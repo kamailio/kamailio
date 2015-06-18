@@ -41,6 +41,17 @@
     <xsl:template match="text()|@*"/>
     <xsl:template match="text()|@*" mode="drop"/>
 
+    <xsl:template name="quotechar">
+	<xsl:choose>
+	    <xsl:when test="$db='mysql'">
+			<xsl:text>`</xsl:text>
+	    </xsl:when>
+	    <xsl:otherwise>
+			<xsl:text></xsl:text>
+		</xsl:otherwise>
+	</xsl:choose>
+    </xsl:template>
+
     <!-- Return the name of the context element, first look for a database
          specific name, use the common name if no database-specific name
          is found.

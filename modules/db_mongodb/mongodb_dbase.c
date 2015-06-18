@@ -470,7 +470,7 @@ int db_mongodb_get_columns(const db1_con_t* _h, db1_res_t* _r)
  * \param _r database result set
  * \return 0 on success, negative on failure
  */
-static int db_mongdob_convert_bson(const db1_con_t* _h, db1_res_t* _r,
+static int db_mongodb_convert_bson(const db1_con_t* _h, db1_res_t* _r,
 		int _row, const bson_t *_rdoc)
 {
 	static str dummy_string = {"", 0};
@@ -619,7 +619,7 @@ static int db_mongdob_convert_bson(const db1_con_t* _h, db1_res_t* _r,
  * \param _r database result set
  * \return 0 on success, negative on failure
  */
-static int db_mongdob_convert_result(const db1_con_t* _h, db1_res_t* _r)
+static int db_mongodb_convert_result(const db1_con_t* _h, db1_res_t* _r)
 {
 	int row;
 	db_mongodb_result_t *mgres;
@@ -671,7 +671,7 @@ static int db_mongdob_convert_result(const db1_con_t* _h, db1_res_t* _r)
 			LM_DBG("selected document: %s\n", jstr);
 			bson_free (jstr);
 		}
-		if(db_mongdob_convert_bson(_h, _r, row, itdoc)) {
+		if(db_mongodb_convert_bson(_h, _r, row, itdoc)) {
 			LM_ERR("failed to convert bson at pos %d\n", row);
 			return -1;
 		}
@@ -739,7 +739,7 @@ static int db_mongodb_store_result(const db1_con_t* _h, db1_res_t** _r)
 		LM_ERR("failed to set the columns\n");
 		goto error;
 	}
-	if(db_mongdob_convert_result(_h, *_r)<0) {
+	if(db_mongodb_convert_result(_h, *_r)<0) {
 		LM_ERR("failed to set the rows in result\n");
 		goto error;
 	}

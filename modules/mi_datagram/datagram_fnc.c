@@ -331,9 +331,9 @@ static void datagram_close_async(struct mi_root *mi_rpl,struct mi_handler *hdl, 
 
 	LM_DBG("the socket domain is %i and af_local is %i\n", p->domain, AF_LOCAL);
 
-	mi_create_dtgram_replysocket(reply_sock, p->domain, err);
+	memset(&dtgram, 0, sizeof(dtgram));
 
-        memset(&dtgram, 0, sizeof(dtgram));
+	mi_create_dtgram_replysocket(reply_sock, p->domain, err);
 
 	if (mi_rpl!=0) {
 		/*allocate the response datagram*/	

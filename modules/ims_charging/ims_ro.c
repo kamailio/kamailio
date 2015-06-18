@@ -547,6 +547,9 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     //getting subscription id type
     if (strncasecmp(subscr.id.s, "tel:", 4) == 0) {
 	subscr.type = Subscription_Type_MSISDN;
+	// Strip "tel:":
+	subscr.id.s += 4;
+	subscr.id.len -= 4;
     } else {
 	subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
     }
@@ -780,6 +783,9 @@ void send_ccr_stop(struct ro_session *ro_session) {
     //getting subscription id type
     if (strncasecmp(subscr.id.s, "tel:", 4) == 0) {
 	subscr.type = Subscription_Type_MSISDN;
+	// Strip "tel:":
+	subscr.id.s += 4;
+	subscr.id.len -= 4;
     } else {
 	subscr.type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
     }
@@ -996,6 +1002,9 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     //getting subscription id type
     if (strncasecmp(subscription_id.s, "tel:", 4) == 0) {
 	subscription_id_type = Subscription_Type_MSISDN;
+	// Strip "tel:":
+	subscription_id.s += 4;
+	subscription_id.len -= 4;
     } else {
 	subscription_id_type = Subscription_Type_IMPU; //default is END_USER_SIP_URI
     }
@@ -1218,6 +1227,12 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i]\n",
 	    ro_cca_data->mscc->granted_service_unit->cc_time,
 	    ro_cca_data->mscc->validity_time);
+    
+    if (ro_cca_data->mscc->granted_service_unit->cc_time <=0 ) {
+        LM_DBG("got zero GSU.... reservation failed");
+	error_code = RO_RETURN_FALSE;
+	goto error1;
+    }
 
     ssd->ro_session->last_event_timestamp = time(0);
     ssd->ro_session->event_type = pending;

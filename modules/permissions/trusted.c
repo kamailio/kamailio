@@ -41,7 +41,7 @@
 #include "../../parser/parse_from.h"
 #include "../../usr_avp.h"
 
-#define TABLE_VERSION 5
+#define TABLE_VERSION 6
 
 struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
 struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
@@ -58,7 +58,7 @@ static db_func_t perm_dbf;
  */
 int reload_trusted_table(void)
 {
-	db_key_t cols[4];
+	db_key_t cols[6];
 	db1_res_t* res = NULL;
 	db_row_t* row;
 	db_val_t* val;
@@ -66,13 +66,16 @@ int reload_trusted_table(void)
 	struct trusted_list **new_hash_table;
 	struct trusted_list **old_hash_table;
 	int i;
+	int priority;
 
-	char *pattern, *tag;
+	char *pattern, *ruri_pattern, *tag;
 
 	cols[0] = &source_col;
 	cols[1] = &proto_col;
 	cols[2] = &from_col;
-	cols[3] = &tag_col;
+	cols[3] = &ruri_col;
+	cols[4] = &tag_col;
+	cols[5] = &priority_col;
 
 	if (db_handle == 0) {
 	    LM_ERR("no connection to database\n");
@@ -84,7 +87,7 @@ int reload_trusted_table(void)
 		return -1;
 	}
 
-	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
+	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 6, 0, &res) < 0) {
 		LM_ERR("failed to query database\n");
 		return -1;
 	}
@@ -103,7 +106,7 @@ int reload_trusted_table(void)
 		
 	for (i = 0; i < RES_ROW_N(res); i++) {
 	    val = ROW_VALUES(row + i);
-	    if ((ROW_N(row + i) == 4) &&
+	    if ((ROW_N(row + i) == 6) &&
 		((VAL_TYPE(val) == DB1_STRING) || (VAL_TYPE(val) == DB1_STR) ) && 
 		!VAL_NULL(val) &&
 		((VAL_TYPE(val + 1) == DB1_STRING) || (VAL_TYPE(val + 1) == DB1_STR))
@@ -111,30 +114,42 @@ int reload_trusted_table(void)
 		(VAL_NULL(val + 2) ||
 		 (((VAL_TYPE(val + 2) == DB1_STRING) || (VAL_TYPE(val + 2) == DB1_STR)) &&
 		!VAL_NULL(val + 2))) && (VAL_NULL(val + 3) ||
-		 (((VAL_TYPE(val + 3) == DB1_STRING) || (VAL_TYPE(val + 3) == DB1_STR) )&& 
-		!VAL_NULL(val + 3)))) {
+		 (((VAL_TYPE(val + 3) == DB1_STRING) || (VAL_TYPE(val + 3) == DB1_STR) )&&
+		!VAL_NULL(val + 3))) && (VAL_NULL(val + 4) ||
+		 (((VAL_TYPE(val + 4) == DB1_STRING) || (VAL_TYPE(val + 4) == DB1_STR) )&&
+		!VAL_NULL(val + 4)))) {
 		if (VAL_NULL(val + 2)) {
 		    pattern = 0;
 		} else {
 		    pattern = (char *)VAL_STRING(val + 2);
 		}
 		if (VAL_NULL(val + 3)) {
+		    ruri_pattern = 0;
+		} else {
+		    ruri_pattern = (char *)VAL_STRING(val + 3);
+		}
+		if (VAL_NULL(val + 4)) {
 		    tag = 0;
 		} else {
-		    tag = (char *)VAL_STRING(val + 3);
+		    tag = (char *)VAL_STRING(val + 4);
+		}
+		if (VAL_NULL(val + 5)) {
+		    priority = 0;
+		} else {
+		    priority = (int)VAL_INT(val + 5);
 		}
 		if (hash_table_insert(new_hash_table,
 				      (char *)VAL_STRING(val),
 				      (char *)VAL_STRING(val + 1),
-				      pattern, tag) == -1) {
+				      pattern, ruri_pattern, tag, priority) == -1) {
 		    LM_ERR("hash table problem\n");
 		    perm_dbf.free_result(db_handle, res);
 		    empty_hash_table(new_hash_table);
 		    return -1;
 		}
-		LM_DBG("tuple <%s, %s, %s, %s> inserted into trusted hash "
+		LM_DBG("tuple <%s, %s, %s, %s, %s> inserted into trusted hash "
 		    "table\n", VAL_STRING(val), VAL_STRING(val + 1),
-		    pattern, tag);
+		    pattern, ruri_pattern, tag);
 	    } else {
 		LM_ERR("database problem\n");
 		perm_dbf.free_result(db_handle, res);
@@ -362,8 +377,9 @@ static inline int match_proto(const char *proto_string, int proto_int)
 static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 {
 	int i, tag_avp_type;
-	str uri;
+	str uri, ruri;
 	char uri_string[MAX_URI_SIZE+1];
+	char ruri_string[MAX_URI_SIZE+1];
 	db_row_t* row;
 	db_val_t* val;
 	regex_t preg;
@@ -379,6 +395,13 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 		}
 		memcpy(uri_string, uri.s, uri.len);
 		uri_string[uri.len] = (char)0;
+		ruri = msg->first_line.u.request.uri;
+		if (ruri.len > MAX_URI_SIZE) {
+			LM_ERR("message has Request URI too large\n");
+			return -1;
+		}
+		memcpy(ruri_string, ruri.s, ruri.len);
+		ruri_string[ruri.len] = (char)0;
 	}
 	get_tag_avp(&tag_avp, &tag_avp_type);
 
@@ -386,28 +409,45 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 
 	for(i = 0; i < RES_ROW_N(_r); i++) {
 		val = ROW_VALUES(row + i);
-		if ((ROW_N(row + i) == 3) &&
+		if ((ROW_N(row + i) == 4) &&
 		    (VAL_TYPE(val) == DB1_STRING) && !VAL_NULL(val) &&
 		    match_proto(VAL_STRING(val), proto) &&
 		    (VAL_NULL(val + 1) ||
 		      ((VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1))) &&
 		    (VAL_NULL(val + 2) ||
-		      ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))))
+		      ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))) &&
+		    (VAL_NULL(val + 3) ||
+		      ((VAL_TYPE(val + 3) == DB1_STRING) && !VAL_NULL(val + 3))))
 		{
-			if (!VAL_NULL(val + 1) && IS_SIP(msg)) {
+			if (IS_SIP(msg)) {
+			    if (!VAL_NULL(val + 1)) {
 				if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
 					LM_ERR("invalid regular expression\n");
-					continue;
+					if (VAL_NULL(val + 2)) {
+						continue;
+					}
 				}
 				if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
 					regfree(&preg);
 					continue;
 				}
-			    regfree(&preg);
+				regfree(&preg);
+			    }
+			    if (!VAL_NULL(val + 2)) {
+				if (regcomp(&preg, (char *)VAL_STRING(val + 2), REG_NOSUB)) {
+					LM_ERR("invalid regular expression\n");
+					continue;
+				}
+				if (regexec(&preg, ruri_string, 0, (regmatch_t *)0, 0)) {
+					regfree(&preg);
+					continue;
+				}
+				regfree(&preg);
+			    }
 			}
 			/* Found a match */
-			if (tag_avp.n && !VAL_NULL(val + 2)) {
-				avp_val.s.s = (char *)VAL_STRING(val + 2);
+			if (tag_avp.n && !VAL_NULL(val + 3)) {
+				avp_val.s.s = (char *)VAL_STRING(val + 3);
 				avp_val.s.len = strlen(avp_val.s.s);
 				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, avp_val) != 0) {
 					LM_ERR("failed to set of tag_avp failed\n");
@@ -437,9 +477,10 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 	
 	db_key_t keys[1];
 	db_val_t vals[1];
-	db_key_t cols[3];
+	db_key_t cols[4];
 
 	if (db_mode == DISABLE_CACHE) {
+		db_key_t order = &priority_col;
 	
 	        if (db_handle == 0) {
 		    LM_ERR("no connection to database\n");
@@ -449,7 +490,8 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 		keys[0] = &source_col;
 		cols[0] = &proto_col;
 		cols[1] = &from_col;
-		cols[2] = &tag_col;
+		cols[2] = &ruri_col;
+		cols[3] = &tag_col;
 
 		if (perm_dbf.use_table(db_handle, &trusted_table) < 0) {
 			LM_ERR("failed to use trusted table\n");
@@ -460,7 +502,7 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 		VAL_NULL(vals) = 0;
 		VAL_STRING(vals) = src_ip;
 
-		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 3, 0,
+		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 4, order,
 				   &res) < 0){
 			LM_ERR("failed to query database\n");
 			return -1;
@@ -555,3 +597,24 @@ error:
     return -1;
 }
 
+
+int reload_trusted_table_cmd(void)
+{
+	if (!db_handle) {
+		db_handle = perm_dbf.init(&db_url);
+		if (!db_handle) {
+			LM_ERR("unable to connect database\n");
+			return -1;
+		}
+	}
+	if (reload_trusted_table () != 1) {
+		perm_dbf.close(db_handle);
+		db_handle = 0;
+		return -1;
+	}
+
+	perm_dbf.close(db_handle);
+	db_handle = 0;
+
+	return 1;
+}

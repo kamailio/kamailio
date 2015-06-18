@@ -23,9 +23,12 @@
 #ifndef CXDX_CALLBACKS_H
 #define CXDX_CALLBACKS_H
 
+#include "../cdp/cdp_load.h"
 /**
  * Check, if a user-agent follows the indicated service-routes
  */
 int PPR_RTR_Event(void *parsed_message, int type, void *param);
+
+AAAMessage* cxdx_process_rtr(AAAMessage *request);
 
 #endif /* CXDX_CALLBACKS_H */

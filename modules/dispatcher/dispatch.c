@@ -2055,7 +2055,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	struct search_state st;
 	struct usr_avp *avp;
 	struct usr_avp *prev_avp;
-	struct socket_info *sock;
+	struct socket_info *sock = NULL;
 	int_str avp_value;
 	int_str sock_avp_value;
 	int alg = 0;
@@ -2092,14 +2092,12 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	if(sock_avp_name.n!=0)
 	{
 		prev_avp = search_first_avp(sock_avp_type,
-				attrs_avp_name, &avp_value, &st);
+				attrs_avp_name, &sock_avp_value, &st);
 		if(prev_avp!=NULL)
 		{
 			if (sscanf( sock_avp_value.s.s, "%p", (void**)&sock ) != 1)
 				sock = NULL;
 			destroy_avp(prev_avp);
-		} else {
-			sock = NULL;
 		}
 	}
 

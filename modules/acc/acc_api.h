@@ -110,7 +110,7 @@ typedef struct acc_engine {
 #define ACC_CORE_LEN  6
 
 
-enum {TYPE_NULL = 0, TYPE_INT, TYPE_STR};
+enum {TYPE_NULL = 0, TYPE_INT, TYPE_STR, TYPE_DOUBLE, TYPE_DATE};
 
 
 typedef int (*register_engine_f)(acc_engine_t *eng);

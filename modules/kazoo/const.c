@@ -17,6 +17,7 @@ str str_body_col = str_init("body");
 str str_expires_col = str_init("expires");
 str str_received_time_col = str_init("received_time");
 str str_presentity_uri_col = str_init("presentity_uri");
+str str_priority_col = str_init("priority");
 
 str str_event_col = str_init("event");
 str str_contact_col = str_init("contact");

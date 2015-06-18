@@ -1415,6 +1415,7 @@ void internal_print_all_dlg(struct dlg_cell *dlg) {
         LM_DBG("Dialog out callee cseq: %.*s\n", dlg_out->callee_cseq.len, dlg_out->callee_cseq.s);
         LM_DBG("Dialog out callee contact: %.*s\n", dlg_out->callee_contact.len, dlg_out->callee_contact.s);
         LM_DBG("Dialog out callee route set: %.*s\n", dlg_out->callee_route_set.len, dlg_out->callee_route_set.s);
+        LM_DBG("Dialog out state (deleted): %i\n", dlg_out->deleted);
 
         LM_DBG("----------");
         dlg_out = dlg_out->next;

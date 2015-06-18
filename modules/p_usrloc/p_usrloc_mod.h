@@ -92,7 +92,7 @@ extern int desc_time_order;
 extern int cseq_delay;
 extern int ul_fetch_rows;
 extern int ul_hash_size;
-
+extern int ul_db_update_as_insert;
 
 
 extern str default_db_url;
@@ -102,6 +102,7 @@ extern str domain_db;
 extern int expire;
 
 extern int matching_mode;
+extern int ul_db_ops_ruid;
 
 struct mi_root* mi_ul_db_refresh(struct mi_root* cmd, void* param);
 struct mi_root* mi_loc_nr_refresh(struct mi_root* cmd, void* param);

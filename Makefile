@@ -663,7 +663,7 @@ man: $(foreach mods,$(modules_dirs),$(mods)-man)
 mk-install_dirs: $(cfg_prefix)/$(cfg_dir) $(bin_prefix)/$(bin_dir) \
 			$(modules_prefix)/$(modules_dir) $(doc_prefix)/$(doc_dir) \
 			$(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5 \
-			$(share_prefix)/$(share_dir) $(run_prefix)/$(run_dir) \
+			$(share_prefix)/$(share_dir) \
 			$(foreach mods,$(modules_dirs),\
 				$(modules_prefix)/$(modules_dir)$(mods) \
 				$(doc_prefix)/$(doc_dir)$(mods) )
@@ -795,7 +795,7 @@ install-every-module-doc: $(foreach mods,$(modules_dirs),install-$(mods)-doc)
 
 install-every-module-man: $(foreach mods,$(modules_dirs),install-$(mods)-man)
 
-install-utils: utils $(bin_prefix)/$(bin_dir) $(run_prefix)/$(run_dir)
+install-utils: utils $(bin_prefix)/$(bin_dir)
 	@for r in $(C_INSTALL_BIN) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
@@ -920,10 +920,10 @@ clean: clean-libs
 clean-extra-names:
 	@rm -f $(filter-out $(MAIN_NAME), sip-router ser kamailio)
 
-# proper/distclean a.s.o modules, utils and libs too
+# proper/distclean-old a.s.o modules, utils and libs too
 
 proper: clean-extra-names proper-modules proper-utils proper-libs
-distclean: distclean-modules distclean-utils distclean-libs
+distclean-old: distclean-modules distclean-utils distclean-libs
 realclean: realclean-modules realclean-utils realclean-libs
 maintainer-clean: maintainer-clean-modules maintainer-clean-utils \
  maintainer-clean-libs
@@ -936,7 +936,7 @@ clean-all: clean
 maintainer-clean: modules=$(modules_all)
 
 # on make proper clean also the build config (w/o module list)
-proper realclean distclean maintainer-clean: clean_cfg
+proper realclean distclean-old maintainer-clean: clean_cfg
 
 # on maintainer clean, remove also the configured module list
 maintainer-clean: clean_modules_cfg clean_makefile_vars
@@ -959,7 +959,7 @@ clean_modules_cfg clean-modules-cfg:
 
 # clean everything generated - shortcut on maintainer-clean
 .PHONY: pure
-pure: maintainer-clean
+pure distclean: maintainer-clean
 
 .PHONY: install_initd_debian install-initd-debian
 install_initd_debian install-initd-debian:

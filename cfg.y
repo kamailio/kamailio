@@ -425,6 +425,7 @@ extern char *default_routename;
 %token DNS_CACHE_MEM
 %token DNS_CACHE_GC_INT
 %token DNS_CACHE_DEL_NONEXP
+%token DNS_CACHE_REC_PREF
 
 /* ipv6 auto bind */
 %token AUTO_BIND_IPV6
@@ -467,6 +468,7 @@ extern char *default_routename;
 %token GROUP
 %token CHROOT
 %token WDIR
+%token RUNDIR
 %token MHOMED
 %token DISABLE_TCP
 %token TCP_ACCEPT_ALIASES
@@ -899,6 +901,8 @@ assign_stm:
 	| DNS_CACHE_GC_INT error { yyerror("boolean value expected"); }
 	| DNS_CACHE_DEL_NONEXP EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_del_nonexp=$3); }
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
+	| DNS_CACHE_REC_PREF EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_rec_pref=$3); }
+	| DNS_CACHE_REC_PREF error { yyerror("boolean value expected"); }
 	| AUTO_BIND_IPV6 EQUAL NUMBER {IF_AUTO_BIND_IPV6(auto_bind_ipv6 = $3);}
 	| AUTO_BIND_IPV6 error { yyerror("boolean value expected"); }
 	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }
@@ -996,6 +1000,9 @@ assign_stm:
 	| WDIR EQUAL STRING     { working_dir=$3; }
 	| WDIR EQUAL ID         { working_dir=$3; }
 	| WDIR EQUAL error      { yyerror("string value expected"); }
+	| RUNDIR EQUAL STRING     { runtime_dir=$3; }
+	| RUNDIR EQUAL ID         { runtime_dir=$3; }
+	| RUNDIR EQUAL error      { yyerror("string value expected"); }
 	| MHOMED EQUAL NUMBER { mhomed=$3; }
 	| MHOMED EQUAL error { yyerror("boolean value expected"); }
 	| DISABLE_TCP EQUAL NUMBER {

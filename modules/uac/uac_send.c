@@ -20,6 +20,7 @@
 
 #include "../../dprint.h"
 #include "../../trim.h"
+#include "../../route.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -27,6 +28,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/contact/parse_contact.h"
+#include "../../lib/kcore/faked_msg.h"
 
 #include "auth.h"
 #include "auth_hdr.h"
@@ -34,6 +36,7 @@
 
 #define MAX_UACH_SIZE 2048
 #define MAX_UACB_SIZE 4086
+#define MAX_UACD_SIZE 128
 
 /** TM bind */
 struct tm_binds tmb;
@@ -62,10 +65,31 @@ typedef struct _uac_send_info {
 	str   s_auser;
 	char  b_apasswd[64];
 	str   s_apasswd;
-	unsigned int onreply;
+	char  b_evparam[MAX_UACD_SIZE];
+	str   s_evparam;
+	unsigned int evroute;
+	unsigned int evcode;
+	unsigned int evtype;
 } uac_send_info_t;
 
 static struct _uac_send_info _uac_req;
+
+void uac_send_info_copy(uac_send_info_t *src, uac_send_info_t *dst)
+{
+	memcpy(dst, src, sizeof(uac_send_info_t));
+	dst->s_method.s  = dst->b_method;
+	dst->s_ruri.s    = dst->b_ruri;
+	dst->s_turi.s    = dst->b_turi;
+	dst->s_furi.s    = dst->b_furi;
+	dst->s_hdrs.s    = dst->b_hdrs;
+	dst->s_body.s    = dst->b_body;
+	dst->s_ouri.s    = dst->b_ouri;
+	dst->s_auser.s   = dst->b_auser;
+	dst->s_apasswd.s = dst->b_apasswd;
+	dst->s_callid.s  = dst->b_callid;
+	dst->s_sock.s    = dst->b_sock;
+	dst->s_evparam.s = dst->b_evparam;
+}
 
 uac_send_info_t *uac_send_info_clone(uac_send_info_t *ur)
 {
@@ -76,18 +100,7 @@ uac_send_info_t *uac_send_info_clone(uac_send_info_t *ur)
 		LM_ERR("no more shm memory\n");
 		return NULL;
 	}
-	memcpy(tp, ur, sizeof(uac_send_info_t));
-	tp->s_method.s  = tp->b_method;
-	tp->s_ruri.s    = tp->b_ruri;
-	tp->s_turi.s    = tp->b_turi;
-	tp->s_furi.s    = tp->b_furi;
-	tp->s_hdrs.s    = tp->b_hdrs;
-	tp->s_body.s    = tp->b_body;
-	tp->s_ouri.s    = tp->b_ouri;
-	tp->s_auser.s   = tp->b_auser;
-	tp->s_apasswd.s = tp->b_apasswd;
-	tp->s_callid.s  = tp->b_callid;
-	tp->s_sock.s    = tp->b_sock;
+	uac_send_info_copy(ur, tp);
 
 	return tp;
 }
@@ -130,6 +143,8 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
 			if(_uac_req.s_method.len<=0)
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res, &_uac_req.s_method);
+		case 8:
+			return pv_get_uintval(msg, param, res, _uac_req.evroute);
 		case 9:
 			if(_uac_req.s_auser.len<=0)
 				return pv_get_null(msg, param, res);
@@ -146,6 +161,14 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
 			if(_uac_req.s_sock.len<=0)
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res, &_uac_req.s_sock);
+		case 14:
+			if(_uac_req.s_evparam.len<=0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_uac_req.s_evparam);
+		case 15:
+			return pv_get_uintval(msg, param, res, _uac_req.evcode);
+		case 16:
+			return pv_get_uintval(msg, param, res, _uac_req.evtype);
 		default:
 			return pv_get_uintval(msg, param, res, _uac_req.flags);
 	}
@@ -171,8 +194,11 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 				_uac_req.s_hdrs.len = 0;
 				_uac_req.s_body.len = 0;
 				_uac_req.s_method.len = 0;
-				_uac_req.onreply = 0;
 				_uac_req.s_callid.len = 0;
+				_uac_req.evroute = 0;
+				_uac_req.evtype = 0;
+				_uac_req.evcode = 0;
+				_uac_req.s_evparam.len = 0;
 			}
 			break;
 		case 1:
@@ -318,7 +344,7 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 		case 8:
 			if(val==NULL)
 			{
-				_uac_req.onreply = 0;
+				_uac_req.evroute = 0;
 				return 0;
 			}
 			if(!(val->flags&PV_VAL_INT))
@@ -326,12 +352,7 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->ri>=ONREPLY_RT_NO)
-			{
-				LM_ERR("Value too big\n");
-				return -1;
-			}
-			_uac_req.onreply = val->ri;
+			_uac_req.evroute = val->ri;
 			break;
 		case 9:
 			if(val==NULL)
@@ -408,6 +429,52 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 			_uac_req.s_sock.s[val->rs.len] = '\0';
 			_uac_req.s_sock.len = val->rs.len;
 			break;
+		case 14:
+			if(val==NULL)
+			{
+				_uac_req.s_evparam.len = 0;
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_STR))
+			{
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			if(val->rs.len>=MAX_UACD_SIZE)
+			{
+				LM_ERR("Value size too big\n");
+				return -1;
+			}
+			memcpy(_uac_req.s_evparam.s, val->rs.s, val->rs.len);
+			_uac_req.s_evparam.s[val->rs.len] = '\0';
+			_uac_req.s_evparam.len = val->rs.len;
+			break;
+		case 15:
+			if(val==NULL)
+			{
+				_uac_req.evcode = 0;
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_INT))
+			{
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			_uac_req.evcode = val->ri;
+			break;
+		case 16:
+			if(val==NULL)
+			{
+				_uac_req.evtype = 0;
+				return 0;
+			}
+			if(!(val->flags&PV_VAL_INT))
+			{
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			_uac_req.evtype = val->ri;
+			break;
 	}
 	return 0;
 }
@@ -451,13 +518,19 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 7;
 			else if(strncmp(in->s, "callid", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 11;
+			else if(strncmp(in->s, "evcode", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 15;
+			else if(strncmp(in->s, "evtype", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 16;
 			else goto error;
 		break;
 		case 7: 
-			if(strncmp(in->s, "onreply", 7)==0)
+			if(strncmp(in->s, "evroute", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 8;
 			else if(strncmp(in->s, "apasswd", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 10;
+			else if(strncmp(in->s, "evparam", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 14;
 			else goto error;
 		break;
 		default:
@@ -493,6 +566,7 @@ void uac_req_init(void)
 	_uac_req.s_apasswd.s  = _uac_req.b_apasswd;
 	_uac_req.s_callid.s   = _uac_req.b_callid;
 	_uac_req.s_sock.s     = _uac_req.b_sock;
+	_uac_req.s_evparam.s  = _uac_req.b_evparam;
 	return;
 }
 
@@ -533,6 +607,41 @@ int uac_send_tmdlg(dlg_t *tmdlg, sip_msg_t *rpl)
 
 #define MAX_UACH_SIZE 2048
 
+/**
+ *
+ */
+void uac_req_run_event_route(sip_msg_t *msg, uac_send_info_t *tp, int rcode)
+{
+	char *evrtname = "uac:reply";
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t *fmsg;
+
+	rt = route_get(&event_rt, evrtname);
+	if (rt < 0 || event_rt.rlist[rt] == NULL)
+	{
+		LM_DBG("event_route[uac:reply] does not exist\n");
+		return;
+	}
+
+	uac_send_info_copy(tp, &_uac_req);
+	_uac_req.evcode = rcode;
+	if(msg==NULL)
+	{
+		_uac_req.evtype = 2;
+		fmsg = faked_msg_get_next();
+	} else {
+		_uac_req.evtype = 1;
+		fmsg = msg;
+	}
+
+	backup_rt = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	set_route_type(backup_rt);
+}
+
 /** 
  * TM callback function
  */
@@ -550,13 +659,21 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	dlg_t tmdlg;
 	uac_send_info_t *tp = NULL;
 
+	LM_DBG("tm callback with status %d\n", ps->code);
+
 	if(ps->param==NULL || *ps->param==0)
 	{
-		LM_DBG("message id not received\n");
+		LM_DBG("callback param with message id not received\n");
 		goto done;
 	}
 	tp = (uac_send_info_t*)(*ps->param);
-	if(ps->code != 401 && ps->code != 407)
+
+	if(tp->evroute!=0) {
+		uac_req_run_event_route((ps->rpl==FAKED_REPLY)?NULL:ps->rpl,
+				tp, ps->code);
+	}
+
+	if((ps->code != 401 && ps->code != 407) || tp->s_apasswd.len<=0)
 	{
 		LM_DBG("completed with status %d\n", ps->code);
 		goto done;
@@ -638,7 +755,7 @@ error:
 }
 
 
-int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
+int uac_req_send(void)
 {
 	int ret;
 	uac_req_t uac_r;
@@ -653,7 +770,8 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 	uac_r.headers = (_uac_req.s_hdrs.len <= 0) ? NULL : &_uac_req.s_hdrs;
 	uac_r.body = (_uac_req.s_body.len <= 0) ? NULL : &_uac_req.s_body;
 	uac_r.ssock = (_uac_req.s_sock.len <= 0) ? NULL : &_uac_req.s_sock;
-	if(_uac_req.s_auser.len > 0 && _uac_req.s_apasswd.len>0)
+	if((_uac_req.s_auser.len > 0 && _uac_req.s_apasswd.len>0)
+			|| (_uac_req.evroute > 0))
 	{
 		tp = uac_send_info_clone(&_uac_req);
 		if(tp==NULL)
@@ -684,3 +802,7 @@ int uac_req_send(struct sip_msg *msg, char *s1, char *s2)
 	return 1;
 }
 
+int w_uac_req_send(struct sip_msg *msg, char *s1, char *s2)
+{
+	return uac_req_send();
+}

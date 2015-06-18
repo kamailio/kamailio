@@ -10,7 +10,7 @@ Federico Cabiddu
 
    <federico.cabiddu@gmail.com>
 
-   Copyright � 2014 Federico Cabiddu
+   Copyright © 2015 Federico Cabiddu
      __________________________________________________________________
 
    Table of Contents
@@ -72,16 +72,18 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This modules provides transaction storage for the Kamailio SIP Server
+   This module provides transaction storage for the Kamailio SIP Server
    Platform. It stores in an internal table transactions for a Request-URI
    (R-URI) and add branches to them later if new contacts for the AOR are
    added.
 
-   When the ts_store function is called, the modules stores the current
+   When the ts_store function is called, the module stores the current
    transaction R-URI URI, index and label. Two functions (ts_append and
    ts_append_to) provide the ability to add new branches either to a
    specific transaction or to all of the transactions stored for a given
-   R-URI.
+   R-URI. If USRLOC's use_domain option is true, the domain part of the
+   R-URI is used to store the transaction, otherwise only the username
+   part is used.
 
    When a transaction is destroyed by the TM module, it is removed from
    the module's table too.
@@ -97,6 +99,9 @@ Chapter 1. Admin Guide
      * REGISTRAR--registrar module-- used to lookup for new contacts and
        update the dset for the r-uri.
      * TM--transaction module-- used to send SIP requests.
+     * USRLOC--usrloc module-- according to the value of use_domain
+       option, domain part of the r-uri will be used to store the
+       transaction.
      * SL
 
 2.2. External libraries or applications
@@ -116,7 +121,7 @@ Chapter 1. Admin Guide
    must be a power of two, otherwise it will be rounded down to the
    nearest power of two.
 
-   Default value is "2048".
+   Default value is “2048”.
 
    Example 1.1. Set hash_size parameter
 ...
@@ -163,7 +168,7 @@ if (is_method("INVITE")) {
    Example 1.3. ts_append usage
 ...
 if (is_method("REGISTER")) {
-        ts_append("location", "$tu");
+        ts_append("location", "$tU");
 }
 ...
 

@@ -33,6 +33,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../pt.h"
+#include "../../sr_module.h"
 #include "../../events.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -233,6 +234,11 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 			{
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
+			}
+			if(_pkg_proc_stats_list[i].pid==0) {
+				_pkg_proc_stats_list[i].pid = pt[i].pid;
+				_pkg_proc_stats_list[i].total_size = _pkg_proc_stats_list[0].total_size;
+				_pkg_proc_stats_list[i].rank = PROC_NOCHLDINIT;
 			}
 			if(rpc->struct_add(th, "dddddddd",
 							"entry",     i,

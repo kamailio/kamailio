@@ -349,11 +349,10 @@ int term_impu_registered(struct sip_msg* _m, char* _t, char* _s)
 	else uri = _m->first_line.u.request.uri;
 		
 	for(i=0;i<uri.len;i++)
-		if (uri.s[i]==';' || uri.s[i]=='?') {
+		if (uri.s[i]==';' || uri.s[i]=='?' || (i>3 /*sip:*/ && uri.s[i]==':' /*strip port*/)) {
 			uri.len = i;
 			break;
 		}
-	
 	LM_DBG("term_impu_registered: Looking for <%.*s>\n",uri.len,uri.s);
 
 	ul.lock_udomain((udomain_t*)_t, &uri);

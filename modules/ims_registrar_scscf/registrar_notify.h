@@ -125,7 +125,7 @@ int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str
 int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int event_type, str *presentity_uri, str *watcher_contact);
 
 
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription);
+str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription, str *primary_impu, int primary_locked);
 
 str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type);
 

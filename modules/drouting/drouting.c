@@ -563,7 +563,7 @@ static inline str* build_ruri(struct sip_uri *uri, int strip, str *pri,
 	}
 	memcpy(p, uri->user.s+strip, uri->user.len-strip);
 	p += uri->user.len-strip;
-	if (uri->passwd.len) {
+	if (uri->passwd.s && uri->passwd.len) {
 		*(p++)=':';
 		memcpy(p, uri->passwd.s, uri->passwd.len);
 		p += uri->passwd.len;
@@ -571,12 +571,12 @@ static inline str* build_ruri(struct sip_uri *uri, int strip, str *pri,
 	*(p++)='@';
 	memcpy(p, hostport->s, hostport->len);
 	p += hostport->len;
-	if (uri->params.len) {
+	if (uri->params.s && uri->params.len) {
 		*(p++)=';';
 		memcpy(p, uri->params.s, uri->params.len);
 		p += uri->params.len;
 	}
-	if (uri->headers.len) {
+	if (uri->headers.s && uri->headers.len) {
 		*(p++)='?';
 		memcpy(p, uri->headers.s, uri->headers.len);
 		p += uri->headers.len;

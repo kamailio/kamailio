@@ -14,3 +14,40 @@ Possible values for the search request:
   * 1-999 the number was found and the result represents its carrier ID
   * 1000: the number could be found, but its owned from a carriers which is
     not interesting for us and belongs to the "other carrier" group
+
+
+From PDB_VERSION_1 onwards the pdb request and reply looks like this:
+
+    +-------+----+----+------+--+-------+
+    |          header           |  body |
+    +-------+----+----+------+--+-------+
+    |version|type|code|length|id|payload|
+    +-------+----+----+------+--+-------+
+
+Version
+    Current version is 1 (0x01).
+
+Type
+    PDB_TYPE_REQUEST_ID = 0,    /* request pdb type */
+    PDB_TYPE_REPLY_ID,          /* reply pdb type */
+
+Code
+    PDB_CODE_DEFAULT = 0,   /* for request */
+    PDB_CODE_OK,            /* for response - OK */
+    PDB_CODE_NOT_NUMBER,    /* for response - letters found in the number */
+    PDB_CODE_NOT_FOUND,     /* for response - no pdb_id found for the number */
+
+Length
+    The length of the whole message
+
+Id
+    A pdb_msg id which might be used for asynchronous queries.
+
+Payload
+    Request number including '\0' for request.
+    Request number including '\0' and pdb_id for reply.
+
+Backwards compatibility with the old msg protocol is kept when the first byte
+received is different from the known versions ('0x01' for now)
+
+For more info about the data structures used, see common.h file.

@@ -893,6 +893,10 @@ static void jsonrpc_clean_context(jsonrpc_ctx_t* ctx)
 
 static int mod_init(void)
 {
+	int sep;
+	int len;
+	char *p;
+
 	/* bind the XHTTP API */
 	if(jsonrpc_transport==0 || jsonrpc_transport==1) {
 		if (xhttp_load_api(&xhttp_api) < 0) {
@@ -905,6 +909,28 @@ static int mod_init(void)
 		}
 	}
 	if(jsonrpc_transport==0 || jsonrpc_transport==2) {
+		if(jsonrpc_fifo != NULL && *jsonrpc_fifo!=0) {
+			if(*jsonrpc_fifo != '/') {
+				if(runtime_dir!=NULL && *runtime_dir!=0) {
+					len = strlen(runtime_dir);
+					sep = 0;
+					if(runtime_dir[len-1]!='/') {
+						sep = 1;
+					}
+					len += sep + strlen(jsonrpc_fifo);
+					p = pkg_malloc(len + 1);
+					if(p==NULL) {
+						LM_ERR("no more pkg\n");
+						return -1;
+					}
+					strcpy(p, runtime_dir);
+					if(sep) strcat(p, "/");
+					strcat(p, jsonrpc_fifo);
+					jsonrpc_fifo = p;
+					LM_DBG("fifo path is [%s]\n", jsonrpc_fifo);
+				}
+			}
+		}
 		if(jsonrpc_init_fifo_file()<0) {
 			if(jsonrpc_transport==2) {
 				LM_ERR("cannot initialize fifo transport\n");

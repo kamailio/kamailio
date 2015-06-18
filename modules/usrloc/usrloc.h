@@ -194,6 +194,9 @@ int ul_set_keepalive_timeout(int _to);
 typedef int (*ul_refresh_keepalive_t)(unsigned int _aorhash, str *_ruid);
 int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid);
 
+
+typedef void (*ul_set_max_partition_t)(unsigned int m);
+
 /*! usrloc API export structure */
 typedef struct usrloc_api {
 	int           use_domain; /*! use_domain module parameter */
@@ -226,6 +229,7 @@ typedef struct usrloc_api {
 
 	ul_set_keepalive_timeout_t set_keepalive_timeout;
 	ul_refresh_keepalive_t     refresh_keepalive;
+	ul_set_max_partition_t     set_max_partition;
 } usrloc_api_t;
 
 

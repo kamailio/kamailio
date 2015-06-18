@@ -22,6 +22,7 @@
 
 #include <sys/types.h>
 #include <regex.h>
+#include "parse_config.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
@@ -116,13 +117,15 @@ void free_hash_table(struct trusted_list** table)
 
 
 /* 
- * Add <src_ip, proto, pattern, tag> into hash table, where proto is integer
+ * Add <src_ip, proto, pattern, ruri_pattern, tag, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
 int hash_table_insert(struct trusted_list** table, char* src_ip, 
-		char* proto, char* pattern, char* tag)
+		char* proto, char* pattern, char* ruri_pattern, char* tag, int priority)
 {
 	struct trusted_list *np;
+	struct trusted_list *np0 = NULL;
+	struct trusted_list *np1 = NULL;
 	unsigned int hash_val;
 
 	np = (struct trusted_list *) shm_malloc(sizeof(*np));
@@ -155,7 +158,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 	}
 
 	np->src_ip.len = strlen(src_ip);
-	np->src_ip.s = (char *) shm_malloc(np->src_ip.len);
+	np->src_ip.s = (char *) shm_malloc(np->src_ip.len+1);
 
 	if (np->src_ip.s == NULL) {
 		LM_CRIT("cannot allocate shm memory for src_ip string\n");
@@ -164,6 +167,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 	}
 
 	(void) strncpy(np->src_ip.s, src_ip, np->src_ip.len);
+	np->src_ip.s[np->src_ip.len] = 0;
 
 	if (pattern) {
 		np->pattern = (char *) shm_malloc(strlen(pattern)+1);
@@ -178,13 +182,27 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 		np->pattern = 0;
 	}
 
+	if (ruri_pattern) {
+		np->ruri_pattern = (char *) shm_malloc(strlen(ruri_pattern)+1);
+		if (np->ruri_pattern == NULL) {
+			LM_CRIT("cannot allocate shm memory for ruri_pattern string\n");
+			shm_free(np->src_ip.s);
+			shm_free(np);
+			return -1;
+		}
+		(void) strcpy(np->ruri_pattern, ruri_pattern);
+	} else {
+		np->ruri_pattern = 0;
+	}
+
 	if (tag) {
 		np->tag.len = strlen(tag);
 		np->tag.s = (char *) shm_malloc((np->tag.len) + 1);
 		if (np->tag.s == NULL) {
-			LM_CRIT("cannot allocate shm memory for pattern string\n");
+			LM_CRIT("cannot allocate shm memory for pattern or ruri_pattern string\n");
 			shm_free(np->src_ip.s);
 			shm_free(np->pattern);
+			shm_free(np->ruri_pattern);
 			shm_free(np);
 			return -1;
 		}
@@ -194,9 +212,29 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 		np->tag.s = 0;
 	}
 
+	np->priority = priority;
+
 	hash_val = perm_hash(np->src_ip);
-	np->next = table[hash_val];
-	table[hash_val] = np;
+	if(table[hash_val]==NULL) {
+		np->next = NULL;
+		table[hash_val] = np;
+	} else {
+		np1 = NULL;
+		np0 = table[hash_val];
+		while(np0) {
+			if(np0->priority < np->priority)
+				break;
+			np1 = np0;
+			np0 = np0->next;
+		}
+		if(np1==NULL) {
+			np->next = table[hash_val];
+			table[hash_val] = np;
+		} else {
+			np->next = np1->next;
+			np1->next = np;
+		}
+	}
 
 	return 1;
 }
@@ -211,8 +249,9 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 		char *src_ip_c_str, int proto)
 {
-	str uri;
+	str uri, ruri;
 	char uri_string[MAX_URI_SIZE + 1];
+	char ruri_string[MAX_URI_SIZE + 1];
 	regex_t preg;
 	struct trusted_list *np;
 	str src_ip;
@@ -232,6 +271,13 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 		}
 		memcpy(uri_string, uri.s, uri.len);
 		uri_string[uri.len] = (char)0;
+		ruri = msg->first_line.u.request.uri;
+		if (ruri.len > MAX_URI_SIZE) {
+			LM_ERR("message has Request URI too large\n");
+			return -1;
+		}
+		memcpy(ruri_string, ruri.s, ruri.len);
+		ruri_string[ruri.len] = (char)0;
 	}
 
 	for (np = table[perm_hash(src_ip)]; np != NULL; np = np->next) {
@@ -239,16 +285,31 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 		(strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
 		((np->proto == PROTO_NONE) || (proto == PROTO_NONE) ||
 		 (np->proto == proto))) {
-		if (np->pattern && IS_SIP(msg)) {
-		    if (regcomp(&preg, np->pattern, REG_NOSUB)) {
-			LM_ERR("invalid regular expression\n");
-			continue;
+		if (IS_SIP(msg)) {
+		    if (np->pattern) {
+		        if (regcomp(&preg, np->pattern, REG_NOSUB)) {
+			    LM_ERR("invalid regular expression\n");
+			    if (!np->ruri_pattern) {
+				continue;
+			    }
+		        }
+		        if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+			    regfree(&preg);
+			    continue;
+		        }
+		        regfree(&preg);
 		    }
-		    if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+		    if (np->ruri_pattern) {
+			if (regcomp(&preg, np->ruri_pattern, REG_NOSUB)) {
+			    LM_ERR("invalid regular expression\n");
+			    continue;
+			}
+			if (regexec(&preg, ruri_string, 0, (regmatch_t *)0, 0)) {
+			    regfree(&preg);
+			    continue;
+			}
 			regfree(&preg);
-			continue;
 		    }
-		    regfree(&preg);
 		}
 		/* Found a match */
 		if (tag_avp.n && np->tag.s) {
@@ -282,12 +343,14 @@ int hash_table_mi_print(struct trusted_list** table, struct mi_node* rpl)
 		np = table[i];
 		while (np) {
 			if (addf_mi_node_child(rpl, 0, 0, 0,
-						"%4d <%.*s, %d, %s, %s>",
+						"%4d <%.*s, %d, %s, %s, %s, %d>",
 						i,
 						np->src_ip.len, ZSW(np->src_ip.s),
 						np->proto,
 						np->pattern?np->pattern:"NULL",
-						np->tag.len?np->tag.s:"NULL") == 0) {
+						np->ruri_pattern?np->ruri_pattern:"NULL",
+						np->tag.len?np->tag.s:"NULL",
+						np->priority) == 0) {
 				return -1;
 			}
 			np = np->next;
@@ -328,9 +391,11 @@ int hash_table_rpc_print(struct trusted_list** hash_table, rpc_t* rpc, void* c)
 				rpc->fault(c, 500, "Internal error creating rpc data (ip)");
 				return -1;
 			}
-			if(rpc->struct_add(ih, "dss", "proto",  np->proto,
+			if(rpc->struct_add(ih, "dsssd", "proto",  np->proto,
 						"pattern",  np->pattern ? np->pattern : "NULL",
-						"tag",  np->tag.len ? np->tag.s : "NULL") < 0)
+						"ruri_pattern",  np->ruri_pattern ? np->ruri_pattern : "NULL",
+						"tag",  np->tag.len ? np->tag.s : "NULL",
+						"priority", np->priority) < 0)
 			{
 				rpc->fault(c, 500, "Internal error creating rpc data");
 				return -1;

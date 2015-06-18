@@ -490,7 +490,7 @@ static CallInfo*
 get_call_info(struct sip_msg *msg, CallControlAction action)
 {
     static CallInfo call_info;
-    int headers;
+    hdr_flags_t headers;
 
     memset(&call_info, 0, sizeof(struct CallInfo));
 
@@ -985,7 +985,7 @@ __dialog_ended(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
         if( !msg || msg == FAKED_REPLY)
             msg = _params->req;
         call_control_stop(msg, dlg->callid);
-        *_params->param = CCInactive;
+        *_params->param = (void*)CCInactive;
     }
 }
 

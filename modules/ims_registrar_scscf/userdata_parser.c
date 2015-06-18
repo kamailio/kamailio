@@ -860,7 +860,21 @@ static ims_subscription* parse_ims_subscription(xmlDocPtr doc, xmlNodePtr root)
 					s->service_profiles_cnt++;
 			}				
 	s->lock = lock_alloc();
-	s->lock = lock_init(s->lock);
+	if (s->lock==0) {
+		LM_ERR("Failed to allocate Lock for IMS Subscription\n");
+		shm_free(s);
+		return 0;
+	}
+	if (lock_init(s->lock)==0){
+		LM_ERR("Failed to initialize Lock for IMS Subscription\n");
+		lock_dealloc(s->lock);
+		s->lock=0;
+		shm_free(s);
+		return 0;
+	}
+#ifdef EXTRA_DEBUG
+    	LM_DBG("LOCK CREATED FOR SUBSCRIPTION [%.*s]: %p\n", s->private_identity.len, s->private_identity.s, s->lock);
+#endif
 	return s;
 }
 

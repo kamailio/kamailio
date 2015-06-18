@@ -38,16 +38,15 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
+#include "common.h"
+
 MODULE_VERSION
-
-
-#define NETBUFSIZE 200
-
 
 static char* modp_server = NULL;  /*!< format: \<host\>:\<port\>,... */
 static int timeout = 50;  /*!< timeout for queries in milliseconds */
 static int timeoutlogs = -10;  /*!< for aggregating timeout logs */
 static int *active = NULL;
+static uint16_t *global_id = NULL;
 
 
 /*!
@@ -90,6 +89,14 @@ struct mi_root * mi_pdb_status(struct mi_root* cmd, void* param);  /* usage: kam
 struct mi_root * mi_pdb_activate(struct mi_root* cmd, void* param);  /* usage: kamctl fifo pdb_activate */
 struct mi_root * mi_pdb_deactivate(struct mi_root* cmd, void* param);  /* usage: kamctl fifo pdb_deactivate */
 
+/* debug function for the new client <-> server protocol */
+static void pdb_msg_dbg(struct pdb_msg msg, char *dbg_msg);
+
+/* build the new protocol message before transmission */
+static int pdb_msg_format_send(struct pdb_msg *msg,
+                               uint8_t version, uint8_t type,
+                               uint8_t code, uint16_t id,
+                               char *payload, uint16_t payload_len);
 
 static cmd_export_t cmds[]={
 	{ "pdb_query", (cmd_function)pdb_query, 2, pdb_query_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
@@ -150,20 +157,65 @@ struct server_list_t {
 static struct server_list_t *server_list;
 
 
+/* debug function for the new client <-> server protocol */
+static void pdb_msg_dbg(struct pdb_msg msg, char *dbg_msg) {
+    int i;
+    char buf[PAYLOADSIZE];
+    char *ptr = buf;
+
+    for (i = 0; i < msg.hdr.length - sizeof(msg.hdr); i++) {
+        ptr += sprintf(ptr,"%02X ", msg.bdy.payload[i]);
+    }
+
+    LM_DBG("%s\n"
+           "version = %d\ntype = %d\ncode = %d\nid = %d\nlen = %d\n"
+           "payload = %s\n",
+            dbg_msg,
+            msg.hdr.version, msg.hdr.type, msg.hdr.code, msg.hdr.id, msg.hdr.length,
+            buf);
+}
+
+/* build the message before send */
+static int pdb_msg_format_send(struct pdb_msg *msg,
+                               uint8_t version, uint8_t type,
+                               uint8_t code, uint16_t id,
+                               char *payload, uint16_t payload_len)
+{
+    msg->hdr.version    = version;
+    msg->hdr.type       = type;
+    msg->hdr.code       = code;
+    msg->hdr.id         = id;
+
+    if (payload == NULL) {
+        /* just ignore the NULL buff (called when just want to set the len) */
+        msg->hdr.length     = sizeof(struct pdb_hdr);
+        return 0;
+    } else {
+        msg->hdr.length     = sizeof(struct pdb_hdr) + payload_len;
+        memcpy(msg->bdy.payload, payload, payload_len);
+        return 0;
+    }
+
+    return 0;
+}
+
+
+
 /*!
  * \return 1 if query for the number succeded and the avp with the corresponding carrier id was set,
  * -1 otherwise
  */
 static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct multiparam_t *_dstavp)
 {
+    struct pdb_msg msg;
 	struct timeval tstart, tnow;
 	struct server_item_t *server;
 	short int carrierid, *_id;
-	char buf[NETBUFSIZE+1+sizeof(carrierid)];
+    char buf[sizeof(struct pdb_msg)];
 	size_t reqlen;
 	int_str avp_val;
 	struct usr_avp *avp;
-	int i, ret, nflush;
+	int i, ret, nflush, bytes_received;
 	long int td;
 	str number = STR_NULL;
 
@@ -209,7 +261,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 	server = server_list->head;
 	while (server) {
 		nflush = 0;
-		while (recv(server->sock, buf, NETBUFSIZE, MSG_DONTWAIT) > 0) {
+		while (recv(server->sock, buf, sizeof(struct pdb_msg), MSG_DONTWAIT) > 0) {
 			nflush++;
 			if (gettimeofday(&tnow, NULL) != 0) {
 				LM_ERR("gettimeofday() failed with errno=%d (%s)\n", errno, strerror(errno));
@@ -227,24 +279,46 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 
 	/* prepare request */
 	reqlen = number.len + 1; /* include null termination */
-	if (reqlen > NETBUFSIZE) {
+	if (reqlen > sizeof(struct pdb_bdy)) {
 		LM_ERR("number too long '%.*s'.\n", number.len, number.s);
 		return -1;
 	}
 	strncpy(buf, number.s, number.len);
 	buf[number.len] = '\0';
 
-	/* send request to all servers */
-	server = server_list->head;
-	while (server) {
-		LM_DBG("sending request to '%s:%d'\n", server->host, server->port);
-		ret=sendto(server->sock, buf, reqlen, MSG_DONTWAIT, (struct sockaddr *)&(server->dstaddr), server->dstaddrlen);
-		if (ret < 0) {
-			LM_ERR("sendto() failed with errno=%d (%s)\n", errno, strerror(errno));
-		}
-		server = server->next;
-	}
-		
+    switch (PDB_VERSION) {
+        case PDB_VERSION_1:
+            pdb_msg_format_send(&msg, PDB_VERSION, PDB_TYPE_REQUEST_ID, PDB_CODE_DEFAULT, htons(*global_id), buf, reqlen);
+            pdb_msg_dbg(msg, "Kamailio pdb client sends:");
+
+            /* increment msg id for the next request */
+            *global_id = *global_id + 1;
+
+            /* send request to all servers */
+            server = server_list->head;
+            while (server) {
+                LM_DBG("sending request to '%s:%d'\n", server->host, server->port);
+                ret=sendto(server->sock, (struct pdb_msg*)&msg, msg.hdr.length, MSG_DONTWAIT, (struct sockaddr *)&(server->dstaddr), server->dstaddrlen);
+                if (ret < 0) {
+                    LM_ERR("sendto() failed with errno=%d (%s)\n", errno, strerror(errno));
+                }
+                server = server->next;
+            }
+            break;
+        default:
+            /* send request to all servers */
+            server = server_list->head;
+            while (server) {
+                LM_DBG("sending request to '%s:%d'\n", server->host, server->port);
+                ret=sendto(server->sock, buf, reqlen, MSG_DONTWAIT, (struct sockaddr *)&(server->dstaddr), server->dstaddrlen);
+                if (ret < 0) {
+                    LM_ERR("sendto() failed with errno=%d (%s)\n", errno, strerror(errno));
+                }
+                server = server->next;
+            }
+            break;
+    }
+
 	/* wait for response */
 	for (;;) {
 		if (gettimeofday(&tnow, NULL) != 0) {
@@ -267,13 +341,48 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 		ret=poll(server_list->fds, server_list->nserver, timeout-td);
 		for (i=0; i<server_list->nserver; i++) {
 			if (server_list->fds[i].revents & POLLIN) {
-				if (recv(server_list->fds[i].fd, buf, NETBUFSIZE, MSG_DONTWAIT) > 0) { /* do not block - just in case select/poll was wrong */
-					buf[NETBUFSIZE] = '\0';
-					if (strncmp(buf, number.s, number.len) == 0) {
-						_id = (short int *)&(buf[reqlen]);
-						carrierid=ntohs(*_id); /* convert to host byte order */
-						goto found;
-					}
+				if ((bytes_received = recv(server_list->fds[i].fd, buf,  sizeof(struct pdb_msg), MSG_DONTWAIT)) > 0) { /* do not block - just in case select/poll was wrong */
+                    switch (PDB_VERSION) {
+                        case PDB_VERSION_1:
+                            memcpy(&msg, buf, bytes_received);
+                            pdb_msg_dbg(msg, "Kamailio pdb client receives:");
+
+                            _id = (short int *)&(msg.hdr.id); /* make gcc happy */
+                            msg.hdr.id = ntohs(*_id);
+
+                            switch (msg.hdr.code) {
+                                case PDB_CODE_OK:
+                                    msg.bdy.payload[sizeof(struct pdb_bdy) - 1] = '\0';
+                                    if (strcmp(msg.bdy.payload, number.s) == 0) {
+                                        _id = (short int *)&(msg.bdy.payload[reqlen]); /* make gcc happy */
+                                        carrierid=ntohs(*_id); /* convert to host byte order */
+                                        goto found;
+                                    }
+                                    break;
+                                case PDB_CODE_NOT_NUMBER:
+                                    LM_WARN("Number %s has letters in it\n", number.s);
+                                    carrierid = 0;
+                                    goto found;
+                                case PDB_CODE_NOT_FOUND:
+                                    LM_WARN("Number %s pdb_id not found\n", number.s);
+                                    carrierid = 0;
+                                    goto found;
+                                default:
+                                    LM_WARN("Invalid code %d received\n", msg.hdr.code);
+                                    carrierid = 0;
+                                    goto found;
+                            }
+
+                            break;
+                        default:
+                            buf[sizeof(struct pdb_msg) - 1] = '\0';
+                            if (strncmp(buf, number.s, number.len) == 0) {
+                                _id = (short int *)&(buf[reqlen]);
+                                carrierid=ntohs(*_id); /* convert to host byte order */
+                                goto found;
+                            }
+                            break;
+                    }
 				}
 			}
 			server_list->fds[i].revents = 0;
@@ -664,7 +773,10 @@ static int mod_init(void)
 		shm_free(active);
 		return -1;
 	}
-	return 0;
+
+    global_id = (uint16_t*)shm_malloc(sizeof(uint16_t));
+
+    return 0;
 }
 
 static int child_init (int rank)

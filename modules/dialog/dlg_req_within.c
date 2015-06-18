@@ -216,7 +216,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 			unref++;
 		}
 		/* dialog terminated (BYE) */
-		run_dlg_callbacks( DLGCB_TERMINATED, dlg, ps->req, ps->rpl, DLG_DIR_NONE, 0);
+		run_dlg_callbacks( DLGCB_TERMINATED_CONFIRMED, dlg, ps->req, ps->rpl, DLG_DIR_NONE, 0);
 
 		LM_DBG("first final reply\n");
 		/* derefering the dialog */
@@ -264,6 +264,10 @@ void dlg_ka_cb(struct cell* t, int type, struct tmcb_params* ps){
 	}
 
 	if(ps->code==408 || ps->code==481) {
+		if (dlg->state != DLG_STATE_CONFIRMED) {
+			LM_DBG("skip updating non-confirmed dialogs\n");
+			goto done;
+		}
 		if(update_dlg_timer(&dlg->tl, 10)<0) {
 			LM_ERR("failed to update dialog lifetime\n");
 			goto done;
@@ -548,6 +552,9 @@ int dlg_bye_all(struct dlg_cell *dlg, str *hdrs)
 {
 	str all_hdrs = { 0, 0 };
 	int ret;
+
+	/* run dialog terminated callbacks */
+	run_dlg_callbacks( DLGCB_TERMINATED, dlg, NULL, NULL, DLG_DIR_NONE, 0);
 
 	if ((build_extra_hdr(dlg, hdrs, &all_hdrs)) != 0)
 	{

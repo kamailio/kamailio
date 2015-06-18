@@ -139,6 +139,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_append_branches = t_append_branches;
 	tmb->t_load_contacts = t_load_contacts;
 	tmb->t_next_contacts = t_next_contacts;
+	tmb->set_fr = t_set_fr;
 	return 1;
 }
 

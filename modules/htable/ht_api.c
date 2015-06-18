@@ -346,7 +346,7 @@ int ht_init_tables(void)
 		{
 			if(lock_init(&ht->entries[i].lock)==0)
 			{
-				LM_ERR("cannot initalize lock[%d] in [%.*s]\n", i,
+				LM_ERR("cannot initialize lock[%d] in [%.*s]\n", i,
 						ht->name.len, ht->name.s);
 				i--;
 				while(i>=0)
@@ -672,7 +672,10 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 	}
 	/* add val if htable has an integer init value */
 	if(ht->flags!=PV_VAL_INT)
+	{
+		if(mode) ht_slot_unlock(ht, idx);
 		return NULL;
+	}
 	isval.n = ht->initval.n + val;
 	it = ht_cell_new(name, 0, &isval, hid);
 	if(it == NULL)

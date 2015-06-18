@@ -38,6 +38,15 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 
+
+#ifdef ENABLE_ASYNC_MUTEX
+#define LOCK_ASYNC_CONTINUE(_t) lock(&(_t)->async_mutex )
+#define UNLOCK_ASYNC_CONTINUE(_t) unlock(&(_t)->async_mutex )
+#else
+#define LOCK_ASYNC_CONTINUE(_t) LOCK_REPLIES(_t)
+#define UNLOCK_ASYNC_CONTINUE(_t) UNLOCK_REPLIES(_t)
+#endif
+
 /* Suspends the transaction for later use.
  * Save the returned hash_index and label to get
  * back to the SIP request processing, see the readme.
@@ -180,9 +189,9 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	 * form calling t_continue() multiple times simultaneously */
 	LOCK_ASYNC_CONTINUE(t);
 
-	t->flags |= T_ASYNC_CONTINUE;   /* we can now know anywhere in kamailio 
+	t->flags |= T_ASYNC_CONTINUE;   /* we can now know anywhere in kamailio
 					 * that we are executing post a suspend */
-	
+
 	/* which route block type were we in when we were suspended */
 	cb_type =  FAILURE_CB_TYPE;;
 	switch (t->async_backup.backup_route) {

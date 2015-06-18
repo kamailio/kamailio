@@ -615,9 +615,11 @@ static inline void Snd_CE_add_applications(AAAMessage *msg,peer *p)
  */
 void I_Snd_CER(peer *p)
 {
+        int retries = 3;
 	AAAMessage *cer=0;
 //	AAA_AVP *avp;
 	unsigned long ip;
+        peer_event_t next_event;
 	union {
 		struct sockaddr addr;
 		struct sockaddr_in in;
@@ -631,8 +633,19 @@ void I_Snd_CER(peer *p)
 	cer->hopbyhopId = next_hopbyhop();
 	cer->endtoendId = next_endtoend();
 	addrlen = sizeof(addr_u);
-	if (getsockname(p->I_sock,&(addr_u.addr), &addrlen) == -1) { 
+
+retry:  if (getsockname(p->I_sock,&(addr_u.addr), &addrlen) == -1) { 
 		LM_ERR("I_Snd_CER(): Error on finding local host address > %s\n",strerror(errno));
+                //try and create a new FD
+                if (retries > 0) {
+                    p->state = Wait_Conn_Ack;
+                    next_event = I_Snd_Conn_Req(p);
+                    if (next_event==I_Rcv_Conn_NAck) {
+                        sm_process(p, next_event, 0, 1, p->I_sock);
+                        retries--;
+                        goto retry;
+                    }
+                }
 	}else{
 		switch(addr_u.addr.sa_family){
 			case AF_INET:
@@ -992,8 +1005,10 @@ int Process_CER(peer *p,AAAMessage *cer)
  */
 void Snd_CEA(peer *p,AAAMessage *cer,int result_code,int sock)
 {
+	int retries=3;
 	AAAMessage *cea;
 	unsigned int ip;
+	peer_event_t next_event;
 	union {
 		struct sockaddr addr;
 		struct sockaddr_in in;
@@ -1006,8 +1021,18 @@ void Snd_CEA(peer *p,AAAMessage *cer,int result_code,int sock)
 	if (!cea) goto done;
 	
 	addrlen = sizeof(addr_u);
-	if (getsockname(sock, &(addr_u.addr), &addrlen) == -1) { 
+retry:	if (getsockname(sock, &(addr_u.addr), &addrlen) == -1) { 
 		LM_ERR("Snd_CEA(): Error on finding local host address > %s\n",strerror(errno));
+		//try and create a new FD
+                if (retries > 0) {
+                    p->state = Wait_Conn_Ack;
+                    next_event = I_Snd_Conn_Req(p);
+                    if (next_event==I_Rcv_Conn_NAck) {
+                        sm_process(p, next_event, 0, 1, p->I_sock);
+                        retries--;
+                        goto retry;
+                    } 
+                }
 	}else{
 		switch(addr_u.addr.sa_family){
 			case AF_INET:

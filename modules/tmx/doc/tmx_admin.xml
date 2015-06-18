@@ -172,7 +172,7 @@ if (t_cancel_callid("123qaz", "5", "22", "200")) {
 			</function>
 		</title>
 		<para>
-		Send reply to first INVITE transaction identified by callid and cseq.
+		Send reply to first transaction identified by callid and cseq.
 		</para>
 		<para>
 		Parameters:.

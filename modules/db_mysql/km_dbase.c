@@ -140,7 +140,8 @@ void db_mysql_async_exec_task(void *param)
 		return;
 	}
 	if(db_mysql_submit_query(dbc, &p[1])<0) {
-		LM_ERR("failed to execute query on async worker\n");
+		LM_ERR("failed to execute query [%.*s] on async worker\n",
+		       (p[1].len>100)?100:p[1].len, p[1].s);
 	}
 	db_mysql_close(dbc);
 }
@@ -183,7 +184,7 @@ int db_mysql_submit_query_async(const db1_con_t* _h, const str* _s)
 	return 0;
 }
 
-
+static char *db_mysql_tquote = "`";
 /**
  * Initialize the database module.
  * No function should be called before this
@@ -192,7 +193,10 @@ int db_mysql_submit_query_async(const db1_con_t* _h, const str* _s)
  */
 db1_con_t* db_mysql_init(const str* _url)
 {
-	return db_do_init(_url, (void *)db_mysql_new_connection);
+	db1_con_t *c;
+	c = db_do_init(_url, (void *)db_mysql_new_connection);
+	if(c) CON_TQUOTE(c) = db_mysql_tquote;
+	return c;
 }
 
 
@@ -781,11 +785,12 @@ done:
 		return -1;
 	}
  
-	ret = snprintf(mysql_sql_buf, sql_buffer_size, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+	ret = snprintf(mysql_sql_buf, sql_buffer_size, "insert into %s%.*s%s (",
+			CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
 	if (ret < 0 || ret >= sql_buffer_size) goto error;
 	off = ret;
 
-	ret = db_print_columns(mysql_sql_buf + off, sql_buffer_size - off, _k, _n);
+	ret = db_print_columns(mysql_sql_buf + off, sql_buffer_size - off, _k, _n, CON_TQUOTESZ(_h));
 	if (ret < 0) return -1;
 	off += ret;
 

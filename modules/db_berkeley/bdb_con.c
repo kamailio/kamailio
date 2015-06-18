@@ -49,11 +49,8 @@
  */
 static void bdb_con_free(db_con_t* con, bdb_con_t *payload)
 {
-	bdb_uri_t *buri;
 	if (!payload)
 		return;
-
-	buri = DB_GET_PAYLOAD(con->uri);
 
 	/* Delete the structure only if there are no more references
 	 * to it in the connection pool

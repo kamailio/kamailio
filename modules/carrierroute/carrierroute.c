@@ -78,7 +78,7 @@ const str CR_EMPTY_PREFIX = str_init("null");
 
 int mode = 0;
 int cr_match_mode = 10;
-
+int cr_avoid_failed_dests = 1;
 
 /************* Declaration of Interface Functions **************************/
 static int mod_init(void);
@@ -108,17 +108,18 @@ static param_export_t params[]= {
 	carrierfailureroute_DB_COLS
 	carrier_name_DB_COLS
 	domain_name_DB_COLS
-	{"subscriber_table",       PARAM_STR, &subscriber_table },
-	{"subscriber_user_col",    PARAM_STR, &subscriber_username_col },
-	{"subscriber_domain_col",  PARAM_STR, &subscriber_domain_col },
-	{"subscriber_carrier_col", PARAM_STR, &cr_preferred_carrier_col },
-	{"config_source",          PARAM_STRING, &config_source },
-	{"default_tree",           PARAM_STR, &default_tree },
-	{"config_file",            PARAM_STRING, &config_file },
-	{"use_domain",             INT_PARAM, &default_carrierroute_cfg.use_domain },
-	{"fallback_default",       INT_PARAM, &default_carrierroute_cfg.fallback_default },
-	{"fetch_rows",             INT_PARAM, &default_carrierroute_cfg.fetch_rows },
-	{"match_mode",             INT_PARAM, &cr_match_mode },
+	{"subscriber_table",          PARAM_STR, &subscriber_table },
+	{"subscriber_user_col",       PARAM_STR, &subscriber_username_col },
+	{"subscriber_domain_col",     PARAM_STR, &subscriber_domain_col },
+	{"subscriber_carrier_col",    PARAM_STR, &cr_preferred_carrier_col },
+	{"config_source",             PARAM_STRING, &config_source },
+	{"default_tree",              PARAM_STR, &default_tree },
+	{"config_file",               PARAM_STRING, &config_file },
+	{"use_domain",                INT_PARAM, &default_carrierroute_cfg.use_domain },
+	{"fallback_default",          INT_PARAM, &default_carrierroute_cfg.fallback_default },
+	{"fetch_rows",                INT_PARAM, &default_carrierroute_cfg.fetch_rows },
+	{"match_mode",                INT_PARAM, &cr_match_mode },
+	{"avoid_failed_destinations", INT_PARAM, &cr_avoid_failed_dests },
 	{0,0,0}
 };
 
@@ -177,6 +178,11 @@ static int mod_init(void) {
 
 	if (cr_match_mode != 10 && cr_match_mode != 128) {
 		LM_ERR("invalid matching mode %d specific, please use 10 or 128\n", cr_match_mode);
+		return -1;
+	}
+
+	if (cr_avoid_failed_dests != 0 && cr_avoid_failed_dests != 1) {
+		LM_ERR("avoid_failed_dests must be 0 or 1");
 		return -1;
 	}
 

@@ -26,6 +26,10 @@
 	query can be defined in milliseconds. The queying can be activated and
   	deactivated using FIFO commands.
 	</para>
+	<para>
+    More about the new communication protocol between this module and pdb_server
+    can be found in utils/pdbt/docs/network_protocol.txt. The current version is 1.
+	</para>
 	</section>
 
 	<section>

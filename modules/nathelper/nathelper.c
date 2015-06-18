@@ -675,6 +675,7 @@ mod_init(void)
 			LM_ERR("bad config - natping_processes must be >= 0\n");
 			return -1;
 		}
+		ul.set_max_partition(natping_processes*natping_interval);
 
 		sipping_flag = (sipping_flag==-1)?0:(1<<sipping_flag);
 		natping_disable_flag = (natping_disable_flag==-1)?0:(1<<natping_disable_flag);
@@ -920,8 +921,8 @@ set_contact_alias_f(struct sip_msg* msg, char* str1, char* str2)
 		pkg_free(buf);
 		return -1;
 	}
-	c->uri.s = buf;
-	c->uri.len = len;
+	c->uri.s = buf + br;
+	c->uri.len = len -2*br;
 
 	return 1;
 }

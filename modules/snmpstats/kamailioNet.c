@@ -977,11 +977,6 @@ handle_kamailioNetTcpKeepIdle(netsnmp_mib_handler *handler,
     
     switch(reqinfo->mode) {
 
-    struct cfg_group_tcp t;
-    unsigned int value;
-
-    tcp_options_get(&t);
-    value = t.con_lifetime;
         case MODE_GET:
             snmp_set_var_typed_value(requests->requestvb, ASN_INTEGER,
 			 (u_char *) &value, sizeof(int));

@@ -90,11 +90,11 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
     }
 
     ims_subscription* subscription = impu_rec->s;
-    lock_get(subscription->lock);
+    lock_subscription(subscription);
     //add subscription data
     if (rpc->struct_add(sh, "S{", "impi", &subscription->private_identity, "service profiles", &sph) < 0) {
 	rpc->fault(ctx, 500, "Internal error adding impu subscription data");
-	lock_release(subscription->lock);
+	unlock_subscription(subscription);
 	unlock_udomain(domain, &impu);
 	return;
     }
@@ -104,13 +104,13 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
 	sprintf(numstr, "%d", i + 1);
 	if (rpc->struct_add(sph, "{", numstr, &sdh) < 0) {
 	    rpc->fault(ctx, 500, "Internal error adding impu subscription detail data");
-	    lock_release(subscription->lock);
+	    unlock_subscription(subscription);
 	    unlock_udomain(domain, &impu);
 	    return;
 	}
 	if (rpc->struct_add(sdh, "{", "impus", &spi) < 0) {
 	    rpc->fault(ctx, 500, "Internal error adding impu subscription data");
-	    lock_release(subscription->lock);
+	    unlock_subscription(subscription);
 	    unlock_udomain(domain, &impu);
 	    return;
 	}
@@ -119,14 +119,14 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
 	    sprintf(numstr, "%d", j + 1);
 	    if (rpc->struct_add(spi, "S", numstr, &subscription->service_profiles[i].public_identities[j].public_identity) < 0) {
 		rpc->fault(ctx, 500, "Internal error adding impu subscription detail data");
-		lock_release(subscription->lock);
+		unlock_subscription(subscription);
 		unlock_udomain(domain, &impu);
 		return;
 	    }
 	}
     }
 
-    lock_release(subscription->lock);
+    unlock_subscription(subscription);
 
     //add contact data
     if (rpc->struct_add(ah, "{", "contacts", &ch) < 0) {

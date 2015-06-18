@@ -9,7 +9,7 @@
 
 <table id="aliases" xmlns:db="http://docbook.org/ns/docbook">
     <name>aliases</name>
-    <version>6</version>
+    <version>8</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table for the registrar module is similar to the "location" table, (the aliases index makes lookup of missed calls much faster). Thus, the function lookup("alias") can be used to map aliases to AORs. More information is available at: &KAMAILIO_MOD_DOC;registrar.html. Most people uses the dbaliases table with the alias_db module now.
@@ -35,23 +35,23 @@
         <natural/>
     </column>
 
-    <column id="username">
+	<column id="username">
         <name>&USERCOL;</name>
         <type>string</type>
         <size>&user_len;</size>
         <default/>
+        <description>Username / phone number </description>
         <natural/>
-        <description>Alias Username / Phone Number </description>
     </column>
 
     <column id="domain">
         <name>domain</name>
         <type>string</type>
         <size>&domain_len;</size>
-		<null/>
-		<default><null/></default>
-        <natural/>
+        <null/>
+        <default><null/></default>
         <description>Domain name</description>
+        <natural/>
     </column>
 
     <column id="contact">
@@ -74,13 +74,13 @@
     <column>
         <name>path</name>
         <type>string</type>
-        <size>&uri_len;</size>
+        <size>&long_hf_len;</size>
         <null/>
         <default><null/></default>
         <description>Path Header(s) per RFC 3327</description>
     </column>
 
-    <column>
+    <column id="expires">
         <name>expires</name>
         <type>datetime</type>
         <default>&DEFAULT_ALIASES_EXPIRES;</default>
@@ -125,7 +125,7 @@
         <type>int</type>
         <size>&flag_len;</size>
         <default>0</default>
-        <description>Flags</description>
+        <description>Internal flags</description>
     </column>
 
     <column>
@@ -133,7 +133,7 @@
         <type>int</type>
         <size>&flag_len;</size>
         <default>0</default>
-        <description>CFlags</description>
+        <description>Branch and contact flags</description>
     </column>
 
     <column>
@@ -179,9 +179,42 @@
         <description>The value of reg-id contact parameter</description>
     </column>
 
+    <column>
+        <name>server_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of server_id from configuration file</description>
+    </column>
 
-	<index>
-        <name>alias_idx</name>
+    <column>
+        <name>connection_id</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value of connection id for location record</description>
+    </column>
+
+    <column>
+        <name>keepalive</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value to control sending keep alive requests</description>
+    </column>
+
+
+    <column>
+        <name>partition</name>
+        <type>int</type>
+        <size>11</size>
+        <default>0</default>
+        <description>The value to of the partition for keep alive requests</description>
+    </column>
+
+
+    <index>
+        <name>account_contact_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="contact"/>
@@ -190,6 +223,10 @@
         <name>ruid_idx</name>
         <colref linkend="ruid"/>
         <unique/>
+    </index>
+    <index>
+        <name>expires_idx</name>
+        <colref linkend="expires"/>
     </index>
 
 </table>

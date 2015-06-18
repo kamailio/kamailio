@@ -378,6 +378,7 @@ DNS_CACHE_MAX_TTL	dns_cache_max_ttl
 DNS_CACHE_MEM		dns_cache_mem
 DNS_CACHE_GC_INT	dns_cache_gc_interval
 DNS_CACHE_DEL_NONEXP	dns_cache_del_nonexp|dns_cache_delete_nonexpired
+DNS_CACHE_REC_PREF	dns_cache_rec_pref
 /* ipv6 auto bind */
 AUTO_BIND_IPV6		auto_bind_ipv6
 /* blacklist */
@@ -416,6 +417,7 @@ USER		"user"|"uid"
 GROUP		"group"|"gid"
 CHROOT		"chroot"
 WDIR		"workdir"|"wdir"
+RUNDIR		"rundir"|"run_dir"
 MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
@@ -778,6 +780,8 @@ IMPORTFILE      "import_file"
 								return DNS_CACHE_GC_INT; }
 <INITIAL>{DNS_CACHE_DEL_NONEXP}	{ count(); yylval.strval=yytext;
 								return DNS_CACHE_DEL_NONEXP; }
+<INITIAL>{DNS_CACHE_REC_PREF}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_REC_PREF; }
 <INITIAL>{AUTO_BIND_IPV6}	{ count(); yylval.strval=yytext;
 								return AUTO_BIND_IPV6; }
 <INITIAL>{DST_BLST_INIT}	{ count(); yylval.strval=yytext;
@@ -818,6 +822,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{GROUP}	{ count(); yylval.strval=yytext; return GROUP; }
 <INITIAL>{CHROOT}	{ count(); yylval.strval=yytext; return CHROOT; }
 <INITIAL>{WDIR}	{ count(); yylval.strval=yytext; return WDIR; }
+<INITIAL>{RUNDIR}	{ count(); yylval.strval=yytext; return RUNDIR; }
 <INITIAL>{MHOMED}	{ count(); yylval.strval=yytext; return MHOMED; }
 <INITIAL>{DISABLE_TCP}	{ count(); yylval.strval=yytext; return DISABLE_TCP; }
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }

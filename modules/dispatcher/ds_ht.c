@@ -103,7 +103,7 @@ ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire)
 	{
 		if(lock_init(&dsht->entries[i].lock)==0)
 		{
-			LM_ERR("cannot initalize lock[%d]\n", i);
+			LM_ERR("cannot initialize lock[%d]\n", i);
 			i--;
 			while(i>=0)
 			{

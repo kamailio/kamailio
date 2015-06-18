@@ -53,6 +53,7 @@ extern const str CR_EMPTY_PREFIX;
 
 extern int mode;
 extern int cr_match_mode;
+extern int cr_avoid_failed_dests;
 
 extern int_str cr_uris_avp;
 

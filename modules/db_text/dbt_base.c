@@ -320,15 +320,6 @@ clean:
 }
 
 /*
- * Raw SQL query -- is not the case to have this method
- */
-int dbt_raw_query(db1_con_t* _h, char* _s, db1_res_t** _r)
-{
-	*_r = NULL;
-    return -1;
-}
-
-/*
  * Affected Rows
  */
 int dbt_affected_rows(db1_con_t* _h)
@@ -512,7 +503,8 @@ int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		_drp = _drp0;
 	}
 
-	dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
+	if( ((dbt_con_p)_h->tail)->affected )
+		dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
 	
 	/* dbt_print_table(_tbc, NULL); */
 	
@@ -596,7 +588,8 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		_drp = _drp->next;
 	}
 
-	dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
+	if( ((dbt_con_p)_h->tail)->affected )
+		dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
 	
 	/* dbt_print_table(_tbc, NULL); */
 	

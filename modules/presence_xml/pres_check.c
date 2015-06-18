@@ -140,7 +140,7 @@ int presxml_check_activities(struct sip_msg *msg, str presentity_uri, str activi
 	if (presentity == NULL || presentity->len <= 0 || presentity->s == NULL)
 	{
 		LM_DBG("cannot get presentity for %.*s\n", presentity_uri.len, presentity_uri.s);
-		return -1;
+		goto error;
 	}
 
 	if ((xmlDoc = xmlParseMemory(presentity->s, presentity->len)) == NULL)
@@ -192,6 +192,7 @@ error:
 		pkg_free(nodeName);
 	if (xmlDoc != NULL)
 		xmlFreeDoc(xmlDoc);
-	pres_free_presentity(presentity, ev);
+	if(presentity != NULL)
+		pres_free_presentity(presentity, ev);
 	return retval;
 }

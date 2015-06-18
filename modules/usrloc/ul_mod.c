@@ -81,6 +81,7 @@ MODULE_VERSION
 #define SRV_ID_COL     "server_id"
 #define CON_ID_COL     "connection_id"
 #define KEEPALIVE_COL  "keepalive"
+#define PARTITION_COL  "partition"
 
 #define ULATTRS_USER_COL       "username"
 #define ULATTRS_DOMAIN_COL     "domain"
@@ -143,6 +144,7 @@ str last_mod_col    = str_init(LAST_MOD_COL);	/*!< Name of column containing the
 str srv_id_col      = str_init(SRV_ID_COL);		/*!< Name of column containing the server id value */
 str con_id_col      = str_init(CON_ID_COL);		/*!< Name of column containing the connection id value */
 str keepalive_col   = str_init(KEEPALIVE_COL);	/*!< Name of column containing the keepalive value */
+str partition_col   = str_init(PARTITION_COL);	/*!< Name of column containing the partition value */
 
 str ulattrs_user_col   = str_init(ULATTRS_USER_COL);   /*!< Name of column containing username */
 str ulattrs_domain_col = str_init(ULATTRS_DOMAIN_COL); /*!< Name of column containing domain */

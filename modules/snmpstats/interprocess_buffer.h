@@ -35,7 +35,7 @@
  * instead of adding/removing users/contacts from the SNMP tables directly, the
  * callbacks add an add/delete command to the interprocessBuffer.
  *
- * When an snmp request is recieved by the SNMPStats sub-process, it will
+ * When an snmp request is received by the SNMPStats sub-process, it will
  * consume this interprocess buffer, adding and deleting users.  When it is
  * finished, it can service the SNMP request.
  *

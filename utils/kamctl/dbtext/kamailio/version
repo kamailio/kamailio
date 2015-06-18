@@ -1,9 +1,9 @@
 table_name(string) table_version(int) 
 acc:5
-acc_cdrs:1
+acc_cdrs:2
 active_watchers:11
 address:6
-aliases:6
+aliases:8
 carrier_name:1
 carrierfailureroute:2
 carrierroute:3
@@ -29,7 +29,7 @@ imc_rooms:1
 lcr_gw:3
 lcr_rule:2
 lcr_rule_target:1
-location:7
+location:8
 location_attrs:1
 matrix:1
 missed_calls:4
@@ -47,11 +47,11 @@ rls_presentity:1
 rls_watchers:3
 rtpproxy:1
 sca_subscriptions:1
-silo:7
+silo:8
 sip_trace:4
 speed_dial:2
 subscriber:6
-trusted:5
+trusted:6
 uacreg:1
 uid_credentials:7
 uid_domain:2

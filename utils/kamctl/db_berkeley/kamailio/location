@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) ruid(str) username(str) domain(str) contact(str) received(str) path(str) expires(datetime) q(double) callid(str) cseq(int) last_modified(datetime) flags(int) cflags(int) user_agent(str) socket(str) methods(int) instance(str) reg_id(int) server_id(int) connection_id(int) keepalive(int)
+id(int) ruid(str) username(str) domain(str) contact(str) received(str) path(str) expires(datetime) q(double) callid(str) cseq(int) last_modified(datetime) flags(int) cflags(int) user_agent(str) socket(str) methods(int) instance(str) reg_id(int) server_id(int) connection_id(int) keepalive(int) partition(int)
 METADATA_KEY
 1 2 3 
 METADATA_READONLY
@@ -7,4 +7,4 @@ METADATA_READONLY
 METADATA_LOGFLAGS
 0
 METADATA_DEFAULTS
-NIL|''|''|NULL|''|NULL|NULL|'2030-05-28 21:32:15'|1.0|'Default-Call-ID'|1|'1900-01-01 00:00:01'|0|0|''|NULL|NULL|NULL|0|0|0|0
+NIL|''|''|NULL|''|NULL|NULL|'2030-05-28 21:32:15'|1.0|'Default-Call-ID'|1|'1900-01-01 00:00:01'|0|0|''|NULL|NULL|NULL|0|0|0|0|0

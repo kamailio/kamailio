@@ -180,10 +180,8 @@ static void free_pg_params(struct pg_params* params)
  */
 static int check_types(db_cmd_t* cmd) 
 { 
-	struct pg_cmd* pcmd; 
 	struct pg_con* pcon;
 	
-	pcmd = DB_GET_PAYLOAD(cmd);
 	/* FIXME: The function should take the connection as one of parameters */
 	pcon = DB_GET_PAYLOAD(cmd->ctx->con[db_payload_idx]);
 
@@ -369,10 +367,7 @@ int pg_cmd(db_cmd_t* cmd)
 
 int pg_getopt(db_cmd_t* cmd, char* optname, va_list ap)
 {
-	struct pg_cmd* pcmd;
 	long long* id;
-
-	pcmd = (struct pg_cmd*)DB_GET_PAYLOAD(cmd);
 
 	if (!strcasecmp("last_id", optname)) {
 		id = va_arg(ap, long long*);
@@ -393,9 +388,6 @@ int pg_getopt(db_cmd_t* cmd, char* optname, va_list ap)
 
 int pg_setopt(db_cmd_t* cmd, char* optname, va_list ap)
 {
-	struct pg_cmd* pcmd;
-
-	pcmd = (struct pg_cmd*)DB_GET_PAYLOAD(cmd);
 	return 1;
 }
 

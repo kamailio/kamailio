@@ -22,9 +22,6 @@
 #ifndef _T_SUSPEND_H
 #define _T_SUSPEND_H
 
-#define LOCK_ASYNC_CONTINUE(_t) lock(&(_t)->async_mutex )
-#define UNLOCK_ASYNC_CONTINUE(_t) unlock(&(_t)->async_mutex )
-
 int t_suspend(struct sip_msg *msg,
 		unsigned int *hash_index, unsigned int *label);
 typedef int (*t_suspend_f)(struct sip_msg *msg,

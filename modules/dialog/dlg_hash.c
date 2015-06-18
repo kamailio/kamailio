@@ -42,9 +42,6 @@
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
 
-#define MAX_LDG_LOCKS  2048
-#define MIN_LDG_LOCKS  2
-
 extern int dlg_ka_interval;
 
 /*! global dialog table */
@@ -169,8 +166,9 @@ int dlg_ka_run(ticks_t ti)
 		if(*dlg_ka_list_head == *dlg_ka_list_tail) {
 			*dlg_ka_list_head = NULL;
 			*dlg_ka_list_tail = NULL;
+		} else {
+			*dlg_ka_list_head = dka->next;
 		}
-		*dlg_ka_list_head = dka->next;
 		lock_release(dlg_ka_list_lock);
 
 		/* send keep-alive for dka */
@@ -179,10 +177,16 @@ int dlg_ka_run(ticks_t ti)
 			shm_free(dka);
 			dka = NULL;
 		} else {
-			if(dka->iflags & DLG_IFLAG_KA_SRC)
+			if((dka->iflags & DLG_IFLAG_KA_SRC)
+					&& (dlg->state==DLG_STATE_CONFIRMED))
 				dlg_send_ka(dlg, DLG_CALLER_LEG);
-			if(dka->iflags & DLG_IFLAG_KA_DST)
+			if((dka->iflags & DLG_IFLAG_KA_DST)
+					&& (dlg->state==DLG_STATE_CONFIRMED))
 				dlg_send_ka(dlg, DLG_CALLEE_LEG);
+			if(dlg->state==DLG_STATE_DELETED) {
+				shm_free(dka);
+				dka = NULL;
+			}
 			dlg_release(dlg);
 		}
 		/* append to tail */
@@ -216,7 +220,7 @@ int dlg_clean_run(ticks_t ti)
 	tm = (unsigned int)time(NULL);
 	for(i=0; i<d_table->size; i++)
 	{
-		lock_set_get(d_table->locks, d_table->entries[i].lock_idx);
+		dlg_lock(d_table, &d_table->entries[i]);
 		dlg = d_table->entries[i].first;
 		while (dlg) {
 			tdlg = dlg;
@@ -236,7 +240,7 @@ int dlg_clean_run(ticks_t ti)
 				tdlg->dflags |= DLG_FLAG_CHANGED;
 			}
 		}
-		lock_set_release(d_table->locks, d_table->entries[i].lock_idx);
+		dlg_unlock(d_table, &d_table->entries[i]);
 	}
 	return 0;
 }
@@ -248,7 +252,6 @@ int dlg_clean_run(ticks_t ti)
  */
 int init_dlg_table(unsigned int size)
 {
-	unsigned int n;
 	unsigned int i;
 
 	dlg_ka_list_head = (dlg_ka_t **)shm_malloc(sizeof(dlg_ka_t *));
@@ -281,30 +284,13 @@ int init_dlg_table(unsigned int size)
 	d_table->size = size;
 	d_table->entries = (struct dlg_entry*)(d_table+1);
 
-	n = (size<MAX_LDG_LOCKS)?size:MAX_LDG_LOCKS;
-	for(  ; n>=MIN_LDG_LOCKS ; n-- ) {
-		d_table->locks = lock_set_alloc(n);
-		if (d_table->locks==0)
-			continue;
-		if (lock_set_init(d_table->locks)==0) {
-			lock_set_dealloc(d_table->locks);
-			d_table->locks = 0;
-			continue;
-		}
-		d_table->locks_no = n;
-		break;
-	}
-
-	if (d_table->locks==0) {
-		LM_ERR("unable to allocted at least %d locks for the hash table\n",
-			MIN_LDG_LOCKS);
-		goto error1;
-	}
-
 	for( i=0 ; i<size; i++ ) {
 		memset( &(d_table->entries[i]), 0, sizeof(struct dlg_entry) );
+		if(lock_init(&d_table->entries[i].lock)<0) {
+			LM_ERR("failed to init lock for slot: %d\n", i);
+			goto error1;
+		}
 		d_table->entries[i].next_id = rand() % (3*size);
-		d_table->entries[i].lock_idx = i % d_table->locks_no;
 	}
 
 	return 0;
@@ -404,11 +390,6 @@ void destroy_dlg_table(void)
 	if (d_table==0)
 		return;
 
-	if (d_table->locks) {
-		lock_set_destroy(d_table->locks);
-		lock_set_dealloc(d_table->locks);
-	}
-
 	for( i=0 ; i<d_table->size; i++ ) {
 		dlg = d_table->entries[i].first;
 		while (dlg) {
@@ -416,7 +397,7 @@ void destroy_dlg_table(void)
 			dlg = dlg->next;
 			destroy_dlg(l_dlg);
 		}
-
+		lock_destroy(&d_table->entries[i].lock);
 	}
 
 	shm_free(d_table);

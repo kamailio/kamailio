@@ -46,6 +46,9 @@
 #include "../../parser/parse_nameaddr.h"
 
 #include "../../lib/kcore/strcommon.h"
+
+#include "../../mod_fix.h"
+
 #include "kz_trans.h"
 #include "kz_json.h"
 #include "kz_amqp.h"
@@ -191,6 +194,8 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 	str sv;
 	pv_value_t* pv;
 	pv_value_t v;
+    str v2 = {0,0};
+	void* v1 = NULL;
 
 	if(val==NULL || (val->flags&PV_VAL_NULL))
 		return -1;
@@ -249,7 +254,18 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 
 			if(tp->type == TR_PARAM_STRING)
 			{
-				sv = tp->v.s;
+				v1 = tp->v.s.s;
+				if(fixup_spve_null(&v1, 1) != 0) {
+					LM_ERR("cannot get spve_value from TR_PARAM_STRING : %.*s\n", tp->v.s.len, tp->v.s.s);
+					return -1;
+				}
+				if (fixup_get_svalue(msg, (gparam_p)v1, &v2) != 0) {
+					LM_ERR("cannot get value from TR_PARAM_STRING\n");
+					fixup_free_spve_null(&v1, 1);
+					return -1;
+				}
+				fixup_free_spve_null(&v1, 1);
+				sv = v2;
 			} else {
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
@@ -337,8 +353,10 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 		} \
 		memset(_tp, 0, sizeof(tr_param_t)); \
 		_tp->type = TR_PARAM_STRING; \
-		_tp->v.s.s = _ps; \
 		_tp->v.s.len = _p - _ps; \
+		_tp->v.s.s = (char*)malloc((tp->v.s.len+1)*sizeof(char)); \
+		strncpy(_tp->v.s.s, _ps, tp->v.s.len); \
+		_tp->v.s.s[tp->v.s.len] = '\0'; \
 		_kz_parse_params[_kz_tr_parse_params++] = _tp; \
 	}
 

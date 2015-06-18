@@ -87,6 +87,8 @@ static int mi_child_init(void);
 static int mi_child_loc_nr_init(void);
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
+int ul_db_update_as_insert = 0;
+
 /*
  * Module parameters and their default values
  */
@@ -168,6 +170,7 @@ int policy               = DB_DEFAULT_POLICY;
 int db_write             = 0;
 int db_master_write      = 0;
 int alg_location         = 0;
+int ul_db_ops_ruid 		 = 0;
 
 int db_use_transactions  = 0;
 str db_transaction_level = str_init(DB_DEFAULT_TRANSACTION_LEVEL);
@@ -249,6 +252,7 @@ static param_export_t params[] = {
 	{"write_on_master_db",   INT_PARAM, &db_master_write     },
 	{"connection_expires",   INT_PARAM, &connection_expires  },
 	{"alg_location",         INT_PARAM, &alg_location },
+    {"db_ops_ruid",          INT_PARAM, &ul_db_ops_ruid },
 	{0, 0, 0}
 };
 

@@ -44,20 +44,35 @@
 	are ordered for forwarding purposes as follows:
 	</para>
 	<para>
-	<itemizedlist>
+	<orderedlist>
             <listitem>
-                <para>(1) according to longest Request-URI user part match
+                <para>according to longest Request-URI user part match
                 </para>
             </listitem>
             <listitem>
-                <para>(2) according to tuple's priority
+                <para>according to tuple's priority
                 </para>
             </listitem>
             <listitem>
-                <para>(3) according to tuple's randomized weight
+                <para>according to tuple's randomized weight
                 </para>
             </listitem>
-        </itemizedlist>
+        </orderedlist>
+	</para>
+	<para>
+    or, if priority_ordering parameter is set to value 1, as follows:
+	</para>
+	<para>
+	<orderedlist>
+            <listitem>
+                <para>according to tuple's priority
+                </para>
+            </listitem>
+            <listitem>
+                <para>according to tuple's randomized weight
+                </para>
+            </listitem>
+        </orderedlist>
 	</para>
 	<para>
 	A tuple can be marked as a "stopper" tuple.  If a "stopper"
@@ -965,6 +980,29 @@ modparam("lcr", "lcr_gw_count", 1024)
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "dont_strip_or_tag_flag", 10)
+...
+</programlisting>
+                </example>
+	</section>
+
+	<section>
+		<title><varname>priority_ordering</varname> (integer)</title>
+		<para>
+		Defines how matching gateways are ordered (see Overview section).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>
+		Setting <varname>priority_ordering</varname> module
+		parameter
+		</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "priority_ordering", 1)
 ...
 </programlisting>
                 </example>

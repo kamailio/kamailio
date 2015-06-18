@@ -107,6 +107,21 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
  */
 int update_ucontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
 
+/*!
+ * \brief Setting contact expires to now in memory
+ * \param _c contact
+  * \return 0 on success, -1 on failure
+ */
+int mem_expire_ucontact(ucontact_t* _c);
+
+/*!
+ * \brief Setting ucontact expires to now
+ * \param _r record the contact belongs to
+ * \param _c updated contact
+ * \return 0 on success, -1 on failure
+ */
+int expire_ucontact(struct impurecord* _r, ucontact_t* _c);
+
 int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);
 
 int add_dialog_data_to_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id);

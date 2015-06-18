@@ -9,9 +9,8 @@ before_install:
 script: ./test/travis/build_travis.sh
 branches:
   only:
-    - master
-    - 4.2
-    - 4.1
+    - 'master'
+    - '/^4\.[0-9]+$/'
 notifications:
   irc:
     channels:

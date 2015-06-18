@@ -47,9 +47,9 @@
 		<table_name>acc_cdrs</table_name>
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
-		<column><field>start_time</field><type>DB1_STR</type></column>
-		<column><field>end_time</field><type>DB1_STR</type></column>
-		<column><field>duration</field><type>DB1_STR</type></column>
+		<column><field>start_time</field><type>DB1_DATETIME</type></column>
+		<column><field>end_time</field><type>DB1_DATETIME</type></column>
+		<column><field>duration</field><type>DB1_DOUBLE</type></column>
 	</db_table>
 	<!-- Declaration of missed_calls table-->
 	<db_table id="missed_calls">
@@ -468,7 +468,9 @@
 		<column><field>src_ip</field><type>DB1_STR</type></column>
 		<column><field>proto</field><type>DB1_STR</type></column>
 		<column><field>from_pattern</field><type>DB1_STR</type></column>
+		<column><field>ruri_pattern</field><type>DB1_STR</type></column>
 		<column><field>tag</field><type>DB1_STR</type></column>
+		<column><field>priority</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of address table-->
 	<db_table id="address">
@@ -619,6 +621,10 @@
 		<column><field>methods</field><type>DB1_INT</type></column>
 		<column><field>instance</field><type>DB1_STR</type></column>
 		<column><field>reg_id</field><type>DB1_INT</type></column>
+		<column><field>server_id</field><type>DB1_INT</type></column>
+		<column><field>connection_id</field><type>DB1_INT</type></column>
+		<column><field>keepalive</field><type>DB1_INT</type></column>
+		<column><field>partition</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of rls_presentity table-->
 	<db_table id="rls_presentity">
@@ -881,6 +887,7 @@
 		<column><field>server_id</field><type>DB1_INT</type></column>
 		<column><field>connection_id</field><type>DB1_INT</type></column>
 		<column><field>keepalive</field><type>DB1_INT</type></column>
+		<column><field>partition</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of location_attrs table-->
 	<db_table id="location_attrs">
@@ -2739,7 +2746,9 @@
 				<col><field>src_ip</field></col>
 				<col><field>proto</field></col>
 				<col><field>from_pattern</field></col>
+				<col><field>ruri_pattern</field></col>
 				<col><field>tag</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -2749,7 +2758,9 @@
 				<col><field>src_ip</field></col>
 				<col><field>proto</field></col>
 				<col><field>from_pattern</field></col>
+				<col><field>ruri_pattern</field></col>
 				<col><field>tag</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -2762,7 +2773,9 @@
 				<col><field>src_ip</field></col>
 				<col><field>proto</field></col>
 				<col><field>from_pattern</field></col>
+				<col><field>ruri_pattern</field></col>
 				<col><field>tag</field></col>
+				<col><field>priority</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
@@ -3288,6 +3301,10 @@
 				<col><field>methods</field></col>
 				<col><field>instance</field></col>
 				<col><field>reg_id</field></col>
+				<col><field>server_id</field></col>
+				<col><field>connection_id</field></col>
+				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3312,6 +3329,10 @@
 				<col><field>methods</field></col>
 				<col><field>instance</field></col>
 				<col><field>reg_id</field></col>
+				<col><field>server_id</field></col>
+				<col><field>connection_id</field></col>
+				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3339,6 +3360,10 @@
 				<col><field>methods</field></col>
 				<col><field>instance</field></col>
 				<col><field>reg_id</field></col>
+				<col><field>server_id</field></col>
+				<col><field>connection_id</field></col>
+				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
@@ -4318,6 +4343,7 @@
 				<col><field>server_id</field></col>
 				<col><field>connection_id</field></col>
 				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -4345,6 +4371,7 @@
 				<col><field>server_id</field></col>
 				<col><field>connection_id</field></col>
 				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -4375,6 +4402,7 @@
 				<col><field>server_id</field></col>
 				<col><field>connection_id</field></col>
 				<col><field>keepalive</field></col>
+				<col><field>partition</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

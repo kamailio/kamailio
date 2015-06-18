@@ -40,7 +40,8 @@
 	</para>
 	<para>
 		By default (if no parameters are changed in the config file) it uses
-		a Unix stream socket under /tmp: /tmp/&ctlsocket;. This socket is also the
+		a Unix stream socket under /var/run/&kamailiobinary;:
+		/var/run/&kamailiobinary;/&ctlsocket;. This socket is also the
 		default for &sercmd;.
 	</para>
 	<para>

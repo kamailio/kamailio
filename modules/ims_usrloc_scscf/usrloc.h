@@ -410,6 +410,12 @@ typedef struct contact_list {
 //    stat_var *contacts;        /*!< no of contacts in table */
 }contact_list_t;
 
+typedef struct ims_subscription_list {
+    struct hslot_sp* slot;
+    int size;               /* size of list (slots) */
+    int subscriptions;      /* total number of subscriptions in storage */
+}ims_subscription_list_t;
+
 typedef int (*insert_impurecord_t)(struct udomain* _d, str* public_identity, int reg_state, int barring,
         ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
         struct impurecord** _r);
@@ -428,7 +434,13 @@ typedef void (*lock_contact_slot_i_t)(int sl);
 
 typedef void (*unlock_contact_slot_i_t)(int sl);
 
+typedef void (*lock_subscription_t)(ims_subscription* s);
+
+typedef void (*unlock_subscription_t)(ims_subscription* s);
+
 typedef int (*update_ucontact_t)(struct impurecord* _r, struct ucontact* _c, struct ucontact_info* _ci);
+
+typedef int (*expire_ucontact_t)(struct impurecord* _r, struct ucontact* _c);
 
 typedef int (*unlink_contact_from_impu_t)(struct impurecord* _r, struct ucontact* _c, int write_to_db);
 
@@ -490,12 +502,16 @@ typedef struct usrloc_api {
     unlock_contact_slot_t unlock_contact_slot;
     lock_contact_slot_i_t lock_contact_slot_i;
     unlock_contact_slot_i_t unlock_contact_slot_i;
+    lock_subscription_t lock_subscription;
+    unlock_subscription_t unlock_subscription;
+    
     insert_ucontact_t insert_ucontact;
     delete_ucontact_t delete_ucontact;
     get_ucontact_t get_ucontact;
     release_ucontact_t release_ucontact;
     get_all_ucontacts_t get_all_ucontacts;
     update_ucontact_t update_ucontact;
+    expire_ucontact_t expire_ucontact;
     unlink_contact_from_impu_t unlink_contact_from_impu;
     link_contact_to_impu_t link_contact_to_impu;
     //update_user_profile_t update_user_profile;

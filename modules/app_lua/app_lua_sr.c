@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -265,6 +263,11 @@ static int lua_sr_modf (lua_State *L)
 		}
 	}
 	pkg_free(act);
+	for(i=0; i<MAX_ACTIONS; i++)
+	{
+		if(argv[i]!=NULL) pkg_free(argv[i]);
+		argv[i] = 0;
+	}
 	lua_pushinteger(L, ret);
 	return 1;
 

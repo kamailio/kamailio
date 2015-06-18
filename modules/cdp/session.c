@@ -403,12 +403,13 @@ void cdp_sessions_log()
 			switch (x->type){
 				case AUTH_CLIENT_STATEFULL:
 				case AUTH_SERVER_STATEFULL:
-					LM_DBG(ANSI_GRAY"\tAuth State [%d] Timeout [%d] Lifetime [%d] Grace [%d] Generic [%p]\n",
+					LM_DBG(ANSI_GRAY"\tAuth State [%d] Timeout [%d] Lifetime [%d] Grace [%d] Generic [%p] Class [%d]\n",
 							x->u.auth.state,
 							(int)(x->u.auth.timeout-time(0)),
 							x->u.auth.lifetime?(int)(x->u.auth.lifetime-time(0)):-1,
 							(int)(x->u.auth.grace_period),
-							x->u.auth.generic_data);
+							x->u.auth.generic_data, 
+                                                        x->u.auth.class);
 					break;
 				case ACCT_CC_CLIENT:
 					LM_DBG(ANSI_GRAY"\tCCAcct State [%d] Charging Active [%c (%d)s] Reserved Units(valid=%ds) [%d] Generic [%p]\n",
@@ -585,6 +586,7 @@ AAASession* cdp_new_auth_session(str id,int is_client,int is_statefull)
 		s->u.auth.timeout=time(0)+config->default_auth_session_timeout;
 		s->u.auth.lifetime=0;
 		s->u.auth.grace_period=0;
+                s->u.auth.class = AUTH_CLASS_UNKNOWN;
 		cdp_add_session(s);
 	}
 	return s;

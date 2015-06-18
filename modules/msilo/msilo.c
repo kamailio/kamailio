@@ -91,7 +91,7 @@ static str sc_stored_hdrs = str_init("extra_hdrs"); /* 10 */
 
 MODULE_VERSION
 
-#define S_TABLE_VERSION 7
+#define S_TABLE_VERSION 8
 
 /** database connection */
 static db1_con_t *db_con = NULL;

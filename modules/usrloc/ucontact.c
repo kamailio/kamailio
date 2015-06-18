@@ -458,6 +458,9 @@ int st_flush_ucontact(ucontact_t* _c)
 
 /* ============== Database related functions ================ */
 
+extern unsigned int _ul_max_partition;
+static unsigned int _ul_partition_counter = 0;
+
 /*!
  * \brief Insert contact into the database
  * \param _c inserted contact
@@ -466,8 +469,8 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char* dom;
-	db_key_t keys[21];
-	db_val_t vals[21];
+	db_key_t keys[22];
+	db_val_t vals[22];
 	int nr_cols;
 	
 	if (_c->flags & FL_MEM) {
@@ -641,6 +644,18 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[nr_cols].nul = 0;
 	vals[nr_cols].val.int_val = (int)_c->keepalive;
 	nr_cols++;
+
+	keys[nr_cols] = &partition_col;
+	vals[nr_cols].type = DB1_INT;
+	vals[nr_cols].nul = 0;
+	if(_ul_max_partition>0) {
+		vals[nr_cols].val.int_val = ((_ul_partition_counter++) + my_pid())
+										% _ul_max_partition;
+	} else {
+		vals[nr_cols].val.int_val = 0;
+	}
+	nr_cols++;
+
 
 	if (use_domain) {
 		keys[nr_cols] = &domain_col;
@@ -1624,6 +1639,28 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
 	}
 }
 
+/*!
+ * \brief helper function for update_ucontact
+ * \param _c contact
+ * \return 0 on success, -1 on failure
+ */
+static inline int update_contact_db(ucontact_t* _c)
+{
+	int res;
+
+	if (ul_db_update_as_insert)
+		res = db_insert_ucontact(_c);
+	else
+		res = db_update_ucontact(_c);
+
+	if (res < 0) {
+		LM_ERR("failed to update database\n");
+		return -1;
+	} else {
+		_c->state = CS_SYNC;
+	}
+	return 0;
+}
 
 /*!
  * \brief Update ucontact with new values
@@ -1634,13 +1671,15 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
  */
 int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 {
-	int res;
-
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
 	if (mem_update_ucontact( _c, _ci) < 0) {
 		LM_ERR("failed to update memory\n");
 		return -1;
+	}
+
+	if (db_mode==DB_ONLY) {
+		if (update_contact_db(_c) < 0) return -1;
 	}
 
 	/* run callbacks for UPDATE event */
@@ -1655,18 +1694,8 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 
 	st_update_ucontact(_c);
 
-	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
-		if (ul_db_update_as_insert)
-			res = db_insert_ucontact(_c);
-		else
-			res = db_update_ucontact(_c);
-
-		if (res < 0) {
-			LM_ERR("failed to update database\n");
-			return -1;
-		} else {
-			_c->state = CS_SYNC;
-		}
+	if (db_mode == WRITE_THROUGH) {
+		if (update_contact_db(_c) < 0) return -1;
 	}
 	return 0;
 }

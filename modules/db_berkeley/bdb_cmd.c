@@ -507,17 +507,11 @@ int bdb_cmd_first(db_res_t* res)
 
 int bdb_cmd_next(db_res_t* res)
 {
-	db_con_t *con;
-	bdb_res_t *bres;
-	bdb_con_t *bcon;
 	bdb_cmd_t *bcmd;
 	DBT key, data;
 	int ret;
 	static char dbuf[MAX_ROW_SIZE];
 
-	con = res->cmd->ctx->con[db_payload_idx];
-	bres = DB_GET_PAYLOAD(res);
-	bcon = DB_GET_PAYLOAD(con);
 	bcmd = DB_GET_PAYLOAD(res->cmd);
 
 	if (bcmd->next_flag == 2 || bcmd->next_flag == -2) return 1;

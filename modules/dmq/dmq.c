@@ -63,6 +63,7 @@ str dmq_server_socket = {0, 0};
 struct sip_uri dmq_server_uri;
 
 str dmq_notification_address = {0, 0};
+int multi_notify = 0;
 struct sip_uri dmq_notification_uri;
 int ping_interval = 60;
 
@@ -110,6 +111,7 @@ static param_export_t params[] = {
 	{"ping_interval", INT_PARAM, &ping_interval},
 	{"server_address", PARAM_STR, &dmq_server_address},
 	{"notification_address", PARAM_STR, &dmq_notification_address},
+	{"multi_notify", INT_PARAM, &multi_notify},
 	{0, 0, 0}
 };
 

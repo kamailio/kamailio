@@ -49,6 +49,14 @@
 	#elif defined(DBG_QM_MALLOC)
 		#define DBG_F_MALLOC
 	#endif
+#elif defined TLSF_MALLOC
+	#ifdef DBG_TLSF_MALLOC
+		#ifndef DBG_QM_MALLOC
+			#define DBG_QM_MALLOC
+		#endif
+	#elif defined(DBG_QM_MALLOC)
+		#define DBG_TLSF_MALLOC
+	#endif
 #endif
 
 #ifdef PKG_MALLOC
@@ -57,6 +65,9 @@
 		extern struct fm_block* mem_block;
 #	elif defined DL_MALLOC
 #		include "dl_malloc.h"
+#	elif defined TLSF_MALLOC
+#		include "tlsf.h"
+		extern tlsf_t mem_block;
 #   else
 #		include "q_malloc.h"
 		extern struct qm_block* mem_block;
@@ -75,6 +86,13 @@
 				_SRC_FUNCTION_, _SRC_LINE_)
 #			define pkg_realloc(p, s) fm_realloc(mem_block, (p), (s), \
 					_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_)
+#		elif defined TLSF_MALLOC
+#			define pkg_malloc(s) tlsf_malloc(mem_block, (s), _SRC_LOC_, \
+				_SRC_FUNCTION_, _SRC_LINE_)
+#			define pkg_free(p)   tlsf_free(mem_block, (p), _SRC_LOC_,  \
+				_SRC_FUNCTION_, _SRC_LINE_)
+#			define pkg_realloc(p, s) tlsf_realloc(mem_block, (p), (s), \
+					_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_)
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s),_SRC_LOC_, \
 				_SRC_FUNCTION_, _SRC_LINE_)
@@ -92,6 +110,10 @@
 #			define pkg_malloc(s) dlmalloc((s))
 #			define pkg_realloc(p, s) dlrealloc((p), (s))
 #			define pkg_free(p)   dlfree((p))
+#		elif defined TLSF_MALLOC
+#			define pkg_malloc(s) tlsf_malloc(mem_block, (s))
+#			define pkg_realloc(p, s) tlsf_realloc(mem_block, (p), (s))
+#			define pkg_free(p)   tlsf_free(mem_block, (p))
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s))
 #			define pkg_realloc(p, s) qm_realloc(mem_block, (p), (s))
@@ -108,6 +130,11 @@
 #		define pkg_info(mi)  0
 #		define pkg_available()  0
 #		define pkg_sums()  0
+#	elif defined TLSF_MALLOC
+#		define pkg_status()  tlsf_status(mem_block)
+#		define pkg_info(mi)  tlsf_meminfo(mem_block, (mi))
+#		define pkg_available()  tlsf_available(mem_block)
+#		define pkg_sums()  tlsf_sums(mem_block)
 #	else
 #		define pkg_status()    qm_status(mem_block)
 #		define pkg_info(mi)    qm_info(mem_block, mi)

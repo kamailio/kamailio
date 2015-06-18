@@ -29,6 +29,7 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 int pv_parse_uac_req_name(pv_spec_p sp, str *in);
 void uac_req_init(void);
-int uac_req_send(struct sip_msg *msg, char *s1, char *s2);
+int uac_req_send(void);
+int w_uac_req_send(struct sip_msg *msg, char *s1, char *s2);
 
 #endif

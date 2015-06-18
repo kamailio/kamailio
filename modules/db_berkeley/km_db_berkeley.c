@@ -776,13 +776,13 @@ int bdb_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 	tbl_cache_p _tbc = NULL;
 	table_p _tp = NULL;
 	char kbuf[MAX_ROW_SIZE];
-	int i, j, ret, klen;
+	int ret, klen;
 	int *lkey=NULL;
 	DBT key;
 	DB *db;
 	DBC *dbcp;
 
-	i = j = ret = 0;
+	ret = 0;
 	klen=MAX_ROW_SIZE;
 
 	if (_op)
@@ -904,13 +904,13 @@ int _bdb_delete_cursor(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
 	db1_res_t* _r   = NULL;
 	char kbuf[MAX_ROW_SIZE];
 	char dbuf[MAX_ROW_SIZE];
-	int i, ret, klen=MAX_ROW_SIZE;
+	int ret, klen=MAX_ROW_SIZE;
 	DBT key, data;
 	DB *db;
 	DBC *dbcp;
 	int *lkey=NULL;
 	
-	i = ret = 0;
+	ret = 0;
 	
 	if ((!_h) || !CON_TABLE(_h))
 		return -1;

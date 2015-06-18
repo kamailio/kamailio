@@ -13,6 +13,7 @@
 extern str str_event_message_summary;
 extern str str_event_dialog;
 extern str str_event_presence;
+extern str kz_app_name;
 
 extern str str_username_col;
 extern str str_domain_col;
@@ -20,6 +21,7 @@ extern str str_body_col;
 extern str str_expires_col;
 extern str str_received_time_col;
 extern str str_presentity_uri_col;
+extern str str_priority_col;
 
 extern str str_event_col;
 extern str str_contact_col;
@@ -40,5 +42,6 @@ extern str str_presence_status_online;
 
 extern str str_null_string;
 
+extern char kz_json_escape_char;
 
 #endif /* DBK_CONST_H_ */

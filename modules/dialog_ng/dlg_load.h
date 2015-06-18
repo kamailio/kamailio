@@ -43,15 +43,18 @@ typedef struct dlg_cell *(*get_dlg_f)(struct sip_msg *msg);
 /* get_dlg_lifetime function prototype */
 typedef time_t (*get_dlg_expires_f)(str *callid, str *ftag, str *ttag);
 
+typedef void (*release_dlg_f)(struct dlg_cell *dlg);
+
 struct dlg_binds {
 	register_dlgcb_f  		register_dlgcb;
-	register_dlgcb_nodlg_f 	register_dlgcb_nodlg;
+	register_dlgcb_nodlg_f          register_dlgcb_nodlg;
 	terminate_dlg_f 		terminate_dlg;
-	lookup_terminate_dlg_f 	lookup_terminate_dlg;
+	lookup_terminate_dlg_f          lookup_terminate_dlg;
 	set_dlg_variable_f 		set_dlg_var;
 	get_dlg_variable_f 		get_dlg_var;
 	get_dlg_expires_f 		get_dlg_expires;
-	get_dlg_f				get_dlg;
+	get_dlg_f			get_dlg;
+        release_dlg_f                   release_dlg;
 };
 
 

@@ -47,7 +47,7 @@
 <!ENTITY ser "SER">
 <!ENTITY sername "SIP Express Router">
 <!ENTITY sercmd "kamcmd">
-<!ENTITY ctlsocket "ser_ctl">
+<!ENTITY ctlsocket "kamailio_ctl">
 
 <!ENTITY serhome "http://iptel.org/ser">
 <!ENTITY serbugs "http://sip-router.org/tracker">

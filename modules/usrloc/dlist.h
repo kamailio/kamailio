@@ -140,4 +140,9 @@ unsigned long get_number_of_users(void);
 int find_domain(str* _d, udomain_t** _p);
 
 
+/*!
+ * \brief Set the value for max partition
+ */
+void ul_set_max_partition(unsigned int m);
+
 #endif

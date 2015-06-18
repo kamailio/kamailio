@@ -16,9 +16,9 @@
 		<table_name>acc_cdrs</table_name>
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
-		<column><field>start_time</field><type>DB1_STR</type></column>
-		<column><field>end_time</field><type>DB1_STR</type></column>
-		<column><field>duration</field><type>DB1_STR</type></column>
+		<column><field>start_time</field><type>DB1_DATETIME</type></column>
+		<column><field>end_time</field><type>DB1_DATETIME</type></column>
+		<column><field>duration</field><type>DB1_DOUBLE</type></column>
 	</db_table>
 	<!-- Declaration of missed_calls table-->
 	<db_table id="missed_calls">

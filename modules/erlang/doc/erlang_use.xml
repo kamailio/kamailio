@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!--  -->
+
+<chapter>
+	<title>Using &kamailio; from Erlang</title>
+	<section>
+		<title>RPC calls from Erlang</title>
+		<para>
+			This module implements the erlang transport and encoding interface for &kamailio; RPCs. It's allow to call any exported RPC in &kamailio;
+			from erlang node.
+		</para>
+		<para>
+			The string in RPC response is binary encoded to allow from erlang side conversion into appropriate encoding and further transformations.
+		</para>
+		<para>
+			Here are some examples:
+		</para>
+		<example>
+			<title>Example of RPC call from erlang shell with no response</title>
+			<programlisting format="linespecific">
+<![CDATA[
+
+(node1@erlang.lan)26> rpc:call('proxy@kamailio.lan',domain,reload,[]).
+ok
+
+]]>
+			</programlisting>
+		</example>
+		<example>
+			<title>Example, check is line registered</title>
+			<programlisting format="linespecific">
+<![CDATA[
+
+(node1@erlang.lan)29> rpc:call('proxy@kamailio.lan',ul,lookup,["location","1001@orange.voip"]).
+[{[{<<"Contact">>,
+    {[{<<"Address">>,
+       <<"sip:1001@10.1.130.138:5161;transport=udp">>},
+      {<<"Expires">>,96},
+      {<<"Q">>,-1.0},
+      {<<"Call-ID">>,<<"5c89766276627815@10.1.130.138">>},
+      {<<"CSeq">>,10335},
+      {<<"User-Agent">>,<<"Grandstream GXP2000 1.2.5.3">>},
+      {<<"Received">>,<<"sip:198.51.100.137:62770">>},
+      {<<"Path">>,
+       <<"&lt;sip:172.16.23.130;lr;received=sip:198.51.100.137:62"...>>},
+      {<<"State">>,<<"CS_SYNC">>},
+      {<<"Flags">>,0},
+      {<<"CFlags">>,64},
+      {<<"Socket">>,<<"udp:172.16.23.130:5070">>},
+      {<<"Methods">>,8159},
+      {<<"Ruid">>,<<"uloc-5534a79b-37ea-8">>},
+      {<<"Instance">>,<<"[not set]">>},
+      {<<"Reg-Id">>,0},
+      {<<"Last-Keepalive">>,1429543986},
+      {<<"Last-Modified">>,1429543906}]}}]}]
+
+]]>
+			</programlisting>
+		</example>
+		<example>
+			<title>Example get config variable</title>
+			<programlisting format="linespecific">
+<![CDATA[
+
+(node1@erlang.lan)26> rpc:call('proxy@kamailio.lan',"cfg","get",["registrar","bindip"]).
+[<<"172.16.23.130">>]
+
+]]>
+			</programlisting>
+		</example>
+		<example>
+			<title>Example get dialog statistics</title>
+			<programlisting format="linespecific">
+<![CDATA[
+
+(node1@erlang.lan)26>rpc:call('proxy@kamailio.lan',"stats","get_statistics",["dialog:"]).
+[<<"dialog:active_dialogs = 3">>,
+ <<"dialog:early_dialogs = 0">>,
+ <<"dialog:expired_dialogs = 0">>,
+ <<"dialog:failed_dialogs = 2">>,
+ <<"dialog:processed_dialogs = 15">>]
+
+]]>
+			</programlisting>
+		</example>
+	</section>
+</chapter>

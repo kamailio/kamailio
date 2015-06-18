@@ -62,17 +62,21 @@ Ramona-Elena Modroiu
               4.10. uac_reg_request_to(user, mode)
 
         5. Pseudo Variables
-        6. Counters
-        7. RPC Commands
+        6. Event Routes
 
-              7.1. uac.reg_dump
-              7.2. uac.reg_info
-              7.3. uac.reg_enable
-              7.4. uac.reg_disable
-              7.5. uac.reg_reload
-              7.6. uac.reg_refresh
+              6.1. event_route[uac:reply]
 
-        8. Remote Registration
+        7. Counters
+        8. RPC Commands
+
+              8.1. uac.reg_dump
+              8.2. uac.reg_info
+              8.3. uac.reg_enable
+              8.4. uac.reg_disable
+              8.5. uac.reg_reload
+              8.6. uac.reg_refresh
+
+        9. Remote Registration
 
    List of Examples
 
@@ -102,13 +106,14 @@ Ramona-Elena Modroiu
    1.24. uac_req_send usage
    1.25. uac_reg_lookup usage
    1.26. uac_reg_request_to usage
-   1.27. uac.reg_dump usage
-   1.28. uac.reg_info usage
-   1.29. uac.reg_enable usage
-   1.30. uac.reg_disable usage
-   1.31. uac.reg_reload usage
-   1.32. uac.reg_refresh usage
-   1.33. lookup remote registrations usage
+   1.27. event_route[uac:reply] usage
+   1.28. uac.reg_dump usage
+   1.29. uac.reg_info usage
+   1.30. uac.reg_enable usage
+   1.31. uac.reg_disable usage
+   1.32. uac.reg_reload usage
+   1.33. uac.reg_refresh usage
+   1.34. lookup remote registrations usage
 
 Chapter 1. Admin Guide
 
@@ -153,17 +158,21 @@ Chapter 1. Admin Guide
         4.10. uac_reg_request_to(user, mode)
 
    5. Pseudo Variables
-   6. Counters
-   7. RPC Commands
+   6. Event Routes
 
-        7.1. uac.reg_dump
-        7.2. uac.reg_info
-        7.3. uac.reg_enable
-        7.4. uac.reg_disable
-        7.5. uac.reg_reload
-        7.6. uac.reg_refresh
+        6.1. event_route[uac:reply]
 
-   8. Remote Registration
+   7. Counters
+   8. RPC Commands
+
+        8.1. uac.reg_dump
+        8.2. uac.reg_info
+        8.3. uac.reg_enable
+        8.4. uac.reg_disable
+        8.5. uac.reg_reload
+        8.6. uac.reg_refresh
+
+   9. Remote Registration
 
 1. Overview
 
@@ -182,8 +191,11 @@ Chapter 1. Admin Guide
 
    Known limitations in this version:
      * Authentication does not support qop auth-int, just qop auth;
-     * CSeq is not increased during authentication - the response may be
-       rejected.
+     * CSeq is not increased automatically by uac_auth() during
+       authentication - the follow up request may be rejected. CSeq can be
+       increased when authenticating INVITE requests - dialog module has
+       to be used, with CSeq tracking feature enabled (see the readme of
+       dialog module).
      * The "uac_replace_*" functions can only be run once on the same SIP
        request. Try to save needed changes in a pseudovariable and apply
        them once.
@@ -614,7 +626,31 @@ uac_restore_to();
 
    Example 1.23. uac_auth usage
 ...
-uac_auth();
+modparam("uac","auth_username_avp","$avp(auser)")
+modparam("uac","auth_password_avp","$avp(apass)")
+modparam("uac","auth_realm_avp","$avp(arealm)")
+
+request_route {
+   ...
+   if(is_method("INVITE")) {
+      t_on_failure("TRUNKAUTH");
+   }
+   ...
+}
+
+failure_route[TRUNKAUTH] {
+
+    if (t_is_canceled()) {
+        exit;
+    }
+    if(t_check_status("401|407")) {
+        $avp(auser) = "test";
+        $avp(apass) = "test";
+        uac_auth();
+        t_relay();
+        exit;
+    }
+}
 ...
 
 4.8. uac_req_send()
@@ -691,7 +727,31 @@ failure_route[REMOTE_AUTH] {
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
 
-6. Counters
+6. Event Routes
+
+   6.1. event_route[uac:reply]
+
+6.1. event_route[uac:reply]
+
+   Event route executed for the final reply to the request set with
+   uac_req_send(). The associated $uac_req(evroute) has to be set to 1.
+
+   Example 1.27. event_route[uac:reply] usage
+...
+$uac_req(method)="OPTIONS";
+$uac_req(ruri)="sip:kamailio.org";
+$uac_req(furi)="sip:kamailio.org";
+$uac_req(turi)="sip:kamailio.org";
+$uac_req(callid)=$(mb{s.md5});
+$uac_req(evroute)=1;
+uac_req_send();
+...
+event_route[uac:reply] {
+    xlog("received reply code is: $uac_req(evcode)\n");
+}
+...
+
+7. Counters
 
      * regtotal: Total number of registrations
      * regactive: Total number of active registrations (successfully
@@ -699,25 +759,25 @@ failure_route[REMOTE_AUTH] {
      * regdisabled: Total number of disabled registrations (no longer
        active)
 
-7. RPC Commands
+8. RPC Commands
 
-   7.1. uac.reg_dump
-   7.2. uac.reg_info
-   7.3. uac.reg_enable
-   7.4. uac.reg_disable
-   7.5. uac.reg_reload
-   7.6. uac.reg_refresh
+   8.1. uac.reg_dump
+   8.2. uac.reg_info
+   8.3. uac.reg_enable
+   8.4. uac.reg_disable
+   8.5. uac.reg_reload
+   8.6. uac.reg_refresh
 
-7.1. uac.reg_dump
+8.1. uac.reg_dump
 
    Dump the content of remote registration table from memory.
 
-   Example 1.27. uac.reg_dump usage
+   Example 1.28. uac.reg_dump usage
 ...
    kamcmd uac.reg_dump
 ...
 
-7.2. uac.reg_info
+8.2. uac.reg_info
 
    Return the details of a remote registration record based on a filter.
    The command has two parameter: attribute and value. The attribute can
@@ -725,12 +785,12 @@ failure_route[REMOTE_AUTH] {
    should be matcheg against the value of the attribute in the remote
    registration record.
 
-   Example 1.28. uac.reg_info usage
+   Example 1.29. uac.reg_info usage
 ...
    kamcmd uac.reg_info l_uuid account123
 ...
 
-7.3. uac.reg_enable
+8.3. uac.reg_enable
 
    Enable a remote registration record based on a filter. The command has
    two parameter: attribute and value. The attribute can be: l_uuid,
@@ -738,12 +798,12 @@ failure_route[REMOTE_AUTH] {
    matcheg against the value of the attribute in the remote registration
    record.
 
-   Example 1.29. uac.reg_enable usage
+   Example 1.30. uac.reg_enable usage
 ...
    kamcmd uac.reg_enable l_uuid account123
 ...
 
-7.4. uac.reg_disable
+8.4. uac.reg_disable
 
    Disable a remote registration record based on a filter. The command has
    two parameter: attribute and value. The attribute can be: l_uuid,
@@ -751,33 +811,33 @@ failure_route[REMOTE_AUTH] {
    matcheg against the value of the attribute in the remote registration
    record.
 
-   Example 1.30. uac.reg_disable usage
+   Example 1.31. uac.reg_disable usage
 ...
    kamcmd uac.reg_disable l_uuid account123
 ...
 
-7.5. uac.reg_reload
+8.5. uac.reg_reload
 
    Reload the records from database for remote registrations.
 
-   Example 1.31. uac.reg_reload usage
+   Example 1.32. uac.reg_reload usage
 ...
    kamcmd uac.reg_reload
 ...
 
-7.6. uac.reg_refresh
+8.6. uac.reg_refresh
 
    Load one record by l_uuid from database for remote registrations. If
    the record exists in memory, its authentication password is updated,
    otherwise a new record is added. The command has a parameter, which is
    the value of l_uuid field.
 
-   Example 1.32. uac.reg_refresh usage
+   Example 1.33. uac.reg_refresh usage
 ...
    kamcmd uac.reg_refresh account123
 ...
 
-8. Remote Registration
+9. Remote Registration
 
    The module can register contact addresses to remote REGISTRAR servers.
    You have to add records to uacreg table. The table stores following
@@ -810,7 +870,7 @@ failure_route[REMOTE_AUTH] {
    if the call is coming from a remote SIP provider and can change the
    R-URI to local username@domain. Afterwards you can run location lookup.
 
-   Example 1.33. lookup remote registrations usage
+   Example 1.34. lookup remote registrations usage
 ...
     if(uac_reg_lookup("$rU", "$ru")) {
         xlog("request from a remote SIP provider [$ou => $ru]\n");

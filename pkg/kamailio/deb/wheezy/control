@@ -8,6 +8,7 @@ Build-Depends: bison,
                debhelper (>= 9),
                docbook-xml,
                dpkg-dev (>= 1.16.1.1),
+               erlang-dev,
                flex,
                gcj-jdk,
                libconfuse-dev,
@@ -561,6 +562,21 @@ Description: authentication using ephemeral credentials module for Kamailio
  .
  This package provides the ephemeral module for Kamailio.
 
+Package: kamailio-erlang-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: kamailio (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: earlang modules for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This module provides interact with Erlang node. The module allows sending,
+ receiving Erlang messages and RPC calls between each other.
+
 Package: kamailio-extra-modules
 Architecture: linux-any
 Multi-Arch: same
@@ -573,7 +589,7 @@ Description: extra modules for Kamailio
  proxy server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides: gzcompress uuid ev jansson
+ This package provides: gzcompress uuid ev jansson janssonrpc-c
 
 Package: kamailio-nth
 Architecture: any

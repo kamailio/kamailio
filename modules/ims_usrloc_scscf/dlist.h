@@ -144,13 +144,6 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
  int get_udomain(const char* _n, udomain_t** _d);
 
 /*!
- * \brief Loops through all domains summing up the number of users
- * \return the number of users, could be zero
- */
-unsigned long get_number_of_users(void);
-
-
-/*!
  * \brief Find a particular domain, small wrapper around find_dlist
  * \param _d domain name
  * \param _p pointer to domain if found

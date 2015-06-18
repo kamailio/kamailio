@@ -31,6 +31,7 @@
 #include "../../trim.h"
 
 #include "mongodb_client.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -76,6 +77,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"mongodb_next", (cmd_function)w_mongodb_next_reply, 1, fixup_spve_null,
 		0, ANY_ROUTE},
+	{"bind_ndb_mongodb",   (cmd_function)bind_ndb_mongodb,  0,
+		0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 

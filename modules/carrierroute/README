@@ -232,7 +232,7 @@ Chapter 1. Admin Guide
 
    This modules scales up to more than a few million users, and is able to
    handle more than several hundred thousand routing table entries. We
-   recieved reports of some setups that used more than a million routing
+   received reports of some setups that used more than a million routing
    table entries. It also supports a large number of carriers and domains
    which can be efficiently looked up in most of the cases (see below for
    more informations). In load balancing scenarios the usage of the config

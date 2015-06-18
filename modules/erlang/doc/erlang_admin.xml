@@ -1,0 +1,700 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+		<title>Overview</title>
+		<para>
+			Erlang is a general-purpose programming language and runtime environment.
+			Erlang has built-in support for concurrency, distribution and fault tolerance.
+			This module provides interact with Erlang node. The module allows sending,
+			receiving Erlang messages and RPC calls between each other.
+		</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+				The following modules must be loaded before this module:
+				<itemizedlist mark="none">
+					<listitem>
+						<para>
+							<emphasis>None</emphasis>
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed before running
+			&kamailio; with this module loaded:
+			<itemizedlist mark="none">
+			<listitem>
+				<para>
+					<emphasis>ei</emphasis> - Erlang interface C library.
+					<para>
+						The routines for handling the Erlang binary term format
+						and communicate with with distributed Erlang.
+						For more details see <ulink url="http://www.erlang.org/doc/apps/erl_interface/index.html">Erlang Interface Reference Manual</ulink>
+					</para>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>epmd</emphasis> - Erlang Port Mapper Daemon.
+					<para>
+						This daemon acts as a name server on all hosts involved in distributed
+						Erlang computations. For more details see <ulink url="http://www.erlang.org/doc/man/epmd.html">
+						Erlang Port Mapper Daemon Manual</ulink>.
+					</para>
+				</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+				<emphasis>epmd</emphasis> must running on the same host where &kamailio; is running.
+				Erlang does not need to be installed on the same host where &kamailio; is running.
+			</para>
+		</section>
+	</section>
+	<section>
+		<title>Parameters</title>
+		<section id="erlang.p.no_cnodes">
+			<title><varname>no_cnodes</varname> (int)</title>
+			<para>
+				Number of erlang C node processes to be started to handle the communication
+				tasks. A C node is a C program written to act as a hidden node in a distributed Erlang system.
+			</para>
+			<para>
+			<emphasis>
+				Default value is 1.
+			</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>no_cnodes</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("erlang", "no_cnodes", 2)	
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.p.cnode_alivename">
+			<title><varname>cnode_alivename</varname> (str)</title>
+			<para>
+				<emphasis>alivename</emphasis> is the registered name of the &kamailio; process.
+			</para>
+			<para>
+				<emphasis>Note,</emphasis> if the <varname>no_cnodes</varname> greater then 1,
+				then <emphasis>alivename</emphasis> of &kamailio; process will be suffixed with number.
+			</para>
+			<example>
+				<title>Set <varname>cnode_alivename</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("erlang", "cnode_alivename", "proxy")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.p.cnode_host">
+			<title><varname>cnode_host</varname> (str)</title>
+			<para>
+				C node <emphasis>host</emphasis> is the name of the machine we're running on.
+				If long names are to be used, it should be fully qualified.
+			</para>
+			<example>
+				<title>Set <varname>cnode_host</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("erlang", "cnode_host", "kamailio.lan")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.p.erlang_nodename">
+			<title><varname>erlang_nodename</varname> (str)</title>
+			<para>
+				The format of the node name is an <emphasis>name@host</emphasis>
+				where name is the name given by the user and host is the full
+				host name if long names are used, or the first part of the host
+				name if short names are used.
+			</para>
+			<example>
+				<title>Set <varname>erlang_nodename</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("erlang", "erlang_nodename", "node1@erlang.lan")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.p.cookie">
+			<title><varname>cookie</varname> (str)</title>
+			<para>
+				Each node has its own magic cookie. When a nodes tries to connect
+				to another node, the magic cookies are compared If they do not match,
+				the connected node rejects the connection.
+			</para>
+			<example>
+				<title>Set <varname>cookie</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("erlang", "cookie", "secretcookie")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.p.trace_level">
+			<title><varname>trace_level</varname> (int)</title>
+			<para>
+				Used to set tracing on the distribution. The parameter is different
+				verbosity level. A higher level means more information. Useful in
+				development, but in production should be disabled.
+			</para>
+			<para>
+				The different tracelevels has the following messages:
+				<itemizedlist>
+					<orderedlist>
+						<listitem>
+							Verbose error messages
+						</listitem>
+						<listitem>
+							Above messages and verbose warning messages
+						</listitem>
+						<listitem>
+							Above messages and progress reports for connection handling
+						</listitem>
+						<listitem>
+							Above messages and progress reports for communication
+						</listitem>
+						<listitem>
+							Above messages and progress reports for data conversion
+						</listitem>
+					</orderedlist>
+				</itemizedlist>
+			</para>
+			<emphasis>
+				Default value is 0, no verbose is set.
+			</emphasis>
+			<emphasis>
+				To see trace log on stdout, &kamailio; must be started with <emphasis>-E</emphasis> option.
+			</emphasis>
+			<example>
+				<title>Set <varname>trace_level</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("erlang", "trace_level", 5)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>rpc_reply_with_struct</varname> (int)</title>
+			<para>
+				Prepend Erlang atom struct in RPC &kamailio; reply where RPC struct is generated.
+				Some libraries for converting erlang term in JSON require atom struct
+				as first element in tuple to convert list of properties into javscript object.
+			</para>
+			<emphasis>
+				Default value is 0 (disabled).
+			</emphasis>
+		</section>
+	</section>
+	<section>
+		<title>Exported pseudo variables</title>
+		<section>
+			<title>Overview</title>
+			<para>
+				Erlang provides a number of data types but not all of them are supported by &kamailio;.
+				This module provides several of them as pseudo variables. These pseudo variables
+				allow user to create Erlang message or function arguments and receive result from
+				Erlang node. Some Erlang variables can contain other data types, so we introduced several
+				attributes to determine type, length, or get formatted output useful for debug,
+				quick compare or put into the log.
+			</para>
+		</section>
+		<section>
+			<title>Attributes</title>
+			<para>
+				Exported pseudo variable has several attributes to get type, length and formatted output
+				readable by transformations or user. Pseudo variable by self determine variable type, but
+				we need to know what type on some position is. 
+			</para>
+			<itemizedlist>
+				<listitem>
+					<varname>type</varname>
+					<para>
+						get variable type. Possible types are: <emphasis>atom, integer,
+						list, string</emphasis>, <emphasis>tuple</emphasis>,
+						<emphasis>pid</emphasis> and <emphasis>ref</emphasis>.
+					</para>
+				</listitem>
+				<listitem>
+					<varname>length</varname>
+					<para>
+						get length of list or tuple.
+					</para>
+				</listitem>
+				<listitem>
+					<varname>format</varname>
+					<para>
+						Prints a term, in clear text. It tries to resemble the
+						term printing in the Erlang shell.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title>Example of using attribute <emphasis>length</emphasis></title>
+				<programlisting format="linespecific">
+...
+xlogl("L_DEBUG","The number of elements in list L: $erl_list(L=>length)\n");
+xlogl("L_DEBUG","The number of elements in tuple T: $erl_tuple(T=>length)\n");
+...
+
+&gt; example of log output:
+
+DEBUG: &lt;script&gt;: 120:The number of elements in list L: 4
+DEBUG: &lt;script&gt;: 121:The number of elements in tuple T: 2
+...
+				</programlisting>
+			</example>
+			<example>
+				<title>Example of using attributes <emphasis>type</emphasis> and <emphasis>format</emphasis></title>
+				<programlisting format="linespecific">
+...
+xlogl("L_DEBUG","list L in clear text: $erl_list(L=>format), the type at index 2: $erl_list(L[2]=>type)\n");
+xlogl("L_DEBUG","tuple T in clear text: $erltuple(T=>format), the type at index 1: $erl_tuple[T[1]=>type)\n");
+...
+
+&gt; example of log output:
+
+DEBUG: &lt;script&gt;: 130:list L in clear text: [example, list, 4, "items"], the type at index 2: integer
+DEBUG: &lt;script&gt;: 131:tuple T in clear text: {example, tuple}, the type at index 1: atom
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.v.erl_atom">
+			<title><varname>$erl_atom(name)</varname></title>
+			<para>
+				<emphasis>erl_atom</emphasis> pseudo variable allows create analog to Erlang atom data type.
+				Erlang atom is a literal, a constant with name. Formatted output pseudo
+				variable atom could be enclosed in single quotes (') if it does 
+				not begin with a lower-case letter or if it contains other characters
+				than alphanumeric characters, underscore (_), or @.
+			</para>
+			<para>
+
+			</para>
+			<example>
+				<title>Example set and print to log $erl_atom</title>
+				<programlisting format="linespecific">
+...
+$erl_atom(A) = "badrpc";
+xlogl("L_DEBUG","$$erl_atom(A): $erl_atom(A=>format)\n");
+...
+
+&gt; log output is:
+
+DEBUG: &lt;script&gt;: 123:$erl_atom(A): badrpc
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.v.erl_list">
+			<title><varname>$erl_list(name)</varname></title>
+			<para>
+				Compound data type with a variable number of terms. Formally,
+				a list is either the empty list [] or consists of one or more 
+				elements.
+			</para>
+			<para>
+				Behavior of the list is the same as AVP variable. Set value without
+				index prepends element on list. You are able to replace element at
+				given index. List supports [*] index to get whole list or reset all
+				elements in the list. To create empty list set whole list to
+				<emphasis>$null</emphasis>.
+			</para>
+			<example>
+				<title>Example of using $erl_list</title>
+				<programlisting format="linespecific">
+...
+$erl_atom(E) = "example";
+$erl_list(L) = "list";
+$erl_list(L) = "of";
+$erl_list(L) = $erl_atom(E);
+
+xlogl("L_DEBUG","length(L): $erl_list(L=>length), format(L): $erl_list(L=>format)\n");
+
+# empty list
+$erl_tuple(E[*]) = $null;
+
+xlogl("L_DEBUG","length(E): $erl_list(E=>length), format(E): $erl_list(L=>format)\n");
+...
+
+&gt; log output is:
+
+DEBUG: &lt;script&gt;: 143:length(L): 3, format(L): [example, "of", "list"]
+DEBUG: &lt;script&gt;: 148:length(E): 0, format(E): []
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.v.erl_tuple">
+			<title><varname>$erl_tuple(name)</varname></title>
+			<para>
+				From the Erlang point of view the tuple compound data type with
+				a fixed number of terms. The module implementation of tuple has
+				the same behavior as the list.
+			</para>
+			<example>
+				<title>Example of using erl_tuple</title>
+				<programlisting format="linespecific">
+...
+$erl_atom(line) = "line";
+$erl_atom(id)   = "id";
+$erl_atom(owner)= "owner";
+
+$var(user)  = "Bob";
+
+$erl_tuple(owner) = $var(user);
+$erl_tuple(owner) = $erl_atom(owner);
+
+$erl_tuple(id) = 23;
+$erl_tuple(id) = $erl_atom(id);
+
+$erl_list(L) = $erl_tuple(owner);
+$erl_list(L) = $erl_tuple(id);
+
+$erl_tuple(T) = $erl_list(L);
+$erl_tuple(T) = $erl_atom(line);
+
+xlogl("L_DEBUG","length(T): $erl_tuple(T=>length), format(T): $erl_tuple(T=>format)\n");
+...
+
+&gt; log output is:
+...
+DEBUG: &lt;script&gt;: 153:length(T): 2, format(T): {line, [{id, 23}, {owner, "Bob"}]}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.v.erl_pid">
+			<title><varname>$erl_pid(name)</varname></title>
+			<para>
+				<emphasis>erl_pid</emphasis> holds Eralng process identifier. Provides
+				access to Erlang PID value and could be used in send message.
+			</para>
+			<example>
+				<title>Example of using $erl_pid</title>
+				<programlisting format="linespecific">
+...
+if ($erl_xbuff(msg[0]=>type) == "pid") {
+	$erl_pid(pid) = $erl_xbuff(msg[0]);
+	xlogl("L_INFO","Received PID: $erl_pid(pid=>format)\n");
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.v.erl_ref">
+			<title><varname>$erl_ref(name)</varname></title>
+			<para>
+				<emphasis>erl_ref</emphasis> holds Erlang reference. Provides
+				access to reference value and could be used in send message.
+			</para>
+			<example>
+				<title>Example of using erl_ref</title>
+				<programlisting format="linespecific">
+...
+if ($erl_xbuff(msg[0]=>type) == "ref") {
+	$erl_ref(ref) = $erl_xbuff(msg[0]);
+	xlogl("L_INFO","Reference: $erl_ref(ref=>format)\n");
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.v.erl_xbuff">
+			<title><varname>$erl_xbuff(name)</varname></title>
+			<para>
+				<emphasis>erl_xbuff</emphasis> is created as generic pseudo variable
+				to acts as other pseudo variables exported from module. It's useful
+				when in advance we don't know what variable type to expect.
+				The behavior of variable depends of initialization. Module
+				functions expect this PV as return value, and PV for incoming
+				Erlang message.
+			</para>
+			<example>
+				<title>Example of using $erl_xbuff</title>
+				<programlisting format="linespecific">
+...
+# Tuple T from previous example
+
+$erl_xbuff(X) = $erl_tuple(T);
+
+xlogl("L_DEBUG","typeof(X): $erl_xbuff(X=>type), length(X): $erl_xbuff(X=>length), format(X): $erl_xbuff(X=>format)\n");
+...
+
+&gt; log output is:
+...
+DEBUG: &lt;script&gt;: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{id, 23}, {owner, "Bob"}]}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+		<title>Functions</title>
+		<section id="erlang.f.erl_rpc">
+			<title>
+				<function moreinfo="none">erl_rpc(mod,fun,args,reply)</function>
+			</title>
+			<para>
+				This function supports calling Erlang functions on remote nodes.
+			</para>
+			<para>
+				The parameter <emphasis>mod</emphasis> and <emphasis>fun</emphasis>
+				are module and function name respectively. It can be a static 
+				string or a dynamic string value with config variables.
+			</para>
+			<para>
+				The parameter <emphasis>args</emphasis> is list of arguments passed to
+				function, so it must be <emphasis>list</emphasis>, or <emphasis>xbuff</emphasis> that contains list.
+			</para>
+			<para>
+				The parameter <emphasis>reply</emphasis> is result from RPC call. It must
+				be <emphasis>xbuff</emphasis> to accept any result.
+			</para>
+			<para>
+				Function returns false on error to send or wrong arguments passed to function.
+				If executing remote function caused error function still returns
+				true but error is encoded into <emphasis>repl</emphasis> parameter.
+			</para>
+			<example>
+				<title>Example of using erl_rpc</title>
+				<programlisting format="linespecific">
+...
+# example of call erlang:list_to_tuple(["one","two"])
+# on remote node
+
+$erl_list(L) = "two";
+$erl_list(L) = "one";
+
+# put list into list
+$erl_list(args) = $erl_list(L);
+
+erl_rpc("erlang", "list_to_tuple", "$erl_list(args)", "$erl_xbuff(repl)");
+
+xlogl("L_DEBUG","type(repl): $erl_xbuff(repl=>type), format(repl): $erl_xbuff(repl=>format)\n");
+
+&gt; log output:
+...
+DEBUG: &lt;script&gt;: 386:type(repl): tuple, format(repl): {"one", "two"}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.f.erl_reg_send">
+			<title><function moreinfo="none">erl_reg_send(server,msg)</function></title>
+			<para>
+				This function sends an Erlang term to a registered process.
+			</para>
+			<para>
+				The argument <emphasis>server</emphasis> is the registered name
+				of the intended recipient process on remote node.
+			</para>
+			<para>
+				The argument <emphasis>msg</emphasis> is containing the message to be sent.
+			</para>
+			<example>
+				<title>Example of using erl_reg_send</title>
+				<programlisting format="linespecific">
+...
+# example of send message to registered process
+# {notifier,'node1@erlang.lan'} ! {example,message}
+
+$erl_atom(example) = "example";
+$erl_atom(message) = "message";
+
+$erl_tuple(M) = $erl_atom(message);
+$erl_tuple(M) = $erl_atom(example);
+
+erl_reg_send("notifier","$erl_tuple(M)");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.f.erl_send">
+			<title><function moreinfo="none">erl_send(pid,msg)</function></title>
+			<para>
+				This function sends an Erlang term to a process. This function
+				can be used from ANY_ROUTE. The argument <emphasis>pid</emphasis>
+				is the Erlang process id of the intended recipient process on
+				remote node. The argument <emphasis>msg</emphasis> is containing
+				the message to be sent.
+			</para>
+			<example>
+				<title>Example of using erl_send</title>
+				<programlisting format="linespecific">
+...
+# example of send message to process
+# Pid ! {example,message}
+
+$erl_atom(notifier) = "notifier";
+$erl_list(args) = $erl_atom(notifier);
+
+erl_rpc("erlang", "whereis", "$erl_list(args)", "$erl_xbuff(pid)");
+
+$erl_atom(example) = "example";
+$erl_atom(message) = "message";
+
+$erl_tuple(M) = $erl_atom(message);
+$erl_tuple(M) = $erl_atom(example);
+
+erl_send("$erl_xbuff(pid)","$erl_tuple(M)");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.f.erl_reply">
+			<title><function>erl_reply(msg)</function></title>
+			<para>
+				Function to send message from event route (pseudo process).
+				Function sends reply message <emphasis>msg</emphasis> to the sender process.
+			</para>
+			<example>
+				<title>Example of use erl_reply</title>
+				<programlisting format="linespecific">
+...
+# event route acts as registered process
+event_route[erlang:greetings] {
+
+	xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
+
+	$erl_atom(hello) = "hello";
+	$erl_tuple(reply) = "Erlang";
+	$erl_tuple(reply) = $erl_atom(hello);
+
+	# reply greeting
+	erl_reply("$erl_tuple(reply)");
+}
+...
+
+%% in erlang shell
+
+(node1@erlang.lan)24&gt; {greetings,'proxy@kamailio.lan'} ! {hello,"Kamailio"}.
+{hello,"Kamailio"}
+(node1@erlang.lan)25&gt; flush().
+Shell got {hello,"Erlang"}
+ok
+
+&gt; logged info message:
+INFO: &lt;script&gt;: 951:Received message: {"hello", "Kamailio"}
+&gt;
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+		<title>Event routes</title>
+		<para>
+			To allow &kamailio; C node to have similar to erlang registered processes
+			we can use event routes. Event routes executed when asynchronous message received
+			from erlang node.
+		</para>
+		<para>
+			Event route receives message in <varname>$erl_xbuff(msg)</varname> and sender
+			process in <varname>$erl_xbuff(pid)</varname>. Reply message is optional
+			and can be sent with <emphasis>erl_reply</emphasis>.
+		</para>
+		<section>
+			<title>Registered pseudo process</title>
+			<para>
+				To create pseudo erlang registered process in &kamailio; scrip create event route in form of
+				<varname>event_route[erlang:<emphasis>&lt;my_process_name&gt;</emphasis>]</varname>. Where
+				<emphasis>&lt;my_process_name&gt;</emphasis> is the name of pseudo process.
+			</para>
+			<example>
+				<title>Example of registered process</title>
+				<programlisting format="linespecific">
+...
+# event route acts as registered process
+event_route[erlang:handler] {
+
+	xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
+
+}
+...
+
+%% in erlang shell send message to registered process
+
+(node1@erlang.lan)12> {handler,'proxy@kamailio.lan'} ! {"hello","Kamailio"}.
+{"hello","Kamailio"}
+
+&gt; logged info message:
+INFO: &lt;script&gt;: 951:Received message: {"hello", "Kamailio"}
+&gt;
+				</programlisting>
+			</example>
+		</section>
+		<section id="erlang.e.self">
+			<title><varname>event_route[erlang:self]</varname></title>
+			<para>
+				The reserved pseudo process name to receive messages sent to &kamailio; C node.
+				The message are sent to non registered process.
+			</para>
+			<example>
+				<title>Example of using default event route</title>
+				<programlisting format="linespecific">
+...
+# default event route from erlang
+event_route[erlang:self] {
+
+	xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
+
+	if(pv_isset("$erl_xbuff(msg[1])") &amp;&amp; $erl_xbuff(msg[1]=>type) == "pid") {
+		xlogl("L_INFO","Echo reply to: $erl_xbuff(msg[1]=>format)\n");
+		erl_send("$erl_xbuff(msg[1])","$erl_xbuff(msg[0])");
+	}
+}
+...
+
+%% in erlang shell send message to registered process
+
+(node1@erlang.lan)12> Pid=rpc:call('proxy@kamailio.lan',erlang,whereis,[self]).
+&lt;14808.9.0&gt;
+(node1@erlang.lan)14> Pid ! ["hello from",self()].
+["hello from",&lt;0.247.0&gt;]
+(node1@erlang.lan)15> flush().
+Shell got "hello from"
+ok
+
+&gt; logged info messages:
+INFO: &lt;script&gt;: 653:Received message: ["hello from", &lt;node1@erlang.lan.247.0&gt;]
+INFO: &lt;script&gt;: 656:Echo reply to: &lt;node1@erlang.lan.247.0&gt;]
+&gt;
+				</programlisting>
+			</example>
+		</section>
+	</section>
+</chapter>
+

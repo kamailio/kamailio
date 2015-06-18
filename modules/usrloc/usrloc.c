@@ -74,6 +74,7 @@ int bind_usrloc(usrloc_api_t* api)
 
 	api->set_keepalive_timeout    = ul_set_keepalive_timeout;
 	api->refresh_keepalive        = ul_refresh_keepalive;
+	api->set_max_partition        = ul_set_max_partition;
 
 	api->use_domain = use_domain;
 	api->db_mode    = db_mode;

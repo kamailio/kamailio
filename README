@@ -11,7 +11,8 @@ Table of contents
   III. Getting started
   IV.  About the project
   V.   Obtaining Help
-  VI.  More Information
+  VI.  Contributions
+  VII. More Information
 
 
 I. About Kamailio
@@ -20,32 +21,35 @@ I. About Kamailio
 Kamailio is an industrial-strength, free server for realtime communication,
 based on the Session Initiation Protocol (SIP RFC3261). 
 
-It is engineered to power Realtime Communications such as IP telephony and presence 
-infrastructures up to large scale. With embedded support for WebSockets, HTTP,
-MSRP and XMLrpc as well as Json-rpc it's a modern server, up to date with current
-standards.
+It is engineered to power Realtime Communications such as IP telephony and
+presence infrastructures up to large scale. With embedded support for
+WebSockets/WebRTC, HTTP, XSRP and XMLrpc as well as Json-rpc it's a modern
+server, up to date with current standards on IPv4/IPv6 and TLS security.
 
 Kamailio keeps track of users, sets up multimedia sessions, relays instant 
-messages and creates space for new plug-in applications. Its proven interoperability 
-guarantees seamless integration with components from other vendors, eliminating the 
-risk of a single-vendor trap. Kamailio has successfully participated in various 
-interoperability tests in which it worked with the products 
-of other leading SIP vendors.
+messages and creates space for new plug-in applications. Its proven
+interoperability guarantees seamless integration with components from other
+vendors, eliminating the risk of a single-vendor trap. Kamailio has
+successfully participated in various interoperability tests in which it worked
+with the products of other leading SIP vendors.
 
-The Kamailio software enables a flexible plug-in model for new applications: Third parties 
-can easily link their plug-ins with the server code and provide thereby advanced and
-customized services. With a modern RPC interface, 3rd party application can integrate
-and interact with services provided by Kamailio. By using the EVAPI interface or the
-embedded HTTP server restful applications can be built.
+The Kamailio software enables a flexible plug-in model for new applications:
+third parties can easily link their plug-ins with the server code and provide
+thereby advanced and customized services. With a modern RPC interface, 3rd
+party application can integrate and interact with services provided by
+Kamailio. By using the EVAPI interface or the embedded HTTP server restful
+applications can be built.
 
-Kamailio's performance and robustness allows it to serve millions of users and accommodate needs
-of very large operators. With a low-cost dual-CPU, the Kamailio server is able to power 
-IP telephony services in an area as large as the Bay Area during peak hours.
+Kamailio's performance and robustness allows it to serve millions of users and
+accommodate needs of very large operators. With a low-cost dual-CPU, the
+Kamailio server is able to power IP telephony services in an area as large as
+the Bay Area during peak hours.
 
-The Kamailio server is extremely configurable to allow the creation of various routing and 
-admission policies as well as setting up new and customized services. Its configurability 
-allows it to serve many roles: network security barrier, presence server, application server, 
-IMS server or PSTN gateway guard (Session Border Controller) for example.
+The Kamailio server is extremely configurable to allow the creation of various
+routing and admission policies as well as setting up new and customized
+services. Its configurability  allows it to serve many roles: network security
+barrier, presence server, application server,  IMS server or PSTN gateway guard
+(Edge Proxy / Session Border Controller) for example.
 
 
 II. Feature List
@@ -60,7 +64,13 @@ our web site for a current list.
 III. Getting started
 ====================
 
-The INSTALL document will guide you through the installation.
+The documentation wiki is an important source of tutorials for installing
+and understanding how Kamailio works:
+
+  * http://www.kamailio.org/wiki/
+
+The INSTALL document provides more details and guidelines that will help with
+the installation.
 
 Kamailio is composed of a core and additional modules. For each module
 there is a README with documentation on how to configure and use the 
@@ -74,15 +84,16 @@ IV. About kamailio.org
 ========================
 
 The Kamailio project has roots in a line of projects starting with SIP Express
-Router, then OpenSER and now Kamailio. A merge project was started during the fall
-of 2008 by developers from the OpenSER project, recently renamed to Kamailio.org
-and SIP Express Router (SER) from iptel.org. 
+Router, then OpenSER and now Kamailio. A merge project was started during the
+fall of 2008 by developers from the OpenSER project, recently renamed to
+Kamailio.org and SIP Express Router (SER) from iptel.org. 
 
 Kamailio is the result of a merge of the code base and years of experience from
-both developer teams. In release 4.0, during the spring of 2013, the
-merger of the products was completed and a unified product was released.
+both developer teams. During the development of the release 4.0, autumn-winter
+of 2012, the merger of the products was completed and a unified product was
+released.
 
-See http://www.kamailio.org/ for the story of SER, OpenSER/Kamailio and kamailio.org.
+See http://www.kamailio.org/ for the story of SER, OpenSER and Kamailio.
 
 V. Obtaining Help
 =================
@@ -97,8 +108,27 @@ list is set up for mutual help by the community of Kamailio users and developers
 To participate in the mailing list, subscribe at the following web address: 
          http://lists.sip-router.org/mailman/listinfo/sr-users
 
-VI. More Information
-====================
+The IRC channel #kamailio on freenode.net is a place where to meet and discuss
+with other members of Kamailio community.
+
+VI. Contributions
+=================
+
+Kamailio is an open source project managed and developed by its community.
+Anyone is welcome to join the development efforts and contribute with code,
+documentation or other resources that could help the project.
+
+For code contributions, follow the suggestions provided at:
+
+  * http://www.kamailio.org/wiki/devel/git-commit-guidelines
+
+The recommended way to contribute code is via pull requests to Kamailio
+project on Github:
+
+  * https://github.com/kamailio
+
+VII. More Information
+=====================
 
 Most up-to-date information is always available at our website,
                  http://www.kamailio.org/

@@ -688,15 +688,19 @@ void kz_amqp_add_payload_common_properties(json_obj_ptr json_obj, char* server_i
     char node_name[512];
 
 
-    json_object_object_add(json_obj, BLF_JSON_APP_NAME,
-			   json_object_new_string(NAME));
-    json_object_object_add(json_obj, BLF_JSON_APP_VERSION,
-			   json_object_new_string(VERSION));
-    sprintf(node_name, "kamailio@%.*s", dbk_node_hostname.len, dbk_node_hostname.s);
-    json_object_object_add(json_obj, BLF_JSON_NODE,
-			   json_object_new_string(node_name));
-    json_object_object_add(json_obj, BLF_JSON_MSG_ID,
-			   json_object_new_string_len(unique->s, unique->len));
+	if(kz_json_get_object(json_obj, BLF_JSON_APP_NAME) == NULL)
+		json_object_object_add(json_obj, BLF_JSON_APP_NAME, json_object_new_string(kz_app_name.s));
+
+	if(kz_json_get_object(json_obj, BLF_JSON_APP_VERSION) == NULL)
+		json_object_object_add(json_obj, BLF_JSON_APP_VERSION, json_object_new_string(VERSION));
+
+	if(kz_json_get_object(json_obj, BLF_JSON_NODE) == NULL) {
+		sprintf(node_name, "kamailio@%.*s", dbk_node_hostname.len, dbk_node_hostname.s);
+		json_object_object_add(json_obj, BLF_JSON_NODE,	json_object_new_string(node_name));	
+	}
+
+	if(kz_json_get_object(json_obj, BLF_JSON_MSG_ID) == NULL)
+		json_object_object_add(json_obj, BLF_JSON_MSG_ID, json_object_new_string_len(unique->s, unique->len));
 
 }
 
@@ -1261,10 +1265,9 @@ int get_channel_index() {
 int kz_amqp_bind_targeted_channel(kz_amqp_conn_ptr kz_conn, int idx )
 {
     kz_amqp_bind_ptr bind = channels[idx].targeted;
-    amqp_queue_declare_ok_t *r = NULL;
     int ret = -1;
 
-    r = amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
+    amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
     if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		goto error;
@@ -1297,7 +1300,6 @@ int kz_amqp_bind_targeted_channel(kz_amqp_conn_ptr kz_conn, int idx )
 int kz_amqp_bind_targeted_channel_ex(kz_amqp_conn_ptr kz_conn, int loopcount, int idx )
 {
     kz_amqp_bind_ptr bind = NULL;
-    amqp_queue_declare_ok_t *r = NULL;
     str rpl_exch = str_init("targeted");
     str rpl_exch_type = str_init("direct");
     int ret = -1;
@@ -1325,7 +1327,7 @@ int kz_amqp_bind_targeted_channel_ex(kz_amqp_conn_ptr kz_conn, int loopcount, in
 		goto error;
     }
 
-    r = amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
+    amqp_queue_declare(kz_conn->conn, channels[idx].channel, bind->queue, 0, 0, 1, 1, kz_amqp_empty_table);
     if (kz_amqp_error("Declaring queue", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		goto error;
@@ -1738,12 +1740,12 @@ void kz_amqp_manager_loop(int child_no)
 	int INTERNAL_READ_COUNT , INTERNAL_READ_MAX_LOOP;
 	int CONSUMER_READ_COUNT , CONSUMER_READ_MAX_LOOP;
 	int ACK_READ_COUNT , ACK_READ_MAX_LOOP;
-	char* payload;
 	int channel_res;
     kz_amqp_conn_ptr kzconn;
 	kz_amqp_cmd_ptr cmd;
     int loopcount = 0;
     int firstLoop = dbk_consume_messages_on_reconnect;
+    char* payload = NULL;
 
 
     while(1) {
@@ -2114,10 +2116,10 @@ void kz_amqp_consumer_proc(int child_no)
 	close(kz_pipe_fds[child_no*2+1]);
     int i, idx;
 	int OK;
-	char* payload;
 	int channel_res;
     kz_amqp_conn_ptr kzconn;
     kz_amqp_channel_ptr consumer_channels = NULL;
+	char* payload = NULL;
 
     kzconn = (kz_amqp_conn_ptr)pkg_malloc(sizeof(kz_amqp_conn));
     if(kzconn == NULL)

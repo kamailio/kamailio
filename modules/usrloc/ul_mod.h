@@ -39,7 +39,7 @@
  */
 
 
-#define UL_TABLE_VERSION 7
+#define UL_TABLE_VERSION 8
 
 extern str ruid_col;
 extern str user_col;
@@ -61,6 +61,7 @@ extern str reg_id_col;
 extern str srv_id_col;
 extern str con_id_col;
 extern str keepalive_col;
+extern str partition_col;
 extern str last_mod_col;
 
 extern str ulattrs_user_col;

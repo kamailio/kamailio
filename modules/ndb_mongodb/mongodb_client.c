@@ -32,6 +32,7 @@
 #include "../../ut.h"
 
 #include "mongodb_client.h"
+#include "api.h"
 
 static mongodbc_server_t *_mongodbc_srv_list=NULL;
 
@@ -489,3 +490,25 @@ int mongodbc_next_reply(str *name)
 	LM_DBG("next cursor result: [[%s]]\n", (rpl->jsonrpl.s)?rpl->jsonrpl.s:"<null>");
 	return 0;
 }
+
+/**
+ *
+ */
+int bind_ndb_mongodb(ndb_mongodb_api_t* api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	memset(api, 0, sizeof(ndb_mongodb_api_t));
+	api->cmd		= mongodbc_exec;
+	api->cmd_simple	= mongodbc_exec_simple;
+	api->find		= mongodbc_find;
+	api->find_one	= mongodbc_find_one;
+	api->next_reply	= mongodbc_next_reply;
+	api->free_reply	= mongodbc_free_reply;
+
+	return 0;
+}
+

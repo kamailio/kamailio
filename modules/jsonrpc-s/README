@@ -171,7 +171,8 @@ modparam("jsonrpc-s", "transport", 1)
 3.3. fifo_name (str)
 
    The name of the FIFO file to be created for listening and reading
-   external commands.
+   external commands. If the given path is not absolute, the fifo file is
+   created relative to run_dir (global parameter).
 
    Default value is NONE.
 

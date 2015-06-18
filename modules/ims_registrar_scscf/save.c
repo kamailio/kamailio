@@ -472,7 +472,10 @@ void free_ims_subscription_data(ims_subscription *s) {
         shm_free(s->service_profiles);
     if (s->private_identity.s)
         shm_free(s->private_identity.s);
-    lock_release(s->lock);
+    ul.unlock_subscription(s);
+#ifdef EXTRA_DEBUG
+    LM_DBG("SUBSCRIPTION LOCK %p destroyed\n", s->lock);
+#endif
     lock_destroy(s->lock);
     lock_dealloc(s->lock);
     shm_free(s);
@@ -768,10 +771,10 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                 break;
             }
 
-            lock_get(subscription->lock);
+            ul.lock_subscription(subscription);
             subscription->ref_count++;
             LM_DBG("ref count after add is now %d\n", subscription->ref_count);
-            lock_release(subscription->lock);
+            ul.unlock_subscription(subscription);
             ul.unlock_udomain(_d, public_identity);
 
             //now update the implicit set
@@ -810,10 +813,10 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                     ul.unlock_udomain(_d, &pi->public_identity);
                 }
             }
-            lock_get(subscription->lock);
+            ul.lock_subscription(subscription);
             subscription->ref_count--;
             LM_DBG("ref count after sub is now %d\n", subscription->ref_count);
-            lock_release(subscription->lock);
+            ul.unlock_subscription(subscription);
 
             //finally we update the explicit IMPU record with the new data
             ul.lock_udomain(_d, public_identity);
@@ -870,11 +873,10 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
 
             if (!subscription) {
                 LM_WARN("subscription is null..... continuing without de-registering implicit set\n");
-                unlock(subscription->lock);
             } else {
-                lock(subscription->lock);
+                ul.lock_subscription(subscription);
                 subscription->ref_count++; //this is so we can de-reg the implicit set just now without holding the lock on the current IMPU
-                unlock(subscription->lock);
+                ul.unlock_subscription(subscription);
 
                 ul.unlock_udomain(_d, public_identity);
 
@@ -937,9 +939,9 @@ int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
                         ul.unlock_udomain(_d, &pi->public_identity);
                     }
                 }
-                lock(subscription->lock);
+                ul.lock_subscription(subscription);
                 subscription->ref_count--;
-                unlock(subscription->lock);
+                ul.unlock_subscription(subscription);
             }
 
 	    if (ret == 2) {

@@ -895,8 +895,10 @@ modparam("usrloc", "timer_procs", 4)
 	<section id="usrloc.p.xavp_contact">
 		<title><varname>xavp_contact</varname> (string)</title>
 		<para>
-		The name of XAVP storring the attributes per contact. They are saved
-		in location record and restored at lookup.
+		The name of XAVP storing the attributes per contact. They are saved
+		in location record and restored at lookup. The tm module parameter
+		<varname>xavp_contact</varname> must also be set to the same value to use the
+		<varname>t_load_contacts</varname> and <varname>t_next_contacts</varname> functions.
 		</para>
 		<para>
 		<emphasis>
@@ -939,7 +941,8 @@ modparam("usrloc", "db_ops_ruid", 0)
 		<title><varname>handle_lost_tcp</varname> (int)</title>
 		<para>
 			If set to 1, Kamailio will remove location records made via
-			TCP/TLS/WS/WSS transports when it looses corresponding tcp connections.
+			TCP/TLS/WS/WSS transports when it looses corresponding tcp
+            connections.  Does not currently work in DB-Only scheme.
 		</para>
 		<para>
 		<emphasis>

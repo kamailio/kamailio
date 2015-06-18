@@ -1,7 +1,7 @@
 /* 
  * sipcapture module - helper module to capture sip messages
  *
- * Copyright (C) 2011-2014 Alexandr Dubovikov (QSC AG) (alexandr.dubovikov@gmail.com)
+ * Copyright (C) 2011-2015 Alexandr Dubovikov (alexandr.dubovikov@gmail.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -129,9 +129,15 @@ static int sipcapture_init_rpc(void);
 static int child_init(int rank);
 static void destroy(void);
 static int sipcapture_fixup(void** param, int param_no);
-static int sip_capture(struct sip_msg *msg, str *dtable,  _capture_mode_data_t *cm_data);
+static int reportcapture_fixup(void** param, int param_no);
+static int float2int_fixup(void** param, int param_no);
 
+static int sip_capture(struct sip_msg *msg, str *dtable,  _capture_mode_data_t *cm_data);
+static int report_capture(struct sip_msg *msg, str *_table, str* _corr, str *_data);
 static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t * _cm_data, char* s2);
+static int w_report_capture(struct sip_msg* _m, char* _table, char* _corr, char* _data);
+static int w_float2int(struct sip_msg* _m, char* _val, char* _coof, char* s2);
+
 int init_rawsock_children(void);
 int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
@@ -144,6 +150,7 @@ static struct mi_root* sip_capture_mi(struct mi_root* cmd, void* param );
 static str db_url		= str_init(DEFAULT_DB_URL);
 static str table_name		= str_init("sip_capture");
 static str hash_source		= str_init("call_id");
+static str table_time_sufix	= str_init("%Y%m%D");
 static str mt_mode		= str_init("rand");
 static str date_column		= str_init("date");
 static str micro_ts_column 	= str_init("micro_ts");
@@ -241,8 +248,12 @@ struct hep_timehdr* heptime;
  */
 static cmd_export_t cmds[] = {
 	{"sip_capture", (cmd_function)w_sip_capture, 0, 0, 0, ANY_ROUTE},
-	{"sip_capture", (cmd_function)w_sip_capture, 1, sipcapture_fixup, 0, ANY_ROUTE },	                         
+	{"sip_capture", (cmd_function)w_sip_capture, 1, sipcapture_fixup, 0, ANY_ROUTE },	                         	
 	{"sip_capture", (cmd_function)w_sip_capture, 2, sipcapture_fixup, 0, ANY_ROUTE },
+	{"report_capture", (cmd_function)w_report_capture, 1, reportcapture_fixup, 0, ANY_ROUTE },	                         
+	{"report_capture", (cmd_function)w_report_capture, 2, reportcapture_fixup, 0, ANY_ROUTE },	                         
+	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },	                         
+	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0, ANY_ROUTE },	                         
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -308,9 +319,10 @@ static param_export_t params[] = {
         {"raw_moni_bpf_on",  		INT_PARAM, &bpf_on   },		
         {"callid_aleg_header",          PARAM_STR, &callid_aleg_header},
         {"capture_mode",		PARAM_STRING|USE_FUNC_PARAM, (void *)capture_mode_param},
-    {"insert_retries",   	INT_PARAM, &insert_retries },
-    {"insert_retry_timeout",INT_PARAM, &insert_retry_timeout },
-		{0, 0, 0}
+        {"insert_retries",   		INT_PARAM, &insert_retries },
+        {"insert_retry_timeout",	INT_PARAM, &insert_retry_timeout },
+        {"table_time_sufix",		PARAM_STR, &table_time_sufix },
+	{0, 0, 0}
 };
 
 
@@ -906,6 +918,62 @@ static int sipcapture_fixup(void** param, int param_no)
         
         return 0;
 } 
+
+static int reportcapture_fixup(void** param, int param_no)
+{
+
+        if (param_no == 1 ) {
+                return fixup_var_pve_str_12(param, 1);
+        }
+        if (param_no == 2 ){
+                return fixup_var_pve_str_12(param, 1);
+        }
+        if (param_no == 3 ){
+                return fixup_var_pve_str_12(param, 1);
+        }
+        
+        return 0;
+} 
+
+static int float2int_fixup(void** param, int param_no)
+{
+
+        if (param_no == 1 ) {
+                return fixup_var_pve_str_12(param, 1);
+        }
+        if (param_no == 2 ){
+                return fixup_var_pve_str_12(param, 1);
+        }
+        
+        return 0;
+} 
+
+
+
+static int w_float2int(struct sip_msg* _m, char* _val, char* _coof, char* s2)
+{
+        str value = {0};
+        str coof = {0};
+        int ret = 0;
+  
+        if(_val!=NULL && (get_str_fparam(&value, _m, (fparam_t*)_val) < 0))
+        {
+                LM_ERR("invalid table parameter [%s] [%s]\n", _val, value.s);
+                return -1;
+        }
+        
+        if(_coof!=NULL && (get_str_fparam(&coof, _m, (fparam_t*)_coof) < 0))
+        {
+                LM_ERR("invalid data parameter [%s] [%s]\n", _coof, coof.s);
+                return -1;
+        }
+
+        ret = (int) (atof (value.s) * atoi(coof.s));
+
+        return  ret ? ret : -1;
+}
+
+
    
 static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t * cm_data, char* s2)
 {
@@ -919,6 +987,40 @@ static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t 
 
         return sip_capture(_m, (table.len>0)?&table:NULL, cm_data );
 }
+
+static int w_report_capture(struct sip_msg* _m, char* _table, char* _corr, char* _data)
+{
+        str table = {0};
+        str corr = {0};
+        str data = {0};
+        
+        if(_table!=NULL && (get_str_fparam(&table, _m, (fparam_t*)_table) < 0))
+        {
+                LM_ERR("invalid table parameter [%s] [%s]\n", _table, table.s);
+                return -1;
+        }
+        
+        if(_corr!=NULL && (get_str_fparam(&corr, _m, (fparam_t*)_corr) < 0))
+        {
+                LM_ERR("invalid corr parameter [%s] [%s]\n", _corr, corr.s);
+                return -1;
+        }
+        
+        if(_data!=NULL && (get_str_fparam(&data, _m, (fparam_t*)_data) < 0))
+        {
+
+        
+                LM_ERR("invalid data parameter [%s] [%s]\n", _data, data.s);
+                return -1;
+        }
+        
+        /* workaround for data function */
+        if(data.len > 0 && !strncmp(data.s, "report_capture", data.len)) data.len = 0;
+        
+        return report_capture(_m, (table.len>0)?&table:NULL, (corr.len>0)?&corr:NULL ,(data.len>0)?&data:NULL );        
+        
+}
+
 
 
 int extract_host_port(void)
@@ -1026,7 +1128,7 @@ static void destroy(void)
 	c = capture_modes_root;
 
 	while (c){
-		c0 = c;
+		c0 = c->next;
 		if (c->name.s){
 			pkg_free(c->name.s);
 		}
@@ -1041,7 +1143,7 @@ static void destroy(void)
 		}
 
 		pkg_free(c);
-		c = c0->next;
+		c = c0;
 	}
 
 	if (capture_on_flag)
@@ -1085,15 +1187,19 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 
-	str tmp, corrtmp;
+	str tmp, corrtmp, ntab;
 	int ii = 0;
 	int ret = 0;
 	int counter = 0;
 	db_insert_f insert;
 	time_t retry_failed_time = 0;
-
+	struct tm capt_ts;
+ 
+	/* new */
 	str *table = NULL;
 	_capture_mode_data_t *c = NULL;
+	char strftime_buf[128];	        
+	time_t tvsec_;
 
 	c = (cm_data)? cm_data:capture_def;
 	if (!c){
@@ -1115,7 +1221,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_keys[0] = &date_column;
 	db_vals[0].type = DB1_DATETIME;
 	db_vals[0].nul = 0;
-	db_vals[0].val.time_val = time(NULL);
+	db_vals[0].val.time_val = (sco->tmstamp/1000000);
 	
 	db_keys[1] = &micro_ts_column;
         db_vals[1].type = DB1_BIGINT;
@@ -1304,8 +1410,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 
 	if (dtable){
 		table = dtable;
-	}
-
+        }
 	else if (c->no_tables > 0 ){
 
 		if ( c->mtmode == mode_hash ){
@@ -1329,10 +1434,24 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 		}
 		table = &c->table_names[ii];
 	}
+	else {
+	        table = &table_name;
+	}
 
+	tvsec_ = (time_t) (sco->tmstamp/1000000);        		
+	if(gmtime_r( &tvsec_, &capt_ts) == NULL)
+        {
+                LM_ERR("unable to set time to attributes\n");
+                return -1;
+        }
+
+    	ntab.len = strftime(strftime_buf, sizeof(strftime_buf), table->s,  &capt_ts);
+        ntab.s = strftime_buf;
+
+        table = &ntab;
 
 	/* check dynamic table */
-	LM_DBG("insert into homer table: [%.*s]\n", table->len, table->s);
+	LM_DBG("insert into homer table [1]: [%.*s]\n", table->len, table->s);
 	c->db_funcs.use_table(c->db_con, table);
 
 	LM_DBG("storing info...\n");
@@ -2064,6 +2183,11 @@ int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_re
 		LM_ERR("no connection mode available to store data\n");
 		return -1;
 	}
+	
+	if(!correlation_id || strlen(correlation_id) == 0) {
+	        LM_ERR("no correlation id defined\n");
+		return -1;
+        }	
 
 	memset(&sco, 0, sizeof(struct _sipcapture_object));
 	gettimeofday( &tvb, &tz );
@@ -2084,6 +2208,13 @@ int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_re
         	inet_ntop(AF_INET, &(hg->hep_src_ip4->data), ipstr_src, INET_ADDRSTRLEN);
         	inet_ntop(AF_INET, &(hg->hep_dst_ip4->data), ipstr_dst, INET_ADDRSTRLEN);
 	}
+
+
+	 /* type of proto */
+        if (hg->proto_t->data == 5) sco.type = 1;
+        else if (hg->proto_t->data == 32) sco.type = 2;
+        else if (hg->proto_t->data == 99) sco.type = 1;
+        else if (hg->proto_t->data == 100) sco.type = 1;
 
 
         /*source ip*/
@@ -2199,4 +2330,174 @@ error:
 	return -1;
 }
 
+static int report_capture(struct sip_msg *msg, str *_table, str* _corr,  str *_data)
+{
+	struct _sipcapture_object sco;
+	db_key_t db_keys[RTCP_NR_KEYS];
+	db_val_t db_vals[RTCP_NR_KEYS];	                        	        
+	char buf_ip[IP_ADDR_MAX_STR_SIZE+12];
+	struct timeval tvb;
+        struct timezone tz;
+        char tmp_node[100];
+        time_t epoch_time_as_time_t;
+        str corrtmp, tmp;
+                        
+	
+	_capture_mode_data_t *c = NULL;
+	c = capture_def;
+	if (!c){
+	        LM_ERR("no connection mode available to store data\n");
+	        return -1;
+        }
+	                                                          
+	                                          
+	LM_DBG("CAPTURE DEBUG...\n");
+
+	gettimeofday( &tvb, &tz );	        
+
+	if(msg==NULL) {
+		LM_DBG("nothing to capture\n");
+		return -1;
+	}
+	memset(&sco, 0, sizeof(struct _sipcapture_object));
+
+	if(capture_on_flag==NULL || *capture_on_flag==0) {
+		LM_DBG("capture off...\n");
+		return -1;
+	}
+
+	sco.proto = msg->rcv.proto;
+		
+	/* FAMILY TYPE */
+	sco.family = msg->rcv.src_ip.af;
+	
+	/* MESSAGE TYPE */
+	sco.type = msg->first_line.type;
+	
+	/* MSG */	
+	sco.msg.s = msg->buf;
+	sco.msg.len = msg->len;	        
+	//EMPTY_STR(sco.msg);
+                 
+	/* IP source and destination */
+	
+	strcpy(buf_ip, ip_addr2a(&msg->rcv.src_ip));
+	sco.source_ip.s = buf_ip;
+	sco.source_ip.len = strlen(buf_ip);
+        sco.source_port = msg->rcv.src_port;	
+
+        /*source ip*/
+	sco.destination_ip.s = ip_addr2a(&msg->rcv.dst_ip);
+	sco.destination_ip.len = strlen(sco.destination_ip.s);
+	sco.destination_port = msg->rcv.dst_port;
+
+			
+	if(heptime && heptime->tv_sec != 0) {
+               sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
+               snprintf(tmp_node, 100, "%.*s:%i", capture_node.len, capture_node.s, heptime->captid);
+               sco.node.s = tmp_node;
+               sco.node.len = strlen(tmp_node);
+               epoch_time_as_time_t = heptime->tv_sec;;
+        }
+        else {
+               sco.tmstamp = (unsigned long long)tvb.tv_sec*1000000+tvb.tv_usec; /* micro ts */
+               sco.node = capture_node;
+               epoch_time_as_time_t = tvb.tv_sec;
+        }
+
+        if(_corr && _corr->len > 0) {
+                 corrtmp.s = _corr->s;
+                 corrtmp.len = _corr->len;
+        }
+        else if(correlation_id) {
+                corrtmp.s = correlation_id;
+                corrtmp.len = strlen(correlation_id);
+                if(!strncmp(_table->s, "rtcp_capture",12)) corrtmp.len--;
+        }
+
+	db_keys[0] = &date_column;
+	db_vals[0].type = DB1_DATETIME;
+	db_vals[0].nul = 0;
+	db_vals[0].val.time_val = epoch_time_as_time_t;
+	
+	db_keys[1] = &micro_ts_column;
+        db_vals[1].type = DB1_BIGINT;
+        db_vals[1].nul = 0;
+        db_vals[1].val.ll_val = sco.tmstamp;
+	
+	db_keys[2] = &correlation_column;
+	db_vals[2].type = DB1_STR;
+	db_vals[2].nul = 0;
+	db_vals[2].val.str_val = corrtmp;
+	
+	db_keys[3] = &source_ip_column;
+	db_vals[3].type = DB1_STR;
+	db_vals[3].nul = 0;
+	db_vals[3].val.str_val = sco.source_ip;
+	
+	db_keys[4] = &source_port_column;
+        db_vals[4].type = DB1_INT;
+        db_vals[4].nul = 0;
+        db_vals[4].val.int_val = sco.source_port;
+        
+	db_keys[5] = &dest_ip_column;
+	db_vals[5].type = DB1_STR;
+	db_vals[5].nul = 0;
+	db_vals[5].val.str_val = sco.destination_ip;
+	
+	db_keys[6] = &dest_port_column;
+        db_vals[6].type = DB1_INT;
+        db_vals[6].nul = 0;
+        db_vals[6].val.int_val = sco.destination_port;        
+        
+        db_keys[7] = &proto_column;			
+        db_vals[7].type = DB1_INT;
+        db_vals[7].nul = 0;
+        db_vals[7].val.int_val = sco.proto;        
+
+        db_keys[8] = &family_column;			
+        db_vals[8].type = DB1_INT;
+        db_vals[8].nul = 0;
+        db_vals[8].val.int_val = sco.family;        
+        
+        db_keys[9] = &type_column;			
+        db_vals[9].type = DB1_INT;
+        db_vals[9].nul = 0;
+        db_vals[9].val.int_val = sco.type;                
+
+	db_keys[10] = &node_column;
+	db_vals[10].type = DB1_STR;
+	db_vals[10].nul = 0;
+	db_vals[10].val.str_val = sco.node;
+	
+	db_keys[11] = &msg_column;
+	db_vals[11].type = DB1_BLOB;
+	db_vals[11].nul = 0;
+
+	if(_data && _data->len > 0) 
+	{
+	        tmp.s = _data->s;
+        	tmp.len = _data->len;	
+	}	
+	else {
+	        /* MSG */
+	        tmp.s = msg->buf;
+	        tmp.len = msg->len;
+        }
+	
+	db_vals[11].val.blob_val = tmp;
+
+	c->db_funcs.use_table(c->db_con, _table);
+
+	if (c->db_funcs.insert(c->db_con, db_keys, db_vals, RTCP_NR_KEYS) < 0) {
+		LM_ERR("failed to insert into database\n");
+                goto error;               
+	}
+
+	return 1;
+
+error:
+        return -1;
+                        
+}
 

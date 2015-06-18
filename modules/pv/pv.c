@@ -68,6 +68,9 @@ static pv_export_t mod_pvs[] = {
 	{ {"branch", sizeof("branch")-1}, /* branch attributes */
 		PVT_CONTEXT, pv_get_branchx, pv_set_branchx,
 		pv_parse_branchx_name, pv_parse_index, 0, 0 },
+	{ {"sbranch", sizeof("sbranch")-1}, /* static branch attributes */
+		PVT_CONTEXT, pv_get_sbranch, pv_set_sbranch,
+		pv_parse_branchx_name, 0, 0, 0 },
 	{ {"mi", (sizeof("mi")-1)}, /* message id */
 		PVT_OTHER, pv_get_msgid, 0,
 		0, 0, 0, 0},
@@ -475,6 +478,11 @@ static int pv_unset(struct sip_msg* msg, char* pvid, char *foo);
 static int is_int(struct sip_msg* msg, char* pvar, char* s2);
 static int pv_typeof(sip_msg_t *msg, char *pv, char *t);
 static int pv_not_empty(sip_msg_t *msg, char *pv, char *s2);
+static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
+static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2);
+static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
+static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
+
 static int pv_init_rpc(void);
 
 static cmd_export_t cmds[]={
@@ -494,6 +502,15 @@ static cmd_export_t cmds[]={
 	{"not_empty", (cmd_function)pv_not_empty, 1, fixup_pvar_null,
 		fixup_free_pvar_null,
 		ANY_ROUTE},
+	{"xavp_params_explode", (cmd_function)w_xavp_params_explode,
+		2, fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
+		ANY_ROUTE },
+	{"sbranch_append",    (cmd_function)w_sbranch_append,    0, 0, 0,
+		ANY_ROUTE },
+	{"sbranch_reset",     (cmd_function)w_sbranch_reset,     0, 0, 0,
+		ANY_ROUTE },
 
 	{0,0,0,0,0,0}
 };
@@ -524,10 +541,11 @@ static int mod_init(void)
 		return -1;
 	}
 	if(pv_init_rpc()!=0)
-        {
-                LM_ERR("failed to register RPC commands\n");
-                return -1;
-        }
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+    }
+	pv_init_sbranch();
 
 	return 0;
 }
@@ -661,6 +679,59 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2)
 	}
 
 	return -1;
+}
+
+/**
+ *
+ */
+static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname)
+{
+	str sparams;
+	str sxname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pparams, &sparams)!=0) {
+		LM_ERR("cannot get the params\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pxname, &sxname)!=0) {
+		LM_ERR("cannot get the xavp name\n");
+		return -1;
+	}
+
+	if(xavp_params_explode(&sparams, &sxname)<0)
+		return -1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2)
+{
+	if(sbranch_set_ruri(msg)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2)
+{
+	if(sbranch_append(msg)<0)
+		return -1;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2)
+{
+	if(sbranch_reset()<0)
+		return -1;
+	return 1;
 }
 
 static const char* rpc_shv_set_doc[2] = {

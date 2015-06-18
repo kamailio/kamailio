@@ -64,6 +64,8 @@ static void* shm_mempool=(void*)-1;
 	struct fm_block* shm_block;
 #elif DL_MALLOC
 	mspace shm_block;
+#elif TLSF_MALLOC
+	tlsf_t shm_block;
 #else
 	struct qm_block* shm_block;
 #endif
@@ -254,5 +256,13 @@ void shm_mem_destroy(void)
 #endif
 }
 
+unsigned long shm_available_safe()
+{
+	unsigned long ret;
+	shm_lock();
+	ret = shm_available();
+	shm_unlock();
+	return ret;
+}
 
 #endif

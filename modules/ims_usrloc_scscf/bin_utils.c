@@ -898,8 +898,18 @@ ims_subscription *bin_decode_ims_subscription(bin_data *x)
 		if (!bin_decode_service_profile(x,imss->service_profiles+i)) goto error;
 
 	imss->lock = lock_alloc();
-	imss->lock = lock_init(imss->lock);
+	if (imss->lock==0){
+		goto error;
+	}
+	if (lock_init(imss->lock)==0){
+		lock_dealloc(imss->lock);
+		imss->lock=0;
+		goto error;
+	}
 	imss->ref_count = 1;
+#ifdef EXTRA_DEBUG
+    	LM_DBG("LOCK CREATED FOR SUBSCRIPTION [%.*s]: %p\n", imss->private_identity.len, imss->private_identity.s, imss->lock);
+#endif
 
 	return imss;
 error:

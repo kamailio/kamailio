@@ -55,10 +55,10 @@ void destroy_log(void) {
 
 
 
-void log_stdout(char * format, va_list ap)
+void log_stderr(char * format, va_list ap)
 {
-	vfprintf(stdout, format, ap);
-	fflush(stdout);
+	vfprintf(stderr, format, ap);
+	fflush(stderr);
 }
 
 
@@ -70,7 +70,7 @@ void pdb_log(int priority, char * format, ...) {
 	if (priority<=log_level) {
 		va_start(ap, format);
 		if (use_syslog) vsyslog(priority, format, ap);
-		else log_stdout(format, ap);
+		else log_stderr(format, ap);
 		va_end(ap);
 	}
 }

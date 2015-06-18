@@ -119,7 +119,6 @@ get_prefix(
 {
 	rt_info_t *rt = NULL;
 	char *tmp=NULL;
-	char local=0;
 	int idx=0;
 
 	if(NULL == ptree)
@@ -132,8 +131,8 @@ get_prefix(
 	while(tmp< (prefix->s+prefix->len)) {
 		if(NULL == tmp)
 			goto err_exit;
-		local=*tmp;
-		if( !IS_DECIMAL_DIGIT(local) ) {
+		idx = get_node_index(*tmp);
+		if (idx == -1){
 			/* unknown character in the prefix string */
 			goto err_exit;
 		}
@@ -141,7 +140,6 @@ get_prefix(
 			/* last digit in the prefix string */
 			break;
 		}
-		idx = local -'0';
 		if( NULL == ptree->ptnode[idx].next) {
 			/* this is a leaf */
 			break;
@@ -155,7 +153,7 @@ get_prefix(
 		if(NULL == tmp)
 			goto err_exit;
 		/* is it a real node or an intermediate one */
-		idx = *tmp-'0';
+		idx = get_node_index(*tmp);
 		if(NULL != ptree->ptnode[idx].rg) {
 			/* real node; check the constraints on the routing info*/
 			if( NULL != (rt = internal_check_rt( &(ptree->ptnode[idx]), rgid)))
@@ -206,34 +204,36 @@ add_prefix(
 	while(tmp < (prefix->s+prefix->len)) {
 		if(NULL == tmp)
 			goto err_exit;
-		if( !IS_DECIMAL_DIGIT(*tmp) ) {
+		int insert_index = get_node_index(*tmp);
+		if (insert_index == -1){
 			/* unknown character in the prefix string */
 			goto err_exit;
 		}
 		if( tmp == (prefix->s+prefix->len-1) ) {
-			/* last digit in the prefix string */
+			/* last symbol in the prefix string */
+			
 			LM_DBG("adding info %p, %d at: "
-				"%p (%d)\n", r, rg, &(ptree->ptnode[*tmp-'0']), *tmp-'0');
-			res = add_rt_info(&(ptree->ptnode[*tmp-'0']), r,rg);
+				"%p (%d)\n", r, rg, &(ptree->ptnode[insert_index]), insert_index);
+			res = add_rt_info(&(ptree->ptnode[insert_index]), r,rg);
 			if(res < 0 )
 				goto err_exit;
 			unode++;
 			res = 1;
 			goto ok_exit;
 		}
-		/* process the current digit in the prefix */
-		if(NULL == ptree->ptnode[*tmp - '0'].next) {
+		/* process the current symbol in the prefix */
+		if(NULL == ptree->ptnode[insert_index].next) {
 			/* allocate new node */
-			INIT_PTREE_NODE(ptree, ptree->ptnode[*tmp - '0'].next);
-			inode+=10;
+			INIT_PTREE_NODE(ptree, ptree->ptnode[insert_index].next);
+			inode+=PTREE_CHILDREN;
 #if 0
 			printf("new tree node: %p (bp: %p)\n", 
-					ptree->ptnode[*tmp - '0'].next,
-					ptree->ptnode[*tmp - '0'].next->bp
+					ptree->ptnode[insert_index].next,
+					ptree->ptnode[insert_index].next->bp
 					);
 #endif
 		}
-		ptree = ptree->ptnode[*tmp-'0'].next;
+		ptree = ptree->ptnode[insert_index].next;
 		tmp++; 
 	}
 
@@ -317,4 +317,33 @@ print_rt(
 				rt->pgwl[i].pgw->id, 
 				rt->pgwl[i].pgw->pri.len, rt->pgwl[i].pgw->pri.s,
 				rt->pgwl[i].pgw->ip.len, rt->pgwl[i].pgw->ip.s);
+}
+
+
+int
+get_node_index(
+		char ch
+		)
+{
+	switch (ch)
+	{
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			return ch - '0';
+		case '*':
+			return 10;
+		case '#':
+			return 11;
+		case '+':
+			return 12;
+	}
+	return -1;
 }

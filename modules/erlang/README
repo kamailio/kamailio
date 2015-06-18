@@ -1,0 +1,852 @@
+ERLANG Module
+
+Seudin Kasumovic
+
+   <seudin.kasumovic@gmail.com>
+
+Edited by
+
+Seudin Kasumovic
+
+   <seudin.kasumovic@gmail.com>
+
+   Copyright © 2015 Bicom Systems Ltd.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. no_cnodes (int)
+              3.2. cnode_alivename (str)
+              3.3. cnode_host (str)
+              3.4. erlang_nodename (str)
+              3.5. cookie (str)
+              3.6. trace_level (int)
+              3.7. rpc_reply_with_struct (int)
+
+        4. Exported pseudo variables
+
+              4.1. Overview
+              4.2. Attributes
+              4.3. $erl_atom(name)
+              4.4. $erl_list(name)
+              4.5. $erl_tuple(name)
+              4.6. $erl_pid(name)
+              4.7. $erl_ref(name)
+              4.8. $erl_xbuff(name)
+
+        5. Functions
+
+              5.1. erl_rpc(mod,fun,args,reply)
+              5.2. erl_reg_send(server,msg)
+              5.3. erl_send(pid,msg)
+              5.4. erl_reply(msg)
+
+        6. Event routes
+
+              6.1. Registered pseudo process
+              6.2. event_route[erlang:self]
+
+   2. Using Kamailio from Erlang
+
+        1. RPC calls from Erlang
+
+   3. Developer Guide
+
+        1. Available Functions
+
+              1.1. erl_load_api(erl_api)
+              1.2. rpc(reply,module,function,args)
+              1.3. reg_send(server,msg)
+              1.4. send(pid,msg)
+              1.5. reply(msg)
+              1.6. xavp2xbuff(xbuff,xavp)
+              1.7. xbuff2xavp(xavp,xbuff)
+
+   List of Examples
+
+   1.1. Set no_cnodes parameter
+   1.2. Set cnode_alivename parameter
+   1.3. Set cnode_host parameter
+   1.4. Set erlang_nodename parameter
+   1.5. Set cookie parameter
+   1.6. Set trace_level parameter
+   1.7. Example of using attribute length
+   1.8. Example of using attributes type and format
+   1.9. Example set and print to log $erl_atom
+   1.10. Example of using $erl_list
+   1.11. Example of using erl_tuple
+   1.12. Example of using $erl_pid
+   1.13. Example of using erl_ref
+   1.14. Example of using $erl_xbuff
+   1.15. Example of using erl_rpc
+   1.16. Example of using erl_reg_send
+   1.17. Example of using erl_send
+   1.18. Example of use erl_reply
+   1.19. Example of registered process
+   1.20. Example of using default event route
+   2.1. Example of RPC call from erlang shell with no response
+   2.2. Example, check is line registered
+   2.3. Example get config variable
+   2.4. Example get dialog statistics
+   3.1. Example of using API
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. no_cnodes (int)
+        3.2. cnode_alivename (str)
+        3.3. cnode_host (str)
+        3.4. erlang_nodename (str)
+        3.5. cookie (str)
+        3.6. trace_level (int)
+        3.7. rpc_reply_with_struct (int)
+
+   4. Exported pseudo variables
+
+        4.1. Overview
+        4.2. Attributes
+        4.3. $erl_atom(name)
+        4.4. $erl_list(name)
+        4.5. $erl_tuple(name)
+        4.6. $erl_pid(name)
+        4.7. $erl_ref(name)
+        4.8. $erl_xbuff(name)
+
+   5. Functions
+
+        5.1. erl_rpc(mod,fun,args,reply)
+        5.2. erl_reg_send(server,msg)
+        5.3. erl_send(pid,msg)
+        5.4. erl_reply(msg)
+
+   6. Event routes
+
+        6.1. Registered pseudo process
+        6.2. event_route[erlang:self]
+
+1. Overview
+
+   Erlang is a general-purpose programming language and runtime
+   environment. Erlang has built-in support for concurrency, distribution
+   and fault tolerance. This module provides interact with Erlang node.
+   The module allows sending, receiving Erlang messages and RPC calls
+   between each other.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * ei - Erlang interface C library.
+       The routines for handling the Erlang binary term format and
+       communicate with with distributed Erlang. For more details see
+       Erlang Interface Reference Manual
+     * epmd - Erlang Port Mapper Daemon.
+       This daemon acts as a name server on all hosts involved in
+       distributed Erlang computations. For more details see Erlang Port
+       Mapper Daemon Manual.
+
+   epmd must running on the same host where Kamailio is running. Erlang
+   does not need to be installed on the same host where Kamailio is
+   running.
+
+3. Parameters
+
+   3.1. no_cnodes (int)
+   3.2. cnode_alivename (str)
+   3.3. cnode_host (str)
+   3.4. erlang_nodename (str)
+   3.5. cookie (str)
+   3.6. trace_level (int)
+   3.7. rpc_reply_with_struct (int)
+
+3.1. no_cnodes (int)
+
+   Number of erlang C node processes to be started to handle the
+   communication tasks. A C node is a C program written to act as a hidden
+   node in a distributed Erlang system.
+
+   Default value is 1.
+
+   Example 1.1. Set no_cnodes parameter
+...
+modparam("erlang", "no_cnodes", 2)
+...
+
+3.2. cnode_alivename (str)
+
+   alivename is the registered name of the Kamailio process.
+
+   Note, if the no_cnodes greater then 1, then alivename of Kamailio
+   process will be suffixed with number.
+
+   Example 1.2. Set cnode_alivename parameter
+...
+modparam("erlang", "cnode_alivename", "proxy")
+...
+
+3.3. cnode_host (str)
+
+   C node host is the name of the machine we're running on. If long names
+   are to be used, it should be fully qualified.
+
+   Example 1.3. Set cnode_host parameter
+...
+modparam("erlang", "cnode_host", "kamailio.lan")
+...
+
+3.4. erlang_nodename (str)
+
+   The format of the node name is an name@host where name is the name
+   given by the user and host is the full host name if long names are
+   used, or the first part of the host name if short names are used.
+
+   Example 1.4. Set erlang_nodename parameter
+...
+modparam("erlang", "erlang_nodename", "node1@erlang.lan")
+...
+
+3.5. cookie (str)
+
+   Each node has its own magic cookie. When a nodes tries to connect to
+   another node, the magic cookies are compared If they do not match, the
+   connected node rejects the connection.
+
+   Example 1.5. Set cookie parameter
+...
+modparam("erlang", "cookie", "secretcookie")
+...
+
+3.6. trace_level (int)
+
+   Used to set tracing on the distribution. The parameter is different
+   verbosity level. A higher level means more information. Useful in
+   development, but in production should be disabled.
+
+   The different tracelevels has the following messages:
+    1. Verbose error messages
+    2. Above messages and verbose warning messages
+    3. Above messages and progress reports for connection handling
+    4. Above messages and progress reports for communication
+    5. Above messages and progress reports for data conversion
+
+   Default value is 0, no verbose is set. To see trace log on stdout,
+   Kamailio must be started with -E option.
+
+   Example 1.6. Set trace_level parameter
+...
+modparam("erlang", "trace_level", 5)
+...
+
+3.7. rpc_reply_with_struct (int)
+
+   Prepend Erlang atom struct in RPC Kamailio reply where RPC struct is
+   generated. Some libraries for converting erlang term in JSON require
+   atom struct as first element in tuple to convert list of properties
+   into javscript object.
+   Default value is 0 (disabled).
+
+4. Exported pseudo variables
+
+   4.1. Overview
+   4.2. Attributes
+   4.3. $erl_atom(name)
+   4.4. $erl_list(name)
+   4.5. $erl_tuple(name)
+   4.6. $erl_pid(name)
+   4.7. $erl_ref(name)
+   4.8. $erl_xbuff(name)
+
+4.1. Overview
+
+   Erlang provides a number of data types but not all of them are
+   supported by Kamailio. This module provides several of them as pseudo
+   variables. These pseudo variables allow user to create Erlang message
+   or function arguments and receive result from Erlang node. Some Erlang
+   variables can contain other data types, so we introduced several
+   attributes to determine type, length, or get formatted output useful
+   for debug, quick compare or put into the log.
+
+4.2. Attributes
+
+   Exported pseudo variable has several attributes to get type, length and
+   formatted output readable by transformations or user. Pseudo variable
+   by self determine variable type, but we need to know what type on some
+   position is.
+     * type
+       get variable type. Possible types are: atom, integer, list, string,
+       tuple, pid and ref.
+     * length
+       get length of list or tuple.
+     * format
+       Prints a term, in clear text. It tries to resemble the term
+       printing in the Erlang shell.
+
+   Example 1.7. Example of using attribute length
+...
+xlogl("L_DEBUG","The number of elements in list L: $erl_list(L=>length)\n");
+xlogl("L_DEBUG","The number of elements in tuple T: $erl_tuple(T=>length)\n");
+...
+
+> example of log output:
+
+DEBUG: <script>: 120:The number of elements in list L: 4
+DEBUG: <script>: 121:The number of elements in tuple T: 2
+...
+
+   Example 1.8. Example of using attributes type and format
+...
+xlogl("L_DEBUG","list L in clear text: $erl_list(L=>format), the type at index 2
+: $erl_list(L[2]=>type)\n");
+xlogl("L_DEBUG","tuple T in clear text: $erltuple(T=>format), the type at index
+1: $erl_tuple[T[1]=>type)\n");
+...
+
+> example of log output:
+
+DEBUG: <script>: 130:list L in clear text: [example, list, 4, "items"], the type
+ at index 2: integer
+DEBUG: <script>: 131:tuple T in clear text: {example, tuple}, the type at index
+1: atom
+...
+
+4.3. $erl_atom(name)
+
+   erl_atom pseudo variable allows create analog to Erlang atom data type.
+   Erlang atom is a literal, a constant with name. Formatted output pseudo
+   variable atom could be enclosed in single quotes (') if it does not
+   begin with a lower-case letter or if it contains other characters than
+   alphanumeric characters, underscore (_), or @.
+
+   Example 1.9. Example set and print to log $erl_atom
+...
+$erl_atom(A) = "badrpc";
+xlogl("L_DEBUG","$$erl_atom(A): $erl_atom(A=>format)\n");
+...
+
+> log output is:
+
+DEBUG: <script>: 123:$erl_atom(A): badrpc
+...
+
+4.4. $erl_list(name)
+
+   Compound data type with a variable number of terms. Formally, a list is
+   either the empty list [] or consists of one or more elements.
+
+   Behavior of the list is the same as AVP variable. Set value without
+   index prepends element on list. You are able to replace element at
+   given index. List supports [*] index to get whole list or reset all
+   elements in the list. To create empty list set whole list to $null.
+
+   Example 1.10. Example of using $erl_list
+...
+$erl_atom(E) = "example";
+$erl_list(L) = "list";
+$erl_list(L) = "of";
+$erl_list(L) = $erl_atom(E);
+
+xlogl("L_DEBUG","length(L): $erl_list(L=>length), format(L): $erl_list(L=>format
+)\n");
+
+# empty list
+$erl_tuple(E[*]) = $null;
+
+xlogl("L_DEBUG","length(E): $erl_list(E=>length), format(E): $erl_list(L=>format
+)\n");
+...
+
+> log output is:
+
+DEBUG: <script>: 143:length(L): 3, format(L): [example, "of", "list"]
+DEBUG: <script>: 148:length(E): 0, format(E): []
+...
+
+4.5. $erl_tuple(name)
+
+   From the Erlang point of view the tuple compound data type with a fixed
+   number of terms. The module implementation of tuple has the same
+   behavior as the list.
+
+   Example 1.11. Example of using erl_tuple
+...
+$erl_atom(line) = "line";
+$erl_atom(id)   = "id";
+$erl_atom(owner)= "owner";
+
+$var(user)  = "Bob";
+
+$erl_tuple(owner) = $var(user);
+$erl_tuple(owner) = $erl_atom(owner);
+
+$erl_tuple(id) = 23;
+$erl_tuple(id) = $erl_atom(id);
+
+$erl_list(L) = $erl_tuple(owner);
+$erl_list(L) = $erl_tuple(id);
+
+$erl_tuple(T) = $erl_list(L);
+$erl_tuple(T) = $erl_atom(line);
+
+xlogl("L_DEBUG","length(T): $erl_tuple(T=>length), format(T): $erl_tuple(T=>form
+at)\n");
+...
+
+> log output is:
+...
+DEBUG: <script>: 153:length(T): 2, format(T): {line, [{id, 23}, {owner, "Bob"}]}
+...
+
+4.6. $erl_pid(name)
+
+   erl_pid holds Eralng process identifier. Provides access to Erlang PID
+   value and could be used in send message.
+
+   Example 1.12. Example of using $erl_pid
+...
+if ($erl_xbuff(msg[0]=>type) == "pid") {
+        $erl_pid(pid) = $erl_xbuff(msg[0]);
+        xlogl("L_INFO","Received PID: $erl_pid(pid=>format)\n");
+}
+...
+
+4.7. $erl_ref(name)
+
+   erl_ref holds Erlang reference. Provides access to reference value and
+   could be used in send message.
+
+   Example 1.13. Example of using erl_ref
+...
+if ($erl_xbuff(msg[0]=>type) == "ref") {
+        $erl_ref(ref) = $erl_xbuff(msg[0]);
+        xlogl("L_INFO","Reference: $erl_ref(ref=>format)\n");
+}
+...
+
+4.8. $erl_xbuff(name)
+
+   erl_xbuff is created as generic pseudo variable to acts as other pseudo
+   variables exported from module. It's useful when in advance we don't
+   know what variable type to expect. The behavior of variable depends of
+   initialization. Module functions expect this PV as return value, and PV
+   for incoming Erlang message.
+
+   Example 1.14. Example of using $erl_xbuff
+...
+# Tuple T from previous example
+
+$erl_xbuff(X) = $erl_tuple(T);
+
+xlogl("L_DEBUG","typeof(X): $erl_xbuff(X=>type), length(X): $erl_xbuff(X=>length
+), format(X): $erl_xbuff(X=>format)\n");
+...
+
+> log output is:
+...
+DEBUG: <script>: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{id, 23}
+, {owner, "Bob"}]}
+...
+
+5. Functions
+
+   5.1. erl_rpc(mod,fun,args,reply)
+   5.2. erl_reg_send(server,msg)
+   5.3. erl_send(pid,msg)
+   5.4. erl_reply(msg)
+
+5.1.  erl_rpc(mod,fun,args,reply)
+
+   This function supports calling Erlang functions on remote nodes.
+
+   The parameter mod and fun are module and function name respectively. It
+   can be a static string or a dynamic string value with config variables.
+
+   The parameter args is list of arguments passed to function, so it must
+   be list, or xbuff that contains list.
+
+   The parameter reply is result from RPC call. It must be xbuff to accept
+   any result.
+
+   Function returns false on error to send or wrong arguments passed to
+   function. If executing remote function caused error function still
+   returns true but error is encoded into repl parameter.
+
+   Example 1.15. Example of using erl_rpc
+...
+# example of call erlang:list_to_tuple(["one","two"])
+# on remote node
+
+$erl_list(L) = "two";
+$erl_list(L) = "one";
+
+# put list into list
+$erl_list(args) = $erl_list(L);
+
+erl_rpc("erlang", "list_to_tuple", "$erl_list(args)", "$erl_xbuff(repl)");
+
+xlogl("L_DEBUG","type(repl): $erl_xbuff(repl=>type), format(repl): $erl_xbuff(re
+pl=>format)\n");
+
+> log output:
+...
+DEBUG: <script>: 386:type(repl): tuple, format(repl): {"one", "two"}
+...
+
+5.2. erl_reg_send(server,msg)
+
+   This function sends an Erlang term to a registered process.
+
+   The argument server is the registered name of the intended recipient
+   process on remote node.
+
+   The argument msg is containing the message to be sent.
+
+   Example 1.16. Example of using erl_reg_send
+...
+# example of send message to registered process
+# {notifier,'node1@erlang.lan'} ! {example,message}
+
+$erl_atom(example) = "example";
+$erl_atom(message) = "message";
+
+$erl_tuple(M) = $erl_atom(message);
+$erl_tuple(M) = $erl_atom(example);
+
+erl_reg_send("notifier","$erl_tuple(M)");
+...
+
+5.3. erl_send(pid,msg)
+
+   This function sends an Erlang term to a process. This function can be
+   used from ANY_ROUTE. The argument pid is the Erlang process id of the
+   intended recipient process on remote node. The argument msg is
+   containing the message to be sent.
+
+   Example 1.17. Example of using erl_send
+...
+# example of send message to process
+# Pid ! {example,message}
+
+$erl_atom(notifier) = "notifier";
+$erl_list(args) = $erl_atom(notifier);
+
+erl_rpc("erlang", "whereis", "$erl_list(args)", "$erl_xbuff(pid)");
+
+$erl_atom(example) = "example";
+$erl_atom(message) = "message";
+
+$erl_tuple(M) = $erl_atom(message);
+$erl_tuple(M) = $erl_atom(example);
+
+erl_send("$erl_xbuff(pid)","$erl_tuple(M)");
+...
+
+5.4. erl_reply(msg)
+
+   Function to send message from event route (pseudo process). Function
+   sends reply message msg to the sender process.
+
+   Example 1.18. Example of use erl_reply
+...
+# event route acts as registered process
+event_route[erlang:greetings] {
+
+        xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
+
+        $erl_atom(hello) = "hello";
+        $erl_tuple(reply) = "Erlang";
+        $erl_tuple(reply) = $erl_atom(hello);
+
+        # reply greeting
+        erl_reply("$erl_tuple(reply)");
+}
+...
+
+%% in erlang shell
+
+(node1@erlang.lan)24> {greetings,'proxy@kamailio.lan'} ! {hello,"Kamailio"}.
+{hello,"Kamailio"}
+(node1@erlang.lan)25> flush().
+Shell got {hello,"Erlang"}
+ok
+
+> logged info message:
+INFO: <script>: 951:Received message: {"hello", "Kamailio"}
+>
+
+6. Event routes
+
+   6.1. Registered pseudo process
+   6.2. event_route[erlang:self]
+
+   To allow Kamailio C node to have similar to erlang registered processes
+   we can use event routes. Event routes executed when asynchronous
+   message received from erlang node.
+
+   Event route receives message in $erl_xbuff(msg) and sender process in
+   $erl_xbuff(pid). Reply message is optional and can be sent with
+   erl_reply.
+
+6.1. Registered pseudo process
+
+   To create pseudo erlang registered process in Kamailio scrip create
+   event route in form of event_route[erlang:<my_process_name>]. Where
+   <my_process_name> is the name of pseudo process.
+
+   Example 1.19. Example of registered process
+...
+# event route acts as registered process
+event_route[erlang:handler] {
+
+        xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
+
+}
+...
+
+%% in erlang shell send message to registered process
+
+(node1@erlang.lan)12> {handler,'proxy@kamailio.lan'} ! {"hello","Kamailio"}.
+{"hello","Kamailio"}
+
+> logged info message:
+INFO: <script>: 951:Received message: {"hello", "Kamailio"}
+>
+
+6.2. event_route[erlang:self]
+
+   The reserved pseudo process name to receive messages sent to Kamailio C
+   node. The message are sent to non registered process.
+
+   Example 1.20. Example of using default event route
+...
+# default event route from erlang
+event_route[erlang:self] {
+
+        xlogl("L_INFO","Received message: $erl_xbuff(msg=>format)\n");
+
+        if(pv_isset("$erl_xbuff(msg[1])") && $erl_xbuff(msg[1]=>type) == "pid")
+{
+                xlogl("L_INFO","Echo reply to: $erl_xbuff(msg[1]=>format)\n");
+                erl_send("$erl_xbuff(msg[1])","$erl_xbuff(msg[0])");
+        }
+}
+...
+
+%% in erlang shell send message to registered process
+
+(node1@erlang.lan)12> Pid=rpc:call('proxy@kamailio.lan',erlang,whereis,[self]).
+<14808.9.0>
+(node1@erlang.lan)14> Pid ! ["hello from",self()].
+["hello from",<0.247.0>]
+(node1@erlang.lan)15> flush().
+Shell got "hello from"
+ok
+
+> logged info messages:
+INFO: <script>: 653:Received message: ["hello from", <node1@erlang.lan.247.0>]
+INFO: <script>: 656:Echo reply to: <node1@erlang.lan.247.0>]
+>
+
+Chapter 2. Using Kamailio from Erlang
+
+   Table of Contents
+
+   1. RPC calls from Erlang
+
+1. RPC calls from Erlang
+
+   This module implements the erlang transport and encoding interface for
+   Kamailio RPCs. It's allow to call any exported RPC in Kamailio from
+   erlang node.
+
+   The string in RPC response is binary encoded to allow from erlang side
+   conversion into appropriate encoding and further transformations.
+
+   Here are some examples:
+
+   Example 2.1. Example of RPC call from erlang shell with no response
+(node1@erlang.lan)26> rpc:call('proxy@kamailio.lan',domain,reload,[]).
+ok
+
+   Example 2.2. Example, check is line registered
+(node1@erlang.lan)29> rpc:call('proxy@kamailio.lan',ul,lookup,["location","1001@
+orange.voip"]).
+[{[{<<"Contact">>,
+    {[{<<"Address">>,
+       <<"sip:1001@10.1.130.138:5161;transport=udp">>},
+      {<<"Expires">>,96},
+      {<<"Q">>,-1.0},
+      {<<"Call-ID">>,<<"5c89766276627815@10.1.130.138">>},
+      {<<"CSeq">>,10335},
+      {<<"User-Agent">>,<<"Grandstream GXP2000 1.2.5.3">>},
+      {<<"Received">>,<<"sip:198.51.100.137:62770">>},
+      {<<"Path">>,
+       <<"&lt;sip:172.16.23.130;lr;received=sip:198.51.100.137:62"...>>},
+      {<<"State">>,<<"CS_SYNC">>},
+      {<<"Flags">>,0},
+      {<<"CFlags">>,64},
+      {<<"Socket">>,<<"udp:172.16.23.130:5070">>},
+      {<<"Methods">>,8159},
+      {<<"Ruid">>,<<"uloc-5534a79b-37ea-8">>},
+      {<<"Instance">>,<<"[not set]">>},
+      {<<"Reg-Id">>,0},
+      {<<"Last-Keepalive">>,1429543986},
+      {<<"Last-Modified">>,1429543906}]}}]}]
+
+   Example 2.3. Example get config variable
+(node1@erlang.lan)26> rpc:call('proxy@kamailio.lan',"cfg","get",["registrar","bi
+ndip"]).
+[<<"172.16.23.130">>]
+
+   Example 2.4. Example get dialog statistics
+(node1@erlang.lan)26>rpc:call('proxy@kamailio.lan',"stats","get_statistics",["di
+alog:"]).
+[<<"dialog:active_dialogs = 3">>,
+ <<"dialog:early_dialogs = 0">>,
+ <<"dialog:expired_dialogs = 0">>,
+ <<"dialog:failed_dialogs = 2">>,
+ <<"dialog:processed_dialogs = 15">>]
+
+Chapter 3. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. erl_load_api(erl_api)
+        1.2. rpc(reply,module,function,args)
+        1.3. reg_send(server,msg)
+        1.4. send(pid,msg)
+        1.5. reply(msg)
+        1.6. xavp2xbuff(xbuff,xavp)
+        1.7. xbuff2xavp(xavp,xbuff)
+
+1. Available Functions
+
+   1.1. erl_load_api(erl_api)
+   1.2. rpc(reply,module,function,args)
+   1.3. reg_send(server,msg)
+   1.4. send(pid,msg)
+   1.5. reply(msg)
+   1.6. xavp2xbuff(xbuff,xavp)
+   1.7. xbuff2xavp(xavp,xbuff)
+
+1.1.  erl_load_api(erl_api)
+
+   Function to be called directly from other modules to load the API. On
+   success return 0, on error 1.
+
+   Meaning of the parameters is as follows:
+     * erl_api_t* erl_api - API bindings structure.
+
+1.2.  rpc(reply,module,function,args)
+
+   This function supports calling Erlang functions on remote nodes. On
+   success function returns 0.
+
+   Meaning of parameters is as follows:
+     * ei_x_buff* reply - dynamic ei buffer where RPC reply returns.
+     * str *module - string containing module name.
+     * str *function - string containing function name.
+     * ei_x_buff *args - dynamic ei buffer with encoded arguments.
+
+1.3.  reg_send(server,msg)
+
+   This function sends an Erlang term to a registered process. On success
+   return 0.
+
+   Meaning of parameters is as follows:
+     * str *server - string containing registered name of the intended
+       recipient process on remote node.
+     * ei_x_buff *msg - dynamic ei buffer with encoded erlang term. The
+       msg must be encoded with version byte.
+
+1.4.  send(pid,msg)
+
+   This function sends an Erlang term to a process. On success return 0.
+
+   Meaning of parameters is as follows:
+     * erlang_pid *pid - pid of the intended recipient process on remote
+       node.
+     * ei_x_buff *msg - dynamic ei buffer with encoded erlang term. The
+       msg must be encoded with version byte.
+
+1.5.  reply(msg)
+
+   Function to send reply on processed message.
+
+   Meaning of parameters is as follows:
+     * ei_x_buff *msg - dynamic ei buffer with encoded erlang term.
+
+1.6.  xavp2xbuff(xbuff,xavp)
+
+   Function encodes XAVP variable into ei dynamic buffer. How to create
+   XAVP variable see source code.
+
+   Meaning of parameters is as follows:
+     * ei_x_buff *xbuff - dynamic ei buffer where XAVP variable will be
+       encoded.
+     * sr_xavp_t *xavp - XAVP variable to be encoded.
+
+1.7.  xbuff2xavp(xavp,xbuff)
+
+   Function decodes ei dynamic buffer into XAVP variable.
+
+   Meaning of parameters is as follows:
+     * sr_xavp_t **xavp - XAVP variable where ei buffer will be decoded.
+     * ei_x_buff *xbuff - dynamic ei buffer.
+
+   Example 3.1. Example of using API
+/* note: new without version byte */
+ei_x_new(&ei_req);
+
+/* ei_x_buff <- XAVP */
+if (erl_api.xavp2xbuff(&ei_req,xreq)) {
+        LM_ERR("failed to encode\n");
+        ei_x_free(&ei_req);
+        return -1;
+}
+
+memset((void*)&ei_rep,0,sizeof(ei_x_buff));
+
+erl_api.rpc(&ei_rep,&module,&function,&ei_req);
+...
+
+/* must be XAVP */
+xrepl->val.type = SR_XTYPE_XAVP;
+
+/* XAVP <- ei_x_buff */
+if (erl_api.xbuff2xavp(&xrepl->val.v.xavp,&ei_rep)){
+        LM_ERR("failed to decode\n");
+        ei_x_free(&ei_req);
+        ei_x_free(&ei_rep);
+        return -1;
+}

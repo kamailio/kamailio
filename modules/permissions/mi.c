@@ -54,11 +54,7 @@ struct mi_root* mi_trusted_reload(struct mi_root *cmd_tree, void *param)
  * RPC function to reload trusted table
  */
 void rpc_trusted_reload(rpc_t* rpc, void* c) {
-	if (hash_table==NULL) {
-		rpc->fault(c, 500, "Reload failed. No hash table");
-		return;
-	}
-	if (reload_trusted_table () != 1) {
+	if (reload_trusted_table_cmd () != 1) {
 		rpc->fault(c, 500, "Reload failed.");
 		return;
 	}

@@ -429,6 +429,8 @@ int bdb_is_neq_type(db_type_t _t0, db_type_t _t1)
 		case DB1_BITMAP:
 			if (_t0==DB1_INT)
 				return 0;
+		default:
+			break;
 	}
 	return 1;
 }
@@ -545,6 +547,8 @@ int bdb_cmp_val(db_val_t* _vp, db_val_t* _v)
 		case DB1_BITMAP:
 			return (_vp->val.int_val<_v->val.bitmap_val)?-1:
 				(_vp->val.int_val>_v->val.bitmap_val)?1:0;
+		default:
+			break;
 	}
 	return -2;
 }

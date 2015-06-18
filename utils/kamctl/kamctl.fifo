@@ -25,7 +25,7 @@ fi
 #
 if [ -z "$FIFOPATH" ]; then
 	if [ -z "$OSER_FIFO" ]; then
-		FIFOPATH=/tmp/kamailio_fifo
+		FIFOPATH=/var/run/kamailio/kamailio_fifo
 	else
 		FIFOPATH=$OSER_FIFO
 	fi

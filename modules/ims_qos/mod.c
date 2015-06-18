@@ -108,6 +108,8 @@ stat_var *asrs;
 stat_var *successful_aars;
 stat_var *successful_strs;
 
+static str identifier = {0,0};
+static int identifier_size = 0;
 
 /** module functions */
 static int mod_init(void);
@@ -259,6 +261,9 @@ static int mod_child_init(int rank) {
 }
 
 static void mod_destroy(void) {
+    if (identifier_size > 0 && identifier.s) {
+        pkg_free(identifier.s);
+    }
 }
 
 /*callback of CDP session*/
@@ -353,12 +358,16 @@ void callback_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params * para
     int new_has_video = 0;
     int must_unlock_aaa = 1;
     
+    if (rx_session_id==0) {
+        LM_WARN("Strange... no rx session ID in callback.... why?\n");
+        return;
+    } 
     //getting session data
     
     LM_DBG("Dialog callback of type %d received\n", type);
     
-    if(type == DLGCB_TERMINATED || type == DLGCB_DESTROY || type == DLGCB_EXPIRED){
-	   LM_DBG("Dialog has ended - we need to terminate Rx bearer session\n");
+    if(type == DLGCB_TERMINATED || type == DLGCB_DESTROY || type == DLGCB_EXPIRED || type == DLGCB_FAILED){
+	   LM_DBG("Dialog has ended or failed - we need to terminate Rx bearer session\n");
 
 	LM_DBG("Received notification of termination of dialog with Rx session ID: [%.*s]\n",
 		rx_session_id->len, rx_session_id->s);
@@ -521,6 +530,36 @@ void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param) {
     }
 }
 
+static int get_identifier(str* src) {
+    char *sep;
+    
+    if (src == 0 || src->len == 0){
+        return -1;
+    }
+
+    if (identifier_size <= src->len) {
+        if (identifier.s) {
+            pkg_free(identifier.s);
+        }
+        identifier.s = (char*) pkg_malloc(src->len + 1);
+        if (!identifier.s) {
+            LM_ERR("no more pkg mem\n");
+            return -1;
+        }
+        memset(identifier.s, 0, src->len + 1);
+        identifier_size = src->len + 1;
+    }
+    
+    memcpy(identifier.s, src->s, src->len);
+    identifier.len = src->len;
+    sep = memchr(identifier.s, 59 /* ; */, identifier.len);
+
+    if (sep) identifier.len = (int) (sep - identifier.s);
+    
+    return 0;
+}
+
+
 /* Wrapper to send AAR from config file - this only allows for AAR for calls - not register, which uses r_rx_aar_register
  * return: 1 - success, <=0 failure. 2 - message not a AAR generating message (ie proceed without PCC if you wish)
  */
@@ -538,16 +577,12 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     str ttag = {0, 0};
     
     str route_name;
-    str identifier, ip;
+    str ip, uri;
     int identifier_type;
     int ip_version = 0;
-    int must_free_asserted_identity = 0;
     sdp_session_cell_t* sdp_session;
     str s_id;
-    char *sep = 0;
-    
     struct hdr_field *h=0;
-    
     struct dlg_cell* dlg = 0;
 
     cfg_action_t* cfg_action = 0;
@@ -712,36 +747,38 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 	//if its mo we use p_asserted_identity in request - if that not there we use from_uri
 	//if its mt we use p_asserted_identity in reply - if that not there we use to_uri
 	if(s_id.len > 0 && id_type > -1) {
-	    identifier.s = s_id.s;
-	    identifier.len = s_id.len;
+            get_identifier(&s_id);
 	    identifier_type = id_type;
 	    LM_DBG("Passed in subscription_id [%.*s] and subscription_id_type [%d]\n", identifier.len, identifier.s, identifier_type);
 	} else {
 	    if (dlg_direction == DLG_MOBILE_ORIGINATING) {
 		LM_DBG("originating direction\n");
-		if ((identifier = cscf_get_asserted_identity(t->uas.request, 1)).len == 0) {
+                uri = cscf_get_asserted_identity(t->uas.request, 1);
+		if (uri.len == 0) {
 		    LM_DBG("No P-Asserted-Identity hdr found in request. Using From hdr in req");
 
-		    if (!cscf_get_from_uri(t->uas.request, &identifier)) {
+		    if (!cscf_get_from_uri(t->uas.request, &uri)) {
 			    LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
 			    goto error;
 		    }
-		    LM_DBG("going to remove parameters if any from identity: [%.*s]\n", identifier.len, identifier.s);
-		    sep = memchr(identifier.s, 59 /* ; */, identifier.len);
-		    if(sep) identifier.len =  (int)(sep - identifier.s);
+		    LM_DBG("going to remove parameters if any from identity: [%.*s]\n", uri.len, uri.s);
+		    get_identifier(&uri);
 		    LM_DBG("identifier from uri : [%.*s]\n", identifier.len, identifier.s);
 		    
 		} else {
-		    must_free_asserted_identity = 1;
+                    get_identifier(&uri);
+                    //free this cscf_get_asserted_identity allocates it
+                    pkg_free(uri.s);
 		}
 	    } else {
 		LM_DBG("terminating direction\n");
-		if ((identifier = cscf_get_asserted_identity(msg, 0)).len == 0) {
+                uri = cscf_get_asserted_identity(msg, 0);
+		if (uri.len == 0) {
 		    LM_DBG("No P-Asserted-Identity hdr found in response. Using Called party id in resp");
 		    //get identity from called party id
 		    //getting called asserted identity
-		    if ((identifier = cscf_get_public_identity_from_called_party_id(t->uas.request, &h)).len == 0) {
-			
+                    uri = cscf_get_public_identity_from_called_party_id(t->uas.request, &h);
+		    if (uri.len == 0) {
 			LM_DBG("No P-Called-Party hdr found in response. Using req URI from dlg");
 			//get dialog and get the req URI from there
 			dlg = dlgb.get_dlg(msg);
@@ -751,14 +788,18 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 			}
 			LM_DBG("dlg req uri : [%.*s] going to remove parameters if any\n", dlg->req_uri.len, dlg->req_uri.s);
 			
-			identifier.s =dlg->req_uri.s;
-			identifier.len = dlg->req_uri.len;
-			sep = memchr(dlg->req_uri.s, 59 /* ; */, dlg->req_uri.len);
-			if(sep) identifier.len =  (int)(sep - identifier.s);
-			
+                        if (get_identifier(&dlg->req_uri) !=0 ) {
+                            dlgb.release_dlg(dlg);
+                            goto error;
+                        }
+			dlgb.release_dlg(dlg);
 			LM_DBG("identifier from dlg req uri : [%.*s]\n", identifier.len, identifier.s);
-		    }
-		}
+		    } else {
+                        get_identifier(&uri);
+                    }
+		} else {
+                    get_identifier(&uri);
+                }
 	    }
 	    if (strncasecmp(identifier.s,"tel:",4)==0) {
 		identifier_type = AVP_Subscription_Id_Type_E164; //
@@ -810,12 +851,6 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
             goto error;
         }
 	
-	//free this cscf_get_asserted_identity allocates it
-	if (must_free_asserted_identity) {
-		pkg_free(identifier.s);
-		must_free_asserted_identity = 1;
-	}
-	
 	//create new diameter auth session
         auth_session = cdpb.AAACreateClientAuthSession(1, callback_for_cdp_session, rx_authdata_p); //returns with a lock
         if (!auth_session) {
@@ -826,6 +861,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
             }
             goto error;
         }
+        auth_session->u.auth.class = AUTH_CLASS_RXMEDIA;
 
         //attach new cdp auth session to dlg for this direction
         if (dlg_direction == DLG_MOBILE_ORIGINATING) {
@@ -868,13 +904,6 @@ error:
     if (saved_t_data)
         free_saved_transaction_global_data(saved_t_data); //only free global data if no AARs were sent. if one was sent we have to rely on the callback (CDP) to free
     //otherwise the callback will segfault
-
-    //free this cscf_get_asserted_identity allocates it
-    if (must_free_asserted_identity) {
-	    pkg_free(identifier.s);
-	    must_free_asserted_identity = 1;
-    }
-
     return result;
 }
 
@@ -1077,6 +1106,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                             lock_release(saved_t_data->lock);
                             goto error;
                         }
+                        auth->u.auth.class = AUTH_CLASS_RXREG;
                     }
 
                     //we are ready to send the AAR async. lets save the local data data

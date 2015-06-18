@@ -177,7 +177,7 @@ failure_route[1] {
 	    the transaction is complete. In the referred block, you can start a new
 	    branch which is required for failover of multiple outbound flows (RFC 5626).
 	    Note that the set of commands which are usable within a branch_failure route
-	    is limited to a subset of the failure_rotue commands including logging,
+	    is limited to a subset of the failure_route commands including logging,
 	    rewriting URI and initiating new branches. Any other commands may generate
 	    errors or result in unpredictable behavior.
 	    Note that whenever failure_route is entered, uri is reset to
@@ -325,6 +325,19 @@ if (t_newtran()) {
 	<para>
 	    Sends a stateful reply after a transaction has been
 	    established. See <function>t_newtran</function> for usage.
+	</para>
+	<para>
+		If the code is in the range 300-399 (redirect reply), the current
+		destination set is appended to the reply as Contact headers.
+		The destination set contains the request URI (R-URI), if it is
+		modified compared to the received one, plus the branches added to the
+		request (e.g., after an append_branch() or lookup("location")).
+		If the R-URI was changed but it is not desired to be part of the
+		destination set, it can be reverted using the function revert_uri().
+	</para>
+	<para>
+		Custom headers to the reply can be added using append_to_reply()
+		function from textops module.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>

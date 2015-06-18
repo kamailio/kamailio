@@ -842,7 +842,7 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 	pres_ev_t* event= NULL;
 	event_t* parsed_event= NULL;
 	param_t* ev_param= NULL;
-	int found;
+	int found = 0;
 	str reason= {0, 0};
 	struct sip_uri uri;
 	int reply_code;
@@ -1040,7 +1040,7 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 		goto error;
 	}
 	LM_DBG("subscription status= %s - %s\n", get_status_str(subs.status), 
-            found==0?"inserted":"found in watcher table");
+            (found==0)?"inserted":"found in watcher table");
 	
 	if (pres_notifier_processes > 0)
 	{

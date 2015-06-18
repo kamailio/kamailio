@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module Developer's Guide -->
+
+<chapter>
+	<title>&develguide;</title>
+	<section>
+		<title>Available Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">erl_load_api(erl_api)</function>
+			</title>
+			<para>
+				Function to be called directly from other modules to load the API.
+				On success return 0, on error 1.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist mark="none">
+				<listitem>
+					<para><emphasis>erl_api_t* erl_api</emphasis> - API bindings structure.</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">rpc(reply,module,function,args)</function>
+			</title>
+			<para>
+				This function supports calling Erlang functions on remote nodes. On success function returns 0.
+			</para>
+			<para>Meaning of parameters is as follows:</para>
+			<itemizedlist mark="none">
+				<listitem>
+					<para><emphasis>ei_x_buff* reply</emphasis> - dynamic ei buffer where RPC reply returns.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>str *module</emphasis> - string containing module name.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>str *function</emphasis> - string containing function name.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>ei_x_buff *args</emphasis> - dynamic ei buffer with encoded arguments.</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">reg_send(server,msg)</function>
+			</title>
+			<para>
+				This function sends an Erlang term to a registered process. On success return 0.
+			</para>
+			<para>Meaning of parameters is as follows:</para>
+			<itemizedlist mark="none">
+				<listitem>
+					<para><emphasis>str *server</emphasis> - string containing
+					registered name of the intended recipient process on remote node.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>ei_x_buff *msg</emphasis> - dynamic ei buffer
+					with encoded erlang term. The msg must be encoded with version byte.</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">send(pid,msg)</function>
+			</title>
+			<para>
+				This function sends an Erlang term to a process. On success return 0.
+			</para>
+			<para>Meaning of parameters is as follows:</para>
+			<itemizedlist mark="none">
+				<listitem>
+					<para><emphasis>erlang_pid *pid</emphasis> - pid of the intended
+					recipient process on remote node.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>ei_x_buff *msg</emphasis> - dynamic ei buffer
+					with encoded erlang term. The msg must be encoded with version byte.</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">reply(msg)</function>
+			</title>
+			<para>
+				Function to send reply on processed message.
+			</para>
+			<para>Meaning of parameters is as follows:</para>
+			<itemizedlist mark="none">
+				<listitem>
+					<para><emphasis>ei_x_buff *msg</emphasis> - dynamic ei buffer
+					with encoded erlang term.</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">xavp2xbuff(xbuff,xavp)</function>
+			</title>
+			<para>
+				Function encodes XAVP variable into ei dynamic buffer. How to create XAVP variable
+				see source code.
+			</para>
+			<para>Meaning of parameters is as follows:</para>
+			<itemizedlist mark="none">
+				<listitem>
+					<para><emphasis>ei_x_buff *xbuff</emphasis> - dynamic ei buffer
+					where XAVP variable will be encoded.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>sr_xavp_t *xavp</emphasis> - XAVP variable to be encoded.</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">xbuff2xavp(xavp,xbuff)</function>
+			</title>
+			<para>
+				Function decodes ei dynamic buffer into XAVP variable.
+			</para>
+			<para>Meaning of parameters is as follows:</para>
+			<itemizedlist mark="none">
+				<listitem>
+					<para><emphasis>sr_xavp_t **xavp</emphasis> - XAVP variable where ei buffer will be decoded.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>ei_x_buff *xbuff</emphasis> - dynamic ei buffer.</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+		<example>
+				<title>Example of using API</title>
+				<programlisting format="linespecific" language="C">
+<![CDATA[
+
+/* note: new without version byte */
+ei_x_new(&ei_req);
+
+/* ei_x_buff <- XAVP */
+if (erl_api.xavp2xbuff(&ei_req,xreq)) {
+	LM_ERR("failed to encode\n");
+	ei_x_free(&ei_req);
+	return -1;
+}
+
+memset((void*)&ei_rep,0,sizeof(ei_x_buff));
+
+erl_api.rpc(&ei_rep,&module,&function,&ei_req);
+...
+
+/* must be XAVP */
+xrepl->val.type = SR_XTYPE_XAVP;
+
+/* XAVP <- ei_x_buff */
+if (erl_api.xbuff2xavp(&xrepl->val.v.xavp,&ei_rep)){
+	LM_ERR("failed to decode\n");
+	ei_x_free(&ei_req);
+	ei_x_free(&ei_rep);
+	return -1;
+}
+
+]]>
+				</programlisting>
+			</example>
+	</section>
+</chapter>

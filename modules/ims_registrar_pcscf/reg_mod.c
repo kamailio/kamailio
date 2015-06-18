@@ -122,6 +122,7 @@ static int w_lookup_transport(struct sip_msg* _m, char* _d, char* _uri);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
+static int domain_uri_fixup(void** param, int param_no);
 static int save_fixup2(void** param, int param_no);
 static int assert_identity_fixup(void ** param, int param_no);
 
@@ -141,15 +142,16 @@ inline void pcscf_act_time()
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"pcscf_save",     		(cmd_function)w_save,                   1,  	save_fixup2,            0,		ONREPLY_ROUTE },
-	{"pcscf_save_pending",          (cmd_function)w_save_pending,       	1,  	save_fixup2,            0,		REQUEST_ROUTE },
-	{"pcscf_follows_service_routes",(cmd_function)w_follows_service_routes, 1,  	save_fixup2,            0,		REQUEST_ROUTE },
-	{"pcscf_force_service_routes",  (cmd_function)w_force_service_routes,   1,  	save_fixup2,            0,		REQUEST_ROUTE },
-	{"pcscf_is_registered",         (cmd_function)w_is_registered,          1,  	save_fixup2,            0,		REQUEST_ROUTE|ONREPLY_ROUTE },
-	{"pcscf_assert_identity",       (cmd_function)w_assert_identity,        2,  	assert_identity_fixup,  0,		REQUEST_ROUTE },
-	{"pcscf_assert_called_identity",(cmd_function)w_assert_called_identity, 1,  assert_identity_fixup,  0,		ONREPLY_ROUTE },
-	{"reginfo_handle_notify",       (cmd_function)w_reginfo_handle_notify,  1,      domain_fixup,           0,              REQUEST_ROUTE},
-        {"lookup_transport",		(cmd_function)w_lookup_transport,                 1,      domain_fixup,           0,              REQUEST_ROUTE|FAILURE_ROUTE},
+	{"pcscf_save",     		(cmd_function)w_save,                   1,  	save_fixup2,            0,ONREPLY_ROUTE },
+	{"pcscf_save_pending",          (cmd_function)w_save_pending,       	1,  	save_fixup2,            0,REQUEST_ROUTE },
+	{"pcscf_follows_service_routes",(cmd_function)w_follows_service_routes, 1,  	save_fixup2,            0,REQUEST_ROUTE },
+	{"pcscf_force_service_routes",  (cmd_function)w_force_service_routes,   1,  	save_fixup2,            0,REQUEST_ROUTE },
+	{"pcscf_is_registered",         (cmd_function)w_is_registered,          1,  	save_fixup2,            0,REQUEST_ROUTE|ONREPLY_ROUTE },
+	{"pcscf_assert_identity",       (cmd_function)w_assert_identity,        2,  	assert_identity_fixup,  0,REQUEST_ROUTE },
+	{"pcscf_assert_called_identity",(cmd_function)w_assert_called_identity, 1,      assert_identity_fixup,  0,ONREPLY_ROUTE },
+	{"reginfo_handle_notify",       (cmd_function)w_reginfo_handle_notify,  1,      domain_fixup,           0,REQUEST_ROUTE},
+        {"lookup_transport",		(cmd_function)w_lookup_transport,       1,      domain_fixup,           0,REQUEST_ROUTE|FAILURE_ROUTE},
+        {"lookup_transport",		(cmd_function)w_lookup_transport,       2,      domain_uri_fixup,        0,REQUEST_ROUTE|FAILURE_ROUTE},
 	
 	{0, 0, 0, 0, 0, 0}
 };
@@ -357,6 +359,23 @@ static int domain_fixup(void** param, int param_no)
 		}
 		*param = (void*)d;
 	}
+	return 0;
+}
+
+static int domain_uri_fixup(void** param, int param_no)
+{
+	udomain_t* d;
+
+	if (param_no == 1) {
+		if (ul.register_udomain((char*)*param, &d) < 0) {
+			LM_ERR("failed to register domain\n");
+			return E_UNSPEC;
+		}
+		*param = (void*)d;
+	} else {
+            fixup_var_pve_12(param, param_no);
+        }
+        
 	return 0;
 }
 

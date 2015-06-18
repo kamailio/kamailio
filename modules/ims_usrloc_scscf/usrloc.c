@@ -88,12 +88,15 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->unlock_contact_slot = unlock_contact_slot;
 	api->lock_contact_slot_i = lock_contact_slot_i;
 	api->unlock_contact_slot_i = unlock_contact_slot_i;	
+        api->lock_subscription = lock_subscription;
+        api->unlock_subscription = unlock_subscription;
 	api->get_all_ucontacts = get_all_ucontacts;
 	api->insert_ucontact = insert_ucontact;
 	api->delete_ucontact = delete_ucontact;
 	api->get_ucontact = get_ucontact;
 	api->release_ucontact = release_ucontact;
 	api->update_ucontact = update_ucontact;
+	api->expire_ucontact = expire_ucontact;
 	api->add_dialog_data_to_contact = add_dialog_data_to_contact;
 	api->remove_dialog_data_from_contact = remove_dialog_data_from_contact;
 	api->unlink_contact_from_impu = unlink_contact_from_impu;

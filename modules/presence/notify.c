@@ -2355,7 +2355,7 @@ static watcher_t *build_watchers_list(subs_t *sub)
 	db_key_t query_cols[3], result_cols[4];
 	db_val_t query_vals[3], *values;
 	db_row_t *rows;
-	db1_res_t *result;
+	db1_res_t *result = NULL;
 	int n_query_cols = 0, n_result_cols = 0;
 	int wuser_col, wdomain_col, callid_col, status_col;
 	int i;

@@ -115,9 +115,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE },
 	{"uac_auth",          (cmd_function)w_uac_auth,       0,                  0, 0,
 			FAILURE_ROUTE },
-	{"uac_req_send",  (cmd_function)uac_req_send,         0,                  0, 0, 
-		REQUEST_ROUTE | FAILURE_ROUTE |
-		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE | LOCAL_ROUTE},
+	{"uac_req_send",  (cmd_function)w_uac_req_send,       0,                  0, 0,
+			ANY_ROUTE},
 	{"uac_reg_lookup",  (cmd_function)w_uac_reg_lookup,  2, fixup_pvar_pvar,
 		fixup_free_pvar_pvar, ANY_ROUTE },
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2, fixup_pvar_uint, fixup_free_pvar_uint,
@@ -513,6 +512,24 @@ static int w_replace_to(struct sip_msg* msg, char* p1, char* p2)
 
 }
 
+int replace_to_api(sip_msg_t *msg, str* pd, str* pu)
+{
+	str *uri;
+	str *dsp;
+	if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
+		LM_ERR("failed to find/parse TO hdr\n");
+		return -1;
+	}
+
+	uri = (pu!=NULL && pu->len>0)?pu:NULL;
+	dsp = (pd!=NULL && pd->len>0)?pd:NULL;
+
+	LM_DBG("dsp=%p (len=%d) , uri=%p (len=%d)\n", dsp, dsp?dsp->len:0,
+			uri, uri?uri->len:0);
+
+	return replace_uri(msg, dsp, uri, msg->to, &rr_to_param, &restore_to_avp, 0);
+}
+
 
 static int w_uac_auth(struct sip_msg* msg, char* str, char* str2)
 {
@@ -574,14 +591,16 @@ static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s)
 }
 
 
-int bind_uac(struct uac_binds *uacb)
+int bind_uac(uac_api_t *uacb)
 {
-	if (uacb == NULL)
-        {
-                LM_WARN("bind_uac: Cannot load uac API into a NULL pointer\n");
-                return -1;
-        }
+	if (uacb == NULL) {
+		LM_WARN("bind_uac: Cannot load uac API into a NULL pointer\n");
+		return -1;
+	}
 
-        uacb->replace_from = replace_from_api;
-        return 0;
+	memset(uacb, 0, sizeof(uac_api_t));
+	uacb->replace_from = replace_from_api;
+	uacb->replace_to = replace_to_api;
+	uacb->req_send = uac_req_send;
+	return 0;
 }
