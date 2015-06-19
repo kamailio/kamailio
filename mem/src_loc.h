@@ -68,7 +68,7 @@
 #	ifdef MOD_NAME
 #		define _SRC_MODULE_ MOD_NAME
 #	else
-#		define _SRC_MODULE_ "<core>"
+#		define _SRC_MODULE_ "core"
 #	endif /* MOD_NAME */
 #endif /* _SRC_MODULE_ */
 

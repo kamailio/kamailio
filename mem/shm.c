@@ -221,6 +221,8 @@ int shm_init_api(sr_shm_api_t *ap)
 	_shm_root.xavailable     = ap->xavailable;
 	_shm_root.xsums          = ap->xsums;
 	_shm_root.xdestroy       = ap->xdestroy;
+	_shm_root.xstats         = ap->xstats;
+	_shm_root.xfstats        = ap->xfstats;
 	return 0;
 
 }

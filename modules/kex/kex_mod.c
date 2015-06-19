@@ -40,6 +40,7 @@
 #include "mi_core.h"
 #include "core_stats.h"
 #include "pkg_stats.h"
+#include "mod_stats.h"
 
 
 MODULE_VERSION
@@ -145,6 +146,11 @@ static int mod_init(void)
 #endif
 	register_pkg_proc_stats();
 	pkg_proc_stats_init_rpc();
+
+	register_mod_stats();
+    mod_stats_init();
+	mod_stats_init_rpc();
+
 	return 0;
 }
 
@@ -168,6 +174,7 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	pkg_proc_stats_destroy();
+	mod_stats_destroy();
 	return;
 }
 
