@@ -1657,7 +1657,7 @@ static int w_sdp_get_line_startswith(sip_msg_t *msg, char *avp, char *s_line)
 		p = find_sdp_line(line.s + line.len, body.s + body.len, sline.s[0]);
 	}
 
-	return 0;
+	return -1;
 }
 
 /**
