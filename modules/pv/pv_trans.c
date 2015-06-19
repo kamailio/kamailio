@@ -233,6 +233,19 @@ static int pdu_7bit_decode(str sin) {
 	return j;	
 }
 
+/* Get only the numeric part of string, e.g.
+   040/123-456 => 040123456 */
+static int getNumericValue(str sin) {
+	int i, j = 0;
+	for(i = 0; i < sin.len; i ++) {
+		if (sin.s[i] >= '0' && sin.s[i] <= '9') {
+			_tr_buffer[j++] = sin.s[i];
+		}
+	}
+	_tr_buffer[j] = '\0';
+	return j;
+}
+
 /* -- transformations functions */
 
 /*!
@@ -383,6 +396,17 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			if(val->rs.len>TR_BUFFER_SIZE/2-1)
 				return -1;
 			i = pdu_7bit_decode(val->rs);
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = i;
+			break;
+		case TR_S_NUMERIC:
+			if(!(val->flags&PV_VAL_STR))
+				return -1;
+			if(val->rs.len>TR_BUFFER_SIZE)
+				return -1;
+			i = getNumericValue(val->rs);
 			memset(val, 0, sizeof(pv_value_t));
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;
@@ -2029,6 +2053,9 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==7 && strncasecmp(name.s, "toupper", 7)==0) {
 		t->subtype = TR_S_TOUPPER;
+		goto done;
+	} else if(name.len==7 && strncasecmp(name.s, "numeric", 7)==0) {
+		t->subtype = TR_S_NUMERIC;
 		goto done;
 	} else if(name.len==11 && strncasecmp(name.s, "encode.hexa", 11)==0) {
 		t->subtype = TR_S_ENCODEHEXA;
