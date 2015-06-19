@@ -362,11 +362,16 @@ int reload_tables ( void )
 	}
 
 	if ((VAL_NULL(ROW_VALUES(row) + 2) == 1) ||
-	    (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT)) {
+	    ((VAL_TYPE(ROW_VALUES(row) + 2) != DB1_INT) &&
+	     (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_BIGINT))) {
 	    LM_ERR("type at row <%u> is null or not int\n", i);
 	    goto err;
 	}
-	type = (int)VAL_INT(ROW_VALUES(row) + 2);
+	if(VAL_TYPE(ROW_VALUES(row) + 2) == DB1_BIGINT) {
+		type = (int)VAL_BIGINT(ROW_VALUES(row) + 2);
+	} else {
+		type = (int)VAL_INT(ROW_VALUES(row) + 2);
+	}
 	if ((type != 0) && (type != 2)) {
 	    LM_ERR("unknown type <%d> at row <%u>\n", type, i);
 	    goto err;
