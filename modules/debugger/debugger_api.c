@@ -985,8 +985,40 @@ static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
 
 	if(dbg_set_mod_debug_level(value.s, value.len, &l)<0)
 	{
-		rpc->fault(ctx, 500, "cannot store parameter\n");
+		rpc->fault(ctx, 500, "cannot store parameter");
 		return;
+	}
+	rpc->add(ctx, "s", "200 ok");
+}
+
+/**
+ *
+ */
+static const char* dbg_rpc_mod_facility_doc[2] = {
+	"Specify module log facility",
+	0
+};
+
+static void dbg_rpc_mod_facility(rpc_t* rpc, void* ctx) {
+	int fl;
+	str value = {0, 0};
+	str facility = {0, 0};
+
+	if (rpc->scan(ctx, "SS", &value, &facility) < 1)
+	{
+	    rpc->fault(ctx, 500, "invalid parameters");
+	    return;
+	}
+
+	if ((fl = str2facility(facility.s)) == -1) {
+	    rpc->fault(ctx, 500, "facility not found");
+	    return;
+	}
+
+	if(dbg_set_mod_debug_facility(value.s, value.len, &fl) < 0)
+	{
+	    rpc->fault(ctx, 500, "cannot store parameter");
+	    return;
 	}
 	rpc->add(ctx, "s", "200 ok");
 }
@@ -1032,6 +1064,7 @@ rpc_export_t dbg_rpc[] = {
 	{"dbg.ls",        dbg_rpc_list,      dbg_rpc_list_doc,      0},
 	{"dbg.trace",     dbg_rpc_trace,     dbg_rpc_trace_doc,     0},
 	{"dbg.mod_level", dbg_rpc_mod_level, dbg_rpc_mod_level_doc, 0},
+	{"dbg.mod_facility", dbg_rpc_mod_facility, dbg_rpc_mod_facility_doc, 0},
 	{"dbg.reset_msgid", dbg_rpc_reset_msgid, dbg_rpc_reset_msgid_doc, 0},
 	{0, 0, 0, 0}
 };
@@ -1056,10 +1089,19 @@ typedef struct _dbg_mod_level {
 	struct _dbg_mod_level *next;
 } dbg_mod_level_t;
 
+typedef struct _dbg_mod_facility {
+	str name;
+	unsigned int hashid;
+	int facility;
+	struct _dbg_mod_facility *next;
+} dbg_mod_facility_t;
+
 typedef struct _dbg_mod_slot
 {
 	dbg_mod_level_t *first;
 	gen_lock_t lock;
+	dbg_mod_facility_t *first_ft;
+	gen_lock_t lock_ft;
 } dbg_mod_slot_t;
 
 static dbg_mod_slot_t *_dbg_mod_table = NULL;
@@ -1086,13 +1128,15 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 
 	for(i=0; i<_dbg_mod_table_size; i++)
 	{
-		if(lock_init(&_dbg_mod_table[i].lock)==0)
+		if(lock_init(&_dbg_mod_table[i].lock)==0 ||
+		   lock_init(&_dbg_mod_table[i].lock_ft)==0)
 		{
 			LM_ERR("cannot initialize lock[%d]\n", i);
 			i--;
 			while(i>=0)
 			{
 				lock_destroy(&_dbg_mod_table[i].lock);
+				lock_destroy(&_dbg_mod_table[i].lock_ft);
 				i--;
 			}
 			shm_free(_dbg_mod_table);
@@ -1209,6 +1253,82 @@ int dbg_set_mod_debug_level(char *mname, int mnlen, int *mlevel)
 
 }
 
+int dbg_set_mod_debug_facility(char *mname, int mnlen, int *mfacility)
+{
+	unsigned int idx;
+	unsigned int hid;
+	dbg_mod_facility_t *it;
+	dbg_mod_facility_t *itp;
+	dbg_mod_facility_t *itn;
+
+	if(_dbg_mod_table==NULL)
+		return -1;
+
+	hid = dbg_compute_hash(mname, mnlen);
+	idx = hid&(_dbg_mod_table_size-1);
+
+	lock_get(&_dbg_mod_table[idx].lock_ft);
+	it = _dbg_mod_table[idx].first_ft;
+	itp = NULL;
+	while(it!=NULL && it->hashid < hid) {
+		itp = it;
+		it = it->next;
+	}
+	while(it!=NULL && it->hashid==hid)
+	{
+		if(mnlen==it->name.len
+				&& strncmp(mname, it->name.s, mnlen)==0)
+		{
+			/* found */
+			if(mfacility==NULL) {
+				/* remove */
+				if(itp!=NULL) {
+					itp->next = it->next;
+				} else {
+					_dbg_mod_table[idx].first_ft = it->next;
+				}
+				shm_free(it);
+			} else {
+				/* set */
+				it->facility = *mfacility;
+			}
+			lock_release(&_dbg_mod_table[idx].lock_ft);
+			return 0;
+		}
+		itp = it;
+		it = it->next;
+	}
+	/* not found - add */
+	if(mfacility==NULL) {
+		lock_release(&_dbg_mod_table[idx].lock_ft);
+		return 0;
+	}
+	itn = (dbg_mod_facility_t*)shm_malloc(sizeof(dbg_mod_facility_t) + (mnlen+1)*sizeof(char));
+	if(itn==NULL) {
+		LM_ERR("no more shm\n");
+		lock_release(&_dbg_mod_table[idx].lock_ft);
+		return -1;
+	}
+	memset(itn, 0, sizeof(dbg_mod_facility_t) + (mnlen+1)*sizeof(char));
+	itn->facility = *mfacility;
+	itn->hashid   = hid;
+	itn->name.s   = (char*)(itn) + sizeof(dbg_mod_facility_t);
+	itn->name.len = mnlen;
+	strncpy(itn->name.s, mname, mnlen);
+	itn->name.s[itn->name.len] = '\0';
+
+	if(itp==NULL) {
+		itn->next = _dbg_mod_table[idx].first_ft;
+		_dbg_mod_table[idx].first_ft = itn;
+	} else {
+		itn->next = itp->next;
+		itp->next = itn;
+	}
+	lock_release(&_dbg_mod_table[idx].lock_ft);
+	return 0;
+
+}
+
 static int _dbg_get_mod_debug_level = 0;
 int dbg_get_mod_debug_level(char *mname, int mnlen, int *mlevel)
 {
@@ -1252,6 +1372,49 @@ int dbg_get_mod_debug_level(char *mname, int mnlen, int *mlevel)
 	return -1;
 }
 
+static int _dbg_get_mod_debug_facility = 0;
+int dbg_get_mod_debug_facility(char *mname, int mnlen, int *mfacility)
+{
+	unsigned int idx;
+	unsigned int hid;
+	dbg_mod_facility_t *it;
+	/* no LOG*() usage in this function and those executed insite it
+	 * - use fprintf(stderr, ...) if need for troubleshooting
+	 * - it will loop otherwise */
+	if(_dbg_mod_table==NULL)
+		return -1;
+
+	if(cfg_get(dbg, dbg_cfg, mod_facility_mode)==0)
+		return -1;
+
+	if(_dbg_get_mod_debug_facility!=0)
+		return -1;
+	_dbg_get_mod_debug_facility = 1;
+
+	hid = dbg_compute_hash(mname, mnlen);
+	idx = hid&(_dbg_mod_table_size-1);
+	lock_get(&_dbg_mod_table[idx].lock_ft);
+	it = _dbg_mod_table[idx].first_ft;
+	while(it!=NULL && it->hashid < hid)
+		it = it->next;
+	while(it!=NULL && it->hashid == hid)
+	{
+		if(mnlen==it->name.len
+				&& strncmp(mname, it->name.s, mnlen)==0)
+		{
+			/* found */
+			*mfacility = it->facility;
+		    lock_release(&_dbg_mod_table[idx].lock_ft);
+			_dbg_get_mod_debug_facility = 0;
+			return 0;
+		}
+		it = it->next;
+	}
+	lock_release(&_dbg_mod_table[idx].lock_ft);
+	_dbg_get_mod_debug_facility = 0;
+	return -1;
+}
+
 /**
  *
  */
@@ -1260,6 +1423,13 @@ void dbg_enable_mod_levels(void)
 	if(_dbg_mod_table==NULL)
 		return;
 	set_module_debug_level_cb(dbg_get_mod_debug_level);
+}
+
+void dbg_enable_mod_facilities(void)
+{
+	if(_dbg_mod_table==NULL)
+		return;
+	set_module_debug_facility_cb(dbg_get_mod_debug_facility);
 }
 
 #define DBG_PVCACHE_SIZE 32
@@ -1423,7 +1593,7 @@ void dbg_enable_log_assign(void)
 	set_log_assign_action_cb(dbg_log_assign);
 }
 
-int dbg_level_mode_fixup(void *temp_handle,
+int dbg_mode_fixup(void *temp_handle,
 	str *group_name, str *var_name, void **value){
 	if(_dbg_mod_table==NULL)
 	{

@@ -890,12 +890,13 @@ skip_after:
 /* another helper functions, adds/Removes the lump,
 	code moved form build_req_from_req  */
 
-static inline void process_lumps(	struct sip_msg* msg,
-					                                struct lump* lumps,
-									char* new_buf,
-									unsigned int* new_buf_offs,
-									unsigned int* orig_offs,
-									struct dest_info* send_info)
+void process_lumps( struct sip_msg* msg,
+                    struct lump* lumps,
+                    char* new_buf,
+                    unsigned int* new_buf_offs,
+                    unsigned int* orig_offs,
+                    struct dest_info* send_info,
+                    int flag)
 {
 	struct lump *t;
 	struct lump *r;
@@ -1356,11 +1357,21 @@ skip_after:
 					break;
 				}
 				size=t->u.offset-s_offset;
-				if (size){
+                if (size > 0 && flag == FLAG_MSG_ALL){
 					memcpy(new_buf+offset, orig+s_offset,size);
 					offset+=size;
 					s_offset+=size;
-				}
+                } else if (flag == FLAG_MSG_LUMPS_ONLY) {
+                    /* do not copy the whole message, jump to the lumps offs */
+                    s_offset+=size;
+                }
+
+                /* the LUMP_DELs are printed with "- " before them */
+                if (t->op==LUMP_DEL && flag == FLAG_MSG_LUMPS_ONLY) {
+                    new_buf[offset++] = '-';
+                    new_buf[offset++] = ' ';
+                }
+
 				/* process before  */
 				for(r=t->before;r;r=r->before){
 					switch (r->op){
@@ -1384,11 +1395,22 @@ skip_after:
 					}
 				}
 skip_nop_before:
-				/* process main (del only) */
-				if (t->op==LUMP_DEL){
-					/* skip len bytes from orig msg */
-					s_offset+=t->len;
-				}
+                /* process main (del only) */
+                if (t->op==LUMP_DEL && flag == FLAG_MSG_ALL){
+                    /* skip len bytes from orig msg */
+                    s_offset+=t->len;
+                } else if (t->op==LUMP_DEL && flag == FLAG_MSG_LUMPS_ONLY) {
+                    /* copy lump value and indent as necessarely */
+                    memcpy(new_buf+offset, orig + t->u.offset, t->len);
+                    offset+=t->len;
+                    if (new_buf[offset-1] != '\n') {
+                        new_buf[offset] = '\n';
+                        offset+=1;
+                    }
+                    /* skip len bytes from orig msg */
+                    s_offset+=t->len;
+                 }
+
 				/* process after */
 				for(r=t->after;r;r=r->after){
 					switch (r->op){
@@ -1419,6 +1441,11 @@ skip_nop_after:
 	}
 	*new_buf_offs=offset;
 	*orig_offs=s_offset;
+
+    /* add '\0' to char* lump list to print it smoothly */
+    if (flag == FLAG_MSG_LUMPS_ONLY) {
+        new_buf[offset] = '\0';
+    }
 #undef RCVCOMP_PARAM_ADD 
 #undef SENDCOMP_PARAM_ADD
 }
@@ -2142,8 +2169,8 @@ after_update_via1:
 	}
 	new_buf[new_len]=0;
 	/* copy msg adding/removing lumps */
-	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info);
-	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset,send_info);
+	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info, FLAG_MSG_ALL);
+	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset,send_info, FLAG_MSG_ALL);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
 	new_buf[new_len]=0;
@@ -2236,8 +2263,8 @@ char * generate_res_buf_from_sip_res( struct sip_msg* msg,
 	new_buf[new_len]=0; /* debug: print the message */
 	offset=s_offset=0;
 	/*FIXME: no send sock*/
-	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, 0);/*FIXME:*/
-	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, 0);
+	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, 0, FLAG_MSG_ALL);/*FIXME:*/
+	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, 0, FLAG_MSG_ALL);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset,
 		buf+s_offset,
@@ -2916,7 +2943,7 @@ char * build_only_headers( struct sip_msg* msg, int skip_first_line,
 	offset = 0;
 
 	/* copy message lumps */
-	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info);
+	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info, FLAG_MSG_ALL);
 	/* copy the rest of the message without body */
 	if (len > s_offset) {
 		memcpy(new_buf+offset, buf+s_offset, len-s_offset);
@@ -2966,7 +2993,7 @@ char * build_body( struct sip_msg* msg,
 	offset = 0;
 
 	/* copy body lumps */
-	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, send_info);
+	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, send_info, FLAG_MSG_ALL);
 	/* copy the rest of the message without body */
 	if (len > s_offset) {
 		memcpy(new_buf+offset, buf+s_offset, len-s_offset);
@@ -3026,9 +3053,9 @@ char * build_all( struct sip_msg* msg, int touch_clen,
 	offset = s_offset = 0;
 
 	/* copy message lumps */
-	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info);
+	process_lumps(msg, msg->add_rm, new_buf, &offset, &s_offset, send_info, FLAG_MSG_ALL);
 	/* copy body lumps */
-	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, send_info);
+	process_lumps(msg, msg->body_lumps, new_buf, &offset, &s_offset, send_info, FLAG_MSG_ALL);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
 	offset += (len-s_offset);

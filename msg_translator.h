@@ -31,6 +31,10 @@
 #ifndef  _MSG_TRANSLATOR_H
 #define _MSG_TRANSLATOR_H
 
+/* flags used for process_lumps flag parameter */
+#define FLAG_MSG_LUMPS_ONLY     0   /* copy just the lumps */
+#define FLAG_MSG_ALL            1   /* copy all the msg */
+
 #define MY_HF_SEP ": "
 #define MY_HF_SEP_LEN 2
 
@@ -163,4 +167,17 @@ int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
 
 /* returns a copy in private memory of the boundary in a multipart body */
 int get_boundary(struct sip_msg* msg, str* boundary);
+
+
+/* process the lumps of a sip msg
+ * flags =  => add also the existing header to new_buf
+ * flags =  => add only the lumps (unapplied info) to new_buf
+ **/
+void process_lumps( struct sip_msg* msg,
+                    struct lump* lumps,
+                    char* new_buf,
+                    unsigned int* new_buf_offs,
+                    unsigned int* orig_offs,
+                    struct dest_info* send_info,
+                    int flag);
 #endif

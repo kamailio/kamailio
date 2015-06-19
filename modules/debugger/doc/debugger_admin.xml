@@ -19,8 +19,9 @@
 	<para>
 		This module provides an interactive config file debugger. It can print
 		a trace of config script execution for a SIP message to log and set
-		breakpoints on every script action, allowing step-by-step execution of 
-		the routing and response scripts.
+		breakpoints on every script action, allowing step-by-step execution of
+		the routing and response scripts. Moreover, this module allows setting
+		static and dynamic module specific debug settings.
 	</para>
 	<para>
 		Debugging can be done from local or remote host via RPC interface (e.g.,
@@ -247,8 +248,11 @@ modparam("debugger", "step_loops", 100)
 	    <title><varname>mod_hash_size</varname> (int)</title>
 	    <para>
 		Used to compute power of two as size of internal hash table to store levels
-		per module (e.g., if its set to 4, internal hash table has 16 slots). This
-		parameter is accesible readonly via the Kamailio config framework.
+		per module (e.g., if its set to 4, internal hash table has 16 slots). One
+		must set it's value grater than 0 such that memory to be allocated
+		to save the module specific debug levels or facility configured by 
+		<varname>mod_level</varname> or <varname>mod_facility</varname>.
+		This parameter is accesible readonly via the Kamailio config framework.
 	    </para>
 	    <para>
 		<emphasis>
@@ -303,6 +307,52 @@ modparam("debugger", "mod_level", "core=3")
 modparam("debugger", "mod_level", "tm=3")
 ...
 </programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.mod_facility_mode">
+	    <title><varname>mod_facility_mode</varname> (int)</title>
+	    <para>
+			Enable or disable per module log facility (0 - disabled, 1 - enabled).
+			This parameter is tunable via the Kamailio config framework. To use
+			per module log facility you also have to set <varname>mod_hash_size</varname>.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mod_facility_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_facility_mode", 1)
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="dbg.p.mod_facility">
+	    <title><varname>mod_facility</varname> (str)</title>
+	    <para>
+		Specify module log facility - the value must be in the format:
+		modulename=facility. The parameter can be set many times. For core
+		log facility, use module name 'core'. You also must enable
+		<varname>mod_facility_mode</varname> and <varname>mod_hash_size</varname>.
+	    </para>
+        <para>
+        NOTE: See the <emphasis>syslog()</emphasis> library call for facility names (http://linux.die.net/man/3/syslog).
+        The most used facilities are LOG_LOCAL[0-7].
+        </para>
+
+	    <example>
+		<title>Set <varname>mod_facility</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "mod_facility", "core=LOG_LOCAL0")
+modparam("debugger", "mod_facility", "debugger=LOG_LOCAL1")
+...
+        </programlisting>
 	    </example>
 	</section>
 
@@ -481,8 +531,69 @@ dbg_pv_dump(30, "L_DBG");
 	    </example>
 	</section>
 
+ 	<section id="dbg.f.dbg_sip_msg">
+	    <title>
+		<function moreinfo="none">dbg_sip_msg([log_level], [facility])</function>
+	    </title>
+	    <para>
+            Prints how the sip message <emphasis>would look</emphasis> like if it <emphasis>would be sent</emphasis> out
+            at that point in the config(i.e. if the current lump lists would
+            have been applied at that point in the config).
+
+            It also prints a diff list for both header and body of sip msg
+            which contain the lump lists content. The lumps deleted are printed
+            with "-" sign whereas the lumps added have no sign. The config line
+            where the function has been called is also printed.
+	    </para>
+	    <para>
+            NOTE that dbg_sip_msg function does not modify the initially received SIP message.
+            Just displays how it WOULD look like if it were to send it at that point.
+	    </para>
+		<para>
+			NOTE that the lump lists are usually applied only once, just before sending, to spare message reparse processing.
+            All the changes present in lump list are applied on the <emphasis>initially received</emphasis> SIP message.
+            One can force the lump application using msg_apply_changes() function from textopsx module.
+	    </para>
+		<para>
+	    </para>
+		<example>
+		<title><function>dbg_sip_msg</function> usage</title>
+		<programlisting format="linespecific">
+...
+    dbg_sip_msg();
+    dbg_sip_msg("L_ERR");
+    dbg_sip_msg("L_ERR", "LOG_LOCAL0");
+...
+        </programlisting>
+
+		<para>Output when dbg_sip_msg("L_ERR") is called after <emphasis>append_hf("P-Hint: My hint\r\n"); remove_hf("Contact");</emphasis></para>
+		<programlisting format="linespecific">
+ERROR: debugger [debugger_mod.c:467]: w_dbg_sip_msg(): CONFIG LINE 338
+------------------------- START OF SIP message debug --------------------------
+OPTIONS sip:nobody@127.0.0.1 SIP/2.0
+Via: SIP/2.0/UDP 127.0.1.1:56872;branch=z9hG4bK.6d7c487a;rport;alias
+From: sip:sipsak@127.0.1.1:56872;tag=188b7433
+To: sip:nobody@127.0.0.1
+Call-ID: 411792435@127.0.1.1
+CSeq: 1 OPTIONS
+Content-Length: 0
+Max-Forwards: 70
+User-Agent: sipsak 0.9.6
+Accept: text/plain
+P-Hint: My hintt
+
+------------------------------ SIP header diffs -------------------------------
+- Contact: sip:sipsak@127.0.1.1:56872
+P-Hint: My hint
+------------------------------- SIP body diffs --------------------------------
+-------------------------- END OF SIP message debug ---------------------------
+        </programlisting>
+	    </example>
     </section>
-	
+
+    </section>
+
+
 	<section>
 		<title>Exported RPC Functions</title>
 
