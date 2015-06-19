@@ -707,10 +707,12 @@ modparam("permissions", "tag_col", "peer_tag")
 		</example>
 	</section>
 	<section id ="permissions.p.priority_col">
-		<title><varname>priority_col</varname> (integer)</title>
+		<title><varname>priority_col</varname> (string)</title>
 		<para>
 		The column name used to store the priority of the corresponding rule from the database
-		row.
+		row. Priority values should be integer. When db_mode is set to 1 (caching), priorities
+                are ordered from highest to lowest. In non-caching mode, priority order (ASC vs DESC)
+                is determined by database.
 		</para>
 		<para>
 		<emphasis>
