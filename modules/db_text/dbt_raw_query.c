@@ -41,6 +41,7 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
     char* fields_end_ptr = NULL;
     char* fields_ptr = NULL;
     char* where_ptr = NULL;
+    char* order_start_ptr = NULL;
     char** tokens = NULL;
     str table;
     dbt_table_p _tbc = NULL;
@@ -52,6 +53,10 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 	db_key_t* _k = NULL;
 	db_op_t* _op = NULL;
 	db_val_t* _v = NULL;
+	str order;
+	db_key_t k_order = NULL;
+
+	LM_DBG("SQLRAW : %.*s\n", _s->len, _s->s);
 
     fields_end_ptr = strcasestr(_s->s, " from ");
     if(fields_end_ptr == NULL)
@@ -63,6 +68,11 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
     fields_ptr[len] = '\0';
     fields_ptr = dbt_trim(fields_ptr);
 
+    order_start_ptr = strcasestr(_s->s, " order by ");
+    if(order_start_ptr != NULL) {
+    	*order_start_ptr = '\0';
+    	order_start_ptr += 10;
+    }
 
 
     where_ptr = strcasestr(_s->s, " where ");
@@ -80,6 +90,7 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 
     table.s = table_ptr;
     table.len = len;
+    LM_DBG("using table '%.*s'\n", table.len, table.s);
 
 	if(dbt_use_table(_h, &table) != 0) {
 		LM_ERR("use table is invalid %.*s\n", table.len, table.s);
@@ -120,9 +131,13 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 
 
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-    _tbc = NULL;
-
-	res = dbt_query(_h, _k, _op, _v, result_cols, nc, cols, NULL, _r);
+	_tbc = NULL;
+	if(order_start_ptr != NULL) {
+		order.s = order_start_ptr;
+		order.len = strlen(order_start_ptr);
+		k_order = &order;
+	}
+	res = dbt_query(_h, _k, _op, _v, result_cols, nc, cols, k_order, _r);
 
 error:
 
