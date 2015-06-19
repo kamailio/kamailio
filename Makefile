@@ -1057,7 +1057,7 @@ install_initd_centos install-initd-centos:
 		> /etc/default/$(NAME)
 	/usr/sbin/groupadd -r $(NAME)
 	/usr/sbin/useradd -r -g $(NAME) -s /bin/false -c "Kamailio Daemon" \
-                  -d ${lib_prefix}/${lib_dir} $(NAME)
+                  -d /var/run/$(NAME) $(NAME)
 
 .PHONY: dbschema
 dbschema:
