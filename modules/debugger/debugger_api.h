@@ -58,6 +58,6 @@ int dbg_msgid_filter(struct sip_msg *msg, unsigned int flags, void *bar);
 #define DBG_DP_XAVP			8
 #define DBG_DP_OTHER		16
 #define DBG_DP_ALL			31
-int dbg_dump_json(struct sip_msg* msg, unsigned int mask, int level);
+
 #endif
 

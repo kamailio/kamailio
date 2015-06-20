@@ -38,6 +38,7 @@
 
 #include "debugger_api.h"
 #include "debugger_config.h"
+#include "debugger_json.h"
 
 MODULE_VERSION
 
