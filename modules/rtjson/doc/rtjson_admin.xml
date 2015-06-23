@@ -148,6 +148,8 @@ rtjson_push_routes();
 ...
 rtjson_init_routes("$var(json)");
 rtjson_push_routes();
+t_on_failure("REROUTE");
+t_relay();
 ...
 failure_route[REROUTE] {
 	rtjson_next_route();
@@ -174,6 +176,8 @@ failure_route[REROUTE] {
 ...
 rtjson_init_routes("$var(json)");
 rtjson_push_routes();
+t_on_branch("OUTGOING");
+t_relay();
 ...
 branch_route[OUTGOING] {
 	rtjson_update_branch();
@@ -191,7 +195,85 @@ branch_route[OUTGOING] {
 		The format of the JSON document containing routing information.
 	</para>
 	<para>
-		Description of the fields: TBA.
+		Description of the fields in the JSON routing document:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>version</emphasis> - intended to enforce versioning
+				checks (not enforced yet), recommended to be set to "1.0".
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>routing</emphasis> - can be "serial" or "parallel",
+				corresponding to desired routing type: serial or parallel forking.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>routes</emphasis> - an array with structures holding
+				the attributes for destinations. The attributes can be:
+				<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>uri</emphasis> - request URI
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>dst_uri</emphasis> - outbound proxy URI
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>path</emphasis> - Path URI vector
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>socket</emphasis> - local socket
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>headers</emphasis> - a structure with values for headers
+					From and To specified as display name and URI, plus extra
+					headers to be appended to SIP request. It requires uac module in
+					order to update From and To headers.
+					Set by rtjson_update_branch() only for serial routing.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>branch_flags</emphasis> - branch flags.
+					Set by rtjson_update_branch() only for serial routing.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>fr_timer</emphasis> - value for fr_timer parameter of
+					tm module.
+					Set by rtjson_update_branch() only for serial routing.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>fr_inv_timer</emphasis> - value for fr_inv_timer parameter
+					of tm module.
+					Set by rtjson_update_branch() only for serial routing.
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+			</listitem>
+			</itemizedlist>
+	</para>
+	<para>
+		Other fields can appear in the JSON routing document, being ignored
+		by rtjson functions. They can be processed directly in the configuration
+		files using json or jansson modules. For example, the document can include
+		the transaction identification tuple (index,label) that can be used
+		to resume the execution of a suspended transaction.
 	</para>
 	<example>
 		<title>JSON Routing Structure</title>
@@ -199,7 +281,7 @@ branch_route[OUTGOING] {
 ...
 {
 	"version": "1.0",
-	"routing": "parallel",
+	"routing": "serial",
 	"routes": [
 		{
 			"uri": "sip:127.0.0.1:5080",
