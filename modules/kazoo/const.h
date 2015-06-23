@@ -44,7 +44,12 @@ extern str str_null_string;
 
 extern char kz_json_escape_char;
 
-extern int dbk_use_federated_exchanges;
-extern str dbk_federated_exchanges;
+extern int dbk_use_federated_exchange;
+extern str dbk_federated_exchange;
+extern str dbk_primary_zone_name;
+extern int dbk_use_hearbeats;
+extern int kz_cmd_pipe;
+extern int kz_server_counter;
+extern int kz_zone_counter;
 
 #endif /* DBK_CONST_H_ */

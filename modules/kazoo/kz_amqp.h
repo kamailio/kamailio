@@ -8,6 +8,9 @@
 #ifndef KZ_AMQP_H_
 #define KZ_AMQP_H_
 
+#include <fcntl.h>
+#include <event.h>
+#include <sys/timerfd.h>
 #include <amqp.h>
 
 #include "../../sr_module.h"
@@ -16,6 +19,28 @@
 #include "const.h"
 #include "defs.h"
 #include "../../lib/kcore/faked_msg.h"
+
+typedef enum {
+	KZ_AMQP_CONNECTION_CLOSED     = 0,
+	KZ_AMQP_CONNECTION_OPEN    = 1,
+	KZ_AMQP_CONNECTION_FAILURE    = 2
+} kz_amqp_connection_state;
+
+typedef enum {
+	KZ_AMQP_CMD_PUBLISH     = 1,
+	KZ_AMQP_CMD_CALL    = 2,
+	KZ_AMQP_CMD_CONSUME = 3,
+	KZ_AMQP_CMD_ACK = 4
+} kz_amqp_pipe_cmd_type;
+
+typedef enum {
+	KZ_AMQP_CHANNEL_CLOSED     = 0,
+	KZ_AMQP_CHANNEL_FREE     = 1,
+	KZ_AMQP_CHANNEL_PUBLISHING    = 2,
+	KZ_AMQP_CHANNEL_BINDED = 3,
+	KZ_AMQP_CHANNEL_CALLING    = 4,
+	KZ_AMQP_CHANNEL_CONSUMING = 5
+} kz_amqp_channel_state;
 
 typedef struct amqp_connection_info kz_amqp_connection_info;
 typedef kz_amqp_connection_info *kz_amqp_connection_info_ptr;
@@ -29,22 +54,26 @@ extern int dbk_consumer_processes;
 typedef struct kz_amqp_connection_t {
 	kz_amqp_connection_info info;
 	char* url;
-    struct kz_amqp_connection_t* next;
+//    struct kz_amqp_connection_t* next;
 } kz_amqp_connection, *kz_amqp_connection_ptr;
 
+/*
 typedef struct {
 	kz_amqp_connection_ptr current;
 	kz_amqp_connection_ptr head;
 	kz_amqp_connection_ptr tail;
 } kz_amqp_connection_pool, *kz_amqp_connection_pool_ptr;
-
+*/
 typedef struct kz_amqp_conn_t {
-	kz_amqp_connection_ptr info;
+	struct kz_amqp_server_t* server;
 	amqp_connection_state_t conn;
+	kz_amqp_connection_state state;
+	struct event *ev;
+	struct itimerspec *timer;
 	amqp_socket_t *socket;
 	amqp_channel_t channel_count;
 	amqp_channel_t channel_counter;
-    struct kz_amqp_conn_t* next;
+//    struct kz_amqp_conn_t* next;
 } kz_amqp_conn, *kz_amqp_conn_ptr;
 
 typedef struct {
@@ -58,21 +87,6 @@ typedef struct {
 #define AMQP_KZ_CMD_CALL          2
 #define AMQP_KZ_CMD_CONSUME       3
 
-typedef enum {
-	KZ_AMQP_PUBLISH     = 1,
-	KZ_AMQP_CALL    = 2,
-	KZ_AMQP_CONSUME = 3,
-	KZ_AMQP_ACK = 4
-} kz_amqp_pipe_cmd_type;
-
-typedef enum {
-	KZ_AMQP_CLOSED     = 0,
-	KZ_AMQP_FREE     = 1,
-	KZ_AMQP_PUBLISHING    = 2,
-	KZ_AMQP_BINDED = 3,
-	KZ_AMQP_CALLING    = 4,
-	KZ_AMQP_CONSUMING = 5
-} kz_amqp_channel_state;
 
 typedef struct {
     gen_lock_t lock;
@@ -86,6 +100,7 @@ typedef struct {
 	char* return_payload;
 	int   return_code;
 	int   consumer;
+	int   server_id;
 	uint64_t delivery_tag;
 	amqp_channel_t channel;
 	struct timeval timeout;
@@ -135,6 +150,34 @@ typedef struct {
 	kz_amqp_binding_ptr tail;
 } kz_amqp_bindings, *kz_amqp_bindings_ptr;
 
+typedef struct kz_amqp_server_t {
+	int id;
+	int channel_index;
+	struct kz_amqp_zone_t* zone;
+	kz_amqp_connection_ptr connection;
+	kz_amqp_conn_ptr producer;
+	kz_amqp_conn_ptr consumer;
+	kz_amqp_channel_ptr channels;
+	kz_amqp_channel_ptr consumer_channels;
+    struct kz_amqp_server_t* next;
+} kz_amqp_server, *kz_amqp_server_ptr;
+
+typedef struct kz_amqp_servers_t {
+	kz_amqp_server_ptr head;
+	kz_amqp_server_ptr tail;
+} kz_amqp_servers, *kz_amqp_servers_ptr;
+
+typedef struct kz_amqp_zone_t {
+	char* zone;
+	kz_amqp_servers_ptr servers;
+    struct kz_amqp_zone_t* next;
+} kz_amqp_zone, *kz_amqp_zone_ptr;
+
+typedef struct kz_amqp_zones_t {
+	kz_amqp_zone_ptr head;
+	kz_amqp_zone_ptr tail;
+} kz_amqp_zones, *kz_amqp_zones_ptr;
+
 int kz_amqp_init();
 void kz_amqp_destroy();
 int kz_amqp_add_connection(modparam_t type, void* val);
@@ -146,15 +189,16 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload);
 int kz_amqp_subscribe_simple(struct sip_msg* msg, char* exchange, char* exchange_type, char* queue_name, char* routing_key);
 int kz_amqp_encode(struct sip_msg* msg, char* unencoded, char* encoded);
 int kz_amqp_encode_ex(str* unencoded, pv_value_p dst_val);
-//void kz_amqp_presence_consumer_loop(int child_no);
-void kz_amqp_consumer_loop(int child_no);
 
 //void kz_amqp_generic_consumer_loop(int child_no);
 void kz_amqp_manager_loop(int child_no);
 
-void kz_amqp_consumer_proc(int child_no);
-void kz_amqp_publisher_proc(int child_no);
-void kz_amqp_timeout_proc(int child_no);
+int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr);
+int kz_amqp_publisher_proc(int cmd_pipe);
+int kz_amqp_timeout_proc();
+int kz_amqp_consumer_worker_proc(int cmd_pipe);
+
+int kz_amqp_handle_server_failure(kz_amqp_conn_ptr connection);
 
 int kz_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
 int kz_pv_get_last_query_result(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res);
@@ -164,6 +208,13 @@ int kz_pv_get_connection_host(struct sip_msg *msg, pv_param_t *param,	pv_value_t
 int kz_callid_init(void);
 int kz_callid_child_init(int rank);
 void kz_generate_callid(str* callid);
+
+kz_amqp_zone_ptr kz_amqp_get_primary_zone();
+kz_amqp_zone_ptr kz_amqp_get_zones();
+kz_amqp_zone_ptr kz_amqp_get_zone(char* zone);
+kz_amqp_zone_ptr kz_amqp_add_zone(char* zone);
+
+void kz_amqp_fire_connection_event(char *event, char* host);
 
 static inline int kz_amqp_error(char const *context, amqp_rpc_reply_t x)
 {

@@ -47,18 +47,20 @@ static int mod_init(void);
 static int  mod_child_init(int rank);
 static int fire_init_event(int rank);
 static void mod_destroy(void);
-static void  mod_consumer_proc(int rank);
 
 str dbk_node_hostname = { 0, 0 };
 str dbk_reg_fs_path = { 0, 0 };
 
+int kz_server_counter = 0;
+int kz_zone_counter = 0;
+
 int dbk_auth_wait_timeout = 3;
 int dbk_reconn_retries = 8;
-
 int dbk_presentity_phtable_size = 4096;
 
-int dbk_use_federated_exchanges = 1;
-str dbk_federated_exchanges = str_init("federate-");
+int dbk_use_federated_exchange = 1;
+str dbk_federated_exchange = str_init("federate");
+str dbk_primary_zone_name = str_init("local");
 
 //int dbk_dialog_expires = 30;
 //int dbk_presence_expires = 3600;
@@ -87,15 +89,16 @@ int dbk_consumer_loop_count = 10;
 int dbk_consumer_ack_loop_count = 20;
 int dbk_include_entity = 1;
 int dbk_pua_mode = 1;
-
+int dbk_use_hearbeats = 0;
 int dbk_single_consumer_on_reconnect = 1;
 int dbk_consume_messages_on_reconnect = 1;
 
 int startup_time = 0;
 
-int *kz_pipe_fds = NULL;
-
-db1_con_t * shared_db1 = NULL;
+int *kz_worker_pipes_fds = NULL;
+int *kz_worker_pipes = NULL;
+int kz_cmd_pipe = 0;
+int  kz_cmd_pipe_fds[2] = {-1,-1};
 
 /* database connection */
 db1_con_t *kz_pa_db = NULL;
@@ -182,8 +185,10 @@ static param_export_t params[] = {
     {"amqp_query_timeout_avp", STR_PARAM, &kz_query_timeout_avp.s},
     {"json_escape_char", STR_PARAM, &kz_json_escape_str.s},
     {"app_name", STR_PARAM, &kz_app_name.s},
-    {"use_federated_exchanges", INT_PARAM, &dbk_use_federated_exchanges},
-    {"federated_exchange_prepend", STR_PARAM, &dbk_federated_exchanges.s},
+    {"use_federated_exchange", INT_PARAM, &dbk_use_federated_exchange},
+    {"federated_exchange", STR_PARAM, &dbk_federated_exchange.s},
+    {"amqp_heartbeats", INT_PARAM, &dbk_use_hearbeats},
+    {"amqp_primary_zone", STR_PARAM, &dbk_primary_zone_name.s},
     {0, 0, 0}
 };
 
@@ -291,20 +296,30 @@ static int mod_init(void) {
     }
 
 
-    int total_workers = dbk_consumer_processes + 3;
-    int total_pipes = total_workers;
-    kz_pipe_fds = (int*) shm_malloc(sizeof(int) * (total_pipes) * 2 );
+    int total_workers = dbk_consumer_processes + 2 + kz_server_counter;
 
-    for(i=0; i < total_pipes; i++) {
-    	kz_pipe_fds[i*2] = kz_pipe_fds[i*2+1] = -1;
-		if (pipe(&kz_pipe_fds[i*2]) < 0) {
-			LM_ERR("pipe(%d) failed\n", i);
+    register_procs(total_workers);
+    cfg_register_child(total_workers);
+
+	if (pipe(kz_cmd_pipe_fds) < 0) {
+		LM_ERR("cmd pipe() failed\n");
+		return -1;
+	}
+
+    kz_worker_pipes_fds = (int*) shm_malloc(sizeof(int) * (dbk_consumer_processes) * 2 );
+    kz_worker_pipes = (int*) shm_malloc(sizeof(int) * dbk_consumer_processes );
+    for(i=0; i < dbk_consumer_processes; i++) {
+    	kz_worker_pipes_fds[i*2] = kz_worker_pipes_fds[i*2+1] = -1;
+		if (pipe(&kz_worker_pipes_fds[i*2]) < 0) {
+			LM_ERR("worker pipe(%d) failed\n", i);
 			return -1;
 		}
     }
 
-    register_procs(total_workers);
-    cfg_register_child(total_workers);
+	kz_cmd_pipe = kz_cmd_pipe_fds[1];
+	for(i=0; i < dbk_consumer_processes; i++) {
+		kz_worker_pipes[i] = kz_worker_pipes_fds[i*2+1];
+	}
 
     return 0;
 }
@@ -324,6 +339,8 @@ static int mod_child_init(int rank)
 {
 	int pid;
 	int i;
+	kz_amqp_zone_ptr g;
+	kz_amqp_server_ptr s;
 
 	fire_init_event(rank);
 
@@ -332,37 +349,40 @@ static int mod_child_init(int rank)
 
 
 	if (rank==PROC_MAIN) {
-		pid=fork_process(2, "AMQP Consumer", 1);
+		pid=fork_process(PROC_NOCHLDINIT, "AMQP Timer", 0);
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0){
-			kz_amqp_consumer_proc(1);
+			return(kz_amqp_timeout_proc());
 		}
-		else {
-			pid=fork_process(1, "AMQP Publisher", 1);
+
+		for(i=0; i < dbk_consumer_processes; i++) {
+			pid=fork_process(i+1, "AMQP Consumer Worker", 1);
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0){
-				kz_amqp_publisher_proc(0);
+				close(kz_worker_pipes_fds[i*2+1]);
+				kz_amqp_consumer_worker_proc(kz_worker_pipes_fds[i*2]);
 			}
-			else {
-				pid=fork_process(3, "AMQP Timer", 1);
+		}
+
+		for (g = kz_amqp_get_zones(); g != NULL; g = g->next) {
+			for (s = g->servers->head; s != NULL; s = s->next) {
+				pid=fork_process(PROC_NOCHLDINIT, "AMQP Consumer", 0);
 				if (pid<0)
 					return -1; /* error */
 				if(pid==0){
-					kz_amqp_timeout_proc(2);
-				}
-				else {
-					for(i=0; i < dbk_consumer_processes; i++) {
-						pid=fork_process(i+4, "AMQP Consumer Worker", 1);
-						if (pid<0)
-							return -1; /* error */
-						if(pid==0){
-							mod_consumer_proc(i+3);
-						}
-					}
+					return(kz_amqp_consumer_proc(s));
 				}
 			}
+		}
+
+		pid=fork_process(PROC_NOCHLDINIT, "AMQP Publisher", 1);
+		if (pid<0)
+			return -1; /* error */
+		if(pid==0){
+			close(kz_cmd_pipe_fds[1]);
+			kz_amqp_publisher_proc(kz_cmd_pipe_fds[0]);
 		}
 		return 0;
 	}
@@ -390,12 +410,6 @@ static int mod_child_init(int rank)
 
 	return 0;
 }
-
-static void  mod_consumer_proc(int rank)
-{
-	kz_amqp_consumer_loop(rank);
-}
-
 
 static int fire_init_event(int rank)
 {
@@ -431,7 +445,8 @@ static int fire_init_event(int rank)
 
 static void mod_destroy(void) {
 	kz_amqp_destroy();
-    shm_free(kz_pipe_fds);
+    shm_free(kz_worker_pipes_fds);
+    shm_free(kz_worker_pipes);
 }
 
 
