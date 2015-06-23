@@ -534,8 +534,8 @@ int evapi_relay(str *evdata)
 	int sbsize;
 	str *sbuf;
 
-	LM_DBG("relaying event data [%.*s]\n",
-			evdata->len, evdata->s);
+	LM_DBG("relaying event data [%.*s] (%d)\n",
+			evdata->len, evdata->s, evdata->len);
 
 	sbsize = evdata->len;
 	sbuf = (str*)shm_malloc(sizeof(str) + ((sbsize+32) * sizeof(char)));
@@ -560,12 +560,12 @@ int evapi_relay(str *evdata)
 		return -1;
 	}
 
+	LM_DBG("sending [%p] [%.*s] (%d)\n", sbuf, sbuf->len, sbuf->s, sbuf->len);
 	len = write(_evapi_notify_sockets[1], &sbuf, sizeof(str*));
 	if(len<=0) {
 		LM_ERR("failed to pass the pointer to evapi dispatcher\n");
 		return -1;
 	}
-	LM_DBG("sent [%p] [%.*s] (%d)\n", sbuf, sbuf->len, sbuf->s, sbuf->len);
 	return 0;
 }
 
