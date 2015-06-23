@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2014 asipto.com
+   Copyright Â© 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -158,10 +158,18 @@ modparam("evapi", "netstring_format", 0)
    4.2. evapi_async_relay(evdata)
    4.3. evapi_close()
 
-4.1. evapi_relay(evdata)
+4.1.  evapi_relay(evdata)
 
-   Relay the event data give as parameter to connected applications. The
-   format on the network is netstring with evdata payload.
+   Relay the event data given as parameter to connected applications.
+
+   The format on the network is netstring with evdata payload if
+   netstring_format parameter is set to 1 or bare evdata if
+   netstring_format parameter is set to 0.
+
+   The function is passing the task to evapi dispatcher process, therefore
+   the SIP worker process is not blocked. Also, it doesn't wait for any
+   response, therefore the processing of the configuration continues very
+   fast when executing evapi_relay().
 
    This function can be used from ANY_ROUTE.
 
@@ -180,12 +188,19 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 },
 ...
 
-4.2. evapi_async_relay(evdata)
+4.2.  evapi_async_relay(evdata)
 
-   Relay the event data give as parameter to connected applications. The
-   format on the network is netstring with evdata payload. Before
-   evaluating the parameter, the request processing is suspended using tm
-   module.
+   Relay the event data given as parameter to connected applications.
+   Before evaluating the parameter, the request processing is suspended
+   using tm module (using the t_suspend()/t_continue() framework). The
+   routing of the SIP request can be continued once
+   event_route[evapi:message-received] is triggered. After
+   evapi_async_relay() returns true, no relaying should happen in
+   request_route(), it should be followed by exit;.
+
+   The format on the network is netstring with evdata payload if
+   netstring_format parameter is set to 1 or bare evdata if
+   netstring_format parameter is set to 0.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -195,7 +210,7 @@ evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
         " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
 ...
 
-4.3. evapi_close()
+4.3.  evapi_close()
 
    Close evapi current client connection.
 
@@ -217,7 +232,7 @@ event_route[evapi:connection-new] {
    5.2. evapi:connection-closed
    5.3. evapi:message-received
 
-5.1. evapi:connection-new
+5.1.  evapi:connection-new
 
    If defined, the module calls event_route[evapi:connection-new] when a
    new client is connected.
@@ -227,7 +242,7 @@ event_route[evapi:connection-new] {
 }
 ...
 
-5.2. evapi:connection-closed
+5.2.  evapi:connection-closed
 
    If defined, the module calls event_route[evapi:connection-closed] when
    a client connection is closed.
@@ -237,7 +252,7 @@ event_route[evapi:connection-closed] {
 }
 ...
 
-5.3. evapi:message-received
+5.3.  evapi:message-received
 
    If defined, the module calls event_route[evapi:message-received] when a
    message is received from a client.
