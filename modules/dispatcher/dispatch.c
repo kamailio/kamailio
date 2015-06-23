@@ -471,10 +471,11 @@ int dp_init_relative_weights(ds_set_t *dset)
 			t++;
 		}
 	}
-	/* if the array was not completely filled (i.e., the sum of weights is
+	/* if the array was not completely filled (i.e., the sum of rweights is
 	 * less than 100 due to truncated), then use last address to fill the rest */
-	for(; t<100; t++)
-		dset->rwlist[t] = (unsigned int)(dset->nr-1);
+	unsigned int last_insert = t>0? dset->rwlist[t-1] : (unsigned int)(dset->nr-1); 
+	for(j=t; j<100; j++)
+		dset->rwlist[j] = last_insert;
 
 	/* shuffle the content of the array in order to mix the selection
 	 * of the addresses (e.g., if first address has weight=20, avoid
