@@ -66,6 +66,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"evapi_async_relay", (cmd_function)w_evapi_async_relay, 1, fixup_evapi_relay,
 		0, REQUEST_ROUTE},
+	{"evapi_close",       (cmd_function)w_evapi_close,       0, NULL,
+		0, ANY_ROUTE},
 	{"evapi_close",       (cmd_function)w_evapi_close,       1, NULL,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
