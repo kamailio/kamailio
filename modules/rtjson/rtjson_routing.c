@@ -677,6 +677,10 @@ int rtjson_update_branch(sip_msg_t *msg)
 		LM_WARN("no idx for routing\n");
 		return -1;
 	}
+	if(iavp->val.v.i<=0) {
+		LM_WARN("invalid branch idx for routing\n");
+		return -1;
+	}
 
 	srjson_InitDoc(&tdoc, NULL);
 
@@ -708,7 +712,8 @@ int rtjson_update_branch(sip_msg_t *msg)
 	nj = tj->child;
 
 	i = 0;
-	while(nj && i<iavp->val.v.i) {
+	/* stop at number of branches - 1 */
+	while(nj && i<iavp->val.v.i-1) {
 		nj = nj->next;
 		i++;
 	}
