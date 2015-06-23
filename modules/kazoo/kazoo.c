@@ -59,7 +59,7 @@ int dbk_reconn_retries = 8;
 int dbk_presentity_phtable_size = 4096;
 
 int dbk_use_federated_exchange = 1;
-str dbk_federated_exchange = str_init("federate");
+str dbk_federated_exchange = str_init("federation");
 str dbk_primary_zone_name = str_init("local");
 
 //int dbk_dialog_expires = 30;

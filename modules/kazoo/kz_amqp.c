@@ -1480,14 +1480,16 @@ int kz_amqp_bind_consumer(kz_amqp_conn_ptr kz_conn, kz_amqp_bind_ptr bind, int i
     amqp_bytes_t federated_routing_key = {0, 0};
 	char _federated[100];
 
-	amqp_exchange_declare(kz_conn->conn, chan[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
-    if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
-    {
-		ret = -RET_AMQP_ERROR;
-		goto error;
-    }
+	if(bind->federate == 0 || dbk_use_federated_exchange == 0) {
+		amqp_exchange_declare(kz_conn->conn, chan[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+		if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
+		{
+			ret = -RET_AMQP_ERROR;
+			goto error;
+		}
+	}
 
-    if(bind->federate == 1 && dbk_use_federated_exchange == 1) {
+	if(bind->federate == 1 && dbk_use_federated_exchange == 1) {
     	federated_exchange = kz_local_amqp_bytes_dup_from_string(dbk_federated_exchange.s);
 		amqp_exchange_declare(kz_conn->conn, chan[idx].channel, federated_exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
 		if (kz_amqp_error("Declaring federated exchange", amqp_get_rpc_reply(kz_conn->conn)))
@@ -1504,13 +1506,15 @@ int kz_amqp_bind_consumer(kz_amqp_conn_ptr kz_conn, kz_amqp_bind_ptr bind, int i
 		goto error;
     }
 
-    LM_DBG("QUEUE BIND\n");
-    if (amqp_queue_bind(kz_conn->conn, chan[idx].channel, bind->queue, bind->exchange, bind->routing_key, kz_amqp_empty_table) < 0
-	    || kz_amqp_error("Binding queue", amqp_get_rpc_reply(kz_conn->conn)))
-    {
-		ret = -RET_AMQP_ERROR;
-		goto error;
-    }
+	if(bind->federate == 0 || dbk_use_federated_exchange == 0) {
+		LM_DBG("QUEUE BIND\n");
+		if (amqp_queue_bind(kz_conn->conn, chan[idx].channel, bind->queue, bind->exchange, bind->routing_key, kz_amqp_empty_table) < 0
+			|| kz_amqp_error("Binding queue", amqp_get_rpc_reply(kz_conn->conn)))
+		{
+			ret = -RET_AMQP_ERROR;
+			goto error;
+		}
+	}
 
     if(bind->federate == 1 && dbk_use_federated_exchange == 1) {
     	sprintf(_federated, "%.*s%s%.*s", (int)bind->exchange.len, (char*)bind->exchange.bytes,
