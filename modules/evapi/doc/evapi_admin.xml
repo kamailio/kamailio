@@ -131,8 +131,18 @@ modparam("evapi", "netstring_format", 0)
 		<function moreinfo="none">evapi_relay(evdata)</function>
 	    </title>
 	    <para>
-		Relay the event data give as parameter to connected applications.
-		The format on the network is netstring with evdata payload.
+		Relay the event data given as parameter to connected applications.
+		</para>
+		<para>
+		The format on the network is netstring with evdata payload if
+		netstring_format parameter is set to 1 or bare evdata if
+		netstring_format parameter is set to 0.
+		</para>
+		<para>
+		The function is passing the task to evapi dispatcher process, therefore
+		the SIP worker process is not blocked. Also, it doesn't wait for any
+		response, therefore the processing of the configuration continues
+		very fast when executing evapi_relay().
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -166,10 +176,17 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 		<function moreinfo="none">evapi_async_relay(evdata)</function>
 	    </title>
 	    <para>
-		Relay the event data give as parameter to connected applications.
-		The format on the network is netstring with evdata payload. Before
+		Relay the event data given as parameter to connected applications. Before
 		evaluating the parameter, the request processing is suspended using
-		tm module.
+		tm module (using the t_suspend()/t_continue() framework). The routing
+		of the SIP request can be continued once event_route[evapi:message-received]
+		is triggered. After evapi_async_relay() returns true, no relaying should
+		happen in request_route(), it should be followed by exit;.
+		</para>
+		<para>
+		The format on the network is netstring with evdata payload if
+		netstring_format parameter is set to 1 or bare evdata if
+		netstring_format parameter is set to 0.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
