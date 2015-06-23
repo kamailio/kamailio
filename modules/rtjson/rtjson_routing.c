@@ -58,7 +58,7 @@ int rtjson_init(void)
 		memset(&tmb, 0, sizeof(struct tm_binds));
 	}
 	if (load_uac_api(&uacb) < 0) {
-		LM_ERR("cannot bind to UAC API - some features are diabled\n");
+		LM_NOTICE("cannot bind to UAC API - some features are diabled\n");
 		memset(&uacb, 0, sizeof(uac_api_t));
 	}
 	return 0;
