@@ -258,7 +258,7 @@ int load_user_carrier(str * user, str * domain) {
 int load_route_data_db(struct route_data_t * rd) {
 	db1_res_t * res = NULL;
 	db_row_t * row = NULL;
-	int i, ret;
+	int i, ret, to_free;
 	struct carrier_data_t * tmp_carrier_data;
 	static str query_str;
 	str tmp_scan_prefix, tmp_rewrite_host, tmp_rewrite_prefix,
@@ -349,7 +349,29 @@ int load_route_data_db(struct route_data_t * rd) {
 			tmp_rewrite_host.s=(char *)row->values[COL_REWRITE_HOST].val.string_val;
 			tmp_rewrite_prefix.s=(char *)row->values[COL_REWRITE_PREFIX].val.string_val;
 			tmp_rewrite_suffix.s=(char *)row->values[COL_REWRITE_SUFFIX].val.string_val;
-			tmp_comment.s=(char *)row->values[COL_COMMENT].val.string_val;
+			switch(cr_id_in_avp) {
+				case 0:
+					//Description only
+					tmp_comment.s=(char *)row->values[COL_COMMENT].val.string_val;
+					break;
+				case 1:
+					//ID of row + comment
+					//Malloc sizeof int * 8 bytes + 255 chars for comment from db + " - " + NULL
+					tmp_comment.s=(char *)pkg_malloc(8 * sizeof(int) + 255 + 3 + 1);
+					if (!tmp_comment.s)
+						LM_ERR("No pkg memory left\n");
+					snprintf(tmp_comment.s, 8 * sizeof(int) + 255 + 3 + 1, "%d - %s", row->values[COL_ID].val.int_val, row->values[COL_COMMENT].val.string_val);
+					to_free = 1;
+					break;
+				case 2:
+					//ID of row only
+					tmp_comment.s=(char *)pkg_malloc(8 * sizeof(int) + 1);
+					if (!tmp_comment.s)
+						LM_ERR("No pkg memory left\n");
+					snprintf(tmp_comment.s, 8 * sizeof(int) + 1, "%d", row->values[COL_ID].val.int_val);
+					to_free = 1;
+					break;
+			}
 			if (tmp_scan_prefix.s==NULL) tmp_scan_prefix.s="";
 			if (tmp_rewrite_host.s==NULL) tmp_rewrite_host.s="";
 			if (tmp_rewrite_prefix.s==NULL) tmp_rewrite_prefix.s="";
@@ -378,6 +400,10 @@ int load_route_data_db(struct route_data_t * rd) {
 					NULL,
 					&tmp_comment) == -1) {
 				goto errout;
+			}
+			if(to_free && tmp_comment.s) {
+				pkg_free(tmp_comment.s);
+				to_free = 0;
 			}
 		}
 		if (DB_CAPABILITY(carrierroute_dbf, DB_CAP_FETCH)) {
@@ -409,7 +435,29 @@ int load_route_data_db(struct route_data_t * rd) {
 		tmp_scan_prefix.s=(char *)row->values[FCOL_SCAN_PREFIX].val.string_val;
 		tmp_host_name.s=(char *)row->values[FCOL_HOST_NAME].val.string_val;
 		tmp_reply_code.s=(char *)row->values[FCOL_REPLY_CODE].val.string_val;
-		tmp_comment.s=(char *)row->values[FCOL_COMMENT].val.string_val;
+		switch(cr_id_in_avp) {
+			case 0:
+				//Description only
+				tmp_comment.s=(char *)row->values[FCOL_COMMENT].val.string_val;
+				break;
+			case 1:
+				//ID of row + comment
+				//Malloc sizeof int * 8 bytes + 255 chars for comment from db + " - " + NULL
+				tmp_comment.s=(char *)pkg_malloc(8 * sizeof(int) + 255 + 3 + 1);
+				if (!tmp_comment.s)
+					LM_ERR("No pkg memory left\n");
+				snprintf(tmp_comment.s, 8 * sizeof(int) + 255 + 3 + 1, "%d - %s", row->values[FCOL_ID].val.int_val, row->values[FCOL_COMMENT].val.string_val);
+				to_free = 1;
+				break;
+			case 2:
+				//ID of row only
+				tmp_comment.s=(char *)pkg_malloc(8 * sizeof(int) + 1);
+				if (!tmp_comment.s)
+					LM_ERR("No pkg memory left\n");
+				snprintf(tmp_comment.s, 8 * sizeof(int) + 1, "%d", row->values[FCOL_ID].val.int_val);
+				to_free = 1;
+				break;
+		}
 		if (tmp_scan_prefix.s==NULL) tmp_scan_prefix.s="";
 		if (tmp_host_name.s==NULL) tmp_host_name.s="";
 		if (tmp_reply_code.s==NULL) tmp_reply_code.s="";
@@ -430,6 +478,10 @@ int load_route_data_db(struct route_data_t * rd) {
 				&tmp_comment) == -1) {
 			goto errout;
 		}
+		if(to_free && tmp_comment.s) {
+			pkg_free(tmp_comment.s);
+			to_free = 0;
+		}
 	}
 
 	carrierroute_dbf.free_result(carrierroute_dbh, res);
@@ -438,6 +490,9 @@ int load_route_data_db(struct route_data_t * rd) {
 errout:
 	if (res) {
 		carrierroute_dbf.free_result(carrierroute_dbh, res);
+	}
+	if(to_free && tmp_comment.s) {
+		pkg_free(tmp_comment.s);
 	}
 	return -1;
 }

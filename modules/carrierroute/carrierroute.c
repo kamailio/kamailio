@@ -79,6 +79,7 @@ const str CR_EMPTY_PREFIX = str_init("null");
 int mode = 0;
 int cr_match_mode = 10;
 int cr_avoid_failed_dests = 1;
+int cr_id_in_avp = 0;
 
 /************* Declaration of Interface Functions **************************/
 static int mod_init(void);
@@ -120,6 +121,7 @@ static param_export_t params[]= {
 	{"fetch_rows",                INT_PARAM, &default_carrierroute_cfg.fetch_rows },
 	{"match_mode",                INT_PARAM, &cr_match_mode },
 	{"avoid_failed_destinations", INT_PARAM, &cr_avoid_failed_dests },
+	{"id_in_avp",				  INT_PARAM, &cr_id_in_avp},
 	{0,0,0}
 };
 
@@ -183,6 +185,11 @@ static int mod_init(void) {
 
 	if (cr_avoid_failed_dests != 0 && cr_avoid_failed_dests != 1) {
 		LM_ERR("avoid_failed_dests must be 0 or 1");
+		return -1;
+	}
+
+	if (cr_id_in_avp < 0 || cr_id_in_avp > 2) {
+		LM_ERR("id_in_avp must be between 0 and 2");
 		return -1;
 	}
 
