@@ -338,7 +338,7 @@ static int mod_init(void)
 					port_str.len, port_str.s);
 				return -1;
 			}
-			if(xcap_port< 0 || xcap_port> 65535)
+			if(xcap_port< 1 || xcap_port> 65535)
 			{
 				LM_ERR("wrong xcap server port\n");
 				return -1;
