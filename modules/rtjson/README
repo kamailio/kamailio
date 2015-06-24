@@ -155,6 +155,8 @@ rtjson_push_routes();
 ...
 rtjson_init_routes("$var(json)");
 rtjson_push_routes();
+t_on_failure("REROUTE");
+t_relay();
 ...
 failure_route[REROUTE] {
         rtjson_next_route();
@@ -172,6 +174,8 @@ failure_route[REROUTE] {
 ...
 rtjson_init_routes("$var(json)");
 rtjson_push_routes();
+t_on_branch("OUTGOING");
+t_relay();
 ...
 branch_route[OUTGOING] {
         rtjson_update_branch();
@@ -182,13 +186,40 @@ branch_route[OUTGOING] {
 
    The format of the JSON document containing routing information.
 
-   Description of the fields: TBA.
+   Description of the fields in the JSON routing document:
+     * version - intended to enforce versioning checks (not enforced yet),
+       recommended to be set to "1.0".
+     * routing - can be "serial" or "parallel", corresponding to desired
+       routing type: serial or parallel forking.
+     * routes - an array with structures holding the attributes for
+       destinations. The attributes can be:
+          + uri - request URI
+          + dst_uri - outbound proxy URI
+          + path - Path URI vector
+          + socket - local socket
+          + headers - a structure with values for headers From and To
+            specified as display name and URI, plus extra headers to be
+            appended to SIP request. It requires uac module in order to
+            update From and To headers. Set by rtjson_update_branch() only
+            for serial routing.
+          + branch_flags - branch flags. Set by rtjson_update_branch()
+            only for serial routing.
+          + fr_timer - value for fr_timer parameter of tm module. Set by
+            rtjson_update_branch() only for serial routing.
+          + fr_inv_timer - value for fr_inv_timer parameter of tm module.
+            Set by rtjson_update_branch() only for serial routing.
+
+   Other fields can appear in the JSON routing document, being ignored by
+   rtjson functions. They can be processed directly in the configuration
+   files using json or jansson modules. For example, the document can
+   include the transaction identification tuple (index,label) that can be
+   used to resume the execution of a suspended transaction.
 
    Example 1.6. JSON Routing Structure
 ...
 {
         "version": "1.0",
-        "routing": "parallel",
+        "routing": "serial",
         "routes": [
                 {
                         "uri": "sip:127.0.0.1:5080",
