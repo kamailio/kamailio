@@ -1211,12 +1211,13 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Internal error creating dest struct");
 					return;
 				}
-				if(rpc->struct_add(wh, "SSddS",
+				if(rpc->struct_add(wh, "SSdddS",
 							"BODY", &(list->dlist[j].attrs.body),
 							"DUID", (list->dlist[j].attrs.duid.s)?
 							&(list->dlist[j].attrs.duid):&data,
 							"MAXLOAD", list->dlist[j].attrs.maxload,
 							"WEIGHT", list->dlist[j].attrs.weight,
+							"RWEIGHT", list->dlist[j].attrs.rweight,
 							"SOCKET", (list->dlist[j].attrs.socket.s)?
 							&(list->dlist[j].attrs.socket):&data)<0)
 				{

@@ -917,6 +917,24 @@ modparam("dispatcher", "force_dst", 1)
 			</listitem>
 			<listitem>
 				<para>
+				<quote>11</quote> - use relative weight based load distribution.
+				You have to set the attribute 'rweight' per each address in
+				destination set. Active host usage probability is 
+				rweight/(SUM of all active host rweights in destination group). 
+				</para>
+				<para>
+				The major difference from the weight distribution is the
+				probability recalculation according to rweight value in case of 
+				host enabling/disabling
+				</para>
+				<para>
+				For example, 100 calls in 3-hosts group with rweight params 1/2/1  
+				will be distributed as 25/50/25. After third host failing 
+				distribution will be changed to 33/67/0.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
 				<quote>X</quote> - if the algorithm is not implemented, the
 				first entry in set is chosen.
 				</para>
@@ -1448,6 +1466,12 @@ onreply_route {
 					must be set to a positive integer value beteen 0 and
 					100. The value represents the percent of calls to be
 					sent to that gateways.
+				</listitem>
+				<listitem>
+					'rweight' - used for relative weight based load 
+					distribution. It must be set to a positive integer value 
+					between 1 and 100 (otherwise host will be excluded from 
+					relative weight distribution type). 
 				</listitem>
 				<listitem>
 					'socket' - used to set the sending socket for the gateway.
