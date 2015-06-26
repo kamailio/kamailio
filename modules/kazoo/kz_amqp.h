@@ -30,7 +30,12 @@ typedef enum {
 	KZ_AMQP_CMD_PUBLISH     = 1,
 	KZ_AMQP_CMD_CALL    = 2,
 	KZ_AMQP_CMD_CONSUME = 3,
-	KZ_AMQP_CMD_ACK = 4
+	KZ_AMQP_CMD_ACK = 4,
+	KZ_AMQP_CMD_TARGETED_CONSUMER = 5,
+	KZ_AMQP_CMD_PUBLISH_BROADCAST = 6,
+	KZ_AMQP_CMD_COLLECT = 7,
+	KZ_AMQP_CMD_ASYNC_CALL    = 8,
+	KZ_AMQP_CMD_ASYNC_COLLECT    = 9
 } kz_amqp_pipe_cmd_type;
 
 typedef enum {
@@ -83,10 +88,11 @@ typedef struct {
 } kz_amqp_conn_pool, *kz_amqp_conn_pool_ptr;
 
 
+/*
 #define AMQP_KZ_CMD_PUBLISH       1
 #define AMQP_KZ_CMD_CALL          2
 #define AMQP_KZ_CMD_CONSUME       3
-
+*/
 
 typedef struct {
     gen_lock_t lock;
@@ -98,13 +104,30 @@ typedef struct {
 	char* queue;
 	char* payload;
 	char* return_payload;
+	str* message_id;
 	int   return_code;
 	int   consumer;
 	int   server_id;
 	uint64_t delivery_tag;
 	amqp_channel_t channel;
 	struct timeval timeout;
+
+	/* timer */
+	struct event *timer_ev;
+	int timerfd;
+
 } kz_amqp_cmd, *kz_amqp_cmd_ptr;
+
+typedef struct kz_amqp_cmd_entry_t {
+	kz_amqp_cmd_ptr cmd;
+	struct kz_amqp_cmd_entry_t* next;
+} kz_amqp_cmd_entry, *kz_amqp_cmd_entry_ptr;
+
+typedef struct kz_amqp_cmd_table_t {
+	kz_amqp_cmd_entry_ptr entries;
+	gen_lock_t lock;
+} kz_amqp_cmd_table, *kz_amqp_cmd_table_ptr;
+
 
 typedef struct {
 	char* payload;
@@ -215,6 +238,8 @@ kz_amqp_zone_ptr kz_amqp_get_zone(char* zone);
 kz_amqp_zone_ptr kz_amqp_add_zone(char* zone);
 
 void kz_amqp_fire_connection_event(char *event, char* host);
+
+void kz_amqp_free_pipe_cmd(kz_amqp_cmd_ptr cmd);
 
 static inline int kz_amqp_error(char const *context, amqp_rpc_reply_t x)
 {

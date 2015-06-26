@@ -57,6 +57,7 @@ int kz_zone_counter = 0;
 int dbk_auth_wait_timeout = 3;
 int dbk_reconn_retries = 8;
 int dbk_presentity_phtable_size = 4096;
+int dbk_command_table_size = 2048;
 
 int dbk_use_federated_exchange = 1;
 str dbk_federated_exchange = str_init("federation");
@@ -189,6 +190,7 @@ static param_export_t params[] = {
     {"federated_exchange", STR_PARAM, &dbk_federated_exchange.s},
     {"amqp_heartbeats", INT_PARAM, &dbk_use_hearbeats},
     {"amqp_primary_zone", STR_PARAM, &dbk_primary_zone_name.s},
+    {"amqp_command_hashtable_size", INT_PARAM, &dbk_command_table_size},
     {0, 0, 0}
 };
 
@@ -347,14 +349,19 @@ static int mod_child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0;
 
+//	if (rank>PROC_MAIN)
+//		kz_cmd_pipe = kz_cmd_pipe_fds[1];
+
 
 	if (rank==PROC_MAIN) {
+		/*
 		pid=fork_process(PROC_NOCHLDINIT, "AMQP Timer", 0);
 		if (pid<0)
-			return -1; /* error */
+			return -1;
 		if(pid==0){
 			return(kz_amqp_timeout_proc());
 		}
+		*/
 
 		for(i=0; i < dbk_consumer_processes; i++) {
 			pid=fork_process(i+1, "AMQP Consumer Worker", 1);
