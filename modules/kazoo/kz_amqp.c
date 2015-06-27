@@ -1827,7 +1827,7 @@ void kz_amqp_cmd_timeout_cb(int fd, short event, void *arg)
 	if(retrieved_cmd == NULL) {
 		LM_ERR("timer what!? ");
 	} else {
-		LM_ERR("amqp message timeout for exchange '%s' with routing key '%s' and message id '%.*s'\n"
+		LM_DBG("amqp message timeout for exchange '%s' with routing key '%s' and message id '%.*s'\n"
 				, cmd->exchange, cmd->routing_key
 				, cmd->message_id->len, cmd->message_id->s
 				);
@@ -2149,7 +2149,7 @@ void kz_amqp_publisher_proc_cb(int fd, short event, void *arg)
 	case KZ_AMQP_CMD_TARGETED_CONSUMER:
 		retrieved_cmd = kz_cmd_retrieve(cmd->message_id);
 		if(retrieved_cmd == NULL) {
-			LM_ERR("amqp message id %.*s not found.\n", cmd->message_id->len, cmd->message_id->s);
+			LM_DBG("amqp message id %.*s not found.\n", cmd->message_id->len, cmd->message_id->s);
 			kz_amqp_free_pipe_cmd(cmd);
 		} else {
 			kz_amqp_stop_cmd_timer(retrieved_cmd);
