@@ -1778,8 +1778,8 @@ route_name:		NUMBER	{
 ;
 
 
-route_main:	ROUTE { ; }
-		  | ROUTE_REQUEST { ; }
+route_main:	ROUTE { routename=NULL; }
+		  | ROUTE_REQUEST { routename=NULL; }
 ;
 
 route_stm:
@@ -1845,8 +1845,8 @@ failure_route_stm:
 	;
 
 
-route_reply_main:	ROUTE_ONREPLY { ; }
-		  | ROUTE_REPLY { ; }
+route_reply_main:	ROUTE_ONREPLY { routename=NULL; }
+		  | ROUTE_REPLY { routename=NULL; }
 ;
 
 
