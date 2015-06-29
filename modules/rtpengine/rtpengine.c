@@ -1002,6 +1002,9 @@ child_init(int rank)
 	struct addrinfo hints, *res;
 	struct rtpp_set  *rtpp_list;
 	struct rtpp_node *pnode;
+#ifdef IP_MTU_DISCOVER
+	int ip_mtu_discover = IP_PMTUDISC_DONT;
+#endif
 
 	if(rtpp_set_list==NULL )
 		return 0;
@@ -1063,6 +1066,12 @@ child_init(int rank)
 				freeaddrinfo(res);
 				return -1;
 			}
+
+#ifdef IP_MTU_DISCOVER
+			setsockopt(rtpp_socks[pnode->idx], IPPROTO_IP,
+				   IP_MTU_DISCOVER, &ip_mtu_discover,
+				   sizeof(ip_mtu_discover));
+#endif
 
 			if (connect( rtpp_socks[pnode->idx], res->ai_addr, res->ai_addrlen) == -1) {
 				LM_ERR("can't connect to a RTP proxy\n");
