@@ -121,6 +121,9 @@ static int fixup_aar(void** param, int param_no);
 
 int * callback_singleton; /*< Callback singleton */
 
+str early_qosrelease_reason = {"QoS released", 12};
+str confirmed_qosrelease_headers = {NULL, 0};
+
 /* parameters storage */
 str rx_dest_realm = str_init("ims.smilecoms.com");
 /* Only used if we want to force the Rx peer usually this is configured at a stack level and the first request uses realm routing */
@@ -147,6 +150,8 @@ static param_export_t params[] = {
     { "cdp_event_list_size_threshold", INT_PARAM, &cdp_event_list_size_threshold}, /**Threshold for size of cdp event list after which a warning is logged */
     { "audio_default_bandwidth", INT_PARAM, &audio_default_bandwidth},
     { "video_default_bandwidth", INT_PARAM, &video_default_bandwidth},
+    { "early_qosrelease_reason", PARAM_STR, &early_qosrelease_reason},
+    { "confirmed_qosrelease_headers", PARAM_STR, &confirmed_qosrelease_headers},
     { 0, 0, 0}
 };
 

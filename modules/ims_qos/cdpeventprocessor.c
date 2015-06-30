@@ -173,7 +173,7 @@ void cdp_cb_event_process() {
     cdp_cb_event_t *ev;
     udomain_t* domain;
     pcontact_t* pcontact;
-    str release_reason = {"QoS released", 12}; /* TODO: This could be a module parameter */
+
     struct pcontact_info ci;
     memset(&ci, 0, sizeof (struct pcontact_info));
 
@@ -275,8 +275,8 @@ void cdp_cb_event_process() {
                                 p_session_data->ftag.len, p_session_data->ftag.s,
                                 p_session_data->ttag.len, p_session_data->ttag.s);
                         dlgb.terminate_dlg(&p_session_data->callid,
-                                &p_session_data->ftag, &p_session_data->ttag, NULL,
-                                &release_reason);
+                                &p_session_data->ftag, &p_session_data->ttag, &confirmed_qosrelease_headers,
+                                &early_qosrelease_reason);
                     }
                 }
 

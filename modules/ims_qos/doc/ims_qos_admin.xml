@@ -258,6 +258,48 @@ modparam("ims_qos", "video_default_bandwidth", 256)
         </programlisting>
       </example>
     </section>
+    <section>
+      <title><varname>early_qosrelease_reason</varname> (String)</title>
+
+      <para>This sets the default Reason, when a call is terminated in 
+            early stage due to QoS-failure.</para>
+
+      <para><emphasis> Default value is "QoS released", an call in early stage
+		       would be released with "488 QoS released".</emphasis></para>
+
+      <example>
+        <title><varname>early_qosrelease_reason</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "early_qosrelease_reason", "Sorry - QoS failed")
+...
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>confirmed_qosrelease_headers</varname> (String)</title>
+
+      <para>These headers are added to the BYE-Message, when an confirmed call
+	    is terminated due to a QoS failure.</para>
+
+      <para><emphasis> Default value is "", no Extra-Headers</emphasis></para>
+
+      <para><emphasis> The headers must end with CRLF.</emphasis></para>
+
+      <example>
+        <title><varname>confirmed_qosrelease_headers</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "confirmed_qosrelease_headers", "X-Reason: QoS failed\r\n")
+...
+        </programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>
