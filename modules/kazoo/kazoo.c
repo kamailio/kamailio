@@ -41,7 +41,8 @@
 #include "kz_trans.h"
 #include "kz_pua.h"
 
-#define DBK_DEFAULT_NO_CONSUMERS 8
+#define DBK_DEFAULT_NO_CONSUMERS 1
+#define DBK_DEFAULT_NO_WORKERS 8
 
 static int mod_init(void);
 static int  mod_child_init(int rank);
@@ -71,6 +72,7 @@ int dbk_create_empty_dialog = 1;
 int dbk_channels = 50;
 
 int dbk_consumer_processes = DBK_DEFAULT_NO_CONSUMERS;
+int dbk_consumer_workers = DBK_DEFAULT_NO_WORKERS;
 
 struct timeval kz_sock_tv = (struct timeval){0,100000};
 struct timeval kz_amqp_tv = (struct timeval){0,100000};
@@ -176,6 +178,7 @@ static param_export_t params[] = {
     {"amqp_waitframe_timeout_micro", INT_PARAM, &kz_amqp_tv.tv_usec},
     {"amqp_waitframe_timeout_sec", INT_PARAM, &kz_amqp_tv.tv_sec},
     {"amqp_consumer_processes", INT_PARAM, &dbk_consumer_processes},
+    {"amqp_consumer_workers", INT_PARAM, &dbk_consumer_workers},
     {"amqp_consumer_event_key", STR_PARAM, &dbk_consumer_event_key.s},
     {"amqp_consumer_event_subkey", STR_PARAM, &dbk_consumer_event_subkey.s},
     {"amqp_query_timeout_micro", INT_PARAM, &kz_qtimeout_tv.tv_usec},
@@ -309,7 +312,7 @@ static int mod_init(void) {
     }
 
 
-    int total_workers = dbk_consumer_processes + 2 + kz_server_counter;
+    int total_workers = dbk_consumer_workers + (dbk_consumer_processes * kz_server_counter) + 2;
 
     register_procs(total_workers);
     cfg_register_child(total_workers);
@@ -319,9 +322,9 @@ static int mod_init(void) {
 		return -1;
 	}
 
-    kz_worker_pipes_fds = (int*) shm_malloc(sizeof(int) * (dbk_consumer_processes) * 2 );
-    kz_worker_pipes = (int*) shm_malloc(sizeof(int) * dbk_consumer_processes );
-    for(i=0; i < dbk_consumer_processes; i++) {
+    kz_worker_pipes_fds = (int*) shm_malloc(sizeof(int) * (dbk_consumer_workers) * 2 );
+    kz_worker_pipes = (int*) shm_malloc(sizeof(int) * dbk_consumer_workers);
+    for(i=0; i < dbk_consumer_workers; i++) {
     	kz_worker_pipes_fds[i*2] = kz_worker_pipes_fds[i*2+1] = -1;
 		if (pipe(&kz_worker_pipes_fds[i*2]) < 0) {
 			LM_ERR("worker pipe(%d) failed\n", i);
@@ -330,7 +333,7 @@ static int mod_init(void) {
     }
 
 	kz_cmd_pipe = kz_cmd_pipe_fds[1];
-	for(i=0; i < dbk_consumer_processes; i++) {
+	for(i=0; i < dbk_consumer_workers; i++) {
 		kz_worker_pipes[i] = kz_worker_pipes_fds[i*2+1];
 	}
 
@@ -374,23 +377,26 @@ static int mod_child_init(int rank)
 		}
 		*/
 
-		for(i=0; i < dbk_consumer_processes; i++) {
+		for(i=0; i < dbk_consumer_workers; i++) {
 			pid=fork_process(i+1, "AMQP Consumer Worker", 1);
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0){
 				close(kz_worker_pipes_fds[i*2+1]);
-				kz_amqp_consumer_worker_proc(kz_worker_pipes_fds[i*2]);
+				return(kz_amqp_consumer_worker_proc(kz_worker_pipes_fds[i*2]));
 			}
 		}
 
 		for (g = kz_amqp_get_zones(); g != NULL; g = g->next) {
-			for (s = g->servers->head; s != NULL; s = s->next) {
-				pid=fork_process(PROC_NOCHLDINIT, "AMQP Consumer", 0);
-				if (pid<0)
-					return -1; /* error */
-				if(pid==0){
-					return(kz_amqp_consumer_proc(s));
+			int w = (g == kz_amqp_get_primary_zone() ? dbk_consumer_processes : 1);
+			for(i=0; i < w; i++) {
+				for (s = g->servers->head; s != NULL; s = s->next) {
+					pid=fork_process(PROC_NOCHLDINIT, "AMQP Consumer", 0);
+					if (pid<0)
+						return -1; /* error */
+					if(pid==0){
+						return(kz_amqp_consumer_proc(s));
+					}
 				}
 			}
 		}

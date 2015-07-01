@@ -54,7 +54,7 @@ extern int dbk_channels;
 extern str dbk_node_hostname;
 extern str dbk_consumer_event_key;
 extern str dbk_consumer_event_subkey;
-extern int dbk_consumer_processes;
+extern int dbk_consumer_workers;
 
 typedef struct kz_amqp_connection_t {
 	kz_amqp_connection_info info;
@@ -197,9 +197,9 @@ typedef struct kz_amqp_server_t {
 	struct kz_amqp_zone_t* zone;
 	kz_amqp_connection_ptr connection;
 	kz_amqp_conn_ptr producer;
-	kz_amqp_conn_ptr consumer;
+//	kz_amqp_conn_ptr consumer;
 	kz_amqp_channel_ptr channels;
-	kz_amqp_channel_ptr consumer_channels;
+//	kz_amqp_channel_ptr consumer_channels;
     struct kz_amqp_server_t* next;
 } kz_amqp_server, *kz_amqp_server_ptr;
 
