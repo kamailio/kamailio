@@ -2081,6 +2081,7 @@ void kz_amqp_cmd_timeout_cb(int fd, short event, void *arg)
 	close(cmd->timerfd);
 	event_del(cmd->timer_ev);
 	pkg_free(cmd->timer_ev);
+	pkg_free(cmd->message_id);
 	pkg_free(cmd);
 
 }
