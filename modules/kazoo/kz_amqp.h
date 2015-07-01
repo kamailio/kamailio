@@ -113,10 +113,26 @@ typedef struct {
 	struct timeval timeout;
 
 	/* timer */
+//	struct event *timer_ev;
+//	int timerfd;
+
+	/* async */
+	char *cb_route;
+	char *err_route;
+	unsigned int t_hash;
+	unsigned int t_label;
+
+
+} kz_amqp_cmd, *kz_amqp_cmd_ptr;
+
+typedef struct {
+	str* message_id;
+
+	/* timer */
 	struct event *timer_ev;
 	int timerfd;
 
-} kz_amqp_cmd, *kz_amqp_cmd_ptr;
+} kz_amqp_cmd_timeout, *kz_amqp_cmd_timeout_ptr;
 
 typedef struct kz_amqp_cmd_entry_t {
 	kz_amqp_cmd_ptr cmd;
@@ -135,6 +151,8 @@ typedef struct {
 	amqp_channel_t channel;
 	char* event_key;
 	char* event_subkey;
+	str* message_id;
+	kz_amqp_cmd_ptr cmd;
 } kz_amqp_consumer_delivery, *kz_amqp_consumer_delivery_ptr;
 
 typedef struct {
@@ -212,6 +230,8 @@ int kz_amqp_subscribe(struct sip_msg* msg, char* payload);
 int kz_amqp_subscribe_simple(struct sip_msg* msg, char* exchange, char* exchange_type, char* queue_name, char* routing_key);
 int kz_amqp_encode(struct sip_msg* msg, char* unencoded, char* encoded);
 int kz_amqp_encode_ex(str* unencoded, pv_value_p dst_val);
+
+int kz_amqp_async_query(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* _cb_route, char* _err_route);
 
 //void kz_amqp_generic_consumer_loop(int child_no);
 void kz_amqp_manager_loop(int child_no);

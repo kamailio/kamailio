@@ -235,7 +235,7 @@ struct json_object* kz_json_parse(const char *str)
 
     tok = json_tokener_new();
     if (!tok) {
-      LM_ERR("Error parsing json: cpuld not allocate tokener\n");
+      LM_ERR("Error parsing json: could not allocate tokener\n");
       return NULL;
     }
 

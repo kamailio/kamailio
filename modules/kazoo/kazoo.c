@@ -110,6 +110,9 @@ str kz_db_url = {0,0};
 str kz_query_timeout_avp = {0,0};
 pv_spec_t kz_query_timeout_spec;
 
+str kz_query_result_avp = str_init("$avp(amqp_result)");
+pv_spec_t kz_query_result_spec;
+
 str kz_app_name = str_init(NAME);
 
 MODULE_VERSION
@@ -152,7 +155,10 @@ static cmd_export_t cmds[] = {
     {"kazoo_json", (cmd_function) kz_json_get_field, 3, fixup_kz_json, fixup_kz_json_free, ANY_ROUTE},
     {"kazoo_json_keys", (cmd_function) kz_json_get_keys, 3, fixup_kz_json, fixup_kz_json_free, ANY_ROUTE},
     {"kazoo_encode", (cmd_function) kz_amqp_encode, 2, fixup_kz_amqp_encode, fixup_kz_amqp_encode_free, ANY_ROUTE},
-    {0, 0, 0, 0, 0, 0}
+
+    {"kazoo_async_query", (cmd_function) kz_amqp_async_query, 5, fixup_kz_async_amqp, fixup_kz_async_amqp_free, ANY_ROUTE},
+
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[] = {
@@ -191,6 +197,7 @@ static param_export_t params[] = {
     {"amqp_heartbeats", INT_PARAM, &dbk_use_hearbeats},
     {"amqp_primary_zone", STR_PARAM, &dbk_primary_zone_name.s},
     {"amqp_command_hashtable_size", INT_PARAM, &dbk_command_table_size},
+    {"amqp_result_avp", STR_PARAM, &kz_query_result_avp.s},
     {0, 0, 0}
 };
 
@@ -229,6 +236,10 @@ static int kz_init_avp(void) {
 		}
 	} else {
 		memset( &kz_query_timeout_spec, 0, sizeof(pv_spec_t));
+	}
+
+	if ( kz_parse_avp(&kz_query_result_avp, &kz_query_result_spec, "amqp_result_avp") <0) {
+		return -1;
 	}
 
 	return 0;

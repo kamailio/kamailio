@@ -11,6 +11,9 @@
 int fixup_kz_amqp(void** param, int param_no);
 int fixup_kz_amqp_free(void** param, int param_no);
 
+int fixup_kz_async_amqp(void** param, int param_no);
+int fixup_kz_async_amqp_free(void** param, int param_no);
+
 int fixup_kz_amqp4(void** param, int param_no);
 int fixup_kz_amqp4_free(void** param, int param_no);
 
