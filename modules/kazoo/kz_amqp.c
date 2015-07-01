@@ -2539,7 +2539,7 @@ error:
 
 }
 
-void kz_amqp_send_worker_event(amqp_envelope_t* envelope, kz_amqp_bind_ptr bind)
+void kz_amqp_send_worker_event(int _kz_server_id, amqp_envelope_t* envelope, kz_amqp_bind_ptr bind)
 {
     char buffer[100];
     kz_amqp_cmd_ptr cmd = NULL;
@@ -2562,8 +2562,8 @@ void kz_amqp_send_worker_event(amqp_envelope_t* envelope, kz_amqp_bind_ptr bind)
 
 	json_object* JObj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);
     if(JObj != NULL) {
-        const char* server_id_str = json_object_get_string(JObj);
-        sprintf(buffer, "consumer://%d/%s", server_id, server_id_str);
+        const char* _kz_server_id_str = json_object_get_string(JObj);
+        sprintf(buffer, "consumer://%d/%s", _kz_server_id, _kz_server_id_str);
         json_object_object_del(json_obj, BLF_JSON_SERVERID);
         json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
     }
@@ -2730,7 +2730,7 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 			case AMQP_RESPONSE_NORMAL:
 				idx = envelope.channel-1;
 				if(idx < dbk_channels) {
-					kz_amqp_send_worker_event(&envelope, NULL);
+					kz_amqp_send_worker_event(server_ptr->id, &envelope, NULL);
 				} else {
 					idx = idx - dbk_channels;
 					if(!server_ptr->consumer_channels[idx].consumer->no_ack ) {
@@ -2740,7 +2740,7 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 						}
 					}
 					if(OK)
-						kz_amqp_send_worker_event(&envelope, server_ptr->consumer_channels[idx].consumer);
+						kz_amqp_send_worker_event(server_ptr->id, &envelope, server_ptr->consumer_channels[idx].consumer);
 				}
 				/*
 				idx = envelope.channel-1;
