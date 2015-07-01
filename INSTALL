@@ -50,7 +50,7 @@ Starting with version 3.0.0, the two SIP server flavours are built from
 same source code tree. In version 4.0.0 the two source code trees were
 merged even more, so a combined module directory is now used.
 
-Kamailio flavor is the one built by default. SER is, historically speaking, the
+Kamailio flavour is the one built by default. SER is, historically speaking, the
 first open source SIP server started in 2001. Kamailio forked from SER in
 2005 under the initial name OpenSER.
 
@@ -772,7 +772,7 @@ A: In both cases, the reason is probably an error in request routing script
 
 Q: Where to report issues?
 
-A: Use bug tracker at: http://sip-router.org/tracker
+A: Use bug tracker at: https://github.com/kamailio/kamailio/issues
 
 Q: Any F.A.Q. that could be helpful to check before reporting an issue?
 
