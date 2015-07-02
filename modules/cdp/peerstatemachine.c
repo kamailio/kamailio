@@ -722,11 +722,25 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 		switch (avp->code){
 			case AVP_Auth_Application_Id:
 				id = get_4bytes(avp->data.s);	
-				add_peer_application(p,id,0,DP_AUTHORIZATION);	
+				add_peer_application(p,id,0,DP_AUTHORIZATION);
+				avp_vendor = AAAFindMatchingAVP(msg,0,AVP_Supported_Vendor_Id,0,0);
+				while (avp_vendor) {
+					vendor = get_4bytes(avp_vendor->data.s);
+					LM_DBG("Found Supported Vendor for Application %i: %i\n", DP_AUTHORIZATION, vendor);
+					add_peer_application(p,id,vendor,DP_AUTHORIZATION);
+					avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
+				}
 				break;
 			case AVP_Acct_Application_Id:
 				id = get_4bytes(avp->data.s);	
 				add_peer_application(p,id,0,DP_ACCOUNTING);	
+				avp_vendor = AAAFindMatchingAVP(msg,0,AVP_Supported_Vendor_Id,0,0);
+				while (avp_vendor) {
+					vendor = get_4bytes(avp_vendor->data.s);
+					LM_DBG("Found Supported Vendor for Application %i: %i\n", DP_ACCOUNTING, vendor);
+					add_peer_application(p,id,vendor,DP_ACCOUNTING);
+					avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
+				}
 				break;
 			case AVP_Vendor_Specific_Application_Id:
 				group = AAAUngroupAVPS(avp->data);
