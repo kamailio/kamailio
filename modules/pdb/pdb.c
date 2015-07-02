@@ -269,7 +269,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 			}
 			td=(tnow.tv_usec-tstart.tv_usec+(tnow.tv_sec-tstart.tv_sec)*1000000) / 1000;
 			if (td > timeout) {
-				LM_WARN("exceeded timeout while flushing recv buffer.\n");
+				LM_NOTICE("exceeded timeout while flushing recv buffer.\n");
 				return -1;
 			}
 		}
@@ -329,10 +329,10 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 		if (td > timeout) {
 			timeoutlogs++;
 			if (timeoutlogs<0) {
-				LM_WARN("exceeded timeout while waiting for response.\n");
+				LM_NOTICE("exceeded timeout while waiting for response.\n");
 			}
 			else if (timeoutlogs>1000) {
-				LM_WARN("exceeded timeout %d times while waiting for response.\n", timeoutlogs);
+				LM_NOTICE("exceeded timeout %d times while waiting for response.\n", timeoutlogs);
 				timeoutlogs=0;
 			}
 			return -1;
@@ -360,15 +360,15 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
                                     }
                                     break;
                                 case PDB_CODE_NOT_NUMBER:
-                                    LM_WARN("Number %s has letters in it\n", number.s);
+                                    LM_NOTICE("Number %s has letters in it\n", number.s);
                                     carrierid = 0;
                                     goto found;
                                 case PDB_CODE_NOT_FOUND:
-                                    LM_WARN("Number %s pdb_id not found\n", number.s);
+                                    LM_NOTICE("Number %s pdb_id not found\n", number.s);
                                     carrierid = 0;
                                     goto found;
                                 default:
-                                    LM_WARN("Invalid code %d received\n", msg.hdr.code);
+                                    LM_NOTICE("Invalid code %d received\n", msg.hdr.code);
                                     carrierid = 0;
                                     goto found;
                             }
@@ -391,7 +391,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 
 	found:
 	if (timeoutlogs>0) {
-		LM_WARN("exceeded timeout while waiting for response (buffered %d lines).\n", timeoutlogs);
+		LM_NOTICE("exceeded timeout while waiting for response (buffered %d lines).\n", timeoutlogs);
 		timeoutlogs=-10;
 	}
 	if (gettimeofday(&tnow, NULL) == 0) {
