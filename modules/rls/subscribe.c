@@ -982,23 +982,32 @@ int send_resource_subs(char* uri, void* param)
 	str pres_uri, *tmp_str;
 	struct sip_uri parsed_pres_uri;
 	int duplicate = 0;
+	str *normalized_uri;
 	
 	subs_info_t *s = (subs_info_t *) ((void**)param)[0];
 	list_entry_t **rls_contact_list = (list_entry_t **) ((void**)param)[1];
 
 	pres_uri.s = uri;
 	pres_uri.len = strlen(uri);
-	if (parse_uri(pres_uri.s, pres_uri.len, &parsed_pres_uri) < 0)
-	{
-		LM_ERR("bad uri: %.*s\n", pres_uri.len, pres_uri.s);
-		return -1;
+
+	normalized_uri = normalize_sip_uri(&pres_uri);
+	if (normalized_uri->s == NULL || normalized_uri->len == 0) {
+	    LM_ERR("failed to normalize RLS entry URI %.*s\n",
+		   pres_uri.len, pres_uri.s);
+	    return -1;
+	}
+	
+	if (parse_uri(normalized_uri->s, normalized_uri->len, &parsed_pres_uri)
+	    < 0) {
+	    LM_ERR("bad uri: %.*s\n", normalized_uri->len, normalized_uri->s);
+	    return -1;
 	}
 
 	if (check_self(&parsed_pres_uri.host, 0, PROTO_NONE) != 1
 		&& rls_disable_remote_presence != 0)
 	{
 		LM_WARN("Unable to subscribe to remote contact %.*s for watcher %.*s\n",
-				pres_uri.len, pres_uri.s,
+				normalized_uri->len, normalized_uri->s,
 				s->watcher_uri->len,
 				s->watcher_uri->s);
 		return 1;
@@ -1009,8 +1018,8 @@ int send_resource_subs(char* uri, void* param)
 	if (rls_max_backend_subs > 0 && ++counter > rls_max_backend_subs)
 		return 1;
 
-	s->pres_uri = &pres_uri;
-	s->remote_target = &pres_uri;
+	s->pres_uri = normalized_uri;
+	s->remote_target = normalized_uri;
 
 	/* Build list of contacts... checking each contact exists only once */
 	if ((tmp_str = (str *)pkg_malloc(sizeof(str))) == NULL)
@@ -1024,8 +1033,8 @@ int send_resource_subs(char* uri, void* param)
 		LM_ERR("out of private memory\n");
 		return -1;
 	}
-	memcpy(tmp_str->s, pres_uri.s, pres_uri.len);
-	tmp_str->len = pres_uri.len;
+	memcpy(tmp_str->s, normalized_uri->s, normalized_uri->len);
+	tmp_str->len = normalized_uri->len;
 	*rls_contact_list = list_insert(tmp_str, *rls_contact_list, &duplicate);
 	if (duplicate != 0)
 	{
