@@ -234,7 +234,7 @@ typedef struct {
 typedef struct ims_subscription_s {
     str private_identity; /**< private identity 				*/
     struct hslot_sp* slot; /*!< Collision slot in the hash table array we belong to */
-    unsigned int impu_hash; /**< hash over public_identity */
+    int sl;                 /*!< slot number we belong to */
     int wpsi; /** This is not in the standards
 	 	 	 	 	 	 	 	 	 	 	 	0 normal user or distinct psi inside
 	 	 	 	 	 	 	 	 	 	 	 	1 wildcarded psi
@@ -295,7 +295,7 @@ typedef struct contact_dialog_data {
 typedef struct ucontact {
     gen_lock_t *lock;           /**< we have to lock the contact as it is shared by many impu structs and has reference conting	*/
     struct contact_hslot* slot; /*!< Collision slot in the hash table array we belong to */
-    unsigned int contact_hash; 			/*!< Hash over contact */
+    unsigned int sl; 			/*!< Hash slot number we belong to */
     int ref_count;
     contact_state_t state;
     str domain; /*!< Pointer to domain name (NULL terminated) */
@@ -372,13 +372,26 @@ static inline char* get_impu_regstate_as_string(enum pi_reg_states reg_state) {
     }
 }
 
+typedef struct _contact_ptr {
+    ucontact_t* contact;
+    struct contact_ptr* prev;
+    struct contact_ptr* next;
+} contact_ptr;
+
+typedef struct _contact_ptr_list {
+    int n;
+    gen_lock_t* lock;
+    struct contact_ptr* first; 
+} contact_ptr_list;
+
 /*! \brief
  * Basic hash table element
  */
 typedef struct impurecord {
-    str* domain; 					/*!< Pointer to domain we belong to (null terminated string) */
-    int is_primary;					/*!< first IMPU (in implicit set this is the one that will trigger a SAR, if no implicit set - we should still be safe with first) */
+    str* domain; 				/*!< Pointer to domain we belong to (null terminated string) */
+    int is_primary;				/*!< first IMPU (in implicit set this is the one that will trigger a SAR, if no implicit set - we should still be safe with first) */
     str public_identity; 			/*!< Address of record */
+    str private_identity;                       /*!< Subscription to which we be long */
     unsigned int aorhash; 			/*!< Hash over address of record */
     int barring;
     enum pi_reg_states reg_state;
@@ -416,7 +429,7 @@ typedef struct ims_subscription_list {
     int subscriptions;      /* total number of subscriptions in storage */
 }ims_subscription_list_t;
 
-typedef int (*insert_impurecord_t)(struct udomain* _d, str* public_identity, int reg_state, int barring,
+typedef int (*insert_impurecord_t)(struct udomain* _d, str* public_identity, str* private_identity, int reg_state, int barring,
         ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
         struct impurecord** _r);
 
@@ -424,7 +437,7 @@ typedef int (*get_impurecord_t)(struct udomain* _d, str* _aor, struct impurecord
 
 typedef int (*delete_impurecord_t)(struct udomain* _d, str* _aor, struct impurecord* _r);
 
-typedef int (*update_impurecord_t)(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
+typedef int (*update_impurecord_t)(struct udomain* _d, str* public_identity, impurecord_t* impu_rec, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
 typedef void (*lock_contact_slot_t)(str* contact_uri);
 
@@ -437,6 +450,8 @@ typedef void (*unlock_contact_slot_i_t)(int sl);
 typedef void (*lock_subscription_t)(ims_subscription* s);
 
 typedef void (*unlock_subscription_t)(ims_subscription* s);
+typedef void (*unref_subscription_t) (ims_subscription* s);
+typedef void (*ref_subscription_t) (ims_subscription* s);
 
 typedef int (*update_ucontact_t)(struct impurecord* _r, struct ucontact* _c, struct ucontact_info* _ci);
 
@@ -504,6 +519,8 @@ typedef struct usrloc_api {
     unlock_contact_slot_i_t unlock_contact_slot_i;
     lock_subscription_t lock_subscription;
     unlock_subscription_t unlock_subscription;
+    unref_subscription_t unref_subscription;
+    ref_subscription_t ref_subscription;
     
     insert_ucontact_t insert_ucontact;
     delete_ucontact_t delete_ucontact;

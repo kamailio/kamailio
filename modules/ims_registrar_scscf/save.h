@@ -62,7 +62,7 @@ int save(struct sip_msg* msg, char* str1, char* route);
 
 int unregister(struct sip_msg* _m, char* _d, char* _uri);
 
-int update_contacts_new(struct sip_msg* msg, udomain_t* _d,
+int update_contacts(struct sip_msg* msg, udomain_t* _d,
         str* public_identity, int assignment_type, ims_subscription** s,
         str* ccf1, str* ccf2, str* ecf1, str* ecf2, contact_for_header_t** contact_header);
 

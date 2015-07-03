@@ -204,19 +204,20 @@ void slot_add(hslot_t* _s, struct impurecord* _r)
  */
 void slot_rem(hslot_t* _s, struct impurecord* _r)
 {
-	if (_r->prev) {
-		_r->prev->next = _r->next;
-	} else {
-		_s->first = _r->next;
-	}
+    LM_DBG("Removing IMPU [%.*s] from hashtable\n", _r->public_identity.len, _r->public_identity.s);
+    if (_r->prev) {
+        _r->prev->next = _r->next;
+    } else {
+        _s->first = _r->next;
+    }
 
-	if (_r->next) {
-		_r->next->prev = _r->prev;
-	} else {
-		_s->last = _r->prev;
-	}
+    if (_r->next) {
+        _r->next->prev = _r->prev;
+    } else {
+        _s->last = _r->prev;
+    }
 
-	_r->prev = _r->next = 0;
-	_r->slot = 0;
-	_s->n--;
+    _r->prev = _r->next = 0;
+    _r->slot = 0;
+    _s->n--;
 }

@@ -68,11 +68,14 @@
 #include "usrloc_db.h"
 #include "contact_hslot.h"
 #include "ul_scscf_stats.h"
+#include "hslot_sp.h"
+#include "dlist.h"
 
 extern int unreg_validity;
 extern int db_mode;
 struct contact_list* contact_list;
-extern struct ul_scscf_counters_h ul_scscf_cnts_h;
+struct ims_subscription_list* ims_subscription_list;
+extern int subs_hash_size;
 
 /*!
  * \brief Create a new domain structure
@@ -91,21 +94,21 @@ int new_udomain(str* _n, int _s, udomain_t** _d) {
      */
     *_d = (udomain_t*) shm_malloc(sizeof (udomain_t));
     if (!(*_d)) {
-	LM_ERR("new_udomain(): No memory left\n");
-	goto error0;
+        LM_ERR("new_udomain(): No memory left\n");
+        goto error0;
     }
     memset(*_d, 0, sizeof (udomain_t));
 
     (*_d)->table = (hslot_t*) shm_malloc(sizeof (hslot_t) * _s);
     if (!(*_d)->table) {
-	LM_ERR("no memory left 2\n");
-	goto error1;
+        LM_ERR("no memory left 2\n");
+        goto error1;
     }
 
     (*_d)->name = _n;
 
     for (i = 0; i < _s; i++) {
-	init_slot(*_d, &((*_d)->table[i]), i);
+        init_slot(*_d, &((*_d)->table[i]), i);
     }
 
     (*_d)->size = _s;
@@ -126,12 +129,12 @@ void free_udomain(udomain_t* _d) {
     int i;
 
     if (_d->table) {
-	for (i = 0; i < _d->size; i++) {
-	    lock_ulslot(_d, i);
-	    deinit_slot(_d->table + i);
-	    unlock_ulslot(_d, i);
-	}
-	shm_free(_d->table);
+        for (i = 0; i < _d->size; i++) {
+            lock_ulslot(_d, i);
+            deinit_slot(_d->table + i);
+            unlock_ulslot(_d, i);
+        }
+        shm_free(_d->table);
     }
     shm_free(_d);
 }
@@ -162,19 +165,18 @@ void print_udomain(FILE* _f, udomain_t* _d) {
     fprintf(_f, "name : '%.*s'\n", _d->name->len, ZSW(_d->name->s));
     fprintf(_f, "size : %d\n", _d->size);
     fprintf(_f, "table: %p\n", _d->table);
-    /*fprintf(_f, "lock : %d\n", _d->lock); -- can be a structure --andrei*/
     fprintf(_f, "\n");
     for (i = 0; i < _d->size; i++) {
-	r = _d->table[i].first;
-	n += _d->table[i].n;
-	if (max < _d->table[i].n) {
-	    max = _d->table[i].n;
-	    slot = i;
-	}
-	while (r) {
-	    print_impurecord(_f, r);
-	    r = r->next;
-	}
+        r = _d->table[i].first;
+        n += _d->table[i].n;
+        if (max < _d->table[i].n) {
+            max = _d->table[i].n;
+            slot = i;
+        }
+        while (r) {
+            print_impurecord(_f, r);
+            r = r->next;
+        }
     }
     fprintf(_f, "\nMax slot: %d (%d/%d)\n", max, slot, n);
     fprintf(_f, "\n---/Domain---\n");
@@ -185,8 +187,8 @@ inline int time2str(time_t _v, char* _s, int* _l) {
     int l;
 
     if ((!_s) || (!_l) || (*_l < 2)) {
-	LM_ERR("Invalid parameter value\n");
-	return -1;
+        LM_ERR("Invalid parameter value\n");
+        return -1;
     }
 
     *_s++ = '\'';
@@ -196,11 +198,11 @@ inline int time2str(time_t _v, char* _s, int* _l) {
     l = strftime(_s, *_l - 1, "%Y-%m-%d %H:%M:%S", t);
 
     if (l == 0) {
-	LM_ERR("Error during time conversion\n");
-	/* the value of _s is now unspecified */
-	_s = NULL;
-	_l = 0;
-	return -1;
+        LM_ERR("Error during time conversion\n");
+        /* the value of _s is now unspecified */
+        _s = NULL;
+        _l = 0;
+        return -1;
     }
     *_l = l;
 
@@ -216,17 +218,16 @@ inline int time2str(time_t _v, char* _s, int* _l) {
  * \param _r new created record
  * \return 0 on success, -1 on failure
  */
-int mem_insert_impurecord(struct udomain* _d, str* public_identity, int reg_state, int barring,
-	ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
-	struct impurecord** _r) {
+int mem_insert_impurecord(struct udomain* _d, str* public_identity, str* private_identity, int reg_state, int barring,
+        ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
+        struct impurecord** _r) {
     int sl;
 
-    if (new_impurecord(_d->name, public_identity, reg_state, barring, s, ccf1, ccf2, ecf1,
-	    ecf2, _r) < 0) {
-	LM_ERR("creating impurecord failed\n");
-	return -1;
+    if (new_impurecord(_d->name, public_identity, private_identity, reg_state, barring, s, ccf1, ccf2, ecf1,
+            ecf2, _r) < 0) {
+        LM_ERR("creating impurecord failed\n");
+        return -1;
     }
-    LM_DBG("Successfully parsed user data\n");
 
     sl = ((*_r)->aorhash) & (_d->size - 1);
     slot_add(&_d->table[sl], *_r);
@@ -254,125 +255,49 @@ void mem_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
  */
 void mem_timer_udomain(udomain_t* _d) {
     struct impurecord* ptr, *t;
-    struct ucontact* contact_ptr, *tmp_contact_ptr;
+    struct ucontact* contact_ptr;
     int i;
 
     //go through contacts first
     LM_DBG("*** mem_timer_udomain - checking contacts - START ***\n");
-    
     for (i = 0; i < contact_list->size; i++) {
-#ifdef EXTRA_DEBUG
-	LM_DBG("looking for contacts in slot %d\n", i);
-#endif
-	lock_contact_slot_i(i);
-	contact_ptr = contact_list->slot[i].first;
-	while (contact_ptr) {
-	    LM_DBG("We have a contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d\n", i, contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s, (double) contact_ptr->expires - time(NULL), contact_ptr->ref_count);
-	    if (contact_ptr->ref_count <= 0) {
-		LM_DBG("Deleting contact [%.*s]\n", contact_ptr->c.len, contact_ptr->c.s);
-		tmp_contact_ptr = contact_ptr->next;
-		delete_ucontact(contact_ptr);
-		contact_ptr = tmp_contact_ptr;
-	    } else {
-		contact_ptr = contact_ptr->next;
-	    }
-	}
-	unlock_contact_slot_i(i);
+        lock_contact_slot_i(i);
+        contact_ptr = contact_list->slot[i].first;
+        while (contact_ptr) {
+            LM_DBG("We have a contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d\n", i, contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s, (double) contact_ptr->expires - time(NULL), contact_ptr->ref_count);
+		//contacts are now deleted during impurecord processing
+            contact_ptr = contact_ptr->next;
+        } 
+        unlock_contact_slot_i(i);
     }
-    
     LM_DBG("*** mem_timer_udomain - checking contacts - FINISHED ***\n");
 
     int temp = 0;
 
     LM_DBG("*** mem_timer_udomain - checking IMPUs - START ***\n");
     for (i = 0; i < _d->size; i++) {
-	lock_ulslot(_d, i);
-	ptr = _d->table[i].first;
-	temp = 0;
-	while (ptr) {
-	    temp = 1;
+        lock_ulslot(_d, i);
+        ptr = _d->table[i].first;
+        temp = 0;
+        while (ptr) {
+            temp = 1;
 #ifdef EXTRA_DEBUG
-	    LM_DBG("ULSLOT %d LOCKED\n", i);
+            LM_DBG("ULSLOT %d LOCKED\n", i);
 #endif
-	    t = ptr;
-	    ptr = ptr->next;
-	    timer_impurecord(t);
-
-//	    			if (t->reg_state == IMPU_NOT_REGISTERED && t->shead == 0) {
-//	    				//remove it - housekeeping - not sure why its still here...?
-//	    				if (exists_ulcb_type(t->cbs, UL_IMPU_NR_DELETE))
-//	    					run_ul_callbacks(t->cbs, UL_IMPU_NR_DELETE, t, NULL);
-//	    					    
-//	    				LM_DBG("about to delete impurecord\n");
-//	    				delete_impurecord(_d, &t->public_identity, t);
-//	    			} //else if (t->reg_state == IMPU_UNREGISTERED) {//Remove IMPU record if it is in state IMPU_UNREGISTERED and has expired
-	    //			    
-	    //				if (time_now >= t->expires) {//check here and only remove if no subscribes - if there is a subscribe then bump the validity by unreg_validity
-	    //				    if(t->shead != 0){
-	    //					LM_DBG("This impurecord still has subscriptions - extending the expiry");
-	    //					t->expires = time(NULL) + unreg_validity;
-	    //				    } else {
-	    //					if (exists_ulcb_type(t->cbs, UL_IMPU_UNREG_EXPIRED))
-	    //						run_ul_callbacks(t->cbs, UL_IMPU_UNREG_EXPIRED, t, NULL);
-	    //					LM_DBG("about to delete impurecord\n");
-	    //					delete_impurecord(_d, &t->public_identity, t);
-	    //				    }
-	    //				}
-	    //			//} else if (t->reg_state != IMPU_UNREGISTERED && t->contacts == 0) { /* Remove the entire record if it is empty IFF it is not an UNREGISTERED RECORD */
-	    //			} else if (t->reg_state != IMPU_UNREGISTERED && t->num_contacts == 0 && t->shead == 0) { /* Remove the entire record if it is empty IFF it is not an UNREGISTERED RECORD */
-	    //																								/* TS 23.228 5.3.2.1 (release 11) */
-	    //				//need a way of distinguishing between deletes that need a SAR (expired) and deletes that do not need a SAR (explicit de reg)
-	    //				//we only want to send one SAR for each implicit IMPU set
-	    //				//make sure all IMPU's associated with this set are de-registered before calling the callbacks
-	    //				int first=1;
-	    //				int this_is_first = 0;
-	    //
-	    //				lock_get(t->s->lock);
-	    //				for (k = 0; k < t->s->service_profiles_cnt; k++){
-	    //					for (j = 0;j < t->s->service_profiles[k].public_identities_cnt;j++) {
-	    //						impu = &(t->s->service_profiles[k].public_identities[j]);
-	    //
-	    //						sl = core_hash(&impu->public_identity, 0, _d->size);
-	    //						if (sl != i)
-	    //							lock_udomain(_d, &impu->public_identity);
-	    //
-	    //						if (first) {
-	    //							first = 0; //dont do anything - we will leave this impu to be processed as normal
-	    //							if (!strncmp(impu->public_identity.s, t->public_identity.s, t->public_identity.len)) {
-	    //								//we are the first in the implicit set
-	    //								this_is_first = 1;
-	    //							}
-	    //						} else {
-	    //							//set all other implicits to not registered
-	    //							if (update_impurecord(_d, &impu->public_identity, IMPU_NOT_REGISTERED,
-	    //														-1/*barring*/, -1 /*do not change send sar on delete */, 0/*is_primary*/, NULL, NULL, NULL, NULL, NULL, &temp_impu) != 0) {
-	    //								LM_ERR("Unable to update impurecord for <%.*s>\n", impu->public_identity.len, impu->public_identity.s);
-	    //							}
-	    //						}
-	    //						if (sl != i)
-	    //							unlock_udomain(_d, &impu->public_identity);
-	    //					}
-	    //				}
-	    //				lock_release(t->s->lock);
-	    //
-	    //				if (this_is_first) {
-	    //					//now run a normal callback on our
-	    //					if (exists_ulcb_type(t->cbs, UL_IMPU_REG_NC_DELETE))
-	    //						run_ul_callbacks(t->cbs, UL_IMPU_REG_NC_DELETE, t, NULL);
-	    //					LM_DBG("about to delete impurecord\n");
-	    //						delete_impurecord(_d, &t->public_identity, t);
-	    //				}
-	    //			}
-	}
-	if (temp) {
+            t = ptr;
+            ptr = ptr->next;
+            timer_impurecord(t);
+        }
+        if (temp) {
 #ifdef EXTRA_DEBUG
-	    LM_DBG("ULSLOT %d UN-LOCKED\n", i);
+            LM_DBG("ULSLOT %d UN-LOCKED\n", i);
 #endif
-	}
-	unlock_ulslot(_d, i);
+        }
+        unlock_ulslot(_d, i);
     }
     LM_DBG("*** mem_timer_udomain - checking IMPUs - FINISHED ***\n");
 }
+
 
 /*!
  * \brief Get lock for a domain
@@ -382,15 +307,7 @@ void mem_timer_udomain(udomain_t* _d) {
 void lock_udomain(udomain_t* _d, str* _aor) {
     unsigned int sl;
     sl = core_hash(_aor, 0, _d->size);
-#ifdef EXTRA_DEBUG
-    LM_DBG("LOCKING UDOMAIN SLOT [%d]\n", sl);
-#endif
-
-#ifdef GEN_LOCK_T_PREFERED
-    lock_get(_d->table[sl].lock);
-#else
-    ul_lock_idx(_d->table[sl].lockidx);
-#endif
+    lock_ulslot(_d, sl);
 }
 
 /*!
@@ -401,14 +318,7 @@ void lock_udomain(udomain_t* _d, str* _aor) {
 void unlock_udomain(udomain_t* _d, str* _aor) {
     unsigned int sl;
     sl = core_hash(_aor, 0, _d->size);
-#ifdef EXTRA_DEBUG
-    LM_DBG("UN-LOCKING UDOMAIN SLOT [%d]\n", sl);
-#endif
-#ifdef GEN_LOCK_T_PREFERED
-    lock_release(_d->table[sl].lock);
-#else
-    ul_release_idx(_d->table[sl].lockidx);
-#endif
+    unlock_ulslot(_d, sl);
 }
 
 /*!
@@ -417,11 +327,18 @@ void unlock_udomain(udomain_t* _d, str* _aor) {
  * \param i slot number
  */
 void lock_ulslot(udomain_t* _d, int i) {
-#ifdef GEN_LOCK_T_PREFERED
-    lock_get(_d->table[i].lock);
-#else
-    ul_lock_idx(_d->table[i].lockidx);
+#ifdef EXTRA_DEBUG
+    LM_DBG("LOCKING UDOMAIN SLOT [%d]\n", i);
 #endif
+    int mypid;
+    mypid = my_pid();
+    if (likely(atomic_get(&_d->table[i].locker_pid) != mypid)) {
+        lock_get(_d->table[i].lock);
+        atomic_set(&_d->table[i].locker_pid, mypid);
+    } else {
+        /* locked within the same process that executed us */
+        _d->table[i].recursive_lock_level++;
+    }
 }
 
 /*!
@@ -430,11 +347,16 @@ void lock_ulslot(udomain_t* _d, int i) {
  * \param i slot number
  */
 void unlock_ulslot(udomain_t* _d, int i) {
-#ifdef GEN_LOCK_T_PREFERED
-    lock_release(_d->table[i].lock);
-#else
-    ul_release_idx(_d->table[i].lockidx);
+#ifdef EXTRA_DEBUG
+    LM_DBG("UN-LOCKING UDOMAIN SLOT [%d]\n", i);
 #endif
+    if (likely(_d->table[i].recursive_lock_level == 0)) {
+        atomic_set(&_d->table[i].locker_pid, 0);
+        lock_release(_d->table[i].lock);
+    } else {
+        /* recursive locked => decrease lock count */
+        _d->table[i].recursive_lock_level--;
+    }
 }
 
 void lock_contact_slot(str* contact_uri) {
@@ -481,6 +403,8 @@ void lock_subscription(ims_subscription* s) {
 }
 
 void unlock_subscription(ims_subscription* s) {
+    if (s == 0)
+        return;
 #ifdef EXTRA_DEBUG
     LM_DBG("UN-LOCKING SUBSCRIPTION %p (Refcount: %d)\n", s->lock, s->ref_count);
     LM_DBG("(SUBSCRIPTION PRIVATE IDENTITY [%.*s])\n", s->private_identity.len, s->private_identity.s);
@@ -488,46 +412,75 @@ void unlock_subscription(ims_subscription* s) {
     lock_release(s->lock);
 }
 
+void lock_subscription_slot(int i) {
+#ifdef EXTRA_DEBUG
+    LM_DBG("LOCKING SUBSCRIPTION slot %d)\n", i);
+#endif
+    lock_get(ims_subscription_list->slot[i].lock);
+}
+
+void unlock_subscription_slot(int i) {
+#ifdef EXTRA_DEBUG
+    LM_DBG("UN-LOCKING SUBSCRIPTION slot %d\n", i);
+#endif
+    lock_release(ims_subscription_list->slot[i].lock);
+}
+
 /*!
- * \brief Create and insert a new record
- * \param _d domain to insert the new record
- * \param _aor address of the record
- * \param _r new created record
- * \return return 0 on success, -1 on failure
+ * \brief Create and insert a new impurecord assumes domain is locked
+ * @param _d domain to insert the new record
+ * @param public_identity IMPU of new record
+ * @param private_identity IMPI of new record
+ * @param reg_state state to insert in
+ * @param barring is impu barred or not
+ * @param s associated subscription data
+ * @param ccf1  
+ * @param ccf2
+ * @param ecf1
+ * @param ecf2
+ * @param _r pointer to returned IMPU record
+ * @return 0 on success with _r populated
  */
-int insert_impurecord(struct udomain* _d, str* public_identity, int reg_state, int barring,
-	ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
-	struct impurecord** _r) {
+int insert_impurecord(struct udomain* _d, str* public_identity, str* private_identity, int reg_state, int barring,
+        ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
+        struct impurecord** _r) {
+
+    if (s == 0 || (*s) == 0) {
+        LM_WARN("Can't insert an impurecord without it being associated to a subscription\n");
+        goto error;
+    }
+
+    if (!private_identity || !private_identity->len || !private_identity->s) {
+        LM_WARN("Can't insert an impurecord without it being associated to a subscription (private_identity\n");
+        goto error;
+    }
 
     /* check to see if we already have this subscription information in memory*/
-    if (mem_insert_impurecord(_d, public_identity, reg_state, barring, s, ccf1, ccf2, ecf1, ecf2, _r) < 0) {
-	LM_ERR("inserting record failed\n");
-	goto error;
+    if (mem_insert_impurecord(_d, public_identity, private_identity, reg_state, barring, s, ccf1, ccf2, ecf1, ecf2, _r) < 0) {
+        LM_ERR("inserting record failed\n");
+        goto error;
     }
 
     /*DB?*/
     if (db_mode == WRITE_THROUGH && db_insert_impurecord(_d, public_identity, reg_state, barring, s, ccf1, ccf2, ecf1, ecf2, _r) != 0) {
-	LM_ERR("error inserting contact into db");
-	goto error;
+        LM_ERR("error inserting contact into db");
+        goto error;
     }
 
     return 0;
 
 error:
-    //    if (s) {
-    //    	free_ims_subscription_data(s);
-    //    }
     return -1;
 }
 
 /*!
- * \brief Obtain a impurecord pointer if the impurecord exists in domain
+ * \brief Obtain a impurecord pointer if the impurecord exists in domain. You should call this function with a lock on the domain
  * \param _d domain to search the record
  * \param _aor address of record
  * \param _r new created record
- * \return 0 if a record was found, 1 if nothing could be found
+ * \return 0 if a record was found, 1 if nothing could be found (assumes caller has lock on domain)
  */
-int get_impurecord(udomain_t* _d, str* public_identity, struct impurecord** _r) {
+int get_impurecord_unsafe(udomain_t* _d, str* public_identity, struct impurecord** _r) {
     unsigned int sl, i, aorhash;
     impurecord_t* r;
 
@@ -537,63 +490,76 @@ int get_impurecord(udomain_t* _d, str* public_identity, struct impurecord** _r) 
     r = _d->table[sl].first;
 
     for (i = 0; i < _d->table[sl].n; i++) {
-	if ((r->aorhash == aorhash) && (r->public_identity.len == public_identity->len)
-		&& !memcmp(r->public_identity.s, public_identity->s, public_identity->len)) {
-	    *_r = r;
-	    return 0;
-	}
+        if ((r->aorhash == aorhash) && (r->public_identity.len == public_identity->len)
+                && !memcmp(r->public_identity.s, public_identity->s, public_identity->len)) {
+            *_r = r;
+            return 0;
+        }
 
-	r = r->next;
+        r = r->next;
     }
     return 1; /* Nothing found */
 }
 
 /*!
+ * \brief Obtain a impurecord pointer if the impurecord exists in domain. domain must be locked before calling
+ * \param _d domain to search the record
+ * \param public_identity address of record
+ * \param _r returned record - null if not found
+ * \return 0 if a record was found, 1 if nothing could be found
+ */
+int get_impurecord(udomain_t* _d, str* public_identity, struct impurecord** _r) {
+    unsigned int ret;
+
+    ret = get_impurecord_unsafe(_d, public_identity, _r);
+
+    return ret;
+}
+
+/*!
+ * \brief release the lock on the impurecord - effectively the domain slot
+ * \param _d domain
+ * \param _r impurecord to release (unlock)
+ */
+void release_impurecord(udomain_t* _d, struct impurecord* _r) {
+    unlock_udomain(_d, &_r->public_identity);
+}
+
+/*!
  * \brief Delete a impurecord from domain
  * \param _d domain where the record should be deleted
- * \param _aor address of record
- * \param _r deleted record
+ * \param _aor address of record - used only if _r in next param is null
+ * \param _r deleted record to delete - if null will use the aor to search (assumed that domain is locked).
  * \return 0 on success, -1 if the record could not be deleted
  */
 int delete_impurecord(udomain_t* _d, str* _aor, struct impurecord* _r) {
-    //    struct ucontact* c;//, *t;
-
     LM_DBG("Deleting IMPURECORD [%.*s]\n", _r->public_identity.len, _r->public_identity.s);
 
     if (_r == 0) {
-	if (get_impurecord(_d, _aor, &_r) > 0) {
-	    return 0;
-	}
+        LM_DBG("no impurecord passed in - let's search\n");
+        if (get_impurecord(_d, _aor, &_r) != 0) {
+            return 0;
+        }
     }
 
-    //TODO: need to unref the contacts in the contact list (not delete them), the timer should delete all contacts that are unreffed
-    //    c = _r->contacts;
-    //    while (c) {
-    //	t = c;
-    //	c = c->next;
-    //	if (delete_ucontact(_r, t) < 0) {
-    //	    LM_ERR("deleting contact failed [%.*s]\n", c->aor.len, c->aor.s);
-    //	    return -1;
-    //	}
-    //    }
-
     if (exists_ulcb_type(_r->cbs, UL_IMPU_DELETE)) {
-	run_ul_callbacks(_r->cbs, UL_IMPU_DELETE, _r, 0);
+        run_ul_callbacks(_r->cbs, UL_IMPU_DELETE, _r, 0);
     }
 
     /*DB?*/
     if (db_mode == WRITE_THROUGH
-	    && db_delete_impurecord(_d, _r) != 0) {
-	LM_ERR("error deleting IMPU record from db");
-	return 0;
+            && db_delete_impurecord(_d, _r) != 0) {
+        LM_ERR("error deleting IMPU record from db...continuing to remove from memory\n");
     }
 
     mem_delete_impurecord(_d, _r);
+
     return 0;
 }
 
 /*
  * get all IMPUs as string from a subscription related to an impurecord. apply filter for barring (assumed to be called with lock on impurec)
+ * you should have some for of lock on the subscription (ie a reference)
  * barring-1 get all barred
  * barring-0 get all unbarred
  * barring-(-1) get all records
@@ -610,70 +576,70 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     LM_DBG("getting IMPU subscription set\n");
 
     if (!impu_rec) {
-	LM_ERR("no impu record provided\n");
-	return 1;
+        LM_ERR("no impu record provided\n");
+        return 1;
     }
 
     if (!impu_rec->s) {
-	LM_DBG("no subscription associated with impu\n");
-	return 0;
+        LM_DBG("no subscription associated with impu\n");
+        return 0;
     }
 
     lock_subscription(impu_rec->s);
     for (i = 0; i < impu_rec->s->service_profiles_cnt; i++) {
-	for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
-	    impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
-	    if (barring < 0) {
-		//get all records
-		bytes_needed += impi->public_identity.len;
-		(*num_impus)++;
-	    } else {
-		if (impi->barring == barring) {
-		    //add the record to the list
-		    bytes_needed += impi->public_identity.len;
-		    (*num_impus)++;
-		}
-	    }
-	}
+        for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
+            impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
+            if (barring < 0) {
+                //get all records
+                bytes_needed += impi->public_identity.len;
+                (*num_impus)++;
+            } else {
+                if (impi->barring == barring) {
+                    //add the record to the list
+                    bytes_needed += impi->public_identity.len;
+                    (*num_impus)++;
+                }
+            }
+        }
     }
     LM_DBG("num of records returned is %d and we need %d bytes\n", *num_impus, bytes_needed);
 
     len = (sizeof (str)*(*num_impus)) + bytes_needed;
-    *impus = (str*) pkg_malloc(len);
+    *impus = (str*) pkg_malloc(len); //TODO: rather put this on the stack... dont' fragment pkg....
     if (*impus == 0) {
-	LM_ERR("no more pkg_mem\n");
-	return 0;
+        LM_ERR("no more pkg_mem\n");
+        return 0;
     }
     char* ptr = (char*) (*impus + *num_impus);
 
     //now populate the data
     count = 0;
     for (i = 0; i < impu_rec->s->service_profiles_cnt; i++) {
-	for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
-	    impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
-	    if (barring < 0) {
-		//get all records
-		(*impus)[count].s = ptr;
-		memcpy(ptr, impi->public_identity.s, impi->public_identity.len);
-		(*impus)[count].len = impi->public_identity.len;
-		ptr += impi->public_identity.len;
-		count++;
-	    } else {
-		if (impi->barring == barring) {
-		    //add the record to the list
-		    (*impus)[count].s = ptr;
-		    memcpy(ptr, impi->public_identity.s, impi->public_identity.len);
-		    (*impus)[count].len = impi->public_identity.len;
-		    ptr += impi->public_identity.len;
-		    count++;
-		}
-	    }
-	}
+        for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
+            impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
+            if (barring < 0) {
+                //get all records
+                (*impus)[count].s = ptr;
+                memcpy(ptr, impi->public_identity.s, impi->public_identity.len);
+                (*impus)[count].len = impi->public_identity.len;
+                ptr += impi->public_identity.len;
+                count++;
+            } else {
+                if (impi->barring == barring) {
+                    //add the record to the list
+                    (*impus)[count].s = ptr;
+                    memcpy(ptr, impi->public_identity.s, impi->public_identity.len);
+                    (*impus)[count].len = impi->public_identity.len;
+                    ptr += impi->public_identity.len;
+                    count++;
+                }
+            }
+        }
     }
 
     if (ptr != ((char*) *impus + len)) {
-	LM_CRIT("buffer overflow\n");
-	return 1;
+        LM_CRIT("buffer overflow\n");
+        return 1;
     }
 
     unlock_subscription(impu_rec->s);
@@ -681,3 +647,91 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     return 0;
 }
 
+/**
+ * @brief Get a subscription from the subscription list based on the IMPI
+ *  NB - does not return with a lock on the subscription but does increment ref count
+ * @param impu string of impu to search for
+ * @param s ims_subscription to be returned if found
+ * @param leave_slot_locked if no subscription is found return with the slot locked (in case we want to add) 
+ * @return 0 on success
+ */
+int get_subscription(str* impi_s, ims_subscription** s, int leave_slot_locked) {
+    int subscription_hash, sl;
+    ims_subscription* ptr;
+
+    subscription_hash = core_hash(impi_s, 0, 0);
+    sl = subscription_hash & (subs_hash_size - 1);
+    lock_subscription_slot(sl);
+    ptr = ims_subscription_list->slot[sl].first;
+    while (ptr) {
+        if ((impi_s->len == ptr->private_identity.len) && (memcmp(impi_s->s, ptr->private_identity.s, impi_s->len) == 0)) {
+            LM_DBG("found an existing subscription for IMPI [%.*s]\n", impi_s->len, impi_s->s);
+            (*s) = ptr;
+            lock_subscription(ptr);
+            ref_subscription_unsafe(ptr);
+            unlock_subscription(ptr);
+            unlock_subscription_slot(sl);
+            return 0;
+        }
+        ptr = ptr->next;
+    }
+    if (!leave_slot_locked)
+        unlock_subscription_slot(sl);
+    return 1;
+}
+
+void add_subscription_unsafe(ims_subscription* s) {
+    int sl;
+    sl = core_hash(&s->private_identity, 0, subs_hash_size);
+    subs_slot_add(&ims_subscription_list->slot[sl], s);
+    s->sl = sl;
+
+}
+
+void add_subscription(ims_subscription* s) {
+    int sl;
+    sl = core_hash(&s->private_identity, 0, subs_hash_size);
+    lock_subscription_slot(sl);
+    add_subscription_unsafe(s);
+    unlock_subscription_slot(sl);
+}
+
+void delete_subscription(ims_subscription* s) {
+    LM_DBG("Deleting subscription %p [%.*s]\n", s, s->private_identity.len, s->private_identity.s);
+    free_ims_subscription_data(s);
+}
+
+void release_subscription(ims_subscription* s) {
+    LM_DBG("Releasing subscription %p [%.*s]\n", s, s->private_identity.len, s->private_identity.s);
+    unref_subscription(s);
+}
+
+/**
+ * @brief update/add subscription
+ * @param s
+ * @return 
+ */
+int update_subscription(ims_subscription* s) {
+    return 0;
+}
+
+void ref_contact_unsafe(ucontact_t* c) {
+    LM_DBG("incrementing ref count on contact [%.*s], was %d\n", c->c.len, c->c.s, c->ref_count);
+    c->ref_count++;
+}
+
+/**
+ * @brief unref contact - assume a lock on the slot is held prior to calling this
+ * @param c
+ */
+void unref_contact_unsafe(ucontact_t* c) {
+    LM_DBG("decrementing ref count on contact [%.*s], was %d\n", c->c.len, c->c.s, c->ref_count);
+    c->ref_count--;
+    if (c->ref_count <= 0) {
+        LM_DBG("contact [%.*s] no longer referenced.... deleting\n", c->c.len, c->c.s);
+        if (c->ref_count < 0) {
+            LM_WARN("reference dropped below zero... this should not happen\n");
+        }
+        delete_ucontact(c);
+    }
+}

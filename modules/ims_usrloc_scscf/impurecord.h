@@ -65,7 +65,7 @@ struct hslot; /*!< Hash table slot */
  * \param _r pointer to the new record
  * \return 0 on success, negative on failure
  */
-int new_impurecord(str* _dom, str* public_identity, int reg_state, int barring, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, impurecord_t** _r);
+int new_impurecord(str* _dom, str* public_identity, str* private_identity, int reg_state, int barring, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, impurecord_t** _r);
 
 
 /*!
@@ -170,13 +170,15 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path,
 		int _cseq,
 		struct ucontact** _co);
 
-int update_impurecord(struct udomain* _d, str* public_identity, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
+int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* impu_rec, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
 int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db);
 int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db);
 
 void ref_subscription_unsafe(ims_subscription* s);
 void unref_subscription_unsafe(ims_subscription* s);
+void ref_subscription(ims_subscription* s);
+void unref_subscription(ims_subscription* s);
 
 #endif
 

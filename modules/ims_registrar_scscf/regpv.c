@@ -449,7 +449,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 	ilen = sizeof(ucontact_t);
 	ul.lock_udomain((udomain_t*)table, &aor);
 	res = ul.get_impurecord((udomain_t*)table, &aor, &r);
-	if (res > 0) {
+	if (res != 0) {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain((udomain_t*)table, &aor);
 		return -1;

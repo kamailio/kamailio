@@ -87,7 +87,7 @@ void ul_contact_changed(impurecord_t* r, ucontact_t* c, int type, void* param) {
 
     LM_DBG("Received notification of type %d on contact Address <%.*s>", type, c->c.len, c->c.s);
     
-    if(!r->shead){
+    if(!r->shead) {
         LM_DBG("There are no subscriptions for this IMPU therefore breaking out now as nothing to do");
         return;
     }

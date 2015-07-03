@@ -784,8 +784,8 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 
 	    /* insert impu into memory */
 	    lock_udomain(_d, &impu);
-	    if (get_impurecord(_d, &impu, &impurecord) != 0) {
-		if (mem_insert_impurecord(_d, &impu, reg_state, barring,
+	    if (get_impurecord_unsafe(_d, &impu, &impurecord) != 0) {
+		if (mem_insert_impurecord(_d, &impu, &subscription->private_identity,reg_state, barring,
 			&subscription, &ccf1, &ccf2, &ecf1, &ecf2, &impurecord)
 			!= 0) {
 		    LM_ERR("Unable to insert IMPU into memory [%.*s]\n", impu.len, impu.s);

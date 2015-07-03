@@ -33,6 +33,8 @@
 
 #include "../../parser/msg_parser.h"
 
+#define MAX_PATH_BUFFER 2048
+
 /*! \brief
  * Extracts all Path header bodies into one string and
  * checks if first hop is a loose router. It also extracts

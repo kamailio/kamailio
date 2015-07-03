@@ -115,7 +115,7 @@ void print_udomain(FILE* _f, udomain_t* _d);
 void mem_timer_udomain(udomain_t* _d);
 
 
-int mem_insert_impurecord(struct udomain* _d, str* public_identity, int reg_state, int barring, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
+int mem_insert_impurecord(struct udomain* _d, str* public_identity, str* private_identity, int reg_state, int barring, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
 
 /*!
@@ -160,31 +160,55 @@ void lock_contact_slot_i(int i);
 void unlock_contact_slot_i(int i);
 void lock_subscription(ims_subscription* s);
 void unlock_subscription(ims_subscription* s);
+void lock_subscription_slot(int i);
+void unlock_subscription_slot(int i);
 
 /* ===== module interface ======= */
 
-
 /*!
- * \brief Create and insert a new record
+ * 
  * \param _d domain to insert the new record
- * \param _aor address of the record
+ * \param public_identity
+ * \param private_identity
+ * \param reg_state
+ * \param barring
+ * \param s
+ * \param ccf1
+ * \param ccf2
+ * \param ecf1
+ * \param ecf2
  * \param _r new created record
- * \return return 0 on success, -1 on failure
+ * \return 
  */
-int insert_impurecord(struct udomain* _d, str* public_identity, int reg_state, int barring,
+int insert_impurecord(struct udomain* _d, str* public_identity, str* private_identity, int reg_state, int barring,
         ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2,
         struct impurecord** _r);
 
 
 /*!
- * \brief Obtain a impurecord pointer if the impurecord exists in domain
+ * \brief Obtain a impurecord pointer if the impurecord exists in domain. You should call this function with a lock on the domain
  * \param _d domain to search the record
  * \param _aor address of record
  * \param _r new created record
  * \return 0 if a record was found, 1 if nothing could be found
  */
+int get_impurecord_unsafe(udomain_t* _d, str* _aor, struct impurecord** _r);
+
+/*!
+ * \brief Obtain a impurecord pointer if the impurecord exists in domain (safe version)
+ * \param _d domain to search the record
+ * \param _aor address of record
+ * \param _r new created record
+ * \return 0 if a record was found, 1 if nothing could be found returns with a lock on the domain
+ */
 int get_impurecord(udomain_t* _d, str* _aor, struct impurecord** _r);
 
+/*!
+ * \brief release the lock on the impurecord - effectively the domain slot
+ * @param _d domain
+ * @param _r impurecord to release (unlock)
+ */
+void release_impurecord(udomain_t* _d, struct impurecord* _r);
 
 /*!
  * \brief Delete a impurecord from domain
@@ -196,11 +220,21 @@ int get_impurecord(udomain_t* _d, str* _aor, struct impurecord** _r);
 int delete_impurecord(udomain_t* _d, str* _aor, struct impurecord* _r);
 
 
-//get all IMPUs as string from a subscription related to an impurecord. apply filter for barring (assumed to be called with lock on impurec)
-//barring-1 get all barred
-//barring-0 get all unbarred
-//barring-(-1) get all records
+/*!get all IMPUs as string from a subscription related to an impurecord. apply filter for barring (assumed to be called with lock on impurec)
+ * barring-1 get all barred
+ * barring-0 get all unbarred
+ * barring-(-1) get all records
+ */
 int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus);
 
+int get_subscription(str* impi_s, ims_subscription** s, int leave_slot_locked);
+void add_subscription(ims_subscription* s);
+void add_subscription_unsafe(ims_subscription* s);
+void delete_subscription(ims_subscription* s);
+void release_subscription(ims_subscription* s);
+int update_subscription(ims_subscription* s);
+
+void unref_contact_unsafe(ucontact_t* c);
+void ref_contact_unsafe(ucontact_t* c);
 
 #endif

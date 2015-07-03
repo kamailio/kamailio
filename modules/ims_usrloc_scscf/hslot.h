@@ -66,6 +66,9 @@ typedef struct hslot {
 #else
 	int lockidx;            /*!< Lock index for hash entry - the rest*/
 #endif
+        atomic_t locker_pid;
+        int recursive_lock_level;
+       
 } hslot_t;
 
 /*! \brief

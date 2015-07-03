@@ -98,8 +98,6 @@ void destroy_ulcb_list(void)
 	shm_free(ulcb_list);
 }
 
-
-
 /*! \brief 
 	register a callback function 'f' for 'types' mask of events;
 */

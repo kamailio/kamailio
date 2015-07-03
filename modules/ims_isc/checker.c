@@ -522,7 +522,6 @@ void isc_free_match(isc_match *m) {
 	}
 	LM_DBG("isc_match_free: match position freed\n");
 }
-
 /**
  *	Find if user is registered or not => TRUE/FALSE.
  * This uses the S-CSCF registrar to get the state.
@@ -530,33 +529,24 @@ void isc_free_match(isc_match *m) {
  * @returns the reg_state
  */
 int isc_is_registered(str *uri, udomain_t *d) {
-	int result = 0;
+    int result = 0;
+    int ret = 0;
+    impurecord_t *p;
 
-	int ret = 0;
-	impurecord_t *p;
+    isc_ulb.lock_udomain(d, uri);
 
-	LM_DBG("locking domain\n");
-	isc_ulb.lock_udomain(d, uri);
+    LM_DBG("Searching in usrloc\n");
+    //need to get the urecord
+    if ((ret = isc_ulb.get_impurecord(d, uri, &p)) != 0) {
+        LM_DBG("no record exists for [%.*s]\n", uri->len, uri->s);
+        isc_ulb.unlock_udomain(d, uri);
+        return result;
+    }
 
-	LM_DBG("Searching in usrloc\n");
-	//need to get the urecord
-	if ((ret = isc_ulb.get_impurecord(d, uri, &p)) != 0) {
-		LM_DBG("no record exists for [%.*s]\n", uri->len, uri->s);
-		isc_ulb.unlock_udomain(d, uri);
-		return result;
-	}
+    LM_DBG("Finished searching usrloc\n");
+    result = p->reg_state;
+    isc_ulb.unlock_udomain(d, uri);
 
-	LM_DBG("Finished searching usrloc\n");
-	if (p) {
-		result = p->reg_state;
-		//need to free the record somewhere
-//		isc_ulb.release_urecord(p);
-		//need to do an unlock on the domain somewhere
-		isc_ulb.unlock_udomain(d, uri);
-
-	}
-
-	isc_ulb.unlock_udomain(d, uri);
-	return result;
+    return result;
 }
 

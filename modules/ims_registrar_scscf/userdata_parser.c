@@ -872,6 +872,8 @@ static ims_subscription* parse_ims_subscription(xmlDocPtr doc, xmlNodePtr root)
 		shm_free(s);
 		return 0;
 	}
+        
+        s->sl = -1; //this tells us the subscription is not linked to a list....
 #ifdef EXTRA_DEBUG
     	LM_DBG("LOCK CREATED FOR SUBSCRIPTION [%.*s]: %p\n", s->private_identity.len, s->private_identity.s, s->lock);
 #endif

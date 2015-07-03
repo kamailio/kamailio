@@ -10,10 +10,13 @@
 
 #include "../../counters.h"
 
+extern struct ul_scscf_counters_h ul_scscf_cnts_h;
+
 struct ul_scscf_counters_h {
     counter_handle_t active_subscriptions;
     counter_handle_t active_impus;
     counter_handle_t active_contacts;
+    counter_handle_t expired_contacts;
 };
 
 int ul_scscf_init_counters();

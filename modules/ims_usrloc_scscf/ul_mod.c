@@ -146,6 +146,7 @@ static param_export_t params[] = {
 	{"fetch_rows",        	INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",         	INT_PARAM, &ul_hash_size    },
 	{"subs_hash_size",    	INT_PARAM, &subs_hash_size  },
+        {"contacts_hash_size", 	INT_PARAM, &contacts_hash_size  },
 	{"nat_bflag",         	INT_PARAM, &nat_bflag       },
 	{"usrloc_debug_file", 	PARAM_STR, &usrloc_debug_file},
 	{"enable_debug_file", 	INT_PARAM, &usrloc_debug},
@@ -452,10 +453,6 @@ static void timer(unsigned int ticks, void* param) {
         fflush(debug_file);
     }
     
-    if (sync_subscriptions() !=0 ) {
-        LM_ERR("Failed to sync subscriptions\n");
-    }
-
     LM_DBG("Syncing cache\n");
     if (synchronize_all_udomains() != 0) {
         LM_ERR("synchronizing cache failed\n");

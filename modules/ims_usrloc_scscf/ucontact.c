@@ -147,7 +147,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
     }
     
     LM_DBG("generating hash based on [%.*s]\n", _contact->len, _contact->s);
-    c->contact_hash = core_hash(_contact, 0, contact_list->size);
+    c->sl = core_hash(_contact, 0, contact_list->size);
     c->ref_count = 1;
     c->expires = _ci->expires;
     c->q = _ci->q;
@@ -531,7 +531,7 @@ int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsign
 }
 
 void release_ucontact(struct ucontact* _c) {
-    lock_contact_slot_i(_c->contact_hash);
-    _c->ref_count--;
-    unlock_contact_slot_i(_c->contact_hash);
+    lock_contact_slot_i(_c->sl);
+    unref_contact_unsafe(_c);
+    unlock_contact_slot_i(_c->sl);
 }
