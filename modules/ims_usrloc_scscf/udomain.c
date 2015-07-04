@@ -589,6 +589,9 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     for (i = 0; i < impu_rec->s->service_profiles_cnt; i++) {
         for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
             impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
+            LM_DBG("Got Record %.*s (%i)\n", impi->public_identity.len,
+              impi->public_identity.s, impi->public_identity.len);
+
             if (barring < 0) {
                 //get all records
                 bytes_needed += impi->public_identity.len;
@@ -608,7 +611,7 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     *impus = (str*) pkg_malloc(len); //TODO: rather put this on the stack... dont' fragment pkg....
     if (*impus == 0) {
         LM_ERR("no more pkg_mem\n");
-        return 0;
+        return 1;
     }
     char* ptr = (char*) (*impus + *num_impus);
 
