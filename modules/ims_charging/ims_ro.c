@@ -181,9 +181,13 @@ inline int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
 
 /* called only when building stop record AVPS */
 inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used_unit, int active_rating_group, int active_service_identifier) {
+    char x[4];
     AAA_AVP_LIST used_list, mscc_list;
     str used_group;
-    char x[4];
+
+    // Add Multiple-Services AVP Indicator
+    set_4bytes(x, 1);
+    Ro_add_avp(msg, x, 4, AVP_Multiple_Services_Indicator, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
     //unsigned int service_id = 1000; //Removed these are now configurable config file params
 
@@ -216,10 +220,13 @@ inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used
 }
 
 inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int requested_unit, int used_unit, int active_rating_group, int active_service_identifier) {
+    // Add Multiple-Services AVP Indicator
+    char x[4];
+    set_4bytes(x, 1);
+    Ro_add_avp(msg, x, 4, AVP_Multiple_Services_Indicator, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+
     AAA_AVP_LIST list, used_list, mscc_list;
     str group, used_group;
-
-    char x[4];
 
     list.head = 0;
     list.tail = 0;
