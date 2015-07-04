@@ -173,7 +173,8 @@ unsigned int init_flag = 0;
 db1_con_t* ul_dbh = 0; /* Database connection handle */
 db_func_t ul_dbf;
 
-
+/* filter on load by server id */
+unsigned int ul_db_srvid = 0;
 
 /*! \brief
  * Exported functions
@@ -229,6 +230,7 @@ static param_export_t params[] = {
 	{"expires_type",        PARAM_INT, &ul_expires_type},
 	{"db_raw_fetch_type",   PARAM_INT, &ul_db_raw_fetch_type},
 	{"db_insert_null",      PARAM_INT, &ul_db_insert_null},
+	{"server_id_filter",    PARAM_INT, &ul_db_srvid},
 	{0, 0, 0}
 };
 

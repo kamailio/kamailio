@@ -379,6 +379,9 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 	db_row_t *row;
 	db_key_t columns[21];
 	db1_res_t* res = NULL;
+	db_key_t keys[1]; /* where */
+	db_val_t vals[1];
+	db_op_t  ops[1];
 	str user, contact;
 	char* domain;
 	int i;
@@ -418,9 +421,21 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 	LM_NOTICE("load start time [%d]\n", (int)time(NULL));
 #endif
 
+	if (ul_db_srvid) {
+		LM_NOTICE("filtered by server_id[%d]\n", server_id);
+		keys[0] = &srv_id_col;
+		ops[0] = OP_EQ;
+		vals[0].type = DB1_INT;
+		vals[0].nul = 0;
+		vals[0].val.int_val = server_id;
+	}
+
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(21):(20), 0,
-		0) < 0) {
+		if (ul_dbf.query(_c, (ul_db_srvid)?(keys):(0),
+							(ul_db_srvid)?(ops):(0), (ul_db_srvid)?(vals):(0),
+							columns, (ul_db_srvid)?(1):(0),
+							(use_domain)?(21):(20), 0, 0) < 0)
+		{
 			LM_ERR("db_query (1) failed\n");
 			return -1;
 		}
@@ -429,8 +444,11 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 			return -1;
 		}
 	} else {
-		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(21):(20), 0,
-		&res) < 0) {
+		if (ul_dbf.query(_c, (ul_db_srvid)?(keys):(0),
+							(ul_db_srvid)?(ops):(0), (ul_db_srvid)?(vals):(0),
+							columns, (ul_db_srvid)?(1):(0),
+							(use_domain)?(21):(20), 0, &res) < 0)
+		{
 			LM_ERR("db_query failed\n");
 			return -1;
 		}
