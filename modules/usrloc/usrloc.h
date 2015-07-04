@@ -40,6 +40,8 @@
 #define DB_ONLY       3
 #define DB_READONLY   4
 
+#define GAU_OPT_SERVER_ID  (1<<0)  /* filter query by server_id */
+
 /*forward declaration necessary for udomain*/
 
 struct udomain;
@@ -181,7 +183,7 @@ typedef void (*unlock_udomain_t)(struct udomain* _d, str *_aor);
 typedef int (*register_udomain_t)(const char* _n, struct udomain** _d);
 
 typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags,
-		unsigned int part_idx, unsigned int part_max);
+		unsigned int part_idx, unsigned int part_max, int options);
 
 typedef int (*get_udomain_t)(const char* _n, udomain_t** _d);
 
