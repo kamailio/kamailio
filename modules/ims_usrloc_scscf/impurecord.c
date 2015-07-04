@@ -774,12 +774,30 @@ void free_ims_subscription_data(ims_subscription *s) {
 
 /* Still needs to be implemented */
 int compare_subscription(ims_subscription* new, ims_subscription* orig) {
-    int i, j;
+    int i, j, k, l;
     LM_DBG("Comparing subscription for IMPI [%.*s]\n", orig->private_identity.len, orig->private_identity.s);
     for (i = 0; i < orig->service_profiles_cnt; i++) {
-
         for (j = 0; j < orig->service_profiles[i].public_identities_cnt; j++) {
+            for (k = 0; k < new->service_profiles_cnt; k++) {
+                for (l = 0; l < new->service_profiles[k].public_identities_cnt; l++) {
+                    LM_DBG("new %.*s (%i) vs. orig %.*s (%i)\n",
+                      new->service_profiles[k].public_identities[l].public_identity.len,
+                      new->service_profiles[k].public_identities[l].public_identity.s,
+                      new->service_profiles[k].public_identities[l].public_identity.len,
+                      orig->service_profiles[i].public_identities[j].public_identity.len,
+                      orig->service_profiles[i].public_identities[j].public_identity.s,
+                      orig->service_profiles[i].public_identities[j].public_identity.len);
 
+                    if (orig->service_profiles[i].public_identities[j].public_identity.len == 
+                      new->service_profiles[k].public_identities[l].public_identity.len) {
+                        if (memcmp(orig->service_profiles[i].public_identities[j].public_identity.s,
+                          new->service_profiles[k].public_identities[l].public_identity.s,
+                          new->service_profiles[k].public_identities[l].public_identity.len) == 0)
+                            return 1;
+                    }
+                    
+                }
+            }
         }
     }
 
@@ -828,7 +846,8 @@ int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* im
             unlock_subscription_slot(subs_ptr->sl);
         } else {
             //TODO: we may want to do a deep comparison of the subscription and update....
-            subs_ptr = subscription;
+            if (compare_subscription(subs_ptr, subscription) != 0)
+                subs_ptr = subscription;
         }
         lock_subscription(subs_ptr);
         subscription_locked = 1;
@@ -917,9 +936,11 @@ int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* im
         } else {
             LM_DBG("new subscription is the same as the old one....not doing anything");
             //check that the service profile and associated impus are in the subscription, if not, add...
-            if (compare_subscription(subs_ptr, *s) != 0) {
-                LM_WARN("TODO: There is a new service profile we need to add to the subscription\n");
-            }
+            /* if (compare_subscription(subs_ptr, *s) != 0) {
+                unref_subscription((*_r)->s); //different subscription which we don't have lock on yet.
+                ref_subscription_unsafe(subs_ptr);
+                (*_r)->s = subs_ptr;
+            }   */
         }
     }
 
