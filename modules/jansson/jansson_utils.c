@@ -33,7 +33,7 @@ int jansson_to_val(pv_value_t* val, char** freeme, json_t* v) {
 	val->flags = 0;
 
 	if(json_is_object(v) || json_is_array(v)) {
-		const char* value = json_dumps(v, JSON_COMPACT);
+		const char* value = json_dumps(v, JSON_COMPACT|JSON_PRESERVE_ORDER);
 		*freeme = (char*)value;
 		val->rs.s = (char*)value;
 		val->rs.len = strlen(value);
