@@ -123,6 +123,18 @@ static pv_export_t mod_pvs[] = {
 	{{"aa", (sizeof("aa")-1)}, /* auth algorithm */
 		PVT_OTHER, pv_get_authattr, 0,
 		0, 0, pv_init_iname, 6},	
+	{{"adn", (sizeof("adn")-1)}, /* auth nonce */
+		PVT_OTHER, pv_get_authattr, 0,
+		0, 0, pv_init_iname, 7},	
+	{{"adc", (sizeof("adc")-1)}, /* auth cnonce */
+		PVT_OTHER, pv_get_authattr, 0,
+		0, 0, pv_init_iname, 8},	
+	{{"adr", (sizeof("adr")-1)}, /* auth response */
+		PVT_OTHER, pv_get_authattr, 0,
+		0, 0, pv_init_iname, 9},	
+	{{"ado", (sizeof("ado")-1)}, /* auth opaque */
+		PVT_OTHER, pv_get_authattr, 0,
+		0, 0, pv_init_iname, 10},	
 	{{"Au", (sizeof("Au")-1)}, /* */
 		PVT_OTHER, pv_get_acc_username, 0,
 		0, 0, pv_init_iname, 1},
