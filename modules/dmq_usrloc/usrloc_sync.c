@@ -116,7 +116,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
     LM_ERR("dmq_ul.get_all_ucontacts is NULL\n");
     goto done;
   }
-	rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1);
+	rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1, 0);
 	if (rval<0) {
 		LM_ERR("failed to fetch contacts\n");
 		goto done;
@@ -130,7 +130,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 			LM_ERR("out of pkg memory\n");
 			goto done;
 		}
-		rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1);
+		rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1, 0);
 		if (rval != 0) {
 			pkg_free(buf);
 			goto done;
