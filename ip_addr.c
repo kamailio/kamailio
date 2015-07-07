@@ -377,7 +377,8 @@ char* get_proto_name(unsigned int proto)
 int ip_addr_match_net(ip_addr_t *iaddr, ip_addr_t *naddr,
 		int mask)
 {
-	unsigned char c;
+	unsigned char ci;
+	unsigned char cn;
 	int i;
 	int mbytes;
 	int mbits;
@@ -420,8 +421,9 @@ int ip_addr_match_net(ip_addr_t *iaddr, ip_addr_t *naddr,
 	mbits = mask % 8;
 	if(mbits==0)
 		return 0;
-	c = naddr->u.addr[i] & (~((1 << (8 - mbits)) - 1));
-	if((iaddr->u.addr[i] & c) == c)
+	ci = iaddr->u.addr[i] & (~((1 << (8 - mbits)) - 1));
+	cn = naddr->u.addr[i] & (~((1 << (8 - mbits)) - 1));
+	if(ci == cn)
 		return 0;
 	return -1;
 }
