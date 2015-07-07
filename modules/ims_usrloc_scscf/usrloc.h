@@ -420,6 +420,7 @@ typedef struct impurecord_info {
 typedef struct contact_list {
     struct contact_hslot* slot;
     int size;
+    int max_collisions;
 //    stat_var *contacts;        /*!< no of contacts in table */
 }contact_list_t;
 
@@ -427,6 +428,7 @@ typedef struct ims_subscription_list {
     struct hslot_sp* slot;
     int size;               /* size of list (slots) */
     int subscriptions;      /* total number of subscriptions in storage */
+    int max_collisions;
 }ims_subscription_list_t;
 
 typedef int (*insert_impurecord_t)(struct udomain* _d, str* public_identity, str* private_identity, int reg_state, int barring,

@@ -72,6 +72,7 @@ struct udomain {
     str* name; /*!< Domain name (NULL terminated) */
     int size; /*!< Hash table size */
     struct hslot* table; /*!< Hash table - array of collision slots */
+    int max_collisions;
 };
 
 

@@ -849,7 +849,7 @@ int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* im
             if (compare_subscription(subs_ptr, subscription) != 0) {
                 subs_ptr = subscription;
             } else {
-                // Treat it as a new Subscription - it's not the same as the previos one
+                // Treat it as a new Subscription - it's not the same as the previous one
                 ref_subscription_unsafe(subs_ptr); //we reference coz we are using it - will be unreferenced later.
                 add_subscription_unsafe(subs_ptr);
                 unlock_subscription_slot(subs_ptr->sl);
@@ -1071,7 +1071,7 @@ void ref_subscription_unsafe(ims_subscription* s) {
 }
 
 /**
- * @brief unref a subscription - assume slot and subsription locked!
+ * @brief unref a subscription - assume slot and subscription locked!
  * @param s
  */
 void unref_subscription_unsafe(ims_subscription* s) {

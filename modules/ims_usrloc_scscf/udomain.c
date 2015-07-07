@@ -256,9 +256,10 @@ void mem_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 void mem_timer_udomain(udomain_t* _d) {
     struct impurecord* ptr, *t;
     struct ucontact* contact_ptr;
-    int i;
+    int i, n, temp;
 
     //go through contacts first
+    n = contact_list->max_collisions;
     LM_DBG("*** mem_timer_udomain - checking contacts - START ***\n");
     for (i = 0; i < contact_list->size; i++) {
         lock_contact_slot_i(i);
@@ -268,11 +269,16 @@ void mem_timer_udomain(udomain_t* _d) {
 		//contacts are now deleted during impurecord processing
             contact_ptr = contact_ptr->next;
         } 
+        if (contact_list->slot[i].n > n) {
+            n = contact_list->slot[i].n;
+        }
         unlock_contact_slot_i(i);
+        contact_list->max_collisions = n;
     }
     LM_DBG("*** mem_timer_udomain - checking contacts - FINISHED ***\n");
 
-    int temp = 0;
+    temp = 0;
+    n = _d->max_collisions;
 
     LM_DBG("*** mem_timer_udomain - checking IMPUs - START ***\n");
     for (i = 0; i < _d->size; i++) {
@@ -293,9 +299,24 @@ void mem_timer_udomain(udomain_t* _d) {
             LM_DBG("ULSLOT %d UN-LOCKED\n", i);
 #endif
         }
+        if (_d->table[i].n > n)
+            n = _d->table[i].n;
+        
         unlock_ulslot(_d, i);
+        _d->max_collisions = n;
     }
     LM_DBG("*** mem_timer_udomain - checking IMPUs - FINISHED ***\n");
+    
+    n = ims_subscription_list->max_collisions;
+    for (i = 0; i < ims_subscription_list->size; i++) {
+        lock_subscription_slot(i);
+        if (ims_subscription_list->slot[i].n > n) {
+            n = ims_subscription_list->slot[i].n;
+        }
+        unlock_subscription_slot(i);
+    }
+    ims_subscription_list->max_collisions = n;
+    
 }
 
 

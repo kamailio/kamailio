@@ -17,6 +17,9 @@ struct ul_scscf_counters_h {
     counter_handle_t active_impus;
     counter_handle_t active_contacts;
     counter_handle_t expired_contacts;
+    counter_handle_t subscription_collisions;
+    counter_handle_t impu_collisions;
+    counter_handle_t contact_collisions;
 };
 
 int ul_scscf_init_counters();
