@@ -1,8 +1,20 @@
 Release notes for Kamailio/SIP Router (sr)
 ***********************************************
 
-For news about release 4.0, please check
+Starting with release 3.2, release notes have
+been posted to the Kamailio website. Release
+notes for previous versions are posted below.
+
+For releases after 3.1, please visit:
+
+http://www.kamailio.org/wiki/features/new-in-4.3.x
+http://www.kamailio.org/wiki/features/new-in-4.2.x
+http://www.kamailio.org/wiki/features/new-in-4.1.x
 http://www.kamailio.org/wiki/features/new-in-4.0.x
+http://www.kamailio.org/wiki/features/new-in-3.3.x
+http://www.kamailio.org/wiki/features/new-in-3.2.x
+
+Earlier verisons are listed below.
 ===================================================
 
 sip-router 3.1 changes
