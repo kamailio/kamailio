@@ -63,10 +63,11 @@ struct impurecord;
 #define UL_IMPU_INSERT		   	(1<<8)		/* new IMPU record has been added */
 #define UL_IMPU_UPDATE		   	(1<<9)		/* IMPU record has been updated */
 #define UL_IMPU_NEW_CONTACT		(1<<10)		/* a new contact has been inserted for this IMPU */
-#define UL_IMPU_UPDATE_CONTACT		(1<<11)		/* a new contact has been inserted for this IMPU */
-#define UL_IMPU_DELETE_CONTACT		(1<<12)		/* a new contact has been inserted for this IMPU */
-#define UL_IMPU_EXPIRE_CONTACT		(1<<13)		/* a new contact has been inserted for this IMPU */
-#define ULCB_MAX               	((1<<14)-1)
+#define UL_IMPU_UPDATE_CONTACT		(1<<11)		/* contact has been updated */
+#define UL_IMPU_DELETE_CONTACT		(1<<12)		/* explciti contact delete from IMPU (dereg) */
+#define UL_IMPU_DELETE_CONTACT_IMPLICIT	(1<<13)		/* implicit contact delete frim IMPU (expiry, etc) */
+#define UL_IMPU_EXPIRE_CONTACT		(1<<14)		/* a new contact has been inserted for this IMPU */
+#define ULCB_MAX               	((1<<15)-1)
 
 /*! \brief callback function prototype */
 typedef void (ul_cb) (struct impurecord* r, struct ucontact *c, int type, void *param);

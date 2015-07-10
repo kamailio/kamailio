@@ -668,7 +668,7 @@ static inline int unregister_contact(udomain_t* _d, str* public_identity, impure
 
     //    if (ul.delete_ucontact(impu_rec, ucontact) != 0) {
     ul.lock_contact_slot_i(ucontact->sl);
-    if (ul.unlink_contact_from_impu(impu_rec, ucontact, 1) != 0) {
+    if (ul.unlink_contact_from_impu(impu_rec, ucontact, 1, 1/*explicit dereg of contact*/) != 0) {
         LM_ERR("Failed to delete ucontact <%.*s>\n", chi->uri.len, chi->uri.s);
     }
     ul.unlock_contact_slot_i(ucontact->sl);

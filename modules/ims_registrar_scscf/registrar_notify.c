@@ -499,6 +499,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int e
 
             //richard: we only use reg unreg expired and refresh
         case IMS_REGISTRAR_CONTACT_UNREGISTERED:
+        case IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT:
         case IMS_REGISTRAR_CONTACT_REGISTERED:
         case IMS_REGISTRAR_CONTACT_REFRESHED:
         case IMS_REGISTRAR_CONTACT_EXPIRED:
@@ -599,7 +600,7 @@ int process_contact(impurecord_t* presentity_impurecord, udomain_t * _d, int exp
                         //delete contact
                         LM_DBG("This contact <%.*s> is in state terminated and is in usrloc so removing it from usrloc\n", contact_uri.len, contact_uri.s);
                         ul.lock_contact_slot(&contact_uri);
-                        if (ul.unlink_contact_from_impu(implicit_impurecord, ucontact, 1) != 0) {
+                        if (ul.unlink_contact_from_impu(implicit_impurecord, ucontact, 1, 0 /*implicit dereg of contact from IMPU*/) != 0) {
                             LM_ERR("Failed to delete ucontact <%.*s> from implicit IMPU\n", contact_uri.len, contact_uri.s);
                             ul.unlock_contact_slot(&contact_uri);
                             ul.release_ucontact(ucontact);
@@ -636,7 +637,7 @@ next_implicit_impu:
                 //delete contact
                 LM_DBG("This contact <%.*s> is in state terminated and is in usrloc so removing it from usrloc\n", contact_uri.len, contact_uri.s);
                 ul.lock_contact_slot(&contact_uri);
-                if (ul.unlink_contact_from_impu(presentity_impurecord, ucontact, 1) != 0) {
+                if (ul.unlink_contact_from_impu(presentity_impurecord, ucontact, 1, 0 /*implicit dereg of contact from IMPU */) != 0) {
                     LM_ERR("Failed to delete ucontact <%.*s>\n", contact_uri.len, contact_uri.s);
                     ret = CSCF_RETURN_FALSE;
                     ul.unlock_contact_slot(&contact_uri);

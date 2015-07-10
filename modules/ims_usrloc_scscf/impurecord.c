@@ -395,7 +395,7 @@ static inline void process_impurecord(impurecord_t* _r) {
             LM_DBG("\t\texpiring contact %i: [%.*s] in slot [%d]\n", n, contacts_to_expire[n]->c.len, contacts_to_expire[n]->c.s, contacts_to_expire[n]->sl);
             sl = ptr->sl;
             lock_contact_slot_i(sl);
-            unlink_contact_from_impu(_r, ptr, 1);
+            unlink_contact_from_impu(_r, ptr, 1, 0 /*implicit dereg of contact from IMPU*/);
             unlock_contact_slot_i(sl);
         }
     }
@@ -1002,7 +1002,7 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
     if (i < MAX_CONTACTS_PER_IMPU) {
         LM_DBG("contact [%.*s] needs to be linked to impu [%.*s] at position %d\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
         if (overwrite)
-            unlink_contact_from_impu(impu, impu->newcontacts[i], write_to_db); //unlink the contact we are overwriting
+            unlink_contact_from_impu(impu, impu->newcontacts[i], write_to_db, 0 /*implicit dereg of contact */); //unlink the contact we are overwriting
 
         impu->num_contacts = i + 1; //we always bump this - as unlink (in overwrite would have decremented)
         impu->newcontacts[i] = contact;
@@ -1019,8 +1019,8 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
     return 0;
 }
 
-int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db) {
-    ucontact_t* ptr;
+int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db, int is_explicit) {
+    ucontact_t* ptr, *found_contact;
     int i;
     i = 0;
     int found = 0;
@@ -1035,29 +1035,35 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
         } else {
             if (ptr == contact) {
                 LM_DBG("unlinking contact [%.*s] from impu [%.*s]\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
-
-                if (exists_ulcb_type(impu->cbs, UL_IMPU_DELETE_CONTACT)) {
-                    LM_DBG("Running callback UL_IMPU_DELETE_CONTACT for contact [%.*s] and impu [%.*s]\n", ptr->c.len, ptr->c.s, impu->public_identity.len, impu->public_identity.s);
-                    run_ul_callbacks(impu->cbs, UL_IMPU_DELETE_CONTACT, impu, ptr);
-                }
-
                 found = 1;
+                found_contact = ptr;
                 impu->newcontacts[i] = 0;
                 impu->num_contacts--;
-                unref_contact_unsafe(contact); //should we lock the actual contact? safe version maybe?
-
-                if (write_to_db && db_mode == WRITE_THROUGH && db_unlink_contact_from_impu(impu, contact) != 0) {
-                    LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
-                }
             }
         }
         i++;
         ptr = impu->newcontacts[i];
     }
 
-    if (found && i < MAX_CONTACTS_PER_IMPU) {
-        LM_DBG("zero'ing last pointer to contact in the list\n");
-        impu->newcontacts[i - 1] = 0;
+    if (found) {
+        if (i < MAX_CONTACTS_PER_IMPU) {
+            LM_DBG("zero'ing last pointer to contact in the list\n");
+            impu->newcontacts[i - 1] = 0;
+        }
+        LM_DBG("unlinking contact [%.*s] from impu [%.*s]\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
+        if (is_explicit && exists_ulcb_type(impu->cbs, UL_IMPU_DELETE_CONTACT)) {
+            LM_DBG("Running callback UL_IMPU_DELETE_CONTACT for contact [%.*s] and impu [%.*s]\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
+            run_ul_callbacks(impu->cbs, UL_IMPU_DELETE_CONTACT, impu, found_contact);
+        }
+        if (!is_explicit && exists_ulcb_type(impu->cbs, UL_IMPU_DELETE_CONTACT_IMPLICIT)) {
+            LM_DBG("Running callback UL_IMPU_DELETE_CONTACT_IMPLICIT for contact [%.*s] and impu [%.*s]\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
+            run_ul_callbacks(impu->cbs, UL_IMPU_DELETE_CONTACT_IMPLICIT, impu, found_contact);
+        }
+
+        if (write_to_db && db_mode == WRITE_THROUGH && db_unlink_contact_from_impu(impu, found_contact) != 0) {
+            LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
+        }
+        unref_contact_unsafe(found_contact); //should we lock the actual contact? safe version maybe?
     } else {
         LM_DBG("contact [%.*s] did not exist in IMPU list [%.*s] while trying to unlink\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
     }

@@ -109,6 +109,7 @@ enum {
     IMS_REGISTRAR_CONTACT_REFRESHED, /**< The expiration was refreshed					*/
     IMS_REGISTRAR_CONTACT_EXPIRED, /**< A contact has expired and will be removed		*/
     IMS_REGISTRAR_CONTACT_UNREGISTERED, /**< User unregistered with Expires 0				*/
+    IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT, /**< User unregistered implicitly, ie not via explicit deregister	*/
 } IMS_Registrar_events;
 
 

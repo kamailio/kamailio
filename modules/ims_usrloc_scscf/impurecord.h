@@ -173,7 +173,7 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path,
 int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* impu_rec, int reg_state, int send_sar_on_delete, int barring, int is_primary, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);
 
 int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db);
-int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db);
+int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db, int is_explicit);
 
 void ref_subscription_unsafe(ims_subscription* s);
 void unref_subscription_unsafe(ims_subscription* s);

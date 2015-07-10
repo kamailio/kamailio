@@ -459,7 +459,7 @@ typedef int (*update_ucontact_t)(struct impurecord* _r, struct ucontact* _c, str
 
 typedef int (*expire_ucontact_t)(struct impurecord* _r, struct ucontact* _c);
 
-typedef int (*unlink_contact_from_impu_t)(struct impurecord* _r, struct ucontact* _c, int write_to_db);
+typedef int (*unlink_contact_from_impu_t)(struct impurecord* _r, struct ucontact* _c, int write_to_db, int is_explicit);
 
 typedef int (*link_contact_to_impu_t)(struct impurecord* _r, struct ucontact* _c, int wirte_to_db);
 
