@@ -715,6 +715,8 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 					vendor = get_4bytes(avp_vendor->data.s);
 					LM_DBG("Found Supported Vendor for Application %i: %i\n", DP_AUTHORIZATION, vendor);
 					add_peer_application(p,id,vendor,DP_AUTHORIZATION);
+					if (!avp_vendor->next)
+						break;
 					avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
 				}
 				break;
@@ -726,6 +728,8 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 					vendor = get_4bytes(avp_vendor->data.s);
 					LM_DBG("Found Supported Vendor for Application %i: %i\n", DP_ACCOUNTING, vendor);
 					add_peer_application(p,id,vendor,DP_ACCOUNTING);
+					if (!avp_vendor->next)
+						break;
 					avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
 				}
 				break;
