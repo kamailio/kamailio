@@ -23,6 +23,7 @@
 #define MAX_PANI_LEN 100
 
 enum ro_session_event_type {
+    unknown = 0,
     pending,
     answered,
     no_more_credit,

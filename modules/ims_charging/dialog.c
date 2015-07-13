@@ -164,9 +164,11 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 					}
 				}
 
-				LM_DBG("Sending CCR STOP on Ro_Session [%p]\n", ro_session);
-				send_ccr_stop(ro_session);
-				ro_session->active = 0;
+				if (ro_session->event_type != unknown) {
+					LM_DBG("Sending CCR STOP on Ro_Session [%p], as it is in '%d' state\n", ro_session, ro_session->event_type);
+					send_ccr_stop(ro_session);
+					ro_session->active = 0;
+				}
 				
 				if (ro_db_mode == DB_MODE_REALTIME) {
 				    ro_session->flags |= RO_SESSION_FLAG_DELETED;
