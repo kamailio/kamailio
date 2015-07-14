@@ -791,10 +791,6 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 			((ap->opd&AVPOPS_VAL_INT)&&((avp->flags&AVP_NAME_STR))==0) ||
 			((ap->opd&AVPOPS_VAL_STR)&&(avp->flags&AVP_NAME_STR)) )  )
 				continue;
-			if((ap->u.sval->pvp.pvn.u.isname.type&AVP_SCRIPT_MASK)!=0
-					&& ((ap->u.sval->pvp.pvn.u.isname.type&AVP_SCRIPT_MASK)
-								&avp->flags)==0)
-				continue;
 			/* remove avp */
 			destroy_avp( avp );
 			n++;
