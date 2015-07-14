@@ -88,7 +88,7 @@ if [ -f $DEFAULTS ]; then
 fi
 
 if [ "$RUN_KAMAILIO" != "yes" ]; then
-    log_failure_msg "Kamailio not yet configured. Edit /etc/default/kamailio first."
+    log_failure_msg "Kamailio not yet configured. Edit /etc/default/$NAME first."
     exit 0
 fi
 
@@ -115,6 +115,7 @@ fi
 # /var/run can be a tmpfs
 if [ ! -d $HOMEDIR ]; then
     mkdir -p $HOMEDIR
+    chown ${USER}:${GROUP} $HOMEDIR
 fi
 
 OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP"

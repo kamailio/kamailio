@@ -115,6 +115,7 @@ fi
 # /var/run can be a tmpfs
 if [ ! -d $HOMEDIR ]; then
     mkdir -p $HOMEDIR
+    chown ${USER}:${GROUP} $HOMEDIR
 fi
 
 OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP"
