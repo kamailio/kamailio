@@ -94,7 +94,7 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir) {
     memset(td, 0, sizeof (dlg_t));
 
     if (dir == DLG_CALLER_LEG) {
-        cseq = cell->first_req_cseq;
+        cseq = dlg_out->callee_cseq;
         route_set = cell->caller_route_set;
         contact = cell->caller_contact;
         td->rem_uri = cell->from_uri;
@@ -103,7 +103,7 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir) {
         td->id.loc_tag = dlg_out->to_tag;
         td->send_sock = cell->caller_bind_addr;
     } else {
-        cseq = dlg_out->callee_cseq;
+        cseq = dlg_out->caller_cseq;
         route_set = dlg_out->callee_route_set;
         contact = dlg_out->callee_contact;
         td->rem_uri = dlg_out->to_uri;
@@ -121,6 +121,8 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir) {
     /*we don not increase here the cseq as this will be done by TM*/
     td->loc_seq.value = loc_seq;
     td->loc_seq.is_set = 1;
+
+    LM_DBG("CSeq is '%.*s' (%i)\n", cseq.len, cseq.s, loc_seq);
 
     /*route set*/
     if (route_set.s && route_set.len) {

@@ -697,51 +697,61 @@ int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq, str *to_
 
         //compare the to_tag passed parameter to all the dlg_out to_tag entry of the dlg parameter  (There could be multiple)
         while (dlg_out) {
+            LM_DBG("Searching out dialog with to_tag '%.*s' (looking for '%.*s')\n", dlg_out->to_tag.len, dlg_out->to_tag.s, to_tag->len, to_tag->s);
 
             if (dlg_out->to_tag.len == to_tag->len && memcmp(dlg_out->to_tag.s, to_tag->s, dlg_out->to_tag.len) == 0) {
                 //this parameter matches we have found the dlg_out to update the cseq
 
                 if (leg == DLG_CALLER_LEG) {
+                    LM_DBG("Update Caller\n");
                     //update caller cseq
                     if (dlg_out->caller_cseq.s) {
-                        if (dlg_out->caller_cseq.len < cseq->len) {
+                        if (dlg_out->caller_cseq.len != cseq->len) {
                             shm_free(dlg_out->caller_cseq.s);
                             dlg_out->caller_cseq.s = (char*) shm_malloc(cseq->len);
                             if (dlg_out->caller_cseq.s == NULL)
                                 goto error;
                             dlg_out->caller_cseq.len = cseq->len;
-                            memcpy(dlg_out->caller_cseq.s, cseq->s, cseq->len);
                         }
+                        LM_DBG("Updating CSeq...\n");
+                        memcpy(dlg_out->caller_cseq.s, cseq->s, cseq->len);
+                        LM_DBG("CSeq is now '%.*s' (%p)\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s, dlg_out->caller_cseq.s);
                     } else {
                         dlg_out->caller_cseq.s = (char*) shm_malloc(cseq->len);
                         if (dlg_out->caller_cseq.s == NULL)
                             goto error;
 
                         dlg_out->caller_cseq.len = cseq->len;
+                        LM_DBG("Updating CSeq...\n");
                         memcpy(dlg_out->caller_cseq.s, cseq->s, cseq->len);
+                        LM_DBG("CSeq is now '%.*s' (%p)\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s, dlg_out->caller_cseq.s);
                     }
-
                 } else if (leg == DLG_CALLEE_LEG) {
+                    LM_DBG("Update Callee\n");
                     //update callee cseq
                     if (dlg_out->callee_cseq.s) {
-                        if (dlg_out->callee_cseq.len < cseq->len) {
+                        if (dlg_out->callee_cseq.len != cseq->len) {
                             shm_free(dlg_out->callee_cseq.s);
                             dlg_out->callee_cseq.s = (char*) shm_malloc(cseq->len);
                             if (dlg_out->callee_cseq.s == NULL)
                                 goto error;
 
                             dlg_out->callee_cseq.len = cseq->len;
-                            memcpy(dlg_out->callee_cseq.s, cseq->s, cseq->len);
                         }
+                        LM_DBG("Updating CSeq...\n");
+			memcpy(dlg_out->callee_cseq.s, cseq->s, cseq->len);
+                        LM_DBG("CSeq is now '%.*s' (%p)\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s, dlg_out->caller_cseq.s);
                     } else {
                         dlg_out->callee_cseq.s = (char*) shm_malloc(cseq->len);
                         if (dlg_out->callee_cseq.s == NULL)
                             goto error;
 
                         dlg_out->callee_cseq.len = cseq->len;
-                        memcpy(dlg_out->callee_cseq.s, cseq->s, cseq->len);
-                    }
 
+                        LM_DBG("Updating CSeq...\n");
+                        memcpy(dlg_out->callee_cseq.s, cseq->s, cseq->len);
+                        LM_DBG("CSeq is now '%.*s' (%p)\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s, dlg_out->caller_cseq.s);
+                    }
                 }
             }
             dlg_out = dlg_out->next;
