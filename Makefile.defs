@@ -753,6 +753,10 @@ ifeq ($(WITHAS), 1)
 	C_DEFS+= -DWITH_AS_SUPPORT
 endif
 
+ifeq ($(SCTP), 1)
+	C_DEFS+= -DUSE_SCTP
+endif
+
 ifeq ($(mode),)
 	mode = release
 endif
