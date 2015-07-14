@@ -2095,7 +2095,8 @@ int pv_set_ruri_user(struct sip_msg* msg, pv_param_t *param,
 		return -1;
 	}
 					
-	if((val==NULL) || (val->flags&PV_VAL_NULL))
+	if((val==NULL) || (val->flags&PV_VAL_NULL)
+			|| ((val->flags&PV_VAL_STR) && val->rs.len<=0))
 	{
 		memset(&act, 0, sizeof(act));
 		act.type = SET_USER_T;
