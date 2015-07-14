@@ -16,12 +16,12 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/kamailio
-NAME=kamailio
+NAME=`basename "$0"`
 DESC="Kamailio SIP Server"
-HOMEDIR=/var/run/kamailio
+HOMEDIR=/var/run/$NAME
 PIDFILE=$HOMEDIR/$NAME.pid
-DEFAULTS=/etc/default/kamailio
-CFGFILE=/etc/kamailio/kamailio.cfg
+DEFAULTS=/etc/default/$NAME
+CFGFILE=/etc/$NAME/kamailio.cfg
 RUN_KAMAILIO=no
 USER=kamailio
 GROUP=kamailio
@@ -67,9 +67,9 @@ create_radius_seqfile ()
     # write to the file. If the file exists before kamailio starts, it
     # won't change it's ownership and will be writable for both root
     # and kamailio, no matter what options are chosen at install time
-    RADIUS_SEQ_FILE=/var/run/kamailio/kamailio_radius.seq
-    if [ -d /var/run/kamailio ]; then
-	chown ${USER}:${GROUP} /var/run/kamailio
+    RADIUS_SEQ_FILE="$HOMEDIR/kamailio_radius.seq"
+    if [ -d $HOMEDIR ]; then
+	chown ${USER}:${GROUP} $HOMEDIR
 
 	if [ ! -f $RADIUS_SEQ_FILE ]; then
 	    touch $RADIUS_SEQ_FILE
@@ -88,7 +88,7 @@ if [ -f $DEFAULTS ]; then
 fi
 
 if [ "$RUN_KAMAILIO" != "yes" ]; then
-    log_failure_msg "Kamailio not yet configured. Edit /etc/default/kamailio first."
+    log_failure_msg "Kamailio not yet configured. Edit /etc/default/$NAME first."
     exit 0
 fi
 
@@ -115,6 +115,7 @@ fi
 # /var/run can be a tmpfs
 if [ ! -d $HOMEDIR ]; then
     mkdir -p $HOMEDIR
+    chown ${USER}:${GROUP} $HOMEDIR
 fi
 
 OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP"
