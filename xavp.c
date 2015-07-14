@@ -641,6 +641,7 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 		LM_ERR("cannot create cloned root xavp\n");
 		return NULL;
 	}
+	LM_DBG("cloned root xavp [%.*s]\n", xold->name.len, xold->name.s);
 
 	if(xold->val.type!=SR_XTYPE_XAVP)
 	{
@@ -667,15 +668,16 @@ sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold)
 					return NULL;
 				}
 			}
+			LM_DBG("cloned inner xavp [%.*s]\n", oavp->name.len, oavp->name.s);
 			if(xnew->val.v.xavp == NULL)
 			{
 				/* link to val in head xavp */
 				xnew->val.v.xavp = navp;
-				pavp = navp;
 			} else {
 				/* link to prev xavp in the list */
 				pavp->next = navp;
 			}
+			pavp = navp;
 		}
 		oavp = oavp->next;
 	}
