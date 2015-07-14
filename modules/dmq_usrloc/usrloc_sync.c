@@ -328,7 +328,6 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 			LM_ERR("unrecognized field in json object\n");
 		}
 	}
-	srjson_DestroyDoc(&jdoc);
 	memset( &ci, 0, sizeof(ucontact_info_t));
 	ci.ruid = ruid;
 	ci.c = &c;
@@ -367,16 +366,19 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 		default:  goto invalid;
 	}
 
+	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_200_rpl;
 	resp->resp_code = 200;
 	return 0;
 
 invalid:
+	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_400_rpl;
 	resp->resp_code = 400;
 	return 0;
 
 error:
+	srjson_DestroyDoc(&jdoc);
 	resp->reason = dmq_500_rpl;
 	resp->resp_code = 500;
 	return 0;
