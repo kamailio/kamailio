@@ -376,6 +376,25 @@ sbranch_reset();
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.pv_xavp_print">
+			<title>
+				<function moreinfo="none">pv_xavp_print()</function>
+			</title>
+			<para>
+				Print all XAVPs to the syslog using INFO log level.
+			</para>
+			<para>
+			Function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pv_xavp_print()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pv_xavp_print();
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>
