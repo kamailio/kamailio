@@ -45,6 +45,7 @@ Daniel-Constantin Mierla
               4.7. sbranch_set_ruri()
               4.8. sbranch_append()
               4.9. sbranch_reset()
+              4.10. pv_xavp_print()
 
         5. MI Commands
 
@@ -70,8 +71,9 @@ Daniel-Constantin Mierla
    1.10. sbranch_set_ruri() usage
    1.11. sbranch_append() usage
    1.12. sbranch_append() usage
-   1.13. shv_set usage
-   1.14. shv_get usage
+   1.13. pv_xavp_print() usage
+   1.14. shv_set usage
+   1.15. shv_get usage
 
 Chapter 1. Admin Guide
 
@@ -100,6 +102,7 @@ Chapter 1. Admin Guide
         4.7. sbranch_set_ruri()
         4.8. sbranch_append()
         4.9. sbranch_reset()
+        4.10. pv_xavp_print()
 
    5. MI Commands
 
@@ -203,6 +206,7 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
    4.7. sbranch_set_ruri()
    4.8. sbranch_append()
    4.9. sbranch_reset()
+   4.10. pv_xavp_print()
 
 4.1. pv_isset(pvar)
 
@@ -352,6 +356,17 @@ sbranch_append();
 sbranch_reset();
 ...
 
+4.10. pv_xavp_print()
+
+   Print all XAVPs to the syslog using INFO log level.
+
+   Function can be used from ANY_ROUTE.
+
+   Example 1.13. pv_xavp_print() usage
+...
+pv_xavp_print();
+...
+
 5. MI Commands
 
    5.1. shv_set
@@ -375,7 +390,7 @@ sbranch_reset();
                 _value_
                 _empty_line_
 
-   Example 1.13. shv_set usage
+   Example 1.14. shv_set usage
 ...
 $ kamctl fifo shv_set debug int 0
 ...
@@ -393,7 +408,7 @@ $ kamctl fifo shv_set debug int 0
                 _name_
                 _empty_line_
 
-   Example 1.14. shv_get usage
+   Example 1.15. shv_get usage
 ...
 $ kamctl fifo shv_get debug
 $ kamctl fifo shv_get
