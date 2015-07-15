@@ -358,6 +358,7 @@ static inline void process_impurecord(impurecord_t* _r) {
                 LM_DBG("DBG:registrar_timer: Subscription has dialog record in hash table with presentity uri <%.*s>\n", sub_dialog->pres_uri.len, sub_dialog->pres_uri.s);
             }
             lock_release(&sub_dialog_table[sl].lock);
+            mustdeleteimpu = 0;
         }
         s = s->next;
     }
@@ -367,7 +368,6 @@ static inline void process_impurecord(impurecord_t* _r) {
             _r->barring,
             get_impu_regstate_as_string(_r->reg_state));
     flag = 0;
-    mustdeleteimpu = 1;
     hascontacts = 0;
     num_contacts_to_expire = 0;
     for (k = 0; (k < _r->num_contacts) && (k < MAX_CONTACTS_PER_IMPU); k++) {
