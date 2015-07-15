@@ -102,10 +102,14 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 	buf_len = snprintf(buf, sizeof(buf), "%p", record);
 	xmlNewProp(registration_node, BAD_CAST "id", BAD_CAST buf);
 
+	LM_DBG("Updated Contact %.*s[%.*s]\n", c->c.len, c->c.s,
+		c->ruid.len, c->ruid.s);
+
 	ptr = record->contacts;
 	while (ptr) {
 		if (VALID_CONTACT(ptr, cur_time)) {
-			LM_DBG("Contact %.*s, %p\n", ptr->c.len, ptr->c.s, ptr);
+			LM_DBG("Contact %.*s[%.*s]\n", ptr->c.len, ptr->c.s,
+				ptr->ruid.len, ptr->ruid.s);
 			/* Contact-Node */
 			contact_node =xmlNewChild(registration_node, NULL, BAD_CAST "contact", NULL) ;
 			if( contact_node ==NULL) {
@@ -116,7 +120,9 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 			buf_len = snprintf(buf, sizeof(buf), "%p", ptr);
 			xmlNewProp(contact_node, BAD_CAST "id", BAD_CAST buf);
 			/* Check, if this is the modified contact: */
-			if (ptr == c) {
+			if ((c->ruid.len == ptr->ruid.len) &&
+				!memcmp(c->ruid.s, ptr->ruid.s, c->ruid.len))
+			{
 				if ((type & UL_CONTACT_INSERT) || (type & UL_CONTACT_UPDATE)) {
 					reg_active = 1;
 					xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
