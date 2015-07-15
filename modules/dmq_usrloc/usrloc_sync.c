@@ -96,7 +96,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 {
  	int rval, len=0;
 	void *buf, *cp;
-	str c;
+	str c, recv;
 	str path;
 	str ruid;
 	unsigned int aorhash;
@@ -145,6 +145,9 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
             break;
         c.s = (char*)cp + sizeof(c.len);
         cp =  (char*)cp + sizeof(c.len) + c.len;
+        memcpy(&(recv.len), cp, sizeof(recv.len));
+        recv.s = (char*)cp + sizeof(recv.len);
+        cp =  (char*)cp + sizeof(recv.len) + recv.len;
         memcpy( &send_sock, cp, sizeof(send_sock));
         cp = (char*)cp + sizeof(send_sock);
         memcpy( &flags, cp, sizeof(flags));
