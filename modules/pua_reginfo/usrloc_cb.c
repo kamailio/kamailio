@@ -101,10 +101,14 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 	snprintf(buf, sizeof(buf), "%p", record);
 	xmlNewProp(registration_node, BAD_CAST "id", BAD_CAST buf);
 
+	LM_DBG("Updated Contact %.*s[%.*s]\n", c->c.len, c->c.s,
+		c->ruid.len, c->ruid.s);
+
 	ptr = record->contacts;
 	while (ptr) {
 		if (VALID_CONTACT(ptr, cur_time)) {
-			LM_DBG("Contact %.*s, %p\n", ptr->c.len, ptr->c.s, ptr);
+			LM_DBG("Contact %.*s[%.*s]\n", ptr->c.len, ptr->c.s,
+				ptr->ruid.len, ptr->ruid.s);
 			/* Contact-Node */
 			contact_node =xmlNewChild(registration_node, NULL, BAD_CAST "contact", NULL) ;
 			if( contact_node ==NULL) {
@@ -115,7 +119,9 @@ str* build_reginfo_full(urecord_t * record, str uri, ucontact_t* c, int type) {
 			snprintf(buf, sizeof(buf), "%p", ptr);
 			xmlNewProp(contact_node, BAD_CAST "id", BAD_CAST buf);
 			/* Check, if this is the modified contact: */
-			if (ptr == c) {
+			if ((c->ruid.len == ptr->ruid.len) &&
+				!memcmp(c->ruid.s, ptr->ruid.s, c->ruid.len))
+			{
 				if ((type & UL_CONTACT_INSERT) || (type & UL_CONTACT_UPDATE)) {
 					reg_active = 1;
 					xmlNewProp(contact_node, BAD_CAST "state", BAD_CAST "active");
@@ -218,9 +224,9 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	str content_type;
 	udomain_t * domain;
 	urecord_t * record;
+	ucontact_t* _c = NULL;
 	int res;
 	str uri = {NULL, 0};
-	str user = {NULL, 0};
 
 	char* at = NULL;
 	char id_buf[512];
@@ -245,9 +251,6 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 		LM_ERR("Unknown Type %i\n", type);
 		return;
 	}
-	/* make a local copy of the AOR */
-	user.len = c->aor->len;
-	user.s = c->aor->s;
 
 	/* Get the UDomain for this account */
 	res = ul.get_udomain(c->domain->s, &domain);
@@ -256,10 +259,11 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 		return;
 	}
 
-	/* Get the URecord for this AOR */
-	res = ul.get_urecord(domain, &user, &record);
-	if (res > 0) {
-		LM_ERR("' %.*s (%.*s)' Not found in usrloc\n", c->aor->len, c->aor->s, c->domain->len, c->domain->s);
+	/* Get the URecord for this ruid */
+	res = ul.get_urecord_by_ruid(domain, ul.get_aorhash(c->aor), &(c->ruid),
+		&record, &_c);
+	if (res < 0) {
+		LM_ERR("'%.*s (%.*s)' Not found in usrloc\n", c->aor->len, c->aor->s, c->domain->len, c->domain->s);
 		return;
 	}
 
