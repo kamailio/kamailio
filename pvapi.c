@@ -592,6 +592,9 @@ static int pv_get_marker(struct sip_msg *msg, pv_param_t *param,
 			(int)pv_str_marker.s[0]);
 }
 
+static char pv_str_empty_buf[2];
+static char pv_str_null_buf[8];
+
 static str pv_str_empty  = { "", 0 };
 static str pv_str_null   = { "<null>", 6 };
 int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
@@ -1890,6 +1893,13 @@ int pv_init_api(void)
 	tr_init_table();
 	if(pv_init_buffer()<0)
 		return -1;
+
+	pv_str_empty_buf[0] = '\0';
+	pv_str_empty_buf[1] = '\0';
+	pv_str_empty.s = pv_str_empty_buf;
+	strcpy(pv_str_null_buf, "<null>");
+	pv_str_null.s = pv_str_null_buf;
+
 	if(register_pvars_mod("core", _core_pvs)<0)
 		return -1;
 	return 0;
