@@ -437,6 +437,10 @@ done:
 		sip_msg_free(t->uac[branch].reply);
 		t->uac[branch].reply = 0;
 	}
+
+        t->flags &= ~T_ASYNC_SUSPENDED;   /*This transaction is no longer suspended so unsetting the SUSPEND flag*/
+
+
 	return 0;
 
 kill_trans:
