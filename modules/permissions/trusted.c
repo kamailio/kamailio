@@ -43,9 +43,9 @@
 
 #define TABLE_VERSION 6
 
-struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
-struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
-struct trusted_list **hash_table_2;   /* Pointer to hash table 2 */
+struct trusted_list ***hash_table = 0;    /* Pointer to current hash table pointer */
+struct trusted_list **hash_table_1 = 0;   /* Pointer to hash table 1 */
+struct trusted_list **hash_table_2 = 0;   /* Pointer to hash table 2 */
 
 
 static db1_con_t* db_handle = 0;
@@ -70,17 +70,22 @@ int reload_trusted_table(void)
 
 	char *pattern, *ruri_pattern, *tag;
 
+	if (hash_table == 0) {
+	    LM_ERR("in-memory hash table not initialized\n");
+	    return -1;
+	}
+
+	if (db_handle == 0) {
+	    LM_ERR("no connection to database\n");
+	    return -1;
+	}
+
 	cols[0] = &source_col;
 	cols[1] = &proto_col;
 	cols[2] = &from_col;
 	cols[3] = &ruri_col;
 	cols[4] = &tag_col;
 	cols[5] = &priority_col;
-
-	if (db_handle == 0) {
-	    LM_ERR("no connection to database\n");
-	    return -1;
-	}
 
 	if (perm_dbf.use_table(db_handle, &trusted_table) < 0) {
 		LM_ERR("failed to use trusted table\n");
