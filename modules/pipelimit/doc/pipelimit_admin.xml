@@ -29,9 +29,66 @@
 		Pipelimit started from ratelimit module, adding support for definition
 		of pipes limits in database and dynamic names. Complexity of keeping
 		everything in a module and make it dual mode functional resulted in a
-		new module which is focused on just traffic shaping policies. For
-		description of the algorithms see the README of ratelimit.
+		new module which is focused on just traffic shaping policies.
 	</para>
+	<section>
+		<title>Algorithms</title>
+		<para>
+			Algorithms are based from the ratelimit module, which describes the
+			algorithms in more detail. The algorithms are used by the pipelimit
+			module to determine if a message should be blocked.
+		</para>
+		<para>
+			<emphasis>Tail Drop Algorithm (TAILDROP)</emphasis>
+		</para>
+		<para>
+			This is a trivial algorithm that imposes some risks when used in
+			conjunction with long timer intervals. At the start of each interval an
+			internal counter is reset and incremented for each incoming message.
+			Once the counter hits the configured limit pl_check returns an error.
+		</para>
+		<para>
+			<emphasis>Random Early Detection Algorithm (RED)</emphasis>
+		</para>
+		<para>
+			The Random Early Detection Algorithm tries to circumvent the
+			synchronization problem imposed by the tail drop algorithm by measuring
+			the average load and adapting the drop rate dynamically. When running
+			with the RED algorithm (enabled by default) Kamailio will return errors
+			to the Kamailio routing engine every n'th packet trying to evenly
+			spread the measured load of the last timer interval onto the current
+			interval. As a negative side effect Kamailio might drop messages
+			although the limit might not be reached within the interval. Decrease
+			the timer interval if you encounter this.
+		</para>
+		<para>
+			<emphasis>Network Algorithm (NETWORK)</emphasis>
+		</para>
+		<para>
+			This algorithm relies on information provided by network interfaces.
+			The total amount of bytes waiting to be consumed on all the network
+			interfaces is retrieved once every timer_interval seconds. If the
+			returned amount exceeds the limit specified in the modparam, pl_check
+			returns an error.
+		</para>
+		<para>
+			<emphasis>Feedback Algorithm (FEEDBACK)</emphasis>
+		</para>
+		<para>
+			Using the PID Controller model (see Wikipedia page), the drop rate is
+			adjusted dynamically based on the load factor so that the load factor
+			always drifts towards the specified limit (or setpoint, in PID terms).
+		</para>
+		<para>
+			As reading the CPU load average is relatively expensive (opening
+			/proc/stat, parsing it, etc), this only happens once every
+			timer_interval seconds and consequently the FEEDBACK value is only at
+			these intervals recomputed. This in turn makes it difficult for the
+			drop rate to adjust quickly. Worst case scenarios are request rates
+			going up/down instantly by thousands - it takes up to 20 seconds for
+			the controller to adapt to the new request rate.
+		</para>
+	</section>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -291,7 +348,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 		<para>	
 		If algorithm and limit are provided, the function attempts to create a
 		new pipe of one with that name doesn't exit. If it exists, no changes
-		to algorithm and limit are done.
+		to algorithm and limit are done. Algorithm is case sensitive.
 		</para>
 		<para>	
 		The pipe name can be provided via a pseudo variabile.
@@ -311,7 +368,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 			</para></listitem>
 			<listitem><para>
 			<emphasis>algorithm</emphasis> - the string or pseudovariable with the
-			algorithm. The values can be: taildrop, red, network or feedback - see
+			algorithm. The values can be: TAILDROP, RED, NETWORK, or FEEDBACK - see
 			readme of ratelimit module for details on each algorithm.
 			</para></listitem>
 			<listitem><para>
@@ -322,7 +379,7 @@ modparam("pipelimit", "reply_reason", "Limiting")
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
-		<title><function>rl_check</function> usage</title>
+		<title><function>pl_check</function> usage</title>
 		<programlisting format="linespecific">
 ...
 	# perform pipe match for current method
@@ -360,12 +417,20 @@ with unexpected retcode=$var(check_result)\n");
 ...
 	# perform pipe match for authenticated user
 	$var(limit) = 20;
-	if (!pl_check("$au", "traildrop", "$var(limit)")) {
+	if (!pl_check("$au", "TAILDROP", "$var(limit)")) {
 		pl_drop();
 		exit;
 	}
 ...
-
+	# perform pipe match for INVITE
+	if (is_method("INVITE")) {
+		$var(invlimit) = 10;
+		if (!pl_check("$si", "TAILDROP", "$var(invlimit)")) {
+			pl_drop();
+			exit;
+		}
+	}
+...
 </programlisting>
 		</example>
 	</section>
