@@ -107,7 +107,7 @@ void update_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg) {
             default:
                 x->lifetime = time(0) + auth_lifetime;
         }
-        if (x->timeout != -1 && x->timeout < x->lifetime) x->timeout = x->lifetime + x->grace_period;
+        if (x->timeout != -1 && x->timeout <= x->lifetime) x->timeout = x->lifetime + x->grace_period;
     }
     avp = AAAFindMatchingAVP(msg, 0, AVP_Session_Timeout, 0, 0);
     if (avp && avp->data.len == 4) {
