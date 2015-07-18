@@ -7,7 +7,7 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=dnssec.so
-LIBS= -lval-threads -lcrypto -lsres -lpthread
+LIBS= -lval-threads -lcrypto -lsres -lpthread -lssl
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
