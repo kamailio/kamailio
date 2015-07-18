@@ -46,6 +46,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 		const unsigned int _cpy)
 {
 	static str dummy_string = {"", 0};
+	static char dummy_string_buf[2];
 	
 	if (!_v) {
 		LM_ERR("invalid parameter value\n");
@@ -59,6 +60,8 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 			 * string so that we do not crash when the NULL flag
 			 * is set but the module does not check it properly
 			 */
+		dummy_string_buf[0] = '\0';
+		dummy_string.s = dummy_string_buf;
 		VAL_STRING(_v) = dummy_string.s;
 		VAL_STR(_v) = dummy_string;
 		VAL_BLOB(_v) = dummy_string;
