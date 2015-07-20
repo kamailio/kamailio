@@ -1318,12 +1318,13 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS= -mips2 $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
-					CFLAGS+=-minline-all-stringops -ftree-vectorize \
-							-fno-strict-overflow
+					CFLAGS+=-ftree-vectorize -fno-strict-overflow
+			# not supported on mips: -minline-all-stringops
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-minline-all-stringops -ftree-vectorize
+					CFLAGS+=-ftree-vectorize
+			# not supported on mips: -minline-all-stringops
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
@@ -1363,12 +1364,14 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS= -mips64 $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
-					CFLAGS+=-minline-all-stringops -ftree-vectorize \
-							-fno-strict-overflow
+					CFLAGS+=-ftree-vectorize -fno-strict-overflow
+			# not supported on mips: -minline-all-stringops
+
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-minline-all-stringops -ftree-vectorize
+					CFLAGS+=-ftree-vectorize
+			# not supported on mips: -minline-all-stringops
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
