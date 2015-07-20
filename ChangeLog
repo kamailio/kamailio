@@ -1,3 +1,467 @@
+===================== 2015-07-20 Version 4.3.1 Released =====================
+
+===================== Changes Since Version 4.3.0 ===========================
+
+commit 949c09b650246b805c7fbe0b70a41c16a56468e7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 20 14:45:28 2015 +0200
+
+    Makefile.defs: version set to 4.3.1
+
+commit b8852389346fbaeef9e46ddffd35e3aca0b7873c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 20 14:43:18 2015 +0200
+
+    pkg/rpm: updated spec files for v4.3.1
+
+commit 5599ae1efa03d4c182a7a78c63f6b300f2b9ef88
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jul 20 14:28:04 2015 +0200
+
+    pkg/kamailio/deb: update version to 4.3.1
+
+commit 474ed6547aa71a7cc5e48444fd876a74a183548a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Jul 18 14:37:30 2015 +0200
+
+    dnssec: link openssl
+    
+    Fixes: #253
+    (cherry picked from commit 577ddf62f46d3e06d9ae235fef9cde177020a9d4)
+
+commit 02ba3dd9fbb41fb3f03fa230672c72acedc39f0d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 17 08:59:29 2015 +0200
+
+    permissions: safety check for trusted hash table
+    
+    - avoid crash if a db reload is issued in db-only mode
+    - reported Emmanuel Schmidbauer, GH #228
+    
+    (cherry picked from commit f2958e5861a96e40f0aca05d5d5bd7fa14c2089e)
+
+commit ff31270f9419d275bcf532f666075903b0b26a08
+Author: Fred Posner <fred@palner.com>
+Date:   Thu Jul 16 15:17:52 2015 -0400
+
+    Update pipelimit_admin.xml
+    
+    - added information about algorithms
+    - corrected rl typos
+    - corrected example (wrong algorithm)
+    - added note about algorithms being case sensitive
+    - added example using pipelimit for specific method (INVITE)
+    (cherry picked from commit b0f465bc6e402ba77923216affc2020ad25e97c0)
+
+commit 27c0918a9198e6c7d684541ddfabe598d35dbba8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 16 14:18:51 2015 +0200
+
+    etc/kamailio-oob.cfg: remove modules_k from mpath
+    
+    (cherry picked from commit d796409e653031fdfecee554500b06a43b981296)
+
+commit 3551d707fa497554f3da767e9fba8e046f83b417
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 17:40:05 2015 +0200
+
+    pv: catch early setting $rU with empty string
+    
+    - avoids backing up and restoring last char, which can create
+      inappropriate access when using static empty string value
+    
+    (cherry picked from commit adf1bca4a820e9cb5fcc94a1953b0fcdbd8a20da)
+
+commit b896bb31155240011c32ff6444c0f30c269ae6d0
+Author: Paul Arnold <paul@barfoo.net>
+Date:   Wed Jul 15 12:10:13 2015 +1000
+
+    Makefile.groups: rename usrloc_dmq to dmq_usrloc
+    
+    (cherry picked from commit 8dcc663d050ec314e35ed2c4bcaae592f8e39350)
+
+commit 6279f50a2cdbcba34226f959f40258bb768954bc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 16:15:43 2015 +0200
+
+    Makefile.defs: detect gcc version 5.0+
+    
+    - reported by Anthony Messina, GH #230
+    
+    (cherry picked from commit 35e5da141569b8ace7c0a8fd743d02de6c0df525)
+
+commit 6acc988416ebfd03e4471cb11ae25e5c53690945
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 15:36:19 2015 +0200
+
+    pv: documented pv_xavp_print() function
+    
+    (cherry picked from commit aa5156037e0884e7aa3981421a15327fffd62f99)
+
+commit a3f01fa8abc6abf885bb77263e3ef5b275a7edc6
+Author: Fred Posner <fred@palner.com>
+Date:   Thu Jul 9 12:53:33 2015 -0400
+
+    core: update release notes in NEWS
+    
+    - Earlier versions for 3.1 and earlier remain. Newer versions are linked to the Kamailio website.
+    (cherry picked from commit 917bd965e230c9c60906e1c2d3c9ed3df7b00e7f)
+
+commit 05ac2a2b88f476b0fd32b1bf314b2357eedfceb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 7 11:14:31 2015 +0200
+
+    core: fix matching network addresses with bitmask non divisible to 8
+    
+    - reported by Kyle Kurz <kkurz@digium.com> for permissions module
+    
+    (cherry picked from commit f429e753dfa750a604bfb0acb5068b47d0fbe142)
+
+commit 5d1fe9db6ef3da2d349a1b77bd441eda19ff7aa0
+Author: kelchy <kelchy@bitbucket.org>
+Date:   Mon Jul 6 19:21:41 2015 +0800
+
+    prevent jansson from shuffling key order in json
+    
+    (cherry picked from commit 140d0c6fc89d3c72bbd45627ca627e19e45b4e53)
+
+commit 563cc6e069079a66839ab1a9a0c7e12139cca6d9
+Author: Fred Posner <fred@palner.com>
+Date:   Mon Jul 6 08:53:16 2015 +0200
+
+    INSTALL: updated bug tracker URL
+    
+    - fixed flavour typo
+    
+    (cherry picked from commit 115e1eb10566ffafe0f37aed92df8413f660ea6c)
+
+commit 48996cc1e879a2abf96306fc69ace2a86b8ef836
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Jun 25 20:00:54 2015 +0300
+
+    modules/htable: improves error message when loading from database
+    
+    (cherry picked from commit f39736b276878f0de1e0471311119f12f1878801)
+
+commit 9c2dbc86a63c6bc403798d8ba48dfea764ca2537
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Wed Jun 24 23:59:49 2015 +0300
+
+    modules/[rls|presence_xml]: fixes warning [-Wtautological-compare]
+    
+    warning: comparison of unsigned expression < 0 is always false
+    (cherry picked from commit d5339cf397b83b79cd1594e37df69990374ec467)
+
+commit 785ab99f18627f1173c9e1714551577c901f04ed
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Wed Jul 15 09:48:57 2015 +0100
+
+    dmq_usrloc: use new version of serialized structure returned by usrloc (now includes received address)
+    
+    (cherry picked from commit bc01d8d6c6abfc7912a27df3ac23bffd818758e9)
+
+commit 5304da51e32ba79dbe6bdd60d848c4d4f5afd9bd
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Tue Jul 14 22:59:10 2015 +0100
+
+    dmq_usrloc: don't destroy json doc before we're done with it.
+    
+    (cherry picked from commit 99f7d67b20c011e78c277a44ea8cd4d6a820806f)
+
+commit 6e6f679c7d7894bd0e268581022ed111c33384c5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 15 16:00:03 2015 +0200
+
+    pua_reginfo: use ruid to fix comparation of contact
+    
+    (ptr == c) is always false. Using ruid instead.
+    
+    (cherry picked from commit 7d31d78e3ac861cddfcb70c9940242ec7f3f0dbc)
+
+commit 9a6d8d2bffe13b442ed5e880fb0dd2c6572c29e2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu May 28 18:26:08 2015 +0200
+
+    pua_reginfo: use ul.get_urecord_by_ruid instead of ul.get_urecord
+    
+    (cherry picked from commit 63bd356cc3c7aa64d64361283f630f88b8db88af)
+
+commit 2acfc53ae66f3d96523e746f7722c2f98a09c1d1
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 14 17:18:02 2015 +0200
+
+    pkg/kamailio/deb: kamailio.init use $NAME as basename "$0" and chown HOMEDIR when created
+    
+    (manual cherry picked from commit 7cf6368591b630ddf19b32e1218fdbc10490442c)
+    (manual cherry picked from commit 62c4a48f6f8568613de54eeddccb0814692e41be)
+
+commit 9c6eef916be7926ae2c7f926da670a3e01226232
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 15:19:55 2015 +0200
+
+    avpops: remove unecessary test for deleting avps by name rules
+    
+    - causes crash, following the change to use cached pv structures
+    - reported by Alexandr Dubovikov, GH #239
+    
+    (cherry picked from commit b120b47c39034d4bc384ff733ce62b845f2b4062)
+
+commit f5d11d18f9d483c5fc731ff36f30fbbe1204f9ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 14:54:31 2015 +0200
+
+    core: proper cloning of xavp list with no-data type
+    
+    - function used for cloning xavps stored in location record
+    - reported by Luca Mularoni
+    
+    (cherry picked from commit 4efb386ebf47fc89446f57f2faf6f5cddfb7bff7)
+
+commit 8c597a012e68408475f1abf1b65a1970b8ecd298
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 14:06:07 2015 +0200
+
+    Makefile.defs: test if SCTP is set to enable core USE_SCTP
+    
+    (cherry picked from commit a9d10bbae1ffbd6be0f5a83ffacfa57a03174a2e)
+
+commit 48a43eb98e3d4c905485a062d614ec0f7f5ca854
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Mon Jul 13 16:53:02 2015 +0200
+
+    core: Add tsilo to Makefile.groups
+    
+    Conflicts:
+    	Makefile.groups
+
+commit 41a211e6c13dcecaa6752238d63dfae932433ea7
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Fri Jul 3 11:27:12 2015 +0300
+
+    modules/rls: normalize RLS entry URIs
+    
+    - RLS entry URI is xs:AnyURI, which may be an absolute or relative URI.
+      In relative URI, URI scheme is missing.
+    
+    (cherry picked from commit 68bb6b35098f5555ca35ddb21527660e46b7336a)
+
+commit 5e9862c1b669a8d4d359ed73f47a008b1e8d7865
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Mon Jun 29 17:29:35 2015 +0300
+
+    modules/rtpengine: unset "don't fragment" ip header flag
+    
+    (cherry picked from commit 5de00fa47bd3e9f0a05324463325dcaf891174a5)
+
+commit 66cbab29ef285ea71116f814108106412f41eae5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 24 13:32:12 2015 +0200
+
+    uac: refreshed the readme
+
+commit 119a878abf15ae2af524174a5948f9b8b4d87599
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 24 13:31:56 2015 +0200
+
+    rtjson: updated the readme content
+
+commit a5bb99b4499b1ffde155cad9b2bc1377caf19009
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 23:21:35 2015 +0200
+
+    rtjson: more documentation about json routing document format
+    
+    (cherry picked from commit 5db8bec2fdfba911f7053e615cf156d76af5fa46)
+
+commit 4b19b9223d73d7138a48e7b358a86f2504efa4f0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 16:45:17 2015 +0200
+
+    rtjson: safety check for branch index stored interanlly in xavp
+    
+    (cherry picked from commit 59389b288fd50369226681b309c0895de03d7b77)
+
+commit 32243fd248a5d49b22ee597fe02ca95f58cab8a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 16:44:11 2015 +0200
+
+    evapi: don't print the message after relaying to evapi dispatcher
+    
+    - the dispatcher process can consume it and frees the pointers
+    
+    (cherry picked from commit 57b75141542cdaa471dab00cfb4f7d8812d41824)
+
+commit f1a39a6580f6af041f3b002961dcd6f45498ad87
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 16:09:40 2015 +0200
+
+    rtjson: proper access to items in routes array
+    
+    - more debug messages to show the internal operations
+    
+    (cherry picked from commit 8025761dc0c75fd50e3ee24be96d420df79659d5)
+
+commit c6b64b214af224e3416cc1d302bea472d847cebf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 14:07:37 2015 +0200
+
+    evapi: more documentation for exported functions
+    
+    (cherry picked from commit 96225847ddfc2f879d63adbc0117748c9cf76f02)
+
+commit bebf30abb057221be646e95b07cdaca88cab63b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 13:15:29 2015 +0200
+
+    uac: fixed typos in log message
+    
+    (cherry picked from commit 42f0a1ffe551442058f53c9446495d5e62dc5abc)
+
+commit 85f93d29191ee099704c850a8742cf23404a3e9f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 13:12:08 2015 +0200
+
+    rtjson: error log level set to notice for importing uac api
+    
+    - printed at module init, it is not preventing to start the server
+    
+    (cherry picked from commit 239c54843897ec143c03693e44c994ee9cdde684)
+
+commit dcd1ba0e3a4e37b0a291bdebb69df0edec29aff2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 11:45:22 2015 +0200
+
+    evapi: evapi_close() doesn't use any parameter
+    
+    (cherry picked from commit cccd1a4b20c750246b491ff41090c5749561948d)
+
+commit 2894aff93058d29e2ad336c43478c3fcb5d082b1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 19 12:06:30 2015 +0200
+
+    Makefile: kamailio user home dir set to /var/run/kamailio for install-initd-centos
+    
+    - affects the useradd command
+    - it was pointing to lib dir
+    
+    (cherry picked from commit dc2d3c3f609c81e21928390110952f4070ea9c62)
+
+commit 388433d265cfcf8637c4e549803ee84cc9ef8519
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 19 11:56:56 2015 +0200
+
+    sdpops: don't return 0 if no match for sdp_get_line_startswith()
+    
+    - that causes exit of config execution
+    - reported by Sebastian Damm
+    
+    (cherry picked from commit 0870ab88262bb61124899ad98d06a72a6cdc7129)
+
+commit 75b853cf54c2dd7595c094b302af169fcad25fe0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 19 10:41:08 2015 +0200
+
+    domain: allow 'type' field in domain_attrs to be a DB1_BIGINT
+    
+    - in addition to allowing DB1_INT
+    - makes it work with MySQL views on 64bit systems
+    - based on a patch by divereigh, GH#182
+    
+    (cherry picked from commit e6f3a512c599678fca08daca561bcad4c05add23)
+
+commit 6da6b53ba373af00f4f29b097c28709b9436583b
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Jun 18 15:22:56 2015 +0300
+
+    Makefile.defs: fixes indentation
+    
+    (cherry picked from commit 89633c4c85a6a44df3bbe4a80cf5ca595b59c196)
+
+commit 82b3e56c0ea38682d82ac7b5411555e7c8423eab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 17 16:12:44 2015 +0200
+
+    utils: fixed indentation
+    
+    (cherry picked from commit 8a9d7df57e0ac83bb8fb6f97c71b01ec96184ba0)
+
+commit f4f400c6078ac45133c546ed0e42e434ae06c983
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 16 15:45:07 2015 +0200
+
+    dialog: removed unused variable
+    
+    (cherry picked from commit 6dba3a2d2785cba6b29bcb3d11b318687a12b632)
+
+commit 69fe3fae08a8ebbe4926fb1e96e52547fe1047bb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 16 15:06:43 2015 +0200
+
+    dialog: re-entrant mutex for dialogs hash table slots
+    
+    - changed from a lock set usage to per slot lock field
+    
+    (cherry picked from commit 9c3ea838b31039ac067e17d519df67b64b0dada1)
+
+commit 43b70c5c809f666c74bc0b75ce7549d2a7b0518e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 11 10:49:10 2015 +0200
+
+    uac: updated notes about uac_auth()
+    
+    (cherry picked from commit db829aabf30c5b4fdfee5ebd842959b63a598b26)
+
+commit 65a4adb30436ae16f241aefb3c44fdd36192a3fd
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jun 16 11:25:50 2015 +0200
+
+    Revert "modules/lcr: added priority_ordering module parameter"
+    
+    This reverts commit 27d0e6d99ee512788f16ce4f6b6e4127dea420bd.
+
+commit 27d0e6d99ee512788f16ce4f6b6e4127dea420bd
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Jun 16 11:37:45 2015 +0300
+
+    modules/lcr: added priority_ordering module parameter
+    
+    - allows ordering of matched gateways only by priority and weight
+
+commit 2b34e4def552444fd72b9dc4f4ae286b19a839b7
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Thu Jun 11 10:17:32 2015 +0100
+
+    dispatcher: Fix typo in error message
+    (cherry picked from commit 55a7bf18d0663a9503320143958d0d9e2e845b26)
+
+commit b83c7fef0e4d5c3cab1e2d0ad46bab7e9a852118
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Fri May 29 14:40:53 2015 +0100
+
+    tm: Ensure all contact attributes are initialised to NULL when serial forking
+    (cherry picked from commit 192cf785eead68980194e63b06e34bf8f5f861f3)
+
+commit 8ca68616a289a342f2ccedb42c7889294cebc4af
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Wed May 27 14:36:56 2015 +0100
+
+    tm: Load and restore contact attributes when serial forking
+    
+    - Add xavp_contact parameter for name of xavp holding attributes from usrloc
+    - t_load_contacts: Load per branch attributes into contact XAVP
+    - t_next_contacts/t_next_contact_flow: Restore branch attributes
+    (cherry picked from commit 4033b77bf99b1521df8add14c6abea3c85d225d1)
+
+commit 1396a656ee9653a94bf1d3470fc2054b54fa40e5
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Wed May 27 14:33:06 2015 +0100
+
+    usrloc: Update documentation concerning xavp_contact parameter
+    
+    - Note that tm xavp_contact parameter must match
+    (cherry picked from commit b4488aa7d743b7f14bc0232beaa69f3591aa1b66)
+
+
 ===================== 2015-06-10 Version 4.3.0 Released =====================
 
 ===================== Changes Since Version 4.2.0 ===========================
