@@ -51,7 +51,15 @@
 #include "../../cfg/cfg.h"
 #include "../../cfg/cfg_ctx.h"
 
+#ifdef VERSION_NODATE
+#define BUILD_STR __FILE__ " compiled with " COMPILER "\n"
+#else
+#ifdef VERSION_DATE
+#define BUILD_STR __FILE__ " compiled on " VERSION_DATE " with " COMPILER "\n"
+#else
 #define BUILD_STR __FILE__ " compiled on "__TIME__ " " __DATE__ " with " COMPILER "\n"
+#endif
+#endif
 #define BUILD_STR_LEN (sizeof(BUILD_STR)-1)
 
 #ifndef SVNREVISION
