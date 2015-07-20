@@ -175,6 +175,25 @@ modparam("rr", "enable_double_rr", 0)
 ...
 </programlisting>
       </example>
+      <para>Some useragents (e. g. Linphone) incorrectly use UDP transport for
+      subsequent requests in dialog, despite being configured to use another
+      SIP transport protocol. This can be worked around by setting Record-Route
+      header with explicit transport attribute. But enable_double_rr enabled in
+      default mode omits transport attribute from being added to header if it
+      detects that both sender and receiver use same protocol (e. g. TCP or
+      TLS), and this results in UDP being used by such broken clients. Set
+      enable_double_rr to value 2 to always have two RR headers with transport
+      attributes expicitly set.</para>
+
+      <example>
+        <title>Set <varname>enable_double_rr</varname> to 2 to always have two explicit RR headers</title>
+
+        <programlisting format="linespecific">
+...
+modparam("rr", "enable_double_rr", 2)
+...
+</programlisting>
+      </example>
     </section>
 
     <section>
