@@ -32,8 +32,8 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright (c) 2014, 2013, 2007, 2008, 2004 Edvina AB, 1und1 Internet
-   AG, BASIS AudioNet GmbH, Elena-Ramona Modroiu, Juha Heinanen, FhG FOKUS
+   Copyright © 2014, 2013, 2007, 2008, 2004 Edvina AB, 1und1 Internet AG,
+   BASIS AudioNet GmbH, Elena-Ramona Modroiu, Juha Heinanen, FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -357,30 +357,30 @@ rand_reset_prob();
 ...
 rand_get_prob();
 
-4.5.  sleep(time)
+4.5. sleep(time)
 
    Waits "time" seconds.
 
    Meaning of the parameters is as follows:
-     * time - Time to wait in seconds.
+     * time - Time to wait in seconds. It can be an integer or a variable
+       holding an integer.
 
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE, BRANCH_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.9. sleep usage
 ...
 sleep("1");
 ...
 
-4.6.  usleep(time)
+4.6. usleep(time)
 
    Waits "time" micro-seconds.
 
    Meaning of the parameters is as follows:
-     * time - Time to wait in micro-seconds (1/1000000 of a second).
+     * time - Time to wait in micro-seconds (1/1000000 of a second). It
+       can be an integer or a variable holding an integer.
 
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE, BRANCH_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.10. usleep usage
 ...
@@ -388,7 +388,7 @@ sleep("1");
 usleep("5000");
 ...
 
-4.7.  abort()
+4.7. abort()
 
    Debugging function that aborts the server. Depending on the
    configuration of the server a core dump will be created.
@@ -401,7 +401,7 @@ usleep("5000");
 abort();
 ...
 
-4.8.  pkg_status()
+4.8. pkg_status()
 
    Debugging function that dumps the status for the private (PKG) memory.
    This information is logged to the default log facility, depending on
@@ -416,7 +416,7 @@ abort();
 pkg_status();
 ...
 
-4.9.  pkg_summary()
+4.9. pkg_summary()
 
    Debugging function that dumps the summary for the private (PKG) memory
    usage. This information is logged to the default log facility,
@@ -431,7 +431,7 @@ pkg_status();
 pkg_summary();
 ...
 
-4.10.  shm_status()
+4.10. shm_status()
 
    Debugging function that dumps the status for the shared (SHM) memory.
    This information is logged to the default log facility, depending on
@@ -446,7 +446,7 @@ pkg_summary();
 shm_status();
 ...
 
-4.11.  shm_summary()
+4.11. shm_summary()
 
    Debugging function that dumps the summary for the shared (SHM) memory
    usage. This information is logged to the default log facility,
@@ -632,7 +632,7 @@ $ kamctl fifo rand_set_prob 10
 
    This command don't need a parameter.
 
-   Example 1.25.  rand_reset_prob usage
+   Example 1.25. rand_reset_prob usage
 ...
 $ kamctl fifo rand_reset_prob
 ...
@@ -696,7 +696,7 @@ $ kamctl fifo set_gflag 0x3
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.30.  reset_gflag usage
+   Example 1.30. reset_gflag usage
 ...
 $ kamctl fifo reset_gflag 1
 $ kamctl fifo reset_gflag 0x3
@@ -735,7 +735,7 @@ TRUE
    Return the bitmap with all flags. The function gets no parameters and
    returns the bitmap in hexadecimal and decimal format.
 
-   Example 1.32.  get_gflags usage
+   Example 1.32. get_gflags usage
 ...
 $ kamctl fifo get_gflags
 0x3039
@@ -769,7 +769,7 @@ $ kamctl cfgutils.set_gflag s:1
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.34.  cfgutils.reset_gflag usage
+   Example 1.34. cfgutils.reset_gflag usage
 ...
 $ kamctl cfgutils.reset_gflag s:0x1
 ...
