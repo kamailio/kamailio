@@ -157,9 +157,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"rand_event",      (cmd_function)rand_event, 0, 0, 0,
 		ANY_ROUTE},
-	{"sleep",  (cmd_function)m_sleep,  1, fixup_uint_null, 0,
+	{"sleep",  (cmd_function)m_sleep,  1, fixup_igp_null, 0,
 		ANY_ROUTE},
-	{"usleep", (cmd_function)m_usleep, 1, fixup_uint_null, 0,
+	{"usleep", (cmd_function)m_usleep, 1, fixup_igp_null, 0,
 		ANY_ROUTE},
 	{"abort",      (cmd_function)dbg_abort,        0, 0, 0,
 		ANY_ROUTE},
@@ -766,15 +766,27 @@ static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
 
 static int m_sleep(struct sip_msg *msg, char *time, char *str2)
 {
-	LM_DBG("sleep %lu seconds\n", (unsigned long)time);
-	sleep((unsigned int)(unsigned long)time);
+	int s;
+	if(fixup_get_ivalue(msg, (gparam_t*)time, &s)!=0)
+	{
+		LM_ERR("cannot get time interval value\n");
+		return -1;
+	}
+	LM_DBG("sleep %lu seconds\n", (unsigned long)s);
+	sleep((unsigned int)s);
 	return 1;
 }
 
 static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 {
+	int s;
+	if(fixup_get_ivalue(msg, (gparam_t*)time, &s)!=0)
+	{
+		LM_ERR("cannot get time interval value\n");
+		return -1;
+	}
 	LM_DBG("sleep %lu microseconds\n", (unsigned long)time);
-	sleep_us((unsigned int)(unsigned long)time);
+	sleep_us((unsigned int)s);
 	return 1;
 }
 
