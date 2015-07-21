@@ -815,6 +815,27 @@ route[CHARGING_CCR_REPLY]
         </programlisting>
       </example>
     </section>
+    
+    <section>
+      <title><function moreinfo="none">Ro_set_session_id_avp()</function>
+      </title>
+
+      <para>Sets the Ro session ID to an AVP for use in the config file</para>
+
+      <para>This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.</para>
+
+      <example>
+        <title>Ro_set_session_id_avp</title>
+
+        <programlisting format="linespecific">
+...
+            Ro_set_session_id_avp();
+            xlog("L_DBG","Ro session AVP has been set: $avp(ro_session_id)\n");
+...
+        </programlisting>
+      </example>
+    </section>
+    
   </section>
 
   <section>

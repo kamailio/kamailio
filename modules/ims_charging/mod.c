@@ -83,10 +83,15 @@ static void mod_destroy(void);
 static int w_ro_ccr(struct sip_msg *msg, char* route_name, char* direction, int reservation_units, char* incoming_trunk_id, char* outgoing_trunk_id);
 //void ro_session_ontimeout(struct ro_tl *tl);
 
+
+int create_response_avp_string(char* name, str* val);
+static int w_ro_set_session_id_avp(struct sip_msg *msg, char *str1, char *str2);
+
 static int ro_fixup(void **param, int param_no);
 
 static cmd_export_t cmds[] = {
 		{ "Ro_CCR", 	(cmd_function) w_ro_ccr, 5, ro_fixup, 0, REQUEST_ROUTE },
+                { "Ro_set_session_id_avp", 	(cmd_function) w_ro_set_session_id_avp, 0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
 		{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -310,6 +315,52 @@ static int mod_child_init(int rank) {
 static void mod_destroy(void) {
 
 }
+
+int create_response_avp_string(char* name, str* val) {
+    int rc;
+    int_str avp_val, avp_name;
+    avp_name.s.s = name;
+    avp_name.s.len = strlen(name);
+
+    avp_val.s = *val;
+
+    rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, avp_name, avp_val);
+
+    if (rc < 0)
+        LM_ERR("couldnt create AVP\n");
+    else
+        LM_INFO("created AVP successfully : [%.*s] - [%.*s]\n", avp_name.s.len, avp_name.s.s, val->len, val->s);
+
+    return 1;
+}
+
+//This function gets the dlg from the current msg, gets the ro_session from the dlg and sets a AVP for use in the cfg file: ro_session_id
+static int w_ro_set_session_id_avp(struct sip_msg *msg, char *str1, char *str2) {
+    struct ro_session *ro_session = 0;
+    struct dlg_cell* dlg;
+    int res = -1;
+    
+    //get dlg from msg
+    dlg = dlgb.get_dlg(msg);
+    if (!dlg) {
+            LM_ERR("Unable to find dialog and cannot do Ro charging without it\n");
+            return RO_RETURN_ERROR;
+    }
+    
+    //get ro session id from dialog
+    ro_session= lookup_ro_session(dlg->h_entry, &dlg->callid, 0, 0);
+    if(!ro_session) {
+        LM_ERR("Unable to find Ro charging data\n");
+            return RO_RETURN_ERROR;
+    }
+    
+    //set avp response with session id
+    res = create_response_avp_string("ro_session_id", &ro_session->ro_session_id);
+    return res;
+}
+
+
+
 
 static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, int reservation_units, char* c_incoming_trunk_id, char* c_outgoing_trunk_id) {
 	/* PSEUDOCODE/NOTES
