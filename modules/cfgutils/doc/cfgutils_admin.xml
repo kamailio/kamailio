@@ -243,12 +243,13 @@ rand_get_prob();
 		<itemizedlist>
 			<listitem>
 				<para><emphasis>time</emphasis> - Time to wait in seconds.
+					It can be an integer or a variable
+					holding an integer.
 				</para>
 			</listitem>
 		</itemizedlist>
 		<para>
-			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-			FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 			<title><function>sleep</function> usage</title>
@@ -271,13 +272,13 @@ sleep("1");
 		<itemizedlist>
 			<listitem>
 				<para><emphasis>time</emphasis> - Time to wait in micro-seconds
-					(1/1000000 of a second).
+					(1/1000000 of a second). It can be an integer or a variable
+					holding an integer.
 				</para>
 			</listitem>
 		</itemizedlist>
 		<para>
-			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
-			FAILURE_ROUTE, BRANCH_ROUTE.
+			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 			<title><function>usleep</function> usage</title>
