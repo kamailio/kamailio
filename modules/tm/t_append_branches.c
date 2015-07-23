@@ -116,7 +116,7 @@ int t_append_branches(void) {
 										&bflags, &si, &ruid, &instance, &location_ua))) {
 		LM_DBG("Current uri %.*s\n",current_uri.len, current_uri.s);
 
-		for (i=0; i<nr_branches; i++) {
+		for (i=0; i<=nr_branches; i++) {
 			if (t->uac[i].ruid.len == ruid.len
 					&& !memcmp(t->uac[i].ruid.s, ruid.s, ruid.len)) {
 				LM_DBG("branch already added [%.*s]\n", ruid.len, ruid.s);
