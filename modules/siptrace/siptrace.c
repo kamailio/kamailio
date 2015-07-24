@@ -535,6 +535,11 @@ static int sip_trace_prepare(sip_msg_t *msg)
 		goto error;
 	}
 
+	if(parse_to_header(msg)==-1 || msg->to==NULL || get_to(msg)==NULL) {
+		LM_ERR("cannot parse To header\n");
+		goto error;
+	}
+
 	if(parse_headers(msg, HDR_CALLID_F, 0)!=0 || msg->callid==NULL
 			|| msg->callid->body.s==NULL) {
 		LM_ERR("cannot parse call-id\n");
