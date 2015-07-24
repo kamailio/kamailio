@@ -757,6 +757,11 @@ static int sip_trace_store(struct _siptrace_data *sto, struct dest_info *dst)
 
 static int sip_trace_store_db(struct _siptrace_data *sto)
 {
+	if(db_con==NULL) {
+		LM_DBG("database connection not initialized\n");
+		return -1;
+	}
+
 	if(trace_to_database_flag==NULL || *trace_to_database_flag==0)
 		goto done;
 
