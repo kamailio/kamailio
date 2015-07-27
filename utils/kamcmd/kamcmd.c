@@ -111,7 +111,7 @@ arg:\n\
      string or number; to force a number to be interpreted as string \n\
      prefix it by \"s:\", e.g. s:1\n\
 Examples:\n\
-        " NAME " -s unixs:/tmp/ser_unix system.listMethods\n\
+        " NAME " -s unixs:/tmp/" NAME "_ctl system.listMethods\n\
         " NAME " -f \"pid: %v  desc: %v\\n\" -s udp:localhost:2047 core.ps \n\
         " NAME " ps  # uses default ctl socket \n\
         " NAME "     # enters interactive mode on the default socket \n\
