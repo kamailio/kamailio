@@ -234,6 +234,7 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 			str2sint(&pit->body, &dest->attrs.maxload);
 		}
 	}
+	if(params_list) free_params(params_list);
 	return 0;
 }
 
