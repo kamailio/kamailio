@@ -615,7 +615,7 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 #endif
 
 	/* run extra acc engines */
-	acc_run_engines(req, 0, NULL);
+	acc_run_engines(ack, 0, NULL);
 	
 }
 
