@@ -488,6 +488,30 @@ int is_registered(struct sip_msg* _m, udomain_t* _d) {
 	return -1;	
 }
 
+int unregister(udomain_t* _d, str * uri, str * received_host, int received_port) {
+	int result = -1;
+	struct pcontact * pcontact;
+	struct pcontact_info ci;
+    	memset(&ci, 0, sizeof (struct pcontact_info));
+
+	if (ul.get_pcontact(_d, uri, received_host, received_port, &pcontact) == 0) {
+		/* Lock this record while working with the data: */
+		ul.lock_udomain(_d, &pcontact->aor, received_host, received_port);
+
+		LM_DBG("Updating contact [%.*s]: setting state to PCONTACT_DEREG_PENDING_PUBLISH\n", pcontact->aor.len, pcontact->aor.s);
+
+		ci.reg_state = PCONTACT_DEREG_PENDING_PUBLISH;
+		ci.num_service_routes = 0;
+		if (ul.update_pcontact(_d, &ci, pcontact) == 0) result = 1;
+
+		// if (ul.delete_pcontact(_d, &pc->aor, received_host, received_port, pcontact) == 0) result = 1;
+
+		/* Unlock domain */
+		ul.unlock_udomain(_d, &pcontact->aor, received_host, received_port);
+	}
+	return result;
+}
+
 /**
  * Get the current asserted identity for the user
  */
