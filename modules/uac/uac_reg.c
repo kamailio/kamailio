@@ -928,8 +928,13 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		return -1;
 	if(reg->expires==0)
 		return 1;
-	if(reg->flags&UAC_REG_ONGOING)
-		return 2;
+	if(reg->flags&UAC_REG_ONGOING) {
+		if (reg->timer_expires > tn - reg_retry_interval)
+			return 2;
+		LM_DBG("record marked as ongoing registration (%d) - resetting\n",
+				(int)reg->flags);
+		reg->flags &= ~(UAC_REG_ONLINE|UAC_REG_AUTHSENT);
+	}
 	if(reg->flags&UAC_REG_DISABLED)
 		return 4;
 	if(reg->timer_expires > tn + reg_timer_interval + 3)
