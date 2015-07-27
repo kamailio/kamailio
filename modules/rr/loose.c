@@ -759,7 +759,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	int status = RR_DRIVEN;
 	str uri;
 	struct socket_info *si;
-	int uri_is_myself, next_is_strict;
+	int uri_is_myself;
 	int use_ob = 0;
 
 	hdr = _m->route;
@@ -770,11 +770,11 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	routed_msg_id = 0;
 
 	if (parse_uri(uri.s, uri.len, &puri) < 0) {
-		LM_ERR("failed to parse the first route URI\n");
+		LM_ERR("failed to parse the first route URI (%.*s)\n",
+				uri.len, ZSW(uri.s));
 		return RR_ERROR;
 	}
 
-	next_is_strict = is_strict(&puri.params);
 	routed_params = puri.params;
 	uri_is_myself = is_myself(&puri);
 
@@ -817,7 +817,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			/* double route may occure due different IP and port, so force as
 			 * send interface the one advertise in second Route */
 			if (parse_uri(rt->nameaddr.uri.s,rt->nameaddr.uri.len,&puri)<0) {
-				LM_ERR("failed to parse the double route URI\n");
+				LM_ERR("failed to parse the double route URI (%.*s)\n",
+						rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 				return RR_ERROR;
 			}
 
@@ -854,7 +855,8 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		
 		uri = rt->nameaddr.uri;
 		if (parse_uri(uri.s, uri.len, &puri) < 0) {
-			LM_ERR("failed to parse the first route URI\n");
+			LM_ERR("failed to parse the next route URI (%.*s)\n",
+					uri.len, ZSW(uri.s));
 			return RR_ERROR;
 		}
 	} else {
@@ -869,7 +871,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	}
 
 	LM_DBG("URI to be processed: '%.*s'\n", uri.len, ZSW(uri.s));
-	if (next_is_strict) {
+	if (is_strict(&puri.params)) {
 		LM_DBG("Next URI is a strict router\n");
 		if (handle_sr(_m, hdr, rt) < 0) {
 			LM_ERR("failed to handle strict router\n");
