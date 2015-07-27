@@ -434,7 +434,8 @@ doxygen_dir=doc/doxygen
 
 BASEDIR ?= $(DESTDIR)
 basedir = $(BASEDIR)
-runbasedir = $(BASEDIR)
+RUNBASEDIR ?= $(DESTDIR)
+runbasedir = $(RUNBASEDIR)
 
 # install location
 PREFIX ?= $(LOCALBASE)
