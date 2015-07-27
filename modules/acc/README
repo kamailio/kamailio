@@ -767,7 +767,8 @@ modparam("acc", "failed_filter", "404,407")
    Shall acc attempt to account e2e ACKs too ? Note that this is really
    only an attempt, as e2e ACKs may take a different path (unless RR
    enabled) and mismatch original INVITE (e2e ACKs are a separate
-   transaction).
+   transaction). The flag for accounting has to be set for each ACK as
+   well.
 
    Default value is 0 (no).
 
