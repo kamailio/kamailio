@@ -2050,7 +2050,8 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	}
 	
 	if (local_winner>=0 && winning_code>=200 ) {
-		DBG("DEBUG: local transaction completed\n");
+		DBG("DEBUG: local transaction completed %d/%d (totag retr: %d/%d)\n",
+				winning_code, local_winner, totag_retr, t->tmcb_hl.reg_types);
 		if (!totag_retr) {
 			if (unlikely(has_tran_tmcbs(t,TMCB_LOCAL_COMPLETED) ))
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, t, 0,
