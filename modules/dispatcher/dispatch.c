@@ -219,6 +219,7 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 			dest->attrs.socket = pit->body;
 		}
 	}
+	if(params_list) free_params(params_list);
 	return 0;
 }
 
