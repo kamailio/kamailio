@@ -378,5 +378,5 @@ pcscf_save("location");
         {"pcscf_unregister",		(cmd_function)w_unregister,		4,      domain_uri_fixup,       0,ANY_ROUTE},
 
 -->
-
+  </section>
 </chapter>
