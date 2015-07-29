@@ -13,7 +13,7 @@
 	
 	<title>&adminguide;</title>
 	
-	<section>
+	<section id="maxfwd.overview">
 	<title>Overview</title>
 	<para>
 		The module implements all of the operations that handle the Max-Forward
@@ -27,7 +27,7 @@
 		and an error response is sent to the UAC.
 	</para>
 	</section>
-	<section>
+	<section id="maxfwd.dependencies">
 	<title>Dependencies</title>
 	<section>
 		<title>&kamailio; Modules</title>
@@ -60,7 +60,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="maxfwd.p.max_limit">
 		<title><varname>max_limit</varname> (integer)</title>
 		<para>
 		Set an upper limit for the max-forward value in the outgoing requests.
@@ -93,7 +93,7 @@ modparam("maxfwd", "max_limit", 32)
 	</section>
 
 
-	<section>
+	<section id="maxfwd.f.maxfwd_process">
 	<title>Functions</title>
 	<section>
 		<title>
@@ -158,7 +158,7 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		</example>
 	</section>
 
-	<section>
+	<section id="maxfwd.f.mf_process_maxfwd_header">
 		<title>
 		<function moreinfo="none">mf_process_maxfwd_header(max_value)</function>
 		</title>
@@ -176,7 +176,7 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		</para>
 	</section>
 
-	<section>
+	<section id="maxfwd.f.is_maxfwd_lt">
 		<title>
 		<function moreinfo="none">is_maxfwd_lt(max_value)</function>
 		</title>
@@ -235,7 +235,7 @@ if ( is_maxfwd_lt("1") ) {
 		</example>
 	</section>
 
-	<section>
+	<section id="maxfwd.f.maxfwd_at_least">
 		<title>
 		<function moreinfo="none">maxfwd_at_least(max_value)</function>
 		</title>
@@ -244,7 +244,7 @@ if ( is_maxfwd_lt("1") ) {
 		</para>
 	</section>
 
-	<section>
+	<section id="maxfwd.f.mf_lowlimit">
 		<title>
 		<function moreinfo="none">mf_lowlimit(max_value)</function>
 		</title>
