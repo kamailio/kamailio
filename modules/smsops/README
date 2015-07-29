@@ -24,6 +24,20 @@ Carsten Bock
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
+        3. Parameters
+
+              3.1.
+
+        4. Functions
+
+              4.1. isRPDATA()
+              4.2. smsdump()
+
+   List of Examples
+
+   1.1. isRPDATA() usage
+   1.2. smsdump() usage
+
 Chapter 1. Admin Guide
 
    Table of Contents
@@ -34,9 +48,18 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
+   3. Parameters
+
+        3.1.
+
+   4. Functions
+
+        4.1. isRPDATA()
+        4.2. smsdump()
+
 1. Overview
 
-   This module collects the Transformations for 3GPP-SMS-V2.
+   This module collects the Transformations for 3GPP-SMS.
 
 2. Dependencies
 
@@ -53,3 +76,42 @@ Chapter 1. Admin Guide
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
+
+3. Parameters
+
+   3.1.
+
+   There are no configurable Parameters yet
+
+4. Functions
+
+   4.1. isRPDATA()
+   4.2. smsdump()
+
+4.1. isRPDATA()
+
+   Returns true, if the message contains RP-Data in it's body.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.1. isRPDATA() usage
+...
+if (isRPDATA())
+{
+    ...
+}
+...
+
+4.2. smsdump()
+
+   Dumps the content of a 3GPP-SMS message to the Debug-Log.
+
+   Please make sure, to have debug-Log enabled. Otherwise, you won't see
+   anything.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.2. smsdump() usage
+...
+smsdump();
+...
