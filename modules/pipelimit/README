@@ -24,6 +24,9 @@ Daniel-Constantin Mierla
    1. Admin Guide
 
         1. Overview
+
+              1.1. Algorithms
+
         2. Dependencies
 
               2.1. Kamailio Modules
@@ -77,7 +80,7 @@ Daniel-Constantin Mierla
    1.9. Set reply_code parameter at runtime
    1.10. Set reply_reason parameter
    1.11. Set reply_reason parameter at runtime
-   1.12. rl_check usage
+   1.12. pl_check usage
    1.13. pl_drop usage
 
 Chapter 1. Admin Guide
@@ -85,6 +88,9 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
+
+        1.1. Algorithms
+
    2. Dependencies
 
         2.1. Kamailio Modules
@@ -127,6 +133,8 @@ Chapter 1. Admin Guide
 
 1. Overview
 
+   1.1. Algorithms
+
    This module implements traffic limiting for SIP requests.
 
    The module defines in an abstract mode the notion of 'pipe', which can
@@ -138,8 +146,54 @@ Chapter 1. Admin Guide
    Pipelimit started from ratelimit module, adding support for definition
    of pipes limits in database and dynamic names. Complexity of keeping
    everything in a module and make it dual mode functional resulted in a
-   new module which is focused on just traffic shaping policies. For
-   description of the algorithms see the README of ratelimit.
+   new module which is focused on just traffic shaping policies.
+
+1.1. Algorithms
+
+   Algorithms are based from the ratelimit module, which describes the
+   algorithms in more detail. The algorithms are used by the pipelimit
+   module to determine if a message should be blocked.
+
+   Tail Drop Algorithm (TAILDROP)
+
+   This is a trivial algorithm that imposes some risks when used in
+   conjunction with long timer intervals. At the start of each interval an
+   internal counter is reset and incremented for each incoming message.
+   Once the counter hits the configured limit pl_check returns an error.
+
+   Random Early Detection Algorithm (RED)
+
+   The Random Early Detection Algorithm tries to circumvent the
+   synchronization problem imposed by the tail drop algorithm by measuring
+   the average load and adapting the drop rate dynamically. When running
+   with the RED algorithm (enabled by default) Kamailio will return errors
+   to the Kamailio routing engine every n'th packet trying to evenly
+   spread the measured load of the last timer interval onto the current
+   interval. As a negative side effect Kamailio might drop messages
+   although the limit might not be reached within the interval. Decrease
+   the timer interval if you encounter this.
+
+   Network Algorithm (NETWORK)
+
+   This algorithm relies on information provided by network interfaces.
+   The total amount of bytes waiting to be consumed on all the network
+   interfaces is retrieved once every timer_interval seconds. If the
+   returned amount exceeds the limit specified in the modparam, pl_check
+   returns an error.
+
+   Feedback Algorithm (FEEDBACK)
+
+   Using the PID Controller model (see Wikipedia page), the drop rate is
+   adjusted dynamically based on the load factor so that the load factor
+   always drifts towards the specified limit (or setpoint, in PID terms).
+
+   As reading the CPU load average is relatively expensive (opening
+   /proc/stat, parsing it, etc), this only happens once every
+   timer_interval seconds and consequently the FEEDBACK value is only at
+   these intervals recomputed. This in turn makes it difficult for the
+   drop rate to adjust quickly. Worst case scenarios are request rates
+   going up/down instantly by thousands - it takes up to 20 seconds for
+   the controller to adapt to the new request rate.
 
 2. Dependencies
 
@@ -298,7 +352,7 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
 
    If algorithm and limit are provided, the function attempts to create a
    new pipe of one with that name doesn't exit. If it exists, no changes
-   to algorithm and limit are done.
+   to algorithm and limit are done. Algorithm is case sensitive.
 
    The pipe name can be provided via a pseudo variabile.
 
@@ -311,13 +365,13 @@ kamcmd cfg.set_now_string pipelimit reply_reason "Limiting"
    Meaning of the parameters is as follows:
      * name - the string or pseudovariable with the pipe name.
      * algorithm - the string or pseudovariable with the algorithm. The
-       values can be: taildrop, red, network or feedback - see readme of
+       values can be: TAILDROP, RED, NETWORK, or FEEDBACK - see readme of
        ratelimit module for details on each algorithm.
      * limit - the integer or pseudovariable with the limit value.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.12. rl_check usage
+   Example 1.12. pl_check usage
 ...
         # perform pipe match for current method
         if (!pl_check("one")) {
@@ -354,9 +408,18 @@ with unexpected retcode=$var(check_result)\n");
 ...
         # perform pipe match for authenticated user
         $var(limit) = 20;
-        if (!pl_check("$au", "traildrop", "$var(limit)")) {
+        if (!pl_check("$au", "TAILDROP", "$var(limit)")) {
                 pl_drop();
                 exit;
+        }
+...
+        # perform pipe match for INVITE
+        if (is_method("INVITE")) {
+                $var(invlimit) = 10;
+                if (!pl_check("$si", "TAILDROP", "$var(invlimit)")) {
+                        pl_drop();
+                        exit;
+                }
         }
 ...
 
