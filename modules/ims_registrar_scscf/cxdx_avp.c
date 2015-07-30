@@ -148,7 +148,7 @@ inline int cxdx_add_call_id(AAAMessage *msg, str data)
 	cxdx_add_avp(msg,data.s,data.len,
 		AVP_Call_Id,
 		AAA_AVP_FLAG_VENDOR_SPECIFIC,
-		50,
+		0,
 		AVP_DUPLICATE_DATA,
 		__FUNCTION__);
 }
