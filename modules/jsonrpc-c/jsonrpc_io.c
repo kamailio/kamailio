@@ -85,8 +85,7 @@ int jsonrpc_io_child_process(int cmd_pipe, char* _servers)
 
 	if (!connect_servers(server_group))
 	{
-		LM_ERR("failed to connect to any servers\n");
-		return -1;
+		LM_WARN("failed to connect to any servers\n");
 	}
 
 	event_dispatch();
