@@ -193,16 +193,14 @@ peer* get_routing_peer(cdp_session_t* cdp_session, AAAMessage *m) {
 
     avp_vendor = AAAFindMatchingAVP(m, 0, AVP_Vendor_Id, 0, AAA_FORWARD_SEARCH);
     avp = AAAFindMatchingAVP(m, 0, AVP_Auth_Application_Id, 0, AAA_FORWARD_SEARCH);
-    if (avp) {
-        if (avp_vendor) vendor_id = get_4bytes(avp_vendor->data.s);
-        else vendor_id = 0;
+    if (avp && avp_vendor) {
+	vendor_id = get_4bytes(avp_vendor->data.s);
         app_id = get_4bytes(avp->data.s);
     }
 
     avp = AAAFindMatchingAVP(m, 0, AVP_Acct_Application_Id, 0, AAA_FORWARD_SEARCH);
-    if (avp) {
-        if (avp_vendor) vendor_id = get_4bytes(avp_vendor->data.s);
-        else vendor_id = 0;
+    if (avp && avp_vendor) {
+	vendor_id = get_4bytes(avp_vendor->data.s);
         app_id = get_4bytes(avp->data.s);
     }
 
