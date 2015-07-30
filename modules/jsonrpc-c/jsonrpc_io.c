@@ -349,6 +349,7 @@ int parse_servers(char *_servers, struct jsonrpc_server_group **group_ptr)
 	
 		struct jsonrpc_server *server = pkg_malloc(sizeof(struct jsonrpc_server));
 		CHECK_MALLOC(server);
+		memset(server, 0, sizeof(struct jsonrpc_server));
 		char *h = pkg_malloc(strlen(host)+1);
 		CHECK_MALLOC(h);
 
@@ -376,6 +377,7 @@ int parse_servers(char *_servers, struct jsonrpc_server_group **group_ptr)
 			
 			selected_group = pkg_malloc(sizeof(struct jsonrpc_server_group));
 			CHECK_MALLOC(selected_group);
+			memset(selected_group, 0, sizeof(struct jsonrpc_server_group));
 			selected_group->priority = priority;
 			selected_group->next_server = server;
 			
