@@ -1663,7 +1663,6 @@ read_error:
 	return ret;
 con_error:
 	con->state=S_CONN_BAD;
-	LM_WARN("%s:%d %s releasing\n", __FILE__, __LINE__, __PRETTY_FUNCTION__);
 	release_tcpconn(con, CONN_ERROR, tcpmain_sock);
 	return ret;
 error:
