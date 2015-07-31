@@ -77,12 +77,12 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
  * Performs http_query and saves possible result (first body line of reply)
  * to pvar.
  */
-int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
+int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _hdr)
 {
 	CURL *curl;
 	CURLcode res;  
-	str value, post_value;
-	char *url, *at, *post;
+	str value, post_value, hdr_value;
+	char *url, *at, *post = NULL, *hdr = NULL;
 	http_res_stream_t stream;
 	long stat;
 	pv_spec_t *dst;
@@ -112,6 +112,28 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 	*(url + value.len) = (char)0;
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
+	if (_hdr) {
+		if (fixup_get_svalue(_m, (gparam_p)_hdr, &hdr_value) != 0) {
+			LM_ERR("cannot get Header value\n");
+			curl_easy_cleanup(curl);
+			pkg_free(url);
+			return -1;
+		}
+		if (hdr_value.len > 0) {
+			hdr = pkg_malloc(hdr_value.len + 1);
+			if (hdr == NULL) {
+				curl_easy_cleanup(curl);
+				pkg_free(url);
+				LM_ERR("cannot allocate pkg memory for header\n");
+				return -1;
+			}
+			memcpy(hdr, hdr_value.s, hdr_value.len);
+			*(hdr + hdr_value.len) = (char)0;
+
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdr);
+		}
+	}
+
 	if (_post) {
 		/* Now specify we want to POST data */ 
 		curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -120,18 +142,22 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 			LM_ERR("cannot get post value\n");
 			curl_easy_cleanup(curl);
 			pkg_free(url);
+			if (hdr) pkg_free(hdr);
 			return -1;
 		}
-		post = pkg_malloc(post_value.len + 1);
-		if (post == NULL) {
-			curl_easy_cleanup(curl);
-			pkg_free(url);
-			LM_ERR("cannot allocate pkg memory for post\n");
-			return -1;
+		if (post_value.len > 0) {
+			post = pkg_malloc(post_value.len + 1);
+			if (post == NULL) {
+				curl_easy_cleanup(curl);
+				pkg_free(url);
+				if (hdr) pkg_free(hdr);
+				LM_ERR("cannot allocate pkg memory for post\n");
+				return -1;
+			}
+			memcpy(post, post_value.s, post_value.len);
+			*(post + post_value.len) = (char)0;
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post);
 		}
-		memcpy(post, post_value.s, post_value.len);
-		*(post + post_value.len) = (char)0;
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post);
 	}
 
 
@@ -145,6 +171,9 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 	pkg_free(url);
 	if (_post) {
 		pkg_free(post);
+	}
+	if (_hdr) {
+		pkg_free(hdr);
 	}
 
 	if (res != CURLE_OK) {
