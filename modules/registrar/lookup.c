@@ -36,6 +36,7 @@
 #include "../../action.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_rr.h"
+#include "../../parser/parse_to.h"
 #include "../../forward.h"
 #include "../usrloc/usrloc.h"
 #include "common.h"
@@ -642,8 +643,16 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag, in
 	{
 		uri = *_uri;
 	} else {
-		if (_m->new_uri.s) uri = _m->new_uri;
-		else uri = _m->first_line.u.request.uri;
+		if(IS_SIP_REPLY(_m)) {
+			if (parse_to_header(_m) < 0) {
+				LM_ERR("failed to prepare the message\n");
+				return -1;
+			}
+			uri = get_to(_m)->uri;
+		} else {
+			if (_m->new_uri.s) uri = _m->new_uri;
+			else uri = _m->first_line.u.request.uri;
+		}
 	}
 	
 	if (extract_aor(&uri, &aor, NULL) < 0) {
