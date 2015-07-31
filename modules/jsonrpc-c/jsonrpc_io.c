@@ -44,7 +44,7 @@
 
 struct jsonrpc_server {
 	char *host;
-	int  port, socket, status;
+	int  port, socket, status, conn_attempts;
 	struct jsonrpc_server *next;
 	struct event *ev;
 	struct itimerspec *timer;
@@ -67,6 +67,9 @@ int  parse_servers(char *_servers, struct jsonrpc_server_group **group_ptr);
 int  connect_servers(struct jsonrpc_server_group *group);
 int  connect_server(struct jsonrpc_server *server);
 int  handle_server_failure(struct jsonrpc_server *server);
+
+/* module config from jsonrpc_mod.c */
+int _jsonrpcc_max_conn_retry = 0; /* max retries to connect. -1 forever 0 none */
 
 int jsonrpc_io_child_process(int cmd_pipe, char* _servers)
 {
@@ -346,6 +349,7 @@ int parse_servers(char *_servers, struct jsonrpc_server_group **group_ptr)
 		server->port = port;
 		server->status = JSONRPC_SERVER_DISCONNECTED;
 		server->socket = 0;
+		server->conn_attempts = _jsonrpcc_max_conn_retry;
 
 		int group_cnt = 0;
 
@@ -443,6 +447,7 @@ int connect_server(struct jsonrpc_server *server)
 
 	server->socket = sockfd;
 	server->status = JSONRPC_SERVER_CONNECTED;
+	server->conn_attempts = _jsonrpcc_max_conn_retry;
 
 	struct event *socket_ev = pkg_malloc(sizeof(struct event));
 	CHECK_MALLOC(socket_ev);
@@ -507,6 +512,12 @@ int handle_server_failure(struct jsonrpc_server *server)
 		server->ev = NULL;
 	}
 	server->status = JSONRPC_SERVER_FAILURE;
+	server->conn_attempts--;
+	if(_jsonrpcc_max_conn_retry!=-1 && server->conn_attempts<0) {
+		LM_ERR("max reconnect attempts. No further attempts will be made to reconnect this server.");
+		return -1;
+	}
+
 	int timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 	
 	if (timerfd == -1) {

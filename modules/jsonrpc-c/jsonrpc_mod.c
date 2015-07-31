@@ -48,6 +48,8 @@ int        fixup_pvar_shm(void** param, int param_no);
 char *servers_param;
 int  pipe_fds[2] = {-1,-1};
 
+extern int _jsonrpcc_max_conn_retry; /* max retries to connect */
+
 struct tm_binds tmb;
 
 /*
@@ -65,6 +67,7 @@ static cmd_export_t cmds[]={
  */
 static param_export_t mod_params[]={
 	{"servers", PARAM_STRING, &servers_param},
+	{"max_conn_attempts", INT_PARAM, &_jsonrpcc_max_conn_retry},
 	{ 0,0,0 }
 };
 
