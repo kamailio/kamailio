@@ -891,15 +891,16 @@ lookup_branches("location");
 
 4.4. registered(domain [, uri [, match_option [, match_action]]])
 
-   The function returns true if the AOR in the Request-URI is registered,
-   false otherwise. The function does not modify the message being
-   process, it neither rewrites the Request-URI if a contact is found nor
-   append branches.
+   The function returns true if the AOR in the URI is registered, false
+   otherwise. The function does not modify the message being process, it
+   neither rewrites the Request-URI if a contact is found nor append
+   branches. If uri parameter is not provided, then it considered to be
+   the Request-URI for SIP requests and To-URI for SIP replies.
 
    Meaning of the parameters is as follows:
      * domain - Name of table that should be used for the lookup.
-     * uri (optional) - SIP URI to do be used instead of R-URI. It can be
-       a dynamic string with pseudo-variables.
+     * uri (optional) - SIP URI to do be used instead of Request/To-URI.
+       It can be a dynamic string with pseudo-variables.
      * match_option (optional) - flag parameter to restrict contact
        search. use reg_xavp_cfg to set the values to compare to.
        flag values is as follows:
@@ -911,7 +912,7 @@ lookup_branches("location");
        flag values is as follows:
           + 1 - set xavp_rcd with value from matched contact
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+   This function can be used from ANY_ROUTE.
 
    Example 1.31. registered usage
 ...

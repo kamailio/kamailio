@@ -1110,10 +1110,12 @@ lookup_branches("location");
 		<function moreinfo="none">registered(domain [, uri [, match_option [, match_action]]])</function>
 		</title>
 		<para>
-		The function returns true if the AOR in the Request-URI is 
+		The function returns true if the AOR in the URI is 
 		registered, false otherwise.  The function does not modify the 
 		message being process, it neither rewrites the Request-URI if a 
-		contact is found nor append branches.
+		contact is found nor append branches. If uri parameter is not
+		provided, then it considered to be the Request-URI for SIP requests
+		and To-URI for SIP replies.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -1126,7 +1128,7 @@ lookup_branches("location");
 		<listitem>
 			<para>
 			<emphasis>uri</emphasis> (optional) - SIP URI to do be used instead
-			of R-URI. It can be a dynamic string with pseudo-variables.
+			of Request/To-URI. It can be a dynamic string with pseudo-variables.
 			</para>
 		</listitem>
 		<listitem>
@@ -1160,7 +1162,7 @@ lookup_branches("location");
 		</listitem>
 		</itemizedlist>
 		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>registered</function> usage</title>
