@@ -393,13 +393,10 @@ int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
 		strncmp(param->pvn.u.isname.name.s.s, "value", 5) == 0)
 	{
 		if(ht_expired_cell->flags&AVP_VAL_STR) {
-			res->rs = ht_expired_cell->value.s;
-			res->flags = PV_VAL_STR;
+			return pv_get_strval(msg, param, res, &ht_expired_cell->value.s);
 		} else {
-			res->ri = ht_expired_cell->value.n;
-			res->flags = PV_VAL_INT|PV_TYPE_INT;
+			return pv_get_sintval(msg, param, res, ht_expired_cell->value.n);
 		}
-		return 0;
 	}
 
 	if (res->rs.s == NULL)
