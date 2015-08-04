@@ -88,6 +88,7 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 	pv_spec_t *dst;
 	pv_value_t val;
 	double download_size;
+	struct curl_slist *chunk = NULL;
 
 	memset(&stream, 0, sizeof(http_res_stream_t));
 
@@ -130,14 +131,12 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 			memcpy(hdr, hdr_value.s, hdr_value.len);
 			*(hdr + hdr_value.len) = (char)0;
 
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdr);
+			chunk = curl_slist_append(chunk, hdr);
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 		}
 	}
 
 	if (_post) {
-		/* Now specify we want to POST data */ 
-		curl_easy_setopt(curl, CURLOPT_POST, 1L);
-
 		if (fixup_get_svalue(_m, (gparam_p)_post, &post_value) != 0) {
 			LM_ERR("cannot get post value\n");
 			curl_easy_cleanup(curl);
@@ -146,6 +145,9 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 			return -1;
 		}
 		if (post_value.len > 0) {
+			/* Now specify we want to POST data */ 
+			curl_easy_setopt(curl, CURLOPT_POST, 1L);
+
 			post = pkg_malloc(post_value.len + 1);
 			if (post == NULL) {
 				curl_easy_cleanup(curl);
@@ -174,6 +176,9 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 	}
 	if (_hdr) {
 		pkg_free(hdr);
+	}
+	if (chunk) {
+		 curl_slist_free_all(chunk);
 	}
 
 	if (res != CURLE_OK) {
