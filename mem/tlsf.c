@@ -1125,27 +1125,13 @@ size_t tlsf_available(tlsf_t pool)
 	return control->total_size - control->real_used;
 }
 
-static void tlsf_status_cb(void* ptr, size_t size, int used, void* user)
-{
-#ifdef DBG_TLSF_MALLOC
-	block_header_t* block = block_from_ptr(ptr);
-#endif
-
-#ifdef DBG_TLSF_MALLOC
-	LOG_(DEFAULT_FACILITY, *(int*)user, "tlsf_status: ", "(%p): used=%s size=%zu was %s from %s: %s(%ld)\n",
-			ptr, used ? "true" : "false", size, used ? "alloc'd" : "free'd", block->alloc_info.file, block->alloc_info.func, block->alloc_info.line);
-#else
-	LOG_(DEFAULT_FACILITY, *(int*)user, "tlsf_status: ", "(%p): used=%s size=%zu\n",
-			ptr, used ? "true" : "false", size);
-#endif
-
-
-}
-
 void tlsf_status(tlsf_t pool)
 {
-	int memlog;
+	int memlog, fl, sl;
+	unsigned int len;
+	char summary[FL_INDEX_COUNT];
 	control_t* control = tlsf_cast(control_t*, pool);
+	block_header_t* pb;
 
 	memlog=cfg_get(core, core_cfg, memlog);
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ", "status of pool (%p):\n", pool);
@@ -1158,9 +1144,34 @@ void tlsf_status(tlsf_t pool)
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 			"max used (+overhead)=%zu, max fragments=%zu\n", control->max_used, control->max_fragments);
 #endif
+
+	/* print a summary of the 2 levels bucket list */
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
-			"dumping all fragments:\n");
-	tlsf_walk_pool(pool, tlsf_status_cb, (void *) &memlog);
+				"Used blocks matrix ('.': unused, 'X': between 2^X and (2^(X+1)-1) used blocks, X=A..Z, A=0, B=1, ...)\n");
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+				"> first-level: %d block list arrays between 2^fl and 2^(fl+1) bytes (fl=%d..%d)\n",
+				FL_INDEX_COUNT, FL_INDEX_SHIFT, FL_INDEX_MAX);
+	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+				"v second-level: %d block lists between 2^fl+sl*2^(fl-%d) and 2^fl+(sl+1)*2^(fl-%d)-1 bytes (sl=0..%d)\n",
+				SL_INDEX_COUNT, SL_INDEX_COUNT_LOG2, SL_INDEX_COUNT_LOG2, SL_INDEX_COUNT-1);
+	for (sl = 0 ; sl < SL_INDEX_COUNT ; sl++) {
+		for (fl = 0 ; fl < FL_INDEX_COUNT ; fl++) {
+			if (control->blocks[fl][sl] == &control->block_null) {
+				summary[fl] = '.';
+			} else {
+				/* count free list length */
+				len = 1;
+				pb = control->blocks[fl][sl];
+				while (pb->next_free != &control->block_null) {
+					pb = pb->next_free;
+					len++;
+				}
+				summary[fl] = 'A' + tlsf_fls(len);
+			}
+		}
+		LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
+					"%2d|%.*s|\n", sl, FL_INDEX_COUNT, summary);
+	}
 }
 
 #ifdef DBG_TLSF_MALLOC
