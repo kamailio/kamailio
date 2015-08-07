@@ -466,7 +466,7 @@ static void rpc_reload(rpc_t *rpc, void *c)
 		return;
 	}
 
-	rpc->rpl_printf(c, "relaad OK");
+	rpc->rpl_printf(c, "reload ok");
 	return;
 }
 
