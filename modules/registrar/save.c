@@ -322,7 +322,6 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c, unsig
 			ci.received = path_received;
 		}
 
-		ci.server_id = server_id;
 		if(_m->contact) {
 			_c = (((contact_body_t*)_m->contact->parsed)->contacts);
 			if(_c->instance!=NULL && _c->instance->body.len>0) {
