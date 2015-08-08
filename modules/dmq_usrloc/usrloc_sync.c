@@ -95,6 +95,30 @@ static int add_contact(str aor, ucontact_info_t* ci)
 		return -1;
 }
 
+static int delete_contact(str aor, ucontact_info_t* ci)
+{
+	udomain_t* _d;
+	urecord_t* r;
+	ucontact_t* c;
+
+	dmq_ul.get_udomain("location", &_d);
+
+	if (dmq_ul.get_urecord_by_ruid(_d, dmq_ul.get_aorhash(&aor),
+				&ci->ruid, &r, &c) != 0) {
+		LM_WARN("AOR/Contact not found\n");
+		return -1;
+	}
+	if (dmq_ul.delete_ucontact(r, c) != 0) {
+		dmq_ul.unlock_udomain(_d, &aor);
+		LM_WARN("could not delete contact\n");
+		return -1;
+	}
+	dmq_ul.release_urecord(r);
+	dmq_ul.unlock_udomain(_d, &aor);
+
+	return 0;
+}
+
 void usrloc_get_all_ucontact(dmq_node_t* node)
 {
  	int rval, len=0;
@@ -364,6 +388,7 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 						break;
 		case DMQ_RM:
 						LM_DBG("Received DMQ_RM. Delete contact info...\n");
+						delete_contact(aor, &ci);
 						break;
 		case DMQ_SYNC:
 						LM_DBG("Received DMQ_SYNC. Sending all contacts...\n");
@@ -517,8 +542,7 @@ void dmq_ul_cb_contact(ucontact_t* ptr, int type, void* param)
 											usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, 0);
 										break;
 				case UL_CONTACT_DELETE:
-											//usrloc_dmq_send_contact(ptr, aor, DMQ_RM);
-											LM_DBG("Contact <%.*s> deleted\n", aor.len, aor.s);
+											usrloc_dmq_send_contact(ptr, aor, DMQ_RM, 0);
 										break;
 				case UL_CONTACT_EXPIRE:
 											//usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE);
