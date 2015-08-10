@@ -101,7 +101,7 @@ Richard Fuchs
    1.6. Set extra_id_pv parameter
    1.7. Set setid_avp parameter
    1.8. Set force_send_interface parameter
-   1.9. Set write_sdp_avp parameter
+   1.9. Set write_sdp_pv parameter
    1.10. Set rtp_inst_pvar parameter
    1.11. set_rtpengine_set usage
    1.12. rtpengine_offer usage
@@ -350,9 +350,11 @@ modparam("rtpengine", "force_send_interface", "10.3.7.123")
 
    There is no default value.
 
-   Example 1.9. Set write_sdp_avp parameter
+   Example 1.9. Set write_sdp_pv parameter
 ...
-modparam("rtpengine", "write_sdp_avp", "$avp(sdp)")
+modparam("rtpengine", "write_sdp_pv", "$avp(sdp)")
+  ...  or
+modparam("rtpengine", "write_sdp_pv", "$pv(sdp)")
 ...
 
 4.10. rtp_inst_pvar (string)
