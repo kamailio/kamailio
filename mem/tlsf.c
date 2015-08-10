@@ -613,8 +613,10 @@ static void* block_prepare_used(control_t* control, block_header_t* block, size_
 		block_mark_as_used(block);
 		p = block_to_ptr(block);
 #ifdef TLSF_STATS
-		TLSF_INCREASE_REAL_USED(control, block->size + (p - (void *)block));
-		control->allocated += block->size;
+		TLSF_INCREASE_REAL_USED(control, block_size(block) + (p - (void *)block
+				/* prev_phys_block is melted in the previous block when the current block is used */
+				+ sizeof(block->prev_phys_block)));
+		control->allocated += block_size(block);
 #endif
 #ifdef DBG_TLSF_MALLOC
 		block->alloc_info.file = file;
@@ -847,7 +849,7 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 	block_set_prev_used(block);
 	block_insert(tlsf_cast(control_t*, tlsf), block);
 #ifdef TLSF_STATS
-	tlsf_cast(control_t*, tlsf)->total_size += block->size;
+	tlsf_cast(control_t*, tlsf)->total_size += block_size(block);
 #endif
 #ifdef DBG_TLSF_MALLOC
 	block->alloc_info.file = _SRC_LOC_;
@@ -877,7 +879,7 @@ void tlsf_remove_pool(tlsf_t tlsf, pool_t pool)
 	mapping_insert(block_size(block), &fl, &sl);
 	remove_free_block(control, block, fl, sl);
 #ifdef TLSF_STATS
-	tlsf_cast(control_t*, tlsf)->total_size -= block->size;
+	tlsf_cast(control_t*, tlsf)->total_size -= block_size(block);
 #endif
 }
 
@@ -990,8 +992,10 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		block_header_t* block = block_from_ptr(ptr);
 		tlsf_assert(!block_is_free(block) && "block already marked as free");
 #if defined TLSF_STATS
-		control->allocated -= block->size;
-		control->real_used -= (block->size + (ptr - (void *)block));
+		control->allocated -= block_size(block);
+		control->real_used -= (block_size(block) + (ptr - (void *)block
+				/* prev_phys_block is melted in the previous block when the current block is used */
+				+ sizeof(block->prev_phys_block)));
 #endif
 #ifdef DBG_TLSF_MALLOC
 		block->alloc_info.file = file;
@@ -1082,8 +1086,8 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 		else
 		{
 #ifdef TLSF_STATS
-			control->allocated -= block->size;
-			control->real_used -= block->size;
+			control->allocated -= block_size(block);
+			control->real_used -= block_size(block);
 #endif
 			/* Do we need to expand to the next block? */
 			if (adjust > cursize)
@@ -1096,8 +1100,8 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 			block_trim_used(control, block, adjust);
 			p = ptr;
 #ifdef TLSF_STATS
-			control->allocated += block->size;
-			TLSF_INCREASE_REAL_USED(control, block->size);
+			control->allocated +=block_size(block);
+			TLSF_INCREASE_REAL_USED(control, block_size(block));
 #endif
 		}
 	}
