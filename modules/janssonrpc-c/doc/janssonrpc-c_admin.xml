@@ -356,11 +356,11 @@ route {
 }
 
 route[RESPONSE] {
-	if(jansson_get($var(jsrpc_result), "internal_error", "$var(internal)")) {
+	if(jansson_get("internal_error", $var(jsrpc_result), "$var(internal)")) {
 		route(INTERNAL);
-	} else if(jansson_get($var(jsrpc_result), "error", "$var(error)")) {
+	} else if(jansson_get("error", $var(jsrpc_result), "$var(error)")) {
 		route(ERROR);
-	} else if(jansson_get($var(jsrpc_result), "result", "$var(result)")) {
+	} else if(jansson_get("result", $var(jsrpc_result), "$var(result)")) {
 		route(RESULT);
 	}
     t_reply("200", "OK");
@@ -373,15 +373,15 @@ route[RESULT] {
 
 route[ERROR] {
 	xlog("There was an error\n");
-	if(jansson_get($var(error), "code", "$var(c)")) {
+	if(jansson_get("code", $var(error), "$var(c)")) {
 		xlog("code is $var(c)\n");
 	}
 
-	if(jansson_get($var(error), "message", "$var(r)")) {
+	if(jansson_get("message", $var(error), "$var(r)")) {
 		xlog("error is $var(r)\n");
 	}
 
-	if(jansson_get($var(error), "data", "$var(d)")) {
+	if(jansson_get("data", $var(error), "$var(d)")) {
 		xlog("data is $var(d)\n");
 	}
 }
@@ -389,13 +389,13 @@ route[ERROR] {
 route[INTERNAL] {
 	xlog("There was an internal error\n");
 
-	jansson_get($var(internal), "code", "$var(c)");
+	jansson_get("code", $var(internal), "$var(c)");
 	xlog("code is $var(c)\n");
 
-	jansson_get($var(internal), "message", "$var(r)");
+	jansson_get("message", $var(internal), "$var(r)");
 	xlog("error is $var(r)\n");
 
-	if(jansson_get($var(internal), "data", "$var(d)")) {
+	if(jansson_get("data", $var(internal), "$var(d)")) {
 		xlog("request is $var(d)\n");
 	}
 }
