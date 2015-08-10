@@ -10,6 +10,7 @@
 #include "src_loc.h"
 #include "../dprint.h"
 #include "../cfg/cfg.h"
+#include "memdbg.h"
 
 /*
 ** Constants.
@@ -972,7 +973,13 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 	const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
 	block_header_t* block = block_locate_free(control, adjust);
 #ifdef DBG_TLSF_MALLOC
-	return block_prepare_used(control, block, adjust, file, function, line);
+	void *ptr;
+
+	MDBG("tlsf_malloc(%p, %zu) called from %s: %s(%lu)\n", tlsf, size, file, function, line);
+	ptr = block_prepare_used(control, block, adjust, file, function, line);
+	MDBG("tlsf_malloc(%p, %zu) returns address %p \n", tlsf, size,
+		ptr);
+	return ptr;
 #else
 	return block_prepare_used(control, block, adjust);
 #endif
@@ -985,12 +992,31 @@ void tlsf_free(tlsf_t tlsf, void* ptr,
 void tlsf_free(tlsf_t tlsf, void* ptr)
 #endif
 {
+#ifdef DBG_TLSF_MALLOC
+	MDBG("tlsf_free(%p, %p), called from %s: %s(%lu)\n", tlsf, ptr, file, function, line);
+#endif
 	/* Don't attempt to free a NULL pointer. */
 	if (ptr)
 	{
 		control_t* control = tlsf_cast(control_t*, tlsf);
 		block_header_t* block = block_from_ptr(ptr);
-		tlsf_assert(!block_is_free(block) && "block already marked as free");
+		if (block_is_free(block)) {
+			LOG(L_CRIT, "BUG: tlsf_free: freeing already freed pointer (%p)"
+#ifdef DBG_TLSF_MALLOC
+					", called from %s: %s(%lu)"
+					", first free %s: %s(%lu)\n",
+					ptr, file, function, line,
+					block->alloc_info.file, block->alloc_info.func, block->alloc_info.line);
+#else
+					"\n", ptr);
+#endif
+			if(likely(cfg_get(core, core_cfg, mem_safety)==0)) {
+				abort();
+			} else {
+				return;
+			}
+
+		}
 #if defined TLSF_STATS
 		control->allocated -= block_size(block);
 		control->real_used -= (block_size(block) + (ptr - (void *)block
@@ -1006,6 +1032,12 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		block = block_merge_prev(control, block);
 		block = block_merge_next(control, block);
 		block_insert(control, block);
+	} else {
+#ifdef DBG_TLSF_MALLOC
+		LOG(L_WARN, "tlsf_free: free(0) called from %s: %s(%d)\n", file, function, line);
+#else
+		LOG(L_WARN, "tlsf_free: free(0) called\n");
+#endif
 	}
 }
 
