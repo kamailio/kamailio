@@ -298,10 +298,12 @@ modparam("rtpengine", "force_send_interface", "2001:8d8:1ff:10c0:9a90:96ff:fea8:
 			There is no default value.
 		</para>
 		<example>
-		<title>Set <varname>write_sdp_avp</varname> parameter</title>
+		<title>Set <varname>write_sdp_pv</varname> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("rtpengine", "write_sdp_avp", "$avp(sdp)")
+modparam("rtpengine", "write_sdp_pv", "$avp(sdp)")
+  ...  or
+modparam("rtpengine", "write_sdp_pv", "$pv(sdp)")
 ...
 </programlisting>
 		</example>
