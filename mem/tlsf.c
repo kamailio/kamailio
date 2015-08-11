@@ -1034,7 +1034,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		block_insert(control, block);
 	} else {
 #ifdef DBG_TLSF_MALLOC
-		LOG(L_WARN, "tlsf_free: free(0) called from %s: %s(%d)\n", file, function, line);
+		LOG(L_WARN, "tlsf_free: free(0) called from %s: %s(%lu)\n", file, function, line);
 #else
 		LOG(L_WARN, "tlsf_free: free(0) called\n");
 #endif
