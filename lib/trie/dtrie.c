@@ -152,6 +152,7 @@ int dtrie_insert(struct dtrie_node_t *root, const char *number, const unsigned i
 			if(node->child[digit]->child == NULL){
 				SHM_MEM_ERROR;
 				shm_free(node->child[digit]);
+				node->child[digit] = NULL;
 				return -1;
 			}
 			LM_DBG("allocate %lu bytes for %d root children pointer at %p\n",
