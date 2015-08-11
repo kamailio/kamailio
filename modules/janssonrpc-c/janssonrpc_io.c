@@ -587,9 +587,12 @@ int handle_response(json_t* response)
 	return_obj = json_object();
 
 	json_t* error = json_object_get(response, "error");
+	// if the error value is null, we don't care
+	bool _error = error && (json_typeof(error) != JSON_NULL);
+
 	json_t* result = json_object_get(response, "result");
 
-	if(error) {
+	if(_error) {
 		json_object_set(return_obj, "error", error);
 	}
 
@@ -597,7 +600,7 @@ int handle_response(json_t* response)
 		json_object_set(return_obj, "result", result);
 	}
 
-	if ((!result && !error) || (result && error)) {
+	if ((!result && !_error) || (result && _error)) {
 		WARN("bad response\n");
 		internal = internal_error(JRPC_ERR_BAD_RESP, req->payload);
 		json_object_update(return_obj, internal);
@@ -621,7 +624,7 @@ int handle_response(json_t* response)
 		goto free_and_end;
 	}
 
-	if(error) {
+	if(_error) {
 		// get code from error
 		json_t* _code = json_object_get(error, "code");
 		if(_code) {
