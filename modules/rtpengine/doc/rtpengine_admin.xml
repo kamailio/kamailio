@@ -286,6 +286,31 @@ modparam("rtpengine", "force_send_interface", "2001:8d8:1ff:10c0:9a90:96ff:fea8:
 </programlisting>
 		</example>
 	</section>
+
+	<section id="rtpengine.p.read_sdp_pv">
+		<title><varname>read_sdp_pv</varname> (string)</title>
+		<para>
+			If this parameter is set to a valid AVP or script var specifier, rtpengine
+			will take the input SDP from this pv instead of the message body.
+		</para>
+		<para>
+			There is no default value.
+		</para>
+		<example>
+		<title>Set <varname>read_sdp_pv</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "read_sdp_pv", "$var(sdp)")
+...
+route {
+	...
+	$var(sdp) = $rb + "a=foo:bar\r\n";
+	rtpproxy_manage();
+}
+</programlisting>
+		</example>
+	</section>
+
 	<section id="rtpengine.p.write_sdp_pv">
 		<title><varname>write_sdp_pv</varname> (string)</title>
 		<para>

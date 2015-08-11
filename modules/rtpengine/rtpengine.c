@@ -255,6 +255,9 @@ static int_str setid_avp;
 static str            write_sdp_pvar_str = {NULL, 0};
 static pv_spec_t*     write_sdp_pvar = NULL;
 
+static str            read_sdp_pvar_str = {NULL, 0};
+static pv_spec_t*     read_sdp_pvar = NULL;
+
 #define RTPENGINE_SESS_LIMIT_MSG "Parallel session limit reached"
 #define RTPENGINE_SESS_LIMIT_MSG_LEN (sizeof(RTPENGINE_SESS_LIMIT_MSG)-1)
 
@@ -332,6 +335,7 @@ static param_export_t params[] = {
 	{"force_send_interface",  PARAM_STRING, &force_send_ip_str	},
 	{"rtp_inst_pvar",         PARAM_STR, &rtp_inst_pv_param },
 	{"write_sdp_pv",          PARAM_STR, &write_sdp_pvar_str          },
+	{"read_sdp_pv",           PARAM_STR, &read_sdp_pvar_str          },
 	{0, 0, 0}
 };
 
@@ -1403,6 +1407,16 @@ mod_init(void)
 		}
 	}
 
+	if (read_sdp_pvar_str.len > 0) {
+		read_sdp_pvar = pv_cache_get(&read_sdp_pvar_str);
+		if (read_sdp_pvar == NULL
+		    || (read_sdp_pvar->type != PVT_AVP &&  read_sdp_pvar->type != PVT_SCRIPTVAR) ) {
+			LM_ERR("read_sdp_pv: not a valid AVP or VAR definition <%.*s>\n",
+		       read_sdp_pvar_str.len, read_sdp_pvar_str.s);
+			return -1;
+		}
+	}
+
 	if (rtpp_strings)
 		pkg_free(rtpp_strings);
 
@@ -1780,6 +1794,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	int ret, queried_nodes;
 	struct rtpp_node *node;
 	char *cp;
+	pv_value_t pv_val;
 
 	/*** get & init basic stuff needed ***/
 
@@ -1810,7 +1825,16 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		ng_flags.replace = bencode_list(bencbuf);
 		ng_flags.rtcp_mux = bencode_list(bencbuf);
 
-		if (extract_body(msg, &body) == -1) {
+		if (read_sdp_pvar!= NULL) {
+			if (read_sdp_pvar->getf(msg,&read_sdp_pvar->pvp, &pv_val) < 0)
+			{
+				LM_ERR("error getting pvar value <%.*s>\n", read_sdp_pvar_str.len, read_sdp_pvar_str.s);
+				goto error;
+			} else {
+				body = pv_val.rs;
+			}
+
+		} else if (extract_body(msg, &body) == -1) {
 			LM_ERR("can't extract body from the message\n");
 			goto error;
 		}
