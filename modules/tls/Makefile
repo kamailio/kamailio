@@ -40,7 +40,10 @@ include ../../Makefile.modules
 install-tls-cert: $(cfg_prefix)/$(cfg_dir)
 	MAIN_NAME=$(MAIN_NAME) ./$(SCR_NAME)_cert.sh -d $(cfg_prefix)/$(cfg_dir)
 
-install-cfg:  install-tls-cert
+install-cfg:
+	@if ! [ -d $(cfg_prefix)/$(cfg_dir) ]; then \
+		mkdir -p "$(cfg_prefix)/$(cfg_dir)" ; \
+	fi
 	@$(call try_err, $(INSTALL_TOUCH) \
 			"$(cfg_prefix)/$(cfg_dir)tls.cfg.sample" )
 	@sed -e "s#\/usr/local/etc/kamailio/#$(cfg_target)#g" \
