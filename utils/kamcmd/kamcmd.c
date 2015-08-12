@@ -87,7 +87,15 @@
 
 static char id[]="$Id$";
 static char version[]= NAME " " VERSION;
+#ifdef VERSION_NODATE
+static char compiled[] = "";
+#else
+#ifdef VERSION_DATE
+static char compiled[]= VERSION_DATE;
+#else
 static char compiled[]= __TIME__ " " __DATE__;
+#endif
+#endif
 static char help_msg[]="\
 Usage: " NAME " [options][-s address] [ cmd ]\n\
 Options:\n\
