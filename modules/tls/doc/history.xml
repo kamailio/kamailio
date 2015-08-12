@@ -29,5 +29,10 @@
 			The code is currently maintained by Andrei Pelinescu-Onciul
 			<email>andrei@iptel.org</email>.
 		</para>
+		<para>
+			Install does not generate self-signed certificates by default
+			anymore. In order to generate them now you should do
+			"make install-tls-cert"
+		</para>
 	</section>
 </section>
