@@ -204,10 +204,6 @@ if (!auth_check("$fd", "subscriber", "1")) {
 			<emphasis>-2 (invalid password)</emphasis> - wrong password
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-3 (invalid user)</emphasis> - authentication user does
-			not exist
-			</para></listitem>
-			<listitem><para>
 			<emphasis>-4 (nonce expired)</emphasis> - the nonce has expired
 			</para></listitem>
 			<listitem><para>
@@ -217,10 +213,6 @@ if (!auth_check("$fd", "subscriber", "1")) {
 			<listitem><para>
 			<emphasis>-6 (nonce reused)</emphasis> - the nonce has already been
 			used to authenticate a previous request
-			</para></listitem>
-			<listitem><para>
-			<emphasis>-8 (auth user mismatch)</emphasis> - the auth user is different
-			then the From/To user
 			</para></listitem>
 		</itemizedlist>
 		<para>Meaning of the parameters is as follows:</para>
@@ -355,6 +347,13 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 		check to see if the authentication username matches either To or
 		From header username, a matter of whether it is for a REGISTER
 		request or not.	The parameter may be a pseudo variable.
+		</para>
+		<para>
+		The set of possible return codes is the same than pv_{www,proxy}_authenticate, with
+		one more possible value:
+		    <para><emphasis>-8 (auth user mismatch)</emphasis> - the auth user is different
+               than the From/To user
+			</para>
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
