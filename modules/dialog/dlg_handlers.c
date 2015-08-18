@@ -1402,8 +1402,12 @@ void dlg_ontimeout(struct dlg_tl *tl)
 
 		if(dlg->iflags&DLG_IFLAG_TIMEOUTBYE)
 		{
+			/* set the dialog context so that it's available in
+			 * tm:local-request event route */
+			dlg_set_ctx_iuid(dlg);
 			if(dlg_bye_all(dlg, NULL)<0)
-				dlg_unref(dlg, 1);
+				LM_ERR("failed to send BYE message\n");
+			dlg_reset_ctx_iuid();	
 
 			dlg_unref(dlg, 1);
 			if_update_stat(dlg_enable_stats, expired_dlgs, 1);
