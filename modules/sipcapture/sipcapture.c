@@ -92,7 +92,7 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 37
+#define NR_KEYS 39
 #define RTCP_NR_KEYS 12
 
 /*multiple table mode*/
@@ -160,8 +160,10 @@ static str correlation_column 	= str_init("correlation_id");
 static str ruri_column 		= str_init("ruri");     	
 static str ruri_user_column 	= str_init("ruri_user");  
 static str from_user_column 	= str_init("from_user");  
+static str from_domain_column 	= str_init("from_domain");
 static str from_tag_column 	= str_init("from_tag");   
 static str to_user_column 	= str_init("to_user");
+static str to_domain_column 	= str_init("to_domain");
 static str to_tag_column 	= str_init("to_tag");   
 static str pid_user_column 	= str_init("pid_user");
 static str contact_user_column 	= str_init("contact_user");
@@ -276,8 +278,10 @@ static param_export_t params[] = {
 	{"ruri_column",      		PARAM_STR, &ruri_column     	},
 	{"ruri_user_column",      	PARAM_STR, &ruri_user_column  },
 	{"from_user_column",      	PARAM_STR, &from_user_column  },
+	{"from_domain_column",      	PARAM_STR, &from_domain_column  },
 	{"from_tag_column",        	PARAM_STR, &from_tag_column   },
 	{"to_user_column",     		PARAM_STR, &to_user_column	},
+	{"to_domain_column",     		PARAM_STR, &to_domain_column	},
 	{"to_tag_column",        	PARAM_STR, &to_tag_column	},
 	{"pid_user_column",   		PARAM_STR, &pid_user_column	},
 	{"contact_user_column",        	PARAM_STR, &contact_user_column	},
@@ -1397,16 +1401,26 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[35].type = DB1_STR;
 	db_vals[35].nul = 0;
 	db_vals[35].val.str_val = (correlation_id) ? corrtmp : sco->callid;
-	
-	db_keys[36] = &msg_column;
-	db_vals[36].type = DB1_BLOB;
+
+	db_keys[36] = &from_domain_column;
+	db_vals[36].type = DB1_STR;
 	db_vals[36].nul = 0;
+	db_vals[36].val.str_val = sco->from_domain;
+
+	db_keys[37] = &to_domain_column;
+	db_vals[37].type = DB1_STR;
+	db_vals[37].nul = 0;
+	db_vals[37].val.str_val = sco->to_domain;
+
+	db_keys[38] = &msg_column;
+	db_vals[38].type = DB1_BLOB;
+	db_vals[38].nul = 0;
 
 	/*we don't have empty spaces now */
 	tmp.s = sco->msg.s;
 	tmp.len = sco->msg.len;
 
-	db_vals[36].val.blob_val = tmp;
+	db_vals[38].val.blob_val = tmp;
 
 	if (dtable){
 		table = dtable;
@@ -1572,10 +1586,12 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 		}
               
 		sco.from_user = from.user;
-		sco.from_tag = get_from(msg)->tag_value;              
+		sco.from_domain = from.host;
+		sco.from_tag = get_from(msg)->tag_value;
 	}
 	else {
 		EMPTY_STR(sco.from_user);
+		EMPTY_STR(sco.from_domain);
 		EMPTY_STR(sco.from_tag);
 	}
 
@@ -1588,12 +1604,14 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 			}
 
 			sco.to_user = to.user;
-			if(get_to(msg)->tag_value.len) 
-				sco.to_tag = get_to(msg)->tag_value;              
+			sco.to_domain = to.host;
+			if(get_to(msg)->tag_value.len)
+				sco.to_tag = get_to(msg)->tag_value;
 			else { EMPTY_STR(sco.to_tag); }
 	}
 	else {
 		EMPTY_STR(sco.to_user);
+		EMPTY_STR(sco.to_domain);
 		EMPTY_STR(sco.to_tag);
 	}
 

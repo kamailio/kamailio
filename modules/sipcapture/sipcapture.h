@@ -30,8 +30,10 @@ struct _sipcapture_object {
 	str ruri;
 	str ruri_user;
 	str from_user;
+	str from_domain;
 	str from_tag;
 	str to_user;
+	str to_domain;
 	str to_tag;
 	str pid_user;
 	str contact_user;
