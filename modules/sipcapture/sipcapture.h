@@ -58,8 +58,8 @@ struct _sipcapture_object {
 	int family;
 	str rtp_stat;
 	int type;
-        long long tmstamp;
-        long timestamp;
+	long long tmstamp;
+	long timestamp;
 	str node;
 	str msg;
 #ifdef STATISTICS
