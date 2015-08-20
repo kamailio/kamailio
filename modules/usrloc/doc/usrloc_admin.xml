@@ -64,6 +64,13 @@
 				case.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>Call-id only based</emphasis> - it is not
+				according to RFC3261, as it will check the Call-ID only
+				(independent of the Contact-Header or Path).
+			</para>
+			</listitem>
 		</itemizedlist>
 		<para>
 		To find out how to control/select the contact maching algorithm, please see the
@@ -706,6 +713,12 @@ modparam("usrloc", "db_mode", 2)
 				matching algorithm.  This mode is like mode <emphasis>0</emphasis>
 				but allows for duplicate contacts from differing paths.
 				If no path is available, it defaults to mode 0.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>3</emphasis> - CALLID only based 
+				matching algorithm. This mode will discard any duplicate
+				registration coming through different paths.
 				</para>
 			</listitem>
 		</itemizedlist>

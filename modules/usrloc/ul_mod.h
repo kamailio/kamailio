@@ -104,9 +104,10 @@ extern unsigned int ul_db_srvid;
 /*
  * Matching algorithms
  */
-#define CONTACT_ONLY        (0)
-#define CONTACT_CALLID      (1)
-#define CONTACT_PATH        (2)
+#define CONTACT_ONLY         (0)
+#define CONTACT_CALLID       (1)
+#define CONTACT_PATH         (2)
+#define CONTACT_CALLID_ONLY  (3)
 
 extern int matching_mode;
 
