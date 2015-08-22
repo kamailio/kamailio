@@ -65,6 +65,10 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 	memset(ptr, 0, sizeof(struct pg_con));
 	ptr->ref = 1;
 
+	memset(keywords, 0, (sizeof(char*) * 10));
+	memset(values, 0, (sizeof(char*) * 10));
+	memset(to, 0, (sizeof(char) * 16));
+
 	if (id->port) {
 		ports = int2str(id->port, 0);
 		LM_DBG("opening connection: postgres://xxxx:xxxx@%s:%d/%s\n", ZSW(id->host),
