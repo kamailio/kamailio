@@ -36,6 +36,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../cfg/cfg_struct.h"
 #include "../../lib/kcore/faked_msg.h"
 
 #include "evapi_dispatch.h"
@@ -254,6 +255,8 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		return;
 	}
 
+	cfg_update();
+
 	evapi_env_reset(&evenv);
 	if(rlen == 0) {
 		/* client is gone */
@@ -342,6 +345,8 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 		return;
 	}
 
+	cfg_update();
+
 	/* accept new client connection */
 	csock = accept(watcher->fd, (struct sockaddr *)&caddr, &clen);
 
@@ -416,6 +421,8 @@ void evapi_recv_notify(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		perror("received invalid event\n");
 		return;
 	}
+
+	cfg_update();
 
 	/* read message from client */
 	rlen = read(watcher->fd, &sbuf, sizeof(str*));
