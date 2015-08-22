@@ -668,7 +668,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 		return SANITY_CHECK_FAILED;
 	}
 	if (_msg->proxy_require != NULL) {
-		dump_hdr_field(_msg->proxy_require);
+		//dump_hdr_field(_msg->proxy_require);
 		if (_msg->proxy_require->parsed == NULL &&
 				parse_proxyrequire(_msg->proxy_require) < 0) {
 			LOG(L_WARN, "sanity_check(): check_proxy_require(): parse_proxy_require failed\n");
