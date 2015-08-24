@@ -1406,7 +1406,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 			 * tm:local-request event route */
 			dlg_set_ctx_iuid(dlg);
 			if(dlg_bye_all(dlg, NULL)<0)
-				LM_ERR("failed to send BYE message\n");
+				dlg_unref(dlg, 1);
 			dlg_reset_ctx_iuid();	
 
 			dlg_unref(dlg, 1);
