@@ -706,8 +706,8 @@ modparam("dialog", "db_update_period", 120)
    the dialog records at startup from the database. This value can be used
    to tune the load time at startup. For 1MB of private memory (default),
    it should be below 400. The database driver must support the
-   fetch_result() capability. A value of 0 means the functionality is
-   disabled.
+   fetch_result() capability. A value of 0 means the db fetch is not
+   limited.
 
    Default value is "200".
 
