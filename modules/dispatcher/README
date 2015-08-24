@@ -688,8 +688,14 @@ Note
    Controls what gateways are tested to see if they are reachable. If set
    to 0, only the gateways with state PROBING are tested; if set to 1, all
    gateways are tested; if set to 2, only gateways in inactive state with
-   probing mode set are tested. If set to 1 and there is a failure of
-   keepalive to an active gateway, then it is set to TRYING state.
+   probing mode set are tested. 
+
+   If set to 3, any gateway with a PROBING state is continually probed without 
+   modifying/removing the PROBING state flag.  This allows selected gateways to 
+   be probed continually, regardless of state chagnes.
+
+   If set to 1 and there is a failure of keepalive to an active gateway, then it 
+   is set to TRYING state.
 
    Default value is "0".
 
