@@ -107,7 +107,7 @@ int register_udomain(const char* _n, udomain_t** _d);
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
 int get_all_ucontacts(void *, int, unsigned int,
-           unsigned int part_idx, unsigned int part_max);
+           unsigned int part_idx, unsigned int part_max, int options);
 
 /*!
  * \brief Find a particular domain, small wrapper around find_dlist
