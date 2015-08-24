@@ -687,13 +687,9 @@ static int mod_init(void)
 			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
-		// if db_fetch_rows=0 then no rows should be loaded form the db on startup.
-		// http://kamailio.org/docs/modules/3.3.x/modules_k/dialog.html#idp148408
-		if (db_fetch_rows>0) {
-			if (init_dlg_db(&db_url, dlg_hash_size, db_update_period,db_fetch_rows)!=0) {
-				LM_ERR("failed to initialize the DB support\n");
-				return -1;
-			}
+		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period,db_fetch_rows)!=0) {
+			LM_ERR("failed to initialize the DB support\n");
+			return -1;
 		}
 		run_load_callbacks();
 	}
