@@ -359,6 +359,7 @@ static void datagram_close_async(struct mi_root *mi_rpl,struct mi_handler *hdl, 
 		}
 		free_mi_tree(mi_rpl);
 		pkg_free(dtgram.start);
+		if (done) free_async_handler( hdl );
 	} else if (done) {
 		mi_send_dgram(reply_sock, MI_COMMAND_FAILED, MI_COMMAND_FAILED_LEN,
 				(struct sockaddr*)&reply_addr, reply_addr_len, mi_socket_timeout);
@@ -372,6 +373,7 @@ err:
 	if(dtgram.start)
 		pkg_free(dtgram.start);
 	close(reply_sock);
+	if (done) free_async_handler( hdl );
 	return;
 }
 
