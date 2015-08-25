@@ -164,7 +164,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 
 	if (!payload) {
 		LM_ERR("Failed to build jsonrpc_request_t (method: %s, params: %s)\n", cmd->method, cmd->params);	
-		return;
+		goto error;
 	}
 	char *json = (char*)json_object_get_string(payload);
 
@@ -202,7 +202,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 
 		if (timerfd == -1) {
 			LM_ERR("Could not create timerfd.");
-			return;
+			goto error;
 		}
 
 		req->timerfd = timerfd;
@@ -216,7 +216,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		if (timerfd_settime(timerfd, 0, itime, NULL) == -1) 
 		{
 			LM_ERR("Could not set timer.");
-			return;
+			goto error;
 		}
 		pkg_free(itime);
 		struct event *timer_ev = pkg_malloc(sizeof(struct event));
@@ -224,7 +224,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		event_set(timer_ev, timerfd, EV_READ, timeout_cb, req); 
 		if(event_add(timer_ev, NULL) == -1) {
 			LM_ERR("event_add failed while setting request timer (%s).", strerror(errno));
-			return;
+			goto error;
 		}
 		req->timer_ev = timer_ev;
 	} else if (!sent) {
@@ -238,6 +238,10 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 
 	pkg_free(ns);
 	json_object_put(payload);
+	if (cmd->notify_only) free_pipe_cmd(cmd);
+error:
+	if (cmd->notify_only) free_pipe_cmd(cmd);
+	return;
 }
 
 void socket_cb(int fd, short event, void *arg)
