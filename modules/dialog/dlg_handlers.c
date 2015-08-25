@@ -992,6 +992,47 @@ static inline int parse_dlg_rr_param(char *p, char *end, int *h_entry, int *h_id
 
 
 /*!
+ * \brief Update the saved Contact information in dialog from SIP message
+ * \param dlg updated dialog
+ * \param req SIP request
+ * \param dir direction of request, must DLG_DIR_UPSTREAM or DLG_DIR_DOWNSTREAM
+ * \return 0 on success, -1 on failure
+ */
+static inline int dlg_refresh_contacts(struct dlg_cell *dlg, struct sip_msg *req,
+		unsigned int dir)
+{
+	str contact;
+
+	if(req->first_line.type == SIP_REPLY)
+		return 0;
+	if(req->first_line.u.request.method_value != METHOD_INVITE)
+		return 0;
+
+	/* extract the contact address */
+	if (!req->contact&&(parse_headers(req,HDR_CONTACT_F,0)<0||!req->contact)){
+		LM_ERR("bad sip message or missing Contact hdr\n");
+		return -1;
+	}
+	if ( parse_contact(req->contact)<0 ||
+	((contact_body_t *)req->contact->parsed)->contacts==NULL ||
+	((contact_body_t *)req->contact->parsed)->contacts->next!=NULL ) {
+		LM_ERR("bad Contact HDR\n");
+		return -1;
+	}
+	contact = ((contact_body_t *)req->contact->parsed)->contacts->uri;
+
+	if ( dir==DLG_DIR_UPSTREAM) {
+		return dlg_update_contact(dlg, DLG_CALLEE_LEG, &contact);
+	} else if ( dir==DLG_DIR_DOWNSTREAM) {
+		return dlg_update_contact(dlg, DLG_CALLER_LEG, &contact);
+	} else {
+		LM_CRIT("dir is not set!\n");
+		return -1;
+	}
+}
+
+
+/*!
  * \brief Update the saved CSEQ information in dialog from SIP message
  * \param dlg updated dialog
  * \param req SIP request
@@ -1311,6 +1352,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			}
 		}
 		if(event != DLG_EVENT_REQACK) {
+			if(dlg_refresh_contacts(dlg, req, dir)!=0) {
+				LM_ERR("contacts update failed\n");
+			} else {
+				dlg->dflags |= DLG_FLAG_CHANGED;
+			}
 			if(update_cseqs(dlg, req, dir)!=0) {
 				LM_ERR("cseqs update failed\n");
 			} else {
