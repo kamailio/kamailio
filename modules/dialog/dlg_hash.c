@@ -355,6 +355,12 @@ void destroy_dlg(struct dlg_cell *dlg)
 	if (dlg->tag[DLG_CALLEE_LEG].s)
 		shm_free(dlg->tag[DLG_CALLEE_LEG].s);
 
+	if (dlg->contact[DLG_CALLER_LEG].s)
+		shm_free(dlg->contact[DLG_CALLER_LEG].s);
+
+	if (dlg->contact[DLG_CALLEE_LEG].s)
+		shm_free(dlg->contact[DLG_CALLEE_LEG].s);
+
 	if (dlg->cseq[DLG_CALLER_LEG].s)
 		shm_free(dlg->cseq[DLG_CALLER_LEG].s);
 
@@ -493,7 +499,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 
 	if(dlg->tag[leg].s)
 		shm_free(dlg->tag[leg].s);
-	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len + contact->len );
+	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len );
 
 	if(dlg->cseq[leg].s) {
 		if (dlg->cseq[leg].len < cs.len) {
@@ -502,6 +508,15 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 		}
 	} else {
 		dlg->cseq[leg].s = (char*)shm_malloc( cs.len );
+	}
+
+	if(dlg->contact[leg].s) {
+		if (dlg->contact[leg].len < contact->len) {
+			shm_free(dlg->contact[leg].s);
+			dlg->contact[leg].s = (char*)shm_malloc(contact->len);
+		}
+	} else {
+		dlg->contact[leg].s = (char*)shm_malloc( contact->len );
 	}
 
 	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL) {
@@ -524,11 +539,6 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 	dlg->tag[leg].len = tag->len;
 	memcpy( p, tag->s, tag->len);
 	p += tag->len;
-	/* contact */
-	dlg->contact[leg].s = p;
-	dlg->contact[leg].len = contact->len;
-	memcpy( p, contact->s, contact->len);
-	p += contact->len;
 	/* rr */
 	if (rr->len) {
 		dlg->route_set[leg].s = p;
@@ -536,6 +546,9 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 		memcpy( p, rr->s, rr->len);
 	}
 
+	/* contact */
+	dlg->contact[leg].len = contact->len;
+	memcpy(dlg->contact[leg].s, contact->s, contact->len);
 	/* cseq */
 	dlg->cseq[leg].len = cs.len;
 	memcpy( dlg->cseq[leg].s, cs.s, cs.len);
@@ -576,6 +589,55 @@ int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq)
 
 	LM_DBG("cseq of leg[%d] is %.*s\n", leg,
 			dlg->cseq[leg].len, dlg->cseq[leg].s);
+	dlg_unlock(d_table, d_entry);
+	return 0;
+error:
+	dlg_unlock(d_table, d_entry);
+	LM_ERR("not more shm mem\n");
+	return -1;
+}
+
+
+/*!
+ * \brief Update or set the Contact for an existing dialog
+ * \param dlg dialog
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \param ct Contact of caller or callee
+ * \return 0 on success, -1 on failure
+ */
+int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *ct)
+{
+	dlg_entry_t *d_entry;
+
+	d_entry = &(d_table->entries[dlg->h_entry]);
+
+	dlg_lock(d_table, d_entry);
+
+	if ( dlg->contact[leg].s ) {
+		if(dlg->contact[leg].len == ct->len
+				&& memcmp(dlg->contact[leg].s, ct->s, ct->len)==0) {
+			LM_DBG("same contact for leg[%d] - [%.*s]\n", leg,
+				dlg->contact[leg].len, dlg->contact[leg].s);
+			goto done;
+		}
+		if (dlg->contact[leg].len < ct->len) {
+			shm_free(dlg->contact[leg].s);
+			dlg->contact[leg].s = (char*)shm_malloc(ct->len);
+			if (dlg->contact[leg].s==NULL)
+				goto error;
+		}
+	} else {
+		dlg->contact[leg].s = (char*)shm_malloc(ct->len);
+		if (dlg->contact[leg].s==NULL)
+			goto error;
+	}
+
+	memcpy( dlg->contact[leg].s, ct->s, ct->len );
+	dlg->contact[leg].len = ct->len;
+
+	LM_DBG("contact of leg[%d] is %.*s\n", leg,
+			dlg->contact[leg].len, dlg->contact[leg].s);
+done:
 	dlg_unlock(d_table, d_entry);
 	return 0;
 error:
