@@ -99,7 +99,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 		LM_ERR("no more shm mem\n");
 		return NULL;
 	}
-	var->next = NULL;
+	memset(var, 0, sizeof(struct dlg_var));
 	var->vflags = DLG_FLAG_NEW;
 	/* set key */
 	var->key.len = key->len;
@@ -113,7 +113,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	var->key.s[var->key.len] = '\0';
 	/* set value */
 	var->value.len = val->len;
-	var->value.s = (char*)shm_malloc(var->value.len);
+	var->value.s = (char*)shm_malloc(var->value.len+1);
 	if (var->value.s==NULL) {
 		shm_free(var->key.s);			
 		shm_free(var);			
@@ -121,6 +121,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 		return NULL;
 	}
 	memcpy(var->value.s, val->s, val->len);
+	var->value.s[var->value.len] = '\0';
 	return var;
 }
 
