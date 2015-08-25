@@ -2754,11 +2754,13 @@ static void ds_options_callback( struct cell *t, int type,
 		/* Set the according entry back to "Active" */
 		state = 0;
 		if (ds_probing_mode==DS_PROBE_ALL || 
-                    (ds_probing_mode == DS_PROBE_ONLYFLAGGED && ds_get_state(group, &uri) & DS_PROBING_DST))
+                    ((ds_probing_mode==DS_PROBE_ONLYFLAGGED)
+						&& (ds_get_state(group, &uri) & DS_PROBING_DST)))
 			state |= DS_PROBING_DST;
 
 		/* Check if in the meantime someone disabled the target through RPC or MI */
-		if (!(ds_get_state(group, &uri) & DS_DISABLED_DST) && ds_update_state(fmsg, group, &uri, state) != 0)
+		if (!(ds_get_state(group, &uri) & DS_DISABLED_DST)
+				&& ds_update_state(fmsg, group, &uri, state) != 0)
 		{
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
@@ -2768,7 +2770,8 @@ static void ds_options_callback( struct cell *t, int type,
 		if (ds_probing_mode!=DS_PROBE_NONE)
 			state |= DS_PROBING_DST;
 		/* Check if in the meantime someone disabled the target through RPC or MI */
-		if (!(ds_get_state(group, &uri) & DS_DISABLED_DST) && ds_update_state(fmsg, group, &uri, state) != 0)
+		if (!(ds_get_state(group, &uri) & DS_DISABLED_DST)
+				&& ds_update_state(fmsg, group, &uri, state) != 0)
 		{
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);
