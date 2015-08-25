@@ -48,6 +48,7 @@
 #define DS_PROBE_NONE		0
 #define DS_PROBE_ALL		1
 #define DS_PROBE_INACTIVE	2
+#define DS_PROBE_ONLYFLAGGED	3
 
 #define DS_MATCH_ALL		0
 #define DS_MATCH_NOPORT		1
