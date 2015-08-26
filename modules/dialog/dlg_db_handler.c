@@ -135,7 +135,7 @@ int dlg_connect_db(const str *db_url)
 }
 
 
-int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int fetch_num_rows)
+int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int fetch_num_rows, int db_skip_load)
 {
 	/* Find a database module */
 	if (db_bind_mod(db_url, &dialog_dbf) < 0){
@@ -164,15 +164,16 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int
 		return -1;
 	}
 
-	if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows) ) !=0 ){
-		LM_ERR("unable to load the dialog data\n");
-		return -1;
+	if ( db_skip_load == 0 ) {
+		if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows) ) !=0 ){
+			LM_ERR("unable to load the dialog data\n");
+			return -1;
+		}
+		if( (load_dialog_vars_from_db(fetch_num_rows) ) !=0 ){
+			LM_ERR("unable to load the dialog data\n");
+			return -1;
+		}
 	}
-	if( (load_dialog_vars_from_db(fetch_num_rows) ) !=0 ){
-		LM_ERR("unable to load the dialog data\n");
-		return -1;
-	}
-
 	dialog_dbf.close(dialog_db_handle);
 	dialog_db_handle = 0;
 
