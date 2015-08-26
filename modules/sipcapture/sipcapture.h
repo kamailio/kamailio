@@ -29,6 +29,7 @@ struct _sipcapture_object {
 	str reply_reason;
 	str ruri;
 	str ruri_user;
+	str ruri_domain;
 	str from_user;
 	str from_domain;
 	str from_tag;

@@ -92,7 +92,7 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 39
+#define NR_KEYS 40
 #define RTCP_NR_KEYS 12
 
 /*multiple table mode*/
@@ -159,6 +159,7 @@ static str reply_reason_column 	= str_init("reply_reason");
 static str correlation_column 	= str_init("correlation_id");
 static str ruri_column 		= str_init("ruri");     	
 static str ruri_user_column 	= str_init("ruri_user");  
+static str ruri_domain_column 	= str_init("ruri_domain");  
 static str from_user_column 	= str_init("from_user");  
 static str from_domain_column 	= str_init("from_domain");
 static str from_tag_column 	= str_init("from_tag");   
@@ -273,15 +274,16 @@ static param_export_t params[] = {
 	{"date_column",        		PARAM_STR, &date_column       },
 	{"micro_ts_column",     	PARAM_STR, &micro_ts_column	},
 	{"method_column",      		PARAM_STR, &method_column 	},
-        {"correlation_column",     	PARAM_STR, &correlation_column.s },
+	{"correlation_column",     	PARAM_STR, &correlation_column.s },
 	{"reply_reason_column",		PARAM_STR, &reply_reason_column	},
 	{"ruri_column",      		PARAM_STR, &ruri_column     	},
 	{"ruri_user_column",      	PARAM_STR, &ruri_user_column  },
+	{"ruri_domain_column",      PARAM_STR, &ruri_domain_column  },
 	{"from_user_column",      	PARAM_STR, &from_user_column  },
-	{"from_domain_column",      	PARAM_STR, &from_domain_column  },
+	{"from_domain_column",      PARAM_STR, &from_domain_column  },
 	{"from_tag_column",        	PARAM_STR, &from_tag_column   },
 	{"to_user_column",     		PARAM_STR, &to_user_column	},
-	{"to_domain_column",     		PARAM_STR, &to_domain_column	},
+	{"to_domain_column",     	PARAM_STR, &to_domain_column	},
 	{"to_tag_column",        	PARAM_STR, &to_tag_column	},
 	{"pid_user_column",   		PARAM_STR, &pid_user_column	},
 	{"contact_user_column",        	PARAM_STR, &contact_user_column	},
@@ -1412,15 +1414,20 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[37].nul = 0;
 	db_vals[37].val.str_val = sco->to_domain;
 
-	db_keys[38] = &msg_column;
-	db_vals[38].type = DB1_BLOB;
+	db_keys[38] = &ruri_domain_column;
+	db_vals[38].type = DB1_STR;
 	db_vals[38].nul = 0;
+	db_vals[38].val.str_val = sco->ruri_domain;
+
+	db_keys[39] = &msg_column;
+	db_vals[39].type = DB1_BLOB;
+	db_vals[39].nul = 0;
 
 	/*we don't have empty spaces now */
 	tmp.s = sco->msg.s;
 	tmp.len = sco->msg.len;
 
-	db_vals[38].val.blob_val = tmp;
+	db_vals[39].val.blob_val = tmp;
 
 	if (dtable){
 		table = dtable;
@@ -1545,6 +1552,7 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 		
 		sco.ruri = msg->first_line.u.request.uri;
 		sco.ruri_user = msg->parsed_uri.user;
+		sco.ruri_domain = msg->parsed_uri.host;
 	}
 	else if(msg->first_line.type == SIP_REPLY) {
 		sco.method = msg->first_line.u.reply.status;
@@ -1552,6 +1560,7 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 
 		EMPTY_STR(sco.ruri);
 		EMPTY_STR(sco.ruri_user);
+		EMPTY_STR(sco.ruri_domain);
 	}
 	else {
 		LM_ERR("unknown type [%i]\n", msg->first_line.type);
