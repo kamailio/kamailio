@@ -892,7 +892,7 @@ static int print_body(struct binrpc_parse_ctx* in_pkt,
 read_value:
 		val.name.s=0;
 		val.name.len=0;
-		p=binrpc_read_record(in_pkt, p, end, &val, &ret);
+		p=binrpc_read_record(in_pkt, p, end, &val, 1, &ret);
 		if (ret<0){
 			if (fmt)
 				putchar('\n');
@@ -902,7 +902,7 @@ read_value:
 				printf("end of message detected\n");
 				break;
 			}
-			fprintf(stderr, "ERROR while parsing the record %d,"
+			fprintf(stderr, "ERROR:: while parsing the record %d,"
 					" @%d: %02x : %s\n", rec,
 					in_pkt->offset, *p, binrpc_error(ret));
 			goto error;
@@ -1161,13 +1161,13 @@ static struct binrpc_val* parse_reply_body(int* records,
 		val.type=BINRPC_T_ALL;
 		val.name.s=0;
 		val.name.len=0;
-		p=binrpc_read_record(in_pkt, p, end, &val, &ret);
+		p=binrpc_read_record(in_pkt, p, end, &val, 1, &ret);
 		if (ret<0){
 			if (ret==E_BINRPC_EOP){
 				printf("end of message detected\n");
 				break;
 			}
-			fprintf(stderr, "ERROR while parsing the record %d,"
+			fprintf(stderr, "ERROR: while parsing the record %d,"
 					" @%d: %02x : %s\n", rec,
 					in_pkt->offset, *p, binrpc_error(ret));
 			goto error;
