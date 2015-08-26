@@ -3,19 +3,19 @@
  *
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
+ * For a license to use the kamailio software under conditions
  * other than those described here, or to purchase support for this
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -2255,12 +2255,12 @@ int main(int argc, char** argv)
 	srand(getpid()+time(0)); /* we don't need very strong random numbers */
 	
 	if (sock_name==0){
-		fprintf(stderr, "ERROR: no ser address specified\n");
+		fprintf(stderr, "ERROR: no server socket address specified\n");
 		goto error;
 	}
 	sock_id=parse_listen_id(sock_name, strlen(sock_name), sock_type);
 	if (sock_id==0){
-		fprintf(stderr, "ERROR: error parsing ser address %s\n", sock_name);
+		fprintf(stderr, "ERROR: error parsing server socket address %s\n", sock_name);
 		goto error;
 	}
 	
