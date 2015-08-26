@@ -99,6 +99,7 @@ static char* profiles_wv_s = NULL;
 static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
+static int db_skip_load = 0;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
@@ -291,6 +292,7 @@ static param_export_t mod_params[]={
 	{ "timer_procs",           PARAM_INT, &dlg_timer_procs          },
 	{ "track_cseq_updates",    PARAM_INT, &_dlg_track_cseq_updates  },
 	{ "lreq_callee_headers",   PARAM_STR, &dlg_lreq_callee_headers  },
+	{ "db_skip_load",          INT_PARAM, &db_skip_load            },
 	{ 0,0,0 }
 };
 
@@ -687,9 +689,11 @@ static int mod_init(void)
 			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
-		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period,db_fetch_rows)!=0) {
-			LM_ERR("failed to initialize the DB support\n");
-			return -1;
+		if (db_skip_load==0) {
+			if (init_dlg_db(&db_url, dlg_hash_size, db_update_period,db_fetch_rows)!=0) {
+				LM_ERR("failed to initialize the DB support\n");
+				return -1;
+			}
 		}
 		run_load_callbacks();
 	}
