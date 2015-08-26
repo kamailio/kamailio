@@ -815,7 +815,7 @@ int binrpc_print_response(struct binrpc_response_handle *resp_handle, char* fmt)
 read_value:
 		val.name.s=0;
 		val.name.len=0;
-		p=binrpc_read_record(&resp_handle->in_pkt, p, end, &val, &ret);
+		p=binrpc_read_record(&resp_handle->in_pkt, p, end, &val, 0, &ret);
 		if (ret<0){
 			if (fmt)
 				putchar('\n');
@@ -898,7 +898,7 @@ int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 		val.type = BINRPC_T_ALL;
 		val.name.s = 0;
 		val.name.len = 0;
-		p = binrpc_read_record(&resp_handle->in_pkt, p, end, &val, &ret);
+		p = binrpc_read_record(&resp_handle->in_pkt, p, end, &val, 0, &ret);
 		if (ret<0){
 			if (ret==E_BINRPC_EOP){
 				break;
@@ -982,7 +982,7 @@ int binrpc_parse_error_response(
 	val.type=BINRPC_T_INT;
 	val.name.s=0;
 	val.name.len=0;
-	p = binrpc_read_record(&resp_handle->in_pkt, p, end, &val, &ret);
+	p = binrpc_read_record(&resp_handle->in_pkt, p, end, &val, 0, &ret);
 	if (ret < 0) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"parse_error_response: error when parsing reply (code): %s", binrpc_error(ret)
@@ -992,7 +992,7 @@ int binrpc_parse_error_response(
 	*err_no = val.u.intval;
 
 	val.type=BINRPC_T_STR;
-	p = binrpc_read_record(&resp_handle->in_pkt, p, end, &val, &ret);
+	p = binrpc_read_record(&resp_handle->in_pkt, p, end, &val, 0, &ret);
 	if (ret < 0) {
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"parse_error_response: error when parsing reply (str): %s", binrpc_error(ret)
@@ -1170,7 +1170,7 @@ int binrpc_response_to_text(
 		val.type=BINRPC_T_ALL;
 		val.name.s=0;
 		val.name.len=0;
-		p = binrpc_read_record(&resp_handle->in_pkt, p, end, &val, &ret);
+		p = binrpc_read_record(&resp_handle->in_pkt, p, end, &val, 0, &ret);
 		if (ret < 0) {
 			if (ret == E_BINRPC_EOP) {
 				printf("end of message detected\n");
