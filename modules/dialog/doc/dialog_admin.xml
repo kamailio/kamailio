@@ -472,7 +472,7 @@ modparam("dialog", "db_update_period", 120)
 		<para>
 			The number of the rows to be fetched at once from database when loading the dialog records at startup from the database.
 			This value can be used to tune the load time at startup. For 1MB of private memory (default), it should be below 400.
-			The database driver must support the fetch_result() capability. A value of 0 means the functionality is disabled.
+			The database driver must support the fetch_result() capability. A value of 0 means the database fetch is not limited.
 		</para>
 		<para>
 		<emphasis>
@@ -488,6 +488,28 @@ modparam("dialog", "db_fetch_rows", 500)
 </programlisting>
 		</example>
 	</section>
+
+<section>
+		<title><varname>db_skip_load</varname> (integer)</title>
+		<para>
+			Set db_skip_load to 1, to skip the loading of dialogs from the database alltogether.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> ( not skipped ).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_skip_load</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "db_skip_load", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+
 
 	<section>
 		<title><varname>table_name</varname> (string)</title>
