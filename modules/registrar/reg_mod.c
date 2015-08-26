@@ -41,6 +41,7 @@
 #include "../../error.h"
 #include "../../socket_info.h"
 #include "../../pvar.h"
+#include "../../dset.h"
 #include "../../modules/usrloc/usrloc.h"
 #include "../../lib/kcore/statistics.h"
 #include "../../lib/srutils/sruid.h"
@@ -383,6 +384,8 @@ static int mod_init(void)
 	/* fix the flags */
 	sock_flag = (sock_flag!=-1)?(1<<sock_flag):0;
 	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
+
+	set_aor_case_sensitive(cfg_get(registrar, registrar_cfg, case_sensitive));
 
 	return 0;
 }
