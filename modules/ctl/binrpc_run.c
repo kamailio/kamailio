@@ -655,7 +655,7 @@ int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
 	
 	/* get rpc method */
 	val.type=BINRPC_T_STR;
-	f_ctx.in.s=binrpc_read_record(ctx, f_ctx.in.s, f_ctx.in.end, &val, &err);
+	f_ctx.in.s=binrpc_read_record(ctx, f_ctx.in.s, f_ctx.in.end, &val, 0, &err);
 	if (err<0){
 		LOG(L_CRIT, "ERROR: bad rpc request method, binrpc error: %s (%d)\n",
 				binrpc_error(err), err);
@@ -857,7 +857,7 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 			case 'd': /* int */
 				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_INT;
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
-												ctx->in.end, &v, &err);
+												ctx->in.end, &v, 0, &err);
 				if (err<0 || ((i=binrpc_val_conv_int(&v, &err))==0 && err<0))
 						goto error_read;
 				*(va_arg(ap, int*))=i;
@@ -865,7 +865,7 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 			case 'f':
 				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_DOUBLE;
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
-												ctx->in.end, &v, &err);
+												ctx->in.end, &v, 0, &err);
 				if (err<0 || ((d=binrpc_val_conv_double(&v, &err))==0 &&
 						err<0))
 					goto error_read;
@@ -875,7 +875,7 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 			case 'S': /* str */
 				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_STR;
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s, 
-												ctx->in.end, &v,&err);
+												ctx->in.end, &v, 0, &err);
 				if (err<0 || ((s=binrpc_val_conv_str(ctx, &v, &err))==0 &&
 							err<0)){
 					v.u.strval.s="if you get this string, you don't"
@@ -895,7 +895,7 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 				/* FIXME: structure reading doesn't work for now */
 #if 0
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s, 
-												ctx->in.end, &v, &err);
+												ctx->in.end, &v, 0, &err);
 				if (err<0) goto error_read;
 				ctx->in.in_struct++;
 				*(va_arg(ap, void**))=ctx; /* use the same context */

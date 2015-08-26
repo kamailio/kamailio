@@ -614,12 +614,15 @@ inline static int binrpc_bytes_needed(struct binrpc_parse_ctx *ctx)
 /* prefill v with the requested type, if type==BINRPC_T_ALL it 
  * will be replaced by the actual record type 
  * known problems: no support for arrays inside STRUCT
+ * param smode: allow simple vals inside struct (needed for 
+ * not-strict-formatted rpc responses)
  * returns position after the record and *err==0 if succesfull
  *         original position and *err<0 if not */
 inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 												unsigned char* buf,
 												unsigned char* end,
 												struct binrpc_val* v,
+												int smode,
 												int* err
 												)
 {
@@ -664,18 +667,30 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 		goto error_type;
 	}
 	v->type=type;
-	if (ctx->in_struct){
-		switch(type){
-			case BINRPC_T_STRUCT:
+	switch(type){
+		case BINRPC_T_STRUCT:
+			if (ctx->in_struct){
 				if (end_tag){
 					ctx->in_struct--;
 					v->u.end=1;
 				}else{
-					goto error_record;
+					if(smode==0) {
+						goto error_record;
+					} else {
+						v->u.end=0;
+						ctx->in_struct++;
+					}
 				}
-				break;
-			case BINRPC_T_AVP:
-				/* name | value */
+			} else {
+				if (end_tag)
+					goto error_record;
+				v->u.end=0;
+				ctx->in_struct++;
+			}
+			break;
+		case BINRPC_T_AVP:
+			/* name | value */
+			if (ctx->in_struct){
 				v->name.s=(char*)p;
 				v->name.len=(len-1); /* don't include 0 term */
 				p+=len;
@@ -689,7 +704,7 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 					tmp=ctx->in_struct;
 					ctx->in_struct=0; /* hack to parse a normal record */
 					v->type=type; /* hack */
-					p=binrpc_read_record(ctx, p, end, v, err);
+					p=binrpc_read_record(ctx, p, end, v, smode, err);
 					if (err<0){
 						ctx->in_struct=tmp;
 						goto error;
@@ -701,50 +716,51 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 				}else{
 					goto  error_record;
 				}
-				break;
-			default:
-				goto error_record;
-		}
-	}else{
-		switch(type){
-			case BINRPC_T_INT:
-				p=binrpc_read_int(&v->u.intval, len, p, end, err);
-				break;
-			case BINRPC_T_STR:
-				v->u.strval.s=(char*)p;
-				v->u.strval.len=(len-1); /* don't include terminating 0 */
-				p+=len;
-				break;
-			case BINRPC_T_BYTES:
-				v->u.strval.s=(char*)p;
-				v->u.strval.len=len;
-				p+=len;
-			case BINRPC_T_STRUCT:
-				if (end_tag)
-					goto error_record;
-				v->u.end=0;
-				ctx->in_struct++;
-				break;
-			case BINRPC_T_ARRAY:
-				if (end_tag){
-					if (ctx->in_array>0){
-						ctx->in_array--;
-						v->u.end=1;
-					}else
-						goto error_record;
-				}else{
-					ctx->in_array++;
-					v->u.end=0;
-				}
-				break;
-			case BINRPC_T_DOUBLE: /* FIXME: hack: represented as fixed point
-			                                      inside an int */
-				p=binrpc_read_int(&i, len, p, end, err);
-				v->u.fval=((double)i)/1000;
-				break;
-			default:
+			} else {
 				goto error_type;
-		}
+			}
+			break;
+		case BINRPC_T_INT:
+			if (ctx->in_struct && smode==0) goto error_record;
+			p=binrpc_read_int(&v->u.intval, len, p, end, err);
+			break;
+		case BINRPC_T_STR:
+			if (ctx->in_struct && smode==0) goto error_record;
+			v->u.strval.s=(char*)p;
+			v->u.strval.len=(len-1); /* don't include terminating 0 */
+			p+=len;
+			break;
+		case BINRPC_T_BYTES:
+			if (ctx->in_struct && smode==0) goto error_record;
+			v->u.strval.s=(char*)p;
+			v->u.strval.len=len;
+			p+=len;
+		case BINRPC_T_ARRAY:
+			if (ctx->in_struct && smode==0) goto error_record;
+			if (end_tag){
+				if (ctx->in_array>0){
+					ctx->in_array--;
+					v->u.end=1;
+				}else{
+					goto error_record;
+				}
+			}else{
+				ctx->in_array++;
+				v->u.end=0;
+			}
+			break;
+		case BINRPC_T_DOUBLE: /* FIXME: hack: represented as fixed point
+		                                      inside an int */
+			if (ctx->in_struct && smode==0) goto error_record;
+			p=binrpc_read_int(&i, len, p, end, err);
+			v->u.fval=((double)i)/1000;
+			break;
+		default:
+			if (ctx->in_struct){
+				goto error_record;
+			} else {
+				goto error_type;
+			}
 	}
 	ctx->offset+=(int)(p-buf);
 no_offs_update:
