@@ -258,4 +258,8 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri);
 
 int init_dst_set(void);
 
+int set_aor_case_sensitive(int mode);
+
+int get_aor_case_sensitive(void);
+
 #endif /* _DSET_H */

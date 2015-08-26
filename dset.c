@@ -893,3 +893,22 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 
 	return 0;
 }
+
+/* address of record (aor) management */
+
+/* address of record considered case sensitive
+ * - 0 = no; 1 = yes */
+static int aor_case_sensitive=0;
+
+int set_aor_case_sensitive(int mode)
+{
+	int r;
+	r = aor_case_sensitive;
+	aor_case_sensitive = mode;
+	return r;
+}
+
+int get_aor_case_sensitive(void)
+{
+	return aor_case_sensitive;
+}
