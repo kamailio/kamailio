@@ -18,6 +18,7 @@
 
 #include "../../ip_addr.h"
 #include "../../dprint.h"
+#include "../../dset.h"
 #include "../../lib/srutils/sruid.h"
 
 #include "ul_rpc.h"
@@ -321,7 +322,8 @@ static inline int rpc_fix_aor(str *aor)
 		if (p)
 			aor->len = p - aor->s;
 	}
-	strlower(aor);
+	if(!get_aor_case_sensitive())
+		strlower(aor);
 
 	return 0;
 }
