@@ -519,7 +519,8 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 		dlg->contact[leg].s = (char*)shm_malloc( contact->len );
 	}
 
-	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL) {
+	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL
+			|| dlg->contact[leg].s==NULL) {
 		LM_ERR("no more shm mem\n");
 		if (dlg->tag[leg].s)
 		{
@@ -531,6 +532,12 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 			shm_free(dlg->cseq[leg].s);
 			dlg->cseq[leg].s = NULL;
 		}
+		if (dlg->contact[leg].s)
+		{
+			shm_free(dlg->contact[leg].s);
+			dlg->contact[leg].s = NULL;
+		}
+
 		return -1;
 	}
 	p = dlg->tag[leg].s;
