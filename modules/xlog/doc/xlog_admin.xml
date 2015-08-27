@@ -375,6 +375,203 @@ xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 </programlisting>
 		</example>
 	</section>
+
+	<section id="xlog.f.xinfo">
+		<title>
+		<function moreinfo="none">xinfo(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_INFO level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xinfo</function> usage</title>
+		<programlisting format="linespecific">
+...
+xinfo("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xnotice">
+		<title>
+		<function moreinfo="none">xnotice(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_NOTICE level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xnotice</function> usage</title>
+		<programlisting format="linespecific">
+...
+xnotice("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xwarn">
+		<title>
+		<function moreinfo="none">xwarn(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_WARN level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xwarn</function> usage</title>
+		<programlisting format="linespecific">
+...
+xwarn("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xerr">
+		<title>
+		<function moreinfo="none">xerr(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_ERR level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xerr</function> usage</title>
+		<programlisting format="linespecific">
+...
+xerr("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xbug">
+		<title>
+		<function moreinfo="none">xbug(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_BUG level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xbug</function> usage</title>
+		<programlisting format="linespecific">
+...
+xbug("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xcrit">
+		<title>
+		<function moreinfo="none">xcrit(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_CRIT level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xcrit</function> usage</title>
+		<programlisting format="linespecific">
+...
+xcrit("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="xlog.f.xalert">
+		<title>
+		<function moreinfo="none">xalert(format)</function>
+		</title>
+		<para>
+		Print a formatted log message at L_ALERT level.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>format</emphasis> - The formatted string to be printed.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>xalert</function> usage</title>
+		<programlisting format="linespecific">
+...
+xalert("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="xlog.f.xlogl">
 		<title>
 		<function moreinfo="none">xlogl([ [facility,] level,] format)</function>
