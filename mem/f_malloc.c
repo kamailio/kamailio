@@ -203,6 +203,29 @@ static inline void fm_extract_free(struct fm_block* qm, struct fm_frag* frag)
 	pf = frag->prv_free;
 	hash = GET_HASH(frag->size);
 
+	if(unlikely(pf==0)) {
+		/* try to discover previous fragment (safety review) */
+		LM_WARN("missing prev info for fragment %p from %p [%d]\n",
+					frag, qm, hash);
+		if(likely(qm->free_hash[hash].first)) {
+			if(likely(qm->free_hash[hash].first==frag)) {
+				pf = &(qm->free_hash[hash].first);
+			} else {
+				for(pf=&(qm->free_hash[hash].first); (*pf); pf=&((*pf)->u.nxt_free)) {
+					if((*pf)->u.nxt_free==frag) {
+						break;
+					}
+				}
+			}
+		}
+		if(unlikely(pf==0)) {
+			LM_ALERT("attemting to extract inexistent fragment %p from %p [%d]\n",
+					frag, qm, hash);
+			return;
+		}
+		frag->prv_free = pf;
+	}
+
 	*pf=frag->u.nxt_free;
 
 	if(frag->u.nxt_free) frag->u.nxt_free->prv_free = pf;
