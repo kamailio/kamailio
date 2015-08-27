@@ -773,10 +773,10 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 		SET_STR_VALUE(values+16, cell->route_set[DLG_CALLER_LEG]);
 		SET_STR_VALUE(values+17, cell->route_set[DLG_CALLEE_LEG]);
 
-		SET_PROPER_NULL_FLAG(cell->route_set[DLG_CALLER_LEG], 	values, 14);
-		SET_PROPER_NULL_FLAG(cell->route_set[DLG_CALLEE_LEG], 	values, 15);
-		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLER_LEG], 	values, 16);
-		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLEE_LEG], 	values, 17);
+		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLER_LEG], 	values, 14);
+		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLEE_LEG], 	values, 15);
+		SET_PROPER_NULL_FLAG(cell->route_set[DLG_CALLER_LEG], 	values, 16);
+		SET_PROPER_NULL_FLAG(cell->route_set[DLG_CALLEE_LEG], 	values, 17);
 
 		VAL_NULL(values+18) = 0;
 		VAL_INT(values+18)  = cell->sflags;
