@@ -477,7 +477,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 
 			ci = dbrow2info(ROW_VALUES(row)+1, &contact, 0);
 			if (ci==0) {
-				LM_ERR("sipping record for %.*s in table %s\n",
+				LM_ERR("skipping record for %.*s in table %s\n",
 						user.len, user.s, _d->name->s);
 				continue;
 			}
