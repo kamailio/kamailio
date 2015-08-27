@@ -11,9 +11,9 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
 
-   Copyright � 2008-2010 Elena-Ramona Modroiu
+   Copyright © 2008-2010 Elena-Ramona Modroiu
      __________________________________________________________________
 
    Table of Contents
@@ -41,9 +41,16 @@ Elena-Ramona Modroiu
 
               5.1. xlog([ [facility,] level,] format)
               5.2. xdbg(format)
-              5.3. xlogl([ [facility,] level,] format)
-              5.4. xdbgl(format)
-              5.5. xlogm(level, format)
+              5.3. xinfo(format)
+              5.4. xnotice(format)
+              5.5. xwarn(format)
+              5.6. xerr(format)
+              5.7. xbug(format)
+              5.8. xcrit(format)
+              5.9. xalert(format)
+              5.10. xlogl([ [facility,] level,] format)
+              5.11. xdbgl(format)
+              5.12. xlogm(level, format)
 
    List of Examples
 
@@ -56,6 +63,13 @@ Elena-Ramona Modroiu
    1.7. Set methods_filter parameter
    1.8. xlog usage
    1.9. xdbg usage
+   1.10. xinfo usage
+   1.11. xnotice usage
+   1.12. xwarn usage
+   1.13. xerr usage
+   1.14. xbug usage
+   1.15. xcrit usage
+   1.16. xalert usage
 
 Chapter 1. Admin Guide
 
@@ -82,9 +96,16 @@ Chapter 1. Admin Guide
 
         5.1. xlog([ [facility,] level,] format)
         5.2. xdbg(format)
-        5.3. xlogl([ [facility,] level,] format)
-        5.4. xdbgl(format)
-        5.5. xlogm(level, format)
+        5.3. xinfo(format)
+        5.4. xnotice(format)
+        5.5. xwarn(format)
+        5.6. xerr(format)
+        5.7. xbug(format)
+        5.8. xcrit(format)
+        5.9. xalert(format)
+        5.10. xlogl([ [facility,] level,] format)
+        5.11. xdbgl(format)
+        5.12. xlogm(level, format)
 
 1. Overview
 
@@ -234,11 +255,18 @@ modparam("xlog", "long_format", 1)
 
    5.1. xlog([ [facility,] level,] format)
    5.2. xdbg(format)
-   5.3. xlogl([ [facility,] level,] format)
-   5.4. xdbgl(format)
-   5.5. xlogm(level, format)
+   5.3. xinfo(format)
+   5.4. xnotice(format)
+   5.5. xwarn(format)
+   5.6. xerr(format)
+   5.7. xbug(format)
+   5.8. xcrit(format)
+   5.9. xalert(format)
+   5.10. xlogl([ [facility,] level,] format)
+   5.11. xdbgl(format)
+   5.12. xlogm(level, format)
 
-5.1. xlog([ [facility,] level,] format)
+5.1.  xlog([ [facility,] level,] format)
 
    Output a formated log message.
 
@@ -261,7 +289,7 @@ modparam("xlog", "long_format", 1)
             See above options for valid log levels.
        If it is not a pseudo-variable, then what really matters is the
        third letter of the value. If the log level is higher than the
-       "debug" global parameter, the message is not printed to syslog.
+       “debug” global parameter, the message is not printed to syslog.
        If this parameter is missing, the implicit log level is 'L_ERR'.
      * format - The formatted string to be printed.
 
@@ -280,7 +308,7 @@ xlog("LOG_LOCAL3", "L_ERR", "this message will be sent to syslog facility LOG_LO
 CAL3\n");
 ...
 
-5.2. xdbg(format)
+5.2.  xdbg(format)
 
    Print a formatted message using DBG function.
 
@@ -294,17 +322,115 @@ CAL3\n");
 xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
 
-5.3. xlogl([ [facility,] level,] format)
+5.3.  xinfo(format)
+
+   Print a formatted log message at L_INFO level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. xinfo usage
+...
+xinfo("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.4.  xnotice(format)
+
+   Print a formatted log message at L_NOTICE level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. xnotice usage
+...
+xnotice("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.5.  xwarn(format)
+
+   Print a formatted log message at L_WARN level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. xwarn usage
+...
+xwarn("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.6.  xerr(format)
+
+   Print a formatted log message at L_ERR level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. xerr usage
+...
+xerr("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.7.  xbug(format)
+
+   Print a formatted log message at L_BUG level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. xbug usage
+...
+xbug("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.8.  xcrit(format)
+
+   Print a formatted log message at L_CRIT level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.15. xcrit usage
+...
+xcrit("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.9.  xalert(format)
+
+   Print a formatted log message at L_ALERT level.
+
+   Meaning of the parameters is as follows:
+     * format - The formatted string to be printed.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.16. xalert usage
+...
+xalert("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
+...
+
+5.10.  xlogl([ [facility,] level,] format)
 
    Similar to xlog(), in addition prints configuration file line number at
    the beginning of message.
 
-5.4. xdbgl(format)
+5.11.  xdbgl(format)
 
    Similar to xdbg(), in addition prints configuration file line number at
    the beginning of message.
 
-5.5. xlogm(level, format)
+5.12.  xlogm(level, format)
 
    Similar to xlog(level, format), but skips writing the log messages for
    SIP requests and responses that match the SIP method id with
