@@ -311,6 +311,9 @@ static inline ucontact_info_t* dbrow2info(db_val_t *vals, str *contact, int rcon
 		ci.sock = grep_sock_info( &host, (unsigned short)port, proto);
 		if (ci.sock==0) {
 			LM_DBG("non-local socket <%s>...ignoring\n", p);
+			if (skip_remote_socket) {
+				return 0;
+			}
 		}
 	}
 

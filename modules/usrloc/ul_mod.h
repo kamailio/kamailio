@@ -86,6 +86,7 @@ extern int ul_db_check_update;
 extern int ul_keepalive_timeout;
 extern int handle_lost_tcp;
 extern int close_expired_tcp;
+extern int skip_remote_socket;
 
 
 /*! nat branch flag */
