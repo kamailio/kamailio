@@ -88,6 +88,13 @@ static int xlog_1(struct sip_msg*, char*, char*);
 static int xlog_2(struct sip_msg*, char*, char*);
 static int xlog_3(struct sip_msg*, char*, char*, char*);
 static int xdbg(struct sip_msg*, char*, char*);
+static int xinfo(struct sip_msg*, char*, char*);
+static int xnotice(struct sip_msg*, char*, char*);
+static int xwarn(struct sip_msg*, char*, char*);
+static int xerr(struct sip_msg*, char*, char*);
+static int xbug(struct sip_msg*, char*, char*);
+static int xcrit(struct sip_msg*, char*, char*);
+static int xalert(struct sip_msg*, char*, char*);
 
 static int xlogl_1(struct sip_msg*, char*, char*);
 static int xlogl_2(struct sip_msg*, char*, char*);
@@ -138,6 +145,13 @@ static cmd_export_t cmds[]={
 	{"xlog",   (cmd_function)xlog_2,   2, xlog_fixup,  0, ANY_ROUTE},
 	{"xlog",   (cmd_function)xlog_3,   3, xlog3_fixup, 0, ANY_ROUTE},
 	{"xdbg",   (cmd_function)xdbg,     1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xinfo",  (cmd_function)xinfo,    1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xnotice",(cmd_function)xnotice,  1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xwarn",  (cmd_function)xwarn,    1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xerr",   (cmd_function)xerr,     1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xbug",   (cmd_function)xbug,     1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xcrit",  (cmd_function)xcrit,    1, xdbg_fixup,  0, ANY_ROUTE},
+	{"xalert", (cmd_function)xalert,   1, xdbg_fixup,  0, ANY_ROUTE},
 	{"xlogl",  (cmd_function)xlogl_1,  1, xdbgl_fixup, 0, ANY_ROUTE},
 	{"xlogl",  (cmd_function)xlogl_2,  2, xlogl_fixup, 0, ANY_ROUTE},
 	{"xlogl",  (cmd_function)xlogl_3,  3, xlogl3_fixup,0, ANY_ROUTE},
@@ -388,6 +402,76 @@ static int xdbg_helper(struct sip_msg* msg, char* frm, char* str2, int mode, int
 static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 {
 	return xdbg_helper(msg, frm, str2, 0, NOFACILITY);
+}
+
+/**
+ * print log message to L_INFO level
+ */
+static int xinfo(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_INFO))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_INFO, 0, NOFACILITY);
+}
+
+/**
+ * print log message to L_NOTICE level
+ */
+static int xnotice(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_NOTICE))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_NOTICE, 0, NOFACILITY);
+}
+
+/**
+ * print log message to L_WARN level
+ */
+static int xwarn(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_WARN))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_WARN, 0, NOFACILITY);
+}
+
+/**
+ * print log message to L_ERR level
+ */
+static int xerr(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_ERR))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_ERR, 0, NOFACILITY);
+}
+
+/**
+ * print log message to L_BUG level
+ */
+static int xbug(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_BUG))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_BUG, 0, NOFACILITY);
+}
+
+/**
+ * print log message to L_CRIT level
+ */
+static int xcrit(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_CRIT2))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_CRIT2, 0, NOFACILITY);
+}
+
+/**
+ * print log message to L_ALERT level
+ */
+static int xalert(struct sip_msg* msg, char* frm, char* str2)
+{
+	if(!is_printable(L_ALERT))
+		return 1;
+	return xlog_helper(msg, (xl_msg_t*)frm, L_ALERT, 0, NOFACILITY);
 }
 
 /**
