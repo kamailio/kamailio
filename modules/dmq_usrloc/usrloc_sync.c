@@ -51,7 +51,10 @@ static int add_contact(str aor, ucontact_info_t* ci)
 	str contact;
 	int res;
 
-	dmq_ul.get_udomain("location", &_d);
+        if (dmq_ul.get_udomain("location", &_d) < 0) {
+                LM_ERR("Failed to get domain\n");
+                return -1;
+        }
 	res = dmq_ul.get_urecord(_d, &aor, &r);
 	if (res < 0) {
 		LM_ERR("failed to retrieve record from usrloc\n");
@@ -98,7 +101,10 @@ static int delete_contact(str aor, ucontact_info_t* ci)
 	urecord_t* r;
 	ucontact_t* c;
 
-	dmq_ul.get_udomain("location", &_d);
+        if (dmq_ul.get_udomain("location", &_d) < 0) {
+                LM_ERR("Failed to get domain\n");
+                return -1;
+        }
 
 	if (dmq_ul.get_urecord_by_ruid(_d, dmq_ul.get_aorhash(&aor),
 				&ci->ruid, &r, &c) != 0) {
