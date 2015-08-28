@@ -415,7 +415,7 @@ int geoip_update_pv(str *tomatch, str *name)
 	}
 
 	strncpy(gr->tomatch, tomatch->s, tomatch->len);
-	tomatch->s[tomatch->len] = '\0';
+	gr->tomatch[tomatch->len] = '\0';
 	gr->record = GeoIP_record_by_name(_handle_GeoIP,
 			(const char*)gr->tomatch);
 	LM_DBG("attempt to match: %s\n", gr->tomatch);
