@@ -2,7 +2,7 @@
  * script functions of utils module
  *
  * Copyright (C) 2008 Juha Heinanen
- * Copyright (C) 2013 Carsten Bock, ng-voice GmbH
+ * Copyright (C) 2013-2015 Carsten Bock, ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -55,7 +55,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 	http_res_stream_t *stream = (http_res_stream_t *) stream_ptr;
 
 	stream->buf = (char *) pkg_realloc(stream->buf, stream->curr_size + 
-			(size * nmemb) + 1);
+			(size * nmemb));
 
 	if (stream->buf == NULL) {
 		LM_ERR("cannot allocate memory for stream\n");
@@ -64,14 +64,11 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 
 	memcpy(&stream->buf[stream->pos], (char *) ptr, (size * nmemb));
 
-	stream->curr_size += ((size * nmemb) + 1);
+	stream->curr_size += (size * nmemb);
 	stream->pos += (size * nmemb);
-
-	stream->buf[stream->pos + 1] = '\0';
 
 	return size * nmemb;
 }
-
 
 /* 
  * Performs http_query and saves possible result (first body line of reply)
