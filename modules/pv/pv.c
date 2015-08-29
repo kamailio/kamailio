@@ -494,6 +494,7 @@ static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
+static int w_var_to_xavp(sip_msg_t *msg, char *p1, char *p2);
 
 static int pv_init_rpc(void);
 
@@ -504,6 +505,8 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 #ifdef WITH_XAVP
 	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0, 
+		ANY_ROUTE },
+	{"pv_var_to_xavp",  (cmd_function)w_var_to_xavp, 2, 0, 0,
 		ANY_ROUTE },
 #endif
 	{"is_int", (cmd_function)is_int, 1, fixup_pvar_null, fixup_free_pvar_null,
@@ -691,6 +694,20 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2)
 	}
 
 	return -1;
+}
+
+static int w_var_to_xavp(sip_msg_t *msg, char *s1, char *s2)
+{
+	str xname, varname;
+
+	if(s1 == NULL || s2 == NULL) {
+		LM_ERR("wrong parameters\n");
+		return -1;
+	}
+
+	varname.len = strlen(s1); varname.s = s1;
+	xname.s = s2; xname.len = strlen(s2);
+	return pv_var_to_xavp(&varname, &xname);
 }
 
 /**

@@ -186,6 +186,10 @@ script_var_t* get_varnull_by_name(str *name)
 	return 0;
 }
 
+script_var_t* get_var_all(void) {
+	return script_vars;
+}
+
 void reset_vars(void)
 {
 	script_var_t *it;
