@@ -396,8 +396,8 @@ void remove_ts_transaction(ts_transaction_t* ts_t)
 	if (ts_t->prev)
 		ts_t->prev->next = ts_t->next;
 
-	if ((ts_t->prev == NULL) && (ts_t->next == NULL))
-		ts_t->urecord->transactions = NULL;
+	if (ts_t->urecord->transactions == ts_t)
+		ts_t->urecord->transactions = ts_t->next;
 
 	free_ts_transaction((void*)ts_t);
 
