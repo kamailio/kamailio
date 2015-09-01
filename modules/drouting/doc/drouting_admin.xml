@@ -469,7 +469,11 @@
 		be small enough such that subsequent intervals do not overlap. 
 		For non-recurring intervals, durations of any positive length are 
 		permitted, zero-length duration means <quote>forever</quote>. 
-		Negative-length durations are not allowed.
+		Negative-length durations are not allowed. In the common case of
+		a duration less than one day, the value starts with 'PT' followed by
+		number of hours, minutes and seconds, e.g., a duration of 8 hours
+		and 30 minutes is written 'PT8H30M'. See RFC 2445 DURATION
+		specifications for full format.
 	</para>
 	</listitem>
 	<listitem>
@@ -612,7 +616,7 @@
 		Here is an example of evaluating multiple Byxxx parameters.
 	</para>
 	<para>
-		dtstart=<quote>19970105T083000</quote> duration=<quote>10M</quote>
+		dtstart=<quote>19970105T083000</quote> duration=<quote>PT10M</quote>
 		freq=<quote>yearly</quote> interval=<quote>2</quote> 
 		bymonth=<quote>1</quote> byday=<quote>SU</quote>
 	</para>
