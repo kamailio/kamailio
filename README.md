@@ -28,6 +28,18 @@ To keep a coherent and consitent history of the development, the commit messages
 
   * https://www.kamailio.org/wiki/devel/github-contributions
 
+Contributions must conform with licensing rules of Kamailio project.
+
+## License
+
+Main License: GPLv2.
+
+Each source code file contains at the top the license and copyright details. Most of the code is licensed under GPLv2, some parts of the code are licensed under BSD.
+
+### New Contributions Licensing
+
+New contributions to core and several main modules (auth, corex, sl, tls, tm) have to be done under BSD license. New contributions under GPL must grant the GPL-OpenSSL linking exception. Contributions to existing components released under BSD must be done under BSD as well.
+
 ## Documentation
 
 The main index for documentation is available at:
