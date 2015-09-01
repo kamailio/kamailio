@@ -126,9 +126,14 @@ modparam("tmrec", "separator", ";")
 			For a recurring interval, the <quote>duration</quote> parameter MUST
 			be small enough such that subsequent intervals do not overlap. 
 			For non-recurring intervals, durations of any positive length are 
-			permitted.  Zero-length duration means <quote>forever</quote>. 
-			Negative-length durations are not allowed. See RFC 2445 for
-			the format of duration.
+			permitted. Zero-length duration means <quote>forever</quote>. 
+			Negative-length durations are not allowed.
+			</para>
+			<para>
+			See RFC 2445 for the format of duration. In short for common cases
+			when the duration doesn't exeed a data, it must start with PT
+			followed by the value for hours, minutes or seconds - e.g., a
+			duration of 8 hours must be written as PT8H.
 			</para>
 		</listitem>
 		<listitem>
@@ -253,7 +258,7 @@ modparam("tmrec", "separator", ";")
 		Next is an example of evaluating multiple Byxxx parameters.
 		</para>
 		<para>
-		startdate=<quote>20100101T093000</quote> duration=<quote>10H30M</quote>
+		startdate=<quote>20100101T093000</quote> duration=<quote>PT10H30M</quote>
 		frequency=<quote>yearly</quote> interval=<quote>4</quote> 
 		bymonth=<quote>3</quote> byday=<quote>SU</quote>
 		</para>
