@@ -8,11 +8,11 @@ Project Website:
 
 Kamailio is an open source implementation of a SIP Signaling Server. SIP is an open standard protocol specified by IETF, the core specification document is [RFC3261](https://tools.ietf.org/html/rfc3261).
 
-It is designed for scalability, targeting large deployoments (e.g., for IP telephony operators or carriers, which have a large subscriber base or route a big volume of acalls), but can be also used in enterprises or for personal needs to provide VoIP, Instant Messaging and Presence. Kamailio is well known for its flexibility, robustness, strong security and the extensive number of features - for more, see:
+It is designed for scalability, targeting large deployments (e.g. for IP telephony operators or carriers, which have a large subscriber base or route a big volume of calls), but can be also used in enterprises or for personal needs to provide VoIP, Instant Messaging and Presence. Kamailio is well known for its flexibility, robustness, strong security and the extensive number of features - for more, see:
 
   * http://www.kamailio.org/w/features/
 
-Kamailio was started back in 2001 by Fraunhofer Fokus, a research institute in Berlin, Germany, at that time having the name SIP Express Router (aka SER). In 2005, a fork named OpenSER has been created, which was renamed to Kamailio in July 2008, due to trademark issues. Starting in the autumn of 2008, Kamailio and SER initiated the process to merge the two projects back. After the merge was complete, Kamailio became the main name of the project, being better protected in terms of trademarks.
+Kamailio was started back in 2001 by [Fraunhofer Fokus](https://www.fokus.fraunhofer.de/), a research institute in Berlin, Germany, at that time having the name SIP Express Router (aka SER). In 2005, a fork named OpenSER was created, which was renamed to Kamailio in July 2008 due to trademark issues. Starting in the autumn of 2008, Kamailio and SER initiated the process to merge the two projects. After the merge was complete, Kamailio became the main name of the project, being better protected in terms of trademarks.
 
 Fraunhofer Fokus is no longer actively involved in the evolution of the project, Kamailio being now developed and managed by its world wide community. Fokus still uses Kamailio in its research projects (such as OpenIMSCore) and it is hosting events related to the project, such as developer meetings or Kamailio World Conference.
 
@@ -24,11 +24,11 @@ Github pull requests are the recommended way to contribute to Kamailio source co
 
   * https://github.com/kamailio/kamailio/pulls
 
-To keep a coherent and consitent history of the development, the commit messages format and content must follow the rules detailed at:
+To keep a coherent and consistent history of the development, the commit messages format and content must follow the rules detailed at:
 
   * https://www.kamailio.org/wiki/devel/github-contributions
 
-Contributions must conform with licensing rules of Kamailio project.
+Contributions must conform with licensing rules of the Kamailio project.
 
 ## License
 
@@ -38,7 +38,7 @@ Each source code file contains at the top the license and copyright details. Mos
 
 ### New Contributions Licensing
 
-New contributions to core and several main modules (auth, corex, sl, tls, tm) have to be done under BSD license. New contributions under GPL must grant the GPL-OpenSSL linking exception. Contributions to existing components released under BSD must be done under BSD as well.
+New contributions to the core and several main modules (auth, corex, sl, tls, tm) have to be done under the BSD license. New contributions under the GPL must grant the GPL-OpenSSL linking exception. Contributions to existing components released under BSD must be done under BSD as well.
 
 ## Documentation
 
@@ -50,7 +50,7 @@ The online documentation for modules in the latest stable branch:
 
   * http://kamailio.org/docs/modules/stable/
 
-The wiki collect a consistent number of tutorials, the indexes for variables, functions and parameters:
+The wiki collects a consistent number of tutorials, the indexes for variables, functions and parameters:
 
   * http://www.kamailio.org/wiki/
 
@@ -83,7 +83,7 @@ Mailing list for discussions regarding stable versions of Kamailio:
 
   * **sr-users (at) lists.sip-router.org** - [sr-users web page](http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users)
 
-Mailing list for discussions regarding development of Kamailio and the state of master (devel) branch:
+Mailing list for discussions regarding the development of Kamailio and the state of master (devel) branch:
 
   * **sr-dev (at) lists.sip-router.org** - [sr-dev web page](http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev)
 
