@@ -59,7 +59,7 @@ Repositories for packages:
 
 ## Issues
 
-To report a bug or make a request for a features, use the Issues Page from Github project:
+To report a bug or make a request for new features, use the Issues Page from Github project:
 
   * https://github.com/kamailio/kamailio/issues
 
@@ -69,15 +69,15 @@ To report a bug or make a request for a features, use the Issues Page from Githu
 
 Mailing list for discussions regarding stable versions of Kamailio:
 
-  * <sr-users (at) lists.sip-router.org> - [sr-users web page](http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users)
+  * **sr-users (at) lists.sip-router.org** - [sr-users web page](http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users)
 
 Mailing list for discussions regarding development of Kamailio and the state of master (devel) branch:
 
-  * <sr-dev (at) lists.sip-router.org> - [sr-dev web page](http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev)
+  * **sr-dev (at) lists.sip-router.org** - [sr-dev web page](http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev)
 
 Mailing list for discussions with commercial purpose:
 
-  * <business (at) lists.kamailio.org> - [business web page](http://lists.kamailio.org/cgi-bin/mailman/listinfo/business)
+  * **business (at) lists.kamailio.org** - [business web page](http://lists.kamailio.org/cgi-bin/mailman/listinfo/business)
 
 For more, see:
 
@@ -96,4 +96,4 @@ News:
 
   * http://www.kamailio.org/w/category/news/
 
-_** Thank you for flying Kamailio! **_
+**Thank you for flying Kamailio!**
