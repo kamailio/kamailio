@@ -395,6 +395,37 @@ pv_xavp_print();
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.pv_var_to_xavp">
+			<title>
+				<function moreinfo="none">pv_var_to_xavp(varname, xname)</function>
+			</title>
+			<para>
+				Copy script variables values to a xavp.
+			</para>
+			<para>
+				First parameter can be '*' in order to copy all script variables. Second parameter is the name of the destination xavp. If xavp already exists it will be reset first.
+			</para>
+			<para>
+			Function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pv_var_to_xavp()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var("temp") = 3;
+$var("foo") = "foo indeed";
+pv_var_to_xavp("temp", "ok");
+...
+$xavp("ok[0]=>temp") now is 3
+...
+pv_var_to_xavp("*", "ok");
+...
+$xavp("ok[0]=>temp") now is 3
+$xavp("ok[0]=>foo") now is "foo indeed"
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>

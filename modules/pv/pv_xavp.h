@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com) 
+ * Copyright (C) 2009 Daniel-Constantin Mierla (asipto.com)
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #ifdef WITH_XAVP
 
 #include "../../pvar.h"
+#include "pv_svar.h"
 
 int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
@@ -30,6 +31,8 @@ int pv_parse_xavp_name(pv_spec_p sp, str *in);
 int pv_xavp_print(struct sip_msg* msg, char* s1, char *s2);
 
 int xavp_params_explode(str *params, str *xname);
+
+int pv_var_to_xavp(str *varname, str *xname);
 
 #endif
 #endif

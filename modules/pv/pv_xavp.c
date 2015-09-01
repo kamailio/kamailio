@@ -613,4 +613,65 @@ int xavp_params_explode(str *params, str *xname)
 
 	return 0;
 }
+
+int pv_var_to_xavp(str *varname, str *xname)
+{
+	script_var_t *it;
+	sr_xavp_t *xavp = NULL;
+	sr_xval_t xval;
+
+	LM_DBG("xname:%.*s varname:%.*s\n", xname->len, xname->s,
+		varname->len, varname->s);
+
+	// clean xavp
+	xavp_rm_by_name(xname, 1, NULL);
+
+	if(varname->len==1 && varname->s[0] == '*') {
+		for(it=get_var_all(); it; it=it->next) {
+			memset(&xval, 0, sizeof(sr_xval_t));
+			if(it->v.flags&VAR_VAL_INT)
+			{
+				xval.type = SR_XTYPE_INT;
+				xval.v.i = it->v.value.n;
+			} else {
+				if(it->v.value.s.len==0) continue;
+				xval.type = SR_XTYPE_STR;
+				xval.v.s.s = it->v.value.s.s;
+				xval.v.s.len = it->v.value.s.len;
+			}
+			xavp = xavp_add_xavp_value(xname, &it->name, &xval, NULL);
+			if(xavp==NULL) {
+				LM_ERR("can't copy [%.*s]\n", it->name.len, it->name.s);
+				goto error;
+			}
+		}
+	}
+	else {
+		it = get_var_by_name(varname);
+		if(it==NULL) {
+			LM_ERR("script var [%.*s] not found\n", varname->len, varname->s);
+			return -1;
+		}
+		memset(&xval, 0, sizeof(sr_xval_t));
+		if(it->v.flags&VAR_VAL_INT)
+		{
+			xval.type = SR_XTYPE_INT;
+			xval.v.i = it->v.value.n;
+		} else {
+			xval.type = SR_XTYPE_STR;
+			xval.v.s.s = it->v.value.s.s;
+			xval.v.s.len = it->v.value.s.len;
+		}
+		xavp = xavp_add_xavp_value(xname, &it->name, &xval, NULL);
+		if(xavp==NULL) {
+			LM_ERR("can't copy [%.*s]\n", it->name.len, it->name.s);
+			goto error;
+		}
+	}
+	return 1;
+
+error:
+	xavp_rm_by_name(xname, 1, NULL);
+	return -1;
+}
 #endif
