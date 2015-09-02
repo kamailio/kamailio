@@ -2820,7 +2820,7 @@ int pv_parse_hdr_name(pv_spec_p sp, str *in)
 	s.s = p;
 	s.len = in->len+1;
 
-	if (parse_hname2(s.s, s.s + ((s.len<4)?4:s.len), &hdr)==0)
+	if (parse_hname2_short(s.s, s.s + s.len, &hdr)==0)
 	{
 		LM_ERR("error parsing header name [%.*s]\n", s.len, s.s);
 		goto error;
