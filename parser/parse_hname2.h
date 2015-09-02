@@ -36,6 +36,6 @@
  * @file
  */
 char* parse_hname2(char* const begin, const char* const end, struct hdr_field* const hdr);
-char* parse_hname2_safe(char* const begin, const char* const end, struct hdr_field* const hdr);
+char* parse_hname2_short(char* const begin, const char* const end, struct hdr_field* const hdr);
 
 #endif /* PARSE_HNAME2_H */
