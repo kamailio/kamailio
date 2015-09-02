@@ -518,7 +518,8 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 				}
 				break;
 			default:
-				LM_ERR("unsupported route_type %d\n", get_route_type());
+				LM_INFO("unsupported route_type %d - code set to 0\n",
+						get_route_type());
 				code = 0;
 		}
 	}
