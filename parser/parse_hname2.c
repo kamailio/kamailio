@@ -254,3 +254,31 @@ char* parse_hname2(char* const begin, const char* const end, struct hdr_field* c
 	}
 }
 
+/**
+ * parse_hname2_short() - safer version to parse header name stored in short buffers
+ *   - parse_hanem2() reads 4 bytes at once, expecting to walk through a buffer
+ *   that contains more than the header name (e.g., sip msg buf, full header buf
+ *   with name and body)
+ */
+char* parse_hname2_short(char* const begin, const char* const end, struct hdr_field* const hdr)
+{
+#define HBUF_MAX_SIZE 256
+	char hbuf[HBUF_MAX_SIZE];
+	char *p;
+
+	if(end-begin>=HBUF_MAX_SIZE-4) {
+		p = q_memchr(p, ':', end - begin);
+		if(p && p-4> begin) {
+			/* header name termination char found and enough space in buffer after it */
+			return parse_hname2(begin, end, hdr);
+		}
+		/* not enough space */
+		return NULL;
+	}
+	/* pad with whitespace - tipycal char after the ':' of the header name */
+	memset(hbuf, ' ', HBUF_MAX_SIZE);
+	memcpy(hbuf, begin, end-begin);
+	p = parse_hname2(hbuf, hbuf + 4 + (end-begin), hdr);
+	if(!p) return NULL;
+	return begin + (p-hbuf);
+}
