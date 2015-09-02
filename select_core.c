@@ -619,7 +619,7 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 				/* if header name is parseable, parse it and set SEL_PARAM_DIV */
 			c=s->params[2].v.s.s[s->params[2].v.s.len];
 			s->params[2].v.s.s[s->params[2].v.s.len]=':';
-			if (parse_hname2(s->params[2].v.s.s,s->params[2].v.s.s+(s->params[2].v.s.len<3?4:s->params[2].v.s.len+1),
+			if (parse_hname2_short(s->params[2].v.s.s,s->params[2].v.s.s+(s->params[2].v.s.len<3?4:s->params[2].v.s.len+1),
 						&hdr)==0) {
 				LM_ERR("fixup_call:parse error\n");
 				return -1;
