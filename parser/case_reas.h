@@ -57,7 +57,7 @@
 
 #define reas_CASE		\
 	p += 4;				\
-	val = READ(p);		\
+	val = SAFE_READ(p, end - p);	\
 	ON_CASE;			\
 	goto other;
 
