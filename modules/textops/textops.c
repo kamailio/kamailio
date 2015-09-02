@@ -2226,8 +2226,7 @@ static int hname_fixup(void** param, int param_no)
 	gp->v.str.s[gp->v.str.len] = ':';
 	gp->v.str.len++;
 	
-	if (parse_hname2(gp->v.str.s, gp->v.str.s
-				+ ((gp->v.str.len<4)?4:gp->v.str.len), &hdr)==0)
+	if (parse_hname2_short(gp->v.str.s, gp->v.str.s + gp->v.str.len, &hdr)==0)
 	{
 		LM_ERR("error parsing header name\n");
 		pkg_free(gp);
