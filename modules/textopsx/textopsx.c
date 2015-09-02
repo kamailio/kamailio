@@ -544,7 +544,7 @@ static int fixup_hname_param(char *hname, struct hname_data** h) {
 	(*h)->hname.len = hname - (*h)->hname.s;
 	savec = *hname;
 	*hname = ':';
-	parse_hname2((*h)->hname.s, (*h)->hname.s+(*h)->hname.len+3, &hdr);
+	parse_hname2_short((*h)->hname.s, (*h)->hname.s+(*h)->hname.len, &hdr);
 	*hname = savec;
 
 	if (hdr.type == HDR_ERROR_T) goto err;
