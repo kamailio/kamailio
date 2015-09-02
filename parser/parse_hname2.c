@@ -95,11 +95,26 @@ static inline char* skip_ws(char* p, unsigned int size)
 
 /*@} */
 
+#define SAFE_READ(val, len) \
+((len) == 1 ? READ1(val) : ((len) == 2 ? READ2(val) : ((len) == 3 ? READ3(val) : ((len) > 3 ? READ4(val) : READ0(val)))))
+
 #define READ(val) \
-(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+READ4(val)
+
+#define READ4(val) \
+(*((val) + 0) + (*((val) + 1) << 8) + (*((val) + 2) << 16) + (*((val) + 3) << 24))
 
 #define READ3(val) \
-(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16))
+(*((val) + 0) + (*((val) + 1) << 8) + (*((val) + 2) << 16))
+
+#define READ2(val) \
+(*((val) + 0) + (*((val) + 1) << 8))
+
+#define READ1(val) \
+(*((val) + 0))
+
+#define READ0(val) \
+(0)
 
 #define FIRST_QUATERNIONS       \
         case _via1_: via1_CASE; \
