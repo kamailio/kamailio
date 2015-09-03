@@ -374,7 +374,13 @@ int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
 		   different length (for example because of different auth.
 		   checks)..  Therefore we force credentials to be rebuilt by UAC
 		   without prompting for password */
-		return 4;
+		/* if current time is less than start time, reset the start time 
+            	(e.g., after start, the system clock was set in the past) */ 
+        	t=time(0); 
+        	if (t < up_since) 
+			up_since = t;
+		if (since < t)
+			return 4; 
 	}
 	t=time(0);
 	if (unlikely((since > t) && ((since-t) > nonce_auth_max_drift) )){
