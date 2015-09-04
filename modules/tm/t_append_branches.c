@@ -23,9 +23,6 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * History:
- * -------
- *  2014-09-09  first release of t_append_branches
  *
  */
 
