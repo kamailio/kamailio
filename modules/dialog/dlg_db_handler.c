@@ -712,15 +712,18 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 			&sflags_column, /*18*/     &toroute_name_column, /*19*/ &req_uri_column, /*20*/
 			&xdata_column, /*21*/      &iflags_column  /*22*/ };
 
+	i = 0;
 	if( (cell->dflags & DLG_FLAG_NEW) != 0 
 	|| (cell->dflags & DLG_FLAG_CHANGED_VARS) != 0) {
 		/* iterate the list */
 		for(var=cell->vars ; var ; var=var->next) {
 			if (update_dialog_vars_dbinfo(cell, var) != 0)
 				return -1;
+			i++;
 		}
 		/* Remove the flag */
 		cell->dflags &= ~DLG_FLAG_CHANGED_VARS;
+		LM_DBG("updated %d vars for dlg [%d:%d]\n", i, cell->h_entry, cell->h_id);
 	}
 
 	if(use_dialog_table()!=0)
