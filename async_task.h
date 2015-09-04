@@ -36,5 +36,6 @@ int async_task_child_init(int rank);
 int async_task_initialized(void);
 int async_task_set_workers(int n);
 int async_task_push(async_task_t *task);
+int async_task_set_usleep(int n);
 
 #endif
