@@ -23,6 +23,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * History:
+ * -------
+ *  2014-09-09  first release of t_append_branches
  *
  */
 
@@ -106,8 +109,6 @@ int t_append_branches(void) {
 		set_branch_route(t->on_branch_delayed);
 	}
 
-	outgoings = t->nr_of_outgoings;
-
 	/* not really sure that the following is needed */
 
 	set_branch_iterator(nr_branches-1);
@@ -116,7 +117,7 @@ int t_append_branches(void) {
 										&bflags, &si, &ruid, &instance, &location_ua))) {
 		LM_DBG("Current uri %.*s\n",current_uri.len, current_uri.s);
 
-		for (i=0; i<=nr_branches; i++) {
+		for (i=0; i<outgoings; i++) {
 			if (t->uac[i].ruid.len == ruid.len
 					&& !memcmp(t->uac[i].ruid.s, ruid.s, ruid.len)) {
 				LM_DBG("branch already added [%.*s]\n", ruid.len, ruid.s);
@@ -133,6 +134,8 @@ int t_append_branches(void) {
 					&path, 0, si, orig_msg->fwd_send_flags,
 					orig_msg->rcv.proto, (dst_uri.len)?-1:UAC_SKIP_BR_DST_F, &instance,
 					&ruid, &location_ua);
+		
+		LM_DBG("added branch [%.*s] with ruid [%.*s]\n", current_uri.len, current_uri.s, ruid.len, ruid.s);
 
 		/* test if cancel was received meanwhile */
 		if (t->flags & T_CANCELED) goto canceled;
