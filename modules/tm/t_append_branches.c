@@ -109,9 +109,8 @@ int t_append_branches(void) {
 		set_branch_route(t->on_branch_delayed);
 	}
 
-	/* not really sure that the following is needed */
+	init_branch_iterator();
 
-	set_branch_iterator(nr_branches-1);
 	found = 0;
 	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
 										&bflags, &si, &ruid, &instance, &location_ua))) {
