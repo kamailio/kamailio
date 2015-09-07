@@ -1729,6 +1729,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	str* to_tag;
 	str reason;
 	struct tmcb_params onsend_params;
+	struct ip_addr ip;
 
 	/* keep compiler warnings about use of uninit vars silent */
 	res_len=0;
@@ -1736,7 +1737,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	relayed_msg=0;
 	relayed_code=0;
 	totag_retr=0;
-
 
 	/* remember, what was sent upstream to know whether we are
 	 * forwarding a first final reply or not */
@@ -1921,23 +1921,34 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		if (reply_status == RPS_COMPLETED) {
 			start_final_repl_retr(t);
 		}
-		if (likely(uas_rb->dst.send_sock &&
-					SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0)){
-			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
-				LOCK_REPLIES( t );
-				run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb, t->uas.request,
-				                              relayed_msg, relayed_code);
-				UNLOCK_REPLIES( t );
+		if (likely(uas_rb->dst.send_sock)) {
+
+			if (onsend_route_enabled(SIP_REPLY) && p_msg && (p_msg != FAKED_REPLY)) {
+				if (run_onsend(p_msg, &uas_rb->dst, buf, res_len)==0){
+					su2ip_addr(&ip, &(uas_rb->dst.to));
+					LOG(L_ERR, "forward_reply: reply to %s:%d(%d) dropped"
+							" (onsend_route)\n", ip_addr2a(&ip),
+								su_getport(&(uas_rb->dst.to)), uas_rb->dst.proto);
+				}
 			}
-			if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
-				INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
-									relayed_msg, uas_rb, &uas_rb->dst, buf,
-									res_len,
-									(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0,
-									uas_rb->branch, relayed_code);
-				LOCK_REPLIES( t );
-				run_trans_callbacks_off_params(TMCB_RESPONSE_SENT, t, &onsend_params);
-				UNLOCK_REPLIES( t );
+
+			if (SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0){
+				if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
+					LOCK_REPLIES( t );
+					run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb, t->uas.request,
+												  relayed_msg, relayed_code);
+					UNLOCK_REPLIES( t );
+				}
+				if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
+					INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
+										relayed_msg, uas_rb, &uas_rb->dst, buf,
+										res_len,
+										(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0,
+										uas_rb->branch, relayed_code);
+					LOCK_REPLIES( t );
+					run_trans_callbacks_off_params(TMCB_RESPONSE_SENT, t, &onsend_params);
+					UNLOCK_REPLIES( t );
+				}
 			}
 		} else if (unlikely(uas_rb->dst.send_sock == 0))
 			ERR("no resolved dst to send reply to\n");
