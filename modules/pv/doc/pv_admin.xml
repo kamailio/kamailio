@@ -426,6 +426,30 @@ $xavp("ok[0]=>foo") now is "foo indeed"
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.pv_xavp_to_var">
+			<title>
+				<function moreinfo="none">pv_xavp_to_var(xname)</function>
+			</title>
+			<para>
+				Copy xavp values to vars. Reverse of pv_var_to_xavp().
+			</para>
+			<para>
+			Function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pv_xavp_to_var()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$xavp("bar=>temp") = 3;
+$xavp("bar[0]=>foo") = "foo indeed";
+pv_xavp_to_var("bar");
+...
+$var("temp") now is 3
+$var("foo") now is "foo indeed"
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>
