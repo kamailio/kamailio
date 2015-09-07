@@ -51,7 +51,10 @@ static int add_contact(str aor, ucontact_info_t* ci)
 	str contact;
 	int res;
 
-	dmq_ul.get_udomain("location", &_d);
+        if (dmq_ul.get_udomain("location", &_d) < 0) {
+                LM_ERR("Failed to get domain\n");
+                return -1;
+        }
 	res = dmq_ul.get_urecord(_d, &aor, &r);
 	if (res < 0) {
 		LM_ERR("failed to retrieve record from usrloc\n");
@@ -116,6 +119,12 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
     LM_ERR("dmq_ul.get_all_ucontacts is NULL\n");
     goto done;
   }
+
+	if (dmq_ul.get_udomain("location", &_d) < 0) {
+		LM_ERR("Failed to get domain\n");
+		goto done;
+	}
+
 	rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1);
 	if (rval<0) {
 		LM_ERR("failed to fetch contacts\n");
@@ -160,8 +169,6 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
         cp =  (char*)cp + sizeof(ruid.len) + ruid.len;
         memcpy( &aorhash, cp, sizeof(aorhash));
         cp = (char*)cp + sizeof(aorhash);
-
-        dmq_ul.get_udomain("location", &_d);
 
         res = dmq_ul.get_urecord_by_ruid(_d, aorhash, &ruid, &r, &ptr);
         aor = r->aor;
