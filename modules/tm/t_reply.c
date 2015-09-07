@@ -1922,16 +1922,19 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			start_final_repl_retr(t);
 		}
 		if (likely(uas_rb->dst.send_sock)) {
-
 			if (onsend_route_enabled(SIP_REPLY) && p_msg && (p_msg != FAKED_REPLY)) {
 				if (run_onsend(p_msg, &uas_rb->dst, buf, res_len)==0){
 					su2ip_addr(&ip, &(uas_rb->dst.to));
 					LOG(L_ERR, "forward_reply: reply to %s:%d(%d) dropped"
 							" (onsend_route)\n", ip_addr2a(&ip),
 								su_getport(&(uas_rb->dst.to)), uas_rb->dst.proto);
+					/* workaround for drop - reset send_sock to skip sending out */
+					uas_rb->dst.send_sock = 0;
 				}
 			}
+		}
 
+		if (likely(uas_rb->dst.send_sock)) {
 			if (SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0){
 				if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
 					LOCK_REPLIES( t );
@@ -1950,8 +1953,9 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 					UNLOCK_REPLIES( t );
 				}
 			}
-		} else if (unlikely(uas_rb->dst.send_sock == 0))
-			ERR("no resolved dst to send reply to\n");
+		} else {
+			LM_NOTICE("dst no longer set - skiped sending the reply out\n");
+		}
 		/* Call put_on_wait() only if we really send out
 		* the reply. It can happen that the reply has been already sent from
 		* failure_route  or from a callback and the timer has been already
