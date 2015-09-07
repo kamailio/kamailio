@@ -674,4 +674,62 @@ error:
 	xavp_rm_by_name(xname, 1, NULL);
 	return -1;
 }
+
+int pv_xavp_to_var_helper(sr_xavp_t *avp) {
+	script_var_t *it;
+	int_str value;
+	int flags = 0;
+
+	it = add_var(&avp->name, VAR_TYPE_ZERO);
+	if(!it)	return -1;
+	if(avp->val.type==SR_XTYPE_STR){
+		flags |= VAR_VAL_STR;
+		value.s.len = avp->val.v.s.len;
+		value.s.s = avp->val.v.s.s;
+		LM_DBG("var:[%.*s]  STR:[%.*s]\n", avp->name.len, avp->name.s,
+			value.s.len, value.s.s);
+	}
+	else if(avp->val.type==SR_XTYPE_INT) {
+		flags |= VAR_VAL_INT;
+		value.n = avp->val.v.i;
+		LM_DBG("var:[%.*s] INT:[%d]\n", avp->name.len, avp->name.s,
+			value.n);
+	} else {
+		LM_ERR("avp type not STR nor INT\n");
+		return -1;
+	}
+	set_var_value(it, &value, flags);
+
+	return 0;
+}
+
+int pv_xavp_to_var(str *xname) {
+	sr_xavp_t *xavp;
+	sr_xavp_t *avp;
+
+	LM_DBG("xname:%.*s\n", xname->len, xname->s);
+
+	xavp = xavp_get_by_index(xname, 0, NULL);
+	if(!xavp) {
+		LM_ERR("xavp [%.*s] not found\n", xname->len, xname->s);
+		return -1;
+	}
+	if(xavp->val.type!=SR_XTYPE_XAVP){
+		LM_ERR("%.*s not xavp type?\n", xname->len, xname->s);
+		return -1;
+	}
+	avp = xavp->val.v.xavp;
+	if (avp)
+	{
+		if(pv_xavp_to_var_helper(avp)<0) return -1;
+		avp = avp->next;
+	}
+
+	while(avp)
+	{
+		if(pv_xavp_to_var_helper(avp)<0) return -1;
+		avp = avp->next;
+	}
+	return 1;
+}
 #endif
