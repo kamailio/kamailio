@@ -622,6 +622,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     //We don't ever do AAR on request for calling scenario...
     if (msg->first_line.type != SIP_REPLY) {
         LM_DBG("Can't do AAR for call session in request\n");
+		result = CSCF_RETURN_FALSE;
         return result;
     }
 
@@ -634,17 +635,19 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     }
 
     //we dont apply QoS if its not a reply to an INVITE! or UPDATE or PRACK!
-    if ((t->method.len == 5 && memcmp(t->method.s, "PRACK", 5) == 0)
-            || (t->method.len == 6 && (memcmp(t->method.s, "INVITE", 6) == 0
-            || memcmp(t->method.s, "UPDATE", 6) == 0))) {
-        if (cscf_get_content_length(msg) == 0
-                || cscf_get_content_length(t->uas.request) == 0) {
-            LM_DBG("No SDP offer answer -> therefore we can not do Rx AAR");
-            //goto aarna; //AAR na if we dont have offer/answer pair
-            return result;
-        }
+    if ((t->method.len == 5 && memcmp(t->method.s, "PRACK", 5) == 0) 
+		|| (t->method.len == 6 && (memcmp(t->method.s, "INVITE", 6) == 0 
+		|| memcmp(t->method.s, "UPDATE", 6) == 0))) {
+			if (cscf_get_content_length(msg) == 0 
+				|| cscf_get_content_length(t->uas.request) == 0) {
+				LM_DBG("No SDP offer answer -> therefore we can not do Rx AAR");
+				//goto aarna; //AAR na if we dont have offer/answer pair
+				result = CSCF_RETURN_FALSE;
+				return result;
+			}
     } else {
         LM_DBG("Message is not response to INVITE, PRACK or UPDATE -> therefore we do not Rx AAR");
+		result = CSCF_RETURN_FALSE;
         return result;
     }
 
