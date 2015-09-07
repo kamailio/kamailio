@@ -370,10 +370,6 @@ event_route[network:msg] {
 		</example>
 	</section>
 
-
-    - ("flagname")
-	- ("flagname")
-
 	</section>
 
 	<section>
