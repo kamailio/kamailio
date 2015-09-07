@@ -46,6 +46,8 @@ Muhammad Shahzad Shafi
               4.6. msg_iflag_set(flagname)
               4.7. msg_iflag_reset(flagname)
               4.8. msg_iflag_is_set(flagname)
+              4.9. file_read(fpath, var)
+              4.10. file_write(fpath, content)
 
         5. RPC Commands
 
@@ -73,8 +75,10 @@ Muhammad Shahzad Shafi
    1.9. msg_iflag_set usage
    1.10. msg_iflag_reset usage
    1.11. msg_iflag_is_set usage
-   1.12. event_route[network:msg] use cases
-   1.13. Sample PERL code for do_compress and do_uncompress
+   1.12. file_read usage
+   1.13. file_write usage
+   1.14. event_route[network:msg] use cases
+   1.15. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -103,6 +107,8 @@ Chapter 1. Admin Guide
         4.6. msg_iflag_set(flagname)
         4.7. msg_iflag_reset(flagname)
         4.8. msg_iflag_is_set(flagname)
+        4.9. file_read(fpath, var)
+        4.10. file_write(fpath, content)
 
    5. RPC Commands
 
@@ -228,6 +234,8 @@ modparam("corex", "msg_avp", "$avp(msg)")
    4.6. msg_iflag_set(flagname)
    4.7. msg_iflag_reset(flagname)
    4.8. msg_iflag_is_set(flagname)
+   4.9. file_read(fpath, var)
+   4.10. file_write(fpath, content)
 
 4.1. append_branch([ uri, [ q ] ])
 
@@ -352,6 +360,28 @@ event_route[network:msg] {
     if(msg_iflag_is_set("UAC_AUTH")) { ... }
 ...
 
+4.9. file_read(fpath, var)
+
+   Read content of a text file into a variable.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. file_read usage
+...
+if(file_read("/tmp/data.txt", "$var(data)")) { ... }
+...
+
+4.10. file_write(fpath, content)
+
+   Write content of parameter to a text file.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. file_write usage
+...
+if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
+...
+
 5. RPC Commands
 
    5.1. corex.list_sockets
@@ -461,7 +491,7 @@ event_route[network:msg] {
    Next is a basic usage example where encoding and decoding is done using
    PERL,
 
-   Example 1.12. event_route[network:msg] use cases
+   Example 1.14. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -492,7 +522,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.13. Sample PERL code for do_compress and do_uncompress
+   Example 1.15. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
