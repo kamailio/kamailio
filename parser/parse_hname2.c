@@ -282,7 +282,7 @@ char* parse_hname2_short(char* const begin, const char* const end, struct hdr_fi
 	char *p;
 
 	if(end-begin>=HBUF_MAX_SIZE-4) {
-		p = q_memchr(p, ':', end - begin);
+		p = q_memchr(begin, ':', end - begin);
 		if(p && p-4> begin) {
 			/* header name termination char found and enough space in buffer after it */
 			return parse_hname2(begin, end, hdr);
