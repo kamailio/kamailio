@@ -453,7 +453,7 @@ int insert_ucontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
                 case 2://overwrite oldest
                     LM_DBG("Too many contacts already registered, overwriting oldest for IMPU <%.*s>\n", _r->public_identity.len, _r->public_identity.s);
                     //we can just remove the first one seeing the contacts are ordered on insertion with newest last and oldest first
-                    //TODO:mem_delete_ucontact(_r, _r->contacts);
+                    delete_ucontact(_r->newcontacts[0]);
                     break;
                 default://unknown
                     LM_ERR("unknown maxcontact behaviour..... ignoring\n");
