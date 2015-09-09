@@ -108,11 +108,11 @@ int t_append_branches(void) {
 
 	init_branch_iterator();
 
-	found = 0;
 	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
 										&bflags, &si, &ruid, &instance, &location_ua))) {
 		LM_DBG("Current uri %.*s\n",current_uri.len, current_uri.s);
 
+		found = 0;
 		for (i=0; i<outgoings; i++) {
 			if (t->uac[i].ruid.len == ruid.len
 					&& !memcmp(t->uac[i].ruid.s, ruid.s, ruid.len)) {
