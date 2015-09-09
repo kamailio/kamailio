@@ -1,0 +1,31 @@
+{
+  "name": "imc_members",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "room": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "flag": {
+      "type": "int",
+      "default": null,
+      "null": false
+    }
+  ]
+}

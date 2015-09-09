@@ -1,0 +1,36 @@
+{
+  "name": "domainpolicy",
+  "version": 2,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "rule": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "type": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "att": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "val": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "description": {
+      "type": "string",
+      "default": null,
+      "null": false
+    }
+  ]
+}

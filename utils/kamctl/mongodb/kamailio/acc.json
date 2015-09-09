@@ -1,0 +1,46 @@
+{
+  "name": "acc",
+  "version": 5,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "method": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "from_tag": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "to_tag": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "callid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "sip_code": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "sip_reason": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "time": {
+      "type": "datetime",
+      "default": null,
+      "null": false
+    }
+  ]
+}

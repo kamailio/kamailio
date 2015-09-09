@@ -1,0 +1,36 @@
+{
+  "name": "rtpproxy",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "setid": {
+      "type": "string",
+      "default": 00,
+      "null": false
+    },
+    "url": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "weight": {
+      "type": "int",
+      "default": 1,
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

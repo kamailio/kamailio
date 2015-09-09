@@ -1,0 +1,36 @@
+{
+  "name": "address",
+  "version": 6,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "grp": {
+      "type": "int",
+      "default": 1,
+      "null": false
+    },
+    "ip_addr": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "mask": {
+      "type": "int",
+      "default": 32,
+      "null": false
+    },
+    "port": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "tag": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

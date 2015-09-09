@@ -1,0 +1,41 @@
+{
+  "name": "dispatcher",
+  "version": 4,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "setid": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "destination": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "priority": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "attrs": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

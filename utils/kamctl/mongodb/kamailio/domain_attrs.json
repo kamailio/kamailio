@@ -1,0 +1,36 @@
+{
+  "name": "domain_attrs",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "did": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "name": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "type": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "value": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "last_modified": {
+      "type": "datetime",
+      "default": "1900-01-01 00:00:01",
+      "null": false
+    }
+  ]
+}

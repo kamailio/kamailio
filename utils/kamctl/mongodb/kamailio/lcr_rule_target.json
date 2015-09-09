@@ -1,0 +1,36 @@
+{
+  "name": "lcr_rule_target",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "lcr_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "rule_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "gw_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "priority": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "weight": {
+      "type": "int",
+      "default": 1,
+      "null": false
+    }
+  ]
+}

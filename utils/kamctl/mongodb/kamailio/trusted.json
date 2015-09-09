@@ -1,0 +1,41 @@
+{
+  "name": "trusted",
+  "version": 6,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "src_ip": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "proto": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "from_pattern": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ruri_pattern": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "tag": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "priority": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

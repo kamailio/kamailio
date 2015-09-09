@@ -1,0 +1,21 @@
+{
+  "name": "re_grp",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "reg_exp": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "group_id": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

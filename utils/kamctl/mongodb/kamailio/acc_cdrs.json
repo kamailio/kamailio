@@ -1,0 +1,26 @@
+{
+  "name": "acc_cdrs",
+  "version": 2,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "start_time": {
+      "type": "datetime",
+      "default": "2000-01-01 00:00:00",
+      "null": false
+    },
+    "end_time": {
+      "type": "datetime",
+      "default": "2000-01-01 00:00:00",
+      "null": false
+    },
+    "duration": {
+      "type": "double",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "purplemap",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "sip_user": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "ext_user": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "ext_prot": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "ext_pass": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "speed_dial",
+  "version": 2,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "sd_username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "sd_domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "new_uri": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "fname": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "lname": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

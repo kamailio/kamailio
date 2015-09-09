@@ -1,0 +1,126 @@
+{
+  "name": "dialog",
+  "version": 7,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "hash_entry": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "hash_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "callid": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "from_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "from_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "to_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "to_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "caller_cseq": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "callee_cseq": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "caller_route_set": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "callee_route_set": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "caller_contact": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "callee_contact": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "caller_sock": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "callee_sock": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "state": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "start_time": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "timeout": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "sflags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "iflags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "toroute_name": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "req_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "xdata": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

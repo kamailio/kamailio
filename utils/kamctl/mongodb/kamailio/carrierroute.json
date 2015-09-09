@@ -1,0 +1,66 @@
+{
+  "name": "carrierroute",
+  "version": 3,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "carrier": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "domain": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "scan_prefix": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "mask": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "prob": {
+      "type": "double",
+      "default": 0,
+      "null": false
+    },
+    "strip": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "rewrite_host": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "rewrite_prefix": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "rewrite_suffix": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

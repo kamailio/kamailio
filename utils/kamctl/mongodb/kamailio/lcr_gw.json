@@ -1,0 +1,76 @@
+{
+  "name": "lcr_gw",
+  "version": 3,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "lcr_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "gw_name": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "ip_addr": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "hostname": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "port": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "params": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "uri_scheme": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "transport": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "strip": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "prefix": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "tag": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "defunct": {
+      "type": "int",
+      "default": null,
+      "null": true
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "xcap",
+  "version": 4,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "doc": {
+      "type": "text",
+      "default": null,
+      "null": false
+    },
+    "doc_type": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "etag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "source": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "doc_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "port": {
+      "type": "int",
+      "default": null,
+      "null": false
+    }
+  ]
+}

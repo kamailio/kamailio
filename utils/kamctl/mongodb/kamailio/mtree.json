@@ -1,0 +1,21 @@
+{
+  "name": "mtree",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "tprefix": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "tvalue": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

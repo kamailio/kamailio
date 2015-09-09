@@ -1,0 +1,26 @@
+{
+  "name": "pdt",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "sdomain": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "prefix": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

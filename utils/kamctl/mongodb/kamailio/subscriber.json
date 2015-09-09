@@ -1,0 +1,46 @@
+{
+  "name": "subscriber",
+  "version": 6,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "password": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "email_address": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "ha1": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "ha1b": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "rpid": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

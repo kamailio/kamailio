@@ -1,0 +1,21 @@
+{
+  "name": "matrix",
+  "version": 1,
+  "columns": [
+    "first": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "second": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "res": {
+      "type": "int",
+      "default": null,
+      "null": false
+    }
+  ]
+}

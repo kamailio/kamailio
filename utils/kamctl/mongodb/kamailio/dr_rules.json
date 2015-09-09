@@ -1,0 +1,46 @@
+{
+  "name": "dr_rules",
+  "version": 3,
+  "columns": [
+    "ruleid": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "groupid": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "prefix": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "timerec": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "priority": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "routeid": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "gwlist": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

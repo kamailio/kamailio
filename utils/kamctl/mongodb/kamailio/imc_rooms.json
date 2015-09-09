@@ -1,0 +1,26 @@
+{
+  "name": "imc_rooms",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "name": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "flag": {
+      "type": "int",
+      "default": null,
+      "null": false
+    }
+  ]
+}

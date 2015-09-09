@@ -1,0 +1,121 @@
+{
+  "name": "location",
+  "version": 8,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "ruid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "contact": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "received": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "path": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "expires": {
+      "type": "datetime",
+      "default": "2030-05-28 21:32:15",
+      "null": false
+    },
+    "q": {
+      "type": "double",
+      "default": 1.0,
+      "null": false
+    },
+    "callid": {
+      "type": "string",
+      "default": "Default-Call-ID",
+      "null": false
+    },
+    "cseq": {
+      "type": "int",
+      "default": 1,
+      "null": false
+    },
+    "last_modified": {
+      "type": "datetime",
+      "default": "1900-01-01 00:00:01",
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "cflags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "user_agent": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "socket": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "methods": {
+      "type": "int",
+      "default": null,
+      "null": true
+    },
+    "instance": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "reg_id": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "server_id": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "connection_id": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "keepalive": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "partition": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}
