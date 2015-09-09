@@ -750,6 +750,21 @@ dlg_cell_t* search_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 
 
 /*!
+ * \brief Lock hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_lock(str *callid)
+{
+	unsigned int he;
+	struct dlg_entry *d_entry;
+
+	he = core_hash(callid, 0, d_table->size);
+	d_entry = &(d_table->entries[he]);
+	dlg_lock(d_table, d_entry);
+}
+
+
+/*!
  * \brief Release hash table slot by call-id
  * \param callid call-id value
  */
@@ -762,7 +777,6 @@ void dlg_hash_release(str *callid)
 	d_entry = &(d_table->entries[he]);
 	dlg_unlock(d_table, d_entry);
 }
-
 
 
 /*!
