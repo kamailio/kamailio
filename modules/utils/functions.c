@@ -199,8 +199,13 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
 		LM_DBG("http_query download size: %u\n", (unsigned int)download_size);
 
-		/* search for line feed */
+		/* search for line feed and remove initial empty lines*/
 		at = memchr(stream.buf, (char)10, download_size);
+		while (at == stream.buf) {
+                	stream.buf += 1 ;
+                	download_size -= 1 ;
+                	at = memchr(stream.buf, (char)10, download_size);
+        	}
 		if (at == NULL) {
 			/* not found: use whole stream */
 			at = stream.buf + (unsigned int)download_size;
