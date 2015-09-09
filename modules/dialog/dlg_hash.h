@@ -357,6 +357,13 @@ dlg_cell_t* search_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 
 /*!
+ * \brief Lock hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_lock(str *callid);
+
+
+/*!
  * \brief Release hash table slot by call-id
  * \param callid call-id value
  */
