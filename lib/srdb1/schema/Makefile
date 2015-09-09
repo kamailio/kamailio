@@ -209,16 +209,16 @@ mongodb:
 	done
 	@# small hack to create the version table entries, this is here easier as with XSL
 	@echo "use kamailio;" \
-		> "$(SCHEME)/dbtext/kamailio/version-create.mongo" ;
+		> "$(SCHEME)/mongodb/kamailio/version-create.mongo" ;
 	@echo "db.createCollection(\"version\");" \
-		>> "$(SCHEME)/dbtext/kamailio/version-create.mongo" ;
+		>> "$(SCHEME)/mongodb/kamailio/version-create.mongo" ;
 	@for FILE in $(sort $(wildcard $(SCHEME)/mongodb/kamailio/*.json)) ; do \
 		if [ -f "$$FILE" ]; then \
 			if [  "$$FILE" != "$(SCHEME)/mongodb/kamailio/version.json" ]; then \
 				VN=`grep '"version":' "$$FILE" | grep -o -E '[0-9]+'` ; \
 				FN=`basename $$FILE .json` ;\
 				echo "db.getCollection(\"version\").insert({ table_name: \"$$FN\", table_version: NumberInt($$VN) });" \
-						>> "$(SCHEME)/dbtext/kamailio/version-create.mongo" ; \
+						>> "$(SCHEME)/mongodb/kamailio/version-create.mongo" ; \
 			fi ; \
 		fi ; \
 	done ; \
