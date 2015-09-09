@@ -33,6 +33,9 @@ DB_SQLITE_XSL = $(STYLESHEETS)/db_sqlite.xsl
 # Stylesheet used to generate oracle database schema
 ORACLE_XSL = $(STYLESHEETS)/oracle.xsl
 
+# Stylesheet used to generate mongodb database schema
+MONGODB_XSL = $(STYLESHEETS)/mongodb.xsl
+
 # Stylesheet used to generate docbook documentation
 DOCBOOK_XSL = $(STYLESHEETS)/docbook.xsl
 
@@ -194,6 +197,35 @@ db_sqlite:
 
 db_sqlite_clean:
 	-@rm -f $(SCHEME)/db_sqlite/*
+
+.PHONY: mongodb mongodb_clean
+mongodb:
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(SCHEME)/mongodb/kamailio" \
+		--stringparam prefix "" \
+		--stringparam db "mongodb" \
+		$(MONGODB_XSL) kamailio-"$$FILE".xml ; \
+	done
+	@# small hack to create the version table entries, this is here easier as with XSL
+	@echo "use kamailio;" \
+		> "$(SCHEME)/dbtext/kamailio/version-create.mongo" ;
+	@echo "db.createCollection(\"version\");" \
+		>> "$(SCHEME)/dbtext/kamailio/version-create.mongo" ;
+	@for FILE in $(sort $(wildcard $(SCHEME)/mongodb/kamailio/*.json)) ; do \
+		if [ -f "$$FILE" ]; then \
+			if [  "$$FILE" != "$(SCHEME)/mongodb/kamailio/version.json" ]; then \
+				VN=`grep '"version":' "$$FILE" | grep -o -E '[0-9]+'` ; \
+				FN=`basename $$FILE .json` ;\
+				echo "db.getCollection(\"version\").insert({ table_name: \"$$FN\", table_version: NumberInt($$VN) });" \
+						>> "$(SCHEME)/dbtext/kamailio/version-create.mongo" ; \
+			fi ; \
+		fi ; \
+	done ; \
+
+mongodb_clean:
+	-@rm -f $(SCHEME)/mongodb/kamailio/*
+
 
 .PHONY: docbook-xml
 docbook-xml:
