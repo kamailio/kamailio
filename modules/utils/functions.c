@@ -86,6 +86,8 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 	pv_value_t val;
 	double download_size;
 	struct curl_slist *chunk = NULL;
+	double size;
+    	char *head;
 
 	memset(&stream, 0, sizeof(http_res_stream_t));
 
@@ -200,18 +202,20 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 		LM_DBG("http_query download size: %u\n", (unsigned int)download_size);
 
 		/* search for line feed and remove initial empty lines*/
-		at = memchr(stream.buf, (char)10, download_size);
-		while (at == stream.buf) {
-                	stream.buf += 1 ;
-                	download_size -= 1 ;
-                	at = memchr(stream.buf, (char)10, download_size);
+		head = stream.buf;
+		size = download_size;
+		at = memchr(head, (char)10, size);
+		while (at == head) {
+                	head += 1 ;
+                	size -= 1 ;
+                	at = memchr(head, (char)10, size);
         	}
 		if (at == NULL) {
 			/* not found: use whole stream */
-			at = stream.buf + (unsigned int)download_size;
+			at = head + (unsigned int)size;
 		}
-		val.rs.s = stream.buf;
-		val.rs.len = at - stream.buf;
+		val.rs.s = head;
+		val.rs.len = at - head;
 		LM_DBG("http_query result: %.*s\n", val.rs.len, val.rs.s);
 		val.flags = PV_VAL_STR;
 		dst = (pv_spec_t *)_dst;
