@@ -781,9 +781,9 @@ int rls_handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_doma
 		}
 	}
 
-	if (dbmode != RLS_DB_ONLY)
+	if (get_to(msg)->tag_value.s==NULL || get_to(msg)->tag_value.len==0)
 	{
-		/* sending notify with full state */
+		/* initial subscriber - sending notify with full state */
 		if(send_full_notify(&subs, service_node, &subs.pres_uri, hash_code)<0)
 		{
 			LM_ERR("failed sending full state notify\n");
