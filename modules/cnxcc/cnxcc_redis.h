@@ -22,7 +22,7 @@
  *
  */
 
-#ifndef CNXCC_STORAGE_H_
+#ifndef CNXCC_REDIS_H_
 #define CNXCC_REDIS_H_
 
 #include <hiredis/hiredis.h>
