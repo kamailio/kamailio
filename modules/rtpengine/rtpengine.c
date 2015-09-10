@@ -854,7 +854,7 @@ static struct mi_root* mi_enable_rtp_proxy(struct mi_root *cmd_tree,
 	struct mi_node *node, *crt_node;
 	struct rtpp_set *rtpp_list;
 	struct rtpp_node *crt_rtpp, *found_rtpp;
-	struct mi_root *root;
+	struct mi_root *root = NULL;
 	struct mi_attr *attr;
 	unsigned int enable;
 	int found, found_rtpp_disabled;
@@ -1099,7 +1099,7 @@ static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree,
 												void* param)
 {
 	struct mi_node *node;
-	struct mi_root *root;
+	struct mi_root *root = NULL;
 	struct rtpp_set *rtpp_list;
 	struct rtpp_node *crt_rtpp;
 	int found;
@@ -1190,7 +1190,7 @@ static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree,
 {
 	struct mi_node *node, *crt_node;
 	struct mi_attr *attr;
-	struct mi_root *root;
+	struct mi_root *root = NULL;
 	struct rtpp_set *rtpp_list;
 	struct rtpp_node *crt_rtpp, *found_rtpp;
 	int found, found_rtpp_disabled;
