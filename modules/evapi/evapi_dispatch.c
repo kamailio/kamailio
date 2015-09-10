@@ -225,7 +225,7 @@ int evapi_dispatch_notify(char *obuf, int olen)
  */
 void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 {
-#define CLIENT_BUFFER_SIZE	4096
+#define CLIENT_BUFFER_SIZE	32768
 	char rbuffer[CLIENT_BUFFER_SIZE];
 	ssize_t rlen;
 	int i, k;
