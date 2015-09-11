@@ -545,8 +545,6 @@ finish:
  */
 static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
 {
-	int hash;
-	struct fm_frag *pf;
 	struct fm_frag *n;
 
 	n=FRAG_NEXT(f);
