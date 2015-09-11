@@ -88,7 +88,7 @@ error:
 void update_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg) {
     AAA_AVP *avp;
     uint32_t session_timeout = 0, grace_period = 0, auth_lifetime = 0;
-    int update_grace = 0, update_timeout = 0, update_lifetime = 0;
+    int update_grace = 0, update_lifetime = 0;
 
     avp = AAAFindMatchingAVP(msg, 0, AVP_Auth_Grace_Period, 0, 0);
     if (avp && avp->data.len == 4) {
@@ -129,7 +129,6 @@ void update_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg) {
                 x->lifetime = time(0) + auth_lifetime;
         }
         if (x->timeout != -1 && x->timeout < x->lifetime) {
-            update_timeout = 1;
             x->timeout = x->lifetime + x->grace_period;
         }
     }
