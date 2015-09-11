@@ -91,7 +91,7 @@
 	((qm)->free_bitmap[(b)/FM_HASH_BMP_BITS] & (1UL<<((b)%FM_HASH_BMP_BITS)))
 
 
-
+#define fm_is_free(f) ((f)->u.nxt_free)
 /**
  * \brief Find the first free fragment in a memory block
  * 
@@ -173,38 +173,18 @@ inline static int fm_bmp_first_set(struct fm_block* qm, int start)
  */
 static inline void fm_extract_free(struct fm_block* qm, struct fm_frag* frag)
 {
-	struct fm_frag** pf;
 	int hash;
 
-	pf = frag->prv_free;
 	hash = GET_HASH(frag->size);
 
-	if(unlikely(pf==0)) {
-		/* try to discover previous fragment (safety review) */
-		LM_WARN("missing prev info for fragment %p from %p [%d]\n",
-					frag, qm, hash);
-		if(likely(qm->free_hash[hash].first)) {
-			if(likely(qm->free_hash[hash].first==frag)) {
-				pf = &(qm->free_hash[hash].first);
-			} else {
-				for(pf=&(qm->free_hash[hash].first); (*pf); pf=&((*pf)->u.nxt_free)) {
-					if((*pf)->u.nxt_free==frag) {
-						break;
-					}
-				}
-			}
-		}
-		if(unlikely(pf==0)) {
-			LM_ALERT("attemting to extract inexistent fragment %p from %p [%d]\n",
-					frag, qm, hash);
-			return;
-		}
-		frag->prv_free = pf;
+	if(frag->prv_free) {
+		frag->prv_free->u.nxt_free = frag->u.nxt_free;
+	} else {
+		qm->free_hash[hash].first = frag->u.nxt_free;
 	}
-
-	*pf=frag->u.nxt_free;
-
-	if(frag->u.nxt_free) frag->u.nxt_free->prv_free = pf;
+	if(frag->u.nxt_free && frag->u.nxt_free!=qm->last_frag) {
+		frag->u.nxt_free->prv_free = frag->prv_free;
+	}
 
 	qm->ffrags--;
 	qm->free_hash[hash].no--;
@@ -213,6 +193,7 @@ static inline void fm_extract_free(struct fm_block* qm, struct fm_frag* frag)
 		fm_bmp_reset(qm, hash);
 #endif /* F_MALLOC_HASH_BITMAP */
 	frag->prv_free = NULL;
+	frag->u.nxt_free = NULL;
 
 	qm->real_used+=frag->size;
 	qm->used+=frag->size;
@@ -225,24 +206,41 @@ static inline void fm_extract_free(struct fm_block* qm, struct fm_frag* frag)
  */
 static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
 {
-	struct fm_frag** f;
+	struct fm_frag* f;
 	int hash;
 	
 	hash=GET_HASH(frag->size);
-	f=&(qm->free_hash[hash].first);
+	f=qm->free_hash[hash].first;
 	if (frag->size > F_MALLOC_OPTIMIZE){ /* because of '<=' in GET_HASH,
 											(different from 0.8.1[24] on
 											 purpose --andrei ) */
-		for(; *f; f=&((*f)->u.nxt_free)){
-			if (frag->size <= (*f)->size) break;
+		/* large fragments list -- add at a position ordered by size */
+		for(; f && f->u.nxt_free!=qm->last_frag; f=f->u.nxt_free){
+			if (frag->size <= f->size) break;
 		}
-	}
 	
-	/*insert it here*/
-	frag->prv_free = f;
-	frag->u.nxt_free=*f;
-	if (*f) (*f)->prv_free = &(frag->u.nxt_free);
-	*f=frag;
+		/*insert frag before f*/
+		frag->u.nxt_free = f;
+		if(f) {
+			frag->prv_free=f->prv_free;
+			if(f->prv_free) f->prv_free->u.nxt_free = frag;
+			if(qm->free_hash[hash].first==f) qm->free_hash[hash].first = frag;
+		} else {
+			/* to be only one in slot */
+			qm->free_hash[hash].first = frag;
+			frag->prv_free=0;
+		}
+	} else {
+		/* fixed fragment size list -- add first */
+		frag->prv_free=0;
+		if(f) {
+			f->prv_free = frag;
+			frag->u.nxt_free = f;
+		} else {
+			frag->u.nxt_free = qm->last_frag;
+		}
+		qm->free_hash[hash].first = frag;
+	}
 	qm->ffrags++;
 	qm->free_hash[hash].no++;
 #ifdef F_MALLOC_HASH_BITMAP
@@ -382,22 +380,23 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, unsigned long size)
 	while((char*)frag < (char*)qm->last_frag) {
 		nxt = FRAG_NEXT(frag);
 
-		if ( ((char*)nxt < (char*)qm->last_frag) && frag->prv_free
-				&& nxt->prv_free) {
-			/* join frag + nxt */
+		if ( ((char*)nxt < (char*)qm->last_frag) && fm_is_free(frag)
+				&& fm_is_free(nxt)) {
+			/* join frag with all next consecutive free frags */
 			fm_extract_free(qm, frag);
 			do {
 				fm_extract_free(qm, nxt);
 				frag->size += nxt->size + FRAG_OVERHEAD;
 
-				/* join - one frag less, add overhead to used */
+				/* after join - one frag less, add its overhead to used
+				 * (real_used already has it - f and n were extracted */
 				qm->used += FRAG_OVERHEAD;
 
 				if( frag->size >size )
 					return frag;
 
 				nxt = FRAG_NEXT(frag);
-			} while (((char*)nxt < (char*)qm->last_frag) && nxt->prv_free);
+			} while (((char*)nxt < (char*)qm->last_frag) && fm_is_free(nxt));
 
 			fm_insert_free(qm, frag);
 		}
@@ -518,40 +517,30 @@ finish:
 
 #ifdef MEM_JOIN_FREE
 /**
- * join fragment f with next one (if it is free)
+ * join fragment free frag f with next one (if it is free)
  */
 static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
 {
 	int hash;
-	struct fm_frag **pf;
-	struct fm_frag* n;
+	struct fm_frag *pf;
+	struct fm_frag *n;
 
 	n=FRAG_NEXT(f);
-	/* check if valid and if in free list */
-	if (((char*)n >= (char*)qm->last_frag) || (n->prv_free==NULL))
+
+	/* check if n is valid and if in free list */
+	if (((char*)n >= (char*)qm->last_frag) || !fm_is_free(n))
 		return;
 
 	/* detach n from the free list */
-	hash=GET_HASH(n->size);
-	pf=n->prv_free;
-	if (*pf==0){
-		/* not found, bad! */
-		LM_WARN("could not find %p in free list (hash=%ld)\n", n, GET_HASH(n->size));
-		return;
-	}
-	/* detach */
-	*pf=n->u.nxt_free;
-	if(n->u.nxt_free) n->u.nxt_free->prv_free = pf;
-	qm->ffrags--;
-	qm->free_hash[hash].no--;
-#ifdef F_MALLOC_HASH_BITMAP
-	if (qm->free_hash[hash].no==0)
-		fm_bmp_reset(qm, hash);
-#endif /* F_MALLOC_HASH_BITMAP */
-	/* join */
+	fm_extract_free(qm, n);
+
+	/* join - f extended with size of n plus its overhead */
 	f->size+=n->size+FRAG_OVERHEAD;
-	qm->real_used+=n->size;
-	qm->used+=n->size + FRAG_OVERHEAD;
+
+	/* after join - one frag less, add its overhead to used
+	 * (real_used already has it - f and n were extracted */
+	qm->used += FRAG_OVERHEAD;
+
 }
 #endif /*MEM_JOIN_FREE*/
 
@@ -593,7 +582,7 @@ void fm_free(struct fm_block* qm, void* p)
 	MDBG("fm_free: freeing block alloc'ed from %s: %s(%ld)\n",
 			f->file, f->func, f->line);
 #endif
-	if(unlikely(f->prv_free!=NULL)) {
+	if(unlikely(fm_is_free(f))) {
 		LM_INFO("freeing a free fragment (%p/%p) - ignore\n",
 				f, p);
 		return;
@@ -682,11 +671,12 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #endif
 		diff=size-f->size;
 		n=FRAG_NEXT(f);
+		/*if next frag is free, check if a join has enough size*/
 		if (((char*)n < (char*)qm->last_frag) && 
-				(n->prv_free) && ((n->size+FRAG_OVERHEAD)>=diff)){
+				fm_is_free(n) && ((n->size+FRAG_OVERHEAD)>=diff)){
 			/* detach n from the free list */
 			fm_extract_free(qm, n);
-			/* join  */
+			/* join */
 			f->size+=n->size+FRAG_OVERHEAD;
 			qm->used+=FRAG_OVERHEAD;
 
@@ -915,7 +905,7 @@ void fm_sums(struct fm_block* qm)
 	
 	for (f=qm->first_frag, i=0; (char*)f<(char*)qm->last_frag;
 			f=FRAG_NEXT(f), i++){
-		if (f->prv_free==0){
+		if (!fm_is_free(f)){
 			x = get_mem_counter(&root,f);
 			x->count++;
 			x->size+=f->size;
