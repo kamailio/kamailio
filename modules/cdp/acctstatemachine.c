@@ -210,29 +210,41 @@ inline int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMes
 			}
 			break;
 		case ACC_CC_ST_PENDING_U:
-			if (event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
-				rc = get_result_code(msg);
-				if (rc >= 2000 && rc < 3000) {
-					event = ACC_CC_EV_RECV_ANS_SUCCESS;
-				} else {
-					event = ACC_CC_EV_RECV_ANS_UNSUCCESS;
-				}
-			}
-			switch (event) {
-				case ACC_CC_EV_RECV_ANS_SUCCESS:
-					x->state = ACC_CC_ST_OPEN;
-					LM_DBG("success CCA for UPDATE\n");
-					update_gsu_response_timers(x, msg);
-					break;
-				case ACC_CC_EV_RECV_ANS_UNSUCCESS:
-					//TODO: check whether we grant or terminate service to callback clients
-					x->state = ACC_CC_ST_DISCON;
-					LM_ERR("update failed... going back to IDLE/DISCON\n");
-					break;
-				default:
-					LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
-				break;
-			}
+			
+                        /**Richard added Aug 5 - there is a potential race condition where you may send a CCR-U immediately followed by CCR-T
+                         * and then receive a CCA-T while in state ACC_CC_ST_PENDING_U (e.g. if update timer and dialog termination at same time)  
+                         * In this event you would incorrectly ignore the CCR-T
+                         * Solution is to change state to change state to ACC_CC_ST_PENDING_T if CCR-T is sent while in this state  */
+                        if (event == ACC_CC_EV_SEND_REQ && msg && get_accounting_record_type(msg) == 4 /*TERMINATE RECORD*/) {
+                                LM_ERR("Received CCR-T while in state ACC_CC_ST_PENDING_U, just going to change to ACC_CC_ST_PENDING_T\n");
+                                s->u.cc_acc.state = ACC_CC_ST_PENDING_T;
+                                //update our reservation and its timers...
+                                update_gsu_request_timers(x, msg);
+                        } else {
+                            if (event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
+                                    rc = get_result_code(msg);
+                                    if (rc >= 2000 && rc < 3000) {
+                                            event = ACC_CC_EV_RECV_ANS_SUCCESS;
+                                    } else {
+                                            event = ACC_CC_EV_RECV_ANS_UNSUCCESS;
+                                    }
+                            }
+                            switch (event) {
+                                    case ACC_CC_EV_RECV_ANS_SUCCESS:
+                                            x->state = ACC_CC_ST_OPEN;
+                                            LM_DBG("success CCA for UPDATE\n");
+                                            update_gsu_response_timers(x, msg);
+                                            break;
+                                    case ACC_CC_EV_RECV_ANS_UNSUCCESS:
+                                            //TODO: check whether we grant or terminate service to callback clients
+                                            x->state = ACC_CC_ST_DISCON;
+                                            LM_ERR("update failed... going back to IDLE/DISCON\n");
+                                            break;
+                                    default:
+                                            LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
+                                    break;
+                            }
+                        }
 			break;
 		case ACC_CC_ST_DISCON:
 			switch (event) {
