@@ -298,7 +298,13 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		LM_DBG("continuing from a suspended reply"
 				" - resetting the suspend branch flag\n");
 
+		if (t->uac[branch].reply) {
 		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
+                } else {
+			LM_WARN("no reply in t_continue for branch. not much we can do\n");
+			return 0;
+		}
+                
 		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
 
 		faked_env( t, t->uac[branch].reply, 1);
