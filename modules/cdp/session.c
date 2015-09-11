@@ -587,7 +587,6 @@ AAASession* cdp_new_auth_session(str id,int is_client,int is_statefull)
 		s->u.auth.lifetime=0;
 		s->u.auth.grace_period=0;
                 s->u.auth.class = AUTH_CLASS_UNKNOWN;
-                s->u.auth.last_requested_grace = s->u.auth.last_requested_lifetime = s->u.auth.last_requested_timeout = 0;
 		cdp_add_session(s);
 	}
 	return s;
