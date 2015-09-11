@@ -91,12 +91,13 @@ typedef unsigned long fm_hash_bitmap_t;
  * - +1 .... end -  size = 2^k, big buckets
  */
 struct fm_frag{
-	unsigned long size;
+	unsigned long size;           /* size of fragment */
 	union{
-		struct fm_frag* nxt_free;
+		struct fm_frag* nxt_free; /* next free frag in slot, last poitns to qm last_frag,
+									used to detect if fragment is free (when not null) */
 		long reserved;
 	}u;
-	struct fm_frag** prv_free;
+	struct fm_frag* prv_free;     /* prev free frag in slot - for faster join/defrag */
 #ifdef DBG_F_MALLOC
 	const char* file;
 	const char* func;
