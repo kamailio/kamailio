@@ -142,7 +142,7 @@
 #define PKG_MEM_POOL_SIZE PKG_MEM_SIZE*1024*1024	/*!< used only if PKG_MALLOC is defined*/
 
 #define SHM_MEM_SIZE 64				/*!< used if SH_MEM is defined*/
-
+#define SHM_MEM_POOL_SIZE SHM_MEM_SIZE*1024*1024
 
 /* dimensioning buckets in q_malloc */
 /*! \brief size of the size2bucket table; everything beyond that asks for
