@@ -997,9 +997,11 @@ install_initd_centos install-initd-centos:
 		-e "s#GROUP=kamailio#GROUP=$(NAME)#g" \
 		< pkg/kamailio/rpm/kamailio.default \
 		> /etc/default/$(NAME)
+	mkdir -p /var/run/$(NAME)
 	/usr/sbin/groupadd -r $(NAME)
 	/usr/sbin/useradd -r -g $(NAME) -s /bin/false -c "Kamailio Daemon" \
                   -d /var/run/$(NAME) $(NAME)
+	chown $(NAME):$(NAME) /var/run/$(NAME)
 
 .PHONY: dbschema
 dbschema:
