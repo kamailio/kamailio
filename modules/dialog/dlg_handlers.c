@@ -845,6 +845,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 		}
 		/* lock the slot - dlg found, but in dlg_state_deleted, do a new one */
 		dlg_hash_lock(&callid);
+		mlock = 1;
     }
     spiral_detected = 0;
 
