@@ -153,7 +153,7 @@ int t_append_branches(void) {
 
 	if (added_branches==0) {
 		if(lowest_ret!=E_CFG)
-			LOG(L_ERR, "ERROR: t_append_branch: failure to add branches\n");
+			LOG(L_ERR, "ERROR: t_append_branch: failure to add branches (%d)\n", lowest_ret);
 		ser_error=lowest_ret;
 		replies_locked = 0;
 		UNLOCK_REPLIES(t);
@@ -198,7 +198,7 @@ int t_append_branches(void) {
 	set_kr(REQ_FWDED);
 	replies_locked = 0;
 	UNLOCK_REPLIES(t);
-	return 1;
+	return success_branch;
 
 canceled:
 	DBG("t_append_branches: cannot append branches to a canceled transaction\n");
