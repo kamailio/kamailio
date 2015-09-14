@@ -26,6 +26,7 @@
 
 int shm_initialized(void);
 int init_shm(void);
+void shm_set_mname(char *mname);
 
 #endif /*__shm_init_h*/
 
