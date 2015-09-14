@@ -796,6 +796,15 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
         goto error;
     }
     
+    /* Add specific action AVP's */
+    rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE
+    rx_add_specific_action_avp(aar, 2); // INDICATION_OF_LOSS_OF_BEARER
+    rx_add_specific_action_avp(aar, 3); // INDICATION_RECOVERY_OF_BEARER
+    rx_add_specific_action_avp(aar, 4); // INDICATION_RELEASE_OF_BEARER
+    rx_add_specific_action_avp(aar, 5); // INDICATION_ESTABLISHMENT_OF_BEARER (now void)
+    rx_add_specific_action_avp(aar, 6); // IP-CAN_CHANGE
+    rx_add_specific_action_avp(aar, 12); // ACCESS_NETWORK_INFO_REPORT
+
     show_callsessiondata(p_session_data);
     
     LM_DBG("Unlocking AAA session...\n");
@@ -885,6 +894,15 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
 
     /* Add media component description avp for register*/
     rx_add_media_component_description_avp_register(aar);
+
+    /* Add specific action AVP's */
+    rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE
+    rx_add_specific_action_avp(aar, 2); // INDICATION_OF_LOSS_OF_BEARER
+    rx_add_specific_action_avp(aar, 3); // INDICATION_RECOVERY_OF_BEARER
+    rx_add_specific_action_avp(aar, 4); // INDICATION_RELEASE_OF_BEARER
+    rx_add_specific_action_avp(aar, 5); // INDICATION_ESTABLISHMENT_OF_BEARER (now void)
+    rx_add_specific_action_avp(aar, 6); // IP-CAN_CHANGE
+    rx_add_specific_action_avp(aar, 12); // ACCESS_NETWORK_INFO_REPORT
 
     /* Add Framed IP address AVP*/
     if (!rx_add_framed_ip_avp(&aar->avpList, ip, ip_version)) {

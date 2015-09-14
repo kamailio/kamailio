@@ -900,3 +900,22 @@ inline int rx_get_result_code(AAAMessage *msg, unsigned int *data) {
 }
 
 
+/**
+ * Creates and adds an Acct-Application-Id AVP.
+ * @param msg - the Diameter message to add to.
+ * @param data - the value for the AVP payload
+ * @return CSCF_RETURN_TRUE on success or 0 on error
+ */
+inline int rx_add_specific_action_avp(AAAMessage *msg, unsigned int data) {
+    char x[4];
+    set_4bytes(x, data);
+
+    return
+    rx_add_avp(msg, x, 4,
+            AVP_IMS_Specific_Action,
+            AAA_AVP_FLAG_MANDATORY|AAA_AVP_FLAG_VENDOR_SPECIFIC,
+            IMS_vendor_id_3GPP,
+            AVP_DUPLICATE_DATA,
+            __FUNCTION__);
+}
+
