@@ -503,6 +503,8 @@ data_target = $(prefix)/$(data_dir)
 #		additional option to PKG_MALLOC which utilizes a fater then
 #		qm version
 #		(not true anymore, q_malloc performs approx. the same)
+# -DQ_MALLOC
+#		custom quick malloc, recommended for debugging
 # -DF_MALLOC
 #		an even faster malloc, not recommended for debugging
 # -DTLSF_MALLOC=1
@@ -661,26 +663,13 @@ C_DEFS= $(extra_defs) \
 # use make mode=debug all instead. Anyway no by default ser is  compiled w/ 
 # debugging symbols in all cases (-g). --andrei
 
-# set memory manager and its debug mode
-ifeq ($(MEMMNG), 1)
-#	use q_malloc
+# memory managers and related debug mode
+# enable f_malloc
+C_DEFS+= -DF_MALLOC
+# enable q_malloc
+C_DEFS+= -DQ_MALLOC
 ifeq 	($(MEMDBG), 1)
-		C_DEFS+= -DDBG_QM_MALLOC
-endif
-	C_DEFS+= -DMEM_JOIN_FREE
-else ifeq ($(MEMMNG), 2)
-#	use tlsf malloc
-	C_DEFS+= -DTLSF_MALLOC=1
-ifeq 	($(MEMDBG), 1)
-		C_DEFS+= -DDBG_TLSF_MALLOC
-endif
-else
-#	use f_malloc
-	C_DEFS+= -DF_MALLOC
-ifeq 	($(MEMDBG), 1)
-		C_DEFS+= -DDBG_F_MALLOC
-endif
-	C_DEFS+= -DMEM_JOIN_FREE
+	C_DEFS+= -DDBG_SR_MEMORY
 endif
 
 ifneq ($(PKG_MEM_SIZE),)
