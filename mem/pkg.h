@@ -20,6 +20,8 @@
 #ifndef _sr_pkg_h_
 #define _sr_pkg_h_
 
+#ifdef PKG_MALLOC
+
 #include "memapi.h"
 
 extern sr_pkg_api_t _pkg_root;
@@ -46,5 +48,30 @@ int pkg_init_api(sr_pkg_api_t *ap);
 int pkg_init_manager(char *name);
 void pkg_destroy_manager(void);
 void pkg_print_manager(void);
+
+#else /*PKG_MALLOC*/
+/* use system allocator */
+#	include <stdlib.h>
+#	include "memdbg.h"
+#	ifdef DBG_SYS_MALLOC
+#	define pkg_malloc(s) \
+	(  { void *____v123; ____v123=malloc((s)); \
+	   MDBG("malloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
+	   ____v123; } )
+#	define pkg_realloc(p, s) \
+	(  { void *____v123; ____v123=realloc(p, s); \
+	   MDBG("realloc %p size %lu end %p (%s:%d)\n", ____v123, (unsigned long)(s), (char*)____v123+(s), __FILE__, __LINE__);\
+	    ____v123; } )
+#	define pkg_free(p)  do{ MDBG("free %p (%s:%d)\n", (p), __FILE__, __LINE__); free((p)); }while(0)
+#	else
+#	define pkg_malloc(s)		malloc((s))
+#	define pkg_realloc(p, s)	realloc((p), (s))
+#	define pkg_free(p)			free((p))
+#	endif
+#	define pkg_status() do{}while(0)
+#	define pkg_info(mi) do{ memset((mi),0, sizeof(*(mi))); } while(0)
+#	define pkg_available() 0
+#	define pkg_sums() do{}while(0)
+#endif /*PKG_MALLOC*/
 
 #endif
