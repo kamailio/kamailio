@@ -249,6 +249,10 @@ void mem_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
     counter_add(ul_scscf_cnts_h.active_impus, -1);
 }
 
+static unsigned int expired_contacts_size = 0;
+ucontact_t** expired_contacts = 0;
+
+
 /*!
  * \brief Run timer handler for given domain
  * \param _d domain
@@ -256,8 +260,25 @@ void mem_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 void mem_timer_udomain(udomain_t* _d) {
     struct impurecord* ptr, *t;
     struct ucontact* contact_ptr;
+    unsigned int num_expired_contacts = 0;
     int i, n, temp;
-
+    time_t now;
+    
+    now = time(0);
+    int numcontacts = contact_list->max_collisions?(contact_list->max_collisions * contact_list->size):(contact_list->size);
+    if (expired_contacts_size < numcontacts) {
+        LM_DBG("Changing expired_contacts list size from %d to %d\n", expired_contacts_size, numcontacts);
+        if (expired_contacts){
+            pkg_free(expired_contacts);
+        }
+        expired_contacts = (ucontact_t**)pkg_malloc(numcontacts*sizeof(ucontact_t**));
+        if (!expired_contacts) {
+            LM_ERR("no more pkg mem\n");
+            return;
+        }
+        expired_contacts_size = numcontacts;
+    }
+    
     //go through contacts first
     n = contact_list->max_collisions;
     LM_DBG("*** mem_timer_udomain - checking contacts - START ***\n");
@@ -265,8 +286,18 @@ void mem_timer_udomain(udomain_t* _d) {
         lock_contact_slot_i(i);
         contact_ptr = contact_list->slot[i].first;
         while (contact_ptr) {
-            LM_DBG("We have a contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d\n", i, contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s, (double) contact_ptr->expires - time(NULL), contact_ptr->ref_count);
+            LM_DBG("We have a contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d (state: %d)\n", 
+                    i, contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s, 
+                    (double) contact_ptr->expires - now, contact_ptr->ref_count,
+                    contact_ptr->state);
 		//contacts are now deleted during impurecord processing
+            if ((contact_ptr->expires-now) <=0 && (contact_ptr->state != CONTACT_DELETED)) {
+                LM_DBG("expiring contact [%.*s].... setting to CONTACT_EXPIRE_PENDING_NOTIFY\n", contact_ptr->aor.len, contact_ptr->aor.s);
+                contact_ptr->state = CONTACT_EXPIRE_PENDING_NOTIFY;
+                ref_contact_unsafe(contact_ptr);
+                expired_contacts[num_expired_contacts] = contact_ptr;
+                num_expired_contacts++;
+            }
             contact_ptr = contact_ptr->next;
         } 
         if (contact_list->slot[i].n > n) {
@@ -316,6 +347,15 @@ void mem_timer_udomain(udomain_t* _d) {
         unlock_subscription_slot(i);
     }
     ims_subscription_list->max_collisions = n;
+    
+    /* now we delete the expired contacts.  (mark them for deletion */
+    for (i=0; i<num_expired_contacts; i++) {
+        lock_contact_slot_i(expired_contacts[i]->sl);
+        LM_DBG("Setting contact state to CONTACT_DELETED for contact [%.*s]\n", expired_contacts[i]->aor.len, expired_contacts[i]->aor.s);
+        expired_contacts[i]->state = CONTACT_DELETED;
+        unref_contact_unsafe(expired_contacts[i]);
+        unlock_contact_slot_i(expired_contacts[i]->sl);
+    }
     
 }
 
@@ -756,6 +796,6 @@ void unref_contact_unsafe(ucontact_t* c) {
         if (c->ref_count < 0) {
             LM_WARN("reference dropped below zero... this should not happen\n");
         }
-        delete_ucontact(c);
+        delete_scontact(c);
     }
 }

@@ -790,6 +790,8 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 			!= 0) {
 		    LM_ERR("Unable to insert IMPU into memory [%.*s]\n", impu.len, impu.s);
 		}
+                /* run the INSERTion callback so REGISTRAR can get into sync - ie subscribe for callbacks on the IMPU.... for NOTIFYs for example*/
+                run_ul_callbacks(NULL, UL_IMPU_INSERT, impurecord, NULL);
 	    }
 
 	    /* add contacts */
@@ -844,9 +846,9 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 				continue;
 			    }
 
-			    if (get_ucontact(impurecord, &contact, contact_data.callid, contact_data.path, contact_data.cseq, &c) != 0) {
+			    if (get_scontact(&contact, contact_data.callid, contact_data.path, contact_data.cseq, &c) != 0) {
 				LM_DBG("Contact doesn't exist yet, creating new one [%.*s]\n", contact.len, contact.s);
-				if ((c = mem_insert_ucontact(impurecord, &contact, &contact_data)) == 0) {
+				if ((c = mem_insert_scontact(impurecord, &contact, &contact_data)) == 0) {
 				    LM_ERR("Unable to insert contact [%.*s] for IMPU [%.*s] into memory... continuing...\n",
 					    contact.len, contact.s,
 					    impu.len, impu.s);
@@ -854,7 +856,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 				}
 			    }
 			    link_contact_to_impu(impurecord, c, 0);
-			    release_ucontact(c);
+			    release_scontact(c);
 			}
 			if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
 			    if (ul_dbf.fetch_result(_c, &contact_rs, ul_fetch_rows) < 0) {

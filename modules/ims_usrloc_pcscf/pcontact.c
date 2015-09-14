@@ -61,6 +61,8 @@
 extern int db_mode;
 extern int hashing_type;
 
+extern int expires_grace;
+
 /*! retransmission detection interval in seconds */
 int cseq_delay = 20;
 
@@ -113,13 +115,14 @@ void free_ppublic(ppublic_t* _p)
 
 int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, struct pcontact** _c)
 {
-	int i;
+	int i, has_rinstance=0;
 	ppublic_t* ppublic_ptr;
-	int is_default = 1;
+	int is_default = 1, params_len;
 	struct sip_uri sip_uri;
-
-
-	*_c = (pcontact_t*)shm_malloc(sizeof(pcontact_t));
+        char* p, *params, *sep;
+        str rinstance = {0,0};
+        
+	*_c = (pcontact_t*)shm_malloc(sizeof(pcontact_t) + _contact->len + _ci->received_host.len + _ci->via_host.len);
 	if (*_c == 0) {
 		LM_ERR("no more shared memory\n");
 		return -1;
@@ -130,15 +133,13 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 			_contact->len, _contact->s,
 			_ci->num_public_ids,
 			reg_state_to_string(_ci->reg_state));
+        
+        
 
-	(*_c)->aor.s = (char*) shm_malloc(_contact->len);
-	if ((*_c)->aor.s == 0) {
-		LM_ERR("no more shared memory\n");
-		shm_free(*_c);
-		*_c = 0;
-		return -2;
-	}
-	memcpy((*_c)->aor.s, _contact->s, _contact->len);
+        p = (char*)((struct pcontact*)(*_c) + 1);
+        (*_c)->aor.s = p;
+	memcpy(p, _contact->s, _contact->len);
+        p += _contact->len;
 	(*_c)->aor.len = _contact->len;
 	(*_c)->domain = (str*)_d;
 
@@ -149,6 +150,36 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 		*_c = 0;
 		return -2;
 	}
+        
+        /* is there an rinstance param */
+        LM_DBG("checking for rinstance");
+        /*check for alias - NAT */
+        params = sip_uri.sip_params.s;
+        params_len = sip_uri.sip_params.len;
+        while (params_len >= RINSTANCE_LEN) {
+            if (strncmp(params, RINSTANCE, RINSTANCE_LEN) == 0) {
+                has_rinstance = 1;
+                break;
+            }
+            sep = memchr(params, 59 /* ; */, params_len);
+            if (sep == NULL) {
+                LM_DBG("no rinstance param\n");
+                break;
+            } else {
+                params_len = params_len - (sep - params + 1);
+                params = sep + 1;
+            }
+        }
+        if (has_rinstance) {
+            rinstance.s = params + RINSTANCE_LEN;
+            rinstance.len = params_len - RINSTANCE_LEN;
+            sep = (char*)memchr(rinstance.s, 59 /* ; */, rinstance.len);
+            if (sep != NULL){
+                rinstance.len = (sep-rinstance.s);
+            }
+        }
+        (*_c)->rinstance.s = rinstance.s;
+        (*_c)->rinstance.len = rinstance.len;
 	(*_c)->contact_host.s = sip_uri.host.s;
 	(*_c)->contact_host.len = sip_uri.host.len;
 	(*_c)->contact_port = sip_uri.port_no;
@@ -160,36 +191,24 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 
 	// Add received Info:
 	if (_ci->received_host.len > 0 && _ci->received_host.s) {
-		(*_c)->received_host.s = (char*) shm_malloc(_ci->received_host.len);
-		if ((*_c)->received_host.s == 0) {
-			LM_ERR("no more share memory\n");
-			shm_free((*_c)->aor.s);
-			shm_free(*_c);
-			*_c = 0;
-			return -2;
-		}
-		memcpy((*_c)->received_host.s, _ci->received_host.s, _ci->received_host.len);
+        (*_c)->received_host.s = p;
+		memcpy(p, _ci->received_host.s, _ci->received_host.len);
+                p += _ci->received_host.len;
 		(*_c)->received_host.len = _ci->received_host.len;
 		(*_c)->received_port = _ci->received_port;
 		(*_c)->received_proto = _ci->received_proto;
 	}
-
-	if (hashing_type==0) {
-		(*_c)->aorhash = core_hash(_contact, 0, 0);
-	} else if (hashing_type==1) {
-		if ((*_c)->received_host.len > 0 && memcmp((*_c)->contact_host.s, (*_c)->received_host.s, (*_c)->contact_host.len) != 0) {
-		    LM_DBG("Looks like this contact is natted - contact URI: [%.*s] but came from [%.*s]\n", (*_c)->contact_host.len, 
-		    (*_c)->contact_host.s, (*_c)->received_host.len, (*_c)->received_host.s);
-		    (*_c)->aorhash = core_hash(&(*_c)->received_host, 0, 0);
-		} else 
-		    (*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
-	} else {
-		if ((*_c)->received_host.len > 0) {
-			(*_c)->aorhash = core_hash(&(*_c)->received_host, 0, 0);	
-		} else {
-			(*_c)->aorhash = core_hash(&(*_c)->contact_host, 0, 0);
-		}
-	}
+        
+        if (_ci->via_host.len > 0 && _ci->via_host.s) {
+            (*_c)->via_host.s = p;
+            memcpy(p, _ci->via_host.s, _ci->via_host.len);
+            p += _ci->via_host.len;
+            (*_c)->via_host.len = _ci->via_host.len;
+            (*_c)->via_port = _ci->via_port;
+            (*_c)->via_proto = _ci->via_prot;
+        }
+        
+        (*_c)->aorhash = get_aor_hash(_d, &_ci->via_host, _ci->via_port, _ci->via_prot);
 
 	//setup public ids
 	for (i=0; i<_ci->num_public_ids; i++) {
@@ -213,6 +232,12 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
 			(*_c)->num_service_routes = _ci->num_service_routes;
 		}
 	}
+        
+        LM_DBG("New contact host:port [%.*s:%d]\n", (*_c)->contact_host.len, (*_c)->contact_host.s, (*_c)->contact_port);
+        LM_DBG("New contact via host:port:proto: [%.*s:%d:%d]\n", (*_c)->via_host.len, (*_c)->via_host.s, (*_c)->via_port, (*_c)->via_proto);
+        LM_DBG("New contact received host:port:proto: [%.*s:%d:%d]\n", (*_c)->received_host.len, (*_c)->received_host.s, (*_c)->received_port, (*_c)->received_proto);
+        LM_DBG("New contact aorhash [%u]\n", (*_c)->aorhash);
+        
 	return 0;
 
 out_of_memory:
@@ -250,15 +275,6 @@ void free_pcontact(pcontact_t* _c) {
 			_c->num_service_routes = 0;
 		}
 	}
-	//free URI
-	if (_c->aor.s) {
-		shm_free(_c->aor.s);
-	}
-
-	//free received host
-	if (_c->received_host.s) {
-		shm_free(_c->received_host.s);
-	}
 
 	if (_c->rx_session_id.len > 0 && _c->rx_session_id.s)
 		shm_free(_c->rx_session_id.s);
@@ -272,17 +288,26 @@ static inline void nodb_timer(pcontact_t* _c)
 			"Expires: %d, "
 			"Expires in: %d seconds, "
 			"Received: %.*s:%d, "
-			"Proto: %d\n",
+                        "Path: %.*s, "
+			"Proto: %d, "
+                        "Hash: %u, " 
+                        "Slot: %u\n",
 			_c->aor.len, _c->aor.s,
 			reg_state_to_string(_c->reg_state),
 			(int)_c->expires,
 			(int)(_c->expires - time(NULL)),
 			_c->received_host.len, _c->received_host.s,
 			_c->received_port,
-			_c->received_proto);
+                        _c->path.len, _c->path.s,
+			_c->received_proto,
+                        _c->aorhash,
+                        _c->sl);
 
 	get_act_time();
-	if ((_c->expires - act_time) <= -10) {//we've allowed some grace time TODO: add as parameter
+        
+        
+        if ((_c->expires - act_time) + expires_grace <= 0) {//we've allowed some grace time TODO: add as parameter
+        //if ((_c->expires - act_time) <= -10) {//we've allowed some grace time TODO: add as parameter
 		LM_DBG("pcscf contact <%.*s> has expired and will be removed\n", _c->aor.len, _c->aor.s);
 		if (exists_ulcb_type(PCSCF_CONTACT_EXPIRE)) {
 			run_ul_callbacks(PCSCF_CONTACT_EXPIRE, _c);

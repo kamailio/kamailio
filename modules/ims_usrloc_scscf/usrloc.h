@@ -143,12 +143,13 @@ typedef enum cstate {
 
 typedef enum contact_state {
     CONTACT_VALID,
-    CONTACT_EXPIRED,
+    CONTACT_DELETE_PENDING,
+    CONTACT_EXPIRE_PENDING_NOTIFY,
     CONTACT_DELETED
 } contact_state_t;
 
 /*! \brief Valid contact is a contact that either didn't expire yet or is permanent */
-#define VALID_CONTACT(c, t)   ((c->expires>t) || (c->expires==0))
+#define VALID_CONTACT(c, t)   (((c->expires>t) || (c->expires==0)) && c->state!=CONTACT_DELETED && c->state!=CONTACT_DELETE_PENDING && c->state!=CONTACT_EXPIRE_PENDING_NOTIFY)
 
 struct hslot;
 /*!< Hash table slot */
@@ -467,7 +468,7 @@ typedef int (*insert_ucontact_t)(struct impurecord* _r, str* _contact, struct uc
 
 typedef int (*delete_ucontact_t)(struct ucontact* _c);
 
-typedef int (*get_ucontact_t)(struct impurecord* _r, str* _c, str* _callid, str* _path, int _cseq, struct ucontact** _co);
+typedef int (*get_ucontact_t)(str* _c, str* _callid, str* _path, int _cseq, struct ucontact** _co);
 
 typedef void (*release_ucontact_t)(struct ucontact* _c);
 

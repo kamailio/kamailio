@@ -69,7 +69,6 @@
 #include "reg_mod.h"
 #include "save.h"
 #include "service_routes.h"
-#include "lookup.h"
 MODULE_VERSION
 
 usrloc_api_t ul;						/**!< Structure containing pointers to usrloc functions*/
@@ -114,19 +113,14 @@ static int w_follows_service_routes(struct sip_msg* _m, char* _d, char* _foo);
 static int w_force_service_routes(struct sip_msg* _m, char* _d, char* _foo);
 static int w_is_registered(struct sip_msg* _m, char* _d, char* _foo);
 static int w_reginfo_handle_notify(struct sip_msg* _m, char* _d, char* _foo);
-static int w_unregister(struct sip_msg* _m, char* _d, char* _aor, char* _received_host, char* _received_port);
 
 static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri);
 static int w_assert_called_identity(struct sip_msg* _m, char* _d, char* _foo);
 
-static int w_lookup_transport(struct sip_msg* _m, char* _d, char* _uri);
-
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
-static int domain_uri_fixup(void** param, int param_no);
 static int save_fixup2(void** param, int param_no);
 static int assert_identity_fixup(void ** param, int param_no);
-static int unregister_fixup(void ** param, int param_no);
 
 /* Pseudo-Variables */
 static int pv_get_asserted_identity_f(struct sip_msg *, pv_param_t *, pv_value_t *);
@@ -152,10 +146,6 @@ static cmd_export_t cmds[] = {
 	{"pcscf_assert_identity",       (cmd_function)w_assert_identity,        2,  	assert_identity_fixup,  0,REQUEST_ROUTE },
 	{"pcscf_assert_called_identity",(cmd_function)w_assert_called_identity, 1,      assert_identity_fixup,  0,ONREPLY_ROUTE },
 	{"reginfo_handle_notify",       (cmd_function)w_reginfo_handle_notify,  1,      domain_fixup,           0,REQUEST_ROUTE},
-        {"lookup_transport",		(cmd_function)w_lookup_transport,       1,      domain_fixup,           0,REQUEST_ROUTE|FAILURE_ROUTE},
-        {"lookup_transport",		(cmd_function)w_lookup_transport,       2,      domain_uri_fixup,       0,REQUEST_ROUTE|FAILURE_ROUTE},
-        {"pcscf_unregister",		(cmd_function)w_unregister,		4,      unregister_fixup,       0,ANY_ROUTE},
-	
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -365,23 +355,6 @@ static int domain_fixup(void** param, int param_no)
 	return 0;
 }
 
-static int domain_uri_fixup(void** param, int param_no)
-{
-	udomain_t* d;
-
-	if (param_no == 1) {
-		if (ul.register_udomain((char*)*param, &d) < 0) {
-			LM_ERR("failed to register domain\n");
-			return E_UNSPEC;
-		}
-		*param = (void*)d;
-	} else {
-            fixup_var_pve_str_12(param, param_no);
-        }
-        
-	return 0;
-}
-
 /*! \brief
  * Fixup for "save" function - both domain and flags
  */
@@ -431,21 +404,6 @@ static int w_save(struct sip_msg* _m, char* _d, char* _cflags)
 	return save(_m, (udomain_t*)_d, ((int)(unsigned long)_cflags));
 }
 
-/*! \brief
- * Wrapper to lookup_transport(location)
- */
-static int w_lookup_transport(struct sip_msg* _m, char* _d, char* _uri)
-{
-	str uri = {0};
-	if(_uri!=NULL && (fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0))
-	{
-		LM_ERR("invalid uri parameter\n");
-		return -1;
-	}
-
-	return lookup_transport(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
-}
-
 static int w_save_pending(struct sip_msg* _m, char* _d, char* _cflags)
 {
 	return save_pending(_m, (udomain_t*)_d);
@@ -487,76 +445,6 @@ static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri)
 	}
 
 	return assert_identity( _m, (udomain_t*)_d, identity);
-}
-
-/*! \brief
- * Fixup for "assert_identity" function - both domain and URI to be asserted
- */
-static int unregister_fixup(void ** param, int param_no) {
-	if (param_no == 1) {
-		return domain_fixup(param,param_no);
-	} else {
-		pv_elem_t *model=NULL;
-		str s;
-
-		/* convert to str */
-		s.s = (char*)*param;
-		s.len = strlen(s.s);
-
-		model = NULL;
-		if(s.len==0) {
-			LM_ERR("no param!\n");
-			return E_CFG;
-		}
-		if(pv_parse_format(&s, &model)<0 || model==NULL) {
-			LM_ERR("wrong format [%s]!\n", s.s);
-			return E_CFG;
-		}
-		*param = (void*)model;
-		return 0;
-	}
-	return E_CFG;
-}
-
-
-static int w_unregister(struct sip_msg* _m, char* _d, char* _aor, char* _received_host, char* _received_port) {
-	pv_elem_t *model;
-	str aor;
-	str received_host;
-	str received_port;
-	int port = 0;
-
-	if ((_aor == NULL) || (_received_host == NULL) || (_received_port == NULL)) {
-		LM_ERR("error - bad parameters\n");
-		return -1;
-	}
-
-	model = (pv_elem_t*)_aor;
-	if (pv_printf_s(_m, model, &aor)<0) {
-		LM_ERR("error - cannot print the format\n");
-		return -1;
-	}
-	LM_DBG("URI: %.*s\n", aor.len, aor.s);
-
-	model = (pv_elem_t*)_received_host;
-	if (pv_printf_s(_m, model, &received_host)<0) {
-		LM_ERR("error - cannot print the format\n");
-		return -1;
-	}
-	LM_DBG("Received-Host: %.*s\n", received_host.len, received_host.s);
-
-	model = (pv_elem_t*)_received_port;
-	if (pv_printf_s(_m, model, &received_port)<0) {
-		LM_ERR("error - cannot print the format\n");
-		return -1;
-	}
-	LM_DBG("Received-Port: %.*s\n", received_port.len, received_port.s);
-	if (str2sint(&received_port, &port) != 0) {
-		LM_ERR("error - cannot convert %.*s to an int!\n", received_port.len, received_port.s);
-		return -1;
-	}
-
-	return unregister((udomain_t*)_d, &aor, &received_host, port);
 }
 
 static int w_assert_called_identity(struct sip_msg* _m, char* _d, char* _foo) {

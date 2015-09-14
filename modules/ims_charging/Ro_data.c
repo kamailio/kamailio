@@ -124,7 +124,7 @@ ims_information_t * new_ims_information(event_type_t * event_type, time_stamps_t
     if (outgoing_trunk_id && outgoing_trunk_id->s)
         str_dup_ptr(x->outgoing_trunk_id, *outgoing_trunk_id, pkg);
     
-    if (pani && pani->s) {
+    if (pani && pani->s && (pani->len > 0)) {
 	str_dup_ptr(x->access_network_info, *pani, pkg);
     }
 

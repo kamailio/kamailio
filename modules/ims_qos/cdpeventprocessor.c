@@ -173,6 +173,7 @@ void cdp_cb_event_process() {
     cdp_cb_event_t *ev;
     udomain_t* domain;
     pcontact_t* pcontact;
+    pcontact_info_t contact_info;
 
     struct pcontact_info ci;
     memset(&ci, 0, sizeof (struct pcontact_info));
@@ -248,8 +249,19 @@ void cdp_cb_event_process() {
 			    LM_DBG("Unable to register usrloc domain....aborting\n");
 			    return;
 			}
-			ul.lock_udomain(domain, &p_session_data->registration_aor, &p_session_data->ip, p_session_data->recv_port);
-			if (ul.get_pcontact(domain, &p_session_data->registration_aor, &p_session_data->ip, p_session_data->recv_port, &pcontact) != 0) {
+			ul.lock_udomain(domain, &p_session_data->via_host, p_session_data->via_port, p_session_data->via_proto);
+                        
+                        contact_info.received_host = p_session_data->ip;
+                        contact_info.received_port = p_session_data->recv_port;
+                        contact_info.received_proto = p_session_data->recv_proto;
+                        contact_info.searchflag = (1 << SEARCH_RECEIVED);
+                        
+                        contact_info.via_host = p_session_data->via_host;
+                        contact_info.via_port = p_session_data->via_port;
+                        contact_info.via_prot = p_session_data->via_proto;
+                        contact_info.aor = p_session_data->registration_aor;
+                        
+			if (ul.get_pcontact(domain, &contact_info, &pcontact) != 0) {
 			    LM_DBG("no contact found for terminated Rx reg session..... ignoring\n");
 			} else {
 			    LM_DBG("Updating contact [%.*s] after Rx reg session terminated, setting state to PCONTACT_DEREG_PENDING_PUBLISH\n", pcontact->aor.len, pcontact->aor.s);
@@ -257,7 +269,7 @@ void cdp_cb_event_process() {
 			    ci.num_service_routes = 0;
 			    ul.update_pcontact(domain, &ci, pcontact);
 			}
-			ul.unlock_udomain(domain, &p_session_data->registration_aor, &p_session_data->ip, p_session_data->recv_port);
+			ul.unlock_udomain(domain, &p_session_data->via_host, p_session_data->via_port, p_session_data->via_proto);
 			counter_add(ims_qos_cnts_h.active_registration_rx_sessions, -1);
 		    }
                 } else {

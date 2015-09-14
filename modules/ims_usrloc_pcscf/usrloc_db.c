@@ -12,11 +12,14 @@
 str id_col	        	= str_init(ID_COL);
 str domain_col			= str_init(DOMAIN_COL);
 str aor_col		    	= str_init(AOR_COL);
-str contact_col		    = str_init(CONTACT_COL);
+str host_col                    = str_init(HOST_COL);
+str port_col                    = str_init(PORT_COL);
+str protocol_col 		= str_init(PROTOCOL_COL);
 str received_col    	= str_init(RECEIVED_COL);
 str received_port_col	= str_init(RECEIVED_PORT_COL);
 str received_proto_col	= str_init(RECEIVED_PROTO_COL);
 str path_col			= str_init(PATH_COL);
+str rinstance_col       = str_init(RINSTANCE_COL);
 str rx_session_id_col	= str_init(RX_SESSION_ID_COL);
 str reg_state_col		= str_init(REG_STATE_COL);
 str expires_col			= str_init(EXPIRES_COL);
@@ -24,7 +27,6 @@ str service_routes_col	= str_init(SERVICE_ROUTES_COL);
 str socket_col			= str_init(SOCKET_COL);
 str public_ids_col		= str_init(PUBLIC_IDS_COL);
 str security_type_col 	= str_init(SECURITY_TYPE_COL);
-str protocol_col 		= str_init(PROTOCOL_COL);
 str mode_col			= str_init(MODE_COL);
 str ck_col				= str_init(CK_COL);
 str ik_col 				= str_init(IK_COL);
@@ -227,51 +229,60 @@ int db_insert_pcontact(struct pcontact* _c)
 	str empty_str = str_init("");
 	str impus, service_routes;
 
-	db_key_t keys[13] = {
-							&domain_col,
-				&aor_col, 			&contact_col,
+	db_key_t keys[16] = {
+				&domain_col,
+				&aor_col,
 				&received_col,
 				&received_port_col,	&received_proto_col,
-				&path_col,			&rx_session_id_col,
-				&reg_state_col,
+				&path_col,		&rinstance_col,
+                                &rx_session_id_col,	&reg_state_col,
 				&expires_col,		&service_routes_col,
-				&socket_col,		&public_ids_col
+				&socket_col,		&public_ids_col, &host_col, &port_col, &protocol_col
 	};
-	db_val_t values[13];
+	db_val_t values[16];
 
 	VAL_TYPE(GET_FIELD_IDX(values, LP_DOMAIN_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_AOR_IDX)) = DB1_STR;
-	VAL_TYPE(GET_FIELD_IDX(values, LP_CONTACT_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RECEIVED_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_PATH_IDX)) = DB1_STR;
+        VAL_TYPE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_RX_SESSION_ID_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = DB1_INT;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_EXPIRES_IDX)) = DB1_DATETIME;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_SERVICE_ROUTES_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_SOCKET_IDX)) = DB1_STR;
 	VAL_TYPE(GET_FIELD_IDX(values, LP_PUBLIC_IPS_IDX)) = DB1_STR;
+        VAL_TYPE(GET_FIELD_IDX(values, LP_HOST_IDX)) = DB1_STR;
+        VAL_TYPE(GET_FIELD_IDX(values, LP_PORT_IDX)) = DB1_INT;
+        VAL_TYPE(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = DB1_INT;
+        
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_DOMAIN_IDX), (*_c->domain));
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_AOR_IDX), _c->aor);	//TODO: need to clean AOR
-	SET_STR_VALUE(GET_FIELD_IDX(values, LP_CONTACT_IDX), _c->aor);
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RECEIVED_IDX), _c->received_host);
+        SET_STR_VALUE(GET_FIELD_IDX(values, LP_HOST_IDX), _c->via_host);
 
 	SET_PROPER_NULL_FLAG((*_c->domain), values, LP_DOMAIN_IDX);
 	SET_PROPER_NULL_FLAG(_c->aor, values, LP_AOR_IDX);
-	SET_PROPER_NULL_FLAG(_c->aor, values, LP_CONTACT_IDX);
 	SET_PROPER_NULL_FLAG(_c->received_host, values, LP_RECEIVED_IDX);
+        SET_PROPER_NULL_FLAG(_c->via_host, values, LP_HOST_IDX);
 
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = _c->received_port;
 	VAL_INT(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = _c->received_proto;
 	VAL_NULL(GET_FIELD_IDX(values, LP_RECEIVED_PORT_IDX)) = 0;
 	VAL_NULL(GET_FIELD_IDX(values, LP_RECEIVED_PROTO_IDX)) = 0;
+        VAL_INT(GET_FIELD_IDX(values, LP_PORT_IDX)) = _c->via_port;
+        VAL_INT(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = _c->via_proto;
+        VAL_NULL(GET_FIELD_IDX(values, LP_PORT_IDX)) = 0;
+        VAL_NULL(GET_FIELD_IDX(values, LP_PROTOCOL_IDX)) = 0;
 
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_PATH_IDX), _c->path);
+        SET_STR_VALUE(GET_FIELD_IDX(values, LP_RINSTANCE_IDX), _c->rinstance);
 	SET_STR_VALUE(GET_FIELD_IDX(values, LP_RX_SESSION_ID_IDX), _c->rx_session_id);
-
 	SET_PROPER_NULL_FLAG(_c->path, values, LP_PATH_IDX);
+        SET_PROPER_NULL_FLAG(_c->rinstance, values, LP_RINSTANCE_IDX);
 	SET_PROPER_NULL_FLAG(_c->rx_session_id, values, LP_RX_SESSION_ID_IDX);
 
 	VAL_DOUBLE(GET_FIELD_IDX(values, LP_REG_STATE_IDX)) = _c->reg_state;
@@ -314,7 +325,7 @@ int db_insert_pcontact(struct pcontact* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, values, 13) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, values, 15) < 0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}

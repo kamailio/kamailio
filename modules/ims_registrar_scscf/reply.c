@@ -65,6 +65,7 @@
 #define CONTACT_SEP_LEN (sizeof(CONTACT_SEP) - 1)
 
 extern str scscf_serviceroute_uri_str;
+extern int contact_expires_buffer_percentage;
 
 extern struct tm_binds tmb;
 
@@ -421,7 +422,7 @@ int build_expired_contact(contact_t* chi, contact_for_header_t** contact_header)
 
 int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) {
     char *p, *cp;
-    int fl, len;
+    int fl, len, expires, expires_orig;
     ucontact_t* c;
     param_t* tmp;
     *contact_header = 0;
@@ -469,7 +470,15 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
 
                 memcpy(p, EXPIRES_PARAM, EXPIRES_PARAM_LEN);
                 p += EXPIRES_PARAM_LEN;
-                cp = int2str((int) (c->expires - act_time), &len);
+                
+                /* the expires we put in the contact header is decremented to give the UE some grace before we expires them */
+                expires = expires_orig = (int)(c->expires - act_time);
+                expires = expires - (contact_expires_buffer_percentage*expires/100);
+                if (expires <= 0) {
+                    LM_WARN("expires after buffer change was <= 0, not adding buffer space\n");
+                    expires = expires_orig;
+                }
+                cp = int2str(expires, &len);
                 memcpy(p, cp, len);
                 p += len;
     

@@ -43,7 +43,7 @@
 #include "dlg_hash.h"
 #include "dlg_handlers.h"
 #include "dlg_profile.h"
-
+#include "dlg_var.h"
 
 /*! size of dialog profile hash */
 #define PROFILE_HASH_SIZE 16
@@ -53,9 +53,7 @@ extern struct tm_binds d_tmb;
 
 /*! global dialog message id */
 static unsigned int            current_dlg_msg_id = 0 ;
-
-/*! global dialog */
-struct dlg_cell                *current_dlg_pointer = NULL ;
+static unsigned int       current_dlg_msg_pid = 0 ;
 
 /*! pending dialog links */
 static struct dlg_profile_link *current_pending_linkers = NULL;
@@ -67,16 +65,8 @@ static struct dlg_profile_table *profiles = NULL;
 static struct dlg_profile_table* new_dlg_profile( str *name,
 		unsigned int size, unsigned int has_value);
 
+static sruid_t _dlg_profile_sruid;
 
-struct dlg_cell *get_current_dlg_pointer(void)
-{
-	return current_dlg_pointer;
-}
-
-void reset_current_dlg_pointer(void)
-{
-	current_dlg_pointer = NULL;
-}
 
 /*!
  * \brief Add profile definitions to the global list
@@ -311,18 +301,26 @@ void destroy_linkers(struct dlg_profile_link *linker)
  */
 int profile_cleanup( struct sip_msg *msg, unsigned int flags, void *param )
 {
-	current_dlg_msg_id = 0;
-	if (current_dlg_pointer) {
-		unref_dlg( current_dlg_pointer, 1);
-		current_dlg_pointer = NULL;
-	}
-	if (current_pending_linkers) {
-		destroy_linkers(current_pending_linkers);
-		current_pending_linkers = NULL;
-	}
+    dlg_cell_t *dlg;
 
-	/* need to return non-zero - 0 will break the exec of the request */
-	return 1;
+    current_dlg_msg_id = 0;
+    current_dlg_msg_pid = 0;
+    dlg = dlg_get_ctx_dialog();
+    if (dlg != NULL) {
+        if (dlg->dflags & DLG_FLAG_TM) {
+            unref_dlg(dlg, 1);
+        } else {
+            /* dialog didn't make it to tm */
+            unref_dlg(dlg, 2);
+        }
+    }
+    if (current_pending_linkers) {
+        destroy_linkers(current_pending_linkers);
+        current_pending_linkers = NULL;
+    }
+
+    /* need to return non-zero - 0 will break the exec of the request */
+    return 1;
 }
 
 
@@ -344,36 +342,6 @@ struct dlg_cell* get_dialog_from_tm(struct cell *t)
 
     return NULL;
 }
-
-/*!
- * \brief Get the current dialog for a message, if exists
- * \param msg SIP message
- * \return NULL if called in REQUEST_ROUTE, pointer to dialog ctx otherwise
- */
-struct dlg_cell *get_current_dialog(struct sip_msg *msg)
-{
-
-	if (is_route_type(REQUEST_ROUTE|BRANCH_ROUTE)) {
-            LM_DBG("Get Current Dialog: Route type is REQUEST ROUTE or BRANCH ROUTE");
-            LM_DBG("Get Current Dialog: SIP Method - %.*s", msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
-		/* use the per-process static holder */
-		if (msg->id==current_dlg_msg_id){
-                    LM_DBG("Message Id [%i] equals current dlg msg id [%i] - returning current dlg pointer", msg->id, current_dlg_msg_id);
-                    return current_dlg_pointer;
-                }
-                LM_DBG("Message Id [%i] not equal to current point dlg id [%i] - returning null", msg->id, current_dlg_msg_id);
-		current_dlg_pointer = NULL;
-		current_dlg_msg_id = msg->id;
-		destroy_linkers(current_pending_linkers);
-		current_pending_linkers = NULL;
-		return NULL;
-	} else {
-		/* use current transaction to get dialog */
-            LM_DBG("Route type is not REQUEST ROUTE or brancg route - getting from tm");
-	    return get_dialog_from_tm(d_tmb.t_gett());
-	}
-}
-
 
 /*!
  * \brief Calculate the hash profile from a dialog
@@ -449,32 +417,31 @@ static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *d
  * \param msg SIP message
  * \param dlg dialog cell
  */
-void set_current_dialog(struct sip_msg *msg, struct dlg_cell *dlg)
+void set_current_dialog(sip_msg_t *msg, dlg_cell_t *dlg)
 {
-	struct dlg_profile_link *linker;
-	struct dlg_profile_link *tlinker;
+        struct dlg_profile_link *linker;
+        struct dlg_profile_link *tlinker;
 
-	/* if linkers are not from current request, just discard them */
-	if (msg->id!=current_dlg_msg_id) {
-		current_dlg_msg_id = msg->id;
-		destroy_linkers(current_pending_linkers);
-	} else {
-		/* add the linker, one be one, to the dialog */
-		linker = current_pending_linkers;
-		while (linker) {
-			tlinker = linker;
-			linker = linker->next;
-			/* process tlinker */
-			tlinker->next = NULL;
-			link_dlg_profile( tlinker, dlg);
-		}
-	}
-	current_pending_linkers = NULL;
-	current_dlg_pointer = dlg;
-
-	/* do not increase reference counter here, let caller handle it
-	 * (yes, this is somewhat ugly) */
+        LM_DBG("setting current dialog [%u:%u]\n", dlg->h_entry, dlg->h_id);
+        /* if linkers are not from current request, just discard them */
+        if (msg->id!=current_dlg_msg_id || msg->pid!=current_dlg_msg_pid) {
+                current_dlg_msg_id = msg->id;
+                current_dlg_msg_pid = msg->pid;
+                destroy_linkers(current_pending_linkers);
+        } else {
+                /* add the linker, one by one, to the dialog */
+                linker = current_pending_linkers;
+                while (linker) {
+                        tlinker = linker;
+                        linker = linker->next;
+                        /* process tlinker */
+                        tlinker->next = NULL;
+                        link_dlg_profile( tlinker, dlg);
+                }
+        }
+        current_pending_linkers = NULL;
 }
+
 
 
 /*!
@@ -486,11 +453,11 @@ void set_current_dialog(struct sip_msg *msg, struct dlg_cell *dlg)
  */
 int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *profile)
 {
-	struct dlg_cell *dlg;
-	struct dlg_profile_link *linker;
+	dlg_cell_t *dlg = NULL;
+	dlg_profile_link_t *linker;
 
 	/* get current dialog */
-	dlg = get_current_dialog(msg);
+	dlg = dlg_get_msg_dialog(msg);
 
 	if (dlg==NULL && !is_route_type(REQUEST_ROUTE)) {
 		LM_CRIT("BUG - dialog not found in a non REQUEST route (%d)\n",
@@ -503,12 +470,13 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 		sizeof(struct dlg_profile_link) + (profile->has_value?value->len:0) );
 	if (linker==NULL) {
 		LM_ERR("no more shm memory\n");
-		return -1;
+		goto error;
 	}
 	memset(linker, 0, sizeof(struct dlg_profile_link));
 
-	/* set backpointer to profile */
+	/* set backpointers to profile and linker (itself) */
 	linker->profile = profile;
+	linker->hash_linker.linker = linker;
 
 	/* set the value */
 	if (profile->has_value) {
@@ -516,17 +484,37 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 		memcpy( linker->hash_linker.value.s, value->s, value->len);
 		linker->hash_linker.value.len = value->len;
 	}
+	sruid_next_safe(&_dlg_profile_sruid);
+	strcpy(linker->hash_linker.puid, _dlg_profile_sruid.uid.s);
+	linker->hash_linker.puid_len = _dlg_profile_sruid.uid.len;
 
 	if (dlg!=NULL) {
 		/* add linker directly to the dialog and profile */
 		link_dlg_profile( linker, dlg);
 	} else {
+		/* if existing linkers are not from current request, just discard them */
+		if (msg->id!=current_dlg_msg_id || msg->pid!=current_dlg_msg_pid) {
+			current_dlg_msg_id = msg->id;
+			current_dlg_msg_pid = msg->pid;
+			destroy_linkers(current_pending_linkers);
+			current_pending_linkers = NULL;
+		}
 		/* no dialog yet -> set linker as pending */
+		if (msg->id!=current_dlg_msg_id || msg->pid!=current_dlg_msg_pid) {
+			current_dlg_msg_id = msg->id;
+			current_dlg_msg_pid = msg->pid;
+			destroy_linkers(current_pending_linkers);
+		}
+
 		linker->next = current_pending_linkers;
 		current_pending_linkers = linker;
 	}
 
+	dlg_release(dlg);
 	return 0;
+error:
+	dlg_release(dlg);
+	return -1;
 }
 
 
@@ -540,16 +528,21 @@ int set_dlg_profile(struct sip_msg *msg, str *value, struct dlg_profile_table *p
 int unset_dlg_profile(struct sip_msg *msg, str *value,
 		struct dlg_profile_table *profile)
 {
-	struct dlg_cell *dlg;
-	struct dlg_profile_link *linker;
-	struct dlg_profile_link *linker_prev;
-	struct dlg_entry *d_entry;
+	dlg_cell_t *dlg;
+	dlg_profile_link_t *linker;
+	dlg_profile_link_t *linker_prev;
+	dlg_entry_t *d_entry;
+
+	if (is_route_type(REQUEST_ROUTE)) {
+		LM_ERR("dialog delete profile cannot be used in request route\n");
+		return -1;
+	}
 
 	/* get current dialog */
-	dlg = get_current_dialog(msg);
+	dlg = dlg_get_msg_dialog(msg);
 
-	if (dlg==NULL || is_route_type(REQUEST_ROUTE)) {
-		LM_CRIT("BUG - dialog NULL or del_profile used in request route\n");
+	if (dlg==NULL) {
+		LM_WARN("dialog is NULL for delete profile\n");
 		return -1;
 	}
 
@@ -572,6 +565,7 @@ int unset_dlg_profile(struct sip_msg *msg, str *value,
 		}
 	}
 	dlg_unlock( d_table, d_entry);
+	dlg_release(dlg);
 	return -1;
 
 found:
@@ -586,6 +580,7 @@ found:
 	dlg_unlock( d_table, d_entry);
 	/* remove linker from profile table and free it */
 	destroy_linkers(linker);
+	dlg_release(dlg);
 	return 1;
 }
 
@@ -602,10 +597,11 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 	struct dlg_cell *dlg;
 	struct dlg_profile_link *linker;
 	struct dlg_entry *d_entry;
+        int ret;
 
 	LM_DBG("Getting current dialog");
 	/* get current dialog */
-	dlg = get_current_dialog(msg);
+	dlg = dlg_get_msg_dialog(msg);
 
 	if (dlg == NULL) {
 		LM_DBG("Error: Current dlg is null");
@@ -614,6 +610,7 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 	}
 	LM_DBG("Current dlg found");
 
+        ret = -1;
 	/* check the dialog linkers */
 	d_entry = &d_table->entries[dlg->h_entry];
 	dlg_lock( d_table, d_entry);
@@ -624,13 +621,15 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 			if (profile->has_value == 0) {
 				LM_DBG("Profile has value is zero returning true");
 				dlg_unlock( d_table, d_entry);
-				return 1;
+				ret = 1;
+                                goto done;
 			} else if (value && value->len == linker->hash_linker.value.len
 					&& memcmp(value->s, linker->hash_linker.value.s, value->len)
 							== 0) {
 				LM_DBG("Profile has value equal to passed value returning true");
 				dlg_unlock( d_table, d_entry);
-				return 1;
+				ret = 1;
+                                goto done;
 			}
 			/* allow further search - maybe the dialog is inserted twice in
 			 * the same profile, but with different values -bogdan
@@ -638,7 +637,10 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 		}
 	}
 	dlg_unlock( d_table, d_entry);
-	return -1;
+        
+done:
+        dlg_release(dlg);
+        return ret;
 }
 
 
@@ -688,8 +690,14 @@ unsigned int get_profile_size(struct dlg_profile_table *profile, str *value)
  * Determine if message is in a dialog currently being tracked
  */
 int	is_known_dlg(struct sip_msg *msg) {
-	if(get_current_dialog(msg) == NULL)
+	dlg_cell_t *dlg;
+
+	dlg = dlg_get_msg_dialog(msg);
+	
+	if(dlg == NULL)
 		return -1;
+
+	dlg_release(dlg);
 
 	return 1;
 }

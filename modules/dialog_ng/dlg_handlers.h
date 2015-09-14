@@ -90,6 +90,15 @@ void destroy_dlg_handlers(void);
 int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	struct cell* t, unsigned int leg, str *tag);
 
+/*!
+ * \brief Clone dialog internal unique id to shared memory
+ */
+dlg_iuid_t *dlg_get_iuid_shm_clone(dlg_cell_t *dlg);
+
+/*!
+ * \brief Free dialog internal unique id stored in shared memory
+ */
+void dlg_iuid_sfree(void *iuid);
 
 /*!
  * \brief Function that is registered as TM callback and called on requests
@@ -99,6 +108,7 @@ int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
  */
 void dlg_onreq(struct cell* t, int type, struct tmcb_params *param);
 
+void dlg_onreply(struct cell* t, int type, struct tmcb_params *param);
 
 /*!
  * \brief Function that is registered as RR callback for dialog tracking
@@ -136,6 +146,16 @@ void dlg_ontimeout( struct dlg_tl *tl);
  */ 
 int dlg_new_dialog(struct sip_msg *msg, struct cell *t, const int run_initial_cbs);
 
+/*!
+ * \brief add dlg structure to tm callbacks
+ * \param t current transaction
+ * \param req current sip request
+ * \param dlg current dialog
+ * \param smode if the sip request was spiraled
+ * \return 0 on success, -1 on failure
+ */
+int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
+		int smode);
 
 /*!
  * \brief Function that returns the dialog lifetime as pseudo-variable

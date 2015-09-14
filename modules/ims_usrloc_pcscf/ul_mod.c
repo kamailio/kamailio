@@ -72,6 +72,9 @@ static int child_init(int rank);                    /*!< Per-child init function
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
 
+
+int expires_grace = 3600;   //default is a grace period of 1 hour - after this contact is removed from P
+
 /*
  * Module parameters and their default values
  */
@@ -114,6 +117,7 @@ static param_export_t params[] = {
 	{"hashing_type",		INT_PARAM, &hashing_type	},
 	{"lookup_check_received",		INT_PARAM, &lookup_check_received	},
 	{"match_contact_host_port",		INT_PARAM, &match_contact_host_port	},
+        {"expires_grace",		INT_PARAM, &expires_grace	},
 
 	{0, 0, 0}
 };

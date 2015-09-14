@@ -23,26 +23,25 @@
 #define MAX_PANI_LEN 100
 
 enum ro_session_event_type {
-    unknown = 0,
     pending,
     answered,
     no_more_credit,
-    unknown_error
+    delayed_delete,
+    unknown_error,
 };
 
 struct diameter_avp_value {
-	str mac;
+    str mac;
 };
 
 //used to pass data into dialog callbacks
+
 struct impu_data {
     str identity;
     str contact;
 } impu_data_t;
 
-
 struct ro_session {
-    str cdp_session_id;
     volatile int ref;
     int direction;
     struct ro_session* next;
@@ -69,7 +68,7 @@ struct ro_session {
     int auth_session_type;
     int active;
     unsigned int flags;
-    struct diameter_avp_value avp_value;
+    str mac;
     int rating_group;
     int service_identifier;
 };
@@ -141,7 +140,7 @@ extern struct ro_session_table *ro_session_table;
 		if ((_ro_session)->ref<=0) { \
 			unlink_unsafe_ro_session( _ro_session_entry, _ro_session);\
 			LM_DBG("ref <=0 for ro_session %p\n",_ro_session);\
-			destroy_ro_session(_ro_session);\
+                        put_ro_session_on_wait(_ro_session);\
 		}\
 	}while(0)
 
@@ -193,9 +192,9 @@ void link_ro_session(struct ro_session *ro_session, int n);
 
 void remove_aaa_session(str *session_id);
 
-struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity, 
-	str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
-	int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani);
+struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity,
+        str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
+        int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani);
 
 /*!
  * \brief Refefence a ro_session with locking
@@ -216,6 +215,8 @@ void unref_ro_session(struct ro_session *ro_session, unsigned int cnt);
 struct ro_session* lookup_ro_session(unsigned int h_entry, str *callid, int direction, unsigned int *del);
 
 void free_impu_data(struct impu_data *impu_data);
+
+int put_ro_session_on_wait(struct ro_session* session);
 
 
 #endif	/* RO_SESSION_HASH_H */

@@ -6,6 +6,7 @@
  */
 
 #include "ro_session_hash.h"
+#include "ims_ro.h"
 
 #define MAX_ROSESSION_LOCKS  2048
 #define MIN_ROSESSION_LOCKS  2
@@ -20,6 +21,8 @@ struct ro_session_table *ro_session_table = 0;
  */
 void link_ro_session(struct ro_session *ro_session, int n) {
     struct ro_session_entry *ro_session_entry;
+    
+    LM_DBG("Linking Ro session [%.*s] into entries hash index [%d]", ro_session->ro_session_id.len, ro_session->ro_session_id.s, ro_session->h_entry);
 
     ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
 
@@ -126,6 +129,15 @@ error0:
     return -1;
 }
 
+int put_ro_session_on_wait(struct ro_session* session) {
+    LM_DBG("Putting Ro session [%p] - [%.*s] on wait queue for deletion\n", session, session->ro_session_id.len, session->ro_session_id.s);
+    session->event_type = delayed_delete;
+    session->last_event_timestamp = get_current_time_micro();
+    insert_ro_timer(&session->ro_tl, 120);
+    
+    return 0;
+}
+
 /*!
  * \brief Destroy an ro_session and free memory
  * \param ro_session destroyed Ro Session
@@ -139,7 +151,6 @@ inline void destroy_ro_session(struct ro_session *ro_session) {
     if (ro_session->ro_session_id.s && (ro_session->ro_session_id.len > 0)) {
         shm_free(ro_session->ro_session_id.s);
     }
-
 
     shm_free(ro_session);
 }
@@ -180,7 +191,7 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
 	int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani){
     LM_DBG("Building Ro Session **********");
     char *p;
-    unsigned int len = session_id->len + callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + 
+    unsigned int len = /*session_id->len + */callid->len + asserted_identity->len + called_asserted_identity->len + mac->len + 
         incoming_trunk_id->len + outgoing_trunk_id->len + pani->len + sizeof (struct ro_session);
     struct ro_session *new_ro_session = (struct ro_session*) shm_malloc(len);
 
@@ -203,7 +214,7 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     new_ro_session->auth_appid = auth_appid;
     new_ro_session->auth_session_type = auth_session_type;
 
-    new_ro_session->ro_tl.next = new_ro_session->ro_tl.prev;
+    new_ro_session->ro_tl.next = new_ro_session->ro_tl.prev;// = 0;
     new_ro_session->ro_tl.timeout = 0; //requested_secs;
 
     new_ro_session->reserved_secs = requested_secs;
@@ -227,11 +238,6 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     memcpy(p, callid->s, callid->len);
     p += callid->len;
 
-    new_ro_session->ro_session_id.s = p;
-    new_ro_session->ro_session_id.len = session_id->len;
-    memcpy(p, session_id->s, session_id->len);
-    p += session_id->len;
-
     new_ro_session->asserted_identity.s = p;
     new_ro_session->asserted_identity.len = asserted_identity->len;
     memcpy(p, asserted_identity->s, asserted_identity->len);
@@ -252,8 +258,8 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     memcpy(p, outgoing_trunk_id->s, outgoing_trunk_id->len);
     p += outgoing_trunk_id->len;
     
-    new_ro_session->avp_value.mac.s = p;
-    new_ro_session->avp_value.mac.len = mac->len;
+    new_ro_session->mac.s = p;
+    new_ro_session->mac.len = mac->len;
     memcpy(p, mac->s, mac->len);
     p += mac->len;
     

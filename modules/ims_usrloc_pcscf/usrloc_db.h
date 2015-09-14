@@ -12,17 +12,20 @@ typedef enum location_pcscf_fields_idx {
 //	LP_ID_IDX = 0,
 	LP_DOMAIN_IDX = 0,
 	LP_AOR_IDX,
-	LP_CONTACT_IDX,
 	LP_RECEIVED_IDX,
 	LP_RECEIVED_PORT_IDX,
 	LP_RECEIVED_PROTO_IDX,
 	LP_PATH_IDX,
+        LP_RINSTANCE_IDX,
 	LP_RX_SESSION_ID_IDX,
 	LP_REG_STATE_IDX,
 	LP_EXPIRES_IDX,
 	LP_SERVICE_ROUTES_IDX,
 	LP_SOCKET_IDX,
 	LP_PUBLIC_IPS_IDX,
+                LP_HOST_IDX,
+                LP_PORT_IDX,
+                LP_PROTOCOL_IDX
 
 } location_pcscf_fields_idx_t;
 
@@ -52,12 +55,15 @@ typedef enum location_pcscf_fields_idx {
 
 #define ID_COL				"id"
 #define DOMAIN_COL			"domain"
+#define HOST_COL			"host"
+#define PORT_COL			"port"
+#define PROTOCOL_COL		"protocol"
 #define AOR_COL				"aor"
-#define CONTACT_COL			"contact"
 #define RECEIVED_COL		"received"
 #define RECEIVED_PORT_COL	"received_port"
 #define RECEIVED_PROTO_COL	"received_proto"
 #define PATH_COL			"path"
+#define RINSTANCE_COL           "rinstance"
 #define RX_SESSION_ID_COL	"rx_session_id"
 #define REG_STATE_COL		"reg_state"
 #define EXPIRES_COL			"expires"
@@ -65,7 +71,7 @@ typedef enum location_pcscf_fields_idx {
 #define SOCKET_COL			"socket"
 #define PUBLIC_IDS_COL		"public_ids"
 #define SECURITY_TYPE_COL	"security_type"
-#define PROTOCOL_COL		"protocol"
+
 #define MODE_COL			"mode"
 #define CK_COL				"ck"
 #define IK_COL				"ik"
@@ -97,7 +103,9 @@ extern db_func_t ul_dbf;
 extern str id_col;
 extern str domain_col;
 extern str aor_col;
-extern str contact_col;
+extern str host_col;
+extern str port_col;
+extern str protocol_col;
 extern str received_col;
 extern str received_port_col;
 extern str received_proto_col;

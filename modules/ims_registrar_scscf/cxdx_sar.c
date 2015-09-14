@@ -63,6 +63,7 @@
 #include "regtime.h"
 #include "../../parser/hf.h"
 #include "../../lib/ims/ims_getters.h"
+#include "registrar_notify.h"
 
 extern struct cdp_binds cdpb;
 

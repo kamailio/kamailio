@@ -79,6 +79,7 @@ static void timer(unsigned int ticks, void* param); /*!< Timer handler */
 static int child_init(int rank);                    /*!< Per-child init function */
 
 extern int bind_usrloc(usrloc_api_t* api);
+extern void contact_dlg_create_handler(struct dlg_cell* dlg, int cb_types, struct dlg_cb_params *dlg_params);/*V1.1*/
 extern int ul_locks_no;
 extern int subs_locks_no;
 extern int contacts_locks_no;
@@ -374,7 +375,20 @@ static int mod_init(void) {
 	}
 
 	init_flag = 1;
-	
+        
+	/* From contact_dlg_handlers.c
+         * 
+         * V1.1*/
+         
+        if (dlgb.register_dlgcb(0x00, DLGCB_CREATED, contact_dlg_create_handler, 0x00, 0x00) )
+        {
+            LM_ERR("Unable to setup DLGCB_CREATED");
+            return -1;
+        }
+        else
+        {
+            LM_DBG(" DLGCB_CREATED created successfully");
+        }
 	return 0;
 }
 

@@ -234,6 +234,7 @@ void run_load_callbacks( void )
 void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 {
 	struct dlg_callback *cb;
+        LM_DBG("Running DLG_CREATED callbacks\n");
 
 	if (create_cbs==NULL || create_cbs==POINTER_CLOSED_MARKER || create_cbs->first==NULL)
 		return;
