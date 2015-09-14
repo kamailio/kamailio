@@ -1063,6 +1063,8 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		 * set next failure route, failure_route will not be reentered
 		 * on failure */
 		t->on_failure=0;
+		/* if continuing on timeout of a suspended transaction, reset the flag */
+		t->flags &= ~T_ASYNC_SUSPENDED;
 		if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
 			/* run a failure_route action if some was marked */
 			if (run_top_route(failure_rt.rlist[on_failure], &faked_req, 0)<0)
