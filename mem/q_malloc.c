@@ -916,7 +916,7 @@ void qm_sums(void* qmp)
 }
 #else
 
-void qm_sums(struct qm_block* qm)
+void qm_sums(void* qm)
 {
 	return;
 }
