@@ -276,12 +276,18 @@ char* parse_hname2_short(char* const begin, const char* const end, struct hdr_fi
 			return parse_hname2(begin, end, hdr);
 		}
 		/* not enough space */
+		LM_ERR("not enough space to parse the header name in [%.*s] (%d)\n",
+				(int)(end-begin), begin, (int)(end-begin));
 		return NULL;
 	}
 	/* pad with whitespace - tipycal char after the ':' of the header name */
 	memset(hbuf, ' ', HBUF_MAX_SIZE);
 	memcpy(hbuf, begin, end-begin);
 	p = parse_hname2(hbuf, hbuf + 4 + (end-begin), hdr);
-	if(!p) return NULL;
+	if(!p) {
+		LM_ERR("failed to parse the header name in [%.*s] (%d)\n",
+				(int)(end-begin), begin, (int)(end-begin));
+		return NULL;
+	}
 	return begin + (p-hbuf);
 }
