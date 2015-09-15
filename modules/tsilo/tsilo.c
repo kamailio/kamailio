@@ -1,6 +1,6 @@
 /**
  *
- * Copyright (C) 2014 Federico Cabiddu (federico.cabiddu@gmail.com)
+ * Copyright (C) 2015 Federico Cabiddu (federico.cabiddu@gmail.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -33,6 +33,7 @@
 #include "../../modules/usrloc/usrloc.h"
 #include "../../dset.h"
 #include "../../rpc_lookup.h"
+#include "../../lib/kcore/statistics.h"
 
 #include "ts_hash.h"
 #include "ts_handlers.h"
@@ -63,7 +64,14 @@ static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *d);
 static int fixup_ts_append_to(void** param, int param_no);
 static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri);
 static int fixup_ts_append(void** param, int param_no);
+
 static int w_ts_store(struct sip_msg* msg);
+
+extern stat_var *stored_ruris;
+extern stat_var *stored_transactions;
+extern stat_var *total_ruris;
+extern stat_var *total_transactions;
+extern stat_var *added_branches;
 
 static cmd_export_t cmds[]={
 	{"ts_append_to", (cmd_function)w_ts_append_to,  3,
@@ -72,7 +80,7 @@ static cmd_export_t cmds[]={
 		fixup_ts_append, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"ts_store", (cmd_function)w_ts_store,  0,
 		0 , 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{0,0,0,0,0}
+	{0,0,0,0,0,0}
 };
 
 static param_export_t params[]={
@@ -80,21 +88,36 @@ static param_export_t params[]={
 	{0,0,0}
 };
 
+#ifdef STATISTICS
+/*! \brief We expose internal variables via the statistic framework below.*/
+stat_export_t mod_stats[] = {
+	{"stored_ruris",	STAT_NO_RESET, 	&stored_ruris  },
+	{"stored_transactions",	STAT_NO_RESET, 	&stored_transactions  },
+	{"total_ruris",		STAT_NO_RESET, 	&total_ruris  },
+	{"total_transactions",	STAT_NO_RESET, 	&total_transactions  },
+	{"added_branches",	STAT_NO_RESET, 	&added_branches  },
+	{0, 0, 0}
+};
+#endif
 
 /** module exports */
-struct module_exports exports= {
+struct module_exports exports = {
 	"tsilo",
-    DEFAULT_DLFLAGS,
-	cmds,
-	params,
-	0, /* exported statistics */
-    0,    /* exported MI functions */
-    0,
-    0,
-	mod_init,   /* module initialization function */
+	DEFAULT_DLFLAGS,/* dlopen flags */
+	cmds,        	/* Exported functions */
+	params,      	/* Exported parameters */
+#ifdef STATISTICS
+	mod_stats,   	/* exported statistics */
+#else
 	0,
-	(destroy_function) destroy,  /* destroy function */
-	0
+#endif
+	0,           	/* exported MI functions */
+	0,     		/* exported pseudo-variables */
+	0,           	/* extra processes */
+	mod_init,    	/* module initialization function */
+	0,
+	destroy, 	/* destroy function */
+	0,  		/* Per-child init function */
 };
 
 /**
@@ -107,10 +130,10 @@ static int mod_init(void)
 
 	/* register the RPC methods */
 	if(rpc_register_array(rpc_methods)!=0)
-    {
+	{
         LM_ERR("failed to register RPC commands\n");
         return -1;
-    }
+	}
 	/* load the TM API */
 	if (load_tm_api(&_tmb)!=0) {
 		LM_ERR("can't load TM API\n");
@@ -137,25 +160,25 @@ static int mod_init(void)
 
 	use_domain = _ul.use_domain;
 	/* sanitize hash_size */
-    if (hash_size < 1){
-        LM_WARN("hash_size is smaller "
-				"than 1  -> rounding from %d to 1\n",
-                hash_size);
-        hash_size = 1;
-    }
+	if (hash_size < 1){
+		LM_WARN("hash_size is smaller "
+			"than 1  -> rounding from %d to 1\n",
+			hash_size);
+		hash_size = 1;
+	}
 
-    /* initialize the hash table */
-    for( n=0 ; n<(8*sizeof(n)) ; n++) {
-        if (hash_size==(1<<n))
-            break;
-        if (n && hash_size<(1<<n)) {
-            LM_WARN("hash_size is not a power "
-                "of 2 as it should be -> rounding from %d to %d (n=%d)\n",
-                hash_size, 1<<(n-1), n);
-            hash_size = 1<<(n-1);
+	/* initialize the hash table */
+	for( n=0 ; n<(8*sizeof(n)) ; n++) {
+		if (hash_size==(1<<n))
 			break;
-        }
-    }
+		if (n && hash_size<(1<<n)) {
+			LM_WARN("hash_size is not a power "
+				"of 2 as it should be -> rounding from %d to %d (n=%d)\n",
+				hash_size, 1<<(n-1), n);
+			hash_size = 1<<(n-1);
+			break;
+		}
+	}
 
 	LM_DBG("creating table with size %d", hash_size);
 	if ( init_ts_table(hash_size)<0 ) {
@@ -163,7 +186,15 @@ static int mod_init(void)
 		return -1;
 	}
 
+#ifdef STATISTICS
+	/* register statistics */
+	if (register_module_stats(exports.name, mod_stats)!=0 ) {
+		LM_ERR("failed to register core statistics\n");
+		return -1;
+	}
 	return 0;
+#endif
+
 }
 
 /**
