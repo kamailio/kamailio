@@ -21,7 +21,9 @@
 		to them later if new contacts for the AOR are added.
 	</para>
 	<para>
-		When the <emphasis>ts_store</emphasis> function is called, the module stores the current transaction R-URI &uri;, index and label. Two functions (<emphasis>ts_append</emphasis> and <emphasis>ts_append_to</emphasis>) provide the ability to add new branches either to a specific transaction or to all of the transactions stored for a given R-URI. If USRLOC's <emphasis>use_domain</emphasis> option is true, the domain part of the R-URI is used to store the transaction, otherwise only the username part is used.
+		For each message, the modules stores <quote>Request-URI</quote>
+		(<quote>R-URI</quote>), &uri; and the internal transaction index
+		and label.
 	</para>
 	<para>
 		When a transaction is destroyed by the <emphasis>TM</emphasis> module,
@@ -227,6 +229,39 @@ if (is_method("REGISTER")) {
 			<programlisting  format="linespecific">
 			kamcmd ts.lookup sip:abcd@example.com
 			</programlisting>
+		</section>
+	</section>
+	<section>
+		<title>Statistics</title>
+		<section>
+			<title><varname>stored_ruris</varname></title>
+			<para>
+			Number of ruris currently stored in the TSILO table.
+			</para>
+		</section>
+		<section>
+			<title><varname>stored_transactions</varname></title>
+			<para>
+			Number of transactions currently stored in the TSILO table.
+			</para>
+		</section>
+		<section>
+			<title><varname>added_branches</varname></title>
+			<para>
+			Total number of added branches from the startup.
+			</para>
+		</section>
+		<section>
+			<title><varname>total_ruris</varname></title>
+			<para>
+			Total number of stored ruris from the startup.
+			</para>
+		</section>
+		<section>
+			<title><varname>total_transactions</varname></title>
+			<para>
+			Total number of stored transactions from the startup.
+			</para>
 		</section>
 	</section>
 </chapter>
