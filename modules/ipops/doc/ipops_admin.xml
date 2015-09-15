@@ -752,10 +752,10 @@ if (srv_query ("_sip._udp.example.com", "udp") > 0) {
   $var(cnt) = $srvquery(udp=>count);
   $var(i) = 0;
   while ($var(i) &lt; $var(cnt)) {
-    xlog ("port[$var(i)] $srvquery(udp=>port[$var(i)])\n)";
-    xlog ("priority[$var(i)] $srvquery(udp=>priority[$var(i)])\n)";
-    xlog ("target[$var(i)] $srvquery(udp=>target[$var(i)])\n)";
-    xlog ("weight[$var(i)] $srvquery(udp=>weight[$var(i)])\n)";
+    xlog ("port[$var(i)] $srvquery(udp=>port[$var(i)])\n");
+    xlog ("priority[$var(i)] $srvquery(udp=>priority[$var(i)])\n");
+    xlog ("target[$var(i)] $srvquery(udp=>target[$var(i)])\n");
+    xlog ("weight[$var(i)] $srvquery(udp=>weight[$var(i)])\n");
     $var(i) = $var(i) + 1;
   }
 }
