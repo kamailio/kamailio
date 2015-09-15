@@ -948,9 +948,11 @@ void fm_sums(void* qmp)
 void fm_sums(void* qmp)
 {
 	struct fm_block* qm;
+	int memlog;
 
 	qm = (struct fm_block*)qmp;
-	LOG_(DEFAULT_FACILITY, memlog, "fm_sums not available (%p)\n", qm);
+	memlog=cfg_get(core, core_cfg, memlog);
+	LOG_(DEFAULT_FACILITY, memlog, "fm_sums: ", "not available (%p)\n", qm);
 	return;
 }
 #endif /* DBG_F_MALLOC */
