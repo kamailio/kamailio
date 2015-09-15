@@ -990,17 +990,19 @@ static void  htable_rpc_dump(rpc_t* rpc, void* c)
 					goto error;
 				}
 				if(it->flags&AVP_VAL_STR) {
-					if(rpc->struct_add(vh, "SS",
+					if(rpc->struct_add(vh, "SSs",
 							"name",  &it->name.s,
-							"value", &it->value.s)<0)
+							"value", &it->value.s,
+							"type", "str")<0)
 					{
 						rpc->fault(c, 500, "Internal error adding item");
 						goto error;
 					}
 				} else {
-					if(rpc->struct_add(vh, "Sd",
+					if(rpc->struct_add(vh, "Sds",
 							"name",  &it->name.s,
-							"value", (int)it->value.n)<0)
+							"value", (int)it->value.n,
+							"type", "int")<0)
 					{
 						rpc->fault(c, 500, "Internal error adding item");
 						goto error;
