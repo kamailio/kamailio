@@ -62,7 +62,7 @@ extern sr_shm_api_t _shm_root;
 									_SRC_FUNCTION_, _SRC_LINE_)
 #else
 #	define shm_malloc(s)         _shm_root.xmalloc(_shm_root.mem_block, (s))
-#	define shm_malloc_unsafe(s)  _shm_root.xmalloc_safe(_shm_root.mem_block, (s))
+#	define shm_malloc_unsafe(s)  _shm_root.xmalloc_unsafe(_shm_root.mem_block, (s))
 #	define shm_realloc(p, s)     _shm_root.xrealloc(_shm_root.mem_block, (p), (s))
 #	define shm_resize(p, s)      _shm_root.xresize(_shm_root.mem_block, (p), (s))
 #	define shm_free(p)           _shm_root.xfree(_shm_root.mem_block, (p))
