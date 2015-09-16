@@ -390,15 +390,6 @@ int update_pcontact(struct udomain* _d, struct pcontact_info* _ci, struct pconta
 		}
 	}
 
-	// update received info (if info is available):
-	if (_ci->received_host.len > 0) {
-		if (_c->received_host.s)
-			shm_free(_c->received_host.s);
-		STR_SHM_DUP(_c->received_host, _ci->received_host, "update_pcontact");
-	}
-	if (_ci->received_port > 0) _c->received_port = _ci->received_port;
-	if (_ci->received_proto > 0) _c->received_proto = _ci->received_proto;
-
 	//update Rx reg session information
 	if (_ci->rx_regsession_id && _ci->rx_regsession_id->len>0 && _ci->rx_regsession_id->s) {
 		if (_c->rx_session_id.len > 0 && _c->rx_session_id.s) {
