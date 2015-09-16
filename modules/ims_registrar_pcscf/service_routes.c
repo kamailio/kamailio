@@ -214,10 +214,10 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 //    if (_m->id != current_msg_id) {
         current_msg_id = _m->id;
         c = NULL;
-        search_ci.received_host.s = 0;
-        search_ci.received_host.len = 0;
-        search_ci.received_port = 0;
-        search_ci.received_proto = 0;
+        search_ci.received_host.s = received_host.s;
+        search_ci.received_host.len = received_host.len;
+        search_ci.received_port = _m->rcv.src_port;
+        search_ci.received_proto = _m->rcv.proto;
         search_ci.searchflag = SEARCH_NORMAL;
         search_ci.via_host = host;
         search_ci.via_port = port;
