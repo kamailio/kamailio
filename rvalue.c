@@ -997,16 +997,20 @@ rv_str:
 	/* if "" => 0 (most likely case) */
 	if (likely(s->len==0)) *i=0;
 	else if (unlikely(str2sint(s, i)!=0)){
-		/* error converting to int => non numeric => 0 */
-		*i=0;
+		/* dec to int failed, try hex to int */
+		if(!(s->len>2 && s->s[0]=='0' && (s->s[1]=='x' || s->s[1]=='X')
+					&& (hexstr2int(s->s+2, s->len-2, (unsigned int*)i)==0))) {
+			/* error converting to int => non numeric => 0 */
+			*i=0;
 #ifdef RV_STR2INT_VERBOSE_ERR
-		WARN("automatic string to int conversion for \"%.*s\" failed\n",
+			WARN("automatic string to int conversion for \"%.*s\" failed\n",
 				s->len, ZSW(s->s));
-		/* return an error code */
+			/* return an error code */
 #endif
 #ifdef RV_STR2INT_ERR
-		ret=-1;
+			ret=-1;
 #endif
+		}
 	}
 	if (destroy_pval)
 		pv_value_destroy(&pval);
