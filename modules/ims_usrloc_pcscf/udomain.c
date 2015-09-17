@@ -354,10 +354,10 @@ int update_pcontact(struct udomain* _d, struct pcontact_info* _ci, struct pconta
 			for (i=0; i<_c->num_service_routes; i++) {
 				if (_c->service_routes[i].s)
 					shm_free(_c->service_routes[i].s);
-				shm_free(_c->service_routes);
-				_c->service_routes=0;
-				_c->num_service_routes=0;
 			}
+			shm_free(_c->service_routes);
+			_c->service_routes=0;
+			_c->num_service_routes=0;
 		}
 		//now add the new service routes
 		if (_ci->num_service_routes > 0) {

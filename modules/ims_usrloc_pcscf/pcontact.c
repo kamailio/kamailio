@@ -270,10 +270,10 @@ void free_pcontact(pcontact_t* _c) {
 		for (i = 0; i < _c->num_service_routes; i++) {
 			if (_c->service_routes[i].s)
 				shm_free(_c->service_routes[i].s);
-			shm_free(_c->service_routes);
-			_c->service_routes = 0;
-			_c->num_service_routes = 0;
 		}
+		shm_free(_c->service_routes);
+		_c->service_routes = 0;
+		_c->num_service_routes = 0;
 	}
 
 	if (_c->rx_session_id.len > 0 && _c->rx_session_id.s)
