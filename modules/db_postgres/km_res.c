@@ -126,14 +126,8 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 				RES_NAMES(_r)[col]);
 
 		/* The pointer that is here returned is part of the result structure. */
-		RES_NAMES(_r)[col]->s = pkg_malloc(strlen(PQfname(CON_RESULT(_h), col))+1);
-		if (! RES_NAMES(_r)[col]->s) {
-			LM_ERR("no private memory left\n");
-			db_free_columns(_r);
-			return -4;
-		}
-		strcpy(RES_NAMES(_r)[col]->s, PQfname(CON_RESULT(_h), col));
-		RES_NAMES(_r)[col]->len = strlen(RES_NAMES(_r)[col]->s);
+		RES_NAMES(_r)[col]->s = PQfname(CON_RESULT(_h), col);
+		RES_NAMES(_r)[col]->len = strlen(PQfname(CON_RESULT(_h), col));
 
 		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_r)[col], col,
 				RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s);
