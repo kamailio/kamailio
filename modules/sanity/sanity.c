@@ -659,19 +659,18 @@ int check_proxy_require(struct sip_msg* _msg) {
 	int u_len;
 
 #ifdef EXTRA_DEBUG
-	DBG("check_proxy_require entered\n");
+	LM_DBG("checking proxy require\n");
 #endif
 
 	if (parse_headers(_msg, HDR_PROXYREQUIRE_F, 0) != 0) {
-		LOG(L_WARN, "sanity_check(): check_proxy_require():"
-				" failed to parse proxy require header\n");
+		LM_WARN("failed to parse proxy require header\n");
 		return SANITY_CHECK_FAILED;
 	}
 	if (_msg->proxy_require != NULL) {
-		dump_hdr_field(_msg->proxy_require);
+		//dump_hdr_field(_msg->proxy_require);
 		if (_msg->proxy_require->parsed == NULL &&
 				parse_proxyrequire(_msg->proxy_require) < 0) {
-			LOG(L_WARN, "sanity_check(): check_proxy_require(): parse_proxy_require failed\n");
+			LM_WARN("parse_proxy_require failed\n");
 			return SANITY_CHECK_FAILED;
 		}
 		r_pr = _msg->proxy_require->parsed;
@@ -679,7 +678,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 			l_pr = proxyrequire_list;
 			while (l_pr != NULL) {
 #ifdef EXTRA_DEBUG
-				DBG("check_proxy_require(): comparing r='%.*s' l='%.*s'\n",
+				LM_DBG("comparing r='%.*s' l='%.*s'\n",
 						r_pr->string.len, r_pr->string.s, l_pr->string.len,
 						l_pr->string.s);
 #endif
@@ -692,14 +691,12 @@ int check_proxy_require(struct sip_msg* _msg) {
 				l_pr = l_pr->next;
 			}
 			if (l_pr == NULL) {
-				DBG("sanit_check(): check_proxy_require():"
-						" request contains unsupported extension: %.*s\n",
+				LM_DBG("request contains unsupported extension: %.*s\n",
 						r_pr->string.len, r_pr->string.s);
 				u_len = UNSUPPORTED_HEADER_LEN + 2 + r_pr->string.len;
 				u = pkg_malloc(u_len);
 				if (u == NULL) {
-					LOG(L_ERR, "sanity_check(): check_proxy_require():"
-							" failed to allocate memory for"
+					LM_ERR("failed to allocate memory for"
 							" Unsupported header\n");
 				}
 				else {
@@ -713,12 +710,11 @@ int check_proxy_require(struct sip_msg* _msg) {
 
 				if (_msg->REQ_METHOD != METHOD_ACK) {
 					if (sanity_reply(_msg, 420, "Bad Extension") < 0) {
-						LOG(L_WARN, "sanity_check(): check_proxy_require():"
-								" failed to send 420 via sl reply\n");
+						LM_WARN("failed to send 420 via sl reply\n");
 					}
 				}
 #ifdef EXTRA_DEBUG
-				DBG("check_proxy_require failed\n");
+				LM_DBG("checking proxy require failed\n");
 #endif
 				if (u) pkg_free(u);
 				return SANITY_CHECK_FAILED;
@@ -728,7 +724,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 			}
 		}
 #ifdef EXTRA_DEBUG
-		DBG("check_proxy_require passed\n");
+		LM_DBG("checking proxy require passed\n");
 #endif
 		if (_msg->proxy_require->parsed) {
 			/* TODO we have to free it here, because it is not automatically
@@ -739,7 +735,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 	}
 #ifdef EXTRA_DEBUG
 	else {
-		DBG("check_proxy_require(): no proxy-require header found\n");
+		LM_DBG("no proxy-require header found\n");
 	}
 #endif
 

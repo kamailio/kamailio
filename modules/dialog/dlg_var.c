@@ -35,7 +35,7 @@ dlg_ctx_t _dlg_ctx;
 extern int spiral_detected;
 
 /*! global variable table, in case the dialog does not exist yet */
-struct dlg_var * var_table = 0;
+static struct dlg_var *_dlg_var_table = 0;
 /*! ID of the current message */
 int msg_id;
 
@@ -94,7 +94,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 		LM_ERR("no more shm mem\n");
 		return NULL;
 	}
-	var->next = NULL;
+	memset(var, 0, sizeof(struct dlg_var));
 	var->vflags = DLG_FLAG_NEW;
 	/* set key */
 	var->key.len = key->len;
@@ -108,7 +108,7 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 	var->key.s[var->key.len] = '\0';
 	/* set value */
 	var->value.len = val->len;
-	var->value.s = (char*)shm_malloc(var->value.len);
+	var->value.s = (char*)shm_malloc(var->value.len+1);
 	if (var->value.s==NULL) {
 		shm_free(var->key.s);			
 		shm_free(var);			
@@ -116,19 +116,21 @@ static inline struct dlg_var *new_dlg_var(str *key, str *val)
 		return NULL;
 	}
 	memcpy(var->value.s, val->s, val->len);
+	var->value.s[var->value.len] = '\0';
 	return var;
 }
 
 /*! Delete the current var-list */
 void free_local_varlist() {
 	struct dlg_var *var;
-	while (var_table) {
-		var = var_table;
-		var_table = var_table->next;
+	while (_dlg_var_table) {
+		var = _dlg_var_table;
+		_dlg_var_table = _dlg_var_table->next;
 		shm_free(var->key.s);
 		shm_free(var->value.s);
 		shm_free(var);
 	}
+	_dlg_var_table = NULL;
 }
 
 /*! Retrieve the local var-list pointer */
@@ -139,9 +141,9 @@ struct dlg_var * get_local_varlist_pointer(struct sip_msg *msg, int clear_pointe
 		free_local_varlist();
 		msg_id = msg->id;
 	}
-	var = var_table;
+	var = _dlg_var_table;
 	if (clear_pointer)
-		var_table = NULL;
+		_dlg_var_table = NULL;
 	return var;
 }
 
@@ -156,7 +158,7 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 	if (dlg) 
 		var_list = &dlg->vars;
 	else 
-		var_list = &var_table;
+		var_list = &_dlg_var_table;
 
 	if ( val && (var=new_dlg_var(key, val))==NULL) {
 		LM_ERR("failed to create new dialog variable\n");
@@ -211,7 +213,7 @@ str * get_dlg_variable_unsafe(struct dlg_cell *dlg, str *key)
 	if (dlg) 
 		var_list = dlg->vars;
 	else
-		var_list = var_table;
+		var_list = _dlg_var_table;
 
 	/* iterate the list */
 	for(var=var_list ; var ; var=var->next) {
@@ -239,7 +241,7 @@ int pv_parse_dialog_var_name(pv_spec_p sp, str *in)
 /*! Internal debugging function: Prints the list of dialogs */
 void print_lists(struct dlg_cell *dlg) {
 	struct dlg_var *varlist;
-	varlist = var_table;
+	varlist = _dlg_var_table;
 	LM_DBG("Internal var-list (%p):\n", varlist);
 	while (varlist) {
 		LM_DBG("%.*s=%.*s (flags %i)\n",

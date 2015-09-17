@@ -168,7 +168,7 @@ static inline int get_event_flag(str* event)
                 return CONFERENCE_EVENT;
             break;
         case 14:
-            if (strncmp(event->s, "presence;winfo", 14) == 0)
+            if (strncmp(event->s, "presence.winfo", 14) == 0)
                 return PWINFO_EVENT;
             break;
         case 15:

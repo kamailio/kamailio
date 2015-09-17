@@ -107,11 +107,26 @@ static inline char* skip_ws(char* p, unsigned int size)
 
 /*@} */
 
+#define SAFE_READ(val, len) \
+((len) == 1 ? READ1(val) : ((len) == 2 ? READ2(val) : ((len) == 3 ? READ3(val) : ((len) > 3 ? READ4(val) : READ0(val)))))
+
 #define READ(val) \
-(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+READ4(val)
+
+#define READ4(val) \
+(*((val) + 0) + (*((val) + 1) << 8) + (*((val) + 2) << 16) + (*((val) + 3) << 24))
 
 #define READ3(val) \
-(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16))
+(*((val) + 0) + (*((val) + 1) << 8) + (*((val) + 2) << 16))
+
+#define READ2(val) \
+(*((val) + 0) + (*((val) + 1) << 8))
+
+#define READ1(val) \
+(*((val) + 0))
+
+#define READ0(val) \
+(0)
 
 #define FIRST_QUATERNIONS       \
         case _via1_: via1_CASE; \
@@ -254,3 +269,37 @@ char* parse_hname2(char* const begin, const char* const end, struct hdr_field* c
 	}
 }
 
+/**
+ * parse_hname2_short() - safer version to parse header name stored in short buffers
+ *   - parse_hanem2() reads 4 bytes at once, expecting to walk through a buffer
+ *   that contains more than the header name (e.g., sip msg buf, full header buf
+ *   with name and body)
+ */
+char* parse_hname2_short(char* const begin, const char* const end, struct hdr_field* const hdr)
+{
+#define HBUF_MAX_SIZE 256
+	char hbuf[HBUF_MAX_SIZE];
+	char *p;
+
+	if(end-begin>=HBUF_MAX_SIZE-4) {
+		p = q_memchr(begin, ':', end - begin);
+		if(p && p-4> begin) {
+			/* header name termination char found and enough space in buffer after it */
+			return parse_hname2(begin, end, hdr);
+		}
+		/* not enough space */
+		LM_ERR("not enough space to parse the header name in [%.*s] (%d)\n",
+				(int)(end-begin), begin, (int)(end-begin));
+		return NULL;
+	}
+	/* pad with whitespace - tipycal char after the ':' of the header name */
+	memset(hbuf, ' ', HBUF_MAX_SIZE);
+	memcpy(hbuf, begin, end-begin);
+	p = parse_hname2(hbuf, hbuf + 4 + (end-begin), hdr);
+	if(!p) {
+		LM_ERR("failed to parse the header name in [%.*s] (%d)\n",
+				(int)(end-begin), begin, (int)(end-begin));
+		return NULL;
+	}
+	return begin + (p-hbuf);
+}

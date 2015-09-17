@@ -156,6 +156,7 @@ static const char* corex_rpc_shm_status_doc[2] = {
  */
 static void corex_rpc_shm_status(rpc_t* rpc, void* ctx)
 {
+	LM_DBG("printing shared memory status report\n");
 	shm_status();
 }
 
@@ -169,6 +170,7 @@ static const char* corex_rpc_shm_summary_doc[2] = {
  */
 static void corex_rpc_shm_summary(rpc_t* rpc, void* ctx)
 {
+	LM_DBG("printing shared memory summary report\n");
 	shm_sums();
 }
 

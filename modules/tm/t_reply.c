@@ -1063,6 +1063,8 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		 * set next failure route, failure_route will not be reentered
 		 * on failure */
 		t->on_failure=0;
+		/* if continuing on timeout of a suspended transaction, reset the flag */
+		t->flags &= ~T_ASYNC_SUSPENDED;
 		if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
 			/* run a failure_route action if some was marked */
 			if (run_top_route(failure_rt.rlist[on_failure], &faked_req, 0)<0)
@@ -2367,10 +2369,21 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_xavps = xavp_set_list(&t->xavps_list);
 #endif
 		setbflagsval(0, uac->branch_flags);
+		if(msg_status>last_uac_status) {
+			/* current response (msg) status is higher that the last received
+			 * on the same branch - set it temporarily so functions in onreply_route
+			 * can access it (e.g., avoid sending CANCEL by forcing another t_relply()
+			 * in onreply_route when a negative sip response was received) */
+			uac->last_received = msg_status;
+		}
+
 		/* Pre- and post-script callbacks have already
 		 * been executed by the core. (Miklos)
 		 */
 		run_top_route(onreply_rt.rlist[onreply_route], p_msg, &ctx);
+
+		/* restore brach last_received as before executing onreply_route */
+		uac->last_received = last_uac_status;
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		getbflagsval(0, &uac->branch_flags);
