@@ -157,13 +157,18 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     //get each individual element from the MAA
     cxdx_get_result_code(maa, &rc);
     cxdx_get_experimental_result_code(maa, &experimental_rc);
-    cxdx_get_sip_number_auth_items(maa, &sip_number_auth_items);
+
+    if (!cxdx_get_sip_number_auth_items(maa, &sip_number_auth_items)) {
+       sip_number_auth_items = 0;
+       goto success;
+    }
 
     //now assign the auth_data_item elements
     //there can be many of these in the MAA
     struct auth_data_item *adi;
     int adi_len;
     char *p;
+    int items_found = 0;
     while ((cxdx_get_auth_data_item_answer(maa, &auth_data, &item_number,
             &algorithm, &authenticate, &authorization2,
             &ck, &ik,
@@ -256,6 +261,8 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
             adi->previous = adi_list->last;
             adi_list->last = adi;
         }
+	
+        items_found++;
     }
 
     if (!(rc) && !(experimental_rc)) {
@@ -304,7 +311,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
 
 success:
 
-    if (!sip_number_auth_items) {
+    if (!sip_number_auth_items || !items_found) {
         stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_AUTH_DATA);
         result = CSCF_RETURN_FALSE;
         goto done;
