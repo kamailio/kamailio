@@ -45,6 +45,7 @@
 
 
 extern int http_response_trim;
+extern int http_response_mode;
 
 /* 
  * curl write function that saves received data as zero terminated
@@ -208,14 +209,15 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 		if(http_response_trim) {
 			trim(&hres);
 		}
-		/* search for line feed */
-		at = memchr(hres.s, (char)10, hres.len);
-		if (at == NULL) {
-			/* not found: use whole stream */
-			val.rs = hres;
-		} else {
-			val.rs.s = hres.s;
-			val.rs.len = at - hres.s;
+		val.rs = hres;
+		if(http_response_mode==0) {
+			/* only first line - search for line feed */
+			at = memchr(hres.s, (char)10, hres.len);
+			if (at != NULL) {
+				/* found: use first line */
+				val.rs.s = hres.s;
+				val.rs.len = at - hres.s;
+			}
 		}
 		LM_DBG("http_query result: %.*s\n", val.rs.len, val.rs.s);
 		val.flags = PV_VAL_STR;
