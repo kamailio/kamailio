@@ -190,7 +190,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	}
 
 	if (!(t->flags & T_ASYNC_SUSPENDED)) {
-		LM_ERR("transaction is not suspended [%u:%u]\n", hash_index, label);
+		LM_WARN("transaction is not suspended [%u:%u]\n", hash_index, label);
 		return -2;
 	}
 
