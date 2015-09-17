@@ -634,7 +634,7 @@ static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn)
 
 	if(_tmx_tmb.t_continue(tindex, tlabel, act)<0)
 	{
-		LM_ERR("resuming the processing of transaction [%u:%u] failed\n",
+		LM_WARN("resuming the processing of transaction [%u:%u] failed\n",
 				tindex, tlabel);
 		return -1;
 	}
