@@ -93,6 +93,26 @@ modparam("utils", "http_query_timeout", 2)
 				</programlisting>
 			</example>
 		</section>
+		<section id="utils.p.http_response_mode">
+			<title><varname>http_response_mode</varname> (int)</title>
+			<para>
+			Control what part of the HTTP reponse is returned: only
+			first line (for value 0), or all response (for value 1).
+			</para>
+			<para>
+			<emphasis>
+				Default value is 0 (return only the first line).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>http_response_mode</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("utils", "http_response_mode", 1)
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="utils.p.http_response_trim">
 			<title><varname>http_response_trim</varname> (int)</title>
 			<para>
@@ -113,7 +133,6 @@ modparam("utils", "http_response_trim", 1)
 				</programlisting>
 			</example>
 		</section>
-
 		<section id="utils.p.forward_active">
 			<title><varname>forward_active</varname> (int)</title>
 			<para>
