@@ -627,3 +627,44 @@ error:
 	return ret;
 }
 
+int pcscf_unregister(udomain_t* _d, str * uri, str * received_host, int received_port) {
+	int result = -1;
+	struct pcontact * pcontact;
+	struct pcontact_info ci;
+    	memset(&ci, 0, sizeof (struct pcontact_info));
+
+	pcontact_info_t search_ci;
+	sip_uri_t contact_uri;
+        if (parse_uri(uri->s, uri->len, &contact_uri) != 0) {
+            LM_WARN("Failed to parse aor [%.*s]\n", uri->len, uri->s);
+            return -1;
+        }
+
+        search_ci.received_host.s = received_host->s;
+        search_ci.received_host.len = received_host->len;
+        search_ci.received_port = received_port;
+        search_ci.received_proto = contact_uri.proto? contact_uri.proto : PROTO_UDP;
+        search_ci.searchflag = SEARCH_RECEIVED;
+        search_ci.via_host.s = received_host->s;
+        search_ci.via_host.len = received_host->len;
+        search_ci.via_port = received_port;
+        search_ci.via_prot = search_ci.received_proto;
+        search_ci.aor.s = uri->s;
+        search_ci.aor.len = uri->len;
+
+	if (ul.get_pcontact(_d, &search_ci, &pcontact) == 0) {
+		/* Lock this record while working with the data: */
+		ul.lock_udomain(_d, &pcontact->via_host, pcontact->via_port, pcontact->via_proto);
+
+		LM_DBG("Updating contact [%.*s]: setting state to PCONTACT_DEREG_PENDING_PUBLISH\n", pcontact->aor.len, pcontact->aor.s);
+
+		ci.reg_state = PCONTACT_DEREG_PENDING_PUBLISH;
+		ci.num_service_routes = 0;
+		if (ul.update_pcontact(_d, &ci, pcontact) == 0) result = 1;
+
+		/* Unlock domain */
+		ul.unlock_udomain(_d, &pcontact->via_host, pcontact->via_port, pcontact->via_proto);
+	}
+	return result;
+}
+
