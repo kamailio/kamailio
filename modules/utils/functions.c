@@ -36,12 +36,15 @@
 #include "../../pvar.h"
 #include "../../route_struct.h"
 #include "../../ut.h"
+#include "../../trim.h"
 #include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
 #include "../../lvalue.h"
 
 #include "utils.h"
 
+
+extern int http_response_trim;
 
 /* 
  * curl write function that saves received data as zero terminated
@@ -86,6 +89,7 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 	pv_value_t val;
 	double download_size;
 	struct curl_slist *chunk = NULL;
+	str hres;
 
 	memset(&stream, 0, sizeof(http_res_stream_t));
 
@@ -199,14 +203,20 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
 		LM_DBG("http_query download size: %u\n", (unsigned int)download_size);
 
+		hres.s = stream.buf;
+		hres.len = download_size;
+		if(http_response_trim) {
+			trim(&hres);
+		}
 		/* search for line feed */
-		at = memchr(stream.buf, (char)10, download_size);
+		at = memchr(hres.s, (char)10, hres.len);
 		if (at == NULL) {
 			/* not found: use whole stream */
-			at = stream.buf + (unsigned int)download_size;
+			val.rs = hres;
+		} else {
+			val.rs.s = hres.s;
+			val.rs.len = at - hres.s;
 		}
-		val.rs.s = stream.buf;
-		val.rs.len = at - stream.buf;
 		LM_DBG("http_query result: %.*s\n", val.rs.len, val.rs.s);
 		val.flags = PV_VAL_STR;
 		dst = (pv_spec_t *)_dst;

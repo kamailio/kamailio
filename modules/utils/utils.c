@@ -58,6 +58,7 @@ MODULE_VERSION
 
 /* Module parameter variables */
 int http_query_timeout = 4;
+int http_response_trim = 0;
 static int forward_active = 0;
 static int   mp_max_id = 0;
 static char* mp_switch = "";
@@ -122,6 +123,7 @@ static param_export_t params[] = {
     {"pres_db_url", PARAM_STR, &pres_db_url},
     {"xcap_table", PARAM_STR, &xcap_table},
     {"http_query_timeout", INT_PARAM, &http_query_timeout},
+    {"http_response_trim", INT_PARAM, &http_response_trim},
     {"forward_active", INT_PARAM, &forward_active},
     {0, 0, 0}
 };
