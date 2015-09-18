@@ -34,4 +34,10 @@ int qm_malloc_init_pkg_manager(void);
 int qm_malloc_init_shm_manager(void);
 #endif
 
+#ifdef TLSF_MALLOC
+/* two levels segregated fit - implemented in tlsf_malloc.c */
+int tlsf_malloc_init_pkg_manager(void);
+int tlsf_malloc_init_shm_manager(void);
+#endif
+
 #endif

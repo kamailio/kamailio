@@ -64,6 +64,10 @@ int pkg_init_manager(char *name)
 			|| strcmp(name, "qmalloc")==0) {
 		/*quick malloc*/
 		return qm_malloc_init_pkg_manager();
+	} else if(strcmp(name, "tlsf")==0
+			|| strcmp(name, "tlsf_malloc")==0) {
+		/*tlsf malloc*/
+		return tlsf_malloc_init_pkg_manager();
 	} else if(strcmp(name, "sm")==0) {
 		/*system malloc*/
 	} else {

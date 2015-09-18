@@ -507,8 +507,8 @@ data_target = $(prefix)/$(data_dir)
 #		custom quick malloc, recommended for debugging
 # -DF_MALLOC
 #		an even faster malloc, not recommended for debugging
-# -DTLSF_MALLOC=1
-#       an implemetation of the "two levels segregation fit" malloc algorithm
+# -DTLSF_MALLOC
+#       an implemetation of the "two levels segregated fit" malloc algorithm
 # -DDL_MALLOC
 #		a malloc implementation based on Doug Lea's dl_malloc
 # -DSF_MALLOC 
@@ -668,6 +668,8 @@ C_DEFS= $(extra_defs) \
 C_DEFS+= -DF_MALLOC
 # enable q_malloc
 C_DEFS+= -DQ_MALLOC
+# enable TLSF malloc
+C_DEFS+= -DTLSF_MALLOC
 ifeq 	($(MEMDBG), 1)
 	C_DEFS+= -DDBG_SR_MEMORY
 endif

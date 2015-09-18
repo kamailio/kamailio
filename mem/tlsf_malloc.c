@@ -1,3 +1,5 @@
+#if defined(TLSF_MALLOC)
+
 #include <assert.h>
 #include <limits.h>
 #include <stddef.h>
@@ -5,12 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tlsf.h"
-#include "tlsfbits.h"
+#include "tlsf_malloc.h"
+#include "tlsf_malloc_bits.h"
 #include "src_loc.h"
+#include "memdbg.h"
+#include "memapi.h"
 #include "../dprint.h"
 #include "../cfg/cfg.h"
-#include "memdbg.h"
+#include "../globals.h"
 
 /*
 ** Constants.
@@ -104,7 +108,7 @@ tlsf_static_assert(ALIGN_SIZE == SMALL_BLOCK_SIZE / SL_INDEX_COUNT);
 typedef struct {
 	const char* file;
 	const char* func;
-	unsigned long line;
+	unsigned int line;
 } alloc_info_t;
 #endif
 /*
@@ -166,24 +170,20 @@ static const size_t block_size_min =
 	sizeof(block_header_t) - sizeof(block_header_t*);
 static const size_t block_size_max = tlsf_cast(size_t, 1) << FL_INDEX_MAX;
 
-#ifdef TLSF_STATS
-	#define TLSF_INCREASE_REAL_USED(control, increment) do {control->real_used += (increment) ; control->max_used = tlsf_max(control->real_used, control->max_used);}while(0)
-	#define TLSF_INCREASE_FRAGMENTS(control) do {control->fragments++ ; control->max_fragments = tlsf_max(control->fragments, control->max_fragments);}while(0)
-#endif
+#define TLSF_INCREASE_REAL_USED(control, increment) do {control->real_used += (increment) ; control->max_used = tlsf_max(control->real_used, control->max_used);}while(0)
+#define TLSF_INCREASE_FRAGMENTS(control) do {control->fragments++ ; control->max_fragments = tlsf_max(control->fragments, control->max_fragments);}while(0)
 
 /* The TLSF control structure. */
 typedef struct control_t
 {
 	/* Empty lists point at this block to indicate they are free. */
 	block_header_t block_null;
-#ifdef TLSF_STATS
 	size_t total_size;
 	size_t allocated;
 	size_t real_used;
 	size_t max_used;
 	size_t fragments;
 	size_t max_fragments;
-#endif
 	/* Bitmaps for free lists. */
 	unsigned int fl_bitmap;
 	unsigned int sl_bitmap[FL_INDEX_COUNT];
@@ -430,9 +430,7 @@ static void remove_free_block(control_t* control, block_header_t* block, int fl,
 			}
 		}
 	}
-#if defined TLSF_STATS
 	control->fragments--;
-#endif
 }
 
 /* Insert a free block into the free block list. */
@@ -454,9 +452,7 @@ static void insert_free_block(control_t* control, block_header_t* block, int fl,
 	control->blocks[fl][sl] = block;
 	control->fl_bitmap |= (1 << fl);
 	control->sl_bitmap[fl] |= (1 << sl);
-#if defined TLSF_STATS
 	TLSF_INCREASE_FRAGMENTS(control);
-#endif
 }
 
 /* Remove a given block from the free list. */
@@ -613,12 +609,10 @@ static void* block_prepare_used(control_t* control, block_header_t* block, size_
 		block_trim_free(control, block, size);
 		block_mark_as_used(block);
 		p = block_to_ptr(block);
-#ifdef TLSF_STATS
 		TLSF_INCREASE_REAL_USED(control, block_size(block) + (p - (void *)block
 				/* prev_phys_block is melted in the previous block when the current block is used */
 				+ sizeof(block->prev_phys_block)));
 		control->allocated += block_size(block);
-#endif
 #ifdef DBG_TLSF_MALLOC
 		block->alloc_info.file = file;
 		block->alloc_info.func = function;
@@ -849,9 +843,7 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 	block_set_free(block);
 	block_set_prev_used(block);
 	block_insert(tlsf_cast(control_t*, tlsf), block);
-#ifdef TLSF_STATS
 	tlsf_cast(control_t*, tlsf)->total_size += block_size(block);
-#endif
 #ifdef DBG_TLSF_MALLOC
 	block->alloc_info.file = _SRC_LOC_;
 	block->alloc_info.func = _SRC_FUNCTION_;
@@ -879,9 +871,7 @@ void tlsf_remove_pool(tlsf_t tlsf, pool_t pool)
 
 	mapping_insert(block_size(block), &fl, &sl);
 	remove_free_block(control, block, fl, sl);
-#ifdef TLSF_STATS
 	tlsf_cast(control_t*, tlsf)->total_size -= block_size(block);
-#endif
 }
 
 /*
@@ -933,14 +923,12 @@ tlsf_t tlsf_create(void* mem)
 	}
 
 	control_construct(tlsf_cast(control_t*, mem));
-#ifdef TLSF_STATS
 	tlsf_cast(control_t*, mem)->real_used = tlsf_size();
 	tlsf_cast(control_t*, mem)->max_used = tlsf_size();
 	tlsf_cast(control_t*, mem)->allocated = 0;
 	tlsf_cast(control_t*, mem)->total_size = tlsf_size();
 	tlsf_cast(control_t*, mem)->fragments = 0;
 	tlsf_cast(control_t*, mem)->max_fragments = 0;
-#endif
 	return tlsf_cast(tlsf_t, mem);
 }
 
@@ -964,7 +952,7 @@ pool_t tlsf_get_pool(tlsf_t tlsf)
 
 #ifdef DBG_TLSF_MALLOC
 void* tlsf_malloc(tlsf_t tlsf, size_t size,
-		const char *file, const char *function, unsigned long line)
+		const char *file, const char *function, unsigned int line)
 #else
 void* tlsf_malloc(tlsf_t tlsf, size_t size)
 #endif
@@ -975,7 +963,7 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 #ifdef DBG_TLSF_MALLOC
 	void *ptr;
 
-	MDBG("tlsf_malloc(%p, %zu) called from %s: %s(%lu)\n", tlsf, size, file, function, line);
+	MDBG("tlsf_malloc(%p, %zu) called from %s: %s(%u)\n", tlsf, size, file, function, line);
 	ptr = block_prepare_used(control, block, adjust, file, function, line);
 	MDBG("tlsf_malloc(%p, %zu) returns address %p \n", tlsf, size,
 		ptr);
@@ -987,13 +975,13 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 
 #ifdef DBG_TLSF_MALLOC
 void tlsf_free(tlsf_t tlsf, void* ptr,
-		const char *file, const char *function, unsigned long line)
+		const char *file, const char *function, unsigned int line)
 #else
 void tlsf_free(tlsf_t tlsf, void* ptr)
 #endif
 {
 #ifdef DBG_TLSF_MALLOC
-	MDBG("tlsf_free(%p, %p), called from %s: %s(%lu)\n", tlsf, ptr, file, function, line);
+	MDBG("tlsf_free(%p, %p), called from %s: %s(%u)\n", tlsf, ptr, file, function, line);
 #endif
 	/* Don't attempt to free a NULL pointer. */
 	if (ptr)
@@ -1003,8 +991,8 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		if (block_is_free(block)) {
 			LOG(L_CRIT, "BUG: tlsf_free: freeing already freed pointer (%p)"
 #ifdef DBG_TLSF_MALLOC
-					", called from %s: %s(%lu)"
-					", first free %s: %s(%lu)\n",
+					", called from %s: %s(%u)"
+					", first free %s: %s(%u)\n",
 					ptr, file, function, line,
 					block->alloc_info.file, block->alloc_info.func, block->alloc_info.line);
 #else
@@ -1017,12 +1005,10 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 			}
 
 		}
-#if defined TLSF_STATS
 		control->allocated -= block_size(block);
 		control->real_used -= (block_size(block) + (ptr - (void *)block
 				/* prev_phys_block is melted in the previous block when the current block is used */
 				+ sizeof(block->prev_phys_block)));
-#endif
 #ifdef DBG_TLSF_MALLOC
 		block->alloc_info.file = file;
 		block->alloc_info.func = function;
@@ -1034,7 +1020,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		block_insert(control, block);
 	} else {
 #ifdef DBG_TLSF_MALLOC
-		LOG(L_WARN, "tlsf_free: free(0) called from %s: %s(%lu)\n", file, function, line);
+		LOG(L_WARN, "tlsf_free: free(0) called from %s: %s(%u)\n", file, function, line);
 #else
 		LOG(L_WARN, "tlsf_free: free(0) called\n");
 #endif
@@ -1056,7 +1042,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 */
 #ifdef DBG_TLSF_MALLOC
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size,
-		const char *file, const char *function, unsigned long line)
+		const char *file, const char *function, unsigned int line)
 #else
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 #endif
@@ -1117,10 +1103,8 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 		}
 		else
 		{
-#ifdef TLSF_STATS
 			control->allocated -= block_size(block);
 			control->real_used -= block_size(block);
-#endif
 			/* Do we need to expand to the next block? */
 			if (adjust > cursize)
 			{
@@ -1131,17 +1115,13 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 			/* Trim the resulting block and return the original pointer. */
 			block_trim_used(control, block, adjust);
 			p = ptr;
-#ifdef TLSF_STATS
 			control->allocated +=block_size(block);
 			TLSF_INCREASE_REAL_USED(control, block_size(block));
-#endif
 		}
 	}
 
 	return p;
 }
-
-#ifdef TLSF_STATS
 
 void tlsf_meminfo(tlsf_t pool, struct mem_info *info)
 {
@@ -1171,7 +1151,6 @@ void tlsf_status(tlsf_t pool)
 
 	memlog=cfg_get(core, core_cfg, memlog);
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ", "status of pool (%p):\n", pool);
-#ifdef TLSF_STATS
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ", "heap size= %zu\n",
 			control->total_size);
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
@@ -1179,11 +1158,10 @@ void tlsf_status(tlsf_t pool)
 			control->allocated, control->real_used, control->total_size - control->real_used, control->fragments);
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 			"max used (+overhead)=%zu, max fragments=%zu\n", control->max_used, control->max_fragments);
-#endif
 
 	/* print a summary of the 2 levels bucket list */
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
-				"Used blocks matrix ('.': unused, 'X': between 2^X and (2^(X+1)-1) used blocks, X=A..Z, A=0, B=1, ...)\n");
+				"Free blocks matrix ('.': none, 'X': between 2^X and (2^(X+1)-1) free blocks, X=A..Z, A=0, B=1, ...)\n");
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_status: ",
 				"> first-level: %d block list arrays between 2^fl and 2^(fl+1) bytes (fl=%d..%d)\n",
 				FL_INDEX_COUNT, FL_INDEX_SHIFT, FL_INDEX_MAX);
@@ -1284,5 +1262,211 @@ void tlsf_sums(tlsf_t pool)
 {}
 #endif /* defined DBG_TLSF_MALLOC */
 
-#endif
+/*memory manager core api*/
+static char *_tlsf_mem_name = "f_malloc";
 
+/* PKG - private memory API*/
+static void *_tlsf_pkg_pool = 0;
+static tlsf_t _tlsf_pkg_block = 0;
+
+/**
+ * \brief Destroy memory pool
+ */
+void tlsf_malloc_destroy_pkg_manager(void)
+{
+	if (_tlsf_pkg_pool) {
+		free(_tlsf_pkg_pool);
+		_tlsf_pkg_pool = 0;
+	}
+	_tlsf_pkg_block = 0;
+}
+
+/**
+ * \brief Init memory pool
+ */
+int tlsf_malloc_init_pkg_manager(void)
+{
+	sr_pkg_api_t ma;
+	_tlsf_pkg_pool = malloc(pkg_mem_size);
+	if (_tlsf_pkg_pool) {
+		_tlsf_pkg_block = tlsf_create_with_pool(_tlsf_pkg_pool, pkg_mem_size);
+	} else {
+		LOG(L_CRIT, "could not initialize tlsf pkg memory pool\n");
+		fprintf(stderr, "Too much tlsf pkg memory demanded: %ld bytes\n",
+						pkg_mem_size);
+		return -1;
+	}
+
+	memset(&ma, 0, sizeof(sr_pkg_api_t));
+	ma.mname      = _tlsf_mem_name;
+	ma.mem_pool   = _tlsf_pkg_pool;
+	ma.mem_block  = _tlsf_pkg_block;
+	ma.xmalloc    = tlsf_malloc;
+	ma.xfree      = tlsf_free;
+	ma.xrealloc   = tlsf_realloc;
+	ma.xstatus    = tlsf_status;
+	ma.xinfo      = tlsf_meminfo;
+	ma.xavailable = tlsf_available;
+	ma.xsums      = tlsf_sums;
+	ma.xdestroy   = tlsf_malloc_destroy_pkg_manager;
+
+	return pkg_init_api(&ma);
+}
+
+/* SHM - shared memory API*/
+static void *_tlsf_shm_pool = 0;
+static tlsf_t _tlsf_shm_block = 0;
+
+/*SHM wrappers to sync the access to memory block*/
+#ifdef DBG_TLSF_MALLOC
+void* tlsf_shm_malloc(void* tlsfmp, unsigned long size,
+					const char* file, const char* func, unsigned int line)
+{
+	void *r;
+	shm_lock();
+	r = tlsf_malloc(tlsfmp, size, file, func, line);
+	shm_unlock();
+	return r;
+}
+void* tlsf_shm_realloc(void* tlsfmp, void* p, unsigned long size,
+					const char* file, const char* func, unsigned int line)
+{
+	void *r;
+	shm_lock();
+	r = tlsf_realloc(tlsfmp, p, size, file, func, line);
+	shm_unlock();
+	return r;
+}
+void* tlsf_shm_resize(void* tlsfmp, void* p, unsigned long size,
+					const char* file, const char* func, unsigned int line)
+{
+	void *r;
+	shm_lock();
+	if(p) tlsf_free(tlsfmp, p, file, func, line);
+	r = tlsf_malloc(tlsfmp, size, file, func, line);
+	shm_unlock();
+	return r;
+}
+void tlsf_shm_free(void* tlsfmp, void* p, const char* file, const char* func,
+				unsigned int line)
+{
+	shm_lock();
+	tlsf_free(tlsfmp, p, file, func, line);
+	shm_unlock();
+}
+#else
+void* tlsf_shm_malloc(void* tlsfmp, unsigned long size)
+{
+	void *r;
+	shm_lock();
+	r = tlsf_malloc(tlsfmp, size);
+	shm_unlock();
+	return r;
+}
+void* tlsf_shm_realloc(void* tlsfmp, void* p, unsigned long size)
+{
+	void *r;
+	shm_lock();
+	r = tlsf_realloc(tlsfmp, p, size);
+	shm_unlock();
+	return r;
+}
+void* tlsf_shm_resize(void* tlsfmp, void* p, unsigned long size)
+{
+	void *r;
+	shm_lock();
+	if(p) tlsf_free(tlsfmp, p);
+	r = tlsf_malloc(tlsfmp, size);
+	shm_unlock();
+	return r;
+}
+void tlsf_shm_free(void* tlsfmp, void* p)
+{
+	shm_lock();
+	tlsf_free(tlsfmp, p);
+	shm_unlock();
+}
+#endif
+void tlsf_shm_status(void* tlsfmp)
+{
+	shm_lock();
+	tlsf_status(tlsfmp);
+	shm_unlock();
+}
+void tlsf_shm_info(void* tlsfmp, struct mem_info* info)
+{
+	shm_lock();
+	tlsf_meminfo(tlsfmp, info);
+	shm_unlock();
+
+}
+unsigned long tlsf_shm_available(void* tlsfmp)
+{
+	unsigned long r;
+	shm_lock();
+	r = tlsf_available(tlsfmp);
+	shm_unlock();
+	return r;
+}
+void tlsf_shm_sums(void* tlsfmp)
+{
+	shm_lock();
+	tlsf_sums(tlsfmp);
+	shm_unlock();
+}
+
+
+/**
+ * \brief Destroy memory pool
+ */
+void tlsf_malloc_destroy_shm_manager(void)
+{
+	/*shm pool from core - nothing to do*/
+	_tlsf_shm_pool = 0;
+	_tlsf_shm_block = 0;
+}
+
+/**
+ * \brief Init memory pool
+ */
+int tlsf_malloc_init_shm_manager(void)
+{
+	sr_shm_api_t ma;
+	_tlsf_shm_pool = shm_core_get_pool();
+	if (_tlsf_shm_pool) {
+		_tlsf_shm_block = tlsf_create_with_pool(_tlsf_shm_pool, shm_mem_size);
+	} else {
+		LOG(L_CRIT, "could not initialize tlsf shm memory pool\n");
+		fprintf(stderr, "Too much tlsf shm memory demanded: %ld bytes\n",
+						pkg_mem_size);
+		return -1;
+	}
+
+	memset(&ma, 0, sizeof(sr_shm_api_t));
+	ma.mname          = _tlsf_mem_name;
+	ma.mem_pool       = _tlsf_shm_pool;
+	ma.mem_block      = _tlsf_shm_block;
+	ma.xmalloc        = tlsf_shm_malloc;
+	ma.xmalloc_unsafe = tlsf_malloc;
+	ma.xfree          = tlsf_shm_free;
+	ma.xfree_unsafe   = tlsf_free;
+	ma.xrealloc       = tlsf_shm_realloc;
+	ma.xresize        = tlsf_shm_resize;
+	ma.xstatus        = tlsf_shm_status;
+	ma.xinfo          = tlsf_shm_info;
+	ma.xavailable     = tlsf_shm_available;
+	ma.xsums          = tlsf_shm_sums;
+	ma.xdestroy       = tlsf_malloc_destroy_shm_manager;
+
+	if(shm_init_api(&ma)<0) {
+		LM_ERR("cannot initialize the core shm api\n");
+		return -1;
+	}
+	if(shm_core_lock_init()<0) {
+		LM_ERR("cannot initialize the core shm lock\n");
+		return -1;
+	}
+	return 0;
+}
+
+#endif /* TLSF_MALLOC */
