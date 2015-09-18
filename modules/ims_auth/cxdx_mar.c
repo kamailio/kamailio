@@ -503,6 +503,10 @@ int cxdx_send_mar(struct sip_msg *msg, str public_identity, str private_identity
     }
     if (!mar) goto error1;
 
+    if (cxdx_dest_host.len > 0) {
+       if (!cxdx_add_destination_host(mar, cxdx_dest_host)) goto error1;
+    }
+
     if (!cxdx_add_destination_realm(mar, cxdx_dest_realm)) goto error1;
 
     if (!cxdx_add_vendor_specific_appid(mar, IMS_vendor_id_3GPP, IMS_Cx, 0 /*IMS_Cx*/)) goto error1;

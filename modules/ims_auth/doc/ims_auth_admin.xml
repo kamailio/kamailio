@@ -244,7 +244,7 @@ modparam("ims_auth", "cxdx_forced_peer", "hss.ims.smilecoms.com")
     <section>
       <title><varname>cxdx_dest_realm</varname> (string)</title>
 
-      <para>Destination realm to be used in Diameter messags to HSS</para>
+      <para>Destination realm to be used in Diameter messages to HSS</para>
 
       <para>Default value is <quote>ims.smilecoms.com</quote>.</para>
 
@@ -254,6 +254,24 @@ modparam("ims_auth", "cxdx_forced_peer", "hss.ims.smilecoms.com")
         <programlisting format="linespecific">
 ...
 modparam("ims_auth", "cxdx_dest_realm", "ims.smilecoms.com")
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>cxdx_dest_host</varname> (string)</title>
+
+      <para>Destination Host to be used in Diameter-MAR messages to HSS</para>
+
+      <para>Default value is <quote></quote> (not set).</para>
+
+      <example>
+        <title><varname>cxdx_dest_host</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_auth", "cxdx_dest_host", "hss.ims.ng-voice.com")
 ...
 </programlisting>
       </example>

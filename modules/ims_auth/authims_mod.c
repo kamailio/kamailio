@@ -95,11 +95,11 @@ static str registration_default_algorithm = str_init("AKAv1-MD5"); /**< default 
 unsigned char registration_default_algorithm_type = 1; /**< fixed default algorithm for registration (if none present)	 */
 
 str cxdx_dest_realm = str_init("ims.smilecoms.com");
+str cxdx_dest_host = str_init("");
 
 //Only used if we want to force the Rx peer
 //Usually this is configured at a stack level and the first request uses realm routing
 str cxdx_forced_peer = str_init("");
-
 
 /* fixed parameter storage */
 str scscf_name_str = str_init("sip:scscf.ims.smilecoms.com:6060"); /**< fixed name of the S-CSCF 							*/
@@ -140,6 +140,7 @@ static param_export_t params[] = {
     {"av_check_only_impu", INT_PARAM, &av_check_only_impu},
     {"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
     {"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
+    {"cxdx_dest_host", PARAM_STR, &cxdx_dest_host},
     {0, 0, 0}
 };
 
