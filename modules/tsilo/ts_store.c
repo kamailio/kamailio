@@ -43,21 +43,28 @@ int ts_store(struct sip_msg* msg) {
 	struct cell		*t;
 	str aor;
 	struct sip_uri ruri;
+	str suri;
 
 	ts_urecord_t* r;
 	int res;
 
-
+	if (msg->new_uri.s!=NULL) {
+		/* incoming r-uri was chaged by cfg or other component */
+		suri = msg->new_uri;
+	} else {
+		/* no changes to incoming r-uri */
+		suri = msg->first_line.u.request.uri;
+	}
 
 	if (use_domain) {
-		aor = msg->first_line.u.request.uri;
+		aor = suri;
 	}
 	else {
-		if (parse_uri(msg->first_line.u.request.uri.s, msg->first_line.u.request.uri.len, &ruri)!=0)
+		if (parse_uri(suri.s, suri.len, &ruri)!=0)
 		{
 			LM_ERR("bad uri [%.*s]\n",
-					msg->first_line.u.request.uri.len,
-					msg->first_line.u.request.uri.s);
+					suri.len,
+					suri.s);
 			return -1;
 		}
 		aor = ruri.user;
