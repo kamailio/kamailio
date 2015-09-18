@@ -58,13 +58,14 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 {
 	http_res_stream_t *stream = (http_res_stream_t *) stream_ptr;
 
-	stream->buf = (char *) pkg_realloc(stream->buf, stream->curr_size + 
+	char *tmp = (char *) pkg_realloc(stream->buf, stream->curr_size + 
 			(size * nmemb));
 
-	if (stream->buf == NULL) {
+	if (tmp == NULL) {
 		LM_ERR("cannot allocate memory for stream\n");
 		return CURLE_WRITE_ERROR;
 	}
+	stream->buf = tmp;
 
 	memcpy(&stream->buf[stream->pos], (char *) ptr, (size * nmemb));
 
