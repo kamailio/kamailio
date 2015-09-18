@@ -677,9 +677,27 @@ void add_peer_application(peer *p, int id, int vendor, app_type type)
 	p->applications_cnt++;	 
 }
 
+int count_Supported_Vendor_Id_AVPS(AAAMessage *msg)
+{
+	AAA_AVP* avp_vendor;
+	int avp_vendor_cnt;
+	
+	avp_vendor = AAAFindMatchingAVP(msg,0,AVP_Supported_Vendor_Id,0,0);
+	avp_vendor_cnt = 0;
+	while (avp_vendor) {
+		avp_vendor_cnt++;
+		if (!avp_vendor->next)
+			break;
+		avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
+	}
+	LM_DBG("Found %i Supported_Vendor AVPS", avp_vendor_cnt);
+	return avp_vendor_cnt;
+}
+
 void save_peer_applications(peer *p,AAAMessage *msg)
 {
 	int total_cnt=0;
+	int supported_vendor_id_avp_cnt = 0;
 	AAA_AVP *avp,*avp_vendor,*avp2;
 	AAA_AVP_LIST group;
 	int id,vendor;
@@ -689,10 +707,18 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 		p->applications = 0;
 		p->applications_cnt = 0;
 	}
+	
+	supported_vendor_id_avp_cnt = count_Supported_Vendor_Id_AVPS(msg);
+	
 	for(avp=msg->avpList.head;avp;avp = avp->next)
+
 		switch (avp->code){
 			case AVP_Auth_Application_Id:
+				total_cnt += supported_vendor_id_avp_cnt;
+				break;
 			case AVP_Acct_Application_Id:
+				total_cnt += supported_vendor_id_avp_cnt;
+				break;
 			case AVP_Vendor_Specific_Application_Id:				
 				total_cnt+=2;/* wasteful, but let's skip decoding */	
 				break;				
@@ -706,19 +732,21 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 	}
 	for(avp=msg->avpList.head;avp;avp = avp->next)
 	{
+		
 		switch (avp->code){
 			case AVP_Auth_Application_Id:
-				id = get_4bytes(avp->data.s);	
+				id = get_4bytes(avp->data.s);
 				add_peer_application(p,id,0,DP_AUTHORIZATION);
 				avp_vendor = AAAFindMatchingAVP(msg,0,AVP_Supported_Vendor_Id,0,0);
 				while (avp_vendor) {
+					
 					vendor = get_4bytes(avp_vendor->data.s);
 					LM_DBG("Found Supported Vendor for Application %i: %i\n", DP_AUTHORIZATION, vendor);
 					add_peer_application(p,id,vendor,DP_AUTHORIZATION);
 					if (!avp_vendor->next)
 						break;
-					avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
-				}
+					avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,AAA_FORWARD_SEARCH);
+				} 
 				break;
 			case AVP_Acct_Application_Id:
 				id = get_4bytes(avp->data.s);	
@@ -730,19 +758,19 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 					add_peer_application(p,id,vendor,DP_ACCOUNTING);
 					if (!avp_vendor->next)
 						break;
-					avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,0);
-				}
+					avp_vendor = AAAFindMatchingAVP(msg,avp_vendor->next,AVP_Supported_Vendor_Id,0,AAA_FORWARD_SEARCH);
+				} 
 				break;
 			case AVP_Vendor_Specific_Application_Id:
 				group = AAAUngroupAVPS(avp->data);
 				avp_vendor = AAAFindMatchingAVPList(group,group.head,AVP_Vendor_Id,0,0);				
-				avp2 = AAAFindMatchingAVPList(group,group.head,AVP_Auth_Application_Id,0,0);				
+				avp2 = AAAFindMatchingAVPList(group,group.head,AVP_Auth_Application_Id,0,AAA_FORWARD_SEARCH);				
 				if (avp_vendor&&avp2){
 					vendor = get_4bytes(avp_vendor->data.s);
 					id = get_4bytes(avp2->data.s);
 					add_peer_application(p,id,vendor,DP_AUTHORIZATION);						
 				}
-				avp2 = AAAFindMatchingAVPList(group,group.head,AVP_Acct_Application_Id,0,0);				
+				avp2 = AAAFindMatchingAVPList(group,group.head,AVP_Acct_Application_Id,0,AAA_FORWARD_SEARCH);				
 				if (avp_vendor&&avp2){
 					vendor = get_4bytes(avp_vendor->data.s);
 					id = get_4bytes(avp2->data.s);

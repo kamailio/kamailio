@@ -261,7 +261,6 @@ AAA_AVP  *AAAFindMatchingAVP(
 
 	/* param checking */
 	if (!msg) {
-		LM_ERR("FindMatchingAVP: param msg passed null !!\n");
 		goto error;
 	}
 
@@ -667,10 +666,9 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 		if (avp_flags&AAA_AVP_FLAG_VENDOR_SPECIFIC) {
 			avp_vendorID = get_4bytes( ptr );
 			ptr += AVP_VENDOR_ID_SIZE;
-		}
-
+		} 
 		/* data length */
-		avp_data_len = avp_len-AVP_HDR_SIZE(avp_flags);
+		avp_data_len = avp_len - AVP_HDR_SIZE(avp_flags);
 		/*check the data length */
 		if ( buf.s+buf.len<ptr+avp_data_len) {
 			LM_ERR("hss3g_ungroup_avps: source buffer to short!! "
@@ -725,7 +723,6 @@ AAA_AVP  *AAAFindMatchingAVPList(
 	AAASearchType searchType)
 {
 	AAA_AVP *avp_t;
-
 	/* param checking */
 
 	/* where should I start searching from ? */
