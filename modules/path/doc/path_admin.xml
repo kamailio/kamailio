@@ -150,7 +150,7 @@ modparam("path", "use_received", 1)
 		If the <quote>outbound</quote> module was loaded before this module, and outbound is
 		required for this request, the header will be in the form
 		<quote>Path: &lt;sip:flowtoken@1.2.3.4;lr;ob&gt;</quote>, where <quote>flowtoken</quote>
-		is the RFC 5636 flow-token that can be used to identify the source and local address and
+		is the RFC 5626 flow-token that can be used to identify the source and local address and
 		transport the request was received on, and where <quote>1.2.3.4</quote> is the address of
 		the outgoing interface.
 		</para>
