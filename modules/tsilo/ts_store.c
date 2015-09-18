@@ -39,7 +39,7 @@
 
 extern int use_domain;
 
-int ts_store(struct sip_msg* msg) {
+int ts_store(struct sip_msg* msg, str *puri) {
 	struct cell		*t;
 	str aor;
 	struct sip_uri ruri;
@@ -48,12 +48,16 @@ int ts_store(struct sip_msg* msg) {
 	ts_urecord_t* r;
 	int res;
 
-	if (msg->new_uri.s!=NULL) {
-		/* incoming r-uri was chaged by cfg or other component */
-		suri = msg->new_uri;
+	if(puri && puri->s && puri->len>0) {
+		suri = *puri;
 	} else {
-		/* no changes to incoming r-uri */
-		suri = msg->first_line.u.request.uri;
+		if (msg->new_uri.s!=NULL) {
+			/* incoming r-uri was chaged by cfg or other component */
+			suri = msg->new_uri;
+		} else {
+			/* no changes to incoming r-uri */
+			suri = msg->first_line.u.request.uri;
+		}
 	}
 
 	if (use_domain) {

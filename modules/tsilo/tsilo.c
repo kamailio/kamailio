@@ -65,7 +65,8 @@ static int fixup_ts_append_to(void** param, int param_no);
 static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri);
 static int fixup_ts_append(void** param, int param_no);
 
-static int w_ts_store(struct sip_msg* msg);
+static int w_ts_store(struct sip_msg* msg, char *p1, char *p2);
+static int w_ts_store1(struct sip_msg* msg, char *_ruri, char *p2);
 
 extern stat_var *stored_ruris;
 extern stat_var *stored_transactions;
@@ -80,6 +81,8 @@ static cmd_export_t cmds[]={
 		fixup_ts_append, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"ts_store", (cmd_function)w_ts_store,  0,
 		0 , 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"ts_store", (cmd_function)w_ts_store1,  1,
+		fixup_spve_null , 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0,0,0,0,0,0}
 };
 
@@ -279,7 +282,22 @@ static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *table
 /**
  *
  */
-static int w_ts_store(struct sip_msg* msg)
+static int w_ts_store(struct sip_msg* msg, char *p1, char *p2)
 {
-	return ts_store(msg);
+	return ts_store(msg, 0);
+}
+
+
+/**
+ *
+ */
+static int w_ts_store1(struct sip_msg* msg, char *_ruri, char *p2)
+{
+	str suri;
+
+	if(fixup_get_svalue(msg, (gparam_t*)_ruri, &suri)!=0) {
+		LM_ERR("failed to conert r-uri parameter\n");
+		return -1;
+	}
+	return ts_store(msg, &suri);
 }
