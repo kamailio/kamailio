@@ -284,9 +284,10 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 
 	_evapi_clients[i].rbuffer[_evapi_clients[i].rpos+rlen] = '\0';
 
-	LM_NOTICE("{%d} [%s:%d] - received [%.*s]\n",
+	LM_NOTICE("{%d} [%s:%d] - received [%.*s] (%d) (%d)\n",
 			i, _evapi_clients[i].src_addr, _evapi_clients[i].src_port,
-			(int)rlen, _evapi_clients[i].rbuffer+_evapi_clients[i].rpos);
+			(int)rlen, _evapi_clients[i].rbuffer+_evapi_clients[i].rpos,
+			(int)rlen, (int)_evapi_clients[i].rpos);
 	evenv.conidx = i;
 	evenv.eset = 1;
 	if(_evapi_netstring_format) {
@@ -304,6 +305,7 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			}
 			if(k==_evapi_clients[i].rpos+rlen) {
 				_evapi_clients[i].rpos = 0;
+				LM_DBG("empty content\n");
 				return;
 			}
 			/* pointer to start of whole frame */
@@ -316,6 +318,10 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 						break;
 					/* invalid character - discard the rest */
 					_evapi_clients[i].rpos = 0;
+					LM_DBG("invalid char when searching for size [%c] [%.*s] (%d) (%d)\n",
+							_evapi_clients[i].rbuffer[k],
+							(int)(_evapi_clients[i].rpos+rlen), _evapi_clients[i].rbuffer,
+							(int)(_evapi_clients[i].rpos+rlen), k);
 					return;
 				}
 				k++;
@@ -329,6 +335,7 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 				efp = _evapi_clients[i].rbuffer + _evapi_clients[i].rpos + rlen;
 				if(efp<=sfp) {
 					_evapi_clients[i].rpos = 0;
+					LM_DBG("weird - invalid size for residual data\n");
 					return;
 				}
 				_evapi_clients[i].rpos = (unsigned int)(efp-sfp);
@@ -339,12 +346,17 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 						_evapi_clients[i].rbuffer[k] = sfp[k];
 					}
 				}
+				LM_DBG("residual data [%.*s] (%d)\n",
+						_evapi_clients[i].rpos, _evapi_clients[i].rbuffer,
+						_evapi_clients[i].rpos);
 				return;
 			}
 			k++;
 			frame.s = _evapi_clients[i].rbuffer + k;
 			if(frame.s[frame.len]!=',') {
 				/* invalid data - discard and reset buffer */
+				LM_DBG("frame size mismatch the ending char (%c): [%.*s] (%d)\n",
+						frame.s[frame.len], frame.len, frame.s, frame.len);
 				_evapi_clients[i].rpos = 0 ;
 				return;
 			}
