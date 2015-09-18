@@ -10,7 +10,7 @@ Federico Cabiddu
 
    <federico.cabiddu@gmail.com>
 
-   Copyright © 2015 Federico Cabiddu
+   Copyright � 2015 Federico Cabiddu
      __________________________________________________________________
 
    Table of Contents
@@ -29,7 +29,7 @@ Federico Cabiddu
 
         4. Functions
 
-              4.1. ts_store()
+              4.1. ts_store([uri])
               4.2. ts_append(domain, ruri)
               4.3. ts_append_to(tindex, tlabel, domain)
 
@@ -69,7 +69,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. ts_store()
+        4.1. ts_store([uri])
         4.2. ts_append(domain, ruri)
         4.3. ts_append_to(tindex, tlabel, domain)
 
@@ -93,7 +93,7 @@ Chapter 1. Admin Guide
    (R-URI) and add branches to them later if new contacts for the AOR are
    added.
 
-   For each message, the modules stores “Request-URI” (“R-URI”), URI and
+   For each message, the modules stores "Request-URI" ("R-URI"), URI and
    the internal transaction index and label.
 
    When a transaction is destroyed by the TM module, it is removed from
@@ -132,7 +132,7 @@ Chapter 1. Admin Guide
    must be a power of two, otherwise it will be rounded down to the
    nearest power of two.
 
-   Default value is “2048”.
+   Default value is "2048".
 
    Example 1.1. Set hash_size parameter
 ...
@@ -141,22 +141,25 @@ modparam("tsilo", "hash_size", 1024)
 
 4. Functions
 
-   4.1. ts_store()
+   4.1. ts_store([uri])
    4.2. ts_append(domain, ruri)
    4.3. ts_append_to(tindex, tlabel, domain)
 
-4.1. ts_store()
+4.1. ts_store([uri])
 
-   The method stores r-uri, tindex and tlabel of the current transaction.
+   The method stores uri, tindex and tlabel of the current transaction. If
+   the uri parameter is missing, then the value is taken from r-uri. The
+   uri parameter can contain variables.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.2. ts_store usage
 ...
 if (is_method("INVITE")) {
-        if (t_newtran()) {
-                ts_store();
-        }
+    if (t_newtran()) {
+        ts_store();
+        # t_store("sip:alice@$td");
+    }
 }
 ...
 

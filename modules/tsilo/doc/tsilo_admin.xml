@@ -106,9 +106,11 @@ modparam("tsilo", "hash_size", 1024)
 	<section>
 	<title>Functions</title>
 	<section>
-		<title><function moreinfo="none">ts_store()</function></title>
+		<title><function moreinfo="none">ts_store([uri])</function></title>
 		<para>
-		The method stores r-uri, tindex and tlabel of the current transaction.
+		The method stores uri, tindex and tlabel of the current transaction. If
+		the uri parameter is missing, then the value is taken from r-uri. The
+		uri parameter can contain variables.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -118,9 +120,10 @@ modparam("tsilo", "hash_size", 1024)
 		<programlisting format="linespecific">
 ...
 if (is_method("INVITE")) {
-	if (t_newtran()) {
-		ts_store();
-	}
+    if (t_newtran()) {
+        ts_store();
+        # t_store("sip:alice@$td");
+    }
 }
 ...
 </programlisting>
