@@ -1,0 +1,49 @@
+The curl module - todo
+======================
+
+- connection parameters
+	timeout=x		- DONE
+	read=line/all
+	tlsverify=on/off
+	failover=curlcon	Other curlcon that can be used for failover in case of 5xx response or timeout
+	httpredirect		- DONE
+	useragent		- DONE
+
+- Make sure modparams work
+	httpproxy		- Not working with curl
+	tls cert, key, ca	- Not working with curl yet
+	httpredirect		- done
+	timeout			- done
+	
+- save fingerprint of cert for trust-on-first-use procedure
+
+- status for curlcon-object, needs to be object in process memory, so child_init
+	- if 5xx response or timeout set flag
+	- function in dialplan - curlcon_exist(object)
+	- pv $curlstatus(object) ??
+
+- pv for curl error codes (result < 100)
+	$curlerror(code)	Result string - DONE
+
+- rpc
+	curl.listcon	list all connection objects with properties
+			-- Done, but not documented
+	curl.modcon     modify connection object
+			url
+			username
+			password
+			scheme
+			timeout
+			read
+			tlsverify
+			failover
+	curl.addcon	add connection object
+	curl.rmcon	remove connection object
+
+
+- Async - event_route when done
+	Need background task process to run curl request
+	event_route[curl:connectioncomplete]
+	$curlcon == connection
+	$curl == URL
+	$curlres == result

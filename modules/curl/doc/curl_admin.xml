@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	This module implements protocol functions that use the libcurl library
+	to fetch data from external HTTP servers or post data to HTTP servers.
+	The module is using a concept of "connections" to define properties
+	of sessions in a simple way.
+	</para>
+	<para>
+	Function http_query allows &kamailio; to issue an HTTP GET
+	request and get access to parts of the reply. This function has
+	been ported from the utils module and now use the same libcurl
+	functions.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+			None.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be
+		installed before  
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libcurl</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	
+	<section>
+		<title>Parameters</title>
+		<section id="utils.p.httpredirect">
+			<title><varname>httpredirect</varname> (int)</title>
+			<para>
+			If set to 1, enabled, CURL will follow HTTP 302 Redirects.
+			If set to 0, CURL will not follow redirects. Default is 1, enabled.
+			</para>
+			<para>
+			The latest redirect URL will be stored in the <emphasis>$curlredirect</emphasis>
+			pseudovariable.
+			</para>
+			<example>
+			<title>Set <varname>httpredirect</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "httpredirect", 0)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.useragent">
+			<title><varname>useragent</varname> (string)</title>
+			<para>
+			Useragent to use in the HTTP protocol for requests. Defaults to
+			the &kamailio; SIP useragent string - including software version and platform.
+			</para>
+			<example>
+			<title>Set <varname>useragent</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "useragent", "Secret HTTP REST grabber 0.42")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.connection_timeout">
+			<title><varname>connection_timeout</varname> (int)</title>
+			<para>
+			Defines in seconds how long &kamailio; waits for response
+			from servers.
+			</para>
+			<para>
+			<emphasis>
+				Default value is zero, i.e.,
+				the timeout function is disabled.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>connection_timeout</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "connection_timeout", 2)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.tlsclientcert">
+			<title><varname>tlsclientcert</varname> (string)</title>
+			<para>
+			File name for a TLS client certificate. The certificate needs to be encoded
+			in PEM format.
+			</para>
+			<para>
+			<emphasis>
+				Default value is empty string, i.e.
+				no client certificate used. Note that if
+				you specify a client cert, you also need to specify
+				the <varname>tlsclientkey</varname>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>tlsclientcert</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.tlsclientkey">
+			<title><varname>tlsclientkey</varname> (string)</title>
+			<para>
+			File name for a TLS client key. The key needs to be encoded
+			in PEM format.
+			</para>
+			<para>
+			<emphasis>
+				Default value is empty string, i.e.
+				no client certificate or key is used. Note that if
+				you specify a client key, you also need to specify
+				the <varname>tlsclientcert</varname>.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>tlsclientkey</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.tlscacert">
+			<title><varname>tlscacert</varname> (string)</title>
+			<para>
+			File name for the trusted TLS CA cert used to verify servers.
+			The certificates need to be encoded in PEM format.
+			</para>
+			<para>
+			<emphasis>
+				Default value is empty string, i.e.
+				no CA certificate is used to verify the host. If
+				<varname>tlsverifyhost</varname> is on, all TLS
+				connections will fail without any CA certificate
+				to validate with.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>tlscacert</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.tlsverifyserver">
+			<title><varname>tlsverifyserver</varname> (int)</title>
+			<para>
+			If set to 0, TLS verification of the server certificate
+			is disabled. This means that the connection will get 
+			encrypted, but there's no authentication. There's no
+			proof that the transmission of data is to the host
+			that is meant to receive data.
+			</para>
+			<para>
+			IF set to 1, default setting, and one or more CA certificates
+			is configured, the server TLS certificate will be validated.
+			If validation fails, the connection fails.
+			</para>
+			<para>
+			</para>
+			<example>
+			<title>Set <varname>tlsverifyserver</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "tlsverifyserver", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="utils.p.curlcon">
+			<title><varname>curlcon</varname> (string)</title>
+			<para>
+			Defines a connection and credentials for the connection for use
+			in a connection-oriented function call in this module.
+			</para>
+			<para>
+			<emphasis>Syntax:</emphasis>
+			&lt;connection-name&gt;=&gt;&lt;schema&gt;://[&lt;username&gt;:&lt;password&gt;@]&lt;hostname/address&gt;[;param=value]
+			</para>
+			<para>
+			The address in the URL is the base for the URL in the <function>curlcon_query()</function> call. The
+			address given in the function call will be appended to the base URL in the connection definition.
+			</para>
+			<para>
+			<emphasis>
+				By default, no connections are defined.
+			</emphasis>
+			</para>
+			<para>
+			Parameters
+			<itemizedlist>
+				<listitem><para>
+				<emphasis>httpredirect</emphasis> Set to 1 for following HTTP 302
+				redirect. 0 to disable. Default is the setting for the httpredirect modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>timeout</emphasis> Timeout used for this connection. Overrides the 
+				default timeout for the module.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>useragent</emphasis> Useragent used for HTTP requests. Overrides
+				useragent modparam.
+				</para></listitem>
+			</itemizedlist>
+			</para>
+			<example>
+			<title>Set <varname>curlcon</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "curlcon", "apione=>http://atlanta.example.com")
+modparam("curl", "curlcon", "apitwo=>http://atlanta.example.com/api/12")
+modparam("curl", "curlcon", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
+modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+		<section id="curl.f.curl_http_query">
+			<title>
+				<function moreinfo="none">curl_http_query(url, [post-data], result)</function>
+			</title>
+			<para>
+			Sends HTTP GET or POST request according to URL given in
+			<quote>url</quote> parameter, which is a string that may
+			contain pseudo variables.
+	    	        </para>
+			<para>
+			If you want to make a POST-Request, you have to define
+			the <quote>post</quote>-data, that should be submitted
+			in that request as the second parameter.
+	    	        </para>
+		        <para>
+			If HTTP server returns a class 2xx, 3xx or 4xx reply,
+			the first line of the reply's body (if any) is
+			stored in <quote>result</quote> parameter,
+			which must be a	writable pseudo	variable.
+			</para>
+			<para>
+			Function returns reply code of HTTP reply or -1
+			if something went wrong.
+	   	     	</para>
+			<para>
+			This function can be used from REQUEST_ROUTE,
+			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
+			</para>
+			<para>
+			Note that this function is based on the http_query function in the utils module.
+			It is changed to use the same base library and settings as the rest of the functions in this module.
+			</para>
+			<example>
+				<title><function>curl_http_query()</function> usage</title>
+				<programlisting format="linespecific">
+...
+# GET-Request
+curl_http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+           "$var(result)")
+switch ($retcode) {
+       ...
+}
+...
+				</programlisting>
+				<programlisting format="linespecific">
+...
+# POST-Request
+curl_http_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+           "$var(result)")
+switch ($retcode) {
+       ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+	<section>
+	<title>Pseudovariables</title>
+		<section >
+			<title>
+				<function moreinfo="none">$curlerror(error)</function>
+			</title>
+			<para>
+			cURL returns error codes from the protocol used. If an error
+			happens, a cURL specific error code below 100 is returned.
+			The $curlerror pv returns a text string representing the error.
+			For more information on cURL error codes, please visit
+			http://curl.haxx.se/libcurl/c/libcurl-errors.html
+			</para>
+		</section>
+	</section>
+	<section>
+	<title>Counters</title>
+		<section >
+			<title>
+				<function moreinfo="none">curl.connections</function>
+			</title>
+			<para>
+				The number of connection definitions that are in-memory.
+			</para>
+		</section>
+		<section >
+			<title>
+				<function moreinfo="none">curl.connok</function>
+			</title>
+			<para>
+				The number of successful connections since &kamailio; start
+			</para>
+		</section>
+		<section >
+			<title>
+				<function moreinfo="none">curl.connfail</function>
+			</title>
+			<para>
+				The number of failed connections since &kamailio; start
+			</para>
+		</section>
+	</section>
+	
+</chapter>

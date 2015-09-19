@@ -1,0 +1,342 @@
+curl
+
+Olle E. Johansson
+
+   Edvina AB
+
+Juha Heinanen
+
+   TutPro Inc.
+
+Carsten Bock
+
+   ng-voice GmbH
+
+   Copyright © 2008-2009 Juha Heinanen
+
+   Copyright © 2013 Carsten Bock, ng-voice GmbH
+
+   Copyright © 2015 Olle E. Johansson, Edvina AB
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. httpredirect (int)
+              3.2. useragent (string)
+              3.3. connection_timeout (int)
+              3.4. tlsclientcert (string)
+              3.5. tlsclientkey (string)
+              3.6. tlscacert (string)
+              3.7. tlsverifyserver (int)
+              3.8. curlcon (string)
+
+        4. Functions
+
+              4.1. curl_http_query(url, [post-data], result)
+
+        5. Pseudovariables
+
+              5.1. $curlerror(error)
+
+        6. Counters
+
+              6.1. curl.connections
+              6.2. curl.connok
+              6.3. curl.connfail
+
+   List of Examples
+
+   1.1. Set httpredirect parameter
+   1.2. Set useragent parameter
+   1.3. Set connection_timeout parameter
+   1.4. Set tlsclientcert parameter
+   1.5. Set tlsclientkey parameter
+   1.6. Set tlscacert parameter
+   1.7. Set tlsverifyserver parameter
+   1.8. Set curlcon parameter
+   1.9. curl_http_query() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. httpredirect (int)
+        3.2. useragent (string)
+        3.3. connection_timeout (int)
+        3.4. tlsclientcert (string)
+        3.5. tlsclientkey (string)
+        3.6. tlscacert (string)
+        3.7. tlsverifyserver (int)
+        3.8. curlcon (string)
+
+   4. Functions
+
+        4.1. curl_http_query(url, [post-data], result)
+
+   5. Pseudovariables
+
+        5.1. $curlerror(error)
+
+   6. Counters
+
+        6.1. curl.connections
+        6.2. curl.connok
+        6.3. curl.connfail
+
+1. Overview
+
+   This module implements protocol functions that use the libcurl library
+   to fetch data from external HTTP servers or post data to HTTP servers.
+   The module is using a concept of "connections" to define properties of
+   sessions in a simple way.
+
+   Function http_query allows Kamailio to issue an HTTP GET request and
+   get access to parts of the reply. This function has been ported from
+   the utils module and now use the same libcurl functions.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libcurl.
+
+3. Parameters
+
+   3.1. httpredirect (int)
+   3.2. useragent (string)
+   3.3. connection_timeout (int)
+   3.4. tlsclientcert (string)
+   3.5. tlsclientkey (string)
+   3.6. tlscacert (string)
+   3.7. tlsverifyserver (int)
+   3.8. curlcon (string)
+
+3.1. httpredirect (int)
+
+   If set to 1, enabled, CURL will follow HTTP 302 Redirects. If set to 0,
+   CURL will not follow redirects. Default is 1, enabled.
+
+   The latest redirect URL will be stored in the $curlredirect
+   pseudovariable.
+
+   Example 1.1. Set httpredirect parameter
+...
+modparam("curl", "httpredirect", 0)
+...
+
+3.2. useragent (string)
+
+   Useragent to use in the HTTP protocol for requests. Defaults to the
+   Kamailio SIP useragent string - including software version and
+   platform.
+
+   Example 1.2. Set useragent parameter
+...
+modparam("curl", "useragent", "Secret HTTP REST grabber 0.42")
+...
+
+3.3. connection_timeout (int)
+
+   Defines in seconds how long Kamailio waits for response from servers.
+
+   Default value is zero, i.e., the timeout function is disabled.
+
+   Example 1.3. Set connection_timeout parameter
+...
+modparam("curl", "connection_timeout", 2)
+...
+
+3.4. tlsclientcert (string)
+
+   File name for a TLS client certificate. The certificate needs to be
+   encoded in PEM format.
+
+   Default value is empty string, i.e. no client certificate used. Note
+   that if you specify a client cert, you also need to specify the
+   tlsclientkey.
+
+   Example 1.4. Set tlsclientcert parameter
+...
+modparam("curl", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
+...
+
+3.5. tlsclientkey (string)
+
+   File name for a TLS client key. The key needs to be encoded in PEM
+   format.
+
+   Default value is empty string, i.e. no client certificate or key is
+   used. Note that if you specify a client key, you also need to specify
+   the tlsclientcert.
+
+   Example 1.5. Set tlsclientkey parameter
+...
+modparam("curl", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
+...
+
+3.6. tlscacert (string)
+
+   File name for the trusted TLS CA cert used to verify servers. The
+   certificates need to be encoded in PEM format.
+
+   Default value is empty string, i.e. no CA certificate is used to verify
+   the host. If tlsverifyhost is on, all TLS connections will fail without
+   any CA certificate to validate with.
+
+   Example 1.6. Set tlscacert parameter
+...
+modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
+...
+
+3.7. tlsverifyserver (int)
+
+   If set to 0, TLS verification of the server certificate is disabled.
+   This means that the connection will get encrypted, but there's no
+   authentication. There's no proof that the transmission of data is to
+   the host that is meant to receive data.
+
+   IF set to 1, default setting, and one or more CA certificates is
+   configured, the server TLS certificate will be validated. If validation
+   fails, the connection fails.
+
+   Example 1.7. Set tlsverifyserver parameter
+...
+modparam("curl", "tlsverifyserver", 1)
+...
+
+3.8. curlcon (string)
+
+   Defines a connection and credentials for the connection for use in a
+   connection-oriented function call in this module.
+
+   Syntax:
+   <connection-name>=><schema>://[<username>:<password>@]<hostname/address
+   >[;param=value]
+
+   The address in the URL is the base for the URL in the curlcon_query()
+   call. The address given in the function call will be appended to the
+   base URL in the connection definition.
+
+   By default, no connections are defined.
+
+   Parameters
+     * httpredirect Set to 1 for following HTTP 302 redirect. 0 to
+       disable. Default is the setting for the httpredirect modparam.
+     * timeout Timeout used for this connection. Overrides the default
+       timeout for the module.
+     * useragent Useragent used for HTTP requests. Overrides useragent
+       modparam.
+
+   Example 1.8. Set curlcon parameter
+...
+modparam("curl", "curlcon", "apione=>http://atlanta.example.com")
+modparam("curl", "curlcon", "apitwo=>http://atlanta.example.com/api/12")
+modparam("curl", "curlcon", "apithree=>http://annabella:mysecret@atlanta.example
+.com/api/12")
+modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;
+timeout=12")
+...
+
+4. Functions
+
+   4.1. curl_http_query(url, [post-data], result)
+
+4.1. curl_http_query(url, [post-data], result)
+
+   Sends HTTP GET or POST request according to URL given in "url"
+   parameter, which is a string that may contain pseudo variables.
+
+   If you want to make a POST-Request, you have to define the "post"-data,
+   that should be submitted in that request as the second parameter.
+
+   If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line of
+   the reply's body (if any) is stored in "result" parameter, which must
+   be a writable pseudo variable.
+
+   Function returns reply code of HTTP reply or -1 if something went
+   wrong.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, and BRANCH_ROUTE.
+
+   Note that this function is based on the http_query function in the
+   utils module. It is changed to use the same base library and settings
+   as the rest of the functions in this module.
+
+   Example 1.9. curl_http_query() usage
+...
+# GET-Request
+curl_http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$
+(fu{s.escape.param})",
+           "$var(result)")
+switch ($retcode) {
+       ...
+}
+...
+...
+# POST-Request
+curl_http_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&f_ur
+i=$(fu{s.escape.param})",
+           "$var(result)")
+switch ($retcode) {
+       ...
+}
+...
+
+5. Pseudovariables
+
+   5.1. $curlerror(error)
+
+5.1. $curlerror(error)
+
+   cURL returns error codes from the protocol used. If an error happens, a
+   cURL specific error code below 100 is returned. The $curlerror pv
+   returns a text string representing the error. For more information on
+   cURL error codes, please visit
+   http://curl.haxx.se/libcurl/c/libcurl-errors.html
+
+6. Counters
+
+   6.1. curl.connections
+   6.2. curl.connok
+   6.3. curl.connfail
+
+6.1. curl.connections
+
+   The number of connection definitions that are in-memory.
+
+6.2. curl.connok
+
+   The number of successful connections since Kamailio start
+
+6.3. curl.connfail
+
+   The number of failed connections since Kamailio start
