@@ -270,8 +270,13 @@ modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;
 				<function moreinfo="none">curl_connect(connection, url, content_type, data, result)</function>
 			</title>
 			<para>
-				Sends HTTP GET or POST request to a given connection. For a
-				POST request, content-type can be specified.
+			Sends HTTP GET or POST request to a given connection. For a
+			POST request, content-type can be specified.
+	    	        </para>
+			<para>
+			The return value is the HTTP return code (if >=100) or the
+			CURL error code if below 100. See the $curlerror pseudovariable
+			below for more information about CURL error codes.
 	    	        </para>
 			<para>
 			This function can be used from REQUEST_ROUTE,
