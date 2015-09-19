@@ -96,7 +96,7 @@ modparam("mi_rpc","rpc_url","tcp:localhost:2046")
 			<listitem>
 				<function>mi</function> - uses a special, "pretty" format
 				which generates nicer (more readable) output when used with
-				sercmd.
+				kamcmd.
 			</listitem>
 			<listitem>
 				<function>mi_dg</function> - uses an output format similar to
@@ -125,10 +125,10 @@ modparam("mi_rpc","rpc_url","tcp:localhost:2046")
 			(optional).
 		</para>
  		<para>
-		Example using 'sercmd':
+		Example using 'kamcmd':
 		</para>
 		<programlisting  format="linespecific">
-sercmd> mi uptime
+kamcmd> mi uptime
 Now:: Thu Sep 24 18:17:15 2009
 Up since:: Thu Sep 24 17:35:45 2009
 Up time:: 2490 [sec]
