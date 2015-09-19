@@ -119,7 +119,7 @@ modparam("mi_rpc","rpc_url","tcp:localhost:2046")
    Depending on the version (e.g. mi, mi_dg) it formats the output in a
    similar way to the corresponding kamailio mi module:
      * mi - uses a special, "pretty" format which generates nicer (more
-       readable) output when used with sercmd.
+       readable) output when used with kamcmd.
      * mi_dg - uses an output format similar to the kamailio mi_datagram
        module.
      * mi_fifo - uses an output format similar to the kamailio mi_fifo
@@ -135,8 +135,8 @@ modparam("mi_rpc","rpc_url","tcp:localhost:2046")
 
    _parameters_ - the MI command parameters (optional).
 
-   Example using 'sercmd':
-sercmd> mi uptime
+   Example using 'kamcmd':
+kamcmd> mi uptime
 Now:: Thu Sep 24 18:17:15 2009
 Up since:: Thu Sep 24 17:35:45 2009
 Up time:: 2490 [sec]
