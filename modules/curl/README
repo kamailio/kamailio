@@ -48,11 +48,15 @@ Carsten Bock
 
               5.1. $curlerror(error)
 
-        6. Counters
+        6. RPC Commands
 
-              6.1. curl.connections
-              6.2. curl.connok
-              6.3. curl.connfail
+              6.1. curl.listcon
+
+        7. Counters
+
+              7.1. curl.connections
+              7.2. curl.connok
+              7.3. curl.connfail
 
    List of Examples
 
@@ -95,11 +99,15 @@ Chapter 1. Admin Guide
 
         5.1. $curlerror(error)
 
-   6. Counters
+   6. RPC Commands
 
-        6.1. curl.connections
-        6.2. curl.connok
-        6.3. curl.connfail
+        6.1. curl.listcon
+
+   7. Counters
+
+        7.1. curl.connections
+        7.2. curl.connok
+        7.3. curl.connfail
 
 1. Overview
 
@@ -323,20 +331,31 @@ switch ($retcode) {
    cURL error codes, please visit
    http://curl.haxx.se/libcurl/c/libcurl-errors.html
 
-6. Counters
+6. RPC Commands
 
-   6.1. curl.connections
-   6.2. curl.connok
-   6.3. curl.connfail
+   6.1. curl.listcon
 
-6.1. curl.connections
+6.1. curl.listcon
+
+   Lists all defined CURL connections
+
+   Parameters:
+     * No parameters
+
+7. Counters
+
+   7.1. curl.connections
+   7.2. curl.connok
+   7.3. curl.connfail
+
+7.1. curl.connections
 
    The number of connection definitions that are in-memory.
 
-6.2. curl.connok
+7.2. curl.connok
 
    The number of successful connections since Kamailio start
 
-6.3. curl.connfail
+7.3. curl.connfail
 
    The number of failed connections since Kamailio start

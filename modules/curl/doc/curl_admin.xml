@@ -337,6 +337,20 @@ switch ($retcode) {
 		</section>
 	</section>
 	<section>
+        <title>RPC Commands</title>
+		<section>
+			<title><function moreinfo="none">curl.listcon</function></title>
+			<para>
+				Lists all defined CURL connections
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>No parameters</para></listitem>
+			
+		</itemizedlist>
+		</section>
+	</section>
+	<section>
 	<title>Counters</title>
 		<section >
 			<title>
