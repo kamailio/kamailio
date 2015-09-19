@@ -1317,7 +1317,7 @@ modparam("tm", "via1_matching", 1)
    Default value is 0 (off).
 
    Can be set at runtime, e.g.:
-        $ sercmd cfg.set_now_int tm callid_matching 0
+        $ kamcmd cfg.set_now_int tm callid_matching 0
 
    Example 1.33. Set callid_matching parameter
 ...
