@@ -62,7 +62,7 @@
 	
 	<section>
 		<title>Parameters</title>
-		<section id="utils.p.httpredirect">
+		<section id="curl.p.httpredirect">
 			<title><varname>httpredirect</varname> (int)</title>
 			<para>
 			If set to 1, enabled, CURL will follow HTTP 302 Redirects.
@@ -81,7 +81,7 @@ modparam("curl", "httpredirect", 0)
 				</programlisting>
 			</example>
 		</section>
-		<section id="utils.p.useragent">
+		<section id="curl.p.useragent">
 			<title><varname>useragent</varname> (string)</title>
 			<para>
 			Useragent to use in the HTTP protocol for requests. Defaults to
@@ -96,7 +96,7 @@ modparam("curl", "useragent", "Secret HTTP REST grabber 0.42")
 				</programlisting>
 			</example>
 		</section>
-		<section id="utils.p.connection_timeout">
+		<section id="curl.p.connection_timeout">
 			<title><varname>connection_timeout</varname> (int)</title>
 			<para>
 			Defines in seconds how long &kamailio; waits for response
@@ -117,7 +117,7 @@ modparam("curl", "connection_timeout", 2)
 				</programlisting>
 			</example>
 		</section>
-		<section id="utils.p.tlsclientcert">
+		<section id="curl.p.tlsclientcert">
 			<title><varname>tlsclientcert</varname> (string)</title>
 			<para>
 			File name for a TLS client certificate. The certificate needs to be encoded
@@ -140,7 +140,7 @@ modparam("curl", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
 				</programlisting>
 			</example>
 		</section>
-		<section id="utils.p.tlsclientkey">
+		<section id="curl.p.tlsclientkey">
 			<title><varname>tlsclientkey</varname> (string)</title>
 			<para>
 			File name for a TLS client key. The key needs to be encoded
@@ -163,7 +163,7 @@ modparam("curl", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 				</programlisting>
 			</example>
 		</section>
-		<section id="utils.p.tlscacert">
+		<section id="curl.p.tlscacert">
 			<title><varname>tlscacert</varname> (string)</title>
 			<para>
 			File name for the trusted TLS CA cert used to verify servers.
@@ -187,7 +187,7 @@ modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 				</programlisting>
 			</example>
 		</section>
-		<section id="utils.p.tlsverifyserver">
+		<section id="curl.p.tlsverifyserver">
 			<title><varname>tlsverifyserver</varname> (int)</title>
 			<para>
 			If set to 0, TLS verification of the server certificate
@@ -212,7 +212,7 @@ modparam("curl", "tlsverifyserver", 1)
 				</programlisting>
 			</example>
 		</section>
-		<section id="utils.p.curlcon">
+		<section id="curl.p.curlcon">
 			<title><varname>curlcon</varname> (string)</title>
 			<para>
 			Defines a connection and credentials for the connection for use
@@ -264,6 +264,32 @@ modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;
 
 	<section>
 	<title>Functions</title>
+		<section id="curl.f.curl_connect">
+			<title>
+				<function moreinfo="none">curl_connect(connection, url, result)</function>
+				<function moreinfo="none">curl_connect(connection, url, content_type, data, result)</function>
+			</title>
+			<para>
+				Sends HTTP GET or POST request to a given connection. For a
+				POST request, content-type can be specified.
+	    	        </para>
+			<para>
+			This function can be used from REQUEST_ROUTE,
+			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
+			</para>
+			<example>
+				<title><function>curl_connect()</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "curlcon", "anders=>http://kamailio.org/api/");
+...
+# POST Request
+$var(res) = curl_connect("apiserver", "/postlåda", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
+xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result $var(res)\n");
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="curl.f.curl_http_query">
 			<title>
 				<function moreinfo="none">curl_http_query(url, [post-data], result)</function>

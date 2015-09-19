@@ -42,7 +42,11 @@ Carsten Bock
 
         4. Functions
 
-              4.1. curl_http_query(url, [post-data], result)
+              4.1. curl_connect(connection, url, result)
+                      curl_connect(connection, url, content_type, data,
+                      result)
+
+              4.2. curl_http_query(url, [post-data], result)
 
         5. Pseudovariables
 
@@ -68,7 +72,8 @@ Carsten Bock
    1.6. Set tlscacert parameter
    1.7. Set tlsverifyserver parameter
    1.8. Set curlcon parameter
-   1.9. curl_http_query() usage
+   1.9. curl_connect() usage
+   1.10. curl_http_query() usage
 
 Chapter 1. Admin Guide
 
@@ -93,7 +98,10 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. curl_http_query(url, [post-data], result)
+        4.1. curl_connect(connection, url, result)
+                curl_connect(connection, url, content_type, data, result)
+
+        4.2. curl_http_query(url, [post-data], result)
 
    5. Pseudovariables
 
@@ -275,9 +283,31 @@ timeout=12")
 
 4. Functions
 
-   4.1. curl_http_query(url, [post-data], result)
+   4.1. curl_connect(connection, url, result) curl_connect(connection,
+          url, content_type, data, result)
 
-4.1. curl_http_query(url, [post-data], result)
+   4.2. curl_http_query(url, [post-data], result)
+
+4.1. curl_connect(connection, url, result) curl_connect(connection, url,
+content_type, data, result)
+
+   Sends HTTP GET or POST request to a given connection. For a POST
+   request, content-type can be specified.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, and BRANCH_ROUTE.
+
+   Example 1.9. curl_connect() usage
+...
+modparam("curl", "curlcon", "anders=>http://kamailio.org/api/");
+...
+# POST Request
+$var(res) = curl_connect("apiserver", "/postlåda", "application/json", "{ ok, {
+200, ok}}", "$avp(gurka)");
+xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result $var(res)\n");
+...
+
+4.2. curl_http_query(url, [post-data], result)
 
    Sends HTTP GET or POST request according to URL given in "url"
    parameter, which is a string that may contain pseudo variables.
@@ -299,7 +329,7 @@ timeout=12")
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.9. curl_http_query() usage
+   Example 1.10. curl_http_query() usage
 ...
 # GET-Request
 curl_http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$
