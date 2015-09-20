@@ -118,7 +118,7 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type);
 static call_t *__alloc_new_call_by_time(credit_data_t *credit_data, struct sip_msg *msg, int max_secs);
 static call_t *__alloc_new_call_by_money(credit_data_t *credit_data, struct sip_msg *msg, double credit,
 		                                 double cost_per_second, int initial_pulse, int final_pulse);
-static void __notify_call_termination(sip_data_t *data);
+static void __notify_call_termination(sip_msg_t *msg);
 static void __free_call(call_t *call);
 static int __has_to_tag(struct sip_msg *msg);
 static credit_data_t *__alloc_new_credit_data(str *client_id, credit_type_t type);
@@ -454,18 +454,8 @@ static void __dialog_terminated_callback(struct dlg_cell *cell, int type, struct
 	__stop_billing(&cell->callid);
 }
 
-static void __notify_call_termination(sip_data_t *data) {
+static void __notify_call_termination(sip_msg_t *msg) {
 	struct run_act_ctx ra_ctx;
-	struct sip_msg *msg;
-
-	if (_data.cs_route_number < 0)
-		return;
-
-	if (faked_msg_init_with_dlg_info(&data->callid, &data->from_uri, &data->from_tag,
-					&data->to_uri, &data->to_tag, &msg) != 0) {
-		LM_ERR("[%.*s]: error generating faked sip message\n", data->callid.len, data->callid.s);
-		return;
-	}
 
 	init_run_actions_ctx(&ra_ctx);
 	//run_top_route(event_rt.rlist[_data.cs_route_number], msg, &ra_ctx);
@@ -958,6 +948,9 @@ static int __shm_str_hash_alloc(struct str_hash_table *ht, int size) {
 }
 
 int terminate_call(call_t *call) {
+	sip_msg_t *dmsg = NULL;
+	sip_data_t *data = NULL;
+
 	LM_DBG("Got kill signal for call [%.*s] client [%.*s] h_id [%u] h_entry [%u]. Dropping it now\n",
 		call->sip_data.callid.len,
 		call->sip_data.callid.s,
@@ -970,6 +963,14 @@ int terminate_call(call_t *call) {
 	struct mi_node *node, *node1	= NULL;
 	struct mi_cmd *end_dlg_cmd		= NULL;
 
+	if (_data.cs_route_number >= 0) {
+		data = &call->sip_data;
+		if (faked_msg_init_with_dlg_info(&data->callid, &data->from_uri, &data->from_tag,
+					&data->to_uri, &data->to_tag, &dmsg) != 0) {
+			LM_ERR("[%.*s]: error generating faked sip message\n", data->callid.len, data->callid.s);
+			dmsg = NULL;
+		}
+	}
 	root	= init_mi_tree(0, 0, 0);
 	if (root == NULL) {
 		LM_ERR("Error initializing tree to terminate call\n");
@@ -1006,7 +1007,7 @@ int terminate_call(call_t *call) {
 		free_mi_tree(root);
 		free_mi_tree(result);
 
-		__notify_call_termination(&call->sip_data);
+		if(dmsg) __notify_call_termination(dmsg);
 		return 0;
 	}
 
