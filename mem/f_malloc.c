@@ -180,7 +180,10 @@ static inline void fm_extract_free(struct fm_block* qm, struct fm_frag* frag)
 	if(frag->prv_free) {
 		frag->prv_free->u.nxt_free = frag->u.nxt_free;
 	} else {
-		qm->free_hash[hash].first = frag->u.nxt_free;
+		if(frag->u.nxt_free!=qm->last_frag)
+			qm->free_hash[hash].first = frag->u.nxt_free;
+		else
+			qm->free_hash[hash].first = NULL;
 	}
 	if(frag->u.nxt_free && frag->u.nxt_free!=qm->last_frag) {
 		frag->u.nxt_free->prv_free = frag->prv_free;
