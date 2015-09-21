@@ -327,6 +327,8 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 				k++;
 			}
 			if(k==_evapi_clients[i].rpos+rlen || frame.len<=0) {
+				LM_DBG("invalid frame len: %d kpos: %d rpos: %u rlen: %lu\n",
+						frame.len, k, _evapi_clients[i].rpos, rlen);
 				_evapi_clients[i].rpos = 0;
 				return;
 			}
@@ -364,6 +366,8 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			k += frame.len ;
 			evenv.msg.s = frame.s;
 			evenv.msg.len = frame.len;
+			LM_DBG("executing event route for frame: [%.*s] (%d)\n",
+						frame.len, frame.s, frame.len);
 			evapi_run_cfg_route(&evenv, _evapi_rts.msg_received);
 			k++;
 		}
