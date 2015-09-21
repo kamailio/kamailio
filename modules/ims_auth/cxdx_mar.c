@@ -102,6 +102,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     struct cell *t = 0;
     int result = CSCF_RETURN_TRUE;
     int sip_number_auth_items;
+    int items_found = 0;
     struct auth_data_item_list *adi_list = 0;
     AAA_AVP *auth_data;
     auth_data = 0;
@@ -168,7 +169,6 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
 	    struct auth_data_item *adi;
 	    int adi_len;
 	    char *p;
-	    int items_found = 0;
 	    while ((cxdx_get_auth_data_item_answer(maa, &auth_data, &item_number,
 		    &algorithm, &authenticate, &authorization2,
 		    &ck, &ik,
