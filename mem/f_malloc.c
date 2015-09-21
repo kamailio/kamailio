@@ -211,27 +211,42 @@ static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
 {
 	struct fm_frag* f;
 	int hash;
+	int after;
 	
 	hash=GET_HASH(frag->size);
 	f=qm->free_hash[hash].first;
 	if (frag->size > F_MALLOC_OPTIMIZE){ /* because of '<=' in GET_HASH,
 											(different from 0.8.1[24] on
 											 purpose --andrei ) */
+		after = 0;
 		/* large fragments list -- add at a position ordered by size */
-		for(; f && f->u.nxt_free!=qm->last_frag; f=f->u.nxt_free){
+		for(; f; f=f->u.nxt_free){
 			if (frag->size <= f->size) break;
+			if(f->u.nxt_free==qm->last_frag) {
+				/*size greater than last frag in slot*/
+				after = 1;
+				break;
+			}
 		}
 	
-		/*insert frag before f*/
-		frag->u.nxt_free = f;
 		if(f) {
-			frag->prv_free=f->prv_free;
-			if(f->prv_free) f->prv_free->u.nxt_free = frag;
-			if(qm->free_hash[hash].first==f) qm->free_hash[hash].first = frag;
+			if(after) {
+				/*insert frag after f*/
+				frag->prv_free=f;
+				f->u.nxt_free=frag;
+				frag->u.nxt_free = qm->last_frag;
+			} else {
+				/*insert frag before f*/
+				frag->u.nxt_free = f;
+				frag->prv_free=f->prv_free;
+				if(f->prv_free) f->prv_free->u.nxt_free = frag;
+				if(qm->free_hash[hash].first==f) qm->free_hash[hash].first = frag;
+			}
 		} else {
 			/* to be only one in slot */
 			qm->free_hash[hash].first = frag;
 			frag->prv_free=0;
+			frag->u.nxt_free = qm->last_frag;
 		}
 	} else {
 		/* fixed fragment size list -- add first */
