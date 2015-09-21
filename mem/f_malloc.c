@@ -367,9 +367,11 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	/* init first fragment*/
 	qm->first_frag->size=size;
 	qm->first_frag->prv_free=0;
+	qm->first_frag->u.nxt_free=0;
 	/* init last fragment*/
 	qm->last_frag->size=0;
 	qm->last_frag->prv_free=0;
+	qm->last_frag->u.nxt_free=0;
 	
 #ifdef DBG_F_MALLOC
 	qm->first_frag->check=ST_CHECK_PATTERN;
