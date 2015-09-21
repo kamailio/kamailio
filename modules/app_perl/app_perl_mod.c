@@ -167,7 +167,7 @@ static mi_export_t mi_cmds[] = {
 /*
  * Module interface
  */
-struct module_exports exports = {
+struct module_exports _app_perl_exports = {
 	"app_perl", 
 	RTLD_NOW | RTLD_GLOBAL,
 	cmds,       /* Exported functions */
@@ -351,7 +351,7 @@ static int mod_init(void) {
 	struct timeval t1;
 	struct timeval t2;
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	if(register_mi_mod(_app_perl_exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
 		return -1;
