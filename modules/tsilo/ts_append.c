@@ -59,7 +59,7 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 	while(ptr) {
 		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",ptr->tindex, ptr->tlabel, ruri->len, ruri->s);
 
-		appended = ts_append_to(msg, ptr->tindex, ptr->tlabel, table);
+		appended = ts_append_to(msg, ptr->tindex, ptr->tlabel, table, ruri);
 		if (appended > 0)
 			update_stat(added_branches, appended);
 		ptr = ptr->next;
@@ -70,7 +70,7 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 	return 1;
 }
 
-int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table) {
+int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri) {
 	struct cell     *t;
 	struct sip_msg *orig_msg;
 	int ret;
@@ -84,7 +84,11 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table) {
 
 	orig_msg = t->uas.request;
 
-	ret = _regapi.lookup_to_dset(orig_msg, table, NULL);
+	if(uri==NULL || uri->s==NULL || uri->len<=0) {
+		ret = _regapi.lookup_to_dset(orig_msg, table, NULL);
+	} else {
+		ret = _regapi.lookup_to_dset(orig_msg, table, uri);
+	}
 	if(ret != 1) {
 		LM_DBG("transaction %u:%u: error updating dset (%d)\n", tindex, tlabel, ret);
 		return -1;

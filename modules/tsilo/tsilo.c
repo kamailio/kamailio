@@ -61,6 +61,7 @@ static int mod_init(void);
 static void destroy(void);
 
 static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *d);
+static int w_ts_append_to2(struct sip_msg* msg, char *idx, char *lbl, char *d, char *ruri);
 static int fixup_ts_append_to(void** param, int param_no);
 static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri);
 static int fixup_ts_append(void** param, int param_no);
@@ -76,6 +77,8 @@ extern stat_var *added_branches;
 
 static cmd_export_t cmds[]={
 	{"ts_append_to", (cmd_function)w_ts_append_to,  3,
+		fixup_ts_append_to, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"ts_append_to", (cmd_function)w_ts_append_to,  4,
 		fixup_ts_append_to, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"ts_append", (cmd_function)w_ts_append,  2,
 		fixup_ts_append, 0, REQUEST_ROUTE | FAILURE_ROUTE },
@@ -226,6 +229,10 @@ static int fixup_ts_append_to(void** param, int param_no)
 			return -1;
 		}
 	}
+
+	if (param_no==4) {
+		return fixup_spve_null(param, 1);
+	}
 	return 0;
 }
 
@@ -276,7 +283,34 @@ static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *table
 		return -1;
 	}
 
-	return ts_append_to(msg, tindex, tlabel, table);
+	return ts_append_to(msg, tindex, tlabel, table, 0);
+}
+
+/**
+ *
+ */
+static int w_ts_append_to2(struct sip_msg* msg, char *idx, char *lbl, char *table, char *ruri)
+{
+	unsigned int tindex;
+	unsigned int tlabel;
+	str suri;
+
+	if(fixup_get_ivalue(msg, (gparam_p)idx, (int*)&tindex)<0) {
+		LM_ERR("cannot get transaction index\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_p)lbl, (int*)&tlabel)<0) {
+		LM_ERR("cannot get transaction label\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)ruri, &suri)!=0) {
+		LM_ERR("failed to conert r-uri parameter\n");
+		return -1;
+	}
+
+	return ts_append_to(msg, tindex, tlabel, table, &suri);
 }
 
 /**

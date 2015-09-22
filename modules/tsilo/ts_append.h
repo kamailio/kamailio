@@ -23,6 +23,6 @@
 #define _TS_APPEND_H
 
 int ts_append(struct sip_msg* msg, str *ruri, char *table);
-int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table);
+int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri);
 
 #endif
