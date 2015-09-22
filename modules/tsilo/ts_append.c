@@ -50,9 +50,9 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 
 	if (res != 0) {
 		LM_ERR("failed to retrieve record for %.*s\n", ruri->len, ruri->s);
-		 unlock_entry_by_ruri(ruri);
-		 return -1;
-        }
+		unlock_entry_by_ruri(ruri);
+		return -1;
+	}
 
 	ptr = _r->transactions;
 
