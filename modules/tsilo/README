@@ -31,7 +31,7 @@ Federico Cabiddu
 
               4.1. ts_store([uri])
               4.2. ts_append(domain, ruri)
-              4.3. ts_append_to(tindex, tlabel, domain)
+              4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
         5. Exported RPC Functions
 
@@ -71,7 +71,7 @@ Chapter 1. Admin Guide
 
         4.1. ts_store([uri])
         4.2. ts_append(domain, ruri)
-        4.3. ts_append_to(tindex, tlabel, domain)
+        4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
    5. Exported RPC Functions
 
@@ -143,7 +143,7 @@ modparam("tsilo", "hash_size", 1024)
 
    4.1. ts_store([uri])
    4.2. ts_append(domain, ruri)
-   4.3. ts_append_to(tindex, tlabel, domain)
+   4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
 4.1. ts_store([uri])
 
@@ -186,7 +186,7 @@ if (is_method("REGISTER")) {
 }
 ...
 
-4.3. ts_append_to(tindex, tlabel, domain)
+4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
    The method add branches to the transaction identified by tindex and
    tlabel, performing a contacts lookup on the table specified by the
@@ -200,6 +200,7 @@ if (is_method("REGISTER")) {
        pseudo-variable.
      * domain - Name of table that should be used for looking up new
        contacts for r-uri.
+     * uri (optiona) - uri for which to do lookup for new destinations.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
