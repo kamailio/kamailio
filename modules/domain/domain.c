@@ -314,7 +314,7 @@ int reload_tables ( void )
     cols[2] = &type_col;
     cols[3] = &value_col;
 
-    if (domain_db_init(&db_url) < 0) {
+    if (domain_db_init(&d_db_url) < 0) {
 	LM_ERR("unable to open database connection\n");
 	return -1;
     }
