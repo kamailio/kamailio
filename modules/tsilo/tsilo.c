@@ -212,10 +212,21 @@ static void destroy(void)
 	return;
 }
 
+static int ts_check_uri(str *uri)
+{
+	struct sip_uri ruri;
+	if (parse_uri(uri->s, uri->len, &ruri)!=0)
+	{
+		LM_ERR("bad uri [%.*s]\n",
+				uri->len,
+				uri->s);
+		return -1;
+	}
+	return 0;
+}
 /**
  *
  */
-
 static int fixup_ts_append_to(void** param, int param_no)
 {
 	if (param_no==1 || param_no==2) {
@@ -263,6 +274,8 @@ static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri)
 		LM_ERR("invalid ruri parameter\n");
 		return -1;
 	}
+	if(ts_check_uri(&ruri)<0)
+		return -1;
 	return ts_append(_msg, &ruri, _table);
 }
 /**
@@ -309,6 +322,8 @@ static int w_ts_append_to2(struct sip_msg* msg, char *idx, char *lbl, char *tabl
 		LM_ERR("failed to conert r-uri parameter\n");
 		return -1;
 	}
+	if(ts_check_uri(&suri)<0)
+		return -1;
 
 	return ts_append_to(msg, tindex, tlabel, table, &suri);
 }

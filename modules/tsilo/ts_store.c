@@ -60,19 +60,14 @@ int ts_store(struct sip_msg* msg, str *puri) {
 		}
 	}
 
-	if (use_domain) {
-		aor = suri;
+	if (parse_uri(suri.s, suri.len, &ruri)!=0)
+	{
+		LM_ERR("bad uri [%.*s]\n",
+				suri.len,
+				suri.s);
+		return -1;
 	}
-	else {
-		if (parse_uri(suri.s, suri.len, &ruri)!=0)
-		{
-			LM_ERR("bad uri [%.*s]\n",
-					suri.len,
-					suri.s);
-			return -1;
-		}
-		aor = ruri.user;
-	}
+	aor = suri;
 
 	t = _tmb.t_gett();
 	if (!t || t==T_UNDEFINED) {
