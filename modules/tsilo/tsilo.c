@@ -69,11 +69,11 @@ static int fixup_ts_append(void** param, int param_no);
 static int w_ts_store(struct sip_msg* msg, char *p1, char *p2);
 static int w_ts_store1(struct sip_msg* msg, char *_ruri, char *p2);
 
-extern stat_var *stored_ruris;
-extern stat_var *stored_transactions;
-extern stat_var *total_ruris;
-extern stat_var *total_transactions;
-extern stat_var *added_branches;
+stat_var *stored_ruris;
+stat_var *stored_transactions;
+stat_var *total_ruris;
+stat_var *total_transactions;
+stat_var *added_branches;
 
 static cmd_export_t cmds[]={
 	{"ts_append_to", (cmd_function)w_ts_append_to,  3,
