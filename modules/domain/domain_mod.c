@@ -210,9 +210,9 @@ static int mod_init(void)
 	goto error;
     }
     memset(hash_table_1, 0, sizeof(struct domain_list *) *
-	   DOM_HASH_SIZE + 1);
+	   (DOM_HASH_SIZE + 1));
     memset(hash_table_2, 0, sizeof(struct domain_list *) *
-	   DOM_HASH_SIZE + 1);
+	   (DOM_HASH_SIZE + 1));
     *hash_table = hash_table_1;
 
     /* Allocate and initialize locks */
