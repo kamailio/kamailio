@@ -131,7 +131,7 @@ int t_append_branches(void) {
 		new_branch=add_uac( t, orig_msg, &current_uri,
 					(dst_uri.len) ? (&dst_uri) : &current_uri,
 					&path, 0, si, orig_msg->fwd_send_flags,
-					orig_msg->rcv.proto, (dst_uri.len)?-1:UAC_SKIP_BR_DST_F, &instance,
+					PROTO_NONE, (dst_uri.len)?-1:UAC_SKIP_BR_DST_F, &instance,
 					&ruid, &location_ua);
 		
 		LM_DBG("added branch [%.*s] with ruid [%.*s]\n", current_uri.len, current_uri.s, ruid.len, ruid.s);
