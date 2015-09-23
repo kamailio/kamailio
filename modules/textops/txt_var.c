@@ -124,7 +124,7 @@ int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	return 0;
 
 error:
-	if (tp->type == TR_PARAM_SPEC) {
+	if (tp->type == TR_PARAM_SPEC && se!=NULL) {
 		subst_expr_free(se);
 	}
 	return -1;
