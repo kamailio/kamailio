@@ -74,6 +74,11 @@ int t_suspend(struct sip_msg *msg,
 		ser_error = E_CANCELED;
 		return 1;
 	}
+	if (t->uas.status >= 200) {
+		LM_DBG("trasaction sent out a final response already - %d\n",
+				t->uas.status);
+		return -3;
+	}
 
 	if (msg->first_line.type != SIP_REPLY) {
 		/* send a 100 Trying reply, because the INVITE processing
