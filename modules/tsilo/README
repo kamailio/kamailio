@@ -10,7 +10,7 @@ Federico Cabiddu
 
    <federico.cabiddu@gmail.com>
 
-   Copyright � 2015 Federico Cabiddu
+   Copyright © 2015 Federico Cabiddu
      __________________________________________________________________
 
    Table of Contents
@@ -93,7 +93,7 @@ Chapter 1. Admin Guide
    (R-URI) and add branches to them later if new contacts for the AOR are
    added.
 
-   For each message, the modules stores "Request-URI" ("R-URI"), URI and
+   For each message, the modules stores “Request-URI” (“R-URI”), URI and
    the internal transaction index and label.
 
    When a transaction is destroyed by the TM module, it is removed from
@@ -110,9 +110,6 @@ Chapter 1. Admin Guide
      * REGISTRAR--registrar module-- used to lookup for new contacts and
        update the dset for the r-uri.
      * TM--transaction module-- used to send SIP requests.
-     * USRLOC--usrloc module-- according to the value of use_domain
-       option, domain part of the r-uri will be used to store the
-       transaction.
      * SL
 
 2.2. External libraries or applications
@@ -132,7 +129,7 @@ Chapter 1. Admin Guide
    must be a power of two, otherwise it will be rounded down to the
    nearest power of two.
 
-   Default value is "2048".
+   Default value is “2048”.
 
    Example 1.1. Set hash_size parameter
 ...
