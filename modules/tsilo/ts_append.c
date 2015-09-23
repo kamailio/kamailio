@@ -81,6 +81,16 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 				tindex, tlabel);
 		return -1;
 	}
+	if (t->flags & T_CANCELED) {
+		LM_DBG("trasaction [%u:%u] was cancelled\n",
+				tindex, tlabel);
+		return -2;
+	}
+	if (t->uas.status >= 200) {
+		LM_DBG("trasaction [%u:%u] sent out a final response already - %d\n",
+				tindex, tlabel, t->uas.status);
+		return -3;
+	}
 
 	orig_msg = t->uas.request;
 
@@ -91,7 +101,7 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 	}
 	if(ret != 1) {
 		LM_DBG("transaction %u:%u: error updating dset (%d)\n", tindex, tlabel, ret);
-		return -1;
+		return -4;
 	}
 
 	return _tmb.t_append_branches();
