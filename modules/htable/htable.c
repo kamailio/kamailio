@@ -1042,7 +1042,7 @@ static void  htable_rpc_list(rpc_t* rpc, void* c)
 		if (ht->dbtable.len > 0) {
 			len = ht->dbtable.len > 127 ? 127 : ht->dbtable.len;
 			memcpy(dbname, ht->dbtable.s, len);
-			dbname[ht->dbtable.len] = '\0';
+			dbname[len] = '\0';
 		} else {
 			dbname[0] = '\0';
 		}
