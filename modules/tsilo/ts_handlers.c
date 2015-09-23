@@ -40,14 +40,11 @@ int ts_set_tm_callbacks(struct cell *t, sip_msg_t *req, ts_transaction_t *ts)
 	if(t==NULL)
 		return -1;
 
-	if ( (ts_clone=clone_ts_transaction(ts)) < 0 ) {
+	if ( (ts_clone=clone_ts_transaction(ts)) == NULL ) {
 		LM_ERR("failed to clone transaction\n");
 		return -1;
 	}
 
-	if (ts_clone == NULL) {
-		LM_ERR("transaction clone null\n");
-	}
 	if ( _tmb.register_tmcb( req, t,TMCB_DESTROY,
 			ts_onreply, (void*)ts_clone, free_ts_transaction)<0 ) {
 		LM_ERR("failed to register TMCB for transaction %d:%d\n", t->hash_index, t->label);
