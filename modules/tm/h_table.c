@@ -123,7 +123,7 @@ void free_cell_helper( struct cell* dead_cell, const char *fname, unsigned int f
 	struct totag_elem *tt, *foo;
 	struct tm_callback *cbs, *cbs_tmp;
 
-	LM_WARN("===== freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
+	LM_DBG("freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
 
 	release_cell_lock( dead_cell );
 	if (unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
