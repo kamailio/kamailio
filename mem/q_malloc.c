@@ -1100,7 +1100,7 @@ int qm_malloc_init_shm_manager(void)
 	if (_qm_shm_block==0){
 		LOG(L_CRIT, "could not initialize qm shm memory pool\n");
 		fprintf(stderr, "Too much qm shm memory demanded: %ld bytes\n",
-						pkg_mem_size);
+						shm_mem_size);
 		return -1;
 	}
 

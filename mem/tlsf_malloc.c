@@ -1438,7 +1438,7 @@ int tlsf_malloc_init_shm_manager(void)
 	} else {
 		LOG(L_CRIT, "could not initialize tlsf shm memory pool\n");
 		fprintf(stderr, "Too much tlsf shm memory demanded: %ld bytes\n",
-						pkg_mem_size);
+						shm_mem_size);
 		return -1;
 	}
 

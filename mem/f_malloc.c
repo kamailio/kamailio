@@ -1155,7 +1155,7 @@ int fm_malloc_init_shm_manager(void)
 	if (_fm_shm_block==0){
 		LOG(L_CRIT, "could not initialize fm shm memory pool\n");
 		fprintf(stderr, "Too much fm shm memory demanded: %ld bytes\n",
-						pkg_mem_size);
+						shm_mem_size);
 		return -1;
 	}
 
