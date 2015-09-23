@@ -591,8 +591,10 @@ void free_server_list(server_list_t* list)
 		return;
 
 	server_list_t* node = NULL;
-	for(node=list; node!=NULL; node=node->next)
+	server_list_t* next = NULL;
+	for(node=list; node!=NULL; node=next)
 	{
+		next = node->next;
 		pkg_free(node);
 	}
 }
