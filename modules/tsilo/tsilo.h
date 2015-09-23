@@ -23,15 +23,11 @@
 
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/registrar/api.h"
-#include "../../modules/usrloc/usrloc.h"
 
 /** TM bind */
 extern struct tm_binds _tmb;
 /** REGISTRAR bind */
 extern registrar_api_t _regapi;
 /** USRLOC BIND **/
-extern usrloc_api_t _ul;
-
-extern int use_domain;
 
 #endif

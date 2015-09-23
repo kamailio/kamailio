@@ -37,8 +37,6 @@
 #include "ts_hash.h"
 #include "ts_store.h"
 
-extern int use_domain;
-
 int ts_store(struct sip_msg* msg, str *puri) {
 	struct cell		*t;
 	str aor;

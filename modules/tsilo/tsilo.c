@@ -30,7 +30,6 @@
 #include "../../script_cb.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/registrar/api.h"
-#include "../../modules/usrloc/usrloc.h"
 #include "../../dset.h"
 #include "../../rpc_lookup.h"
 #include "../../lib/kcore/statistics.h"
@@ -48,10 +47,6 @@ MODULE_VERSION
 struct tm_binds _tmb;
 /** REGISTRAR bind **/
 registrar_api_t _regapi;
-/** USRLOC BIND **/
-usrloc_api_t _ul;
-
-int use_domain = 0;
 
 /** parameters */
 static int hash_size = 2048;
@@ -132,7 +127,6 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	unsigned int n;
-	bind_usrloc_t bind_usrloc;
 
 	/* register the RPC methods */
 	if(rpc_register_array(rpc_methods)!=0)
@@ -151,20 +145,7 @@ static int mod_init(void)
 		LM_ERR("cannot load REGISTRAR API\n");
 		return -1;
 	}
-	/* load UL-Bindings */
-	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 
-	if (!bind_usrloc) {
-		LM_ERR("could not load the USRLOC API\n");
-		return -1;
-	}
-
-	if (bind_usrloc(&_ul) < 0) {
-		LM_ERR("could not load the USRLOC API\n");
-		return -1;
-	}
-
-	use_domain = _ul.use_domain;
 	/* sanitize hash_size */
 	if (hash_size < 1){
 		LM_WARN("hash_size is smaller "
