@@ -253,8 +253,6 @@ int schedule_retry(jsonrpc_request_t* req)
 
 	new_req->ntries = req->ntries;
 
-	free_request(req);
-
 	const struct timeval tv = ms_to_tv(time);
 
 	new_req->retry_ev = evtimer_new(global_ev_base, retry_cb, (void*)new_req);
@@ -263,6 +261,8 @@ int schedule_retry(jsonrpc_request_t* req)
 				strerror(errno));
 		goto error;
 	}
+
+	free_request(req);
 
 	return 0;
 error:
