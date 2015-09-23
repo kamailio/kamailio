@@ -442,7 +442,7 @@ void* fm_malloc(void* qmp, unsigned long size)
 #endif
 {
 	struct fm_block* qm;
-	struct fm_frag** f;
+	struct fm_frag* f;
 	struct fm_frag* frag;
 	int hash;
 
@@ -463,8 +463,8 @@ void* fm_malloc(void* qmp, unsigned long size)
 	hash=fm_bmp_first_set(qm, GET_HASH(size));
 	if (likely(hash>=0)){
 		if (likely(hash<=F_MALLOC_OPTIMIZE/ROUNDTO)) { /* return first match */
-			f=&(qm->free_hash[hash].first);
-			if(likely(*f)) goto found;
+			f=qm->free_hash[hash].first;
+			if(likely(f && f!=qm->last_frag)) goto found;
 #ifdef DBG_F_MALLOC
 			MDBG(" block %p hash %d empty but no. is %lu\n", qm,
 					hash, qm->free_hash[hash].no);
@@ -482,17 +482,17 @@ void* fm_malloc(void* qmp, unsigned long size)
 		   hash buckets.
 		*/
 		do {
-			for(f=&(qm->free_hash[hash].first);(*f); f=&((*f)->u.nxt_free))
-				if ((*f)->size>=size) goto found;
+			for(f=qm->free_hash[hash].first; f && f!=qm->last_frag; f=f->u.nxt_free)
+				if (f->size>=size) goto found;
 			hash++; /* try in next hash cell */
 		}while((hash < F_HASH_SIZE) &&
 				((hash=fm_bmp_first_set(qm, hash)) >= 0));
 	}
 #else /* F_MALLOC_HASH_BITMAP */
 	for(hash=GET_HASH(size);hash<F_HASH_SIZE;hash++){
-		f=&(qm->free_hash[hash].first);
-		for(;(*f); f=&((*f)->u.nxt_free))
-			if ((*f)->size>=size) goto found;
+		f=qm->free_hash[hash].first;
+		for(;f && f!=qm->last_frag; f=f->u.nxt_free)
+			if (f->size>=size) goto found;
 		/* try in a bigger bucket */
 	}
 #endif /* F_MALLOC_HASH_BITMAP */
@@ -507,7 +507,7 @@ void* fm_malloc(void* qmp, unsigned long size)
 found:
 	/* we found it!*/
 	/* detach it from the free list*/
-	frag=*f;
+	frag=f;
 	fm_extract_free(qm, frag);
 
 	/*see if use full frag or split it in two*/
