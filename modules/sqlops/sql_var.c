@@ -257,7 +257,9 @@ int pv_parse_dbr_name(pv_spec_p sp, str *in)
 		if(p>in->s+in->len || *p=='\0' || *p!=']')
 			goto error_index;
 	} else {
-		LM_ERR("unknow key [%.*s]\n", pvs.len, pvs.s);
+		LM_ERR("unknown key [%.*s]\n", pvs.len, pvs.s);
+		if(spv!=NULL)
+			pkg_free(spv);
 		return -1;
 	}
 	sp->pvp.pvn.u.dname = (void*)spv;
