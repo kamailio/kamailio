@@ -115,13 +115,15 @@ unsigned int transaction_count( void )
 
 
 
-void free_cell( struct cell* dead_cell )
+void free_cell_helper( struct cell* dead_cell, const char *fname, unsigned int fline )
 {
 	char *b;
 	int i;
 	struct sip_msg *rpl;
 	struct totag_elem *tt, *foo;
 	struct tm_callback *cbs, *cbs_tmp;
+
+	LM_WARN("===== freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
 
 	release_cell_lock( dead_cell );
 	if (unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))

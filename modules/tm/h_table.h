@@ -552,7 +552,10 @@ struct s_table* tm_get_table(void);
 
 struct s_table* init_hash_table(void);
 void   free_hash_table(void);
-void   free_cell( struct cell* dead_cell );
+
+void   free_cell_helper( struct cell* dead_cell, const char *fname, unsigned int fline);
+#define free_cell(t) free_cell_helper((t), __FILE__, __LINE__)
+
 struct cell*  build_cell( struct sip_msg* p_msg );
 
 #ifdef TM_HASH_STATS
