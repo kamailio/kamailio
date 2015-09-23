@@ -227,6 +227,10 @@ int tmx_check_pretran(sip_msg_t *msg)
 		LM_ERR("failed to get From header\n");
 		return -1;
 	}
+	if (msg->callid==NULL || msg->callid->body.s==NULL) {
+		LM_ERR("failed to parse callid headers\n");
+		return -1;
+	}
 
 	vbr = msg->via1->branch;
 
