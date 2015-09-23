@@ -51,11 +51,6 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>USRLOC</emphasis>--usrloc module-- according to the value of <emphasis>use_domain</emphasis> option, domain part of the r-uri will be used to store the transaction.
-			</para>
-			</listitem>
-			<listitem>
-			<para>
 				<emphasis>SL</emphasis>
 			</para>
 			</listitem>
