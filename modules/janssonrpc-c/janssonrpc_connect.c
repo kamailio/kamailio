@@ -88,9 +88,13 @@ void force_disconnect(jsonrpc_server_t* server)
 
 	/* clean out requests */
 	jsonrpc_request_t* req = NULL;
+	jsonrpc_request_t* next = NULL;
 	int key = 0;
 	for (key=0; key < JSONRPC_DEFAULT_HTABLE_SIZE; key++) {
-		for (req = request_table[key]; req != NULL; req = req->next) {
+		for (req = request_table[key]; req != NULL; req = next) {
+			/* fail_request frees req so need to store
+			   next_req before call */
+			next = req->next;
 			if(req->server != NULL && req->server == server) {
 				fail_request(JRPC_ERR_SERVER_DISCONNECT, req,
 						"Failing request for server shutdown");
@@ -128,9 +132,10 @@ void server_backoff_cb(int fd, short event, void *arg)
 
 	close(fd);
 	CHECK_AND_FREE_EV(a->ev);
-	pkg_free(arg);
 
 	wait_server_backoff(timeout, a->server, false);
+
+	pkg_free(arg);
 }
 
 void wait_server_backoff(unsigned int timeout /* seconds */,
