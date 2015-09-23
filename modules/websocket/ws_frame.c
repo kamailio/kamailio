@@ -431,15 +431,6 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 	frame->opcode = (buf[0] & 0xff) & BYTE0_MASK_OPCODE;
 	frame->mask = (buf[1] & 0xff) & BYTE1_MASK_MASK;
 	
-	if (!frame->fin)
-	{
-		LM_WARN("WebSocket fragmentation not supported in the sip "
-			"sub-protocol\n");
-		*err_code = 1002;
-		*err_text = str_status_protocol_error;
-		return -1;
-	}
-
 	if (frame->rsv1 || frame->rsv2 || frame->rsv3)
 	{
 		LM_WARN("WebSocket reserved fields with non-zero values\n");
@@ -450,6 +441,10 @@ static int decode_and_validate_ws_frame(ws_frame_t *frame,
 
 	switch(frame->opcode)
 	{
+	case OPCODE_CONTINUATION:
+		LM_DBG("supported continuation frame: 0x%x\n",
+			(unsigned char) frame->opcode);
+		break;
 	case OPCODE_TEXT_FRAME:
 	case OPCODE_BINARY_FRAME:
 		LM_DBG("supported non-control frame: 0x%x\n",
@@ -651,6 +646,36 @@ int ws_frame_receive(void *data)
 
 	switch(opcode)
 	{
+	case OPCODE_CONTINUATION:
+		if (likely(frame.wsc->sub_protocol == SUB_PROTOCOL_SIP))
+		{
+			if (frame.wsc->frag_buf.len + frame.payload_len >= BUF_SIZE)
+			{
+				LM_ERR("Buffer overflow assembling websocket fragments %d + %d = %d\n", frame.wsc->frag_buf.len, frame.payload_len, frame.wsc->frag_buf.len + frame.payload_len);
+				wsconn_put(frame.wsc);
+				return -1;
+			}
+			memcpy(frame.wsc->frag_buf.s + frame.wsc->frag_buf.len, frame.payload_data, frame.payload_len);
+			frame.wsc->frag_buf.len += frame.payload_len;
+			frame.wsc->frag_buf.s[frame.wsc->frag_buf.len] = '\0';
+
+			if (frame.fin)
+			{
+				ret = receive_msg(frame.wsc->frag_buf.s,
+						frame.wsc->frag_buf.len,
+						tcpinfo->rcv);
+				wsconn_put(frame.wsc);
+				return ret;
+			}
+			wsconn_put(frame.wsc);
+			return 0;
+		}
+		else
+		{
+			LM_ERR("Unsupported fragmented sub-protocol");
+			wsconn_put(frame.wsc);
+			return -1;
+		}
 	case OPCODE_TEXT_FRAME:
 	case OPCODE_BINARY_FRAME:
 		if (likely(frame.wsc->sub_protocol == SUB_PROTOCOL_SIP))
@@ -659,11 +684,23 @@ int ws_frame_receive(void *data)
 				frame.payload_data);
 			update_stat(ws_sip_received_frames, 1);
 
-			wsconn_put(frame.wsc);
+			if (frame.fin)
+			{
 
-			return receive_msg(frame.payload_data,
+				wsconn_put(frame.wsc);
+
+				return receive_msg(frame.payload_data,
 						frame.payload_len,
 						tcpinfo->rcv);
+			}
+			else
+			{
+				memcpy(frame.wsc->frag_buf.s, frame.payload_data, frame.payload_len);
+				frame.wsc->frag_buf.len = frame.payload_len;
+				frame.wsc->frag_buf.s[frame.wsc->frag_buf.len] = '\0';
+				wsconn_put(frame.wsc);
+				return 0;
+			}
 		}
 		else if (frame.wsc->sub_protocol == SUB_PROTOCOL_MSRP)
 		{
