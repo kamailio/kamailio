@@ -590,6 +590,8 @@ inline static void insert_into_hash_table_unsafe( struct cell * p_cell,
 inline static void remove_from_hash_table_unsafe( struct cell * p_cell)
 {
 	clist_rm(p_cell, next_c, prev_c);
+	p_cell->next_c = 0;
+	p_cell->prev_c = 0;
 #	ifdef EXTRA_DEBUG
 #ifdef TM_HASH_STATS
 	if (_tm_table->entries[p_cell->hash_index].cur_entries==0){
