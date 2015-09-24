@@ -93,6 +93,52 @@ int lookup_to_dset(struct sip_msg* _m, udomain_t* _d, str* _uri) {
 }
 
 /*! \brief
+ * add xavp with details of the record (ruid, ...)
+ */
+int xavp_rcd_helper(ucontact_t* ptr) {
+	sr_xavp_t *xavp=NULL;
+	sr_xavp_t *list=NULL;
+	str xname_ruid = {"ruid", 4};
+	str xname_received = { "received", 8};
+	str xname_contact = { "contact", 7};
+	sr_xval_t xval;
+
+	if(ptr==NULL) return -1;
+
+	if(reg_xavp_rcd.s!=NULL)
+	{
+		list = xavp_get(&reg_xavp_rcd, NULL);
+		xavp = list;
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->ruid;
+		xavp_add_value(&xname_ruid, &xval, &xavp);
+
+		if(ptr->received.len > 0)
+		{
+			memset(&xval, 0, sizeof(sr_xval_t));
+			xval.type = SR_XTYPE_STR;
+			xval.v.s = ptr->received;
+			xavp_add_value(&xname_received, &xval, &xavp);
+		}
+
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = ptr->c;
+		xavp_add_value(&xname_contact, &xval, &xavp);
+
+		if(list==NULL)
+		{
+			/* no reg_xavp_rcd xavp in root list - add it */
+			xval.type = SR_XTYPE_XAVP;
+			xval.v.xavp = xavp;
+			xavp_add_value(&reg_xavp_rcd, &xval, NULL);
+		}
+	}
+	return 0;
+}
+
+/*! \brief
  * Lookup contact in the database and rewrite Request-URI
  * or not according to _mode value:
  *  0: rewrite
@@ -115,9 +161,6 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 	str inst = {0};
 	unsigned int ahash = 0;
 	sr_xavp_t *xavp=NULL;
-	sr_xavp_t *list=NULL;
-	str xname = {"ruid", 4};
-	sr_xval_t xval;
 	sip_uri_t path_uri;
 	str path_str;
 
@@ -238,23 +281,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 		/* reset next hop address */
 		reset_dst_uri(_m);
 
-		/* add xavp with details of the record (ruid, ...) */
-		if(reg_xavp_rcd.s!=NULL)
-		{
-			list = xavp_get(&reg_xavp_rcd, NULL);
-			xavp = list;
-			memset(&xval, 0, sizeof(sr_xval_t));
-			xval.type = SR_XTYPE_STR;
-			xval.v.s = ptr->ruid;
-			xavp_add_value(&xname, &xval, &xavp);
-			if(list==NULL)
-			{
-				/* no reg_xavp_rcd xavp in root list - add it */
-				xval.type = SR_XTYPE_XAVP;
-				xval.v.xavp = xavp;
-				xavp_add_value(&reg_xavp_rcd, &xval, NULL);
-			}
-		}
+		xavp_rcd_helper(ptr);
 
 		/* If a Path is present, use first path-uri in favour of
 		 * received-uri because in that case the last hop towards the uac
@@ -712,6 +739,8 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag, in
 				(match_contact.len != ptr->c.len || 
 				memcmp(match_contact.s, ptr->c.s, match_contact.len)))
 				continue;
+
+			xavp_rcd_helper(ptr);
 
 			if(ptr->xavp!=NULL && match_action_flag == 1) {
 				sr_xavp_t *xavp = xavp_clone_level_nodata(ptr->xavp);

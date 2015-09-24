@@ -739,7 +739,7 @@ modparam("registrar", "xavp_cfg", "reg")
 		<para>
 			Defines the name of XAVP class to store details from the
 			location records. The values are stored as inner XAVPs, like
-			$xavp(class=&gt;attribute). Valid inner XAVP names:
+			$xavp(class[0]=&gt;attribute). Valid inner XAVP names:
 		</para>
 		<itemizedlist>
 		<listitem>
@@ -748,11 +748,31 @@ modparam("registrar", "xavp_cfg", "reg")
 				id.
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+				<emphasis>contact</emphasis> - the record's contact value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>received</emphasis> - the record's received value.
+			</para>
+		</listitem>
 		</itemizedlist>
 		<para>
-			For example. if this parameter is set to 'ulrcd', then the ruid
-			for contact records are set in $xavp(ulrcd=&gt;ruid).
+			For example. if this parameter is set to 'ulrcd', then values are set in:
 		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>$xavp(ulrcd[0]=&gt;ruid)</emphasis></para>
+		</listitem>
+		<listitem>
+			<para><emphasis>$xavp(ulrcd[0]=&gt;contact)</emphasis></para>
+		</listitem>
+		<listitem>
+			<para><emphasis>$xavp(ulrcd[0]=&gt;received)</emphasis></para>
+		</listitem>
+		</itemizedlist>
 		<para>
 		<emphasis>
 			Default value is NULL (disabled).
