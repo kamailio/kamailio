@@ -73,7 +73,7 @@ stat_var *added_branches;
 static cmd_export_t cmds[]={
 	{"ts_append_to", (cmd_function)w_ts_append_to,  3,
 		fixup_ts_append_to, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"ts_append_to", (cmd_function)w_ts_append_to,  4,
+	{"ts_append_to", (cmd_function)w_ts_append_to2,  4,
 		fixup_ts_append_to, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"ts_append", (cmd_function)w_ts_append,  2,
 		fixup_ts_append, 0, REQUEST_ROUTE | FAILURE_ROUTE },
