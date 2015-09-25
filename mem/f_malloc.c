@@ -91,7 +91,8 @@
 	((qm)->free_bitmap[(b)/FM_HASH_BMP_BITS] & (1UL<<((b)%FM_HASH_BMP_BITS)))
 
 
-#define fm_is_free(f) ((f)->u.nxt_free)
+#define fm_is_free(f) ((f)->is_free)
+
 /**
  * \brief Find the first free fragment in a memory block
  * 
@@ -158,12 +159,10 @@ inline static int fm_bmp_first_set(struct fm_block* qm, int start)
  * \name Memory manager boundary check pattern
  */
 /*@{ */
-#ifdef DBG_F_MALLOC
 #define ST_CHECK_PATTERN   0xf0f0f0f0 /** inserted at the beginning */
 #define END_CHECK_PATTERN1 0xc0c0c0c0 /** inserted at the end       */
 #define END_CHECK_PATTERN2 0xabcdefed /** inserted at the end       */
 /*@} */
-#endif
 
 
 /**
@@ -177,17 +176,18 @@ static inline void fm_extract_free(struct fm_block* qm, struct fm_frag* frag)
 
 	hash = GET_HASH(frag->size);
 
-	if(frag->prv_free) {
-		frag->prv_free->u.nxt_free = frag->u.nxt_free;
+	if(frag->prev_free) {
+		frag->prev_free->next_free = frag->next_free;
 	} else {
-		if(frag->u.nxt_free!=qm->last_frag)
-			qm->free_hash[hash].first = frag->u.nxt_free;
-		else
-			qm->free_hash[hash].first = NULL;
+		qm->free_hash[hash].first = frag->next_free;
 	}
-	if(frag->u.nxt_free && frag->u.nxt_free!=qm->last_frag) {
-		frag->u.nxt_free->prv_free = frag->prv_free;
+	if(frag->next_free) {
+		frag->next_free->prev_free = frag->prev_free;
 	}
+
+	frag->prev_free = NULL;
+	frag->next_free = NULL;
+	frag->is_free = 0;
 
 	qm->ffrags--;
 	qm->free_hash[hash].no--;
@@ -195,8 +195,6 @@ static inline void fm_extract_free(struct fm_block* qm, struct fm_frag* frag)
 	if (qm->free_hash[hash].no==0)
 		fm_bmp_reset(qm, hash);
 #endif /* F_MALLOC_HASH_BITMAP */
-	frag->prv_free = NULL;
-	frag->u.nxt_free = NULL;
 
 	qm->real_used+=frag->size;
 	qm->used+=frag->size;
@@ -210,55 +208,41 @@ static inline void fm_extract_free(struct fm_block* qm, struct fm_frag* frag)
 static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
 {
 	struct fm_frag* f;
+	struct fm_frag* p;
 	int hash;
-	int after;
 	
 	hash=GET_HASH(frag->size);
 	f=qm->free_hash[hash].first;
+	p=NULL;
 	if (frag->size > F_MALLOC_OPTIMIZE){ /* because of '<=' in GET_HASH,
 											(different from 0.8.1[24] on
 											 purpose --andrei ) */
-		after = 0;
 		/* large fragments list -- add at a position ordered by size */
-		for(; f; f=f->u.nxt_free){
+		for(; f; f=f->next_free){
 			if (frag->size <= f->size) break;
-			if(f->u.nxt_free==qm->last_frag) {
-				/*size greater than last frag in slot*/
-				after = 1;
-				break;
-			}
+			p = f;
 		}
 	
+		frag->next_free = f;
+		frag->prev_free = p;
 		if(f) {
-			if(after) {
-				/*insert frag after f*/
-				frag->prv_free=f;
-				f->u.nxt_free=frag;
-				frag->u.nxt_free = qm->last_frag;
-			} else {
-				/*insert frag before f*/
-				frag->u.nxt_free = f;
-				frag->prv_free=f->prv_free;
-				if(f->prv_free) f->prv_free->u.nxt_free = frag;
-				if(qm->free_hash[hash].first==f) qm->free_hash[hash].first = frag;
-			}
+			f->prev_free = frag;
+		}
+		if(p) {
+			p->next_free = frag;
 		} else {
-			/* to be only one in slot */
 			qm->free_hash[hash].first = frag;
-			frag->prv_free=0;
-			frag->u.nxt_free = qm->last_frag;
 		}
 	} else {
 		/* fixed fragment size list -- add first */
-		frag->prv_free=0;
+		frag->prev_free = 0;
+		frag->next_free = f;
 		if(f) {
-			f->prv_free = frag;
-			frag->u.nxt_free = f;
-		} else {
-			frag->u.nxt_free = qm->last_frag;
+			f->prev_free = frag;
 		}
 		qm->free_hash[hash].first = frag;
 	}
+	frag->is_free = 1;
 	qm->ffrags++;
 	qm->free_hash[hash].no++;
 #ifdef F_MALLOC_HASH_BITMAP
@@ -307,8 +291,8 @@ void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 		n->file=file;
 		n->func="frag. from fm_split_frag";
 		n->line=line;
-		n->check=ST_CHECK_PATTERN;
 #endif
+		n->check=ST_CHECK_PATTERN;
 		/* reinsert n in free list*/
 		qm->used-=FRAG_OVERHEAD;
 		fm_insert_free(qm, n);
@@ -366,17 +350,17 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	qm->last_frag=(struct fm_frag*)(end-sizeof(struct fm_frag));
 	/* init first fragment*/
 	qm->first_frag->size=size;
-	qm->first_frag->prv_free=0;
-	qm->first_frag->u.nxt_free=0;
+	qm->first_frag->prev_free=0;
+	qm->first_frag->next_free=0;
+	qm->first_frag->is_free=0;
 	/* init last fragment*/
 	qm->last_frag->size=0;
-	qm->last_frag->prv_free=0;
-	qm->last_frag->u.nxt_free=0;
+	qm->last_frag->prev_free=0;
+	qm->last_frag->next_free=0;
+	qm->last_frag->is_free=0;
 	
-#ifdef DBG_F_MALLOC
 	qm->first_frag->check=ST_CHECK_PATTERN;
 	qm->last_frag->check=END_CHECK_PATTERN1;
-#endif
 	
 	/* link initial fragment into the free list*/
 	
@@ -464,7 +448,7 @@ void* fm_malloc(void* qmp, unsigned long size)
 	if (likely(hash>=0)){
 		if (likely(hash<=F_MALLOC_OPTIMIZE/ROUNDTO)) { /* return first match */
 			f=qm->free_hash[hash].first;
-			if(likely(f && f!=qm->last_frag)) goto found;
+			if(likely(f)) goto found;
 #ifdef DBG_F_MALLOC
 			MDBG(" block %p hash %d empty but no. is %lu\n", qm,
 					hash, qm->free_hash[hash].no);
@@ -482,7 +466,7 @@ void* fm_malloc(void* qmp, unsigned long size)
 		   hash buckets.
 		*/
 		do {
-			for(f=qm->free_hash[hash].first; f && f!=qm->last_frag; f=f->u.nxt_free)
+			for(f=qm->free_hash[hash].first; f; f=f->next_free)
 				if (f->size>=size) goto found;
 			hash++; /* try in next hash cell */
 		}while((hash < F_HASH_SIZE) &&
@@ -491,7 +475,7 @@ void* fm_malloc(void* qmp, unsigned long size)
 #else /* F_MALLOC_HASH_BITMAP */
 	for(hash=GET_HASH(size);hash<F_HASH_SIZE;hash++){
 		f=qm->free_hash[hash].first;
-		for(;f && f!=qm->last_frag; f=f->u.nxt_free)
+		for(; f; f=f->u.nxt_free)
 			if (f->size>=size) goto found;
 		/* try in a bigger bucket */
 	}
@@ -523,10 +507,10 @@ finish:
 	frag->file=file;
 	frag->func=func;
 	frag->line=line;
-	frag->check=ST_CHECK_PATTERN;
 	MDBG("fm_malloc(%p, %lu) returns address %p \n", qm, size,
 		(char*)frag+sizeof(struct fm_frag));
 #endif
+	frag->check=ST_CHECK_PATTERN;
 
 	if (qm->max_real_used<qm->real_used)
 		qm->max_real_used=qm->real_used;
@@ -804,7 +788,7 @@ void fm_status(void* qmp)
 	for(h=0,i=0,size=0;h<F_HASH_SIZE;h++){
 		unused=0;
 		for (f=qm->free_hash[h].first,j=0; f;
-				size+=f->size,f=f->u.nxt_free,i++,j++){
+				size+=f->size,f=f->next_free,i++,j++){
 			if (!FRAG_WAS_USED(f)){
 				unused++;
 #ifdef DBG_F_MALLOC
