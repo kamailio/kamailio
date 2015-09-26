@@ -1670,7 +1670,7 @@ error:
 	return 0;
 }
 
-#define JSONRPC_BUF_IN_SIZE	4096
+#define JSONRPC_BUF_IN_SIZE	8192
 static void jsonrpc_run_fifo_server(FILE *fifo_stream)
 {
 	FILE *reply_stream;
