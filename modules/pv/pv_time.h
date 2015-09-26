@@ -25,10 +25,14 @@
 #include "../../pvar.h"
 
 int pv_parse_time_name(pv_spec_p sp, str *in);
-int pv_get_time(struct sip_msg *msg, pv_param_t *param,
+int pv_get_local_time(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+int pv_get_utc_time(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_parse_strftime_name(pv_spec_p sp, str *in);
-int pv_get_strftime(struct sip_msg *msg, pv_param_t *param,
+int pv_get_local_strftime(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+int pv_get_utc_strftime(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_get_timenows(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
