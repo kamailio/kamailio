@@ -80,7 +80,7 @@ mod_list_carrierroute=carrierroute
 mod_list_berkeley=db_berkeley
 
 # - modules depending on curl library
-mod_list_utils=utils
+mod_list_utils=utils curl
 
 # - modules depending on purple library
 mod_list_purple=purple
