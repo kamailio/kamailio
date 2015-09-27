@@ -505,6 +505,7 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 
 	for (i = 0; i < _d->table[sl].n; i++) {
             LM_DBG("comparing contact with aorhash [%u], aor [%.*s]\n", c->aorhash, c->aor.len, c->aor.s);
+            LM_DBG("  contact host [%.*s:%d]\n", c->contact_host.len, c->contact_host.s, c->contact_port);
 		if ((c->aorhash == aorhash) && (c->contact_host.len == contact_info->via_host.len) && (memcmp(contact_info->via_host.s, c->contact_host.s, c->contact_host.len)==0) && (c->contact_port == contact_info->via_port)
                         && (!(contact_info->searchflag&SEARCH_RECEIVED) || ((contact_info->searchflag&SEARCH_RECEIVED)
                         && (c->received_host.len == contact_info->received_host.len && (memcmp(c->received_host.s, contact_info->received_host.s, contact_info->received_host.len)==0))
