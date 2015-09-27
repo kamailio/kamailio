@@ -182,7 +182,7 @@ int new_pcontact(struct udomain* _d, str* _contact, struct pcontact_info* _ci, s
         (*_c)->rinstance.len = rinstance.len;
 	(*_c)->contact_host.s = sip_uri.host.s;
 	(*_c)->contact_host.len = sip_uri.host.len;
-	(*_c)->contact_port = sip_uri.port_no;
+	(*_c)->contact_port = sip_uri.port_no?sip_uri.port_no:5060;
 	(*_c)->contact_user.s = sip_uri.user.s;
 	(*_c)->contact_user.len = sip_uri.user.len;
 
