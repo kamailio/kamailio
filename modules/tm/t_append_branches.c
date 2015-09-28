@@ -49,6 +49,8 @@
 int t_append_branches(void) {
 	struct cell *t = NULL;
 	struct sip_msg *orig_msg = NULL;
+	static struct sip_msg faked_req;
+	
 	short outgoings;
 
 	int success_branch;
@@ -62,6 +64,7 @@ int t_append_branches(void) {
 	int new_branch, branch_ret, lowest_ret;
 	branch_bm_t	added_branches;
 	int replies_locked = 0;
+	int ret = 0;
 
 	t = get_t();
 	if(t == NULL)
@@ -106,6 +109,15 @@ int t_append_branches(void) {
 		set_branch_route(t->on_branch_delayed);
 	}
 
+	if (!fake_req(&faked_req, orig_msg, 0, NULL)) {
+		LOG(L_ERR, "ERROR: t_append_branches: fake_req failed\n");
+		return -1;
+	}
+	
+	/* fake also the env. conforming to the fake msg */
+	faked_env( t, &faked_req, 0);
+
+	/* DONE with faking ;-) -> run the failure handlers */
 	init_branch_iterator();
 
 	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
@@ -125,9 +137,9 @@ int t_append_branches(void) {
 			continue;
 
 		setbflagsval(0, bflags);
-		new_branch=add_uac( t, orig_msg, &current_uri,
+		new_branch=add_uac( t, &faked_req, &current_uri,
 					(dst_uri.len) ? (&dst_uri) : &current_uri,
-					&path, 0, si, orig_msg->fwd_send_flags,
+					&path, 0, si, faked_req.fwd_send_flags,
 					PROTO_NONE, (dst_uri.len)?-1:UAC_SKIP_BR_DST_F, &instance,
 					&ruid, &location_ua);
 		
@@ -149,15 +161,14 @@ int t_append_branches(void) {
 	setbflagsval(0, backup_bflags);
 
 	/* update message flags, if changed in branch route */
-	t->uas.request->flags = orig_msg->flags;
+	t->uas.request->flags = faked_req.flags;
 
 	if (added_branches==0) {
 		if(lowest_ret!=E_CFG)
-			LOG(L_ERR, "ERROR: t_append_branch: failure to add branches\n");
+			LOG(L_ERR, "ERROR: t_append_branch: failure to add branches (%d)\n", lowest_ret);
 		ser_error=lowest_ret;
-		replies_locked = 0;
-		UNLOCK_REPLIES(t);
-		return lowest_ret;
+		ret = lowest_ret;
+		goto done;
 	}
 
 	ser_error=0; /* clear branch adding errors */
@@ -167,14 +178,14 @@ int t_append_branches(void) {
 
 	for (i=outgoings; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
-			branch_ret=t_send_branch(t, i, orig_msg , 0, 0 /* replies are already locked */ );
+			branch_ret=t_send_branch(t, i, &faked_req , 0, 0 /* replies are already locked */ );
 			if (branch_ret>=0){ /* some kind of success */
 				if (branch_ret==i) { /* success */
 					success_branch++;
 					if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
 						run_trans_callbacks_with_buf( TMCB_REQUEST_OUT,
 								&t->uac[nr_branches].request,
-								orig_msg, 0, -orig_msg->REQ_METHOD);
+								&faked_req, 0, -orig_msg->REQ_METHOD);
 				}
 				else /* new branch added */
 					added_branches |= 1<<branch_ret;
@@ -188,17 +199,14 @@ int t_append_branches(void) {
 		 *  when attempting dns failover) */
 		ser_error=E_SEND;
 		/* else return the last error (?) */
-		/* the caller should take care and delete the transaction */
-		replies_locked = 0;
-		UNLOCK_REPLIES(t);
-		return -1;
+		ret = -1;
+		goto done;
 	}
 
 	ser_error=0; /* clear branch send errors, we have overall success */
 	set_kr(REQ_FWDED);
-	replies_locked = 0;
-	UNLOCK_REPLIES(t);
-	return 1;
+	ret = success_branch;
+	goto done;
 
 canceled:
 	DBG("t_append_branches: cannot append branches to a canceled transaction\n");
@@ -207,15 +215,20 @@ canceled:
 	/* restore backup flags from initial env */
 	setbflagsval(0, backup_bflags);
 	/* update message flags, if changed in branch route */
-	t->uas.request->flags = orig_msg->flags;
-	/* if needed unlock transaction's replies */
+	t->uas.request->flags = faked_req.flags;
+	/* restore the number of outgoing branches
+	 * since new branches have not been completed */
+	t->nr_of_outgoings = outgoings;
+	ser_error=E_CANCELED;
+	ret = -1;
+done:
+	/* restore original environment and free the fake msg */
+	faked_env( t, 0, 0);
+	free_faked_req(&faked_req,t);
+	
 	if (likely(replies_locked)) {
-		/* restore the number of outgoing branches
-		 * since new branches have not been completed */
-		t->nr_of_outgoings = outgoings;
 		replies_locked = 0;
 		UNLOCK_REPLIES(t);
 	}
-	ser_error=E_CANCELED;
-	return -1;
+	return ret;
 }
