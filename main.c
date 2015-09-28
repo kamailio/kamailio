@@ -1799,6 +1799,7 @@ int main(int argc, char** argv)
 	int dont_fork_cnt;
 	struct name_lst* n_lst;
 	char *p;
+	struct stat st = {0};
 
 	/*init*/
 	time(&up_since);
@@ -2342,6 +2343,19 @@ try_again:
 			goto error;
 		}
 		sock_gid = gid;
+	}
+	/* create runtime dir if doesn't exist */
+	if (stat(runtime_dir, &st) == -1) {
+		if(mkdir(runtime_dir, 0700) == -1) {
+			fprintf(stderr,  "failed to create runtime dir\n");
+			goto error;
+		}
+		if(sock_uid!=-1 || sock_gid!=-1) {
+			if(chown(runtime_dir, sock_uid, sock_gid) == -1) {
+				fprintf(stderr,  "failed to change owner of runtime dir\n");
+				goto error;
+			}
+		}
 	}
 	if (fix_all_socket_lists()!=0){
 		fprintf(stderr,  "failed to initialize list addresses\n");
