@@ -76,8 +76,8 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
     if (_m->new_uri.s) aor = _m->new_uri;
     else aor = _m->first_line.u.request.uri;
 
-    for (i = 0; i < aor.len; i++)
-        if (aor.s[i] == ';' || aor.s[i] == '?') {
+    for (i = 4; i < aor.len; i++)
+        if (aor.s[i] == ':' || aor.s[i] == ';' || aor.s[i] == '?') {
             aor.len = i;
             break;
         }
