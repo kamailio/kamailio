@@ -200,7 +200,11 @@ Options:\n\
     -O nr        Script optimization level (debugging option)\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
                   disable with no or off\n\
-    -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n"
+    -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n\
+    -x name      Specify internal manager for shared memory (shm)\n\
+                  - can be: fm, qm or tlsf\n\
+    -X name      Specify internal manager for private memory (pkg)\n\
+                  - if omitted, the one for shm is used\n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
