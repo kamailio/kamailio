@@ -925,7 +925,7 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 					rpc->struct_add(ha, "ss",
 						"address", ai->address_str.s);
 				rpc->struct_add(ha, "sss",
-						"proto", si->port_no_str.s,
+						"port", si->port_no_str.s,
 						"mcast", si->flags & SI_IS_MCAST ? "yes" : "no",
 						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no");
 			} else {
@@ -939,7 +939,7 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 					rpc->struct_add(ha, "s",
 						"ipaddress", si->address_str.s);
 				rpc->struct_add(ha, "sss",
-						"proto", si->port_no_str.s,
+						"port", si->port_no_str.s,
 						"mcast", si->flags & SI_IS_MCAST ? "yes" : "no",
 						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no");
 			}
