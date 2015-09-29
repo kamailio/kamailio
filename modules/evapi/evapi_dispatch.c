@@ -371,6 +371,7 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			evapi_run_cfg_route(&evenv, _evapi_rts.msg_received);
 			k++;
 		}
+		_evapi_clients[i].rpos = 0 ;
 	} else {
 		evenv.msg.s = _evapi_clients[i].rbuffer;
 		evenv.msg.len = rlen;
