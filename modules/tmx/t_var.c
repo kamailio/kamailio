@@ -442,6 +442,7 @@ int pv_get_tm_reply_ruid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	struct cell *t;
+	tm_ctx_t *tcx = 0;
 	int branch;
 
 	if(msg==NULL || res==NULL)
@@ -451,7 +452,7 @@ int pv_get_tm_reply_ruid(struct sip_msg *msg, pv_param_t *param,
 	if (_tmx_tmb.t_check( msg , 0 )==-1) return -1;
 	if ( (t=_tmx_tmb.t_gett())==0) {
 		/* no T */
-		res->rs = _empty_str;
+		return pv_get_strempty(msg, param, res);
 	} else {
 		switch (get_route_type()) {
 			case FAILURE_ROUTE:
@@ -460,18 +461,27 @@ int pv_get_tm_reply_ruid(struct sip_msg *msg, pv_param_t *param,
 				if ( (branch=_tmx_tmb.t_get_picked_branch())<0 ) {
 					LM_CRIT("no picked branch (%d) for a final response"
 							" in MODE_ONFAILURE\n", branch);
-					return -1;
+					return pv_get_strempty(msg, param, res);
 				}
-				res->rs = t->uac[branch].ruid;
+				LM_DBG("reply ruid is [%.*s]\n", t->uac[branch].ruid.len, t->uac[branch].ruid.s);
+				return pv_get_strval(msg, param, res, &t->uac[branch].ruid);
 				break;
+			case TM_ONREPLY_ROUTE:
+				tcx = _tmx_tmb.tm_ctx_get();
+				if(tcx == NULL) {
+					return pv_get_strempty(msg, param, res);
+				}
+				branch = tcx->branch_index;
+				if(branch<0 || branch>=t->nr_of_outgoings) {
+					return pv_get_strempty(msg, param, res);
+				}
+				LM_DBG("reply ruid is [%.*s]\n", t->uac[branch].ruid.len, t->uac[branch].ruid.s);
+				return pv_get_strval(msg, param, res, &t->uac[branch].ruid);
 			default:
 				LM_ERR("unsupported route_type %d\n", get_route_type());
-				return -1;
+				return pv_get_strempty(msg, param, res);
 		}
 	}
-	LM_DBG("reply ruid is [%.*s]\n", res->rs.len, res->rs.s);
-	res->flags = PV_VAL_STR;
-	return 0;
 }
 
 int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
