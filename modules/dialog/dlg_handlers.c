@@ -796,8 +796,10 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	dlg = dlg_search(&callid, &ftag, &ttag, &dir);
 	if(dlg) {
 		if (detect_spirals) {
-			if (spiral_detected == 1)
+			if (spiral_detected == 1) {
+				dlg_hash_release(&callid);
 				return 0;
+			}
 
 			if ( dlg->state != DLG_STATE_DELETED ) {
 				LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
