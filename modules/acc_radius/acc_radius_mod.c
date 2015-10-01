@@ -24,6 +24,7 @@
  * History:
  * -------
  * 2010-07-28 - moved out radius account out of acc module (daniel)
+ * 2015-10-01 - accounting memory leak is fixed with free_strar_mem (ycaner)
  */
 
 /*! \file
@@ -49,6 +50,7 @@
 #include "../../lib/kcore/radius.h"
 #include "../../modules/acc/acc_api.h"
 #include "acc_radius_mod.h"
+#include "../../modules/acc/acc_extra.h"
 
 MODULE_VERSION
 
@@ -329,6 +331,8 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	uint32_t av_type;
 	int offset;
 	int i;
+        int m=0;
+        int o=0;
 
 	send=NULL;
 
@@ -353,8 +357,11 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	ADD_RAD_AVPAIR( RA_TIME_STAMP, &av_type, -1);
 
 	/* add extra also */
-	attr_cnt += accb.get_extra_attrs(rad_extra, req, inf->varr+attr_cnt,
-				inf->iarr+attr_cnt, inf->tarr+attr_cnt);
+        o = accb.get_extra_attrs(rad_extra, req, inf->varr+attr_cnt,
+                                inf->iarr+attr_cnt, inf->tarr+attr_cnt);
+        attr_cnt += o;
+        m = attr_cnt;
+
 
 	/* add the values for the vector - start from 1 instead of
 	 * 0 to skip the first value which is the METHOD as string */
@@ -388,10 +395,14 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 		goto error;
 	}
 	rc_avpair_free(send);
+	 /* free memory allocated by extra2strar */
+        free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
 	return 1;
 
 error:
 	rc_avpair_free(send);
+	/* free memory allocated by extra2strar */
+        free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
 	return -1;
 }
 
