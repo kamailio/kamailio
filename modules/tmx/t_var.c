@@ -44,8 +44,6 @@ static struct _pv_tmx_data _pv_treq;
 static struct _pv_tmx_data _pv_trpl;
 static struct _pv_tmx_data _pv_tinv;
 
-static str _empty_str = {"", 0};
-
 void pv_tmx_data_init(void)
 {
 	memset(&_pv_treq, 0, sizeof(struct _pv_tmx_data));
@@ -494,6 +492,14 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL || res==NULL)
 		return -1;
 
+	switch (get_route_type()) {
+		case CORE_ONREPLY_ROUTE:
+		case TM_ONREPLY_ROUTE:
+			/* use the status of the current reply */
+			code = msg->first_line.u.reply.statuscode;
+			goto done;
+	}
+
 	/* first get the transaction */
 	if (_tmx_tmb.t_check( msg , 0 )==-1) return -1;
 	if ( (t=_tmx_tmb.t_gett())==0) {
@@ -505,16 +511,6 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 			case BRANCH_ROUTE:
 				/* use the status of the last sent reply */
 				code = t->uas.status;
-				break;
-			case CORE_ONREPLY_ROUTE:
-				/*  t_check() above has the side effect of setting T and
-					REFerencing T => we must unref and unset it for the 
-					main/core onreply_route. */
-				_tmx_tmb.t_unref(msg);
-				/* no break */
-			case TM_ONREPLY_ROUTE:
-				/* use the status of the current reply */
-				code = msg->first_line.u.reply.statuscode;
 				break;
 			case FAILURE_ROUTE:
 			case BRANCH_FAILURE_ROUTE:
@@ -534,12 +530,10 @@ int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 		}
 	}
 
-	LM_DBG("reply code is <%d>\n",code);
+done:
+	LM_DBG("reply code is <%d>\n", code);
+	return pv_get_sintval(msg, param, res, code);
 
-	res->rs.s = int2str( code, &res->rs.len);
-
-	res->ri = code;
-	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 	return 0;
 }
 
@@ -557,7 +551,7 @@ int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
 	if (_tmx_tmb.t_check( msg , 0 )==-1) return -1;
 	if ( (t=_tmx_tmb.t_gett())==0) {
 		/* no T */
-		res->rs = _empty_str;
+		return pv_get_strempty(msg, param, res);
 	} else {
 		switch (get_route_type()) {
 			case CORE_ONREPLY_ROUTE:
