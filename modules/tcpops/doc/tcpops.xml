@@ -14,10 +14,22 @@
 		    <email>camille.oudot@orange.com</email>
 		</address>
 	    </author>
+	    <author>
+		<firstname>Olle E.</firstname>
+		<surname>Johansson</surname>
+		<affiliation><orgname>Edvina AB</orgname></affiliation>
+		<address>
+		    <email>oej@edvina.net</email>
+		</address>
+	    </author>
 	</authorgroup>
 	<copyright>
 	    <year>2015</year>
 	    <holder>Orange</holder>
+	</copyright>
+	<copyright>
+	    <year>2015</year>
+	    <holder>Edvina AB, Sollentuna, Sweden</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
@@ -27,7 +39,7 @@
     <section id="tcpops.overview">
 	<title>Overview</title>
 	<para>
-	    This modules allows kamailio to control the TCP options (such as the keepalive
+	    This modules allows Kamailio to control the TCP connection options (such as the keepalive
 	    mechanism), on demand, and on a per-socket basis.
 	</para>
 	<para>

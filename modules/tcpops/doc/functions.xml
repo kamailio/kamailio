@@ -8,6 +8,41 @@
 
 	<title>Functions</title>
 
+	<section id="tcpops.f.tcp_conid_state">
+		<title>
+			<function>tcp_conid_state(conid)</function>
+		</title>
+		<para>
+				Check the state of a TCP or WS connection ID
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> (optionnal): the Kamailio internal
+				connection id (as in the <emphasis>$conid</emphasis> pseudovariable).
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Retuns values:</para>
+		<para>1: Connection is OK</para>
+		<para>2: Socket is accepting incoming connections</para>
+		<para>3: Socket is setting up outgoing connection</para>
+		<para>-1: Connection does not exist (or was closed)</para>
+		<para>-2: Socket has reached EOF</para>
+		<para>-3: Socket error has occured. Connection will likely close. </para>
+		<para>-4: Socket is in unknow bad state. Connection will likely close. </para>
+		<example>
+			<title><function>tcp_conid_state</function> usage</title>
+			<programlisting><![CDATA[
+...
+	if(!tcp_conid_state($var(conid))) {
+		xlog("L_ERR", "Connection $conid is closed or malfunctional\n");
+	}
+...
+			]]></programlisting>
+		</example>
+	</section>
+
 	<section id="tcpops.f.tcp_keepalive_enable">
 		<title>
 			<function>tcp_keepalive_enable([conid], idle, count, interval)</function>
