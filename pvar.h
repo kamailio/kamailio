@@ -210,6 +210,7 @@ str* pv_cache_get_name(pv_spec_t *spec);
 
 /*! \brief PV helper functions */
 int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_strempty(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int pv_get_uintval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, unsigned int uival);

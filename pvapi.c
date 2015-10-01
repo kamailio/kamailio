@@ -608,6 +608,21 @@ int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 /**
  *
  */
+int pv_get_strempty(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(res==NULL)
+		return -1;
+
+	res->rs = pv_str_empty;
+	res->ri = 0;
+	res->flags = PV_VAL_STR;
+	return 0;
+}
+
+
+/**
+ *
+ */
 pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 {
 	pv_item_t *pvi;
