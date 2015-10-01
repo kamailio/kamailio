@@ -398,6 +398,7 @@ int remove_profile(dlg_profile_table_t *profile, str *value, str *puid)
 				lh->next = lh->prev = NULL;
 				if(lh->linker) shm_free(lh->linker);
 				p_entry->content--;
+				lock_release(&profile->lock );
 				return 1;
 			}
 			lh = lh->next;
