@@ -231,32 +231,43 @@ static int w_tcp_conid_state(sip_msg_t* msg, char* conid, char *p2)
 
 	if (unlikely((s_con = tcpconn_get(i_conid, 0, 0, 0, 0)) == NULL)) {
 		LM_DBG("Connection id %d does not exist.\n", i_conid);
-		return -1;
+		ret = -1;
+		goto done;
 	} 
 	/* Connection structure exists, now check what Kamailio thinks of it */
 	if (s_con->state == S_CONN_OK) {
 		/* All is fine, return happily */
-		return 1;
+		ret = 1;
+		goto done;
 	}
 	if (s_con->state == S_CONN_EOF) {	/* Socket closed or about to close under our feet */
-		return -2;
+		ret = -2;
+		goto done;
 	}
 	if (s_con->state == S_CONN_ERROR) {	/* Error on read/write - will close soon */
-		return -3;
+		ret = -3;
+		goto done;
 	}
 	if (s_con->state == S_CONN_BAD) {	/* Unknown state */
-		return -4;
+		ret = -4;
+		goto done;
 	}
 	if (s_con->state == S_CONN_ACCEPT) {	/* Incoming connection to be set up */
-		return 2;
+		ret = 2;
+		goto done;
 	}
 	if (s_con->state == S_CONN_CONNECT) {	/* Outbound connection moving to S_CONN_OK */
-		return 3;
+		ret = 3;
+		goto done;
 	}
 	/* Wonder what state we're in here */
-	LM_DBG("Connection id %d is in state %d - go figure. I will treat is a good. If not, file a bug report please.\n", i_conid, s_con->flags);
-	
-	return 1;	/* Good connection */
+	LM_DBG("Connection id %d is in unexpected state %d - assuming ok.\n", i_conid, s_con->flags);
+
+	/* Good connection */
+	ret = 1;
+done:
+	if(s_con) tcpconn_put(s_con);
+	return ret;
 }
 
 static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* conid, char* time)
