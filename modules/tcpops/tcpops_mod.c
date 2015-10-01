@@ -49,7 +49,7 @@ static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con);
 static int w_tcp_keepalive_disable0(sip_msg_t* msg);
 static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* con, char* time);
 static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time);
-static int w_tcp_is_conid_alive(sip_msg_t* msg, char* con);
+static int w_tcp_conid_state(sip_msg_t* msg, char* con, char* p2);
 
 static int fixup_numpv(void** param, int param_no);
 
@@ -222,7 +222,7 @@ static int w_tcp_keepalive_disable0(sip_msg_t* msg)
 	return tcpops_keepalive_disable(fd, 0);
 }
 
-static int w_tcp_conid_state(sip_msg_t* msg, char* conid)
+static int w_tcp_conid_state(sip_msg_t* msg, char* conid, char *p2)
 {
 	struct tcp_connection *s_con;
 	int ret = -1;
