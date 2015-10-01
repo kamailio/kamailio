@@ -711,8 +711,8 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 			&sflags_column,      &toroute_name_column,     &req_uri_column,
 			&xdata_column, &iflags_column };
 
-	if(cell->state<DLG_STATE_EARLY) {
-		LM_DBG("not storing dlg in db during initial state\n");
+	if(cell->state<DLG_STATE_EARLY || cell->state==DLG_STATE_DELETED) {
+		LM_DBG("not storing dlg in db during initial or deleted states\n");
 		return 0;
 	}
 
