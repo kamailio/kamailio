@@ -1,6 +1,4 @@
 /*
- * $Id$
- * 
  * Accounting module
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,10 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- * 2010-07-28 - moved out radius account out of acc module (daniel)
- * 2015-10-01 - accounting memory leak is fixed with free_strar_mem (ycaner)
  */
 
 /*! \file
@@ -131,7 +125,7 @@ static int mod_init( void )
 		LM_ERR("radius config file not set\n");
 		return -1;
 	}
-	
+
 	/* bind the ACC API */
 	if (acc_load_api(&accb)<0) {
 		LM_ERR("cannot bind to ACC API\n");
@@ -143,7 +137,7 @@ static int mod_init( void )
 		LM_ERR("failed to parse rad_extra param\n");
 		return -1;
 	}
-		
+
 	memset(&_acc_radius_engine, 0, sizeof(acc_engine_t));
 
 	if(radius_flag != -1)
@@ -198,7 +192,7 @@ static int acc_api_fixup(void** param, int param_no)
 		accp->reason.len = strlen(p);
 		/* any code? */
 		if (accp->reason.len>=3 && isdigit((int)p[0])
-		&& isdigit((int)p[1]) && isdigit((int)p[2]) ) {
+				&& isdigit((int)p[1]) && isdigit((int)p[2]) ) {
 			accp->code = (p[0]-'0')*100 + (p[1]-'0')*10 + (p[2]-'0');
 			accp->code_s.s = p;
 			accp->code_s.len = 3;
@@ -235,7 +229,7 @@ enum { RA_ACCT_STATUS_TYPE=0, RA_SERVICE_TYPE, RA_SIP_RESPONSE_CODE,
 enum {RV_STATUS_START=0, RV_STATUS_STOP, RV_STATUS_ALIVE, RV_STATUS_FAILED,
 	RV_SIP_SESSION, RV_STATIC_MAX};
 static struct attr
-	rd_attrs[RA_STATIC_MAX+ACC_CORE_LEN-2+MAX_ACC_EXTRA+MAX_ACC_LEG];
+		rd_attrs[RA_STATIC_MAX+ACC_CORE_LEN-2+MAX_ACC_EXTRA+MAX_ACC_LEG];
 static struct val rd_vals[RV_STATIC_MAX];
 
 int init_acc_rad(acc_extra_t *leg_info, char *rad_cfg, int srv_type)
@@ -299,30 +293,30 @@ int acc_radius_init(acc_init_info_t *inf)
 
 static inline uint32_t rad_status( struct sip_msg *req, int code )
 {
-        str tag;
-        unsigned int in_dialog_req = 0;
+	str tag;
+	unsigned int in_dialog_req = 0;
 
-        tag = get_to(req)->tag_value;
-        if(tag.s!=0 && tag.len!=0)
+	tag = get_to(req)->tag_value;
+	if(tag.s!=0 && tag.len!=0)
 		in_dialog_req = 1;
 
 	if (req->REQ_METHOD==METHOD_INVITE && in_dialog_req == 0
-	            && code>=200 && code<300)
- 		return rd_vals[RV_STATUS_START].v;
- 	if ((req->REQ_METHOD==METHOD_BYE || req->REQ_METHOD==METHOD_CANCEL))
- 		return rd_vals[RV_STATUS_STOP].v;
+			&& code>=200 && code<300)
+		return rd_vals[RV_STATUS_START].v;
+	if ((req->REQ_METHOD==METHOD_BYE || req->REQ_METHOD==METHOD_CANCEL))
+		return rd_vals[RV_STATUS_STOP].v;
 	if (in_dialog_req != 0)
 		return rd_vals[RV_STATUS_ALIVE].v;
- 	return rd_vals[RV_STATUS_FAILED].v;
- }
+	return rd_vals[RV_STATUS_FAILED].v;
+}
 
 #define ADD_RAD_AVPAIR(_attr,_val,_len)		\
-    do {								\
-	if (!rc_avpair_add(rh, &send, rd_attrs[_attr].v, _val, _len, 0)) { \
-	    LM_ERR("failed to add %s, %d\n", rd_attrs[_attr].n, _attr);	\
-	    goto error;							\
-	} \
-    }while(0)
+	do {								\
+		if (!rc_avpair_add(rh, &send, rd_attrs[_attr].v, _val, _len, 0)) { \
+			LM_ERR("failed to add %s, %d\n", rd_attrs[_attr].n, _attr);	\
+			goto error;							\
+		} \
+	}while(0)
 
 int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 {
@@ -331,8 +325,8 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	uint32_t av_type;
 	int offset;
 	int i;
-        int m=0;
-        int o=0;
+	int m=0;
+	int o=0;
 
 	send=NULL;
 
@@ -357,26 +351,26 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	ADD_RAD_AVPAIR( RA_TIME_STAMP, &av_type, -1);
 
 	/* add extra also */
-        o = accb.get_extra_attrs(rad_extra, req, inf->varr+attr_cnt,
-                                inf->iarr+attr_cnt, inf->tarr+attr_cnt);
-        attr_cnt += o;
-        m = attr_cnt;
+	o = accb.get_extra_attrs(rad_extra, req, inf->varr+attr_cnt,
+			inf->iarr+attr_cnt, inf->tarr+attr_cnt);
+	attr_cnt += o;
+	m = attr_cnt;
 
 
 	/* add the values for the vector - start from 1 instead of
 	 * 0 to skip the first value which is the METHOD as string */
 	offset = RA_STATIC_MAX-1;
 	for( i=1; i<attr_cnt; i++) {
-	    switch (inf->tarr[i]) {
-	    case TYPE_STR:
-		ADD_RAD_AVPAIR(offset+i, inf->varr[i].s, inf->varr[i].len);
-		break;
-	    case TYPE_INT:
-		ADD_RAD_AVPAIR(offset+i, &(inf->iarr[i]), -1);
-		break;
-	    default:
-		break;
-	    }
+		switch (inf->tarr[i]) {
+			case TYPE_STR:
+				ADD_RAD_AVPAIR(offset+i, inf->varr[i].s, inf->varr[i].len);
+				break;
+			case TYPE_INT:
+				ADD_RAD_AVPAIR(offset+i, &(inf->iarr[i]), -1);
+				break;
+			default:
+				break;
+		}
 	}
 
 	/* call-legs attributes also get inserted */
@@ -387,7 +381,7 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 			for (i=0; i<attr_cnt; i++)
 				ADD_RAD_AVPAIR( offset+i, inf->varr[i].s, inf->varr[i].len );
 		}while ( (attr_cnt=accb.get_leg_attrs(inf->leg_info,req,inf->varr,inf->iarr,
-					      inf->tarr, 0))!=0 );
+						inf->tarr, 0))!=0 );
 	}
 
 	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
@@ -395,14 +389,14 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 		goto error;
 	}
 	rc_avpair_free(send);
-	 /* free memory allocated by extra2strar */
-        free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
+	/* free memory allocated by extra2strar */
+	free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
 	return 1;
 
 error:
 	rc_avpair_free(send);
 	/* free memory allocated by extra2strar */
-        free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
+	free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
 	return -1;
 }
 
