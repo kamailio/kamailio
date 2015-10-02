@@ -119,6 +119,9 @@ Chapter 1. Admin Guide
 
 1. Overview
 
+   Note: This module is still in development. Not all options documented
+   here work yet.
+
    This module implements protocol functions that use the libcurl library
    to fetch data from external HTTP servers or post data to HTTP servers.
    The module is using a concept of "connections" to define properties of
@@ -303,12 +306,13 @@ content_type, data, result)
 
    Example 1.9. curl_connect() usage
 ...
-modparam("curl", "curlcon", "anders=>http://kamailio.org/api/");
+modparam("curl", "curlcon", "apiserver=>http://kamailio.org/api/");
 ...
 # POST Request
-$var(res) = curl_connect("apiserver", "/postlåda", "application/json", "{ ok, {
-200, ok}}", "$avp(gurka)");
-xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result $var(res)\n");
+$var(res) = curl_connect("apiserver", "/mailbox", "application/json", "{ ok, {20
+0, ok}}", "$avp(gurka)");
+xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result code $var(res)\n"
+);
 ...
 
 4.2. curl_http_query(url, [post-data], result)

@@ -16,6 +16,10 @@
 	<section>
 	<title>Overview</title>
 	<para>
+	Note: This module is still in development. Not all options documented
+	here work yet.
+	</para>
+	<para>
 	This module implements protocol functions that use the libcurl library
 	to fetch data from external HTTP servers or post data to HTTP servers.
 	The module is using a concept of "connections" to define properties
@@ -286,11 +290,11 @@ modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;
 				<title><function>curl_connect()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "curlcon", "anders=>http://kamailio.org/api/");
+modparam("curl", "curlcon", "apiserver=>http://kamailio.org/api/");
 ...
 # POST Request
-$var(res) = curl_connect("apiserver", "/postlåda", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
-xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result $var(res)\n");
+$var(res) = curl_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
+xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result code $var(res)\n");
 ...
 				</programlisting>
 			</example>
