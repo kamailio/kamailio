@@ -401,6 +401,9 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
                 goto error;
         }else if(rc_result==OK_RC){
                 LM_DBG("Radius accounting - OK \n");
+        }else{
+        	LM_ERR("Radius accounting - Unkown response \n");
+                goto error;
         }
 
         rc_avpair_free(send);
