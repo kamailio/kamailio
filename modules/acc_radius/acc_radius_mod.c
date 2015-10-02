@@ -327,7 +327,8 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	int i;
 	int m=0;
 	int o=0;
-
+	int rc_result=-1;
+	
 	send=NULL;
 
 	attr_cnt = accb.get_core_attrs( req, inf->varr, inf->iarr, inf->tarr );
@@ -384,14 +385,31 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 						inf->tarr, 0))!=0 );
 	}
 
-	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
-		LM_ERR("radius-ing failed\n");
-		goto error;
-	}
-	rc_avpair_free(send);
-	/* free memory allocated by extra2strar */
-	free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
-	return 1;
+	rc_result=rc_acct(rh, SIP_PORT, send);
+
+        if (rc_result==ERROR_RC) {
+                LM_ERR("Radius accounting - ERROR - \n");
+                goto error;
+        }else if(rc_result==BADRESP_RC){
+                LM_ERR("Radius accounting - BAD RESPONSE \n");
+                goto error;
+        }else if(rc_result==TIMEOUT_RC){
+                LM_ERR("Radius accounting - TIMEOUT \n");
+                goto error;
+        }else if(rc_result==REJECT_RC){
+                LM_ERR("Radius accounting - REJECTED \n");
+                goto error;
+        }else if(rc_result==OK_RC){
+                LM_DBG("Radius accounting - OK \n");
+        }else{
+        	LM_ERR("Radius accounting - Unkown response \n");
+                goto error;
+        }
+
+        rc_avpair_free(send);
+        /* free memory allocated by extra2strar */
+        free_strar_mem( &(inf->tarr[m-o]), &(inf->varr[m-o]), o, m);
+        return 1;
 
 error:
 	rc_avpair_free(send);
