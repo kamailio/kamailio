@@ -847,7 +847,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	dlg->vars = get_local_varlist_pointer(req, 1);
 
 	/* after dlg_search() slot was kept locked */
-	link_dlg(dlg, 0, 0);
+	link_dlg(dlg, 0, 1);
 	/* unlock after dlg_search() */
 	dlg_hash_release(&callid);
 
