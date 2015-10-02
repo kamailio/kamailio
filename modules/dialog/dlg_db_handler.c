@@ -867,43 +867,31 @@ error:
 
 int update_dialog_dbinfo(struct dlg_cell * cell)
 {
-	struct dlg_entry entry;
 	/* lock the entry */
-	entry = (d_table->entries)[cell->h_entry];
-	dlg_lock( d_table, &entry);
+	dlg_lock(d_table, &d_table->entries[cell->h_entry]);
 	if (update_dialog_dbinfo_unsafe(cell) != 0) {
-		dlg_unlock( d_table, &entry);
+		dlg_unlock(d_table, &d_table->entries[cell->h_entry]);
 		return -1;
 	} 
-	dlg_unlock( d_table, &entry);
+	dlg_unlock(d_table, &d_table->entries[cell->h_entry]);
 	return 0;
 }
 
 void dialog_update_db(unsigned int ticks, void * param)
 {
-	int index;
-	struct dlg_entry entry;
-	struct dlg_cell  * cell; 
+	int i;
+	struct dlg_cell *cell;
 
 	LM_DBG("saving current_info \n");
-	
-	for(index = 0; index< d_table->size; index++){
-		/* lock the whole entry */
-		entry = (d_table->entries)[index];
-		dlg_lock( d_table, &entry);
 
-		for(cell = entry.first; cell != NULL; cell = cell->next){
-			if (update_dialog_dbinfo_unsafe(cell) != 0) {
-				dlg_unlock( d_table, &entry);
-				goto error;
-			}
+	for(i = 0; i < d_table->size; i++){
+		/* lock the slot */
+		dlg_lock(d_table, &d_table->entries[i]);
+		for(cell = d_table->entries[i].first; cell != NULL; cell = cell->next){
+			/* if update fails for one dlg, still do it for the next ones */
+			update_dialog_dbinfo_unsafe(cell);
 		}
-		dlg_unlock( d_table, &entry);
-
+		dlg_unlock(d_table, &d_table->entries[i]);
 	}
-
 	return;
-
-error:
-	dlg_unlock( d_table, &entry);
 }
