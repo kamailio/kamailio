@@ -67,13 +67,15 @@
             <function moreinfo="none">jansson_get(key/path, src, dst)</function>
         </title>
         <para>
-            Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'.
+            Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'. 
         </para>
         <para>
             The path string supports dot delimited notation (e.g. foo.bar.baz), array notation (e.g. [0]), or a combination of the two (e.g. foo.bar[0][1].baz).
         </para>
         <para>
             The function can put a string, integer, null, or new json string into destination.
+ 	    If the key/path can't be found in the JSON data structure, the pvar is not changed. If it had a previous
+	    value, that value remains unchanged.
         </para>
         <example>
         <title><function>jansson_get</function> usage</title>
