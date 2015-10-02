@@ -1,3 +1,650 @@
+===================== 2015-10-02 Version 4.3.3 Released =====================
+
+===================== Changes Since Version 4.3.2 ===========================
+
+commit 51e15819d31a1387837e1872d4cb80f94956cad1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 2 14:29:11 2015 +0200
+
+    Makefile.defs: version set to 4.3.3
+
+commit ecf289cfcdb7ee5678d86f03ccf4a5138c102a34
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 2 14:27:36 2015 +0200
+
+    pkg/rpm: updated spec files for v4.3.3
+
+commit 3181001ebae49847ed210428946fde96e89e9c4f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 2 14:01:34 2015 +0200
+
+    dialog: fix race due to deep copy of dlg hash table slot when saving to db
+    
+    (cherry picked from commit 2d9c7f9658fe78979df69c81f56b36366b80a262)
+
+commit 76b5d394ddec84c6a80dcfd67df2e2ec036f37da
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Oct 2 13:26:39 2015 +0200
+
+    pkg/kamailio/deb: update version to 4.3.3
+
+commit bf0efda9cbd3ab02e1cdefb187ae2ac3089e1b18
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 2 10:57:50 2015 +0200
+
+    dialog: avoid useless re-entrant locking when linking the new dialog
+    
+    (cherry picked from commit 02fa3bf1b62cb10a33a8b216cfe7baa9e1b84054)
+
+commit 385d9be8ed45f378c52c7d4f1220f517f5605831
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 16:51:59 2015 +0200
+
+    dialog: don't update dlg vars in db if in deleted state
+    
+    - dlg record and vars are scheduled for deletion
+    
+    (cherry picked from commit 6620fe7b0963ffe0e2c0d4ab7a38e85d1dfd121d)
+
+commit 714d3e329e9c0352da814832e6f86cd0e5fdea39
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 16:34:59 2015 +0200
+
+    dialog: updated old comment to reflect current behaviour
+    
+    (cherry picked from commit 098849c72a8b651a5757eac3eb3dee6772766d76)
+
+commit 9083ac32755565a97421d2b6100bc477c19175f5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 16:31:07 2015 +0200
+
+    dialog: release remote profile lock on remove operation
+    
+    (cherry picked from commit 04bd28fffdfed05dda9a8fff41b220a3bb008a17)
+
+commit 1ec00b13bb7069a0a4dba44bac0eb95fd271f9f1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 16:08:13 2015 +0200
+
+    dialog: completed previous commit for spiral handling
+    
+    (cherry picked from commit b198b390106924df2279d94f28305c25c86b435e)
+
+commit 39d1b8f8eeddef1d796855e8d7ef63569987fb65
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 15:49:26 2015 +0200
+
+    dialog: keep slot locked when searching for duplicate dialog
+    
+    - when attempting to create a new dialog, the function searching to see
+      if it is already one with same attributes keeps the slot locked so is
+      no race in between the return of function and building the new dlg
+      structure
+    - if the dlg is found, release the lock after figuring out it is a
+      spiral or not
+    
+    (cherry picked from commit 9d807d1d8af24c0163d3bb2ae876a87a8b637494)
+
+commit 915f1410d9c0b4a5afe89727ad2d64437951f8a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 26 22:19:17 2015 +0200
+
+    jsonrpc-s: input buffer for fifo transport increased to 8k
+    
+    (cherry picked from commit 0a7e24398a564d1703f4484834b823e988cf64db)
+
+commit e0406d460b29e3a4872dfb2f31b710c0773ff88e
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Thu Sep 24 11:02:56 2015 +1200
+
+    janssonrpc-c: Fix use after free
+    
+    - Fix use after free due to pointer aliasing of 'arg' and 'a'
+      in server_backoff_cb.
+    - Fix use after free in force_disconnect
+    - Fix use after free in free_server_list
+    
+    (cherry picked from commit a53b2fb68d555b07be479e41895937ae1c6318f6)
+
+commit 8ffab1caa7753f5cdcf00584340a68f7d3308b18
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Thu Sep 24 10:35:34 2015 +1200
+
+    janssonrpc-c: Fix double free if retry timer add fails
+    
+    - Fix double free if schedule_retry fails when adding
+      request retry timer. timeout_cb called fail_request
+      which frees req after schedule_retry had already
+      done so.
+    
+    (cherry picked from commit bce9cf97646153af6abcf9f43cbb72f2c734e490)
+
+commit 3b2946b41a69e19f4a995c26baa03f6f9fc61cba
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Wed Sep 23 22:21:41 2015 +1200
+
+    sqlops: Fix memory leak in error condition
+    
+    - Fix pv_parse_dbr_name to free spv if the key is
+      unknown.
+    - Fix typo in error log in pv_parse_dbr_name.
+    
+    (cherry picked from commit 48de750550dd12016e957d60e0ae57e59944558d)
+
+commit cfc9fee62d9a7023743b694eeab4276a124f448f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 23 13:03:15 2015 +0200
+
+    tm: t_suspend() skip suspending if a final response was sent out for transaction already
+    
+    (cherry picked from commit 92c376dbeb6ee515a80537c91014972ada4a5f34)
+
+commit 8cdf9a26e90b1006a6992ad73d1e60fbc1c5178c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 23 12:59:52 2015 +0200
+
+    tsilo: ts_append_to() check if transation is active before adding new branches
+    
+    (cherry picked from commit 9451625ff8cc7e02abc2c6cf95572bff9c086d20)
+
+commit 1e0e1a8cd24aac95ffe1970643a2a8cb37f044fe
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Wed Sep 23 22:17:21 2015 +1200
+
+    sqlops: Don't pkg_free memory that wasn't pkg_malloc'd
+    
+    - Don't pkg_free the gparam_t parameter of sql_parse_index.
+      When called within pv_parse_dbr_name that parameter is
+      an internal field in the sql_pv_t structure and wasn't
+      allocated with pkg_malloc.
+    
+    (cherry picked from commit 460e0a6077d69cf74ceb4b095195b683fb49269c)
+
+commit b7c3276fd6a8c309465a6bb22db09044a420c68b
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Wed Sep 23 22:03:47 2015 +1200
+
+    htable: Fix buffer overrun in htable_rpc_list
+    
+    - Fix for using wrong len variable in htable_rpc_list if
+      ht->dbtable.len is greater than 127, causing an out of
+      bounds write.
+    
+    (cherry picked from commit 1c164473c6fd78318236254827a4cadbe8271463)
+
+commit 209162e56facff75549560361cfd1d5474bb615e
+Author: zxcpoiu <zxcpoiu@gmail.com>
+Date:   Wed Sep 23 17:23:40 2015 +0800
+
+    tmx: safety check for bad callid header in t_precheck_tran()
+    - reported by GH#331
+    
+    (cherry picked from commit 7cc1d1113e8e461656d55595f1a268d345d2676b)
+
+commit 5d7d1fd3ccc96e032ef73a799dfbd97b86839b5e
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Wed Sep 23 20:48:56 2015 +1200
+
+    textops: prevent null dereference on tr_txt_eval_re error
+    
+    - Check for NULL pointer before calling subst_expr_free
+      to prevent NULL pointer dereference when there is an
+      unknown subtype error.
+    
+    (cherry picked from commit 5aa2ed265f80664f57073213b17c83b1dac42ab4)
+
+commit 8559ab818ffae6e24941758ecb97d37894d1adee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 21 13:04:56 2015 +0200
+
+    evapi: debug messages for invalid len and execution of event route
+    
+    (cherry picked from commit 093337bc7f3d8d3ce31ad3770252503628bc3599)
+
+commit 0ceab4ea76348fd91b86ee9d372783a3fef5af76
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Mon Sep 21 12:43:39 2015 +0200
+
+    app_perl: renamed the exported structure "_app_perl_exports" to avoid naming conflicts
+    
+    - reported by GH#333
+    
+    (cherry picked from commit 2c736877dc215592f3f8889ffd47e90ab68066af)
+
+commit 8a943bd7ab88942aabdd28f1959b0b7e1dd2eb00
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 21 00:16:27 2015 +0200
+
+    core: name of structure exported by a module can be prefixed with module name
+    
+    - some modules use the flag for global exporting, which can lead to
+      naming conflicts
+    - related to GH#333
+    
+    (cherry picked from commit 6c7d38ee0fcbd482ff0527178481345fc93a7fc8)
+
+commit 660edda79e65925b414f0d0cb47764603a08dd1f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 20 23:16:35 2015 +0200
+
+    cnxcc: build fake msg for event route before terminating the dialog
+    
+    - dialog structure can be deleted in between
+    - reported by GH#324
+    
+    (cherry picked from commit 6177e766035f6bad2d5ee512ccde9a805d026760)
+
+commit 0d2fe9ae840d3e34f3c69577a5d6875f2d2c3831
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sat Sep 19 12:48:42 2015 +0100
+
+    sctp Documentation - change "sercmd" to "kamcmd"
+    
+    (cherry picked from commit 58b4ea9ca31305a4450807add2c21e7ecb01614b)
+
+commit 91788e01dec1fba92a2484b5c547a5c493527b60
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sat Sep 19 12:47:36 2015 +0100
+
+    tm Change "sercmd" to "kamcmd"
+    
+    (cherry picked from commit 0c9ea3ccb7fac1180f26741422857807d24fcea1)
+
+commit 6c387ca9c854a426c206266deef6bfcbb77ffb8b
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sat Sep 19 12:46:06 2015 +0100
+
+    mi_rpc Change "sercmd" to "kamcmd" in docs
+    
+    (cherry picked from commit 52d88ef0f0b0b361419edede208acd459af9fb1a)
+
+commit 7e788aac3bd94c2c979441d6ab8b4528faf3c820
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sat Sep 19 12:43:02 2015 +0100
+
+    srdb1  Check if the module is loaded, so the error message makes sense in case of missing module
+    
+    If a module use a default database and it's not loaded, currently
+    Kamailio complains that the module doesn't implement an API function
+    instead of actually telling the Kamailian that the module is not loaded.
+    This patch modifies that behaviour.
+    
+    (cherry picked from commit c1a1a1bb054ee79af6ca44d262c8f73c725a2d90)
+
+commit 14297b78418cbe963b491de928f8e44510819c4d
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Apr 20 21:11:42 2015 +0200
+
+    async: Fix some error messages
+    
+    (cherry picked from commit 103b915cffd63b4abab1a3e57b51644eef20e81d)
+
+commit f31270d714f6017ec6d4ad3c1ebced6f7fdc8c65
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 19 00:16:22 2015 +0200
+
+    evapi: more debug messages when processing received data
+    
+    (cherry picked from commit a8adf3bdb74dd3819bb23e2876eee704663f3cef)
+
+commit fdecde3715688aa9145f21e0cbdb414ace61198c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 18 10:08:14 2015 +0200
+
+    evapi: implemented receive buffering per connected client
+    
+    - incomplete data may be received on tcp, needing to wait to get more
+      (only for netstring format)
+    
+    (cherry picked from commit 4eb7656726d1b1b408a12d55b3d7d297b78ee68d)
+
+commit 59976f8235f091e911137e1e1a74154aacd23b9b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 18 09:31:58 2015 +0200
+
+    htable: more checks of updateexpire when item is updated
+    
+    (cherry picked from commit dd0fd7011b750e34c595936b6c95759ccb77f786)
+
+commit 1452eddee9ec5933325faf4d6b26a07ac74394f4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 16 23:54:02 2015 +0200
+
+    core: cast operator (int) converts hex strings as well
+    
+    - in addition to dec string
+    
+    (cherry picked from commit 33f159121193b3ed09e2ec7aa7b55aa543aeb852)
+
+commit 98228c451bb6f8d08070b56232736e79fd045073
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 09:48:26 2015 +0200
+
+    acc_radius: fixed identation, removed history
+    
+    (cherry picked from commit f9a6b7893ad421cb142e03c9c2797773061c8933)
+
+commit c8d17ba355b3979fc28390f9c93460572ecfeb17
+Author: Yasin <yasin.caner@netgsm.com.tr>
+Date:   Thu Oct 1 10:28:54 2015 +0300
+
+    acc_radius : fixes extra attribues memory leak
+    
+    if we dont free getting memory from extrarstr , can give out of memory. this commit fixes this problem.
+    (cherry picked from commit f84689aa9f56693abe95f537f8a0217a068b1f01)
+
+commit 4479272e96f73d03607af82b4dd3b171ba8a40c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 09:26:14 2015 +0200
+
+    tmx: tm reply code pv to use status code directly in onreply routes
+    
+    - no need to lookup transaction
+    
+    (cherry picked from commit 738b113b4be346b7caef600249202d361b556a41)
+
+commit 170d6717abb3b824bf0e7046ab47abcc37369782
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 09:12:16 2015 +0200
+
+    tmx: proper response of branch ruid pv for tm onreply route
+    
+    (cherry picked from commit 11791d2b749df9673e9c8fe09ae9e923fb6e735b)
+
+commit a79449a149a84957a2786200ba2207027069c410
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 1 09:11:11 2015 +0200
+
+    core: pv - helper function to return empty string
+    
+    (cherry picked from commit 36a704e8b54b65e8414fd2a02d973e74a9256e1d)
+
+commit ce1cdba720e34cff1b5c2d150996d666e8ce2127
+Author: Sven Neuhaus <neuhaus@tyntec.com>
+Date:   Tue Sep 29 15:26:45 2015 +0200
+
+    core: Fix label for RPC command ("proto" -> "port")
+    
+    (cherry picked from commit 03b955ef8cc2ffcc08d0b361c0f1d6ce057c68b8)
+
+commit e10fc9b41e45abd73e3006b3fe8a4c76f96451f7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 25 23:38:56 2015 +0200
+
+    core: mem - reworked f_malloc free chunks management
+    
+    - credits to Juha Heinanen for heling with testing
+    
+    (cherry picked from commit 8cced16d7055939a885b6dc6bdb8a346748a0fcd)
+
+commit efb2a06b5f6d4278bda6dec63af8e685a559fd73
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 28 23:02:27 2015 +0200
+
+    core: create runtime dir if doesn't exist
+    
+    - test and create runtime dir (default /var/run/kamailio)
+    - do chown of runtime dir if user/group parameters are set for kamailio
+    
+    (cherry picked from commit b151e9d6071b1affe814f4edf2e87b132f0accb8)
+
+commit 7ba20025b12bc6754778de72bbca58b01f9c4f7b
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Wed Sep 23 21:20:27 2015 +1200
+
+    tsilo: Fix pointer comparison in ts_set_tm_callbacks
+    
+    - Fix cloned ts_transaction pointer comparison to check for
+      NULL rather than less than zero. The latter doesn't make
+      sense for an allocated pointer.
+    
+    (cherry picked from commit e304f9d8d4cc16a3b6cca1cdd10dff6d0a18d955)
+
+commit 0be54999fe5025cf42fa9d5506e588542c7ec2ed
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Wed Sep 23 21:26:39 2015 +1200
+
+    tsilo: Call LM_DBG with correct transaction information
+    
+    - Use cb_ptr in ts_onreply LM_DBG call as the ptr variable
+      is NULL at that call point and cb_ptr contains the
+      transaction information being looked for.
+    
+    (cherry picked from commit 03f6a49146980338d7e31aec60da551f8b6e7595)
+
+commit 33939d102b836e440915ce958e90cef36aafec2d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 22 23:05:27 2015 +0200
+
+    domain: proper memset of the hash tables used by domain at init time
+    
+    - discovered on a report by Juha Heinanen
+    
+    (cherry picked from commit 82f74a57229e46e9b9302a6b4caebed6860c47ed)
+
+commit 71e7e92aeed8acb058e4064a1369f52bd612479f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 22 15:22:32 2015 +0200
+
+    core: tcp - reset connection write flag if io_watch_chg() for pollout fails
+    
+    - it can loop otherwise in trying to see if write can be done
+    
+    (cherry picked from commit d36734d658cd0bcfc8357c7e85ca32da0612aaee)
+
+commit 9b1b8a70aaac447624c4633c169dde3b84542b66
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Tue Sep 22 15:53:28 2015 +0200
+
+    tsilo: don't force destination protocol on branches added by t_append_branches
+    
+    (cherry picked from commit 6bdddb99d7bca42897b2c0f96a87c49b97efd8ac)
+
+commit 938759112e00bdac837c09e407480872ae1aff35
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 21 18:20:24 2015 +0200
+
+    tsilo: print return error code by lookup_to_dset() in ts_append()
+    
+    - helps figuring out why it failed
+    
+    (cherry picked from commit 692c24ac7d6524cb2388534ee004d636c8b0c277)
+
+commit 8bdb3f95d3db79bea5f3d49e2c8b0fc090bb65dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 22 14:07:47 2015 +0200
+
+    Makefile.defs: memory manager set to q_malloc
+
+commit 2b8dc34378812f9aea187c2cfe27021dd4f7113b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 21 21:10:47 2015 +0200
+
+    mem: f_malloc - safety init of nxt_free fields in first and last fragments
+    
+    (cherry picked from commit 66b9c4dc56e14cac8ffcb0f87d29be4858dafbd3)
+
+commit 2070b215872ce8d15375e9ccda8bb45b496ad44a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 21 17:01:18 2015 +0200
+
+    mem: f_malloc - proper inserting of last free large fragment
+    
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit b58a55da1a43f1b2d3b1f0b831fcb639c57a66b9)
+
+commit b09ccd2d16982c16babe5ba71c3e7d94bec71706
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 20 22:33:57 2015 +0200
+
+    mem: f_malloc - properly set empty slot in free hash
+    
+    - reported by Juha Heninanen
+    
+    (cherry picked from commit f6400aa19736e3f6acf00f3c79f5ddaaf2acbcee)
+
+commit 578200cd2f32dfcc45b1b1fe682a907cf21083e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 20 18:48:18 2015 +0200
+
+    tmx: safety check for bad cseq header in t_precheck_tran()
+    
+    - reported by GH#331
+    
+    (cherry picked from commit 3e84157b4bbce9c6bcb8c4563910811a7eb8f019)
+
+commit 7881ec8d3cd5aa347424108f1fb9860c383e01d5
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Fri Sep 18 17:25:03 2015 +0200
+
+    utils: Don't leak memory of pkg_realloc returns NULL
+
+commit 020693698e0ec43da1d652524e497f12d1263fe4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 18 13:36:03 2015 +0200
+
+    tsilo: use current r-uri for ts_store()
+    
+    - msg->first_line.u.request.uri is always the incoming r-uri (never
+      updated inside the msg structure)
+    - if $ru was updated, msg->new_uri is set with the new value
+    - if incoming r-uri is wanted back after $ru was updated, revert_uri()
+      can be used
+    - if only incoming r-uri is allowed, then the function doesn't work when
+      dialing an alias or a short number
+    
+    (cherry picked from commit 1e5bad019c450a003e812ee051d84134aad6c5f0)
+
+commit bc89d93ce935881754b21af98e1e5ccc41ac9f3a
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Thu Sep 17 15:50:48 2015 +0100
+
+    parser: Fix parser error when Retry-After is last header
+    
+    - Prevent off-by-one error when CRLF is followed by CRLF
+    (cherry picked from commit deab9d061cbe180aaf32b7416c2477b4eb901ec8)
+
+commit 192294cc025f7b39efcd60c2053423ff10861d75
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 17 12:50:55 2015 +0200
+
+    tm: warn in case of transaction is not suspended by a continue is attempted
+    
+    (cherry picked from commit 33c5449563becd2357b648ec469ef247a6ae2f5d)
+
+commit c58d4c4471f794944c60164a19ae3aa884fe2ade
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 14 12:45:28 2015 +0200
+
+    tm: test if transaction was suspended before resuming inside t_continue()
+    
+    (cherry picked from commit 52c4965bbb4cde5d7bddcf697aa504e7c2202ac1)
+
+commit 0c6bed8779024c0c35a9c1bb82dc24255d8f08e2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 14 12:53:54 2015 +0200
+
+    tm: reset async suspended flag when continuing via failure_route
+    
+    - suspended transaction can be resumed automatically on timeout, without
+      t_continue(), ending up in failure_route
+    
+    (cherry picked from commit 171553ebcac2f00a015191f36f2f228c0d3e483b)
+
+commit ce43a14d701ec38276883b863cd81bbb3de3b35a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 17 12:48:36 2015 +0200
+
+    tmx: err to work if resuming suspended transaction fails
+    
+    - it can be a non-suspended transaction id or after expiration
+    
+    (cherry picked from commit 2682d85657d1caf96961a6153cd82c506fde7d0d)
+
+commit 978e3b65c7d1d21a69a55492dc156493cc8c28bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 16 11:21:08 2015 +0200
+
+    auth_db: more log messages when username checks failed
+    
+    (cherry picked from commit d46d008e0936a01229872df71ac26afb43122f4b)
+
+commit c5b7b0baab51c5d2ca584c1ff1366f8e03e97290
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 15 19:05:12 2015 +0200
+
+    ipops: fixed wrong location of double quites in example in docs
+    
+    - reported by GH#327
+    
+    (cherry picked from commit 5d50171a4443eeafa5734afec58bbf41c07fece7)
+
+commit c8bf8199fbbc8ddfbca76a63df94bb246bb0017a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 14 22:28:57 2015 +0200
+
+    Makefile: install-initd-centos target creates run dir
+    
+    (cherry picked from commit 19b3d02c0fc4188b175d0d86e27f3c092900b10c)
+
+commit d6d2474bbbd6a6fd08cbede42ad1cd64cc47dc64
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 11 16:39:36 2015 +0200
+
+    mem: removed unused variables
+    
+    - two old vars not needed anymore after previous commit
+    
+    (cherry picked from commit 16bcb9d257622a68eed44d6eea5e342f35dbde83)
+
+commit 7ac3eea0c49872a75d384e94ee0b4380caf440e0
+Author: jaybeepee <jason.penton@gmail.com>
+Date:   Fri Sep 11 13:38:37 2015 +0200
+
+    modules/tm: precent possible seg fault if branch reply is null
+    
+    (cherry picked from commit aec9850491a8e8fa919396ae0e0f1d99d30c607c)
+
+commit 3ddf71b943530e98ba94ad9d9ec37be3a90e1182
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 11 16:32:32 2015 +0200
+
+    mem/f_malloc: simplified free frags management
+    
+    - avoid address referencing to previous free fragments, it can get
+      invalidated on joins
+    - straight doubly linked list also speeds join/defrag
+    
+    (cherry picked from commit 2d0455d9f2266ad67867e03aa652863e37d5a8d2)
+
+commit 637e727484affa52489ff6d7bf2fe06fd6bb1085
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 15 13:09:36 2015 +0200
+
+    textopsx: include : in the value to be parsed as header name inside fixup_hname_param()
+    
+    - reported by BjÃ¶rn Bylander
+    
+    (cherry picked from commit 5f301c9e9b3d4b67a11aeaab45c21fd8d8929695)
+
+commit 0b20349c487f9a486db7407b3f712ca06531b9d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 15 13:08:53 2015 +0200
+
+    parse: more log messages in case of errors in parse_hname2_short()
+    
+    (cherry picked from commit 3913cc881030cccc9518733e18363402f2dfb18e)
+
+commit 3763f689436b717b323d6d0337317ffc24d180a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 14 12:05:27 2015 +0200
+
+    dialog: mark slot as lock if dialog found in state deleted for spiral detection
+    
+    (cherry picked from commit 6a9c892fd0a7a526ec6ced4b40479875477d96db)
+
+
 ===================== 2015-09-10 Version 4.3.2 Released =====================
 
 ===================== Changes Since Version 4.3.1 ===========================
