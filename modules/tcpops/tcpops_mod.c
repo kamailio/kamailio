@@ -49,7 +49,8 @@ static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con);
 static int w_tcp_keepalive_disable0(sip_msg_t* msg);
 static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* con, char* time);
 static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time);
-static int w_tcp_conid_state(sip_msg_t* msg, char* con, char* p2);
+static int w_tcp_conid_state(sip_msg_t* msg, char* con, char *p2);
+static int w_tcp_conid_alive(sip_msg_t* msg, char* con, char *p2);
 
 static int fixup_numpv(void** param, int param_no);
 
@@ -68,6 +69,8 @@ static cmd_export_t cmds[]={
 	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime1, 1, fixup_numpv,
 		0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"tcp_conid_state", (cmd_function)w_tcp_conid_state, 1, fixup_numpv,
+		0, ANY_ROUTE},
+	{"tcp_conid_alive", (cmd_function)w_tcp_conid_alive, 1, fixup_numpv,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -222,6 +225,7 @@ static int w_tcp_keepalive_disable0(sip_msg_t* msg)
 	return tcpops_keepalive_disable(fd, 0);
 }
 
+/*! \brief Check the state of the TCP connection */
 static int w_tcp_conid_state(sip_msg_t* msg, char* conid, char *p2)
 {
 	struct tcp_connection *s_con;
@@ -268,6 +272,19 @@ static int w_tcp_conid_state(sip_msg_t* msg, char* conid, char *p2)
 done:
 	if(s_con) tcpconn_put(s_con);
 	return ret;
+}
+
+/*! \brief A simple check to see if a connection is alive or not,
+	avoiding all the various connection states
+ */
+static int w_tcp_conid_alive(sip_msg_t* msg, char* conid, char *p2)
+{
+	int ret = w_tcp_conid_state(msg, conid, p2);
+	if (ret >= 1) {
+		return 1;	/* TRUE */
+	} 
+	/* We have some kind of problem */
+	return -1;
 }
 
 static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* conid, char* time)

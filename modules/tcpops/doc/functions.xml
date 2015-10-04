@@ -8,6 +8,36 @@
 
 	<title>Functions</title>
 
+	<section id="tcpops.f.tcp_conid_alive">
+		<title>
+			<function>tcp_conid_alive(conid)</function>
+		</title>
+		<para>
+				Check the state of a TCP or WS connection ID
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> (optionnal): the Kamailio internal
+				connection id (as in the <emphasis>$conid</emphasis> pseudovariable).
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Retuns values:</para>
+		<para>1: Connection is OK</para>
+		<para>-1: Connection has errors, does not exist or is about to be closed)</para>
+		<example>
+			<title><function>tcp_conid_alive</function> usage</title>
+			<programlisting><![CDATA[
+...
+	$var(conid) = $conid;
+	if(!tcp_conid_alive("$var(conid)")) {
+		xlog("L_ERR", "Connection $conid can no longer be used\n");
+	}
+...
+			]]></programlisting>
+		</example>
+	</section>
 	<section id="tcpops.f.tcp_conid_state">
 		<title>
 			<function>tcp_conid_state(conid)</function>
@@ -35,7 +65,7 @@
 			<title><function>tcp_conid_state</function> usage</title>
 			<programlisting><![CDATA[
 ...
-	if(!tcp_conid_state($var(conid))) {
+	if(!tcp_conid_state("$var(conid)")) {
 		xlog("L_ERR", "Connection $conid is closed or malfunctional\n");
 	}
 ...
