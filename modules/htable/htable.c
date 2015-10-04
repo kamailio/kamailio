@@ -326,7 +326,7 @@ static int ht_rm_name_re(struct sip_msg* msg, char* key, char* foo)
 	}
 	if(pv_printf_s(msg, hpv->pve, &sre)!=0)
 	{
-		LM_ERR("cannot get $ht expression\n");
+		LM_ERR("cannot get $sht expression\n");
 		return -1;
 	}
 	if (hpv->ht->dmqreplicate>0) {
@@ -358,7 +358,7 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
 	}
 	if(pv_printf_s(msg, hpv->pve, &sre)!=0)
 	{
-		LM_ERR("cannot get $ht expression\n");
+		LM_ERR("cannot get $sht expression\n");
 		return -1;
 	}
 
@@ -462,13 +462,13 @@ static int w_ht_slot_lock(struct sip_msg* msg, char* key, char* foo)
 	{
 		hpv->ht = ht_get_table(&hpv->htname);
 		if(hpv->ht==NULL) {
-			LM_ERR("cannot get $ht root\n");
+			LM_ERR("cannot get $sht root\n");
 			return -11;
 		}
 	}
 	if(pv_printf_s(msg, hpv->pve, &skey)!=0)
 	{
-		LM_ERR("cannot get $ht key\n");
+		LM_ERR("cannot get $sht key\n");
 		return -1;
 	}
 
@@ -504,13 +504,13 @@ static int w_ht_slot_unlock(struct sip_msg* msg, char* key, char* foo)
 	{
 		hpv->ht = ht_get_table(&hpv->htname);
 		if(hpv->ht==NULL) {
-			LM_ERR("cannot get $ht root\n");
+			LM_ERR("cannot get $sht root\n");
 			return -11;
 		}
 	}
 	if(pv_printf_s(msg, hpv->pve, &skey)!=0)
 	{
-		LM_ERR("cannot get $ht key\n");
+		LM_ERR("cannot get $sht key\n");
 		return -1;
 	}
 
@@ -896,7 +896,7 @@ static void htable_rpc_sets(rpc_t* rpc, void* c) {
 
 	if(ht_set_cell(ht, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0)
 	{
-		LM_ERR("cannot set $ht(%.*s=>%.*s)\n", htname.len, htname.s,
+		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
 				keyname.len, keyname.s);
 		rpc->fault(c, 500, "Failed to set the item");
 		return;
@@ -930,7 +930,7 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 	
 	if(ht_set_cell(ht, &keyname, 0, &keyvalue, 1)!=0)
 	{
-		LM_ERR("cannot set $ht(%.*s=>%.*s)\n", htname.len, htname.s,
+		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
 				keyname.len, keyname.s);
 		rpc->fault(c, 500, "Failed to set the item");
 		return;
