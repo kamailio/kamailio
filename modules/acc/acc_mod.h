@@ -103,5 +103,6 @@ extern int acc_time_mode;
 extern str acc_time_attr;
 extern str acc_time_exten;
 
+extern int acc_prepare_always;
 
 #endif

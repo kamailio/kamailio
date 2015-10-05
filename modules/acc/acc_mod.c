@@ -108,6 +108,7 @@ static char *failed_filter_str = 0;  /* by default, do not filter logging of
 unsigned short failed_filter[MAX_FAILED_FILTER_COUNT + 1];
 static char* leg_info_str = 0;	/*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
+int acc_prepare_always = 0; /* prepare the request always for later acc */
 int acc_prepare_flag = -1; /*!< should the request be prepared for later acc */
 char *acc_time_format = "%Y-%m-%d %H:%M:%S";
 int reason_from_hf = 0; /*!< assign reason from reason hf if present */
@@ -262,6 +263,7 @@ static param_export_t params[] = {
 	{"multi_leg_info",          PARAM_STRING, &leg_info_str            },
 	{"detect_direction",        INT_PARAM, &detect_direction        },
 	{"acc_prepare_flag",        INT_PARAM, &acc_prepare_flag        },
+	{"acc_prepare_always",      INT_PARAM, &acc_prepare_always      },
 	{"reason_from_hf",          INT_PARAM, &reason_from_hf          },
 	/* syslog specific */
 	{"log_flag",             INT_PARAM, &log_flag             },

@@ -624,7 +624,7 @@ modparam("acc", "detect_direction", 1)
 		later, with flags set in TM module specific routes (e.g., like
 		failure_route). If this flag is not set and acc or missed_call flag
 		are not set either in request route block, there is no way to mark the
-		request for transaction later. If either acc or missed_call flags are
+		request for transaction later unless you set acc_prepare_always. If either acc or missed_call flags are
 		set in request route block, there is no need to set this flag.
 		</para>
 		<para>
@@ -635,6 +635,23 @@ modparam("acc", "detect_direction", 1)
 		<programlisting format="linespecific">
 ...
 modparam("acc", "acc_prepare_flag", 5)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="acc.p.acc_prepare_always">
+		<title><varname>acc_prepare_always</varname> (integer)</title>
+		<para>
+		Prepare all request even if acc_prepare_flag is not set to mark the request for transaction later.
+		</para>
+		<para>
+		Default value is not-set (previous behaviour).
+		</para>
+		<example>
+		<title>acc_prepare_flag example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "acc_prepare_always", 1)
 ...
 </programlisting>
 		</example>
