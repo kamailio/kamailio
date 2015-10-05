@@ -163,6 +163,8 @@ static int db_write_cdr( struct dlg_cell* dialog,
 
 	for(i=0; i<m; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
+		/* reset errno, some strtoX don't reset it */
+		errno = 0;
 		switch(cdr_type_array[i]) {
 			case TYPE_NULL:
 				VAL_NULL(db_cdr_vals+i)=1;
