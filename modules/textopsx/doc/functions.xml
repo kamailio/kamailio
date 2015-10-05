@@ -103,14 +103,15 @@ remove_body();
 
 	<section id="textopsx.f.keep_hf">
 		<title>
-		<function moreinfo="none">keep_hf(regexp)</function>
+		<function moreinfo="none">keep_hf([regexp])</function>
 		</title>
 		<para>
 			Remove headers that don't match the regular expression regexp.
 			Several header are ignored always (thus not removed): Via, From,
 			To, Call-ID, CSeq, Content-Length, Content-Type, Max-Forwards,
 			Contact, Route, Record-Route -- these can be removed one by one
-			with remove_hf().
+			with remove_hf(). If regexp is missing, then only the headers
+			listed above are kept, the rest are removed.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
