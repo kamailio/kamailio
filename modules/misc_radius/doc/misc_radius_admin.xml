@@ -94,12 +94,20 @@
 			</para>
 			<itemizedlist>
 				<listitem>
-				<para><emphasis>radiusclient-ng</emphasis> 0.5.6 or higher -- 
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or freeradius-client 
++				or higher. 
 				library and development files. See <ulink 
-				url='http://developer.berlios.de/projects/radiusclient-ng/'>
-				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				url='https://github.com/FreeRADIUS/freeradius-client/'>
++				https://github.com/FreeRADIUS/freeradius-client/</ulink>.
 				</para>
 				</listitem>
+				<listitem>
++				<para>
++				<emphasis>freeradius-client</emphasis> library can be used after 
++				setting FREERADIUS variable in source code with 
++				<emphasis>'export FREERADIUS=1'</emphasis> command before compile.
+ 				</para>
+ 				</listitem>
 			</itemizedlist>
 		</section>
 	</section>
