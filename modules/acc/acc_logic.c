@@ -102,7 +102,7 @@ struct acc_enviroment acc_env;
 	(((_rq)->REQ_METHOD==METHOD_CANCEL) && report_cancels==0)
 
 #define is_acc_prepare_on(_rq) \
-	(is_acc_flag_set(_rq,acc_prepare_flag))
+	(acc_prepare_always || is_acc_flag_set(_rq,acc_prepare_flag))
 
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps );
 
