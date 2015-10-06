@@ -600,7 +600,6 @@ static int m_sleep(struct sip_msg *msg, char *time, char *str2)
 		LM_ERR("cannot get time interval value\n");
 		return -1;
 	}
-	LM_DBG("sleep %lu seconds\n", (unsigned long)s);
 	sleep((unsigned int)s);
 	return 1;
 }
@@ -613,7 +612,6 @@ static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 		LM_ERR("cannot get time interval value\n");
 		return -1;
 	}
-	LM_DBG("sleep %lu microseconds\n", (unsigned long)time);
 	sleep_us((unsigned int)s);
 	return 1;
 }
