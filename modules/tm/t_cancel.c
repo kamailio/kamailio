@@ -37,6 +37,36 @@
 #include "t_hooks.h"
 
 
+typedef struct cancel_reason_map {
+	int code;
+	str text;
+} cancel_reason_map_t;
+
+static cancel_reason_map_t _cancel_reason_map[] = {
+	200, str_init("Answered elsewhere"),
+	0, {0, 0}
+};
+
+/**
+ *
+ */
+void cancel_reason_text(struct cancel_info* cancel_data)
+{
+	int i;
+
+	if(cancel_data->reason.cause<=0
+			|| cancel_data->reason.u.text.s!=NULL) return;
+
+	for(i=0; _cancel_reason_map[i].text.s!=0; i++) {
+		if(_cancel_reason_map[i].code==cancel_data->reason.cause) {
+			cancel_data->reason.u.text = _cancel_reason_map[i].text;
+			return;
+		}
+	}
+
+	return;
+}
+
 /** Prepare to cancel a transaction.
  * Determine which branches should be canceled and prepare them (internally
  * mark them as "cancel in progress", see prepare_cancel_branch()).
@@ -87,6 +117,9 @@ int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags)
 	int r;
 
 	ret=0;
+
+	cancel_reason_text(cancel_data);
+
 	/* cancel pending client transactions, if any */
 	for( i=0 ; i<t->nr_of_outgoings ; i++ ) 
 		if (cancel_data->cancel_bitmap & (1<<i)){
