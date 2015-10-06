@@ -16,9 +16,17 @@ Edited by
 
 Bogdan-Andrei Iancu
 
+Edited by
+
+Carsten Bock
+
+   ng-voice GmbH
+
    Copyright © 2003 FhG FOKUS
 
    Copyright © 2005 Voice Sistem SRL
+
+   Copyright © 2015 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -76,6 +84,7 @@ Bogdan-Andrei Iancu
               3.38. expires_type (int)
               3.39. db_raw_fetch_type (int)
               3.40. db_insert_null (int)
+              3.41. skip_remote_socket (int)
 
         4. Functions
         5. MI Commands
@@ -173,6 +182,7 @@ Bogdan-Andrei Iancu
    1.38. Set expires_type parameter
    1.39. Set db_raw_fetch_type parameter
    1.40. Set db_insert_null parameter
+   1.41. Set skip_remote_socket parameter
 
 Chapter 1. Admin Guide
 
@@ -229,6 +239,7 @@ Chapter 1. Admin Guide
         3.38. expires_type (int)
         3.39. db_raw_fetch_type (int)
         3.40. db_insert_null (int)
+        3.41. skip_remote_socket (int)
 
    4. Functions
    5. MI Commands
@@ -294,6 +305,8 @@ Chapter 1. Admin Guide
        contact and path must be matched as string; the cseq must be higher
        than the previous one - so be careful how you deal with REGISTER
        retransmissions in this case.
+     * Call-id only based - it is not according to RFC3261, as it will
+       check the Call-ID only (independent of the Contact-Header or Path).
 
    To find out how to control/select the contact maching algorithm, please
    see the module parameter matching_mode - Section 3.26, "matching_mode
@@ -357,6 +370,7 @@ Chapter 1. Admin Guide
    3.38. expires_type (int)
    3.39. db_raw_fetch_type (int)
    3.40. db_insert_null (int)
+   3.41. skip_remote_socket (int)
 
 3.1. nat_bflag (integer)
 
@@ -695,6 +709,8 @@ modparam("usrloc", "db_mode", 2)
      * 2 - CONTACT and PATH based matching algorithm. This mode is like
        mode 0 but allows for duplicate contacts from differing paths. If
        no path is available, it defaults to mode 0.
+     * 3 - CALLID only based matching algorithm. This mode will discard
+       any duplicate registration coming through different paths.
 
    Default value is 0 (CONTACT_ONLY).
 
@@ -899,6 +915,19 @@ modparam("usrloc", "db_raw_fetch_type", 1)
 modparam("usrloc", "db_insert_null", 1)
 ...
 
+3.41. skip_remote_socket (int)
+
+   If set to 1, Kamailio will skip location record when loading from
+   database, if socket value of the record does not in kamailio listening
+   socket list.
+
+   Default value is "0".
+
+   Example 1.41. Set skip_remote_socket parameter
+...
+modparam("usrloc", "skip_remote_socket", 1)
+...
+
 4. Functions
 
    There are no exported functions that could be used in scripts.
@@ -912,7 +941,7 @@ modparam("usrloc", "db_insert_null", 1)
    5.5. ul_add
    5.6. ul_show_contact
 
-5.1.  ul_rm
+5.1. ul_rm
 
    Deletes an entire AOR record (including its contacts).
 
@@ -921,7 +950,7 @@ modparam("usrloc", "db_insert_null", 1)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-5.2.  ul_rm_contact
+5.2. ul_rm_contact
 
    Deletes a contact from an AOR record.
 
@@ -931,7 +960,7 @@ modparam("usrloc", "db_insert_null", 1)
        only if use_domain option is on).
      * contact - exact contact to be removed
 
-5.3.  ul_dump
+5.3. ul_dump
 
    Dumps the entire content of the USRLOC in memory cache
 
@@ -940,11 +969,11 @@ modparam("usrloc", "db_insert_null", 1)
        "brief", a brief dump will be done (only AOR and contacts, with no
        other details)
 
-5.4.  ul_flush
+5.4. ul_flush
 
    Triggers the flush of USRLOC memory cache into DB.
 
-5.5.  ul_add
+5.5. ul_add
 
    Adds a new contact for an user AOR.
 
@@ -960,7 +989,7 @@ modparam("usrloc", "db_insert_null", 1)
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
 
-5.6.  ul_show_contact
+5.6. ul_show_contact
 
    Dumps the contacts of an user AOR.
 
@@ -981,14 +1010,14 @@ modparam("usrloc", "db_insert_null", 1)
    6.8. ul.db_contacts
    6.9. ul.db_expired_contacts
 
-6.1.  ul.dump
+6.1. ul.dump
 
    Dumps the content of the location table
 
    Parameters:
      * None.
 
-6.2.  ul.lookup table AOR
+6.2. ul.lookup table AOR
 
    Looks up the contents of an AOR entry in the location table
 
@@ -997,7 +1026,7 @@ modparam("usrloc", "db_insert_null", 1)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-6.3.  ul.rm table AOR
+6.3. ul.rm table AOR
 
    Deletes an entire AOR record (including its contacts).
 
@@ -1006,7 +1035,7 @@ modparam("usrloc", "db_insert_null", 1)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-6.4.  ul.rm_contact table AOR contact
+6.4. ul.rm_contact table AOR contact
 
    Deletes a contact from an AOR record.
 
@@ -1016,11 +1045,11 @@ modparam("usrloc", "db_insert_null", 1)
        only if use_domain option is on).
      * contact - exact contact to be removed
 
-6.5.  ul.flush
+6.5. ul.flush
 
    Triggers the flush of USRLOC memory cache into DB.
 
-6.6.  ul.add
+6.6. ul.add
 
    Adds a new contact for an user AOR.
 
@@ -1036,7 +1065,7 @@ modparam("usrloc", "db_insert_null", 1)
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
 
-6.7.  ul.db_users
+6.7. ul.db_users
 
    Tell number of different users (AoRs) in a location table that have
    unexpired contacts.
@@ -1045,7 +1074,7 @@ modparam("usrloc", "db_insert_null", 1)
      * table name - location table where the users are looked for, for
        example, location.
 
-6.8.  ul.db_contacts
+6.8. ul.db_contacts
 
    Tell number of unexpired contacts in a location table.
 
@@ -1053,7 +1082,7 @@ modparam("usrloc", "db_insert_null", 1)
      * table name - location table where the contacts are looked for, for
        example, location.
 
-6.9.  ul.db_expired_contacts
+6.9. ul.db_expired_contacts
 
    Tell number of expired contacts in a location table.
 
@@ -1142,7 +1171,7 @@ Chapter 2. Developer Guide
    1.15. ul_register_ulcb(type ,callback, param)
    1.16. ul_get_num_users()
 
-1.1.  ul_register_domain(name)
+1.1. ul_register_domain(name)
 
    The function registers a new domain. Domain is just another name for
    table used in registrar. The function is called from fixups in
@@ -1157,7 +1186,7 @@ Chapter 2. Developer Guide
      * const char* name - Name of the domain (also called table) to be
        registered.
 
-1.2.  ul_insert_urecord(domain, aor, rec)
+1.2. ul_insert_urecord(domain, aor, rec)
 
    The function creates a new record structure and inserts it in the
    specified domain. The record is structure that contains all the
@@ -1172,7 +1201,7 @@ Chapter 2. Developer Guide
 
      * urecord_t** rec - The newly created record structure.
 
-1.3.  ul_delete_urecord(domain, aor)
+1.3. ul_delete_urecord(domain, aor)
 
    The function deletes all the contacts bound with the given Address Of
    Record.
@@ -1184,7 +1213,7 @@ Chapter 2. Developer Guide
      * str* aor - Address of record (aka username) of the record, that
        should be deleted.
 
-1.4.  ul_delete_urecord_by_ruid(domain, ruid)
+1.4. ul_delete_urecord_by_ruid(domain, ruid)
 
    The function deletes from given domain a contact with given ruid.
 
@@ -1194,7 +1223,7 @@ Chapter 2. Developer Guide
 
      * str* ruid - ruid of contact that should be deleted.
 
-1.5.  ul_get_urecord(domain, aor)
+1.5. ul_get_urecord(domain, aor)
 
    The function returns pointer to record with given Address of Record.
 
@@ -1204,7 +1233,7 @@ Chapter 2. Developer Guide
 
      * str* aor - Address of Record of request record.
 
-1.6.  ul_lock_udomain(domain)
+1.6. ul_lock_udomain(domain)
 
    The function lock the specified domain, it means, that no other
    processes will be able to access during the time. This prevents race
@@ -1215,14 +1244,14 @@ Chapter 2. Developer Guide
    Meaning of the parameters is as follows:
      * udomain_t* domain - Domain to be locked.
 
-1.7.  ul_unlock_udomain(domain)
+1.7. ul_unlock_udomain(domain)
 
    Unlock the specified domain previously locked by ul_lock_udomain.
 
    Meaning of the parameters is as follows:
      * udomain_t* domain - Domain to be unlocked.
 
-1.8.  ul_release_urecord(record)
+1.8. ul_release_urecord(record)
 
    Do some sanity checks - if all contacts have been removed, delete the
    entire record structure.
@@ -1230,7 +1259,7 @@ Chapter 2. Developer Guide
    Meaning of the parameters is as follows:
      * urecord_t* record - Record to be released.
 
-1.9.  ul_insert_ucontact(record, contact, expires, q, callid, cseq, flags,
+1.9. ul_insert_ucontact(record, contact, expires, q, callid, cseq, flags,
 cont, ua, sock)
 
    The function inserts a new contact in the given record with specified
@@ -1251,7 +1280,7 @@ cont, ua, sock)
      * struct socket_info *sock - socket on which the REGISTER message was
        received on.
 
-1.10.  ul_delete_ucontact (record, contact)
+1.10. ul_delete_ucontact (record, contact)
 
    The function deletes given contact from record.
 
@@ -1261,7 +1290,7 @@ cont, ua, sock)
 
      * ucontact_t* contact - Contact to be deleted.
 
-1.11.  ul_get_ucontact(record, contact)
+1.11. ul_get_ucontact(record, contact)
 
    The function tries to find contact with given Contact URI and returns
    pointer to structure representing the contact.
@@ -1271,7 +1300,7 @@ cont, ua, sock)
 
      * str_t* contact - URI of the request contact.
 
-1.12.  ul_get_all_ucontacts (buf, len, flags)
+1.12. ul_get_all_ucontacts (buf, len, flags)
 
    The function retrieves all contacts of all registered users and returns
    them in the caller-supplied buffer. If the buffer is too small, the
@@ -1292,7 +1321,7 @@ cont, ua, sock)
 
      * unsigned int flags - Flags that must be set.
 
-1.13.  ul_update_ucontact(contact, expires, q, callid, cseq, set, res, ua,
+1.13. ul_update_ucontact(contact, expires, q, callid, cseq, set, res, ua,
 sock)
 
    The function updates contact with new values.
@@ -1311,7 +1340,7 @@ sock)
      * struct socket_info *sock - socket on which the REGISTER message was
        received on.
 
-1.14.  ul_bind_ursloc( api )
+1.14. ul_bind_ursloc( api )
 
    The function imports all functions that are exported by the USRLOC
    module. Overs for other modules which want to user the internal USRLOC
@@ -1320,7 +1349,7 @@ sock)
    Meaning of the parameters is as follows:
      * usrloc_api_t* api - USRLOC API
 
-1.15.  ul_register_ulcb(type ,callback, param)
+1.15. ul_register_ulcb(type ,callback, param)
 
    The function register with USRLOC a callback function to be called when
    some event occures inside USRLOC.
@@ -1333,6 +1362,6 @@ sock)
      * void *param - some parameter to be passed to the callback each time
        when it is called.
 
-1.16.  ul_get_num_users()
+1.16. ul_get_num_users()
 
    The function loops through all domains summing up the number of users.

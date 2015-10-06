@@ -219,7 +219,7 @@ void free_impurecord(impurecord_t* _r) {
  */
 void print_impurecord(FILE* _f, impurecord_t* _r) {
     ucontact_t* ptr;
-    int i;
+    int i = 0;
 
     fprintf(_f, "...Record(%p)...\n", _r);
     fprintf(_f, "domain : '%.*s'\n", _r->domain->len, ZSW(_r->domain->s));
@@ -268,7 +268,7 @@ void print_impurecord(FILE* _f, impurecord_t* _r) {
  * \param _ci contact information
  * \return pointer to new created contact on success, 0 on failure
  */
-ucontact_t* mem_insert_ucontact(impurecord_t* _r, str* _c, ucontact_info_t* _ci) {
+ucontact_t* mem_insert_scontact(impurecord_t* _r, str* _c, ucontact_info_t* _ci) {
     ucontact_t* c;
     int sl;
 
@@ -308,7 +308,14 @@ void mem_delete_ucontact(ucontact_t* _c) {
 
     struct contact_dialog_data *dialog_data;
     //tear down dialogs in dialog data list
+    LM_DBG("Checking if dialog_data is there and needs to be torn down\n");
+    if(_c->first_dialog_data == 0) {
+        LM_DBG("first dialog is 0!\n");
+    } else {
+        LM_DBG("first dialog is not 0\n");
+    }
     for (dialog_data = _c->first_dialog_data; dialog_data;) {
+        LM_DBG("Going to tear down dialog with info h_entry [%d] h_id [%d]\n", dialog_data->h_entry, dialog_data->h_id);
         dlgb.lookup_terminate_dlg(dialog_data->h_entry, dialog_data->h_id, NULL);
         dialog_data = dialog_data->next;
     }
@@ -316,7 +323,6 @@ void mem_delete_ucontact(ucontact_t* _c) {
     mem_remove_ucontact(_c);
     free_ucontact(_c);
 }
-
 /*!
  * \brief Expires timer for NO_DB db_mode
  *
@@ -374,11 +380,30 @@ static inline void process_impurecord(impurecord_t* _r) {
         if ((ptr = _r->newcontacts[k])) {
             flag = 1;
             if (!VALID_CONTACT(ptr, act_time)) {
-                LM_DBG("IMPU:<%.*s> - contact:<%.*s> has expired... unlinking contact from IMPU\n", _r->public_identity.len, _r->public_identity.s, ptr->c.len, ptr->c.s);
-                contacts_to_expire[num_contacts_to_expire] = ptr;
-                num_contacts_to_expire++;
+                if (ptr->state == CONTACT_DELETED) {
+                    LM_DBG("Contact: <%.*s> has been deleted - unlinking from IMPU\n", ptr->c.len, ptr->c.s);
+                    contacts_to_expire[num_contacts_to_expire] = ptr;
+                    num_contacts_to_expire++;
+                } else if (ptr->state == CONTACT_EXPIRE_PENDING_NOTIFY) {
+                    LM_DBG("Contact: <%.*s> is in state CONTACT_EXPIRE_PENDING_NOTIFY....running callback\n", ptr->c.len, ptr->c.s);
+                    if (exists_ulcb_type(_r->cbs, UL_IMPU_DELETE_CONTACT)) {
+                        LM_DBG("Running callback UL_IMPU_DELETE_CONTACT for contact [%.*s] and impu [%.*s]\n", ptr->c.len, ptr->c.s, _r->public_identity.len, _r->public_identity.s);
+                        run_ul_callbacks(_r->cbs, UL_IMPU_DELETE_CONTACT, _r, ptr);
+                    }
+                    hascontacts = 1;    // we do this because the impu must only be deleted if in state deleted....
+                    mustdeleteimpu = 0;
+                } else if (ptr->state == CONTACT_VALID) {
+                    LM_DBG("Contact: <%.*s> is in state valid but it has expired.... ignoring as the contact check will set the appropriate action/state\n", ptr->c.len, ptr->c.s);
+                    mustdeleteimpu = 0;
+                    hascontacts = 1;
+                } else {
+                    LM_WARN("Bogus state for contact [%.*s] - state: %d... ignoring", ptr->c.len, ptr->c.s, ptr->state);
+                    mustdeleteimpu = 0;
+                    hascontacts = 1;
+                }
             } else {
-                LM_DBG("\t\tContact #%i - %.*s, Ref [%d] (expires in %ld seconds)\n", k, ptr->c.len, ptr->c.s, ptr->ref_count, ptr->expires - act_time);
+                LM_DBG("\t\tContact #%i - %.*s, Ref [%d] (expires in %ld seconds) (State: %d)\n", 
+                        k, ptr->c.len, ptr->c.s, ptr->ref_count, ptr->expires - act_time, ptr->state);
                 mustdeleteimpu = 0;
                 hascontacts = 1;
             }
@@ -389,7 +414,7 @@ static inline void process_impurecord(impurecord_t* _r) {
     }
 
     if (num_contacts_to_expire > 0) {
-        LM_DBG("\tThere are %d contacts to expire\n", num_contacts_to_expire);
+        LM_DBG("\tThere are %d contacts to expire/unlink\n", num_contacts_to_expire);
         for (n = 0; n < num_contacts_to_expire; n++) {
             ptr = contacts_to_expire[n];
             LM_DBG("\t\texpiring contact %i: [%.*s] in slot [%d]\n", n, contacts_to_expire[n]->c.len, contacts_to_expire[n]->c.s, contacts_to_expire[n]->sl);
@@ -441,7 +466,7 @@ int get_contacts_count(impurecord_t* _r) {
  * \param _c new created contact
  * \return 0 on success, -1 on failure
  */
-int insert_ucontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucontact_t** _c) {
+int insert_scontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucontact_t** _c) {
     //First check our constraints
     if (maxcontact > 0 && maxcontact_behaviour > 0) {
         int numcontacts = get_contacts_count(_r);
@@ -464,7 +489,7 @@ int insert_ucontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
 
     //at this stage we are safe to insert the new contact
     LM_DBG("INSERTing ucontact in usrloc module\n");
-    if (((*_c) = mem_insert_ucontact(_r, _contact, _ci)) == 0) {
+    if (((*_c) = mem_insert_scontact(_r, _contact, _ci)) == 0) {
         LM_ERR("failed to insert contact\n");
         return -1;
     }
@@ -477,8 +502,8 @@ int insert_ucontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
 
     //make sure IMPU is linked to this contact
     link_contact_to_impu(_r, *_c, 1);
-    
-    release_ucontact(*_c);
+
+    release_scontact(*_c);
 
     if (exists_ulcb_type(NULL, UL_CONTACT_INSERT)) {
         run_ul_callbacks(NULL, UL_CONTACT_INSERT, _r, *_c);
@@ -489,13 +514,14 @@ int insert_ucontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
 
     return 0;
 }
+
 /*!
  * \brief Delete ucontact from impurecord
  * \param _r record where the contact belongs to
  * \param _c deleted contact
  * \return 0 on success, -1 on failure
  */
-int delete_ucontact(struct ucontact* _c) {
+int delete_scontact(struct ucontact* _c) {
     int ret = 0;
 
     LM_DBG("Deleting contact: [%.*s]\n", _c->c.len, _c->c.s);
@@ -586,7 +612,7 @@ static inline struct ucontact* contact_port_ip_match(unsigned int slot, str* _c)
 static inline struct ucontact* contact_callid_match(unsigned int slot,
         str* _c, str *_callid) {
     ucontact_t* ptr = contact_list->slot[slot].first;
-    
+
     while (ptr) {
         if ((_c->len == ptr->c.len) && (_callid->len == ptr->callid.len)
                 && !memcmp(_c->s, ptr->c.s, _c->len)
@@ -636,7 +662,7 @@ static inline struct ucontact* contact_path_match(unsigned int slot, str* _c, st
  * \return 0 - found, 1 - not found, -1 - invalid found,
  * -2 - found, but to be skipped (same cseq) - don't forget to release_ucontact so dec. the ref counter
  */
-int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path, int _cseq, struct ucontact** _co) {
+int get_scontact(str* _c, str* _callid, str* _path, int _cseq, struct ucontact** _co) {
     unsigned int sl;
     ucontact_t* ptr;
     int with_callid = 0;
@@ -677,9 +703,9 @@ int get_ucontact(impurecord_t* _r, str* _c, str* _callid, str* _path, int _cseq,
             if (_cseq < ptr->cseq) {
                 LM_DBG("cseq less than expected\n");
             }
-            
+
         }
-        LM_DBG("contact found p=[%p], aor:[%.*s] and contact:[%.*s]\n", ptr, ptr->aor.len, ptr->aor.s, ptr->c.len, ptr->c.s);
+        LM_DBG("contact found p=[%p], aor:[%.*s] and contact:[%.*s], state [%d]\n", ptr, ptr->aor.len, ptr->aor.s, ptr->c.len, ptr->c.s, ptr->state);
         ref_contact_unsafe(ptr);
         *_co = ptr;
         unlock_contact_slot_i(sl); /*TODO: we probably need to ref count here..... */
@@ -781,21 +807,21 @@ int compare_subscription(ims_subscription* new, ims_subscription* orig) {
             for (k = 0; k < new->service_profiles_cnt; k++) {
                 for (l = 0; l < new->service_profiles[k].public_identities_cnt; l++) {
                     LM_DBG("new %.*s (%i) vs. orig %.*s (%i)\n",
-                      new->service_profiles[k].public_identities[l].public_identity.len,
-                      new->service_profiles[k].public_identities[l].public_identity.s,
-                      new->service_profiles[k].public_identities[l].public_identity.len,
-                      orig->service_profiles[i].public_identities[j].public_identity.len,
-                      orig->service_profiles[i].public_identities[j].public_identity.s,
-                      orig->service_profiles[i].public_identities[j].public_identity.len);
+                            new->service_profiles[k].public_identities[l].public_identity.len,
+                            new->service_profiles[k].public_identities[l].public_identity.s,
+                            new->service_profiles[k].public_identities[l].public_identity.len,
+                            orig->service_profiles[i].public_identities[j].public_identity.len,
+                            orig->service_profiles[i].public_identities[j].public_identity.s,
+                            orig->service_profiles[i].public_identities[j].public_identity.len);
 
-                    if (orig->service_profiles[i].public_identities[j].public_identity.len == 
-                      new->service_profiles[k].public_identities[l].public_identity.len) {
+                    if (orig->service_profiles[i].public_identities[j].public_identity.len ==
+                            new->service_profiles[k].public_identities[l].public_identity.len) {
                         if (memcmp(orig->service_profiles[i].public_identities[j].public_identity.s,
-                          new->service_profiles[k].public_identities[l].public_identity.s,
-                          new->service_profiles[k].public_identities[l].public_identity.len) == 0)
+                                new->service_profiles[k].public_identities[l].public_identity.s,
+                                new->service_profiles[k].public_identities[l].public_identity.len) == 0)
                             return 1;
                     }
-                    
+
                 }
             }
         }
@@ -853,7 +879,7 @@ int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* im
                 ref_subscription_unsafe(subs_ptr); //we reference coz we are using it - will be unreferenced later.
                 add_subscription_unsafe(subs_ptr);
                 unlock_subscription_slot(subs_ptr->sl);
-            }            
+            }
         }
         lock_subscription(subs_ptr);
         subscription_locked = 1;
@@ -1050,15 +1076,6 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
             LM_DBG("zero'ing last pointer to contact in the list\n");
             impu->newcontacts[i - 1] = 0;
         }
-        LM_DBG("unlinking contact [%.*s] from impu [%.*s]\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
-        if (is_explicit && exists_ulcb_type(impu->cbs, UL_IMPU_DELETE_CONTACT)) {
-            LM_DBG("Running callback UL_IMPU_DELETE_CONTACT for contact [%.*s] and impu [%.*s]\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
-            run_ul_callbacks(impu->cbs, UL_IMPU_DELETE_CONTACT, impu, found_contact);
-        }
-        if (!is_explicit && exists_ulcb_type(impu->cbs, UL_IMPU_DELETE_CONTACT_IMPLICIT)) {
-            LM_DBG("Running callback UL_IMPU_DELETE_CONTACT_IMPLICIT for contact [%.*s] and impu [%.*s]\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
-            run_ul_callbacks(impu->cbs, UL_IMPU_DELETE_CONTACT_IMPLICIT, impu, found_contact);
-        }
 
         if (write_to_db && db_mode == WRITE_THROUGH && db_unlink_contact_from_impu(impu, found_contact) != 0) {
             LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
@@ -1085,12 +1102,15 @@ void unref_subscription_unsafe(ims_subscription* s) {
 
     LM_DBG("un-reffing subscription [%.*s] - was [%d]\n", s->private_identity.len, s->private_identity.s, s->ref_count);
     s->ref_count--;
-    if (s->ref_count == 0 && (s->sl >= 0)) { //-1 as sl means the subscription was never added to the list
-        sl = s->sl;
-        subs_slot_rem(&ims_subscription_list->slot[sl], s);
+    if (s->ref_count == 0) {
+        if (s->sl >= 0) { //-1 as sl means the subscription was never added to the list
+            sl = s->sl;
+            subs_slot_rem(&ims_subscription_list->slot[sl], s);
+        }
         delete_subscription(s);
         s = 0;
     }
+    
 }
 
 void ref_subscription(ims_subscription* s) {

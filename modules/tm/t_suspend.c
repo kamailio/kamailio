@@ -74,6 +74,11 @@ int t_suspend(struct sip_msg *msg,
 		ser_error = E_CANCELED;
 		return 1;
 	}
+	if (t->uas.status >= 200) {
+		LM_DBG("trasaction sent out a final response already - %d\n",
+				t->uas.status);
+		return -3;
+	}
 
 	if (msg->first_line.type != SIP_REPLY) {
 		/* send a 100 Trying reply, because the INVITE processing
@@ -106,10 +111,10 @@ int t_suspend(struct sip_msg *msg,
 		 * - failure route to be executed if the branch is not continued
 		 *   before timeout */
 		t->uac[t->async_backup.blind_uac].on_failure = t->on_failure;
+		t->flags |= T_ASYNC_SUSPENDED;
 	} else {
 		LM_DBG("this is a suspend on reply - setting msg flag to SUSPEND\n");
 		msg->msg_flags |= FL_RPL_SUSPENDED;
-                t->flags |= T_ASYNC_SUSPENDED;
 		/* this is a reply suspend find which branch */
 
 		if (t_check( msg  , &branch )==-1){
@@ -131,6 +136,7 @@ int t_suspend(struct sip_msg *msg,
 
 		LM_DBG("saving transaction data\n");
 		t->uac[branch].reply->flags = msg->flags;
+		t->flags |= T_ASYNC_SUSPENDED;
 	}
 
 	*hash_index = t->hash_index;
@@ -176,7 +182,13 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		return -1;
 	}
 
+	if (!(t->flags & T_ASYNC_SUSPENDED)) {
+		LM_WARN("transaction is not suspended [%u:%u]\n", hash_index, label);
+		return -2;
+	}
+
 	if (t->flags & T_CANCELED) {
+		t->flags &= ~T_ASYNC_SUSPENDED;
 		/* The transaction has already been canceled,
 		 * needless to continue */
 		UNREF(t); /* t_unref would kill the transaction */
@@ -219,6 +231,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 				/* Either t_continue() has already been
 				* called or the branch has already timed out.
 				* Needless to continue. */
+				t->flags &= ~T_ASYNC_SUSPENDED;
 				UNLOCK_ASYNC_CONTINUE(t);
 				UNREF(t); /* t_unref would kill the transaction */
 				return 1;
@@ -298,7 +311,13 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		LM_DBG("continuing from a suspended reply"
 				" - resetting the suspend branch flag\n");
 
+		if (t->uac[branch].reply) {
 		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
+                } else {
+			LM_WARN("no reply in t_continue for branch. not much we can do\n");
+			return 0;
+		}
+                
 		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
 
 		faked_env( t, t->uac[branch].reply, 1);
@@ -438,12 +457,14 @@ done:
 		t->uac[branch].reply = 0;
 	}
 
-        t->flags &= ~T_ASYNC_SUSPENDED;   /*This transaction is no longer suspended so unsetting the SUSPEND flag*/
+	/*This transaction is no longer suspended so unsetting the SUSPEND flag*/
+	t->flags &= ~T_ASYNC_SUSPENDED;
 
 
 	return 0;
 
 kill_trans:
+	t->flags &= ~T_ASYNC_SUSPENDED;
 	/* The script has hopefully set the error code. If not,
 	 * let us reply with a default error. */
 	if ((kill_transaction_unsafe(t,

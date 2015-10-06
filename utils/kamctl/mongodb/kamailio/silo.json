@@ -1,0 +1,71 @@
+{
+  "name": "silo",
+  "version": 8,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "src_addr": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "dst_addr": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "inc_time": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "exp_time": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "snd_time": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "ctype": {
+      "type": "string",
+      "default": "text/plain",
+      "null": false
+    },
+    "body": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "extra_hdrs": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "callid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "status": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

@@ -55,8 +55,6 @@ static char* profiles_wv_s = NULL;
 static char* profiles_nv_s = NULL;
 int detect_spirals = 1;
 str dlg_extra_hdrs = {NULL, 0};
-int initial_cbs_inscript = 1;
-
 str dlg_bridge_controller = str_init("sip:controller@kamailio.org");
 
 str ruri_pvar_param = str_init("$ru");
@@ -792,7 +790,7 @@ static int w_dlg_terminate(struct sip_msg *msg, char *side, char *r) {
         }
     }
 
-    dlg = get_current_dialog(msg);
+    dlg = dlg_get_msg_dialog(msg);
     //dlg_get_ctx_dialog();
     if (!dlg) {
         LM_DBG("Unable to find dialog for terminate\n");

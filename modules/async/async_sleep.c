@@ -141,7 +141,7 @@ int async_sleep(struct sip_msg* msg, int seconds, cfg_action_t *act)
 	ai = (async_item_t*)shm_malloc(sizeof(async_item_t));
 	if(ai==NULL)
 	{
-		LM_ERR("no more shm\n");
+		LM_ERR("no more shm memory\n");
 		return -1;
 	}
 	memset(ai, 0, sizeof(async_item_t));
@@ -149,7 +149,7 @@ int async_sleep(struct sip_msg* msg, int seconds, cfg_action_t *act)
 	ai->act = act;
 	if(tmb.t_suspend(msg, &ai->tindex, &ai->tlabel)<0)
 	{
-		LM_ERR("failed to suppend the processing\n");
+		LM_ERR("failed to suspend the processing\n");
 		shm_free(ai);
 		return -1;
 	}
@@ -239,13 +239,13 @@ int async_send_task(sip_msg_t* msg, cfg_action_t *act)
 	at = (async_task_t*)shm_malloc(dsize);
 	if(at==NULL)
 	{
-		LM_ERR("no more shm\n");
+		LM_ERR("no more shm memory\n");
 		return -1;
 	}
 	memset(at, 0, dsize);
 	if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
 	{
-		LM_ERR("failed to suppend the processing\n");
+		LM_ERR("failed to suspend the processing\n");
 		shm_free(at);
 		return -1;
 	}

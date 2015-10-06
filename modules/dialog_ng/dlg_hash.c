@@ -17,6 +17,7 @@
 #include "dlg_profile.h"
 #include "dlg_handlers.h"
 #include "dlg_db_handler.h"
+#include <execinfo.h>
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
@@ -68,6 +69,24 @@ static int dlg_hash_size_out = 4096;
 			destroy_dlg(_dlg);\
 		}\
 	}while(0)
+
+inline static int backtrace2str(char* buf, int size)
+{
+        void* bt[32];
+        int bt_size, i;
+        char** bt_strs;
+
+        bt_size=backtrace(bt, sizeof(bt)/sizeof(bt[0]));
+        bt_strs=backtrace_symbols(bt, bt_size);
+        if (bt_strs){
+                /*if (bt_size>16) bt_size=16;*/ /* go up only 12 entries */
+                for (i=0; i< bt_size; i++){
+                        /* try to isolate only the function name*/
+                        LM_DBG("BACKTRACE: %s\n", bt_strs[i]);
+                }
+        }
+        return 0;
+}
 
 /*!
  * \brief Initialize the global dialog table
@@ -197,9 +216,7 @@ inline void destroy_dlg(struct dlg_cell *dlg) {
     LM_DBG("About to run dlg callback for destroy\n");
     run_dlg_callbacks(DLGCB_DESTROY, dlg, NULL, NULL, DLG_DIR_NONE, 0);
     LM_DBG("DONE: About to run dlg callback for destroy\n");
-    if (dlg == get_current_dlg_pointer())
-        reset_current_dlg_pointer();
-
+    
     if (dlg->cbs.first)
         destroy_dlg_callbacks_list(dlg->cbs.first);
 
@@ -468,14 +485,14 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
  * \param to_tag - dialog to_tag
  * \return created dlg_out structure on success, NULL otherwise
  */
-struct dlg_cell_out* build_new_dlg_out(struct dlg_cell *dlg, str* to_uri, str* to_tag) {
+struct dlg_cell_out* build_new_dlg_out(struct dlg_cell *dlg, str* to_uri, str* to_tag, str* branch) {
 
     struct dlg_cell_out *dlg_out;
     int len;
     char *p;
 
     //len = sizeof (struct dlg_cell_out) +dlg->did.len + to_tag->len + to_uri->len;
-    len = sizeof (struct dlg_cell_out) +to_tag->len + to_uri->len;
+    len = sizeof (struct dlg_cell_out) +to_tag->len + to_uri->len + branch->len;
 
     dlg_out = (struct dlg_cell_out*) shm_malloc(len);
     if (dlg_out == 0) {
@@ -489,10 +506,12 @@ struct dlg_cell_out* build_new_dlg_out(struct dlg_cell *dlg, str* to_uri, str* t
 
     p = (char*) (dlg_out + 1);
 
-    //dlg_out->did.s = p;
-    //dlg_out->did.len = dlg->did.len;
-    //memcpy(p, dlg->did.s, dlg->did.len);
-    //p += dlg->did.len;
+    if (branch->len > 0) {
+        dlg_out->branch.s = p;
+        dlg_out->branch.len = branch->len;
+        memcpy(p, branch->s, branch->len);
+        p += branch->len;
+    }
 
     dlg_out->to_uri.s = p;
     dlg_out->to_uri.len = to_uri->len;
@@ -697,61 +716,51 @@ int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq, str *to_
 
         //compare the to_tag passed parameter to all the dlg_out to_tag entry of the dlg parameter  (There could be multiple)
         while (dlg_out) {
-            LM_DBG("Searching out dialog with to_tag '%.*s' (looking for '%.*s')\n", dlg_out->to_tag.len, dlg_out->to_tag.s, to_tag->len, to_tag->s);
 
             if (dlg_out->to_tag.len == to_tag->len && memcmp(dlg_out->to_tag.s, to_tag->s, dlg_out->to_tag.len) == 0) {
                 //this parameter matches we have found the dlg_out to update the cseq
 
                 if (leg == DLG_CALLER_LEG) {
-                    LM_DBG("Update Caller\n");
                     //update caller cseq
                     if (dlg_out->caller_cseq.s) {
-                        if (dlg_out->caller_cseq.len != cseq->len) {
+                        if (dlg_out->caller_cseq.len < cseq->len) {
                             shm_free(dlg_out->caller_cseq.s);
                             dlg_out->caller_cseq.s = (char*) shm_malloc(cseq->len);
                             if (dlg_out->caller_cseq.s == NULL)
                                 goto error;
                             dlg_out->caller_cseq.len = cseq->len;
+                            memcpy(dlg_out->caller_cseq.s, cseq->s, cseq->len);
                         }
-                        LM_DBG("Updating CSeq...\n");
-                        memcpy(dlg_out->caller_cseq.s, cseq->s, cseq->len);
-                        LM_DBG("CSeq is now '%.*s' (%p)\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s, dlg_out->caller_cseq.s);
                     } else {
                         dlg_out->caller_cseq.s = (char*) shm_malloc(cseq->len);
                         if (dlg_out->caller_cseq.s == NULL)
                             goto error;
 
                         dlg_out->caller_cseq.len = cseq->len;
-                        LM_DBG("Updating CSeq...\n");
                         memcpy(dlg_out->caller_cseq.s, cseq->s, cseq->len);
-                        LM_DBG("CSeq is now '%.*s' (%p)\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s, dlg_out->caller_cseq.s);
                     }
+
                 } else if (leg == DLG_CALLEE_LEG) {
-                    LM_DBG("Update Callee\n");
                     //update callee cseq
                     if (dlg_out->callee_cseq.s) {
-                        if (dlg_out->callee_cseq.len != cseq->len) {
+                        if (dlg_out->callee_cseq.len < cseq->len) {
                             shm_free(dlg_out->callee_cseq.s);
                             dlg_out->callee_cseq.s = (char*) shm_malloc(cseq->len);
                             if (dlg_out->callee_cseq.s == NULL)
                                 goto error;
 
                             dlg_out->callee_cseq.len = cseq->len;
+                            memcpy(dlg_out->callee_cseq.s, cseq->s, cseq->len);
                         }
-                        LM_DBG("Updating CSeq...\n");
-			memcpy(dlg_out->callee_cseq.s, cseq->s, cseq->len);
-                        LM_DBG("CSeq is now '%.*s' (%p)\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s, dlg_out->caller_cseq.s);
                     } else {
                         dlg_out->callee_cseq.s = (char*) shm_malloc(cseq->len);
                         if (dlg_out->callee_cseq.s == NULL)
                             goto error;
 
                         dlg_out->callee_cseq.len = cseq->len;
-
-                        LM_DBG("Updating CSeq...\n");
                         memcpy(dlg_out->callee_cseq.s, cseq->s, cseq->len);
-                        LM_DBG("CSeq is now '%.*s' (%p)\n", dlg_out->caller_cseq.len, dlg_out->caller_cseq.s, dlg_out->caller_cseq.s);
                     }
+
                 }
             }
             dlg_out = dlg_out->next;
@@ -862,6 +871,7 @@ struct dlg_cell * lookup_dlg(unsigned int h_entry, unsigned int h_id) {
 
     for (dlg = d_entry->first; dlg; dlg = dlg->next) {
         if (dlg->h_id == h_id) {
+//            backtrace2str(0,0);
             ref_dlg_unsafe(dlg, 1);
             dlg_unlock(d_table, d_entry);
             LM_DBG("dialog id=%u found on entry %u\n", h_id, h_entry);
@@ -883,27 +893,32 @@ not_found:
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
+ * \param mode let hash table slot locked if dialog is not found
  * \return dialog structure on success, NULL on failure
  */
 static inline struct dlg_cell * internal_get_dlg(unsigned int h_entry,
-        str *callid, str *ftag, str *ttag, unsigned int *dir) {
+        str *callid, str *ftag, str *ttag, unsigned int *dir, unsigned int mode) {
     struct dlg_cell *dlg;
-    struct dlg_entry *d_entry;
+	struct dlg_entry *d_entry;
 
-    d_entry = &(d_table->entries[h_entry]);
+	d_entry = &(d_table->entries[h_entry]);
 
-    dlg_lock(d_table, d_entry);
+	dlg_lock( d_table, d_entry);
+      
+	for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
+		/* Check callid / fromtag / totag */
+		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
+			ref_dlg_unsafe(dlg, 1);
+			dlg_unlock( d_table, d_entry);
+			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d\n",
+				callid->len, callid->s,h_entry,*dir);
+			return dlg;
+		}
+	}
 
-    for (dlg = d_entry->first; dlg; dlg = dlg->next) {
-        /* Check callid / fromtag / totag */
-        if (match_dialog(dlg, callid, ftag, ttag, dir) == 1) {
-            ref_dlg_unsafe(dlg, 1);
-            dlg_unlock(d_table, d_entry);
-            return dlg;
-        }
-    }
-
-    dlg_unlock(d_table, d_entry);
+	if(likely(mode==0)) dlg_unlock( d_table, d_entry);
+	LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
+	return 0;
 
     return 0;
 }
@@ -926,13 +941,13 @@ static inline struct dlg_cell * internal_get_dlg(unsigned int h_entry,
  */
 struct dlg_cell * get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir) {
     struct dlg_cell *dlg;
+    unsigned int he;
 
-    if ((dlg = internal_get_dlg(core_hash(callid, 0,
-            d_table->size), callid, ftag, ttag, dir)) == 0 &&
-            (dlg = internal_get_dlg(core_hash(callid, ttag->len
-            ? ttag : 0, d_table->size), callid, ftag, ttag, dir)) == 0) {
+    he = core_hash(callid, 0, d_table->size);
+    dlg = internal_get_dlg(he, callid, ftag, ttag, dir, 0);
+
+    if (dlg == 0) {
         LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
-
         return 0;
     }
     return dlg;
@@ -968,21 +983,23 @@ void link_dlg_out(struct dlg_cell *dlg, struct dlg_cell_out *dlg_out, int n) {
     LM_DBG("Done: link_dlg_out\n");
     return;
 }
-
 /*!
  * \brief Link a dialog structure
  * \param dlg dialog
  * \param n extra increments for the reference counter
+ * \param mode link in safe mode (0 - lock slot; 1 - don't)
  */
-void link_dlg(struct dlg_cell *dlg, int n) {
+void link_dlg(struct dlg_cell *dlg, int n, int mode) {
     struct dlg_entry *d_entry;
 
-    LM_DBG("Linking new dialog with h_entry: %u", dlg->h_entry);
     d_entry = &(d_table->entries[dlg->h_entry]);
 
-    dlg_lock(d_table, d_entry);
+    if (unlikely(mode == 0)) dlg_lock(d_table, d_entry);
 
-    dlg->h_id = d_entry->next_id++;
+    /* keep id 0 for special cases */
+    dlg->h_id = 1 + d_entry->next_id++;
+    if (dlg->h_id == 0) dlg->h_id = 1;
+    LM_DBG("linking dialog [%u:%u]\n", dlg->h_entry, dlg->h_id);
     if (d_entry->first == 0) {
         d_entry->first = d_entry->last = dlg;
     } else {
@@ -993,10 +1010,11 @@ void link_dlg(struct dlg_cell *dlg, int n) {
 
     ref_dlg_unsafe(dlg, 1 + n);
 
-    dlg_unlock(d_table, d_entry);
-
+    if (unlikely(mode == 0)) dlg_unlock(d_table, d_entry);
     return;
 }
+
+
 
 /*!
  * \brief Refefence a dialog with locking
@@ -1011,9 +1029,11 @@ void ref_dlg(struct dlg_cell *dlg, unsigned int cnt) {
     d_entry = &(d_table->entries[dlg->h_entry]);
 
     dlg_lock(d_table, d_entry);
+//    backtrace2str(0, 0);
     ref_dlg_unsafe(dlg, cnt);
     dlg_unlock(d_table, d_entry);
 }
+
 
 /*!
  * \brief Unreference a dialog with locking
@@ -1028,6 +1048,7 @@ void unref_dlg(struct dlg_cell *dlg, unsigned int cnt) {
     d_entry = &(d_table->entries[dlg->h_entry]);
 
     dlg_lock(d_table, d_entry);
+//    backtrace2str(0, 0);
     unref_dlg_unsafe(dlg, cnt, d_entry);
     dlg_unlock(d_table, d_entry);
 }
@@ -1062,8 +1083,6 @@ static inline void log_next_state_dlg(const int event, const struct dlg_cell * d
 void next_state_dlg(struct dlg_cell *dlg, int event,
         int *old_state, int *new_state, int *unref, str * to_tag) {
     struct dlg_entry *d_entry;
-    
-
 
     d_entry = &(d_table->entries[dlg->h_entry]);
 
@@ -1084,27 +1103,28 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
             switch (dlg->state) {
                 case DLG_STATE_UNCONFIRMED:
                 case DLG_STATE_EARLY:
-		    if (to_tag) {
-                        LM_DBG("Going to check if there is another active branch - we only change state to DELETED if there are no other active branches\n");
-                        while (dlg_out) {
-                            if (dlg_out->to_tag.len != to_tag->len || memcmp(dlg_out->to_tag.s, to_tag->s, dlg_out->to_tag.len) != 0) {
-				if(dlg_out->deleted != 1) {
-				    LM_DBG("Found a dlg_out that is not for this event and is not in state deleted, therefore there is another active branch\n");
-				    delete = 0;
-                                    //we should delete this dlg_out tho...
-                                    dlg_out->deleted=1;
-				}
-                            }
-                            dlg_out = dlg_out->next;
-                        }
-                    } 
-		    if(delete) {
-			dlg->state = DLG_STATE_DELETED;
-			unref_dlg_unsafe(dlg, 1, d_entry);
-			*unref = 1;
-		    }
+//		    if (to_tag) {
+//                        LM_DBG("Going to check if there is another active branch - we only change state to DELETED if there are no other active branches\n");
+//                        while (dlg_out) {
+//                            if (dlg_out->to_tag.len == to_tag->len && memcmp(dlg_out->to_tag.s, to_tag->s, dlg_out->to_tag.len) == 0) {
+//                                dlg_out->deleted=1;
+//                            } else {
+//                                if (dlg_out->deleted != 1) {
+//                                    LM_DBG("Found a dlg_out (to-tag: [%.*s]) that is not for this event and is not in state deleted, therefore there is another active branch\n", to_tag->len, to_tag->s);
+//                                    delete = 0;
+//                                }
+//                            }
+//                            dlg_out = dlg_out->next;
+//                        }
+//                    }
+                    if (delete) {
+                        dlg->state = DLG_STATE_DELETED;
+                        unref_dlg_unsafe(dlg, 1, d_entry);
+                        *unref = 1;
+                    }
                     break;
                 case DLG_STATE_CONFIRMED:
+                case DLG_STATE_CONFIRMED_NA:
                     unref_dlg_unsafe(dlg, 1, d_entry);
                     break;
                 case DLG_STATE_DELETED:
@@ -1128,18 +1148,6 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
             switch (dlg->state) {
                 case DLG_STATE_UNCONFIRMED:
                 case DLG_STATE_EARLY:
-		    if (to_tag) {
-                        LM_DBG("Going to check if there is another active branch - we only change state to DELETED if there are no other active branches\n");
-                        while (dlg_out) {
-                            if (dlg_out->to_tag.len != to_tag->len || memcmp(dlg_out->to_tag.s, to_tag->s, dlg_out->to_tag.len) != 0) {
-				if(dlg_out->deleted != 1) {
-				    LM_DBG("Found a dlg_out that is not for this event and is not in state deleted, therefore there is another active branch\n");
-				    delete = 0;
-				}
-                            }
-                            dlg_out = dlg_out->next;
-                        }
-                    } 
 		    if(delete) {
 			dlg->state = DLG_STATE_DELETED;
 			*unref = 1;
@@ -1163,11 +1171,10 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
                     ref_dlg_unsafe(dlg, 1);
                 case DLG_STATE_UNCONFIRMED:
                 case DLG_STATE_EARLY:
-                    dlg->state = DLG_STATE_CONFIRMED;
-                    //TODO: check that the callbacks for confirmed are run
+                    dlg->state = DLG_STATE_CONFIRMED_NA;
                     break;
+                case DLG_STATE_CONFIRMED_NA:
                 case DLG_STATE_CONFIRMED:
-                    //check the to_tag passed parameter exists
                     if (to_tag) {
                         //compare the to_tag passed parameter to the dlg_out to_tag entry of the dlg parameter  (There should be only 1 dlg_out entry)
 
@@ -1191,19 +1198,13 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
                             //The parameter does not match so this is a concurrently confirmed call
                             //dlg->state = DLG_STATE_CONCURRENTLY_CONFIRMED;
                         }
-                    } else {
-                        //to_tag parameter does not exist so break
-                        break;
                     }
+                    break;
                 case DLG_STATE_CONCURRENTLY_CONFIRMED:
-
                     //check the to_tag passed parameter exists
-
                     if (to_tag) {
-
                         //compare the to_tag passed parameter to all the dlg_out to_tag entry of the dlg parameter  (There could be multiple)
                         while (dlg_out) {
-
                             if (dlg_out->to_tag.len == to_tag->len && memcmp(dlg_out->to_tag.s, to_tag->s, dlg_out->to_tag.len) == 0) {
                                 //this parameter matches the existing dlg_out and is therefore a retransmission
                                 found = 1;
@@ -1214,12 +1215,10 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
                             //The parameter does not match so this is another concurrently confirmed call (we would have breaked by now if it matched)
                             dlg->state = DLG_STATE_CONCURRENTLY_CONFIRMED;
                         }
-
                     } else {
                         //to_tag parameter does not exist so break
                         break;
                     }
-
                     break;
                 default:
                     log_next_state_dlg(event, dlg);
@@ -1227,6 +1226,9 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
             break;
         case DLG_EVENT_REQACK:
             switch (dlg->state) {
+                case DLG_STATE_CONFIRMED_NA:
+                    dlg->state = DLG_STATE_CONFIRMED;
+                    break;
                 case DLG_STATE_CONFIRMED:
                     break;
                 case DLG_STATE_DELETED:
@@ -1248,6 +1250,8 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
                 default:
                     log_next_state_dlg(event, dlg);
             }
+            break;
+
             break;
         case DLG_EVENT_REQPRACK:
             switch (dlg->state) {
@@ -1276,6 +1280,13 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
                     dlg->from_tag.len, dlg->from_tag.s);
     }
     *new_state = dlg->state;
+    
+    /* remove the dialog from profiles when is not no longer active */
+    if (*new_state == DLG_STATE_DELETED && dlg->profile_links != NULL
+            && *old_state != *new_state) {
+        destroy_linkers(dlg->profile_links);
+        dlg->profile_links = NULL;
+    }
 
     dlg_unlock(d_table, d_entry);
 
@@ -1758,6 +1769,53 @@ error:
 }
 
 /*!
+ * \brief Search dialog that corresponds to CallId, From Tag and To Tag
+ *
+ * Get dialog that correspond to CallId, From Tag and To Tag.
+ * See RFC 3261, paragraph 4. Overview of Operation:
+ * "The combination of the To tag, From tag, and Call-ID completely
+ * defines a peer-to-peer SIP relationship between [two UAs] and is
+ * referred to as a dialog."
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * If the dialog is not found, the hash slot is left locked, to allow
+ * linking the structure of a new dialog.
+ * \param callid callid
+ * \param ftag from tag
+ * \param ttag to tag
+ * \param dir direction
+ * \return dialog structure on success, NULL on failure (and slot locked)
+ */
+dlg_cell_t* search_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
+{
+	struct dlg_cell *dlg;
+	unsigned int he;
+
+	he = core_hash(callid, 0, d_table->size);
+	dlg = internal_get_dlg(he, callid, ftag, ttag, dir, 1);
+
+	if (dlg == 0) {
+		LM_DBG("dialog with callid='%.*s' not found\n", callid->len, callid->s);
+		return 0;
+	}
+	return dlg;
+}
+
+/*!
+ * \brief Release hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_release(str *callid)
+{
+	unsigned int he;
+	struct dlg_entry *d_entry;
+
+	he = core_hash(callid, 0, d_table->size);
+	d_entry = &(d_table->entries[he]);
+	dlg_unlock(d_table, d_entry);
+}
+
+/*!
  * \brief decrement dialog ref counter by 1
  * \see dlg_unref
  * \param dlg dialog
@@ -1810,3 +1868,22 @@ char* state_to_char(unsigned int state) {
 		return "Unknown";
 	}
 }
+
+/*!
+ * \brief Search a dialog in the global list by iuid
+ *
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * \param diuid internal unique id per dialog
+ * \return dialog structure on success, NULL on failure
+ */
+dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
+{
+	if(diuid==NULL)
+		return NULL;
+	if(diuid->h_id==0)
+		return NULL;
+	/* dlg ref counter is increased by next line */
+	return lookup_dlg(diuid->h_entry, diuid->h_id);
+}
+

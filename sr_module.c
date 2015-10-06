@@ -459,6 +459,8 @@ int load_module(char* mod_path)
 	int new_dlflags;
 	int retries;
 	int path_type;
+	str expref;
+	char exbuf[64];
 
 #ifndef RTLD_NOW
 /* for openbsd */
@@ -611,9 +613,24 @@ reload:
 		}
 	}
 	exp = (union module_exports_u*)dlsym(handle, DLSYM_PREFIX "exports");
-	if ( (error =(char*)dlerror())!=0 ){
-		LM_ERR("%s\n", error);
-		goto error1;
+	if(exp==NULL) {
+		/* 'exports' structure not found, look up for '_modulename_exports' */
+		mdir = strrchr(mod_path, '/');
+		if (!mdir) {
+			expref.s = mod_path;
+		} else {
+			expref.s = mdir+1;
+		}
+		expref.len = strlen(expref.s);
+		if(expref.len>3 && strcmp(expref.s+expref.len-3, ".so")==0)
+			expref.len -= 3;
+		snprintf(exbuf, 62, DLSYM_PREFIX "_%.*s_exports", expref.len, expref.s);
+		exp = (union module_exports_u*)dlsym(handle, exbuf);
+		LM_DBG("looking up exports with name: %s\n", exbuf);
+		if ( (error =(char*)dlerror())!=0 ){
+			LM_ERR("%s\n", error);
+			goto error1;
+		}
 	}
 	/* hack to allow for kamailio style dlflags inside exports */
 	if (*mod_if_ver == 1) {

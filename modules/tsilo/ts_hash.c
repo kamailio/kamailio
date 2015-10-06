@@ -34,6 +34,7 @@
 #include "../../ut.h"
 #include "../../hashes.h"
 #include "../../lib/kmi/mi.h"
+#include "../../lib/kcore/statistics.h"
 #include "ts_hash.h"
 #include "ts_handlers.h"
 
@@ -256,6 +257,10 @@ int insert_ts_urecord(str* ruri, ts_urecord_t** _r)
 	}
 	entry->n++;
 	(*_r)->entry = entry;
+
+	update_stat(stored_ruris, 1);
+	update_stat(total_ruris, 1);
+
 	LM_DBG("urecord entry %p",entry);
 	return 0;
 }
@@ -281,6 +286,8 @@ void remove_ts_urecord(ts_urecord_t* _r)
                 entry->first = entry->last = NULL;
 	}
 
+	update_stat(stored_ruris, -1);
+
 	entry->n--;
 	free_ts_urecord(_r);
 
@@ -297,7 +304,7 @@ void remove_ts_urecord(ts_urecord_t* _r)
 int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord* _r)
 {
 	ts_transaction_t *ptr, *prev;
-    ts_transaction_t* ts;
+	ts_transaction_t* ts;
 
 	unsigned int tindex;
 	unsigned int tlabel;
@@ -318,7 +325,7 @@ int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord
 	}
 
 	if ( (ts=new_ts_transaction(tindex, tlabel) ) == 0) {
-		LM_ERR("failed to create new contact\n");
+		LM_ERR("failed to create new transaction\n");
 		return -1;
 	}
 
@@ -335,6 +342,10 @@ int insert_ts_transaction(struct cell* t, struct sip_msg* msg, struct ts_urecord
 	if (ts_set_tm_callbacks(t, msg, ts) < 0) {
 		LM_ERR("failed to set transaction %d:%d callbacks\n", tindex, tlabel);
 	}
+
+	update_stat(stored_transactions, 1);
+	update_stat(total_transactions, 1);
+
 	return 0;
 }
 /*!
@@ -396,8 +407,10 @@ void remove_ts_transaction(ts_transaction_t* ts_t)
 	if (ts_t->prev)
 		ts_t->prev->next = ts_t->next;
 
-	if ((ts_t->prev == NULL) && (ts_t->next == NULL))
-		ts_t->urecord->transactions = NULL;
+	if (ts_t->urecord->transactions == ts_t)
+		ts_t->urecord->transactions = ts_t->next;
+
+	update_stat(stored_transactions, -1);
 
 	free_ts_transaction((void*)ts_t);
 

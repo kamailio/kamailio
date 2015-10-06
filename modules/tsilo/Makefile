@@ -8,7 +8,11 @@ include ../../Makefile.defs
 auto_gen=
 NAME=tsilo.so
 LIBS=
+
 DEFS+=-DKAMAILIO_MOD_INTERFACE
+
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 
 ifeq ($(INSTALL_FLAVOUR),kamailio)
 DEFS+= -DWITH_EVENT_LOCAL_REQUEST

@@ -355,6 +355,12 @@ void destroy_dlg(struct dlg_cell *dlg)
 	if (dlg->tag[DLG_CALLEE_LEG].s)
 		shm_free(dlg->tag[DLG_CALLEE_LEG].s);
 
+	if (dlg->contact[DLG_CALLER_LEG].s)
+		shm_free(dlg->contact[DLG_CALLER_LEG].s);
+
+	if (dlg->contact[DLG_CALLEE_LEG].s)
+		shm_free(dlg->contact[DLG_CALLEE_LEG].s);
+
 	if (dlg->cseq[DLG_CALLER_LEG].s)
 		shm_free(dlg->cseq[DLG_CALLER_LEG].s);
 
@@ -493,7 +499,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 
 	if(dlg->tag[leg].s)
 		shm_free(dlg->tag[leg].s);
-	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len + contact->len );
+	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len );
 
 	if(dlg->cseq[leg].s) {
 		if (dlg->cseq[leg].len < cs.len) {
@@ -504,7 +510,17 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 		dlg->cseq[leg].s = (char*)shm_malloc( cs.len );
 	}
 
-	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL) {
+	if(dlg->contact[leg].s) {
+		if (dlg->contact[leg].len < contact->len) {
+			shm_free(dlg->contact[leg].s);
+			dlg->contact[leg].s = (char*)shm_malloc(contact->len);
+		}
+	} else {
+		dlg->contact[leg].s = (char*)shm_malloc( contact->len );
+	}
+
+	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL
+			|| dlg->contact[leg].s==NULL) {
 		LM_ERR("no more shm mem\n");
 		if (dlg->tag[leg].s)
 		{
@@ -516,6 +532,12 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 			shm_free(dlg->cseq[leg].s);
 			dlg->cseq[leg].s = NULL;
 		}
+		if (dlg->contact[leg].s)
+		{
+			shm_free(dlg->contact[leg].s);
+			dlg->contact[leg].s = NULL;
+		}
+
 		return -1;
 	}
 	p = dlg->tag[leg].s;
@@ -524,11 +546,6 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 	dlg->tag[leg].len = tag->len;
 	memcpy( p, tag->s, tag->len);
 	p += tag->len;
-	/* contact */
-	dlg->contact[leg].s = p;
-	dlg->contact[leg].len = contact->len;
-	memcpy( p, contact->s, contact->len);
-	p += contact->len;
 	/* rr */
 	if (rr->len) {
 		dlg->route_set[leg].s = p;
@@ -536,6 +553,9 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 		memcpy( p, rr->s, rr->len);
 	}
 
+	/* contact */
+	dlg->contact[leg].len = contact->len;
+	memcpy(dlg->contact[leg].s, contact->s, contact->len);
 	/* cseq */
 	dlg->cseq[leg].len = cs.len;
 	memcpy( dlg->cseq[leg].s, cs.s, cs.len);
@@ -576,6 +596,55 @@ int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq)
 
 	LM_DBG("cseq of leg[%d] is %.*s\n", leg,
 			dlg->cseq[leg].len, dlg->cseq[leg].s);
+	dlg_unlock(d_table, d_entry);
+	return 0;
+error:
+	dlg_unlock(d_table, d_entry);
+	LM_ERR("not more shm mem\n");
+	return -1;
+}
+
+
+/*!
+ * \brief Update or set the Contact for an existing dialog
+ * \param dlg dialog
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \param ct Contact of caller or callee
+ * \return 0 on success, -1 on failure
+ */
+int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *ct)
+{
+	dlg_entry_t *d_entry;
+
+	d_entry = &(d_table->entries[dlg->h_entry]);
+
+	dlg_lock(d_table, d_entry);
+
+	if ( dlg->contact[leg].s ) {
+		if(dlg->contact[leg].len == ct->len
+				&& memcmp(dlg->contact[leg].s, ct->s, ct->len)==0) {
+			LM_DBG("same contact for leg[%d] - [%.*s]\n", leg,
+				dlg->contact[leg].len, dlg->contact[leg].s);
+			goto done;
+		}
+		if (dlg->contact[leg].len < ct->len) {
+			shm_free(dlg->contact[leg].s);
+			dlg->contact[leg].s = (char*)shm_malloc(ct->len);
+			if (dlg->contact[leg].s==NULL)
+				goto error;
+		}
+	} else {
+		dlg->contact[leg].s = (char*)shm_malloc(ct->len);
+		if (dlg->contact[leg].s==NULL)
+			goto error;
+	}
+
+	memcpy( dlg->contact[leg].s, ct->s, ct->len );
+	dlg->contact[leg].len = ct->len;
+
+	LM_DBG("contact of leg[%d] is %.*s\n", leg,
+			dlg->contact[leg].len, dlg->contact[leg].s);
+done:
 	dlg_unlock(d_table, d_entry);
 	return 0;
 error:
@@ -651,7 +720,7 @@ dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
- * \param mode let hash table slot locked if dialog is not found
+ * \param mode let hash table slot locked or not
  * \return dialog structure on success, NULL on failure
  */
 static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
@@ -669,7 +738,7 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 		/* Check callid / fromtag / totag */
 		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
 			ref_dlg_unsafe(dlg, 1);
-			dlg_unlock( d_table, d_entry);
+			if(likely(mode==0)) dlg_unlock( d_table, d_entry);
 			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d\n",
 				callid->len, callid->s,h_entry,*dir);
 			return dlg;
@@ -725,15 +794,15 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
  * referred to as a dialog."
  * Note that the caller is responsible for decrementing (or reusing)
  * the reference counter by one again if a dialog has been found.
- * If the dialog is not found, the hash slot is left locked, to allow
- * linking the structure of a new dialog.
+ * Important: the hash slot is left locked (e.g., needed to allow
+ * linking the structure of a new dialog).
  * \param callid callid
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
  * \return dialog structure on success, NULL on failure (and slot locked)
  */
-dlg_cell_t* search_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
+dlg_cell_t* dlg_search( str *callid, str *ftag, str *ttag, unsigned int *dir)
 {
 	struct dlg_cell *dlg;
 	unsigned int he;
@@ -750,6 +819,21 @@ dlg_cell_t* search_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 
 
 /*!
+ * \brief Lock hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_lock(str *callid)
+{
+	unsigned int he;
+	struct dlg_entry *d_entry;
+
+	he = core_hash(callid, 0, d_table->size);
+	d_entry = &(d_table->entries[he]);
+	dlg_lock(d_table, d_entry);
+}
+
+
+/*!
  * \brief Release hash table slot by call-id
  * \param callid call-id value
  */
@@ -762,7 +846,6 @@ void dlg_hash_release(str *callid)
 	d_entry = &(d_table->entries[he]);
 	dlg_unlock(d_table, d_entry);
 }
-
 
 
 /*!

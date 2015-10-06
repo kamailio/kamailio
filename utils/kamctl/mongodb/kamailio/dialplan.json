@@ -1,0 +1,51 @@
+{
+  "name": "dialplan",
+  "version": 2,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "dpid": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "pr": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "match_op": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "match_exp": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "match_len": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "subst_exp": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "repl_exp": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "attrs": {
+      "type": "string",
+      "default": null,
+      "null": false
+    }
+  ]
+}

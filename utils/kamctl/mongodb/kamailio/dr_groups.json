@@ -1,0 +1,31 @@
+{
+  "name": "dr_groups",
+  "version": 2,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "groupid": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

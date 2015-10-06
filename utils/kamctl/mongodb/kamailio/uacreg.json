@@ -1,0 +1,61 @@
+{
+  "name": "uacreg",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "l_uuid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "l_username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "l_domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "r_username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "r_domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "realm": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "auth_username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "auth_password": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "auth_proxy": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "expires": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

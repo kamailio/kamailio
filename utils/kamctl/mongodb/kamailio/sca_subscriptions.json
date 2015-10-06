@@ -1,0 +1,71 @@
+{
+  "name": "sca_subscriptions",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "subscriber": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "aor": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "event": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "expires": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "state": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "app_idx": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "call_id": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "from_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "to_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "record_route": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "notify_cseq": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "subscribe_cseq": {
+      "type": "int",
+      "default": null,
+      "null": false
+    }
+  ]
+}

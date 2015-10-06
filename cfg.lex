@@ -400,6 +400,7 @@ SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
 SOCKET_WORKERS socket_workers
 ASYNC_WORKERS async_workers
+ASYNC_USLEEP async_usleep
 CHECK_VIA	check_via
 PHONE2TEL	phone2tel
 MEMLOG		"memlog"|"mem_log"
@@ -630,6 +631,7 @@ IMPORTFILE      "import_file"
 <EVRTNAME>{EVENT_RT_NAME}	{ count();
 								addstr(&s_buf, yytext, yyleng);
 								yylval.strval=s_buf.s;
+								routename=s_buf.s;
 								memset(&s_buf, 0, sizeof(s_buf));
 								return EVENT_RT_NAME; }
 <EVRTNAME>{RBRACK}          { count();
@@ -809,6 +811,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{SOCKET_WORKERS}	{ count(); yylval.strval=yytext; return SOCKET_WORKERS; }
 <INITIAL>{ASYNC_WORKERS}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS; }
+<INITIAL>{ASYNC_USLEEP}	{ count(); yylval.strval=yytext; return ASYNC_USLEEP; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{PHONE2TEL}	{ count(); yylval.strval=yytext; return PHONE2TEL; }
 <INITIAL>{MEMLOG}	{ count(); yylval.strval=yytext; return MEMLOG; }

@@ -1,0 +1,51 @@
+{
+  "name": "rls_presentity",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "rlsubs_did": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "resource_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "content_type": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "presence_state": {
+      "type": "text",
+      "default": null,
+      "null": false
+    },
+    "expires": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "updated": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "auth_state": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "reason": {
+      "type": "string",
+      "default": null,
+      "null": false
+    }
+  ]
+}

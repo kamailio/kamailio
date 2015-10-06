@@ -1,0 +1,16 @@
+{
+  "name": "domain_name",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

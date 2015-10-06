@@ -1,0 +1,31 @@
+{
+  "name": "cpl",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "cpl_xml": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "cpl_bin": {
+      "type": "text",
+      "default": null,
+      "null": true
+    }
+  ]
+}

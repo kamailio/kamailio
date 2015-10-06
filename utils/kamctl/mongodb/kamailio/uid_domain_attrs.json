@@ -1,0 +1,36 @@
+{
+  "name": "uid_domain_attrs",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "did": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "name": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "type": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "value": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

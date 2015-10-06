@@ -28,7 +28,7 @@
 #include "../../mod_fix.h"
 #include "../../route.h"
 #include "../../data_lump.h"
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../lib/kcore/statistics.h"
 #include "../../dset.h"
 #include "../../script_cb.h"
 #include "../../parser/msg_parser.h"
@@ -42,6 +42,7 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 	ts_transaction_t* ptr;
 
 	int res;
+	int appended;
 
 	lock_entry_by_ruri(ruri);
 
@@ -49,15 +50,18 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 
 	if (res != 0) {
 		LM_ERR("failed to retrieve record for %.*s\n", ruri->len, ruri->s);
-		 unlock_entry_by_ruri(ruri);
-		 return -1;
-        }
+		unlock_entry_by_ruri(ruri);
+		return -1;
+	}
 
 	ptr = _r->transactions;
 
 	while(ptr) {
 		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",ptr->tindex, ptr->tlabel, ruri->len, ruri->s);
-		ts_append_to(msg, ptr->tindex, ptr->tlabel, table);
+
+		appended = ts_append_to(msg, ptr->tindex, ptr->tlabel, table, ruri);
+		if (appended > 0)
+			update_stat(added_branches, appended);
 		ptr = ptr->next;
 	}
 
@@ -66,9 +70,10 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 	return 1;
 }
 
-int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table) {
+int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri) {
 	struct cell     *t;
 	struct sip_msg *orig_msg;
+	int ret;
 
 	if(_tmb.t_lookup_ident(&t, tindex, tlabel) < 0)
 	{
@@ -76,12 +81,27 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table) {
 				tindex, tlabel);
 		return -1;
 	}
+	if (t->flags & T_CANCELED) {
+		LM_DBG("trasaction [%u:%u] was cancelled\n",
+				tindex, tlabel);
+		return -2;
+	}
+	if (t->uas.status >= 200) {
+		LM_DBG("trasaction [%u:%u] sent out a final response already - %d\n",
+				tindex, tlabel, t->uas.status);
+		return -3;
+	}
 
 	orig_msg = t->uas.request;
 
-	if (_regapi.lookup_to_dset(orig_msg, table, NULL) != 1) {
-		LM_DBG("transaction %u:%u: error updating dset\n", tindex, tlabel);
-		return -1;
+	if(uri==NULL || uri->s==NULL || uri->len<=0) {
+		ret = _regapi.lookup_to_dset(orig_msg, table, NULL);
+	} else {
+		ret = _regapi.lookup_to_dset(orig_msg, table, uri);
+	}
+	if(ret != 1) {
+		LM_DBG("transaction %u:%u: error updating dset (%d)\n", tindex, tlabel, ret);
+		return -4;
 	}
 
 	return _tmb.t_append_branches();

@@ -41,6 +41,7 @@
 #include "../../error.h"
 #include "../../socket_info.h"
 #include "../../pvar.h"
+#include "../../dset.h"
 #include "../../modules/usrloc/usrloc.h"
 #include "../../lib/kcore/statistics.h"
 #include "../../lib/srutils/sruid.h"
@@ -165,13 +166,13 @@ static cmd_export_t cmds[] = {
 	{"lookup_to_dset",  (cmd_function)w_lookup_to_dset,  2,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)w_registered,  1,  domain_uri_fixup, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE },
+			ANY_ROUTE },
 	{"registered",   (cmd_function)w_registered,  2,  domain_uri_fixup, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE },
+			ANY_ROUTE },
 	{"registered",   (cmd_function)w_registered3, 3,  registered_fixup, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE },
+			ANY_ROUTE },
 	{"registered",   (cmd_function)w_registered4, 4,  registered_fixup, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE },
+			ANY_ROUTE },
 	{"add_sock_hdr", (cmd_function)add_sock_hdr,  1,  fixup_str_null, 0,
 			REQUEST_ROUTE },
 	{"unregister",   (cmd_function)w_unregister,  2,  unreg_fixup, 0,
@@ -385,6 +386,8 @@ static int mod_init(void)
 	/* fix the flags */
 	sock_flag = (sock_flag!=-1)?(1<<sock_flag):0;
 	tcp_persistent_flag = (tcp_persistent_flag!=-1)?(1<<tcp_persistent_flag):0;
+
+	set_aor_case_sensitive(cfg_get(registrar, registrar_cfg, case_sensitive));
 
 	return 0;
 }

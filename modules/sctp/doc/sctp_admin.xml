@@ -194,7 +194,7 @@ modparam("sctp", "sctp_send_retries", 1)
 			features that depend on it (e.g. sctp_assoc_reuse).
 		</para>
 		<para>
-			Can be changed at runtime (sercmd sctp assoc_tracking 0), but changes
+			Can be changed at runtime (&sercmd; sctp assoc_tracking 0), but changes
 			will be allowed only if all the other features that depend on it are
 			turned off (for example it can be turned off only if first
 			sctp_assoc_reuse was turned off).

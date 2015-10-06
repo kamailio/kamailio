@@ -68,7 +68,7 @@ static int domain_init_rpc(void);
 /*
  * Module parameter variables
  */
-str db_url = str_init(DEFAULT_RODB_URL);
+str d_db_url = str_init(DEFAULT_RODB_URL);
 str domain_table = str_init(DOMAIN_TABLE); /* Name of domain table */
 str domain_attrs_table = str_init(DOMAIN_ATTRS_TABLE);
 str did_col = str_init(DID_COL);       /* Name of domain id column */
@@ -112,7 +112,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",         PARAM_STR, &db_url      },
+	{"db_url",         PARAM_STR, &d_db_url      },
 	{"domain_table",   PARAM_STR, &domain_table},
 	{"domain_attrs_table",   PARAM_STR, &domain_attrs_table},
 	{"did_col",        PARAM_STR, &did_col  },
@@ -175,14 +175,14 @@ static int mod_init(void)
     }
 
     /* Bind database */
-    if (domain_db_bind(&db_url)) {
-	LM_DBG("Usign db_url [%.*s]\n", db_url.len, db_url.s);
+    if (domain_db_bind(&d_db_url)) {
+	LM_DBG("Usign db_url [%.*s]\n", d_db_url.len, d_db_url.s);
 	LM_ERR("no database module found. Have you configure thed \"db_url\" modparam properly?\n");
 	return -1;
     }
 
     /* Check table versions */
-    if (domain_db_init(&db_url) < 0) {
+    if (domain_db_init(&d_db_url) < 0) {
 	LM_ERR("unable to open database connection\n");
 	return -1;
     }
@@ -210,9 +210,9 @@ static int mod_init(void)
 	goto error;
     }
     memset(hash_table_1, 0, sizeof(struct domain_list *) *
-	   DOM_HASH_SIZE + 1);
+	   (DOM_HASH_SIZE + 1));
     memset(hash_table_2, 0, sizeof(struct domain_list *) *
-	   DOM_HASH_SIZE + 1);
+	   (DOM_HASH_SIZE + 1));
     *hash_table = hash_table_1;
 
     /* Allocate and initialize locks */

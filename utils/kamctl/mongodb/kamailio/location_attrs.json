@@ -1,0 +1,46 @@
+{
+  "name": "location_attrs",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "ruid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "aname": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "atype": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "avalue": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "last_modified": {
+      "type": "datetime",
+      "default": "1900-01-01 00:00:01",
+      "null": false
+    }
+  ]
+}

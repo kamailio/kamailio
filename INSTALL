@@ -133,6 +133,7 @@ Requirements:
 - libunistring - for the WebSocket module
 - python and devel headers for the Python module
 - jdk and gcj for Java module
+- the jansson library for the jansson module used for JSON document handling
 
 
 OS Notes:

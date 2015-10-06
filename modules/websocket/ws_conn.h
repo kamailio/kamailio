@@ -60,6 +60,8 @@ typedef struct ws_connection
 
 	atomic_t refcnt;
 	int      run_event;
+
+	str frag_buf;
 } ws_connection_t;
 
 typedef struct

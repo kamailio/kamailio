@@ -91,6 +91,21 @@ modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title><varname>max_conn_attempts</varname> (int)</title>
+			<para>
+				Max number of connection attempts for a server. -1 will keep reconnecting
+				forever, 0 will skip any attempt to reconnect.
+			</para>
+			<example>
+				<title>Set <varname>max_conn_attempts</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("jsonrpc", "max_conn_attempts", 10)
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 		<title>Functions</title>

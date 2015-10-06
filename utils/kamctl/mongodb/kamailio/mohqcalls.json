@@ -1,0 +1,41 @@
+{
+  "name": "mohqcalls",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "mohq_id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "call_id": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "call_status": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "call_from": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "call_contact": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "call_time": {
+      "type": "datetime",
+      "default": null,
+      "null": false
+    }
+  ]
+}

@@ -51,6 +51,7 @@ script_var_t* add_var(str *name, int vtype);
 script_var_t* set_var_value(script_var_t *var, int_str *value, int flags);
 script_var_t* get_var_by_name(str *name);
 script_var_t* get_varnull_by_name(str *name);
+script_var_t* get_var_all(void);
 
 void reset_vars(void);
 void destroy_vars(void);

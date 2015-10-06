@@ -102,7 +102,7 @@ struct acc_enviroment acc_env;
 	(((_rq)->REQ_METHOD==METHOD_CANCEL) && report_cancels==0)
 
 #define is_acc_prepare_on(_rq) \
-	(is_acc_flag_set(_rq,acc_prepare_flag))
+	(acc_prepare_always || is_acc_flag_set(_rq,acc_prepare_flag))
 
 static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps );
 
@@ -615,7 +615,7 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 #endif
 
 	/* run extra acc engines */
-	acc_run_engines(req, 0, NULL);
+	acc_run_engines(ack, 0, NULL);
 	
 }
 

@@ -1,0 +1,26 @@
+{
+  "name": "globalblacklist",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "prefix": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "whitelist": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "uid_uri_attrs",
+  "version": 2,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "did": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "name": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "value": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "type": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "scheme": {
+      "type": "string",
+      "default": "sip",
+      "null": false
+    }
+  ]
+}

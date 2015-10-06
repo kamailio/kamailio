@@ -58,6 +58,8 @@ MODULE_VERSION
 
 /* Module parameter variables */
 int http_query_timeout = 4;
+int http_response_trim = 0;
+int http_response_mode = 0;
 static int forward_active = 0;
 static int   mp_max_id = 0;
 static char* mp_switch = "";
@@ -88,11 +90,14 @@ static void destroy(void);
 static int fixup_http_query_get(void** param, int param_no);
 static int fixup_free_http_query_get(void** param, int param_no);
 static int fixup_http_query_post(void** param, int param_no);
+static int fixup_http_query_post_hdr(void** param, int param_no);
 static int fixup_free_http_query_post(void** param, int param_no);
+static int fixup_free_http_query_post_hdr(void** param, int param_no);
 
 /* Wrappers for http_query to be defined later */
 static int w_http_query(struct sip_msg* _m, char* _url, char* _result);
 static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result);
+static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post, char* _hdr, char* _result);
 
 /* forward function */
 int utils_forward(struct sip_msg *msg, int id, int proto);
@@ -105,6 +110,9 @@ static cmd_export_t cmds[] = {
     {"http_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
      fixup_free_http_query_post,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+    {"http_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
+     fixup_free_http_query_post_hdr,
+     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
      fixup_free_pvar_pvar, REQUEST_ROUTE},
     {0, 0, 0, 0, 0, 0}
@@ -116,6 +124,8 @@ static param_export_t params[] = {
     {"pres_db_url", PARAM_STR, &pres_db_url},
     {"xcap_table", PARAM_STR, &xcap_table},
     {"http_query_timeout", INT_PARAM, &http_query_timeout},
+    {"http_response_trim", INT_PARAM, &http_response_trim},
+    {"http_response_mode", INT_PARAM, &http_response_mode},
     {"forward_active", INT_PARAM, &forward_active},
     {0, 0, 0}
 };
@@ -391,6 +401,32 @@ static int fixup_http_query_post(void** param, int param_no)
 }
 
 /*
+ * Fix http_query params: url (string that may contain pvars) and
+ * result (writable pvar).
+ */
+static int fixup_http_query_post_hdr(void** param, int param_no)
+{
+    if ((param_no >= 1) || (param_no <= 3)) {
+	return fixup_spve_null(param, 1);
+    }
+
+    if (param_no == 4) {
+	if (fixup_pvar_null(param, 1) != 0) {
+	    LM_ERR("failed to fixup result pvar\n");
+	    return -1;
+	}
+	if (((pv_spec_t *)(*param))->setf == NULL) {
+	    LM_ERR("result pvar is not writeble\n");
+	    return -1;
+	}
+	return 0;
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
+
+/*
  * Free http_query params.
  */
 static int fixup_free_http_query_post(void** param, int param_no)
@@ -409,18 +445,42 @@ static int fixup_free_http_query_post(void** param, int param_no)
 }
 
 /*
+ * Free http_query params.
+ */
+static int fixup_free_http_query_post_hdr(void** param, int param_no)
+{
+    if ((param_no >= 1) || (param_no <= 2)) {
+	LM_WARN("free function has not been defined for spve\n");
+	return 0;
+    }
+
+    if (param_no == 3) {
+	return fixup_free_pvar_null(param, 1);
+    }
+    
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
+
+/*
  * Wrapper for HTTP-Query (GET)
  */
 static int w_http_query(struct sip_msg* _m, char* _url, char* _result) {
-	return http_query(_m, _url, _result, NULL);
+	return http_query(_m, _url, _result, NULL, NULL);
 }
-
 
 /*
  * Wrapper for HTTP-Query (POST-Variant)
  */
 static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result) {
-	return http_query(_m, _url, _result, _post);
+	return http_query(_m, _url, _result, _post, NULL);
+}
+
+/*
+ * Wrapper for HTTP-Query (POST-Variant)
+ */
+static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post, char* _hdr, char* _result) {
+	return http_query(_m, _url, _result, _post, _hdr);
 }
 
 /*!

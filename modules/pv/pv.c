@@ -450,9 +450,13 @@ static pv_export_t mod_pvs[] = {
 
 	{ {"shv", (sizeof("shv")-1)}, PVT_OTHER, pv_get_shvar,
 		pv_set_shvar, pv_parse_shvar_name, 0, 0, 0},
-	{ {"time", (sizeof("time")-1)}, PVT_CONTEXT, pv_get_time,
+	{ {"time", (sizeof("time")-1)}, PVT_CONTEXT, pv_get_local_time,
 		0, pv_parse_time_name, 0, 0, 0},
-	{ {"timef", (sizeof("timef")-1)}, PVT_CONTEXT, pv_get_strftime,
+	{ {"timef", (sizeof("timef")-1)}, PVT_CONTEXT, pv_get_local_strftime,
+		0, pv_parse_strftime_name, 0, 0, 0},
+	{ {"utime", (sizeof("utime")-1)}, PVT_CONTEXT, pv_get_utc_time,
+		0, pv_parse_time_name, 0, 0, 0},
+	{ {"utimef", (sizeof("utimef")-1)}, PVT_CONTEXT, pv_get_utc_strftime,
 		0, pv_parse_strftime_name, 0, 0, 0},
 	{ {"TV", (sizeof("TV")-1)}, PVT_OTHER, pv_get_timeval,
 		0, pv_parse_timeval_name, 0, 0, 0},
@@ -494,6 +498,8 @@ static int w_xavp_params_explode(sip_msg_t *msg, char *pparams, char *pxname);
 static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
+static int w_var_to_xavp(sip_msg_t *msg, char *p1, char *p2);
+static int w_xavp_to_var(sip_msg_t *msg, char *p1);
 
 static int pv_init_rpc(void);
 
@@ -504,6 +510,10 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 #ifdef WITH_XAVP
 	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0, 
+		ANY_ROUTE },
+	{"pv_var_to_xavp",  (cmd_function)w_var_to_xavp, 2, 0, 0,
+		ANY_ROUTE },
+	{"pv_xavp_to_var",  (cmd_function)w_xavp_to_var, 1, 0, 0,
 		ANY_ROUTE },
 #endif
 	{"is_int", (cmd_function)is_int, 1, fixup_pvar_null, fixup_free_pvar_null,
@@ -691,6 +701,33 @@ static int is_int(struct sip_msg* msg, char* pvar, char* s2)
 	}
 
 	return -1;
+}
+
+static int w_var_to_xavp(sip_msg_t *msg, char *s1, char *s2)
+{
+	str xname, varname;
+
+	if(s1 == NULL || s2 == NULL) {
+		LM_ERR("wrong parameters\n");
+		return -1;
+	}
+
+	varname.len = strlen(s1); varname.s = s1;
+	xname.s = s2; xname.len = strlen(s2);
+	return pv_var_to_xavp(&varname, &xname);
+}
+
+static int w_xavp_to_var(sip_msg_t *msg, char *s1)
+{
+	str xname;
+
+	if(s1 == NULL) {
+		LM_ERR("wrong parameters\n");
+		return -1;
+	}
+
+	xname.s = s1; xname.len = strlen(s1);
+	return pv_xavp_to_var(&xname);
 }
 
 /**

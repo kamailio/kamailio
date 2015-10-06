@@ -1,0 +1,31 @@
+{
+  "name": "uid_global_attrs",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "name": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "type": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "value": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

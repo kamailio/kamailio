@@ -1,0 +1,56 @@
+{
+  "name": "presentity",
+  "version": 4,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "event": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "etag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "expires": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "received_time": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "body": {
+      "type": "text",
+      "default": null,
+      "null": false
+    },
+    "sender": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "priority": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

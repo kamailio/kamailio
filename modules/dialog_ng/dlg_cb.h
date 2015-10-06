@@ -70,8 +70,6 @@ typedef int (*set_dlg_variable_f)( str* callid, str* ftag, str* ttag,
 typedef str* (*get_dlg_variable_f)( str *callid, str *ftag, str *ttag,
                                     str* key);
 
-typedef struct dlg_cell* (*get_current_dlg_f)( struct sip_msg* msg);
-
 #define DLGCB_LOADED          (1<<0)
 #define DLGCB_CREATED         (1<<1)
 #define DLGCB_FAILED          (1<<2)

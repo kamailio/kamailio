@@ -55,8 +55,9 @@
 #define DLG_STATE_UNCONFIRMED  1 /*!< unconfirmed dialog */
 #define DLG_STATE_EARLY        2 /*!< early dialog */
 #define DLG_STATE_CONFIRMED    4 /*!< confirmed dialog */
-#define DLG_STATE_DELETED      5 /*!< deleted dialog */
-#define DLG_STATE_CONCURRENTLY_CONFIRMED      6 /*!< confirmed concurrent dailogs */
+#define DLG_STATE_CONFIRMED_NA 5 /*!< confirmed dialog without a ACK yet */
+#define DLG_STATE_DELETED      6 /*!< deleted dialog */
+#define DLG_STATE_CONCURRENTLY_CONFIRMED      7 /*!< confirmed concurrent dailogs */
 
 /* events for dialog processing */
 #define DLG_EVENT_TDEL         1 /*!< transaction was destroyed */
@@ -66,7 +67,8 @@
 #define DLG_EVENT_REQPRACK     5 /*!< PRACK request */
 #define DLG_EVENT_REQACK       6 /*!< ACK request */
 #define DLG_EVENT_REQBYE       7 /*!< BYE request */
-#define DLG_EVENT_REQ          8 /*!< other requests */
+#define DLG_EVENT_REQCANCEL    8 /*!< CANCEL request */
+#define DLG_EVENT_REQ          9 /*!< other requests */
 
 /* dialog flags */
 #define DLG_FLAG_NEW           (1<<0) /*!< new dialog */
@@ -77,10 +79,14 @@
 #define DLG_FLAG_CALLEEBYE     (1<<5) /*!< bye from callee */
 #define DLG_FLAG_LOCALDLG      (1<<6) /*!< local dialog, unused */
 #define DLG_FLAG_CHANGED_VARS  (1<<7) /*!< dialog-variables changed */
+#define DLG_FLAG_HASCANCEL     (1<<8) /*!< cancel was received */
 
 /* dialog-variable flags (in addition to dialog-flags) */
-#define DLG_FLAG_DEL           (1<<8) /*!< delete this var */
-#define DLG_FLAG_INSERTED      (1<<9) /*!< DLG already written to DB - could have been put in by early media or confirmed */
+#define DLG_FLAG_DEL           (1<<9) /*!< delete this var */
+#define DLG_FLAG_INSERTED      (1<<10) /*!< DLG already written to DB - could have been put in by early media or confirmed */
+#define DLG_FLAG_TM            (1<<11) /*!< dialog is set in transaction */
+#define DLG_FLAG_EXPIRED       (1<<12)/*!< dialog is expired */
+
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
@@ -88,6 +94,12 @@
 #define DLG_DIR_NONE           0 /*!< dialog has no direction */
 #define DLG_DIR_DOWNSTREAM     1 /*!< dialog has downstream direction */
 #define DLG_DIR_UPSTREAM       2 /*!< dialog has upstream direction */
+
+/*! internal unique ide per dialog */
+typedef struct dlg_iuid {
+	unsigned int         h_id;		/*!< id in the hash table entry (seq nr in slot) */
+	unsigned int         h_entry;           /*!< index of hash table entry (the slot number) */
+} dlg_iuid_t;
 
 /*! entries in the main dialog table */
 struct dlg_entry_out {
@@ -97,7 +109,7 @@ struct dlg_entry_out {
 };
 
 /*! entries in the dialog list */
-struct dlg_cell {
+typedef struct dlg_cell {
     volatile int ref; /*!< reference counter */
     struct dlg_cell *next; /*!< next entry in the list */
     struct dlg_cell *prev; /*!< previous entry in the list */
@@ -127,13 +139,14 @@ struct dlg_cell {
     struct cell *transaction; /*!< ptr to associated transaction for this dialog TM module cell ptr */
     gen_lock_t *dlg_out_entries_lock; /*!< lock for dialog_out linked list */
     unsigned int from_rr_nb; /*!< information from record routing */
-};
+} dlg_cell_t;
 
 struct dlg_cell_out {
     struct dlg_cell_out *next; /*!< next entry in the list */
     struct dlg_cell_out *prev; /*!< previous entry in the list */
     unsigned int h_id; /*!< id of the hash table entry */
     unsigned int h_entry; /*!< number of hash entry */
+    str branch;
     str did;
     str to_uri; /*!< to uri */
     str to_tag; /*!< to tags of callee*/
@@ -147,27 +160,24 @@ struct dlg_cell_out {
 };
 
 /*! entries in the main dialog table */
-struct dlg_entry {
+typedef struct dlg_entry {
     struct dlg_cell *first; /*!< dialog list */
     struct dlg_cell *last; /*!< optimisation, end of the dialog list */
     unsigned int next_id; /*!< next id */
     unsigned int lock_idx; /*!< lock index */
-};
+} dlg_entry_t;
 
 /*! main dialog table */
-struct dlg_table {
+typedef struct dlg_table {
     unsigned int size; /*!< size of the dialog table */
     struct dlg_entry *entries; /*!< dialog hash table */
     unsigned int locks_no; /*!< number of locks */
     gen_lock_set_t *locks; /*!< lock table */
-};
+} dlg_table_t;
 
 
 /*! global dialog table */
 extern struct dlg_table *d_table;
-/*! point to the current dialog */
-extern struct dlg_cell *current_dlg_pointer;
-
 
 /*!
  * \brief Set a dialog lock
@@ -286,6 +296,15 @@ int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *contact, st
  */
 int dlg_set_toroute(struct dlg_cell *dlg, str *route);
 
+/*!
+ * \brief Search and return dialog in the global list by iuid
+ *
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * \param diuid internal unique id per dialog
+ * \return dialog structure on success, NULL on failure
+ */
+dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid);
 
 /*!
  * \brief Lookup a dialog in the global list
@@ -298,6 +317,31 @@ int dlg_set_toroute(struct dlg_cell *dlg, str *route);
  */
 struct dlg_cell* lookup_dlg(unsigned int h_entry, unsigned int h_id);
 
+/*!
+ * \brief Search dialog that corresponds to CallId, From Tag and To Tag
+ *
+ * Get dialog that correspond to CallId, From Tag and To Tag.
+ * See RFC 3261, paragraph 4. Overview of Operation:
+ * "The combination of the To tag, From tag, and Call-ID completely
+ * defines a peer-to-peer SIP relationship between [two UAs] and is
+ * referred to as a dialog."
+ * Note that the caller is responsible for decrementing (or reusing)
+ * the reference counter by one again if a dialog has been found.
+ * If the dialog is not found, the hash slot is left locked, to allow
+ * linking the structure of a new dialog.
+ * \param callid callid
+ * \param ftag from tag
+ * \param ttag to tag
+ * \param dir direction
+ * \return dialog structure on success, NULL on failure (and slot locked)
+ */
+dlg_cell_t* search_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
+
+/*!
+ * \brief Release hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_release(str *callid);
 
 /*!
  * \brief Get dialog that correspond to CallId, From Tag and To Tag
@@ -322,8 +366,9 @@ struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
  * \brief Link a dialog structure
  * \param dlg dialog
  * \param n extra increments for the reference counter
+ * \param mode link in safe mode (0 - lock slot; 1 - don't)
  */
-void link_dlg(struct dlg_cell *dlg, int n);
+void link_dlg(struct dlg_cell *dlg, int n, int mode);
 
 
 void link_dlg_out(struct dlg_cell *dlg, struct dlg_cell_out *dlg_out, int n);
@@ -406,6 +451,7 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
 
     if (d_entry_out->first == 0) {
         //there are no dialog out entries yet
+        LM_DBG("No dlg outs yet...\n");
         if (*dir == DLG_DIR_DOWNSTREAM) {
             if (dlg->callid.len == callid->len &&
                     dlg->from_tag.len == ftag->len &&
@@ -441,14 +487,14 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
             LM_DBG("No match found\n");
         }
     } else {
-
+        LM_DBG("searching dlg_outs\n");
         //there is a dialog out entry
         if (*dir == DLG_DIR_DOWNSTREAM) {
             if (dlg->callid.len == callid->len &&
                     dlg->from_tag.len == ftag->len &&
                     strncmp(dlg->callid.s, callid->s, callid->len) == 0 &&
                     strncmp(dlg->from_tag.s, ftag->s, ftag->len) == 0) {
-                //now need to scroll thought d_out_entries to see if to_tag matches!
+                //now need to scroll through d_out_entries to see if to_tag matches!
                 dlg_out = d_entry_out->first;
                 while (dlg_out) {
                     if (dlg_out->to_tag.len == ttag->len &&
@@ -511,6 +557,8 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
                     }
                     dlg_out = dlg_out->next;
                 }
+                *dir = DLG_DIR_UPSTREAM;
+                return 1;
             }
             else
             	LM_DBG("no match tags: ");
@@ -561,7 +609,7 @@ int mi_print_dlg(struct mi_node *rpl, struct dlg_cell *dlg, int with_context);
  * \return created dlg_out structure on success, NULL otherwise
  */
 
-struct dlg_cell_out* build_new_dlg_out(struct dlg_cell *dlg, str *to_uri, str* to_tag);
+struct dlg_cell_out* build_new_dlg_out(struct dlg_cell *dlg, str *to_uri, str* to_tag, str* branch);
 
 /*!
  * \brief Remove all dlg_out entries from dlg structure expect that identified as dlg_do_not_remove

@@ -1,0 +1,101 @@
+{
+  "name": "pua",
+  "version": 7,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "pres_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "pres_id": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "event": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "expires": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "desired_expires": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "flag": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "etag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "tuple_id": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "watcher_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "call_id": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "to_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "from_tag": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "cseq": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "record_route": {
+      "type": "text",
+      "default": null,
+      "null": true
+    },
+    "contact": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "remote_contact": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "version": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "extra_headers": {
+      "type": "text",
+      "default": null,
+      "null": false
+    }
+  ]
+}

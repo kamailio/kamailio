@@ -47,6 +47,7 @@
 #include "config.h"
 #include "peermanager.h"
 #include "diameter_api.h"
+#include "math.h"
 
 #define LB_MAX_PEERS 20			/**< maximum peers that can be loadbalanced accross i.e. same metric */
 
@@ -82,6 +83,7 @@ peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, in
     peer *p;
     int j;
     time_t least_recent_time;
+    struct timespec time_spec;
 
     if (cdp_session) {
         /*try and find an already used peer for this session - sticky*/
@@ -125,13 +127,20 @@ peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, in
     }
 
     least_recent_time = peers[0]->last_selected;
+    LM_DBG("peer [%.*s] was last used @ %ld\n", peers[0]->fqdn.len, peers[0]->fqdn.s, peers[0]->last_selected);
     p = peers[0];
     for (j = 1; j < peer_count; j++) {
+        LM_DBG("Peer [%.*s] was last used at [%ld]\n", peers[j]->fqdn.len, peers[j]->fqdn.s, peers[j]->last_selected);
         if (peers[j]->last_selected < least_recent_time) {
             least_recent_time = peers[j]->last_selected;
             p = peers[j];
         }
     }
+    
+    clock_gettime(CLOCK_REALTIME, &time_spec);
+
+    p->last_selected = (time_spec.tv_sec*1000000) + round(time_spec.tv_nsec / 1.0e3); // Convert nanoseconds to microseconds
+    LM_DBG("chosen peer [%.*s]\n", p->fqdn.len, p->fqdn.s);
 
     if (cdp_session) {
         if (cdp_session->sticky_peer_fqdn_buflen <= p->fqdn.len) {
@@ -150,7 +159,7 @@ peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, in
         cdp_session->sticky_peer_fqdn.len = p->fqdn.len;
         memcpy(cdp_session->sticky_peer_fqdn.s, p->fqdn.s, p->fqdn.len);
     }
-    p->last_selected = time(NULL);
+
     return p;
 }
 
@@ -193,16 +202,14 @@ peer* get_routing_peer(cdp_session_t* cdp_session, AAAMessage *m) {
 
     avp_vendor = AAAFindMatchingAVP(m, 0, AVP_Vendor_Id, 0, AAA_FORWARD_SEARCH);
     avp = AAAFindMatchingAVP(m, 0, AVP_Auth_Application_Id, 0, AAA_FORWARD_SEARCH);
-    if (avp) {
-        if (avp_vendor) vendor_id = get_4bytes(avp_vendor->data.s);
-        else vendor_id = 0;
+    if (avp && avp_vendor) {
+	vendor_id = get_4bytes(avp_vendor->data.s);
         app_id = get_4bytes(avp->data.s);
     }
 
     avp = AAAFindMatchingAVP(m, 0, AVP_Acct_Application_Id, 0, AAA_FORWARD_SEARCH);
-    if (avp) {
-        if (avp_vendor) vendor_id = get_4bytes(avp_vendor->data.s);
-        else vendor_id = 0;
+    if (avp && avp_vendor) {
+	vendor_id = get_4bytes(avp_vendor->data.s);
         app_id = get_4bytes(avp->data.s);
     }
 

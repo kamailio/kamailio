@@ -1,0 +1,16 @@
+{
+  "name": "carrier_name",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "carrier": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

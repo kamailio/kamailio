@@ -460,7 +460,10 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 						}
 						cell->next = it->next;
 						cell->prev = it->prev;
-						cell->expire = now + ht->htexpire;
+						if(ht->updateexpire)
+							cell->expire = now + ht->htexpire;
+						else
+							cell->expire = it->expire;
 						if(it->prev)
 							it->prev->next = cell;
 						else
@@ -489,7 +492,10 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 						if(mode) ht_slot_unlock(ht, idx);
 						return -1;
 					}
-					cell->expire = now + ht->htexpire;
+					if(ht->updateexpire)
+						cell->expire = now + ht->htexpire;
+					else
+						cell->expire = it->expire;
 					cell->next = it->next;
 					cell->prev = it->prev;
 					if(it->prev)
@@ -649,7 +655,8 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, int mode,
 				return NULL;
 			} else {
 				it->value.n += val;
-				it->expire = now + ht->htexpire;
+				if(ht->updateexpire)
+					it->expire = now + ht->htexpire;
 				if(old!=NULL)
 				{
 					if(old->msize>=it->msize)

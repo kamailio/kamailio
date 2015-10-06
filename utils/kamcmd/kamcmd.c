@@ -3,19 +3,19 @@
  *
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
+ * For a license to use the kamailio software under conditions
  * other than those described here, or to purchase support for this
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -82,12 +82,20 @@
 
 
 #ifndef UNIX_PATH_MAX
-#define UNIX_PATH_MAX 108
+#define UNIX_PATH_MAX 100
 #endif
 
 static char id[]="$Id$";
 static char version[]= NAME " " VERSION;
+#ifdef VERSION_NODATE
+static char compiled[] = "";
+#else
+#ifdef VERSION_DATE
+static char compiled[]= VERSION_DATE;
+#else
 static char compiled[]= __TIME__ " " __DATE__;
+#endif
+#endif
 static char help_msg[]="\
 Usage: " NAME " [options][-s address] [ cmd ]\n\
 Options:\n\
@@ -111,7 +119,7 @@ arg:\n\
      string or number; to force a number to be interpreted as string \n\
      prefix it by \"s:\", e.g. s:1\n\
 Examples:\n\
-        " NAME " -s unixs:/tmp/ser_unix system.listMethods\n\
+        " NAME " -s unixs:/tmp/" NAME "_ctl system.listMethods\n\
         " NAME " -f \"pid: %v  desc: %v\\n\" -s udp:localhost:2047 core.ps \n\
         " NAME " ps  # uses default ctl socket \n\
         " NAME "     # enters interactive mode on the default socket \n\
@@ -884,7 +892,7 @@ static int print_body(struct binrpc_parse_ctx* in_pkt,
 read_value:
 		val.name.s=0;
 		val.name.len=0;
-		p=binrpc_read_record(in_pkt, p, end, &val, &ret);
+		p=binrpc_read_record(in_pkt, p, end, &val, 1, &ret);
 		if (ret<0){
 			if (fmt)
 				putchar('\n');
@@ -894,7 +902,7 @@ read_value:
 				printf("end of message detected\n");
 				break;
 			}
-			fprintf(stderr, "ERROR while parsing the record %d,"
+			fprintf(stderr, "ERROR:: while parsing the record %d,"
 					" @%d: %02x : %s\n", rec,
 					in_pkt->offset, *p, binrpc_error(ret));
 			goto error;
@@ -1153,13 +1161,13 @@ static struct binrpc_val* parse_reply_body(int* records,
 		val.type=BINRPC_T_ALL;
 		val.name.s=0;
 		val.name.len=0;
-		p=binrpc_read_record(in_pkt, p, end, &val, &ret);
+		p=binrpc_read_record(in_pkt, p, end, &val, 1, &ret);
 		if (ret<0){
 			if (ret==E_BINRPC_EOP){
 				printf("end of message detected\n");
 				break;
 			}
-			fprintf(stderr, "ERROR while parsing the record %d,"
+			fprintf(stderr, "ERROR: while parsing the record %d,"
 					" @%d: %02x : %s\n", rec,
 					in_pkt->offset, *p, binrpc_error(ret));
 			goto error;
@@ -2247,12 +2255,12 @@ int main(int argc, char** argv)
 	srand(getpid()+time(0)); /* we don't need very strong random numbers */
 	
 	if (sock_name==0){
-		fprintf(stderr, "ERROR: no ser address specified\n");
+		fprintf(stderr, "ERROR: no server socket address specified\n");
 		goto error;
 	}
 	sock_id=parse_listen_id(sock_name, strlen(sock_name), sock_type);
 	if (sock_id==0){
-		fprintf(stderr, "ERROR: error parsing ser address %s\n", sock_name);
+		fprintf(stderr, "ERROR: error parsing server socket address %s\n", sock_name);
 		goto error;
 	}
 	

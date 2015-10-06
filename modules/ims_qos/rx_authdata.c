@@ -68,9 +68,9 @@
 #include "../../lib/ims/ims_getters.h"
 #include "mod.h"
 
-int create_new_regsessiondata(str* domain, str* aor, str *ip, int ip_version, int recv_port, rx_authsessiondata_t** session_data) {
+int create_new_regsessiondata(str* domain, str* aor,  str *ip, int ip_version, int recv_port, unsigned short recv_proto, str *via_host, unsigned short via_port, unsigned short via_proto, rx_authsessiondata_t** session_data) {
 
-	int len = (domain->len + 1) + aor->len + ip->len + sizeof(rx_authsessiondata_t);
+	int len = (domain->len + 1) + ip->len + aor->len + via_host->len + sizeof(rx_authsessiondata_t);
 	rx_authsessiondata_t* p_session_data = shm_malloc(len);
 	if (!p_session_data) {
 		LM_ERR("no more shm memory\n");
@@ -82,8 +82,12 @@ int create_new_regsessiondata(str* domain, str* aor, str *ip, int ip_version, in
         p_session_data->must_terminate_dialog = 0; /*irrelevent for reg session data this will always be 0 */
 
 	p_session_data->session_has_been_opened = 0; /*0 has not been opened 1 has been opened*/
-	p_session_data->ip_version = ip_version;
-	p_session_data->recv_port = recv_port;
+	p_session_data->ip_version = ip_version;   
+	p_session_data->via_port = via_port;
+        p_session_data->via_proto = via_proto;
+        
+        p_session_data->recv_port = recv_port;
+        p_session_data->recv_proto = recv_proto;
 	
 	char* p = (char*)(p_session_data + 1);
 	p_session_data->domain.s = p;
@@ -97,10 +101,15 @@ int create_new_regsessiondata(str* domain, str* aor, str *ip, int ip_version, in
 	p_session_data->registration_aor.len = aor->len;
 	p += aor->len;
 	
-	p_session_data->ip.s = p;
+        p_session_data->ip.s = p;
 	memcpy(p, ip->s, ip->len);
 	p_session_data->ip.len = ip->len;
 	p += ip->len;
+        
+	p_session_data->via_host.s = p;
+	memcpy(p, via_host->s, via_host->len);
+	p_session_data->via_host.len = via_host->len;
+	p += via_host->len;
 	
 	if (p != (((char*)p_session_data) + len)) {
 		LM_ERR("buffer over/underflow\n");
@@ -338,7 +347,7 @@ void free_callsessiondata(rx_authsessiondata_t* session_data) {
     if(!session_data){
 	return;
     }
-    
+    LM_DBG("Freeing session data for [%.*s]\n", session_data->via_host.len, session_data->via_host.s);
     LM_DBG("Destroy current flow description\n");
     free_flow_description(session_data, 1);
     

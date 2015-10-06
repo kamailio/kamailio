@@ -1817,8 +1817,468 @@ static int lua_sr_sdpops_with_media(lua_State *L)
 /**
  *
  */
+static int lua_sr_sdpops_with_active_media(lua_State *L)
+{
+	int ret;
+	str media;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	media.s = (char*)lua_tostring(L, -1);
+	media.len = strlen(media.s);
+
+	ret = _lua_sdpopsb.sdp_with_active_media(env_L->msg, &media);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_with_transport(lua_State *L)
+{
+	int ret;
+	str transport;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	transport.s = (char*)lua_tostring(L, -1);
+	transport.len = strlen(transport.s);
+
+	ret = _lua_sdpopsb.sdp_with_transport(env_L->msg, &transport, 0);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_with_codecs_by_id(lua_State *L)
+{
+	int ret;
+	str codecs;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	codecs.s = (char*)lua_tostring(L, -1);
+	codecs.len = strlen(codecs.s);
+
+	ret = _lua_sdpopsb.sdp_with_codecs_by_id(env_L->msg, &codecs);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_with_codecs_by_name(lua_State *L)
+{
+	int ret;
+	str codecs;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	codecs.s = (char*)lua_tostring(L, -1);
+	codecs.len = strlen(codecs.s);
+
+	ret = _lua_sdpopsb.sdp_with_codecs_by_name(env_L->msg, &codecs);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_with_ice(lua_State *L)
+{
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=0)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	ret = _lua_sdpopsb.sdp_with_ice(env_L->msg);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_keep_codecs_by_id(lua_State *L)
+{
+	int ret;
+	str codecs;
+	str media;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=2)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	codecs.s = (char*)lua_tostring(L, -2);
+	codecs.len = strlen(codecs.s);
+
+	media.s = (char*)lua_tostring(L, -1);
+	media.len = strlen(media.s);
+
+	ret = _lua_sdpopsb.sdp_keep_codecs_by_id(env_L->msg, &codecs, &media);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_keep_codecs_by_name(lua_State *L)
+{
+	int ret;
+	str media;
+	str codecs;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=2)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	codecs.s = (char*)lua_tostring(L, -2);
+	codecs.len = strlen(codecs.s);
+
+	media.s = (char*)lua_tostring(L, -1);
+	media.len = strlen(media.s);
+
+	ret = _lua_sdpopsb.sdp_keep_codecs_by_name(env_L->msg, &codecs, &media);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_remove_media(lua_State *L)
+{
+	int ret;
+	str media;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	media.s = (char*)lua_tostring(L, -1);
+	media.len = strlen(media.s);
+
+	ret = _lua_sdpopsb.sdp_remove_media(env_L->msg, &media);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_remove_transport(lua_State *L)
+{
+	int ret;
+	str transport;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	transport.s = (char*)lua_tostring(L, -1);
+	transport.len = strlen(transport.s);
+
+	ret = _lua_sdpopsb.sdp_remove_transport(env_L->msg, &transport);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_remove_line_by_prefix(lua_State *L)
+{
+	int ret;
+	str media;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	media.s = (char*)lua_tostring(L, -1);
+	media.len = strlen(media.s);
+
+	ret = _lua_sdpopsb.sdp_remove_line_by_prefix(env_L->msg, &media);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_remove_codecs_by_id(lua_State *L)
+{
+	int ret;
+	str codecs;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	codecs.s = (char*)lua_tostring(L, -1);
+	codecs.len = strlen(codecs.s);
+
+	ret = _lua_sdpopsb.sdp_remove_codecs_by_id(env_L->msg, &codecs);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
+static int lua_sr_sdpops_remove_codecs_by_name(lua_State *L)
+{
+	int ret;
+	str codecs;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SDPOPS))
+	{
+		LM_WARN("weird: sdpops function executed but module not registered\n");
+		return app_lua_return_error(L);
+	}
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_error(L);
+	}
+
+	if(lua_gettop(L)!=1)
+	{
+		LM_ERR("incorrect number of arguments\n");
+		return app_lua_return_error(L);
+	}
+
+	codecs.s = (char*)lua_tostring(L, -1);
+	codecs.len = strlen(codecs.s);
+
+	ret = _lua_sdpopsb.sdp_remove_codecs_by_name(env_L->msg, &codecs);
+
+	return app_lua_return_int(L, ret);
+}
+
+/**
+ *
+ */
 static const luaL_Reg _sr_sdpops_Map [] = {
-	{"sdp_with_media",       lua_sr_sdpops_with_media},
+	{"sdp_with_media",            lua_sr_sdpops_with_media},
+	{"sdp_with_active_media",     lua_sr_sdpops_with_active_media},
+	{"sdp_with_transport",        lua_sr_sdpops_with_transport},
+	{"sdp_with_codecs_by_id",     lua_sr_sdpops_with_codecs_by_id},
+	{"sdp_with_codecs_by_name",   lua_sr_sdpops_with_codecs_by_name},
+	{"sdp_with_ice",              lua_sr_sdpops_with_ice},
+	{"sdp_keep_codecs_by_id",     lua_sr_sdpops_keep_codecs_by_id},
+	{"sdp_keep_codecs_by_name",   lua_sr_sdpops_keep_codecs_by_name},
+	{"sdp_remove_media",          lua_sr_sdpops_remove_media},
+	{"sdp_remove_transport",      lua_sr_sdpops_remove_transport},
+	{"sdp_remove_line_by_prefix", lua_sr_sdpops_remove_line_by_prefix},
+	{"sdp_remove_codecs_by_id",   lua_sr_sdpops_remove_codecs_by_id},
+	{"sdp_remove_codecs_by_name", lua_sr_sdpops_remove_codecs_by_name},
 	{NULL, NULL}
 };
 

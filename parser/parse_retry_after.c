@@ -72,8 +72,6 @@ found:
 	/* find the end of header */
 	for (; t<end; t++){
 		if (*t=='\n'){
-			if (((t+1)<end) && (*(t+1)=='\r'))
-				t++;
 			if (((t+1)<end) && (*(t+1)==' ' || *(t+1)=='\t')){
 				t++;
 				continue; /* line folding ... */

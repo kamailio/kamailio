@@ -1380,24 +1380,11 @@ static int w_sdp_with_codecs_by_id(sip_msg_t* msg, char* codecs, char *bar)
 /**
  *
  */
-static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar)
+int sdp_with_codecs_by_name(sip_msg_t* msg, str* codecs)
 {
-	str lcodecs = {0, 0};
 	str idslist;
 	sdp_info_t *sdp = NULL;
 	int ret;
-
-	if(codecs==0)
-	{
-		LM_ERR("invalid parameters\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_p)codecs, &lcodecs)!=0)
-	{
-		LM_ERR("unable to get the codecs\n");
-		return -1;
-	}
 
 	if(parse_sdp(msg) < 0) {
 		LM_ERR("Unable to parse sdp\n");
@@ -1411,7 +1398,7 @@ static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar)
 		return -1;
 	}
 
-	if(sdpops_build_ids_list(sdp, &lcodecs, &idslist)<0)
+	if(sdpops_build_ids_list(sdp, codecs, &idslist)<0)
 		return -1;
 
 	ret = sdp_with_codecs_by_id(msg, &idslist);
@@ -1419,6 +1406,28 @@ static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar)
 	if(ret<=0)
 		return (ret - 1);
 	return ret;
+}
+
+/**
+ *
+ */
+static int w_sdp_with_codecs_by_name(sip_msg_t* msg, char* codecs, char *bar)
+{
+	str lcodecs = {0, 0};
+
+	if(codecs==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)codecs, &lcodecs)!=0)
+	{
+		LM_ERR("unable to get the codecs\n");
+		return -1;
+	}
+
+	return sdp_with_codecs_by_name(msg, &lcodecs);
 }
 
 /**
@@ -1515,7 +1524,7 @@ static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
 /**
  *
  */
-static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar)
+int sdp_with_ice(sip_msg_t* msg)
 {
     str ice, body;
 
@@ -1538,9 +1547,17 @@ static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar)
 	LM_DBG("found ice attribute\n");
 	return 1;
     } else {
-	LM_DBG("did't find ice attribute\n");
+	LM_DBG("didn't find ice attribute\n");
 	return -1;
     }
+}
+
+/**
+ *
+ */
+static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar)
+{
+    return sdp_with_ice(msg);
 }
 
 /**
@@ -1669,5 +1686,17 @@ int bind_sdpops(struct sdpops_binds *sob){
 		return -1;
 	}
 	sob->sdp_with_media = sdp_with_media;
+	sob->sdp_with_active_media = sdp_with_active_media;
+	sob->sdp_with_transport = sdp_with_transport;
+	sob->sdp_with_codecs_by_id = sdp_with_codecs_by_id;
+	sob->sdp_with_codecs_by_name = sdp_with_codecs_by_name;
+	sob->sdp_with_ice = sdp_with_ice;
+	sob->sdp_keep_codecs_by_id = sdp_keep_codecs_by_id;
+	sob->sdp_keep_codecs_by_name = sdp_keep_codecs_by_name;
+	sob->sdp_remove_media = sdp_remove_media;
+	sob->sdp_remove_transport = sdp_remove_transport;
+	sob->sdp_remove_line_by_prefix = sdp_remove_line_by_prefix;
+	sob->sdp_remove_codecs_by_id = sdp_remove_codecs_by_id;
+	sob->sdp_remove_codecs_by_name = sdp_remove_codecs_by_name;
 	return 0;
 }

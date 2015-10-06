@@ -36,6 +36,12 @@
 #define MAX_TS_LOCKS  2048
 #define MIN_TS_LOCKS  2
 
+extern stat_var *stored_ruris;
+extern stat_var *stored_transactions;
+extern stat_var *total_ruris;
+extern stat_var *total_transactions;
+extern stat_var *added_branches;
+
 typedef struct ts_transaction
 {
 	unsigned int		tindex;		/*!< transaction index */

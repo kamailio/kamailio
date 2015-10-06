@@ -1,0 +1,31 @@
+{
+  "name": "dbaliases",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "alias_username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "alias_domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "domain": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

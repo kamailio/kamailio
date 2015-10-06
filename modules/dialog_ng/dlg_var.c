@@ -22,10 +22,12 @@
  */
 		       
 #include "../../route.h"
+#include "../../pvapi.h"
 
 #include "dlg_var.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
+#include "dlg_handlers.h"
 #include "dlg_db_handler.h"
 
 dlg_ctx_t _dlg_ctx;
@@ -103,7 +105,7 @@ struct dlg_var * get_local_varlist_pointer(struct sip_msg *msg, int clear_pointe
 }
 
 /* Adds, updates and deletes dialog variables */
-int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val, int new)
+int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 {
 	struct dlg_var * var = NULL;
 	struct dlg_var * it;
@@ -149,10 +151,9 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val, int new)
 	}
 
 	/* not found: */
-
 	if (!var) {
-		LM_ERR("dialog variable <%.*s> does not exist in variable list\n", key->len, key->s);
-		return -1;
+		LM_DBG("dialog variable <%.*s> does not exist in variable list\n", key->len, key->s);
+		return 1;
 	}
 
 	/* insert a new one at the beginning of the list */
@@ -283,12 +284,12 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 
     if( !val)
     {
-        if (set_dlg_variable_unsafe(dlg, key, NULL, 1)!=0) {
+        if (set_dlg_variable_unsafe(dlg, key, NULL)!=0) {
             LM_ERR("failed to delete dialog variable <%.*s>\n", key->len,key->s);
             goto error;
         }
     } else {
-        if (set_dlg_variable_unsafe(dlg, key, val, 1)!=0) {
+        if (set_dlg_variable_unsafe(dlg, key, val)!=0) {
             LM_ERR("failed to store dialog values <%.*s>\n",key->len,key->s);
             goto error;
         }
@@ -311,16 +312,20 @@ error:
 
 int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	struct dlg_cell *dlg;
-	str * value;
 
-	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR || param->pvn.u.isname.type!=AVP_NAME_STR || param->pvn.u.isname.name.s.s==NULL) {
+	dlg_cell_t *dlg;
+	str * value;
+	str spv;
+
+	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR
+			|| param->pvn.u.isname.type!=AVP_NAME_STR
+			|| param->pvn.u.isname.name.s.s==NULL) {
 		LM_CRIT("BUG - bad parameters\n");
 		return -1;
 	}
 
-	/* Retrieve the current dialog */
-	dlg=get_current_dialog( msg);
+	/* Retrieve the dialog for current message */
+	dlg=dlg_get_msg_dialog( msg);
 
 	if (dlg) {
 		/* Lock the dialog */
@@ -330,26 +335,51 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		get_local_varlist_pointer(msg, 0);
 	}
 
+	/* dcm: todo - the value should be cloned for safe usage */
 	value = get_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s);
+
+	spv.s = NULL;
+	if(value) {
+		spv.len = pv_get_buffer_size();
+		if(spv.len<value->len+1) {
+			LM_ERR("pv buffer too small (%d) - needed %d\n", spv.len, value->len);
+		} else {
+			spv.s = pv_get_buffer();
+			strncpy(spv.s, value->s, value->len);
+			spv.len = value->len;
+			spv.s[spv.len] = '\0';
+		}
+	}
 
 	print_lists(dlg);
 
 	/* unlock dialog */
-	if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+	if (dlg) {
+		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+		dlg_release(dlg);
+	}
 
-	if (value)
-		return pv_get_strval(msg, param, res, value);
+	if (spv.s)
+		return pv_get_strval(msg, param, res, &spv);
 
 
-	return 0;
+	return pv_get_null(msg, param, res);
 }
 
 int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val)
 {
-	struct dlg_cell *dlg;
+	dlg_cell_t *dlg = NULL;
+	int ret = -1;
 
-	/* Retrieve the current dialog */
-	dlg=get_current_dialog( msg);
+	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR
+			|| param->pvn.u.isname.type!=AVP_NAME_STR
+			|| param->pvn.u.isname.name.s.s==NULL ) {
+		LM_CRIT("BUG - bad parameters\n");
+		goto error;
+	}
+
+	/* Retrieve the dialog for current message */
+	dlg=dlg_get_msg_dialog( msg);
 	
 	if (dlg) {
 		/* Lock the dialog */
@@ -359,18 +389,16 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 		get_local_varlist_pointer(msg, 0);
 	}
 
-	if (param==NULL || param->pvn.type!=PV_NAME_INTSTR || param->pvn.u.isname.type!=AVP_NAME_STR || param->pvn.u.isname.name.s.s==NULL ) {
-		LM_CRIT("BUG - bad parameters\n");
-		return -1;
-	}
-
 	if (val==NULL || val->flags&(PV_VAL_NONE|PV_VAL_NULL|PV_VAL_EMPTY)) {
 		/* if NULL, remove the value */
-		if (set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, NULL, 1)!=0) {
-			LM_ERR("failed to delete dialog variable <%.*s>\n", param->pvn.u.isname.name.s.len,param->pvn.u.isname.name.s.s);
+		ret = set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, NULL);
+		if(ret!= 0) {
 			/* unlock dialog */
-			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-			return -1;
+			if (dlg) {
+				dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+				dlg_release(dlg);
+			}
+			return ret;
 		}
 	} else {
 		/* if value, must be string */
@@ -378,19 +406,19 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 			LM_ERR("non-string values are not supported\n");
 			/* unlock dialog */
 			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-			return -1;
+			goto error;
 		}
 
-		if (set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, &val->rs, 1)!=0) {
-			LM_ERR("failed to store dialog values <%.*s>\n",param->pvn.u.isname.name.s.len,param->pvn.u.isname.name.s.s);
+		ret = set_dlg_variable_unsafe(dlg, &param->pvn.u.isname.name.s, &val->rs);
+		if(ret!= 0) {
 			/* unlock dialog */
 			if (dlg) dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
-			return -1;
+			goto error;
 		}
 	}
 	/* unlock dialog */
 	if (dlg) {
-		dlg->dflags &= DLG_FLAG_CHANGED_VARS;		
+		dlg->dflags |= DLG_FLAG_CHANGED_VARS;
 		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 		if ( dlg_db_mode==DB_MODE_REALTIME )
 			update_dialog_dbinfo(dlg);
@@ -398,7 +426,11 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 	}
 	print_lists(dlg);
 
+	dlg_release(dlg);
 	return 0;
+error:
+	dlg_release(dlg);
+	return -1;
 }
 
 int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
@@ -749,14 +781,21 @@ error:
 	return -1;
 }
 
-void dlg_set_ctx_dialog(struct dlg_cell *dlg)
+void dlg_set_ctx_iuid(dlg_cell_t *dlg)
 {
-	_dlg_ctx.dlg = dlg;
+	_dlg_ctx.iuid.h_entry = dlg->h_entry;
+	_dlg_ctx.iuid.h_id = dlg->h_id;
 }
 
-struct dlg_cell* dlg_get_ctx_dialog(void)
+void dlg_reset_ctx_iuid(void)
 {
-	return _dlg_ctx.dlg;
+	_dlg_ctx.iuid.h_entry = 0;
+	_dlg_ctx.iuid.h_id = 0;
+}
+
+dlg_cell_t* dlg_get_ctx_dialog(void)
+{
+	return dlg_get_by_iuid(&_dlg_ctx.iuid);
 }
 
 dlg_ctx_t* dlg_get_dlg_ctx(void)

@@ -106,17 +106,14 @@ int t_append_branches(void) {
 		set_branch_route(t->on_branch_delayed);
 	}
 
-	outgoings = t->nr_of_outgoings;
+	init_branch_iterator();
 
-	/* not really sure that the following is needed */
-
-	set_branch_iterator(nr_branches-1);
-	found = 0;
 	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
 										&bflags, &si, &ruid, &instance, &location_ua))) {
 		LM_DBG("Current uri %.*s\n",current_uri.len, current_uri.s);
 
-		for (i=0; i<=nr_branches; i++) {
+		found = 0;
+		for (i=0; i<outgoings; i++) {
 			if (t->uac[i].ruid.len == ruid.len
 					&& !memcmp(t->uac[i].ruid.s, ruid.s, ruid.len)) {
 				LM_DBG("branch already added [%.*s]\n", ruid.len, ruid.s);
@@ -131,8 +128,10 @@ int t_append_branches(void) {
 		new_branch=add_uac( t, orig_msg, &current_uri,
 					(dst_uri.len) ? (&dst_uri) : &current_uri,
 					&path, 0, si, orig_msg->fwd_send_flags,
-					orig_msg->rcv.proto, (dst_uri.len)?-1:UAC_SKIP_BR_DST_F, &instance,
+					PROTO_NONE, (dst_uri.len)?-1:UAC_SKIP_BR_DST_F, &instance,
 					&ruid, &location_ua);
+		
+		LM_DBG("added branch [%.*s] with ruid [%.*s]\n", current_uri.len, current_uri.s, ruid.len, ruid.s);
 
 		/* test if cancel was received meanwhile */
 		if (t->flags & T_CANCELED) goto canceled;
@@ -154,7 +153,7 @@ int t_append_branches(void) {
 
 	if (added_branches==0) {
 		if(lowest_ret!=E_CFG)
-			LOG(L_ERR, "ERROR: t_append_branch: failure to add branches\n");
+			LOG(L_ERR, "ERROR: t_append_branch: failure to add branches (%d)\n", lowest_ret);
 		ser_error=lowest_ret;
 		replies_locked = 0;
 		UNLOCK_REPLIES(t);
@@ -199,7 +198,7 @@ int t_append_branches(void) {
 	set_kr(REQ_FWDED);
 	replies_locked = 0;
 	UNLOCK_REPLIES(t);
-	return 1;
+	return success_branch;
 
 canceled:
 	DBG("t_append_branches: cannot append branches to a canceled transaction\n");

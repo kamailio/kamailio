@@ -98,8 +98,6 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
     struct cell *t = 0;
     unsigned int cdp_result;
     int result = CSCF_RETURN_ERROR;
-    AAASession *auth = 0;
-    rx_authsessiondata_t* p_session_data = 0;
     
     LM_DBG("Received AAR callback\n");
     saved_transaction_t* data = (saved_transaction_t*) param;
@@ -147,29 +145,8 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
 	LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len, aaa->sessionId->data.s);
 
 	if(!data->aar_update) {
-	    LM_DBG("This is an AAA response to an initial AAR - active_media_rx_sessions");
-	    
-	    //need to set Rx auth data to say this session has been successfully opened
-	    //This is used elsewhere to prevent acting on termination events when the session has not been opened
-	    //getting auth session
-	    auth = cdpb.AAAGetAuthSession(aaa->sessionId->data);
-	    if (!auth) {
-		LM_DBG("Could not get Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
-		goto error;
-	    }
-	    //getting session data
-	    p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
-	    if (!p_session_data) {
-		LM_DBG("Could not get session data on Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
-		if (auth) cdpb.AAASessionsUnlock(auth->hash);
-		goto error;
-	    }
-	    
-	    LM_DBG("Setting session_has_been_opened and incrementing active_media_rx_sessions\n");
-	    p_session_data->session_has_been_opened = 1;
+	    LM_DBG("This is an AAA response to an initial AAR");
 	    counter_inc(ims_qos_cnts_h.active_media_rx_sessions);
-
-	    if (auth) cdpb.AAASessionsUnlock(auth->hash);
 	    
 	    str * passed_rx_session_id = shm_malloc(sizeof (struct _str));
 	    passed_rx_session_id->s = 0;
@@ -216,6 +193,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
     AAASession *auth = 0;
     rx_authsessiondata_t* p_session_data = 0;
     int result = CSCF_RETURN_ERROR;
+    pcontact_info_t contact_info;
 
     LM_DBG("Received AAR callback\n");
     saved_transaction_local_t* local_data = (saved_transaction_local_t*) param;
@@ -275,7 +253,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 
     if (cdp_result >= 2000 && cdp_result < 3000) {
         counter_inc(ims_qos_cnts_h.successful_registration_aars);
-        if (is_rereg) {
+	if (is_rereg) {
             LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the the subscription was successful\n");
             result = CSCF_RETURN_TRUE;
             create_return_code(result);
@@ -296,7 +274,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 	    if (auth) cdpb.AAASessionsUnlock(auth->hash);
 	    goto error;
 	}
-	    p_session_data->session_has_been_opened = 1;
+	p_session_data->session_has_been_opened = 1;
 	counter_inc(ims_qos_cnts_h.active_registration_rx_sessions);
 	
 	if (auth) cdpb.AAASessionsUnlock(auth->hash);
@@ -307,10 +285,22 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
                 local_data->auth_session_id.len, local_data->auth_session_id.s);
         LM_DBG("Registering for Usrloc callbacks on DELETE\n");
 
-        ul.lock_udomain(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port);
-        if (ul.get_pcontact(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port, &pcontact) != 0) {
-            LM_ERR("Shouldn't get here, can find contact....\n");
-            ul.unlock_udomain(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port);
+        ul.lock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
+        
+        contact_info.received_host = local_data->recv_host;
+        contact_info.received_port = local_data->recv_port;
+        contact_info.received_proto = local_data->recv_proto;
+        contact_info.searchflag = (1 << SEARCH_RECEIVED);
+        
+        
+        contact_info.aor = local_data->contact;
+        contact_info.via_host = local_data->via_host;
+        contact_info.via_port = local_data->via_port;
+        contact_info.via_prot = local_data->via_proto;
+        
+        if (ul.get_pcontact(domain_t, &contact_info, &pcontact) != 0) {
+            LM_ERR("Shouldn't get here, can't find contact....\n");
+            ul.unlock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
             goto error;
         }
 
@@ -320,7 +310,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
          * */
         if (ul.update_rx_regsession(domain_t, &local_data->auth_session_id, pcontact) != 0) {
             LM_ERR("unable to update pcontact......\n");
-            ul.unlock_udomain(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port);
+            ul.unlock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
             goto error;
         }
         memset(&ci, 0, sizeof (struct pcontact_info));
@@ -332,7 +322,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         //register for callbacks on contact
         ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE,
                 callback_pcscf_contact_cb, NULL);
-        ul.unlock_udomain(domain_t, &local_data->contact, &p_session_data->ip, p_session_data->recv_port);
+        ul.unlock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
         result = CSCF_RETURN_TRUE;
     } else {
         LM_DBG("Received negative reply from PCRF for AAR Request\n");
@@ -526,7 +516,7 @@ int rx_send_aar_update_no_video(AAASession* auth) {
     char x[4];
     int ret = 0;
 
-    str ip;
+    str recv_ip;
     uint16_t ip_version;
 
     //we get ip and identifier for the auth session data 
@@ -534,7 +524,7 @@ int rx_send_aar_update_no_video(AAASession* auth) {
     p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
     identifier = p_session_data->identifier;
     identifier_type = p_session_data->identifier_type;
-    ip = p_session_data->ip;
+    recv_ip = p_session_data->ip;
     ip_version = p_session_data->ip_version;
     
     aar = cdpb.AAACreateRequest(IMS_Rx, IMS_AAR, Flag_Proxyable, auth);
@@ -630,9 +620,9 @@ int rx_send_aar_update_no_video(AAASession* auth) {
 
     add_media_components_using_current_flow_description(aar, p_session_data);
 
-    LM_DBG("Adding framed ip address [%.*s]\n", ip.len, ip.s);
+    LM_DBG("Adding framed ip address [%.*s]\n", recv_ip.len, recv_ip.s);
     /* Add Framed IP address AVP*/
-    if (!rx_add_framed_ip_avp(&aar->avpList, ip, ip_version)) {
+    if (!rx_add_framed_ip_avp(&aar->avpList, recv_ip, ip_version)) {
         LM_ERR("Unable to add framed IP AVP\n");
         goto error;
     }
@@ -806,6 +796,15 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
         goto error;
     }
     
+    /* Add specific action AVP's */
+    rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE
+    rx_add_specific_action_avp(aar, 2); // INDICATION_OF_LOSS_OF_BEARER
+    rx_add_specific_action_avp(aar, 3); // INDICATION_RECOVERY_OF_BEARER
+    rx_add_specific_action_avp(aar, 4); // INDICATION_RELEASE_OF_BEARER
+    rx_add_specific_action_avp(aar, 5); // INDICATION_ESTABLISHMENT_OF_BEARER (now void)
+    rx_add_specific_action_avp(aar, 6); // IP-CAN_CHANGE
+    rx_add_specific_action_avp(aar, 12); // ACCESS_NETWORK_INFO_REPORT
+
     show_callsessiondata(p_session_data);
     
     LM_DBG("Unlocking AAA session...\n");
@@ -895,6 +894,15 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
 
     /* Add media component description avp for register*/
     rx_add_media_component_description_avp_register(aar);
+
+    /* Add specific action AVP's */
+    rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE
+    rx_add_specific_action_avp(aar, 2); // INDICATION_OF_LOSS_OF_BEARER
+    rx_add_specific_action_avp(aar, 3); // INDICATION_RECOVERY_OF_BEARER
+    rx_add_specific_action_avp(aar, 4); // INDICATION_RELEASE_OF_BEARER
+    rx_add_specific_action_avp(aar, 5); // INDICATION_ESTABLISHMENT_OF_BEARER (now void)
+    rx_add_specific_action_avp(aar, 6); // IP-CAN_CHANGE
+    rx_add_specific_action_avp(aar, 12); // ACCESS_NETWORK_INFO_REPORT
 
     /* Add Framed IP address AVP*/
     if (!rx_add_framed_ip_avp(&aar->avpList, ip, ip_version)) {

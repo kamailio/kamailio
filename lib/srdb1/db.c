@@ -199,6 +199,10 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		tmp = name;
 	}
 
+	if (!find_module_by_name(tmp)) {
+		LM_ERR("Module %s not found. Missing loadmodule? \n", tmp);
+		goto error;
+	}
 	dbind = (db_bind_api_f)find_mod_export(tmp, "db_bind_api", 0, 0);
 	if(dbind != NULL)
 	{

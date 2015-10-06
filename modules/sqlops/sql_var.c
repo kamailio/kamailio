@@ -104,7 +104,6 @@ int sql_parse_index(str *in, gparam_t *gp)
 		if (gp->v.pvs == NULL)
 		{
 			LM_ERR("no pkg memory left for pv_spec_t\n");
-		    pkg_free(gp);
 		    return -1;
 		}
 
@@ -112,7 +111,6 @@ int sql_parse_index(str *in, gparam_t *gp)
 		{
 			LM_ERR("invalid PV identifier\n");
 		    pkg_free(gp->v.pvs);
-		    pkg_free(gp);
 			return -1;
 		}
 	} else {
@@ -257,7 +255,9 @@ int pv_parse_dbr_name(pv_spec_p sp, str *in)
 		if(p>in->s+in->len || *p=='\0' || *p!=']')
 			goto error_index;
 	} else {
-		LM_ERR("unknow key [%.*s]\n", pvs.len, pvs.s);
+		LM_ERR("unknown key [%.*s]\n", pvs.len, pvs.s);
+		if(spv!=NULL)
+			pkg_free(spv);
 		return -1;
 	}
 	sp->pvp.pvn.u.dname = (void*)spv;

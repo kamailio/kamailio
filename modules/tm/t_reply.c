@@ -982,6 +982,8 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		 * set next failure route, failure_route will not be reentered
 		 * on failure */
 		t->on_failure=0;
+		/* if continuing on timeout of a suspended transaction, reset the flag */
+		t->flags &= ~T_ASYNC_SUSPENDED;
 		if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
 			/* run a failure_route action if some was marked */
 			if (run_top_route(failure_rt.rlist[on_failure], &faked_req, 0)<0)
@@ -1729,6 +1731,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	str* to_tag;
 	str reason;
 	struct tmcb_params onsend_params;
+	struct ip_addr ip;
 
 	/* keep compiler warnings about use of uninit vars silent */
 	res_len=0;
@@ -1736,7 +1739,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	relayed_msg=0;
 	relayed_code=0;
 	totag_retr=0;
-
 
 	/* remember, what was sent upstream to know whether we are
 	 * forwarding a first final reply or not */
@@ -1921,26 +1923,41 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		if (reply_status == RPS_COMPLETED) {
 			start_final_repl_retr(t);
 		}
-		if (likely(uas_rb->dst.send_sock &&
-					SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0)){
-			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
-				LOCK_REPLIES( t );
-				run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb, t->uas.request,
-				                              relayed_msg, relayed_code);
-				UNLOCK_REPLIES( t );
+		if (likely(uas_rb->dst.send_sock)) {
+			if (onsend_route_enabled(SIP_REPLY) && p_msg && (p_msg != FAKED_REPLY)) {
+				if (run_onsend(p_msg, &uas_rb->dst, buf, res_len)==0){
+					su2ip_addr(&ip, &(uas_rb->dst.to));
+					LOG(L_ERR, "forward_reply: reply to %s:%d(%d) dropped"
+							" (onsend_route)\n", ip_addr2a(&ip),
+								su_getport(&(uas_rb->dst.to)), uas_rb->dst.proto);
+					/* workaround for drop - reset send_sock to skip sending out */
+					uas_rb->dst.send_sock = 0;
+				}
 			}
-			if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
-				INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
-									relayed_msg, uas_rb, &uas_rb->dst, buf,
-									res_len,
-									(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0,
-									uas_rb->branch, relayed_code);
-				LOCK_REPLIES( t );
-				run_trans_callbacks_off_params(TMCB_RESPONSE_SENT, t, &onsend_params);
-				UNLOCK_REPLIES( t );
+		}
+
+		if (likely(uas_rb->dst.send_sock)) {
+			if (SEND_PR_BUFFER( uas_rb, buf, res_len ) >= 0){
+				if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
+					LOCK_REPLIES( t );
+					run_trans_callbacks_with_buf( TMCB_RESPONSE_OUT, uas_rb, t->uas.request,
+												  relayed_msg, relayed_code);
+					UNLOCK_REPLIES( t );
+				}
+				if (unlikely(has_tran_tmcbs(t, TMCB_RESPONSE_SENT))){
+					INIT_TMCB_ONSEND_PARAMS(onsend_params, t->uas.request,
+										relayed_msg, uas_rb, &uas_rb->dst, buf,
+										res_len,
+										(relayed_msg==FAKED_REPLY)?TMCB_LOCAL_F:0,
+										uas_rb->branch, relayed_code);
+					LOCK_REPLIES( t );
+					run_trans_callbacks_off_params(TMCB_RESPONSE_SENT, t, &onsend_params);
+					UNLOCK_REPLIES( t );
+				}
 			}
-		} else if (unlikely(uas_rb->dst.send_sock == 0))
-			ERR("no resolved dst to send reply to\n");
+		} else {
+			LM_NOTICE("dst no longer set - skiped sending the reply out\n");
+		}
 		/* Call put_on_wait() only if we really send out
 		* the reply. It can happen that the reply has been already sent from
 		* failure_route  or from a callback and the timer has been already
@@ -2050,7 +2067,8 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	}
 	
 	if (local_winner>=0 && winning_code>=200 ) {
-		DBG("DEBUG: local transaction completed\n");
+		DBG("DEBUG: local transaction completed %d/%d (totag retr: %d/%d)\n",
+				winning_code, local_winner, totag_retr, t->tmcb_hl.reg_types);
 		if (!totag_retr) {
 			if (unlikely(has_tran_tmcbs(t,TMCB_LOCAL_COMPLETED) ))
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, t, 0,
@@ -2285,10 +2303,21 @@ int reply_received( struct sip_msg  *p_msg )
 		backup_xavps = xavp_set_list(&t->xavps_list);
 #endif
 		setbflagsval(0, uac->branch_flags);
+		if(msg_status>last_uac_status) {
+			/* current response (msg) status is higher that the last received
+			 * on the same branch - set it temporarily so functions in onreply_route
+			 * can access it (e.g., avoid sending CANCEL by forcing another t_relply()
+			 * in onreply_route when a negative sip response was received) */
+			uac->last_received = msg_status;
+		}
+
 		/* Pre- and post-script callbacks have already
 		 * been executed by the core. (Miklos)
 		 */
 		run_top_route(onreply_rt.rlist[onreply_route], p_msg, &ctx);
+
+		/* restore brach last_received as before executing onreply_route */
+		uac->last_received = last_uac_status;
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 		getbflagsval(0, &uac->branch_flags);

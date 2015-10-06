@@ -396,7 +396,7 @@ static inline void update_contact_pos(struct impurecord* _r, ucontact_t* _c) {
  * \param _c updated contact
  * \return 0 on success, -1 on failure
  */
-int expire_ucontact(struct impurecord* _r, ucontact_t* _c) {
+int expire_scontact(struct impurecord* _r, ucontact_t* _c) {
     /* we have to update memory in any case, but database directly
      * only in db_mode 1 */
     LM_DBG("Expiring contact aor: [%.*s] and contact uri: [%.*s]\n", _c->aor.len, _c->aor.s, _c->c.len, _c->c.s);
@@ -434,7 +434,7 @@ int expire_ucontact(struct impurecord* _r, ucontact_t* _c) {
  * \param _ci new contact informations
  * \return 0 on success, -1 on failure
  */
-int update_ucontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci) {
+int update_scontact(struct impurecord* _r, ucontact_t* _c, ucontact_info_t* _ci) {
     /* we have to update memory in any case, but database directly
      * only in db_mode 1 */
     LM_DBG("Updating contact aor: [%.*s] and contact uri: [%.*s]\n", _c->aor.len, _c->aor.s, _c->c.len, _c->c.s);
@@ -503,7 +503,7 @@ int add_dialog_data_to_contact(ucontact_t* _c, unsigned int h_entry, unsigned in
  * used when this contact is part of a confirmed dialog so we can tear down the dialog if the contact is removed
  */
 int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsigned int h_id) {
-    struct contact_dialog_data *dialog_data, *tmp_dialog_data; 
+    struct contact_dialog_data *dialog_data, *tmp_dialog_data;     
     LM_DBG("Removing dialog data from contact <%.*s> with h_entry <%d> and h_id <%d>", _c->c.len, _c->c.s, h_entry, h_id);
     
     for (dialog_data = _c->first_dialog_data; dialog_data;) {
@@ -521,16 +521,17 @@ int remove_dialog_data_from_contact(ucontact_t* _c, unsigned int h_entry, unsign
 	    }else{
 	       _c->last_dialog_data =  tmp_dialog_data->prev;
 	    }
-	    shm_free(tmp_dialog_data);
-	    return 0;
+	    shm_free(tmp_dialog_data);            
+	    return 0; 
 	}
         
     }
-    LM_DBG("Did not find dialog data to remove from contact");
-    return 0;
+   
+      LM_DBG("Did not find dialog data to remove from contact");
+      return 1;              
 }
 
-void release_ucontact(struct ucontact* _c) {
+void release_scontact(struct ucontact* _c) {
     lock_contact_slot_i(_c->sl);
     unref_contact_unsafe(_c);
     unlock_contact_slot_i(_c->sl);

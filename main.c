@@ -200,7 +200,11 @@ Options:\n\
     -O nr        Script optimization level (debugging option)\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
                   disable with no or off\n\
-    -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n"
+    -A define    Add config pre-processor define (e.g., -A WITH_AUTH)\n\
+    -x name      Specify internal manager for shared memory (shm)\n\
+                  - can be: fm, qm or tlsf\n\
+    -X name      Specify internal manager for private memory (pkg)\n\
+                  - if omitted, the one for shm is used\n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -497,6 +501,12 @@ char* pid_file = 0; /* filename as asked by use */
 char* pgid_file = 0;
 
 
+/* memory manager */
+#define SR_MEMMNG_DEFAULT	"fm"
+
+char *sr_memmng_pkg = NULL;
+char *sr_memmng_shm = NULL;
+
 /* call it before exiting; if show_status==1, mem status is displayed */
 void cleanup(show_status)
 {
@@ -504,7 +514,7 @@ void cleanup(show_status)
 	
 	/*clean-up*/
 #ifndef SHM_SAFE_MALLOC
-	if (mem_lock)
+	if (_shm_lock)
 		shm_unlock(); /* hack: force-unlock the shared memory lock in case
 					 some process crashed and let it locked; this will
 					 allow an almost gracious shutdown */
@@ -571,12 +581,12 @@ void cleanup(show_status)
 		}
 	}
 	/* zero all shmem alloc vars that we still use */
-	shm_mem_destroy();
+	shm_destroy_manager();
 #endif
 	destroy_lock_ops();
 	if (pid_file) unlink(pid_file);
 	if (pgid_file) unlink(pgid_file);
-	destroy_pkg_mallocs();
+	pkg_destroy_manager();
 }
 
 
@@ -1793,6 +1803,7 @@ int main(int argc, char** argv)
 	int dont_fork_cnt;
 	struct name_lst* n_lst;
 	char *p;
+	struct stat st = {0};
 
 	/*init*/
 	time(&up_since);
@@ -1807,7 +1818,7 @@ int main(int argc, char** argv)
 	dprint_init_colors();
 
 	/* command line options */
-	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:"
+	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:"
 #ifdef STATS
 		"s:"
 #endif
@@ -1841,6 +1852,12 @@ int main(int argc, char** argv)
 						goto error;
 					};
 					break;
+			case 'x':
+					sr_memmng_shm = optarg;
+					break;
+			case 'X':
+					sr_memmng_pkg = optarg;
+					break;
 			default:
 					if (c == 'h' || (optarg && strcmp(optarg, "-h") == 0)) {
 						printf("version: %s\n", full_version);
@@ -1850,11 +1867,26 @@ int main(int argc, char** argv)
 					break;
 		}
 	}
-	
+
+	if(sr_memmng_pkg==NULL) {
+		if(sr_memmng_shm!=NULL) {
+			sr_memmng_pkg = sr_memmng_shm;
+		} else {
+			sr_memmng_pkg = SR_MEMMNG_DEFAULT;
+		}
+	}
+	if(sr_memmng_shm==NULL) {
+		sr_memmng_shm = SR_MEMMNG_DEFAULT;
+	}
+	shm_set_mname(sr_memmng_shm);
+	if (pkg_mem_size == 0) {
+		pkg_mem_size = PKG_MEM_POOL_SIZE;
+	}
+
 	/*init pkg mallocs (before parsing cfg or the rest of the cmd line !)*/
 	if (pkg_mem_size)
 		LM_INFO("private (per process) memory: %ld bytes\n", pkg_mem_size );
-	if (init_pkg_mallocs()==-1)
+	if (pkg_init_manager(sr_memmng_pkg)<0)
 		goto error;
 
 #ifdef DBG_MSG_QA
@@ -1873,6 +1905,11 @@ int main(int argc, char** argv)
 	/* switches required before script processing */
 	while((c=getopt(argc,argv,options))!=-1) {
 		switch(c) {
+			case 'M':
+			case 'x':
+			case 'X':
+					/* ignore, they were parsed immediately after startup */
+					break;
 			case 'f':
 					cfg_file=optarg;
 					break;
@@ -1892,10 +1929,6 @@ int main(int argc, char** argv)
 						goto error;
 					};
 					LM_INFO("shared memory: %ld bytes\n", shm_mem_size );
-					break;
-			case 'M':
-					/* ignore it, it was parsed immediately after startup,
-					   the pkg mem. is already initialized at this point */
 					break;
 			case 'd':
 					/* ignore it, was parsed immediately after startup */
@@ -1996,6 +2029,9 @@ int main(int argc, char** argv)
 			default:
 					abort();
 		}
+	}
+	if (shm_mem_size == 0) {
+		shm_mem_size = SHM_MEM_POOL_SIZE;
 	}
 
 	if (endianness_sanity_check() != 0){
@@ -2312,6 +2348,19 @@ try_again:
 		}
 		sock_gid = gid;
 	}
+	/* create runtime dir if doesn't exist */
+	if (stat(runtime_dir, &st) == -1) {
+		if(mkdir(runtime_dir, 0700) == -1) {
+			fprintf(stderr,  "failed to create runtime dir\n");
+			goto error;
+		}
+		if(sock_uid!=-1 || sock_gid!=-1) {
+			if(chown(runtime_dir, sock_uid, sock_gid) == -1) {
+				fprintf(stderr,  "failed to change owner of runtime dir\n");
+				goto error;
+			}
+		}
+	}
 	if (fix_all_socket_lists()!=0){
 		fprintf(stderr,  "failed to initialize list addresses\n");
 		goto error;
@@ -2357,6 +2406,8 @@ try_again:
 	if (!shm_initialized() && init_shm()<0)
 		goto error;
 #endif /* SHM_MEM */
+	pkg_print_manager();
+	shm_print_manager();
 	if (init_atomic_ops()==-1)
 		goto error;
 	if (init_basex() != 0){

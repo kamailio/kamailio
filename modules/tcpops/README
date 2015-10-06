@@ -4,7 +4,13 @@ Camille Oudot
 
    Orange
 
-   Copyright Â© 2015 Orange
+Olle E. Johansson
+
+   Edvina AB
+
+   Copyright © 2015 Orange
+
+   Copyright © 2015 Edvina AB, Sollentuna, Sweden
      __________________________________________________________________
 
    Table of Contents
@@ -15,15 +21,19 @@ Camille Oudot
         2. Parameters
         3. Functions
 
-              3.1. tcp_keepalive_enable([conid], idle, count, interval)
-              3.2. tcp_keepalive_disable([conid])
-              3.3. tcp_set_connection_lifetime([conid], lifetime)
+              3.1. tcp_conid_alive(conid)
+              3.2. tcp_conid_state(conid)
+              3.3. tcp_keepalive_enable([conid], idle, count, interval)
+              3.4. tcp_keepalive_disable([conid])
+              3.5. tcp_set_connection_lifetime([conid], lifetime)
 
    List of Examples
 
-   1.1. tcp_keepalive_enable usage
-   1.2. tcp_keepalive_disable usage
-   1.3. tcp_set_connection_lifetime usage
+   1.1. tcp_conid_alive usage
+   1.2. tcp_conid_state usage
+   1.3. tcp_keepalive_enable usage
+   1.4. tcp_keepalive_disable usage
+   1.5. tcp_set_connection_lifetime usage
 
 Chapter 1. Admin Guide
 
@@ -33,14 +43,17 @@ Chapter 1. Admin Guide
    2. Parameters
    3. Functions
 
-        3.1. tcp_keepalive_enable([conid], idle, count, interval)
-        3.2. tcp_keepalive_disable([conid])
-        3.3. tcp_set_connection_lifetime([conid], lifetime)
+        3.1. tcp_conid_alive(conid)
+        3.2. tcp_conid_state(conid)
+        3.3. tcp_keepalive_enable([conid], idle, count, interval)
+        3.4. tcp_keepalive_disable([conid])
+        3.5. tcp_set_connection_lifetime([conid], lifetime)
 
 1. Overview
 
-   This modules allows kamailio to control the TCP options (such as the
-   keepalive mechanism), on demand, and on a per-socket basis.
+   This modules allows Kamailio to control the TCP connection options
+   (such as the keepalive mechanism), on demand, and on a per-socket
+   basis.
 
    Note: the keepalive functions only work on systems with the
    HAVE_TCP_KEEPIDLE, HAVE_TCP_KEEPCNT and HAVE_TCP_KEEPINTVL macros
@@ -50,11 +63,66 @@ Chapter 1. Admin Guide
 
 3. Functions
 
-   3.1. tcp_keepalive_enable([conid], idle, count, interval)
-   3.2. tcp_keepalive_disable([conid])
-   3.3. tcp_set_connection_lifetime([conid], lifetime)
+   3.1. tcp_conid_alive(conid)
+   3.2. tcp_conid_state(conid)
+   3.3. tcp_keepalive_enable([conid], idle, count, interval)
+   3.4. tcp_keepalive_disable([conid])
+   3.5. tcp_set_connection_lifetime([conid], lifetime)
 
-3.1.  tcp_keepalive_enable([conid], idle, count, interval)
+3.1. tcp_conid_alive(conid)
+
+   Check the state of a TCP or WS connection ID
+
+   Meaning of the parameters is as follows:
+     * conid (optionnal): the Kamailio internal connection id (as in the
+       $conid pseudovariable).
+
+   Retuns values:
+
+   1: Connection is OK
+
+   -1: Connection has errors, does not exist or is about to be closed)
+
+   Example 1.1. tcp_conid_alive usage
+...
+        $var(conid) = $conid;
+        if(!tcp_conid_alive("$var(conid)")) {
+                xlog("L_ERR", "Connection $conid can no longer be used\n");
+        }
+...
+
+3.2. tcp_conid_state(conid)
+
+   Check the state of a TCP or WS connection ID
+
+   Meaning of the parameters is as follows:
+     * conid (optionnal): the Kamailio internal connection id (as in the
+       $conid pseudovariable).
+
+   Retuns values:
+
+   1: Connection is OK
+
+   2: Socket is accepting incoming connections
+
+   3: Socket is setting up outgoing connection
+
+   -1: Connection does not exist (or was closed)
+
+   -2: Socket has reached EOF
+
+   -3: Socket error has occured. Connection will likely close.
+
+   -4: Socket is in unknow bad state. Connection will likely close.
+
+   Example 1.2. tcp_conid_state usage
+...
+        if(!tcp_conid_state("$var(conid)")) {
+                xlog("L_ERR", "Connection $conid is closed or malfunctional\n");
+        }
+...
+
+3.3. tcp_keepalive_enable([conid], idle, count, interval)
 
    Enables keepalive on a TCP connection.
 
@@ -70,7 +138,7 @@ Chapter 1. Admin Guide
 
    Retuns 1 on success, -1 on failure.
 
-   Example 1.1. tcp_keepalive_enable usage
+   Example 1.3. tcp_keepalive_enable usage
 request_route {
         if (is_method("INVITE")) {
                 $avp(caller_conid) = $conid;
@@ -89,7 +157,7 @@ onreply_route[foo] {
         ...
 }
 
-3.2.  tcp_keepalive_disable([conid])
+3.4. tcp_keepalive_disable([conid])
 
    Disables keepalive on a TCP connection.
 
@@ -101,7 +169,7 @@ onreply_route[foo] {
 
    Retuns 1 on success, -1 on failure.
 
-   Example 1.2. tcp_keepalive_disable usage
+   Example 1.4. tcp_keepalive_disable usage
 request_route {
         ...
         if (is_method("BYE")) {
@@ -120,7 +188,7 @@ onreply_route[foo] {
         ...
 }
 
-3.3.  tcp_set_connection_lifetime([conid], lifetime)
+3.5. tcp_set_connection_lifetime([conid], lifetime)
 
    Sets the connection lifetime of a connection (TCP).
 
@@ -132,7 +200,7 @@ onreply_route[foo] {
 
    Retuns 1 on success, -1 on failure.
 
-   Example 1.3. tcp_set_connection_lifetime usage
+   Example 1.5. tcp_set_connection_lifetime usage
 ...
 # use 10s as default lifetime
 tcp_connection_lifetime=10

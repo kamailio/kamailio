@@ -162,6 +162,7 @@ int subscription_default_expires = 3600; /**< the default value for expires if n
 int subscription_min_expires = 10; /**< minimum subscription expiration time 		*/
 int subscription_max_expires = 1000000; /**< maximum subscription expiration time 		*/
 int subscription_expires_range = 0;
+int contact_expires_buffer_percentage = 10;     /**< percentage we expiry for contact we will substrace from reg response to UE */
 
 int notification_list_size_threshold = 0; /**Threshold for size of notification list after which a warning is logged */
 
@@ -258,6 +259,7 @@ static param_export_t params[] = {
     {"subscription_default_expires", INT_PARAM, &subscription_default_expires},
     {"subscription_min_expires", INT_PARAM, &subscription_min_expires},
     {"subscription_max_expires", INT_PARAM, &subscription_max_expires},
+    {"expires_buffer_percent", INT_PARAM, &contact_expires_buffer_percentage},
     {"ue_unsubscribe_on_dereg", INT_PARAM, &ue_unsubscribe_on_dereg},
     {"subscription_expires_range", INT_PARAM, &subscription_expires_range},
     {"user_data_always", INT_PARAM, &user_data_always},
@@ -318,6 +320,11 @@ static int mod_init(void) {
 
     if (!scscf_serviceroute_uri_str.s) {
         LM_ERR("Unable to allocate memory for service route uri\n");
+        return -1;
+    }
+    
+    if (contact_expires_buffer_percentage < 0 || contact_expires_buffer_percentage > 90) {
+        LM_ERR("contact expires percentage not valid, must be >0 and <=90");
         return -1;
     }
 

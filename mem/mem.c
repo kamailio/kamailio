@@ -42,6 +42,8 @@
 #include "shm_mem.h"
 #endif
 
+#if 0
+
 #ifdef PKG_MALLOC
 	#ifndef DL_MALLOC
 	char* mem_pool = 0;
@@ -130,3 +132,4 @@ int init_shm_mallocs(int force_alloc)
 #endif
 	return 0;
 }
+#endif 

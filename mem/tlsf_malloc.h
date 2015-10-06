@@ -1,6 +1,8 @@
 #ifndef INCLUDED_tlsf
 #define INCLUDED_tlsf
 
+#if defined(TLSF_MALLOC)
+
 /*
 ** Two Level Segregated Fit memory allocator, version 3.0.
 ** Written by Matthew Conte, and placed in the Public Domain.
@@ -18,7 +20,10 @@
 
 #include <stddef.h>
 #include "meminfo.h"
-#define TLSF_STATS
+
+#ifdef DBG_SR_MEMORY
+#define DBG_TLSF_MALLOC
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
@@ -42,11 +47,11 @@ void tlsf_remove_pool(tlsf_t tlsf, pool_t pool);
 /* malloc/memalign/realloc/free replacements. */
 #ifdef DBG_TLSF_MALLOC
 void* tlsf_malloc(tlsf_t tlsf, size_t size,
-		const char *file, const char *function, unsigned long line);
+		const char *file, const char *function, unsigned int line);
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size,
-		const char *file, const char *function, unsigned long line);
+		const char *file, const char *function, unsigned int line);
 void tlsf_free(tlsf_t tlsf, void* ptr,
-		const char *file, const char *function, unsigned long line);
+		const char *file, const char *function, unsigned int line);
 #else
 void* tlsf_malloc(tlsf_t tlsf, size_t bytes);
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size);
@@ -79,5 +84,7 @@ size_t tlsf_available(tlsf_t pool);
 #if defined(__cplusplus)
 };
 #endif
+
+#endif /* TLSF_MALLOC */
 
 #endif

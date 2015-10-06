@@ -93,5 +93,6 @@ AAA_AVP* rx_create_codec_data_avp(str *raw_sdp_stream, int number, int direction
 inline int rx_get_result_code(AAAMessage *msg, unsigned int *data);
 unsigned int rx_get_abort_cause(AAAMessage *msg);
 
+inline int rx_add_specific_action_avp(AAAMessage *msg, unsigned int data);
 
 #endif /*__PCC_AVP_H*/

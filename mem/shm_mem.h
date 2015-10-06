@@ -31,6 +31,10 @@
 #ifndef shm_mem_h
 #define shm_mem_h
 
+#include "shm.h"
+
+#if 0
+
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -337,6 +341,7 @@ do{\
  */
 unsigned long shm_available_safe();
 
+#endif
 
 #endif /* shm_mem_h */
 

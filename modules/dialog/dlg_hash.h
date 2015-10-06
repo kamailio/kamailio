@@ -267,6 +267,16 @@ int dlg_set_leg_info(dlg_cell_t *dlg, str* tag, str *rr, str *contact,
 
 
 /*!
+ * \brief Update or set the Contact for an existing dialog
+ * \param dlg dialog
+ * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
+ * \param ct Contact of caller or callee
+ * \return 0 on success, -1 on failure
+ */
+int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *ct);
+
+
+/*!
  * \brief Update or set the CSEQ for an existing dialog
  * \param dlg dialog
  * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
@@ -335,15 +345,22 @@ dlg_cell_t* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
  * referred to as a dialog."
  * Note that the caller is responsible for decrementing (or reusing)
  * the reference counter by one again if a dialog has been found.
- * If the dialog is not found, the hash slot is left locked, to allow
- * linking the structure of a new dialog.
+ * Important: the hash slot is left locked (e.g., needed to allow
+ * linking the structure of a new dialog).
  * \param callid callid
  * \param ftag from tag
  * \param ttag to tag
  * \param dir direction
  * \return dialog structure on success, NULL on failure (and slot locked)
  */
-dlg_cell_t* search_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
+dlg_cell_t* dlg_search(str *callid, str *ftag, str *ttag, unsigned int *dir);
+
+
+/*!
+ * \brief Lock hash table slot by call-id
+ * \param callid call-id value
+ */
+void dlg_hash_lock(str *callid);
 
 
 /*!

@@ -426,7 +426,7 @@ static int load_dialog_out_from_db(struct dlg_cell *dlg, str *did, int fetch_num
 			GET_STR_VALUE(to_uri,	values, DLGO_TO_URI_IDX, 	1, 0);
 			GET_STR_VALUE(to_tag,	values, DLGO_TO_TAG_IDX, 	1, 0);
 
-			dlg_out	= build_new_dlg_out(dlg, &to_uri, &to_tag);
+			dlg_out	= build_new_dlg_out(dlg, &to_uri, &to_tag, 0);
 
 			if (!dlg_out) {
 				LM_ERR("Error creating dlg_out cell\n");
@@ -534,7 +534,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			}
 
 			/*link the dialog*/
-			link_dlg(dlg, 0);
+			link_dlg(dlg, 0, 0);
 
 			GET_STR_VALUE(did, 		values, DLGI_DID_COL_IDX,		1, 0);
 			update_dlg_did(dlg, &did);
@@ -721,7 +721,7 @@ static int load_dialog_vars_from_db(int fetch_num_rows)
 					if (dlg->h_id == VAL_INT(values+1)) {
 						str key = { VAL_STR(values+2).s, strlen(VAL_STRING(values+2)) };
 						str value = { VAL_STR(values+3).s, strlen(VAL_STRING(values+3)) };
-						set_dlg_variable_unsafe(dlg, &key, &value, 1);
+						set_dlg_variable_unsafe(dlg, &key, &value);
 						break;
 					}
 					dlg = dlg->next;
@@ -886,8 +886,14 @@ error:
 
 int update_dialog_out_dbinfo_unsafe(struct dlg_cell * cell)
 {
+    	str x = {0,0};
+
 	struct dlg_cell_out *dlg_out	= cell->dlg_entry_out.first;
-	str x = {0,0};
+        if (!dlg_out) {
+            LM_DBG("no out dialogs to update\n");
+            return 0;
+        }
+            
 	if(use_dialog_out_table()!=0)
 		return -1;
 
@@ -1044,8 +1050,9 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 		VAL_INT(GET_FIELD_IDX(values, DLGI_HASH_ENTRY_COL_IDX))	= cell->h_entry;
 		VAL_INT(GET_FIELD_IDX(values, DLGI_HASH_ID_COL_IDX))	= cell->h_id;
 		VAL_INT(GET_FIELD_IDX(values, DLGI_START_TIME_COL_IDX))	= cell->start_ts;
-		VAL_INT(GET_FIELD_IDX(values, DLGI_STATE_COL_IDX))		= cell->state;
+		VAL_INT(GET_FIELD_IDX(values, DLGI_STATE_COL_IDX))	= cell->state;
 		VAL_INT(GET_FIELD_IDX(values, DLGI_TIMEOUT_COL_IDX))	= (unsigned int)( (unsigned int)time(0) + cell->tl.timeout - get_ticks() );
+                VAL_INT(GET_FIELD_IDX(values, DLGI_TOROUTE_INDEX_COL_IDX)) = cell->toroute;
 
 		SET_STR_VALUE(GET_FIELD_IDX(values, DLGI_CALLID_COL_IDX), cell->callid);
 		SET_STR_VALUE(GET_FIELD_IDX(values, DLGI_DID_COL_IDX), cell->did);

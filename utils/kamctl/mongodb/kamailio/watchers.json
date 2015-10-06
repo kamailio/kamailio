@@ -1,0 +1,46 @@
+{
+  "name": "watchers",
+  "version": 3,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "presentity_uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "watcher_username": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "watcher_domain": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "event": {
+      "type": "string",
+      "default": "presence",
+      "null": false
+    },
+    "status": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "reason": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "inserted_time": {
+      "type": "int",
+      "default": null,
+      "null": false
+    }
+  ]
+}

@@ -4113,6 +4113,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 			if (unlikely(io_watch_chg(&io_h, tcpconn->s, POLLOUT, fd_i)==-1)){
 				LM_ERR("io_watch_chg(2) failed: for %p, fd %d\n",
 							tcpconn, tcpconn->s);
+				tcpconn->flags&=~F_CONN_WRITE_W;
 				goto error;
 			}
 		}else

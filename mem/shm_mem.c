@@ -25,6 +25,8 @@
 
 #ifdef SHM_MEM
 
+#if 0
+
 #include <stdlib.h>
 
 #include "shm_mem.h"
@@ -264,5 +266,7 @@ unsigned long shm_available_safe()
 	shm_unlock();
 	return ret;
 }
+
+#endif
 
 #endif

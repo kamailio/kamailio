@@ -44,7 +44,7 @@
 
 struct jsonrpc_server {
 	char *host;
-	int  port, socket, status;
+	int  port, socket, status, conn_attempts;
 	struct jsonrpc_server *next;
 	struct event *ev;
 	struct itimerspec *timer;
@@ -68,6 +68,9 @@ int  connect_servers(struct jsonrpc_server_group *group);
 int  connect_server(struct jsonrpc_server *server);
 int  handle_server_failure(struct jsonrpc_server *server);
 
+/* module config from jsonrpc_mod.c */
+int _jsonrpcc_max_conn_retry = 0; /* max retries to connect. -1 forever 0 none */
+
 int jsonrpc_io_child_process(int cmd_pipe, char* _servers)
 {
 	if (parse_servers(_servers, &server_group) != 0)
@@ -85,8 +88,7 @@ int jsonrpc_io_child_process(int cmd_pipe, char* _servers)
 
 	if (!connect_servers(server_group))
 	{
-		LM_ERR("failed to connect to any servers\n");
-		return -1;
+		LM_WARN("failed to connect to any servers\n");
 	}
 
 	event_dispatch();
@@ -142,6 +144,11 @@ int (*res_cb)(json_object*, char*, int) = &result_cb;
 void cmd_pipe_cb(int fd, short event, void *arg)
 {
 	struct jsonrpc_pipe_cmd *cmd;
+	char *ns = 0;
+	size_t bytes;
+	json_object *payload = NULL;
+	jsonrpc_request_t *req = NULL;
+	json_object *params;
 	/* struct event *ev = (struct event*)arg; */
 
 	if (read(fd, &cmd, sizeof(cmd)) != sizeof(cmd)) {
@@ -149,9 +156,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		return;
 	}
 
-	json_object *params = json_tokener_parse(cmd->params);
-	json_object *payload = NULL;
-	jsonrpc_request_t *req = NULL;
+	params = json_tokener_parse(cmd->params);
 
 	if (cmd->notify_only) {
 		payload = build_jsonrpc_notification(cmd->method, params);
@@ -163,11 +168,10 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 
 	if (!payload) {
 		LM_ERR("Failed to build jsonrpc_request_t (method: %s, params: %s)\n", cmd->method, cmd->params);	
-		return;
+		goto error;
 	}
 	char *json = (char*)json_object_get_string(payload);
 
-	char *ns; size_t bytes;
 	bytes = netstring_encode_new(&ns, json, (size_t)strlen(json));
 
 	struct jsonrpc_server_group *g;
@@ -201,7 +205,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 
 		if (timerfd == -1) {
 			LM_ERR("Could not create timerfd.");
-			return;
+			goto error;
 		}
 
 		req->timerfd = timerfd;
@@ -215,7 +219,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		if (timerfd_settime(timerfd, 0, itime, NULL) == -1) 
 		{
 			LM_ERR("Could not set timer.");
-			return;
+			goto error;
 		}
 		pkg_free(itime);
 		struct event *timer_ev = pkg_malloc(sizeof(struct event));
@@ -223,7 +227,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		event_set(timer_ev, timerfd, EV_READ, timeout_cb, req); 
 		if(event_add(timer_ev, NULL) == -1) {
 			LM_ERR("event_add failed while setting request timer (%s).", strerror(errno));
-			return;
+			goto error;
 		}
 		req->timer_ev = timer_ev;
 	} else if (!sent) {
@@ -237,6 +241,14 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 
 	pkg_free(ns);
 	json_object_put(payload);
+	if (cmd->notify_only) free_pipe_cmd(cmd);
+	return;
+
+error:
+	if(ns) pkg_free(ns);
+	if(payload) json_object_put(payload);
+	if (cmd->notify_only) free_pipe_cmd(cmd);
+	return;
 }
 
 void socket_cb(int fd, short event, void *arg)
@@ -338,6 +350,7 @@ int parse_servers(char *_servers, struct jsonrpc_server_group **group_ptr)
 	
 		struct jsonrpc_server *server = pkg_malloc(sizeof(struct jsonrpc_server));
 		CHECK_MALLOC(server);
+		memset(server, 0, sizeof(struct jsonrpc_server));
 		char *h = pkg_malloc(strlen(host)+1);
 		CHECK_MALLOC(h);
 
@@ -346,6 +359,7 @@ int parse_servers(char *_servers, struct jsonrpc_server_group **group_ptr)
 		server->port = port;
 		server->status = JSONRPC_SERVER_DISCONNECTED;
 		server->socket = 0;
+		server->conn_attempts = _jsonrpcc_max_conn_retry;
 
 		int group_cnt = 0;
 
@@ -365,6 +379,7 @@ int parse_servers(char *_servers, struct jsonrpc_server_group **group_ptr)
 			
 			selected_group = pkg_malloc(sizeof(struct jsonrpc_server_group));
 			CHECK_MALLOC(selected_group);
+			memset(selected_group, 0, sizeof(struct jsonrpc_server_group));
 			selected_group->priority = priority;
 			selected_group->next_server = server;
 			
@@ -442,6 +457,7 @@ int connect_server(struct jsonrpc_server *server)
 
 	server->socket = sockfd;
 	server->status = JSONRPC_SERVER_CONNECTED;
+	server->conn_attempts = _jsonrpcc_max_conn_retry;
 
 	struct event *socket_ev = pkg_malloc(sizeof(struct event));
 	CHECK_MALLOC(socket_ev);
@@ -506,6 +522,12 @@ int handle_server_failure(struct jsonrpc_server *server)
 		server->ev = NULL;
 	}
 	server->status = JSONRPC_SERVER_FAILURE;
+	server->conn_attempts--;
+	if(_jsonrpcc_max_conn_retry!=-1 && server->conn_attempts<0) {
+		LM_ERR("max reconnect attempts. No further attempts will be made to reconnect this server.");
+		return -1;
+	}
+
 	int timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 	
 	if (timerfd == -1) {

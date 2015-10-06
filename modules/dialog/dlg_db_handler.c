@@ -135,7 +135,7 @@ int dlg_connect_db(const str *db_url)
 }
 
 
-int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int fetch_num_rows)
+int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int fetch_num_rows, int db_skip_load)
 {
 	/* Find a database module */
 	if (db_bind_mod(db_url, &dialog_dbf) < 0){
@@ -164,15 +164,16 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int
 		return -1;
 	}
 
-	if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows) ) !=0 ){
-		LM_ERR("unable to load the dialog data\n");
-		return -1;
+	if ( db_skip_load == 0 ) {
+		if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows) ) !=0 ){
+			LM_ERR("unable to load the dialog data\n");
+			return -1;
+		}
+		if( (load_dialog_vars_from_db(fetch_num_rows) ) !=0 ){
+			LM_ERR("unable to load the dialog data\n");
+			return -1;
+		}
 	}
-	if( (load_dialog_vars_from_db(fetch_num_rows) ) !=0 ){
-		LM_ERR("unable to load the dialog data\n");
-		return -1;
-	}
-
 	dialog_dbf.close(dialog_db_handle);
 	dialog_db_handle = 0;
 
@@ -701,25 +702,33 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 
 	db_val_t values[DIALOG_TABLE_COL_NO];
 
-	db_key_t insert_keys[DIALOG_TABLE_COL_NO] = { &h_entry_column,
-			&h_id_column,        &call_id_column,     &from_uri_column,
-			&from_tag_column,    &to_uri_column,      &to_tag_column,
-			&from_sock_column,   &to_sock_column,
-			&start_time_column,  &state_column,       &timeout_column,
-			&from_cseq_column,   &to_cseq_column,     &from_route_column,
-			&to_route_column,    &from_contact_column,&to_contact_column,
-			&sflags_column,      &toroute_name_column,     &req_uri_column,
-			&xdata_column, &iflags_column };
+	db_key_t insert_keys[DIALOG_TABLE_COL_NO] = { &h_entry_column, /*0*/
+			&h_id_column, /*1*/        &call_id_column,  /*2*/      &from_uri_column, /*3*/
+			&from_tag_column, /*4*/    &to_uri_column,  /*5*/       &to_tag_column, /*6*/
+			&from_sock_column, /*7*/   &to_sock_column,  /*8*/
+			&start_time_column, /*9*/  &state_column,  /*10*/       &timeout_column, /*11*/
+			&from_cseq_column, /*12*/  &to_cseq_column,  /*13*/     &from_contact_column, /*14*/
+			&to_contact_column, /*15*/ &from_route_column, /*16*/   &to_route_column, /*17*/
+			&sflags_column, /*18*/     &toroute_name_column, /*19*/ &req_uri_column, /*20*/
+			&xdata_column, /*21*/      &iflags_column  /*22*/ };
 
+	if(cell->state<DLG_STATE_EARLY || cell->state==DLG_STATE_DELETED) {
+		LM_DBG("not storing dlg in db during initial or deleted states\n");
+		return 0;
+	}
+
+	i = 0;
 	if( (cell->dflags & DLG_FLAG_NEW) != 0 
 	|| (cell->dflags & DLG_FLAG_CHANGED_VARS) != 0) {
 		/* iterate the list */
 		for(var=cell->vars ; var ; var=var->next) {
 			if (update_dialog_vars_dbinfo(cell, var) != 0)
 				return -1;
+			i++;
 		}
 		/* Remove the flag */
 		cell->dflags &= ~DLG_FLAG_CHANGED_VARS;
+		LM_DBG("updated %d vars for dlg [%d:%d]\n", i, cell->h_entry, cell->h_id);
 	}
 
 	if(use_dialog_table()!=0)
@@ -767,15 +776,15 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 
 		SET_STR_VALUE(values+12, cell->cseq[DLG_CALLER_LEG]);
 		SET_STR_VALUE(values+13, cell->cseq[DLG_CALLEE_LEG]);
-		SET_STR_VALUE(values+14, cell->route_set[DLG_CALLER_LEG]);
-		SET_STR_VALUE(values+15, cell->route_set[DLG_CALLEE_LEG]);
-		SET_STR_VALUE(values+16, cell->contact[DLG_CALLER_LEG]);
-		SET_STR_VALUE(values+17, cell->contact[DLG_CALLEE_LEG]);
+		SET_STR_VALUE(values+14, cell->contact[DLG_CALLER_LEG]);
+		SET_STR_VALUE(values+15, cell->contact[DLG_CALLEE_LEG]);
+		SET_STR_VALUE(values+16, cell->route_set[DLG_CALLER_LEG]);
+		SET_STR_VALUE(values+17, cell->route_set[DLG_CALLEE_LEG]);
 
-		SET_PROPER_NULL_FLAG(cell->route_set[DLG_CALLER_LEG], 	values, 14);
-		SET_PROPER_NULL_FLAG(cell->route_set[DLG_CALLEE_LEG], 	values, 15);
-		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLER_LEG], 	values, 16);
-		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLEE_LEG], 	values, 17);
+		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLER_LEG], 	values, 14);
+		SET_PROPER_NULL_FLAG(cell->contact[DLG_CALLEE_LEG], 	values, 15);
+		SET_PROPER_NULL_FLAG(cell->route_set[DLG_CALLER_LEG], 	values, 16);
+		SET_PROPER_NULL_FLAG(cell->route_set[DLG_CALLEE_LEG], 	values, 17);
 
 		VAL_NULL(values+18) = 0;
 		VAL_INT(values+18)  = cell->sflags;
@@ -810,6 +819,7 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 		VAL_TYPE(values+10) = VAL_TYPE(values+11) = DB1_INT;
 
 		VAL_TYPE(values+12) = VAL_TYPE(values+13) =DB1_STR;
+		VAL_TYPE(values+14) = VAL_TYPE(values+15) =DB1_STR;
 
 		VAL_INT(values)			= cell->h_entry;
 		VAL_INT(values+1)		= cell->h_id;
@@ -819,14 +829,17 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 
 		SET_STR_VALUE(values+12, cell->cseq[DLG_CALLER_LEG]);
 		SET_STR_VALUE(values+13, cell->cseq[DLG_CALLEE_LEG]);
+		SET_STR_VALUE(values+14, cell->contact[DLG_CALLER_LEG]);
+		SET_STR_VALUE(values+15, cell->contact[DLG_CALLEE_LEG]);
 
 
 		VAL_NULL(values) = VAL_NULL(values+1) = 
 		VAL_NULL(values+10) = VAL_NULL(values+11) = 
-		VAL_NULL(values+12) = VAL_NULL(values+13) = 0;
+		VAL_NULL(values+12) = VAL_NULL(values+13) = 
+		VAL_NULL(values+14) = VAL_NULL(values+15) = 0;
 
 		if((dialog_dbf.update(dialog_db_handle, (insert_keys), 0, 
-						(values), (insert_keys+10), (values+10), 2, 4)) !=0){
+						(values), (insert_keys+10), (values+10), 2, 6)) !=0){
 			LM_ERR("could not update database info\n");
 			goto error;
 		}
@@ -854,43 +867,31 @@ error:
 
 int update_dialog_dbinfo(struct dlg_cell * cell)
 {
-	struct dlg_entry entry;
 	/* lock the entry */
-	entry = (d_table->entries)[cell->h_entry];
-	dlg_lock( d_table, &entry);
+	dlg_lock(d_table, &d_table->entries[cell->h_entry]);
 	if (update_dialog_dbinfo_unsafe(cell) != 0) {
-		dlg_unlock( d_table, &entry);
+		dlg_unlock(d_table, &d_table->entries[cell->h_entry]);
 		return -1;
 	} 
-	dlg_unlock( d_table, &entry);
+	dlg_unlock(d_table, &d_table->entries[cell->h_entry]);
 	return 0;
 }
 
 void dialog_update_db(unsigned int ticks, void * param)
 {
-	int index;
-	struct dlg_entry entry;
-	struct dlg_cell  * cell; 
+	int i;
+	struct dlg_cell *cell;
 
 	LM_DBG("saving current_info \n");
-	
-	for(index = 0; index< d_table->size; index++){
-		/* lock the whole entry */
-		entry = (d_table->entries)[index];
-		dlg_lock( d_table, &entry);
 
-		for(cell = entry.first; cell != NULL; cell = cell->next){
-			if (update_dialog_dbinfo_unsafe(cell) != 0) {
-				dlg_unlock( d_table, &entry);
-				goto error;
-			}
+	for(i = 0; i < d_table->size; i++){
+		/* lock the slot */
+		dlg_lock(d_table, &d_table->entries[i]);
+		for(cell = d_table->entries[i].first; cell != NULL; cell = cell->next){
+			/* if update fails for one dlg, still do it for the next ones */
+			update_dialog_dbinfo_unsafe(cell);
 		}
-		dlg_unlock( d_table, &entry);
-
+		dlg_unlock(d_table, &d_table->entries[i]);
 	}
-
 	return;
-
-error:
-	dlg_unlock( d_table, &entry);
 }

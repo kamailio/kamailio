@@ -81,9 +81,13 @@ typedef struct rx_authsessiondata {
     str ttag;
     str identifier;
     int identifier_type;
+    str via_host;       /* UE host as fetched from Via (first for REQUEST, last for REPLY) */
+    unsigned short via_port; /* UE port as fetched from Via (first for REQUEST, last for REPLY) */
+    unsigned short via_proto; /* UE proto as fetched from Via (first for REQUEST, last for REPLY) */
     str ip;
-    int recv_port;
     int ip_version;
+    int recv_port;
+    unsigned short recv_proto;
     //for registration session
     int subscribed_to_signaling_path_status; // 0 not subscribed 1 is subscribed
     int session_has_been_opened; // 0 has not been opened 1 has been opened
@@ -94,7 +98,7 @@ typedef struct rx_authsessiondata {
     flow_description_t *first_new_flow_description;
 } rx_authsessiondata_t;
 
-int create_new_regsessiondata(str* domain, str* aor,  str *ip, int ip_version, int recv_port, rx_authsessiondata_t** session_data);
+int create_new_regsessiondata(str* domain, str* aor,  str *ip, int ip_version, int recv_port, unsigned short recv_proto, str *via_host, unsigned short via_port, unsigned short via_proto, rx_authsessiondata_t** session_data);
 int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifier, int identifier_type, str *ip, int ip_version, rx_authsessiondata_t** session_data);
 void free_callsessiondata(rx_authsessiondata_t* session_data);
 

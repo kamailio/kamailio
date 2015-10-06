@@ -40,7 +40,7 @@
  * Performs http_query and saves possible result (first body line of reply)
  * to pvar.
  */
-int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post);
+int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _hdr);
 
 
 #endif /* UTILS_FUNCTIONS_H */

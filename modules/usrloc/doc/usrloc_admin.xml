@@ -64,6 +64,13 @@
 				case.
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>Call-id only based</emphasis> - it is not
+				according to RFC3261, as it will check the Call-ID only
+				(independent of the Contact-Header or Path).
+			</para>
+			</listitem>
 		</itemizedlist>
 		<para>
 		To find out how to control/select the contact maching algorithm, please see the
@@ -708,6 +715,12 @@ modparam("usrloc", "db_mode", 2)
 				If no path is available, it defaults to mode 0.
 				</para>
 			</listitem>
+			<listitem>
+				<para><emphasis>3</emphasis> - CALLID only based 
+				matching algorithm. This mode will discard any duplicate
+				registration coming through different paths.
+				</para>
+			</listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>
@@ -1046,6 +1059,28 @@ modparam("usrloc", "db_raw_fetch_type", 1)
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "db_insert_null", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.skip_remote_socket">
+		<title><varname>skip_remote_socket</varname> (int)</title>
+		<para>
+			If set to 1, Kamailio will skip location record when loading from
+			database, if socket value of the record does not in kamailio
+			listening socket list.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>skip_remote_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "skip_remote_socket", 1)
 ...
 </programlisting>
 		</example>

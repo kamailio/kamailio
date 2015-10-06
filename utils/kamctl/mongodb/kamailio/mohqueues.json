@@ -1,0 +1,36 @@
+{
+  "name": "mohqueues",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "name": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "uri": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "mohdir": {
+      "type": "string",
+      "default": null,
+      "null": true
+    },
+    "mohfile": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "debug": {
+      "type": "int",
+      "default": null,
+      "null": false
+    }
+  ]
+}

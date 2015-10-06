@@ -92,7 +92,7 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 37
+#define NR_KEYS 40
 #define RTCP_NR_KEYS 12
 
 /*multiple table mode*/
@@ -159,9 +159,12 @@ static str reply_reason_column 	= str_init("reply_reason");
 static str correlation_column 	= str_init("correlation_id");
 static str ruri_column 		= str_init("ruri");     	
 static str ruri_user_column 	= str_init("ruri_user");  
+static str ruri_domain_column 	= str_init("ruri_domain");  
 static str from_user_column 	= str_init("from_user");  
+static str from_domain_column 	= str_init("from_domain");
 static str from_tag_column 	= str_init("from_tag");   
 static str to_user_column 	= str_init("to_user");
+static str to_domain_column 	= str_init("to_domain");
 static str to_tag_column 	= str_init("to_tag");   
 static str pid_user_column 	= str_init("pid_user");
 static str contact_user_column 	= str_init("contact_user");
@@ -271,13 +274,16 @@ static param_export_t params[] = {
 	{"date_column",        		PARAM_STR, &date_column       },
 	{"micro_ts_column",     	PARAM_STR, &micro_ts_column	},
 	{"method_column",      		PARAM_STR, &method_column 	},
-        {"correlation_column",     	PARAM_STR, &correlation_column.s },
+	{"correlation_column",     	PARAM_STR, &correlation_column.s },
 	{"reply_reason_column",		PARAM_STR, &reply_reason_column	},
 	{"ruri_column",      		PARAM_STR, &ruri_column     	},
 	{"ruri_user_column",      	PARAM_STR, &ruri_user_column  },
+	{"ruri_domain_column",      PARAM_STR, &ruri_domain_column  },
 	{"from_user_column",      	PARAM_STR, &from_user_column  },
+	{"from_domain_column",      PARAM_STR, &from_domain_column  },
 	{"from_tag_column",        	PARAM_STR, &from_tag_column   },
 	{"to_user_column",     		PARAM_STR, &to_user_column	},
+	{"to_domain_column",     	PARAM_STR, &to_domain_column	},
 	{"to_tag_column",        	PARAM_STR, &to_tag_column	},
 	{"pid_user_column",   		PARAM_STR, &pid_user_column	},
 	{"contact_user_column",        	PARAM_STR, &contact_user_column	},
@@ -1198,7 +1204,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	/* new */
 	str *table = NULL;
 	_capture_mode_data_t *c = NULL;
-	char strftime_buf[128];	        
+	char strftime_buf[128];
 	time_t tvsec_;
 
 	c = (cm_data)? cm_data:capture_def;
@@ -1215,8 +1221,8 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	
 	if(correlation_id) {
 	         corrtmp.s = correlation_id;
-	         corrtmp.len = strlen(correlation_id);        
-        }
+	         corrtmp.len = strlen(correlation_id);
+	}
 	
 	db_keys[0] = &date_column;
 	db_vals[0].type = DB1_DATETIME;
@@ -1224,9 +1230,9 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[0].val.time_val = (sco->tmstamp/1000000);
 	
 	db_keys[1] = &micro_ts_column;
-        db_vals[1].type = DB1_BIGINT;
-        db_vals[1].nul = 0;
-        db_vals[1].val.ll_val = sco->tmstamp;
+	db_vals[1].type = DB1_BIGINT;
+	db_vals[1].nul = 0;
+	db_vals[1].val.ll_val = sco->tmstamp;
 	
 	db_keys[2] = &method_column;
 	db_vals[2].type = DB1_STR;
@@ -1257,12 +1263,12 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[7].type = DB1_STR;
 	db_vals[7].nul = 0;
 	db_vals[7].val.str_val = sco->from_tag;
-
+	
 	db_keys[8] = &to_user_column;
 	db_vals[8].type = DB1_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val = sco->to_user;
-
+	
 	db_keys[9] = &to_tag_column;
 	db_vals[9].type = DB1_STR;
 	db_vals[9].nul = 0;
@@ -1272,12 +1278,12 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[10].type = DB1_STR;
 	db_vals[10].nul = 0;
 	db_vals[10].val.str_val = sco->pid_user;
-
+	
 	db_keys[11] = &contact_user_column;
 	db_vals[11].type = DB1_STR;
 	db_vals[11].nul = 0;
-	db_vals[11].val.str_val = sco->contact_user;	
-
+	db_vals[11].val.str_val = sco->contact_user;
+	
 	db_keys[12] = &auth_user_column;
 	db_vals[12].type = DB1_STR;
 	db_vals[12].nul = 0;
@@ -1287,7 +1293,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[13].type = DB1_STR;
 	db_vals[13].nul = 0;
 	db_vals[13].val.str_val = sco->callid;
-
+	
 	db_keys[14] = &callid_aleg_column;
 	db_vals[14].type = DB1_STR;
 	db_vals[14].nul = 0;
@@ -1302,11 +1308,11 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[16].type = DB1_STR;
 	db_vals[16].nul = 0;
 	db_vals[16].val.str_val = sco->via_1_branch;
-
+	
 	db_keys[17] = &cseq_column;
 	db_vals[17].type = DB1_STR;
 	db_vals[17].nul = 0;
-	db_vals[17].val.str_val = sco->cseq;	
+	db_vals[17].val.str_val = sco->cseq;
 	
 	db_keys[18] = &reason_column;
 	db_vals[18].type = DB1_STR;
@@ -1317,12 +1323,12 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[19].type = DB1_STR;
 	db_vals[19].nul = 0;
 	db_vals[19].val.str_val = sco->content_type;
-
+	
 	db_keys[20] = &authorization_column;
 	db_vals[20].type = DB1_STR;
 	db_vals[20].nul = 0;
 	db_vals[20].val.str_val = sco->authorization;
-
+	
 	db_keys[21] = &user_agent_column;
 	db_vals[21].type = DB1_STR;
 	db_vals[21].nul = 0;
@@ -1334,59 +1340,59 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[22].val.str_val = sco->source_ip;
 	
 	db_keys[23] = &source_port_column;
-        db_vals[23].type = DB1_INT;
-        db_vals[23].nul = 0;
-        db_vals[23].val.int_val = sco->source_port;
-        
+	db_vals[23].type = DB1_INT;
+	db_vals[23].nul = 0;
+	db_vals[23].val.int_val = sco->source_port;
+	
 	db_keys[24] = &dest_ip_column;
 	db_vals[24].type = DB1_STR;
 	db_vals[24].nul = 0;
 	db_vals[24].val.str_val = sco->destination_ip;
 	
 	db_keys[25] = &dest_port_column;
-        db_vals[25].type = DB1_INT;
-        db_vals[25].nul = 0;
-        db_vals[25].val.int_val = sco->destination_port;        
-        
+	db_vals[25].type = DB1_INT;
+	db_vals[25].nul = 0;
+	db_vals[25].val.int_val = sco->destination_port;
+	
 	db_keys[26] = &contact_ip_column;
 	db_vals[26].type = DB1_STR;
 	db_vals[26].nul = 0;
 	db_vals[26].val.str_val = sco->contact_ip;
 	
 	db_keys[27] = &contact_port_column;
-        db_vals[27].type = DB1_INT;
-        db_vals[27].nul = 0;
-        db_vals[27].val.int_val = sco->contact_port;
-        
+	db_vals[27].type = DB1_INT;
+	db_vals[27].nul = 0;
+	db_vals[27].val.int_val = sco->contact_port;
+	
 	db_keys[28] = &orig_ip_column;
 	db_vals[28].type = DB1_STR;
 	db_vals[28].nul = 0;
 	db_vals[28].val.str_val = sco->originator_ip;
 	
-	db_keys[29] = &orig_port_column;			
-        db_vals[29].type = DB1_INT;
-        db_vals[29].nul = 0;
-        db_vals[29].val.int_val = sco->originator_port;        
-        
-        db_keys[30] = &proto_column;			
-        db_vals[30].type = DB1_INT;
-        db_vals[30].nul = 0;
-        db_vals[30].val.int_val = sco->proto;        
-
-        db_keys[31] = &family_column;			
-        db_vals[31].type = DB1_INT;
-        db_vals[31].nul = 0;
-        db_vals[31].val.int_val = sco->family;        
-        
-        db_keys[32] = &rtp_stat_column;			
-        db_vals[32].type = DB1_STR;
-        db_vals[32].nul = 0;
-        db_vals[32].val.str_val = sco->rtp_stat;                
-        
-        db_keys[33] = &type_column;			
-        db_vals[33].type = DB1_INT;
-        db_vals[33].nul = 0;
-        db_vals[33].val.int_val = sco->type;                
+	db_keys[29] = &orig_port_column;
+	db_vals[29].type = DB1_INT;
+	db_vals[29].nul = 0;
+	db_vals[29].val.int_val = sco->originator_port;
+	
+	db_keys[30] = &proto_column;
+	db_vals[30].type = DB1_INT;
+	db_vals[30].nul = 0;
+	db_vals[30].val.int_val = sco->proto;
+	
+	db_keys[31] = &family_column;
+	db_vals[31].type = DB1_INT;
+	db_vals[31].nul = 0;
+	db_vals[31].val.int_val = sco->family;
+	
+	db_keys[32] = &rtp_stat_column;
+	db_vals[32].type = DB1_STR;
+	db_vals[32].nul = 0;
+	db_vals[32].val.str_val = sco->rtp_stat;
+	
+	db_keys[33] = &type_column;
+	db_vals[33].type = DB1_INT;
+	db_vals[33].nul = 0;
+	db_vals[33].val.int_val = sco->type;
 
 	db_keys[34] = &node_column;
 	db_vals[34].type = DB1_STR;
@@ -1396,21 +1402,36 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_keys[35] = &correlation_column;
 	db_vals[35].type = DB1_STR;
 	db_vals[35].nul = 0;
-	db_vals[35].val.str_val = (correlation_id) ? corrtmp : sco->callid;	
-	
-	db_keys[36] = &msg_column;
-	db_vals[36].type = DB1_BLOB;
+	db_vals[35].val.str_val = (correlation_id) ? corrtmp : sco->callid;
+
+	db_keys[36] = &from_domain_column;
+	db_vals[36].type = DB1_STR;
 	db_vals[36].nul = 0;
+	db_vals[36].val.str_val = sco->from_domain;
+
+	db_keys[37] = &to_domain_column;
+	db_vals[37].type = DB1_STR;
+	db_vals[37].nul = 0;
+	db_vals[37].val.str_val = sco->to_domain;
+
+	db_keys[38] = &ruri_domain_column;
+	db_vals[38].type = DB1_STR;
+	db_vals[38].nul = 0;
+	db_vals[38].val.str_val = sco->ruri_domain;
+
+	db_keys[39] = &msg_column;
+	db_vals[39].type = DB1_BLOB;
+	db_vals[39].nul = 0;
 
 	/*we don't have empty spaces now */
 	tmp.s = sco->msg.s;
 	tmp.len = sco->msg.len;
 
-	db_vals[36].val.blob_val = tmp;
+	db_vals[39].val.blob_val = tmp;
 
 	if (dtable){
 		table = dtable;
-        }
+	}
 	else if (c->no_tables > 0 ){
 
 		if ( c->mtmode == mode_hash ){
@@ -1440,15 +1461,15 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 
 	tvsec_ = (time_t) (sco->tmstamp/1000000);        		
 	if(gmtime_r( &tvsec_, &capt_ts) == NULL)
-        {
-                LM_ERR("unable to set time to attributes\n");
-                return -1;
-        }
+		{
+			LM_ERR("unable to set time to attributes\n");
+			return -1;
+		}
 
-    	ntab.len = strftime(strftime_buf, sizeof(strftime_buf), table->s,  &capt_ts);
-        ntab.s = strftime_buf;
+	ntab.len = strftime(strftime_buf, sizeof(strftime_buf), table->s,  &capt_ts);
+	ntab.s = strftime_buf;
 
-        table = &ntab;
+	table = &ntab;
 
 	/* check dynamic table */
 	LM_DBG("insert into homer table [1]: [%.*s]\n", table->len, table->s);
@@ -1493,9 +1514,9 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 {
 	struct _sipcapture_object sco;
 	struct sip_uri from, to, contact;
-	struct hdr_field *hook1 = NULL;	 
-	hdr_field_t *tmphdr[4];       
-	contact_body_t*  cb=0;	        	        
+	struct hdr_field *hook1 = NULL;
+	hdr_field_t *tmphdr[4];
+	contact_body_t*  cb=0;
 	char buf_ip[IP_ADDR_MAX_STR_SIZE+12];
 	char *port_str = NULL, *tmp = NULL;
 	struct timeval tvb;
@@ -1503,11 +1524,10 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
         char tmp_node[100];
         char rtpinfo[256];
         unsigned int len = 0;
-	                                          
+
 	LM_DBG("CAPTURE DEBUG...\n");
 
 	gettimeofday( &tvb, &tz );
-	        
 
 	if(msg==NULL) {
 		LM_DBG("nothing to capture\n");
@@ -1526,21 +1546,23 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	if(msg->first_line.type == SIP_REQUEST) {
 
 		if (parse_sip_msg_uri(msg)<0) return -1;
-	
+		
 		sco.method = msg->first_line.u.request.method;
 		EMPTY_STR(sco.reply_reason);
 		
 		sco.ruri = msg->first_line.u.request.uri;
-		sco.ruri_user = msg->parsed_uri.user;		
+		sco.ruri_user = msg->parsed_uri.user;
+		sco.ruri_domain = msg->parsed_uri.host;
 	}
 	else if(msg->first_line.type == SIP_REPLY) {
 		sco.method = msg->first_line.u.reply.status;
 		sco.reply_reason = msg->first_line.u.reply.reason;
 
 		EMPTY_STR(sco.ruri);
-		EMPTY_STR(sco.ruri_user);		
+		EMPTY_STR(sco.ruri_user);
+		EMPTY_STR(sco.ruri_domain);
 	}
-	else {		
+	else {
 		LM_ERR("unknown type [%i]\n", msg->first_line.type);
 		EMPTY_STR(sco.method);
 		EMPTY_STR(sco.reply_reason);
@@ -1549,54 +1571,58 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	}
 
 	if(heptime && heptime->tv_sec != 0) {
-               sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
-               snprintf(tmp_node, 100, "%.*s:%i", capture_node.len, capture_node.s, heptime->captid);
-               sco.node.s = tmp_node;
-               sco.node.len = strlen(tmp_node);
-        }
-        else {
-               sco.tmstamp = (unsigned long long)tvb.tv_sec*1000000+tvb.tv_usec; /* micro ts */
-               sco.node = capture_node;
-        }
+		sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
+		snprintf(tmp_node, 100, "%.*s:%i", capture_node.len, capture_node.s, heptime->captid);
+		sco.node.s = tmp_node;
+		sco.node.len = strlen(tmp_node);
+	}
+	else {
+		sco.tmstamp = (unsigned long long)tvb.tv_sec*1000000+tvb.tv_usec; /* micro ts */
+		sco.node = capture_node;
+	}
 	
 	/* Parse FROM */
-        if(msg->from) {
+	if(msg->from) {
 
-              if (parse_from_header(msg)!=0){
-                   LOG(L_ERR, "ERROR: eval_elem: bad or missing" " From: header\n");
-                   return -1;
-              }
+		if (parse_from_header(msg)!=0){
+			LOG(L_ERR, "ERROR: eval_elem: bad or missing" " From: header\n");
+			return -1;
+		}
 
-              if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len, &from)<0){
-                   LOG(L_ERR, "ERROR: do_action: bad from dropping"" packet\n");
-                   return -1;
-              }
+		if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len, &from)<0){
+			LOG(L_ERR, "ERROR: do_action: bad from dropping"" packet\n");
+			return -1;
+		}
               
-              sco.from_user = from.user;
-              sco.from_tag = get_from(msg)->tag_value;              
-        }
-        else {
+		sco.from_user = from.user;
+		sco.from_domain = from.host;
+		sco.from_tag = get_from(msg)->tag_value;
+	}
+	else {
 		EMPTY_STR(sco.from_user);
+		EMPTY_STR(sco.from_domain);
 		EMPTY_STR(sco.from_tag);
-        }
+	}
 
-        /* Parse TO */
-        if(msg->to) {
+	/* Parse TO */
+	if(msg->to) {
 
-              if (parse_uri(get_to(msg)->uri.s, get_to(msg)->uri.len, &to)<0){
-                    LOG(L_ERR, "ERROR: do_action: bad to dropping"" packet\n");
-                    return -1;
-              }
-        
-              sco.to_user = to.user;
-              if(get_to(msg)->tag_value.len) 
-              		sco.to_tag = get_to(msg)->tag_value;              
-              else { EMPTY_STR(sco.to_tag); }
-        }
-        else {        
-        	EMPTY_STR(sco.to_user);
-        	EMPTY_STR(sco.to_tag);
-        }
+			if (parse_uri(get_to(msg)->uri.s, get_to(msg)->uri.len, &to)<0){
+					LOG(L_ERR, "ERROR: do_action: bad to dropping"" packet\n");
+					return -1;
+			}
+
+			sco.to_user = to.user;
+			sco.to_domain = to.host;
+			if(get_to(msg)->tag_value.len)
+				sco.to_tag = get_to(msg)->tag_value;
+			else { EMPTY_STR(sco.to_tag); }
+	}
+	else {
+		EMPTY_STR(sco.to_user);
+		EMPTY_STR(sco.to_domain);
+		EMPTY_STR(sco.to_tag);
+	}
 
 	/* Call-id */
 	if(msg->callid) sco.callid = msg->callid->body;

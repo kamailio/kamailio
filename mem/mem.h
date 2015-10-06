@@ -40,6 +40,9 @@
 #include "../config.h"
 #include "../dprint.h"
 
+#include "pkg.h"
+
+#if 0
 /* fix debug defines, DBG_F_MALLOC <=> DBG_QM_MALLOC */
 #ifdef F_MALLOC
 	#ifdef DBG_F_MALLOC
@@ -187,6 +190,7 @@ void destroy_pkg_mallocs(void);
  * \return 0 if the memory allocation was successful, -1 otherwise
  */
 int init_shm_mallocs(int force_alloc);
+#endif
 
 /** generic logging helper for allocation errors in private memory pool/ system */
 #ifdef SYSTEM_MALLOC

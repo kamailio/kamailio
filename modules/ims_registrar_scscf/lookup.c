@@ -76,8 +76,8 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
     if (_m->new_uri.s) aor = _m->new_uri;
     else aor = _m->first_line.u.request.uri;
 
-    for (i = 0; i < aor.len; i++)
-        if (aor.s[i] == ';' || aor.s[i] == '?') {
+    for (i = 4; i < aor.len; i++)
+        if (aor.s[i] == ':' || aor.s[i] == ';' || aor.s[i] == '?') {
             aor.len = i;
             break;
         }
@@ -203,7 +203,7 @@ int lookup_path_to_contact(struct sip_msg* _m, char* contact_uri) {
     }
     LM_DBG("Looking up contact [%.*s]\n", s_contact_uri.len, s_contact_uri.s);
 
-    if (ul.get_ucontact(NULL, &s_contact_uri, 0, 0, 0, &contact) == 0) { //get_contact returns with lock
+    if (ul.get_ucontact(&s_contact_uri, 0, 0, 0, &contact) == 0) { //get_contact returns with lock
 
         if (!VALID_CONTACT(contact, act_time)) {
             LM_DBG("Contact is not valid...ignoring\n");

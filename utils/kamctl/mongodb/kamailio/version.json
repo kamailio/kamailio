@@ -1,0 +1,16 @@
+{
+  "name": "version",
+  "version": 1,
+  "columns": [
+    "table_name": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "table_version": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

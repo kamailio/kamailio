@@ -1,0 +1,21 @@
+{
+  "name": "dr_gw_lists",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "gwlist": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "null": false
+    }
+  ]
+}

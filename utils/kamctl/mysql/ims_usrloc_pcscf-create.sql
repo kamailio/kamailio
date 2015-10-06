@@ -1,13 +1,15 @@
 INSERT INTO version (table_name, table_version) values ('location','6');
 CREATE TABLE `location` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `domain` varchar(64) DEFAULT NULL,
+  `domain` varchar(64) NOT NULL,
   `aor` varchar(255) NOT NULL,
-  `contact` varchar(255) DEFAULT NULL,
+  `host` varchar(100) NOT NULL,
+  `port` int(10) NOT NULL,
   `received` varchar(128) DEFAULT NULL,
   `received_port` int(10) unsigned DEFAULT NULL,
   `received_proto` int(10) unsigned DEFAULT NULL,
   `path` varchar(512) DEFAULT NULL,
+  `rinstance` varchar(255) DEFAULT NULL,
   `rx_session_id` varchar(256) DEFAULT NULL,
   `reg_state` tinyint(4) DEFAULT NULL,
   `expires` datetime DEFAULT '2030-05-28 21:32:15',

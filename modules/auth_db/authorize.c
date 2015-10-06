@@ -512,30 +512,40 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 					|| _m->REQ_METHOD==METHOD_PRACK || _m->REQ_METHOD==METHOD_UPDATE
 					|| _m->REQ_METHOD==METHOD_MESSAGE))) {
 			if(srealm.len!=uri->user.len
-						|| strncmp(srealm.s, uri->user.s, srealm.len)!=0)
+						|| strncmp(srealm.s, uri->user.s, srealm.len)!=0) {
+				LM_DBG("authentication username mismatch with from/to username\n");
 				return AUTH_USER_MISMATCH;
+			}
 		}
 
 		if(_m->REQ_METHOD==METHOD_REGISTER || _m->REQ_METHOD==METHOD_PUBLISH) {
 			/* check from==to */
 			if(furi->user.len!=turi->user.len
-					|| strncmp(furi->user.s, turi->user.s, furi->user.len)!=0)
+					|| strncmp(furi->user.s, turi->user.s, furi->user.len)!=0) {
+				LM_DBG("from username mismatch with to username\n");
 				return AUTH_USER_MISMATCH;
+			}
 			if(use_domain!=0 && (furi->host.len!=turi->host.len
-					|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0))
+					|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0)) {
+				LM_DBG("from domain mismatch with to domain\n");
 				return AUTH_USER_MISMATCH;
+			}
 			/* check r-uri==from for publish */
 			if(_m->REQ_METHOD==METHOD_PUBLISH) {
 				if(parse_sip_msg_uri(_m)<0)
 					return AUTH_ERROR;
 				uri = &_m->parsed_uri;
 				if(furi->user.len!=uri->user.len
-						|| strncmp(furi->user.s, uri->user.s, furi->user.len)!=0)
-					return AUTH_USER_MISMATCH;
-				if(use_domain!=0 && (furi->host.len!=uri->host.len
-						|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0))
+						|| strncmp(furi->user.s, uri->user.s, furi->user.len)!=0) {
+					LM_DBG("from username mismatch with r-uri username\n");
 					return AUTH_USER_MISMATCH;
 				}
+				if(use_domain!=0 && (furi->host.len!=uri->host.len
+						|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0)) {
+					LM_DBG("from domain mismatch with r-uri domain\n");
+					return AUTH_USER_MISMATCH;
+				}
+			}
 		}
 		return AUTH_OK;
 	}

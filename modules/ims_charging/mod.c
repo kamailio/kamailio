@@ -172,7 +172,6 @@ int fix_parameters() {
 
 static int mod_init(void) {
 	int n;
-	load_dlg_f load_dlg;
 	load_tm_f load_tm;
 	bind_usrloc_t bind_usrloc;
 
@@ -189,13 +188,6 @@ static int mod_init(void) {
 	if (load_tm(&tmb) == -1)
 		goto error;
 
-	if (!(load_dlg = (load_dlg_f) find_export("load_dlg", 0, 0))) { /* bind to dialog module */
-		LM_ERR("can not import load_dlg. This module requires Kamailio dialog module.\n");
-	}
-	if (load_dlg(&dlgb) == -1) {
-		goto error;
-	}
-
 	if (load_cdp_api(&cdpb) != 0) { /* load the CDP API */
 		LM_ERR("can't load CDP API\n");
 		goto error;
@@ -210,6 +202,16 @@ static int mod_init(void) {
 	if (!cdp_avp) {
 		LM_ERR("can't load CDP_AVP API\n");
 		goto error;
+	}
+        
+        bind_usrloc = (bind_usrloc_t) find_export("ul_bind_usrloc", 1, 0);
+	if (!bind_usrloc) {
+	    LM_ERR("can't bind usrloc\n");
+	    return -1;
+	}
+	
+	if (bind_usrloc(&ul) < 0) {
+	    return -1;
 	}
 
 	/* init timer lists*/
@@ -239,15 +241,7 @@ static int mod_init(void) {
 		return -1;
 	}
 
-	bind_usrloc = (bind_usrloc_t) find_export("ul_bind_usrloc", 1, 0);
-	if (!bind_usrloc) {
-	    LM_ERR("can't bind usrloc\n");
-	    return -1;
-	}
 	
-	if (bind_usrloc(&ul) < 0) {
-	    return -1;
-	}
 
 	/*Register for callback of URECORD being deleted - so we can send a SAR*/
 
@@ -491,21 +485,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	    ret = RO_RETURN_ERROR;
 	    goto done;
 	}
-	
-	
-	//reg for callbacks on confirmed and terminated
-	if (dlgb.register_dlgcb(dlg, /* DLGCB_RESPONSE_FWDED */ DLGCB_CONFIRMED, add_dlg_data_to_contact, (void*)impu_data ,NULL ) != 0) {
-	    LM_CRIT("cannot register callback for dialog confirmation\n");
-	    ret = RO_RETURN_ERROR;
-	    goto done;
-	}
 
-	if (dlgb.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED /*| DLGCB_DESTROY */, remove_dlg_data_from_contact, (void*)impu_data, NULL ) != 0) {
-	    LM_CRIT("cannot register callback for dialog termination\n");
-	    ret = RO_RETURN_ERROR;
-	    goto done;
-	}
-	
 send_ccr:
 
 	//check if we need to send_ccr - 
@@ -565,6 +545,7 @@ send_ccr:
     
 done:
 	if(free_contact)  shm_free(contact.s);// shm_malloc in cscf_get_public_identity_from_requri	
+        dlgb.release_dlg(dlg);
 	return ret;
 }
 

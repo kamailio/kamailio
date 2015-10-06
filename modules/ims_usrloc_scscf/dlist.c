@@ -234,7 +234,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
  * \param part_max maximal part
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
-int get_all_ucontacts(void *buf, int len, unsigned int flags,
+int get_all_scontacts(void *buf, int len, unsigned int flags,
 								unsigned int part_idx, unsigned int part_max)
 {
 	return get_all_mem_ucontacts( buf, len, flags, part_idx, part_max);

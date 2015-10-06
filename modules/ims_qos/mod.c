@@ -589,7 +589,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     str s_id;
     struct hdr_field *h=0;
     struct dlg_cell* dlg = 0;
-
+    
     cfg_action_t* cfg_action = 0;
     saved_transaction_t* saved_t_data = 0; //data specific to each contact's AAR async call
     char* direction = dir;
@@ -879,7 +879,13 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
         LM_DBG("Attached CDP auth session [%.*s] for Rx to dialog in %s mode\n", auth_session->id.len, auth_session->id.s, direction);
     } else {
         LM_DBG("Update AAR session for this dialog in mode %s\n", direction);
-	saved_t_data->aar_update = 1;//this is an update aar - we set this so on async_aar we know this is an update and act accordingly
+        //check if this is triggered by a 183 - if so break here as its probably a re-transmit
+        if((msg->first_line).u.reply.statuscode == 183) {
+            LM_ERR("Received a 183 for a diameter session that already exists - just going to ignore this\n");
+            cdpb.AAASessionsUnlock(auth_session->hash);
+            goto ignore;
+        }
+        saved_t_data->aar_update = 1;//this is an update aar - we set this so on async_aar we know this is an update and act accordingly
     }
 
     LM_DBG("Suspending SIP TM transaction\n");
@@ -906,6 +912,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 
 error:
     LM_ERR("Error trying to send AAR (calling)\n");
+ignore:
     if (saved_t_data)
         free_saved_transaction_global_data(saved_t_data); //only free global data if no AARs were sent. if one was sent we have to rely on the callback (CDP) to free
     //otherwise the callback will segfault
@@ -921,6 +928,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
     contact_t* c;
     struct hdr_field* h;
     pcontact_t* pcontact;
+    pcontact_info_t contact_info;
     contact_body_t* cb = 0;
     AAASession* auth;
     rx_authsessiondata_t* rx_regsession_data_p;
@@ -932,6 +940,11 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
     saved_transaction_t* saved_t_data = 0; //data specific to each contact's AAR async call
     str recv_ip;
     int recv_port;
+    unsigned short recv_proto;
+    
+    struct via_body* vb;
+    unsigned short via_port;
+    unsigned short via_proto;
     
     if (fixup_get_svalue(msg, (gparam_t*) route, &route_name) != 0) {
         LM_ERR("no async route block for assign_server_unreg\n");
@@ -998,6 +1011,10 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
         }
     }
 
+    vb = cscf_get_ue_via(msg);
+    via_port = vb->port?vb->port:5060;
+    via_proto = vb->proto;
+    
     //before we continue, make sure we have a transaction to work with (viz. cdp async)
     t = tmb.t_gett();
     if (t == NULL || t == T_UNDEFINED) {
@@ -1050,17 +1067,27 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
     recv_ip.s = ip_addr2a(&msg->rcv.src_ip);
     recv_ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
     recv_port = msg->rcv.src_port;
+    recv_proto = msg->rcv.proto; 
+    
     LM_DBG("Message received IP address is: [%.*s]\n", recv_ip.len, recv_ip.s);
-    uint16_t ip_version = AF_INET; //TODO IPv6!!!?
+    LM_DBG("Message via is [%d://%.*s:%d]\n", vb->proto, vb->host.len, vb->host.s, via_port);
 
     lock_get(saved_t_data->lock); //we lock here to make sure we send all requests before processing replies asynchronously
     for (h = msg->contact; h; h = h->next) {
         if (h->type == HDR_CONTACT_T && h->parsed) {
             for (c = ((contact_body_t*) h->parsed)->contacts; c; c = c->next) {
-                ul.lock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
-                if (ul.get_pcontact(domain_t, &c->uri, &recv_ip, recv_port, &pcontact) != 0) {
-                    LM_DBG("This contact does not exist in PCSCF usrloc - error in cfg file\n");
-                    ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
+                ul.lock_udomain(domain_t, &vb->host, vb->port, vb->proto);
+                contact_info.aor = c->uri;
+                contact_info.via_host = vb->host;
+                contact_info.via_port = vb->port;
+                contact_info.via_prot = vb->proto;
+                contact_info.searchflag = SEARCH_NORMAL;
+                contact_info.received_host.s = 0;
+                contact_info.received_host.len = 0;
+                
+                if (ul.get_pcontact(domain_t, &contact_info, &pcontact) != 0) {
+                    LM_ERR("This contact does not exist in PCSCF usrloc - error in cfg file\n");
+                    ul.unlock_udomain(domain_t, &vb->host, vb->port, vb->proto);
                     lock_release(saved_t_data->lock);
                     goto error;
                 } else if (pcontact->reg_state == PCONTACT_REG_PENDING
@@ -1084,10 +1111,10 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                         is_rereg = 1;
                     } else {
                         LM_DBG("Creating new Rx session for contact <%.*s>\n", pcontact->aor.len, pcontact->aor.s);
-                        int ret = create_new_regsessiondata(domain_t->name, &pcontact->aor, &recv_ip, ip_version, recv_port, &rx_regsession_data_p);
+                        int ret = create_new_regsessiondata(domain_t->name, &pcontact->aor, &recv_ip, AF_INET /* TODO: IPv6 support */, recv_port, recv_proto, &vb->host, vb->port, vb->proto, &rx_regsession_data_p);
                         if (!ret) {
                             LM_ERR("Unable to create regsession data parcel for rx_session_id [%.*s]...Aborting\n", pcontact->rx_session_id.len, pcontact->rx_session_id.s);
-                            ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
+                            ul.unlock_udomain(domain_t, &vb->host, vb->port, vb->proto);
                             if (rx_regsession_data_p) {
                                 shm_free(rx_regsession_data_p);
                                 rx_regsession_data_p = 0;
@@ -1102,7 +1129,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                                 shm_free(rx_regsession_data_p);
                                 rx_regsession_data_p = 0;
                             }
-                            ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
+                            ul.unlock_udomain(domain_t, &vb->host, via_port, via_proto);
                             if (auth) cdpb.AAASessionsUnlock(auth->hash);
                             if (rx_regsession_data_p) {
                                 shm_free(rx_regsession_data_p);
@@ -1115,7 +1142,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                     }
 
                     //we are ready to send the AAR async. lets save the local data data
-                    int local_data_len = sizeof (saved_transaction_local_t) + c->uri.len + auth->id.len;
+                    int local_data_len = sizeof (saved_transaction_local_t) + c->uri.len + auth->id.len + vb->host.len + recv_ip.len;
                     local_data = shm_malloc(local_data_len);
                     if (!local_data) {
                         LM_ERR("unable to alloc memory for local data, trying to send AAR Register\n");
@@ -1138,6 +1165,21 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                     memcpy(p, auth->id.s, auth->id.len);
                     p += auth->id.len;
 
+                    local_data->via_host.s = p;
+                    local_data->via_host.len = vb->host.len;
+                    memcpy(p, vb->host.s, vb->host.len);
+                    p += vb->host.len;
+                    
+                    local_data->recv_host.s = p;
+                    local_data->recv_host.len = recv_ip.len;
+                    memcpy(p, recv_ip.s, recv_ip.len);
+                    p += recv_ip.len;
+                    
+                    local_data->via_port = via_port;
+                    local_data->via_proto = via_proto;
+                    local_data->recv_port = recv_port;
+                    local_data->recv_proto = recv_proto;
+                    
                     if (p != (((char*) local_data) + local_data_len)) {
                         LM_CRIT("buffer overflow\n");
                         free_saved_transaction_data(local_data);
@@ -1150,7 +1192,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                     //ret = rx_send_aar_register(msg, auth, &puri.host, &ip_version, &c->uri, local_data); //returns a locked rx auth object
                     ret = rx_send_aar_register(msg, auth, local_data); //returns a locked rx auth object
 
-                    ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
+                    ul.unlock_udomain(domain_t, &vb->host, via_port, via_proto);
 
                     if (!ret) {
                         LM_ERR("Failed to send AAR\n");
@@ -1165,7 +1207,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
                 } else {
                     //contact exists - this is a re-registration, for now we just ignore this
                     LM_DBG("This contact exists and is not in state REGISTER PENDING - we assume re (or de) registration and ignore\n");
-                    ul.unlock_udomain(domain_t, &c->uri, &recv_ip, recv_port);
+                    ul.unlock_udomain(domain_t, &vb->host, via_port, via_proto);
                     //now we loop for any other contacts.
                 }
             }

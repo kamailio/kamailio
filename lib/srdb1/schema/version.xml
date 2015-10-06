@@ -8,6 +8,7 @@
 
 <table id="version" xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>version</name>
+    <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
 
     <column id="table_name">

@@ -2,6 +2,9 @@
  * Copyright 2015 (C) Orange
  * <camille.oudot@orange.com>
  *
+ * Copyright 2015 (C) Edvina AB
+ * <oej@edvina.net>
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * This file is free software; you can redistribute it and/or modify
@@ -46,6 +49,8 @@ static int w_tcp_keepalive_disable1(sip_msg_t* msg, char* con);
 static int w_tcp_keepalive_disable0(sip_msg_t* msg);
 static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* con, char* time);
 static int w_tcpops_set_connection_lifetime1(sip_msg_t* msg, char* time);
+static int w_tcp_conid_state(sip_msg_t* msg, char* con, char *p2);
+static int w_tcp_conid_alive(sip_msg_t* msg, char* con, char *p2);
 
 static int fixup_numpv(void** param, int param_no);
 
@@ -63,6 +68,10 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime1, 1, fixup_numpv,
 		0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"tcp_conid_state", (cmd_function)w_tcp_conid_state, 1, fixup_numpv,
+		0, ANY_ROUTE},
+	{"tcp_conid_alive", (cmd_function)w_tcp_conid_alive, 1, fixup_numpv,
+		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -216,6 +225,67 @@ static int w_tcp_keepalive_disable0(sip_msg_t* msg)
 	return tcpops_keepalive_disable(fd, 0);
 }
 
+/*! \brief Check the state of the TCP connection */
+static int w_tcp_conid_state(sip_msg_t* msg, char* conid, char *p2)
+{
+	struct tcp_connection *s_con;
+	int ret = -1;
+
+	_IVALUE (conid)
+
+	if (unlikely((s_con = tcpconn_get(i_conid, 0, 0, 0, 0)) == NULL)) {
+		LM_DBG("Connection id %d does not exist.\n", i_conid);
+		ret = -1;
+		goto done;
+	} 
+	/* Connection structure exists, now check what Kamailio thinks of it */
+	if (s_con->state == S_CONN_OK) {
+		/* All is fine, return happily */
+		ret = 1;
+		goto done;
+	}
+	if (s_con->state == S_CONN_EOF) {	/* Socket closed or about to close under our feet */
+		ret = -2;
+		goto done;
+	}
+	if (s_con->state == S_CONN_ERROR) {	/* Error on read/write - will close soon */
+		ret = -3;
+		goto done;
+	}
+	if (s_con->state == S_CONN_BAD) {	/* Unknown state */
+		ret = -4;
+		goto done;
+	}
+	if (s_con->state == S_CONN_ACCEPT) {	/* Incoming connection to be set up */
+		ret = 2;
+		goto done;
+	}
+	if (s_con->state == S_CONN_CONNECT) {	/* Outbound connection moving to S_CONN_OK */
+		ret = 3;
+		goto done;
+	}
+	/* Wonder what state we're in here */
+	LM_DBG("Connection id %d is in unexpected state %d - assuming ok.\n", i_conid, s_con->flags);
+
+	/* Good connection */
+	ret = 1;
+done:
+	if(s_con) tcpconn_put(s_con);
+	return ret;
+}
+
+/*! \brief A simple check to see if a connection is alive or not,
+	avoiding all the various connection states
+ */
+static int w_tcp_conid_alive(sip_msg_t* msg, char* conid, char *p2)
+{
+	int ret = w_tcp_conid_state(msg, conid, p2);
+	if (ret >= 1) {
+		return 1;	/* TRUE */
+	} 
+	/* We have some kind of problem */
+	return -1;
+}
 
 static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* conid, char* time)
 {
@@ -226,7 +296,7 @@ static int w_tcpops_set_connection_lifetime2(sip_msg_t* msg, char* conid, char* 
 	_IVALUE (time)
 
 	if (unlikely((s_con = tcpconn_get(i_conid, 0, 0, 0, 0)) == NULL)) {
-		LM_ERR("invalid connection id %d, (must be a TCP connid)\n", i_conid);
+		LM_ERR("invalid connection id %d, (must be a TCP conid)\n", i_conid);
 		return 0;
 	} else {
 		ret = tcpops_set_connection_lifetime(s_con, i_time);

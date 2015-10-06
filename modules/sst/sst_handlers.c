@@ -173,13 +173,19 @@ static inline int sst_build_minse_hdr(int seval, str *sehdr)
 	sehdr->s = sst_se_buf;
 	return 0;
 }
-static inline int sst_build_se_hdr(int seval, str *sehdr)
+static inline int sst_build_se_hdr(int seval, str *sehdr, char *refresher)
 {
 	if(sehdr==NULL)
 		return -1;
 
-	sehdr->len = snprintf(sst_se_buf, SST_SE_BUF_SIZE,
-			"Session-Expires: %d\r\n", seval);
+	if(refresher==NULL) {
+		sehdr->len = snprintf(sst_se_buf, SST_SE_BUF_SIZE,
+				"Session-Expires: %d\r\n", seval);
+	}
+	else {
+		sehdr->len = snprintf(sst_se_buf, SST_SE_BUF_SIZE,
+				"Session-Expires: %d;refresher=%s\r\n", seval, refresher);
+	}
 	sehdr->s = sst_se_buf;
 	return 0;
 }
@@ -342,7 +348,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 		}
 		
 		info->requester = SST_PXY;
-		sst_build_se_hdr(info->interval, &msehdr);
+		sst_build_se_hdr(info->interval, &msehdr, NULL);
 		if (append_header(msg, msehdr.s)) {
 			LM_ERR("failed to append Session-Expires header to proxy "
 					"requested SST.\n");
@@ -562,7 +568,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 					 * header and forward back to the UAC and it will
 					 * deal with refreshing the session.
 					 */
-					sst_build_se_hdr(info->interval, &sehdr);
+					sst_build_se_hdr(info->interval, &sehdr, "uac");
 					if (append_header(msg, sehdr.s)) {
 						LM_ERR("failed to append Session-Expires header\n");
 						return;

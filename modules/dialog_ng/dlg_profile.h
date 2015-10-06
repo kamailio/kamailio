@@ -34,6 +34,8 @@
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../modules/tm/h_table.h"
+#include "../../lib/srutils/srjson.h"
+#include "../../lib/srutils/sruid.h"
 
 
 
@@ -46,21 +48,26 @@
 
 
 /*! dialog profile hash list */
-struct dlg_profile_hash {
+typedef struct dlg_profile_hash {
 	str value; /*!< hash value */
 	struct dlg_cell *dlg; /*!< dialog cell */
+	char puid[SRUID_SIZE];
+	int puid_len;
+	time_t expires;
+	int flags;
+	struct dlg_profile_link *linker;
 	struct dlg_profile_hash *next;
 	struct dlg_profile_hash *prev;
 	unsigned int hash; /*!< position in the hash table */
-};
+} dlg_profile_hash_t;
 
 
 /*! list with links to dialog profiles */
-struct dlg_profile_link {
+typedef struct dlg_profile_link {
 	struct dlg_profile_hash hash_linker;
 	struct dlg_profile_link  *next;
 	struct dlg_profile_table *profile;
-};
+} dlg_profile_link_t;
 
 
 /*! dialog profile entry */
@@ -80,14 +87,7 @@ struct dlg_profile_table {
 	struct dlg_profile_table *next;
 };
 
-
-struct dlg_cell *get_current_dlg_pointer(void);
-
-void reset_current_dlg_pointer(void);
-
 struct dlg_cell* get_dialog_from_tm(struct cell *t);
-
-struct dlg_cell *get_current_dialog(struct sip_msg *msg);
 
 /*!
  * \brief Add profile definitions to the global list

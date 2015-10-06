@@ -1,0 +1,26 @@
+{
+  "name": "pl_pipes",
+  "version": 1,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "pipeid": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "algorithm": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "plimit": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

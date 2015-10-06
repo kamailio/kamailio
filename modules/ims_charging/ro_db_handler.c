@@ -180,8 +180,8 @@ int update_ro_dbinfo_unsafe(struct ro_session* ro_session) {
 	db_set_int_val(values, DIRECTION_COL_IDX, ro_session->direction);
 	db_set_str_val(values, ASSERTED_ID_COL_IDX, &ro_session->asserted_identity);
 	db_set_str_val(values, CALLEE_COL_IDX, &ro_session->called_asserted_identity);
-	db_set_datetime_val(values, START_TIME_COL_IDX, ro_session->start_time);
-	db_set_datetime_val(values, LAST_EVENT_TS_COL_IDX, ro_session->last_event_timestamp);
+	db_set_datetime_val(values, START_TIME_COL_IDX, ro_session->start_time/1000000);
+	db_set_datetime_val(values, LAST_EVENT_TS_COL_IDX, ro_session->last_event_timestamp/1000000);
 	db_set_int_val(values, RESERVED_SECS_COL_IDX, ro_session->reserved_secs);
 	db_set_int_val(values, VALID_FOR_COL_IDX, ro_session->valid_for);
 	db_set_int_val(values, STATE_COL_IDX, ro_session->active);
@@ -216,8 +216,8 @@ int update_ro_dbinfo_unsafe(struct ro_session* ro_session) {
 	db_set_int_val(values, DIRECTION_COL_IDX - 1, ro_session->direction);
 	db_set_str_val(values, ASSERTED_ID_COL_IDX - 1, &ro_session->asserted_identity);
 	db_set_str_val(values, CALLEE_COL_IDX - 1, &ro_session->called_asserted_identity);
-	db_set_datetime_val(values, START_TIME_COL_IDX - 1, ro_session->start_time);
-	db_set_datetime_val(values, LAST_EVENT_TS_COL_IDX - 1, ro_session->last_event_timestamp);
+	db_set_datetime_val(values, START_TIME_COL_IDX - 1, ro_session->start_time/1000000);
+	db_set_datetime_val(values, LAST_EVENT_TS_COL_IDX - 1, ro_session->last_event_timestamp/1000000);
 	db_set_int_val(values, RESERVED_SECS_COL_IDX - 1, ro_session->reserved_secs);
 	db_set_int_val(values, VALID_FOR_COL_IDX - 1, ro_session->valid_for);
 	db_set_int_val(values, STATE_COL_IDX - 1, ro_session->active);

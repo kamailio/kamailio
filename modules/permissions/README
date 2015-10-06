@@ -60,7 +60,7 @@ Emmanuel Schmidbauer
               3.16. from_col (string)
               3.17. ruri_col (string)
               3.18. tag_col (string)
-              3.19. priority_col (integer)
+              3.19. priority_col (string)
               3.20. peer_tag_avp (AVP string)
               3.21. peer_tag_mode (integer)
 
@@ -168,7 +168,7 @@ Chapter 1. Admin Guide
         3.16. from_col (string)
         3.17. ruri_col (string)
         3.18. tag_col (string)
-        3.19. priority_col (integer)
+        3.19. priority_col (string)
         3.20. peer_tag_avp (AVP string)
         3.21. peer_tag_mode (integer)
 
@@ -400,7 +400,7 @@ Chapter 1. Admin Guide
    3.16. from_col (string)
    3.17. ruri_col (string)
    3.18. tag_col (string)
-   3.19. priority_col (integer)
+   3.19. priority_col (string)
    3.20. peer_tag_avp (AVP string)
    3.21. peer_tag_mode (integer)
 
@@ -642,10 +642,13 @@ modparam("permissions", "ruri_col", "regexp")
 modparam("permissions", "tag_col", "peer_tag")
 ...
 
-3.19. priority_col (integer)
+3.19. priority_col (string)
 
    The column name used to store the priority of the corresponding rule
-   from the database row.
+   from the database row. Priority values should be integer. When db_mode
+   is set to 1 (caching), priorities are ordered from highest to lowest.
+   In non-caching mode, priority order (ASC vs DESC) is determined by
+   database.
 
    Default value is "priority".
 

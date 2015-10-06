@@ -69,7 +69,7 @@ typedef struct param_source {
 /*
  * Module parameters variables
  */
-extern str db_url;
+extern str d_db_url;
 extern str domain_table;	/* Domain table name */
 extern str domain_attrs_table;	/* Domain attributes table name */
 extern str did_col;   	        /* Domain id column name */

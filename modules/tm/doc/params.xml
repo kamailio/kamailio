@@ -1003,7 +1003,7 @@ modparam("tm", "via1_matching", 1)
 	<para>
 		Can be set at runtime, e.g.:
 		<programlisting>
-	$ sercmd cfg.set_now_int tm callid_matching 0
+	$ &sercmd; cfg.set_now_int tm callid_matching 0
 		</programlisting>
 	</para>
 	<example>

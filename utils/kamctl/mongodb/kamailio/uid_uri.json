@@ -1,0 +1,36 @@
+{
+  "name": "uid_uri",
+  "version": 3,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "uid": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "did": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "username": {
+      "type": "string",
+      "default": null,
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "scheme": {
+      "type": "string",
+      "default": "sip",
+      "null": false
+    }
+  ]
+}

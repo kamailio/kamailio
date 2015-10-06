@@ -307,6 +307,20 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		}
 
 		ci.server_id = server_id;
+		if(_m->contact) {
+			_c = (((contact_body_t*)_m->contact->parsed)->contacts);
+			if(_c->instance!=NULL && _c->instance->body.len>0) {
+				ci.instance = _c->instance->body;
+				LM_DBG("set instance[%.*s]\n", ci.instance.len, ci.instance.s);
+			}
+			if(_use_regid && _c->instance!=NULL && _c->reg_id!=NULL && _c->reg_id->body.len>0) {
+				if(str2int(&_c->reg_id->body, &ci.reg_id)<0 || ci.reg_id==0)
+				{
+					LM_ERR("invalid reg-id value\n");
+					goto error;
+				}
+			}
+		}
 
 		allow_parsed = 0; /* not parsed yet */
 		received_found = 0; /* not found yet */

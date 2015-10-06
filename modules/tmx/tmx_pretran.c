@@ -210,7 +210,10 @@ int tmx_check_pretran(sip_msg_t *msg)
 		LM_ERR("failed to parse required headers\n");
 		return -1;
 	}
-
+	if(msg->cseq==NULL || msg->cseq->parsed==NULL) {
+		LM_ERR("failed to parse cseq headers\n");
+		return -1;
+	}
 	if(get_cseq(msg)->method_id==METHOD_ACK
 			|| get_cseq(msg)->method_id==METHOD_CANCEL) {
 		LM_DBG("no pre-transaction management for ACK or CANCEL\n");
@@ -222,6 +225,10 @@ int tmx_check_pretran(sip_msg_t *msg)
 	}
 	if (parse_from_header(msg)<0 || get_from(msg)->tag_value.len==0) {
 		LM_ERR("failed to get From header\n");
+		return -1;
+	}
+	if (msg->callid==NULL || msg->callid->body.s==NULL) {
+		LM_ERR("failed to parse callid headers\n");
 		return -1;
 	}
 

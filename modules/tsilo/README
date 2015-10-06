@@ -29,14 +29,22 @@ Federico Cabiddu
 
         4. Functions
 
-              4.1. ts_store()
+              4.1. ts_store([uri])
               4.2. ts_append(domain, ruri)
-              4.3. ts_append_to(tindex, tlabel, domain)
+              4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
         5. Exported RPC Functions
 
               5.1. ts.dump
               5.2. ts.lookup
+
+        6. Statistics
+
+              6.1. stored_ruris
+              6.2. stored_transactions
+              6.3. added_branches
+              6.4. total_ruris
+              6.5. total_transactions
 
    List of Examples
 
@@ -61,14 +69,22 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. ts_store()
+        4.1. ts_store([uri])
         4.2. ts_append(domain, ruri)
-        4.3. ts_append_to(tindex, tlabel, domain)
+        4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
    5. Exported RPC Functions
 
         5.1. ts.dump
         5.2. ts.lookup
+
+   6. Statistics
+
+        6.1. stored_ruris
+        6.2. stored_transactions
+        6.3. added_branches
+        6.4. total_ruris
+        6.5. total_transactions
 
 1. Overview
 
@@ -77,13 +93,8 @@ Chapter 1. Admin Guide
    (R-URI) and add branches to them later if new contacts for the AOR are
    added.
 
-   When the ts_store function is called, the module stores the current
-   transaction R-URI URI, index and label. Two functions (ts_append and
-   ts_append_to) provide the ability to add new branches either to a
-   specific transaction or to all of the transactions stored for a given
-   R-URI. If USRLOC's use_domain option is true, the domain part of the
-   R-URI is used to store the transaction, otherwise only the username
-   part is used.
+   For each message, the modules stores “Request-URI” (“R-URI”), URI and
+   the internal transaction index and label.
 
    When a transaction is destroyed by the TM module, it is removed from
    the module's table too.
@@ -99,9 +110,6 @@ Chapter 1. Admin Guide
      * REGISTRAR--registrar module-- used to lookup for new contacts and
        update the dset for the r-uri.
      * TM--transaction module-- used to send SIP requests.
-     * USRLOC--usrloc module-- according to the value of use_domain
-       option, domain part of the r-uri will be used to store the
-       transaction.
      * SL
 
 2.2. External libraries or applications
@@ -130,22 +138,25 @@ modparam("tsilo", "hash_size", 1024)
 
 4. Functions
 
-   4.1. ts_store()
+   4.1. ts_store([uri])
    4.2. ts_append(domain, ruri)
-   4.3. ts_append_to(tindex, tlabel, domain)
+   4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
-4.1. ts_store()
+4.1. ts_store([uri])
 
-   The method stores r-uri, tindex and tlabel of the current transaction.
+   The method stores uri, tindex and tlabel of the current transaction. If
+   the uri parameter is missing, then the value is taken from r-uri. The
+   uri parameter can contain variables.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.2. ts_store usage
 ...
 if (is_method("INVITE")) {
-        if (t_newtran()) {
-                ts_store();
-        }
+    if (t_newtran()) {
+        ts_store();
+        # t_store("sip:alice@$td");
+    }
 }
 ...
 
@@ -172,7 +183,7 @@ if (is_method("REGISTER")) {
 }
 ...
 
-4.3. ts_append_to(tindex, tlabel, domain)
+4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
    The method add branches to the transaction identified by tindex and
    tlabel, performing a contacts lookup on the table specified by the
@@ -186,6 +197,7 @@ if (is_method("REGISTER")) {
        pseudo-variable.
      * domain - Name of table that should be used for looking up new
        contacts for r-uri.
+     * uri (optiona) - uri for which to do lookup for new destinations.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -220,3 +232,31 @@ if (is_method("REGISTER")) {
 
    RPC Command Format:
                         kamcmd ts.lookup sip:abcd@example.com
+
+6. Statistics
+
+   6.1. stored_ruris
+   6.2. stored_transactions
+   6.3. added_branches
+   6.4. total_ruris
+   6.5. total_transactions
+
+6.1. stored_ruris
+
+   Number of ruris currently stored in the TSILO table.
+
+6.2. stored_transactions
+
+   Number of transactions currently stored in the TSILO table.
+
+6.3. added_branches
+
+   Total number of added branches from the startup.
+
+6.4. total_ruris
+
+   Total number of stored ruris from the startup.
+
+6.5. total_transactions
+
+   Total number of stored transactions from the startup.

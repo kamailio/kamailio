@@ -62,6 +62,14 @@ struct sip_msg;
 inline int cxdx_add_destination_realm(AAAMessage *msg, str data);
 
 /**
+ * Creates and adds a Destination-Host AVP.
+ * @param msg - the Diameter message to add to.
+ * @param data - the value for the AVP payload
+ * @returns 1 on success or 0 on error
+ */
+inline int cxdx_add_destination_host(AAAMessage *msg,str data);
+
+/**
  * Creates and adds a Vendor-Specifig-Application-ID AVP.
  * @param msg - the Diameter message to add to.
  * @param vendor_id - the value of the vendor_id,

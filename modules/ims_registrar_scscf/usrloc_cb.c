@@ -91,23 +91,9 @@ void ul_contact_changed(impurecord_t* r, ucontact_t* c, int type, void* param) {
         LM_DBG("There are no subscriptions for this IMPU therefore breaking out now as nothing to do");
         return;
     }
-    
+//    
     if (type == UL_IMPU_DELETE_CONTACT) {
         LM_DBG("Received notification of UL CONTACT DELETE");
-        event_reg(0, r, c, IMS_REGISTRAR_CONTACT_UNREGISTERED, 0, 0);
-    } else if (type == UL_IMPU_DELETE_CONTACT_IMPLICIT) {
-        LM_DBG("Received notification of UL CONTACT_DELETE_IMPLICIT");
-        event_reg(0, r, c, IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT, 0, 0);
-    } else if (type == UL_IMPU_EXPIRE_CONTACT) {
-        LM_DBG("Received notification of UL CONTACT EXPIRE");
-        event_reg(0, r, c, IMS_REGISTRAR_CONTACT_EXPIRED, 0, 0);
-    } else if (type == UL_IMPU_UPDATE_CONTACT) {
-        LM_DBG("Received notification of UL CONTACT UPDATE");
-        event_reg(0, r, c, IMS_REGISTRAR_CONTACT_REFRESHED, 0, 0);
-    } else if (type == UL_IMPU_NEW_CONTACT) {
-        LM_DBG("Received notification of UL IMPU CONTACT INSERT");
-        event_reg(0, r, c, IMS_REGISTRAR_CONTACT_REGISTERED, 0, 0);
-    } else {
-        LM_DBG("This type of callback not supported here");
+        event_reg(0, r, IMS_REGISTRAR_CONTACT_UNREGISTERED, 0, 0);
     }
 }

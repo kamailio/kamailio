@@ -319,6 +319,20 @@ int fixup_free_pvar_pvar(void** param, int param_no)
 }
 
 
+int fixup_pvar_pvar_pvar(void** param, int param_no)
+{
+	if (param_no > 3)
+		return E_UNSPEC;
+	return fixup_pvar_all(param, param_no);
+}
+
+int fixup_free_pvar_pvar_pvar(void** param, int param_no)
+{
+	if (param_no > 3)
+		return E_UNSPEC;
+	return fixup_free_pvar_all(param, param_no);
+}
+
 
 int fixup_pvar_null(void** param, int param_no)
 {

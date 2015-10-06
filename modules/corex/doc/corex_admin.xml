@@ -370,9 +370,45 @@ event_route[network:msg] {
 		</example>
 	</section>
 
+	<section id="corex.f.file_read">
+		<title>
+			<function moreinfo="none">file_read(fpath, var)</function>
+		</title>
+		<para>
+			Read content of a text file into a variable.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>file_read</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(file_read("/tmp/data.txt", "$var(data)")) { ... }
+...
+</programlisting>
+		</example>
+	</section>
 
-    - ("flagname")
-	- ("flagname")
+	<section id="corex.f.file_write">
+		<title>
+			<function moreinfo="none">file_write(fpath, content)</function>
+		</title>
+		<para>
+			Write content of parameter to a text file.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>file_write</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 

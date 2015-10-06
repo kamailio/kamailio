@@ -92,7 +92,7 @@ struct mi_root* mi_trusted_dump(struct mi_root *cmd_tree, void *param)
 void rpc_trusted_dump(rpc_t* rpc, void* c) {
 
 	if (hash_table==NULL) {
-		rpc->fault(c, 500, "Reload failed. No trusted table");
+		rpc->fault(c, 500, "No trusted table");
 		return;
 	}
 
@@ -154,6 +154,10 @@ struct mi_root* mi_address_dump(struct mi_root *cmd_tree, void *param)
  */
 void rpc_address_dump(rpc_t* rpc, void* c) {
 
+	if(addr_hash_table==NULL) {
+		rpc->fault(c, 500, "No address table");
+		return;
+	}
 	if(addr_hash_table_rpc_print(*addr_hash_table, rpc, c) < 0 ) {
 		LM_DBG("failed to print a subnet_table dump\n");
 	}
@@ -185,6 +189,10 @@ struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
  * RPC function to dump subnet table
  */
 void rpc_subnet_dump(rpc_t* rpc, void* c) {
+	if(subnet_table==NULL) {
+		rpc->fault(c, 500, "No subnet table");
+		return;
+	}
 	if(subnet_table_rpc_print(*subnet_table, rpc, c) < 0) {
 		LM_DBG("failed to print a subnet_table dump\n");
 	}
@@ -217,6 +225,10 @@ struct mi_root* mi_domain_name_dump(struct mi_root *cmd_tree, void *param)
  */
 void rpc_domain_name_dump(rpc_t* rpc, void* c) {
 
+	if(domain_list_table==NULL) {
+		rpc->fault(c, 500, "No domain list table");
+		return;
+	}
 	if ( domain_name_table_rpc_print(*domain_list_table, rpc, c) < 0 ) {
 		LM_DBG("failed to print a subnet_table dump\n");
 	}

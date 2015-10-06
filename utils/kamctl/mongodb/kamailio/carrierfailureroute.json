@@ -1,0 +1,56 @@
+{
+  "name": "carrierfailureroute",
+  "version": 2,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "carrier": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "domain": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "scan_prefix": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "host_name": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "reply_code": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "flags": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "mask": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "next_domain": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "description": {
+      "type": "string",
+      "default": null,
+      "null": true
+    }
+  ]
+}

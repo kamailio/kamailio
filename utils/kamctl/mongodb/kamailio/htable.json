@@ -1,0 +1,36 @@
+{
+  "name": "htable",
+  "version": 2,
+  "columns": [
+    "id": {
+      "type": "int",
+      "default": null,
+      "null": false
+    },
+    "key_name": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "key_type": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "value_type": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    },
+    "key_value": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "expires": {
+      "type": "int",
+      "default": 0,
+      "null": false
+    }
+  ]
+}

@@ -229,7 +229,8 @@ int th_prepare_msg(sip_msg_t *msg)
 
 	if (parse_headers(msg, HDR_EOH_F, 0)==-1)
 	{
-		LM_DBG("parsing headers failed");
+		LM_DBG("parsing headers failed [[%.*s]]\n",
+				msg->len, msg->buf);
 		return 2;
 	}
 

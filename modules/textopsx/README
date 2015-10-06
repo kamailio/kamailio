@@ -22,7 +22,7 @@ Daniel-Constantin Mierla
               2.1. msg_apply_changes()
               2.2. change_reply_status(code, reason)
               2.3. remove_body()
-              2.4. keep_hf(regexp)
+              2.4. keep_hf([regexp])
               2.5. fnmatch(value, expr [, flags])
               2.6. append_hf_value(hf, hvalue)
               2.7. insert_hf_value(hf, hvalue)
@@ -68,7 +68,7 @@ Chapter 1. Admin Guide
         2.1. msg_apply_changes()
         2.2. change_reply_status(code, reason)
         2.3. remove_body()
-        2.4. keep_hf(regexp)
+        2.4. keep_hf([regexp])
         2.5. fnmatch(value, expr [, flags])
         2.6. append_hf_value(hf, hvalue)
         2.7. insert_hf_value(hf, hvalue)
@@ -97,7 +97,7 @@ Chapter 1. Admin Guide
    2.1. msg_apply_changes()
    2.2. change_reply_status(code, reason)
    2.3. remove_body()
-   2.4. keep_hf(regexp)
+   2.4. keep_hf([regexp])
    2.5. fnmatch(value, expr [, flags])
    2.6. append_hf_value(hf, hvalue)
    2.7. insert_hf_value(hf, hvalue)
@@ -170,12 +170,14 @@ onreply_route {
 remove_body();
 ...
 
-2.4. keep_hf(regexp)
+2.4. keep_hf([regexp])
 
    Remove headers that don't match the regular expression regexp. Several
    header are ignored always (thus not removed): Via, From, To, Call-ID,
    CSeq, Content-Length, Content-Type, Max-Forwards, Contact, Route,
-   Record-Route -- these can be removed one by one with remove_hf().
+   Record-Route -- these can be removed one by one with remove_hf(). If
+   regexp is missing, then only the headers listed above are kept, the
+   rest are removed.
 
    This function can be used from ANY_ROUTE.
 

@@ -766,7 +766,6 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
     str ttag;
     str req_uri;
     unsigned int dir;
-    int mlock;
 
 	dlg = dlg_get_ctx_dialog();
     if(dlg != NULL) {
@@ -792,17 +791,15 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
     trim(&req_uri);
 
 	dir = DLG_DIR_NONE;
-	mlock = 1;
 	/* search dialog by SIP attributes
-	 * - if not found, hash table slot is left locked, to avoid races
-	 *   to add 'same' dialog on parallel forking or not-handled-yet
-	 *   retransmissions. Release slot after linking new dialog */
-	dlg = search_dlg(&callid, &ftag, &ttag, &dir);
+	 * - hash table slot is left locked  */
+	dlg = dlg_search(&callid, &ftag, &ttag, &dir);
 	if(dlg) {
-		mlock = 0;
 		if (detect_spirals) {
-			if (spiral_detected == 1)
+			if (spiral_detected == 1) {
+				dlg_hash_release(&callid);
 				return 0;
+			}
 
 			if ( dlg->state != DLG_STATE_DELETED ) {
 				LM_DBG("Callid '%.*s' found, must be a spiraled request\n",
@@ -817,10 +814,11 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 				_dlg_ctx.iuid.h_id = dlg->h_id;
 				/* search_dlg() has incremented the ref count by 1 */
 				dlg_release(dlg);
+				dlg_hash_release(&callid);
 				return 0;
 			}
 			dlg_release(dlg);
-        }
+		}
     }
     spiral_detected = 0;
 
@@ -831,7 +829,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
                          &req_uri /*r-uri*/ );
 
 	if (dlg==0) {
-		if(likely(mlock==1)) dlg_hash_release(&callid);
+		dlg_hash_release(&callid);
 		LM_ERR("failed to create new dialog\n");
 		return -1;
 	}
@@ -839,7 +837,7 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	/* save caller's tag, cseq, contact and record route*/
 	if (populate_leg_info(dlg, req, t, DLG_CALLER_LEG,
 			&(get_from(req)->tag_value)) !=0) {
-		if(likely(mlock==1)) dlg_hash_release(&callid);
+		dlg_hash_release(&callid);
 		LM_ERR("could not add further info to the dialog\n");
 		shm_free(dlg);
 		return -1;
@@ -848,9 +846,10 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 	/* Populate initial varlist: */
 	dlg->vars = get_local_varlist_pointer(req, 1);
 
-	/* if search_dlg() returned NULL, slot was kept locked */
-	link_dlg(dlg, 0, mlock);
-	if(likely(mlock==1)) dlg_hash_release(&callid);
+	/* after dlg_search() slot was kept locked */
+	link_dlg(dlg, 0, 1);
+	/* unlock after dlg_search() */
+	dlg_hash_release(&callid);
 
 	dlg->lifetime = get_dlg_timeout(req);
 	s.s   = _dlg_ctx.to_route_name;
@@ -988,6 +987,47 @@ static inline int parse_dlg_rr_param(char *p, char *end, int *h_entry, int *h_id
 	}
 
 	return 0;
+}
+
+
+/*!
+ * \brief Update the saved Contact information in dialog from SIP message
+ * \param dlg updated dialog
+ * \param req SIP request
+ * \param dir direction of request, must DLG_DIR_UPSTREAM or DLG_DIR_DOWNSTREAM
+ * \return 0 on success, -1 on failure
+ */
+static inline int dlg_refresh_contacts(struct dlg_cell *dlg, struct sip_msg *req,
+		unsigned int dir)
+{
+	str contact;
+
+	if(req->first_line.type == SIP_REPLY)
+		return 0;
+	if(req->first_line.u.request.method_value != METHOD_INVITE)
+		return 0;
+
+	/* extract the contact address */
+	if (!req->contact&&(parse_headers(req,HDR_CONTACT_F,0)<0||!req->contact)){
+		LM_ERR("bad sip message or missing Contact hdr\n");
+		return -1;
+	}
+	if ( parse_contact(req->contact)<0 ||
+	((contact_body_t *)req->contact->parsed)->contacts==NULL ||
+	((contact_body_t *)req->contact->parsed)->contacts->next!=NULL ) {
+		LM_ERR("bad Contact HDR\n");
+		return -1;
+	}
+	contact = ((contact_body_t *)req->contact->parsed)->contacts->uri;
+
+	if ( dir==DLG_DIR_UPSTREAM) {
+		return dlg_update_contact(dlg, DLG_CALLEE_LEG, &contact);
+	} else if ( dir==DLG_DIR_DOWNSTREAM) {
+		return dlg_update_contact(dlg, DLG_CALLER_LEG, &contact);
+	} else {
+		LM_CRIT("dir is not set!\n");
+		return -1;
+	}
 }
 
 
@@ -1311,6 +1351,11 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			}
 		}
 		if(event != DLG_EVENT_REQACK) {
+			if(dlg_refresh_contacts(dlg, req, dir)!=0) {
+				LM_ERR("contacts update failed\n");
+			} else {
+				dlg->dflags |= DLG_FLAG_CHANGED;
+			}
 			if(update_cseqs(dlg, req, dir)!=0) {
 				LM_ERR("cseqs update failed\n");
 			} else {
@@ -1402,8 +1447,12 @@ void dlg_ontimeout(struct dlg_tl *tl)
 
 		if(dlg->iflags&DLG_IFLAG_TIMEOUTBYE)
 		{
+			/* set the dialog context so that it's available in
+			 * tm:local-request event route */
+			dlg_set_ctx_iuid(dlg);
 			if(dlg_bye_all(dlg, NULL)<0)
 				dlg_unref(dlg, 1);
+			dlg_reset_ctx_iuid();	
 
 			dlg_unref(dlg, 1);
 			if_update_stat(dlg_enable_stats, expired_dlgs, 1);

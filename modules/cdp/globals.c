@@ -45,6 +45,7 @@
 
 #include "globals.h"
 #include "utils.h"
+#include "../../mem/shm_mem.h"
 
 //str aaa_fqdn={"unset_fqdn",10};
 //str aaa_realm={"unset_realm",11};
@@ -83,31 +84,6 @@
 /** call it before exiting; if show_status==1, mem status is displayed */
 void destroy_memory(int show_status)
 {
-	/*clean-up*/
-	if (mem_lock)
-	    shm_unlock(); /* hack: force-unlock the shared memory lock in case
-	                             some process crashed and let it locked; this will
-	                             allow an almost gracious shutdown */
-#ifdef SHM_MEM
-	if (show_status){
-		LM_DBG( "Memory status (shm):\n");
-		//shm_status();
-#ifndef SER_MOD_INTERFACE
-		shm_sums();
-#endif		
-	}
-	/* zero all shmem alloc vars that we still use */
-	shm_mem_destroy();
-#endif
-#ifdef PKG_MALLOC
-	if (show_status){
-		LM_DBG( "Memory status (pkg):\n");
-		//pkg_status();
-#ifndef SER_MOD_INTERFACE
-		pkg_sums();
-#endif
-	}
-#endif
 }
 
 

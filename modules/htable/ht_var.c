@@ -44,7 +44,7 @@ int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
 	}
 	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
-		LM_ERR("cannot get $ht name\n");
+		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	htc = ht_cell_pkg_copy(hpv->ht, &htname, _htc_local);
@@ -83,10 +83,10 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 
 	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
-		LM_ERR("cannot get $ht name\n");
+		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
-	LM_DBG("set value for $ht(%.*s=>%.*s)\n", hpv->htname.len, hpv->htname.s,
+	LM_DBG("set value for $sht(%.*s=>%.*s)\n", hpv->htname.len, hpv->htname.s,
 			htname.len, htname.s);
 	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
@@ -106,7 +106,7 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		}
 		if(ht_set_cell(hpv->ht, &htname, 0, &isval, 1)!=0)
 		{
-			LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
+			LM_ERR("cannot set $sht(%.*s)\n", htname.len, htname.s);
 			return -1;
 		}
 	} else {
@@ -116,7 +116,7 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		}
 		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval, 1)!=0)
 		{
-			LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
+			LM_ERR("cannot set $sht(%.*s)\n", htname.len, htname.s);
 			return -1;
 		}
 	}
@@ -203,7 +203,7 @@ int pv_get_ht_cell_expire(struct sip_msg *msg,  pv_param_t *param,
 	}
 	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
-		LM_ERR("cannot get $ht name\n");
+		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	if(ht_get_cell_expire(hpv->ht, &htname, &now)!=0)
@@ -228,10 +228,10 @@ int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
 
 	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
-		LM_ERR("cannot get $ht name\n");
+		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
-	LM_DBG("set expire value for $ht(%.*s=>%.*s)\n", hpv->htname.len,
+	LM_DBG("set expire value for $sht(%.*s=>%.*s)\n", hpv->htname.len,
 			hpv->htname.s, htname.len, htname.s);
 	isval.n = 0;
 	if(val!=NULL)
@@ -244,7 +244,7 @@ int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
 	}	
 	if(ht_set_cell_expire(hpv->ht, &htname, 0, &isval)!=0)
 	{
-		LM_ERR("cannot set $ht(%.*s)\n", htname.len, htname.s);
+		LM_ERR("cannot set $sht(%.*s)\n", htname.len, htname.s);
 		return -1;
 	}
 
@@ -268,7 +268,7 @@ int pv_get_ht_cn(struct sip_msg *msg,  pv_param_t *param,
 	}
 	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
-		LM_ERR("cannot get $ht name\n");
+		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	
@@ -295,7 +295,7 @@ int pv_get_ht_cv(struct sip_msg *msg,  pv_param_t *param,
 	}
 	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
-		LM_ERR("cannot get $ht name\n");
+		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	
@@ -322,7 +322,7 @@ int pv_get_ht_add(struct sip_msg *msg,  pv_param_t *param,
 	}
 	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
 	{
-		LM_ERR("cannot get $ht name\n");
+		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	htc = ht_cell_value_add(hpv->ht, &htname, val, 1, _htc_local);
@@ -393,13 +393,10 @@ int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
 		strncmp(param->pvn.u.isname.name.s.s, "value", 5) == 0)
 	{
 		if(ht_expired_cell->flags&AVP_VAL_STR) {
-			res->rs = ht_expired_cell->value.s;
-			res->flags = PV_VAL_STR;
+			return pv_get_strval(msg, param, res, &ht_expired_cell->value.s);
 		} else {
-			res->ri = ht_expired_cell->value.n;
-			res->flags = PV_VAL_INT|PV_TYPE_INT;
+			return pv_get_sintval(msg, param, res, ht_expired_cell->value.n);
 		}
-		return 0;
 	}
 
 	if (res->rs.s == NULL)

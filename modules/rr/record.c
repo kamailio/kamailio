@@ -283,7 +283,8 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	if (_l ==0 )
 		goto lump_err;
 	if (enable_double_rr) {
-		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, 0)))
+		if (!(_l = insert_cond_lump_after(_l,
+				(enable_double_rr == 2) ? COND_TRUE : COND_IF_DIFF_REALMS, 0)))
 			goto lump_err;
 		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, 0)))
 			goto lump_err;
@@ -429,8 +430,10 @@ int record_route(struct sip_msg* _m, str *params)
 			ret = -5;
 			goto error;
 		}
-		l = insert_cond_lump_after(l, COND_IF_DIFF_REALMS, 0);
-		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_REALMS, 0);
+		l = insert_cond_lump_after(l,
+				(enable_double_rr == 2) ? COND_TRUE : COND_IF_DIFF_REALMS, 0);
+		l2 = insert_cond_lump_before(l2,
+				(enable_double_rr == 2) ? COND_TRUE : COND_IF_DIFF_REALMS, 0);
 		if (!l || !l2) {
 			LM_ERR("failed to insert conditional lump\n");
 			ret = -6;
@@ -706,14 +709,16 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 		goto lump_err;
 	}
 	hdr = NULL;
-	if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_PROTO, 0)))
+	if (!(_l = insert_cond_lump_after(_l,
+				(enable_double_rr == 2) ? COND_TRUE : COND_IF_DIFF_PROTO, 0)))
 		goto lump_err;
 	if (!(_l = insert_new_lump_after(_l, trans, RR_TRANS_LEN, 0)))
 		goto lump_err;
 	if (!(_l = insert_subst_lump_after(_l, _inbound?SUBST_RCV_PROTO:SUBST_SND_PROTO, 0)))
 		goto lump_err;
 	if (enable_double_rr) {
-		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, 0)))
+		if (!(_l = insert_cond_lump_after(_l,
+					(enable_double_rr == 2) ? COND_TRUE : COND_IF_DIFF_REALMS, 0)))
 			goto lump_err;
 		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, 0)))
 			goto lump_err;
@@ -790,8 +795,10 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 			ret = -3;
 			goto error;
 		}
-		l = insert_cond_lump_after(l, COND_IF_DIFF_PROTO, 0);
-		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_PROTO, 0);
+		l = insert_cond_lump_after(l,
+				(enable_double_rr == 2) ? COND_TRUE : COND_IF_DIFF_PROTO, 0);
+		l2 = insert_cond_lump_before(l2,
+				(enable_double_rr == 2) ? COND_TRUE : COND_IF_DIFF_PROTO, 0);
 		if (!l || !l2) {
 			LM_ERR("failed to insert conditional lump\n");
 			ret = -4;

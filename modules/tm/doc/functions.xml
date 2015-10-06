@@ -1665,6 +1665,10 @@ t_relay_to("0x01");
 		 parameter) for the current transaction.
 	</para>
 	<para>
+		Note: the function has to be used when processing the INVITE
+		(not when processing the CANCEL).
+	</para>
+	<para>
 		See also: <varname>e2e_cancel_reason</varname>.
 	</para>
 	<example>

@@ -111,7 +111,9 @@ Chapter 1. Admin Guide
    foo.bar[0][1].baz).
 
    The function can put a string, integer, null, or new json string into
-   destination.
+   destination. If the key/path can't be found in the JSON data structure,
+   the pvar is not changed. If it had a previous value, that value remains
+   unchanged.
 
    Example 1.1. jansson_get usage
 ...

@@ -61,4 +61,9 @@ int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity);
  */
 int assert_called_identity(struct sip_msg* _m, udomain_t* _d);
 
+/**
+ * Unregister a contact
+ */
+int pcscf_unregister(udomain_t* _d, str * uri, str * received_host, int received_port);
+
 #endif /* SERVICE_ROUTES_H */

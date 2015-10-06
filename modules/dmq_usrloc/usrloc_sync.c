@@ -51,7 +51,10 @@ static int add_contact(str aor, ucontact_info_t* ci)
 	str contact;
 	int res;
 
-	dmq_ul.get_udomain("location", &_d);
+        if (dmq_ul.get_udomain("location", &_d) < 0) {
+                LM_ERR("Failed to get domain\n");
+                return -1;
+        }
 	res = dmq_ul.get_urecord(_d, &aor, &r);
 	if (res < 0) {
 		LM_ERR("failed to retrieve record from usrloc\n");
@@ -92,9 +95,36 @@ static int add_contact(str aor, ucontact_info_t* ci)
 		return -1;
 }
 
+static int delete_contact(str aor, ucontact_info_t* ci)
+{
+	udomain_t* _d;
+	urecord_t* r;
+	ucontact_t* c;
+
+        if (dmq_ul.get_udomain("location", &_d) < 0) {
+                LM_ERR("Failed to get domain\n");
+                return -1;
+        }
+
+	if (dmq_ul.get_urecord_by_ruid(_d, dmq_ul.get_aorhash(&aor),
+				&ci->ruid, &r, &c) != 0) {
+		LM_WARN("AOR/Contact not found\n");
+		return -1;
+	}
+	if (dmq_ul.delete_ucontact(r, c) != 0) {
+		dmq_ul.unlock_udomain(_d, &aor);
+		LM_WARN("could not delete contact\n");
+		return -1;
+	}
+	dmq_ul.release_urecord(r);
+	dmq_ul.unlock_udomain(_d, &aor);
+
+	return 0;
+}
+
 void usrloc_get_all_ucontact(dmq_node_t* node)
 {
- 	int rval, len=0;
+	int rval, len=0;
 	void *buf, *cp;
 	str c, recv;
 	str path;
@@ -106,16 +136,22 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 	len = 0;
 	buf = NULL;
 
-  str aor;
-  urecord_t* r;
-  udomain_t* _d;
-  ucontact_t* ptr = 0;
-  int res;
+	str aor;
+	urecord_t* r;
+	udomain_t* _d;
+	ucontact_t* ptr = 0;
+	int res;
 
-  if (dmq_ul.get_all_ucontacts == NULL){
-    LM_ERR("dmq_ul.get_all_ucontacts is NULL\n");
-    goto done;
-  }
+	if (dmq_ul.get_all_ucontacts == NULL){
+		LM_ERR("dmq_ul.get_all_ucontacts is NULL\n");
+		goto done;
+	}
+
+	if (dmq_ul.get_udomain("location", &_d) < 0) {
+		LM_ERR("Failed to get domain\n");
+		goto done;
+	}
+
 	rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1, 0);
 	if (rval<0) {
 		LM_ERR("failed to fetch contacts\n");
@@ -138,48 +174,46 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 	}
 	if (buf == NULL)
 		goto done;
-	  cp = buf;
-    while (1) {
-        memcpy(&(c.len), cp, sizeof(c.len));
-        if (c.len == 0)
-            break;
-        c.s = (char*)cp + sizeof(c.len);
-        cp =  (char*)cp + sizeof(c.len) + c.len;
-        memcpy(&(recv.len), cp, sizeof(recv.len));
-        recv.s = (char*)cp + sizeof(recv.len);
-        cp =  (char*)cp + sizeof(recv.len) + recv.len;
-        memcpy( &send_sock, cp, sizeof(send_sock));
-        cp = (char*)cp + sizeof(send_sock);
-        memcpy( &flags, cp, sizeof(flags));
-        cp = (char*)cp + sizeof(flags);
-        memcpy( &(path.len), cp, sizeof(path.len));
-        path.s = path.len ? ((char*)cp + sizeof(path.len)) : NULL ;
-        cp =  (char*)cp + sizeof(path.len) + path.len;
-        memcpy( &(ruid.len), cp, sizeof(ruid.len));
-        ruid.s = ruid.len ? ((char*)cp + sizeof(ruid.len)) : NULL ;
-        cp =  (char*)cp + sizeof(ruid.len) + ruid.len;
-        memcpy( &aorhash, cp, sizeof(aorhash));
-        cp = (char*)cp + sizeof(aorhash);
+	cp = buf;
+	while (1) {
+		memcpy(&(c.len), cp, sizeof(c.len));
+		if (c.len == 0)
+			break;
+		c.s = (char*)cp + sizeof(c.len);
+		cp =  (char*)cp + sizeof(c.len) + c.len;
+		memcpy(&(recv.len), cp, sizeof(recv.len));
+		recv.s = (char*)cp + sizeof(recv.len);
+		cp =  (char*)cp + sizeof(recv.len) + recv.len;
+		memcpy( &send_sock, cp, sizeof(send_sock));
+		cp = (char*)cp + sizeof(send_sock);
+		memcpy( &flags, cp, sizeof(flags));
+		cp = (char*)cp + sizeof(flags);
+		memcpy( &(path.len), cp, sizeof(path.len));
+		path.s = path.len ? ((char*)cp + sizeof(path.len)) : NULL ;
+		cp =  (char*)cp + sizeof(path.len) + path.len;
+		memcpy( &(ruid.len), cp, sizeof(ruid.len));
+		ruid.s = ruid.len ? ((char*)cp + sizeof(ruid.len)) : NULL ;
+		cp =  (char*)cp + sizeof(ruid.len) + ruid.len;
+		memcpy( &aorhash, cp, sizeof(aorhash));
+		cp = (char*)cp + sizeof(aorhash);
 
-        dmq_ul.get_udomain("location", &_d);
+		res = dmq_ul.get_urecord_by_ruid(_d, aorhash, &ruid, &r, &ptr);
+		aor = r->aor;
+		if (res > 0) {
+			LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+			dmq_ul.release_urecord(r);
+			dmq_ul.unlock_udomain(_d, &aor);
+			continue;
+		}
+		LM_DBG("- AoR: %.*s  AoRhash=%d  Flags=%d\n", aor.len, aor.s, aorhash, flags);
 
-        res = dmq_ul.get_urecord_by_ruid(_d, aorhash, &ruid, &r, &ptr);
-        aor = r->aor;
-        if (res > 0) {
-            LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-            dmq_ul.release_urecord(r);
-            dmq_ul.unlock_udomain(_d, &aor);
-            continue;
-        }
-        LM_DBG("- AoR: %.*s  AoRhash=%d  Flags=%d\n", aor.len, aor.s, aorhash, flags);
-
-        while (ptr) {
-            usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, node);
-            ptr = ptr->next;
-        }
-        dmq_ul.release_urecord(r);
-        dmq_ul.unlock_udomain(_d, &aor);
-    }
+		while (ptr) {
+			usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, node);
+			ptr = ptr->next;
+		}
+		dmq_ul.release_urecord(r);
+		dmq_ul.unlock_udomain(_d, &aor);
+	}
 	pkg_free(buf);
 
 done:
@@ -352,21 +386,22 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 
 	switch(action) {
 		case DMQ_UPDATE:
-						LM_DBG("Received DMQ_UPDATE. Update contact info...\n");
-						add_contact(aor, &ci);
-						break;
+			LM_DBG("Received DMQ_UPDATE. Update contact info...\n");
+			add_contact(aor, &ci);
+			break;
 		case DMQ_RM:
-						LM_DBG("Received DMQ_RM. Delete contact info...\n");
-						break;
+			LM_DBG("Received DMQ_RM. Delete contact info...\n");
+			delete_contact(aor, &ci);
+			break;
 		case DMQ_SYNC:
-						LM_DBG("Received DMQ_SYNC. Sending all contacts...\n");
-						usrloc_get_all_ucontact(node);
-						break;
+			LM_DBG("Received DMQ_SYNC. Sending all contacts...\n");
+			usrloc_get_all_ucontact(node);
+			break;
 		case DMQ_NONE:
-						LM_DBG("Received DMQ_NONE. Not used...\n");
-						break;
-
-		default:  goto invalid;
+			LM_DBG("Received DMQ_NONE. Not used...\n");
+			break;
+		default:
+			goto invalid;
 	}
 
 	srjson_DestroyDoc(&jdoc);
@@ -496,29 +531,28 @@ void dmq_ul_cb_contact(ucontact_t* ptr, int type, void* param)
 {
 	str aor;
 
-		LM_DBG("Callback from usrloc with type=%d\n", type);
-		aor.s = ptr->aor->s;
-		aor.len = ptr->aor->len;
+	LM_DBG("Callback from usrloc with type=%d\n", type);
+	aor.s = ptr->aor->s;
+	aor.len = ptr->aor->len;
 
-		if (!(ptr->flags & FL_RPL)) {
+	if (!(ptr->flags & FL_RPL)) {
 
-			switch(type){
-				case UL_CONTACT_INSERT:
-											usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, 0);
-										break;
-				case UL_CONTACT_UPDATE:
-											usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, 0);
-										break;
-				case UL_CONTACT_DELETE:
-											//usrloc_dmq_send_contact(ptr, aor, DMQ_RM);
-											LM_DBG("Contact <%.*s> deleted\n", aor.len, aor.s);
-										break;
-				case UL_CONTACT_EXPIRE:
-											//usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE);
-											LM_DBG("Contact <%.*s> expired\n", aor.len, aor.s);
-										break;
-			}
-		} else {
-			LM_DBG("Contact received from DMQ... skip\n");
+		switch(type){
+			case UL_CONTACT_INSERT:
+				usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, 0);
+				break;
+			case UL_CONTACT_UPDATE:
+				usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, 0);
+				break;
+			case UL_CONTACT_DELETE:
+				usrloc_dmq_send_contact(ptr, aor, DMQ_RM, 0);
+				break;
+			case UL_CONTACT_EXPIRE:
+				//usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE);
+				LM_DBG("Contact <%.*s> expired\n", aor.len, aor.s);
+				break;
 		}
+	} else {
+		LM_DBG("Contact received from DMQ... skip\n");
+	}
 }
