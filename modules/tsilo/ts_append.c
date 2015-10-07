@@ -49,9 +49,9 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 
 	if (res != 0) {
 		LM_ERR("failed to retrieve record for %.*s\n", ruri->len, ruri->s);
-		 unlock_entry_by_ruri(ruri);
-		 return -1;
-        }
+		unlock_entry_by_ruri(ruri);
+		return -1;
+	}
 
 	ptr = _r->transactions;
 
@@ -68,24 +68,32 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 
 int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table) {
 	struct cell     *t;
+	struct cell     *orig_t;
 	struct sip_msg *orig_msg;
 	int ret;
+
+	orig_t = _tmb.t_gett();
 
 	if(_tmb.t_lookup_ident(&t, tindex, tlabel) < 0)
 	{
 		LM_ERR("transaction [%u:%u] not found\n",
 				tindex, tlabel);
-		return -1;
+		ret = -1;
+		goto done;
 	}
+
 	if (t->flags & T_CANCELED) {
 		LM_DBG("trasaction [%u:%u] was cancelled\n",
 				tindex, tlabel);
-		return -2;
+		ret = -2;
+		goto done;
 	}
+
 	if (t->uas.status >= 200) {
 		LM_DBG("trasaction [%u:%u] sent out a final response already - %d\n",
 				tindex, tlabel, t->uas.status);
-		return -3;
+		ret = -3;
+		goto done;
 	}
 
 	orig_msg = t->uas.request;
@@ -93,8 +101,17 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table) {
 	ret = _regapi.lookup_to_dset(orig_msg, table, NULL);
 	if(ret != 1) {
 		LM_DBG("transaction %u:%u: error updating dset (%d)\n", tindex, tlabel, ret);
-		return -4;
+		ret = -4;
+		goto done;
 	}
+	
+	ret = _tmb.t_append_branches();
 
-	return _tmb.t_append_branches();
+done:
+	/* unref the transaction which had been referred by t_lookup_ident() call. 
+	 * Restore the original transaction (if any) */
+	_tmb.unref_cell(t);
+	_tmb.t_sett(orig_t, T_BR_UNDEFINED);
+	
+	return ret;
 }
