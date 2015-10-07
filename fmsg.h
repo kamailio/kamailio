@@ -19,9 +19,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 		       
-#ifndef _FAKED_SIP_MSG_H_
-#define _FAKED_SIP_MSG_H_
+#ifndef _FMSG_H_
+#define _FMSG_H_
 
-#include "../../fmsg.h"
+#include "parser/msg_parser.h"
+
+int faked_msg_init(void);
+sip_msg_t* faked_msg_next(void);
+sip_msg_t* faked_msg_get_next(void);
 
 #endif

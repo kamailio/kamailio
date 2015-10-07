@@ -24,11 +24,11 @@
 * Module: \ref libkcore
 */
 
-#include "../../dprint.h"
-#include "../../globals.h"
-#include "../../dset.h"
+#include "dprint.h"
+#include "globals.h"
+#include "dset.h"
 
-#include "faked_msg.h"
+#include "fmsg.h"
 
 #define FAKED_SIP_MSG "OPTIONS sip:you@kamailio.org SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1\r\nFrom: <you@kamailio.org>;tag=123\r\nTo: <you@kamailio.org>\r\nCall-ID: 123\r\nCSeq: 1 OPTIONS\r\nContent-Length: 0\r\n\r\n"
 #define FAKED_SIP_MSG_LEN (sizeof(FAKED_SIP_MSG)-1)
