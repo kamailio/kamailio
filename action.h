@@ -75,4 +75,6 @@ int run_actions_safe(struct run_act_ctx* c, struct action* a,
 
 void log_prefix_set(sip_msg_t *msg);
 
+int run_child_one_init_route(void);
+
 #endif

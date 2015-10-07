@@ -49,6 +49,7 @@
 #include "globals.h"
 #include "dset.h"
 #include "onsend.h"
+#include "fmsg.h"
 #include "resolve.h"
 #ifdef USE_TCP
 #include "tcp_server.h"
@@ -1634,4 +1635,37 @@ int run_top_route(struct action* a, sip_msg_t* msg, struct run_act_ctx *c)
 	ret = run_actions(p, a, msg);
 	setsflagsval(sfbk);
 	return ret;
+}
+
+
+/**
+ *
+ */
+int run_child_one_init_route(void)
+{
+	struct sip_msg *fmsg;
+	struct run_act_ctx ctx;
+	int rtb, rt;
+
+	LM_DBG("attempting to run event_route[core:worker-one-init]\n");
+
+	rt = route_get(&event_rt, "core:worker-one-init");
+	if(rt>=0 && event_rt.rlist[rt]!=NULL) {
+		LM_DBG("executing event_route[core:worker-one-init] (%d)\n", rt);
+		if(faked_msg_init()<0)
+			return -1;
+		fmsg = faked_msg_next();
+		rtb = get_route_type();
+		set_route_type(REQUEST_ROUTE);
+		init_run_actions_ctx(&ctx);
+		run_top_route(event_rt.rlist[rt], fmsg, &ctx);
+		if(ctx.run_flags&DROP_R_F)
+		{
+			LM_ERR("exit due to 'drop' in event route\n");
+			return -1;
+		}
+		set_route_type(rtb);
+	}
+
+	return 0;
 }

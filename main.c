@@ -1228,6 +1228,7 @@ int main_loop(void)
 	int r;
 #endif
 	int nrprocs;
+	int woneinit;
 
 	/* one "main" process and n children handling i/o */
 	if (dont_fork){
@@ -1544,6 +1545,7 @@ int main_loop(void)
 		if (counters_prefork_init(get_max_procs()) == -1) goto error;
 
 
+		woneinit = 0;
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			nrprocs = (si->workers>0)?si->workers:children_no;
@@ -1580,8 +1582,13 @@ int main_loop(void)
 #ifdef STATS
 					setstats( i+r*children_no );
 #endif
+					if(woneinit==0) {
+						if(run_child_one_init_route()<0)
+							goto error;
+					}
 					return udp_rcv_loop();
 				}
+				woneinit = 1;
 			}
 			/*parent*/
 			/*close(udp_sock)*/; /*if it's closed=>sendto invalid fd errors?*/
