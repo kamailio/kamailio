@@ -28,6 +28,7 @@
 
 #include "../../sr_module.h"
 #include "../../timer.h"
+#include "../../timer_proc.h"
 #include "../../route.h"
 #include "../../dprint.h"
 #include "../../hashes.h"
@@ -51,6 +52,7 @@ MODULE_VERSION
 int  ht_timer_interval = 20;
 int  ht_db_expires_flag = 0;
 int  ht_enable_dmq = 0;
+int  ht_timer_procs = 0;
 
 static int htable_init_rpc(void);
 
@@ -144,6 +146,7 @@ static param_export_t params[]={
 	{"timer_interval",     INT_PARAM, &ht_timer_interval},
 	{"db_expires",         INT_PARAM, &ht_db_expires_flag},
 	{"enable_dmq",         INT_PARAM, &ht_enable_dmq},
+	{"timer_procs",        PARAM_INT, &ht_timer_procs},
 	{0,0,0}
 };
 
@@ -202,10 +205,14 @@ static int mod_init(void)
 		LM_DBG("starting auto-expire timer\n");
 		if(ht_timer_interval<=0)
 			ht_timer_interval = 20;
-		if(register_timer(ht_timer, 0, ht_timer_interval)<0)
-		{
-			LM_ERR("failed to register timer function\n");
-			return -1;
+		if(ht_timer_procs<=0) {
+			if(register_timer(ht_timer, 0, ht_timer_interval)<0)
+			{
+				LM_ERR("failed to register timer function\n");
+				return -1;
+			}
+		} else {
+			register_sync_timers(1);
 		}
 	}
 
@@ -227,6 +234,17 @@ static int child_init(int rank)
 	int rtb, rt;
 
 	LM_DBG("rank is (%d)\n", rank);
+
+	if(rank==PROC_MAIN) {
+		if(ht_timer_procs>0) {
+			if(fork_sync_timer(PROC_TIMER, "HTable Timer", 1 /*socks flag*/,
+					ht_timer, NULL, ht_timer_interval)<0) {
+				LM_ERR("failed to start timer routine as process\n");
+				return -1; /* error */
+			}
+		}
+	}
+
 	if (rank!=PROC_INIT)
 		return 0;
 	
