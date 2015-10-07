@@ -332,6 +332,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
         /* just put the timer back in with however many seconds are left (if any!!! in which case we need to kill */
         /* also update the event type to no_more_credit to save on processing the next time we get here */
         i_req->ro_session->event_type = no_more_credit;
+		i_req->ro_session->last_event_timestamp = get_current_time_micro();
         int whatsleft = i_req->ro_session->reserved_secs - used_secs;
         if (whatsleft <= 0) {
             // TODO we need to handle this situation more precisely.
