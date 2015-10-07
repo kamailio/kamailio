@@ -1,5 +1,4 @@
-/* $Id: nathelper.c 1808 2007-03-10 17:36:19Z bogdan_iancu $
- *
+/*
  * Copyright (C) 2003 Porta Software Ltd
  *
  * This file is part of Kamailio, a free SIP server.
