@@ -124,15 +124,18 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 		goto error;
 	}	
 	
-	ip.s= ip_addr2a(&msg->rcv.dst_ip);
-	if(ip.s== NULL)
-	{
-		LM_ERR("transforming ip_addr to ascii\n");
-		goto error;
+	if(msg->rcv.bind_address->useinfo.name.len>0) {
+		ip = msg->rcv.bind_address->useinfo.name;
+	} else {
+		ip = msg->rcv.bind_address->address_str;
 	}
-	ip.len= strlen(ip.s);
-	port = msg->rcv.dst_port;
 
+	if(msg->rcv.bind_address->useinfo.port_no>0) {
+		port = msg->rcv.bind_address->useinfo.port_no;
+	} else {
+		port = msg->rcv.bind_address->port_no;
+	}
+	
 	if(strncmp(ip.s, "sip:", 4)!=0)
 	{
 		strncpy(contact->s, "sip:", 4);
