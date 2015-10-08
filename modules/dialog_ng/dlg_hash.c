@@ -336,6 +336,7 @@ struct dlg_cell* build_new_dlg(str *callid, str *from_uri, str *from_tag, str *r
     }
 
     dlg->state = DLG_STATE_UNCONFIRMED;
+	dlg->init_ts = (unsigned int)time(NULL);
 
     dlg->h_entry = core_hash(callid, 0, d_table->size);
     LM_DBG("new dialog on hash %u\n", dlg->h_entry);
@@ -1240,6 +1241,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
         case DLG_EVENT_REQBYE:
             switch (dlg->state) {
                 case DLG_STATE_CONFIRMED:
+				case DLG_STATE_CONFIRMED_NA:	/* we weight towards tearing the dialog down if we get a bye - perhaps bye can beat ack*/
                     dlg->dflags |= DLG_FLAG_HASBYE;
                     dlg->state = DLG_STATE_DELETED;
                     *unref = 1;

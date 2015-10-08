@@ -125,6 +125,7 @@ typedef struct dlg_cell {
     str caller_route_set; /*!< route set of caller*/
     struct socket_info * caller_bind_addr; /*! binded address of caller*/
     unsigned int state; /*!< dialog state */
+    unsigned int init_ts;/*!< init (creation) time (absolute UNIX ts)*/
     unsigned int start_ts; /*!< start time  (absolute UNIX ts)*/
     unsigned int lifetime; /*!< dialog lifetime */
     unsigned int toroute; /*!< index of route that is executed on timeout */

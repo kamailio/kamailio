@@ -44,6 +44,7 @@ int spiral_detected = -1;
 extern struct rr_binds d_rrb; /*!< binding to record-routing module */
 extern struct tm_binds d_tmb;
 extern struct dialog_ng_counters_h dialog_ng_cnts_h;
+time_t act_time;
 
 extern pv_elem_t *ruri_param_model; /*!< pv-string to get r-uri */
 
@@ -1671,7 +1672,7 @@ int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
             goto error;
         }
         if (d_tmb.register_tmcb(req, t,
-                TMCB_RESPONSE_IN | TMCB_RESPONSE_READY | TMCB_RESPONSE_FWDED | TMCB_ON_FAILURE | TMCB_E2ECANCEL_IN | TMCB_REQUEST_OUT,
+                TMCB_DESTROY | TMCB_RESPONSE_IN | TMCB_RESPONSE_READY | TMCB_RESPONSE_FWDED | TMCB_ON_FAILURE | TMCB_E2ECANCEL_IN | TMCB_REQUEST_OUT,
                 dlg_onreply, (void*) iuid, dlg_iuid_sfree) < 0) {
             LM_ERR("failed to register TMCB\n");
             goto error;
@@ -1826,6 +1827,7 @@ void internal_print_all_dlg(struct dlg_cell *dlg) {
 
     LM_DBG("----------------------------");
     LM_DBG("Dialog h_entry:h_id = [%u : %u]\n", dlg->h_entry, dlg->h_id);
+	LM_DBG("Dialog age: %ld\n", act_time - dlg->init_ts);
     LM_DBG("Dialog call-id: %.*s\n", dlg->callid.len, dlg->callid.s);
     LM_DBG("Dialog state: %d\n", dlg->state);
     LM_DBG("Dialog ref counter: %d\n", dlg->ref);
@@ -1876,6 +1878,7 @@ void print_all_dlgs() {
     struct dlg_cell *dlg;
     unsigned int i;
 
+	act_time = time(0);
 
     LM_DBG("********************");
     LM_DBG("printing %i dialogs\n", d_table->size);
