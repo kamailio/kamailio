@@ -1,13 +1,11 @@
 /*
- * $Id$
- *
  * scanner for cfg files
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -17,7 +15,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,62 +24,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2003-01-29  src_port added (jiri)
- *  2003-01-23  mhomed added (jiri)
- *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-01  added dst_port, proto (tcp, udp, tls), af(inet, inet6) (andrei)
- *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
- *  2003-04-12  added force_rport, chdir and wdir (andrei)
- *  2003-04-22  strip_tail added (jiri)
- *  2003-07-03  tls* (disable, certificate, private_key, ca_list, verify,
- *               require_certificate added (andrei)
- *  2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
- *  2003-10-02  added {,set_}advertised_{address,port} (andrei)
- *  2003-10-07  added hex and octal numbers support (andrei)
- *  2003-10-10  replaced len_gt w/ msg:len (andrei)
- *  2003-10-13  added fifo_dir (andrei)
- *  2003-10-28  added tcp_accept_aliases (andrei)
- *  2003-11-29  added {tcp_send, tcp_connect, tls_*}_timeout (andrei)
- *  2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
- *  2004-04-28  added sock_mode (replaces fifo_mode), sock_user &
- *               sock_group  (andrei)
- *  2004-05-03  applied multicast support patch from janakj
- *              added MCAST_TTL (andrei)
- *  2004-10-08  more escapes: \", \xHH, \nnn and minor optimizations (andrei)
- *  2004-10-19  added FROM_URI and TO_URI (andrei)
- *  2004-11-30  added force_send_socket
- *  2005-07-08  added tcp_connection_lifetime, tcp_poll_method,
- *               tcp_max_connections (andrei)
- *  2005-07-11  added dns_retr_{time,no}, dns_servers_no, dns_use_search_list,
- *              dns_try_ipv6 (andrei)
- *  2005-12-11  added onsend_route, snd_{ip,port,proto,af},
- *              to_{ip,port} (andrei)
- *  2005-12-12  separated drop, exit, break, return, added RETCODE (andrei)
- *  2005-12-19  select framework (mma)
- *  2006-09-11  added dns cache (use, flags, ttls, mem ,gc) & dst blacklist
- *              options (andrei)
- *  2006-10-13  added STUN_ALLOW_STUN, STUN_ALLOW_FP, STUN_REFRESH_INTERVAL
- *              (vlada)
- *  2007-06-07  added SHM_FORCE_ALLOC, MLOCK_PAGES, REAL_TIME, RT_PRIO,
- *              RT_POLICY, RT_TIMER1_PRIO, RT_TIMER1_POLICY, RT_TIMER2_PRIO,
- *              RT_TIMER2_POLICY (andrei)
- *  2007-06-16  added DNS_SRV_LB, DNS_TRY_NAPTR (andrei)
- *  2007-06-18  added DNS_{UDP,TCP,TLS}_PREF (andrei)
- *  2007-09-10  introduced phone2tel option which allows NOT to consider
- *              user=phone URIs as TEL URIs (jiri)
- *  2007-10-10  added DNS_SEARCH_FMATCH (mma)
- *  2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
- *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
- *  2008-01-24  added CFG_DESCRIPTION used by cfg_var (Miklos)
- *  2008-11-28  added support for kamailio pvars and avp/pvar guessing (andrei)
- *  2008-12-11  added support for "string1" "string2" (andrei)
- *  2009-03-10  added SET_USERPHONE action (Miklos)
- *  2009-04-24  add strlen, strempty and defined operators (andrei)
- *  2009-03-07  RETCODE, it's now  a core pvar (andrei)
- *  2010-01-10  added SHM_MEM_SZ (andrei)
- *  2010-02-17 added DST_BLST_{UDP,TCP,TLS,SCTP}_IMASK (andrei)
 */
 
 %option noinput

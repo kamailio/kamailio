@@ -1,13 +1,11 @@
 /*
- * $Id$
- *
  *  cfg grammar
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
@@ -17,7 +15,7 @@
  * software, please contact iptel.org by e-mail at the following addresses:
  *    info@iptel.org
  *
- * ser is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -26,80 +24,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- /*
- * History:
- * ---------
- * 2003-01-29  src_port added (jiri)
- * 2003-01-23  mhomed added (jiri)
- * 2003-03-19  replaced all mallocs/frees with pkg_malloc/pkg_free (andrei)
- * 2003-03-19  Added support for route type in find_export (janakj)
- * 2003-03-20  Regex support in modparam (janakj)
- * 2003-04-01  added dst_port, proto , af (andrei)
- * 2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
- * 2003-04-12  added force_rport, chroot and wdir (andrei)
- * 2003-04-15  added tcp_children, disable_tcp (andrei)
- * 2003-04-22  strip_tail added (jiri)
- * 2003-07-03  tls* (disable, certificate, private_key, ca_list, verify,
- *              require_certificate added (andrei)
- * 2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
- * 2003-10-02  added {,set_}advertised_{address,port} (andrei)
- * 2003-10-10  added <,>,<=,>=, != operators support
- *             added msg:len (andrei)
- * 2003-10-11  if(){} doesn't require a ';' after it anymore (andrei)
- * 2003-10-13  added FIFO_DIR & proto:host:port listen/alias support (andrei)
- * 2003-10-24  converted to the new socket_info lists (andrei)
- * 2003-10-28  added tcp_accept_aliases (andrei)
- * 2003-11-20  added {tcp_connect, tcp_send, tls_*}_timeout (andrei)
- * 2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
- * 2004-04-29  added SOCK_MODE, SOCK_USER & SOCK_GROUP (andrei)
- * 2004-05-03  applied multicast support patch (MCAST_LOOPBACK) from janakj
- *             added MCAST_TTL (andrei)
- * 2004-07-05  src_ip & dst_ip will detect ip addresses between quotes
- *              (andrei)
- * 2004-10-19  added FROM_URI, TO_URI (andrei)
- * 2004-11-30  added force_send_socket (andrei)
- * 2005-07-08  added TCP_CON_LIFETIME, TCP_POLL_METHOD, TCP_MAX_CONNECTIONS
- *              (andrei)
- * 2005-07-11 added DNS_RETR_TIME, DNS_RETR_NO, DNS_SERVERS_NO, DNS_USE_SEARCH,
- *             DNS_TRY_IPV6 (andrei)
- * 2005-07-12  default onreply route added (andrei)
- * 2005-11-16  fixed if (cond) cmd; (andrei)
- * 2005-12-11  added onsend_route support, fcmd (filtered cmd),
- *             snd_{ip,port,proto,af}, to_{ip,proto} (andrei)
- * 2005-12-19  select framework (mma)
- * 2006-01-06  AVP index support (mma)
- * 2005-01-07  optional semicolon in statement, PARAM_STR&PARAM_STRING
- * 2006-02-02  named flags support (andrei)
- * 2006-02-06  named routes support (andrei)
- * 2006-05-30  avp flags (tma)
- * 2006-09-11  added dns cache (use, flags, ttls, mem ,gc) & dst blacklist
- *              options (andrei)
- * 2006-10-13  added STUN_ALLOW_STUN, STUN_ALLOW_FP, STUN_REFRESH_INTERVAL
- *              (vlada)
- * 2007-02-09  separated command needed for tls-in-core and for tls in general
- *              (andrei)
- * 2007-06-07  added SHM_FORCE_ALLOC, MLOCK_PAGES, REAL_TIME, RT_PRIO,
- *              RT_POLICY, RT_TIMER1_PRIO, RT_TIMER1_POLICY, RT_TIMER2_PRIO,
- *              RT_TIMER2_POLICY (andrei)
- * 2007-06-16  added DDNS_SRV_LB, DNS_TRY_NAPTR (andrei)
- * 2007-09-10  introduced phone2tel option which allows NOT to consider
- *             user=phone URIs as TEL URIs (jiri)
- * 2007-10-10  added DNS_SEARCH_FMATCH (mma)
- * 2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
- *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
- * 2008-01-24  added cfg_var definition (Miklos)
- * 2008-11-18  support for variable parameter module functions (andrei)
- * 2007-12-03  support for generalised lvalues and rvalues:
- *               lval=rval_expr, where lval=avp|pvar  (andrei)
- * 2007-12-06  expression are now evaluated in terms of rvalues;
- *             NUMBER is now always positive; cleanup (andrei)
- * 2009-01-26  case/switch() support (andrei)
- * 2009-03-10  added SET_USERPHONE action (Miklos)
- * 2009-05-04  switched if to rval_expr (andrei)
- * 2010-01-10  init shm on first mod_param or route block;
- *             added SHM_MEM_SZ (andrei)
- * 2010-02-17  added blacklist imask (DST_BLST_*_IMASK) support (andrei)
-*/
 
 %expect 6
 
