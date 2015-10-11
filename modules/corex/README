@@ -55,6 +55,7 @@ Muhammad Shahzad Shafi
               5.2. corex.list_aliases
               5.3. corex.shm_status
               5.4. corex.shm_summary
+              5.5. corex.pkg_summary
 
         6. Event Routes
 
@@ -116,6 +117,7 @@ Chapter 1. Admin Guide
         5.2. corex.list_aliases
         5.3. corex.shm_status
         5.4. corex.shm_summary
+        5.5. corex.pkg_summary
 
    6. Event Routes
 
@@ -388,6 +390,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
    5.2. corex.list_aliases
    5.3. corex.shm_status
    5.4. corex.shm_summary
+   5.5. corex.pkg_summary
 
 5.1. corex.list_sockets
 
@@ -416,6 +419,19 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 
    Example:
                 kamcmd corex.shm_summary
+
+5.5. corex.pkg_summary
+
+   Trigger pkg summary dump to syslog for a specific pid or process index.
+   It has two parameters: first to specify what matching type is desired
+   (can be 'pid' or 'idx'); second to specify the value for desired match.
+
+   The dump is happening when the selected process is doing a runtime
+   handling (e.g., processing a sip message).
+
+   Example:
+                kamcmd corex.pkg_summary pid 2345
+                kamcmd corex.pkg_summary idx 1
 
 6. Event Routes
 

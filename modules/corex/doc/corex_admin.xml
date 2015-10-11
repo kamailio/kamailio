@@ -471,6 +471,28 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 		&sercmd; corex.shm_summary
 		</programlisting>
     </section>
+	<section>
+		<title>
+		<function moreinfo="none">corex.pkg_summary</function>
+		</title>
+		<para>
+			Trigger pkg summary dump to syslog for a specific pid or
+			process index. It has two parameters: first to specify what
+			matching type is desired (can be 'pid' or 'idx'); second to
+			specify the value for desired match.
+		</para>
+		<para>
+			The dump is happening when the selected process is doing a
+			runtime handling (e.g., processing a sip message).
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; corex.pkg_summary pid 2345
+		&sercmd; corex.pkg_summary idx 1
+		</programlisting>
+    </section>
     </section>
 
     <section>
