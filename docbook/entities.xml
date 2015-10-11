@@ -9,6 +9,7 @@
 <!ENTITY kamailiobinary "kamailio">
 <!ENTITY kamailioname "Kamailio SIP Server Platform">
 <!ENTITY kamailioconfig "kamailio.cfg">
+<!ENTITY kamailioconfdir "/usr/local/etc/kamailio">
 
 <!ENTITY kamwiki "http://www.kamailio.org/wiki/">
 <!ENTITY kamwikilink "<ulink url='&kamwiki;'>&kamwiki;</ulink>">

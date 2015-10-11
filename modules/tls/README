@@ -119,7 +119,7 @@ Carsten Bock
    1.39. Set renegotiation parameter
    1.40. Short config file
    1.41. Set config parameter
-   1.42. Change and reload tls config at runtime
+   1.42. Change and reload the tls configuration at runtime
    1.43. Set xavp_cfg parameter
    1.44. is_peer_verified usage
 
@@ -230,20 +230,20 @@ route{
    This module includes several workarounds for various Openssl bugs (like
    compression and Kerberos using the wrong memory allocations functions,
    low memory problems a.s.o). On startup it will try to enable the needed
-   workarounds based on the Openssl library version. Each time a known
+   workarounds based on the OpenSSL library version. Each time a known
    problem is detected and a workaround is enabled, a message will be
    logged. In general it is recommended to compile this module on the same
    machine or a similar machine to where kamailio will be run or to link
    it statically with libssl. For example if on the compile machine
-   Openssl does not have the Kerberos support enabled, but on the target
-   machine a Kerberos enabled Openssl library is installed, Kamailio
+   OpenSSL does not have the Kerberos support enabled, but on the target
+   machine a Kerberos enabled OpenSSL library is installed, Kamailio
    cannot apply the needed workarounds and will refuse to start. The same
-   thing will happen if the Openssl versions are too different (to force
+   thing will happen if the OpenSSL versions are too different (to force
    Kamailio startup anyway, see the tls_force_run module parameter).
 
-   Compression is fully supported if you have a new enough Openssl version
+   Compression is fully supported if you have a new enough OpenSSL version
    (starting with 0.9.8). Although there are some problems with zlib
-   compression in currently deployed Openssl versions (up to and including
+   compression in currently deployed OpenSSL versions (up to and including
    0.9.8d, see openssl bug #1468), the TLS module will automatically
    switch to its own fixed version. Note however that starting with
    Kamailio 3.1 compression is not enabled by default, due to the huge
@@ -276,8 +276,8 @@ make all include_modules=tls
 
    .
 
-   However in some cases the Openssl library requires linking with other
-   libraries. For example compiling the Openssl library with Kerberos and
+   However in some cases the OpenSSL library requires linking with other
+   libraries. For example compiling the OpenSSL library with Kerberos and
    zlib-shared support will require linking the TLS module with libkrb5
    and libz. In this case just add TLS_EXTRA_LIBS="library list" to make's
    command line. E.g.:
@@ -342,17 +342,16 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 8. Quick Certificate Howto
 
    There are various ways to create, sign certificates and manage small
-   CAs (Certificate Authorities). If you want a GUI, try tinyca
-   (http://tinyca.sm-zone.net/), a very nice and small CA management
-   application. If you are in a hurry and everything you have are the
-   installed openssl libraries and utilities, read on.
+   CAs (Certificate Authorities). If you are in a hurry and everything you
+   have are the installed OpenSSL libraries and utilities, read on.
 
    Assumptions: we run our own CA.
 
    Warning: in this example no key is encrypted. The client and server
    private keys must not be encrypted (Kamailio doesn't support encrypted
    keys), so make sure the corresponding files are readable only by
-   trusted people. You should use a password for your CA private key.
+   trusted people. You should use a password to protect your CA private
+   key.
 
 Assumptions
 ------------
@@ -377,83 +376,90 @@ new_certs_dir   = $dir/newcerts         # default place for new certs.
 
 certificate     = $dir/cacert.pem       # The CA certificate
 serial          = $dir/serial           # The current serial number
-crlnumber       = $dir/crlnumber        # the current crl number
+crlnumber       = $dir/crlnumber        # the current CRL number
 crl             = $dir/crl.pem          # The current CRL
 private_key     = $dir/private/cakey.pem# The private key
 RANDFILE        = $dir/private/.rand    # private random number file
 
 ...
 
-If this is not the case create a new openssl config file that uses the above
+If this is not the case create a new OpenSSL config file that uses the above
 paths for the default CA and add to all the openssl commands:
  -config filename. E.g.:
         openssl ca -config my_openssl.cnf -in kamailio1_cert_req.pem -out kamail
 io1_cert.pem
 
 
-Creating CA certificate
------------------------
-1. create CA directory
+Creating the CA certificate
+---------------------------
+1. Create the CA directory
         mkdir ca
         cd ca
 
-2. create ca directory structure and files  (see ca(1))
-        mkdir demoCA #default CA name, edit /etc/ssl/openssl.cnf
+2. Create the CA directory structure and files  (see ca(1))
+        mkdir demoCA            #default CA name, edit /etc/ssl/openssl.cnf
         mkdir  demoCA/private
         mkdir demoCA/newcerts
         touch demoCA/index.txt
         echo 01 >demoCA/serial
         echo 01 >demoCA/crlnumber
 
-2. create CA private key
+2. Create CA private key
         openssl genrsa -out demoCA/private/cakey.pem 2048
         chmod 600 demoCA/private/cakey.pem
 
-3. create CA self-signed certificate
+3. Create CA self-signed certificate
         openssl req -out demoCA/cacert.pem   -x509 -new -key demoCA/private/cake
 y.pem
 
 
-Creating a server/client certificate
-------------------------------------
-1. create a certificate request (and its private key in privkey.pem)
+Creating a server/client TLS certificate
+----------------------------------------
+1. Create a certificate request (and its private key in privkey.pem)
+
         openssl req -out kamailio1_cert_req.pem -new -nodes
+
         WARNING: the organization name should be the same as in the CA certifica
 te.
 
-2. sign it with the ca certificate
+2. Sign it with the CA certificate
         openssl ca -in kamailio1_cert_req.pem -out kamailio1_cert.pem
 
-3. copy kamailio1_cert.pem to your Kamailio config. dir
+3. Copy kamailio1_cert.pem to your Kamailio configuration dir
 
 
-Setting Kamailio to use the certificate
------------------------------------------
-1. Create the ca list file:
-        for each of your ca certificates that you intend to use do:
+Setting Kamailio to use the TLS certificate
+---------------------------------------------
+1. Create the CA list file:
+        for each of your CA certificates that you intend to use do:
                 cat cacert.pem >>calist.pem
 
 2. Copy your Kamailio certificate, private key and ca list file to your
         intended machine (preferably in your Kamailio configuration directory,
          this is the default place Kamailio searches for).
 
-3. set up Kamailio.cfg to use the certificate
+3. Set up Kamailio.cfg to use the certificate
         if your Kamailio certificate name is different from cert.pem or it is no
 t
         placed in Kamailio cfg. directory, add to your kamailio.cfg:
                 modparam("tls", "certificate", "/path/cert_file_name")
 
-4. set up Kamailio to use the private key
+4. Set up Kamailio to use the private key
         if your private key is not contained in the same file as the certificate
         (or the certificate name is not the default cert.pem), add to your
          Kamailio.cfg:
                 modparam("tls", "private_key", "/path/private_key_file")
 
-5. set up Kamailio to use the ca list (optional)
+5. Set up Kamailio to use the CA list (optional)
+   The CA list is not used for your server certificate - it's used to approve ot
+her servers
+   and clients connecting to your server with a client certificate or for approv
+ing
+   a certificate used by a server your server connects to.
         add to your Kamailio.cfg:
                 modparam("tls", "ca_list", "/path/ca_list_file")
 
-6. set up tls authentication options:
+6. Set up TLS authentication options:
                 modparam("tls", "verify_certificate", 1)
                 modparam("tls", "require_certificate", 1)
         (for more information see the module parameters documentation)
@@ -461,15 +467,15 @@ t
 
 Revoking a certificate and using a CRL
 --------------------------------------
-1. revoking a certificate:
+1. Revoking a certificate:
         openssl ca -revoke bad_cert.pem
 
-2. generate/update the certificate revocation list:
+2. Generate/update the certificate revocation list:
         openssl ca -gencrl -out my_crl.pem
 
-3. copy my_crl.pem to your Kamailio config. dir
+3. Copy my_crl.pem to your Kamailio config. dir
 
-4. set up Kamailio to use the CRL:
+4. Set up Kamailio to use the CRL:
                 modparam("tls", "crl", "path/my_crl.pem")
 
 9. Parameters
@@ -527,8 +533,8 @@ Revoking a certificate and using a CRL
        Newer versions of libssl don't include support for it anymore.
      * SSLv23 - any of the SSLv2, SSLv3 and TLSv1 or newer methods will be
        accepted.
-       From OpenSSL manual: "A TLS/SSL connection established with these
-       methods may understand the SSLv3, TLSv1, TLSv1.1 and TLSv1.2
+       From the OpenSSL manual: "A TLS/SSL connection established with
+       these methods may understand the SSLv3, TLSv1, TLSv1.1 and TLSv1.2
        protocols. If extensions are required (for example server name) a
        client will send out TLSv1 client hello messages including
        extensions and will indicate that it also understands TLSv1.1,
@@ -539,7 +545,7 @@ Revoking a certificate and using a CRL
        hello messages done over SSLv2. You shouldn't use SSLv2 or SSLv3
        for anything which should be highly secure.
 
-   If rfc3261 conformance is desired, at least TLSv1 must be used. For
+   If RFC 3261 conformance is desired, at least TLSv1 must be used. For
    compatibility with older clients SSLv23 is the option, but again, be
    aware of security concerns, SSLv2/3 being considered very insecure by
    2014.
@@ -560,11 +566,11 @@ modparam("tls", "tls_method", "TLSv1")
    relative to the main config file directory (e.g.: for kamailio -f
    /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 
-   Warning: try not to use certificate with keys longer then 1024 bytes.
+   Warning: try not to use certificate with keys longer then 2048 bytes.
    Longer keys will severely impact performance, in particular the TLS
    connection rate.
 
-   The default value is [SER_CFG_DIR]/cert.pem.
+   The default value is /usr/local/etc/kamailio/cert.pem
 
    Example 1.4. Set certificate parameter
 ...
@@ -573,7 +579,9 @@ modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
 
 9.3. private_key (string)
 
-   Sets the private key file name.
+   Sets the private key file name. The private key can be in the same file
+   as the certificate or in a separate file, specified by this
+   configuration parameter.
 
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
@@ -585,7 +593,7 @@ modparam("tls", "certificate", "/usr/local/etc/kamailio/my_certificate.pem")
    certificate (just append it to the certificate file, e.g.: cat pkey.pem
    >> cert.pem)
 
-   The default value is [SER_CFG_DIR]/cert.pem.
+   The default value is /usr/local/etc/kamailio/cert.pem
 
    Example 1.5. Set private_key parameter
 ...
@@ -596,7 +604,8 @@ modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
 
    Sets the CA list file name. This file contains a list of all the
    trusted CAs certificates. If a signature in a certificate chain belongs
-   to one of the listed CAs, the authentication will succeed.
+   to one of the listed CAs, the verification of that certificate will
+   succeed.
 
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
@@ -619,11 +628,11 @@ modparam("tls", "ca_list", "/usr/local/etc/kamailio/ca_list.pem")
 
 9.5. crl (string)
 
-   Sets the certificate revocation list file name. This file contains a
-   list of revoked certificates. Any attempt to verify a revoked
-   certificate will fail.
+   Sets the certificate revocation list (CRL) file name. This file
+   contains a list of revoked certificates. Any attempt to verify a
+   revoked certificate will fail.
 
-   If not set, no crl list will be used.
+   If not set, no CRL list will be used.
 
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
@@ -636,19 +645,19 @@ Note
    If set, require_certificate should also be set or it will not have any
    effect.
 
-   By default the crl file is not set.
+   By default the CRL file name is not set.
 
-   To update the crl in a running Kamailio, make sure you configure tls
-   via a separate tls config file (the config modparam) and issue a
+   To update the CRL in a running Kamailio, make sure you configure TLS
+   via a separate TLS config file (the config modparam) and issue a
    tls.reload RPC call, e.g.:
  $ kamcmd tls.reload
 
-   A quick way to create the CRL in PEM format, using openssl is:
+   A quick way to create the CRL in PEM format, using OpenSSL is:
  $ openssl ca -gencrl -keyfile cacert.key -cert cacert.pem -out my_crl.pem
 
    my_crl.pem will contain the signed list of the revoked certificates.
 
-   To revoke a certificate use something like:
+   To revoke a TLS certificate use something like:
  $ openssl ca -revoke bad_cert.pem -keyfile cacert.key -cert cacert.pem
 
    and then refresh the crl file using the command above.
@@ -698,8 +707,8 @@ modparam("tls", "verify_depth", 9)
 9.8. require_certificate (boolean)
 
    When enabled it will require a certificate from a client. If the client
-   does not offer a certificate and verify_certificate is on, the
-   certificate verification will fail.
+   does not offer a certificate and verify_certificate is on, certificate
+   verification will fail.
 
    The default value is off.
 
@@ -759,8 +768,8 @@ modparam("tls", "server_name", "kamailio.org")
 
    If the value set is -1, the connection will never be close on idle.
 
-   It can be changed also at runtime, via the RPC interface and config
-   framework. The config variable name is tls.connection_timeout.
+   This setting can be changed also at runtime, via the RPC interface and
+   config framework. The config variable name is tls.connection_timeout.
 
    Example 1.13. Set connection_timeout parameter
 ...
@@ -772,7 +781,7 @@ modparam("tls", "connection_timeout", 60)
 
 9.14. tls_disable_compression (boolean)
 
-   If set compression over SSL/TLS will be disabled. Note that compression
+   If set compression over TLS will be disabled. Note that compression
    uses a lot of memory (about 10x more then with the compression
    disabled), so if you want to minimize memory usage is a good idea to
    disable it.
@@ -789,9 +798,9 @@ modparam("tls", "tls_disable_compression", 0) # enable
    Release internal OpenSSL read or write buffers as soon as they are no
    longer needed. Combined with ssl_free_list_max_len has the potential of
    saving a lot of memory ( ~ 32k per connection in the default
-   configuration, or 16k + ssl_max_send_fragment). For sr versions > 3.0
-   it makes little sense to disable it (0) since the tls module already
-   has its own internal buffering.
+   configuration, or 16k + ssl_max_send_fragment). For Kamailio versions >
+   3.0 it makes little sense to disable it (0) since the tls module
+   already has its own internal buffering.
 
    A value of -1 would not change this option from its openssl default.
    Use 0 or 1 for enable/disable.
@@ -889,7 +898,7 @@ modparam("tls", "ssl_read_ahead", 1)
 9.19. send_close_notify (boolean)
 
    Enables/disables sending close notify alerts prior to closing the
-   corresponding TCP connection. Sending the close notify prior to tcp
+   corresponding TCP connection. Sending the close notify prior to TCP
    shutdown is "nicer" from a TLS point of view, but it has a measurable
    performance impact. Default: off. Can be set at runtime
    (tls.send_close_notify).
@@ -930,7 +939,7 @@ modparam("tls", "con_ct_wq_max", 1048576)
 
    Sets the maximum total number of bytes queued in all the clear-text
    send queues. These queues are used when data cannot be encrypted and
-   sent immediately because of an ongoing TLS/SSL level renegotiation.
+   sent immediately because of an ongoing TLS level renegotiation.
 
    The default value is 10485760 (10 Mb).
 
@@ -1011,7 +1020,7 @@ modparam("tls", "tls_debug", 10)
    well low memory situations (openssl bug #1491). As of this writing this
    is not true for any openssl version (including 0.9.8e).
 
-   If an ill-behaved openssl version is detected, a very conservative
+   If an ill-behaved OpenSSL version is detected, a very conservative
    value is choosed, which depends on the maximum possible number of
    simultaneously created TLS connections (and hence on the process
    number).
@@ -1039,9 +1048,9 @@ modparam("tls", "low_mem_threshold1", -1)
    established TLS connections will start to fail preemptively. The value
    is expressed in KB.
 
-   The default value depends on whether the openssl library used handles
+   The default value depends on whether the OpenSSL library used handles
    well low memory situations (openssl bug #1491). As of this writing this
-   is not true for any openssl version (including 0.9.8e).
+   is not true for any OpenSSL version (including 0.9.8e).
 
    If an ill-behaved openssl version is detected, a very conservative
    value is choosed, which depends on the maximum possible number of
@@ -1067,7 +1076,7 @@ modparam("tls", "low_mem_threshold2", -1)
 
 9.27. tls_force_run (boolean)
 
-   If enabled Kamailio will start even if some of the openssl sanity
+   If enabled Kamailio will start even if some of the OpenSSL sanity
    checks fail (turn it on at your own risk).
 
    Currently failing any of the following sanity checks will not allow
@@ -1076,8 +1085,8 @@ modparam("tls", "low_mem_threshold2", -1)
        different" from the library used at runtime. The versions should
        have the same major, minor and fix level (e.g.: 0.9.8a and 0.9.8c
        are ok, but 0.9.8 and 0.9.9 are not)
-     * the openssl library used at compile time and the one used at
-       runtime have different kerberos options
+     * the OpenSSL library used at compile time and the one used at
+       runtime have different Kerberos options
 
    By default tls_force_run is disabled.
 
@@ -1126,12 +1135,14 @@ modparam("tls", "renegotiation", 1)
 
 9.31. config (string)
 
-   Sets the name of the TLS specific config file or config directory.
+   Sets the name of the TLS specific configuration file or configuration
+   directory.
 
-   If set the TLS module will load a special config file or config files
-   from config directory, in which different TLS parameters can be
-   specified on a per role (server or client) and domain basis (for now
-   only IPs). The corresponding module parameters will be ignored.
+   If set the TLS module will load a special configuration file or
+   configuration files from configuration directory, in which different
+   TLS parameters can be specified on a per role (server or client) and
+   domain basis (for now only IPs). The corresponding module parameters
+   will be ignored if a separate configuraiton file is used.
 
    If the file or directory name starts with a '.' the path will be
    relative to the working directory (at runtime). If it starts with a '/'
@@ -1198,16 +1209,16 @@ server_name = kamailio.org
 modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 ...
 
-   It can be changed also at runtime. The new config will not be loaded
+   The file can be changed at runtime. The new config will not be loaded
    immediately, but after the first tls.reload RPC call.
 
-   Example 1.42. Change and reload tls config at runtime
+   Example 1.42. Change and reload the tls configuration at runtime
  $ kamcmd cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ kamcmd tls.reload
 
 9.32. xavp_cfg (string)
 
-   Sets the name of XAVP that stored attributes for TLS connections.
+   Sets the name of XAVP that stores attributes for TLS connections.
 
    The following (inner) attributes can be set:
      * server_name - SNI to be used for outbound connections

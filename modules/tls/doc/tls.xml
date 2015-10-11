@@ -98,22 +98,22 @@ route{
 			This module includes several workarounds for various Openssl bugs
 			(like compression and Kerberos using the wrong memory allocations
 			functions, low memory problems a.s.o). On startup it will try to enable 
-			the needed workarounds based on the Openssl library version. Each time
+			the needed workarounds based on the OpenSSL library version. Each time
 			a known problem is detected and a workaround is enabled, a message will
 			be logged. In general it is recommended to compile this module on the
 			same machine or a similar machine to where kamailio will be run or to
 			link it statically with <emphasis>libssl</emphasis>. For example if on
-			the compile machine Openssl does not have the Kerberos support enabled,
-			but on the target machine a Kerberos enabled Openssl library is installed,
+			the compile machine OpenSSL does not have the Kerberos support enabled,
+			but on the target machine a Kerberos enabled OpenSSL library is installed,
 			Kamailio cannot apply the needed workarounds and will refuse to start.
-			The same thing will happen if the Openssl versions are too different
+			The same thing will happen if the OpenSSL versions are too different
 			(to force Kamailio startup anyway, see the <varname>tls_force_run</varname>
 			module parameter).
 		</para>
 		<para>
-			Compression is fully supported if you have a new enough Openssl version
+			Compression is fully supported if you have a new enough OpenSSL version
 			(starting with 0.9.8). Although there are some problems with zlib compression
-			in currently deployed Openssl versions (up to and including 0.9.8d, see
+			in currently deployed OpenSSL versions (up to and including 0.9.8d, see
 			openssl bug #1468), the TLS module will automatically switch to its own fixed version.
 			Note however that starting with &kamailio; 3.1 compression is not enabled by
 			default, due to the huge extra memory consumption that it causes (about 10x
@@ -161,8 +161,8 @@ make all include_modules=tls
 			.
 		</para>
 		<para>
-			However in some cases the Openssl library requires linking with other libraries.
-			For example compiling the Openssl library with Kerberos and zlib-shared support
+			However in some cases the OpenSSL library requires linking with other libraries.
+			For example compiling the OpenSSL library with Kerberos and zlib-shared support
 			will require linking the TLS module with libkrb5 and libz. In this case just add
 			<emphasis>TLS_EXTRA_LIBS</emphasis>="library list" to make's command line. E.g.:
 			<programlisting>
