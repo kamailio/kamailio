@@ -26,6 +26,9 @@
 
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../pt.h"
+#include "../../cfg/cfg.h"
+#include "../../cfg/cfg_ctx.h"
 #include "../../socket_info.h"
 #include "../../name_alias.h"
 #include "../../mem/shm_mem.h"
@@ -174,6 +177,53 @@ static void corex_rpc_shm_summary(rpc_t* rpc, void* ctx)
 	shm_sums();
 }
 
+
+static const char* corex_rpc_pkg_summary_doc[2] = {
+	"Trigger shm summary dump to syslog",
+	0
+};
+
+
+static cfg_ctx_t	*_cfg_corex_ctx = NULL;
+
+/*
+ * RPC command to dump pkg summary to syslog
+ */
+static void corex_rpc_pkg_summary(rpc_t* rpc, void* c)
+{
+	str	group = str_init("core");
+	str var = str_init("mem_dump_pkg");
+	str sel = {0, 0};
+	int	i;
+
+	if (rpc->scan(c, "Sd", &sel, &i) < 2) {
+		rpc->fault(c, 400, "Selector and value not provided");
+		return;
+	}
+
+	if(sel.len!=3) {
+		rpc->fault(c, 500, "Unsupported selector");
+		return;
+	}
+
+	if(strncasecmp(sel.s, "idx", 3)==0) {
+		if(i<0 || i>=*process_count) {
+			rpc->fault(c, 500, "Index value out of range");
+			return;
+		}
+		i = pt[i].pid;
+	} else if(strncasecmp(sel.s, "pid", 3)!=0) {
+		rpc->fault(c, 500, "Unsupported selector type");
+		return;
+	}
+
+	if(cfg_set_now(_cfg_corex_ctx, &group, NULL, &var,
+				(void *)(long)i, CFG_VAR_INT)!=0) {
+		rpc->fault(c, 500, "Operation failed");
+		return;
+	}
+}
+
 rpc_export_t corex_rpc_cmds[] = {
 	{"corex.list_sockets", corex_rpc_list_sockets,
 		corex_rpc_list_sockets_doc, RET_ARRAY},
@@ -183,6 +233,8 @@ rpc_export_t corex_rpc_cmds[] = {
 		corex_rpc_shm_status_doc, 0},
 	{"corex.shm_summary", corex_rpc_shm_summary,
 		corex_rpc_shm_summary_doc, 0},
+	{"corex.pkg_summary", corex_rpc_pkg_summary,
+		corex_rpc_pkg_summary_doc, 0},
 	{0, 0, 0, 0}
 };
 
@@ -191,6 +243,11 @@ rpc_export_t corex_rpc_cmds[] = {
  */
 int corex_init_rpc(void)
 {
+	if (cfg_register_ctx(&_cfg_corex_ctx, NULL)) {
+		LOG(L_ERR, "failed to register cfg context\n");
+		return -1;
+	}
+
 	if (rpc_register_array(corex_rpc_cmds)!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
