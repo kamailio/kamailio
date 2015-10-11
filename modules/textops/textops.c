@@ -2844,6 +2844,7 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 			begin=body.s;
 
 			off=begin-msg->buf;
+			if (lst) replace_lst_free(lst);
 			lst=subst_run(se, begin, msg, &nmatches);
 			body.s[body.len] = c;
 			if(lst==0 && flags!=NULL && *flags=='f')
@@ -2880,7 +2881,7 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 		}
 		/* if flags set for first header, then all done */
 		if(flags!=NULL && *flags=='f')
-			return ret;
+			goto done;
 	}
 	if(hfl!=NULL)
 	{
@@ -2892,6 +2893,7 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 		begin=body.s;
 
 		off=begin-msg->buf;
+		if (lst) replace_lst_free(lst);
 		lst=subst_run(se, begin, msg, &nmatches);
 		body.s[body.len] = c;
 		if(lst==0)
@@ -2924,10 +2926,11 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 		}
 	}
 error:
-	LM_DBG("lst was %p\n", lst);
-	if (lst) replace_lst_free(lst);
 	if (nmatches<0)
 		LM_ERR("%s subst_run failed\n", exports.name);
+	LM_DBG("lst was %p\n", lst);
+done:
+	if (lst) replace_lst_free(lst);
 	return ret;
 }
 
