@@ -171,17 +171,17 @@ Chapter 1. Admin Guide
 
    These three module parameters control which optional integrity checks
    will be performed on the SIP message carrying digest response during
-   digest authentication. auth_check_register controls integrity checks to
-   be performed on REGISTER messages, auth_checks_no_dlg controls which
-   optional integrity checks will be performed on SIP requests that have
-   no To header field or no To tag (in other words the requests either
-   establishing or outside dialogs). auth_checks_in_dlg controls which
-   integrity checks will be performed on SIP requests within dialogs, such
-   as BYE or re-INVITE. The default value for all three parameters is 0
-   (old behaviour, no extra checks). The set of integrity checks that can
-   be performed on REGISTERs is typically different from sets of integrity
-   checks that can be performed for other SIP request types, hence we have
-   three independent module parameters.
+   SIP MD5 digest authentication. auth_check_register controls integrity
+   checks to be performed on REGISTER messages, auth_checks_no_dlg
+   controls which optional integrity checks will be performed on SIP
+   requests that have no To header field or no To tag (in other words the
+   requests either establishing or outside dialogs). auth_checks_in_dlg
+   controls which integrity checks will be performed on SIP requests
+   within dialogs, such as BYE or re-INVITE. The default value for all
+   three parameters is 0 (old behaviour, no extra checks). The set of
+   integrity checks that can be performed on REGISTERs is typically
+   different from sets of integrity checks that can be performed for other
+   SIP request types, hence we have three independent module parameters.
 
    Without the extra checks the nonce will protect only against expired
    values. Some reply attacks are still possible in the expire "window". A
@@ -194,24 +194,24 @@ Chapter 1. Admin Guide
    (see nonce_expire) and an MD5 over it and some secret (the MD5 is used
    to make sure that nobody tampers with the nonce expire time).
 
-   When the extra checks are enabled, the nonce will include and extra MD5
+   When the extra checks are enabled, the nonce will include an extra MD5
    over the selected part/parts of the message (see below) and some other
    secret. This will be used to check if the selected part of the message
    is the same when an UA tries to reuse the nonce, thus protecting or
    severely limiting reply attacks.
 
    The possible flag values for all three parameters are:
-     * 1 for checking if the message uri changed (uses the whole uri)
+     * 1 for checking if the message URI changed (uses the whole URI)
      * 2 for checking the callid
-     * 4 for checking the from tag
-     * 8 for checking the source ip (see nonce.h).
+     * 4 for checking the From tag
+     * 8 for checking the source IP address (see nonce.h).
 
-   For example setting auth_checks_register to 3 would check if the callid
-   or the request uri changed from the REGISTER message for which the
-   original nonce was generated (this would allow nonce reuse only within
-   the same UA and for the expire time). Note that enabling the extra
-   checks will limit nonce caching by UAs, requiring extra challenges and
-   roundtrips, but will provide much better protection.
+   As an example setting auth_checks_register to 3 would check if the
+   callid or the request uri changed from the REGISTER message for which
+   the original nonce was generated (this would allow nonce reuse only
+   within the same UA and for the expire time). Note that enabling the
+   extra checks will limit nonce caching by UAs, requiring extra
+   challenges and roundtrips, but will provide much better protection.
 
 Warning
 
@@ -599,7 +599,7 @@ modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
    If set to 1, www_challenge() and proxy_challenge() functions send reply
    statelessly no matter if transaction exists or not. If set to 0
    (default), reply is sent statefully if transaction exists and
-   stelelessly otherwise.
+   statelessly otherwise.
 
    Example 1.13. force_stateless_reply example
 ...
@@ -608,12 +608,12 @@ modparam("auth", "force_stateless_reply", 1)
 
 3.16. realm_prefix (string)
 
-   Prefix to be automatically strip from realm. As an alternative to SRV
-   records (not all SIP clients support SRV lookup), a subdomain of the
-   master domain can be defined for SIP purposes (like sip.mydomain.net
-   pointing to same IP address as the SRV record for mydomain.net). By
-   ignoring the realm_prefix "sip.", at authentication, sip.mydomain.net
-   will be equivalent to mydomain.net .
+   Prefix to be automatically stripped from the realm. As an alternative
+   to SRV records (not all SIP clients support SRV lookup), a subdomain of
+   the master domain can be defined for SIP purposes (like
+   sip.mydomain.net pointing to same IP address as the SRV record for
+   mydomain.net). By ignoring the realm_prefix "sip.", at authentication,
+   sip.example.com will be equivalent to example.com .
 
    Default value is empty string.
 
