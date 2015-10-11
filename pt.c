@@ -528,8 +528,15 @@ void mem_dump_pkg_cb(str *gname, str *name)
 		   possible race with a parallel cfg_set */
 		((struct cfg_group_core*)core_cfg)->memlog=memlog;
 
-		LOG(memlog, "Memory status (pkg) of process %d:\n", my_pid());
-		pkg_status();
+		if (cfg_get(core, core_cfg, mem_summary) & 1) {
+			LOG(memlog, "Memory status (pkg) of process %d:\n", my_pid());
+			pkg_status();
+		}
+		if (cfg_get(core, core_cfg, mem_summary) & 4) {
+			LOG(memlog, "Memory still-in-use summary (pkg) of process %d:\n",
+					my_pid());
+			pkg_sums();
+		}
 
 		((struct cfg_group_core*)core_cfg)->memlog=old_memlog;
 	}
