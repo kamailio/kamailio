@@ -63,6 +63,8 @@ extern int cdp_event_list_size_threshold;
 
 extern struct ims_qos_counters_h ims_qos_cnts_h;
 
+extern int terminate_dialog_on_rx_failure;
+
 int init_cdp_cb_event_list() {
     cdp_event_list = shm_malloc(sizeof (cdp_cb_event_list_t));
     if (!cdp_event_list) {
@@ -226,7 +228,10 @@ void cdp_cb_event_process() {
                     LM_DBG("This is a media bearer session session");
                     //this is a media bearer session that was terminated from the transport plane - we need to terminate the associated dialog
                     //so we set p_session_data->must_terminate_dialog to 1 and when we receive AUTH_EV_SERVICE_TERMINATED event we will terminate the dialog
-                    p_session_data->must_terminate_dialog = 1;
+                    //we only terminate the dialog if terminate_dialog_on_rx_failure is set
+                    if(terminate_dialog_on_rx_failure) {
+                        p_session_data->must_terminate_dialog = 1;
+                    }
                 }
                 break;
 

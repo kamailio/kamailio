@@ -121,6 +121,8 @@ static int fixup_aar(void** param, int param_no);
 
 int * callback_singleton; /*< Callback singleton */
 
+int terminate_dialog_on_rx_failure = 1;  //this specifies whether a dialog is torn down when a media rx session fails - in some cases you might not want the dialog torn down
+
 str early_qosrelease_reason = {"QoS released", 12};
 str confirmed_qosrelease_headers = {NULL, 0};
 
@@ -152,6 +154,7 @@ static param_export_t params[] = {
     { "video_default_bandwidth", INT_PARAM, &video_default_bandwidth},
     { "early_qosrelease_reason", PARAM_STR, &early_qosrelease_reason},
     { "confirmed_qosrelease_headers", PARAM_STR, &confirmed_qosrelease_headers},
+    { "terminate_dialog_on_rx_failure", INT_PARAM, &terminate_dialog_on_rx_failure},
     { 0, 0, 0}
 };
 
