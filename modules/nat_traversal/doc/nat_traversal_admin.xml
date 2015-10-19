@@ -29,6 +29,8 @@
       SIP proxies may be involved in handling registration and routing and
       where the incoming and outgoing paths may not necessarily be the same,
       or where the routing path may even change between consecutive dialogs.
+      The nat_traversal functionality is built primarily for IPv4 NAT handling
+      and hasn't been adapted to support IPv6 session keepalives.
     </para>
   </section>
   
