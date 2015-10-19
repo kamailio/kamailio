@@ -496,10 +496,7 @@ static int mod_init(void)
 		return -1;
 
 	/* param checkings */
-	if (dlg_flag==-1) {
-		LM_ERR("no dlg flag set!!\n");
-		return -1;
-	} else if (dlg_flag>MAX_FLAG) {
+	if (dlg_flag>MAX_FLAG) {
 		LM_ERR("invalid dlg flag %d!!\n",dlg_flag);
 		return -1;
 	}

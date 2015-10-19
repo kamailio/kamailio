@@ -55,7 +55,7 @@
 #include "dlg_var.h"
 
 static str       rr_param;		/*!< record-route parameter for matching */
-static int       dlg_flag;		/*!< flag for dialog tracking */
+static int       dlg_flag_mask=0;	/*!< flag for dialog tracking */
 static pv_spec_t *timeout_avp;		/*!< AVP for timeout setting */
 static int       default_timeout;	/*!< default dialog timeout */
 static int       seq_match_mode;	/*!< dlg_match mode */ 
@@ -107,7 +107,7 @@ void init_dlg_handlers(char *rr_param_p, int dlg_flag_p,
 	rr_param.s = rr_param_p;
 	rr_param.len = strlen(rr_param.s);
 
-	dlg_flag = 1<<dlg_flag_p;
+	if(dlg_flag_p>=0) dlg_flag_mask = 1<<dlg_flag_p;
 
 	timeout_avp = timeout_avp_p;
 	default_timeout = default_timeout_p;
@@ -711,7 +711,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		}
 	}
 	if (dlg==NULL) {
-		if((req->flags&dlg_flag)!=dlg_flag)
+		if((req->flags&dlg_flag_mask)!=dlg_flag_mask)
 			return;
 		LM_DBG("dialog creation on config flag\n");
 		dlg_new_dialog(req, t, 1);
