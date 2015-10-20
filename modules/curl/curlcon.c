@@ -66,15 +66,19 @@ curl_con_t* curl_get_connection(str *name)
 	unsigned int conid;
 
 	conid = core_case_hash(name, 0, 0);
+	LM_DBG("curl_get_connection looking for curlcon: [%.*s] ID %u\n", name->len, name->s, conid);
 
 	cc = _curl_con_root;
 	while(cc)
 	{
-		if(conid==cc->conid && cc->name.len==name->len
-				&& strncmp(cc->name.s, name->s, name->len)==0)
+		LM_DBG("---> curl_get_connection comparing with curlcon: [%.*s]\n", cc->name.len, cc->name.s);
+		LM_DBG("---> curl_get_connection comparing conid %u with cc->conid %u \n", conid, cc->conid);
+		if(conid==cc->conid && cc->name.len==name->len && strncmp(cc->name.s, name->s, name->len)==0) {
 			return cc;
+		}
 		cc = cc->next;
 	}
+	LM_DBG("curl_get_connection no success in looking for curlcon: [%.*s]\n", name->len, name->s);
 	return NULL;
 }
 
@@ -332,6 +336,7 @@ curl_con_t *curl_init_con(str *name)
 	unsigned int conid;
 
 	conid = core_case_hash(name, 0, 0);
+	LM_DBG("curl_init_con curlcon: [%.*s] ID %u\n", name->len, name->s, conid);
 
 	cc = _curl_con_root;
 	while(cc)
@@ -353,6 +358,7 @@ curl_con_t *curl_init_con(str *name)
 	}
 	memset(cc, 0, sizeof(curl_con_t));
 	cc->next = _curl_con_root;
+	cc->conid = conid;
 	_curl_con_root = cc;
 	cc->name = *name;
 

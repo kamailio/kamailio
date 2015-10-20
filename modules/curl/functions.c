@@ -87,7 +87,7 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
 {
     CURL *curl;
     CURLcode res;  
-    str value, post_value;
+    str value;
     char *url, *at, *post;
     http_res_stream_t stream;
     long stat;
@@ -95,17 +95,12 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     pv_value_t val;
     double download_size;
     double total_time;
+    struct curl_slist *headerlist = NULL;
 
     memset(&stream, 0, sizeof(http_res_stream_t));
 
-#ifdef SKREP
-    if (fixup_get_svalue(_m, (gparam_p)_url, &value) != 0) {
-	LM_ERR("cannot get page value\n");
-	return -1;
-    }
-#endif
-	value.s = _url;
-	value.len = strlen(_url);
+    value.s = _url;
+    value.len = strlen(_url);
 
     curl = curl_easy_init();
     if (curl == NULL) {
@@ -125,26 +120,17 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     res = curl_easy_setopt(curl, CURLOPT_URL, url);
 
     if (_post) {
+	char ctype[256];
+
+	ctype[0] = '\0';
+	snprintf(ctype, sizeof(ctype), "Content-Type: %s", contenttype);
+
         /* Now specify we want to POST data */ 
 	res |= curl_easy_setopt(curl, CURLOPT_POST, 1L);
 	/* Set the content-type of the DATA */
+	headerlist = curl_slist_append(headerlist, ctype);
+	res |= curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
 
-#ifdef SKREP
-    	if (fixup_get_svalue(_m, (gparam_p)_post, &post_value) != 0) {
-		LM_ERR("cannot get post value\n");
-		pkg_free(url);
-		return -1;
-    	}
-        post = pkg_malloc(post_value.len + 1);
-        if (post == NULL) {
-		curl_easy_cleanup(curl);
-		pkg_free(url);
-        	LM_ERR("cannot allocate pkg memory for post\n");
-        	return -1;
-	}
-	memcpy(post, post_value.s, post_value.len);
-	*(post + post_value.len) = (char)0;
-#endif
  	res |= curl_easy_setopt(curl, CURLOPT_POSTFIELDS, _post);
 	
     }
@@ -166,12 +152,13 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
 
     res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
     res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
-    	if (res != CURLE_OK) {
-		/* PANIC */
-		LM_ERR("Could not set CURL options. Library error \n");
-	} else {
-    		res = curl_easy_perform(curl);  
-	}
+
+    if (res != CURLE_OK) {
+	/* PANIC */
+	LM_ERR("Could not set CURL options. Library error \n");
+    } else {
+   	res = curl_easy_perform(curl);  
+    }
     pkg_free(url);
 #ifdef SKREP
     if (_post) {
@@ -242,6 +229,7 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	char connurlbuf[BUFSIZ/2];
 	char urlbuf[512];
 	unsigned int len = 0;
+	str postdata;
 
 	memset(usernamebuf,0,sizeof(usernamebuf));
 	memset(passwordbuf,0,sizeof(passwordbuf));
@@ -271,6 +259,15 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	LM_DBG("***** #### ***** CURL URL: %s \n", urlbuf);
 	if (_post && *_post) {
 		LM_DBG("***** #### ***** CURL POST data: %s \n", _post);
+		 if(pv_printf_s(_m, (pv_elem_t*)_post, &postdata) != 0) {
+                	LM_ERR("curl :: unable to handle post data %s\n", _post);
+                	return -1;
+        	}
+        	if(postdata.s==NULL || postdata.len == 0) {
+                	LM_ERR("curl :: invalid post data parameter\n");
+                	return -1;
+        	}
+		LM_DBG("***** #### ***** CURL POST data: %s Content-type %s\n", postdata.s, contenttype);
 	}
 
 	/* TODO: Concatenate URL in connection with URL given in function */

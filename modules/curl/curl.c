@@ -386,16 +386,30 @@ static int fixup_curl_connect(void** param, int param_no)
 
 /*
  * Fix curl_connect params when posting (5 parameters): 
- *	connection, url, content-type, data, pvar
+ *	connection (string/pvar), url (string with pvars), content-type, data (string/pvar, pvar
  */
 static int fixup_curl_connect_post(void** param, int param_no)
 {
 
-    if (param_no == 1 || param_no == 2 || param_no == 3 || param_no == 4) {
+    str s;
+    pv_elem_t *pv = NULL;
+
+    if (param_no == 1 || param_no == 2 || param_no == 3) {
 	/* We want char * strings */
 	/* At some point we need to allow pvars in the string. */
 	return 0;
 	}
+    if (param_no == 4) {
+        s.s = (char*)(*param);
+        s.len = strlen(s.s);
+
+	if(pv_parse_format(&s, &pv) < 0) {
+	    LM_ERR("failed to parse postdata \n");
+	    return -1;
+	}
+	*param = (void*)pv;
+	return 0;
+    }
     if (param_no == 5) {
 	if (fixup_pvar_null(param, 1) != 0) {
 	    LM_ERR("failed to fixup result pvar\n");
