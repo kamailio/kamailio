@@ -1,0 +1,87 @@
+LOG_SYSTEMD Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2015 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Functions
+
+              3.1. sd_journal_print(level, text)
+
+   List of Examples
+
+   1.1. sd_journal_print usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Functions
+
+        3.1. sd_journal_print(level, text)
+
+1. Overview
+
+   This module provides logging to systemd journal from configuration
+   file.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libsystemd
+
+3. Functions
+
+   3.1. sd_journal_print(level, text)
+
+3.1.  sd_journal_print(level, text)
+
+   Print the text in the systemd journal at the provided level parameter.
+
+   Both parameters can contain variables.
+
+   For more, see the manual page for function sd_journal_print() in C
+   library libsystemd.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.1. sd_journal_print usage
+...
+   sd_journal_print("LOG_INFO", "R-URI is $ru\n");
+...

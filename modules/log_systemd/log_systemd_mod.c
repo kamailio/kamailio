@@ -1,0 +1,133 @@
+/**
+ * Copyright (C) 2015 Daniel-Constantin Mierla (asipto.com)
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * This file is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ *
+ * This file is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <systemd/sd-journal.h>
+
+#include "../../sr_module.h"
+#include "../../dprint.h"
+#include "../../ut.h"
+#include "../../mod_fix.h"
+
+MODULE_VERSION
+
+static int  mod_init(void);
+static int  child_init(int);
+static void mod_destroy(void);
+
+static int w_sd_journal_print(struct sip_msg* msg, char* lev, char* txt);
+
+
+static cmd_export_t cmds[]={
+	{"sd_journal_print", (cmd_function)w_sd_journal_print, 2, fixup_spve_spve,
+		0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
+
+static param_export_t params[]={
+	{0, 0, 0}
+};
+
+struct module_exports exports = {
+	"log_systemd",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,
+	params,
+	0,
+	0,              /* exported MI functions */
+	0,              /* exported pseudo-variables */
+	0,              /* extra processes */
+	mod_init,       /* module initialization function */
+	0,              /* response function */
+	mod_destroy,    /* destroy function */
+	child_init      /* per child init function */
+};
+
+
+
+/**
+ * init module function
+ */
+static int mod_init(void)
+{
+	return 0;
+}
+
+/**
+ * @brief Initialize async module children
+ */
+static int child_init(int rank)
+{
+	return 0;
+}
+/**
+ * destroy module function
+ */
+static void mod_destroy(void)
+{
+}
+
+/**
+ *
+ */
+static int w_sd_journal_print(struct sip_msg* msg, char* lev, char* txt)
+{
+	str slev;
+	str stxt;
+	int ilev;
+
+	if(fixup_get_svalue(msg, (gparam_t*)lev, &slev)!=0) {
+		LM_ERR("unable to get level parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)txt, &stxt)!=0) {
+		LM_ERR("unable to get text parameter\n");
+		return -1;
+	}
+
+	/* one of LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR, LOG_WARNING,
+	 * LOG_NOTICE, LOG_INFO, LOG_DEBUG, as defined in syslog.h, see syslog(3) */
+	ilev = LOG_DEBUG;
+	if(slev.len==9 && strncasecmp(slev.s, "LOG_EMERG", slev.len)==0) {
+		ilev = LOG_EMERG;
+	} else if(slev.len==9 && strncasecmp(slev.s, "LOG_ALERT", slev.len)==0) {
+		ilev = LOG_ALERT;
+	} else if(slev.len==8 && strncasecmp(slev.s, "LOG_CRIT", slev.len)==0) {
+		ilev = LOG_CRIT;
+	} else if(slev.len==7 && strncasecmp(slev.s, "LOG_ERR", slev.len)==0) {
+		ilev = LOG_ERR;
+	} else if(slev.len==11 && strncasecmp(slev.s, "LOG_WARNING", slev.len)==0) {
+		ilev = LOG_WARNING;
+	} else if(slev.len==10 && strncasecmp(slev.s, "LOG_NOTICE", slev.len)==0) {
+		ilev = LOG_NOTICE;
+	} else if(slev.len==8 && strncasecmp(slev.s, "LOG_INFO", slev.len)==0) {
+		ilev = LOG_INFO;
+	}
+
+	sd_journal_print(ilev, "%.*s", stxt.len, stxt.s);
+
+	return 1;
+}
