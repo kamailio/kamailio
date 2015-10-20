@@ -28,7 +28,7 @@
 
 #ifdef TLS_HOOKS
 
-struct tls_hooks tls_hook= {0,0,0,0,0,0,0,0};
+struct tls_hooks tls_hook= {0};
 
 static int tls_hooks_loaded=0;
 
