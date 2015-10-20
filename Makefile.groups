@@ -183,6 +183,9 @@ mod_list_cnxcc=cnxcc
 # - modules depending on erlang library
 mod_list_erlang=erlang
 
+# - modules depending on systemd library
+mod_list_systemd=log_systemd
+
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_db) $(mod_list_dbuid) \
@@ -209,7 +212,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_ev) $(mod_list_kazoo) \
 			   $(mod_list_mongodb) $(mod_list_cnxcc) \
 			   $(mod_list_jansson) $(mod_list_geoip2) \
-			   $(mod_list_erlang))
+			   $(mod_list_erlang) $(mod_list_systemd))
 
 
 
@@ -393,6 +396,9 @@ module_group_kcnxcc=$(mod_list_cnxcc)
 
 # pkg erlang module
 module_group_kerlang=$(mod_list_erlang)
+
+# pkg systemd module
+module_group_ksystemd=$(mod_list_systemd)
 
 # list of static modules
 #
