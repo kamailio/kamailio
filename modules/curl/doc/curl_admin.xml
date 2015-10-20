@@ -270,13 +270,38 @@ modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;
 	<title>Functions</title>
 		<section id="curl.f.curl_connect">
 			<title>
-				<function moreinfo="none">curl_connect(connection, url, result)</function>
-				<function moreinfo="none">curl_connect(connection, url, content_type, data, result)</function>
+				<function moreinfo="none">curl_connect(connection, url, [content_type, data,] result)</function>
 			</title>
 			<para>
 			Sends HTTP GET or POST request to a given connection. For a
 			POST request, content-type can be specified.
 	    	        </para>
+			<itemizedlist>
+                		<listitem>
+                        		<para>
+                                		<emphasis>connection</emphasis> - the name of an existing
+						curl connection, definied by a modparam.
+					</para>
+                        		<para>
+                                		<emphasis>url</emphasis> - the part of the URL to add to the
+						predefined URL in the connection definition.
+					</para>
+                        		<para>
+                                		<emphasis>content_type</emphasis> - Used only when posting
+						data with HTTP POST. An Internet Media type, like
+						"application/json" or "text/plain". Will be added to the
+						HTTP request as a header.
+					</para>
+                        		<para>
+                                		<emphasis>data</emphasis> - Data or a pseudo variable holding
+						data to be posted.
+					</para>
+                        		<para>
+                                		<emphasis>result</emphasis> - The name of a pseudo variable that
+						will have the data of the response from the HTTP server.
+					</para>
+                		</listitem>
+                	</itemizedlist>
 			<para>
 			The return value is the HTTP return code (if >=100) or the
 			CURL error code if below 100. See the $curlerror pseudovariable
@@ -295,6 +320,9 @@ modparam("curl", "curlcon", "apiserver=>http://kamailio.org/api/");
 # POST Request
 $var(res) = curl_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
 xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result code $var(res)\n");
+
+$var(res) = curl_connect("apiserver", "/callroute", "application/json", "$var(jsondata)", "$avp(route)");
+xlog("L_INFO", "API-server Curl connection: $avp(route) Result code $var(res)\n");
 ...
 				</programlisting>
 			</example>

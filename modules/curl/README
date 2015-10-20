@@ -42,8 +42,7 @@ Carsten Bock
 
         4. Functions
 
-              4.1. curl_connect(connection, url, result)
-                      curl_connect(connection, url, content_type, data,
+              4.1. curl_connect(connection, url, [content_type, data,]
                       result)
 
               4.2. curl_http_query(url, [post-data], result)
@@ -98,9 +97,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. curl_connect(connection, url, result)
-                curl_connect(connection, url, content_type, data, result)
-
+        4.1. curl_connect(connection, url, [content_type, data,] result)
         4.2. curl_http_query(url, [post-data], result)
 
    5. Pseudovariables
@@ -286,16 +283,23 @@ timeout=12")
 
 4. Functions
 
-   4.1. curl_connect(connection, url, result) curl_connect(connection,
-          url, content_type, data, result)
-
+   4.1. curl_connect(connection, url, [content_type, data,] result)
    4.2. curl_http_query(url, [post-data], result)
 
-4.1. curl_connect(connection, url, result) curl_connect(connection, url,
-content_type, data, result)
+4.1. curl_connect(connection, url, [content_type, data,] result)
 
    Sends HTTP GET or POST request to a given connection. For a POST
    request, content-type can be specified.
+     * connection - the name of an existing curl connection, definied by a
+       modparam.
+       url - the part of the URL to add to the predefined URL in the
+       connection definition.
+       content_type - Used only when posting data with HTTP POST. An
+       Internet Media type, like "application/json" or "text/plain". Will
+       be added to the HTTP request as a header.
+       data - Data or a pseudo variable holding data to be posted.
+       result - The name of a pseudo variable that will have the data of
+       the response from the HTTP server.
 
    The return value is the HTTP return code (if >=100) or the CURL error
    code if below 100. See the $curlerror pseudovariable below for more
@@ -312,6 +316,11 @@ modparam("curl", "curlcon", "apiserver=>http://kamailio.org/api/");
 $var(res) = curl_connect("apiserver", "/mailbox", "application/json", "{ ok, {20
 0, ok}}", "$avp(gurka)");
 xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result code $var(res)\n"
+);
+
+$var(res) = curl_connect("apiserver", "/callroute", "application/json", "$var(js
+ondata)", "$avp(route)");
+xlog("L_INFO", "API-server Curl connection: $avp(route) Result code $var(res)\n"
 );
 ...
 
