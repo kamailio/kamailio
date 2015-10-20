@@ -114,12 +114,12 @@ static int mod_init(void)
 
 	/* init faked sip msg */
 	if(faked_msg_init()<0) {
-		LM_ERR("failed to init faked sip msg\n");
+		LM_ERR("failed to init faked sip message\n");
 		return -1;
 	}
 
 	if(load_tm_api( &tmb ) < 0) {
-		LM_INFO("cannot load the TM-functions - async relay disabled\n");
+		LM_INFO("cannot load the TM module functions - async relay disabled\n");
 		memset(&tmb, 0, sizeof(tm_api_t));
 	}
 
@@ -180,7 +180,7 @@ static int child_init(int rank)
 		/* main function for dispatcher */
 		evapi_close_notify_sockets_child();
 		if(evapi_run_dispatcher(_evapi_bind_addr, _evapi_bind_port)<0) {
-			LM_ERR("failed to initialize disptacher process\n");
+			LM_ERR("failed to initialize evapi dispatcher process\n");
 			return -1;
 		}
 	}
@@ -276,7 +276,7 @@ static int w_evapi_async_relay(sip_msg_t *msg, char *evdata, char *p2)
 	}
 	if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
 	{
-		LM_ERR("failed to suppend request processing\n");
+		LM_ERR("failed to suspend request processing\n");
 		return -1;
 	}
 
