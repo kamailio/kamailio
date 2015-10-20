@@ -49,7 +49,7 @@
 /* Forward declaration */
 static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char *username, 
 		const char *secret, const char *contenttype, char* _post, const unsigned int timeout,
-		unsigned int http_follow_redirect);
+		unsigned int http_follow_redirect, unsigned int oneline, unsigned int maxdatasize);
 
 /* 
  * curl write function that saves received data as zero terminated
@@ -83,7 +83,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 
 /*! Send query to server, optionally post data.
  */
-static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char *_username, const char *_secret, const char *contenttype, char* _post, unsigned int timeout, unsigned int http_follow_redirect)
+static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char *_username, const char *_secret, const char *contenttype, char* _post, unsigned int timeout, unsigned int http_follow_redirect, unsigned int oneline, unsigned int maxdatasize)
 {
     CURL *curl;
     CURLcode res;  
@@ -135,6 +135,11 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
 	
     }
 
+    if (maxdatasize) {
+	/* Maximum data size to download */
+	res |= curl_easy_setopt(curl, CURLOPT_MAXFILESIZE, (long) maxdatasize);
+    }
+
     if (_username) {
  	res |= curl_easy_setopt(curl, CURLOPT_USERNAME, _username);
 	res |= curl_easy_setopt(curl, CURLOPT_HTTPAUTH, (CURLAUTH_DIGEST|CURLAUTH_BASIC));
@@ -176,6 +181,7 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
 		LM_ERR("failed to perform curl (%d)\n", res);
 	}
 
+	curl_slist_free_all(headerlist);
 	curl_easy_cleanup(curl);
 	if(stream.buf) {
 		pkg_free(stream.buf);
@@ -184,9 +190,18 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
 	return -1;
     }
 
-	/* HTTP_CODE CHANGED TO CURLINFO_RESPONSE_CODE in curl > 7.10.7 */
+    /* HTTP_CODE CHANGED TO CURLINFO_RESPONSE_CODE in curl > 7.10.7 */
     curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-/* CURLINFO_CONTENT_TYPE, char *    */
+    if(res == CURLE_OK) {
+      char *ct;
+
+      /* ask for the content-type of the response */
+      res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+ 
+      if(ct) {
+        LM_DBG("We received Content-Type: %s\n", ct);
+      }
+    }
 
     if ((stat >= 200) && (stat < 500)) {
 	curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
@@ -194,25 +209,27 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
 	LM_DBG("http_query download size: %u Time : %ld \n", (unsigned int)download_size, (long) total_time);
 
 	/* search for line feed */
-	at = memchr(stream.buf, (char)10, download_size);
+	if (oneline) {
+		at = memchr(stream.buf, (char)10, download_size);
+	}
 	if (at == NULL) {
-	    /* not found: use whole stream */
-	    at = stream.buf + (unsigned int)download_size;
+	    	at = stream.buf + (unsigned int)download_size;
 	}
 	val.rs.s = stream.buf;
 	val.rs.len = at - stream.buf;
-	LM_DBG("http_query result: %.*s\n", val.rs.len, val.rs.s);
+	LM_DBG("curl query result: %.*s\n", val.rs.len, val.rs.s);
 	val.flags = PV_VAL_STR;
 	dst = (pv_spec_t *)_dst;
 	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
     }
-    	if (stat == 200) {
-		counter_inc(connok);
-	} else {
-		counter_inc(connfail);
-	}
+    if (stat == 200) {
+	counter_inc(connok);
+    } else {
+	counter_inc(connfail);
+    }
 	
-	/* CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ... ); */
+    /* CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ... ); */
+    curl_slist_free_all(headerlist);
     curl_easy_cleanup(curl);
     pkg_free(stream.buf);
     return stat;
@@ -272,7 +289,7 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 
 	/* TODO: Concatenate URL in connection with URL given in function */
 	return curL_query_url(_m, urlbuf, _result, usernamebuf, passwordbuf, (contenttype ? contenttype : "text/plain"), _post,
-		conn->timeout, conn->http_follow_redirect );
+		conn->timeout, conn->http_follow_redirect, 0, 0 );
 }
 
 
@@ -285,7 +302,7 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 {
 	int res;
 
-	res =  curL_query_url(_m, _url, _dst, NULL, NULL, "text/plain", _post, default_connection_timeout, default_http_follow_redirect);
+	res =  curL_query_url(_m, _url, _dst, NULL, NULL, "text/plain", _post, default_connection_timeout, default_http_follow_redirect, 1, 0);
 
 	return res;
 }
