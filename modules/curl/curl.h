@@ -44,6 +44,7 @@ extern char 	*default_http_proxy;			/*!< Default HTTP proxy to use */
 extern unsigned int	default_http_proxy_port;		/*!< Default HTTP proxy port to use */
 extern unsigned int	default_http_follow_redirect;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
 extern char 	*default_useragent;			/*!< Default CURL useragent. Default "Kamailio Curl " */
+extern unsigned int	default_maxdatasize;			/*!< Default Maximum download size */
 
 extern counter_handle_t connections;	/* Number of connection definitions */
 extern counter_handle_t connok;	/* Successful Connection attempts */
@@ -74,6 +75,7 @@ typedef struct _curl_con
 	int http_follow_redirect;	/*!< TRUE if we should follow HTTP 302 redirects */
 	unsigned int port;		/*!< The port to connect to */
 	int timeout;			/*!< Timeout for this connection */
+	long maxdatasize;		/*!< Maximum data download on GET or POST */
 	http_res_stream_t *stream;	/*!< Curl stream */
 	struct _curl_con *next;		/*!< next connection */
 	char redirecturl[512];		/*!< Last redirect URL - to use for $curlredirect(curlcon) pv */

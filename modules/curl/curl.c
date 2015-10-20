@@ -78,6 +78,7 @@ char 		*default_http_proxy = NULL;		/*!< Default HTTP proxy to use */
 unsigned int	default_http_proxy_port = 0;		/*!< Default HTTP proxy port to use */
 unsigned int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
 char 		*default_useragent = CURL_USER_AGENT;	/*!< Default CURL useragent. Default "Kamailio Curl " */
+unsigned int	default_maxdatasize = 0;		/*!< Default download size. 0=disabled */
 
 static curl_version_info_data *curl_info;
 
@@ -133,16 +134,17 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-    	{"connection_timeout", INT_PARAM, &default_connection_timeout},
+    	{"connection_timeout", PARAM_INT, &default_connection_timeout},
 	{"curlcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
 	{"tlscacert", PARAM_STRING,  &default_tls_cacert },
 	{"tlsclientcert", PARAM_STRING, &default_tls_clientcert },
 	{"tlsclientkey", PARAM_STRING, &default_tls_clientkey },
-	{"tlsverifyserver", INT_PARAM, &default_tls_verifyserver },
-	{"httpproxyport", INT_PARAM, &default_http_proxy_port },
+	{"tlsverifyserver", PARAM_INT, &default_tls_verifyserver },
+	{"httpproxyport", PARAM_INT, &default_http_proxy_port },
 	{"httpproxy", PARAM_STRING, &default_http_proxy},
-	{"httpredirect", INT_PARAM, &default_http_follow_redirect },
+	{"httpredirect", PARAM_INT, &default_http_follow_redirect },
 	{"useragent", PARAM_STRING,  &default_useragent },
+	{"maxdatasize", PARAM_INT,  &default_maxdatasize },
     	{0, 0, 0}
 };
 

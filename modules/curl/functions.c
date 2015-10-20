@@ -247,6 +247,7 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	char urlbuf[512];
 	unsigned int len = 0;
 	str postdata;
+	long maxdatasize = default_maxdatasize;
 
 	memset(usernamebuf,0,sizeof(usernamebuf));
 	memset(passwordbuf,0,sizeof(passwordbuf));
@@ -289,7 +290,7 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 
 	/* TODO: Concatenate URL in connection with URL given in function */
 	return curL_query_url(_m, urlbuf, _result, usernamebuf, passwordbuf, (contenttype ? contenttype : "text/plain"), _post,
-		conn->timeout, conn->http_follow_redirect, 0, 0 );
+		conn->timeout, conn->http_follow_redirect, 0, (unsigned int) maxdatasize );
 }
 
 
