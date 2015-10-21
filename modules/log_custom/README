@@ -1,0 +1,111 @@
+LOG_CUSTOM Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2015 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Core Logging
+        4. Functions
+
+              4.1. log_udp(text)
+
+   List of Examples
+
+   1.1. log_udp usage
+   1.2. log_udp usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Core Logging
+   4. Functions
+
+        4.1. log_udp(text)
+
+1. Overview
+
+   This module provides logging to custom systems, replacing the default
+   core logging to syslog. At this moment it can send the logs to an IP
+   and port via UDP, once all modules have been initialized.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Core Logging
+
+   This module can replace the syslog logging with sending the log
+   messages to a remote address and port via UDP. The logging to remote
+   target is started when all the modules are initialized, before that the
+   default syslog system is used.
+
+   It requires that core parameters log_engine_type to be set to 'udp' and
+   log_engine_data to be set to target 'address:port'. It is not enabled
+   if log_stderror=yes.
+
+   Example 1.1. log_udp usage
+...
+log_engine_type="udp"
+log_engine_data="127.0.0.1:9"
+...
+loadmodule "log_custom.so"
+...
+
+4. Functions
+
+   4.1. log_udp(text)
+
+4.1. log_udp(text)
+
+   Send the text to the address specified in core parameter
+   log_engine_data. It is provided as sample function mainly for testing,
+   because all logs messages printed by kamailio should be diverted as
+   described in the section 'Core Logging', so you can use xlog functions
+   in config file.
+
+   The parameter can contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.2. log_udp usage
+...
+   log_udp("R-URI is $ru\n");
+...
