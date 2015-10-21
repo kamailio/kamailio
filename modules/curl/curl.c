@@ -41,6 +41,7 @@
  *  curl_connect(connection, url, content-type, data, $avp)
  *
  * 	$var(res) = curl_connect("anders", "/postlåda", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
+ * 	$var(res) = curl_connect("anders", "/postlåda", "application/json", "$var(tomat)", "$avp(gurka)");
  *
  */
 
