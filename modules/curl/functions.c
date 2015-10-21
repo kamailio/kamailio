@@ -60,6 +60,10 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
  */
 size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 {
+    /* A question here is if we can somehow signal maxdatasize and stop filling
+	buffers at maxdatasize - we don't need any more. Or just ignore and stop
+	allocating pkg memory at that point. A good todo.
+     */
     http_res_stream_t *stream = (http_res_stream_t *) stream_ptr;
 
     stream->buf = (char *) pkg_realloc(stream->buf, stream->curr_size + 

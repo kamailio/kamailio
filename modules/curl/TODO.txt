@@ -3,24 +3,30 @@ The curl module - todo
 
 - connection parameters
 	timeout=x		- DONE
-	read=line/all
+	read=line/all		- Implemented in API, but not in parameter
 	tlsverify=on/off
 	failover=curlcon	Other curlcon that can be used for failover in case of 5xx response or timeout
 	httpredirect		- DONE
 	useragent		- DONE
+
 
 - Make sure modparams work
 	httpproxy		- Not working with curl
 	tls cert, key, ca	- Not working with curl yet
 	httpredirect		- done
 	timeout			- done
+	maxdatasize		- done
 	
+- Add XAVP parameter setting before running curl_connect
+
 - save fingerprint of cert for trust-on-first-use procedure
 
 - status for curlcon-object, needs to be object in process memory, so child_init
 	- if 5xx response or timeout set flag
 	- function in dialplan - curlcon_exist(object)
 	- pv $curlstatus(object) ??
+
+- Figure out a way to communicate back the content-type of the response. Another pvar arg?
 
 - pv for curl error codes (result < 100)
 	$curlerror(code)	Result string - DONE
