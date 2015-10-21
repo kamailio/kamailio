@@ -100,6 +100,27 @@ modparam("curl", "useragent", "Secret HTTP REST grabber 0.42")
 				</programlisting>
 			</example>
 		</section>
+		<section id="curl.p.maxdatasize">
+			<title><varname>maxdatasize</varname> (int)</title>
+			<para>
+			Defines the maximum size in bytes for a response. Note that this
+			is allocated from pkg memory (process memory) dynamically.
+			</para>
+			<para>
+			<emphasis>
+				Default value is zero, i.e.,
+				the limit on the datasize is disabled.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>maxdatasize</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "maxdatasize", 2000)
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="curl.p.connection_timeout">
 			<title><varname>connection_timeout</varname> (int)</title>
 			<para>
