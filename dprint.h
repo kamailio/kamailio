@@ -123,6 +123,13 @@ extern int log_stderr;
 extern int log_color;
 extern char *log_prefix_fmt;
 extern str *log_prefix_val;
+extern char *_km_log_engine_type;
+extern char *_km_log_engine_data;
+
+typedef void (*km_log_f)(int, const char *, ...);
+extern km_log_f _km_log_func;
+
+void km_log_func_set(km_log_f f);
 
 /** @brief maps log levels to their string name and corresponding syslog level */
 
@@ -303,7 +310,7 @@ void log_prefix_init(void);
 						if (unlikely(log_color)) dprint_color_reset(); \
 					} else { \
 						if(unlikely(log_prefix_val)) { \
-							syslog(LOG2SYSLOG_LEVEL(__llevel) |\
+							_km_log_func(LOG2SYSLOG_LEVEL(__llevel) |\
 							   (((facility) != DEFAULT_FACILITY) ? \
 								(facility) : \
 								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
@@ -312,7 +319,7 @@ void log_prefix_init(void);
 								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
 								(prefix) , ## args); \
 						} else { \
-							syslog(LOG2SYSLOG_LEVEL(__llevel) |\
+							_km_log_func(LOG2SYSLOG_LEVEL(__llevel) |\
 							   (((facility) != DEFAULT_FACILITY) ? \
 								(facility) : \
 								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \

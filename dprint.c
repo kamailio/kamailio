@@ -36,6 +36,19 @@
 #include <stdio.h>
 #include <strings.h>
 
+char *_km_log_engine_type = NULL;
+char *_km_log_engine_data = NULL;
+
+km_log_f _km_log_func = &syslog;
+
+/**
+ *
+ */
+void km_log_func_set(km_log_f f)
+{
+	_km_log_func = f;
+}
+
 #ifndef NO_SIG_DEBUG
 /* signal protection: !=0 when LOG/DBG/... are printing */
 volatile int dprint_crit = 0; 
