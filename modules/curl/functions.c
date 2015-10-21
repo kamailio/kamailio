@@ -88,7 +88,7 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     CURL *curl;
     CURLcode res;  
     str value;
-    char *url, *at, *post;
+    char *url, *at = NULL, *post;
     http_res_stream_t stream;
     long stat;
     pv_spec_t *dst;
@@ -138,8 +138,9 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     }
 
     if (maxdatasize) {
-	/* Maximum data size to download */
-	res |= curl_easy_setopt(curl, CURLOPT_MAXFILESIZE, (long) maxdatasize);
+	/* Maximum data size to download - we always download full response, but
+	   cut it off before moving to pvar */
+    	LM_DBG("****** ##### CURL Max datasize %u\n", maxdatasize);
     }
 
     if (_username) {
@@ -167,11 +168,6 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
    	res = curl_easy_perform(curl);  
     }
     pkg_free(url);
-#ifdef SKREP
-    if (_post) {
-	pkg_free(post);
-    }
-#endif
 
     if (res != CURLE_OK) {
 	/* http://curl.haxx.se/libcurl/c/libcurl-errors.html */
@@ -195,34 +191,49 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     /* HTTP_CODE CHANGED TO CURLINFO_RESPONSE_CODE in curl > 7.10.7 */
     curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
     if(res == CURLE_OK) {
-      char *ct;
+    	char *ct;
 
-      /* ask for the content-type of the response */
-      res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+    	/* ask for the content-type of the response */
+    	res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
  
-      if(ct) {
-        LM_DBG("We received Content-Type: %s\n", ct);
-      }
+    	if(ct) {
+        	LM_DBG("We received Content-Type: %s\n", ct);
+        }
     }
 
     if ((stat >= 200) && (stat < 500)) {
+	int datasize = (int) download_size;
+
 	curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
     	curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
-	LM_DBG("http_query download size: %u Time : %ld \n", (unsigned int)download_size, (long) total_time);
+	LM_DBG("  -- curl download size: %u Time : %ld \n", (unsigned int)download_size, (long) total_time);
 
 	/* search for line feed */
 	if (oneline) {
 		at = memchr(stream.buf, (char)10, download_size);
+		datasize = (int) (at - stream.buf);
+		LM_DBG("  -- curl download size cut to first line: %d \n", datasize);
 	}
 	if (at == NULL) {
-	    	at = stream.buf + (unsigned int)download_size;
+		if (maxdatasize && ((unsigned int) download_size) > maxdatasize) {
+			/* Limit at maximum data size */
+			datasize = (int) maxdatasize;
+			LM_DBG("  -- curl download size cut to maxdatasize : %d \n", datasize);
+		} else {
+			/* Limit at actual downloaded data size */
+			datasize = (int) download_size;
+			LM_DBG("  -- curl download size cut to download_size : %d \n", datasize);
+	    		//at = stream.buf + (unsigned int) download_size;
+		}
 	}
+	/* Create a STR object */
 	val.rs.s = stream.buf;
-	val.rs.len = at - stream.buf;
-	LM_DBG("curl query result: %.*s\n", val.rs.len, val.rs.s);
+	val.rs.len = datasize;
+	LM_DBG("curl query result: Length %d %.*s \n", val.rs.len, val.rs.len, val.rs.s);
 	val.flags = PV_VAL_STR;
 	dst = (pv_spec_t *)_dst;
 	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+	LM_DBG("---------- curl result pvar set. \n");
     }
     if (stat == 200) {
 	counter_inc(connok);
@@ -231,7 +242,9 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     }
 	
     /* CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ... ); */
-    curl_slist_free_all(headerlist);
+    if (headerlist) {
+    	curl_slist_free_all(headerlist);
+    }
     curl_easy_cleanup(curl);
     pkg_free(stream.buf);
     return stat;
@@ -250,7 +263,7 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	unsigned int len = 0;
 	str postdatabuf;
 	char *postdata = NULL;
-	long maxdatasize = default_maxdatasize;
+	unsigned int maxdatasize = default_maxdatasize;
 	int res;
 
 	memset(usernamebuf,0,sizeof(usernamebuf));
@@ -280,7 +293,6 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 		(_url[0] && _url[0] == '/')?"":(_url[0] != '\0' ? "/": ""), _url);
 	LM_DBG("***** #### ***** CURL URL: %s \n", urlbuf);
 	if (_post && *_post) {
-		LM_DBG("***** #### ***** CURL POST data: %s \n", _post);
 		 if(pv_printf_s(_m, (pv_elem_t*)_post, &postdatabuf) != 0) {
                 	LM_ERR("curl :: unable to handle post data %s\n", _post);
                 	return -1;
@@ -291,6 +303,10 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
         	}
 		/* Allocated using pkg_memory */
 		postdata = as_asciiz(&postdatabuf);
+		if (postdata  == NULL) {
+        	    ERR("Curl: No memory left\n");
+            	    return -1;
+                }
 		LM_DBG("***** #### ***** CURL POST data: %s Content-type %s\n", postdata, contenttype);
 		
 	}
