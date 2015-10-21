@@ -131,6 +131,8 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
 	headerlist = curl_slist_append(headerlist, ctype);
 	res |= curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
 
+	/* Tell CURL we want to upload using POST */
+
  	res |= curl_easy_setopt(curl, CURLOPT_POSTFIELDS, _post);
 	
     }
@@ -246,8 +248,10 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	char connurlbuf[BUFSIZ/2];
 	char urlbuf[512];
 	unsigned int len = 0;
-	str postdata;
+	str postdatabuf;
+	char *postdata = NULL;
 	long maxdatasize = default_maxdatasize;
+	int res;
 
 	memset(usernamebuf,0,sizeof(usernamebuf));
 	memset(passwordbuf,0,sizeof(passwordbuf));
@@ -277,20 +281,28 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	LM_DBG("***** #### ***** CURL URL: %s \n", urlbuf);
 	if (_post && *_post) {
 		LM_DBG("***** #### ***** CURL POST data: %s \n", _post);
-		 if(pv_printf_s(_m, (pv_elem_t*)_post, &postdata) != 0) {
+		 if(pv_printf_s(_m, (pv_elem_t*)_post, &postdatabuf) != 0) {
                 	LM_ERR("curl :: unable to handle post data %s\n", _post);
                 	return -1;
         	}
-        	if(postdata.s==NULL || postdata.len == 0) {
+        	if(postdatabuf.s==NULL || postdatabuf.len == 0) {
                 	LM_ERR("curl :: invalid post data parameter\n");
                 	return -1;
         	}
-		LM_DBG("***** #### ***** CURL POST data: %s Content-type %s\n", postdata.s, contenttype);
+		/* Allocated using pkg_memory */
+		postdata = as_asciiz(&postdatabuf);
+		LM_DBG("***** #### ***** CURL POST data: %s Content-type %s\n", postdata, contenttype);
+		
 	}
 
 	/* TODO: Concatenate URL in connection with URL given in function */
-	return curL_query_url(_m, urlbuf, _result, usernamebuf, passwordbuf, (contenttype ? contenttype : "text/plain"), _post,
+	res = curL_query_url(_m, urlbuf, _result, usernamebuf, passwordbuf, (contenttype ? contenttype : "text/plain"), postdata,
 		conn->timeout, conn->http_follow_redirect, 0, (unsigned int) maxdatasize );
+
+	if (postdata != NULL) {
+		pkg_free(postdata);
+	}
+	return res;
 }
 
 
