@@ -16,8 +16,8 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides logging to systemd journal from configuration
-		file.
+		It provides logging to systemd journal from the moment
+		of loading this module.
 	</para>
 	</section>
 
@@ -50,6 +50,30 @@
 			</itemizedlist>
 		</para>
 	</section>
+	</section>
+
+	<section>
+	<title>Core Logging</title>
+		<para>
+		This module can replace the syslog logging with sending the log messages
+		to systemd journal. The logging to systemd is
+		started when this module is loaded, before that the default
+		syslog system is used.
+		</para>
+		<para>
+		It requires that core parameters log_engine_type to be set to 'systemd'.
+		It is not enabled if log_stderror=yes.
+		</para>
+		<example>
+		<title><function>Core Logging Replacement with Systemd</function></title>
+		<programlisting format="linespecific">
+...
+log_engine_type="systemd"
+...
+loadmodule "log_systemd.so"
+...
+</programlisting>
+	    </example>
 	</section>
 
 	<section>

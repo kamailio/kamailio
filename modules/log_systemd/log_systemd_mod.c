@@ -33,6 +33,9 @@
 
 MODULE_VERSION
 
+static int _lc_log_systemd = 0;
+void _lc_core_log_systemd(int lpriority, const char *format, ...);
+
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
@@ -65,7 +68,18 @@ struct module_exports exports = {
 	child_init      /* per child init function */
 };
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	if(_km_log_engine_type==0)
+		return 0;
 
+	if(strcasecmp(_km_log_engine_type, "systemd")!=0)
+		return 0;
+
+	km_log_func_set(&_lc_core_log_systemd);
+	_lc_log_systemd = 1;
+	return 0;
+}
 
 /**
  * init module function
@@ -130,4 +144,22 @@ static int w_sd_journal_print(struct sip_msg* msg, char* lev, char* txt)
 	sd_journal_print(ilev, "%.*s", stxt.len, stxt.s);
 
 	return 1;
+}
+
+#define LC_LOG_MSG_MAX_SIZE	16384
+void _lc_core_log_systemd(int lpriority, const char *format, ...)
+{
+	va_list arglist;
+	char obuf[LC_LOG_MSG_MAX_SIZE];
+	int n;
+	int priority;
+
+	/* Return on MASKed log priorities */
+	priority = LOG_PRI(lpriority);
+
+	va_start(arglist, format);
+	n = 0;
+	n += vsnprintf(obuf+n, LC_LOG_MSG_MAX_SIZE - n, format, arglist);
+	va_end(arglist);
+	sd_journal_print(priority, "%.*s", n, obuf);
 }

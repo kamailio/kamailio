@@ -23,13 +23,15 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Functions
+        3. Core Logging
+        4. Functions
 
-              3.1. sd_journal_print(level, text)
+              4.1. sd_journal_print(level, text)
 
    List of Examples
 
-   1.1. sd_journal_print usage
+   1.1. Core Logging Replacement with Systemd
+   1.2. sd_journal_print usage
 
 Chapter 1. Admin Guide
 
@@ -41,14 +43,15 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Functions
+   3. Core Logging
+   4. Functions
 
-        3.1. sd_journal_print(level, text)
+        4.1. sd_journal_print(level, text)
 
 1. Overview
 
-   This module provides logging to systemd journal from configuration
-   file.
+   It provides logging to systemd journal from the moment of loading this
+   module.
 
 2. Dependencies
 
@@ -66,11 +69,27 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libsystemd
 
-3. Functions
+3. Core Logging
 
-   3.1. sd_journal_print(level, text)
+   This module can replace the syslog logging with sending the log
+   messages to systemd journal. The logging to systemd is started when
+   this module is loaded, before that the default syslog system is used.
 
-3.1.  sd_journal_print(level, text)
+   It requires that core parameters log_engine_type to be set to
+   'systemd'. It is not enabled if log_stderror=yes.
+
+   Example 1.1. Core Logging Replacement with Systemd
+...
+log_engine_type="systemd"
+...
+loadmodule "log_systemd.so"
+...
+
+4. Functions
+
+   4.1. sd_journal_print(level, text)
+
+4.1.  sd_journal_print(level, text)
 
    Print the text in the systemd journal at the provided level parameter.
 
@@ -81,7 +100,7 @@ Chapter 1. Admin Guide
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.1. sd_journal_print usage
+   Example 1.2. sd_journal_print usage
 ...
    sd_journal_print("LOG_INFO", "R-URI is $ru\n");
 ...
