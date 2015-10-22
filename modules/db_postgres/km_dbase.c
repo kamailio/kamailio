@@ -602,7 +602,6 @@ int db_postgres_store_result(const db1_con_t* _con, db1_res_t** _r)
 	}
 
 done:
-	db_postgres_free_query(_con);
 	return (rc);
 }
 
