@@ -330,6 +330,8 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	int m=0;
 	int o=0;
 	int rc_result=-1;
+	double tsecmicro;
+	char smicrosec[18];
 	
 	send=NULL;
 
@@ -352,9 +354,7 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	// Event Time Stamp with Microseconds
         if(rad_time_mode==1){
                 gettimeofday(&inf->env->tv, NULL);
-                double tsecmicro;
                 tsecmicro=inf->env->tv.tv_sec+((double)inf->env->tv.tv_usec/1000000.0);
-                char smicrosec[18];
                 //radius client doesn t support double
                 sprintf(smicrosec,"%f",tsecmicro);
                 ADD_RAD_AVPAIR(RA_TIME_STAMP, &smicrosec, -1);
