@@ -630,7 +630,7 @@ urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 		return 0;
 	}
 
-	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 16, order,
+	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 19, order,
 				&res) < 0) {
 		LM_ERR("db_query failed\n");
 		return 0;
@@ -814,7 +814,7 @@ urecord_t* db_load_urecord_by_ruid(db1_con_t* _c, udomain_t* _d, str *_ruid)
 		return 0;
 	}
 
-	if (ul_dbf.query(_c, keys, 0, vals, columns, 1, 18, order,
+	if (ul_dbf.query(_c, keys, 0, vals, columns, 1, 21, order,
 				&res) < 0) {
 		LM_ERR("db_query failed\n");
 		return 0;
