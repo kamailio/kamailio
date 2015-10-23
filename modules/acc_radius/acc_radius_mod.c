@@ -74,6 +74,7 @@ static char *radius_config = 0;
 int radius_flag = -1;
 int radius_missed_flag = -1;
 static int service_type = -1;
+int rad_time_mode=0;
 void *rh;
 /* rad extra variables */
 static char *rad_extra_str = 0;
@@ -91,11 +92,12 @@ static cmd_export_t cmds[] = {
 
 
 static param_export_t params[] = {
-	{"radius_config",        PARAM_STRING, &radius_config        },
+	{"radius_config",        PARAM_STRING, &radius_config     },
 	{"radius_flag",          INT_PARAM, &radius_flag          },
 	{"radius_missed_flag",   INT_PARAM, &radius_missed_flag   },
 	{"service_type",         INT_PARAM, &service_type         },
-	{"radius_extra",         PARAM_STRING, &rad_extra_str        },
+	{"radius_extra",         PARAM_STRING, &rad_extra_str     },
+	{"rad_time_mode",          INT_PARAM, &rad_time_mode      },
 	{0,0,0}
 };
 
@@ -328,6 +330,8 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	int m=0;
 	int o=0;
 	int rc_result=-1;
+	double tsecmicro;
+	char smicrosec[18];
 	
 	send=NULL;
 
@@ -347,9 +351,18 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 	av_type = req->REQ_METHOD; /* method */
 	ADD_RAD_AVPAIR( RA_SIP_METHOD, &av_type, -1);
 
-	/* unix time */
-	av_type = (uint32_t)inf->env->ts;
-	ADD_RAD_AVPAIR( RA_TIME_STAMP, &av_type, -1);
+	// Event Time Stamp with Microseconds
+        if(rad_time_mode==1){
+                gettimeofday(&inf->env->tv, NULL);
+                tsecmicro=inf->env->tv.tv_sec+((double)inf->env->tv.tv_usec/1000000.0);
+                //radius client doesn t support double
+                sprintf(smicrosec,"%f",tsecmicro);
+                ADD_RAD_AVPAIR(RA_TIME_STAMP, &smicrosec, -1);
+        }else{
+                av_type = (uint32_t)inf->env->ts;
+                ADD_RAD_AVPAIR(RA_TIME_STAMP, &av_type, -1);
+        }
+
 
 	/* add extra also */
 	o = accb.get_extra_attrs(rad_extra, req, inf->varr+attr_cnt,
