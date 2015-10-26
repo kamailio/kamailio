@@ -166,6 +166,39 @@ modparam("acc_radius", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>rad_time_mode</varname>(integer)</title>
+		<para>
+		Radius Event-Timestamp for accounting. 
+		</para>
+		<para>
+		Values can be:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>0</emphasis> -  (default), format is only unix
+				timestamp for Event-Timestamp (For example: 1445590624)</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>1</emphasis> - format is unix timestamp with microseconds
+			in Addition, it needs to change Event-Timestamp attribute type in dictionary to string
+			both radius server and client
+			(For example: 1445590624.377372)   </para>
+		</listitem>
+ 		</itemizedlist>
+		
+		<para>
+		Default value is 0 (Unix timestamp).
+		</para>
+		<example>
+		<title>rad_time_mode example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_radius", "rad_time_mode", 1)
+...
+</programlisting>
+		</example>
+</section>
 	</section>
 
 	<section>
