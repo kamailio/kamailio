@@ -356,7 +356,7 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
                 gettimeofday(&inf->env->tv, NULL);
                 tsecmicro=inf->env->tv.tv_sec+((double)inf->env->tv.tv_usec/1000000.0);
                 //radius client doesn t support double so convert it
-                sprintf(smicrosec,"%f",tsecmicro);
+                sprintf(smicrosec,"%17.6f",tsecmicro);
                 ADD_RAD_AVPAIR(RA_TIME_STAMP, &smicrosec, -1);
         }else{
                 av_type = (uint32_t)inf->env->ts;
