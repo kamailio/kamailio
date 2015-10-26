@@ -200,11 +200,11 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 		r = 0;
 		ptr = 0;
 		res = dmq_ul.get_urecord_by_ruid(_d, aorhash, &ruid, &r, &ptr);
-		aor = r->aor;
 		if (res < 0) {
-			LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+			LM_DBG("'%.*s' Not found in usrloc\n", ruid.len, ZSW(ruid.s));
 			continue;
 		}
+		aor = r->aor;
 		LM_DBG("- AoR: %.*s  AoRhash=%d  Flags=%d\n", aor.len, aor.s, aorhash, flags);
 
 		while (ptr) {
