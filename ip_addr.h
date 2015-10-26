@@ -757,14 +757,14 @@ static inline char* suip2a(union sockaddr_union* su, int su_len)
 			return "<addr. error>";
 		buf[0]='[';
 		offs=1+ip6tosbuf((unsigned char*)su->sin6.sin6_addr.s6_addr, &buf[1],
-							sizeof(buf)-4);
+							IP6_MAX_STR_SIZE);
 		buf[offs]=']';
 		offs++;
 	}else
 	if (unlikely(su_len<sizeof(su->sin)))
 		return "<addr. error>";
 	else
-		offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, sizeof(buf)-2);
+		offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, IP4_MAX_STR_SIZE);
 	buf[offs]=0;
 	return buf;
 }
