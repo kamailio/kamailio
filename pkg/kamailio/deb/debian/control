@@ -239,7 +239,7 @@ Architecture: linux-any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
-         mysql-client,
+         mysql-client | virtual-mysql-client,
          ${misc:Depends},
          ${shlibs:Depends}
 Description: MySQL database connectivity module for Kamailio
