@@ -43,8 +43,8 @@ typedef struct cancel_reason_map {
 } cancel_reason_map_t;
 
 static cancel_reason_map_t _cancel_reason_map[] = {
-	200, str_init("Answered elsewhere"),
-	0, {0, 0}
+	{ 200, str_init("Answered elsewhere") },
+	{ 0, {0, 0} }
 };
 
 /**
