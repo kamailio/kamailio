@@ -308,7 +308,11 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 	/* Lock this record while working with the data: */
 	ul.lock_udomain(_d, &vb->host, port, proto);
         
-        pcontact_t * c = getContactP(_m, _d);
+	pcontact_t * c = getContactP(_m, _d);
+	if (!c) {
+		LM_DBG("no contact found in usrloc when checking for service route\n");
+		goto error;
+	}
 
 	/* Check the route-set: */
 	if (_m->route) {
@@ -386,7 +390,6 @@ error:
 	/* Unlock domain */
 	ul.unlock_udomain(_d, &vb->host, port, proto);
 	return -1;
-    return 1;
 }
 
 static str route_start={"Route: <",8};
