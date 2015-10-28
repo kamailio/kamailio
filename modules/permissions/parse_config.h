@@ -3,7 +3,7 @@
  *
  * PERMISSIONS module
  *
- * Copyright (C) 2003 MiklÛs Tirp·k (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 Mikl√≥s Tirp√°k (mtirpak@sztaki.hu)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */

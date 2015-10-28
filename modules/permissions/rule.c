@@ -3,7 +3,7 @@
  *
  * PERMISSIONS module
  *
- * Copyright (C) 2003 MiklÛs Tirp·k (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 Mikl√≥s Tirp√°k (mtirpak@sztaki.hu)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -17,12 +17,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -30,13 +30,14 @@
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
+#include "../../lib/srutils/tmrec.h"
 #include "rule.h"
 
 
-/* 
- * allocate memory for a new rule 
+/*
+ * allocate memory for a new rule
  */
-rule *new_rule(void) 
+rule *new_rule(void)
 {
 	rule	*r;
 
@@ -51,30 +52,34 @@ rule *new_rule(void)
 }
 
 
-/* 
- * free memory allocated by a rule 
+/*
+ * free memory allocated by a rule
  */
-void free_rule(rule *r) 
+void free_rule(rule *r)
 {
 	if (!r) return;
-		
+
 	if (r->left) free_expression(r->left);
 	if (r->left_exceptions) free_expression(r->left_exceptions);
 	if (r->right) free_expression(r->right);
 	if (r->right_exceptions) free_expression(r->right_exceptions);
+	if (r->time_period) {
+		free(r->time_period);
+		r->time_period = NULL;
+	}
 
 	if (r->next) free_rule(r->next);
 	pkg_free(r);
 }
 
 
-/* 
- * list rules 
+/*
+ * list rules
  */
-void print_rule(rule *r) 
+void print_rule(rule *r)
 {
 	if (!r) return;
-		
+
 	printf("\nNEW RULE:\n");
 	printf("\n\tLEFT: ");
 	if (r->left) print_expression(r->left);  else printf("ALL");
@@ -93,10 +98,10 @@ void print_rule(rule *r)
 }
 
 
-/* 
- * look for a proper rule matching with left:right 
+/*
+ * look for a proper rule matching with left:right and correct time
  */
-int search_rule(rule *r, char *left, char *right) 
+int search_rule(rule *r, char *left, char *right)
 {
 	rule	*r1;
 
@@ -105,7 +110,8 @@ int search_rule(rule *r, char *left, char *right)
 		if (( (!r1->left) || (search_expression(r1->left, left)) )
 		&& (!search_expression(r1->left_exceptions, left))
 		&& ( (!r1->right) || (search_expression(r1->right, right)) )
-		&& (!search_expression(r1->right_exceptions, right))) return 1;
+		&& (!search_expression(r1->right_exceptions, right))
+        && (check_time(r1->time_period))) return 1;
 
 		r1 = r1->next;
 	}
@@ -114,14 +120,14 @@ int search_rule(rule *r, char *left, char *right)
 }
 
 
-/* 
+/*
  * allocate memory for a new expression
  * str is saved in vale, and compiled to POSIX regexp (reg_value)
  */
-expression *new_expression(char *str) 
+expression *new_expression(char *str)
 {
 	expression	*e;
-	
+
 	if (!str) return 0;
 
 	e = (expression *)pkg_malloc(sizeof(expression));
@@ -131,7 +137,7 @@ expression *new_expression(char *str)
 	}
 
 	strcpy(e->value, str);
-	
+
 	e->reg_value = (regex_t*)pkg_malloc(sizeof(regex_t));
 	if (!e->reg_value) {
 		LM_ERR("not enough pkg memory\n");
@@ -145,16 +151,16 @@ expression *new_expression(char *str)
 		pkg_free(e);
 		return NULL;
 	}
-	
+
 	e->next = 0;
 	return e;
 }
 
 
-/* 
- * free memory allocated by an expression 
+/*
+ * free memory allocated by an expression
  */
-void free_expression(expression *e) 
+void free_expression(expression *e)
 {
 	if (!e) return;
 
@@ -164,10 +170,10 @@ void free_expression(expression *e)
 }
 
 
-/* 
- * list expressions 
+/*
+ * list expressions
  */
-void print_expression(expression *e) 
+void print_expression(expression *e)
 {
 	if (!e) return;
 
@@ -176,10 +182,10 @@ void print_expression(expression *e)
 }
 
 
-/* 
- * look for matching expression 
+/*
+ * look for matching expression
  */
-int search_expression(expression *e, char *value) 
+int search_expression(expression *e, char *value)
 {
 	expression	*e1;
 
@@ -190,3 +196,32 @@ int search_expression(expression *e, char *value)
 	}
 	return 0;
 }
+
+/* Function to check if we are in a time period */
+int check_time(tmrec_t *time_period)
+ {
+	time_t tv;
+ 	ac_tm_t act;
+
+	/* set current time */
+ 	tv = time(NULL);
+	memset(&act, 0, sizeof(act));
+	if (ac_tm_set_time(&act, tv)<0)
+	   goto error;
+
+ 	/* if there is no dstart, timerec is valid */
+ 	if (time_period->dtstart==0)
+ 		goto done;
+
+ 	/* match the specified recurence */
+ 	if (tr_check_recurrence(time_period, &act, 0)!=0)
+ 		goto error;
+
+ done:
+ 	ac_tm_destroy(&act);
+ 	return 1;
+
+ error:
+ 	ac_tm_destroy(&act);
+ 	return 0;
+ }

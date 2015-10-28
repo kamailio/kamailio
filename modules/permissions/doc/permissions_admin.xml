@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -41,21 +41,23 @@
 	<section id="sec-call-routing">
 		<title>Call Routing</title>
 		<para>
-		The module can be used to determine if a call has appropriate 
-		permission to be established. Permission rules are stored in 
+		The module can be used to determine if a call has appropriate
+		permission to be established. Permission rules are stored in
 		plaintext configuration files similar to
 		<filename moreinfo="none">hosts.allow</filename> and <filename
-		moreinfo="none">hosts.deny</filename> files used by tcpd.
+		moreinfo="none">hosts.deny</filename> files used by tcpd. A time
+		period can be specified at the end of each rule to add time
+	    	restriction. The time period is in the RFC 2445 format.
 		</para>
 		<para>
-		When <function moreinfo="none">allow_routing</function> function is 
-		called it tries to find a rule that matches selected fields of the 
+		When <function moreinfo="none">allow_routing</function> function is
+		called it tries to find a rule that matches selected fields of the
 		message.
 		</para>
 		<para>
-		&kamailio; is a forking proxy and therefore a single message can be sent 
-		to different destinations simultaneously. When checking permissions 
-		all the destinations must be checked and if one of them fails, the 
+		&kamailio; is a forking proxy and therefore a single message can be sent
+		to different destinations simultaneously. When checking permissions
+		all the destinations must be checked and if one of them fails, the
 		forwarding will fail.
 		</para>
 		<para>
@@ -64,20 +66,20 @@
 		<itemizedlist>
 		<listitem>
 			<para>
-			Create a set of pairs of form (From, R-URI of branch 1), 
+			Create a set of pairs of form (From, R-URI of branch 1),
 			(From, R-URI of branch 2), etc.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Routing will be allowed when all pairs match an entry in the 
-			allow file.
+			Routing will be allowed when all pairs match an entry in the
+			allow file at a correct time.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Otherwise routing will be denied when one of pairs matches an 
-			entry in the deny file.
+			Otherwise routing will be denied when one of pairs matches an
+			entry in the deny file at a correct time.
 			</para>
 		</listitem>
 		<listitem>
@@ -87,53 +89,53 @@
 		</listitem>
 		</itemizedlist>
 		<para>
-		A non-existing permission control file is treated as if it were an 
-		empty file. Thus, permission control can be turned off by providing 
+		A non-existing permission control file is treated as if it were an
+		empty file. Thus, permission control can be turned off by providing
 		no permission control files.
 		</para>
 		<para>
-		From header field and Request-URIs are always compared with regular 
-		expressions! For the syntax see the sample file: 
+		From header field and Request-URIs are always compared with regular
+		expressions! For the syntax see the sample file:
 		<filename moreinfo="none">config/permissions.allow</filename>.
 		</para>
 	</section>
 	<section id="sec-registration-permissions">
 		<title>Registration Permissions</title>
 		<para>
-		In addition to call routing it is also possible to check REGISTER 
-		messages and decide--based on the configuration files--whether the 
+		In addition to call routing it is also possible to check REGISTER
+		messages and decide--based on the configuration files--whether the
 		message should be allowed and the registration accepted or not.
 		</para>
 		<para>
-		Main purpose of the function is to prevent registration of "prohibited" 
-		IP addresses. One example, when a malicious user registers a contact 
-		containing IP address of a PSTN gateway, he might be able to bypass 
-		authorization checks performed by the SIP proxy. That is undesirable 
-		and therefore attempts to register IP address of a PSTN gateway should 
+		Main purpose of the function is to prevent registration of "prohibited"
+		IP addresses. One example, when a malicious user registers a contact
+		containing IP address of a PSTN gateway, he might be able to bypass
+		authorization checks performed by the SIP proxy. That is undesirable
+		and therefore attempts to register IP address of a PSTN gateway should
 		be rejected. Files <filename
 		moreinfo="none">config/register.allow</filename> and <filename
-		moreinfo="none">config/register.deny</filename> contain an example 
+		moreinfo="none">config/register.deny</filename> contain an example
 		configuration.
 		</para>
 		<para>
 		The function for registration checking is called <function
-		moreinfo="none">allow_register</function> and the algorithm is very 
-		similar to the algorithm described in 
-		<xref linkend="sec-call-routing"/>. The only difference is in the way 
+		moreinfo="none">allow_register</function> and the algorithm is very
+		similar to the algorithm described in
+		<xref linkend="sec-call-routing"/>. The only difference is in the way
 		how pairs are created.
 		</para>
 		<para>
-		Instead of the From header field the function uses the To header field because 
-		th To header field in REGISTER messages contains the URI of the person 
-		being registered. Instead of the Request-URI of branches the function 
+		Instead of the From header field the function uses the To header field because
+		th To header field in REGISTER messages contains the URI of the person
+		being registered. Instead of the Request-URI of branches the function
 		uses the Contact header field.
 		</para>
 		<para>
-		Thus, the pairs used in matching will look like this: (To, Contact 1), 
+		Thus, the pairs used in matching will look like this: (To, Contact 1),
 		(To, Contact 2), (To, Contact 3), and so on..
 		</para>
 		<para>
-		The algorithm of matching is the same as described in 
+		The algorithm of matching is the same as described in
 		<xref linkend="sec-call-routing"/>.
 		</para>
 	</section>
@@ -177,13 +179,13 @@
 		</listitem>
 		</itemizedlist>
 		<para>
-		A non-existing permission control file is treated as if it were an 
-		empty file. Thus, permission control can be turned off by providing 
+		A non-existing permission control file is treated as if it were an
+		empty file. Thus, permission control can be turned off by providing
 		no permission control files.
 		</para>
 		<para>
-		The From URI and the URI stored in pvar are always compared with regular 
-		expressions! For the syntax see the sample file: 
+		The From URI and the URI stored in pvar are always compared with regular
+		expressions! For the syntax see the sample file:
 		<filename moreinfo="none">config/permissions.allow</filename>.
 		</para>
 	</section>
@@ -205,18 +207,18 @@
 		identifier (positive integer value, i.e., equal or greater than 1).
 		The group identifier is given as an argument to the allow_address() and
 		allow_source_address() functions.
-		One group can contain all of the three types of addresses: exact 
+		One group can contain all of the three types of addresses: exact
 		IP address, subnet IP address or DNS domain name.
 		</para>
 		<para>
-		When the argument is an IP addess, it is tried to be matched with the 
-		records from that group that are of type exact IP or subnet. If the 
+		When the argument is an IP addess, it is tried to be matched with the
+		records from that group that are of type exact IP or subnet. If the
 		argument is not an IP it is tried to be matched
 		with the records that are DNS domain names. No DNS lookup is performed,
 		only strict matching.
 		</para>
 		<para>
-		As a side effect of matching the address, non-NULL tag 
+		As a side effect of matching the address, non-NULL tag
 		(see tag_col module parameter) is added as value to
 		peer_tag AVP if peer_tag_avp module parameter has been defined.
 		</para>
@@ -235,7 +237,7 @@
 		expression&gt;.
 		</para>
 		<para>
-		A requests is accepted if there exists a rule, where 
+		A requests is accepted if there exists a rule, where
 		</para>
 		<itemizedlist>
 		<listitem>
@@ -313,8 +315,8 @@
 	<section id ="permissions.p.default_allow_file">
 		<title><varname>default_allow_file</varname> (string)</title>
 		<para>
-		Default allow file used by the functions with no parameters. If you 
-		don't specify a full pathname then the directory in which is the main 
+		Default allow file used by the functions with no parameters. If you
+		don't specify a full pathname then the directory in which is the main
 		config file is located will be used.
 		</para>
 		<para>
@@ -335,7 +337,7 @@ modparam("permissions", "default_allow_file", "/etc/permissions.allow")
 		<title><varname>default_deny_file</varname> (string)</title>
 		<para>
 		Default file containing deny rules. The file is used by functions
-		with no parameters. If you don't specify a full pathname then the 
+		with no parameters. If you don't specify a full pathname then the
 		directory in which the main config file is located will be used.
 		</para>
 		<para>
@@ -355,13 +357,13 @@ modparam("permissions", "default_deny_file", "/etc/permissions.deny")
 	<section id ="permissions.p.check_all_branches">
 		<title><varname>check_all_branches</varname> (integer)</title>
 		<para>
-		If set then allow_routing functions will check Request-URI of all 
-		branches (default). If disabled then only Request-URI of the first 
+		If set then allow_routing functions will check Request-URI of all
+		branches (default). If disabled then only Request-URI of the first
 		branch will be checked.
 		</para>
 		<warning>
 		<para>
-		Do not disable this parameter unless you really know what you 
+		Do not disable this parameter unless you really know what you
 		are doing.
 		</para>
 		</warning>
@@ -382,8 +384,8 @@ modparam("permissions", "check_all_branches", 0)
 	<section id ="permissions.p.allow_suffix">
 		<title><varname>allow_suffix</varname> (string)</title>
 		<para>
-		Suffix to be appended to basename to create filename of the allow 
-		file when version with one parameter of either 
+		Suffix to be appended to basename to create filename of the allow
+		file when version with one parameter of either
 		<function moreinfo="none">allow_routing</function> or
 		<function moreinfo="none">allow_register</function> is used.
 		</para>
@@ -409,8 +411,8 @@ modparam("permissions", "allow_suffix", ".allow")
 	<section id ="permissions.p.deny_suffix">
 		<title><varname>deny_suffix</varname> (string)</title>
 		<para>
-		Suffix to be appended to basename to create filename of the deny file 
-		when version with one parameter of either 
+		Suffix to be appended to basename to create filename of the deny file
+		when version with one parameter of either
 		<function moreinfo="none">allow_routing</function> or
 		<function moreinfo="none">allow_register</function> is used.
 		</para>
@@ -436,7 +438,7 @@ modparam("permissions", "deny_suffix", ".deny")
 	<section id ="permissions.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		This is URL of the database to be used to store rules used by 
+		This is URL of the database to be used to store rules used by
 		<function moreinfo="none">allow_trusted</function> function.
 		</para>
 		<para>
@@ -625,7 +627,7 @@ modparam("permissions", "source_col", "source_ip_address")
 		the received request.  Possible values that can be stored in
 		proto_col are <quote>any</quote>, <quote>udp</quote>,
 		<quote>tcp</quote>, <quote>tls</quote>,
-		<quote>sctp</quote>, <quote>ws</quote>, <quote>wss</quote>, 
+		<quote>sctp</quote>, <quote>ws</quote>, <quote>wss</quote>,
 		and <quote>none</quote>.  Value
 		<quote>any</quote> matches always and value
 		<quote>none</quote> never.
@@ -687,7 +689,7 @@ modparam("permissions", "ruri_col", "regexp")
 	<section id ="permissions.p.tag_col">
 		<title><varname>tag_col</varname> (string)</title>
 		<para>
-		Name of the column in the <quote>address</quote> or 
+		Name of the column in the <quote>address</quote> or
 		<quote>trusted</quote> table containing a string
 		that is added as value to peer_tag AVP if peer_tag AVP
         	has been defined and if the address or peer matches.
@@ -753,7 +755,7 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 		<title><varname>peer_tag_mode</varname> (integer)</title>
 		<para>
 		Tag mode for <function moreinfo="none">allow_trusted</function>.
-		<quote>0</quote> sets only the tag of the first match. 
+		<quote>0</quote> sets only the tag of the first match.
 		<quote>1</quote> adds the tags of all matches to the avp. In addition
 		the return value of <function moreinfo="none">allow_trusted</function>
 		is the number of matches. This parameter is not used for address table matching functions.
@@ -782,8 +784,8 @@ modparam("permissions", "peer_tag_mode", 1)
 		</title>
 		<para>
 		Returns true if all pairs constructed as described in <xref
-			linkend="sec-call-routing"/> have appropriate permissions according to 
-		the configuration files. This function uses default configuration 
+			linkend="sec-call-routing"/> have appropriate permissions according to
+		the configuration files. This function uses default configuration
 		files specified in <varname>default_allow_file</varname> and
 		<varname>default_deny_file</varname>.
 		</para>
@@ -807,20 +809,20 @@ if (allow_routing()) {
 		</title>
 		<para>
 		Returns true if all pairs constructed as described in <xref
-			linkend="sec-call-routing"/> have appropriate permissions according 
+			linkend="sec-call-routing"/> have appropriate permissions according
 		to the configuration files given as parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>basename</emphasis> - Basename from which allow 
+			<para><emphasis>basename</emphasis> - Basename from which allow
 			and deny filenames will be created by appending contents of
 			<varname>allow_suffix</varname> and <varname>deny_suffix</varname>
 			parameters.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function 
-			expects the file to be located in the same directory as the main 
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
 			configuration file of the server.
 			</para>
 		</listitem>
@@ -844,8 +846,8 @@ if (allow_routing("basename")) {
 		<function moreinfo="none">allow_routing(allow_file,deny_file)</function>
 		</title>
 		<para>
-		Returns true if all pairs constructed as described in 
-		<xref linkend="sec-call-routing"/> have appropriate permissions 
+		Returns true if all pairs constructed as described in
+		<xref linkend="sec-call-routing"/> have appropriate permissions
 		according to the configuration files given as parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -854,8 +856,8 @@ if (allow_routing("basename")) {
 			<para><emphasis>allow_file</emphasis> - File containing allow rules.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function 
-			expects the file to be located in the same directory as the main 
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
 			configuration file of the server.
 			</para>
 		</listitem>
@@ -863,8 +865,8 @@ if (allow_routing("basename")) {
 			<para><emphasis>deny_file</emphasis> - File containing deny rules.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function 
-			expects the file to be located in the same directory as the main 
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
 			configuration file of the server.
 			</para>
 		</listitem>
@@ -889,20 +891,20 @@ if (allow_routing("rules.allow", "rules.deny")) {
 		</title>
 		<para>
 		The function returns true if all pairs constructed as described in <xref
-			linkend="sec-registration-permissions"/> have appropriate permissions 
+			linkend="sec-registration-permissions"/> have appropriate permissions
 		according to the configuration files given as parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>basename</emphasis> - Basename from which allow 
+			<para><emphasis>basename</emphasis> - Basename from which allow
 			and deny filenames will be created by appending contents of
 			<varname>allow_suffix</varname> and <varname>deny_suffix</varname>
 			parameters.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function 
-			expects the file to be located in the same directory as the main 
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
 			configuration file of the server.
 			</para>
 		</listitem>
@@ -931,8 +933,8 @@ if (method=="REGISTER") {
 		<function moreinfo="none">allow_register(allow_file, deny_file)</function>
 		</title>
 		<para>
-		The function returns true if all pairs constructed as described in 
-		<xref linkend="sec-registration-permissions"/> have appropriate 
+		The function returns true if all pairs constructed as described in
+		<xref linkend="sec-registration-permissions"/> have appropriate
 		permissions according to the configuration files given as parameters.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -941,8 +943,8 @@ if (method=="REGISTER") {
 			<para><emphasis>allow_file</emphasis> - File containing allow rules.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function 
-			expects the file to be located in the same directory as the main 
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
 			configuration file of the server.
 			</para>
 		</listitem>
@@ -950,8 +952,8 @@ if (method=="REGISTER") {
 			<para><emphasis>deny_file</emphasis> - File containing deny rules.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function 
-			expects the file to be located in the same directory as the main 
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
 			configuration file of the server.
 			</para>
 		</listitem>
@@ -981,20 +983,20 @@ if (method=="REGISTER") {
 		</title>
 		<para>
 		Returns true if the pair constructed as described in <xref
-			linkend="sec-uri-permissions"/> have appropriate permissions 
+			linkend="sec-uri-permissions"/> have appropriate permissions
 		according to the configuration files specified by the parameter.
 		</para>
 		<para>Meaning of the parameter is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>basename</emphasis> - Basename from which allow 
+			<para><emphasis>basename</emphasis> - Basename from which allow
 			and deny filenames will be created by appending contents of
 			<varname>allow_suffix</varname> and <varname>deny_suffix</varname>
 			parameters.
 			</para>
 			<para>
-			If the parameter doesn't contain full pathname then the function 
-			expects the file to be located in the same directory as the main 
+			If the parameter doesn't contain full pathname then the function
+			expects the file to be located in the same directory as the main
 			configuration file of the server.
 			</para>
 		</listitem>
@@ -1032,14 +1034,14 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 		address table.
 		</para>
 		<para>
-		When matching is done if the argument is an IP address, it is 
+		When matching is done if the argument is an IP address, it is
 		matched with the records from that group that are of type exact
 		IP or subnet. If the argument is not an IP it is tried to be matched
 		with the records that are DNS domain names. No DNS lookup is performed,
 		only strict matching.
 		Cached address table entry containing port value <quote>0</quote>
 		matches any port. The <quote>group_id</quote> argument can be an integer
-		string or a pseudo variable. 
+		string or a pseudo variable.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -1180,7 +1182,7 @@ if (allow_trusted("$si", "$proto")) {
 		</example>
 	</section>
 	</section>
-	
+
 	<section>
 	<title>MI Commands</title>
 	<section id ="permissions.m.address_reload">
@@ -1189,7 +1191,7 @@ if (allow_trusted("$si", "$proto")) {
 		</title>
 		<para>
 			Causes the permissions module to re-read the contents of
-			address database table into cache memory. 
+			address database table into cache memory.
 			The in-cache memory entries are
 			for performance reasons stored in two
                         different tables:  address table and
@@ -1199,7 +1201,7 @@ if (allow_trusted("$si", "$proto")) {
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
-	
+
 	<section id ="permissions.m.address_dump">
 		<title>
 		<function moreinfo="none">address_dump</function>
@@ -1240,7 +1242,7 @@ if (allow_trusted("$si", "$proto")) {
 		<function moreinfo="none">trusted_dump</function>
 		</title>
 		<para>
-			Causes the permissions module to dump the 
+			Causes the permissions module to dump the
 			contents of trusted table from cache memory.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
@@ -1293,7 +1295,7 @@ if (allow_trusted("$si", "$proto")) {
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
-	
+
 	<section id ="permissions.r.addressDump">
 		<title>
 		<function moreinfo="none">addressDump</function>

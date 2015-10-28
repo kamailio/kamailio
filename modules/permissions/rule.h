@@ -3,7 +3,7 @@
  *
  * PERMISSIONS module
  *
- * Copyright (C) 2003 MiklÛs Tirp·k (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 Mikl√≥s Tirp√°k (mtirpak@sztaki.hu)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -17,16 +17,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
- 
+
 #ifndef RULE_H
 #define RULE_H 1
 
 #include <regex.h>
+#include "../../lib/srutils/tmrec.h"
 
 #define EXPRESSION_LENGTH 256	/* maximum length of an expression */
 #define LINE_LENGTH 500		/* maximum length of lines in the config file */
@@ -37,7 +38,7 @@ typedef struct rule_struct rule;
 
 struct expression_struct;
 typedef struct expression_struct expression;
-	
+
 rule *new_rule(void);
 void free_rule(rule *r);
 void print_rule(rule *r);
@@ -47,6 +48,7 @@ expression *new_expression(char *str);
 void free_expression(expression *e);
 void print_expression(expression *e);
 int search_expression(expression *e, char *value);
+int check_time(tmrec_t *time_period);
 
 /*
  * stores an expression
@@ -70,6 +72,7 @@ struct expression_struct  {
  */
 struct rule_struct {
 	expression *left, *left_exceptions, *right, *right_exceptions;
+    tmrec_t *time_period;
 	struct rule_struct	*next;
 };
 

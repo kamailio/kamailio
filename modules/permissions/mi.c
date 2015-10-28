@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -136,10 +136,10 @@ void rpc_address_reload(rpc_t* rpc, void* c) {
 struct mi_root* mi_address_dump(struct mi_root *cmd_tree, void *param)
 {
     struct mi_root* rpl_tree;
-    
+
     rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
     if (rpl_tree==NULL) return 0;
-    
+
     if(addr_hash_table_mi_print(*addr_hash_table, &rpl_tree->node) <  0) {
 	LM_ERR("failed to add a node\n");
 	free_mi_tree(rpl_tree);
@@ -172,10 +172,10 @@ void rpc_address_dump(rpc_t* rpc, void* c) {
 struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
 {
     struct mi_root* rpl_tree;
-    
+
     rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
     if (rpl_tree==NULL) return 0;
-    
+
     if(subnet_table && subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
 	LM_ERR("failed to add a node\n");
 	free_mi_tree(rpl_tree);
@@ -246,14 +246,14 @@ struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
     struct mi_node *node;
     str *basenamep, *urip, *contactp;
     char basename[MAX_FILE_LEN + 1];
-    char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1]; 
+    char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1];
     unsigned int allow_suffix_len;
 
     node = cmd->node.kids;
     if (node == NULL || node->next == NULL || node->next->next == NULL ||
 	node->next->next->next != NULL)
 	return init_mi_tree(400, MI_SSTR(MI_MISSING_PARM));
-    
+
     /* look for base name */
     basenamep = &node->value;
     if (basenamep == NULL)
@@ -297,7 +297,7 @@ void rpc_test_uri(rpc_t* rpc, void* c)
 {
     	str basenamep, urip, contactp;
 	char basename[MAX_FILE_LEN + 1];
-	char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1]; 
+	char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1];
 	unsigned int allow_suffix_len;
 
 	if (rpc->scan(c, "S", &basenamep) != 1) {

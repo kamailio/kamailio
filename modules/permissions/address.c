@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -502,7 +502,7 @@ int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
  * allow_source_address("group") equals to allow_address("group", "$si", "$sp")
  * but is faster.
  */
-int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2) 
+int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
 {
 	int addr_group = 1;
 
@@ -534,7 +534,7 @@ int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
  * subnet table in any group. If yes, returns that group. If not returns -1.
  * Port value 0 in cached address and group table matches any port.
  */
-int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2) 
+int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
 {
 	int group = -1;
 
