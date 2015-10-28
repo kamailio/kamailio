@@ -1,15 +1,19 @@
 # SIP Express Router permissions module config file
 #
-# Syntax: 
-#	from_list [EXCEPT from_list] : req_uri_list [EXCEPT req_uri_list]
+# Syntax:
+#   if you want to have time restriction:
+#       from_list [EXCEPT from_list] : req_uri_list [EXCEPT req_uri_list] : time_recurrence
+#   if you want the rule valid at any time
+#       from_list [EXCEPT from_list] : req_uri_list [EXCEPT req_uri_list]
 #
-# 	from_list and req_uri_list are comma separated expressions
+#   from_list and req_uri_list are comma separated expressions
 # 	Expressions are treated as case insensitive POSIX Extended Regular Expressions.
-# 	Keyword ALL matches any expression.
+#   Keyword ALL matches any expression.
+#   The time recurrence rule is a list of attributes defined by RFC2445 as in the TMREC module.
 #
 # Examples:
 #	ALL : "^sip:361[0-9]*@abc\.com$" EXCEPT "^sip:361[0-9]*3@abc\.com$", "^sip:361[0-9]*4@abc\.com$"
 #
-#	"^sip:3677[0-9]*@abc\.com$" :  "^sip:361[0-9]*@abc\.com$"
+#	"^sip:3677[0-9]*@abc\.com$" :  "^sip:361[0-9]*@abc\.com$" : "20120101T000000|PT24H|weekly|||SA,SU"
 #
-#	All : ALL
+#	All : ALL : "20120101T083000|PT10H|weekly|||MO,TU,WE,TH,FR"

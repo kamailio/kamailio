@@ -18,9 +18,13 @@ Edited by
 
 Emmanuel Schmidbauer
 
-   Copyright © 2003 Miklos Tirpak
+Edited by
 
-   Copyright © 2006-2008 Juha Heinanen
+Guillaume Dhainaut
+
+   Copyright ï¿½ 2003 Miklos Tirpak
+
+   Copyright ï¿½ 2006-2008 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -77,6 +81,7 @@ Emmanuel Schmidbauer
               4.9. allow_source_address_group()
               4.10. allow_address_group(addr, port)
               4.11. allow_trusted([src_ip_pvar, proto_pvar])
+              4.42. log_attempt(log_file)
 
         5. MI Commands
 
@@ -130,6 +135,7 @@ Emmanuel Schmidbauer
    1.30. allow_source_address_group() usage
    1.31. allow_source_address_group() usage
    1.32. allow_trusted() usage
+   1.33. log_attempt() usage
 
 Chapter 1. Admin Guide
 
@@ -185,6 +191,7 @@ Chapter 1. Admin Guide
         4.9. allow_source_address_group()
         4.10. allow_address_group(addr, port)
         4.11. allow_trusted([src_ip_pvar, proto_pvar])
+        4.12. log_attempt(log_file)
 
    5. MI Commands
 
@@ -228,7 +235,8 @@ Chapter 1. Admin Guide
    The module can be used to determine if a call has appropriate
    permission to be established. Permission rules are stored in plaintext
    configuration files similar to hosts.allow and hosts.deny files used by
-   tcpd.
+   tcpd. A time period can be specified at the end of each rule to add time
+   restriction. The time period is in the RFC 2445 format.
 
    When allow_routing function is called it tries to find a rule that
    matches selected fields of the message.
@@ -242,9 +250,9 @@ Chapter 1. Admin Guide
      * Create a set of pairs of form (From, R-URI of branch 1), (From,
        R-URI of branch 2), etc.
      * Routing will be allowed when all pairs match an entry in the allow
-       file.
+       file at a correct time.
      * Otherwise routing will be denied when one of pairs matches an entry
-       in the deny file.
+       in the deny file at a correct time.
      * Otherwise, routing will be allowed.
 
    A non-existing permission control file is treated as if it were an
@@ -696,6 +704,7 @@ modparam("permissions", "peer_tag_mode", 1)
    4.9. allow_source_address_group()
    4.10. allow_address_group(addr, port)
    4.11. allow_trusted([src_ip_pvar, proto_pvar])
+   4.12. log_attempt(log_file)
 
 4.1. allow_routing()
 
@@ -953,6 +962,21 @@ if (allow_trusted()) {
 if (allow_trusted("$si", "$proto")) {
         t_relay();
 };
+...
+
+4.12. log_attempt(log_file)
+
+    Log the call attempts in the file log_file. Can be used to keep a trace
+    in case of call blocking with the allow_routing() function. The line is
+    like: from_uri, to_uri, date, method.
+
+    Example 1.33. log_attempt() usage
+...
+if(!allow_routing())
+{
+    log_attempt("forbidden_calls");
+    ...
+}
 ...
 
 5. MI Commands

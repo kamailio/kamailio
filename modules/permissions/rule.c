@@ -3,7 +3,7 @@
  *
  * PERMISSIONS module
  *
- * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 MiklÃ³s TirpÃ¡k (mtirpak@sztaki.hu)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -30,6 +30,7 @@
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
+#include "../../lib/srutils/tmrec.h"
 #include "rule.h"
 
 
@@ -62,6 +63,10 @@ void free_rule(rule *r)
 	if (r->left_exceptions) free_expression(r->left_exceptions);
 	if (r->right) free_expression(r->right);
 	if (r->right_exceptions) free_expression(r->right_exceptions);
+	if (r->time_period) {
+		free(r->time_period);
+		r->time_period = NULL;
+	}
 
 	if (r->next) free_rule(r->next);
 	pkg_free(r);
@@ -94,7 +99,7 @@ void print_rule(rule *r)
 
 
 /* 
- * look for a proper rule matching with left:right 
+ * look for a proper rule matching with left:right and correct time
  */
 int search_rule(rule *r, char *left, char *right) 
 {
@@ -105,7 +110,8 @@ int search_rule(rule *r, char *left, char *right)
 		if (( (!r1->left) || (search_expression(r1->left, left)) )
 		&& (!search_expression(r1->left_exceptions, left))
 		&& ( (!r1->right) || (search_expression(r1->right, right)) )
-		&& (!search_expression(r1->right_exceptions, right))) return 1;
+		&& (!search_expression(r1->right_exceptions, right))
+        && (check_time(r1->time_period))) return 1;
 
 		r1 = r1->next;
 	}
@@ -114,8 +120,8 @@ int search_rule(rule *r, char *left, char *right)
 }
 
 
-/* 
- * allocate memory for a new expression
+/*
+ * allocate memory for a new expression 
  * str is saved in vale, and compiled to POSIX regexp (reg_value)
  */
 expression *new_expression(char *str) 
@@ -176,10 +182,10 @@ void print_expression(expression *e)
 }
 
 
-/* 
- * look for matching expression 
+/*
+ * look for matching expression
  */
-int search_expression(expression *e, char *value) 
+int search_expression(expression *e, char *value)
 {
 	expression	*e1;
 
@@ -190,3 +196,32 @@ int search_expression(expression *e, char *value)
 	}
 	return 0;
 }
+
+/* Function to check if we are in a time period */
+int check_time(tmrec_t *time_period)
+ {
+	time_t tv;
+ 	ac_tm_t act;
+
+	/* set current time */
+ 	tv = time(NULL);
+	memset(&act, 0, sizeof(act));
+	if (ac_tm_set_time(&act, tv)<0)
+	   goto error;
+
+ 	/* if there is no dstart, timerec is valid */
+ 	if (time_period->dtstart==0)
+ 		goto done;
+
+ 	/* match the specified recurence */
+ 	if (tr_check_recurrence(time_period, &act, 0)!=0)
+ 		goto error;
+
+ done:
+ 	ac_tm_destroy(&act);
+ 	return 1;
+
+ error:
+ 	ac_tm_destroy(&act);
+ 	return 0;
+ }

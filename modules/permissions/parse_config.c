@@ -3,7 +3,7 @@
  *
  * PERMISSIONS module
  *
- * Copyright (C) 2003 MiklÛs Tirp·k (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 Mikl√≥s Tirp√°k (mtirpak@sztaki.hu)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "../../sr_module.h"
+#include "../../lib/srutils/tmrec.h"
 #include "rule.h"
 #include "parse_config.h"
 
@@ -153,12 +154,15 @@ static rule *parse_config_line(char *line)
 {
 	rule	*rule1;
 	expression *left, *left_exceptions, *right, *right_exceptions;
-	int	i=-1, exit=0, apost=0, colon=-1, eval=0;
-	static char	str1[LINE_LENGTH], str2[LINE_LENGTH+1];
+	tmrec_t *time_period;
+	int	i=-1, exit=0, apost=0, colon1=-1, colon2=-1, nbr=0, eval=0;
+	static char	str1[LINE_LENGTH], str2[LINE_LENGTH+1], str3[LINE_LENGTH+1];
+	char tmrec_separator = '|';
 
 	if (!line) return 0;
 
 	rule1 = 0;
+	time_period = malloc(sizeof(tmrec_t));
 	left = left_exceptions = right = right_exceptions = 0;
 
 	while (!exit) {
@@ -167,8 +171,17 @@ static rule *parse_config_line(char *line)
 			case '"':	apost = !apost;
 					eval = 1;
 					break;
-			
-			case ':':	if (!apost) colon = i;
+
+			case ':':
+					if (!apost) {
+						if (nbr==0){
+							colon1 = i;
+							nbr++;
+						} else {
+							colon2 = i;
+							nbr++;
+						}
+					}
 					eval = 1;
 					break;
 			
@@ -186,12 +199,12 @@ static rule *parse_config_line(char *line)
 	}
 
 	if (eval) {
-		if ((0<colon) && (colon+1<i)) {
+		if ((0<colon1) && (colon1+1<i)) {
 			/* valid line */
 			
 			/* left expression */
-			strncpy(str1, line, colon);
-			str1[colon] = '\0';
+			strncpy(str1, line, colon1);
+			str1[colon1] = '\0';
 			if (parse_expression(str1, &left, &left_exceptions)) {
 				/* error */
 				LM_ERR("failed to parse line-left: %s\n", line);
@@ -199,14 +212,54 @@ static rule *parse_config_line(char *line)
 			}
 			
 			/* right expression */
-			strncpy(str2, line+colon+1, i-colon-1);
-			str2[i-colon-1] = '\0';
+			if (nbr==2){
+				strncpy(str2, line+colon1+1, colon2-colon1-1);
+				str2[colon2-colon1-1] = '\0';
+			} else {
+				strncpy(str2, line+colon1+1, i-colon1-1);
+				str2[i-colon1-1] = '\0';
+			}
+
 			if (parse_expression(str2, &right, &right_exceptions)) {
 				/* error */
 				LM_ERR("failed to parse line-right: %s\n", line);
 				goto error;
 			}
 			
+			if (nbr==2){
+				/* Time period */
+				static char temp[LINE_LENGTH+1];
+				strncpy(temp, line+colon2+1, i-colon2-1);
+				temp[i-colon2-1] = '\0';
+
+				/* Remove space and quotes*/
+				/* Trim leading space and first quote*/
+				while(isspace(*temp)) memmove (temp, temp+1, strlen (temp+1) + 1);
+				/* Empty string */
+				if(*temp == 0) {
+					goto error;
+				}
+
+				/* Trim trailing space and last quote*/
+				char *end = temp + strlen(temp) - 1;
+				while(end > temp && isspace(*end)) end--;
+				*(end+1) = 0;
+
+				/* Remove the quote */
+				strncpy(str3, temp+1, strlen(temp)-2);
+				str3[strlen(temp)-2] = '\0';
+			} else {
+				strcpy(str3, "|||||");
+				str3[5] = '\0';
+			}
+
+			memset(time_period, 0, sizeof(*time_period));
+			/* parse time recurrence definition */
+			if (tr_parse_recurrence_string(time_period, str3, tmrec_separator)<0) {
+				LM_ERR("failed to parse line-period: %s\n", line);
+				goto error;
+			}
+
 			rule1 = new_rule();
 			if (!rule1) {
 				LM_ERR("can't create new rule\n");
@@ -217,6 +270,7 @@ static rule *parse_config_line(char *line)
 			rule1->left_exceptions = left_exceptions;
 			rule1->right = right;
 			rule1->right_exceptions = right_exceptions;
+			rule1->time_period = time_period;
 			return rule1;
 		} else {
 			/* error */
@@ -231,7 +285,11 @@ static rule *parse_config_line(char *line)
 
 	if (right) free_expression(right);
 	if (right_exceptions) free_expression(right_exceptions);
-	
+	if (time_period) {
+		free(time_period);
+		time_period = NULL;
+	}
+
 	return 0;
 }
 
@@ -245,7 +303,6 @@ rule *parse_config_file(char *filename)
 	FILE	*file;
 	char	line[LINE_LENGTH+1];
 	rule	*start_rule = NULL, *rule1 = NULL, *rule2 = NULL;
-
 	file = fopen(filename,"r");
 	if (!file) {
 		LM_INFO("file not found: %s\n", filename);

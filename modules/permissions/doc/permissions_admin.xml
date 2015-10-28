@@ -45,7 +45,9 @@
 		permission to be established. Permission rules are stored in 
 		plaintext configuration files similar to
 		<filename moreinfo="none">hosts.allow</filename> and <filename
-		moreinfo="none">hosts.deny</filename> files used by tcpd.
+		moreinfo="none">hosts.deny</filename> files used by tcpd. A time
+		period can be specified at the end of each rule to add time
+	    	restriction. The time period is in the RFC 2445 format.
 		</para>
 		<para>
 		When <function moreinfo="none">allow_routing</function> function is 
@@ -71,13 +73,13 @@
 		<listitem>
 			<para>
 			Routing will be allowed when all pairs match an entry in the 
-			allow file.
+			allow file at a correct time.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
 			Otherwise routing will be denied when one of pairs matches an 
-			entry in the deny file.
+			entry in the deny file at a correct time.
 			</para>
 		</listitem>
 		<listitem>

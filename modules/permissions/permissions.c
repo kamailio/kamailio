@@ -88,7 +88,7 @@ str port_col = str_init("port");           /* Name of port column */
 static int check_all_branches = 1;
 
 
-/*  
+/* 
  * Convert the name of the files into table index
  */
 static int load_fixup(void** param, int param_no);
@@ -435,7 +435,7 @@ check_branches:
 }
 
 
-/*  
+/* 
  * Convert the name of the files into table index
  */
 static int load_fixup(void** param, int param_no)
@@ -666,7 +666,7 @@ static int mi_addr_child_init(void)
 }
 
 
-/* 
+/*
  * destroy function 
  */
 static void mod_exit(void) 
