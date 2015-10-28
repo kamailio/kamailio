@@ -105,6 +105,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     int items_found = 0;
     struct auth_data_item_list *adi_list = 0;
     AAA_AVP *auth_data;
+	AAA_AVP* avp;
     auth_data = 0;
     int item_number;
     str authenticate = {0, 0}, authorization2 = {0, 0}, ck = {0, 0}, ik = {0, 0}, ip = {0, 0}, ha1 = {0, 0};
@@ -114,7 +115,8 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     HASHHEX ha1_hex;
     HASHHEX result_hex;
     str etsi_nonce = {0, 0};
-    str private_identity, public_identity;
+    str private_identity = {0,0};
+	str public_identity = {0,0};
     str algorithm;
 
     if (is_timeout) {
@@ -139,21 +141,29 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     }
 
     /* get the private_identity */
-    private_identity = cscf_get_private_identity(t->uas.request, data->realm);
-    if (!private_identity.len) {
+	/* private_identity = cscf_get_private_identity(t->uas.request, data->realm);*/
+	private_identity = cxdx_get_user_name(maa);
+	if (!private_identity.len) {
         LM_ERR("No private identity specified (Authorization: username)\n");
         stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_PRIVATE);
         result = CSCF_RETURN_FALSE;
         goto error;
     }
-    /* get the public_identity */
-    public_identity = cscf_get_public_identity(t->uas.request);
-    if (!public_identity.len) {
+
+	    /* get the public_identity */
+	    /*public_identity = cscf_get_public_identity(t->uas.request);*/
+	
+	avp = cxdx_get_next_public_identity(maa, 0, AVP_IMS_Public_Identity,IMS_vendor_id_3GPP,__FUNCTION__);
+	if (avp) {
+		public_identity = avp->data;
+	}
+	if (!public_identity.len) {
         LM_ERR("No public identity specified (To:)\n");
         stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_PUBLIC);
         result = CSCF_RETURN_FALSE;
         goto error;
     }
+	
 
     //get each individual element from the MAA
     cxdx_get_result_code(maa, &rc);

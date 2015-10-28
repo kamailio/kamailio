@@ -338,14 +338,21 @@ int challenge(struct sip_msg* msg, char* str1, char* alg, int is_proxy_auth, cha
     }
 
     /* get the private_identity */
-    private_identity = cscf_get_private_identity(msg, realm);
+	if (is_proxy_auth)
+		private_identity = cscf_get_private_identity_from(msg, realm);
+	else
+		private_identity = cscf_get_private_identity(msg, realm);
     if (!private_identity.len) {
         LM_ERR("No private identity specified (Authorization: username)\n");
         stateful_request_reply(msg, 403, MSG_403_NO_PRIVATE);
         return CSCF_RETURN_BREAK;
     }
     /* get the public_identity */
-    public_identity = cscf_get_public_identity(msg);
+	if (is_proxy_auth)
+		public_identity = cscf_get_public_identity_from(msg);
+	else
+		public_identity = cscf_get_public_identity(msg);
+	
     if (!public_identity.len) {
         LM_ERR("No public identity specified (To:)\n");
         stateful_request_reply(msg, 403, MSG_403_NO_PUBLIC);
@@ -724,6 +731,8 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
     int expires = 0;
     auth_vector *av = 0;
     uint32_t nc_parsed = 0; /* the numerical representation of nc */
+	
+	LM_DBG("Running authenticate, is_proxy_auth=%d\n", is_proxy_auth);
 
     ret = AUTH_ERROR;
 
@@ -759,14 +768,22 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
         return 0; //CSCF_RETURN_BREAK;
     }
 
-    private_identity = cscf_get_private_identity(msg, realm);
+	if (is_proxy_auth) {
+		private_identity = cscf_get_private_identity_from(msg, realm);
+	} else {
+		private_identity = cscf_get_private_identity(msg, realm);
+	}
     if (!private_identity.len) {
         LM_ERR("private identity missing\n");
         return AUTH_NO_CREDENTIALS;
     }
 
-    public_identity = cscf_get_public_identity(msg);
-    if (!public_identity.len) {
+    if (is_proxy_auth)
+		public_identity = cscf_get_public_identity_from(msg);
+	else 
+		public_identity = cscf_get_public_identity(msg);
+    
+	if (!public_identity.len) {
         LM_ERR("public identity missing\n");
         return AUTH_NO_CREDENTIALS;
     }
