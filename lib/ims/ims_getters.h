@@ -120,11 +120,25 @@ contact_body_t *cscf_parse_contacts(struct sip_msg *msg);
  */
 str cscf_get_private_identity(struct sip_msg *msg, str realm);
 /**
+ * Returns the Private Identity extracted from the Authorization header.
+ * If none found there takes the SIP URI in from without the "sip:" prefix
+ * @param msg - the SIP message
+ * @param realm - the realm to match in an Authorization header
+ * @returns the str containing the private id, no mem dup
+ */
+str cscf_get_private_identity_from(struct sip_msg *msg, str realm);
+/**
  * Returns the Public Identity extracted from the To header
  * @param msg - the SIP message
  * @returns the str containing the public id, no mem dup
  */
 str cscf_get_public_identity(struct sip_msg *msg);
+/**
+ * Returns the Public Identity extracted from the From header
+ * @param msg - the SIP message
+ * @returns the str containing the public id, no mem dup
+ */
+str cscf_get_public_identity_from(struct sip_msg *msg);
 /**
  * Returns the expires value from the Expires header in the message.
  * It searches into the Expires header and if not found returns -1
