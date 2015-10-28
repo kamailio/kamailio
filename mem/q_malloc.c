@@ -112,32 +112,37 @@ inline static unsigned long big_hash_idx(unsigned long s)
 #define END_CHECK_PATTERN2 0xabcdefed
 
 
-static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f)
+static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f,
+			      const char* file, unsigned int line)
 {
 	if (f->check!=ST_CHECK_PATTERN){
 		LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p) "
-				"beginning overwritten(%lx)!\n",
+				"beginning overwritten (%lx)! Memory allocator was called "
+				"from %s:%u. Fragment marked by %s:%lu.\n",
 				f, (char*)f+sizeof(struct qm_frag),
-				f->check);
+				f->check, file, line, f->file, f->line);
 		qm_status(qm);
 		abort();
 	};
 	if ((FRAG_END(f)->check1!=END_CHECK_PATTERN1)||
 		(FRAG_END(f)->check2!=END_CHECK_PATTERN2)){
-		LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p)"
-					" end overwritten(%lx, %lx)!\n",
+		LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p) "
+				"end overwritten (%lx, %lx)! Memory allocator was called "
+				"from %s:%u. Fragment marked by %s:%lu.\n",
 				f, (char*)f+sizeof(struct qm_frag), 
-				FRAG_END(f)->check1, FRAG_END(f)->check2);
+				FRAG_END(f)->check1, FRAG_END(f)->check2,
+				file, line, f->file, f->line);
 		qm_status(qm);
 		abort();
 	}
 	if ((f>qm->first_frag)&&
 			((PREV_FRAG_END(f)->check1!=END_CHECK_PATTERN1) ||
 				(PREV_FRAG_END(f)->check2!=END_CHECK_PATTERN2) ) ){
-		LOG(L_CRIT, "BUG: qm_*: prev. fragm. tail overwritten(%lx, %lx)[%p:%p]!"
-					"\n",
+		LOG(L_CRIT, "BUG: qm_*: prev. fragm. tail overwritten(%lx, %lx)[%p:%p]! "
+				"Memory allocator was called from %s:%u. Fragment marked by "
+				"%s:%lu.\n",
 				PREV_FRAG_END(f)->check1, PREV_FRAG_END(f)->check2, f,
-				(char*)f+sizeof(struct qm_frag));
+				(char*)f+sizeof(struct qm_frag), file, line, f->file, f->line);
 		qm_status(qm);
 		abort();
 	}
@@ -370,7 +375,7 @@ void* qm_malloc(void* qmp, unsigned long size)
 		/* we found it!*/
 		/*detach it from the free list*/
 #ifdef DBG_QM_MALLOC
-			qm_debug_frag(qm, f);
+			qm_debug_frag(qm, f, file, line);
 #endif
 		qm_detach_free(qm, f);
 		/*mark it as "busy"*/
@@ -453,7 +458,7 @@ void qm_free(void* qmp, void* p)
 	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
 
 #ifdef DBG_QM_MALLOC
-	qm_debug_frag(qm, f);
+	qm_debug_frag(qm, f, file, line);
 	if (f->u.is_free){
 		LOG(L_CRIT, "BUG: qm_free: freeing already freed pointer (%p),"
 				" called from %s: %s(%d), first free %s: %s(%ld) - aborting\n",
@@ -487,7 +492,7 @@ void qm_free(void* qmp, void* p)
 		if (((char*)next < (char*)qm->last_frag_end) && (next->u.is_free)){
 			/* join next packet */
 #ifdef DBG_QM_MALLOC
-			qm_debug_frag(qm, next);
+			qm_debug_frag(qm, next, file, line);
 #endif
 			qm_detach_free(qm, next);
 			size+=next->size+FRAG_OVERHEAD;
@@ -503,7 +508,7 @@ void qm_free(void* qmp, void* p)
 			if (prev->u.is_free){
 				/* join prev packet */
 #ifdef DBG_QM_MALLOC
-				qm_debug_frag(qm, prev);
+				qm_debug_frag(qm, prev, file, line);
 #endif
 				qm_detach_free(qm, prev);
 				size+=prev->size+FRAG_OVERHEAD;
@@ -575,7 +580,7 @@ void* qm_realloc(void* qmp, void* p, unsigned long size)
 #endif
 	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
 #ifdef DBG_QM_MALLOC
-	qm_debug_frag(qm, f);
+	qm_debug_frag(qm, f, file, line);
 	MDBG("qm_realloc: realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
 	if (f->u.is_free){
