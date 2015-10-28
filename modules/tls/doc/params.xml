@@ -459,7 +459,7 @@ modparam("tls", "tls_disable_compression", 0) # enable
 	<para>
 		Release internal OpenSSL read or write buffers as soon as they are
 		no longer needed. Combined with
-		<varname>ssl_free_list_max_len</varname> has the potential of saving
+		<varname>ssl_freelist_max_len</varname> has the potential of saving
 		a lot of memory ( ~ 32k per connection in the default configuration,
 		or 16k + <varname>ssl_max_send_fragment</varname>).
 		For &kamailio; versions &gt; 3.0 it makes little sense to disable it (0)
@@ -490,7 +490,7 @@ modparam("tls", "ssl_release_buffers", 1)
 
 
 <section id="tls.p.ssl_freelist_max_len">
-	<title><varname>ssl_free_list_max_len</varname> (integer)</title>
+	<title><varname>ssl_freelist_max_len</varname> (integer)</title>
 	<para>
 		Sets the maximum number of free memory chunks, that OpenSSL will keep
 		per connection. Setting it to 0 would cause any unused memory chunk
