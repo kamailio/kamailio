@@ -145,6 +145,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 					continue;
 				}
 				//build contact info
+				ci.aor = c->uri;
 				ci.expires = expires;
 				ci.public_ids = public_id;
 				ci.num_public_ids = public_id_cnt;
@@ -156,30 +157,6 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 				ci.received_host.s = 0;
 				ci.received_port = 0;
 				ci.received_proto = 0;
-                                ci.searchflag = 1<<SEARCH_RECEIVED;
-
-				// Received Info: First try AVP, otherwise simply take the source of the request:
-				memset(&val, 0, sizeof(int_str));
-				if (rcv_avp_name.n!=0 && search_first_avp(rcv_avp_type, rcv_avp_name, &val, 0) && val.s.len > 0) {
-					if (val.s.len>RECEIVED_MAX_SIZE) {
-						LM_ERR("received too long\n");
-						goto error;
-					}
-					if (parse_uri(val.s.s, val.s.len, &parsed_received) < 0) {
-						LM_DBG("Error parsing Received URI <%.*s>\n", val.s.len, val.s.s);
-						continue;
-					}
-					ci.received_host = parsed_received.host;
-					ci.received_port = parsed_received.port_no;
-					ci.received_proto = parsed_received.proto;
-				} else {
-					ci.received_host.len = ip_addr2sbuf(&req->rcv.src_ip, srcip, sizeof(srcip));
-					ci.received_host.s = srcip;
-					ci.received_port = req->rcv.src_port;
-					ci.received_proto = req->rcv.proto;
-				}
-				// Set to default, if not set:
-				if (ci.received_port == 0) ci.received_port = 5060;
 
 				port = puri.port_no?puri.port_no:5060;
                                 ci.via_host = puri.host;
