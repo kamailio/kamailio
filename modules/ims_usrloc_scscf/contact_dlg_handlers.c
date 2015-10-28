@@ -95,7 +95,7 @@ static void contact_dlg_handler(struct dlg_cell* dlg, int cb_types, struct dlg_c
 
         //for now we will abort if there is no dlg_out.... TODO maybe we can only do the caller side....
         if (dlg->dlg_entry_out.first == 0x00) {
-            LM_ERR("no dlg out... ignoring!!! for type [%d]\n",cb_types);
+            LM_DBG("no dlg out... ignoring!!! for type [%d] - usually happens on failure response in dialog\n",cb_types);
             return;
         }
         register_udomain("location", &_d);
