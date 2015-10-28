@@ -19,8 +19,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -88,7 +88,7 @@ str port_col = str_init("port");           /* Name of port column */
 static int check_all_branches = 1;
 
 
-/* 
+/*
  * Convert the name of the files into table index
  */
 static int load_fixup(void** param, int param_no);
@@ -330,7 +330,7 @@ static char* get_plain_uri(const str* uri)
  * -1:	deny
  * 1:	allow
  */
-static int check_routing(struct sip_msg* msg, int idx) 
+static int check_routing(struct sip_msg* msg, int idx)
 {
 	struct hdr_field *from;
 	int len, q;
@@ -435,7 +435,7 @@ check_branches:
 }
 
 
-/* 
+/*
  * Convert the name of the files into table index
  */
 static int load_fixup(void** param, int param_no)
@@ -501,7 +501,7 @@ static int single_fixup(void** param, int param_no)
 
 	strcpy(buffer, (char*)*param);
 	strcat(buffer, allow_suffix);
-	tmp = buffer; 
+	tmp = buffer;
 	ret = load_fixup(&tmp, 1);
 
 	strcpy(buffer + param_len, deny_suffix);
@@ -543,7 +543,7 @@ static int double_fixup(void** param, int param_no)
 
 		strcpy(buffer, (char*)*param);
 		strcat(buffer, allow_suffix);
-		tmp = buffer; 
+		tmp = buffer;
 		ret = load_fixup(&tmp, 1);
 
 		strcpy(buffer + param_len, deny_suffix);
@@ -587,7 +587,7 @@ static int double_fixup(void** param, int param_no)
 
 
 /*
- * module initialization function 
+ * module initialization function
  */
 static int mod_init(void)
 {
@@ -667,9 +667,9 @@ static int mi_addr_child_init(void)
 
 
 /*
- * destroy function 
+ * destroy function
  */
-static void mod_exit(void) 
+static void mod_exit(void)
 {
 	int i;
 
@@ -715,7 +715,7 @@ int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 /*
  * Test of REGISTER messages. Creates To-Contact pairs and compares them
  * against rules in allow and deny files passed as parameters. The function
- * iterates over all Contacts and creates a pair with To for each contact 
+ * iterates over all Contacts and creates a pair with To for each contact
  * found. That allows to restrict what IPs may be used in registrations, for
  * example
  */
@@ -831,7 +831,7 @@ int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file)
  * -1:	deny
  * 1:	allow
  */
-static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp) 
+static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 {
 	struct hdr_field *from;
 	int idx, len;

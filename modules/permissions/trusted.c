@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -108,11 +108,11 @@ int reload_trusted_table(void)
 	row = RES_ROWS(res);
 
 	LM_DBG("number of rows in trusted table: %d\n", RES_ROW_N(res));
-		
+
 	for (i = 0; i < RES_ROW_N(res); i++) {
 	    val = ROW_VALUES(row + i);
 	    if ((ROW_N(row + i) == 6) &&
-		((VAL_TYPE(val) == DB1_STRING) || (VAL_TYPE(val) == DB1_STR) ) && 
+		((VAL_TYPE(val) == DB1_STRING) || (VAL_TYPE(val) == DB1_STR) ) &&
 		!VAL_NULL(val) &&
 		((VAL_TYPE(val + 1) == DB1_STRING) || (VAL_TYPE(val + 1) == DB1_STR))
 		&& !VAL_NULL(val + 1) &&
@@ -170,7 +170,7 @@ int reload_trusted_table(void)
 	empty_hash_table(old_hash_table);
 
 	LM_DBG("trusted table reloaded successfully.\n");
-	
+
 	return 1;
 }
 
@@ -215,10 +215,10 @@ int init_trusted(void)
 
 		hash_table_1 = new_hash_table();
 		if (!hash_table_1) return -1;
-		
+
 		hash_table_2  = new_hash_table();
 		if (!hash_table_2) goto error;
-		
+
 		hash_table = (struct trusted_list ***)shm_malloc
 			(sizeof(struct trusted_list **));
 		if (!hash_table) goto error;
@@ -321,7 +321,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
         if ((proto_int == PROTO_NONE) ||
 	                (strcasecmp(proto_string, "any") == 0))
 	        return 1;
-	
+
 	if (proto_int == PROTO_UDP) {
 		if (strcasecmp(proto_string, "udp") == 0) {
 			return 1;
@@ -329,7 +329,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_TCP) {
 		if (strcasecmp(proto_string, "tcp") == 0) {
 			return 1;
@@ -337,7 +337,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_TLS) {
 		if (strcasecmp(proto_string, "tls") == 0) {
 			return 1;
@@ -345,7 +345,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_SCTP) {
 		if (strcasecmp(proto_string, "sctp") == 0) {
 			return 1;
@@ -361,7 +361,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_WSS) {
 		if (strcasecmp(proto_string, "wss") == 0) {
 			return 1;
@@ -459,14 +459,14 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 					return -1;
 				}
 			}
-			if (!peer_tag_mode) 
+			if (!peer_tag_mode)
 				return 1;
 			count++;
 		}
 	}
 	if (!count)
 		return -1;
-	else 
+	else
 		return count;
 }
 
@@ -475,18 +475,18 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
  * Checks based on given source IP address and protocol, and From URI
  * of request if request can be trusted without authentication.
  */
-int allow_trusted(struct sip_msg* msg, char *src_ip, int proto) 
+int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 {
 	int result;
 	db1_res_t* res = NULL;
-	
+
 	db_key_t keys[1];
 	db_val_t vals[1];
 	db_key_t cols[4];
 
 	if (db_mode == DISABLE_CACHE) {
 		db_key_t order = &priority_col;
-	
+
 	        if (db_handle == 0) {
 		    LM_ERR("no connection to database\n");
 		    return -1;
@@ -502,7 +502,7 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 			LM_ERR("failed to use trusted table\n");
 			return -1;
 		}
-		
+
 		VAL_TYPE(vals) = DB1_STRING;
 		VAL_NULL(vals) = 0;
 		VAL_STRING(vals) = src_ip;
@@ -517,7 +517,7 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 			perm_dbf.free_result(db_handle, res);
 			return -1;
 		}
-		
+
 		result = match_res(msg, proto, res);
 		perm_dbf.free_result(db_handle, res);
 		return result;
@@ -531,7 +531,7 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
  * Checks based on request's source address, protocol, and From URI
  * if request can be trusted without authentication.
  */
-int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2) 
+int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2)
 {
     return allow_trusted(_msg, ip_addr2a(&(_msg->rcv.src_ip)),
 			 _msg->rcv.proto);
@@ -542,7 +542,7 @@ int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2)
  * Checks based on source address and protocol given in pvar arguments and
  * and requests's From URI, if request can be trusted without authentication.
  */
-int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp) 
+int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp)
 {
     str src_ip, proto;
     int proto_int;
@@ -552,7 +552,7 @@ int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp)
 	LM_ERR("src_ip param does not exist or has no value\n");
 	return -1;
     }
-    
+
     if (_proto_sp==NULL
 	|| (fixup_get_svalue(_msg, (gparam_p)_proto_sp, &proto) != 0)) {
 	LM_ERR("proto param does not exist or has no value\n");

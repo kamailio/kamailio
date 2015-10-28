@@ -18,15 +18,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
  * --------
  *  2003-09-03  replaced /usr/local/et/ser/ with CFG_DIR (andrei)
  */
- 
+
 #ifndef PERMISSIONS_H
 #define PERMISSIONS_H 1
 

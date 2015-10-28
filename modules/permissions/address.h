@@ -15,23 +15,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef ADDRESS_H
 #define ADDRESS_H
-		
+
 #include "../../parser/msg_parser.h"
 
 
 /* Pointer to current address hash table pointer */
-extern struct addr_list ***addr_hash_table; 
+extern struct addr_list ***addr_hash_table;
 
 
 /* Pointer to current subnet table */
-extern struct subnet **subnet_table; 
+extern struct subnet **subnet_table;
 
 
 /* Pointer to current domain name table */

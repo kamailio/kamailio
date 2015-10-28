@@ -17,12 +17,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -34,10 +34,10 @@
 #include "rule.h"
 
 
-/* 
- * allocate memory for a new rule 
+/*
+ * allocate memory for a new rule
  */
-rule *new_rule(void) 
+rule *new_rule(void)
 {
 	rule	*r;
 
@@ -52,13 +52,13 @@ rule *new_rule(void)
 }
 
 
-/* 
- * free memory allocated by a rule 
+/*
+ * free memory allocated by a rule
  */
-void free_rule(rule *r) 
+void free_rule(rule *r)
 {
 	if (!r) return;
-		
+
 	if (r->left) free_expression(r->left);
 	if (r->left_exceptions) free_expression(r->left_exceptions);
 	if (r->right) free_expression(r->right);
@@ -73,13 +73,13 @@ void free_rule(rule *r)
 }
 
 
-/* 
- * list rules 
+/*
+ * list rules
  */
-void print_rule(rule *r) 
+void print_rule(rule *r)
 {
 	if (!r) return;
-		
+
 	printf("\nNEW RULE:\n");
 	printf("\n\tLEFT: ");
 	if (r->left) print_expression(r->left);  else printf("ALL");
@@ -98,10 +98,10 @@ void print_rule(rule *r)
 }
 
 
-/* 
+/*
  * look for a proper rule matching with left:right and correct time
  */
-int search_rule(rule *r, char *left, char *right) 
+int search_rule(rule *r, char *left, char *right)
 {
 	rule	*r1;
 
@@ -121,13 +121,13 @@ int search_rule(rule *r, char *left, char *right)
 
 
 /*
- * allocate memory for a new expression 
+ * allocate memory for a new expression
  * str is saved in vale, and compiled to POSIX regexp (reg_value)
  */
-expression *new_expression(char *str) 
+expression *new_expression(char *str)
 {
 	expression	*e;
-	
+
 	if (!str) return 0;
 
 	e = (expression *)pkg_malloc(sizeof(expression));
@@ -137,7 +137,7 @@ expression *new_expression(char *str)
 	}
 
 	strcpy(e->value, str);
-	
+
 	e->reg_value = (regex_t*)pkg_malloc(sizeof(regex_t));
 	if (!e->reg_value) {
 		LM_ERR("not enough pkg memory\n");
@@ -151,16 +151,16 @@ expression *new_expression(char *str)
 		pkg_free(e);
 		return NULL;
 	}
-	
+
 	e->next = 0;
 	return e;
 }
 
 
-/* 
- * free memory allocated by an expression 
+/*
+ * free memory allocated by an expression
  */
-void free_expression(expression *e) 
+void free_expression(expression *e)
 {
 	if (!e) return;
 
@@ -170,10 +170,10 @@ void free_expression(expression *e)
 }
 
 
-/* 
- * list expressions 
+/*
+ * list expressions
  */
-void print_expression(expression *e) 
+void print_expression(expression *e)
 {
 	if (!e) return;
 
