@@ -170,7 +170,7 @@ int kz_pua_publish_presence_to_presentity(struct json_object *json_obj) {
     str event = str_init("presence");
     str presence_body = { 0, 0 };
     str activity = str_init("");
-    str note = str_init("Idle");
+    str note = str_init("Available");
     str status = str_presence_status_online;
     int expires = 0;
 
@@ -217,9 +217,9 @@ int kz_pua_publish_presence_to_presentity(struct json_object *json_obj) {
     	note = str_presence_note_offline;
     	status = str_presence_status_offline;
 
-    } else {
-    	note = str_presence_note_idle;
-    }
+    }; // else {
+    //	note = str_presence_note_idle;
+//    }
 
 
     sprintf(body, PRESENCE_BODY, from_user.s, callid.s, status.s, note.s, activity.s, note.s);
