@@ -315,6 +315,24 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
 </programlisting>
 		</example>
 	</section>
+    <section>
+        <title><varname>force_dummy_presence</varname>(int)</title>
+        <para>
+        Set this parameter to enable simple body notify with status 'open' when presentity info is not available.
+        </para>
+        <para>
+        <emphasis>Default value: <quote>0</quote>.
+        </emphasis>
+        </para>
+        <example>
+        <title>Set <varname>force_dummy_presence</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("presence_xml", "force_dummy_presence", 1)
+...
+</programlisting>
+        </example>
+    </section>
 </section>
 
 

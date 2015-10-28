@@ -33,6 +33,7 @@ Anca-Maria Vamanu
               3.8. xcap_server (str)
               3.9. passive_mode(int)
               3.10. xcapauth_userdel_reason(str)
+              3.11. force_dummy_presence(int)
 
         4. Functions
 
@@ -56,8 +57,9 @@ Anca-Maria Vamanu
    1.8. Set xcap_server parameter
    1.9. Set passive_mode parameter
    1.10. Set xcapauth_userdel_reason parameter
-   1.11. pres_check_basic usage
-   1.12. pres_check_activities usage
+   1.11. Set force_dummy_presence parameter
+   1.12. pres_check_basic usage
+   1.13. pres_check_activities usage
 
 Chapter 1. Admin Guide
 
@@ -81,6 +83,7 @@ Chapter 1. Admin Guide
         3.8. xcap_server (str)
         3.9. passive_mode(int)
         3.10. xcapauth_userdel_reason(str)
+        3.11. force_dummy_presence(int)
 
    4. Functions
 
@@ -139,6 +142,7 @@ Chapter 1. Admin Guide
    3.8. xcap_server (str)
    3.9. passive_mode(int)
    3.10. xcapauth_userdel_reason(str)
+   3.11. force_dummy_presence(int)
 
 3.1. db_url(str)
 
@@ -284,12 +288,24 @@ modparam("presence_xml", "xcapauth_userdel_reason", "probation;retry-after=30")
 modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
 ...
 
+3.11. force_dummy_presence(int)
+
+   Set this parameter to enable simple body notify with status 'open' when
+   presentity info is not available.
+
+   Default value: "0".
+
+   Example 1.11. Set force_dummy_presence parameter
+...
+modparam("presence_xml", "force_dummy_presence", 1)
+...
+
 4. Functions
 
    4.1. pres_check_basic(presentity_uri, status)
    4.2. pres_check_activities(presentity_uri, activity)
 
-4.1. pres_check_basic(presentity_uri, status)
+4.1.  pres_check_basic(presentity_uri, status)
 
    Checks the /presence/tuple/status/basic nodes in the presentity for
    presentity_uri against the value in status.
@@ -300,7 +316,7 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
      * 1 - if a match is found.
      * -1 - if a match is not found.
 
-   Example 1.11. pres_check_basic usage
+   Example 1.12. pres_check_basic usage
 ...
     if (pres_check_basic("$ru", "open")) {
         ...
@@ -312,7 +328,7 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
     }
 ...
 
-4.2. pres_check_activities(presentity_uri, activity)
+4.2.  pres_check_activities(presentity_uri, activity)
 
    Checks whether a /presence/person/activities/activity node exists in
    the presentity for presentity_uri.
@@ -324,7 +340,7 @@ modparam("presence_xml", "xcapauth_userdel_reason", "rejected")
      * -1 - if a match is not found.
      * -2 - if /presence/person or /presence/person/activity do not exist.
 
-   Example 1.12. pres_check_activities usage
+   Example 1.13. pres_check_activities usage
 ...
     if (pres_check_basic("$ru", "open")) {
         pres_check_activities("$ru", "unknown");

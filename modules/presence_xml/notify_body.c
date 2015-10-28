@@ -43,6 +43,8 @@
 #include "notify_body.h"
 #include "presence_xml.h"
 
+extern int force_dummy_presence;
+
 str* offline_nbody(str* body);
 str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n);
 str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node);
@@ -56,14 +58,61 @@ void free_xml_body(char* body)
 	body= NULL;
 }
 
+#define PRESENCE_EMPTY_BODY_SIZE 512
+
+#define PRESENCE_EMPTY_BODY "<presence> \
+<tuple id=\"615293b33c62dec073e05d9421e9f48b\">\
+<status>\
+<basic>open</basic>\
+</status>\
+</tuple>\
+<note xmlns=\"urn:ietf:params:xml:ns:pidf\">Available</note>\
+</presence>"
+
+str* pres_agg_nbody_empty(str* pres_user, str* pres_domain)
+{
+	str* n_body= NULL;
+
+	LM_DBG("creating empty presence for [pres_user]=%.*s [pres_domain]= %.*s\n",
+			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
+
+	str* body_array = (str*)pkg_malloc(sizeof(str));
+	char* body = (char*)pkg_malloc(PRESENCE_EMPTY_BODY_SIZE);
+	sprintf(body, PRESENCE_EMPTY_BODY);
+	body_array->s = body;
+	body_array->len = strlen(body);
+
+
+	n_body= agregate_xmls(pres_user, pres_domain, &body_array, 1);
+	LM_DBG("[n_body]=%p\n", n_body);
+	if(n_body) {
+		LM_DBG("[*n_body]=%.*s\n",n_body->len, n_body->s);
+	}
+	if(n_body== NULL)
+	{
+		LM_ERR("while aggregating body\n");
+	}
+
+	pkg_free(body);
+	pkg_free(body_array);
+
+
+	xmlCleanupParser();
+	xmlMemoryDump();
+
+	return n_body;
+}
 
 str* pres_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, int off_index)
 {
 	str* n_body= NULL;
 	str* body= NULL;
 
-	if(body_array== NULL)
+	if(body_array== NULL && (!force_dummy_presence))
 		return NULL;
+
+	if(body_array== NULL)
+		return pres_agg_nbody_empty(pres_user, pres_domain);
 
 	if(off_index>= 0)
 	{
