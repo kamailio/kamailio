@@ -45,6 +45,7 @@ Alexandr Dubovikov
               3.16. capture_node (str)
               3.17. insert_retries (integer)
               3.18. insert_retry_timeout (integer)
+              3.19. callid_aleg_header (str)
 
         4. MI Commands
 
@@ -77,6 +78,7 @@ Alexandr Dubovikov
    1.16. Set capture_node parameter
    1.17. Set insert_retries parameter
    1.18. Set insert_retry_timeout parameter
+   1.19. Set callid_aleg_header parameter
 
 Chapter 1. Admin Guide
 
@@ -108,6 +110,7 @@ Chapter 1. Admin Guide
         3.16. capture_node (str)
         3.17. insert_retries (integer)
         3.18. insert_retry_timeout (integer)
+        3.19. callid_aleg_header (str)
 
    4. MI Commands
 
@@ -172,6 +175,7 @@ Chapter 1. Admin Guide
    3.16. capture_node (str)
    3.17. insert_retries (integer)
    3.18. insert_retry_timeout (integer)
+   3.19. callid_aleg_header (str)
 
 3.1. db_url (str)
 
@@ -410,6 +414,19 @@ modparam("sipcapture", "insert_retries", 5)
    Example 1.18. Set insert_retry_timeout parameter
 ...
 modparam("sipcapture", "insert_retry_timeout", 10)
+...
+
+3.19. callid_aleg_header (str)
+
+   Header name used to correlate A-leg with B-leg. It can take a list of
+   headers, separated by semicolon, e.g. "X-CID0;X-CID1". First match
+   wins.
+
+   Default value is "X-CID".
+
+   Example 1.19. Set callid_aleg_header parameter
+...
+modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 ...
 
 4. MI Commands
