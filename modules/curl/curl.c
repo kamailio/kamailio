@@ -389,7 +389,8 @@ static int fixup_curl_connect(void** param, int param_no)
 
 /*
  * Fix curl_connect params when posting (5 parameters): 
- *	connection (string/pvar), url (string with pvars), content-type, data (string/pvar, pvar
+ *	connection (string/pvar), url (string with pvars), content-type, 
+ *      data (string/pvar, pvar)
  */
 static int fixup_curl_connect_post(void** param, int param_no)
 {
@@ -397,12 +398,12 @@ static int fixup_curl_connect_post(void** param, int param_no)
     str s;
     pv_elem_t *pv = NULL;
 
-    if (param_no == 1 || param_no == 2 || param_no == 3) {
+    if (param_no == 1 || param_no == 3) {
 	/* We want char * strings */
-	/* At some point we need to allow pvars in the string. */
 	return 0;
 	}
-    if (param_no == 4) {
+    /* URL and data may contain pvar */
+    if (param_no == 4 || param_no == 2) {
         s.s = (char*)(*param);
         s.len = strlen(s.s);
 

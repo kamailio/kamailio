@@ -264,6 +264,9 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	char passwordbuf[BUFSIZ/2];
 	char connurlbuf[BUFSIZ/2];
 	char urlbuf[512];
+	str urlbuf2;
+	char *urlbuf3 = NULL;
+
 	unsigned int len = 0;
 	str postdatabuf;
 	char *postdata = NULL;
@@ -292,9 +295,41 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	strncpy(passwordbuf, conn->password.s, conn->password.len);
 	strncpy(connurlbuf, conn->url.s, conn->url.len);
 
-	strncpy(urlbuf,conn->schema.s, conn->schema.len);
-	snprintf(&urlbuf[conn->schema.len],(sizeof(urlbuf) - conn->schema.len), "://%s%s%s", connurlbuf, 
-		(_url[0] && _url[0] == '/')?"":(_url[0] != '\0' ? "/": ""), _url);
+	LM_DBG("******** CURL Connection found %s\n", connection);
+
+	if (_url && *_url) {
+		if(pv_printf_s(_m, (pv_elem_t*) _url, &urlbuf2) != 0) {
+               		LM_ERR("curl :: unable to handle post data %s\n", _url);
+               		return -1;
+        	}
+        	if(urlbuf2.s==NULL || urlbuf2.len == 0) {
+               		LM_ERR("curl :: invalid url parameter\n");
+               		return -1;
+        	}
+		LM_DBG("******** CURL Connection URL parsed for  %s\n", connection);
+		/* Allocated using pkg_memory */
+		urlbuf3 = as_asciiz(&urlbuf2);
+		if (urlbuf3  == NULL) {
+       			ERR("Curl: No memory left\n");
+          		return -1;
+        	}
+		LM_DBG("******** CURL URL string after PV parsing %s\n", urlbuf3);
+	} else {
+		LM_DBG("******** CURL URL string NULL no PV parsing %s\n", _url);
+	}
+	strncpy(urlbuf, conn->schema.s, conn->schema.len);
+	if (urlbuf3 != NULL) {
+		snprintf(&urlbuf[conn->schema.len],(sizeof(urlbuf) - conn->schema.len), "://%s%s%s", connurlbuf, 
+			(urlbuf3[0] && urlbuf3[0] == '/')?"":(urlbuf3[0] != '\0' ? "/": ""), urlbuf3);
+	} else {
+		snprintf(&urlbuf[conn->schema.len],(sizeof(urlbuf) - conn->schema.len), "://%s%s%s", connurlbuf, 
+			(_url[0] && _url[0] == '/')?"":(_url[0] != '\0' ? "/": ""), _url);
+	}
+
+	/* Release the memory allocated by as_asciiz */
+	if (urlbuf3 != NULL) {
+		pkg_free(urlbuf3);
+	}
 	LM_DBG("***** #### ***** CURL URL: %s \n", urlbuf);
 	if (_post && *_post) {
 		 if(pv_printf_s(_m, (pv_elem_t*)_post, &postdatabuf) != 0) {
@@ -319,6 +354,7 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	res = curL_query_url(_m, urlbuf, _result, usernamebuf, passwordbuf, (contenttype ? contenttype : "text/plain"), postdata,
 		conn->timeout, conn->http_follow_redirect, 0, (unsigned int) maxdatasize );
 
+	LM_DBG("***** #### ***** CURL DONE : %s \n", urlbuf);
 	if (postdata != NULL) {
 		pkg_free(postdata);
 	}
