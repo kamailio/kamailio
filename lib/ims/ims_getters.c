@@ -122,6 +122,15 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm) {
 	struct hdr_field* h = 0;
 	int ret, i, res;
 
+	if ((parse_headers(msg, HDR_AUTHORIZATION_F, 0) != 0) && (parse_headers(msg, HDR_PROXYAUTH_F, 0) != 0)) {
+		return pi;
+	}
+
+	h = msg->authorization;
+	if (!msg->authorization) {
+		goto fallback;
+	}
+		
 	if (realm.len && realm.s) {
 		ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
 		if (ret < 0) {
@@ -140,6 +149,9 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm) {
 			}
 		}
 	}
+	
+	if (!h)
+		goto fallback;
 
 	res = parse_credentials(h);
 	if (res != 0) {
