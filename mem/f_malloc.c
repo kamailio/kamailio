@@ -265,7 +265,8 @@ static inline
 #ifdef DBG_F_MALLOC 
 void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 					unsigned long size,
-					const char* file, const char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line,
+					const char* mname)
 #else
 void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 					unsigned long size)
@@ -291,6 +292,7 @@ void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 		n->file=file;
 		n->func="frag. from fm_split_frag";
 		n->line=line;
+		n->mname=mname;
 #endif
 		n->check=ST_CHECK_PATTERN;
 		/* reinsert n in free list*/
@@ -419,8 +421,8 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, unsigned long size)
  * \return address of allocated memory
  */
 #ifdef DBG_F_MALLOC
-void* fm_malloc(void* qmp, unsigned long size,
-					const char* file, const char* func, unsigned int line)
+void* fm_malloc(void* qmp, unsigned long size, const char* file,
+                    const char* func, unsigned int line, const char* mname)
 #else
 void* fm_malloc(void* qmp, unsigned long size)
 #endif
@@ -496,7 +498,7 @@ found:
 
 	/*see if use full frag or split it in two*/
 #ifdef DBG_F_MALLOC
-	fm_split_frag(qm, frag, size, file, func, line);
+	fm_split_frag(qm, frag, size, file, func, line, mname);
 #else
 	fm_split_frag(qm, frag, size);
 #endif
@@ -506,6 +508,7 @@ finish:
 #ifdef DBG_F_MALLOC
 	frag->file=file;
 	frag->func=func;
+	frag->mname=mname;
 	frag->line=line;
 	MDBG("fm_malloc(%p, %lu) returns address %p \n", qm, size,
 		(char*)frag+sizeof(struct fm_frag));
@@ -557,8 +560,8 @@ static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
  * \param p freed memory
  */
 #ifdef DBG_F_MALLOC
-void fm_free(void* qmp, void* p, const char* file, const char* func, 
-				unsigned int line)
+void fm_free(void* qmp, void* p, const char* file, const char* func,
+				unsigned int line, const char* mname)
 #else
 void fm_free(void* qmp, void* p)
 #endif
@@ -602,6 +605,7 @@ void fm_free(void* qmp, void* p)
 	f->file=file;
 	f->func=func;
 	f->line=line;
+	f->mname=mname;
 #endif
 #ifdef MEM_JOIN_FREE
 	if(unlikely(cfg_get(core, core_cfg, mem_join)!=0))
@@ -622,7 +626,8 @@ void fm_free(void* qmp, void* p)
  */
 #ifdef DBG_F_MALLOC
 void* fm_realloc(void* qmp, void* p, unsigned long size,
-					const char* file, const char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line,
+					const char *mname)
 #else
 void* fm_realloc(void* qmp, void* p, unsigned long size)
 #endif
@@ -648,7 +653,7 @@ void* fm_realloc(void* qmp, void* p, unsigned long size)
 	if (size==0) {
 		if (p)
 #ifdef DBG_F_MALLOC
-			fm_free(qm, p, file, func, line);
+			fm_free(qm, p, file, func, line, mname);
 #else
 			fm_free(qm, p);
 #endif
@@ -656,7 +661,7 @@ void* fm_realloc(void* qmp, void* p, unsigned long size)
 	}
 	if (p==0)
 #ifdef DBG_F_MALLOC
-		return fm_malloc(qm, size, file, func, line);
+		return fm_malloc(qm, size, file, func, line, mname);
 #else
 		return fm_malloc(qm, size);
 #endif
@@ -671,7 +676,7 @@ void* fm_realloc(void* qmp, void* p, unsigned long size)
 		/* shrink */
 #ifdef DBG_F_MALLOC
 		MDBG("fm_realloc: shrinking from %lu to %lu\n", f->size, size);
-		fm_split_frag(qm, f, size, file, "frag. from fm_realloc", line);
+		fm_split_frag(qm, f, size, file, "frag. from fm_realloc", line, mname);
 #else
 		fm_split_frag(qm, f, size);
 #endif
@@ -695,7 +700,7 @@ void* fm_realloc(void* qmp, void* p, unsigned long size)
 			if (f->size > size){
 		#ifdef DBG_F_MALLOC
 				fm_split_frag(qm, f, size, file, "fragm. from fm_realloc",
-						line);
+						line, mname);
 		#else
 				fm_split_frag(qm, f, size);
 		#endif
@@ -703,7 +708,7 @@ void* fm_realloc(void* qmp, void* p, unsigned long size)
 		}else{
 			/* could not join => realloc */
 	#ifdef DBG_F_MALLOC
-			ptr=fm_malloc(qm, size, file, func, line);
+			ptr=fm_malloc(qm, size, file, func, line, mname);
 	#else
 			ptr=fm_malloc(qm, size);
 	#endif
@@ -712,7 +717,7 @@ void* fm_realloc(void* qmp, void* p, unsigned long size)
 				memcpy(ptr, p, orig_size);
 			}
 	#ifdef DBG_F_MALLOC
-			fm_free(qm, p, file, func, line);
+			fm_free(qm, p, file, func, line, mname);
 	#else
 			fm_free(qm, p);
 	#endif
@@ -873,17 +878,6 @@ unsigned long fm_available(void* qmp)
 
 #ifdef DBG_F_MALLOC
 
-typedef struct _mem_counter{
-	const char *file;
-	const char *func;
-	unsigned long line;
-	
-	unsigned long size;
-	int count;
-	
-	struct _mem_counter *next;
-} mem_counter;
-
 static mem_counter* get_mem_counter(mem_counter **root,struct fm_frag* f)
 {
 	mem_counter *x;
@@ -897,6 +891,7 @@ make_new:
 	x->file = f->file;
 	x->func = f->func;
 	x->line = f->line;
+	x->mname = f->mname;
 	x->count = 0;
 	x->size = 0;
 	x->next = *root;
@@ -947,9 +942,60 @@ void fm_sums(void* qmp)
 	}
 	LOG_(DEFAULT_FACILITY, memlog, "fm_status: ",
 			"-----------------------------\n");
+
+}
+
+
+void fm_mod_get_stats(void *qmp, void **fm_rootp)
+{
+	if (!fm_rootp) {
+		return ;
+	}
+
+	LM_DBG("get fm memory statistics\n");
+
+	struct fm_block *qm = (struct fm_block *) qmp;
+	mem_counter **fm_root = (mem_counter **) fm_rootp;
+	struct fm_frag* f;
+	int i;
+	mem_counter *x;
+
+	if (!qm) return ;
+
+	/* update fragment detail list */
+	for (f=qm->first_frag, i=0; (char*)f<(char*)qm->last_frag;
+			f=FRAG_NEXT(f), i++){
+		if (f->is_free==0){
+			x = get_mem_counter(fm_root,f);
+			x->count++;
+			x->size+=f->size;
+		}
+	}
+
+    return ;
+}
+
+void fm_mod_free_stats(void *fm_rootp)
+{
+	if (!fm_rootp) {
+		return ;
+	}
+
+	LM_DBG("free fm memory statistics\n");
+
+	mem_counter *root = (mem_counter *) fm_rootp;
+	mem_counter *new, *old;
+	new = root;
+	old = root;
+
+	while (new) {
+		old = new;
+		new = new->next;
+		free(old);
+	}
 }
 #else
-void fm_sums(void* qmp)
+void fm_sums(void *qmp)
 {
 	struct fm_block* qm;
 	int memlog;
@@ -958,6 +1004,18 @@ void fm_sums(void* qmp)
 	memlog=cfg_get(core, core_cfg, memlog);
 	LOG_(DEFAULT_FACILITY, memlog, "fm_sums: ", "not available (%p)\n", qm);
 	return;
+}
+
+void fm_mod_get_stats(void *qmp, void **fm_rootp)
+{
+	LM_WARN("Enable DBG_F_MALLOC for getting statistics\n");
+	return ;
+}
+
+void fm_mod_free_stats(void *fm_rootp)
+{
+	LM_WARN("Enable DBG_F_MALLOC for freeing statistics\n");
+	return ;
 }
 #endif /* DBG_F_MALLOC */
 
@@ -1009,6 +1067,8 @@ int fm_malloc_init_pkg_manager(void)
 	ma.xavailable = fm_available;
 	ma.xsums      = fm_sums;
 	ma.xdestroy   = fm_malloc_destroy_pkg_manager;
+	ma.xstats     = fm_mod_get_stats;
+	ma.xfstats    = fm_mod_free_stats;
 
 	return pkg_init_api(&ma);
 }
@@ -1021,38 +1081,38 @@ static struct fm_block *_fm_shm_block = 0;
 /*SHM wrappers to sync the access to memory block*/
 #ifdef DBG_F_MALLOC
 void* fm_shm_malloc(void* qmp, unsigned long size,
-					const char* file, const char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
 	shm_lock();
-	r = fm_malloc(qmp, size, file, func, line);
+	r = fm_malloc(qmp, size, file, func, line, mname);
 	shm_unlock();
 	return r;
 }
 void* fm_shm_realloc(void* qmp, void* p, unsigned long size,
-					const char* file, const char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
 	shm_lock();
-	r = fm_realloc(qmp, p, size, file, func, line);
+	r = fm_realloc(qmp, p, size, file, func, line, mname);
 	shm_unlock();
 	return r;
 }
 void* fm_shm_resize(void* qmp, void* p, unsigned long size,
-					const char* file, const char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
 	shm_lock();
-	if(p) fm_free(qmp, p, file, func, line);
-	r = fm_malloc(qmp, size, file, func, line);
+	if(p) fm_free(qmp, p, file, func, line, mname);
+	r = fm_malloc(qmp, size, file, func, line, mname);
 	shm_unlock();
 	return r;
 }
 void fm_shm_free(void* qmp, void* p, const char* file, const char* func,
-				unsigned int line)
+				unsigned int line, const char* mname)
 {
 	shm_lock();
-	fm_free(qmp, p, file, func, line);
+	fm_free(qmp, p, file, func, line, mname);
 	shm_unlock();
 }
 #else
@@ -1158,6 +1218,8 @@ int fm_malloc_init_shm_manager(void)
 	ma.xavailable     = fm_shm_available;
 	ma.xsums          = fm_shm_sums;
 	ma.xdestroy       = fm_malloc_destroy_shm_manager;
+	ma.xstats         = fm_mod_get_stats;
+	ma.xfstats        = fm_mod_free_stats;
 
 	if(shm_init_api(&ma)<0) {
 		LM_ERR("cannot initialize the core shm api\n");
