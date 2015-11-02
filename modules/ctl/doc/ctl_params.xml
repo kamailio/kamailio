@@ -200,13 +200,13 @@ modparam("ctl", "autoconversion", 1)
 		kilobytes.
 	</para>
 	<para>
-		Default: 4 (meaning 4KB);
+		Default: 32 (meaning 32KB);
 	</para>
 	<example>
 		<title>Set the <varname>binrpc_max_body_size</varname> parameter
 		</title>
 		<programlisting>
-modparam("ctl", "binrpc_max_body_size", 10)
+modparam("ctl", "binrpc_max_body_size", 16)
 		</programlisting>
 	</example>
 	</section>
@@ -218,13 +218,13 @@ modparam("ctl", "binrpc_max_body_size", 10)
 		kilobytes.
 	</para>
 	<para>
-		Default: 1 (meaning 1KB);
+		Default: 8 (meaning 8KB);
 	</para>
 	<example>
 		<title>Set the <varname>binrpc_struct_max_body_size</varname> parameter
 		</title>
 		<programlisting>
-modparam("ctl", "binrpc_struct_max_body_size", 3)
+modparam("ctl", "binrpc_struct_max_body_size", 4)
 		</programlisting>
 	</example>
 	</section>

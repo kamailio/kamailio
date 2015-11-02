@@ -235,20 +235,20 @@ modparam("ctl", "autoconversion", 1)
    Set the size of binrpc buffer for RPC reply. Value represents
    kilobytes.
 
-   Default: 4 (meaning 4KB);
+   Default: 32 (meaning 32KB);
 
    Example 1.8. Set the binrpc_max_body_size parameter
-modparam("ctl", "binrpc_max_body_size", 10)
+modparam("ctl", "binrpc_max_body_size", 16)
 
 3.8. binrpc_struct_max_body_size (integer)
 
    Set the size of binrpc structure buffer for RPC reply. Value represents
    kilobytes.
 
-   Default: 1 (meaning 1KB);
+   Default: 8 (meaning 8KB);
 
    Example 1.9. Set the binrpc_struct_max_body_size parameter
-modparam("ctl", "binrpc_struct_max_body_size", 3)
+modparam("ctl", "binrpc_struct_max_body_size", 4)
 
 4. SIP-router RPC Functions
 
