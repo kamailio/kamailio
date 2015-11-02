@@ -55,7 +55,8 @@ typedef struct {
 	char		*buf;
 	size_t		curr_size;
 	size_t		pos;
-} http_res_stream_t;
+	size_t		max_size;
+} curl_res_stream_t;
 
 
 /*! Predefined connection objects */
@@ -76,7 +77,7 @@ typedef struct _curl_con
 	unsigned int port;		/*!< The port to connect to */
 	int timeout;			/*!< Timeout for this connection */
 	long maxdatasize;		/*!< Maximum data download on GET or POST */
-	http_res_stream_t *stream;	/*!< Curl stream */
+	curl_res_stream_t *stream;	/*!< Curl stream */
 	struct _curl_con *next;		/*!< next connection */
 	char redirecturl[512];		/*!< Last redirect URL - to use for $curlredirect(curlcon) pv */
 } curl_con_t;

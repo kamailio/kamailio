@@ -60,26 +60,26 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
  */
 size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 {
-    /* A question here is if we can somehow signal maxdatasize and stop filling
-	buffers at maxdatasize - we don't need any more. Or just ignore and stop
-	allocating pkg memory at that point. A good todo.
-     */
-    http_res_stream_t *stream = (http_res_stream_t *) stream_ptr;
+    curl_res_stream_t *stream = (curl_res_stream_t *) stream_ptr;
 
-    stream->buf = (char *) pkg_realloc(stream->buf, stream->curr_size + 
-				(size * nmemb) + 1);
 
-    if (stream->buf == NULL) {
-	LM_ERR("cannot allocate memory for stream\n");
-	return CURLE_WRITE_ERROR;
+    if (stream->max_size == 0 || stream->curr_size < stream->max_size) {
+    	stream->buf = (char *) pkg_realloc(stream->buf, stream->curr_size + (size * nmemb) + 1);
+
+    	if (stream->buf == NULL) {
+		LM_ERR("cannot allocate memory for stream\n");
+		return CURLE_WRITE_ERROR;
+    	}
+
+    	memcpy(&stream->buf[stream->pos], (char *) ptr, (size * nmemb));
+
+    	stream->curr_size += ((size * nmemb) + 1);
+    	stream->pos += (size * nmemb);
+
+    	stream->buf[stream->pos + 1] = '\0';
+    }  else {
+    	LM_DBG("****** ##### CURL Max datasize exceeded: max  %u current %u\n", (unsigned int) stream->max_size, (unsigned int)stream->curr_size);
     }
-
-    memcpy(&stream->buf[stream->pos], (char *) ptr, (size * nmemb));
-
-    stream->curr_size += ((size * nmemb) + 1);
-    stream->pos += (size * nmemb);
-
-    stream->buf[stream->pos + 1] = '\0';
 
     return size * nmemb;
  }
@@ -93,7 +93,7 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     CURLcode res;  
     str value;
     char *url, *at = NULL;
-    http_res_stream_t stream;
+    curl_res_stream_t stream;
     long stat;
     pv_spec_t *dst;
     pv_value_t val;
@@ -101,7 +101,8 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     double total_time;
     struct curl_slist *headerlist = NULL;
 
-    memset(&stream, 0, sizeof(http_res_stream_t));
+    memset(&stream, 0, sizeof(curl_res_stream_t));
+    stream.max_size = (size_t) maxdatasize;
 
     value.s = _url;
     value.len = strlen(_url);
