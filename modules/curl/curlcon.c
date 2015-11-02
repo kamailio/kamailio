@@ -90,6 +90,13 @@ curl_con_t* curl_get_connection(str *name)
  *
  *		the url is very much like CURLs syntax
  *		the url is a base url where you can add local address
+ *	Parameters
+ *		httpredirect
+ *		timeout
+ *		useragent
+ *		failover
+ *		maxdatasize
+ *
  */
 int curl_parse_param(char *val)
 {
@@ -100,6 +107,8 @@ int curl_parse_param(char *val)
 	str password	= STR_NULL;
 	str params	= STR_NULL;
 	str failover	= STR_NULL;
+
+	unsigned int maxdatasize = default_maxdatasize;
 	unsigned int timeout	= default_connection_timeout;
 	str useragent   = { default_useragent, strlen(default_useragent) };
 	unsigned int http_follow_redirect = default_http_follow_redirect;
@@ -284,6 +293,13 @@ int curl_parse_param(char *val)
 				failover = tok;
 				LM_DBG("curl [%.*s] - failover [%.*s]\n", pit->name.len, pit->name.s,
 						failover.len, failover.s);
+			} else if(pit->name.len==11 && strncmp(pit->name.s, "maxdatasize", 11)==0) {
+				if(str2int(&tok, &maxdatasize)!=0) {
+					/* Bad timeout */
+					LM_DBG("curl connection [%.*s]: timeout bad value. Using default\n", name.len, name.s);
+					maxdatasize = default_maxdatasize;
+				}
+				LM_DBG("curl [%.*s] - timeout [%d]\n", pit->name.len, pit->name.s, maxdatasize);
 			} else {
 				LM_ERR("curl Unknown parameter [%.*s] \n", pit->name.len, pit->name.s);
 			}
@@ -291,11 +307,10 @@ int curl_parse_param(char *val)
 	}
 
 	/* The URL ends either with nothing or parameters. Parameters start with ; */
-	
 
-	LM_DBG("cname: [%.*s] url: [%.*s] username [%.*s] password [%.*s] failover [%.*s] timeout [%d] useragent [%.*s]\n", 
+	LM_DBG("cname: [%.*s] url: [%.*s] username [%.*s] password [%.*s] failover [%.*s] timeout [%d] useragent [%.*s] maxdatasize [%d]\n", 
 			name.len, name.s, url.len, url.s, username.len, username.s,
-			password.len, password.s, failover.len, failover.s, timeout, useragent.len, useragent.s);
+			password.len, password.s, failover.len, failover.s, timeout, useragent.len, useragent.s, maxdatasize);
 
 	if(conparams != NULL) {
 		free_params(conparams);
@@ -312,6 +327,7 @@ int curl_parse_param(char *val)
 	cc->useragent = useragent;
 	cc->url = url;
 	cc->timeout = timeout;
+	cc->maxdatasize = maxdatasize;
 	cc->http_follow_redirect = http_follow_redirect;
 	return 0;
 

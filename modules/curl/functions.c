@@ -293,6 +293,7 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	strncpy(usernamebuf, conn->username.s, conn->username.len);
 	strncpy(passwordbuf, conn->password.s, conn->password.len);
 	strncpy(connurlbuf, conn->url.s, conn->url.len);
+	maxdatasize = conn->maxdatasize;
 
 	LM_DBG("******** CURL Connection found %s\n", connection);
 

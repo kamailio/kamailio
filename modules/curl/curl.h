@@ -76,7 +76,7 @@ typedef struct _curl_con
 	int http_follow_redirect;	/*!< TRUE if we should follow HTTP 302 redirects */
 	unsigned int port;		/*!< The port to connect to */
 	int timeout;			/*!< Timeout for this connection */
-	long maxdatasize;		/*!< Maximum data download on GET or POST */
+	unsigned int maxdatasize;	/*!< Maximum data download on GET or POST */
 	curl_res_stream_t *stream;	/*!< Curl stream */
 	struct _curl_con *next;		/*!< next connection */
 	char redirecturl[512];		/*!< Last redirect URL - to use for $curlredirect(curlcon) pv */

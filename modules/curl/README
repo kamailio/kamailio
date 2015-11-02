@@ -125,7 +125,12 @@ Chapter 1. Admin Guide
    This module implements protocol functions that use the libcurl library
    to fetch data from external HTTP servers or post data to HTTP servers.
    The module is using a concept of "connections" to define properties of
-   sessions in a simple way.
+   HTTP sessions in a simple way.
+
+   The curl module has multiple settings, some of them applies to a
+   defined connection. You can set timeouts, max data sizes for download
+   and much more either using modparam settings or parameters to the
+   connection definition.
 
    Function http_query allows Kamailio to issue an HTTP GET request and
    get access to parts of the reply. This function has been ported from
@@ -282,6 +287,8 @@ modparam("curl", "tlsverifyserver", 1)
    Parameters
      * httpredirect Set to 1 for following HTTP 302 redirect. 0 to
        disable. Default is the setting for the httpredirect modparam.
+     * maxdatasize The maximum datasize for a response. Overrides the
+       maxdatasize modparam setting.
      * timeout Timeout used for this connection. Overrides the default
        timeout for the module.
      * useragent Useragent used for HTTP requests. Overrides useragent
