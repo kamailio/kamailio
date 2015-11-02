@@ -44,12 +44,7 @@ static const char* curl_rpc_listcon_doc[2] = {
 static void curl_rpc_listcon(rpc_t* rpc, void* ctx)
 {
 	void* th;
-	void* ih;
 	void* rh;
-	void* sh;
-	int j;
-	char c[3];
-	str data = {"", 0};
 	curl_con_t *cc;
 
 	cc = _curl_con_root;

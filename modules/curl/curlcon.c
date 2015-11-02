@@ -239,8 +239,6 @@ int curl_parse_param(char *val)
 	if (*p == ';') {
 		/* We have parameters */
 		str tok;
-		int_str ival;
-		int itype;
 		param_t *pit = NULL;
 
 		/* Adjust the URL length */

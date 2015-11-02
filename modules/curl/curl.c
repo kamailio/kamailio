@@ -83,10 +83,6 @@ unsigned int	default_maxdatasize = 0;		/*!< Default download size. 0=disabled */
 
 static curl_version_info_data *curl_info;
 
-/* lock for configuration access */
-static gen_lock_t *conf_lock = NULL;
-
-
 /* Module management function prototypes */
 static int mod_init(void);
 static int child_init(int);
@@ -571,7 +567,6 @@ static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *
 {
 	str curlerr;
 	char *err = NULL;
-	CURLcode codeerr;
 
 	if(param==NULL) {
 		return -1;
@@ -598,7 +593,6 @@ static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *
  */
 static int pv_parse_curlredirect(pv_spec_p sp, str *in)
 {
-	int cerr  = 0;
 	if(sp==NULL || in==NULL || in->len<=0) {
 		return -1;
 	}

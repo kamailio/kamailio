@@ -92,7 +92,7 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     CURL *curl;
     CURLcode res;  
     str value;
-    char *url, *at = NULL, *post;
+    char *url, *at = NULL;
     http_res_stream_t stream;
     long stat;
     pv_spec_t *dst;
@@ -172,6 +172,9 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
    	res = curl_easy_perform(curl);  
     }
     pkg_free(url);
+    if (headerlist) {
+    	curl_slist_free_all(headerlist);
+    }
 
     if (res != CURLE_OK) {
 	/* http://curl.haxx.se/libcurl/c/libcurl-errors.html */
@@ -183,7 +186,6 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
 		LM_ERR("failed to perform curl (%d)\n", res);
 	}
 
-	curl_slist_free_all(headerlist);
 	curl_easy_cleanup(curl);
 	if(stream.buf) {
 		pkg_free(stream.buf);
@@ -246,9 +248,6 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     }
 	
     /* CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ... ); */
-    if (headerlist) {
-    	curl_slist_free_all(headerlist);
-    }
     curl_easy_cleanup(curl);
     pkg_free(stream.buf);
     return stat;
@@ -267,7 +266,6 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
 	str urlbuf2;
 	char *urlbuf3 = NULL;
 
-	unsigned int len = 0;
 	str postdatabuf;
 	char *postdata = NULL;
 	unsigned int maxdatasize = default_maxdatasize;
