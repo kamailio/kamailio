@@ -108,6 +108,7 @@ tlsf_static_assert(ALIGN_SIZE == SMALL_BLOCK_SIZE / SL_INDEX_COUNT);
 typedef struct {
 	const char* file;
 	const char* func;
+	const char* mname;
 	unsigned int line;
 } alloc_info_t;
 #endif
@@ -598,7 +599,7 @@ static block_header_t* block_locate_free(control_t* control, size_t size)
 }
 #ifdef DBG_TLSF_MALLOC
 static void* block_prepare_used(control_t* control, block_header_t* block, size_t size,
-		const char *file, const char *function, unsigned long line)
+		const char *file, const char *function, unsigned long line, const char *mname)
 #else
 static void* block_prepare_used(control_t* control, block_header_t* block, size_t size)
 #endif
@@ -617,6 +618,7 @@ static void* block_prepare_used(control_t* control, block_header_t* block, size_
 		block->alloc_info.file = file;
 		block->alloc_info.func = function;
 		block->alloc_info.line = line;
+		block->alloc_info.mname = mname;
 #endif
 	}
 	return p;
@@ -952,7 +954,7 @@ pool_t tlsf_get_pool(tlsf_t tlsf)
 
 #ifdef DBG_TLSF_MALLOC
 void* tlsf_malloc(tlsf_t tlsf, size_t size,
-		const char *file, const char *function, unsigned int line)
+		const char *file, const char *function, unsigned int line, const char *mname)
 #else
 void* tlsf_malloc(tlsf_t tlsf, size_t size)
 #endif
@@ -964,7 +966,7 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 	void *ptr;
 
 	MDBG("tlsf_malloc(%p, %zu) called from %s: %s(%u)\n", tlsf, size, file, function, line);
-	ptr = block_prepare_used(control, block, adjust, file, function, line);
+	ptr = block_prepare_used(control, block, adjust, file, function, line, mname);
 	MDBG("tlsf_malloc(%p, %zu) returns address %p \n", tlsf, size,
 		ptr);
 	return ptr;
@@ -975,7 +977,7 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 
 #ifdef DBG_TLSF_MALLOC
 void tlsf_free(tlsf_t tlsf, void* ptr,
-		const char *file, const char *function, unsigned int line)
+		const char *file, const char *function, unsigned int line, const char *mname)
 #else
 void tlsf_free(tlsf_t tlsf, void* ptr)
 #endif
@@ -1013,6 +1015,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 		block->alloc_info.file = file;
 		block->alloc_info.func = function;
 		block->alloc_info.line = line;
+		block->alloc_info.mname = mname;
 #endif
 		block_mark_as_free(block);
 		block = block_merge_prev(control, block);
@@ -1042,7 +1045,7 @@ void tlsf_free(tlsf_t tlsf, void* ptr)
 */
 #ifdef DBG_TLSF_MALLOC
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size,
-		const char *file, const char *function, unsigned int line)
+		const char *file, const char *function, unsigned int line, const char *mname)
 #else
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 #endif
@@ -1054,7 +1057,7 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 	if (ptr && size == 0)
 	{
 #ifdef DBG_TLSF_MALLOC
-		tlsf_free(tlsf, ptr, file, function, line);
+		tlsf_free(tlsf, ptr, file, function, line, mname);
 #else
 		tlsf_free(tlsf, ptr);
 #endif
@@ -1063,7 +1066,7 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 	else if (!ptr)
 	{
 #ifdef DBG_TLSF_MALLOC
-		p = tlsf_malloc(tlsf, size, file, function, line);
+		p = tlsf_malloc(tlsf, size, file, function, line, mname);
 #else
 		p = tlsf_malloc(tlsf, size);
 #endif
@@ -1086,7 +1089,7 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 		if (adjust > cursize && (!block_is_free(next) || adjust > combined))
 		{
 #ifdef DBG_TLSF_MALLOC
-			p = tlsf_malloc(tlsf, size, file, function, line);
+			p = tlsf_malloc(tlsf, size, file, function, line, mname);
 #else
 			p = tlsf_malloc(tlsf, size);
 #endif
@@ -1095,7 +1098,7 @@ void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size)
 				const size_t minsize = tlsf_min(cursize, size);
 				memcpy(p, ptr, minsize);
 #ifdef DBG_TLSF_MALLOC
-				tlsf_free(tlsf, ptr, file, function, line);
+				tlsf_free(tlsf, ptr, file, function, line, mname);
 #else
 				tlsf_free(tlsf, ptr);
 #endif
@@ -1189,16 +1192,6 @@ void tlsf_status(tlsf_t pool)
 }
 
 #ifdef DBG_TLSF_MALLOC
-typedef struct _mem_counter{
-	const char *file;
-	const char *func;
-	unsigned long line;
-
-	unsigned long size;
-	int count;
-
-	struct _mem_counter *next;
-} mem_counter;
 
 static mem_counter* get_mem_counter(mem_counter **root, block_header_t* f)
 {
@@ -1211,6 +1204,7 @@ make_new:
 	x = malloc(sizeof(mem_counter));
 	x->file = f->alloc_info.file;
 	x->func = f->alloc_info.func;
+	x->mname= f->alloc_info.mname;
 	x->line = f->alloc_info.line;
 	x->count = 0;
 	x->size = 0;
@@ -1257,13 +1251,68 @@ void tlsf_sums(tlsf_t pool)
 	LOG_(DEFAULT_FACILITY, memlog, "tlsf_sums: ",
 			"-----------------------------\n");
 }
+
+void tlsf_mod_get_stats(tlsf_t pool, void **rootp)
+{
+	if (!rootp) {
+		return ;
+	}
+
+	LM_DBG("get tlsf memory statistics\n");
+
+	mem_counter **root = (mem_counter **) rootp;
+	block_header_t* block = pool + tlsf_size() - sizeof(block_header_t*);
+	mem_counter *x;
+
+	while (block && !block_is_last(block))
+	{
+		if(!block_is_free(block)) {
+			x = get_mem_counter(root, block);
+			x->count++;
+			x->size+=block_size(block);
+		}
+
+		block = block_next(block);
+	}
+}
+
+void tlsf_mod_free_stats(void *rootp)
+{
+	if (!rootp) {
+		return ;
+	}
+
+	LM_DBG("free tlsf memory statistics\n");
+
+	mem_counter *root = (mem_counter *) rootp;
+	mem_counter *x;
+	x = root;
+	while (x) {
+		root = x->next;
+		free(x);
+		x = root;
+	}
+}
+
 #else
 void tlsf_sums(tlsf_t pool)
 {}
+
+void tlsf_mod_get_stats(tlsf_t pool, void **rootp)
+{
+	LM_WARN("Enable DBG_TLSF_MALLOC for getting statistics\n");
+	return ;
+}
+
+void tlsf_mod_free_stats(void *rootp)
+{
+	LM_WARN("Enable DBG_TLSF_MALLOC for freeing statistics\n");
+	return ;
+}
 #endif /* defined DBG_TLSF_MALLOC */
 
 /*memory manager core api*/
-static char *_tlsf_mem_name = "f_malloc";
+static char *_tlsf_mem_name = "tlsf_malloc";
 
 /* PKG - private memory API*/
 static void *_tlsf_pkg_pool = 0;
@@ -1309,6 +1358,8 @@ int tlsf_malloc_init_pkg_manager(void)
 	ma.xavailable = tlsf_available;
 	ma.xsums      = tlsf_sums;
 	ma.xdestroy   = tlsf_malloc_destroy_pkg_manager;
+	ma.xstats     = tlsf_mod_get_stats;
+	ma.xfstats    = tlsf_mod_free_stats;
 
 	return pkg_init_api(&ma);
 }
@@ -1320,38 +1371,38 @@ static tlsf_t _tlsf_shm_block = 0;
 /*SHM wrappers to sync the access to memory block*/
 #ifdef DBG_TLSF_MALLOC
 void* tlsf_shm_malloc(void* tlsfmp, unsigned long size,
-					const char* file, const char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
 	shm_lock();
-	r = tlsf_malloc(tlsfmp, size, file, func, line);
+	r = tlsf_malloc(tlsfmp, size, file, func, line, mname);
 	shm_unlock();
 	return r;
 }
 void* tlsf_shm_realloc(void* tlsfmp, void* p, unsigned long size,
-					const char* file, const char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
 	shm_lock();
-	r = tlsf_realloc(tlsfmp, p, size, file, func, line);
+	r = tlsf_realloc(tlsfmp, p, size, file, func, line, mname);
 	shm_unlock();
 	return r;
 }
 void* tlsf_shm_resize(void* tlsfmp, void* p, unsigned long size,
-					const char* file, const char* func, unsigned int line)
+					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
 	shm_lock();
-	if(p) tlsf_free(tlsfmp, p, file, func, line);
-	r = tlsf_malloc(tlsfmp, size, file, func, line);
+	if(p) tlsf_free(tlsfmp, p, file, func, line, mname);
+	r = tlsf_malloc(tlsfmp, size, file, func, line, mname);
 	shm_unlock();
 	return r;
 }
 void tlsf_shm_free(void* tlsfmp, void* p, const char* file, const char* func,
-				unsigned int line)
+				unsigned int line, const char* mname)
 {
 	shm_lock();
-	tlsf_free(tlsfmp, p, file, func, line);
+	tlsf_free(tlsfmp, p, file, func, line, mname);
 	shm_unlock();
 }
 #else
@@ -1457,6 +1508,8 @@ int tlsf_malloc_init_shm_manager(void)
 	ma.xavailable     = tlsf_shm_available;
 	ma.xsums          = tlsf_shm_sums;
 	ma.xdestroy       = tlsf_malloc_destroy_shm_manager;
+	ma.xstats         = tlsf_mod_get_stats;
+	ma.xfstats        = tlsf_mod_free_stats;
 
 	if(shm_init_api(&ma)<0) {
 		LM_ERR("cannot initialize the core shm api\n");

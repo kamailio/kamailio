@@ -47,11 +47,11 @@ void tlsf_remove_pool(tlsf_t tlsf, pool_t pool);
 /* malloc/memalign/realloc/free replacements. */
 #ifdef DBG_TLSF_MALLOC
 void* tlsf_malloc(tlsf_t tlsf, size_t size,
-		const char *file, const char *function, unsigned int line);
+		const char *file, const char *function, unsigned int line, const char *mname);
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size,
-		const char *file, const char *function, unsigned int line);
+		const char *file, const char *function, unsigned int line, const char *mname);
 void tlsf_free(tlsf_t tlsf, void* ptr,
-		const char *file, const char *function, unsigned int line);
+		const char *file, const char *function, unsigned int line, const char *mname);
 #else
 void* tlsf_malloc(tlsf_t tlsf, size_t bytes);
 void* tlsf_realloc(tlsf_t tlsf, void* ptr, size_t size);
@@ -80,6 +80,20 @@ void tlsf_meminfo(tlsf_t pool, struct mem_info *info);
 void tlsf_status(tlsf_t pool);
 void tlsf_sums(tlsf_t pool);
 size_t tlsf_available(tlsf_t pool);
+void tlsf_mod_get_stats(tlsf_t pool, void **root);
+void tlsf_mod_free_stats(void *root);
+
+typedef struct _mem_counter{
+	const char *file;
+	const char *func;
+	const char *mname;
+	unsigned long line;
+
+	unsigned long size;
+	int count;
+
+	struct _mem_counter *next;
+} mem_counter;
 
 #if defined(__cplusplus)
 };
