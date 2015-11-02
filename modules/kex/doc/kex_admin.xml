@@ -712,6 +712,82 @@ resetdebug();
 		&sercmd; stats.reset_statistics shmem: fwd_requests fwd_replies
 		</programlisting>
     </section>
+
+	<section id="kex.r.mod.stats">
+		<title>
+		<function moreinfo="none">mod.stats module_name/all pkg/shm/all</function>
+		</title>
+		<para>
+			Print private(pkg) or shared(shm) memory currently allocated a given module or by all modules.
+		</para>
+		<para>
+			NOTE: Processing is done only when the command is issued and involves iterating
+            throug the list of memory fragments and printing details about them.
+		</para>
+		<para>
+			NOTE: Only the module functions that <emphasis>directly</emphasis> calls shm_alloc or
+            pkg_alloc are taken into consideration.
+		</para>
+		<para>The firt parameter can be:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>module_name</emphasis> - print statistics for specific module.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>all</emphasis> - print statistics for all modules that uses memory.
+			</para>
+		</listitem>
+		</itemizedlist>
+
+		<para>The second parameter can be:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>pkg</emphasis> - print private memory statistics.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>shm</emphasis> - print shared memory statistics.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>all</emphasis> - print both private and shared memory statistics.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		Examples:
+		</para>
+        <programlisting  format="linespecific">
+		&sercmd; mod.stats core all
+		&sercmd; mod.stats userblacklist shm
+		&sercmd; mod.stats kex pkg
+		&sercmd; mod.stats all all
+		</programlisting>
+		<para>
+		Output:
+		</para>
+        <programlisting  format="linespecific">
+Module: kex
+{
+    // this is the pkg zone of the module
+    // function_name(line_where_pkg_malloc_was_called): size_alloc'ed_by_pkg_malloc
+    init_mi_uptime(74): 56
+    Total: 56
+}
+{
+    // this is the shm zone of the module
+    // function_name(line_where_shm_malloc_was_called): size_alloc'ed_by_shm_malloc
+    pkg_proc_stats_init(79): 864
+    Total: 864
+}
+		</programlisting>
+    </section>
     </section>
 </chapter>
 
