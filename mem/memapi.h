@@ -27,13 +27,13 @@
 #ifdef DBG_SR_MEMORY
 
 typedef void* (*sr_malloc_f)(void* mbp, unsigned long size,
-					const char* file, const char* func, unsigned int line);
-typedef void  (*sr_free_f)(void* mbp, void* p, const char* file, const char* func, 
-					unsigned int line);
+					const char* file, const char* func, unsigned int line, const char* mname);
+typedef void  (*sr_free_f)(void* mbp, void* p, const char* file, const char* func,
+					unsigned int line, const char* mname);
 typedef void* (*sr_realloc_f)(void* mbp, void* p, unsigned long size,
-					const char* file, const char* func, unsigned int line);
+					const char* file, const char* func, unsigned int line, const char* mname);
 typedef void* (*sr_resize_f)(void* mbp, void* p, unsigned long size,
-					const char* file, const char* func, unsigned int line);
+					const char* file, const char* func, unsigned int line, const char* mname);
 
 #else /*DBG_SR_MEMORY*/
 
@@ -50,6 +50,9 @@ typedef unsigned long (*sr_mem_available_f)(void* mbp);
 typedef void  (*sr_mem_sums_f)(void* mbp);
 
 typedef void  (*sr_mem_destroy_f)(void);
+
+typedef void (*sr_mem_mod_get_stats_f)(void* mbp, void **p);
+typedef void (*sr_mem_mod_free_stats_f)(void* mbp);
 
 /*private memory api*/
 typedef struct sr_pkg_api {
@@ -75,6 +78,10 @@ typedef struct sr_pkg_api {
 	sr_mem_sums_f      xsums;
 	/*memory destroy manager*/
 	sr_mem_destroy_f   xdestroy;
+	/*memory stats per module*/
+	sr_mem_mod_get_stats_f  xstats;
+	/*memory stats free per module*/
+	sr_mem_mod_free_stats_f xfstats;
 } sr_pkg_api_t;
 
 /*shared memory api*/
@@ -107,6 +114,10 @@ typedef struct sr_shm_api {
 	sr_mem_sums_f      xsums;
 	/*memory destroy manager*/
 	sr_mem_destroy_f   xdestroy;
+	/*memory stats per module*/
+	sr_mem_mod_get_stats_f  xstats;
+	/*memory stats free per module*/
+	sr_mem_mod_free_stats_f xfstats;
 } sr_shm_api_t;
 
 #endif

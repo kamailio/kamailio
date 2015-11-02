@@ -86,6 +86,7 @@ struct fm_frag{
 #ifdef DBG_F_MALLOC
 	const char* file;
 	const char* func;
+	const char* mname;
 	unsigned long line;
 #endif
 	unsigned int check;
@@ -134,7 +135,8 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type);
  */
 #ifdef DBG_F_MALLOC
 void* fm_malloc(void* qmp, unsigned long size,
-					const char* file, const char* func, unsigned int line);
+					const char* file, const char* func, unsigned int line,
+					const char* mname);
 #else
 void* fm_malloc(void* qmp, unsigned long size);
 #endif
@@ -148,8 +150,8 @@ void* fm_malloc(void* qmp, unsigned long size);
  * \param p freed memory
  */
 #ifdef DBG_F_MALLOC
-void  fm_free(void* qmp, void* p, const char* file, const char* func, 
-				unsigned int line);
+void fm_free(void* qmp, void* p, const char* file, const char* func,
+				unsigned int line, const char* mname);
 #else
 void  fm_free(void* qmp, void* p);
 #endif
@@ -165,8 +167,8 @@ void  fm_free(void* qmp, void* p);
  * \return reallocated memory block
  */
 #ifdef DBG_F_MALLOC
-void*  fm_realloc(void* qmp, void* p, unsigned long size, 
-					const char* file, const char* func, unsigned int line);
+void* fm_realloc(void* qmp, void* p, unsigned long size,
+					const char* file, const char* func, unsigned int line, const char *mname);
 #else
 void*  fm_realloc(void* qmp, void* p, unsigned long size);
 #endif
@@ -204,6 +206,20 @@ unsigned long fm_available(void* qmp);
  * \param qm memory block
  */
 void fm_sums(void* qmp);
+void fm_mod_get_stats(void* qm, void **fm_root);
+void fm_mod_free_stats(void *root);
+
+typedef struct _mem_counter{
+	const char *file;
+	const char *func;
+	const char *mname;
+	unsigned long line;
+
+	unsigned long size;
+	int count;
+
+	struct _mem_counter *next;
+} mem_counter;
 
 #endif
 #endif

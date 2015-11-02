@@ -28,11 +28,11 @@ extern sr_pkg_api_t _pkg_root;
 
 #ifdef DBG_SR_MEMORY
 #	define pkg_malloc(s)      _pkg_root.xmalloc(_pkg_root.mem_block, (s), _SRC_LOC_, \
-				_SRC_FUNCTION_, _SRC_LINE_)
+				_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define pkg_free(p)        _pkg_root.xfree(_pkg_root.mem_block, (p), _SRC_LOC_, \
-				_SRC_FUNCTION_, _SRC_LINE_)
+				_SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #	define pkg_realloc(p, s)  _pkg_root.xrealloc(_pkg_root.mem_block, (p), (s), \
-				_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_)
+				_SRC_LOC_, _SRC_FUNCTION_, _SRC_LINE_, _SRC_MODULE_)
 #else
 #	define pkg_malloc(s)      _pkg_root.xmalloc(_pkg_root.mem_block, (s))
 #	define pkg_realloc(p, s)  _pkg_root.xrealloc(_pkg_root.mem_block, (p), (s))
@@ -43,6 +43,8 @@ extern sr_pkg_api_t _pkg_root;
 #	define pkg_info(mi)    _pkg_root.xinfo(_pkg_root.mem_block, mi)
 #	define pkg_available() _pkg_root.xavailable(_pkg_root.mem_block)
 #	define pkg_sums()      _pkg_root.xsums(_pkg_root.mem_block)
+#	define pkg_mod_get_stats(x)     _pkg_root.xstats(_pkg_root.mem_block, x)
+#	define pkg_mod_free_stats(x)    _pkg_root.xfstats(x)
 
 int pkg_init_api(sr_pkg_api_t *ap);
 int pkg_init_manager(char *name);

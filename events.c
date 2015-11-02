@@ -165,6 +165,15 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.rcv_nosip = f;
 				else return -1;
 			break;
+		case SREV_MODULE_PKG_STATS:
+				if(_sr_events_list.mod_update_pkg_stats==0)
+					_sr_events_list.mod_update_pkg_stats = f;
+				else return -1;
+		case SREV_MODULE_SHM_STATS:
+				if(_sr_events_list.mod_update_shm_stats==0)
+					_sr_events_list.mod_update_shm_stats = f;
+				else return -1;
+			break;
 		default:
 			return -1;
 	}
@@ -284,6 +293,18 @@ int sr_event_exec(int type, void *data)
 					ret = _sr_events_list.rcv_nosip(data);
 					return ret;
 				} else return 1;
+		case SREV_MODULE_PKG_STATS:
+				if(unlikely(_sr_events_list.mod_update_pkg_stats!=0))
+				{
+					ret = _sr_events_list.mod_update_pkg_stats(data);
+					return ret;
+				} else return 1;
+		case SREV_MODULE_SHM_STATS:
+				if(unlikely(_sr_events_list.mod_update_shm_stats!=0))
+				{
+					ret = _sr_events_list.mod_update_shm_stats(data);
+					return ret;
+				} else return 1;
 		default:
 			return -1;
 	}
@@ -319,6 +340,10 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.stun_in!=0)?1:0;
 		case SREV_RCV_NOSIP:
 				return (_sr_events_list.rcv_nosip!=0)?1:0;
+		case SREV_MODULE_PKG_STATS:
+				return (_sr_events_list.mod_update_pkg_stats!=0)?1:0;
+		case SREV_MODULE_SHM_STATS:
+				return (_sr_events_list.mod_update_shm_stats!=0)?1:0;
 	}
 	return 0;
 }
