@@ -88,6 +88,7 @@ pres_get_sphere_t pres_get_sphere;
 str xcap_table= str_init("xcap");
 str db_url = str_init(DEFAULT_DB_URL);
 int force_active= 0;
+int force_dummy_presence = 0;
 int integrated_xcap_server= 0;
 xcap_serv_t* xs_list= NULL;
 int disable_presence = 0;
@@ -130,6 +131,7 @@ static param_export_t params[]={
 	{ "disable_xcapdiff",	INT_PARAM, &disable_xcapdiff },
 	{ "passive_mode",		INT_PARAM, &passive_mode },
 	{ "xcapauth_userdel_reason", PARAM_STR, &xcapauth_userdel_reason},
+	{ "force_dummy_presence",       INT_PARAM, &force_dummy_presence },
 	{ 0, 0, 0}
 };
 
