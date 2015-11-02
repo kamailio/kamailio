@@ -95,6 +95,8 @@ MODULE_VERSION
 #define NR_KEYS 40
 #define RTCP_NR_KEYS 12
 
+#define MAX_HEADERS 16
+
 /*multiple table mode*/
 enum e_mt_mode{
 	mode_random = 1,
@@ -137,6 +139,9 @@ static int report_capture(struct sip_msg *msg, str *_table, str* _corr, str *_da
 static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t * _cm_data, char* s2);
 static int w_report_capture(struct sip_msg* _m, char* _table, char* _corr, char* _data);
 static int w_float2int(struct sip_msg* _m, char* _val, char* _coof, char* s2);
+
+static int sipcapture_parse_aleg_callid_headers();
+int parse_aleg_callid_headers(str *headers_str, str *headers);
 
 int init_rawsock_children(void);
 int extract_host_port(void);
@@ -215,6 +220,9 @@ int hep_offset = 0;
 str raw_socket_listen = { 0, 0 };
 str raw_interface = { 0, 0 };
 char *authkey = NULL, *correlation_id = NULL;
+
+str callid_aleg_headers[MAX_HEADERS];
+int n_callid_aleg_headers = 0;
 
 struct ifreq ifr; 	/* interface structure */
 
@@ -737,6 +745,10 @@ static int mod_init(void) {
 	}
 
 	pkg_free(def_params);
+
+	if (sipcapture_parse_aleg_callid_headers() < 0) {
+		return -1;
+	}
 
 
 #ifdef STATISTICS
@@ -1692,10 +1704,15 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
         }
 
 	/* callid_aleg - default is X-CID but configurable via modul params */
-        if((tmphdr[0] = get_hdr_by_name(msg, callid_aleg_header.s, callid_aleg_header.len)) != NULL) {	
-		sco.callid_aleg = tmphdr[0]->body;
-        }
-	else { EMPTY_STR(sco.callid_aleg);}
+	EMPTY_STR(sco.callid_aleg);
+	int index;
+	for (index = 0; index < n_callid_aleg_headers; index++) {
+		if((tmphdr[0] = get_hdr_by_name(msg, callid_aleg_headers[index].s, callid_aleg_headers[index].len)) != NULL) {
+			LM_DBG("MATCHED header %.*s\n", callid_aleg_headers[index].len, callid_aleg_headers[index].s);
+			sco.callid_aleg = tmphdr[0]->body;
+			break;
+		}
+	}
 		
 	/* VIA 1 */
 	sco.via_1 = msg->h_via1->body;
@@ -2527,3 +2544,53 @@ error:
                         
 }
 
+// Algorithm optimized by coudot
+int parse_aleg_callid_headers(str *headers_str, str *headers){
+	if (headers_str->len == 0) {
+		return 0;
+	}
+
+	int index = 0;
+	int begin = 0;
+	int current = 0;
+
+	while ((index < headers_str->len) && (current < MAX_HEADERS)) {
+		// End of headers string
+		if ((index == headers_str->len - 1) && (headers_str->s[index] != ';')) {
+			headers[current].s = headers_str->s + begin;
+			headers[current].len = index + 1 - begin;
+			current++;
+			break;
+		}
+		else if (headers_str->s[index] == ';') {
+			// Skip empty header
+			if (begin == index) {
+				begin++;
+			}
+			else {
+				// Another header identified
+				headers[current].s = headers_str->s + begin;
+				headers[current].len = index - begin;
+				current++;
+				begin = index + 1;
+			}
+		}
+		// Move to next char
+		index++;
+	}
+
+	// current now holds the number of headers
+	return current;
+}
+
+static int sipcapture_parse_aleg_callid_headers() {
+	int i;
+	n_callid_aleg_headers = parse_aleg_callid_headers(&callid_aleg_header, callid_aleg_headers);
+	LM_DBG("Number of headers:%d\n", n_callid_aleg_headers);
+
+	for (i=0; i < n_callid_aleg_headers; i++) {
+		LM_DBG("Header: %.*s\n", callid_aleg_headers[i].len, callid_aleg_headers[i].s);
+	}
+
+	return n_callid_aleg_headers;
+}

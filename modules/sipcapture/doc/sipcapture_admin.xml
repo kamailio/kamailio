@@ -450,6 +450,26 @@ modparam("sipcapture", "insert_retry_timeout", 10)
 			</programlisting>
 		</example>
 	</section>
+	<section id="sipcapture.p.callid_aleg_header">
+		<title><varname>callid_aleg_header</varname> (str)</title>
+		<para>
+		Header name used to correlate A-leg with B-leg. It can take a list of headers,
+		separated by semicolon, e.g. "X-CID0;X-CID1". First match wins.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "X-CID".
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>callid_aleg_header</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
+...
+			</programlisting>
+		</example>
+	</section>
 </section>	
     <section>
 	<title>MI Commands</title>
