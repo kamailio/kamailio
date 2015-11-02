@@ -62,35 +62,6 @@ int mod_stats_destroy(void)
 	return 0;
 }
 
-
-/**
- *
- */
-static int mod_update_pkg_mod_stats_list(void *data)
-{
-	return 0;
-}
-
-
-/**
- *
- */
-static int mod_update_shm_mod_stats_list(void *data)
-{
-	return 0;
-}
-
-
-/**
- *
- */
-int register_mod_stats(void)
-{
-	sr_event_register_cb(SREV_MODULE_PKG_STATS, mod_update_pkg_mod_stats_list);
-	sr_event_register_cb(SREV_MODULE_SHM_STATS, mod_update_shm_mod_stats_list);
-	return 0;
-}
-
 /**
  *
  */

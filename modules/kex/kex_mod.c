@@ -147,8 +147,7 @@ static int mod_init(void)
 	register_pkg_proc_stats();
 	pkg_proc_stats_init_rpc();
 
-	register_mod_stats();
-	mod_stats_init();
+	/* per module memmory debugging RPC command */
 	mod_stats_init_rpc();
 
 	return 0;
@@ -174,7 +173,6 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	pkg_proc_stats_destroy();
-	mod_stats_destroy();
 	return;
 }
 

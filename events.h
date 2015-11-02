@@ -34,8 +34,6 @@
 #define SREV_TCP_WS_FRAME_IN		10
 #define SREV_TCP_WS_FRAME_OUT		11
 #define SREV_STUN_IN			12
-#define SREV_MODULE_PKG_STATS   13
-#define SREV_MODULE_SHM_STATS   14
 
 #define SREV_CB_LIST_SIZE	3
 
@@ -54,8 +52,6 @@ typedef struct sr_event_cb {
 	sr_event_cb_f tcp_ws_frame_out;
 	sr_event_cb_f stun_in;
 	sr_event_cb_f rcv_nosip;
-	sr_event_cb_f mod_update_pkg_stats;
-	sr_event_cb_f mod_update_shm_stats;
 } sr_event_cb_t;
 
 void sr_event_cb_init(void);
