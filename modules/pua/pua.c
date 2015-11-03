@@ -1099,7 +1099,14 @@ static void db_update(unsigned int ticks,void *param)
 						q_vals[puri_col].val.str_val = *(p->pres_uri);
 						q_vals[pid_col].val.str_val = p->id;
 						q_vals[flag_col].val.int_val = p->flag;
-						q_vals[callid_col].val.str_val = p->call_id;
+						if(p->call_id.s) {
+							LM_DBG("p->callid = %.*s\n", p->call_id.len, p->call_id.s);
+							q_vals[callid_col].val.str_val = p->call_id;
+						} else {
+							LM_DBG("p->callid is empty\n");
+							q_vals[callid_col].val.str_val.s = "";
+							q_vals[callid_col].val.str_val.len = 0;
+						}
 						q_vals[fromtag_col].val.str_val = p->from_tag;
 						q_vals[cseq_col].val.int_val= p->cseq;
 						q_vals[expires_col].val.int_val = p->expires;
