@@ -2024,10 +2024,8 @@ reg_notification * new_notification(str subscription_state,
         return 0;
     }
 
-    sprintf(bufc, content.s, r->version);
     buf.s = bufc;
-    buf.len = strlen(bufc);
-
+    buf.len = snprintf(buf.s, MAX_REGINFO_SIZE, content.s, r->version);
 
     int len;
     char *p;
