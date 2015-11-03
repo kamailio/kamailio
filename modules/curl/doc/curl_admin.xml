@@ -32,7 +32,12 @@
 	connection definition.
 	</para>
 	<para>
-	Function http_query allows &kamailio; to issue an HTTP GET
+	Like in SIP, the HTTP URL may need encoding to be transported safely
+	over the network. Check the string encoding functions in the Transformation
+	Cookbook (as used in the curl_http_query example below).
+	</para>
+	<para>
+	Function curl_http_query allows &kamailio; to issue an HTTP GET
 	request and get access to parts of the reply. This function has
 	been ported from the utils module and now use the same libcurl
 	functions.
