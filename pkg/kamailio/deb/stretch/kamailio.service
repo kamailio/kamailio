@@ -1,0 +1,22 @@
+[Unit]
+Description=Kamailio (OpenSER) - the Open Source SIP Server
+After=syslog.target network.target
+
+[Service]
+Type=forking
+Environment='PIDFILE=/var/run/kamailio/kamailio.pid'
+Environment='CFGFILE=/etc/kamailio/kamailio.cfg'
+Environment='SHM_MEMORY=64'
+Environment='PKG_MEMORY=8'
+Environment='USER=kamailio'
+Environment='GROUP=kamailio'
+EnvironmentFile=-/etc/default/kamailio
+EnvironmentFile=-/etc/default/kamailio.d/*
+PIDFile=$PIDFILE
+# ExecStart requires a full absolute path
+ExecStart=/usr/sbin/kamailio -P $PIDFILE -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP
+ExecStopPost=/bin/rm -f $PIDFILE
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

@@ -8,6 +8,11 @@ DIST=trusty
 rm -rf ${DIST}
 cp -r debian ${DIST}
 
+# No systemd
+sed -i -e '/dh-systemd/d' ${DIST}/control
+sed -i -e '/dh_systemd/d' ${DIST}/rules
+rm ${DIST}/kamailio.service
+
 # No mi_xmlrpc module
 sed -i -e '/libxmlrpc-c3-dev/d' -e '/^Package: kamailio-xmlrpc-modules/,/^$/d' \
 	${DIST}/control

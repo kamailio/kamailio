@@ -26,6 +26,11 @@ if [ -e ${DIST}/patches/series ]; then
   sed -i -e '/hardening_flags.patch/d' ${DIST}/patches/series
 fi
 
+# No systemd
+sed -i -e '/dh-systemd/d' ${DIST}/control
+sed -i -e '/dh_systemd/d' ${DIST}/rules
+rm ${DIST}/kamailio.service
+
 # No java module:
 sed -i -e '/gcj-jdk/d' -e '/^Package: kamailio-java-modules/,/^$/d' \
 	${DIST}/control
