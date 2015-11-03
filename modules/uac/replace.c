@@ -128,6 +128,22 @@ static inline int decode_uri( str *src , str *dst)
 	int i,j;
 	signed char c;
 
+	/* sanity checks */
+	if (!src) {
+		LM_ERR("NULL src\n");
+		return -1;
+	}
+
+	if (!dst) {
+		LM_ERR("NULL dst\n");
+		return -1;
+	}
+
+	if (!src->s || src->len == 0) {
+		LM_ERR("empty src\n");
+		return -1;
+	}
+
 	/* Count '-' at end and disregard them */
 	for( n=0,i=src->len-1; src->s[i]=='-'; i--)
 		n++;
