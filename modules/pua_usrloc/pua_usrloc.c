@@ -64,7 +64,7 @@ int pua_ul_publish = 0;
 int pua_ul_bflag = -1;
 int pua_ul_bmask = 0;
 
-pua_api_t pua;
+pua_api_t _pu_pua;
 str pres_prefix= STR_NULL;
 
 /*! \brief Structure containing pointers to usrloc functions */
@@ -75,9 +75,6 @@ usrloc_api_t ul;
 static int mod_init(void);
 
 int pua_set_publish(struct sip_msg* , char*, char*);
-
-send_publish_t pua_send_publish;
-send_subscribe_t pua_send_subscribe;
 
 static cmd_export_t cmds[]=
 {
@@ -174,24 +171,22 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	if (bind_pua(&pua) < 0)
+	if (bind_pua(&_pu_pua) < 0)
 	{
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
-	if(pua.send_publish == NULL)
+	if(_pu_pua.send_publish == NULL)
 	{
 		LM_ERR("Could not import send_publish\n");
 		return -1;
 	}
-	pua_send_publish= pua.send_publish;
 
-	if(pua.send_subscribe == NULL)
+	if(_pu_pua.send_subscribe == NULL)
 	{
 		LM_ERR("Could not import send_subscribe\n");
 		return -1;
 	}
-	pua_send_subscribe= pua.send_subscribe;
 	
 	/* register post-script pua_unset_publish unset function */
 	if(register_script_cb(pua_unset_publish, POST_SCRIPT_CB|REQUEST_CB, 0)<0)
