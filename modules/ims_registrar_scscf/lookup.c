@@ -171,6 +171,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
             if (ptr->path.s && ptr->path.len
                     && get_path_dst_uri(&ptr->path, &path_dst) < 0) {
                 LM_ERR("failed to get dst_uri for Path\n");
+		i++;
                 continue;
             }
 
@@ -180,6 +181,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
                     &ptr->path, ptr->q, ptr->cflags, ptr->sock) == -1) {
                 LM_ERR("failed to append a branch\n");
                 /* Also give a chance to the next branches*/
+		i++;
                 continue;
             }
         }
