@@ -65,7 +65,11 @@ int ts_store(struct sip_msg* msg, str *puri) {
 				suri.s);
 		return -1;
 	}
-	aor = suri;
+
+	if (use_domain)
+		aor = suri;
+	else
+		aor = ruri.user;
 
 	t = _tmb.t_gett();
 	if (!t || t==T_UNDEFINED) {

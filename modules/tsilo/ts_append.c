@@ -41,12 +41,23 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 	ts_urecord_t* _r;
 	ts_transaction_t* ptr;
 
+	struct sip_uri p_uri;
+	str *t_uri;
+
 	int res;
 	int appended;
 
 	lock_entry_by_ruri(ruri);
 
-	res = get_ts_urecord(ruri, &_r);
+	if (use_domain) {
+		t_uri = ruri;
+	}
+	else {
+		parse_uri(ruri->s, ruri->len, &p_uri);
+		t_uri = &p_uri.user;
+	}
+
+	res = get_ts_urecord(t_uri, &_r);
 
 	if (res != 0) {
 		LM_ERR("failed to retrieve record for %.*s\n", ruri->len, ruri->s);

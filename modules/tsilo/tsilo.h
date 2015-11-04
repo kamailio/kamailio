@@ -30,4 +30,5 @@ extern struct tm_binds _tmb;
 extern registrar_api_t _regapi;
 /** USRLOC BIND **/
 
+extern int use_domain;
 #endif

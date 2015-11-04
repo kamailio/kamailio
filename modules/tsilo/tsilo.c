@@ -50,6 +50,7 @@ registrar_api_t _regapi;
 
 /** parameters */
 static int hash_size = 2048;
+int use_domain = 0;
 
 /** module functions */
 static int mod_init(void);
@@ -86,6 +87,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"hash_size",	INT_PARAM,	&hash_size},
+	{"use_domain",	INT_PARAM,	&use_domain},
 	{0,0,0}
 };
 
