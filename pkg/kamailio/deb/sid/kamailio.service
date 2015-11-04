@@ -4,7 +4,6 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-Environment='PIDFILE=/var/run/kamailio/kamailio.pid'
 Environment='CFGFILE=/etc/kamailio/kamailio.cfg'
 Environment='SHM_MEMORY=64'
 Environment='PKG_MEMORY=8'
@@ -12,10 +11,10 @@ Environment='USER=kamailio'
 Environment='GROUP=kamailio'
 EnvironmentFile=-/etc/default/kamailio
 EnvironmentFile=-/etc/default/kamailio.d/*
-PIDFile=$PIDFILE
+# PIDFile requires a full absolute path
+PIDFile=/var/run/kamailio/kamailio.pid
 # ExecStart requires a full absolute path
-ExecStart=/usr/sbin/kamailio -P $PIDFILE -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP
-ExecStopPost=/bin/rm -f $PIDFILE
+ExecStart=/usr/sbin/kamailio -P /var/run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP
 Restart=on-abort
 
 [Install]
