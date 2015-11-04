@@ -268,14 +268,19 @@ again:
 						}
 				}
 				LOG(cfg_get(core, core_cfg, corelog),
-						"error reading: %s (%d)\n", strerror(errno), errno);
+						"error reading: %s (%d) ([%s]:%u -> [%s]:%u)\n",
+						strerror(errno), errno,
+						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 				return -1;
 			}
 		}else if (unlikely((bytes_read==0) || 
 					(*flags & RD_CONN_FORCE_EOF))){
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
-			LM_DBG("EOF on %p, FD %d\n", c, fd);
+			LM_DBG("EOF on %p, FD %d ([%s]:%u -> [%s]:%u)\n", c, fd,
+					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
@@ -319,7 +324,9 @@ int tcp_read(struct tcp_connection *c, int* flags)
 	bytes_free=r->b_size- (int)(r->pos - r->buf);
 	
 	if (unlikely(bytes_free==0)){
-		LM_ERR("buffer overrun, dropping\n");
+		LM_ERR("buffer overrun, dropping ([%s]:%u -> [%s]:%u)\n",
+				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		r->error=TCP_REQ_OVERRUN;
 		return -1;
 	}
@@ -507,7 +514,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 								p++;
 								goto skip;
 							} else {
-								LM_DBG("ERROR: no clen, p=%X\n", *p);
+								LM_DBG("no clen, p=%X\n", *p);
 								r->error=TCP_REQ_BAD_LEN;
 							}
 						}
@@ -579,7 +586,7 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 							p++;
 							goto skip;
 						} else {
-							LM_DBG("ERROR: no clen, p=%X\n", *p);
+							LM_DBG("no clen, p=%X\n", *p);
 							r->error=TCP_REQ_BAD_LEN;
 						}
 					}
@@ -1367,7 +1374,9 @@ again:
 				init_dst_from_rcv(&dst, &con->rcv);
 
 				if (tcp_send(&dst, 0, CRLF, CRLF_LEN) < 0) {
-					LM_ERR("CRLF ping: tcp_send() failed\n");
+					LM_ERR("CRLF ping: tcp_send() failed ([%s]:%u -> [%s]:%u)\n",
+							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				}
 				ret = 0;
 			} else if (unlikely(req->state==H_STUN_END)) {
@@ -1428,7 +1437,9 @@ again:
 				/*if we still have some unparsed bytes, try to parse them too*/
 				goto again;
 			} else if (unlikely(con->state==S_CONN_EOF)){
-				LM_DBG("EOF after reading complete request\n");
+				LM_DBG("EOF after reading complete request ([%s]:%u -> [%s]:%u)\n",
+						ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+						ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				resp=CONN_EOF;
 			}
 			req->parsed=req->buf; /* fix req->parsed */
@@ -1446,8 +1457,10 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 {
 	long response[2];
 	
-		LM_DBG("releasing con %p, state %ld, fd=%d, id=%d\n",
-				c, state, c->fd, c->id);
+		LM_DBG("releasing con %p, state %ld, fd=%d, id=%d ([%s]:%u -> [%s]:%u)\n",
+				c, state, c->fd, c->id,
+				ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+				ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		LM_DBG("extra_data %p\n", c->extra_data);
 		/* release req & signal the parent */
 		c->reader_pid=0; /* reset it */
@@ -1479,8 +1492,11 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	/* if conn->state is ERROR or BAD => force timeout too */
 	if (unlikely(io_watch_del(&io_w, c->fd, -1, IO_FD_CLOSING)<0)){
 		LM_ERR("io_watch_del failed for %p"
-					" id %d fd %d, state %d, flags %x, main fd %d\n",
-					c, c->id, c->fd, c->state, c->flags, c->s);
+					" id %d fd %d, state %d, flags %x, main fd %d"
+					" ([%s]:%u -> [%s]:%u)\n",
+					c, c->id, c->fd, c->state, c->flags, c->s,
+					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
+					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 	}
 	tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
 	release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
@@ -1594,9 +1610,11 @@ repeat_1st_read:
 								S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
 			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con)<0)){
 				LM_CRIT("io_watch_add failed for %p id %d fd %d, state %d, flags %x,"
-							" main fd %d, refcnt %d\n",
+							" main fd %d, refcnt %d ([%s]:%u -> [%s]:%u)\n",
 							con, con->id, con->fd, con->state, con->flags,
-							con->s, atomic_get(&con->refcnt));
+							con->s, atomic_get(&con->refcnt),
+							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 				local_timer_del(&tcp_reader_ltimer, &con->timer);
 				goto con_error;
@@ -1628,9 +1646,12 @@ read_error:
 				if (unlikely(io_watch_del(&io_w, con->fd, idx,
 											IO_FD_CLOSING) < 0)){
 					LM_CRIT("io_watch_del failed for %p id %d fd %d,"
-							" state %d, flags %x, main fd %d, refcnt %d\n",
+							" state %d, flags %x, main fd %d, refcnt %d"
+							" ([%s]:%u -> [%s]:%u)\n",
 							con, con->id, con->fd, con->state,
-							con->flags, con->s, atomic_get(&con->refcnt));
+							con->flags, con->s, atomic_get(&con->refcnt),
+							ip_addr2a(&con->rcv.src_ip), con->rcv.src_port,
+							ip_addr2a(&con->rcv.dst_ip), con->rcv.dst_port);
 				}
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 				local_timer_del(&tcp_reader_ltimer, &con->timer);
@@ -1696,7 +1717,7 @@ void tcp_receive_loop(int unix_sock)
 		goto error;
 	/* add the unix socket */
 	if (io_watch_add(&io_w, tcpmain_sock, POLLIN,  F_TCPMAIN, 0)<0){
-		LM_CRIT("failed to add socket to the fd list\n");
+		LM_CRIT("failed to add tcp main socket to the fd list\n");
 		goto error;
 	}
 
