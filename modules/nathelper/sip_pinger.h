@@ -17,9 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
- * 2005-07-11  created (bogdan)
  */
 
 
@@ -137,6 +134,7 @@ static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
 
 	if ( sipping_method.len + 1 + curi->len + s_len(" SIP/2.0"CRLF) +
 		s_len("Via: SIP/2.0/UDP ") + vaddr.len +
+				((s->address.af==AF_INET6)?2:0) +
 				1 + vport.len + s_len(";branch=0") +
 		(path->len ? (s_len(CRLF"Route: ") + path->len) : 0) +
 		s_len(CRLF"From: ") +  sipping_from.len + s_len(";tag=") +
