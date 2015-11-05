@@ -356,6 +356,32 @@ modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.hash_entry_tout">
+		<title><varname>hash_entry_tout</varname> (string)</title>
+		<para>
+			Number of seconds after an rtpengine hash table entry is marked for deletion.
+			By default, this parameter is set to 120 (seconds).
+		</para>
+		<para>
+			To maintain information about a selected rtp machine node, for a given call, entries are added in a hashtable of (callid, node) pairs.
+			When "offer" comes, insert new entry in the hastable.
+			When subsequent commands come, lookup callid and return chosen node.
+			When "delete" comes, remove old entry from hashtable.
+		</para>
+		<para>
+			NOTE: In the current implementation, the actual deletion happens <emphasis>on the fly</emphasis>,
+			while insert/remove/lookup the hastable, <emphasis>only</emphasis> for the entries in the insert/remove/lookup path.
+		</para>
+		<example>
+		<title>Set <varname>hash_entry_tout</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpproxy", "hash_entry_tout", "300")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
