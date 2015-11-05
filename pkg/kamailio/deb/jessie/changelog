@@ -1,3 +1,9 @@
+kamailio (4.4.0~dev6) unstable; urgency=medium
+
+  * update version to 4.4.0~dev6
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Thu, 05 Nov 2015 09:16:36 +0100
+
 kamailio (4.4.0~dev5) unstable; urgency=medium
 
   * update version to 4.4.0~dev5
