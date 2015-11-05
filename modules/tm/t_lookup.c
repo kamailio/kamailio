@@ -1568,7 +1568,7 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 		prefetch_loc_r(p_cell->next_c, 1);
 		if(p_cell->label == label){
 			REF_UNSAFE(p_cell);
-    			UNLOCK_HASH(hash_index);
+			UNLOCK_HASH(hash_index);
 			set_t(p_cell, T_BR_UNDEFINED);
 			*trans=p_cell;
 			DBG("DEBUG: t_lookup_ident: transaction found\n");
