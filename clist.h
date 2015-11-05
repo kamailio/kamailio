@@ -87,7 +87,9 @@
 #define clist_rm_sublist(s, e, next, prev) \
 	do{\
 		(s)->prev->next=(e)->next;  \
-		(e)->next->prev=(s)->prev ; \
+		(e)->next->prev=(s)->prev;  \
+		(s)->prev=NULL; \
+		(e)->next=NULL; \
 	}while(0)
 
 
