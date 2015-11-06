@@ -73,6 +73,38 @@
 		If the set was selected using setid_avp, the avp needs to be
 		set only once before rtpengine_offer() or rtpengine_manage() call.
 	</para>
+	<para>
+		From the current implementation point of view, the sets of rtpproxy nodes
+		are shared memory(shm), so all processes can see a common list of nodes.
+		There is no locking when setting the nodes enabled/disabled (to keep the
+		memory access as fast as possible). Thus, problems related to node state
+		might appear for concurent processes that might set the nodes
+		enabled/disabled(e.g. by fifo command). This robustness problems are overcomed as follows.
+	</para>
+
+	<para>
+		If the current process sees the selected node as disabled, the node is
+		<emphasis>force tested</emphasis> before the current process actually
+		takes the disabled decision. If the test succeeds, the process will set
+		the node as enabled (but other concurrent process might still see it as disabled).
+.
+	</para>
+
+	<para>
+		If the current process sees the selected node as enabled, it does no additional checks
+		and sends the command which will fail in case the machine is actually broken.
+		The process will set the node as disabled (but other concurrent process might still see it as enabled).
+	</para>
+
+	<para>
+		The 'kamctl fifo' commands (including rtpengin ones) are executed by an exclusive
+		process which operate on the same shared memory node list.
+	</para>
+
+	<para>
+		All the nodes are pinged in the beginning by all the processes,
+		even if the node list is shared memory.
+	</para>
 	</section>
 
 	<section>
