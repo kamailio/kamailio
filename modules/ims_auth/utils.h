@@ -54,7 +54,7 @@
 #include "../../parser/parse_content.h"
 #include "../../data_lump_rpl.h"
 
-int get_nonce_response(struct sip_msg *msg, str realm,str *nonce,str *response,
+int get_nonce_response(struct sip_msg *msg, str *username, str realm,str *nonce,str *response,
                 enum qop_type *qop,str *qop_str,str *nc,str *cnonce,str *uri, int is_proxy_auth);
 str ims_get_body(struct sip_msg * msg);
 str ims_get_auts(struct sip_msg *msg, str realm, int is_proxy_auth);

@@ -77,6 +77,7 @@ extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
 
 extern str registration_qop_str; /**< the qop options to put in the authorization challenges */
+extern str invite_qop_str; /**< the qop options to put in the authorization challenges for INVITE*/
 extern int av_request_at_sync; /**< how many auth vectors to request in a sync MAR 		*/
 extern int av_request_at_once; /**< how many auth vectors to request in a MAR 				*/
 extern int auth_vector_timeout;
@@ -722,7 +723,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
     int ret = -1; //CSCF_RETURN_FALSE;
     unsigned int aud_hash = 0;
     str realm;
-    str private_identity, public_identity;
+    str private_identity, public_identity, username;
     str nonce, response16, nc, cnonce, qop_str = {0, 0}, auts = {0, 0}, body, *next_nonce = &empty_s;
     enum qop_type qop = QOP_UNSPEC;
     str uri = {0, 0};
@@ -788,7 +789,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
         return AUTH_NO_CREDENTIALS;
     }
 
-    if (!get_nonce_response(msg, realm, &nonce, &response16, &qop, &qop_str, &nc, &cnonce, &uri, is_proxy_auth) ||
+    if (!get_nonce_response(msg, &username, realm, &nonce, &response16, &qop, &qop_str, &nc, &cnonce, &uri, is_proxy_auth) ||
             !nonce.len || !response16.len) {
         LM_DBG("Nonce or response missing: nonce len [%i], response16 len[%i]\n", nonce.len, response16.len);
         return AUTH_ERROR;
@@ -875,7 +876,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
         case AUTH_AKAV1_MD5:
         case AUTH_AKAV2_MD5:
         case AUTH_MD5:
-            calc_HA1(HA_MD5, &private_identity, &realm, &(av->authorization), &(av->authenticate), &cnonce, ha1);
+            calc_HA1(HA_MD5, &username/*&private_identity*/, &realm, &(av->authorization), &(av->authenticate), &cnonce, ha1);
             calc_response(ha1, &(av->authenticate),
                     &nc,
                     &cnonce,
@@ -1541,6 +1542,23 @@ int pack_challenge(struct sip_msg *msg, str realm, auth_vector *av, int is_proxy
     char ck[32], ik[32];
     int ck_len, ik_len;
     str *auth_prefix = is_proxy_auth ? &S_Proxy : &S_WWW;
+	str qop;
+	int is_invite;
+	
+	is_invite = (msg->first_line.u.request.method_value == METHOD_INVITE) ? 1:0;
+    if  (is_invite) {
+		qop.s = invite_qop_str.s;
+		qop.len = invite_qop_str.len;
+		LM_DBG("setting QOP str used is [%.*s]\n", invite_qop_str.len, invite_qop_str.s);
+//		av->type = AUTH_MD5;
+	} else {
+		qop.s = registration_qop_str.s;
+		qop.len = registration_qop_str.len;
+		LM_DBG("setting QOP str used is [%.*s]\n", registration_qop_str.len, registration_qop_str.s);
+	}
+    LM_DBG("QOP str used is [%.*s]\n", qop.len, qop.s);
+	
+	
     switch (av->type) {
         case AUTH_AKAV1_MD5:
         case AUTH_AKAV2_MD5:
@@ -1549,7 +1567,7 @@ int pack_challenge(struct sip_msg *msg, str realm, auth_vector *av, int is_proxy
             ik_len = bin_to_base16(av->ik.s, 16, ik);
             x.len = S_Authorization_AKA.len + auth_prefix->len + realm.len + av->authenticate.len
                     + algorithm_types[av->type].len + ck_len + ik_len
-                    + registration_qop_str.len;
+                    + qop.len;
             x.s = pkg_malloc(x.len);
             if (!x.s) {
                 LM_ERR("Error allocating %d bytes\n",
@@ -1559,8 +1577,8 @@ int pack_challenge(struct sip_msg *msg, str realm, auth_vector *av, int is_proxy
             sprintf(x.s, S_Authorization_AKA.s, auth_prefix->len, auth_prefix->s, realm.len, realm.s,
                     av->authenticate.len, av->authenticate.s,
                     algorithm_types[av->type].len, algorithm_types[av->type].s,
-                    ck_len, ck, ik_len, ik, registration_qop_str.len,
-                    registration_qop_str.s);
+                    ck_len, ck, ik_len, ik, qop.len,
+                    qop.s);
             x.len = strlen(x.s);
             break;
         case AUTH_HTTP_DIGEST_MD5:
@@ -1575,7 +1593,7 @@ int pack_challenge(struct sip_msg *msg, str realm, auth_vector *av, int is_proxy
         case AUTH_MD5:
             /* FOKUS MD5 */
             x.len = S_Authorization_MD5.len + auth_prefix->len + realm.len + av->authenticate.len
-                    + algorithm_types[av->type].len + registration_qop_str.len;
+                    + algorithm_types[av->type].len + qop.len;
             x.s = pkg_malloc(x.len);
             if (!x.s) {
                 LM_ERR("pack_challenge: Error allocating %d bytes\n", x.len);
@@ -1584,7 +1602,7 @@ int pack_challenge(struct sip_msg *msg, str realm, auth_vector *av, int is_proxy
             sprintf(x.s, S_Authorization_MD5.s, auth_prefix->len, auth_prefix->s, realm.len, realm.s,
                     av->authenticate.len, av->authenticate.s,
                     algorithm_types[AUTH_MD5].len, algorithm_types[AUTH_MD5].s,
-                    registration_qop_str.len, registration_qop_str.s);
+                    qop.len, qop.s);
             x.len = strlen(x.s);
             break;
 
