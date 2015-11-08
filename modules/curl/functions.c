@@ -209,27 +209,27 @@ static int curL_query_url(struct sip_msg* _m, char* _url, char* _dst, const char
     }
 
     if ((stat >= 200) && (stat < 500)) {
-	int datasize = (int) download_size;
+	double datasize = download_size;
 
 	curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
     	curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
 	LM_DBG("  -- curl download size: %u Time : %ld \n", (unsigned int)download_size, (long) total_time);
 
-	/* search for line feed */
 	if (oneline) {
+		/* search for line feed */
 		at = memchr(stream.buf, (char)10, download_size);
-		datasize = (int) (at - stream.buf);
-		LM_DBG("  -- curl download size cut to first line: %d \n", datasize);
+		datasize = (double) (at - stream.buf);
+		LM_DBG("  -- curl download size cut to first line: %d \n", (int) datasize);
 	}
 	if (at == NULL) {
 		if (maxdatasize && ((unsigned int) download_size) > maxdatasize) {
 			/* Limit at maximum data size */
-			datasize = (int) maxdatasize;
-			LM_DBG("  -- curl download size cut to maxdatasize : %d \n", datasize);
+			datasize = (double) maxdatasize;
+			LM_DBG("  -- curl download size cut to maxdatasize : %d \n", (int) datasize);
 		} else {
 			/* Limit at actual downloaded data size */
-			datasize = (int) download_size;
-			LM_DBG("  -- curl download size cut to download_size : %d \n", datasize);
+			datasize = (double) download_size;
+			LM_DBG("  -- curl download size cut to download_size : %d \n", (int) datasize);
 	    		//at = stream.buf + (unsigned int) download_size;
 		}
 	}
