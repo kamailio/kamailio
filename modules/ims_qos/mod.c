@@ -915,6 +915,10 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 
 error:
     LM_ERR("Error trying to send AAR (calling)\n");
+	if (auth_session != NULL) {
+		cdpb.AAASessionsUnlock(auth_session->hash);
+		cdpb.AAADropAuthSession(auth_session);
+	}
 ignore:
     if (saved_t_data)
         free_saved_transaction_global_data(saved_t_data); //only free global data if no AARs were sent. if one was sent we have to rely on the callback (CDP) to free
