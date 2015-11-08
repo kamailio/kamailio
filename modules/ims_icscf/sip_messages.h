@@ -52,8 +52,8 @@
 #define MSG_400_MALFORMED_CONTACT "Bad Request - Error parsing Contact parameters"
 #define MSG_400_NO_VISITED "Bad Request - P-Visited-Network-ID header missing" 
 
-#define MSG_403_UNKOWN_EXPERIMENTAL_RC "Forbidden - HSS responded with unknown Experimental Result Code"
-#define MSG_403_UNABLE_TO_COMPLY "Forbidden - HSS Unable to comply"
+#define MSG_500_UNKOWN_EXPERIMENTAL_RC "Forbidden - HSS responded with unknown Experimental Result Code"
+#define MSG_500_UNABLE_TO_COMPLY "Forbidden - HSS Unable to comply"
 #define MSG_403_UNKOWN_RC "Forbidden - HSS responded with unknown Result Code"
 #define MSG_403_USER_UNKNOWN "Forbidden - HSS User Unknown"
 #define MSG_403_IDENTITIES_DONT_MATCH "Forbidden - HSS Identities don't match"

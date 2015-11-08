@@ -161,14 +161,14 @@ void async_cdp_lir_callback(int is_timeout, void *param, AAAMessage *lia, long e
                     goto success;
 
                 default:
-                    cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_UNKOWN_EXPERIMENTAL_RC);
+                    cscf_reply_transactional_async(t, t->uas.request, 500, MSG_500_UNKOWN_EXPERIMENTAL_RC);
                     result = CSCF_RETURN_BREAK;
                     goto done;
             }
             break;
 
         case AAA_UNABLE_TO_COMPLY:
-            cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_UNABLE_TO_COMPLY);
+            cscf_reply_transactional_async(t, t->uas.request, 500, MSG_500_UNABLE_TO_COMPLY);
             result = CSCF_RETURN_BREAK;
             goto done;
 
