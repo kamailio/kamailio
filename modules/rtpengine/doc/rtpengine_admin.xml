@@ -388,8 +388,26 @@ modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 		</example>
 	</section>
 
-	<section id="rtpengine.p.hash_entry_tout">
-		<title><varname>hash_entry_tout</varname> (string)</title>
+	<section id="rtpengine.p.hash_table_size">
+		<title><varname>hash_table_size</varname> (integer)</title>
+		<para>
+			Size of the hash table. Default value is 256.
+		</para>
+		<para>
+			NOTE: If configured size is <emphasis>less than</emphasis> 1, the size will be defaulted to 1.
+		</para>
+		<example>
+		<title>Set <varname>hash_table_size</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpproxy", "hash_table_size", "123")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.hash_table_tout">
+		<title><varname>hash_table_tout</varname> (integer)</title>
 		<para>
 			Number of seconds after an rtpengine hash table entry is marked for deletion.
 			By default, this parameter is set to 120 (seconds).
@@ -405,14 +423,15 @@ modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 			while insert/remove/lookup the hastable, <emphasis>only</emphasis> for the entries in the insert/remove/lookup path.
 		</para>
 		<example>
-		<title>Set <varname>hash_entry_tout</varname> parameter</title>
+		<title>Set <varname>hash_table_tout</varname> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("rtpproxy", "hash_entry_tout", "300")
+modparam("rtpproxy", "hash_table_tout", "300")
 ...
 </programlisting>
 		</example>
 	</section>
+
 
 	</section>
 

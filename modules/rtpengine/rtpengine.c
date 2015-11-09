@@ -231,7 +231,8 @@ static pid_t mypid;
 static unsigned int myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
 static char *setid_avp_param = NULL;
-static int hash_entry_tout = 120;
+static int hash_table_tout = 120;
+static int hash_table_size = 256;
 
 static char ** rtpp_strings=0;
 static int rtpp_sets=0; /*used in rtpengine_set_store()*/
@@ -340,7 +341,8 @@ static param_export_t params[] = {
 	{"rtp_inst_pvar",         PARAM_STR, &rtp_inst_pv_param },
 	{"write_sdp_pv",          PARAM_STR, &write_sdp_pvar_str          },
 	{"read_sdp_pv",           PARAM_STR, &read_sdp_pvar_str          },
-	{"hash_entry_tout",       INT_PARAM, &hash_entry_tout        },
+	{"hash_table_tout",       INT_PARAM, &hash_table_tout        },
+	{"hash_table_size",       INT_PARAM, &hash_table_size        },
 	{0, 0, 0}
 };
 
@@ -1446,11 +1448,11 @@ mod_init(void)
 	}
 
 	/* init the hastable which keeps the call-id <-> selected_node relation */
-	if (!rtpengine_hash_table_init()) {
-		LM_ERR("rtpengine_hash_table_init() failed!\n");
+	if (!rtpengine_hash_table_init(hash_table_size)) {
+		LM_ERR("rtpengine_hash_table_init(%d) failed!\n", hash_table_size);
 		return -1;
 	} else {
-		LM_DBG("rtpengine_hash_table_init() success!\n");
+		LM_DBG("rtpengine_hash_table_init(%d) success!\n", hash_table_size);
 	}
 
 	return 0;
@@ -2307,7 +2309,7 @@ found:
 	}
 	entry->node = node;
 	entry->next = NULL;
-	entry->tout = get_ticks() + hash_entry_tout;
+	entry->tout = get_ticks() + hash_table_tout;
 
 	/* Insert the key<->entry from the hashtable */
 	if (!rtpengine_hash_table_insert(&callid, entry)) {
