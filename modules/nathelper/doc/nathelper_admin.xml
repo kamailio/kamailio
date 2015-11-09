@@ -641,6 +641,16 @@ fix_nated_register();
 		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
+		<example>
+		<title><function>nat_uac_test</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(nat_uac_test("19")) {
+    rtpproxy_manage("co");
+}
+...
+</programlisting>
+		</example>
 	</section>
 
 	<section id="nathelper.f.is_rfc1918">
@@ -654,6 +664,16 @@ fix_nated_register();
 		<para>
 		This function can be used from ANY_ROUTE.
 		</para>
+		<example>
+		<title><function>is_rfc1918</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(is_rfc1918("$rd")) {
+    # domain in r-uri is private address
+}
+...
+</programlisting>
+		</example>
 	</section>
 
 	<section id="nathelper.f.add_contact_alias">

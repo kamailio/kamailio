@@ -24,13 +24,13 @@ Edited by
 
 Ovidiu Sas
 
-   Copyright (c) 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2008 Sippy Software, Inc.
 
-   Copyright (c) 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright (c) 2009 TuTPro Inc.
+   Copyright © 2009 TuTPro Inc.
 
-   Copyright (c) 2010 VoIPEmbedded Inc.
+   Copyright © 2010 VoIPEmbedded Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -108,13 +108,15 @@ Ovidiu Sas
    1.16. fix_nated_sdp usage
    1.17. add_rcv_paramer usage
    1.18. fix_nated_register usage
-   1.19. add_contact_alias usage
-   1.20. handle_ruri_alias usage
-   1.21. set_contact_alias usage
-   1.22. $rr_count usage
-   1.23. $rr_top_count usage
-   1.24. nh_enable_ping usage
-   1.25. @nathelper.rewrite_contact usage
+   1.19. nat_uac_test usage
+   1.20. is_rfc1918 usage
+   1.21. add_contact_alias usage
+   1.22. handle_ruri_alias usage
+   1.23. set_contact_alias usage
+   1.24. $rr_count usage
+   1.25. $rr_top_count usage
+   1.26. nh_enable_ping usage
+   1.27. @nathelper.rewrite_contact usage
 
 Chapter 1. Admin Guide
 
@@ -454,7 +456,7 @@ modparam("nathelper", "append_sdp_oldmediaip", 1)
    5.8. handle_ruri_alias()
    5.9. set_contact_alias()
 
-5.1.  fix_nated_contact()
+5.1. fix_nated_contact()
 
    Rewrites the "Contact" header to contain the request's source
    address:port.
@@ -467,7 +469,7 @@ modparam("nathelper", "append_sdp_oldmediaip", 1)
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
 
-5.2.  fix_nated_sdp(flags [, ip_address])
+5.2. fix_nated_sdp(flags [, ip_address])
 
    Alters the SDP information in orer to facilitate NAT traversal. What
    changes to be performed may be controled via the "flags" parameter.
@@ -497,7 +499,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
 
-5.3.  add_rcv_param([flag]),
+5.3. add_rcv_param([flag]),
 
    Add a received parameter to the "Contact" header fields or the Contact
    URI. The parameter will contain the URI created from the source IP,
@@ -521,7 +523,7 @@ add_rcv_param(); # add the parameter to the Contact header
 add_rcv_param("1"); # add the parameter to the Contact URI
 ...
 
-5.4.  fix_nated_register()
+5.4. fix_nated_register()
 
    The function creates a URI consisting of the source IP, port, and
    protocol and stores the URI in an Attribute-Value-Pair. The URI will be
@@ -539,7 +541,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 fix_nated_register();
 ...
 
-5.5.  nat_uac_test(flags)
+5.5. nat_uac_test(flags)
 
    Tries to guess if client's request originated behind a nat. The
    parameter determines what heuristics is used.
@@ -568,14 +570,28 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-5.6.  is_rfc1918(ip_address)
+   Example 1.19. nat_uac_test usage
+...
+if(nat_uac_test("19")) {
+    rtpproxy_manage("co");
+}
+...
+
+5.6. is_rfc1918(ip_address)
 
    Determines if the address in the parameter is an rfc1918 or rfc6598
    address. The parameter allows pseudo-variables usage.
 
    This function can be used from ANY_ROUTE.
 
-5.7.  add_contact_alias([ip_addr, port, proto])
+   Example 1.20. is_rfc1918 usage
+...
+if(is_rfc1918("$rd")) {
+    # domain in r-uri is private address
+}
+...
+
+5.7. add_contact_alias([ip_addr, port, proto])
 
    Adds an ";alias=ip~port~transport" parameter to the contact URI
    containing either received ip, port, and transport protocol or those
@@ -585,7 +601,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.
 
-   Example 1.19. add_contact_alias usage
+   Example 1.21. add_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!add_contact_alias("$var(src_ip)", "$Rp", "tcp")) {
@@ -596,7 +612,7 @@ fix_nated_register();
     };
 ...
 
-5.8.  handle_ruri_alias()
+5.8. handle_ruri_alias()
 
    Checks if the Request URI has an "alias" parameter and if so, removes
    it and sets the "$du" based on its value. Note that this means that
@@ -612,7 +628,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
 
-   Example 1.20. handle_ruri_alias usage
+   Example 1.22. handle_ruri_alias usage
 ...
     if ($du == "") {
         handle_ruri_alias();
@@ -631,7 +647,7 @@ fix_nated_register();
     };
 ...
 
-5.9.  set_contact_alias()
+5.9. set_contact_alias()
 
    Adds an ";alias=ip~port~transport" parameter to the contact URI
    containing the received ip, port, and transport protocol. The new
@@ -641,7 +657,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and FAILURE_ROUTE.
 
-   Example 1.21. set_contact_alias usage
+   Example 1.23. set_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!set_contact_alias()) {
@@ -661,7 +677,7 @@ fix_nated_register();
 
    Number of Record Routes in received SIP request or reply.
 
-   Example 1.22. $rr_count usage
+   Example 1.24. $rr_count usage
 ...
     $avp(rr_count) = $rr_count;
 ...
@@ -673,7 +689,7 @@ fix_nated_register();
    value of $rr_top_count is 1. If there is no Record Route(s), value of
    $rr_top_count is 0.
 
-   Example 1.23. $rr_top_count usage
+   Example 1.25. $rr_top_count usage
 ...
     if ($rr_count == $avp(rr_count) + $rr_top_count) {
         route(ADD_CONTACT_ALIAS);
@@ -691,7 +707,7 @@ fix_nated_register();
 
    The function takes only one parameter - a number in decimal format.
 
-   Example 1.24. nh_enable_ping usage
+   Example 1.26. nh_enable_ping usage
 ...
 $ kamctl fifo nh_enable_ping 1
 ...
@@ -706,7 +722,7 @@ $ kamctl fifo nh_enable_ping 1
    counted from 1. Only IP:port is rewritten, remaining part are left
    unchanged. Full nameaddr is supported.
 
-   Example 1.25. @nathelper.rewrite_contact usage
+   Example 1.27. @nathelper.rewrite_contact usage
 ...
 $c = @nathelper.rewrite_contact[1];
 ...
@@ -721,38 +737,38 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       What happend with "rtpproxy_disable" parameter?
+   What happend with "rtpproxy_disable" parameter?
 
-       It was removed as it became obsolete - now "rtpproxy_sock" can take
-       empty value to disable the rtpproxy functionality.
+   It was removed as it became obsolete - now "rtpproxy_sock" can take
+   empty value to disable the rtpproxy functionality.
 
    2.2.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/.
 
    2.3.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one of our
-       mailing lists:
-         * User Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-         * Developer Mailing List -
-           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <sr-users@lists.sip-router.org> and e-mails regarding development
-       versions should be sent to <sr-dev@lists.sip-router.org>.
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
 
-       If you want to keep the mail private, send it to
-       <sr-users@lists.sip-router.org>.
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
 
    2.4.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sip-router.org/tracker.
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.
