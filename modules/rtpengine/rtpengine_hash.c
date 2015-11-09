@@ -74,6 +74,7 @@ int rtpengine_hash_table_init(int size) {
 		// never expire the head of the hashtable index lists
 		rtpengine_hash_table->entry_list[i]->tout = -1;
 		rtpengine_hash_table->entry_list[i]->next = NULL;
+		rtpengine_hash_table->total = 0;
 	}
 
 	// init lock
@@ -165,6 +166,9 @@ int rtpengine_hash_table_insert(void *key, void *value) {
 
 			// set pointers
 			entry = last_entry;
+
+			// update total
+			rtpengine_hash_table->total--;
 		}
 
 		// next entry in the list
@@ -173,6 +177,9 @@ int rtpengine_hash_table_insert(void *key, void *value) {
 	}
 
 	last_entry->next = new_entry;
+
+	// update total
+	rtpengine_hash_table->total++;
 
 	// unlock
 	lock_release(rtpengine_hash_lock);
@@ -205,6 +212,9 @@ int rtpengine_hash_table_remove(void *key) {
 			shm_free(entry->callid.s);
 			shm_free(entry);
 
+			// update total
+			rtpengine_hash_table->total--;
+
 			// unlock
 			lock_release(rtpengine_hash_lock);
 
@@ -222,6 +232,9 @@ int rtpengine_hash_table_remove(void *key) {
 
 			// set pointers
 			entry = last_entry;
+
+			// update total
+			rtpengine_hash_table->total--;
 		}
 
 		last_entry = entry;
@@ -271,6 +284,9 @@ void* rtpengine_hash_table_lookup(void *key) {
 
 			// set pointers
 			entry = last_entry;
+
+			// update total
+			rtpengine_hash_table->total--;
 		}
 
 		last_entry = entry;
@@ -314,6 +330,9 @@ void rtpengine_hash_table_print() {
 
 				// set pointers
 				entry = last_entry;
+
+				// update total
+				rtpengine_hash_table->total--;
 			} else {
 				LM_DBG("hash_index=%d callid=%.*s tout=%u\n",
 					i, entry->callid.len, entry->callid.s, entry->tout - get_ticks());
@@ -326,4 +345,15 @@ void rtpengine_hash_table_print() {
 
 	// unlock
 	lock_release(rtpengine_hash_lock);
+}
+
+unsigned int rtpengine_hash_table_total() {
+
+	// check rtpengine hashtable
+	if (!rtpengine_hash_table) {
+		LM_ERR("NULL rtpengine_hash_table");
+		return 0;
+	}
+
+	return rtpengine_hash_table->total;
 }
