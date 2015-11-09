@@ -1041,6 +1041,23 @@ $ &ctltool; fifo nh_ping_rtpp all
 			</programlisting>
 			</example>
 		</section>
+
+	    <section id="rtpengine.m.nh_show_hash_total">
+			<title><function moreinfo="none">nh_show_hash_total</function></title>
+			<para>
+				Print the total number of hash entries in the hash table at a given moment.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">nh_show_hash_total</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &ctltool; fifo nh_show_hash_total
+...
+			</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 </chapter>
