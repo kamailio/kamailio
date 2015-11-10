@@ -210,6 +210,30 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.p.rtpengine_allow_op">
+		<title><varname>rtpengine_allow_op</varname> (integer)</title>
+		<para>
+		Enable this to allow finishing the current sessions while denying new sessions for the
+		<emphasis>manually deactivated nodes </emphasis> via kamctl command i.e. "disabled(permanent)" nodes.
+		Probably the manually deactivated machine is still running(did not crash).
+		</para>
+		<para>
+		This is <emphasis>useful</emphasis> when deactivating a node for maintanance and reject new sessions but allow current ones to finish.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>0</quote> to keep the current behaviour.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rtpengine_allow_op</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "rtpengine_allow_op", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="rtpengine.p.queried_nodes_limit">
 		<title><varname>queried_nodes_limit</varname> (integer)</title>
 		<para>
