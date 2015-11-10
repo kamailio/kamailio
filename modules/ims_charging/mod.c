@@ -378,10 +378,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	tm_cell_t *t;
 	unsigned int tindex = 0,
 				 tlabel = 0;
-	struct impu_data *impu_data;
-	char *p;
 	struct dlg_cell* dlg;
-	unsigned int len;
 	struct ro_session *ro_session = 0;
 	int free_contact = 0;
 	
@@ -457,34 +454,6 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	}
 	
 	LM_DBG("IMPU data to pass to usrloc:  contact <%.*s> identity <%.*s>\n", contact.len, contact.s, identity.len, identity.s);
-	
-	//create impu_data_parcel
-	len = identity.len + contact.len +  sizeof (struct impu_data);
-	impu_data = (struct impu_data*) shm_malloc(len);
-	if (!impu_data) {
-	    LM_ERR("Unable to allocate memory for impu_data, trying to send CCR\n");
-	    ret = RO_RETURN_ERROR;
-	    goto done;
-	}
-	memset(impu_data, 0, len);
-	
-	p = (char*) (impu_data + 1);
-	impu_data->identity.s = p;
-	impu_data->identity.len = identity.len;
-	memcpy(p, identity.s, identity.len);
-	p += identity.len;
-
-	impu_data->contact.s = p;
-	impu_data->contact.len = contact.len;
-	memcpy(p, contact.s, contact.len);
-	p += contact.len;
-	
-	if (p != (((char*) impu_data) + len)) {
-	    LM_ERR("buffer overflow creating impu data, trying to send CCR\n");
-	    shm_free(impu_data);
-	    ret = RO_RETURN_ERROR;
-	    goto done;
-	}
 
 send_ccr:
 

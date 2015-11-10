@@ -173,12 +173,6 @@ static inline void unlink_unsafe_ro_session(struct ro_session_entry *ro_session_
 int init_ro_session_table(unsigned int size);
 
 /*!
- * \brief Destroy a ro_session and free memory
- * \param ro_session destroyed Ro Session
- */
-inline void destroy_ro_session(struct ro_session *ro_session);
-
-/*!
  * \brief Destroy the ro_session dialog table
  */
 void destroy_ro_session_table(void);
