@@ -1325,7 +1325,7 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS=$(CC_OPT) -funroll-loops  $(PROFILE)
 			#if gcc 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
-					CFLAGS+=-march=r3000 \
+					CFLAGS+=-mfp32 -march=r3000 \
 							-ftree-vectorize -fno-strict-overflow
 			# not supported on mips: -minline-all-stringops
 else
