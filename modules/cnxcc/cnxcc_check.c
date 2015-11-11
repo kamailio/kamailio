@@ -24,9 +24,6 @@
 
 #include <stdio.h>
 
-#include "../../locking.h"
-#include "../../lock_ops.h"
-
 #include "cnxcc_mod.h"
 #include "cnxcc.h"
 #include "cnxcc_check.h"
@@ -40,7 +37,7 @@ void check_calls_by_money(unsigned int ticks, void *param) {
 	call_t *tmp_call = NULL;
 	int i;
 
-	lock_get(&_data.money.lock);
+	cnxcc_lock(_data.money.lock);
 
 	if (_data.money.credit_data_by_client->table)
 		for(i = 0; i < _data.money.credit_data_by_client->size; i++)
@@ -54,7 +51,7 @@ void check_calls_by_money(unsigned int ticks, void *param) {
 					break;
 				}*/
 
-				lock_get(&credit_data->lock);
+				cnxcc_lock(credit_data->lock);
 
 				clist_foreach_safe(credit_data->call_list, call, tmp_call, next) {
 					int consumed_time = 0;
@@ -88,7 +85,7 @@ void check_calls_by_money(unsigned int ticks, void *param) {
 				}
 
 				if (credit_data->concurrent_calls == 0) {
-					lock_release(&credit_data->lock);
+					cnxcc_unlock(credit_data->lock);
 					continue;
 				}
 
@@ -112,15 +109,16 @@ void check_calls_by_money(unsigned int ticks, void *param) {
 					terminate_all_calls(credit_data);
 
 					// make sure the rest of the servers kill the calls belonging to this customer
-					redis_publish_to_kill_list(credit_data);
-					lock_release(&credit_data->lock);
+					if (_data.redis)
+						redis_publish_to_kill_list(credit_data);
+					cnxcc_unlock(credit_data->lock);
 					break;
 				}
 
-				lock_release(&credit_data->lock);
+				cnxcc_unlock(credit_data->lock);
 			}
 
-	lock_release(&_data.money.lock);
+	cnxcc_unlock(_data.money.lock);
 }
 
 void check_calls_by_time(unsigned int ticks, void *param) {
@@ -129,7 +127,7 @@ void check_calls_by_time(unsigned int ticks, void *param) {
 	call_t *tmp_call = NULL;
 	int i;
 
-	lock_get(&_data.time.lock);
+	cnxcc_lock(_data.time.lock);
 
 	if (_data.time.credit_data_by_client->table)
 		for(i = 0; i < _data.time.credit_data_by_client->size; i++)
@@ -139,7 +137,7 @@ void check_calls_by_time(unsigned int ticks, void *param) {
 				int total_consumed_secs = 0;
 				double consumption_diff = 0/*, distributed_consumption = 0*/;
 
-				lock_get(&credit_data->lock);
+				cnxcc_lock(credit_data->lock);
 
 				/*if (i > SAFE_ITERATION_THRESHOLD)
 				{
@@ -169,7 +167,7 @@ void check_calls_by_time(unsigned int ticks, void *param) {
 				}
 
 				if (credit_data->concurrent_calls == 0) {
-					lock_release(&credit_data->lock);
+					cnxcc_unlock(credit_data->lock);
 					continue;
 				}
 
@@ -190,13 +188,14 @@ void check_calls_by_time(unsigned int ticks, void *param) {
 					terminate_all_calls(credit_data);
 
 					// make sure the rest of the servers kill the calls belonging to this customer
-					redis_publish_to_kill_list(credit_data);
-					lock_release(&credit_data->lock);
+					if (_data.redis)
+						redis_publish_to_kill_list(credit_data);
+					cnxcc_unlock(credit_data->lock);
 					break;
 				}
 
-				lock_release(&credit_data->lock);
+				cnxcc_unlock(credit_data->lock);
 			}
 
-	lock_release(&_data.time.lock);
+	cnxcc_unlock(_data.time.lock);
 }
