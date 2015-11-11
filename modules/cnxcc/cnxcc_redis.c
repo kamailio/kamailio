@@ -531,7 +531,7 @@ static void __subscription_cb(redisAsyncContext *c, void *r, void *privdata) {
 	 if (try_get_credit_data_entry(&key, &credit_data) < 0)
 		 return;
 
-	 lock_get(&credit_data->lock);
+	 cnxcc_lock(credit_data->lock);
 
 	 if (credit_data->deallocating)
 		 goto done; // no need to terminate the calls. They are already being terminated
@@ -539,6 +539,6 @@ static void __subscription_cb(redisAsyncContext *c, void *r, void *privdata) {
 	 LM_ALERT("Got kill list entry for key [%.*s]\n", key.len, key.s);
 	 terminate_all_calls(credit_data);
 done:
-	 lock_release(&credit_data->lock);
+	 cnxcc_unlock(credit_data->lock);
 
 }
