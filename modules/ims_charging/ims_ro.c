@@ -973,12 +973,11 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
 
     int sdp_stream_num = 0;
 
-    LM_DBG("Sending initial CCR request for reservation_units [%d] incoming_trunk_id [%.*s] outgoing_trunk_id [%.*s]\n",
-            reservation_units,
+    LM_DBG("Sending initial CCR request (%c) for reservation_units [%d] incoming_trunk_id [%.*s] outgoing_trunk_id [%.*s]\n",
+	dir==RO_ORIG_DIRECTION?'O':'T',
+			reservation_units,
             incoming_trunk_id->len, incoming_trunk_id->s,
             outgoing_trunk_id->len, outgoing_trunk_id->s);
-
-
 
     ssd = shm_malloc(sizeof (struct session_setup_data)); // lookup structure used to load session info from cdp callback on CCA
     if (!ssd) {
