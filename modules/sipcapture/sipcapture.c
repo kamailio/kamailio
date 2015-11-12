@@ -1491,6 +1491,8 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 
 	if (db_insert_mode == 1 && c->db_funcs.insert_delayed != NULL)
 		insert = c->db_funcs.insert_delayed;
+	else if (db_insert_mode == 2 && c->db_funcs.insert_async != NULL)
+		insert = c->db_funcs.insert_async;
 	else
 		insert = c->db_funcs.insert;
 	ret = insert(c->db_con, db_keys, db_vals, NR_KEYS);
@@ -2362,6 +2364,11 @@ int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_re
                 	LM_ERR("failed to insert delayed into database\n");
                         goto error;
                 }
+	} else if (db_insert_mode==2 && c->db_funcs.insert_async!=NULL) {
+		if (c->db_funcs.insert_async(c->db_con, db_keys, db_vals, RTCP_NR_KEYS) < 0) {
+			LM_ERR("failed to insert async into database\n");
+			goto error;
+		}
         } else if (c->db_funcs.insert(c->db_con, db_keys, db_vals, RTCP_NR_KEYS) < 0) {
 		LM_ERR("failed to insert into database\n");
                 goto error;               
