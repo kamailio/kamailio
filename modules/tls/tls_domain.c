@@ -182,6 +182,8 @@ void tls_free_domain(tls_domain_t* d)
 	if (d->crl_file.s) shm_free(d->crl_file.s);
 	if (d->pkey_file.s) shm_free(d->pkey_file.s);
 	if (d->cert_file.s) shm_free(d->cert_file.s);
+	if (d->server_name.s) shm_free(d->server_name.s);
+	if (d->server_id.s) shm_free(d->server_id.s);
 	shm_free(d);
 }
 
@@ -904,7 +906,7 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 	server_name.len = strlen(server_name.s);
 
 	new_domain = tls_lookup_cfg(*tls_domains_cfg, TLS_DOMAIN_SRV,
-			&orig_domain->ip, orig_domain->port, &server_name);
+			&orig_domain->ip, orig_domain->port, &server_name, 0);
 	if (new_domain==NULL) {
 		LM_DBG("TLS domain for socket [%s:%d] and server_name='%s' "
 			"not found\n", ip_addr2a(&orig_domain->ip),
@@ -1289,7 +1291,7 @@ tls_domains_cfg_t* tls_new_cfg(void)
  * @return found configuration or default, if not found
  */
 tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
-		struct ip_addr* ip, unsigned short port, str *sname)
+		struct ip_addr* ip, unsigned short port, str *sname, str *srvid)
 {
 	tls_domain_t *p;
 
@@ -1302,6 +1304,18 @@ tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
 	}
 
 	while (p) {
+		if(srvid && srvid->len>0) {
+			LM_DBG("comparing addr: [%s:%d]  [%s:%d] -- id: [%.*s] [%.*s]\n",
+				ip_addr2a(&p->ip), p->port, ip_addr2a(ip), port,
+				p->server_id.len, ZSW(p->server_id.s),
+				srvid->len, ZSW(srvid->s));
+			if(p->server_id.s && p->server_id.len==srvid->len
+					&& strncasecmp(p->server_name.s, srvid->s, srvid->len)==0) {
+				LM_DBG("TLS config found by server id\n");
+				return p;
+			}
+
+		}
 		if(sname) {
 			LM_DBG("comparing addr: [%s:%d]  [%s:%d] -- sni: [%.*s] [%.*s]\n",
 				ip_addr2a(&p->ip), p->port, ip_addr2a(ip), port,

@@ -130,6 +130,21 @@ int tls_run_event_routes(struct tcp_connection *c);
 
 extern str sr_tls_xavp_cfg;
 
+static str *tls_get_connect_server_id(void)
+{
+	sr_xavp_t *vavp = NULL;
+	str sid = {"server_id", 9};
+	if(sr_tls_xavp_cfg.s!=NULL)
+		vavp = xavp_get_child_with_sval(&sr_tls_xavp_cfg, &sid);
+	if(vavp==NULL || vavp->val.v.s.len<=0) {
+		LM_DBG("xavp with outbound server id not found\n");
+		return NULL;
+	}
+	LM_DBG("found xavp with outbound server id: %s\n", vavp->val.v.s.s);
+	return &vavp->val.v.s;
+
+}
+
 /**
  * get the server name (sni) for outbound connections from xavp
  */
@@ -167,6 +182,7 @@ static int tls_complete_init(struct tcp_connection* c)
 	tls_domains_cfg_t* cfg;
 	enum tls_conn_states state;
 	str *sname = NULL;
+	str *srvid = NULL;
 
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
@@ -192,12 +208,13 @@ static int tls_complete_init(struct tcp_connection* c)
 	if (c->flags & F_CONN_PASSIVE) {
 		state=S_TLS_ACCEPTING;
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_SRV,
-								&c->rcv.dst_ip, c->rcv.dst_port, 0);
+								&c->rcv.dst_ip, c->rcv.dst_port, 0, 0);
 	} else {
 		state=S_TLS_CONNECTING;
 		sname = tls_get_connect_server_name();
+		srvid = tls_get_connect_server_id();
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
-						&c->rcv.dst_ip, c->rcv.dst_port, sname);
+						&c->rcv.dst_ip, c->rcv.dst_port, sname, srvid);
 	}
 	if (unlikely(c->state<0)) {
 		BUG("Invalid connection (state %d)\n", c->state);
