@@ -1031,7 +1031,16 @@ modparam("tls", "renegotiation", 1)
 			<listitem><para>crl</para></listitem>
 			<listitem><para>cipher_list</para></listitem>
 			<listitem><para>server_name</para></listitem>
+			<listitem><para>server_id</para></listitem>
 	</itemizedlist>
+	<para>
+		The value for server_id can be any string, being used to match TLS
+		client config profile, overriding the match on ip:port and
+		server_name. This is the recommended way for selecting a specific
+		TLS client config profile, because the local or remote port is hard
+		to predict for a stream connection - see parameter xavp_cfg to learn
+		how to enable it.
+	</para>
 	<para>
 		All the parameters that take filenames as values will be resolved
 		using the same rules as for the tls config filename itself: starting
@@ -1071,6 +1080,16 @@ verify_depth = 3
 ca_list = local_ca.pem
 server_name = kamailio.org
 
+[client:127.0.0.1:5061]
+method = TLSv1
+verify_certificate = yes
+require_certificate = yes
+private_key = default_key.pem
+certificate = default_cert.pem
+ca_list = default_ca.pem
+crl = default_crl.pem
+server_name = kamailio.org
+server_id = kamailio.org
 	</programlisting>
 	</example>
 	<para>
@@ -1108,6 +1127,12 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 	</para>
 	<itemizedlist>
 		<listitem><para>server_name - SNI to be used for outbound connections</para></listitem>
+		<listitem><para>server_id - string value to be used to match TLS config profile
+				for client (outbound) connections. If it is set, matching the TLS config
+				profile is done first on server_id and then on ip:port and server_name.
+				This is the recommended way for selecting a specific TLS client config
+				profile as the local or remote port is hard to predict for a stream
+				connection.</para></listitem>
 	</itemizedlist>
 	<para>
 		The default value is empty (not set).
@@ -1119,6 +1144,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
   modparam("tls", "xavp_cfg", "tls")
  ...
   $xavp(tls=>server_name) = "kamailio.org";
+  $xavp(tls=>server_id) = "kamailio.org";
   $du = "sip:kamailio.org:5061;transport=tls";
   route(RELAY);
 ...
