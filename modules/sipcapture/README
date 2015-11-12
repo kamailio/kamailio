@@ -235,6 +235,10 @@ modparam("sipcapture", "hash_source", "to_user")
    when the DB driver has support for it. If no INSERT DELAYED support is
    offered by DB driver, then standard INSERT is used.
 
+   If set to 2, use ASYNC INSERT to store sip message into capture table
+   when the DB driver has support for it. If no ASYNC INSERT support is
+   offered by DB driver, then standard INSERT is used.
+
    Default value is 0 (no INSERT DELAYED).
 
    Example 1.5. db_insert_mode example
