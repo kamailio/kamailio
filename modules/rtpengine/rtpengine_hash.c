@@ -22,13 +22,12 @@ static int str_cmp_str(const str *a, const str *b) {
 }
 
 /* from sipwise rtpengine */
-static int str_equal(void *a, void *b) {
-	return (str_cmp_str((str *) a, (str *) b) == 0);
+static int str_equal(str *a, str *b) {
+	return (str_cmp_str(a, b) == 0);
 }
 
 /* from sipwise rtpengine */
-static unsigned int str_hash(void *ss) {
-	const str *s = (str*) ss;
+static unsigned int str_hash(str *s) {
 	unsigned int ret = 5381;
 	str it = *s;
 
@@ -62,14 +61,22 @@ int rtpengine_hash_table_init(int size) {
 
 	// init hashtable entry_list
 	rtpengine_hash_table->entry_list = shm_malloc(hash_table_size * sizeof(struct rtpengine_hash_entry));
+	if (!rtpengine_hash_table->entry_list) {
+		LM_ERR("no shm left to create rtpengine_hash_table->entry_list\n");
+		rtpengine_hash_table_destroy();
+		return 0;
+	}
+	memset(rtpengine_hash_table->entry_list, 0, hash_table_size * sizeof(struct rtpengine_hash_entry));
 
-	// init hashtable entry_list[i] (head never filled)
+	// init hashtable entry_list[i] (head never filled); destroy table on error
 	for (i = 0; i < hash_table_size; i++) {
 		rtpengine_hash_table->entry_list[i] = shm_malloc(sizeof(struct rtpengine_hash_entry));
 		if (!rtpengine_hash_table->entry_list[i]) {
 			LM_ERR("no shm left to create rtpengine_hash_table->entry_list[%d]\n", i);
+			rtpengine_hash_table_destroy();
 			return 0;
 		}
+		memset(rtpengine_hash_table->entry_list[i], 0, sizeof(struct rtpengine_hash_entry));
 
 		// never expire the head of the hashtable index lists
 		rtpengine_hash_table->entry_list[i]->tout = -1;
@@ -81,6 +88,7 @@ int rtpengine_hash_table_init(int size) {
 	rtpengine_hash_lock = lock_alloc();
 	if (!rtpengine_hash_lock) {
 		LM_ERR("no shm left to init rtpengine_hash_table lock");
+		rtpengine_hash_table_destroy();
 		return 0;
 	}
 
@@ -94,6 +102,14 @@ int rtpengine_hash_table_destroy() {
 	// check rtpengine hashtable
 	if (!rtpengine_hash_table) {
 		LM_ERR("NULL rtpengine_hash_table");
+		return 0;
+	}
+
+	// check rtpengine hashtable->entry_list
+	if (!rtpengine_hash_table->entry_list) {
+		LM_ERR("NULL rtpengine_hash_table->entry_list");
+		shm_free(rtpengine_hash_table);
+		rtpengine_hash_table = NULL;
 		return 0;
 	}
 
@@ -111,6 +127,7 @@ int rtpengine_hash_table_destroy() {
 
 	// destroy hashtable entry_list
 	shm_free(rtpengine_hash_table->entry_list);
+	rtpengine_hash_table->entry_list = NULL;
 
 	// destroy hashtable
 	shm_free(rtpengine_hash_table);
@@ -128,7 +145,7 @@ int rtpengine_hash_table_destroy() {
 	return 1;
 }
 
-int rtpengine_hash_table_insert(void *key, void *value) {
+int rtpengine_hash_table_insert(str *key, struct rtpengine_hash_entry *value) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 	struct rtpengine_hash_entry *new_entry = (struct rtpengine_hash_entry *) value;
 	unsigned int hash_index;
@@ -136,6 +153,12 @@ int rtpengine_hash_table_insert(void *key, void *value) {
 	// check rtpengine hashtable
 	if (!rtpengine_hash_table) {
 		LM_ERR("NULL rtpengine_hash_table");
+		return 0;
+	}
+
+	// check rtpengine hashtable->entry_list
+	if (!rtpengine_hash_table->entry_list) {
+		LM_ERR("NULL rtpengine_hash_table->entry_list");
 		return 0;
 	}
 
@@ -187,13 +210,19 @@ int rtpengine_hash_table_insert(void *key, void *value) {
 	return 1;
 }
 
-int rtpengine_hash_table_remove(void *key) {
+int rtpengine_hash_table_remove(str *key) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 	unsigned int hash_index;
 
 	// check rtpengine hashtable
 	if (!rtpengine_hash_table) {
 		LM_ERR("NULL rtpengine_hash_table");
+		return 0;
+	}
+
+	// check rtpengine hashtable->entry_list
+	if (!rtpengine_hash_table->entry_list) {
+		LM_ERR("NULL rtpengine_hash_table->entry_list");
 		return 0;
 	}
 
@@ -247,14 +276,21 @@ int rtpengine_hash_table_remove(void *key) {
 	return 0;
 }
 
-void* rtpengine_hash_table_lookup(void *key) {
+struct rtpp_node *rtpengine_hash_table_lookup(str *key) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 	unsigned int hash_index;
+	struct rtpp_node *node;
 
 	// check rtpengine hashtable
 	if (!rtpengine_hash_table) {
 		LM_ERR("NULL rtpengine_hash_table");
-		return 0;
+		return NULL;
+	}
+
+	// check rtpengine hashtable->entry_list
+	if (!rtpengine_hash_table->entry_list) {
+		LM_ERR("NULL rtpengine_hash_table->entry_list");
+		return NULL;
 	}
 
 	// get first entry from entry list; jump over unused list head
@@ -267,10 +303,12 @@ void* rtpengine_hash_table_lookup(void *key) {
 	while (entry) {
 		// if key found, return entry
 		if (str_equal(&entry->callid, (str *)key)) {
+			node = entry->node;
+
 			// unlock
 			lock_release(rtpengine_hash_lock);
 
-			return entry;
+			return node;
 		}
 
 		// if expired entry discovered, delete it
@@ -307,6 +345,12 @@ void rtpengine_hash_table_print() {
 	// check rtpengine hashtable
 	if (!rtpengine_hash_table) {
 		LM_ERR("NULL rtpengine_hash_table");
+		return ;
+	}
+
+	// check rtpengine hashtable->entry_list
+	if (!rtpengine_hash_table->entry_list) {
+		LM_ERR("NULL rtpengine_hash_table->entry_list");
 		return ;
 	}
 
