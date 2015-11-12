@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-
+	
 	<title>&adminguide;</title>
-
+	
 	<section>
 	<title>Overview</title>
 	<para>
@@ -33,7 +33,7 @@
                 </listitem>
 		<listitem>
 		<para>
-		Homer encapsulation protocol mode (HEP v1, v2, v3).
+		Homer encapsulation protocol mode (HEP v1, v2, v3). 
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -125,7 +125,7 @@ modparam("sipcapture", "table_name", "homer_capture1|homer_capture2");
 	<section id="sipcapture.p.mt_mode">
 		<title><varname>mt_mode</varname> (str)</title>
 		<para>
-		Name of the mode used for storing data in multiple tables. Modes can be "rand" (random), "round_robin" (use a round_robin algorithm) or "hash" (use hashing to determine the table to store). These modes are only triggered if there is more than one table specified in table_name parameter, separated by "|".
+		Name of the mode used for storing data in multiple tables. Modes can be "rand" (random), "round_robin" (use a round_robin algorithm) or "hash" (use hashing to determine the table to store). These modes are only triggered if there is more than one table specified in table_name parameter, separated by "|". 
 		</para>
 		<para>
 		<emphasis>
@@ -166,11 +166,6 @@ modparam("sipcapture", "hash_source", "to_user")
                 If set to 1, use INSERT DELAYED to store sip message into capture table
                 when the DB driver has support for it. If no INSERT DELAYED support
                 is offered by DB driver, then standard INSERT is used.
-                </para>
-                <para>
-								If set to 2, use ASYNC INSER to store sip message into capture table
-								when the DB driver has support for it. If no ASYNC INSERT support is
-								offered by DB driver, then standard INSERT is used.
                 </para>
                 <para>
                 Default value is 0 (no INSERT DELAYED).
@@ -263,7 +258,7 @@ modparam("sipcapture", "raw_ipip_capture_on", 1)
                 <title><varname>raw_moni_capture_on</varname> (integer)</title>
                 <para>
                 Parameter to enable/disable monitoring/mirroring port capturing (on(1)/off(0))
-		Only one mode on raw socket can be enabled! Monitoring port capturing currently
+		Only one mode on raw socket can be enabled! Monitoring port capturing currently 
 		supported only on Linux.
                 </para>
                 <para>
@@ -283,14 +278,14 @@ modparam("sipcapture", "raw_moni_capture_on", 1)
 	<section id="sipcapture.p.raw_socket_listen">
                 <title><varname>raw_socket_listen</varname> (string)</title>
                 <para>
-                Parameter indicate an listen IP address of RAW socket for IPIP capturing.
-                You can also define a port/portrange for IPIP/Mirroring mode, to capture
+                Parameter indicate an listen IP address of RAW socket for IPIP capturing. 
+                You can also define a port/portrange for IPIP/Mirroring mode, to capture 
                 SIP messages in specific ports:
 		<para>
 		"10.0.0.1:5060" - the source/destination port of the SIP message must be equal 5060
 		</para>
 		<para>
-		"10.0.0.1:5060-5090" - the source/destination port of the SIP message must be
+		"10.0.0.1:5060-5090" - the source/destination port of the SIP message must be 
 		equal or be between 5060 and 5090.
 		</para>
 		<para>
@@ -376,7 +371,7 @@ modparam("sipcapture", "promiscuous_on", 1)
 	<section id="sipcapture.p.raw_moni_bpf_on">
                 <title><varname>raw_moni_bpf_on</varname> (integer)</title>
                 <para>
-                Activate Linux Socket Filter (LSF based on BPF) on the mirroring interface.
+                Activate Linux Socket Filter (LSF based on BPF) on the mirroring interface. 
                 The structure is defined in linux/filter.h. The default LSF accept a port/portrange
                 from the raw_socket_listen param. Currently LSF supported only on Linux.
                 </para>
@@ -393,7 +388,7 @@ modparam("sipcapture", "raw_moni_bpf_on", 1)
 ...
 </programlisting>
                 </example>
-        </section>
+        </section>        
 	<section id="sipcapture.p.capture_node">
 		<title><varname>capture_node</varname> (str)</title>
 		<para>
@@ -475,7 +470,7 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 			</programlisting>
 		</example>
 	</section>
-</section>
+</section>	
     <section>
 	<title>MI Commands</title>
 	<section id="sipcapture.m.sip_capture">
@@ -493,11 +488,11 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 			<listitem><para>capture_mode : turns on/off SIP message capturing.
 			Possible values are:</para>
 			<itemizedlist>
-				<listitem><para> on </para></listitem>
+				<listitem><para> on </para></listitem> 
 				<listitem><para> off </para></listitem>
 			</itemizedlist>
 			<para>The parameter is optional - if missing, the command will
-			return the status of the SIP message capturing (as string
+			return the status of the SIP message capturing (as string 
 			<quote>on</quote> or <quote>off</quote> ) without changing
 			anything.</para>
 			</listitem>
@@ -530,26 +525,26 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 			<listitem><para>on or off: turns on/off SIP message capturing.
 			Possible values are:</para>
 			<itemizedlist>
-				<listitem><para>on</para></listitem>
+				<listitem><para>on</para></listitem> 
 				<listitem><para>off</para></listitem>
 			</itemizedlist>
 			</listitem>
-			<listitem><para><quote>check</quote> does not change
+			<listitem><para><quote>check</quote> does not change 
 			sipcapture status, just reports the current status.</para>
 			</listitem>
 		</itemizedlist>
 
 	</section>
 	</section><!-- RPC commands -->
-
+	
 	<section>
 		<title>Database setup</title>
 		<para>
-		Before running &kamailio; with the sipcapture module, you have to setup the database
-		tables where the module will store the data. For that, if the table were not
-		created by the installation script or you choose to install everything by
-		yourself you can use the sipcapture_create.sql, <acronym>SQL</acronym> script
-		in the sql folder of sipcapture module as template. You can also find the
+		Before running &kamailio; with the sipcapture module, you have to setup the database 
+		tables where the module will store the data. For that, if the table were not 
+		created by the installation script or you choose to install everything by 
+		yourself you can use the sipcapture_create.sql, <acronym>SQL</acronym> script 
+		in the sql folder of sipcapture module as template. You can also find the 
 		complete database documentation on the project webpage, &kamailiodbdocslink;.
 		</para>
 	</section>
@@ -557,10 +552,10 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
         <title>Limitations</title>
 	<itemizedlist>
 		<listitem>
-		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port.
+		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port. 
 		   Don't activate both at the same time.
 		</listitem><listitem>
-		2. By default MySQL doesn't support INSERT DELAYED for partitioning table. You can patch MySQL
+		2. By default MySQL doesn't support INSERT DELAYED for partitioning table. You can patch MySQL 
 		  (http://bugs.mysql.com/bug.php?id=50393)
 		</listitem><listitem>
 		3. Mirroring port capturing works only on Linux.
