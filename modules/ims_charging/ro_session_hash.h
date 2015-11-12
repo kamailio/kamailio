@@ -175,7 +175,8 @@ int init_ro_session_table(unsigned int size);
 /*!
  * \brief Destroy the ro_session dialog table
  */
-void destroy_ro_session_table(void);
+void destroy_ro_session(struct ro_session *ro_session);
+
 
 /*!
  * \brief Link a ro_session structure
