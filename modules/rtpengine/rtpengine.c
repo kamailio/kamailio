@@ -218,6 +218,7 @@ static int rtpp_test_ping(struct rtpp_node *node);
 
 /* Pseudo-Variables */
 static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
 
 /*mi commands*/
 static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree, void* param);
@@ -235,7 +236,7 @@ static pid_t mypid;
 static unsigned int myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
 static char *setid_avp_param = NULL;
-static int hash_table_tout = 120;
+static int hash_table_tout = 3600;
 static int hash_table_size = 256;
 
 static char ** rtpp_strings=0;
@@ -2284,6 +2285,7 @@ select_rtpp_node_new(str callid, int do_test, int op)
 	int was_forced = 0;
 
 	/* XXX Use quick-and-dirty hashing algo */
+	sum = 0;
 	for(i = 0; i < callid.len; i++)
 		sum += callid.s[i];
 	sum &= 0xff;
@@ -2347,26 +2349,38 @@ found:
 			goto retry;
 	}
 
-	/* build hash table entry */
+	/* build the entry */
 	struct rtpengine_hash_entry *entry = shm_malloc(sizeof(struct rtpp_node));
-	if (shm_str_dup(&entry->callid, &callid) < 0) {
-		LM_ERR("rtpengine hash table fail to duplicate calllen=%d callid=%.*s",
+	if (!entry) {
+		LM_ERR("rtpengine hash table fail to create entry for calllen=%d callid=%.*s\n",
 			callid.len, callid.len, callid.s);
+		return node;
+	}
+
+	/* fill the entry */
+	if (shm_str_dup(&entry->callid, &callid) < 0) {
+		LM_ERR("rtpengine hash table fail to duplicate calllen=%d callid=%.*s\n",
+			callid.len, callid.len, callid.s);
+		shm_free(entry);
+		return node;
 	}
 	entry->node = node;
 	entry->next = NULL;
 	entry->tout = get_ticks() + hash_table_tout;
 
-	/* Insert the key<->entry from the hashtable */
+	/* insert the key<->entry from the hashtable */
 	if (!rtpengine_hash_table_insert(&callid, entry)) {
-		LM_ERR("rtpengine hash table fail to insert node=%.*s for calllen=%d callid=%.*s",
+		LM_ERR("rtpengine hash table fail to insert node=%.*s for calllen=%d callid=%.*s\n",
 			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
+		shm_free(entry->callid.s);
+		shm_free(entry);
+		return node;
 	} else {
 		LM_DBG("rtpengine hash table insert node=%.*s for calllen=%d callid=%.*s\n",
 			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
 	}
 
-	/* Return selected node  */
+	/* return selected node */
 	return node;
 }
 
@@ -2377,25 +2391,49 @@ static struct rtpp_node *
 select_rtpp_node_old(str callid, int do_test, int op)
 {
 	struct rtpp_node *node = NULL;
-	struct rtpengine_hash_entry *entry = NULL;
 
-	entry = rtpengine_hash_table_lookup(&callid);
-	if (!entry) {
-		LM_ERR("rtpengine hash table lookup failed to find entry for calllen=%d callid=%.*s\n",
-			callid.len, callid.len, callid.s);
-	} else {
-		LM_DBG("rtpengine hash table lookup find entry for calllen=%d callid=%.*s\n",
-			callid.len, callid.len, callid.s);
-		node = entry->node;
-	}
+	node = rtpengine_hash_table_lookup(&callid);
 
 	if (!node) {
-		LM_ERR("rtpengine hash table lookup failed to find node for calllen=%d callid=%.*s\n",
+		LM_NOTICE("rtpengine hash table lookup failed to find node for calllen=%d callid=%.*s\n",
 			callid.len, callid.len, callid.s);
 		return NULL;
 	} else {
 		LM_DBG("rtpengine hash table lookup find node=%.*s for calllen=%d callid=%.*s\n",
 			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
+	}
+
+	return node;
+}
+
+/*
+ * Main balancing routine. This DO try to keep the same proxy for
+ * the call if some proxies were disabled or enabled (e.g. kamctl command)
+ */
+static struct rtpp_node *
+select_rtpp_node(str callid, int do_test, int op)
+{
+	struct rtpp_node *node = NULL;
+
+	if(!active_rtpp_set) {
+		LM_ERR("script error - no valid set selected\n");
+		return NULL;
+	}
+
+	// lookup node
+	node = select_rtpp_node_old(callid, do_test, op);
+
+	// check node
+	if (!node) {
+		// run the selection algorithm
+		node = select_rtpp_node_new(callid, do_test, op);
+
+		// check node
+		if (!node) {
+			LM_ERR("rtpengine failed to select new for calllen=%d callid=%.*s\n",
+				callid.len, callid.len, callid.s);
+			return NULL;
+		}
 	}
 
 	// if node enabled, return it
@@ -2418,28 +2456,6 @@ select_rtpp_node_old(str callid, int do_test, int op)
 	}
 
 	return NULL;
-}
-
-/*
- * Main balancing routine. This DO try to keep the same proxy for
- * the call if some proxies were disabled or enabled (e.g. kamctl command)
- */
-static struct rtpp_node *
-select_rtpp_node(str callid, int do_test, int op)
-{
-	if(!active_rtpp_set) {
-		LM_ERR("script error - no valid set selected\n");
-		return NULL;
-	}
-
-	// calculate and choose a node
-	if (op == OP_OFFER) {
-		// run the selection algorithm
-		return select_rtpp_node_new(callid, do_test, op);
-	} else {
-		// lookup the hastable (key=callid value=node) and get the old node
-		return select_rtpp_node_old(callid, do_test, op);
-	}
 }
 
 static int
@@ -2858,7 +2874,8 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_rtpstat_wrap, parms, 1);
 }
 
-int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri) {
+static int
+set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri) {
 	pv_value_t val;
 
 	if (rtp_inst_pvar == NULL)

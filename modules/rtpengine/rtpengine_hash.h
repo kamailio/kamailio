@@ -22,9 +22,9 @@ struct rtpengine_hash_table {
 
 int rtpengine_hash_table_init(int size);
 int rtpengine_hash_table_destroy();
-int rtpengine_hash_table_insert(void *key, void *value);
-int rtpengine_hash_table_remove(void *key);
-void* rtpengine_hash_table_lookup(void *key);
+int rtpengine_hash_table_insert(str *key, struct rtpengine_hash_entry *value);
+int rtpengine_hash_table_remove(str *key);
+struct rtpp_node *rtpengine_hash_table_lookup(str *key);
 void rtpengine_hash_table_print();
 unsigned int rtpengine_hash_table_total();
 
