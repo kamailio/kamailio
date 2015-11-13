@@ -964,6 +964,8 @@ int ht_has_autoexpire(void)
 	return 0;
 }
 
+extern int ht_timer_procs;
+
 void ht_timer(unsigned int ticks, void *param)
 {
 	ht_t *ht;
@@ -971,18 +973,24 @@ void ht_timer(unsigned int ticks, void *param)
 	ht_cell_t *it0;
 	time_t now;
 	int i;
+	int istart;
+	int istep;
 
 	if(_ht_root==NULL)
 		return;
 
 	now = time(NULL);
-	
+
+	istart = (int)(long)param;
+	if(ht_timer_procs<=0) istep = 1;
+	else istep = ht_timer_procs;
+
 	ht = _ht_root;
 	while(ht)
 	{
 		if(ht->htexpire>0)
 		{
-			for(i=0; i<ht->htsize; i++)
+			for(i=istart; i<ht->htsize; i+=istep)
 			{
 				/* free entries */
 				ht_slot_lock(ht, i);
