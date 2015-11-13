@@ -581,27 +581,6 @@ modparam("htable", "timer_interval", 10)
 </programlisting>
 		</example>
 	</section>
-	<section id="htable.p.timer_mode">
-		<title><varname>timer_mode</varname> (integer)</title>
-		<para>
-		If set to 1, the module will start a new timer process. If set to 0
-		will use the default timer process to check for expired htable
-		values.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>timer_mode</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("htable", "timer_mode", 1)
-...
-</programlisting>
-		</example>
-	</section>
 	<section id="htable.p.db_expires">
 		<title><varname>db_expires</varname> (integer)</title>
 		<para>
