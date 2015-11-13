@@ -470,10 +470,13 @@ sdp_get("$avp(sdp)");
 	</section>
 	<section id="sdpops.f.sdp_content">
 	    <title>
-		<function moreinfo="none">sdp_content()</function>
+		<function moreinfo="none">sdp_content([sloppy])</function>
 	    </title>
 	    <para>
-		Return true if the SIP message has SDP body or a SDP part in body.
+		Return true if the SIP message has SDP body or a SDP part in
+        body.  If an argument is given, the function does not parse message
+        body, but returns true if Content-Type is "application/sdp" or
+        if that string exists in "multipart/mixed" body.
 	    </para>
 		<para>
 			This function can be used from ANY_ROUTE.
