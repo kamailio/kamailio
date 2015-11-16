@@ -6,10 +6,11 @@
 
 /* table entry */
 struct rtpengine_hash_entry {
-	unsigned int tout;			// call timeout
 	str callid;				// call callid
+	str viabranch;				// call viabranch
 	struct rtpp_node *node;			// call selected node
 
+	unsigned int tout;			// call timeout
 	struct rtpengine_hash_entry *next;	// call next
 };
 
@@ -22,10 +23,13 @@ struct rtpengine_hash_table {
 
 int rtpengine_hash_table_init(int size);
 int rtpengine_hash_table_destroy();
-int rtpengine_hash_table_insert(str *key, struct rtpengine_hash_entry *value);
-int rtpengine_hash_table_remove(str *key);
-struct rtpp_node *rtpengine_hash_table_lookup(str *key);
+int rtpengine_hash_table_insert(str callid, str viabranch, struct rtpengine_hash_entry *value);
+int rtpengine_hash_table_remove(str callid, str viabranch);
+struct rtpp_node *rtpengine_hash_table_lookup(str callid, str viabranch);
 void rtpengine_hash_table_print();
 unsigned int rtpengine_hash_table_total();
+
+void rtpengine_hash_table_free_entry(struct rtpengine_hash_entry *entry);
+void rtpengine_hash_table_free_entry_list(struct rtpengine_hash_entry *entry_list);
 
 #endif
