@@ -101,6 +101,7 @@ static tls_domain_t mod_params = {
 	TLS_USE_TLSv1,    /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
+	{0, 0},           /* Server id */
 	0                 /* next */
 };
 
@@ -123,6 +124,7 @@ tls_domain_t srv_defaults = {
 	TLS_USE_TLSv1,    /* TLS method */
 	STR_STATIC_INIT(TLS_CRL_FILE), /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
+	{0, 0},           /* Server id */
 	0                 /* next */
 };
 
@@ -145,6 +147,7 @@ tls_domain_t cli_defaults = {
 	TLS_USE_TLSv1,    /* TLS method */
 	{0, 0}, /* Certificate revocation list */
 	{0, 0},           /* Server name (SNI) */
+	{0, 0},           /* Server id */
 	0                 /* next */
 };
 
