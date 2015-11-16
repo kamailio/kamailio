@@ -311,7 +311,27 @@ modparam("carrierroute", "fetch_rows", 3000)
 </programlisting>
 		</example>
 	</section>
-
+<section>
+		<title><varname>db_load_description</varname> (integer)</title>
+		<para>
+		Toggle on/off loading in memory the description column in the 
+		carrierroute/carrierfailureroute database tables. This reduces the 
+		shared memory used by the module.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Unset <varname>db_load_description</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("carrierroute", "db_load_description", 0)
+...
+</programlisting>
+		</example>
+	</section>
 	<section>
 		<title><varname>match_mode</varname> (integer)</title>
 		<para>

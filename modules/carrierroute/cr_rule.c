@@ -95,7 +95,7 @@ int add_route_rule(struct route_flags *rf, const str * prefix,
 		goto mem_error;
 	}
 
-	if (shm_str_dup(&shm_rr->comment, comment) != 0) {
+	if (comment && shm_str_dup(&shm_rr->comment, comment) != 0) {
 		goto mem_error;
 	}
 

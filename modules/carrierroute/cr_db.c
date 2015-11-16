@@ -39,6 +39,7 @@
 
 #define QUERY_LEN 2048
 
+static int columns_load_num, failure_columns_load_num, load_comments;
 static char query[QUERY_LEN];
 
 str * columns[COLUMN_NUM] = { &carrierroute_id_col, &carrierroute_carrier_col,
@@ -76,6 +77,15 @@ str * failure_columns[FAILURE_COLUMN_NUM] = {
 	&carrierfailureroute_next_domain_col,
 	&carrierfailureroute_description_col
 };
+
+
+void set_load_comments_params(int lc) {
+	load_comments = lc;
+	columns_load_num = lc ? COLUMN_NUM : COLUMN_NUM_NO_COMMENT;
+	failure_columns_load_num = lc ? FAILURE_COLUMN_NUM : FAILURE_COLUMN_NUM_NO_COMMENT;
+}
+
+
 
 
 static int load_carrier_map(struct route_data_t *rd) {
@@ -263,6 +273,7 @@ int load_route_data_db(struct route_data_t * rd) {
 	static str query_str;
 	str tmp_scan_prefix, tmp_rewrite_host, tmp_rewrite_prefix,
 		tmp_rewrite_suffix, tmp_host_name, tmp_reply_code, tmp_comment;
+	str *p_tmp_comment;
 
 	if( (strlen("SELECT DISTINCT  FROM  WHERE = ")
 			+ carrierroute_table.len + columns[COL_DOMAIN]->len
@@ -325,7 +336,7 @@ int load_route_data_db(struct route_data_t * rd) {
 
 	if (DB_CAPABILITY(carrierroute_dbf, DB_CAP_FETCH)) {
 		if (carrierroute_dbf.query(carrierroute_dbh, NULL, NULL, NULL, (db_key_t *) columns, 0,
-					COLUMN_NUM, NULL, NULL) < 0) {
+				columns_load_num, NULL, NULL) < 0) {
 			LM_ERR("Failed to query database to prepare fetch row.\n");
 			return -1;
 		}
@@ -335,7 +346,7 @@ int load_route_data_db(struct route_data_t * rd) {
 		}
 	} else {
 		if (carrierroute_dbf.query(carrierroute_dbh, NULL, NULL, NULL, (db_key_t *) columns, 0,
-				 COLUMN_NUM, NULL, &res) < 0) {
+				columns_load_num, NULL, &res) < 0) {
 			LM_ERR("Failed to query database.\n");
 			return -1;
 		}
@@ -349,17 +360,23 @@ int load_route_data_db(struct route_data_t * rd) {
 			tmp_rewrite_host.s=(char *)row->values[COL_REWRITE_HOST].val.string_val;
 			tmp_rewrite_prefix.s=(char *)row->values[COL_REWRITE_PREFIX].val.string_val;
 			tmp_rewrite_suffix.s=(char *)row->values[COL_REWRITE_SUFFIX].val.string_val;
-			tmp_comment.s=(char *)row->values[COL_COMMENT].val.string_val;
 			if (tmp_scan_prefix.s==NULL) tmp_scan_prefix.s="";
 			if (tmp_rewrite_host.s==NULL) tmp_rewrite_host.s="";
 			if (tmp_rewrite_prefix.s==NULL) tmp_rewrite_prefix.s="";
 			if (tmp_rewrite_suffix.s==NULL) tmp_rewrite_suffix.s="";
-			if (tmp_comment.s==NULL) tmp_comment.s="";
 			tmp_scan_prefix.len=strlen(tmp_scan_prefix.s);
 			tmp_rewrite_host.len=strlen(tmp_rewrite_host.s);
 			tmp_rewrite_prefix.len=strlen(tmp_rewrite_prefix.s);
 			tmp_rewrite_suffix.len=strlen(tmp_rewrite_suffix.s);
-			tmp_comment.len=strlen(tmp_comment.s);
+
+			p_tmp_comment = NULL;
+			if (load_comments) {
+				tmp_comment.s = (char *)row->values[COL_COMMENT].val.string_val;
+				if (tmp_comment.s==NULL) tmp_comment.s="";
+				tmp_comment.len=strlen(tmp_comment.s);
+				p_tmp_comment = &tmp_comment;
+			}
+
 			if (add_route(rd,
 					row->values[COL_CARRIER].val.int_val,
 					row->values[COL_DOMAIN].val.int_val,
@@ -376,7 +393,7 @@ int load_route_data_db(struct route_data_t * rd) {
 					0,
 					-1,
 					NULL,
-					&tmp_comment) == -1) {
+					p_tmp_comment) == -1) {
 				goto errout;
 			}
 		}
@@ -400,7 +417,7 @@ int load_route_data_db(struct route_data_t * rd) {
 		return -1;
 	}
 	if (carrierroute_dbf.query(carrierroute_dbh, NULL, NULL, NULL, (db_key_t *)failure_columns, 0,
-								FAILURE_COLUMN_NUM, NULL, &res) < 0) {
+			failure_columns_load_num, NULL, &res) < 0) {
 		LM_ERR("failed to query database.\n");
 		return -1;
 	}
@@ -409,15 +426,21 @@ int load_route_data_db(struct route_data_t * rd) {
 		tmp_scan_prefix.s=(char *)row->values[FCOL_SCAN_PREFIX].val.string_val;
 		tmp_host_name.s=(char *)row->values[FCOL_HOST_NAME].val.string_val;
 		tmp_reply_code.s=(char *)row->values[FCOL_REPLY_CODE].val.string_val;
-		tmp_comment.s=(char *)row->values[FCOL_COMMENT].val.string_val;
 		if (tmp_scan_prefix.s==NULL) tmp_scan_prefix.s="";
 		if (tmp_host_name.s==NULL) tmp_host_name.s="";
 		if (tmp_reply_code.s==NULL) tmp_reply_code.s="";
-		if (tmp_comment.s==NULL) tmp_comment.s="";
 		tmp_scan_prefix.len=strlen(tmp_scan_prefix.s);
 		tmp_host_name.len=strlen(tmp_host_name.s);
 		tmp_reply_code.len=strlen(tmp_reply_code.s);
-		tmp_comment.len=strlen(tmp_comment.s);
+		p_tmp_comment = NULL;
+
+		if (load_comments) {
+			tmp_comment.s = (char *)row->values[FCOL_COMMENT].val.string_val;
+			if (tmp_comment.s==NULL) tmp_comment.s="";
+			tmp_comment.len=strlen(tmp_comment.s);
+			p_tmp_comment = &tmp_comment;
+		}
+
 		if (add_failure_route(rd,
 				row->values[FCOL_CARRIER].val.int_val,
 				row->values[COL_DOMAIN].val.int_val,
@@ -427,7 +450,7 @@ int load_route_data_db(struct route_data_t * rd) {
 				row->values[FCOL_FLAGS].val.int_val,
 				row->values[FCOL_MASK].val.int_val,
 				row->values[FCOL_NEXT_DOMAIN].val.int_val,
-				&tmp_comment) == -1) {
+				p_tmp_comment) == -1) {
 			goto errout;
 		}
 	}
