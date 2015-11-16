@@ -646,6 +646,11 @@ int pv_parse_t_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 			break;
+		case 4:
+			if(strncmp(in->s, "ruid", 4) == 0)
+				sp->pvp.pvn.u.isname.name.n = 7;
+			else goto error;
+			break;
 		case 5:
 			if(strncmp(in->s, "flags", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 5;
@@ -773,6 +778,19 @@ int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_strval(msg, param, res, &t->uac[branch].uri);
+		case 7: /* $T_branch(ruid) */
+			switch(route_type) {
+				case BRANCH_ROUTE:
+					/* branch and branch_failure routes have their index set */
+					tcx = _tmx_tmb.tm_ctx_get();
+					if(tcx == NULL)
+						return pv_get_null(msg, param, res);
+					return pv_get_strval(msg, param, res, &t->uac[tcx->branch_index].ruid);
+				break;
+				default:
+					return pv_get_tm_reply_ruid(msg, param, res);
+			}
+
 	}
 	return 0;
 }
