@@ -294,7 +294,7 @@ modparam("rtpengine", "extra_id_pv", "$avp(extra_id)")
 		</example>
 	</section>
 
-	<section id="rtpengine.p.setid_pv">
+	<section id="rtpengine.p.setid_avp">
 		<title><varname>setid_avp</varname> (string)</title>
 		<para>
 			The parameter defines an AVP that, if set,
@@ -597,8 +597,29 @@ modparam("rtpengine", "disabled_col", "disabled_column_name")
 	</section>
 
 
+	<section id="rtpengine.p.setid_default">
+		<title><varname>setid_default</varname> (string)</title>
+		<para>
+			The default set of nodes to be used.
+		</para>
+		<para>
+			By default, the setid is 0.
+		</para>
+		<para>
+			NOTE that if setid_avp is configured, this value will be ignored and
+			the active set will be chosen according to the setid_avp.
+		</para>
+		<example>
+		<title>Set <varname>setid_default</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "setid_default", 11)
+...
+</programlisting>
+		</example>
 	</section>
 
+	</section>
 
 
 

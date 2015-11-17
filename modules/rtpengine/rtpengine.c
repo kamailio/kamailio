@@ -235,6 +235,7 @@ static str extra_id_pv_param = {NULL, 0};
 static char *setid_avp_param = NULL;
 static int hash_table_tout = 3600;
 static int hash_table_size = 256;
+static int setid_default = DEFAULT_RTPP_SET_ID;
 
 static char ** rtpp_strings=0;
 static int rtpp_sets=0; /*used in rtpengine_set_store()*/
@@ -340,14 +341,15 @@ static param_export_t params[] = {
 	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
 	{"url_col",               PARAM_STR, &rtpp_url_col           },
 	{"disabled_col",          PARAM_STR, &rtpp_disabled_col      },
-	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param },
-	{"setid_avp",             PARAM_STRING, &setid_avp_param },
-	{"force_send_interface",  PARAM_STRING, &force_send_ip_str	},
-	{"rtp_inst_pvar",         PARAM_STR, &rtp_inst_pv_param },
-	{"write_sdp_pv",          PARAM_STR, &write_sdp_pvar_str          },
-	{"read_sdp_pv",           PARAM_STR, &read_sdp_pvar_str          },
+	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param      },
+	{"setid_avp",             PARAM_STRING, &setid_avp_param     },
+	{"force_send_interface",  PARAM_STRING, &force_send_ip_str   },
+	{"rtp_inst_pvar",         PARAM_STR, &rtp_inst_pv_param      },
+	{"write_sdp_pv",          PARAM_STR, &write_sdp_pvar_str     },
+	{"read_sdp_pv",           PARAM_STR, &read_sdp_pvar_str      },
 	{"hash_table_tout",       INT_PARAM, &hash_table_tout        },
 	{"hash_table_size",       INT_PARAM, &hash_table_size        },
+	{"setid_default",         INT_PARAM, &setid_default          },
 	{0, 0, 0}
 };
 
@@ -1503,6 +1505,14 @@ mod_init(void)
 		return -1;
 	} else {
 		LM_DBG("rtpengine_hash_table_init(%d) success!\n", hash_table_size);
+	}
+
+	/* select the default set */
+	default_rtpp_set = select_rtpp_set(setid_default);
+	if (!default_rtpp_set) {
+		LM_NOTICE("Default rtpp set %d NOT found\n", setid_default);
+	} else {
+		LM_DBG("Default rtpp set %d found\n", setid_default);
 	}
 
 	return 0;
