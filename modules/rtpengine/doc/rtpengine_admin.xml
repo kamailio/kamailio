@@ -458,12 +458,33 @@ modparam("rtpengine", "hash_table_tout", "300")
         </section>
 
 
+	<section id="rtpengine.p.setid_col">
+		<title><varname>setid_col</varname> (string)</title>
+		<para>
+			Column name in the rtpproxy table. If database mode is activated,
+			set the setid of rtp nodes according to this column, on startup.
+			The MySQL value for this column should be INT UNSIGNED.
+		</para>
+		<para>
+			By default, the column name is "setid".
+		</para>
+		<example>
+		<title>Set <varname>setid_col</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "setid_col", "setid_column_name")
+...
+</programlisting>
+		</example>
+	</section>
+
+
 	<section id="rtpengine.p.disabled_col">
 		<title><varname>disabled_col</varname> (string)</title>
 		<para>
 			Column name in the rtpproxy table. If database mode is activated,
 			set the state of rtp nodes according to this column, on startup.
-			The MySQL value for this column is INT.
+			The MySQL value for this column should be INT.
 		</para>
 		<para>
 			By default, the column name is "disabled".

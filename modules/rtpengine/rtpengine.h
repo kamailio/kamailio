@@ -69,6 +69,7 @@ int init_rtpproxy_db(void);
 
 extern str rtpp_db_url;
 extern str rtpp_table_name;
+extern str rtpp_setid_col;
 extern str rtpp_url_col;
 extern str rtpp_disabled_col;
 

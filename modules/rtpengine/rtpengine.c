@@ -337,6 +337,7 @@ static param_export_t params[] = {
 	{"queried_nodes_limit",   INT_PARAM, &queried_nodes_limit    },
 	{"db_url",                PARAM_STR, &rtpp_db_url            },
 	{"table_name",            PARAM_STR, &rtpp_table_name        },
+	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
 	{"url_col",               PARAM_STR, &rtpp_url_col           },
 	{"disabled_col",          PARAM_STR, &rtpp_disabled_col      },
 	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param },
