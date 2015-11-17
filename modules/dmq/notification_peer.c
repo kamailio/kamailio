@@ -406,7 +406,7 @@ int extract_node_list(dmq_node_list_t* update_list, struct sip_msg* msg)
 			update_list->nodes = cur;
 			update_list->count++;
 			total_nodes++;
-		} else if (find->params && ret->status != find->status) {
+		} else if (find->uri.params.s && ret->status != find->status) {
 			LM_DBG("updating status on %.*s from %d to %d\n",
 				STR_FMT(&tmp_uri), ret->status, find->status);
 			ret->status = find->status;

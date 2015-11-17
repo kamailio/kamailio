@@ -185,20 +185,12 @@ dmq_node_t* build_dmq_node(str* uri, int shm) {
 	}
 	/* if any params found */
 	if(params) {
-		if(shm) {
-			if(shm_duplicate_params(&ret->params, params) < 0) {
-				LM_ERR("error duplicating params\n");
-				free_params(params);
-				goto error;
-			}
+		if(set_dmq_node_params(ret, params) < 0) {
 			free_params(params);
-		} else {
-			ret->params = params;
-		}
-		if(set_dmq_node_params(ret, ret->params) < 0) {
 			LM_ERR("error setting parameters\n");
 			goto error;
 		}
+		free_params(params);
 	} else {
 		LM_DBG("no dmqnode params found\n");		
 	}
@@ -248,12 +240,8 @@ dmq_node_t* find_dmq_node_uri2(str* uri)
 void destroy_dmq_node(dmq_node_t* node, int shm)
 {
 	if(shm) {
-		if (node->params!=NULL)
-			shm_free_params(node->params);
 		shm_free_node(node);
 	} else {
-		if (node->params!=NULL)
-			free_params(node->params);
 		pkg_free_node(node);
 	}
 }
