@@ -43,7 +43,6 @@ typedef struct dmq_node {
 	str orig_uri; /* original uri string - e.g. sip:127.0.0.1:5060;passive=true */
 	struct sip_uri uri; /* parsed uri string */
 	struct ip_addr ip_address; /* resolved IP address */
-	param_t* params; /* uri parameters */
 	int status; /* reserved - maybe something like active,timeout,disabled */
 	int last_notification; /* last notificatino receied from the node */
 	struct dmq_node* next; /* pointer to the next struct dmq_node */
