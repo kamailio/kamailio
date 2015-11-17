@@ -31,7 +31,7 @@ static db_func_t rtpp_dbf;
 static db1_con_t *rtpp_db_handle = NULL;
 
 str rtpp_db_url = {NULL, 0};
-str rtpp_table_name = str_init("rtpproxy");
+str rtpp_table_name = str_init("rtpengine");
 str rtpp_setid_col = str_init("setid");
 str rtpp_url_col = str_init("url");
 str rtpp_disabled_col = str_init("disabled");
