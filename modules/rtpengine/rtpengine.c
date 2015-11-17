@@ -103,9 +103,6 @@ MODULE_VERSION
 #define MI_SET_NATPING_STATE		"nh_enable_ping"
 #define MI_DEFAULT_NATPING_STATE	1
 
-#define MI_MIN_RECHECK_TICKS		0
-#define MI_MAX_RECHECK_TICKS		(unsigned int)-1
-
 #define MI_ENABLE_RTP_PROXY			"nh_enable_rtpp"
 #define MI_SHOW_RTP_PROXIES			"nh_show_rtpp"
 #define MI_PING_RTP_PROXY           "nh_ping_rtpp"
@@ -338,9 +335,10 @@ static param_export_t params[] = {
 	{"rtpengine_tout_ms",     INT_PARAM, &rtpengine_tout_ms      },
 	{"rtpengine_allow_op",    INT_PARAM, &rtpengine_allow_op     },
 	{"queried_nodes_limit",   INT_PARAM, &queried_nodes_limit    },
-	{"db_url",                PARAM_STR, &rtpp_db_url },
-	{"table_name",            PARAM_STR, &rtpp_table_name },
-	{"url_col",               PARAM_STR, &rtpp_url_col },
+	{"db_url",                PARAM_STR, &rtpp_db_url            },
+	{"table_name",            PARAM_STR, &rtpp_table_name        },
+	{"url_col",               PARAM_STR, &rtpp_url_col           },
+	{"disabled_col",          PARAM_STR, &rtpp_disabled_col      },
 	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param },
 	{"setid_avp",             PARAM_STRING, &setid_avp_param },
 	{"force_send_interface",  PARAM_STRING, &force_send_ip_str	},
@@ -644,7 +642,7 @@ struct rtpp_set *get_rtpp_set(int set_id)
 }
 
 
-int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy)
+int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabled, unsigned int ticks)
 {
 	/* Make rtp proxies list. */
 	char *p, *p1, *p2, *plim;
@@ -679,10 +677,14 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy)
 		}
 		memset(pnode, 0, sizeof(*pnode));
 		pnode->idx = rtpp_no++;
-		pnode->rn_recheck_ticks = 0;
+		if (ticks == MI_MAX_RECHECK_TICKS) {
+			pnode->rn_recheck_ticks = ticks;
+		} else {
+			pnode->rn_recheck_ticks = ticks + get_ticks();
+		}
 		pnode->rn_weight = weight;
 		pnode->rn_umode = 0;
-		pnode->rn_disabled = 0;
+		pnode->rn_disabled = disabled;
 		pnode->rn_url.s = shm_malloc(p2 - p1 + 1);
 		if (pnode->rn_url.s == NULL) {
 			shm_free(pnode);
@@ -775,7 +777,7 @@ static int rtpengine_add_rtpengine_set( char * rtp_proxies)
 
 	if (rtpp_list != NULL)
 	{
-		if (add_rtpengine_socks(rtpp_list, rtp_proxies) != 0)
+		if (add_rtpengine_socks(rtpp_list, rtp_proxies, 0, 0) != 0)
 			goto error;
 		else
 			return 0;
@@ -2114,8 +2116,8 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 
 	cp = send_rtpp_command(node, dict, &ret);
 	if (!cp) {
-	    node->rn_disabled = 1;
-    	node->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
+		node->rn_disabled = 1;
+		node->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
 		LM_ERR("proxy did not respond to ping\n");
 		goto error;
 	}

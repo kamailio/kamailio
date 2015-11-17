@@ -26,6 +26,9 @@
 #include "bencode.h"
 #include "../../str.h"
 
+#define MI_MIN_RECHECK_TICKS		0
+#define MI_MAX_RECHECK_TICKS		(unsigned int)-1
+
 struct rtpp_node {
 	unsigned int		idx;			/* overall index */
 	str					rn_url;			/* unparsed, deletable */
@@ -59,7 +62,7 @@ struct rtpp_set_head{
 
 
 struct rtpp_set *get_rtpp_set(int set_id);
-int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
+int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabled, unsigned int ticks);
 
 
 int init_rtpproxy_db(void);
@@ -67,6 +70,7 @@ int init_rtpproxy_db(void);
 extern str rtpp_db_url;
 extern str rtpp_table_name;
 extern str rtpp_url_col;
+extern str rtpp_disabled_col;
 
 
 #endif

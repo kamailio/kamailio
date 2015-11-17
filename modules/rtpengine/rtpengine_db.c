@@ -34,6 +34,7 @@ str rtpp_db_url = {NULL, 0};
 str rtpp_table_name = str_init("rtpproxy");
 str rtpp_set_id_col = str_init("set_id");
 str rtpp_url_col = str_init("url");
+str rtpp_disabled_col = str_init("disabled");
 
 static int rtpp_connect_db(void)
 {
@@ -63,13 +64,16 @@ static int rtpp_load_db(void)
 	db1_res_t *res = NULL;
 	db_val_t *values = NULL;
 	db_row_t *rows = NULL;
-	db_key_t query_cols[] = {&rtpp_set_id_col, &rtpp_url_col};
+	db_key_t query_cols[] = {&rtpp_set_id_col, &rtpp_url_col, &rtpp_disabled_col};
 
 	str url;
 	int set_id;
+	int disabled;
+	unsigned int ticks;
+
 	/* int weight, flags; */
 	int n_rows = 0;
-	int n_cols = 2;
+	int n_cols = 3;
 
 	if (rtpp_db_handle == NULL)
 	{
@@ -101,6 +105,12 @@ static int rtpp_load_db(void)
 		set_id = VAL_INT(values);
 		url.s = VAL_STR(values+1).s;
 		url.len = strlen(url.s);
+		disabled = VAL_INT(values+2);
+		if (disabled) {
+			ticks = MI_MAX_RECHECK_TICKS;
+		} else {
+			ticks = 0;
+		}
 		/*
 		weight = VAL_INT(values+2);
 		flags = VAL_INT(values+3);
@@ -111,9 +121,10 @@ static int rtpp_load_db(void)
 			continue;
 		}
 
-		if (add_rtpengine_socks(rtpp_list, url.s) !=  0)
+		if (add_rtpengine_socks(rtpp_list, url.s, disabled, ticks) !=  0)
 		{
-			LM_ERR("error inserting '%.*s' into set %d\n", url.len, url.s, set_id);
+			LM_ERR("error inserting '%.*s' into set %d disabled=%d\n",
+				url.len, url.s, set_id, disabled);
 		}
 	}
 

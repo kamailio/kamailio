@@ -454,6 +454,27 @@ modparam("rtpengine", "hash_table_size", "123")
 modparam("rtpengine", "hash_table_tout", "300")
 ...
 </programlisting>
+                </example>
+        </section>
+
+
+	<section id="rtpengine.p.disabled_col">
+		<title><varname>disabled_col</varname> (string)</title>
+		<para>
+			Column name in the rtpproxy table. If database mode is activated,
+			set the state of rtp nodes according to this column, on startup.
+			The MySQL value for this column is INT.
+		</para>
+		<para>
+			By default, the column name is "disabled".
+		</para>
+		<example>
+		<title>Set <varname>disabled_col</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "disabled_col", "disabled_column_name")
+...
+</programlisting>
 		</example>
 	</section>
 
