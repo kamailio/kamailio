@@ -170,8 +170,7 @@ static char fourbits2char[16] = { '0', '1', '2', '3', '4', '5',
 /* converts a str to an u. short, returns the u. short and sets *err on
  * error and if err!=null
   */
-static inline unsigned short str2s(const char* s, unsigned int len,
-									int *err)
+static inline unsigned short str2s(const char* s, unsigned int len, int *err)
 {
 	unsigned short ret;
 	int i;
@@ -619,6 +618,10 @@ static inline void strlower(str* _s)
 {
 	int i;
 
+	if (_s == NULL) return ;
+	if (_s->len < 0) return ;
+	if (_s->s == NULL) return ;
+
 	for(i = 0; i < _s->len; i++) {
 		_s->s[i] = tolower(_s->s[i]);
 	}
@@ -631,7 +634,12 @@ static inline void strlower(str* _s)
 static inline int str2int(str* _s, unsigned int* _r)
 {
 	int i;
-	
+
+	if (_s == NULL) return -1;
+	if (_r == NULL) return -1;
+	if (_s->len < 0) return -1;
+	if (_s->s == NULL) return -1;
+
 	*_r = 0;
 	for(i = 0; i < _s->len; i++) {
 		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
@@ -641,7 +649,7 @@ static inline int str2int(str* _s, unsigned int* _r)
 			return -1;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -653,7 +661,10 @@ static inline int str2sint(str* _s, int* _r)
 	int i;
 	int sign;
 
-	if (_s->len == 0) return -1;
+	if (_s == NULL) return -1;
+	if (_r == NULL) return -1;
+	if (_s->len < 0) return -1;
+	if (_s->s == NULL) return -1;
 
 	*_r = 0;
 	sign = 1;
@@ -688,14 +699,41 @@ static inline int str2sint(str* _s, int* _r)
  */
 static inline int shm_str_dup(str* dst, const str* src)
 {
-	dst->s = (char*)shm_malloc(src->len);
-	if (!dst->s) {
+	/* NULL checks */
+	if (dst == NULL || src == NULL) {
+		LM_ERR("NULL src or dst\n");
+		return -1;
+	}
+
+	/**
+	 * fallback actions:
+	 * 	- dst->len=0
+	 * 	- dst->s is allocated sizeof(void*) size
+	 * 	- return 0 (i.e. success)
+	 */
+
+	/* fallback checks */
+	if (src->len < 0 || src->s == NULL) {
+		LM_WARN("shm_str_dup fallback; dup called for src->s == NULL or src->len < 0\n");
+		dst->len = 0;
+	} else {
+		dst->len = src->len;
+	}
+
+	dst->s = (char*)shm_malloc(dst->len);
+	if (dst->s == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 
-	memcpy(dst->s, src->s, src->len);
-	dst->len = src->len;
+	/* avoid memcpy from NULL source - undefined behaviour */
+	if (src->s == NULL) {
+		LM_WARN("shm_str_dup fallback; skip memcpy for src->s == NULL\n");
+		return 0;
+	}
+
+	memcpy(dst->s, src->s, dst->len);
+
 	return 0;
 }
 #endif /* SHM_MEM */
@@ -710,15 +748,41 @@ static inline int shm_str_dup(str* dst, const str* src)
  */
 static inline int pkg_str_dup(str* dst, const str* src)
 {
-	dst->s = (char*)pkg_malloc(src->len);
-	if (dst->s==NULL)
-	{
+	/* NULL checks */
+	if (dst == NULL || src == NULL) {
+		LM_ERR("NULL src or dst\n");
+		return -1;
+	}
+
+	/**
+	 * fallback actions:
+	 * 	- dst->len=0
+	 * 	- dst->s is allocated sizeof(void*) size
+	 * 	- return 0 (i.e. success)
+	 */
+
+	/* fallback checks */
+	if (src->len < 0 || src->s == NULL) {
+		LM_WARN("pkg_str_dup fallback; dup called for src->s == NULL or src->len < 0\n");
+		dst->len = 0;
+	} else {
+		dst->len = src->len;
+	}
+
+	dst->s = (char*)pkg_malloc(dst->len);
+	if (dst->s == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 
-	memcpy(dst->s, src->s, src->len);
-	dst->len = src->len;
+	/* avoid memcpy from NULL source - undefined behaviour */
+	if (src->s == NULL) {
+		LM_WARN("pkg_str_dup fallback; skip memcpy for src->s == NULL\n");
+		return 0;
+	}
+
+	memcpy(dst->s, src->s, dst->len);
+
 	return 0;
 }
 
