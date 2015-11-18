@@ -1583,15 +1583,15 @@ cr() {
 ### DISPATCHER management
 #
 dispatcher() {
-	require_dbengine
-	require_ctlengine
 	case $1 in
 		show)
+			require_dbengine
 			mecho "dispatcher gateways"
 			QUERY="select * FROM $DISPATCHER_TABLE ORDER BY $DISPATCHER_SETID_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
 		addgw|add)
+			require_dbengine
 			shift
 			if [ $# -lt 2 ] ; then
 				merr "too few parameters"
@@ -1638,6 +1638,7 @@ dispatcher() {
 
 			;;
 		rmgw|rm)
+			require_dbengine
 			shift
 			if [ $# -ne 1 ] ; then
 				merr "missing gateway id to be removed"
@@ -1654,10 +1655,12 @@ dispatcher() {
 
 			;;
 		reload)
+			require_ctlengine
 			$CTLCMD ds_reload
 			;;
 
 		dump)
+			require_ctlengine
 			$CTLCMD ds_list
 			;;
 
