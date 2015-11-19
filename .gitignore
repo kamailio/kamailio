@@ -36,6 +36,8 @@ utils/protoshoot/protoshoot
 *~
 # Emacs file locks
 .#*
+# Emacs desktop files
+.emacs.desktop*
 # MacOSX auto-generated files
 libiname.lst
 *.dylib
