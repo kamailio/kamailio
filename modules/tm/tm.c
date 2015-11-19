@@ -319,7 +319,7 @@ static cmd_export_t cmds[]={
 #endif
 	{"t_replicate",        w_t_replicate_uri,       0, 0,
 			REQUEST_ROUTE},
-	{"t_replicate",        w_t_replicate_uri,       1, fixup_var_str_1,
+	{"t_replicate",        w_t_replicate_uri,       1, fixup_spve_null,
 			REQUEST_ROUTE},
 	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
