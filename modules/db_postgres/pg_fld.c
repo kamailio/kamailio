@@ -93,19 +93,23 @@ union ull {
 	uint32_t ui32[2];
 };
 
+#if !defined(__OS_darwin) || (defined(__OS_darwin) && !defined(NTOHLL))
 static inline uint64_t htonll(uint64_t in)
 {
 	union ull* p = (union ull*)&in;
 	
 	return ((uint64_t)htonl(p->ui32[0]) << 32) + (uint64_t)htonl(p->ui32[1]);
 }
+#endif
 
 
+#if !defined(__OS_darwin) || (defined(__OS_darwin) && !defined(NTOHLL))
 static inline uint64_t ntohll(uint64_t in)
 {
 	union ull* p = (union ull*)&in;
 	return ((uint64_t)ntohl(p->ui32[0]) << 32) + (uint64_t)ntohl(p->ui32[1]);
 }
+#endif
 
 
 static inline void db_int2pg_int4(struct pg_params* dst, int i, 
