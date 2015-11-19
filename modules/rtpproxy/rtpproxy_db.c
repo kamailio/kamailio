@@ -34,7 +34,7 @@ static db1_con_t *rtpp_db_handle = NULL;
 
 str rtpp_db_url = {NULL, 0};
 str rtpp_table_name = str_init("rtpproxy");
-str rtpp_set_name_col = str_init("set_name");
+str rtpp_setid_col = str_init("setid");
 str rtpp_url_col = str_init("url");
 str rtpp_weight_col = str_init("weight");
 str rtpp_flags_col = str_init("flags");
@@ -67,7 +67,7 @@ static int rtpp_load_db(void)
 	db1_res_t *res = NULL;
 	db_val_t *values = NULL;
 	db_row_t *rows = NULL;
-	db_key_t query_cols[] = {&rtpp_set_name_col, &rtpp_url_col, &rtpp_weight_col, &rtpp_flags_col};
+	db_key_t query_cols[] = {&rtpp_setid_col, &rtpp_url_col, &rtpp_weight_col, &rtpp_flags_col};
 
 	str set, url;
 	int weight, flags;
