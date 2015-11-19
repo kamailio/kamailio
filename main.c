@@ -745,7 +745,11 @@ void handle_sigs(void)
 			/* exit */
 			shutdown_children(SIGTERM, 1);
 			LM_DBG("terminating due to SIGCHLD\n");
-			exit(0);
+			if (WIFSIGNALED(chld_status)) {
+				exit(1);
+			} else {
+				exit(0);
+			}
 			break;
 
 		case SIGHUP: /* ignoring it*/
