@@ -771,7 +771,7 @@ static inline int pkg_str_dup(str* dst, const str* src)
 
 	dst->s = (char*)pkg_malloc(dst->len);
 	if (dst->s == NULL) {
-		SHM_MEM_ERROR;
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
