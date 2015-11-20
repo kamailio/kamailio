@@ -36,6 +36,8 @@ static int child_init(int);
 
 int dmq_usrloc_enable = 0;
 int _dmq_usrloc_sync = 1;
+int _dmq_usrloc_batch_size = 0;
+int _dmq_usrloc_batch_usleep = 0;
 
 usrloc_api_t dmq_ul;
 
@@ -44,6 +46,8 @@ MODULE_VERSION
 static param_export_t params[] = {
 	{"enable", INT_PARAM, &dmq_usrloc_enable},
 	{"sync",   INT_PARAM, &_dmq_usrloc_sync},
+	{"batch_size",   INT_PARAM, &_dmq_usrloc_batch_size},
+	{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
 	{0, 0, 0}
 };
 
