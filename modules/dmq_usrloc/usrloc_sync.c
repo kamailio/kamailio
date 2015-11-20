@@ -124,6 +124,9 @@ static int delete_contact(str aor, ucontact_info_t* ci)
 	return 0;
 }
 
+#define dmq_usrloc_malloc	malloc
+#define dmq_usrloc_free		free
+
 void usrloc_get_all_ucontact(dmq_node_t* node)
 {
 	int rval, len=0;
@@ -161,16 +164,16 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 	}
 	if (rval > 0) {
 		if (buf != NULL)
-			pkg_free(buf);
+			dmq_usrloc_free(buf);
 		len = rval * 2;
-		buf = pkg_malloc(len);
+		buf = dmq_usrloc_malloc(len);
 		if (buf == NULL) {
 			LM_ERR("out of pkg memory\n");
 			goto done;
 		}
 		rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1, 0);
 		if (rval != 0) {
-			pkg_free(buf);
+			dmq_usrloc_free(buf);
 			goto done;
 		}
 	}
@@ -216,7 +219,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 		dmq_ul.release_urecord(r);
 		dmq_ul.unlock_udomain(_d, &aor);
 	}
-	pkg_free(buf);
+	dmq_usrloc_free(buf);
 
 done:
 	c.s = ""; c.len = 0;
