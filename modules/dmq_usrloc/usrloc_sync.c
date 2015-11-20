@@ -43,6 +43,8 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 
 #define MAX_AOR_LEN 256
 
+extern int _dmq_usrloc_sync;
+
 static int add_contact(str aor, ucontact_info_t* ci)
 {
 	urecord_t* r;
@@ -425,6 +427,10 @@ error:
 
 int usrloc_dmq_request_sync() {
 	srjson_doc_t jdoc;
+
+	if(_dmq_usrloc_sync==0)
+		return 0;
+
 	LM_DBG("requesting sync from dmq peers\n");
 	srjson_InitDoc(&jdoc, NULL);
 
