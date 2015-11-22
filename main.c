@@ -752,9 +752,9 @@ void handle_sigs(void)
 			}
 			LM_INFO("terminating due to SIGCHLD\n");
 #endif
+			LM_DBG("terminating due to SIGCHLD\n");
 			/* exit */
 			shutdown_children(SIGTERM, 1);
-			LM_DBG("terminating due to SIGCHLD\n");
 			if (WIFSIGNALED(chld_status)) {
 				exit(1);
 			} else {
