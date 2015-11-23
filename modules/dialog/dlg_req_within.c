@@ -348,6 +348,11 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 		goto err;
 	}
 
+	/* safety bump of cseq if prack was involved in call setup */
+	if(cell->iflags & DLG_IFLAG_PRACK) {
+		dialog_info->loc_seq.value += 80;
+	}
+
 	LM_DBG("sending BYE to %s\n", (dir==DLG_CALLER_LEG)?"caller":"callee");
 
 	iuid = dlg_get_iuid_shm_clone(cell);
