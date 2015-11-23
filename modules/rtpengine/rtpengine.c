@@ -193,9 +193,9 @@ static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op
 static int fixup_set_id(void ** param, int param_no);
 static int set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2);
 static struct rtpp_set * select_rtpp_set(int id_set);
-static struct rtpp_node *select_rtpp_node_new(str, str, int);
-static struct rtpp_node *select_rtpp_node_old(str, str, int);
-static struct rtpp_node *select_rtpp_node(str, str, int);
+static struct rtpp_node *select_rtpp_node_new(str, int, int);
+static struct rtpp_node *select_rtpp_node_old(str, int, int);
+static struct rtpp_node *select_rtpp_node(str, int, int);
 static char *send_rtpp_command(struct rtpp_node *, bencode_item_t *, int *);
 static int get_extra_id(struct sip_msg* msg, str *id_str);
 
@@ -1859,8 +1859,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 {
 	struct ng_flags_parse ng_flags;
 	bencode_item_t *item, *resp;
-	str callid = STR_NULL, from_tag = STR_NULL, to_tag = STR_NULL, viabranch = STR_NULL;
-	str body = STR_NULL, error = STR_NULL;
+	str callid, from_tag, to_tag, body, viabranch, error;
 	int ret, queried_nodes;
 	struct rtpp_node *node;
 	char *cp;
@@ -1993,7 +1992,7 @@ select_node:
 			LM_ERR("queried nodes limit reached\n");
 			goto error;
 		}
-		node = select_rtpp_node(callid, viabranch, 1);
+		node = select_rtpp_node(callid, 1, op);
 		if (!node) {
 			LM_ERR("no available proxies\n");
 			goto error;
@@ -2037,12 +2036,12 @@ select_node:
 
 	if (op == OP_DELETE) {
 		/* Delete the key<->value from the hashtable */
-		if (!rtpengine_hash_table_remove(callid, viabranch)) {
-			LM_ERR("rtpengine hash table failed to remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
-				callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+		if (!rtpengine_hash_table_remove(&callid)) {
+			LM_ERR("rtpengine hash table failed to remove entry for callen=%d callid=%.*s\n",
+				callid.len, callid.len, callid.s);
 		} else {
-			LM_DBG("rtpengine hash table remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
-				callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+			LM_DBG("rtpengine hash table remove entry for callen=%d callid=%.*s\n",
+				callid.len, callid.len, callid.s);
 		}
 	}
 
@@ -2279,7 +2278,7 @@ static struct rtpp_set * select_rtpp_set(int id_set ){
  * run the selection algorithm and return the new selected node
  */
 static struct rtpp_node *
-select_rtpp_node_new(str callid, str viabranch, int do_test)
+select_rtpp_node_new(str callid, int do_test, int op)
 {
 	struct rtpp_node* node;
 	unsigned i, sum, sumcut, weight_sum;
@@ -2351,25 +2350,18 @@ found:
 	}
 
 	/* build the entry */
-	struct rtpengine_hash_entry *entry = shm_malloc(sizeof(struct rtpengine_hash_entry));
+	struct rtpengine_hash_entry *entry = shm_malloc(sizeof(struct rtpp_node));
 	if (!entry) {
-		LM_ERR("rtpengine hash table fail to create entry for calllen=%d callid=%.*s viabranch=%.*s\n",
-			callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+		LM_ERR("rtpengine hash table fail to create entry for calllen=%d callid=%.*s\n",
+			callid.len, callid.len, callid.s);
 		return node;
 	}
-        memset(entry, 0, sizeof(struct rtpengine_hash_entry));
 
 	/* fill the entry */
 	if (shm_str_dup(&entry->callid, &callid) < 0) {
 		LM_ERR("rtpengine hash table fail to duplicate calllen=%d callid=%.*s\n",
 			callid.len, callid.len, callid.s);
-		rtpengine_hash_table_free_entry(entry);
-		return node;
-	}
-	if (shm_str_dup(&entry->viabranch, &viabranch) < 0) {
-		LM_ERR("rtpengine hash table fail to duplicate calllen=%d viabranch=%.*s\n",
-			callid.len, viabranch.len, viabranch.s);
-		rtpengine_hash_table_free_entry(entry);
+		shm_free(entry);
 		return node;
 	}
 	entry->node = node;
@@ -2377,14 +2369,15 @@ found:
 	entry->tout = get_ticks() + hash_table_tout;
 
 	/* insert the key<->entry from the hashtable */
-	if (!rtpengine_hash_table_insert(callid, viabranch, entry)) {
-		LM_ERR("rtpengine hash table fail to insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
-		rtpengine_hash_table_free_entry(entry);
+	if (!rtpengine_hash_table_insert(&callid, entry)) {
+		LM_ERR("rtpengine hash table fail to insert node=%.*s for calllen=%d callid=%.*s\n",
+			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
+		shm_free(entry->callid.s);
+		shm_free(entry);
 		return node;
 	} else {
-		LM_DBG("rtpengine hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+		LM_DBG("rtpengine hash table insert node=%.*s for calllen=%d callid=%.*s\n",
+			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
 	}
 
 	/* return selected node */
@@ -2395,19 +2388,19 @@ found:
  * lookup the hastable (key=callid value=node) and get the old node (e.g. for answer/delete)
  */
 static struct rtpp_node *
-select_rtpp_node_old(str callid, str viabranch, int do_test)
+select_rtpp_node_old(str callid, int do_test, int op)
 {
 	struct rtpp_node *node = NULL;
 
-	node = rtpengine_hash_table_lookup(callid, viabranch);
+	node = rtpengine_hash_table_lookup(&callid);
 
 	if (!node) {
-		LM_NOTICE("rtpengine hash table lookup failed to find node for calllen=%d callid=%.*s viabranch=%.*s\n",
-			callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+		LM_NOTICE("rtpengine hash table lookup failed to find node for calllen=%d callid=%.*s\n",
+			callid.len, callid.len, callid.s);
 		return NULL;
 	} else {
-		LM_DBG("rtpengine hash table lookup find node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+		LM_DBG("rtpengine hash table lookup find node=%.*s for calllen=%d callid=%.*s\n",
+			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
 	}
 
 	return node;
@@ -2418,7 +2411,7 @@ select_rtpp_node_old(str callid, str viabranch, int do_test)
  * the call if some proxies were disabled or enabled (e.g. kamctl command)
  */
 static struct rtpp_node *
-select_rtpp_node(str callid, str viabranch, int do_test)
+select_rtpp_node(str callid, int do_test, int op)
 {
 	struct rtpp_node *node = NULL;
 
@@ -2428,12 +2421,12 @@ select_rtpp_node(str callid, str viabranch, int do_test)
 	}
 
 	// lookup node
-	node = select_rtpp_node_old(callid, viabranch, do_test);
+	node = select_rtpp_node_old(callid, do_test, op);
 
 	// check node
 	if (!node) {
 		// run the selection algorithm
-		node = select_rtpp_node_new(callid, viabranch, do_test);
+		node = select_rtpp_node_new(callid, do_test, op);
 
 		// check node
 		if (!node) {

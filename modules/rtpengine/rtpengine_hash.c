@@ -11,25 +11,25 @@ static struct rtpengine_hash_table *rtpengine_hash_table;
 static int hash_table_size;
 
 /* from sipwise rtpengine */
-static int str_cmp_str(const str a, const str b) {
-	if (a.len < b.len)
+static int str_cmp_str(const str *a, const str *b) {
+	if (a->len < b->len)
 		return -1;
-	if (a.len > b.len)
+	if (a->len > b->len)
 		return 1;
-	if (a.len == 0 && b.len == 0)
+	if (a->len == 0 && b->len == 0)
 		return 0;
-	return memcmp(a.s, b.s, a.len);
+	return memcmp(a->s, b->s, a->len);
 }
 
 /* from sipwise rtpengine */
-static int str_equal(str a, str b) {
+static int str_equal(str *a, str *b) {
 	return (str_cmp_str(a, b) == 0);
 }
 
 /* from sipwise rtpengine */
-static unsigned int str_hash(str s) {
+static unsigned int str_hash(str *s) {
 	unsigned int ret = 5381;
-	str it = s;
+	str it = *s;
 
 	while (it.len > 0) {
 		ret = (ret << 5) + ret + *it.s;
@@ -40,7 +40,7 @@ static unsigned int str_hash(str s) {
 	return ret % hash_table_size;
 }
 
-/* rtpengine hash API */
+/* rtpengine glib hash API */
 int rtpengine_hash_table_init(int size) {
 	int i;
 
@@ -58,7 +58,6 @@ int rtpengine_hash_table_init(int size) {
 		LM_ERR("no shm left to create rtpengine_hash_table\n");
 		return 0;
 	}
-	memset(rtpengine_hash_table, 0, sizeof(struct rtpengine_hash_table));
 
 	// init hashtable entry_list
 	rtpengine_hash_table->entry_list = shm_malloc(hash_table_size * sizeof(struct rtpengine_hash_entry));
@@ -98,6 +97,7 @@ int rtpengine_hash_table_init(int size) {
 
 int rtpengine_hash_table_destroy() {
 	int i;
+	struct rtpengine_hash_entry *entry, *last_entry;
 
 	// check rtpengine hashtable
 	if (!rtpengine_hash_table) {
@@ -113,11 +113,16 @@ int rtpengine_hash_table_destroy() {
 		return 0;
 	}
 
-	lock_get(rtpengine_hash_lock);
-
 	// destroy hashtable entry_list[i]
+	lock_get(rtpengine_hash_lock);
 	for (i = 0; i < hash_table_size; i++) {
-		rtpengine_hash_table_free_entry_list(rtpengine_hash_table->entry_list[i]);
+		entry = rtpengine_hash_table->entry_list[i];
+		while (entry) {
+			last_entry = entry;
+			entry = entry->next;
+			shm_free(last_entry->callid.s);
+			shm_free(last_entry);
+		}
 	}
 
 	// destroy hashtable entry_list
@@ -127,7 +132,6 @@ int rtpengine_hash_table_destroy() {
 	// destroy hashtable
 	shm_free(rtpengine_hash_table);
 	rtpengine_hash_table = NULL;
-
 	lock_release(rtpengine_hash_lock);
 
 	// destroy lock
@@ -141,7 +145,7 @@ int rtpengine_hash_table_destroy() {
 	return 1;
 }
 
-int rtpengine_hash_table_insert(str callid, str viabranch, struct rtpengine_hash_entry *value) {
+int rtpengine_hash_table_insert(str *key, struct rtpengine_hash_entry *value) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 	struct rtpengine_hash_entry *new_entry = (struct rtpengine_hash_entry *) value;
 	unsigned int hash_index;
@@ -159,21 +163,18 @@ int rtpengine_hash_table_insert(str callid, str viabranch, struct rtpengine_hash
 	}
 
 	// get entry list
-	hash_index = str_hash(callid);
+	hash_index = str_hash(key);
 	entry = rtpengine_hash_table->entry_list[hash_index];
 	last_entry = entry;
 
 	// lock
 	lock_get(rtpengine_hash_lock);
 	while (entry) {
-		// if found, don't add new entry
-		if (str_equal(entry->callid, new_entry->callid) &&
-		    str_equal(entry->viabranch, new_entry->viabranch)) {
+		// if key found, don't add new entry
+		if (str_equal(&entry->callid, &new_entry->callid)) {
 			// unlock
 			lock_release(rtpengine_hash_lock);
-			LM_NOTICE("callid=%.*s, viabranch=%.*s already in hashtable, ignore new value",
-				entry->callid.len, entry->callid.s,
-				entry->viabranch.len, entry->viabranch.s);
+			LM_ERR("Call id %.*s already in hashtable, ignore new value", entry->callid.len, entry->callid.s);
 			return 0;
 		}
 
@@ -183,7 +184,8 @@ int rtpengine_hash_table_insert(str callid, str viabranch, struct rtpengine_hash
 			last_entry->next = entry->next;
 
 			// free current entry; entry points to unknown
-			rtpengine_hash_table_free_entry(entry);
+			shm_free(entry->callid.s);
+			shm_free(entry);
 
 			// set pointers
 			entry = last_entry;
@@ -208,7 +210,7 @@ int rtpengine_hash_table_insert(str callid, str viabranch, struct rtpengine_hash
 	return 1;
 }
 
-int rtpengine_hash_table_remove(str callid, str viabranch) {
+int rtpengine_hash_table_remove(str *key) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 	unsigned int hash_index;
 
@@ -225,19 +227,19 @@ int rtpengine_hash_table_remove(str callid, str viabranch) {
 	}
 
 	// get first entry from entry list; jump over unused list head
-	hash_index = str_hash(callid);
+	hash_index = str_hash(key);
 	entry = rtpengine_hash_table->entry_list[hash_index];
 	last_entry = entry;
 
 	// lock
 	lock_get(rtpengine_hash_lock);
 	while (entry) {
-		// if callid found, delete entry
-		if (str_equal(entry->callid, callid) &&
-		    str_equal(entry->viabranch, viabranch)) {
+		// if key found, delete entry
+		if (str_equal(&entry->callid, (str *)key)) {
 			// free entry
 			last_entry->next = entry->next;
-			rtpengine_hash_table_free_entry(entry);
+			shm_free(entry->callid.s);
+			shm_free(entry);
 
 			// update total
 			rtpengine_hash_table->total--;
@@ -254,7 +256,8 @@ int rtpengine_hash_table_remove(str callid, str viabranch) {
 			last_entry->next = entry->next;
 
 			// free current entry; entry points to unknown
-			rtpengine_hash_table_free_entry(entry);
+			shm_free(entry->callid.s);
+			shm_free(entry);
 
 			// set pointers
 			entry = last_entry;
@@ -273,7 +276,7 @@ int rtpengine_hash_table_remove(str callid, str viabranch) {
 	return 0;
 }
 
-struct rtpp_node *rtpengine_hash_table_lookup(str callid, str viabranch) {
+struct rtpp_node *rtpengine_hash_table_lookup(str *key) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 	unsigned int hash_index;
 	struct rtpp_node *node;
@@ -291,16 +294,15 @@ struct rtpp_node *rtpengine_hash_table_lookup(str callid, str viabranch) {
 	}
 
 	// get first entry from entry list; jump over unused list head
-	hash_index = str_hash(callid);
+	hash_index = str_hash(key);
 	entry = rtpengine_hash_table->entry_list[hash_index];
 	last_entry = entry;
 
 	// lock
 	lock_get(rtpengine_hash_lock);
 	while (entry) {
-		// if callid found, return entry
-		if (str_equal(entry->callid, callid) &&
-		    str_equal(entry->viabranch, viabranch)) {
+		// if key found, return entry
+		if (str_equal(&entry->callid, (str *)key)) {
 			node = entry->node;
 
 			// unlock
@@ -315,7 +317,8 @@ struct rtpp_node *rtpengine_hash_table_lookup(str callid, str viabranch) {
 			last_entry->next = entry->next;
 
 			// free current entry; entry points to unknown
-			rtpengine_hash_table_free_entry(entry);
+			shm_free(entry->callid.s);
+			shm_free(entry);
 
 			// set pointers
 			entry = last_entry;
@@ -366,7 +369,8 @@ void rtpengine_hash_table_print() {
 				last_entry->next = entry->next;
 
 				// free current entry; entry points to unknown
-				rtpengine_hash_table_free_entry(entry);
+				shm_free(entry->callid.s);
+				shm_free(entry);
 
 				// set pointers
 				entry = last_entry;
@@ -396,42 +400,4 @@ unsigned int rtpengine_hash_table_total() {
 	}
 
 	return rtpengine_hash_table->total;
-}
-
-void rtpengine_hash_table_free_entry(struct rtpengine_hash_entry *entry) {
-	if (!entry) {
-		return ;
-	}
-
-	// free callid
-	if (entry->callid.s) {
-		shm_free(entry->callid.s);
-	}
-
-	// free viabranch
-	if (entry->viabranch.s) {
-		shm_free(entry->viabranch.s);
-	}
-
-	// free entry
-	shm_free(entry);
-
-	return ;
-}
-
-void rtpengine_hash_table_free_entry_list(struct rtpengine_hash_entry *entry_list) {
-	struct rtpengine_hash_entry *entry, *last_entry;
-
-	if (!entry_list) {
-		return ;
-	}
-
-	entry = entry_list;
-	while (entry) {
-		last_entry = entry;
-		entry = entry->next;
-		rtpengine_hash_table_free_entry(last_entry);
-	}
-
-	return ;
 }
