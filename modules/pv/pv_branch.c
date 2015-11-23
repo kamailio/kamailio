@@ -425,6 +425,11 @@ int pv_get_sndfrom(struct sip_msg *msg, pv_param_t *param,
 		case 5: /* len */
 			return pv_get_uintval(msg, param, res,
 					(int)snd_inf->len);
+		case 6: /* sproto */
+			if(get_valid_proto_string((int)snd_inf->send_sock->proto,
+						0, 0, &s)<0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &s);
 		default:
 			/* 0 - ip */
 			return pv_get_strval(msg, param, res,
@@ -463,6 +468,11 @@ int pv_get_sndto(struct sip_msg *msg, pv_param_t *param,
 		case 5: /* len */
 			return pv_get_uintval(msg, param, res,
 					(int)snd_inf->len);
+		case 6: /* sproto */
+			if(get_valid_proto_string((int)snd_inf->send_sock->proto,
+						0, 0, &s)<0)
+				return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &s);
 		default:
 			/* 0 - ip */
 			su2ip_addr(&ip, snd_inf->to);
@@ -503,6 +513,11 @@ int pv_parse_snd_name(pv_spec_p sp, str *in)
 		case 5:
 			if(strncmp(in->s, "proto", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "sproto", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 		break;
 		default:
