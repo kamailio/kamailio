@@ -115,7 +115,9 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 			return 0;
 		}
 		code = mysql_errno(CON_CONNECTION(_h));
-		if (code != CR_SERVER_GONE_ERROR && code != CR_SERVER_LOST) {
+		if (code!=CR_SERVER_GONE_ERROR && code!=CR_SERVER_LOST
+				&& code!=CR_SSL_CONNECTION_ERROR && code!=CR_CONNECTION_ERROR
+				&& code!=CR_CONN_HOST_ERROR && code!=CR_SERVER_LOST_EXTENDED) {
 			break;
 		}
 		counter_inc(mysql_cnts_h.driver_err);
