@@ -118,7 +118,8 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 		}
 		counter_inc(mysql_cnts_h.driver_err);
 	}
-	LM_ERR("driver error on query: %s\n", mysql_error(CON_CONNECTION(_h)));
+	LM_ERR("driver error on query: %s (%d)\n", mysql_error(CON_CONNECTION(_h)),
+			mysql_errno(CON_CONNECTION(_h)));
 	return -2;
 }
 
