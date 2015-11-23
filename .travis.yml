@@ -1,12 +1,13 @@
+sudo: required
 language: c
 compiler:
   - gcc
   - clang
+services:
+  - docker
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y gdebi-core
-  - sudo test/travis/build_deps.sh precise $TRAVIS_BUILD_DIR
-script: ./test/travis/build_travis.sh
+  - docker pull linuxmaniac/pkg-kamailio-docker:stretch
+script: docker run -v $TRAVIS_BUILD_DIR:/code:rw linuxmaniac/pkg-kamailio-docker:stretch /bin/bash -c "export CC=$CC; cd /code; ./test/travis/build_travis.sh"
 branches:
   only:
     - 'master'
