@@ -8,7 +8,6 @@
 
 static gen_lock_t *rtpengine_hash_lock;
 static struct rtpengine_hash_table *rtpengine_hash_table;
-static int hash_table_size;
 
 /* from sipwise rtpengine */
 static int str_cmp_str(const str *a, const str *b) {
@@ -38,20 +37,12 @@ static unsigned int str_hash(void *ss) {
 		it.len--;
 	}
 
-	return ret % hash_table_size;
+	return ret % RTPENGINE_HASH_TABLE_SIZE;
 }
 
 /* rtpengine glib hash API */
-int rtpengine_hash_table_init(int size) {
+int rtpengine_hash_table_init() {
 	int i;
-
-	// init hash table size
-	if (size < 1) {
-		hash_table_size = 1;
-	} else {
-		hash_table_size = size;
-	}
-	LM_DBG("rtpengine_hash_table size = %d\n", hash_table_size);
 
 	// init hashtable
 	rtpengine_hash_table = shm_malloc(sizeof(struct rtpengine_hash_table));
@@ -60,18 +51,15 @@ int rtpengine_hash_table_init(int size) {
 		return 0;
 	}
 
-	// init hashtable entry_list
-	rtpengine_hash_table->entry_list = shm_malloc(hash_table_size * sizeof(struct rtpengine_hash_entry));
-
-	// init hashtable entry_list[i] (head never filled)
-	for (i = 0; i < hash_table_size; i++) {
+	// init hashtable entry_list heads (never filled)
+	for (i = 0; i < RTPENGINE_HASH_TABLE_SIZE; i++) {
 		rtpengine_hash_table->entry_list[i] = shm_malloc(sizeof(struct rtpengine_hash_entry));
 		if (!rtpengine_hash_table->entry_list[i]) {
 			LM_ERR("no shm left to create rtpengine_hash_table->entry_list[%d]\n", i);
 			return 0;
 		}
 
-		// never expire the head of the hashtable index lists
+		/* never expire the head of the hashtable index lists */
 		rtpengine_hash_table->entry_list[i]->tout = -1;
 		rtpengine_hash_table->entry_list[i]->next = NULL;
 	}
@@ -96,9 +84,9 @@ int rtpengine_hash_table_destroy() {
 		return 0;
 	}
 
-	// destroy hashtable entry_list[i]
+	// destroy hashtable entry_list content
 	lock_get(rtpengine_hash_lock);
-	for (i = 0; i < hash_table_size; i++) {
+	for (i = 0; i < RTPENGINE_HASH_TABLE_SIZE; i++) {
 		entry = rtpengine_hash_table->entry_list[i];
 		while (entry) {
 			last_entry = entry;
@@ -107,9 +95,6 @@ int rtpengine_hash_table_destroy() {
 			shm_free(last_entry);
 		}
 	}
-
-	// destroy hashtable entry_list
-	shm_free(rtpengine_hash_table->entry_list);
 
 	// destroy hashtable
 	shm_free(rtpengine_hash_table);
@@ -298,7 +283,7 @@ void rtpengine_hash_table_print() {
 	lock_get(rtpengine_hash_lock);
 
 	// print hashtable
-	for (i = 0; i < hash_table_size; i++) {
+	for (i = 0; i < RTPENGINE_HASH_TABLE_SIZE; i++) {
 		entry = rtpengine_hash_table->entry_list[i];
 		last_entry = entry;
 

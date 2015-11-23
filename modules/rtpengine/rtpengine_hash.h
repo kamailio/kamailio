@@ -3,6 +3,7 @@
 
 #include "../../str.h"
 
+#define RTPENGINE_HASH_TABLE_SIZE       512
 
 /* table entry */
 struct rtpengine_hash_entry {
@@ -10,16 +11,16 @@ struct rtpengine_hash_entry {
 	str callid;				// call callid
 	struct rtpp_node *node;			// call selected node
 
-	struct rtpengine_hash_entry *next;	// call next
+	struct rtpengine_hash_entry *next;	// next 
 };
 
 /* table */
 struct rtpengine_hash_table {
-	struct rtpengine_hash_entry **entry_list;
+	struct rtpengine_hash_entry *entry_list[RTPENGINE_HASH_TABLE_SIZE];
 };
 
 
-int rtpengine_hash_table_init(int size);
+int rtpengine_hash_table_init();
 int rtpengine_hash_table_destroy();
 int rtpengine_hash_table_insert(void *key, void *value);
 int rtpengine_hash_table_remove(void *key);
