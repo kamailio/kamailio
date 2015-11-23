@@ -3,6 +3,9 @@
 # build script for travis CI
 # environment based on Ubuntu 12.04 LTS (precise)
 #
+
+set -e
+
 export JAVA_HOME="/usr/lib/jvm/java-gcj"
 EXCLUDED_MODULES=""
 EXTRA_EXCLUDED_MODULES="bdb dbtext oracle pa iptrtpproxy mi_xmlrpc dnssec kazoo cnxcc"
