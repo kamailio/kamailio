@@ -109,7 +109,6 @@ MODULE_VERSION
 #define MI_ENABLE_RTP_PROXY			"nh_enable_rtpp"
 #define MI_SHOW_RTP_PROXIES			"nh_show_rtpp"
 #define MI_PING_RTP_PROXY           "nh_ping_rtpp"
-#define MI_SHOW_HASH_TOTAL          "nh_show_hash_total"
 
 #define MI_RTP_PROXY_NOT_FOUND		"RTP proxy not found"
 #define MI_RTP_PROXY_NOT_FOUND_LEN	(sizeof(MI_RTP_PROXY_NOT_FOUND)-1)
@@ -144,10 +143,6 @@ MODULE_VERSION
 #define MI_SUCCESS_LEN         		(sizeof(MI_SUCCESS)-1)
 #define MI_FAIL                     "fail"
 #define MI_FAIL_LEN         		(sizeof(MI_FAIL)-1)
-#define MI_HASH_ENTRIES				"entries"
-#define MI_HASH_ENTRIES_LEN			(sizeof(MI_HASH_ENTRIES)-1)
-#define MI_HASH_ENTRIES_FAIL		"Fail to get entry details"
-#define MI_HASH_ENTRIES_FAIL_LEN	(sizeof(MI_HASH_ENTRIES_FAIL)-1)
 
 #define MI_FOUND_ALL                   2
 #define MI_FOUND_ONE                   1
@@ -220,10 +215,12 @@ static int rtpp_test_ping(struct rtpp_node *node);
 static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 /*mi commands*/
-static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree, void* param);
-static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree, void* param);
-static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree, void* param);
-static struct mi_root* mi_show_hash_total(struct mi_root* cmd_tree, void* param);
+static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree,
+		void* param );
+static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree,
+		void* param);
+static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree,
+        void* param);
 
 
 static int rtpengine_disable_tout = 60;
@@ -353,7 +350,6 @@ static mi_export_t mi_cmds[] = {
 	{MI_ENABLE_RTP_PROXY,     mi_enable_rtp_proxy,  0,  0,  0},
 	{MI_SHOW_RTP_PROXIES,     mi_show_rtp_proxy,    0,  0,  0},
 	{MI_PING_RTP_PROXY,       mi_ping_rtp_proxy,    0,  0,  0},
-	{MI_SHOW_HASH_TOTAL,      mi_show_hash_total,    0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -1110,7 +1106,8 @@ error:
 	return -1;
 }
 
-static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree, void* param)
+static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree,
+												void* param)
 {
 	struct mi_node *node;
 	struct mi_root *root = NULL;
@@ -1199,7 +1196,8 @@ error:
 	return init_mi_tree(404, MI_ERROR, MI_ERROR_LEN);
 }
 
-static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree, void* param)
+static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree,
+												void* param)
 {
 	struct mi_node *node, *crt_node;
 	struct mi_attr *attr;
@@ -1323,48 +1321,6 @@ error:
 	return init_mi_tree(404, MI_ERROR, MI_ERROR_LEN);
 }
 
-
-static struct mi_root* mi_show_hash_total(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_node *node, *crt_node;
-	struct mi_attr *attr;
-	struct mi_root *root = NULL;
-	unsigned int total;
-	str total_str;
-
-	// Init print tree
-	root = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if (!root) {
-		LM_ERR("the MI tree cannot be initialized!\n");
-		return 0;
-	}
-	node = &root->node;
-
-	// Create new node and add it to the roots's kids
-	if(!(crt_node = add_mi_node_child(node, MI_DUP_NAME, "total", strlen("total"), 0, 0))) {
-		LM_ERR("cannot add the child node to the tree\n");
-		goto error;
-	}
-
-	// Get total number of entries
-	total = rtpengine_hash_table_total();
-	total_str.s = int2str(total, &total_str.len);
-
-	// Add node attributes
-	if ((attr = add_mi_attr(crt_node, MI_DUP_VALUE, MI_HASH_ENTRIES, MI_HASH_ENTRIES_LEN, total_str.s, total_str.len)) == 0) {
-		LM_ERR("cannot add attributes to the node\n");
-		goto error;
-	}
-
-	return root;
-
-error:
-	if (root) {
-	    free_mi_tree(root);
-	}
-
-	return init_mi_tree(404, MI_HASH_ENTRIES_FAIL, MI_HASH_ENTRIES_FAIL_LEN);
-}
 
 
 static int

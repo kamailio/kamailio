@@ -15,8 +15,7 @@ struct rtpengine_hash_entry {
 
 /* table */
 struct rtpengine_hash_table {
-	struct rtpengine_hash_entry **entry_list;	// hastable
-	unsigned int total;				// total number of entries in the hashtable
+	struct rtpengine_hash_entry **entry_list;
 };
 
 
@@ -25,7 +24,6 @@ int rtpengine_hash_table_destroy();
 int rtpengine_hash_table_insert(void *key, void *value);
 int rtpengine_hash_table_remove(void *key);
 void* rtpengine_hash_table_lookup(void *key);
-void rtpengine_hash_table_print();
-unsigned int rtpengine_hash_table_total();
+void rtpengine_hash_table_print() ;
 
 #endif
