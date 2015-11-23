@@ -1068,6 +1068,8 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			switch (dlg->state) {
 				case DLG_STATE_EARLY:
 				case DLG_STATE_CONFIRMED_NA:
+					dlg->iflags |= DLG_IFLAG_PRACK;
+					break;
 				case DLG_STATE_DELETED:
 					break;
 				default:
