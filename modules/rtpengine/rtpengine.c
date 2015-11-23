@@ -227,7 +227,6 @@ static struct mi_root* mi_show_hash_total(struct mi_root* cmd_tree, void* param)
 
 
 static int rtpengine_disable_tout = 60;
-static int rtpengine_allow_op = 0;
 static int rtpengine_retr = 5;
 static int rtpengine_tout_ms = 1000;
 static int queried_nodes_limit = MAX_RTPP_TRIED_NODES;
@@ -335,7 +334,6 @@ static param_export_t params[] = {
 	{"rtpengine_disable_tout",INT_PARAM, &rtpengine_disable_tout },
 	{"rtpengine_retr",        INT_PARAM, &rtpengine_retr         },
 	{"rtpengine_tout_ms",     INT_PARAM, &rtpengine_tout_ms      },
-	{"rtpengine_allow_op",    INT_PARAM, &rtpengine_allow_op     },
 	{"queried_nodes_limit",   INT_PARAM, &queried_nodes_limit    },
 	{"db_url",                PARAM_STR, &rtpp_db_url },
 	{"table_name",            PARAM_STR, &rtpp_table_name },
@@ -2371,7 +2369,7 @@ found:
 }
 
 /*
- * lookup the hastable (key=callid value=node) and get the old node (e.g. for answer/delete)
+ * lookup the hastable (key=callid value=node) and get the old node
  */
 static struct rtpp_node *
 select_rtpp_node_old(str callid, int do_test, int op)
@@ -2398,22 +2396,11 @@ select_rtpp_node_old(str callid, int do_test, int op)
 			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
 	}
 
-	// if node enabled, return it
+	// if node broke, don't send any message
 	if (!node->rn_disabled) {
 		return node;
-	}
-
-	// if node _manually_ disabled(e.g kamctl) and proper configuration, return it
-	if (node->rn_recheck_ticks == MI_MAX_RECHECK_TICKS) {
-		if (rtpengine_allow_op) {
-			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled(permanent) (probably still UP)! Return it\n",
-				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
-			return node;
-		}
-		LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled(permanent) (probably still UP)! Return NULL\n",
-			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
 	} else {
-		LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled (probably BROKE)! Return NULL\n",
+		LM_DBG("rtpengine hash table lookup find node=%.*s for calllen=%d callid=%.*s, which is disabled!\n",
 			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
 	}
 
