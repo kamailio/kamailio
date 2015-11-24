@@ -1465,6 +1465,79 @@ Content-Disposition: signal;handling=required
 		</example>
 	</section>
 
+	<section id="textops.f.get_body_part">
+		<title>
+		<function moreinfo="none">get_body_part(content_type, opv)</function>
+		</title>
+		<para>
+		Return the content of a multipart body SIP message, storing it in opv.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header
+				of the part to be returned. If more than one exists the first
+				occurrence will be returned.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>opv</emphasis> - variable name where to store the
+				result.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE,
+			ONREPLY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>get_body_part</function> usage</title>
+		<programlisting format="linespecific">
+...
+get_body_part("application/vnd.cirpack.isdn-ext", "$var(pbody)");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.get_body_part_raw">
+		<title>
+		<function moreinfo="none">get_body_part_raw(content_type, opv)</function>
+		</title>
+		<para>
+			Return the content of a multipart body SIP message, including headers and
+			boundary string, storing it in opv.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header
+				of the part to be returned. If more than one exists the first
+				occurrence will be returned.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>opv</emphasis> - variable name where to store the
+				result.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE,
+			ONREPLY_ROUTE.
+		</para>
+
+		<example>
+		<title><function>get_body_part_raw</function> usage</title>
+		<programlisting format="linespecific">
+...
+get_body_part("application/vnd.cirpack.isdn-ext", "$var(hbody)");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.remove_body_part">
 		<title>
 		<function moreinfo="none">remove_body_part(content_type)</function>
