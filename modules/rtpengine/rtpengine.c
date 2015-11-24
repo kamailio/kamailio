@@ -107,7 +107,14 @@ MODULE_VERSION
 #define MI_SHOW_RTP_PROXIES			"nh_show_rtpp"
 #define MI_PING_RTP_PROXY           "nh_ping_rtpp"
 #define MI_SHOW_HASH_TOTAL          "nh_show_hash_total"
+#define MI_RELOAD_RTP_PROXY           "nh_reload_rtpp"
 
+#define MI_DB_NOT_FOUND		"RTP database not found"
+#define MI_DB_NOT_FOUND_LEN	(sizeof(MI_DB_NOT_FOUND)-1)
+#define MI_DB_ERR		"Error reloading from RTP database"
+#define MI_DB_ERR_LEN	(sizeof(MI_DB_ERR)-1)
+#define MI_DB_OK		"Success reloading from RTP database"
+#define MI_DB_OK_LEN	(sizeof(MI_DB_OK)-1)
 #define MI_RTP_PROXY_NOT_FOUND		"RTP proxy not found"
 #define MI_RTP_PROXY_NOT_FOUND_LEN	(sizeof(MI_RTP_PROXY_NOT_FOUND)-1)
 #define MI_PING_DISABLED			"NATping disabled from script"
@@ -222,6 +229,7 @@ static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree, void* param
 static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree, void* param);
 static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree, void* param);
 static struct mi_root* mi_show_hash_total(struct mi_root* cmd_tree, void* param);
+static struct mi_root* mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param);
 
 
 static int rtpengine_disable_tout = 60;
@@ -357,7 +365,8 @@ static mi_export_t mi_cmds[] = {
 	{MI_ENABLE_RTP_PROXY,     mi_enable_rtp_proxy,  0,  0,  0},
 	{MI_SHOW_RTP_PROXIES,     mi_show_rtp_proxy,    0,  0,  0},
 	{MI_PING_RTP_PROXY,       mi_ping_rtp_proxy,    0,  0,  0},
-	{MI_SHOW_HASH_TOTAL,      mi_show_hash_total,    0,  0,  0},
+	{MI_SHOW_HASH_TOTAL,      mi_show_hash_total,   0,  0,  0},
+	{MI_RELOAD_RTP_PROXY,     mi_reload_rtp_proxy,  0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -1372,6 +1381,39 @@ error:
 	}
 
 	return init_mi_tree(404, MI_HASH_ENTRIES_FAIL, MI_HASH_ENTRIES_FAIL_LEN);
+}
+
+static struct mi_root*
+mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param)
+{
+	struct mi_root *root = NULL;
+
+	if (rtpp_db_url.s == NULL) {
+		// no database
+		root = init_mi_tree(404, MI_DB_NOT_FOUND, MI_DB_NOT_FOUND_LEN);
+		if (!root) {
+			LM_ERR("the MI tree cannot be initialized!\n");
+			return 0;
+		}
+	} else {
+                if (init_rtpproxy_db() < 0) {
+			// fail reloading from database
+			root = init_mi_tree(404, MI_DB_ERR, MI_DB_ERR_LEN);
+			if (!root) {
+				LM_ERR("the MI tree cannot be initialized!\n");
+				return 0;
+			}
+                } else {
+			// success reloading from database
+			root = init_mi_tree(200, MI_DB_OK, MI_DB_OK_LEN);
+			if (!root) {
+				LM_ERR("the MI tree cannot be initialized!\n");
+				return 0;
+			}
+		}
+	}
+
+	return root;
 }
 
 
