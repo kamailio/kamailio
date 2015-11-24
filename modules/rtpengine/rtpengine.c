@@ -204,7 +204,7 @@ static char *send_rtpp_command(struct rtpp_node *, bencode_item_t *, int *);
 static int get_extra_id(struct sip_msg* msg, str *id_str);
 
 static int rtpengine_set_store(modparam_t type, void * val);
-static int rtpengine_add_rtpengine_set( char * rtp_proxies);
+static int rtpengine_add_rtpengine_set(char * rtp_proxies, int disabled, unsigned int ticks);
 
 static int mod_init(void);
 static int child_init(int);
@@ -521,6 +521,9 @@ static int bind_force_send_ip(int sock_idx)
 	return 0;
 }
 
+static inline int str_cmp(const str *a , const str *b) {
+	return ! (a->len == b->len && ! strncmp(a->s, b->s, a->len));
+}
 
 static inline int str_eq(const str *p, const char *q) {
 	int l = strlen(q);
@@ -530,6 +533,7 @@ static inline int str_eq(const str *p, const char *q) {
 		return 0;
 	return 1;
 }
+
 static inline str str_prefix(const str *p, const char *q) {
 	str ret;
 	ret.s = NULL;
@@ -585,6 +589,25 @@ static int rtpengine_set_store(modparam_t type, void * val){
 	rtpp_sets++;
 
 	return 0;
+}
+
+struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url)
+{
+	struct rtpp_node *rtpp_node;
+
+	if (rtpp_list == NULL) {
+		return NULL;
+	}
+
+	rtpp_node = rtpp_list->rn_first;
+	while (rtpp_node) {
+		if (str_cmp(&rtpp_node->rn_url, url) == 0) {
+			return rtpp_node;
+		}
+		rtpp_node = rtpp_node->rn_next;
+	}
+
+	return NULL;
 }
 
 struct rtpp_set *get_rtpp_set(int set_id)
@@ -659,6 +682,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabl
 	/* Make rtp proxies list. */
 	char *p, *p1, *p2, *plim;
 	struct rtpp_node *pnode;
+	struct rtpp_node *rtpp_node;
 	int weight;
 
 	p = rtpproxy;
@@ -720,6 +744,16 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabl
 			pnode->rn_address += 5;
 		}
 
+		// if node found in set, update it for disabled state
+		rtpp_node = get_rtpp_node(rtpp_list, &pnode->rn_url);
+		if (rtpp_node) {
+			rtpp_node->rn_disabled = pnode->rn_disabled;
+			rtpp_node->rn_recheck_ticks = pnode->rn_recheck_ticks;
+			rtpp_node->rn_weight = pnode->rn_weight;
+			shm_free(pnode);
+			continue;
+		}
+
 		if (rtpp_list->rn_first == NULL) {
 			rtpp_list->rn_first = pnode;
 		} else {
@@ -736,7 +770,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabl
 /*	0-succes
  *  -1 - erorr
  * */
-static int rtpengine_add_rtpengine_set( char * rtp_proxies)
+static int rtpengine_add_rtpengine_set(char * rtp_proxies, int disabled, unsigned int ticks)
 {
 	char *p,*p2;
 	struct rtpp_set * rtpp_list;
@@ -789,7 +823,8 @@ static int rtpengine_add_rtpengine_set( char * rtp_proxies)
 
 	if (rtpp_list != NULL)
 	{
-		if (add_rtpengine_socks(rtpp_list, rtp_proxies, 0, 0) != 0)
+
+		if (add_rtpengine_socks(rtpp_list, rtp_proxies, disabled, ticks) != 0)
 			goto error;
 		else
 			return 0;
@@ -1439,7 +1474,7 @@ mod_init(void)
 	{
 		/* storing the list of rtp proxy sets in shared memory*/
 		for(i=0;i<rtpp_sets;i++){
-			if(rtpengine_add_rtpengine_set(rtpp_strings[i]) !=0){
+			if(rtpengine_add_rtpengine_set(rtpp_strings[i], 0, 0) !=0){
 				for(;i<rtpp_sets;i++)
 					if(rtpp_strings[i])
 						pkg_free(rtpp_strings[i]);

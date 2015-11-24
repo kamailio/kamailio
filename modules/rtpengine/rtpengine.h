@@ -61,6 +61,7 @@ struct rtpp_set_head{
 };
 
 
+struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url);
 struct rtpp_set *get_rtpp_set(int set_id);
 int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabled, unsigned int ticks);
 
