@@ -906,6 +906,9 @@ void terminate_all_calls(credit_data_t *credit_data) {
 static void __free_call(call_t *call) {
 	struct str_hash_entry *e = NULL;
 
+	if(call->sip_data.callid.s==NULL)
+		return;
+
 	LM_DBG("Freeing call [%.*s]\n", call->sip_data.callid.len, call->sip_data.callid.s);
 	e = str_hash_get(_data.money.call_data_by_cid, call->sip_data.callid.s, call->sip_data.callid.len);
 
