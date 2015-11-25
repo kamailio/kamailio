@@ -50,6 +50,17 @@ extern pv_spec_t kz_query_timeout_spec;
 const amqp_bytes_t kz_amqp_empty_bytes = { 0, NULL };
 const amqp_table_t kz_amqp_empty_table = { 0, NULL };
 
+
+amqp_exchange_declare_ok_t * AMQP_CALL kz_amqp_exchange_declare(amqp_connection_state_t state, amqp_channel_t channel,
+			amqp_bytes_t exchange, amqp_bytes_t type,
+			amqp_boolean_t passive, amqp_boolean_t durable, amqp_table_t arguments) {
+#if AMQP_VERSION_MINOR == 5
+	return amqp_exchange_declare(state, channel, exchange, type, passive, durable, arguments);
+#else
+	return amqp_exchange_declare(state, channel, exchange, type, passive, durable, 0, 0, arguments);
+#endif
+}
+
 static char *kz_amqp_str_dup(str *src)
 {
 	char *res;
@@ -1270,7 +1281,7 @@ int kz_amqp_bind_targeted_channel(kz_amqp_conn_ptr kz_conn, int idx )
 		goto error;
     }
 
-	amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+	kz_amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
     if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
@@ -1331,7 +1342,7 @@ int kz_amqp_bind_targeted_channel_ex(kz_amqp_conn_ptr kz_conn, int loopcount, in
 		goto error;
     }
 
-	amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+	kz_amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
     if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
@@ -1379,7 +1390,7 @@ int kz_amqp_bind_consumer_ex(kz_amqp_conn_ptr kz_conn, kz_amqp_bind_ptr bind, in
 		goto error;
     }
 
-	amqp_exchange_declare(kz_conn->conn, chan[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+	kz_amqp_exchange_declare(kz_conn->conn, chan[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
     if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
@@ -1424,7 +1435,7 @@ int kz_amqp_bind_consumer(kz_amqp_conn_ptr kz_conn, kz_amqp_bind_ptr bind)
 		goto error;
     }
 
-	amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
+	kz_amqp_exchange_declare(kz_conn->conn, channels[idx].channel, bind->exchange, bind->exchange_type, 0, 0, kz_amqp_empty_table);
     if (kz_amqp_error("Declaring exchange", amqp_get_rpc_reply(kz_conn->conn)))
     {
 		ret = -RET_AMQP_ERROR;
