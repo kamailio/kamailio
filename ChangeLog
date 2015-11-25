@@ -1,3 +1,629 @@
+===================== 2015-11-25 Version 4.3.4 Released =====================
+
+===================== Changes Since Version 4.3.4 ===========================
+
+commit 6c2b677e38e0599e27dc7690516870d0797b096e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 14:27:26 2015 +0100
+
+    Makefile.defs: version set to 4.3.4
+
+commit 216200598ac47643b05d27add0a2c5645a2b3597
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 14:23:26 2015 +0100
+
+    pkg/rpm: updated spec files for v4.3.4
+
+commit 138a552ce71c795f39ad6e35d815d182dc26e747
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 14:10:32 2015 +0100
+
+    cnxcc: more safety checks for call structure
+    
+    (cherry picked from commit 6985a2953b0577ad8dff449c2e849f6ff15da01c)
+
+commit 18251e590f22a37a0392e981987e3a46a3122cbe
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Nov 25 12:54:28 2015 +0000
+
+    kazoo : check amqp version
+    
+    manual backport from master
+
+commit 451a510d863ec7cb7a8cde0b31ca4fe8983d324c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Nov 25 13:53:33 2015 +0100
+
+    pkg/kamailio/deb: update version to 4.3.4
+
+commit 1c6fcd1bc43165cd9a8732489cb2fbe83e2aa1ac
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 13:19:13 2015 +0100
+
+    cnxcc: safety check before freeing call structure
+    
+    - reported by GH#417
+    
+    (cherry picked from commit ce5591e8f7568f98b39d9b96a2c8debe81837a07)
+
+commit 51bf77b20de2ddca20e3376d3671beb362475550
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 25 13:11:22 2015 +0100
+
+    kazoo: check amqp version
+    
+    - checks amqp version for amqp_exchange_declare
+    - manual backport from 29aaeb5
+
+commit 8d8a43064f6ba7419473b139997f44bd4ef698a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 18:17:48 2015 +0100
+
+    db_mysql: explicitely set the reconenct flag via mysql cloent api
+    
+    - old mode setting connection fied directly still in place, but now
+      should be safer if that changes
+    
+    (cherry picked from commit e89c77f641311415b13b00dc9d469c0424362d53)
+
+commit b2361d71de4208227468244754c0fc8229e7bcab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 18:00:58 2015 +0100
+
+    db_mysql: extended the list of error code when to try to resend query
+    
+    (cherry picked from commit 6a62cc666352fbca7f1cc5a239464b42a7afc2cb)
+
+commit 71ff3942698e33e8f2e79c5a5ac2a35a27b060b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 17:11:51 2015 +0100
+
+    db_mysql: print error number when failing to do mysql query
+    
+    (cherry picked from commit a1556c0708af959a3816e732a7bd692c5fa5f4dc)
+
+commit 863739dec78161fdce871c281601a011572515a2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 16:43:43 2015 +0100
+
+    dialog: safety bump of cseq for bye if prack was involved in call setup
+    
+    - reported by GH#409
+    
+    (cherry picked from commit aab6547f39d723de6a01680cbd79b9365be8092f)
+
+commit 8962cb713c397da2960e6c3db3b58cd2e6769d43
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 17 09:14:07 2015 +0100
+
+    lib/srdb1: url parser extracts the db name before the url parameters
+    
+    - some database urls can have parameters after db name, like:
+      driver://username:password@dbhost:port/dbname?params
+    - reported by Kelvin Chua for db_mongodb
+    
+    (cherry picked from commit 4da5d898da9a0a8f2780dcdf864354098268a7e9)
+
+commit 5fcac5c54fd487014efe1645f4db0e31dd6564e7
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Wed Nov 25 11:44:55 2015 +0100
+
+    usrloc: fix mem leak when closing expired TCP
+    
+    CONN_EOF handler already decreases the reference counter for us
+    
+    (cherry picked from commit daa2509a58438505a6faa57e1a8befcc667a3b28)
+
+commit 7c46ff13e70e2d67e8bf5b8e6b90b2cf28b3b5fb
+Merge: d96a409 6c11766
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Nov 24 16:02:57 2015 +0100
+
+    Merge pull request #414 from linuxmaniac/vseva/travis_docker_4.3
+    
+    tests/travis: migrate to docker environment
+
+commit 6c11766a2d370d90559b1f01cc8ca3dd610669c9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Nov 24 15:23:44 2015 +0100
+
+    tests/travis: migrate to docker environment
+    
+    - use jessie as default distribution
+
+commit d96a409649573c8d5e08a9b04536613307ecc779
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Nov 23 23:08:38 2015 +0100
+
+    test/travis: build_travis.sh force error on any command
+
+commit f07d47d7d413a1dbc4da779d7c274f88e01058e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 22 10:02:36 2015 +0100
+
+    core: relocate dbg message before killing children at shut down
+    
+    - can race with per module log level, debugger module can be destroyed
+    
+    (cherry picked from commit 5a142f7cc2899090b007654529f08b1b2f4e70b1)
+
+commit 2823f0b09ff9d91ff52475abdf58bb030dee3773
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 19 13:58:33 2015 +0100
+
+    tm: use svpe fixup for t replicate uri param
+    
+    - the function expects it for getting the value
+    
+    (cherry picked from commit ea0b4e50f62f8a461b737882c383f17767851d3d)
+
+commit 20b4c9e6294bca137d788dd0c1750f320d3e8461
+Author: Daniel Rus Morales <danirus@eml.cc>
+Date:   Thu Nov 19 13:44:08 2015 +0100
+
+    db_postgress: fix compilation, NTOHLL and NTOHLL provided by OSX 10.10
+    
+    (cherry picked from commit b37aa66fd1cf3fe99aae50adb89d4cfecf6d90d1)
+
+commit d0c5a5835969660d43355fa91b39f1a8e08f6eb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 19 00:01:27 2015 +0100
+
+    kamctl: require db or ctl engine made specific for dispatcher subcommands
+    
+    (cherry picked from commit d2416957e4caec8a64abec82029ea18c52a7bc2d)
+
+commit dd4d1700a36c6d64590ad00ae8c60270d16c62c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 18 14:42:51 2015 +0100
+
+    usrloc: log details of contact when inserting in db failes
+    
+    (cherry picked from commit 1a05910912fbf9baaf821cc30fac7485c1e67622)
+
+commit 3969a72ebf47d9468ecfdf8c1ea3a4216b098ebf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 17 22:51:01 2015 +0100
+
+    dmq: removed params field from dmq_node_t
+    
+    - used only for setting a flag
+    - duplicating a node caused issues with param field not being
+      duplicated, resulting in potential many free of same pointer, reported
+      by Sebastian Damm
+    
+    (cherry picked from commit 16bc7b726a21108458f354aea840cdbf5d89d6d8)
+
+commit 851a3bb7788b0a154e8fdb9fa4f150fa0777e8b5
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Mon Nov 23 12:35:03 2015 +0200
+
+    p_usrloc: str->s string NULL check before str_dup
+    
+    Don't shm_str_dup() NULL str->s strings.
+    Add checks to avoid shm_str_dup() warning.
+
+commit 2fe732bd12fd45d2845626589b255a9d78acd7d1
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Fri Nov 20 11:13:40 2015 +0100
+
+    tm: set next hop as dst_uri for appended branches
+    
+    (cherry picked from commit 4d122e15f4599010000f6e5d2e60e9bc13b2281a)
+
+commit 2d1b6dcf6b00291e6d81b1a847718b21f80c3d16
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Wed Nov 18 12:21:19 2015 +0200
+
+    core: NULL checks for ut.h
+    
+    Add some NULL checks for shm/pkg dup functions and few others.
+    
+    (cherry-picked from commit 24999a5dbf7d986942479c0670158748c263a3cd)
+
+commit 62243d315df63909b079f731f25de23a638bcdf6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 19 13:30:07 2015 +0100
+
+    rtpproxy: fix mismatching internal value for column setid
+    
+    - on a report by Jan Hazenberg
+    
+    (cherry picked from commit b89534385ef881719c85534ab7a32a500be2aa9c)
+
+commit c064b97f79e4a4c757166704b67b98d36340d7cc
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Thu Nov 19 11:16:11 2015 +0100
+
+    core: exit with failure code if a child dies
+    
+    (cherry picked from commit dd7854ea6f7efa6899bf59bb0d5069f0daf1def9)
+
+commit 040a36678f104905a0066c8b6a352da59c539fee
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Wed Nov 11 13:08:52 2015 +0100
+
+    cnxcc: make cnxcc locks re-entrant
+    
+    (cherry picked from commit a4cdd61afad027c9bb431ceda4e71941274610ce)
+
+commit 2665a0e7d2a2b3a02cfeb2809ec9dd0d3bafcb25
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 16 11:43:53 2015 +0100
+
+    core: print runtime dir in log message
+    
+    - do logging to syslog, along with stderror for runtime dir related
+      errors
+    
+    (cherry picked from commit 5e9f144ca214f43b2fd01917fb4983716c8916f8)
+
+commit d260080724b8f9ec0a3c55b3cee3ce34205b814c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 10 09:30:30 2015 +0100
+
+    core: dns cache - test for null pointers before debug checks after removing from list
+    
+    - next/prev are set to null after remove from list by commit
+      0fbcca38574139f1cd8ba7506ee5e204be5f2da7
+    
+    (cherry picked from commit 70699ae8b9159c18bdd73c3092ccb19691edf0fd)
+
+commit 9dfa62688c71062598f66adde3ba5b34bc58ebf9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 21:05:30 2015 +0100
+
+    nathelper: added examples in docs for few functions
+    
+    (cherry picked from commit 2aa7683dfebedc4ef9c3fdd50fb7abd2a2d718db)
+
+commit 8a16b37554cb668b9fcb9d0aba11157506f33672
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 5 08:58:44 2015 +0100
+
+    tm: print file name and line in free_cell() warning log message
+    
+    (cherry picked from commit bbf3f2a970020116da8c4c50069713e31a268943)
+
+commit 0066abcf28d707be7444ccb709cbeb9f37c636be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 5 08:53:01 2015 +0100
+
+    tm: unlink cell and its timer in free function if structure still linked in clist
+    
+    (cherry picked from commit 2fad76064992af047244e30c6152bf0f05a0785f)
+
+commit ff64906a7cf9d6704dc82ab52a49ef0ed48d8fde
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 23 22:53:01 2015 +0200
+
+    tm: reset next/prev fields when unlinking transaction from hash table
+    
+    (cherry picked from commit 649141185f231435bbe03fd13fe5a0e65b9fed04)
+
+commit b69ecda51c820fbf4a4bc4de352a7b2f5e2d8d91
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 23 17:46:50 2015 +0200
+
+    tm: warn troubleshooting message for deleted transaction turned in dbg
+    
+    (cherry picked from commit 92ff485409611ad345b14b784afb1be25fa188b9)
+
+commit 171df16dea1d2c6215b6aa50a49157cf253f502f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Sep 23 12:43:41 2015 +0200
+
+    tm: more debug info when freeing a transaction
+    
+    - attempt to catch a double free
+    
+    (cherry picked from commit ef44e5b8b4292f4c4ff3a77e46bbb33e5e0f077f)
+
+commit ad6916e60745da509cc74b8a4b576d8530b73361
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 5 08:51:25 2015 +0100
+
+    core: clist - restet prev/next when removing from clist slot
+    
+    (cherry picked from commit 0fbcca38574139f1cd8ba7506ee5e204be5f2da7)
+
+commit 213abc43fa2b3ff8fc8ab4db1859cb79298e201a
+Author: Tristan MahÃ© <gled@remote-shell.net>
+Date:   Wed Nov 4 10:33:03 2015 -0800
+
+    set the log_prefix buffer size to 1024b
+    
+    (cherry picked from commit 439623667d6ea5cf9dec30033df94965213e8494)
+
+commit 22e4556c91377ecdab849fe181b6a8397bfada7c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 11 08:59:10 2015 +0100
+
+    Makefile.defs: gcc 5.2 option -mfp32 is required by -march=r3000 for mips arch
+    
+    - reported by Victor Seva, GH#394
+    
+    (cherry picked from commit b2ff2745b97051625509de0f328e5b1a8f584387)
+
+commit b5d19f21718b94fb522db5b414d43e7fdb038ebf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 09:36:12 2015 +0100
+
+    Makefile.defs: removed option -minline-all-stringops for compiler on mips
+    
+    - not supported, reported by Victor Seva, FS#392
+    
+    (cherry picked from commit 2718efddb8e87a269af012d8661d57887e7c4d86)
+
+commit 946e996fed4bed9a62703cdd248777e2c7ab4a89
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 9 09:21:29 2015 +0100
+
+    tls: check for support of SSLv3 method
+    
+    - some versions of libssl removed support for SSLv3
+    - reported by Victore Seva, FS#391
+    
+    (cherry picked from commit b1c6c2af7e96c0bcbdee4ff46f6faf19fdc75d9f)
+
+commit 16be09c270e5dafd5721129c68dde7e2ababed38
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 4 10:08:02 2015 +0100
+
+    core: print src and dst addresses in tcp error log messages
+    
+    (cherry picked from commit 420a11873291cca93c8b43b5766f8661d46538c5)
+
+commit 8d82eb9a43885a1c524c5a53155f3299ce55fbb7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 4 15:43:12 2015 +0100
+
+    nathelper: consider IPv6 brackets when checking size for keepalive request
+    
+    (cherry picked from commit 27f19950f107a943c3bf9db1fddb1e4912136181)
+
+commit 3edb10ad073c383dab8a2819d759fcc9e3bd9986
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 2 16:19:44 2015 +0100
+
+    core: parser - remove inline for parse_param()
+    
+    - it gets recent compiler warnings when is an extern object
+    - reported by Victor Seva, GH#286
+    
+    (cherry picked from commit e3a8e5772445d28a0fc6db2e432d750dbb8062da)
+
+commit 5c9ef6ca51d51232a0e3ab4e57915a7674e876a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 2 15:23:31 2015 +0100
+
+    kamdbctl: divert stderr when searching for greadlink
+    
+    (cherry picked from commit 2bd19e232ece9bf0a090ba34d505d9ed6c9753a5)
+
+commit bc00c004f5c8214f814369e01f8ec78ca780cbb5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 2 13:30:32 2015 +0100
+
+    ctl: increased default buffers size for rpc responses
+    
+     - binrpc_max_body_size = 32
+     - binrpc_struct_max_body_size = 8
+    
+    (cherry picked from commit 19756eecb2048320182667cc440cfa7d275304c9)
+
+commit cc236c6720c3c4d91d6cf69134bb6c290d530900
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 27 11:26:23 2015 +0100
+
+    tm: added braces around initializer of cancel reason map
+    
+    - reported by Yacin Caner
+    
+    (cherry picked from commit fc0e6275fa61f72c1fed0f69393f609cc682888c)
+
+commit e1b60b857f78ec459ae31a4cf6475643ec102f40
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 26 21:31:59 2015 +0100
+
+    core: fixed passed buffer size in suip2a() for ipv6
+    
+    - buffer size set to IP6_MAX_STR_SIZE, it was too short and returned
+      value was empty addres "[]"
+    - the function is used only by siptrace
+    - patch from github pull request #381
+    
+    (cherry picked from commit d6f313e61b3318924e6653c8ca1184b2016f701d)
+
+commit 5d8315268e19538023d4127e74e166925ea216b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 23 18:56:45 2015 +0200
+
+    db_postgres: safety check to see if hasing is over non-null pointer
+    
+    - inside implementation of replace command
+    
+    (cherry picked from commit 9cd4aef84d8e7a079486ff73285a9bd6a15e8db3)
+
+commit 4dc766a2083391b1870d34f8ee9575088b9e8e69
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 22 23:08:44 2015 +0200
+
+    db_postgres: don't free pg query structure in store result function
+    
+    - it is done when freeing the result
+    
+    (cherry picked from commit 56cd7a0d38c8bbee6cc3e981b7a2b78b6d47257d)
+
+commit 4fdd11699c83f2e4c787d210ca08eb3ec2fb559a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 21 09:49:38 2015 +0200
+
+    corex: detect ipv6 for send*() functions
+    
+    (cherry picked from commit 027495fb6ac7c8f50ff9945c209bc9f7ac98d991)
+
+commit 3dc9dd21708d3abe9db888dd0ae2ab49270a82d8
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Oct 20 20:52:10 2015 +0200
+
+    evapi fix some minor typos in debug/error messages
+    
+    (cherry picked from commit 84d75d43c17b4773bb15a80c1a1f33a47424d858)
+
+commit 67885bd0e5fd56b5dd7d4bb6f8bb7113bc1ea559
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Oct 19 09:11:20 2015 +0200
+
+    nat_traversal Add comment about lacking IPv6 support
+    
+    (cherry picked from commit cc8ff059d362e0c805de2067d73f64cbd12acdb8)
+
+commit bf236d1892abdc3e27dc01d84eca67cd1b858156
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 11 19:37:54 2015 +0200
+
+    core: mem_summary taken in consideration for runtime pkg dump callback
+    
+    (cherry picked from commit 02dc876cc6d8e78bfc26c4c2318814aec22c4498)
+
+commit ca09891f79facdc7f557ecacb31e7346e545e4a4
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sun Oct 11 19:26:46 2015 +0200
+
+    auth Minor update to docs, spelling errors
+    
+    (cherry picked from commit a0f82365012a7980c77b076d2e48f8a38cb63742)
+
+commit eef390eaefd9286feaae1505d566e4e41fb61e30
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Oct 7 11:39:37 2015 -0700
+
+    presence: use advertised ip for local contact
+    (cherry picked from commit 6a498f713a2522e18bed96dc4d1f361008a95502)
+
+commit 6d3db65279e1e6bd7d45fe6ff4169e556883e21d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 6 17:53:15 2015 +0200
+
+    tm: support to add text in Reason header for local generated CANCEL
+    
+    (cherry picked from commit 743fee551c833bd31f1bfdf1a4b422886243f8b6)
+
+commit c5a53e0f12430653f890534a1c140b84545f1ac0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 4 06:28:39 2015 +0200
+
+    nathelper: use advertised address if send socket has one
+    
+    - reported by emanuel Buu, GH#352
+    
+    (cherry picked from commit 4da31d56f4b1e18fc4232c5174637c858c75e9db)
+
+commit a56e5980e572357f9d3c0152623850c34ddb8963
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Tue Nov 3 13:08:47 2015 +0200
+
+    uac: Sanity checks
+    
+    Sanity checks for decode_uri(). Add NULL and len > 0 checks.
+    Segfault when vsf parameter was empty in the Route: header (e.g 'vsf=').
+    
+    (cherry picked from commit d956f397c8cea4774e5941bdad8f76ecc44acdd5)
+
+commit 83938d2153d0d33f1e3248a9ae280dae38440855
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Tue Nov 3 15:58:02 2015 +0200
+
+    dialog: Sanity checks
+    
+    Add NULL checks for the parse_dlg_rr_param().
+    Segfault when 'did' parameter was empty in the Route header (e.g. 'did=').
+    
+    (cherry picked from commit 876787d977c46ffcb1288f5eb66e91145cba1061)
+
+commit 801d9cc900a7cdd954733012540299c7ca288007
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 27 11:44:06 2015 +0100
+
+    dmq_usrloc: fixed handling of dmq_ul.get_urecord_by_ruid() response
+    
+    - manual backport of master branch commits: 13cde2b and eeb3c16 (GH#373)
+
+commit 60985a13878b9ec3b84b565c02be14927ba6357a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Oct 23 14:15:54 2015 +0200
+
+    usrloc: fixed number of columns when loading urecord in db mode 3
+    
+    - reported by GH#373
+    
+    (cherry picked from commit 922e5818b02b6d5e1f082e861f97bc8868f5ae57)
+
+commit f699719fed8b1fffc653c272c01941730dab6d3e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 20 19:44:47 2015 +0200
+
+    tls: init tls hooks to {0}, avoiding fields enumeration
+    
+    - if a new field is added, then should be no longer needed to update
+      initialization
+    
+    (cherry picked from commit 92c7656a37549de0eed3621ec243022400f6c6c4)
+
+commit 6306a8fe46fc7ebf2c8b8b52177d38f9178ba659
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 11 14:35:46 2015 +0200
+
+    uac: uac.reg_dump returns an array rpc result
+    
+    (cherry picked from commit b4120c53a1ba2ae2bad8b9c04963b4becc0a9700)
+
+commit e827ccf957a341b7026b06f17686da7fcc426fc2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Oct 11 03:38:24 2015 +0200
+
+    textops: fix leak when subst_hf() with flag f is used
+    
+    - substituion list was not freed
+    
+    (cherry picked from commit 321a6140cdc7d6fd3f18f911af9825bb62575ace)
+
+commit 0aaa2dd0afab46cb35e88d4091a9118066682059
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Wed Oct 7 09:29:39 2015 +0200
+
+    tsilo: unref the transaction after appending new branches
+    
+    (cherry picked from commit 3c086a85b99d59dabc48f77893d4c68199af0577)
+
+commit 42f3e1f081d2606a500f93e5e1fd8c97690956de
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Mon Sep 28 09:09:59 2015 +0200
+
+    tm: fake msg and environment to append new branches
+    
+    (cherry picked from commit 6845d190f46de820fa4586b30eb2fba0aae1eb01)
+
+commit 74042e3c00edd441e30d7aba25807f99617be375
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Wed Oct 7 13:44:03 2015 +0200
+
+    nathelper Via header for SIP ping over IPv6 needs square brackets
+    
+    (cherry picked from commit 274f1034bfb9ea0d52ef291d2f95021ca86f3081)
+
+commit b7678a7c920f82ab23e495e76db99d7b2457395e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 6 00:28:19 2015 +0200
+
+    acc: reset errno for converting numbers for cdr generation
+    
+    - reported by Mayama Takeshi, GH#359
+    
+    (cherry picked from commit caf477104c90049bf0c5e163d7eff89111448776)
+
+
 ===================== 2015-10-02 Version 4.3.3 Released =====================
 
 ===================== Changes Since Version 4.3.2 ===========================
