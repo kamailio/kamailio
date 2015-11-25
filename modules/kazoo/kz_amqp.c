@@ -54,7 +54,7 @@ const amqp_table_t kz_amqp_empty_table = { 0, NULL };
 amqp_exchange_declare_ok_t * AMQP_CALL kz_amqp_exchange_declare(amqp_connection_state_t state, amqp_channel_t channel,
 			amqp_bytes_t exchange, amqp_bytes_t type,
 			amqp_boolean_t passive, amqp_boolean_t durable, amqp_table_t arguments) {
-#if AMQP_VERSION_MINOR == 5
+#if AMQP_VERSION_MAJOR == 0 && AMQP_VERSION_MINOR < 6
 	return amqp_exchange_declare(state, channel, exchange, type, passive, durable, arguments);
 #else
 	return amqp_exchange_declare(state, channel, exchange, type, passive, durable, 0, 0, arguments);
