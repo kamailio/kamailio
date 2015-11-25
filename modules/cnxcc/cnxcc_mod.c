@@ -889,14 +889,18 @@ void terminate_all_calls(credit_data_t *credit_data) {
 	credit_data->deallocating = 1;
 
 	clist_foreach_safe(credit_data->call_list, call, tmp, next) {
-		LM_DBG("Killing call with CID [%.*s]\n", call->sip_data.callid.len, call->sip_data.callid.s);
+		if(call->sip_data.callid.s!=NULL) {
+			LM_DBG("Killing call with CID [%.*s]\n", call->sip_data.callid.len, call->sip_data.callid.s);
 
-		/*
-		 * Update number of calls forced to end
-		 */
-		_data.stats->dropped++;
-		terminate_call(call);
-		__free_call(call);
+			/*
+			 * Update number of calls forced to end
+			 */
+			_data.stats->dropped++;
+			terminate_call(call);
+			__free_call(call);
+		} else {
+			LM_WARN("invalid call structure %p\n", call);
+		}
 	}
 }
 
