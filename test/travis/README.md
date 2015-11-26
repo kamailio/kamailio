@@ -1,18 +1,25 @@
-Travis-ci build
-===============
+Kamailio Travis-CI Builds
+=========================
 
-The build environment is based on docker containers, so it can be easily
-reproducible by any developer of the project.
+Overview
+--------
 
-The container we use is build at [docker hub](https://hub.docker.com/r/linuxmaniac/pkg-kamailio-docker/)
-It's Debian Stretch based image build [DockerFile](https://github.com/linuxmaniac/pkg-kamailio-docker/blob/master/stretch/Dockerfile)
+The Travis-CI build environment for Kamailio is based on docker containers,
+so it can be easily reproducible by any developer of the project on local
+systems.
 
-Build locally
+Docker containers
+-----------------
+
+The default used container is built at [docker hub](https://hub.docker.com/r/linuxmaniac/pkg-kamailio-docker/)
+and it is a Debian Stretch based image done with the following [DockerFile](https://github.com/linuxmaniac/pkg-kamailio-docker/blob/master/stretch/Dockerfile)
+
+Build Locally
 -------------
 
 Same steps defined at [.travis.yml](https://github.com/kamailio/kamailio/blob/master/.travis.yml):
 
-- Choose the compiler you want to use setting `CC` to `gcc` or `clang`
+  * Choose the compiler to be used by setting the variable `CC` to `gcc` or `clang`
 
 ```
 $ docker pull linuxmaniac/pkg-kamailio-docker:stretch
@@ -21,10 +28,10 @@ $ docker run \
     /bin/bash -c "export CC=gcc; cd /code; ./test/travis/build_travis.sh"
 ```
 
-You can always [login](./README.md#login-inside-the-build-environment) inside the container
-and build it [manually](http://www.kamailio.org/wiki/install/devel/git#compile_kamailio)
+One can always [login](./README.md#login-inside-the-build-environment) inside
+the container and build everything [manually](http://www.kamailio.org/wiki/install/devel/git#compile_kamailio)
 
-Clean sources
+Clean Sources
 -------------
 
 ```
@@ -33,7 +40,7 @@ $ docker run \
     /bin/bash -c "cd /code; make -f debian/rules clean; rm -rf debian"
 ```
 
-Login inside the build environment
+Login Inside The Build Environment
 ----------------------------------
 
 ```
@@ -41,11 +48,11 @@ $ docker run -i -t \
     -v $(pwd):/code:rw linuxmaniac/pkg-kamailio-docker:stretch /bin/bash
 ```
 
-Test other Debian distributions
--------------------------------
+Use Other Debian Distributions
+------------------------------
 
 There are several container [images available](https://hub.docker.com/r/linuxmaniac/pkg-kamailio-docker/tags/) already.
-You just need to use any of the them selecting the proper tag
+One can just use any of the them by selecting the proper tag:
 
 ```
 $ export $DIST=sid
@@ -59,4 +66,4 @@ $ docker run \
 TODO
 ----
 
-- tests inside the docker container
+  * tests inside the docker container
