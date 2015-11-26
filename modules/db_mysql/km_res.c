@@ -32,7 +32,7 @@
 
 
 #include <string.h>
-#include <mysql/mysql.h>
+#include <mysql.h>
 #include "../../lib/srdb1/db_res.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
