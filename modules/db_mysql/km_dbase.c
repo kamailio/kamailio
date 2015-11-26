@@ -33,9 +33,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <mysql/mysql.h>
-#include <mysql/errmsg.h>
-#include <mysql/mysql_version.h>
+#include <mysql.h>
+#include <errmsg.h>
+#include <mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../async_task.h"
