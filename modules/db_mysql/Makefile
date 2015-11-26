@@ -20,7 +20,7 @@ endif
 
 ifneq ($(MYSQLCFG),)
 	# use autodetection
-	DEFS += $(shell $(MYSQLCFG) --include | sed 's/\(-I[^ ]*\)\/mysql/\1/g' )
+	DEFS += $(shell $(MYSQLCFG) --include)
 	LIBS = $(shell $(MYSQLCFG) --libs)
 else
 	# mysql.h locations (freebsd,openbsd  solaris)

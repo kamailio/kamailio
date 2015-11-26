@@ -27,7 +27,7 @@
 #include "../../lib/srdb2/db_uri.h"
 
 #include <time.h>
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 enum my_con_flags {
 	MY_CONNECTED = 1

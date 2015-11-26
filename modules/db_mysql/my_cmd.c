@@ -46,8 +46,8 @@
 #include <stdio.h>
 #include <time.h>  /*strptime, XOPEN issue must be >=4 */
 #include <string.h>
-#include <mysql/errmsg.h>
-#include <mysql/mysqld_error.h>
+#include <errmsg.h>
+#include <mysqld_error.h>
 
 #define STR_BUF_SIZE 1024
 

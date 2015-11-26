@@ -38,7 +38,7 @@
 #include "km_dbase.h"
 #include "km_db_mysql.h"
 
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 unsigned int db_mysql_timeout_interval = 2;   /* Default is 6 seconds */
 unsigned int db_mysql_auto_reconnect = 1;     /* Default is enabled   */
