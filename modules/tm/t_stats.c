@@ -94,6 +94,7 @@ void free_tm_stats()
 		(res)->completed_6xx=(s1)->completed_6xx+(s2)->completed_6xx; \
 		(res)->completed_2xx=(s1)->completed_2xx+(s2)->completed_2xx; \
 		(res)->replied_locally=(s1)->replied_locally+(s2)->replied_locally; \
+		(res)->replied_total=(s1)->replied_total+(s2)->replied_total; \
 		(res)->deleted=(s1)->deleted+(s2)->deleted; \
 	}while(0)
 
