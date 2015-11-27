@@ -675,6 +675,11 @@ Note
    valid response). This parameter can be modified via ser config
    framework.
 
+   Please note that the response codes the module accepts as valid reply to the
+   PING-Method are not only the ones generated from the backends.
+   E.g.: Setting code=408 or class=400 will never set a backend down even if it is, because 
+   internally Kamailio transforms the timeout T_code=0 (no response), to code 408 and accepts that as vaild value.
+
    Default value is “” (only 200 OK is accepted).
 
    Example 1.26. Set the “ds_ping_reply_codes” parameter
