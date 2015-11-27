@@ -3026,6 +3026,7 @@ int pv_get_expires(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	unsigned int exp_max = 0;
 	hdr_field_t* hdr;
 	contact_t* c;
+	contact_t* c0;
 	unsigned int eval = 0;
 	unsigned int ehdr = 0;
 	unsigned int efound = 0;
@@ -3056,7 +3057,7 @@ int pv_get_expires(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				}
 				c = ((contact_body_t*)hdr->parsed)->contacts;
 				while(c) {
-					c = c->next;
+					c0 = c->next;
 					if(c->expires && c->expires->body.len) {
 						if (str2int(&c->expires->body, &eval) < 0) {
 							LM_ERR("failed to parse expires\n");
@@ -3071,6 +3072,7 @@ int pv_get_expires(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 						if(eval>exp_max) exp_max = eval;
 						if(eval<exp_min) exp_min = eval;
 					}
+					c = c0;
 				}
 			}
 			hdr = hdr->next;
