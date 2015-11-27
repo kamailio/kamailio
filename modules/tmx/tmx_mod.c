@@ -108,8 +108,10 @@ unsigned long tmx_stats_trans_6xx(void);
 unsigned long tmx_stats_trans_inuse(void);
 unsigned long tmx_stats_trans_active(void);
 unsigned long tmx_stats_rcv_rpls(void);
-unsigned long tmx_stats_rld_rpls(void);
-unsigned long tmx_stats_loc_rpls(void);
+unsigned long tmx_stats_abs_rpls(void);
+unsigned long tmx_stats_rld_rcv_rpls(void);
+unsigned long tmx_stats_rld_loc_rpls(void);
+unsigned long tmx_stats_rld_tot_rpls(void);
 
 static stat_export_t mod_stats[] = {
 	{"UAS_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_uas_trans   },
@@ -122,8 +124,10 @@ static stat_export_t mod_stats[] = {
 	{"inuse_transactions" ,  STAT_IS_FUNC, (stat_var**)tmx_stats_trans_inuse },
 	{"active_transactions" , STAT_IS_FUNC, (stat_var**)tmx_stats_trans_active},
 	{"received_replies" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_rcv_rpls    },
-	{"relayed_replies" ,     STAT_IS_FUNC, (stat_var**)tmx_stats_rld_rpls    },
-	{"local_replies" ,       STAT_IS_FUNC, (stat_var**)tmx_stats_loc_rpls    },
+	{"received_replies_absorbed", STAT_IS_FUNC, (stat_var**)tmx_stats_abs_rpls    },
+	{"relayed_locally" ,     STAT_IS_FUNC, (stat_var**)tmx_stats_rld_loc_rpls},
+	{"relayed_received" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_rld_rcv_rpls},
+	{"relayed_total" ,       STAT_IS_FUNC, (stat_var**)tmx_stats_rld_tot_rpls},
 	{0,0,0}
 };
 #endif
@@ -810,23 +814,31 @@ unsigned long tmx_stats_trans_active(void)
 unsigned long tmx_stats_rcv_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.completed_6xx
-		+ _tmx_stats_all.completed_5xx
-		+ _tmx_stats_all.completed_4xx
-		+ _tmx_stats_all.completed_3xx
-		+ _tmx_stats_all.completed_2xx;
+	return _tmx_stats_all.received_replies;
 }
 
-unsigned long tmx_stats_rld_rpls(void)
+unsigned long tmx_stats_abs_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.replied_total - _tmx_stats_all.replied_locally;
+	return _tmx_stats_all.received_replies - tmx_stats_rld_rcv_rpls();
 }
 
-unsigned long tmx_stats_loc_rpls(void)
+unsigned long tmx_stats_rld_loc_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.replied_locally;
+	return _tmx_stats_all.relayed_locally;
+}
+
+unsigned long tmx_stats_rld_tot_rpls(void)
+{
+	tmx_stats_update();
+	return _tmx_stats_all.relayed_total;
+}
+
+unsigned long tmx_stats_rld_rcv_rpls(void)
+{
+	tmx_stats_update();
+	return _tmx_stats_all.relayed_total - _tmx_stats_all.relayed_locally;
 }
 
 #endif
