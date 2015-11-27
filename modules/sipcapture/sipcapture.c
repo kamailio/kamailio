@@ -77,6 +77,7 @@
 #include "sipcapture.h"
 #include "hash_mode.h"
 #include "hep.h"
+#include "th_mask.h"
 
 #ifdef STATISTICS
 #include "../../lib/kcore/statistics.h"
@@ -130,6 +131,9 @@ static int child_init(int rank);
 static void destroy(void);
 static int sipcapture_fixup(void** param, int param_no);
 static int sip_capture(struct sip_msg *msg, str *dtable,  _capture_mode_data_t *cm_data);
+
+str _th_key = str_init("31321jdqjwdkjuahvchacdcsadcasdfh");
+str th_callid_prefix = str_init("!!:");
 
 static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t * _cm_data, char* s2);
 int init_rawsock_children(void);
@@ -1106,6 +1110,13 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 		LM_DBG("invalid parameter\n");
 		return -1;
 	}
+
+        str out;
+        if(strncmp(sco->callid.s,&th_callid_prefix,3) == 0) {
+                th_mask_init();
+                out.s = th_mask_decode(sco->callid.s, sco->callid.len, &th_callid_prefix, 0, &out.len);
+                sco->callid = out;
+        }
 	
 	if(correlation_id) {
 	         corrtmp.s = correlation_id;
