@@ -2031,6 +2031,7 @@ static int remove_multibody_f(struct sip_msg* msg, char* p1)
 static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mode)
 {
 	char *start, *end, *bstart;
+	char *body_headers_end; 
 	unsigned int len, t;
 	str content_type, body;
 	str boundary = {0,0};
@@ -2084,6 +2085,7 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 				}
 				end = end + 2;
 				len = len - content_type.len - 2;
+				body_headers_end = end;
 				if (find_line_start(boundary.s, boundary.len, &end,
 					&len))
 				{
@@ -2099,12 +2101,8 @@ static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mod
 					pkg_free(boundary.s);
 					boundary.s = NULL;
 					if(mode==1) {
-						end = start;
-						if (!find_line_start(CRLF, CRLF_LEN, &end, &len)) {
-							LM_ERR("no CRLF found after body headers\n");
-							goto err;
-						}
-						val.rs.s = end + CRLF_LEN;
+						end = body_headers_end;
+						val.rs.s = end;
 						val.rs.len = bstart - val.rs.s;
 					} else {
 						val.rs.s = start;
