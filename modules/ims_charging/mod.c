@@ -499,7 +499,7 @@ send_ccr:
 	}
 
 	LM_DBG("Suspending SIP TM transaction\n");
-	if (tmb.t_suspend(msg, &tindex, &tlabel) < 0) {
+	if (tmb.t_suspend(msg, &tindex, &tlabel) != 0) {
 		LM_ERR("failed to suspend the TM processing\n");
 		ret =  RO_RETURN_ERROR;
 		goto done;
