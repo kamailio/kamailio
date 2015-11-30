@@ -581,27 +581,6 @@ modparam("htable", "timer_interval", 10)
 </programlisting>
 		</example>
 	</section>
-	<section id="htable.p.timer_mode">
-		<title><varname>timer_mode</varname> (integer)</title>
-		<para>
-		If set to 1, the module will start a new timer process. If set to 0
-		will use the default timer process to check for expired htable
-		values.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>timer_mode</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("htable", "timer_mode", 1)
-...
-</programlisting>
-		</example>
-	</section>
 	<section id="htable.p.db_expires">
 		<title><varname>db_expires</varname> (integer)</title>
 		<para>
@@ -658,10 +637,10 @@ modparam("htable", "enable_dmq", 1)
 	<section id="htable.p.timer_procs">
 		<title><varname>timer_procs</varname> (integer)</title>
 		<para>
-			If set to 1, the module will create its own timer process to scan
-			for expired items in hash tables. If set to zero, it will use the
-			core timer for this task. Set it to 1 if you store a lot of items
-			with autoexpire property.
+			If set to 1 or greater, the module will create its own timer
+			processes to scan for expired items in hash tables. If set to zero,
+			it will use the core timer for this task. Set it to 1 if you store
+			a lot of items with autoexpire property.
 		</para>
 		<para>
 		<emphasis>
@@ -672,7 +651,7 @@ modparam("htable", "enable_dmq", 1)
 		<title>Set <varname>timer_procs</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("htable", "timer_procs", 1)
+modparam("htable", "timer_procs", 4)
 ...
 </programlisting>
 		</example>

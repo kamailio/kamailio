@@ -50,6 +50,7 @@
 #include "cr_func.h"
 #include "db_carrierroute.h"
 #include "config.h"
+#include "cr_db.h"
 #include <sys/stat.h>
 
 #define AVP_CR_URIS "_cr_uris"
@@ -63,6 +64,7 @@ str subscriber_table = str_init("subscriber");
 static str subscriber_username_col = str_init("username");
 static str subscriber_domain_col = str_init("domain");
 static str cr_preferred_carrier_col = str_init("cr_preferred_carrier");
+static int cr_load_comments = 1;
 
 str * subscriber_columns[SUBSCRIBER_COLUMN_NUM] = {
 	&subscriber_username_col,
@@ -118,6 +120,7 @@ static param_export_t params[]= {
 	{"use_domain",                INT_PARAM, &default_carrierroute_cfg.use_domain },
 	{"fallback_default",          INT_PARAM, &default_carrierroute_cfg.fallback_default },
 	{"fetch_rows",                INT_PARAM, &default_carrierroute_cfg.fetch_rows },
+	{"db_load_description", 	  INT_PARAM, &cr_load_comments },
 	{"match_mode",                INT_PARAM, &cr_match_mode },
 	{"avoid_failed_destinations", INT_PARAM, &cr_avoid_failed_dests },
 	{0,0,0}
@@ -186,8 +189,15 @@ static int mod_init(void) {
 		return -1;
 	}
 
+	if (cr_load_comments != 0 && cr_load_comments != 1) {
+		LM_ERR("db_load_comments must be 0 or 1");
+		return -1;
+	}
+
 	if (strcmp(config_source, "db") == 0) {
 		mode = CARRIERROUTE_MODE_DB;
+
+		set_load_comments_params(cr_load_comments);
 
 		LM_INFO("use database as configuration source\n");
 		if(carrierroute_db_init() < 0){

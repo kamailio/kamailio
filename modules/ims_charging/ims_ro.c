@@ -211,8 +211,11 @@ inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used
     set_4bytes(x, active_service_identifier);
     Ro_add_avp_list(&mscc_list, x, 4, AVP_Service_Identifier, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
-    set_4bytes(x, active_rating_group);
-    Ro_add_avp_list(&mscc_list, x, 4, AVP_Rating_Group, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    // Rating Group = -1 => omit Rating group
+    if (active_rating_group >= 0) {
+        set_4bytes(x, active_rating_group);
+        Ro_add_avp_list(&mscc_list, x, 4, AVP_Rating_Group, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    }
 
     used_group = cdpb.AAAGroupAVPS(mscc_list);
     cdpb.AAAFreeAVPList(&mscc_list);
@@ -246,8 +249,11 @@ inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int 
     set_4bytes(x, active_service_identifier);
     Ro_add_avp_list(&mscc_list, x, 4, AVP_Service_Identifier, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
-    set_4bytes(x, active_rating_group);
-    Ro_add_avp_list(&mscc_list, x, 4, AVP_Rating_Group, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    // Rating Group = -1 => omit Rating group
+    if (active_rating_group >= 0) {
+      set_4bytes(x, active_rating_group);
+      Ro_add_avp_list(&mscc_list, x, 4, AVP_Rating_Group, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    }
 
     /* if we must Used-Service-Unit */
     if (used_unit >= 0) {
@@ -973,12 +979,11 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
 
     int sdp_stream_num = 0;
 
-    LM_DBG("Sending initial CCR request for reservation_units [%d] incoming_trunk_id [%.*s] outgoing_trunk_id [%.*s]\n",
-            reservation_units,
+    LM_DBG("Sending initial CCR request (%c) for reservation_units [%d] incoming_trunk_id [%.*s] outgoing_trunk_id [%.*s]\n",
+	dir==RO_ORIG_DIRECTION?'O':'T',
+			reservation_units,
             incoming_trunk_id->len, incoming_trunk_id->s,
             outgoing_trunk_id->len, outgoing_trunk_id->s);
-
-
 
     ssd = shm_malloc(sizeof (struct session_setup_data)); // lookup structure used to load session info from cdp callback on CCA
     if (!ssd) {

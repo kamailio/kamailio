@@ -1,31 +1,37 @@
 #!/bin/bash
 #
 # build script for travis CI
-# environment based on Ubuntu 12.04 LTS (precise)
+# environment based docker container at
+# https://hub.docker.com/r/linuxmaniac/pkg-kamailio-docker/
 #
-export JAVA_HOME="/usr/lib/jvm/java-gcj"
-EXCLUDED_MODULES=""
-EXTRA_EXCLUDED_MODULES="bdb dbtext oracle pa iptrtpproxy mi_xmlrpc dnssec kazoo cnxcc"
-PACKAGE_GROUPS="mysql postgres berkeley unixodbc radius presence ldap xml perl utils lua memcached \
-	snmpstats carrierroute xmpp cpl redis python geoip\
-	sqlite json mono ims sctp java \
-	purple tls outbound websocket autheph"
-export TESTS_EXCLUDE="3 12 17 19 20 23 25 26 30 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 50"
 
+set -e
+
+DIST=${DIST:-stretch}
+CC=${CC:-gcc}
+
+if ! [ -d /code/pkg/kamailio/deb/"${DIST}" ] ; then
+	echo "${DIST} not supported"
+	exit 1
+else
+	rm -rf /code/debian
+	ln -s /code/pkg/kamailio/deb/"${DIST}" /code/debian
+fi
 function build {
-	echo "make distclean"
-	make distclean
-	echo "make cfg"
-	make FLAVOUR=kamailio cfg \
-		skip_modules="${EXCLUDED_MODULES} ${EXTRA_EXCLUDED_MODULES}" \
-		group_include="kstandard"
-	echo "make all"
-	make all
-	echo "make groups"
-	for grp in ${PACKAGE_GROUPS}; do
-		make every-module group_include="k${grp}"
-	done
+	echo "make clean"
+	make -f debian/rules clean
+	echo "make build"
+	make -f debian/rules build
 }
+
+if [[ "${CC}" =~ clang ]] ; then
+	CLANG=$(find /usr/bin -type l -name 'clang-[0-9]*' | sort -r | head -1)
+	echo "setting clang to ${CLANG}"
+	update-alternatives --install /usr/bin/clang clang "${CLANG}" 1
+fi
+
+echo "environment DIST=$DIST CC=$CC"
+${CC} --version
 
 # build flags
 export MEMDBG=0
@@ -36,11 +42,9 @@ export MEMDBG=1
 echo "build with MEMDBG=1"
 build
 
-#echo "unit tests"
-#make -C test/unit
 if [[ "$CC" =~ gcc ]] ; then
 	echo "make install"
-	sudo make install
+	make install
 else
 	echo "skip make install step"
 fi

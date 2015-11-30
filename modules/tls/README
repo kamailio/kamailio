@@ -42,7 +42,7 @@ Carsten Bock
               9.13. connection_timeout (int)
               9.14. tls_disable_compression (boolean)
               9.15. ssl_release_buffers (integer)
-              9.16. ssl_free_list_max_len (integer)
+              9.16. ssl_freelist_max_len (integer)
               9.17. ssl_max_send_fragment (integer)
               9.18. ssl_read_ahead (boolean)
               9.19. send_close_notify (boolean)
@@ -152,7 +152,7 @@ Chapter 1. Admin Guide
         9.13. connection_timeout (int)
         9.14. tls_disable_compression (boolean)
         9.15. ssl_release_buffers (integer)
-        9.16. ssl_free_list_max_len (integer)
+        9.16. ssl_freelist_max_len (integer)
         9.17. ssl_max_send_fragment (integer)
         9.18. ssl_read_ahead (boolean)
         9.19. send_close_notify (boolean)
@@ -495,7 +495,7 @@ Revoking a certificate and using a CRL
    9.13. connection_timeout (int)
    9.14. tls_disable_compression (boolean)
    9.15. ssl_release_buffers (integer)
-   9.16. ssl_free_list_max_len (integer)
+   9.16. ssl_freelist_max_len (integer)
    9.17. ssl_max_send_fragment (integer)
    9.18. ssl_read_ahead (boolean)
    9.19. send_close_notify (boolean)
@@ -796,7 +796,7 @@ modparam("tls", "tls_disable_compression", 0) # enable
 9.15. ssl_release_buffers (integer)
 
    Release internal OpenSSL read or write buffers as soon as they are no
-   longer needed. Combined with ssl_free_list_max_len has the potential of
+   longer needed. Combined with ssl_freelist_max_len has the potential of
    saving a lot of memory ( ~ 32k per connection in the default
    configuration, or 16k + ssl_max_send_fragment). For Kamailio versions >
    3.0 it makes little sense to disable it (0) since the tls module
@@ -815,7 +815,7 @@ Note
    Example 1.16. Set ssl_release_buffers parameter
 modparam("tls", "ssl_release_buffers", 1)
 
-9.16. ssl_free_list_max_len (integer)
+9.16. ssl_freelist_max_len (integer)
 
    Sets the maximum number of free memory chunks, that OpenSSL will keep
    per connection. Setting it to 0 would cause any unused memory chunk to
@@ -1165,6 +1165,13 @@ modparam("tls", "renegotiation", 1)
      * crl
      * cipher_list
      * server_name
+     * server_id
+
+   The value for server_id can be any string, being used to match TLS
+   client config profile, overriding the match on ip:port and server_name.
+   This is the recommended way for selecting a specific TLS client config
+   profile, because the local or remote port is hard to predict for a
+   stream connection - see parameter xavp_cfg to learn how to enable it.
 
    All the parameters that take filenames as values will be resolved using
    the same rules as for the tls config filename itself: starting with a
@@ -1201,6 +1208,17 @@ verify_depth = 3
 ca_list = local_ca.pem
 server_name = kamailio.org
 
+[client:127.0.0.1:5061]
+method = TLSv1
+verify_certificate = yes
+require_certificate = yes
+private_key = default_key.pem
+certificate = default_cert.pem
+ca_list = default_ca.pem
+crl = default_crl.pem
+server_name = kamailio.org
+server_id = kamailio.org
+
    For a more complete example check the tls.cfg distributed with the
    Kamailio source (kamailio/modules/tls/tls.cfg).
 
@@ -1222,6 +1240,12 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 
    The following (inner) attributes can be set:
      * server_name - SNI to be used for outbound connections
+     * server_id - string value to be used to match TLS config profile for
+       client (outbound) connections. If it is set, matching the TLS
+       config profile is done first on server_id and then on ip:port and
+       server_name. This is the recommended way for selecting a specific
+       TLS client config profile as the local or remote port is hard to
+       predict for a stream connection.
 
    The default value is empty (not set).
 
@@ -1230,6 +1254,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
   modparam("tls", "xavp_cfg", "tls")
  ...
   $xavp(tls=>server_name) = "kamailio.org";
+  $xavp(tls=>server_id) = "kamailio.org";
   $du = "sip:kamailio.org:5061;transport=tls";
   route(RELAY);
 ...

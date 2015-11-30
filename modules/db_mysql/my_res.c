@@ -27,7 +27,7 @@
 #include "../../dprint.h"
 #include "../../lib/srdb2/db_gen.h"
 
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 
 void my_res_free(db_res_t* res, struct my_res* payload)

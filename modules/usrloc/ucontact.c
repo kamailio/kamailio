@@ -680,7 +680,8 @@ int db_insert_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.insert(ul_dbh, keys, vals, nr_cols) < 0) {
-		LM_ERR("inserting contact in db failed\n");
+		LM_ERR("inserting contact in db failed %.*s (%.*s)\n",
+				_c->aor->len, ZSW(_c->aor->s), _c->ruid.len, ZSW(_c->ruid.s));
 		return -1;
 	}
 

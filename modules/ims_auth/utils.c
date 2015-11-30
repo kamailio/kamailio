@@ -149,7 +149,7 @@ inline int ims_find_credentials(struct sip_msg* _m, str* _realm,
  * @param response - param to fill with the response
  * @returns 1 if found, 0 if not
  */
-int get_nonce_response(struct sip_msg *msg, str realm,str *nonce,str *response,
+int get_nonce_response(struct sip_msg *msg, str *username, str realm,str *nonce,str *response,
 	enum qop_type *qop,str *qop_str,str *nc,str *cnonce,str *uri, int is_proxy_auth)
 {
 	struct hdr_field* h = 0;
@@ -191,6 +191,8 @@ int get_nonce_response(struct sip_msg *msg, str realm,str *nonce,str *response,
 			*cnonce = ((auth_body_t*) h->parsed)->digest.cnonce;
 		if (uri)
 			*uri = ((auth_body_t*) h->parsed)->digest.uri;
+		if (username)
+			*username = ((auth_body_t*) h->parsed)->digest.username.whole;
 	}
 	LM_DBG("Found nonce response\n");
 	return 1;

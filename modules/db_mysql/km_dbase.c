@@ -33,9 +33,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <mysql/mysql.h>
-#include <mysql/errmsg.h>
-#include <mysql/mysql_version.h>
+#include <mysql.h>
+#include <errmsg.h>
+#include <mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../async_task.h"
@@ -113,12 +113,15 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 			return 0;
 		}
 		code = mysql_errno(CON_CONNECTION(_h));
-		if (code != CR_SERVER_GONE_ERROR && code != CR_SERVER_LOST) {
+		if (code!=CR_SERVER_GONE_ERROR && code!=CR_SERVER_LOST
+				&& code!=CR_SSL_CONNECTION_ERROR && code!=CR_CONNECTION_ERROR
+				&& code!=CR_CONN_HOST_ERROR && code!=CR_SERVER_LOST_EXTENDED) {
 			break;
 		}
 		counter_inc(mysql_cnts_h.driver_err);
 	}
-	LM_ERR("driver error on query: %s\n", mysql_error(CON_CONNECTION(_h)));
+	LM_ERR("driver error on query: %s (%d)\n", mysql_error(CON_CONNECTION(_h)),
+			mysql_errno(CON_CONNECTION(_h)));
 	return -2;
 }
 

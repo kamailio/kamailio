@@ -752,10 +752,14 @@ void handle_sigs(void)
 			}
 			LM_INFO("terminating due to SIGCHLD\n");
 #endif
+			LM_DBG("terminating due to SIGCHLD\n");
 			/* exit */
 			shutdown_children(SIGTERM, 1);
-			LM_DBG("terminating due to SIGCHLD\n");
-			exit(0);
+			if (WIFSIGNALED(chld_status)) {
+				exit(1);
+			} else {
+				exit(0);
+			}
 			break;
 
 		case SIGHUP: /* ignoring it*/
@@ -2358,12 +2362,14 @@ try_again:
 	/* create runtime dir if doesn't exist */
 	if (stat(runtime_dir, &st) == -1) {
 		if(mkdir(runtime_dir, 0700) == -1) {
-			fprintf(stderr,  "failed to create runtime dir\n");
+			LM_ERR("failed to create runtime dir %s\n", runtime_dir);
+			fprintf(stderr,  "failed to create runtime dir %s\n", runtime_dir);
 			goto error;
 		}
 		if(sock_uid!=-1 || sock_gid!=-1) {
 			if(chown(runtime_dir, sock_uid, sock_gid) == -1) {
-				fprintf(stderr,  "failed to change owner of runtime dir\n");
+				LM_ERR("failed to change owner of runtime dir %s\n", runtime_dir);
+				fprintf(stderr,  "failed to change owner of runtime dir %s\n", runtime_dir);
 				goto error;
 			}
 		}

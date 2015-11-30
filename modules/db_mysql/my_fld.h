@@ -28,7 +28,7 @@
 
 #include "../../lib/srdb2/db_drv.h"
 #include "../../lib/srdb2/db_fld.h"
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 struct my_fld {
 	db_drv_t gen;

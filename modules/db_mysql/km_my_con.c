@@ -28,7 +28,7 @@
 
 #include "km_my_con.h"
 #include "km_db_mysql.h"
-#include <mysql/mysql_version.h>
+#include <mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
@@ -43,6 +43,9 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	struct my_con* ptr;
 	char *host, *grp, *egrp;
 	unsigned int connection_flag = 0;
+#if MYSQL_VERSION_ID > 50012
+	my_bool rec;
+#endif
 
 	if (!id) {
 		LM_ERR("invalid parameter value\n");
@@ -99,6 +102,13 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	mysql_options(ptr->con, MYSQL_OPT_CONNECT_TIMEOUT, (const char *)&db_mysql_timeout_interval);
 	mysql_options(ptr->con, MYSQL_OPT_READ_TIMEOUT, (const char *)&db_mysql_timeout_interval);
 	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const char *)&db_mysql_timeout_interval);
+#if MYSQL_VERSION_ID > 50012
+	/* set reconnect flag if enabled */
+	if (db_mysql_auto_reconnect) {
+		rec = 1;
+		mysql_options(ptr->con, MYSQL_OPT_RECONNECT, &rec);
+	}
+#endif
 
 	if (db_mysql_update_affected_found) { 
 	    connection_flag |= CLIENT_FOUND_ROWS;

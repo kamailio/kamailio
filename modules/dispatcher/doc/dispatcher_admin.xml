@@ -636,6 +636,14 @@ modparam("dispatcher", "force_dst", 1)
 		This parameter can be modified via ser config framework.
  		</para>
  		<para>
+			Please note that the response codes the module accepts as valid reply to the
+			PING-Method are not only the ones generated from the remote servers, but also those
+			that are generated locally. E.g.: setting code=408 or class=400 will never set
+			a backend down even if it is, because internally the Kamailio transaction layer
+			generates a 408 in the case of no response from the remote server, and this 
+			internal code 408 is accepted as vaild value.
+ 		</para>
+ 		<para>
  		<emphasis>
  			Default value is <quote></quote> (only 200 OK is accepted).
  		</emphasis>

@@ -34,8 +34,6 @@
 #include "db_carrierroute.h"
 #include "cr_data.h"
 
-
-#define COLUMN_NUM 12
 #define COL_ID             0
 #define COL_CARRIER        1
 #define COL_DOMAIN         2
@@ -48,8 +46,9 @@
 #define COL_REWRITE_PREFIX 9
 #define COL_REWRITE_SUFFIX 10
 #define COL_COMMENT        11
+#define COLUMN_NUM 		   12
+#define COLUMN_NUM_NO_COMMENT COL_COMMENT
 
-#define FAILURE_COLUMN_NUM 10
 #define FCOL_ID             0
 #define FCOL_CARRIER        1
 #define FCOL_DOMAIN         2
@@ -60,6 +59,8 @@
 #define FCOL_MASK           7
 #define FCOL_NEXT_DOMAIN    8
 #define FCOL_COMMENT        9
+#define FAILURE_COLUMN_NUM 10
+#define FAILURE_COLUMN_NUM_NO_COMMENT FCOL_COMMENT
 
 #define CARRIER_NAME_COLUMN_NUM 2
 #define CARRIER_NAME_ID_COL 0
@@ -73,6 +74,7 @@ extern str * columns[];
 extern str * carrier_columns[];
 extern str * failure_columns[];
 
+void set_load_comments_params(int load_comments);
 
 /**
  * Loads the routing data from the database given in global

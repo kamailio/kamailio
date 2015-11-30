@@ -212,7 +212,7 @@ static int mod_init(void)
 				return -1;
 			}
 		} else {
-			register_sync_timers(1);
+			register_sync_timers(ht_timer_procs);
 		}
 	}
 
@@ -232,15 +232,18 @@ static int child_init(int rank)
 	struct sip_msg *fmsg;
 	struct run_act_ctx ctx;
 	int rtb, rt;
+	int i;
 
 	LM_DBG("rank is (%d)\n", rank);
 
 	if(rank==PROC_MAIN) {
 		if(ht_timer_procs>0) {
-			if(fork_sync_timer(PROC_TIMER, "HTable Timer", 1 /*socks flag*/,
-					ht_timer, NULL, ht_timer_interval)<0) {
-				LM_ERR("failed to start timer routine as process\n");
-				return -1; /* error */
+			for(i=0; i<ht_timer_procs; i++) {
+				if(fork_sync_timer(PROC_TIMER, "HTable Timer", 1 /*socks flag*/,
+						ht_timer, (void*)(long)i, ht_timer_interval)<0) {
+					LM_ERR("failed to start timer routine as process\n");
+					return -1; /* error */
+				}
 			}
 		}
 	}

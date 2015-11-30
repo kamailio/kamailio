@@ -36,6 +36,7 @@
 #include "../../trim.h"
 #include "../../data_lump.h"
 #include "../../ut.h"
+#include "../../parser/parse_content.h"
 
 #include "api.h"
 #include "sdpops_data.h"
@@ -59,6 +60,7 @@ static int w_sdp_remove_transport(sip_msg_t* msg, char* transport, char *bar);
 static int w_sdp_print(sip_msg_t* msg, char* level, char *bar);
 static int w_sdp_get(sip_msg_t* msg, char *bar);
 static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar);
+static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_get_line_startswith(sip_msg_t* msg, char *foo, char *bar);
 
@@ -104,6 +106,8 @@ static cmd_export_t cmds[] = {
 		1, 0,  0, ANY_ROUTE},
 	{"sdp_content",                (cmd_function)w_sdp_content,
 		0, 0,  0, ANY_ROUTE},
+	{"sdp_content",                (cmd_function)w_sdp_content_sloppy,
+		1, 0,  0, ANY_ROUTE},
 	{"sdp_with_ice",                (cmd_function)w_sdp_with_ice,
 		0, 0,  0, ANY_ROUTE},
 	{"sdp_get_line_startswith", (cmd_function)w_sdp_get_line_startswith,
@@ -1519,6 +1523,66 @@ static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
 	if(parse_sdp(msg)==0 && msg->body!=NULL)
 		return 1;
 	return -1;
+}
+
+/*
+ * Find the first case insensitive occurrence of find in s, where the
+ * search is limited to the first slen characters of s.
+ * Based on FreeBSD strnstr.
+ */
+char* strnistr(const char *s, const char *find, size_t slen)
+{
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != '\0') {
+		len = strlen(find);
+		do {
+			do {
+				if ((sc = *s++) == '\0' || slen-- < 1)
+					return (NULL);
+			} while (sc != c);
+			if (len > slen)
+				return (NULL);
+		} while (strncasecmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
+}
+
+/**
+ *
+ */
+static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar)
+{
+	str body;
+	int mime;
+
+	body.s = get_body(msg);
+	if (body.s == NULL) return -1;
+	body.len = msg->len - (int)(body.s - msg->buf);
+	if (body.len == 0) return -1;
+
+	mime = parse_content_type_hdr(msg);
+	if (mime < 0) return -1;  /* error */
+	if (mime == 0) return 1;  /* default is application/sdp */
+
+	switch (((unsigned int)mime) >> 16) {
+	case TYPE_APPLICATION:
+		if ((mime & 0x00ff) == SUBTYPE_SDP) return 1; else return -1;
+	case TYPE_MULTIPART:
+		if ((mime & 0x00ff) == SUBTYPE_MIXED) {
+			if (strnistr(body.s, "application/sdp", body.len) == NULL) {
+				return -1;
+			} else {
+				return 1;
+			}
+		} else {
+			return -1;
+		}
+	default:
+		return -1;
+	}
 }
 
 /**

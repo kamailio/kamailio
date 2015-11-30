@@ -43,6 +43,7 @@
 #include "../../mem/mem.h"
 #include "../../str.h"
 #include "../../re.h"
+#include "../../lvalue.h"
 #include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_hname2.h"
@@ -117,6 +118,9 @@ static int append_multibody_2(struct sip_msg* msg, char*, char *);
 static int append_multibody_3(struct sip_msg* msg, char*, char *, char *);
 static int fixup_multibody_f(void** param, int param_no);
 static int remove_multibody_f(struct sip_msg *msg, char *);
+static int get_body_part_raw_f(sip_msg_t* msg, char* ctype, char* ovar);
+static int get_body_part_f(sip_msg_t* msg, char* ctype, char* ovar);
+static int fixup_get_body_part(void** param, int param_no);
 static int is_method_f(struct sip_msg* msg, char* , char *);
 static int has_body_f(struct sip_msg *msg, char *type, char *str2 );
 static int in_list_f(struct sip_msg* _msg, char* _subject, char* _list,
@@ -290,6 +294,12 @@ static cmd_export_t cmds[]={
 	{"remove_body_part",     (cmd_function)remove_multibody_f,    1,
 		fixup_spve_null, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"get_body_part_raw",    (cmd_function)get_body_part_raw_f,   2,
+		fixup_get_body_part, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
+	{"get_body_part",        (cmd_function)get_body_part_f,       2,
+		fixup_get_body_part, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE },
 
 	{0,0,0,0,0,0}
 };
@@ -2013,6 +2023,151 @@ static int remove_multibody_f(struct sip_msg* msg, char* p1)
  err:
 	pkg_free(boundary.s);
 	return -1;
+}
+
+/**
+ *
+ */
+static int get_body_part_helper(sip_msg_t* msg, char* ctype, char* ovar, int mode)
+{
+	char *start, *end, *bstart;
+	char *body_headers_end; 
+	unsigned int len, t;
+	str content_type, body;
+	str boundary = {0,0};
+	pv_spec_t *dst;
+	pv_value_t val;
+
+	if(ctype==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)ctype, &content_type)!=0) {
+		LM_ERR("unable to get content type\n");
+		return -1;
+	}
+
+	body.s = get_body(msg);
+	if (body.s == 0) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+	body.len = msg->len - (int)(body.s - msg->buf);
+	if (body.len == 0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	if(get_boundary(msg, &boundary)!=0) {
+		LM_ERR("Cannot get boundary. Is body multipart?\n");
+		return -1;
+	}
+
+	start = body.s;
+	len = body.len;
+
+	/* note: header body can follow just after name: - fixit */
+	while (find_line_start("Content-Type: ", 14, &start, &len))
+	{
+		end = start + 14;
+		len = len - 14;
+		if (len > (content_type.len + 2)) {
+			if (strncasecmp(end, content_type.s, content_type.len)== 0)
+			{
+				LM_DBG("found content type %.*s\n",
+					content_type.len, content_type.s);
+				end = end + content_type.len;
+				if ((*end != 13) || (*(end + 1) != 10))
+				{
+					LM_ERR("no CRLF found after content type\n");
+					goto err;
+				}
+				end = end + 2;
+				len = len - content_type.len - 2;
+				body_headers_end = end;
+				if (find_line_start(boundary.s, boundary.len, &end,
+					&len))
+				{
+					LM_DBG("found boundary %.*s\n", boundary.len, boundary.s);
+					bstart = end;
+					end = end + boundary.len;
+					len = len - boundary.len;
+					if (!(t = get_line(end, len))) {
+						LM_ERR("no CRLF found after boundary\n");
+						goto err;
+					}
+					end += t; len = end-start;
+					pkg_free(boundary.s);
+					boundary.s = NULL;
+					if(mode==1) {
+						end = body_headers_end;
+						val.rs.s = end;
+						val.rs.len = bstart - val.rs.s;
+					} else {
+						val.rs.s = start;
+						val.rs.len = len;
+					}
+					LM_DBG("output result: %.*s\n", val.rs.len, val.rs.s);
+					val.flags = PV_VAL_STR;
+					dst = (pv_spec_t *)ovar;
+					dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+					return 1;
+				}
+				LM_ERR("boundary not found after content\n");
+				goto err;
+			}
+			start = end;
+		} else {
+			LM_ERR("failed to match on content-type\n");
+			goto err;
+		}
+	}
+ err:
+	if(boundary.s) pkg_free(boundary.s);
+	return -1;
+}
+
+/**
+ *
+ */
+static int get_body_part_raw_f(sip_msg_t* msg, char* ctype, char* ovar)
+{
+	return get_body_part_helper(msg, ctype, ovar, 0);
+}
+
+/**
+ *
+ */
+static int get_body_part_f(sip_msg_t* msg, char* ctype, char* ovar)
+{
+	return get_body_part_helper(msg, ctype, ovar, 1);
+}
+
+/*
+ * Fix get_body_part_raw params: content type (string that may contain pvars) and
+ * result (writable pvar).
+ */
+static int fixup_get_body_part(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return fixup_spve_null(param, 1);
+	}
+
+	if (param_no == 2) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+		    LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
 }
 
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)

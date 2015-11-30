@@ -85,7 +85,9 @@ int add_authinfo_hdr = 1; /**< should an Authentication-Info header be added on 
 int av_request_at_once = 1; /**< how many auth vectors to request in a MAR 				*/
 int av_request_at_sync = 1; /**< how many auth vectors to request in a sync MAR 		*/
 static str registration_qop = str_init("auth,auth-int"); /**< the qop options to put in the authorization challenges */
+static str invite_qop = str_init("auth"); /**< the qop options to put in the authorization challenges for INVITE*/
 str registration_qop_str = STR_NULL; /**< the qop options to put in the authorization challenges */
+str invite_qop_str = STR_NULL;
 int av_check_only_impu = 0; /**< Should we check IMPU (0) or IMPU and IMPI (1), when searching for authentication vectors? */
 static str s_qop_s = str_init(", qop=\"");
 static str s_qop_e = str_init("\"");
@@ -135,6 +137,7 @@ static param_export_t params[] = {
     {"av_request_at_sync", INT_PARAM, &av_request_at_sync},
     {"registration_default_algorithm", PARAM_STR, &registration_default_algorithm},
     {"registration_qop", PARAM_STR, &registration_qop},
+	{"invite_qop", PARAM_STR, &invite_qop},
     {"ignore_failed_auth", INT_PARAM, &ignore_failed_auth},
     {"av_check_only_impu", INT_PARAM, &av_check_only_impu},
     {"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
@@ -232,6 +235,26 @@ static int mod_init(void) {
     } else {
         registration_qop_str.len = 0;
         registration_qop_str.s = 0;
+    }
+	
+	if (invite_qop.s && invite_qop.len > 0) {
+        invite_qop_str.len = s_qop_s.len + invite_qop.len
+                + s_qop_e.len;
+        invite_qop_str.s = pkg_malloc(invite_qop_str.len);
+        if (!invite_qop_str.s) {
+            LM_ERR("Error allocating %d bytes\n", invite_qop_str.len);
+            invite_qop_str.len = 0;
+            return 0;
+        }
+        invite_qop_str.len = 0;
+        STR_APPEND(invite_qop_str, s_qop_s);
+        memcpy(invite_qop_str.s + invite_qop_str.len,
+            invite_qop.s, invite_qop.len);
+        invite_qop_str.len += invite_qop.len;
+        STR_APPEND(invite_qop_str, s_qop_e);
+    } else {
+        invite_qop_str.len = 0;
+        invite_qop_str.s = 0;
     }
 
     /* Register the auth vector timer */

@@ -1,4 +1,4 @@
-# Kamailio - The Open Source SIP Server
+# Kamailio - The Open Source SIP Server [![Build Status](https://travis-ci.org/kamailio/kamailio.svg?branch=master)](https://travis-ci.org/kamailio/kamailio)
 
 Project Website:
 
@@ -107,5 +107,10 @@ An open IRC discussion channel is managed by the community:
 News:
 
   * http://www.kamailio.org/w/category/news/
+
+## Travis-ci/Testing build environment
+
+ * [travis-ci](https://travis-ci.org/kamailio/kamailio/builds/)
+ * [docker build](/test/travis/README.md)
 
 **Thank you for flying Kamailio!**

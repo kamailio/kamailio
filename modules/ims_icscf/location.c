@@ -143,7 +143,7 @@ int I_perform_location_information_request(struct sip_msg* msg, char* route, cha
     create_lia_return_code(CSCF_RETURN_ERROR);
     
     LM_DBG("Suspending SIP TM transaction\n");
-    if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) < 0) {
+    if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) != 0) {
         LM_ERR("failed to suspend the TM processing\n");
         free_saved_lir_transaction_data(saved_t);
 

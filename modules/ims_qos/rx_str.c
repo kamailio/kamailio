@@ -106,7 +106,8 @@ int rx_send_str(str *rx_session_id) {
         // If we are in DISCON is because an STR was already sent
         // so just wait for STA or for Grace Timout to happen
         LM_DBG("Hmmm, auth session already in disconnected state\n");
-        goto error;
+        cdpb.AAASessionsUnlock(auth->hash);
+		CSCF_RETURN_FALSE;
     }
 
     LM_DBG("Creating STR\n");

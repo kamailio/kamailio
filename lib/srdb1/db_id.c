@@ -55,6 +55,30 @@ static int dupl_string(char** dst, const char* begin, const char* end)
 	return 0;
 }
 
+/**
+ * Duplicate a string name (until a params separator found)
+ * \param dst destination
+ * \param begin start of the string
+ * \param end end of the string
+ */
+static int dupl_string_name(char** dst, const char* begin, const char* end)
+{
+	char *p;
+	if (*dst) pkg_free(*dst);
+
+	for(p=(char*)begin; p<end; p++) {
+		if(*p=='?') break;
+	}
+	*dst = pkg_malloc(p - begin + 1);
+	if ((*dst) == NULL) {
+		return -1;
+	}
+
+	memcpy(*dst, begin, p - begin);
+	(*dst)[p - begin] = '\0';
+	return 0;
+}
+
 
 /**
  * Parse a database URL of form 
@@ -151,7 +175,7 @@ static int parse_db_url(struct db_id* id, const str* url)
 
 			case '/':
 				if (dupl_string(&id->host, begin, url->s + i) < 0) goto err;
-				if (dupl_string(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
+				if (dupl_string_name(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
 				return 0;
 			}
 			break;
@@ -178,7 +202,7 @@ static int parse_db_url(struct db_id* id, const str* url)
 				id->host = prev_token;
 				prev_token = 0;
 				id->port = str2s(begin, url->s + i - begin, 0);
-				if (dupl_string(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
+				if (dupl_string_name(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
 				return 0;
 			}
 			break;
@@ -193,7 +217,7 @@ static int parse_db_url(struct db_id* id, const str* url)
 
 			case '/':
 				if (dupl_string(&id->host, begin, url->s + i) < 0) goto err;
-				if (dupl_string(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
+				if (dupl_string_name(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
 				return 0;
 			}
 			break;
@@ -202,7 +226,7 @@ static int parse_db_url(struct db_id* id, const str* url)
 			switch(url->s[i]) {
 			case '/':
 				id->port = str2s(begin, url->s + i - begin, 0);
-				if (dupl_string(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
+				if (dupl_string_name(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
 				return 0;
 			}
 			break;

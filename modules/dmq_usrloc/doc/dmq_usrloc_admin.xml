@@ -75,6 +75,108 @@ modparam("dmq_usrloc", "enable", 1)
 </programlisting>
 	</example>
 	</section>
+	<section id="usrloc_dmq.p.sync">
+		<title><varname>sync</varname> (int)</title>
+		<para>
+			The parameter controls whetner to request synchronization of all
+			usrloc records at startup.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				0 - disabled
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				1 - enabled
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>sync</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "sync", 0)
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="usrloc_dmq.p.batch_size">
+		<title><varname>batch_size</varname> (int)</title>
+		<para>
+			The parameter controls whetner to throttle synchronization of
+			all contacts in batches. Once a batch of SIP requests is sent out,
+			then sleep for 'batch_usleep' microseconds.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				&lt;=0 - disabled (no batching)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				&gt;0 - how many records to be sent in a batch
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>batch size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "batch_size", 4000)
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="usrloc_dmq.p.batch_usleep">
+		<title><varname>batch_usleep</varname> (int)</title>
+		<para>
+			The parameter controls whetner to throttle synchronization of
+			all contacts in batches. Once a batch of SIP requests is sent out,
+			then sleep for 'batch_usleep' microseconds.
+			The value can be:
+			<itemizedlist>
+			<listitem>
+			<para>
+				&lt;=0 - no sleep (it disables the batching)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				&gt;0 - how many microseconds to sleep before sending
+				out another batch of usrloc records.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>batch_usleep</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "batch_usleep", 1000)
+...
+</programlisting>
+	</example>
+	</section>
 	</section>
 
 </chapter>

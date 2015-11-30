@@ -60,20 +60,31 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	}
 	memset(c, 0, sizeof(ucontact_t));
 
-	if (shm_str_dup( &c->c, _contact) < 0) goto error;
-	if (shm_str_dup( &c->callid, _ci->callid) < 0) goto error;
-	if (shm_str_dup( &c->user_agent, _ci->user_agent) < 0) goto error;
+	if (_contact->s && _contact->len > 0) {
+		if (shm_str_dup( &c->c, _contact) < 0) goto error;
+	}
 
-	if (_ci->received.s && _ci->received.len) {
+	if (_ci->callid->s && _ci->callid->len > 0) {
+		if (shm_str_dup( &c->callid, _ci->callid) < 0) goto error;
+	}
+
+	if (_ci->user_agent->s && _ci->user_agent->len > 0) {
+		if (shm_str_dup( &c->user_agent, _ci->user_agent) < 0) goto error;
+	}
+
+	if (_ci->received.s && _ci->received.len > 0) {
 		if (shm_str_dup( &c->received, &_ci->received) < 0) goto error;
 	}
-	if (_ci->path && _ci->path->len) {
+
+	if (_ci->path && _ci->path->len > 0) {
 		if (shm_str_dup( &c->path, _ci->path) < 0) goto error;
 	}
-	if (_ci->ruid.s && _ci->ruid.len) {
+
+	if (_ci->ruid.s && _ci->ruid.len > 0) {
 		if (shm_str_dup( &c->ruid, &_ci->ruid) < 0) goto error;
 	}
-	if (_ci->instance.s && _ci->instance.len) {
+
+	if (_ci->instance.s && _ci->instance.len > 0) {
 		if (shm_str_dup( &c->instance, &_ci->instance) < 0) goto error;
 	}
 

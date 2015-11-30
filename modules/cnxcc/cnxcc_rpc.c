@@ -24,8 +24,6 @@
 
 #include <stdio.h>
 
-#include "../../locking.h"
-#include "../../lock_ops.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
 
@@ -57,11 +55,11 @@ void rpc_kill_call(rpc_t* rpc, void* ctx) {
 
 	LM_ALERT("Killing call [%.*s] via XMLRPC request\n", callid.len, callid.s);
 
-	lock_get(&call->lock);
+	cnxcc_lock(call->lock);
 
 	terminate_call(call);
 
-	lock_release(&call->lock);
+	cnxcc_unlock(call->lock);
 }
 
 void rpc_check_client_stats(rpc_t* rpc, void* ctx) {
@@ -88,10 +86,10 @@ void rpc_check_client_stats(rpc_t* rpc, void* ctx) {
 		return;
 	}
 
-	lock_get(&credit_data->lock);
+	cnxcc_lock(credit_data->lock);
 
 	if (credit_data->number_of_calls <= 0) {
-		lock_release(&credit_data->lock);
+		cnxcc_unlock(credit_data->lock);
 		LM_INFO("No calls for current client\n");
 		return;
 	}
@@ -136,7 +134,7 @@ void rpc_check_client_stats(rpc_t* rpc, void* ctx) {
 		rows.s		= pkg_realloc(rows.s, rows.len + row_len);
 
 		if (rows.s == NULL) {
-			lock_release(&credit_data->lock);
+			cnxcc_unlock(credit_data->lock);
 			goto nomem;
 		}
 
@@ -146,7 +144,7 @@ void rpc_check_client_stats(rpc_t* rpc, void* ctx) {
 		index++;
 	}
 
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 
 	if (rpc->add(ctx, "S", &rows) < 0) {
 		LM_ERR("%s: error creating RPC struct\n", __FUNCTION__);
@@ -167,13 +165,13 @@ static int iterate_over_table(hash_tables_t *hts, str *result, credit_type_t typ
 	char row_buffer[512];
 	int index = 0;
 
-	lock_get(&hts->lock);
+	cnxcc_lock(hts->lock);
 
 	if (hts->credit_data_by_client->table)
 		for(index = 0; index < hts->credit_data_by_client->size; index++)
 			clist_foreach_safe(&hts->credit_data_by_client->table[index], h_entry, tmp, next) {
 				credit_data_t *credit_data	= (credit_data_t *) h_entry->u.p;
-				lock_get(&credit_data->lock);
+				cnxcc_lock(credit_data->lock);
 
 				int row_len = 0;
 
@@ -212,13 +210,13 @@ static int iterate_over_table(hash_tables_t *hts, str *result, credit_type_t typ
 					return -1;
 				}
 
-				lock_release(&credit_data->lock);
+				cnxcc_unlock(credit_data->lock);
 
 				row_len 	= strlen(row_buffer);
 				result->s	= pkg_realloc(result->s, result->len + row_len);
 
 				if (result->s == NULL) {
-					lock_release(&hts->lock);
+					cnxcc_unlock(hts->lock);
 					goto nomem;
 				}
 
@@ -227,7 +225,7 @@ static int iterate_over_table(hash_tables_t *hts, str *result, credit_type_t typ
 
 			}
 
-	lock_release(&hts->lock);
+	cnxcc_unlock(hts->lock);
 
 	return 0;
 
@@ -249,7 +247,7 @@ void rpc_active_clients(rpc_t* rpc, void* ctx) {
 	iterate_over_table(&_data.time, &rows, CREDIT_TIME);
 	iterate_over_table(&_data.money, &rows, CREDIT_MONEY);
 
-	if (!rpc->add(ctx, "S", &rows) < 0) {
+	if (rpc->add(ctx, "S", &rows) < 0) {
 		LM_ERR("%s: error creating RPC struct\n", __FUNCTION__);
 	}
 

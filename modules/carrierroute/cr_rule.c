@@ -95,7 +95,7 @@ int add_route_rule(struct route_flags *rf, const str * prefix,
 		goto mem_error;
 	}
 
-	if (shm_str_dup(&shm_rr->comment, comment) != 0) {
+	if (comment && shm_str_dup(&shm_rr->comment, comment) != 0) {
 		goto mem_error;
 	}
 
@@ -360,7 +360,7 @@ struct failure_route_rule *add_failure_route_rule(struct failure_route_rule **fr
 	shm_frr->mask = mask;
 	shm_frr->next_domain = next_domain;
 	
-	if (shm_str_dup(&shm_frr->comment, comment) != 0) {
+	if (comment && shm_str_dup(&shm_frr->comment, comment) != 0) {
 		goto mem_error;
 	}
 	

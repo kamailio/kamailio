@@ -34,7 +34,7 @@
 #include "../../lib/srdb1/db_id.h"
 
 #include <time.h>
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 
 struct my_con {

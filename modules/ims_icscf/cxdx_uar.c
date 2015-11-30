@@ -175,8 +175,8 @@ void async_cdp_uar_callback(int is_timeout, void *param, AAAMessage *uaa, long e
                     goto success;
 
                 default:
-                    LM_ERR("MSG_403_UNKOWN_EXPERIMENTAL_RC returning 403\n");
-                    cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_UNKOWN_EXPERIMENTAL_RC);
+                    LM_ERR("MSG_403_UNKOWN_EXPERIMENTAL_RC returning 500\n");
+                    cscf_reply_transactional_async(t, t->uas.request, 500, MSG_500_UNKOWN_EXPERIMENTAL_RC);
                     result = CSCF_RETURN_FALSE;
                     goto done;
             }
@@ -189,7 +189,7 @@ void async_cdp_uar_callback(int is_timeout, void *param, AAAMessage *uaa, long e
             goto done;
         case AAA_UNABLE_TO_COMPLY:
             LM_ERR("AAA_UNABLE_TO_COMPLY returning 403\n");
-            cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_UNABLE_TO_COMPLY);
+            cscf_reply_transactional_async(t, t->uas.request, 500, MSG_500_UNABLE_TO_COMPLY);
             result = CSCF_RETURN_FALSE;
             goto done;
 

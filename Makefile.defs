@@ -97,7 +97,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 4
 PATCHLEVEL = 4
 SUBLEVEL =  0
-EXTRAVERSION = -dev5
+EXTRAVERSION = -dev7
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -1263,13 +1263,15 @@ ifeq		($(CC_NAME), gcc)
 				CFLAGS=$(CC_OPT) -funroll-loops  $(PROFILE)
 			#if gcc 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
-					CFLAGS+=-march=r3000 -minline-all-stringops \
+					CFLAGS+=-mfp32 -march=r3000 \
 							-ftree-vectorize -fno-strict-overflow
+			# not supported on mips: -minline-all-stringops
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-march=r3000 -minline-all-stringops \
+					CFLAGS+=-march=r3000 \
 							-ftree-vectorize
+			# not supported on mips: -minline-all-stringops
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)

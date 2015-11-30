@@ -25,6 +25,7 @@
 #include "../usrloc/ul_callback.h"
 #include "../usrloc/dlist.h"
 #include "../../dprint.h"
+#include "../../ut.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_addr_spec.h"
 
@@ -42,6 +43,10 @@ int usrloc_dmq_request_sync();
 int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* node);
 
 #define MAX_AOR_LEN 256
+
+extern int _dmq_usrloc_sync;
+extern int _dmq_usrloc_batch_size;
+extern int _dmq_usrloc_batch_usleep;
 
 static int add_contact(str aor, ucontact_info_t* ci)
 {
@@ -122,6 +127,9 @@ static int delete_contact(str aor, ucontact_info_t* ci)
 	return 0;
 }
 
+#define dmq_usrloc_malloc	malloc
+#define dmq_usrloc_free		free
+
 void usrloc_get_all_ucontact(dmq_node_t* node)
 {
 	int rval, len=0;
@@ -141,6 +149,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 	udomain_t* _d;
 	ucontact_t* ptr = 0;
 	int res;
+	int n;
 
 	if (dmq_ul.get_all_ucontacts == NULL){
 		LM_ERR("dmq_ul.get_all_ucontacts is NULL\n");
@@ -159,22 +168,23 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 	}
 	if (rval > 0) {
 		if (buf != NULL)
-			pkg_free(buf);
+			dmq_usrloc_free(buf);
 		len = rval * 2;
-		buf = pkg_malloc(len);
+		buf = dmq_usrloc_malloc(len);
 		if (buf == NULL) {
 			LM_ERR("out of pkg memory\n");
 			goto done;
 		}
 		rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1, 0);
 		if (rval != 0) {
-			pkg_free(buf);
+			dmq_usrloc_free(buf);
 			goto done;
 		}
 	}
 	if (buf == NULL)
 		goto done;
 	cp = buf;
+	n = 0;
 	while (1) {
 		memcpy(&(c.len), cp, sizeof(c.len));
 		if (c.len == 0)
@@ -209,12 +219,19 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 
 		while (ptr) {
 			usrloc_dmq_send_contact(ptr, aor, DMQ_UPDATE, node);
+			n++;
 			ptr = ptr->next;
 		}
 		dmq_ul.release_urecord(r);
 		dmq_ul.unlock_udomain(_d, &aor);
+		if(_dmq_usrloc_batch_size>0 && _dmq_usrloc_batch_usleep>0) {
+			if(n>=_dmq_usrloc_batch_size) {
+				n = 0;
+				sleep_us(_dmq_usrloc_batch_usleep);
+			}
+		}
 	}
-	pkg_free(buf);
+	dmq_usrloc_free(buf);
 
 done:
 	c.s = ""; c.len = 0;
@@ -425,6 +442,10 @@ error:
 
 int usrloc_dmq_request_sync() {
 	srjson_doc_t jdoc;
+
+	if(_dmq_usrloc_sync==0)
+		return 0;
+
 	LM_DBG("requesting sync from dmq peers\n");
 	srjson_InitDoc(&jdoc, NULL);
 

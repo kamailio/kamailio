@@ -820,12 +820,7 @@ unsigned long tmx_stats_rcv_rpls(void)
 unsigned long tmx_stats_rld_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.completed_6xx
-		+ _tmx_stats_all.completed_5xx
-		+ _tmx_stats_all.completed_4xx
-		+ _tmx_stats_all.completed_3xx
-		+ _tmx_stats_all.completed_2xx
-		- _tmx_stats_all.replied_locally;
+	return _tmx_stats_all.replied_total - _tmx_stats_all.replied_locally;
 }
 
 unsigned long tmx_stats_loc_rpls(void)

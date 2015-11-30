@@ -49,10 +49,9 @@ Ovidiu Sas
               3.8. array_size_suffix (str)
               3.9. fetch_rows (integer)
               3.10. timer_interval (integer)
-              3.11. timer_mode (integer)
-              3.12. db_expires (integer)
-              3.13. enable_dmq (integer)
-              3.14. timer_procs (integer)
+              3.11. db_expires (integer)
+              3.12. enable_dmq (integer)
+              3.13. timer_procs (integer)
 
         4. Functions
 
@@ -104,19 +103,18 @@ Ovidiu Sas
    1.11. Set array_size_suffix parameter
    1.12. Set fetch_rows parameter
    1.13. Set timer_interval parameter
-   1.14. Set timer_mode parameter
-   1.15. Set db_expires parameter
-   1.16. Set enable_dmq parameter
-   1.17. Set timer_procs parameter
-   1.18. sht_print usage
-   1.19. sht_rm_name_re usage
-   1.20. sht_rm_value_re usage
-   1.21. sht_reset usage
-   1.22. sht_lock usage
-   1.23. sht_unlock usage
-   1.24. sht_iterator_start usage
-   1.25. sht_iterator_end usage
-   1.26. sht_iterator_next usage
+   1.14. Set db_expires parameter
+   1.15. Set enable_dmq parameter
+   1.16. Set timer_procs parameter
+   1.17. sht_print usage
+   1.18. sht_rm_name_re usage
+   1.19. sht_rm_value_re usage
+   1.20. sht_reset usage
+   1.21. sht_lock usage
+   1.22. sht_unlock usage
+   1.23. sht_iterator_start usage
+   1.24. sht_iterator_end usage
+   1.25. sht_iterator_next usage
 
 Chapter 1. Admin Guide
 
@@ -141,10 +139,9 @@ Chapter 1. Admin Guide
         3.8. array_size_suffix (str)
         3.9. fetch_rows (integer)
         3.10. timer_interval (integer)
-        3.11. timer_mode (integer)
-        3.12. db_expires (integer)
-        3.13. enable_dmq (integer)
-        3.14. timer_procs (integer)
+        3.11. db_expires (integer)
+        3.12. enable_dmq (integer)
+        3.13. timer_procs (integer)
 
    4. Functions
 
@@ -414,10 +411,9 @@ $ kamcmd htable.dump htable
    3.8. array_size_suffix (str)
    3.9. fetch_rows (integer)
    3.10. timer_interval (integer)
-   3.11. timer_mode (integer)
-   3.12. db_expires (integer)
-   3.13. enable_dmq (integer)
-   3.14. timer_procs (integer)
+   3.11. db_expires (integer)
+   3.12. enable_dmq (integer)
+   3.13. timer_procs (integer)
 
 3.1. htable (str)
 
@@ -566,19 +562,7 @@ modparam("htable", "fetch_rows", 1000)
 modparam("htable", "timer_interval", 10)
 ...
 
-3.11. timer_mode (integer)
-
-   If set to 1, the module will start a new timer process. If set to 0
-   will use the default timer process to check for expired htable values.
-
-   Default value is 0.
-
-   Example 1.14. Set timer_mode parameter
-...
-modparam("htable", "timer_mode", 1)
-...
-
-3.12. db_expires (integer)
+3.11. db_expires (integer)
 
    If set to 1, the module will load/save the expires values of the items
    in hash table from/to database. It applies only to hash tables that
@@ -586,12 +570,12 @@ modparam("htable", "timer_mode", 1)
 
    Default value is 0.
 
-   Example 1.15. Set db_expires parameter
+   Example 1.14. Set db_expires parameter
 ...
 modparam("htable", "db_expires", 1)
 ...
 
-3.13. enable_dmq (integer)
+3.12. enable_dmq (integer)
 
    If set to 1, will enable DMQ replication of actions performed upon
    entries in all tables having "dmqreplicate" parameter set. Any update
@@ -609,23 +593,23 @@ modparam("htable", "db_expires", 1)
 
    Default value is 0.
 
-   Example 1.16. Set enable_dmq parameter
+   Example 1.15. Set enable_dmq parameter
 ...
 modparam("htable", "enable_dmq", 1)
 ...
 
-3.14. timer_procs (integer)
+3.13. timer_procs (integer)
 
-   If set to 1, the module will create its own timer process to scan for
-   expired items in hash tables. If set to zero, it will use the core
-   timer for this task. Set it to 1 if you store a lot of items with
-   autoexpire property.
+   If set to 1 or greater, the module will create its own timer processes
+   to scan for expired items in hash tables. If set to zero, it will use
+   the core timer for this task. Set it to 1 if you store a lot of items
+   with autoexpire property.
 
    Default value is 0.
 
-   Example 1.17. Set timer_procs parameter
+   Example 1.16. Set timer_procs parameter
 ...
-modparam("htable", "timer_procs", 1)
+modparam("htable", "timer_procs", 4)
 ...
 
 4. Functions
@@ -648,7 +632,7 @@ modparam("htable", "timer_procs", 1)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.18. sht_print usage
+   Example 1.17. sht_print usage
 ...
 sht_print();
 ...
@@ -661,7 +645,7 @@ sht_print();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.19. sht_rm_name_re usage
+   Example 1.18. sht_rm_name_re usage
 ...
 sht_rm_name_re("ha=>.*");
 ...
@@ -674,7 +658,7 @@ sht_rm_name_re("ha=>.*");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.20. sht_rm_value_re usage
+   Example 1.19. sht_rm_value_re usage
 ...
 sht_rm_value_re("ha=>.*");
 ...
@@ -686,7 +670,7 @@ sht_rm_value_re("ha=>.*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.21. sht_reset usage
+   Example 1.20. sht_reset usage
 ...
 sht_reset("ha$var(x)");
 ...
@@ -699,7 +683,7 @@ sht_reset("ha$var(x)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. sht_lock usage
+   Example 1.21. sht_lock usage
 ...
 sht_lock("ha=>test");
 ...
@@ -712,7 +696,7 @@ sht_lock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. sht_unlock usage
+   Example 1.22. sht_unlock usage
 ...
 sht_lock("ha=>test");
 $sht(ha=>test) = $sht(ha=>test) + 10;
@@ -734,7 +718,7 @@ sht_unlock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. sht_iterator_start usage
+   Example 1.23. sht_iterator_start usage
 ...
 sht_iterator_start("i1", "h1");
 ...
@@ -749,7 +733,7 @@ sht_iterator_start("i1", "h1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. sht_iterator_end usage
+   Example 1.24. sht_iterator_end usage
 ...
 sht_iterator_end("i1");
 ...
@@ -771,7 +755,7 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.26. sht_iterator_next usage
+   Example 1.25. sht_iterator_next usage
 ...
     sht_iterator_start("i1", "h1");
     while(sht_iterator_next("i1")) {

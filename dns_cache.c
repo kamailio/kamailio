@@ -459,15 +459,15 @@ int init_dns_cache_stats(int iproc_num)
 
 #define debug_lu_lst( txt, l) \
 	do{ \
-		if (check_lu_lst((l))){  \
+		if ((l) && check_lu_lst((l))){  \
 			dbg_lu_lst(txt  " crt:", (l)); \
 			abort(); \
 		} \
-		if (check_lu_lst((l)->next)){ \
+		if (((l)->next) && check_lu_lst((l)->next)){ \
 			dbg_lu_lst(txt  " next:",  (l)); \
 			abort(); \
 		} \
-		if (check_lu_lst((l)->prev)){ \
+		if (((l)->prev) && check_lu_lst((l)->prev)){ \
 			dbg_lu_lst(txt  " prev:", (l)); \
 			abort(); \
 		} \

@@ -294,10 +294,12 @@ static int __mod_init(void) {
 	if (__init_hashtable(_data.channel.call_data_by_cid) != 0)
 		return -1;
 
-	lock_init(&_data.lock);
-	lock_init(&_data.time.lock);
-	lock_init(&_data.money.lock);
-	lock_init(&_data.channel.lock);
+
+	cnxcc_lock_init(_data.lock);
+
+	cnxcc_lock_init(_data.time.lock);
+	cnxcc_lock_init(_data.money.lock);
+	cnxcc_lock_init(_data.channel.lock);
 
 	register_mi_cmd(__mi_credit_control_stats, "cnxcc_stats", NULL, NULL, 0);
 
@@ -471,45 +473,45 @@ int try_get_credit_data_entry(str *client_id, credit_data_t **credit_data) {
 
 	/* by money */
 	hts = &_data.money;
-	lock_get(&hts->lock);
+	cnxcc_lock(hts->lock);
 
 	cd_entry = str_hash_get(hts->credit_data_by_client, client_id->s, client_id->len);
 
 	if (cd_entry != NULL) {
 		*credit_data	= cd_entry->u.p;
-		lock_release(&hts->lock);
+		cnxcc_unlock(hts->lock);
 		return 0;
 	}
 
-	lock_release(&hts->lock);
+	cnxcc_unlock(hts->lock);
 
 	/* by time */
 	hts = &_data.time;
-	lock_get(&hts->lock);
+	cnxcc_lock(hts->lock);
 
 	cd_entry = str_hash_get(hts->credit_data_by_client, client_id->s, client_id->len);
 
 	if (cd_entry != NULL) {
 		*credit_data	= cd_entry->u.p;
-		lock_release(&hts->lock);
+		cnxcc_unlock(hts->lock);
 		return 0;
 	}
 
-	lock_release(&hts->lock);
+	cnxcc_unlock(hts->lock);
 
 	/* by channel */
 	hts = &_data.channel;
-	lock_get(&hts->lock);
+	cnxcc_lock(hts->lock);
 
 	cd_entry = str_hash_get(hts->credit_data_by_client, client_id->s, client_id->len);
 
 	if (cd_entry != NULL) {
 		*credit_data	= cd_entry->u.p;
-		lock_release(&hts->lock);
+		cnxcc_unlock(hts->lock);
 		return 0;
 	}
 
-	lock_release(&hts->lock);
+	cnxcc_unlock(hts->lock);
 	return -1;
 }
 
@@ -520,45 +522,45 @@ int try_get_call_entry(str *callid, call_t **call, hash_tables_t **hts) {
 
 	/* by money */
 	*hts = &_data.money;
-	lock_get(&(*hts)->lock);
+	cnxcc_lock((*hts)->lock);
 
 	call_entry = str_hash_get((*hts)->call_data_by_cid, callid->s, callid->len);
 
 	if (call_entry != NULL) {
 		*call = call_entry->u.p;
-		lock_release(&(*hts)->lock);
+		cnxcc_unlock((*hts)->lock);
 		return 0;
 	}
 
-	lock_release(&(*hts)->lock);
+	cnxcc_unlock((*hts)->lock);
 
 	/* by time */
 	*hts = &_data.time;
-	lock_get(&(*hts)->lock);
+	cnxcc_lock((*hts)->lock);
 
 	call_entry = str_hash_get((*hts)->call_data_by_cid, callid->s, callid->len);
 
 	if (call_entry != NULL) {
 		*call = call_entry->u.p;
-		lock_release(&(*hts)->lock);
+		cnxcc_unlock((*hts)->lock);
 		return 0;
 	}
 
-	lock_release(&(*hts)->lock);
+	cnxcc_unlock((*hts)->lock);
 
 	/* by channel */
 	*hts = &_data.channel;
-	lock_get(&(*hts)->lock);
+	cnxcc_lock((*hts)->lock);
 
 	call_entry = str_hash_get((*hts)->call_data_by_cid, callid->s, callid->len);
 
 	if (call_entry != NULL) {
 		*call = call_entry->u.p;
-		lock_release(&(*hts)->lock);
+		cnxcc_unlock((*hts)->lock);
 		return 0;
 	}
 
-	lock_release(&(*hts)->lock);
+	cnxcc_unlock((*hts)->lock);
 	return -1;
 }
 
@@ -586,7 +588,7 @@ static void __stop_billing(str *callid) {
 		return;
 	}
 
-	lock_get(&hts->lock);
+	cnxcc_lock(hts->lock);
 
 	/*
 	 * Search credit_data by client_id
@@ -595,7 +597,7 @@ static void __stop_billing(str *callid) {
 
 	if (cd_entry == NULL) {
 		LM_ERR("Credit data not found for CID [%.*s], client-ID [%.*s]\n", callid->len, callid->s, call->client_id.len, call->client_id.s);
-		lock_release(&hts->lock);
+		cnxcc_unlock(hts->lock);
 		return;
 	}
 
@@ -603,23 +605,23 @@ static void __stop_billing(str *callid) {
 
 	if (credit_data == NULL) {
 		LM_ERR("[%.*s]: credit_data pointer is null\n", callid->len, callid->s);
-		lock_release(&hts->lock);
+		cnxcc_unlock(hts->lock);
 		return;
 	}
 
-	lock_release(&hts->lock);
+	cnxcc_unlock(hts->lock);
 
 	/*
 	 * Update calls statistics
 	 */
-	lock_get(&_data.lock);
+	cnxcc_lock(_data.lock);
 
 	_data.stats->active--;
 	_data.stats->total--;
 
-	lock_release(&_data.lock);
+	cnxcc_unlock(_data.lock);
 
-	lock(&credit_data->lock);
+	cnxcc_lock(credit_data->lock);
 
 	LM_DBG("Call [%.*s] of client-ID [%.*s], ended\n", callid->len, callid->s, call->client_id.len, call->client_id.s);
 
@@ -653,7 +655,13 @@ static void __stop_billing(str *callid) {
 	 * Remove (and free) the call from the list of calls of the current credit_data
 	 */
 	clist_rm(call, next, prev);
-	__free_call(call);
+	/* 
+	 * don't free the call if all the credit data is being deallocated,
+	 * it will be freed by terminate_all_calls()
+	 */
+	if (!credit_data->deallocating) {
+		__free_call(call);
+	}
 
 	/*
 	 * In case there are no active calls for a certain client, we remove the client-id from the hash table.
@@ -663,7 +671,7 @@ static void __stop_billing(str *callid) {
 		LM_DBG("Removing client [%.*s] and its calls from the list\n", credit_data->call_list->client_id.len, credit_data->call_list->client_id.s);
 
 		credit_data->deallocating = 1;
-		lock(&hts->lock);
+		cnxcc_lock(hts->lock);
 
 		if (_data.redis) {
 			redis_clean_up_if_last(credit_data);
@@ -675,7 +683,7 @@ static void __stop_billing(str *callid) {
 		 */
 		str_hash_del(cd_entry);
 
-		lock_release(&hts->lock);
+		cnxcc_unlock(hts->lock);
 
 		/*
 		 * Free client_id in list's root
@@ -686,7 +694,7 @@ static void __stop_billing(str *callid) {
 		/*
 		 * Release the lock since we are going to free the entry down below
 		 */
-		lock_release(&credit_data->lock);
+		cnxcc_unlock(credit_data->lock);
 
 		/*
 		 * Free the whole entry
@@ -699,7 +707,7 @@ static void __stop_billing(str *callid) {
 		return;
 	}
 
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 }
 
 static void __setup_billing(str *callid, unsigned int h_entry, unsigned int h_id) {
@@ -708,7 +716,7 @@ static void __setup_billing(str *callid, unsigned int h_entry, unsigned int h_id
 
 	LM_DBG("Creating dialog for [%.*s], h_id [%u], h_entry [%u]\n", callid->len, callid->s, h_id, h_entry);
 
-//	lock_get(&_data.lock);
+//	cnxcc_lock(&_data);
 
 	/*
 	 * Search call data by call-id
@@ -731,21 +739,21 @@ static void __setup_billing(str *callid, unsigned int h_entry, unsigned int h_id
 	/*
 	 * Update calls statistics
 	 */
-	lock_get(&_data.lock);
+	cnxcc_lock(_data.lock);
 
 	_data.stats->active++;
 	_data.stats->total++;
 
-	lock_release(&_data.lock);
+	cnxcc_unlock(_data.lock);
 
-	lock_get(&call->lock);
+	cnxcc_lock(call->lock);
 
 	call->dlg_h_entry	= h_entry;
 	call->dlg_h_id		= h_id;
 
 	LM_DBG("Call [%.*s] from client [%.*s], created\n", callid->len, callid->s, call->client_id.len, call->client_id.s);
 
-	lock_release(&call->lock);
+	cnxcc_unlock(call->lock);
 }
 
 static void __start_billing(str *callid, str *from_uri, str *to_uri, str tags[2]) {
@@ -756,7 +764,7 @@ static void __start_billing(str *callid, str *from_uri, str *to_uri, str tags[2]
 
 	LM_DBG("Billing started for call [%.*s]\n", callid->len, callid->s);
 
-//	lock_get(&_data.lock);
+//	cnxcc_lock(&_data);
 
 	/*
 	 * Search call data by call-id
@@ -776,7 +784,7 @@ static void __start_billing(str *callid, str *from_uri, str *to_uri, str tags[2]
 		return;
 	}
 
-	lock_get(&hts->lock);
+	cnxcc_lock(hts->lock);
 
 	/*
 	 * Search credit_data by client_id
@@ -785,7 +793,7 @@ static void __start_billing(str *callid, str *from_uri, str *to_uri, str tags[2]
 
 	if (cd_entry == NULL) {
 		LM_ERR("Credit data not found for CID [%.*s], client-ID [%.*s]\n", callid->len, callid->s, call->client_id.len, call->client_id.s);
-		lock_release(&hts->lock);
+		cnxcc_unlock(hts->lock);
 		return;
 	}
 
@@ -793,13 +801,13 @@ static void __start_billing(str *callid, str *from_uri, str *to_uri, str tags[2]
 
 	if (credit_data == NULL) {
 		LM_ERR("[%.*s]: credit_data pointer is null\n", callid->len, callid->s);
-		lock_release(&hts->lock);
+		cnxcc_unlock(hts->lock);
 		return;
 	}
 
-	lock_release(&hts->lock);
+	cnxcc_unlock(hts->lock);
 
-	lock(&credit_data->lock);
+	cnxcc_lock(credit_data->lock);
 
 	/*
 	 * Now that the call is confirmed, we can increase the count of "concurrent_calls".
@@ -834,9 +842,9 @@ static void __start_billing(str *callid, str *from_uri, str *to_uri, str tags[2]
 	 */
 	call->max_amount = credit_data->max_amount - credit_data->consumed_amount;
 
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 
-	lock_get(&call->lock);
+	cnxcc_lock(call->lock);
 
 	/*
 	 * Store from-tag value
@@ -870,7 +878,7 @@ static void __start_billing(str *callid, str *from_uri, str *to_uri, str tags[2]
 			call->sip_data.to_uri.len, call->sip_data.to_uri.s,
 			call->sip_data.to_tag.len, call->sip_data.to_tag.s);
 exit:
-	lock_release(&call->lock);
+	cnxcc_unlock(call->lock);
 }
 
 // must be called with lock held on credit_data
@@ -881,13 +889,18 @@ void terminate_all_calls(credit_data_t *credit_data) {
 	credit_data->deallocating = 1;
 
 	clist_foreach_safe(credit_data->call_list, call, tmp, next) {
-		LM_DBG("Killing call with CID [%.*s]\n", call->sip_data.callid.len, call->sip_data.callid.s);
+		if(call->sip_data.callid.s!=NULL) {
+			LM_DBG("Killing call with CID [%.*s]\n", call->sip_data.callid.len, call->sip_data.callid.s);
 
-		/*
-		 * Update number of calls forced to end
-		 */
-		_data.stats->dropped++;
-		terminate_call(call);
+			/*
+			 * Update number of calls forced to end
+			 */
+			_data.stats->dropped++;
+			terminate_call(call);
+			__free_call(call);
+		} else {
+			LM_WARN("invalid call structure %p\n", call);
+		}
 	}
 }
 
@@ -896,6 +909,9 @@ void terminate_all_calls(credit_data_t *credit_data) {
  */
 static void __free_call(call_t *call) {
 	struct str_hash_entry *e = NULL;
+
+	if(call->sip_data.callid.s==NULL)
+		return;
 
 	LM_DBG("Freeing call [%.*s]\n", call->sip_data.callid.len, call->sip_data.callid.s);
 	e = str_hash_get(_data.money.call_data_by_cid, call->sip_data.callid.s, call->sip_data.callid.len);
@@ -1020,32 +1036,32 @@ error:
 }
 
 static credit_data_t *__get_or_create_credit_data_entry(str *client_id, credit_type_t type) {
-	struct str_hash_table *ht = NULL;
-	gen_lock_t *lock = NULL;
+	struct str_hash_table *sht = NULL;
+	struct hash_tables *ht;
 	struct str_hash_entry *e = NULL;
 	credit_data_t *credit_data = NULL;
 
 	switch(type) {
 	case CREDIT_MONEY:
-		ht = _data.money.credit_data_by_client;
-		lock =  &_data.money.lock;
+		sht = _data.money.credit_data_by_client;
+		ht =  &_data.money;
 		break;
 	case CREDIT_TIME:
-		ht = _data.time.credit_data_by_client;
-		lock =  &_data.time.lock;
+		sht = _data.time.credit_data_by_client;
+		ht =  &_data.time;
 		break;
 	case CREDIT_CHANNEL:
-		ht = _data.channel.credit_data_by_client;
-		lock =  &_data.channel.lock;
+		sht = _data.channel.credit_data_by_client;
+		ht =  &_data.channel;
 		break;
 	default:
 		LM_ERR("BUG: Something went terribly wrong\n");
 		return NULL;
 	}
 
-	lock_get(lock);
-	e = str_hash_get(ht, client_id->s, client_id->len);
-	lock_release(lock);
+	cnxcc_lock(ht->lock);
+	e = str_hash_get(sht, client_id->s, client_id->len);
+	cnxcc_unlock(ht->lock);
 
 	/*
 	 * Alloc new call_array_t if it doesn't exist
@@ -1066,11 +1082,11 @@ static credit_data_t *__get_or_create_credit_data_entry(str *client_id, credit_t
 		if (credit_data == NULL)
 			goto no_memory;
 
-		lock_get(lock);
-		str_hash_add(ht, e);
-		lock_release(lock);
+		cnxcc_lock(ht->lock);
+		str_hash_add(sht, e);
+		cnxcc_unlock(ht->lock);
 
-		LM_DBG("Call didn't exist. Allocated new entry\n");
+		LM_DBG("Credit entry didn't exist. Allocated new entry [%p]\n", e);
 	}
 
 	return (credit_data_t *) e->u.p;
@@ -1083,7 +1099,7 @@ no_memory:
 static credit_data_t *__alloc_new_credit_data(str *client_id, credit_type_t type) {
 	credit_data_t *credit_data = shm_malloc(sizeof(credit_data_t));;
 
-	lock_init(&credit_data->lock);
+	cnxcc_lock_init(credit_data->lock);
 
 	credit_data->call_list = shm_malloc(sizeof(call_t));
 
@@ -1135,7 +1151,8 @@ error:
 static call_t *__alloc_new_call_by_money(credit_data_t *credit_data, struct sip_msg *msg, 
 					double credit, double cost_per_second, int initial_pulse, int final_pulse) {
 	call_t *call = NULL;
-	lock_get(&credit_data->lock);
+
+	cnxcc_lock(credit_data->lock);
 
 	if (credit_data->call_list == NULL) {
 		LM_ERR("Credit data call list is NULL\n");
@@ -1183,7 +1200,7 @@ static call_t *__alloc_new_call_by_money(credit_data_t *credit_data, struct sip_
 	 */
 	clist_insert(credit_data->call_list, call, next, prev);
 
-	lock_init(&call->lock);
+	cnxcc_lock_init(call->lock);
 
 	/*
 	 * Increase the number of calls for this client. This call is not yet confirmed.
@@ -1192,21 +1209,21 @@ static call_t *__alloc_new_call_by_money(credit_data_t *credit_data, struct sip_
 	if (_data.redis)
 		redis_incr_by_int(credit_data, "number_of_calls", 1);
 
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 
 	LM_DBG("New call allocated for client [%.*s]\n", call->client_id.len, call->client_id.s);
 
 	return call;
 
 error:
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 	return NULL;
 }
 
 static call_t *__alloc_new_call_by_time(credit_data_t *credit_data, struct sip_msg *msg, int max_secs) {
 	call_t *call = NULL;
 
-	lock_get(&credit_data->lock);
+	cnxcc_lock(credit_data->lock);
 
 	if (credit_data->call_list == NULL) {
 		LM_ERR("Credit data call list is NULL\n");
@@ -1250,7 +1267,7 @@ static call_t *__alloc_new_call_by_time(credit_data_t *credit_data, struct sip_m
 	 */
 	clist_insert(credit_data->call_list, call, next, prev);
 
-	lock_init(&call->lock);
+	cnxcc_lock_init(call->lock);
 
 	/*
 	 * Increase the number of calls for this client. This call is not yet confirmed.
@@ -1259,21 +1276,21 @@ static call_t *__alloc_new_call_by_time(credit_data_t *credit_data, struct sip_m
 	if (_data.redis)
 		redis_incr_by_int(credit_data, "number_of_calls", 1);
 
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 
 	LM_DBG("New call allocated for client [%.*s]\n", call->client_id.len, call->client_id.s);
 
 	return call;
 
 error:
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 	return NULL;
 }
 
 static call_t *alloc_new_call_by_channel(credit_data_t *credit_data, struct sip_msg *msg, int max_chan) {
 	call_t *call = NULL;
 
-	lock_get(&credit_data->lock);
+	cnxcc_lock(credit_data->lock);
 
 	if (credit_data->call_list == NULL) {
 		LM_ERR("Credit data call list is NULL\n");
@@ -1317,7 +1334,7 @@ static call_t *alloc_new_call_by_channel(credit_data_t *credit_data, struct sip_
 	 */
 	clist_insert(credit_data->call_list, call, next, prev);
 
-	lock_init(&call->lock);
+	cnxcc_lock_init(call->lock);
 
 	/*
 	 * Increase the number of calls for this client. This call is not yet confirmed.
@@ -1326,7 +1343,7 @@ static call_t *alloc_new_call_by_channel(credit_data_t *credit_data, struct sip_
 	if (_data.redis)
 		redis_incr_by_int(credit_data, "number_of_calls", 1);
 
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 
 	LM_DBG("New call allocated for client [%.*s]\n", call->client_id.len, call->client_id.s);
 
@@ -1334,27 +1351,27 @@ static call_t *alloc_new_call_by_channel(credit_data_t *credit_data, struct sip_
 	return call;
 
 error:
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 	return NULL;
 }
 
 static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type) {
 	struct str_hash_table *ht	= NULL;
-	gen_lock_t *lock		= NULL;
+	cnxcc_lock_t lock;
 	struct str_hash_entry *e	= NULL;
 
 	switch(type) {
 	case CREDIT_MONEY:
 		ht	= _data.money.call_data_by_cid;
-		lock	=  &_data.money.lock;
+		lock	=  _data.money.lock;
 		break;
 	case CREDIT_TIME:
 		ht	= _data.time.call_data_by_cid;
-		lock	=  &_data.time.lock;
+		lock	=  _data.time.lock;
 		break;
 	case CREDIT_CHANNEL:
 		ht	= _data.channel.call_data_by_cid;
-		lock	=  &_data.channel.lock;
+		lock	=  _data.channel.lock;
 		break;
 	default:
 		LM_ERR("Something went terribly wrong\n");
@@ -1400,9 +1417,9 @@ static int __add_call_by_cid(str *cid, call_t *call, credit_type_t type) {
 
 	e->u.p	= call;
 
-	lock_get(lock);
+	cnxcc_lock(lock);
 	str_hash_add(ht, e);
-	lock_release(lock);
+	cnxcc_unlock(lock);
 
 	return 0;
 }
@@ -1805,9 +1822,9 @@ static int __update_max_time(struct sip_msg* msg, char* str_pv_client, char* str
 	call_t *call			= NULL,
 	       *tmp_call		= NULL;
 
-	lock_get(&_data.time.lock);
+	cnxcc_lock(_data.time.lock);
 	e = str_hash_get(ht, client_id_val.rs.s, client_id_val.rs.len);
-	lock_release(&_data.time.lock);
+	cnxcc_unlock(_data.time.lock);
 
 	if (e == NULL) {
 		LM_ERR("Client [%.*s] was not found\n", client_id_val.rs.len, client_id_val.rs.s);
@@ -1815,7 +1832,7 @@ static int __update_max_time(struct sip_msg* msg, char* str_pv_client, char* str
 	}
 		
 	credit_data = (credit_data_t *) e->u.p;
-	lock_get(&credit_data->lock);
+	cnxcc_lock(credit_data->lock);
 
 	LM_DBG("Updating max-secs for [%.*s] from [%f] to [%f]\n", e->key.len, e->key.s, credit_data->max_amount, credit_data->max_amount + secs);
 	
@@ -1834,7 +1851,7 @@ static int __update_max_time(struct sip_msg* msg, char* str_pv_client, char* str
 //redit_data->consumed_amount			= 0;
 
 
-	lock_release(&credit_data->lock);
+	cnxcc_unlock(credit_data->lock);
 
 	return 1;
 }

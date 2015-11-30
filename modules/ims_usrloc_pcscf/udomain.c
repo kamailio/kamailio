@@ -665,8 +665,8 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
         ci.via_prot = VAL_INT(vals + 3);
 	received.s = (char*) VAL_STRING(vals + 4);
 	if (VAL_NULL(vals+4) || !received.s || !received.s[0]) {
-            LM_ERR("Empty received for contact [%.*s].... ignoring\n", contact->len, contact->s);
-            return 0;
+		LM_DBG("Empty received for contact [%.*s]....\n", contact->len, contact->s);	/*this could happen if you have been notified about a contact from S-CSCF*/
+		received.len = 0;
 	} else {
 		received.len = strlen(received.s);
 	}
