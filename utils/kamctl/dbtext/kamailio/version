@@ -1,4 +1,5 @@
 table_name(string) table_version(int) 
+version:1
 acc:5
 acc_cdrs:2
 active_watchers:11
