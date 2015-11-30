@@ -465,10 +465,9 @@ int challenge(struct sip_msg* msg, char* str1, char* alg, int is_proxy_auth, cha
         saved_t->is_proxy_auth = is_proxy_auth;
 
         LM_DBG("Suspending SIP TM transaction\n");
-        if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) < 0) {
+        if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) != 0) {
             LM_ERR("failed to suspend the TM processing\n");
             free_saved_transaction_data(saved_t);
-
             stateful_request_reply(msg, 480, MSG_480_DIAMETER_ERROR);
             return CSCF_RETURN_BREAK;
         }
@@ -856,6 +855,10 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
         /* if QOP is sent, nc must be specified */
         /* the expected nc is the last used one plus 1 */
         int p;
+		if (!nc.s || nc.len < 8 ) {
+			LM_ERR("qop specified with no nonce count... failing\n");
+			goto cleanup;
+		}
         for (p = 0; p < 8; ++p) { /* nc is 8LHEX (RFC 2617 §3.2.2) */
             nc_parsed = (nc_parsed << 4) | UNHEX((int) nc.s[p]);
         }
@@ -870,7 +873,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
             av->status = AUTH_VECTOR_USELESS;
             goto cleanup;
         }
-    }
+	}
 
     switch (av->type) {
         case AUTH_AKAV1_MD5:
