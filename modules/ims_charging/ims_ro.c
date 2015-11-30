@@ -246,8 +246,11 @@ inline int Ro_add_multiple_service_credit_Control(AAAMessage *msg, unsigned int 
     set_4bytes(x, active_service_identifier);
     Ro_add_avp_list(&mscc_list, x, 4, AVP_Service_Identifier, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 
-    set_4bytes(x, active_rating_group);
-    Ro_add_avp_list(&mscc_list, x, 4, AVP_Rating_Group, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    // Rating Group = -1 => omit Rating group
+    if (active_rating_group >= 0) {
+      set_4bytes(x, active_rating_group);
+      Ro_add_avp_list(&mscc_list, x, 4, AVP_Rating_Group, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
+    }
 
     /* if we must Used-Service-Unit */
     if (used_unit >= 0) {
