@@ -892,7 +892,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     }
 
     LM_DBG("Suspending SIP TM transaction\n");
-    if (tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel) < 0) {
+    if (tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel) != 0) {
         LM_ERR("failed to suspend the TM processing\n");
 	if (auth_session) cdpb.AAASessionsUnlock(auth_session->hash);
 	goto error;
