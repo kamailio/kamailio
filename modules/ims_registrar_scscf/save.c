@@ -1128,7 +1128,7 @@ int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction, char* ro
     create_return_code(CSCF_RETURN_ERROR);
 
     LM_DBG("Suspending SIP TM transaction\n");
-    if (tmb.t_suspend(_m, &saved_t->tindex, &saved_t->tlabel) < 0) {
+    if (tmb.t_suspend(_m, &saved_t->tindex, &saved_t->tlabel) != 0) {
         LM_ERR("failed to suspend the TM processing\n");
         free_saved_transaction_data(saved_t);
         rerrno = R_SAR_FAILED;
@@ -1357,7 +1357,7 @@ int save(struct sip_msg* msg, char* str1, char *route) {
     create_return_code(CSCF_RETURN_ERROR);
 
     LM_DBG("Suspending SIP TM transaction\n");
-    if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) < 0) {
+    if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) != 0) {
         LM_ERR("failed to suspend the TM processing\n");
         free_saved_transaction_data(saved_t);
         rerrno = R_SAR_FAILED;

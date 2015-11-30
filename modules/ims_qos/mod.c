@@ -1055,7 +1055,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
     }
 
     LM_DBG("Suspending SIP TM transaction\n");
-    if (tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel) < 0) {
+    if (tmb.t_suspend(msg, &saved_t_data->tindex, &saved_t_data->tlabel) != 0) {
         LM_ERR("failed to suspend the TM processing\n");
         free_saved_transaction_global_data(saved_t_data);
         return CSCF_RETURN_ERROR;
