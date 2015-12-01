@@ -1352,6 +1352,10 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 			/* within dialog request */
 			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, NULL, dir, 0);
+			if (add_dlg_rr_param( req, dlg->h_entry, dlg->h_id)<0 ) {
+				LM_ERR("failed to add RR param\n");
+				goto error;
+			}
 
 			if ( (event!=DLG_EVENT_REQACK) &&
 					(dlg->cbs.types)&DLGCB_RESPONSE_WITHIN ) {
