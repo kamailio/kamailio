@@ -514,7 +514,7 @@ static int mod_init(void)
 			register_timer(ds_ht_timer, NULL, ds_hash_check_interval);
 		} else {
 			LM_ERR("call load dispatching DSTID_AVP set but no size"
-					" for hash table\n");
+					" for hash table (see ds_hash_size parameter)\n");
 			return -1;
 		}
 	}
