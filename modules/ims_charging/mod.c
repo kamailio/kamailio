@@ -345,11 +345,13 @@ static int w_ro_set_session_id_avp(struct sip_msg *msg, char *str1, char *str2) 
     ro_session= lookup_ro_session(dlg->h_entry, &dlg->callid, 0, 0);
     if(!ro_session) {
         LM_ERR("Unable to find Ro charging data\n");
+        dlgb.release_dlg(dlg);
             return RO_RETURN_ERROR;
     }
     
     //set avp response with session id
     res = create_response_avp_string("ro_session_id", &ro_session->ro_session_id);
+    dlgb.release_dlg(dlg);
     return res;
 }
 
