@@ -510,17 +510,18 @@ mysql> describe rtpengine;
 | Field    | Type             | Null | Key | Default | Extra |
 +----------+------------------+------+-----+---------+-------+
 | setid    | int(10) unsigned | NO   |     | NULL    |       |
-| url      | varchar(64)      | NO   |     | NULL    |       |
+| url      | varchar(256)     | NO   |     | NULL    |       |
+| weight   | int(10) unsigned | NO   |     | NULL    |       |
 | disabled | int(11)          | NO   |     | NULL    |       |
 +----------+------------------+------+-----+---------+-------+
 
 mysql> select * from rtpengine;
-+-------+---------------------------+----------+
-| setid | url                       | disabled |
-+-------+---------------------------+----------+
-|     0 | udp:rtpproxy1.domain:8800 |        0 |
-|     0 | udp:rtpproxy2.domain:8800 |        1 |
-+-------+---------------------------+----------+
++-------+---------------------------+--------+----------+
+| setid | url                       | weight | disabled |
++-------+---------------------------+--------+----------+
+|     0 | udp:rtpproxy1.domain:8800 |    100 |        0 |
+|     0 | udp:rtpproxy2.domain:8800 |    200 |        1 |
++-------+---------------------------+--------+----------+
 
 mysql> select * from version;
 +---------------------------+---------------+
@@ -528,7 +529,6 @@ mysql> select * from version;
 +---------------------------+---------------+
 | rtpengine                 |             1 |
 +---------------------------+---------------+
-...
 </programlisting>
 		</example>
 	</section>
@@ -560,7 +560,7 @@ modparam("rtpengine", "setid_col", "setid_column_name")
 		<para>
 			Column name in the rtpengine table. If database mode is activated (i.e. valid db_url),
 			set the url of rtp nodes according to this column, on startup.
-			The MySQL value for this column should be INT UNSIGNED.
+			The MySQL value for this column should be VARCHAR.
 		</para>
 		<para>
 			By default, the column name is "url".
@@ -570,6 +570,28 @@ modparam("rtpengine", "setid_col", "setid_column_name")
 <programlisting format="linespecific">
 ...
 modparam("rtpengine", "url_col", "url_column_name")
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section id="rtpengine.p.weight_col">
+		<title><varname>weight_col</varname> (string)</title>
+		<para>
+			Column name in the rtpengine table. If database mode is activated (i.e. valid db_url),
+			set the weight of rtp nodes according to this column, on startup. The column value has
+			priority over the URL weight.
+			The MySQL value for this column should be INT UNSIGNED.
+		</para>
+		<para>
+			By default, the column name is "weight".
+		</para>
+		<example>
+		<title>Set <varname>weight_col</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "weight_col", "weight_column_name")
 ...
 </programlisting>
 		</example>

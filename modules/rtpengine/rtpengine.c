@@ -204,7 +204,7 @@ static char *send_rtpp_command(struct rtpp_node *, bencode_item_t *, int *);
 static int get_extra_id(struct sip_msg* msg, str *id_str);
 
 static int rtpengine_set_store(modparam_t type, void * val);
-static int rtpengine_add_rtpengine_set(char * rtp_proxies, int disabled, unsigned int ticks);
+static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, int disabled, unsigned int ticks);
 
 static int mod_init(void);
 static int child_init(int);
@@ -348,6 +348,7 @@ static param_export_t params[] = {
 	{"table_name",            PARAM_STR, &rtpp_table_name        },
 	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
 	{"url_col",               PARAM_STR, &rtpp_url_col           },
+	{"weight_col",            PARAM_STR, &rtpp_weight_col        },
 	{"disabled_col",          PARAM_STR, &rtpp_disabled_col      },
 	{"extra_id_pv",           PARAM_STR, &extra_id_pv_param      },
 	{"setid_avp",             PARAM_STRING, &setid_avp_param     },
@@ -677,19 +678,20 @@ struct rtpp_set *get_rtpp_set(int set_id)
 }
 
 
-int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabled, unsigned int ticks)
+int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
+			unsigned int weight, int disabled, unsigned int ticks)
 {
 	/* Make rtp proxies list. */
 	char *p, *p1, *p2, *plim;
 	struct rtpp_node *pnode;
 	struct rtpp_node *rtpp_node;
-	int weight;
+	int local_weight;
 
 	p = rtpproxy;
 	plim = p + strlen(p);
 
 	for(;;) {
-			weight = 1;
+		local_weight = weight;
 		while (*p && isspace((int)*p))
 			++p;
 		if (p >= plim)
@@ -702,7 +704,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabl
 		/* Have weight specified? If yes, scan it */
 		p2 = memchr(p1, '=', p - p1);
 		if (p2 != NULL) {
-			weight = strtoul(p2 + 1, NULL, 10);
+			local_weight = strtoul(p2 + 1, NULL, 10);
 		} else {
 			p2 = p;
 		}
@@ -718,7 +720,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabl
 		} else {
 			pnode->rn_recheck_ticks = ticks + get_ticks();
 		}
-		pnode->rn_weight = weight;
+		pnode->rn_weight = local_weight;
 		pnode->rn_umode = 0;
 		pnode->rn_disabled = disabled;
 		pnode->rn_url.s = shm_malloc(p2 - p1 + 1);
@@ -744,7 +746,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabl
 			pnode->rn_address += 5;
 		}
 
-		// if node found in set, update it for disabled state
+		// if node found in set, update it
 		rtpp_node = get_rtpp_node(rtpp_list, &pnode->rn_url);
 		if (rtpp_node) {
 			rtpp_node->rn_disabled = pnode->rn_disabled;
@@ -770,7 +772,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabl
 /*	0-succes
  *  -1 - erorr
  * */
-static int rtpengine_add_rtpengine_set(char * rtp_proxies, int disabled, unsigned int ticks)
+static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, int disabled, unsigned int ticks)
 {
 	char *p,*p2;
 	struct rtpp_set * rtpp_list;
@@ -824,7 +826,7 @@ static int rtpengine_add_rtpengine_set(char * rtp_proxies, int disabled, unsigne
 	if (rtpp_list != NULL)
 	{
 
-		if (add_rtpengine_socks(rtpp_list, rtp_proxies, disabled, ticks) != 0)
+		if (add_rtpengine_socks(rtpp_list, rtp_proxies, weight, disabled, ticks) != 0)
 			goto error;
 		else
 			return 0;
@@ -1474,7 +1476,7 @@ mod_init(void)
 	{
 		/* storing the list of rtp proxy sets in shared memory*/
 		for(i=0;i<rtpp_sets;i++){
-			if(rtpengine_add_rtpengine_set(rtpp_strings[i], 0, 0) !=0){
+			if(rtpengine_add_rtpengine_set(rtpp_strings[i], 1, 0, 0) !=0){
 				for(;i<rtpp_sets;i++)
 					if(rtpp_strings[i])
 						pkg_free(rtpp_strings[i]);

@@ -63,7 +63,7 @@ struct rtpp_set_head{
 
 struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url);
 struct rtpp_set *get_rtpp_set(int set_id);
-int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, int disabled, unsigned int ticks);
+int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, unsigned int weight, int disabled, unsigned int ticks);
 
 
 int init_rtpproxy_db(void);
@@ -72,6 +72,7 @@ extern str rtpp_db_url;
 extern str rtpp_table_name;
 extern str rtpp_setid_col;
 extern str rtpp_url_col;
+extern str rtpp_weight_col;
 extern str rtpp_disabled_col;
 
 
