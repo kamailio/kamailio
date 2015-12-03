@@ -679,13 +679,14 @@ struct rtpp_set *get_rtpp_set(int set_id)
 
 
 int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
-			unsigned int weight, int disabled, unsigned int ticks)
+			unsigned int weight, int disabled, unsigned int ticks, int isDB)
 {
 	/* Make rtp proxies list. */
 	char *p, *p1, *p2, *plim;
 	struct rtpp_node *pnode;
 	struct rtpp_node *rtpp_node;
-	int local_weight;
+	unsigned int local_weight, port;
+	str s1;
 
 	p = rtpproxy;
 	plim = p + strlen(p);
@@ -701,19 +702,27 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 			++p;
 		if (p <= p1)
 			break; /* may happen??? */
-		/* Have weight specified? If yes, scan it */
-		p2 = memchr(p1, '=', p - p1);
-		if (p2 != NULL) {
-			local_weight = strtoul(p2 + 1, NULL, 10);
-		} else {
-			p2 = p;
+		p2 = p;
+
+		/* if called for database, consider simple, single char *URL */
+		/* if called for config, consider weight URL */
+		if (!isDB) {
+			/* Have weight specified? If yes, scan it */
+			p2 = memchr(p1, '=', p - p1);
+			if (p2 != NULL) {
+				local_weight = strtoul(p2 + 1, NULL, 10);
+			} else {
+				p2 = p;
+			}
 		}
+
 		pnode = shm_malloc(sizeof(struct rtpp_node));
 		if (pnode == NULL) {
 			LM_ERR("no shm memory left\n");
 			return -1;
 		}
 		memset(pnode, 0, sizeof(*pnode));
+
 		pnode->idx = rtpp_no++;
 		if (ticks == MI_MAX_RECHECK_TICKS) {
 			pnode->rn_recheck_ticks = ticks;
@@ -725,13 +734,14 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 		pnode->rn_disabled = disabled;
 		pnode->rn_url.s = shm_malloc(p2 - p1 + 1);
 		if (pnode->rn_url.s == NULL) {
+			rtpp_no--;
 			shm_free(pnode);
 			LM_ERR("no shm memory left\n");
 			return -1;
 		}
 		memmove(pnode->rn_url.s, p1, p2 - p1);
-		pnode->rn_url.s[p2 - p1] 	= 0;
-		pnode->rn_url.len 			= p2-p1;
+		pnode->rn_url.s[p2 - p1] = 0;
+		pnode->rn_url.len = p2-p1;
 
 		/* Leave only address in rn_address */
 		pnode->rn_address = pnode->rn_url.s;
@@ -744,16 +754,49 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 		} else if (strncasecmp(pnode->rn_address, "unix:", 5) == 0) {
 			pnode->rn_umode = 0;
 			pnode->rn_address += 5;
+		} else {
+			LM_WARN("Node address must start with 'udp:' or 'udp6:' or 'unix:'. Ignore '%s'.\n", pnode->rn_address);
+			rtpp_no--;
+			shm_free(pnode->rn_url.s);
+			shm_free(pnode);
+			continue;
 		}
 
-		// if node found in set, update it
+		/* Check the rn_address is 'hostname:port' */
+		/* Check the rn_address port is valid */
+		p1 = strchr(pnode->rn_address, ':');
+		if (p1 != NULL) {
+			p1++;
+		}
+
+		if (p1 != NULL && p1 != '\0') {
+			s1.s = p1;
+			s1.len = strlen(p1);
+			if (str2int(&s1, &port) < 0 || port > 0xFFFF) {
+				LM_WARN("Node address must end with a valid port number. Ignore '%s'.\n", pnode->rn_address);
+				rtpp_no--;
+				shm_free(pnode->rn_url.s);
+				shm_free(pnode);
+				continue;
+			}
+		}
+
+		/* If node found in set, update it */
 		rtpp_node = get_rtpp_node(rtpp_list, &pnode->rn_url);
 		if (rtpp_node) {
 			rtpp_node->rn_disabled = pnode->rn_disabled;
 			rtpp_node->rn_recheck_ticks = pnode->rn_recheck_ticks;
 			rtpp_node->rn_weight = pnode->rn_weight;
+
+			rtpp_no--;
+			shm_free(pnode->rn_url.s);
 			shm_free(pnode);
-			continue;
+
+			if (!isDB) {
+				continue;
+			} else {
+				return 0;
+			}
 		}
 
 		if (rtpp_list->rn_first == NULL) {
@@ -764,6 +807,12 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 
 		rtpp_list->rn_last = pnode;
 		rtpp_list->rtpp_node_count++;
+
+		if (!isDB) {
+			continue;
+		} else {
+			return 0;
+		}
 	}
 	return 0;
 }
@@ -826,7 +875,7 @@ static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, 
 	if (rtpp_list != NULL)
 	{
 
-		if (add_rtpengine_socks(rtpp_list, rtp_proxies, weight, disabled, ticks) != 0)
+		if (add_rtpengine_socks(rtpp_list, rtp_proxies, weight, disabled, ticks, 0) != 0)
 			goto error;
 		else
 			return 0;

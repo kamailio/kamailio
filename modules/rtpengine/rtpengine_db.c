@@ -122,7 +122,7 @@ static int rtpp_load_db(void)
 			continue;
 		}
 
-		if (add_rtpengine_socks(rtpp_list, url.s, weight, disabled, ticks) !=  0)
+		if (add_rtpengine_socks(rtpp_list, url.s, weight, disabled, ticks, 1) !=  0)
 		{
 			LM_ERR("error inserting '%.*s' into set %d disabled=%d\n",
 				url.len, url.s, setid, disabled);
