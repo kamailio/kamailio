@@ -541,7 +541,7 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 		goto failed;
 	}
 
-	add_to_rr.s = pkg_malloc(2+rr_param->len+param_val.len);
+	add_to_rr.s = pkg_malloc(3+rr_param->len+param_val.len);
 	if ( add_to_rr.s==0 ) {
 		add_to_rr.len = 0;
 		LM_ERR("no more pkg mem\n");
@@ -550,7 +550,7 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 	add_to_rr.len = sprintf(add_to_rr.s, ";%.*s=%.*s", rr_param->len,rr_param->s,param_val.len,param_val.s);
 
 	if ( uac_rrb.add_rr_param(msg, &add_to_rr)!=0 ) {
-		LM_ERR("add_RR_param failed\n");
+		LM_ERR("add rr param failed\n");
 		goto failed;
 	}
 	pkg_free(add_to_rr.s);
