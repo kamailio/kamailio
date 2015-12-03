@@ -1830,7 +1830,7 @@ int fix_all_socket_lists()
 #ifdef __OS_linux
 		&&  (!auto_bind_ipv6 || add_interfaces_via_netlink(0, AF_INET6, 0, PROTO_UDP, &ai_lst) == 0)
 #else
-		&& ( !auto_bind_ipv6 || add_interfaces(0, AF_INET6, 0,  PROTO_UDP, &ai_lst) !=0 ) /* add_interface does not work for IPv6 on Linux */
+		&& ( !auto_bind_ipv6 || add_interfaces(0, AF_INET6, 0,  PROTO_UDP, &ai_lst) ==0 ) /* add_interface does not work for IPv6 on Linux */
 #endif /* __OS_linux */
 			 ) && (addr_info_to_si_lst(ai_lst, 0, PROTO_UDP, 0, &udp_listen)==0)){
 			free_addr_info_lst(&ai_lst);
