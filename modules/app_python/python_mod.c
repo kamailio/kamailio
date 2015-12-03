@@ -40,7 +40,7 @@
 MODULE_VERSION
 
 
-static str script_name = str_init("/usr/local/etc/sip-router/handler.py");
+static str script_name = str_init("/usr/local/etc/" NAME "/handler.py");
 static str mod_init_fname = str_init("mod_init");
 static str child_init_mname = str_init("child_init");
 
