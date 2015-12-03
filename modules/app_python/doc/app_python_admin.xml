@@ -20,6 +20,11 @@
 		This module allows executing Python scripts from config file,
 		exporting functions to access the SIP message from Python.
 	</para>
+	<para>
+		For some basic examples of Python scripts that can be used with
+		this module, look at the files inside source tree located at
+		'modules/app_python/python_examples/'.
+	</para>
     </section>
     <section>
 	<title>Dependencies</title>
@@ -56,18 +61,19 @@
 	<section>
 	    <title><varname>script_name</varname> (string)</title>
 	    <para>
-			TBD.
+			The path to the fiel with Python code to be executed
+			from configuration file.
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>/usr/local/etc/sip-router/handler.py</quote>.
+		    Default value is <quote>/usr/local/etc/kamailio/handler.py</quote>.
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>script_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("app_python", "script_name", "/usr/local/etc/sip-router/myscript.py")
+modparam("app_python", "script_name", "/usr/local/etc/kamailio/myscript.py")
 ...
 </programlisting>
 	    </example>
@@ -76,7 +82,8 @@ modparam("app_python", "script_name", "/usr/local/etc/sip-router/myscript.py")
 	<section>
 	    <title><varname>mod_init_function</varname> (string)</title>
 	    <para>
-			TBD.
+			The Python function to be executed by this module when
+			it is initialied by &kamailio;.
 	    </para>
 	    <para>
 		<emphasis>
@@ -96,7 +103,8 @@ modparam("app_python", "mod_init_function", "my_mod_init")
 	<section>
 	    <title><varname>child_init_method</varname> (string)</title>
 	    <para>
-			TBD.
+			The Python function to be executed by this module when
+			a new worker process (child) is initialied by &kamailio;.
 	    </para>
 	    <para>
 		<emphasis>
@@ -119,17 +127,19 @@ modparam("app_python", "child_init_method", "my_child_init")
 	<title>Functions</title>
  	<section>
 	    <title>
-		<function moreinfo="none">python_exec(method [, mystr])</function>
+		<function moreinfo="none">python_exec(method [, args])</function>
 	    </title>
 	    <para>
-		TBD.
+			Execute the Python function with the name given by the parameter 'method'.
+			Optionally can be provided a second string with parameters to be passed
+			to the Python function.
 	    </para>
 		<example>
 		<title><function>python_exec</function> usage</title>
 		<programlisting format="linespecific">
 ...
-python_exec("...");
-python_exec("...", "...");
+python_exec("my_python_function");
+python_exec("my_python_function", "my_params");
 ...
 </programlisting>
 	    </example>
