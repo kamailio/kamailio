@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('htable','2');
 CREATE TABLE htable (
     id NUMBER(10) PRIMARY KEY,
     key_name VARCHAR2(64) DEFAULT '',
@@ -16,3 +15,5 @@ END htable_tr;
 /
 BEGIN map2users('htable'); END;
 /
+INSERT INTO version (table_name, table_version) values ('htable','2');
+

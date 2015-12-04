@@ -51,7 +51,7 @@ inline static int ob_load_api(ob_api_t *pxb)
 	bind_ob_f bind_ob_exports;
 	if (!(bind_ob_exports = (bind_ob_f)find_export("bind_ob", 1, 0)))
 	{
-		LM_INFO("Failed to import bind_ob\n");
+		LM_INFO("unable to import bind_ob - maybe module is not loaded\n");
 		return -1;
 	}
 	return bind_ob_exports(pxb);

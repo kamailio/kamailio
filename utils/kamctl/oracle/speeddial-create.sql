@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('speed_dial','2');
 CREATE TABLE speed_dial (
     id NUMBER(10) PRIMARY KEY,
     username VARCHAR2(64) DEFAULT '',
@@ -20,3 +19,5 @@ END speed_dial_tr;
 /
 BEGIN map2users('speed_dial'); END;
 /
+INSERT INTO version (table_name, table_version) values ('speed_dial','2');
+

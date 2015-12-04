@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('usr_preferences','2');
 CREATE TABLE usr_preferences (
     id SERIAL PRIMARY KEY NOT NULL,
     uuid VARCHAR(64) DEFAULT '' NOT NULL,
@@ -12,4 +11,6 @@ CREATE TABLE usr_preferences (
 
 CREATE INDEX usr_preferences_ua_idx ON usr_preferences (uuid, attribute);
 CREATE INDEX usr_preferences_uda_idx ON usr_preferences (username, domain, attribute);
+
+INSERT INTO version (table_name, table_version) values ('usr_preferences','2');
 

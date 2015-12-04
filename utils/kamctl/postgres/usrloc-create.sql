@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('location','8');
 CREATE TABLE location (
     id SERIAL PRIMARY KEY NOT NULL,
     ruid VARCHAR(64) DEFAULT '' NOT NULL,
@@ -29,7 +28,8 @@ CREATE TABLE location (
 CREATE INDEX location_account_contact_idx ON location (username, domain, contact);
 CREATE INDEX location_expires_idx ON location (expires);
 
-INSERT INTO version (table_name, table_version) values ('location_attrs','1');
+INSERT INTO version (table_name, table_version) values ('location','8');
+
 CREATE TABLE location_attrs (
     id SERIAL PRIMARY KEY NOT NULL,
     ruid VARCHAR(64) DEFAULT '' NOT NULL,
@@ -43,4 +43,6 @@ CREATE TABLE location_attrs (
 
 CREATE INDEX location_attrs_account_record_idx ON location_attrs (username, domain, ruid);
 CREATE INDEX location_attrs_last_modified_idx ON location_attrs (last_modified);
+
+INSERT INTO version (table_name, table_version) values ('location_attrs','1');
 

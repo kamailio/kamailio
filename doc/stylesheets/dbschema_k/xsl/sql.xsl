@@ -51,9 +51,6 @@
 	    <xsl:call-template name="get-name"/>
 	</xsl:variable>
 
-	<!-- Create row in version table -->
-	<xsl:apply-templates select="version"/>
-
 	<xsl:text>CREATE TABLE </xsl:text>
 	<xsl:call-template name="quotechar"/>
 	<xsl:value-of select="$table.name"/>
@@ -73,11 +70,16 @@
 
 	<xsl:call-template name="table.close"/>
 
+	<!-- Create indexes for table -->
 	<xsl:for-each select="index[count(child::unique)=0]">
 	    <xsl:if test="not(child::primary)">
 	        <xsl:call-template name="create_index"/>
 	    </xsl:if>
 	</xsl:for-each>
+	<!-- Create row in version table -->
+	<xsl:apply-templates select="version"/>
+	<xsl:text>&#x0A;</xsl:text>
+
     </xsl:template>
 
 <!-- ################ /TABLE ################  -->

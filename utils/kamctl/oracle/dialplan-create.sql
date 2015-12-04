@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('dialplan','2');
 CREATE TABLE dialplan (
     id NUMBER(10) PRIMARY KEY,
     dpid NUMBER(10),
@@ -19,3 +18,5 @@ END dialplan_tr;
 /
 BEGIN map2users('dialplan'); END;
 /
+INSERT INTO version (table_name, table_version) values ('dialplan','2');
+

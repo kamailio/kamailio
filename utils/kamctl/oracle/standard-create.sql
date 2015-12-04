@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('version','1');
 CREATE TABLE version (
     table_name VARCHAR2(32),
     table_version NUMBER(10) DEFAULT 0 NOT NULL,
@@ -7,3 +6,5 @@ CREATE TABLE version (
 
 BEGIN map2users('version'); END;
 /
+INSERT INTO version (table_name, table_version) values ('version','1');
+

@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('rls_presentity','1');
 CREATE TABLE rls_presentity (
     id SERIAL PRIMARY KEY NOT NULL,
     rlsubs_did VARCHAR(255) NOT NULL,
@@ -16,7 +15,8 @@ CREATE INDEX rls_presentity_rlsubs_idx ON rls_presentity (rlsubs_did);
 CREATE INDEX rls_presentity_updated_idx ON rls_presentity (updated);
 CREATE INDEX rls_presentity_expires_idx ON rls_presentity (expires);
 
-INSERT INTO version (table_name, table_version) values ('rls_watchers','3');
+INSERT INTO version (table_name, table_version) values ('rls_presentity','1');
+
 CREATE TABLE rls_watchers (
     id SERIAL PRIMARY KEY NOT NULL,
     presentity_uri VARCHAR(128) NOT NULL,
@@ -48,4 +48,6 @@ CREATE TABLE rls_watchers (
 CREATE INDEX rls_watchers_rls_watchers_update ON rls_watchers (watcher_username, watcher_domain, event);
 CREATE INDEX rls_watchers_rls_watchers_expires ON rls_watchers (expires);
 CREATE INDEX rls_watchers_updated_idx ON rls_watchers (updated);
+
+INSERT INTO version (table_name, table_version) values ('rls_watchers','3');
 

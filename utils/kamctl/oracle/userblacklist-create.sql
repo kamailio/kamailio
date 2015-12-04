@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('userblacklist','1');
 CREATE TABLE userblacklist (
     id NUMBER(10) PRIMARY KEY,
     username VARCHAR2(64) DEFAULT '',
@@ -17,7 +16,8 @@ BEGIN map2users('userblacklist'); END;
 /
 CREATE INDEX ORA_userblacklist_idx  ON userblacklist (username, domain, prefix);
 
-INSERT INTO version (table_name, table_version) values ('globalblacklist','1');
+INSERT INTO version (table_name, table_version) values ('userblacklist','1');
+
 CREATE TABLE globalblacklist (
     id NUMBER(10) PRIMARY KEY,
     prefix VARCHAR2(64) DEFAULT '',
@@ -34,4 +34,6 @@ END globalblacklist_tr;
 BEGIN map2users('globalblacklist'); END;
 /
 CREATE INDEX ORA_globalblacklist_idx  ON globalblacklist (prefix);
+
+INSERT INTO version (table_name, table_version) values ('globalblacklist','1');
 

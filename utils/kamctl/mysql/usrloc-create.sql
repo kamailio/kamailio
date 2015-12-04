@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('location','8');
 CREATE TABLE `location` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `ruid` VARCHAR(64) DEFAULT '' NOT NULL,
@@ -29,7 +28,8 @@ CREATE TABLE `location` (
 CREATE INDEX account_contact_idx ON location (`username`, `domain`, `contact`);
 CREATE INDEX expires_idx ON location (`expires`);
 
-INSERT INTO version (table_name, table_version) values ('location_attrs','1');
+INSERT INTO version (table_name, table_version) values ('location','8');
+
 CREATE TABLE `location_attrs` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `ruid` VARCHAR(64) DEFAULT '' NOT NULL,
@@ -43,4 +43,6 @@ CREATE TABLE `location_attrs` (
 
 CREATE INDEX account_record_idx ON location_attrs (`username`, `domain`, `ruid`);
 CREATE INDEX last_modified_idx ON location_attrs (`last_modified`);
+
+INSERT INTO version (table_name, table_version) values ('location_attrs','1');
 

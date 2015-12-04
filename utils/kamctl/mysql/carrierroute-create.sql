@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('carrierroute','3');
 CREATE TABLE `carrierroute` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `carrier` INT(10) UNSIGNED DEFAULT 0 NOT NULL,
@@ -14,7 +13,8 @@ CREATE TABLE `carrierroute` (
     `description` VARCHAR(255) DEFAULT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('carrierfailureroute','2');
+INSERT INTO version (table_name, table_version) values ('carrierroute','3');
+
 CREATE TABLE `carrierfailureroute` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `carrier` INT(10) UNSIGNED DEFAULT 0 NOT NULL,
@@ -28,15 +28,19 @@ CREATE TABLE `carrierfailureroute` (
     `description` VARCHAR(255) DEFAULT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('carrier_name','1');
+INSERT INTO version (table_name, table_version) values ('carrierfailureroute','2');
+
 CREATE TABLE `carrier_name` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `carrier` VARCHAR(64) DEFAULT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('domain_name','1');
+INSERT INTO version (table_name, table_version) values ('carrier_name','1');
+
 CREATE TABLE `domain_name` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `domain` VARCHAR(64) DEFAULT NULL
 );
+
+INSERT INTO version (table_name, table_version) values ('domain_name','1');
 

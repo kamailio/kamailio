@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('sip_trace','4');
 CREATE TABLE `sip_trace` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `time_stamp` DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL,
@@ -19,4 +18,6 @@ CREATE INDEX traced_user_idx ON sip_trace (`traced_user`);
 CREATE INDEX date_idx ON sip_trace (`time_stamp`);
 CREATE INDEX fromip_idx ON sip_trace (`fromip`);
 CREATE INDEX callid_idx ON sip_trace (`callid`);
+
+INSERT INTO version (table_name, table_version) values ('sip_trace','4');
 

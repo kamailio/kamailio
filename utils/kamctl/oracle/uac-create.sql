@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('uacreg','1');
 CREATE TABLE uacreg (
     id NUMBER(10) PRIMARY KEY,
     l_uuid VARCHAR2(64) DEFAULT '',
@@ -22,3 +21,5 @@ END uacreg_tr;
 /
 BEGIN map2users('uacreg'); END;
 /
+INSERT INTO version (table_name, table_version) values ('uacreg','1');
+

@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('dr_gateways','3');
 CREATE TABLE dr_gateways (
     gwid SERIAL PRIMARY KEY NOT NULL,
     type INTEGER DEFAULT 0 NOT NULL,
@@ -9,7 +8,8 @@ CREATE TABLE dr_gateways (
     description VARCHAR(128) DEFAULT '' NOT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('dr_rules','3');
+INSERT INTO version (table_name, table_version) values ('dr_gateways','3');
+
 CREATE TABLE dr_rules (
     ruleid SERIAL PRIMARY KEY NOT NULL,
     groupid VARCHAR(255) NOT NULL,
@@ -21,14 +21,16 @@ CREATE TABLE dr_rules (
     description VARCHAR(128) DEFAULT '' NOT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('dr_gw_lists','1');
+INSERT INTO version (table_name, table_version) values ('dr_rules','3');
+
 CREATE TABLE dr_gw_lists (
     id SERIAL PRIMARY KEY NOT NULL,
     gwlist VARCHAR(255) NOT NULL,
     description VARCHAR(128) DEFAULT '' NOT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('dr_groups','2');
+INSERT INTO version (table_name, table_version) values ('dr_gw_lists','1');
+
 CREATE TABLE dr_groups (
     id SERIAL PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL,
@@ -36,4 +38,6 @@ CREATE TABLE dr_groups (
     groupid INTEGER DEFAULT 0 NOT NULL,
     description VARCHAR(128) DEFAULT '' NOT NULL
 );
+
+INSERT INTO version (table_name, table_version) values ('dr_groups','2');
 

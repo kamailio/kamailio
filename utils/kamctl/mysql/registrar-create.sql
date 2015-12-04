@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('aliases','8');
 CREATE TABLE `aliases` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `ruid` VARCHAR(64) DEFAULT '' NOT NULL,
@@ -28,4 +27,6 @@ CREATE TABLE `aliases` (
 
 CREATE INDEX account_contact_idx ON aliases (`username`, `domain`, `contact`);
 CREATE INDEX expires_idx ON aliases (`expires`);
+
+INSERT INTO version (table_name, table_version) values ('aliases','8');
 

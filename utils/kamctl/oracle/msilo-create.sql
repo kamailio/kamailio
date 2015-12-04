@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('silo','8');
 CREATE TABLE silo (
     id NUMBER(10) PRIMARY KEY,
     src_addr VARCHAR2(128) DEFAULT '',
@@ -24,4 +23,6 @@ END silo_tr;
 BEGIN map2users('silo'); END;
 /
 CREATE INDEX silo_account_idx  ON silo (username, domain);
+
+INSERT INTO version (table_name, table_version) values ('silo','8');
 

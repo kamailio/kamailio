@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('uacreg','1');
 CREATE TABLE uacreg (
     id SERIAL PRIMARY KEY NOT NULL,
     l_uuid VARCHAR(64) DEFAULT '' NOT NULL,
@@ -13,4 +12,6 @@ CREATE TABLE uacreg (
     expires INTEGER DEFAULT 0 NOT NULL,
     CONSTRAINT uacreg_l_uuid_idx UNIQUE (l_uuid)
 );
+
+INSERT INTO version (table_name, table_version) values ('uacreg','1');
 
