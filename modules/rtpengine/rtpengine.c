@@ -2360,17 +2360,21 @@ found:
         memset(entry, 0, sizeof(struct rtpengine_hash_entry));
 
 	/* fill the entry */
-	if (shm_str_dup(&entry->callid, &callid) < 0) {
-		LM_ERR("rtpengine hash table fail to duplicate calllen=%d callid=%.*s\n",
-			callid.len, callid.len, callid.s);
-		rtpengine_hash_table_free_entry(entry);
-		return node;
+        if (callid.s && callid.len > 0) {
+		if (shm_str_dup(&entry->callid, &callid) < 0) {
+			LM_ERR("rtpengine hash table fail to duplicate calllen=%d callid=%.*s\n",
+				callid.len, callid.len, callid.s);
+			rtpengine_hash_table_free_entry(entry);
+			return node;
+		}
 	}
-	if (shm_str_dup(&entry->viabranch, &viabranch) < 0) {
-		LM_ERR("rtpengine hash table fail to duplicate calllen=%d viabranch=%.*s\n",
-			callid.len, viabranch.len, viabranch.s);
-		rtpengine_hash_table_free_entry(entry);
-		return node;
+        if (viabranch.s && viabranch.len > 0) {
+		if (shm_str_dup(&entry->viabranch, &viabranch) < 0) {
+			LM_ERR("rtpengine hash table fail to duplicate calllen=%d viabranch=%.*s\n",
+				callid.len, viabranch.len, viabranch.s);
+			rtpengine_hash_table_free_entry(entry);
+			return node;
+		}
 	}
 	entry->node = node;
 	entry->next = NULL;
