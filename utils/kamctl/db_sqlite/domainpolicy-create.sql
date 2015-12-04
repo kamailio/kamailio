@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('domainpolicy','2');
 CREATE TABLE domainpolicy (
     id INTEGER PRIMARY KEY NOT NULL,
     rule VARCHAR(255) NOT NULL,
@@ -10,4 +9,6 @@ CREATE TABLE domainpolicy (
 );
 
 CREATE INDEX domainpolicy_rule_idx ON domainpolicy (rule);
+
+INSERT INTO version (table_name, table_version) values ('domainpolicy','2');
 

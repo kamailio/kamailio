@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('uid_credentials','7');
 CREATE TABLE `uid_credentials` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `auth_username` VARCHAR(64) NOT NULL,
@@ -15,4 +14,6 @@ CREATE INDEX cred_idx ON uid_credentials (`auth_username`, `did`);
 CREATE INDEX uid ON uid_credentials (`uid`);
 CREATE INDEX did_idx ON uid_credentials (`did`);
 CREATE INDEX realm_idx ON uid_credentials (`realm`);
+
+INSERT INTO version (table_name, table_version) values ('uid_credentials','7');
 

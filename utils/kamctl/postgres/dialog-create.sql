@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('dialog','7');
 CREATE TABLE dialog (
     id SERIAL PRIMARY KEY NOT NULL,
     hash_entry INTEGER NOT NULL,
@@ -28,7 +27,8 @@ CREATE TABLE dialog (
 
 CREATE INDEX dialog_hash_idx ON dialog (hash_entry, hash_id);
 
-INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
+INSERT INTO version (table_name, table_version) values ('dialog','7');
+
 CREATE TABLE dialog_vars (
     id SERIAL PRIMARY KEY NOT NULL,
     hash_entry INTEGER NOT NULL,
@@ -38,4 +38,6 @@ CREATE TABLE dialog_vars (
 );
 
 CREATE INDEX dialog_vars_hash_idx ON dialog_vars (hash_entry, hash_id);
+
+INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
 

@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('sca_subscriptions','1');
 CREATE TABLE sca_subscriptions (
     id INTEGER PRIMARY KEY NOT NULL,
     subscriber VARCHAR(255) NOT NULL,
@@ -18,4 +17,6 @@ CREATE TABLE sca_subscriptions (
 
 CREATE INDEX sca_subscriptions_sca_expires_idx ON sca_subscriptions (expires);
 CREATE INDEX sca_subscriptions_sca_subscribers_idx ON sca_subscriptions (subscriber, event);
+
+INSERT INTO version (table_name, table_version) values ('sca_subscriptions','1');
 

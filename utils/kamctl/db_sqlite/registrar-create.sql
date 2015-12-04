@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('aliases','8');
 CREATE TABLE aliases (
     id INTEGER PRIMARY KEY NOT NULL,
     ruid VARCHAR(64) DEFAULT '' NOT NULL,
@@ -28,4 +27,6 @@ CREATE TABLE aliases (
 
 CREATE INDEX aliases_account_contact_idx ON aliases (username, domain, contact);
 CREATE INDEX aliases_expires_idx ON aliases (expires);
+
+INSERT INTO version (table_name, table_version) values ('aliases','8');
 

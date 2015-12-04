@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('uid_global_attrs','1');
 CREATE TABLE uid_global_attrs (
     id INTEGER PRIMARY KEY NOT NULL,
     name VARCHAR(32) NOT NULL,
@@ -7,4 +6,6 @@ CREATE TABLE uid_global_attrs (
     flags INTEGER DEFAULT 0 NOT NULL,
     CONSTRAINT uid_global_attrs_global_attrs_idx UNIQUE (name, value)
 );
+
+INSERT INTO version (table_name, table_version) values ('uid_global_attrs','1');
 

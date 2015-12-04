@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('dialog','7');
 CREATE TABLE `dialog` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `hash_entry` INT(10) UNSIGNED NOT NULL,
@@ -28,7 +27,8 @@ CREATE TABLE `dialog` (
 
 CREATE INDEX hash_idx ON dialog (`hash_entry`, `hash_id`);
 
-INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
+INSERT INTO version (table_name, table_version) values ('dialog','7');
+
 CREATE TABLE `dialog_vars` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `hash_entry` INT(10) UNSIGNED NOT NULL,
@@ -38,4 +38,6 @@ CREATE TABLE `dialog_vars` (
 );
 
 CREATE INDEX hash_idx ON dialog_vars (`hash_entry`, `hash_id`);
+
+INSERT INTO version (table_name, table_version) values ('dialog_vars','1');
 

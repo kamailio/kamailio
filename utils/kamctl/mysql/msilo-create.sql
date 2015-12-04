@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('silo','8');
 CREATE TABLE `silo` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `src_addr` VARCHAR(128) DEFAULT '' NOT NULL,
@@ -16,4 +15,6 @@ CREATE TABLE `silo` (
 );
 
 CREATE INDEX account_idx ON silo (`username`, `domain`);
+
+INSERT INTO version (table_name, table_version) values ('silo','8');
 

@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('uid_uri','3');
 CREATE TABLE uid_uri (
     id NUMBER(10) PRIMARY KEY,
     uuid VARCHAR2(64),
@@ -19,7 +18,8 @@ BEGIN map2users('uid_uri'); END;
 CREATE INDEX uid_uri_uri_idx1  ON uid_uri (username, did, scheme);
 CREATE INDEX uid_uri_uri_uid  ON uid_uri (uuid);
 
-INSERT INTO version (table_name, table_version) values ('uid_uri_attrs','2');
+INSERT INTO version (table_name, table_version) values ('uid_uri','3');
+
 CREATE TABLE uid_uri_attrs (
     id NUMBER(10) PRIMARY KEY,
     username VARCHAR2(64),
@@ -40,3 +40,5 @@ END uid_uri_attrs_tr;
 /
 BEGIN map2users('uid_uri_attrs'); END;
 /
+INSERT INTO version (table_name, table_version) values ('uid_uri_attrs','2');
+

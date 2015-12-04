@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('mohqcalls','1');
 CREATE TABLE mohqcalls (
     id NUMBER(10) PRIMARY KEY,
     mohq_id NUMBER(10),
@@ -18,7 +17,8 @@ END mohqcalls_tr;
 /
 BEGIN map2users('mohqcalls'); END;
 /
-INSERT INTO version (table_name, table_version) values ('mohqueues','1');
+INSERT INTO version (table_name, table_version) values ('mohqcalls','1');
+
 CREATE TABLE mohqueues (
     id NUMBER(10) PRIMARY KEY,
     name VARCHAR2(25),
@@ -38,3 +38,5 @@ END mohqueues_tr;
 /
 BEGIN map2users('mohqueues'); END;
 /
+INSERT INTO version (table_name, table_version) values ('mohqueues','1');
+

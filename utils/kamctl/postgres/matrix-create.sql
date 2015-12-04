@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('matrix','1');
 CREATE TABLE matrix (
     first INTEGER NOT NULL,
     second SMALLINT NOT NULL,
@@ -6,4 +5,6 @@ CREATE TABLE matrix (
 );
 
 CREATE INDEX matrix_matrix_idx ON matrix (first, second);
+
+INSERT INTO version (table_name, table_version) values ('matrix','1');
 

@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('grp','2');
 CREATE TABLE grp (
     id NUMBER(10) PRIMARY KEY,
     username VARCHAR2(64) DEFAULT '',
@@ -16,7 +15,8 @@ END grp_tr;
 /
 BEGIN map2users('grp'); END;
 /
-INSERT INTO version (table_name, table_version) values ('re_grp','1');
+INSERT INTO version (table_name, table_version) values ('grp','2');
+
 CREATE TABLE re_grp (
     id NUMBER(10) PRIMARY KEY,
     reg_exp VARCHAR2(128) DEFAULT '',
@@ -32,4 +32,6 @@ END re_grp_tr;
 BEGIN map2users('re_grp'); END;
 /
 CREATE INDEX re_grp_group_idx  ON re_grp (group_id);
+
+INSERT INTO version (table_name, table_version) values ('re_grp','1');
 

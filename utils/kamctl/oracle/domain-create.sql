@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('domain','2');
 CREATE TABLE domain (
     id NUMBER(10) PRIMARY KEY,
     domain VARCHAR2(64),
@@ -15,7 +14,8 @@ END domain_tr;
 /
 BEGIN map2users('domain'); END;
 /
-INSERT INTO version (table_name, table_version) values ('domain_attrs','1');
+INSERT INTO version (table_name, table_version) values ('domain','2');
+
 CREATE TABLE domain_attrs (
     id NUMBER(10) PRIMARY KEY,
     did VARCHAR2(64),
@@ -34,3 +34,5 @@ END domain_attrs_tr;
 /
 BEGIN map2users('domain_attrs'); END;
 /
+INSERT INTO version (table_name, table_version) values ('domain_attrs','1');
+

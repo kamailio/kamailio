@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('uid_user_attrs','3');
 CREATE TABLE uid_user_attrs (
     id NUMBER(10) PRIMARY KEY,
     uuid VARCHAR2(64),
@@ -17,3 +16,5 @@ END uid_user_attrs_tr;
 /
 BEGIN map2users('uid_user_attrs'); END;
 /
+INSERT INTO version (table_name, table_version) values ('uid_user_attrs','3');
+

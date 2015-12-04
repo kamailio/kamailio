@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('uid_credentials','7');
 CREATE TABLE uid_credentials (
     id NUMBER(10) PRIMARY KEY,
     auth_username VARCHAR2(64),
@@ -23,4 +22,6 @@ CREATE INDEX uid_credentials_cred_idx  ON uid_credentials (auth_username, did);
 CREATE INDEX uid_credentials_uuid  ON uid_credentials (uuid);
 CREATE INDEX uid_credentials_did_idx  ON uid_credentials (did);
 CREATE INDEX uid_credentials_realm_idx  ON uid_credentials (realm);
+
+INSERT INTO version (table_name, table_version) values ('uid_credentials','7');
 

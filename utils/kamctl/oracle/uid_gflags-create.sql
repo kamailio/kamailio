@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('uid_global_attrs','1');
 CREATE TABLE uid_global_attrs (
     id NUMBER(10) PRIMARY KEY,
     name VARCHAR2(32),
@@ -16,3 +15,5 @@ END uid_global_attrs_tr;
 /
 BEGIN map2users('uid_global_attrs'); END;
 /
+INSERT INTO version (table_name, table_version) values ('uid_global_attrs','1');
+

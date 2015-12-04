@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('matrix','1');
 CREATE TABLE matrix (
     first NUMBER(10),
     second NUMBER(5),
@@ -14,4 +13,6 @@ END matrix_tr;
 BEGIN map2users('matrix'); END;
 /
 CREATE INDEX matrix_matrix_idx  ON matrix (first, second);
+
+INSERT INTO version (table_name, table_version) values ('matrix','1');
 
