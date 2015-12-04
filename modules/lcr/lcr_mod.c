@@ -2409,10 +2409,9 @@ void ping_timer(unsigned int ticks, void* param)
  * transport parts of R-URI based on first gw_uri_avp value, which is then
  * destroyed.  Saves R-URI user to ruri_user_avp for later use.
  *
- * On other calls, rewrites R-URI, where scheme, host, port,
- * and transport of URI are taken from the first gw_uri_avp value, 
- * which is then destroyed. URI user is taken either from ruri_user_avp
- * value saved earlier.
+ * On other calls, rewrites R-URI, where scheme, host, port, and
+ * transport of URI are taken from the first gw_uri_avp value,  which is then
+ * destroyed. URI user is taken from ruri_user_avp value saved earlier.
  *
  * Returns 1 upon success and -1 upon failure.
  */
@@ -2451,6 +2450,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	/* Save Request-URI user into uri_user_avp for use in subsequent
          * invocations. */
 
+	delete_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp);
 	val.s = _m->parsed_uri.user;
 	add_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp, val);
 	LM_DBG("added ruri_user_avp <%.*s>\n", val.s.len, val.s.s);
