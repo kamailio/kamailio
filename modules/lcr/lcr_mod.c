@@ -1848,6 +1848,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
     int_str val;
 
     delete_avp(gw_uri_avp_type|AVP_VAL_STR, gw_uri_avp);
+    delete_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp);
 
     for (i = 0; i < gw_cnt; i++) {
 	if (matched_gws[i].duplicate == 1) continue;
@@ -2450,7 +2451,6 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	/* Save Request-URI user into uri_user_avp for use in subsequent
          * invocations. */
 
-	delete_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp);
 	val.s = _m->parsed_uri.user;
 	add_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp, val);
 	LM_DBG("added ruri_user_avp <%.*s>\n", val.s.len, val.s.s);
