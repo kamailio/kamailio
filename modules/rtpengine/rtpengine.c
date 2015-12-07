@@ -2452,18 +2452,16 @@ select_rtpp_node(str callid, str viabranch, int do_test)
 		return node;
 	}
 
-	// if node _manually_ disabled(e.g kamctl) and proper configuration, return it
-	if (node->rn_recheck_ticks == MI_MAX_RECHECK_TICKS) {
-		if (rtpengine_allow_op) {
+	// if proper configuration and node manually or timeout disabled, return it
+	if (rtpengine_allow_op) {
+		if (node->rn_recheck_ticks == MI_MAX_RECHECK_TICKS) {
 			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled(permanent) (probably still UP)! Return it\n",
 				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
-			return node;
+		} else {
+			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled, either broke or timeout disabled! Return it\n",
+				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
 		}
-		LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled(permanent) (probably still UP)! Return NULL\n",
-			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
-	} else {
-		LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled (probably BROKE)! Return NULL\n",
-			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
+		return node;
 	}
 
 	return NULL;
