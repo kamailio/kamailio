@@ -2,6 +2,7 @@
 #define _RTPENGINE_HASH_H
 
 #include "../../str.h"
+#include "../../locking.h"
 
 
 /* table entry */
@@ -17,6 +18,7 @@ struct rtpengine_hash_entry {
 /* table */
 struct rtpengine_hash_table {
 	struct rtpengine_hash_entry **entry_list;	// hastable
+	gen_lock_t **row_locks;				// hastable row locks
 	unsigned int total;				// total number of entries in the hashtable
 };
 
@@ -31,5 +33,7 @@ unsigned int rtpengine_hash_table_total();
 
 void rtpengine_hash_table_free_entry(struct rtpengine_hash_entry *entry);
 void rtpengine_hash_table_free_entry_list(struct rtpengine_hash_entry *entry_list);
+
+void rtpengine_hash_table_free_row_lock(gen_lock_t *lock);
 
 #endif
