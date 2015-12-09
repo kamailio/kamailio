@@ -606,9 +606,11 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 	int offset;
 	hdr_flags_t flags;
 
-	/* eat crlf from the beginning */
-	for (tmp=buf; (*tmp=='\n' || *tmp=='\r')&&
-			tmp-buf < len ; tmp++);
+	/* eat crlf & whitespaces from the beginning */
+	for (tmp=buf; (tmp-buf < len)
+			&& (*tmp=='\n' || *tmp=='\r' || *tmp=='\0'
+				|| *tmp=='\t' || *tmp==' ');
+			tmp++);
 	offset=tmp-buf;
 	fl=&(msg->first_line);
 	rest=parse_first_line(tmp, len-offset, fl);
