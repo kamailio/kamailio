@@ -59,10 +59,12 @@
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
 #include "../../config.h"
+#include "../../lvalue.h"
 
 #include "functions.h"
 #include "curlcon.h"
 #include "curlrpc.h"
+#include "curl_api.h"
 
 MODULE_VERSION
 
@@ -126,6 +128,7 @@ static cmd_export_t cmds[] = {
     {"curl_connect", (cmd_function)w_curl_connect_post, 5, fixup_curl_connect_post,
      fixup_free_curl_connect_post,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+    {"bind_curl",  (cmd_function)bind_curl_api,  0, 0, 0, 0},
 };
 
 
@@ -343,8 +346,7 @@ static int fixup_http_query_get(void** param, int param_no)
 static int fixup_free_http_query_get(void** param, int param_no)
 {
     if (param_no == 1) {
-	LM_WARN("free function has not been defined for spve\n");
-	return 0;
+        return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 2) {
@@ -363,10 +365,14 @@ static int fixup_free_http_query_get(void** param, int param_no)
 static int fixup_curl_connect(void** param, int param_no)
 {
 
-    if ((param_no == 1) || (param_no == 2)) {
+    if (param_no == 1) {
 	/* We want char * strings */
 	return 0;
-	}
+    }
+    /* URL and data may contain pvar */
+    if (param_no == 2) {
+        return fixup_spve_null(param, 1);
+    }
     if (param_no == 3) {
 	if (fixup_pvar_null(param, 1) != 0) {
 	    LM_ERR("failed to fixup result pvar\n");
@@ -391,24 +397,13 @@ static int fixup_curl_connect(void** param, int param_no)
 static int fixup_curl_connect_post(void** param, int param_no)
 {
 
-    str s;
-    pv_elem_t *pv = NULL;
-
     if (param_no == 1 || param_no == 3) {
 	/* We want char * strings */
 	return 0;
-	}
+    }
     /* URL and data may contain pvar */
-    if (param_no == 4 || param_no == 2) {
-        s.s = (char*)(*param);
-        s.len = strlen(s.s);
-
-	if(pv_parse_format(&s, &pv) < 0) {
-	    LM_ERR("failed to parse postdata \n");
-	    return -1;
-	}
-	*param = (void*)pv;
-	return 0;
+    if (param_no == 2 || param_no == 4) {
+        return fixup_spve_null(param, 1);
     }
     if (param_no == 5) {
 	if (fixup_pvar_null(param, 1) != 0) {
@@ -432,13 +427,16 @@ static int fixup_curl_connect_post(void** param, int param_no)
  */
 static int fixup_free_curl_connect_post(void** param, int param_no)
 {
-    if (param_no == 1 || param_no == 2 || param_no == 3 || param_no == 4) {
-	LM_WARN("free function has not been defined for spve\n");
+    if (param_no == 1 || param_no == 3) {
+	/* Char strings don't need freeing */
 	return 0;
+    }
+    if (param_no == 2 || param_no == 4) {
+        return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 5) {
-	return fixup_free_pvar_null(param, 5);
+	return fixup_free_pvar_null(param, 1);
     }
     
     LM_ERR("invalid parameter number <%d>\n", param_no);
@@ -450,13 +448,16 @@ static int fixup_free_curl_connect_post(void** param, int param_no)
  */
 static int fixup_free_curl_connect(void** param, int param_no)
 {
-    if ((param_no == 1) || (param_no == 2)) {
-	LM_WARN("free function has not been defined for spve\n");
+    if (param_no == 1) {
+	/* Char strings don't need freeing */
 	return 0;
     }
+    if (param_no == 2) {
+        return fixup_free_spve_null(param, 1);
+    }
 
-    if (param_no == 5) {
-	return fixup_free_pvar_null(param, 5);
+    if (param_no == 3) {
+	return fixup_free_pvar_null(param, 1);
     }
     
     LM_ERR("invalid parameter number <%d>\n", param_no);
@@ -467,17 +468,81 @@ static int fixup_free_curl_connect(void** param, int param_no)
  * Wrapper for Curl_connect (GET)
  */
 static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _result) {
-//	curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _result, const char *contenttype, char* _post)
+/* int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* _url, str* _result, const str *contenttype, const str* _post); */
+
+	str con = {NULL,0};
+	str url = {NULL,0};
+	str result = {NULL,0};
+	pv_spec_t *dst;
+	pv_value_t val;
+	int ret = 0;
+
+	if (_con == NULL || _url == NULL || _result == NULL) {
+		LM_ERR("Invalid parameter\n");
+	}
+	con.s = _con;
+	con.len = strlen(con.s);
+
+	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
+		LM_ERR("_url has no value\n");
+		return -1;
+	}
+
 	LM_DBG("**** Curl Connection %s URL %s Result var %s\n", _con, _url, _result);
 
-	return curl_con_query_url(_m, _con, _url, _result, NULL, NULL);
+	ret = curl_con_query_url(_m, &con, &url, &result, NULL, NULL);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	dst = (pv_spec_t *)_result;
+	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+
+	if (result.s != NULL)
+		pkg_free(result.s);
+
+	return ret;
 }
 
 /*
  * Wrapper for Curl_connect (POST)
  */
 static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url, char* _ctype, char* _data, char *_result) {
-	return curl_con_query_url(_m, _con, _url, _result, _ctype, _data);
+	str con = {NULL,0};
+	str url = {NULL,0};
+	str data = {NULL, 0};
+	str result = {NULL,0};
+	pv_spec_t *dst;
+	pv_value_t val;
+	int ret = 0;
+
+	if (_con == NULL || _url == NULL || _data == NULL || _result == NULL) {
+		LM_ERR("Invalid parameter\n");
+	}
+	con.s = _con;
+	con.len = strlen(con.s);
+
+	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
+		LM_ERR("_url has no value\n");
+		return -1;
+	}
+	if (get_str_fparam(&data, _m, (gparam_p)_data) != 0) {
+		LM_ERR("_data has no value\n");
+		return -1;
+	}
+
+	LM_DBG("**** Curl Connection %s URL %s Result var %s\n", _con, _url, _result);
+
+	ret = curl_con_query_url(_m, &con, &url, &result, _ctype, &data);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	dst = (pv_spec_t *)_result;
+	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+
+	if (result.s != NULL)
+		pkg_free(result.s);
+
+	return ret;
 }
 
 
@@ -513,8 +578,7 @@ static int fixup_http_query_post(void** param, int param_no)
 static int fixup_free_http_query_post(void** param, int param_no)
 {
     if ((param_no == 1) || (param_no == 2)) {
-	LM_WARN("free function has not been defined for spve\n");
-	return 0;
+        return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 3) {
@@ -529,7 +593,27 @@ static int fixup_free_http_query_post(void** param, int param_no)
  * Wrapper for HTTP-Query (GET)
  */
 static int w_http_query(struct sip_msg* _m, char* _url, char* _result) {
-	return http_query(_m, _url, _result, NULL);
+	int ret = 0;
+	str url = {NULL, 0};
+	str result = {NULL, 0};
+	pv_spec_t *dst;
+	pv_value_t val;
+
+	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
+		LM_ERR("_url has no value\n");
+		return -1;
+	}
+
+	ret = http_query(_m, url.s, &result, NULL);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	dst = (pv_spec_t *)_result;
+	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+
+	if (result.s != NULL)
+		pkg_free(result.s);
+	return ret;
 }
 
 
@@ -537,7 +621,31 @@ static int w_http_query(struct sip_msg* _m, char* _url, char* _result) {
  * Wrapper for HTTP-Query (POST-Variant)
  */
 static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result) {
-	return http_query(_m, _url, _result, _post);
+	int ret = 0;
+	str url = {NULL, 0};
+	str post = {NULL, 0};
+	str result = {NULL, 0};
+	pv_spec_t *dst;
+	pv_value_t val;
+
+	if (get_str_fparam(&url, _m, (gparam_p)_url) != 0) {
+		LM_ERR("_url has no value\n");
+		return -1;
+	}
+	if (get_str_fparam(&post, _m, (gparam_p)_post) != 0) {
+		LM_ERR("_data has no value\n");
+		return -1;
+	}
+
+	ret = http_query(_m, url.s, &result, post.s);
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	dst = (pv_spec_t *)_result;
+	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+
+	if (result.s != NULL)
+		pkg_free(result.s);
+	return ret;
 }
 
 /*!
