@@ -361,8 +361,7 @@ static int fixup_http_query_get(void** param, int param_no)
 static int fixup_free_http_query_get(void** param, int param_no)
 {
     if (param_no == 1) {
-	LM_WARN("free function has not been defined for spve\n");
-	return 0;
+	return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 2) {
@@ -406,7 +405,7 @@ static int fixup_http_query_post(void** param, int param_no)
  */
 static int fixup_http_query_post_hdr(void** param, int param_no)
 {
-    if ((param_no >= 1) || (param_no <= 3)) {
+    if ((param_no >= 1) && (param_no <= 3)) {
 	return fixup_spve_null(param, 1);
     }
 
@@ -432,8 +431,7 @@ static int fixup_http_query_post_hdr(void** param, int param_no)
 static int fixup_free_http_query_post(void** param, int param_no)
 {
     if ((param_no == 1) || (param_no == 2)) {
-	LM_WARN("free function has not been defined for spve\n");
-	return 0;
+	return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 3) {
@@ -449,12 +447,11 @@ static int fixup_free_http_query_post(void** param, int param_no)
  */
 static int fixup_free_http_query_post_hdr(void** param, int param_no)
 {
-    if ((param_no >= 1) || (param_no <= 2)) {
-	LM_WARN("free function has not been defined for spve\n");
-	return 0;
+    if ((param_no >= 1) && (param_no <= 3)) {
+	return fixup_free_spve_null(param, 1);
     }
 
-    if (param_no == 3) {
+    if (param_no == 4) {
 	return fixup_free_pvar_null(param, 1);
     }
     
