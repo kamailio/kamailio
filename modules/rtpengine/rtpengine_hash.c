@@ -7,7 +7,6 @@
 #include "../../timer.h"
 
 static struct rtpengine_hash_table *rtpengine_hash_table;
-static int hash_table_size;
 
 /* from sipwise rtpengine */
 static int str_cmp_str(const str a, const str b) {
@@ -36,12 +35,13 @@ static unsigned int str_hash(str s) {
 		it.len--;
 	}
 
-	return ret % hash_table_size;
+	return ret % rtpengine_hash_table->size;
 }
 
 /* rtpengine hash API */
 int rtpengine_hash_table_init(int size) {
 	int i;
+	int hash_table_size;
 
 	// init hash table size
 	if (size < 1) {
@@ -58,15 +58,16 @@ int rtpengine_hash_table_init(int size) {
 		return 0;
 	}
 	memset(rtpengine_hash_table, 0, sizeof(struct rtpengine_hash_table));
+	rtpengine_hash_table->size = hash_table_size;
 
-	// init hashtable entry_list
-	rtpengine_hash_table->entry_list = shm_malloc(hash_table_size * sizeof(struct rtpengine_hash_entry));
-	if (!rtpengine_hash_table->entry_list) {
-		LM_ERR("no shm left to create rtpengine_hash_table->entry_list\n");
+	// init hashtable row_entry_list
+	rtpengine_hash_table->row_entry_list = shm_malloc(rtpengine_hash_table->size * sizeof(struct rtpengine_hash_entry*));
+	if (!rtpengine_hash_table->row_entry_list) {
+		LM_ERR("no shm left to create rtpengine_hash_table->row_entry_list\n");
 		rtpengine_hash_table_destroy();
 		return 0;
 	}
-	memset(rtpengine_hash_table->entry_list, 0, hash_table_size * sizeof(struct rtpengine_hash_entry));
+	memset(rtpengine_hash_table->row_entry_list, 0, rtpengine_hash_table->size * sizeof(struct rtpengine_hash_entry*));
 
 	// init hashtable row_locks
 	rtpengine_hash_table->row_locks = shm_malloc(hash_table_size * sizeof(gen_lock_t*));
@@ -86,19 +87,19 @@ int rtpengine_hash_table_init(int size) {
 	}
 	memset(rtpengine_hash_table->row_totals, 0, hash_table_size * sizeof(unsigned int));
 
-	// init hashtable entry_list[i], row_locks[i] and row_totals[i]
+	// init hashtable row_entry_list[i], row_locks[i] and row_totals[i]
 	for (i = 0; i < hash_table_size; i++) {
 		// init hashtable row_entry_list[i]
-		rtpengine_hash_table->entry_list[i] = shm_malloc(sizeof(struct rtpengine_hash_entry));
-		if (!rtpengine_hash_table->entry_list[i]) {
-			LM_ERR("no shm left to create rtpengine_hash_table->entry_list[%d]\n", i);
+		rtpengine_hash_table->row_entry_list[i] = shm_malloc(sizeof(struct rtpengine_hash_entry));
+		if (!rtpengine_hash_table->row_entry_list[i]) {
+			LM_ERR("no shm left to create rtpengine_hash_table->row_entry_list[%d]\n", i);
 			rtpengine_hash_table_destroy();
 			return 0;
 		}
-		memset(rtpengine_hash_table->entry_list[i], 0, sizeof(struct rtpengine_hash_entry));
+		memset(rtpengine_hash_table->row_entry_list[i], 0, sizeof(struct rtpengine_hash_entry));
 
-		rtpengine_hash_table->entry_list[i]->tout = -1;
-		rtpengine_hash_table->entry_list[i]->next = NULL;
+		rtpengine_hash_table->row_entry_list[i]->tout = -1;
+		rtpengine_hash_table->row_entry_list[i]->next = NULL;
 
 		// init hashtable row_locks[i]
 		rtpengine_hash_table->row_locks[i] = lock_alloc();
@@ -122,16 +123,16 @@ int rtpengine_hash_table_destroy() {
 	}
 
 	// destroy hashtable content
-	for (i = 0; i < hash_table_size; i++) {
-		// destroy hashtable entry_list[i]
+	for (i = 0; i < rtpengine_hash_table->size; i++) {
+		// destroy hashtable row_entry_list[i]
 		if (rtpengine_hash_table->row_locks[i]) {
 			lock_get(rtpengine_hash_table->row_locks[i]);
 		} else {
 			LM_ERR("NULL rtpengine_hash_table->row_locks[%d]\n", i);
 			return 0;
 		}
-		rtpengine_hash_table_free_entry_list(rtpengine_hash_table->entry_list[i]);
-		rtpengine_hash_table->entry_list[i] = NULL;
+		rtpengine_hash_table_free_row_entry_list(rtpengine_hash_table->row_entry_list[i]);
+		rtpengine_hash_table->row_entry_list[i] = NULL;
 		lock_release(rtpengine_hash_table->row_locks[i]);
 
 		// destroy hashtable row_locks[i]
@@ -139,9 +140,9 @@ int rtpengine_hash_table_destroy() {
 		rtpengine_hash_table->row_locks[i] = NULL;
 	}
 
-	// destroy hashtable entry_list
-	shm_free(rtpengine_hash_table->entry_list);
-	rtpengine_hash_table->entry_list = NULL;
+	// destroy hashtable row_entry_list
+	shm_free(rtpengine_hash_table->row_entry_list);
+	rtpengine_hash_table->row_entry_list = NULL;
 
 	// destroy hashtable row_locks
 	shm_free(rtpengine_hash_table->row_locks);
@@ -171,7 +172,7 @@ int rtpengine_hash_table_insert(str callid, str viabranch, struct rtpengine_hash
 
 	// get entry list
 	hash_index = str_hash(callid);
-	entry = rtpengine_hash_table->entry_list[hash_index];
+	entry = rtpengine_hash_table->row_entry_list[hash_index];
 	last_entry = entry;
 
 	// lock
@@ -237,7 +238,7 @@ int rtpengine_hash_table_remove(str callid, str viabranch) {
 
 	// get first entry from entry list; jump over unused list head
 	hash_index = str_hash(callid);
-	entry = rtpengine_hash_table->entry_list[hash_index];
+	entry = rtpengine_hash_table->row_entry_list[hash_index];
 	last_entry = entry;
 
 	// lock
@@ -303,7 +304,7 @@ struct rtpp_node *rtpengine_hash_table_lookup(str callid, str viabranch) {
 
 	// get first entry from entry list; jump over unused list head
 	hash_index = str_hash(callid);
-	entry = rtpengine_hash_table->entry_list[hash_index];
+	entry = rtpengine_hash_table->row_entry_list[hash_index];
 	last_entry = entry;
 
 	// lock
@@ -363,7 +364,7 @@ void rtpengine_hash_table_print() {
 	}
 
 	// print hashtable
-	for (i = 0; i < hash_table_size; i++) {
+	for (i = 0; i < rtpengine_hash_table->size; i++) {
 		// lock
 		if (rtpengine_hash_table->row_locks[i]) {
 			lock_get(rtpengine_hash_table->row_locks[i]);
@@ -372,7 +373,7 @@ void rtpengine_hash_table_print() {
 			return ;
 		}
 
-		entry = rtpengine_hash_table->entry_list[i];
+		entry = rtpengine_hash_table->row_entry_list[i];
 		last_entry = entry;
 
 		while (entry) {
@@ -414,7 +415,7 @@ unsigned int rtpengine_hash_table_total() {
 		return 0;
 	}
 
-	for (i = 0; i < hash_table_size; i++) {
+	for (i = 0; i < rtpengine_hash_table->size; i++) {
 		total += rtpengine_hash_table->row_totals[i];
 	}
 
@@ -443,15 +444,15 @@ void rtpengine_hash_table_free_entry(struct rtpengine_hash_entry *entry) {
 	return ;
 }
 
-void rtpengine_hash_table_free_entry_list(struct rtpengine_hash_entry *entry_list) {
+void rtpengine_hash_table_free_row_entry_list(struct rtpengine_hash_entry *row_entry_list) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 
-	if (!entry_list) {
-		LM_ERR("try to free a NULL entry_list\n");
+	if (!row_entry_list) {
+		LM_ERR("try to free a NULL row_entry_list\n");
 		return ;
 	}
 
-	entry = entry_list;
+	entry = row_entry_list;
 	while (entry) {
 		last_entry = entry;
 		entry = entry->next;
@@ -480,9 +481,9 @@ int rtpengine_hash_table_sanity_checks() {
 		return 0;
 	}
 
-	// check rtpengine hashtable->entry_list
-	if (!rtpengine_hash_table->entry_list) {
-		LM_ERR("NULL rtpengine_hash_table->entry_list\n");
+	// check rtpengine hashtable->row_entry_list
+	if (!rtpengine_hash_table->row_entry_list) {
+		LM_ERR("NULL rtpengine_hash_table->row_entry_list\n");
 		return 0;
 	}
 

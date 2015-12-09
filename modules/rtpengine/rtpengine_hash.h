@@ -17,9 +17,10 @@ struct rtpengine_hash_entry {
 
 /* table */
 struct rtpengine_hash_table {
-	struct rtpengine_hash_entry **entry_list;	// hashtable
-	gen_lock_t **row_locks;				// vector of pointers to locks
-	unsigned int *row_totals;			// vector of numbers of entries in the hashtable rows
+	struct rtpengine_hash_entry **row_entry_list;	// vector of size pointers to entry
+	gen_lock_t **row_locks;				// vector of size pointers to locks
+	unsigned int *row_totals;			// vector of size numbers of entries in the hashtable rows
+	unsigned int size;				// hash table size
 };
 
 
@@ -32,7 +33,7 @@ void rtpengine_hash_table_print();
 unsigned int rtpengine_hash_table_total();
 
 void rtpengine_hash_table_free_entry(struct rtpengine_hash_entry *entry);
-void rtpengine_hash_table_free_entry_list(struct rtpengine_hash_entry *entry_list);
+void rtpengine_hash_table_free_row_entry_list(struct rtpengine_hash_entry *row_entry_list);
 
 void rtpengine_hash_table_free_row_lock(gen_lock_t *lock);
 int rtpengine_hash_table_sanity_checks();
