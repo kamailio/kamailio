@@ -255,6 +255,7 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	int orig_id = 0, orig_nr = 0;
 	str host;
 	int port, proto;
+	char c = 0;
 	ds_set_t *orig_ds_lists = ds_lists[list_idx];
 
 	/* check uri */
@@ -329,10 +330,22 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 
 	/* check socket attribute */
 	if (dp->attrs.socket.s && dp->attrs.socket.len > 0) {
+		/* parse_phostport(...) expects 0-terminated string
+		 * - after socket parameter is either ';' or '\0' */
+		if(dp->attrs.socket.s[dp->attrs.socket.len]!='\0') {
+			c = dp->attrs.socket.s[dp->attrs.socket.len];
+			dp->attrs.socket.s[dp->attrs.socket.len] = '\0';
+		}
 		if (parse_phostport(dp->attrs.socket.s, &host.s, &host.len,
 				&port, &proto)!=0) {
 			LM_ERR("bad socket <%.*s>\n", dp->attrs.socket.len, dp->attrs.socket.s);
+			if(c!=0) {
+				dp->attrs.socket.s[dp->attrs.socket.len] = c;
+			}
 			goto err;
+		}
+		if(c!=0) {
+			dp->attrs.socket.s[dp->attrs.socket.len] = c;
 		}
 		dp->sock = grep_sock_info( &host, (unsigned short)port, proto);
 		if (dp->sock==0) {
