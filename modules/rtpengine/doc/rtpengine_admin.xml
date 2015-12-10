@@ -73,6 +73,38 @@
 		If the set was selected using setid_avp, the avp needs to be
 		set only once before rtpengine_offer() or rtpengine_manage() call.
 	</para>
+	<para>
+		From the current implementation point of view, the sets of rtpproxy nodes
+		are shared memory(shm), so all processes can see a common list of nodes.
+		There is no locking when setting the nodes enabled/disabled (to keep the
+		memory access as fast as possible). Thus, problems related to node state
+		might appear for concurent processes that might set the nodes
+		enabled/disabled(e.g. by fifo command). This robustness problems are overcomed as follows.
+	</para>
+
+	<para>
+		If the current process sees the selected node as disabled, the node is
+		<emphasis>force tested</emphasis> before the current process actually
+		takes the disabled decision. If the test succeeds, the process will set
+		the node as enabled (but other concurrent process might still see it as disabled).
+.
+	</para>
+
+	<para>
+		If the current process sees the selected node as enabled, it does no additional checks
+		and sends the command which will fail in case the machine is actually broken.
+		The process will set the node as disabled (but other concurrent process might still see it as enabled).
+	</para>
+
+	<para>
+		The 'kamctl fifo' commands (including rtpengin ones) are executed by an exclusive
+		process which operate on the same shared memory node list.
+	</para>
+
+	<para>
+		All the nodes are pinged in the beginning by all the processes,
+		even if the node list is shared memory.
+	</para>
 	</section>
 
 	<section>
@@ -174,6 +206,30 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 		<programlisting format="linespecific">
 ...
 modparam("rtpengine", "rtpengine_tout_ms", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="rtpengine.p.rtpengine_allow_op">
+		<title><varname>rtpengine_allow_op</varname> (integer)</title>
+		<para>
+		Enable this to allow finishing the current sessions while denying new sessions for the
+		<emphasis>manually deactivated nodes </emphasis> via kamctl command i.e. "disabled(permanent)" nodes.
+		Probably the manually deactivated machine is still running(did not crash).
+		</para>
+		<para>
+		This is <emphasis>useful</emphasis> when deactivating a node for maintanance and reject new sessions but allow current ones to finish.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>0</quote> to keep the current behaviour.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>rtpengine_allow_op</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "rtpengine_allow_op", 1)
 ...
 </programlisting>
 		</example>
@@ -305,7 +361,7 @@ modparam("rtpengine", "read_sdp_pv", "$var(sdp)")
 route {
 	...
 	$var(sdp) = $rb + "a=foo:bar\r\n";
-	rtpproxy_manage();
+	rtpengine_manage();
 }
 </programlisting>
 		</example>
@@ -330,7 +386,7 @@ modparam("rtpengine", "write_sdp_pv", "$avp(sdp)")
 ...
 route {
 	...
-	rtpproxy_manage();
+	rtpengine_manage();
 	set_body("$avp(sdp)a=baz123\r\n", "application/sdp");
 }
 </programlisting>
@@ -350,11 +406,57 @@ route {
 		<title>Set <varname>rtp_inst_pvar</varname> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
+modparam("rtpengine", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
 ...
 </programlisting>
 		</example>
 	</section>
+
+	<section id="rtpengine.p.hash_table_size">
+		<title><varname>hash_table_size</varname> (integer)</title>
+		<para>
+			Size of the hash table. Default value is 256.
+		</para>
+		<para>
+			NOTE: If configured size is <emphasis>less than</emphasis> 1, the size will be defaulted to 1.
+		</para>
+		<example>
+		<title>Set <varname>hash_table_size</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "hash_table_size", "123")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.hash_table_tout">
+		<title><varname>hash_table_tout</varname> (integer)</title>
+		<para>
+			Number of seconds after an rtpengine hash table entry is marked for deletion.
+			By default, this parameter is set to 3600 (seconds).
+		</para>
+		<para>
+			To maintain information about a selected rtp machine node, for a given call, entries are added in a hashtable of (callid, node) pairs.
+			When command comes, lookup callid. If found, return chosen node. If not found, choose a new node, insert it in the hastable and return the chosen node.
+		</para>
+		<para>
+			NOTE: In the current implementation, the actual deletion happens <emphasis>on the fly</emphasis>,
+			while insert/remove/lookup the hastable, <emphasis>only</emphasis> for the entries in the insert/remove/lookup path.
+		</para>
+		<para>
+			NOTE: When configuring this parameter, one should consider maximum call time VS share memory for unfinished calls.
+		</para>
+		<example>
+		<title>Set <varname>hash_table_tout</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "hash_table_tout", "300")
+...
+</programlisting>
+		</example>
+	</section>
+
 
 	</section>
 
@@ -964,6 +1066,23 @@ $ &ctltool; fifo nh_ping_rtpp all
 			</programlisting>
 			</example>
 		</section>
+
+	    <section id="rtpengine.m.nh_show_hash_total">
+			<title><function moreinfo="none">nh_show_hash_total</function></title>
+			<para>
+				Print the total number of hash entries in the hash table at a given moment.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">nh_show_hash_total</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &ctltool; fifo nh_show_hash_total
+...
+			</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 </chapter>
