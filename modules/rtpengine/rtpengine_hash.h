@@ -35,7 +35,6 @@ unsigned int rtpengine_hash_table_total();
 void rtpengine_hash_table_free_entry(struct rtpengine_hash_entry *entry);
 void rtpengine_hash_table_free_row_entry_list(struct rtpengine_hash_entry *row_entry_list);
 
-void rtpengine_hash_table_free_row_lock(gen_lock_t *lock);
 int rtpengine_hash_table_sanity_checks();
 
 #endif

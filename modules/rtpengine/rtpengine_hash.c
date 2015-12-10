@@ -6,6 +6,9 @@
 #include "../../locking.h"
 #include "../../timer.h"
 
+static void rtpengine_hash_table_free_row_lock(gen_lock_t *row_lock);
+
+
 static struct rtpengine_hash_table *rtpengine_hash_table;
 
 /* from sipwise rtpengine */
@@ -60,15 +63,6 @@ int rtpengine_hash_table_init(int size) {
 	memset(rtpengine_hash_table, 0, sizeof(struct rtpengine_hash_table));
 	rtpengine_hash_table->size = hash_table_size;
 
-	// init hashtable row_entry_list
-	rtpengine_hash_table->row_entry_list = shm_malloc(rtpengine_hash_table->size * sizeof(struct rtpengine_hash_entry*));
-	if (!rtpengine_hash_table->row_entry_list) {
-		LM_ERR("no shm left to create rtpengine_hash_table->row_entry_list\n");
-		rtpengine_hash_table_destroy();
-		return 0;
-	}
-	memset(rtpengine_hash_table->row_entry_list, 0, rtpengine_hash_table->size * sizeof(struct rtpengine_hash_entry*));
-
 	// init hashtable row_locks
 	rtpengine_hash_table->row_locks = shm_malloc(hash_table_size * sizeof(gen_lock_t*));
 	if (!rtpengine_hash_table->row_locks) {
@@ -77,6 +71,15 @@ int rtpengine_hash_table_init(int size) {
 		return 0;
 	}
 	memset(rtpengine_hash_table->row_locks, 0, hash_table_size * sizeof(gen_lock_t*));
+
+	// init hashtable row_entry_list
+	rtpengine_hash_table->row_entry_list = shm_malloc(rtpengine_hash_table->size * sizeof(struct rtpengine_hash_entry*));
+	if (!rtpengine_hash_table->row_entry_list) {
+		LM_ERR("no shm left to create rtpengine_hash_table->row_entry_list\n");
+		rtpengine_hash_table_destroy();
+		return 0;
+	}
+	memset(rtpengine_hash_table->row_entry_list, 0, rtpengine_hash_table->size * sizeof(struct rtpengine_hash_entry*));
 
 	// init hashtable row_totals
 	rtpengine_hash_table->row_totals = shm_malloc(hash_table_size * sizeof(unsigned int));
@@ -87,8 +90,16 @@ int rtpengine_hash_table_init(int size) {
 	}
 	memset(rtpengine_hash_table->row_totals, 0, hash_table_size * sizeof(unsigned int));
 
-	// init hashtable row_entry_list[i], row_locks[i] and row_totals[i]
+	// init hashtable  row_locks[i], row_entry_list[i] and row_totals[i]
 	for (i = 0; i < hash_table_size; i++) {
+		// init hashtable row_locks[i]
+		rtpengine_hash_table->row_locks[i] = lock_alloc();
+		if (!rtpengine_hash_table->row_locks[i]) {
+			LM_ERR("no shm left to create rtpengine_hash_table->row_locks[%d]\n", i);
+			rtpengine_hash_table_destroy();
+			return 0;
+		}
+
 		// init hashtable row_entry_list[i]
 		rtpengine_hash_table->row_entry_list[i] = shm_malloc(sizeof(struct rtpengine_hash_entry));
 		if (!rtpengine_hash_table->row_entry_list[i]) {
@@ -101,13 +112,8 @@ int rtpengine_hash_table_init(int size) {
 		rtpengine_hash_table->row_entry_list[i]->tout = -1;
 		rtpengine_hash_table->row_entry_list[i]->next = NULL;
 
-		// init hashtable row_locks[i]
-		rtpengine_hash_table->row_locks[i] = lock_alloc();
-		if (!rtpengine_hash_table->row_locks[i]) {
-			LM_ERR("no shm left to create rtpengine_hash_table->row_locks[%d]\n", i);
-			rtpengine_hash_table_destroy();
-			return 0;
-		}
+		// init hashtable row_totals[i]
+		rtpengine_hash_table->row_totals[i] = 0;
 	}
 
 	return 1;
@@ -116,23 +122,40 @@ int rtpengine_hash_table_init(int size) {
 int rtpengine_hash_table_destroy() {
 	int i;
 
-	// sanity checks
-	if (!rtpengine_hash_table_sanity_checks()) {
-		LM_ERR("sanity checks failed\n");
-		return 0;
+	// check rtpengine hashtable
+	if (!rtpengine_hash_table) {
+		LM_ERR("NULL rtpengine_hash_table\n");
+		return 1;
+	}
+
+	// check rtpengine hashtable->row_locks
+	if (!rtpengine_hash_table->row_locks) {
+		LM_ERR("NULL rtpengine_hash_table->row_locks\n");
+		shm_free(rtpengine_hash_table);
+		rtpengine_hash_table = NULL;
+		return 1;
 	}
 
 	// destroy hashtable content
 	for (i = 0; i < rtpengine_hash_table->size; i++) {
-		// destroy hashtable row_entry_list[i]
-		if (rtpengine_hash_table->row_locks[i]) {
-			lock_get(rtpengine_hash_table->row_locks[i]);
-		} else {
+		// lock
+		if (!rtpengine_hash_table->row_locks[i]) {
 			LM_ERR("NULL rtpengine_hash_table->row_locks[%d]\n", i);
-			return 0;
+			continue;
+		} else {
+			lock_get(rtpengine_hash_table->row_locks[i]);
 		}
-		rtpengine_hash_table_free_row_entry_list(rtpengine_hash_table->row_entry_list[i]);
-		rtpengine_hash_table->row_entry_list[i] = NULL;
+
+		// check rtpengine hashtable->row_entry_list
+		if (!rtpengine_hash_table->row_entry_list) {
+			LM_ERR("NULL rtpengine_hash_table->row_entry_list\n");
+		} else {
+			// destroy hashtable row_entry_list[i]
+			rtpengine_hash_table_free_row_entry_list(rtpengine_hash_table->row_entry_list[i]);
+			rtpengine_hash_table->row_entry_list[i] = NULL;
+		}
+
+		// unlock
 		lock_release(rtpengine_hash_table->row_locks[i]);
 
 		// destroy hashtable row_locks[i]
@@ -141,20 +164,38 @@ int rtpengine_hash_table_destroy() {
 	}
 
 	// destroy hashtable row_entry_list
-	shm_free(rtpengine_hash_table->row_entry_list);
-	rtpengine_hash_table->row_entry_list = NULL;
-
-	// destroy hashtable row_locks
-	shm_free(rtpengine_hash_table->row_locks);
-	rtpengine_hash_table->row_locks = NULL;
+	if (!rtpengine_hash_table->row_entry_list) {
+		LM_ERR("NULL rtpengine_hash_table->row_entry_list\n");
+	} else {
+		shm_free(rtpengine_hash_table->row_entry_list);
+		rtpengine_hash_table->row_entry_list = NULL;
+	}
 
 	// destroy hashtable row_totals
-	shm_free(rtpengine_hash_table->row_totals);
-	rtpengine_hash_table->row_totals = NULL;
+	if (!rtpengine_hash_table->row_totals) {
+		LM_ERR("NULL rtpengine_hash_table->row_totals\n");
+	} else {
+		shm_free(rtpengine_hash_table->row_totals);
+		rtpengine_hash_table->row_totals = NULL;
+	}
+
+	// destroy hashtable row_locks
+	if (!rtpengine_hash_table->row_locks) {
+		// should not be the case; just for code symmetry
+		LM_ERR("NULL rtpengine_hash_table->row_locks\n");
+	} else {
+		shm_free(rtpengine_hash_table->row_locks);
+		rtpengine_hash_table->row_locks = NULL;
+	}
 
 	// destroy hashtable
-	shm_free(rtpengine_hash_table);
-	rtpengine_hash_table = NULL;
+	if (!rtpengine_hash_table) {
+		// should not be the case; just for code symmetry
+		LM_ERR("NULL rtpengine_hash_table\n");
+	} else {
+		shm_free(rtpengine_hash_table);
+		rtpengine_hash_table = NULL;
+	}
 
 	return 1;
 }
@@ -463,7 +504,7 @@ void rtpengine_hash_table_free_row_entry_list(struct rtpengine_hash_entry *row_e
 	return ;
 }
 
-void rtpengine_hash_table_free_row_lock(gen_lock_t *row_lock) {
+static void rtpengine_hash_table_free_row_lock(gen_lock_t *row_lock) {
 	if (!row_lock) {
 		LM_ERR("try to free a NULL lock\n");
 		return ;
@@ -481,15 +522,15 @@ int rtpengine_hash_table_sanity_checks() {
 		return 0;
 	}
 
-	// check rtpengine hashtable->row_entry_list
-	if (!rtpengine_hash_table->row_entry_list) {
-		LM_ERR("NULL rtpengine_hash_table->row_entry_list\n");
-		return 0;
-	}
-
 	// check rtpengine hashtable->row_locks
 	if (!rtpengine_hash_table->row_locks) {
 		LM_ERR("NULL rtpengine_hash_table->row_locks\n");
+		return 0;
+	}
+
+	// check rtpengine hashtable->row_entry_list
+	if (!rtpengine_hash_table->row_entry_list) {
+		LM_ERR("NULL rtpengine_hash_table->row_entry_list\n");
 		return 0;
 	}
 
