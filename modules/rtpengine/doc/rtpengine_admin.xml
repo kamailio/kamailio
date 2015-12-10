@@ -221,6 +221,11 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 		This is <emphasis>useful</emphasis> when deactivating a node for maintanance and reject new sessions but allow current ones to finish.
 		</para>
 		<para>
+		The behaviour is the same for a rtpengine deleted table node.
+		When the node is deleted from the table and the table reloaded (see nh_reload_rtpp) the node actually is disabled(permanent) and hidden for display.
+		Next time the same node will be added in the table, and the content reloaded, it will be updated and re-displayed.
+		</para>
+		<para>
 		<emphasis>
 		Default value is <quote>0</quote> to keep the current behaviour.
 		</emphasis>
@@ -1261,9 +1266,9 @@ $ &ctltool; fifo nh_ping_rtpp all
 				Returns specific message related to success, failure and no db_url configured.
 			</para>
 			<para>
-				NOTE: The current behaviour updates the nodes state or creates new ones,
-				based on the database content. Old nodes are not deleted if they are deleted
-				from database. This may require locking on the global nodes list.
+				NOTE: The current behaviour updates the nodes state or creates new ones or
+				hides old ones, based on the database content. If allow_op modparam is enabled,
+				the sessions are still allowed to finish for the hidden old nodes.
 			</para>
 			<example>
 			<title>

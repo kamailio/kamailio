@@ -36,6 +36,7 @@ struct rtpp_node {
 	char				*rn_address;	/* substring of rn_url */
 	int					rn_disabled;	/* found unaccessible? */
 	unsigned			rn_weight;		/* for load balancing */
+	unsigned int		rn_displayed;		/* for delete at db reload */
 	unsigned int		rn_recheck_ticks;
         int                     rn_rep_supported;
         int                     rn_ptl_supported;
@@ -64,6 +65,10 @@ struct rtpp_set_head{
 struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url);
 struct rtpp_set *get_rtpp_set(int set_id);
 int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, unsigned int weight, int disabled, unsigned int ticks, int isDB);
+
+int rtpengine_delete_node(struct rtpp_node *rtpp_node);
+int rtpengine_delete_node_set(struct rtpp_set *rtpp_list);
+int rtpengine_delete_node_all();
 
 
 int init_rtpproxy_db(void);

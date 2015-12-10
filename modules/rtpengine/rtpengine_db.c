@@ -98,6 +98,9 @@ static int rtpp_load_db(void)
 		LM_WARN("No rtpproxy instances in database\n");
 		return 0;
 	}
+
+	rtpengine_delete_node_all();
+
 	for (i=0; i<n_rows; i++)
 	{
 		values = ROW_VALUES(rows + i);

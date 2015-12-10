@@ -387,6 +387,45 @@ struct module_exports exports = {
 	child_init
 };
 
+/* hide the node from display and disable it permanent */
+int rtpengine_delete_node(struct rtpp_node *rtpp_node)
+{
+	rtpp_node->rn_displayed = 0;
+	rtpp_node->rn_disabled = MI_MAX_RECHECK_TICKS;
+
+	return 1;
+}
+
+
+int rtpengine_delete_node_set(struct rtpp_set *rtpp_list)
+{
+	struct rtpp_node *rtpp_node;
+
+	for(rtpp_node = rtpp_list->rn_first; rtpp_node != NULL;
+			rtpp_node = rtpp_node->rn_next) {
+		rtpengine_delete_node(rtpp_node);
+	}
+
+	return 1;
+}
+
+
+int rtpengine_delete_node_all()
+{
+	struct rtpp_set *rtpp_list;
+
+	if (!rtpp_set_list) {
+		return 1;
+	}
+
+	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != NULL;
+			rtpp_list = rtpp_list->rset_next) {
+		rtpengine_delete_node_set(rtpp_list);
+	}
+
+	return 1;
+}
+
 
 static int get_ip_type(char *str_addr)
 {
@@ -732,6 +771,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 		pnode->rn_weight = local_weight;
 		pnode->rn_umode = 0;
 		pnode->rn_disabled = disabled;
+		pnode->rn_displayed = 1;
 		pnode->rn_url.s = shm_malloc(p2 - p1 + 1);
 		if (pnode->rn_url.s == NULL) {
 			rtpp_no--;
@@ -785,6 +825,7 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 		rtpp_node = get_rtpp_node(rtpp_list, &pnode->rn_url);
 		if (rtpp_node) {
 			rtpp_node->rn_disabled = pnode->rn_disabled;
+			rtpp_node->rn_displayed = pnode->rn_displayed;
 			rtpp_node->rn_recheck_ticks = pnode->rn_recheck_ticks;
 			rtpp_node->rn_weight = pnode->rn_weight;
 
@@ -1265,6 +1306,9 @@ static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree, void* param)
 
 		for(crt_rtpp = rtpp_list->rn_first; crt_rtpp != NULL;
 						crt_rtpp = crt_rtpp->rn_next) {
+			if (!crt_rtpp->rn_displayed) {
+				continue;
+			}
 
 	        /* found a matching rtpp - show it */
 	        if (found == MI_FOUND_ALL ||
