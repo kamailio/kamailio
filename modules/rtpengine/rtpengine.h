@@ -27,36 +27,36 @@
 #include "../../str.h"
 
 #define MI_MIN_RECHECK_TICKS		0
-#define MI_MAX_RECHECK_TICKS		(unsigned int)-1
+#define MI_MAX_RECHECK_TICKS		((unsigned int)-1)
 
 struct rtpp_node {
 	unsigned int		idx;			/* overall index */
-	str					rn_url;			/* unparsed, deletable */
-	int					rn_umode;
-	char				*rn_address;	/* substring of rn_url */
-	int					rn_disabled;	/* found unaccessible? */
-	unsigned			rn_weight;		/* for load balancing */
+	str			rn_url;			/* unparsed, deletable */
+	int			rn_umode;
+	char			*rn_address;		/* substring of rn_url */
+	int			rn_disabled;		/* found unaccessible? */
+	unsigned int		rn_weight;		/* for load balancing */
 	unsigned int		rn_displayed;		/* for delete at db reload */
 	unsigned int		rn_recheck_ticks;
-        int                     rn_rep_supported;
-        int                     rn_ptl_supported;
+	int			rn_rep_supported;
+	int			rn_ptl_supported;
 	struct rtpp_node	*rn_next;
 };
 
 
-struct rtpp_set{
+struct rtpp_set {
 	unsigned int 		id_set;
-	unsigned			weight_sum;
+	unsigned int		weight_sum;
 	unsigned int		rtpp_node_count;
-	int 				set_disabled;
+	int 			set_disabled;
 	unsigned int		set_recheck_ticks;
 	struct rtpp_node	*rn_first;
 	struct rtpp_node	*rn_last;
-	struct rtpp_set     *rset_next;
+	struct rtpp_set	 	*rset_next;
 };
 
 
-struct rtpp_set_head{
+struct rtpp_set_head {
 	struct rtpp_set		*rset_first;
 	struct rtpp_set		*rset_last;
 };
