@@ -794,7 +794,12 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 			rtpp_no--;
 			shm_free(pnode->rn_url.s);
 			shm_free(pnode);
-			continue;
+
+			if (!isDB) {
+				continue;
+			} else {
+				return 0;
+			}
 		}
 
 		/* Check the rn_address is 'hostname:port' */
@@ -812,7 +817,12 @@ int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy,
 				rtpp_no--;
 				shm_free(pnode->rn_url.s);
 				shm_free(pnode);
-				continue;
+
+				if (!isDB) {
+					continue;
+				} else {
+					return 0;
+				}
 			}
 		}
 
