@@ -509,7 +509,7 @@ error:
 int update_hard_presentity(str *pres_uri, pres_ev_t *event, str *file_uri, str *filename)
 {
 	int ret = -1, new_t, pidf_result;
-	str *pidf_doc;
+	str *pidf_doc = 0;
 	char *sphere = NULL;
 	presentity_t *pres = NULL;
 	struct sip_uri parsed_uri;
