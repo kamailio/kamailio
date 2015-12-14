@@ -1829,6 +1829,7 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
     int_str val;
 
     delete_avp(gw_uri_avp_type|AVP_VAL_STR, gw_uri_avp);
+    delete_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp);
 
     for (i = 0; i < gw_cnt; i++) {
 	if (matched_gws[i].duplicate == 1) continue;
