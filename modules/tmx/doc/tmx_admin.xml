@@ -691,35 +691,35 @@ event_route [tm:branch-failure:contact] {
 		</section>
 
 		<section>
-		<title>received_replies</title>
+		<title>rpl_received</title>
 			<para>
 			Total number of replies received by TM module.
 			</para>
 		</section>
 
 		<section>
-		<title>received_replies_absorbed</title>
+		<title>rpl_absorbed</title>
 			<para>
 			Total number of replies received and not relayed by TM module.
 			</para>
 		</section>
 
 		<section>
-		<title>tmx:relayed_locally</title>
-			<para>
-			Total number of replies locally generated and relayed by TM module.
-			</para>
-		</section>
-
-		<section>
-		<title>relayed_received </title>
+		<title>rpl_relayed</title>
 			<para>
 			Total number of replies received and relayed by TM module.
 			</para>
 		</section>
 
 		<section>
-		<title>relayed_total</title>
+		<title>rpl_generated</title>
+			<para>
+			Total number of replies locally generated and relayed by TM module.
+			</para>
+		</section>
+
+		<section>
+		<title>rpl_sent</title>
 			<para>
 			Total number of replies relayed by TM module.
 			</para>

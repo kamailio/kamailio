@@ -93,9 +93,9 @@ void free_tm_stats()
 		(res)->completed_5xx=(s1)->completed_5xx+(s2)->completed_5xx; \
 		(res)->completed_6xx=(s1)->completed_6xx+(s2)->completed_6xx; \
 		(res)->completed_2xx=(s1)->completed_2xx+(s2)->completed_2xx; \
-		(res)->received_replies=(s1)->received_replies+(s2)->received_replies; \
-		(res)->relayed_locally=(s1)->relayed_locally+(s2)->relayed_locally; \
-		(res)->relayed_total=(s1)->relayed_total+(s2)->relayed_total; \
+		(res)->rpl_received=(s1)->rpl_received+(s2)->rpl_received; \
+		(res)->rpl_generated=(s1)->rpl_generated+(s2)->rpl_generated; \
+		(res)->rpl_sent=(s1)->rpl_sent+(s2)->rpl_sent; \
 		(res)->deleted=(s1)->deleted+(s2)->deleted; \
 	}while(0)
 
@@ -138,9 +138,9 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 										 (unsigned) waiting);
 	rpc->struct_add(st, "d", "total", (unsigned) all.transactions);
 	rpc->struct_add(st, "d", "total_local", (unsigned)all.client_transactions);
-	rpc->struct_add(st, "d", "received_replies", (unsigned)all.received_replies);
-	rpc->struct_add(st, "d", "relayed_locally", (unsigned)all.relayed_locally);
-	rpc->struct_add(st, "d", "relayed_total", (unsigned)all.relayed_total);
+	rpc->struct_add(st, "d", "rpl_received", (unsigned)all.rpl_received);
+	rpc->struct_add(st, "d", "rpl_generated", (unsigned)all.rpl_generated);
+	rpc->struct_add(st, "d", "rpl_sent", (unsigned)all.rpl_sent);
 	rpc->struct_add(st, "ddddd", 
 			"6xx", (unsigned int)all.completed_6xx,
 			"5xx", (unsigned int)all.completed_5xx,

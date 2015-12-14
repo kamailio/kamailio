@@ -114,21 +114,21 @@ unsigned long tmx_stats_rld_loc_rpls(void);
 unsigned long tmx_stats_rld_tot_rpls(void);
 
 static stat_export_t mod_stats[] = {
-	{"UAS_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_uas_trans   },
-	{"UAC_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_uac_trans   },
-	{"2xx_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_2xx   },
-	{"3xx_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_3xx   },
-	{"4xx_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_4xx   },
-	{"5xx_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_5xx   },
-	{"6xx_transactions" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_6xx   },
-	{"inuse_transactions" ,  STAT_IS_FUNC, (stat_var**)tmx_stats_trans_inuse },
-	{"active_transactions" , STAT_IS_FUNC, (stat_var**)tmx_stats_trans_active},
-	{"received_replies" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_rcv_rpls    },
-	{"received_replies_absorbed", STAT_IS_FUNC, (stat_var**)tmx_stats_abs_rpls    },
-	{"relayed_locally" ,     STAT_IS_FUNC, (stat_var**)tmx_stats_rld_loc_rpls},
-	{"relayed_received" ,    STAT_IS_FUNC, (stat_var**)tmx_stats_rld_rcv_rpls},
-	{"relayed_total" ,       STAT_IS_FUNC, (stat_var**)tmx_stats_rld_tot_rpls},
-	{0,0,0}
+	{"UAS_transactions",    STAT_IS_FUNC, (stat_var**)tmx_stats_uas_trans   },
+	{"UAC_transactions",    STAT_IS_FUNC, (stat_var**)tmx_stats_uac_trans   },
+	{"2xx_transactions",    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_2xx   },
+	{"3xx_transactions",    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_3xx   },
+	{"4xx_transactions",    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_4xx   },
+	{"5xx_transactions",    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_5xx   },
+	{"6xx_transactions",    STAT_IS_FUNC, (stat_var**)tmx_stats_trans_6xx   },
+	{"inuse_transactions",  STAT_IS_FUNC, (stat_var**)tmx_stats_trans_inuse },
+	{"active_transactions", STAT_IS_FUNC, (stat_var**)tmx_stats_trans_active},
+	{"rpl_received",        STAT_IS_FUNC, (stat_var**)tmx_stats_rcv_rpls    },
+	{"rpl_absorbed",        STAT_IS_FUNC, (stat_var**)tmx_stats_abs_rpls    },
+	{"rpl_generated",       STAT_IS_FUNC, (stat_var**)tmx_stats_rld_loc_rpls},
+	{"rpl_relayed",         STAT_IS_FUNC, (stat_var**)tmx_stats_rld_rcv_rpls},
+	{"rpl_sent",            STAT_IS_FUNC, (stat_var**)tmx_stats_rld_tot_rpls},
+	{0, 0, 0}
 };
 #endif
 
@@ -814,31 +814,31 @@ unsigned long tmx_stats_trans_active(void)
 unsigned long tmx_stats_rcv_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.received_replies;
+	return _tmx_stats_all.rpl_received;
 }
 
 unsigned long tmx_stats_abs_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.received_replies - tmx_stats_rld_rcv_rpls();
+	return _tmx_stats_all.rpl_received - tmx_stats_rld_rcv_rpls();
 }
 
 unsigned long tmx_stats_rld_loc_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.relayed_locally;
+	return _tmx_stats_all.rpl_generated;
 }
 
 unsigned long tmx_stats_rld_tot_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.relayed_total;
+	return _tmx_stats_all.rpl_sent;
 }
 
 unsigned long tmx_stats_rld_rcv_rpls(void)
 {
 	tmx_stats_update();
-	return _tmx_stats_all.relayed_total - _tmx_stats_all.relayed_locally;
+	return _tmx_stats_all.rpl_sent - _tmx_stats_all.rpl_generated;
 }
 
 #endif

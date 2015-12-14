@@ -554,8 +554,8 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* t_update_timers_after_sending_reply( rb ); */
 	update_reply_stats( code );
 	trans->relayed_reply_branch=-2;
-	t_stats_relayed_locally();
-	t_stats_relayed_total();
+	t_stats_rpl_generated();
+	t_stats_rpl_sent();
 	if (lock) UNLOCK_REPLIES( trans );
 
 	/* do UAC cleanup procedures in case we generated
@@ -1867,7 +1867,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			}
 		}
 		update_reply_stats( relayed_code );
-		t_stats_relayed_total();
+		t_stats_rpl_sent();
 		if (!buf) {
 			LOG(L_ERR, "ERROR: relay_reply: "
 				"no mem for outbound reply buffer\n");
@@ -1890,7 +1890,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		memcpy( uas_rb->buffer, buf, res_len );
 		if (relayed_msg==FAKED_REPLY) { /* to-tags for local replies */
 			update_local_tags(t, &bm, uas_rb->buffer, buf);
-			t_stats_relayed_locally();
+			t_stats_rpl_generated();
 		}
 
 		/* update the status ... */
@@ -2041,7 +2041,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		winning_msg= branch==local_winner
 			? p_msg :  t->uac[local_winner].reply;
 		if (winning_msg==FAKED_REPLY) {
-			t_stats_relayed_locally();
+			t_stats_rpl_generated();
 			winning_code = branch==local_winner
 				? msg_status : t->uac[local_winner].last_received;
 		} else {
@@ -2049,7 +2049,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		t->uas.status = winning_code;
 		update_reply_stats( winning_code );
-		t_stats_relayed_total();
+		t_stats_rpl_sent();
 		if (unlikely(is_invite(t) && winning_msg!=FAKED_REPLY &&
 					 winning_code>=200 && winning_code <300 &&
 					 has_tran_tmcbs(t, TMCB_LOCAL_COMPLETED) ))  {
@@ -2143,8 +2143,8 @@ int reply_received( struct sip_msg  *p_msg )
 	if ( (t==0)||(t==T_UNDEFINED))
 		goto trans_not_found;
 
-	/* if transaction found, increment the received_replies counter */
-	t_stats_received_replies();
+	/* if transaction found, increment the rpl_received counter */
+	t_stats_rpl_received();
 
 	if (unlikely(branch==T_BR_UNDEFINED))
 		BUG("invalid branch, please report to sr-dev@sip-router.org\n");
