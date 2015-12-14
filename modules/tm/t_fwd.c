@@ -146,6 +146,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	str ua_bak;
 	int free_ua;
 	int backup_route_type;
+	int test_dst;
 	snd_flags_t fwd_snd_flags_bak;
 	snd_flags_t rpl_snd_flags_bak;
 	struct socket_info *force_send_socket_bak;
@@ -427,14 +428,14 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (likely(next_hop!=0 || (flags & UAC_DNS_FAILOVER_F))){
 		/* next_hop present => use it for dns resolution */
 #ifdef USE_DNS_FAILOVER
-		if (uri2dst2(&t->uac[branch].dns_h, dst, fsocket, snd_flags,
-							next_hop?next_hop:uri, fproto) == 0)
+		test_dst = (uri2dst2(&t->uac[branch].dns_h, dst, fsocket, snd_flags,
+							next_hop?next_hop:uri, fproto) == 0);
 #else
 		/* dst filled from the uri & request (send_socket) */
-		if (uri2dst2(dst, fsocket, snd_flags,
-							next_hop?next_hop:uri, fproto)==0)
+		test_dst = (uri2dst2(dst, fsocket, snd_flags,
+							next_hop?next_hop:uri, fproto)==0);
 #endif
-		{
+		if (test_dst){
 			ret=E_BAD_ADDRESS;
 			goto error01;
 		}
