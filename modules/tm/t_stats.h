@@ -43,8 +43,9 @@ struct t_proc_stats {
 	/* number of transactions which completed with this status */
 	stat_counter completed_3xx, completed_4xx, completed_5xx, 
 		completed_6xx, completed_2xx;
-	stat_counter replied_locally;
-	stat_counter replied_total;
+	stat_counter received_replies;
+	stat_counter relayed_locally;
+	stat_counter relayed_total;
 	stat_counter deleted;
 #ifdef TM_MORE_STATS
 	/* number of created transactions */
@@ -121,15 +122,19 @@ inline static void update_reply_stats( int code ) {
 	}
 }
 
-
-inline void static t_stats_replied_locally(void)
+inline void static t_stats_received_replies(void)
 {
-	tm_stats[process_no].s.replied_locally++;
+	tm_stats[process_no].s.received_replies++;
 }
 
-inline void static t_stats_replied_total(void)
+inline void static t_stats_relayed_locally(void)
 {
-	tm_stats[process_no].s.replied_total++;
+	tm_stats[process_no].s.relayed_locally++;
+}
+
+inline void static t_stats_relayed_total(void)
+{
+	tm_stats[process_no].s.relayed_total++;
 }
 
 
