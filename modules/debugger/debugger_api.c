@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "../cfgt/cfgt.h"
 #include "../../dprint.h"
 #include "../../events.h"
 #include "../../locking.h"
@@ -70,6 +71,7 @@ str *dbg_get_state_name(int t)
 #define DBG_CFGTRACE_ON	(1<<0)
 #define DBG_ABKPOINT_ON	(1<<1)
 #define DBG_LBKPOINT_ON	(1<<2)
+#define DBG_CFGTEST_ON	(1<<3)
 
 static str _dbg_status_list[] = {
 	str_init("cfgtrace-on"),
@@ -78,6 +80,8 @@ static str _dbg_status_list[] = {
 	str_init("abkpoint-off"),
 	str_init("lbkpoint-on"),
 	str_init("lbkpoint-off"),
+	str_init("cfgtest-on"),
+	str_init("cfgtest-off"),
 	{0, 0}
 };
 
@@ -89,6 +93,8 @@ str *dbg_get_status_name(int t)
 		return &_dbg_status_list[2];
 	if(t&DBG_LBKPOINT_ON)
 		return &_dbg_status_list[4];
+	if(t&DBG_CFGTEST_ON)
+		return &_dbg_status_list[6];
 
 	return &_dbg_state_list[0];
 }
@@ -187,6 +193,12 @@ int _dbg_step_loops = 200;
  * disabled by default
  */
 int _dbg_reset_msgid = 0;
+
+/**
+ * disabled by default
+ */
+int _dbg_cfgtest = 0;
+cfgt_api_t _dbg_cfgt;
 
 /**
  *
@@ -355,6 +367,11 @@ int dbg_cfg_trace(void *data)
 					a->type, an->len, ZSW(an->s)
 				);
 		}
+	}
+	if(_dbg_pid_list[process_no].set&DBG_CFGTEST_ON)
+	{
+		if(_dbg_cfgt.cfgt_process_route(msg, a)<0)
+				LM_ERR("Error processing route\n");
 	}
 	if(!(_dbg_pid_list[process_no].set&DBG_ABKPOINT_ON))
 	{
@@ -590,6 +607,8 @@ int dbg_init_mypid(void)
 		_dbg_pid_list[process_no].set |= DBG_ABKPOINT_ON;
 	if(_dbg_cfgtrace==1)
 		_dbg_pid_list[process_no].set |= DBG_CFGTRACE_ON;
+	if(_dbg_cfgtest==1)
+		_dbg_pid_list[process_no].set |= DBG_CFGTEST_ON;
 	if(_dbg_reset_msgid==1)
 	{
 		LM_DBG("[%d] create locks\n", process_no);

@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../cfgt/cfgt.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
@@ -71,6 +72,10 @@ extern char *_dbg_cfgtrace_lname;
 extern int _dbg_step_usleep;
 extern int _dbg_step_loops;
 extern int _dbg_reset_msgid;
+extern int _dbg_cfgtest;
+
+/* cfgt api */
+extern cfgt_api_t _dbg_cfgt;
 
 static int _dbg_sip_msg_cline;
 static char * _dbg_cfgtrace_facility_str = 0;
@@ -111,6 +116,7 @@ static param_export_t params[]={
 	{"mod_facility",      PARAM_STRING|USE_FUNC_PARAM, (void*)dbg_mod_facility_param},
 	{"reset_msgid",       INT_PARAM, &_dbg_reset_msgid},
 	{"cfgpkgcheck",       INT_PARAM, &_dbg_cfgpkgcheck},
+	{"cfgtest",           INT_PARAM, &_dbg_cfgtest},
 	{0, 0, 0}
 };
 
@@ -136,6 +142,8 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	int fl;
+	bind_cfgt_t bind_cfgt;
+
 	if (_dbg_cfgtrace_facility_str!=NULL)
 	{
 		fl = str2facility(_dbg_cfgtrace_facility_str);
@@ -186,6 +194,19 @@ static int mod_init(void)
 			LM_ERR("could not insert callback");
 			return -1;
 		}
+	}
+	if(_dbg_cfgtest==1)
+	{
+		bind_cfgt = (bind_cfgt_t)find_export("cfgt_bind_cfgt", 1, 0);
+		if (!bind_cfgt) {
+			LM_ERR("can't find cfgt module\n");
+			return -1;
+		}
+
+		if (bind_cfgt(&_dbg_cfgt) < 0) {
+			return -1;
+		}
+		LM_INFO("bind to cfgt module\n");
 	}
 	return dbg_init_bp_list();
 }
