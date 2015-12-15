@@ -41,6 +41,7 @@ Daniel-Constantin Mierla
               3.14. log_assign (int)
               3.15. cfgpkgcheck (int)
               3.16. reset_msgid (int)
+              3.17. cfgtest (int)
 
         4. Functions
 
@@ -76,9 +77,10 @@ Daniel-Constantin Mierla
    1.14. Set log_assign parameter
    1.15. Set cfgpkgcheck parameter
    1.16. Set reset_msgid parameter
-   1.17. dbg_breakpoint usage
-   1.18. dbg_pv_dump usage
-   1.19. dbg_sip_msg usage
+   1.17. Set cfgtest parameter
+   1.18. dbg_breakpoint usage
+   1.19. dbg_pv_dump usage
+   1.20. dbg_sip_msg usage
 
 Chapter 1. Admin Guide
 
@@ -108,6 +110,7 @@ Chapter 1. Admin Guide
         3.14. log_assign (int)
         3.15. cfgpkgcheck (int)
         3.16. reset_msgid (int)
+        3.17. cfgtest (int)
 
    4. Functions
 
@@ -183,6 +186,7 @@ Chapter 1. Admin Guide
    3.14. log_assign (int)
    3.15. cfgpkgcheck (int)
    3.16. reset_msgid (int)
+   3.17. cfgtest (int)
 
 3.1. cfgtrace (int)
 
@@ -389,13 +393,26 @@ modparam("debugger", "cfgpkgcheck", 1)
 modparam("debugger", "reset_msgid", 1)
 ...
 
+3.17. cfgtest (int)
+
+   Control whether the cfgt module is enabled or disabled at startup.
+   Module cfgt needs to be loaded before.
+
+   Default value is "0" (disabled).
+
+   Example 1.17. Set cfgtest parameter
+...
+loadmodule "cfgt.so"
+modparam("debugger", "cfgtest", 1)
+...
+
 4. Functions
 
    4.1. dbg_breakpoint(mode)
    4.2. dbg_pv_dump([mask] [, level])
    4.3. dbg_sip_msg([log_level], [facility])
 
-4.1. dbg_breakpoint(mode)
+4.1.  dbg_breakpoint(mode)
 
    Anchor a breakpoint at the current line of the config (the one on which
    this function is called). The 'mode' specifies whether the breakpoint
@@ -404,13 +421,13 @@ modparam("debugger", "reset_msgid", 1)
    Note that this version of the module does not export this anchors to
    RPC for interactive debugging (temporarily disabled).
 
-   Example 1.17. dbg_breakpoint usage
+   Example 1.18. dbg_breakpoint usage
 ...
 if($si=="10.0.0.10")
         dbg_breakpoint("1");
 ...
 
-4.2. dbg_pv_dump([mask] [, level])
+4.2.  dbg_pv_dump([mask] [, level])
 
    Prints the content of pv_cache on json format. Defaults are mask=31 and
    level = "L_DBG"
@@ -432,7 +449,7 @@ if($si=="10.0.0.10")
      * L_INFO - log level 2
      * L_DBG - log level 3
 
-   Example 1.18. dbg_pv_dump usage
+   Example 1.19. dbg_pv_dump usage
 ...
 $var(temp) = 1;
 $avp(s:more_avp) = 2;
@@ -455,7 +472,7 @@ vp(x)":[{"different":["foo"]},{"other":[2,1],"more":["hi","bye"]}],"$T_branch_id
 x":0,"$var(empty)":0}
  ...
 
-4.3. dbg_sip_msg([log_level], [facility])
+4.3.  dbg_sip_msg([log_level], [facility])
 
    Prints how the sip message would look like if it would be sent out at
    that point in the config(i.e. if the current lump lists would have been
@@ -475,7 +492,7 @@ x":0,"$var(empty)":0}
    force the lump application using msg_apply_changes() function from
    textopsx module.
 
-   Example 1.19. dbg_sip_msg usage
+   Example 1.20. dbg_sip_msg usage
 ...
     dbg_sip_msg();
     dbg_sip_msg("L_ERR");
@@ -512,7 +529,7 @@ P-Hint: My hint
    5.4. dbg.mod_level
    5.5. dbg.reset_msgid
 
-5.1. dbg.ls
+5.1.  dbg.ls
 
    List Kamailio processes with info related to interactive debugging.
 
@@ -526,7 +543,7 @@ P-Hint: My hint
                 dbg.ls
                 dbg.ls 1234
 
-5.2. dbg.trace
+5.2.  dbg.trace
 
    Control config script running trace.
 
@@ -543,7 +560,7 @@ P-Hint: My hint
                 dbg.trace off
                 dbg.trace on 1234
 
-5.3. dbg.bp
+5.3.  dbg.bp
 
    Control breakpoints and config execution.
 
@@ -581,7 +598,7 @@ P-Hint: My hint
                 dbg.bp eval 1234 $fu
                 dbg.bp move 1234
 
-5.4. dbg.mod_level
+5.4.  dbg.mod_level
 
    Specify module log level.
 
@@ -595,7 +612,7 @@ P-Hint: My hint
                 dbg.mod_level core 3
                 dbg.mod_level tm 3
 
-5.5. dbg.reset_msgid
+5.5.  dbg.reset_msgid
 
    Resets the message sequence ($mi). Internally there is no real change.
    This can be useful for unit test cases in order to be able to replicate
