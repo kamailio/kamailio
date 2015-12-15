@@ -30,14 +30,14 @@
  */
 
 
-#ifndef UTILS_FUNCTIONS_H
-#define UTILS_FUNCTIONS_H
+#ifndef CURL_FUNCTIONS_H
+#define CURL_FUNCTIONS_H
 
 #include "../../parser/msg_parser.h"
 
 /*! Use predefined connection to run HTTP get or post
  */
-int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _result, const char *contenttype, char* _post);
+int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* _url, str* _result, const char *contenttype, const str* _post);
 
 
 
@@ -45,7 +45,7 @@ int curl_con_query_url(struct sip_msg* _m, char *connection, char* _url, char* _
  * Performs http_query and saves possible result (first body line of reply)
  * to pvar.
  */
-int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post);
+int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post);
 
 
-#endif /* UTILS_FUNCTIONS_H */
+#endif /* CURL_FUNCTIONS_H */
