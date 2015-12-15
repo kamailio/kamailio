@@ -53,3 +53,6 @@ The curl module - todo
 	$curlcon == connection
 	$curl == URL
 	$curlres == result
+
+- API for other modules - done by Hugh Waite
+	- Needs documentation
