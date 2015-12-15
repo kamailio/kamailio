@@ -418,6 +418,28 @@ modparam("debugger", "reset_msgid", 1)
 	    </example>
 	</section>
 
+	<section id="dbg.p.cfgtest">
+	    <title><varname>cfgtest</varname> (int)</title>
+	    <para>
+			Control whether the cfgt module is enabled or disabled
+			at startup. Module cfgt needs to be loaded before.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cfgtest</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+loadmodule "cfgt.so"
+modparam("debugger", "cfgtest", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 
     <section>
