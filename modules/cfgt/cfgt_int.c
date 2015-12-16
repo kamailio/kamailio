@@ -236,7 +236,7 @@ cfgt_node_p cfgt_create_node(struct sip_msg *msg)
 	{
 		node->msgid = msg->id;
 		LM_DBG("msgid:%d\n", node->msgid);
-		if(_cfgt_get_hdr(msg, &node->uuid)!=0 || &node->uuid.len==0)
+		if(_cfgt_get_hdr(msg, &node->uuid)!=0 || node->uuid.len==0)
 		{
 			LM_ERR("cannot get value of cfgtest uuid header!!\n");
 			goto error;
