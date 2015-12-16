@@ -1221,6 +1221,10 @@ int dbg_get_mod_debug_level(char *mname, int mnlen, int *mlevel)
 	if(_dbg_mod_table==NULL)
 		return -1;
 
+	if (!dbg_cfg) {
+		return -1;
+	}
+
 	if(cfg_get(dbg, dbg_cfg, mod_level_mode)==0)
 		return -1;
 
