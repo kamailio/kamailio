@@ -167,6 +167,12 @@ static int mod_init(void)
 		LM_ERR("Fail to declare the configuration\n");
 		return -1;
 	}
+
+	/* anyhow, should fail before */
+	if (!dbg_cfg) {
+                return -1;
+	}
+
 	LM_DBG("cfg level_mode:%d facility_mode:%d hash_size:%d\n",
 		cfg_get(dbg, dbg_cfg, mod_level_mode),
 		cfg_get(dbg, dbg_cfg, mod_facility_mode),
@@ -231,6 +237,7 @@ static int child_init(int rank)
  */
 static void mod_destroy(void)
 {
+	dbg_cfg = NULL;
 }
 
 /**
@@ -352,19 +359,27 @@ static int dbg_mod_level_param(modparam_t type, void *val)
 	}
 	s.s = (char*)val;
 	s.len = p - s.s;
+
+	if (!dbg_cfg) {
+                return -1;
+	}
+
 	LM_DBG("cfg level_mode:%d hash_size:%d\n",
 		cfg_get(dbg, dbg_cfg, mod_level_mode),
 		cfg_get(dbg, dbg_cfg, mod_hash_size));
+
 	if(dbg_init_mod_levels(cfg_get(dbg, dbg_cfg, mod_hash_size))<0)
 	{
 		LM_ERR("failed to init per module log level\n");
 		return -1;
 	}
+
 	if(dbg_set_mod_debug_level(s.s, s.len, &l)<0)
 	{
 		LM_ERR("cannot store parameter: %s\n", (char*)val);
 		return -1;
 	}
+
 	return 0;
 
 }
@@ -392,19 +407,27 @@ static int dbg_mod_facility_param(modparam_t type, void *val)
 
 	s.s = (char*)val;
 	s.len = p - s.s;
+
+	if (!dbg_cfg) {
+                return -1;
+	}
+
 	LM_DBG("cfg facility_mode:%d hash_size:%d\n",
 		cfg_get(dbg, dbg_cfg, mod_facility_mode),
 		cfg_get(dbg, dbg_cfg, mod_hash_size));
+
 	if(dbg_init_mod_levels(cfg_get(dbg, dbg_cfg, mod_hash_size))<0)
 	{
 		LM_ERR("failed to init per module log level\n");
 		return -1;
 	}
+
 	if(dbg_set_mod_debug_facility(s.s, s.len, &fl)<0)
 	{
 		LM_ERR("cannot store parameter: %s\n", (char*)val);
 		return -1;
 	}
+
 	return 0;
 }
 
