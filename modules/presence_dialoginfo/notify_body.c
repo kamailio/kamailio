@@ -571,7 +571,7 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	aux_body= (str*)pkg_malloc(sizeof(str));
 	if(aux_body== NULL)
 	{
-		ERR_MEM(PKG_MEM_STR);
+		LM_ERR("error allocating memory for aux body str\n");
 		return NULL;
 	}
 	memset(aux_body, 0, sizeof(str));
@@ -579,7 +579,7 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	if(aux_body->s== NULL)
 	{
 		pkg_free(aux_body);
-		ERR_MEM(PKG_MEM_STR);
+		LM_ERR("error allocating memory for aux body buffer\n");
 		return NULL;
 	}
 	memcpy(aux_body->s, body->s, body->len);
