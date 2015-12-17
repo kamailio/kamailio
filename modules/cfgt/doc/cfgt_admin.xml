@@ -23,7 +23,7 @@
 	</para>
 	<para>
 		In order to identify defferent scenarios a prefix string should be
-		used at Call-ID header.
+		used inside the Call-ID header.
 	</para>
 	</section>
 	<section>
@@ -62,7 +62,7 @@
 		<title><varname>basedir</varname> (string)</title>
 		<para>
 			Control where the config reports should be stored. The dir must
-			exists and &kamailioname; must have perms to write on it.
+			exist and &kamailioname; must have permissions to write on it.
 		</para>
 		<para>
 		<emphasis>
@@ -126,7 +126,9 @@ modparam("cfgt", "mask", 12)
 		<title><varname>callid_prefix</varname> (string)</title>
 		<para>
 			Prefix used to indentify test scenario messages. Last char of the
-			string will be used as delimiter.
+			string will be used as delimiter for the scenario ID. With parameter
+			set to <quote>NGCP%</quote> and Call-ID <quote>NGCP%123%456</quote> 
+			the scenario identified will be <quote>123</quote>.
 		</para>
 		<para>
 		<emphasis>
