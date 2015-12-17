@@ -10,7 +10,7 @@ Victor Seva
 
    <linuxmaniac@torreviejawireless.org>
 
-   Copyright � 2015 Victor Seva (sipwise.com)
+   Copyright © 2015 Victor Seva (sipwise.com)
      __________________________________________________________________
 
    Table of Contents
@@ -58,7 +58,7 @@ Chapter 1. Admin Guide
    SIP scenarios.
 
    In order to identify defferent scenarios a prefix string should be used
-   at Call-ID header.
+   inside the Call-ID header.
 
 2. Dependencies
 
@@ -84,10 +84,10 @@ Chapter 1. Admin Guide
 
 3.1. basedir (string)
 
-   Control where the config reports should be stored. The dir must exists
-   and Kamailio SIP Server Platform must have perms to write on it.
+   Control where the config reports should be stored. The dir must exist
+   and Kamailio SIP Server Platform must have permissions to write on it.
 
-   Default value is "/tmp".
+   Default value is “/tmp”.
 
    Example 1.1. Set cfgtrace parameter
 ...
@@ -104,7 +104,7 @@ modparam("cfgt", "basedir", "/var/run/kamailio/cfgtest")
      * 16 - dump DP_OTHER vars
      * 32 - dump ALL vars
 
-   Default value is "32" (ALL).
+   Default value is “32” (ALL).
 
    Example 1.2. Set mask parameter
 ...
@@ -115,9 +115,11 @@ modparam("cfgt", "mask", 12)
 3.3. callid_prefix (string)
 
    Prefix used to indentify test scenario messages. Last char of the
-   string will be used as delimiter.
+   string will be used as delimiter for the scenario ID. With parameter
+   set to “NGCP%” and Call-ID “NGCP%123%456” the scenario identified will
+   be “123”.
 
-   Default value is "NGCP%" (using "%" as delimiter).
+   Default value is “NGCP%” (using “%” as delimiter).
 
    Example 1.3. Set callid_prefix parameter
 ...
