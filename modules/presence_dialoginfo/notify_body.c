@@ -595,5 +595,18 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	memcpy(version_start, version, version_len);
 	memset(version_start + version_len, ' ', 12 - version_len);
 
+	xmlDocPtr doc = xmlReadMemory(aux_body->s, aux_body->len, "noname.xml", NULL, 0);
+        if (doc == NULL) {
+		LM_ERR("error allocation xmldoc\n");
+		pkg_free(aux_body->s);
+		pkg_free(aux_body);
+		return NULL;
+	}
+	pkg_free(aux_body->s);
+        xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&aux_body->s, &aux_body->len, 1);
+
+        xmlCleanupParser();
+        xmlMemoryDump();
+
 	return aux_body;
 }

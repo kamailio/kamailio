@@ -1535,8 +1535,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 					{
 						aux_body = subs->event->aux_body_processing(subs, notify_body);
 						if(aux_body) {
-							xmlFree(notify_body->s);
-							pkg_free(notify_body);
+							free_notify_body(notify_body, subs->event);
 							notify_body = aux_body;
 						}
 					}
