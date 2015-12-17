@@ -148,13 +148,31 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 	</section>
 
 	</section>
-
-<!--
 	<section>
 		<title>Usage</title>
 		<para>
-			TODO: add some more info of how this is been used
+		This module is used by the <emphasis>debugger</emphasis> module, so it must be loaded
+		first. To enable the generation of the reports, the <emphasis>debugger</emphasis> module
+		must be configured by setting the <emphasis>cfgtest</emphasis> parameter to "1".
 		</para>
-	</section>
--->
+		<para>
+		Example of configuration:
+		</para>
+<programlisting  format="linespecific">
+...
+#!ifdef WITH_DEBUG
+# ----- cfgt params -----
+modparam("cfgt", "basedir", "/tmp/kamailio/cfgtest")
+modparam("cfgt", "callid_prefix", "TRACE-ID%")
+modparam("cfgt", "mask", 32)
+
+# ----- debugger params -----
+modparam("debugger", "cfgtrace", 1)
+modparam("debugger", "log_level_name", "exec")
+
+modparam("debugger", "cfgtest", 1)
+#!endif
+...
+</programlisting>
+    </section>
 </chapter>
