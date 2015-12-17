@@ -206,7 +206,9 @@ modparam("ims_usrloc_pcscf", "db_mode", 1)
    can deny the request.
      * 0 - This uses the original hash over AOR method. By default we are
        backwards compatible...
-     * 1 - Use the newer hash over IP:PORT.
+     * 1 - Use the newer hash over the Host from Contact-Header.
+     * 2 - Use the newer hash over the source-IP from where the request
+       was received (useful for NAT-Scenarios)
 
    Default value is 0.
 

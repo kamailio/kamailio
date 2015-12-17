@@ -15,9 +15,9 @@ Richard Good
    Smile Communications
    <richard.good@smilecoms.com>
 
-   Copyright Â© 2007 FhG FOKUS
+   Copyright © 2007 FhG FOKUS
 
-   Copyright Â© 2012 Smile Communications
+   Copyright © 2012 Smile Communications
      __________________________________________________________________
 
    Table of Contents
@@ -42,8 +42,10 @@ Richard Good
 
               4.1. I_scscf_select(initial)
               4.2. I_scscf_drop()
-              4.3. I_perform_user_authorization_request(capabalities)
-              4.4. I_perform_location_information_request()
+              4.3. I_perform_user_authorization_request(route_block,
+                      capabalities)
+
+              4.4. I_perform_location_information_request(route_block)
 
         5. Statistics
 
@@ -62,7 +64,7 @@ Richard Good
    1.6. I_scscf_select usage
    1.7. I_scscf_drop usage
    1.8. I_perform_user_authorization_request usage
-   1.9. proxy_authorize usage
+   1.9. I_perform_location_information_request()
 
 Chapter 1. Admin Guide
 
@@ -86,8 +88,10 @@ Chapter 1. Admin Guide
 
         4.1. I_scscf_select(initial)
         4.2. I_scscf_drop()
-        4.3. I_perform_user_authorization_request(capabalities)
-        4.4. I_perform_location_information_request()
+        4.3. I_perform_user_authorization_request(route_block,
+                capabalities)
+
+        4.4. I_perform_location_information_request(route_block)
 
    5. Statistics
 
@@ -163,7 +167,10 @@ modparam("ims_icscf","scscf_entry_expiry", 300)
 
 3.4. cxdx_forced_peer (string)
 
-   FQDN of Diameter Peer (HSS) to use for communication (MAR)
+   FQDN of Diameter Peer (HSS) to use for communication (UAR, LIR). If you
+   use this, the routing defined in your diameter xml configuration file
+   (CDP) will be ignored and as a result you will lose the benefits of
+   load balancing and failover.
 
    Default value is "".
 
@@ -187,8 +194,8 @@ modparam("ims_icscf", "cxdx_dest_realm", "ims.smilecoms.com")
 
    4.1. I_scscf_select(initial)
    4.2. I_scscf_drop()
-   4.3. I_perform_user_authorization_request(capabalities)
-   4.4. I_perform_location_information_request()
+   4.3. I_perform_user_authorization_request(route_block, capabalities)
+   4.4. I_perform_location_information_request(route_block)
 
 4.1. I_scscf_select(initial)
 
@@ -227,12 +234,13 @@ I_scscf_drop();
 
    .
 
-4.3. I_perform_user_authorization_request(capabalities)
+4.3. I_perform_user_authorization_request(route_block, capabalities)
 
    Perform a UAR on Diameter CXDX interface. This function will build a
    list of SCSCFs to be used and populate the SCSCF list for the request.
    On a succesful return of this message you can get the next available
    SCSCF by using the I_scscf_select functoin in 4.1.
+     * Route block to resume after async UAR Diameter reply.
      * capabilities - whether to request capabilities or not "1" - with
        capabilities, "0" - no capabilities.
 
@@ -243,47 +251,84 @@ I_scscf_drop();
 
    Example 1.8. I_perform_user_authorization_request usage
 ...
-            I_perform_user_authorization_request("0"); #0=REG/DEREG; 1=REG+Capab
-ilities
-            #this is async so to know status we have to check the reply avp
-            switch ($avp(s:uaa_return_code)){
-                case 1: #success
+I_perform_user_authorization_request("REG_UAR_REPLY","0"); #0=REG/DEREG; 1=REG+C
+apabilities
+exit;
+...
+route[REG_UAR_REPLY]
+{
+    #this is async so to know status we have to check the reply avp
+    switch ($avp(s:uaa_return_code)){
+            case 1: #success
                     if (I_scscf_select("0")){
-                        t_on_failure("register_failure");
-                        t_on_reply("register_reply");
-                        if (!t_relay()) {
-                            t_reply("500", "Error forwarding to SCSCF");
-                        }
+                            t_on_failure("register_failure");
+                            t_on_reply("register_reply");
+                            #now relay to appropriate SCSCF
+                            if (!t_relay()) {
+                                    t_reply("500", "Error forwarding to SCSCF");
+                            }
                     } else {#select failed
-                        I_scscf_drop();
-                        t_reply("500", "Server error on SCSCF Select (UAR)");
+                            I_scscf_drop();
+                            t_reply("500", "Server error on SCSCF Select (UAR)")
+;
                     }
                     break;
-                case -1: #failure
+            case -1: #failure
                     xlog("L_ERR", "UAR failure - error response sent from module
-");
+\n");
                     break;
-                case -2: #error
-                    xlog("L_ERR", "UAR error - sending error response now");
+            case -2: #error
+                    xlog("L_ERR", "UAR error - sending error response now\n");
                     t_reply("500", "UAR failed");
                     break;
-                default:
+            default:
                     xlog("L_ERR", "Unknown return code from UAR, value is [$avp(
-s:uaa_return_code)]");
+s:uaa_return_code)]\n");
                     t_reply("500", "Unknown response code from UAR");
                     break;
-            }
+    }
+}
 ...
 
-4.4. I_perform_location_information_request()
+4.4. I_perform_location_information_request(route_block)
+
+   Perform a LIR on Diameter CXDX interface.
+     * Route block to resume after async LIR Diameter reply.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.9. proxy_authorize usage
+   p.s. this is executed asynchronously. See example on how to retrieve
+   return value
+
+   Example 1.9. I_perform_location_information_request()
 ...
-if (!proxy_authorize("$fd", "subscriber)) {
-proxy_challenge("$fd", "1");  # Realm will be autogenerated
-};
+I_perform_location_information_request("SESSION_LIR_REPLY","0");
+exit;
+...
+route[SESSION_LIR_REPLY]
+{
+    if ($avp(lia_return_code) == 1) {
+            if (I_scscf_select("0")) {
+                    append_branch();
+                    t_on_reply("initial_request_reply");
+                    t_on_failure("initial_request_failure");
+                    if (!t_relay()) {
+                            t_reply("500","Error forwarding towards S-CSCF");
+                            break;
+                    }
+                    break;
+            } else {
+                    xlog("L_DBG", "dropping scscf list on initial request\n");
+                    I_scscf_drop();
+                    t_reply("500", "Server error on LIR select S-CSCF");
+                    break;
+            }
+    } else {
+            t_reply("500", "Server error on LIR");
+            break;
+    }
+    break;
+}
 ...
 
 5. Statistics
