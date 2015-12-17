@@ -29,6 +29,8 @@ Victor Seva
               3.2. mask (int)
               3.3. callid_prefix (string)
 
+        4. Usage
+
    List of Examples
 
    1.1. Set cfgtrace parameter
@@ -51,13 +53,15 @@ Chapter 1. Admin Guide
         3.2. mask (int)
         3.3. callid_prefix (string)
 
+   4. Usage
+
 1. Overview
 
    This module provides a report of the way Kamailio SIP Server Platform
    configuration has been executed as part of a unit test for different
    SIP scenarios.
 
-   In order to identify defferent scenarios a prefix string should be used
+   In order to identify different scenarios a prefix string should be used
    inside the Call-ID header.
 
 2. Dependencies
@@ -114,10 +118,10 @@ modparam("cfgt", "mask", 12)
 
 3.3. callid_prefix (string)
 
-   Prefix used to indentify test scenario messages. Last char of the
-   string will be used as delimiter for the scenario ID. With parameter
-   set to “NGCP%” and Call-ID “NGCP%123%456” the scenario identified will
-   be “123”.
+   Prefix used to identify test scenario messages. Last char of the string
+   will be used as delimiter for the scenario ID. With parameter set to
+   “NGCP%” and Call-ID “NGCP%123%456” the scenario identified will be
+   “123”.
 
    Default value is “NGCP%” (using “%” as delimiter).
 
@@ -125,4 +129,26 @@ modparam("cfgt", "mask", 12)
 ...
 # using '%' as delimiter
 modparam("cfgt", "callid_prefix", "TEST-ID%")
+...
+
+4. Usage
+
+   This module is used by the debugger module, so it must be loaded first.
+   To enable the generation of the reports, the debugger module must be
+   configured by setting the cfgtest parameter to "1".
+
+   Example of configuration:
+...
+#!ifdef WITH_DEBUG
+# ----- cfgt params -----
+modparam("cfgt", "basedir", "/tmp/kamailio/cfgtest")
+modparam("cfgt", "callid_prefix", "TRACE-ID%")
+modparam("cfgt", "mask", 32)
+
+# ----- debugger params -----
+modparam("debugger", "cfgtrace", 1)
+modparam("debugger", "log_level_name", "exec")
+
+modparam("debugger", "cfgtest", 1)
+#!endif
 ...
