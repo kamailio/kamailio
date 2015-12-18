@@ -140,6 +140,11 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
    Example of configuration:
 ...
 #!ifdef WITH_DEBUG
+loadmodule "cfgt.so"
+loadmodule "debugger.so"
+#!endif
+...
+#!ifdef WITH_DEBUG
 # ----- cfgt params -----
 modparam("cfgt", "basedir", "/tmp/kamailio/cfgtest")
 modparam("cfgt", "callid_prefix", "TRACE-ID%")
