@@ -14,7 +14,7 @@ Di-Shi Sun
 
    <support@transnexus.com>
 
-   Copyright © 2003 FhG FOKUS
+   Copyright � 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -380,7 +380,7 @@ modparam("osp","use_rpid_calling_number",1)
    to use the different URI format in the SIP redirection message. If this
    value is set to 0, the OSP Module uses "xxxxxxxxxx@xxx.xxx.xxx.xxx" URI
    in the SIP redirection messages. If this value is set to 1, the OSP
-   Module will use “<xxxxxxxxxx@xxx.xxx.xxx.xxx>” URI in the SIP
+   Module will use "<xxxxxxxxxx@xxx.xxx.xxx.xxx>" URI in the SIP
    redirection messages. The default value is 0
 
    Example 1.16. Setting the redirection URI format

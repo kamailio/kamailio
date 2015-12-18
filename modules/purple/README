@@ -11,7 +11,7 @@ Eric Ptak
 
    <eric.ptak@atosorigin.com>
 
-   Copyright © 2008 Atos Worldline
+   Copyright � 2008 Atos Worldline
      __________________________________________________________________
 
    Table of Contents
@@ -178,7 +178,7 @@ CREATE TABLE purplemap (
 
    The URL to connect to database.
 
-   Default value is “mysql://openserro:openserro@localhost/openser”.
+   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
 
    Example 1.4. Set db_url parameter
 ...
@@ -224,7 +224,7 @@ modparam("purple", "httpProxy_port", 3128)
    5.2. purple_handle_publish()
    5.3. purple_handle_subscribe()
 
-5.1.  purple_send_message()
+5.1. purple_send_message()
 
    Send message to a purple destination.
 
@@ -241,7 +241,7 @@ if (is_method("MESSAGE")) {
 }
 ...
 
-5.2.  purple_handle_publish()
+5.2. purple_handle_publish()
 
    Handle PUBLISH to a purple destination.
 
@@ -256,7 +256,7 @@ if(is_method("PUBLISH")) {
 }
 ...
 
-5.3.  purple_handle_subscribe()
+5.3. purple_handle_subscribe()
 
    Handle SUBSCRIBE to a purple destination.
 

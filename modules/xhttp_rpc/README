@@ -16,7 +16,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright Â© 2011 VoIPEmbedded Inc.
+   Copyright © 2011 VoIPEmbedded Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -145,7 +145,7 @@ modparam("xhttp", "xhttp_rpc_buf_size", 1024)
 
    4.1. dispatch_xhttp_rpc()
 
-4.1.  dispatch_xhttp_rpc()
+4.1. dispatch_xhttp_rpc()
 
    Handle the HTTP request and generate a response.
 

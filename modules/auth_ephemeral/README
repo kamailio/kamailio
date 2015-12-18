@@ -5,7 +5,7 @@ Peter Dunkley
    Crocodile RCS Ltd
    <peter.dunkley@crocodile-rcs.com>
 
-   Copyright © 2013 Crocodile RCS Ltd
+   Copyright � 2013 Crocodile RCS Ltd
      __________________________________________________________________
 
    Table of Contents
@@ -221,7 +221,7 @@ modparam("auth_ephemeral", "username_format", 0)
    4.6. autheph_check_to([username])
    4.7. autheph_check_timestamp(username)
 
-4.1.  autheph_proxy(realm)
+4.1. autheph_proxy(realm)
 
    This function performs proxy authentication.
 
@@ -235,7 +235,7 @@ Note
        present to the user so that he can decide what username and
        password to use. Usually this is domain of the host the server is
        running on.
-       It must not be an empty string “”. Apart from a static string, a
+       It must not be an empty string "". Apart from a static string, a
        typical value is the From-URI domain (i.e., $fd).
        The string may contain pseudo variables.
 
@@ -249,7 +249,7 @@ if (!autheph_proxy("$fd")) {
 }
 ...
 
-4.2.  autheph_www(realm[, method])
+4.2. autheph_www(realm[, method])
 
    This function performs WWW digest authentication.
 
@@ -263,7 +263,7 @@ Note
        present to the user so that he can decide what username and
        password to use. Usually this is domain of the host the server is
        running on.
-       It must not be an empty string “”. Apart from a static string, a
+       It must not be an empty string "". Apart from a static string, a
        typical value is the From-URI domain (i.e., $fd).
        The string may contain pseudo variables.
      * method - the method to be used for authentication. This parameter
@@ -280,7 +280,7 @@ if (!autheph_www("$fd")) {
 }
 ...
 
-4.3.  autheph_check(realm)
+4.3. autheph_check(realm)
 
    This function combines the functionalities of autheph_www and
    autheph_proxy, the first being exectuted if the SIP request is a
@@ -296,7 +296,7 @@ Note
        present to the user so that he can decide what username and
        password to use. Usually this is domain of the host the server is
        running on.
-       It must not be an empty string “”. Apart from a static string, a
+       It must not be an empty string "". Apart from a static string, a
        typical value is the From-URI domain (i.e., $fd).
        The string may contain pseudo variables.
 
@@ -310,7 +310,7 @@ if (!autheph_check("$fd")) {
 }
 ...
 
-4.4.  autheph_authenticate(username, password)
+4.4. autheph_authenticate(username, password)
 
    This function performs non-digest ephemeral authentication. This may be
    used when digest authentication cannot. For example, during WebSocket
@@ -337,7 +337,7 @@ if (!autheph_authenticate("$var(username)", "$var(password)")) {
 }
 ...
 
-4.5.  autheph_check_from([username])
+4.5. autheph_check_from([username])
 
    This function checks that the username (or username and domain) in the
    From: URI matches the credentials.
@@ -371,7 +371,7 @@ if (!autheph_check_from()) {
 }
 ...
 
-4.6.  autheph_check_to([username])
+4.6. autheph_check_to([username])
 
    This function checks that the username (or username and domain) in the
    To: URI matches the credentials.
@@ -405,7 +405,7 @@ if (!autheph_check_to()) {
 }
 ...
 
-4.7.  autheph_check_timestamp(username)
+4.7. autheph_check_timestamp(username)
 
    This function checks that the timestamp in the username parameter has
    not expired. The autheph_(check|proxy|www) functions all do this

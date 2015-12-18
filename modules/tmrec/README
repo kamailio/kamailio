@@ -138,7 +138,11 @@ modparam("tmrec", "separator", ";")
        subsequent intervals do not overlap. For non-recurring intervals,
        durations of any positive length are permitted. Zero-length
        duration means "forever". Negative-length durations are not
-       allowed. See RFC 2445 for the format of duration.
+       allowed.
+       See RFC 2445 for the format of duration. In short for common cases
+       when the duration doesn't exeed a data, it must start with PT
+       followed by the value for hours, minutes or seconds - e.g., a
+       duration of 8 hours must be written as PT8H.
      * frequency - can be one of the following values: "daily" - specify
        repeating periods based on an interval of a day or more; "weekly" -
        specify repeating periods based on an interval of a week or more;
@@ -208,7 +212,7 @@ modparam("tmrec", "separator", ";")
 
    Next is an example of evaluating multiple Byxxx parameters.
 
-   startdate="20100101T093000" duration="10H30M" frequency="yearly"
+   startdate="20100101T093000" duration="PT10H30M" frequency="yearly"
    interval="4" bymonth="3" byday="SU"
 
    First, the interval="4" would be applied to frequency="yearly" to match

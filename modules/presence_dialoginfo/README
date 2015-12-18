@@ -19,9 +19,9 @@ Klaus Darilion
 
    <klaus.darilion@mailinglists@pernau.at>
 
-   Copyright © 2007 Juha Heinanen
+   Copyright � 2007 Juha Heinanen
 
-   Copyright © 2008 Klaus Darilion, IPCom (Module implementation was
+   Copyright � 2008 Klaus Darilion, IPCom (Module implementation was
    partly sponsored by Silver Server (www.sil.at))
      __________________________________________________________________
 
@@ -205,7 +205,7 @@ alice@example    server     server     bob@example   watcher@example
    state more intersting than confirmed as often you might want to pickup
    a call if the originall callee is already busy in a call.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.1. Set parameter
 ...

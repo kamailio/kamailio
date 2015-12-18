@@ -10,7 +10,7 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright © 2007 Juha Heinanen
+   Copyright � 2007 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -53,8 +53,8 @@ Chapter 1. Admin Guide
    before calling handle_publish() and handle_subscribe() functions.
 
    The module implements a simple check of content type
-   “application/simple-message-summary:” Content must start with
-   “Messages-Waiting” status line followed by zero or more lines that
+   "application/simple-message-summary:" Content must start with
+   "Messages-Waiting" status line followed by zero or more lines that
    consist of tabs and printable ASCII characters.
 
 2. Dependencies
