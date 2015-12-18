@@ -1,3 +1,679 @@
+===================== 2015-12-18 Version 4.1.9 Released =====================
+
+===================== Changes Since Version 4.1.7 ===========================
+
+commit a18026d9906f9739064c34f05eeba3922e8a64c3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 18 12:24:28 2015 +0100
+
+    Makefile.defs: version set to 4.1.9
+
+commit 264e3c2339f283367645daddea6266f0352e79d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 18 12:23:41 2015 +0100
+
+    pkg/rpm: version set to 4.1.9 in spec files
+
+commit cd45f5529d1145d2359fa58fde96da7197d506bc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Dec 18 11:49:58 2015 +0100
+
+    pkg/kamailio/deb: update to 4.1.9
+
+commit d4248b354ec08e509e1b25b312357f543159e4c9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 18 12:16:08 2015 +0100
+
+    modules: refreshed the readme files for many modules
+
+commit 85d59b019e1910da1eeb1d7655137d20568f365a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 4 17:30:06 2015 +0100
+
+    outbound: adjusted log message for trying to import the api
+    
+    - when module is not loaded, a messages with 'failed' was printed,
+      which could trigger an alert even for info level
+    
+    (cherry picked from commit 700617c6b3707fba16001f82fab6ca0370b23acf)
+    (cherry picked from commit a350e33b3fe13e807a621d12325342c93c4ab706)
+    (cherry picked from commit dc6522a8533c710557fe634ee72aaf795f6ae92e)
+
+commit 58b32821266ddee093d4144e93ffb238ea633b24
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 13:24:40 2015 +0100
+
+    core: proper test of return code for add_interfaces() in case of IPv6
+    
+    - report with patch by Christian KÃ¼hnke
+    
+    (cherry picked from commit 299d2f7764527fbc5b6de1833976f43c58b1ff2d)
+    (cherry picked from commit 6516699e46bd912de3b65d4cc4eb668e919e845e)
+    (cherry picked from commit 350f605f123cf30942a02576d6a4ffb2bb615bf0)
+
+commit c3f23bf098f2335e6520eae6544bd0f7b9a07839
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 12:31:01 2015 +0100
+
+    app_python: basic documentation for params and functions
+    
+    - based on quick look at the code
+    
+    (cherry picked from commit e2853a8ac22bc26d47153731f65479f03a756c52)
+    (cherry picked from commit cf77d88069407512c7d2ff234607ab6e3fc9c784)
+    (cherry picked from commit a5de6b2b6adb2e0adc3ed04b172dfbde079c0b5a)
+
+commit cb93fb73912869efc5153103168dd1079da6e4a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 19 00:01:27 2015 +0100
+
+    kamctl: require db or ctl engine made specific for dispatcher subcommands
+    
+    (cherry picked from commit d2416957e4caec8a64abec82029ea18c52a7bc2d)
+    (cherry picked from commit d0c5a5835969660d43355fa91b39f1a8e08f6eb0)
+    (cherry picked from commit b316b2ac21c61b2224b721b3af61e5bb5d3f0274)
+
+commit b8f4ce45005b5d0b085577ff4eae92444a689fd7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 18 12:12:21 2015 +0100
+
+    nathelper: consider IPv6 brackets when checking size for keepalive request
+    
+        (cherry picked from commit 27f19950f107a943c3bf9db1fddb1e4912136181)
+        (cherry picked from commit 8d82eb9a43885a1c524c5a53155f3299ce55fbb7)
+
+commit 9edb00cad8078272c36f9674af297d44da6bb1b1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Oct 26 21:31:59 2015 +0100
+
+    core: fixed passed buffer size in suip2a() for ipv6
+    
+    - buffer size set to IP6_MAX_STR_SIZE, it was too short and returned
+      value was empty addres "[]"
+    - the function is used only by siptrace
+    - patch from github pull request #381
+    
+    (cherry picked from commit d6f313e61b3318924e6653c8ca1184b2016f701d)
+    (cherry picked from commit e1b60b857f78ec459ae31a4cf6475643ec102f40)
+    (cherry picked from commit d51575098ddaea40304c757a297ba7ec53745f8d)
+
+commit 8e010d9f740aa976069d903a3df7b0c0583bda88
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 21 09:49:38 2015 +0200
+
+    corex: detect ipv6 for send*() functions
+    
+    (cherry picked from commit 027495fb6ac7c8f50ff9945c209bc9f7ac98d991)
+    (cherry picked from commit 4fdd11699c83f2e4c787d210ca08eb3ec2fb559a)
+    (cherry picked from commit 5b93cc210c8608f6c030dd889d66f8deee43bf54)
+
+commit 7a7127f144dce25deae531781d376ef50402db2a
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Wed Oct 7 13:44:03 2015 +0200
+
+    nathelper Via header for SIP ping over IPv6 needs square brackets
+    
+    (cherry picked from commit 274f1034bfb9ea0d52ef291d2f95021ca86f3081)
+    (cherry picked from commit 74042e3c00edd441e30d7aba25807f99617be375)
+    (cherry picked from commit c8ef96a8a939b2e3536217d40cfcee9d008611cb)
+
+commit 46551c11bb5f5421b12d4a759e7cae4a69d0cdc6
+Author: Chris Double <chris.double@double.co.nz>
+Date:   Wed Sep 23 20:48:56 2015 +1200
+
+    textops: prevent null dereference on tr_txt_eval_re error
+    
+    - Check for NULL pointer before calling subst_expr_free
+      to prevent NULL pointer dereference when there is an
+      unknown subtype error.
+    
+    (cherry picked from commit 5aa2ed265f80664f57073213b17c83b1dac42ab4)
+    (cherry picked from commit 5d7d1fd3ccc96e032ef73a799dfbd97b86839b5e)
+    (cherry picked from commit 67009ea2bcc358a186f93b2717c0d46944a2676c)
+
+commit 95959f4bf3d42c2307deac6462ba721f101fdd48
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 1 14:18:02 2015 +0200
+
+    drouting: notes about the format of duration attribute
+    
+    (cherry picked from commit 711144a1fa3e1dfa540cc7ccd0ce1c14faeba42f)
+    (cherry picked from commit 46af0cfb7cc1fffb22e43ebd41f07fc95947f8e5)
+    (cherry picked from commit 516adfe9913391590c314561e7a5c531f6e96304)
+
+commit be6cfcec326badaa9f6109c352d8ead2f93dbe7b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 1 09:17:39 2015 +0200
+
+    tmrec: more details about duration format for time recurrences
+    
+    (cherry picked from commit 81006ee1246b8f700ce9ce20814d4522780d7ceb)
+    (cherry picked from commit c979b991450052f6a77238aef391dd8bb3f13f32)
+    (cherry picked from commit cc1cbf6113c8536b2e6193b51c8e34ebc09a7dac)
+
+commit 0e031ef1b7725ac2f82b3239a0be34f3cccbc540
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 26 15:16:13 2015 +0200
+
+    kamcmd: lower max size for socket name
+    
+    - was set to 108 which is common for linux, but mac os x has it 104
+    - set to 100 now
+    
+    (cherry picked from commit 3f4c63802194cb83ffb8124e5ae38f85ee315c28)
+    (cherry picked from commit 05242f6db6edcf32705722dcd0d9d3e3cf7a8340)
+    (cherry picked from commit ebe43e905eac23d86b7a9979a976f08a5bd7f888)
+
+commit a7b29ec8f708605b6712ae7bbb913c1fa6d1978e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 26 15:09:17 2015 +0200
+
+    kamcmd: updated default server name references
+    
+    (cherry picked from commit 8db5eb2b53320d84ded36c531a00f6dfbec27a75)
+    (cherry picked from commit ee3048e8685f54c35daff699ad64ce9ef5c71f8a)
+    (cherry picked from commit 74800f2bf9a11ca138867ea6cdaaa53ff4a79562)
+
+commit 106544359d427a0f1393fc9330406007b915f5cf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 24 09:28:29 2015 +0200
+
+    sanity: adjusted log messages for check_proxy_require()
+    
+    (cherry picked from commit 0f479b5366fae4c5ad0c78e4c91661b7a421d5e8)
+    (cherry picked from commit a8c2c53b1175af7bd3c6020cc01e95174b2597e0)
+    (cherry picked from commit 8c04e7e86c99c8f8719715e66a89d8e93c6e5f63)
+
+commit 65d4736123c4ca7629687c97fca17946b1ef908d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Aug 22 09:28:29 2015 +0200
+
+    sanity: commented priting require header on error level
+    
+    (cherry picked from commit 9902ca145178498ff47092f0ecdd3bca6650c97c)
+    (cherry picked from commit 60b2e3e3e66320446541ba92de239fc3f58bc79f)
+    (cherry picked from commit c680f2bf70b7f9cd804945f1a44b9e6e8284ed59)
+
+commit 5e9072d44e1cbe3588e13030e2fbb26cd8a0b1a9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 30 20:54:56 2015 +0200
+
+    pua: fix typo in matching presence.winfo
+    
+    - patch by foucse, GH #270
+    
+    (cherry picked from commit 48f89ed0390a80cc760da5a7ed41dd9c5c5ffc4d)
+    (cherry picked from commit d88f52cadb2bf6764518c89be852b0534731d82e)
+    (cherry picked from commit c271ba62e20993708f7f6a5089206b507295f169)
+
+commit bd71f80d14c7829edf675a6c6f55b304b0d49fb0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 28 12:31:24 2015 +0200
+
+    geoip: set null termination to the field used for query
+    
+    (cherry picked from commit ec2a72d75dc0a2c9c3d88361094fdda7a7477935)
+    (cherry picked from commit 4c24d4acbca4e5ec99b5de1dd5f29d2cdeae9e2b)
+    (cherry picked from commit 0b18aea1f48584a4ee9ce445dfca7c25794c6c73)
+
+commit eaeb67df6c2a288074b976d9356b6617f8920cf8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 28 10:02:03 2015 +0200
+
+    permissions: check if hash tables exist for address config functions
+    
+    - reported by Olle E. Johansson, GH#248
+    
+    (cherry picked from commit 6fcd35ba5bb71df680b89c2bafceccde0439b6f1)
+    (cherry picked from commit 64028d658a788b74f6f9c71f2e2aa3b0b5a1c803)
+    (cherry picked from commit 0cd5280e2f0bc3df24aa98584b549d65a79fee20)
+
+commit 36b8b61557aa035cda898b36d54cde8fc7992035
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 28 09:47:48 2015 +0200
+
+    permissions: safety check if hash tables exist for rpc dump commands
+    
+    - reported by Olle E. Johansson, GH#248
+    
+    (cherry picked from commit 56e41533cae52cf5f782064ed23393d2d18aff08)
+    (cherry picked from commit 5db29ed56f2a682861e34a455ae76e0d43b4ff4c)
+    (cherry picked from commit 9eaf2f8fd998e04564f3161175e4c6afa2ef4c12)
+
+commit fb8a926601770285b1789a8798e7c7bfadd18a5f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 27 12:01:03 2015 +0200
+
+    kamcmd: use NAME to build help message
+    
+    (cherry picked from commit 7038d12dbb9c8db1b46c0874bfd8fce72d6e72ed)
+    (cherry picked from commit ff1d3f06840928aace36780ecbc898cd2e90ce0a)
+    (cherry picked from commit 4bce6e25bcb8a07687c87f9c64b5d54fba8e0410)
+
+commit 3e9a3b64e5d8beea64c5b026242b04042d101c85
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 27 15:03:21 2015 +0200
+
+    tm: more verbose debug message when local transaction is completed
+    
+    (cherry picked from commit 54fea03a078f8258d124a83443617c54bdbc2574)
+    (cherry picked from commit aa91d8ba178624c08ffcbb6af55efa777f6ca640)
+    (cherry picked from commit 22b2b07d9295410ac1a9dbc11baf129b984ca640)
+
+commit ece3006e857f0ac802eebe26a4f9afc30149ade5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 16:15:43 2015 +0200
+
+    Makefile.defs: detect gcc version 5.0+
+    
+    - reported by Anthony Messina, GH #230
+    
+    (cherry picked from commit 35e5da141569b8ace7c0a8fd743d02de6c0df525)
+    (cherry picked from commit 6279f50a2cdbcba34226f959f40258bb768954bc)
+    (cherry picked from commit be2892e6a60915902c89044483786625e78a3f0d)
+
+commit 61a55e21ab20fb10815d3b0f42edd5e4d567ea0d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 8 07:34:47 2015 +0200
+
+    tm: extended docs for t_reply()
+    
+    (cherry picked from commit a221ec34074c25838f470070cb6c7e604a33fc98)
+    (cherry picked from commit f050389b568aaab3717484b67b9b157199c63bbc)
+    (cherry picked from commit de21507868af81ef3155e6de4b1e788058578459)
+
+commit 88eda0dbd40c5338ee304e674a9c111af58bdae3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 8 07:34:22 2015 +0200
+
+    sl: extended docs for sl_send_reply()
+    
+    (cherry picked from commit 29aa683f7c3d507a88b83ecd84d9023c5e162ab1)
+    (cherry picked from commit 1a08fa07b601c5f9636c6dba223230ec91301768)
+    (cherry picked from commit 4faa50094a44d8c06c2fd3987f107731530eae47)
+
+commit 7974ea9f71ccba807155d3d236907e66c762f760
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Jul 18 14:37:30 2015 +0200
+
+    dnssec: link openssl
+    
+    Fixes: #253
+    (cherry picked from commit 577ddf62f46d3e06d9ae235fef9cde177020a9d4)
+    (cherry picked from commit f477aa382b3357b4e21aad27c801a51d5d9290de)
+
+commit e13d935400973f335d341d93ca80301226b49d68
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 23 13:15:29 2015 +0200
+
+    uac: fixed typos in log message
+    
+    (cherry picked from commit 42f0a1ffe551442058f53c9446495d5e62dc5abc)
+    (cherry picked from commit bebf30abb057221be646e95b07cdaca88cab63b5)
+    (cherry picked from commit b90cdaf34bc7a3da55a0b561719909336b9be065)
+
+commit 7e1698eb48bc8b7dcefe2e6011f0fa4d32734390
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 11 10:49:10 2015 +0200
+
+    uac: updated notes about uac_auth()
+    
+    (cherry picked from commit db829aabf30c5b4fdfee5ebd842959b63a598b26)
+    (cherry picked from commit 43b70c5c809f666c74bc0b75ce7549d2a7b0518e)
+    (cherry picked from commit 8fd81333a4bf9de641321430aebfdda5f089b8d4)
+
+commit ff6f3fa14d982c505d0b6846456e8de36e6d9a1a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 14:36:24 2015 +0200
+
+    regex: safety to check to avoid working with zero size allocations
+    
+    (cherry picked from commit 5e5866b2ac8390caa9373f49345ed877c6e5f037)
+    (cherry picked from commit fd6dba3b9752e9cbf21da2ca7b66b2e5c1dafce7)
+
+commit 96cf43f98dab4e66242e4dca329aba3bca5f4cf2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 13:01:18 2015 +0200
+
+    regex: reset pointer after free to avoid double free if an error occurs
+    
+    (cherry picked from commit 379667e878c9e0795998f600edbcbb3974846f71)
+    (cherry picked from commit b103dff88f4ac83acf20798c06d43b2586810a36)
+
+commit 435e69c40efb022472470114e93a6819edb15d68
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 14 12:54:18 2015 +0200
+
+    imc: better condition to catch no result of database query
+    
+    (cherry picked from commit 29d7ca71fdfc8c52fb5e68fcf3bccf98dde0d089)
+    (cherry picked from commit bae153942524b1d86e29f10208e35dbf088d7db5)
+
+commit 4c901a6a3c5c5a3679f6f23e914c416314873067
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 7 23:31:49 2015 +0100
+
+    registrar: use proper iterator to get to the index of the $ulc() contact
+    
+    - part of a patch by Luis Azedo
+    
+    (cherry picked from commit f39b92acb2be15e03aa117bdf171087ea7a77050)
+    (cherry picked from commit 4ab41baecf0f9912c2a3ed859d53ffe3e5b46a26)
+
+commit 9e3d5dda096d59ef9ba0c7b991a06500edb1741d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 14:58:32 2015 +0100
+
+    ldap: fixed copy&paste error added in previous commit
+    
+    (cherry picked from commit c6ddf3aec7eb6e8d6046b006fde64ab7479aab5e)
+    (cherry picked from commit 87ca6e634c627a6beb4b7355fcfcbd0070e2afe1)
+
+commit 266589638805bbcc9a9a951f5656d786a32734e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 14:52:08 2015 +0100
+
+    ldap: more useful info on reconnect
+    
+    - reconnect message made a notice level, being not an error situation
+    - print the chosen ldap server address at info level when reconnecting
+    
+    (cherry picked from commit c5ae4020de8499e7a318783b21276dfd3fc0a6e3)
+    (cherry picked from commit b2aa72a6357dd93c75a345fd433c3b86c2654313)
+
+commit be3623e48822bf8f3f452dce7198495dcfe2bebe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 14:38:38 2015 +0100
+
+    sqlops: more verbose log message if execution of query fails
+    
+    (cherry picked from commit 941fbda5c66da6c8069b3bce3764249bbb58baaa)
+    (cherry picked from commit bb81ec09e22bb35944879a081eba47b1cfcc816b)
+
+commit 0805db462d5623c4a816bfaf9e3cd42d4d1679e5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 10 13:54:11 2015 +0100
+
+    db_cluster: fix checking the capabilities for write operation with different priorities
+    
+    - reported by Jan Hazenberg
+    
+    (cherry picked from commit 8375f37cd7603216a2bb55a4e9985b3c5e54af91)
+    (cherry picked from commit 4ae4e5f381fba4cf43d8792e56d2baa4b2edcc6f)
+
+commit aa640ff7dba8b2cd6e967493d176d01ac6889055
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 23 14:29:46 2015 +0100
+
+    sdpops: safety check when location a= line not to exceed end of message
+    
+    (cherry picked from commit 91596953115fe1bbe5c6f0dd0dd6e8d99cdbd285)
+    (cherry picked from commit e24c9ff7038534e07682e8a7bafd903e4303590e)
+
+commit 70c0ea551a3547160d9f4fc3a6ddc76abcb1ca16
+Author: mikomarrache <mikomarrache@users.noreply.github.com>
+Date:   Wed Feb 11 11:37:26 2015 +0100
+
+    dialog: fix initialization of slot next_id to avoid colision after restart
+    
+    - next_id was set to the highest id of a dialog loaded from database,
+      next new dialog was reusing the same value
+    
+    (cherry picked from commit e122c5ee8c6055c033cc11f14e5308ed94461fe6)
+    (cherry picked from commit 9b0ed6d54e47880818f934a8988c89d340739564)
+
+commit eeee655ee6eb1698aef2f788a271d68a663bde73
+Author: smititelu <stefan.mititelu@1and1.ro>
+Date:   Wed Dec 16 13:28:18 2015 +0200
+
+    debugger: Fix coredump when kamailio stopped
+    
+    Upon kamailio stop, 'dbg_cfg' pointed to invalid memory zone(not NULL).
+    Reset the pointer to NULL upon module_destroy() and do the NULL checks.
+    
+    Reported by foucse in issue #446.
+    
+    (cherry picked from commit 64583809c677384e2fcd54a5ba7f921b3ea59c51)
+
+commit 72a7b974b74f3d51e9ec612da148e7371d460c2c
+Merge: 6629046 babf618
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Nov 24 23:28:45 2015 +0100
+
+    Merge pull request #416 from linuxmaniac/vseva/travis_docker_4.1
+    
+    tests/travis: migrate to docker environment
+
+commit babf6187722f595b5fd32692958676b17c308efa
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Nov 24 16:05:40 2015 +0100
+
+    tests/travis: migrate to docker environment
+    
+    - use jessie as default distribution
+    - remove clang build. Not supported here
+
+commit 66290463f74353972eaf7d3e90920acc18d6ab61
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Nov 23 23:12:18 2015 +0100
+
+    test/travis: build_travis.sh force error on any command
+
+commit eb2cad0ba521c260d7a3b7aeda2642e5eed965a5
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Mon Nov 23 12:35:03 2015 +0200
+
+    p_usrloc: str->s string NULL check before str_dup
+    
+    Don't shm_str_dup() NULL str->s strings.
+    Add checks to avoid shm_str_dup() warning.
+    
+    (cherry picked from commit d1c6dc67b222e05be1ff90be9b38846f63866839)
+
+commit 4dce9a6e9e15a6aaa6cf31a563c4e5684a0ddf7a
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Wed Nov 18 12:21:19 2015 +0200
+
+    core: NULL checks for ut.h
+    
+    Add some NULL checks for shm/pkg dup functions and few others.
+    
+    (cherry-picked from commit 24999a5dbf7d986942479c0670158748c263a3cd)
+
+commit cb65228e2509cef518d595cc4737994393f7d51e
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Tue Nov 3 15:58:02 2015 +0200
+
+    dialog: Sanity checks
+    
+    Add NULL checks for the parse_dlg_rr_param().
+    Segfault when 'did' parameter was empty in the Route header (e.g. 'did=').
+
+commit 7e32dfcf50e62577b406991972f6f99ae003c347
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Tue Nov 3 13:08:47 2015 +0200
+
+    uac: Sanity checks
+    
+    Sanity checks for decode_uri(). Add NULL and len > 0 checks.
+    Segfault when vsf parameter was empty in the Route: header (e.g 'vsf=').
+
+commit 07cc2883c7dc57f011dbba437fe00d9cc4ad2afc
+Author: Hugh Waite <hugh.waite@acision.com>
+Date:   Thu Sep 17 15:50:48 2015 +0100
+
+    parser: Fix parser error when Retry-After is last header
+    
+    - Prevent off-by-one error when CRLF is followed by CRLF
+    (cherry picked from commit deab9d061cbe180aaf32b7416c2477b4eb901ec8)
+
+commit 9e03ac7410c879dc9e91dd21c04c0597ce1ccff3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 25 16:12:51 2015 +0200
+
+    mi_datagram: free async handler when command completed
+    
+    - reported by Torge Szczepanek, GH#298
+    
+    (cherry picked from commit 374bfb1c467d6bf2a4cc143d22868c37143783bd)
+    (cherry picked from commit d495aafb98d3560c36b681dae21b671ce8b23e86)
+    (cherry picked from commit a4ca8feae11a8168ab600b2a648f85af1e792661)
+
+commit e1e3389c946af67fd132c2121188a36a67328188
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Wed Aug 26 13:00:10 2015 +0200
+
+    modules/dialog: make dialog context available in event route tm:local-request
+    
+    (cherry picked from commit 5002f66a98b6104702c8c862e7335ff189e7b7d8)
+
+commit 0e550eec214f9bfea1e87519e6c842230a552e50
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Tue Aug 11 15:31:02 2015 +0300
+
+    dtrie: Set child to NULL when run out of SHM
+    
+    The stop condition in dtrie_delete is node==NULL. Suppose the case when there
+    is no SHM memory left when trying to dtrie_insert(). The memory gets freed
+    by shm_free() but the pointer still points to it. This leads to segfault when
+    dtrie_delete tries to access that memory zone, in the given case. GDB says:
+    "Cannot access memory at address 0x1130000001d"
+    
+    (cherry picked from commit 60ffee9cf54ff362026497036935746c9dbe62e5)
+
+commit 29c81c48b06c349c36f88f06404e7d3f93397be6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Sat Aug 8 08:00:59 2015 +0200
+
+    registrar: fix backport f2d23c1a038703
+
+commit f2d23c1a038703e37a32dd5ea75d9b442e2fbc93
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Aug 6 20:36:22 2015 +0200
+
+    registrar: get instance and ref_id when using msg
+    
+    needed for check max_contacts properly if sip.instance exists
+    as contact parameter
+    
+    See: #278
+    (cherry picked from commit 99ce64fc555cc0b6b0189d812c6156cb05fb2e1b)
+
+commit bd85c1d19fc0e1c2d706282b954a2baa1665d34f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 7 11:14:31 2015 +0200
+
+    core: fix matching network addresses with bitmask non divisible to 8
+    
+    - reported by Kyle Kurz <kkurz@digium.com> for permissions module
+    
+    (cherry picked from commit f429e753dfa750a604bfb0acb5068b47d0fbe142)
+    (cherry picked from commit 05ac2a2b88f476b0fd32b1bf314b2357eedfceb0)
+    (cherry picked from commit f06fc524de25e09549f7fbb57a0f08fb2765267e)
+
+commit 10c1c00ed184fc3d13a0b244618a32151ec403ed
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed Jul 15 16:00:03 2015 +0200
+
+    pua_reginfo: use ruid to fix comparation of contact
+    
+    (ptr == c) is always false. Using ruid instead.
+    
+    (cherry picked from commit 7d31d78e3ac861cddfcb70c9940242ec7f3f0dbc)
+
+commit bb16ed70ed07b51f08a2abc2582ee61ea1cc4fb8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu May 28 18:26:08 2015 +0200
+
+    pua_reginfo: use ul.get_urecord_by_ruid instead of ul.get_urecord
+    
+    (cherry picked from commit 63bd356cc3c7aa64d64361283f630f88b8db88af)
+
+commit e57bae2fa2a8a784e12c93a5d8a45e59290cd55e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 15:19:55 2015 +0200
+
+    avpops: remove unecessary test for deleting avps by name rules
+    
+    - causes crash, following the change to use cached pv structures
+    - reported by Alexandr Dubovikov, GH #239
+    
+    (cherry picked from commit b120b47c39034d4bc384ff733ce62b845f2b4062)
+    (cherry picked from commit 9c6eef916be7926ae2c7f926da670a3e01226232)
+    (cherry picked from commit c5d4c25bc54a823a60abbd1f22ad23c4ff7ffd61)
+
+commit b9d267bfcd09d18460235ce903b339068cef116e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 14:54:31 2015 +0200
+
+    core: proper cloning of xavp list with no-data type
+    
+    - function used for cloning xavps stored in location record
+    - reported by Luca Mularoni
+    
+    (cherry picked from commit 4efb386ebf47fc89446f57f2faf6f5cddfb7bff7)
+    (cherry picked from commit f5d11d18f9d483c5fc731ff36f30fbbe1204f9ff)
+    (cherry picked from commit 2a5d17bc74d8f7518537390d9986ec0539440443)
+
+commit 481a7628eebcdeb0a12ac4f1286882c946204d56
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 14 14:06:07 2015 +0200
+
+    Makefile.defs: test if SCTP is set to enable core USE_SCTP
+    
+    (cherry picked from commit a9d10bbae1ffbd6be0f5a83ffacfa57a03174a2e)
+    (cherry picked from commit 8c597a012e68408475f1abf1b65a1970b8ecd298)
+    (cherry picked from commit 57cf13ce5531e1b0d92bc00a29f358bb0e24524b)
+
+commit 1fdda9d491ce3b95f8ab4a1013bcc8b39052006a
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 8 15:45:28 2015 +0200
+
+    lib/srdb1: use 6 digits for db_double2str
+    
+    acc module was getting values rounded by this
+    
+    (cherry picked from commit e1dcdf5a48cae9802c51c1d516d6fbc862855dcb)
+
+commit 7c32f097d7b616337a09c7001ee9c280838029ef
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 12 21:38:58 2015 +0200
+
+    travisci: use regex to select 4.X branches
+    
+    (cherry picked from commit 5695978137225cc16cbe1cf8282c3eb31262257d)
+
+commit 64e265981b78eaa88727c9bed33a550348fd9b4b
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Sat May 9 18:16:28 2015 +0200
+
+    modules/nathelper: don't include enclosing bracket in contact uri in set_contact_alias
+    
+    (cherry picked from commit b525ada2d12bf85c385a5f97859afd5d52405354)
+
+commit 59f3fa679d35d64db42037ef862bb8a1c4c12cb7
+Author: Timo TerÃ¤s <timo.teras@iki.fi>
+Date:   Mon Mar 9 16:30:53 2015 +0200
+
+    sqlops: fix use-after-free by deep copying result name
+    
+    When creating a new result handle, deep copy the result name.
+    Otherwise we might end up accessing the name after it's freed.
+    
+    (cherry picked from commit 6e2604464e64cfaaf1e0327228f53f4787b69470)
+
+commit 0c8419e3ef8137b443978195f0dfd975578afcff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 18 18:36:37 2015 +0100
+
+    sqlops: fix column index for sqlops_is_null()
+    
+    - report and patch by Mihaly Zachar
+    
+    (cherry picked from commit 768dc8b566e2af04411570ef7b4d55a210a1927d)
+    (cherry picked from commit 6614c8e78ac9cb5add92aff0db2d3a24dbc65423)
+
+
 ===================== 2015-02-05 Version 4.1.8 Released =====================
 
 ===================== Changes Since Version 4.1.7 ===========================
