@@ -126,6 +126,7 @@ static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
 
 	if ( sipping_method.len + 1 + curi->len + s_len(" SIP/2.0"CRLF) +
 		s_len("Via: SIP/2.0/UDP ") + s->address_str.len +
+				((s->address.af==AF_INET6)?2:0) +
 				1 + s->port_no_str.len + s_len(";branch=0") +
 		(path->len ? (s_len(CRLF"Route: ") + path->len) : 0) +
 		s_len(CRLF"From: ") +  sipping_from.len + s_len(";tag=") +
