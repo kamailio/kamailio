@@ -51,10 +51,13 @@ static int add_contact(str aor, ucontact_info_t* ci)
 	str contact;
 	int res;
 
-        if (dmq_ul.get_udomain("location", &_d) < 0) {
-                LM_ERR("Failed to get domain\n");
-                return -1;
-        }
+	if (dmq_ul.get_udomain("location", &_d) < 0) {
+		LM_ERR("Failed to get domain\n");
+		return -1;
+	}
+
+	dmq_ul.lock_udomain(_d, &aor);
+
 	res = dmq_ul.get_urecord(_d, &aor, &r);
 	if (res < 0) {
 		LM_ERR("failed to retrieve record from usrloc\n");
