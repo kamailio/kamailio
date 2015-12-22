@@ -1470,6 +1470,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 	c_back_param *cb_param= NULL;
 	str* final_body= NULL;
 	uac_req_t uac_r;
+	str* aux_body = NULL;
 	
 	LM_DBG("dialog info:\n");
 	printf_subs(subs);
@@ -1532,7 +1533,11 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 					/* call aux_body_processing if exists */
 					if(subs->event->aux_body_processing)
 					{
-						subs->event->aux_body_processing(subs, notify_body);
+						aux_body = subs->event->aux_body_processing(subs, notify_body);
+						if(aux_body) {
+							free_notify_body(notify_body, subs->event);
+							notify_body = aux_body;
+						}
 					}
 
 					/* apply authorization rules if exists */

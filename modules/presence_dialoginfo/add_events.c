@@ -57,6 +57,7 @@ int dlginfo_add_events(void)
 
 	/* modify XML body for each watcher to set the correct "version" */
     event.aux_body_processing = dlginfo_body_setversion;
+    event.aux_free_body = free_xml_body;
 
 	
     if (pres_add_event(&event) < 0) {

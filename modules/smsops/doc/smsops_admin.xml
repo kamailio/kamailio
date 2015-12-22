@@ -77,7 +77,7 @@ if (isRPDATA())
 </programlisting>
 		</example>
 		</section>
-		<section id="smsops.f.isRPDATA">
+		<section id="smsops.f.smsdump">
 		<title><function moreinfo="none">smsdump()</function></title>
 		<para>Dumps the content of a 3GPP-SMS message to the Debug-Log.</para>
 		<para>Please make sure, to have debug-Log enabled. Otherwise, you won't see anything.</para>

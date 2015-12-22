@@ -22,8 +22,8 @@
 		SIP scenarios.
 	</para>
 	<para>
-		In order to identify defferent scenarios a prefix string should be
-		used at Call-ID header.
+		In order to identify different scenarios a prefix string should be
+		used inside the Call-ID header.
 	</para>
 	</section>
 	<section>
@@ -62,7 +62,7 @@
 		<title><varname>basedir</varname> (string)</title>
 		<para>
 			Control where the config reports should be stored. The dir must
-			exists and &kamailioname; must have perms to write on it.
+			exist and &kamailioname; must have permissions to write on it.
 		</para>
 		<para>
 		<emphasis>
@@ -125,8 +125,10 @@ modparam("cfgt", "mask", 12)
 	<section id="cfgt.p.callid_prefix">
 		<title><varname>callid_prefix</varname> (string)</title>
 		<para>
-			Prefix used to indentify test scenario messages. Last char of the
-			string will be used as delimiter.
+			Prefix used to identify test scenario messages. Last char of the
+			string will be used as delimiter for the scenario ID. With parameter
+			set to <quote>NGCP%</quote> and Call-ID <quote>NGCP%123%456</quote> 
+			the scenario identified will be <quote>123</quote>.
 		</para>
 		<para>
 		<emphasis>
@@ -146,13 +148,36 @@ modparam("cfgt", "callid_prefix", "TEST-ID%")
 	</section>
 
 	</section>
-
-<!--
 	<section>
 		<title>Usage</title>
 		<para>
-			TODO: add some more info of how this is been used
+		This module is used by the <emphasis>debugger</emphasis> module, so it must be loaded
+		first. To enable the generation of the reports, the <emphasis>debugger</emphasis> module
+		must be configured by setting the <emphasis>cfgtest</emphasis> parameter to "1".
 		</para>
-	</section>
--->
+		<para>
+		Example of configuration:
+		</para>
+<programlisting  format="linespecific">
+...
+#!ifdef WITH_DEBUG
+loadmodule "cfgt.so"
+loadmodule "debugger.so"
+#!endif
+...
+#!ifdef WITH_DEBUG
+# ----- cfgt params -----
+modparam("cfgt", "basedir", "/tmp/kamailio/cfgtest")
+modparam("cfgt", "callid_prefix", "TRACE-ID%")
+modparam("cfgt", "mask", 32)
+
+# ----- debugger params -----
+modparam("debugger", "cfgtrace", 1)
+modparam("debugger", "log_level_name", "exec")
+
+modparam("debugger", "cfgtest", 1)
+#!endif
+...
+</programlisting>
+    </section>
 </chapter>

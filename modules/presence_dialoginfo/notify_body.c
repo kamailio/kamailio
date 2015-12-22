@@ -538,6 +538,7 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	char *version_start=0;
 	char version[MAX_INT_LEN + 2]; /* +2 becasue of trailing " and \0 */
 	int version_len;
+	str* aux_body = NULL;
 
 	if (!body) {
 		return NULL;
@@ -564,9 +565,29 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	version_len = snprintf(version, MAX_INT_LEN + 2,"%d\"", subs->version);
 	if (version_len >= MAX_INT_LEN + 2) {
 		LM_ERR("failed to convert 'version' to string\n");
-		memcpy(version_start, "00000000000\"", 12);
 		return NULL;
 	}
+
+	aux_body= (str*)pkg_malloc(sizeof(str));
+	if(aux_body== NULL)
+	{
+		LM_ERR("error allocating memory for aux body str\n");
+		return NULL;
+	}
+	memset(aux_body, 0, sizeof(str));
+	aux_body->s= (char*)pkg_malloc( body->len * sizeof(char));
+	if(aux_body->s== NULL)
+	{
+		pkg_free(aux_body);
+		LM_ERR("error allocating memory for aux body buffer\n");
+		return NULL;
+	}
+	memcpy(aux_body->s, body->s, body->len);
+	aux_body->len= body->len;
+
+	/* again but on the copied str, no checks needed */
+	version_start = strstr(aux_body->s + 34, "version=");
+	version_start += 9;
 	/* Replace the placeholder 00000000000 with the version.
 	 * Put the padding behind the ""
 	 */
@@ -574,5 +595,18 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	memcpy(version_start, version, version_len);
 	memset(version_start + version_len, ' ', 12 - version_len);
 
-	return NULL;
+	xmlDocPtr doc = xmlReadMemory(aux_body->s, aux_body->len, "noname.xml", NULL, 0);
+        if (doc == NULL) {
+		LM_ERR("error allocation xmldoc\n");
+		pkg_free(aux_body->s);
+		pkg_free(aux_body);
+		return NULL;
+	}
+	pkg_free(aux_body->s);
+        xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&aux_body->s, &aux_body->len, 1);
+
+        xmlCleanupParser();
+        xmlMemoryDump();
+
+	return aux_body;
 }
