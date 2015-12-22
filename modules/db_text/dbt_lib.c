@@ -443,13 +443,13 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 		case DB1_DOUBLE:
 			break;
 		case DB1_STRING:
-			if(_t0==DB1_STR)
+			if(_t0==DB1_STR || _t0==DB1_BLOB)
 				return 0;
 		case DB1_STR:
 			if(_t0==DB1_STRING || _t0==DB1_BLOB)
 				return 0;
 		case DB1_BLOB:
-			if(_t0==DB1_STR)
+			if(_t0==DB1_STR || _t0==DB1_STRING)
 				return 0;
 		case DB1_BITMAP:
 			if (_t0==DB1_INT)
