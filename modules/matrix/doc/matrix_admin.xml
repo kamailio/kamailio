@@ -62,7 +62,7 @@
 
 <section>
 	<title>Parameters</title>
-	<section>
+	<section id="matrix.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 	  <para>
 			The URL for the database connection.
@@ -81,7 +81,7 @@ modparam("matrix", "db_url", "&defaultrodb;")
 		  </programlisting>
 	  </example>
   </section>
-	<section>
+	<section id="matrix.p.matrix_table">
 		<title><varname>matrix_table</varname> (string)</title>
 	  <para>
 			The name of the table containing the matrix data.
@@ -100,7 +100,7 @@ modparam("matrix", "matrix_table", "matrix")
 		  </programlisting>
 	  </example>
   </section>
-	<section>
+	<section id="matrix.p.matrix_first_col">
 		<title><varname>matrix_first_col</varname> (string)</title>
 	  <para>
 			The name of the column containing the first row in the matrix.
@@ -119,7 +119,7 @@ modparam("matrix", "matrix_first_col", "first")
 		  </programlisting>
 	  </example>
   </section>
-	<section>
+	<section id="matrix.p.matrix_second_col">
 		<title><varname>matrix_second_col</varname> (string)</title>
 	  <para>
 			The name of the column containing the second row in the matrix.
@@ -138,7 +138,7 @@ modparam("matrix", "matrix_second_col", "second")
 		  </programlisting>
 	  </example>
   </section>
-	<section>
+	<section id="matrix.p.matrix_res_col">
 		<title><varname>matrix_res_col</varname> (string)</title>
 	  <para>
 			The name of the column containing the result ID to be used.
@@ -160,7 +160,7 @@ modparam("matrix", "matrix_res_col", "res")
 </section>
 <section>
 	<title>Functions</title>
-	<section>
+	<section id="matrix.f.matrix">
 	  <title>
 			<function moreinfo="none">matrix (string first, string second, string dstavp)</function>
 		</title>
