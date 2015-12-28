@@ -176,8 +176,6 @@ int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c);
 void empty_addr_hash_table(struct addr_list** hash_table);
 
 
-#define PERM_MAX_SUBNETS 512
-
 
 /*
  * Structure used to store a subnet
