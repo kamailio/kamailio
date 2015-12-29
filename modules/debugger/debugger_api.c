@@ -1138,6 +1138,7 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 		return -1;
 	}
 	memset(_dbg_mod_table, 0, _dbg_mod_table_size*sizeof(dbg_mod_slot_t));
+	LM_DBG("Created _dbg_mod_table, size %d\n", _dbg_mod_table_size);
 
 	for(i=0; i<_dbg_mod_table_size; i++)
 	{

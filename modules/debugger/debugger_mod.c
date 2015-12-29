@@ -28,6 +28,8 @@
 #include <string.h>
 
 #include "../cfgt/cfgt.h"
+#include "../../lib/kmi/mi.h"
+#include "../../lib/kmi/tree.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
@@ -60,6 +62,10 @@ static int fixup_dbg_sip_msg(void** param, int param_no);
 static int w_dbg_sip_msg(struct sip_msg* msg, char *level, char *facility);
 
 extern char* dump_lump_list(struct lump *list, int s_offset, char *s_buf);
+
+/* mi commands */
+static struct mi_root* mi_set_dbg_mod_level(struct mi_root *cmd_tree, void *param);
+static struct mi_root* mi_set_dbg_mod_facility(struct mi_root *cmd_tree, void *param);
 
 /* parameters */
 extern int _dbg_cfgtrace;
@@ -120,13 +126,19 @@ static param_export_t params[]={
 	{0, 0, 0}
 };
 
+static mi_export_t mi_cmds[] = {
+	{"set_dbg_mod_level",         mi_set_dbg_mod_level, 0, 0, 0},
+	{"set_dbg_mod_facility",      mi_set_dbg_mod_facility, 0, 0, 0},
+	{ 0, 0, 0, 0, 0}
+};
+
 struct module_exports exports = {
 	"debugger",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,
-	0,              /* exported MI functions */
+	mi_cmds,        /* exported MI functions */
 	0,              /* exported pseudo-variables */
 	0,              /* extra processes */
 	mod_init,       /* module initialization function */
@@ -136,6 +148,124 @@ struct module_exports exports = {
 };
 
 
+static struct mi_root* mi_set_dbg_mod_level(struct mi_root *cmd_tree, void *param) {
+	struct mi_node *node;
+	str mod_str, level_str;
+	int l;
+
+	/* get first param */
+	node = cmd_tree->node.kids;
+	if (node == NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+	if (node->value.s == NULL || node->value.len == 0) {
+		return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	/* get module str */
+	mod_str = node->value;
+
+	/* get second param */
+	node = node->next;
+	if (node == NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+	if (node->value.s == NULL || node->value.len == 0) {
+		return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	/* get level str */
+	level_str = node->value;
+
+	/* no further params expected */
+	node = node->next;
+	if (node != NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+	/* get level int */
+	if (str2sint(&level_str, &l) < 0) {
+		LM_ERR("invalid parameter - level value: %.*s\n",
+			level_str.len, level_str.s);
+		return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	/* set level int */
+	if (default_dbg_cfg.mod_hash_size <= 0 || default_dbg_cfg.mod_level_mode <= 0 ||
+	    dbg_set_mod_debug_level(mod_str.s, mod_str.len, &l) < 0) {
+		LM_ERR("cannot set level for %.*s; enable mod_hash_size and mod_level_mode\n",
+			mod_str.len, mod_str.s);
+		return init_mi_tree(500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
+	} else {
+		LM_DBG("module=%.*s level_str=%.*s level_int=%d\n",
+			mod_str.len, mod_str.s, level_str.len, level_str.s, l);
+	}
+
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}
+
+static struct mi_root* mi_set_dbg_mod_facility(struct mi_root *cmd_tree, void *param) {
+	struct mi_node *node;
+	str mod_str, facility_str;
+	int fl;
+
+	/* get first param */
+	node = cmd_tree->node.kids;
+	if (node == NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+	if (node->value.s == NULL || node->value.len == 0) {
+		return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	/* get module str */
+	mod_str = node->value;
+
+	/* get second param */
+	node = node->next;
+	if (node == NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+	if (node->value.s == NULL || node->value.len == 0) {
+		return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	/* get facility str */
+	facility_str = node->value;
+
+	/* no further params expected */
+	node = node->next;
+	if (node != NULL) {
+		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
+
+	/* get facility int */
+	facility_str.s[facility_str.len] = '\0';
+	if ((fl = str2facility(facility_str.s)) == -1) {
+		LM_ERR("invalid parameter - facility value: %.*s\n",
+			facility_str.len, facility_str.s);
+		return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
+
+	/* set facility int */
+	if (default_dbg_cfg.mod_hash_size <= 0 || default_dbg_cfg.mod_facility_mode <= 0 ||
+	    dbg_set_mod_debug_facility(mod_str.s, mod_str.len, &fl) < 0) {
+		LM_ERR("cannot set facility for %.*s; enable mod_hash_size and mod_facility_mode\n",
+			mod_str.len, mod_str.s);
+		return init_mi_tree(500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
+	} else {
+		LM_DBG("module=%.*s facility_str=%.*s facility_int=%d\n",
+			mod_str.len, mod_str.s, facility_str.len, facility_str.s, fl);
+	}
+
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+}
+
+
 /**
  * init module function
  */
@@ -143,6 +273,12 @@ static int mod_init(void)
 {
 	int fl;
 	bind_cfgt_t bind_cfgt;
+
+	if (register_mi_mod(exports.name, mi_cmds) != 0)
+	{
+		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
 
 	if (_dbg_cfgtrace_facility_str!=NULL)
 	{
