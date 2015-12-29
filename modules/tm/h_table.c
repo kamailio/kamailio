@@ -40,6 +40,7 @@
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_stats.h"
+#include "t_funcs.h"
 #include "h_table.h"
 #include "../../fix_lumps.h" /* free_via_clen_lump */
 #include "timer.h"
@@ -129,6 +130,11 @@ void free_cell_helper(tm_cell_t* dead_cell, int silent, const char *fname, unsig
 		if(likely(silent==0)) {
 			LM_WARN("removed cell %p is still linked in hash table (%s:%u)\n",
 				dead_cell, fname, fline);
+			if(t_on_wait(dead_cell)) {
+				LM_WARN("cell %p is still linked in wait timer (%s:%u)"
+						" - skip freeing now\n", dead_cell, fname, fline);
+				return;
+			}
 		}
 		unlink_timers(dead_cell);
 		remove_from_hash_table_unsafe(dead_cell);

@@ -150,6 +150,12 @@ void put_on_wait(  struct cell  *Trans  )
 }
 
 
+int t_on_wait(tm_cell_t *Trans)
+{
+	if(Trans->wait_timer.prev!=NULL || Trans->wait_timer.next!=NULL)
+		return 1;
+	return 0;
+}
 
 /* WARNING: doesn't work from failure route (deadlock, uses t_reply =>
  *  tries to get the reply lock again) */
