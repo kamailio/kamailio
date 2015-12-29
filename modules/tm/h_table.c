@@ -115,7 +115,7 @@ unsigned int transaction_count( void )
 
 
 
-void free_cell_helper( struct cell* dead_cell, const char *fname, unsigned int fline )
+void free_cell_helper(tm_cell_t* dead_cell, int silent, const char *fname, unsigned int fline )
 {
 	char *b;
 	int i;
@@ -126,8 +126,10 @@ void free_cell_helper( struct cell* dead_cell, const char *fname, unsigned int f
 	LM_DBG("freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
 
 	if(dead_cell->prev_c!=NULL && dead_cell->next_c!=NULL) {
-		LM_WARN("removed cell %p is still linked in hash table (%s:%u)\n",
+		if(likely(silent==0)) {
+			LM_WARN("removed cell %p is still linked in hash table (%s:%u)\n",
 				dead_cell, fname, fline);
+		}
 		unlink_timers(dead_cell);
 		remove_from_hash_table_unsafe(dead_cell);
 	}
@@ -437,7 +439,7 @@ void free_hash_table(  )
 			/* delete all synonyms at hash-collision-slot i */
 			clist_foreach_safe(&_tm_table->entries[i], p_cell, tmp_cell,
 									next_c){
-				free_cell(p_cell);
+				free_cell_silent(p_cell);
 			}
 		}
 		shm_free(_tm_table);
