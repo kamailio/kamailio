@@ -604,7 +604,7 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 	}
 	pkg_free(aux_body->s);
         xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&aux_body->s, &aux_body->len, 1);
-
+	xmlFreeDoc(doc);
         xmlCleanupParser();
         xmlMemoryDump();
 

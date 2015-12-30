@@ -82,7 +82,7 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 }
 
 int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri) {
-	struct cell     *t;
+	struct cell     *t=0;
 	struct cell     *orig_t;
 	struct sip_msg *orig_msg;
 	int ret;
@@ -130,7 +130,7 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 done:
 	/* unref the transaction which had been referred by t_lookup_ident() call. 
 	 * Restore the original transaction (if any) */
-	_tmb.unref_cell(t);
+	if(t) _tmb.unref_cell(t);
 	_tmb.t_sett(orig_t, T_BR_UNDEFINED);
 	
 	return ret;

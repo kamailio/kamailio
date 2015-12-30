@@ -66,6 +66,7 @@ static int service_type = -1;
 
 int use_ruri_flag = -1;
 int ar_radius_avps_mode = 0;
+int append_realm_to_username = 1;
 
 static char *auth_extra_str = 0;
 struct extra_attr *auth_extra = 0;
@@ -95,6 +96,7 @@ static param_export_t params[] = {
 	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag	},
 	{"auth_extra",       PARAM_STRING, &auth_extra_str	},
 	{"radius_avps_mode",	 INT_PARAM, &ar_radius_avps_mode	},
+	{"append_realm_to_username", INT_PARAM, &append_realm_to_username       },
 	{0, 0, 0}
 };
 
