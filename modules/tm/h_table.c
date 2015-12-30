@@ -131,6 +131,7 @@ void free_cell_helper(tm_cell_t* dead_cell, int silent, const char *fname, unsig
 			LM_WARN("removed cell %p is still linked in hash table (%s:%u)\n",
 				dead_cell, fname, fline);
 			if(t_on_wait(dead_cell)) {
+				INIT_REF(dead_cell, 1);
 				LM_WARN("cell %p is still linked in wait timer (%s:%u)"
 						" - skip freeing now\n", dead_cell, fname, fline);
 				return;
