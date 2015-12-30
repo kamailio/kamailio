@@ -205,6 +205,23 @@ modparam("auth_radius", "radius_avps_mode", 1)
 		</programlisting>
 		</example>
 	</section>
+	<section id="auth_radius.p.append_realm_to_username">
+		<title><varname>append_realm_to_username</varname> (integer)</title>
+		<para>
+			If set to 1, the username passed to the RADIUS server will have the
+			digest realm appended to it, if no domain is provided in the digest
+			username.
+		</para>
+		<para>
+			Default value is 1.
+		</para>
+		<example>
+		<title><varname>append_realm_to_username</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "append_realm_to_username", 0)
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
