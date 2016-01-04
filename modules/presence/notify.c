@@ -1612,11 +1612,12 @@ jump_over_body:
 	}
 
 	LM_GEN1(pres_local_log_level,
-		"NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s\n",
+		"NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s : %.*s\n",
 		td->rem_uri.len, td->rem_uri.s, td->hooks.next_hop->len,
 		td->hooks.next_hop->s,
-		td->loc_uri.len, td->loc_uri.s, subs->event->name.len,
-		subs->event->name.s);
+		td->loc_uri.len, td->loc_uri.s,
+		subs->event->name.len, subs->event->name.s,
+		subs->callid.len, subs->callid.s);
 
 	ps_free_tm_dlg(td);
 	
@@ -2859,7 +2860,13 @@ int process_dialogs(int round, int presence_winfo)
 
 		if (dialog->n > 1)
 		{
-			LM_ERR("multiple records found\n");
+			LM_ERR("multiple records found for %.*s, ci : %.*s, tt : %.*s, ft : %.*s, ev : %.*s\n",
+					sub.pres_uri.len, sub.pres_uri.s,
+					sub.callid.len, sub.callid.s,
+					sub.to_tag.len, sub.to_tag.s,
+					sub.from_tag.len, sub.from_tag.s,
+					ev_sname.len, ev_sname.s
+					);
 			goto delete_dialog;
 		}
 
