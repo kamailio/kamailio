@@ -165,6 +165,11 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.rcv_nosip = f;
 				else return -1;
 			break;
+		case SREV_TCP_CLOSED:
+				if(_sr_events_list.tcp_closed==0)
+					_sr_events_list.tcp_closed = f;
+				else return -1;
+			break;
 		default:
 			return -1;
 	}
@@ -284,6 +289,12 @@ int sr_event_exec(int type, void *data)
 					ret = _sr_events_list.rcv_nosip(data);
 					return ret;
 				} else return 1;
+		case SREV_TCP_CLOSED:
+				if(unlikely(_sr_events_list.tcp_closed!=0))
+				{
+					ret = _sr_events_list.tcp_closed(data);
+					return ret;
+				} else return 1;
 		default:
 			return -1;
 	}
@@ -319,6 +330,8 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.stun_in!=0)?1:0;
 		case SREV_RCV_NOSIP:
 				return (_sr_events_list.rcv_nosip!=0)?1:0;
+		case SREV_TCP_CLOSED:
+				return (_sr_events_list.tcp_closed!=0)?1:0;
 	}
 	return 0;
 }
