@@ -125,9 +125,10 @@ int dbt_bind_api(db_func_t *dbb)
 	dbb->insert      = (db_insert_f)dbt_insert;
 	dbb->delete      = (db_delete_f)dbt_delete; 
 	dbb->update      = (db_update_f)dbt_update;
+	dbb->replace     = (db_replace_f)dbt_replace;
 	dbb->affected_rows = (db_affected_rows_f) dbt_affected_rows;
 	dbb->raw_query   = (db_raw_query_f) dbt_raw_query;
-	dbb->cap         = DB_CAP_ALL | DB_CAP_AFFECTED_ROWS | DB_CAP_RAW_QUERY;
+	dbb->cap         = DB_CAP_ALL | DB_CAP_AFFECTED_ROWS | DB_CAP_RAW_QUERY | DB_CAP_REPLACE;
 
 	return 0;
 }
