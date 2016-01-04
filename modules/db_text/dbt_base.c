@@ -617,3 +617,132 @@ error:
 	return -1;
 }
 
+int dbt_replace(db1_con_t* _h, db_key_t* _k, db_val_t* _v,
+	      int _n, int _nk, int _m)
+{
+	dbt_table_p _tbc = NULL;
+	dbt_row_p _drp = NULL;
+	int i, j;
+	int *lkey=NULL, *lres=NULL;
+
+	if (!_h || !CON_TABLE(_h) || _nk <= 0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	((dbt_con_p)_h->tail)->affected = 0;
+
+	/* lock database */
+	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+	if(!_tbc)
+	{
+		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+		return -1;
+	}
+
+	if(_k)
+	{
+		lkey = dbt_get_refs(_tbc, _k, _nk);
+		if(!lkey)
+			goto error;
+	}
+	lres = dbt_get_refs(_tbc, _k, _n);
+	if(!lres)
+		goto error;
+	_drp = _tbc->rows;
+	while(_drp)
+	{
+		if(dbt_row_match(_tbc, _drp, lkey, NULL, _v, _nk))
+		{ // update fields
+			for(i=0; i<_n; i++)
+			{
+				if(dbt_is_neq_type(_tbc->colv[lres[i]]->type, _v[i].type))
+				{
+					LM_ERR("incompatible types!\n");
+					goto error;
+				}
+
+				if(dbt_row_update_val(_drp, &(_v[i]),
+							_tbc->colv[lres[i]]->type, lres[i]))
+				{
+					LM_ERR("cannot set v[%d] in c[%d]!\n",
+							i, lres[i]);
+					goto error;
+				}
+			}
+
+			((dbt_con_p)_h->tail)->affected++;
+
+		}
+		_drp = _drp->next;
+	}
+
+	if(((dbt_con_p)_h->tail)->affected == 0) {
+		_drp = dbt_row_new(_tbc->nrcols);
+		if(!_drp)
+		{
+			LM_ERR("no shm memory for a new row!!\n");
+			goto error;
+		}
+
+		for(i=0; i<_n; i++)
+		{
+			j = lres[i];
+			if(dbt_is_neq_type(_tbc->colv[j]->type, _v[i].type))
+			{
+				LM_ERR("incompatible types v[%d] - c[%d]!\n", i, j);
+				goto error;
+			}
+			if(_v[i].type == DB1_STRING && !_v[i].nul)
+				_v[i].val.str_val.len = strlen(_v[i].val.string_val);
+			if(dbt_row_set_val(_drp, &(_v[i]), _tbc->colv[j]->type, j))
+			{
+				LM_ERR("cannot set v[%d] in c[%d]!\n", i, j);
+				goto error;
+			}
+		}
+
+		if(dbt_table_add_row(_tbc, _drp))
+		{
+			LM_ERR("cannot insert the new row!!\n");
+			goto error;
+		}
+
+		((dbt_con_p)_h->tail)->affected = 1;
+
+	}
+
+	if( ((dbt_con_p)_h->tail)->affected )
+		dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
+
+	/* dbt_print_table(_tbc, NULL); */
+
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+
+	if(lkey)
+		pkg_free(lkey);
+	if(lres)
+		pkg_free(lres);
+
+    return 0;
+
+error:
+
+	if(lkey)
+		pkg_free(lkey);
+	if(lres)
+		pkg_free(lres);
+	if(_drp) // free row
+		dbt_row_free(_tbc, _drp);
+
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+
+	LM_ERR("failed to update the table!\n");
+
+	return -1;
+}
+
+
