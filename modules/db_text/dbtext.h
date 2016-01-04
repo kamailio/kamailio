@@ -82,6 +82,12 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 /*
+ * replace a row in table
+ */
+int dbt_replace(db1_con_t* _h, db_key_t* _k, db_val_t* _v,
+	      int _n, int _nk, int _m);
+
+/*
  * Affected rows
  */
 int dbt_affected_rows(db1_con_t* _h);
