@@ -1221,7 +1221,9 @@ int add_interfaces(char* if_name, int family, unsigned short port,
 			ret = -1;
 			break;
 		}
-		LM_DBG("If: %8s Fam: %8x Flg: %16lx Adr: %s\n", ifa->ifa_name, ifa->ifa_addr->sa_family, ifa->ifa_flags, tmp);
+		LM_DBG("If: %8s Fam: %8x Flg: %16lx Adr: %s\n",
+				ifa->ifa_name, ifa->ifa_addr->sa_family,
+				(unsigned long)ifa->ifa_flags, tmp);
 
 		ret = 0;
 	}
