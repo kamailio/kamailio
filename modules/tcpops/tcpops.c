@@ -31,6 +31,7 @@
 #include "../../globals.h"
 #include "../../pass_fd.h"
 #include "../../timer.h"
+#include "../../fmsg.h"
 #include "../../sr_module.h"
 
 /**
