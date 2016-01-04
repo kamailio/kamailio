@@ -186,6 +186,25 @@ int tcp_http11_continue(struct tcp_connection *c)
 }
 #endif /* HTTP11 */
 
+static int tcp_make_closed_event(struct receive_info* rcv_info, struct tcp_connection* con)
+{
+	int ret;
+	tcp_event_info_t tev;
+
+	ret = 0;
+	LM_DBG("TCP closed event creation triggered\n");
+	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
+		memset(&tev, 0, sizeof(tcp_event_info_t));
+		tev.type = SREV_TCP_CLOSED;
+		tev.rcv = rcv_info;
+		tev.con = con;
+		ret = sr_event_exec(SREV_TCP_CLOSED, (void*)(&tev));
+	} else {
+		LM_DBG("no callback registering for handling TCP closed event - dropping!\n");
+	}
+	return ret;
+}
+
 
 /** reads data from an existing tcp connection.
  * Side-effects: blacklisting, sets connection state to S_CONN_OK, tcp stats.
@@ -272,12 +291,20 @@ again:
 						strerror(errno), errno,
 						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+
+				if((errno == ECONNRESET || errno == ETIMEDOUT) && likely(c->rcv.proto_reserved1 != 0)){
+					tcp_make_closed_event(&c->rcv, c);
+				}
+
 				return -1;
 			}
 		}else if (unlikely((bytes_read==0) || 
 					(*flags & RD_CONN_FORCE_EOF))){
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
+			if (likely(c->rcv.proto_reserved1 != 0)){
+				tcp_make_closed_event(&c->rcv, c);
+			}
 			LM_DBG("EOF on %p, FD %d ([%s]:%u -> [%s]:%u)\n", c, fd,
 					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
 					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
