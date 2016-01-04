@@ -58,15 +58,20 @@ void free_xml_body(char* body)
 	body= NULL;
 }
 
-#define PRESENCE_EMPTY_BODY_SIZE 512
+#define PRESENCE_EMPTY_BODY_SIZE 1024
 
-#define PRESENCE_EMPTY_BODY "<presence> \
-<tuple id=\"615293b33c62dec073e05d9421e9f48b\">\
+#define PRESENCE_EMPTY_BODY  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
+<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" xmlns:c=\"urn:ietf:params:xml:ns:pidf:cipid\" entity=\"%.*s\"> \
+<tuple xmlns=\"urn:ietf:params:xml:ns:pidf\" id=\"615293b33c62dec073e05d9421e9f48b\">\
 <status>\
 <basic>open</basic>\
 </status>\
 </tuple>\
 <note xmlns=\"urn:ietf:params:xml:ns:pidf\">Available</note>\
+<dm:person xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" id=\"1\">\
+<rpid:activities/>\
+<dm:note>Available</dm:note>\
+</dm:person>\
 </presence>"
 
 str* pres_agg_nbody_empty(str* pres_user, str* pres_domain)
@@ -78,7 +83,7 @@ str* pres_agg_nbody_empty(str* pres_user, str* pres_domain)
 
 	str* body_array = (str*)pkg_malloc(sizeof(str));
 	char* body = (char*)pkg_malloc(PRESENCE_EMPTY_BODY_SIZE);
-	sprintf(body, PRESENCE_EMPTY_BODY);
+	sprintf(body, PRESENCE_EMPTY_BODY, pres_user->len, pres_user->s);
 	body_array->s = body;
 	body_array->len = strlen(body);
 
