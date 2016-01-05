@@ -90,11 +90,25 @@ int str2facility(char *s)
 {
 	int i;
 
-	for( i=0; str_fac[i] ; i++) {
+	for (i=0; str_fac[i]; i++) {
 		if (!strcasecmp(s,str_fac[i]))
 			return int_fac[i];
 	}
 	return -1;
+}
+
+char* facility2str(int fl, int *len)
+{
+	int i;
+
+	for (i=0; str_fac[i]; i++) {
+		if (fl == int_fac[i]) {
+			*len = strlen(str_fac[i]);
+			return str_fac[i];
+		}
+	}
+
+	return NULL;
 }
 
 /* fixup function for log_facility cfg parameter */
