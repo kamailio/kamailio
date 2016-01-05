@@ -981,12 +981,12 @@ static void  dbg_rpc_trace(rpc_t* rpc, void* ctx)
 /**
  *
  */
-static const char* dbg_rpc_mod_level_doc[2] = {
-	"Specify module log level",
+static const char* dbg_rpc_set_mod_level_doc[2] = {
+	"Set module log level",
 	0
 };
 
-static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
+static void dbg_rpc_set_mod_level(rpc_t* rpc, void* ctx){
 	int l;
 	str value = {0,0};
 
@@ -1007,12 +1007,12 @@ static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
 /**
  *
  */
-static const char* dbg_rpc_mod_facility_doc[2] = {
-	"Specify module log facility",
+static const char* dbg_rpc_set_mod_facility_doc[2] = {
+	"Set module log facility",
 	0
 };
 
-static void dbg_rpc_mod_facility(rpc_t* rpc, void* ctx) {
+static void dbg_rpc_set_mod_facility(rpc_t* rpc, void* ctx) {
 	int fl;
 	str value = {0, 0};
 	str facility = {0, 0};
@@ -1076,8 +1076,8 @@ rpc_export_t dbg_rpc[] = {
 	{"dbg.bp",        dbg_rpc_bp,        dbg_rpc_bp_doc,        0},
 	{"dbg.ls",        dbg_rpc_list,      dbg_rpc_list_doc,      0},
 	{"dbg.trace",     dbg_rpc_trace,     dbg_rpc_trace_doc,     0},
-	{"dbg.mod_level", dbg_rpc_mod_level, dbg_rpc_mod_level_doc, 0},
-	{"dbg.mod_facility", dbg_rpc_mod_facility, dbg_rpc_mod_facility_doc, 0},
+	{"dbg.set_mod_level", dbg_rpc_set_mod_level, dbg_rpc_set_mod_level_doc, 0},
+	{"dbg.set_mod_facility", dbg_rpc_set_mod_facility, dbg_rpc_set_mod_facility_doc, 0},
 	{"dbg.reset_msgid", dbg_rpc_reset_msgid, dbg_rpc_reset_msgid_doc, 0},
 	{0, 0, 0, 0}
 };
