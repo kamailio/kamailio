@@ -1039,6 +1039,55 @@ static void dbg_rpc_set_mod_facility(rpc_t* rpc, void* ctx) {
 /**
  *
  */
+static const char* dbg_rpc_get_mod_level_doc[2] = {
+	"Get module log level",
+	0
+};
+
+static void dbg_rpc_get_mod_level(rpc_t* rpc, void* ctx){
+	int l;
+	str value = {0,0};
+
+	if (rpc->scan(ctx, "S", &value) < 1)
+	{
+		rpc->fault(ctx, 500, "invalid parameters");
+		return;
+	}
+
+	l = get_debug_level(value.s, value.len);
+
+	rpc->add(ctx, "d", l);
+}
+
+/**
+ *
+ */
+static const char* dbg_rpc_get_mod_facility_doc[2] = {
+	"Get module log facility",
+	0
+};
+
+static void dbg_rpc_get_mod_facility(rpc_t* rpc, void* ctx) {
+	int fl;
+	str value = {0, 0};
+	str facility = {0, 0};
+
+	if (rpc->scan(ctx, "S", &value) < 1)
+	{
+	    rpc->fault(ctx, 500, "invalid parameters");
+	    return;
+	}
+
+	fl = get_debug_facility(value.s, value.len);
+	facility.s = facility2str(fl, &facility.len);
+
+	rpc->add(ctx, "S", &facility);
+}
+
+
+/**
+ *
+ */
 static const char* dbg_rpc_reset_msgid_doc[2] = {
 	"Reset msgid on all process",
 	0
@@ -1078,6 +1127,8 @@ rpc_export_t dbg_rpc[] = {
 	{"dbg.trace",     dbg_rpc_trace,     dbg_rpc_trace_doc,     0},
 	{"dbg.set_mod_level", dbg_rpc_set_mod_level, dbg_rpc_set_mod_level_doc, 0},
 	{"dbg.set_mod_facility", dbg_rpc_set_mod_facility, dbg_rpc_set_mod_facility_doc, 0},
+	{"dbg.get_mod_level", dbg_rpc_get_mod_level, dbg_rpc_get_mod_level_doc, 0},
+	{"dbg.get_mod_facility", dbg_rpc_get_mod_facility, dbg_rpc_get_mod_facility_doc, 0},
 	{"dbg.reset_msgid", dbg_rpc_reset_msgid, dbg_rpc_reset_msgid_doc, 0},
 	{0, 0, 0, 0}
 };
