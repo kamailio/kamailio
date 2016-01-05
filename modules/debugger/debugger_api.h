@@ -34,6 +34,7 @@ int dbg_init_mypid(void);
 int dbg_init_rpc(void);
 
 int dbg_init_mod_levels(int _dbg_mod_hash_size);
+int dbg_destroy_mod_levels();
 int dbg_set_mod_debug_level(char *mname, int mnlen, int *mlevel);
 int dbg_set_mod_debug_facility(char *mname, int mnlen, int *mfacility);
 void dbg_enable_mod_levels(void);

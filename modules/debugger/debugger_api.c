@@ -1161,6 +1161,63 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 	return 0;
 }
 
+/**
+ *
+ */
+int dbg_destroy_mod_levels()
+{
+	int i;
+	dbg_mod_level_t *itl = NULL;
+	dbg_mod_level_t *itlp = NULL;
+
+	dbg_mod_facility_t *itf = NULL;
+	dbg_mod_facility_t *itfp = NULL;
+
+	if (_dbg_mod_table_size <= 0)
+		return 0;
+
+	if (_dbg_mod_table == NULL)
+		return 0;
+
+	for (i = 0; i < _dbg_mod_table_size; i++) {
+		// destroy level list
+		lock_get(&_dbg_mod_table[i].lock);
+		itl = _dbg_mod_table[i].first;
+		while (itl) {
+			itlp = itl;
+			itl = itl->next;
+			shm_free(itlp);
+		}
+		lock_release(&_dbg_mod_table[i].lock);
+
+		// destroy facility list
+		lock_get(&_dbg_mod_table[i].lock_ft);
+		itf = _dbg_mod_table[i].first_ft;
+		while (itf) {
+			itfp = itf;
+			itf = itf->next;
+			shm_free(itfp);
+		}
+		lock_release(&_dbg_mod_table[i].lock_ft);
+
+		// destroy locks
+		lock_destroy(&_dbg_mod_table[i].lock);
+		lock_destroy(&_dbg_mod_table[i].lock_ft);
+
+		// reset all
+		_dbg_mod_table[i].first = NULL;
+		_dbg_mod_table[i].first_ft = NULL;
+	}
+
+	// free table
+	shm_free(_dbg_mod_table);
+	_dbg_mod_table = NULL;
+
+	LM_DBG("Destroyed _dbg_mod_table, size %d\n", _dbg_mod_table_size);
+
+	return 0;
+}
+
 /*
  * case insensitive hashing - clone here to avoid usage of LOG*()
  * - s1 - str to hash
