@@ -874,7 +874,85 @@ $ &ctltool; fifo get_dbg_mod_facility debugger
 		</programlisting>
     </section>
 
+	<section id="dbg.r.set_mod_level">
+		<title>
+			<function moreinfo="none">dbg.set_mod_level</function>
+		</title>
+		<para>
+			Set the module log level.
+			If module does not exist in kamailio, the entry in the level hashtable is still added for the bogus module.
+		</para>
+		<para>
+			Name: <emphasis>dbg.set_mod_level</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.set_mod_level core 1
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.set_mod_facility">
+		<title>
+			<function moreinfo="none">dbg.set_mod_facility</function>
+		</title>
+		<para>
+			Set the module log facility.
+			If module does not exist in kamailio, the entry in the facility hashtable is still added for the bogus module.
+		</para>
+		<para>
+			Name: <emphasis>dbg.set_mod_facility</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.set_mod_facility core LOG_LOCAL1
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.get_mod_level">
+		<title>
+			<function moreinfo="none">dbg.get_mod_level</function>
+		</title>
+		<para>
+			Get the module log level.
+			If module does not exist in kamailio, the entry in the level hashtable is still added for the bogus module.
+		</para>
+		<para>
+			Name: <emphasis>dbg.get_mod_level</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.get_mod_level core
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.get_mod_facility">
+		<title>
+			<function moreinfo="none">dbg.get_mod_facility</function>
+		</title>
+		<para>
+			Get the module log facility.
+			If module does not exist in kamailio, the entry in the facility hashtable is still added for the bogus module.
+		</para>
+		<para>
+			Name: <emphasis>dbg.get_mod_facility</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.get_mod_facility core
+		</programlisting>
+	</section>
+
     </section>
+
+
 	<section>
 		<title>Usage</title>
 		<para>
