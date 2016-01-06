@@ -1790,7 +1790,7 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 	memcpy((void*)(buffer + buflen) , (void*)body->s, body->len);
 	buflen +=body->len;
 
-	if (msg_send(dst_fin, buffer, buflen)<0)
+	if (msg_send_buffer(dst_fin, buffer, buflen, 1)<0)
 	{
 		LM_ERR("cannot send hep duplicate message\n");
 		goto error;
