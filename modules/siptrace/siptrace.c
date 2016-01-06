@@ -1667,7 +1667,7 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 
 	/* check if from and to are in the same family*/
 	if(from_su.s.sa_family != to_su.s.sa_family) {
-		LOG(L_ERR, "ERROR: trace_send_hep_duplicate: interworking detected ?\n");
+		LM_ERR("interworking detected ?\n");
 		goto error;
 	}
 
@@ -1744,7 +1744,7 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 		len = sizeof(struct hep_ip6hdr);
 	}
 	else {
-		LOG(L_ERR, "ERROR: trace_send_hep_duplicate: Unsupported protocol family\n");
+		LM_ERR("Unsupported protocol family\n");
 		goto error;;
 	}
 
@@ -1755,7 +1755,7 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 	len += sizeof(struct hep_hdr) + body->len;
 	buffer = (void *)pkg_malloc(len+1);
 	if (buffer==0){
-		LOG(L_ERR, "ERROR: trace_send_hep_duplicate: out of memory\n");
+		LM_ERR("out of memory\n");
 		goto error;
 	}
 
