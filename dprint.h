@@ -160,6 +160,8 @@ extern volatile int dprint_crit;
 #endif
 
 int str2facility(char *s);
+char* facility2str(int fl, int *len);
+
 int log_facility_fixup(void *handle, str *gname, str *name, void **val);
 
 void dprint_color(int level);

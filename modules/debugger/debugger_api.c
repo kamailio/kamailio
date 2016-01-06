@@ -981,12 +981,12 @@ static void  dbg_rpc_trace(rpc_t* rpc, void* ctx)
 /**
  *
  */
-static const char* dbg_rpc_mod_level_doc[2] = {
-	"Specify module log level",
+static const char* dbg_rpc_set_mod_level_doc[2] = {
+	"Set module log level",
 	0
 };
 
-static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
+static void dbg_rpc_set_mod_level(rpc_t* rpc, void* ctx){
 	int l;
 	str value = {0,0};
 
@@ -1007,12 +1007,12 @@ static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
 /**
  *
  */
-static const char* dbg_rpc_mod_facility_doc[2] = {
-	"Specify module log facility",
+static const char* dbg_rpc_set_mod_facility_doc[2] = {
+	"Set module log facility",
 	0
 };
 
-static void dbg_rpc_mod_facility(rpc_t* rpc, void* ctx) {
+static void dbg_rpc_set_mod_facility(rpc_t* rpc, void* ctx) {
 	int fl;
 	str value = {0, 0};
 	str facility = {0, 0};
@@ -1035,6 +1035,55 @@ static void dbg_rpc_mod_facility(rpc_t* rpc, void* ctx) {
 	}
 	rpc->add(ctx, "s", "200 ok");
 }
+
+/**
+ *
+ */
+static const char* dbg_rpc_get_mod_level_doc[2] = {
+	"Get module log level",
+	0
+};
+
+static void dbg_rpc_get_mod_level(rpc_t* rpc, void* ctx){
+	int l;
+	str value = {0,0};
+
+	if (rpc->scan(ctx, "S", &value) < 1)
+	{
+		rpc->fault(ctx, 500, "invalid parameters");
+		return;
+	}
+
+	l = get_debug_level(value.s, value.len);
+
+	rpc->add(ctx, "d", l);
+}
+
+/**
+ *
+ */
+static const char* dbg_rpc_get_mod_facility_doc[2] = {
+	"Get module log facility",
+	0
+};
+
+static void dbg_rpc_get_mod_facility(rpc_t* rpc, void* ctx) {
+	int fl;
+	str value = {0, 0};
+	str facility = {0, 0};
+
+	if (rpc->scan(ctx, "S", &value) < 1)
+	{
+	    rpc->fault(ctx, 500, "invalid parameters");
+	    return;
+	}
+
+	fl = get_debug_facility(value.s, value.len);
+	facility.s = facility2str(fl, &facility.len);
+
+	rpc->add(ctx, "S", &facility);
+}
+
 
 /**
  *
@@ -1076,8 +1125,10 @@ rpc_export_t dbg_rpc[] = {
 	{"dbg.bp",        dbg_rpc_bp,        dbg_rpc_bp_doc,        0},
 	{"dbg.ls",        dbg_rpc_list,      dbg_rpc_list_doc,      0},
 	{"dbg.trace",     dbg_rpc_trace,     dbg_rpc_trace_doc,     0},
-	{"dbg.mod_level", dbg_rpc_mod_level, dbg_rpc_mod_level_doc, 0},
-	{"dbg.mod_facility", dbg_rpc_mod_facility, dbg_rpc_mod_facility_doc, 0},
+	{"dbg.set_mod_level", dbg_rpc_set_mod_level, dbg_rpc_set_mod_level_doc, 0},
+	{"dbg.set_mod_facility", dbg_rpc_set_mod_facility, dbg_rpc_set_mod_facility_doc, 0},
+	{"dbg.get_mod_level", dbg_rpc_get_mod_level, dbg_rpc_get_mod_level_doc, 0},
+	{"dbg.get_mod_facility", dbg_rpc_get_mod_facility, dbg_rpc_get_mod_facility_doc, 0},
 	{"dbg.reset_msgid", dbg_rpc_reset_msgid, dbg_rpc_reset_msgid_doc, 0},
 	{0, 0, 0, 0}
 };
@@ -1138,6 +1189,7 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 		return -1;
 	}
 	memset(_dbg_mod_table, 0, _dbg_mod_table_size*sizeof(dbg_mod_slot_t));
+	LM_DBG("Created _dbg_mod_table, size %d\n", _dbg_mod_table_size);
 
 	for(i=0; i<_dbg_mod_table_size; i++)
 	{
@@ -1157,6 +1209,63 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 			return -1;
 		}
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+int dbg_destroy_mod_levels()
+{
+	int i;
+	dbg_mod_level_t *itl = NULL;
+	dbg_mod_level_t *itlp = NULL;
+
+	dbg_mod_facility_t *itf = NULL;
+	dbg_mod_facility_t *itfp = NULL;
+
+	if (_dbg_mod_table_size <= 0)
+		return 0;
+
+	if (_dbg_mod_table == NULL)
+		return 0;
+
+	for (i = 0; i < _dbg_mod_table_size; i++) {
+		// destroy level list
+		lock_get(&_dbg_mod_table[i].lock);
+		itl = _dbg_mod_table[i].first;
+		while (itl) {
+			itlp = itl;
+			itl = itl->next;
+			shm_free(itlp);
+		}
+		lock_release(&_dbg_mod_table[i].lock);
+
+		// destroy facility list
+		lock_get(&_dbg_mod_table[i].lock_ft);
+		itf = _dbg_mod_table[i].first_ft;
+		while (itf) {
+			itfp = itf;
+			itf = itf->next;
+			shm_free(itfp);
+		}
+		lock_release(&_dbg_mod_table[i].lock_ft);
+
+		// destroy locks
+		lock_destroy(&_dbg_mod_table[i].lock);
+		lock_destroy(&_dbg_mod_table[i].lock_ft);
+
+		// reset all
+		_dbg_mod_table[i].first = NULL;
+		_dbg_mod_table[i].first_ft = NULL;
+	}
+
+	// free table
+	shm_free(_dbg_mod_table);
+	_dbg_mod_table = NULL;
+
+	LM_DBG("Destroyed _dbg_mod_table, size %d\n", _dbg_mod_table_size);
+
 	return 0;
 }
 
