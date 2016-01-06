@@ -174,7 +174,7 @@ db_func_t db_funcs;      		/*!< Database functions */
  */
 static cmd_export_t cmds[] = {
 	{"sip_trace", (cmd_function)sip_trace, 0, 0, 0, ANY_ROUTE},
-    {"sip_trace", (cmd_function)sip_trace, 1, fixup_siptrace, 0, ANY_ROUTE},
+	{"sip_trace", (cmd_function)sip_trace, 1, fixup_siptrace, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -207,7 +207,7 @@ static param_export_t params[] = {
 	{"xheaders_write",     INT_PARAM, &xheaders_write       },
 	{"xheaders_read",      INT_PARAM, &xheaders_read        },
 	{"hep_mode_on",        INT_PARAM, &hep_mode_on          },	 
-    {"force_send_sock",    PARAM_STR, &force_send_sock_str	},
+	{"force_send_sock",    PARAM_STR, &force_send_sock_str	},
 	{"hep_version",        INT_PARAM, &hep_version          },
 	{"hep_capture_id",     INT_PARAM, &hep_capture_id       },	        
 	{"trace_delayed",      INT_PARAM, &trace_delayed        },
@@ -297,8 +297,8 @@ static int mod_init(void)
 	*trace_to_database_flag = trace_to_database;
 
 	if(hep_version != 1 && hep_version != 2) {
-	    LM_ERR("unsupported version of HEP");
-	    return -1;
+		LM_ERR("unsupported version of HEP");
+		return -1;
 	}
 
 	/* Find a database module if needed */
@@ -316,12 +316,11 @@ static int mod_init(void)
 		}
 	}
 
-        if(hep_version != 1 && hep_version != 2) {
-  
-                  LM_ERR("unsupported version of HEP");
-                  return -1;
-        }                                          
+	if(hep_version != 1 && hep_version != 2) {
 
+		LM_ERR("unsupported version of HEP");
+		return -1;
+	}
 
 	trace_on_flag = (int*)shm_malloc(sizeof(int));
 	if(trace_on_flag==NULL) {
@@ -391,19 +390,19 @@ static int mod_init(void)
 
 	if(force_send_sock_str.s!=0)
 	{
-	    force_send_sock_str.len = strlen(force_send_sock_str.s);
-	    force_send_sock_uri = (struct sip_uri *)pkg_malloc(sizeof(struct sip_uri));
-	    if(force_send_sock_uri==0)
-	    {
-	        LM_ERR("no more pkg memory left\n");
-	        return -1;
-	    }
-	    memset(force_send_sock_uri, 0, sizeof(struct sip_uri));
-	    if(parse_uri(force_send_sock_str.s, force_send_sock_str.len, force_send_sock_uri)<0)
-	    {
-	        LM_ERR("bad dup uri\n");
-	        return -1;
-	    }
+		force_send_sock_str.len = strlen(force_send_sock_str.s);
+		force_send_sock_uri = (struct sip_uri *)pkg_malloc(sizeof(struct sip_uri));
+		if(force_send_sock_uri==0)
+		{
+			LM_ERR("no more pkg memory left\n");
+			return -1;
+		}
+		memset(force_send_sock_uri, 0, sizeof(struct sip_uri));
+		if(parse_uri(force_send_sock_str.s, force_send_sock_str.len, force_send_sock_uri)<0)
+		{
+			LM_ERR("bad dup uri\n");
+			return -1;
+		}
 	}
 
 	if(traced_user_avp_str.s && traced_user_avp_str.len > 0)
@@ -466,7 +465,7 @@ static int child_init(int rank)
 			return -1;
 		}
 		if (db_check_table_version(&db_funcs, db_con, &siptrace_table,
-					   SIP_TRACE_TABLE_VERSION) < 0) {
+					SIP_TRACE_TABLE_VERSION) < 0) {
 			LM_ERR("error during table version check\n");
 			db_funcs.close(db_con);		
 			return -1;
@@ -752,7 +751,7 @@ static int sip_trace_store(struct _siptrace_data *sto, struct dest_info *dst)
 		return -1;
 
 	if(hep_mode_on) trace_send_hep_duplicate(&sto->body, &sto->fromip, &sto->toip, dst);
-    else trace_send_duplicate(sto->body.s, sto->body.len, dst);
+	else trace_send_duplicate(sto->body.s, sto->body.len, dst);
 
 	if (sip_trace_xheaders_free(sto) != 0)
 		return -1;
@@ -961,14 +960,14 @@ static int sip_trace(struct sip_msg *msg, struct dest_info * dst, char *dir)
 	struct onsend_info *snd_inf = NULL;
 
 	if (dst){
-	    if (dst->send_sock == 0){
-	        dst->send_sock=get_send_socket(0, &dst->to, dst->proto);
-	        if (dst->send_sock==0){
-	            LM_ERR("can't forward to af %d, proto %d no corresponding"
-	                    " listening socket\n", dst->to.s.sa_family, dst->proto);
-	            return -1;
-	        }
-	    }
+		if (dst->send_sock == 0){
+			dst->send_sock=get_send_socket(0, &dst->to, dst->proto);
+			if (dst->send_sock==0){
+				LM_ERR("can't forward to af %d, proto %d no corresponding"
+						" listening socket\n", dst->to.s.sa_family, dst->proto);
+				return -1;
+			}
+		}
 	}
 
 	if(msg==NULL) {
@@ -1584,23 +1583,23 @@ static int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 	}
 
 	if (!dst2){
-	    init_dest_info(&dst);
-	    /* create a temporary proxy*/
-	    dst.proto = PROTO_UDP;
-	    p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
-	             dst.proto);
-	    if (p==0){
-	        LM_ERR("bad host name in uri\n");
-	        return -1;
-	    }
-	    hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
+		init_dest_info(&dst);
+		/* create a temporary proxy*/
+		dst.proto = PROTO_UDP;
+		p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
+				dst.proto);
+		if (p==0){
+			LM_ERR("bad host name in uri\n");
+			return -1;
+		}
+		hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
 
-	    dst.send_sock=get_send_socket(0, &dst.to, dst.proto);
-	    if (dst.send_sock==0){
-	        LM_ERR("can't forward to af %d, proto %d no corresponding"
-	                " listening socket\n", dst.to.s.sa_family, dst.proto);
-	        goto error;
-	    }
+		dst.send_sock=get_send_socket(0, &dst.to, dst.proto);
+		if (dst.send_sock==0){
+			LM_ERR("can't forward to af %d, proto %d no corresponding"
+					" listening socket\n", dst.to.s.sa_family, dst.proto);
+			goto error;
+		}
 	}
 
 	if (msg_send((dst2)?dst2:&dst, buf, len)<0)
@@ -1610,15 +1609,15 @@ static int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 	}
 
 	if (p){
-	    free_proxy(p); /* frees only p content, not p itself */
-	    pkg_free(p);
+		free_proxy(p); /* frees only p content, not p itself */
+		pkg_free(p);
 	}
 	return 0;
 error:
-    if (p){
-	free_proxy(p); /* frees only p content, not p itself */
-	pkg_free(p);
-    }
+	if (p){
+		free_proxy(p); /* frees only p content, not p itself */
+		pkg_free(p);
+	}
 	return -1;
 }
 
@@ -1637,7 +1636,7 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 	struct hep_timehdr hep_time;
 	struct timeval tvb;
 	struct timezone tz;
-	                 
+
 	struct hep_ip6hdr hep_ip6header;
 
 	if(body->s==NULL || body->len <= 0)
@@ -1647,8 +1646,8 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 		return 0;
 
 
-        gettimeofday( &tvb, &tz );
-        
+	gettimeofday( &tvb, &tz );
+
 
 	/* message length */
 	len = body->len 
@@ -1671,46 +1670,46 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 		goto error;
 	}
 
-    if (!dst2){
-	init_dest_info(&dst);
-	/* create a temporary proxy*/
-	dst.proto = PROTO_UDP;
-	p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
-			dst.proto);
-	if (p==0)
-	{
-		LM_ERR("bad host name in uri\n");
-		goto error;
+	if (!dst2){
+		init_dest_info(&dst);
+		/* create a temporary proxy*/
+		dst.proto = PROTO_UDP;
+		p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
+				dst.proto);
+		if (p==0)
+		{
+			LM_ERR("bad host name in uri\n");
+			goto error;
+		}
+
+		hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
+		LM_DBG("setting up the socket_info\n");
+		dst_fin = &dst;
+	} else {
+		dst_fin = dst2;
 	}
 
-	hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
-	LM_DBG("setting up the socket_info\n");
-	dst_fin = &dst;
-    } else {
-        dst_fin = dst2;
-    }
+	if (force_send_sock_str.s) {
+		LM_DBG("force_send_sock activated, grep for the sock_info\n");
+		si = grep_sock_info(&force_send_sock_uri->host,
+				(force_send_sock_uri->port_no)?force_send_sock_uri->port_no:SIP_PORT,
+				PROTO_UDP);
+		if (!si) {
+			LM_WARN("cannot grep socket info\n");
+		} else {
+			LM_DBG("found socket while grep: [%.*s] [%.*s]\n", si->name.len, si->name.s, si->address_str.len, si->address_str.s);
+			dst_fin->send_sock = si;
+		}
+	}
 
-    if (force_send_sock_str.s) {
-        LM_DBG("force_send_sock activated, grep for the sock_info\n");
-        si = grep_sock_info(&force_send_sock_uri->host,
-                (force_send_sock_uri->port_no)?force_send_sock_uri->port_no:SIP_PORT,
-                PROTO_UDP);
-        if (!si) {
-             LM_WARN("cannot grep socket info\n");
-        } else {
-            LM_DBG("found socket while grep: [%.*s] [%.*s]\n", si->name.len, si->name.s, si->address_str.len, si->address_str.s);
-            dst_fin->send_sock = si;
-        }
-    }
-
-    if (dst_fin->send_sock == 0) {
-        dst_fin->send_sock=get_send_socket(0, &dst_fin->to, dst_fin->proto);
-        if (dst_fin->send_sock == 0) {
-            LM_ERR("can't forward to af %d, proto %d no corresponding"
-                    " listening socket\n", dst_fin->to.s.sa_family, dst_fin->proto);
-            goto error;
-        }
-    }
+	if (dst_fin->send_sock == 0) {
+		dst_fin->send_sock=get_send_socket(0, &dst_fin->to, dst_fin->proto);
+		if (dst_fin->send_sock == 0) {
+			LM_ERR("can't forward to af %d, proto %d no corresponding"
+					" listening socket\n", dst_fin->to.s.sa_family, dst_fin->proto);
+			goto error;
+		}
+	}
 
 	/* Version && proto && length */
 	hdr.hp_l = sizeof(struct hep_hdr);
@@ -1778,13 +1777,13 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 
 	if(hep_version == 2) {
 
-                hep_time.tv_sec = tvb.tv_sec;
-                hep_time.tv_usec = tvb.tv_usec;
-                hep_time.captid = hep_capture_id;
+		hep_time.tv_sec = tvb.tv_sec;
+		hep_time.tv_usec = tvb.tv_usec;
+		hep_time.captid = hep_capture_id;
 
-                memcpy((void*)buffer+buflen, &hep_time, sizeof(struct hep_timehdr));
-                buflen += sizeof(struct hep_timehdr);
-        }
+		memcpy((void*)buffer+buflen, &hep_time, sizeof(struct hep_timehdr));
+		buflen += sizeof(struct hep_timehdr);
+	}
 
 	/* PAYLOAD */
 	memcpy((void*)(buffer + buflen) , (void*)body->s, body->len);
@@ -1796,10 +1795,10 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 		goto error;
 	}
 
-    if (p) {
-	free_proxy(p); /* frees only p content, not p itself */
-	pkg_free(p);
-    }
+	if (p) {
+		free_proxy(p); /* frees only p content, not p itself */
+		pkg_free(p);
+	}
 	pkg_free(buffer);
 	return 0;
 error:
@@ -1843,14 +1842,14 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 		LM_ERR("bad protocol %s\n", pipport);
 		return -1;
 	}
-	
+
 	if((len = strlen(pipport)) >= 256) {
 		LM_ERR("too big pipport\n");
 		goto error;
 	}
 
 	/* our tmp string */
-        strncpy(tmp_piport, pipport, len+1);
+	strncpy(tmp_piport, pipport, len+1);
 
 	len = 0;
 
@@ -1867,19 +1866,19 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 		port_no = 0;
 	}
 	else {
-        	/*the address contains a port number*/
-        	*p = '\0';
-        	p++;
-        	port_str.s = p;
-        	port_str.len = strlen(p);
-        	LM_DBG("the port string is %s\n", p);
-        	if(str2int(&port_str, &port_no) != 0 ) {
-	        	LM_ERR("there is not a valid number port\n");
-	        	goto error;
-        	}
-        	*p = '\0';
-        }
-        
+		/*the address contains a port number*/
+		*p = '\0';
+		p++;
+		port_str.s = p;
+		port_str.len = strlen(p);
+		LM_DBG("the port string is %s\n", p);
+		if(str2int(&port_str, &port_no) != 0 ) {
+			LM_ERR("there is not a valid number port\n");
+			goto error;
+		}
+		*p = '\0';
+	}
+
 	/* now IPv6 address has no brakets. It should be fixed! */
 	if (host_s[0] == '[') {
 		len = strlen(host_s + 1) - 1;
@@ -1939,8 +1938,8 @@ static void siptrace_rpc_status (rpc_t* rpc, void* c) {
 }
 
 static const char* siptrace_status_doc[2] = {
-        "Get status or turn on/off siptrace. Parameters: on, off or check.",
-        0
+	"Get status or turn on/off siptrace. Parameters: on, off or check.",
+	0
 };
 
 rpc_export_t siptrace_rpc[] = {
