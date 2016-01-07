@@ -918,7 +918,7 @@ $ &ctltool; fifo get_dbg_mod_facility debugger
 		</title>
 		<para>
 			Get the module log level.
-			If module does not exist in kamailio, the entry in the level hashtable is still added for the bogus module.
+			If mod_name does not exist in the level hashtable, returns the config file value.
 		</para>
 		<para>
 			Name: <emphasis>dbg.get_mod_level</emphasis>
@@ -937,7 +937,7 @@ $ &ctltool; fifo get_dbg_mod_facility debugger
 		</title>
 		<para>
 			Get the module log facility.
-			If module does not exist in kamailio, the entry in the facility hashtable is still added for the bogus module.
+			If mod_name does not exist in the facility hashtable, returns the config file value.
 		</para>
 		<para>
 			Name: <emphasis>dbg.get_mod_facility</emphasis>

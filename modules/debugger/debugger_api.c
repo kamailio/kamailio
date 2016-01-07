@@ -1344,15 +1344,14 @@ int dbg_set_mod_debug_level(char *mname, int mnlen, int *mlevel)
 		itp = it;
 		it = it->next;
 	}
+	lock_release(&_dbg_mod_table[idx].lock);
 	/* not found - add */
 	if(mlevel==NULL) {
-		lock_release(&_dbg_mod_table[idx].lock);
 		return 0;
 	}
 	itn = (dbg_mod_level_t*)shm_malloc(sizeof(dbg_mod_level_t) + (mnlen+1)*sizeof(char));
 	if(itn==NULL) {
 		LM_ERR("no more shm\n");
-		lock_release(&_dbg_mod_table[idx].lock);
 		return -1;
 	}
 	memset(itn, 0, sizeof(dbg_mod_level_t) + (mnlen+1)*sizeof(char));
@@ -1363,6 +1362,7 @@ int dbg_set_mod_debug_level(char *mname, int mnlen, int *mlevel)
 	strncpy(itn->name.s, mname, mnlen);
 	itn->name.s[itn->name.len] = '\0';
 
+	lock_get(&_dbg_mod_table[idx].lock);
 	if(itp==NULL) {
 		itn->next = _dbg_mod_table[idx].first;
 		_dbg_mod_table[idx].first = itn;
@@ -1420,15 +1420,14 @@ int dbg_set_mod_debug_facility(char *mname, int mnlen, int *mfacility)
 		itp = it;
 		it = it->next;
 	}
+	lock_release(&_dbg_mod_table[idx].lock_ft);
 	/* not found - add */
 	if(mfacility==NULL) {
-		lock_release(&_dbg_mod_table[idx].lock_ft);
 		return 0;
 	}
 	itn = (dbg_mod_facility_t*)shm_malloc(sizeof(dbg_mod_facility_t) + (mnlen+1)*sizeof(char));
 	if(itn==NULL) {
 		LM_ERR("no more shm\n");
-		lock_release(&_dbg_mod_table[idx].lock_ft);
 		return -1;
 	}
 	memset(itn, 0, sizeof(dbg_mod_facility_t) + (mnlen+1)*sizeof(char));
@@ -1439,6 +1438,7 @@ int dbg_set_mod_debug_facility(char *mname, int mnlen, int *mfacility)
 	strncpy(itn->name.s, mname, mnlen);
 	itn->name.s[itn->name.len] = '\0';
 
+	lock_get(&_dbg_mod_table[idx].lock_ft);
 	if(itp==NULL) {
 		itn->next = _dbg_mod_table[idx].first_ft;
 		_dbg_mod_table[idx].first_ft = itn;
