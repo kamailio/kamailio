@@ -626,6 +626,8 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 			}
 		} else {
 			sock = NULL;
+			sock_str.s = 0;
+			sock_str.len = 0;
 		}
 
 		vavp = xavp_get(&flags_name, xavp->val.v.xavp);
