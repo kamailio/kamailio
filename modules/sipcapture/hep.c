@@ -274,6 +274,8 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
         src_ip.af = 0;
                 	        
 	payload = NULL;
+	correlation_id = NULL;
+	authkey = NULL;
 
 	i = sizeof(hep_ctrl_t);	        
 	        
