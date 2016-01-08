@@ -216,7 +216,7 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 		//      needs changes in dbt_query / dbt_row_match
 
 		l = matches[2].rm_eo - matches[2].rm_so;
-		_k1[idx] = pkg_malloc(sizeof(db_key_t));
+		_k1[idx] = pkg_malloc(sizeof(str));
 		_k1[idx]->len = l;
 		_k1[idx]->s = pkg_malloc(sizeof(char) * (l+1));
 		strncpy(_k1[idx]->s, buffer+matches[2].rm_so, l);
