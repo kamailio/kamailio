@@ -16,9 +16,9 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright (c) 2010 asipto.com
+   Copyright © 2010 asipto.com
 
-   Copyright (c) 2006 voice-system.ro
+   Copyright © 2006 voice-system.ro
      __________________________________________________________________
 
    Table of Contents
@@ -50,6 +50,7 @@ Daniel-Constantin Mierla
               3.15. hep_capture_id (integer)
               3.16. trace_delayed (integer)
               3.17. force_send_sock (str)
+              3.18. trace_mode (integer)
 
         4. Functions
 
@@ -85,7 +86,8 @@ Daniel-Constantin Mierla
    1.15. Set hep_capture_id parameter
    1.16. Set trace_delayed parameter
    1.17. Set force_send_sock parameter
-   1.18. sip_trace() usage
+   1.18. Set trace_mode parameter
+   1.19. sip_trace() usage
 
 Chapter 1. Admin Guide
 
@@ -116,6 +118,7 @@ Chapter 1. Admin Guide
         3.15. hep_capture_id (integer)
         3.16. trace_delayed (integer)
         3.17. force_send_sock (str)
+        3.18. trace_mode (integer)
 
    4. Functions
 
@@ -190,6 +193,7 @@ Chapter 1. Admin Guide
    3.15. hep_capture_id (integer)
    3.16. trace_delayed (integer)
    3.17. force_send_sock (str)
+   3.18. trace_mode (integer)
 
 3.1. db_url (str)
 
@@ -420,11 +424,27 @@ modparam("siptrace", "trace_delayed", 1)
 modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 ...
 
+3.18. trace_mode (integer)
+
+   If set to 1, the module uses core events triggered when receiving or
+   sending SIP traffic to mirror traffic to a SIP capture server using
+   HEP. It will automatically do the mirroring of all traffic, no need to
+   set the siptrace flag per request.
+
+   If set to 0, no automatic mirroring of SIP traffic via HEP.
+
+   Default value is 0.
+
+   Example 1.18. Set trace_mode parameter
+...
+modparam("siptrace", "trace_mode", 1)
+...
+
 4. Functions
 
    4.1. sip_trace([address])
 
-4.1.  sip_trace([address])
+4.1. sip_trace([address])
 
    Store or forward the current processed SIP message in database. It is
    stored in the form prior applying changes made to it.
@@ -438,7 +458,7 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.18. sip_trace() usage
+   Example 1.19. sip_trace() usage
 ...
 sip_trace();
 ...
@@ -449,7 +469,7 @@ sip_trace("sip:10.1.1.2:5085");
 
    5.1. sip_trace
 
-5.1.  sip_trace
+5.1. sip_trace
 
    Name: sip_trace
 
@@ -470,7 +490,7 @@ sip_trace("sip:10.1.1.2:5085");
 
    6.1. siptrace.status param
 
-6.1.  siptrace.status param
+6.1. siptrace.status param
 
    Name: siptrace.status
 
