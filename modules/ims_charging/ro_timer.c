@@ -400,6 +400,18 @@ void ro_session_ontimeout(struct ro_tl *tl) {
     //		return;
     //	}
 
+    if(ro_session->is_final_allocation) {
+        now = get_current_time_micro();
+        used_secs = now - ro_session->last_event_timestamp;
+        if((ro_session->reserved_secs - used_secs) > 0) {
+            update_ro_timer(&ro_session->ro_tl, (ro_session->reserved_secs - used_secs));
+            return;
+        }
+        else {
+            ro_session->event_type = no_more_credit;
+        }
+    }
+
     switch (ro_session->event_type) {
         case answered:
             now = get_current_time_micro();

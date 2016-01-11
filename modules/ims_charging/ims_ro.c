@@ -1255,6 +1255,9 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     ssd->ro_session->event_type = pending;
     ssd->ro_session->reserved_secs = ro_cca_data->mscc->granted_service_unit->cc_time;
     ssd->ro_session->valid_for = ro_cca_data->mscc->validity_time;
+    ssd->ro_session->is_final_allocation = 0;
+    if (ro_cca_data->mscc->final_unit_action && (ro_cca_data->mscc->final_unit_action->action == 0))
+        ssd->ro_session->is_final_allocation = 1;
 
     Ro_free_CCA(ro_cca_data);
 

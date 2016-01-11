@@ -71,6 +71,7 @@ struct ro_session {
     str mac;
     int rating_group;
     int service_identifier;
+    unsigned int is_final_allocation;
 };
 
 /*! entries in the main ro_session table */
