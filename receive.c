@@ -91,6 +91,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	unsigned int diff;
 #endif
 	str inb;
+	sr_net_info_t netinfo;
 
 	inb.s = buf;
 	inb.len = len;
@@ -138,6 +139,14 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 	/* ... clear branches from previous message */
 	clear_branches();
+
+	if(sr_event_enabled(SREV_NET_DATA_RECV)) {
+		memset(&netinfo, 0, sizeof(sr_net_info_t));
+		netinfo.data.s = msg->buf;
+		netinfo.data.len = msg->len;
+		netinfo.rcv = rcv_info;
+		sr_event_exec(SREV_NET_DATA_RECV, (void*)&netinfo);
+	}
 
 	if (msg->first_line.type==SIP_REQUEST){
 		ruri_mark_new(); /* ruri is usable for forking (not consumed yet) */
