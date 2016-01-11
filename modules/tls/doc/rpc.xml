@@ -53,8 +53,10 @@
 	<section id="tls.r.tls.reload">
 		<title><function>tls.reload</function></title>
 		<para>
-			Reload the external TLS configuration file. (Does not reload 
-			modparam() parameters)
+			Reload the external TLS configuration file (aka tls.cfg). It does not reload 
+			modparam() parameters. Note that existing active TLS connections are not
+			terminated and they continue to use the old certificates. New configuration
+			will be used for new connections.
 		</para>
 		<para>Parameters: </para>
                 <itemizedlist>
