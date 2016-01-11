@@ -56,6 +56,11 @@ enum ss_mismatch {
 	SS_MISMATCH_MCAST  /* mcast forced send socket */
 };
 
+typedef struct sr_send_info {
+	str data;
+	struct dest_info* dst;
+} sr_net_info_t;
+
 struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 									union sockaddr_union* su, int proto,
 									enum ss_mismatch* mismatch);
@@ -119,6 +124,8 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 {
 	struct dest_info new_dst;
 	str outb;
+	sr_net_info_t netinfo;
+
 #ifdef USE_TCP 
 	int port;
 	struct ip_addr ip;
@@ -271,6 +278,15 @@ static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
 	}
 	ret = 0;
 done:
+
+	if(!(flags&1)) {
+		memset(&netinfo, 0, sizeof(sr_net_info_t));
+		netinfo.data.s = outb.s;
+		netinfo.data.len = outb.len;
+		netinfo.dst = dst;
+		sr_event_exec(SREV_NET_DATA_SEND, (void*)&netinfo);
+	}
+
 	if(outb.s != buf)
 		pkg_free(outb.s);
 	return ret;
