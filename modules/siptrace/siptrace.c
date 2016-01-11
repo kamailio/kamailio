@@ -107,6 +107,7 @@ static void trace_sl_ack_in(sl_cbp_t *slcb);
 static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_info*);
 static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int *proto);
 
+int siptrace_net_data_recv(void *data);
 int siptrace_net_data_send(void *data);
 static int _siptrace_mode = 0;
 
@@ -454,6 +455,7 @@ static int mod_init(void)
 	}
 
 	if(_siptrace_mode==1) {
+		sr_event_register_cb(SREV_NET_DATA_RECV, siptrace_net_data_recv);
 		sr_event_register_cb(SREV_NET_DATA_SEND, siptrace_net_data_send);
 	}
 	return 0;
@@ -1912,6 +1914,48 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 
 error:
 	return -1;
+}
+
+
+/**
+ *
+ */
+int siptrace_net_data_recv(void *data)
+{
+	sr_net_info_t *nd;
+	struct _siptrace_data sto;
+
+	if(data==0)
+		return -1;
+
+	nd = (sr_net_info_t*)data;
+	if(nd->rcv==NULL || nd->data.s==NULL || nd->data.len<=0)
+		return -1;
+
+	memset(&sto, 0, sizeof(struct _siptrace_data));
+
+	sto.body.s   = nd->data.s;
+	sto.body.len = nd->data.len;
+
+	siptrace_copy_proto(nd->rcv->proto, sto.fromip_buff);
+	strcat(sto.fromip_buff, ip_addr2a(&nd->rcv->src_ip));
+	strcat(sto.fromip_buff,":");
+	strcat(sto.fromip_buff, int2str(nd->rcv->src_port, NULL));
+	sto.fromip.s = sto.fromip_buff;
+	sto.fromip.len = strlen(sto.fromip_buff);
+
+	siptrace_copy_proto(nd->rcv->proto, sto.toip_buff);
+	strcat(sto.toip_buff, ip_addr2a(&nd->rcv->dst_ip));
+	strcat(sto.toip_buff,":");
+	strcat(sto.toip_buff, int2str(nd->rcv->dst_port, NULL));
+	sto.toip.s = sto.toip_buff;
+	sto.toip.len = strlen(sto.toip_buff);
+
+	sto.dir = "in";
+
+	trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL);
+	return 0;
+
 }
 
 /**
