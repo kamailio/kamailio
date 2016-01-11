@@ -50,6 +50,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../str.h"
 #include "../../onsend.h"
+#include "../../events.h"
 
 #include "../../modules/sipcapture/hep.h"
 
@@ -105,6 +106,9 @@ static void trace_sl_ack_in(sl_cbp_t *slcb);
 
 static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_info*);
 static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int *proto);
+
+int siptrace_net_data_send(void *data);
+static int _siptrace_mode = 0;
 
 
 static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
@@ -211,6 +215,7 @@ static param_export_t params[] = {
 	{"hep_version",        INT_PARAM, &hep_version          },
 	{"hep_capture_id",     INT_PARAM, &hep_capture_id       },	        
 	{"trace_delayed",      INT_PARAM, &trace_delayed        },
+	{"trace_mode",         PARAM_INT, &_siptrace_mode       },
 	{0, 0, 0}
 };
 
@@ -448,6 +453,9 @@ static int mod_init(void)
 		trace_table_avp_type = 0;
 	}
 
+	if(_siptrace_mode==1) {
+		sr_event_register_cb(SREV_NET_DATA_SEND, siptrace_net_data_send);
+	}
 	return 0;
 }
 
@@ -1906,6 +1914,53 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+int siptrace_net_data_send(void *data)
+{
+	sr_net_info_t *nd;
+	struct dest_info new_dst;
+	struct _siptrace_data sto;
+
+	if(data==0)
+		return -1;
+
+	nd = (sr_net_info_t*)data;
+	if(nd->dst==NULL || nd->data.s==NULL || nd->data.len<=0)
+		return -1;
+
+	new_dst=*nd->dst;
+	new_dst.send_sock=get_send_socket(0, &nd->dst->to, nd->dst->proto);
+
+	memset(&sto, 0, sizeof(struct _siptrace_data));
+
+	sto.body.s   = nd->data.s;
+	sto.body.len = nd->data.len;
+
+	if (unlikely(new_dst.send_sock==0)) {
+		LM_WARN("no sending socket found\n");
+		strcpy(sto.fromip_buff, "any:255.255.255.255:5060");
+	} else {
+		strncpy(sto.fromip_buff, new_dst.send_sock->sock_str.s,
+			new_dst.send_sock->sock_str.len);
+	}
+	sto.fromip.s = sto.fromip_buff;
+	sto.fromip.len = strlen(sto.fromip_buff);
+
+	siptrace_copy_proto(new_dst.send_sock->proto, sto.toip_buff);
+	strcat(sto.toip_buff, suip2a(&new_dst.to, sizeof(new_dst.to)));
+	strcat(sto.toip_buff,":");
+	strcat(sto.toip_buff, int2str((int)su_getport(&new_dst.to), NULL));
+	sto.toip.s = sto.toip_buff;
+	sto.toip.len = strlen(sto.toip_buff);
+
+	sto.dir = "out";
+
+	trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL);
+	return 0;
+}
+
 static void siptrace_rpc_status (rpc_t* rpc, void* c) {
 	str status = {0, 0};
 
@@ -1956,4 +2011,3 @@ static int siptrace_init_rpc(void)
 	}
 	return 0;
 }
-
