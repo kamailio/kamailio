@@ -56,10 +56,6 @@ enum ss_mismatch {
 	SS_MISMATCH_MCAST  /* mcast forced send socket */
 };
 
-typedef struct sr_send_info {
-	str data;
-	struct dest_info* dst;
-} sr_net_info_t;
 
 struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 									union sockaddr_union* su, int proto,
