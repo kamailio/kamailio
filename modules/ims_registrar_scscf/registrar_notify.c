@@ -471,7 +471,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
 
             //get IMPU set from the presentity's subscription
             res = ul.get_impus_from_subscription_as_string(_d, r,
-                    0/*all unbarred impus*/, &impu_list, &num_impus);
+                    0/*all unbarred impus*/, &impu_list, &num_impus, 0/*pkg*/);
             if (res != 0) {
                 LM_WARN("failed to get IMPUs from subscription\n");
                 ul.unlock_udomain(_d, presentity_uri);
@@ -512,7 +512,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
 
             //this is a ulcallback so r_passed domain is already locked
             res = ul.get_impus_from_subscription_as_string(_d, r_passed,
-                    0/*all unbarred impus*/, &impu_list, &num_impus);
+                    0/*all unbarred impus*/, &impu_list, &num_impus, 0/*pkg*/);
             if (res != 0) {
                 LM_WARN("failed to get IMPUs from subscription\n");
                 if (impu_list) {
