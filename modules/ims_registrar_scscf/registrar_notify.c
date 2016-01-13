@@ -57,6 +57,7 @@
 #include <libxml/parser.h>
 
 #include "../../lib/ims/useful_defs.h"
+#include "../ims_usrloc_scscf/udomain.h"
 
 #define STATE_ACTIVE 1
 #define STATE_TERMINATED 0
@@ -437,8 +438,6 @@ error:
  * return 0 on success. anything else failure
  */
 int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact) {
-
-    str content = {0, 0};
     impurecord_t* r;
     int num_impus;
     str* impu_list;
@@ -481,19 +480,9 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
                 return 1;
             }
             ul.unlock_udomain((udomain_t*) _d, presentity_uri);
-
-            content = generate_reginfo_full(_d, impu_list,
-                    num_impus, 0, 0);
-
-            if (impu_list) {
-                pkg_free(impu_list);
-            }
-
             LM_DBG("About to ceate notification");
 
-            create_notifications(_d, r_passed, presentity_uri, watcher_contact, content, event_type);
-            if (content.s) pkg_free(content.s);
-            //            if (send_now) notification_timer(0, 0);
+            create_notifications(_d, r_passed, presentity_uri, watcher_contact, &impu_list, num_impus, event_type);
             return 0;
             break;
 
@@ -507,9 +496,6 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
                 LM_ERR("this is a contact change passed from ul callback: r_passed and c_passed should both be valid and presentity_uri, watcher_contact and _d should be 0 for ul callback");
                 return 0;
             }
-
-            //content = get_reginfo_partial(r_passed, c_passed, event_type);
-
             //this is a ulcallback so r_passed domain is already locked
             res = ul.get_impus_from_subscription_as_string(_d, r_passed,
                     0/*all unbarred impus*/, &impu_list, &num_impus, 0/*pkg*/);
@@ -526,19 +512,9 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
                 LM_ERR("Unable to register usrloc domain....aborting\n");
                 return 0;
             }
-            //	    
-            content = generate_reginfo_full(udomain, impu_list,
-                    num_impus, &r_passed->public_identity, 1);
-            //	    
-            if (impu_list) {
-                pkg_free(impu_list);
-            }
-
             LM_DBG("About to ceate notification");
 
-            create_notifications(_d, r_passed, presentity_uri, watcher_contact, content, event_type);
-            if (content.s) pkg_free(content.s);
-            //                        if (send_now) notification_timer(0, 0);
+            create_notifications(_d, r_passed, presentity_uri, watcher_contact, &impu_list, num_impus, event_type);
             return 1;
 
         default:
@@ -1391,7 +1367,7 @@ static str subs_active = {"active;expires=", 15};
  * @param content - the body content
  * @param expires - the remaining subcription expiration time in seconds
  */
-void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str content, int event_type) {
+void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str** impus, int num_impus, int event_type) {
 
     reg_notification *n;
     reg_subscriber *s;
@@ -1432,7 +1408,7 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
 
         if (s->expires > act_time) {
             LM_DBG("Expires is greater than current time!");
-            subscription_state.s = pkg_malloc(32);
+            subscription_state.s = (char*) pkg_malloc(32 * sizeof (char*));
             subscription_state.len = 0;
             if (subscription_state.s) {
 
@@ -1462,8 +1438,9 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
                 version = s->version + 1;
                 ul.update_subscriber(r, &s, 0, &local_cseq, &version);
 
-                n = new_notification(subscription_state, content_type, content, s);
+                n = new_notification(subscription_state, content_type, impus, num_impus, s);
                 if (n) {
+                    n->_d = _t;
                     LM_DBG("Notification exists - about to add it");
                     add_notification(n);
                 } else {
@@ -1488,15 +1465,16 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity
                 version = s->version + 1;
                 ul.update_subscriber(r, &s, 0, &local_cseq, &version);
 
-                n = new_notification(subscription_state, content_type, content, s);
-                if (n) {
-                    LM_DBG("Notification exists - about to add it");
-                    add_notification(n);
+            n = new_notification(subscription_state, content_type, impus, num_impus, s);
+            if (n) {
+                n->_d = _t;
+                LM_DBG("Notification exists - about to add it");
+                add_notification(n);
 
-                } else {
-                    LM_DBG("Notification does not exist");
-                }
-//            }
+            } else {
+                LM_DBG("Notification does not exist");
+            }
+            //            }
         }
         s = s->next;
 
@@ -1655,7 +1633,7 @@ static void process_xml_for_contact(str* buf, str* pad, ucontact_t* ptr) {
  * @returns the str with the XML content
  * if its a new subscription we do things like subscribe to updates on IMPU, etc
  */
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *primary_impu, int primary_locked) {
+str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus) {
     str x = {0, 0};
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
@@ -1927,12 +1905,23 @@ static int free_tm_dlg(dlg_t * td) {
 
 void send_notification(reg_notification * n) {
     str h = {0, 0};
-
+    str content = {0, 0};
     uac_req_t uac_r;
     dlg_t* td = NULL;
 
+    struct udomain* domain = (struct udomain*) n->_d;
+    if (!domain) {
+        ul.register_udomain("location", &domain);
+    }
+
+    LM_DBG("Have a notification to send for the following IMPUs using domain [%.*s]\n", domain->name->len, domain->name->s);
+
+
+    content = generate_reginfo_full(domain, n->impus, n->num_impus);
+
     str method = {"NOTIFY", 6};
 
+    LM_DBG("Notification content: [%.*s]", content.len, content.s);
     LM_DBG("DBG:send_notification: NOTIFY about <%.*s>\n", n->watcher_uri.len, n->watcher_uri.s);
 
     h.len = 0;
@@ -1975,14 +1964,12 @@ void send_notification(reg_notification * n) {
         return;
     }
 
-
-    if (n->content.len) {
-
+    if (content.len) {
         LM_DBG("Notification content exists - about to send notification with subscription state: [%.*s] content_type: [%.*s] content: [%.*s] : presentity_uri: [%.*s] watcher_uri: [%.*s]",
-                n->subscription_state.len, n->subscription_state.s, n->content_type.len, n->content_type.s, n->content.len, n->content.s,
+                n->subscription_state.len, n->subscription_state.s, n->content_type.len, n->content_type.s, content.len, content.s,
                 n->presentity_uri.len, n->presentity_uri.s, n->watcher_uri.len, n->watcher_uri.s);
 
-        set_uac_req(&uac_r, &method, &h, &n->content, td, TMCB_LOCAL_COMPLETED,
+        set_uac_req(&uac_r, &method, &h, &content, td, TMCB_LOCAL_COMPLETED,
                 uac_request_cb, 0);
         tmb.t_request_within(&uac_r);
     } else {
@@ -2012,26 +1999,17 @@ void send_notification(reg_notification * n) {
  * @returns the r_notification or NULL on error
  */
 reg_notification * new_notification(str subscription_state,
-        str content_type, str content, reg_subscriber * r) {
-
+        str content_type, str** impus, int num_impus, reg_subscriber * r) {
+    int i;
     reg_notification *n = 0;
-
-    str buf;
-    char bufc[MAX_REGINFO_SIZE];
-
-    if (content.len > MAX_REGINFO_SIZE) {
-        LM_ERR("content size (%d) exceeds MAX_REGINFO_SIZE (%d)!\n", content.len, MAX_REGINFO_SIZE);
-        return 0;
-    }
-
-    buf.s = bufc;
-    buf.len = snprintf(buf.s, MAX_REGINFO_SIZE, content.s, r->version);
-
     int len;
     char *p;
 
     len = sizeof (reg_notification) + r->call_id.len + r->from_tag.len + r->to_tag.len + r->watcher_uri.len + r->watcher_contact.len +
-            r->record_route.len + r->sockinfo_str.len + r->presentity_uri.len + subscription_state.len + content_type.len + buf.len;
+            r->record_route.len + r->sockinfo_str.len + r->presentity_uri.len + subscription_state.len + content_type.len + (num_impus*sizeof(str)); // + buf.len;
+    for (i=0; i<num_impus; i++) {
+        len += impus[i]->len;
+    }
 
     LM_DBG("Creating new notification");
 
@@ -2106,12 +2084,16 @@ reg_notification * new_notification(str subscription_state,
     p += content_type.len;
     LM_DBG("Notification content type: [%.*s]", n->content_type.len, n->content_type.s);
 
-    n->content.s = p;
-    n->content.len = buf.len;
-    memcpy(p, buf.s, buf.len);
-    p += buf.len;
-    LM_DBG("Notification content: [%.*s]", n->content.len, n->content.s);
-
+    n->impus = p;
+    p += sizeof(str)*num_impus;
+    for (i=0; i<num_impus; i++) {
+        n->impus[i].s = p;
+        memcpy(p, impus[i]->s, impus[i]->len);
+        n->impus[i].len = impus[i]->len;
+        p += impus[i]->len;
+    }
+    n->num_impus = num_impus;
+    
     if (p != (((char*) n) + len)) {
         LM_CRIT("buffer overflow\n");
         free_notification(n);

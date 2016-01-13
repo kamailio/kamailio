@@ -62,12 +62,14 @@ typedef struct _reg_notification {
     
     str subscription_state; /**< Subscription-state header value*/
     str content_type; /**< content type					*/
-    str content; /**< content						*/
     
     str watcher_contact;
     str watcher_uri;
     str presentity_uri;
     
+    struct udomain* _d;
+    str* impus;
+    int num_impus;
     
     unsigned int local_cseq;
     str call_id;
@@ -126,11 +128,11 @@ int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str
 int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact);
 
 
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription, str *primary_impu, int primary_locked);
+str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription);
 
 str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type);
 
-void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str content, int event_type);
+void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str** impus, int num_impus, int event_type);
 
 void notification_event_process();
 
@@ -141,7 +143,7 @@ void send_notification(reg_notification * n);
 void add_notification(reg_notification *n);
 
 reg_notification* new_notification(str subscription_state,
-        str content_type, str content, reg_subscriber* r);
+        str content_type, str** impus, int num_impus, reg_subscriber* r);
 
 dlg_t* build_dlg_t_from_notification(reg_notification* n);
 
