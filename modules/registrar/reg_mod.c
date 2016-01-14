@@ -365,7 +365,6 @@ static int mod_init(void)
 	} else if (reg_xavp_cfg.s) {
 		if (reg_xavp_cfg.len == 0 || sock_flag == -1) {
 			LM_WARN("empty reg_xavp_cfg or sock_flag no set -> resetting\n");
-			reg_xavp_cfg.len = 0;
 			sock_flag = -1;
 		}
 	} else if (sock_flag!=-1) {
