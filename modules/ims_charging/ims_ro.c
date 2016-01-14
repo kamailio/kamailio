@@ -755,9 +755,29 @@ void send_ccr_stop(struct ro_session *ro_session) {
     long used = 0;
     str user_name = {0, 0};
     int ret = 0;
+    time_t stop_time;
+    time_t actual_time_micros;
+    int actual_time_seconds;
+
+    stop_time = get_current_time_micro();
+
+    if (ro_session->start_time == 0)
+        actual_time_micros = 0;
+    else
+        actual_time_micros = stop_time - ro_session->start_time;
+
+    actual_time_seconds = (actual_time_micros + (1000000 - 1)) / (float) 1000000;
 
     if (ro_session->event_type != pending) {
-        used = rint((get_current_time_micro() - ro_session->last_event_timestamp)/(float)1000000);
+        used = rint((stop_time - ro_session->last_event_timestamp) / (float) 1000000);
+        LM_DBG("Final used number of seconds for session is %ld\n", used);
+    }
+
+    LM_DBG("Call started at %ld and ended at %ld and lasted %d seconds and so far we have billed for %ld seconds\n", ro_session->start_time, stop_time,
+            actual_time_seconds, ro_session->billed + used);
+    if (ro_session->billed + used < actual_time_seconds) {
+        LM_DBG("Making adjustment by adding %ld seconds\n", actual_time_seconds - (ro_session->billed + used));
+        used += actual_time_seconds - (ro_session->billed + used);
     }
 
     counter_add(ims_charging_cnts_h.billed_secs, (int)used);

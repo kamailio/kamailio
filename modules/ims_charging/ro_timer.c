@@ -380,6 +380,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
 void ro_session_ontimeout(struct ro_tl *tl) {
     time_t now, call_time;
     long used_secs;
+	int adjustment;
 
     LM_DBG("We have a fired timer [p=%p] and tl=[%i].\n", tl, tl->timeout);
 
@@ -419,6 +420,12 @@ void ro_session_ontimeout(struct ro_tl *tl) {
             used_secs = rint((now - ro_session->last_event_timestamp) / (float) 1000000);
             call_time = rint((now - ro_session->start_time) / (float) 1000000);
 
+			if ((used_secs + ro_session->billed) < (call_time)) {
+				adjustment = call_time - (used_secs + ro_session->billed);
+				LM_DBG("Making adjustment for Ro interim timer by adding %d seconds\n", adjustment);
+				used_secs += adjustment;
+			}
+			
             counter_add(ims_charging_cnts_h.billed_secs, used_secs);
 
             if (ro_session->callid.s != NULL
@@ -444,6 +451,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
                 // Apply for more credit.
                 //
                 // The function call will return immediately and we will receive the reply asynchronously via a callback
+				ro_session->billed += used_secs;
                 send_ccr_interim(ro_session, (unsigned int) used_secs, interim_request_credits);
                 return;
             } else {
