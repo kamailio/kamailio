@@ -72,6 +72,7 @@ struct ro_session {
     int rating_group;
     int service_identifier;
     unsigned int is_final_allocation;
+    unsigned int billed;
 };
 
 /*! entries in the main ro_session table */
