@@ -57,6 +57,10 @@
 		    </listitem>
 	    	</itemizedlist>
 	    </para>
+	    <para>
+		NOTE: Due to the debugger module child_init() function, one should load the module first in the module sequence in order to initialize _dbg_pid_list.
+		Otherwise, another module (i.e. p_usrloc) forking a process with rank != PROC_INIT will fail.
+	    </para>
 	</section>
 	<section>
 	    <title>External Libraries or Applications</title>
