@@ -707,6 +707,8 @@ static int fixup_dbg_sip_msg(void** param, int param_no)
     int level;
     struct action *dbg_sip_msg_action;
 
+	LM_DBG("dbg_sip_msg() called with %d params\n", param_no);
+
     switch(param_no)
     {
         case 2:
@@ -716,8 +718,9 @@ static int fixup_dbg_sip_msg(void** param, int param_no)
                 return E_UNSPEC;
             }
 
-                         *param = (void*)(long)facility;    
+                         *param = (void*)(long)facility;
         break;
+
         case 1:
             switch(((char*)(*param))[2])
             {
@@ -737,6 +740,15 @@ static int fixup_dbg_sip_msg(void** param, int param_no)
 
             *param = (void*)(long)level;
         break;
+
+        case 0:
+		_dbg_sip_msg_cline = -1;
+		return 0;
+
+        default:
+		// should not reach here
+		_dbg_sip_msg_cline = -1;
+		return -1;
     }
 
     /* save the config line where this config function was called */
@@ -815,36 +827,23 @@ static int w_dbg_sip_msg(struct sip_msg* msg, char *level, char *facility)
     new_buf_offs = 0;
     process_lumps(msg, msg->body_lumps, bdy_lumps, &new_buf_offs, &orig_offs, &send_info, flag);
 
-    /* do the print */
-    if (hdr_lumps != NULL && bdy_lumps != NULL) {
-        LOG_FC(ifacility, ilevel, "CONFIG LINE %d\n%s%.*s%s%s%s%s%s",
-            _dbg_sip_msg_cline,
-            start_txt,
-            obuf.len, obuf.s,
-            hdr_txt, hdr_lumps,
-            bdy_txt, bdy_lumps,
-            end_txt);
-    } else if (hdr_lumps != NULL) {
-        LOG_FC(ifacility, ilevel, "CONFIG LINE %d\n%s%.*s%s%s%s",
-            _dbg_sip_msg_cline,
-            start_txt,
-            obuf.len, obuf.s,
-            hdr_txt, hdr_lumps,
-            end_txt);
-    } else if (bdy_lumps != NULL) {
-        LOG_FC(ifacility, ilevel, "CONFIG LINE %d\n%s%.*s%s%s%s",
-            _dbg_sip_msg_cline,
-            start_txt,
-            obuf.len, obuf.s,
-            bdy_txt, bdy_lumps,
-            end_txt);
-    } else {
-        LOG_FC(ifacility, ilevel, "CONFIG LINE %d\n%s%.*s%s",
-            _dbg_sip_msg_cline,
-            start_txt,
-            obuf.len, obuf.s,
-            end_txt);
-    }
+	/* do the print */
+	if (_dbg_sip_msg_cline < 0 ) {
+		LOG_FC(ifacility, ilevel, "CONFIG LINE unknown\n%s%.*s%s%s%s%s%s",
+		    start_txt,
+		    obuf.len, obuf.s,
+		    hdr_txt, hdr_lumps,
+		    bdy_txt, bdy_lumps,
+		    end_txt);
+	} else {
+		LOG_FC(ifacility, ilevel, "CONFIG LINE %d\n%s%.*s%s%s%s%s%s",
+		    _dbg_sip_msg_cline,
+		    start_txt,
+		    obuf.len, obuf.s,
+		    hdr_txt, hdr_lumps,
+		    bdy_txt, bdy_lumps,
+		    end_txt);
+	}
 
     /* free lumps */
     if (hdr_lumps) {
