@@ -99,11 +99,11 @@ static cmd_export_t cmds[]={
 	{"dbg_pv_dump", (cmd_function)w_dbg_dump, 2,
 		fixup_dbg_pv_dump, 0, ANY_ROUTE},
 	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 0,
-		fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 1,
-		fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 2,
-		fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -776,6 +776,11 @@ static int w_dbg_sip_msg(struct sip_msg* msg, char *level, char *facility)
 	const char *end_txt =   "-------------------------- END OF SIP message debug ---------------------------\n\n";
 	struct dest_info send_info;
 	str obuf;
+
+	if (msg->first_line.type != SIP_REPLY && get_route_type() != REQUEST_ROUTE) {
+		LM_ERR("invalid usage - not in request route\n");
+		return -1;
+	}
 
 	if (level != NULL) {
 		/* substract L_OFFSET previously added */
