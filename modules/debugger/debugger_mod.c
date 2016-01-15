@@ -98,12 +98,12 @@ static cmd_export_t cmds[]={
 		fixup_dbg_pv_dump, 0, ANY_ROUTE},
 	{"dbg_pv_dump", (cmd_function)w_dbg_dump, 2,
 		fixup_dbg_pv_dump, 0, ANY_ROUTE},
-    {"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 0,
-        fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
-    {"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 1,
-        fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
-    {"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 2,
-        fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
+	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 0,
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
+	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 1,
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
+	{"dbg_sip_msg", (cmd_function)w_dbg_sip_msg, 2,
+		fixup_dbg_sip_msg, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -320,8 +320,8 @@ static struct mi_root* mi_get_dbg_mod_level(struct mi_root *cmd_tree, void *para
 	}
 
 	if ((attr = add_mi_attr(crt_node, MI_DUP_VALUE,
-	    level_attr.s, level_attr.len,
-	    level_str.s, level_str.len)) == 0) {
+		level_attr.s, level_attr.len,
+		level_str.s, level_str.len)) == 0) {
 		LM_ERR("cannot add attributes to the node\n");
 		goto error;
 	}
@@ -383,8 +383,8 @@ static struct mi_root* mi_get_dbg_mod_facility(struct mi_root *cmd_tree, void *p
 	}
 
 	if ((attr = add_mi_attr(crt_node, MI_DUP_VALUE,
-	    facility_attr.s, facility_attr.len,
-	    facility_str.s, facility_str.len)) == 0) {
+		facility_attr.s, facility_attr.len,
+		facility_str.s, facility_str.len)) == 0) {
 		LM_ERR("cannot add attributes to the node\n");
 		goto error;
 	}
@@ -439,7 +439,7 @@ static int mod_init(void)
 
 	/* anyhow, should fail before */
 	if (!dbg_cfg) {
-                return -1;
+		return -1;
 	}
 
 	LM_DBG("cfg level_mode:%d facility_mode:%d hash_size:%d\n",
@@ -556,7 +556,7 @@ static int fixup_dbg_pv_dump(void** param, int param_no)
 		break;
 	}
 
-    return 0;
+	return 0;
 }
 
 /**
@@ -604,7 +604,7 @@ static int fixup_dbg_breakpoint(void** param, int param_no)
 	a = dbg_fixup_get_action(param, param_no);
 	p = (char*)(*param);
 
-    return dbg_add_breakpoint(a, (*p=='0')?0:1);
+	return dbg_add_breakpoint(a, (*p=='0')?0:1);
 }
 
 static int dbg_mod_level_param(modparam_t type, void *val)
@@ -631,7 +631,7 @@ static int dbg_mod_level_param(modparam_t type, void *val)
 	s.len = p - s.s;
 
 	if (!dbg_cfg) {
-                return -1;
+		return -1;
 	}
 
 	LM_DBG("cfg level_mode:%d hash_size:%d\n",
@@ -679,7 +679,7 @@ static int dbg_mod_facility_param(modparam_t type, void *val)
 	s.len = p - s.s;
 
 	if (!dbg_cfg) {
-                return -1;
+		return -1;
 	}
 
 	LM_DBG("cfg facility_mode:%d hash_size:%d\n",
@@ -703,59 +703,59 @@ static int dbg_mod_facility_param(modparam_t type, void *val)
 
 static int fixup_dbg_sip_msg(void** param, int param_no)
 {
-    int facility;
-    int level;
-    struct action *dbg_sip_msg_action;
+	int facility;
+	int level;
+	struct action *dbg_sip_msg_action;
 
 	LM_DBG("dbg_sip_msg() called with %d params\n", param_no);
 
-    switch(param_no)
-    {
-        case 2:
-            facility = str2facility((char*)*(param));
-            if (facility == -1) {
-                LM_ERR("invalid log facility configured");
-                return E_UNSPEC;
-            }
+	switch(param_no)
+	{
+		case 2:
+			facility = str2facility((char*)*(param));
+			if (facility == -1) {
+				LM_ERR("invalid log facility configured");
+				return E_UNSPEC;
+			}
 
-                         *param = (void*)(long)facility;
-        break;
+			*param = (void*)(long)facility;
+			break;
 
-        case 1:
-            switch(((char*)(*param))[2])
-            {
-                /* add L_OFFSET because L_WARN is consdered null pointer */
-                case 'A': level = L_ALERT + L_OFFSET; break;
-                case 'B': level = L_BUG + L_OFFSET; break;
-                case 'C': level = L_CRIT2 + L_OFFSET; break;
-                case 'E': level = L_ERR + L_OFFSET; break;
-                case 'W': level = L_WARN + L_OFFSET; break;
-                case 'N': level = L_NOTICE + L_OFFSET; break;
-                case 'I': level = L_INFO + L_OFFSET; break;
-                case 'D': level = L_DBG + L_OFFSET; break;
-                default:
-                    LM_ERR("unknown log level\n");
-                    return E_UNSPEC;
-            }
+		case 1:
+			switch(((char*)(*param))[2])
+			{
+				/* add L_OFFSET because L_WARN is consdered null pointer */
+				case 'A': level = L_ALERT + L_OFFSET; break;
+				case 'B': level = L_BUG + L_OFFSET; break;
+				case 'C': level = L_CRIT2 + L_OFFSET; break;
+				case 'E': level = L_ERR + L_OFFSET; break;
+				case 'W': level = L_WARN + L_OFFSET; break;
+				case 'N': level = L_NOTICE + L_OFFSET; break;
+				case 'I': level = L_INFO + L_OFFSET; break;
+				case 'D': level = L_DBG + L_OFFSET; break;
+				default:
+					LM_ERR("unknown log level\n");
+					return E_UNSPEC;
+			}
 
-            *param = (void*)(long)level;
-        break;
+			*param = (void*)(long)level;
+			break;
 
-        case 0:
-		_dbg_sip_msg_cline = -1;
-		return 0;
+		case 0:
+			_dbg_sip_msg_cline = -1;
+			return 0;
 
-        default:
-		// should not reach here
-		_dbg_sip_msg_cline = -1;
-		return -1;
-    }
+		default:
+			// should not reach here
+			_dbg_sip_msg_cline = -1;
+			return -1;
+	}
 
-    /* save the config line where this config function was called */
-    dbg_sip_msg_action = dbg_fixup_get_action(param, param_no);
-    _dbg_sip_msg_cline = dbg_sip_msg_action->cline;
+	/* save the config line where this config function was called */
+	dbg_sip_msg_action = dbg_fixup_get_action(param, param_no);
+	_dbg_sip_msg_cline = dbg_sip_msg_action->cline;
 
-     return 0;
+	return 0;
 }
 
 /**
@@ -764,95 +764,95 @@ static int fixup_dbg_sip_msg(void** param, int param_no)
   */
 static int w_dbg_sip_msg(struct sip_msg* msg, char *level, char *facility)
 {
-    int ilevel = cfg_get(core, core_cfg, debug);
-    int ifacility= cfg_get(core, core_cfg, log_facility);
-    int flag = FLAG_MSG_LUMPS_ONLY; // copy lumps only, not the whole message
-    unsigned int new_buf_offs=0, orig_offs = 0;
-    char *hdr_lumps = NULL;
-    char *bdy_lumps = NULL;
-    const char *start_txt = "------------------------- START OF SIP message debug --------------------------\n";
-    const char *hdr_txt =   "------------------------------ SIP header diffs -------------------------------\n";
-    const char *bdy_txt =   "------------------------------- SIP body diffs --------------------------------\n";
-    const char *end_txt =   "-------------------------- END OF SIP message debug ---------------------------\n\n";
-    struct dest_info send_info;
-    str obuf;
+	int ilevel = cfg_get(core, core_cfg, debug);
+	int ifacility= cfg_get(core, core_cfg, log_facility);
+	int flag = FLAG_MSG_LUMPS_ONLY; // copy lumps only, not the whole message
+	unsigned int new_buf_offs=0, orig_offs = 0;
+	char *hdr_lumps = NULL;
+	char *bdy_lumps = NULL;
+	const char *start_txt = "------------------------- START OF SIP message debug --------------------------\n";
+	const char *hdr_txt =   "------------------------------ SIP header diffs -------------------------------\n";
+	const char *bdy_txt =   "------------------------------- SIP body diffs --------------------------------\n";
+	const char *end_txt =   "-------------------------- END OF SIP message debug ---------------------------\n\n";
+	struct dest_info send_info;
+	str obuf;
 
-    if (level != NULL) {
-        /* substract L_OFFSET previously added */
-        ilevel = (int)(long)level - L_OFFSET;
-    }
+	if (level != NULL) {
+		/* substract L_OFFSET previously added */
+		ilevel = (int)(long)level - L_OFFSET;
+	}
 
-    if (facility != NULL) {
-        ifacility = (int)(long)facility;
-    }
+	if (facility != NULL) {
+		ifacility = (int)(long)facility;
+	}
 
-    /* msg_apply_changes_f code needed to get the current msg */
-    init_dest_info(&send_info);
-    send_info.proto = PROTO_UDP;
-    if(msg->first_line.type == SIP_REPLY) {
-        obuf.s = generate_res_buf_from_sip_res(msg,
-                (unsigned int*)&obuf.len, BUILD_NO_VIA1_UPDATE);
-    } else {
-        obuf.s = build_req_buf_from_sip_req(msg,
-                (unsigned int*)&obuf.len, &send_info,
-                BUILD_NO_PATH|BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
-    }
+	/* msg_apply_changes_f code needed to get the current msg */
+	init_dest_info(&send_info);
+	send_info.proto = PROTO_UDP;
+	if(msg->first_line.type == SIP_REPLY) {
+		obuf.s = generate_res_buf_from_sip_res(msg,
+				(unsigned int*)&obuf.len, BUILD_NO_VIA1_UPDATE);
+	} else {
+		obuf.s = build_req_buf_from_sip_req(msg,
+				(unsigned int*)&obuf.len, &send_info,
+				BUILD_NO_PATH|BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
+	}
 
-    if(obuf.s == NULL)
-    {
-        LM_ERR("couldn't update msg buffer content\n");
-        return -1;
-    }
+	if(obuf.s == NULL)
+	{
+		LM_ERR("couldn't update msg buffer content\n");
+		return -1;
+	}
 
-    if(obuf.len >= BUF_SIZE)
-    {
-        LM_ERR("new buffer overflow (%d)\n", obuf.len);
-        pkg_free(obuf.s);
-        return -1;
-    }
+	if(obuf.len >= BUF_SIZE)
+	{
+		LM_ERR("new buffer overflow (%d)\n", obuf.len);
+		pkg_free(obuf.s);
+		return -1;
+	}
 
-    /* skip original uri */
-    if (msg->new_uri.s){
-        orig_offs=msg->first_line.u.request.uri.s - msg->buf;
-        orig_offs=msg->first_line.u.request.uri.len;
-    }
+	/* skip original uri */
+	if (msg->new_uri.s){
+		orig_offs=msg->first_line.u.request.uri.s - msg->buf;
+		orig_offs=msg->first_line.u.request.uri.len;
+	}
 
-    /* alloc private mem and copy lumps */
-    hdr_lumps = pkg_malloc(BUF_SIZE);
-    bdy_lumps = pkg_malloc(BUF_SIZE);
+	/* alloc private mem and copy lumps */
+	hdr_lumps = pkg_malloc(BUF_SIZE);
+	bdy_lumps = pkg_malloc(BUF_SIZE);
 
-    new_buf_offs = 0;
-    process_lumps(msg, msg->add_rm, hdr_lumps, &new_buf_offs, &orig_offs, &send_info, flag);
+	new_buf_offs = 0;
+	process_lumps(msg, msg->add_rm, hdr_lumps, &new_buf_offs, &orig_offs, &send_info, flag);
 
-    new_buf_offs = 0;
-    process_lumps(msg, msg->body_lumps, bdy_lumps, &new_buf_offs, &orig_offs, &send_info, flag);
+	new_buf_offs = 0;
+	process_lumps(msg, msg->body_lumps, bdy_lumps, &new_buf_offs, &orig_offs, &send_info, flag);
 
 	/* do the print */
 	if (_dbg_sip_msg_cline < 0 ) {
 		LOG_FC(ifacility, ilevel, "CONFIG LINE unknown\n%s%.*s%s%s%s%s%s",
-		    start_txt,
-		    obuf.len, obuf.s,
-		    hdr_txt, hdr_lumps,
-		    bdy_txt, bdy_lumps,
-		    end_txt);
+			start_txt,
+			obuf.len, obuf.s,
+			hdr_txt, hdr_lumps,
+			bdy_txt, bdy_lumps,
+			end_txt);
 	} else {
 		LOG_FC(ifacility, ilevel, "CONFIG LINE %d\n%s%.*s%s%s%s%s%s",
-		    _dbg_sip_msg_cline,
-		    start_txt,
-		    obuf.len, obuf.s,
-		    hdr_txt, hdr_lumps,
-		    bdy_txt, bdy_lumps,
-		    end_txt);
+			_dbg_sip_msg_cline,
+			start_txt,
+			obuf.len, obuf.s,
+			hdr_txt, hdr_lumps,
+			bdy_txt, bdy_lumps,
+			end_txt);
 	}
 
-    /* free lumps */
-    if (hdr_lumps) {
-        pkg_free(hdr_lumps);
-    }
+	/* free lumps */
+	if (hdr_lumps) {
+		pkg_free(hdr_lumps);
+	}
 
-    if (bdy_lumps) {
-        pkg_free(bdy_lumps);
-    }
+	if (bdy_lumps) {
+		pkg_free(bdy_lumps);
+	}
 
-    return 1;
+	return 1;
 }
