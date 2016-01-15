@@ -47,11 +47,6 @@
 #include "db.h"
 #include "../../lib/ims/useful_defs.h"
 
-#if defined (__OS_freebsd)
-#include "sys/limits.h"
-#define MAXINT INT_MAX
-#endif
-
 extern int scscf_entry_expiry; //time for scscf entries to remain the scscf_list
 
 extern struct tm_binds tmb; //Structure with pointers to tm funcs

@@ -51,10 +51,8 @@
 #include "mod.h"
 #include "location.h"
 
-#if defined (__OS_freebsd)
-#include "sys/limits.h"
+#include "limits.h"
 #define MAXINT INT_MAX
-#endif
 
 //we use pseudo variables to communicate back to config file this takes the result and converys to a return code, publishes it a pseudo variable
 int create_lia_return_code(int result) {
