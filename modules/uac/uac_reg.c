@@ -532,6 +532,8 @@ int reg_ht_add(reg_uac_t *reg)
 	}
 	memset(nr, 0, sizeof(reg_uac_t) + len);
 	nr->expires = reg->expires;
+	nr->flags   = reg->flags;
+	nr->reg_delay = reg->reg_delay;
 	nr->h_uuid = reg_compute_hash(&reg->l_uuid);
 	nr->h_user = reg_compute_hash(&reg->l_username);
 	
@@ -595,6 +597,7 @@ int reg_ht_update_attrs(reg_uac_t *reg)
 			strncpy(ri->r->auth_proxy.s, reg->auth_proxy.s, reg->auth_proxy.len);
 			ri->r->auth_proxy.len = reg->auth_proxy.len;
 			ri->r->auth_proxy.s[reg->auth_proxy.len] = '\0';
+			if(reg->flags & UAC_REG_DISABLED) ri->r->flags |= UAC_REG_DISABLED;
 			lock_release(&_reg_htable->entries[slot].lock);
 			return 0;
 		}
