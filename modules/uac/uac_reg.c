@@ -69,6 +69,7 @@ typedef struct _reg_uac
 	unsigned int flags;
 	unsigned int expires;
 	time_t timer_expires;
+	unsigned int reg_delay;
 } reg_uac_t;
 
 typedef struct _reg_item
@@ -117,6 +118,8 @@ str auth_username_column = str_init("auth_username");
 str auth_password_column = str_init("auth_password");
 str auth_proxy_column = str_init("auth_proxy");
 str expires_column = str_init("expires");
+str flags_column = str_init("flags");
+str reg_delay_column = str_init("reg_delay");
 
 
 #if 0
@@ -133,6 +136,8 @@ CREATE TABLE uacreg (
     auth_password VARCHAR(64) NOT NULL,
     auth_proxy VARCHAR(128) DEFAULT '' NOT NULL,
     expires INT(10) UNSIGNED DEFAULT 0 NOT NULL,
+    flags INT(10) UNSIGNED DEFAULT 0 NOT NULL,
+    reg_delay INT(10) UNSIGNED DEFAULT 0 NOT NULL,
     CONSTRAINT l_uuid_idx UNIQUE (l_uuid)
 ) ENGINE=MyISAM;
 #endif
@@ -1071,7 +1076,7 @@ int uac_reg_load_db(void)
 	db1_con_t *reg_db_con = NULL;
 	db_func_t reg_dbf;
 	reg_uac_t reg;
-	db_key_t db_cols[10] = {
+	db_key_t db_cols[12] = {
 		&l_uuid_column,
 		&l_username_column,
 		&l_domain_column,
@@ -1081,7 +1086,9 @@ int uac_reg_load_db(void)
 		&auth_username_column,
 		&auth_password_column,
 		&auth_proxy_column,
-		&expires_column
+		&expires_column,
+		&flags_column,
+		&reg_delay_column
 	};
 	db1_res_t* db_res = NULL;
 	int i, ret;
@@ -1120,7 +1127,7 @@ int uac_reg_load_db(void)
 	}
 
 	if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
-		if(reg_dbf.query(reg_db_con, 0, 0, 0, db_cols, 0, 10, 0, 0) < 0)
+		if(reg_dbf.query(reg_db_con, 0, 0, 0, db_cols, 0, 12, 0, 0) < 0)
 		{
 			LM_ERR("Error while querying db\n");
 			return -1;
@@ -1172,6 +1179,10 @@ int uac_reg_load_db(void)
 			reg_db_set_attr(auth_proxy, 8);
 			reg.expires
 				= (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
+			reg.flags
+				= (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
+			reg.reg_delay
+				= (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
 			
 			if(reg_ht_add(&reg)<0)
 			{
@@ -1212,7 +1223,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db1_con_t *reg_db_con = NULL;
 	db_func_t reg_dbf;
 	reg_uac_t reg;
-	db_key_t db_cols[10] = {
+	db_key_t db_cols[12] = {
 		&l_uuid_column,
 		&l_username_column,
 		&l_domain_column,
@@ -1222,7 +1233,9 @@ int uac_reg_db_refresh(str *pl_uuid)
 		&auth_username_column,
 		&auth_password_column,
 		&auth_proxy_column,
-		&expires_column
+		&expires_column,
+		&flags_column,
+		&reg_delay_column
 	};
 	db_key_t db_keys[1] = {&l_uuid_column};
 	db_val_t db_vals[1];
@@ -1269,7 +1282,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_vals[0].val.str_val.len = pl_uuid->len;
 
 	if((ret=reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
-			1 /*nr keys*/, 10 /*nr cols*/, 0, &db_res))!=0
+			1 /*nr keys*/, 12 /*nr cols*/, 0, &db_res))!=0
 		|| RES_ROW_N(db_res)<=0 )
 	{
 		reg_dbf.free_result(reg_db_con, db_res);
@@ -1300,6 +1313,8 @@ int uac_reg_db_refresh(str *pl_uuid)
 	reg.expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
 	reg.h_uuid = reg_compute_hash(&reg.l_uuid);
 	reg.h_user = reg_compute_hash(&reg.l_username);
+	reg.flags = (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
+	reg.reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
 
 	lock_get(_reg_htable_gc_lock);
 	if(reg_ht_get_byuuid(pl_uuid)!=NULL)
@@ -1508,7 +1523,7 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "SSSSSSSSSdddd",
+			if(rpc->struct_add(th, "SSSSSSSSSddddd",
 					"l_uuid",        &reg->r->l_uuid,
 					"l_username",    &reg->r->l_username,
 					"l_domain",      &reg->r->l_domain,
@@ -1522,7 +1537,8 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 					"expires",       (int)reg->r->expires,
 					"flags",         (int)reg->r->flags,
 					"diff_expires",  (int)(reg->r->timer_expires - tn),
-					"timer_expires", (int)reg->r->timer_expires
+					"timer_expires", (int)reg->r->timer_expires,
+					"reg_delay",     (int)reg->r->reg_delay
 				)<0)
 			{
 				lock_release(&_reg_htable->entries[i].lock);
