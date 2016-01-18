@@ -15,6 +15,8 @@
 				<col><field>auth_password</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
+				<col><field>flags</field></col>
+				<col><field>reg_delay</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -31,6 +33,8 @@
 				<col><field>auth_password</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
+				<col><field>flags</field></col>
+				<col><field>reg_delay</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -50,6 +54,8 @@
 				<col><field>auth_password</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
+				<col><field>flags</field></col>
+				<col><field>reg_delay</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

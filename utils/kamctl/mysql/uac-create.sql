@@ -10,8 +10,10 @@ CREATE TABLE `uacreg` (
     `auth_password` VARCHAR(64) DEFAULT '' NOT NULL,
     `auth_proxy` VARCHAR(64) DEFAULT '' NOT NULL,
     `expires` INT DEFAULT 0 NOT NULL,
+    `flags` INT DEFAULT 0 NOT NULL,
+    `reg_delay` INT DEFAULT 0 NOT NULL,
     CONSTRAINT l_uuid_idx UNIQUE (`l_uuid`)
 );
 
-INSERT INTO version (table_name, table_version) values ('uacreg','1');
+INSERT INTO version (table_name, table_version) values ('uacreg','2');
 
