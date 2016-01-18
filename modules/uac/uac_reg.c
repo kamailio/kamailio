@@ -46,6 +46,7 @@
 #define UAC_REG_ONGOING		(1<<1)
 #define UAC_REG_ONLINE		(1<<2)
 #define UAC_REG_AUTHSENT	(1<<3)
+#define UAC_REG_INIT		(1<<4)
 
 #define MAX_UACH_SIZE 2048
 #define UAC_REG_GC_INTERVAL	150
@@ -70,6 +71,7 @@ typedef struct _reg_uac
 	unsigned int expires;
 	time_t timer_expires;
 	unsigned int reg_delay;
+	time_t reg_init;
 } reg_uac_t;
 
 typedef struct _reg_item
@@ -534,6 +536,7 @@ int reg_ht_add(reg_uac_t *reg)
 	nr->expires = reg->expires;
 	nr->flags   = reg->flags;
 	nr->reg_delay = reg->reg_delay;
+	nr->reg_init  = time(NULL);
 	nr->h_uuid = reg_compute_hash(&reg->l_uuid);
 	nr->h_user = reg_compute_hash(&reg->l_username);
 	
@@ -961,6 +964,16 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	}
 	if(reg->flags&UAC_REG_DISABLED)
 		return 4;
+
+	if(!(reg->flags & UAC_REG_INIT)) {
+		if(reg->reg_delay>0) {
+			if(tn < reg->reg_init+reg->reg_delay) {
+				return 2;
+			}
+		}
+	}
+	reg->flags |= UAC_REG_INIT;
+
 	if(reg->timer_expires > tn + reg_timer_interval + 3)
 		return 3;
 	uuid = (char*)shm_malloc(reg->l_uuid.len+1);
@@ -1526,7 +1539,7 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "SSSSSSSSSddddd",
+			if(rpc->struct_add(th, "SSSSSSSSSdddddd",
 					"l_uuid",        &reg->r->l_uuid,
 					"l_username",    &reg->r->l_username,
 					"l_domain",      &reg->r->l_domain,
@@ -1541,6 +1554,7 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 					"flags",         (int)reg->r->flags,
 					"diff_expires",  (int)(reg->r->timer_expires - tn),
 					"timer_expires", (int)reg->r->timer_expires,
+					"reg_init",      (int)reg->r->reg_init,
 					"reg_delay",     (int)reg->r->reg_delay
 				)<0)
 			{
