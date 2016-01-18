@@ -127,21 +127,21 @@ str reg_delay_column = str_init("reg_delay");
 #if 0
 INSERT INTO version (table_name, table_version) values ('uacreg','1');
 CREATE TABLE uacreg (
-    id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    l_uuid VARCHAR(64) NOT NULL,
-    l_username VARCHAR(64) NOT NULL,
-    l_domain VARCHAR(128) DEFAULT '' NOT NULL,
-    r_username VARCHAR(64) NOT NULL,
-    r_domain VARCHAR(128) NOT NULL,
-    realm VARCHAR(64) NOT NULL,
-    auth_username VARCHAR(64) NOT NULL,
-    auth_password VARCHAR(64) NOT NULL,
-    auth_proxy VARCHAR(128) DEFAULT '' NOT NULL,
-    expires INT(10) UNSIGNED DEFAULT 0 NOT NULL,
-    flags INT(10) UNSIGNED DEFAULT 0 NOT NULL,
-    reg_delay INT(10) UNSIGNED DEFAULT 0 NOT NULL,
-    CONSTRAINT l_uuid_idx UNIQUE (l_uuid)
-) ENGINE=MyISAM;
+		id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
+		l_uuid VARCHAR(64) NOT NULL,
+		l_username VARCHAR(64) NOT NULL,
+		l_domain VARCHAR(128) DEFAULT '' NOT NULL,
+		r_username VARCHAR(64) NOT NULL,
+		r_domain VARCHAR(128) NOT NULL,
+		realm VARCHAR(64) NOT NULL,
+		auth_username VARCHAR(64) NOT NULL,
+		auth_password VARCHAR(64) NOT NULL,
+		auth_proxy VARCHAR(128) DEFAULT '' NOT NULL,
+		expires INT(10) UNSIGNED DEFAULT 0 NOT NULL,
+		flags INT(10) UNSIGNED DEFAULT 0 NOT NULL,
+		reg_delay INT(10) UNSIGNED DEFAULT 0 NOT NULL,
+		CONSTRAINT l_uuid_idx UNIQUE (l_uuid)
+		) ENGINE=MyISAM;
 #endif
 
 
@@ -158,9 +158,9 @@ counter_handle_t regdisabled;      /* Disabled registrations */
 static void uac_reg_counter_init()
 {
 	LM_DBG("*** Initializing UAC reg counters\n");
-        counter_register(&regtotal, "uac", "regtotal", 0, 0, 0, "Total number of registration accounts in memory", 0);
-        counter_register(&regactive, "uac", "regactive", 0, 0, 0, "Number of successfully registred accounts (200 OK)", 0);
-        counter_register(&regdisabled, "uac", "regdisabled", 0, 0, 0, "Counter of failed registrations (not 200 OK)", 0);
+	counter_register(&regtotal, "uac", "regtotal", 0, 0, 0, "Total number of registration accounts in memory", 0);
+	counter_register(&regactive, "uac", "regactive", 0, 0, 0, "Number of successfully registred accounts (200 OK)", 0);
+	counter_register(&regdisabled, "uac", "regdisabled", 0, 0, 0, "Counter of failed registrations (not 200 OK)", 0);
 }
 
 
@@ -195,7 +195,7 @@ int uac_reg_init_ht(unsigned int sz)
 	_reg_htable_gc->htsize = sz;
 
 	_reg_htable_gc->entries =
-			(reg_entry_t*)shm_malloc(_reg_htable_gc->htsize*sizeof(reg_entry_t));
+		(reg_entry_t*)shm_malloc(_reg_htable_gc->htsize*sizeof(reg_entry_t));
 	if(_reg_htable_gc->entries==NULL)
 	{
 		LM_ERR("no more shm.\n");
@@ -221,7 +221,7 @@ int uac_reg_init_ht(unsigned int sz)
 	_reg_htable->htsize = sz;
 
 	_reg_htable->entries =
-			(reg_entry_t*)shm_malloc(_reg_htable->htsize*sizeof(reg_entry_t));
+		(reg_entry_t*)shm_malloc(_reg_htable->htsize*sizeof(reg_entry_t));
 	if(_reg_htable->entries==NULL)
 	{
 		LM_ERR("no more shm.\n");
@@ -518,14 +518,14 @@ int reg_ht_add(reg_uac_t *reg)
 	}
 
 	len = reg->l_uuid.len + 1
-			+ reg->l_username.len + 1
-			+ reg->l_domain.len + 1
-			+ reg->r_username.len + 1
-			+ reg->r_domain.len + 1
-			+ reg->realm.len + 1
-			+ UAC_REG_MAX_URI_SIZE /*reg->auth_proxy.len*/ + 1
-			+ reg->auth_username.len + 1
-			+ UAC_REG_MAX_PASSWD_SIZE /*reg->auth_password.len*/ + 1;
+		+ reg->l_username.len + 1
+		+ reg->l_domain.len + 1
+		+ reg->r_username.len + 1
+		+ reg->r_domain.len + 1
+		+ reg->realm.len + 1
+		+ UAC_REG_MAX_URI_SIZE /*reg->auth_proxy.len*/ + 1
+		+ reg->auth_username.len + 1
+		+ UAC_REG_MAX_PASSWD_SIZE /*reg->auth_password.len*/ + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
 	{
@@ -539,7 +539,7 @@ int reg_ht_add(reg_uac_t *reg)
 	nr->reg_init  = time(NULL);
 	nr->h_uuid = reg_compute_hash(&reg->l_uuid);
 	nr->h_user = reg_compute_hash(&reg->l_username);
-	
+
 	p = (char*)nr + sizeof(reg_uac_t);
 
 	reg_copy_shm(&nr->l_uuid, &reg->l_uuid, 0);
@@ -666,7 +666,7 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 			if(domain!=NULL && domain->s!=NULL)
 			{
 				if((it->r->l_domain.len==domain->len)
-				&& (strncmp(it->r->l_domain.s, domain->s, domain->len)==0))
+						&& (strncmp(it->r->l_domain.s, domain->s, domain->len)==0))
 				{
 					return it->r;
 				}
@@ -747,7 +747,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	}
 	uuid = *((char**)ps->param);
 	LM_DBG("completed with status %d [uuid: %s]\n",
-		ps->code, uuid);
+			ps->code, uuid);
 	suuid.s = uuid;
 	suuid.len = strlen(suuid.s);
 	ri = reg_ht_get_byuuid(&suuid);
@@ -830,7 +830,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		}
 
 		LM_DBG("auth header body [%.*s]\n",
-			hdr->body.len, hdr->body.s);
+				hdr->body.len, hdr->body.s);
 
 		if (parse_authenticate_body(&hdr->body, &auth)<0)
 		{
@@ -843,14 +843,14 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 					|| strncmp(auth.realm.s, ri->realm.s, ri->realm.len)!=0)
 			{
 				LM_ERR("realms do not match. requested realm: [%.*s]\n",
-					auth.realm.len, auth.realm.s);
+						auth.realm.len, auth.realm.s);
 				goto error;
 			}
 		}
 		cred.realm = auth.realm;
 		cred.user = ri->auth_username; 
 		cred.passwd = ri->auth_password;
- 		cred.next = NULL;
+		cred.next = NULL;
 
 		snprintf(b_ruri, MAX_URI_SIZE, "sip:%.*s",
 				ri->r_domain.len, ri->r_domain.s);
@@ -858,13 +858,13 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 		do_uac_auth(&method, &s_ruri, &cred, &auth, response);
 		new_auth_hdr=build_authorization_hdr(ps->code, &s_ruri, &cred,
-						&auth, response);
+				&auth, response);
 		if (new_auth_hdr==0)
 		{
 			LM_ERR("failed to build authorization hdr\n");
 			goto error;
 		}
-		
+
 #ifdef UAC_OLD_AUTH
 		snprintf(b_turi, MAX_URI_SIZE, "sip:%.*s@%.*s",
 				ri->r_username.len, ri->r_username.s,
@@ -905,13 +905,13 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				&s_turi, /* To */
 				&s_turi, /* From */
 				(ri->auth_proxy.len)?&ri->auth_proxy:NULL /* outbound uri */
-			);
+				);
 #endif
 		ret = uac_tmb.t_request_within(&uac_r);
 
 		if(ret<0) {
 			LM_ERR("failed to send request with authentication for [%.*s]",
-			       ri->l_uuid.len, ri->l_uuid.s);
+					ri->l_uuid.len, ri->l_uuid.s);
 			goto error;
 		}
 
@@ -920,7 +920,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	} else
 	{
 		LM_ERR("got sip response %d while registering [%.*s]\n",
-		       ps->code, ri->l_uuid.len, ri->l_uuid.s);
+				ps->code, ri->l_uuid.len, ri->l_uuid.s);
 		goto error;
 	}
 
@@ -1019,7 +1019,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 			&s_turi, /* To */
 			&s_turi, /* From */
 			(reg->auth_proxy.len)?&reg->auth_proxy:NULL /* outbound uri */
-		);
+			);
 
 	if(ret<0)
 	{
@@ -1072,17 +1072,17 @@ void uac_reg_timer(unsigned int ticks)
 }
 
 #define reg_db_set_attr(attr, pos) do { \
-		if(!VAL_NULL(&RES_ROWS(db_res)[i].values[pos])) { \
-			reg.attr.s = \
-				(char*)(RES_ROWS(db_res)[i].values[pos].val.string_val); \
-			reg.attr.len = strlen(reg.attr.s); \
-			if(reg.attr.len == 0) { \
-				LM_ERR("empty value not allowed for column[%d]='%.*s' - ignoring record\n", \
-						pos, db_cols[pos]->len, db_cols[pos]->s); \
-				continue; \
-			} \
+	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[pos])) { \
+		reg.attr.s = \
+		(char*)(RES_ROWS(db_res)[i].values[pos].val.string_val); \
+		reg.attr.len = strlen(reg.attr.s); \
+		if(reg.attr.len == 0) { \
+			LM_ERR("empty value not allowed for column[%d]='%.*s' - ignoring record\n", \
+					pos, db_cols[pos]->len, db_cols[pos]->s); \
+			continue; \
 		} \
-	} while(0);
+	} \
+} while(0);
 
 /**
  *
@@ -1125,7 +1125,7 @@ int uac_reg_load_db(void)
 	if (!DB_CAPABILITY(reg_dbf, DB_CAP_ALL))
 	{
 		LM_ERR("database module does not "
-		    "implement all functions needed by the module\n");
+				"implement all functions needed by the module\n");
 		return -1;
 	}
 
@@ -1162,8 +1162,8 @@ int uac_reg_load_db(void)
 		}
 	} else {
 		if((ret=reg_dbf.query(reg_db_con, NULL, NULL, NULL, db_cols,
-				0, 10, 0, &db_res))!=0
-			|| RES_ROW_N(db_res)<=0 )
+						0, 10, 0, &db_res))!=0
+				|| RES_ROW_N(db_res)<=0 )
 		{
 			reg_dbf.free_result(reg_db_con, db_res);
 			if( ret==0)
@@ -1199,13 +1199,13 @@ int uac_reg_load_db(void)
 				= (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
 			reg.reg_delay
 				= (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
-			
+
 			if(reg_ht_add(&reg)<0)
 			{
 				LM_ERR("Error adding reg to htable\n");
 				goto error;
 			}
-	 	}
+		}
 		if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
 			if(reg_dbf.fetch_result(reg_db_con, &db_res, reg_fetch_rows)<0) {
 				LM_ERR("Error while fetching!\n");
@@ -1275,7 +1275,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	if (!DB_CAPABILITY(reg_dbf, DB_CAP_ALL))
 	{
 		LM_ERR("database module does not "
-		    "implement all functions needed by the module\n");
+				"implement all functions needed by the module\n");
 		return -1;
 	}
 
@@ -1298,8 +1298,8 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_vals[0].val.str_val.len = pl_uuid->len;
 
 	if((ret=reg_dbf.query(reg_db_con, db_keys, NULL, db_vals, db_cols,
-			1 /*nr keys*/, 12 /*nr cols*/, 0, &db_res))!=0
-		|| RES_ROW_N(db_res)<=0 )
+					1 /*nr keys*/, 12 /*nr cols*/, 0, &db_res))!=0
+			|| RES_ROW_N(db_res)<=0 )
 	{
 		reg_dbf.free_result(reg_db_con, db_res);
 		if( ret==0)
@@ -1389,8 +1389,8 @@ int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 			return -1;
 		}
 		snprintf(b_ruri, MAX_URI_SIZE, "sip:%.*s@%.*s",
-			reg->l_username.len, reg->l_username.s,
-			reg->l_domain.len, reg->l_domain.s);
+				reg->l_username.len, reg->l_username.s,
+				reg->l_domain.len, reg->l_domain.s);
 		s_ruri.s = b_ruri; s_ruri.len = strlen(s_ruri.s);
 	} else {
 		if(parse_uri(src->s, src->len, &puri)!=0)
@@ -1405,7 +1405,7 @@ int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 			return -1;
 		}
 		snprintf(b_ruri, MAX_URI_SIZE, "%.*s",
-			reg->l_uuid.len, reg->l_uuid.s);
+				reg->l_uuid.len, reg->l_uuid.s);
 		s_ruri.s = b_ruri; s_ruri.len = strlen(s_ruri.s);
 	}
 	memset(&val, 0, sizeof(pv_value_t));
@@ -1460,8 +1460,8 @@ int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 
 	// Set uri ($ru)
 	snprintf(ruri, MAX_URI_SIZE, "sip:%.*s@%.*s",
-		reg->r_username.len, reg->r_username.s,
-		reg->r_domain.len, reg->r_domain.s);
+			reg->r_username.len, reg->r_username.s,
+			reg->r_domain.len, reg->r_domain.s);
 	memset(&act, 0, sizeof(act));
 	act.type = SET_URI_T;
 	act.val[0].type = STRING_ST;
@@ -1540,23 +1540,23 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 				return;
 			}
 			if(rpc->struct_add(th, "SSSSSSSSSdddddd",
-					"l_uuid",        &reg->r->l_uuid,
-					"l_username",    &reg->r->l_username,
-					"l_domain",      &reg->r->l_domain,
-					"r_username",    &reg->r->r_username,
-					"r_domain",      &reg->r->r_domain,
-					"realm",         &reg->r->realm,
-					"auth_username", &reg->r->auth_username,
-					"auth_password", &reg->r->auth_password,
-					"auth_proxy",    (reg->r->auth_proxy.len)?
-										&reg->r->auth_proxy:&none,
-					"expires",       (int)reg->r->expires,
-					"flags",         (int)reg->r->flags,
-					"diff_expires",  (int)(reg->r->timer_expires - tn),
-					"timer_expires", (int)reg->r->timer_expires,
-					"reg_init",      (int)reg->r->reg_init,
-					"reg_delay",     (int)reg->r->reg_delay
-				)<0)
+						"l_uuid",        &reg->r->l_uuid,
+						"l_username",    &reg->r->l_username,
+						"l_domain",      &reg->r->l_domain,
+						"r_username",    &reg->r->r_username,
+						"r_domain",      &reg->r->r_domain,
+						"realm",         &reg->r->realm,
+						"auth_username", &reg->r->auth_username,
+						"auth_password", &reg->r->auth_password,
+						"auth_proxy",    (reg->r->auth_proxy.len)?
+						&reg->r->auth_proxy:&none,
+						"expires",       (int)reg->r->expires,
+						"flags",         (int)reg->r->flags,
+						"diff_expires",  (int)(reg->r->timer_expires - tn),
+						"timer_expires", (int)reg->r->timer_expires,
+						"reg_init",      (int)reg->r->reg_init,
+						"reg_delay",     (int)reg->r->reg_delay
+						)<0)
 			{
 				lock_release(&_reg_htable->entries[i].lock);
 				rpc->fault(ctx, 500, "Internal error adding item");
@@ -1634,21 +1634,21 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 					return;
 				}
 				if(rpc->struct_add(th, "SSSSSSSSSdddd",
-						"l_uuid",        &reg->r->l_uuid,
-						"l_username",    &reg->r->l_username,
-						"l_domain",      &reg->r->l_domain,
-						"r_username",    &reg->r->r_username,
-						"r_domain",      &reg->r->r_domain,
-						"realm",         &reg->r->realm,
-						"auth_username", &reg->r->auth_username,
-						"auth_password", &reg->r->auth_password,
-						"auth_proxy",    (reg->r->auth_proxy.len)?
-											&reg->r->auth_proxy:&none,
-						"expires",       (int)reg->r->expires,
-						"flags",         (int)reg->r->flags,
-						"diff_expires",  (int)(reg->r->timer_expires - tn),
-						"timer_expires", (int)reg->r->timer_expires
-					)<0)
+							"l_uuid",        &reg->r->l_uuid,
+							"l_username",    &reg->r->l_username,
+							"l_domain",      &reg->r->l_domain,
+							"r_username",    &reg->r->r_username,
+							"r_domain",      &reg->r->r_domain,
+							"realm",         &reg->r->realm,
+							"auth_username", &reg->r->auth_username,
+							"auth_password", &reg->r->auth_password,
+							"auth_proxy",    (reg->r->auth_proxy.len)?
+							&reg->r->auth_proxy:&none,
+							"expires",       (int)reg->r->expires,
+							"flags",         (int)reg->r->flags,
+							"diff_expires",  (int)(reg->r->timer_expires - tn),
+							"timer_expires", (int)reg->r->timer_expires
+							)<0)
 				{
 					lock_release(&_reg_htable->entries[i].lock);
 					rpc->fault(ctx, 500, "Internal error adding item");
