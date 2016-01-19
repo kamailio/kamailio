@@ -422,7 +422,7 @@ void remove_ts_transaction(ts_transaction_t* ts_t)
  * \brief Destroy a transaction and free memory
  * \param tma destroyed transaction
  */
-inline void free_ts_transaction(void *ts_t)
+void free_ts_transaction(void *ts_t)
 {
 	shm_free((struct ts_transaction*)ts_t);
 	ts_t = 0;
