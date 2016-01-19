@@ -490,7 +490,15 @@ static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
 		LM_DBG("token %.*s", opt_argv[i].len, opt_argv[i].s);
 		if (opt_argv[i].len >= 1) {
 			switch(*opt_argv[i].s) {
-					case '-': switch(opt_argv[i].s[1]) {
+					case '-': 
+						  /* -{OPTION}{PARAMETER} is not allowed */
+                                                  if (opt_argv[i].len != 2) {
+                                                        FIFO_ERR(E_WRONGOPT);
+                                                        LM_DBG("Unknown option: %.*s\n", opt_argv[i].len, opt_argv[i].s);
+                                                        return -1;
+                                                  }
+
+						  switch(opt_argv[i].s[1]) {
 							case OPT_DOMAIN_CHR:
 							op = OPT_DOMAIN;
 							used_opts |= O_DOMAIN;
