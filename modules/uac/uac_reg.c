@@ -42,11 +42,11 @@
 #include "auth_hdr.h"
 #include "uac_reg.h"
 
-#define UAC_REG_DISABLED	(1<<0)
-#define UAC_REG_ONGOING		(1<<1)
-#define UAC_REG_ONLINE		(1<<2)
-#define UAC_REG_AUTHSENT	(1<<3)
-#define UAC_REG_INIT		(1<<4)
+#define UAC_REG_DISABLED	(1<<0) /* registration disabled */
+#define UAC_REG_ONGOING		(1<<1) /* registration on progress */
+#define UAC_REG_ONLINE		(1<<2) /* registered */
+#define UAC_REG_AUTHSENT	(1<<3) /* registration with auth in progress */
+#define UAC_REG_INIT		(1<<4) /* registration initialized */
 
 #define MAX_UACH_SIZE 2048
 #define UAC_REG_GC_INTERVAL	150
