@@ -899,6 +899,27 @@ event_route[uac:reply] {
 			The value is what should be matcheg against the value of the attribute
 			in the remote registration record.
 		</para>
+		<para>
+			The state of the registration is reflected in the flags field:
+			<itemizedlist>
+			<listitem><para>
+			1 (2^0) - registration profile is disabled
+			</para></listitem>
+			<listitem><para>
+			2 (2^1) - registration in progress
+			</para></listitem>
+			<listitem><para>
+			4 (2^2) - registration succeeded
+			</para></listitem>
+			<listitem><para>
+			8 (2^3) - registration in progres with authentication
+			</para></listitem>
+			<listitem><para>
+			16 (2^4) - registration initialized (after loading from database,
+			the registration process was initialized)
+			</para></listitem>
+		</itemizedlist>
+		</para>
 		<example>
 		<title><function>uac.reg_info</function> usage</title>
 			<programlisting format="linespecific">
