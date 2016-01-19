@@ -96,6 +96,7 @@ curl_con_t* curl_get_connection(str *name)
  *		useragent
  *		failover
  *		maxdatasize
+ *		verifyserver
  *
  */
 int curl_parse_param(char *val)
@@ -108,10 +109,14 @@ int curl_parse_param(char *val)
 	str params	= STR_NULL;
 	str failover	= STR_NULL;
 
+	str client_cert = { default_tls_clientcert, default_tls_clientcert ? strlen(default_tls_clientcert) : 0 };
+	str client_key	= { default_tls_clientkey, default_tls_clientkey ? strlen(default_tls_clientkey) : 0 };
+
 	unsigned int maxdatasize = default_maxdatasize;
 	unsigned int timeout	= default_connection_timeout;
 	str useragent   = { default_useragent, strlen(default_useragent) };
 	unsigned int http_follow_redirect = default_http_follow_redirect;
+	unsigned int verifyserver = default_tls_verifyserver;
 
 	str in;
 	char *p;
@@ -300,6 +305,17 @@ int curl_parse_param(char *val)
 					maxdatasize = default_maxdatasize;
 				}
 				LM_DBG("curl [%.*s] - timeout [%d]\n", pit->name.len, pit->name.s, maxdatasize);
+			} else if(pit->name.len==12 && strncmp(pit->name.s, "verifyserver", 7)==0) {
+				if(str2int(&tok, &verifyserver)!=0) {
+					/* Bad integer */
+					LM_DBG("curl connection [%.*s]: verifyserver bad value. Using default\n", name.len, name.s);
+					verifyserver = default_tls_verifyserver;
+				}
+				if (verifyserver != 0 && verifyserver != 1) {
+					LM_DBG("curl connection [%.*s]: verifyserver bad value. Using default\n", name.len, name.s);
+					verifyserver = default_tls_verifyserver;
+				}
+				LM_DBG("curl [%.*s] - verifyserver [%d]\n", pit->name.len, pit->name.s, verifyserver);
 			} else {
 				LM_ERR("curl Unknown parameter [%.*s] \n", pit->name.len, pit->name.s);
 			}
@@ -310,7 +326,10 @@ int curl_parse_param(char *val)
 
 	LM_DBG("cname: [%.*s] url: [%.*s] username [%.*s] password [%.*s] failover [%.*s] timeout [%d] useragent [%.*s] maxdatasize [%d]\n", 
 			name.len, name.s, url.len, url.s, username.len, username.s,
-			password.len, password.s, failover.len, failover.s, timeout, useragent.len, useragent.s, maxdatasize);
+			password.len, password.s, failover.len, failover.s, timeout,
+			useragent.len, useragent.s, maxdatasize);
+	LM_DBG("cname: [%.*s] client_cert [%.*s] client_key [%.*s] verifyserver [%d]\n",
+			name.len, name.s, client_cert.len, client_cert.s, client_key.len, client_key.s, verifyserver);
 
 	if(conparams != NULL) {
 		free_params(conparams);
@@ -326,6 +345,9 @@ int curl_parse_param(char *val)
 	cc->failover = failover;
 	cc->useragent = useragent;
 	cc->url = url;
+	cc->clientcert = client_cert;
+	cc->clientkey = client_key;
+	cc->verify_server = verifyserver;
 	cc->timeout = timeout;
 	cc->maxdatasize = maxdatasize;
 	cc->http_follow_redirect = http_follow_redirect;

@@ -76,6 +76,7 @@ unsigned int	default_connection_timeout = 4;
 char		*default_tls_cacert = NULL;		/*!< File name: Default CA cert to use for curl TLS connection */
 char		*default_tls_clientcert = NULL;		/*!< File name: Default client certificate to use for curl TLS connection */
 char		*default_tls_clientkey = NULL;		/*!< File name: Key in PEM format that belongs to client cert */
+char		*default_cipher_suite_list = NULL;		/*!< List of allowed cipher suites */
 unsigned int	default_tls_verifyserver = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
 char 		*default_http_proxy = NULL;		/*!< Default HTTP proxy to use */
 unsigned int	default_http_proxy_port = 0;		/*!< Default HTTP proxy port to use */
@@ -139,6 +140,7 @@ static param_export_t params[] = {
 	{"tlscacert", PARAM_STRING,  &default_tls_cacert },
 	{"tlsclientcert", PARAM_STRING, &default_tls_clientcert },
 	{"tlsclientkey", PARAM_STRING, &default_tls_clientkey },
+	{"tlscipherlist", PARAM_STRING, &default_cipher_suite_list },
 	{"tlsverifyserver", PARAM_INT, &default_tls_verifyserver },
 	{"httpproxyport", PARAM_INT, &default_http_proxy_port },
 	{"httpproxy", PARAM_STRING, &default_http_proxy},

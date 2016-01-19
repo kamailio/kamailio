@@ -223,6 +223,28 @@ modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 				</programlisting>
 			</example>
 		</section>
+		<section id="curl.p.tlscipherlist">
+			<title><varname>tlscipherlist</varname> (string)</title>
+			<para>
+			List of allowed cipher suites.
+			See http://curl.haxx.se/libcurl/c/CURLOPT_SSL_CIPHER_LIST.html for details
+			of the cipher list curl option.
+			</para>
+			<para>
+			<emphasis>
+				Default value is empty string, i.e.
+				the default list of ciphers in libcurl will be used.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>tlscipherlist</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_gcm_sha_256")
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="curl.p.tlsverifyserver">
 			<title><varname>tlsverifyserver</varname> (int)</title>
 			<para>
@@ -285,6 +307,10 @@ modparam("curl", "tlsverifyserver", 1)
 				<listitem><para>
 				<emphasis>useragent</emphasis> Useragent used for HTTP requests. Overrides
 				useragent modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>verifyserver</emphasis> Enables or disables server certificate verification.
+				Overrides tlsverifyserver modparam.
 				</para></listitem>
 			</itemizedlist>
 			</para>

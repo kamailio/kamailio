@@ -39,6 +39,7 @@ extern unsigned int	default_connection_timeout;
 extern char	*default_tls_cacert;			/*!< File name: Default CA cert to use for curl TLS connection */
 extern char	*default_tls_clientcert;		/*!< File name: Default client certificate to use for curl TLS connection */
 extern char	*default_tls_clientkey;			/*!< File name: Key in PEM format that belongs to client cert */
+extern char	*default_cipher_suite_list;			/*!< List of allowed cipher suites */
 extern unsigned int	default_tls_verifyserver;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
 extern char 	*default_http_proxy;			/*!< Default HTTP proxy to use */
 extern unsigned int	default_http_proxy_port;		/*!< Default HTTP proxy port to use */
@@ -69,10 +70,11 @@ typedef struct _curl_con
 	str username;			/*!< The username to use for auth */
 	str password;			/*!< The password to use for auth */
 	str failover;			/*!< Another connection to use if this one fails */
+	str useragent;			/*!< Useragent to use for this connection */
 	str cacert;			/*!< File name of CA cert to use */
 	str clientcert;			/*!< File name of CA client cert */
-	str useragent;			/*!< Useragent to use for this connection */
-	int tls_verifyserver;		/*!< TRUE if server cert needs to be verified */
+	str clientkey;			/*!< File name of CA client key */
+	int verify_server;		/*!< TRUE if server cert to be verified */
 	int http_follow_redirect;	/*!< TRUE if we should follow HTTP 302 redirects */
 	unsigned int port;		/*!< The port to connect to */
 	int timeout;			/*!< Timeout for this connection */
