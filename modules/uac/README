@@ -785,6 +785,14 @@ event_route[uac:reply] {
    should be matcheg against the value of the attribute in the remote
    registration record.
 
+   The state of the registration is reflected in the flags field:
+     * 1 (2^0) - registration profile is disabled
+     * 2 (2^1) - registration in progress
+     * 4 (2^2) - registration succeeded
+     * 8 (2^3) - registration in progres with authentication
+     * 16 (2^4) - registration initialized (after loading from database,
+       the registration process was initialized)
+
    Example 1.29. uac.reg_info usage
 ...
    kamcmd uac.reg_info l_uuid account123
