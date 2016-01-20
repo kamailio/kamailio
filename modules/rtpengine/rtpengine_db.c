@@ -91,6 +91,8 @@ static int rtpp_load_db(void)
 		return -1;
 	}
 
+	rtpengine_delete_node_all();
+
 	n_rows = RES_ROW_N(res);
 	rows = RES_ROWS(res);
 	if (n_rows == 0)
@@ -98,8 +100,6 @@ static int rtpp_load_db(void)
 		LM_WARN("No rtpproxy instances in database\n");
 		return 0;
 	}
-
-	rtpengine_delete_node_all();
 
 	for (i=0; i<n_rows; i++)
 	{

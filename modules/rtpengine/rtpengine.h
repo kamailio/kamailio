@@ -53,12 +53,14 @@ struct rtpp_set {
 	struct rtpp_node	*rn_first;
 	struct rtpp_node	*rn_last;
 	struct rtpp_set	 	*rset_next;
+	gen_lock_t		*rset_lock;
 };
 
 
 struct rtpp_set_head {
 	struct rtpp_set		*rset_first;
 	struct rtpp_set		*rset_last;
+	gen_lock_t		*rset_head_lock;
 };
 
 
