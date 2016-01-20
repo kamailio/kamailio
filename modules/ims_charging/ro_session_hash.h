@@ -76,6 +76,7 @@ struct ro_session {
     int service_identifier;
     unsigned int is_final_allocation;
     long billed;
+    unsigned int ccr_sent;
 };
 
 /*! entries in the main ro_session table */
