@@ -4,6 +4,7 @@
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "../ims_usrloc_scscf/udomain.h"
 #include "ro_db_handler.h"
+#include "ims_charging_stats.h"
 
 struct cdp_binds cdpb;
 
@@ -11,6 +12,7 @@ extern usrloc_api_t ul;
 extern int ro_db_mode;
 extern char *domain;
 extern struct dlg_binds dlgb;
+extern struct ims_charging_counters_h ims_charging_cnts_h;
 
 void dlg_callback_received(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
     LM_DBG("Received dialog callback event [%d]\n", type);

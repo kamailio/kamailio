@@ -721,6 +721,7 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
     goto success;
 
 error:
+    counter_inc(ims_charging_cnts_h.failed_interim_ccr);  
     if (ro_cca_data)
         Ro_free_CCA(ro_cca_data);
 
@@ -904,7 +905,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
     Ro_free_CCR(ro_ccr_data);
 
     counter_inc(ims_charging_cnts_h.final_ccrs);
-    counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
+//    counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
     return;
 
 error1:
@@ -935,6 +936,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
 
     if (!cca) {
         LM_ERR("Error in termination CCR.\n");
+        counter_inc(ims_charging_cnts_h.failed_final_ccrs); 
         return;
     }
 
@@ -942,6 +944,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
 
     if (ro_cca_data == NULL) {
         LM_DBG("Could not parse CCA message response.\n");
+        counter_inc(ims_charging_cnts_h.failed_final_ccrs); 
         return;
     }
 
@@ -955,6 +958,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
     counter_inc(ims_charging_cnts_h.successful_final_ccrs);
 
 error:
+    counter_inc(ims_charging_cnts_h.failed_final_ccrs);      
     Ro_free_CCA(ro_cca_data);
     if (!is_timeout && cca) {
         cdpb.AAAFreeMessage(&cca);
@@ -1184,6 +1188,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     }
 
     counter_inc(ims_charging_cnts_h.initial_ccrs);
+    counter_inc(ims_charging_cnts_h.active_ro_sessions);
 
     if (free_called_asserted_identity) shm_free(called_asserted_identity.s); // shm_malloc in cscf_get_public_identity_from_requri	
     return RO_RETURN_BREAK;
@@ -1305,7 +1310,6 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     shm_free(ssd);
 
     counter_inc(ims_charging_cnts_h.successful_initial_ccrs);
-    counter_inc(ims_charging_cnts_h.active_ro_sessions);
 
     return;
 
@@ -1314,6 +1318,8 @@ error1:
 
 error0:
     LM_DBG("Trying to reserve credit on initial INVITE failed on cdp callback\n");
+//    counter_add(ims_charging_cnts_h.active_ro_sessions, -1); /*we bumped active on the original initial ccr sent */
+    counter_inc(ims_charging_cnts_h.failed_initial_ccrs);      /* drop by one as theoretically this is failed initial ccr */
     create_cca_return_code(error_code);
 
     if (!is_timeout && cca) {

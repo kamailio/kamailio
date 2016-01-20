@@ -11,6 +11,7 @@
 #include "ro_timer.h"
 #include "../../mem/shm_mem.h"
 #include "../ims_usrloc_scscf/usrloc.h"
+#include "ims_charging_stats.h"
 #include <stdlib.h>
 
 
@@ -21,6 +22,8 @@
 #define RO_SESSION_FLAG_DELETED      (1<<3) /*!< ro session has been deleted */
 
 #define MAX_PANI_LEN 100
+
+extern struct ims_charging_counters_h ims_charging_cnts_h;
 
 enum ro_session_event_type {
     pending,
@@ -72,7 +75,7 @@ struct ro_session {
     int rating_group;
     int service_identifier;
     unsigned int is_final_allocation;
-    unsigned int billed;
+    long billed;
 };
 
 /*! entries in the main ro_session table */
@@ -163,6 +166,8 @@ static inline void unlink_unsafe_ro_session(struct ro_session_entry *ro_session_
         ro_session_entry->first = ro_session->next;
 
     ro_session->next = ro_session->prev = 0;
+    
+    counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
 
     return;
 }

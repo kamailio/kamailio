@@ -21,6 +21,8 @@
 #include "../../lib/ims/ims_getters.h"
 #include "ro_db_handler.h"
 #include "ims_charging_stats.h"
+#include "ro_session_hash.h"
+#include "ims_charging_stats.h"
 
 MODULE_VERSION
 
@@ -57,6 +59,7 @@ client_ro_cfg cfg = { str_init("scscf.ims.smilecoms.com"),
     0
 };
 
+extern struct ims_charging_counters_h ims_charging_cnts_h;
 struct cdp_binds cdpb;
 struct dlg_binds dlgb;
 cdp_avp_bind_t *cdp_avp;
