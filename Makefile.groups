@@ -90,7 +90,7 @@ mod_list_purple=purple
 mod_list_memcached=memcached
 
 # - modules depending on openssl library
-mod_list_tlsdeps=auth_identity tls
+mod_list_tlsdeps=auth_identity crypto tls
 
 # - modules depending on openssl library
 mod_list_outbound=outbound
