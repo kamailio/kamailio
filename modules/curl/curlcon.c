@@ -96,7 +96,8 @@ curl_con_t* curl_get_connection(str *name)
  *		useragent
  *		failover
  *		maxdatasize
- *		verifyserver
+ *		verifypeer
+ *		verifyhost
  *
  */
 int curl_parse_param(char *val)
@@ -116,7 +117,8 @@ int curl_parse_param(char *val)
 	unsigned int timeout	= default_connection_timeout;
 	str useragent   = { default_useragent, strlen(default_useragent) };
 	unsigned int http_follow_redirect = default_http_follow_redirect;
-	unsigned int verifyserver = default_tls_verifyserver;
+	unsigned int verify_peer = default_tls_verify_peer;
+	unsigned int verify_host = default_tls_verify_host;
 
 	str in;
 	char *p;
@@ -305,17 +307,28 @@ int curl_parse_param(char *val)
 					maxdatasize = default_maxdatasize;
 				}
 				LM_DBG("curl [%.*s] - timeout [%d]\n", pit->name.len, pit->name.s, maxdatasize);
-			} else if(pit->name.len==12 && strncmp(pit->name.s, "verifyserver", 7)==0) {
-				if(str2int(&tok, &verifyserver)!=0) {
+			} else if(pit->name.len==12 && strncmp(pit->name.s, "verifypeer", 7)==0) {
+				if(str2int(&tok, &verify_peer)!=0) {
 					/* Bad integer */
-					LM_DBG("curl connection [%.*s]: verifyserver bad value. Using default\n", name.len, name.s);
-					verifyserver = default_tls_verifyserver;
+					LM_DBG("curl connection [%.*s]: verifypeer bad value. Using default\n", name.len, name.s);
+					verify_peer = default_tls_verify_peer;
 				}
-				if (verifyserver != 0 && verifyserver != 1) {
-					LM_DBG("curl connection [%.*s]: verifyserver bad value. Using default\n", name.len, name.s);
-					verifyserver = default_tls_verifyserver;
+				if (verify_peer != 0 && verify_peer != 1) {
+					LM_DBG("curl connection [%.*s]: verifypeer bad value. Using default\n", name.len, name.s);
+					verify_peer = default_tls_verify_peer;
 				}
-				LM_DBG("curl [%.*s] - verifyserver [%d]\n", pit->name.len, pit->name.s, verifyserver);
+				LM_DBG("curl [%.*s] - verifypeer [%d]\n", pit->name.len, pit->name.s, verify_peer);
+			} else if(pit->name.len==12 && strncmp(pit->name.s, "verifyhost", 7)==0) {
+				if(str2int(&tok, &verify_host)!=0) {
+					/* Bad integer */
+					LM_DBG("curl connection [%.*s]: verifyhost bad value. Using default\n", name.len, name.s);
+					verify_host = default_tls_verify_host;
+				}
+				if (verify_host != 0 && verify_host != 1) {
+					LM_DBG("curl connection [%.*s]: verifyhost bad value. Using default\n", name.len, name.s);
+					verify_host = default_tls_verify_host;
+				}
+				LM_DBG("curl [%.*s] - verifyhost [%d]\n", pit->name.len, pit->name.s, verify_host);
 			} else {
 				LM_ERR("curl Unknown parameter [%.*s] \n", pit->name.len, pit->name.s);
 			}
@@ -328,8 +341,9 @@ int curl_parse_param(char *val)
 			name.len, name.s, url.len, url.s, username.len, username.s,
 			password.len, password.s, failover.len, failover.s, timeout,
 			useragent.len, useragent.s, maxdatasize);
-	LM_DBG("cname: [%.*s] client_cert [%.*s] client_key [%.*s] verifyserver [%d]\n",
-			name.len, name.s, client_cert.len, client_cert.s, client_key.len, client_key.s, verifyserver);
+	LM_DBG("cname: [%.*s] client_cert [%.*s] client_key [%.*s] verify_peer [%d] verify_host [%d]\n",
+			name.len, name.s, client_cert.len, client_cert.s, client_key.len, client_key.s,
+			verify_peer, verify_host);
 
 	if(conparams != NULL) {
 		free_params(conparams);
@@ -347,7 +361,8 @@ int curl_parse_param(char *val)
 	cc->url = url;
 	cc->clientcert = client_cert;
 	cc->clientkey = client_key;
-	cc->verify_server = verifyserver;
+	cc->verify_peer = verify_peer;
+	cc->verify_host = verify_host;
 	cc->timeout = timeout;
 	cc->maxdatasize = maxdatasize;
 	cc->http_follow_redirect = http_follow_redirect;

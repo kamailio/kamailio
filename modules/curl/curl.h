@@ -40,7 +40,8 @@ extern char	*default_tls_cacert;			/*!< File name: Default CA cert to use for cu
 extern char	*default_tls_clientcert;		/*!< File name: Default client certificate to use for curl TLS connection */
 extern char	*default_tls_clientkey;			/*!< File name: Key in PEM format that belongs to client cert */
 extern char	*default_cipher_suite_list;			/*!< List of allowed cipher suites */
-extern unsigned int	default_tls_verifyserver;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+extern unsigned int	default_tls_verify_peer;	/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+extern unsigned int	default_tls_verify_host;	/*!< 0 = Do not verify TLS server CN/SAN. 2 = Verify TLS server CN/SAN (default) */
 extern char 	*default_http_proxy;			/*!< Default HTTP proxy to use */
 extern unsigned int	default_http_proxy_port;		/*!< Default HTTP proxy port to use */
 extern unsigned int	default_http_follow_redirect;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
@@ -74,7 +75,8 @@ typedef struct _curl_con
 	str cacert;			/*!< File name of CA cert to use */
 	str clientcert;			/*!< File name of CA client cert */
 	str clientkey;			/*!< File name of CA client key */
-	int verify_server;		/*!< TRUE if server cert to be verified */
+	int verify_peer;		/*!< TRUE if server cert to be verified */
+	int verify_host;		/*!< TRUE if server CN/SAN to be verified */
 	int http_follow_redirect;	/*!< TRUE if we should follow HTTP 302 redirects */
 	unsigned int port;		/*!< The port to connect to */
 	int timeout;			/*!< Timeout for this connection */

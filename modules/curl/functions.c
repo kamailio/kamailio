@@ -55,7 +55,8 @@ typedef struct {
     char *clientkey;
     char *cacert;
     char *ciphersuites;
-    unsigned int verify_server;
+    unsigned int verify_peer;
+    unsigned int verify_host;
     unsigned int timeout;
     unsigned int http_follow_redirect;
     unsigned int oneline;
@@ -177,7 +178,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
         res |= curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST, params->ciphersuites);
     }
 
-    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long) params->verify_server);
+    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long) params->verify_peer);
+    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long) params->verify_host);
 
     res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long) 1);
     res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) params->timeout);
@@ -365,7 +367,8 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	query_params.clientkey = conn->clientkey.s;
 	query_params.cacert = default_tls_cacert;
 	query_params.ciphersuites = default_cipher_suite_list;
-	query_params.verify_server = conn->verify_server;
+	query_params.verify_peer = conn->verify_peer;
+	query_params.verify_host = conn->verify_host;
 	query_params.timeout = conn->timeout;
 	query_params.http_follow_redirect = conn->http_follow_redirect;
 	query_params.oneline = 0;
@@ -410,7 +413,8 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.clientkey = NULL;
 	query_params.cacert = NULL;
 	query_params.ciphersuites = NULL;
-	query_params.verify_server = default_tls_verifyserver;
+	query_params.verify_peer = default_tls_verify_peer;
+	query_params.verify_host = default_tls_verify_host;
 	query_params.timeout = default_connection_timeout;
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = 1;

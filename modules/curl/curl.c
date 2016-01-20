@@ -77,7 +77,8 @@ char		*default_tls_cacert = NULL;		/*!< File name: Default CA cert to use for cu
 char		*default_tls_clientcert = NULL;		/*!< File name: Default client certificate to use for curl TLS connection */
 char		*default_tls_clientkey = NULL;		/*!< File name: Key in PEM format that belongs to client cert */
 char		*default_cipher_suite_list = NULL;		/*!< List of allowed cipher suites */
-unsigned int	default_tls_verifyserver = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+unsigned int	default_tls_verify_peer = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+unsigned int	default_tls_verify_host = 2;		/*!< 0 = Do not verify TLS server CN/SAN  2 = Verify TLS server CN/SAN (default) */
 char 		*default_http_proxy = NULL;		/*!< Default HTTP proxy to use */
 unsigned int	default_http_proxy_port = 0;		/*!< Default HTTP proxy port to use */
 unsigned int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
@@ -141,7 +142,8 @@ static param_export_t params[] = {
 	{"tlsclientcert", PARAM_STRING, &default_tls_clientcert },
 	{"tlsclientkey", PARAM_STRING, &default_tls_clientkey },
 	{"tlscipherlist", PARAM_STRING, &default_cipher_suite_list },
-	{"tlsverifyserver", PARAM_INT, &default_tls_verifyserver },
+	{"tlsverifypeer", PARAM_INT, &default_tls_verify_peer },
+	{"tlsverifyhost", PARAM_INT, &default_tls_verify_host },
 	{"httpproxyport", PARAM_INT, &default_http_proxy_port },
 	{"httpproxy", PARAM_STRING, &default_http_proxy},
 	{"httpredirect", PARAM_INT, &default_http_follow_redirect },
@@ -150,13 +152,6 @@ static param_export_t params[] = {
     	{0, 0, 0}
 };
 
-//		str	default_tls_clientcert;			/*!< File name: Default client certificate to use for curl TLS connection */
-//		str	default_tls_clientkey;			/*!< File name: Key in PEM format that belongs to client cert */
-//		int	default_tls_verifyserver = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
-//		str	default_http_proxy;			/*!< Default HTTP proxy to use */
-//		int	default_http_proxy_port;		/*!< Default HTTP proxy port to use */
-//		int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
-//		str	default_useragent;			/*!< Default CURL useragent. Default "Kamailio Curl " */
 
 /*!
  * \brief Exported Pseudo variables
