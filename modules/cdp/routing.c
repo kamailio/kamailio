@@ -89,7 +89,9 @@ peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, in
         /*try and find an already used peer for this session - sticky*/
         if ((cdp_session->sticky_peer_fqdn.len > 0) && cdp_session->sticky_peer_fqdn.s) {
             //we have an old sticky peer. let's make sure it's up and connected before we use it.
+            AAASessionsUnlock(cdp_session->hash); /*V1.1 - Don't attempt to hold two locks at same time */
             p = get_peer_by_fqdn(&cdp_session->sticky_peer_fqdn);
+            AAASessionsLock(cdp_session->hash); /*V1.1 - As we were...no call seems to pass cdp_session unlocked */  
             if (p && !p->disabled && (p->state == I_Open || p->state == R_Open) && peer_handles_application(p, app_id, vendor_id)) {
                 p->last_selected = time(NULL);
                 LM_DBG("Found a sticky peer [%.*s] for this session - re-using\n", p->fqdn.len, p->fqdn.s);
