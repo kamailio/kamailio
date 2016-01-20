@@ -10,7 +10,6 @@
 
 #include "ro_timer.h"
 #include "../../mem/shm_mem.h"
-#include "../ims_usrloc_scscf/usrloc.h"
 #include "ims_charging_stats.h"
 #include <stdlib.h>
 

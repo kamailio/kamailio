@@ -17,7 +17,6 @@
 #include "ims_ro.h"
 #include "config.h"
 #include "dialog.h"
-#include "../ims_usrloc_scscf/usrloc.h"
 #include "../../lib/ims/ims_getters.h"
 #include "ro_db_handler.h"
 #include "ims_charging_stats.h"
@@ -67,8 +66,6 @@ struct cdp_binds cdpb;
 struct dlg_binds dlgb;
 cdp_avp_bind_t *cdp_avp;
 struct tm_binds tmb;
-
-usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
 
 char* rx_dest_realm_s = "ims.smilecoms.com";
 str rx_dest_realm;
@@ -184,7 +181,6 @@ int fix_parameters() {
 static int mod_init(void) {
 	int n;
 	load_tm_f load_tm;
-	bind_usrloc_t bind_usrloc;
 
 	if (!fix_parameters()) {
 		LM_ERR("unable to set Ro configuration parameters correctly\n");
@@ -215,16 +211,6 @@ static int mod_init(void) {
 		goto error;
 	}
         
-        bind_usrloc = (bind_usrloc_t) find_export("ul_bind_usrloc", 1, 0);
-	if (!bind_usrloc) {
-	    LM_ERR("can't bind usrloc\n");
-	    return -1;
-	}
-	
-	if (bind_usrloc(&ul) < 0) {
-	    return -1;
-	}
-
 	/* init timer lists*/
 	if (init_ro_timer(ro_session_ontimeout) != 0) {
 		LM_ERR("cannot init timer list\n");
@@ -250,15 +236,6 @@ static int mod_init(void) {
 	if (register_timer(ro_timer_routine, 0/*(void*)ro_session_list*/, 1) < 0) {
 		LM_ERR("failed to register timer \n");
 		return -1;
-	}
-
-	
-
-	/*Register for callback of URECORD being deleted - so we can send a SAR*/
-
-	if (ul.register_ulcb == NULL) {
-	    LM_ERR("Could not import ul_register_ulcb\n");
-	    return -1;
 	}
 	
 	if (ims_charging_init_counters() != 0) {
