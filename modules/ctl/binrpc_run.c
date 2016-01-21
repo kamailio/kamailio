@@ -856,6 +856,7 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 			case 'b': /* bool */
 			case 't': /* time */
 			case 'd': /* int */
+			case 'u': /* uint */
 				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_INT;
 				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
 												ctx->in.end, &v, 0, &err);
@@ -955,6 +956,7 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 			case 'd':
 			case 't':
 			case 'b':
+			case 'u':
 				err=binrpc_addint(&ctx->out.pkt, va_arg(ap, int));
 				if (err<0) goto error_add;
 				break;
@@ -1061,6 +1063,7 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 			case 'd':
 			case 't':
 			case 'b':
+			case 'u':
 				avp.type=BINRPC_T_INT;
 				avp.u.intval=va_arg(ap, int);
 				break;
@@ -1124,6 +1127,7 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 			case 'd':
 			case 't':
 			case 'b':
+			case 'u':
 				err=binrpc_addint(&s->pkt, va_arg(ap, int));
 				if (err<0) goto error_add;
 				break;
