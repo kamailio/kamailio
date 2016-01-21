@@ -13,6 +13,7 @@
 
 <!ENTITY kamwiki "http://www.kamailio.org/wiki/">
 <!ENTITY kamwikilink "<ulink url='&kamwiki;'>&kamwiki;</ulink>">
+<!ENTITY kamcmd "kamcmd">
 
 <!ENTITY kamailiohome "http://www.kamailio.org/">
 <!ENTITY kamailiobugs "http://sip-router.org/tracker">
