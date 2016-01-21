@@ -132,6 +132,7 @@
 #include "sock_ut.h"
 #include "async_task.h"
 #include "dset.h"
+#include "timer_proc.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -1302,6 +1303,7 @@ int main_loop(void)
 		cfg_register_child(
 				1   /* main = udp listener */
 				+ 1 /* timer */
+				+ 1 /* wtimer */
 #ifdef USE_SLOW_TIMER
 				+ 1 /* slow timer */
 #endif
@@ -1371,6 +1373,10 @@ int main_loop(void)
 				}else{
 				}
 
+		if(sr_wtimer_start()<0) {
+			LM_CRIT("Cannot start wtimer\n");
+			goto error;
+		}
 		/* main process, receive loop */
 		process_no=0; /*main process number*/
 		pt[process_no].pid=getpid();
@@ -1402,6 +1408,7 @@ int main_loop(void)
 		 * will be added later.) */
 		cfg_register_child(
 				1   /* timer */
+				+ 1   /* wtimer */
 #ifdef USE_SLOW_TIMER
 				+ 1 /* slow timer */
 #endif
@@ -1664,6 +1671,10 @@ int main_loop(void)
 			if (arm_timer()<0) goto error;
 			timer_main();
 		}
+		if(sr_wtimer_start()<0) {
+			LM_CRIT("Cannot start wtimer\n");
+			goto error;
+		}
 
 	/* init childs with rank==MAIN before starting tcp main (in case they want
 	 * to fork  a tcp capable process, the corresponding tcp. comm. fds in
@@ -1788,6 +1799,7 @@ static int calc_proc_no(void)
 #ifdef USE_SLOW_TIMER
 		+ 1 /* slow timer process */
 #endif
+		+ 1 /* wtimer process */
 #ifdef USE_TCP
 		+((!tcp_disable)?( 1/* tcp main */ + tcp_listeners ):0)
 #endif
@@ -1911,6 +1923,7 @@ int main(int argc, char** argv)
 #ifdef USE_TCP
 	init_tcp_options(); /* set the defaults before the config */
 #endif
+
 	/* process command line (cfg. file path etc) */
 	optind = 1;  /* reset getopt */
 	/* switches required before script processing */
@@ -2449,6 +2462,12 @@ try_again:
 		LM_CRIT("could not initialize timer, exiting...\n");
 		goto error;
 	}
+	/* init wtimer */
+	if(sr_wtimer_init()<0) {
+		LM_CRIT("could not initialize wtimer, exiting...\n");
+		goto error;
+	}
+
 #ifdef USE_DNS_CACHE
 	if (init_dns_cache()<0){
 		LM_CRIT("could not initialize the dns cache, exiting...\n");
