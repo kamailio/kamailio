@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -137,6 +137,10 @@ static int w_crypto_aes_encrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	}
 	etext.len = ins.len;
 	etext.s = (char *)crypto_aes_encrypt(&en, (unsigned char *)ins.s, &etext.len);
+	if(etext.s==NULL) {
+		LM_ERR("AES encryption failed\n");
+		return -1;
+	}
 
 	memset(&val, 0, sizeof(pv_value_t));
 	val.rs.s = pv_get_buffer();
@@ -188,6 +192,52 @@ static int fixup_crypto_aes_encrypt(void** param, int param_no)
  */
 static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* outb)
 {
+	str ins;
+	str keys;
+	pv_spec_t *dst;
+	pv_value_t val;
+	EVP_CIPHER_CTX de;
+	str etext;
+	unsigned char salt[] = {1,2,3,4,5,6,7,8};
+
+	if (fixup_get_svalue(msg, (gparam_t*)inb, &ins) != 0) {
+		LM_ERR("cannot get input value\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)keyb, &keys) != 0) {
+		LM_ERR("cannot get key value\n");
+		return -1;
+	}
+	dst = (pv_spec_t*)outb;
+
+	/* gen key and iv. init the cipher ctx object */
+	if (crypto_aes_init((unsigned char *)keys.s, keys.len, salt, NULL, &de)) {
+		LM_ERR("couldn't initialize AES cipher\n");
+		return -1;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	etext.s = pv_get_buffer();
+	etext.len = base64_dec((unsigned char *)ins.s, ins.len,
+					(unsigned char *)etext.s, pv_get_buffer_size()-1);
+	if (etext.len < 0) {
+		LM_ERR("base64 inpuy with encrypted value is too large (need %d)\n",
+				-etext.len);
+		return -1;
+	}
+	val.rs.len = etext.len;
+	val.rs.s = (char *)crypto_aes_decrypt(&de, (unsigned char *)etext.s,
+			&val.rs.len);
+	if(val.rs.s==NULL) {
+		LM_ERR("AES decryption failed\n");
+		return -1;
+	}
+	LM_DBG("plain result: [%.*s]\n", val.rs.len, val.rs.s);
+	val.flags = PV_VAL_STR;
+	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+
+	free(val.rs.s);
+	EVP_CIPHER_CTX_cleanup(&de);
 	return 1;
 }
 
