@@ -48,6 +48,7 @@ The curl module - todo
 
 
 - Async - event_route when done
+	(with and without suspending transaction)
 	Need background task process to run curl request
 	event_route[curl:connectioncomplete]
 	$curlcon == connection
