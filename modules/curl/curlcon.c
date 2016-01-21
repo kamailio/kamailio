@@ -26,6 +26,8 @@
  * \ingroup curl
  */
 
+#include <curl/curl.h>
+
 #include "../../hashes.h"
 #include "../../dprint.h"
 #include "../../parser/parse_param.h"
@@ -110,15 +112,17 @@ int curl_parse_param(char *val)
 	str params	= STR_NULL;
 	str failover	= STR_NULL;
 
-	str client_cert = { default_tls_clientcert, default_tls_clientcert ? strlen(default_tls_clientcert) : 0 };
-	str client_key	= { default_tls_clientkey, default_tls_clientkey ? strlen(default_tls_clientkey) : 0 };
+	str client_cert  = default_tls_clientcert;
+	str client_key   = default_tls_clientkey;
+	str ciphersuites = default_cipher_suite_list;
+	str useragent    = default_useragent;
 
 	unsigned int maxdatasize = default_maxdatasize;
 	unsigned int timeout	= default_connection_timeout;
-	str useragent   = { default_useragent, strlen(default_useragent) };
 	unsigned int http_follow_redirect = default_http_follow_redirect;
 	unsigned int verify_peer = default_tls_verify_peer;
 	unsigned int verify_host = default_tls_verify_host;
+	unsigned int sslversion = default_tls_version;
 
 	str in;
 	char *p;
@@ -126,8 +130,6 @@ int curl_parse_param(char *val)
 	param_t *conparams = NULL;
 	curl_con_t *cc;
 
-	username.len = 0;
-	password.len = 0;
 	LM_INFO("curl modparam parsing starting\n");
 	LM_DBG("modparam curlcon: %s\n", val);
 
@@ -307,7 +309,7 @@ int curl_parse_param(char *val)
 					maxdatasize = default_maxdatasize;
 				}
 				LM_DBG("curl [%.*s] - timeout [%d]\n", pit->name.len, pit->name.s, maxdatasize);
-			} else if(pit->name.len==12 && strncmp(pit->name.s, "verifypeer", 7)==0) {
+			} else if(pit->name.len==10 && strncmp(pit->name.s, "verifypeer", 10)==0) {
 				if(str2int(&tok, &verify_peer)!=0) {
 					/* Bad integer */
 					LM_DBG("curl connection [%.*s]: verifypeer bad value. Using default\n", name.len, name.s);
@@ -318,7 +320,7 @@ int curl_parse_param(char *val)
 					verify_peer = default_tls_verify_peer;
 				}
 				LM_DBG("curl [%.*s] - verifypeer [%d]\n", pit->name.len, pit->name.s, verify_peer);
-			} else if(pit->name.len==12 && strncmp(pit->name.s, "verifyhost", 7)==0) {
+			} else if(pit->name.len==10 && strncmp(pit->name.s, "verifyhost", 10)==0) {
 				if(str2int(&tok, &verify_host)!=0) {
 					/* Bad integer */
 					LM_DBG("curl connection [%.*s]: verifyhost bad value. Using default\n", name.len, name.s);
@@ -329,6 +331,29 @@ int curl_parse_param(char *val)
 					verify_host = default_tls_verify_host;
 				}
 				LM_DBG("curl [%.*s] - verifyhost [%d]\n", pit->name.len, pit->name.s, verify_host);
+			} else if(pit->name.len==10 && strncmp(pit->name.s, "sslversion", 10)==0) {
+				if(str2int(&tok, &sslversion)!=0) {
+					/* Bad integer */
+					LM_DBG("curl connection [%.*s]: sslversion bad value. Using default\n", name.len, name.s);
+					sslversion = default_tls_version;
+				}
+				if (sslversion >= CURL_SSLVERSION_LAST) {
+					LM_DBG("curl connection [%.*s]: sslversion bad value. Using default\n", name.len, name.s);
+					sslversion = default_tls_version;
+				}
+				LM_DBG("curl [%.*s] - sslversion [%d]\n", pit->name.len, pit->name.s, sslversion);
+			} else if(pit->name.len==10 && strncmp(pit->name.s, "clientcert", 10)==0) {
+				client_cert = tok;
+				LM_DBG("curl [%.*s] - clientcert [%.*s]\n", pit->name.len, pit->name.s,
+						client_cert.len, client_cert.s);
+			} else if(pit->name.len==9 && strncmp(pit->name.s, "clientkey", 9)==0) {
+				client_key = tok;
+				LM_DBG("curl [%.*s] - clientkey [%.*s]\n", pit->name.len, pit->name.s,
+						client_key.len, client_key.s);
+			} else if(pit->name.len==12 && strncmp(pit->name.s, "ciphersuites", 12)==0) {
+				ciphersuites = tok;
+				LM_DBG("curl [%.*s] - ciphersuites [%.*s]\n", pit->name.len, pit->name.s,
+						ciphersuites.len, ciphersuites.s);
 			} else {
 				LM_ERR("curl Unknown parameter [%.*s] \n", pit->name.len, pit->name.s);
 			}
@@ -336,14 +361,6 @@ int curl_parse_param(char *val)
 	}
 
 	/* The URL ends either with nothing or parameters. Parameters start with ; */
-
-	LM_DBG("cname: [%.*s] url: [%.*s] username [%.*s] password [%.*s] failover [%.*s] timeout [%d] useragent [%.*s] maxdatasize [%d]\n", 
-			name.len, name.s, url.len, url.s, username.len, username.s,
-			password.len, password.s, failover.len, failover.s, timeout,
-			useragent.len, useragent.s, maxdatasize);
-	LM_DBG("cname: [%.*s] client_cert [%.*s] client_key [%.*s] verify_peer [%d] verify_host [%d]\n",
-			name.len, name.s, client_cert.len, client_cert.s, client_key.len, client_key.s,
-			verify_peer, verify_host);
 
 	if(conparams != NULL) {
 		free_params(conparams);
@@ -353,19 +370,29 @@ int curl_parse_param(char *val)
 	if (cc == NULL) {
 		return -1;
 	}
-	cc->username = username;
-	cc->password = password;
+
+	cc->username = username.s ? as_asciiz(&username) : NULL;
+	cc->password = password.s ? as_asciiz(&password) : NULL;
 	cc->schema = schema;
 	cc->failover = failover;
-	cc->useragent = useragent;
+	cc->useragent = as_asciiz(&useragent);
 	cc->url = url;
-	cc->clientcert = client_cert;
-	cc->clientkey = client_key;
+	cc->clientcert = client_cert.s ? as_asciiz(&client_cert) : NULL;
+	cc->clientkey = client_key.s ? as_asciiz(&client_key) : NULL;
+	cc->ciphersuites = ciphersuites.s ? as_asciiz(&ciphersuites) : NULL;
+	cc->sslversion = sslversion;
 	cc->verify_peer = verify_peer;
 	cc->verify_host = verify_host;
 	cc->timeout = timeout;
 	cc->maxdatasize = maxdatasize;
 	cc->http_follow_redirect = http_follow_redirect;
+
+	LM_DBG("cname: [%.*s] url: [%.*s] username [%s] password [%s] failover [%.*s] timeout [%d] useragent [%s] maxdatasize [%d]\n", 
+			name.len, name.s, cc->url.len, cc->url.s, cc->username ? cc->username : "", cc->password ? cc->password : "",
+			cc->failover.len, cc->failover.s, cc->timeout, cc->useragent, cc->maxdatasize);
+	LM_DBG("cname: [%.*s] client_cert [%s] client_key [%s] ciphersuites [%s] sslversion [%d] verify_peer [%d] verify_host [%d]\n",
+			name.len, name.s, cc->clientcert, cc->clientkey, cc->ciphersuites, cc->sslversion, cc->verify_peer, cc->verify_host);
+
 	return 0;
 
 error:

@@ -55,6 +55,7 @@ typedef struct {
     char *clientkey;
     char *cacert;
     char *ciphersuites;
+    unsigned int sslversion;
     unsigned int verify_peer;
     unsigned int verify_host;
     unsigned int timeout;
@@ -160,7 +161,6 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
     /* Client certificate */
     if (params->clientcert != NULL && params->clientkey != NULL) {
-	LM_ERR("Setting curl cert %s key %s \n", params->clientcert, params->clientkey);
         res |= curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
         res |= curl_easy_setopt(curl, CURLOPT_SSLCERT, params->clientcert);
 
@@ -169,12 +169,14 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     }
 
     if (params->cacert != NULL) {
-	LM_ERR("Setting ca cert %s\n", params->cacert);
         res |= curl_easy_setopt(curl, CURLOPT_CAINFO, params->cacert);
     }
 
+    if (params->sslversion != CURL_SSLVERSION_DEFAULT) {
+        res |= curl_easy_setopt(curl, CURLOPT_SSLVERSION, (long) params->sslversion);
+    }
+
     if (params->ciphersuites != NULL) {
-	LM_ERR("Setting ciphersuites %s\n", params->ciphersuites);
         res |= curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST, params->ciphersuites);
     }
 
@@ -288,8 +290,6 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 {
 	curl_con_t *conn = NULL;
 	char *urlbuf = NULL;
-	char *username_str = NULL;
-	char *password_str = NULL;
 	char *postdata = NULL;
 	curl_query_t query_params;
 
@@ -308,14 +308,6 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 		return -1;
 	}
 	LM_DBG("******** CURL Connection found %.*s\n", connection->len, connection->s);
-	if (conn->username.s != NULL && conn->username.len > 0)
-	{
-		username_str = as_asciiz(&conn->username);
-	}
-	if (conn->password.s != NULL && conn->password.len > 0)
-	{
-		password_str = as_asciiz(&conn->password);
-	}
 	maxdatasize = conn->maxdatasize;
 
 
@@ -359,14 +351,15 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	}
 
 	memset(&query_params, 0, sizeof(curl_query_t));
-	query_params.username = username_str;
-	query_params.secret = password_str;
+	query_params.username = conn->username;
+	query_params.secret = conn->password;
 	query_params.contenttype = contenttype ? (char*)contenttype : "text/plain";
 	query_params.post = postdata;
-	query_params.clientcert = conn->clientcert.s;
-	query_params.clientkey = conn->clientkey.s;
+	query_params.clientcert = conn->clientcert;
+	query_params.clientkey = conn->clientkey;
 	query_params.cacert = default_tls_cacert;
-	query_params.ciphersuites = default_cipher_suite_list;
+	query_params.ciphersuites = conn->ciphersuites;
+	query_params.sslversion = conn->sslversion;
 	query_params.verify_peer = conn->verify_peer;
 	query_params.verify_host = conn->verify_host;
 	query_params.timeout = conn->timeout;
@@ -380,12 +373,6 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 error:
 	if (urlbuf != NULL) {
 		pkg_free(urlbuf);
-	}
-	if (username_str != NULL) {
-		pkg_free(username_str);
-	}
-	if (password_str != NULL) {
-		pkg_free(password_str);
 	}
 	if (postdata != NULL) {
 		pkg_free(postdata);
@@ -413,6 +400,7 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.clientkey = NULL;
 	query_params.cacert = NULL;
 	query_params.ciphersuites = NULL;
+	query_params.sslversion = default_tls_version;
 	query_params.verify_peer = default_tls_verify_peer;
 	query_params.verify_host = default_tls_verify_host;
 	query_params.timeout = default_connection_timeout;
