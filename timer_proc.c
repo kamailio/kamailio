@@ -278,4 +278,116 @@ int fork_sync_utimer(int child_id, char* desc, int make_sock,
 }
 
 
+#define SR_WTIMER_SIZE	16
+
+typedef struct sr_wtimer_node {
+	struct sr_wtimer_node *next;
+	uint32_t interval;
+	uint32_t steps;
+	uint32_t cycles;
+	timer_function* f;
+	void* param;
+} sr_wtimer_node_t;
+
+typedef struct sr_wtimer {
+	uint32_t itimer;
+	sr_wtimer_node_t *wlist[SR_WTIMER_SIZE];
+} sr_wtimer_t;
+
+static sr_wtimer_t *_sr_wtimer = NULL;;
+
+/**
+ *
+ */
+int sr_wtimer_init(void)
+{
+	if(_sr_wtimer!=NULL)
+		return 0;
+	_sr_wtimer = (sr_wtimer_t *)pkg_malloc(sizeof(sr_wtimer_t));
+	if(_sr_wtimer!=NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+
+	memset(_sr_wtimer, 0, sizeof(sr_wtimer_t));
+	register_sync_timers(1);
+	return 0;
+}
+
+/**
+ *
+ */
+int sr_wtimer_add(timer_function* f, void* param, int interval)
+{
+	sr_wtimer_node_t *wt;
+	if(_sr_wtimer!=NULL) {
+		LM_ERR("wtimer not intialized\n");
+		return -1;
+	}
+
+	wt = (sr_wtimer_node_t*)pkg_malloc(sizeof(sr_wtimer_node_t));
+	if(wt==NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+	memset(wt, 0, sizeof(sr_wtimer_node_t));
+	wt->f = f;
+	wt->param = param;
+	wt->interval = interval;
+	wt->steps = interval % SR_WTIMER_SIZE;
+	wt->cycles = interval / SR_WTIMER_SIZE;
+	wt->next = _sr_wtimer->wlist[wt->steps];
+	_sr_wtimer->wlist[wt->steps] = wt;
+
+	return 0;
+}
+
+/**
+ *
+ */
+void sr_wtimer_exec(unsigned int ticks, void *param)
+{
+	sr_wtimer_node_t *wt;
+	uint32_t i;
+	uint32_t c;
+
+	if(_sr_wtimer!=NULL) {
+		LM_ERR("wtimer not intialized\n");
+		return;
+	}
+
+	_sr_wtimer->itimer++;
+	c = _sr_wtimer->itimer / SR_WTIMER_SIZE;
+
+	for(i=1; i<=SR_WTIMER_SIZE; i++) {
+		if(_sr_wtimer->itimer % i == 0) {
+			for(wt=_sr_wtimer->wlist[i % SR_WTIMER_SIZE];
+					wt!=NULL; wt = wt->next) {
+				if(wt->cycles==0 || (c % wt->cycles==0)) {
+					wt->f(ticks, wt->param);
+				}
+			}
+		}
+	}
+}
+
+/**
+ *
+ */
+int sr_wtimer_start(void)
+{
+	if(_sr_wtimer!=NULL) {
+		LM_ERR("wtimer not intialized\n");
+		return -1;
+	}
+
+	if(fork_sync_timer(-1 /*PROC_TIMER*/, "WTIMER", 1,
+				sr_wtimer_exec, NULL, 1)<0) {
+		LM_ERR("wtimer starting failed\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

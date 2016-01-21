@@ -122,6 +122,10 @@ int fork_sync_timer(int child_id, char* desc, int make_sock,
 int fork_sync_utimer(int child_id, char* desc, int make_sock,
 						utimer_function* f, void* param, int uinterval);
 
+int sr_wtimer_init(void);
+int sr_wtimer_add(timer_function* f, void* param, int interval);
+int sr_wtimer_start(void);
+
 #endif /*__timer_proc_h*/
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
