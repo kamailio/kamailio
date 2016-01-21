@@ -304,7 +304,7 @@ int sr_wtimer_init(void)
 	if(_sr_wtimer!=NULL)
 		return 0;
 	_sr_wtimer = (sr_wtimer_t *)pkg_malloc(sizeof(sr_wtimer_t));
-	if(_sr_wtimer!=NULL) {
+	if(_sr_wtimer==NULL) {
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
@@ -320,7 +320,7 @@ int sr_wtimer_init(void)
 int sr_wtimer_add(timer_function* f, void* param, int interval)
 {
 	sr_wtimer_node_t *wt;
-	if(_sr_wtimer!=NULL) {
+	if(_sr_wtimer==NULL) {
 		LM_ERR("wtimer not intialized\n");
 		return -1;
 	}
@@ -351,7 +351,7 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 	uint32_t i;
 	uint32_t c;
 
-	if(_sr_wtimer!=NULL) {
+	if(_sr_wtimer==NULL) {
 		LM_ERR("wtimer not intialized\n");
 		return;
 	}
@@ -376,12 +376,12 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
  */
 int sr_wtimer_start(void)
 {
-	if(_sr_wtimer!=NULL) {
+	if(_sr_wtimer==NULL) {
 		LM_ERR("wtimer not intialized\n");
 		return -1;
 	}
 
-	if(fork_sync_timer(-1 /*PROC_TIMER*/, "WTIMER", 1,
+	if(fork_sync_timer(-1 /*PROC_TIMER*/, "secondary timer", 1,
 				sr_wtimer_exec, NULL, 1)<0) {
 		LM_ERR("wtimer starting failed\n");
 		return -1;
