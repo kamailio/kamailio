@@ -137,7 +137,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     if (tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
         LM_ERR("t_continue: transaction not found\n");
         result = CSCF_RETURN_ERROR;
-        goto error;
+        goto error1;
     }
 
     /* get the private_identity */
@@ -485,6 +485,8 @@ error:
         tmb.unref_cell(t);
     }
     tmb.t_continue(data->tindex, data->tlabel, data->act);
+    
+error1:    
     free_saved_transaction_data(data);
 }
 

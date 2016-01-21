@@ -1125,7 +1125,7 @@ static void  htable_rpc_stats(rpc_t* rpc, void* c)
 			ht_slot_unlock(ht, i);
 		}
 
-		if(rpc->struct_add(th, "Sddd",
+		if(rpc->struct_add(th, "Sdddd",
 						"name", &ht->name,	/* str */
 						"slots", (int)ht->htsize,	/* uint */
 						"all", (int)all,	/* uint */

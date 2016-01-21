@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "../cfgt/cfgt.h"
 #include "../../dprint.h"
 #include "../../events.h"
 #include "../../locking.h"
@@ -70,6 +71,7 @@ str *dbg_get_state_name(int t)
 #define DBG_CFGTRACE_ON	(1<<0)
 #define DBG_ABKPOINT_ON	(1<<1)
 #define DBG_LBKPOINT_ON	(1<<2)
+#define DBG_CFGTEST_ON	(1<<3)
 
 static str _dbg_status_list[] = {
 	str_init("cfgtrace-on"),
@@ -78,6 +80,8 @@ static str _dbg_status_list[] = {
 	str_init("abkpoint-off"),
 	str_init("lbkpoint-on"),
 	str_init("lbkpoint-off"),
+	str_init("cfgtest-on"),
+	str_init("cfgtest-off"),
 	{0, 0}
 };
 
@@ -89,6 +93,8 @@ str *dbg_get_status_name(int t)
 		return &_dbg_status_list[2];
 	if(t&DBG_LBKPOINT_ON)
 		return &_dbg_status_list[4];
+	if(t&DBG_CFGTEST_ON)
+		return &_dbg_status_list[6];
 
 	return &_dbg_state_list[0];
 }
@@ -187,6 +193,12 @@ int _dbg_step_loops = 200;
  * disabled by default
  */
 int _dbg_reset_msgid = 0;
+
+/**
+ * disabled by default
+ */
+int _dbg_cfgtest = 0;
+cfgt_api_t _dbg_cfgt;
 
 /**
  *
@@ -355,6 +367,11 @@ int dbg_cfg_trace(void *data)
 					a->type, an->len, ZSW(an->s)
 				);
 		}
+	}
+	if(_dbg_pid_list[process_no].set&DBG_CFGTEST_ON)
+	{
+		if(_dbg_cfgt.cfgt_process_route(msg, a)<0)
+				LM_ERR("Error processing route\n");
 	}
 	if(!(_dbg_pid_list[process_no].set&DBG_ABKPOINT_ON))
 	{
@@ -590,6 +607,8 @@ int dbg_init_mypid(void)
 		_dbg_pid_list[process_no].set |= DBG_ABKPOINT_ON;
 	if(_dbg_cfgtrace==1)
 		_dbg_pid_list[process_no].set |= DBG_CFGTRACE_ON;
+	if(_dbg_cfgtest==1)
+		_dbg_pid_list[process_no].set |= DBG_CFGTEST_ON;
 	if(_dbg_reset_msgid==1)
 	{
 		LM_DBG("[%d] create locks\n", process_no);
@@ -962,12 +981,12 @@ static void  dbg_rpc_trace(rpc_t* rpc, void* ctx)
 /**
  *
  */
-static const char* dbg_rpc_mod_level_doc[2] = {
-	"Specify module log level",
+static const char* dbg_rpc_set_mod_level_doc[2] = {
+	"Set module log level",
 	0
 };
 
-static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
+static void dbg_rpc_set_mod_level(rpc_t* rpc, void* ctx){
 	int l;
 	str value = {0,0};
 
@@ -988,12 +1007,12 @@ static void dbg_rpc_mod_level(rpc_t* rpc, void* ctx){
 /**
  *
  */
-static const char* dbg_rpc_mod_facility_doc[2] = {
-	"Specify module log facility",
+static const char* dbg_rpc_set_mod_facility_doc[2] = {
+	"Set module log facility",
 	0
 };
 
-static void dbg_rpc_mod_facility(rpc_t* rpc, void* ctx) {
+static void dbg_rpc_set_mod_facility(rpc_t* rpc, void* ctx) {
 	int fl;
 	str value = {0, 0};
 	str facility = {0, 0};
@@ -1016,6 +1035,55 @@ static void dbg_rpc_mod_facility(rpc_t* rpc, void* ctx) {
 	}
 	rpc->add(ctx, "s", "200 ok");
 }
+
+/**
+ *
+ */
+static const char* dbg_rpc_get_mod_level_doc[2] = {
+	"Get module log level",
+	0
+};
+
+static void dbg_rpc_get_mod_level(rpc_t* rpc, void* ctx){
+	int l;
+	str value = {0,0};
+
+	if (rpc->scan(ctx, "S", &value) < 1)
+	{
+		rpc->fault(ctx, 500, "invalid parameters");
+		return;
+	}
+
+	l = get_debug_level(value.s, value.len);
+
+	rpc->add(ctx, "d", l);
+}
+
+/**
+ *
+ */
+static const char* dbg_rpc_get_mod_facility_doc[2] = {
+	"Get module log facility",
+	0
+};
+
+static void dbg_rpc_get_mod_facility(rpc_t* rpc, void* ctx) {
+	int fl;
+	str value = {0, 0};
+	str facility = {0, 0};
+
+	if (rpc->scan(ctx, "S", &value) < 1)
+	{
+	    rpc->fault(ctx, 500, "invalid parameters");
+	    return;
+	}
+
+	fl = get_debug_facility(value.s, value.len);
+	facility.s = facility2str(fl, &facility.len);
+
+	rpc->add(ctx, "S", &facility);
+}
+
 
 /**
  *
@@ -1057,8 +1125,10 @@ rpc_export_t dbg_rpc[] = {
 	{"dbg.bp",        dbg_rpc_bp,        dbg_rpc_bp_doc,        0},
 	{"dbg.ls",        dbg_rpc_list,      dbg_rpc_list_doc,      0},
 	{"dbg.trace",     dbg_rpc_trace,     dbg_rpc_trace_doc,     0},
-	{"dbg.mod_level", dbg_rpc_mod_level, dbg_rpc_mod_level_doc, 0},
-	{"dbg.mod_facility", dbg_rpc_mod_facility, dbg_rpc_mod_facility_doc, 0},
+	{"dbg.set_mod_level", dbg_rpc_set_mod_level, dbg_rpc_set_mod_level_doc, 0},
+	{"dbg.set_mod_facility", dbg_rpc_set_mod_facility, dbg_rpc_set_mod_facility_doc, 0},
+	{"dbg.get_mod_level", dbg_rpc_get_mod_level, dbg_rpc_get_mod_level_doc, 0},
+	{"dbg.get_mod_facility", dbg_rpc_get_mod_facility, dbg_rpc_get_mod_facility_doc, 0},
 	{"dbg.reset_msgid", dbg_rpc_reset_msgid, dbg_rpc_reset_msgid_doc, 0},
 	{0, 0, 0, 0}
 };
@@ -1119,6 +1189,7 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 		return -1;
 	}
 	memset(_dbg_mod_table, 0, _dbg_mod_table_size*sizeof(dbg_mod_slot_t));
+	LM_DBG("Created _dbg_mod_table, size %d\n", _dbg_mod_table_size);
 
 	for(i=0; i<_dbg_mod_table_size; i++)
 	{
@@ -1138,6 +1209,63 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 			return -1;
 		}
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+int dbg_destroy_mod_levels()
+{
+	int i;
+	dbg_mod_level_t *itl = NULL;
+	dbg_mod_level_t *itlp = NULL;
+
+	dbg_mod_facility_t *itf = NULL;
+	dbg_mod_facility_t *itfp = NULL;
+
+	if (_dbg_mod_table_size <= 0)
+		return 0;
+
+	if (_dbg_mod_table == NULL)
+		return 0;
+
+	for (i = 0; i < _dbg_mod_table_size; i++) {
+		// destroy level list
+		lock_get(&_dbg_mod_table[i].lock);
+		itl = _dbg_mod_table[i].first;
+		while (itl) {
+			itlp = itl;
+			itl = itl->next;
+			shm_free(itlp);
+		}
+		lock_release(&_dbg_mod_table[i].lock);
+
+		// destroy facility list
+		lock_get(&_dbg_mod_table[i].lock_ft);
+		itf = _dbg_mod_table[i].first_ft;
+		while (itf) {
+			itfp = itf;
+			itf = itf->next;
+			shm_free(itfp);
+		}
+		lock_release(&_dbg_mod_table[i].lock_ft);
+
+		// destroy locks
+		lock_destroy(&_dbg_mod_table[i].lock);
+		lock_destroy(&_dbg_mod_table[i].lock_ft);
+
+		// reset all
+		_dbg_mod_table[i].first = NULL;
+		_dbg_mod_table[i].first_ft = NULL;
+	}
+
+	// free table
+	shm_free(_dbg_mod_table);
+	_dbg_mod_table = NULL;
+
+	LM_DBG("Destroyed _dbg_mod_table, size %d\n", _dbg_mod_table_size);
+
 	return 0;
 }
 
@@ -1216,15 +1344,14 @@ int dbg_set_mod_debug_level(char *mname, int mnlen, int *mlevel)
 		itp = it;
 		it = it->next;
 	}
+	lock_release(&_dbg_mod_table[idx].lock);
 	/* not found - add */
 	if(mlevel==NULL) {
-		lock_release(&_dbg_mod_table[idx].lock);
 		return 0;
 	}
 	itn = (dbg_mod_level_t*)shm_malloc(sizeof(dbg_mod_level_t) + (mnlen+1)*sizeof(char));
 	if(itn==NULL) {
 		LM_ERR("no more shm\n");
-		lock_release(&_dbg_mod_table[idx].lock);
 		return -1;
 	}
 	memset(itn, 0, sizeof(dbg_mod_level_t) + (mnlen+1)*sizeof(char));
@@ -1235,6 +1362,7 @@ int dbg_set_mod_debug_level(char *mname, int mnlen, int *mlevel)
 	strncpy(itn->name.s, mname, mnlen);
 	itn->name.s[itn->name.len] = '\0';
 
+	lock_get(&_dbg_mod_table[idx].lock);
 	if(itp==NULL) {
 		itn->next = _dbg_mod_table[idx].first;
 		_dbg_mod_table[idx].first = itn;
@@ -1292,15 +1420,14 @@ int dbg_set_mod_debug_facility(char *mname, int mnlen, int *mfacility)
 		itp = it;
 		it = it->next;
 	}
+	lock_release(&_dbg_mod_table[idx].lock_ft);
 	/* not found - add */
 	if(mfacility==NULL) {
-		lock_release(&_dbg_mod_table[idx].lock_ft);
 		return 0;
 	}
 	itn = (dbg_mod_facility_t*)shm_malloc(sizeof(dbg_mod_facility_t) + (mnlen+1)*sizeof(char));
 	if(itn==NULL) {
 		LM_ERR("no more shm\n");
-		lock_release(&_dbg_mod_table[idx].lock_ft);
 		return -1;
 	}
 	memset(itn, 0, sizeof(dbg_mod_facility_t) + (mnlen+1)*sizeof(char));
@@ -1311,6 +1438,7 @@ int dbg_set_mod_debug_facility(char *mname, int mnlen, int *mfacility)
 	strncpy(itn->name.s, mname, mnlen);
 	itn->name.s[itn->name.len] = '\0';
 
+	lock_get(&_dbg_mod_table[idx].lock_ft);
 	if(itp==NULL) {
 		itn->next = _dbg_mod_table[idx].first_ft;
 		_dbg_mod_table[idx].first_ft = itn;
@@ -1334,6 +1462,10 @@ int dbg_get_mod_debug_level(char *mname, int mnlen, int *mlevel)
 	 * - it will loop otherwise */
 	if(_dbg_mod_table==NULL)
 		return -1;
+
+	if (!dbg_cfg) {
+		return -1;
+	}
 
 	if(cfg_get(dbg, dbg_cfg, mod_level_mode)==0)
 		return -1;
@@ -1377,6 +1509,10 @@ int dbg_get_mod_debug_facility(char *mname, int mnlen, int *mfacility)
 	 * - it will loop otherwise */
 	if(_dbg_mod_table==NULL)
 		return -1;
+
+	if (!dbg_cfg) {
+		return -1;
+	}
 
 	if(cfg_get(dbg, dbg_cfg, mod_facility_mode)==0)
 		return -1;

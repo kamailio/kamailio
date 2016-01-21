@@ -56,6 +56,7 @@ enum ss_mismatch {
 	SS_MISMATCH_MCAST  /* mcast forced send socket */
 };
 
+
 struct socket_info* get_send_socket2(struct socket_info* force_send_socket,
 									union sockaddr_union* su, int proto,
 									enum ss_mismatch* mismatch);
@@ -97,6 +98,7 @@ void forward_set_send_info(int v);
 
 int is_check_self_func_list_set(void);
 
+#define msg_send(_dst, _buf, _len) msg_send_buffer((_dst), (_buf), (_len), 0)
 
 /* params:
  * dst = struct dest_info containing:
@@ -109,12 +111,17 @@ int is_check_self_func_list_set(void);
  *        (useful for sending replies on  the same connection as the request
  *         that generated them; use 0 if you don't want this)
  * buf, len = buffer
+ * flags = control internal behavior
+ *    * 1 - skip executing event SREV_NET_DATA_OUT
  * returns: 0 if ok, -1 on error*/
 
-static inline int msg_send(struct dest_info* dst, char* buf, int len)
+static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
+		int flags)
 {
 	struct dest_info new_dst;
 	str outb;
+	sr_net_info_t netinfo;
+
 #ifdef USE_TCP 
 	int port;
 	struct ip_addr ip;
@@ -127,7 +134,9 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	
 	outb.s = buf;
 	outb.len = len;
-	sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
+	if(!(flags&1)) {
+		sr_event_exec(SREV_NET_DATA_OUT, (void*)&outb);
+	}
 
 	if(outb.s==NULL) {
 		LM_ERR("failed to update outgoing buffer\n");
@@ -265,6 +274,15 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	}
 	ret = 0;
 done:
+
+	if(!(flags&1)) {
+		memset(&netinfo, 0, sizeof(sr_net_info_t));
+		netinfo.data.s = outb.s;
+		netinfo.data.len = outb.len;
+		netinfo.dst = dst;
+		sr_event_exec(SREV_NET_DATA_SEND, (void*)&netinfo);
+	}
+
 	if(outb.s != buf)
 		pkg_free(outb.s);
 	return ret;

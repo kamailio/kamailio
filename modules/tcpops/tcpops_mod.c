@@ -35,6 +35,7 @@
 #include "../../tcp_options.h"
 #include "../../dprint.h"
 #include "../../mod_fix.h"
+#include "../../events.h"
 
 #include "tcpops.h"
 
@@ -100,6 +101,11 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	LM_DBG("TCP keepalive module loaded.\n");
+
+	if (sr_event_register_cb(SREV_TCP_CLOSED, tcpops_handle_tcp_closed) != 0) {
+		LM_ERR("problem registering tcpops_handle_tcp_closed call-back\n");
+		return -1;
+	}
 
 	return 0;
 }

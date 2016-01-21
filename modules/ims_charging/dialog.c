@@ -1,27 +1,31 @@
 #include "mod.h"
 #include "dialog.h"
 #include "ro_session_hash.h"
-#include "../ims_usrloc_scscf/usrloc.h"
-#include "../ims_usrloc_scscf/udomain.h"
 #include "ro_db_handler.h"
+#include "ims_charging_stats.h"
 
 struct cdp_binds cdpb;
 
-extern usrloc_api_t ul;
 extern int ro_db_mode;
 extern char *domain;
 extern struct dlg_binds dlgb;
+extern struct ims_charging_counters_h ims_charging_cnts_h;
 
 void dlg_callback_received(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
     LM_DBG("Received dialog callback event [%d]\n", type);
+    unsigned int termcode = 0;
     switch (type) {
         case DLGCB_CONFIRMED:
             dlg_answered(dlg, type, _params);
             break;
         case DLGCB_TERMINATED:
+            dlg_terminated(dlg, type, termcode, "normal call clearing", _params);
+            break;
         case DLGCB_FAILED:
+            dlg_terminated(dlg, type, termcode, "call failed", _params);
+            break;
         case DLGCB_EXPIRED:
-            dlg_terminated(dlg, type, _params);
+            dlg_terminated(dlg, type, termcode, "dialog timeout", _params);
             break;
         default:
             LM_WARN("Received unknown dialog callback [%d]\n", type);
@@ -29,7 +33,6 @@ void dlg_callback_received(struct dlg_cell *dlg, int type, struct dlg_cb_params 
 }
 
 void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
-    struct sip_msg *reply;
     struct ro_session* session = 0;
     struct ro_session_entry* ro_session_entry;
     time_t now = get_current_time_micro();
@@ -114,17 +117,36 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 
 }
 
-void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
+void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode, char* reason, struct dlg_cb_params *_params) {
 	//int i;
 	int unref = 0;
 	struct ro_session *ro_session = 0;
 	struct ro_session_entry *ro_session_entry;
 	struct sip_msg *request;
+        str s_reason;
+        
+        s_reason.s = reason;
+        s_reason.len = strlen(reason);
 	
-	LM_DBG("dialog [%p] terminated, lets send stop record\n", dlg);
+	LM_DBG("dialog [%p] terminated on type [%d], lets send stop record\n", dlg, type);
 
 	if (!_params) {
 		return;
+	}
+	
+	LM_DBG("Direction is %d\n", _params->direction);
+	if (_params->req) {
+		if (_params->req->first_line.u.request.method_value == METHOD_BYE) {
+			if (_params->direction == DLG_DIR_DOWNSTREAM) {
+				LM_DBG("Dialog ended by Caller\n");
+			} else {
+				LM_DBG("Dialog ended by Callee\n");
+			}
+		} else {
+			LM_DBG("Request is %.*s\n", _params->req->first_line.u.request.method.len, _params->req->first_line.u.request.method.s);
+		}
+	} else if (_params->rpl) {
+		LM_DBG("Reply is [%d - %.*s]", _params->rpl->first_line.u.reply.statuscode, _params->rpl->first_line.u.reply.reason.len, _params->rpl->first_line.u.reply.reason.s);
 	}
 	
 	ro_session = (struct ro_session*)*_params->param;
@@ -153,14 +175,14 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 				//double processing for various dialog_terminated callback events.
 				//If however, the call was never answered, then we can continue as normal
 				ro_session_lock(ro_session_table, ro_session_entry);
-				if (!ro_session->active && (ro_session->start_time != 0)) {
-					unref_ro_session(ro_session,1);
-					LM_ERR("Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);
+                                
+                                LM_DBG("processing dlg_terminated in Ro and session [%.*s] has active = %d", ro_session->ro_session_id.len, ro_session->ro_session_id.s, ro_session->active);
+				if ((!ro_session->active && (ro_session->start_time != 0)) || (ro_session->ccr_sent == 1)) {
+					unref_ro_session_unsafe(ro_session,1,ro_session_entry);
+					LM_ERR("CCR already sent or Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);
 					ro_session_unlock(ro_session_table, ro_session_entry);
 					return;
 				}
-			
-	
 
 				if (ro_session->active) { // if the call was never activated, there's no timer to remove
 					int ret = remove_ro_timer(&ro_session->ro_tl);
@@ -176,8 +198,10 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 				}
 
 				LM_DBG("Sending CCR STOP on Ro_Session [%p]\n", ro_session);
-				send_ccr_stop(ro_session);
+				send_ccr_stop_with_param(ro_session, termcode, &s_reason);
 				ro_session->active = -1;    //deleted.... terminated ....
+                                ro_session->ccr_sent = 1;
+//                                counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
 				
 				if (ro_db_mode == DB_MODE_REALTIME) {
 				    ro_session->flags |= RO_SESSION_FLAG_DELETED;
@@ -194,89 +218,3 @@ void dlg_terminated(struct dlg_cell *dlg, int type, struct dlg_cb_params *_param
 		//}
 	}
 }
-
-void remove_dlg_data_from_contact(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
-        
-    struct impu_data *impu_data;
-    impurecord_t* implicit_impurecord = 0;
-    struct ucontact* ucontact;
-    str callid = {0, 0};
-    str path = {0, 0};
-    udomain_t* domain_t;
-    
-    LM_DBG("dialog [%p] terminated, lets remove dlg data from contact\n", dlg);
-    
-    if (ul.register_udomain(domain, &domain_t) < 0) {
-	    LM_ERR("Unable to register usrloc domain....aborting\n");
-	    return;
-    }
-    
-    if(_params && _params->param){
-	impu_data = (struct impu_data*)*_params->param;
-	if (!impu_data) {
-		LM_ERR("IMPU data object is NULL...... aborting\n");
-		return;
-	}
-	
-	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
-	LM_DBG("IMPU data domain <%.*s>", domain_t->name->len, domain_t->name->s);
-	
-	ul.lock_udomain(domain_t, &impu_data->identity);
-	if (ul.get_impurecord(domain_t, &impu_data->identity, &implicit_impurecord) != 0) {
-	    LM_DBG("usrloc does not have imprecord for implicity IMPU, ignore\n");
-	}else {
-	    if (ul.get_ucontact(&impu_data->contact, &callid, &path, 0/*cseq*/,  &ucontact) != 0) { //contact does not exist
-		LM_DBG("This contact: <%.*s> is not in usrloc, ignore - NOTE: You need S-CSCF usrloc set to match_mode CONTACT_PORT_IP_ONLY\n", impu_data->contact.len, impu_data->contact.s);
-	    } else {//contact exists so add dialog data to it
-		ul.remove_dialog_data_from_contact(ucontact, dlg->h_entry, dlg->h_id);
-		ul.release_ucontact(ucontact);
-	    }
-	}
-	ul.unlock_udomain(domain_t, &impu_data->identity);
-	free_impu_data(impu_data);
-    }
-    
-    //we referenced the dialog when we registered for callbacks on it...
-    dlgb.release_dlg(dlg);
-}
-
-void add_dlg_data_to_contact(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params) {
-    
-    struct impu_data *impu_data;
-    impurecord_t* implicit_impurecord = 0;
-    struct ucontact* ucontact;
-    str callid = {0, 0};
-    str path = {0, 0};
-    udomain_t* domain_t;
-    
-    LM_DBG("dialog [%p] confirmed, lets add dlg data to contact\n", dlg);
-    
-    if (ul.register_udomain(domain, &domain_t) < 0) {
-	    LM_ERR("Unable to register usrloc domain....aborting\n");
-	    return;
-    }
-    
-    if(_params && _params->param){
-	impu_data = (struct impu_data*)*_params->param;
-	if (!impu_data) {
-		LM_ERR("IMPU data object is NULL...... aborting\n");
-		return;
-	}
-	
-	LM_DBG("IMPU data is present, contact: <%.*s> identity <%.*s>", impu_data->contact.len, impu_data->contact.s, impu_data->identity.len, impu_data->identity.s);
-	LM_DBG("IMPU data domain <%.*s>", domain_t->name->len, domain_t->name->s);
-	
-	ul.lock_udomain(domain_t, &impu_data->identity);
-	if (ul.get_impurecord(domain_t, &impu_data->identity, &implicit_impurecord) != 0) {
-	    LM_DBG("usrloc does not have imprecord for implicity IMPU, ignore\n");
-	}else {
-	    if (ul.get_ucontact(&impu_data->contact, &callid, &path, 0/*cseq*/,  &ucontact) != 0) { //contact does not exist
-		LM_DBG("This contact: <%.*s> is not in usrloc, ignore - NOTE: You need S-CSCF usrloc set to match_mode CONTACT_PORT_IP_ONLY\n", impu_data->contact.len, impu_data->contact.s);
-	    } else {//contact exists so add dialog data to it
-		ul.add_dialog_data_to_contact(ucontact, dlg->h_entry, dlg->h_id);
-		ul.release_ucontact(ucontact);
-	    }
-	}
-	ul.unlock_udomain(domain_t, &impu_data->identity);
-    }
-} 

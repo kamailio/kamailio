@@ -57,6 +57,10 @@
 		    </listitem>
 	    	</itemizedlist>
 	    </para>
+	    <para>
+		NOTE: Due to the debugger module child_init() function, one should load the module first in the module sequence in order to initialize _dbg_pid_list.
+		Otherwise, another module (i.e. p_usrloc) forking a process with rank != PROC_INIT will fail.
+	    </para>
 	</section>
 	<section>
 	    <title>External Libraries or Applications</title>
@@ -418,6 +422,28 @@ modparam("debugger", "reset_msgid", 1)
 	    </example>
 	</section>
 
+	<section id="dbg.p.cfgtest">
+	    <title><varname>cfgtest</varname> (int)</title>
+	    <para>
+			Control whether the cfgt module is enabled or disabled
+			at startup. Module cfgt needs to be loaded before.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote> (disabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cfgtest</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+loadmodule "cfgt.so"
+modparam("debugger", "cfgtest", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	</section>
 
     <section>
@@ -592,6 +618,83 @@ P-Hint: My hint
     </section>
 
     </section>
+
+
+
+	<section>
+		<title>Exported MI Functions</title>
+
+		<section id="debugger.m.set_dbg_mod_level mod_name level">
+			<title><function moreinfo="none">set_dbg_mod_level mod_name level</function></title>
+			<para>
+				Set the module log level.
+				If module does not exist in kamailio, the entry in the level hashtable is still added for the bogus module.
+			</para>
+			<example>
+				<title><function moreinfo="none">set_dbg_mod_level</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &ctltool; fifo set_dbg_mod_level core 2
+$ &ctltool; fifo set_dbg_mod_level debugger 3
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="debugger.m.set_dbg_mod_facility mod_name facility">
+			<title><function moreinfo="none">set_dbg_mod_facility mod_name facility</function></title>
+			<para>
+				Set the mod_name log facility.
+				If mod_name does not exist in kamailio, the entry in the facility hashtable is still added for the bogus mod_name.
+			</para>
+			<example>
+				<title><function moreinfo="none">set_dbg_mod_facility</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &ctltool; fifo set_dbg_mod_facility core LOG_LOCAL1
+$ &ctltool; fifo set_dbg_mod_facility debugger LOG_LOCAL0
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="debugger.m.get_dbg_mod_level mod_name">
+			<title><function moreinfo="none">get_dbg_mod_level mod_name</function></title>
+			<para>
+				Get the mod_name log level.
+				If mod_name does not exist in the level hashtable, returns the config file value.
+			</para>
+			<example>
+				<title><function moreinfo="none">get_dbg_mod_level</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &ctltool; fifo get_dbg_mod_level core
+$ &ctltool; fifo get_dbg_mod_level debugger
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="debugger.m.get_dbg_mod_facility mod_name">
+			<title><function moreinfo="none">get_dbg_mod_facility mod_name</function></title>
+			<para>
+				Get the mod_name log facility.
+				If mod_name does not exist in the facility hashtable, returns the config file value.
+			</para>
+			<example>
+				<title><function moreinfo="none">get_dbg_mod_facility</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ &ctltool; fifo get_dbg_mod_facility core
+$ &ctltool; fifo get_dbg_mod_facility debugger
+...
+				</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+
 
 
 	<section>
@@ -775,7 +878,85 @@ P-Hint: My hint
 		</programlisting>
     </section>
 
+	<section id="dbg.r.set_mod_level">
+		<title>
+			<function moreinfo="none">dbg.set_mod_level</function>
+		</title>
+		<para>
+			Set the module log level.
+			If module does not exist in kamailio, the entry in the level hashtable is still added for the bogus module.
+		</para>
+		<para>
+			Name: <emphasis>dbg.set_mod_level</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.set_mod_level core 1
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.set_mod_facility">
+		<title>
+			<function moreinfo="none">dbg.set_mod_facility</function>
+		</title>
+		<para>
+			Set the module log facility.
+			If module does not exist in kamailio, the entry in the facility hashtable is still added for the bogus module.
+		</para>
+		<para>
+			Name: <emphasis>dbg.set_mod_facility</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.set_mod_facility core LOG_LOCAL1
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.get_mod_level">
+		<title>
+			<function moreinfo="none">dbg.get_mod_level</function>
+		</title>
+		<para>
+			Get the module log level.
+			If mod_name does not exist in the level hashtable, returns the config file value.
+		</para>
+		<para>
+			Name: <emphasis>dbg.get_mod_level</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.get_mod_level core
+		</programlisting>
+	</section>
+
+	<section id="dbg.r.get_mod_facility">
+		<title>
+			<function moreinfo="none">dbg.get_mod_facility</function>
+		</title>
+		<para>
+			Get the module log facility.
+			If mod_name does not exist in the facility hashtable, returns the config file value.
+		</para>
+		<para>
+			Name: <emphasis>dbg.get_mod_facility</emphasis>
+		</para>
+		<para>
+			Examples of use with &sercmd;:
+		</para>
+		<programlisting  format="linespecific">
+			dbg.get_mod_facility core
+		</programlisting>
+	</section>
+
     </section>
+
+
 	<section>
 		<title>Usage</title>
 		<para>

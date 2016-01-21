@@ -104,30 +104,30 @@ int utils_forward(struct sip_msg *msg, int id, int proto);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-    {"http_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
-     fixup_free_http_query_get,
-     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"http_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
-     fixup_free_http_query_post,
-     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"http_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
-     fixup_free_http_query_post_hdr,
-     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
-     fixup_free_pvar_pvar, REQUEST_ROUTE},
-    {0, 0, 0, 0, 0, 0}
+	{"http_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
+		fixup_free_http_query_get,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
+		fixup_free_http_query_post,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
+		fixup_free_http_query_post_hdr,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
+		fixup_free_pvar_pvar, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 
 /* Exported parameters */
 static param_export_t params[] = {
-    {"pres_db_url", PARAM_STR, &pres_db_url},
-    {"xcap_table", PARAM_STR, &xcap_table},
-    {"http_query_timeout", INT_PARAM, &http_query_timeout},
-    {"http_response_trim", INT_PARAM, &http_response_trim},
-    {"http_response_mode", INT_PARAM, &http_response_mode},
-    {"forward_active", INT_PARAM, &forward_active},
-    {0, 0, 0}
+	{"pres_db_url", PARAM_STR, &pres_db_url},
+	{"xcap_table", PARAM_STR, &xcap_table},
+	{"http_query_timeout", INT_PARAM, &http_query_timeout},
+	{"http_response_trim", INT_PARAM, &http_response_trim},
+	{"http_response_mode", INT_PARAM, &http_response_mode},
+	{"forward_active", INT_PARAM, &forward_active},
+	{0, 0, 0}
 };
 
 static mi_export_t mi_cmds[] = {
@@ -140,18 +140,18 @@ static mi_export_t mi_cmds[] = {
 
 /* Module interface */
 struct module_exports exports = {
-    "utils",
-    DEFAULT_DLFLAGS, /* dlopen flags */
-    cmds,      /* Exported functions */
-    params,    /* Exported parameters */
-    0,         /* exported statistics */
-    mi_cmds,   /* exported MI functions */
-    0,         /* exported pseudo-variables */
-    0,         /* extra processes */
-    mod_init,  /* module initialization function */
-    0,         /* response function*/
-    destroy,   /* destroy function */
-    child_init /* per-child init function */
+	"utils",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,      /* Exported functions */
+	params,    /* Exported parameters */
+	0,         /* exported statistics */
+	mi_cmds,   /* exported MI functions */
+	0,         /* exported pseudo-variables */
+	0,         /* extra processes */
+	mod_init,  /* module initialization function */
+	0,         /* response function*/
+	destroy,   /* destroy function */
+	child_init /* per-child init function */
 };
 
 
@@ -192,51 +192,51 @@ static void destroy_shmlock(void)
 
 
 static void pres_db_close(void) {
-    if (pres_dbh) {
-	pres_dbf.close(pres_dbh);
-	pres_dbh = NULL;
-    }
+	if (pres_dbh) {
+		pres_dbf.close(pres_dbh);
+		pres_dbh = NULL;
+	}
 }
 
 static int pres_db_init(void) {
-    if (!pres_db_url.s || !pres_db_url.len) {
-	LM_INFO("xcap_auth_status function is disabled\n");
-	return 0;
-    }
-    if (db_bind_mod(&pres_db_url, &pres_dbf) < 0) {
-	LM_ERR("can't bind database module\n");
-	return -1;
-    }
-    if ((pres_dbh = pres_dbf.init(&pres_db_url)) == NULL) {
-	LM_ERR("can't connect to database\n");
-	return -1;
-    }
-    if (db_check_table_version(&pres_dbf, pres_dbh, &xcap_table,
-			       XCAP_TABLE_VERSION) < 0) {
-	LM_ERR("during table version check\n");
+	if (!pres_db_url.s || !pres_db_url.len) {
+		LM_INFO("xcap_auth_status function is disabled\n");
+		return 0;
+	}
+	if (db_bind_mod(&pres_db_url, &pres_dbf) < 0) {
+		LM_ERR("can't bind database module\n");
+		return -1;
+	}
+	if ((pres_dbh = pres_dbf.init(&pres_db_url)) == NULL) {
+		LM_ERR("can't connect to database\n");
+		return -1;
+	}
+	if (db_check_table_version(&pres_dbf, pres_dbh, &xcap_table,
+				XCAP_TABLE_VERSION) < 0) {
+		LM_ERR("during table version check\n");
+		pres_db_close();
+		return -1;
+	}
 	pres_db_close();
-	return -1;
-    }
-    pres_db_close();
-    return 0;
+	return 0;
 }
 
 static int pres_db_open(void) {
-    if (!pres_db_url.s || !pres_db_url.len) {
+	if (!pres_db_url.s || !pres_db_url.len) {
+		return 0;
+	}
+	if (pres_dbh) {
+		pres_dbf.close(pres_dbh);
+	}
+	if ((pres_dbh = pres_dbf.init(&pres_db_url)) == NULL) {
+		LM_ERR("can't connect to database\n");
+		return -1;
+	}
+	if (pres_dbf.use_table(pres_dbh, &xcap_table) < 0) {
+		LM_ERR("in use_table: %.*s\n", xcap_table.len, xcap_table.s);
+		return -1;
+	}
 	return 0;
-    }
-    if (pres_dbh) {
-	pres_dbf.close(pres_dbh);
-    }
-    if ((pres_dbh = pres_dbf.init(&pres_db_url)) == NULL) {
-	LM_ERR("can't connect to database\n");
-	return -1;
-    }
-    if (pres_dbf.use_table(pres_dbh, &xcap_table) < 0) {
-	LM_ERR("in use_table: %.*s\n", xcap_table.len, xcap_table.s);
-	return -1;
-    }
-    return 0;
 }
 
 
@@ -296,10 +296,10 @@ static int mod_init(void)
 
 	/* presence database */
 	LM_DBG("pres_db_url=%s/%d/%p\n", ZSW(pres_db_url.s), pres_db_url.len,
-	       pres_db_url.s);
+			pres_db_url.s);
 
 	if(pres_db_init() < 0) {
-	    return -1;
+		return -1;
 	}
 
 	return 0;
@@ -312,7 +312,7 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-    return pres_db_open();
+	return pres_db_open();
 }
 
 static void destroy(void)
@@ -335,24 +335,24 @@ static void destroy(void)
  */
 static int fixup_http_query_get(void** param, int param_no)
 {
-    if (param_no == 1) {
-	return fixup_spve_null(param, 1);
-    }
-
-    if (param_no == 2) {
-	if (fixup_pvar_null(param, 1) != 0) {
-	    LM_ERR("failed to fixup result pvar\n");
-	    return -1;
+	if (param_no == 1) {
+		return fixup_spve_null(param, 1);
 	}
-	if (((pv_spec_t *)(*param))->setf == NULL) {
-	    LM_ERR("result pvar is not writeble\n");
-	    return -1;
-	}
-	return 0;
-    }
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 2) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -360,17 +360,16 @@ static int fixup_http_query_get(void** param, int param_no)
  */
 static int fixup_free_http_query_get(void** param, int param_no)
 {
-    if (param_no == 1) {
-	LM_WARN("free function has not been defined for spve\n");
-	return 0;
-    }
+	if (param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	}
 
-    if (param_no == 2) {
-	return fixup_free_pvar_null(param, 1);
-    }
-    
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 2) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 
@@ -380,24 +379,24 @@ static int fixup_free_http_query_get(void** param, int param_no)
  */
 static int fixup_http_query_post(void** param, int param_no)
 {
-    if ((param_no == 1) || (param_no == 2)) {
-	return fixup_spve_null(param, 1);
-    }
-
-    if (param_no == 3) {
-	if (fixup_pvar_null(param, 1) != 0) {
-	    LM_ERR("failed to fixup result pvar\n");
-	    return -1;
+	if ((param_no == 1) || (param_no == 2)) {
+		return fixup_spve_null(param, 1);
 	}
-	if (((pv_spec_t *)(*param))->setf == NULL) {
-	    LM_ERR("result pvar is not writeble\n");
-	    return -1;
-	}
-	return 0;
-    }
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 3) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -406,24 +405,24 @@ static int fixup_http_query_post(void** param, int param_no)
  */
 static int fixup_http_query_post_hdr(void** param, int param_no)
 {
-    if ((param_no >= 1) || (param_no <= 3)) {
-	return fixup_spve_null(param, 1);
-    }
-
-    if (param_no == 4) {
-	if (fixup_pvar_null(param, 1) != 0) {
-	    LM_ERR("failed to fixup result pvar\n");
-	    return -1;
+	if ((param_no >= 1) && (param_no <= 3)) {
+		return fixup_spve_null(param, 1);
 	}
-	if (((pv_spec_t *)(*param))->setf == NULL) {
-	    LM_ERR("result pvar is not writeble\n");
-	    return -1;
-	}
-	return 0;
-    }
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 4) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -431,17 +430,16 @@ static int fixup_http_query_post_hdr(void** param, int param_no)
  */
 static int fixup_free_http_query_post(void** param, int param_no)
 {
-    if ((param_no == 1) || (param_no == 2)) {
-	LM_WARN("free function has not been defined for spve\n");
-	return 0;
-    }
+	if ((param_no == 1) || (param_no == 2)) {
+		return fixup_free_spve_null(param, 1);
+	}
 
-    if (param_no == 3) {
-	return fixup_free_pvar_null(param, 1);
-    }
-    
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 3) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -449,17 +447,16 @@ static int fixup_free_http_query_post(void** param, int param_no)
  */
 static int fixup_free_http_query_post_hdr(void** param, int param_no)
 {
-    if ((param_no >= 1) || (param_no <= 2)) {
-	LM_WARN("free function has not been defined for spve\n");
-	return 0;
-    }
+	if ((param_no >= 1) && (param_no <= 3)) {
+		return fixup_free_spve_null(param, 1);
+	}
 
-    if (param_no == 3) {
-	return fixup_free_pvar_null(param, 1);
-    }
-    
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 4) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*

@@ -80,9 +80,13 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 	if (my_ping_interval) {
 		t = time(0);
 		if ((t - CON_TIMESTAMP(_h)) > my_ping_interval) {
-			if (mysql_ping(CON_CONNECTION(_h))) {
-				LM_WARN("driver error on ping: %s\n", mysql_error(CON_CONNECTION(_h)));
-				counter_inc(mysql_cnts_h.driver_err);
+			for (i=0; i < (db_mysql_auto_reconnect ? 3 : 1); i++) {
+				if (mysql_ping(CON_CONNECTION(_h))) {
+					LM_WARN("driver error on ping: %s\n", mysql_error(CON_CONNECTION(_h)));
+					counter_inc(mysql_cnts_h.driver_err);
+				} else {
+					break;
+				}
 			}
 		}
 		/*

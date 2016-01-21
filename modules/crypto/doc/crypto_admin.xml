@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides various cryptography tools for use
+		in &kamailio; configuration file.
+	</para>
+	<para>
+		It relies on OpenSSL libraries for cryptographic operations
+		(libssl, libcrypto).
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libcrypto</emphasis> - part of OpenSSL project
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="async.f.crypto_aes_encrypt">
+	    <title>
+		<function moreinfo="none">crypto_aes_encrypt(text, key, res)</function>
+	    </title>
+	    <para>
+		Encrypts the text with the key using AES encryption algorithm. The
+		result is encoded in base64 format and stored in res. The parameter
+		res must be a read-write variables. The parameters text and key can
+		be static strings or strings with variables (dynamic strings).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>crypto_aes_encrypt</function> usage</title>
+		<programlisting format="linespecific">
+...
+crypto_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="async.f.crypto_aes_decrypt">
+	    <title>
+		<function moreinfo="none">crypto_aes_decrypt(text, key, res)</function>
+	    </title>
+	    <para>
+		Decrypts the text with the key using AES encryption algorithm. The
+		text has to be encoded in base64 format. The parameter
+		res must be a read-write variables. The parameters text and key can
+		be static strings or strings with variables (dynamic strings).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>crypto_aes_decrypt</function> usage</title>
+		<programlisting format="linespecific">
+...
+crypto_aes_decrypt("$var(encrypted)", "my-secret-key", "$var(text)");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+</chapter>

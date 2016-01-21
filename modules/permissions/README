@@ -63,6 +63,7 @@ Emmanuel Schmidbauer
               3.19. priority_col (string)
               3.20. peer_tag_avp (AVP string)
               3.21. peer_tag_mode (integer)
+              3.22. max_subnets (int)
 
         4. Functions
 
@@ -119,17 +120,18 @@ Emmanuel Schmidbauer
    1.19. Set priority_col parameter
    1.20. Set peer_tag_avp parameter
    1.21. Set peer_tag_mode parameter
-   1.22. allow_routing usage
-   1.23. allow_routing(basename) usage
-   1.24. allow_routing(allow_file, deny_file) usage
-   1.25. allow_register(basename) usage
-   1.26. allow_register(allow_file, deny_file) usage
-   1.27. allow_uri(basename, pvar) usage
-   1.28. allow_address() usage
-   1.29. allow_source_address(group_id) usage
-   1.30. allow_source_address_group() usage
+   1.22. Set max_subnets parameter
+   1.23. allow_routing usage
+   1.24. allow_routing(basename) usage
+   1.25. allow_routing(allow_file, deny_file) usage
+   1.26. allow_register(basename) usage
+   1.27. allow_register(allow_file, deny_file) usage
+   1.28. allow_uri(basename, pvar) usage
+   1.29. allow_address() usage
+   1.30. allow_source_address(group_id) usage
    1.31. allow_source_address_group() usage
-   1.32. allow_trusted() usage
+   1.32. allow_source_address_group() usage
+   1.33. allow_trusted() usage
 
 Chapter 1. Admin Guide
 
@@ -171,6 +173,7 @@ Chapter 1. Admin Guide
         3.19. priority_col (string)
         3.20. peer_tag_avp (AVP string)
         3.21. peer_tag_mode (integer)
+        3.22. max_subnets (int)
 
    4. Functions
 
@@ -403,6 +406,7 @@ Chapter 1. Admin Guide
    3.19. priority_col (string)
    3.20. peer_tag_avp (AVP string)
    3.21. peer_tag_mode (integer)
+   3.22. max_subnets (int)
 
 3.1. default_allow_file (string)
 
@@ -683,6 +687,17 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 modparam("permissions", "peer_tag_mode", 1)
 ...
 
+3.22. max_subnets (int)
+
+   The maximum number of subnet addresses to be loaded from address table.
+
+   Default value is "512".
+
+   Example 1.22. Set max_subnets parameter
+...
+modparam("permissions", "max_subnets", 1024)
+...
+
 4. Functions
 
    4.1. allow_routing()
@@ -706,7 +721,7 @@ modparam("permissions", "peer_tag_mode", 1)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.22. allow_routing usage
+   Example 1.23. allow_routing usage
 ...
 if (allow_routing()) {
         t_relay();
@@ -729,7 +744,7 @@ if (allow_routing()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.23. allow_routing(basename) usage
+   Example 1.24. allow_routing(basename) usage
 ...
 if (allow_routing("basename")) {
         t_relay();
@@ -754,7 +769,7 @@ if (allow_routing("basename")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.24. allow_routing(allow_file, deny_file) usage
+   Example 1.25. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
         t_relay();
@@ -777,7 +792,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.25. allow_register(basename) usage
+   Example 1.26. allow_register(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register")) {
@@ -807,7 +822,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. allow_register(allow_file, deny_file) usage
+   Example 1.27. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register.allow", "register.deny")) {
@@ -836,7 +851,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. allow_uri(basename, pvar) usage
+   Example 1.28. allow_uri(basename, pvar) usage
 ...
 if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
         t_relay();
@@ -862,7 +877,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. allow_address() usage
+   Example 1.29. allow_address() usage
 ...
 
 // Check if source address/port is in group 1
@@ -884,7 +899,7 @@ if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. allow_source_address(group_id) usage
+   Example 1.30. allow_source_address(group_id) usage
 ...
 
 // Check source address/port of request
@@ -901,7 +916,7 @@ if (!allow_source_address("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. allow_source_address_group() usage
+   Example 1.31. allow_source_address_group() usage
 ...
 
 $var(group) = allow_source_address_group();
@@ -919,7 +934,7 @@ if ($var(group) != -1) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.31. allow_source_address_group() usage
+   Example 1.32. allow_source_address_group() usage
 ...
 
 $var(group) = allow_address_group("1.2.3.4", "5060");
@@ -944,7 +959,7 @@ if ($var(group) != -1) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.32. allow_trusted() usage
+   Example 1.33. allow_trusted() usage
 ...
 if (allow_trusted()) {
         t_relay();

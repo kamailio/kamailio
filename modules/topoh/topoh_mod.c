@@ -331,7 +331,7 @@ int th_msg_received(void *data)
 		{
 			/* one Via in received reply -- it is for local generated request
 			 * - nothing to unhide unless is CANCEL/ACK */
-			if((get_cseq(&msg)->method_id)&(METHOD_CANCEL))
+			if(!((get_cseq(&msg)->method_id)&(METHOD_CANCEL)))
 				goto done;
 		}
 

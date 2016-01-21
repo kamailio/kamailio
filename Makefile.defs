@@ -97,7 +97,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 4
 PATCHLEVEL = 4
 SUBLEVEL =  0
-EXTRAVERSION = -dev7
+EXTRAVERSION = -dev8
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -1785,7 +1785,7 @@ ifeq ($(CC_NAME), suncc)
 endif
 	OLD_SOLARIS= $(shell echo "$(OSREL)" | \
 				sed -e 's/^5\.[0-6][^0-9]*$$/yes/' )
-	LIBS+= -L$(LOCALBASE)/lib -lxnet -lnsl 
+	LIBS+= -L$(LOCALBASE)/lib -lxnet -lsocket -lnsl 
 ifeq	($(OLD_SOLARIS), yes)
 		LIBS+=-lposix4
 else

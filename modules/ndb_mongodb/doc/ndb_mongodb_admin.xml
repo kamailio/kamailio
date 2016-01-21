@@ -62,7 +62,7 @@
 	<section id="ndb_mongodb.p.server">
 		<title><varname>server</varname> (str)</title>
 		<para>
-			Specify the details to connect to REDIS server. It takes a list of
+			Specify the details to connect to MongoDB server. It takes a list of
 			attribute=value separated by semicolon, the attributes can be
 			name and uri. Name is a generic identifier to be used
 			with module functions. The uri parameter must be a valid

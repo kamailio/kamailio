@@ -772,6 +772,26 @@ modparam("permissions", "peer_tag_mode", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id ="permissions.p.max_subnets">
+		<title><varname>max_subnets</varname> (int)</title>
+		<para>
+			The maximum number of subnet addresses to be loaded from
+			address table.
+		</para>
+		<para>
+		<emphasis>
+		Default value is <quote>512</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>max_subnets</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "max_subnets", 1024)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

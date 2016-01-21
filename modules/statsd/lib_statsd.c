@@ -24,13 +24,13 @@ static StatsConnection statsd_connection = {
     "8125"
 };
 
-int statsd_connect(void){
+bool statsd_connect(void){
 
     struct addrinfo *serverAddr;
     int rc, error;
 
     if (statsd_socket.sock > 0){
-        return True;
+        return true;
     }
 
     error = getaddrinfo(
@@ -41,62 +41,62 @@ int statsd_connect(void){
         LM_ERR(
             "Statsd: could not initiate server information (%s)\n",
             gai_strerror(error));
-        return False;
+        return false;
     }
 
     statsd_socket.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (statsd_socket.sock == 0 ){
         LM_ERR("Statsd: could not initiate a connect to statsd\n");
-        return False;
+        return false;
     }
 
     rc = connect(
         statsd_socket.sock, serverAddr->ai_addr, serverAddr->ai_addrlen);
     if (rc < 0){
         LM_ERR("Statsd: could not initiate a connect to statsd\n");
-        return False;
+        return false;
     }
-    return True;
+    return true;
 }
 
-int send_command(char *command){
+bool send_command(char *command){
     int send_result;
 
     if (!statsd_connect()){
-        return False;
+        return false;
     }
 
     send_result = send(statsd_socket.sock, command, strlen(command), 0);
     if ( send_result < 0){
         LM_ERR("could not send the correct info to statsd (%i| %s)\n",
             send_result, strerror(errno));
-        return True;
+        return true;
     }
     LM_DBG("Sent to statsd (%s)", command);
-    return True;
+    return true;
 }
 
-int statsd_set(char *key, char *value){
+bool statsd_set(char *key, char *value){
    char* end = 0;
    char command[254];
    int val;
    val = strtol(value, &end, 0);
    if (*end){
        LM_ERR("statsd_count could not  use the provide value(%s)\n", value);
-       return False;
+       return false;
    }
    snprintf(command, sizeof command, "%s:%i|s\n", key, val);
    return send_command(command);
 }
 
 
-int statsd_gauge(char *key, char *value){
+bool statsd_gauge(char *key, char *value){
    char command[254];
    snprintf(command, sizeof command, "%s:%s|g\n", key, value);
    return send_command(command);
 }
 
-int statsd_count(char *key, char *value){
+bool statsd_count(char *key, char *value){
    char* end = 0;
    char command[254];
    int val;
@@ -104,19 +104,19 @@ int statsd_count(char *key, char *value){
    val = strtol(value, &end, 0);
    if (*end){
        LM_ERR("statsd_count could not  use the provide value(%s)\n", value);
-       return False;
+       return false;
    }
    snprintf(command, sizeof command, "%s:%i|c\n", key, val);
    return send_command(command);
 }
 
-int statsd_timing(char *key, int value){
+bool statsd_timing(char *key, int value){
    char command[254];
    snprintf(command, sizeof command, "%s:%i|ms\n", key, value);
    return send_command(command);
 }
 
-int statsd_init(char *ip, char *port){
+bool statsd_init(char *ip, char *port){
 
     if (ip != NULL){
         statsd_connection.ip = ip;
@@ -127,7 +127,7 @@ int statsd_init(char *ip, char *port){
     return statsd_connect();
 }
 
-int statsd_destroy(void){
+bool statsd_destroy(void){
     statsd_socket.sock = 0;
-    return True;
+    return true;
 }

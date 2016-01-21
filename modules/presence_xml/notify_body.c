@@ -58,27 +58,51 @@ void free_xml_body(char* body)
 	body= NULL;
 }
 
-#define PRESENCE_EMPTY_BODY_SIZE 512
+#define PRESENCE_EMPTY_BODY_SIZE 1024
 
-#define PRESENCE_EMPTY_BODY "<presence> \
-<tuple id=\"615293b33c62dec073e05d9421e9f48b\">\
+#define PRESENCE_EMPTY_BODY  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
+<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" xmlns:c=\"urn:ietf:params:xml:ns:pidf:cipid\" entity=\"%.*s\"> \
+<tuple xmlns=\"urn:ietf:params:xml:ns:pidf\" id=\"615293b33c62dec073e05d9421e9f48b\">\
 <status>\
 <basic>open</basic>\
 </status>\
 </tuple>\
 <note xmlns=\"urn:ietf:params:xml:ns:pidf\">Available</note>\
+<dm:person xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" id=\"1\">\
+<rpid:activities/>\
+<dm:note>Available</dm:note>\
+</dm:person>\
 </presence>"
 
 str* pres_agg_nbody_empty(str* pres_user, str* pres_domain)
 {
 	str* n_body= NULL;
 
+	str* body_array;
+	char* body;
+
 	LM_DBG("creating empty presence for [pres_user]=%.*s [pres_domain]= %.*s\n",
 			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
 
-	str* body_array = (str*)pkg_malloc(sizeof(str));
-	char* body = (char*)pkg_malloc(PRESENCE_EMPTY_BODY_SIZE);
-	sprintf(body, PRESENCE_EMPTY_BODY);
+	if(pres_user->len+sizeof(PRESENCE_EMPTY_BODY)
+			>= PRESENCE_EMPTY_BODY_SIZE - 1) {
+		LM_ERR("insufficient buffer to add user (its len is: %d)\n",
+				pres_user->len);
+		return NULL;
+	}
+	body_array = (str*)pkg_malloc(sizeof(str));
+	if(body_array==NULL) {
+		LM_ERR("no more pkg\n");
+		return NULL;
+	}
+
+	body = (char*)pkg_malloc(PRESENCE_EMPTY_BODY_SIZE);
+	if(body_array==NULL) {
+		LM_ERR("no more pkg\n");
+		pkg_free(body_array);
+		return NULL;
+	}
+	snprintf(body, PRESENCE_EMPTY_BODY_SIZE, PRESENCE_EMPTY_BODY, pres_user->len, pres_user->s);
 	body_array->s = body;
 	body_array->len = strlen(body);
 
@@ -86,11 +110,10 @@ str* pres_agg_nbody_empty(str* pres_user, str* pres_domain)
 	n_body= agregate_xmls(pres_user, pres_domain, &body_array, 1);
 	LM_DBG("[n_body]=%p\n", n_body);
 	if(n_body) {
-		LM_DBG("[*n_body]=%.*s\n",n_body->len, n_body->s);
+		LM_DBG("[*n_body]=%.*s\n", n_body->len, n_body->s);
 	}
-	if(n_body== NULL)
-	{
-		LM_ERR("while aggregating body\n");
+	if(n_body== NULL) {
+		LM_ERR("while aggregating body for: %.*s\n", pres_user->len, pres_user->s);
 	}
 
 	pkg_free(body);

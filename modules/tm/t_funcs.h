@@ -190,6 +190,7 @@ int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 
 
 void put_on_wait(  struct cell  *Trans  );
+int t_on_wait(tm_cell_t *Trans);
 
 
 int t_relay_to( struct sip_msg  *p_msg ,

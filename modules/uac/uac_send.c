@@ -178,13 +178,19 @@ int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
 int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
+	pv_value_t *tval;
+
 	if(param==NULL || tmb.t_request==NULL)
 		return -1;
 
+	tval = val;
+	if((tval!=NULL) && (tval->flags&PV_VAL_NULL)) {
+		tval = NULL;
+	}
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 0:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.flags = 0;
 				_uac_req.s_ruri.len = 0;
@@ -202,278 +208,278 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 			}
 			break;
 		case 1:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_ruri.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->rs.len>=MAX_URI_SIZE)
+			if(tval->rs.len>=MAX_URI_SIZE)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_ruri.s, val->rs.s, val->rs.len);
-			_uac_req.s_ruri.s[val->rs.len] = '\0';
-			_uac_req.s_ruri.len = val->rs.len;
+			memcpy(_uac_req.s_ruri.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_ruri.s[tval->rs.len] = '\0';
+			_uac_req.s_ruri.len = tval->rs.len;
 			break;
 		case 2:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_turi.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->rs.len>=MAX_URI_SIZE)
+			if(tval->rs.len>=MAX_URI_SIZE)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_turi.s, val->rs.s, val->rs.len);
-			_uac_req.s_turi.s[val->rs.len] = '\0';
-			_uac_req.s_turi.len = val->rs.len;
+			memcpy(_uac_req.s_turi.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_turi.s[tval->rs.len] = '\0';
+			_uac_req.s_turi.len = tval->rs.len;
 			break;
 		case 3:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_furi.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->rs.len>=MAX_URI_SIZE)
+			if(tval->rs.len>=MAX_URI_SIZE)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_furi.s, val->rs.s, val->rs.len);
-			_uac_req.s_furi.s[val->rs.len] = '\0';
-			_uac_req.s_furi.len = val->rs.len;
+			memcpy(_uac_req.s_furi.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_furi.s[tval->rs.len] = '\0';
+			_uac_req.s_furi.len = tval->rs.len;
 			break;
 		case 4:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_hdrs.len = 0;
 				return 0;
 			}
-						if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->rs.len>=MAX_UACH_SIZE)
+			if(tval->rs.len>=MAX_UACH_SIZE)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_hdrs.s, val->rs.s, val->rs.len);
-			_uac_req.s_hdrs.s[val->rs.len] = '\0';
-			_uac_req.s_hdrs.len = val->rs.len;
+			memcpy(_uac_req.s_hdrs.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_hdrs.s[tval->rs.len] = '\0';
+			_uac_req.s_hdrs.len = tval->rs.len;
 			break;
 		case 5:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_body.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->rs.len>=MAX_UACB_SIZE)
+			if(tval->rs.len>=MAX_UACB_SIZE)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_body.s, val->rs.s, val->rs.len);
-			_uac_req.s_body.s[val->rs.len] = '\0';
-			_uac_req.s_body.len = val->rs.len;
+			memcpy(_uac_req.s_body.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_body.s[tval->rs.len] = '\0';
+			_uac_req.s_body.len = tval->rs.len;
 			break;
 		case 6:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_ouri.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->rs.len>=MAX_URI_SIZE)
+			if(tval->rs.len>=MAX_URI_SIZE)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_ouri.s, val->rs.s, val->rs.len);
-			_uac_req.s_ouri.s[val->rs.len] = '\0';
-			_uac_req.s_ouri.len = val->rs.len;
+			memcpy(_uac_req.s_ouri.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_ouri.s[tval->rs.len] = '\0';
+			_uac_req.s_ouri.len = tval->rs.len;
 			break;
 		case 7:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_method.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->rs.len>=32)
+			if(tval->rs.len>=32)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_method.s, val->rs.s, val->rs.len);
-			_uac_req.s_method.s[val->rs.len] = '\0';
-			_uac_req.s_method.len = val->rs.len;
+			memcpy(_uac_req.s_method.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_method.s[tval->rs.len] = '\0';
+			_uac_req.s_method.len = tval->rs.len;
 			break;
 		case 8:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.evroute = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_INT))
+			if(!(tval->flags&PV_VAL_INT))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			_uac_req.evroute = val->ri;
+			_uac_req.evroute = tval->ri;
 			break;
 		case 9:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_auser.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid auth user type\n");
 				return -1;
 			}
-			if(val->rs.len>=128)
+			if(tval->rs.len>=128)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_auser.s, val->rs.s, val->rs.len);
-			_uac_req.s_auser.s[val->rs.len] = '\0';
-			_uac_req.s_auser.len = val->rs.len;
+			memcpy(_uac_req.s_auser.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_auser.s[tval->rs.len] = '\0';
+			_uac_req.s_auser.len = tval->rs.len;
 			break;
 		case 10:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_apasswd.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid auth password type\n");
 				return -1;
 			}
-			if(val->rs.len>=64)
+			if(tval->rs.len>=64)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_apasswd.s, val->rs.s, val->rs.len);
-			_uac_req.s_apasswd.s[val->rs.len] = '\0';
-			_uac_req.s_apasswd.len = val->rs.len;
+			memcpy(_uac_req.s_apasswd.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_apasswd.s[tval->rs.len] = '\0';
+			_uac_req.s_apasswd.len = tval->rs.len;
 			break;
 		case 11:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_callid.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_callid.s, val->rs.s, val->rs.len);
-			_uac_req.s_callid.s[val->rs.len] = '\0';
-			_uac_req.s_callid.len = val->rs.len;
+			memcpy(_uac_req.s_callid.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_callid.s[tval->rs.len] = '\0';
+			_uac_req.s_callid.len = tval->rs.len;
 			break;
 		case 12:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_apasswd.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid socket pv type\n");
 				return -1;
 			}
-			if(val->rs.len>=MAX_URI_SIZE)
+			if(tval->rs.len>=MAX_URI_SIZE)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_sock.s, val->rs.s, val->rs.len);
-			_uac_req.s_sock.s[val->rs.len] = '\0';
-			_uac_req.s_sock.len = val->rs.len;
+			memcpy(_uac_req.s_sock.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_sock.s[tval->rs.len] = '\0';
+			_uac_req.s_sock.len = tval->rs.len;
 			break;
 		case 14:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.s_evparam.len = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_STR))
+			if(!(tval->flags&PV_VAL_STR))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			if(val->rs.len>=MAX_UACD_SIZE)
+			if(tval->rs.len>=MAX_UACD_SIZE)
 			{
 				LM_ERR("Value size too big\n");
 				return -1;
 			}
-			memcpy(_uac_req.s_evparam.s, val->rs.s, val->rs.len);
-			_uac_req.s_evparam.s[val->rs.len] = '\0';
-			_uac_req.s_evparam.len = val->rs.len;
+			memcpy(_uac_req.s_evparam.s, tval->rs.s, tval->rs.len);
+			_uac_req.s_evparam.s[tval->rs.len] = '\0';
+			_uac_req.s_evparam.len = tval->rs.len;
 			break;
 		case 15:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.evcode = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_INT))
+			if(!(tval->flags&PV_VAL_INT))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			_uac_req.evcode = val->ri;
+			_uac_req.evcode = tval->ri;
 			break;
 		case 16:
-			if(val==NULL)
+			if(tval==NULL)
 			{
 				_uac_req.evtype = 0;
 				return 0;
 			}
-			if(!(val->flags&PV_VAL_INT))
+			if(!(tval->flags&PV_VAL_INT))
 			{
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
-			_uac_req.evtype = val->ri;
+			_uac_req.evtype = tval->ri;
 			break;
 	}
 	return 0;

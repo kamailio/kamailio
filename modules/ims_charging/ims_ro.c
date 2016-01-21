@@ -42,6 +42,8 @@ extern cdp_avp_bind_t *cdp_avp;
 extern str ro_forced_peer;
 extern int ro_db_mode;
 extern struct ims_charging_counters_h ims_charging_cnts_h;
+extern int vendor_specific_id;
+extern int vendor_specific_chargeinfo;
 
 struct session_setup_data {
     struct ro_session *ro_session;
@@ -179,6 +181,21 @@ inline int Ro_add_termination_cause(AAAMessage *msg, unsigned int term_code) {
 
     return Ro_add_avp(msg, s.s, s.len, AVP_Termination_Cause, AAA_AVP_FLAG_MANDATORY, 0, AVP_DUPLICATE_DATA, __FUNCTION__);
 }
+
+inline int Ro_add_vendor_specific_termination_cause(AAAMessage *msg, unsigned int term_code) {
+    char x[4];
+    str s = {x, 4};
+    uint32_t code = htonl(term_code);
+    memcpy(x, &code, sizeof (uint32_t));
+
+    return Ro_add_avp(msg, s.s, s.len, VS_TERMCODE, AAA_AVP_FLAG_VENDOR_SPECIFIC, 10, AVP_DUPLICATE_DATA, __FUNCTION__);
+}
+
+inline int Ro_add_vendor_specific_termination_reason(AAAMessage *msg, str* reason) {
+    return Ro_add_avp(msg, reason->s, reason->len, VS_TERMREASON, AAA_AVP_FLAG_VENDOR_SPECIFIC, 10, AVP_DUPLICATE_DATA, __FUNCTION__);
+}
+
+
 
 /* called only when building stop record AVPS */
 inline int Ro_add_multiple_service_credit_Control_stop(AAAMessage *msg, int used_unit, int active_rating_group, int active_service_identifier) {
@@ -721,6 +738,7 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
     goto success;
 
 error:
+    counter_inc(ims_charging_cnts_h.failed_interim_ccr);  
     if (ro_cca_data)
         Ro_free_CCA(ro_cca_data);
 
@@ -744,7 +762,7 @@ long get_current_time_micro() {
     return tv.tv_sec*1000000 + tv.tv_usec;
 }
 
-void send_ccr_stop(struct ro_session *ro_session) {
+void send_ccr_stop_with_param(struct ro_session *ro_session, unsigned int code, str* reason) {
     AAASession * auth = 0;
     Ro_CCR_t * ro_ccr_data = 0;
     AAAMessage * ccr = 0;
@@ -755,9 +773,29 @@ void send_ccr_stop(struct ro_session *ro_session) {
     long used = 0;
     str user_name = {0, 0};
     int ret = 0;
+    time_t stop_time;
+    time_t actual_time_micros;
+    int actual_time_seconds;
+
+    stop_time = get_current_time_micro();
+
+    if (ro_session->start_time == 0)
+        actual_time_micros = 0;
+    else
+        actual_time_micros = stop_time - ro_session->start_time;
+
+    actual_time_seconds = (actual_time_micros + (1000000 - 1)) / (float) 1000000;
 
     if (ro_session->event_type != pending) {
-        used = rint((get_current_time_micro() - ro_session->last_event_timestamp)/(float)1000000);
+        used = rint((stop_time - ro_session->last_event_timestamp) / (float) 1000000);
+        LM_DBG("Final used number of seconds for session is %ld\n", used);
+    }
+
+    LM_DBG("Call started at %ld and ended at %ld and lasted %d seconds and so far we have billed for %ld seconds\n", ro_session->start_time, stop_time,
+            actual_time_seconds, ro_session->billed + used);
+    if (ro_session->billed + used < actual_time_seconds) {
+        LM_DBG("Making adjustment by adding %ld seconds\n", actual_time_seconds - (ro_session->billed + used));
+        used += actual_time_seconds - (ro_session->billed + used);
     }
 
     counter_add(ims_charging_cnts_h.billed_secs, (int)used);
@@ -869,6 +907,16 @@ void send_ccr_stop(struct ro_session *ro_session) {
         LM_ERR("problem add Termination cause AVP to STOP record.\n");
     }
 
+    if (vendor_specific_chargeinfo) {
+        if (!Ro_add_vendor_specific_termination_cause(ccr, code)) {
+            LM_ERR("problem add Termination cause AVP to STOP record.\n");
+        }
+
+        if (!Ro_add_vendor_specific_termination_reason(ccr, reason)) {
+            LM_ERR("problem add Termination cause AVP to STOP record.\n");
+        }
+    }
+
     cdpb.AAASessionsUnlock(auth->hash);
 
     if (ro_forced_peer.len > 0) {
@@ -884,7 +932,7 @@ void send_ccr_stop(struct ro_session *ro_session) {
     Ro_free_CCR(ro_ccr_data);
 
     counter_inc(ims_charging_cnts_h.final_ccrs);
-    counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
+//    counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
     return;
 
 error1:
@@ -915,6 +963,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
 
     if (!cca) {
         LM_ERR("Error in termination CCR.\n");
+        counter_inc(ims_charging_cnts_h.failed_final_ccrs); 
         return;
     }
 
@@ -922,6 +971,7 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
 
     if (ro_cca_data == NULL) {
         LM_DBG("Could not parse CCA message response.\n");
+        counter_inc(ims_charging_cnts_h.failed_final_ccrs); 
         return;
     }
 
@@ -933,8 +983,14 @@ static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *c
     }
 
     counter_inc(ims_charging_cnts_h.successful_final_ccrs);
+    Ro_free_CCA(ro_cca_data);
+    if (!is_timeout && cca) {
+        cdpb.AAAFreeMessage(&cca);
+    }
+    return;
 
 error:
+    counter_inc(ims_charging_cnts_h.failed_final_ccrs);      
     Ro_free_CCA(ro_cca_data);
     if (!is_timeout && cca) {
         cdpb.AAAFreeMessage(&cca);
@@ -1138,6 +1194,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     LM_DBG("new CC Ro Session ID: [%.*s] stored in shared memory address [%p]\n", cc_acc_session->id.len, cc_acc_session->id.s, new_session);
 
     LM_DBG("Sending CCR Diameter message.\n");
+//    new_session->ccr_sent = 1;      //assume we will send successfully
     cdpb.AAASessionsUnlock(cc_acc_session->hash);
 
     if (ro_forced_peer.len > 0) {
@@ -1150,6 +1207,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
 
     if (ret != 1) {
         LM_ERR("Failed to send Diameter CCR\n");
+//        new_session->ccr_sent = 0;
         goto error;
     }
 
@@ -1164,6 +1222,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     }
 
     counter_inc(ims_charging_cnts_h.initial_ccrs);
+    counter_inc(ims_charging_cnts_h.active_ro_sessions);
 
     if (free_called_asserted_identity) shm_free(called_asserted_identity.s); // shm_malloc in cscf_get_public_identity_from_requri	
     return RO_RETURN_BREAK;
@@ -1255,13 +1314,17 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     ssd->ro_session->event_type = pending;
     ssd->ro_session->reserved_secs = ro_cca_data->mscc->granted_service_unit->cc_time;
     ssd->ro_session->valid_for = ro_cca_data->mscc->validity_time;
+    ssd->ro_session->is_final_allocation = 0;
+
+    if (ro_cca_data->mscc->final_unit_action && (ro_cca_data->mscc->final_unit_action->action == 0))
+        ssd->ro_session->is_final_allocation = 1;
 
     Ro_free_CCA(ro_cca_data);
 
     LM_DBG("Freeing CCA message\n");
     cdpb.AAAFreeMessage(&cca);
 
-    link_ro_session(ssd->ro_session, 1); /* create extra ref for the fact that dialog has a handle in the callbacks */
+    link_ro_session(ssd->ro_session, 0); 
 
     if (ro_db_mode == DB_MODE_REALTIME) {
         ssd->ro_session->flags |= RO_SESSION_FLAG_NEW;
@@ -1281,7 +1344,6 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     shm_free(ssd);
 
     counter_inc(ims_charging_cnts_h.successful_initial_ccrs);
-    counter_inc(ims_charging_cnts_h.active_ro_sessions);
 
     return;
 
@@ -1290,6 +1352,8 @@ error1:
 
 error0:
     LM_DBG("Trying to reserve credit on initial INVITE failed on cdp callback\n");
+//    counter_add(ims_charging_cnts_h.active_ro_sessions, -1); /*we bumped active on the original initial ccr sent */
+    counter_inc(ims_charging_cnts_h.failed_initial_ccrs);      /* drop by one as theoretically this is failed initial ccr */
     create_cca_return_code(error_code);
 
     if (!is_timeout && cca) {

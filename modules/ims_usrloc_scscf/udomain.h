@@ -226,7 +226,7 @@ int delete_impurecord(udomain_t* _d, str* _aor, struct impurecord* _r);
  * barring-0 get all unbarred
  * barring-(-1) get all records
  */
-int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus);
+int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus, int is_shm);
 
 int get_subscription(str* impi_s, ims_subscription** s, int leave_slot_locked);
 void add_subscription(ims_subscription* s);

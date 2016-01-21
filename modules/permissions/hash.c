@@ -44,6 +44,9 @@ static int_str tag_avp;
 extern int peer_tag_mode;
 
 
+extern int _perm_max_subnets;
+
+#define PERM_MAX_SUBNETS _perm_max_subnets
 
 /*
  * Parse and set tag AVP specs

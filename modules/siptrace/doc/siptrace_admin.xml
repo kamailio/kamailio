@@ -469,6 +469,30 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 </programlisting>
                 </example>
         </section>
+	<section id="siptrace.p.trace_mode">
+                <title><varname>trace_mode</varname> (integer)</title>
+                <para>
+				If set to 1, the module uses core events triggered when receiving
+				or sending SIP traffic to mirror traffic to a SIP capture server
+				using HEP. It will automatically do the mirroring of all traffic,
+				no need to set the siptrace flag per request.
+                </para>
+                <para>
+                If set to 0, no automatic mirroring of SIP traffic via HEP.
+                </para>
+                <para>
+                Default value is <emphasis>0</emphasis>.
+                </para>
+                <example>
+                <title>Set <varname>trace_mode</varname>
+                parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("siptrace", "trace_mode", 1)
+...
+</programlisting>
+                </example>
+        </section>
 	</section>
 	
 	<section>

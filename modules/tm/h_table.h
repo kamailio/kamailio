@@ -553,8 +553,9 @@ struct s_table* tm_get_table(void);
 struct s_table* init_hash_table(void);
 void   free_hash_table(void);
 
-void   free_cell_helper( struct cell* dead_cell, const char *fname, unsigned int fline);
-#define free_cell(t) free_cell_helper((t), __FILE__, __LINE__)
+void   free_cell_helper(tm_cell_t* dead_cell, int silent, const char *fname, unsigned int fline);
+#define free_cell(t) free_cell_helper((t), 0, __FILE__, __LINE__)
+#define free_cell_silent(t) free_cell_helper((t), 1, __FILE__, __LINE__)
 
 struct cell*  build_cell( struct sip_msg* p_msg );
 

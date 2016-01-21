@@ -93,8 +93,9 @@ void free_tm_stats()
 		(res)->completed_5xx=(s1)->completed_5xx+(s2)->completed_5xx; \
 		(res)->completed_6xx=(s1)->completed_6xx+(s2)->completed_6xx; \
 		(res)->completed_2xx=(s1)->completed_2xx+(s2)->completed_2xx; \
-		(res)->replied_locally=(s1)->replied_locally+(s2)->replied_locally; \
-		(res)->replied_total=(s1)->replied_total+(s2)->replied_total; \
+		(res)->rpl_received=(s1)->rpl_received+(s2)->rpl_received; \
+		(res)->rpl_generated=(s1)->rpl_generated+(s2)->rpl_generated; \
+		(res)->rpl_sent=(s1)->rpl_sent+(s2)->rpl_sent; \
 		(res)->deleted=(s1)->deleted+(s2)->deleted; \
 	}while(0)
 
@@ -137,7 +138,9 @@ void tm_rpc_stats(rpc_t* rpc, void* c)
 										 (unsigned) waiting);
 	rpc->struct_add(st, "d", "total", (unsigned) all.transactions);
 	rpc->struct_add(st, "d", "total_local", (unsigned)all.client_transactions);
-	rpc->struct_add(st, "d", "replied_locally", (unsigned)all.replied_locally);
+	rpc->struct_add(st, "d", "rpl_received", (unsigned)all.rpl_received);
+	rpc->struct_add(st, "d", "rpl_generated", (unsigned)all.rpl_generated);
+	rpc->struct_add(st, "d", "rpl_sent", (unsigned)all.rpl_sent);
 	rpc->struct_add(st, "ddddd", 
 			"6xx", (unsigned int)all.completed_6xx,
 			"5xx", (unsigned int)all.completed_5xx,

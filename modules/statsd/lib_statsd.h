@@ -1,8 +1,6 @@
+#include <stdbool.h>
 
 #define BUFFER_SIZE 8192
-typedef int Bool;
-#define True 1
-#define False 0
 
 typedef struct StatsConnection{
     char *ip;
@@ -17,11 +15,11 @@ typedef struct StatsdSocket {
     char data[BUFFER_SIZE]; // buffer for the answer data
 } StatsdSocket;
 
-int statsd_connect(void);
-int send_command(char *command);
-int statsd_set(char *key, char *value);
-int statsd_gauge(char *key, char *value);
-int statsd_count(char *key, char *value);
-int statsd_timing(char *key, int value);
-int statsd_init(char *ip, char *port);
-int statsd_destroy(void);
+bool statsd_connect(void);
+bool send_command(char *command);
+bool statsd_set(char *key, char *value);
+bool statsd_gauge(char *key, char *value);
+bool statsd_count(char *key, char *value);
+bool statsd_timing(char *key, int value);
+bool statsd_init(char *ip, char *port);
+bool statsd_destroy(void);

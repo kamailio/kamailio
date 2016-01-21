@@ -136,6 +136,11 @@ struct receive_info{
 	/* no need for dst_su yet */
 };
 
+typedef struct sr_net_info {
+	str data;
+	struct dest_info* dst;
+	struct receive_info* rcv;
+} sr_net_info_t;
 
 /* send flags */
 #define SND_F_FORCE_CON_REUSE	1 /* reuse an existing connection or fail */

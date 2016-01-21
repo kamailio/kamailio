@@ -1306,8 +1306,10 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 
 11.4. tls.reload
 
-   Reload the external TLS configuration file. (Does not reload modparam()
-   parameters)
+   Reload the external TLS configuration file (aka tls.cfg). It does not
+   reload modparam() parameters. Note that existing active TLS connections
+   are not terminated and they continue to use the old certificates. New
+   configuration will be used for new connections.
 
    Parameters:
      * None.

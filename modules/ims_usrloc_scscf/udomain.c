@@ -626,7 +626,7 @@ int delete_impurecord(udomain_t* _d, str* _aor, struct impurecord* _r) {
  * barring-(-1) get all records
  * NB. Remember to free the block of memory pointed to by impus (pkg_malloc)
  */
-int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus) {
+int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus, int is_shm) {
     int i, j, count;
     *num_impus = 0;
     *impus = 0;
@@ -669,9 +669,16 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     LM_DBG("num of records returned is %d and we need %d bytes\n", *num_impus, bytes_needed);
 
     len = (sizeof (str)*(*num_impus)) + bytes_needed;
-    *impus = (str*) pkg_malloc(len); //TODO: rather put this on the stack... dont' fragment pkg....
+    if (is_shm)
+        *impus = (str*) shm_malloc(len); 
+    else 
+        *impus = (str*) pkg_malloc(len); //TODO: rather put this on the stack... dont' fragment pkg....
+    
     if (*impus == 0) {
-        LM_ERR("no more pkg_mem\n");
+        if (is_shm)
+            LM_ERR("no more shm_mem\n");
+        else 
+            LM_ERR("no more pkg_mem\n");
         return 1;
     }
     char* ptr = (char*) (*impus + *num_impus);

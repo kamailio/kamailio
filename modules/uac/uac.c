@@ -102,21 +102,21 @@ static pv_export_t mod_pvs[] = {
 /* Exported functions */
 static cmd_export_t cmds[]={
 	{"uac_replace_from",  (cmd_function)w_replace_from,  2, fixup_replace_uri, 0,
-			REQUEST_ROUTE | BRANCH_ROUTE },
+		REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_replace_from",  (cmd_function)w_replace_from,  1, fixup_replace_uri, 0,
-			REQUEST_ROUTE | BRANCH_ROUTE },
+		REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_restore_from",  (cmd_function)w_restore_from,  0,                  0, 0,
-			REQUEST_ROUTE },
+		REQUEST_ROUTE },
 	{"uac_replace_to",  (cmd_function)w_replace_to,  2, fixup_replace_uri, 0,
-		 	REQUEST_ROUTE | BRANCH_ROUTE },
+		REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_replace_to",  (cmd_function)w_replace_to,  1, fixup_replace_uri, 0,
-			REQUEST_ROUTE | BRANCH_ROUTE },
+		REQUEST_ROUTE | BRANCH_ROUTE },
 	{"uac_restore_to",  (cmd_function)w_restore_to,  0, 0, 0,
-			REQUEST_ROUTE },
+		REQUEST_ROUTE },
 	{"uac_auth",          (cmd_function)w_uac_auth,       0,                  0, 0,
-			FAILURE_ROUTE },
+		FAILURE_ROUTE },
 	{"uac_req_send",  (cmd_function)w_uac_req_send,       0,                  0, 0,
-			ANY_ROUTE},
+		ANY_ROUTE},
 	{"uac_reg_lookup",  (cmd_function)w_uac_reg_lookup,  2, fixup_pvar_pvar,
 		fixup_free_pvar_pvar, ANY_ROUTE },
 	{"uac_reg_request_to",  (cmd_function)w_uac_reg_request_to,  2, fixup_pvar_uint, fixup_free_pvar_uint,
@@ -144,8 +144,8 @@ static param_export_t params[] = {
 	{"reg_db_url",        PARAM_STR,                &reg_db_url          },
 	{"reg_db_table",      PARAM_STR,                &reg_db_table        },
 	{"reg_contact_addr",  PARAM_STR,                &reg_contact_addr    },
-	{"reg_timer_interval", INT_PARAM,		&reg_timer_interval	},
-	{"reg_retry_interval",INT_PARAM,                &reg_retry_interval    },
+	{"reg_timer_interval", INT_PARAM,               &reg_timer_interval	},
+	{"reg_retry_interval", INT_PARAM,               &reg_retry_interval    },
 	{0, 0, 0}
 };
 
@@ -185,10 +185,10 @@ static int mod_init(void)
 
 	if (restore_mode_str && *restore_mode_str) {
 		if (strcasecmp(restore_mode_str,"none")==0) {
-	    	restore_mode = UAC_NO_RESTORE;
-	    } else if (strcasecmp(restore_mode_str,"manual")==0) {
-	    	restore_mode = UAC_MANUAL_RESTORE;
-	    } else if (strcasecmp(restore_mode_str,"auto")==0) {
+			restore_mode = UAC_NO_RESTORE;
+		} else if (strcasecmp(restore_mode_str,"manual")==0) {
+			restore_mode = UAC_MANUAL_RESTORE;
+		} else if (strcasecmp(restore_mode_str,"auto")==0) {
 			restore_mode = UAC_AUTO_RESTORE;
 		} else {
 			LM_ERR("unsupported value '%s' for restore_mode\n",  restore_mode_str);
@@ -209,9 +209,9 @@ static int mod_init(void)
 			goto error;
 		}
 		if ( parse_auth_avp(auth_realm_avp, &auth_realm_spec, "realm")<0
-		|| parse_auth_avp(auth_username_avp, &auth_username_spec, "username")<0
-		|| parse_auth_avp(auth_password_avp, &auth_password_spec, "password")<0
-		) {
+				|| parse_auth_avp(auth_username_avp, &auth_username_spec, "username")<0
+				|| parse_auth_avp(auth_password_avp, &auth_password_spec, "password")<0
+		   ) {
 			goto error;
 		}
 	} else {
@@ -275,7 +275,7 @@ static int mod_init(void)
 			if (uac_restore_dlg==0 || load_dlg_api(&dlg_api)!=0) {
 				if (!uac_rrb.append_fromtag) {
 					LM_ERR("'append_fromtag' RR param is not enabled!"
-						" - required by AUTO restore mode\n");
+							" - required by AUTO restore mode\n");
 					goto error;
 				}
 				if (uac_restore_dlg!=0)
@@ -415,9 +415,9 @@ int w_replace_from(struct sip_msg* msg, char* p1, char* p2)
 	str *dsp = NULL;
 
 	if (p2==NULL) {
-		 p2 = p1;
-		 p1 = NULL;
-		 dsp = NULL;
+		p2 = p1;
+		p1 = NULL;
+		dsp = NULL;
 	}
 
 	/* p1 display , p2 uri */
@@ -487,7 +487,7 @@ static int w_replace_to(struct sip_msg* msg, char* p1, char* p2)
 		dsp = NULL;
 	}
 
-	 /* p1 display , p2 uri */
+	/* p1 display , p2 uri */
 
 	if( p1!=NULL ) {
 		if(pv_printf_s( msg, (pv_elem_p)p1, &dsp_s)!=0)
@@ -553,8 +553,8 @@ static int w_uac_reg_lookup(struct sip_msg* msg,  char* src, char* dst)
 
 	if (!(val.flags & PV_VAL_STR))
 	{
-	    LM_ERR("src pv value is not string\n");
-	    return -1;
+		LM_ERR("src pv value is not string\n");
+		return -1;
 	}
 	return uac_reg_lookup(msg, &val.rs, dpv, 0);
 }
@@ -577,8 +577,8 @@ static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s)
 
 	if (!(val.flags & PV_VAL_STR))
 	{
-	    LM_ERR("src pv value is not string\n");
-	    return -1;
+		LM_ERR("src pv value is not string\n");
+		return -1;
 	}
 
 	if (mode > 1)

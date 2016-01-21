@@ -34,6 +34,9 @@
 #define SREV_TCP_WS_FRAME_IN		10
 #define SREV_TCP_WS_FRAME_OUT		11
 #define SREV_STUN_IN			12
+#define SREV_TCP_CLOSED			13
+#define SREV_NET_DATA_RECV		14
+#define SREV_NET_DATA_SEND		15
 
 #define SREV_CB_LIST_SIZE	3
 
@@ -52,6 +55,9 @@ typedef struct sr_event_cb {
 	sr_event_cb_f tcp_ws_frame_out;
 	sr_event_cb_f stun_in;
 	sr_event_cb_f rcv_nosip;
+	sr_event_cb_f tcp_closed;
+	sr_event_cb_f net_data_recv;
+	sr_event_cb_f net_data_send;
 } sr_event_cb_t;
 
 void sr_event_cb_init(void);

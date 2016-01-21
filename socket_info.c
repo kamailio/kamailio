@@ -41,6 +41,7 @@
 
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <ifaddrs.h>
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
@@ -1129,7 +1130,8 @@ error:
 	return -1;
 
 }
-/* add all family type addresses of interface if_to the socket_info array
+/* add all family type addresses of interface if_name to the socket_info array
+ * if family ==0, uses all families
  * if if_name==0, adds all addresses on all interfaces
  * uses RTNETLINK sockets to get addresses on the present interface on LINUX
  * return: -1 on error, 0 on success
@@ -1160,7 +1162,7 @@ int add_interfaces_via_netlink(char* if_name, int family, unsigned short port,
 				LM_DBG("in add_iface_via_netlink Name %s Address %s\n",
 							ifaces[i].name, tmp->addr);
 					/* match family */
-					if (family == tmp->family){
+					if (family && family == tmp->family){
 					/* check if loopback */
 					if (ifaces[i].flags & IFF_LOOPBACK){
 						LM_DBG("INTERFACE %s is loopback", ifaces[i].name);
@@ -1182,129 +1184,51 @@ error:
 #endif /* __OS_linux */
 
 /* add all family type addresses of interface if_name to the socket_info array
+ * if family ==0, uses all families
  * if if_name==0, adds all addresses on all interfaces
- * WARNING: it only works with ipv6 addresses on FreeBSD
  * return: -1 on error, 0 on success
  */
 int add_interfaces(char* if_name, int family, unsigned short port,
 					unsigned short proto,
 					struct addr_info** ai_l)
 {
-	struct ifconf ifc;
-	struct ifreq ifr;
-	struct ifreq ifrcopy;
-	char*  last;
-	char* p;
-	int size;
-	int lastlen;
-	int s;
 	char* tmp;
 	struct ip_addr addr;
-	int ret;
+	int ret = -1;
 	enum si_flags flags;
+	struct ifaddrs *ifap, *ifa;
 
-#ifdef HAVE_SOCKADDR_SA_LEN
-	#ifndef MAX
-		#define MAX(a,b) ( ((a)>(b))?(a):(b))
-	#endif
-#endif
-	/* ipv4 or ipv6 only*/
-	flags=SI_NONE;
-	s=socket(family, SOCK_DGRAM, 0);
-	ret=-1;
-	lastlen=0;
-	ifc.ifc_req=0;
-	for (size=100; ; size*=2){
-		ifc.ifc_len=size*sizeof(struct ifreq);
-		ifc.ifc_req=(struct ifreq*) pkg_malloc(size*sizeof(struct ifreq));
-		if (ifc.ifc_req==0){
-			LM_ERR("memory allocation failure\n");
-			goto error;
-		}
-		if (ioctl(s, SIOCGIFCONF, &ifc)==-1){
-			if(errno==EBADF) return 0; /* invalid descriptor => no such ifs*/
-			LM_ERR("ioctl failed: %s\n", strerror(errno));
-			goto error;
-		}
-		if  ((lastlen) && (ifc.ifc_len==lastlen)) break; /*success,
-														   len not changed*/
-		lastlen=ifc.ifc_len;
-		/* try a bigger array*/
-		pkg_free(ifc.ifc_req);
-	}
-	
-	last=(char*)ifc.ifc_req+ifc.ifc_len;
-	for(p=(char*)ifc.ifc_req; p<last;
-			p+=
-			#ifdef __OS_linux
-				sizeof(ifr) /* works on x86_64 too */
-			#else
-				(sizeof(ifr.ifr_name)+
-				#ifdef  HAVE_SOCKADDR_SA_LEN
-					MAX(ifr.ifr_addr.sa_len, sizeof(struct sockaddr))
-				#else
-					( (ifr.ifr_addr.sa_family==AF_INET)?
-						sizeof(struct sockaddr_in):
-						((ifr.ifr_addr.sa_family==AF_INET6)?
-						sizeof(struct sockaddr_in6):sizeof(struct sockaddr)) )
-				#endif
-				)
-			#endif
-		)
+	if (getifaddrs (&ifap) != 0) {
+		LM_ERR("getifaddrs failed\n");
+		return -1;
+        }
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
 	{
-		/* copy contents into ifr structure
-		 * warning: it might be longer (e.g. ipv6 address) */
-		memcpy(&ifr, p, sizeof(ifr));
-		if (ifr.ifr_addr.sa_family!=family){
-			/*printf("strange family %d skipping...\n",
-					ifr->ifr_addr.sa_family);*/
+		if (if_name && strcmp(if_name, ifa->ifa_name))
 			continue;
+		if (family && family != ifa->ifa_addr->sa_family)
+			continue;
+		sockaddr2ip_addr(&addr, (struct sockaddr*)ifa->ifa_addr);
+		tmp=ip_addr2a(&addr);
+		if (ifa->ifa_flags & IFF_LOOPBACK) 
+			flags = SI_IS_LO;
+		else
+			flags = SI_NONE;
+		if (new_addr_info2list(tmp, flags, ai_l)!=0)
+		{
+			LM_ERR("new_addr_info2list failed\n");
+			ret = -1;
+			break;
 		}
-		
-		/*get flags*/
-		ifrcopy=ifr;
-		if (ioctl(s, SIOCGIFFLAGS,  &ifrcopy)!=-1){ /* ignore errors */
-			/* ignore down ifs only if listening on all of them*/
-			if (if_name==0){ 
-				/* if if not up, skip it*/
-				if (!(ifrcopy.ifr_flags & IFF_UP)) continue;
-			}
-		}
-		
-		
-		
-		if ((if_name==0)||
-			(strncmp(if_name, ifr.ifr_name, sizeof(ifr.ifr_name))==0)){
-			
-			/*add address*/
-			sockaddr2ip_addr(&addr, 
-					(struct sockaddr*)(p+(long)&((struct ifreq*)0)->ifr_addr));
-			if ((tmp=ip_addr2a(&addr))==0) goto error;
-			/* check if loopback */
-			if (ifrcopy.ifr_flags & IFF_LOOPBACK) 
-				flags|=SI_IS_LO;
-			/* save the info */
-			if (new_addr_info2list(tmp, flags, ai_l)!=0){
-				LM_ERR("new_addr_info2list failed\n");
-				goto error;
-			}
-			ret=0;
-		}
-			/*
-			printf("%s:\n", ifr->ifr_name);
-			printf("        ");
-			print_sockaddr(&(ifr->ifr_addr));
-			printf("        ");
-			ls_ifflags(ifr->ifr_name, family, options);
-			printf("\n");*/
+		LM_DBG("If: %8s Fam: %8x Flg: %16lx Adr: %s\n",
+				ifa->ifa_name, ifa->ifa_addr->sa_family,
+				(unsigned long)ifa->ifa_flags, tmp);
+
+		ret = 0;
 	}
-	pkg_free(ifc.ifc_req); /*clean up*/
-	close(s);
+	freeifaddrs(ifap);
 	return  ret;
-error:
-	if (ifc.ifc_req) pkg_free(ifc.ifc_req);
-	close(s);
-	return -1;
 }
 
 
@@ -1474,7 +1398,7 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 	for (si=*list;si;){
 		next=si->next;
 		ai_lst=0;
-		if (add_interfaces(si->name.s, AF_INET, si->port_no,
+		if (add_interfaces(si->name.s, 0, si->port_no,
 							si->proto, &ai_lst)!=-1){
 			if (si->flags & SI_IS_MHOMED){
 				if((new_si=new_sock2list_after(ai_lst->name.s, 0, si->port_no,

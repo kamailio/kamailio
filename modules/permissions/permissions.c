@@ -88,6 +88,8 @@ str port_col = str_init("port");           /* Name of port column */
 static int check_all_branches = 1;
 
 
+int _perm_max_subnets = 512;
+
 /*  
  * Convert the name of the files into table index
  */
@@ -178,6 +180,7 @@ static param_export_t params[] = {
 	{"ip_addr_col",        PARAM_STR, &ip_addr_col     },
 	{"mask_col",           PARAM_STR, &mask_col        },
 	{"port_col",           PARAM_STR, &port_col        },
+	{"max_subnets",        PARAM_INT, &_perm_max_subnets },
 	{0, 0, 0}
 };
 

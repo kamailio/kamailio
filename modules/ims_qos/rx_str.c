@@ -107,7 +107,7 @@ int rx_send_str(str *rx_session_id) {
         // so just wait for STA or for Grace Timout to happen
         LM_DBG("Hmmm, auth session already in disconnected state\n");
         cdpb.AAASessionsUnlock(auth->hash);
-		CSCF_RETURN_FALSE;
+        return CSCF_RETURN_FALSE;
     }
 
     LM_DBG("Creating STR\n");

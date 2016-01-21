@@ -6,6 +6,11 @@
 #include "../dialog_ng/dlg_hash.h"
 #include "ro_session_hash.h"
 
+typedef enum {
+    VS_TERMCODE = 3,
+    VS_TERMREASON = 2
+} vs_term_avp;
+
 struct interim_ccr {
 	struct ro_session* ro_session;
 	int new_credit;
@@ -19,7 +24,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
 	    str *incoming_trunk_id, str *outgoing_trunk_id, str *enb_cell_id, cfg_action_t* action, unsigned int tindex, unsigned int tlabel);
 long get_current_time_micro();
 void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned int reserve);
-void send_ccr_stop(struct ro_session *ro_session);
+void send_ccr_stop_with_param(struct ro_session *ro_session, unsigned int code, str* reason);
 int get_direction_as_int(str* direction);
 
 #endif /* CLIENT_RF_IMS_RO_H */

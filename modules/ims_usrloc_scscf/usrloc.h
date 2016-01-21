@@ -496,7 +496,7 @@ typedef int (*get_subscriber_t)(impurecord_t* urec, str *watcher_contact, str *p
 typedef int (*add_subscriber_t)(impurecord_t* urec,
 		subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber, int db_load);
 
-typedef int (*get_impus_from_subscription_as_string_t)(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus);
+typedef int (*get_impus_from_subscription_as_string_t)(udomain_t* _d, impurecord_t* impu_rec, int barring, str** impus, int* num_impus, int is_shm);
 
 typedef str (*get_presentity_from_subscriber_dialog_t)(str *callid, str *to_tag, str *from_tag);
 

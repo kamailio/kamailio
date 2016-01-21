@@ -227,7 +227,7 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
 
     new_ro_session->h_entry = dlg_h_entry; /* we will use the same entry ID as the dlg - saves us using our own hash function */
     new_ro_session->h_id = 0;
-    new_ro_session->ref = 0;
+    new_ro_session->ref = 1;
     
     new_ro_session->rating_group = active_rating_group;
     new_ro_session->service_identifier = active_service_identifier;

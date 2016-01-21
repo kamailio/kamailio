@@ -31,6 +31,8 @@
 #include "../../globals.h"
 #include "../../pass_fd.h"
 #include "../../timer.h"
+#include "../../fmsg.h"
+#include "../../sr_module.h"
 
 /**
  * gets the fd of the current message source connection
@@ -184,4 +186,47 @@ int tcpops_set_connection_lifetime(struct tcp_connection* con, int time) {
 	con->timeout = get_ticks_raw() + con->lifetime;
 	LM_DBG("new connection lifetime for conid=%d: %d\n", con->id, con->timeout);
 	return 1;
+}
+
+static void tcpops_tcp_closed_run_route(struct tcp_connection *con)
+{
+	int rt, backup_rt;
+	struct run_act_ctx ctx;
+	sip_msg_t *fmsg;
+	LM_DBG("tcp_closed_run_route event_route[tcp:closed]\n");
+
+	rt = route_get(&event_rt, "tcp:closed");
+	if (rt < 0 || event_rt.rlist[rt] == NULL)
+	{
+		LM_DBG("route does not exist");
+		return;
+	}
+
+	if (faked_msg_init() < 0)
+	{
+		LM_ERR("faked_msg_init() failed\n");
+		return;
+	}
+	fmsg = faked_msg_next();
+	fmsg->rcv = con->rcv;
+
+	backup_rt = get_route_type();
+	set_route_type(EVENT_ROUTE);
+	init_run_actions_ctx(&ctx);
+	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	set_route_type(backup_rt);
+}
+
+int tcpops_handle_tcp_closed(void *data)
+{
+	tcp_event_info_t *tev = (tcp_event_info_t *) data;
+
+	if (tev == NULL || tev->con == NULL) {
+		LM_WARN("received bad TCP closed event\n");
+		return -1;
+	}
+
+	tcpops_tcp_closed_run_route(tev->con);
+
+	return 0;
 }

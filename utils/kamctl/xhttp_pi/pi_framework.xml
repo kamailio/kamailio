@@ -752,6 +752,8 @@
 		<column><field>auth_password</field><type>DB1_STR</type></column>
 		<column><field>auth_proxy</field><type>DB1_STR</type></column>
 		<column><field>expires</field><type>DB1_INT</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>reg_delay</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of uid_credentials table-->
 	<db_table id="uid_credentials">
@@ -3806,6 +3808,8 @@
 				<col><field>auth_password</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
+				<col><field>flags</field></col>
+				<col><field>reg_delay</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3822,6 +3826,8 @@
 				<col><field>auth_password</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
+				<col><field>flags</field></col>
+				<col><field>reg_delay</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3841,6 +3847,8 @@
 				<col><field>auth_password</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
+				<col><field>flags</field></col>
+				<col><field>reg_delay</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
