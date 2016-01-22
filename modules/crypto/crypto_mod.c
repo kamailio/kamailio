@@ -272,6 +272,7 @@ int crypto_aes_init(unsigned char *key_data, int key_data_len,
 		unsigned char *salt, EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx)
 {
 	int i, nrounds = 5;
+	int x;
 	unsigned char key[32], iv[32];
 
 	/*
@@ -287,10 +288,10 @@ int crypto_aes_init(unsigned char *key_data, int key_data_len,
 		return -1;
 	}
 
-	for(int x = 0; x<32; ++x)
+	for(x = 0; x<32; ++x)
 		LM_DBG("key: %x iv: %x \n", key[x], iv[x]);
 
-	for(int x = 0; x<8; ++x)
+	for(x = 0; x<8; ++x)
 		LM_DBG("salt: %x\n", salt[x]);
 
 	if(e_ctx) {
