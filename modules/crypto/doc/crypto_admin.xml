@@ -57,6 +57,36 @@
 	</section>
 
 	<section>
+	<title>Parameters</title>
+	<section id="crypto.p.salt">
+		<title><varname>salt</varname> (str)</title>
+		<para>
+			A keyword to generate salt for encryption. It must be
+			at least 8 chars long. If set to empty, no salt is used
+			for encryption.
+		</para>
+		<para>
+			The salt is a binary array that is appended to the encryption
+			password for better protection against dictionary attacks. Same
+			salt and password need to be when encrypting and decrypting.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "..." (see code).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("crypto", "salt", "l0Bh2M8a")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
 	<title>Functions</title>
 	<section id="async.f.crypto_aes_encrypt">
 	    <title>

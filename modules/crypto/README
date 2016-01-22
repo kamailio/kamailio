@@ -23,15 +23,20 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Functions
+        3. Parameters
 
-              3.1. crypto_aes_encrypt(text, key, res)
-              3.2. crypto_aes_decrypt(text, key, res)
+              3.1. salt (str)
+
+        4. Functions
+
+              4.1. crypto_aes_encrypt(text, key, res)
+              4.2. crypto_aes_decrypt(text, key, res)
 
    List of Examples
 
-   1.1. crypto_aes_encrypt usage
-   1.2. crypto_aes_decrypt usage
+   1.1. Set interval parameter
+   1.2. crypto_aes_encrypt usage
+   1.3. crypto_aes_decrypt usage
 
 Chapter 1. Admin Guide
 
@@ -43,10 +48,14 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Functions
+   3. Parameters
 
-        3.1. crypto_aes_encrypt(text, key, res)
-        3.2. crypto_aes_decrypt(text, key, res)
+        3.1. salt (str)
+
+   4. Functions
+
+        4.1. crypto_aes_encrypt(text, key, res)
+        4.2. crypto_aes_decrypt(text, key, res)
 
 1. Overview
 
@@ -72,12 +81,32 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * libcrypto - part of OpenSSL project
 
-3. Functions
+3. Parameters
 
-   3.1. crypto_aes_encrypt(text, key, res)
-   3.2. crypto_aes_decrypt(text, key, res)
+   3.1. salt (str)
 
-3.1. crypto_aes_encrypt(text, key, res)
+3.1. salt (str)
+
+   A keyword to generate salt for encryption. It must be at least 8 chars
+   long. If set to empty, no salt is used for encryption.
+
+   The salt is a binary array that is appended to the encryption password
+   for better protection against dictionary attacks. Same salt and
+   password need to be when encrypting and decrypting.
+
+   Default value is "..." (see code).
+
+   Example 1.1. Set interval parameter
+...
+modparam("crypto", "salt", "l0Bh2M8a")
+...
+
+4. Functions
+
+   4.1. crypto_aes_encrypt(text, key, res)
+   4.2. crypto_aes_decrypt(text, key, res)
+
+4.1. crypto_aes_encrypt(text, key, res)
 
    Encrypts the text with the key using AES encryption algorithm. The
    result is encoded in base64 format and stored in res. The parameter res
@@ -86,12 +115,12 @@ Chapter 1. Admin Guide
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.1. crypto_aes_encrypt usage
+   Example 1.2. crypto_aes_encrypt usage
 ...
 crypto_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
 ...
 
-3.2. crypto_aes_decrypt(text, key, res)
+4.2. crypto_aes_decrypt(text, key, res)
 
    Decrypts the text with the key using AES encryption algorithm. The text
    has to be encoded in base64 format. The parameter res must be a
@@ -100,7 +129,7 @@ crypto_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.2. crypto_aes_decrypt usage
+   Example 1.3. crypto_aes_decrypt usage
 ...
 crypto_aes_decrypt("$var(encrypted)", "my-secret-key", "$var(text)");
 ...
