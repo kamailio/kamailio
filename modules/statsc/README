@@ -27,6 +27,7 @@ Daniel-Constantin Mierla
 
               3.1. interval (int)
               3.2. items (int)
+              3.3. track (str)
 
         4. RPC Commands
 
@@ -36,6 +37,7 @@ Daniel-Constantin Mierla
 
    1.1. Set interval parameter
    1.2. Set items parameter
+   1.3. Set track parameter
 
 Chapter 1. Admin Guide
 
@@ -51,6 +53,7 @@ Chapter 1. Admin Guide
 
         3.1. interval (int)
         3.2. items (int)
+        3.3. track (str)
 
    4. RPC Commands
 
@@ -83,6 +86,7 @@ Chapter 1. Admin Guide
 
    3.1. interval (int)
    3.2. items (int)
+   3.3. track (str)
 
 3.1. interval (int)
 
@@ -106,6 +110,27 @@ modparam("statsc", "interval", 300)
 modparam("statsc", "items", 200)
 ...
 
+3.3. track (str)
+
+   Specify the statistics to track. The parameter can be set many times
+   and one value can speficy many statistics.
+
+   The format is "rname=sname", where the rname is the name for report and
+   sname is internal Kamailio statistic name.
+
+   Next statistics are tracked by default:
+     * shm.free - the internal statistc 'free_size' (from group 'shmem').
+     * shm.used - the internal statistc 'used_size' (from group 'shmem').
+     * shm.real_used - the internal statistc 'real_used_size' (from group
+       'shmem').
+
+   Default value is "".
+
+   Example 1.3. Set track parameter
+...
+modparam("statsc", "track", "req.received=rcv_requests")
+...
+
 4. RPC Commands
 
    4.1. statsc.exec
@@ -114,10 +139,10 @@ modparam("statsc", "items", 200)
 
    Get the report of recorded statistics.
 
-   Name: statsc.exec
+   Name: statsc.report
 
    Parameters:
-     * _report_ :
+     * _type_ :
           + "list": list recorded values
           + "diff": show diff between recorded values
      * _name_: (optional) name of the statistic to show the report for. If
@@ -127,8 +152,8 @@ modparam("statsc", "items", 200)
 
    Example:
 ...
-# prototype: kamcmd statsc.exec _report_ _name_ _limit_
-kamcmd statsc list
-kamcmd statsc list all 10
-kamcmd statsc diff
+# prototype: kamcmd statsc.report _type_ _name_ _limit_
+kamcmd statsc.report list
+kamcmd statsc.report list all 10
+kamcmd statsc.report diff
 ...
