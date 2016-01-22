@@ -107,11 +107,11 @@ modparam("statsc", "items", 200)
 		Get the report of recorded statistics.
 		</para>
 		<para>
-		Name: <emphasis>statsc.exec</emphasis>
+		Name: <emphasis>statsc.report</emphasis>
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>_report_ : </para>
+			<listitem><para>_type_ : </para>
 			      <itemizedlist>
 	                 <listitem><para> <quote>list</quote>: list recorded values</para></listitem>
 			         <listitem><para> <quote>diff</quote>: show diff between recorded values</para></listitem>
@@ -128,10 +128,10 @@ modparam("statsc", "items", 200)
 		</para>
 <programlisting  format="linespecific">
 ...
-# prototype: &kamcmd; statsc.exec _report_ _name_ _limit_
-&kamcmd; statsc list
-&kamcmd; statsc list all 10
-&kamcmd; statsc diff
+# prototype: &kamcmd; statsc.report _type_ _name_ _limit_
+&kamcmd; statsc.report list
+&kamcmd; statsc.report list all 10
+&kamcmd; statsc.report diff
 ...
 </programlisting>
     </section>
