@@ -319,7 +319,7 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 	int cmode;
 	str sname;
 	int range;
-	int k, n, r, m, v;
+	int k, m, n, v;
 	time_t tn;
 	void* th;
 	void* ts;
