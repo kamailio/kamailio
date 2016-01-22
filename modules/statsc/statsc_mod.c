@@ -304,7 +304,7 @@ int statsc_track_param(modparam_t type, void* val)
 /**
  *
  */
-static const char* statsc_rpc_exec_doc[2] = {
+static const char* statsc_rpc_report_doc[2] = {
 	"Statistics collector control command",
 	0
 };
@@ -312,7 +312,7 @@ static const char* statsc_rpc_exec_doc[2] = {
 /**
  *
  */
-static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
+static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 {
 	statsc_nmap_t *sm = NULL;
 	str cname;
@@ -458,7 +458,7 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
  *
  */
 rpc_export_t statsc_rpc[] = {
-	{"statsc.exec", statsc_rpc_exec, statsc_rpc_exec_doc, 0},
+	{"statsc.report", statsc_rpc_report, statsc_rpc_report_doc, 0},
 	{0, 0, 0, 0}
 };
 
@@ -467,8 +467,7 @@ rpc_export_t statsc_rpc[] = {
  */
 int statsc_init_rpc(void)
 {
-	if (rpc_register_array(statsc_rpc)!=0)
-	{
+	if (rpc_register_array(statsc_rpc)!=0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
