@@ -54,6 +54,9 @@ static int fixup_crypto_aes_encrypt(void** param, int param_no);
 static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* outb);
 static int fixup_crypto_aes_decrypt(void** param, int param_no);
 
+#define CRYPTO_SALT_BSIZE	16
+static char _crypto_salt[CRYPTO_SALT_BSIZE];
+static char *_crypto_salt_param = "k8hTm4aZ";
 
 static cmd_export_t cmds[]={
 	{"crypto_aes_encrypt", (cmd_function)w_crypto_aes_encrypt, 3,
@@ -64,7 +67,8 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{0, 0, 0}
+	{ "salt", PARAM_STRING, &_crypto_salt_param },
+	{ 0, 0, 0 }
 };
 
 struct module_exports exports = {
@@ -88,6 +92,23 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	int i;
+	char k;
+	memset(_crypto_salt, 0, CRYPTO_SALT_BSIZE*sizeof(char));
+	if(_crypto_salt_param==NULL || _crypto_salt_param[0]==0) {
+		_crypto_salt_param = NULL;
+	} else {
+		if(strlen(_crypto_salt_param)<8) {
+			LM_ERR("salt parameter must be at least 8 characters\n");
+			return -1;
+		}
+		k = 97;
+		for(i=0; i<strlen(_crypto_salt_param); i++) {
+			if(i>=CRYPTO_SALT_BSIZE) break;
+			_crypto_salt[i] = (_crypto_salt_param[i]*7 + k + k*(i+1))%0xff;
+			k = _crypto_salt[i];
+		}
+	}
 	return 0;
 }
 
@@ -118,7 +139,6 @@ static int w_crypto_aes_encrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	pv_value_t val;
 	EVP_CIPHER_CTX en;
 	str etext;
-	unsigned char salt[] = {1,2,3,4,5,6,7,8};
 
 	if (fixup_get_svalue(msg, (gparam_t*)inb, &ins) != 0) {
 		LM_ERR("cannot get input value\n");
@@ -131,7 +151,8 @@ static int w_crypto_aes_encrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	dst = (pv_spec_t*)outb;
 
 	/* gen key and iv. init the cipher ctx object */
-	if (crypto_aes_init((unsigned char *)keys.s, keys.len, salt, &en, NULL)) {
+	if (crypto_aes_init((unsigned char *)keys.s, keys.len,
+				(unsigned char*)((_crypto_salt_param)?_crypto_salt:0), &en, NULL)) {
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}
@@ -198,7 +219,6 @@ static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	pv_value_t val;
 	EVP_CIPHER_CTX de;
 	str etext;
-	unsigned char salt[] = {1,2,3,4,5,6,7,8};
 
 	if (fixup_get_svalue(msg, (gparam_t*)inb, &ins) != 0) {
 		LM_ERR("cannot get input value\n");
@@ -211,7 +231,8 @@ static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	dst = (pv_spec_t*)outb;
 
 	/* gen key and iv. init the cipher ctx object */
-	if (crypto_aes_init((unsigned char *)keys.s, keys.len, salt, NULL, &de)) {
+	if (crypto_aes_init((unsigned char *)keys.s, keys.len,
+				(unsigned char*)((_crypto_salt_param)?_crypto_salt:0), NULL, &de)) {
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}
