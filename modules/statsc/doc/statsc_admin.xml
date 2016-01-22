@@ -95,6 +95,56 @@ modparam("statsc", "items", 200)
 </programlisting>
 		</example>
 	</section>
+	<section id="statsc.p.track">
+		<title><varname>track</varname> (str)</title>
+		<para>
+			Specify the statistics to track. The parameter can
+			be set many times and one value can speficy many
+			statistics.
+		</para>
+		<para>
+			The format is "rname=sname", where the rname is the
+			name for report and sname is internal &kamailio; statistic
+			name.
+		</para>
+		<para>
+			Next statistics are tracked by default:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>shm.free</emphasis> - the internal statistc 'free_size'
+				(from group 'shmem').
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>shm.used</emphasis> - the internal statistc 'used_size'
+				(from group 'shmem').
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>shm.real_used</emphasis> - the internal statistc 'real_used_size'
+				(from group 'shmem').
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is "".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>track</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("statsc", "track", "req.received=rcv_requests")
+modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
