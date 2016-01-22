@@ -76,7 +76,9 @@ void dtrie_delete(struct dtrie_node_t *root, struct dtrie_node_t *node,
 		dt_delete_func_t delete_payload, const unsigned int branches)
 {
 	unsigned int i;
-	if (node==NULL) return;
+
+	if (node == NULL) return;
+	if (root == NULL) return;
 
 	for (i=0; i<branches; i++) {
 		dtrie_delete(root, node->child[i], delete_payload, branches);
@@ -122,6 +124,10 @@ int dtrie_insert(struct dtrie_node_t *root, const char *number, const unsigned i
 {
 	struct dtrie_node_t *node = root;
 	unsigned char digit, i=0;
+
+	if (node == NULL) return -1;
+	if (root == NULL) return -1;
+	if (number == NULL) return -1;
 
 	while (i<numberlen) {
 		if (branches==10) {
@@ -202,6 +208,8 @@ unsigned int dtrie_leaves(const struct dtrie_node_t *root, const unsigned int br
 {
 	unsigned int i, sum = 0, leaf = 1;
 
+	if (root == NULL) return 0;
+
 	for (i=0; i<branches; i++) {
 		if (root->child[i]) {
 			sum += dtrie_leaves(root->child[i], branches);
@@ -219,6 +227,10 @@ void **dtrie_longest_match(struct dtrie_node_t *root, const char *number,
 	struct dtrie_node_t *node = root;
 	unsigned char digit, i = 0;
 	void **ret = NULL;
+
+	if (node == NULL) return NULL;
+	if (root == NULL) return NULL;
+	if (number == NULL) return NULL;
 
 	if (nmatchptr) *nmatchptr=-1;
 	if (node->data != NULL) {
