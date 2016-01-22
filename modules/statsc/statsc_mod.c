@@ -32,6 +32,7 @@
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
 
+#include "../../parser/parse_param.h"
 #include "../../lib/kcore/statistics.h"
 
 MODULE_VERSION
@@ -42,6 +43,8 @@ int statsc_init_rpc(void);
 
 static int statsc_interval = 540; /* 15 min */
 static int statsc_items = 100;    /* history items */
+
+int statsc_track_param(modparam_t type, void* val);
 
 static int  mod_init(void);
 static int  child_init(int);
@@ -56,6 +59,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
+	{"track",        PARAM_STRING|USE_FUNC_PARAM, (void*)statsc_track_param},
 	{"interval",     INT_PARAM,   &statsc_interval},
 	{"items",        INT_PARAM,   &statsc_items},
 	{0, 0, 0}
@@ -125,28 +129,19 @@ typedef int (*statsc_func_t)(void *p, int64_t *res);
 
 typedef struct statsc_nmap {
 	str sname;
-	int sindex;
-	statsc_func_t f;
-	void *p;
+	str rname;
+	int64_t *vals;
+	struct statsc_nmap *next;
 } statsc_nmap_t;
 
 
-int statsc_timestamp(void *p, int64_t *res)
-{
-	return 0;
-}
-
-int statsc_svalue(void *p, int64_t *res)
+int statsc_svalue(str *name, int64_t *res)
 {
 	stat_var       *stat;
-	str name;
 
-	name.s = (char*)p;
-	name.len = strlen(name.s);
-
-	stat = get_stat(&name);
+	stat = get_stat(name);
 	if(stat==NULL) {
-		LM_ERR("statistic %.*s not found\n", name.len, name.s);
+		LM_ERR("statistic %.*s not found\n", name->len, name->s);
 		return -1;
 	}
 
@@ -155,40 +150,69 @@ int statsc_svalue(void *p, int64_t *res)
 	return 0;
 }
 
-static statsc_nmap_t _statsc_nmap[] = {
-	{ {"timestamp", 9},         0, statsc_timestamp, (void*)0},
-	{ {"shm.free",  8},         1, statsc_svalue,  (void*)"free_size"}, /* shmem:free_size */
-	{ {"shm.used",  8},         2, statsc_svalue,  (void*)"used_size"},
-	{ {"shm.real_used",  13},   3, statsc_svalue,  (void*)"real_used_size"},
-	{ {0, 0},                   0, 0}
+static statsc_nmap_t _statsc_nmap_default[] = {
+	{ str_init("shm.free"),        str_init("free_size"), 0, 0}, /* shmem:free_size */
+	{ str_init("shm.used"),        str_init("used_size"), 0, 0},
+	{ str_init("shm.real_used"),   str_init("real_used_size"), 0, 0},
+	{ {0, 0},                      {0, 0}, 0, 0}
 };
-
-
-int statsc_nmap_index(str *sn)
-{
-	int i;
-
-	for(i=0; _statsc_nmap[i].sname.s!=0; i++) {
-		if(sn->len==_statsc_nmap[i].sname.len
-				&& strncmp(sn->s, _statsc_nmap[i].sname.s, sn->len)==0) {
-			return i;
-		}
-	}
-	return -1;
-}
 
 typedef struct _statsc_info {
 	uint64_t steps;
 	uint32_t slots;
-	int64_t **stable;
+	statsc_nmap_t *slist;
 } statsc_info_t;
 
 
 static statsc_info_t *_statsc_info = NULL;
 
+int statsc_nmap_add(str *sname, str *rname)
+{
+	int sz;
+	statsc_nmap_t *sm = NULL;
+	statsc_nmap_t *sl = NULL;
+
+	if(_statsc_info==NULL) {
+		return -1;
+	}
+
+	sz = sizeof(statsc_nmap_t) + statsc_items * sizeof(int64_t)
+		+ sname->len + rname->len + 4;
+	sm = shm_malloc(sz);
+	if(sm==NULL) {
+		LM_ERR("no more shared memory\n");
+		return -1;
+	}
+	memset(sm, 0, sz);
+	sm->sname.s = (char*)((char*)sm + sizeof(statsc_nmap_t));
+	sm->sname.len = sname->len;
+	sm->rname.s = (char*)((char*)sm->sname.s + sm->sname.len + 1);
+	sm->rname.len = rname->len;
+	sm->vals = (int64_t*)((char*)sm->rname.s + sm->rname.len + 1);
+	memcpy(sm->sname.s, sname->s, sname->len);
+	memcpy(sm->rname.s, rname->s, rname->len);
+
+	if(_statsc_info->slist==NULL) {
+		_statsc_info->slist = sm;
+		_statsc_info->slots = 1;
+		return 0;
+	}
+	sl = _statsc_info->slist;
+	while(sl->next!=NULL) sl = sl->next;
+	sl->next = sm;
+	_statsc_info->slots++;
+	return 0;
+}
+
 int statsc_init(void)
 {
 	int i;
+	int sz;
+	statsc_nmap_t *sm = NULL;
+
+	if(_statsc_info!=NULL) {
+		return 0;
+	}
 
 	_statsc_info = shm_malloc(sizeof(statsc_info_t));
 	if(_statsc_info==NULL) {
@@ -196,32 +220,25 @@ int statsc_init(void)
 		return -1;
 	}
 	memset(_statsc_info, 0, sizeof(statsc_info_t));
-	
-	for(i=0; _statsc_nmap[i].sname.s!=0; i++);
-	_statsc_info->slots = i;
-	
-	_statsc_info->stable = shm_malloc(_statsc_info->slots * sizeof(int64_t*));
-	if(_statsc_info->stable==NULL) {
+
+	/* first slot with timestamps */
+	sz = sizeof(statsc_nmap_t) + statsc_items * sizeof(int64_t);
+	sm = shm_malloc(sz);
+	if(sm==NULL) {
 		LM_ERR("no more shared memory\n");
-		shm_free(_statsc_info);
-		_statsc_info=NULL;
 		return -1;
 	}
-	memset(_statsc_info->stable, 0, _statsc_info->slots * sizeof(int64_t*));
-	for(i=0; i<_statsc_info->slots; i++) {
-		_statsc_info->stable[i] = shm_malloc(statsc_items * sizeof(int64_t));
-		if(_statsc_info->stable[i]==NULL) {
-			LM_ERR("no more shared memory\n");
-			i--;
-			while(i>=0) {
-				shm_free(_statsc_info->stable[i]);
-				i--;
-			}
-			shm_free(_statsc_info->stable);
-			shm_free(_statsc_info);
+	memset(sm, 0, sz);
+	sm->vals = (int64_t*)((char*)sm + sizeof(statsc_nmap_t));
+	_statsc_info->slist = sm;
+	_statsc_info->slots = 1;
+
+	for(i=0; _statsc_nmap_default[i].sname.s!=0; i++) {
+		if(statsc_nmap_add(&_statsc_nmap_default[i].sname,
+					&_statsc_nmap_default[i].rname)<0) {
+			LM_ERR("cannot enable tracking default statistics\n");
 			return -1;
 		}
-		memset(_statsc_info->stable[i], 0, statsc_items * sizeof(int64_t));
 	}
 
 	return 0;
@@ -230,26 +247,57 @@ int statsc_init(void)
 
 void statsc_timer(unsigned int ticks, void *param)
 {
+	statsc_nmap_t *sm = NULL;
 	time_t tn;
-	int i;
 	int n;
 
-	if(_statsc_info==NULL) {
+	if(_statsc_info==NULL || _statsc_info->slist==NULL) {
 		LM_ERR("statsc not initialized\n");
 		return;
 	}
 
 	tn = time(NULL);
 	n = _statsc_info->steps % statsc_items;
-	_statsc_info->stable[0][n] = (int64_t)tn;
+	_statsc_info->slist->vals[n] = (int64_t)tn;
 
 	LM_DBG("statsc timer - time: %lu - ticks: %u - index: %d - steps: %llu\n",
 			(unsigned long)tn, ticks, n, (unsigned long long)_statsc_info->steps);
 
-	for(i=1; i<_statsc_info->slots; i++) {
-		_statsc_nmap[i].f(_statsc_nmap[i].p, _statsc_info->stable[i] + n);
+	for(sm=_statsc_info->slist->next; sm!=NULL; sm=sm->next) {
+		statsc_svalue(&sm->rname, sm->vals + n);
 	}
 	_statsc_info->steps++;
+}
+
+
+/**
+ *
+ */
+int statsc_track_param(modparam_t type, void* val)
+{
+	param_t* params_list = NULL;
+	param_hooks_t phooks;
+	param_t *pit=NULL;
+	str s;
+
+	if(val==NULL)
+		return -1;
+	if(statsc_init()<0)
+		return -1;
+	s.s = (char*)val;
+	s.len = strlen(s.s);
+	if(s.s[s.len-1]==';')
+		s.len--;
+	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0)
+		return -1;
+	for (pit = params_list; pit; pit=pit->next) {
+		if(statsc_nmap_add(&pit->name, &pit->body)<0) {
+			LM_ERR("cannot enable tracking statistics\n");
+			return -1;
+		}
+	}
+	free_params(params_list);
+	return 0;
 }
 
 
@@ -266,12 +314,12 @@ static const char* statsc_rpc_exec_doc[2] = {
  */
 static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 {
+	statsc_nmap_t *sm = NULL;
 	str cname;
 	int cmode;
 	str sname;
 	int range;
-	int sidx;
-	int i, k, n, m, v;
+	int k, n, r, m, v;
 	time_t tn;
 	void* th;
 	void* ts;
@@ -279,7 +327,7 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 	void* ta;
 	void* td;
 
-	if(_statsc_info==NULL) {
+	if(_statsc_info==NULL || _statsc_info->slist==NULL) {
 		rpc->fault(ctx, 500, "Statistics collector not initialized");
 		return;
 	}
@@ -305,16 +353,13 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 	}
 
 	range = 0;
-	sidx = -1;
 	if(rpc->scan(ctx, "*S", &sname) != 1) {
 		sname.len = 0;
 		sname.s = NULL;
 	} else {
-		if(sname.len!=3 || strncmp(sname.s, "all", 3)!=0) {
-			if((sidx = statsc_nmap_index(&sname))<0) {
-				rpc->fault(ctx, 500, "Invalid statistic name");
-				return;
-			}
+		if(sname.len==3 && strncmp(sname.s, "all", 3)==0) {
+			sname.len = 0;
+			sname.s = NULL;
 		}
 		rpc->scan(ctx, "*d", &range);
 		if(range<0 || range>statsc_items)
@@ -332,14 +377,16 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Error creating rpc (2)");
 		return;
 	}
-	for(i=1; i<_statsc_info->slots; i++) {
-		if(sidx==-1 || sidx==i) {
+	for(sm=_statsc_info->slist->next; sm!=NULL; sm=sm->next) {
+		if(sname.s==NULL ||
+				(sname.len == sm->sname.len
+				 && strncmp(sname.s, sm->sname.s, sname.len)==0)) {
 			if(rpc->array_add(ts, "{", &ta)<0) {
 				rpc->fault(ctx, 500, "Error creating rpc (3)");
 				return;
 			}
 			if(rpc->struct_add(ta, "S[",
-						"name", &_statsc_nmap[i].sname,
+						"name", &sm->sname,
 						"data", &td )<0) {
 				rpc->fault(ctx, 500, "Error creating rpc (4)");
 				return;
@@ -350,7 +397,7 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Error creating rpc (5)");
 					return;
 				}
-				v = (int)_statsc_info->stable[i][k];
+				v = (int)sm->vals[k];
 				switch(cmode) {
 					case 1:
 						break;
@@ -359,14 +406,14 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 							continue;
 						}
 						if(k==0) {
-							v -= (int)_statsc_info->stable[i][statsc_items-1];
+							v -= (int)sm->vals[statsc_items-1];
 						} else {
-							v -= (int)_statsc_info->stable[i][k-1];
+							v -= (int)sm->vals[k-1];
 						}
 						break;
 				}
 				if(rpc->struct_add(ti, "udd",
-						"timestamp", (unsigned int)_statsc_info->stable[0][k],
+						"timestamp", (unsigned int)_statsc_info->slist->vals[k],
 						"value", v,
 						"index", m++)<0) {
 					rpc->fault(ctx, 500, "Error creating rpc (6)");
@@ -381,7 +428,7 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Error creating rpc (7)");
 					return;
 				}
-				v = (int)_statsc_info->stable[i][k];
+				v = (int)sm->vals[k];
 				switch(cmode) {
 					case 1:
 						break;
@@ -389,11 +436,11 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 						if(n==k-1) {
 							continue;
 						}
-						v -= (int)_statsc_info->stable[i][k-1];
+						v -= (int)sm->vals[k-1];
 						break;
 				}
 				if(rpc->struct_add(ti, "udd",
-						"timestamp", (unsigned int)_statsc_info->stable[0][k],
+						"timestamp", (unsigned int)_statsc_info->slist->vals[k],
 						"value", v,
 						"index", m++)<0) {
 					rpc->fault(ctx, 500, "Error creating rpc (8)");
