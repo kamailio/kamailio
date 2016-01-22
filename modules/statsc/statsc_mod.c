@@ -244,7 +244,7 @@ void statsc_timer(unsigned int ticks, void *param)
 	_statsc_info->stable[0][n] = (int64_t)tn;
 
 	LM_DBG("statsc timer - time: %lu - ticks: %u - index: %d - steps: %llu\n",
-			(unsigned long)tn, ticks, n, _statsc_info->steps);
+			(unsigned long)tn, ticks, n, (unsigned long long)_statsc_info->steps);
 
 	for(i=1; i<_statsc_info->slots; i++) {
 		_statsc_nmap[i].f(_statsc_nmap[i].p, _statsc_info->stable[i] + n);
@@ -271,7 +271,7 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 	str sname;
 	int range;
 	int sidx;
-	int i, k, n, r, m, v;
+	int i, k, n, m, v;
 	time_t tn;
 	void* th;
 	void* ts;
@@ -345,7 +345,6 @@ static void statsc_rpc_exec(rpc_t* rpc, void* ctx)
 				return;
 			}
 			m = 0;
-			r = range;
 			for(k=n; k>=0; k--) {
 				if(rpc->array_add(td, "{", &ti)<0) {
 					rpc->fault(ctx, 500, "Error creating rpc (5)");
