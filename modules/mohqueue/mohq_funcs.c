@@ -512,25 +512,22 @@ char *pfncname = "create_call: ";
 pcall->pmohq = &pmod_data->pmohq_lst [mohq_idx];
 str *pstr = &pmsg->callid->body;
 char *pbuf = pcall->call_buffer;
-pcall->call_bufpos = sizeof (pcall->call_buffer);
+pcall->call_buflen = sizeof (pcall->call_buffer);
 pcall->call_id = pbuf;
-if (!addstrbfr (pstr->s, pstr->len, &pbuf, &pcall->call_bufpos, 1))
+if (!addstrbfr (pstr->s, pstr->len, &pbuf, &pcall->call_buflen, 1))
   { return 0; }
 pstr = &pmsg->from->body;
 pcall->call_from = pbuf;
-if (!addstrbfr (pstr->s, pstr->len, &pbuf, &pcall->call_bufpos, 1))
-  { return 0; }
-pcall->call_tag = pbuf;
-if (!addstrbfr (0, 0, &pbuf, &pcall->call_bufpos, 1))
+if (!addstrbfr (pstr->s, pstr->len, &pbuf, &pcall->call_buflen, 1))
   { return 0; }
 pcall->call_contact = pbuf;
 if (pmsg->contact)
   {
   pstr = &pmsg->contact->body;
-  if (!addstrbfr (pstr->s, pstr->len, &pbuf, &pcall->call_bufpos, 0))
+  if (!addstrbfr (pstr->s, pstr->len, &pbuf, &pcall->call_buflen, 0))
     { return 0; }
   }
-if (!addstrbfr (0, 0, &pbuf, &pcall->call_bufpos, 1))
+if (!addstrbfr (0, 0, &pbuf, &pcall->call_buflen, 1))
   { return 0; }
 
 /**********
@@ -538,46 +535,43 @@ if (!addstrbfr (0, 0, &pbuf, &pcall->call_bufpos, 1))
 **********/
 
 pcall->call_via = pbuf;
-hdr_field_t *phdr = pmsg->h_via1;
-if (phdr)
+hdr_field_t *phdr;
+for (phdr = pmsg->h_via1; phdr; phdr = next_sibling_hdr (phdr))
   {
-  while ((phdr = next_sibling_hdr (phdr)))
+  struct via_body *pvia;
+  char *pviabuf;
+  int npos;
+  for (pvia = (struct via_body *)phdr->parsed; pvia; pvia = pvia->next)
     {
-    struct via_body *pvia;
-    char *pviabuf;
-    int npos;
-    for (pvia = (struct via_body *)phdr->parsed; pvia; pvia = pvia->next)
+    /**********
+    * skip trailing whitespace
+    **********/
+
+    npos = pvia->bsize;
+    pviabuf = pvia->name.s;
+    while (npos)
       {
-      /**********
-      * skip trailing whitespace
-      **********/
-
-      npos = pvia->bsize;
-      pviabuf = pvia->name.s;
-      while (npos)
-        {
-        --npos;
-        if (pviabuf [npos] == ' ' || pviabuf [npos] == '\r'
-          || pviabuf [npos] == '\n' || pviabuf [npos] == '\t'
-          || pviabuf [npos] == ',')
-          { continue; }
-        break;
-        }
-
-      /**********
-      * copy via
-      **********/
-
-      if (!addstrbfr ("Via: ", 5, &pbuf, &pcall->call_bufpos, 0))
-        { return 0; }
-      if (!addstrbfr (pviabuf, npos, &pbuf, &pcall->call_bufpos, 0))
-        { return 0; }
-      if (!addstrbfr (SIPEOL, 2, &pbuf, &pcall->call_bufpos, 0))
-        { return 0; }
+      --npos;
+      if (pviabuf [npos] == ' ' || pviabuf [npos] == '\r'
+        || pviabuf [npos] == '\n' || pviabuf [npos] == '\t'
+        || pviabuf [npos] == ',')
+        { continue; }
+      break;
       }
+
+    /**********
+    * copy via
+    **********/
+
+    if (!addstrbfr ("Via: ", 5, &pbuf, &pcall->call_buflen, 0))
+      { return 0; }
+    if (!addstrbfr (pviabuf, npos + 1, &pbuf, &pcall->call_buflen, 0))
+      { return 0; }
+    if (!addstrbfr (SIPEOL, 2, &pbuf, &pcall->call_buflen, 0))
+      { return 0; }
     }
   }
-if (!addstrbfr (0, 0, &pbuf, &pcall->call_bufpos, 1))
+if (!addstrbfr (0, 0, &pbuf, &pcall->call_buflen, 1))
   { return 0; }
 
 /**********
@@ -593,22 +587,26 @@ for (proute = pmsg->record_route; proute; proute = next_sibling_hdr (proute))
   rr_t *prouterr;
   for (prouterr = proute->parsed; prouterr; prouterr = prouterr->next)
     {
-    if (!addstrbfr ("Route: ", 7, &pbuf, &pcall->call_bufpos, 0))
+    if (!addstrbfr ("Route: ", 7, &pbuf, &pcall->call_buflen, 0))
       { return 0; }
     if (!addstrbfr (prouterr->nameaddr.name.s, prouterr->len,
-      &pbuf, &pcall->call_bufpos, 0))
+      &pbuf, &pcall->call_buflen, 0))
       { return 0; }
-    if (!addstrbfr (SIPEOL, 2, &pbuf, &pcall->call_bufpos, 0))
+    if (!addstrbfr (SIPEOL, 2, &pbuf, &pcall->call_buflen, 0))
       { return 0; }
     }
   }
-if (!addstrbfr (0, 0, &pbuf, &pcall->call_bufpos, 1))
+if (!addstrbfr (0, 0, &pbuf, &pcall->call_buflen, 1))
   { return 0; }
 
 /**********
-* update DB
+* o place tag at the end
+* o update DB
 **********/
 
+pcall->call_tag = pbuf;
+if (!addstrbfr (0, 0, &pbuf, &pcall->call_buflen, 1))
+  { return 0; }
 pcall->call_state = CLSTA_ENTER;
 add_call_rec (ncall_idx);
 mohq_debug (pcall->pmohq, "%sAdded call (%s) to queue (%s)",
@@ -1083,9 +1081,8 @@ if (ptm->t_get_reply_totag (pmsg, ptotag) != 1)
   delete_call (pcall);
   return;
   }
-char *pbuf = &pcall->call_buffer [pcall->call_bufpos];
-pcall->call_tag = pbuf;
-if (!addstrbfr (ptotag->s, ptotag->len, &pbuf, &pcall->call_bufpos, 1))
+char *pbuf = pcall->call_tag;
+if (!addstrbfr (ptotag->s, ptotag->len, &pbuf, &pcall->call_buflen, 1))
   {
   LM_ERR ("%sInsufficient buffer space for call (%s)!\n",
     pfncname, pcall->call_from);

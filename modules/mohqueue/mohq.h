@@ -75,7 +75,7 @@ typedef struct
 typedef struct
   {
   char call_buffer [1024];
-  size_t call_bufpos;
+  size_t call_buflen;
   char *call_id;
   char *call_from;
   char call_referto [URI_LEN + 1];
