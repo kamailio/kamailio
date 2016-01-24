@@ -1107,7 +1107,13 @@ static void db_update(unsigned int ticks,void *param)
 							q_vals[callid_col].val.str_val.s = "";
 							q_vals[callid_col].val.str_val.len = 0;
 						}
-						q_vals[fromtag_col].val.str_val = p->from_tag;
+						if( p->from_tag.s) {
+							q_vals[fromtag_col].val.str_val = p->from_tag;
+						} else {
+							LM_DBG("p->from_tag is empty\n");
+							q_vals[fromtag_col].val.str_val.s = "";
+							q_vals[fromtag_col].val.str_val.len = 0;
+						}
 						q_vals[cseq_col].val.int_val= p->cseq;
 						q_vals[expires_col].val.int_val = p->expires;
 						q_vals[desired_expires_col].val.int_val = p->desired_expires;
