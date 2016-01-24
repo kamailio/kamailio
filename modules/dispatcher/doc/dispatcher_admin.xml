@@ -804,11 +804,13 @@ modparam("dispatcher", "force_dst", 1)
 	<section id="dispatcher.p.ds_default_socket">
 		<title><varname>ds_default_socket</varname> (str)</title>
 		<para>
-		Default socket to be used for sending pings and dispatching requests when a gateway has no send socket configured.
+			Default socket to be used for sending pings and dispatching requests
+			when a gateway has no send socket configured.
 		</para>
 		<para>
 		<emphasis>
-			By default no default socket is defined, the first configuration script <emphasis>listen</emphasis> directive is used.
+			By default no default socket is defined, the first configuration
+			script <emphasis>listen</emphasis> directive is used.
 		</emphasis>
 		</para>
 		<example>
@@ -819,6 +821,45 @@ modparam("dispatcher", "force_dst", 1)
  ...
  </programlisting>
 		</example>
+	</section>
+
+ 	<section id="dispatcher.p.ds_timer_mode">
+ 		<title><varname>ds_timer_mode</varname> (int)</title>
+ 		<para>
+			Specify the timer process to be used by the module for
+			keepalives and active dialogs tracking. 
+		</para>
+		<para>
+			It can be set to:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>0 - use main timer process.</para>
+		</listitem>
+		<listitem>
+			<para>1 - use secondary timer process.</para>
+		</listitem>
+		</itemizedlist>
+
+ 		<para>
+			On a server with a lot of traffic, using secondary
+			timer can help with performances, because the main timer
+			can be overloaded by taking care of transactions retransmissions
+			and expirations of items in memory.
+		</para>
+		<para>
+ 		<emphasis>
+ 			Default value is <quote>0</quote>.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>ds_timer_mode</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "ds_timer_mode", 1)
+ ...
+ </programlisting>
+ 		</example>
 	</section>
 
 	</section>
