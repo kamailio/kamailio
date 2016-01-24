@@ -185,8 +185,13 @@ int rx_add_framed_ip_avp(AAA_AVP_LIST * list, str ip, uint16_t version) {
         }
         ip_buflen = len;
     }
-    memcpy(ip_buf, ip.s, ip.len);
-    ip_buf[ip.len] = '\0';
+	if(ip.s[0]=='[' && ip.s[ip.len-1]==']') {
+		memcpy(ip_buf, ip.s+1, ip.len-2);
+		ip_buf[ip.len-2] = '\0';
+	} else {
+		memcpy(ip_buf, ip.s, ip.len);
+		ip_buf[ip.len] = '\0';
+	}
     
     ip_adr.addr.ai_family = version;
 
