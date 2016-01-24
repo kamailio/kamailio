@@ -47,6 +47,7 @@
 #include "../../error.h"
 #include "../../ut.h"
 #include "../../route.h"
+#include "../../timer_proc.h"
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
 #include "../../rpc.h"
@@ -114,6 +115,7 @@ int ds_hash_size = 0;
 int ds_hash_expire = 7200;
 int ds_hash_initexpire = 7200;
 int ds_hash_check_interval = 30;
+int ds_timer_mode = 0;
 
 str ds_outbound_proxy = {0, 0};
 
@@ -241,6 +243,7 @@ static param_export_t params[]={
 	{"ds_hash_check_interval", INT_PARAM, &ds_hash_check_interval},
 	{"outbound_proxy",  PARAM_STR, &ds_outbound_proxy},
 	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
+	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
 	{0,0,0}
 };
 
@@ -511,7 +514,13 @@ static int mod_init(void)
 			if(ds_hash_load_init(1<<ds_hash_size, ds_hash_expire,
 						ds_hash_initexpire)<0)
 				return -1;
-			register_timer(ds_ht_timer, NULL, ds_hash_check_interval);
+			if(ds_timer_mode==1) {
+				if(sr_wtimer_add(ds_ht_timer, NULL, ds_hash_check_interval)<0)
+					return -1;
+			} else {
+				if(register_timer(ds_ht_timer, NULL, ds_hash_check_interval)<0)
+					return -1;
+			}
 		} else {
 			LM_ERR("call load dispatching DSTID_AVP set but no size"
 					" for hash table (see ds_hash_size parameter)\n");
@@ -532,7 +541,13 @@ static int mod_init(void)
 		/*****************************************************
 		 * Register the PING-Timer
 		 *****************************************************/
-		register_timer(ds_check_timer, NULL, ds_ping_interval);
+		if(ds_timer_mode==1) {
+			if(sr_wtimer_add(ds_check_timer, NULL, ds_ping_interval)<0)
+				return -1;
+		} else {
+			if(register_timer(ds_check_timer, NULL, ds_ping_interval)<0)
+				return -1;
+		}
 	}
 
 	return 0;
