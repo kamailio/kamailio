@@ -764,6 +764,22 @@ int synchronize_all_udomains(int istart, int istep)
 	return res;
 }
 
+/*!
+ * \brief Run timer handler to clean all domains in db
+ * \return 0 if all timer return 0, != 0 otherwise
+ */
+int ul_db_clean_udomains(void)
+{
+	int res = 0;
+	dlist_t* ptr;
+
+	get_act_time(); /* Get and save actual time */
+
+	for( ptr=root ; ptr ; ptr=ptr->next)
+		res |= db_timer_udomain(ptr->d);
+
+	return res;
+}
 
 /*!
  * \brief Find a particular domain, small wrapper around find_dlist

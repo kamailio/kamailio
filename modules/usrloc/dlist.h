@@ -146,4 +146,6 @@ int find_domain(str* _d, udomain_t** _p);
  */
 void ul_set_max_partition(unsigned int m);
 
+int ul_db_clean_udomains(void);
+
 #endif

@@ -881,7 +881,8 @@ done:
 
 
 /*!
- * \brief Timer function to cleanup expired contacts, DB_ONLY db_mode
+ * \brief Timer function to cleanup expired contacts, db_mode: DB_ONLY 
+ *   and for WRITE_BACK, WRITE_THROUGH on config param
  * \param _d cleaned domain
  * \return 0 on success, -1 on failure
  */
