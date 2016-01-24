@@ -1474,6 +1474,41 @@ onreply_route {
 		</programlisting>
     </section>
 
+	<section id="dispatcher.rpc.ping_active">
+		<title>
+		<function moreinfo="none">dispatcher.ping_active</function>
+		</title>
+		<para>
+		Sets the global state for sending keepalive requests to destinations.
+		</para>
+		<para>
+		Name: <emphasis>dispatcher.ping_active</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_state_ : state of sending keepalives</para>
+			    <itemizedlist>
+	               <listitem><para> <quote>0</quote>: inactive (don't send)</para></listitem>
+			       <listitem><para> <quote>1</quote>: active (send)</para></listitem>
+				</itemizedlist>
+			</listitem>
+		</itemizedlist>
+		<para>
+			If the state parameter is missing, the current state is returned.
+			When state is changed, new and old values of the state are returned.
+			Default value for state is 1.
+		</para>
+		<para>
+		Example:
+		</para>
+<programlisting  format="linespecific">
+...
+# prototype: &kamcmd; dispatcher.ping_active _state_
+&kamcmd; dispatcher.ping_active 0
+...
+</programlisting>
+    </section>
+
    </section>
 
 	<section id="dispatcher.ex.install">
