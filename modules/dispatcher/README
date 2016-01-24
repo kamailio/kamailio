@@ -102,6 +102,7 @@ Alessandro Arrichiello
               6.1. dispatcher.set_state
               6.2. dispatcher.list
               6.3. dispatcher.reload
+              6.4. dispatcher.ping_active
 
         7. Installation and Running
 
@@ -232,6 +233,7 @@ Chapter 1. Admin Guide
         6.1. dispatcher.set_state
         6.2. dispatcher.list
         6.3. dispatcher.reload
+        6.4. dispatcher.ping_active
 
    7. Installation and Running
 
@@ -1135,6 +1137,7 @@ onreply_route {
    6.1. dispatcher.set_state
    6.2. dispatcher.list
    6.3. dispatcher.reload
+   6.4. dispatcher.ping_active
 
 6.1. dispatcher.set_state
 
@@ -1183,6 +1186,27 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 
    Example
                 kamcmd dispatcher.reload
+
+6.4. dispatcher.ping_active
+
+   Sets the global state for sending keepalive requests to destinations.
+
+   Name: dispatcher.ping_active
+
+   Parameters:
+     * _state_ : state of sending keepalives
+          + "0": inactive (don't send)
+          + "1": active (send)
+
+   If the state parameter is missing, the current state is returned. When
+   state is changed, new and old values of the state are returned. Default
+   value for state is 1.
+
+   Example:
+...
+# prototype: kamcmd dispatcher.ping_active _state_
+kamcmd dispatcher.ping_active 0
+...
 
 7. Installation and Running
 
