@@ -1086,6 +1086,28 @@ modparam("usrloc", "skip_remote_socket", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.db_timer_clean">
+		<title><varname>db_timer_clean</varname> (int)</title>
+		<para>
+			Enable (1) or disable (0) cleaning of expired db records on
+			timer basis for db_mode WRITE-BACK and WRITE-THROUGH. It uses
+			the secondary timer process.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_timer_clean</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_timer_clean", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

@@ -12,11 +12,7 @@ Edited by
 
 Jan Janak
 
-Edited by
-
 Bogdan-Andrei Iancu
-
-Edited by
 
 Carsten Bock
 
@@ -85,6 +81,7 @@ Carsten Bock
               3.39. db_raw_fetch_type (int)
               3.40. db_insert_null (int)
               3.41. skip_remote_socket (int)
+              3.42. db_timer_clean (int)
 
         4. Functions
         5. MI Commands
@@ -183,6 +180,7 @@ Carsten Bock
    1.39. Set db_raw_fetch_type parameter
    1.40. Set db_insert_null parameter
    1.41. Set skip_remote_socket parameter
+   1.42. Set db_timer_clean parameter
 
 Chapter 1. Admin Guide
 
@@ -240,6 +238,7 @@ Chapter 1. Admin Guide
         3.39. db_raw_fetch_type (int)
         3.40. db_insert_null (int)
         3.41. skip_remote_socket (int)
+        3.42. db_timer_clean (int)
 
    4. Functions
    5. MI Commands
@@ -371,6 +370,7 @@ Chapter 1. Admin Guide
    3.39. db_raw_fetch_type (int)
    3.40. db_insert_null (int)
    3.41. skip_remote_socket (int)
+   3.42. db_timer_clean (int)
 
 3.1. nat_bflag (integer)
 
@@ -926,6 +926,19 @@ modparam("usrloc", "db_insert_null", 1)
    Example 1.41. Set skip_remote_socket parameter
 ...
 modparam("usrloc", "skip_remote_socket", 1)
+...
+
+3.42. db_timer_clean (int)
+
+   Enable (1) or disable (0) cleaning of expired db records on timer basis
+   for db_mode WRITE-BACK and WRITE-THROUGH. It uses the secondary timer
+   process.
+
+   Default value is "0".
+
+   Example 1.42. Set db_timer_clean parameter
+...
+modparam("usrloc", "db_timer_clean", 1)
 ...
 
 4. Functions
