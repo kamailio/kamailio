@@ -47,16 +47,21 @@ Alexandr Dubovikov
               3.18. insert_retry_timeout (integer)
               3.19. callid_aleg_header (str)
 
-        4. MI Commands
+        4. Functions
 
-              4.1. sip_capture
+              4.1. sip_capture([table])
+              4.2. report_capture([table],[data])
 
-        5. RPC Commands
+        5. MI Commands
 
-              5.1. sipcapture.status param
+              5.1. sip_capture
 
-        6. Database setup
-        7. Limitations
+        6. RPC Commands
+
+              6.1. sipcapture.status param
+
+        7. Database setup
+        8. Limitations
 
    List of Examples
 
@@ -79,6 +84,8 @@ Alexandr Dubovikov
    1.17. Set insert_retries parameter
    1.18. Set insert_retry_timeout parameter
    1.19. Set callid_aleg_header parameter
+   1.20. sip_capture() usage
+   1.21. sip_capture() usage
 
 Chapter 1. Admin Guide
 
@@ -112,16 +119,21 @@ Chapter 1. Admin Guide
         3.18. insert_retry_timeout (integer)
         3.19. callid_aleg_header (str)
 
-   4. MI Commands
+   4. Functions
 
-        4.1. sip_capture
+        4.1. sip_capture([table])
+        4.2. report_capture([table],[data])
 
-   5. RPC Commands
+   5. MI Commands
 
-        5.1. sipcapture.status param
+        5.1. sip_capture
 
-   6. Database setup
-   7. Limitations
+   6. RPC Commands
+
+        6.1. sipcapture.status param
+
+   7. Database setup
+   8. Limitations
 
 1. Overview
 
@@ -433,11 +445,56 @@ modparam("sipcapture", "insert_retry_timeout", 10)
 modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 ...
 
-4. MI Commands
+4. Functions
 
-   4.1. sip_capture
+   4.1. sip_capture([table])
+   4.2. report_capture([table],[data])
 
-4.1. sip_capture
+4.1.  sip_capture([table])
+
+   Store the current processed HEP/IPIP SIP message in database. It is
+   stored in the form prior applying changes made to it.
+
+   Meaning of the parameters is as follows:
+     * table - The table where HEP SIP message will be stored.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE.
+   Default value is "NULL".
+
+   Example 1.20. sip_capture() usage
+...
+sip_capture();
+...
+sip_capture("sip_capture_call_20160124");
+...
+
+4.2.  report_capture([table],[data])
+
+   Store the current processed HEP REPORT message in database.
+
+   Meaning of the parameters is as follows:
+     * table - The table where REPORT message will be stored.
+       data - The custom report data.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE.
+   Default value is "NULL".
+
+   Example 1.21. sip_capture() usage
+...
+report_capture();
+...
+report_capture("report_data");
+...
+report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
+...
+
+5. MI Commands
+
+   5.1. sip_capture
+
+5.1.  sip_capture
 
    Name: sip_capture
 
@@ -455,11 +512,11 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
                 capture_mode
                 _empty_line_
 
-5. RPC Commands
+6. RPC Commands
 
-   5.1. sipcapture.status param
+   6.1. sipcapture.status param
 
-5.1. sipcapture.status param
+6.1.  sipcapture.status param
 
    Name: sipcapture.status
 
@@ -470,7 +527,7 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
      * “check” does not change sipcapture status, just reports the current
        status.
 
-6. Database setup
+7. Database setup
 
    Before running Kamailio with the sipcapture module, you have to setup
    the database tables where the module will store the data. For that, if
@@ -480,10 +537,8 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
    also find the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-7. Limitations
+8. Limitations
 
      * 1. Only one capturing mode on RAW socket is supported: IPIP or
        monitoring/mirroring port. Don't activate both at the same time.
-     * 2. By default MySQL doesn't support INSERT DELAYED for partitioning
-       table. You can patch MySQL (http://bugs.mysql.com/bug.php?id=50393)
-     * 3. Mirroring port capturing works only on Linux.
+     * 2. Mirroring port capturing works only on Linux.
