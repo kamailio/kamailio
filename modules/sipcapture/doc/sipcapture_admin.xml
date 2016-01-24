@@ -476,6 +476,81 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 		</example>
 	</section>
 </section>	
+<section>
+	<title>Functions</title>
+	<section id="sipcapture.f.sip_capture">
+		<title>
+		<function moreinfo="none">sip_capture([table])</function>
+		</title>
+		<para>
+		Store the current processed HEP/IPIP SIP message in database. It is stored in the
+		form prior applying changes made to it.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>table</emphasis> - The table where HEP SIP message will be stored.		
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<emphasis>
+			Default value is "NULL".
+		</emphasis>
+		<example>
+		<title><function>sip_capture()</function> usage</title>
+		<programlisting format="linespecific">
+...
+sip_capture();
+...
+sip_capture("sip_capture_call_20160124");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sipcapture.f.report_capture">
+		<title>
+		<function moreinfo="none">report_capture([table],[data])</function>
+		</title>
+		<para>
+		Store the current processed HEP REPORT message in database. 
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+		<para><emphasis>table</emphasis> - The table where REPORT message will be stored.
+		</para>
+		<para><emphasis>data</emphasis> - The custom report data.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE.
+		</para>
+		<emphasis>
+			Default value is "NULL".
+		</emphasis>
+		<example>
+		<title><function>sip_capture()</function> usage</title>
+		<programlisting format="linespecific">
+...
+report_capture();
+...
+report_capture("report_data");
+...
+report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
+...
+</programlisting>
+		</example>
+	</section>
+	
+	</section>
+
+
     <section>
 	<title>MI Commands</title>
 	<section id="sipcapture.m.sip_capture">
@@ -559,11 +634,9 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 		<listitem>
 		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port. 
 		   Don't activate both at the same time.
-		</listitem><listitem>
-		2. By default MySQL doesn't support INSERT DELAYED for partitioning table. You can patch MySQL 
-		  (http://bugs.mysql.com/bug.php?id=50393)
-		</listitem><listitem>
-		3. Mirroring port capturing works only on Linux.
+		</listitem>
+		<listitem>
+		2. Mirroring port capturing works only on Linux.
 		</listitem>
         </itemizedlist>
         </section>
