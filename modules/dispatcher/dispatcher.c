@@ -286,6 +286,10 @@ static int mod_init(void)
 		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
+	if(ds_ping_active_init()<0) {
+		return -1;
+	}
+
 	if(ds_init_rpc()<0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -1318,6 +1322,54 @@ static void dispatcher_rpc_set_state(rpc_t* rpc, void* ctx)
 }
 
 
+static const char* dispatcher_rpc_ping_active_doc[2] = {
+	"Manage setting on/off the pinging (keepalive) of destinations",
+	0
+};
+
+
+/*
+ * RPC command to set the state of a destination address
+ */
+static void dispatcher_rpc_ping_active(rpc_t* rpc, void* ctx)
+{
+	int state;
+	int ostate;
+	void *th;
+
+	if(rpc->scan(ctx, "*d", &state)!=1) {
+		state = -1;
+	}
+	ostate = ds_ping_active_get();
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+	if(state==-1) {
+		if(rpc->struct_add(th, "d",
+				"OldPingState", ostate)<0)
+		{
+			rpc->fault(ctx, 500, "Internal error reply structure");
+			return;
+		}
+		return;
+	}
+
+	if(ds_ping_active_set(state)<0) {
+		rpc->fault(ctx, 500, "Ping State Update Failed");
+		return;
+	}
+	if(rpc->struct_add(th, "dd",
+				"NewPingState", state,
+				"OldPingState", ostate)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error reply structure");
+		return;
+	}
+	return;
+}
+
 rpc_export_t dispatcher_rpc_cmds[] = {
 	{"dispatcher.reload", dispatcher_rpc_reload,
 		dispatcher_rpc_reload_doc, 0},
@@ -1325,6 +1377,8 @@ rpc_export_t dispatcher_rpc_cmds[] = {
 		dispatcher_rpc_list_doc,   0},
 	{"dispatcher.set_state",   dispatcher_rpc_set_state,
 		dispatcher_rpc_set_state_doc,   0},
+	{"dispatcher.ping_active",   dispatcher_rpc_ping_active,
+		dispatcher_rpc_ping_active_doc, 0},
 	{0, 0, 0, 0}
 };
 

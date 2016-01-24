@@ -70,6 +70,7 @@ static int _ds_table_version = DS_TABLE_VERSION;
 
 static ds_ht_t *_dsht_load = NULL;
 
+static int *_ds_ping_active = NULL;
 
 extern int ds_force_dst;
 
@@ -90,6 +91,43 @@ static void ds_run_route(struct sip_msg *msg, str *uri, char *route);
 void destroy_list(int);
 void shuffle_uint100array(unsigned int* arr);
 int ds_reinit_rweight_on_state_change(int old_state, int new_state, ds_set_t *dset);
+
+/**
+ *
+ */
+int ds_ping_active_init(void)
+{
+	if(_ds_ping_active!=NULL)
+		return 0;
+	_ds_ping_active = (int*)shm_malloc(sizeof(int));
+	if(_ds_ping_active==NULL) {
+		LM_ERR("no more shared memory\n");
+		return -1;
+	}
+	*_ds_ping_active = 1;
+	return 0;
+}
+
+/**
+ *
+ */
+int ds_ping_active_get(void)
+{
+	if(_ds_ping_active!=NULL)
+		return -1;
+	return *_ds_ping_active;
+}
+
+/**
+ *
+ */
+int ds_ping_active_set(int v)
+{
+	if(_ds_ping_active!=NULL)
+		return -1;
+	*_ds_ping_active = v;
+	return 0;
+}
 
 /**
  *
@@ -2812,6 +2850,11 @@ void ds_check_timer(unsigned int ticks, void* param)
 		return;
 	}
 
+	if(_ds_ping_active!=NULL && *_ds_ping_active==0)
+	{
+		LM_DBG("pinging destinations is inactive by admin\n");
+		return;
+	}
 	/* Iterate over the groups and the entries of each group: */
 	for(list = _ds_list; list!= NULL; list= list->next)
 	{

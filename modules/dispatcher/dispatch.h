@@ -183,5 +183,10 @@ typedef struct _ds_set
 
 ds_set_t *ds_get_list(void);
 int ds_get_list_nr(void);
+
+int ds_ping_active_init(void);
+int ds_ping_active_get(void);
+int ds_ping_active_set(int v);
+
 #endif
 
