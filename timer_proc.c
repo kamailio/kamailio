@@ -278,13 +278,14 @@ int fork_sync_utimer(int child_id, char* desc, int make_sock,
 }
 
 
+/* number of slots in the wheel timer */
 #define SR_WTIMER_SIZE	16
 
 typedef struct sr_wtimer_node {
 	struct sr_wtimer_node *next;
-	uint32_t interval;
-	uint32_t steps;
-	uint32_t cycles;
+	uint32_t interval;  /* frequency of execution (secs) */
+	uint32_t steps;     /* interval = loops * SR_WTIMER_SIZE + steps */
+	uint32_t loops;
 	timer_function* f;
 	void* param;
 } sr_wtimer_node_t;
@@ -335,7 +336,7 @@ int sr_wtimer_add(timer_function* f, void* param, int interval)
 	wt->param = param;
 	wt->interval = interval;
 	wt->steps = interval % SR_WTIMER_SIZE;
-	wt->cycles = interval / SR_WTIMER_SIZE;
+	wt->loops = interval / SR_WTIMER_SIZE;
 	wt->next = _sr_wtimer->wlist[wt->steps];
 	_sr_wtimer->wlist[wt->steps] = wt;
 
@@ -363,7 +364,7 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 		if(_sr_wtimer->itimer % i == 0) {
 			for(wt=_sr_wtimer->wlist[i % SR_WTIMER_SIZE];
 					wt!=NULL; wt = wt->next) {
-				if(wt->cycles==0 || (c % wt->cycles==0)) {
+				if(wt->loops==0 || (c % wt->loops==0)) {
 					wt->f(ticks, wt->param);
 				}
 			}
