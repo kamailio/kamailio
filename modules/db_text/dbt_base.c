@@ -122,12 +122,14 @@ void dbt_close(db1_con_t* _h)
  */
 int dbt_free_result(db1_con_t* _h, db1_res_t* _r)
 {
-	if ((!_h) || (!_r))
+	if ((!_h))
 	{
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
+	if (!_r)
+		return 0;
 
 	if(dbt_result_free((dbt_result_p)_r->ptr) < 0)
 	{
@@ -673,6 +675,7 @@ int dbt_replace(db1_con_t* _h, db_key_t* _k, db_val_t* _v,
 			}
 
 			((dbt_con_p)_h->tail)->affected++;
+			break;
 
 		}
 		_drp = _drp->next;

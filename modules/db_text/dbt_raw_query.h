@@ -32,6 +32,9 @@
 int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r);
 int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r);
 int dbt_raw_query_delete(db1_con_t* _h, str* _s, db1_res_t** _r);
+int dbt_raw_query_insert(db1_con_t* _h, str* _s, db1_res_t** _r);
+int dbt_raw_query_replace(db1_con_t* _h, str* _s, db1_res_t** _r);
+
 
 #endif
 
