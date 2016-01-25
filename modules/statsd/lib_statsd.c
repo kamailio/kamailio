@@ -44,7 +44,7 @@ bool statsd_connect(void){
         return false;
     }
 
-    statsd_socket.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    statsd_socket.sock = socket(serverAddr->ai_family, SOCK_DGRAM, IPPROTO_UDP);
     if (statsd_socket.sock == 0 ){
         LM_ERR("Statsd: could not initiate a connect to statsd\n");
         return false;
@@ -52,6 +52,7 @@ bool statsd_connect(void){
 
     rc = connect(
         statsd_socket.sock, serverAddr->ai_addr, serverAddr->ai_addrlen);
+	freeaddrinfo(serverAddr);
     if (rc < 0){
         LM_ERR("Statsd: could not initiate a connect to statsd\n");
         return false;
