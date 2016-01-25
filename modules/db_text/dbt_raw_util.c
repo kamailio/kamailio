@@ -31,8 +31,16 @@
 
 #include "dbt_raw_util.h"
 
-//static const char* _regexp = "\\s*(and|or)?\\s*(\\w*)\\s*(>=|<=|<>|=|>|<)\\s*(')?([a-zA-Z0-9_-]*)(')?";
-static const char* _regexp = "\\s*(and|or)?\\s*(\\w*)\\s*(>=|<=|<>|=|>|<)\\s*(['\"])?([^'\"]*)(['\"])?";
+static const char* _regexp = "\\s*(and|or|where|,)?\\s*(\\w*)\\s*(>=|<=|<>|=|>|<)\\s*([0-9\\.]+)?(\"([^\\\\\"]|\\\\\")*\")?";
+
+void log_regerror(int errcode, regex_t *compiled)
+{
+	size_t length = regerror (errcode, compiled, NULL, 0);
+	char *buffer = pkg_malloc (length);
+	(void) regerror (errcode, compiled, buffer, length);
+	LM_ERR("error compiling regex : %s\n", buffer);
+	pkg_free(buffer);
+}
 
 char** dbt_str_split(char* a_str, const char a_delim, int* c)
 {
@@ -133,8 +141,8 @@ char* dbt_trim(char *str)
 }
 
 
-#define MAX_MATCH 7
-#define MAX_CLAUSES 12
+#define MAX_MATCH 10
+#define MAX_CLAUSES 20
 
 void dbt_clean_where(int n, db_key_t* _k, db_op_t* _op, db_val_t* _v)
 {
@@ -180,10 +188,13 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 	*_o = NULL;
 	*_v = NULL;
 
+	int res;
+
 	len = strlen(where);
 
-	if (regcomp(&preg, _regexp, REG_EXTENDED | REG_NEWLINE)) {
-		LM_ERR("error compiling regexp\n");
+	res = regcomp(&preg, _regexp, REG_EXTENDED);
+	if(res)	{
+		log_regerror(res, &preg);
 		return -1;
 	}
 
@@ -204,7 +215,7 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 		char* buffer = where + offset;
 
 		if (regexec(&preg, buffer, MAX_MATCH, matches, REG_ICASE)) {
-			LM_ERR("error running regexp\n");
+			LM_ERR("error running regexp %i '%s'\n", idx, buffer);
 			break;
 		}
 		if(matches[0].rm_so == -1) {
@@ -227,23 +238,28 @@ int dbt_build_where(char* where, db_key_t** _k, db_op_t** _o, db_val_t** _v)
 		strncpy(_o1[idx], buffer+matches[3].rm_so, l);
 		_o1[idx][l]='\0';
 
-		l = matches[5].rm_eo - matches[5].rm_so;
-		if(matches[4].rm_so == -1) {
-			strncpy(int_buf, buffer+matches[5].rm_so, l);
+		if(matches[5].rm_so == -1) {
+			l = matches[4].rm_eo - matches[4].rm_so;
+			strncpy(int_buf, buffer+matches[4].rm_so, l);
 			int_buf[l] = '\0';
 			_v1[idx].type = DB1_INT;
 			_v1[idx].val.int_val = atoi(int_buf);
 		} else {
+			char *start = buffer+matches[5].rm_so+1;
+			int writer = 0, reader = 0;
+			l = matches[5].rm_eo - matches[5].rm_so - 2;
 			_v1[idx].type = DB1_STR;
 			_v1[idx].val.str_val.len = l;
 			_v1[idx].val.str_val.s = pkg_malloc(l+1);
-			strncpy(_v1[idx].val.str_val.s, buffer+matches[5].rm_so, l);
+
+			for(reader=0; reader < l; reader++) {
+				if(start[reader] == '\\' && start[reader+1] == '\"')
+					continue;
+				_v1[idx].val.str_val.s[writer++] = start[reader];
+			}
+			_v1[idx].val.str_val.s[writer] = '\0';
+			_v1[idx].val.str_val.len = writer;
 		}
-/*
-		for(int n=0; n < MAX_MATCH; n++) {
-			LM_ERR("MATCH RESULT %d - %d,%d\n", n, matches[n].rm_so, matches[n].rm_eo);
-		}
-*/
 		if(matches[0].rm_eo != -1)
 			offset += matches[0].rm_eo;
 
