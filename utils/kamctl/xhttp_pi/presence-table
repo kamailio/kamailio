@@ -42,6 +42,8 @@
 		<column><field>from_domain</field><type>DB1_STR</type></column>
 		<column><field>updated</field><type>DB1_INT</type></column>
 		<column><field>updated_winfo</field><type>DB1_INT</type></column>
+		<column><field>flags</field><type>DB1_INT</type></column>
+		<column><field>user_agent</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of watchers table-->
 	<db_table id="watchers">

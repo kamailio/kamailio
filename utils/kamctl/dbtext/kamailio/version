@@ -2,7 +2,7 @@ table_name(string) table_version(int)
 version:1
 acc:5
 acc_cdrs:2
-active_watchers:11
+active_watchers:12
 address:6
 aliases:8
 carrier_name:1
