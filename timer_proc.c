@@ -284,7 +284,6 @@ typedef struct sr_wtimer_node {
 	struct sr_wtimer_node *next;
 	uint32_t interval;
 	uint32_t steps;
-	uint32_t cycles;
 	timer_function* f;
 	void* param;
 } sr_wtimer_node_t;
@@ -335,7 +334,6 @@ int sr_wtimer_add(timer_function* f, void* param, int interval)
 	wt->param = param;
 	wt->interval = interval;
 	wt->steps = interval % SR_WTIMER_SIZE;
-	wt->cycles = interval / SR_WTIMER_SIZE;
 	wt->next = _sr_wtimer->wlist[wt->steps];
 	_sr_wtimer->wlist[wt->steps] = wt;
 
@@ -349,7 +347,6 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 {
 	sr_wtimer_node_t *wt;
 	uint32_t i;
-	uint32_t c;
 
 	if(_sr_wtimer==NULL) {
 		LM_ERR("wtimer not intialized\n");
@@ -357,13 +354,12 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 	}
 
 	_sr_wtimer->itimer++;
-	c = _sr_wtimer->itimer / SR_WTIMER_SIZE;
 
 	for(i=1; i<=SR_WTIMER_SIZE; i++) {
 		if(_sr_wtimer->itimer % i == 0) {
 			for(wt=_sr_wtimer->wlist[i % SR_WTIMER_SIZE];
 					wt!=NULL; wt = wt->next) {
-				if(wt->cycles==0 || (c % wt->cycles==0)) {
+				if(_sr_wtimer->itimer % wt->interval==0) {
 					wt->f(ticks, wt->param);
 				}
 			}
