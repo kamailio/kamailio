@@ -38,8 +38,8 @@ bool statsd_connect(void){
     }
 
     statsd_connection.sock = socket(serverAddr->ai_family, SOCK_DGRAM, IPPROTO_UDP);
-    if (statsd_connection.sock == 0 ){
-        LM_ERR("Statsd: could not initiate a connect to statsd\n");
+    if (statsd_connection.sock < 0 ){
+        LM_ERR("Statsd: could not create a socket for statsd connection\n");
         return false;
     }
 
