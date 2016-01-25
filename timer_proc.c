@@ -284,8 +284,9 @@ int fork_sync_utimer(int child_id, char* desc, int make_sock,
 typedef struct sr_wtimer_node {
 	struct sr_wtimer_node *next;
 	uint32_t interval;  /* frequency of execution (secs) */
-	uint32_t steps;     /* interval = loops * SR_WTIMER_SIZE + steps */
+	uint32_t steps;     /* init: interval = loops * SR_WTIMER_SIZE + steps */
 	uint32_t loops;
+	uint32_t eloop;
 	timer_function* f;
 	void* param;
 } sr_wtimer_node_t;
@@ -337,8 +338,24 @@ int sr_wtimer_add(timer_function* f, void* param, int interval)
 	wt->interval = interval;
 	wt->steps = interval % SR_WTIMER_SIZE;
 	wt->loops = interval / SR_WTIMER_SIZE;
+	wt->eloop = wt->loops;
 	wt->next = _sr_wtimer->wlist[wt->steps];
 	_sr_wtimer->wlist[wt->steps] = wt;
+
+	return 0;
+}
+
+/**
+ *
+ */
+int sr_wtimer_reinsert(uint32_t cs, sr_wtimer_node_t *wt)
+{
+	uint32_t ts;
+
+	ts = (cs + wt->interval) % SR_WTIMER_SIZE;
+	wt->eloop = wt->interval / SR_WTIMER_SIZE;
+	wt->next = _sr_wtimer->wlist[ts];
+	_sr_wtimer->wlist[ts] = wt;
 
 	return 0;
 }
@@ -349,8 +366,10 @@ int sr_wtimer_add(timer_function* f, void* param, int interval)
 void sr_wtimer_exec(unsigned int ticks, void *param)
 {
 	sr_wtimer_node_t *wt;
-	uint32_t i;
-	uint32_t c;
+	sr_wtimer_node_t *wn;
+	sr_wtimer_node_t *wp;
+	uint32_t cs;
+	uint32_t cl;
 
 	if(_sr_wtimer==NULL) {
 		LM_ERR("wtimer not intialized\n");
@@ -358,17 +377,29 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 	}
 
 	_sr_wtimer->itimer++;
-	c = _sr_wtimer->itimer / SR_WTIMER_SIZE;
+	cs = _sr_wtimer->itimer % SR_WTIMER_SIZE;
+	cl = _sr_wtimer->itimer / SR_WTIMER_SIZE;
+	LM_DBG("wtimer - loop: %u - slot: %u\n", cl, cs);
 
-	for(i=1; i<=SR_WTIMER_SIZE; i++) {
-		if(_sr_wtimer->itimer % i == 0) {
-			for(wt=_sr_wtimer->wlist[i % SR_WTIMER_SIZE];
-					wt!=NULL; wt = wt->next) {
-				if(wt->loops==0 || (c % wt->loops==0)) {
-					wt->f(ticks, wt->param);
-				}
+	wp = NULL;
+	wt=_sr_wtimer->wlist[cs];
+	while(wt) {
+		wn = wt->next;
+		if(wt->eloop==0) {
+			/* execute timer callback function */
+			wt->f(ticks, wt->param);
+			/* extract and reinsert timer item */
+			if(wp==NULL) {
+				_sr_wtimer->wlist[cs] = wn;
+			} else {
+				wp->next = wn;
 			}
+			sr_wtimer_reinsert(cs, wt);
+		} else {
+			wt->eloop--;
+			wp = wt;
 		}
+		wt = wn;
 	}
 }
 
