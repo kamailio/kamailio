@@ -11,47 +11,40 @@
 #include "../../sr_module.h"
 #include "lib_statsd.h"
 
-static StatsdSocket statsd_socket = {
-    "/var/run/statsd/statsd.sock",
-    -1,
-    500, // timeout 500ms if no answer
-    0,
-    ""
-};
-
 static StatsConnection statsd_connection = {
     "127.0.0.1",
-    "8125"
+    "8125",
+    -1
 };
 
 bool statsd_connect(void){
 
     struct addrinfo *serverAddr;
-    int rc, error;
+    int rc;
 
-    if (statsd_socket.sock > 0){
+    if (statsd_connection.sock > 0){
         return true;
     }
 
-    error = getaddrinfo(
+    rc = getaddrinfo(
         statsd_connection.ip, statsd_connection.port,
         NULL, &serverAddr);
-    if (error != 0)
+    if (rc != 0)
     {
         LM_ERR(
             "Statsd: could not initiate server information (%s)\n",
-            gai_strerror(error));
+            gai_strerror(rc));
         return false;
     }
 
-    statsd_socket.sock = socket(serverAddr->ai_family, SOCK_DGRAM, IPPROTO_UDP);
-    if (statsd_socket.sock == 0 ){
+    statsd_connection.sock = socket(serverAddr->ai_family, SOCK_DGRAM, IPPROTO_UDP);
+    if (statsd_connection.sock == 0 ){
         LM_ERR("Statsd: could not initiate a connect to statsd\n");
         return false;
     }
 
     rc = connect(
-        statsd_socket.sock, serverAddr->ai_addr, serverAddr->ai_addrlen);
+        statsd_connection.sock, serverAddr->ai_addr, serverAddr->ai_addrlen);
 	freeaddrinfo(serverAddr);
     if (rc < 0){
         LM_ERR("Statsd: could not initiate a connect to statsd\n");
@@ -67,7 +60,7 @@ bool send_command(char *command){
         return false;
     }
 
-    send_result = send(statsd_socket.sock, command, strlen(command), 0);
+    send_result = send(statsd_connection.sock, command, strlen(command), 0);
     if ( send_result < 0){
         LM_ERR("could not send the correct info to statsd (%i| %s)\n",
             send_result, strerror(errno));
@@ -129,6 +122,6 @@ bool statsd_init(char *ip, char *port){
 }
 
 bool statsd_destroy(void){
-    statsd_socket.sock = 0;
+    statsd_connection.sock = 0;
     return true;
 }
