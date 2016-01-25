@@ -21,7 +21,7 @@ Eloy Coto Pereiro
         2. Parameters
 
               2.1. ip(string)
-              2.2. port(int)
+              2.2. port(string)
 
         3. Functions
 
@@ -51,7 +51,7 @@ Chapter 1. Admin Guide
    2. Parameters
 
         2.1. ip(string)
-        2.2. port(int)
+        2.2. port(string)
 
    3. Functions
 
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
 2. Parameters
 
    2.1. ip(string)
-   2.2. port(int)
+   2.2. port(string)
 
 2.1. ip(string)
 
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
 modparam("statsd", "ip", "127.0.0.1")
 ...
 
-2.2. port(int)
+2.2. port(string)
 
    Statsd server ip
 
