@@ -46,9 +46,12 @@
 #include "presence.h"
 #include "notify.h"
 #include "utils_func.h"
+#include "../../receive.h"
 
 #define ALLOC_SIZE 3000
 #define MAX_FORWARD 70
+
+int goto_on_notify_reply=-1;
 
 extern int pres_local_log_level;
 
@@ -95,6 +98,8 @@ str str_sender_col = str_init("sender");
 str str_updated_col = str_init("updated");
 str str_updated_winfo_col = str_init("updated_winfo");
 str str_priority_col = str_init("priority");
+str str_flags_col = str_init("flags");
+str str_user_agent_col = str_init("user_agent");
 
 int subset=0;
 
@@ -984,7 +989,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	db_key_t query_cols[7];
 	db_op_t  query_ops[7];
 	db_val_t query_vals[7];
-	db_key_t result_cols[19];
+	db_key_t result_cols[21];
 	int n_result_cols = 0, n_query_cols = 0;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -995,6 +1000,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	int version_col= 0, record_route_col = 0, contact_col = 0;
 	int sockinfo_col= 0, local_contact_col= 0, event_id_col = 0;
 	int watcher_user_col= 0, watcher_domain_col= 0;
+	int flags_col= 0, user_agent_col= 0;
 	subs_t s, *s_new;
 	int inc= 0;
 		
@@ -1058,6 +1064,8 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	result_cols[sockinfo_col=n_result_cols++]     =   &str_socket_info_col;
 	result_cols[local_contact_col=n_result_cols++]=   &str_local_contact_col;
 	result_cols[version_col=n_result_cols++]      =   &str_version_col;
+	result_cols[flags_col=n_result_cols++]        =   &str_flags_col;
+	result_cols[user_agent_col=n_result_cols++]   =   &str_user_agent_col;
 
 	if (pa_dbf.query(pa_db, query_cols, query_ops, query_vals,result_cols,
 				n_query_cols, n_result_cols, 0, &result) < 0) 
@@ -1148,6 +1156,9 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		else
 		    s.expires = row_vals[expires_col].val.int_val - (int)time(NULL);
 		s.version = row_vals[version_col].val.int_val +1;
+		s.flags = row_vals[flags_col].val.int_val;
+		s.user_agent.s=  (char*)row_vals[user_agent_col].val.string_val;
+		s.user_agent.len= (s.user_agent.s)?strlen(s.user_agent.s):0;
 
 		s_new= mem_copy_subs(&s, PKG_MEM_TYPE);
 		if(s_new== NULL)
@@ -1467,7 +1478,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 	str str_hdr = {0, 0};
 	str* notify_body = NULL;
 	int result= 0;
-	c_back_param *cb_param= NULL;
+	subs_t *cb_param= NULL;
 	str* final_body= NULL;
 	uac_req_t uac_r;
 	str* aux_body = NULL;
@@ -1589,16 +1600,7 @@ jump_over_body:
 	}
 
 	LM_DBG("expires %d status %d\n", subs->expires, subs->status);
-	/* if status is TERMINATED_STATUS, the subscription will be deleted so no need to send a parameter */
-	if(subs->status != TERMINATED_STATUS)
-	{
-		cb_param = shm_dup_cbparam(subs);
-		if(cb_param == NULL)
-		{
-			LM_ERR("while duplicating cb_param in share memory\n");
-			goto error;
-		}
-	}
+	cb_param = mem_copy_subs(subs, SHM_MEM_TYPE);
 
 	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, TMCB_LOCAL_COMPLETED,
 			p_tm_callback, (void*)cb_param);
@@ -1607,7 +1609,7 @@ jump_over_body:
 	{
 		LM_ERR("in function tmb.t_request_within\n");
 		if(cb_param)
-			free_cbparam(cb_param);
+			shm_free(cb_param);
 		goto error;
 	}
 
@@ -1700,30 +1702,120 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 	return 0;
 }
 
-void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
-{
-	c_back_param*  cb;
+extern subs_t* _pres_subs_last_sub;
+sip_msg_t* _pres_subs_notify_reply_msg = NULL;
+int _pres_subs_notify_reply_code = 0;
 
-	if(ps->param==NULL || *ps->param==NULL ||
-			((c_back_param*)(*ps->param))->callid.s == NULL ||
-			((c_back_param*)(*ps->param))->to_tag.s== NULL ||
-			((c_back_param*)(*ps->param))->from_tag.s== NULL)
-	{
-		LM_DBG("message id not received, probably a timeout notify\n");
-		if(ps->param != NULL && *ps->param !=NULL)
-			free_cbparam((c_back_param*)(*ps->param));
+int pv_parse_notify_reply_var_name(pv_spec_p sp, str *in)
+{
+	pv_spec_t *pv=NULL;
+	if(in->s==NULL || in->len<=0)
+		return -1;
+	pv = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+	if(pv==NULL)
+		return -1;
+	memset(pv, 0, sizeof(pv_spec_t));
+	if(pv_parse_spec(in, pv)==NULL)
+		goto error;
+	sp->pvp.pvn.u.dname = (void*)pv;
+	sp->pvp.pvn.type = PV_NAME_PVAR;
+	return 0;
+
+error:
+	LM_ERR("invalid pv name [%.*s]\n", in->len, in->s);
+	if(pv!=NULL)
+		pkg_free(pv);
+	return -1;
+}
+
+int pv_get_notify_reply(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
+{
+	pv_spec_t *pv=NULL;
+
+	if(msg==NULL)
+		return 1;
+
+	pv = (pv_spec_t*)param->pvn.u.dname;
+	if(pv==NULL)
+		return pv_get_null(msg, param, res);
+
+	return pv_get_spec_value(_pres_subs_notify_reply_msg, pv, res);
+}
+
+#define FAKED_SIP_408_MSG_FORMAT "SIP/2.0 408 TIMEOUT\r\nVia: SIP/2.0/UDP 127.0.0.1\r\nFrom: invalid;\r\nTo: invalid\r\nCall-ID: invalid\r\nCSeq: 1 TIMEOUT\r\nContent-Length: 0\r\n\r\n"
+static sip_msg_t* _faked_msg = NULL;
+
+sip_msg_t* faked_msg() {
+	if(_faked_msg == NULL) {
+		_faked_msg = pkg_malloc(sizeof(sip_msg_t));
+		if(likely(build_sip_msg_from_buf(_faked_msg, FAKED_SIP_408_MSG_FORMAT, strlen(FAKED_SIP_408_MSG_FORMAT), inc_msg_no())<0)) {
+			LM_ERR("failed to parse msg buffer\n");
+			return NULL;
+		}
+	}
+	return _faked_msg;
+}
+
+void run_notify_reply_event(struct cell *t, struct tmcb_params *ps)
+{
+	int backup_route_type;
+	subs_t* backup_subs = NULL;
+	sip_msg_t msg;
+
+	if (goto_on_notify_reply==-1)
+		return;
+
+	if(likely(build_sip_msg_from_buf(&msg, t->uac->request.buffer, t->uac->request.buffer_len, inc_msg_no())<0)) {
+		LM_ERR("failed to parse msg buffer\n");
 		return;
 	}
 
-	cb= (c_back_param*)(*ps->param);
+	_pres_subs_notify_reply_code = ps->code;
+	if( ps->code == 408 || ps->rpl == NULL) {
+		_pres_subs_notify_reply_msg = faked_msg();
+	} else {
+		_pres_subs_notify_reply_msg = ps->rpl;
+	}
+
+	backup_subs = _pres_subs_last_sub;
+	_pres_subs_last_sub = mem_copy_subs((subs_t*)(*ps->param), PKG_MEM_TYPE);
+
+	backup_route_type = get_route_type();
+	set_route_type(LOCAL_ROUTE);
+	run_top_route(event_rt.rlist[goto_on_notify_reply], &msg, 0);
+	set_route_type(backup_route_type);
+
+	_pres_subs_notify_reply_msg = NULL;
+	_pres_subs_notify_reply_code = 0;
+	pkg_free(_pres_subs_last_sub);
+	_pres_subs_last_sub = backup_subs;
+	free_sip_msg(&msg);
+
+}
+
+void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
+{
+	subs_t* subs;
+
+	if(ps->param == NULL || *ps->param == NULL) {
+                LM_ERR("weird shit happening\n");
+                if(ps->param != NULL && *ps->param !=NULL)
+                        shm_free((subs_t*)(*ps->param));
+                return;
+	}
+
+	subs= (subs_t*)(*ps->param);
 	LM_DBG("completed with status %d [to_tag:%.*s]\n",
-			ps->code, cb->to_tag.len, cb->to_tag.s);
+			ps->code, subs->to_tag.len, subs->to_tag.s);
 
-	if(ps->code == 481 || (ps->code == 408 && timeout_rm_subs))
-		delete_subs(&cb->pres_uri, &cb->ev_name,
-				&cb->to_tag, &cb->from_tag, &cb->callid);
+	run_notify_reply_event(t, ps);
 
-	free_cbparam(cb);
+	if(ps->code == 404 || ps->code == 481 || (ps->code == 408 && timeout_rm_subs)) {
+		delete_subs(&subs->pres_uri, &subs->event->name,
+				&subs->to_tag, &subs->from_tag, &subs->callid);
+	}
+
+	shm_free(subs);
 }
 
 void free_cbparam(c_back_param* cb_param)
@@ -2667,7 +2759,7 @@ error:
 
 int process_dialogs(int round, int presence_winfo)
 {
-	db_key_t query_cols[3], result_cols[18], update_cols[4];
+	db_key_t query_cols[3], result_cols[20], update_cols[4];
 	db_val_t query_vals[3], update_vals[4], *values, *dvalues;
 	db_op_t query_ops[2];
 	db_row_t *rows, *drows;
@@ -2678,6 +2770,7 @@ int process_dialogs(int round, int presence_winfo)
 	int wuser_col, wdomain_col, sockinfo_col, lcontact_col, contact_col;
 	int rroute_col, event_id_col, reason_col, event_col, lcseq_col;
 	int rcseq_col, status_col, version_col, updated_winfo_col, expires_col;
+	int flags_col, user_agent_col;
 	int i, notify_sent = 0, cached_updated_winfo, ret = -1;
 	int end_transaction = 0;
 	subs_t sub;
@@ -2818,6 +2911,8 @@ int process_dialogs(int round, int presence_winfo)
 		result_cols[version_col = n_result_cols++] = &str_version_col;
 		result_cols[updated_winfo_col = n_result_cols++] = &str_updated_winfo_col;
 		result_cols[expires_col = n_result_cols++] = &str_expires_col;
+		result_cols[flags_col = n_result_cols++] = &str_flags_col;
+		result_cols[user_agent_col = n_result_cols++] = &str_user_agent_col;
 
 		/* Need to redo this here as we might have switched to the
 		   presentity table during a previous iteration. */
@@ -2885,6 +2980,7 @@ int process_dialogs(int round, int presence_winfo)
 		EXTRACT_STRING(sub.record_route, VAL_STRING(&dvalues[rroute_col]));
 		EXTRACT_STRING(sub.event_id, VAL_STRING(&dvalues[event_id_col]));
 		EXTRACT_STRING(sub.reason, VAL_STRING(&dvalues[reason_col]));
+		EXTRACT_STRING(sub.user_agent, VAL_STRING(&dvalues[user_agent_col]));
 
 		sub.local_cseq = VAL_INT(&dvalues[lcseq_col]) + 1;
 		sub.remote_cseq = VAL_INT(&dvalues[rcseq_col]);
@@ -2897,6 +2993,7 @@ int process_dialogs(int round, int presence_winfo)
 			sub.expires = VAL_INT(&dvalues[expires_col]) - now;
 		else
 			sub.expires = 0;
+		sub.flags = VAL_INT(&dvalues[flags_col]);
 
 		sub.updated = round;
 

@@ -97,6 +97,12 @@ extern str str_sender_col;
 extern str str_updated_col;
 extern str str_updated_winfo_col;
 extern str str_priority_col;
+extern str str_flags_col;
+extern str str_user_agent_col;
+
+extern int goto_on_notify_reply;
+int pv_parse_notify_reply_var_name(pv_spec_p sp, str *in);
+int pv_get_notify_reply(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
 void PRINT_DLG(FILE* out, dlg_t* _d);
 

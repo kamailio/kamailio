@@ -77,7 +77,7 @@ MODULE_VERSION
 
 #define S_TABLE_VERSION  3
 #define P_TABLE_VERSION  4
-#define ACTWATCH_TABLE_VERSION 11
+#define ACTWATCH_TABLE_VERSION 12
 
 char *log_buf = NULL;
 static int clean_period=100;
@@ -230,6 +230,7 @@ static mi_export_t mi_cmds[] = {
 
 static pv_export_t pres_mod_pvs[] = {
 	{{"subs", (sizeof("subs")-1)}, PVT_OTHER, pv_get_subscription, 0, pv_parse_subscription_name, 0, 0, 0},
+	{{"notify_reply", (sizeof("notify_reply")-1)}, PVT_OTHER, pv_get_notify_reply, 0, pv_parse_notify_reply_var_name, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -439,6 +440,10 @@ static int mod_init(void)
 
 	pa_dbf.close(pa_db);
 	pa_db = NULL;
+
+	goto_on_notify_reply=route_lookup(&event_rt, "presence:notify-reply");
+	if (goto_on_notify_reply>=0 && event_rt.rlist[goto_on_notify_reply]==0)
+		goto_on_notify_reply=-1; /* disable */
 
 	return 0;
 }
@@ -1220,7 +1225,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 {
 	db_key_t query_cols[5], db_cols[3];
 	db_val_t query_vals[5], db_vals[3];
-	db_key_t result_cols[24];
+	db_key_t result_cols[26];
 	int n_query_cols=0, n_result_cols=0, n_update_cols=0;
 	int event_col, pres_uri_col, watcher_user_col, watcher_domain_col;
 	int r_pres_uri_col,r_to_user_col,r_to_domain_col;
@@ -1231,6 +1236,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	int r_event_col, r_local_cseq_col, r_remote_cseq_col;
 	int r_status_col, r_version_col;
 	int r_expires_col, r_watcher_user_col, r_watcher_domain_col;
+	int r_flags_col, r_user_agent_col;
 	db1_res_t *result= NULL;
  	db_val_t *row_vals;
 	db_row_t *rows;
@@ -1300,6 +1306,9 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	result_cols[r_remote_cseq_col=n_result_cols++] = &str_remote_cseq_col;
 	result_cols[r_status_col=n_result_cols++] = &str_status_col;
 	/*********************************************/
+
+	result_cols[r_flags_col=n_result_cols++] = &str_flags_col;
+	result_cols[r_user_agent_col=n_result_cols++] = &str_user_agent_col;
 
 	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
@@ -1398,6 +1407,11 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 		    s.expires = 0;
 
 		s.version = row_vals[r_version_col].val.int_val;
+
+		s.flags = row_vals[r_flags_col].val.int_val;
+		s.user_agent.s=  (char*)row_vals[r_user_agent_col].val.string_val;
+		s.user_agent.len= (s.user_agent.s)?strlen(s.user_agent.s):0;
+
 
 		cs = mem_copy_subs(&s, PKG_MEM_TYPE);
 		if (cs == NULL)
