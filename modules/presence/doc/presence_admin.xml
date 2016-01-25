@@ -1136,8 +1136,18 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 			<title><varname>$subs(attr)</varname></title>
 			<para>
 				Access the attributes of handled subscription. 
-				It must be used after a call of
-				<quote>handle_subscription())</quote>.
+				It must be used after a successful call of
+				<quote>handle_subscription()</quote> or in the following events.
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>tm:local-request</emphasis> - before notify is sent
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>present:notify-reply</emphasis> - after notify is sent
+				</para>
+				</listitem>
+			</itemizedlist>	  
 			</para>
 			<para>
 			The <quote>attr</quote> can be:
@@ -1147,6 +1157,98 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 				<para><emphasis>uri</emphasis> - subscription presentity uri
 				</para>
 				</listitem>	  
+				<listitem>
+				<para><emphasis>pres_uri</emphasis> - alias for presentity uri
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>to_user</emphasis>
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>to_domain</emphasis>
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>from_user</emphasis>
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>from_domain</emphasis>
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>watcher_username</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>watcher_domain</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>event</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>event_id</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>to_tag</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>from_tag</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>callid</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>remote_cseq</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>local_cseq</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>contact</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>local_contact</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>record_route</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>expires</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>status</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>reason</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>version</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>flags</emphasis>
+				</para>
+				</listitem>
+				<listitem>
+				<para><emphasis>user_agent</emphasis>
+				</para>
+				</listitem>
 			</itemizedlist>
 
 			<example>
@@ -1156,6 +1258,57 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 if(handle_subscription())
 {
   xlog("presentity=$subs(uri)\n");
+}
+...
+				 </programlisting>
+			</example>
+		</section>
+		
+		<section>
+			<title><varname>$notify_reply(attr)</varname></title>
+			<para>
+				Access the reply message received when notifying subscriber. 
+				It must be used in the following events.
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>present:notify-reply</emphasis> - after notify is sent
+				</para>
+				</listitem>
+			</itemizedlist>	  
+			</para>
+			<para>
+			The <quote>attr</quote> can be any pseudo var that accesses attributes of msg
+			</para>
+
+			<example>
+			<title><function moreinfo="none">$notify_reply(name)</function> usage</title>
+<programlisting format="linespecific">
+...
+event_route[presence:notify-reply]
+{
+  xlog("received message = $notify_reply($mb)\n");
+}
+...
+				 </programlisting>
+			</example>
+		</section>
+</section>
+
+<section>
+	<title>Events</title>
+		<section>
+			<title><varname>present:notify-reply</varname></title>
+			<para>
+				Fired after notify reply is received or timeout.
+			</para>
+
+			<example>
+			<title><function moreinfo="none">$notify_reply(name)</function> usage</title>
+<programlisting format="linespecific">
+...
+event_route[presence:notify-reply]
+{
+  xlog("received message = $notify_reply($mb)\n");
 }
 ...
 				 </programlisting>
