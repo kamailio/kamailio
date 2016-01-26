@@ -1428,6 +1428,29 @@ static int create_cca_return_code(int result) {
     return 1;
 }
 
+static int create_cca_result_code(int result) {
+    int rc;
+    int_str avp_val, avp_name;
+    avp_name.s.s = RO_AVP_CCA_RESULT_CODE;
+    avp_name.s.len = RO_AVP_CCA_RESULT_CODE_LENGTH;
+
+    avp_val.n = result;
+    avp_val.s.s = RO_RETURN_TRUE_STR; //assume true
+    avp_val.s.len = 1;
+
+    rc = add_avp(AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
+
+    if (rc < 0)
+        LM_ERR("Couldn't create ["RO_AVP_CCA_RESULT_CODE"] AVP\n");
+    else
+        LM_DBG("Created AVP ["RO_AVP_CCA_RESULT_CODE"] successfully: value=[%d]\n", result);
+
+    return 1;
+}
+
+
+
+
 static int get_mac_avp_value(struct sip_msg *msg, str *value) {
     str mac_avp_name_str = str_init(RO_MAC_AVP_NAME);
     pv_spec_t avp_spec;
