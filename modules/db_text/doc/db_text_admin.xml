@@ -293,6 +293,27 @@ modparam("db_text", "emptystring", 1)
 </programlisting>
 			</example>
 		</section>
+		<section>
+			<title><varname>file_buffer_size</varname> (integer)</title>
+			<para>
+			size of the buffer used to read the text file.
+			Some presence tables have columns with large content.
+			</para>
+
+			<para>
+			<emphasis>
+				Default value is <quote>16384</quote> (off).
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>file_buffer_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_text", "file_buffer_size", 8192)
+...
+</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 	<title>Exported RPC Functions</title>

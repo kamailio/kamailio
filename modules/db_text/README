@@ -22,7 +22,7 @@ Olle E. Johansson
 
    <oej@edvina.net>
 
-   Copyright � 2003, 2004 FhG FOKUS
+   Copyright © 2003, 2004 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -44,6 +44,7 @@ Olle E. Johansson
 
               3.1. db_mode (integer)
               3.2. emptystring (integer)
+              3.3. file_buffer_size (integer)
 
         4. Exported RPC Functions
 
@@ -62,11 +63,12 @@ Olle E. Johansson
    1.3. Minimal Kamailio subscriber dbtext table example
    1.4. Set db_mode parameter
    1.5. Set emptystring parameter
-   1.6. Load the dbtext module
-   1.7. Definition of 'subscriber' table (one line)
-   1.8. Definition of 'location' and 'aliases' tables (one line)
-   1.9. Definition of 'version' table and sample records
-   1.10. Configuration file
+   1.6. Set file_buffer_size parameter
+   1.7. Load the dbtext module
+   1.8. Definition of 'subscriber' table (one line)
+   1.9. Definition of 'location' and 'aliases' tables (one line)
+   1.10. Definition of 'version' table and sample records
+   1.11. Configuration file
 
 Chapter 1. Admin Guide
 
@@ -87,6 +89,7 @@ Chapter 1. Admin Guide
 
         3.1. db_mode (integer)
         3.2. emptystring (integer)
+        3.3. file_buffer_size (integer)
 
    4. Exported RPC Functions
 
@@ -129,12 +132,12 @@ Chapter 1. Admin Guide
      * A database is represented by a directory in the local file system.
        NOTE: when you use dbtext in Kamailio, the database URL for modules
        must be the path to the directory where the table-files are
-       located, prefixed by "text://", e.g., "text:///var/dbtext/ser". If
-       there is no "/" after "text://" then "CFG_DIR/" is inserted at the
+       located, prefixed by “text://”, e.g., “text:///var/dbtext/ser”. If
+       there is no “/” after “text://” then “CFG_DIR/” is inserted at the
        beginning of the database path. So, either you provide an absolute
-       path to database directory or a relative one to "CFG_DIR"
+       path to database directory or a relative one to “CFG_DIR”
        directory.
-       Do not forget that all databases in Kamailio needs the "version"
+       Do not forget that all databases in Kamailio needs the “version”
        table.
      * A table is represented by a text file inside database directory.
 
@@ -145,7 +148,7 @@ Chapter 1. Admin Guide
      * the name of column must not include white spaces.
      * the format of a column definition is: name(type,attr).
      * between two column definitions must be a white space, e.g.,
-       "first_name(str) last_name(str)".
+       “first_name(str) last_name(str)”.
      * the type of a column can be:
           + int - integer numbers.
           + double - real numbers with two decimals.
@@ -157,12 +160,12 @@ Chapter 1. Admin Guide
           + null - accept null values in column fields.
           + if no attribute is set, the fields of the column cannot have
             null value.
-     * each other line is a row with data. The line ends with "\n".
-     * the fields are separated by ":".
+     * each other line is a row with data. The line ends with “\n”.
+     * the fields are separated by “:”.
      * no value between two ':' (or between ':' and start/end of a row)
-       means "null" value. If the parameter "emptystring" is enabled,
+       means “null” value. If the parameter "emptystring" is enabled,
        db_text sets a NULL string to an empty string value.
-     * next characters must be escaped in strings: "\n", "\r", "\t", ":".
+     * next characters must be escaped in strings: “\n”, “\r”, “\t”, “:”.
      * 0 -- the zero value must be escaped too.
 
    Example 1.1. Sample of a dbtext table
@@ -211,6 +214,7 @@ suser:supasswd:xxx:alpha.org:xxx
 
    3.1. db_mode (integer)
    3.2. emptystring (integer)
+   3.3. file_buffer_size (integer)
 
 3.1. db_mode (integer)
 
@@ -219,7 +223,7 @@ suser:supasswd:xxx:alpha.org:xxx
    table is requested whether the corresponding file on disk has changed,
    and if yes, will re-load the table from file.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.4. Set db_mode parameter
 ...
@@ -233,18 +237,30 @@ modparam("db_text", "db_mode", 1)
    enable emptystring an empty string will not be NULL, but an empty
    string.
 
-   Default value is "0" (off).
+   Default value is “0” (off).
 
    Example 1.5. Set emptystring parameter
 ...
 modparam("db_text", "emptystring", 1)
 ...
 
+3.3. file_buffer_size (integer)
+
+   size of the buffer used to read the text file. Some presence tables
+   have columns with large content.
+
+   Default value is “16384” (off).
+
+   Example 1.6. Set file_buffer_size parameter
+...
+modparam("db_text", "file_buffer_size", 8192)
+...
+
 4. Exported RPC Functions
 
    4.1. db_text.dump
 
-4.1. db_text.dump
+4.1.  db_text.dump
 
    Write back to hard drive all modified tables.
 
@@ -263,12 +279,12 @@ modparam("db_text", "emptystring", 1)
 
    REMINDER: when you use text in Kamailio, the database URL for modules
    must be the path to the directory where the table-files are located,
-   prefixed by "text://", e.g., "text:///var/dbtext/ser". If there is no
-   "/" after "text://" then "CFG_DIR/" is inserted at the beginning of the
+   prefixed by “text://”, e.g., “text:///var/dbtext/ser”. If there is no
+   “/” after “text://” then “CFG_DIR/” is inserted at the beginning of the
    database path. So, either you provide an absolute path to database
-   directory or a relative one to "CFG_DIR" directory.
+   directory or a relative one to “CFG_DIR” directory.
 
-   Example 1.6. Load the dbtext module
+   Example 1.7. Load the dbtext module
 ...
 loadmodule "/path/to/kamailio/modules_k/db_text.so"
 ...
@@ -280,29 +296,29 @@ modparam("module_name", "db_url", "text:///path/to/dbtext/database")
    Here are definitions for the most important tables as well as a basic
    configuration file to use db_text with Kamailio. The table structures
    may change in time and you will have to adjust these examples. Check
-   the source code directory "utils/kamctl/dbtxt/kamailio" for current
+   the source code directory “utils/kamctl/dbtxt/kamailio” for current
    definitions.
 
    You have to populate the table 'subscriber' by hand with user profiles
    in order to have authentication. To use with the given configuration
    file, the table files must be placed in the '/tmp/serdb' directory.
 
-   Example 1.7. Definition of 'subscriber' table (one line)
+   Example 1.8. Definition of 'subscriber' table (one line)
 ...
-username(str) domain(str) password(str) first_name(str) last_name(str) phone(str
-) email_address(str) datetime_created(int) datetime_modified(int) confirmation(s
-tr) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(str)
-allow_find(str) timezone(str,null) rpid(str,null)
-...
-
-   Example 1.8. Definition of 'location' and 'aliases' tables (one line)
-...
-username(str) domain(str,null) contact(str,null) received(str) expires(int,null)
- q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int) us
-er_agent(str) socket(str)
+username(str) domain(str) password(str) first_name(str) last_name(str) phone(st
+r) email_address(str) datetime_created(int) datetime_modified(int) confirmation
+(str) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) perms(st
+r) allow_find(str) timezone(str,null) rpid(str,null)
 ...
 
-   Example 1.9. Definition of 'version' table and sample records
+   Example 1.9. Definition of 'location' and 'aliases' tables (one line)
+...
+username(str) domain(str,null) contact(str,null) received(str) expires(int,null
+) q(double,null) callid(str,null) cseq(int,null) last_modified(str) flags(int)
+user_agent(str) socket(str)
+...
+
+   Example 1.10. Definition of 'version' table and sample records
 ...
 table_name(str) table_version(int)
 subscriber:3
@@ -310,7 +326,7 @@ location:6
 aliases:6
 ...
 
-   Example 1.10. Configuration file
+   Example 1.11. Configuration file
 ...
 #
 # $Id$
