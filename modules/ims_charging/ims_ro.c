@@ -63,6 +63,7 @@ extern int video_service_identifier;
 extern int video_rating_group;
 
 static int create_cca_return_code(int result);
+static int create_cca_result_code(int result);
 static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
