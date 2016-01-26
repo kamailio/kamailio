@@ -1240,7 +1240,7 @@ error:
     if (ssd)
         shm_free(ssd);
 
-    return RO_RETURN_ERROR;
+	    return RO_RETURN_ERROR;
 }
 
 static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
@@ -1291,9 +1291,10 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     if (!ro_cca_data) {
         LM_ERR("Could not parse CCA message response.\n");
         error_code = RO_RETURN_ERROR;
+	create_cca_result_code(0);
         goto error0;
     }
-
+    create_cca_result_code((int)ro_cca_data->resultcode);
     if (ro_cca_data->resultcode != 2001) {
         LM_ERR("Got bad CCA result code - reservation failed");
         error_code = RO_RETURN_FALSE;
@@ -1435,10 +1436,10 @@ static int create_cca_result_code(int result) {
     avp_name.s.len = RO_AVP_CCA_RESULT_CODE_LENGTH;
 
     avp_val.n = result;
-    avp_val.s.s = RO_RETURN_TRUE_STR; //assume true
-    avp_val.s.len = 1;
+    avp_val.s.s = 0;
+    avp_val.s.len = 0;
 
-    rc = add_avp(AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
+    rc = add_avp(AVP_NAME_STR, avp_name, avp_val);
 
     if (rc < 0)
         LM_ERR("Couldn't create ["RO_AVP_CCA_RESULT_CODE"] AVP\n");
