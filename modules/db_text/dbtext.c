@@ -37,11 +37,14 @@ MODULE_VERSION
 static int mod_init(void);
 static void destroy(void);
 
+#define DEFAULT_DB_TEXT_READ_BUFFER_SIZE 16384
+
 /*
  * Module parameter variables
  */
 int db_mode = 0;  /* Database usage mode: 0 = cache, 1 = no cache */
 int empty_string = 0;  /* Treat empty string as "" = 0, 1 = NULL */
+int _db_text_read_buffer_size = DEFAULT_DB_TEXT_READ_BUFFER_SIZE;
 
 int dbt_bind_api(db_func_t *dbb);
 
@@ -60,6 +63,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"db_mode", INT_PARAM, &db_mode},
 	{"emptystring", INT_PARAM, &empty_string},
+	{"file_buffer_size", INT_PARAM, &_db_text_read_buffer_size},
 	{0, 0, 0}
 };
 

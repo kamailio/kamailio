@@ -84,7 +84,8 @@ int dbt_check_mtime(const str *tbn, const str *dbn, time_t *mt)
 dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 {
 	FILE *fin=NULL;
-	char path[512], buf[4096];
+	char path[512];
+	char *buf;
 	int c, crow, ccol, bp, sign, max_auto;
 	dbt_val_t dtval;
 	dbt_table_p dtp = NULL;
@@ -120,10 +121,16 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 	if(!fin)
 		return NULL;	
 	
+	buf = pkg_malloc(_db_text_read_buffer_size);
+	if(!buf) {
+		LM_ERR("error allocating read buffer, %i\n", _db_text_read_buffer_size);
+		goto done;
+	}
+
 	dtp = dbt_table_new(tbn, dbn, path);
 	if(!dtp)
 		goto done;
-	
+
 	state = DBT_FLINE_ST;
 	crow = ccol = -1;
 	colp = colp0 = NULL;
@@ -473,6 +480,8 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 done:
 	if(fin)
 		fclose(fin);
+	if(buf)
+		pkg_free(buf);
 	return dtp;
 clean:
 	// ????? FILL IT IN - incomplete row/column
@@ -480,6 +489,8 @@ clean:
 	LM_DBG("error at row=%d col=%d c=%c\n", crow+1, ccol+1, c);
 	if(dtp)
 		dbt_table_free(dtp);
+	if(buf)
+		pkg_free(buf);
 	return NULL;
 }
 
