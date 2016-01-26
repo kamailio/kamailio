@@ -31,9 +31,11 @@ static db_func_t rtpp_dbf;
 static db1_con_t *rtpp_db_handle = NULL;
 
 str rtpp_db_url = {NULL, 0};
-str rtpp_table_name = str_init("rtpproxy");
-str rtpp_set_id_col = str_init("set_id");
+str rtpp_table_name = str_init("rtpengine");
+str rtpp_setid_col = str_init("setid");
 str rtpp_url_col = str_init("url");
+str rtpp_weight_col = str_init("weight");
+str rtpp_disabled_col = str_init("disabled");
 
 static int rtpp_connect_db(void)
 {
@@ -63,13 +65,15 @@ static int rtpp_load_db(void)
 	db1_res_t *res = NULL;
 	db_val_t *values = NULL;
 	db_row_t *rows = NULL;
-	db_key_t query_cols[] = {&rtpp_set_id_col, &rtpp_url_col};
+	db_key_t query_cols[] = {&rtpp_setid_col, &rtpp_url_col, &rtpp_weight_col, &rtpp_disabled_col};
 
 	str url;
-	int set_id;
+	int setid, disabled;
+	unsigned int weight, ticks;
+
 	/* int weight, flags; */
 	int n_rows = 0;
-	int n_cols = 2;
+	int n_cols = 4;
 
 	if (rtpp_db_handle == NULL)
 	{
@@ -87,6 +91,8 @@ static int rtpp_load_db(void)
 		return -1;
 	}
 
+	rtpengine_delete_node_all();
+
 	n_rows = RES_ROW_N(res);
 	rows = RES_ROWS(res);
 	if (n_rows == 0)
@@ -94,26 +100,35 @@ static int rtpp_load_db(void)
 		LM_WARN("No rtpproxy instances in database\n");
 		return 0;
 	}
+
 	for (i=0; i<n_rows; i++)
 	{
 		values = ROW_VALUES(rows + i);
 
-		set_id = VAL_INT(values);
+		setid = VAL_INT(values);
 		url.s = VAL_STR(values+1).s;
 		url.len = strlen(url.s);
+		weight = VAL_INT(values+2);
+		disabled = VAL_INT(values+3);
+		if (disabled) {
+			ticks = MI_MAX_RECHECK_TICKS;
+		} else {
+			ticks = 0;
+		}
 		/*
 		weight = VAL_INT(values+2);
 		flags = VAL_INT(values+3);
 		*/
-		if ((rtpp_list = get_rtpp_set(set_id)) == NULL)
+		if ((rtpp_list = get_rtpp_set(setid)) == NULL)
 		{
-			LM_ERR("error getting rtpp_list for set %d\n", set_id);
+			LM_ERR("error getting rtpp_list for set %d\n", setid);
 			continue;
 		}
 
-		if (add_rtpengine_socks(rtpp_list, url.s) !=  0)
+		if (add_rtpengine_socks(rtpp_list, url.s, weight, disabled, ticks, 1) !=  0)
 		{
-			LM_ERR("error inserting '%.*s' into set %d\n", url.len, url.s, set_id);
+			LM_ERR("error inserting '%.*s' into set %d disabled=%d\n",
+				url.len, url.s, setid, disabled);
 		}
 	}
 

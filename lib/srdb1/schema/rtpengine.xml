@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="rtpengine" xmlns:db="http://docbook.org/ns/docbook">
+    <name>rtpengine</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+        <db:para>This table is used by the rtpengine module. It contains the sets of rtpengine instances used for proxying media between endpoints. More information about the rtpengine module can be found at: &KAMAILIO_MOD_DOC;rtpengine.html
+        </db:para>
+    </description>
+
+    <column id="setid">
+        <name>setid</name>
+        <type>unsigned int</type>
+	<size>10</size>
+        <description>RTPEngine instance set ID</description>
+        <default>0</default>
+        <natural/>
+    </column>
+
+    <column id="url">
+        <name>url</name>
+        <type>string</type>
+        <size>64</size>
+        <description>RTPEngine instance socket URL</description>
+    </column>
+
+    <column id="weight">
+        <name>weight</name>
+        <type>unsigned int</type>
+	<size>10</size>
+        <description>RTPEngine instance weight</description>
+        <default>1</default>
+        <natural/>
+    </column>
+
+    <column id="disabled">
+        <name>disabled</name>
+        <type>int</type>
+	<size>1</size>
+        <description>RTPEngine instance state</description>
+        <default>0</default>
+        <natural/>
+    </column>
+
+    <index>
+        <name>rtpengine_nodes</name>
+        <colref linkend="setid"/>
+        <colref linkend="url"/>
+        <primary/>
+    </index>
+
+</table>

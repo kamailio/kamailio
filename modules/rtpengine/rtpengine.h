@@ -26,47 +26,61 @@
 #include "bencode.h"
 #include "../../str.h"
 
+#define MI_MIN_RECHECK_TICKS		0
+#define MI_MAX_RECHECK_TICKS		((unsigned int)-1)
+
 struct rtpp_node {
 	unsigned int		idx;			/* overall index */
-	str					rn_url;			/* unparsed, deletable */
-	int					rn_umode;
-	char				*rn_address;	/* substring of rn_url */
-	int					rn_disabled;	/* found unaccessible? */
-	unsigned			rn_weight;		/* for load balancing */
+	str			rn_url;			/* unparsed, deletable */
+	int			rn_umode;
+	char			*rn_address;		/* substring of rn_url */
+	int			rn_disabled;		/* found unaccessible? */
+	unsigned int		rn_weight;		/* for load balancing */
+	unsigned int		rn_displayed;		/* for delete at db reload */
 	unsigned int		rn_recheck_ticks;
-        int                     rn_rep_supported;
-        int                     rn_ptl_supported;
+	int			rn_rep_supported;
+	int			rn_ptl_supported;
 	struct rtpp_node	*rn_next;
 };
 
 
-struct rtpp_set{
+struct rtpp_set {
 	unsigned int 		id_set;
-	unsigned			weight_sum;
+	unsigned int		weight_sum;
 	unsigned int		rtpp_node_count;
-	int 				set_disabled;
+	int 			set_disabled;
 	unsigned int		set_recheck_ticks;
 	struct rtpp_node	*rn_first;
 	struct rtpp_node	*rn_last;
-	struct rtpp_set     *rset_next;
+	struct rtpp_set	 	*rset_next;
+	gen_lock_t		*rset_lock;
 };
 
 
-struct rtpp_set_head{
+struct rtpp_set_head {
 	struct rtpp_set		*rset_first;
 	struct rtpp_set		*rset_last;
+	gen_lock_t		*rset_head_lock;
 };
 
 
+struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url);
 struct rtpp_set *get_rtpp_set(int set_id);
-int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy);
+int add_rtpengine_socks(struct rtpp_set * rtpp_list, char * rtpproxy, unsigned int weight, int disabled, unsigned int ticks, int isDB);
+
+int rtpengine_delete_node(struct rtpp_node *rtpp_node);
+int rtpengine_delete_node_set(struct rtpp_set *rtpp_list);
+int rtpengine_delete_node_all();
 
 
 int init_rtpproxy_db(void);
 
 extern str rtpp_db_url;
 extern str rtpp_table_name;
+extern str rtpp_setid_col;
 extern str rtpp_url_col;
+extern str rtpp_weight_col;
+extern str rtpp_disabled_col;
 
 
 #endif

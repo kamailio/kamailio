@@ -669,6 +669,15 @@
 		<column><field>from_domain</field><type>DB1_STR</type></column>
 		<column><field>updated</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of rtpengine table-->
+	<db_table id="rtpengine">
+		<table_name>rtpengine</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>setid</field><type>DB1_INT</type></column>
+		<column><field>url</field><type>DB1_STR</type></column>
+		<column><field>weight</field><type>DB1_INT</type></column>
+		<column><field>disabled</field><type>DB1_INT</type></column>
+	</db_table>
 	<!-- Declaration of rtpproxy table-->
 	<db_table id="rtpproxy">
 		<table_name>rtpproxy</table_name>
@@ -3531,6 +3540,29 @@
 			<clause_cols>
 				<col><field>id</field><operator>=</operator></col>
 			</clause_cols>
+		</cmd>
+	</mod>
+	<!-- rtpengine provisionning -->
+	<mod><mod_name>rtpengine</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>rtpengine</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>weight</field></col>
+				<col><field>disabled</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>rtpengine</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>weight</field></col>
+				<col><field>disabled</field></col>
+			</query_cols>
 		</cmd>
 	</mod>
 	<!-- rtpproxy provisionning -->

@@ -1,0 +1,23 @@
+	<!-- rtpengine provisionning -->
+	<mod><mod_name>rtpengine</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>rtpengine</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>weight</field></col>
+				<col><field>disabled</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>rtpengine</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>setid</field></col>
+				<col><field>url</field></col>
+				<col><field>weight</field></col>
+				<col><field>disabled</field></col>
+			</query_cols>
+		</cmd>
+	</mod>
