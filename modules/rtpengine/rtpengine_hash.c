@@ -92,10 +92,17 @@ int rtpengine_hash_table_init(int size) {
 
 	// init hashtable  row_locks[i], row_entry_list[i] and row_totals[i]
 	for (i = 0; i < hash_table_size; i++) {
-		// init hashtable row_locks[i]
+		// alloc hashtable row_locks[i]
 		rtpengine_hash_table->row_locks[i] = lock_alloc();
 		if (!rtpengine_hash_table->row_locks[i]) {
 			LM_ERR("no shm left to create rtpengine_hash_table->row_locks[%d]\n", i);
+			rtpengine_hash_table_destroy();
+			return 0;
+		}
+
+		// init hashtable row_locks[i]
+		if (!lock_init(rtpengine_hash_table->row_locks[i])) {
+			LM_ERR("fail to init rtpengine_hash_table->row_locks[%d]\n", i);
 			rtpengine_hash_table_destroy();
 			return 0;
 		}
@@ -511,6 +518,7 @@ static void rtpengine_hash_table_free_row_lock(gen_lock_t *row_lock) {
 	}
 
 	lock_destroy(row_lock);
+	lock_dealloc(row_lock);
 
 	return ;
 }
