@@ -74,24 +74,24 @@
 
 /* keepintvl */
 #ifndef NO_TCP_KEEPINTVL
-#ifdef __OS_linux
+#ifdef TCP_KEEPINTVL
 #define HAVE_TCP_KEEPINTVL
-#endif /* __OS_ */
-#endif /* NO_TCP_KEEPIDLE */
+#endif /* TCP_KEEPINTVL */
+#endif /* NO_TCP_KEEPINTVL */
 
 /* keepidle */
 #ifndef NO_TCP_KEEPIDLE
-#ifdef __OS_linux
+#ifdef TCP_KEEPIDLE
 #define HAVE_TCP_KEEPIDLE
-#endif /* __OS_*/
+#endif /* TCP_KEEPIDLE*/
 #endif /* NO_TCP_KEEPIDLE */
 
 
 /* keepcnt */
 #ifndef NO_TCP_KEEPCNT
-#ifdef __OS_linux
+#ifdef TCP_KEEPCNT
 #define HAVE_TCP_KEEPCNT
-#endif /* __OS_ */
+#endif /* TCP_KEEPCNT */
 #endif /* NO_TCP_KEEPCNT */
 
 
