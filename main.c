@@ -1703,7 +1703,7 @@ int main_loop(void)
 		}
 #endif
 		/* main */
-		strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
+		strncpy(pt[0].desc, "main process - attendant", MAX_PT_DESC );
 #ifdef USE_TCP
 		close_extra_socks(PROC_ATTENDANT, get_proc_no());
 		if(!tcp_disable){
