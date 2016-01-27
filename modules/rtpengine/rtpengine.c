@@ -1951,16 +1951,16 @@ static void mod_destroy(void)
 
 	lock_get(rtpp_set_list->rset_head_lock);
 	for(crt_list = rtpp_set_list->rset_first; crt_list != NULL; ){
+		last_list = crt_list;
 
 		if (!crt_list->rset_lock) {
-			last_list = crt_list;
 			crt_list = last_list->rset_next;
 			shm_free(last_list);
 			last_list = NULL;
 			continue;
 		}
 
-		lock_get(crt_list->rset_lock);
+		lock_get(last_list->rset_lock);
 		for(crt_rtpp = crt_list->rn_first; crt_rtpp != NULL;  ){
 
 			if(crt_rtpp->rn_url.s)
@@ -1970,9 +1970,8 @@ static void mod_destroy(void)
 			crt_rtpp = last_rtpp->rn_next;
 			shm_free(last_rtpp);
 		}
-		last_list = crt_list;
 		crt_list = last_list->rset_next;
-		lock_release(crt_list->rset_lock);
+		lock_release(last_list->rset_lock);
 
 		lock_destroy(last_list->rset_lock);
 		lock_dealloc((void*)last_list->rset_lock);
