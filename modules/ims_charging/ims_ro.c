@@ -1435,12 +1435,13 @@ static int create_cca_result_code(int result) {
     int_str avp_val, avp_name;
     avp_name.s.s = RO_AVP_CCA_RESULT_CODE;
     avp_name.s.len = RO_AVP_CCA_RESULT_CODE_LENGTH;
+    char buf[10];
 
     avp_val.n = result;
-    avp_val.s.s = 0;
-    avp_val.s.len = 0;
+    avp_val.s.len = snprintf(buf, 10, "%i", result);
+    avp_val.s.s = buf;
 
-    rc = add_avp(AVP_NAME_STR, avp_name, avp_val);
+    rc = add_avp(AVP_NAME_STR | AVP_VAL_STR, avp_name, avp_val);
 
     if (rc < 0)
         LM_ERR("Couldn't create ["RO_AVP_CCA_RESULT_CODE"] AVP\n");
