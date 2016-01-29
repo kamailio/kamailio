@@ -18,7 +18,7 @@
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem>
-				<para><emphasis>conid</emphasis> (optionnal): the Kamailio internal
+				<para><emphasis>conid</emphasis> (optional): the Kamailio internal
 				connection id (as in the <emphasis>$conid</emphasis> pseudovariable).
 				</para>
 			</listitem>
@@ -48,7 +48,7 @@
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem>
-				<para><emphasis>conid</emphasis> (optionnal): the Kamailio internal
+				<para><emphasis>conid</emphasis> (optional): the Kamailio internal
 				connection id (as in the <emphasis>$conid</emphasis> pseudovariable).
 				</para>
 			</listitem>
@@ -83,7 +83,7 @@
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem>
-				<para><emphasis>conid</emphasis> (optionnal): the kamailio internal
+				<para><emphasis>conid</emphasis> (optional): the kamailio internal
 				connection id on which TCP keepalive will be enabled. If no parameter
 				is given, the keepalive mechanism will be enabled on the current message
 				source connection.
@@ -140,7 +140,7 @@ onreply_route[foo] {
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem>
-				<para><emphasis>conid</emphasis> (optionnal): the kamailio internal
+				<para><emphasis>conid</emphasis> (optional): the kamailio internal
 				connection id on which TCP keepalive will be disabled. If no parameter
 				is given, the keepalive mechanism will be disabled on the current message
 				source connection.
@@ -181,7 +181,7 @@ onreply_route[foo] {
                 <para>Meaning of the parameters is as follows:</para>
                 <itemizedlist>
                         <listitem>
-                                <para><emphasis>conid</emphasis> (optionnal): the kamailio internal
+                                <para><emphasis>conid</emphasis> (optional): the kamailio internal
                                 connection id on which to set the new lifetime. If no parameter
                                 is given, it will be set on the current message source connection.
                                 </para>

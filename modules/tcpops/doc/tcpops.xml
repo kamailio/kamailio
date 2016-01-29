@@ -45,7 +45,7 @@
 	<para>
 	<emphasis>Note</emphasis>: the keepalive functions only work on systems with the
 	HAVE_TCP_KEEPIDLE, HAVE_TCP_KEEPCNT and HAVE_TCP_KEEPINTVL macros defined
-	(currently only Linux).
+	(Linux, FreeBSD, DragonFly BSD, NetBSD).
 	</para>
     </section>
     
