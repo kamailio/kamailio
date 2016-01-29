@@ -45,7 +45,7 @@ modparam("statsd", "ip", "127.0.0.1")
         </section>
 
         <section id="statsd.p.serverPort">
-            <title><varname>port</varname>(int)</title>
+            <title><varname>port</varname>(string)</title>
             <para>
             Statsd server ip
             </para>

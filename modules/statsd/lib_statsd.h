@@ -5,15 +5,8 @@
 typedef struct StatsConnection{
     char *ip;
     char *port;
+    int sock;
 } StatsConnection;
-
-typedef struct StatsdSocket {
-    char *name; // name
-    int sock; // socket
-    int timeout; // how many miliseconds to wait for an answer
-    time_t last_failure; // time of the last failure
-    char data[BUFFER_SIZE]; // buffer for the answer data
-} StatsdSocket;
 
 bool statsd_connect(void);
 bool send_command(char *command);
