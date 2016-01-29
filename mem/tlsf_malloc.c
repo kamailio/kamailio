@@ -960,7 +960,7 @@ void* tlsf_malloc(tlsf_t tlsf, size_t size)
 #endif
 {
 	control_t* control = tlsf_cast(control_t*, tlsf);
-	const size_t adjust = adjust_request_size(size, ALIGN_SIZE);
+	const size_t adjust = adjust_request_size(size?size:4, ALIGN_SIZE);
 	block_header_t* block = block_locate_free(control, adjust);
 #ifdef DBG_TLSF_MALLOC
 	void *ptr;
