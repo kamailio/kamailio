@@ -34,6 +34,9 @@
 #include "../../fmsg.h"
 #include "../../sr_module.h"
 
+
+int tcp_closed_event = 1;
+
 /**
  * gets the fd of the current message source connection
  *
@@ -193,6 +196,12 @@ static void tcpops_tcp_closed_run_route(struct tcp_connection *con)
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
+
+	/* bypass event route if tcp_closed_event == 0 and the
+	 * F_CONN_CLOSE_EV flag is not explicitly set */
+	if (!(tcp_closed_event || (con->flags & F_CONN_CLOSE_EV)))
+		return;
+
 	LM_DBG("tcp_closed_run_route event_route[tcp:closed]\n");
 
 	rt = route_get(&event_rt, "tcp:closed");

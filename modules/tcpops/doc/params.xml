@@ -7,6 +7,27 @@
     </sectioninfo>
 
     <title>Parameters</title>
+		<section>
+		<title><varname>closed_event</varname> (int)</title>
+		<para>
+			if set to 0, the "tcp:closed" event route will not be called on TCP
+			disconnections (unless the "tcp_enable_closed_event()" function enabled
+			it explicitly).
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>closed_event</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tcpops", "closed_event", 0)
+...
+</programlisting>
+		</example>
+	</section>
 
 
 

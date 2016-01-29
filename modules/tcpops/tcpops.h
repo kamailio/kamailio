@@ -27,6 +27,8 @@
 #include "../../tcp_conn.h"
 #include "../../events.h"
 
+extern int tcp_closed_event;
+
 int tcpops_get_current_fd(int conid, int *fd);
 int tcpops_acquire_fd_from_tcpmain(int conid, int *fd);
 int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd);
