@@ -55,6 +55,7 @@
 #define F_CONN_WANTS_RD  4096  /* conn. should be watched for READ */
 #define F_CONN_WANTS_WR  8192  /* conn. should be watched for WRITE */
 #define F_CONN_PASSIVE  16384 /* conn. created via accept() and not connect()*/
+#define F_CONN_CLOSE_EV 32768 /* explicitely call tcpops ev route when closed */
 
 #ifndef NO_READ_HTTP11
 #define READ_HTTP11
