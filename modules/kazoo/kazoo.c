@@ -109,6 +109,12 @@ db_func_t kz_pa_dbf;
 str kz_presentity_table = str_init("presentity");
 str kz_db_url = {0,0};
 
+str kz_amqps_ca_cert = {0,0};
+str kz_amqps_cert = {0,0};
+str kz_amqps_key = {0,0};
+int kz_amqps_verify_peer = 1;
+int kz_amqps_verify_hostname = 1;
+
 str kz_query_timeout_avp = {0,0};
 pv_spec_t kz_query_timeout_spec;
 
@@ -201,6 +207,11 @@ static param_export_t params[] = {
     {"amqp_primary_zone", STR_PARAM, &dbk_primary_zone_name.s},
     {"amqp_command_hashtable_size", INT_PARAM, &dbk_command_table_size},
     {"amqp_result_avp", STR_PARAM, &kz_query_result_avp.s},
+    {"amqps_ca_cert", STR_PARAM, &kz_amqps_ca_cert.s},
+    {"amqps_cert", STR_PARAM, &kz_amqps_cert.s},
+    {"amqps_key", STR_PARAM, &kz_amqps_key.s},
+    {"amqps_verify_peer", INT_PARAM, &kz_amqps_verify_peer},
+    {"amqps_verify_hostname", INT_PARAM, &kz_amqps_verify_hostname},
     {0, 0, 0}
 };
 
