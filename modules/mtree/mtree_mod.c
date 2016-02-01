@@ -481,19 +481,84 @@ error:
 
 }
 
+static int mt_pack_values(m_tree_t *pt, db1_res_t* db_res,
+		int row, int cols, str *tvalue)
+{
+	static char vbuf[4096];
+	int c;
+	int len;
+	char *p;
+	str iv;
+
+	len = 0;
+	for(c=1; c<cols; c++) {
+		if(VAL_NULL(&RES_ROWS(db_res)[row].values[c])) {
+			len += 1;
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_STRING) {
+			len += strlen(RES_ROWS(db_res)[row].values[c].val.string_val);
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_STR) {
+			len += RES_ROWS(db_res)[row].values[c].val.str_val.len;
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_INT) {
+			len += 12;
+		} else {
+			LM_ERR("unsupported data type for column %d\n", c);
+			return -1;
+		}
+	}
+	if(len + c>=4096) {
+		LM_ERR("too large values (need %d)\n", len+c);
+		return -1;
+	}
+	p = vbuf;
+	for(c=1; c<cols; c++) {
+		if(VAL_NULL(&RES_ROWS(db_res)[row].values[c])) {
+			*p = pt->pack[2];
+			p++;
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_STRING) {
+			strcpy(p, RES_ROWS(db_res)[row].values[c].val.string_val);
+			p += strlen(RES_ROWS(db_res)[row].values[c].val.string_val);
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_STR) {
+			strncpy(p, RES_ROWS(db_res)[row].values[c].val.str_val.s,
+				RES_ROWS(db_res)[row].values[c].val.str_val.len);
+			p += RES_ROWS(db_res)[row].values[c].val.str_val.len;
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_INT) {
+			iv.s = sint2str(RES_ROWS(db_res)[row].values[c].val.int_val, &iv.len);
+			strncpy(p, iv.s, iv.len);
+			p += iv.len;
+		}
+		if(c+1<cols) {
+			*p = pt->pack[1];
+			p++;
+		}
+	}
+	tvalue->s = vbuf;
+	tvalue->len = p - vbuf;
+	LM_DBG("packed: [%.*s]\n", tvalue->len, tvalue->s);
+	return 0;
+}
+
 static int mt_load_db(m_tree_t *pt)
 {
-	db_key_t db_cols[3] = {&tprefix_column, &tvalue_column};
+	db_key_t db_cols[MT_MAX_COLS] = {&tprefix_column, &tvalue_column};
 	db_key_t key_cols[1];
 	db_op_t op[1] = {OP_EQ};
 	db_val_t vals[1];
 	str tprefix, tvalue;
 	db1_res_t* db_res = NULL;
-	int i, ret;
+	int i, ret, c;
 	m_tree_t new_tree; 
 	m_tree_t *old_tree = NULL; 
 	mt_node_t *bk_head = NULL; 
 
+	if(pt->ncols>0) {
+		for(c=0; c<pt->ncols; c++) {
+			db_cols[c] = &pt->scols[c];
+		}
+	} else {
+		db_cols[0] = &tprefix_column;
+		db_cols[1] = &tvalue_column;
+		c = 2;
+	}
 	key_cols[0] = &tname_column;
 	VAL_TYPE(vals) = DB1_STRING;
 	VAL_NULL(vals) = 0;
@@ -530,7 +595,7 @@ static int mt_load_db(m_tree_t *pt)
 
 	if (DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
 		if(mt_dbf.query(db_con, key_cols, op, vals, db_cols, pt->multi,
-				2, 0, 0) < 0)
+				c, 0, 0) < 0)
 		{
 			LM_ERR("Error while querying db\n");
 			return -1;
@@ -578,8 +643,15 @@ static int mt_load_db(m_tree_t *pt)
 			tprefix.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
 			tprefix.len = strlen(ZSW(tprefix.s));
 
-			tvalue.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
-			tvalue.len = strlen(ZSW(tvalue.s));
+			if(c>2) {
+				if(mt_pack_values(&new_tree, db_res, i, c, &tvalue)<0) {
+					LM_ERR("Error packing values\n");
+					goto error;
+				}
+			} else {
+				tvalue.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
+				tvalue.len = strlen(ZSW(tvalue.s));
+			}
 
 			if(tprefix.s==NULL || tvalue.s==NULL
 					|| tprefix.len<=0 || tvalue.len<=0)
@@ -719,7 +791,7 @@ static int mt_load_db_trees()
 				LM_ERR("Error - bad values in db\n");
 				continue;
 			}
-			new_tree = mt_add_tree(&new_head, &tname, &db_table,
+			new_tree = mt_add_tree(&new_head, &tname, &db_table, NULL,
 					       _mt_tree_type, 0);
 			if(new_tree==NULL)
 			{

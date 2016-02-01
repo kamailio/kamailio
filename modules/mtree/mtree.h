@@ -63,12 +63,16 @@ typedef struct _mt_node
 
 #define MT_NODE_SIZE	mt_char_list.len
 
+#define MT_MAX_COLS	8
 typedef struct _m_tree
 {
 	str tname;
 	str dbtable;
 	int type;
 	int multi;
+	int ncols;
+	str scols[MT_MAX_COLS];
+	char pack[4];
 	unsigned int nrnodes;
 	unsigned int nritems;
 	unsigned int memsize;
@@ -89,7 +93,8 @@ is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *len);
 int mt_match_prefix(struct sip_msg *msg, m_tree_t *pt,
 		    str *tomatch, int mode);
 
-m_tree_t* mt_init_tree(str* tname, str* dbtable, int type, int multi);
+m_tree_t* mt_init_tree(str* tname, str* dbtable, str *scols, int type,
+		int multi);
 void mt_free_tree(m_tree_t *pt);
 int mt_print_tree(m_tree_t *pt);
 void mt_free_node(mt_node_t *pn, int type);
@@ -105,7 +110,7 @@ int mt_defined_trees(void);
 m_tree_t *mt_swap_list_head(m_tree_t *ntree);
 int mt_init_list_head(void);
 m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable,
-		      int type, int multi);
+		      str *cols, int type, int multi);
 
 int mt_mi_match_prefix(struct mi_node *rpl, m_tree_t *pt,
 		    str *tomatch, int mode);
