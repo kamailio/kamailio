@@ -32,6 +32,8 @@
 #include "../../lvalue.h"
 #include "../../basex.h"
 
+#include "crypto_uuid.h"
+
 #include <openssl/evp.h>
 
 #define AES_BLOCK_SIZE 256
@@ -58,6 +60,8 @@ static int fixup_crypto_aes_decrypt(void** param, int param_no);
 static char _crypto_salt[CRYPTO_SALT_BSIZE];
 static char *_crypto_salt_param = "k8hTm4aZ";
 
+static int _crypto_register_callid = 0;
+
 static cmd_export_t cmds[]={
 	{"crypto_aes_encrypt", (cmd_function)w_crypto_aes_encrypt, 3,
 		fixup_crypto_aes_encrypt, 0, ANY_ROUTE},
@@ -67,7 +71,8 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{ "salt", PARAM_STRING, &_crypto_salt_param },
+	{ "salt",            PARAM_STRING, &_crypto_salt_param },
+	{ "register_callid", PARAM_INT, &_crypto_register_callid },
 	{ 0, 0, 0 }
 };
 
@@ -109,6 +114,17 @@ static int mod_init(void)
 			k = _crypto_salt[i];
 		}
 	}
+	if(_crypto_register_callid!=0) {
+		if(crypto_init_callid()<0) {
+			LM_ERR("failed to init callid callback\n");
+			return -1;
+		}
+		if(crypto_register_callid_func()<0) {
+			LM_ERR("unable to register callid callback\n");
+			return -1;
+		}
+		LM_DBG("registered crypto callid callback\n");
+	}
 	return 0;
 }
 
@@ -117,6 +133,11 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	if(_crypto_register_callid!=0 && crypto_child_init_callid(rank)<0) {
+		LM_ERR("failed to register callid callback\n");
+		return -1;
+	}
+
 	return 0;
 }
 
