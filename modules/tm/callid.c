@@ -35,6 +35,7 @@
 #include "../../dprint.h"
 #include "../../pt.h"
 #include "../../socket_info.h"
+#include "../../srapi.h"
 #include "callid.h"
 
 /**
@@ -161,7 +162,7 @@ static inline int inc_hexchar(char* _c)
  * \brief Get a unique Call-ID
  * \param callid returned Call-ID
  */
-void generate_callid(str* callid)
+void tm_generate_callid(str* callid)
 {
 	int i;
 
@@ -170,4 +171,18 @@ void generate_callid(str* callid)
 	}
 	callid->s = callid_prefix.s;
 	callid->len = callid_prefix.len + callid_suffix.len;
+}
+
+/**
+ * \brief Wrapper to get a unique Call-ID based on tm or core callback
+ * \param callid returned Call-ID
+ */
+void generate_callid(str* callid)
+{
+	sr_generate_callid_f cf;
+	if((cf=sr_get_callid_func())!=NULL) {
+		cf(callid);
+	} else {
+		tm_generate_callid(callid);
+	}
 }
