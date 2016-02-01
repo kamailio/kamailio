@@ -379,7 +379,7 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 	_sr_wtimer->itimer++;
 	cs = _sr_wtimer->itimer % SR_WTIMER_SIZE;
 	cl = _sr_wtimer->itimer / SR_WTIMER_SIZE;
-	LM_DBG("wtimer - loop: %u - slot: %u\n", cl, cs);
+	/* LM_DBG("wtimer - loop: %u - slot: %u\n", cl, cs); */
 
 	wp = NULL;
 	wt=_sr_wtimer->wlist[cs];
