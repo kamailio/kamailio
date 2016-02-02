@@ -1,4 +1,3 @@
-INSERT INTO version (table_name, table_version) values ('rtpengine','1');
 CREATE TABLE rtpengine (
     setid NUMBER(10) DEFAULT 0 NOT NULL,
     url VARCHAR2(64),
@@ -15,3 +14,5 @@ END rtpengine_tr;
 /
 BEGIN map2users('rtpengine'); END;
 /
+INSERT INTO version (table_name, table_version) values ('rtpengine','1');
+
