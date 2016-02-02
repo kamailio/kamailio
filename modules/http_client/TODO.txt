@@ -1,4 +1,4 @@
-The curl module - todo
+The http_client module - todo
 ======================
 
 - connection parameters
@@ -25,8 +25,10 @@ The curl module - todo
 	- if 5xx response or timeout set flag
 	- function in dialplan - curlcon_exist(object)
 	- pv $curlstatus(object) ??
+	- this is per process !!!
 
 - Figure out a way to communicate back the content-type of the response. Another pvar arg?
+	- This is per process!
 
 - pv for curl error codes (result < 100)
 	$curlerror(code)	Result string - DONE
