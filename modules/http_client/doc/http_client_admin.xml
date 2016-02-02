@@ -26,7 +26,7 @@
 	of HTTP sessions in a simple way.
 	</para>
 	<para>
-	The curl module has multiple settings, some of them applies to
+	The http_client module has multiple settings, some of them applies to
 	a defined connection. You can set timeouts, max data sizes for download
 	and much more either using modparam settings or parameters to the
 	connection definition.
@@ -77,7 +77,7 @@
 	
 	<section>
 		<title>Parameters</title>
-		<section id="curl.p.httpredirect">
+		<section id="http_client.p.httpredirect">
 			<title><varname>httpredirect</varname> (int)</title>
 			<para>
 			If set to 1, enabled, CURL will follow HTTP 302 Redirects.
@@ -91,12 +91,12 @@
 			<title>Set <varname>httpredirect</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "httpredirect", 0)
+modparam("http_client., "httpredirect", 0)
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.useragent">
+		<section id="http_client.p.useragent">
 			<title><varname>useragent</varname> (string)</title>
 			<para>
 			Useragent to use in the HTTP protocol for requests. Defaults to
@@ -106,12 +106,12 @@ modparam("curl", "httpredirect", 0)
 			<title>Set <varname>useragent</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "useragent", "Secret HTTP REST grabber 0.42")
+modparam("http_client., "useragent", "Secret HTTP REST grabber 0.42")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.maxdatasize">
+		<section id="http_client.p.maxdatasize">
 			<title><varname>maxdatasize</varname> (int)</title>
 			<para>
 			Defines the maximum size in bytes for a response. Note that this
@@ -127,12 +127,12 @@ modparam("curl", "useragent", "Secret HTTP REST grabber 0.42")
 			<title>Set <varname>maxdatasize</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "maxdatasize", 2000)
+modparam("http_client., "maxdatasize", 2000)
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.connection_timeout">
+		<section id="http_client.p.connection_timeout">
 			<title><varname>connection_timeout</varname> (int)</title>
 			<para>
 			Defines in seconds how long &kamailio; waits for response
@@ -148,12 +148,12 @@ modparam("curl", "maxdatasize", 2000)
 			<title>Set <varname>connection_timeout</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "connection_timeout", 2)
+modparam("http_client., "connection_timeout", 2)
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.tlsclientcert">
+		<section id="http_client.p.tlsclientcert">
 			<title><varname>tlsclientcert</varname> (string)</title>
 			<para>
 			File name for a TLS client certificate. The certificate needs to be encoded
@@ -171,12 +171,12 @@ modparam("curl", "connection_timeout", 2)
 			<title>Set <varname>tlsclientcert</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
+modparam("http_client., "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.tlsclientkey">
+		<section id="http_client.p.tlsclientkey">
 			<title><varname>tlsclientkey</varname> (string)</title>
 			<para>
 			File name for a TLS client key. The key needs to be encoded
@@ -194,12 +194,12 @@ modparam("curl", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
 			<title>Set <varname>tlsclientkey</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
+modparam("http_client., "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.tlscacert">
+		<section id="http_client.p.tlscacert">
 			<title><varname>tlscacert</varname> (string)</title>
 			<para>
 			File name for the trusted TLS CA cert used to verify servers.
@@ -218,12 +218,12 @@ modparam("curl", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 			<title>Set <varname>tlscacert</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
+modparam("http_client., "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.tlscipherlist">
+		<section id="http_client.p.tlscipherlist">
 			<title><varname>tlscipherlist</varname> (string)</title>
 			<para>
 			List of allowed cipher suites.
@@ -240,12 +240,12 @@ modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 			<title>Set <varname>tlscipherlist</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_gcm_sha_256")
+modparam("http_client., "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_gcm_sha_256")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.tlsverifypeer">
+		<section id="http_client.p.tlsverifypeer">
 			<title><varname>tlsverifypeer</varname> (int)</title>
 			<para>
 			If set to 0, TLS verification of the server certificate
@@ -267,12 +267,12 @@ modparam("curl", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_g
 			<title>Set <varname>tlsverifypeer</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "tlsverifypeer", 1)
+modparam("http_client., "tlsverifypeer", 1)
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.tlsverifyhost">
+		<section id="http_client.p.tlsverifyhost">
 			<title><varname>tlsverifyhost</varname> (int)</title>
 			<para>
 			If set to 0, domain verification of the server certificate
@@ -293,12 +293,12 @@ modparam("curl", "tlsverifypeer", 1)
 			<title>Set <varname>tlsverifyhost</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "tlsverifyhost", 2)
+modparam("http_client., "tlsverifyhost", 2)
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.curlcon">
+		<section id="http_client.p.curlcon">
 			<title><varname>curlcon</varname> (string)</title>
 			<para>
 			Defines a connection and credentials for the connection for use
@@ -341,6 +341,7 @@ modparam("curl", "tlsverifyhost", 2)
 				certificate verification.
 				Overrides tlsverifypeer modparam.
 				</para></listitem>
+				<listitem><para>
 				<emphasis>verifyhost</emphasis> Set to 2 to enable or 0 to disable server
 				hostname verification.
 				Overrides tlsverifyhost modparam.
@@ -351,10 +352,10 @@ modparam("curl", "tlsverifyhost", 2)
 			<title>Set <varname>curlcon</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "curlcon", "apione=>http://atlanta.example.com")
-modparam("curl", "curlcon", "apitwo=>http://atlanta.example.com/api/12")
-modparam("curl", "curlcon", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
-modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
+modparam("http_client., "http_client.on", "apione=>http://atlanta.example.com")
+modparam("http_client., "http_client.on", "apitwo=>http://atlanta.example.com/api/12")
+modparam("http_client., "http_client.on", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
+modparam("http_client., "http_client.on", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
 ...
 				</programlisting>
 			</example>
@@ -363,7 +364,7 @@ modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;
 
 	<section>
 	<title>Functions</title>
-		<section id="curl.f.curl_connect">
+		<section id="http_client.f.curl_connect">
 			<title>
 				<function moreinfo="none">curl_connect(connection, url, [content_type, data,] result)</function>
 			</title>
@@ -410,7 +411,7 @@ modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;
 				<title><function>curl_connect()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "curlcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client., "http_client.on", "apiserver=>http://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = curl_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
@@ -422,7 +423,7 @@ xlog("L_INFO", "API-server Curl connection: $avp(route) Result code $var(res)\n"
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.f.curl_http_query">
+		<section id="http_client.f.curl_http_query">
 			<title>
 				<function moreinfo="none">curl_http_query(url, [post-data], result)</function>
 			</title>

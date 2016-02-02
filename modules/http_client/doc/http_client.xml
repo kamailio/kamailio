@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
-	<title>curl</title>
+	<title>http_client</title>
 	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 		<author>
@@ -53,7 +53,7 @@
 	</bookinfo>
 	<toc></toc>
 	
-	<xi:include href="curl_admin.xml"/>
+	<xi:include href="http_client_admin.xml"/>
 	
 	
 </book>

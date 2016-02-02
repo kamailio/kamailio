@@ -1,4 +1,4 @@
-curl
+http_client
 
 Olle E. Johansson
 
@@ -38,8 +38,10 @@ Carsten Bock
               3.5. tlsclientcert (string)
               3.6. tlsclientkey (string)
               3.7. tlscacert (string)
-              3.8. tlsverifyserver (int)
-              3.9. curlcon (string)
+              3.8. tlscipherlist (string)
+              3.9. tlsverifypeer (int)
+              3.10. tlsverifyhost (int)
+              3.11. curlcon (string)
 
         4. Functions
 
@@ -71,10 +73,12 @@ Carsten Bock
    1.5. Set tlsclientcert parameter
    1.6. Set tlsclientkey parameter
    1.7. Set tlscacert parameter
-   1.8. Set tlsverifyserver parameter
-   1.9. Set curlcon parameter
-   1.10. curl_connect() usage
-   1.11. curl_http_query() usage
+   1.8. Set tlscipherlist parameter
+   1.9. Set tlsverifypeer parameter
+   1.10. Set tlsverifyhost parameter
+   1.11. Set curlcon parameter
+   1.12. curl_connect() usage
+   1.13. curl_http_query() usage
 
 Chapter 1. Admin Guide
 
@@ -95,8 +99,10 @@ Chapter 1. Admin Guide
         3.5. tlsclientcert (string)
         3.6. tlsclientkey (string)
         3.7. tlscacert (string)
-        3.8. tlsverifyserver (int)
-        3.9. curlcon (string)
+        3.8. tlscipherlist (string)
+        3.9. tlsverifypeer (int)
+        3.10. tlsverifyhost (int)
+        3.11. curlcon (string)
 
    4. Functions
 
@@ -127,7 +133,7 @@ Chapter 1. Admin Guide
    The module is using a concept of "connections" to define properties of
    HTTP sessions in a simple way.
 
-   The curl module has multiple settings, some of them applies to a
+   The http_client module has multiple settings, some of them applies to a
    defined connection. You can set timeouts, max data sizes for download
    and much more either using modparam settings or parameters to the
    connection definition.
@@ -165,8 +171,10 @@ Chapter 1. Admin Guide
    3.5. tlsclientcert (string)
    3.6. tlsclientkey (string)
    3.7. tlscacert (string)
-   3.8. tlsverifyserver (int)
-   3.9. curlcon (string)
+   3.8. tlscipherlist (string)
+   3.9. tlsverifypeer (int)
+   3.10. tlsverifyhost (int)
+   3.11. curlcon (string)
 
 3.1. httpredirect (int)
 
@@ -178,7 +186,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set httpredirect parameter
 ...
-modparam("curl", "httpredirect", 0)
+modparam("http_client., "httpredirect", 0)
 ...
 
 3.2. useragent (string)
@@ -189,7 +197,7 @@ modparam("curl", "httpredirect", 0)
 
    Example 1.2. Set useragent parameter
 ...
-modparam("curl", "useragent", "Secret HTTP REST grabber 0.42")
+modparam("http_client., "useragent", "Secret HTTP REST grabber 0.42")
 ...
 
 3.3. maxdatasize (int)
@@ -201,7 +209,7 @@ modparam("curl", "useragent", "Secret HTTP REST grabber 0.42")
 
    Example 1.3. Set maxdatasize parameter
 ...
-modparam("curl", "maxdatasize", 2000)
+modparam("http_client., "maxdatasize", 2000)
 ...
 
 3.4. connection_timeout (int)
@@ -212,7 +220,7 @@ modparam("curl", "maxdatasize", 2000)
 
    Example 1.4. Set connection_timeout parameter
 ...
-modparam("curl", "connection_timeout", 2)
+modparam("http_client., "connection_timeout", 2)
 ...
 
 3.5. tlsclientcert (string)
@@ -226,7 +234,8 @@ modparam("curl", "connection_timeout", 2)
 
    Example 1.5. Set tlsclientcert parameter
 ...
-modparam("curl", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
+modparam("http_client., "tlsclientcert", "/var/certs/sollentuna.example.com.cert
+")
 ...
 
 3.6. tlsclientkey (string)
@@ -240,7 +249,7 @@ modparam("curl", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
 
    Example 1.6. Set tlsclientkey parameter
 ...
-modparam("curl", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
+modparam("http_client., "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 ...
 
 3.7. tlscacert (string)
@@ -254,26 +263,63 @@ modparam("curl", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 
    Example 1.7. Set tlscacert parameter
 ...
-modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
+modparam("http_client., "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 ...
 
-3.8. tlsverifyserver (int)
+3.8. tlscipherlist (string)
+
+   List of allowed cipher suites. See
+   http://curl.haxx.se/libcurl/c/CURLOPT_SSL_CIPHER_LIST.html for details
+   of the cipher list curl option.
+
+   Default value is empty string, i.e. the default list of ciphers in
+   libcurl will be used.
+
+   Example 1.8. Set tlscipherlist parameter
+...
+modparam("http_client., "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_ae
+s_128_gcm_sha_256")
+...
+
+3.9. tlsverifypeer (int)
 
    If set to 0, TLS verification of the server certificate is disabled.
    This means that the connection will get encrypted, but there's no
    authentication. There's no proof that the transmission of data is to
    the host that is meant to receive data.
 
-   IF set to 1, default setting, and one or more CA certificates is
+   If set to 1, default setting, and one or more CA certificates is
    configured, the server TLS certificate will be validated. If validation
    fails, the connection fails.
 
-   Example 1.8. Set tlsverifyserver parameter
+   See the curl documenation for more details.
+   http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
+
+   Example 1.9. Set tlsverifypeer parameter
 ...
-modparam("curl", "tlsverifyserver", 1)
+modparam("http_client., "tlsverifypeer", 1)
 ...
 
-3.9. curlcon (string)
+3.10. tlsverifyhost (int)
+
+   If set to 0, domain verification of the server certificate is disabled.
+   This means that the connection will get encrypted but there is no check
+   that data will be sent to the host that is meant to receive it. Disable
+   with caution.
+
+   If set to 2, default setting, the hostname in the URL will be verified
+   against the Common Name or Subject Alt Name in the certificate. If
+   validation fails, the connection fails.
+
+   See the curl documentation for more details.
+   http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
+
+   Example 1.10. Set tlsverifyhost parameter
+...
+modparam("http_client., "tlsverifyhost", 2)
+...
+
+3.11. curlcon (string)
 
    Defines a connection and credentials for the connection for use in a
    connection-oriented function call in this module.
@@ -297,15 +343,20 @@ modparam("curl", "tlsverifyserver", 1)
        timeout for the module.
      * useragent Useragent used for HTTP requests. Overrides useragent
        modparam.
+     * verifypeer Set to 1 to enable or 0 to disable server certificate
+       verification. Overrides tlsverifypeer modparam.
+     * verifyhost Set to 2 to enable or 0 to disable server hostname
+       verification. Overrides tlsverifyhost modparam.
 
-   Example 1.9. Set curlcon parameter
+   Example 1.11. Set curlcon parameter
 ...
-modparam("curl", "curlcon", "apione=>http://atlanta.example.com")
-modparam("curl", "curlcon", "apitwo=>http://atlanta.example.com/api/12")
-modparam("curl", "curlcon", "apithree=>http://annabella:mysecret@atlanta.example
-.com/api/12")
-modparam("curl", "curlcon", "apifour=>http://stockholm.example.com/api/getstuff;
-timeout=12")
+modparam("http_client., "http_client.on", "apione=>http://atlanta.example.com")
+modparam("http_client., "http_client.on", "apitwo=>http://atlanta.example.com/ap
+i/12")
+modparam("http_client., "http_client.on", "apithree=>http://annabella:mysecret@a
+tlanta.example.com/api/12")
+modparam("http_client., "http_client.on", "apifour=>http://stockholm.example.com
+/api/getstuff;timeout=12")
 ...
 
 4. Functions
@@ -335,9 +386,10 @@ timeout=12")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.10. curl_connect() usage
+   Example 1.12. curl_connect() usage
 ...
-modparam("curl", "curlcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client., "http_client.on", "apiserver=>http://kamailio.org/api/")
+;
 ...
 # POST Request
 $var(res) = curl_connect("apiserver", "/mailbox", "application/json", "{ ok, {20
@@ -373,7 +425,7 @@ xlog("L_INFO", "API-server Curl connection: $avp(route) Result code $var(res)\n"
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.11. curl_http_query() usage
+   Example 1.13. curl_http_query() usage
 ...
 # GET-Request
 curl_http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$

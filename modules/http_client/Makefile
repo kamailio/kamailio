@@ -6,7 +6,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=curl.so
+NAME=http_client.so
 
 ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)
