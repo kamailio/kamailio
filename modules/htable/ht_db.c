@@ -507,6 +507,12 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 		return -1;
 	}
 
+	if(ht->ncols>0) {
+		LM_WARN("saving htable [%.*s] with custom db columns is not available\n",
+				ht->name.len, ht->name.s);
+		return 0;
+	}
+
 	if (ht_dbf.use_table(ht_db_con, dbtable) < 0)
 	{
 		LM_ERR("failed to use_table\n");
