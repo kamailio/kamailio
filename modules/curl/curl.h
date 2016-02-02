@@ -37,13 +37,16 @@
 
 extern unsigned int	default_connection_timeout;
 extern char	*default_tls_cacert;			/*!< File name: Default CA cert to use for curl TLS connection */
-extern char	*default_tls_clientcert;		/*!< File name: Default client certificate to use for curl TLS connection */
-extern char	*default_tls_clientkey;			/*!< File name: Key in PEM format that belongs to client cert */
-extern unsigned int	default_tls_verifyserver;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+extern str	default_tls_clientcert;		/*!< File name: Default client certificate to use for curl TLS connection */
+extern str	default_tls_clientkey;			/*!< File name: Key in PEM format that belongs to client cert */
+extern str	default_cipher_suite_list;			/*!< List of allowed cipher suites */
+extern unsigned int	default_tls_version;		/*!< 0 = Use libcurl default */
+extern unsigned int	default_tls_verify_peer;	/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+extern unsigned int	default_tls_verify_host;	/*!< 0 = Do not verify TLS server CN/SAN. 2 = Verify TLS server CN/SAN (default) */
 extern char 	*default_http_proxy;			/*!< Default HTTP proxy to use */
 extern unsigned int	default_http_proxy_port;		/*!< Default HTTP proxy port to use */
 extern unsigned int	default_http_follow_redirect;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
-extern char 	*default_useragent;			/*!< Default CURL useragent. Default "Kamailio Curl " */
+extern str 	default_useragent;			/*!< Default CURL useragent. Default "Kamailio Curl " */
 extern unsigned int	default_maxdatasize;			/*!< Default Maximum download size */
 
 extern counter_handle_t connections;	/* Number of connection definitions */
@@ -66,13 +69,17 @@ typedef struct _curl_con
 	unsigned int conid;		/*!< Connection ID */
 	str url;			/*!< The URL without schema (host + base URL)*/
 	str schema;			/*!< The URL schema */
-	str username;			/*!< The username to use for auth */
-	str password;			/*!< The password to use for auth */
+	char *username;			/*!< The username to use for auth */
+	char *password;			/*!< The password to use for auth */
 	str failover;			/*!< Another connection to use if this one fails */
-	str cacert;			/*!< File name of CA cert to use */
-	str clientcert;			/*!< File name of CA client cert */
-	str useragent;			/*!< Useragent to use for this connection */
-	int tls_verifyserver;		/*!< TRUE if server cert needs to be verified */
+	char *useragent;		/*!< Useragent to use for this connection */
+	char *cacert;			/*!< File name of CA cert to use */
+	char *clientcert;		/*!< File name of CA client cert */
+	char *clientkey;		/*!< File name of CA client key */
+	char *ciphersuites;		/*!< List of allowed cipher suites */
+	unsigned int sslversion;	/*!< SSL/TLS version to use */
+	unsigned int verify_peer;	/*!< TRUE if server cert to be verified */
+	unsigned int verify_host;	/*!< TRUE if server CN/SAN to be verified */
 	int http_follow_redirect;	/*!< TRUE if we should follow HTTP 302 redirects */
 	unsigned int port;		/*!< The port to connect to */
 	int timeout;			/*!< Timeout for this connection */

@@ -74,13 +74,16 @@ MODULE_VERSION
 /* Module parameter variables */
 unsigned int	default_connection_timeout = 4;
 char		*default_tls_cacert = NULL;		/*!< File name: Default CA cert to use for curl TLS connection */
-char		*default_tls_clientcert = NULL;		/*!< File name: Default client certificate to use for curl TLS connection */
-char		*default_tls_clientkey = NULL;		/*!< File name: Key in PEM format that belongs to client cert */
-unsigned int	default_tls_verifyserver = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+str		default_tls_clientcert = STR_NULL;		/*!< File name: Default client certificate to use for curl TLS connection */
+str		default_tls_clientkey = STR_NULL;		/*!< File name: Key in PEM format that belongs to client cert */
+str		default_cipher_suite_list = STR_NULL;		/*!< List of allowed cipher suites */
+unsigned int	default_tls_version = 0;		/*!< 0 = Use libcurl default */
+unsigned int	default_tls_verify_peer = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
+unsigned int	default_tls_verify_host = 2;		/*!< 0 = Do not verify TLS server CN/SAN  2 = Verify TLS server CN/SAN (default) */
 char 		*default_http_proxy = NULL;		/*!< Default HTTP proxy to use */
 unsigned int	default_http_proxy_port = 0;		/*!< Default HTTP proxy port to use */
 unsigned int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
-char 		*default_useragent = CURL_USER_AGENT;	/*!< Default CURL useragent. Default "Kamailio Curl " */
+str 		default_useragent = { CURL_USER_AGENT, CURL_USER_AGENT_LEN };	/*!< Default CURL useragent. Default "Kamailio Curl " */
 unsigned int	default_maxdatasize = 0;		/*!< Default download size. 0=disabled */
 
 static curl_version_info_data *curl_info;
@@ -137,24 +140,20 @@ static param_export_t params[] = {
     	{"connection_timeout", PARAM_INT, &default_connection_timeout},
 	{"curlcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
 	{"tlscacert", PARAM_STRING,  &default_tls_cacert },
-	{"tlsclientcert", PARAM_STRING, &default_tls_clientcert },
-	{"tlsclientkey", PARAM_STRING, &default_tls_clientkey },
-	{"tlsverifyserver", PARAM_INT, &default_tls_verifyserver },
+	{"tlsclientcert", PARAM_STR, &default_tls_clientcert },
+	{"tlsclientkey", PARAM_STR, &default_tls_clientkey },
+	{"tlscipherlist", PARAM_STR, &default_cipher_suite_list },
+	{"tlsversion", PARAM_INT, &default_tls_version },
+	{"tlsverifypeer", PARAM_INT, &default_tls_verify_peer },
+	{"tlsverifyhost", PARAM_INT, &default_tls_verify_host },
 	{"httpproxyport", PARAM_INT, &default_http_proxy_port },
 	{"httpproxy", PARAM_STRING, &default_http_proxy},
 	{"httpredirect", PARAM_INT, &default_http_follow_redirect },
-	{"useragent", PARAM_STRING,  &default_useragent },
+	{"useragent", PARAM_STR,  &default_useragent },
 	{"maxdatasize", PARAM_INT,  &default_maxdatasize },
     	{0, 0, 0}
 };
 
-//		str	default_tls_clientcert;			/*!< File name: Default client certificate to use for curl TLS connection */
-//		str	default_tls_clientkey;			/*!< File name: Key in PEM format that belongs to client cert */
-//		int	default_tls_verifyserver = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
-//		str	default_http_proxy;			/*!< Default HTTP proxy to use */
-//		int	default_http_proxy_port;		/*!< Default HTTP proxy port to use */
-//		int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
-//		str	default_useragent;			/*!< Default CURL useragent. Default "Kamailio Curl " */
 
 /*!
  * \brief Exported Pseudo variables
@@ -249,10 +248,13 @@ static int mod_init(void)
 
 	LM_DBG("**** init curl module done. Curl version: %s SSL %s\n", curl_info->version, curl_info->ssl_version);
 	LM_DBG("**** init curl: Number of connection objects: %d \n", curl_connection_count());
-	LM_DBG("**** init curl: User Agent: %s \n", default_useragent);
+	LM_DBG("**** init curl: User Agent: %.*s \n", default_useragent.len, default_useragent.s);
 	LM_DBG("**** init curl: HTTPredirect: %d \n", default_http_follow_redirect);
-	LM_DBG("**** init curl: Client Cert: %s Key %s\n", default_tls_clientcert, default_tls_clientkey);
+	LM_DBG("**** init curl: Client Cert: %.*s Key %.*s\n", default_tls_clientcert.len, default_tls_clientcert.s, default_tls_clientkey.len, default_tls_clientkey.s);
 	LM_DBG("**** init curl: CA Cert: %s \n", default_tls_cacert);
+	LM_DBG("**** init curl: Cipher Suites: %.*s \n", default_cipher_suite_list.len, default_cipher_suite_list.s);
+	LM_DBG("**** init curl: SSL Version: %d \n", default_tls_version);
+	LM_DBG("**** init curl: verifypeer: %d verifyhost: %d\n", default_tls_verify_peer, default_tls_verify_host);
 	LM_DBG("**** init curl: HTTP Proxy: %s Port %d\n", default_http_proxy, default_http_proxy_port);
 
 	LM_DBG("Extra: Curl supports %s %s %s \n",

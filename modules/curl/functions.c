@@ -45,10 +45,27 @@
 #include "curl.h"
 #include "curlcon.h"
 
+
+typedef struct {
+    char *username;
+    char *secret;
+    char *contenttype;
+    char *post;
+    char *clientcert;
+    char *clientkey;
+    char *cacert;
+    char *ciphersuites;
+    unsigned int sslversion;
+    unsigned int verify_peer;
+    unsigned int verify_host;
+    unsigned int timeout;
+    unsigned int http_follow_redirect;
+    unsigned int oneline;
+    unsigned int maxdatasize;
+} curl_query_t;
+
 /* Forward declaration */
-static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const char *username,
-		const char *secret, const char *contenttype, const char* _post, const unsigned int timeout,
-		unsigned int http_follow_redirect, unsigned int oneline, unsigned int maxdatasize);
+static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const curl_query_t * const query_params);
 
 /* 
  * curl write function that saves received data as zero terminated
@@ -86,7 +103,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 
 /*! Send query to server, optionally post data.
  */
-static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const char *_username, const char *_secret, const char *contenttype, const char* _post, unsigned int timeout, unsigned int http_follow_redirect, unsigned int oneline, unsigned int maxdatasize)
+static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const curl_query_t * const params)
 {
     CURL *curl;
     CURLcode res;  
@@ -99,7 +116,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     struct curl_slist *headerlist = NULL;
 
     memset(&stream, 0, sizeof(curl_res_stream_t));
-    stream.max_size = (size_t) maxdatasize;
+    stream.max_size = (size_t) params->maxdatasize;
 
     curl = curl_easy_init();
     if (curl == NULL) {
@@ -110,11 +127,11 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     LM_DBG("****** ##### CURL URL [%s] \n", _url);
     res = curl_easy_setopt(curl, CURLOPT_URL, _url);
 
-    if (_post) {
+    if (params->post) {
 	char ctype[256];
 
 	ctype[0] = '\0';
-	snprintf(ctype, sizeof(ctype), "Content-Type: %s", contenttype);
+	snprintf(ctype, sizeof(ctype), "Content-Type: %s", params->contenttype);
 
         /* Now specify we want to POST data */ 
 	res |= curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -124,28 +141,51 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
 	/* Tell CURL we want to upload using POST */
 
- 	res |= curl_easy_setopt(curl, CURLOPT_POSTFIELDS, _post);
+	res |= curl_easy_setopt(curl, CURLOPT_POSTFIELDS, params->post);
 
     }
 
-    if (maxdatasize) {
+    if (params->maxdatasize) {
 	/* Maximum data size to download - we always download full response, but
 	   cut it off before moving to pvar */
-    	LM_DBG("****** ##### CURL Max datasize %u\n", maxdatasize);
+	LM_DBG("****** ##### CURL Max datasize %u\n", params->maxdatasize);
     }
 
-    if (_username) {
- 	res |= curl_easy_setopt(curl, CURLOPT_USERNAME, _username);
+    if (params->username) {
+	res |= curl_easy_setopt(curl, CURLOPT_USERNAME, params->username);
 	res |= curl_easy_setopt(curl, CURLOPT_HTTPAUTH, (CURLAUTH_DIGEST|CURLAUTH_BASIC));
     }
-    if (_secret) {
- 	res |= curl_easy_setopt(curl, CURLOPT_PASSWORD, _secret);
+    if (params->secret) {
+	res |= curl_easy_setopt(curl, CURLOPT_PASSWORD, params->secret);
     }
 
+    /* Client certificate */
+    if (params->clientcert != NULL && params->clientkey != NULL) {
+        res |= curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+        res |= curl_easy_setopt(curl, CURLOPT_SSLCERT, params->clientcert);
+
+        res |= curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "PEM");
+        res |= curl_easy_setopt(curl, CURLOPT_SSLKEY, params->clientkey);
+    }
+
+    if (params->cacert != NULL) {
+        res |= curl_easy_setopt(curl, CURLOPT_CAINFO, params->cacert);
+    }
+
+    if (params->sslversion != CURL_SSLVERSION_DEFAULT) {
+        res |= curl_easy_setopt(curl, CURLOPT_SSLVERSION, (long) params->sslversion);
+    }
+
+    if (params->ciphersuites != NULL) {
+        res |= curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST, params->ciphersuites);
+    }
+
+    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long) params->verify_peer);
+    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long) params->verify_host?2:0);
 
     res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long) 1);
-    res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) timeout);
-    res |= curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long) http_follow_redirect);
+    res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) params->timeout);
+    res |= curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long) params->http_follow_redirect);
 
 
     res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
@@ -201,16 +241,16 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
 	if (download_size > 0) {
 
-	if (oneline) {
+	if (params->oneline) {
 		/* search for line feed */
 		at = memchr(stream.buf, (char)10, download_size);
 		datasize = (double) (at - stream.buf);
 		LM_DBG("  -- curl download size cut to first line: %d \n", (int) datasize);
 	}
 	if (at == NULL) {
-		if (maxdatasize && ((unsigned int) download_size) > maxdatasize) {
+		if (params->maxdatasize && ((unsigned int) download_size) > params->maxdatasize) {
 			/* Limit at maximum data size */
-			datasize = (double) maxdatasize;
+			datasize = (double) params->maxdatasize;
 			LM_DBG("  -- curl download size cut to maxdatasize : %d \n", (int) datasize);
 		} else {
 			/* Limit at actual downloaded data size */
@@ -250,9 +290,8 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 {
 	curl_con_t *conn = NULL;
 	char *urlbuf = NULL;
-	char *username_str = NULL;
-	char *password_str = NULL;
 	char *postdata = NULL;
+	curl_query_t query_params;
 
 	unsigned int maxdatasize = default_maxdatasize;
 	int res;
@@ -269,14 +308,6 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 		return -1;
 	}
 	LM_DBG("******** CURL Connection found %.*s\n", connection->len, connection->s);
-	if (conn->username.s != NULL && conn->username.len > 0)
-	{
-		username_str = as_asciiz(&conn->username);
-	}
-	if (conn->password.s != NULL && conn->password.len > 0)
-	{
-		password_str = as_asciiz(&conn->password);
-	}
 	maxdatasize = conn->maxdatasize;
 
 
@@ -319,19 +350,29 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 		LM_DBG("***** #### ***** CURL POST data: %s Content-type %s\n", postdata, contenttype);
 	}
 
-	res = curL_query_url(_m, urlbuf, result, username_str, password_str, (contenttype ? contenttype : "text/plain"), postdata,
-		conn->timeout, conn->http_follow_redirect, 0, (unsigned int) maxdatasize );
+	memset(&query_params, 0, sizeof(curl_query_t));
+	query_params.username = conn->username;
+	query_params.secret = conn->password;
+	query_params.contenttype = contenttype ? (char*)contenttype : "text/plain";
+	query_params.post = postdata;
+	query_params.clientcert = conn->clientcert;
+	query_params.clientkey = conn->clientkey;
+	query_params.cacert = default_tls_cacert;
+	query_params.ciphersuites = conn->ciphersuites;
+	query_params.sslversion = conn->sslversion;
+	query_params.verify_peer = conn->verify_peer;
+	query_params.verify_host = conn->verify_host;
+	query_params.timeout = conn->timeout;
+	query_params.http_follow_redirect = conn->http_follow_redirect;
+	query_params.oneline = 0;
+	query_params.maxdatasize = maxdatasize;
+
+	res = curL_query_url(_m, urlbuf, result, &query_params);
 
 	LM_DBG("***** #### ***** CURL DONE : %s \n", urlbuf);
 error:
 	if (urlbuf != NULL) {
 		pkg_free(urlbuf);
-	}
-	if (username_str != NULL) {
-		pkg_free(username_str);
-	}
-	if (password_str != NULL) {
-		pkg_free(password_str);
 	}
 	if (postdata != NULL) {
 		pkg_free(postdata);
@@ -348,8 +389,26 @@ error:
 int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 {
 	int res;
+	curl_query_t query_params;
 
-	res =  curL_query_url(_m, _url, _dst, NULL, NULL, "text/plain", _post, default_connection_timeout, default_http_follow_redirect, 1, 0);
+	memset(&query_params, 0, sizeof(curl_query_t));
+	query_params.username = NULL;
+	query_params.secret = NULL;
+	query_params.contenttype = "text/plain";
+	query_params.post = _post;
+	query_params.clientcert = NULL;
+	query_params.clientkey = NULL;
+	query_params.cacert = NULL;
+	query_params.ciphersuites = NULL;
+	query_params.sslversion = default_tls_version;
+	query_params.verify_peer = default_tls_verify_peer;
+	query_params.verify_host = default_tls_verify_host;
+	query_params.timeout = default_connection_timeout;
+	query_params.http_follow_redirect = default_http_follow_redirect;
+	query_params.oneline = 1;
+	query_params.maxdatasize = 0;
+
+	res =  curL_query_url(_m, _url, _dst, &query_params);
 
 	return res;
 }

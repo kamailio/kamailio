@@ -223,8 +223,30 @@ modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 				</programlisting>
 			</example>
 		</section>
-		<section id="curl.p.tlsverifyserver">
-			<title><varname>tlsverifyserver</varname> (int)</title>
+		<section id="curl.p.tlscipherlist">
+			<title><varname>tlscipherlist</varname> (string)</title>
+			<para>
+			List of allowed cipher suites.
+			See http://curl.haxx.se/libcurl/c/CURLOPT_SSL_CIPHER_LIST.html for details
+			of the cipher list curl option.
+			</para>
+			<para>
+			<emphasis>
+				Default value is empty string, i.e.
+				the default list of ciphers in libcurl will be used.
+			</emphasis>
+			</para>
+			<example>
+			<title>Set <varname>tlscipherlist</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_gcm_sha_256")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="curl.p.tlsverifypeer">
+			<title><varname>tlsverifypeer</varname> (int)</title>
 			<para>
 			If set to 0, TLS verification of the server certificate
 			is disabled. This means that the connection will get 
@@ -233,17 +255,45 @@ modparam("curl", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 			that is meant to receive data.
 			</para>
 			<para>
-			IF set to 1, default setting, and one or more CA certificates
+			If set to 1, default setting, and one or more CA certificates
 			is configured, the server TLS certificate will be validated.
 			If validation fails, the connection fails.
 			</para>
 			<para>
+			See the curl documenation for more details.
+			http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
 			</para>
 			<example>
-			<title>Set <varname>tlsverifyserver</varname> parameter</title>
+			<title>Set <varname>tlsverifypeer</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("curl", "tlsverifyserver", 1)
+modparam("curl", "tlsverifypeer", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="curl.p.tlsverifyhost">
+			<title><varname>tlsverifyhost</varname> (int)</title>
+			<para>
+			If set to 0, domain verification of the server certificate
+			is disabled. This means that the connection will get 
+			encrypted but there is no check that data will be sent to the
+			host that is meant to receive it. Disable with caution.
+			</para>
+			<para>
+			If set to 2, default setting, the hostname in the URL will
+			be verified against the Common Name or Subject Alt Name
+			in the certificate. If validation fails, the connection fails.
+			</para>
+			<para>
+			See the curl documentation for more details.
+			http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
+			</para>
+			<example>
+			<title>Set <varname>tlsverifyhost</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("curl", "tlsverifyhost", 2)
 ...
 				</programlisting>
 			</example>
@@ -285,6 +335,15 @@ modparam("curl", "tlsverifyserver", 1)
 				<listitem><para>
 				<emphasis>useragent</emphasis> Useragent used for HTTP requests. Overrides
 				useragent modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>verifypeer</emphasis> Set to 1 to enable or 0 to disable server
+				certificate verification.
+				Overrides tlsverifypeer modparam.
+				</para></listitem>
+				<emphasis>verifyhost</emphasis> Set to 2 to enable or 0 to disable server
+				hostname verification.
+				Overrides tlsverifyhost modparam.
 				</para></listitem>
 			</itemizedlist>
 			</para>
