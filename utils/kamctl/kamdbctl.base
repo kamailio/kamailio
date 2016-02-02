@@ -37,7 +37,7 @@ STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases domain domain_attrs
 		grp uri speed_dial lcr_gw lcr_rule lcr_rule_target pdt subscriber
 		location location_attrs re_grp trusted address missed_calls
 		usr_preferences aliases silo dialog dialog_vars dispatcher dialplan
-		acc_cdrs}
+		acc_cdrs topos_d topos_t}
 EXTRA_TABLES=${EXTRA_TABLES:-imc_members imc_rooms cpl sip_trace domainpolicy
 		carrierroute carrier_name domain_name carrierfailureroute userblacklist
 		globalblacklist htable purplemap uacreg pl_pipes mtree mtrees
@@ -70,7 +70,7 @@ SED=${SED:-sed}
 # define what modules should be installed
 STANDARD_MODULES=${STANDARD_MODULES:-standard acc lcr domain group
 		permissions registrar usrloc msilo alias_db uri_db speeddial
-		avpops auth_db pdt dialog dispatcher dialplan}
+		avpops auth_db pdt dialog dispatcher dialplan topos}
 
 PRESENCE_MODULES=${PRESENCE_MODULES:-presence rls}
 
