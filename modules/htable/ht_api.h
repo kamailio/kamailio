@@ -53,6 +53,7 @@ typedef struct _ht_entry
 	int rec_lock_level;  /* recursive lock count */
 } ht_entry_t;
 
+#define HT_MAX_COLS 8
 typedef struct _ht
 {
 	str name;
@@ -60,6 +61,9 @@ typedef struct _ht
 	unsigned int htexpire;
 	str dbtable;
 	int dbmode;
+	int ncols;
+	str scols[HT_MAX_COLS];
+	char pack[4];
 	int flags;
 	int_str initval;
 	int updateexpire;
@@ -76,8 +80,9 @@ typedef struct _ht_pv {
 	pv_elem_t *pve;
 } ht_pv_t, *ht_pv_p;
 
-int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
-		int itype, int_str *ival, int updateexpire, int dmqreplicate);
+int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
+		int dbmode, int itype, int_str *ival, int updateexpire,
+		int dmqreplicate);
 int ht_init_tables(void);
 int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);

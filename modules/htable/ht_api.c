@@ -251,11 +251,14 @@ ht_t* ht_get_table(str *name)
 	return NULL;
 }
 
-int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
-		int itype, int_str *ival, int updateexpire, int dmqreplicate)
+int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
+		int dbmode, int itype, int_str *ival, int updateexpire,
+		int dmqreplicate)
 {
 	unsigned int htid;
 	ht_t *ht;
+	int c;
+	int i;
 
 	htid = ht_compute_hash(name);
 
@@ -296,6 +299,48 @@ int ht_add_table(str *name, int autoexp, str *dbtable, int size, int dbmode,
 	if(ival!=NULL)
 		ht->initval = *ival;
 	ht->dmqreplicate = dmqreplicate;
+
+	if(dbcols!=NULL && dbcols->s!=NULL && dbcols->len>0) {
+		ht->scols[0].s = (char*)shm_malloc((1+dbcols->len)*sizeof(char));
+		if(ht->scols[0].s==NULL) {
+			LM_ERR("no more shm memory\n");
+			shm_free(ht);
+			return -1;
+		}
+		memset(ht->scols[0].s, 0, (1+dbcols->len)*sizeof(char));
+		memcpy(ht->scols[0].s, dbcols->s, dbcols->len);
+		ht->scols[0].len = dbcols->len;
+		c = 0;
+		for(i=0; i<dbcols->len; i++) {
+			if(ht->scols[0].s[i]==',') {
+				ht->scols[c].len = (ht->scols[0].s + i - ht->scols[c].s);
+				LM_DBG("db table column[%d]='%.*s'\n", c,
+						ht->scols[c].len, ht->scols[c].s);
+				c++;
+				if(c>=HT_MAX_COLS) {
+					LM_ERR("too many columns %d\n", c);
+					shm_free(ht->scols[0].s);
+					shm_free(ht);
+					return -1;
+				}
+				ht->scols[c].s = ht->scols[0].s + i + 1;
+				ht->scols[c].len = ht->scols[0].s + dbcols->len - ht->scols[c].s;
+			}
+		}
+		LM_DBG("db table column[%d]='%.*s'\n", c,
+				ht->scols[c].len, ht->scols[c].s);
+		if(c==0) {
+			LM_ERR("there must be at least two columns (prefix, value)\n");
+			shm_free(ht->scols[0].s);
+			shm_free(ht);
+			return -1;
+		}
+		ht->ncols = c + 1;
+		ht->pack[0] = 'l';
+		ht->pack[1] = ',';
+		ht->pack[2] = '*';
+	}
+
 	ht->next = _ht_root;
 	_ht_root = ht;
 	return 0;
@@ -828,6 +873,7 @@ int ht_table_spec(char *spec)
 	keyvalue_t kval;
 	str name;
 	str dbtable = {0, 0};
+	str dbcols  = {0, 0};
 	unsigned int autoexpire = 0;
 	unsigned int size = 4;
 	unsigned int dbmode = 0;
@@ -863,6 +909,10 @@ int ht_table_spec(char *spec)
 			dbtable = tok;
 			LM_DBG("htable [%.*s] - dbtable [%.*s]\n", name.len, name.s,
 					dbtable.len, dbtable.s);
+		} else if(pit->name.len==4 && strncmp(pit->name.s, "cols", 4)==0) {
+			dbcols = tok;
+			LM_DBG("htable [%.*s] - dbcols [%.*s]\n", name.len, name.s,
+					dbcols.len, dbcols.s);
 		} else if(pit->name.len==10 && strncmp(pit->name.s, "autoexpire", 10)==0) {
 			if(str2int(&tok, &autoexpire)!=0)
 				goto error;
@@ -897,7 +947,7 @@ int ht_table_spec(char *spec)
 		} else { goto error; }
 	}
 
-	return ht_add_table(&name, autoexpire, &dbtable, size, dbmode,
+	return ht_add_table(&name, autoexpire, &dbtable, &dbcols, size, dbmode,
 			itype, &ival, updateexpire, dmqreplicate);
 
 error:
