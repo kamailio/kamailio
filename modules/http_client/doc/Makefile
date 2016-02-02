@@ -1,4 +1,4 @@
-docs = curl.xml
+docs = http_client.xml
 
 docbook_dir = ../../../docbook
 include $(docbook_dir)/Makefile.module
