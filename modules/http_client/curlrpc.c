@@ -21,14 +21,14 @@
 
 
 /*! \file
- * \brief  Kamailio curl :: RPC functions
- * \ingroup curl
+ * \brief  Kamailio http_client :: RPC functions
+ * \ingroup http_client
  */
 
 #include "../../dprint.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
-#include "curl.h"
+#include "http_client.h"
 #include "curlcon.h"
 
 

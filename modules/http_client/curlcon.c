@@ -22,8 +22,8 @@
  */
 
 /*! \file
- * \brief  Kamailio curl :: Connectoin handling
- * \ingroup curl
+ * \brief  Kamailio http_client :: Connectoin handling
+ * \ingroup http_client
  */
 
 #include <curl/curl.h>
@@ -32,7 +32,7 @@
 #include "../../dprint.h"
 #include "../../parser/parse_param.h"
 #include "../../usr_avp.h"
-#include "curl.h"
+#include "http_client.h"
 #include "curlcon.h"
 
 #define KEYVALUE_TYPE_NONE	0

@@ -1,5 +1,5 @@
 /*
- * header file of curl.c
+ * header file of http_client.c
  *
  * Copyright (C) 2008 Juha Heinanen
  *
@@ -23,9 +23,9 @@
 
 /*!
  * \file
- * \brief Kamailio curl :: Core include file
- * \ingroup curl
- * Module: \ref curl
+ * \brief Kamailio http_client :: Core include file
+ * \ingroup http_client
+ * Module: \ref http_client
  */
 
 #ifndef CURL_H

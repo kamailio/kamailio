@@ -1,5 +1,5 @@
 /*
- * headers of script functions of curl module
+ * headers of script functions of http_client module
  *
  * Copyright (C) 2008 Juha Heinanen
  * Copyright (C) 2013 Carsten Bock, ng-voice GmbH
@@ -24,9 +24,9 @@
 
 /*!
  * \file
- * \brief Kamailio curl :: script functions include file
- * \ingroup curl
- * Module: \ref curl
+ * \brief Kamailio http_client :: script functions include file
+ * \ingroup http_client
+ * Module: \ref http_client
  */
 
 

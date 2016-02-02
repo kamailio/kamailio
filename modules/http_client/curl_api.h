@@ -21,9 +21,9 @@
 
 /*!
  * \file
- * \brief Kamailio curl :: Core API include file
- * \ingroup curl
- * Module: \ref curl
+ * \brief Kamailio http_client :: Core API include file
+ * \ingroup http_client
+ * Module: \ref http_client
  */
 #ifndef _CURL_API_H_
 #define _CURL_API_H_

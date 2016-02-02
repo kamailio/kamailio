@@ -23,12 +23,12 @@
 
 /*!
  * \file
- * \brief Kamailio curl :: Connection handler include file
- * \ingroup curl
- * Module: \ref curl
+ * \brief Kamailio http_client :: Connection handler include file
+ * \ingroup http_client
+ * Module: \ref http_client
  */
 
-#include "curl.h"
+#include "http_client.h"
 
 #ifndef CURLCON_H
 #define CURLCON_H

@@ -1,5 +1,5 @@
 /*
- * script functions of curl module
+ * script functions of http_client module
  *
  * Copyright (C) 2015 Olle E. Johansson, Edvina AB
  *
@@ -27,9 +27,9 @@
 
 /*!
  * \file
- * \brief Kamailio curl :: script functions
- * \ingroup curl
- * Module: \ref curl
+ * \brief Kamailio http_client :: script functions
+ * \ingroup http_client
+ * Module: \ref http_client
  */
 
 
@@ -42,7 +42,7 @@
 #include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
 
-#include "curl.h"
+#include "http_client.h"
 #include "curlcon.h"
 
 
