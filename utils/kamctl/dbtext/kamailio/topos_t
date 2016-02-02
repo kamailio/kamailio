@@ -1,0 +1,1 @@
+id(int,auto) rectime(int) callid(string) a_uuid(string) b_uuid(string) direction(int) x_via(string) 

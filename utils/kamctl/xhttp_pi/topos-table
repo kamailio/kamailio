@@ -1,0 +1,34 @@
+	<!-- Declaration of topos_d table-->
+	<db_table id="topos_d">
+		<table_name>topos_d</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rectime</field><type>DB1_DATETIME</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>a_uuid</field><type>DB1_STR</type></column>
+		<column><field>b_uuid</field><type>DB1_STR</type></column>
+		<column><field>a_contact</field><type>DB1_STR</type></column>
+		<column><field>b_contact</field><type>DB1_STR</type></column>
+		<column><field>a_tag</field><type>DB1_STR</type></column>
+		<column><field>b_tag</field><type>DB1_STR</type></column>
+		<column><field>a_rr</field><type>DB1_BLOB</type></column>
+		<column><field>b_rr</field><type>DB1_BLOB</type></column>
+		<column><field>iflags</field><type>DB1_INT</type></column>
+		<column><field>a_uri</field><type>DB1_STR</type></column>
+		<column><field>b_uri</field><type>DB1_STR</type></column>
+		<column><field>r_uri</field><type>DB1_STR</type></column>
+		<column><field>a_srcip</field><type>DB1_STR</type></column>
+		<column><field>b_srcip</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of topos_t table-->
+	<db_table id="topos_t">
+		<table_name>topos_t</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rectime</field><type>DB1_DATETIME</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>a_uuid</field><type>DB1_STR</type></column>
+		<column><field>b_uuid</field><type>DB1_STR</type></column>
+		<column><field>direction</field><type>DB1_INT</type></column>
+		<column><field>x_via</field><type>DB1_BLOB</type></column>
+	</db_table>

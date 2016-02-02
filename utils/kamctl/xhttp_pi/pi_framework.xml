@@ -746,6 +746,40 @@
 		<column><field>table_name</field><type>DB1_STR</type></column>
 		<column><field>table_version</field><type>DB1_INT</type></column>
 	</db_table>
+	<!-- Declaration of topos_d table-->
+	<db_table id="topos_d">
+		<table_name>topos_d</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rectime</field><type>DB1_DATETIME</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>a_uuid</field><type>DB1_STR</type></column>
+		<column><field>b_uuid</field><type>DB1_STR</type></column>
+		<column><field>a_contact</field><type>DB1_STR</type></column>
+		<column><field>b_contact</field><type>DB1_STR</type></column>
+		<column><field>a_tag</field><type>DB1_STR</type></column>
+		<column><field>b_tag</field><type>DB1_STR</type></column>
+		<column><field>a_rr</field><type>DB1_BLOB</type></column>
+		<column><field>b_rr</field><type>DB1_BLOB</type></column>
+		<column><field>iflags</field><type>DB1_INT</type></column>
+		<column><field>a_uri</field><type>DB1_STR</type></column>
+		<column><field>b_uri</field><type>DB1_STR</type></column>
+		<column><field>r_uri</field><type>DB1_STR</type></column>
+		<column><field>a_srcip</field><type>DB1_STR</type></column>
+		<column><field>b_srcip</field><type>DB1_STR</type></column>
+	</db_table>
+	<!-- Declaration of topos_t table-->
+	<db_table id="topos_t">
+		<table_name>topos_t</table_name>
+		<db_url_id>mysql</db_url_id>
+		<column><field>id</field><type>DB1_INT</type></column>
+		<column><field>rectime</field><type>DB1_DATETIME</type></column>
+		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>a_uuid</field><type>DB1_STR</type></column>
+		<column><field>b_uuid</field><type>DB1_STR</type></column>
+		<column><field>direction</field><type>DB1_INT</type></column>
+		<column><field>x_via</field><type>DB1_BLOB</type></column>
+	</db_table>
 	<!-- Declaration of uacreg table-->
 	<db_table id="uacreg">
 		<table_name>uacreg</table_name>
@@ -3821,6 +3855,136 @@
 				<col><field>table_name</field></col>
 				<col><field>table_version</field></col>
 			</query_cols>
+		</cmd>
+	</mod>
+	<!-- topos_d provisionning -->
+	<mod><mod_name>topos_d</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>topos_d</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
+				<col><field>rectime</field></col>
+				<col><field>callid</field></col>
+				<col><field>a_uuid</field></col>
+				<col><field>b_uuid</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
+				<col><field>a_rr</field></col>
+				<col><field>b_rr</field></col>
+				<col><field>iflags</field></col>
+				<col><field>a_uri</field></col>
+				<col><field>b_uri</field></col>
+				<col><field>r_uri</field></col>
+				<col><field>a_srcip</field></col>
+				<col><field>b_srcip</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>topos_d</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>rectime</field></col>
+				<col><field>callid</field></col>
+				<col><field>a_uuid</field></col>
+				<col><field>b_uuid</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
+				<col><field>a_rr</field></col>
+				<col><field>b_rr</field></col>
+				<col><field>iflags</field></col>
+				<col><field>a_uri</field></col>
+				<col><field>b_uri</field></col>
+				<col><field>r_uri</field></col>
+				<col><field>a_srcip</field></col>
+				<col><field>b_srcip</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>topos_d</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>rectime</field></col>
+				<col><field>callid</field></col>
+				<col><field>a_uuid</field></col>
+				<col><field>b_uuid</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
+				<col><field>a_rr</field></col>
+				<col><field>b_rr</field></col>
+				<col><field>iflags</field></col>
+				<col><field>a_uri</field></col>
+				<col><field>b_uri</field></col>
+				<col><field>r_uri</field></col>
+				<col><field>a_srcip</field></col>
+				<col><field>b_srcip</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>topos_d</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+		</cmd>
+	</mod>
+	<!-- topos_t provisionning -->
+	<mod><mod_name>topos_t</mod_name>
+		<cmd><cmd_name>show</cmd_name>
+			<db_table_id>topos_t</db_table_id>
+			<cmd_type>DB1_QUERY</cmd_type>
+			<query_cols>
+				<col><field>id</field><link_cmd>update</link_cmd></col>
+				<col><field>rectime</field></col>
+				<col><field>callid</field></col>
+				<col><field>a_uuid</field></col>
+				<col><field>b_uuid</field></col>
+				<col><field>direction</field></col>
+				<col><field>x_via</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>add</cmd_name>
+			<db_table_id>topos_t</db_table_id>
+			<cmd_type>DB1_INSERT</cmd_type>
+			<query_cols>
+				<col><field>rectime</field></col>
+				<col><field>callid</field></col>
+				<col><field>a_uuid</field></col>
+				<col><field>b_uuid</field></col>
+				<col><field>direction</field></col>
+				<col><field>x_via</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>update</cmd_name>
+			<db_table_id>topos_t</db_table_id>
+			<cmd_type>DB1_UPDATE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
+			<query_cols>
+				<col><field>rectime</field></col>
+				<col><field>callid</field></col>
+				<col><field>a_uuid</field></col>
+				<col><field>b_uuid</field></col>
+				<col><field>direction</field></col>
+				<col><field>x_via</field></col>
+			</query_cols>
+		</cmd>
+		<cmd><cmd_name>delete</cmd_name>
+			<db_table_id>topos_t</db_table_id>
+			<cmd_type>DB1_DELETE</cmd_type>
+			<clause_cols>
+				<col><field>id</field><operator>=</operator></col>
+			</clause_cols>
 		</cmd>
 	</mod>
 	<!-- uacreg provisionning -->
