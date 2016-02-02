@@ -90,7 +90,7 @@ void rpc_check_client_stats(rpc_t* rpc, void* ctx) {
 
 	if (credit_data->number_of_calls <= 0) {
 		cnxcc_unlock(credit_data->lock);
-		LM_INFO("No calls for current client\n");
+		LM_DBG("No calls for current client\n");
 		return;
 	}
 
