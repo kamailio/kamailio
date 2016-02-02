@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//pub/kamailio/.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="topos_t" xmlns:db="http://docbook.org/ns/docbook">
+    <name>topos_t</name>
+    <version>1</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>This table is used to store topos structures in database. More
+			informations can be found in the topos module documentation at:
+			&KAMAILIO_MOD_DOC;topos.html.
+        </db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
+    </column>
+    <column id="rectime">
+        <name>rectime</name>
+        <type>datetime</type>
+        <description>Date and time when this record was written.</description>
+    </column>
+
+    <column id="a_callid">
+        <name>callid</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>Call ID from SIP message</description>
+        <natural/>
+    </column>
+
+    <column id="a_uuid">
+        <name>a_uuid</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>UUID for A side</description>
+        <natural/>
+	</column>
+
+    <column id="b_uuid">
+        <name>b_uuid</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>UUID for B side</description>
+        <natural/>
+	</column>
+
+    <column id="direction">
+        <name>direction</name>
+        <type>int</type>
+        <description>Forwarding direction</description>
+        <default>0</default>
+        <natural/>
+	</column>
+
+    <column>
+        <name>x_via</name>
+        <type>largetext</type>
+        <description>Via stack - A or B side</description>
+    </column>
+
+    <index>
+        <name>rectime_idx</name>
+        <colref linkend="rectime"/>
+    </index>
+
+    <index>
+        <name>a_callid_idx</name>
+        <colref linkend="a_callid"/>
+    </index>
+
+</table>
