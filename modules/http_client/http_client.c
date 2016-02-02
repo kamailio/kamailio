@@ -1,5 +1,5 @@
 /*
- * curl Module
+ * http_client Module
  * Copyright (C) 2015 Edvina AB, Olle E. Johansson
  *
  * Based on part of the utils module and part
@@ -28,11 +28,11 @@
  */
 
 /*! \file
- * \brief  Kamailio curl :: The module interface file
- * \ingroup curl
+ * \brief  Kamailio http_client :: The module interface file
+ * \ingroup http_client
  */
 
-/*! \defgroup curl Kamailio :: Module interface to Curl
+/*! \defgroup http_client Kamailio :: Module interface to Curl
  *
  * http://curl.haxx.se
  * A generic library for many protocols
