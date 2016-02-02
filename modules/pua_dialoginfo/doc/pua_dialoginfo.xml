@@ -34,9 +34,19 @@
 		<affiliation><orgname>IPCom (Module implementation was partly sponsored by Silver Server (www.sil.at))</orgname></affiliation>
 	    </author>
 	    <editor>
-		<firstname>Klaus </firstname>
+		<firstname>Klaus</firstname>
 		<surname>Darilion</surname>
 		<affiliation><orgname>IPCom</orgname></affiliation>
+	    </editor>
+	    <editor>
+		<firstname>Phil</firstname>
+		<surname>Lavin</surname>
+		<affiliation><orgname>Synety</orgname></affiliation>
+	    </editor>
+	    <editor>
+		<firstname>Muhammad</firstname>
+		<surname>Zaka</surname>
+		<affiliation><orgname>Synety</orgname></affiliation>
 	    </editor>
 	</authorgroup>
 	<copyright>
