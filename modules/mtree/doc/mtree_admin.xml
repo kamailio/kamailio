@@ -107,13 +107,52 @@ modparam("mtree", "db_table", "mymtrees")
 	<section>
 	    <title><varname>mtree</varname> (string)</title>
 	    <para>
-		Definition of memory tree with parameters name, dbtable,
-		type, and multi.  Name is name of the tree, dbtable is name
-		of dbtable where tree is stored, type is type of tree elements
-		(0 = string, 2 = integer), and multi tells if dbtable can
-		contain more than one tree (0 = one tree, 1 = more than
-		one tree identified by tname column). 
-	    </para>
+			Definition of memory tree with using a prameters format string.
+			The parameter names can be:
+		<itemizedlist>
+		<listitem>
+			<para>
+				name - the name of the tree to be used for referencing
+				inside configuration file.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				dbtable - the name of the database table from where to
+				load the records stored in the tree.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				cols - the column names of the database table. They must
+				be enclosed in quotes in order to form a valid SIP parameter
+				value and be separated by comma. The first column corresponds
+				to tprefix. When specified, there must be at least two columns.
+				If this attribute is not specified, then the global module
+				parameters for tprefix and tvalue are used. If more than one
+				value columns are specified, the tree will pack the column
+				values in a comma separated string, which will be associated
+				with the prefix (string transformation {s.select,...) can be
+				used in configuration file to extract a specific column value).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				type - the  type of tree elements (0 = string, 2 = integer).
+				It is valid only when the (tprefix, tvalue) pairs are loaded
+				(not for muti-column values).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				multi - tells if dbtable can contain more than one tree
+				(0 = one tree, 1 = more than one tree identified by tname
+				column). It is valid only when the (tprefix, tvalue) pairs
+				are loaded (not for muti-column values).
+			</para>
+		</listitem>
+		</itemizedlist>
+		</para>
 	    <para>
 	    This parameter can be set many times to add more trees in
 	    memory.
@@ -129,6 +168,8 @@ modparam("mtree", "db_table", "mymtrees")
 ...
 modparam("mtree", "mtree", "name=mytree1;dbtable=routes1;type=0")
 modparam("mtree", "mtree", "name=mytree2;dbtable=routes2;type=0;multi=1")
+modparam("mtree", "mtree",
+    "name=mytree1;dbtable=routes1;cols='key1,val1,val2,val3'")
 ...
 </programlisting>
 	    </example>
