@@ -47,7 +47,7 @@ enum {
 
 
 
-struct via_param {
+typedef struct via_param {
 	int type;               /* Type of the parameter */
 	str name;               /* Name of the parameter */
 	str value;              /* Value of the parameter */
@@ -56,12 +56,12 @@ struct via_param {
 	int size;               /* total size, including preceding and trailing
 							 * white space */
 	struct via_param* next; /* Next parameter in the list */
-};
+} via_param_t;
 
 
 /* Format: name/version/transport host:port;params comment */
  /* WARNING: keep in sync with tm/sip_msg.c via_body_cloner */
-struct via_body { 
+typedef struct via_body { 
 	int error;
 	str hdr;   /* Contains "Via" or "v" */
 	str name;
@@ -92,7 +92,7 @@ struct via_body {
 #endif
 	struct via_body* next; /* pointer to next via body string if
 				  compact via or null */
-};
+} via_body_t;
 
 
 /*
