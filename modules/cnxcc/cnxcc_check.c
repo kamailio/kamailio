@@ -90,7 +90,7 @@ void check_calls_by_money(unsigned int ticks, void *param) {
 				}
 
 				if (_data.redis) {
-					LM_INFO("ec=%f, ca=%f, ca2=%f", credit_data->ended_calls_consumed_amount, total_consumed_money, credit_data->consumed_amount);
+					LM_DBG("ec=%f, ca=%f, ca2=%f", credit_data->ended_calls_consumed_amount, total_consumed_money, credit_data->consumed_amount);
 
 					consumption_diff = credit_data->ended_calls_consumed_amount + total_consumed_money - credit_data->consumed_amount;
 					if (consumption_diff > 0)
