@@ -326,10 +326,6 @@ int curl_parse_param(char *val)
 					LM_DBG("curl connection [%.*s]: verifyhost bad value. Using default\n", name.len, name.s);
 					verify_host = default_tls_verify_host;
 				}
-				if (verify_host != 0 && verify_host != 1) {
-					LM_DBG("curl connection [%.*s]: verifyhost bad value. Using default\n", name.len, name.s);
-					verify_host = default_tls_verify_host;
-				}
 				LM_DBG("curl [%.*s] - verifyhost [%d]\n", pit->name.len, pit->name.s, verify_host);
 			} else if(pit->name.len==10 && strncmp(pit->name.s, "sslversion", 10)==0) {
 				if(str2int(&tok, &sslversion)!=0) {

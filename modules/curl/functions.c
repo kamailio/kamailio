@@ -181,7 +181,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     }
 
     res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long) params->verify_peer);
-    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long) params->verify_host);
+    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long) params->verify_host?2:0);
 
     res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long) 1);
     res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) params->timeout);
