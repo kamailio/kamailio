@@ -11,13 +11,9 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-Edited by
-
 Alex Balashov
 
    <abalashov@evaristesys.com>
-
-Edited by
 
 Ovidiu Sas
 
@@ -417,8 +413,8 @@ $ kamcmd htable.dump htable
 
 3.1. htable (str)
 
-   The definition of a hash table. The value of the parameter must have
-   the following format:
+   The definition of a hash table. The value of the parameter may have the
+   following format:
      * "htname=>size=_number_;autoexpire=_number_;dbtable=_string_"
 
    The parameter can be set multiple times to get more hash tables in same
@@ -435,6 +431,17 @@ $ kamcmd htable.dump htable
        expire.
      * dbtable - name of database to be loaded at startup in hash table.
        If empty or missing, no data will be loaded.
+     * cols - the column names of the database table. They must be
+       enclosed in quotes in order to form a valid SIP parameter value and
+       be separated by comma. The first column corresponds to key_name.
+       When specified, there must be at least two columns. If this
+       attribute is not specified, then the global module parameters for
+       column names are used. If more than one value columns are
+       specified, the hash table will pack the column values in a comma
+       separated string, which will be associated with the key (string
+       transformation {s.select,...} can be used in configuration file to
+       extract a specific column value). When cols attribute is present,
+       writing back to database table is disabled.
      * dbmode - if set to 1, the content of hash table is written to
        database table when the SIP server is stopped (i.e., ensure
        persistency over restarts). Default value is 0 (no write back to db
