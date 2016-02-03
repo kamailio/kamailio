@@ -138,6 +138,7 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 		+ s->to_tag.len+ s->from_tag.len+s->sockinfo_str.len+s->event_id.len
 		+ s->local_contact.len+ s->contact.len+ s->record_route.len
 		+ s->reason.len+ s->watcher_user.len+ s->watcher_domain.len
+		+ s->user_agent.len
 		+ 1)*sizeof(char);
 
 	if(mem_type & PKG_MEM_TYPE)
@@ -166,6 +167,7 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 	CONT_COPY(dest, dest->local_contact, s->local_contact)
 	CONT_COPY(dest, dest->contact, s->contact)
 	CONT_COPY(dest, dest->record_route, s->record_route)
+	CONT_COPY(dest, dest->user_agent, s->user_agent)
 	if(s->event_id.s)
 		CONT_COPY(dest, dest->event_id, s->event_id)
 	if(s->reason.s)
@@ -179,6 +181,7 @@ subs_t* mem_copy_subs(subs_t* s, int mem_type)
 	dest->send_on_cback= s->send_on_cback;
 	dest->expires= s->expires;
 	dest->db_flag= s->db_flag;
+	dest->flags= s->flags;
 
 	return dest;
 
@@ -204,6 +207,7 @@ subs_t* mem_copy_subs_noc(subs_t* s)
 		+ s->to_tag.len+ s->from_tag.len+s->sockinfo_str.len+s->event_id.len
 		+ s->local_contact.len + s->record_route.len+
 		+ s->reason.len+ s->watcher_user.len+ s->watcher_domain.len
+		+ s->user_agent.len
 		+ 1)*sizeof(char);
 
 	dest= (subs_t*)shm_malloc(size);
@@ -227,6 +231,7 @@ subs_t* mem_copy_subs_noc(subs_t* s)
 	CONT_COPY(dest, dest->sockinfo_str, s->sockinfo_str)
 	CONT_COPY(dest, dest->local_contact, s->local_contact)
 	CONT_COPY(dest, dest->record_route, s->record_route)
+	CONT_COPY(dest, dest->user_agent, s->user_agent)
 	if(s->event_id.s)
 		CONT_COPY(dest, dest->event_id, s->event_id)
 	if(s->reason.s)
@@ -240,6 +245,7 @@ subs_t* mem_copy_subs_noc(subs_t* s)
 	dest->send_on_cback= s->send_on_cback;
 	dest->expires= s->expires;
 	dest->db_flag= s->db_flag;
+	dest->flags= s->flags;
 
 	dest->contact.s= (char*)shm_malloc(s->contact.len* sizeof(char));
 	if(dest->contact.s== NULL)

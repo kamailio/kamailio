@@ -40,6 +40,7 @@
 #include "notify.h"
 #include "../pua/hash.h"
 #include "../../mod_fix.h"
+#include "../../dset.h"
 
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
 		str* reply_str);
@@ -181,14 +182,15 @@ int delete_db_subs(str* to_tag, str* from_tag, str* callid)
 
 int insert_subs_db(subs_t* s, int type)
 {
-	db_key_t query_cols[24];
-	db_val_t query_vals[24];
+	db_key_t query_cols[26];
+	db_val_t query_vals[26];
 	int n_query_cols = 0;
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
 		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col, 
 		local_cseq_col, remote_cseq_col, expires_col, record_route_col, 
 		contact_col, local_contact_col, version_col,socket_info_col,reason_col,
-		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col;
+		watcher_user_col, watcher_domain_col, updated_col, updated_winfo_col,
+		user_agent_col, flags_col;
 		
 	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
 	{
@@ -316,6 +318,16 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[updated_winfo_col].nul = 0;
 	n_query_cols++;
 
+	query_cols[flags_col= n_query_cols]=&str_flags_col;
+	query_vals[flags_col].type = DB1_INT;
+	query_vals[flags_col].nul = 0;
+	n_query_cols++;
+
+	query_cols[user_agent_col= n_query_cols]=&str_user_agent_col;
+	query_vals[user_agent_col].type = DB1_STR;
+	query_vals[user_agent_col].nul = 0;
+	n_query_cols++;
+
 	query_vals[pres_uri_col].val.str_val= s->pres_uri;
 	query_vals[callid_col].val.str_val= s->callid;
 	query_vals[totag_col].val.str_val= s->to_tag;
@@ -340,6 +352,8 @@ int insert_subs_db(subs_t* s, int type)
 	query_vals[socket_info_col].val.str_val= s->sockinfo_str;
 	query_vals[updated_col].val.int_val = s->updated;
 	query_vals[updated_winfo_col].val.int_val = s->updated_winfo;
+	query_vals[flags_col].val.int_val = s->flags;
+	query_vals[user_agent_col].val.str_val= s->user_agent;
 
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
@@ -755,7 +769,37 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 		LM_ERR("cleaning pending subscriptions\n");
 }
 
-static char* _pres_subs_last_presentity = NULL;
+subs_t* _pres_subs_last_sub = NULL;
+
+/*
+ * Map between $subs(idxname) and subs_t
+ *
+ * uri (pres_uri) 1
+ * pres_uri 1
+ * to_user 2
+ * to_domain 3
+ * from_user 4
+ * from_domain 5
+ * watcher_username 6
+ * watcher_domain 7
+ * event (event->name) 8
+ * event_id 9
+ * to_tag 10
+ * from_tag 11
+ * callid 12
+ * remote_cseq 13
+ * local_cseq 14
+ * contact 15
+ * local_contact 16
+ * record_route 17
+ * expires 18
+ * status 19
+ * reason 20
+ * version 21
+ * flags 22
+ * user_agent 23
+ *
+ */
 
 int pv_parse_subscription_name(pv_spec_p sp, str *in)
 {
@@ -771,6 +815,119 @@ int pv_parse_subscription_name(pv_spec_p sp, str *in)
 				goto error;
 			};
 			break;
+
+		case 5:
+			if(strncmp(in->s, "event", 5)==0) {
+				sp->pvp.pvn.u.isname.name.n = 8;
+			} else if(strncmp(in->s, "flags", 5)==0) {
+				sp->pvp.pvn.u.isname.name.n = 22;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 6:
+			if(strncmp(in->s, "to_tag", 6)==0) {
+				sp->pvp.pvn.u.isname.name.n = 10;
+			} else if(strncmp(in->s, "callid", 6)==0) {
+				sp->pvp.pvn.u.isname.name.n = 12;
+			} else if(strncmp(in->s, "status", 6)==0) {
+				sp->pvp.pvn.u.isname.name.n = 19;
+			} else if(strncmp(in->s, "reason", 6)==0) {
+				sp->pvp.pvn.u.isname.name.n = 20;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 7:
+			if(strncmp(in->s, "to_user", 7)==0) {
+				sp->pvp.pvn.u.isname.name.n = 2;
+			} else if(strncmp(in->s, "contact", 7)==0) {
+				sp->pvp.pvn.u.isname.name.n = 15;
+			} else if(strncmp(in->s, "expires", 7)==0) {
+				sp->pvp.pvn.u.isname.name.n = 18;
+			} else if(strncmp(in->s, "version", 7)==0) {
+				sp->pvp.pvn.u.isname.name.n = 21;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 8:
+			if(strncmp(in->s, "pres_uri", 8)==0) {
+				sp->pvp.pvn.u.isname.name.n = 1;
+			} else if(strncmp(in->s, "event_id", 8)==0) {
+				sp->pvp.pvn.u.isname.name.n = 9;
+			} else if(strncmp(in->s, "from_tag", 8)==0) {
+				sp->pvp.pvn.u.isname.name.n = 11;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 9:
+			if(strncmp(in->s, "to_domain", 9)==0) {
+				sp->pvp.pvn.u.isname.name.n = 3;
+			} else if(strncmp(in->s, "from_user", 9)==0) {
+				sp->pvp.pvn.u.isname.name.n = 4;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 10:
+			if(strncmp(in->s, "local_cseq", 10)==0) {
+				sp->pvp.pvn.u.isname.name.n = 14;
+			} else if(strncmp(in->s, "user_agent", 10)==0) {
+				sp->pvp.pvn.u.isname.name.n = 23;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 11:
+			if(strncmp(in->s, "from_domain", 11)==0) {
+				sp->pvp.pvn.u.isname.name.n = 5;
+			} else if(strncmp(in->s, "remote_cseq", 11)==0) {
+				sp->pvp.pvn.u.isname.name.n = 13;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 12:
+			if(strncmp(in->s, "record_route", 12)==0) {
+				sp->pvp.pvn.u.isname.name.n = 17;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 13:
+			if(strncmp(in->s, "local_contact", 13)==0) {
+				sp->pvp.pvn.u.isname.name.n = 16;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 14:
+			if(strncmp(in->s, "watcher_domain", 14)==0) {
+				sp->pvp.pvn.u.isname.name.n = 7;
+			} else {
+				goto error;
+			};
+			break;
+
+		case 16:
+			if(strncmp(in->s, "watcher_username", 16)==0) {
+				sp->pvp.pvn.u.isname.name.n = 6;
+			} else {
+				goto error;
+			};
+			break;
+
 		default:
 			goto error;
 	}
@@ -786,13 +943,60 @@ error:
 
 int pv_get_subscription(struct sip_msg *msg, pv_param_t *param,	pv_value_t *res)
 {
-	if(param->pvn.u.isname.name.n==1) /* presentity */
-		return (_pres_subs_last_presentity == NULL) ? pv_get_null(msg, param, res)
-						: pv_get_strzval(msg, param, res, _pres_subs_last_presentity);
+	if(_pres_subs_last_sub == NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(param->pvn.u.isname.name.n==1) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->pres_uri);
+	} else if(param->pvn.u.isname.name.n==2) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->to_user);
+	} else if(param->pvn.u.isname.name.n==3) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->to_domain);
+	} else if(param->pvn.u.isname.name.n==4) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->from_user);
+	} else if(param->pvn.u.isname.name.n==5) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->from_domain);
+	} else if(param->pvn.u.isname.name.n==6) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->watcher_user);
+	} else if(param->pvn.u.isname.name.n==7) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->watcher_domain);
+	} else if(param->pvn.u.isname.name.n==8) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->event->name);
+	} else if(param->pvn.u.isname.name.n==9) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->event_id);
+	} else if(param->pvn.u.isname.name.n==10) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->to_tag);
+	} else if(param->pvn.u.isname.name.n==11) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->from_tag);
+	} else if(param->pvn.u.isname.name.n==12) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->callid);
+	} else if(param->pvn.u.isname.name.n==13) {
+		return pv_get_uintval(msg, param, res, _pres_subs_last_sub->remote_cseq);
+	} else if(param->pvn.u.isname.name.n==14) {
+		return pv_get_uintval(msg, param, res, _pres_subs_last_sub->local_cseq);
+	} else if(param->pvn.u.isname.name.n==15) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->contact);
+	} else if(param->pvn.u.isname.name.n==16) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->local_contact);
+	} else if(param->pvn.u.isname.name.n==17) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->record_route);
+	} else if(param->pvn.u.isname.name.n==18) {
+		return pv_get_uintval(msg, param, res, _pres_subs_last_sub->expires);
+	} else if(param->pvn.u.isname.name.n==19) {
+		return pv_get_uintval(msg, param, res, _pres_subs_last_sub->status);
+	} else if(param->pvn.u.isname.name.n==20) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->reason);
+	} else if(param->pvn.u.isname.name.n==21) {
+		return pv_get_sintval(msg, param, res, _pres_subs_last_sub->version);
+	} else if(param->pvn.u.isname.name.n==22) {
+		return pv_get_sintval(msg, param, res, _pres_subs_last_sub->flags);
+	} else if(param->pvn.u.isname.name.n==23) {
+		return pv_get_strval(msg, param, res, &_pres_subs_last_sub->user_agent);
+	}
 
 	LM_ERR("unknown specifier\n");
 	return pv_get_null(msg, param, res);
-
 }
 
 int handle_subscribe0(struct sip_msg* msg)
@@ -849,9 +1053,9 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 	str reply_str;
 	int sent_reply= 0;
 
-	if(_pres_subs_last_presentity) {
-		pkg_free(_pres_subs_last_presentity);
-		_pres_subs_last_presentity = NULL;
+	if(_pres_subs_last_sub) {
+		pkg_free(_pres_subs_last_sub);
+		_pres_subs_last_sub = NULL;
 	}
 
 	/* ??? rename to avoid collisions with other symbols */
@@ -952,13 +1156,6 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 		reason= subs.reason;
 	}
 
-	if(subs.pres_uri.len > 0 && subs.pres_uri.s) {
-		_pres_subs_last_presentity =
-				(char*)pkg_malloc((subs.pres_uri.len+1) * sizeof(char));
-		strncpy(_pres_subs_last_presentity, subs.pres_uri.s, subs.pres_uri.len);
-		_pres_subs_last_presentity[subs.pres_uri.len] = '\0';
-	}
-		
 	/* mark that the received event is a SUBSCRIBE message */
 	subs.recv_event = PRES_SUBSCRIBE_RECV;
 
@@ -1032,6 +1229,8 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 			}
 		}
 	}
+
+	_pres_subs_last_sub = mem_copy_subs(&subs, PKG_MEM_TYPE);
 
 	/* check if correct status */
 	if(get_status_str(subs.status)== NULL)
@@ -1378,6 +1577,12 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, int miexp,
 	else
 		subs->local_contact= scontact;
 
+	if (parse_headers(msg, HDR_USERAGENT_F, 0) != -1 && msg->user_agent &&
+			msg->user_agent->body.len>0 && msg->user_agent->body.len<MAX_UA_SIZE) {
+		subs->user_agent = msg->user_agent->body;
+	}
+	getbflagsval(0, &subs->flags);
+
 	free_to_params(&TO);
 	return 0;
 	
@@ -1534,7 +1739,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 {
 	db_key_t query_cols[3];
 	db_val_t query_vals[3];
-	db_key_t result_cols[9];
+	db_key_t result_cols[10];
 	db1_res_t *result= NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
@@ -1543,6 +1748,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	int remote_cseq_col= 0, local_cseq_col= 0, status_col, reason_col;
 	int record_route_col, version_col, pres_uri_col;
 	int updated_col, updated_winfo_col;
+	int flags_col;
 	unsigned int remote_cseq;
 	str pres_uri, record_route;
 	str reason;
@@ -1575,6 +1781,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	result_cols[version_col=n_result_cols++] = &str_version_col;
 	result_cols[updated_col=n_result_cols++] = &str_updated_col;
 	result_cols[updated_winfo_col=n_result_cols++] = &str_updated_winfo_col;
+	result_cols[flags_col=n_result_cols++] = &str_flags_col;
 	
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
 	{
@@ -1626,13 +1833,14 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	if(reason.s)
 	{
 		reason.len= strlen(reason.s);
-		subs->reason.s= (char*)pkg_malloc(reason.len* sizeof(char));
-		if(subs->reason.s== NULL)
-		{
-			ERR_MEM(PKG_MEM_STR);
+		if(reason.len > 0) {
+			subs->reason.s= (char*)pkg_malloc(reason.len* sizeof(char));
+			if(subs->reason.s == NULL) {
+				ERR_MEM(PKG_MEM_STR);
+			}
+			memcpy(subs->reason.s, reason.s, reason.len);
+			subs->reason.len= reason.len;
 		}
-		memcpy(subs->reason.s, reason.s, reason.len);
-		subs->reason.len= reason.len;
 	}
 
 	subs->local_cseq= row_vals[local_cseq_col].val.int_val + 1;
@@ -1642,32 +1850,34 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	{
 		pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
 		pres_uri.len= strlen(pres_uri.s);
-		subs->pres_uri.s= (char*)pkg_malloc(pres_uri.len* sizeof(char));
-		if(subs->pres_uri.s== NULL)
-		{	
-			if(subs->reason.s)
-				pkg_free(subs->reason.s);
-			ERR_MEM(PKG_MEM_STR);
+		if(pres_uri.len > 0) {
+			subs->pres_uri.s= (char*)pkg_malloc(pres_uri.len* sizeof(char));
+			if(subs->pres_uri.s== NULL) {
+				if(subs->reason.s)
+					pkg_free(subs->reason.s);
+				ERR_MEM(PKG_MEM_STR);
+			}
+			memcpy(subs->pres_uri.s, pres_uri.s, pres_uri.len);
+			subs->pres_uri.len= pres_uri.len;
 		}
-		memcpy(subs->pres_uri.s, pres_uri.s, pres_uri.len);
-		subs->pres_uri.len= pres_uri.len;
 	}
 
 	record_route.s= (char*)row_vals[record_route_col].val.string_val;
-	if(record_route.s)
-	{
+	if(record_route.s) {
 		record_route.len= strlen(record_route.s);
-		subs->record_route.s= (char*)pkg_malloc(record_route.len*sizeof(char));
-		if(subs->record_route.s== NULL)
-		{
-			ERR_MEM(PKG_MEM_STR);
+		if( record_route.len > 0) {
+			subs->record_route.s= (char*)pkg_malloc(record_route.len*sizeof(char));
+			if(subs->record_route.s== NULL) {
+				ERR_MEM(PKG_MEM_STR);
+			}
+			memcpy(subs->record_route.s, record_route.s, record_route.len);
+			subs->record_route.len= record_route.len;
 		}
-		memcpy(subs->record_route.s, record_route.s, record_route.len);
-		subs->record_route.len= record_route.len;
 	}
 
 	subs->updated= row_vals[updated_col].val.int_val;
 	subs->updated_winfo= row_vals[updated_winfo_col].val.int_val;
+	subs->flags = row_vals[flags_col].val.int_val;
 
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;

@@ -51,6 +51,8 @@ CREATE TABLE active_watchers (
     from_domain VARCHAR2(64),
     updated NUMBER(10),
     updated_winfo NUMBER(10),
+    flags NUMBER(10) DEFAULT 0 NOT NULL,
+    user_agent VARCHAR2(255) DEFAULT '',
     CONSTRAINT ORA_active_watchers_idx  UNIQUE (callid, to_tag, from_tag)
 );
 
@@ -67,7 +69,7 @@ CREATE INDEX ORA_active_watchers_pres  ON active_watchers (presentity_uri, event
 CREATE INDEX active_watchers_updated_idx  ON active_watchers (updated);
 CREATE INDEX ORA_updated_winfo_idx  ON active_watchers (updated_winfo, presentity_uri);
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','11');
+INSERT INTO version (table_name, table_version) values ('active_watchers','12');
 
 CREATE TABLE watchers (
     id NUMBER(10) PRIMARY KEY,

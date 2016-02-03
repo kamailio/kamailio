@@ -43,6 +43,8 @@ CREATE TABLE active_watchers (
     from_domain VARCHAR(64) NOT NULL,
     updated INTEGER NOT NULL,
     updated_winfo INTEGER NOT NULL,
+    flags INTEGER DEFAULT 0 NOT NULL,
+    user_agent VARCHAR(255) DEFAULT '' NOT NULL,
     CONSTRAINT active_watchers_active_watchers_idx UNIQUE (callid, to_tag, from_tag)
 );
 
@@ -51,7 +53,7 @@ CREATE INDEX active_watchers_active_watchers_pres ON active_watchers (presentity
 CREATE INDEX active_watchers_updated_idx ON active_watchers (updated);
 CREATE INDEX active_watchers_updated_winfo_idx ON active_watchers (updated_winfo, presentity_uri);
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','11');
+INSERT INTO version (table_name, table_version) values ('active_watchers','12');
 
 CREATE TABLE watchers (
     id SERIAL PRIMARY KEY NOT NULL,

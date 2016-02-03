@@ -83,6 +83,8 @@ struct subscription
 	int internal_update_flag;
 	int updated;
 	int updated_winfo;
+	flag_t flags;
+	str user_agent;
 	struct subscription* next;
 
 };
