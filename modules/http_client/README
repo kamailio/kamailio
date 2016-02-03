@@ -85,8 +85,9 @@ Carsten Bock
    1.10. Set tlsverifyhost parameter
    1.11. Set httpcon parameter
    1.12. Set config_file parameter
-   1.13. http_connect() usage
-   1.14. curl_http_query() usage
+   1.13. Short http_client config file
+   1.14. http_connect() usage
+   1.15. curl_http_query() usage
 
 Chapter 1. Admin Guide
 
@@ -404,10 +405,27 @@ tstuff;timeout=12")
 
    By default no config file is specified.
 
+   All the parameters that take filenames as values will be resolved using
+   the same rules as for the tls config filename itself: starting with a
+   '.' means relative to the working directory, a '/' means an absolute
+   path and anything else a path relative to the directory of the current
+   Kamailio main config file.
+
    Example 1.12. Set config_file parameter
 ...
 modparam("http_client", "config_file", "httpconnections.cfg)
 ...
+
+   Example 1.13. Short http_client config file
+[authapiserver]
+url = https://api.runbo.example.com/v4.2/auth
+timeout = 1
+maxdatasize = 4
+tlsversion = TLSv2
+verify_peer = yes
+client_key = default_key.pem
+client_cert = default_cert.pem
+http_follow_redirect = no
 
 4. Functions
 
@@ -436,7 +454,7 @@ modparam("http_client", "config_file", "httpconnections.cfg)
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.13. http_connect() usage
+   Example 1.14. http_connect() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
@@ -474,7 +492,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.14. curl_http_query() usage
+   Example 1.15. curl_http_query() usage
 ...
 # GET-Request
 http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri

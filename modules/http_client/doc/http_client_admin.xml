@@ -399,6 +399,13 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
         		<para>
                 	By default no config file is specified.
         		</para>
+ 			<para>
+                	All the parameters that take filenames as values will be resolved
+                	using the same rules as for the tls config filename itself: starting
+                	with a '.' means relative to the working directory, a '/' means an
+                	absolute path and  anything else a path relative to the directory of
+                	the current &kamailio; main config file.
+        		</para>
 			<example>
 			<title>Set <varname>config_file</varname> parameter</title>
 				<programlisting format="linespecific">
@@ -407,6 +414,22 @@ modparam("http_client", "config_file", "httpconnections.cfg)
 ...
 				</programlisting>
 			</example>
+			<example>
+                	<title>Short http_client config file</title>
+        <programlisting>
+[authapiserver]
+url = https://api.runbo.example.com/v4.2/auth
+timeout = 1
+maxdatasize = 4 
+tlsversion = TLSv2
+verify_peer = yes
+client_key = default_key.pem
+client_cert = default_cert.pem
+http_follow_redirect = no
+
+        </programlisting>
+        </example>
+
 		</section>
 	</section>
 
