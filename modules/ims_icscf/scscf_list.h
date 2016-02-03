@@ -49,21 +49,12 @@
 #include "../../sr_module.h"
 #include "../../modules/tm/tm_load.h"
 #include "mod.h"
-#ifndef __OS_darwin
-#include <values.h>
-#endif
+#include <limits.h>
 #include "../../mem/shm_mem.h"
 
 #include "../../dset.h"
 
 #include "../../timer.h"
-
-#ifdef __OS_darwin
-#ifndef MAXINT
-#define MAXINT INT_MAX
-#endif
-#endif
-
 
 /** S-CSCF list element */ 
 typedef struct _scscf_entry {
