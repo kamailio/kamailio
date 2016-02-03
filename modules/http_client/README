@@ -45,10 +45,10 @@ Carsten Bock
 
         4. Functions
 
-              4.1. curl_connect(connection, url, [content_type, data,]
+              4.1. http_connect(connection, url, [content_type, data,]
                       result)
 
-              4.2. curl_http_query(url, [post-data], result)
+              4.2. http_client_query(url, [post-data], result)
 
         5. Pseudovariables
 
@@ -77,7 +77,7 @@ Carsten Bock
    1.9. Set tlsverifypeer parameter
    1.10. Set tlsverifyhost parameter
    1.11. Set curlcon parameter
-   1.12. curl_connect() usage
+   1.12. http_connect() usage
    1.13. curl_http_query() usage
 
 Chapter 1. Admin Guide
@@ -106,8 +106,8 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. curl_connect(connection, url, [content_type, data,] result)
-        4.2. curl_http_query(url, [post-data], result)
+        4.1. http_connect(connection, url, [content_type, data,] result)
+        4.2. http_client_query(url, [post-data], result)
 
    5. Pseudovariables
 
@@ -125,9 +125,6 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   Note: This module is still in development. Not all options documented
-   here work yet.
-
    This module implements protocol functions that use the libcurl library
    to fetch data from external HTTP servers or post data to HTTP servers.
    The module is using a concept of "connections" to define properties of
@@ -140,9 +137,10 @@ Chapter 1. Admin Guide
 
    Like in SIP, the HTTP URL may need encoding to be transported safely
    over the network. Check the string encoding functions in the
-   Transformation Cookbook (as used in the curl_http_query example below).
+   Transformation Cookbook (as used in the http_client_query example
+   below).
 
-   Function curl_http_query allows Kamailio to issue an HTTP GET request
+   Function http_client_query allows Kamailio to issue an HTTP GET request
    and get access to parts of the reply. This function has been ported
    from the utils module and now use the same libcurl functions.
 
@@ -154,7 +152,8 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * None.
+     * TLS - if you use TLS connections (https) the tls module should be
+       loaded first in order to initialize OpenSSL properly.
 
 2.2. External Libraries or Applications
 
@@ -178,15 +177,15 @@ Chapter 1. Admin Guide
 
 3.1. httpredirect (int)
 
-   If set to 1, enabled, CURL will follow HTTP 302 Redirects. If set to 0,
-   CURL will not follow redirects. Default is 1, enabled.
+   If set to 1, enabled, http_client will follow HTTP 302 Redirects. If
+   set to 0, http_client will not follow redirects. Default is 1, enabled.
 
    The latest redirect URL will be stored in the $curlredirect
    pseudovariable.
 
    Example 1.1. Set httpredirect parameter
 ...
-modparam("http_client., "httpredirect", 0)
+modparam("http_client", "httpredirect", 0)
 ...
 
 3.2. useragent (string)
@@ -197,7 +196,7 @@ modparam("http_client., "httpredirect", 0)
 
    Example 1.2. Set useragent parameter
 ...
-modparam("http_client., "useragent", "Secret HTTP REST grabber 0.42")
+modparam("http_client", "useragent", "Secret HTTP REST grabber 0.42")
 ...
 
 3.3. maxdatasize (int)
@@ -209,7 +208,7 @@ modparam("http_client., "useragent", "Secret HTTP REST grabber 0.42")
 
    Example 1.3. Set maxdatasize parameter
 ...
-modparam("http_client., "maxdatasize", 2000)
+modparam("http_client", "maxdatasize", 2000)
 ...
 
 3.4. connection_timeout (int)
@@ -220,7 +219,7 @@ modparam("http_client., "maxdatasize", 2000)
 
    Example 1.4. Set connection_timeout parameter
 ...
-modparam("http_client., "connection_timeout", 2)
+modparam("http_client", "connection_timeout", 2)
 ...
 
 3.5. tlsclientcert (string)
@@ -234,7 +233,7 @@ modparam("http_client., "connection_timeout", 2)
 
    Example 1.5. Set tlsclientcert parameter
 ...
-modparam("http_client., "tlsclientcert", "/var/certs/sollentuna.example.com.cert
+modparam("http_client", "tlsclientcert", "/var/certs/sollentuna.example.com.cert
 ")
 ...
 
@@ -249,7 +248,7 @@ modparam("http_client., "tlsclientcert", "/var/certs/sollentuna.example.com.cert
 
    Example 1.6. Set tlsclientkey parameter
 ...
-modparam("http_client., "tlsclientkey", "/var/certs/sollentuna.example.com.key")
+modparam("http_client", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 ...
 
 3.7. tlscacert (string)
@@ -263,7 +262,7 @@ modparam("http_client., "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 
    Example 1.7. Set tlscacert parameter
 ...
-modparam("http_client., "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
+modparam("http_client", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 ...
 
 3.8. tlscipherlist (string)
@@ -277,7 +276,7 @@ modparam("http_client., "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 
    Example 1.8. Set tlscipherlist parameter
 ...
-modparam("http_client., "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_ae
+modparam("http_client", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_ae
 s_128_gcm_sha_256")
 ...
 
@@ -292,12 +291,12 @@ s_128_gcm_sha_256")
    configured, the server TLS certificate will be validated. If validation
    fails, the connection fails.
 
-   See the curl documenation for more details.
+   See the curl documentation for more details.
    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
 
    Example 1.9. Set tlsverifypeer parameter
 ...
-modparam("http_client., "tlsverifypeer", 1)
+modparam("http_client", "tlsverifypeer", 1)
 ...
 
 3.10. tlsverifyhost (int)
@@ -316,7 +315,7 @@ modparam("http_client., "tlsverifypeer", 1)
 
    Example 1.10. Set tlsverifyhost parameter
 ...
-modparam("http_client., "tlsverifyhost", 2)
+modparam("http_client", "tlsverifyhost", 2)
 ...
 
 3.11. curlcon (string)
@@ -350,21 +349,21 @@ modparam("http_client., "tlsverifyhost", 2)
 
    Example 1.11. Set curlcon parameter
 ...
-modparam("http_client., "http_client.on", "apione=>http://atlanta.example.com")
-modparam("http_client., "http_client.on", "apitwo=>http://atlanta.example.com/ap
+modparam("http_client", "http_client.on", "apione=>http://atlanta.example.com")
+modparam("http_client", "http_client.on", "apitwo=>http://atlanta.example.com/ap
 i/12")
-modparam("http_client., "http_client.on", "apithree=>http://annabella:mysecret@a
+modparam("http_client", "http_client.on", "apithree=>http://annabella:mysecret@a
 tlanta.example.com/api/12")
-modparam("http_client., "http_client.on", "apifour=>http://stockholm.example.com
+modparam("http_client", "http_client.on", "apifour=>http://stockholm.example.com
 /api/getstuff;timeout=12")
 ...
 
 4. Functions
 
-   4.1. curl_connect(connection, url, [content_type, data,] result)
-   4.2. curl_http_query(url, [post-data], result)
+   4.1. http_connect(connection, url, [content_type, data,] result)
+   4.2. http_client_query(url, [post-data], result)
 
-4.1. curl_connect(connection, url, [content_type, data,] result)
+4.1. http_connect(connection, url, [content_type, data,] result)
 
    Sends HTTP GET or POST request to a given connection. For a POST
    request, content-type can be specified.
@@ -386,24 +385,24 @@ modparam("http_client., "http_client.on", "apifour=>http://stockholm.example.com
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.12. curl_connect() usage
+   Example 1.12. http_connect() usage
 ...
-modparam("http_client., "http_client.on", "apiserver=>http://kamailio.org/api/")
+modparam("http_client", "http_client.on", "apiserver=>http://kamailio.org/api/")
 ;
 ...
 # POST Request
-$var(res) = curl_connect("apiserver", "/mailbox", "application/json", "{ ok, {20
+$var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {20
 0, ok}}", "$avp(gurka)");
-xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result code $var(res)\n"
+xlog("L_INFO", "API-server HTTP connection: $avp(gurka) Result code $var(res)\n"
 );
 
-$var(res) = curl_connect("apiserver", "/callroute", "application/json", "$var(js
+$var(res) = http_connect("apiserver", "/callroute", "application/json", "$var(js
 ondata)", "$avp(route)");
-xlog("L_INFO", "API-server Curl connection: $avp(route) Result code $var(res)\n"
+xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
 );
 ...
 
-4.2. curl_http_query(url, [post-data], result)
+4.2. http_client_query(url, [post-data], result)
 
    Sends HTTP GET or POST request according to URL given in "url"
    parameter, which is a string that may contain pseudo variables.
@@ -428,8 +427,8 @@ xlog("L_INFO", "API-server Curl connection: $avp(route) Result code $var(res)\n"
    Example 1.13. curl_http_query() usage
 ...
 # GET-Request
-curl_http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$
-(fu{s.escape.param})",
+http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri
+=$(fu{s.escape.param})",
            "$var(result)")
 switch ($retcode) {
        ...
@@ -437,8 +436,8 @@ switch ($retcode) {
 ...
 ...
 # POST-Request
-curl_http_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&f_ur
-i=$(fu{s.escape.param})",
+http_client_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&f_
+uri=$(fu{s.escape.param})",
            "$var(result)")
 switch ($retcode) {
        ...
@@ -451,10 +450,10 @@ switch ($retcode) {
 
 5.1. $curlerror(error)
 
-   cURL returns error codes from the protocol used. If an error happens, a
-   cURL specific error code below 100 is returned. The $curlerror pv
-   returns a text string representing the error. For more information on
-   cURL error codes, please visit
+   The cURL library returns error codes from the protocol used. If an
+   error happens, a cURL specific error code below 100 is returned. The
+   $curlerror pv returns a text string representing the error. For more
+   information on cURL error codes, please visit
    http://curl.haxx.se/libcurl/c/libcurl-errors.html
 
 6. RPC Commands

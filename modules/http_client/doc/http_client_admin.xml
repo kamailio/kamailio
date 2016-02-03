@@ -16,10 +16,6 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	Note: This module is still in development. Not all options documented
-	here work yet.
-	</para>
-	<para>
 	This module implements protocol functions that use the libcurl library
 	to fetch data from external HTTP servers or post data to HTTP servers.
 	The module is using a concept of "connections" to define properties
@@ -34,10 +30,10 @@
 	<para>
 	Like in SIP, the HTTP URL may need encoding to be transported safely
 	over the network. Check the string encoding functions in the Transformation
-	Cookbook (as used in the curl_http_query example below).
+	Cookbook (as used in the http_client_query example below).
 	</para>
 	<para>
-	Function curl_http_query allows &kamailio; to issue an HTTP GET
+	Function http_client_query allows &kamailio; to issue an HTTP GET
 	request and get access to parts of the reply. This function has
 	been ported from the utils module and now use the same libcurl
 	functions.
@@ -52,7 +48,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-			None.
+			TLS - if you use TLS connections (https) the tls module should be
+			loaded first in order to initialize OpenSSL properly.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -80,8 +77,8 @@
 		<section id="http_client.p.httpredirect">
 			<title><varname>httpredirect</varname> (int)</title>
 			<para>
-			If set to 1, enabled, CURL will follow HTTP 302 Redirects.
-			If set to 0, CURL will not follow redirects. Default is 1, enabled.
+			If set to 1, enabled, http_client will follow HTTP 302 Redirects.
+			If set to 0, http_client will not follow redirects. Default is 1, enabled.
 			</para>
 			<para>
 			The latest redirect URL will be stored in the <emphasis>$curlredirect</emphasis>
@@ -91,7 +88,7 @@
 			<title>Set <varname>httpredirect</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "httpredirect", 0)
+modparam("http_client", "httpredirect", 0)
 ...
 				</programlisting>
 			</example>
@@ -106,7 +103,7 @@ modparam("http_client., "httpredirect", 0)
 			<title>Set <varname>useragent</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "useragent", "Secret HTTP REST grabber 0.42")
+modparam("http_client", "useragent", "Secret HTTP REST grabber 0.42")
 ...
 				</programlisting>
 			</example>
@@ -127,7 +124,7 @@ modparam("http_client., "useragent", "Secret HTTP REST grabber 0.42")
 			<title>Set <varname>maxdatasize</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "maxdatasize", 2000)
+modparam("http_client", "maxdatasize", 2000)
 ...
 				</programlisting>
 			</example>
@@ -148,7 +145,7 @@ modparam("http_client., "maxdatasize", 2000)
 			<title>Set <varname>connection_timeout</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "connection_timeout", 2)
+modparam("http_client", "connection_timeout", 2)
 ...
 				</programlisting>
 			</example>
@@ -171,7 +168,7 @@ modparam("http_client., "connection_timeout", 2)
 			<title>Set <varname>tlsclientcert</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
+modparam("http_client", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
 ...
 				</programlisting>
 			</example>
@@ -194,7 +191,7 @@ modparam("http_client., "tlsclientcert", "/var/certs/sollentuna.example.com.cert
 			<title>Set <varname>tlsclientkey</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "tlsclientkey", "/var/certs/sollentuna.example.com.key")
+modparam("http_client", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 ...
 				</programlisting>
 			</example>
@@ -218,7 +215,7 @@ modparam("http_client., "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 			<title>Set <varname>tlscacert</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
+modparam("http_client", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 ...
 				</programlisting>
 			</example>
@@ -240,7 +237,7 @@ modparam("http_client., "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 			<title>Set <varname>tlscipherlist</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_gcm_sha_256")
+modparam("http_client", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_gcm_sha_256")
 ...
 				</programlisting>
 			</example>
@@ -260,14 +257,14 @@ modparam("http_client., "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_ae
 			If validation fails, the connection fails.
 			</para>
 			<para>
-			See the curl documenation for more details.
+			See the curl documentation for more details.
 			http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
 			</para>
 			<example>
 			<title>Set <varname>tlsverifypeer</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "tlsverifypeer", 1)
+modparam("http_client", "tlsverifypeer", 1)
 ...
 				</programlisting>
 			</example>
@@ -293,7 +290,7 @@ modparam("http_client., "tlsverifypeer", 1)
 			<title>Set <varname>tlsverifyhost</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "tlsverifyhost", 2)
+modparam("http_client", "tlsverifyhost", 2)
 ...
 				</programlisting>
 			</example>
@@ -352,10 +349,10 @@ modparam("http_client., "tlsverifyhost", 2)
 			<title>Set <varname>curlcon</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "http_client.on", "apione=>http://atlanta.example.com")
-modparam("http_client., "http_client.on", "apitwo=>http://atlanta.example.com/api/12")
-modparam("http_client., "http_client.on", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
-modparam("http_client., "http_client.on", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
+modparam("http_client", "http_client.on", "apione=>http://atlanta.example.com")
+modparam("http_client", "http_client.on", "apitwo=>http://atlanta.example.com/api/12")
+modparam("http_client", "http_client.on", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
+modparam("http_client", "http_client.on", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
 ...
 				</programlisting>
 			</example>
@@ -364,9 +361,9 @@ modparam("http_client., "http_client.on", "apifour=>http://stockholm.example.com
 
 	<section>
 	<title>Functions</title>
-		<section id="http_client.f.curl_connect">
+		<section id="http_client.f.http_connect">
 			<title>
-				<function moreinfo="none">curl_connect(connection, url, [content_type, data,] result)</function>
+				<function moreinfo="none">http_connect(connection, url, [content_type, data,] result)</function>
 			</title>
 			<para>
 			Sends HTTP GET or POST request to a given connection. For a
@@ -408,24 +405,24 @@ modparam("http_client., "http_client.on", "apifour=>http://stockholm.example.com
 			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
 			</para>
 			<example>
-				<title><function>curl_connect()</function> usage</title>
+				<title><function>http_connect()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client., "http_client.on", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "http_client.on", "apiserver=>http://kamailio.org/api/");
 ...
 # POST Request
-$var(res) = curl_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
-xlog("L_INFO", "API-server Curl connection: $avp(gurka) Result code $var(res)\n");
+$var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
+xlog("L_INFO", "API-server HTTP connection: $avp(gurka) Result code $var(res)\n");
 
-$var(res) = curl_connect("apiserver", "/callroute", "application/json", "$var(jsondata)", "$avp(route)");
-xlog("L_INFO", "API-server Curl connection: $avp(route) Result code $var(res)\n");
+$var(res) = http_connect("apiserver", "/callroute", "application/json", "$var(jsondata)", "$avp(route)");
+xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n");
 ...
 				</programlisting>
 			</example>
 		</section>
 		<section id="http_client.f.curl_http_query">
 			<title>
-				<function moreinfo="none">curl_http_query(url, [post-data], result)</function>
+				<function moreinfo="none">http_client_query(url, [post-data], result)</function>
 			</title>
 			<para>
 			Sends HTTP GET or POST request according to URL given in
@@ -460,7 +457,7 @@ xlog("L_INFO", "API-server Curl connection: $avp(route) Result code $var(res)\n"
 				<programlisting format="linespecific">
 ...
 # GET-Request
-curl_http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
            "$var(result)")
 switch ($retcode) {
        ...
@@ -470,7 +467,7 @@ switch ($retcode) {
 				<programlisting format="linespecific">
 ...
 # POST-Request
-curl_http_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+http_client_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
            "$var(result)")
 switch ($retcode) {
        ...
@@ -487,7 +484,7 @@ switch ($retcode) {
 				<function moreinfo="none">$curlerror(error)</function>
 			</title>
 			<para>
-			cURL returns error codes from the protocol used. If an error
+			The cURL library returns error codes from the protocol used. If an error
 			happens, a cURL specific error code below 100 is returned.
 			The $curlerror pv returns a text string representing the error.
 			For more information on cURL error codes, please visit
