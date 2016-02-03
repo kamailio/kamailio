@@ -86,6 +86,8 @@ unsigned int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOP
 str 		default_useragent = { CURL_USER_AGENT, CURL_USER_AGENT_LEN };	/*!< Default CURL useragent. Default "Kamailio Curl " */
 unsigned int	default_maxdatasize = 0;		/*!< Default download size. 0=disabled */
 
+str		http_client_config_file = STR_NULL;
+
 static curl_version_info_data *curl_info;
 
 /* Module management function prototypes */
@@ -151,6 +153,7 @@ static param_export_t params[] = {
 	{"httpredirect", PARAM_INT, &default_http_follow_redirect },
 	{"useragent", PARAM_STR,  &default_useragent },
 	{"maxdatasize", PARAM_INT,  &default_maxdatasize },
+	{"config_file", PARAM_STR,  &http_client_config_file },
     	{0, 0, 0}
 };
 
@@ -236,6 +239,15 @@ static int mod_init(void)
 
 	curl_counter_init();
 	counter_add(connections, curl_connection_count());
+
+	if (http_client_config_file.s != NULL)
+	{
+		if (http_client_load_config(&http_client_config_file) < 0)
+		{
+			LM_ERR("Failed to load http_client connections from [%.*s]\n", http_client_config_file.len, http_client_config_file.s);
+			return -1;
+		}
+	}
 
 	if (default_connection_timeout == 0) {
 		LM_ERR("CURL connection timeout set to zero. Using default 4 secs\n");

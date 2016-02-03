@@ -32,6 +32,7 @@
 #include "../../dprint.h"
 #include "../../parser/parse_param.h"
 #include "../../usr_avp.h"
+#include "../../cfg_parser.h"
 #include "http_client.h"
 #include "curlcon.h"
 
@@ -43,6 +44,49 @@ curl_con_t *_curl_con_root = NULL;
 
 /* Forward declaration */
 curl_con_t *curl_init_con(str *name);
+
+/* Temporary structure for holding info parsed from cfg file */
+typedef struct raw_http_client_conn
+{
+	str name;
+
+	str url;
+	str username;
+	str password;
+	str failover;
+	str useragent;
+	str clientcert;
+	str clientkey;
+	str ciphersuites;
+	int verify_peer;
+	int verify_host;
+	int sslversion;
+	int timeout;
+	int maxdatasize;
+	int http_follow_redirect;
+
+	struct raw_http_client_conn *next;
+} raw_http_client_conn_t;
+
+static raw_http_client_conn_t *raw_conn_list = NULL;
+
+static cfg_option_t http_client_options[] = {
+	{"url",                  .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"username",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"password",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"failover",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"useragent",            .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"verify_peer",          .f = cfg_parse_int_opt},
+	{"verify_host",          .f = cfg_parse_int_opt},
+	{"client_cert",          .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"client_key",           .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"cipher_list",          .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"sslversion",           .f = cfg_parse_int_opt},
+	{"timeout",              .f = cfg_parse_int_opt},
+	{"maxdatasize",          .f = cfg_parse_int_opt},
+	{"http_follow_redirect", .f = cfg_parse_int_opt},
+	{0}
+};
 
 /*! Count the number of connections 
  */
@@ -104,7 +148,7 @@ curl_con_t* curl_get_connection(str *name)
  */
 int curl_parse_param(char *val)
 {
-	str name	= STR_NULL;;
+	str name	= STR_NULL;
 	str schema	= STR_NULL;
 	str url		= STR_NULL;
 	str username	= STR_NULL;
@@ -128,7 +172,7 @@ int curl_parse_param(char *val)
 	char *p;
 	char *u;
 	param_t *conparams = NULL;
-	curl_con_t *cc;
+	curl_con_t *cc = NULL;
 
 	LM_INFO("curl modparam parsing starting\n");
 	LM_DBG("modparam httpcon: %s\n", val);
@@ -397,6 +441,178 @@ error:
 	if(conparams != NULL) {
 		free_params(conparams);
 	}
+	return -1;
+}
+
+int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
+{
+	str name	= STR_NULL;
+
+	raw_http_client_conn_t *raw_cc = NULL;
+	int ret;
+	cfg_token_t t;
+
+	/* Get the name from the section header */
+
+	ret = cfg_get_token(&t, parser, 0);
+	if (t.type != CFG_TOKEN_ALPHA)
+	{
+		LM_ERR("Invalid connection name\n");
+		return -1;
+	}
+	pkg_str_dup(&name, &t.val);
+	ret = cfg_get_token(&t, parser, 0);
+	if (t.type != ']')
+	{
+		ERR("%s:%d:%d: Syntax error, ']' expected\n",
+				parser->file, t.start.line, t.start.col);
+		return -1;
+	}
+
+	if (cfg_eat_eol(parser, flags)) return -1;
+
+	raw_cc = pkg_malloc(sizeof(raw_http_client_conn_t));
+	if (raw_cc == NULL) {
+		return -1;
+	}
+	memset(raw_cc, 0, sizeof(raw_http_client_conn_t));
+	raw_cc->next = raw_conn_list;
+	raw_conn_list = raw_cc;
+	raw_cc->name = name;
+	/* Set default values - memory freed if overridden */
+	if (default_tls_clientcert.s != NULL)
+		pkg_str_dup(&raw_cc->clientcert,   &default_tls_clientcert);
+	if (default_tls_clientkey.s != NULL)
+		pkg_str_dup(&raw_cc->clientkey,    &default_tls_clientkey);
+	if (default_cipher_suite_list.s != NULL)
+		pkg_str_dup(&raw_cc->ciphersuites, &default_cipher_suite_list);
+	pkg_str_dup(&raw_cc->useragent,    &default_useragent);
+	raw_cc->verify_peer = default_tls_verify_peer;
+	raw_cc->verify_host = default_tls_verify_host;
+	raw_cc->maxdatasize = default_maxdatasize;
+	raw_cc->timeout	= default_connection_timeout;
+	raw_cc->http_follow_redirect = default_http_follow_redirect;
+	raw_cc->sslversion = default_tls_version;
+
+	http_client_options[0].param = &raw_cc->url;
+	http_client_options[1].param = &raw_cc->username;
+	http_client_options[2].param = &raw_cc->password;
+	http_client_options[3].param = &raw_cc->failover;
+	http_client_options[4].param = &raw_cc->useragent;
+	http_client_options[5].param = &raw_cc->verify_peer;
+	http_client_options[6].param = &raw_cc->verify_host;
+	http_client_options[7].param = &raw_cc->clientcert;
+	http_client_options[8].param = &raw_cc->clientkey;
+	http_client_options[9].param = &raw_cc->ciphersuites;
+	http_client_options[10].param = &raw_cc->sslversion;
+	http_client_options[11].param = &raw_cc->timeout;
+	http_client_options[12].param = &raw_cc->maxdatasize;
+	http_client_options[13].param = &raw_cc->http_follow_redirect;
+
+
+	cfg_set_options(parser, http_client_options);
+
+	return 1;
+}
+
+int fixup_raw_http_client_conn_list(void)
+{
+	raw_http_client_conn_t *raw_cc = NULL;
+	curl_con_t *cc = NULL;
+	str schema, url;
+	char *pos, *end;
+	int ret = 1;
+
+	for (raw_cc = raw_conn_list; raw_cc != NULL; raw_cc = raw_cc->next)
+	{
+		cc = curl_init_con(&raw_cc->name);
+		if (cc == NULL) {
+			ret = -1;
+			goto done;
+		}
+		/* Parse raw URL into schema + hostname/url */
+		schema.s = raw_cc->url.s;
+		pos = schema.s;
+		end = raw_cc->url.s + raw_cc->url.len;
+		while (pos != '\0' && (pos < end))
+		{
+			if (*pos == ':') break;
+			pos++;
+		}
+		if (pos[0] != ':' || pos[1] != '/' || pos[2] != '/' || (end-pos < 4))
+		{
+			LM_ERR("Invalid schema://url definition [%.*s]\n", raw_cc->url.len, raw_cc->url.s);
+			ret = -1;
+			goto done;
+		}
+		schema.len = (int)(pos - schema.s);
+
+		url.s = pos+3;
+		url.len = end - url.s;
+
+		pkg_str_dup(&cc->schema, &schema);
+		pkg_str_dup(&cc->url, &url);
+
+		cc->username = raw_cc->username.s ? as_asciiz(&raw_cc->username) : NULL;
+		cc->password = raw_cc->password.s ? as_asciiz(&raw_cc->password) : NULL;
+		if (raw_cc->failover.s != NULL)
+			pkg_str_dup(&cc->failover, &raw_cc->failover);
+		cc->useragent = as_asciiz(&raw_cc->useragent);
+		cc->clientcert = raw_cc->clientcert.s ? as_asciiz(&raw_cc->clientcert) : NULL;
+		cc->clientkey = raw_cc->clientkey.s ? as_asciiz(&raw_cc->clientkey) : NULL;
+		cc->ciphersuites = raw_cc->ciphersuites.s ? as_asciiz(&raw_cc->ciphersuites) : NULL;
+		cc->sslversion = raw_cc->sslversion;
+		cc->verify_peer = raw_cc->verify_peer;
+		cc->verify_host = raw_cc->verify_host;
+		cc->timeout = raw_cc->timeout;
+		cc->maxdatasize = raw_cc->maxdatasize;
+		cc->http_follow_redirect = raw_cc->http_follow_redirect;
+
+		LM_DBG("cname: [%.*s] url: [%.*s] username [%s] password [%s] failover [%.*s] timeout [%d] useragent [%s] maxdatasize [%d]\n", 
+			cc->name.len, cc->name.s, cc->url.len, cc->url.s, cc->username ? cc->username : "", cc->password ? cc->password : "",
+			cc->failover.len, cc->failover.s, cc->timeout, cc->useragent, cc->maxdatasize);
+		LM_DBG("cname: [%.*s] client_cert [%s] client_key [%s] ciphersuites [%s] sslversion [%d] verify_peer [%d] verify_host [%d]\n",
+			cc->name.len, cc->name.s, cc->clientcert, cc->clientkey, cc->ciphersuites, cc->sslversion, cc->verify_peer, cc->verify_host);
+
+	}
+done:
+	while (raw_conn_list != NULL)
+	{
+		raw_cc = raw_conn_list;
+		if (raw_cc->name.s) pkg_free(raw_cc->name.s);
+		if (raw_cc->url.s) pkg_free(raw_cc->url.s);
+		if (raw_cc->username.s) pkg_free(raw_cc->username.s);
+		if (raw_cc->password.s) pkg_free(raw_cc->password.s);
+		if (raw_cc->failover.s) pkg_free(raw_cc->failover.s);
+		if (raw_cc->useragent.s) pkg_free(raw_cc->useragent.s);
+		if (raw_cc->clientcert.s) pkg_free(raw_cc->clientcert.s);
+		if (raw_cc->clientkey.s) pkg_free(raw_cc->clientkey.s);
+		if (raw_cc->ciphersuites.s) pkg_free(raw_cc->ciphersuites.s);
+		pkg_free(raw_cc);
+		raw_conn_list = raw_conn_list->next;
+	}
+	return ret;
+}
+
+int http_client_load_config(str *config_file)
+{
+	cfg_parser_t *parser;
+	str empty = STR_NULL;
+
+	if ((parser = cfg_parser_init(&empty, config_file)) == NULL)
+	{
+		LM_ERR("Failed to init http_client config file parser\n");
+		goto error;
+	}
+
+	cfg_section_parser(parser, curl_parse_conn, NULL);
+	if (sr_cfg_parse(parser))
+		goto error;
+	cfg_parser_close(parser);
+
+	fixup_raw_http_client_conn_list();
+	return 0;
+error:
 	return -1;
 }
 
