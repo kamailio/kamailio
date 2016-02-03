@@ -56,11 +56,6 @@
 
 #include "../../timer.h"
 
-#ifndef MAXINT
-#define MAXINT INT_MAX
-#endif
-
-
 /** S-CSCF list element */ 
 typedef struct _scscf_entry {
 	str scscf_name;	/**< SIP URI of the S-CSCF */

@@ -51,9 +51,6 @@
 #include "mod.h"
 #include "location.h"
 
-#include "limits.h"
-#define MAXINT INT_MAX
-
 //we use pseudo variables to communicate back to config file this takes the result and converys to a return code, publishes it a pseudo variable
 int create_lia_return_code(int result) {
     int rc;
@@ -181,7 +178,7 @@ void async_cdp_lir_callback(int is_timeout, void *param, AAAMessage *lia, long e
 
 success:
     if (server_name.len) {
-        list = new_scscf_entry(server_name, MAXINT, data->orig);
+        list = new_scscf_entry(server_name, INT_MAX, data->orig);
     } else {
         list = I_get_capab_ordered(server_name, m_capab, m_capab_cnt, o_capab, o_capab_cnt, p_server_names, p_server_names_cnt, data->orig);
     }

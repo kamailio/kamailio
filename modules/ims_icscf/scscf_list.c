@@ -183,10 +183,10 @@ scscf_entry* I_get_capab_ordered(str scscf_name, int *m, int mcnt, int *o, int o
     scscf_entry *list = 0;
     int i, r;
 
-    if (scscf_name.len) list = I_add_to_scscf_list(list, scscf_name, MAXINT, orig);
+    if (scscf_name.len) list = I_add_to_scscf_list(list, scscf_name, INT_MAX, orig);
 
     for (i = 0; i < pcnt; i++)
-        list = I_add_to_scscf_list(list, p[i], MAXINT - i, orig);
+        list = I_add_to_scscf_list(list, p[i], INT_MAX - i, orig);
 
     for (i = 0; i < SCSCF_Capabilities_cnt; i++) {
         r = I_get_capab_match(SCSCF_Capabilities + i, m, mcnt, o, ocnt);
