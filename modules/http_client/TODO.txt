@@ -5,7 +5,7 @@ The http_client module - todo
 	timeout=x		- DONE
 	read=line/all		- Implemented in API, but not in parameter
 	tlsverify=on/off
-	failover=curlcon	Other curlcon that can be used for failover in case of 5xx response or timeout
+	failover=httpcon	Other httpcon that can be used for failover in case of 5xx response or timeout
 	httpredirect		- DONE
 	useragent		- DONE
 
@@ -21,9 +21,9 @@ The http_client module - todo
 
 - save fingerprint of cert for trust-on-first-use procedure
 
-- status for curlcon-object, needs to be object in process memory, so child_init
+- status for httpcon-object, needs to be object in process memory, so child_init
 	- if 5xx response or timeout set flag
-	- function in dialplan - curlcon_exist(object)
+	- function in dialplan - httpcon_exists(object)
 	- pv $curlstatus(object) ??
 	- this is per process !!!
 
