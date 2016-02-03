@@ -55,6 +55,7 @@
 
 #include "../../modules/sanity/api.h"
 
+#include "tps_storage.h"
 #include "tps_msg.h"
 
 MODULE_VERSION
@@ -131,6 +132,10 @@ static int mod_init(void)
 			goto error;
 		}
 	}
+	if(tps_storage_lock_set_init()<0) {
+		LM_ERR("failed to initialize locks set\n");
+		return -1;
+	}
 
 	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC)<0)
 		return -1;
@@ -176,6 +181,7 @@ static void destroy(void)
 		tpsdbf.close(_tps_db_handle);
 		_tps_db_handle = 0;
 	}
+	tps_storage_lock_set_destroy();
 }
 
 /**

@@ -31,6 +31,9 @@
 
 #include "../../parser/msg_parser.h"
 
+#define TPS_DIR_DOWNSTREAM	0
+#define TPS_DIR_UPSTREAM	1
+
 #define TPS_DATA_SIZE	4096
 typedef struct tps_data {
 	char cbuf[TPS_DATA_SIZE];
@@ -42,6 +45,11 @@ typedef struct tps_data {
 	str b_rr;
 	str a_contact;
 	str b_contact;
+	str as_contact;
+	str bs_contact;
+	str x_via1;
+	str x_via2;
+	str x_vbranch1;
 } tps_data_t;
 
 int tps_storage_dialog_find(sip_msg_t *msg, tps_data_t *td);
@@ -51,5 +59,12 @@ int tps_storage_dialog_rm(sip_msg_t *msg, tps_data_t *td);
 int tps_storage_branch_find(sip_msg_t *msg, tps_data_t *td);
 int tps_storage_branch_save(sip_msg_t *msg, tps_data_t *td);
 int tps_storage_branch_rm(sip_msg_t *msg, tps_data_t *td);
+
+int tps_storage_record(sip_msg_t *msg, tps_data_t *td);
+
+int tps_storage_lock_set_init(void);
+int tps_storage_lock_get(str *lkey);
+int tps_storage_lock_release(str *lkey);
+int tps_storage_lock_set_destroy(void);
 
 #endif
