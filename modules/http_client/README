@@ -64,6 +64,12 @@ Carsten Bock
               7.2. httpclient.connok
               7.3. httpclient.connfail
 
+   2. Developer Guide
+
+        1. Available Functions
+
+              1.1. http_client(name)
+
    List of Examples
 
    1.1. Set httpredirect parameter
@@ -482,3 +488,22 @@ switch ($retcode) {
 7.3. httpclient.connfail
 
    The number of failed connections since Kamailio start
+
+Chapter 2. Developer Guide
+
+   Table of Contents
+
+   1. Available Functions
+
+        1.1. http_client(name)
+
+1. Available Functions
+
+   1.1. http_client(name)
+
+1.1. http_client(name)
+
+   Text here
+
+   Meaning of the parameters is as follows:
+     * const char* name - Name of the stuff. (Hugh - fill in here)
