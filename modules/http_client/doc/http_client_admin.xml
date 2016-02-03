@@ -28,6 +28,11 @@
 	connection definition.
 	</para>
 	<para>
+	The connections can either be defined with the "httpcon" module parameter
+	or in a separate configuration file, as specified by the "config_file" module
+	parameter. 
+	</para>
+	<para>
 	Like in SIP, the HTTP URL may need encoding to be transported safely
 	over the network. Check the string encoding functions in the Transformation
 	Cookbook (as used in the http_client_query example below).
@@ -353,6 +358,52 @@ modparam("http_client", "httpcon", "apione=>http://atlanta.example.com")
 modparam("http_client", "httpcon", "apitwo=>http://atlanta.example.com/api/12")
 modparam("http_client", "httpcon", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
 modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.p.config_file">
+			<title><varname>config_file</varname> (string)</title>
+			<para>
+			The file name of a configuration file containing definitions
+			of http connections. This is an alternative to the
+			"httpcon" module parameter - especially when the number of
+			options per line gets too big.
+			</para>
+			<para>
+                	If the file or directory name starts with a '.' the path will be relative to the
+                	working directory (<emphasis>at runtime</emphasis>). If it starts
+                	with a '/' it will be an absolute path and if it starts with anything
+                	else the path will be relative to the main config file directory
+                	(e.g.: for kamailio -f /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
+        		</para>
+			<para>
+                		The following parameters can be set in the config file, for each connection:
+        		</para>
+        		<itemizedlist>
+                        	<listitem><para>url</para></listitem>
+                        	<listitem><para>username</para></listitem>
+                        	<listitem><para>password</para></listitem>
+                        	<listitem><para>failover</para></listitem>
+                        	<listitem><para>useragent</para></listitem>
+                        	<listitem><para>verify_peer</para></listitem>
+                        	<listitem><para>verify_host</para></listitem>
+                        	<listitem><para>client_cert</para></listitem>
+                        	<listitem><para>client_key</para></listitem>
+                        	<listitem><para>tlsversion</para></listitem>
+                        	<listitem><para>timeout</para></listitem>
+                        	<listitem><para>maxdatasize</para></listitem>
+                        	<listitem><para>http_follow_redirect</para></listitem>
+        		</itemizedlist>
+			See the "httpcon" module parameter for explanation of these settings.
+        		<para>
+                	By default no config file is specified.
+        		</para>
+			<example>
+			<title>Set <varname>config_file</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "config_file", "httpconnections.cfg)
 ...
 				</programlisting>
 			</example>
