@@ -83,6 +83,8 @@
 #endif
 
 
+#include "../topoh/api.h"
+
 MODULE_VERSION
 
 
@@ -226,6 +228,9 @@ int n_callid_aleg_headers = 0;
 
 struct ifreq ifr; 	/* interface structure */
 
+static int sc_topoh_unmask = 0;
+static topoh_api_t thb = {0};
+
 #ifdef __OS_linux
 /* Linux socket filter */
 /* tcpdump -s 0 udp and portrange 5060-5090 -dd */
@@ -336,6 +341,7 @@ static param_export_t params[] = {
 	{"insert_retries",   		INT_PARAM, &insert_retries },
 	{"insert_retry_timeout",	INT_PARAM, &insert_retry_timeout },
 	{"table_time_sufix",		PARAM_STR, &table_time_sufix },
+	{"topoh_unamsk",			PARAM_INT, &sc_topoh_unmask },
 	{0, 0, 0}
 };
 
@@ -695,9 +701,8 @@ error:
 
 
 /*! \brief Initialize sipcapture module */
-static int mod_init(void) {
-
-
+static int mod_init(void)
+{
 	struct ip_addr *ip = NULL;
 	char * def_params = NULL;
 
@@ -718,6 +723,14 @@ static int mod_init(void) {
 	{
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
+	}
+
+	if(sc_topoh_unmask==1) {
+		/* bind the topoh API */
+		if (topoh_load_api(&thb)!=0) {
+			LM_ERR("cannot bind to topoh API\n");
+			return -1;
+		}
 	}
 
 	/*Check the table name - if table_name is empty and no capture modes are defined, then error*/
@@ -1212,6 +1225,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_insert_f insert;
 	time_t retry_failed_time = 0;
 	struct tm capt_ts;
+	str ocallid;
 
 	/* new */
 	str *table = NULL;
@@ -1229,6 +1243,12 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	{
 		LM_DBG("invalid parameter\n");
 		return -1;
+	}
+
+	if(sc_topoh_unmask==1) {
+		if(thb.unmask_callid(&sco->callid, &ocallid)==0) {
+			sco->callid = ocallid;
+		}
 	}
 
 	if(correlation_id) {
