@@ -37,11 +37,11 @@
  * http://curl.haxx.se
  * A generic library for many protocols
  *
- *  curl_connect(connection, url, $avp)
- *  curl_connect(connection, url, content-type, data, $avp)
+ *  http_connect(connection, url, $avp)
+ *  http_connect(connection, url, content-type, data, $avp)
  *
- * 	$var(res) = curl_connect("anders", "/postlåda", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
- * 	$var(res) = curl_connect("anders", "/postlåda", "application/json", "$var(tomat)", "$avp(gurka)");
+ * 	$var(res) = http_connect("anders", "/postlåda", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
+ * 	$var(res) = http_connect("anders", "/postlåda", "application/json", "$var(tomat)", "$avp(gurka)");
  *
  */
 
@@ -119,16 +119,16 @@ static int pv_get_curlredirect(struct sip_msg *msg, pv_param_t *param, pv_value_
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-    {"curl_http_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
+    {"http_client_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
      fixup_free_http_query_get,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"curl_http_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
+    {"http_client_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
      fixup_free_http_query_post,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"curl_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
+    {"http_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
      fixup_free_curl_connect,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"curl_connect", (cmd_function)w_curl_connect_post, 5, fixup_curl_connect_post,
+    {"http_connect", (cmd_function)w_curl_connect_post, 5, fixup_curl_connect_post,
      fixup_free_curl_connect_post,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {"bind_curl",  (cmd_function)bind_curl_api,  0, 0, 0, 0},
