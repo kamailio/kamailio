@@ -89,7 +89,7 @@ static void curl_rpc_listcon(rpc_t* rpc, void* ctx)
 }
 
 rpc_export_t curl_rpc_cmds[] = {
-	{"curl.listcon",   curl_rpc_listcon,
+	{"httpclient.listcon",   curl_rpc_listcon,
 		curl_rpc_listcon_doc,   0},
 	{0, 0, 0, 0}
 };

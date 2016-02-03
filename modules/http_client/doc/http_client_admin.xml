@@ -495,9 +495,9 @@ switch ($retcode) {
 	<section>
         <title>RPC Commands</title>
 		<section>
-			<title><function moreinfo="none">curl.listcon</function></title>
+			<title><function moreinfo="none">httpclient.listcon</function></title>
 			<para>
-				Lists all defined CURL connections
+				Lists all defined connections
 			</para>
 		<para>Parameters:</para>
 		<itemizedlist>
@@ -510,7 +510,7 @@ switch ($retcode) {
 	<title>Counters</title>
 		<section >
 			<title>
-				<function moreinfo="none">curl.connections</function>
+				<function moreinfo="none">httpclient.connections</function>
 			</title>
 			<para>
 				The number of connection definitions that are in-memory.
@@ -518,7 +518,7 @@ switch ($retcode) {
 		</section>
 		<section >
 			<title>
-				<function moreinfo="none">curl.connok</function>
+				<function moreinfo="none">httpclient.connok</function>
 			</title>
 			<para>
 				The number of successful connections since &kamailio; start
@@ -526,7 +526,7 @@ switch ($retcode) {
 		</section>
 		<section >
 			<title>
-				<function moreinfo="none">curl.connfail</function>
+				<function moreinfo="none">httpclient.connfail</function>
 			</title>
 			<para>
 				The number of failed connections since &kamailio; start

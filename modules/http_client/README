@@ -56,13 +56,13 @@ Carsten Bock
 
         6. RPC Commands
 
-              6.1. curl.listcon
+              6.1. httpclient.listcon
 
         7. Counters
 
-              7.1. curl.connections
-              7.2. curl.connok
-              7.3. curl.connfail
+              7.1. httpclient.connections
+              7.2. httpclient.connok
+              7.3. httpclient.connfail
 
    List of Examples
 
@@ -115,13 +115,13 @@ Chapter 1. Admin Guide
 
    6. RPC Commands
 
-        6.1. curl.listcon
+        6.1. httpclient.listcon
 
    7. Counters
 
-        7.1. curl.connections
-        7.2. curl.connok
-        7.3. curl.connfail
+        7.1. httpclient.connections
+        7.2. httpclient.connok
+        7.3. httpclient.connfail
 
 1. Overview
 
@@ -458,29 +458,29 @@ switch ($retcode) {
 
 6. RPC Commands
 
-   6.1. curl.listcon
+   6.1. httpclient.listcon
 
-6.1. curl.listcon
+6.1. httpclient.listcon
 
-   Lists all defined CURL connections
+   Lists all defined connections
 
    Parameters:
      * No parameters
 
 7. Counters
 
-   7.1. curl.connections
-   7.2. curl.connok
-   7.3. curl.connfail
+   7.1. httpclient.connections
+   7.2. httpclient.connok
+   7.3. httpclient.connfail
 
-7.1. curl.connections
+7.1. httpclient.connections
 
    The number of connection definitions that are in-memory.
 
-7.2. curl.connok
+7.2. httpclient.connok
 
    The number of successful connections since Kamailio start
 
-7.3. curl.connfail
+7.3. httpclient.connfail
 
    The number of failed connections since Kamailio start

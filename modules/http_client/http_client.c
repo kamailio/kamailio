@@ -204,9 +204,9 @@ static void destroy_shmlock(void)
 /* Init counters */
 static void curl_counter_init()
 {
-        counter_register(&connections, "curl", "connections", 0, 0, 0, "Counter of connection definitions (curlcon)", 0);
-        counter_register(&connok, "curl", "connok", 0, 0, 0, "Counter of successful connections (200 OK)", 0);
-        counter_register(&connfail, "curl", "connfail", 0, 0, 0, "Counter of failed connections (not 200 OK)", 0);
+        counter_register(&connections, "httpclient", "connections", 0, 0, 0, "Counter of connection definitions (curlcon)", 0);
+        counter_register(&connok, "httpclient", "connok", 0, 0, 0, "Counter of successful connections (200 OK)", 0);
+        counter_register(&connfail, "httpclient", "connfail", 0, 0, 0, "Counter of failed connections (not 200 OK)", 0);
 }
 
 
