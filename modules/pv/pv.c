@@ -40,6 +40,7 @@
 #ifdef WITH_XAVP
 #include "pv_xavp.h"
 #endif
+#include "pv_api.h"
 
 MODULE_VERSION
 
@@ -502,6 +503,7 @@ static int w_var_to_xavp(sip_msg_t *msg, char *p1, char *p2);
 static int w_xavp_to_var(sip_msg_t *msg, char *p1);
 
 static int pv_init_rpc(void);
+int pv_register_api(pv_api_t*);
 
 static cmd_export_t cmds[]={
 	{"pv_isset",  (cmd_function)pv_isset,  1, fixup_pvar_null, 0, 
@@ -533,7 +535,8 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 	{"sbranch_reset",     (cmd_function)w_sbranch_reset,     0, 0, 0,
 		ANY_ROUTE },
-
+	/* API exports */
+	{"pv_register_api",   (cmd_function)pv_register_api,     NO_SCRIPT, 0, 0},
 	{0,0,0,0,0,0}
 };
 

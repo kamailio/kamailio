@@ -1,0 +1,567 @@
+ASYNC_HTTP Module
+
+Federico Cabiddu
+
+   <federico.cabiddu@gmail.com>
+
+Giacomo Vacca
+
+   <Giacomo.vacca@gmail.com>
+
+Camille Oudot
+
+   Orange
+   <camille.oudot@orange.com>
+
+Edited by
+
+Federico Cabiddu
+
+   <federico.cabiddu@gmail.com>
+
+   Copyright © 2016 Federico Cabiddu
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. workers (int)
+              3.2. connection_timeout (str)
+              3.3. hash_size (str)
+              3.4. tlsversion (int)
+              3.5. tlsverifyhost (int)
+              3.6. tlsverifypeer (int)
+              3.7. curl_verbose (int)
+              3.8. memory_manager (string)
+              3.9. tlsclientcert (int)
+              3.10. tlsclientkey (int)
+              3.11. tlscapath (int)
+
+        4. Functions
+
+              4.1. http_async_query(url, [post_data], route_name)
+              4.2. http_async_suspend(suspend)
+              4.3. http_verify_host(verify)
+              4.4. http_verify_peer(verify)
+              4.5. http_set_timeout(timeout)
+              4.6. http_append_header(header)
+              4.7. http_set_method(method)
+              4.8. http_set_ssl_cert(path)
+              4.9. http_set_ssl_key(path)
+              4.10. http_set_ca_path(path)
+
+        5. Pseudo Variables
+        6. Statistics
+
+              6.1. requests
+              6.2. replies
+              6.3. errors
+              6.4. timeouts
+
+   List of Examples
+
+   1.1. Set workers parameter
+   1.2. Set connection_timeout parameter
+   1.3. Set hash_size parameter
+   1.4. Set tlsversion parameter
+   1.5. Set tlsverifyhost parameter
+   1.6. Set tlsverifypeer parameter
+   1.7. Set curl_verbose parameter
+   1.8. Set memory_manager parameter
+   1.9. Set tlsclientcert parameter
+   1.10. Set tlsclientkey parameter
+   1.11. Set tlscapath parameter
+   1.12. http_async_query() usage
+   1.13. http_async_suspend() usage
+   1.14. http_verify_host() usage
+   1.15. http_verify_peer() usage
+   1.16. http_set_timeout() usage
+   1.17. http_append_header() usage
+   1.18. http_set_method() usage
+   1.19. http_set_ssl_cert() usage
+   1.20. http_set_ssl_key() usage
+   1.21. http_set_ca_path() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. workers (int)
+        3.2. connection_timeout (str)
+        3.3. hash_size (str)
+        3.4. tlsversion (int)
+        3.5. tlsverifyhost (int)
+        3.6. tlsverifypeer (int)
+        3.7. curl_verbose (int)
+        3.8. memory_manager (string)
+        3.9. tlsclientcert (int)
+        3.10. tlsclientkey (int)
+        3.11. tlscapath (int)
+
+   4. Functions
+
+        4.1. http_async_query(url, [post_data], route_name)
+        4.2. http_async_suspend(suspend)
+        4.3. http_verify_host(verify)
+        4.4. http_verify_peer(verify)
+        4.5. http_set_timeout(timeout)
+        4.6. http_append_header(header)
+        4.7. http_set_method(method)
+        4.8. http_set_ssl_cert(path)
+        4.9. http_set_ssl_key(path)
+        4.10. http_set_ca_path(path)
+
+   5. Pseudo Variables
+   6. Statistics
+
+        6.1. requests
+        6.2. replies
+        6.3. errors
+        6.4. timeouts
+
+1. Overview
+
+   This module performs asynchronous HTTP queries.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * tm - Transaction module
+     * pv - Pseudo-Variables module
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libcurl libev
+
+3. Parameters
+
+   3.1. workers (int)
+   3.2. connection_timeout (str)
+   3.3. hash_size (str)
+   3.4. tlsversion (int)
+   3.5. tlsverifyhost (int)
+   3.6. tlsverifypeer (int)
+   3.7. curl_verbose (int)
+   3.8. memory_manager (string)
+   3.9. tlsclientcert (int)
+   3.10. tlsclientkey (int)
+   3.11. tlscapath (int)
+
+3.1. workers (int)
+
+   Number of worker processes to be started to send HTTP requests and
+   asynchronously handle responses.
+
+   Default value is 1.
+
+   Example 1.1. Set workers parameter
+...
+modparam("async_http", "workers", 2)
+...
+
+3.2. connection_timeout (str)
+
+   Defines in milliseconds how long Kamailio waits for response from HTTP
+   server.
+
+   Default value is 500ms.
+
+   Example 1.2. Set connection_timeout parameter
+...
+modparam("async_http", "connection_timeout", 1000)
+...
+
+3.3. hash_size (str)
+
+   The size of the hash table internally used to keep the requests. A
+   larger table is much faster but consumes more memory. The hash size
+   must be a power of two, otherwise it will be rounded down to the
+   nearest power of two.
+
+   Default value is 2048.
+
+   Example 1.3. Set hash_size parameter
+...
+modparam("async_http", "hash_size", 1024)
+...
+
+3.4. tlsversion (int)
+
+   For HTTPS connections, what's the preferred SSL version.
+   http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
+
+   Default value is 0 (default SSL version).
+
+   Example 1.4. Set tlsversion parameter
+...
+modparam("async_http", "tlsversion", 6)
+...
+
+3.5. tlsverifyhost (int)
+
+   For HTTPS connections, whether the client should verify the server
+   host. http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
+
+   Default value is 2 (enabled).
+
+   Example 1.5. Set tlsverifyhost parameter
+...
+modparam("async_http", "tlsverifyhost", 0)
+...
+
+3.6. tlsverifypeer (int)
+
+   For HTTPS connections, whether the client should verify the server
+   identity. http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
+
+   Default value is 1 (enabled).
+
+   Example 1.6. Set tlsverifypeer parameter
+...
+modparam("async_http", "tlsverifypeer", 0)
+...
+
+3.7. curl_verbose (int)
+
+   If defined to a non-zero value, extra informations from cURL (request
+   and response headers) will be included in the kamailio logs, with
+   LM_INFO priority.
+
+   Default value is 0 (disabled).
+
+   Example 1.7. Set curl_verbose parameter
+...
+modparam("async_http", "curl_verbose", 1)
+...
+
+3.8. memory_manager (string)
+
+   Choose the memory manager used by curl:
+     * shm: curl will use kamailio's SHM pool and memory manager
+     * sys: curl will use the system memory amd memory manager (malloc,
+       free, ...)
+
+   Note: if this module is used in conjunction with another module using
+   libcurl, this parameter will have no effect, and curl will likely use
+   the system memory allocator by default.
+
+   Default value "shm"
+
+   Example 1.8. Set memory_manager parameter
+...
+modparam("async_http", "memory_manager", "sys")
+...
+
+3.9. tlsclientcert (int)
+
+   For HTTPS connections, the file path of the TLS client certificate to
+   be used http://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html
+
+   Default value is NULL (not used). Default type is PEM.
+
+   Example 1.9. Set tlsclientcert parameter
+...
+modparam("async_http", "tlsclientcert", "/etc/kamailio/ssl/clientcert.pem")
+...
+
+3.10. tlsclientkey (int)
+
+   For HTTPS connections, the file path of the TLS client certificate key
+   http://curl.haxx.se/libcurl/c/CURLOPT_SSLKEY.html
+
+   Default value is NULL (not used).
+
+   Example 1.10. Set tlsclientkey parameter
+...
+modparam("async_http", "tlsclientkey", "/etc/kamailio/ssl/clientcert.key")
+...
+
+3.11. tlscapath (int)
+
+   The path of the directory holding the CA certificates.
+   http://curl.haxx.se/libcurl/c/CURLOPT_CAPATH.html
+
+   Default value is NULL..
+
+   Example 1.11. Set tlscapath parameter
+...
+modparam("async_http", "tlscapath", "/etc/kamailio/ssl/ca/")
+...
+
+4. Functions
+
+   4.1. http_async_query(url, [post_data], route_name)
+   4.2. http_async_suspend(suspend)
+   4.3. http_verify_host(verify)
+   4.4. http_verify_peer(verify)
+   4.5. http_set_timeout(timeout)
+   4.6. http_append_header(header)
+   4.7. http_set_method(method)
+   4.8. http_set_ssl_cert(path)
+   4.9. http_set_ssl_key(path)
+   4.10. http_set_ca_path(path)
+
+4.1.  http_async_query(url, [post_data], route_name)
+
+   Sends HTTP(S) request asyncronously to the URL given in “url”
+   parameter, which is a string that may contain pseudo variables.
+
+   Unless a specific HTTP method was specified using
+   http_async_set_method(), it defaults to a GET request, or to a POST
+   request if “post_data” is issued as second argument.
+
+   Parameter “post_data”, optional, which is sent as the body of the
+   request, may also contain pseudo variables.
+
+   Parameter “route_name” defines the route to be executed upon reception
+   of HTTP reply, on error or on timeout. If a transaction exists before
+   calling http_async_query(), it will be paused and resumed in this
+   route, while the routing script execution will be stopped. If executed
+   in a transactionless context, or if http_async_suspend_transaction() is
+   used to not suspend the transaction, the routing script execution will
+   continue and the query result will be available in “route_name”.
+
+   Return value: 0 (stop script execution) on success in transaction
+   context, 1 (continue script execution) in transaction-less context or
+   if http_async_suspend_transaction(0) is used, -1 on error.
+
+   This function can be used from ANY_ROUTE.
+
+   This method is executed asynchronously. The HTTP return code, body and
+   error are returned in the module-specific $http_* PVs (see below). See
+   example on how to retrieve return values.
+
+   Example 1.12. http_async_query() usage
+...
+# create a transaction to be paused, and resumed in route[HTTP_REPLY]
+t_newtran();
+# GET
+http_async_query("http://example.com/test.php?r_uri=$rU&f_uri=$fU", "HTTP_REPLY"
+);
+...
+# POST
+http_async_query("http://example.com/test.php", "{'r_uri':'$rU', 'f_uri':'$fU'}"
+, "HTTP_REPLY");
+...
+route[HTTP_REPLY] {
+    if ($http_ok) {
+        xlog("L_INFO", "route[HTTP_REPLY]: status $http_rs\n");
+        xlog("L_INFO", "route[HTTP_REPLY]: body   $http_rb\n");
+    } else {
+        xlog("L_INFO", "route[HTTP_REPLY]: error  $http_error)\n");
+    }
+}
+...
+
+4.2.  http_async_suspend(suspend)
+
+   In a transaction context if the transaction must be suspended and
+   script execution stopped.
+
+   Parameter “suspend” set to "1" to suspend the transaction, "0" to not
+   suspend and continue with script execution. Default: 1 (transaction
+   suspended).
+
+   Example 1.13. http_async_suspend() usage
+...
+t_newtran();
+http_async_suspend(0);
+# the transaction won't be suspended for the next query
+http_async_query("http://example.com/test.php", "HTTP_REPLY");
+xlog("L_INFO", "query sent\n");
+t_reply("200", "Ok");
+
+...
+
+4.3.  http_verify_host(verify)
+
+   For the next HTTPS connection, whether the client should verify the
+   server host.
+
+   Parameter “verify” set to "1" to enable the host verification, "0" to
+   disable. Default: the global value set as verify_host module parameter.
+
+   Example 1.14. http_verify_host() usage
+...
+http_verify_host("0");
+# host verification is disabled for the next query
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+
+4.4.  http_verify_peer(verify)
+
+   For the next HTTPS connection, whether the client should verify the
+   server identity.
+
+   Parameter “verify” set to "1" to enable the identity verification, "0"
+   to disable. Default: the global value set as verify_peer module
+   parameter.
+
+   Example 1.15. http_verify_peer() usage
+...
+http_verify_peer("0");
+# server identity verification is disabled for the next query
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+
+4.5.  http_set_timeout(timeout)
+
+   For the next HTTP query, set the response timeout.
+
+   Parameter “timeout” string representing the timeout in milliseconds.
+   Default: the global value set as http_timeout module parameter.
+
+   Example 1.16. http_set_timeout() usage
+...
+http_set_timeout("200");
+# the server must respond in maximum 200ms, otherwise the query will fail
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+
+4.6.  http_append_header(header)
+
+   Set/remove/replace a header in the next HTTP query.
+
+   From libcurl's documentation:
+
+   “If you add a header that is otherwise generated and used by libcurl
+   internally, your added one will be used instead. If you add a header
+   with no content as in 'Accept:' (no data on the right side of the
+   colon), the internally used header will get disabled. With this option
+   you can add new headers, replace internal headers and remove internal
+   headers. To add a header with no content (nothing to the right side of
+   the colon), use the form 'MyHeader;' (note the ending semicolon).”
+
+   “The headers included in the linked list must not be CRLF-terminated,
+   because libcurl adds CRLF after each header item.”
+
+   Parameter “header” string representing the header to pass to libcurl
+   for the next query.
+
+   Example 1.17. http_append_header() usage
+...
+http_append_header("X-Sip-Call-Id: $ci");
+# a new 'X-Sip-Call-Id' header will be added to the next query
+http_append_header("Content-Type": application/json");
+# the curl default 'application/x-www-form-urlencoded' Content-Type will be repl
+aced
+http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
+...
+
+4.7.  http_set_method(method)
+
+   For the next HTTP query, set the method.
+
+   Parameter “method” string representing the method (verb): either "GET",
+   "POST", "PUT" or "DELETE" (these are the only supported methods).
+   (Note: if http_set_method() is not called before a query, curl will use
+   GET, or POST if a body is specified)
+
+   Example 1.18. http_set_method() usage
+...
+http_set_method("PUT");
+# the next query will be a HTTP PUT request
+http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
+...
+
+4.8.  http_set_ssl_cert(path)
+
+   For the next HTTPS connection, what client certificate to use.
+
+   Default: the global value set as ssl_cert module parameter.
+
+   Example 1.19. http_set_ssl_cert() usage
+...
+http_set_ssl_cert("/etc/kamailio/ssl/cert.pem");
+# Next query will use the client cert above
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+
+4.9.  http_set_ssl_key(path)
+
+   For the next HTTPS connection, what client certificate key to use.
+
+   Default: the global value set as ssl_key module parameter.
+
+   Example 1.20. http_set_ssl_key() usage
+...
+http_set_ssl_key("/etc/kamailio/ssl/cert.key");
+# Next query will use the client cert key above
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+
+4.10.  http_set_ca_path(path)
+
+   For the next HTTP connection, what CA certificate files to use.
+
+   Default: the global value set as ca_path module parameter.
+
+   Example 1.21. http_set_ca_path() usage
+...
+http_set_ssl_key("/etc/kamailio/ssl/ca/");
+# Next query will use the CA certs above
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+
+5. Pseudo Variables
+
+   The following pseudo variables can only be used in the callback routes
+   executed by http_async_query()
+     * $http_ok: 1 if cURL executed the request successfully, 0 otherwise
+       (check $ah_err for details)
+     * $http_err: cURL error string if an error occured, $null otherwise
+     * $http_rs: http status
+     * $http_rr: http reason phrase
+     * $http_hdr(Name): value of the Name header (the $(ah_hdr(Name)[N])
+       syntax can also be used, check the SIP $hdr() PV documentation for
+       details)
+     * $http_mb and $http_ml: HTTP response buffer (including headers) and
+       length
+     * $http_rb and $http_bs: HTTP response body and body length
+
+6. Statistics
+
+   6.1. requests
+   6.2. replies
+   6.3. errors
+   6.4. timeouts
+
+6.1. requests
+
+   The number of http requests sent.
+
+6.2. replies
+
+   The number of received http replies.
+
+6.3. errors
+
+   The number of errors.
+
+6.4. timeouts
+
+   The number of timed out requests.

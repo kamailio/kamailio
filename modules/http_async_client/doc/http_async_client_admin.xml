@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module performs asynchronous HTTP queries.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>tm</emphasis> - Transaction module
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pv</emphasis> - Pseudo-Variables module
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+            <para>
+				<emphasis>libcurl</emphasis>
+				<emphasis>libev</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section>
+		<title><varname>workers</varname> (int)</title>
+		<para>
+            Number of worker processes to be started to send HTTP requests
+            and asynchronously handle responses.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>workers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "workers", 2)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>connection_timeout</varname> (str)</title>
+        <para>
+            Defines in milliseconds how long &kamailio; waits for response
+            from HTTP server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 500ms.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>connection_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "connection_timeout", 1000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>hash_size</varname> (str)</title>
+        <para>
+		    The size of the hash table internally used to keep the requests. A
+		    larger table is much faster but consumes more memory. The hash size
+		    must be a power of two, otherwise it will be rounded down to the nearest
+		    power of two.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2048.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "hash_size", 1024)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tlsversion</varname> (int)</title>
+        <para>
+		    For HTTPS connections, what's the preferred SSL version.
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (default SSL version).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tlsversion</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "tlsversion", 6)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tlsverifyhost</varname> (int)</title>
+        <para>
+		    For HTTPS connections, whether the client should verify the server host.
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2 (enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tlsverifyhost</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "tlsverifyhost", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tlsverifypeer</varname> (int)</title>
+        <para>
+		    For HTTPS connections, whether the client should verify the server identity.
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (enabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tlsverifypeer</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "tlsverifypeer", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>curl_verbose</varname> (int)</title>
+        <para>
+		    If defined to a non-zero value, extra informations from cURL (request and response headers)
+		    will be included in the kamailio logs, with LM_INFO priority.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>curl_verbose</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "curl_verbose", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>memory_manager</varname> (string)</title>
+        <para>
+			Choose the memory manager used by curl:
+			<itemizedlist>
+				<listitem><para>
+					<emphasis>shm</emphasis>: curl will use kamailio's SHM pool and memory manager
+				</para></listitem>
+				<listitem><para>
+					<emphasis>sys</emphasis>: curl will use the system memory amd memory manager (malloc, free, ...)
+				</para></listitem>
+			</itemizedlist>
+			<para>
+				<emphasis>Note:</emphasis> if this module is used in conjunction with another module using libcurl, this parameter will have no effect, and curl will likely use the system memory allocator by default.
+			</para>
+		</para>
+		<para>
+		<emphasis>
+			Default value "shm"
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>memory_manager</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "memory_manager", "sys")
+...
+</programlisting>
+              </example>
+      </section>
+	<section>
+		<title><varname>tlsclientcert</varname> (int)</title>
+        <para>
+		    For HTTPS connections, the file path of the TLS client certificate to be used
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (not used). Default type is PEM.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tlsclientcert</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "tlsclientcert", "/etc/kamailio/ssl/clientcert.pem")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tlsclientkey</varname> (int)</title>
+        <para>
+		    For HTTPS connections, the file path of the TLS client certificate key
+		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLKEY.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (not used).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tlsclientkey</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "tlsclientkey", "/etc/kamailio/ssl/clientcert.key")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>tlscapath</varname> (int)</title>
+        <para>
+		    The path of the directory holding the CA certificates.
+                    http://curl.haxx.se/libcurl/c/CURLOPT_CAPATH.html
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL..
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tlscapath</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async_http", "tlscapath", "/etc/kamailio/ssl/ca/")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="async_http.f.http_async_query">
+	    <title>
+		<function moreinfo="none">http_async_query(url, [post_data], route_name)</function>
+	    </title>
+        <para>
+            Sends HTTP(S) request asyncronously to the URL given in <quote>url</quote> parameter, which is a string that may contain pseudo variables.
+        </para>
+        <para>
+            Unless a specific HTTP method was specified using <emphasis>http_async_set_method()</emphasis>, it defaults to a GET request, or to a POST request if <quote>post_data</quote> is issued as second argument.
+        </para>
+        <para>
+            Parameter <quote>post_data</quote>, optional, which is sent as the body of the request, may also contain pseudo variables.
+        </para>
+        <para>
+			Parameter <quote>route_name</quote> defines the route to be executed upon reception of HTTP reply, on error or on timeout. 
+			If a transaction exists before calling <emphasis>http_async_query()</emphasis>, it will be paused and resumed in this route, while the routing script execution will be stopped.
+			If executed in a transactionless context, or if <emphasis>http_async_suspend_transaction()</emphasis> is used to not suspend the transaction, the routing script execution will 
+			continue and the query result will be available in <quote>route_name</quote>.
+        </para>
+        <para>
+            Return value: 0 (stop script execution) on success in transaction context, 1 (continue script execution) in transaction-less context or if http_async_suspend_transaction(0) is used, -1 on error.
+        </para>
+        <para>
+		    This function can be used from ANY_ROUTE.
+        </para>
+        <para>
+            This method is executed asynchronously. The HTTP return code, body and error are returned in the module-specific $http_* PVs (see below).
+            See example on how to retrieve return values.
+        </para>
+		<example>
+		<title><function>http_async_query()</function> usage</title>
+		<programlisting format="linespecific">
+...
+# create a transaction to be paused, and resumed in route[HTTP_REPLY]
+t_newtran();
+# GET
+http_async_query("http://example.com/test.php?r_uri=$rU&amp;f_uri=$fU", "HTTP_REPLY");
+...
+# POST
+http_async_query("http://example.com/test.php", "{'r_uri':'$rU', 'f_uri':'$fU'}", "HTTP_REPLY");
+...
+route[HTTP_REPLY] {
+    if ($http_ok) {
+        xlog("L_INFO", "route[HTTP_REPLY]: status $http_rs\n");
+        xlog("L_INFO", "route[HTTP_REPLY]: body   $http_rb\n");
+    } else {
+        xlog("L_INFO", "route[HTTP_REPLY]: error  $http_error)\n");
+    }
+}
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="async_http.f.http_async_suspend">
+	    <title>
+		<function moreinfo="none">http_async_suspend(suspend)</function>
+	    </title>
+        <para>
+		    In a transaction context if the transaction must be suspended and script execution stopped.
+        </para>
+        <para>
+            Parameter <quote>suspend</quote> set to "1" to suspend the transaction, "0" to not suspend and continue with script execution. Default: 1 (transaction suspended).
+        </para>
+		<example>
+		<title><function>http_async_suspend()</function> usage</title>
+		<programlisting format="linespecific">
+...
+t_newtran();
+http_async_suspend(0);
+# the transaction won't be suspended for the next query
+http_async_query("http://example.com/test.php", "HTTP_REPLY");
+xlog("L_INFO", "query sent\n");
+t_reply("200", "Ok");
+
+...
+        </programlisting>
+	    </example>
+	</section>
+	<section id="async_http.f.http_verify_host">
+	    <title>
+		<function moreinfo="none">http_verify_host(verify)</function>
+	    </title>
+        <para>
+		    For the next HTTPS connection, whether the client should verify the server host.
+        </para>
+        <para>
+            Parameter <quote>verify</quote> set to "1" to enable the host verification, "0" to disable. Default: the global value set as <emphasis>verify_host</emphasis> module parameter.
+        </para>
+		<example>
+		<title><function>http_verify_host()</function> usage</title>
+		<programlisting format="linespecific">
+...
+http_verify_host("0");
+# host verification is disabled for the next query
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="async_http.f.http_verify_peer">
+	    <title>
+		<function moreinfo="none">http_verify_peer(verify)</function>
+	    </title>
+        <para>
+		    For the next HTTPS connection, whether the client should verify the server identity.
+        </para>
+        <para>
+            Parameter <quote>verify</quote> set to "1" to enable the identity verification, "0" to disable. Default: the global value set as <emphasis>verify_peer</emphasis> module parameter.
+        </para>
+		<example>
+		<title><function>http_verify_peer()</function> usage</title>
+		<programlisting format="linespecific">
+...
+http_verify_peer("0");
+# server identity verification is disabled for the next query
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="async_http.f.http_set_timeout">
+	    <title>
+		<function moreinfo="none">http_set_timeout(timeout)</function>
+	    </title>
+        <para>
+		    For the next HTTP query, set the response timeout.
+        </para>
+        <para>
+            Parameter <quote>timeout</quote> string representing the timeout in milliseconds. Default: the global value set as <emphasis>http_timeout</emphasis> module parameter.
+        </para>
+		<example>
+		<title><function>http_set_timeout()</function> usage</title>
+		<programlisting format="linespecific">
+...
+http_set_timeout("200");
+# the server must respond in maximum 200ms, otherwise the query will fail
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="async_http.f.http_append_header">
+	    <title>
+		<function moreinfo="none">http_append_header(header)</function>
+	    </title>
+        <para>
+		    Set/remove/replace a header in the next HTTP query.
+        </para>
+        <para>From libcurl's documentation:</para>
+        <para>
+			<quote>If you add a header that is otherwise generated and used by libcurl internally, your added one will be used instead. If you add a header with no content as in 'Accept:' (no data on the right side of the colon), the internally used header will get disabled. With this option you can add new headers, replace internal headers and remove internal headers. To add a header with no content (nothing to the right side of the colon), use the form 'MyHeader;' (note the ending semicolon).</quote>
+        </para>
+        <para>
+			<quote>The headers included in the linked list <emphasis>must not</emphasis> be CRLF-terminated, because libcurl adds CRLF after each header item.</quote>
+		</para>
+        <para>
+            Parameter <quote>header</quote> string representing the header to pass to libcurl for the next query.
+        </para>
+		<example>
+		<title><function>http_append_header()</function> usage</title>
+		<programlisting format="linespecific">
+...
+http_append_header("X-Sip-Call-Id: $ci");
+# a new 'X-Sip-Call-Id' header will be added to the next query
+http_append_header("Content-Type": application/json");
+# the curl default 'application/x-www-form-urlencoded' Content-Type will be replaced
+http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="async_http.f.http_set_method">
+	    <title>
+		<function moreinfo="none">http_set_method(method)</function>
+	    </title>
+        <para>
+		    For the next HTTP query, set the method.
+        </para>
+        <para>
+            Parameter <quote>method</quote> string representing the method (verb): either "GET", "POST", "PUT" or "DELETE" (these are the only supported methods). (Note: if http_set_method() is not called before a query, curl will use GET, or POST if a body is specified)
+        </para>
+		<example>
+		<title><function>http_set_method()</function> usage</title>
+		<programlisting format="linespecific">
+...
+http_set_method("PUT");
+# the next query will be a HTTP PUT request
+http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="async_http.f.http_set_ssl_cert">
+	    <title>
+		<function moreinfo="none">http_set_ssl_cert(path)</function>
+	    </title>
+        <para>
+		    For the next HTTPS connection, what client certificate to use.
+        </para>
+        <para>
+            Default: the global value set as <emphasis>ssl_cert</emphasis> module parameter.
+        </para>
+		<example>
+		<title><function>http_set_ssl_cert()</function> usage</title>
+		<programlisting format="linespecific">
+...
+http_set_ssl_cert("/etc/kamailio/ssl/cert.pem");
+# Next query will use the client cert above
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="async_http.f.http_set_ssl_key">
+	    <title>
+		<function moreinfo="none">http_set_ssl_key(path)</function>
+	    </title>
+        <para>
+		    For the next HTTPS connection, what client certificate key to use.
+        </para>
+        <para>
+            Default: the global value set as <emphasis>ssl_key</emphasis> module parameter.
+        </para>
+		<example>
+		<title><function>http_set_ssl_key()</function> usage</title>
+		<programlisting format="linespecific">
+...
+http_set_ssl_key("/etc/kamailio/ssl/cert.key");
+# Next query will use the client cert key above
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+        </programlisting>
+	    </example>
+	</section>
+
+	<section id="async_http.f.http_set_ca_path">
+	    <title>
+		<function moreinfo="none">http_set_ca_path(path)</function>
+	    </title>
+        <para>
+		    For the next HTTP connection, what CA certificate files to use.
+        </para>
+        <para>
+            Default: the global value set as <emphasis>ca_path</emphasis> module parameter.
+        </para>
+		<example>
+		<title><function>http_set_ca_path()</function> usage</title>
+		<programlisting format="linespecific">
+...
+http_set_ssl_key("/etc/kamailio/ssl/ca/");
+# Next query will use the CA certs above
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+        </programlisting>
+	    </example>
+	</section>
+
+</section>
+
+<section>
+	<title>Pseudo Variables</title>
+	<para>The following pseudo variables can only be used in the callback routes executed by http_async_query()</para>
+	<itemizedlist>
+		<listitem><para>
+			<emphasis>$http_ok</emphasis>: 1 if cURL executed the request successfully, 0 otherwise (check $ah_err for details)
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_err</emphasis>: cURL error string if an error occured, $null otherwise
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_rs</emphasis>: http status
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_rr</emphasis>: http reason phrase
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_hdr(Name)</emphasis>: value of the <emphasis>Name</emphasis> header (the <emphasis>$(ah_hdr(Name)[N])</emphasis> syntax can also be used, check the SIP $hdr() PV documentation for details) 
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_mb</emphasis> and <emphasis>$http_ml</emphasis>: HTTP response buffer (including headers) and length 
+		</para></listitem>
+		<listitem><para>
+			<emphasis>$http_rb</emphasis> and <emphasis>$http_bs</emphasis>: HTTP response body and body length
+		</para></listitem>
+	</itemizedlist>
+</section>
+    
+<section>
+	<title>Statistics</title>
+	<section>
+		<title><varname>requests</varname></title>
+		<para>
+		The number of http requests sent.
+		</para>
+	</section>
+	<section>
+		<title><varname>replies</varname></title>
+		<para>
+		The number of received http replies.
+		</para>
+	</section>
+	<section>
+		<title><varname>errors</varname></title>
+		<para>
+		The number of errors.
+		</para>
+	</section>
+	<section>
+		<title><varname>timeouts</varname></title>
+		<para>
+		The number of timed out requests.
+		</para>
+	</section>
+
+</section>
+</chapter>
+
