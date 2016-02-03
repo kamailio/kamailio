@@ -70,7 +70,7 @@ enum lump_flag { LUMPFLAG_NONE=0, LUMPFLAG_DUPED=1, LUMPFLAG_SHMEM=2,
 #define LUMP_SET_COND_TRUE(_lump)	 (_lump)->flags |= LUMPFLAG_COND_TRUE
 #define LUMP_IS_COND_TRUE(_lump)	 ((_lump)->flags & LUMPFLAG_COND_TRUE)
 
-struct lump{
+typedef struct lump{
 	enum _hdr_types_t type; /* HDR_VIA_T, HDR_OTHER_T (0), ... */
 	enum lump_op op;   /* DEL, ADD, NOP, UNSPEC(=0) */
 	
@@ -91,7 +91,7 @@ struct lump{
 	struct lump* next;
 
 	enum lump_flag flags; /* additional hints for use from TM's shmem */
-};
+} sr_lump_t;
 
 
 /*
