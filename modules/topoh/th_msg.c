@@ -500,6 +500,47 @@ int th_unmask_callid(sip_msg_t *msg)
 	return 0;
 }
 
+#define TH_CALLID_SIZE	256
+int th_unmask_callid_str(str *icallid, str *ocallid)
+{
+	static char th_callid_buf[TH_CALLID_SIZE];
+	str out;
+
+	if(th_param_mask_callid==0)
+		return 0;
+
+	if(icallid->s==NULL) {
+		LM_ERR("invalid Call-Id value\n");
+		return -1;
+	}
+
+	if(th_callid_prefix.len>0) {
+		if(th_callid_prefix.len >= icallid->len) {
+			return 1;
+		}
+		if(strncmp(icallid->s, th_callid_prefix.s, th_callid_prefix.len)!=0) {
+			return 1;
+		}
+	}
+	out.s = th_mask_decode(icallid->s, icallid->len,
+					&th_callid_prefix, 0, &out.len);
+	if(out.len>=TH_CALLID_SIZE) {
+		pkg_free(out.s);
+		LM_ERR("not enough callid buf size (needed %d)\n", out.len);
+		return -2;
+	}
+
+	memcpy(th_callid_buf, out.s, out.len);
+	th_callid_buf[out.len] = '\0';
+
+	pkg_free(out.s);
+
+	ocallid->s = th_callid_buf;
+	ocallid->len = out.len;
+
+	return 0;
+}
+
 int th_flip_record_route(sip_msg_t *msg, int mode)
 {
 	hdr_field_t *hdr;
