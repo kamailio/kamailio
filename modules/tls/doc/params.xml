@@ -1004,7 +1004,7 @@ modparam("tls", "renegotiation", 1)
 		If set the TLS module will load a special configuration file or configuration files
 		from configuration directory, in which different TLS parameters can be specified on a per role (server or
 		client) and domain basis (for now only IPs). The corresponding module
-		parameters will be ignored if a separate configuraiton file is used.
+		parameters will be ignored if a separate configuration file is used.
 	</para>
 	<para>
 		If the file or directory name starts with a '.' the path will be relative to the
