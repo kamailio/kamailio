@@ -83,6 +83,9 @@ mod_list_berkeley=db_berkeley
 # - modules depending on curl library
 mod_list_utils=utils http_client
 
+# - modules depending on curl and libevent2 library
+mod_list_http_async=http_async_client
+
 # - modules depending on purple library
 mod_list_purple=purple
 
@@ -213,7 +216,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_ev) $(mod_list_kazoo) \
 			   $(mod_list_mongodb) $(mod_list_cnxcc) \
 			   $(mod_list_jansson) $(mod_list_geoip2) \
-			   $(mod_list_erlang) $(mod_list_systemd))
+			   $(mod_list_erlang) $(mod_list_systemd) \
+			   $(mod_list_http_async))
 
 
 
@@ -316,6 +320,9 @@ module_group_kldap=$(mod_list_ldap)
 
 # pkg utils module
 module_group_kutils=$(mod_list_utils)
+
+# pkg https_async module
+module_group_khttp_async=$(mod_list_http_async)
 
 # pkg purple module
 module_group_kpurple=$(mod_list_purple)
