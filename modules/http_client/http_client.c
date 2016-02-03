@@ -170,7 +170,7 @@ static pv_export_t mod_pvs[] = {
 
 /* Module interface */
 struct module_exports exports = {
-    "curl",
+    "http_client",
     DEFAULT_DLFLAGS, /* dlopen flags */
     cmds,      /* Exported functions */
     params,    /* Exported parameters */
