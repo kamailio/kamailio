@@ -138,7 +138,7 @@ static cmd_export_t cmds[] = {
 /* Exported parameters */
 static param_export_t params[] = {
     	{"connection_timeout", PARAM_INT, &default_connection_timeout},
-	{"curlcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
+	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
 	{"tlscacert", PARAM_STRING,  &default_tls_cacert },
 	{"tlsclientcert", PARAM_STR, &default_tls_clientcert },
 	{"tlsclientkey", PARAM_STR, &default_tls_clientkey },
@@ -204,7 +204,7 @@ static void destroy_shmlock(void)
 /* Init counters */
 static void curl_counter_init()
 {
-        counter_register(&connections, "httpclient", "connections", 0, 0, 0, "Counter of connection definitions (curlcon)", 0);
+        counter_register(&connections, "httpclient", "connections", 0, 0, 0, "Counter of connection definitions (httpcon)", 0);
         counter_register(&connok, "httpclient", "connok", 0, 0, 0, "Counter of successful connections (200 OK)", 0);
         counter_register(&connfail, "httpclient", "connfail", 0, 0, 0, "Counter of failed connections (not 200 OK)", 0);
 }
@@ -299,7 +299,7 @@ static void destroy(void)
 
 
 /**
- * parse curlcon module parameter
+ * parse httpcon module parameter
  */
 int curl_con_param(modparam_t type, void *val)
 {
@@ -307,7 +307,7 @@ int curl_con_param(modparam_t type, void *val)
 		goto error;
 	}
 
-	LM_DBG("**** CURL got modparam curlcon \n");
+	LM_DBG("**** HTTP_CLIENT got modparam httpcon \n");
 	return curl_parse_param((char*)val);
 error:
 	return -1;
@@ -712,8 +712,8 @@ static int pv_parse_curlredirect(pv_spec_p sp, str *in)
 }
 
 /*
- * PV - return curl redirect URL for curlcon
- *	$curlredirect("curlcon");
+ * PV - return curl redirect URL for httpcon
+ *	$curlredirect("httpcon");
  */
 static int pv_get_curlredirect(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {

@@ -295,8 +295,8 @@ modparam("http_client", "tlsverifyhost", 2)
 				</programlisting>
 			</example>
 		</section>
-		<section id="http_client.p.curlcon">
-			<title><varname>curlcon</varname> (string)</title>
+		<section id="http_client.p.httpcon">
+			<title><varname>httpcon</varname> (string)</title>
 			<para>
 			Defines a connection and credentials for the connection for use
 			in a connection-oriented function call in this module.
@@ -306,7 +306,7 @@ modparam("http_client", "tlsverifyhost", 2)
 			&lt;connection-name&gt;=&gt;&lt;schema&gt;://[&lt;username&gt;:&lt;password&gt;@]&lt;hostname/address&gt;[;param=value]
 			</para>
 			<para>
-			The address in the URL is the base for the URL in the <function>curlcon_query()</function> call. The
+			The address in the URL is the base for the URL in the <function>http_connect()</function> call. The
 			address given in the function call will be appended to the base URL in the connection definition.
 			</para>
 			<para>
@@ -346,13 +346,13 @@ modparam("http_client", "tlsverifyhost", 2)
 			</itemizedlist>
 			</para>
 			<example>
-			<title>Set <varname>curlcon</varname> parameter</title>
+			<title>Set <varname>httpcon</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "http_client.on", "apione=>http://atlanta.example.com")
-modparam("http_client", "http_client.on", "apitwo=>http://atlanta.example.com/api/12")
-modparam("http_client", "http_client.on", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
-modparam("http_client", "http_client.on", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
+modparam("http_client", "httpcon", "apione=>http://atlanta.example.com")
+modparam("http_client", "httpcon", "apitwo=>http://atlanta.example.com/api/12")
+modparam("http_client", "httpcon", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
+modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
 ...
 				</programlisting>
 			</example>
@@ -373,7 +373,7 @@ modparam("http_client", "http_client.on", "apifour=>http://stockholm.example.com
                 		<listitem>
                         		<para>
                                 		<emphasis>connection</emphasis> - the name of an existing
-						curl connection, definied by a modparam.
+						HTTP connection, definied by a httpcon modparam.
 					</para>
                         		<para>
                                 		<emphasis>url</emphasis> - the part of the URL to add to the
@@ -408,7 +408,7 @@ modparam("http_client", "http_client.on", "apifour=>http://stockholm.example.com
 				<title><function>http_connect()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "http_client.on", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
@@ -497,7 +497,7 @@ switch ($retcode) {
 		<section>
 			<title><function moreinfo="none">httpclient.listcon</function></title>
 			<para>
-				Lists all defined connections
+				Lists all defined httpcon connections
 			</para>
 		<para>Parameters:</para>
 		<itemizedlist>

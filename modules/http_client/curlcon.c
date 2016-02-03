@@ -22,7 +22,7 @@
  */
 
 /*! \file
- * \brief  Kamailio http_client :: Connectoin handling
+ * \brief  Kamailio http_client :: Connection handling
  * \ingroup http_client
  */
 
@@ -68,7 +68,7 @@ curl_con_t* curl_get_connection(str *name)
 	unsigned int conid;
 
 	conid = core_case_hash(name, 0, 0);
-	LM_DBG("curl_get_connection looking for curlcon: [%.*s] ID %u\n", name->len, name->s, conid);
+	LM_DBG("curl_get_connection looking for httpcon: [%.*s] ID %u\n", name->len, name->s, conid);
 
 	cc = _curl_con_root;
 	while(cc)
@@ -78,12 +78,12 @@ curl_con_t* curl_get_connection(str *name)
 		}
 		cc = cc->next;
 	}
-	LM_DBG("curl_get_connection no success in looking for curlcon: [%.*s]\n", name->len, name->s);
+	LM_DBG("curl_get_connection no success in looking for httpcon: [%.*s]\n", name->len, name->s);
 	return NULL;
 }
 
 
-/*! Parse the curlcon module parameter
+/*! Parse the httpcon module parameter
  *
  *	Syntax:
  *		name => proto://user:password@server/url/url
@@ -131,7 +131,7 @@ int curl_parse_param(char *val)
 	curl_con_t *cc;
 
 	LM_INFO("curl modparam parsing starting\n");
-	LM_DBG("modparam curlcon: %s\n", val);
+	LM_DBG("modparam httpcon: %s\n", val);
 
 	/* parse: name=>http_url*/
 	in.s = val;
@@ -268,7 +268,7 @@ int curl_parse_param(char *val)
 
 		if (parse_params(&params, CLASS_ANY, &phooks, &conparams) < 0)
                 {
-                        LM_ERR("CURL failed parsing curlcon parameters value\n");
+                        LM_ERR("CURL failed parsing httpcon parameters value\n");
                         goto error;
                 }
 
@@ -408,7 +408,7 @@ curl_con_t *curl_init_con(str *name)
 	unsigned int conid;
 
 	conid = core_case_hash(name, 0, 0);
-	LM_DBG("curl_init_con curlcon: [%.*s] ID %u\n", name->len, name->s, conid);
+	LM_DBG("curl_init_con httpcon: [%.*s] ID %u\n", name->len, name->s, conid);
 
 	cc = _curl_con_root;
 	while(cc)
