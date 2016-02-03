@@ -42,6 +42,7 @@ Carsten Bock
               3.9. tlsverifypeer (int)
               3.10. tlsverifyhost (int)
               3.11. httpcon (string)
+              3.12. config_file (string)
 
         4. Functions
 
@@ -83,8 +84,9 @@ Carsten Bock
    1.9. Set tlsverifypeer parameter
    1.10. Set tlsverifyhost parameter
    1.11. Set httpcon parameter
-   1.12. http_connect() usage
-   1.13. curl_http_query() usage
+   1.12. Set config_file parameter
+   1.13. http_connect() usage
+   1.14. curl_http_query() usage
 
 Chapter 1. Admin Guide
 
@@ -109,6 +111,7 @@ Chapter 1. Admin Guide
         3.9. tlsverifypeer (int)
         3.10. tlsverifyhost (int)
         3.11. httpcon (string)
+        3.12. config_file (string)
 
    4. Functions
 
@@ -140,6 +143,10 @@ Chapter 1. Admin Guide
    defined connection. You can set timeouts, max data sizes for download
    and much more either using modparam settings or parameters to the
    connection definition.
+
+   The connections can either be defined with the "httpcon" module
+   parameter or in a separate configuration file, as specified by the
+   "config_file" module parameter.
 
    Like in SIP, the HTTP URL may need encoding to be transported safely
    over the network. Check the string encoding functions in the
@@ -180,6 +187,7 @@ Chapter 1. Admin Guide
    3.9. tlsverifypeer (int)
    3.10. tlsverifyhost (int)
    3.11. httpcon (string)
+   3.12. config_file (string)
 
 3.1. httpredirect (int)
 
@@ -363,6 +371,44 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 tstuff;timeout=12")
 ...
 
+3.12. config_file (string)
+
+   The file name of a configuration file containing definitions of http
+   connections. This is an alternative to the "httpcon" module parameter -
+   especially when the number of options per line gets too big.
+
+   If the file or directory name starts with a '.' the path will be
+   relative to the working directory (at runtime). If it starts with a '/'
+   it will be an absolute path and if it starts with anything else the
+   path will be relative to the main config file directory (e.g.: for
+   kamailio -f /etc/kamailio/kamailio.cfg it will be relative to
+   /etc/kamailio/).
+
+   The following parameters can be set in the config file, for each
+   connection:
+     * url
+     * username
+     * password
+     * failover
+     * useragent
+     * verify_peer
+     * verify_host
+     * client_cert
+     * client_key
+     * tlsversion
+     * timeout
+     * maxdatasize
+     * http_follow_redirect
+
+   See the "httpcon" module parameter for explanation of these settings.
+
+   By default no config file is specified.
+
+   Example 1.12. Set config_file parameter
+...
+modparam("http_client", "config_file", "httpconnections.cfg)
+...
+
 4. Functions
 
    4.1. http_connect(connection, url, [content_type, data,] result)
@@ -390,7 +436,7 @@ tstuff;timeout=12")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.12. http_connect() usage
+   Example 1.13. http_connect() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
@@ -428,7 +474,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.13. curl_http_query() usage
+   Example 1.14. curl_http_query() usage
 ...
 # GET-Request
 http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri
