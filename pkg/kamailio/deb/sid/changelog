@@ -1,3 +1,9 @@
+kamailio (4.4.0~dev9) unstable; urgency=medium
+
+  * update version to 4.4.0~dev9
+
+ -- Victor Seva <vseva@sipwise.com>  Wed, 03 Feb 2016 18:29:09 +0100
+
 kamailio (4.4.0~dev8) unstable; urgency=medium
 
   * update version to 4.4.0~dev8
