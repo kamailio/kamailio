@@ -42,4 +42,5 @@
 int sip_handle_pcv(sip_msg_t *msg, char *flags, char *str2);
 
 int pv_get_charging_vector(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+int pv_parse_charging_vector_name(pv_spec_p sp, str *in);
 #endif

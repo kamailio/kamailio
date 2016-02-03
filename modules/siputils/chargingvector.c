@@ -454,3 +454,38 @@ int pv_get_charging_vector(struct sip_msg *msg, pv_param_t *param, pv_value_t *r
 
 	return pv_get_null(msg, param, res);
 }
+
+int pv_parse_charging_vector_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "all", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "value", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		break;
+		case 7:
+			if(strncmp(in->s, "genaddr", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown pcv name %.*s\n", in->len, in->s);
+	return -1;
+}

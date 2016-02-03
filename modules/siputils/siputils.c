@@ -77,6 +77,7 @@
 #include "contact_ops.h"
 #include "sipops.h"
 #include "config.h"
+#include "chargingvector.h"
 
 MODULE_VERSION
 
@@ -177,6 +178,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"is_numeric", (cmd_function)is_numeric,                 1, fixup_spve_null,
 		0, ANY_ROUTE},
+	{"sip_p_charging_vector", (cmd_function)sip_handle_pcv,  1, fixup_spve_null,
+		fixup_free_spve_null, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -194,6 +197,13 @@ static param_export_t params[] = {
 };
 
 
+ static pv_export_t mod_pvs[] =  {
+	{ {"pcv", (sizeof("pvc")-1)}, PVT_OTHER, pv_get_charging_vector,
+		0, pv_parse_charging_vector_name, 0, 0, 0},
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 struct module_exports exports= {
 	"siputils",
 	DEFAULT_DLFLAGS, /* dlopen flags */
@@ -201,7 +211,7 @@ struct module_exports exports= {
 	params,          /* param exports */
 	0,               /* exported statistics */
 	0,               /* exported MI functions */
-	0,               /* exported pseudo-variables */
+	mod_pvs,         /* exported pseudo-variables */
 	0,               /* extra processes */
 	mod_init,        /* initialization function */
 	0,               /* Response function */
