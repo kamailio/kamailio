@@ -752,11 +752,13 @@
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>rectime</field><type>DB1_DATETIME</type></column>
-		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>a_callid</field><type>DB1_STR</type></column>
 		<column><field>a_uuid</field><type>DB1_STR</type></column>
 		<column><field>b_uuid</field><type>DB1_STR</type></column>
 		<column><field>a_contact</field><type>DB1_STR</type></column>
 		<column><field>b_contact</field><type>DB1_STR</type></column>
+		<column><field>as_contact</field><type>DB1_STR</type></column>
+		<column><field>bs_contact</field><type>DB1_STR</type></column>
 		<column><field>a_tag</field><type>DB1_STR</type></column>
 		<column><field>b_tag</field><type>DB1_STR</type></column>
 		<column><field>a_rr</field><type>DB1_BLOB</type></column>
@@ -774,11 +776,12 @@
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>rectime</field><type>DB1_DATETIME</type></column>
-		<column><field>callid</field><type>DB1_STR</type></column>
+		<column><field>a_callid</field><type>DB1_STR</type></column>
 		<column><field>a_uuid</field><type>DB1_STR</type></column>
 		<column><field>b_uuid</field><type>DB1_STR</type></column>
 		<column><field>direction</field><type>DB1_INT</type></column>
 		<column><field>x_via</field><type>DB1_BLOB</type></column>
+		<column><field>x_tag</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of uacreg table-->
 	<db_table id="uacreg">
@@ -3865,11 +3868,13 @@
 			<query_cols>
 				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>rectime</field></col>
-				<col><field>callid</field></col>
+				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
 				<col><field>a_contact</field></col>
 				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>a_tag</field></col>
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
@@ -3887,11 +3892,13 @@
 			<cmd_type>DB1_INSERT</cmd_type>
 			<query_cols>
 				<col><field>rectime</field></col>
-				<col><field>callid</field></col>
+				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
 				<col><field>a_contact</field></col>
 				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>a_tag</field></col>
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
@@ -3912,11 +3919,13 @@
 			</clause_cols>
 			<query_cols>
 				<col><field>rectime</field></col>
-				<col><field>callid</field></col>
+				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
 				<col><field>a_contact</field></col>
 				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>a_tag</field></col>
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
@@ -3945,11 +3954,12 @@
 			<query_cols>
 				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>rectime</field></col>
-				<col><field>callid</field></col>
+				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
+				<col><field>x_tag</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3957,11 +3967,12 @@
 			<cmd_type>DB1_INSERT</cmd_type>
 			<query_cols>
 				<col><field>rectime</field></col>
-				<col><field>callid</field></col>
+				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
+				<col><field>x_tag</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3972,11 +3983,12 @@
 			</clause_cols>
 			<query_cols>
 				<col><field>rectime</field></col>
-				<col><field>callid</field></col>
+				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
+				<col><field>x_tag</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
