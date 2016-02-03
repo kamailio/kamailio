@@ -27,6 +27,7 @@
         <type db="dbtext">int,auto</type>
         <description>unique ID</description>
     </column>
+
     <column id="rectime">
         <name>rectime</name>
         <type>datetime</type>
@@ -34,7 +35,7 @@
     </column>
 
     <column id="a_callid">
-        <name>callid</name>
+        <name>a_callid</name>
         <type>string</type>
         <size>&callid_len;</size>
         <default/>
@@ -71,8 +72,17 @@
     <column>
         <name>x_via</name>
         <type>largetext</type>
+        <default/>
         <description>Via stack - A or B side</description>
     </column>
+
+	<column id="x_tag">
+		<name>x_tag</name>
+		<type>string</type>
+		<size>&user_len;</size>
+        <default/>
+		<description>From tag - A or B side.</description>
+	</column>
 
     <index>
         <name>rectime_idx</name>

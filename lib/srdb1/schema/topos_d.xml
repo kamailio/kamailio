@@ -27,6 +27,7 @@
         <type db="dbtext">int,auto</type>
         <description>unique ID</description>
     </column>
+
     <column id="rectime">
         <name>rectime</name>
         <type>datetime</type>
@@ -34,7 +35,7 @@
     </column>
 
     <column id="a_callid">
-        <name>callid</name>
+        <name>a_callid</name>
         <type>string</type>
         <size>&callid_len;</size>
         <default/>
@@ -76,10 +77,27 @@
         <description>Contact address - B side</description>
     </column>
 
+     <column id="as_contact">
+        <name>as_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - server A side</description>
+    </column>
+
+    <column id="bs_contact">
+        <name>bs_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - server B side</description>
+	</column>
+
 	<column id="a_tag">
 		<name>a_tag</name>
 		<type>string</type>
 		<size>&user_len;</size>
+        <default/>
 		<description>From tag.</description>
 	</column>
 
@@ -87,18 +105,21 @@
 		<name>b_tag</name>
 		<type>string</type>
 		<size>&user_len;</size>
+        <default/>
 		<description>From tag.</description>
 	</column>
 
    <column id="a_rr">
         <name>a_rr</name>
         <type>largetext</type>
+        <default/>
         <description>Record route - A side</description>
 	</column>
 
     <column id="b_rr">
         <name>b_rr</name>
         <type>largetext</type>
+        <default/>
         <description>Record route - B side</description>
     </column>
 
@@ -115,6 +136,7 @@
 		<name>a_uri</name>
 		<type>string</type>
 		<size>&uri_len;</size>
+        <default/>
 		<description>The URI of the From header</description>
 	</column>
 
@@ -122,6 +144,7 @@
 		<name>b_uri</name>
 		<type>string</type>
 		<size>&uri_len;</size>
+        <default/>
 		<description>The URI of the To header</description>
 	</column>
 
@@ -129,6 +152,7 @@
 		<name>r_uri</name>
 		<type>string</type>
 		<size>&uri_len;</size>
+        <default/>
 		<description>The R-URI</description>
 	</column>
 
