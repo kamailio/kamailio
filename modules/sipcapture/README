@@ -10,9 +10,9 @@ Alexandr Dubovikov
 
    <alexandr.dubovikov@gmail.com>
 
-   Copyright © 2011 QSC AG
+   Copyright � 2011 QSC AG
 
-   Copyright © 2011 http://www.qsc.de
+   Copyright � 2011 http://www.qsc.de
      __________________________________________________________________
 
    Table of Contents
@@ -46,6 +46,7 @@ Alexandr Dubovikov
               3.17. insert_retries (integer)
               3.18. insert_retry_timeout (integer)
               3.19. callid_aleg_header (str)
+              3.20. topoh_unmask (int)
 
         4. Functions
 
@@ -84,8 +85,9 @@ Alexandr Dubovikov
    1.17. Set insert_retries parameter
    1.18. Set insert_retry_timeout parameter
    1.19. Set callid_aleg_header parameter
-   1.20. sip_capture() usage
+   1.20. Set topoh_unmask parameter
    1.21. sip_capture() usage
+   1.22. sip_capture() usage
 
 Chapter 1. Admin Guide
 
@@ -118,6 +120,7 @@ Chapter 1. Admin Guide
         3.17. insert_retries (integer)
         3.18. insert_retry_timeout (integer)
         3.19. callid_aleg_header (str)
+        3.20. topoh_unmask (int)
 
    4. Functions
 
@@ -188,6 +191,7 @@ Chapter 1. Admin Guide
    3.17. insert_retries (integer)
    3.18. insert_retry_timeout (integer)
    3.19. callid_aleg_header (str)
+   3.20. topoh_unmask (int)
 
 3.1. db_url (str)
 
@@ -445,12 +449,24 @@ modparam("sipcapture", "insert_retry_timeout", 10)
 modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
 ...
 
+3.20. topoh_unmask (int)
+
+   If set to 1, call-id will be unmasked using topoh module api (topoh
+   module must be loaded in this case).
+
+   Default value is 0.
+
+   Example 1.20. Set topoh_unmask parameter
+...
+modparam("sipcapture", "topoh_unmask", 1)
+...
+
 4. Functions
 
    4.1. sip_capture([table])
    4.2. report_capture([table],[data])
 
-4.1.  sip_capture([table])
+4.1. sip_capture([table])
 
    Store the current processed HEP/IPIP SIP message in database. It is
    stored in the form prior applying changes made to it.
@@ -462,14 +478,14 @@ modparam("sipcapture", "callid_aleg_header", "X-CallIDALeg")
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.20. sip_capture() usage
+   Example 1.21. sip_capture() usage
 ...
 sip_capture();
 ...
 sip_capture("sip_capture_call_20160124");
 ...
 
-4.2.  report_capture([table],[data])
+4.2. report_capture([table],[data])
 
    Store the current processed HEP REPORT message in database.
 
@@ -481,7 +497,7 @@ sip_capture("sip_capture_call_20160124");
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.21. sip_capture() usage
+   Example 1.22. sip_capture() usage
 ...
 report_capture();
 ...
@@ -494,7 +510,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 
    5.1. sip_capture
 
-5.1.  sip_capture
+5.1. sip_capture
 
    Name: sip_capture
 
@@ -504,7 +520,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message capturing (as string “on” or “off” )
+       status of the SIP message capturing (as string "on" or "off" )
        without changing anything.
 
    MI FIFO Command Format:
@@ -516,7 +532,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 
    6.1. sipcapture.status param
 
-6.1.  sipcapture.status param
+6.1. sipcapture.status param
 
    Name: sipcapture.status
 
@@ -524,7 +540,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
      * on or off: turns on/off SIP message capturing. Possible values are:
           + on
           + off
-     * “check” does not change sipcapture status, just reports the current
+     * "check" does not change sipcapture status, just reports the current
        status.
 
 7. Database setup
