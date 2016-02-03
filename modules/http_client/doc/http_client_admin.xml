@@ -155,8 +155,8 @@ modparam("http_client", "connection_timeout", 2)
 				</programlisting>
 			</example>
 		</section>
-		<section id="http_client.p.tlsclientcert">
-			<title><varname>tlsclientcert</varname> (string)</title>
+		<section id="http_client.p.client_cert">
+			<title><varname>client_cert</varname> (string)</title>
 			<para>
 			File name for a TLS client certificate. The certificate needs to be encoded
 			in PEM format.
@@ -166,20 +166,20 @@ modparam("http_client", "connection_timeout", 2)
 				Default value is empty string, i.e.
 				no client certificate used. Note that if
 				you specify a client cert, you also need to specify
-				the <varname>tlsclientkey</varname>.
+				the <varname>client_key</varname>.
 			</emphasis>
 			</para>
 			<example>
-			<title>Set <varname>tlsclientcert</varname> parameter</title>
+			<title>Set <varname>client_cert</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "tlsclientcert", "/var/certs/sollentuna.example.com.cert")
+modparam("http_client", "client_cert", "/var/certs/sollentuna.example.com.cert")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="http_client.p.tlsclientkey">
-			<title><varname>tlsclientkey</varname> (string)</title>
+		<section id="http_client.p.client_key">
+			<title><varname>client_key</varname> (string)</title>
 			<para>
 			File name for a TLS client key. The key needs to be encoded
 			in PEM format.
@@ -189,20 +189,20 @@ modparam("http_client", "tlsclientcert", "/var/certs/sollentuna.example.com.cert
 				Default value is empty string, i.e.
 				no client certificate or key is used. Note that if
 				you specify a client key, you also need to specify
-				the <varname>tlsclientcert</varname>.
+				the <varname>client_cert</varname>.
 			</emphasis>
 			</para>
 			<example>
-			<title>Set <varname>tlsclientkey</varname> parameter</title>
+			<title>Set <varname>client_key</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
+modparam("http_client", "client_key", "/var/certs/sollentuna.example.com.key")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="http_client.p.tlscacert">
-			<title><varname>tlscacert</varname> (string)</title>
+		<section id="http_client.p.cacert">
+			<title><varname>cacert</varname> (string)</title>
 			<para>
 			File name for the trusted TLS CA cert used to verify servers.
 			The certificates need to be encoded in PEM format.
@@ -217,16 +217,16 @@ modparam("http_client", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
 			</emphasis>
 			</para>
 			<example>
-			<title>Set <varname>tlscacert</varname> parameter</title>
+			<title>Set <varname>cacert</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
+modparam("http_client", "cacert", "/var/certs/ca/edvina-sip-ca.pem")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="http_client.p.tlscipherlist">
-			<title><varname>tlscipherlist</varname> (string)</title>
+		<section id="http_client.p.cipher_suites">
+			<title><varname>cipher_suites</varname> (string)</title>
 			<para>
 			List of allowed cipher suites.
 			See http://curl.haxx.se/libcurl/c/CURLOPT_SSL_CIPHER_LIST.html for details
@@ -239,16 +239,16 @@ modparam("http_client", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
 			</emphasis>
 			</para>
 			<example>
-			<title>Set <varname>tlscipherlist</varname> parameter</title>
+			<title>Set <varname>cipher_suites</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_gcm_sha_256")
+modparam("http_client", "cipher_suites", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_aes_128_gcm_sha_256")
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="http_client.p.tlsverifypeer">
-			<title><varname>tlsverifypeer</varname> (int)</title>
+		<section id="http_client.p.verify_peer">
+			<title><varname>verify_peer</varname> (int)</title>
 			<para>
 			If set to 0, TLS verification of the server certificate
 			is disabled. This means that the connection will get 
@@ -266,16 +266,16 @@ modparam("http_client", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_ae
 			http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
 			</para>
 			<example>
-			<title>Set <varname>tlsverifypeer</varname> parameter</title>
+			<title>Set <varname>verify_peer</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "tlsverifypeer", 1)
+modparam("http_client", "verify_peer", 1)
 ...
 				</programlisting>
 			</example>
 		</section>
-		<section id="http_client.p.tlsverifyhost">
-			<title><varname>tlsverifyhost</varname> (int)</title>
+		<section id="http_client.p.verify_host">
+			<title><varname>verify_host</varname> (int)</title>
 			<para>
 			If set to 0, domain verification of the server certificate
 			is disabled. This means that the connection will get 
@@ -292,10 +292,41 @@ modparam("http_client", "tlsverifypeer", 1)
 			http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
 			</para>
 			<example>
-			<title>Set <varname>tlsverifyhost</varname> parameter</title>
+			<title>Set <varname>verify_host</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "tlsverifyhost", 2)
+modparam("http_client", "verify_host", 2)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.p.tlsversion">
+			<title><varname>tlsversion</varname> (int)</title>
+			<para>
+			Sets the preferred TLS/SSL version.
+			</para>
+			<para>
+			Valid values are:
+				<itemizedlist>
+				<listitem><para>0 - Use libcurl default</para></listitem>
+				<listitem><para>1 - "TLSv1"</para></listitem>
+				<listitem><para>2 - "SSLv2"</para></listitem>
+				<listitem><para>3 - "SSLv3"</para></listitem>
+				<listitem><para>4 - "TLSv1.0"</para></listitem>
+				<listitem><para>5 - "TLSv1.1"</para></listitem>
+				<listitem><para>6 - "TLSv1.2"</para></listitem>
+				</itemizedlist>
+			</para>
+			<para>
+			SSL versions are now disabled by default.
+			See the curl documentation for more details.
+			http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
+			</para>
+			<example>
+			<title>Set <varname>tlsversion</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "tlsversion", 6)
 ...
 				</programlisting>
 			</example>
@@ -323,30 +354,46 @@ modparam("http_client", "tlsverifyhost", 2)
 			Parameters
 			<itemizedlist>
 				<listitem><para>
-				<emphasis>httpredirect</emphasis> Set to 1 for following HTTP 302
-				redirect. 0 to disable. Default is the setting for the httpredirect modparam.
+				<emphasis>useragent</emphasis> Useragent used for HTTP requests. Overrides
+				useragent modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>verify_peer</emphasis> Set to 1 to enable or 0 to disable server
+				certificate verification.
+				Overrides verify_peer modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>verify_host</emphasis> Set to 2 to enable or 0 to disable server
+				hostname verification.
+				Overrides verify_host modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>client_cert</emphasis> Client certificate used for this connection.
+				Overrides the default client_cert modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>client_key</emphasis> Client key used for this connection.
+				Overrides the default client_key modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>cipher_suites</emphasis> Client certificate used for this connection.
+				Overrides the default cipher_suite modparam.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>timeout</emphasis> Timeout used for this connection. Overrides the 
+				default connection_timeout for the module.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>tlsversion</emphasis> TLS version used for this connection. Overrides the 
+				default tlsversion for the module.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>maxdatasize</emphasis> The maximum datasize for a response. Overrides
 				the maxdatasize modparam setting.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>timeout</emphasis> Timeout used for this connection. Overrides the 
-				default timeout for the module.
-				</para></listitem>
-				<listitem><para>
-				<emphasis>useragent</emphasis> Useragent used for HTTP requests. Overrides
-				useragent modparam.
-				</para></listitem>
-				<listitem><para>
-				<emphasis>verifypeer</emphasis> Set to 1 to enable or 0 to disable server
-				certificate verification.
-				Overrides tlsverifypeer modparam.
-				</para></listitem>
-				<listitem><para>
-				<emphasis>verifyhost</emphasis> Set to 2 to enable or 0 to disable server
-				hostname verification.
-				Overrides tlsverifyhost modparam.
+				<emphasis>httpredirect</emphasis> Set to 1 for following HTTP 302
+				redirect. 0 to disable. Overrides the default httpredirect modparam.
 				</para></listitem>
 			</itemizedlist>
 			</para>
@@ -371,41 +418,53 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 			options per line gets too big.
 			</para>
 			<para>
-                	If the file or directory name starts with a '.' the path will be relative to the
-                	working directory (<emphasis>at runtime</emphasis>). If it starts
-                	with a '/' it will be an absolute path and if it starts with anything
-                	else the path will be relative to the main config file directory
-                	(e.g.: for kamailio -f /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
-        		</para>
+			If the file or directory name starts with a '.' the path will be relative to the
+			working directory (<emphasis>at runtime</emphasis>). If it starts
+			with a '/' it will be an absolute path and if it starts with anything
+			else the path will be relative to the main config file directory
+			(e.g.: for kamailio -f /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
+			</para>
 			<para>
-                		The following parameters can be set in the config file, for each connection:
-        		</para>
-        		<itemizedlist>
-                        	<listitem><para>url</para></listitem>
-                        	<listitem><para>username</para></listitem>
-                        	<listitem><para>password</para></listitem>
-                        	<listitem><para>failover</para></listitem>
-                        	<listitem><para>useragent</para></listitem>
-                        	<listitem><para>verify_peer</para></listitem>
-                        	<listitem><para>verify_host</para></listitem>
-                        	<listitem><para>client_cert</para></listitem>
-                        	<listitem><para>client_key</para></listitem>
-                        	<listitem><para>tlsversion</para></listitem>
-                        	<listitem><para>timeout</para></listitem>
-                        	<listitem><para>maxdatasize</para></listitem>
-                        	<listitem><para>http_follow_redirect</para></listitem>
-        		</itemizedlist>
+				The following parameters can be set in the config file, for each connection.
+				If a parameter is not specified, the default values set by the modparams will be used.
+			</para>
+			<itemizedlist>
+				<listitem><para>url</para></listitem>
+				<listitem><para>username</para></listitem>
+				<listitem><para>password</para></listitem>
+				<listitem><para>failover</para></listitem>
+				<listitem><para>useragent</para></listitem>
+				<listitem><para>verify_peer</para></listitem>
+				<listitem><para>verify_host</para></listitem>
+				<listitem><para>client_cert</para></listitem>
+				<listitem><para>client_key</para></listitem>
+				<listitem><para>cipher_suites</para></listitem>
+				<listitem><para>tlsversion - Valid values are:</para>
+				<itemizedlist>
+				<listitem><para>"DEFAULT"</para></listitem>
+				<listitem><para>"TLSv1"</para></listitem>
+				<listitem><para>"SSLv22</para></listitem>
+				<listitem><para>"SSLv3"</para></listitem>
+				<listitem><para>"TLSv1.0"</para></listitem>
+				<listitem><para>"TLSv1.1"</para></listitem>
+				<listitem><para>"TLSv1.2"</para></listitem>
+				</itemizedlist>
+				</listitem>
+				<listitem><para>timeout</para></listitem>
+				<listitem><para>maxdatasize</para></listitem>
+				<listitem><para>http_follow_redirect</para></listitem>
+			</itemizedlist>
 			See the "httpcon" module parameter for explanation of these settings.
-        		<para>
-                	By default no config file is specified.
-        		</para>
+			<para>
+			By default no config file is specified.
+			</para>
  			<para>
-                	All the parameters that take filenames as values will be resolved
-                	using the same rules as for the tls config filename itself: starting
-                	with a '.' means relative to the working directory, a '/' means an
-                	absolute path and  anything else a path relative to the directory of
-                	the current &kamailio; main config file.
-        		</para>
+			All the parameters that take filenames as values will be resolved
+			using the same rules as for the tls config filename itself: starting
+			with a '.' means relative to the working directory, a '/' means an
+			absolute path and  anything else a path relative to the directory of
+			the current &kamailio; main config file.
+			</para>
 			<example>
 			<title>Set <varname>config_file</varname> parameter</title>
 				<programlisting format="linespecific">
@@ -415,20 +474,20 @@ modparam("http_client", "config_file", "httpconnections.cfg)
 				</programlisting>
 			</example>
 			<example>
-                	<title>Short http_client config file</title>
-        <programlisting>
+			<title>Short http_client config file</title>
+	<programlisting>
 [authapiserver]
 url = https://api.runbo.example.com/v4.2/auth
 timeout = 1
 maxdatasize = 4 
-tlsversion = TLSv2
+tlsversion = TLSv1.2
 verify_peer = yes
 client_key = default_key.pem
 client_cert = default_cert.pem
 http_follow_redirect = no
 
-        </programlisting>
-        </example>
+	</programlisting>
+	</example>
 
 		</section>
 	</section>
@@ -444,31 +503,31 @@ http_follow_redirect = no
 			POST request, content-type can be specified.
 	    	        </para>
 			<itemizedlist>
-                		<listitem>
-                        		<para>
-                                		<emphasis>connection</emphasis> - the name of an existing
+				<listitem>
+					<para>
+						<emphasis>connection</emphasis> - the name of an existing
 						HTTP connection, definied by a httpcon modparam.
 					</para>
-                        		<para>
-                                		<emphasis>url</emphasis> - the part of the URL to add to the
+					<para>
+						<emphasis>url</emphasis> - the part of the URL to add to the
 						predefined URL in the connection definition.
 					</para>
-                        		<para>
-                                		<emphasis>content_type</emphasis> - Used only when posting
+					<para>
+						<emphasis>content_type</emphasis> - Used only when posting
 						data with HTTP POST. An Internet Media type, like
 						"application/json" or "text/plain". Will be added to the
 						HTTP request as a header.
 					</para>
-                        		<para>
-                                		<emphasis>data</emphasis> - Data or a pseudo variable holding
+					<para>
+						<emphasis>data</emphasis> - Data or a pseudo variable holding
 						data to be posted.
 					</para>
-                        		<para>
-                                		<emphasis>result</emphasis> - The name of a pseudo variable that
+					<para>
+						<emphasis>result</emphasis> - The name of a pseudo variable that
 						will have the data of the response from the HTTP server.
 					</para>
-                		</listitem>
-                	</itemizedlist>
+				</listitem>
+			</itemizedlist>
 			<para>
 			The return value is the HTTP return code (if >=100) or the
 			CURL error code if below 100. See the $curlerror pseudovariable
@@ -532,7 +591,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
 ...
 # GET-Request
 http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-           "$var(result)")
+	   "$var(result)")
 switch ($retcode) {
        ...
 }
@@ -542,7 +601,7 @@ switch ($retcode) {
 ...
 # POST-Request
 http_client_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-           "$var(result)")
+	   "$var(result)")
 switch ($retcode) {
        ...
 }
@@ -567,7 +626,7 @@ switch ($retcode) {
 		</section>
 	</section>
 	<section>
-        <title>RPC Commands</title>
+	<title>RPC Commands</title>
 		<section>
 			<title><function moreinfo="none">httpclient.listcon</function></title>
 			<para>

@@ -12,11 +12,11 @@ Carsten Bock
 
    ng-voice GmbH
 
-   Copyright � 2008-2009 Juha Heinanen
+   Copyright © 2008-2009 Juha Heinanen
 
-   Copyright � 2013 Carsten Bock, ng-voice GmbH
+   Copyright © 2013 Carsten Bock, ng-voice GmbH
 
-   Copyright � 2015 Olle E. Johansson, Edvina AB
+   Copyright © 2015 Olle E. Johansson, Edvina AB
      __________________________________________________________________
 
    Table of Contents
@@ -35,14 +35,15 @@ Carsten Bock
               3.2. useragent (string)
               3.3. maxdatasize (int)
               3.4. connection_timeout (int)
-              3.5. tlsclientcert (string)
-              3.6. tlsclientkey (string)
-              3.7. tlscacert (string)
-              3.8. tlscipherlist (string)
-              3.9. tlsverifypeer (int)
-              3.10. tlsverifyhost (int)
-              3.11. httpcon (string)
-              3.12. config_file (string)
+              3.5. client_cert (string)
+              3.6. client_key (string)
+              3.7. cacert (string)
+              3.8. cipher_suites (string)
+              3.9. verify_peer (int)
+              3.10. verify_host (int)
+              3.11. tlsversion (int)
+              3.12. httpcon (string)
+              3.13. config_file (string)
 
         4. Functions
 
@@ -77,17 +78,18 @@ Carsten Bock
    1.2. Set useragent parameter
    1.3. Set maxdatasize parameter
    1.4. Set connection_timeout parameter
-   1.5. Set tlsclientcert parameter
-   1.6. Set tlsclientkey parameter
-   1.7. Set tlscacert parameter
-   1.8. Set tlscipherlist parameter
-   1.9. Set tlsverifypeer parameter
-   1.10. Set tlsverifyhost parameter
-   1.11. Set httpcon parameter
-   1.12. Set config_file parameter
-   1.13. Short http_client config file
-   1.14. http_connect() usage
-   1.15. curl_http_query() usage
+   1.5. Set client_cert parameter
+   1.6. Set client_key parameter
+   1.7. Set cacert parameter
+   1.8. Set cipher_suites parameter
+   1.9. Set verify_peer parameter
+   1.10. Set verify_host parameter
+   1.11. Set tlsversion parameter
+   1.12. Set httpcon parameter
+   1.13. Set config_file parameter
+   1.14. Short http_client config file
+   1.15. http_connect() usage
+   1.16. curl_http_query() usage
 
 Chapter 1. Admin Guide
 
@@ -105,14 +107,15 @@ Chapter 1. Admin Guide
         3.2. useragent (string)
         3.3. maxdatasize (int)
         3.4. connection_timeout (int)
-        3.5. tlsclientcert (string)
-        3.6. tlsclientkey (string)
-        3.7. tlscacert (string)
-        3.8. tlscipherlist (string)
-        3.9. tlsverifypeer (int)
-        3.10. tlsverifyhost (int)
-        3.11. httpcon (string)
-        3.12. config_file (string)
+        3.5. client_cert (string)
+        3.6. client_key (string)
+        3.7. cacert (string)
+        3.8. cipher_suites (string)
+        3.9. verify_peer (int)
+        3.10. verify_host (int)
+        3.11. tlsversion (int)
+        3.12. httpcon (string)
+        3.13. config_file (string)
 
    4. Functions
 
@@ -181,14 +184,15 @@ Chapter 1. Admin Guide
    3.2. useragent (string)
    3.3. maxdatasize (int)
    3.4. connection_timeout (int)
-   3.5. tlsclientcert (string)
-   3.6. tlsclientkey (string)
-   3.7. tlscacert (string)
-   3.8. tlscipherlist (string)
-   3.9. tlsverifypeer (int)
-   3.10. tlsverifyhost (int)
-   3.11. httpcon (string)
-   3.12. config_file (string)
+   3.5. client_cert (string)
+   3.6. client_key (string)
+   3.7. cacert (string)
+   3.8. cipher_suites (string)
+   3.9. verify_peer (int)
+   3.10. verify_host (int)
+   3.11. tlsversion (int)
+   3.12. httpcon (string)
+   3.13. config_file (string)
 
 3.1. httpredirect (int)
 
@@ -237,36 +241,36 @@ modparam("http_client", "maxdatasize", 2000)
 modparam("http_client", "connection_timeout", 2)
 ...
 
-3.5. tlsclientcert (string)
+3.5. client_cert (string)
 
    File name for a TLS client certificate. The certificate needs to be
    encoded in PEM format.
 
    Default value is empty string, i.e. no client certificate used. Note
    that if you specify a client cert, you also need to specify the
-   tlsclientkey.
+   client_key.
 
-   Example 1.5. Set tlsclientcert parameter
+   Example 1.5. Set client_cert parameter
 ...
-modparam("http_client", "tlsclientcert", "/var/certs/sollentuna.example.com.cert
-")
+modparam("http_client", "client_cert", "/var/certs/sollentuna.example.com.cert"
+)
 ...
 
-3.6. tlsclientkey (string)
+3.6. client_key (string)
 
    File name for a TLS client key. The key needs to be encoded in PEM
    format.
 
    Default value is empty string, i.e. no client certificate or key is
    used. Note that if you specify a client key, you also need to specify
-   the tlsclientcert.
+   the client_cert.
 
-   Example 1.6. Set tlsclientkey parameter
+   Example 1.6. Set client_key parameter
 ...
-modparam("http_client", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
+modparam("http_client", "client_key", "/var/certs/sollentuna.example.com.key")
 ...
 
-3.7. tlscacert (string)
+3.7. cacert (string)
 
    File name for the trusted TLS CA cert used to verify servers. The
    certificates need to be encoded in PEM format.
@@ -275,12 +279,12 @@ modparam("http_client", "tlsclientkey", "/var/certs/sollentuna.example.com.key")
    the host. If tlsverifyhost is on, all TLS connections will fail without
    any CA certificate to validate with.
 
-   Example 1.7. Set tlscacert parameter
+   Example 1.7. Set cacert parameter
 ...
-modparam("http_client", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
+modparam("http_client", "cacert", "/var/certs/ca/edvina-sip-ca.pem")
 ...
 
-3.8. tlscipherlist (string)
+3.8. cipher_suites (string)
 
    List of allowed cipher suites. See
    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_CIPHER_LIST.html for details
@@ -289,13 +293,13 @@ modparam("http_client", "tlscacert", "/var/certs/ca/edvina-sip-ca.pem")
    Default value is empty string, i.e. the default list of ciphers in
    libcurl will be used.
 
-   Example 1.8. Set tlscipherlist parameter
+   Example 1.8. Set cipher_suites parameter
 ...
-modparam("http_client", "tlscipherlist", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_ae
-s_128_gcm_sha_256")
+modparam("http_client", "cipher_suites", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_a
+es_128_gcm_sha_256")
 ...
 
-3.9. tlsverifypeer (int)
+3.9. verify_peer (int)
 
    If set to 0, TLS verification of the server certificate is disabled.
    This means that the connection will get encrypted, but there's no
@@ -309,12 +313,12 @@ s_128_gcm_sha_256")
    See the curl documentation for more details.
    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
 
-   Example 1.9. Set tlsverifypeer parameter
+   Example 1.9. Set verify_peer parameter
 ...
-modparam("http_client", "tlsverifypeer", 1)
+modparam("http_client", "verify_peer", 1)
 ...
 
-3.10. tlsverifyhost (int)
+3.10. verify_host (int)
 
    If set to 0, domain verification of the server certificate is disabled.
    This means that the connection will get encrypted but there is no check
@@ -328,12 +332,33 @@ modparam("http_client", "tlsverifypeer", 1)
    See the curl documentation for more details.
    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
 
-   Example 1.10. Set tlsverifyhost parameter
+   Example 1.10. Set verify_host parameter
 ...
-modparam("http_client", "tlsverifyhost", 2)
+modparam("http_client", "verify_host", 2)
 ...
 
-3.11. httpcon (string)
+3.11. tlsversion (int)
+
+   Sets the preferred TLS/SSL version.
+
+   Valid values are:
+     * 0 - Use libcurl default
+     * 1 - "TLSv1"
+     * 2 - "SSLv2"
+     * 3 - "SSLv3"
+     * 4 - "TLSv1.0"
+     * 5 - "TLSv1.1"
+     * 6 - "TLSv1.2"
+
+   SSL versions are now disabled by default. See the curl documentation
+   for more details. http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
+
+   Example 1.11. Set tlsversion parameter
+...
+modparam("http_client", "tlsversion", 6)
+...
+
+3.12. httpcon (string)
 
    Defines a connection and credentials for the connection for use in a
    connection-oriented function call in this module.
@@ -349,30 +374,38 @@ modparam("http_client", "tlsverifyhost", 2)
    By default, no connections are defined.
 
    Parameters
-     * httpredirect Set to 1 for following HTTP 302 redirect. 0 to
-       disable. Default is the setting for the httpredirect modparam.
-     * maxdatasize The maximum datasize for a response. Overrides the
-       maxdatasize modparam setting.
-     * timeout Timeout used for this connection. Overrides the default
-       timeout for the module.
      * useragent Useragent used for HTTP requests. Overrides useragent
        modparam.
-     * verifypeer Set to 1 to enable or 0 to disable server certificate
-       verification. Overrides tlsverifypeer modparam.
-     * verifyhost Set to 2 to enable or 0 to disable server hostname
-       verification. Overrides tlsverifyhost modparam.
+     * verify_peer Set to 1 to enable or 0 to disable server certificate
+       verification. Overrides verify_peer modparam.
+     * verify_host Set to 2 to enable or 0 to disable server hostname
+       verification. Overrides verify_host modparam.
+     * client_cert Client certificate used for this connection. Overrides
+       the default client_cert modparam.
+     * client_key Client key used for this connection. Overrides the
+       default client_key modparam.
+     * cipher_suites Client certificate used for this connection.
+       Overrides the default cipher_suite modparam.
+     * timeout Timeout used for this connection. Overrides the default
+       connection_timeout for the module.
+     * tlsversion TLS version used for this connection. Overrides the
+       default tlsversion for the module.
+     * maxdatasize The maximum datasize for a response. Overrides the
+       maxdatasize modparam setting.
+     * httpredirect Set to 1 for following HTTP 302 redirect. 0 to
+       disable. Overrides the default httpredirect modparam.
 
-   Example 1.11. Set httpcon parameter
+   Example 1.12. Set httpcon parameter
 ...
 modparam("http_client", "httpcon", "apione=>http://atlanta.example.com")
 modparam("http_client", "httpcon", "apitwo=>http://atlanta.example.com/api/12")
-modparam("http_client", "httpcon", "apithree=>http://annabella:mysecret@atlanta.
-example.com/api/12")
-modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
-tstuff;timeout=12")
+modparam("http_client", "httpcon", "apithree=>http://annabella:mysecret@atlanta
+.example.com/api/12")
+modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/g
+etstuff;timeout=12")
 ...
 
-3.12. config_file (string)
+3.13. config_file (string)
 
    The file name of a configuration file containing definitions of http
    connections. This is an alternative to the "httpcon" module parameter -
@@ -386,7 +419,8 @@ tstuff;timeout=12")
    /etc/kamailio/).
 
    The following parameters can be set in the config file, for each
-   connection:
+   connection. If a parameter is not specified, the default values set by
+   the modparams will be used.
      * url
      * username
      * password
@@ -396,7 +430,15 @@ tstuff;timeout=12")
      * verify_host
      * client_cert
      * client_key
-     * tlsversion
+     * cipher_suites
+     * tlsversion - Valid values are:
+          + "DEFAULT"
+          + "TLSv1"
+          + "SSLv22
+          + "SSLv3"
+          + "TLSv1.0"
+          + "TLSv1.1"
+          + "TLSv1.2"
      * timeout
      * maxdatasize
      * http_follow_redirect
@@ -411,17 +453,17 @@ tstuff;timeout=12")
    path and anything else a path relative to the directory of the current
    Kamailio main config file.
 
-   Example 1.12. Set config_file parameter
+   Example 1.13. Set config_file parameter
 ...
 modparam("http_client", "config_file", "httpconnections.cfg)
 ...
 
-   Example 1.13. Short http_client config file
+   Example 1.14. Short http_client config file
 [authapiserver]
 url = https://api.runbo.example.com/v4.2/auth
 timeout = 1
 maxdatasize = 4
-tlsversion = TLSv2
+tlsversion = TLSv1.2
 verify_peer = yes
 client_key = default_key.pem
 client_cert = default_cert.pem
@@ -432,7 +474,7 @@ http_follow_redirect = no
    4.1. http_connect(connection, url, [content_type, data,] result)
    4.2. http_client_query(url, [post-data], result)
 
-4.1. http_connect(connection, url, [content_type, data,] result)
+4.1.  http_connect(connection, url, [content_type, data,] result)
 
    Sends HTTP GET or POST request to a given connection. For a POST
    request, content-type can be specified.
@@ -454,32 +496,32 @@ http_follow_redirect = no
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.14. http_connect() usage
+   Example 1.15. http_connect() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
 # POST Request
-$var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {20
-0, ok}}", "$avp(gurka)");
-xlog("L_INFO", "API-server HTTP connection: $avp(gurka) Result code $var(res)\n"
-);
+$var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {2
+00, ok}}", "$avp(gurka)");
+xlog("L_INFO", "API-server HTTP connection: $avp(gurka) Result code $var(res)\n
+");
 
-$var(res) = http_connect("apiserver", "/callroute", "application/json", "$var(js
-ondata)", "$avp(route)");
-xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
-);
+$var(res) = http_connect("apiserver", "/callroute", "application/json", "$var(j
+sondata)", "$avp(route)");
+xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n
+");
 ...
 
-4.2. http_client_query(url, [post-data], result)
+4.2.  http_client_query(url, [post-data], result)
 
-   Sends HTTP GET or POST request according to URL given in "url"
+   Sends HTTP GET or POST request according to URL given in “url”
    parameter, which is a string that may contain pseudo variables.
 
-   If you want to make a POST-Request, you have to define the "post"-data,
+   If you want to make a POST-Request, you have to define the “post”-data,
    that should be submitted in that request as the second parameter.
 
    If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line of
-   the reply's body (if any) is stored in "result" parameter, which must
+   the reply's body (if any) is stored in “result” parameter, which must
    be a writable pseudo variable.
 
    Function returns reply code of HTTP reply or -1 if something went
@@ -492,11 +534,11 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.15. curl_http_query() usage
+   Example 1.16. curl_http_query() usage
 ...
 # GET-Request
-http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri
-=$(fu{s.escape.param})",
+http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_ur
+i=$(fu{s.escape.param})",
            "$var(result)")
 switch ($retcode) {
        ...
@@ -504,8 +546,8 @@ switch ($retcode) {
 ...
 ...
 # POST-Request
-http_client_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&f_
-uri=$(fu{s.escape.param})",
+http_client_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&f
+_uri=$(fu{s.escape.param})",
            "$var(result)")
 switch ($retcode) {
        ...
@@ -516,7 +558,7 @@ switch ($retcode) {
 
    5.1. $curlerror(error)
 
-5.1. $curlerror(error)
+5.1.  $curlerror(error)
 
    The cURL library returns error codes from the protocol used. If an
    error happens, a cURL specific error code below 100 is returned. The
@@ -541,15 +583,15 @@ switch ($retcode) {
    7.2. httpclient.connok
    7.3. httpclient.connfail
 
-7.1. httpclient.connections
+7.1.  httpclient.connections
 
    The number of connection definitions that are in-memory.
 
-7.2. httpclient.connok
+7.2.  httpclient.connok
 
    The number of successful connections since Kamailio start
 
-7.3. httpclient.connfail
+7.3.  httpclient.connfail
 
    The number of failed connections since Kamailio start
 
@@ -565,7 +607,7 @@ Chapter 2. Developer Guide
 
    1.1. http_client(name)
 
-1.1. http_client(name)
+1.1.  http_client(name)
 
    Text here
 

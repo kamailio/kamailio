@@ -55,7 +55,7 @@ typedef struct {
     char *clientkey;
     char *cacert;
     char *ciphersuites;
-    unsigned int sslversion;
+    unsigned int tlsversion;
     unsigned int verify_peer;
     unsigned int verify_host;
     unsigned int timeout;
@@ -172,8 +172,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
         res |= curl_easy_setopt(curl, CURLOPT_CAINFO, params->cacert);
     }
 
-    if (params->sslversion != CURL_SSLVERSION_DEFAULT) {
-        res |= curl_easy_setopt(curl, CURLOPT_SSLVERSION, (long) params->sslversion);
+    if (params->tlsversion != CURL_SSLVERSION_DEFAULT) {
+        res |= curl_easy_setopt(curl, CURLOPT_SSLVERSION, (long) params->tlsversion);
     }
 
     if (params->ciphersuites != NULL) {
@@ -359,7 +359,7 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	query_params.clientkey = conn->clientkey;
 	query_params.cacert = default_tls_cacert;
 	query_params.ciphersuites = conn->ciphersuites;
-	query_params.sslversion = conn->sslversion;
+	query_params.tlsversion = conn->tlsversion;
 	query_params.verify_peer = conn->verify_peer;
 	query_params.verify_host = conn->verify_host;
 	query_params.timeout = conn->timeout;
@@ -400,7 +400,7 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.clientkey = NULL;
 	query_params.cacert = NULL;
 	query_params.ciphersuites = NULL;
-	query_params.sslversion = default_tls_version;
+	query_params.tlsversion = default_tls_version;
 	query_params.verify_peer = default_tls_verify_peer;
 	query_params.verify_host = default_tls_verify_host;
 	query_params.timeout = default_connection_timeout;

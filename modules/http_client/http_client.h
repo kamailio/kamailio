@@ -77,7 +77,7 @@ typedef struct _curl_con
 	char *clientcert;		/*!< File name of CA client cert */
 	char *clientkey;		/*!< File name of CA client key */
 	char *ciphersuites;		/*!< List of allowed cipher suites */
-	unsigned int sslversion;	/*!< SSL/TLS version to use */
+	unsigned int tlsversion;	/*!< SSL/TLS version to use */
 	unsigned int verify_peer;	/*!< TRUE if server cert to be verified */
 	unsigned int verify_host;	/*!< TRUE if server CN/SAN to be verified */
 	int http_follow_redirect;	/*!< TRUE if we should follow HTTP 302 redirects */
