@@ -1061,6 +1061,26 @@ if(is_first_hop()) { ... }
 </programlisting>
 		</example>
 	</section>
+	<section id="siputils.f.sip_p_charging_vector">
+		<title>
+			<function moreinfo="none">sip_p_charging_vector(flags)</function>
+		</title>
+		<para>
+			Manage the P-Charging-Vector header (RFC3455). The flags can be:
+			'r' - remove; 'g' - generate; 'f' - force (remove + generate).
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title>sip_p_charging_vector() usage</title>
+		<programlisting format="linespecific">
+...
+sip_p_charging_vector("g");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 </chapter>
