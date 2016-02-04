@@ -133,7 +133,7 @@ static cmd_export_t cmds[] = {
     {"http_connect", (cmd_function)w_curl_connect_post, 5, fixup_curl_connect_post,
      fixup_free_curl_connect_post,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"bind_curl",  (cmd_function)bind_curl_api,  0, 0, 0, 0},
+    {"bind_http_client",  (cmd_function)bind_httpc_api,  0, 0, 0, 0},
 };
 
 
