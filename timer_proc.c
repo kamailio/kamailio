@@ -369,7 +369,6 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 	sr_wtimer_node_t *wn;
 	sr_wtimer_node_t *wp;
 	uint32_t cs;
-	uint32_t cl;
 
 	if(_sr_wtimer==NULL) {
 		LM_ERR("wtimer not intialized\n");
@@ -378,8 +377,9 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 
 	_sr_wtimer->itimer++;
 	cs = _sr_wtimer->itimer % SR_WTIMER_SIZE;
+	/* uint32_t cl;
 	cl = _sr_wtimer->itimer / SR_WTIMER_SIZE;
-	/* LM_DBG("wtimer - loop: %u - slot: %u\n", cl, cs); */
+	LM_DBG("wtimer - loop: %u - slot: %u\n", cl, cs); */
 
 	wp = NULL;
 	wt=_sr_wtimer->wlist[cs];
