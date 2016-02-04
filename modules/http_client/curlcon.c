@@ -71,13 +71,13 @@ typedef struct raw_http_client_conn
 static raw_http_client_conn_t *raw_conn_list = NULL;
 
 static cfg_option_t tls_versions[] = {
-	{"DEFAULT",  .val = CURL_SSLVERSION_DEFAULT},
-	{"SSLv2",    .val = CURL_SSLVERSION_SSLv2},
-	{"SSLv3",    .val = CURL_SSLVERSION_SSLv3},
-	{"TLSv1",    .val = CURL_SSLVERSION_TLSv1},
-	{"TLSv1.0",  .val = CURL_SSLVERSION_TLSv1_0},
-	{"TLSv1.1",  .val = CURL_SSLVERSION_TLSv1_1},
-	{"TLSv1.2",  .val = CURL_SSLVERSION_TLSv1_2},
+	{"DEFAULT",  .val = 0}, /* CURL_SSLVERSION_DEFAULT */
+	{"TLSv1",    .val = 1}, /* CURL_SSLVERSION_TLSv1 */
+	{"SSLv2",    .val = 2}, /* CURL_SSLVERSION_SSLv2 */
+	{"SSLv3",    .val = 3}, /* CURL_SSLVERSION_SSLv3 */
+	{"TLSv1.0",  .val = 4}, /* CURL_SSLVERSION_TLSv1_0 - support after libcurl 7.34.0 */
+	{"TLSv1.1",  .val = 5}, /* CURL_SSLVERSION_TLSv1_1 - support after libcurl 7.34.0 */
+	{"TLSv1.2",  .val = 6}, /* CURL_SSLVERSION_TLSv1_2 - support after libcurl 7.34.0 */
 	{0}
 };
 
@@ -334,18 +334,18 @@ int curl_parse_param(char *val)
 			if(pit->name.len==12 && strncmp(pit->name.s, "httpredirect", 12)==0) {
 				if(str2int(&tok, &http_follow_redirect) != 0) {
 					/* Bad value */
-					LM_DBG("curl connection [%.*s]: httpredirect bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: httpredirect bad value. Using default\n", name.len, name.s);
 					http_follow_redirect = default_http_follow_redirect;
 				}
 				if (http_follow_redirect != 0 && http_follow_redirect != 1) {
-					LM_DBG("curl connection [%.*s]: httpredirect bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: httpredirect bad value. Using default\n", name.len, name.s);
 					http_follow_redirect = default_http_follow_redirect;
 				}
 				LM_DBG("curl [%.*s] - httpredirect [%d]\n", pit->name.len, pit->name.s, http_follow_redirect);
 			} else if(pit->name.len==7 && strncmp(pit->name.s, "timeout", 7)==0) {
 				if(str2int(&tok, &timeout)!=0) {
 					/* Bad timeout */
-					LM_DBG("curl connection [%.*s]: timeout bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: timeout bad value. Using default\n", name.len, name.s);
 					timeout = default_connection_timeout;
 				}
 				LM_DBG("curl [%.*s] - timeout [%d]\n", pit->name.len, pit->name.s, timeout);
@@ -360,36 +360,36 @@ int curl_parse_param(char *val)
 			} else if(pit->name.len==11 && strncmp(pit->name.s, "maxdatasize", 11)==0) {
 				if(str2int(&tok, &maxdatasize)!=0) {
 					/* Bad timeout */
-					LM_DBG("curl connection [%.*s]: maxdatasize bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: maxdatasize bad value. Using default\n", name.len, name.s);
 					maxdatasize = default_maxdatasize;
 				}
 				LM_DBG("curl [%.*s] - maxdatasize [%d]\n", pit->name.len, pit->name.s, maxdatasize);
 			} else if(pit->name.len==11 && strncmp(pit->name.s, "verify_peer", 11)==0) {
 				if(str2int(&tok, &verify_peer)!=0) {
 					/* Bad integer */
-					LM_DBG("curl connection [%.*s]: verify_peer bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: verify_peer bad value. Using default\n", name.len, name.s);
 					verify_peer = default_tls_verify_peer;
 				}
 				if (verify_peer != 0 && verify_peer != 1) {
-					LM_DBG("curl connection [%.*s]: verify_peer bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: verify_peer bad value. Using default\n", name.len, name.s);
 					verify_peer = default_tls_verify_peer;
 				}
 				LM_DBG("curl [%.*s] - verify_peer [%d]\n", pit->name.len, pit->name.s, verify_peer);
 			} else if(pit->name.len==11 && strncmp(pit->name.s, "verify_host", 11)==0) {
 				if(str2int(&tok, &verify_host)!=0) {
 					/* Bad integer */
-					LM_DBG("curl connection [%.*s]: verify_host bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: verify_host bad value. Using default\n", name.len, name.s);
 					verify_host = default_tls_verify_host;
 				}
 				LM_DBG("curl [%.*s] - verify_host [%d]\n", pit->name.len, pit->name.s, verify_host);
 			} else if(pit->name.len==10 && strncmp(pit->name.s, "tlsversion", 10)==0) {
 				if(str2int(&tok, &tlsversion)!=0) {
 					/* Bad integer */
-					LM_DBG("curl connection [%.*s]: tlsversion bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: tlsversion bad value. Using default\n", name.len, name.s);
 					tlsversion = default_tls_version;
 				}
 				if (tlsversion >= CURL_SSLVERSION_LAST) {
-					LM_DBG("curl connection [%.*s]: tlsversion bad value. Using default\n", name.len, name.s);
+					LM_WARN("curl connection [%.*s]: tlsversion unsupported value. Using default\n", name.len, name.s);
 					tlsversion = default_tls_version;
 				}
 				LM_DBG("curl [%.*s] - tlsversion [%d]\n", pit->name.len, pit->name.s, tlsversion);
@@ -466,16 +466,19 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 	/* Get the name from the section header */
 
 	ret = cfg_get_token(&t, parser, 0);
-	if (t.type != CFG_TOKEN_ALPHA)
+	if (ret < 0) return -1;
+	if ((ret > 0) || (t.type != CFG_TOKEN_ALPHA))
 	{
-		LM_ERR("Invalid connection name\n");
+		LM_ERR("%s:%d:%d: Invalid or missing connection name\n",
+				parser->file, t.start.line, t.start.col);
 		return -1;
 	}
 	pkg_str_dup(&name, &t.val);
 	ret = cfg_get_token(&t, parser, 0);
-	if (t.type != ']')
+	if (ret < 0) return -1;
+	if ((ret > 0) || (t.type != ']'))
 	{
-		ERR("%s:%d:%d: Syntax error, ']' expected\n",
+		LM_ERR("%s:%d:%d: Syntax error, ']' expected\n",
 				parser->file, t.start.line, t.start.col);
 		return -1;
 	}
@@ -576,6 +579,10 @@ int fixup_raw_http_client_conn_list(void)
 		cc->clientkey = raw_cc->clientkey.s ? as_asciiz(&raw_cc->clientkey) : NULL;
 		cc->ciphersuites = raw_cc->ciphersuites.s ? as_asciiz(&raw_cc->ciphersuites) : NULL;
 		cc->tlsversion = raw_cc->tlsversion;
+		if (cc->tlsversion >= CURL_SSLVERSION_LAST) {
+			LM_WARN("curl connection [%.*s]: tlsversion %d unsupported value. Using default\n", cc->name.len, cc->name.s, cc->tlsversion);
+			cc->tlsversion = default_tls_version;
+		}
 		cc->verify_peer = raw_cc->verify_peer;
 		cc->verify_host = raw_cc->verify_host;
 		cc->timeout = raw_cc->timeout;

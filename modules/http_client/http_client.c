@@ -240,6 +240,10 @@ static int mod_init(void)
 	curl_counter_init();
 	counter_add(connections, curl_connection_count());
 
+	if (default_tls_version >= CURL_SSLVERSION_LAST) {
+		LM_WARN("tlsversion %d unsupported value. Using libcurl default\n", default_tls_version);
+		default_tls_version = CURL_SSLVERSION_DEFAULT;
+	}
 	if (http_client_config_file.s != NULL)
 	{
 		if (http_client_load_config(&http_client_config_file) < 0)
