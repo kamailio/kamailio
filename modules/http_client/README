@@ -70,7 +70,8 @@ Carsten Bock
 
         1. Available Functions
 
-              1.1. http_client(name)
+              1.1. http_connect(msg, connection, url, result,
+                      content_type, post)
 
    List of Examples
 
@@ -601,15 +602,36 @@ Chapter 2. Developer Guide
 
    1. Available Functions
 
-        1.1. http_client(name)
+        1.1. http_connect(msg, connection, url, result, content_type,
+                post)
 
 1. Available Functions
 
-   1.1. http_client(name)
+   1.1. http_connect(msg, connection, url, result, content_type, post)
 
-1.1.  http_client(name)
+1.1.  http_connect(msg, connection, url, result, content_type, post)
 
-   Text here
+   Sends HTTP GET or POST request to a given connection.
+
+   Returns the status code of the HTTP response (if >= 100), or a curl
+   error code (if < 100)
 
    Meaning of the parameters is as follows:
-     * const char* name - Name of the stuff. (Hugh - fill in here)
+     * struct sip_msg *msg
+       The current sip message structure.
+     * const str *connection
+       The name of a preset http_con connection to use for this query.
+     * const str *url
+       A string that will be appended to the base URL specified in the
+       connection. This parameter can be NULL, which means nothing will be
+       appended to the base URL.
+     * str *result
+       A pointer to a string that will contain the response body. On
+       success, the data is allocated in pkg memory by the http_client
+       module and must be freed by the caller.
+     * const char *content_type
+       A null-terminated string specifying the content type to place in a
+       Content-Type header. Use NULL when a message body is not required.
+     * const str *post
+       A string containing the message body to send. Use NULL when a
+       message body is not required.

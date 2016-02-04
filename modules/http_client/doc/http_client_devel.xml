@@ -16,16 +16,55 @@
 	<title>Available Functions</title>
 		<section>
 			<title>
-			<function moreinfo="none">http_client(name)</function>
+			<function moreinfo="none">http_connect(msg, connection, url, result, content_type, post)</function>
 			</title>
 			<para>
-			Text here
+			Sends HTTP GET or POST request to a given connection.
+			</para>
+			<para>
+			Returns the status code of the HTTP response (if &gt;= 100), or a curl error code (if &lt; 100)
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
 			<listitem>
-				<para><emphasis>const char* name</emphasis> - Name of the 
-					stuff. (Hugh - fill in here)
+				<para><emphasis>struct sip_msg *msg</emphasis></para>
+				<para>
+				The current sip message structure.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const str *connection</emphasis></para>
+				<para>
+				The name of a preset http_con connection to use for this query.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const str *url</emphasis></para>
+				<para>
+				A string that will be appended to the base URL specified in the connection.
+				This parameter can be NULL, which means nothing will be appended to the base URL.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>str *result</emphasis></para>
+				<para>
+				A pointer to a string that will contain the response body.
+				On success, the data is allocated in pkg memory by the http_client module
+				and must be freed by the caller.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const char *content_type</emphasis></para>
+				<para>
+				A null-terminated string specifying the content type to place in a Content-Type header.
+				Use NULL when a message body is not required.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const str *post</emphasis></para>
+				<para>
+				A string containing the message body to send.
+				Use NULL when a message body is not required.
 				</para>
 			</listitem>
 			</itemizedlist>
