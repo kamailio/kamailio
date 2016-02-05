@@ -258,11 +258,14 @@ int corex_send(sip_msg_t *msg, gparam_t *pu, enum sip_protos proto)
 		u = &next_hop;
 		u->port_no = 5060;
 		u->host = dest;
-		p = dest.s;
 		/* detect ipv6 */
-		p = memchr(p, ']', dest.len);
-		if (p) p++;
-		p = memchr(p, ':', dest.len);
+		p = memchr(dest.s, ']', dest.len);
+		if (p) {
+			p++;
+			p = memchr(p, ':', dest.s + dest.len - p);
+		} else {
+			p = memchr(dest.s, ':', dest.len);
+		}
 		if (p)
 		{
 			u->host.len = p - dest.s;
