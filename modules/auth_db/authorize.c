@@ -62,13 +62,16 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
-	col[0] = &user_column;
 
 	keys[0] = &user_column;
 	keys[1] = &domain_column;
 
-	for (n = 0, cred=credentials; cred ; n++, cred=cred->next) {
-		col[n] = &cred->text;
+	if(flags&AUTH_DB_SUBS_SKIP_CREDENTIALS) {
+		col[0] = &user_column;
+	} else {
+		for (n = 0, cred=credentials; cred ; n++, cred=cred->next) {
+			col[n] = &cred->text;
+		}
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB1_STR;
