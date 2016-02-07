@@ -1,4 +1,4 @@
-/* 
+/*
  * Digest Authentication Module
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -134,7 +134,7 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"auth_db", 
+	"auth_db",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
@@ -153,7 +153,7 @@ static int child_init(int rank)
 {
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
-	
+
 	auth_db_handle = auth_dbf.init(&db_url);
 	if (auth_db_handle == 0){
 		LM_ERR("unable to connect to the database\n");
@@ -220,7 +220,7 @@ static int w_is_subscriber(sip_msg_t *msg, char *_uri, char* _table,
 {
 	str suri;
 	str stable;
-	int iflags;
+	int iflags = 0;
 	int ret;
 	sip_uri_t puri;
 
@@ -356,7 +356,7 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 
 		/* definition is between p and e */
 		/* search backwards because PV definition may contain '=' characters */
-		for (sep = end; sep >= p && *sep != '='; sep--); 
+		for (sep = end; sep >= p && *sep != '='; sep--);
 		if (sep > p) {
 			/* pv=column style */
 			/* set column name */
@@ -385,7 +385,7 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 				goto parse_error;
 			}
 			pv.len = snprintf(pv.s, pve->text.len + 7, "$avp(%.*s)",
-			                  pve->text.len, pve->text.s);
+					pve->text.len, pve->text.s);
 		}
 
 		/* create a pv spec */
