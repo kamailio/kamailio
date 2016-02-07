@@ -40,14 +40,14 @@
 #include "presence_mwi.h"
 
 /*! \brief utility function that skips spaces and tabs */
-inline char *eat_sp_tab(char *at, char *over)
+static inline char *eat_sp_tab(char *at, char *over)
 {
     while((at < over) && ((*at == ' ') || (*at == '\t'))) at++;
     return at;
 }
 
 /*! \brief utility function that skips printable ascii chars */
-inline char *eat_printable(char *at, char *over)
+static inline char *eat_printable(char *at, char *over)
 {
     while ((at < over) && ((*at == '\t') || ((*at >= 32) && (*at <= 126))))
 	at++;
