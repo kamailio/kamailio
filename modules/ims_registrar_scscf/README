@@ -1,0 +1,818 @@
+IMS Usrloc PCSCF Module
+
+Jason Penton
+
+   Smile Communications
+
+Edited by
+
+Richard Good
+
+   Smile Communications
+
+   Copyright © 2012 Smile Communications
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. default_expires (int)
+              3.2. default_expires_range (int)
+              3.3. min_expires (int)
+              3.4. max_expires (int)
+              3.5. subscription_default_expires (int)
+              3.6. subscription_expires_range (int)
+              3.7. subscription_min_expires (int)
+              3.8. subscription_max_expires (int)
+              3.9. user_data_dtd (string)
+              3.10. user_data_xsd (string)
+              3.11. support_wildcardPSI (int)
+              3.12. scscf_name (string)
+              3.13. store_profile_dereg (int)
+              3.14. cxdx_dest_realm (string)
+              3.15. cxdx_forced_peer (string)
+              3.16. append_branches (integer)
+              3.17. method_filtering (integer)
+              3.18. user_data_always (integer)
+
+        4. Functions
+
+              4.1. save(async_reply_route, domain)
+              4.2. lookup(domain)
+              4.3. lookup_path_to_contact(uri)
+              4.4. unregister(domain)
+              4.5. assign_server_unreg(aysnc_reply_route, domain,
+                      direction)
+
+              4.6. impu_registered(domain)
+              4.7. term_impu_registered(domain)
+              4.8. reg_fetch_contacts(domain, uri, profile)
+              4.9. reg_free_contacts(profile)
+              4.10. can_subscribe_to_reg(domain)
+              4.11. subscribe_to_reg(domain)
+              4.12. can_publish_reg(domain)
+              4.13. publish_reg(domain)
+
+        5. RPC Commands
+
+              5.1. ulpcscf.status
+
+        6. Statistics
+
+              6.1. registered contacts
+              6.2. impus
+              6.3. expired contacts
+
+   2. Frequently Asked Questions
+
+   List of Examples
+
+   1.1. Set default_expires parameter
+   1.2. Set default_expires_range parameter
+   1.3. Set min_expiresparameter
+   1.4. Set max_expiresparameter
+   1.5. Set subscription_default_expires parameter
+   1.6. Set subscription_expires_range parameter
+   1.7. Set subscription_min_expiresparameter
+   1.8. Set subscription_max_expiresparameter
+   1.9. Set user_data_dtdparameter
+   1.10. Set user_data_xsdparameter
+   1.11. Set support_wildcardPSIparameter
+   1.12. Set scscf_nameparameter
+   1.13. Set store_profile_deregparameter
+   1.14. Set cxdx_dest_realmparameter
+   1.15. Set cxdx_forced_peerparameter
+   1.16. Set cxdx_forced_peerparameter
+   1.17. Set cxdx_forced_peerparameter
+   1.18. Set user_data_alwaysparameter
+   1.19. save usage
+   1.20. lookup usage
+   1.21. lookup usage
+   1.22. unregister usage
+   1.23. impu_registered usage
+   1.24. term_impu_registered usage
+   1.25. reg_fetch_contacts usage
+   1.26. reg_free_contacts usage
+   1.27. can_subscribe_to_reg usage
+   1.28. subscribe_to_reg usage
+   1.29. can_publish_reg usage
+   1.30. publish_reg usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. default_expires (int)
+        3.2. default_expires_range (int)
+        3.3. min_expires (int)
+        3.4. max_expires (int)
+        3.5. subscription_default_expires (int)
+        3.6. subscription_expires_range (int)
+        3.7. subscription_min_expires (int)
+        3.8. subscription_max_expires (int)
+        3.9. user_data_dtd (string)
+        3.10. user_data_xsd (string)
+        3.11. support_wildcardPSI (int)
+        3.12. scscf_name (string)
+        3.13. store_profile_dereg (int)
+        3.14. cxdx_dest_realm (string)
+        3.15. cxdx_forced_peer (string)
+        3.16. append_branches (integer)
+        3.17. method_filtering (integer)
+        3.18. user_data_always (integer)
+
+   4. Functions
+
+        4.1. save(async_reply_route, domain)
+        4.2. lookup(domain)
+        4.3. lookup_path_to_contact(uri)
+        4.4. unregister(domain)
+        4.5. assign_server_unreg(aysnc_reply_route, domain, direction)
+        4.6. impu_registered(domain)
+        4.7. term_impu_registered(domain)
+        4.8. reg_fetch_contacts(domain, uri, profile)
+        4.9. reg_free_contacts(profile)
+        4.10. can_subscribe_to_reg(domain)
+        4.11. subscribe_to_reg(domain)
+        4.12. can_publish_reg(domain)
+        4.13. publish_reg(domain)
+
+   5. RPC Commands
+
+        5.1. ulpcscf.status
+
+   6. Statistics
+
+        6.1. registered contacts
+        6.2. impus
+        6.3. expired contacts
+
+1. Overview
+
+   This module contains REGISTER processing logic for the S-CSCF. The
+   'storage engine' of this module is provided by the ims_usrloc_scscf
+   module:
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * CDP
+     * CDP_AVP
+     * TM
+     * ims_usrloc_scscf
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * LibXML2 - used for parsing the XML Subscription information
+       obtained from the HSS (Home Subscriber Server)
+
+3. Parameters
+
+   3.1. default_expires (int)
+   3.2. default_expires_range (int)
+   3.3. min_expires (int)
+   3.4. max_expires (int)
+   3.5. subscription_default_expires (int)
+   3.6. subscription_expires_range (int)
+   3.7. subscription_min_expires (int)
+   3.8. subscription_max_expires (int)
+   3.9. user_data_dtd (string)
+   3.10. user_data_xsd (string)
+   3.11. support_wildcardPSI (int)
+   3.12. scscf_name (string)
+   3.13. store_profile_dereg (int)
+   3.14. cxdx_dest_realm (string)
+   3.15. cxdx_forced_peer (string)
+   3.16. append_branches (integer)
+   3.17. method_filtering (integer)
+   3.18. user_data_always (integer)
+
+3.1. default_expires (int)
+
+   If the processed message contains neither Expires HFs nor expires
+   contact parameters, this value will be used for newly created S-CSCF
+   usrloc records. The parameter contains number of second to expire (for
+   example use 3600 for one hour). If it is set to a lower value than the
+   min_expires parameter then it will be ignored. This parameter can be
+   modified via ser config framework. A random value in a specific
+   interval can be selected by using the default_expires_range parameter
+
+   Default value is 3600.
+
+   Example 1.1. Set default_expires parameter
+...
+        modparam("ims_registrar_scscf", "default_expires", 3600)
+...
+
+3.2. default_expires_range (int)
+
+   This parameter specifies that the expiry used for newly created S-CSCF
+   usrloc records are not fixed(when default_expires applies), but a
+   random value in the intervalrdq
+   [default_expires-default_expires_range%,
+   default_expires+default_expires_range%]. The value is between 0 and 100
+   and represent the maximim percentage from default_expires that will be
+   substracted or added when computing the value. Default in 0, meaning
+   default_expires is left unmodified. This parameter can be modified via
+   ser config framework.
+
+   Default value is 0.
+
+   Example 1.2. Set default_expires_range parameter
+...
+        modparam("ims_registrar_scscf", "default_expires_range", 30) # +- 30% fr
+om default_expires
+...
+
+3.3. min_expires (int)
+
+   The minimum expires value of a Contact, values lower than this minimum
+   will be automatically set to the minimum. Value 0 disables the
+   checking. This parameter can be modified via ser config framework.
+
+   Default value is 60.
+
+   Example 1.3. Set min_expiresparameter
+...
+        modparam("ims_registrar_scscf", "min_expires", 1800)
+...
+
+3.4. max_expires (int)
+
+   The maximum expires value of a Contact, values higher than this maximum
+   will be automatically set to the maximum. Value 0 disables the
+   checking. This parameter can be modified via ser config framework.
+
+   Default value is 0.
+
+   Example 1.4. Set max_expiresparameter
+...
+        modparam("ims_registrar_scscf", "max_expires", 3600)
+...
+
+3.5. subscription_default_expires (int)
+
+   If the processed message contains neither Expires HFs nor expires
+   contact parameters, this value will be used for newly created
+   subscriptions. The parameter contains number of second to expire (for
+   example use 3600 for one hour). If it is set to a lower value than the
+   subscription_min_expires parameter then it will be ignored. A random
+   value in a specific interval can be selected by using the
+   subscription_expires_range parameter
+
+   Default value is 3600.
+
+   Example 1.5. Set subscription_default_expires parameter
+...
+        modparam("ims_registrar_scscf", "subscription_default_expires", 3600)
+...
+
+3.6. subscription_expires_range (int)
+
+   This parameter specifies that the expiry used for newly created
+   subscriptions are not fixed(when subscription_default_expires applies),
+   but a random value in the interval
+   [subscription_default_expires-subscription_expires_range%,
+   subscription_default_expires+subscription_expires_range%]. The value is
+   between 0 and 100 and represent the maximim percentage from
+   subscription_default_expires that will be substracted or added when
+   computing the value. Default in 0, meaning subscription_default_expires
+   is left unmodified.
+
+   Default value is 0.
+
+   Example 1.6. Set subscription_expires_range parameter
+...
+        modparam("ims_registrar_scscf", "subscription_expires_range", 30) # +- 3
+0% from subscription_expires_range
+...
+
+3.7. subscription_min_expires (int)
+
+   The minimum expires value of a subscription, values lower than this
+   minimum will be automatically set to the minimum. Value 0 disables the
+   checking.
+
+   Default value is 10.
+
+   Example 1.7. Set subscription_min_expiresparameter
+...
+        modparam("subscription_min_expires", "min_expires", 1800)
+...
+
+3.8. subscription_max_expires (int)
+
+   The maximum expires value of a subscription, values higher than this
+   maximum will be automatically set to the maximum. Value 0 disables the
+   checking.
+
+   Default value is 1000000.
+
+   Example 1.8. Set subscription_max_expiresparameter
+...
+        modparam("ims_registrar_scscf", "subscription_max_expires", 3600)
+...
+
+3.9. user_data_dtd (string)
+
+   DTD to check the user data received in SAA (Server Assignment Answer).
+
+   Default value is NULL (none).
+
+   Example 1.9. Set user_data_dtdparameter
+...
+        modparam("ims_registrar_scscf", "user_data_dtd", "/usr/local/etc/kamaili
+o/CxDataType_Rel7.dtd")
+...
+
+3.10. user_data_xsd (string)
+
+   XSD to check the user data received in SAA (Server Assignment Answer).
+
+   Default value is NULL (none).
+
+   Example 1.10. Set user_data_xsdparameter
+...
+        modparam("ims_registrar_scscf", "user_data_xsd", "/usr/local/etc/kamaili
+o/CxDataType_Rel7.xsd")
+...
+
+3.11. support_wildcardPSI (int)
+
+   indicate support for wildcard PSI is subscription profile (SAA)
+
+   Default value is 0.
+
+   Example 1.11. Set support_wildcardPSIparameter
+...
+        modparam("ims_registrar_scscf", "support_wildcardPSI", 1)
+...
+
+3.12. scscf_name (string)
+
+   The name of the S-CSCF
+
+   Default value is sip:scscf.ims.smilecoms.com:6060.
+
+   Example 1.12. Set scscf_nameparameter
+...
+        modparam("ims_registrar_scscf", "scscf_name", "sip:scscf2.ims.smilecoms.
+com:6060")
+...
+
+3.13. store_profile_dereg (int)
+
+   Should the subscription profile be stored on de-registration
+
+   Default value 0.
+
+   Example 1.13. Set store_profile_deregparameter
+...
+        modparam("ims_registrar_scscf", "store_profile_dereg", 1)
+...
+
+3.14. cxdx_dest_realm (string)
+
+   Destination realm to be used in Diameter messages
+
+   Default value "ims.smilecoms.com"
+
+   Example 1.14. Set cxdx_dest_realmparameter
+...
+        modparam("ims_registrar_scscf", "cxdx_dest_realm", "my.domain,org")
+...
+
+3.15. cxdx_forced_peer (string)
+
+   FQDN of Diameter Peer (HSS) to use for communication (SAR). If you use
+   this, the routing defined in your diameter xml configuration file (CDP)
+   will be ignored and as a result you will lose the benefits of load
+   balancing and failover.
+
+   Default value NULL (none)
+
+   Example 1.15. Set cxdx_forced_peerparameter
+...
+        modparam("ims_registrar_scscf", "cxdx_forced_peer", "hss.ims.smilecoms.c
+om")
+...
+
+3.16. append_branches (integer)
+
+   The parameter controls how lookup function processes multiple contacts.
+   If there are multiple contacts for the given username in usrloc and
+   this parameter is set to 1, Request-URI will be overwritten with the
+   highest-q rated contact and the rest will be appended to sip_msg
+   structure and can be later used by tm for forking. If the parameter is
+   set to 0, only Request-URI will be overwritten with the highest-q rated
+   contact and the rest will be left unprocessed. This parameter can be
+   modified via Kamailio config framework.
+
+   Default value is 0 (disabled)
+
+   Example 1.16. Set cxdx_forced_peerparameter
+...
+        modparam("ims_registrar_scscf", "append_branches", 1)
+...
+
+3.17. method_filtering (integer)
+
+   Tells if the contact filtering based on supported methods should be
+   performed during lookup. It's enabled only if it has a non zero value.
+
+   Default value is 0 (disabled)
+
+   Example 1.17. Set cxdx_forced_peerparameter
+...
+        modparam("ims_registrar_scscf", "method_filtering", 1)
+...
+
+3.18. user_data_always (integer)
+
+   If specified this will make the S-CSCF always request user data from
+   HSS.
+
+   Default value is 0 (disabled)
+
+   Example 1.18. Set user_data_alwaysparameter
+...
+        modparam("ims_registrar_scscf", "user_data_always", 1)
+...
+
+4. Functions
+
+   4.1. save(async_reply_route, domain)
+   4.2. lookup(domain)
+   4.3. lookup_path_to_contact(uri)
+   4.4. unregister(domain)
+   4.5. assign_server_unreg(aysnc_reply_route, domain, direction)
+   4.6. impu_registered(domain)
+   4.7. term_impu_registered(domain)
+   4.8. reg_fetch_contacts(domain, uri, profile)
+   4.9. reg_free_contacts(profile)
+   4.10. can_subscribe_to_reg(domain)
+   4.11. subscribe_to_reg(domain)
+   4.12. can_publish_reg(domain)
+   4.13. publish_reg(domain)
+
+4.1. save(async_reply_route, domain)
+
+   The function processes a REGISTER message. It can add, remove or modify
+   usrloc records depending on Contact and Expires HFs in the REGISTER
+   message. On success and when called from the REQUEST_ROUTE, 200 OK will
+   be returned listing all contacts that are currently in usrloc. On an
+   error, error message will be sent with a short description in reason
+   phrase. In case of internal errors the function will return FALSE,
+   otherwise a force to exit the cfg is file is actioned by returning 0
+   (asynchronous processing)
+
+   Meaning of the parameters is as follows:
+     * async_reply_route- the route to execute after the save has
+       completed. This is required because the save function is executed
+       asynchronously (Diameter).
+     * domain- Logical domain within registrar.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE
+
+   Example 1.19. save usage
+...
+if (!impu_registered("location")) {
+   save("PRE_REG_SAR_REPLY","location");
+}
+...
+
+4.2. lookup(domain)
+
+   This function extract the IMPU from the Request-URI and tries to find
+   all registered contacts in usrloc. If there are no such contacts, -1 is
+   returned. If there are, Request-URI will be rewritten with the contact
+   that has the highest q value. The rest of the contacts will be appended
+   to the sip msg structure (if append_branches is set) and can be later
+   used by TM module for forking for example...
+
+   If the method filtering option is enabled, the lookup function will
+   only return contacts that support the method of the request being
+   processed (see allows header)
+
+   Meaning of the parameters is as follows:
+     * domain - Logical domain within registrar.
+
+   Return codes:
+     * -1 - Not found
+     * -2 - Found, but method not allowed (check Allows header for INVITE,
+       MESSAGE, etc).
+     * -3 - Error ocurred internally during processing
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE
+
+   Example 1.20. lookup usage
+...
+lookup("location");
+switch ($retcode) {
+    case -1:
+    case -3:
+        sl_send_reply("404", "Not Found");
+        exit;
+    case -2:
+        sl_send_reply("405", "Not Found");
+        exit;
+};
+...
+
+4.3. lookup_path_to_contact(uri)
+
+   This function take a URI and tries to find the contact in usrloc. If
+   the contact is found and has a path set, then a path header is added to
+   the SIP message so it can be loose routed.
+
+   Meaning of the parameters is as follows:
+     * uri - URI of contact to lookup
+
+   Return codes:
+     * 1 - Success
+     * -1 - Failure
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE
+
+   Example 1.21. lookup usage
+...
+lookup_path_to_contact($ruri);
+...
+
+4.4. unregister(domain)
+
+   This function will remove all bindings for the IMPU found in the
+   Request-URI.
+
+   Meaning of the parameters is as follows:
+     * Domain- Logical domain within registrar.
+
+   This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
+
+   Example 1.22. unregister usage
+...
+unregister("location");
+...
+
+4.5. assign_server_unreg(aysnc_reply_route, domain, direction)
+
+   TBD
+
+   used in REQUEST_ROUTE
+
+4.6. impu_registered(domain)
+
+   This function checks if the IMPU in the To header is registered in
+   usrloc.
+
+   Meaning of the parameters is as follows:
+     * domain- Logical domain within registrar.
+
+   Return codes:
+     * 1 - True, IMPU exists in registered state in usrloc
+     * -1 - False, IMPU not registered
+
+   This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
+
+   Example 1.23. impu_registered usage
+...
+impu_registered("location");
+switch ($retcode) {
+    case -1:
+        sl_send_reply("404", "Not Found");
+        exit;
+    case 1:
+        #true, continue with normal processing
+};
+...
+
+4.7. term_impu_registered(domain)
+
+   This function checks if the IMPU in the Request-URI is registered in
+   usrloc.
+
+   Meaning of the parameters is as follows:
+     * domain- Logical domain within registrar.
+
+   Return codes:
+     * 1 - True, IMPU exists in registered state in usrloc
+     * -1 - False, IMPU not registered
+
+   This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
+
+   Example 1.24. term_impu_registered usage
+...
+term_impu_registered("location");
+switch ($retcode) {
+     case -1:
+          sl_send_reply("404", "Not Found");
+          exit;
+     case 1:
+          #true, continue with normal processing
+};
+...
+
+4.8. reg_fetch_contacts(domain, uri, profile)
+
+   The function fetches the contacts for 'uri' from table 'domain' to
+   pseudo-variable $imssulc(profile) [imssulc = ims scscf ulc].
+
+   Meaning of the parameters is as follows:
+     * domain - Name of table that should be used for the lookup of
+       contact addresses.
+     * uri - The SIP URI address of the user which to fetch the contact
+       addresses for. It can contain pseudo-variables that are evaluated
+       at runtime.
+     * profile - Name of $imssulc pseudo-variable profile that will store
+       the fetched contacts. It is a static string.
+
+   This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
+
+   Example 1.25. reg_fetch_contacts usage
+...
+reg_fetch_contacts("location", "$ru", "callee");
+reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
+...
+
+4.9. reg_free_contacts(profile)
+
+   The function frees the contacts from pseudo-variable $ulc(profile).
+   Should be called to release the content of a profile. Anyhow, fetching
+   a new contact addresses set over a profile will release any existing
+   data in that profile.
+
+   Meaning of the parameters is as follows:
+     * profile - Name of $imssulc pseudo-variable profile that stores the
+       contacts. It is a static string.
+
+   This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
+
+   Example 1.26. reg_free_contacts usage
+...
+reg_free_contacts("callee");
+...
+
+4.10. can_subscribe_to_reg(domain)
+
+   This function checks to see that a SUBSCRIBE request is authorised to
+   subscribe to the particular identity. Only 3 entities can subscribe:
+     * The user agent to it's own state
+     * The P-CSCF specified in the path header for that user
+     * Application Server (AS) not yet implemented
+
+   Meaning of the parameters is as follows:
+     * domain - Logical domain within registrar.
+
+   This function can be used in REQUEST_ROUTE
+
+   Example 1.27. can_subscribe_to_reg usage
+...
+if (can_subscribe_to_reg("location")){
+     $var(ret)= subscribe_to_reg("location");
+}
+...
+
+4.11. subscribe_to_reg(domain)
+
+   Save the subscription to the REG event for the UAC or the appropriate
+   P-CSCF (in the path to the UAC).
+
+   Meaning of the parameters is as follows:
+     * domain - Logical domain within registrar.
+
+   This function can be used in REQUEST_ROUTE
+
+   Example 1.28. subscribe_to_reg usage
+...
+if (can_subscribe_to_reg("location")){
+     $var(ret)= subscribe_to_reg("location");
+}
+...
+
+4.12. can_publish_reg(domain)
+
+   This function checks to see that a PUBLISH request is authorised to
+   publish for a particular identity. Only 3 entities can publish:
+     * The user agent to it's own state
+     * The P-CSCF specified in the path header for that user
+     * Application Server (AS) not yet implemented
+
+   Meaning of the parameters is as follows:
+     * domain - Logical domain within registrar.
+
+   This function can be used in REQUEST_ROUTE
+
+   Example 1.29. can_publish_reg usage
+...
+if (can_publish_reg("location")){
+    $var(ret)= publish_reg("location");
+}
+...
+
+4.13. publish_reg(domain)
+
+   Save the publish to the REG event for the UAC or the appropriate P-CSCF
+   (in the path to the UAC).
+
+   Meaning of the parameters is as follows:
+     * domain - Logical domain within registrar.
+
+   This function can be used in REQUEST_ROUTE
+
+   Example 1.30. publish_reg usage
+...
+if (can_publish_reg("location")){
+    $var(ret)= publish_reg("location");
+}
+...
+
+5. RPC Commands
+
+   5.1. ulpcscf.status
+
+   exported RPC commands.
+
+5.1. ulpcscf.status
+
+   Status of pcscf_usrloc, AORs, max slots, etc.
+
+6. Statistics
+
+   6.1. registered contacts
+   6.2. impus
+   6.3. expired contacts
+
+   Exported statistics are listed in the next sections.
+
+6.1. registered contacts
+
+   Number of AOR contacts in registered state - cannot be reset.
+
+6.2. impus
+
+   Number of IMPUs - cannot be reset.
+
+6.3. expired contacts
+
+   Number of expired contacts - can be reset.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1. Where can I find more about Kamailio?
+   2.2. Where can I post a question about this module?
+   2.3. How can I report a bug?
+
+   2.1.
+
+   Where can I find more about Kamailio?
+
+   Take a look at http://www.kamailio.org/.
+
+   2.2.
+
+   Where can I post a question about this module?
+
+   First at all check if your question was already answered on one of our
+   mailing lists:
+     * User Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+     * Developer Mailing List -
+       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+
+   E-mails regarding any stable Kamailio release should be sent to
+   <sr-users@lists.sip-router.org> and e-mails regarding development
+   versions should be sent to <sr-dev@lists.sip-router.org>.
+
+   If you want to keep the mail private, send it to
+   <sr-users@lists.sip-router.org>.
+
+   2.3.
+
+   How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://sip-router.org/tracker.
