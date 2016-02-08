@@ -113,7 +113,14 @@ static int mod_init(void)
 {
 	LM_DBG("TCP keepalive module loaded.\n");
 
-	if (sr_event_register_cb(SREV_TCP_CLOSED, tcpops_handle_tcp_closed) != 0) {
+	if (tcp_closed_event < 0 || tcp_closed_event > 2) {
+		LM_ERR("invalid \"closed_event\" value: %d, must be 0 (disabled), 1 (enabled) or 2 (manual)\n", tcp_closed_event);
+		return -1;
+	}
+
+	if (tcp_closed_event /* register event only if tcp_closed_event != 0 */
+		&& (sr_event_register_cb(SREV_TCP_CLOSED, tcpops_handle_tcp_closed) != 0))
+	{
 		LM_ERR("problem registering tcpops_handle_tcp_closed call-back\n");
 		return -1;
 	}
@@ -365,6 +372,12 @@ static int w_tcpops_enable_closed_event1(sip_msg_t* msg, char* conid, char* foo)
 static int w_tcpops_enable_closed_event0(sip_msg_t* msg, char* foo)
 {
 	struct tcp_connection *s_con;
+
+	if (unlikely(tcp_closed_event != 2)) {
+		LM_WARN("tcp_enable_closed_event() can only be used if"
+				" the \"closed_event\" modparam is set to 2\n");
+		return -1;
+	}
 
 	if(unlikely(msg->rcv.proto != PROTO_TCP && msg->rcv.proto != PROTO_TLS && msg->rcv.proto != PROTO_WS && msg->rcv.proto != PROTO_WSS))
 	{

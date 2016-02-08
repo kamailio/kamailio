@@ -234,14 +234,14 @@ request_route {
                         <title><function>tcp_set_closed_event</function> usage</title>
                         <programlisting><![CDATA[
 ...
-# "tcp:closed" event route is globally disabled
-modparam("tcpops", "closed_event", 0)
+# "tcp:closed" event route is "manual" mode
+modparam("tcpops", "closed_event", 2)
 ...
 
 request_route {
 	...
 	if (is_method("REGISTER") && pv_www_authenticate("$td", "xxx", "0")) {
-		# but it will be enabled on this specific connection
+		# it will be called for this specific connection
 		tcp_enable_closed_event();
 	}
 	...

@@ -35,6 +35,7 @@
 #include "../../sr_module.h"
 
 
+/* globally enabled by default */
 int tcp_closed_event = 1;
 
 /**
@@ -197,11 +198,6 @@ static void tcpops_tcp_closed_run_route(struct tcp_connection *con)
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
 
-	/* bypass event route if tcp_closed_event == 0 and the
-	 * F_CONN_CLOSE_EV flag is not explicitly set */
-	if (!(tcp_closed_event || (con->flags & F_CONN_CLOSE_EV)))
-		return;
-
 	LM_DBG("tcp_closed_run_route event_route[tcp:closed]\n");
 
 	rt = route_get(&event_rt, "tcp:closed");
@@ -235,7 +231,10 @@ int tcpops_handle_tcp_closed(void *data)
 		return -1;
 	}
 
-	tcpops_tcp_closed_run_route(tev->con);
+	/* run event route if tcp_closed_event == 1 or if the
+	 * F_CONN_CLOSE_EV flag is explicitly set */
+	if (tcp_closed_event == 1 || (tev->con->flags & F_CONN_CLOSE_EV))
+		tcpops_tcp_closed_run_route(tev->con);
 
 	return 0;
 }

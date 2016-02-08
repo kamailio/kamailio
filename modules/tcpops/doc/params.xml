@@ -10,13 +10,21 @@
 		<section>
 		<title><varname>closed_event</varname> (int)</title>
 		<para>
-			if set to 0, the "tcp:closed" event route will not be called on TCP
-			disconnections (unless the "tcp_enable_closed_event()" function enabled
-			it explicitly).
+			If set to 0 (gloabbly disabled), the "tcp:closed" event route will never be called on TCP
+			disconnections.
+		</para>
+		<para>
+			If set to 1 (globally enabled), the "tcp:closed" event route will always be called on TCP
+			disconnections.
+		</para>
+		<para>
+			If set to 2 ("manual" mode), the "tcp:closed" event route will only be called on TCP
+			connections for which <literal>tcp_enable_closed_event()</literal> has
+			been applied, when a disconnection occurs.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 1 (enabled).
+			Default value is 1 (globally enabled).
 		</emphasis>
 		</para>
 		<example>
