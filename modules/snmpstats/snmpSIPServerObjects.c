@@ -185,7 +185,7 @@ int handle_kamailioSIPProxyStatefulness(netsnmp_mib_handler *handler,
 {
 	int statefullness;
 
-	if (module_loaded("dialog") || module_loaded("dialog_ng")) 
+	if (module_loaded("dialog") || module_loaded("ims_dialog")) 
 	{
 		statefullness = PROXY_STATEFULNESS_CALL_STATEFUL;
 	}
