@@ -211,4 +211,47 @@ request_route {
                         ]]></programlisting>
                 </example>
         </section>
+
+        <section id="tcpops.f.tcp_enable_closed_event">
+                <title>
+                        <function>tcp_enable_closed_event([conid])</function>
+                </title>
+                <para>
+                                Explicitly enables the "tcp:closed" event route
+                                on a TCP connection.
+                </para>
+                <para>Meaning of the parameters is as follows:</para>
+                <itemizedlist>
+                        <listitem>
+                                <para><emphasis>conid</emphasis> (optionnal): the kamailio internal
+                                connection id. If no parameter
+                                is given, it will be enabled on the current message source connection.
+                                </para>
+                        </listitem>
+                </itemizedlist>
+                <para>Retuns 1 on success, -1 on failure.</para>
+                <example>
+                        <title><function>tcp_set_closed_event</function> usage</title>
+                        <programlisting><![CDATA[
+...
+# "tcp:closed" event route is "manual" mode
+modparam("tcpops", "closed_event", 2)
+...
+
+request_route {
+	...
+	if (is_method("REGISTER") && pv_www_authenticate("$td", "xxx", "0")) {
+		# it will be called for this specific connection
+		tcp_enable_closed_event();
+	}
+	...
+
+}
+
+event_route[tcp:closed] {
+	xlog("connection $conid was closed");
+}
+]]></programlisting>
+                </example>
+        </section>
 </section>
