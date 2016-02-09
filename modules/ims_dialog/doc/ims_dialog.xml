@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-        <title>dialog_ng Module</title>
+        <title>IMS_DIALOG Module</title>
         <productname class="trade">&kamailioname;</productname>
         <authorgroup>
             <author>
@@ -81,7 +81,7 @@
                     <email>richard.good@smilecoms.com</email>
                 </address>
             </editor>
-                
+
         </authorgroup>
         <copyright>
             <year>2006</year>
@@ -93,9 +93,9 @@
         </copyright>
     </bookinfo>
     <toc></toc>
-	
-    <xi:include href="dialog_ng_admin.xml"/>
-    <xi:include href="dialog_ng_devel.xml"/>
-    <xi:include href="dialog_ng_faq.xml"/>
-	
+
+    <xi:include href="ims_dialog_admin.xml"/>
+    <xi:include href="ims_dialog_devel.xml"/>
+    <xi:include href="ims_dialog_faq.xml"/>
+
 </book>

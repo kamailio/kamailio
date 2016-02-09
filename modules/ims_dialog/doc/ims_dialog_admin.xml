@@ -10,19 +10,19 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
     <title>&adminguide;</title>
-	
+
     <section>
         <title>Overview</title>
         <para>
-	The dialog_ng module provides dialog awareness to the &kamailio; proxy. Its
+	The ims_dialog module provides dialog awareness to the &kamailio; proxy. Its
 	functionality is to keep track of the current dialogs, to offer information
 	about them (like how many dialogs are active) or to manage them. The module
 	exports several functions that could be used directly from scripts.
-        The dialog_ng module extends the original dialog module by providing support
+        The ims_dialog module extends the original dialog module by providing support
         for forked calling and early dialog termination.  It is the intention that
-        the dialog_ng module will eventually replace the dialog module.
+        the ims_dialog module will eventually replace the dialog module.
         </para>
         <para>
 	The module, via an internal API, also provide the foundation to build on
@@ -40,19 +40,17 @@
 	creating the corresponding transaction.
         </para>
         <para>
-	The dialog is automatically destroyed when a 
+	The dialog is automatically destroyed when a
             <quote>BYE</quote> is
-	received. In case of no 
+	received. In case of no
             <quote>BYE</quote>, the dialog lifetime is
-	controlled via the default timeout (see 
+	controlled via the default timeout (see
             <quote>default_timeout</quote>
-	- 
+	-
             <xref linkend="default-timeout-id"/>) and custom timeout (see
-            <quote>timeout_avp</quote> - 
+            <quote>timeout_avp</quote> -
             <xref linkend="timeout-avp-id"/>). The
 	dialog timeout is reset each time a sequential request passes.
-       
-        
         </para>
     </section>
 
@@ -143,7 +141,7 @@
                 <varname>enable_stats</varname> (integer)
             </title>
             <para>
-		This function is currently not supported by the dialog_ng module.
+		This function is currently not supported by the ims_dialog module.
                 To be incorporated in the future.
             </para>
         </section>
@@ -165,17 +163,17 @@
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>4096</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>hash_size</varname> parameter
                 </title>
                 <programlisting format="linespecific">
 ...
-modparam("dialog_ng", "hash_size", 1024)
+modparam("ims_dialog", "hash_size", 1024)
 ...
                 </programlisting>
             </example>
@@ -191,17 +189,17 @@ modparam("dialog_ng", "hash_size", 1024)
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>did</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>rr_param</varname> parameter
                 </title>
                 <programlisting format="linespecific">
 ...
-modparam("dialog_ng", "rr_param", "xyz")
+modparam("ims_dialog", "rr_param", "xyz")
 ...
                 </programlisting>
             </example>
@@ -217,17 +215,17 @@ modparam("dialog_ng", "rr_param", "xyz")
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>none</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>dlg_flag</varname> parameter
                 </title>
                 <programlisting format="linespecific">
 ...
-modparam("dialog_ng", "dlg_flag", 4)
+modparam("ims_dialog", "dlg_flag", 4)
 ...
                 </programlisting>
             </example>
@@ -244,17 +242,17 @@ modparam("dialog_ng", "dlg_flag", 4)
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>none</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>timeout_avp</varname> parameter
                 </title>
                 <programlisting format="linespecific">
 ...
-modparam("dialog_ng", "timeout_avp", "$avp(i:10)")
+modparam("ims_dialog", "timeout_avp", "$avp(i:10)")
 ...
                 </programlisting>
             </example>
@@ -269,17 +267,17 @@ modparam("dialog_ng", "timeout_avp", "$avp(i:10)")
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>43200 (12 hours)</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>default_timeout</varname> parameter
                 </title>
                 <programlisting format="linespecific">
 ...
-modparam("dialog_ng", "default_timeout", 21600)
+modparam("ims_dialog", "default_timeout", 21600)
 ...
                 </programlisting>
             </example>
@@ -295,17 +293,17 @@ modparam("dialog_ng", "default_timeout", 21600)
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>NULL</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>dlf_extra_hdrs</varname> parameter
                 </title>
                 <programlisting format="linespecific">
 ...
-modparam("dialog_ng", "dlg_extra_hdrs", "Hint: credit expired\r\n")
+modparam("ims_dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 ...
                 </programlisting>
             </example>
@@ -337,12 +335,12 @@ modparam("dialog_ng", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 			Default value is 1.
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>detect_spirals</varname> parameter
                 </title>
                 <programlisting format="linespecific">
 ...
-modparam("dialog_ng", "detect_spirals", 1)
+modparam("ims_dialog", "detect_spirals", 1)
 ...
                 </programlisting>
             </example>
@@ -353,7 +351,7 @@ modparam("dialog_ng", "detect_spirals", 1)
                 <varname>db_url</varname> (string)
             </title>
             <para>
-		Db storage not yet supported by dialog_ng - this to be done in future.
+		Db storage not yet supported by ims_dialog - this to be done in future.
             </para>
         </section>
 
@@ -362,7 +360,7 @@ modparam("dialog_ng", "detect_spirals", 1)
                 <varname>db_mode</varname> (integer)
             </title>
             <para>
-		Db storage not yet supported by dialog_ng - this to be done in future.
+		Db storage not yet supported by ims_dialog - this to be done in future.
             </para>
         </section>
 
@@ -371,7 +369,7 @@ modparam("dialog_ng", "detect_spirals", 1)
                 <varname>db_update_period</varname> (integer)
             </title>
             <para>
-		Db storage not yet supported by dialog_ng - this to be done in future.
+		Db storage not yet supported by ims_dialog - this to be done in future.
             </para>
         </section>
 
@@ -380,7 +378,7 @@ modparam("dialog_ng", "detect_spirals", 1)
                 <varname>db_fetch_rows</varname> (integer)
             </title>
             <para>
-		Db storage not yet supported by dialog_ng - this to be done in future.
+		Db storage not yet supported by ims_dialog - this to be done in future.
             </para>
         </section>
 
@@ -389,7 +387,7 @@ modparam("dialog_ng", "detect_spirals", 1)
                 <varname>table_name</varname> (string)
             </title>
             <para>
-		Db storage not yet supported by dialog_ng - this to be done in future.
+		Db storage not yet supported by ims_dialog - this to be done in future.
             </para>
         </section>
 
@@ -402,12 +400,12 @@ modparam("dialog_ng", "detect_spirals", 1)
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>empty</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>profiles_with_value</varname> parameter
                 </title>
                 <programlisting format="linespecific">
@@ -427,12 +425,12 @@ modparam("dialog", "profiles_with_value", "caller ; my_profile")
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>empty</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>profiles_no_value</varname> parameter
                 </title>
                 <programlisting format="linespecific">
@@ -452,12 +450,12 @@ modparam("dialog", "profiles_no_value", "inbound ; outbound")
             </para>
             <para>
                 <emphasis>
-			Default value is 
+			Default value is
                     <quote>sip:controller@kamailio.org</quote>.
                 </emphasis>
             </para>
             <example>
-                <title>Set 
+                <title>Set
                     <varname>bridge_controller</varname> parameter
                 </title>
                 <programlisting format="linespecific">
@@ -774,14 +772,14 @@ redlg_setflag("1");
                 <function moreinfo="none">dlg_terminate</function>
             </title>
             <para>
-		Terminates a dialog.  In dialog_ng module this function now
+		Terminates a dialog.  In ims_dialog module this function now
                 includes support for early as well as confirmed dialogs.
             </para>
             <para>Meaning of the parameters is as follows:</para>
             <itemizedlist>
                 <listitem>
                     <para>
-                        <emphasis>side</emphasis> - which side to terminate. 
+                        <emphasis>side</emphasis> - which side to terminate.
                             It can be: caller, callee or both of them.
                     </para>
                 </listitem>
@@ -812,7 +810,7 @@ dlg_terminate("all", "Insufficient QoS");
                 <function moreinfo="none">dlg_refer(side, address)</function>
             </title>
             <para>
-		This function is currently not supported by the dialog_ng module.
+		This function is currently not supported by the ims_dialog module.
                 To be incorporated in the future.
             </para>
         </section>
@@ -822,8 +820,8 @@ dlg_terminate("all", "Insufficient QoS");
                 <function moreinfo="none">dlg_manage()</function>
             </title>
             <para>
-		This has been deprecated in dialog_ng. Instead set dialog flag for 
-                initial INVITE and Route-parameter-callback execution for 
+		This has been deprecated in ims_dialog. Instead set dialog flag for
+                initial INVITE and Route-parameter-callback execution for
                 within-dialog requests.
             </para>
         </section>
@@ -833,7 +831,7 @@ dlg_terminate("all", "Insufficient QoS");
                 <function moreinfo="none">dlg_bridge(from, to, op)</function>
             </title>
             <para>
-		This function is currently not supported by the dialog_ng module.
+		This function is currently not supported by the ims_dialog module.
                 To be incorporated in the future.
             </para>
         </section>
@@ -877,13 +875,13 @@ if(dlg_get("abcdef", "123", "456"))
 </programlisting>
 		</example>
 	</section>
-	
+
         <section>
             <title>
                 <function moreinfo="none">is_known_dlg()</function>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -898,7 +896,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>active_dialogs</varname>
             </title>
             <para>
-			This function is currently not supported by the dialog_ng module.
+			This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -907,16 +905,16 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>early_dialogs</varname>
             </title>
             <para>
-			This function is currently not supported by the dialog_ng module.
+			This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
-        </section>		
+        </section>
         <section>
             <title>
                 <varname>processed_dialogs</varname>
             </title>
             <para>
-			This function is currently not supported by the dialog_ng module.
+			This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -925,7 +923,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>expired_dialogs</varname>
             </title>
             <para>
-			This function is currently not supported by the dialog_ng module.
+			This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -934,7 +932,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>failed_dialogs</varname>
             </title>
             <para>
-			This function is currently not supported by the dialog_ng module.
+			This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -951,12 +949,11 @@ if(dlg_get("abcdef", "123", "456"))
             <para>
 		Lists the description of a dialog or of all dialogs (calls). If only
 		one dialogs is to be listed, the dialog identifiers are to be passed
-		as parameter (callid and fromtag).  In dialog_ng module this also now 
+		as parameter (callid and fromtag).  In ims_dialog module this also now
                 also lists all dlg_out entries for early dialogs.
-                
             </para>
             <para>
-		Name: 
+		Name:
                 <emphasis>dlg_list</emphasis>
             </para>
             <para>Parameters:</para>
@@ -997,7 +994,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg_list_ctx</varname>
             </title>
             <para>
-		This function is currently not supported by the dialog_ng module.
+		This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1007,7 +1004,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg_end_dlg</varname>
             </title>
             <para>
-			This function is currently not supported by the dialog_ng module.
+			This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1017,11 +1014,11 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg_terminate_dlg</varname>
             </title>
             <para>
-		Terminates a singe dialog, identified by the call_id, ftag, ttag. In dialog_ng module this
+		Terminates a singe dialog, identified by the call_id, ftag, ttag. In ims_dialog module this
                 dialog can be terminated in the early or confirmed states.
             </para>
             <para>
-		Name: 
+		Name:
                 <emphasis>dlg_terminate_dlg</emphasis>
             </para>
             <para>Parameters:</para>
@@ -1060,7 +1057,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>profile_get_size</varname>
             </title>
             <para>
-		This function is currently not supported by the dialog_ng module.
+		This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1070,7 +1067,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>profile_list_dlgs</varname>
             </title>
             <para>
-		This function is currently not supported by the dialog_ng module.
+		This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1080,7 +1077,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg_bridge</varname>
             </title>
             <para>
-			This function is currently not supported by the dialog_ng module.
+			This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1095,7 +1092,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg.list</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1105,7 +1102,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg.list_ctx</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1115,7 +1112,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg.dlg_list</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1125,7 +1122,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg.dlg_list_ctx</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1135,7 +1132,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg.end_dlg</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1145,7 +1142,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg.profile_get_size</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1155,7 +1152,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg.profile_list</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1165,7 +1162,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg.bridge_dlg</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1181,7 +1178,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>$DLG_count</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1191,7 +1188,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>$DLG_status</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1201,7 +1198,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>$DLG_lifetime</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1210,7 +1207,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>$dlg(...)</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1219,7 +1216,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>$dlg_ctx(...)</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>
@@ -1229,7 +1226,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>$dlg_var(key)</varname>
             </title>
             <para>
-                    This function is currently not supported by the dialog_ng module.
+                    This function is currently not supported by the ims_dialog module.
                     To be incorporated in the future.
             </para>
         </section>

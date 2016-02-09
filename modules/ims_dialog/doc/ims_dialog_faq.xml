@@ -11,12 +11,12 @@
 <!-- Module FAQ -->
 
 <chapter>
-	
+
 	<title>&faqguide;</title>
 	<qandaset defaultlabel="number">
 	<qandaentry>
 		<question>
-		<para>What happend with <quote>use_tight_match</quote> 
+		<para>What happend with <quote>use_tight_match</quote>
 		parameter?</para>
 		</question>
 		<answer>
@@ -29,14 +29,14 @@
 	</qandaentry>
         <qandaentry>
 		<question>
-		<para>Why is there a dialog_ng module and a dialog module?</para>
+		<para>Why is there a ims_dialog module and a dialog module?</para>
 		</question>
 		<answer>
 		<para>
-			The dialog_ng module addresses shortcomings in the intial dialog
-                        module design.  It makes some large changes to the API and 
+			The ims_dialog module addresses shortcomings in the intial dialog
+                        module design.  It makes some large changes to the API and
                         therefore must be introduced slowly.  It is currently in the
-                        early development stages.  Eventually the dialog_ng module should
+                        early development stages.  Eventually the ims_dialog module should
                         replace the dialog module.
 		</para>
 		</answer>
@@ -58,7 +58,7 @@
 		<answer>
 		<para>
 			First at all check if your question was already answered on one of
-			our mailing lists: 
+			our mailing lists:
 		</para>
 		<itemizedlist>
 			<listitem>
@@ -69,12 +69,12 @@
 			</listitem>
 		</itemizedlist>
 		<para>
-			E-mails regarding any stable &kamailio; release should be sent to 
+			E-mails regarding any stable &kamailio; release should be sent to
 			&kamailiousersmail; and e-mails regarding development versions
 			should be sent to &kamailiodevmail;.
 		</para>
 		<para>
-			If you want to keep the mail private, send it to 
+			If you want to keep the mail private, send it to
 			&kamailiohelpmail;.
 		</para>
 		</answer>

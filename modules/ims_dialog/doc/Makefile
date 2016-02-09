@@ -1,4 +1,4 @@
-docs = dialog_ng.xml
+docs = ims_dialog.xml
 
 docbook_dir = ../../../docbook
 include $(docbook_dir)/Makefile.module
