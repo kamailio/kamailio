@@ -54,8 +54,8 @@
 #include "../../parser/contact/parse_contact.h"
 #include "../../locking.h"
 #include "../tm/tm_load.h"
-#include "../../modules/dialog_ng/dlg_load.h"
-#include "../../modules/dialog_ng/dlg_hash.h"
+#include "../../modules/ims_dialog/dlg_load.h"
+#include "../../modules/ims_dialog/dlg_hash.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 
 #include "../../mem/shm_mem.h"

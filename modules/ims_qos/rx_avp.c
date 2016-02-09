@@ -50,7 +50,7 @@
 
 #include <arpa/inet.h>
 #include "../cdp_avp/mod_export.h"
-#include "../../modules/dialog_ng/dlg_load.h"
+#include "../../modules/ims_dialog/dlg_load.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 #include "rx_authdata.h"
 #include "rx_avp.h"
