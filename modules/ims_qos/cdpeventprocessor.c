@@ -46,7 +46,7 @@
 #include <time.h>
 #include "sem.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
-#include "../dialog_ng/dlg_load.h"
+#include "../ims_dialog/dlg_load.h"
 #include "../cdp/session.h"
 #include "mod.h"
 #include "cdpeventprocessor.h"
