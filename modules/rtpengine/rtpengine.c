@@ -2816,7 +2816,7 @@ select_rtpp_node_old(str callid, str viabranch, int do_test, enum rtpe_operation
 	node = rtpengine_hash_table_lookup(callid, viabranch, op);
 
 	if (!node) {
-		LM_NOTICE("rtpengine hash table lookup failed to find node for calllen=%d callid=%.*s viabranch=%.*s\n",
+		LM_DBG("rtpengine hash table lookup failed to find node for calllen=%d callid=%.*s viabranch=%.*s\n",
 			callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
 		return NULL;
 	} else {
