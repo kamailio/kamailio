@@ -45,7 +45,7 @@
 
 #include "stats.h"
 #include "../cdp/cdp_load.h"
-#include "../../modules/dialog_ng/dlg_load.h"
+#include "../../modules/ims_dialog/dlg_load.h"
 #include "cxdx_avp.h"
 #include "cxdx_lir.h"
 #include "mod.h"
