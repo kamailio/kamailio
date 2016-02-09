@@ -1,9 +1,9 @@
+#include "rtpengine.h"
 #include "rtpengine_hash.h"
 
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
-#include "../../locking.h"
 #include "../../timer.h"
 
 static void rtpengine_hash_table_free_row_lock(gen_lock_t *row_lock);
@@ -274,9 +274,10 @@ int rtpengine_hash_table_insert(str callid, str viabranch, struct rtpengine_hash
 	return 1;
 }
 
-int rtpengine_hash_table_remove(str callid, str viabranch) {
+int rtpengine_hash_table_remove(str callid, str viabranch, enum rtpe_operation op) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 	unsigned int hash_index;
+	int found = 0;
 
 	// sanity checks
 	if (!rtpengine_hash_table_sanity_checks()) {
@@ -299,8 +300,8 @@ int rtpengine_hash_table_remove(str callid, str viabranch) {
 
 	while (entry) {
 		// if callid found, delete entry
-		if (str_equal(entry->callid, callid) &&
-		    str_equal(entry->viabranch, viabranch)) {
+		if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
+		    (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
 			// free entry
 			last_entry->next = entry->next;
 			rtpengine_hash_table_free_entry(entry);
@@ -311,7 +312,11 @@ int rtpengine_hash_table_remove(str callid, str viabranch) {
 			// unlock
 			lock_release(rtpengine_hash_table->row_locks[hash_index]);
 
-			return 1;
+			found = 1;
+
+			if (!(viabranch.len == 0 && op == OP_DELETE)) {
+				return found;
+			}
 		}
 
 		// if expired entry discovered, delete it
@@ -336,10 +341,10 @@ int rtpengine_hash_table_remove(str callid, str viabranch) {
 	// unlock
 	lock_release(rtpengine_hash_table->row_locks[hash_index]);
 
-	return 0;
+	return found;
 }
 
-struct rtpp_node *rtpengine_hash_table_lookup(str callid, str viabranch) {
+struct rtpp_node *rtpengine_hash_table_lookup(str callid, str viabranch, enum rtpe_operation op) {
 	struct rtpengine_hash_entry *entry, *last_entry;
 	unsigned int hash_index;
 	struct rtpp_node *node;
@@ -365,8 +370,8 @@ struct rtpp_node *rtpengine_hash_table_lookup(str callid, str viabranch) {
 
 	while (entry) {
 		// if callid found, return entry
-		if (str_equal(entry->callid, callid) &&
-		    str_equal(entry->viabranch, viabranch)) {
+		if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
+		    (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
 			node = entry->node;
 
 			// unlock
