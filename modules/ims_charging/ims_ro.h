@@ -3,7 +3,7 @@
 
 #include "../../mod_fix.h"
 #include "../cdp/diameter_api.h"
-#include "../dialog_ng/dlg_hash.h"
+#include "../ims_dialog/dlg_hash.h"
 #include "ro_session_hash.h"
 
 typedef enum {

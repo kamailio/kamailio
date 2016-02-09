@@ -11,7 +11,7 @@
 #include <math.h>
 
 #include "../../mem/shm_mem.h"
-#include "../dialog_ng/dlg_load.h"
+#include "../ims_dialog/dlg_load.h"
 #include "ro_timer.h"
 #include "ro_session_hash.h"
 #include "ims_ro.h"
