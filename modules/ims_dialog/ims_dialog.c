@@ -156,7 +156,7 @@ static mi_export_t mi_cmds[] = {
 static rpc_export_t rpc_methods[];
 
 struct module_exports exports = {
-    "dialog_ng", /* module's name */
+    "ims_dialog", /* module's name */
     DEFAULT_DLFLAGS, /* dlopen flags */
     cmds, /* exported functions */
     mod_params, /* param exports */
