@@ -63,8 +63,8 @@
 #include "contact_hslot.h"
 #include "../presence/bind_presence.h"
 #include "../presence/hash.h"
-#include "../../modules/dialog_ng/dlg_load.h"
-#include "../../modules/dialog_ng/dlg_hash.h"
+#include "../../modules/ims_dialog/dlg_load.h"
+#include "../../modules/ims_dialog/dlg_hash.h"
 #include "ul_scscf_stats.h"
 
 MODULE_VERSION

@@ -9,8 +9,8 @@
 #include "usrloc.h"
 #include "ucontact.h"
 #include "dlist.h"
-#include "../../modules/dialog_ng/dlg_load.h"
-#include "../../modules/dialog_ng/dlg_hash.h"
+#include "../../modules/ims_dialog/dlg_load.h"
+#include "../../modules/ims_dialog/dlg_hash.h"
 
 extern struct dlg_binds dlgb;
 
