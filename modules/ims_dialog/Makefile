@@ -3,7 +3,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=dialog_ng.so
+NAME=ims_dialog.so
 LIBS= 
 
 DEFS += -DKAMAILIO_MOD_INTERFACE
