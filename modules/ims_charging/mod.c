@@ -7,8 +7,8 @@
 
 #include "mod.h"
 #include "../../sr_module.h"
-#include "../../modules/dialog_ng/dlg_load.h"
-#include "../../modules/dialog_ng/dlg_hash.h"
+#include "../../modules/ims_dialog/dlg_load.h"
+#include "../../modules/ims_dialog/dlg_hash.h"
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/mod_export.h"
 #include "../../parser/parse_to.h"
