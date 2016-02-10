@@ -302,21 +302,30 @@ int rtpengine_hash_table_remove(str callid, str viabranch, enum rtpe_operation o
 		// if callid found, delete entry
 		if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
 		    (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
-			// free entry
+			// set pointers; exclude entry
 			last_entry->next = entry->next;
+
+			// free current entry; entry points to unknown
 			rtpengine_hash_table_free_entry(entry);
+
+			// set pointers
+			entry = last_entry;
 
 			// update total
 			rtpengine_hash_table->row_totals[hash_index]--;
 
-			// unlock
-			lock_release(rtpengine_hash_table->row_locks[hash_index]);
-
 			found = 1;
 
 			if (!(viabranch.len == 0 && op == OP_DELETE)) {
+				// unlock
+				lock_release(rtpengine_hash_table->row_locks[hash_index]);
 				return found;
 			}
+
+			// try to also delete other viabranch entries for callid
+			last_entry = entry;
+			entry = entry->next;
+			continue;
 		}
 
 		// if expired entry discovered, delete it
