@@ -2008,7 +2008,7 @@ reg_notification * new_notification(str subscription_state,
     len = sizeof (reg_notification) + r->call_id.len + r->from_tag.len + r->to_tag.len + r->watcher_uri.len + r->watcher_contact.len +
             r->record_route.len + r->sockinfo_str.len + r->presentity_uri.len + subscription_state.len + content_type.len + (num_impus*sizeof(str)); // + buf.len;
     for (i=0; i<num_impus; i++) {
-        len += impus[i]->len;
+        len += (*impus)[i].len;
     }
 
     LM_DBG("Creating new notification");
@@ -2088,9 +2088,9 @@ reg_notification * new_notification(str subscription_state,
     p += sizeof(str)*num_impus;
     for (i=0; i<num_impus; i++) {
         n->impus[i].s = p;
-        memcpy(p, impus[i]->s, impus[i]->len);
-        n->impus[i].len = impus[i]->len;
-        p += impus[i]->len;
+        memcpy(p, (*impus)[i].s, (*impus)[i].len);
+        n->impus[i].len = (*impus)[i].len;
+        p += (*impus)[i].len;
     }
     n->num_impus = num_impus;
     
