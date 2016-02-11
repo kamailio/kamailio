@@ -100,6 +100,9 @@ static int ah_get_msg_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *r
 static int ah_get_body_size(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int ah_get_msg_buf(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int ah_get_msg_len(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int ah_parse_req_name(pv_spec_p sp, str *in);
+static int ah_set_req(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+
 
 static str pv_str_1 = {"1", 1};
 static str pv_str_0 = {"0", 1};
@@ -116,6 +119,13 @@ stat_var *requests;
 stat_var *replies;
 stat_var *errors;
 stat_var *timeouts;
+
+enum http_req_name_t {
+	E_HRN_ALL = 0,
+	E_HRN_HDR, E_HRN_METHOD, E_HRN_TIMEOUT,
+	E_HRN_TLS_CA_PATH, E_HRN_TLS_CLIENT_KEY,
+	E_HRN_TLS_CLIENT_CERT
+};
 
 static cmd_export_t cmds[]={
 	{"http_async_query",  (cmd_function)w_http_async_get, 2, fixup_http_async_get,
@@ -195,6 +205,9 @@ static pv_export_t pvs[] = {
 	{STR_STATIC_INIT("http_err"),
 		PVT_OTHER, ah_get_err, 0,
 		0, 0, 0, 0},
+	{STR_STATIC_INIT("http_req"),
+		PVT_OTHER, 0, ah_set_req,
+		ah_parse_req_name, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -540,22 +553,7 @@ static int w_http_append_header(sip_msg_t* msg, char* hdr, char*foo)
 		return -1;
 	}
 
-	ah_params.headers.len++;
-	ah_params.headers.t = shm_realloc(ah_params.headers.t, ah_params.headers.len * sizeof(char*));
-	if (!ah_params.headers.t) {
-		LM_ERR("shm memory allocation failure\n");
-		return -1;
-	}
-	ah_params.headers.t[ah_params.headers.len - 1] = shm_malloc(shdr.len + 1);
-	if (!ah_params.headers.t[ah_params.headers.len - 1]) {
-		LM_ERR("shm memory allocation failure\n");
-		return -1;
-	}
-	memcpy(ah_params.headers.t[ah_params.headers.len - 1], shdr.s, shdr.len);
-	*(ah_params.headers.t[ah_params.headers.len - 1] + shdr.len) = '\0';
-
-	LM_DBG("stored new http header: [%s]\n",
-			ah_params.headers.t[ah_params.headers.len - 1]);
+	header_list_add(&ah_params.headers, &shdr);
 
 	return 1;
 }
@@ -569,18 +567,7 @@ static int w_http_set_method(sip_msg_t* msg, char* meth, char*foo)
 		return -1;
 	}
 
-	if (strncasecmp(smeth.s, "GET", smeth.len) == 0) {
-		ah_params.method = AH_METH_GET;
-	} else if (strncasecmp(smeth.s, "POST", smeth.len) == 0) {
-		ah_params.method = AH_METH_POST;
-	} else if (strncasecmp(smeth.s, "PUT", smeth.len) == 0) {
-		ah_params.method = AH_METH_PUT;
-	} else if (strncasecmp(smeth.s, "DELETE", smeth.len) == 0) {
-		ah_params.method = AH_METH_DELETE;
-	} else {
-		LM_ERR("Unsupported method: %.*s\n", smeth.len, smeth.s);
-		return -1;
-	}
+	query_params_set_method(&ah_params, &smeth);
 
 	return 1;
 }
@@ -727,4 +714,142 @@ static int ah_get_err(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 		LM_ERR("the async_http variables can only be read from an async http worker\n");
 		return pv_get_null(msg, param, res);
 	}
+}
+
+static int ah_parse_req_name(pv_spec_p sp, str *in) {
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "all", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_ALL;
+			else if(strncmp(in->s, "hdr", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_HDR;
+			else goto error;
+			break;
+		case 6:
+			if(strncmp(in->s, "method", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_METHOD;
+			else goto error;
+			break;
+		case 7:
+			if(strncmp(in->s, "timeout", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_TIMEOUT;
+			else goto error;
+			break;
+		case 11:
+			if(strncmp(in->s, "tls_ca_path", 11)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_TLS_CA_PATH;
+			else goto error;
+			break;
+		case 14:
+			if(strncmp(in->s, "tls_client_key", 14)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_TLS_CLIENT_KEY;
+			else goto error;
+			break;
+		case 15:
+			if(strncmp(in->s, "tls_client_cert", 15)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_TLS_CLIENT_CERT;
+			else goto error;
+			break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown http_req name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	pv_value_t *tval;
+
+	if(param==NULL || tmb.t_request==NULL)
+		return -1;
+
+	tval = val;
+	if((tval!=NULL) && (tval->flags&PV_VAL_NULL)) {
+		tval = NULL;
+	}
+
+	switch((enum http_req_name_t) param->pvn.u.isname.name.n) {
+	case E_HRN_ALL:
+		if (tval == NULL)
+			set_query_params(&ah_params);
+		break;
+	case E_HRN_HDR:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(hdr)\n");
+				return -1;
+			}
+			header_list_add(&ah_params.headers, &tval->rs);
+		}
+		break;
+	case E_HRN_METHOD:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(method)\n");
+				return -1;
+			}
+			query_params_set_method(&ah_params, &tval->rs);
+		} else {
+			ah_params.method = AH_METH_DEFAULT;
+		}
+		break;
+	case E_HRN_TIMEOUT:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("invalid value type for $http_req(timeout)\n");
+				return -1;
+			}
+			ah_params.timeout = tval->ri;
+		} else {
+			ah_params.timeout = http_timeout;
+		}
+		break;
+	case E_HRN_TLS_CA_PATH:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(tls_ca_path)\n");
+				return -1;
+			}
+			set_query_param(&ah_params.tls_ca_path, tval->rs);
+		} else {
+			set_query_param(&ah_params.tls_ca_path, tls_ca_path);
+		}
+		break;
+	case E_HRN_TLS_CLIENT_KEY:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(tls_client_key)\n");
+				return -1;
+			}
+			set_query_param(&ah_params.tls_client_key, tval->rs);
+		} else {
+			set_query_param(&ah_params.tls_client_key, tls_client_key);
+		}
+		break;
+	case E_HRN_TLS_CLIENT_CERT:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(tls_client_cert)\n");
+				return -1;
+			}
+			set_query_param(&ah_params.tls_client_cert, tval->rs);
+		} else {
+			set_query_param(&ah_params.tls_client_cert, tls_client_cert);
+		}
+		break;
+	}
+
+	return 1;
 }

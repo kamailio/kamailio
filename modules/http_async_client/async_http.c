@@ -454,3 +454,41 @@ void set_query_params(struct query_params *p) {
 		}
 	}
 }
+
+int header_list_add(struct header_list *hl, str* hdr) {
+	char *tmp;
+
+	hl->len++;
+	hl->t = shm_realloc(hl->t, hl->len * sizeof(char*));
+	if (!hl->t) {
+		LM_ERR("shm memory allocation failure\n");
+		return -1;
+	}
+	hl->t[hl->len - 1] = shm_malloc(hdr->len + 1);
+	tmp = hl->t[hl->len - 1];
+	if (!tmp) {
+		LM_ERR("shm memory allocation failure\n");
+		return -1;
+	}
+	memcpy(tmp, hdr->s, hdr->len);
+	*(tmp + hdr->len) = '\0';
+
+	LM_DBG("stored new http header: [%s]\n", tmp);
+	return 1;
+}
+
+int query_params_set_method(struct query_params *qp, str *meth) {
+	if (strncasecmp(meth->s, "GET", meth->len) == 0) {
+		qp->method = AH_METH_GET;
+	} else if (strncasecmp(meth->s, "POST",meth->len) == 0) {
+		qp->method = AH_METH_POST;
+	} else if (strncasecmp(meth->s, "PUT", meth->len) == 0) {
+		qp->method = AH_METH_PUT;
+	} else if (strncasecmp(meth->s, "DELETE", meth->len) == 0) {
+		qp->method = AH_METH_DELETE;
+	} else {
+		LM_ERR("Unsupported method: %.*s\n", meth->len, meth->s);
+		return -1;
+	}
+	return 1;
+}

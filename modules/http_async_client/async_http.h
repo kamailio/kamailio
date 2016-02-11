@@ -116,6 +116,9 @@ void async_http_cb(struct http_m_reply *reply, void *param);
 void init_query_params(struct query_params*);
 void set_query_params(struct query_params*);
 
+int header_list_add(struct header_list *hl, str* hdr);
+int query_params_set_method(struct query_params *qp, str *meth);
+
 static inline void free_async_query(async_query_t *aq)
 {
 	if (!aq)
