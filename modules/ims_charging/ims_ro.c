@@ -1023,6 +1023,7 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     struct session_setup_data *ssd;
     int ret = 0;
     struct hdr_field *h = 0;
+    char *p;
 
     int cc_event_number = 0; //According to IOT tests this should start at 0
     int cc_event_type = RO_CC_START;
@@ -1052,8 +1053,12 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     if ((asserted_identity = cscf_get_asserted_identity(msg, 0)).len == 0) {
         LM_DBG("No P-Asserted-Identity hdr found. Using From hdr for asserted_identity");
         asserted_identity = dlg->from_uri;
+        if (asserted_identity.len > 0 && asserted_identity.s) {
+            p=(char*)memchr(asserted_identity.s, ';',asserted_identity.len);
+            if (p) 
+                asserted_identity.len = (p-asserted_identity.s);
+        }
     }
-
 
     //getting called asserted identity
     if ((called_asserted_identity = cscf_get_public_identity_from_called_party_id(msg, &h)).len == 0) {
