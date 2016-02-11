@@ -312,7 +312,7 @@ int peer_timer(time_t now,void *ptr)
 						p->waitingDWA = 1;
 						Snd_DWR(p);
 						touch_peer(p);
-						LM_WARN("Inactivity on peer [%.*s], sending DWR... - if we don't get a reply, the peer will be closed\n", p->fqdn.len, p->fqdn.s);
+						LM_DBG("Inactivity on peer [%.*s], sending DWR... - if we don't get a reply, the peer will be closed\n", p->fqdn.len, p->fqdn.s);
 					}
 					break;
 				/* ignored states */
