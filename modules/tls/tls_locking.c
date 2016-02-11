@@ -1,7 +1,7 @@
 /*
  * TLS module
  *
- * Copyright (C) 2007 iptelorg GmbH 
+ * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,7 +42,7 @@ struct CRYPTO_dynlock_value{
 static struct CRYPTO_dynlock_value* dyn_create_f(const char* file, int line)
 {
 	struct CRYPTO_dynlock_value* l;
-	
+
 	l=shm_malloc(sizeof(struct CRYPTO_dynlock_value));
 	if (l==0){
 		LOG(L_CRIT, "ERROR: tls: dyn_create_f locking callback out of shm."
@@ -104,11 +104,12 @@ static void locking_f(int mode, int n, const char* file, int line)
 		abort(); /* quick crash :-) */
 	}
 	if (mode & CRYPTO_LOCK){
+		LM_DBG("lock get (%d): %d (%s:%d)\n", mode, n, file, line);
 		lock_set_get(static_locks, n);
 	}else{
 		lock_set_release(static_locks, n);
+		LM_DBG("lock release (%d): %d (%s:%d)\n", mode, n, file, line);
 	}
-	
 }
 
 
@@ -160,7 +161,7 @@ int tls_init_locks()
 	CRYPTO_set_dynlock_create_callback(dyn_create_f);
 	CRYPTO_set_dynlock_lock_callback(dyn_lock_f);
 	CRYPTO_set_dynlock_destroy_callback(dyn_destroy_f);
-	
+
 	/* starting with v1.0.0 openssl does not use anymore getpid(), but address
 	 * of errno which can point to same virtual address in a multi-process
 	 * application
@@ -172,8 +173,7 @@ int tls_init_locks()
 	 *  (only atomic_inc), fallback to the default use-locks mode
 	 * CRYPTO_set_add_lock_callback(atomic_add_f);
 	 */
-	
-	
+
 	return 0;
 error:
 	tls_destroy_locks();
