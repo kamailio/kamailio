@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -24,8 +24,8 @@
 /*!
  * \file
  * \brief SIP registrar module - Send a reply
- * \ingroup registrar   
- */  
+ * \ingroup registrar
+ */
 
 #include <stdio.h>
 #include "../../ut.h"
@@ -104,10 +104,10 @@ static inline unsigned int calc_buf_len(ucontact_t* c, str *host, int mode)
 			if (qlen) len += Q_PARAM_LEN + qlen;
 			len += EXPIRES_PARAM_LEN + INT2STR_MAX_LEN;
 			if (rcv_param.len>0 && c->received.s) {
-				len += 1 /* ; */ 
-					+ rcv_param.len 
-					+ 1 /* = */ 
-					+ 1 /* dquote */ 
+				len += 1 /* ; */
+					+ rcv_param.len
+					+ 1 /* = */
+					+ 1 /* dquote */
 					+ c->received.len
 					+ 1 /* dquote */
 					;
@@ -204,7 +204,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 	}
 
 	p = contact.buf;
-	
+
 	memcpy(p, CONTACT_BEGIN, CONTACT_BEGIN_LEN);
 	p += CONTACT_BEGIN_LEN;
 
@@ -393,7 +393,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define	EI_R_PARSE      "Message parse error"                       /* R_PARSE */
 #define	EI_R_TO_MISS    "To header not found"                       /* R_TO_MISS */
 #define	EI_R_CID_MISS   "Call-ID header not found"                  /* R_CID_MISS */
-#define	EI_R_CS_MISS    "CSeq header not found"                     /* R_CS_MISS */ 
+#define	EI_R_CS_MISS    "CSeq header not found"                     /* R_CS_MISS */
 #define	EI_R_PARSE_EXP	"Expires parse error"                       /* R_PARSE_EXP */
 #define	EI_R_PARSE_CONT	"Contact parse error"                       /* R_PARSE_CONT */
 #define	EI_R_STAR_EXP	"* used in contact and expires is not zero" /* R_STAR__EXP */
@@ -409,6 +409,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 #define EI_R_OB_UNSUP    "No support for Outbound indicated"        /* R_OB_UNSUP */
 #define EI_R_OB_REQD     "No support for Outbound on server"        /* R_OB_REQD */
 #define EI_R_OB_UNSUP_EDGE "No support for Outbound on edge proxy"  /* R_OB_UNSUP_EDGE */
+#define	EI_R_INV_REGID   "Invalid Reg-Id number"                    /* R_INV_REGID */
 
 
 str error_info[] = {
@@ -445,6 +446,7 @@ str error_info[] = {
 	{EI_R_OB_UNSUP,   sizeof(EI_R_OB_UNSUP) - 1},
 	{EI_R_OB_REQD,    sizeof(EI_R_OB_REQD) - 1},
 	{EI_R_OB_UNSUP_EDGE, sizeof(EI_R_OB_UNSUP_EDGE) - 1},
+	{EI_R_INV_REGID,  sizeof(EI_R_INV_REGID) - 1},
 };
 
 int codes[] = {
@@ -481,6 +483,7 @@ int codes[] = {
 	421, /* R_OB_UNSUP */
 	420, /* R_OB_REQD */
 	439, /* R_OB_UNSUP_EDGE */
+	400, /* R_INV_REGID */
 };
 
 
@@ -490,20 +493,20 @@ int codes[] = {
 static int add_retry_after(struct sip_msg* _m)
 {
 	char* buf, *ra_s;
- 	int ra_len;
- 	
- 	ra_s = int2str(cfg_get(registrar, registrar_cfg, retry_after), &ra_len);
- 	buf = (char*)pkg_malloc(RETRY_AFTER_LEN + ra_len + CRLF_LEN);
- 	if (!buf) {
- 		LM_ERR("no pkg memory left\n");
- 		return -1;
- 	}
- 	memcpy(buf, RETRY_AFTER, RETRY_AFTER_LEN);
- 	memcpy(buf + RETRY_AFTER_LEN, ra_s, ra_len);
- 	memcpy(buf + RETRY_AFTER_LEN + ra_len, CRLF, CRLF_LEN);
- 	add_lump_rpl(_m, buf, RETRY_AFTER_LEN + ra_len + CRLF_LEN,
- 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
- 	return 0;
+	int ra_len;
+
+	ra_s = int2str(cfg_get(registrar, registrar_cfg, retry_after), &ra_len);
+	buf = (char*)pkg_malloc(RETRY_AFTER_LEN + ra_len + CRLF_LEN);
+	if (!buf) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(buf, RETRY_AFTER, RETRY_AFTER_LEN);
+	memcpy(buf + RETRY_AFTER_LEN, ra_s, ra_len);
+	memcpy(buf + RETRY_AFTER_LEN + ra_len, CRLF, CRLF_LEN);
+	add_lump_rpl(_m, buf, RETRY_AFTER_LEN + ra_len + CRLF_LEN,
+			LUMP_RPL_HDR | LUMP_RPL_NODUP);
+	return 0;
 }
 
 #define PATH "Path: "
@@ -513,17 +516,17 @@ static int add_path(struct sip_msg* _m, str* _p)
 {
 	char* buf;
 
- 	buf = (char*)pkg_malloc(PATH_LEN + _p->len + CRLF_LEN);
- 	if (!buf) {
- 		LM_ERR("no pkg memory left\n");
- 		return -1;
- 	}
- 	memcpy(buf, PATH, PATH_LEN);
- 	memcpy(buf + PATH_LEN, _p->s, _p->len);
- 	memcpy(buf + PATH_LEN + _p->len, CRLF, CRLF_LEN);
- 	add_lump_rpl(_m, buf, PATH_LEN + _p->len + CRLF_LEN,
- 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
- 	return 0;
+	buf = (char*)pkg_malloc(PATH_LEN + _p->len + CRLF_LEN);
+	if (!buf) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(buf, PATH, PATH_LEN);
+	memcpy(buf + PATH_LEN, _p->s, _p->len);
+	memcpy(buf + PATH_LEN + _p->len, CRLF, CRLF_LEN);
+	add_lump_rpl(_m, buf, PATH_LEN + _p->len + CRLF_LEN,
+			LUMP_RPL_HDR | LUMP_RPL_NODUP);
+	return 0;
 }
 
 #define UNSUPPORTED "Unsupported: "
@@ -533,17 +536,17 @@ static int add_unsupported(struct sip_msg* _m, str* _p)
 {
 	char* buf;
 
- 	buf = (char*)pkg_malloc(UNSUPPORTED_LEN + _p->len + CRLF_LEN);
- 	if (!buf) {
- 		LM_ERR("no pkg memory left\n");
- 		return -1;
- 	}
- 	memcpy(buf, UNSUPPORTED, UNSUPPORTED_LEN);
- 	memcpy(buf + UNSUPPORTED_LEN, _p->s, _p->len);
- 	memcpy(buf + UNSUPPORTED_LEN + _p->len, CRLF, CRLF_LEN);
- 	add_lump_rpl(_m, buf, UNSUPPORTED_LEN + _p->len + CRLF_LEN,
- 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
- 	return 0;
+	buf = (char*)pkg_malloc(UNSUPPORTED_LEN + _p->len + CRLF_LEN);
+	if (!buf) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(buf, UNSUPPORTED, UNSUPPORTED_LEN);
+	memcpy(buf + UNSUPPORTED_LEN, _p->s, _p->len);
+	memcpy(buf + UNSUPPORTED_LEN + _p->len, CRLF, CRLF_LEN);
+	add_lump_rpl(_m, buf, UNSUPPORTED_LEN + _p->len + CRLF_LEN,
+			LUMP_RPL_HDR | LUMP_RPL_NODUP);
+	return 0;
 }
 
 #define REQUIRE "Require: "
@@ -553,17 +556,17 @@ static int add_require(struct sip_msg* _m, str* _p)
 {
 	char* buf;
 
- 	buf = (char*)pkg_malloc(REQUIRE_LEN + _p->len + CRLF_LEN);
- 	if (!buf) {
- 		LM_ERR("no pkg memory left\n");
- 		return -1;
- 	}
- 	memcpy(buf, REQUIRE, REQUIRE_LEN);
- 	memcpy(buf + REQUIRE_LEN, _p->s, _p->len);
- 	memcpy(buf + REQUIRE_LEN + _p->len, CRLF, CRLF_LEN);
- 	add_lump_rpl(_m, buf, REQUIRE_LEN + _p->len + CRLF_LEN,
- 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
- 	return 0;
+	buf = (char*)pkg_malloc(REQUIRE_LEN + _p->len + CRLF_LEN);
+	if (!buf) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(buf, REQUIRE, REQUIRE_LEN);
+	memcpy(buf + REQUIRE_LEN, _p->s, _p->len);
+	memcpy(buf + REQUIRE_LEN + _p->len, CRLF, CRLF_LEN);
+	add_lump_rpl(_m, buf, REQUIRE_LEN + _p->len + CRLF_LEN,
+			LUMP_RPL_HDR | LUMP_RPL_NODUP);
+	return 0;
 }
 
 #define SUPPORTED "Supported: "
@@ -573,17 +576,17 @@ static int add_supported(struct sip_msg* _m, str* _p)
 {
 	char* buf;
 
- 	buf = (char*)pkg_malloc(SUPPORTED_LEN + _p->len + CRLF_LEN);
- 	if (!buf) {
- 		LM_ERR("no pkg memory left\n");
- 		return -1;
- 	}
- 	memcpy(buf, SUPPORTED, SUPPORTED_LEN);
- 	memcpy(buf + SUPPORTED_LEN, _p->s, _p->len);
- 	memcpy(buf + SUPPORTED_LEN + _p->len, CRLF, CRLF_LEN);
- 	add_lump_rpl(_m, buf, SUPPORTED_LEN + _p->len + CRLF_LEN,
- 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
- 	return 0;
+	buf = (char*)pkg_malloc(SUPPORTED_LEN + _p->len + CRLF_LEN);
+	if (!buf) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(buf, SUPPORTED, SUPPORTED_LEN);
+	memcpy(buf + SUPPORTED_LEN, _p->s, _p->len);
+	memcpy(buf + SUPPORTED_LEN + _p->len, CRLF, CRLF_LEN);
+	add_lump_rpl(_m, buf, SUPPORTED_LEN + _p->len + CRLF_LEN,
+			LUMP_RPL_HDR | LUMP_RPL_NODUP);
+	return 0;
 }
 
 #define FLOW_TIMER "Flow-Timer: "
@@ -595,20 +598,20 @@ static int add_flow_timer(struct sip_msg* _m)
 	int lump_len;
 
 	/* Add three as REG_FLOW_TIMER_MAX is 999 - three digits */
- 	buf = (char*)pkg_malloc(FLOW_TIMER_LEN + 3 + CRLF_LEN);
- 	if (!buf) {
- 		LM_ERR("no pkg memory left\n");
- 		return -1;
- 	}
+	buf = (char*)pkg_malloc(FLOW_TIMER_LEN + 3 + CRLF_LEN);
+	if (!buf) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
 	lump_len = snprintf(buf, FLOW_TIMER_LEN + 3 + CRLF_LEN,
 				"%.*s%d%.*s",
 				(int)FLOW_TIMER_LEN, FLOW_TIMER,
 				reg_flow_timer,
 				(int)CRLF_LEN, CRLF);
- 	add_lump_rpl(_m, buf, lump_len, LUMP_RPL_HDR | LUMP_RPL_NODUP);
- 	return 0;
+	add_lump_rpl(_m, buf, lump_len, LUMP_RPL_HDR | LUMP_RPL_NODUP);
+	return 0;
 }
- 
+
 /*! \brief
  * Send a reply
  */
@@ -671,7 +674,7 @@ int reg_send_reply(struct sip_msg* _m)
 				return -1;
 
 			if ((get_require(_m) & F_OPTION_TAG_OUTBOUND)
-			    || (get_supported(_m) & F_OPTION_TAG_OUTBOUND)) {
+					|| (get_supported(_m) & F_OPTION_TAG_OUTBOUND)) {
 				if (add_require(_m, &outbound_str) < 0)
 					return -1;
 
@@ -707,7 +710,7 @@ int reg_send_reply(struct sip_msg* _m)
 	case 500: msg.s = MSG_500; msg.len = sizeof(MSG_500)-1;break;
 	case 503: msg.s = MSG_503; msg.len = sizeof(MSG_503)-1;break;
 	}
-	
+
 	if (code != 200) {
 		buf = (char*)pkg_malloc(E_INFO_LEN + error_info[rerrno].len + CRLF_LEN + 1);
 		if (!buf) {
@@ -724,9 +727,9 @@ int reg_send_reply(struct sip_msg* _m)
 			if (add_retry_after(_m) < 0) {
 				return -1;
 			}
-		} 
+		}
 	}
-	
+
 	if (slb.freply(_m, code, &msg) < 0) {
 		LM_ERR("failed to send %ld %.*s\n", code, msg.len,msg.s);
 		return -1;
