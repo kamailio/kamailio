@@ -15,16 +15,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
  * \file
  * \brief SIP registrar module - registrar errno
- * \ingroup registrar   
- */  
+ * \ingroup registrar
+ */
 
 
 #ifndef RERRNO_H
@@ -65,6 +65,7 @@ typedef enum rerr {
 	R_OB_UNSUP,   /*!< Outbound not supported by UAC */
 	R_OB_REQD,    /*!< Outbound required by UAC but not supported on server */
 	R_OB_UNSUP_EDGE, /*!< Outbound needed for this registration but not supported on edge proxy */
+	R_INV_REGID,  /*!< Invalid Reg-Id value */
 
 } rerr_t;
 
