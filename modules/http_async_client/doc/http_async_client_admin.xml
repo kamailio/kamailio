@@ -340,7 +340,7 @@ route[HTTP_REPLY] {
         xlog("L_INFO", "route[HTTP_REPLY]: status $http_rs\n");
         xlog("L_INFO", "route[HTTP_REPLY]: body   $http_rb\n");
     } else {
-        xlog("L_INFO", "route[HTTP_REPLY]: error  $http_error)\n");
+        xlog("L_INFO", "route[HTTP_REPLY]: error  $http_err)\n");
     }
 }
 ...
