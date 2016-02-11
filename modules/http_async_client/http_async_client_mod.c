@@ -62,13 +62,13 @@ extern int  num_workers;
 
 int http_timeout = 500; /* query timeout in ms */
 int hash_size = 2048;
-int ssl_version = 0; // Use default SSL version in HTTPS requests (see curl/curl.h)
-int verify_host = 1; // By default verify host in HTTPS requests
-int verify_peer = 1; // By default verify peer in HTTPS requests
+int tls_version = 0; // Use default SSL version in HTTPS requests (see curl/curl.h)
+int tls_verify_host = 1; // By default verify host in HTTPS requests
+int tls_verify_peer = 1; // By default verify peer in HTTPS requests
 int curl_verbose = 0;
-str ssl_cert = STR_STATIC_INIT(""); // client SSL certificate path, defaults to NULL
-str ssl_key = STR_STATIC_INIT(""); // client SSL certificate key path, defaults to NULL
-str ca_path = STR_STATIC_INIT(""); // certificate authority dir path, defaults to NULL
+str tls_client_cert = STR_STATIC_INIT(""); // client SSL certificate path, defaults to NULL
+str tls_client_key = STR_STATIC_INIT(""); // client SSL certificate key path, defaults to NULL
+str tls_ca_path = STR_STATIC_INIT(""); // certificate authority dir path, defaults to NULL
 static char *memory_manager = "shm";
 extern int curl_memory_manager;
 
@@ -78,15 +78,15 @@ static void mod_destroy(void);
 
 static int w_http_async_get(sip_msg_t* msg, char* query, char* rt);
 static int w_http_async_post(sip_msg_t* msg, char* query, char* post, char* rt);
-static int w_http_verify_host(sip_msg_t* msg, char* vh, char*);
-static int w_http_verify_peer(sip_msg_t* msg, char* vp, char*);
+static int w_tls_verify_host(sip_msg_t* msg, char* vh, char*);
+static int w_tls_verify_peer(sip_msg_t* msg, char* vp, char*);
 static int w_http_async_suspend_transaction(sip_msg_t* msg, char* vp, char*);
 static int w_http_set_timeout(sip_msg_t* msg, char* tout, char*);
 static int w_http_append_header(sip_msg_t* msg, char* hdr, char*);
 static int w_http_set_method(sip_msg_t* msg, char* method, char*);
-static int w_http_set_ssl_cert(sip_msg_t* msg, char* sc, char*);
-static int w_http_set_ssl_key(sip_msg_t* msg, char* sk, char*);
-static int w_http_set_ca_path(sip_msg_t* msg, char* cp, char*);
+static int w_http_set_tls_client_cert(sip_msg_t* msg, char* sc, char*);
+static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*);
+static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*);
 static int set_query_param(str* param, str input);
 static int fixup_http_async_get(void** param, int param_no);
 static int fixup_http_async_post(void** param, int param_no);
@@ -122,9 +122,9 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"http_async_query", (cmd_function)w_http_async_post, 3, fixup_http_async_post,
 		0, ANY_ROUTE},
-	{"http_verify_host", (cmd_function)w_http_verify_host, 1, fixup_igp_all,
+	{"tls_verify_host", (cmd_function)w_tls_verify_host, 1, fixup_igp_all,
 		0, ANY_ROUTE},
-	{"http_verify_peer", (cmd_function)w_http_verify_peer, 1, fixup_igp_all,
+	{"tls_verify_peer", (cmd_function)w_tls_verify_peer, 1, fixup_igp_all,
 		0, ANY_ROUTE},
 	{"http_async_suspend", (cmd_function)w_http_async_suspend_transaction, 1, fixup_igp_all,
 		0, ANY_ROUTE},
@@ -134,11 +134,11 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"http_set_method", (cmd_function)w_http_set_method, 1, fixup_spve_null,
 		0, ANY_ROUTE},
-	{"http_set_ssl_cert", (cmd_function)w_http_set_ssl_cert, 1, fixup_spve_null,
+	{"http_set_tls_client_cert", (cmd_function)w_http_set_tls_client_cert, 1, fixup_spve_null,
 		0, ANY_ROUTE},
-	{"http_set_ssl_key", (cmd_function)w_http_set_ssl_key, 1, fixup_spve_null,
+	{"http_set_tls_client_key", (cmd_function)w_http_set_tls_client_key, 1, fixup_spve_null,
 		0, ANY_ROUTE},
-	{"http_set_ca_path", (cmd_function)w_http_set_ca_path, 1, fixup_spve_null,
+	{"http_set_tls_ca_path", (cmd_function)w_http_set_tls_ca_path, 1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -147,13 +147,13 @@ static param_export_t params[]={
 {"workers",					INT_PARAM,   &num_workers},
 	{"connection_timeout",	INT_PARAM,   &http_timeout},
 	{"hash_size",			INT_PARAM,   &hash_size},
-	{"tlsversion",			INT_PARAM,   &ssl_version},
-	{"tlsverifyhost",		INT_PARAM,   &verify_host},
-	{"tlsverifypeer",		INT_PARAM,   &verify_peer},
+	{"tls_version",			INT_PARAM,   &tls_version},
+	{"tls_verify_host",		INT_PARAM,   &tls_verify_host},
+	{"tls_verify_peer",		INT_PARAM,   &tls_verify_peer},
 	{"curl_verbose",		INT_PARAM,   &curl_verbose},
-	{"tlsclientcert",		PARAM_STR,   &ssl_cert},
-	{"tlsclientkey",		PARAM_STR,   &ssl_key},
-	{"tlscapath",			PARAM_STR,   &ca_path},
+	{"tls_client_cert",		PARAM_STR,   &tls_client_cert},
+	{"tls_client_key",		PARAM_STR,   &tls_client_key},
+	{"tls_ca_path",			PARAM_STR,   &tls_ca_path},
 	{"memory_manager",	PARAM_STRING,&memory_manager},
 	{0, 0, 0}
 };
@@ -256,8 +256,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	verify_host = verify_host?1:0;
-	verify_peer = verify_peer?1:0;
+	tls_verify_host = tls_verify_host?1:0;
+	tls_verify_peer = tls_verify_peer?1:0;
 
 	/* init http parameters list */
 	init_query_params(&ah_params);
@@ -499,17 +499,17 @@ if(fixup_get_ivalue(msg, (gparam_t*)NAME, &( i_##NAME))!=0)\
 	return -1;\
 }
 
-static int w_http_verify_host(sip_msg_t* msg, char* vh, char*foo)
+static int w_tls_verify_host(sip_msg_t* msg, char* vh, char*foo)
 {
 	_IVALUE (vh);
-	ah_params.verify_host = i_vh?1:0;
+	ah_params.tls_verify_host = i_vh?1:0;
 	return 1;
 }
 
-static int w_http_verify_peer(sip_msg_t* msg, char* vp, char*foo)
+static int w_tls_verify_peer(sip_msg_t* msg, char* vp, char*foo)
 {
 	_IVALUE (vp);
-	ah_params.verify_peer = i_vp?1:0;
+	ah_params.tls_verify_peer = i_vp?1:0;
 	return 1;
 }
 
@@ -585,40 +585,40 @@ static int w_http_set_method(sip_msg_t* msg, char* meth, char*foo)
 	return 1;
 }
 
-static int w_http_set_ssl_cert(sip_msg_t* msg, char* sc, char*foo)
+static int w_http_set_tls_client_cert(sip_msg_t* msg, char* sc, char*foo)
 {
-	str _ssl_cert;
+	str _tls_client_cert;
 
-	if(fixup_get_svalue(msg, (gparam_t*)sc, &_ssl_cert)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t*)sc, &_tls_client_cert)!=0) {
 		LM_ERR("unable to get method value\n");
 		return -1;
 	}
 
-        return set_query_param(&ah_params.ssl_cert, _ssl_cert);
+        return set_query_param(&ah_params.tls_client_cert, _tls_client_cert);
 }
 
-static int w_http_set_ssl_key(sip_msg_t* msg, char* sk, char*foo)
+static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*foo)
 {
-	str _ssl_key;
+	str _tls_client_key;
 
-	if(fixup_get_svalue(msg, (gparam_t*)sk, &_ssl_key)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t*)sk, &_tls_client_key)!=0) {
 		LM_ERR("unable to get method value\n");
 		return -1;
 	}
 
-        return set_query_param(&ah_params.ssl_key, _ssl_key);
+        return set_query_param(&ah_params.tls_client_key, _tls_client_key);
 }
 
-static int w_http_set_ca_path(sip_msg_t* msg, char* cp, char*foo)
+static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*foo)
 {
-	str _ca_path;
+	str _tls_ca_path;
 
-	if(fixup_get_svalue(msg, (gparam_t*)cp, &_ca_path)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t*)cp, &_tls_ca_path)!=0) {
 		LM_ERR("unable to get method value\n");
 		return -1;
 	}
 
-        return set_query_param(&ah_params.ca_path, _ca_path);
+        return set_query_param(&ah_params.tls_ca_path, _tls_ca_path);
 }
 
 /*

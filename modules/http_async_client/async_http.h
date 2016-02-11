@@ -52,11 +52,11 @@ extern int http_timeout; /* query timeout in ms */
 extern struct sip_msg *ah_reply;
 extern str ah_error;
 
-extern int verify_host;
-extern int verify_peer;
-extern str ssl_cert;
-extern str ssl_key;
-extern str ca_path;
+extern int tls_verify_host;
+extern int tls_verify_peer;
+extern str tls_client_cert;
+extern str tls_client_key;
+extern str tls_ca_path;
 
 
 typedef struct async_http_worker {
@@ -80,16 +80,16 @@ struct header_list {
 
 struct query_params {
 	async_http_method_t method:3;
-	unsigned int verify_peer:1;
-	unsigned int verify_host:1;
+	unsigned int tls_verify_peer:1;
+	unsigned int tls_verify_host:1;
 	unsigned int suspend_transaction:1; /* (create and) suspend the current transaction */
 	unsigned int call_route:1;          /* call script route on reply */
 
 	unsigned int timeout;
 	struct header_list headers;
-	str ssl_cert;
-	str ssl_key;
-	str ca_path;
+	str tls_client_cert;
+	str tls_client_key;
+	str tls_ca_path;
 };
 
 extern struct query_params ah_params;
@@ -139,22 +139,22 @@ static inline void free_async_query(async_query_t *aq)
 		shm_free(aq->query_params.headers.t);
 	}
 
-	if (aq->query_params.ssl_cert.s && aq->query_params.ssl_cert.len > 0) {
-		shm_free(aq->query_params.ssl_cert.s);
-		aq->query_params.ssl_cert.s = NULL;
-		aq->query_params.ssl_cert.len = 0;
+	if (aq->query_params.tls_client_cert.s && aq->query_params.tls_client_cert.len > 0) {
+		shm_free(aq->query_params.tls_client_cert.s);
+		aq->query_params.tls_client_cert.s = NULL;
+		aq->query_params.tls_client_cert.len = 0;
 	}
 
-	if (aq->query_params.ssl_key.s && aq->query_params.ssl_key.len > 0) {
-		shm_free(aq->query_params.ssl_key.s);
-		aq->query_params.ssl_key.s = NULL;
-		aq->query_params.ssl_key.len = 0;
+	if (aq->query_params.tls_client_key.s && aq->query_params.tls_client_key.len > 0) {
+		shm_free(aq->query_params.tls_client_key.s);
+		aq->query_params.tls_client_key.s = NULL;
+		aq->query_params.tls_client_key.len = 0;
 	}
 
-	if (aq->query_params.ca_path.s && aq->query_params.ca_path.len > 0) {
-		shm_free(aq->query_params.ca_path.s);
-		aq->query_params.ca_path.s = NULL;
-		aq->query_params.ca_path.len = 0;
+	if (aq->query_params.tls_ca_path.s && aq->query_params.tls_ca_path.len > 0) {
+		shm_free(aq->query_params.tls_ca_path.s);
+		aq->query_params.tls_ca_path.s = NULL;
+		aq->query_params.tls_ca_path.len = 0;
 	}
 
 	shm_free(aq);

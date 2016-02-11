@@ -199,37 +199,37 @@ void notification_socket_cb(int fd, short event, void *arg)
 	post = ((str)aq->post);
 
 	query_params.timeout = aq->query_params.timeout;
-	query_params.verify_peer = aq->query_params.verify_peer;
-	query_params.verify_host = aq->query_params.verify_host;
+	query_params.tls_verify_peer = aq->query_params.tls_verify_peer;
+	query_params.tls_verify_host = aq->query_params.tls_verify_host;
 	query_params.headers = NULL;
 	for (i = 0 ; i < aq->query_params.headers.len ; i++) {
 		query_params.headers = curl_slist_append(query_params.headers, aq->query_params.headers.t[i]);
 	}
 	query_params.method  = aq->query_params.method;
 
-	query_params.ssl_cert.s = NULL;
-	query_params.ssl_cert.len = 0;
-	if (aq->query_params.ssl_cert.s && aq->query_params.ssl_cert.len > 0) {
-		if (shm_str_dup(&query_params.ssl_cert, &(aq->query_params.ssl_cert)) < 0) {
-			LM_ERR("Error allocating query_params.ssl_cert\n");
+	query_params.tls_client_cert.s = NULL;
+	query_params.tls_client_cert.len = 0;
+	if (aq->query_params.tls_client_cert.s && aq->query_params.tls_client_cert.len > 0) {
+		if (shm_str_dup(&query_params.tls_client_cert, &(aq->query_params.tls_client_cert)) < 0) {
+			LM_ERR("Error allocating query_params.tls_client_cert\n");
 			return;
 		}
 	}
 
-	query_params.ssl_key.s = NULL;
-	query_params.ssl_key.len = 0;
-	if (aq->query_params.ssl_key.s && aq->query_params.ssl_key.len > 0) {
-		if (shm_str_dup(&query_params.ssl_key, &(aq->query_params.ssl_key)) < 0) {
-			LM_ERR("Error allocating query_params.ssl_key\n");
+	query_params.tls_client_key.s = NULL;
+	query_params.tls_client_key.len = 0;
+	if (aq->query_params.tls_client_key.s && aq->query_params.tls_client_key.len > 0) {
+		if (shm_str_dup(&query_params.tls_client_key, &(aq->query_params.tls_client_key)) < 0) {
+			LM_ERR("Error allocating query_params.tls_client_key\n");
 			return;
 		}
 	}
 
-	query_params.ca_path.s = NULL;
-	query_params.ca_path.len = 0;
-	if (aq->query_params.ca_path.s && aq->query_params.ca_path.len > 0) {
-		if (shm_str_dup(&query_params.ca_path, &(aq->query_params.ca_path)) < 0) {
-			LM_ERR("Error allocating query_params.ca_path\n");
+	query_params.tls_ca_path.s = NULL;
+	query_params.tls_ca_path.len = 0;
+	if (aq->query_params.tls_ca_path.s && aq->query_params.tls_ca_path.len > 0) {
+		if (shm_str_dup(&query_params.tls_ca_path, &(aq->query_params.tls_ca_path)) < 0) {
+			LM_ERR("Error allocating query_params.tls_ca_path\n");
 			return;
 		}
 	}
@@ -241,20 +241,20 @@ void notification_socket_cb(int fd, short event, void *arg)
 		free_async_query(aq);
 	}
 
-	if (query_params.ssl_cert.s && query_params.ssl_cert.len > 0) {
-		shm_free(query_params.ssl_cert.s);
-		query_params.ssl_cert.s = NULL;
-		query_params.ssl_cert.len = 0;
+	if (query_params.tls_client_cert.s && query_params.tls_client_cert.len > 0) {
+		shm_free(query_params.tls_client_cert.s);
+		query_params.tls_client_cert.s = NULL;
+		query_params.tls_client_cert.len = 0;
 	}
-	if (query_params.ssl_key.s && query_params.ssl_key.len > 0) {
-		shm_free(query_params.ssl_key.s);
-		query_params.ssl_key.s = NULL;
-		query_params.ssl_key.len = 0;
+	if (query_params.tls_client_key.s && query_params.tls_client_key.len > 0) {
+		shm_free(query_params.tls_client_key.s);
+		query_params.tls_client_key.s = NULL;
+		query_params.tls_client_key.len = 0;
 	}
-	if (query_params.ca_path.s && query_params.ca_path.len > 0) {
-		shm_free(query_params.ca_path.s);
-		query_params.ca_path.s = NULL;
-		query_params.ca_path.len = 0;
+	if (query_params.tls_ca_path.s && query_params.tls_ca_path.len > 0) {
+		shm_free(query_params.tls_ca_path.s);
+		query_params.tls_ca_path.s = NULL;
+		query_params.tls_ca_path.len = 0;
 	}
 
 	return;
@@ -326,36 +326,36 @@ int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act)
 	aq->tindex = tindex;
 	aq->tlabel = tlabel;
 	
-	aq->query_params.verify_peer = ah_params.verify_peer;
-	aq->query_params.verify_host = ah_params.verify_host;
+	aq->query_params.tls_verify_peer = ah_params.tls_verify_peer;
+	aq->query_params.tls_verify_host = ah_params.tls_verify_host;
 	aq->query_params.suspend_transaction = suspend;
 	aq->query_params.timeout = ah_params.timeout;
 	aq->query_params.headers = ah_params.headers;
 	aq->query_params.method = ah_params.method;
 
-	aq->query_params.ssl_cert.s = NULL;
-	aq->query_params.ssl_cert.len = 0;
-	if (ah_params.ssl_cert.s && ah_params.ssl_cert.len > 0) {
-		if (shm_str_dup(&aq->query_params.ssl_cert, &(ah_params.ssl_cert)) < 0) {
-			LM_ERR("Error allocating aq->query_params.ssl_cert\n");
+	aq->query_params.tls_client_cert.s = NULL;
+	aq->query_params.tls_client_cert.len = 0;
+	if (ah_params.tls_client_cert.s && ah_params.tls_client_cert.len > 0) {
+		if (shm_str_dup(&aq->query_params.tls_client_cert, &(ah_params.tls_client_cert)) < 0) {
+			LM_ERR("Error allocating aq->query_params.tls_client_cert\n");
 			goto error;
 		}
 	}
 
-	aq->query_params.ssl_key.s = NULL;
-	aq->query_params.ssl_key.len = 0;
-	if (ah_params.ssl_key.s && ah_params.ssl_key.len > 0) {
-		if (shm_str_dup(&aq->query_params.ssl_key, &(ah_params.ssl_key)) < 0) {
-			LM_ERR("Error allocating aq->query_params.ssl_key\n");
+	aq->query_params.tls_client_key.s = NULL;
+	aq->query_params.tls_client_key.len = 0;
+	if (ah_params.tls_client_key.s && ah_params.tls_client_key.len > 0) {
+		if (shm_str_dup(&aq->query_params.tls_client_key, &(ah_params.tls_client_key)) < 0) {
+			LM_ERR("Error allocating aq->query_params.tls_client_key\n");
 			goto error;
 		}
 	}
 
-	aq->query_params.ca_path.s = NULL;
-	aq->query_params.ca_path.len = 0;
-	if (ah_params.ca_path.s && ah_params.ca_path.len > 0) {
-		if (shm_str_dup(&aq->query_params.ca_path, &(ah_params.ca_path)) < 0) {
-			LM_ERR("Error allocating aq->query_params.ca_path\n");
+	aq->query_params.tls_ca_path.s = NULL;
+	aq->query_params.tls_ca_path.len = 0;
+	if (ah_params.tls_ca_path.s && ah_params.tls_ca_path.len > 0) {
+		if (shm_str_dup(&aq->query_params.tls_ca_path, &(ah_params.tls_ca_path)) < 0) {
+			LM_ERR("Error allocating aq->query_params.tls_ca_path\n");
 			goto error;
 		}
 	}
@@ -412,44 +412,44 @@ void init_query_params(struct query_params *p) {
 void set_query_params(struct query_params *p) {
 	p->headers.len = 0;
 	p->headers.t = NULL;
-	p->verify_host = verify_host;
-	p->verify_peer = verify_peer;
+	p->tls_verify_host = tls_verify_host;
+	p->tls_verify_peer = tls_verify_peer;
 	p->suspend_transaction = 1;
 	p->timeout = http_timeout;
 	p->method = AH_METH_DEFAULT;
 
-	if (p->ssl_cert.s && p->ssl_cert.len > 0) {
-		shm_free(p->ssl_cert.s);
-		p->ssl_cert.s = NULL;
-		p->ssl_cert.len = 0;
+	if (p->tls_client_cert.s && p->tls_client_cert.len > 0) {
+		shm_free(p->tls_client_cert.s);
+		p->tls_client_cert.s = NULL;
+		p->tls_client_cert.len = 0;
 	}
-	if (ssl_cert.s && ssl_cert.len > 0) {
-		if (shm_str_dup(&p->ssl_cert, &ssl_cert) < 0) {
-			LM_ERR("Error allocating ssl_cert\n");
+	if (tls_client_cert.s && tls_client_cert.len > 0) {
+		if (shm_str_dup(&p->tls_client_cert, &tls_client_cert) < 0) {
+			LM_ERR("Error allocating tls_client_cert\n");
 			return;
 		}
 	}
 
-	if (p->ssl_key.s && p->ssl_key.len > 0) {
-		shm_free(p->ssl_key.s);
-		p->ssl_key.s = NULL;
-		p->ssl_key.len = 0;
+	if (p->tls_client_key.s && p->tls_client_key.len > 0) {
+		shm_free(p->tls_client_key.s);
+		p->tls_client_key.s = NULL;
+		p->tls_client_key.len = 0;
 	}
-	if (ssl_key.s && ssl_key.len > 0) {
-		if (shm_str_dup(&p->ssl_key, &ssl_key) < 0) {
-			LM_ERR("Error allocating ssl_key\n");
+	if (tls_client_key.s && tls_client_key.len > 0) {
+		if (shm_str_dup(&p->tls_client_key, &tls_client_key) < 0) {
+			LM_ERR("Error allocating tls_client_key\n");
 			return;
 		}
 	}
 
-	if (p->ca_path.s && p->ca_path.len > 0) {
-		shm_free(p->ca_path.s);
-		p->ca_path.s = NULL;
-		p->ca_path.len = 0;
+	if (p->tls_ca_path.s && p->tls_ca_path.len > 0) {
+		shm_free(p->tls_ca_path.s);
+		p->tls_ca_path.s = NULL;
+		p->tls_ca_path.len = 0;
 	}
-	if (ca_path.s && ca_path.len > 0) {
-		if (shm_str_dup(&p->ca_path, &ca_path) < 0) {
-			LM_ERR("Error allocating ca_path\n");
+	if (tls_ca_path.s && tls_ca_path.len > 0) {
+		if (shm_str_dup(&p->tls_ca_path, &tls_ca_path) < 0) {
+			LM_ERR("Error allocating tls_ca_path\n");
 			return;
 		}
 	}

@@ -121,7 +121,7 @@ modparam("async_http", "hash_size", 1024)
 		</example>
 	</section>
 	<section>
-		<title><varname>tlsversion</varname> (int)</title>
+		<title><varname>tls_version</varname> (int)</title>
         <para>
 		    For HTTPS connections, what's the preferred SSL version.
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
@@ -132,16 +132,16 @@ modparam("async_http", "hash_size", 1024)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>tlsversion</varname> parameter</title>
+		<title>Set <varname>tls_version</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tlsversion", 6)
+modparam("async_http", "tls_version", 6)
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>tlsverifyhost</varname> (int)</title>
+		<title><varname>tls_verify_host</varname> (int)</title>
         <para>
 		    For HTTPS connections, whether the client should verify the server host.
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
@@ -152,16 +152,16 @@ modparam("async_http", "tlsversion", 6)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>tlsverifyhost</varname> parameter</title>
+		<title>Set <varname>tls_verify_host</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tlsverifyhost", 0)
+modparam("async_http", "tls_verify_host", 0)
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>tlsverifypeer</varname> (int)</title>
+		<title><varname>tls_verify_peer</varname> (int)</title>
         <para>
 		    For HTTPS connections, whether the client should verify the server identity.
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
@@ -172,10 +172,10 @@ modparam("async_http", "tlsverifyhost", 0)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>tlsverifypeer</varname> parameter</title>
+		<title>Set <varname>tls_verify_peer</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tlsverifypeer", 0)
+modparam("async_http", "tls_verify_peer", 0)
 ...
 </programlisting>
 		</example>
@@ -231,7 +231,7 @@ modparam("async_http", "memory_manager", "sys")
               </example>
       </section>
 	<section>
-		<title><varname>tlsclientcert</varname> (int)</title>
+		<title><varname>tls_client_cert</varname> (int)</title>
         <para>
 		    For HTTPS connections, the file path of the TLS client certificate to be used
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html
@@ -242,16 +242,16 @@ modparam("async_http", "memory_manager", "sys")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>tlsclientcert</varname> parameter</title>
+		<title>Set <varname>tls_client_cert</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tlsclientcert", "/etc/kamailio/ssl/clientcert.pem")
+modparam("async_http", "tls_client_cert", "/etc/kamailio/ssl/clientcert.pem")
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>tlsclientkey</varname> (int)</title>
+		<title><varname>tls_client_key</varname> (int)</title>
         <para>
 		    For HTTPS connections, the file path of the TLS client certificate key
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLKEY.html
@@ -262,16 +262,16 @@ modparam("async_http", "tlsclientcert", "/etc/kamailio/ssl/clientcert.pem")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>tlsclientkey</varname> parameter</title>
+		<title>Set <varname>tls_client_key</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tlsclientkey", "/etc/kamailio/ssl/clientcert.key")
+modparam("async_http", "tls_client_key", "/etc/kamailio/ssl/clientcert.key")
 ...
 </programlisting>
 		</example>
 	</section>
 	<section>
-		<title><varname>tlscapath</varname> (int)</title>
+		<title><varname>tls_ca_path</varname> (int)</title>
         <para>
 		    The path of the directory holding the CA certificates.
                     http://curl.haxx.se/libcurl/c/CURLOPT_CAPATH.html
@@ -282,10 +282,10 @@ modparam("async_http", "tlsclientkey", "/etc/kamailio/ssl/clientcert.key")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>tlscapath</varname> parameter</title>
+		<title>Set <varname>tls_ca_path</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tlscapath", "/etc/kamailio/ssl/ca/")
+modparam("async_http", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 ...
 </programlisting>
 		</example>
@@ -373,9 +373,9 @@ t_reply("200", "Ok");
         </programlisting>
 	    </example>
 	</section>
-	<section id="async_http.f.http_verify_host">
+	<section id="async_http.f.tls_verify_host">
 	    <title>
-		<function moreinfo="none">http_verify_host(verify)</function>
+		<function moreinfo="none">tls_verify_host(verify)</function>
 	    </title>
         <para>
 		    For the next HTTPS connection, whether the client should verify the server host.
@@ -384,10 +384,10 @@ t_reply("200", "Ok");
             Parameter <quote>verify</quote> set to "1" to enable the host verification, "0" to disable. Default: the global value set as <emphasis>verify_host</emphasis> module parameter.
         </para>
 		<example>
-		<title><function>http_verify_host()</function> usage</title>
+		<title><function>tls_verify_host()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-http_verify_host("0");
+tls_verify_host("0");
 # host verification is disabled for the next query
 http_query("https://example.com/test.php", "HTTP_REPLY");
 ...
@@ -395,9 +395,9 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_verify_peer">
+	<section id="async_http.f.tls_verify_peer">
 	    <title>
-		<function moreinfo="none">http_verify_peer(verify)</function>
+		<function moreinfo="none">tls_verify_peer(verify)</function>
 	    </title>
         <para>
 		    For the next HTTPS connection, whether the client should verify the server identity.
@@ -406,10 +406,10 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
             Parameter <quote>verify</quote> set to "1" to enable the identity verification, "0" to disable. Default: the global value set as <emphasis>verify_peer</emphasis> module parameter.
         </para>
 		<example>
-		<title><function>http_verify_peer()</function> usage</title>
+		<title><function>tls_verify_peer()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-http_verify_peer("0");
+tls_verify_peer("0");
 # server identity verification is disabled for the next query
 http_query("https://example.com/test.php", "HTTP_REPLY");
 ...
@@ -492,21 +492,21 @@ http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_set_ssl_cert">
+	<section id="async_http.f.http_set_tls_client_cert">
 	    <title>
-		<function moreinfo="none">http_set_ssl_cert(path)</function>
+		<function moreinfo="none">http_set_tls_client_cert(path)</function>
 	    </title>
         <para>
 		    For the next HTTPS connection, what client certificate to use.
         </para>
         <para>
-            Default: the global value set as <emphasis>ssl_cert</emphasis> module parameter.
+            Default: the global value set as <emphasis>tls_client_cert</emphasis> module parameter.
         </para>
 		<example>
-		<title><function>http_set_ssl_cert()</function> usage</title>
+		<title><function>http_set_tls_client_cert()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-http_set_ssl_cert("/etc/kamailio/ssl/cert.pem");
+http_set_tls_client_cert("/etc/kamailio/ssl/cert.pem");
 # Next query will use the client cert above
 http_query("https://example.com/test.php", "HTTP_REPLY");
 ...
@@ -514,21 +514,21 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_set_ssl_key">
+	<section id="async_http.f.http_set_tls_client_key">
 	    <title>
-		<function moreinfo="none">http_set_ssl_key(path)</function>
+		<function moreinfo="none">http_set_tls_client_key(path)</function>
 	    </title>
         <para>
 		    For the next HTTPS connection, what client certificate key to use.
         </para>
         <para>
-            Default: the global value set as <emphasis>ssl_key</emphasis> module parameter.
+            Default: the global value set as <emphasis>tls_client_key</emphasis> module parameter.
         </para>
 		<example>
-		<title><function>http_set_ssl_key()</function> usage</title>
+		<title><function>http_set_tls_client_key()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-http_set_ssl_key("/etc/kamailio/ssl/cert.key");
+http_set_tls_client_key("/etc/kamailio/ssl/cert.key");
 # Next query will use the client cert key above
 http_query("https://example.com/test.php", "HTTP_REPLY");
 ...
@@ -536,21 +536,21 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_set_ca_path">
+	<section id="async_http.f.http_set_tls_ca_path">
 	    <title>
-		<function moreinfo="none">http_set_ca_path(path)</function>
+		<function moreinfo="none">http_set_tls_ca_path(path)</function>
 	    </title>
         <para>
 		    For the next HTTP connection, what CA certificate files to use.
         </para>
         <para>
-            Default: the global value set as <emphasis>ca_path</emphasis> module parameter.
+            Default: the global value set as <emphasis>tls_ca_path</emphasis> module parameter.
         </para>
 		<example>
-		<title><function>http_set_ca_path()</function> usage</title>
+		<title><function>http_set_tls_ca_path()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-http_set_ssl_key("/etc/kamailio/ssl/ca/");
+http_set_tls_client_key("/etc/kamailio/ssl/ca/");
 # Next query will use the CA certs above
 http_query("https://example.com/test.php", "HTTP_REPLY");
 ...

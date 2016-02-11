@@ -415,8 +415,8 @@ int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
 int new_request(str *query, str *post, http_m_params_t *query_params, http_multi_cbe_t cb, void *param)
 {
 
-	LM_DBG("received query %.*s with timeout %d, verify_peer %d, verify_host %d (param=%p)\n", 
-			query->len, query->s, query_params->timeout, query_params->verify_peer, query_params->verify_host, param);
+	LM_DBG("received query %.*s with timeout %d, tls_verify_peer %d, tls_verify_host %d (param=%p)\n", 
+			query->len, query->s, query_params->timeout, query_params->tls_verify_peer, query_params->tls_verify_host, param);
 	
 	CURL *easy;
 	CURLMcode rc;
@@ -469,20 +469,20 @@ int new_request(str *query, str *post, http_m_params_t *query_params, http_multi
 	}
 	curl_easy_setopt(cell->easy, CURLOPT_ERRORBUFFER, cell->error);
 	curl_easy_setopt(cell->easy, CURLOPT_PRIVATE, cell);
-	curl_easy_setopt(cell->easy, CURLOPT_SSL_VERIFYPEER, cell->params.verify_peer);
-	curl_easy_setopt(cell->easy, CURLOPT_SSL_VERIFYHOST, cell->params.verify_host?2:0);
-	curl_easy_setopt(cell->easy, CURLOPT_SSLVERSION, ssl_version);
+	curl_easy_setopt(cell->easy, CURLOPT_SSL_VERIFYPEER, cell->params.tls_verify_peer);
+	curl_easy_setopt(cell->easy, CURLOPT_SSL_VERIFYHOST, cell->params.tls_verify_host?2:0);
+	curl_easy_setopt(cell->easy, CURLOPT_SSLVERSION, tls_version);
 
-	if (cell->params.ssl_cert.s && cell->params.ssl_cert.len > 0) {
-		curl_easy_setopt(cell->easy, CURLOPT_SSLCERT, cell->params.ssl_cert.s);
+	if (cell->params.tls_client_cert.s && cell->params.tls_client_cert.len > 0) {
+		curl_easy_setopt(cell->easy, CURLOPT_SSLCERT, cell->params.tls_client_cert.s);
 	}
 
-	if (cell->params.ssl_key.s && cell->params.ssl_key.len > 0) {
-		curl_easy_setopt(cell->easy, CURLOPT_SSLKEY, cell->params.ssl_key.s);
+	if (cell->params.tls_client_key.s && cell->params.tls_client_key.len > 0) {
+		curl_easy_setopt(cell->easy, CURLOPT_SSLKEY, cell->params.tls_client_key.s);
 	}
 
-	if (cell->params.ca_path.s && cell->params.ca_path.len > 0) {
-		curl_easy_setopt(cell->easy, CURLOPT_CAPATH, cell->params.ca_path.s);
+	if (cell->params.tls_ca_path.s && cell->params.tls_ca_path.len > 0) {
+		curl_easy_setopt(cell->easy, CURLOPT_CAPATH, cell->params.tls_ca_path.s);
 	}
 
 	curl_easy_setopt(cell->easy, CURLOPT_HEADER, 1);

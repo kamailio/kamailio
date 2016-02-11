@@ -52,7 +52,7 @@ extern stat_var *requests;
 extern stat_var *replies;
 extern stat_var *errors;
 extern stat_var *timeouts;
-extern int ssl_version;
+extern int tls_version;
 extern int curl_verbose;
 
 void set_curl_mem_callbacks(void);

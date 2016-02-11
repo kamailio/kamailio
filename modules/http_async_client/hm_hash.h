@@ -66,13 +66,13 @@ typedef struct http_m_global
 
 typedef struct hm_params {
 	int timeout;
-	int verify_host;
-	int verify_peer;
+	int tls_verify_host;
+	int tls_verify_peer;
 	struct curl_slist* headers;
 	int method;
-	str ssl_cert;
-	str ssl_key;
-	str ca_path;
+	str tls_client_cert;
+	str tls_client_key;
+	str tls_ca_path;
 } http_m_params_t;
 
 typedef struct http_m_cell
