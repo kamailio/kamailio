@@ -73,7 +73,7 @@
 		<title>Set <varname>workers</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "workers", 2)
+modparam("http_async_client", "workers", 2)
 ...
 </programlisting>
 		</example>
@@ -93,7 +93,7 @@ modparam("async_http", "workers", 2)
 		<title>Set <varname>connection_timeout</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "connection_timeout", 1000)
+modparam("http_async_client", "connection_timeout", 1000)
 ...
 </programlisting>
 		</example>
@@ -115,7 +115,7 @@ modparam("async_http", "connection_timeout", 1000)
 		<title>Set <varname>hash_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "hash_size", 1024)
+modparam("http_async_client", "hash_size", 1024)
 ...
 </programlisting>
 		</example>
@@ -135,7 +135,7 @@ modparam("async_http", "hash_size", 1024)
 		<title>Set <varname>tls_version</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tls_version", 6)
+modparam("http_async_client", "tls_version", 6)
 ...
 </programlisting>
 		</example>
@@ -155,7 +155,7 @@ modparam("async_http", "tls_version", 6)
 		<title>Set <varname>tls_verify_host</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tls_verify_host", 0)
+modparam("http_async_client", "tls_verify_host", 0)
 ...
 </programlisting>
 		</example>
@@ -175,7 +175,7 @@ modparam("async_http", "tls_verify_host", 0)
 		<title>Set <varname>tls_verify_peer</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tls_verify_peer", 0)
+modparam("http_async_client", "tls_verify_peer", 0)
 ...
 </programlisting>
 		</example>
@@ -195,7 +195,7 @@ modparam("async_http", "tls_verify_peer", 0)
 		<title>Set <varname>curl_verbose</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "curl_verbose", 1)
+modparam("http_async_client", "curl_verbose", 1)
 ...
 </programlisting>
 		</example>
@@ -225,7 +225,7 @@ modparam("async_http", "curl_verbose", 1)
 			<title>Set <varname>memory_manager</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "memory_manager", "sys")
+modparam("http_async_client", "memory_manager", "sys")
 ...
 </programlisting>
               </example>
@@ -245,7 +245,7 @@ modparam("async_http", "memory_manager", "sys")
 		<title>Set <varname>tls_client_cert</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tls_client_cert", "/etc/kamailio/ssl/clientcert.pem")
+modparam("http_async_client", "tls_client_cert", "/etc/kamailio/ssl/clientcert.pem")
 ...
 </programlisting>
 		</example>
@@ -265,7 +265,7 @@ modparam("async_http", "tls_client_cert", "/etc/kamailio/ssl/clientcert.pem")
 		<title>Set <varname>tls_client_key</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tls_client_key", "/etc/kamailio/ssl/clientcert.key")
+modparam("http_async_client", "tls_client_key", "/etc/kamailio/ssl/clientcert.key")
 ...
 </programlisting>
 		</example>
@@ -285,7 +285,7 @@ modparam("async_http", "tls_client_key", "/etc/kamailio/ssl/clientcert.key")
 		<title>Set <varname>tls_ca_path</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("async_http", "tls_ca_path", "/etc/kamailio/ssl/ca/")
+modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 ...
 </programlisting>
 		</example>
@@ -294,7 +294,7 @@ modparam("async_http", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 
 	<section>
 	<title>Functions</title>
-	<section id="async_http.f.http_async_query">
+	<section id="http_async_client.f.http_async_query">
 	    <title>
 		<function moreinfo="none">http_async_query(url, [post_data], route_name)</function>
 	    </title>
@@ -348,7 +348,7 @@ route[HTTP_REPLY] {
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_async_suspend">
+	<section id="http_async_client.f.http_async_suspend">
 	    <title>
 		<function moreinfo="none">http_async_suspend(suspend)</function>
 	    </title>
@@ -373,7 +373,7 @@ t_reply("200", "Ok");
         </programlisting>
 	    </example>
 	</section>
-	<section id="async_http.f.tls_verify_host">
+	<section id="http_async_client.f.tls_verify_host">
 	    <title>
 		<function moreinfo="none">tls_verify_host(verify)</function>
 	    </title>
@@ -395,7 +395,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.tls_verify_peer">
+	<section id="http_async_client.f.tls_verify_peer">
 	    <title>
 		<function moreinfo="none">tls_verify_peer(verify)</function>
 	    </title>
@@ -417,7 +417,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_set_timeout">
+	<section id="http_async_client.f.http_set_timeout">
 	    <title>
 		<function moreinfo="none">http_set_timeout(timeout)</function>
 	    </title>
@@ -439,7 +439,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_append_header">
+	<section id="http_async_client.f.http_append_header">
 	    <title>
 		<function moreinfo="none">http_append_header(header)</function>
 	    </title>
@@ -470,7 +470,7 @@ http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_set_method">
+	<section id="http_async_client.f.http_set_method">
 	    <title>
 		<function moreinfo="none">http_set_method(method)</function>
 	    </title>
@@ -492,7 +492,7 @@ http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_set_tls_client_cert">
+	<section id="http_async_client.f.http_set_tls_client_cert">
 	    <title>
 		<function moreinfo="none">http_set_tls_client_cert(path)</function>
 	    </title>
@@ -514,7 +514,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_set_tls_client_key">
+	<section id="http_async_client.f.http_set_tls_client_key">
 	    <title>
 		<function moreinfo="none">http_set_tls_client_key(path)</function>
 	    </title>
@@ -536,7 +536,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 	    </example>
 	</section>
 
-	<section id="async_http.f.http_set_tls_ca_path">
+	<section id="http_async_client.f.http_set_tls_ca_path">
 	    <title>
 		<function moreinfo="none">http_set_tls_ca_path(path)</function>
 	    </title>
