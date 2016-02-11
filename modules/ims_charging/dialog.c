@@ -179,7 +179,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode, char*
                                 LM_DBG("processing dlg_terminated in Ro and session [%.*s] has active = %d", ro_session->ro_session_id.len, ro_session->ro_session_id.s, ro_session->active);
 				if ((!ro_session->active && (ro_session->start_time != 0)) || (ro_session->ccr_sent == 1)) {
 					unref_ro_session_unsafe(ro_session,1,ro_session_entry);
-					LM_ERR("CCR already sent or Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);
+					LM_DBG("CCR already sent or Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);
 					ro_session_unlock(ro_session_table, ro_session_entry);
 					return;
 				}
