@@ -455,7 +455,7 @@ int new_request(str *query, str *post, http_m_params_t *query_params, http_multi
 	cell->url = (char*)shm_malloc(query->len + 1);
 	if (cell->url==0) {
 		LM_ERR("no more shm mem\n");
-        goto error;
+		goto error;
 	}
 	strncpy(cell->url, query->s, query->len);
 	cell->url[query->len] = '\0';
@@ -495,7 +495,7 @@ int new_request(str *query, str *post, http_m_params_t *query_params, http_multi
 		cell->post_data = shm_malloc(post->len + 1);
 		if (cell->post_data == NULL) {
 			LM_ERR("cannot allocate pkg memory for post\n");
-            goto error;
+			goto error;
 		}
 		strncpy(cell->post_data, post->s, post->len);
 		cell->post_data[post->len] = '\0';
@@ -522,7 +522,7 @@ int new_request(str *query, str *post, http_m_params_t *query_params, http_multi
 	rc = curl_multi_add_handle(g->multi, cell->easy);
 	if (check_mcode(rc, cell->error) < 0) {
 		LM_ERR("error adding curl handler: %s\n", cell->error);
-        goto error;
+		goto error;
 	}
 	/* note that the add_handle() will set a time-out to trigger very soon so
 	 *      that the necessary socket_action() call will be called by this app */
