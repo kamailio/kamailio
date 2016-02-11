@@ -87,6 +87,7 @@ static int w_http_set_method(sip_msg_t* msg, char* method, char*);
 static int w_http_set_ssl_cert(sip_msg_t* msg, char* sc, char*);
 static int w_http_set_ssl_key(sip_msg_t* msg, char* sk, char*);
 static int w_http_set_ca_path(sip_msg_t* msg, char* cp, char*);
+static int set_query_param(str* param, str input);
 static int fixup_http_async_get(void** param, int param_no);
 static int fixup_http_async_post(void** param, int param_no);
 
@@ -593,20 +594,7 @@ static int w_http_set_ssl_cert(sip_msg_t* msg, char* sc, char*foo)
 		return -1;
 	}
 
-	if (ah_params.ssl_cert.s) {
-		shm_free(ah_params.ssl_cert.s);
-		ah_params.ssl_cert.s = NULL;
-		ah_params.ssl_cert.len = 0;
-	}
-
-	if (_ssl_cert.s && _ssl_cert.len > 0) {
-		if (shm_str_dup(&ah_params.ssl_cert, &_ssl_cert) < 0) {
-			LM_ERR("Error allocating ah_params.ssl_cert\n");
-			return -1;
-		}
-	}
-
-	return 1;
+        return set_query_param(&ah_params.ssl_cert, _ssl_cert);
 }
 
 static int w_http_set_ssl_key(sip_msg_t* msg, char* sk, char*foo)
@@ -618,20 +606,7 @@ static int w_http_set_ssl_key(sip_msg_t* msg, char* sk, char*foo)
 		return -1;
 	}
 
-	if (ah_params.ssl_key.s) {
-		shm_free(ah_params.ssl_key.s);
-		ah_params.ssl_key.s = NULL;
-		ah_params.ssl_key.len = 0;
-	}
-
-	if (_ssl_key.s && _ssl_key.len > 0) {
-		if (shm_str_dup(&ah_params.ssl_key, &_ssl_key) < 0) {
-			LM_ERR("Error allocating ah_params.ssl_key\n");
-			return -1;
-		}
-	}
-
-	return 1;
+        return set_query_param(&ah_params.ssl_key, _ssl_key);
 }
 
 static int w_http_set_ca_path(sip_msg_t* msg, char* cp, char*foo)
@@ -643,15 +618,23 @@ static int w_http_set_ca_path(sip_msg_t* msg, char* cp, char*foo)
 		return -1;
 	}
 
-	if (ah_params.ca_path.s) {
-		shm_free(ah_params.ca_path.s);
-		ah_params.ca_path.s = NULL;
-		ah_params.ca_path.len = 0;
+        return set_query_param(&ah_params.ca_path, _ca_path);
+}
+
+/*
+ * Helper to copy input string parameter into a query parameter
+ */
+static int set_query_param(str* param, str input)
+{
+	if (param->s) {
+		shm_free(param->s);
+		param->s = NULL;
+		param->len = 0;
 	}
 
-	if (_ca_path.s && _ca_path.len > 0) {
-		if (shm_str_dup(&ah_params.ca_path, &_ca_path) < 0) {
-			LM_ERR("Error allocating ah_params.ca_path\n");
+	if (input.s && input.len > 0) {
+		if (shm_str_dup(param, &input) < 0) {
+			LM_ERR("Error allocating parameter\n");
 			return -1;
 		}
 	}
