@@ -1141,7 +1141,6 @@ void Snd_Message(peer *p, AAAMessage *msg)
 	int send_message_before_session_sm=0;
 	LM_DBG("Snd_Message called to peer [%.*s] for %s with code %d \n",
 		p->fqdn.len,p->fqdn.s,is_req(msg)?"request":"response",msg->commandCode);
-	touch_peer(p);
 	if (msg->sessionId) session = cdp_get_session(msg->sessionId->data);
 	
 	if (session){
