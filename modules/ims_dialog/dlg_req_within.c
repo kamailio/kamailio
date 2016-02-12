@@ -44,12 +44,14 @@
 #include "dlg_hash.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
+#include "dlg_ng_stats.h"
 
 #define MAX_FWD_HDR        "Max-Forwards: " MAX_FWD CRLF
 #define MAX_FWD_HDR_LEN    (sizeof(MAX_FWD_HDR) - 1)
 
 extern str dlg_extra_hdrs;
 extern int dlg_db_mode;
+extern struct dialog_ng_counters_h dialog_ng_cnts_h;
 
 int free_tm_dlg(dlg_t *td) {
     if (td) {
@@ -203,6 +205,9 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps) {
         } else {
             unref++;
         }
+        
+        counter_add(dialog_ng_cnts_h.active, -1);
+        
         /* dialog terminated (BYE) */
         run_dlg_callbacks(DLGCB_TERMINATED, dlg, ps->req, ps->rpl, DLG_DIR_NONE, 0);
 
