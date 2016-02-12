@@ -1280,7 +1280,7 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
 
             to_tag = get_to(rpl)->tag_value;
             if (to_tag.s == 0 || to_tag.len == 0) {
-                LM_ERR("missing TAG param in TO hdr :-/\n");
+                LM_DBG("missing TAG param in TO hdr :-/ - probably a failure response\n");
                 to_tag.s = 0;
                 to_tag.len = 0;
                 //Here we assume that the transaction module timer will remove any early dialogs
