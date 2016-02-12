@@ -345,8 +345,8 @@ int dlg_terminate(struct dlg_cell *dlg, struct sip_msg *msg, str *reason, int si
             return -1;
         }
         if (dlg->transaction) {
-            LM_DBG("terminating early dialog with %d outbound forks\n",
-                    dlg->transaction->nr_of_outgoings);
+            LM_DBG("terminating early dialog with %d outbound forks on transaction %p\n",
+                    dlg->transaction->nr_of_outgoings, dlg->transaction);
 
             t = dlg->transaction;
 
