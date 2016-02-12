@@ -1417,7 +1417,6 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
 
         counter_inc(dialog_ng_cnts_h.active);
 
-        if (unref) unref_dlg(dlg, unref);
         goto done;
     }
 
