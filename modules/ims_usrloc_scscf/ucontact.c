@@ -114,6 +114,10 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
     /*Copy parameter list into shm**/
     param = _ci->params;
     while(param) {
+        LM_DBG("Checking param [%.*s]\n", param->name.len, param->name.s);
+        if (param->name.len == 16 && (memcmp(param->name.s, "+g.3gpp.icsi-ref", 16)==0)) {
+            c->is_3gpp = 1;
+        }
 	/*Copy first param in curr*/
 	curr = shm_malloc(sizeof (param_t));
 	curr->len = param->len;

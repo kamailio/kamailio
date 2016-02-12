@@ -151,6 +151,8 @@ typedef enum contact_state {
 /*! \brief Valid contact is a contact that either didn't expire yet or is permanent */
 #define VALID_CONTACT(c, t)   (((c->expires>t) || (c->expires==0)) && c->state!=CONTACT_DELETED && c->state!=CONTACT_DELETE_PENDING && c->state!=CONTACT_EXPIRE_PENDING_NOTIFY)
 
+#define VALID_UE_TYPE(c, t)   ((t==0) || (t==1 && c->is_3gpp) || (t==2 && !c->is_3gpp))
+
 struct hslot;
 /*!< Hash table slot */
 struct socket_info;
@@ -298,6 +300,7 @@ typedef struct ucontact {
     struct contact_hslot* slot; /*!< Collision slot in the hash table array we belong to */
     unsigned int sl; 			/*!< Hash slot number we belong to */
     int ref_count;
+    int is_3gpp;
     contact_state_t state;
     str domain; /*!< Pointer to domain name (NULL terminated) */
     str aor; /*!< Pointer to the AOR string in record structure*/
