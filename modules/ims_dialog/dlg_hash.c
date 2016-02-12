@@ -452,6 +452,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
                         dlg_out->callee_route_set.s = (char*) shm_malloc(rr->len);
                         if (!dlg_out->callee_route_set.s) {
                             LM_ERR("no more shm mem\n");
+							lock_release(dlg->dlg_out_entries_lock);
                             return -1; //if we're out of mem we dont really care about cleaning up - prob going to crash anyway
                         }
                         dlg_out->callee_route_set.len = rr->len;
