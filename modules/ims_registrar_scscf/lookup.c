@@ -54,11 +54,12 @@
 
 /*! \brief
  * Lookup contact in the database and rewrite Request-URI
- * \return: -1 : not found
+ * \return:  1 : found
+ *          -1 : not found
  *          -2 : found but method not allowed
  *          -3 : error
  */
-int lookup(struct sip_msg* _m, udomain_t* _d) {
+int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
     impurecord_t* r;
     str aor;
     ucontact_t* ptr;
@@ -67,10 +68,26 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
     str path_dst;
     flag_t old_bflags;
     int i = 0;
+    int ue_type;    /*0=any, 1=3gpp, 2=sip */
 
     if (!_m) {
         LM_ERR("NULL message!!!\n");
         return -1;
+    }
+    
+    switch (ue_type_c[0]) {
+            case '3':
+                LM_DBG("looking for 3gpp terminals\n");
+                ue_type = 1;
+                break;
+            case 's':
+            case 'S':
+                LM_DBG("looking for sip terminals\n");
+                ue_type = 2;
+                break;
+        default:
+            LM_DBG("looking for any type of terminal\n");
+            ue_type=0;
     }
 
     if (_m->new_uri.s) aor = _m->new_uri;
@@ -97,7 +114,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
     i = 0;
 
     while (i < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[i])) {
-        if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
+        if (VALID_UE_TYPE(ptr, ue_type) && VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
             LM_DBG("Found a valid contact [%.*s]\n", ptr->c.len, ptr->c.s);
             i++;
             break;
@@ -166,7 +183,7 @@ int lookup(struct sip_msg* _m, udomain_t* _d) {
 
     //the last i was the first valid contact we found - let's go through the rest of valid contacts and append the branches.
     while (i < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[i])) {
-        if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
+        if (VALID_UE_TYPE(ptr, ue_type) && VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
             path_dst.len = 0;
             if (ptr->path.s && ptr->path.len
                     && get_path_dst_uri(&ptr->path, &path_dst) < 0) {
