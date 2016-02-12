@@ -507,7 +507,7 @@ int w_api_terminate_dlg(str *callid, str *ftag, str *ttag, str *hdrs, str* reaso
 
     unref_dlg(dlg, 1);
 
-    return dlg_terminate(dlg, NULL, NULL/*reason*/, 2, hdrs);
+    return dlg_terminate(dlg, NULL, reason, 2, hdrs);
 
 }
 
