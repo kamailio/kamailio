@@ -22,6 +22,12 @@
  *
  */
 
+/*! \file
+ * \brief  Kamailio http_async_client :: Hash functions
+ * \ingroup http_async_client
+ */
+
+
 #ifndef _HM_HASH_
 #define _HM_HASH_
 

@@ -22,6 +22,12 @@
  *
  */
 
+/*! \file
+ * \brief  Kamailio http_async_client :: Multi interface
+ * \ingroup http_async_client
+ */
+
+
 #ifndef _HTTP_MULTI_
 #define _HTTP_MULTI_
 

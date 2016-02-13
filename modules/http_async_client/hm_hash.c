@@ -22,6 +22,12 @@
  *
  */
 
+/*! \file
+ * \brief  Kamailio http_async_client :: Hash functions
+ * \ingroup http_async_client
+ */
+
+
 #include "hm_hash.h"
 
 extern int hash_size;
@@ -53,6 +59,7 @@ int init_http_m_table(unsigned int size)
 	LM_DBG("hash table %p initialized with size %d\n", hm_table, size);
 	return 0;
 }
+
 unsigned int build_hash_key(void *p)
 {
 	str			*hash_str;

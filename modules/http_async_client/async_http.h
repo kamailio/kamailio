@@ -22,6 +22,12 @@
  *
  */
 
+/*! \file
+ * \brief  Kamailio http_async_client :: Async HTTP
+ * \ingroup http_async_client
+ */
+
+
 #ifndef _ASYNC_HTTP_
 #define _ASYNC_HTTP_
 

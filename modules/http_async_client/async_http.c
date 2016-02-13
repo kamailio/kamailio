@@ -22,6 +22,12 @@
  *
  */
 
+/*! \file
+ * \brief  Kamailio http_async_client :: Include file
+ * \ingroup http_async_client
+ */
+
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -305,7 +311,7 @@ int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act)
 	}
 	memset(aq,0,dsize);
 
-    if(shm_str_dup(&aq->query, query)<0) {
+	if(shm_str_dup(&aq->query, query)<0) {
 		goto error;
 	}
 
@@ -361,17 +367,19 @@ int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act)
 		goto error;
 	}
 
-	if (suspend) 
+	if (suspend)  {
 		/* force exit in config */
 		return 0;
+	}
 	
 	/* continue route processing */
 	return 1;
 
 error:
 
-	if (suspend)
+	if (suspend) {
 		tmb.t_cancel_suspend(tindex, tlabel);
+	}
 	free_async_query(aq);
 	return -1;
 }

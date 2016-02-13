@@ -22,6 +22,18 @@
  *
  */
 
+/*! \file
+ * \brief  Kamailio http_async_client :: The module interface file
+ * \ingroup http_async_client
+ */
+
+/*! \defgroup http_async_client Kamailio :: Async module interface to Curl/HTTP
+ *
+ * http://curl.haxx.se
+ * A generic library for many protocols
+ *
+ */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>

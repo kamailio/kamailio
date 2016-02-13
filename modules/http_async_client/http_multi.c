@@ -22,6 +22,12 @@
  *
  */
 
+/*! \file
+ * \brief  Kamailio http_async_client :: multi interface
+ * \ingroup http_async_client
+ */
+
+
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
