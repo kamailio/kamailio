@@ -258,7 +258,7 @@ static int mod_init(void)
 	db_con = mt_dbf.init(&db_url);
 	if(db_con==NULL)
 	{
-		LM_ERR("failed to connect to the database\n");        
+		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
 
@@ -281,8 +281,8 @@ static int mod_init(void)
 
 		while(pt!=NULL)
 		{
-		        LM_DBG("loading from tree <%.*s>\n",
-			        pt->tname.len, pt->tname.s);
+			LM_DBG("loading from tree <%.*s>\n",
+					pt->tname.len, pt->tname.s);
 
 			/* loading all information from database */
 			if(mt_load_db(pt)!=0)
@@ -546,9 +546,9 @@ static int mt_load_db(m_tree_t *pt)
 	str tprefix, tvalue;
 	db1_res_t* db_res = NULL;
 	int i, ret, c;
-	m_tree_t new_tree; 
-	m_tree_t *old_tree = NULL; 
-	mt_node_t *bk_head = NULL; 
+	m_tree_t new_tree;
+	m_tree_t *old_tree = NULL;
+	mt_node_t *bk_head = NULL;
 
 	if(pt->ncols>0) {
 		for(c=0; c<pt->ncols; c++) {
@@ -574,7 +574,7 @@ static int mt_load_db(m_tree_t *pt)
 	if(old_tree==NULL)
 	{
 		LM_ERR("tree definition not found [%.*s]\n", pt->tname.len,
-		       pt->tname.s);
+				pt->tname.s);
 		return -1;
 	}
 	memcpy(&new_tree, old_tree, sizeof(m_tree_t));
@@ -792,7 +792,7 @@ static int mt_load_db_trees()
 				continue;
 			}
 			new_tree = mt_add_tree(&new_head, &tname, &db_table, NULL,
-					       _mt_tree_type, 0);
+							_mt_tree_type, 0);
 			if(new_tree==NULL)
 			{
 				LM_ERR("New tree cannot be initialized\n");
@@ -894,7 +894,7 @@ static struct mi_root* mt_mi_reload(struct mi_root *cmd_tree, void *param)
 				/* re-loading table from database */
 				if(mt_load_db(pt)!=0)
 				{
-					LM_ERR("cannot re-load info from database\n");	
+					LM_ERR("cannot re-load info from database\n");
 					goto error;
 				}
 			}
@@ -1009,9 +1009,9 @@ struct mi_root* mt_mi_list(struct mi_root* cmd_tree, void* param)
 
 	while(pt!=NULL)
 	{
-		if(tname.s==NULL || 
-				(tname.s!=NULL && pt->tname.len>=tname.len && 
-				 strncmp(pt->tname.s, tname.s, tname.len)==0))
+		if(tname.s==NULL ||
+				(tname.s!=NULL && pt->tname.len>=tname.len &&
+					strncmp(pt->tname.s, tname.s, tname.len)==0))
 		{
 			len = 0;
 			if(mt_print_mi_node(pt, pt->head, rpl, code_buf, len)<0)
@@ -1096,7 +1096,7 @@ error:
 	return 0;
 }
 
-void rpc_mtree_summary(rpc_t* rpc, void* c) 
+void rpc_mtree_summary(rpc_t* rpc, void* c)
 {
 	str tname = {0, 0};
 	m_tree_t *pt;
@@ -1225,7 +1225,7 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 				/* re-loading table from database */
 				if(mt_load_db(pt)!=0)
 				{
-					LM_ERR("cannot re-load mtree from database\n");	
+					LM_ERR("cannot re-load mtree from database\n");
 					goto error;
 				}
 			}
