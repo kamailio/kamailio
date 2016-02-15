@@ -562,7 +562,33 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 
 <section>
 	<title>Pseudo Variables</title>
-	<para>The following pseudo variables can only be used in the callback routes executed by http_async_query()</para>
+	<para>The <literal>$http_req(key)</literal> write-only variable can be used to set custom parameters before sending a HTTP query</para>
+	<para>setting this variable has the same effect than using the <literal>http_set_*()</literal>functions</para>
+	<para><literal>key</literal> can be one of:</para>
+	<itemizedlist>
+		<listitem><para><emphasis>all</emphasis>: if set to <literal>$null</literal>, resets all the parameters to their default value (the ones defined in modparam)</para></listitem>
+		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/remove a HTTP header (see <emphasis>http_append_header()</emphasis>). N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
+		<listitem><para><emphasis>method</emphasis>: sets the HTTP method (see <emphasis>http_set_method()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout (see <emphasis>http_set_timeout()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use (see <emphasis>http_set_tls_client_cert()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use (see <emphasis>http_set_tls_client_key()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate files to use (see <emphasis>http_set_tls_ca_path()</emphasis>)</para></listitem>
+	</itemizedlist>
+	<example>
+		<title><literal>$http_req(key)</literal> variable usage</title>
+		<programlisting format="linespecific">
+...
+$http_req(all) = $null;                    # reset the parameters
+$http_req(timeout) = 100;                  # 100 ms
+$http_req(method) = "DELETE";
+$http_req(hdr) = "X-Sip-Call-Id: " + $ci;
+$http_req(hdr) = "X-Foo: bar";             # add a 2nd header
+# the following request will use the above parameters
+http_query("https://example.com/test.php", "HTTP_REPLY");
+...
+		</programlisting>
+	</example>
+	<para>The following read-only pseudo variables can only be used in the callback routes executed by http_async_query()</para>
 	<itemizedlist>
 		<listitem><para>
 			<emphasis>$http_ok</emphasis>: 1 if cURL executed the request successfully, 0 otherwise (check $ah_err for details)
@@ -587,7 +613,6 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 		</para></listitem>
 	</itemizedlist>
 </section>
-    
 <section>
 	<title>Statistics</title>
 	<section>
