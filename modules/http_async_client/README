@@ -412,7 +412,7 @@ t_reply("200", "Ok");
 ...
 tls_verify_host("0");
 # host verification is disabled for the next query
-http_query("https://example.com/test.php", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 
 4.4.  tls_verify_peer(verify)
@@ -428,7 +428,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 tls_verify_peer("0");
 # server identity verification is disabled for the next query
-http_query("https://example.com/test.php", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 
 4.5.  http_set_timeout(timeout)
@@ -442,7 +442,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 http_set_timeout("200");
 # the server must respond in maximum 200ms, otherwise the query will fail
-http_query("https://example.com/test.php", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 
 4.6.  http_append_header(header)
@@ -472,7 +472,8 @@ http_append_header("X-Sip-Call-Id: $ci");
 http_append_header("Content-Type": application/json");
 # the curl default 'application/x-www-form-urlencoded' Content-Type will be repl
 aced
-http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY")
+;
 ...
 
 4.7.  http_set_method(method)
@@ -488,7 +489,8 @@ http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
 ...
 http_set_method("PUT");
 # the next query will be a HTTP PUT request
-http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY")
+;
 ...
 
 4.8.  http_set_tls_client_cert(path)
@@ -501,7 +503,7 @@ http_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
 ...
 http_set_tls_client_cert("/etc/kamailio/ssl/cert.pem");
 # Next query will use the client cert above
-http_query("https://example.com/test.php", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 
 4.9.  http_set_tls_client_key(path)
@@ -514,7 +516,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 http_set_tls_client_key("/etc/kamailio/ssl/cert.key");
 # Next query will use the client cert key above
-http_query("https://example.com/test.php", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 
 4.10.  http_set_tls_ca_path(path)
@@ -527,7 +529,7 @@ http_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 http_set_tls_client_key("/etc/kamailio/ssl/ca/");
 # Next query will use the CA certs above
-http_query("https://example.com/test.php", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 
 5. Pseudo Variables
@@ -561,7 +563,7 @@ $http_req(method) = "DELETE";
 $http_req(hdr) = "X-Sip-Call-Id: " + $ci;
 $http_req(hdr) = "X-Foo: bar";             # add a 2nd header
 # the following request will use the above parameters
-http_query("https://example.com/test.php", "HTTP_REPLY");
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...
 
    The following read-only pseudo variables can only be used in the
