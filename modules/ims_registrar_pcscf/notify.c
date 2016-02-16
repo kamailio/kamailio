@@ -79,6 +79,8 @@
 extern usrloc_api_t ul;
 extern time_t time_now;
 
+extern int subscribe_to_reginfo;
+
 int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_state) {
     char bufport[5], *rest, *sep, *val, *port, *trans;
     pcontact_t* pcontact;
@@ -476,6 +478,11 @@ int reginfo_handle_notify(struct sip_msg* msg, char* domain, char* s2) {
     LM_DBG("Handling notify\n");
     str body;
     int result = 1;
+    
+    if(subscribe_to_reginfo != 1){
+        LM_ERR("Received a NOTIFY for reg-info but I have not SUBSCRIBED for them.  Ignoring");
+        return -1;
+    }
 
     /* If not done yet, parse the whole message now: */
     if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
