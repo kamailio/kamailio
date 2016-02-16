@@ -37,6 +37,14 @@
 			<email>carsten@ng-voice.com</email>
 		</address>
 		</author>
+		<author>
+		<firstname>Hugh</firstname>
+		<surname>Waite</surname>
+		<affiliation><orgname>Xura Inc</orgname></affiliation>
+		<address>
+			<email>hugh.waite@xura.com</email>
+		</address>
+		</author>
 	</authorgroup>
 	<copyright>
 		<year>2008-2009</year>
@@ -49,6 +57,10 @@
 	<copyright>
 		<year>2015</year>
 		<holder>Olle E. Johansson, Edvina AB</holder>
+	</copyright>
+	<copyright>
+		<year>2016</year>
+		<holder>Hugh Waite, Xura Inc</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>
