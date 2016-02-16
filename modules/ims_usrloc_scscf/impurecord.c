@@ -479,6 +479,7 @@ int insert_scontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
                     LM_DBG("Too many contacts already registered, overwriting oldest for IMPU <%.*s>\n", _r->public_identity.len, _r->public_identity.s);
                     //we can just remove the first one seeing the contacts are ordered on insertion with newest last and oldest first
 		    mem_delete_ucontact(_r->newcontacts[0]);
+			_r->newcontacts[0] = 0;
                     break;
                 default://unknown
                     LM_ERR("unknown maxcontact behaviour..... ignoring\n");
@@ -1027,9 +1028,6 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
 
     if (i < MAX_CONTACTS_PER_IMPU) {
         LM_DBG("contact [%.*s] needs to be linked to impu [%.*s] at position %d\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
-        if (overwrite)
-            unlink_contact_from_impu(impu, impu->newcontacts[i], write_to_db, 0 /*implicit dereg of contact */); //unlink the contact we are overwriting
-
         impu->num_contacts = i + 1; //we always bump this - as unlink (in overwrite would have decremented)
         impu->newcontacts[i] = contact;
         ref_contact_unsafe(contact);
