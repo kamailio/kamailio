@@ -206,7 +206,7 @@ static pv_export_t pvs[] = {
 		PVT_OTHER, ah_get_err, 0,
 		0, 0, 0, 0},
 	{STR_STATIC_INIT("http_req"),
-		PVT_OTHER, 0, ah_set_req,
+		PVT_OTHER, pv_get_null, ah_set_req,
 		ah_parse_req_name, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
