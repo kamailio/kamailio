@@ -111,6 +111,8 @@ int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,
 		return pv_get_null(msg, param, res);
 	if(xname->next==NULL)
 		return pv_xavp_get_value(msg, param, res, avp);
+	if(avp->val.type != SR_XTYPE_XAVP)
+		return pv_get_null(msg, param, res);
 
 	idx = 0;
 	idxf = 0;
