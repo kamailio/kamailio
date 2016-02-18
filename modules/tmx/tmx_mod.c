@@ -70,6 +70,7 @@ static int t_flush_flags(struct sip_msg* msg, char*, char* );
 static int t_is_failure_route(struct sip_msg* msg, char*, char* );
 static int t_is_branch_route(struct sip_msg* msg, char*, char* );
 static int t_is_reply_route(struct sip_msg* msg, char*, char*);
+static int t_is_request_route(struct sip_msg* msg, char*, char*);
 
 static int w_t_suspend(struct sip_msg* msg, char*, char*);
 static int w_t_continue(struct sip_msg* msg, char *idx, char *lbl, char *rtn);
@@ -190,6 +191,8 @@ static cmd_export_t cmds[]={
 	{"t_is_branch_route",    (cmd_function)t_is_branch_route,    0, 0,
 			0, ANY_ROUTE  },
 	{"t_is_reply_route",    (cmd_function)t_is_reply_route,    0, 0,
+			0, ANY_ROUTE  },
+	{"t_is_request_route",    (cmd_function)t_is_request_route,    0, 0,
 			0, ANY_ROUTE  },
 	{"t_suspend",    (cmd_function)w_t_suspend,    0, 0,
 			0, ANY_ROUTE  },
@@ -559,6 +562,16 @@ static int t_is_branch_route(struct sip_msg* msg, char *foo, char *bar)
 static int t_is_reply_route(struct sip_msg* msg, char *foo, char *bar)
 {
 	if(route_type & ONREPLY_ROUTE)
+		return 1;
+	return -1;
+}
+
+/**
+ *
+ */
+static int t_is_request_route(struct sip_msg* msg, char *foo, char *bar)
+{
+	if(route_type == REQUEST_ROUTE)
 		return 1;
 	return -1;
 }

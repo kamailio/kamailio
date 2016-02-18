@@ -301,6 +301,31 @@ route[abc] {
 </programlisting>
 		</example>
 	</section>
+	<section id="tmx.f.t_is_request_route">
+		<title>
+		<function moreinfo="none">t_is_request_route()</function>
+		</title>
+		<para>
+		Returns true if the top-executed route block is request_route.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE .
+		</para>
+		<example>
+		<title><function>t_is_request_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route[xyz] {
+    route(abc);
+}
+
+route[abc] {
+    if(t_is_request_route()) { ... }
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="tmx.f.t_suspend">
 		<title>
 		<function moreinfo="none">t_suspend()</function>
