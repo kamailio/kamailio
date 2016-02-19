@@ -63,6 +63,7 @@ MODULE_VERSION
 #define DEF_USE_PUBRURI_AVPS 0
 #define DEF_PUBRURI_CALLER_AVP 0
 #define DEF_PUBRURI_CALLEE_AVP 0
+#define DEF_CALLEE_TRYING 0
 
 
 /* define PUA_DIALOGINFO_DEBUG to activate more verbose 
@@ -91,6 +92,7 @@ int caller_confirmed       = DEF_CALLER_ALWAYS_CONFIRMED;
 int include_req_uri        = DEF_INCLUDE_REQ_URI;
 int send_publish_flag      = DEF_SEND_PUBLISH_FLAG;
 int use_pubruri_avps       = DEF_USE_PUBRURI_AVPS;
+int callee_trying          = DEF_CALLEE_TRYING;
 char * pubruri_caller_avp  = DEF_PUBRURI_CALLER_AVP;
 char * pubruri_callee_avp  = DEF_PUBRURI_CALLEE_AVP;
 
@@ -119,6 +121,7 @@ static param_export_t params[]={
 	{"pubruri_callee_avp",  PARAM_STRING, &pubruri_callee_avp },
 	{"pubruri_caller_dlg_var",  PARAM_STR, &caller_dlg_var },
 	{"pubruri_callee_dlg_var",  PARAM_STR, &callee_dlg_var },
+	{"callee_trying",        INT_PARAM, &callee_trying },
 	{0, 0, 0 }
 };
 
@@ -599,6 +602,14 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 			&(dlg->callid), 1, dlginfo->lifetime,
 			0, 0, 0, 0, (send_publish_flag==-1)?1:0);
 
+	if (callee_trying)
+	{
+		dialog_publish_multi("Trying", dlginfo->pubruris_callee,
+				(include_req_uri)?&(dlg->req_uri):&(dlg->to_uri),
+				&(dlg->from_uri),
+				&(dlg->callid), 0, dlginfo->lifetime,
+				0, 0, 0, 0, (send_publish_flag==-1)?1:0);
+	}
 }
 
 	static void
