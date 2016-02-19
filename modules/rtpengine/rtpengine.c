@@ -2379,6 +2379,51 @@ select_node:
 		goto error;
 	}
 
+	/* add hastable entry with the node => */
+	if (!rtpengine_hash_table_lookup(callid, viabranch)) {
+		// build the entry
+		struct rtpengine_hash_entry *entry = shm_malloc(sizeof(struct rtpengine_hash_entry));
+		if (!entry) {
+			LM_ERR("rtpengine hash table fail to create entry for calllen=%d callid=%.*s viabranch=%.*s\n",
+				callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+			goto skip_hash_table_insert;
+		}
+		memset(entry, 0, sizeof(struct rtpengine_hash_entry));
+
+		// fill the entry
+		if (callid.s && callid.len > 0) {
+			if (shm_str_dup(&entry->callid, &callid) < 0) {
+				LM_ERR("rtpengine hash table fail to duplicate calllen=%d callid=%.*s\n",
+					callid.len, callid.len, callid.s);
+				rtpengine_hash_table_free_entry(entry);
+				goto skip_hash_table_insert;
+			}
+		}
+		if (viabranch.s && viabranch.len > 0) {
+			if (shm_str_dup(&entry->viabranch, &viabranch) < 0) {
+				LM_ERR("rtpengine hash table fail to duplicate calllen=%d viabranch=%.*s\n",
+					callid.len, viabranch.len, viabranch.s);
+				rtpengine_hash_table_free_entry(entry);
+				goto skip_hash_table_insert;
+			}
+		}
+		entry->node = node;
+		entry->next = NULL;
+		entry->tout = get_ticks() + hash_table_tout;
+
+		// insert the key<->entry from the hashtable
+		if (!rtpengine_hash_table_insert(callid, viabranch, entry)) {
+			LM_ERR("rtpengine hash table fail to insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
+				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+			rtpengine_hash_table_free_entry(entry);
+			goto skip_hash_table_insert;
+		} else {
+			LM_DBG("rtpengine hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
+				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
+		}
+	}
+
+skip_hash_table_insert:
 	if (body_out)
 		*body_out = body;
 
@@ -2730,47 +2775,6 @@ found:
 			goto retry;
 		}
 		lock_release(active_rtpp_set->rset_lock);
-	}
-
-	/* build the entry */
-	struct rtpengine_hash_entry *entry = shm_malloc(sizeof(struct rtpengine_hash_entry));
-	if (!entry) {
-		LM_ERR("rtpengine hash table fail to create entry for calllen=%d callid=%.*s viabranch=%.*s\n",
-			callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
-		return node;
-	}
-	memset(entry, 0, sizeof(struct rtpengine_hash_entry));
-
-	/* fill the entry */
-	if (callid.s && callid.len > 0) {
-		if (shm_str_dup(&entry->callid, &callid) < 0) {
-			LM_ERR("rtpengine hash table fail to duplicate calllen=%d callid=%.*s\n",
-				callid.len, callid.len, callid.s);
-			rtpengine_hash_table_free_entry(entry);
-			return node;
-		}
-	}
-	if (viabranch.s && viabranch.len > 0) {
-		if (shm_str_dup(&entry->viabranch, &viabranch) < 0) {
-			LM_ERR("rtpengine hash table fail to duplicate calllen=%d viabranch=%.*s\n",
-				callid.len, viabranch.len, viabranch.s);
-			rtpengine_hash_table_free_entry(entry);
-			return node;
-		}
-	}
-	entry->node = node;
-	entry->next = NULL;
-	entry->tout = get_ticks() + hash_table_tout;
-
-	/* insert the key<->entry from the hashtable */
-	if (!rtpengine_hash_table_insert(callid, viabranch, entry)) {
-		LM_ERR("rtpengine hash table fail to insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
-		rtpengine_hash_table_free_entry(entry);
-		return node;
-	} else {
-		LM_DBG("rtpengine hash table insert node=%.*s for calllen=%d callid=%.*s viabranch=%.*s\n",
-			node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
 	}
 
 	/* return selected node */
