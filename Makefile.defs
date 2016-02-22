@@ -1844,7 +1844,8 @@ ifeq ($(OS), openbsd)
 	C_DEFS+=-DHAVE_SOCKADDR_SA_LEN  -DHAVE_GETHOSTBYNAME2 \
 		-DHAVE_UNION_SEMUN -DHAVE_MSGHDR_MSG_CONTROL \
 		-DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM \
-		-DHAVE_NETINET_IN_SYSTM -DUSE_SIGWAIT
+		-DHAVE_NETINET_IN_SYSTM -DUSE_SIGWAIT \
+		-DHAVE_SCHED_YIELD
 	ifneq ($(found_lock_method), yes)
 		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
@@ -1860,7 +1861,6 @@ ifeq ($(OS), openbsd)
 	endif
 	# (symbols on openbsd are prefixed by "_")
 	YACC=yacc
-	# no sched_yield on openbsd unless linking with c_r (not recommended)
 	# unfortunately pthread is needed for sigwait
 	LIBS= -lpthread
 	OPENBSD_IS_AOUT:= $(shell echo "$(OSREL)" | \
