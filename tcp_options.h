@@ -23,6 +23,7 @@
 
 #ifdef USE_TCP
 
+#include <netinet/in.h>
 #include <netinet/tcp.h>
 #ifndef NO_TCP_ASYNC
 #define TCP_ASYNC /* enabled async mode */

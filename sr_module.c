@@ -381,23 +381,18 @@ error:
 	return ret;
 }
 
-#ifndef DLSYM_PREFIX
-/* define it to null */
-#define DLSYM_PREFIX
-#endif
-
 static inline int version_control(void *handle, char *path)
 {
 	char **m_ver;
 	char **m_flags;
 	char* error;
 
-	m_ver=(char **)dlsym(handle, DLSYM_PREFIX "module_version");
+	m_ver=(char **)dlsym(handle, "module_version");
 	if ((error=(char *)dlerror())!=0) {
 		LM_ERR("no version info in module <%s>: %s\n", path, error);
 		return 0;
 	}
-	m_flags=(char **)dlsym(handle, DLSYM_PREFIX "module_flags");
+	m_flags=(char **)dlsym(handle, "module_flags");
 	if ((error=(char *)dlerror())!=0) {
 		LM_ERR("no compile flags info in module <%s>: %s\n", path, error);
 		return 0;
@@ -587,14 +582,13 @@ reload:
 	if (!version_control(handle, path)) {
 		exit(-1);
 	}
-	mod_if_ver = (unsigned *)dlsym(handle,
-									DLSYM_PREFIX "module_interface_ver");
+	mod_if_ver = (unsigned *)dlsym(handle, "module_interface_ver");
 	if ( (error =(char*)dlerror())!=0 ){
 		LM_ERR("no module interface version in module <%s>\n", path );
 		goto error1;
 	}
 	/* launch register */
-	mr = (mod_register_function)dlsym(handle, DLSYM_PREFIX "mod_register");
+	mr = (mod_register_function)dlsym(handle, "mod_register");
 	if (((error =(char*)dlerror())==0) && mr) {
 		/* no error call it */
 		new_dlflags=dlflags;
@@ -612,7 +606,7 @@ reload:
 			goto error;
 		}
 	}
-	exp = (union module_exports_u*)dlsym(handle, DLSYM_PREFIX "exports");
+	exp = (union module_exports_u*)dlsym(handle, "exports");
 	if(exp==NULL) {
 		/* 'exports' structure not found, look up for '_modulename_exports' */
 		mdir = strrchr(mod_path, '/');
@@ -624,7 +618,7 @@ reload:
 		expref.len = strlen(expref.s);
 		if(expref.len>3 && strcmp(expref.s+expref.len-3, ".so")==0)
 			expref.len -= 3;
-		snprintf(exbuf, 62, DLSYM_PREFIX "_%.*s_exports", expref.len, expref.s);
+		snprintf(exbuf, 62, "_%.*s_exports", expref.len, expref.s);
 		exp = (union module_exports_u*)dlsym(handle, exbuf);
 		LM_DBG("looking up exports with name: %s\n", exbuf);
 		if ( (error =(char*)dlerror())!=0 ){
