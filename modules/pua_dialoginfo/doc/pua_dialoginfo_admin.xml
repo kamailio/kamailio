@@ -461,6 +461,24 @@ modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 		</example>
 		</section>
 
+		<section>
+		<title><varname>callee_trying</varname> (int)</title>
+		<para>
+			If this parameter is set, a "Trying" state will be sent for both the
+			caller and callee, rather than just the caller.
+		</para>
+		<para>
+			<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>callee_trying</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "callee_trying", 1)
+...
+</programlisting>
+		</example>
+		</section>
 	</section>
 
 	<section>

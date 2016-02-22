@@ -426,6 +426,15 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				goto error;
 			}
 
+			if (pa_dbf.start_transaction)
+			{
+				if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
+				{
+					LM_ERR("in start_transaction\n");
+					goto error;
+				}
+			}
+
 			LM_DBG("inserting %d cols into table\n",n_query_cols);
 				
 			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0) 
@@ -468,21 +477,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			if (pa_dbf.replace(pa_db, query_cols, query_vals, n_query_cols, 4, 0) < 0) 
 			{
 				LM_ERR("replacing record in database\n");
-				if (pa_dbf.abort_transaction)
-				{
-					if (pa_dbf.abort_transaction(pa_db) < 0)
-						LM_ERR("in abort_transaction\n");
-				}
 				goto error;
-			}
-
-			if (pa_dbf.end_transaction)
-			{
-				if (pa_dbf.end_transaction(pa_db) < 0)
-				{
-					LM_ERR("in end_transaction\n");
-					goto error;
-				}
 			}
 		}
 
@@ -501,6 +496,15 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		{
 			LM_ERR("unsuccessful sql use table\n");
 			goto error;
+		}
+
+		if (pa_dbf.start_transaction)
+		{
+			if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
+			{
+				LM_ERR("in start_transaction\n");
+				goto error;
+			}
 		}
 
 		if(EVENT_DIALOG_SLA(presentity->event->evp))
@@ -837,6 +841,15 @@ done:
 	if(pres_uri.s)
 		pkg_free(pres_uri.s);
 
+	if (pa_dbf.end_transaction)
+	{
+		if (pa_dbf.end_transaction(pa_db) < 0)
+		{
+			LM_ERR("in end_transaction\n");
+			goto error;
+		}
+	}
+
 	return 0;
 
 send_412:
@@ -866,6 +879,15 @@ error:
 	}
 	if(pres_uri.s)
 		pkg_free(pres_uri.s);
+
+	if (pa_dbf.abort_transaction)
+	{
+		if (pa_dbf.abort_transaction(pa_db) < 0)
+		{
+			LM_ERR("in abort_transaction\n");
+			goto error;
+		}
+	}
 
 	return ret;
 }
