@@ -1,3 +1,9 @@
+kamailio (4.4.0~pre1) unstable; urgency=medium
+
+  * version set to 4.4.0-pre1
+
+ -- Victor Seva <linuxmaniac@torreviejawireless.org>  Tue, 23 Feb 2016 08:53:36 +0100
+
 kamailio (4.4.0~pre0) unstable; urgency=medium
 
   * version set to 4.4.0-pre0
