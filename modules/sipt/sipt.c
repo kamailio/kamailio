@@ -49,6 +49,7 @@ static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv
 static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_charge_indicator(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 /* New API */
 int sipt_parse_pv_name(pv_spec_p sp, str *in);
@@ -92,6 +93,10 @@ static sipt_header_map_t sipt_header_mapping[] =
 		{{NULL, 0}} },
 	{"EVENT_INFO", ISUP_PARM_EVENT_INFO, 
 		{{NULL, 0}} },
+	{"BACKWARD_CALL_INDICATOR", ISUP_PARM_BACKWARD_CALL_IND,
+		{{"CHARGE_INDICATOR", 1}, 
+			{NULL, 0}
+		}},
 	{ NULL, 0, {}}
 };
 
@@ -311,6 +316,28 @@ static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t
 	return 0;
 }
 
+static int sipt_get_charge_indicator(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+
+	if(body.s == NULL)
+	{
+		LM_INFO("No ISUP Message Found");
+		return -1;
+	}
+
+	if(body.s[0] != ISUP_COT && body.s[0] != ISUP_ACM)
+	{
+		LM_DBG("message not a COT or ACM\n");
+		return -1;
+	}
+	LM_DBG("about to get charge indicator\n");
+	
+	pv_get_sintval(msg, param, res, isup_get_charging_indicator((unsigned char*)body.s, body.len));
+	return 0;
+}
+
 static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
@@ -471,6 +498,13 @@ static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			return sipt_get_hop_counter(msg, param, res);
 		case ISUP_PARM_EVENT_INFO:
 			return sipt_get_event_info(msg, param, res);
+		case ISUP_PARM_BACKWARD_CALL_IND:
+			switch(spv->sub_type)
+			{
+				case 1: /* charge_indicator */
+				return sipt_get_charge_indicator(msg, param, res);
+			}
+			break;
 	}
 
 	return -1;

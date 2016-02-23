@@ -305,6 +305,23 @@ int isup_get_called_party_nai(unsigned char *buf, int len)
 	return message->called_party_number[1]&0x7F;
 }
 
+
+int isup_get_charging_indicator(unsigned char *buf, int len) {
+	struct isup_acm_fixed * orig_message = (struct isup_acm_fixed*)buf;
+
+	// not an acm or cot? do nothing
+	if(orig_message->type != ISUP_ACM && orig_message->type != ISUP_COT)
+	{
+		return -1;
+	}
+
+	// add minus 1 because the optinal pointer is optional
+	if (len < sizeof(struct isup_acm_fixed) -1 )
+		return -1;
+
+	return (orig_message->backwards_call_ind[0] & 0x03);
+}
+
 int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int called_status, int called_category, int e2e_indicator, unsigned char *buf, int len)
 {
 	struct isup_acm_fixed * orig_message = (struct isup_acm_fixed*)buf;

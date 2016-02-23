@@ -39,6 +39,7 @@ Torrey Searle
                       $sipt_called_party_nai
 
               4.7. $sipt(event_info)
+              4.8. $sipt(backward_call_indicator.charge_indicator)
 
    List of Tables
 
@@ -47,6 +48,7 @@ Torrey Searle
    1.3. Calling Nature of Address Values
    1.4. Called Nature of Address Values
    1.5. Event Info Values
+   1.6. Charge Indicator Values
 
    List of Examples
 
@@ -87,6 +89,7 @@ Chapter 1. Admin Guide
                 $sipt(called_party_number.nai) / $sipt_called_party_nai
 
         4.7. $sipt(event_info)
+        4.8. $sipt(backward_call_indicator.charge_indicator)
 
 1. Overview
 
@@ -166,6 +169,7 @@ sipt_set_calling($fU, 4, 0, 3);
           $sipt(called_party_number.nai) / $sipt_called_party_nai
 
    4.7. $sipt(event_info)
+   4.8. $sipt(backward_call_indicator.charge_indicator)
 
 4.1. $sipt(calling_party_number.presentation) / $sipt_presentation
 
@@ -305,3 +309,15 @@ if($sipt(called_party_number.nai) == 3)
    4 Call forward on busy
    5 Call forward on no reply
    6 Call forward unconditional
+
+4.8. $sipt(backward_call_indicator.charge_indicator)
+
+   Returns the value of the charge indication of the backward call
+   indicator header in the ACM or COT message. Returns -1 if there is a
+   parsing error.
+
+   Table 1.6. Charge Indicator Values
+   0 no indication
+   1 no charge
+   2 charge
+   3 spare

@@ -291,6 +291,26 @@ if($sipt(called_party_number.nai) == 3)
 			</tgroup>
 		</table>
 	</section>
+	<section id="sipt.v.sipt_backward_call_indicator_charge_indicator">
+		<title><varname>$sipt(backward_call_indicator.charge_indicator)</varname></title>
+		<para>
+			Returns the value of the charge indication 
+			of the backward call indicator header in 
+			the ACM or COT message.
+			Returns -1 if there is a parsing error.
+		</para>
+		<table>
+			<title>Charge Indicator Values</title>
+			<tgroup cols="2">
+				<tbody>
+					<row><entry>0</entry><entry>no indication</entry></row>
+					<row><entry>1</entry><entry>no charge</entry></row>
+					<row><entry>2</entry><entry>charge</entry></row>
+					<row><entry>3</entry><entry>spare</entry></row>
+				</tbody>
+			</tgroup>
+		</table>
+	</section>
 
 </section>
 </chapter>
