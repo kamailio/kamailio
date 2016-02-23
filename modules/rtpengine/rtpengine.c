@@ -160,15 +160,6 @@ MODULE_VERSION
 
 #define	CPORT					"22222"
 
-enum rtpe_operation {
-	OP_OFFER = 1,
-	OP_ANSWER,
-	OP_DELETE,
-	OP_START_RECORDING,
-	OP_QUERY,
-	OP_PING,
-};
-
 struct ng_flags_parse {
 	int via, to, packetize, transport;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux;
@@ -198,8 +189,8 @@ static int fixup_set_id(void ** param, int param_no);
 static int set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2);
 static struct rtpp_set * select_rtpp_set(int id_set);
 static struct rtpp_node *select_rtpp_node_new(str, str, int, struct rtpp_node **, int);
-static struct rtpp_node *select_rtpp_node_old(str, str, int);
-static struct rtpp_node *select_rtpp_node(str, str, int, struct rtpp_node **, int);
+static struct rtpp_node *select_rtpp_node_old(str, str, int, enum rtpe_operation);
+static struct rtpp_node *select_rtpp_node(str, str, int, struct rtpp_node **, int, enum rtpe_operation);
 static int is_queried_node(struct rtpp_node *, struct rtpp_node **, int);
 static int build_rtpp_socks(unsigned int current_rtpp_no);
 static char *send_rtpp_command(struct rtpp_node *, bencode_item_t *, int *);
@@ -2367,7 +2358,7 @@ select_node:
 			goto error;
 		}
 
-		node = select_rtpp_node(callid, viabranch, 1, queried_nodes_ptr, queried_nodes);
+		node = select_rtpp_node(callid, viabranch, 1, queried_nodes_ptr, queried_nodes, op);
 		if (!node) {
 			LM_ERR("no available proxies\n");
 			goto error;
@@ -2409,7 +2400,7 @@ select_node:
 	}
 
 	/* add hastable entry with the node => */
-	if (!rtpengine_hash_table_lookup(callid, viabranch)) {
+	if (!rtpengine_hash_table_lookup(callid, viabranch, op)) {
 		// build the entry
 		struct rtpengine_hash_entry *entry = shm_malloc(sizeof(struct rtpengine_hash_entry));
 		if (!entry) {
@@ -2458,7 +2449,7 @@ skip_hash_table_insert:
 
 	if (op == OP_DELETE) {
 		/* Delete the key<->value from the hashtable */
-		if (!rtpengine_hash_table_remove(callid, viabranch)) {
+		if (!rtpengine_hash_table_remove(callid, viabranch, op)) {
 			LM_ERR("rtpengine hash table failed to remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
 				callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
 		} else {
@@ -2818,14 +2809,14 @@ found:
  * lookup the hastable (key=callid value=node) and get the old node (e.g. for answer/delete)
  */
 static struct rtpp_node *
-select_rtpp_node_old(str callid, str viabranch, int do_test)
+select_rtpp_node_old(str callid, str viabranch, int do_test, enum rtpe_operation op)
 {
 	struct rtpp_node *node = NULL;
 
-	node = rtpengine_hash_table_lookup(callid, viabranch);
+	node = rtpengine_hash_table_lookup(callid, viabranch, op);
 
 	if (!node) {
-		LM_NOTICE("rtpengine hash table lookup failed to find node for calllen=%d callid=%.*s viabranch=%.*s\n",
+		LM_DBG("rtpengine hash table lookup failed to find node for calllen=%d callid=%.*s viabranch=%.*s\n",
 			callid.len, callid.len, callid.s, viabranch.len, viabranch.s);
 		return NULL;
 	} else {
@@ -2841,7 +2832,7 @@ select_rtpp_node_old(str callid, str viabranch, int do_test)
  * the call if some proxies were disabled or enabled (e.g. kamctl command)
  */
 static struct rtpp_node *
-select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **queried_nodes_ptr, int queried_nodes)
+select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **queried_nodes_ptr, int queried_nodes, enum rtpe_operation op)
 {
 	struct rtpp_node *node = NULL;
 	unsigned int current_rtpp_no;
@@ -2865,7 +2856,7 @@ select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **quer
 	}
 
 	// lookup node
-	node = select_rtpp_node_old(callid, viabranch, do_test);
+	node = select_rtpp_node_old(callid, viabranch, do_test, op);
 
 	// check node
 	if (!node) {

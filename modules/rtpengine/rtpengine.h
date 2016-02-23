@@ -25,9 +25,19 @@
 
 #include "bencode.h"
 #include "../../str.h"
+#include "../../locking.h"
 
 #define MI_MIN_RECHECK_TICKS		0
 #define MI_MAX_RECHECK_TICKS		((unsigned int)-1)
+
+enum rtpe_operation {
+        OP_OFFER = 1,
+        OP_ANSWER,
+        OP_DELETE,
+        OP_START_RECORDING,
+        OP_QUERY,
+        OP_PING,
+};
 
 struct rtpp_node {
 	unsigned int		idx;			/* overall index */
