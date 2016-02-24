@@ -186,7 +186,7 @@ static int tls_complete_init(struct tcp_connection* c)
 
 	if (LOW_MEM_NEW_CONNECTION_TEST()){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
+				" operation: shm=%lu threshold1=%d\n", shm_available_safe(), cfg_get(tls, tls_cfg, low_mem_threshold1));
 		goto error2;
 	}
 	     /* Get current TLS configuration and increase reference
@@ -294,7 +294,7 @@ static int tls_fix_connection_unsafe(struct tcp_connection* c)
 		}
 	}else if (unlikely(LOW_MEM_CONNECTED_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
+				" operation: shm=%lu threshold2=%d\n", shm_available_safe(), cfg_get(tls, tls_cfg, low_mem_threshold2));
 		return -1;
 	}
 	return 0;
@@ -324,7 +324,7 @@ static int tls_fix_connection(struct tcp_connection* c)
 	}
 	if (unlikely(LOW_MEM_CONNECTED_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
+				" operation: shm=%lu threshold2=%d\n", shm_available_safe(), cfg_get(tls, tls_cfg, low_mem_threshold2));
 		return -1;
 	}
 	return 0;
@@ -527,7 +527,7 @@ static int tls_shutdown(struct tcp_connection *c)
 		return 0;
 	if (unlikely(LOW_MEM_CONNECTED_TEST())){
 		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: %lu\n", shm_available());
+				" operation: shm=%lu threshold2=%d\n", shm_available_safe(), cfg_get(tls, tls_cfg, low_mem_threshold2));
 		goto err;
 	}
 	
