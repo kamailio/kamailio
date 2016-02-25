@@ -667,13 +667,13 @@ static int fixup_http_async_post(void** param, int param_no)
 	{ \
 		if (ah_reply) { \
 			if (ah_error.s) { \
-				LM_WARN("an async_http variable was read after http error, use $ah_ok to check the request's status\n"); \
+				LM_WARN("an async variable was read after http error, use $http_ok to check the request's status\n"); \
 				return pv_get_null(msg, param, res); \
 			} else { \
 				return pv_api.PV_F(ah_reply, param, res); \
 			} \
 		} else { \
-			LM_ERR("the async_http variables can only be read from an async http worker\n"); \
+			LM_ERR("the async variables can only be read from an async http worker\n"); \
 			return pv_get_null(msg, param, res); \
 		} \
 	}
@@ -698,7 +698,7 @@ static int ah_get_ok(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 			return pv_get_intstrval(msg, param, res, 1, &pv_str_1);
 		}
 	} else {
-		LM_ERR("the async_http variables can only be read from an async http worker\n");
+		LM_ERR("the async variables can only be read from an async http worker\n");
 		return pv_get_null(msg, param, res);
 	}
 }
@@ -711,7 +711,7 @@ static int ah_get_err(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 			return pv_get_null(msg, param, res);
 		}
 	} else {
-		LM_ERR("the async_http variables can only be read from an async http worker\n");
+		LM_ERR("the async variables can only be read from an async http worker\n");
 		return pv_get_null(msg, param, res);
 	}
 }
