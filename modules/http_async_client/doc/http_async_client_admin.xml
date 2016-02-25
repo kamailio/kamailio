@@ -213,7 +213,11 @@ modparam("http_async_client", "curl_verbose", 1)
 				</para></listitem>
 			</itemizedlist>
 			<para>
-				<emphasis>Note:</emphasis> if this module is used in conjunction with another module using libcurl, this parameter will have no effect, and curl will likely use the system memory allocator by default.
+				<emphasis>Note:</emphasis> 
+				if this module is used in conjunction with another module using libcurl (http_client, utils, xcap, xcap_client), 
+				it must be loaded as first one for this parameter to have effect, otherwise curl will likely use the system memory allocator by default.
+				On the other hand if the module is loaded before any other module using libcurl, all the modules will use the memory manager specified 
+				by this parameter.
 			</para>
 		</para>
 		<para>
@@ -310,11 +314,11 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
         <para>
 			Parameter <quote>route_name</quote> defines the route to be executed upon reception of HTTP reply, on error or on timeout. 
 			If a transaction exists before calling <emphasis>http_async_query()</emphasis>, it will be paused and resumed in this route, while the routing script execution will be stopped.
-			If executed in a transactionless context, or if <emphasis>http_async_suspend_transaction()</emphasis> is used to not suspend the transaction, the routing script execution will 
+			If executed in a transactionless context, or if <emphasis>http_async_suspend_transaction()</emphasis> or <emphasis>$http_req(suspend)</emphasis> are used to not suspend the transaction, the routing script execution will 
 			continue and the query result will be available in <quote>route_name</quote>.
         </para>
         <para>
-            Return value: 0 (stop script execution) on success in transaction context, 1 (continue script execution) in transaction-less context or if http_async_suspend_transaction(0) is used, -1 on error.
+            Return value: 0 (stop script execution) on success in transaction context, 1 (continue script execution) in transaction-less context (or if http_async_suspend_transaction(0) or $http_req(suspend) are used), -1 on error.
         </para>
         <para>
 		    This function can be used from ANY_ROUTE.
@@ -593,7 +597,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 	<para>The following read-only pseudo variables can only be used in the callback routes executed by http_async_query()</para>
 	<itemizedlist>
 		<listitem><para>
-			<emphasis>$http_ok</emphasis>: 1 if cURL executed the request successfully, 0 otherwise (check $ah_err for details)
+			<emphasis>$http_ok</emphasis>: 1 if cURL executed the request successfully, 0 otherwise (check $http_err for details)
 		</para></listitem>
 		<listitem><para>
 			<emphasis>$http_err</emphasis>: cURL error string if an error occured, $null otherwise
@@ -605,7 +609,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 			<emphasis>$http_rr</emphasis>: http reason phrase
 		</para></listitem>
 		<listitem><para>
-			<emphasis>$http_hdr(Name)</emphasis>: value of the <emphasis>Name</emphasis> header (the <emphasis>$(ah_hdr(Name)[N])</emphasis> syntax can also be used, check the SIP $hdr() PV documentation for details) 
+			<emphasis>$http_hdr(Name)</emphasis>: value of the <emphasis>Name</emphasis> header (the <emphasis>$(http_hdr(Name)[N])</emphasis> syntax can also be used, check the SIP $hdr() PV documentation for details) 
 		</para></listitem>
 		<listitem><para>
 			<emphasis>$http_mb</emphasis> and <emphasis>$http_ml</emphasis>: HTTP response buffer (including headers) and length 
