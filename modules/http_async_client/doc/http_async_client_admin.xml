@@ -573,6 +573,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use (see <emphasis>http_set_tls_client_cert()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use (see <emphasis>http_set_tls_client_key()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate files to use (see <emphasis>http_set_tls_ca_path()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>suspend</emphasis>: if set to 0 doesn't suspend the current transaction before performing the query (see <emphasis>http_async_suspend()</emphasis>)</para></listitem>
 	</itemizedlist>
 	<example>
 		<title><literal>$http_req(key)</literal> variable usage</title>
@@ -583,6 +584,7 @@ $http_req(timeout) = 100;                  # 100 ms
 $http_req(method) = "DELETE";
 $http_req(hdr) = "X-Sip-Call-Id: " + $ci;
 $http_req(hdr) = "X-Foo: bar";             # add a 2nd header
+$http_req(suspend) = 0;             # don't suspend the transaction, continue routing script's execution
 # the following request will use the above parameters
 http_async_query("https://example.com/test.php", "HTTP_REPLY");
 ...

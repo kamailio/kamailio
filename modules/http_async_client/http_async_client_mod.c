@@ -124,7 +124,7 @@ enum http_req_name_t {
 	E_HRN_ALL = 0,
 	E_HRN_HDR, E_HRN_METHOD, E_HRN_TIMEOUT,
 	E_HRN_TLS_CA_PATH, E_HRN_TLS_CLIENT_KEY,
-	E_HRN_TLS_CLIENT_CERT
+	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND
 };
 
 static cmd_export_t cmds[]={
@@ -737,6 +737,8 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 		case 7:
 			if(strncmp(in->s, "timeout", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_TIMEOUT;
+			else if(strncmp(in->s, "suspend", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_SUSPEND;
 			else goto error;
 			break;
 		case 11:
@@ -847,6 +849,17 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 			set_query_param(&ah_params.tls_client_cert, tval->rs);
 		} else {
 			set_query_param(&ah_params.tls_client_cert, tls_client_cert);
+		}
+		break;
+	case E_HRN_SUSPEND:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("invalid value type for $http_req(suspend)\n");
+				return -1;
+			}
+			ah_params.suspend_transaction = tval->ri?1:0;
+		} else {
+			ah_params.suspend_transaction = 1;
 		}
 		break;
 	}
