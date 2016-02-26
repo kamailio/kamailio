@@ -1855,8 +1855,10 @@ int kz_amqp_send_ex(kz_amqp_server_ptr srv, kz_amqp_cmd_ptr cmd, kz_amqp_channel
     payload = amqp_bytes_malloc_dup(amqp_cstring_bytes(cmd->payload));
 
     json_obj = kz_json_parse(cmd->payload);
-    if (json_obj == NULL)
-    	goto error;
+    if (json_obj == NULL) {
+	    LM_ERR("error parsing json when publishing %s\n", cmd->payload);
+	    goto error;
+    }
 
     if(kz_json_get_object(json_obj, BLF_JSON_SERVERID) == NULL) {
         json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string((char*)srv->channels[idx].targeted->routing_key.bytes));
@@ -2560,13 +2562,13 @@ void kz_amqp_send_worker_event(int _kz_server_id, amqp_envelope_t* envelope, kz_
     str* message_id = NULL;
     int idx = envelope->channel-1;
 
-	json_obj_ptr json_obj = kz_json_parse((char*)envelope->message.body.bytes);
+    json_obj_ptr json_obj = kz_json_parse((char*)envelope->message.body.bytes);
     if (json_obj == NULL) {
     	LM_ERR("error parsing json body\n");
     	return;
     }
 
-	json_object* JObj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);
+    json_object* JObj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);
     if(JObj != NULL) {
         const char* _kz_server_id_str = json_object_get_string(JObj);
         sprintf(buffer, "consumer://%d/%s", _kz_server_id, _kz_server_id_str);
