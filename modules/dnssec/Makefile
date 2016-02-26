@@ -7,10 +7,14 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=dnssec.so
-LIBS= -lval-threads -lcrypto -lsres -lpthread -lssl
+
+DEFS+=-I$(LOCALBASE)/include
+
+LIBS+=-L$(LOCALBASE)/lib
+LIBS+= -lval-threads -lcrypto -lsres -lpthread -lssl
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
-DEFS +=-I$(LOCALBASE)/include
+
 
 SERLIBPATH=../../lib
 SER_LIBS+=$(SERLIBPATH)/kmi/kmi
