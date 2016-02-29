@@ -186,7 +186,7 @@ void free_ucontact(ucontact_t* _c) {
     param_t * tmp, *tmp1;
     
     if (!_c) return;
-    LM_DBG("Freeing ucontact [%.*s]\n", _c->aor.len, _c->aor.s);    
+    LM_DBG("Freeing ucontact [%p] => [%.*s]\n", _c, _c->c.len, _c->c.s);    
     if (_c->path.s) shm_free(_c->path.s);
     if (_c->received.s) shm_free(_c->received.s);
     if (_c->user_agent.s) shm_free(_c->user_agent.s);
