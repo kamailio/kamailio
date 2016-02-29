@@ -1302,7 +1302,8 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     }
     create_cca_result_code((int)ro_cca_data->resultcode);
     if (ro_cca_data->resultcode != 2001) {
-        LM_ERR("Got bad CCA result code - reservation failed");
+        if (ro_cca_data->resultcode != 4012)
+            LM_ERR("Got bad CCA result code [%d] - reservation failed\n", (int)ro_cca_data->resultcode);
         error_code = RO_RETURN_FALSE;
         goto error1;
     }
