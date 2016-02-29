@@ -371,16 +371,19 @@ static int w_ro_ccr_stop(struct sip_msg *msg, char* c_direction, char* _code, ch
 
     if (get_str_fparam(&s_code, msg, (fparam_t*) _code) < 0) {
         LM_ERR("failed to get code\n");
+        dlgb.release_dlg(dlg);
         return RO_RETURN_ERROR;
     }
     LM_DBG("Code is [%.*s]\n", s_code.len, s_code.s);
     if (get_str_fparam(&s_reason, msg, (fparam_t*) _reason) < 0) {
         LM_ERR("failed to get reason\n");
+        dlgb.release_dlg(dlg);
         return RO_RETURN_ERROR;
     }
 
     if (str2int(&s_code, &code) != 0) {
         LM_ERR("Bad response code: [%.*s]\n", s_code.len, s_code.s);
+        dlgb.release_dlg(dlg);
         return RO_RETURN_FALSE;
     }
 
@@ -405,6 +408,7 @@ static int w_ro_ccr_stop(struct sip_msg *msg, char* c_direction, char* _code, ch
     ro_session = lookup_ro_session(dlg->h_entry, &dlg->callid, dir, 0);
     if (ro_session == NULL) {
         LM_DBG("no ro_session - ignoring\n");
+        dlgb.release_dlg(dlg);
         return RO_RETURN_TRUE;
     }
     h_entry = ro_session->h_entry;
@@ -425,6 +429,7 @@ static int w_ro_ccr_stop(struct sip_msg *msg, char* c_direction, char* _code, ch
 done:
     unref_ro_session_unsafe(ro_session, 1, ro_session_entry);
     ro_session_unlock(ro_session_table, ro_session_entry);
+    dlgb.release_dlg(dlg);
     return RO_RETURN_TRUE;
 }
 
