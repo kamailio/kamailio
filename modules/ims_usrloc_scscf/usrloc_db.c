@@ -841,6 +841,14 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 				contact.s = (char*) VAL_STRING(contact_vals);
 				contact.len = strlen(contact.s);
 			    }
+                            
+                            if (contact.len <=0 || !contact.s){
+                                   LM_ERR("Unable to insert contact [%.*s] for IMPU [%.*s] into memory... continuing...\n",
+					    contact.len, contact.s,
+					    impu.len, impu.s); 
+                                   continue;
+                            }
+                            
 			    if (dbrow2contact(contact_vals, &contact_data) != 0) {
 				LM_ERR("unable to convert contact row from DB into valid data... moving on\n");
 				continue;
