@@ -130,7 +130,7 @@ static param_export_t mod_params[] = {
     { "default_timeout", INT_PARAM, &default_timeout},
     { "dlg_extra_hdrs", PARAM_STR, &dlg_extra_hdrs},
     //In this new dialog module we always match using DID
-    //{ "dlg_match_mode", INT_PARAM, &seq_match_mode},
+    { "dlg_match_mode", INT_PARAM, &seq_match_mode},
 
     { "db_url",				PARAM_STR, &db_url 				},
     { "db_mode",			INT_PARAM, &dlg_db_mode_param		},
@@ -943,7 +943,6 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
     if(rpc->scan(c, "*S", &rpc_extra_hdrs)<1)
     {
 	    rpc_extra_hdrs = dfl_rpc_extra_hdrs;
-	    rpc_extra_hdrs.len = 0;
     }
 
     dlg = lookup_dlg(h_entry, h_id);//increments ref count!

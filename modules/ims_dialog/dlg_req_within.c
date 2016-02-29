@@ -212,7 +212,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps) {
         run_dlg_callbacks(DLGCB_TERMINATED, dlg, ps->req, ps->rpl, DLG_DIR_NONE, 0);
 
         /* derefering the dialog */
-        unref_dlg(dlg, unref + 1);
+        unref_dlg(dlg, unref);		/*removed the extra +1 on the unref that is usually added in the unref of next_state_dlg */
     }
 
     if (new_state == DLG_STATE_DELETED && old_state == DLG_STATE_DELETED) {
