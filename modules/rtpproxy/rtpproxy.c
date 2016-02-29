@@ -2227,16 +2227,22 @@ free_opts(struct options *op1, struct options *op2, struct options *op3)
 	return (e); \
     } while (0);
 
+struct new_mediaip {
+	str strip;
+	int pf;
+};
+
 static int
 force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forcedIP)
 {
-	str body, body1, oldport, oldip, newport, newip;
+	str body, body1, oldport, oldip, newport;
+	struct new_mediaip newip;
 	str callid, from_tag, to_tag, tmp, payload_types;
 	str newrtcp = {0, 0};
 	str viabranch;
 	int create, port, len, flookup, argc, proxied, real, via, ret;
 	int orgip, commip;
-	int pf, pf1, force;
+	int pf, force;
 	struct options opts, rep_opts, pt_opts;
 	char *cp, *cp1;
 	char  *cpend, *next;
@@ -2575,10 +2581,12 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 			medianum++;
 
 			if (real != 0) {
-				newip = oldip;
+				newip.strip = oldip;
+				newip.pf = pf;
 			} else {
-				newip.s = ip_addr2a(&msg->rcv.src_ip);
-				newip.len = strlen(newip.s);
+				newip.strip.s = ip_addr2a(&msg->rcv.src_ip);
+				newip.strip.len = strlen(newip.strip.s);
+				newip.pf = msg->rcv.src_ip.af;
 			}
 			/* XXX must compare address families in all addresses */
 			if (pf == AF_INET6) {
@@ -2611,10 +2619,10 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				}
 			}
 
-			STR2IOVEC(newip, v[9]);
+			STR2IOVEC(newip.strip, v[9]);
 			STR2IOVEC(oldport, v[11]);
 #ifdef EXTRA_DEBUG
-			LM_DBG("STR2IOVEC(newip[%.*s], v[9])", newip.len, newip.s);
+			LM_DBG("STR2IOVEC(newip[%.*s], v[9])", newip.strip.len, newip.strip.s);
 			LM_DBG("STR2IOVEC(oldport[%.*s], v[11])", oldport.len, oldport.s);
 #endif
 			if (1 || media_multi) /* XXX netch: can't choose now*/
@@ -2728,26 +2736,46 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				FORCE_RTP_PROXY_RET (-1);
 			}
 
-			pf1 = (argc >= 3 && argv[2][0] == '6') ? AF_INET6 : AF_INET;
+			/*
+			 * if (argc == 1) {
+			 *      Assume AF in reply stays the same as one in
+			 *      the original request.
+			 * }
+			 */
+			if (argc == 2) {
+				/*
+				 * For historical reasons, if rtpproxy returns
+				 * bare address without AF flag, this means
+				 * IPv4.
+				 */
+				newip.pf = AF_INET;
+			} else if (argc >= 3) {
+				/*
+				 * When rtpproxy returns explicit address +
+				 * "AF" flag, use that.
+				 */
+				newip.pf = (argv[2][0] == '6') ? AF_INET6 : AF_INET;
+			}
 
 			if (isnulladdr(&oldip, pf)) {
-				if (pf1 == AF_INET6) {
-					newip.s = "::";
-					newip.len = 2;
+				if (newip.pf == AF_INET6) {
+					newip.strip.s = "::";
+					newip.strip.len = 2;
 				} else {
-					newip.s = "0.0.0.0";
-					newip.len = 7;
+					newip.strip.s = "0.0.0.0";
+					newip.strip.len = 7;
 				}
 			} else {
 				if (forcedIP) {
-					newip.s = str2;
-					newip.len = strlen(newip.s);
+					newip.strip.s = str2;
+					newip.strip.len = strlen(newip.strip.s);
 #ifdef EXTRA_DEBUG
-					LM_DBG("forcing IP='%.*s'\n", newip.len, newip.s);
+					LM_DBG("forcing IP='%.*s'\n", newip.strip.len,
+					    newip.strip.s);
 #endif
 				} else {
-					newip.s = (argc < 2) ? str2 : argv[1];
-					newip.len = strlen(newip.s);
+					newip.strip.s = (argc < 2) ? str2 : argv[1];
+					newip.strip.len = strlen(newip.strip.s);
 				}
 			}
 			/* marker to double check : newport goes: str -> int -> str ?!?! */
@@ -2796,7 +2824,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				body1.s = sdp_stream->ice_attr->foundation.s - 12;
 				body1.len = bodylimit - body1.s;
 				if (insert_candidates(msg, sdp_stream->ice_attr->foundation.s - 12,
-						&newip, port, ice_candidate_priority_val.n) == -1) {
+						&newip.strip, port, ice_candidate_priority_val.n) == -1) {
 					FORCE_RTP_PROXY_RET (-1);
 				}
 			}
@@ -2813,7 +2841,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 #ifdef EXTRA_DEBUG
 				LM_DBG("alter ip body1='%.*s'\n", body1.len, body1.s);
 #endif
-				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0)==-1) {
+				if (alter_mediaip(msg, &body1, &oldip, pf, &newip.strip, newip.pf, 0)==-1) {
 					FORCE_RTP_PROXY_RET (-1);
 				}
 				if (!c2p)
@@ -2828,7 +2856,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 #ifdef EXTRA_DEBUG
 				LM_DBG("alter common ip body1='%.*s'\n", body1.len, body1.s);
 #endif
-				if (alter_mediaip(msg, &body1, &sdp_session->ip_addr, sdp_session->pf, &newip, pf1, 0)==-1) {
+				if (alter_mediaip(msg, &body1, &sdp_session->ip_addr,
+				    sdp_session->pf, &newip.strip, newip.pf, 0)==-1) {
 					FORCE_RTP_PROXY_RET (-1);
 				}
 				c1p_altered = 1;
@@ -2842,7 +2871,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 #ifdef EXTRA_DEBUG
 				LM_DBG("alter media ip body1='%.*s'\n", body1.len, body1.s);
 #endif
-				if (alter_mediaip(msg, &body1, &sdp_session->o_ip_addr, sdp_session->o_pf, &newip, pf1, 0)==-1) {
+				if (alter_mediaip(msg, &body1, &sdp_session->o_ip_addr,
+				    sdp_session->o_pf, &newip.strip, newip.pf, 0)==-1) {
 					FORCE_RTP_PROXY_RET (-1);
 				}
 				o1p = 0;
