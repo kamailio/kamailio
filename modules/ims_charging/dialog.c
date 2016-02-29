@@ -3,6 +3,7 @@
 #include "ro_session_hash.h"
 #include "ro_db_handler.h"
 #include "ims_charging_stats.h"
+#include "../../parser/hf.h"
 
 struct cdp_binds cdpb;
 
@@ -144,6 +145,12 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode, char*
 			}
 		} else {
 			LM_DBG("Request is %.*s\n", _params->req->first_line.u.request.method.len, _params->req->first_line.u.request.method.s);
+		}
+
+		struct hdr_field* h = get_hdr_by_name(_params->req, "Reason", 6);
+		if(h!=NULL){
+                        LM_DBG("reason header is [%.*s]\n", h->body.len, h->body.s);
+			s_reason = h->body;
 		}
 	} else if (_params->rpl) {
 		LM_DBG("Reply is [%d - %.*s]", _params->rpl->first_line.u.reply.statuscode, _params->rpl->first_line.u.reply.reason.len, _params->rpl->first_line.u.reply.reason.s);
