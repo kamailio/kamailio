@@ -357,17 +357,17 @@ static void dlg_terminated(struct sip_msg* req,
     /* dialog terminated (BYE) */
     run_dlg_callbacks(DLGCB_TERMINATED, dlg, req, NULL, dir, 0);
 
-    /* register callback for the coresponding reply */
-    LM_DBG("Registering tmcb1\n");
-    if (d_tmb.register_tmcb(req,
-            0,
-            TMCB_RESPONSE_OUT,
-            dlg_terminated_confirmed,
-            (void*) dlg,
-            0) <= 0) {
-        LM_ERR("cannot register response callback for BYE request\n");
-        return;
-    }
+//    /* register callback for the coresponding reply */
+//    LM_DBG("Registering tmcb1\n");
+//    if (d_tmb.register_tmcb(req,
+//            0,
+//            TMCB_RESPONSE_OUT,
+//            dlg_terminated_confirmed,
+//            (void*) dlg,
+//            0) <= 0) {
+//        LM_ERR("cannot register response callback for BYE request\n");
+//        return;
+//    }
 }
 
 /*!
@@ -752,7 +752,6 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param) {
     }
 
     if (req->first_line.u.request.method_value != METHOD_INVITE/* && req->first_line.u.request.method_value != METHOD_CANCEL*/) {
-        LM_DBG("Ignoring SIP Request: [%.*s] in dlg_onreq\n", req->first_line.u.request.method.len, req->first_line.u.request.method.s);
         return;
     }
 
@@ -806,6 +805,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
     int h_entry, h_id, new_state, old_state, unref, event, timeout;
     unsigned int dir;
     int ret = 0;
+    int reset = 1;
 
     dlg = dlg_get_ctx_dialog();
     if (dlg != NULL) {
@@ -1070,19 +1070,6 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
     if ((event == DLG_EVENT_REQ || event == DLG_EVENT_REQACK)
             && (new_state == DLG_STATE_CONFIRMED || new_state == DLG_STATE_EARLY)) {
 
-        timeout = get_dlg_timeout(req);
-        if (timeout != default_timeout) {
-            dlg->lifetime = timeout;
-        }
-        //        reset = !((dlg->iflags & DLG_IFLAG_TIMER_NORESET) || dlg_timeout_noreset);
-
-        if ((new_state != DLG_STATE_EARLY) && (old_state != DLG_STATE_CONFIRMED/* || reset*/)) {
-            if (update_dlg_timer(&dlg->tl, dlg->lifetime) == -1) {
-                LM_ERR("failed to update dialog lifetime\n");
-            } else {
-                dlg->dflags |= DLG_FLAG_CHANGED;
-            }
-        }
         if (event != DLG_EVENT_REQACK) {
             if (update_cseqs(dlg, req, dir, &ttag) != 0) {
                 LM_ERR("cseqs update failed\n");
@@ -1118,6 +1105,20 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param) {
                         shm_free(iuid);
                     }
                 }
+            }
+        }
+        
+        timeout = get_dlg_timeout(req);
+        if (timeout != default_timeout) {
+            dlg->lifetime = timeout;
+        }
+        //        reset = !((dlg->iflags & DLG_IFLAG_TIMER_NORESET) || dlg_timeout_noreset);
+
+        if ((new_state != DLG_STATE_EARLY) && (old_state != DLG_STATE_CONFIRMED || reset)) {
+            if (update_dlg_timer(&dlg->tl, dlg->lifetime) == -1) {
+                LM_ERR("failed to update dialog lifetime\n");
+            } else {
+                dlg->dflags |= DLG_FLAG_CHANGED;
             }
         }
     }
@@ -1215,9 +1216,10 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
         if (rpl == FAKED_REPLY) {
             LM_DBG("Faked reply\n");
             //TODO - maybe we should run the state machine especially for things like cancel (ie early dialog.....)
-            goto done;
-        }
-
+            to_tag.s = 0;
+            to_tag.len = 0;
+//            goto done;
+        } else {
         // get to tag
         LM_DBG("Extracting to-tag from reply");
         if (!rpl->to && ((parse_headers(rpl, HDR_TO_F, 0) < 0) || !rpl->to)) {
@@ -1235,6 +1237,7 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
                 to_tag.len = 0;
                 //Here we assume that the transaction module timer will remove any early dialogs
                 //return;       if we leave this then we have over-reffed dialogs
+                }
             }
         }
 
@@ -1265,13 +1268,27 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
         LM_DBG("Checking if there is an existing dialog_out entry with same to-tag");
         if (rpl == FAKED_REPLY) {
             LM_DBG("Faked reply\n");
+            
+            if (new_state == DLG_STATE_DELETED
+                && (old_state == DLG_STATE_UNCONFIRMED
+                || old_state == DLG_STATE_EARLY)) {
+                LM_DBG("dialog %p failed (negative reply)\n", dlg);
+                /* dialog setup not completed (3456XX) */
+                run_dlg_callbacks(DLGCB_FAILED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
+                /* do unref */
+                if (unref)
+                    unref_dlg(dlg, unref);
+
+                if (old_state == DLG_STATE_EARLY)
+                    counter_add(dialog_ng_cnts_h.early, -1);
+            }
             goto done;
         }
 
         // get to tag
         LM_DBG("Extracting to-tag from reply");
-        if (!rpl->to && ((parse_headers(rpl, HDR_TO_F, 0) < 0) || !rpl->to)) {
-            LM_ERR("bad reply or missing TO hdr :-/\n");
+        if (rpl == FAKED_REPLY || (!rpl->to && ((parse_headers(rpl, HDR_TO_F, 0) < 0) || !rpl->to))) {
+            LM_ERR("faked reply or bad reply or missing TO hdr :-/\n");
             to_tag.s = 0;
             to_tag.len = 0;
         } else {
@@ -1545,9 +1562,10 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
     mlock = 1;
     dlg = search_dlg(&callid, &ftag, &ttag, &dir);
     if (detect_spirals) {
-        if (spiral_detected == 1)
+        if (spiral_detected == 1) {
+            LM_DBG("spiral detected - returning 0\n");
             return 0;
-
+        }
         dir = DLG_DIR_NONE;
         if (dlg) {
             mlock = 0;
@@ -1572,6 +1590,8 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
                 set_current_dialog(req, dlg);
                 dlg_release(dlg);
                 return 0;
+            } else {
+                LM_DBG("spiral deteced and current state is [%d]\n", dlg->start_ts);
             }
             // get_dlg has incremented the ref count by 1
             dlg_release(dlg);
@@ -1610,7 +1630,6 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
     link_dlg(dlg, 0, mlock);
     if (likely(mlock == 1)) dlg_hash_release(&callid);
 
-    dlg->lifetime = get_dlg_timeout(req);
     s.s = _dlg_ctx.to_route_name;
     s.len = strlen(s.s);
     dlg_set_toroute(dlg, &s);
@@ -1621,6 +1640,8 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
     //        dlg->iflags |= DLG_IFLAG_TIMEOUTBYE;
 
     if (run_initial_cbs) run_create_callbacks(dlg, req);
+
+    dlg->lifetime = get_dlg_timeout(req);
 
     /* first INVITE seen (dialog created, unconfirmed) */
     if (seq_match_mode != SEQ_MATCH_NO_ID &&
@@ -1671,7 +1692,7 @@ int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
             goto error;
         }
         if (d_tmb.register_tmcb(req, t,
-                TMCB_DESTROY | TMCB_RESPONSE_IN | TMCB_RESPONSE_READY | TMCB_RESPONSE_FWDED | TMCB_ON_FAILURE | TMCB_E2ECANCEL_IN | TMCB_REQUEST_OUT,
+                TMCB_RESPONSE_IN | TMCB_RESPONSE_READY | TMCB_RESPONSE_FWDED | TMCB_ON_FAILURE | TMCB_E2ECANCEL_IN | TMCB_REQUEST_OUT,
                 dlg_onreply, (void*) iuid, dlg_iuid_sfree) < 0) {
             LM_ERR("failed to register TMCB\n");
             goto error;
@@ -1688,6 +1709,8 @@ error:
     return -1;
 }
 
+static str reason_hdr_s = {"Reason: dialog_timeout\r\n", 24};
+
 /*!
  * \brief Timer function that removes expired dialogs, run timeout route
  * \param tl dialog timer list
@@ -1696,6 +1719,7 @@ void dlg_ontimeout(struct dlg_tl *tl) {
     dlg_cell_t *dlg;
     int new_state, old_state, unref;
     sip_msg_t *fmsg;
+    
 
     /* get the dialog tl payload */
     dlg = ((struct dlg_cell*) ((char *) (tl) -
@@ -1722,15 +1746,15 @@ void dlg_ontimeout(struct dlg_tl *tl) {
         }
 
         //        if (dlg->iflags & DLG_IFLAG_TIMEOUTBYE) { //TODO return therse flags
-        if (dlg_bye_all(dlg, NULL) < 0)
-            unref_dlg(dlg, 1);
-        /* run event route for end of dlg */
-        //            dlg_run_event_route(dlg, NULL, dlg->state, DLG_STATE_DELETED);  //TODO replace
-
-        unref_dlg(dlg, 1);
-        counter_inc(dialog_ng_cnts_h.expired);
-        return;
-        //        }
+        if (dlg->state == DLG_STATE_CONFIRMED) {
+            if (dlg_bye_all(dlg, &reason_hdr_s) < 0 )  /* function only supports DLG_STATE_CONFIRMED*/
+               LM_DBG("Failed to do dlg_bye_all.!!");
+//            unref_dlg(dlg, 1);
+        }
+//		else if (dlg->state == DLG_STATE_CONFIRMED_NA) 
+//			unref_dlg(dlg, 1);
+//        counter_inc(dialog_ng_cnts_h.expired);
+//        return;
     }
 
     next_state_dlg(dlg, DLG_EVENT_REQBYE, &old_state, &new_state, &unref, 0);
