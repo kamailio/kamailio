@@ -510,7 +510,7 @@ struct dlg_cell_out* build_new_dlg_out(struct dlg_cell *dlg, str* to_uri, str* t
 
     p = (char*) (dlg_out + 1);
 
-    if (branch->len > 0) {
+    if (branch && branch->len > 0) {
         dlg_out->branch.s = p;
         dlg_out->branch.len = branch->len;
         memcpy(p, branch->s, branch->len);
