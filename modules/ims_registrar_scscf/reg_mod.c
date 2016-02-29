@@ -167,6 +167,7 @@ int contact_expires_buffer_percentage = 10;     /**< percentage we expiry for co
 
 int notification_list_size_threshold = 0; /**Threshold for size of notification list after which a warning is logged */
 
+int notification_processes = 4; /*Number of processes that processes the notification queue*/
 
 extern reg_notification_list *notification_list; /**< list of notifications for reg to be sent			*/
 
@@ -266,6 +267,7 @@ static param_export_t params[] = {
     {"subscription_expires_range", INT_PARAM, &subscription_expires_range},
     {"user_data_always", INT_PARAM, &user_data_always},
     {"notification_list_size_threshold", INT_PARAM, &notification_list_size_threshold},
+    {"notification_processes", INT_PARAM, &notification_processes},
 
     {0, 0, 0}
 };
@@ -357,9 +359,10 @@ static int mod_init(void) {
     }
 #endif
 
-    /*register space for notification processor*/
-    register_procs(1);
-
+    /*register space for notification processors*/
+    register_procs(notification_processes);
+    cfg_register_child(notification_processes);
+    
     /* bind the SL API */
     if (sl_load_api(&slb) != 0) {
         LM_ERR("cannot bind to SL API\n");
@@ -505,18 +508,27 @@ static int mod_init(void) {
 }
 
 static int child_init(int rank) {
-    LM_DBG("Initialization of module in child [%d] \n", rank);
     int pid;
+    int k=0;
     
-    if (rank == PROC_MAIN) {
-        pid = fork_process(PROC_MIN, "sip_notification_event_process", 1);
-        if (pid < 0)
-            return -1; //error
-        if (pid == 0) {
-            if (cfg_child_init())
-                return -1; //error
-            notification_event_process();
-        }
+    LM_DBG("Initialization of module in child [%d] \n", rank);
+
+if (rank == PROC_MAIN) {
+    
+        /* fork notification workers */
+	for(k=0;k<notification_processes;k++){
+		pid = fork_process(1001+k,"notification_worker",1);
+		if (pid==-1){
+			LM_CRIT("init_notification_worker(): Error on fork() for worker!\n");
+			return 0;
+		}
+		if (pid==0) {
+			if (cfg_child_init()) return 0;
+			notification_event_process();
+			LM_CRIT("init_notification_worker():: worker_process finished without exit!\n");
+			exit(-1);
+		}
+	}
     }
     
     

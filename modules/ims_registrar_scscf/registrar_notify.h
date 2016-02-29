@@ -72,11 +72,13 @@ typedef struct _reg_notification {
     int num_impus;
     
     unsigned int local_cseq;
+    unsigned int reginfo_s_version;
     str call_id;
     str from_tag;
     str to_tag;
     str record_route;
     str sockinfo_str;
+    
     
     struct _reg_notification *next; /**< next notification in the list	*/
     struct _reg_notification *prev; /**< previous notification in the list	*/
@@ -132,7 +134,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription);
 
 str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type);
 
-void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str** impus, int num_impus, int event_type);
+void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str* impus, int num_impus, int event_type);
 
 void notification_event_process();
 
