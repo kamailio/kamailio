@@ -403,13 +403,14 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param) {
 
     struct mi_node* node;
     struct dlg_cell * dlg = NULL;
-    str mi_extra_hdrs = {NULL, 0};
+    str mi_extra_hdrs = {"Reason: mi_terminated\r\n", 23};
     int status, msg_len;
     char *msg;
 
     str callid = {NULL, 0};
     str ftag = {NULL, 0};
     str ttag = {NULL, 0};
+    str reason = {"mi_terminated", 13};
 
     if (d_table == NULL)
         goto end;
@@ -448,9 +449,9 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param) {
     dlg = get_dlg(&callid, &ftag, &ttag, &dir); //increments ref count!
 
     if (dlg) {
-        LM_DBG("Found dialog to terminate and it is in state [%i]\n", dlg->state);
+        LM_DBG("Found dialog to terminate and it is in state [%i] [%.*s]\n", dlg->state, mi_extra_hdrs.len, mi_extra_hdrs.s);
 
-        if (dlg_terminate(dlg, 0, NULL/*reson*/, /* all sides of a dialog*/ 2, &mi_extra_hdrs) < 0) {
+        if (dlg_terminate(dlg, 0, &reason/*reson*/, /* all sides of a dialog*/ 2, &mi_extra_hdrs) < 0) {
             status = 500;
             msg = MI_DLG_OPERATION_ERR;
             msg_len = MI_DLG_OPERATION_ERR_LEN;
