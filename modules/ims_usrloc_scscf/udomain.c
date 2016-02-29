@@ -261,11 +261,13 @@ void mem_timer_udomain(udomain_t* _d) {
     struct impurecord* ptr, *t;
     struct ucontact* contact_ptr;
     unsigned int num_expired_contacts = 0;
-    int i, n, temp;
+    int i, n, temp, j;
     time_t now;
+    int abort = 0;
+    int slot;
     
     now = time(0);
-    int numcontacts = contact_list->max_collisions?(contact_list->max_collisions * contact_list->size):(contact_list->size);
+    int numcontacts = contact_list->size*2;     //assume we should be ok for each slot to have 2 collisions
     if (expired_contacts_size < numcontacts) {
         LM_DBG("Changing expired_contacts list size from %d to %d\n", expired_contacts_size, numcontacts);
         if (expired_contacts){
@@ -273,7 +275,7 @@ void mem_timer_udomain(udomain_t* _d) {
         }
         expired_contacts = (ucontact_t**)pkg_malloc(numcontacts*sizeof(ucontact_t**));
         if (!expired_contacts) {
-            LM_ERR("no more pkg mem\n");
+            LM_ERR("no more pkg mem trying to allocate [%d] bytes\n", numcontacts*sizeof(ucontact_t**));
             return;
         }
         expired_contacts_size = numcontacts;
@@ -282,21 +284,36 @@ void mem_timer_udomain(udomain_t* _d) {
     //go through contacts first
     n = contact_list->max_collisions;
     LM_DBG("*** mem_timer_udomain - checking contacts - START ***\n");
-    for (i = 0; i < contact_list->size; i++) {
+    for (i=0,j=0; i < contact_list->size; i++) {
         lock_contact_slot_i(i);
         contact_ptr = contact_list->slot[i].first;
         while (contact_ptr) {
-            LM_DBG("We have a contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d (state: %d)\n", 
-                    i, contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s, 
+            if (num_expired_contacts >= numcontacts) {
+                LM_WARN("we don't have enough space to expire all contacts in this pass - will continue in next pass\n");
+                abort = 1;
+                break;
+            }
+            LM_DBG("We have a [3gpp=%d] contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d (state: %d)\n", 
+                    contact_ptr->is_3gpp, i, contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s, 
                     (double) contact_ptr->expires - now, contact_ptr->ref_count,
                     contact_ptr->state);
 		//contacts are now deleted during impurecord processing
-            if ((contact_ptr->expires-now) <=0 && (contact_ptr->state != CONTACT_DELETED)) {
-                LM_DBG("expiring contact [%.*s].... setting to CONTACT_EXPIRE_PENDING_NOTIFY\n", contact_ptr->aor.len, contact_ptr->aor.s);
-                contact_ptr->state = CONTACT_EXPIRE_PENDING_NOTIFY;
-                ref_contact_unsafe(contact_ptr);
-                expired_contacts[num_expired_contacts] = contact_ptr;
-                num_expired_contacts++;
+            if ((contact_ptr->expires-now) <= 0) {
+                if (contact_ptr->state == CONTACT_DELAYED_DELETE) {
+                    if (contact_ptr->ref_count <= 0) {
+                        LM_DBG("contact in state CONTACT_DELATED_DELETE is about to be deleted");
+                        expired_contacts[num_expired_contacts] = contact_ptr;
+                        num_expired_contacts++;
+                    } else {
+                        LM_DBG("contact in state CONTACT_DELATED_DELETE still has a ref count of [%d]... not doing anything for now\n", contact_ptr->ref_count);
+                    }
+                } else if (contact_ptr->state != CONTACT_DELETED) {
+                    LM_DBG("expiring contact [%.*s].... setting to CONTACT_EXPIRE_PENDING_NOTIFY\n", contact_ptr->aor.len, contact_ptr->aor.s);
+                    contact_ptr->state = CONTACT_EXPIRE_PENDING_NOTIFY;
+                    ref_contact_unsafe(contact_ptr);
+                    expired_contacts[num_expired_contacts] = contact_ptr;
+                    num_expired_contacts++;
+                }
             }
             contact_ptr = contact_ptr->next;
         } 
@@ -305,6 +322,9 @@ void mem_timer_udomain(udomain_t* _d) {
         }
         unlock_contact_slot_i(i);
         contact_list->max_collisions = n;
+        if (abort == 1) {
+            break;
+        }
     }
     LM_DBG("*** mem_timer_udomain - checking contacts - FINISHED ***\n");
 
@@ -350,11 +370,17 @@ void mem_timer_udomain(udomain_t* _d) {
     
     /* now we delete the expired contacts.  (mark them for deletion */
     for (i=0; i<num_expired_contacts; i++) {
-        lock_contact_slot_i(expired_contacts[i]->sl);
-        LM_DBG("Setting contact state to CONTACT_DELETED for contact [%.*s]\n", expired_contacts[i]->aor.len, expired_contacts[i]->aor.s);
-        expired_contacts[i]->state = CONTACT_DELETED;
-        unref_contact_unsafe(expired_contacts[i]);
-        unlock_contact_slot_i(expired_contacts[i]->sl);
+        slot = expired_contacts[i]->sl;
+        lock_contact_slot_i(slot);
+        if (expired_contacts[i]->state != CONTACT_DELAYED_DELETE) {
+            LM_DBG("Setting contact state to CONTACT_DELETED for contact [%.*s]\n", expired_contacts[i]->aor.len, expired_contacts[i]->aor.s);
+            expired_contacts[i]->state = CONTACT_DELETED;
+            unref_contact_unsafe(expired_contacts[i]);
+        } else {
+            LM_DBG("deleting contact [%.*s]\n", expired_contacts[i]->aor.len, expired_contacts[i]->aor.s);
+            delete_scontact(expired_contacts[i]);
+        }
+        unlock_contact_slot_i(slot);
     }
     
 }
@@ -803,6 +829,7 @@ void unref_contact_unsafe(ucontact_t* c) {
         if (c->ref_count < 0) {
             LM_WARN("reference dropped below zero... this should not happen\n");
         }
-        delete_scontact(c);
+	c->state = CONTACT_DELAYED_DELETE;
+//        delete_scontact(c);
     }
 }

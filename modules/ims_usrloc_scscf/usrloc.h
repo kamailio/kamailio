@@ -145,11 +145,12 @@ typedef enum contact_state {
     CONTACT_VALID,
     CONTACT_DELETE_PENDING,
     CONTACT_EXPIRE_PENDING_NOTIFY,
-    CONTACT_DELETED
+    CONTACT_DELETED,
+    CONTACT_DELAYED_DELETE
 } contact_state_t;
 
 /*! \brief Valid contact is a contact that either didn't expire yet or is permanent */
-#define VALID_CONTACT(c, t)   (((c->expires>t) || (c->expires==0)) && c->state!=CONTACT_DELETED && c->state!=CONTACT_DELETE_PENDING && c->state!=CONTACT_EXPIRE_PENDING_NOTIFY)
+#define VALID_CONTACT(c, t)   (((c->expires>t) || (c->expires==0)) && c->state!=CONTACT_DELETED && c->state!=CONTACT_DELETE_PENDING && c->state!=CONTACT_EXPIRE_PENDING_NOTIFY && c->state!=CONTACT_DELAYED_DELETE)
 
 #define VALID_UE_TYPE(c, t)   ((t==0) || (t==1 && c->is_3gpp) || (t==2 && !c->is_3gpp))
 

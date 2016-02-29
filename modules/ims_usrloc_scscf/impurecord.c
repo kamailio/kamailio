@@ -478,7 +478,6 @@ int insert_scontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
                 case 2://overwrite oldest
                     LM_DBG("Too many contacts already registered, overwriting oldest for IMPU <%.*s>\n", _r->public_identity.len, _r->public_identity.s);
                     //we can just remove the first one seeing the contacts are ordered on insertion with newest last and oldest first
-		    mem_delete_ucontact(_r->newcontacts[0]);
                     break;
                 default://unknown
                     LM_ERR("unknown maxcontact behaviour..... ignoring\n");
@@ -572,7 +571,7 @@ static inline struct ucontact* contact_match(unsigned int slot, str* _c) {
     ucontact_t* ptr = contact_list->slot[slot].first;
 
     while (ptr) {
-        if ((_c->len == ptr->c.len) && !memcmp(_c->s, ptr->c.s, _c->len)) {//check validity
+        if ((ptr->state != CONTACT_DELAYED_DELETE) && (_c->len == ptr->c.len) && !memcmp(_c->s, ptr->c.s, _c->len)) {//check validity
             return ptr;
         }
         ptr = ptr->next;
@@ -593,7 +592,9 @@ static inline struct ucontact* contact_port_ip_match(unsigned int slot, str* _c)
 
     while (ptr) {
         aor_to_contact(&ptr->c, &contact_ip_port); //strip userpart from contact
-        if ((string_ip_port.len == contact_ip_port.len) && !memcmp(string_ip_port.s, contact_ip_port.s, string_ip_port.len)) {
+        if ((ptr->state != CONTACT_DELAYED_DELETE)
+            && (string_ip_port.len == contact_ip_port.len) 
+            && !memcmp(string_ip_port.s, contact_ip_port.s, string_ip_port.len)) {
             return ptr;
         }
 
@@ -614,7 +615,8 @@ static inline struct ucontact* contact_callid_match(unsigned int slot,
     ucontact_t* ptr = contact_list->slot[slot].first;
 
     while (ptr) {
-        if ((_c->len == ptr->c.len) && (_callid->len == ptr->callid.len)
+        if ((ptr->state != CONTACT_DELAYED_DELETE) 
+                && (_c->len == ptr->c.len) && (_callid->len == ptr->callid.len)
                 && !memcmp(_c->s, ptr->c.s, _c->len)
                 && !memcmp(_callid->s, ptr->callid.s, _callid->len)) {
             return ptr;
@@ -638,7 +640,8 @@ static inline struct ucontact* contact_path_match(unsigned int slot, str* _c, st
     if (_path == NULL) return contact_match(slot, _c);
 
     while (ptr) {
-        if ((_c->len == ptr->c.len) && (_path->len == ptr->path.len)
+        if ((ptr->state != CONTACT_DELAYED_DELETE)
+                && (_c->len == ptr->c.len) && (_path->len == ptr->path.len)
                 && !memcmp(_c->s, ptr->c.s, _c->len)
                 && !memcmp(_path->s, ptr->path.s, _path->len)
                 && VALID_CONTACT(ptr, act_time)
@@ -1012,7 +1015,7 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
 
     while (i < MAX_CONTACTS_PER_IMPU && ptr) {
         if (ptr == contact) {
-            LM_DBG("contact [%.*s] already linked to impu [%.*s]\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
+            LM_DBG("contact [%p] => [%.*s] already linked to impu [%.*s] at position [%i]\n", contact, contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
             return 0;
         }
         i++;
@@ -1027,9 +1030,10 @@ int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_d
 
     if (i < MAX_CONTACTS_PER_IMPU) {
         LM_DBG("contact [%.*s] needs to be linked to impu [%.*s] at position %d\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
-        if (overwrite)
-            unlink_contact_from_impu(impu, impu->newcontacts[i], write_to_db, 0 /*implicit dereg of contact */); //unlink the contact we are overwriting
-
+        if (overwrite) {
+			LM_DBG("In overwrite mode: going to unlink [%p] => [%.*s]\n", impu->newcontacts[i], impu->newcontacts[i]->c.len, impu->newcontacts[i]->c.s);
+			unlink_contact_from_impu(impu, impu->newcontacts[i], write_to_db, 0 /*implicit dereg of contact */); //unlink the contact we are overwriting
+		}
         impu->num_contacts = i + 1; //we always bump this - as unlink (in overwrite would have decremented)
         impu->newcontacts[i] = contact;
         ref_contact_unsafe(contact);
@@ -1051,8 +1055,9 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
     i = 0;
     int found = 0;
     ptr = impu->newcontacts[i];
+	int locked = 0;
 
-    LM_DBG("asked to unlink contact [%.*s] from impu [%.*s]\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
+    LM_DBG("asked to unlink contact [%p] => [%.*s] from impu [%.*s]\n", contact, contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
 
     while (i < MAX_CONTACTS_PER_IMPU && ptr) {
         if (found) {
@@ -1060,7 +1065,9 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
             impu->newcontacts[i - 1] = impu->newcontacts[i];
         } else {
             if (ptr == contact) {
-                LM_DBG("unlinking contact [%.*s] from impu [%.*s]\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
+                LM_DBG("unlinking contact [%p] => [%.*s] from impu [%.*s] at position [%i]\n", 
+				contact,
+				contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
                 found = 1;
                 found_contact = ptr;
                 impu->newcontacts[i] = 0;
@@ -1073,14 +1080,28 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
 
     if (found) {
         if (i < MAX_CONTACTS_PER_IMPU) {
-            LM_DBG("zero'ing last pointer to contact in the list\n");
+            LM_DBG("zero'ing last pointer to contact in the list at position [%i]\n", i-1);
             impu->newcontacts[i - 1] = 0;
         }
 
         if (write_to_db && db_mode == WRITE_THROUGH && db_unlink_contact_from_impu(impu, found_contact) != 0) {
             LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
         }
-        unref_contact_unsafe(found_contact); //should we lock the actual contact? safe version maybe?
+		
+        locked = lock_try(found_contact->lock);
+        if (locked == 0) {
+//                found_contact->state = CONTACT_DELAYED_DELETE;
+				unref_contact_unsafe(found_contact); //we don't unref because we don't have the lock on this particular contacts contact slot and we can't take it coz of deadlock. - so let
+                //a housekeeper thread do it
+                locked = 1;
+        } else {
+                        LM_ERR("Could not get lock to remove link from of contact from impu....");
+                        //TODO: we either need to wait and retry or we need to get another process to do this for us.... right now we will leak a contact.
+        }
+        if (locked == 1) {
+                lock_release(found_contact->lock);
+        }
+		
     } else {
         LM_DBG("contact [%.*s] did not exist in IMPU list [%.*s] while trying to unlink\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
     }

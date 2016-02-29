@@ -105,7 +105,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
     void *cp;
     int shortage;
     int needed;
-    int i,j;
+    int i,j=0;
     cp = buf;
     shortage = 0;
     /* Reserve space for terminating 0000 */
