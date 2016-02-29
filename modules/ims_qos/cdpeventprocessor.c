@@ -265,6 +265,7 @@ void cdp_cb_event_process() {
                         contact_info.via_port = p_session_data->via_port;
                         contact_info.via_prot = p_session_data->via_proto;
                         contact_info.aor = p_session_data->registration_aor;
+						contact_info.reg_state = PCONTACT_ANY;
                         
 			if (ul.get_pcontact(domain, &contact_info, &pcontact) != 0) {
 			    LM_DBG("no contact found for terminated Rx reg session..... ignoring\n");

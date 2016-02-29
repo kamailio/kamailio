@@ -154,10 +154,13 @@ int checkcontact(struct sip_msg* _m, pcontact_t * c) {
 				received_host.len, received_host.s);
 
 			// Finally really compare the "received_host"
-			if (!memcmp(c->received_host.s, received_host.s, received_host.len))
+			if (!memcmp(c->received_host.s, received_host.s, received_host.len)) {
+                            LM_DBG("check contact passed\n");
 				return 0;
 		}
 	}
+	}
+        LM_DBG("check contact failed\n");
 	return 1;
 }
 
@@ -165,21 +168,25 @@ int checkcontact(struct sip_msg* _m, pcontact_t * c) {
  * get PContact-Structure for message
  * (search only once per Request)
  */
-pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
-    ppublic_t * p;
-    contact_body_t *b = 0;
-    contact_t *ct;
-    pcontact_info_t search_ci;
-    str received_host = {0, 0};
-    char srcip[50];
-    struct via_body *vb;
-    unsigned short port, proto;
-    str host;
-    sip_uri_t contact_uri;
+pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d, enum pcontact_reg_states reg_state) {
+	ppublic_t * p;
+	contact_body_t *b = 0;
+	contact_t *ct;
+	pcontact_info_t search_ci;
+	str received_host = {0, 0};
+	char srcip[50];
+	struct via_body *vb;
+	unsigned short port, proto;
+	str host;
+	sip_uri_t contact_uri;
+	int mustRetryViaSearch = 0;
+	int mustRetryReceivedSearch = 0;
 
     b = cscf_parse_contacts(_m);
 
     if (_m->first_line.type == SIP_REPLY && _m->contact && _m->contact->parsed && b->contacts) {
+		mustRetryViaSearch = 1;
+		mustRetryReceivedSearch = 1;
         LM_DBG("This is a reply - to look for contact we favour the contact header above the via (b2bua)... if no contact we will use last via\n");
         ct = b->contacts;
         host = ct->uri;
@@ -214,65 +221,93 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d) {
 //    if (_m->id != current_msg_id) {
         current_msg_id = _m->id;
         c = NULL;
-        search_ci.received_host.s = received_host.s;
-        search_ci.received_host.len = received_host.len;
-        search_ci.received_port = _m->rcv.src_port;
-        search_ci.received_proto = _m->rcv.proto;
-        search_ci.searchflag = SEARCH_NORMAL;
-        search_ci.via_host = host;
-        search_ci.via_port = port;
-        search_ci.via_prot = proto;
-        search_ci.aor.s = 0;
-        search_ci.aor.len = 0;
+	//search_ci.reg_state = PCONTACT_REGISTERED;          //we can do this because this function is always called expecting a REGISTERED contact
+        search_ci.reg_state = reg_state;
+	search_ci.received_host.s = received_host.s;
+	search_ci.received_host.len = received_host.len;
+	search_ci.received_port = _m->rcv.src_port;
+	search_ci.received_proto = _m->rcv.proto;
+	search_ci.searchflag = SEARCH_RECEIVED;
+	search_ci.via_host = host;
+	search_ci.via_port = port;
+	search_ci.via_prot = proto;
+	search_ci.aor.s = 0;
+	search_ci.aor.len = 0;
 
-        if (c == NULL) {
-            b = cscf_parse_contacts(_m);
+//	b = cscf_parse_contacts(_m);
+tryagain:
+	if (b && b->contacts) {
+		for (ct = b->contacts; ct; ct = ct->next) {
+			search_ci.aor = ct->uri;
+			if (ul.get_pcontact(_d, &search_ci, &c) == 0) {
+				if (checkcontact(_m, c) != 0) {
+					c = NULL;
+				} else {
+					break;
+				}
+			}
+		}
+	} else {
+		LM_WARN("No contact-header found...\n");
+	}
 
-            if (b && b->contacts) {
-                for (ct = b->contacts; ct; ct = ct->next) {
-                    search_ci.aor = ct->uri;
-                    if (ul.get_pcontact(_d, &search_ci, &c) == 0) {
-                        if (checkcontact(_m, c) != 0) {
-                            c = NULL;
-                        } else {
-                            break;
+	if ((c == NULL) && (is_registered_fallback2ip == 1)) {
+		LM_INFO("Contact not found based on Contact-header, trying IP/Port/Proto\n");
+		//			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
+		//			received_host.s = srcip;
+		if (ul.get_pcontact(_d, &search_ci, &c) == 1) {
+			LM_DBG("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
+		} else {
+			if (checkcontact(_m, c) != 0) {
+				c = NULL;
+			}
+		}
+	}
+
+	asserted_identity = NULL;
+	registration_contact = NULL;
+	if (c) {
+                LM_DBG("Trying to set asserted identity field");
+		registration_contact = &c->contact_user;
+		p = c->head;
+		while (p) {
+                        LM_DBG("Checking through contact users");
+			if (p->is_default == 1) {
+                            LM_DBG("Found default contact user so setting asserted identity");
+                            asserted_identity = &p->public_identity;
                         }
-                    }
-                }
-            } else {
-                LM_WARN("No contact-header found?!?\n");
-            }
+			p = p->next;
+		}
+	}
+        if (asserted_identity != NULL && asserted_identity->len > 0) {
+            LM_DBG("Have set the asserted_identity param to [%.*s]\n", asserted_identity->len, asserted_identity->s);
+        } else {
+            LM_DBG("Asserted identity not set");
         }
-
-        if ((c == NULL) && (is_registered_fallback2ip == 1)) {
-            LM_INFO("Contact not found based on Contact-header, trying IP/Port/Proto\n");
-            //			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-            //			received_host.s = srcip;
-            if (ul.get_pcontact(_d, &search_ci, &c) == 1) {
-                LM_DBG("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
-            } else {
-                if (checkcontact(_m, c) != 0) {
-                    c = NULL;
-                }
-            }
-        }
-//    }
-    asserted_identity = NULL;
-    registration_contact = NULL;
-    if (c) {
-        registration_contact = &c->contact_user;
-        p = c->head;
-        while (p) {
-            if (p->is_default == 1)
-                asserted_identity = &p->public_identity;
-            p = p->next;
-        }
-    }
+            
     
 //    LM_DBG("pcontact flag is [%d]\n", c->flags);
 //    if (c && (c->flags & (1<<FLAG_READFROMDB)) != 0) {
 //        LM_DBG("we have a contact that was read fresh from the DB....\n");
 //    }
+	if (!c && mustRetryViaSearch) {
+		LM_DBG("This is a reply so we will search using the last via once more...\n");
+		vb = cscf_get_ue_via(_m);
+		search_ci.via_host = vb->host;
+		search_ci.via_port = vb->port ? vb->port : 5060;
+		search_ci.via_prot = vb->proto;
+		mustRetryViaSearch = 0;
+		goto tryagain;
+	}
+	
+	if (!c && mustRetryReceivedSearch) {
+		LM_DBG("This is a reply and we still don't have a match - will try src ip/port of message\n");
+		search_ci.via_host = received_host;
+		search_ci.via_port = _m->rcv.src_port;
+		search_ci.via_prot = _m->rcv.proto;
+		mustRetryReceivedSearch = 0;
+		goto tryagain;
+	}
 
     return c;
 }
@@ -308,7 +343,7 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 	/* Lock this record while working with the data: */
 	ul.lock_udomain(_d, &vb->host, port, proto);
         
-	pcontact_t * c = getContactP(_m, _d);
+	pcontact_t * c = getContactP(_m, _d, PCONTACT_REGISTERED);
 	if (!c) {
 		LM_DBG("no contact found in usrloc when checking for service route\n");
 		goto error;
@@ -405,7 +440,7 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 	str new_route_header;
 	struct lump* lmp = NULL;
 	char * buf;
-	pcontact_t * c = getContactP(_m, _d);
+	pcontact_t * c = getContactP(_m, _d, PCONTACT_REGISTERED);
 //	char srcip[20];
 //	str received_host;
         struct via_body* vb;
@@ -510,7 +545,7 @@ error:
  * Check, if source is registered.
  */
 int is_registered(struct sip_msg* _m, udomain_t* _d) {
-	if (getContactP(_m, _d) != NULL) return 1;
+	if (getContactP(_m, _d, PCONTACT_REGISTERED) != NULL) return 1;
 	return -1;	
 }
 
@@ -549,7 +584,7 @@ int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity) {
 	}
 	LM_DBG("Identity to assert: %.*s\n", identity.len, identity.s);
 	
-	if (getContactP(_m, _d) != NULL) {
+	if (getContactP(_m, _d, PCONTACT_REGISTERED|PCONTACT_REG_PENDING_AAR|PCONTACT_REG_PENDING) != NULL) {
 		for (p = c->head; p; p = p->next) {
 			LM_DBG("Public identity: %.*s\n", p->public_identity.len, p->public_identity.s);
 			    /* Check length: */
@@ -654,6 +689,7 @@ int pcscf_unregister(udomain_t* _d, str * uri, str * received_host, int received
         search_ci.via_prot = search_ci.received_proto;
         search_ci.aor.s = uri->s;
         search_ci.aor.len = uri->len;
+		search_ci.reg_state = PCONTACT_ANY;
 
 	if (ul.get_pcontact(_d, &search_ci, &pcontact) == 0) {
 		/* Lock this record while working with the data: */

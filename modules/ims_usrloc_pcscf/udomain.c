@@ -506,22 +506,33 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 	for (i = 0; i < _d->table[sl].n; i++) {
             LM_DBG("comparing contact with aorhash [%u], aor [%.*s]\n", c->aorhash, c->aor.len, c->aor.s);
             LM_DBG("  contact host [%.*s:%d]\n", c->contact_host.len, c->contact_host.s, c->contact_port);
+		LM_DBG("contact received [%d:%.*s:%d]\n", c->received_proto, c->received_host.len, c->received_host.s, c->received_port);
 
-		if ((c->aorhash == aorhash) && (c->contact_host.len == contact_info->via_host.len) && (memcmp(contact_info->via_host.s, c->contact_host.s, c->contact_host.len)==0) && (c->contact_port == contact_info->via_port)
-                        && (!(contact_info->searchflag&SEARCH_RECEIVED) || ((contact_info->searchflag&SEARCH_RECEIVED)
-                        && ((c->received_host.len == contact_info->received_host.len) && (memcmp(c->received_host.s, contact_info->received_host.s, contact_info->received_host.len)==0))
-                        && (c->received_port == contact_info->received_port)))) {
-                    LM_DBG("found contact with URI [%.*s]\n", c->aor.len, c->aor.s);
-                    if (has_rinstance) {
-                        LM_DBG("confirming rinstance is the same - search has [%.*s] and proposed found contact has [%.*s]",
-                                rinstance.len, rinstance.s, 
-                                c->rinstance.len, c->rinstance.s);
-                        if ((rinstance.len == c->rinstance.len) && memcmp(rinstance.s, c->rinstance.s, rinstance.len) != 0) {
-                            LM_DBG("rinstance does not match - not match here...\n");
-			    c = c->next;
-                            continue;
+		if ((c->aorhash == aorhash) && 
+				(((c->contact_host.len == contact_info->via_host.len) 
+				&& (memcmp(contact_info->via_host.s, c->contact_host.s, c->contact_host.len) == 0) 
+				&& (c->contact_port == contact_info->via_port)
+				&& !(contact_info->searchflag & SEARCH_RECEIVED)) 
+		|| ((contact_info->searchflag & SEARCH_RECEIVED)
+				&& ((c->received_host.len == contact_info->received_host.len) && (memcmp(c->received_host.s, contact_info->received_host.s, contact_info->received_host.len) == 0))
+				&& ((c->received_port == contact_info->received_port) || (c->contact_port == contact_info->received_port))))) { /*volte comes from a different port.... typically uses 4060*/
+			LM_DBG("found contact with URI [%.*s]\n", c->aor.len, c->aor.s);
+			if (has_rinstance) {
+				LM_DBG("confirming rinstance is the same - search has [%.*s] and proposed found contact has [%.*s]",
+						rinstance.len, rinstance.s,
+						c->rinstance.len, c->rinstance.s);
+				if ((rinstance.len == c->rinstance.len) && memcmp(rinstance.s, c->rinstance.s, rinstance.len) != 0) {
+					LM_DBG("rinstance does not match - no match here...\n");
+					c = c->next;
+					continue;
+				}
+			}
+			//finally check state being searched for
+			if ( (contact_info->reg_state != PCONTACT_ANY) && ((contact_info->reg_state & c->reg_state) == 0)) {
+				LM_DBG("can't find contact for requested reg state [%d] - (have [%d])\n", contact_info->reg_state, c->reg_state);
+				c = c->next;
+				continue;
                         }
-                    }
                     *_c = c;
                     return 0;
 		}
@@ -532,21 +543,6 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
         LM_DBG("contact not found in memory\n");
         
 	return 1; /* Nothing found */
-}
-
-int get_pcontact_by_src(udomain_t* _d, str * _host, unsigned short _port, unsigned short _proto, struct pcontact** _c) {
-	str s_contact;
-	pcontact_info_t contact_info;
-        int ret;
-	
-	LM_DBG("Trying to find contact by src with URI: [%.*s]\n", s_contact.len, s_contact.s);
-        contact_info.via_host = *_host;
-        contact_info.via_port = _port;
-        contact_info.via_prot = _proto;
-                
-	ret = get_pcontact(_d, &contact_info, _c);
-
-	return ret;
 }
 
 int update_security(udomain_t* _d, security_type _t, security_t* _s, struct pcontact* _c) {
@@ -667,6 +663,7 @@ static inline pcontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	if (VAL_NULL(vals+4) || !received.s || !received.s[0]) {
 		LM_DBG("Empty received for contact [%.*s]....\n", contact->len, contact->s);	/*this could happen if you have been notified about a contact from S-CSCF*/
 		received.len = 0;
+		received.s = 0;
 	} else {
 		received.len = strlen(received.s);
 	}

@@ -148,12 +148,13 @@ typedef struct ppublic {
 
 /** Enumeration for public identity Registration States */
 enum pcontact_reg_states {
-    PCONTACT_NOT_REGISTERED = 0, /**< User not-registered, no profile stored	*/
-    PCONTACT_REGISTERED = 1, /**< User registered						*/
-    PCONTACT_REG_PENDING = -1, /**< User not-registered, profile stored	*/
-    PCONTACT_REG_PENDING_AAR = -2, /**< User not-registered, profile stored, AAR sent	*/
-    PCONTACT_DEREGISTERED = -3,
-    PCONTACT_DEREG_PENDING_PUBLISH = -4
+    PCONTACT_ANY = 0,
+    PCONTACT_NOT_REGISTERED = 1<<0, /**< User not-registered, no profile stored	*/
+    PCONTACT_REGISTERED = 1<<1, /**< User registered						*/
+    PCONTACT_REG_PENDING = 1<<2, /**< User not-registered, profile stored	*/
+    PCONTACT_REG_PENDING_AAR = 1<<3, /**< User not-registered, profile stored, AAR sent	*/
+    PCONTACT_DEREGISTERED = 1<<4,
+    PCONTACT_DEREG_PENDING_PUBLISH = 1<<5
 };
 
 static inline char* reg_state_to_string(enum pcontact_reg_states reg_state) {

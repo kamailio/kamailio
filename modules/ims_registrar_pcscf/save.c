@@ -97,6 +97,26 @@ static inline int calc_contact_expires(contact_t *c,int expires_hdr, int local_t
 	return local_time_now + r;
 }
 
+static inline char* strnistr(const char *s, const char *find, size_t slen)
+{
+        char c, sc;
+        size_t len;
+
+        if ((c = *find++) != '\0') {
+                len = strlen(find);
+                do {
+                        do {
+                                if ((sc = *s++) == '\0' || slen-- < 1)
+                                        return (NULL);
+                        } while (sc != c);
+                        if (len > slen)
+                                return (NULL);
+                } while (strncasecmp(s, find, len) != 0);
+                s--;
+        }
+        return ((char *)s);
+}
+
 
 /**
  * Updates the registrar with the new values
@@ -118,11 +138,8 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 	struct hdr_field* h;
 	contact_t* c;
 	struct sip_uri puri;
-	struct sip_uri parsed_received;
 	struct pcontact_info ci;
 	pcontact_t* pcontact;
-	char srcip[50];
-	int_str val;
         unsigned short port;
 
 	pcscf_act_time();
@@ -151,13 +168,15 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 				ci.num_public_ids = public_id_cnt;
 				ci.service_routes = service_route;
 				ci.num_service_routes = service_route_cnt;
-				ci.reg_state = PCONTACT_REGISTERED;
+				ci.reg_state = PCONTACT_REGISTERED|PCONTACT_REG_PENDING|PCONTACT_REG_PENDING_AAR;   //we don't want to add contacts that did not come through us (pcscf)
 
+                                if (c->uri.len > 6 && (strnistr(c->uri.s, "alias=", c->uri.len))) {
+                                    LM_DBG("contact has an alias - we can use that as the received.... - TODO\n");
+                                }
 				ci.received_host.len = 0;
 				ci.received_host.s = 0;
 				ci.received_port = 0;
 				ci.received_proto = 0;
-
 				port = puri.port_no?puri.port_no:5060;
                                 ci.via_host = puri.host;
                                 ci.via_port = port;
@@ -169,16 +188,17 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 						goto next_contact;
 					} 
 				    
-					LM_DBG("Adding pcontact: <%.*s>, expires: %d which is in %d seconds\n", c->uri.len, c->uri.s, expires, expires-local_time_now);
-
-					if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
-						LM_ERR("Failed inserting new pcontact\n");
-					} else {
-						//register for callbacks on this contact so we can send PUBLISH to SCSCF should status change
-						LM_DBG("registering for UL callback\n");
-						ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE, callback_pcscf_contact_cb, NULL);
-						//we also need to subscribe to reg event of this contact at SCSCF
-					}
+                                        LM_DBG("We don't add contact from the 200OK that did not go through us (ie, not present in explicit REGISTER that went through us\n");
+//					LM_DBG("Adding pcontact: <%.*s>, expires: %d which is in %d seconds\n", c->uri.len, c->uri.s, expires, expires-local_time_now);
+//					ci.reg_state = PCONTACT_REGISTERED;
+//					if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
+//						LM_ERR("Failed inserting new pcontact\n");
+//					} else {
+//						//register for callbacks on this contact so we can send PUBLISH to SCSCF should status change
+//						LM_DBG("registering for UL callback\n");
+//						ul.register_ulcb(pcontact, PCSCF_CONTACT_DELETE | PCSCF_CONTACT_EXPIRE, callback_pcscf_contact_cb, NULL);
+//						//we also need to subscribe to reg event of this contact at SCSCF
+//					}
 				} else { //contact already exists - update
 					LM_DBG("contact already exists and is in state (%d) : [%s]\n",pcontact->reg_state, reg_state_to_string(pcontact->reg_state));
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
@@ -192,6 +212,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 								pcontact->expires-local_time_now,
 								expires,
 								expires-local_time_now);
+						ci.reg_state = PCONTACT_REGISTERED;
 						if (ul.update_pcontact(_d, &ci, pcontact) != 0) {
 							LM_ERR("failed to update pcscf contact\n");
 						}
@@ -203,8 +224,6 @@ next_contact:
 			}
 	}
 	return 1;
-error:
-	return 0;
 }
 
 /**
@@ -268,7 +287,8 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	ci.num_public_ids=0;
 	ci.num_service_routes=0;
 	ci.expires=local_time_now + pending_reg_expires;
-	ci.reg_state=PCONTACT_REG_PENDING;
+	ci.reg_state=PCONTACT_ANY;
+        ci.searchflag=SEARCH_RECEIVED;  //we want to make sure we are very specific with this search to make sure we get the correct contact to put into reg_pending.
 
 	// Received Info: First try AVP, otherwise simply take the source of the request:
 	memset(&val, 0, sizeof(int_str));
@@ -301,6 +321,7 @@ int save_pending(struct sip_msg* _m, udomain_t* _d) {
 	ul.lock_udomain(_d, &ci.via_host, ci.via_port, ci.via_prot);
 	if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //need to insert new contact
 		LM_DBG("Adding pending pcontact: <%.*s>\n", c->uri.len, c->uri.s);
+		ci.reg_state=PCONTACT_REG_PENDING;
 		if (ul.insert_pcontact(_d, &c->uri, &ci, &pcontact) != 0) {
 			LM_ERR("Failed inserting new pcontact\n");
 		} else {
@@ -345,7 +366,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags) {
 	expires_hdr = cscf_get_expires_hdr(_m, 0);
 	cb = cscf_parse_contacts(_m);
 	if (!cb || (!cb->contacts && !cb->star)) {
-		LM_ERR("No contact headers and not *\n");
+		LM_DBG("No contact headers and not *\n");
 		goto error;
 	}
 	cscf_get_p_associated_uri(_m, &public_ids, &num_public_ids, 1);
