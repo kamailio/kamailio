@@ -380,7 +380,8 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
 void ro_session_ontimeout(struct ro_tl *tl) {
     time_t now, call_time;
     long used_secs;
-	int adjustment;
+    int adjustment;
+    str default_out_of_credit_hdrs = {"Reason: outofcredit\r\n", 21};
 
     LM_DBG("We have a fired timer [p=%p] and tl=[%i].\n", tl, tl->timeout);
 
@@ -484,7 +485,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 
     counter_inc(ims_charging_cnts_h.killed_calls);
 
-    dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id, NULL);
+    dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id, &default_out_of_credit_hdrs);
     return;
 }
 
