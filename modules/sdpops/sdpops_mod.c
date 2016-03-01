@@ -378,25 +378,21 @@ int sdp_remove_codecs_by_id(sip_msg_t* msg, str* codecs)
 	return 0;
 }
 
-// removes consecutive blocks of SDP lines that begin with script provided prefix
+/**
+ * @brief remove all SDP lines that begin with prefix
+ * @return -1 - error; 0 - no lines found ; 1..N - N lines deleted
+ */
 int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 {
 	str body = {NULL, 0};
-	str remove = {NULL, 0};
-	str line = {NULL, 0};
-	char* del_lump_start = NULL;
-	char* del_lump_end = NULL;
-	int del_lump_flag = 0;
-	struct lump *anchor;
-	char* p = NULL;
 
 	if(parse_sdp(msg) < 0) {
-		LM_ERR("Unable to parse sdp\n");
+		LM_ERR("Unable to parse SDP\n");
 		return -1;
 	}
 
 	if(msg->body == NULL) {
-		LM_DBG("No sdp body\n");
+		LM_DBG("No SDP body\n");
 		return -1;
 	}
 
@@ -413,69 +409,77 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 		return -1;
 	}
 
-	p = find_sdp_line(body.s, body.s+body.len, prefix->s[0]);
-	while (p != NULL)
+	char *ptr = NULL;
+	str line = {NULL, 0};
+	str remove = {NULL, 0};
+	int found = 0;
+	struct lump *anchor = NULL;
+
+	ptr = find_sdp_line(body.s, body.s + body.len, prefix->s[0]);
+	while (ptr)
 	{
-		if (sdp_locate_line(msg, p, &line) != 0)
+		if (sdp_locate_line(msg, ptr, &line) != 0)
 		{
-			LM_ERR("sdp_locate_line fail\n");
+			LM_ERR("sdp_locate_line() failed\n");
 			return -1;
 		}
 
-		//LM_DBG("line.s: %.*s\n", line.len, line.s);
-
-		if (extract_field(&line, &remove, *prefix) == 0)
+		if (body.s + body.len < line.s + prefix->len) // check if strncmp would run too far
 		{
-			//LM_DBG("line range: %d - %d\n", line.s - body.s, line.s + line.len - body.s);
-
-			if (del_lump_start == NULL)
-			{
-				del_lump_start = line.s;
-				del_lump_end = line.s + line.len;
-				//LM_DBG("first match, prepare new lump  (len=%d)\n", line.len);
-			}
-			else if ( p == del_lump_end )  // current line is same as del_lump_end
-			{
-				del_lump_end = line.s + line.len;
-				//LM_DBG("cont. match, made lump longer  (len+=%d)\n", line.len);
-			}
-
-			if (del_lump_end >= body.s + body.len)
-			{
-				//LM_DBG("end of buffer, delete lump\n");
-				del_lump_flag = 1;
-			}
-			//LM_DBG("lump pos: %d - %d\n", del_lump_start - body.s, del_lump_end - body.s);
-		}
-		else if ( del_lump_end != NULL)
-		{
-			//LM_DBG("line does not start with search pattern, delete current lump\n");
-			del_lump_flag = 1;
+			//LM_DBG("done searching, prefix string >%.*s< (%d) does not fit into remaining buffer space (%ld) \n", prefix->len, prefix->s, prefix->len, body.s + body.len - line.s);
+			break;
 		}
 
-		if (del_lump_flag && del_lump_start && del_lump_end)
+		if (strncmp(line.s, prefix->s, prefix->len ) == 0)
 		{
-			LM_DBG("del_lump range: %d - %d  len: %d\n", (int)(del_lump_start - body.s),
-					(int)(del_lump_end - body.s), (int)(del_lump_end - del_lump_start));
-
-			anchor = del_lump(msg, del_lump_start - msg->buf, del_lump_end - del_lump_start, HDR_OTHER_T);
-			if (anchor == NULL)
-			{
-				LM_ERR("failed to remove lump\n");
-				return -1;
+			//LM_DBG("current remove >%.*s< (%d)\n", remove.len, remove.s, remove.len);
+			if (!found) {
+				//LM_DBG("first match >%.*s< (%d)\n", line.len,line.s,line.len);
+				remove.s = line.s;
+				remove.len = line.len;
+			} else {
+				//LM_DBG("cont. match >%.*s< (%d)\n", line.len,line.s,line.len);
+				if (remove.s + remove.len == line.s) {
+					//LM_DBG("this match is right after previous match\n");
+					remove.len += line.len;
+				} else {
+					//LM_DBG("there is gap between this and previous match, remove now\n");
+					anchor = del_lump(msg, remove.s - msg->buf, remove.len, HDR_OTHER_T);
+					if (anchor==NULL)
+					{
+						LM_ERR("failed to remove lump\n");
+						return -1;
+					}
+					remove.s = line.s;
+					remove.len = line.len;
+				}
 			}
+			found++;
+			//LM_DBG("updated remove >%.*s< (%d)\n", remove.len, remove.s, remove.len);
 
-			del_lump_start = NULL;
-			del_lump_end = NULL;
-			del_lump_flag = 0;
-			//LM_DBG("succesful lump deletion\n");
 		}
-
-		p = find_sdp_line(line.s + line.len, body.s + body.len, prefix->s[0]);
+		ptr = find_next_sdp_line(ptr, body.s + body.len, prefix->s[0], NULL);
 	}
+
+	if (found) {
+		//LM_DBG("remove >%.*s< (%d)\n", remove.len, remove.s, remove.len);
+		anchor = del_lump(msg, remove.s - msg->buf, remove.len, HDR_OTHER_T);
+		if (anchor==NULL)
+		{
+			LM_ERR("failed to remove lump\n");
+			return -1;
+		}
+		return found;
+	}
+
+	LM_DBG("no match\n");
 	return 0;
 }
 
+/**
+ * removes all SDP lines that begin with script provided prefix
+ * @return -1 - error; 1 - found
+ */
 static int w_sdp_remove_line_by_prefix(sip_msg_t* msg, char* prefix, char* bar)
 {
 	str prfx = {NULL, 0};
@@ -493,7 +497,7 @@ static int w_sdp_remove_line_by_prefix(sip_msg_t* msg, char* prefix, char* bar)
 	}
 	LM_DBG("Removing SDP lines with prefix: %.*s\n", prfx.len, prfx.s);
 
-	if(sdp_remove_line_by_prefix(msg, &prfx)<0)
+	if ( sdp_remove_line_by_prefix(msg, &prfx) < 0)
 		return -1;
 	return 1;
 }
