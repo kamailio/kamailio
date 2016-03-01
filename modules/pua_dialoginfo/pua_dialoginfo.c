@@ -609,7 +609,11 @@ __dialog_loaded(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 	LM_DBG("INVITE dialog loaded: from=%.*s\n", dlg->from_uri.len, dlg->from_uri.s);
 
 	dlginfo=get_dialog_data(dlg, type);
-	if(dlginfo!=NULL) free_dlginfo_cell(dlginfo);
+	if(dlginfo!=NULL) {
+		LM_DBG("dialog info initialized (from=%.*s)\n",
+				dlg->from_uri.len, dlg->from_uri.s);
+		/* free_dlginfo_cell(dlginfo); */
+	}
 }
 
 
