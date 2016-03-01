@@ -142,7 +142,7 @@ static inline int futex_try(futex_lock_t* lock)
 {
 	int c;
 	c=atomic_cmpxchg(lock, 0, 1);
-	if (likely(c))
+	if (likely(c==0))
 		membar_enter_lock();
 	return c;
 }
