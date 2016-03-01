@@ -109,6 +109,17 @@ unsigned int set_modinit_delay(unsigned int v)
 	return r;
 }
 
+/* keep state if server is in destroy modules phase */
+static int _sr_destroy_modules_phase = 0;
+
+/**
+ * return destroy modules phase state
+ */
+int destroy_modules_phase(void)
+{
+	return _sr_destroy_modules_phase;
+}
+
 /**
  * if bit 1 set, SIP worker processes handle RPC commands as well
  * if bit 2 set, RPC worker processes handle SIP commands as well
@@ -797,6 +808,7 @@ void destroy_modules()
 {
 	struct sr_module* t, *foo;
 
+	_sr_destroy_modules_phase = 1;
 	/* call first destroy function from each module */
 	t=modules;
 	while(t) {

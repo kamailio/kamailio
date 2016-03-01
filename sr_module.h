@@ -654,5 +654,6 @@ int is_sip_worker(int rank);
 int is_rpc_worker(int rank);
 
 unsigned int set_modinit_delay(unsigned int v);
+int destroy_modules_phase(void);
 
 #endif /* sr_module_h */
