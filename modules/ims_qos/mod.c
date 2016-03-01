@@ -763,7 +763,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		LM_DBG("originating direction\n");
                 uri = cscf_get_asserted_identity(t->uas.request, 1);
 		if (uri.len == 0) {
-		    LM_DBG("No P-Asserted-Identity hdr found in request. Using From hdr in req");
+		    LM_ERR("No P-Asserted-Identity hdr found in request. Using From hdr in req - we shouldn't have to do this");
 
 		    if (!cscf_get_from_uri(t->uas.request, &uri)) {
 			    LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
@@ -787,7 +787,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		    //getting called asserted identity
                     uri = cscf_get_public_identity_from_called_party_id(t->uas.request, &h);
 		    if (uri.len == 0) {
-			LM_DBG("No P-Called-Party hdr found in response. Using req URI from dlg");
+			LM_ERR("No P-Called-Party hdr found in response. Using req URI from dlg - we shouldn't have to do this");
 			//get dialog and get the req URI from there
 			dlg = dlgb.get_dlg(msg);
 			if (!dlg) {
