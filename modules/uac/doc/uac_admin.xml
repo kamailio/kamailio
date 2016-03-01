@@ -1078,7 +1078,16 @@ event_route[uac:reply] {
 			in seconds, e.g.,: 360
 			</para></listitem>
 		</itemizedlist>
-
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>flags</emphasis> - the state of the registration, see <xref linkend="uac.r.uac.reg_info"/>
+			</para></listitem>
+		</itemizedlist>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>reg_delay</emphasis> - delay initial registration with at least reg_delay seconds, e.g.,: 3
+			</para></listitem>
+		</itemizedlist>
 		<para>
 		The module takes care of sending REGISTER and refresh registrations
 		before they expire.
