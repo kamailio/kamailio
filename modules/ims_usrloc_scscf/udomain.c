@@ -77,6 +77,8 @@ struct contact_list* contact_list;
 struct ims_subscription_list* ims_subscription_list;
 extern int subs_hash_size;
 
+extern int contact_delete_delay;
+
 /*!
  * \brief Create a new domain structure
  * \param  _n is pointer to str representing name of the domain, the string is
@@ -830,6 +832,7 @@ void unref_contact_unsafe(ucontact_t* c) {
             LM_WARN("reference dropped below zero... this should not happen\n");
         }
 	c->state = CONTACT_DELAYED_DELETE;
+        c->expires = time(NULL) + contact_delete_delay;
 //        delete_scontact(c);
     }
 }

@@ -119,6 +119,8 @@ struct dlg_binds dlgb;
 int sub_dialog_hash_size = 9;
 shtable_t sub_dialog_table;
 
+int contact_delete_delay = 30;   //If contact is put into delay delete state this is how long we delay before deleting
+
 new_shtable_t pres_new_shtable;
 insert_shtable_t pres_insert_shtable;
 search_shtable_t pres_search_shtable;
@@ -149,6 +151,7 @@ static param_export_t params[] = {
 	{"subs_hash_size",    	INT_PARAM, &subs_hash_size  },
         {"contacts_hash_size", 	INT_PARAM, &contacts_hash_size  },
 	{"nat_bflag",         	INT_PARAM, &nat_bflag       },
+        {"contact_delete_delay", INT_PARAM, &contact_delete_delay       },
 	{"usrloc_debug_file", 	PARAM_STR, &usrloc_debug_file},
 	{"enable_debug_file", 	INT_PARAM, &usrloc_debug},
     {"user_data_dtd",     	PARAM_STRING, &scscf_user_data_dtd},
