@@ -1300,6 +1300,8 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 	create_cca_result_code(0);
         goto error0;
     }
+    
+    LM_DBG("Ro result code is [%d]\n", (int)ro_cca_data->resultcode);
     create_cca_result_code((int)ro_cca_data->resultcode);
     if (ro_cca_data->resultcode != 2001) {
         if (ro_cca_data->resultcode != 4012)
