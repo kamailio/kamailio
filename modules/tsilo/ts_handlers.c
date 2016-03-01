@@ -21,6 +21,8 @@
 
 #include <string.h>
 
+#include "../../sr_module.h"
+
 #include "ts_hash.h"
 #include "ts_handlers.h"
 
@@ -63,6 +65,7 @@ void ts_onreply(struct cell* t, int type, struct tmcb_params *param)
 	ts_transaction_t *cb_ptr, *ptr;
 
 	if(t_table==0) return;
+	if((type & (TMCB_DESTROY)) && destroy_modules_phase()) return;
 
 	cb_ptr = (ts_transaction_t*)(*param->param);
 	if (cb_ptr == NULL) {
