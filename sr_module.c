@@ -203,14 +203,14 @@ int register_builtin_modules()
 
 
 /** convert cmd exports to current format.
-  * @param ver - module interface versions (0 == ser, 1 == kam).
-  * @param src - null terminated array of cmd exports
-  *              (either ser_cmd_export_t or kam_cmd_export_t, depending
-  *               on ver).
-  * @param mod - pointer to module exports structure.
-  * @return - pkg_malloc'ed null terminated sr_cmd_export_v31_t array with
-  *           the converted cmd exports  or 0 on error.
-  */
+ * @param ver - module interface versions (0 == ser, 1 == kam).
+ * @param src - null terminated array of cmd exports
+ *              (either ser_cmd_export_t or kam_cmd_export_t, depending
+ *               on ver).
+ * @param mod - pointer to module exports structure.
+ * @return - pkg_malloc'ed null terminated sr_cmd_export_v31_t array with
+ *           the converted cmd exports  or 0 on error.
+ */
 static sr31_cmd_export_t* sr_cmd_exports_convert(unsigned ver,
 													void* src, void* mod)
 {
@@ -218,7 +218,7 @@ static sr31_cmd_export_t* sr_cmd_exports_convert(unsigned ver,
 	ser_cmd_export_t* ser_cmd;
 	kam_cmd_export_t* kam_cmd;
 	sr31_cmd_export_t* ret;
-	
+
 	ser_cmd = 0;
 	kam_cmd = 0;
 	ret = 0;
@@ -434,12 +434,12 @@ static inline int version_control(void *handle, char *path)
 
 /**
  * \brief load a sr module
- * 
+ *
  * tries to load the module specified by mod_path.
  * If mod_path is 'modname' or 'modname.so' then
  *  \<MODS_DIR\>/\<modname\>.so will be tried and if this fails
  *  \<MODS_DIR\>/\<modname\>/\<modname\>.so
- * If mod_path contain a '/' it is assumed to be the 
+ * If mod_path contain a '/' it is assumed to be the
  * path to the module and tried first. If fails and mod_path is not
  * absolute path (not starting with '/') then will try:
  * \<MODS_DIR\>/mod_path
@@ -489,7 +489,7 @@ int load_module(char* mod_path)
 			nxt_mdir=strchr(mdir, ':');
 			if (nxt_mdir) mdir_len=(int)(nxt_mdir-mdir);
 			else mdir_len=strlen(mdir);
-			
+
 			if(path_type&2) {
 				/* try path <MODS_DIR>/<modname>.so */
 				path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
@@ -667,7 +667,7 @@ skip:
 
 
 
-/* searches the module list for function name in module mod and returns 
+/* searches the module list for function name in module mod and returns
  *  a pointer to the "name" function record union or 0 if not found
  * sets also *mod_if_ver to the original module interface version.
  * mod==0 is a wildcard matching all modules
@@ -687,7 +687,7 @@ sr31_cmd_export_t* find_mod_export_record(char* mod, char* name,
 			for(cmd=&t->exports.cmds[0]; cmd->name; cmd++) {
 				if((strcmp(name, cmd->name) == 0) &&
 					((cmd->param_no == param_no) ||
-					 (cmd->param_no==VAR_PARAM_NO)) &&
+					(cmd->param_no==VAR_PARAM_NO)) &&
 					((cmd->flags & flags) == flags)
 				){
 					LM_DBG("find_export_record: found <%s> in module %s [%s]\n",
@@ -703,7 +703,7 @@ sr31_cmd_export_t* find_mod_export_record(char* mod, char* name,
 
 
 
-/* searches the module list for function name and returns 
+/* searches the module list for function name and returns
  *  a pointer to the "name" function record union or 0 if not found
  * sets also *mod_if_ver to the module interface version (needed to know
  * which member of the union should be accessed v0 or v1)
@@ -723,7 +723,7 @@ cmd_function find_export(char* name, int param_no, int flags)
 {
 	sr31_cmd_export_t* cmd;
 	unsigned mver;
-	
+
 	cmd = find_export_record(name, param_no, flags, &mver);
 	return cmd?cmd->function:0;
 }
@@ -749,7 +749,7 @@ cmd_function find_mod_export(char* mod, char* name, int param_no, int flags)
 	cmd=find_mod_export_record(mod, name, param_no, flags, &mver);
 	if (cmd)
 		return cmd->function;
-	
+
 	LM_DBG("<%s> in module <%s> not found\n", name, mod);
 	return 0;
 }
@@ -852,7 +852,7 @@ int init_modules(void)
 		if (t->exports.response_f)
 			mod_response_cbk_no++;
 	}
-	mod_response_cbks=pkg_malloc(mod_response_cbk_no * 
+	mod_response_cbks=pkg_malloc(mod_response_cbk_no *
 									sizeof(response_function));
 	if (mod_response_cbks==0){
 		LM_ERR("memory allocation failure for %d response_f callbacks\n",
@@ -905,15 +905,15 @@ int init_child(int rank)
 
 
 /* recursive module child initialization; (recursion is used to
-   process the module linear list in the same order in
-   which modules are loaded in config file
-*/
+ * process the module linear list in the same order in
+ * which modules are loaded in config file
+ */
 
 static int init_mod_child( struct sr_module* m, int rank )
 {
 	if (m) {
 		/* iterate through the list; if error occurs,
-		   propagate it up the stack
+		 * propagate it up the stack
 		 */
 		if (init_mod_child(m->next, rank)!=0) return -1;
 		if (m->exports.init_child_f) {
@@ -950,15 +950,15 @@ int init_child(int rank)
 
 
 /* recursive module initialization; (recursion is used to
-   process the module linear list in the same order in
-   which modules are loaded in config file
+ * process the module linear list in the same order in
+ * which modules are loaded in config file
 */
 
 static int init_mod( struct sr_module* m )
 {
 	if (m) {
 		/* iterate through the list; if error occurs,
-		   propagate it up the stack
+		 * propagate it up the stack
 		 */
 		if (init_mod(m->next)!=0) return -1;
 			if (m->exports.init_f) {
@@ -988,7 +988,7 @@ int init_modules(void)
 {
 	struct sr_module* t;
 	int i;
-	
+
 	if(async_task_init()<0)
 		return -1;
 
@@ -999,7 +999,7 @@ int init_modules(void)
 	for(t = modules; t; t = t->next)
 		if (t->exports.response_f)
 			mod_response_cbk_no++;
-	mod_response_cbks=pkg_malloc(mod_response_cbk_no * 
+	mod_response_cbks=pkg_malloc(mod_response_cbk_no *
 									sizeof(response_function));
 	if (mod_response_cbks==0){
 		LM_ERR("memory allocation failure for %d response_f callbacks\n", mod_response_cbk_no);
@@ -1010,7 +1010,7 @@ int init_modules(void)
 			mod_response_cbks[i]=t->exports.response_f;
 			i++;
 		}
-	
+
 	return 0;
 }
 
@@ -1125,7 +1125,7 @@ int fix_flag( modparam_t type, void* val,
  *  @param param is the parameter that will be fixed-up
  *
  * @return
- *    0 on success, 
+ *    0 on success,
  *    1 if the param doesn't match the specified type
  *    <0 on failure
  */
@@ -1143,7 +1143,7 @@ int fix_param(int type, void** param)
 	}
 	memset(p, 0, sizeof(fparam_t));
 	p->orig = *param;
-	
+
 	switch(type) {
 		case FPARAM_UNSPEC:
 			LM_ERR("Invalid type value\n");
@@ -1254,11 +1254,11 @@ int fix_param(int type, void** param)
 			p->fixed = &p->v;
 			break;
 	}
-	
+
 	p->type = type;
 	*param = (void*)p;
 	return 0;
-	
+
 no_match:
 	pkg_free(p);
 	return 1;
@@ -1328,7 +1328,7 @@ void fparam_free_contents(fparam_t* fp)
 
 /**
  * @brief Generic free fixup type function for a fixed fparam
- * 
+ *
  * Generic free fixup type function for a fixed fparam. It will free whatever
  * was allocated during the initial fparam fixup and restore the original param
  * value.
@@ -1338,7 +1338,7 @@ void fparam_free_restore(void** param)
 {
 	fparam_t *fp;
 	void *orig;
-	
+
 	fp = *param;
 	orig = fp->orig;
 	fp->orig = 0;
@@ -1350,22 +1350,22 @@ void fparam_free_restore(void** param)
 
 
 /** fix a param to one of the given types (mask).
-  *
-  * @param types - bitmap of the allowed types (e.g. FPARAM_INT|FPARAM_STR)
-  * @param param - value/result
-  * @return - 0 on success, -1 on error, 1 if param doesn't
-  *           match any of the types
-  */
+ *
+ * @param types - bitmap of the allowed types (e.g. FPARAM_INT|FPARAM_STR)
+ * @param param - value/result
+ * @return - 0 on success, -1 on error, 1 if param doesn't
+ *           match any of the types
+ */
 int fix_param_types(int types, void** param)
 {
 	int ret;
 	int t;
-	
+
 	if (fixup_get_param_type(param) == STRING_RVE_ST &&
 			(types & (FPARAM_INT|FPARAM_STR|FPARAM_STRING))) {
 		/* if called with a RVE already converted to string =>
-		   don't try AVP, PVAR or SELECT (to avoid double
-		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		 * don't try AVP, PVAR or SELECT (to avoid double
+		 * deref., e.g.: $foo="$bar"; f($foo) ) */
 		types &= ~ (FPARAM_AVP|FPARAM_PVS|FPARAM_SELECT|FPARAM_PVE);
 	}
 	for (t=types & ~(types-1); types; types&=(types-1), t=types & ~(types-1)){
@@ -1390,8 +1390,8 @@ int fixup_var_str_12(void** param, int param_no)
 	int ret;
 	if (fixup_get_param_type(param) != STRING_RVE_ST) {
 		/* if called with a RVE already converted to string =>
-		   don't try AVP, PVAR or SELECT (to avoid double
-		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		 * don't try AVP, PVAR or SELECT (to avoid double
+		 * deref., e.g.: $foo="$bar"; f($foo) ) */
 		if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
 		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
@@ -1432,21 +1432,21 @@ int fixup_var_pve_12(void** param, int param_no)
 	fparam_t* fp;
 	if (fixup_get_param_type(param) != STRING_RVE_ST) {
 		/* if called with a RVE already converted to string =>
-		   don't try PVE again (to avoid double
-		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		 * don't try PVE again (to avoid double
+		 * deref., e.g.: $foo="$bar"; f($foo) ) */
 		if ((ret = fix_param(FPARAM_PVE, param)) <= 0) {
 			if (ret < 0)
 				return ret;
 			/* check if it resolved to a dynamic or "static" PVE.
-			   If the resulting PVE is static (normal string), discard
-			   it and use the normal string fixup (faster at runtime) */
+			 * If the resulting PVE is static (normal string), discard
+			 * it and use the normal string fixup (faster at runtime) */
 			fp = (fparam_t*)*param;
 			if (fp->v.pve->spec == 0 || fp->v.pve->spec->getf == 0)
 				fparam_free_restore(param); /* fallback to STR below */
 			else
 				return ret; /* dynamic PVE => return */
 		}
-		
+
 	}
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
 	LM_ERR("Error while fixing parameter - PVE or str conversions failed\n");
@@ -1471,8 +1471,8 @@ int fixup_var_pve_str_12(void** param, int param_no)
 	fparam_t* fp;
 	if (fixup_get_param_type(param) != STRING_RVE_ST) {
 		/* if called with a RVE already converted to string =>
-		   don't try AVP, PVAR, SELECT or PVE again (to avoid double
-		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		 * don't try AVP, PVAR, SELECT or PVE again (to avoid double
+		 * deref., e.g.: $foo="$bar"; f($foo) ) */
 		if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
 		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
@@ -1480,15 +1480,15 @@ int fixup_var_pve_str_12(void** param, int param_no)
 			if (ret < 0)
 				return ret;
 			/* check if it resolved to a dynamic or "static" PVE.
-			   If the resulting PVE is static (normal string), discard
-			   it and use the normal string fixup (faster at runtime) */
+			 * If the resulting PVE is static (normal string), discard
+			 * it and use the normal string fixup (faster at runtime) */
 			fp = (fparam_t*)*param;
 			if (fp->v.pve->spec == 0 || fp->v.pve->spec->getf == 0)
 				fparam_free_restore(param); /* fallback to STR below */
 			else
 				return ret; /* dynamic PVE => return */
 		}
-		
+
 	}
 	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
 	LM_ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
@@ -1526,8 +1526,8 @@ int fixup_var_int_12(void** param, int param_no)
 	int ret;
 	if (fixup_get_param_type(param) != STRING_RVE_ST) {
 		/* if called with a RVE already converted to string =>
-		   don't try AVP, PVAR or SELECT (to avoid double
-		   deref., e.g.: $foo="$bar"; f($foo) ) */
+		 * don't try AVP, PVAR or SELECT (to avoid double
+		 * deref., e.g.: $foo="$bar"; f($foo) ) */
 		if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
 		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
 		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
@@ -1646,7 +1646,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 	int ret;
 	avp_t* avp;
 	pv_value_t pv_val;
-	
+
 	switch(param->type) {
 		case FPARAM_REGEX:
 		case FPARAM_UNSPEC:
@@ -1670,7 +1670,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			if (likely(avp->flags & AVP_VAL_STR)) {
 				*dst = val.s;
 			} else {
-		 		/* The caller does not know of what type the AVP will be so
+				/* The caller does not know of what type the AVP will be so
 				 * convert int AVPs into string here
 				 */
 				dst->s = int2str(val.n, &dst->len);
@@ -1682,7 +1682,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			break;
 		case FPARAM_PVS:
 			if (likely((pv_get_spec_value(msg, param->v.pvs, &pv_val)==0) &&
-					   ((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR))){
+						((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR))){
 					*dst=pv_val.rs;
 			}else{
 				LM_ERR("Could not convert PV to str\n");
@@ -1751,7 +1751,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 			break;
 		case FPARAM_PVS:
 			if (likely((pv_get_spec_value(msg, param->v.pvs, &pv_val)==0) &&
-					   ((pv_val.flags&(PV_VAL_NULL|PV_VAL_INT))==PV_VAL_INT))){
+						((pv_val.flags&(PV_VAL_NULL|PV_VAL_INT))==PV_VAL_INT))){
 					*dst=pv_val.ri;
 			}else{
 				LM_ERR("Could not convert PV to int\n");
@@ -1869,7 +1869,7 @@ int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param)
 			*dst = *param->v.regex;
 			return 0;
 		default:
-			LM_ERR("unexpected parameter type (%d), instead of regexp.\n", 
+			LM_ERR("unexpected parameter type (%d), instead of regexp.\n",
 					param->type);
 	}
 	return -1;
@@ -1954,7 +1954,7 @@ int is_fparam_rve_fixup(fixup_function f)
 
 /**
  * @brief returns the corresponding fixup_free* for various known fixup types
- * 
+ *
  * Returns the corresponding fixup_free* for various known fixup types.
  * Used to automatically fill in free_fixup* functions.
  * @param f fixup function pointer
@@ -1972,7 +1972,7 @@ free_fixup_function get_fixup_free(fixup_function f)
 		f == fixup_str_12 ||
 		f == fixup_regex_12)
 		return fixup_free_fparam_all;
-	
+
 	/* "pure" fparam, 1st parameter */
 	if (f == fixup_var_str_1 ||
 		f == fixup_var_pve_str_1 ||
@@ -1981,7 +1981,7 @@ free_fixup_function get_fixup_free(fixup_function f)
 		f == fixup_str_1 ||
 		f == fixup_regex_1)
 		return fixup_free_fparam_1;
-	
+
 	/* "pure" fparam, 2nd parameters */
 	if (f == fixup_var_str_2 ||
 		f == fixup_var_pve_str_2 ||
@@ -1990,11 +1990,11 @@ free_fixup_function get_fixup_free(fixup_function f)
 		f == fixup_str_2 ||
 		f == fixup_regex_2)
 		return fixup_free_fparam_2;
-	
+
 	/* mod_fix.h kamailio style fixups */
 	if ((ret = mod_fix_get_fixup_free(f)) != 0)
 		return ret;
-	
+
 	/* unknown */
 	return 0;
 }
