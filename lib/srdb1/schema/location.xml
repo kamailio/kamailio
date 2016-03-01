@@ -179,7 +179,7 @@
         <description>The value of reg-id contact parameter</description>
     </column>
 
-    <column>
+    <column id="server_id">
         <name>server_id</name>
         <type>int</type>
         <size>11</size>
@@ -187,7 +187,7 @@
         <description>The value of server_id from configuration file</description>
     </column>
 
-    <column>
+    <column id="connection_id">
         <name>connection_id</name>
         <type>int</type>
         <size>11</size>
@@ -227,6 +227,12 @@
     <index>
         <name>expires_idx</name>
         <colref linkend="expires"/>
+    </index>
+    <index>
+        <name>connection_idx</name>
+        <colref linkend="server_id"/>
+        <colref linkend="connection_id"/>
+        <unique/>
     </index>
 
 
