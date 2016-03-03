@@ -1,6 +1,584 @@
-===================== 2015-11-25 Version 4.3.4 Released =====================
+===================== 2016-03-03 Version 4.3.5 Released =====================
 
 ===================== Changes Since Version 4.3.4 ===========================
+
+commit 1af06dce5c7c618089a9cf032c3361664db84b3a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 3 15:05:42 2016 +0100
+
+    Makefile.defs: version set to 4.3.5
+
+commit 4cabd79efc0c7b6b080e55167e07028aa1e6af16
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 3 15:04:37 2016 +0100
+
+    pkg/rpm: updated spec files for v4.3.5
+
+commit b3e12de6e354733b4d872dd739ba3cd97be402f9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Mar 3 09:40:11 2016 +0100
+
+    pkg/kamailio/deb: update version to 4.3.5
+
+commit 04c9083bc11a8e74884cc9f1c030e33fc5cbd5f8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Mar 3 09:37:34 2016 +0100
+
+    pkg/kamailio/deb: fix typo at erlang short description
+
+commit 1bf1deba22242c3a578b39e5569fc2eb9e0d9816
+Author: Erik Davidson <erik.davidson@corvisa.com>
+Date:   Tue Mar 1 14:36:02 2016 -0600
+
+    siptrace: Use the trace_local_ip setting in sip_trace()
+    
+    (cherry picked from commit 93dcc5dca539803ad7ae94dc86829d10d3d3412c)
+
+commit 5f2c257b47ecc4f074cd840a944538d0a4affd27
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Tue Feb 2 12:48:07 2016 +0100
+
+    cnxcc: change some log levels from INFO to DBG
+    
+    (cherry picked from commit f604bc4baf7b3332e661dba1c935a259112a4e72)
+
+commit 0be07fc1dfaf1ee54ed8ff4820a11523e3f94376
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 1 11:35:41 2016 +0100
+
+    tsilo: don't execute tm callback for TMCB_DESTROY if server shutdowns
+    
+    - tsilo mod_destroy will clean up, otherwise may end up in deadlock at
+      shutdown, when a slot lock is already aquired and the callback will
+      try to aquire again
+    
+    (cherry picked from commit 81ec422227299b4cbd7aecbb58b862fc67208b30)
+
+commit 53d36500faa78270096a13b06466fdbc96a00760
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 1 11:32:59 2016 +0100
+
+    core: option to check if server is in destroy modules phase
+    
+    (cherry picked from commit 87027c654d9381f79c305b18f33919b8c9a86b89)
+
+commit ac9b57a38bf957d5d507f1205de6268bb4c976ce
+Author: Maksym Sobolyev <sobomax@sippysoft.com>
+Date:   Mon Feb 29 13:28:53 2016 -0800
+
+    Fix IPv6 handling with the default setup. With the current code,
+    it's possible for it to pit IPv6 address, but set adress family
+    to the IP4.
+    
+    (cherry picked from commit 6af319ea9307feb840c9f318954c49c3eac8bbe1)
+
+commit b72f8e045f5cb27ebc94f0e238dd9086aa7e7196
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Mon Feb 29 15:35:41 2016 +0200
+
+    modules/sdpops: reimplement sdp_remove_line_by_prefix() to fix shortcomings
+    
+    - single line match was not removed
+    - multiline match with non-related lines between was not removed
+    
+    (cherry picked from commit 5db4cec2c9e8ab62c711738eae181afa69c1724d)
+
+commit d137e228044536a52e377e7af8a6c51b955172c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 23:07:56 2016 +0100
+
+    registrar: send 400 if the reg-id value is invalid
+    
+    - reported by GH #497
+    
+    (cherry picked from commit f39d144e385f1fbf8759ba03e28e69aeb56d6e6a)
+
+commit 7dc2abd7c93623b300d8d776891532f0feb28e5c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 22:15:39 2016 +0100
+
+    tls: debug messages for mutex ops with lock function
+    
+    (cherry picked from commit dcfd5012c0fe10c2697ceeaf5b09d24e1ae8719e)
+
+commit 2492b7f88671506ececb2329e5cbe909f764dd97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 27 10:14:05 2016 +0100
+
+    core: Makefile.defs - renamed var CPU to CPUTYPE
+    
+    - some operating systems (e.g., suse), sets the CPU in the environment
+      to the cpu architecture, while the makefile uses it for cpu type
+      provided to -mtune parameter of gcc
+    
+    (cherry picked from commit fe37c011810d563f8a7e7d1e6856d7199dd1f5d2)
+
+commit 0b6bf40689fd066eab4c29da4b92aad92ab4032c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 22 00:38:15 2016 +0100
+
+    core: docbook - defined kamcmd entity
+    
+    (cherry picked from commit d5e57d353b2c962902d786ef081ccf06d6a9854e)
+
+commit 4988ab12516157966c1f5b20e294b8fa991ce5aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 19 14:27:21 2016 +0100
+
+    tsilo: remove inline from free_ts_transaction() definition
+    
+    - the prototype is without, resulting in compile warning
+    
+    (cherry picked from commit 311ac224b589328047fdddf7e4eb4165af501707)
+
+commit 6e470dad71312155d1c9e5143813dd967dfd0abf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 11 11:37:07 2016 +0100
+
+    tls: more details about tls.cfg reload
+    
+    (cherry picked from commit 59ce55977e91c399b86177060421d32dbbd7be06)
+
+commit 605af142aa89ddf39c5bef47aacd7dcbfd86cce8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 23 18:11:15 2015 +0100
+
+    matrix: updates for application name
+    
+    (cherry picked from commit b51f7822b3e48a18611bed1aaaac5674757f8e33)
+
+commit a7852fc1eadd92583bba65aeaa086329da1dcff0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 23 18:10:27 2015 +0100
+
+    matrix: added section ids for params and functions in docs
+    
+    (cherry picked from commit a72e8451aef9391229000cb4e13020f0ff722d92)
+
+commit 1e2befef453b392f6099efaa47f3abf0e66b8e85
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 21 14:48:25 2015 +0100
+
+    dmq_usrloc: lock before adding contact
+    
+    - reported by GH #440
+    
+    (cherry picked from commit 5937b04a98204fc70ce6db2eab08c038a3497c2a)
+
+commit df1f50903cd3ec4b048294801aca1e1a0eda05fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 18 21:50:02 2015 +0100
+
+    dispatcher: set sock_avp parameter in example
+    
+    (cherry picked from commit 2809c1eee5d74840ad1974eab09950f2aba3ad31)
+
+commit e9012b5d3d0bbc79d9070b815992398900714854
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 15 12:26:02 2015 +0100
+
+    websocket: fixed Makefile after previous commit
+    
+    - whitespace required after ifneq
+    
+    (cherry picked from commit e0f7a0c678b37c44312369dd90ffdc531782bb99)
+
+commit ecd373613672f339ef7179a33f069d15a4927af7
+Author: Andrey Utkin <andrey.od.utkin@gmail.com>
+Date:   Sat Dec 12 22:37:15 2015 +0200
+
+    modules/websocket: ensure linkage to libcrypto
+    
+    Fixes linkage for Ubuntu Wily (15.10).
+    The issue manifests itself as "undefined symbol: SHA1" error at module loading.
+    
+    (cherry picked from commit 432c1e3b0f7ff6a9fa11e6d8ed8b897dc3f9246f)
+
+commit 8e27522f4f984301a0807384509f1637fcca5461
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 09:20:24 2015 +0100
+
+    uac: increase the buffer for within dialog rr param
+    
+    - following the previous commit
+    
+    (cherry picked from commit 2702629194351069827564243e1cff7e4b0513d9)
+
+commit ac2a7c71696f6da1f99149120bdb97fa893cf134
+Author: Kristian HÃ¸gh <kfh@uni-tel.dk>
+Date:   Tue Dec 1 16:44:22 2015 +0100
+
+    modules/dialog: Error in last commit. goto invalid destination
+    
+    (cherry picked from commit 18644f93e100a2e4ec545ad5e42aa84d90283f75)
+
+commit d4647dfdf6c8be1ff675bfd8583af560dd1eaa81
+Author: Kristian HÃ¸gh <kfh@uni-tel.dk>
+Date:   Tue Dec 1 15:24:16 2015 +0100
+
+    modules/uac: Add RR parameter on sequential requests when using uac_replace_from/to
+    
+    (cherry picked from commit f6a5a28532ff410d03d10e86d43d38a785d0fab2)
+
+commit e669e05e9558a6d0dcc8dc1c36246b6e514a4e2d
+Author: Kristian HÃ¸gh <kfh@uni-tel.dk>
+Date:   Tue Dec 1 15:22:54 2015 +0100
+
+    modules/dialog: Add RR parameter on sequential requests
+    
+    (cherry picked from commit de4ad807334c2b74cafec733a0029e3e2ef4996c)
+
+commit b8a5651dd6ad3d61b46d74c78e651abd2c677442
+Merge: 9165e85 11715a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 1 08:48:29 2016 +0100
+
+    Merge pull request #518 from phil-lavin/backport-loading-dialogs-from-database
+    
+    [4.3 BACKPORT] pua_dialoginfo: don't free dlginfo structure in dlg loaded callback
+
+commit 11715a3601629d8f1b79cac4f84f7e0ebebd318e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 2 09:15:27 2016 +0100
+
+    pua_dialoginfo: don't free dlginfo structure in dlg loaded callback
+    
+    - the structure will be destroyed in a later dlg callback, enabled by
+      dlg_api.register_dlgcb(), via free_dlginfo_cell()
+    - based and includes partial patch from GH #492, by Phil Lavin
+
+commit 9165e8522ea03dda4968e1853216eb508ffd7a1f
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Thu Feb 18 11:09:24 2016 +0100
+
+    srutils: change names colliding with libcrypto
+    
+    (cherry picked from commit 4b5da2d909ea3fcd531eecff2f3e02adad26fa27)
+
+commit a84d800c491c7d05e7abec1f8fe169c6c52e8e62
+Author: Hugh Waite <hugh.waite@xura.com>
+Date:   Tue Feb 16 17:23:50 2016 +0000
+
+    pv: Fix crash when xavp has no attributes
+    - Fixes the crash reported in #511
+    (cherry picked from commit 19bb634ba043e74480c724fb7ed8a2dad43e8dda)
+
+commit 18cd34781d2bdda9c19314c0494f6a655dbe6089
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 12 18:04:19 2016 +0100
+
+    seas: safety check for target buffer size before copying message in encode_msg()
+    
+    - avoid buffer overflow for large SIP messages
+    - reported by Stelios Tsampas
+    
+    (cherry picked from commit f50c9c853e7809810099c970780c30b0765b0643)
+
+commit 4602f2dc430b97b6e76ae5da9ebf7f2a7984a48c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 7 20:21:27 2016 +0100
+
+    auth_db: use username when querying for credentials via is_subscriber
+    
+    - for the case when credentials should not be stored, just discover if a
+      record exists for the user
+    - avoids buffer overflow by setting all credentials columns, while
+      trying to use only the first column
+    - reported by Anthony Messina, GH #500
+    
+    (cherry picked from commit adbbe8b62d6b4b95e5ecbab041b93bb3130f1932)
+
+commit 9e62c2ff843f44c18c418f01285f60c8b5de86d0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 7 19:54:47 2016 +0100
+
+    auth_db: removed trailing spaces for sane git diff
+    
+    (cherry picked from commit 35fa264fe9a70627e9f17f75e0ce39ddbd3550ba)
+
+commit 463f2817e8685d6d1fbc3b4d6486d0aa05e3a48f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 7 19:55:25 2016 +0100
+
+    presence_mwi: static declaration for inline function for eating spaces
+    
+    - based on a report by Anthony Messina, GH #502
+    - get rid of undefined symbols for some compilers
+    
+    (cherry picked from commit 619988ad6cf54d7e8154a9efb65ce2b9cb475e54)
+
+commit 160ec06e7d7e3f8c46fdc62132c46fd695119572
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 5 09:18:48 2016 +0100
+
+    corex: fix regression introduced with detection of ipv6 for send()
+    
+    - reported by Paul Arnold, GH #496
+    
+    (cherry picked from commit 8e20a3c5cf3036b203cda629d89659fb1c57c53b)
+
+commit 83e842d64ee7c0726059d92fc78bdbfa10b2d117
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Fri Jan 22 14:11:25 2016 +0200
+
+    dtrie: sanity checks
+    
+    Segfaults reported by Igor, on sr-Users mailing list.
+    
+    (cherry picked from commit 825b4fabb9bb4b2cf58dc1205423b8ce5d5e08cc)
+
+commit 3ed6eecd71b3178f6dc7e777ee6fccb1314ef352
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 20 18:30:30 2016 +0100
+
+    topoh: proper detection of cancel reply for processing
+    
+    - reported by Alex Balashov
+    
+    (cherry picked from commit 0ce66908ee9da74806e2fa506ef98b5f9043e47c)
+
+commit df2dab4c7cc970cd449772e84ac1645070067336
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Tue Jan 19 11:09:59 2016 +0200
+
+    carrierroute: fixed possible kamctl fifo segfault
+    
+    - introduced checks to reject contiguous -{OPTION}{PARAMETER} in kamctl fifo commands
+    e.g.: kamctl fifo cr_activate_host "-dproxy -p 49 -h proxy1" is not allowed
+
+commit 7fc18d15ce0cdcaf47127e5ef96a28a239ed4104
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 30 21:18:23 2015 +0100
+
+    tm: reinit ref counter if attempting to free while still in wait timer
+    
+    (cherry picked from commit c7e411edb3c68260d43f86ee6977d468c074836b)
+
+commit 384c0ce0728ce83023b50c0ea4748bfa6232a9b4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 30 00:29:49 2015 +0100
+
+    tm: don't free tm cell still linked in wait timer
+    
+    - wait timer should do the free
+    - friendlier handling of situation when modules binding to tm do
+      inconsistent unref operations
+    
+    (cherry picked from commit d83a56bcdfeb8ffc75166a62e11ceb4c057c3ce5)
+
+commit beb0a65386d0d56e3d5c876b55cd08d3b54985df
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 29 23:39:18 2015 +0100
+
+    tm: silent mode when freeing transactions at shutdown
+    
+    - they are still linked in tm hash table as it should be, so no warn
+      message for that case
+    
+    (cherry picked from commit 27495c7c34bf963e403c0f711daf9b76076d2ec3)
+
+commit b8dbff13ed9426e909e54442d80621624a28e50f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 28 23:11:59 2015 +0100
+
+    permissions: max size of subnet array set to 512
+    
+    - was 128, which can be insufficient for large interconnect
+    
+    (cherry picked from commit 82d7e06b09f02a2e6dab9f171586f9cd6f636f5b)
+
+commit f42fa2e7d958e47764020b0a6fc49941f8c12015
+Merge: e393ad5 192abad
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Fri Jan 8 14:34:23 2016 +0100
+
+    Merge pull request #474 from adubovikov/4.3
+    
+    fixed correlation_id
+
+commit 192abad8686e5fa9ffc65b5a42dbad6c16cce440
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Fri Jul 10 17:00:49 2015 +0200
+
+    fixed correlation_id
+
+commit e393ad5e9a7e52f830b4155a42a63eef6b0dc057
+Author: Hugh Waite <hugh.waite@xura.com>
+Date:   Thu Jan 7 12:17:03 2016 +0000
+
+    tm: Reset socket variable while forking
+    - Reset sock_str variable so values from previous forks are not stored in contact_flows AVP
+    (cherry picked from commit 53263a2ddad9bb118763516bcd7995652c4fb070)
+
+commit a45378496c5a1da347e569f7a58b78cfea8004e8
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Thu Jan 7 09:58:42 2016 +0200
+
+    debugger: fix issue #463
+    
+    Don't shm_malloc() while the lock is taken.
+    
+    (cherry picked from commit 3668618369a8a1db8cb3410c0a7f50ce74150cd2)
+
+commit fc11bd1c10ca08eb9f49a99174e85c0c549fba7f
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Tue Dec 22 13:48:19 2015 +0100
+
+    cnxcc: define inline functions in cnxcc.h
+    
+    (cherry picked from commit a9ec529ecee015e79dc60cb8ba8a6686cdf73a7b)
+
+commit b9d441c1177bf2d05e1ca85919a08b6e97b3b302
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 14 16:40:03 2015 +0100
+
+    presence: init variable to prevent invalid cleanup on error getting presence document
+    
+    - reported by GH#441
+    
+    (cherry picked from commit d24863d071417effe5df863736ef037ec8e0b414)
+
+commit c4adb485cf19e2961845c0074949126a74de4fd8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 10 09:33:32 2015 +0100
+
+    dispatcher: proper handling of socket parameter when is not last in attrs
+    
+    - parsing socket function expects a null terminated string
+    
+    (cherry picked from commit fd79adb4975fc0799fe8488d1dd1a771041a0939)
+
+commit 8807dbc93a3731cb51a979158433fc28ff0c04ee
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 9 23:27:09 2015 +0100
+
+    core: skip zero char and whitespaces before parsing first line in parse_msg()
+    
+    - reported by Vasiliy Ganchev
+    
+    (cherry picked from commit 12160de3c2052c4696b8c073b9fa5919f6da7060)
+
+commit d4613882da9b478dcb8f01cc38dd9319694c5901
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Wed Dec 9 15:44:03 2015 +0300
+
+    htable: fixing htable.stats for max slot value
+    
+    add missed 'd' parameter to rpc->struct_add format string
+    
+    (cherry picked from commit 305381bb6b40dc4859f0862411a0c1a261b476c2)
+
+commit 1b2dee301ba6da206fcd9abb3b2f3f1a601b145c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 4 23:02:53 2015 +0100
+
+    utils/misc/vim: added recent core parameter to vim syntax highlighting
+    
+    (cherry picked from commit f9d16e38dbf6b263fc29dceca66007357a9e6f37)
+
+commit a350e33b3fe13e807a621d12325342c93c4ab706
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 4 17:30:06 2015 +0100
+
+    outbound: adjusted log message for trying to import the api
+    
+    - when module is not loaded, a messages with 'failed' was printed,
+      which could trigger an alert even for info level
+    
+    (cherry picked from commit 700617c6b3707fba16001f82fab6ca0370b23acf)
+
+commit 6516699e46bd912de3b65d4cc4eb668e919e845e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 13:24:40 2015 +0100
+
+    core: proper test of return code for add_interfaces() in case of IPv6
+    
+    - report with patch by Christian KÃ¼hnke
+    
+    (cherry picked from commit 299d2f7764527fbc5b6de1833976f43c58b1ff2d)
+
+commit 7dd019826dccf6c3c5d2185faf331603b550f895
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 12:31:39 2015 +0100
+
+    app_python: readme regenerated
+    
+    (cherry picked from commit f025df7a0ac292bd22304683dd976863311b53cd)
+
+commit cf77d88069407512c7d2ff234607ab6e3fc9c784
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 12:31:01 2015 +0100
+
+    app_python: basic documentation for params and functions
+    
+    - based on quick look at the code
+    
+    (cherry picked from commit e2853a8ac22bc26d47153731f65479f03a756c52)
+
+commit 768be33037f8eefeb3a841e030d3bb3f1be4bb9e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 3 12:29:49 2015 +0100
+
+    app_python: use NAME compile flag for default path to the script
+    
+    - reflects better the application name
+    
+    (cherry picked from commit 6ae155ee8ebc0d52fd63f208e57808c1d228f7e0)
+
+commit 03f99c65f016da8816f6367ad3cafd75f89fc712
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Dec 2 23:10:57 2015 +0100
+
+    dispatcher: extended log message when hash size parameter is not set
+    
+    (cherry picked from commit 3272ff6a427ce5bb60d767ed61c8cadd13759de1)
+
+commit 8c7ae98ed97c8d0655d0539cceadf1250cf5dfc3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 27 00:03:26 2015 +0100
+
+    db_mysql: updated include paths for libmysqlclient
+    
+    - direct use of mysql_config, the old substitution done in module
+      Makefile can break the includes of libmysqlclient files
+    - reported by Ian Yu-Hsun Lin, GH#419
+    
+    (cherry picked from commit 2bd85c6b5020929296860074ca9a5dbc0cbde69c)
+
+commit a562275acacb2bd98b075f3132ddbce8de456f41
+Author: smititelu <stefan.mititelu@1and1.ro>
+Date:   Wed Dec 16 13:28:18 2015 +0200
+
+    debugger: Fix coredump when kamailio stopped
+    
+    Upon kamailio stop, 'dbg_cfg' pointed to invalid memory zone(not NULL).
+    Reset the pointer to NULL upon module_destroy() and do the NULL checks.
+    
+    Reported by foucse in issue #446.
+    
+    (cherry picked from commit 64583809c677384e2fcd54a5ba7f921b3ea59c51)
+
+commit 05ec88af66344c2897f34b51b0ca7fc6d66ee2a1
+Author: Juha Heinanen <jh@tutpro.com>
+Date:   Tue Dec 15 00:15:07 2015 +0200
+
+    modules/lcr: backported ruri_user_avp fix
+
+commit 583dc060e89b87bcba241edcedd8d48413640fc1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 27 14:35:51 2015 +0100
+
+    pv: fix for $expires() variables
+    
+    - invalid while iterator was used, resulting in crash
+    - reported by Jayesh Nambiar
+    
+    (cherry picked from commit 3fe7fd27605ed9f506a95d11d4c88b78f22eadd1)
+
+
+===================== 2015-11-25 Version 4.3.4 Released =====================
+
+===================== Changes Since Version 4.3.3 ===========================
 
 commit 6c2b677e38e0599e27dc7690516870d0797b096e
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
