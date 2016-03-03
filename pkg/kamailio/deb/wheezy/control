@@ -569,7 +569,7 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: earlang modules for Kamailio
+Description: erlang modules for Kamailio
  Kamailio is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
