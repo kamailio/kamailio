@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -31,7 +31,7 @@
 /*!
  * \file
  * \brief Kamailio presence module :: Core
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
@@ -50,7 +50,7 @@
 #include "../../error.h"
 #include "../../ut.h"
 #include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h" 
+#include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../mem/mem.h"
@@ -142,9 +142,9 @@ char prefix='a';
 int startup_time=0;
 str db_url = {0, 0};
 int expires_offset = 0;
-int min_expires= 0;
+uint32_t min_expires= 0;
 int min_expires_action= 1;
-int max_expires= 3600;
+uint32_t max_expires= 3600;
 int shtable_size= 9;
 shtable_t subs_htable= NULL;
 int subs_dbmode = WRITE_BACK;
@@ -203,7 +203,7 @@ static param_export_t params[]={
 	{ "expires_offset",         INT_PARAM, &expires_offset },
 	{ "max_expires",            INT_PARAM, &max_expires },
 	{ "min_expires",            INT_PARAM, &min_expires },
-    { "min_expires_action",     INT_PARAM, &min_expires_action },
+	{ "min_expires_action",     INT_PARAM, &min_expires_action },
 	{ "server_address",         PARAM_STR, &server_address},
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
@@ -219,7 +219,7 @@ static param_export_t params[]={
 	{ "xavp_cfg",               PARAM_STR, &pres_xavp_cfg},
 	{ "retrieve_order",         PARAM_INT, &pres_retrieve_order},
 	{ "sip_uri_match",          PARAM_INT, &pres_uri_match},
-    {0,0,0}
+	{0,0,0}
 };
 
 static mi_export_t mi_cmds[] = {
@@ -291,24 +291,21 @@ static int mod_init(void)
 
 	if(expires_offset<0)
 		expires_offset = 0;
-	
+
 	if(to_tag_pref==NULL || strlen(to_tag_pref)==0)
 		to_tag_pref="10";
 
-	if(max_expires<= 0)
+	if(max_expires == 0)
 		max_expires = 3600;
-
-	if(min_expires < 0)
-		min_expires = 0;
 
 	if(min_expires > max_expires)
 		min_expires = max_expires;
 
-    if(min_expires_action < 1 || min_expires_action > 2) {
-        LM_ERR("min_expires_action must be 1 = RFC 6665/3261 Reply 423, 2 = force min_expires value\n");
-        return -1;
-    }
-    
+	if(min_expires_action < 1 || min_expires_action > 2) {
+		LM_ERR("min_expires_action must be 1 = RFC 6665/3261 Reply 423, 2 = force min_expires value\n");
+		return -1;
+	}
+
 	if(server_address.s== NULL)
 		LM_DBG("server_address parameter not set in configuration file\n");
 
@@ -324,7 +321,7 @@ static int mod_init(void)
 		LM_ERR("Can't load tm functions. Module TM not loaded?\n");
 		return -1;
 	}
-	
+
 	if(db_url.s== NULL)
 	{
 		LM_ERR("database url not set!\n");
@@ -337,7 +334,6 @@ static int mod_init(void)
 		LM_ERR("Database module not found\n");
 		return -1;
 	}
-	
 
 	if (!DB_CAPABILITY(pa_dbf, DB_CAP_ALL))
 	{
@@ -355,13 +351,13 @@ static int mod_init(void)
 
 	/*verify table versions */
 	if((db_check_table_version(&pa_dbf, pa_db, &presentity_table, P_TABLE_VERSION) < 0) ||
-		(db_check_table_version(&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION) < 0)) {
-			LM_ERR("error during table version check\n");
-			return -1;
+			(db_check_table_version(&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION) < 0)) {
+		LM_ERR("error during table version check\n");
+		return -1;
 	}
 
 	if(subs_dbmode != NO_DB &&
-		db_check_table_version(&pa_dbf, pa_db, &active_watchers_table, ACTWATCH_TABLE_VERSION) < 0) {
+			db_check_table_version(&pa_dbf, pa_db, &active_watchers_table, ACTWATCH_TABLE_VERSION) < 0) {
 		LM_ERR("wrong table version for %s\n", active_watchers_table.s);
 		return -1;
 	}
@@ -457,7 +453,7 @@ static int child_init(int rank)
 		return 0;
 
 	pid = my_pid();
-	
+
 	if(library_mode)
 		return 0;
 
@@ -490,7 +486,7 @@ static int child_init(int rank)
 		return -1;
 	}
 	/* Do not pool the connections where possible when running notifier
-       processes. */
+	 * processes. */
 	if (pres_notifier_processes > 0 && pa_dbf.init2)
 		pa_db = pa_dbf.init2(&db_url, DB_POOLING_NONE);
 	else
@@ -500,28 +496,28 @@ static int child_init(int rank)
 		LM_ERR("child %d: unsuccessful connecting to database\n", rank);
 		return -1;
 	}
-	
+
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR( "child %d:unsuccessful use_table presentity_table\n", rank);
 		return -1;
 	}
 
-	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)  
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
 		LM_ERR( "child %d:unsuccessful use_table active_watchers_table\n",
 				rank);
 		return -1;
 	}
 
-	if (pa_dbf.use_table(pa_db, &watchers_table) < 0)  
+	if (pa_dbf.use_table(pa_db, &watchers_table) < 0)
 	{
 		LM_ERR( "child %d:unsuccessful use_table watchers_table\n", rank);
 		return -1;
 	}
 
 	LM_DBG("child %d: Database connection opened successfully\n", rank);
-	
+
 	return 0;
 }
 
@@ -536,7 +532,7 @@ static int mi_child_init(void)
 		return -1;
 	}
 	/* Do not pool the connections where possible when running notifier
-       processes. */
+	 * processes. */
 	if (pres_notifier_processes > 0 && pa_dbf.init2)
 		pa_db = pa_dbf.init2(&db_url, DB_POOLING_NONE);
 	else
@@ -546,7 +542,7 @@ static int mi_child_init(void)
 		LM_ERR("connecting database\n");
 		return -1;
 	}
-	
+
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR( "unsuccessful use_table presentity_table\n");
@@ -586,7 +582,7 @@ static void destroy(void)
 
 	if(subs_htable)
 		destroy_shtable(subs_htable, shtable_size);
-	
+
 	if(pres_htable)
 		destroy_phtable();
 
@@ -601,7 +597,7 @@ static void destroy(void)
 
 static int fixup_presence(void** param, int param_no)
 {
- 	pv_elem_t *model;
+	pv_elem_t *model;
 	str s;
 
 	if(library_mode)
@@ -614,19 +610,19 @@ static int fixup_presence(void** param, int param_no)
 		return 0;
 
 	if(*param)
- 	{
+	{
 		s.s = (char*)(*param); s.len = strlen(s.s);
- 		if(pv_parse_format(&s, &model)<0)
- 		{
- 			LM_ERR( "wrong format[%s]\n",(char*)(*param));
- 			return E_UNSPEC;
- 		}
- 
- 		*param = (void*)model;
- 		return 0;
- 	}
- 	LM_ERR( "null format\n");
- 	return E_UNSPEC;
+		if(pv_parse_format(&s, &model)<0)
+		{
+			LM_ERR( "wrong format[%s]\n",(char*)(*param));
+			return E_UNSPEC;
+		}
+
+		*param = (void*)model;
+		return 0;
+	}
+	LM_ERR( "null format\n");
+	return E_UNSPEC;
 }
 
 static int fixup_subscribe(void** param, int param_no)
@@ -722,10 +718,10 @@ error:
 
 /*! \brief
  *  mi cmd: refreshWatchers
- *			\<presentity_uri> 
+ *			\<presentity_uri>
  *			\<event>
  *          \<refresh_type> // can be:  = 0 -> watchers autentification type or
- *									  != 0 -> publish type //		   
+ *									  != 0 -> publish type //
  *		* */
 
 static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
@@ -735,7 +731,7 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	unsigned int refresh_type;
 
 	LM_DBG("start\n");
-	
+
 	node = cmd->node.kids;
 	if(node == NULL)
 		return 0;
@@ -747,7 +743,7 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 		LM_ERR( "empty uri\n");
 		return init_mi_tree(404, "Empty presentity URI", 20);
 	}
-	
+
 	node = node->next;
 	if(node == NULL)
 		return 0;
@@ -758,7 +754,7 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 		return init_mi_tree(400, "Empty event parameter", 21);
 	}
 	LM_DBG("event '%.*s'\n",  event.len, event.s);
-	
+
 	node = node->next;
 	if(node == NULL)
 		return 0;
@@ -803,33 +799,33 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	}
 
 	if(pres_refresh_watchers(&pres_uri, &event, refresh_type,
-					file_uri.len ? &file_uri: NULL,
-					filename.len ? &filename : NULL)<0)
+				file_uri.len ? &file_uri: NULL,
+				filename.len ? &filename : NULL)<0)
 		return 0;
-	
+
 	return init_mi_tree(200, "OK", 2);
 
 error:
 	return 0;
 }
 
-/* 
+/*
  *  mi cmd: cleanup
  *		* */
 
 static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param)
 {
 	LM_DBG("mi_cleanup:start\n");
-	
+
 	(void)msg_watchers_clean(0,0);
 	(void)msg_presentity_clean(0,0);
 	(void)timer_db_update(0,0);
-		
+
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
-        db_val_t* query_vals, int n_query_cols, subs_t** subs_array)
+		db_val_t* query_vals, int n_query_cols, subs_t** subs_array)
 {
 	db_key_t update_cols[5];
 	db_val_t update_vals[5];
@@ -870,17 +866,17 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 	}
 
 	if(subs.status!= status || reason.len!= subs.reason.len ||
-		(reason.s && subs.reason.s && strncmp(reason.s, subs.reason.s,
-											  reason.len)))
+			(reason.s && subs.reason.s && strncmp(reason.s, subs.reason.s,
+				reason.len)))
 	{
 		/* update in watchers_table */
-		query_vals[q_wuser_col].val.str_val= subs.watcher_user; 
-		query_vals[q_wdomain_col].val.str_val= subs.watcher_domain; 
+		query_vals[q_wuser_col].val.str_val= subs.watcher_user;
+		query_vals[q_wdomain_col].val.str_val= subs.watcher_domain;
 
 		update_vals[u_status_col].val.int_val= subs.status;
 		update_vals[u_reason_col].val.str_val= subs.reason;
 
-		if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
+		if (pa_dbf.use_table(pa_db, &watchers_table) < 0)
 		{
 			LM_ERR( "in use_table\n");
 			return -1;
@@ -897,57 +893,57 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 		if(update_pw_dialogs(&subs, subs.db_flag, subs_array)< 0)
 		{
 			LM_ERR( "extracting dialogs from [watcher]=%.*s@%.*s to"
-				" [presentity]=%.*s\n",	subs.watcher_user.len, subs.watcher_user.s,
-				subs.watcher_domain.len, subs.watcher_domain.s, subs.pres_uri.len,
-				subs.pres_uri.s);
+					" [presentity]=%.*s\n",	subs.watcher_user.len, subs.watcher_user.s,
+					subs.watcher_domain.len, subs.watcher_domain.s, subs.pres_uri.len,
+					subs.pres_uri.s);
 			return -1;
 		}
 	}
-    return 0;
+	return 0;
 }
 
 int pres_db_delete_status(subs_t* s)
 {
-    int n_query_cols= 0;
-    db_key_t query_cols[5];
-    db_val_t query_vals[5];
+	int n_query_cols= 0;
+	db_key_t query_cols[5];
+	db_val_t query_vals[5];
 
-    if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
-    {
-        LM_ERR("sql use table failed\n");
-        return -1;
-    }
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
+	{
+		LM_ERR("sql use table failed\n");
+		return -1;
+	}
 
-    query_cols[n_query_cols]= &str_event_col;
-    query_vals[n_query_cols].nul= 0;
-    query_vals[n_query_cols].type= DB1_STR;
-    query_vals[n_query_cols].val.str_val= s->event->name ;
-    n_query_cols++;
+	query_cols[n_query_cols]= &str_event_col;
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB1_STR;
+	query_vals[n_query_cols].val.str_val= s->event->name ;
+	n_query_cols++;
 
-    query_cols[n_query_cols]= &str_presentity_uri_col;
-    query_vals[n_query_cols].nul= 0;
-    query_vals[n_query_cols].type= DB1_STR;
-    query_vals[n_query_cols].val.str_val= s->pres_uri;
-    n_query_cols++;
+	query_cols[n_query_cols]= &str_presentity_uri_col;
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB1_STR;
+	query_vals[n_query_cols].val.str_val= s->pres_uri;
+	n_query_cols++;
 
-    query_cols[n_query_cols]= &str_watcher_username_col;
-    query_vals[n_query_cols].nul= 0;
-    query_vals[n_query_cols].type= DB1_STR;
-    query_vals[n_query_cols].val.str_val= s->watcher_user;
-    n_query_cols++;
+	query_cols[n_query_cols]= &str_watcher_username_col;
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB1_STR;
+	query_vals[n_query_cols].val.str_val= s->watcher_user;
+	n_query_cols++;
 
-    query_cols[n_query_cols]= &str_watcher_domain_col;
-    query_vals[n_query_cols].nul= 0;
-    query_vals[n_query_cols].type= DB1_STR;
-    query_vals[n_query_cols].val.str_val= s->watcher_domain;
-    n_query_cols++;
+	query_cols[n_query_cols]= &str_watcher_domain_col;
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB1_STR;
+	query_vals[n_query_cols].val.str_val= s->watcher_domain;
+	n_query_cols++;
 
-    if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols)< 0)
-    {
-        LM_ERR("sql delete failed\n");
-        return -1;
-    }
-    return 0;
+	if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols)< 0)
+	{
+		LM_ERR("sql delete failed\n");
+		return -1;
+	}
+	return 0;
 
 }
 
@@ -1013,7 +1009,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	result_cols[w_user_col= n_result_cols++]= &str_watcher_username_col;
 	result_cols[w_domain_col= n_result_cols++]= &str_watcher_domain_col;
 
-	if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &watchers_table) < 0)
 	{
 		LM_ERR( "in use_table\n");
 		goto done;
@@ -1041,7 +1037,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	/*must do a copy as sphere_check requires database queries */
 	if(sphere_enable)
 	{
-        	n= result->n;
+		n= result->n;
 		ws_list= (ws_t*)pkg_malloc(n * sizeof(ws_t));
 		if(ws_list== NULL)
 		{
@@ -1056,7 +1052,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			row_vals = ROW_VALUES(row);
 
 			status= row_vals[status_col].val.int_val;
-	
+
 			reason.s= (char*)row_vals[reason_col].val.string_val;
 			reason.len= reason.s?strlen(reason.s):0;
 
@@ -1070,7 +1066,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			{
 				ws_list[i].reason.s = (char*)pkg_malloc(reason.len* sizeof(char));
 				if(ws_list[i].reason.s== NULL)
-				{  
+				{
 					LM_ERR("No more private memory\n");
 					goto done;
 				}
@@ -1079,7 +1075,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			}
 			else
 				ws_list[i].reason.s= NULL;
-            
+
 			ws_list[i].w_user.s = (char*)pkg_malloc(w_user.len* sizeof(char));
 			if(ws_list[i].w_user.s== NULL)
 			{
@@ -1089,8 +1085,8 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			}
 			memcpy(ws_list[i].w_user.s, w_user.s, w_user.len);
 			ws_list[i].w_user.len= w_user.len;
-		
-			 ws_list[i].w_domain.s = (char*)pkg_malloc(w_domain.len* sizeof(char));
+
+			ws_list[i].w_domain.s = (char*)pkg_malloc(w_domain.len* sizeof(char));
 			if(ws_list[i].w_domain.s== NULL)
 			{
 				LM_ERR("No more private memory\n");
@@ -1098,7 +1094,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			}
 			memcpy(ws_list[i].w_domain.s, w_domain.s, w_domain.len);
 			ws_list[i].w_domain.len= w_domain.len;
-			
+
 			ws_list[i].status= status;
 		}
 
@@ -1113,14 +1109,14 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			memset(&subs.reason, 0, sizeof(str));
 
 			if( pres_update_status(subs, reason, query_cols, query_vals,
-					n_query_cols, &subs_array)< 0)
+						n_query_cols, &subs_array)< 0)
 			{
 				LM_ERR("failed to update watcher status\n");
 				goto done;
 			}
 
 		}
-        
+
 		for(i=0; i< n; i++)
 		{
 			pkg_free(ws_list[i].w_user.s);
@@ -1131,16 +1127,15 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		ws_list= NULL;
 
 		goto send_notify;
-
 	}
-	
+
 	for(i = 0; i< result->n; i++)
 	{
 		row= &result->rows[i];
 		row_vals = ROW_VALUES(row);
 
 		status= row_vals[status_col].val.int_val;
-	
+
 		reason.s= (char*)row_vals[reason_col].val.string_val;
 		reason.len= reason.s?strlen(reason.s):0;
 
@@ -1155,7 +1150,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		subs.status= status;
 		memset(&subs.reason, 0, sizeof(str));
 
- 		if( pres_update_status(subs,reason, query_cols, query_vals,
+		if( pres_update_status(subs,reason, query_cols, query_vals,
 					n_query_cols, &subs_array)< 0)
 		{
 			LM_ERR("failed to update watcher status\n");
@@ -1186,7 +1181,7 @@ send_notify:
 				if(pres_db_delete_status(s)<0)
 				{
 					LM_ERR("failed to delete terminated "
-						"dialog from database\n");
+							"dialog from database\n");
 					goto done;
 				}
 			}
@@ -1238,7 +1233,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	int r_expires_col, r_watcher_user_col, r_watcher_domain_col;
 	int r_flags_col, r_user_agent_col;
 	db1_res_t *result= NULL;
- 	db_val_t *row_vals;
+	db_val_t *row_vals;
 	db_row_t *rows;
 	int nr_rows, loop;
 	subs_t s, *cs;
@@ -1250,7 +1245,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 		return(-1);
 	}
 
-	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
 		LM_ERR("use table failed\n");
 		return(-1);
@@ -1310,7 +1305,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	result_cols[r_flags_col=n_result_cols++] = &str_flags_col;
 	result_cols[r_user_agent_col=n_result_cols++] = &str_user_agent_col;
 
-	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols, 
+	if(pa_dbf.query(pa_db, query_cols, 0, query_vals, result_cols,
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
 		LM_ERR("Can't query db\n");
@@ -1350,37 +1345,37 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 
 		s.to_domain.s= (char*)row_vals[r_to_domain_col].val.string_val;
 		s.to_domain.len= s.to_domain.s?strlen(s.to_domain.s):0;
-		
+
 		s.from_user.s= (char*)row_vals[r_from_user_col].val.string_val;
 		s.from_user.len= s.from_user.s?strlen(s.from_user.s):0;
-		
+
 		s.from_domain.s= (char*)row_vals[r_from_domain_col].val.string_val;
 		s.from_domain.len= s.from_domain.s?strlen(s.from_domain.s):0;
-		
+
 		s.watcher_user.s= (char*)row_vals[r_watcher_user_col].val.string_val;
 		s.watcher_user.len= s.watcher_user.s?strlen(s.watcher_user.s):0;
-		
+
 		s.watcher_domain.s= (char*)row_vals[r_watcher_domain_col].val.string_val;
 		s.watcher_domain.len= s.watcher_domain.s?strlen(s.watcher_domain.s):0;
 
 		s.event_id.s=(char*)row_vals[r_event_id_col].val.string_val;
 		s.event_id.len= (s.event_id.s)?strlen(s.event_id.s):0;
-	
+
 		s.to_tag.s= (char*)row_vals[r_to_tag_col].val.string_val;
 		s.to_tag.len= s.to_tag.s?strlen(s.to_tag.s):0;
-		
-		s.from_tag.s= (char*)row_vals[r_from_tag_col].val.string_val; 
+
+		s.from_tag.s= (char*)row_vals[r_from_tag_col].val.string_val;
 		s.from_tag.len= s.from_tag.s?strlen(s.from_tag.s):0;
-		
+
 		s.callid.s= (char*)row_vals[r_callid_col].val.string_val;
 		s.callid.len= s.callid.s?strlen(s.callid.s):0;
-		
+
 		s.record_route.s=  (char*)row_vals[r_record_route_col].val.string_val;
 		s.record_route.len= (s.record_route.s)?strlen(s.record_route.s):0;
 
 		s.contact.s= (char*)row_vals[r_contact_col].val.string_val;
 		s.contact.len= s.contact.s?strlen(s.contact.s):0;
-		
+
 		s.sockinfo_str.s = (char*)row_vals[r_sockinfo_col].val.string_val;
 		s.sockinfo_str.len = s.sockinfo_str.s?strlen(s.sockinfo_str.s):0;
 
@@ -1389,22 +1384,22 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 
 		ev_sname.s= (char*)row_vals[r_event_col].val.string_val;
 		ev_sname.len= ev_sname.s?strlen(ev_sname.s):0;
-		
+
 		s.event = contains_event(&ev_sname, NULL);
 
 		if(s.event == NULL)
 		{
 			LM_ERR("event not found and set to NULL\n");
 		}
-		
+
 		s.local_cseq = row_vals[r_local_cseq_col].val.int_val;
 
 		s.expires = row_vals[r_expires_col].val.int_val;
 
 		if( s.expires > (int)time(NULL) + expires_offset)
-		    s.expires -= (int)time(NULL);
+			s.expires -= (int)time(NULL);
 		else
-		    s.expires = 0;
+			s.expires = 0;
 
 		s.version = row_vals[r_version_col].val.int_val;
 
@@ -1443,34 +1438,33 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	}
 
 	/* otherwise we update the records */
-	db_cols[n_update_cols] = &str_status_col; 
+	db_cols[n_update_cols] = &str_status_col;
 	db_vals[n_update_cols].type = DB1_INT;
-	db_vals[n_update_cols].nul = 0; 
+	db_vals[n_update_cols].nul = 0;
 	db_vals[n_update_cols].val.int_val = subs->status;
 	n_update_cols++;
- 
-	db_cols[n_update_cols] = &str_reason_col; 
+
+	db_cols[n_update_cols] = &str_reason_col;
 	db_vals[n_update_cols].type = DB1_STR;
-	db_vals[n_update_cols].nul = 0; 
+	db_vals[n_update_cols].nul = 0;
 	db_vals[n_update_cols].val.str_val= subs->reason;
 	n_update_cols++;
 
-	db_cols[n_update_cols] = &str_updated_col; 
+	db_cols[n_update_cols] = &str_updated_col;
 	db_vals[n_update_cols].type = DB1_INT;
 	db_vals[n_update_cols].nul = 0;
 	if (subs->callid.len == 0 || subs->from_tag.len == 0)
 	{
 		db_vals[n_update_cols].val.int_val = (int) ((rand() / (RAND_MAX + 1.0)) *
-			  (pres_waitn_time * pres_notifier_poll_rate
-					* pres_notifier_processes));
+				(pres_waitn_time * pres_notifier_poll_rate
+				 * pres_notifier_processes));
 	} else {
-		db_vals[n_update_cols].val.int_val = 
+		db_vals[n_update_cols].val.int_val =
 			core_case_hash(&subs->callid, &subs->from_tag, 0) %
-				  (pres_waitn_time * pres_notifier_poll_rate
-					* pres_notifier_processes);
+			(pres_waitn_time * pres_notifier_poll_rate
+			 * pres_notifier_processes);
 	}
 	n_update_cols++;
-
 
 	if(pa_dbf.update(pa_db, query_cols, 0, query_vals,
 				db_cols,db_vals,n_query_cols,n_update_cols) < 0)
@@ -1494,19 +1488,19 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 	if (subs_dbmode == DB_ONLY) return(update_pw_dialogs_dbonlymode(subs, subs_array));
 
 	lock_get(&subs_htable[hash_code].lock);
-	
+
 	ps= subs_htable[hash_code].entries;
-	
+
 	while(ps && ps->next)
 	{
 		s= ps->next;
 
 		if(s->event== subs->event && s->pres_uri.len== subs->pres_uri.len &&
-			s->watcher_user.len== subs->watcher_user.len && 
-			s->watcher_domain.len==subs->watcher_domain.len &&
-			presence_sip_uri_match(&s->pres_uri, &subs->pres_uri)== 0 &&
-			presence_sip_uri_match(&s->watcher_user, &subs->watcher_user)== 0 &&
-			presence_sip_uri_match(&s->watcher_domain, &subs->watcher_domain)==0)
+				s->watcher_user.len== subs->watcher_user.len &&
+				s->watcher_domain.len==subs->watcher_domain.len &&
+				presence_sip_uri_match(&s->pres_uri, &subs->pres_uri)== 0 &&
+				presence_sip_uri_match(&s->watcher_user, &subs->watcher_user)== 0 &&
+				presence_sip_uri_match(&s->watcher_domain, &subs->watcher_domain)==0)
 		{
 			i++;
 			s->status= subs->status;
@@ -1539,116 +1533,116 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 		else
 			ps= s;
 	}
-	
+
 	LM_DBG("found %d matching dialogs\n", i);
 	lock_release(&subs_htable[hash_code].lock);
-	
+
 	return 0;
 }
 
 static int w_pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2)
 {
-    pv_spec_t *sp;
-    pv_value_t pv_val;
-    str watcher_uri, presentity_uri;
+	pv_spec_t *sp;
+	pv_value_t pv_val;
+	str watcher_uri, presentity_uri;
 
-    sp = (pv_spec_t *)_sp1;
+	sp = (pv_spec_t *)_sp1;
 
-    if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_STR) {
-	    watcher_uri = pv_val.rs;
-	    if (watcher_uri.len == 0 || watcher_uri.s == NULL) {
-		LM_ERR("missing watcher uri\n");
-		return -1;
-	    }
+	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
+		if (pv_val.flags & PV_VAL_STR) {
+			watcher_uri = pv_val.rs;
+			if (watcher_uri.len == 0 || watcher_uri.s == NULL) {
+				LM_ERR("missing watcher uri\n");
+				return -1;
+			}
+		} else {
+			LM_ERR("watcher pseudo variable value is not string\n");
+			return -1;
+		}
 	} else {
-	    LM_ERR("watcher pseudo variable value is not string\n");
-	    return -1;
-	}
-    } else {
-	LM_ERR("cannot get watcher pseudo variable value\n");
-	return -1;
-    }
-
-    sp = (pv_spec_t *)_sp2;
-
-    if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_STR) {
-	    presentity_uri = pv_val.rs;
-	    if (presentity_uri.len == 0 || presentity_uri.s == NULL) {
-		LM_DBG("missing presentity uri\n");
+		LM_ERR("cannot get watcher pseudo variable value\n");
 		return -1;
-	    }
-	} else {
-	    LM_ERR("presentity pseudo variable value is not string\n");
-	    return -1;
 	}
-    } else {
-	LM_ERR("cannot get presentity pseudo variable value\n");
-	return -1;
-    }
 
-    return pres_auth_status(_msg, watcher_uri, presentity_uri);
+	sp = (pv_spec_t *)_sp2;
+
+	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
+		if (pv_val.flags & PV_VAL_STR) {
+			presentity_uri = pv_val.rs;
+			if (presentity_uri.len == 0 || presentity_uri.s == NULL) {
+				LM_DBG("missing presentity uri\n");
+				return -1;
+			}
+		} else {
+			LM_ERR("presentity pseudo variable value is not string\n");
+			return -1;
+		}
+	} else {
+		LM_ERR("cannot get presentity pseudo variable value\n");
+		return -1;
+	}
+
+	return pres_auth_status(_msg, watcher_uri, presentity_uri);
 }
 
 
 int pres_auth_status(struct sip_msg* msg, str watcher_uri, str presentity_uri)
 {
-    str event;
-    struct sip_uri uri;
-    pres_ev_t* ev;
-    str* rules_doc = NULL;
-    subs_t subs;
-    int res;
+	str event;
+	struct sip_uri uri;
+	pres_ev_t* ev;
+	str* rules_doc = NULL;
+	subs_t subs;
+	int res;
 
-    event.s = "presence";
-    event.len = 8;
+	event.s = "presence";
+	event.len = 8;
 
-    ev = contains_event(&event, NULL);
-    if (ev == NULL) {
-	LM_ERR("event is not registered\n");
-	return -1;
-    }
-    if (ev->get_rules_doc == NULL) {
-	LM_DBG("event does not require authorization");
-	return ACTIVE_STATUS;
-    }
-    if (parse_uri(presentity_uri.s, presentity_uri.len, &uri) < 0) {
-	LM_ERR("failed to parse presentity uri\n");
-	return -1;
-    }
-    res = ev->get_rules_doc(&uri.user, &uri.host, &rules_doc);
-    if ((res < 0) || (rules_doc == NULL) || (rules_doc->s == NULL)) {
-	LM_DBG( "no xcap rules doc found for presentity uri\n");
-	return PENDING_STATUS;
-    }
+	ev = contains_event(&event, NULL);
+	if (ev == NULL) {
+		LM_ERR("event is not registered\n");
+		return -1;
+	}
+	if (ev->get_rules_doc == NULL) {
+		LM_DBG("event does not require authorization");
+		return ACTIVE_STATUS;
+	}
+	if (parse_uri(presentity_uri.s, presentity_uri.len, &uri) < 0) {
+		LM_ERR("failed to parse presentity uri\n");
+		return -1;
+	}
+	res = ev->get_rules_doc(&uri.user, &uri.host, &rules_doc);
+	if ((res < 0) || (rules_doc == NULL) || (rules_doc->s == NULL)) {
+		LM_DBG( "no xcap rules doc found for presentity uri\n");
+		return PENDING_STATUS;
+	}
 
-    if (parse_uri(watcher_uri.s, watcher_uri.len, &uri) < 0) {
-	LM_ERR("failed to parse watcher uri\n");
-	goto err;
-    }
+	if (parse_uri(watcher_uri.s, watcher_uri.len, &uri) < 0) {
+		LM_ERR("failed to parse watcher uri\n");
+		goto err;
+	}
 
-    subs.watcher_user = uri.user;
-    subs.watcher_domain = uri.host;
-    subs.pres_uri = presentity_uri;
-    subs.auth_rules_doc = rules_doc;
-    if (ev->get_auth_status(&subs) < 0) {
-	LM_ERR( "getting status from rules document\n");
-	goto err;
-    }
-    LM_DBG("auth status of watcher <%.*s> on presentity <%.*s> is %d\n",
-	   watcher_uri.len, watcher_uri.s, presentity_uri.len, presentity_uri.s,
-	   subs.status);
-    pkg_free(rules_doc->s);
-    pkg_free(rules_doc);
-    if ((subs.reason.len == 12) && (strncmp(subs.reason.s, "polite-block", 12) == 0))
+	subs.watcher_user = uri.user;
+	subs.watcher_domain = uri.host;
+	subs.pres_uri = presentity_uri;
+	subs.auth_rules_doc = rules_doc;
+	if (ev->get_auth_status(&subs) < 0) {
+		LM_ERR( "getting status from rules document\n");
+		goto err;
+	}
+	LM_DBG("auth status of watcher <%.*s> on presentity <%.*s> is %d\n",
+			watcher_uri.len, watcher_uri.s, presentity_uri.len, presentity_uri.s,
+			subs.status);
+	pkg_free(rules_doc->s);
+	pkg_free(rules_doc);
+	if ((subs.reason.len == 12) && (strncmp(subs.reason.s, "polite-block", 12) == 0))
 		return POLITE_BLOCK_STATUS;
-    return subs.status;
+	return subs.status;
 
- err:
-    pkg_free(rules_doc->s);
-    pkg_free(rules_doc);
-    return -1;
+err:
+	pkg_free(rules_doc->s);
+	pkg_free(rules_doc);
+	return -1;
 }
 
 /**
@@ -1755,7 +1749,7 @@ static int fixup_refresh_watchers(void** param, int param_no)
 	} else if(param_no==5) {
 		return fixup_spve_null(param, 1);
 	}
-	
+
 	return 0;
 }
 
@@ -1848,7 +1842,7 @@ void rpc_presence_cleanup(rpc_t* rpc, void* c)
 	(void) msg_watchers_clean(0,0);
 	(void) msg_presentity_clean(0,0);
 	(void) timer_db_update(0,0);
-		
+
 	rpc->rpl_printf(c, "Reload OK");
 	return;
 }

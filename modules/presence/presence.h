@@ -22,7 +22,7 @@
 /*!
  * \file
  * \brief Kamailio presence module :: Core
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
@@ -64,7 +64,7 @@ extern db1_con_t* pa_db;
 extern str db_url;
 extern str presentity_table;
 extern str active_watchers_table;
-extern str watchers_table; 
+extern str watchers_table;
 
 extern int counter;
 extern int pid;
@@ -72,9 +72,9 @@ extern int startup_time;
 extern char *to_tag_pref;
 extern int expires_offset;
 extern str server_address;
-extern int min_expires;
+extern uint32_t min_expires;
 extern int min_expires_action;
-extern int max_expires;
+extern uint32_t max_expires;
 extern int subs_dbmode;
 extern int publ_cache_enabled;
 extern int sphere_enable;

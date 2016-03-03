@@ -15,15 +15,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 /*! \file
  * \brief Kamailio presence module :: SUBSCRIBE support
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
@@ -44,7 +44,7 @@ struct pres_ev;
 #define TERMINATED_STATUS    3
 #define WAITING_STATUS       4
 /* Additional value returned from pres_auth_status when the status is ACTIVE
-   and reason is polite-block */
+ * and reason is polite-block */
 #define POLITE_BLOCK_STATUS  5
 
 #define PRES_SUBSCRIBE_RECV		1
@@ -67,8 +67,8 @@ struct subscription
 	str from_tag;
 	str callid;
 	str sockinfo_str;
-	unsigned int remote_cseq; 
-	unsigned int local_cseq; 
+	unsigned int remote_cseq;
+	unsigned int local_cseq;
 	str contact;
 	str local_contact;
 	str record_route;
@@ -112,14 +112,14 @@ void update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 typedef void (*update_db_subs_t)(db1_con_t * ,db_func_t ,shtable_t ,int ,int ,
 		handle_expired_func_t);
 
-int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, int min_expire,
-        int max_expire, int* to_tag_gen, str scontact, str watcher_user,
-        str watcher_domain, int* reply_code,str* reply_txt);
+int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t min_expire,
+		uint32_t max_expire, int* to_tag_gen, str scontact, str watcher_user,
+		str watcher_domain, int* reply_code,str* reply_txt);
 int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int max_expire,
 		int* to_tag_gen, str scontact, str watcher_user, str watcher_domain);
 typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
-        int max_expire, int* to_tag_gen, str scontact, str watcher_user,
-        str watcher_domain);
+		int max_expire, int* to_tag_gen, str scontact, str watcher_user,
+		str watcher_domain);
 void delete_subs(str* pres_uri, str* ev_name, str* to_tag, str* from_tag, str* callid);
 
 #endif
