@@ -374,7 +374,7 @@ int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
 
 	/* reserve memory for resulting sip uri */
 	sip_uri.len = 4 + tel_uri.len - 4 + 1 + hostpart.len + 1 + 10;
-	sip_uri.s = pkg_malloc(sip_uri.len);
+	sip_uri.s = pkg_malloc(sip_uri.len+1);
 	if (sip_uri.s == 0) {
 		LM_ERR("no more pkg memory\n");
 		pkg_free(tel_uri.s);
