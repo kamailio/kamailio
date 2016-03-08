@@ -50,7 +50,7 @@
 #include "cdp_stats.h"
 
 extern struct cdp_counters_h cdp_cnts_h;
-cdp_trans_list_t *trans_list=0;		/**< list of transactions */
+//trans_list=0;		/**< list of transactions */
 
 /**
  * Initializes the transaction structure.
@@ -151,27 +151,6 @@ inline void del_trans(AAAMessage *msg)
 		cdp_free_trans(x);
 	}
 	lock_release(trans_list->lock);
-}
-
-/**
- * Return and remove the transaction from the transaction list.
- * @param msg - the message that this transaction relates to
- * @returns the cdp_trans_t* if found or NULL if not
- */
-inline cdp_trans_t* cdp_take_trans(AAAMessage *msg)
-{
-	cdp_trans_t *x;
-	lock_get(trans_list->lock);
-	x = trans_list->head;
-	while(x&& x->endtoendid!=msg->endtoendId && x->hopbyhopid!=msg->hopbyhopId) x = x->next;
-	if (x){
-		if (x->prev) x->prev->next = x->next;
-		else trans_list->head = x->next;
-		if (x->next) x->next->prev = x->prev;
-		else trans_list->tail = x->prev;
-	}
-	lock_release(trans_list->lock);
-	return x;
 }
 
 /**

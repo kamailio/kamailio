@@ -51,6 +51,7 @@
 #include "diameter.h"
 #include "diameter_api.h"
 
+
 /** Diameter Transaction representation */
 typedef struct _cdp_trans_t{
 	struct timeval started;			/**< Time the transaction was created - used to measure response times */
@@ -74,10 +75,33 @@ typedef struct {
 int cdp_trans_init();
 int cdp_trans_destroy();
 
-inline cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb, void *ptr,int timeout,int auto_drop);
+cdp_trans_list_t *trans_list;		/**< list of transactions */
+
+extern inline cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb, void *ptr,int timeout,int auto_drop);
 void del_trans(AAAMessage *msg);
-inline cdp_trans_t* cdp_take_trans(AAAMessage *msg);
-inline void cdp_free_trans(cdp_trans_t *x);
+//extern inline cdp_trans_t* cdp_take_trans(AAAMessage *msg);
+/**
+ * Return and remove the transaction from the transaction list.
+ * @param msg - the message that this transaction relates to
+ * @returns the cdp_trans_t* if found or NULL if not
+ */
+inline cdp_trans_t* cdp_take_trans(AAAMessage *msg)
+{
+        cdp_trans_t *x;
+        lock_get(trans_list->lock);
+        x = trans_list->head;
+        while(x&& x->endtoendid!=msg->endtoendId && x->hopbyhopid!=msg->hopbyhopId) x = x->next;
+        if (x){
+                if (x->prev) x->prev->next = x->next;
+                else trans_list->head = x->next;
+                if (x->next) x->next->prev = x->prev;
+                else trans_list->tail = x->prev;
+        }
+        lock_release(trans_list->lock);
+        return x;
+}
+
+extern inline void cdp_free_trans(cdp_trans_t *x);
 
 int cdp_trans_timer(time_t now, void* ptr);
 
