@@ -113,7 +113,7 @@ void print_udomain(FILE* _f, udomain_t* _d);
  * \brief Run timer handler for given domain
  * \param _d domain
  */
-void mem_timer_udomain(udomain_t* _d);
+void mem_timer_udomain(udomain_t* _d, int istart, int istep);
 
 
 int mem_insert_impurecord(struct udomain* _d, str* public_identity, str* private_identity, int reg_state, int barring, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, struct impurecord** _r);

@@ -66,6 +66,7 @@
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "../../modules/ims_dialog/dlg_hash.h"
 #include "ul_scscf_stats.h"
+#include "../../timer_proc.h" /* register_sync_timer */
 
 MODULE_VERSION
 
@@ -77,6 +78,7 @@ static int mod_init(void);                          /*!< Module initialization f
 static void destroy(void);                          /*!< Module destroy function */
 static void timer(unsigned int ticks, void* param); /*!< Timer handler */
 static int child_init(int rank);                    /*!< Per-child init function */
+static void ul_local_timer(unsigned int ticks, void* param); /*!< Local timer handler */
 
 extern int bind_usrloc(usrloc_api_t* api);
 extern void contact_dlg_create_handler(struct dlg_cell* dlg, int cb_types, struct dlg_cb_params *dlg_params);/*V1.1*/
@@ -101,6 +103,7 @@ int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
 int subs_hash_size = 9;					/*!<number of ims subscription slots*/
 int contacts_hash_size = 9;
+int ul_timer_procs = 0;
 
 struct contact_list* contact_list;
 struct ims_subscription_list* ims_subscription_list;
@@ -163,6 +166,7 @@ static param_export_t params[] = {
     {"sub_dialog_hash_size",INT_PARAM, &sub_dialog_hash_size},
     {"db_mode",				INT_PARAM, &db_mode},
     {"db_url", 				PARAM_STR, &db_url},
+    {"timer_procs",             INT_PARAM, &ul_timer_procs},
 	{0, 0, 0}
 };
 
@@ -358,9 +362,17 @@ static int mod_init(void) {
 	    LM_ERR("Failed to register counters\n");
 	    return -1;
 	}
+        
+        /* Register cache timer */
+	if(ul_timer_procs<=0)
+	{
+		if (timer_interval > 0)
+                    register_timer(timer, 0, timer_interval);
+	}
+	else
+		register_sync_timers(ul_timer_procs);
 	
-	/* Register cache timer */
-	register_timer(timer, 0, timer_interval);
+	
 
 	/* init the callbacks list */
 	if (init_ulcb_list() < 0) {
@@ -399,6 +411,17 @@ static int mod_init(void) {
 static int child_init(int rank)
 {
 	dlist_t* ptr;
+        int i;
+        
+        if (rank == PROC_MAIN && ul_timer_procs > 0) {
+            for (i = 0; i < ul_timer_procs; i++) {
+                if (fork_sync_timer(PROC_TIMER, "IMS S-CSCF USRLOC Timer", 1 /*socks flag*/,
+                        ul_local_timer, (void*) (long) i, timer_interval /*sec*/) < 0) {
+                    LM_ERR("failed to start timer routine as process\n");
+                    return -1; /* error */
+                }
+            }
+        }
 
 	/* connecting to DB ? */
 	switch (db_mode) {
@@ -471,8 +494,18 @@ static void timer(unsigned int ticks, void* param) {
     }
     
     LM_DBG("Syncing cache\n");
-    if (synchronize_all_udomains() != 0) {
+    if (synchronize_all_udomains(0, 1) != 0) {
         LM_ERR("synchronizing cache failed\n");
     }
+}
+
+/*! \brief
+ * Local timer handler
+ */
+static void ul_local_timer(unsigned int ticks, void* param)
+{
+	if (synchronize_all_udomains((int)(long)param, ul_timer_procs) != 0) {
+		LM_ERR("synchronizing cache failed\n");
+	}
 }
 

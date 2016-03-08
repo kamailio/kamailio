@@ -388,7 +388,7 @@ void print_all_udomains(FILE* _f)
  * \brief Run timer handler of all domains
  * \return 0 if all timer return 0, != 0 otherwise
  */
-int synchronize_all_udomains(void)
+int synchronize_all_udomains(int istart, int istep)
 {
 	int res = 0;
 	dlist_t* ptr;
@@ -396,7 +396,7 @@ int synchronize_all_udomains(void)
 	get_act_time(); /* Get and save actual time */
 
 	for( ptr=root ; ptr ; ptr=ptr->next)
-		mem_timer_udomain(ptr->d);
+		mem_timer_udomain(ptr->d, istart, istep);
 
 	return res;
 }

@@ -95,7 +95,7 @@ void print_all_udomains(FILE* _f);
  * \brief Run timer handler of all domains
  * \return 0 if all timer return 0, != 0 otherwise
  */
-int synchronize_all_udomains(void);
+int synchronize_all_udomains(int istart, int istep);
 
 
 /*!
