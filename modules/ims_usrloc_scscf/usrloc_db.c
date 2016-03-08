@@ -67,12 +67,12 @@ int query_buffer_len		= 0;
 
 char* impu_contact_insert_query = "INSERT INTO impu_contact (impu_id, contact_id) (SELECT I.id, C.id FROM impu I, contact C WHERE I.impu='%.*s' and C.contact='%.*s')";
 int impu_contact_insert_query_len;
-char* impu_contact_delete_query = "DELETE FROM impu_contact WHERE impu_id in (select impu.id from impu where impu.impu='%.*s') AND contact_id in (select contact.id from contact where contact.contact='%.*s')";
+char* impu_contact_delete_query = "DELETE impu_contact FROM impu_contact INNER JOIN impu ON impu_contact.impu_id = impu.id INNER JOIN contact ON contact.id = impu_contact.contact_id where impu.impu = '%.*s' and contact.contact = '%.*s'";
 int impu_contact_delete_query_len;
 
 char* impu_subscriber_insert_query = "INSERT INTO impu_subscriber (impu_id, subscriber_id) (SELECT I.id, S.id FROM impu I, subscriber S WHERE I.impu='%.*s' and S.event='%.*s' and S.watcher_contact='%.*s' and S.presentity_uri='%.*s')";
 int impu_subscriber_insert_query_len;
-char* impu_subscriber_delete_query = "DELETE FROM impu_subscriber WHERE impu_id in (select impu.id from impu where impu.impu='%.*s') AND subscriber_id in (select subscriber.id from subscriber where subscriber.event='%.*s' and subscriber.watcher_contact='%.*s' and subscriber.presentity_uri='%.*s')";
+char* impu_subscriber_delete_query = "DELETE impu_subscriber FROM impu_subscriber INNER JOIN impu on impu_subscriber.impu_id=impu.id INNER JOIN subscriber on impu_subscriber.subscriber_id=subscriber.id WHERE impu.impu='%.*s' AND subscriber.event='%.*s' and subscriber.watcher_contact='%.*s' and subscriber.presentity_uri='%.*s'";
 int impu_subscriber_delete_query_len;
 
 

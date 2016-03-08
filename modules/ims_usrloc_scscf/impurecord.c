@@ -323,6 +323,28 @@ void mem_delete_ucontact(ucontact_t* _c) {
     mem_remove_ucontact(_c);
     free_ucontact(_c);
 }
+
+static str autocommit_off = str_init("SET AUTOCOMMIT=0");
+static str fail_isolation_level = str_init("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+static str start_transaction = str_init("START TRANSACTION");
+static str commit = str_init("COMMIT");
+static str rollback = str_init("ROLLBACK");
+static str autocommit_on = str_init("SET AUTOCOMMIT=1");
+
+static inline void start_dbtransaction() {
+    if (ul_dbf.raw_query(ul_dbh, &autocommit_off, NULL) < 0) {
+        LM_ERR("could not "
+                "set autocommit off!\n");
+    }
+    if (ul_dbf.raw_query(ul_dbh, &fail_isolation_level, NULL) < 0) {
+        LM_ERR("could not "
+                "set transaction isolation level!\n");
+    }
+    if (ul_dbf.raw_query(ul_dbh, &start_transaction, NULL) < 0) {
+        LM_ERR("could not "
+                "start transaction!\n");
+    }
+}
 /*!
  * \brief Expires timer for NO_DB db_mode
  *
@@ -338,6 +360,7 @@ static inline void process_impurecord(impurecord_t* _r) {
     udomain_t* _d;
     reg_subscriber *s;
     subs_t* sub_dialog;
+    int dbwork = 0;
 
     get_act_time();
 
@@ -347,6 +370,10 @@ static inline void process_impurecord(impurecord_t* _r) {
         if (!valid_subscriber(s, act_time)) {
             LM_DBG("DBG:registrar_timer: Subscriber with watcher_contact <%.*s> and presentity uri <%.*s> expired and removed.\n",
                     s->watcher_contact.len, s->watcher_contact.s, s->presentity_uri.len, s->presentity_uri.s);
+            if (!dbwork) {
+                start_dbtransaction();
+                dbwork = 1;
+            }
             delete_subscriber(_r, s);
         } else {
             LM_DBG("DBG:registrar_timer: Subscriber with watcher_contact <%.*s> and presentity uri <%.*s> is valid and expires in %d seconds.\n",
@@ -420,6 +447,10 @@ static inline void process_impurecord(impurecord_t* _r) {
             LM_DBG("\t\texpiring contact %i: [%.*s] in slot [%d]\n", n, contacts_to_expire[n]->c.len, contacts_to_expire[n]->c.s, contacts_to_expire[n]->sl);
             sl = ptr->sl;
             lock_contact_slot_i(sl);
+            if (!dbwork) {
+                start_dbtransaction();
+                dbwork=1;
+            }
             unlink_contact_from_impu(_r, ptr, 1, 0 /*implicit dereg of contact from IMPU*/);
             unlock_contact_slot_i(sl);
         }
@@ -429,12 +460,27 @@ static inline void process_impurecord(impurecord_t* _r) {
         LM_DBG("no contacts\n");
 
     if (mustdeleteimpu) {
+        if (!dbwork) {
+            start_dbtransaction();
+            dbwork=1;
+        }
         register_udomain("location", &_d);
         delete_impurecord(_d, &_r->public_identity, _r);
     } else {
         if (!hascontacts) {
             LM_DBG("This impu is not to be deleted but has no contacts - changing state to IMPU_UNREGISTERED\n");
             _r->reg_state = IMPU_UNREGISTERED;
+        }
+    }
+    
+    if (dbwork) {
+        if (ul_dbf.raw_query(ul_dbh, &commit, NULL) < 0) {
+            LM_ERR("transaction commit "
+                    "failed.\n");
+        }
+        if (ul_dbf.raw_query(ul_dbh, &autocommit_on, NULL) < 0) {
+            LM_ERR("could not turn "
+                    "transaction autocommit on.\n");
         }
     }
 }
