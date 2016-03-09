@@ -131,13 +131,6 @@ typedef struct _peer_t{
 peer* new_peer(str fqdn,str realm,int port,str src_addr);
 void free_peer(peer *x,int locked);
 
-/**
- * "Touches" the peer by updating the last activity time to the current time.
- * @param p - which peer to touch
- */
-inline void touch_peer(peer *p)
-{
-	p->activity = time(0);
-}
+inline void touch_peer(peer *p);
 
 #endif

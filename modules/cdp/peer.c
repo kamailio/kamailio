@@ -107,3 +107,11 @@ void free_peer(peer *x,int locked)
 	shm_free(x);
 }
 
+/**
+ * "Touches" the peer by updating the last activity time to the current time.
+ * @param p - which peer to touch
+ */
+inline void touch_peer(peer *p)
+{
+	p->activity = time(0);
+}
