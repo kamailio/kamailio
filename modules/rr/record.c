@@ -40,6 +40,7 @@
 #include "../../data_lump.h"
 #include "record.h"
 #include "rr_mod.h"
+#include "loose.h"
 
 
 #define RR_PREFIX_SIP "Record-Route: <sip:"
@@ -375,7 +376,6 @@ int record_route(struct sip_msg* _m, str *params)
 {
 	struct lump* l, *l2;
 	str user = {NULL, 0};
-	struct to_body* from = NULL;
 	str* tag;
 	int use_ob = rr_obb.use_outbound ? rr_obb.use_outbound(_m) : 0;
 	int sips;
@@ -404,13 +404,21 @@ int record_route(struct sip_msg* _m, str *params)
 	}
 
 	if (append_fromtag) {
-		if (parse_from_header(_m) < 0) {
-			LM_ERR("From parsing failed\n");
-			ret = -2;
-			goto error;
+		if (is_direction(_m, RR_FLOW_UPSTREAM) == 0) {
+			if (parse_to_header(_m) < 0) {
+				LM_ERR("To parsing failed\n");
+				ret = -2;
+				goto error;
+			}
+			tag = &((struct to_body*)_m->to->parsed)->tag_value;
+		} else {
+			if (parse_from_header(_m) < 0) {
+				LM_ERR("From parsing failed\n");
+				ret = -2;
+				goto error;
+			}
+			tag = &((struct to_body*)_m->from->parsed)->tag_value;
 		}
-		from = (struct to_body*)_m->from->parsed;
-		tag = &from->tag_value;
 	} else {
 		tag = 0;
 	}
@@ -777,12 +785,23 @@ int record_route_advertised_address(struct sip_msg* _m, str* _data)
 	}
 
 	if (append_fromtag) {
-		if (parse_from_header(_m) < 0) {
-			LM_ERR("From parsing failed\n");
-			ret = -2;
-			goto error;
+		if (is_direction(_m, RR_FLOW_UPSTREAM) == 0) {
+			if (parse_to_header(_m) < 0) {
+				LM_ERR("To parsing failed\n");
+				ret = -2;
+				goto error;
+			}
+			tag = &((struct to_body*)_m->to->parsed)->tag_value;
+		} else {
+			if (parse_from_header(_m) < 0) {
+				LM_ERR("From parsing failed\n");
+				ret = -2;
+				goto error;
+			}
+			tag = &((struct to_body*)_m->from->parsed)->tag_value;
 		}
-		tag = &((struct to_body*)_m->from->parsed)->tag_value;
+	} else {
+		tag = 0;
 	}
 
 	sips = rr_is_sips(_m);
