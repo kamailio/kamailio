@@ -467,7 +467,7 @@ static void destroy(void) {
 
 	if (ul_dbh) {
 		ul_unlock_locks();
-		if (synchronize_all_udomains() != 0) {
+		if (synchronize_all_udomains(0, 1) != 0) {
 			LM_ERR("flushing cache failed\n");
 		}
 		ul_dbf.close(ul_dbh);
@@ -477,7 +477,6 @@ static void destroy(void) {
 	ul_destroy_locks();
 	subs_destroy_locks();
 	destroy_contacts_locks();
-
 	/* free callbacks list */
 	destroy_ulcb_list();
 }
