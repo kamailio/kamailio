@@ -108,7 +108,7 @@ int api_callback(peer *p,AAAMessage *msg,void* ptr)
             long elapsed_usecs =  (stop.tv_sec - t->started.tv_sec)*1000000 + (stop.tv_usec - t->started.tv_usec);
             long elapsed_msecs = elapsed_usecs/1000;
             if (elapsed_msecs > *latency_threshold_p) {
-                if (msg->sessionId && msg->sessionId->data)
+                if (msg->sessionId && msg->sessionId->data.len)
                     LM_ERR("Received diameter response outside of threshold (%d) - %ld (session-id: [%.*s])\n", *latency_threshold_p, elapsed_msecs, msg->sessionId->data.len, msg->sessionId->data.s);
                 else 
                     LM_ERR("Received diameter response outside of threshold (%d) - %ld (no session-id)\n", *latency_threshold_p, elapsed_msecs);
