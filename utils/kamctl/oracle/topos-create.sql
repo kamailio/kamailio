@@ -41,7 +41,8 @@ CREATE TABLE topos_t (
     b_uuid VARCHAR2(255) DEFAULT '',
     direction NUMBER(10) DEFAULT 0 NOT NULL,
     x_via CLOB DEFAULT '',
-    x_tag VARCHAR2(64) DEFAULT ''
+    x_tag VARCHAR2(64) DEFAULT '',
+    x_vbranch VARCHAR2(255) DEFAULT ''
 );
 
 CREATE OR REPLACE TRIGGER topos_t_tr

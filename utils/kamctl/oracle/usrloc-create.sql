@@ -22,7 +22,8 @@ CREATE TABLE location (
     connection_id NUMBER(10) DEFAULT 0 NOT NULL,
     keepalive NUMBER(10) DEFAULT 0 NOT NULL,
     partition NUMBER(10) DEFAULT 0 NOT NULL,
-    CONSTRAINT location_ruid_idx  UNIQUE (ruid)
+    CONSTRAINT location_ruid_idx  UNIQUE (ruid),
+    CONSTRAINT location_connection_idx  UNIQUE (server_id, connection_id)
 );
 
 CREATE OR REPLACE TRIGGER location_tr

@@ -22,7 +22,8 @@ CREATE TABLE `location` (
     `connection_id` INT(11) DEFAULT 0 NOT NULL,
     `keepalive` INT(11) DEFAULT 0 NOT NULL,
     `partition` INT(11) DEFAULT 0 NOT NULL,
-    CONSTRAINT ruid_idx UNIQUE (`ruid`)
+    CONSTRAINT ruid_idx UNIQUE (`ruid`),
+    CONSTRAINT connection_idx UNIQUE (`server_id`, `connection_id`)
 );
 
 CREATE INDEX account_contact_idx ON location (`username`, `domain`, `contact`);

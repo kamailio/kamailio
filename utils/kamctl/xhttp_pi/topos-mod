@@ -98,6 +98,7 @@
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>x_vbranch</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -111,6 +112,7 @@
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>x_vbranch</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -127,6 +129,7 @@
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>x_vbranch</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

@@ -33,7 +33,8 @@ CREATE TABLE `topos_t` (
     `b_uuid` VARCHAR(255) DEFAULT '' NOT NULL,
     `direction` INT DEFAULT 0 NOT NULL,
     `x_via` MEDIUMTEXT DEFAULT '' NOT NULL,
-    `x_tag` VARCHAR(64) DEFAULT '' NOT NULL
+    `x_tag` VARCHAR(64) DEFAULT '' NOT NULL,
+    `x_vbranch` VARCHAR(255) DEFAULT '' NOT NULL
 );
 
 CREATE INDEX rectime_idx ON topos_t (`rectime`);

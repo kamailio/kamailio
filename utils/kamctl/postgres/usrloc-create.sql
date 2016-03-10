@@ -22,7 +22,8 @@ CREATE TABLE location (
     connection_id INTEGER DEFAULT 0 NOT NULL,
     keepalive INTEGER DEFAULT 0 NOT NULL,
     partition INTEGER DEFAULT 0 NOT NULL,
-    CONSTRAINT location_ruid_idx UNIQUE (ruid)
+    CONSTRAINT location_ruid_idx UNIQUE (ruid),
+    CONSTRAINT location_connection_idx UNIQUE (server_id, connection_id)
 );
 
 CREATE INDEX location_account_contact_idx ON location (username, domain, contact);

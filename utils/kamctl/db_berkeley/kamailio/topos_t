@@ -1,10 +1,10 @@
 METADATA_COLUMNS
-id(int) rectime(datetime) a_callid(str) a_uuid(str) b_uuid(str) direction(int) x_via(str) x_tag(str)
+id(int) rectime(datetime) a_callid(str) a_uuid(str) b_uuid(str) direction(int) x_via(str) x_tag(str) x_vbranch(str)
 METADATA_KEY
-2 3 4 5 
+2 3 4 5 8
 METADATA_READONLY
 0
 METADATA_LOGFLAGS
 0
 METADATA_DEFAULTS
-NIL|NIL|''|''|''|0|''|''
+NIL|NIL|''|''|''|0|''|''|''
