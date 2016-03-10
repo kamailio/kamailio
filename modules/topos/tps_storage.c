@@ -55,7 +55,9 @@ int _tps_branch_expire = 180;
 int _tps_dialog_expire = 10800;
 
 int tps_db_insert_branch(tps_data_t *td);
+int tps_db_clean_branches(void);
 int tps_db_insert_dialog(tps_data_t *td);
+int tps_db_clean_dialogs(void);
 
 /**
  *
@@ -410,6 +412,36 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+int tps_db_clean_dialogs(void)
+{
+	db_key_t db_keys[2];
+	db_val_t db_vals[2];
+	db_op_t  db_ops[2] = { OP_LEQ };
+	int nr_keys;
+
+	nr_keys = 0;
+
+	LM_DBG("cleaning expired dialog records\n");
+
+	db_keys[0] = &td_col_rectime;
+	db_vals[0].type = DB1_DATETIME;
+	db_vals[0].nul = 0;
+	db_vals[0].val.time_val = time(NULL) - _tps_dialog_expire;
+	nr_keys++;
+
+	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
+		LM_ERR("failed to perform use table\n");
+		return -1;
+	}
+
+	if (_tpsdbf.delete(_tps_db_handle, db_keys, db_ops, db_vals, nr_keys) < 0) {
+		LM_DBG("failed to clean expired dialog records\n");
+	}
+	return 0;
+}
 
 /**
  *
