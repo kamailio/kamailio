@@ -34,7 +34,7 @@
 #define TPS_DIR_DOWNSTREAM	0
 #define TPS_DIR_UPSTREAM	1
 
-#define TPS_DATA_SIZE	4096
+#define TPS_DATA_SIZE	8192
 typedef struct tps_data {
 	char cbuf[TPS_DATA_SIZE];
 	char *cp;
@@ -59,6 +59,8 @@ typedef struct tps_data {
 	str x_vbranch1;
 	str x_via;
 	str x_tag;
+	str x_rr;
+	str x_uri;
 	int32_t iflags;
 	int32_t direction;
 } tps_data_t;
@@ -72,6 +74,8 @@ int tps_storage_branch_save(sip_msg_t *msg, tps_data_t *td);
 int tps_storage_branch_rm(sip_msg_t *msg, tps_data_t *td);
 
 int tps_storage_record(sip_msg_t *msg, tps_data_t *td);
+int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 
 int tps_storage_lock_set_init(void);
 int tps_storage_lock_get(str *lkey);

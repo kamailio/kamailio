@@ -298,26 +298,6 @@ int tps_skip_msg(sip_msg_t *msg)
 /**
  *
  */
-int tps_request_received(sip_msg_t *msg, int dialog, int direction)
-{
-	if(dialog==0) {
-		/* nothing to do for initial request */
-		return 0;
-	}
-	return 0;
-}
-
-/**
- *
- */
-int tps_response_received(sip_msg_t *msg)
-{
-	return 0;
-}
-
-/**
- *
- */
 int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 {
 	hdr_field_t *hdr;
@@ -456,6 +436,45 @@ int tps_reinsert_contact(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 	return 0;
 }
 
+/**
+ *
+ */
+int tps_request_received(sip_msg_t *msg, int dialog, int direction)
+{
+	if(dialog==0) {
+		/* nothing to do for initial request */
+		return 0;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int tps_response_received(sip_msg_t *msg)
+{
+	tps_data_t mtsd;
+	tps_data_t stsd;
+	tps_data_t *ptsd;
+	str lkey;
+
+	memset(&mtsd, 0, sizeof(tps_data_t));
+	memset(&stsd, 0, sizeof(tps_data_t));
+	ptsd = &mtsd;
+
+	if(tps_pack_request(msg, &mtsd)<0) {
+		LM_ERR("failed to extract and pack the headers\n");
+		return -1;
+	}
+	if(tps_storage_load_dialog(msg, &mtsd, &stsd)<0) {
+		goto error;
+	}
+
+	return 0;
+
+error:
+	return -1;
+}
 
 /**
  *

@@ -354,8 +354,10 @@ str tt_col_a_uuid = str_init("a_uuid");
 str tt_col_b_uuid = str_init("b_uuid");
 str tt_col_direction = str_init("direction");
 str tt_col_x_via = str_init("x_via");
-str tt_col_x_tag = str_init("x_tag");
 str tt_col_x_vbranch = str_init("x_vbranch");
+str tt_col_x_rr = str_init("x_rr");
+str tt_col_x_uri = str_init("x_uri");
+str tt_col_x_tag = str_init("x_tag");
 
 #define TPS_NR_KEYS	32
 
@@ -613,7 +615,135 @@ int tps_db_clean_branches(void)
 	return 0;
 }
 
+#define TPS_DATA_APPEND_DB(_sd, _res, _c, _s)	\
+	do { \
+		if (RES_ROWS(_res)[0].values[_c].nul == 0) \
+		{ \
+			str tmp; \
+			switch(RES_ROWS(_res)[0].values[_c].type) \
+			{ \
+			case DB1_STRING: \
+				tmp.s=(char*)RES_ROWS(_res)[0].values[_c].val.string_val; \
+				tmp.len=strlen(tmp.s); \
+				break; \
+			case DB1_STR: \
+				tmp.len=RES_ROWS(_res)[0].values[_c].val.str_val.len; \
+				tmp.s=(char*)RES_ROWS(_res)[0].values[_c].val.str_val.s; \
+				break; \
+			case DB1_BLOB: \
+				tmp.len=RES_ROWS(_res)[0].values[_c].val.blob_val.len; \
+				tmp.s=(char*)RES_ROWS(_res)[0].values[_c].val.blob_val.s; \
+				break; \
+			default: \
+				tmp.len=0; \
+				tmp.s=NULL; \
+			} \
+			if((_sd)->cp + tmp.len >= (_sd)->cbuf + TPS_DATA_SIZE) { \
+				LM_ERR("not enough space for %d\n", _c); \
+				goto error; \
+			} \
+			if(tmp.len>0) { \
+				(_s)->s = (_sd)->cp; \
+				(_s)->len = tmp.len; \
+				memcpy((_sd)->cp, tmp.s, tmp.len); \
+				(_sd)->cp += tmp.len; \
+				(_sd)->cp[0] = '\0'; \
+				(_sd)->cp++; \
+			} \
+		} \
+	} while(0);
+/**
+ *
+ */
+int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	db_key_t db_keys[4];
+	db_op_t  db_ops[4];
+	db_val_t db_vals[4];
+	db_key_t db_cols[TPS_NR_KEYS];
+	db1_res_t* db_res = NULL;
+	int nr_keys;
+	int nr_cols;
+	int n;
 
+	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
+		return -1;
+
+	nr_keys = 0;
+	nr_cols = 0;
+
+	db_keys[nr_keys]=&tt_col_x_vbranch;
+	db_ops[nr_keys]=OP_EQ;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(md->x_vbranch1);
+	nr_keys++;
+
+	db_cols[nr_cols++] = &tt_col_rectime;
+	db_cols[nr_cols++] = &tt_col_a_callid;
+	db_cols[nr_cols++] = &tt_col_a_uuid;
+	db_cols[nr_cols++] = &tt_col_b_uuid;
+	db_cols[nr_cols++] = &tt_col_direction;
+	db_cols[nr_cols++] = &tt_col_x_via;
+	db_cols[nr_cols++] = &tt_col_x_vbranch;
+	db_cols[nr_cols++] = &tt_col_x_rr;
+	db_cols[nr_cols++] = &tt_col_x_uri;
+	db_cols[nr_cols++] = &tt_col_x_tag;
+
+	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
+		LM_ERR("failed to perform use table\n");
+		return -1;
+	}
+
+	if (_tpsdbf.query(_tps_db_handle, db_keys, db_ops, db_vals, db_cols,
+				nr_keys, nr_cols, NULL, &db_res) < 0) {
+		LM_ERR("failed to query database\n");
+		goto error;
+	}
+
+	if (RES_ROW_N(db_res) <= 0) {
+		LM_DBG("no stored record for <%.*s>\n",
+				md->x_vbranch1.len, ZSW(md->x_vbranch1.s));
+		return 1;
+	}
+
+	sd->cp = sd->cbuf;
+
+	n = 0;
+	n++; /*rectime*/
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_callid);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_uuid);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_uuid);
+	n++; /*direction*/
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_via);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_vbranch1);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_rr);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_uri);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_tag);
+
+	if ((db_res !=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res) < 0)
+		LM_ERR("failed to free result of query\n");
+
+	return 0;
+
+error:
+	if ((db_res !=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res) < 0)
+		LM_ERR("failed to free result of query\n");
+
+	return -1;
+}
+
+/**
+ *
+ */
+int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	return 0;
+}
+
+/**
+ *
+ */
 void tps_storage_clean(unsigned int ticks, void* param)
 {
 	tps_db_clean_branches();

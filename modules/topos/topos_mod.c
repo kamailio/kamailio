@@ -292,12 +292,6 @@ int tps_msg_received(void *data)
 		}
 	} else {
 		/* reply */
-		if(msg.via2==0) {
-			/* one Via in received reply -- it is for local generated request
-			 * - nothing to unhide unless is CANCEL/ACK */
-			if(!((get_cseq(&msg)->method_id)&(METHOD_CANCEL)))
-				goto done;
-		}
 		tps_response_received(&msg);
 	}
 
