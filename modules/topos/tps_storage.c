@@ -36,6 +36,7 @@
 #include "../../dprint.h"
 #include "../../hashes.h"
 #include "../../locking.h"
+#include "../../trim.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_from.h"
@@ -246,8 +247,16 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
  */
 int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 {
+	str stxt;
+
 	if(parse_headers(msg, HDR_EOH_F, 0)==-1)
 		return -1;
+
+	/* callid */
+	stxt = msg->callid->body;
+	trim(&stxt);
+	td->a_callid = stxt;
+
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		/* get from-tag */
 		if(parse_from_header(msg)<0 || msg->from==NULL) {
@@ -255,6 +264,7 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 			goto error;
 		}
 		td->a_tag = get_from(msg)->tag_value;
+		td->x_tag = td->a_tag;
 	} else {
 		/* get to-tag */
 		if(parse_to_header(msg)<0 || msg->to==NULL) {
@@ -262,6 +272,7 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 			goto error;
 		}
 		td->b_tag = get_to(msg)->tag_value;
+		td->b_tag = td->a_tag;
 	}
 
 	/* extract the contact address */
@@ -280,6 +291,7 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 	} else {
 		td->b_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
 	}
+	td->x_via = td->x_via2;
 	return 0;
 
 error:
@@ -294,15 +306,21 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td)
 	int ret;
 
 	ret = tps_storage_fill_contact(msg, td, TPS_DIR_DOWNSTREAM);
-	if(ret<0) return ret;
+	if(ret<0) goto error;
 	ret = tps_storage_fill_contact(msg, td, TPS_DIR_UPSTREAM);
-	if(ret<0) return ret;
+	if(ret<0) goto error;
 	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
-	if(ret<0) return ret;
+	if(ret<0) goto error;
 	ret = tps_db_insert_dialog(td);
-	if(ret<0) return ret;
+	if(ret<0) goto error;
+	ret = tps_db_insert_branch(td);
+	if(ret<0) goto error;
 
 	return 0;
+
+error:
+	LM_ERR("failed to store\n");
+	return ret;
 }
 
 
@@ -337,6 +355,7 @@ str tt_col_b_uuid = str_init("b_uuid");
 str tt_col_direction = str_init("direction");
 str tt_col_x_via = str_init("x_via");
 str tt_col_x_tag = str_init("x_tag");
+str tt_col_x_vbranch = str_init("x_vbranch");
 
 #define TPS_NR_KEYS	32
 
@@ -539,6 +558,11 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_keys[nr_keys] = &tt_col_x_tag;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_tag);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_x_vbranch;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_vbranch1);
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
