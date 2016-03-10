@@ -47,9 +47,17 @@ typedef struct tps_data {
 	str b_contact;
 	str as_contact;
 	str bs_contact;
+	str a_tag;
+	str b_tag;
+	str a_uri;
+	str b_uri;
+	str r_uri;
+	str a_srcip;
+	str b_srcip;
 	str x_via1;
 	str x_via2;
 	str x_vbranch1;
+	int32_t iflags;
 } tps_data_t;
 
 int tps_storage_dialog_find(sip_msg_t *msg, tps_data_t *td);

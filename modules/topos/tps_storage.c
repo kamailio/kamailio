@@ -45,7 +45,10 @@
 
 extern sruid_t _tps_sruid;
 
-#define TPS_STORAGE_LOCK_SIZE	1<<8
+extern db1_con_t* _tps_db_handle;
+extern db_func_t _tpsdbf;
+
+#define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
 
 /**
@@ -237,4 +240,152 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td)
 	ret = tps_storage_fill_contact(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) return ret;
 	return tps_storage_fill_contact(msg, td, TPS_DIR_UPSTREAM);
+}
+
+
+/**
+ * database storage
+ */
+str td_col_rectime = str_init("rectime");
+str td_col_a_callid = str_init("a_callid");
+str td_col_a_uuid = str_init("a_uuid");
+str td_col_b_uuid = str_init("b_uuid");
+str td_col_a_contact = str_init("a_contact");
+str td_col_b_contact = str_init("b_contact");
+str td_col_as_contact = str_init("as_contact");
+str td_col_bs_contact = str_init("bs_contact");
+str td_col_a_tag = str_init("a_tag");
+str td_col_b_tag = str_init("b_tag");
+str td_col_a_rr = str_init("a_rr");
+str td_col_b_rr = str_init("b_rr");
+str td_col_iflags = str_init("iflags");
+str td_col_a_uri = str_init("a_uri");
+str td_col_b_uri = str_init("b_uri");
+str td_col_r_uri = str_init("r_uri");
+str td_col_a_srcip = str_init("a_srcip");
+str td_col_b_srcip = str_init("b_srcip");
+
+str tt_col_rectime = str_init("rectime");
+str tt_col_a_callid = str_init("a_callid");
+str tt_col_a_uuid = str_init("a_uuid");
+str tt_col_b_uuid = str_init("b_uuid");
+str tt_col_direction = str_init("direction");
+str tt_col_x_via = str_init("x_via");
+str tt_col_x_tag = str_init("x_tag");
+
+#define TPS_NR_KEYS	32
+
+/**
+ *
+ */
+int tps_db_insert_dialog(tps_data_t *td)
+{
+	db_key_t db_keys[TPS_NR_KEYS];
+	db_val_t db_vals[TPS_NR_KEYS];
+	int nr_keys;
+
+	memset(db_keys, 0, TPS_NR_KEYS*sizeof(db_key_t));
+	memset(db_vals, 0, TPS_NR_KEYS*sizeof(db_val_t));
+	nr_keys = 0;
+
+	db_keys[nr_keys] = &td_col_rectime;
+	db_vals[nr_keys].type = DB1_INT;
+	db_vals[nr_keys].val.int_val = (int)time(NULL);
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_a_callid;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_callid;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_a_uuid;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_uuid;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_b_uuid;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->b_uuid;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_a_contact;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_contact;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_b_contact;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->b_contact;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_as_contact;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->as_contact;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_bs_contact;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->bs_contact;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_a_tag;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_tag;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_b_tag;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->b_tag;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_a_rr;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_rr;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_b_rr;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->b_rr;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_iflags;
+	db_vals[nr_keys].type = DB1_INT;
+	db_vals[nr_keys].val.int_val = td->iflags;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_a_uri;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_uri;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_b_uri;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->b_uri;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_r_uri;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->r_uri;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_a_srcip;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_srcip;
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_b_srcip;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->b_srcip;
+	nr_keys++;
+
+	if(_tpsdbf.insert(_tps_db_handle, db_keys, db_vals, nr_keys) < 0)
+	{
+		LM_ERR("failed to store message\n");
+		goto error;
+	}
+
+	return 0;
+
+error:
+	return -1;
 }

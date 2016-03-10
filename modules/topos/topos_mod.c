@@ -64,7 +64,7 @@ MODULE_VERSION
 /* Database connection handle */
 db1_con_t* _tps_db_handle = NULL;
 /* DB functions */
-db_func_t tpsdbf;
+db_func_t _tpsdbf;
 /* sruid to get internal uid */
 sruid_t _tps_sruid;
 
@@ -116,11 +116,11 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	/* Find a database module */
-	if (db_bind_mod(&_tps_db_url, &tpsdbf)) {
+	if (db_bind_mod(&_tps_db_url, &_tpsdbf)) {
 		LM_ERR("unable to bind database module\n");
 		return -1;
 	}
-	if (!DB_CAPABILITY(tpsdbf, DB_CAP_ALL)) {
+	if (!DB_CAPABILITY(_tpsdbf, DB_CAP_ALL)) {
 		LM_CRIT("database modules does not "
 			"provide all functions needed\n");
 		return -1;
@@ -163,7 +163,7 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	_tps_db_handle = tpsdbf.init(&_tps_db_url);
+	_tps_db_handle = _tpsdbf.init(&_tps_db_url);
 	if (!_tps_db_handle) {
 		LM_ERR("unable to connect database\n");
 		return -1;
@@ -178,7 +178,7 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	if (_tps_db_handle) {
-		tpsdbf.close(_tps_db_handle);
+		_tpsdbf.close(_tps_db_handle);
 		_tps_db_handle = 0;
 	}
 	tps_storage_lock_set_destroy();

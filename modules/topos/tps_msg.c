@@ -97,7 +97,7 @@ int tps_get_param_value(str *in, str *name, str *value)
 			return 0;
 		}
 	}
-	
+
 	if(params) free_params(params);
 	return 1;
 
@@ -254,7 +254,7 @@ int tps_route_direction(sip_msg_t *msg)
 		LM_DBG("no route header - downstream\n");
 		return 0;
 	}
-	if (parse_rr(msg->route) < 0) 
+	if (parse_rr(msg->route) < 0)
 	{
 		LM_ERR("failed to parse route header\n");
 		return -1;
@@ -434,7 +434,7 @@ int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 int tps_reinsert_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Via");
-	
+
 	if(tps_add_headers(msg, &hname, hbody, 1)<0) {
 		return -1;
 	}
@@ -448,7 +448,7 @@ int tps_reinsert_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 int tps_reinsert_contact(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Contact");
-	
+
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;
 	}
@@ -494,7 +494,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int direction, int local)
 		if(get_cseq(msg)->method_id==METHOD_ACK
 				|| get_cseq(msg)->method_id==METHOD_CANCEL
 				|| local==2) {
-			// th_mask_callid(&msg);
+			// ts_mask_callid(&msg);
 			goto done;
 		} else {
 			/* should be for upstream */
