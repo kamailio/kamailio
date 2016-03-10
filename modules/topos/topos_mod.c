@@ -73,6 +73,9 @@ static str _tps_db_url = str_init(DEFAULT_DB_URL);
 int _tps_param_mask_callid = 0;
 int _tps_sanity_checks = 0;
 
+extern int _tps_branch_expire;
+extern int _tps_dialog_expire;
+
 sanity_api_t scb;
 
 int tps_msg_received(void *data);
@@ -90,6 +93,8 @@ static param_export_t params[]={
 	{"db_url",			PARAM_STR, &_tps_db_url},
 	{"mask_callid",		PARAM_INT, &_tps_param_mask_callid},
 	{"sanity_checks",	PARAM_INT, &_tps_sanity_checks},
+	{"branch_expire",	PARAM_INT, &_tps_branch_expire},
+	{"dialog_expire",	PARAM_INT, &_tps_dialog_expire},
 	{0,0,0}
 };
 
