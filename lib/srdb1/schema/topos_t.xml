@@ -84,6 +84,15 @@
 		<description>From tag - A or B side.</description>
 	</column>
 
+    <column id="x_vbranch">
+        <name>x_vbranch</name>
+        <type>string</type>
+        <size>&callid_len;</size>
+        <default/>
+        <description>Via branch - A or B side</description>
+        <natural/>
+	</column>
+
     <index>
         <name>rectime_idx</name>
         <colref linkend="rectime"/>
