@@ -51,6 +51,9 @@ extern db_func_t _tpsdbf;
 #define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
 
+int tps_db_insert_branch(tps_data_t *td);
+int tps_db_insert_dialog(tps_data_t *td);
+
 /**
  *
  */
@@ -239,7 +242,12 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td)
 
 	ret = tps_storage_fill_contact(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) return ret;
-	return tps_storage_fill_contact(msg, td, TPS_DIR_UPSTREAM);
+	ret = tps_storage_fill_contact(msg, td, TPS_DIR_UPSTREAM);
+	if(ret<0) return ret;
+	ret = tps_db_insert_dialog(td);
+	if(ret<0) return ret;
+
+	return 0;
 }
 
 
@@ -275,6 +283,9 @@ str tt_col_x_tag = str_init("x_tag");
 
 #define TPS_NR_KEYS	32
 
+str _tps_empty = str_init("");
+
+#define TPS_STRZ(_s) ((_s).s)?(_s):(_tps_empty)
 /**
  *
  */
@@ -295,57 +306,57 @@ int tps_db_insert_dialog(tps_data_t *td)
 
 	db_keys[nr_keys] = &td_col_a_callid;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_callid;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_callid);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_a_uuid;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_uuid;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_uuid);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_b_uuid;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->b_uuid;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_uuid);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_a_contact;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_contact;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_contact);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_b_contact;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->b_contact;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_contact);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_as_contact;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->as_contact;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->as_contact);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_bs_contact;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->bs_contact;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->bs_contact);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_a_tag;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_tag;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_tag);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_b_tag;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->b_tag;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_tag);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_a_rr;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_rr;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_rr);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_b_rr;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->b_rr;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_rr);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_iflags;
@@ -355,27 +366,27 @@ int tps_db_insert_dialog(tps_data_t *td)
 
 	db_keys[nr_keys] = &td_col_a_uri;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_uri;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_uri);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_b_uri;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->b_uri;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_uri);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_r_uri;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->r_uri;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->r_uri);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_a_srcip;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_srcip;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_srcip);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_b_srcip;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->b_srcip;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_srcip);
 	nr_keys++;
 
 	if(_tpsdbf.insert(_tps_db_handle, db_keys, db_vals, nr_keys) < 0)
@@ -411,17 +422,17 @@ int tps_db_insert_branch(tps_data_t *td)
 
 	db_keys[nr_keys] = &tt_col_a_callid;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_callid;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_callid);
 	nr_keys++;
 
 	db_keys[nr_keys] = &tt_col_a_uuid;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->a_uuid;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_uuid);
 	nr_keys++;
 
 	db_keys[nr_keys] = &tt_col_b_uuid;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->b_uuid;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_uuid);
 	nr_keys++;
 
 	db_keys[nr_keys] = &tt_col_direction;
@@ -431,12 +442,12 @@ int tps_db_insert_branch(tps_data_t *td)
 
 	db_keys[nr_keys] = &tt_col_x_via;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->x_via;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_via);
 	nr_keys++;
 
 	db_keys[nr_keys] = &tt_col_x_tag;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = td->x_tag;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_tag);
 	nr_keys++;
 
 	if(_tpsdbf.insert(_tps_db_handle, db_keys, db_vals, nr_keys) < 0)
