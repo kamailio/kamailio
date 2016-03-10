@@ -37,6 +37,9 @@
 #include "../../hashes.h"
 #include "../../locking.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
 
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srutils/sruid.h"
@@ -241,6 +244,51 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
 /**
  *
  */
+int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
+{
+	if(parse_headers(msg, HDR_EOH_F, 0)==-1)
+		return -1;
+	if(dir==TPS_DIR_DOWNSTREAM) {
+		/* get from-tag */
+		if(parse_from_header(msg)<0 || msg->from==NULL) {
+			LM_ERR("failed getting 'from' header!\n");
+			goto error;
+		}
+		td->a_tag = get_from(msg)->tag_value;
+	} else {
+		/* get to-tag */
+		if(parse_to_header(msg)<0 || msg->to==NULL) {
+			LM_ERR("failed getting 'to' header!\n");
+			goto error;
+		}
+		td->b_tag = get_to(msg)->tag_value;
+	}
+
+	/* extract the contact address */
+	if(parse_headers(msg, HDR_CONTACT_F, 0)<0 || msg->contact==NULL) {
+		LM_ERR("bad sip message or missing Contact hdr\n");
+		goto error;
+	}
+	if(parse_contact(msg->contact)<0
+			|| ((contact_body_t*)msg->contact->parsed)->contacts==NULL
+			|| ((contact_body_t*)msg->contact->parsed)->contacts->next!=NULL) {
+		LM_ERR("bad Contact header\n");
+		return -1;
+	}
+	if(dir==TPS_DIR_DOWNSTREAM) {
+		td->a_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
+	} else {
+		td->b_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
+	}
+	return 0;
+
+error:
+	return -1;
+}
+
+/**
+ *
+ */
 int tps_storage_record(sip_msg_t *msg, tps_data_t *td)
 {
 	int ret;
@@ -248,6 +296,8 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td)
 	ret = tps_storage_fill_contact(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) return ret;
 	ret = tps_storage_fill_contact(msg, td, TPS_DIR_UPSTREAM);
+	if(ret<0) return ret;
+	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) return ret;
 	ret = tps_db_insert_dialog(td);
 	if(ret<0) return ret;
