@@ -254,6 +254,7 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td)
 /**
  * database storage
  */
+str td_table_name = str_init("topos_d");
 str td_col_rectime = str_init("rectime");
 str td_col_a_callid = str_init("a_callid");
 str td_col_a_uuid = str_init("a_uuid");
@@ -273,6 +274,7 @@ str td_col_r_uri = str_init("r_uri");
 str td_col_a_srcip = str_init("a_srcip");
 str td_col_b_srcip = str_init("b_srcip");
 
+str tt_table_name = str_init("topos_t");
 str tt_col_rectime = str_init("rectime");
 str tt_col_a_callid = str_init("a_callid");
 str tt_col_a_uuid = str_init("a_uuid");
@@ -389,8 +391,12 @@ int tps_db_insert_dialog(tps_data_t *td)
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_srcip);
 	nr_keys++;
 
-	if(_tpsdbf.insert(_tps_db_handle, db_keys, db_vals, nr_keys) < 0)
-	{
+	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
+	if(_tpsdbf.insert(_tps_db_handle, db_keys, db_vals, nr_keys) < 0) {
 		LM_ERR("failed to store message\n");
 		goto error;
 	}
@@ -450,8 +456,12 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_tag);
 	nr_keys++;
 
-	if(_tpsdbf.insert(_tps_db_handle, db_keys, db_vals, nr_keys) < 0)
-	{
+	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
+		LM_ERR("failed to use_table\n");
+		return -1;
+	}
+
+	if(_tpsdbf.insert(_tps_db_handle, db_keys, db_vals, nr_keys) < 0) {
 		LM_ERR("failed to store message\n");
 		goto error;
 	}
