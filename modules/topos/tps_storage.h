@@ -78,4 +78,6 @@ int tps_storage_lock_get(str *lkey);
 int tps_storage_lock_release(str *lkey);
 int tps_storage_lock_set_destroy(void);
 
+void tps_storage_clean(unsigned int ticks, void* param);
+
 #endif

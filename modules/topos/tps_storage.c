@@ -612,3 +612,10 @@ int tps_db_clean_branches(void)
 	}
 	return 0;
 }
+
+
+void tps_storage_clean(unsigned int ticks, void* param)
+{
+	tps_db_clean_branches();
+	tps_db_clean_dialogs();
+}

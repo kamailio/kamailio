@@ -49,6 +49,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
+#include "../../timer_proc.h"
 
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srutils/sruid.h"
@@ -76,6 +77,8 @@ int _tps_sanity_checks = 0;
 extern int _tps_branch_expire;
 extern int _tps_dialog_expire;
 
+int _tps_clean_interval = 60;
+
 sanity_api_t scb;
 
 int tps_msg_received(void *data);
@@ -95,6 +98,7 @@ static param_export_t params[]={
 	{"sanity_checks",	PARAM_INT, &_tps_sanity_checks},
 	{"branch_expire",	PARAM_INT, &_tps_branch_expire},
 	{"dialog_expire",	PARAM_INT, &_tps_dialog_expire},
+	{"clean_interval",	PARAM_INT, &_tps_clean_interval},
 	{0,0,0}
 };
 
@@ -151,6 +155,9 @@ static int mod_init(void)
 #ifdef USE_TCP
 	tcp_set_clone_rcvbuf(1);
 #endif
+
+	if(sr_wtimer_add(tps_storage_clean, NULL, _tps_clean_interval)<0)
+		return -1;
 
 	return 0;
 error:
