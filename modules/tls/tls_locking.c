@@ -104,11 +104,15 @@ static void locking_f(int mode, int n, const char* file, int line)
 		abort(); /* quick crash :-) */
 	}
 	if (mode & CRYPTO_LOCK){
+#ifdef EXTRA_DEBUG
 		LM_DBG("lock get (%d): %d (%s:%d)\n", mode, n, file, line);
+#endif
 		lock_set_get(static_locks, n);
 	}else{
 		lock_set_release(static_locks, n);
+#ifdef EXTRA_DEBUG
 		LM_DBG("lock release (%d): %d (%s:%d)\n", mode, n, file, line);
+#endif
 	}
 }
 
