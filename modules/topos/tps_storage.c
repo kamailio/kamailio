@@ -51,6 +51,9 @@ extern db_func_t _tpsdbf;
 #define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
 
+int _tps_branch_expire = 180;
+int _tps_dialog_expire = 10800;
+
 int tps_db_insert_branch(tps_data_t *td);
 int tps_db_insert_dialog(tps_data_t *td);
 
@@ -392,7 +395,7 @@ int tps_db_insert_dialog(tps_data_t *td)
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
-		LM_ERR("failed to use_table\n");
+		LM_ERR("failed to perform use table\n");
 		return -1;
 	}
 
@@ -457,7 +460,7 @@ int tps_db_insert_branch(tps_data_t *td)
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
-		LM_ERR("failed to use_table\n");
+		LM_ERR("failed to perform use table\n");
 		return -1;
 	}
 
@@ -471,4 +474,35 @@ int tps_db_insert_branch(tps_data_t *td)
 error:
 	return -1;
 
+}
+
+/**
+ *
+ */
+int tps_db_clean_branches(void)
+{
+	db_key_t db_keys[2];
+	db_val_t db_vals[2];
+	db_op_t  db_ops[2] = { OP_LEQ };
+	int nr_keys;
+
+	nr_keys = 0;
+
+	LM_DBG("cleaning expired branch records\n");
+
+	db_keys[0] = &tt_col_rectime;
+	db_vals[0].type = DB1_DATETIME;
+	db_vals[0].nul = 0;
+	db_vals[0].val.time_val = time(NULL) - _tps_branch_expire;
+	nr_keys++;
+
+	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
+		LM_ERR("failed to perform use table\n");
+		return -1;
+	}
+
+	if (_tpsdbf.delete(_tps_db_handle, db_keys, db_ops, db_vals, nr_keys) < 0) {
+		LM_DBG("failed to clean expired branch records\n");
+	}
+	return 0;
 }
