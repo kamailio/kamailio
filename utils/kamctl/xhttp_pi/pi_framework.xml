@@ -783,8 +783,10 @@
 		<column><field>b_uuid</field><type>DB1_STR</type></column>
 		<column><field>direction</field><type>DB1_INT</type></column>
 		<column><field>x_via</field><type>DB1_BLOB</type></column>
-		<column><field>x_tag</field><type>DB1_STR</type></column>
 		<column><field>x_vbranch</field><type>DB1_STR</type></column>
+		<column><field>x_rr</field><type>DB1_BLOB</type></column>
+		<column><field>x_uri</field><type>DB1_STR</type></column>
+		<column><field>x_tag</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of uacreg table-->
 	<db_table id="uacreg">
@@ -3968,8 +3970,10 @@
 				<col><field>b_uuid</field></col>
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
-				<col><field>x_tag</field></col>
 				<col><field>x_vbranch</field></col>
+				<col><field>x_rr</field></col>
+				<col><field>x_uri</field></col>
+				<col><field>x_tag</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3982,8 +3986,10 @@
 				<col><field>b_uuid</field></col>
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
-				<col><field>x_tag</field></col>
 				<col><field>x_vbranch</field></col>
+				<col><field>x_rr</field></col>
+				<col><field>x_uri</field></col>
+				<col><field>x_tag</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3999,8 +4005,10 @@
 				<col><field>b_uuid</field></col>
 				<col><field>direction</field></col>
 				<col><field>x_via</field></col>
-				<col><field>x_tag</field></col>
 				<col><field>x_vbranch</field></col>
+				<col><field>x_rr</field></col>
+				<col><field>x_uri</field></col>
+				<col><field>x_tag</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

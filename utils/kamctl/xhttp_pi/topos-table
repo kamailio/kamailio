@@ -33,6 +33,8 @@
 		<column><field>b_uuid</field><type>DB1_STR</type></column>
 		<column><field>direction</field><type>DB1_INT</type></column>
 		<column><field>x_via</field><type>DB1_BLOB</type></column>
-		<column><field>x_tag</field><type>DB1_STR</type></column>
 		<column><field>x_vbranch</field><type>DB1_STR</type></column>
+		<column><field>x_rr</field><type>DB1_BLOB</type></column>
+		<column><field>x_uri</field><type>DB1_STR</type></column>
+		<column><field>x_tag</field><type>DB1_STR</type></column>
 	</db_table>
