@@ -69,20 +69,12 @@
         <natural/>
 	</column>
 
-    <column>
+    <column id="x_via">
         <name>x_via</name>
         <type>largetext</type>
         <default/>
         <description>Via stack - A or B side</description>
     </column>
-
-	<column id="x_tag">
-		<name>x_tag</name>
-		<type>string</type>
-		<size>&user_len;</size>
-        <default/>
-		<description>From tag - A or B side.</description>
-	</column>
 
     <column id="x_vbranch">
         <name>x_vbranch</name>
@@ -91,6 +83,29 @@
         <default/>
         <description>Via branch - A or B side</description>
         <natural/>
+	</column>
+
+    <column id="x_rr">
+        <name>x_rr</name>
+        <type>largetext</type>
+        <default/>
+        <description>RR stack - A or B side</description>
+	</column>
+
+	<column id="x_uri">
+		<name>x_uri</name>
+		<type>string</type>
+		<size>&uri_len;</size>
+        <default/>
+		<description>The R-URI</description>
+	</column>
+
+	<column id="x_tag">
+		<name>x_tag</name>
+		<type>string</type>
+		<size>&user_len;</size>
+        <default/>
+		<description>From tag - A or B side.</description>
 	</column>
 
     <index>
