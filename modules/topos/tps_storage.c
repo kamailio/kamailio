@@ -389,3 +389,65 @@ int tps_db_insert_dialog(tps_data_t *td)
 error:
 	return -1;
 }
+
+
+/**
+ *
+ */
+int tps_db_insert_branch(tps_data_t *td)
+{
+	db_key_t db_keys[TPS_NR_KEYS];
+	db_val_t db_vals[TPS_NR_KEYS];
+	int nr_keys;
+
+	memset(db_keys, 0, TPS_NR_KEYS*sizeof(db_key_t));
+	memset(db_vals, 0, TPS_NR_KEYS*sizeof(db_val_t));
+	nr_keys = 0;
+
+	db_keys[nr_keys] = &tt_col_rectime;
+	db_vals[nr_keys].type = DB1_INT;
+	db_vals[nr_keys].val.int_val = (int)time(NULL);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_a_callid;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_callid;
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_a_uuid;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->a_uuid;
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_b_uuid;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->b_uuid;
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_direction;
+	db_vals[nr_keys].type = DB1_INT;
+	db_vals[nr_keys].val.int_val = td->direction;
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_x_via;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->x_via;
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_x_tag;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = td->x_tag;
+	nr_keys++;
+
+	if(_tpsdbf.insert(_tps_db_handle, db_keys, db_vals, nr_keys) < 0)
+	{
+		LM_ERR("failed to store message\n");
+		goto error;
+	}
+
+	return 0;
+
+error:
+	return -1;
+
+}
