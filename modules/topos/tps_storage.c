@@ -652,6 +652,7 @@ int tps_db_clean_branches(void)
 			} \
 		} \
 	} while(0);
+
 /**
  *
  */
@@ -721,13 +722,13 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_uri);
 	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_tag);
 
-	if ((db_res !=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res) < 0)
+	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
 		LM_ERR("failed to free result of query\n");
 
 	return 0;
 
 error:
-	if ((db_res !=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res) < 0)
+	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
 		LM_ERR("failed to free result of query\n");
 
 	return -1;
@@ -738,7 +739,97 @@ error:
  */
 int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
+	db_key_t db_keys[4];
+	db_op_t  db_ops[4];
+	db_val_t db_vals[4];
+	db_key_t db_cols[TPS_NR_KEYS];
+	db1_res_t* db_res = NULL;
+	int nr_keys;
+	int nr_cols;
+	int n;
+
+	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
+		return -1;
+
+	nr_keys = 0;
+	nr_cols = 0;
+
+	db_keys[nr_keys]=&td_col_a_uuid;
+	db_ops[nr_keys]=OP_EQ;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
+	nr_keys++;
+
+	db_cols[nr_cols++] = &td_col_rectime;
+	db_cols[nr_cols++] = &td_col_a_callid;
+	db_cols[nr_cols++] = &td_col_a_uuid;
+	db_cols[nr_cols++] = &td_col_b_uuid;
+	db_cols[nr_cols++] = &td_col_a_contact;
+	db_cols[nr_cols++] = &td_col_b_contact;
+	db_cols[nr_cols++] = &td_col_as_contact;
+	db_cols[nr_cols++] = &td_col_bs_contact;
+	db_cols[nr_cols++] = &td_col_a_tag;
+	db_cols[nr_cols++] = &td_col_b_tag;
+	db_cols[nr_cols++] = &td_col_a_rr;
+	db_cols[nr_cols++] = &td_col_b_rr;
+	db_cols[nr_cols++] = &td_col_iflags;
+	db_cols[nr_cols++] = &td_col_a_uri;
+	db_cols[nr_cols++] = &td_col_b_uri;
+	db_cols[nr_cols++] = &td_col_r_uri;
+	db_cols[nr_cols++] = &td_col_a_srcip;
+	db_cols[nr_cols++] = &td_col_b_srcip;
+
+
+	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
+		LM_ERR("failed to perform use table\n");
+		return -1;
+	}
+
+	if (_tpsdbf.query(_tps_db_handle, db_keys, db_ops, db_vals, db_cols,
+				nr_keys, nr_cols, NULL, &db_res) < 0) {
+		LM_ERR("failed to query database\n");
+		goto error;
+	}
+
+	if (RES_ROW_N(db_res) <= 0) {
+		LM_DBG("no stored record for <%.*s>\n",
+				md->a_uuid.len, ZSW(md->a_uuid.s));
+		return 1;
+	}
+
+	sd->cp = sd->cbuf;
+
+	n = 0;
+	n++; /*rectime*/
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_callid);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_uuid);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_uuid);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_contact);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_contact);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->as_contact);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->bs_contact);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_tag);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_tag);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_rr);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_rr);
+	n++; /*iflags*/
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_uri);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_uri);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->r_uri);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_srcip);
+	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_srcip);
+
+	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
+		LM_ERR("failed to free result of query\n");
+
 	return 0;
+
+error:
+	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
+		LM_ERR("failed to free result of query\n");
+
+	return -1;
 }
 
 /**
