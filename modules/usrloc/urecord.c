@@ -251,6 +251,9 @@ static inline int close_connection(int conid) {
 		msg[0] = (long)con;
 		msg[1] = CONN_EOF;
 
+		con->send_flags.f |= SND_F_CON_CLOSE;
+		con->flags |= F_CONN_FORCE_EOF;
+
 		n = send_all(unix_tcp_sock, msg, sizeof(msg));
 		if (unlikely(n <= 0)){
 			LM_ERR("failed to send close request: %s (%d)\n", strerror(errno), errno);
