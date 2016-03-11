@@ -132,6 +132,9 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 	struct lump* anchor;
 	str hs;
 
+	if(hname==NULL || hname->len<=0 || hbody==NULL || hbody->len<=0)
+		return 0;
+
 	parse_headers(msg, HDR_EOH_F, 0);
 	if(hpos == 0) { /* append */
 		/* after last header */
@@ -405,8 +408,10 @@ int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 	LM_DBG("compacted headers - as_contact: [%.*s](%d) - bs_contact: [%.*s](%d)\n",
 			ptsd->as_contact.len, ZSW(ptsd->as_contact.s), ptsd->as_contact.len,
 			ptsd->bs_contact.len, ZSW(ptsd->bs_contact.s), ptsd->bs_contact.len);
+	ptsd->x_rr = ptsd->a_rr;
 	return 0;
 }
+
 
 /**
  *
@@ -439,6 +444,34 @@ int tps_reinsert_contact(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 /**
  *
  */
+int tps_reappend_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
+{
+	str hname = str_init("Via");
+
+	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+int tps_reappend_rr(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
+{
+	str hname = str_init("Record-Route");
+
+	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
 int tps_request_received(sip_msg_t *msg, int dialog, int direction)
 {
 	if(dialog==0) {
@@ -455,24 +488,40 @@ int tps_response_received(sip_msg_t *msg)
 {
 	tps_data_t mtsd;
 	tps_data_t stsd;
+	tps_data_t btsd;
 	tps_data_t *ptsd;
 	str lkey;
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
+	memset(&btsd, 0, sizeof(tps_data_t));
 	ptsd = &mtsd;
+
+	lkey = msg->callid->body;
 
 	if(tps_pack_request(msg, &mtsd)<0) {
 		LM_ERR("failed to extract and pack the headers\n");
 		return -1;
 	}
-	if(tps_storage_load_dialog(msg, &mtsd, &stsd)<0) {
+	tps_storage_lock_get(&lkey);
+	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
 		goto error;
 	}
+	LM_DBG("loaded dialog a_uuid [%.*s]\n",
+			btsd.a_uuid.len, ZSW(btsd.a_uuid.s));
+	if(tps_storage_load_dialog(msg, &btsd, &stsd)<0) {
+		goto error;
+	}
+
+	tps_storage_lock_release(&lkey);
+
+	tps_reappend_via(msg, &btsd, &btsd.x_via);
+	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
 
 	return 0;
 
 error:
+	tps_storage_lock_release(&lkey);
 	return -1;
 }
 

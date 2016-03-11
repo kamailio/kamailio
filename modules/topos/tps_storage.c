@@ -557,14 +557,24 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_via);
 	nr_keys++;
 
-	db_keys[nr_keys] = &tt_col_x_tag;
-	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_tag);
-	nr_keys++;
-
 	db_keys[nr_keys] = &tt_col_x_vbranch;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_vbranch1);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_x_rr;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_rr);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_x_uri;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_uri);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_x_tag;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_tag);
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
@@ -615,6 +625,9 @@ int tps_db_clean_branches(void)
 	return 0;
 }
 
+/**
+ *
+ */
 #define TPS_DATA_APPEND_DB(_sd, _res, _c, _s)	\
 	do { \
 		if (RES_ROWS(_res)[0].values[_c].nul == 0) \
@@ -624,7 +637,11 @@ int tps_db_clean_branches(void)
 			{ \
 			case DB1_STRING: \
 				tmp.s=(char*)RES_ROWS(_res)[0].values[_c].val.string_val; \
-				tmp.len=strlen(tmp.s); \
+				if(tmp.s) { \
+					tmp.len=strlen(tmp.s); \
+				} else { \
+					tmp.len=0; \
+				} \
 				break; \
 			case DB1_STR: \
 				tmp.len=RES_ROWS(_res)[0].values[_c].val.str_val.len; \
@@ -712,15 +729,15 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 
 	n = 0;
 	n++; /*rectime*/
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_callid);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_uuid);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_uuid);
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_callid); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_uuid); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_uuid); n++;
 	n++; /*direction*/
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_via);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_vbranch1);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_rr);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_uri);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->x_tag);
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_via); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_vbranch1); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_rr); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_uri); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_tag); n++;
 
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
 		LM_ERR("failed to free result of query\n");
@@ -802,23 +819,23 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 
 	n = 0;
 	n++; /*rectime*/
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_callid);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_uuid);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_uuid);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_contact);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_contact);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->as_contact);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->bs_contact);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_tag);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_tag);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_rr);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_rr);
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_callid); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_uuid); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_uuid); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_contact); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_contact); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->as_contact); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->bs_contact); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_tag); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_tag); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_rr); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_rr); n++;
 	n++; /*iflags*/
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_uri);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_uri);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->r_uri);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->a_srcip);
-	TPS_DATA_APPEND_DB(sd, db_res, n++, &sd->b_srcip);
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_uri); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_uri); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->r_uri); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_srcip); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_srcip); n++;
 
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
 		LM_ERR("failed to free result of query\n");
