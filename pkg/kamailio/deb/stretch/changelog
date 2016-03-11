@@ -1,3 +1,9 @@
+kamailio (4.4.0~pre3) unstable; urgency=medium
+
+  * version set to 4.4.0-pre3
+
+ -- Victor Seva <vseva@debian.org>  Fri, 11 Mar 2016 09:18:29 +0100
+
 kamailio (4.4.0~pre2) unstable; urgency=medium
 
   * version set to 4.4.0-pre2
