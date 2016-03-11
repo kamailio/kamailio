@@ -4,7 +4,7 @@ Peter Dunkley
 
    Crocodile RCS Ltd
 
-   Copyright � 2012-2013 Crocodile RCS Ltd
+   Copyright © 2012-2013 Crocodile RCS Ltd
      __________________________________________________________________
 
    Table of Contents
@@ -51,6 +51,10 @@ Peter Dunkley
 
               7.1. websocket:closed
 
+        8. Exported Pseudo Variables
+
+              8.1. $ws_conid
+
    List of Examples
 
    1.1. event_route[xhttp:request]
@@ -65,6 +69,7 @@ Peter Dunkley
    1.10. ws_handle_handshake usage
    1.11. ws_close usage
    1.12. event_route[websocket:closed] usage
+   1.13. $ws_conid usage
 
 Chapter 1. Admin Guide
 
@@ -110,6 +115,10 @@ Chapter 1. Admin Guide
 
         7.1. websocket:closed
 
+   8. Exported Pseudo Variables
+
+        8.1. $ws_conid
+
 1. Overview
 
    This module implements a WebSocket (RFC 6455) server and provides
@@ -129,11 +138,11 @@ Chapter 1. Admin Guide
 2.1. Initiating a connection
 
    A WebSocket connection is initiated with an HTTP GET. The xhttp module
-   is used to handle this GET and call the Section 5.1, "
-   ws_handle_handshake() " exported function.
+   is used to handle this GET and call the Section 5.1, “
+   ws_handle_handshake() ” exported function.
 
    event_route[xhttp:request] should perform some validation of the HTTP
-   headers before calling Section 5.1, " ws_handle_handshake() ". The
+   headers before calling Section 5.1, “ ws_handle_handshake() ”. The
    event_route can also be used to make sure the HTTP GET has the correct
    URI, perform HTTP authentication on the WebSocket connection, and check
    the Origin header (RFC 6454) to ensure a browser-based SIP UA or MSRP
@@ -437,7 +446,7 @@ modparam("websocket", "cors_mode", 2)
    5.1. ws_handle_handshake()
    5.2. ws_close([status, reason[, connection_id]])
 
-5.1. ws_handle_handshake()
+5.1.  ws_handle_handshake()
 
    This function checks an HTTP GET request for the required headers and
    values, and (if successful) upgrades the connection from HTTP to
@@ -456,7 +465,7 @@ Note
 ws_handle_handshake();
 ...
 
-5.2. ws_close([status, reason[, connection_id]])
+5.2.  ws_close([status, reason[, connection_id]])
 
    This function closes a WebSocket connection.
 
@@ -497,7 +506,7 @@ ws_close(4000, "Because I say so");
    Name: ws.dump
 
    Parameters:
-     * order (optional) - "id_hash", "used_desc", or "used_asc".
+     * order (optional) - “id_hash”, “used_desc”, or “used_asc”.
 
 Note
 
@@ -582,7 +591,7 @@ Note
 
    7.1. websocket:closed
 
-7.1. websocket:closed
+7.1.  websocket:closed
 
    When defined, the module calls event_route[websocket:closed] when a
    connection closes. The connection may be identified using the the $si
@@ -592,5 +601,21 @@ Note
 ...
 event_route[websocket:closed] {
         xlog("L_INFO", "WebSocket connection from $si:$sp has closed\n");
+}
+...
+
+8. Exported Pseudo Variables
+
+   8.1. $ws_conid
+
+8.1. $ws_conid
+
+   Connection id of closed websocket connection. Can only be used in
+   websocket:closed event route.
+
+   Example 1.13. $ws_conid usage
+...
+event_route[websocket:closed] {
+        xlog("L_INFO", "WebSocket connection with id $ws_conid has closed\n");
 }
 ...

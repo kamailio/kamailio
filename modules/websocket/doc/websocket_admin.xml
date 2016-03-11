@@ -632,6 +632,29 @@ event_route[websocket:closed] {
 		</example>
 	</section>
 
-	</section>	
+	</section>
+    
+	<section>
+		<title>Exported Pseudo Variables</title>
+		<section>
+			<title><function moreinfo="none">$ws_conid</function></title>
+			<para>
+			Connection id of closed websocket connection.  Can only be
+            used in websocket:closed event route.
+			</para>
+		<example>
+		<title>$ws_conid usage</title>
+		<programlisting format="linespecific">
+...
+event_route[websocket:closed] {
+        xlog("L_INFO", "WebSocket connection with id $ws_conid has closed\n");
+}
+...
+		</programlisting>
+		</example>
+	        </section>
+
+	</section>
+
 </chapter>
 

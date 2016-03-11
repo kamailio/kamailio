@@ -292,7 +292,9 @@ static void wsconn_run_route(ws_connection_t *wsc)
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
+	
 	fmsg = faked_msg_next();
+	wsc->rcv.proto_reserved1 = wsc->id;
 	fmsg->rcv = wsc->rcv;
 
 	backup_rt = get_route_type();

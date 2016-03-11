@@ -52,6 +52,7 @@ static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
 static int ws_close_fixup(void** param, int param_no);
+static int pv_get_ws_conid_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 sl_api_t ws_slb;
 
@@ -159,6 +160,12 @@ static mi_export_t mi_cmds[] =
 	{ 0, 0, 0, 0, 0 }
 };
 
+static pv_export_t mod_pvs[] = {
+    {{"ws_conid", (sizeof("ws_conid")-1)}, PVT_CONTEXT,
+     pv_get_ws_conid_f, 0, 0, 0, 0, 0},
+    {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
+
 struct module_exports exports= 
 {
 	"websocket",
@@ -167,7 +174,7 @@ struct module_exports exports=
 	params,			/* Exported parameters */
 	stats,			/* exported statistics */
 	mi_cmds,		/* exported MI functions */
-	0,			/* exported pseudo-variables */
+	mod_pvs,                /* exported pseudo-variables */
 	0,			/* extra processes */
 	mod_init,		/* module initialization function */
 	0,			/* response function */
@@ -340,4 +347,12 @@ static int ws_close_fixup(void** param, int param_no)
 	default:
 		return 0;
 	}
+}
+
+static int pv_get_ws_conid_f(struct sip_msg *msg, pv_param_t *param,
+			     pv_value_t *res)
+{
+    if (msg == NULL) return -1;
+
+    return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
 }
