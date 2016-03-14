@@ -182,8 +182,7 @@ static inline int decode_uri( str *src , str *dst)
 
 
 static inline struct lump* get_display_anchor(struct sip_msg *msg,
-		 	 	 	 	 	 	 	 	 	 	 struct hdr_field *hdr, struct to_body *body, str
-		 	 	 	 	 	 	 	 	 	 	 *dsp)
+		struct hdr_field *hdr, struct to_body *body, str *dsp)
 {
 	struct lump* l;
 	char *p1;
@@ -237,7 +236,7 @@ static inline struct lump* get_display_anchor(struct sip_msg *msg,
  * replace uri and/or display name in FROM / TO header
  */
 int replace_uri( struct sip_msg *msg, str *display, str *uri,
-		  struct hdr_field *hdr, str *rr_param, str* restore_avp, int check_from)
+	struct hdr_field *hdr, str *rr_param, str* restore_avp, int check_from)
 {
 	static char buf_s[MAX_URI_SIZE];
 	struct to_body *body;
@@ -323,9 +322,9 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
-		    memcpy( buf.s, display->s, display->len);
-		    buf.len =  display->len;
-		    if (l==0 && (l=get_display_anchor(msg,hdr,body,&buf))==0)
+			memcpy( buf.s, display->s, display->len);
+			buf.len =  display->len;
+			if (l==0 && (l=get_display_anchor(msg,hdr,body,&buf))==0)
 			{
 				LM_ERR("failed to insert anchor\n");
 				goto error;
@@ -427,7 +426,7 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 		buf.s = buf_s;
 		if ( body->uri.len>uri->len ) {
 			if (body->uri.len>MAX_URI_SIZE) {
-				 LM_ERR("old %.*s uri too long\n",hdr->name.len,hdr->name.s);
+				LM_ERR("old %.*s uri too long\n",hdr->name.len,hdr->name.s);
 				goto error;
 			}
 			memcpy( buf.s, body->uri.s, body->uri.len);
@@ -554,6 +553,7 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 		goto failed;
 	}
 	pkg_free(add_to_rr.s);
+	add_to_rr.s = NULL;
 
 	/* dencrypt parameter ;) */
 	if (uac_passwd.len)
@@ -662,10 +662,10 @@ failed:
 void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param)
 {
 	/* check if the request contains the route param */
-	 if ( (restore_uri( msg, &rr_from_param, &restore_from_avp, 1/*from*/) +
-			 restore_uri( msg, &rr_to_param, &restore_to_avp, 0/*to*/) )!= -2 ) {
+	if ( (restore_uri( msg, &rr_from_param, &restore_from_avp, 1/*from*/) +
+			restore_uri( msg, &rr_to_param, &restore_to_avp, 0/*to*/) )!= -2 ) {
 		/* restore in req performed -> replace in reply */
-		/* in callback we need TO/FROM to be parsed- it's already done 
+		/* in callback we need TO/FROM to be parsed- it's already done
 		 * by restore_from_to() function */
 		if ( uac_tmb.register_tmcb( msg, 0, TMCB_RESPONSE_IN,
 		restore_uris_reply, 0, 0)!=1 ) {
@@ -680,7 +680,7 @@ void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param)
 
 /* replace the entire HDR with the original request */
 static inline int restore_uri_reply(struct sip_msg *rpl,
-		   struct hdr_field *rpl_hdr, struct hdr_field *req_hdr, str* stored_value)
+		struct hdr_field *rpl_hdr, struct hdr_field *req_hdr, str* stored_value)
 
 {
 	struct lump* l;
@@ -758,7 +758,7 @@ void restore_uris_reply(struct cell* t, int type, struct tmcb_params *p)
 
 		/* parse FROM in reply */
 		if (parse_from_header( rpl )<0 ) {
-				 LM_ERR("failed to find/parse FROM hdr\n");
+			LM_ERR("failed to find/parse FROM hdr\n");
 			return;
 		}
 
@@ -776,7 +776,7 @@ void restore_uris_reply(struct cell* t, int type, struct tmcb_params *p)
 	if (req->msg_flags & FL_USE_UAC_TO ) {
 
 		/* parse TO in reply */
-		 if ( rpl->to==0 && (parse_headers(rpl,HDR_TO_F,0)!=0 || rpl->to==0) ) {
+		if ( rpl->to==0 && (parse_headers(rpl,HDR_TO_F,0)!=0 || rpl->to==0) ) {
 			LM_ERR("failed to parse TO hdr\n");
 			return;
 		}
@@ -787,7 +787,7 @@ void restore_uris_reply(struct cell* t, int type, struct tmcb_params *p)
 		}
 
 		if (restore_uri_reply( rpl, rpl->to, req->to, &avp_value.s)) {
-			   LM_ERR("failed to restore TO\n");
+			LM_ERR("failed to restore TO\n");
 		}
 
 	}
