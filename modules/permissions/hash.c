@@ -423,6 +423,7 @@ void empty_hash_table(struct trusted_list **table)
 		while (np) {
 			if (np->src_ip.s) shm_free(np->src_ip.s);
 			if (np->pattern) shm_free(np->pattern);
+			if (np->ruri_pattern) shm_free(np->ruri_pattern);
 			if (np->tag.s) shm_free(np->tag.s);
 			next = np->next;
 			shm_free(np);
