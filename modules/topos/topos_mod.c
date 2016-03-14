@@ -354,7 +354,6 @@ int tps_msg_sent(void *data)
 		tps_response_sent(&msg);
 	}
 
-ready:
 	obuf->s = tps_msg_update(&msg, (unsigned int*)&obuf->len);
 
 done:
