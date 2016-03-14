@@ -393,7 +393,7 @@ void kz_amqp_destroy() {
 
 }
 
-#define KZ_URL_MAX_SIZE 50
+#define KZ_URL_MAX_SIZE 100
 static char* KZ_URL_ROOT = "/";
 
 int kz_amqp_add_connection(modparam_t type, void* val)
