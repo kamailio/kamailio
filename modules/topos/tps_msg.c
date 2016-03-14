@@ -382,7 +382,7 @@ int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 				ptsd->bs_contact.s = ptsd->cp;
 				ptsd->bs_contact.len = rr->nameaddr.uri.len;
 				if(strnstr(ptsd->bs_contact.s, ";r2=on",
-							ptsd->bs_contact.len)==NULL) {
+							ptsd->bs_contact.len)==0) {
 					LM_DBG("single record routing by proxy\n");
 					ptsd->as_contact.s = ptsd->cp;
 					ptsd->as_contact.len = rr->nameaddr.uri.len;
