@@ -489,13 +489,11 @@ int tps_response_received(sip_msg_t *msg)
 	tps_data_t mtsd;
 	tps_data_t stsd;
 	tps_data_t btsd;
-	tps_data_t *ptsd;
 	str lkey;
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
-	ptsd = &mtsd;
 
 	lkey = msg->callid->body;
 
