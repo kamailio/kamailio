@@ -1,5 +1,6 @@
 /*
  *
+ * Copyright (C) 2015 kamailio.org
  * Copyright (C) 2014 Victor Seva <vseva@sipwise.com>
  *
  * This file is part of kamailio, a free SIP server.
@@ -48,3 +49,53 @@ int str_append(str *orig, str *suffix, str *dest)
 	memcpy(dest->s+orig->len, suffix->s, suffix->len);
 	return 0;
 }
+
+/*
+* Find the first occurrence of find in s, where the search is limited to the
+* first slen characters of s.
+*/
+char * _strnstr(const char* s, const char* find, size_t slen)
+{
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != '\0') {
+		len = strlen(find);
+		do {
+			do {
+				if (slen-- < 1 || (sc = *s++) == '\0')
+					return (NULL);
+			} while (sc != c);
+			if (len > slen)
+				return (NULL);
+		} while (strncmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
+}
+
+/*
+ * Find the first case insensitive occurrence of find in s, where the
+ * search is limited to the first slen characters of s.
+ * Based on FreeBSD strnstr.
+ */
+char* _strnistr(const char *s, const char *find, size_t slen)
+{
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != '\0') {
+		len = strlen(find);
+		do {
+			do {
+				if ((sc = *s++) == '\0' || slen-- < 1)
+					return (NULL);
+			} while (sc != c);
+			if (len > slen)
+				return (NULL);
+		} while (strncasecmp(s, find, len) != 0);
+		s--;
+	}
+	return ((char *)s);
+}
+
