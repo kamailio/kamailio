@@ -835,19 +835,23 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         continue;
                     }
 
+                    ul.lock_udomain(_d, &pi->public_identity);
                     //update the implicit IMPU with the new data
                     if (ul.update_impurecord(_d, &pi->public_identity, 0,
                             reg_state, -1 /*do not change send sar on delete */, pi->barring, 0, s, ccf1, ccf2, ecf1, ecf2,
                             &impu_rec) != 0) {
                         LM_ERR("Unable to update implicit impurecord for <%.*s>.... continuing\n", pi->public_identity.len, pi->public_identity.s);
+                        ul.unlock_udomain(_d, &pi->public_identity);
                         continue;
                     }
 
                     //update the contacts for the explicit IMPU
                     if (update_contacts_helper(msg, impu_rec, assignment_type, expires_hdr) != 0) {
                         LM_ERR("Failed trying to update contacts for re-registration of implicit IMPU <%.*s>.......continuing\n", pi->public_identity.len, pi->public_identity.s);
+                        ul.unlock_udomain(_d, &pi->public_identity);
                         continue;
                     }
+                    ul.unlock_udomain(_d, &pi->public_identity);
                 }
             }
             ul.lock_subscription(subscription);
