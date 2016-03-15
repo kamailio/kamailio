@@ -97,26 +97,6 @@ static inline int calc_contact_expires(contact_t *c,int expires_hdr, int local_t
 	return local_time_now + r;
 }
 
-static inline char* strnistr(const char *s, const char *find, size_t slen)
-{
-        char c, sc;
-        size_t len;
-
-        if ((c = *find++) != '\0') {
-                len = strlen(find);
-                do {
-                        do {
-                                if ((sc = *s++) == '\0' || slen-- < 1)
-                                        return (NULL);
-                        } while (sc != c);
-                        if (len > slen)
-                                return (NULL);
-                } while (strncasecmp(s, find, len) != 0);
-                s--;
-        }
-        return ((char *)s);
-}
-
 
 /**
  * Updates the registrar with the new values
@@ -170,7 +150,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 				ci.num_service_routes = service_route_cnt;
 				ci.reg_state = PCONTACT_REGISTERED|PCONTACT_REG_PENDING|PCONTACT_REG_PENDING_AAR;   //we don't want to add contacts that did not come through us (pcscf)
 
-                                if (c->uri.len > 6 && (strnistr(c->uri.s, "alias=", c->uri.len))) {
+                                if (c->uri.len > 6 && (_strnistr(c->uri.s, "alias=", c->uri.len))) {
                                     LM_DBG("contact has an alias - we can use that as the received.... - TODO\n");
                                 }
 				ci.received_host.len = 0;
