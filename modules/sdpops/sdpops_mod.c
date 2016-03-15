@@ -1529,31 +1529,6 @@ static int w_sdp_content(sip_msg_t* msg, char* foo, char *bar)
 	return -1;
 }
 
-/*
- * Find the first case insensitive occurrence of find in s, where the
- * search is limited to the first slen characters of s.
- * Based on FreeBSD strnstr.
- */
-char* strnistr(const char *s, const char *find, size_t slen)
-{
-	char c, sc;
-	size_t len;
-
-	if ((c = *find++) != '\0') {
-		len = strlen(find);
-		do {
-			do {
-				if ((sc = *s++) == '\0' || slen-- < 1)
-					return (NULL);
-			} while (sc != c);
-			if (len > slen)
-				return (NULL);
-		} while (strncasecmp(s, find, len) != 0);
-		s--;
-	}
-	return ((char *)s);
-}
-
 /**
  *
  */
@@ -1576,7 +1551,7 @@ static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar)
 		if ((mime & 0x00ff) == SUBTYPE_SDP) return 1; else return -1;
 	case TYPE_MULTIPART:
 		if ((mime & 0x00ff) == SUBTYPE_MIXED) {
-			if (strnistr(body.s, "application/sdp", body.len) == NULL) {
+			if (_strnistr(body.s, "application/sdp", body.len) == NULL) {
 				return -1;
 			} else {
 				return 1;
