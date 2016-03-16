@@ -80,7 +80,7 @@ str		default_cipher_suite_list = STR_NULL;		/*!< List of allowed cipher suites *
 unsigned int	default_tls_version = 0;		/*!< 0 = Use libcurl default */
 unsigned int	default_tls_verify_peer = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
 unsigned int	default_tls_verify_host = 2;		/*!< 0 = Do not verify TLS server CN/SAN  2 = Verify TLS server CN/SAN (default) */
-char 		*default_http_proxy = NULL;		/*!< Default HTTP proxy to use */
+str 		default_http_proxy = STR_NULL;		/*!< Default HTTP proxy to use */
 unsigned int	default_http_proxy_port = 0;		/*!< Default HTTP proxy port to use */
 unsigned int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
 str 		default_useragent = { CURL_USER_AGENT, CURL_USER_AGENT_LEN };	/*!< Default CURL useragent. Default "Kamailio Curl " */
@@ -140,7 +140,6 @@ static cmd_export_t cmds[] = {
 /* Exported parameters */
 static param_export_t params[] = {
     	{"connection_timeout", PARAM_INT, &default_connection_timeout},
-	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
 	{"cacert", PARAM_STRING,  &default_tls_cacert },
 	{"client_cert", PARAM_STR, &default_tls_clientcert },
 	{"client_key", PARAM_STR, &default_tls_clientkey },
@@ -149,11 +148,12 @@ static param_export_t params[] = {
 	{"verify_peer", PARAM_INT, &default_tls_verify_peer },
 	{"verify_host", PARAM_INT, &default_tls_verify_host },
 	{"httpproxyport", PARAM_INT, &default_http_proxy_port },
-	{"httpproxy", PARAM_STRING, &default_http_proxy},
+	{"httpproxy", PARAM_STR, &default_http_proxy},
 	{"httpredirect", PARAM_INT, &default_http_follow_redirect },
 	{"useragent", PARAM_STR,  &default_useragent },
 	{"maxdatasize", PARAM_INT,  &default_maxdatasize },
 	{"config_file", PARAM_STR,  &http_client_config_file },
+	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
     	{0, 0, 0}
 };
 
@@ -271,7 +271,7 @@ static int mod_init(void)
 	LM_DBG("**** init curl: Cipher Suites: %.*s \n", default_cipher_suite_list.len, default_cipher_suite_list.s);
 	LM_DBG("**** init curl: SSL Version: %d \n", default_tls_version);
 	LM_DBG("**** init curl: verifypeer: %d verifyhost: %d\n", default_tls_verify_peer, default_tls_verify_host);
-	LM_DBG("**** init curl: HTTP Proxy: %s Port %d\n", default_http_proxy, default_http_proxy_port);
+	LM_DBG("**** init curl: HTTP Proxy: %.*s Port %d\n", default_http_proxy.len, default_http_proxy.s, default_http_proxy_port);
 
 	LM_DBG("Extra: Curl supports %s %s %s \n",
 			(curl_info->features & CURL_VERSION_SSL ? "SSL" : ""),

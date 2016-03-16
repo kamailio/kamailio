@@ -58,6 +58,8 @@ typedef struct raw_http_client_conn
 	str clientcert;
 	str clientkey;
 	str ciphersuites;
+	str http_proxy;
+	int http_proxy_port;
 	int verify_peer;
 	int verify_host;
 	int tlsversion;
@@ -82,20 +84,22 @@ static cfg_option_t tls_versions[] = {
 };
 
 static cfg_option_t http_client_options[] = {
-	{"url",                  .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"username",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"password",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"failover",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"useragent",            .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"verify_peer",          .f = cfg_parse_bool_opt},
-	{"verify_host",          .f = cfg_parse_bool_opt},
-	{"client_cert",          .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"client_key",           .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"cipher_suites",        .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"tlsversion",           .f = cfg_parse_enum_opt, .param = tls_versions},
-	{"timeout",              .f = cfg_parse_int_opt},
-	{"maxdatasize",          .f = cfg_parse_int_opt},
-	{"httpredirect",         .f = cfg_parse_bool_opt},
+	{"url",                  .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 0 */
+	{"username",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 1 */
+	{"password",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 2 */
+	{"failover",             .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 3 */
+	{"useragent",            .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 4 */
+	{"verify_peer",          .f = cfg_parse_bool_opt},	/* 5 */
+	{"verify_host",          .f = cfg_parse_bool_opt},	/* 6 */
+	{"client_cert",          .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 7 */
+	{"client_key",           .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 8 */
+	{"cipher_suites",        .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 9 */
+	{"tlsversion",           .f = cfg_parse_enum_opt, .param = tls_versions},	/* 10 */
+	{"timeout",              .f = cfg_parse_int_opt},	/* 11 */
+	{"maxdatasize",          .f = cfg_parse_int_opt},	/* 12 */
+	{"httpredirect",         .f = cfg_parse_bool_opt},	/* 13 */
+	{"httpproxy",           .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 14 */
+	{"httpproxyport",      .f = cfg_parse_int_opt},	/* 15 */
 	{0}
 };
 
@@ -171,7 +175,9 @@ int curl_parse_param(char *val)
 	str client_key   = default_tls_clientkey;
 	str ciphersuites = default_cipher_suite_list;
 	str useragent    = default_useragent;
+	str http_proxy   = default_http_proxy;
 
+	unsigned int http_proxy_port = default_http_proxy_port;
 	unsigned int maxdatasize = default_maxdatasize;
 	unsigned int timeout	= default_connection_timeout;
 	unsigned int http_follow_redirect = default_http_follow_redirect;
@@ -185,8 +191,9 @@ int curl_parse_param(char *val)
 	param_t *conparams = NULL;
 	curl_con_t *cc = NULL;
 
-	LM_INFO("curl modparam parsing starting\n");
+	LM_INFO("http_client modparam parsing starting\n");
 	LM_DBG("modparam httpcon: %s\n", val);
+	LM_DBG(" *** Default httproxy: %s\n", http_proxy.s);
 
 	/* parse: name=>http_url*/
 	in.s = val;
@@ -436,6 +443,11 @@ int curl_parse_param(char *val)
 	cc->verify_host = verify_host;
 	cc->timeout = timeout;
 	cc->maxdatasize = maxdatasize;
+	if (http_proxy_port > 0) {
+		cc->http_proxy_port = http_proxy_port;
+		cc->http_proxy = http_proxy.s ? as_asciiz(&http_proxy) : NULL;
+		LM_DBG("*** Setting HTTP proxy for connection to %s \n", cc->http_proxy);
+	}
 	cc->http_follow_redirect = http_follow_redirect;
 
 	LM_DBG("cname: [%.*s] url: [%.*s] username [%s] password [%s] failover [%.*s] timeout [%d] useragent [%s] maxdatasize [%d]\n", 
@@ -443,6 +455,10 @@ int curl_parse_param(char *val)
 			cc->failover.len, cc->failover.s, cc->timeout, cc->useragent, cc->maxdatasize);
 	LM_DBG("cname: [%.*s] client_cert [%s] client_key [%s] ciphersuites [%s] tlsversion [%d] verify_peer [%d] verify_host [%d]\n",
 			cc->name.len, cc->name.s, cc->clientcert, cc->clientkey, cc->ciphersuites, cc->tlsversion, cc->verify_peer, cc->verify_host);
+	if (cc->http_proxy_port > 0) {
+		LM_DBG("cname: [%.*s] http_proxy [%s] http_proxy_port [%d]\n",
+		cc->name.len, cc->name.s, cc->http_proxy, cc->http_proxy_port);
+	}
 
 	return 0;
 
@@ -501,6 +517,12 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 	if (default_cipher_suite_list.s != NULL)
 		pkg_str_dup(&raw_cc->ciphersuites, &default_cipher_suite_list);
 	pkg_str_dup(&raw_cc->useragent,    &default_useragent);
+	if (default_http_proxy_port > 0) {
+		raw_cc->http_proxy_port = default_http_proxy_port;
+		if (default_http_proxy.s != NULL) {
+			pkg_str_dup(&raw_cc->http_proxy,   &default_http_proxy);
+		}
+	}
 	raw_cc->verify_peer = default_tls_verify_peer;
 	raw_cc->verify_host = default_tls_verify_host;
 	raw_cc->maxdatasize = default_maxdatasize;
@@ -511,6 +533,7 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 	for(i = 0; tls_versions[i].name; i++) {
 		tls_versions[i].param = &raw_cc->tlsversion;
 	}
+	/* Index from above structure (see top of file) */
 	http_client_options[0].param = &raw_cc->url;
 	http_client_options[1].param = &raw_cc->username;
 	http_client_options[2].param = &raw_cc->password;
@@ -525,7 +548,8 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 	http_client_options[11].param = &raw_cc->timeout;
 	http_client_options[12].param = &raw_cc->maxdatasize;
 	http_client_options[13].param = &raw_cc->http_follow_redirect;
-
+	http_client_options[14].param = &raw_cc->http_proxy;
+	http_client_options[15].param = &raw_cc->http_proxy_port;
 
 	cfg_set_options(parser, http_client_options);
 
@@ -583,6 +607,11 @@ int fixup_raw_http_client_conn_list(void)
 			LM_WARN("curl connection [%.*s]: tlsversion %d unsupported value. Using default\n", cc->name.len, cc->name.s, cc->tlsversion);
 			cc->tlsversion = default_tls_version;
 		}
+		cc->http_proxy_port = raw_cc->http_proxy_port;
+		if (cc->http_proxy_port > 0 && raw_cc->http_proxy.s != NULL) {
+			cc->http_proxy = raw_cc->http_proxy.s ? as_asciiz(&raw_cc->http_proxy) : NULL;
+		}
+
 		cc->verify_peer = raw_cc->verify_peer;
 		cc->verify_host = raw_cc->verify_host;
 		cc->timeout = raw_cc->timeout;
@@ -594,6 +623,10 @@ int fixup_raw_http_client_conn_list(void)
 			cc->failover.len, cc->failover.s, cc->timeout, cc->useragent, cc->maxdatasize);
 		LM_DBG("cname: [%.*s] client_cert [%s] client_key [%s] ciphersuites [%s] tlsversion [%d] verify_peer [%d] verify_host [%d]\n",
 			cc->name.len, cc->name.s, cc->clientcert, cc->clientkey, cc->ciphersuites, cc->tlsversion, cc->verify_peer, cc->verify_host);
+		if (cc->http_proxy_port > 0) {
+			LM_DBG("cname: [%.*s] http_proxy [%s] http_proxy_port [%d]\n",
+			cc->name.len, cc->name.s, cc->http_proxy, cc->http_proxy_port);
+		}
 
 	}
 done:
@@ -609,6 +642,7 @@ done:
 		if (raw_cc->clientcert.s) pkg_free(raw_cc->clientcert.s);
 		if (raw_cc->clientkey.s) pkg_free(raw_cc->clientkey.s);
 		if (raw_cc->ciphersuites.s) pkg_free(raw_cc->ciphersuites.s);
+		if (raw_cc->http_proxy.s) pkg_free(raw_cc->http_proxy.s);
 		pkg_free(raw_cc);
 		raw_conn_list = raw_conn_list->next;
 	}
