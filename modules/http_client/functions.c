@@ -55,6 +55,8 @@ typedef struct {
     char *clientkey;
     char *cacert;
     char *ciphersuites;
+    char *http_proxy;
+    unsigned int http_proxy_port;
     unsigned int tlsversion;
     unsigned int verify_peer;
     unsigned int verify_host;
@@ -180,6 +182,15 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
         res |= curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST, params->ciphersuites);
     }
 
+    if (params->http_proxy  != NULL) {
+	res |= curl_easy_setopt(curl, CURLOPT_PROXY, params->http_proxy);
+    }
+
+    if (params->http_proxy_port > 0) {
+	res |= curl_easy_setopt(curl, CURLOPT_PROXYPORT, params->http_proxy_port);
+    }
+
+
     res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long) params->verify_peer);
     res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long) params->verify_host?2:0);
 
@@ -190,6 +201,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
     res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
     res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+
 
     if (res != CURLE_OK) {
 	/* PANIC */
@@ -366,6 +378,8 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	query_params.http_follow_redirect = conn->http_follow_redirect;
 	query_params.oneline = 0;
 	query_params.maxdatasize = maxdatasize;
+	query_params.http_proxy_port = conn->http_proxy_port;
+	query_params.http_proxy = conn->http_proxy;
 
 	res = curL_query_url(_m, urlbuf, result, &query_params);
 

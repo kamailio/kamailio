@@ -43,7 +43,7 @@ extern str	default_cipher_suite_list;			/*!< List of allowed cipher suites */
 extern unsigned int	default_tls_version;		/*!< 0 = Use libcurl default */
 extern unsigned int	default_tls_verify_peer;	/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
 extern unsigned int	default_tls_verify_host;	/*!< 0 = Do not verify TLS server CN/SAN. 2 = Verify TLS server CN/SAN (default) */
-extern char 	*default_http_proxy;			/*!< Default HTTP proxy to use */
+extern str 	default_http_proxy;			/*!< Default HTTP proxy to use */
 extern unsigned int	default_http_proxy_port;		/*!< Default HTTP proxy port to use */
 extern unsigned int	default_http_follow_redirect;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
 extern str 	default_useragent;			/*!< Default CURL useragent. Default "Kamailio Curl " */
@@ -87,6 +87,8 @@ typedef struct _curl_con
 	curl_res_stream_t *stream;	/*!< Curl stream */
 	struct _curl_con *next;		/*!< next connection */
 	char redirecturl[512];		/*!< Last redirect URL - to use for $curlredirect(curlcon) pv */
+	char *http_proxy;			/*!< HTTP proxy for this connection */
+	unsigned int http_proxy_port;	/*!< HTTP proxy port for this connection */
 } curl_con_t;
 
 
