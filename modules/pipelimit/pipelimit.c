@@ -912,8 +912,8 @@ void rpc_pl_push_load(rpc_t *rpc, void *c) {
 }
 
 static rpc_export_t rpc_methods[] = {
-	{"pl.stats",      rpc_pl_stats,     rpc_pl_stats_doc,     0},
-	{"pl.get_pipes",  rpc_pl_get_pipes, rpc_pl_get_pipes_doc, 0},
+	{"pl.stats",      rpc_pl_stats,     rpc_pl_stats_doc,     RET_ARRAY},
+	{"pl.get_pipes",  rpc_pl_get_pipes, rpc_pl_get_pipes_doc, RET_ARRAY},
 	{"pl.set_pipe",   rpc_pl_set_pipe,  rpc_pl_set_pipe_doc,  0},
 	{"pl.get_pid",    rpc_pl_get_pid,   rpc_pl_get_pid_doc,   0},
 	{"pl.set_pid",    rpc_pl_set_pid,   rpc_pl_set_pid_doc,   0},
