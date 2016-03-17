@@ -177,8 +177,4 @@ static void contact_dlg_handler(struct dlg_cell* dlg, int cb_types, struct dlg_c
             i_terminated_count++;
             break;
     }
-    if (i_confirmed_count > 100 && !(i_confirmed_count % 100))
-    {
-        LM_ERR("Curent confirmed count %d terminated count %d \n",i_confirmed_count, i_terminated_count);
-    }
 }
