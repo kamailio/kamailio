@@ -859,11 +859,14 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             LM_DBG("ref count after sub is now %d\n", subscription->ref_count);
             ul.unlock_subscription(subscription);
 
+            ul.lock_udomain(_d, public_identity);
             //finally we update the explicit IMPU record with the new data
             if (ul.update_impurecord(_d, public_identity, 0, reg_state, -1 /*do not change send sar on delete */, 0 /*this is explicit so barring must be 0*/, 0, s, ccf1, ccf2, ecf1, ecf2, &impu_rec) != 0) {
                 LM_ERR("Unable to update explicit impurecord for <%.*s>\n", public_identity->len, public_identity->s);
             }
+            
             notify_subscribers(impu_rec);
+            ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_USER_DEREGISTRATION:
             /*TODO: if its not a star lets find all the contact records and remove them*/
