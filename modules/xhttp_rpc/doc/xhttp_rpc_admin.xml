@@ -166,5 +166,20 @@ event_route[xhttp:request] {
 	    </example>
 	</section>
 	</section>
+	<section>
+	<title>Usage</title>
+	    <para>
+		The module is not intended to be used in a "scripted" mode with
+		command line tools.
+		It only provides a simple web interface with all the available
+		RPC commands. Point a web browser to http://serverip:port/http_rpc
+		and browse through the available rpc commands.
+		</para>
+		<para>
+		If you don't configure a dedicated port for HTTP, then you have
+		to use same port as for SIP TCP. If you load and configure TLS
+		module, then you can browse using HTTPS to the SIP TLS port.
+		</para>
+	</section>
 </chapter>
 
