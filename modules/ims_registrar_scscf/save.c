@@ -694,8 +694,12 @@ int get_number_of_valid_contacts(impurecord_t* impu) {
     int ret = 0;
     get_act_time();
     for (i = 0; i < impu->num_contacts; i++) {
-        if (VALID_CONTACT(impu->newcontacts[i], act_time)) {
-            ret++;
+        if (impu->newcontacts[i]) {
+            if VALID_CONTACT(impu->newcontacts[i], act_time)
+                ret++;
+        } else {
+            //if we hit a null ref then we are at the end of the list.
+            return ret;
         }
     }
 
