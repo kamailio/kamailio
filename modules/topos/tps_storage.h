@@ -61,8 +61,10 @@ typedef struct tps_data {
 	str x_tag;
 	str x_rr;
 	str x_uri;
+	str s_method;
 	int32_t iflags;
 	int32_t direction;
+	int32_t s_cseq;
 } tps_data_t;
 
 int tps_storage_dialog_find(sip_msg_t *msg, tps_data_t *td);

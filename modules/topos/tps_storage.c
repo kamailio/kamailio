@@ -346,6 +346,8 @@ str td_col_b_uri = str_init("b_uri");
 str td_col_r_uri = str_init("r_uri");
 str td_col_a_srcip = str_init("a_srcip");
 str td_col_b_srcip = str_init("b_srcip");
+str td_col_s_method = str_init("s_method");
+str td_col_s_cseq = str_init("s_cseq");
 
 str tt_table_name = str_init("topos_t");
 str tt_col_rectime = str_init("rectime");
@@ -358,6 +360,8 @@ str tt_col_x_vbranch = str_init("x_vbranch");
 str tt_col_x_rr = str_init("x_rr");
 str tt_col_x_uri = str_init("x_uri");
 str tt_col_x_tag = str_init("x_tag");
+str tt_col_s_method = str_init("s_method");
+str tt_col_s_cseq = str_init("s_cseq");
 
 #define TPS_NR_KEYS	32
 
@@ -465,6 +469,16 @@ int tps_db_insert_dialog(tps_data_t *td)
 	db_keys[nr_keys] = &td_col_b_srcip;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_srcip);
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_s_method;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_method);
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_s_cseq;
+	db_vals[nr_keys].type = DB1_INT;
+	db_vals[nr_keys].val.int_val = (int)td->s_cseq;
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
@@ -575,6 +589,16 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_keys[nr_keys] = &tt_col_x_tag;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_tag);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_s_method;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_method);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_s_cseq;
+	db_vals[nr_keys].type = DB1_INT;
+	db_vals[nr_keys].val.int_val = (int)td->s_cseq;
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
