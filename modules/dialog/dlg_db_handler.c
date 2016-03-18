@@ -424,6 +424,10 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 				srjson_DestroyDoc(&jdoc);
 			}
 			dlg->iflags = (unsigned int)VAL_INT(values+22);
+			if(dlg->state==DLG_STATE_DELETED) {
+				/* end_ts used for force clean up not stored - set it to now */
+				dlg->end_ts = (unsigned int)time(0);
+			}
 			/*restore the timer values */
 			if (0 != insert_dlg_timer( &(dlg->tl), (int)dlg->tl.timeout )) {
 				LM_CRIT("Unable to insert dlg %p [%u:%u] "

@@ -546,6 +546,11 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		goto done;
 	}
 
+	if(new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
+		/* set end time */
+		dlg->end_ts = (unsigned int)(time(0));
+	}
+
 	if ( new_state==DLG_STATE_DELETED
 				&& (old_state==DLG_STATE_UNCONFIRMED
 					|| old_state==DLG_STATE_EARLY) ) {
@@ -1261,7 +1266,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			iuid = NULL;
 		}
 	}
-	
+
 	/* run state machine */
 	switch ( req->first_line.u.request.method_value ) {
 		case METHOD_PRACK:
@@ -1285,6 +1290,8 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	/* delay deletion of dialog until transaction has died off in order
 	 * to absorb in-air messages */
 	if (new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
+		/* set end time */
+		dlg->end_ts = (unsigned int)(time(0));
 		iuid = dlg_get_iuid_shm_clone(dlg);
 		if(iuid!=NULL) {
 			if ( d_tmb.register_tmcb(req, NULL, TMCB_DESTROY,
@@ -1447,7 +1454,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 			dlg_set_ctx_iuid(dlg);
 			if(dlg_bye_all(dlg, NULL)<0)
 				dlg_unref(dlg, 1);
-			dlg_reset_ctx_iuid();	
+			dlg_reset_ctx_iuid();
 
 			/* run event route for end of dlg */
 			dlg_run_event_route(dlg, NULL, dlg->state, DLG_STATE_DELETED);
@@ -1462,7 +1469,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
     /* used for computing duration for timed out acknowledged dialog */
 	if (DLG_STATE_CONFIRMED == old_state) {
 		timeout_cb = (void *)CONFIRMED_DIALOG_STATE;
-	}	
+	}
 
 	dlg_run_event_route(dlg, NULL, old_state, new_state);
 
@@ -1471,6 +1478,9 @@ void dlg_ontimeout(struct dlg_tl *tl)
 			dlg->callid.len, dlg->callid.s,
 			dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
 			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+
+		/* set end time */
+		dlg->end_ts = (unsigned int)(time(0));
 
 		/* dialog timeout */
 		run_dlg_callbacks( DLGCB_EXPIRED, dlg, NULL, NULL, DLG_DIR_NONE, timeout_cb);

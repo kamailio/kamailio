@@ -120,6 +120,7 @@ typedef struct dlg_cell
 	unsigned int         lifetime;		/*!< dialog lifetime */
 	unsigned int         init_ts;		/*!< init (creation) time (absolute UNIX ts)*/
 	unsigned int         start_ts;		/*!< start time  (absolute UNIX ts)*/
+	unsigned int         end_ts;		/*!< end time  (absolute UNIX ts)*/
 	unsigned int         dflags;		/*!< internal dialog memory flags */
 	unsigned int         iflags;		/*!< internal dialog persistent flags */
 	unsigned int         sflags;		/*!< script dialog persistent flags */
