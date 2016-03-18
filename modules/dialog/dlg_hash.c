@@ -239,6 +239,13 @@ int dlg_clean_run(ticks_t ti)
 				tdlg->lifetime = 10;
 				tdlg->dflags |= DLG_FLAG_CHANGED;
 			}
+			if(tdlg->state==DLG_STATE_DELETED && tdlg->end_ts<tm-300) {
+				/* dialog in deleted state older than 5min */
+				LM_NOTICE("dialog in delete state is too old (%p ref %d)\n",
+						tdlg, tdlg->ref);
+				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
+				destroy_dlg(tdlg);
+			}
 		}
 		dlg_unlock(d_table, &d_table->entries[i]);
 	}
