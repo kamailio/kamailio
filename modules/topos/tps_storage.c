@@ -275,8 +275,20 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		td->b_tag = td->a_tag;
 	}
 
+	td->x_via = td->x_via2;
+	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
+		LM_ERR("cannot parse cseq header\n");
+		return -1; /* should it be 0 ?!?! */
+	}
+	td->s_method = get_cseq(msg)->method;
+	td->s_cseq = get_cseq(msg)->number;
+
 	/* extract the contact address */
 	if(parse_headers(msg, HDR_CONTACT_F, 0)<0 || msg->contact==NULL) {
+		if(td->s_method_id == METHOD_MESSAGE) {
+			/* no contact required for MESSAGE - done */
+			return 0;
+		}
 		LM_ERR("bad sip message or missing Contact hdr\n");
 		goto error;
 	}
@@ -291,13 +303,7 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 	} else {
 		td->b_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
 	}
-	td->x_via = td->x_via2;
-	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
-		LM_ERR("cannot parse cseq header\n");
-		return -1; /* should it be 0 ?!?! */
-	}
-	td->s_method = get_cseq(msg)->method;
-	td->s_cseq = get_cseq(msg)->number;
+
 	return 0;
 
 error:

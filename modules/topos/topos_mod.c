@@ -228,6 +228,11 @@ int tps_prepare_msg(sip_msg_t *msg)
 		LM_DBG("no second via in this message \n");
 	}
 
+	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
+		LM_ERR("cannot parse cseq header\n");
+		return -1;
+	}
+
 	if(parse_from_header(msg)<0) {
 		LM_ERR("cannot parse FROM header\n");
 		return 3;
@@ -292,7 +297,7 @@ int tps_msg_received(void *data)
 		}
 	} else {
 		/* reply */
-		if(msg->first_line.u.reply.statuscode==100) {
+		if(msg.first_line.u.reply.statuscode==100) {
 			/* nothing to do - it should be absorbed */
 			return 0;
 		}
