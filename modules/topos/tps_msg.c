@@ -491,6 +491,11 @@ int tps_response_received(sip_msg_t *msg)
 	tps_data_t btsd;
 	str lkey;
 
+	if(msg->first_line.u.reply.statuscode==100) {
+		/* nothing to do - it should be absorbed */
+		return 0;
+	}
+
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
