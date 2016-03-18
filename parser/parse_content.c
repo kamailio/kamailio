@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -46,7 +46,7 @@
 
 
 #define is_mime_char(_c_) \
-	(isalpha((int)_c_) || (_c_)=='-' || (_c_)=='+' || (_c_)=='.')
+	(isalpha((int)_c_) || (_c_)=='-' || (_c_)=='+' || (_c_)=='.' || (_c_)=='_')
 #define is_char_equal(_c_,_cs_) \
 	( (isalpha((int)_c_)?(((_c_)|0x20)==(_cs_)):((_c_)==(_cs_)))==1 )
 
@@ -188,7 +188,7 @@ static type_node_t subtype_tree[] = {
 									{'c',SUBTYPE_UNKNOWN,1,-1},
 										{'.',SUBTYPE_UNKNOWN,1,-1},
 											{'p',SUBTYPE_UNKNOWN,1,-1},
-												{'i',SUBTYPE_UNKNOWN,1,-1}, 
+												{'i',SUBTYPE_UNKNOWN,1,-1},
 													{'d',SUBTYPE_UNKNOWN,1,-1},
 														{'f',SUBTYPE_XML_MSRTC_PIDF,0,-1},
 	{'e',SUBTYPE_UNKNOWN,1,107}, /* 94 */
@@ -335,7 +335,7 @@ char* decode_mime_type(char* const start, const char* const end, unsigned int* c
 			if (node!=-1) {
 				type_candidate = subtype_tree[node].final;
 				if (subtype_tree[node].nr_sons)
-        				node++;
+					node++;
 				else
 					node = -1;
 			} else {
@@ -440,10 +440,10 @@ int parse_accept_body(struct hdr_field* const hdr)
 	char *ret;
 
 	if (!hdr) return -1;
-	
+
 	/* maybe the header is already parsed! */
 	if (hdr->parsed!=0) return 1;
-	
+
 	/* it seams we have to parse it! :-( */
 	ret = hdr->body.s;
 	end = ret + hdr->body.len;
