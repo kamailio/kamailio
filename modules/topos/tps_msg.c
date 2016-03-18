@@ -548,11 +548,8 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int direction, int local)
 		return -1;
 	}
 
-	if(direction==TPS_DIR_DOWNSTREAM) {
-		lkey = get_from(msg)->tag_value;
-	} else {
-		lkey = get_to(msg)->tag_value;
-	}
+	lkey = msg->callid->body;
+
 	tps_storage_lock_get(&lkey);
 	if(dialog==0) {
 		if(tps_storage_record(msg, ptsd)<0) {
@@ -599,5 +596,42 @@ error:
  */
 int tps_response_sent(sip_msg_t *msg)
 {
+	tps_data_t mtsd;
+	tps_data_t stsd;
+	tps_data_t btsd;
+	str lkey;
+
+	memset(&mtsd, 0, sizeof(tps_data_t));
+	memset(&stsd, 0, sizeof(tps_data_t));
+	memset(&btsd, 0, sizeof(tps_data_t));
+
+	if(tps_pack_request(msg, &mtsd)<0) {
+		LM_ERR("failed to extract and pack the headers\n");
+		return -1;
+	}
+
+	if(get_cseq(msg)->method_id==METHOD_MESSAGE) {
+		tps_remove_headers(msg, HDR_RECORDROUTE_T);
+		tps_remove_headers(msg, HDR_CONTACT_T);
+		return 0;
+	}
+
+	lkey = msg->callid->body;
+
+	tps_storage_lock_get(&lkey);
+	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
+		goto error;
+	}
+	LM_DBG("loaded dialog a_uuid [%.*s]\n",
+			btsd.a_uuid.len, ZSW(btsd.a_uuid.s));
+	if(tps_storage_load_dialog(msg, &btsd, &stsd)<0) {
+		goto error;
+	}
+	tps_storage_lock_release(&lkey);
+
 	return 0;
+
+error:
+	tps_storage_lock_release(&lkey);
+	return -1;
 }
