@@ -292,6 +292,10 @@ int tps_msg_received(void *data)
 		}
 	} else {
 		/* reply */
+		if(msg->first_line.u.reply.statuscode==100) {
+			/* nothing to do - it should be absorbed */
+			return 0;
+		}
 		tps_response_received(&msg);
 	}
 
