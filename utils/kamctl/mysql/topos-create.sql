@@ -1,6 +1,8 @@
 CREATE TABLE `topos_d` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `rectime` DATETIME NOT NULL,
+    `s_method` VARCHAR(64) DEFAULT '' NOT NULL,
+    `s_cseq` INT UNSIGNED DEFAULT 0 NOT NULL,
     `a_callid` VARCHAR(255) DEFAULT '' NOT NULL,
     `a_uuid` VARCHAR(255) DEFAULT '' NOT NULL,
     `b_uuid` VARCHAR(255) DEFAULT '' NOT NULL,
@@ -28,6 +30,8 @@ INSERT INTO version (table_name, table_version) values ('topos_d','1');
 CREATE TABLE `topos_t` (
     `id` INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     `rectime` DATETIME NOT NULL,
+    `s_method` VARCHAR(64) DEFAULT '' NOT NULL,
+    `s_cseq` INT UNSIGNED DEFAULT 0 NOT NULL,
     `a_callid` VARCHAR(255) DEFAULT '' NOT NULL,
     `a_uuid` VARCHAR(255) DEFAULT '' NOT NULL,
     `b_uuid` VARCHAR(255) DEFAULT '' NOT NULL,
