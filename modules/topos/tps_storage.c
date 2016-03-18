@@ -292,6 +292,12 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		td->b_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
 	}
 	td->x_via = td->x_via2;
+	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
+		LM_ERR("cannot parse cseq header\n");
+		return -1; /* should it be 0 ?!?! */
+	}
+	td->s_method = get_cseq(msg)->method;
+	td->s_cseq = get_cseq(msg)->number;
 	return 0;
 
 error:
@@ -477,8 +483,8 @@ int tps_db_insert_dialog(tps_data_t *td)
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_s_cseq;
-	db_vals[nr_keys].type = DB1_INT;
-	db_vals[nr_keys].val.int_val = (int)td->s_cseq;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_cseq);
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
@@ -597,8 +603,8 @@ int tps_db_insert_branch(tps_data_t *td)
 	nr_keys++;
 
 	db_keys[nr_keys] = &tt_col_s_cseq;
-	db_vals[nr_keys].type = DB1_INT;
-	db_vals[nr_keys].val.int_val = (int)td->s_cseq;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_cseq);
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
@@ -731,6 +737,8 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_cols[nr_cols++] = &tt_col_x_rr;
 	db_cols[nr_cols++] = &tt_col_x_uri;
 	db_cols[nr_cols++] = &tt_col_x_tag;
+	db_cols[nr_cols++] = &tt_col_s_method;
+	db_cols[nr_cols++] = &tt_col_s_cseq;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -762,6 +770,8 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_rr); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_uri); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_tag); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
 
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
 		LM_ERR("failed to free result of query\n");
@@ -820,6 +830,8 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_cols[nr_cols++] = &td_col_r_uri;
 	db_cols[nr_cols++] = &td_col_a_srcip;
 	db_cols[nr_cols++] = &td_col_b_srcip;
+	db_cols[nr_cols++] = &td_col_s_method;
+	db_cols[nr_cols++] = &td_col_s_cseq;
 
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
@@ -860,6 +872,8 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->r_uri); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_srcip); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_srcip); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
 
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
 		LM_ERR("failed to free result of query\n");
