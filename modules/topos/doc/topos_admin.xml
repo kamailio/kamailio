@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -24,6 +24,9 @@
 	<para>
 		The module is transparent for the configuration writer. It only needs to be
 		loaded (tune the parameters if needed).
+	</para>
+	<para>
+		It works for SIP MESSAGE requests.
 	</para>
 	</section>
 	<section>
@@ -122,6 +125,64 @@ modparam("topos", "mask_callid", 1)
 		<programlisting format="linespecific">
 ...
 modparam("topoh", "sanity_checks", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.branch_expires">
+		<title><varname>branch_expires</varname> (int)</title>
+		<para>
+			Interval in seconds after which the branch records are deleted.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 180 (3 min).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>branch_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "branch_expires", 300)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.branch_dialog">
+		<title><varname>branch_dialog</varname> (int)</title>
+		<para>
+			Interval in seconds after which the dialog records are deleted.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 10800 (3 hours).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>branch_dialog</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "branch_dialog", 3600)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.clean_interval">
+		<title><varname>clean_inteval</varname> (int)</title>
+		<para>
+			Interval in seconds to run the clean up of stored
+			records.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 60 (1 min).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>clean_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "clean_interval", 30)
 ...
 </programlisting>
 		</example>
