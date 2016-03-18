@@ -44,8 +44,9 @@
 
    <column id="s_cseq">
         <name>s_cseq</name>
-        <type>unsigned int</type>
-		<default>0</default>
+        <type>string</type>
+        <size>64</size>
+        <default/>
         <description>CSeq from SIP message</description>
     </column>
 
