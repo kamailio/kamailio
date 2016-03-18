@@ -1,6 +1,8 @@
 CREATE TABLE topos_d (
     id NUMBER(10) PRIMARY KEY,
     rectime DATE,
+    s_method VARCHAR2(64) DEFAULT '',
+    s_cseq NUMBER(10) DEFAULT 0 NOT NULL,
     a_callid VARCHAR2(255) DEFAULT '',
     a_uuid VARCHAR2(255) DEFAULT '',
     b_uuid VARCHAR2(255) DEFAULT '',
@@ -36,6 +38,8 @@ INSERT INTO version (table_name, table_version) values ('topos_d','1');
 CREATE TABLE topos_t (
     id NUMBER(10) PRIMARY KEY,
     rectime DATE,
+    s_method VARCHAR2(64) DEFAULT '',
+    s_cseq NUMBER(10) DEFAULT 0 NOT NULL,
     a_callid VARCHAR2(255) DEFAULT '',
     a_uuid VARCHAR2(255) DEFAULT '',
     b_uuid VARCHAR2(255) DEFAULT '',

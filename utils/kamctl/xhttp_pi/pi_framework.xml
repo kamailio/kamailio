@@ -754,6 +754,8 @@
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>rectime</field><type>DB1_DATETIME</type></column>
+		<column><field>s_method</field><type>DB1_STR</type></column>
+		<column><field>s_cseq</field><type>DB1_INT</type></column>
 		<column><field>a_callid</field><type>DB1_STR</type></column>
 		<column><field>a_uuid</field><type>DB1_STR</type></column>
 		<column><field>b_uuid</field><type>DB1_STR</type></column>
@@ -778,6 +780,8 @@
 		<db_url_id>mysql</db_url_id>
 		<column><field>id</field><type>DB1_INT</type></column>
 		<column><field>rectime</field><type>DB1_DATETIME</type></column>
+		<column><field>s_method</field><type>DB1_STR</type></column>
+		<column><field>s_cseq</field><type>DB1_INT</type></column>
 		<column><field>a_callid</field><type>DB1_STR</type></column>
 		<column><field>a_uuid</field><type>DB1_STR</type></column>
 		<column><field>b_uuid</field><type>DB1_STR</type></column>
@@ -3879,6 +3883,8 @@
 			<query_cols>
 				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>rectime</field></col>
+				<col><field>s_method</field></col>
+				<col><field>s_cseq</field></col>
 				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
@@ -3903,6 +3909,8 @@
 			<cmd_type>DB1_INSERT</cmd_type>
 			<query_cols>
 				<col><field>rectime</field></col>
+				<col><field>s_method</field></col>
+				<col><field>s_cseq</field></col>
 				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
@@ -3930,6 +3938,8 @@
 			</clause_cols>
 			<query_cols>
 				<col><field>rectime</field></col>
+				<col><field>s_method</field></col>
+				<col><field>s_cseq</field></col>
 				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
@@ -3965,6 +3975,8 @@
 			<query_cols>
 				<col><field>id</field><link_cmd>update</link_cmd></col>
 				<col><field>rectime</field></col>
+				<col><field>s_method</field></col>
+				<col><field>s_cseq</field></col>
 				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
@@ -3981,6 +3993,8 @@
 			<cmd_type>DB1_INSERT</cmd_type>
 			<query_cols>
 				<col><field>rectime</field></col>
+				<col><field>s_method</field></col>
+				<col><field>s_cseq</field></col>
 				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>
@@ -4000,6 +4014,8 @@
 			</clause_cols>
 			<query_cols>
 				<col><field>rectime</field></col>
+				<col><field>s_method</field></col>
+				<col><field>s_cseq</field></col>
 				<col><field>a_callid</field></col>
 				<col><field>a_uuid</field></col>
 				<col><field>b_uuid</field></col>

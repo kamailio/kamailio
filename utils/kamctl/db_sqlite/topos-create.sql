@@ -1,6 +1,8 @@
 CREATE TABLE topos_d (
     id INTEGER PRIMARY KEY NOT NULL,
     rectime TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    s_method VARCHAR(64) DEFAULT '' NOT NULL,
+    s_cseq INTEGER DEFAULT 0 NOT NULL,
     a_callid VARCHAR(255) DEFAULT '' NOT NULL,
     a_uuid VARCHAR(255) DEFAULT '' NOT NULL,
     b_uuid VARCHAR(255) DEFAULT '' NOT NULL,
@@ -28,6 +30,8 @@ INSERT INTO version (table_name, table_version) values ('topos_d','1');
 CREATE TABLE topos_t (
     id INTEGER PRIMARY KEY NOT NULL,
     rectime TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    s_method VARCHAR(64) DEFAULT '' NOT NULL,
+    s_cseq INTEGER DEFAULT 0 NOT NULL,
     a_callid VARCHAR(255) DEFAULT '' NOT NULL,
     a_uuid VARCHAR(255) DEFAULT '' NOT NULL,
     b_uuid VARCHAR(255) DEFAULT '' NOT NULL,
