@@ -409,6 +409,7 @@ int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 			ptsd->as_contact.len, ZSW(ptsd->as_contact.s), ptsd->as_contact.len,
 			ptsd->bs_contact.len, ZSW(ptsd->bs_contact.s), ptsd->bs_contact.len);
 	ptsd->x_rr = ptsd->a_rr;
+	ptsd->s_method_id = get_cseq(msg)->method_id;
 	return 0;
 }
 
