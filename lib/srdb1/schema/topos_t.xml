@@ -34,6 +34,21 @@
         <description>Date and time when this record was written.</description>
     </column>
 
+    <column id="s_method">
+        <name>s_method</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Method from SIP message</description>
+    </column>
+
+   <column id="s_cseq">
+        <name>s_cseq</name>
+        <type>unsigned int</type>
+		<default>0</default>
+        <description>CSeq from SIP message</description>
+	</column>
+
     <column id="a_callid">
         <name>a_callid</name>
         <type>string</type>
