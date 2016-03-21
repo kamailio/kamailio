@@ -179,20 +179,36 @@
 		<description>The R-URI</description>
 	</column>
 
-    <column id="a_srcip">
-        <name>a_srcip</name>
+    <column id="a_srcaddr">
+        <name>a_srcaddr</name>
         <type>string</type>
-        <size>&ip_add_len;</size>
+        <size>&uri_len;</size>
         <default/>
-        <description>Source IP address</description>
+        <description>Source address - A side</description>
     </column>
 
-    <column id="b_srcip">
-        <name>b_srcip</name>
+    <column id="b_srcaddr">
+        <name>b_srcaddr</name>
         <type>string</type>
-        <size>&ip_add_len;</size>
+        <size>&uri_len;</size>
         <default/>
-        <description>Destination IP address</description>
+        <description>Source address - B side</description>
+    </column>
+
+    <column id="a_socket">
+        <name>a_socket</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Socket address - A side</description>
+    </column>
+
+    <column id="b_socket">
+        <name>b_socket</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Socket address - B side</description>
     </column>
 
     <index>
