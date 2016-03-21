@@ -45,7 +45,13 @@
 		<column><field>y_rr</field><type>DB1_BLOB</type></column>
 		<column><field>s_rr</field><type>DB1_BLOB</type></column>
 		<column><field>x_uri</field><type>DB1_STR</type></column>
+		<column><field>a_contact</field><type>DB1_STR</type></column>
+		<column><field>b_contact</field><type>DB1_STR</type></column>
+		<column><field>as_contact</field><type>DB1_STR</type></column>
+		<column><field>bs_contact</field><type>DB1_STR</type></column>
 		<column><field>x_tag</field><type>DB1_STR</type></column>
+		<column><field>a_tag</field><type>DB1_STR</type></column>
+		<column><field>b_tag</field><type>DB1_STR</type></column>
 		<column><field>a_srcaddr</field><type>DB1_STR</type></column>
 		<column><field>b_srcaddr</field><type>DB1_STR</type></column>
 		<column><field>a_socket</field><type>DB1_STR</type></column>

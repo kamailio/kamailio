@@ -796,7 +796,13 @@
 		<column><field>y_rr</field><type>DB1_BLOB</type></column>
 		<column><field>s_rr</field><type>DB1_BLOB</type></column>
 		<column><field>x_uri</field><type>DB1_STR</type></column>
+		<column><field>a_contact</field><type>DB1_STR</type></column>
+		<column><field>b_contact</field><type>DB1_STR</type></column>
+		<column><field>as_contact</field><type>DB1_STR</type></column>
+		<column><field>bs_contact</field><type>DB1_STR</type></column>
 		<column><field>x_tag</field><type>DB1_STR</type></column>
+		<column><field>a_tag</field><type>DB1_STR</type></column>
+		<column><field>b_tag</field><type>DB1_STR</type></column>
 		<column><field>a_srcaddr</field><type>DB1_STR</type></column>
 		<column><field>b_srcaddr</field><type>DB1_STR</type></column>
 		<column><field>a_socket</field><type>DB1_STR</type></column>
@@ -4008,7 +4014,13 @@
 				<col><field>y_rr</field></col>
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
 				<col><field>a_srcaddr</field></col>
 				<col><field>b_srcaddr</field></col>
 				<col><field>a_socket</field></col>
@@ -4032,7 +4044,13 @@
 				<col><field>y_rr</field></col>
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
 				<col><field>a_srcaddr</field></col>
 				<col><field>b_srcaddr</field></col>
 				<col><field>a_socket</field></col>
@@ -4059,7 +4077,13 @@
 				<col><field>y_rr</field></col>
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
 				<col><field>a_srcaddr</field></col>
 				<col><field>b_srcaddr</field></col>
 				<col><field>a_socket</field></col>
