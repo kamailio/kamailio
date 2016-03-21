@@ -511,22 +511,23 @@ modparam("rtpengine", "table_name", "rtpengine_table_name")
 		<title>Setup <varname>rtpengine</varname> table</title>
 <programlisting format="linespecific">
 mysql> describe rtpengine;
-+----------+------------------+------+-----+---------+-------+
-| Field    | Type             | Null | Key | Default | Extra |
-+----------+------------------+------+-----+---------+-------+
-| setid    | int(10) unsigned | NO   |     | NULL    |       |
-| url      | varchar(256)     | NO   |     | NULL    |       |
-| weight   | int(10) unsigned | NO   |     | NULL    |       |
-| disabled | int(11)          | NO   |     | NULL    |       |
-+----------+------------------+------+-----+---------+-------+
++----------+------------------+------+-----+---------------------+-------+
+| Field    | Type             | Null | Key | Default             | Extra |
++----------+------------------+------+-----+---------------------+-------+
+| setid    | int(10) unsigned | NO   | PRI | 0                   |       |
+| url      | varchar(64)      | NO   | PRI | NULL                |       |
+| weight   | int(10) unsigned | NO   |     | 1                   |       |
+| disabled | int(1)           | NO   |     | 0                   |       |
+| stamp    | datetime         | NO   |     | 1900-01-01 00:00:01 |       |
++----------+------------------+------+-----+---------------------+-------+
 
 mysql> select * from rtpengine;
-+-------+---------------------------+--------+----------+
-| setid | url                       | weight | disabled |
-+-------+---------------------------+--------+----------+
-|     0 | udp:rtpproxy1.domain:8800 |    100 |        0 |
-|     0 | udp:rtpproxy2.domain:8800 |    200 |        1 |
-+-------+---------------------------+--------+----------+
++-------+---------------------------+--------+----------+---------------------+
+| setid | url                       | weight | disabled | stamp               |
++-------+---------------------------+--------+----------+---------------------+
+|     0 | udp:rtpproxy1.domain:8800 |      1 |        0 | 2016-03-10 10:30:54 |
+|     0 | udp:rtpproxy2.domain:8800 |      1 |        1 | 2016-03-10 10:30:54 |
++-------+---------------------------+--------+----------+---------------------+
 
 mysql> select * from version;
 +---------------------------+---------------+

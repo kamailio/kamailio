@@ -8,6 +8,7 @@
 				<col><field>url</field></col>
 				<col><field>weight</field></col>
 				<col><field>disabled</field></col>
+				<col><field>stamp</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -18,6 +19,7 @@
 				<col><field>url</field></col>
 				<col><field>weight</field></col>
 				<col><field>disabled</field></col>
+				<col><field>stamp</field></col>
 			</query_cols>
 		</cmd>
 	</mod>

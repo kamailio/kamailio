@@ -6,4 +6,5 @@
 		<column><field>url</field><type>DB1_STR</type></column>
 		<column><field>weight</field><type>DB1_INT</type></column>
 		<column><field>disabled</field><type>DB1_INT</type></column>
+		<column><field>stamp</field><type>DB1_DATETIME</type></column>
 	</db_table>

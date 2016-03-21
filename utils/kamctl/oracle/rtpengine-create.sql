@@ -3,6 +3,7 @@ CREATE TABLE rtpengine (
     url VARCHAR2(64),
     weight NUMBER(10) DEFAULT 1 NOT NULL,
     disabled NUMBER(10) DEFAULT 0 NOT NULL,
+    stamp DATE DEFAULT '1900-01-01 00:00:01',
     CONSTRAINT rtpengine_rtpengine_nodes  PRIMARY KEY  (setid, url)
 );
 

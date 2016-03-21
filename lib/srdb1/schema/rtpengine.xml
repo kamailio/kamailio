@@ -50,6 +50,14 @@
         <natural/>
     </column>
 
+    <column id="stamp">
+        <name>stamp</name>
+        <type>datetime</type>
+        <description>RTPEngine instance add timestamp</description>
+        <default>1900-01-01 00:00:01</default>
+        <natural/>
+    </column>
+
     <index>
         <name>rtpengine_nodes</name>
         <colref linkend="setid"/>
