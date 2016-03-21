@@ -138,6 +138,38 @@
 		<description>From tag - A or B side.</description>
 	</column>
 
+    <column id="a_srcaddr">
+        <name>a_srcaddr</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Source address - A side</description>
+    </column>
+
+    <column id="b_srcaddr">
+        <name>b_srcaddr</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Source address - B side</description>
+    </column>
+
+    <column id="a_socket">
+        <name>a_socket</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Socket address - A side</description>
+    </column>
+
+    <column id="b_socket">
+        <name>b_socket</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Socket address - B side</description>
+    </column>
+
     <index>
         <name>rectime_idx</name>
         <colref linkend="rectime"/>
