@@ -130,12 +130,60 @@
 		<description>The R-URI</description>
 	</column>
 
+     <column id="a_contact">
+        <name>a_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - A side</description>
+    </column>
+
+    <column id="b_contact">
+        <name>b_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - B side</description>
+    </column>
+
+     <column id="as_contact">
+        <name>as_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - server A side</description>
+    </column>
+
+    <column id="bs_contact">
+        <name>bs_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <default/>
+        <description>Contact address - server B side</description>
+	</column>
+
 	<column id="x_tag">
 		<name>x_tag</name>
 		<type>string</type>
-		<size>&user_len;</size>
+		<size>&callid_len;</size>
         <default/>
 		<description>From tag - A or B side.</description>
+	</column>
+
+	<column id="a_tag">
+		<name>a_tag</name>
+		<type>string</type>
+		<size>&callid_len;</size>
+        <default/>
+		<description>From tag - A side.</description>
+	</column>
+
+	<column id="b_tag">
+		<name>b_tag</name>
+		<type>string</type>
+		<size>&callid_len;</size>
+        <default/>
+		<description>From tag - B side.</description>
 	</column>
 
     <column id="a_srcaddr">
