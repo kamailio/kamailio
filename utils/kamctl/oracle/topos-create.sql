@@ -14,6 +14,7 @@ CREATE TABLE topos_d (
     b_tag VARCHAR2(64) DEFAULT '',
     a_rr CLOB DEFAULT '',
     b_rr CLOB DEFAULT '',
+    s_rr CLOB DEFAULT '',
     iflags NUMBER(10) DEFAULT 0 NOT NULL,
     a_uri VARCHAR2(128) DEFAULT '',
     b_uri VARCHAR2(128) DEFAULT '',
@@ -47,6 +48,8 @@ CREATE TABLE topos_t (
     x_via CLOB DEFAULT '',
     x_vbranch VARCHAR2(255) DEFAULT '',
     x_rr CLOB DEFAULT '',
+    y_rr CLOB DEFAULT '',
+    s_rr CLOB DEFAULT '',
     x_uri VARCHAR2(128) DEFAULT '',
     x_tag VARCHAR2(64) DEFAULT ''
 );
