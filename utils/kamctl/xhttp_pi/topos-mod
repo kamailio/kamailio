@@ -119,7 +119,13 @@
 				<col><field>y_rr</field></col>
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
 				<col><field>a_srcaddr</field></col>
 				<col><field>b_srcaddr</field></col>
 				<col><field>a_socket</field></col>
@@ -143,7 +149,13 @@
 				<col><field>y_rr</field></col>
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
 				<col><field>a_srcaddr</field></col>
 				<col><field>b_srcaddr</field></col>
 				<col><field>a_socket</field></col>
@@ -170,7 +182,13 @@
 				<col><field>y_rr</field></col>
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
+				<col><field>a_contact</field></col>
+				<col><field>b_contact</field></col>
+				<col><field>as_contact</field></col>
+				<col><field>bs_contact</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_tag</field></col>
+				<col><field>b_tag</field></col>
 				<col><field>a_srcaddr</field></col>
 				<col><field>b_srcaddr</field></col>
 				<col><field>a_socket</field></col>
