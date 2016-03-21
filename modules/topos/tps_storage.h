@@ -53,8 +53,10 @@ typedef struct tps_data {
 	str a_uri;
 	str b_uri;
 	str r_uri;
-	str a_srcip;
-	str b_srcip;
+	str a_srcaddr;
+	str b_srcaddr;
+	str a_socket;
+	str b_socket;
 	str x_via1;
 	str x_via2;
 	str x_vbranch1;
