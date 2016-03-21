@@ -240,51 +240,6 @@ char* tps_msg_update(sip_msg_t *msg, unsigned int *olen)
 /**
  *
  */
-int tps_route_direction(sip_msg_t *msg)
-{
-	rr_t *rr;
-	struct sip_uri puri;
-	str ftn = {"ftag", 4};
-	str ftv = {0, 0};
-
-	if(get_from(msg)->tag_value.len<=0)
-	{
-		LM_ERR("failed to get from header tag\n");
-		return -1;
-	}
-	if(msg->route==NULL)
-	{
-		LM_DBG("no route header - downstream\n");
-		return 0;
-	}
-	if (parse_rr(msg->route) < 0)
-	{
-		LM_ERR("failed to parse route header\n");
-		return -1;
-	}
-
-	rr =(rr_t*)msg->route->parsed;
-
-	if (parse_uri(rr->nameaddr.uri.s, rr->nameaddr.uri.len, &puri) < 0) {
-		LM_ERR("failed to parse the first route URI\n");
-		return -1;
-	}
-	if(tps_get_param_value(&puri.params, &ftn, &ftv)!=0)
-		return 0;
-
-	if(get_from(msg)->tag_value.len!=ftv.len
-			|| strncmp(get_from(msg)->tag_value.s, ftv.s, ftv.len)!=0)
-	{
-		LM_DBG("ftag mismatch\n");
-		return 1;
-	}
-	LM_DBG("ftag match\n");
-	return 0;
-}
-
-/**
- *
- */
 int tps_skip_msg(sip_msg_t *msg)
 {
 	if (msg->cseq==NULL || get_cseq(msg)==NULL) {
@@ -494,7 +449,7 @@ int tps_reappend_rr(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 /**
  *
  */
-int tps_request_received(sip_msg_t *msg, int dialog, int direction)
+int tps_request_received(sip_msg_t *msg, int dialog)
 {
 	if(dialog==0) {
 		/* nothing to do for initial request */
@@ -554,12 +509,13 @@ error:
 /**
  *
  */
-int tps_request_sent(sip_msg_t *msg, int dialog, int direction, int local)
+int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 {
 	tps_data_t mtsd;
 	tps_data_t stsd;
 	tps_data_t *ptsd;
 	str lkey;
+	int direction = TPS_DIR_DOWNSTREAM;
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
