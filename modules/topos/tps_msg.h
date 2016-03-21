@@ -33,11 +33,10 @@
 
 int tps_update_hdr_replaces(sip_msg_t *msg);
 char* tps_msg_update(sip_msg_t *msg, unsigned int *olen);
-int tps_route_direction(sip_msg_t *msg);
 int tps_skip_msg(sip_msg_t *msg);
 
-int tps_request_received(sip_msg_t *msg, int dialog, int direction);
+int tps_request_received(sip_msg_t *msg, int dialog);
 int tps_response_received(sip_msg_t *msg);
-int tps_request_sent(sip_msg_t *msg, int dialog, int direction, int local);
+int tps_request_sent(sip_msg_t *msg, int dialog, int local);
 int tps_response_sent(sip_msg_t *msg);
 #endif

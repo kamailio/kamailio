@@ -259,7 +259,6 @@ int tps_msg_received(void *data)
 	sip_msg_t msg;
 	str *obuf;
 	char *nbuf = NULL;
-	int direction;
 	int dialog;
 
 	obuf = (str*)data;
@@ -275,7 +274,6 @@ int tps_msg_received(void *data)
 		goto done;
 	}
 
-	direction = 0;
 	if(msg.first_line.type==SIP_REQUEST) {
 		if(_tps_sanity_checks!=0) {
 			if(scb.check_defaults(&msg)<1) {
@@ -285,15 +283,8 @@ int tps_msg_received(void *data)
 		}
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
 		if(dialog) {
-			direction = tps_route_direction(&msg);
-			if(direction<0) {
-				LM_ERR("not able to detect direction\n");
-				goto done;
-			}
-		}
-		if(dialog) {
 			/* dialog request */
-			tps_request_received(&msg, dialog, direction);
+			tps_request_received(&msg, dialog);
 		}
 	} else {
 		/* reply */
@@ -328,7 +319,6 @@ int tps_msg_sent(void *data)
 {
 	sip_msg_t msg;
 	str *obuf;
-	int direction;
 	int dialog;
 	int local;
 
@@ -346,19 +336,14 @@ int tps_msg_sent(void *data)
 	}
 
 	if(msg.first_line.type==SIP_REQUEST) {
-		direction = tps_route_direction(&msg);
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
 
 		local = 0;
 		if(msg.via2==0) {
 			local = 1;
-			if(direction==0) {
-				/* downstream local request (e.g., dlg bye) */
-				local = 2;
-			}
 		}
 
-		tps_request_sent(&msg, dialog, direction, local);
+		tps_request_sent(&msg, dialog, local);
 	} else {
 		tps_response_sent(&msg);
 	}
