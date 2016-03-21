@@ -307,9 +307,9 @@ int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 			ptsd->x_via2.len, ZSW(ptsd->x_via2.s), ptsd->x_via2.len,
 			ptsd->x_vbranch1.len, ZSW(ptsd->x_vbranch1.s), ptsd->x_vbranch1.len);
 
-	i = 0;
 	ptsd->a_rr.len = 0;
 	ptsd->s_rr.len = 0;
+	i = 0;
 	r2 = 0;
 	for(hdr=msg->record_route; hdr; hdr=next_sibling_hdr(hdr)) {
 		if (parse_rr(hdr) < 0) {
@@ -376,7 +376,14 @@ int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 			ptsd->cp++;
 			ptsd->a_rr.len++;
 		}
-
+	}
+	if(i==1) {
+		ptsd->s_rr.len = ptsd->a_rr.len;
+		ptsd->a_rr.len = 0;
+	}
+	if(i==2 && r2==1) {
+		ptsd->s_rr.len = ptsd->a_rr.len;
+		ptsd->a_rr.len = 0;
 	}
 	LM_DBG("compacted headers - a_rr: [%.*s](%d) - b_rr: [%.*s](%d)\n",
 			ptsd->a_rr.len, ZSW(ptsd->a_rr.s), ptsd->a_rr.len,
@@ -487,12 +494,17 @@ int tps_response_received(sip_msg_t *msg)
 	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
 		goto error;
 	}
+	if(tps_storage_update_branch(msg, &mtsd, &btsd)<0) {
+		goto error;
+	}
 	LM_DBG("loaded dialog a_uuid [%.*s]\n",
 			btsd.a_uuid.len, ZSW(btsd.a_uuid.s));
 	if(tps_storage_load_dialog(msg, &btsd, &stsd)<0) {
 		goto error;
 	}
-
+	if(tps_storage_update_dialog(msg, &btsd, &stsd)<0) {
+		goto error;
+	}
 	tps_storage_lock_release(&lkey);
 
 	tps_reappend_via(msg, &btsd, &btsd.x_via);
@@ -578,6 +590,7 @@ int tps_response_sent(sip_msg_t *msg)
 	tps_data_t stsd;
 	tps_data_t btsd;
 	str lkey;
+	int direction = TPS_DIR_UPSTREAM;
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
@@ -607,6 +620,16 @@ int tps_response_sent(sip_msg_t *msg)
 	}
 	tps_storage_lock_release(&lkey);
 
+	tps_remove_headers(msg, HDR_RECORDROUTE_T);
+	tps_remove_headers(msg, HDR_CONTACT_T);
+
+	if(direction==TPS_DIR_UPSTREAM) {
+		tps_reinsert_contact(msg, &stsd, &stsd.as_contact);
+	} else {
+		tps_reinsert_contact(msg, &stsd, &stsd.bs_contact);
+	}
+
+	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
 	return 0;
 
 error:

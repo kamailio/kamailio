@@ -170,14 +170,20 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
 {
 	str sv;
 	sip_uri_t puri;
-
-	sruid_next(&_tps_sruid);
+	int i;
 
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		sv = td->bs_contact;
 	} else {
 		sv = td->as_contact;
 	}
+	if(sv.len<=0) {
+		/* no contact - skip */
+		return 0;
+	}
+
+	sruid_next(&_tps_sruid);
+
 	if(td->cp + 8 + (2*_tps_sruid.uid.len) + sv.len >= td->cbuf + TPS_DATA_SIZE) {
 		LM_ERR("insufficient data buffer\n");
 		return -1;
@@ -207,6 +213,11 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
 	}
 	*td->cp = '<';
 	td->cp++;
+	for(i=0; i<sv.len; i++) {
+		*td->cp = sv.s[i];
+		td->cp++;
+		if(sv.s[i]==':') break;
+	}
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		*td->cp = 'b';
 	} else {
@@ -917,6 +928,22 @@ error:
 		LM_ERR("failed to free result of query\n");
 
 	return -1;
+}
+
+/**
+ *
+ */
+int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	return 0;
+}
+
+/**
+ *
+ */
+int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	return 0;
 }
 
 /**
