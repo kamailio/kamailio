@@ -354,6 +354,7 @@ str td_col_a_tag = str_init("a_tag");
 str td_col_b_tag = str_init("b_tag");
 str td_col_a_rr = str_init("a_rr");
 str td_col_b_rr = str_init("b_rr");
+str td_col_s_rr = str_init("s_rr");
 str td_col_iflags = str_init("iflags");
 str td_col_a_uri = str_init("a_uri");
 str td_col_b_uri = str_init("b_uri");
@@ -372,6 +373,8 @@ str tt_col_direction = str_init("direction");
 str tt_col_x_via = str_init("x_via");
 str tt_col_x_vbranch = str_init("x_vbranch");
 str tt_col_x_rr = str_init("x_rr");
+str tt_col_y_rr = str_init("y_rr");
+str tt_col_s_rr = str_init("s_rr");
 str tt_col_x_uri = str_init("x_uri");
 str tt_col_x_tag = str_init("x_tag");
 str tt_col_s_method = str_init("s_method");
@@ -453,6 +456,11 @@ int tps_db_insert_dialog(tps_data_t *td)
 	db_keys[nr_keys] = &td_col_b_rr;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_rr);
+	nr_keys++;
+
+	db_keys[nr_keys] = &td_col_s_rr;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_rr);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_iflags;
@@ -593,6 +601,16 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_keys[nr_keys] = &tt_col_x_rr;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_rr);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_y_rr;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->y_rr);
+	nr_keys++;
+
+	db_keys[nr_keys] = &tt_col_s_rr;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_rr);
 	nr_keys++;
 
 	db_keys[nr_keys] = &tt_col_x_uri;
@@ -743,6 +761,8 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_cols[nr_cols++] = &tt_col_x_via;
 	db_cols[nr_cols++] = &tt_col_x_vbranch;
 	db_cols[nr_cols++] = &tt_col_x_rr;
+	db_cols[nr_cols++] = &tt_col_y_rr;
+	db_cols[nr_cols++] = &tt_col_s_rr;
 	db_cols[nr_cols++] = &tt_col_x_uri;
 	db_cols[nr_cols++] = &tt_col_x_tag;
 	db_cols[nr_cols++] = &tt_col_s_method;
@@ -776,6 +796,8 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_via); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_vbranch1); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_rr); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->y_rr); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_rr); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_uri); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_tag); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
@@ -832,6 +854,7 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_cols[nr_cols++] = &td_col_b_tag;
 	db_cols[nr_cols++] = &td_col_a_rr;
 	db_cols[nr_cols++] = &td_col_b_rr;
+	db_cols[nr_cols++] = &td_col_s_rr;
 	db_cols[nr_cols++] = &td_col_iflags;
 	db_cols[nr_cols++] = &td_col_a_uri;
 	db_cols[nr_cols++] = &td_col_b_uri;
@@ -874,6 +897,7 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_tag); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_rr); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_rr); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_rr); n++;
 	n++; /*iflags*/
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_uri); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_uri); n++;

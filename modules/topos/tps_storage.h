@@ -43,6 +43,7 @@ typedef struct tps_data {
 	str a_callid;
 	str a_rr;
 	str b_rr;
+	str s_rr;
 	str a_contact;
 	str b_contact;
 	str as_contact;
@@ -60,6 +61,7 @@ typedef struct tps_data {
 	str x_via;
 	str x_tag;
 	str x_rr;
+	str y_rr;
 	str x_uri;
 	str s_method;
 	str s_cseq;
