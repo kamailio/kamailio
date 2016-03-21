@@ -139,6 +139,13 @@
         <description>Record route - B side</description>
     </column>
 
+    <column id="s_rr">
+        <name>s_rr</name>
+        <type>largetext</type>
+        <default/>
+        <description>Record route - S side</description>
+    </column>
+
 	<column id="iflags">
 		<name>iflags</name>
 		<type>unsigned int</type>
