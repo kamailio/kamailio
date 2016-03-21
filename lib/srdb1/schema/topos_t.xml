@@ -105,7 +105,21 @@
         <name>x_rr</name>
         <type>largetext</type>
         <default/>
-        <description>RR stack - A or B side</description>
+        <description>RR stack - incoming A or B side</description>
+	</column>
+
+    <column id="y_rr">
+        <name>y_rr</name>
+        <type>largetext</type>
+        <default/>
+        <description>RR stack - the other A or B side</description>
+	</column>
+
+   <column id="s_rr">
+        <name>s_rr</name>
+        <type>largetext</type>
+        <default/>
+        <description>RR stack - the S side</description>
 	</column>
 
 	<column id="x_uri">
