@@ -222,11 +222,7 @@ int tps_prepare_msg(sip_msg_t *msg)
 		return 2;
 	}
 
-	/* force 2nd via parsing here - it helps checking it later */
-	if (parse_headers(msg, HDR_VIA2_F, 0)==-1
-			|| (msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
-		LM_DBG("no second via in this message \n");
-	}
+	parse_headers(msg, HDR_VIA2_F, 0);
 
 	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL) {
 		LM_ERR("cannot parse cseq header\n");
@@ -345,6 +341,11 @@ int tps_msg_sent(void *data)
 
 		tps_request_sent(&msg, dialog, local);
 	} else {
+		/* reply */
+		if(msg.first_line.u.reply.statuscode==100) {
+			/* nothing to do - it should be locally generated */
+			return 0;
+		}
 		tps_response_sent(&msg);
 	}
 

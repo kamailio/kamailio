@@ -47,6 +47,8 @@
 
 extern int _tps_param_mask_callid;
 
+str _sr_hname_xbranch = str_init("P-SR-XBranch");
+
 /**
  *
  */
@@ -256,7 +258,7 @@ int tps_skip_msg(sip_msg_t *msg)
 /**
  *
  */
-int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
+int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 {
 	hdr_field_t *hdr;
 	via_body_t *via;
@@ -268,6 +270,7 @@ int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 	if(ptsd->cp==NULL) {
 		ptsd->cp = ptsd->cbuf;
 	}
+
 	i = 0;
 	for(hdr=msg->h_via1; hdr; hdr=next_sibling_hdr(hdr)) {
 		for(via=(struct via_body*)hdr->parsed; via; via=via->next) {
@@ -385,9 +388,11 @@ int tps_pack_request(sip_msg_t *msg, tps_data_t *ptsd)
 		ptsd->s_rr.len = ptsd->a_rr.len;
 		ptsd->a_rr.len = 0;
 	}
-	LM_DBG("compacted headers - a_rr: [%.*s](%d) - b_rr: [%.*s](%d)\n",
+	LM_DBG("compacted headers - a_rr: [%.*s](%d) - b_rr: [%.*s](%d)"
+			" - s_rr: [%.*s](%d)\n",
 			ptsd->a_rr.len, ZSW(ptsd->a_rr.s), ptsd->a_rr.len,
-			ptsd->b_rr.len, ZSW(ptsd->b_rr.s), ptsd->b_rr.len);
+			ptsd->b_rr.len, ZSW(ptsd->b_rr.s), ptsd->b_rr.len,
+			ptsd->s_rr.len, ZSW(ptsd->s_rr.s), ptsd->s_rr.len);
 	LM_DBG("compacted headers - as_contact: [%.*s](%d) - bs_contact: [%.*s](%d)\n",
 			ptsd->as_contact.len, ZSW(ptsd->as_contact.s), ptsd->as_contact.len,
 			ptsd->bs_contact.len, ZSW(ptsd->bs_contact.s), ptsd->bs_contact.len);
@@ -428,6 +433,31 @@ int tps_reinsert_contact(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 /**
  *
  */
+int tps_remove_name_headers(sip_msg_t *msg, str *hname)
+{
+	hdr_field_t *hf;
+	struct lump* l;
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		if (hf->name.len==hname->len
+				&& strncasecmp(hf->name.s, hname->s,
+					hname->len)==0)
+		{
+			l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
+			if (l==0) {
+				LM_ERR("unable to delete header [%.*s]\n",
+						hname->len, hname->s);
+				return -1;
+			}
+			return 0;
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
 int tps_reappend_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Via");
@@ -438,6 +468,57 @@ int tps_reappend_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 
 	return 0;
 }
+
+/**
+ *
+ */
+int tps_append_xbranch(sip_msg_t *msg, str *hbody)
+{
+	if(tps_add_headers(msg, &_sr_hname_xbranch, hbody, 0)<0) {
+		LM_ERR("failed to add xbranch header [%.*s]/%d\n",
+				hbody->len, hbody->s, hbody->len);
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+int tps_remove_xbranch(sip_msg_t *msg)
+{
+	return tps_remove_name_headers(msg, &_sr_hname_xbranch);
+}
+
+/**
+ *
+ */
+int tps_get_xbranch(sip_msg_t *msg, str *hbody)
+{
+	hdr_field_t *hf;
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		return -1;
+	}
+	if(tps_add_headers(msg, &_sr_hname_xbranch, hbody, 0)<0) {
+		return -1;
+	}
+
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		if(_sr_hname_xbranch.len==hf->name.len
+				&& strncasecmp(_sr_hname_xbranch.s, hf->name.s,
+					hf->name.len)==0) {
+			break;
+		}
+	}
+	if(hf!=NULL) {
+		*hbody = hf->body;
+		return 0;
+	}
+	return -1;
+}
+
 
 /**
  *
@@ -474,6 +555,8 @@ int tps_response_received(sip_msg_t *msg)
 	tps_data_t stsd;
 	tps_data_t btsd;
 	str lkey;
+	str ftag;
+	uint32_t direction;
 
 	if(msg->first_line.u.reply.statuscode==100) {
 		/* nothing to do - it should be absorbed */
@@ -486,7 +569,7 @@ int tps_response_received(sip_msg_t *msg)
 
 	lkey = msg->callid->body;
 
-	if(tps_pack_request(msg, &mtsd)<0) {
+	if(tps_pack_message(msg, &mtsd)<0) {
 		LM_ERR("failed to extract and pack the headers\n");
 		return -1;
 	}
@@ -494,15 +577,33 @@ int tps_response_received(sip_msg_t *msg)
 	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
 		goto error;
 	}
-	if(tps_storage_update_branch(msg, &mtsd, &btsd)<0) {
-		goto error;
-	}
 	LM_DBG("loaded dialog a_uuid [%.*s]\n",
 			btsd.a_uuid.len, ZSW(btsd.a_uuid.s));
 	if(tps_storage_load_dialog(msg, &btsd, &stsd)<0) {
 		goto error;
 	}
-	if(tps_storage_update_dialog(msg, &btsd, &stsd)<0) {
+
+	/* detect direction - get from-tag */
+	if(parse_from_header(msg)<0 || msg->from==NULL) {
+		LM_ERR("failed getting 'from' header!\n");
+		goto error;
+	}
+	ftag = get_from(msg)->tag_value;
+
+	if(stsd.a_tag.len!=ftag.len) {
+		direction = TPS_DIR_UPSTREAM;
+	} else {
+		if(memcpy(stsd.a_tag.s, ftag.s, ftag.len)==0) {
+			direction = TPS_DIR_DOWNSTREAM;
+		} else {
+			direction = TPS_DIR_UPSTREAM;
+		}
+	}
+	mtsd.direction = direction;
+	if(tps_storage_update_branch(msg, &mtsd, &btsd)<0) {
+		goto error;
+	}
+	if(tps_storage_update_dialog(msg, &mtsd, &stsd)<0) {
 		goto error;
 	}
 	tps_storage_lock_release(&lkey);
@@ -510,6 +611,7 @@ int tps_response_received(sip_msg_t *msg)
 	tps_reappend_via(msg, &btsd, &btsd.x_via);
 	tps_reappend_rr(msg, &btsd, &btsd.s_rr);
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
+	tps_append_xbranch(msg, &mtsd.x_vbranch1);
 
 	return 0;
 
@@ -533,7 +635,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	memset(&stsd, 0, sizeof(tps_data_t));
 	ptsd = &mtsd;
 
-	if(tps_pack_request(msg, &mtsd)<0) {
+	if(tps_pack_message(msg, &mtsd)<0) {
 		LM_ERR("failed to extract and pack the headers\n");
 		return -1;
 	}
@@ -591,15 +693,23 @@ int tps_response_sent(sip_msg_t *msg)
 	tps_data_t btsd;
 	str lkey;
 	int direction = TPS_DIR_UPSTREAM;
+	str xvbranch;
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
 
-	if(tps_pack_request(msg, &mtsd)<0) {
+	if(tps_get_xbranch(msg, &xvbranch)<0) {
+		LM_DBG("no x-branch header - nothing to do\n");
+		return 0;
+	}
+
+	if(tps_pack_message(msg, &mtsd)<0) {
 		LM_ERR("failed to extract and pack the headers\n");
 		return -1;
 	}
+	mtsd.x_vbranch1 = xvbranch;
+	tps_remove_xbranch(msg);
 
 	if(get_cseq(msg)->method_id==METHOD_MESSAGE) {
 		tps_remove_headers(msg, HDR_RECORDROUTE_T);

@@ -268,22 +268,24 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 	trim(&stxt);
 	td->a_callid = stxt;
 
+	/* get from-tag */
+	if(parse_from_header(msg)<0 || msg->from==NULL) {
+		LM_ERR("failed getting 'from' header!\n");
+		goto error;
+	}
+	td->a_tag = get_from(msg)->tag_value;
+
+	/* get to-tag */
+	if(parse_to_header(msg)<0 || msg->to==NULL) {
+		LM_ERR("failed getting 'to' header!\n");
+		goto error;
+	}
+	td->b_tag = get_to(msg)->tag_value;
+
 	if(dir==TPS_DIR_DOWNSTREAM) {
-		/* get from-tag */
-		if(parse_from_header(msg)<0 || msg->from==NULL) {
-			LM_ERR("failed getting 'from' header!\n");
-			goto error;
-		}
-		td->a_tag = get_from(msg)->tag_value;
 		td->x_tag = td->a_tag;
 	} else {
-		/* get to-tag */
-		if(parse_to_header(msg)<0 || msg->to==NULL) {
-			LM_ERR("failed getting 'to' header!\n");
-			goto error;
-		}
-		td->b_tag = get_to(msg)->tag_value;
-		td->b_tag = td->a_tag;
+		td->x_tag = td->b_tag;
 	}
 
 	td->x_via = td->x_via2;
@@ -370,8 +372,8 @@ str td_col_iflags = str_init("iflags");
 str td_col_a_uri = str_init("a_uri");
 str td_col_b_uri = str_init("b_uri");
 str td_col_r_uri = str_init("r_uri");
-str td_col_a_srcip = str_init("a_srcip");
-str td_col_b_srcip = str_init("b_srcip");
+str td_col_a_srcaddr = str_init("a_srcaddr");
+str td_col_b_srcaddr = str_init("b_srcaddr");
 str td_col_s_method = str_init("s_method");
 str td_col_s_cseq = str_init("s_cseq");
 
@@ -494,14 +496,14 @@ int tps_db_insert_dialog(tps_data_t *td)
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->r_uri);
 	nr_keys++;
 
-	db_keys[nr_keys] = &td_col_a_srcip;
+	db_keys[nr_keys] = &td_col_a_srcaddr;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_srcip);
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->a_srcaddr);
 	nr_keys++;
 
-	db_keys[nr_keys] = &td_col_b_srcip;
+	db_keys[nr_keys] = &td_col_b_srcaddr;
 	db_vals[nr_keys].type = DB1_STR;
-	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_srcip);
+	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_srcaddr);
 	nr_keys++;
 
 	db_keys[nr_keys] = &td_col_s_method;
@@ -850,7 +852,15 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_ops[nr_keys]=OP_EQ;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
+	if(md->a_uuid.len>0 && md->a_uuid.s[0]=='a') {
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
+	} else {
+		if(md->b_uuid.len<=0) {
+			LM_ERR("no valid dlg uuid\n");
+			return -1;
+		}
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uuid);
+	}
 	nr_keys++;
 
 	db_cols[nr_cols++] = &td_col_rectime;
@@ -870,8 +880,8 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_cols[nr_cols++] = &td_col_a_uri;
 	db_cols[nr_cols++] = &td_col_b_uri;
 	db_cols[nr_cols++] = &td_col_r_uri;
-	db_cols[nr_cols++] = &td_col_a_srcip;
-	db_cols[nr_cols++] = &td_col_b_srcip;
+	db_cols[nr_cols++] = &td_col_a_srcaddr;
+	db_cols[nr_cols++] = &td_col_b_srcaddr;
 	db_cols[nr_cols++] = &td_col_s_method;
 	db_cols[nr_cols++] = &td_col_s_cseq;
 
@@ -913,8 +923,8 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_uri); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_uri); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->r_uri); n++;
-	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_srcip); n++;
-	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_srcip); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_srcaddr); n++;
+	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_srcaddr); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
 
@@ -943,6 +953,73 @@ int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
  */
 int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
+	db_key_t db_keys[4];
+	db_op_t  db_ops[4];
+	db_val_t db_vals[4];
+	db_key_t db_ucols[TPS_NR_KEYS];
+	db_val_t db_uvals[TPS_NR_KEYS];
+	db1_res_t* db_res = NULL;
+	int nr_keys;
+	int nr_ucols;
+	int n;
+	int ret;
+
+	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
+		return -1;
+
+	if(md->s_method_id != METHOD_INVITE) {
+		return 0;
+	}
+	if(msg->first_line.u.reply.statuscode<200
+			|| msg->first_line.u.reply.statuscode>=300) {
+		return 0;
+	}
+
+	ret = tps_storage_link_msg(msg, md, md->direction);
+	if(ret<0) return -1;
+
+	memset(db_ucols, 0, TPS_NR_KEYS*sizeof(db_key_t));
+	memset(db_uvals, 0, TPS_NR_KEYS*sizeof(db_val_t));
+
+	nr_keys = 0;
+	nr_ucols = 0;
+
+	db_keys[nr_keys]=&td_col_a_uuid;
+	db_ops[nr_keys]=OP_EQ;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].nul = 0;
+	if(sd->a_uuid.len>0 && sd->a_uuid.s[0]=='a') {
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->a_uuid);
+	} else {
+		if(sd->b_uuid.len<=0) {
+			LM_ERR("no valid dlg uuid\n");
+			return -1;
+		}
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->b_uuid);
+	}
+	nr_keys++;
+
+	db_ucols[nr_ucols] = &td_col_b_contact;
+	db_uvals[nr_ucols].type = DB1_STR;
+	db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_contact);
+	nr_ucols++;
+
+	db_ucols[nr_ucols] = &td_col_b_rr;
+	db_uvals[nr_ucols].type = DB1_STR;
+	db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_rr);
+	nr_ucols++;
+
+	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
+		LM_ERR("failed to perform use table\n");
+		return -1;
+	}
+
+	if(_tpsdbf.update(_tps_db_handle, db_keys, db_ops, db_vals,
+				db_ucols, db_uvals, nr_keys, nr_ucols)!=0) {
+		LM_ERR("failed to do db update for [%.*s]!\n",
+				md->a_uuid.len, md->a_uuid.s);
+		return -1;
+	}
 	return 0;
 }
 
