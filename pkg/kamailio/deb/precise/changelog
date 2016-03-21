@@ -1,3 +1,9 @@
+kamailio (4.4.0~rc1) unstable; urgency=medium
+
+  * version set to 4.4.0-rc1
+
+ -- Victor Seva <vseva@debian.org>  Mon, 21 Mar 2016 22:22:22 +0100
+
 kamailio (4.4.0~rc0) unstable; urgency=medium
 
   * version set to 4.4.0-rc0
