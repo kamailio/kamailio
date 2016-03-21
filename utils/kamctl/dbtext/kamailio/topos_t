@@ -1,1 +1,1 @@
-id(int,auto) rectime(int) s_method(string) s_cseq(string) a_callid(string) a_uuid(string) b_uuid(string) direction(int) x_via(string) x_vbranch(string) x_rr(string) x_uri(string) x_tag(string) 
+id(int,auto) rectime(int) s_method(string) s_cseq(string) a_callid(string) a_uuid(string) b_uuid(string) direction(int) x_via(string) x_vbranch(string) x_rr(string) y_rr(string) s_rr(string) x_uri(string) x_tag(string) 

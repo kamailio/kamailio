@@ -679,6 +679,7 @@
 		<column><field>url</field><type>DB1_STR</type></column>
 		<column><field>weight</field><type>DB1_INT</type></column>
 		<column><field>disabled</field><type>DB1_INT</type></column>
+		<column><field>stamp</field><type>DB1_DATETIME</type></column>
 	</db_table>
 	<!-- Declaration of rtpproxy table-->
 	<db_table id="rtpproxy">
@@ -767,6 +768,7 @@
 		<column><field>b_tag</field><type>DB1_STR</type></column>
 		<column><field>a_rr</field><type>DB1_BLOB</type></column>
 		<column><field>b_rr</field><type>DB1_BLOB</type></column>
+		<column><field>s_rr</field><type>DB1_BLOB</type></column>
 		<column><field>iflags</field><type>DB1_INT</type></column>
 		<column><field>a_uri</field><type>DB1_STR</type></column>
 		<column><field>b_uri</field><type>DB1_STR</type></column>
@@ -789,6 +791,8 @@
 		<column><field>x_via</field><type>DB1_BLOB</type></column>
 		<column><field>x_vbranch</field><type>DB1_STR</type></column>
 		<column><field>x_rr</field><type>DB1_BLOB</type></column>
+		<column><field>y_rr</field><type>DB1_BLOB</type></column>
+		<column><field>s_rr</field><type>DB1_BLOB</type></column>
 		<column><field>x_uri</field><type>DB1_STR</type></column>
 		<column><field>x_tag</field><type>DB1_STR</type></column>
 	</db_table>
@@ -3604,6 +3608,7 @@
 				<col><field>url</field></col>
 				<col><field>weight</field></col>
 				<col><field>disabled</field></col>
+				<col><field>stamp</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3614,6 +3619,7 @@
 				<col><field>url</field></col>
 				<col><field>weight</field></col>
 				<col><field>disabled</field></col>
+				<col><field>stamp</field></col>
 			</query_cols>
 		</cmd>
 	</mod>
@@ -3896,6 +3902,7 @@
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
 				<col><field>b_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>iflags</field></col>
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
@@ -3922,6 +3929,7 @@
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
 				<col><field>b_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>iflags</field></col>
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
@@ -3951,6 +3959,7 @@
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
 				<col><field>b_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>iflags</field></col>
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
@@ -3984,6 +3993,8 @@
 				<col><field>x_via</field></col>
 				<col><field>x_vbranch</field></col>
 				<col><field>x_rr</field></col>
+				<col><field>y_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
 			</query_cols>
@@ -4002,6 +4013,8 @@
 				<col><field>x_via</field></col>
 				<col><field>x_vbranch</field></col>
 				<col><field>x_rr</field></col>
+				<col><field>y_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
 			</query_cols>
@@ -4023,6 +4036,8 @@
 				<col><field>x_via</field></col>
 				<col><field>x_vbranch</field></col>
 				<col><field>x_rr</field></col>
+				<col><field>y_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
 			</query_cols>

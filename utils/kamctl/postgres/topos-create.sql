@@ -14,6 +14,7 @@ CREATE TABLE topos_d (
     b_tag VARCHAR(64) DEFAULT '' NOT NULL,
     a_rr TEXT DEFAULT '' NOT NULL,
     b_rr TEXT DEFAULT '' NOT NULL,
+    s_rr TEXT DEFAULT '' NOT NULL,
     iflags INTEGER DEFAULT 0 NOT NULL,
     a_uri VARCHAR(128) DEFAULT '' NOT NULL,
     b_uri VARCHAR(128) DEFAULT '' NOT NULL,
@@ -39,6 +40,8 @@ CREATE TABLE topos_t (
     x_via TEXT DEFAULT '' NOT NULL,
     x_vbranch VARCHAR(255) DEFAULT '' NOT NULL,
     x_rr TEXT DEFAULT '' NOT NULL,
+    y_rr TEXT DEFAULT '' NOT NULL,
+    s_rr TEXT DEFAULT '' NOT NULL,
     x_uri VARCHAR(128) DEFAULT '' NOT NULL,
     x_tag VARCHAR(64) DEFAULT '' NOT NULL
 );

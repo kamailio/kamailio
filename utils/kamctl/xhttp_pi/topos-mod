@@ -19,6 +19,7 @@
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
 				<col><field>b_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>iflags</field></col>
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
@@ -45,6 +46,7 @@
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
 				<col><field>b_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>iflags</field></col>
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
@@ -74,6 +76,7 @@
 				<col><field>b_tag</field></col>
 				<col><field>a_rr</field></col>
 				<col><field>b_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>iflags</field></col>
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
@@ -107,6 +110,8 @@
 				<col><field>x_via</field></col>
 				<col><field>x_vbranch</field></col>
 				<col><field>x_rr</field></col>
+				<col><field>y_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
 			</query_cols>
@@ -125,6 +130,8 @@
 				<col><field>x_via</field></col>
 				<col><field>x_vbranch</field></col>
 				<col><field>x_rr</field></col>
+				<col><field>y_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
 			</query_cols>
@@ -146,6 +153,8 @@
 				<col><field>x_via</field></col>
 				<col><field>x_vbranch</field></col>
 				<col><field>x_rr</field></col>
+				<col><field>y_rr</field></col>
+				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
 			</query_cols>
