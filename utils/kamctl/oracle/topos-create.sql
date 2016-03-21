@@ -19,8 +19,10 @@ CREATE TABLE topos_d (
     a_uri VARCHAR2(128) DEFAULT '',
     b_uri VARCHAR2(128) DEFAULT '',
     r_uri VARCHAR2(128) DEFAULT '',
-    a_srcip VARCHAR2(50) DEFAULT '',
-    b_srcip VARCHAR2(50) DEFAULT ''
+    a_srcaddr VARCHAR2(128) DEFAULT '',
+    b_srcaddr VARCHAR2(128) DEFAULT '',
+    a_socket VARCHAR2(128) DEFAULT '',
+    b_socket VARCHAR2(128) DEFAULT ''
 );
 
 CREATE OR REPLACE TRIGGER topos_d_tr
@@ -51,7 +53,11 @@ CREATE TABLE topos_t (
     y_rr CLOB DEFAULT '',
     s_rr CLOB DEFAULT '',
     x_uri VARCHAR2(128) DEFAULT '',
-    x_tag VARCHAR2(64) DEFAULT ''
+    x_tag VARCHAR2(64) DEFAULT '',
+    a_srcaddr VARCHAR2(128) DEFAULT '',
+    b_srcaddr VARCHAR2(128) DEFAULT '',
+    a_socket VARCHAR2(128) DEFAULT '',
+    b_socket VARCHAR2(128) DEFAULT ''
 );
 
 CREATE OR REPLACE TRIGGER topos_t_tr
