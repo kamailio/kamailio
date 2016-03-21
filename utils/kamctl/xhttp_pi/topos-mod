@@ -24,8 +24,10 @@
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
 				<col><field>r_uri</field></col>
-				<col><field>a_srcip</field></col>
-				<col><field>b_srcip</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -51,8 +53,10 @@
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
 				<col><field>r_uri</field></col>
-				<col><field>a_srcip</field></col>
-				<col><field>b_srcip</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -81,8 +85,10 @@
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
 				<col><field>r_uri</field></col>
-				<col><field>a_srcip</field></col>
-				<col><field>b_srcip</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
@@ -114,6 +120,10 @@
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -134,6 +144,10 @@
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -157,6 +171,10 @@
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

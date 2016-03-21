@@ -773,8 +773,10 @@
 		<column><field>a_uri</field><type>DB1_STR</type></column>
 		<column><field>b_uri</field><type>DB1_STR</type></column>
 		<column><field>r_uri</field><type>DB1_STR</type></column>
-		<column><field>a_srcip</field><type>DB1_STR</type></column>
-		<column><field>b_srcip</field><type>DB1_STR</type></column>
+		<column><field>a_srcaddr</field><type>DB1_STR</type></column>
+		<column><field>b_srcaddr</field><type>DB1_STR</type></column>
+		<column><field>a_socket</field><type>DB1_STR</type></column>
+		<column><field>b_socket</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of topos_t table-->
 	<db_table id="topos_t">
@@ -795,6 +797,10 @@
 		<column><field>s_rr</field><type>DB1_BLOB</type></column>
 		<column><field>x_uri</field><type>DB1_STR</type></column>
 		<column><field>x_tag</field><type>DB1_STR</type></column>
+		<column><field>a_srcaddr</field><type>DB1_STR</type></column>
+		<column><field>b_srcaddr</field><type>DB1_STR</type></column>
+		<column><field>a_socket</field><type>DB1_STR</type></column>
+		<column><field>b_socket</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of uacreg table-->
 	<db_table id="uacreg">
@@ -3907,8 +3913,10 @@
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
 				<col><field>r_uri</field></col>
-				<col><field>a_srcip</field></col>
-				<col><field>b_srcip</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3934,8 +3942,10 @@
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
 				<col><field>r_uri</field></col>
-				<col><field>a_srcip</field></col>
-				<col><field>b_srcip</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3964,8 +3974,10 @@
 				<col><field>a_uri</field></col>
 				<col><field>b_uri</field></col>
 				<col><field>r_uri</field></col>
-				<col><field>a_srcip</field></col>
-				<col><field>b_srcip</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
@@ -3997,6 +4009,10 @@
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -4017,6 +4033,10 @@
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -4040,6 +4060,10 @@
 				<col><field>s_rr</field></col>
 				<col><field>x_uri</field></col>
 				<col><field>x_tag</field></col>
+				<col><field>a_srcaddr</field></col>
+				<col><field>b_srcaddr</field></col>
+				<col><field>a_socket</field></col>
+				<col><field>b_socket</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

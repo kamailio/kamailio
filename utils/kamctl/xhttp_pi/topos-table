@@ -22,8 +22,10 @@
 		<column><field>a_uri</field><type>DB1_STR</type></column>
 		<column><field>b_uri</field><type>DB1_STR</type></column>
 		<column><field>r_uri</field><type>DB1_STR</type></column>
-		<column><field>a_srcip</field><type>DB1_STR</type></column>
-		<column><field>b_srcip</field><type>DB1_STR</type></column>
+		<column><field>a_srcaddr</field><type>DB1_STR</type></column>
+		<column><field>b_srcaddr</field><type>DB1_STR</type></column>
+		<column><field>a_socket</field><type>DB1_STR</type></column>
+		<column><field>b_socket</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of topos_t table-->
 	<db_table id="topos_t">
@@ -44,4 +46,8 @@
 		<column><field>s_rr</field><type>DB1_BLOB</type></column>
 		<column><field>x_uri</field><type>DB1_STR</type></column>
 		<column><field>x_tag</field><type>DB1_STR</type></column>
+		<column><field>a_srcaddr</field><type>DB1_STR</type></column>
+		<column><field>b_srcaddr</field><type>DB1_STR</type></column>
+		<column><field>a_socket</field><type>DB1_STR</type></column>
+		<column><field>b_socket</field><type>DB1_STR</type></column>
 	</db_table>

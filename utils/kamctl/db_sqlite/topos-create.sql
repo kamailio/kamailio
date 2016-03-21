@@ -19,8 +19,10 @@ CREATE TABLE topos_d (
     a_uri VARCHAR(128) DEFAULT '' NOT NULL,
     b_uri VARCHAR(128) DEFAULT '' NOT NULL,
     r_uri VARCHAR(128) DEFAULT '' NOT NULL,
-    a_srcip VARCHAR(50) DEFAULT '' NOT NULL,
-    b_srcip VARCHAR(50) DEFAULT '' NOT NULL
+    a_srcaddr VARCHAR(128) DEFAULT '' NOT NULL,
+    b_srcaddr VARCHAR(128) DEFAULT '' NOT NULL,
+    a_socket VARCHAR(128) DEFAULT '' NOT NULL,
+    b_socket VARCHAR(128) DEFAULT '' NOT NULL
 );
 
 CREATE INDEX topos_d_rectime_idx ON topos_d (rectime);
@@ -43,7 +45,11 @@ CREATE TABLE topos_t (
     y_rr TEXT DEFAULT '' NOT NULL,
     s_rr TEXT DEFAULT '' NOT NULL,
     x_uri VARCHAR(128) DEFAULT '' NOT NULL,
-    x_tag VARCHAR(64) DEFAULT '' NOT NULL
+    x_tag VARCHAR(64) DEFAULT '' NOT NULL,
+    a_srcaddr VARCHAR(128) DEFAULT '' NOT NULL,
+    b_srcaddr VARCHAR(128) DEFAULT '' NOT NULL,
+    a_socket VARCHAR(128) DEFAULT '' NOT NULL,
+    b_socket VARCHAR(128) DEFAULT '' NOT NULL
 );
 
 CREATE INDEX topos_t_rectime_idx ON topos_t (rectime);
