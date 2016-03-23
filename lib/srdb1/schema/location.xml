@@ -232,7 +232,6 @@
         <name>connection_idx</name>
         <colref linkend="server_id"/>
         <colref linkend="connection_id"/>
-        <unique/>
     </index>
 
 
