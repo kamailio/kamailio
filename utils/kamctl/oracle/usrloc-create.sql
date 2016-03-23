@@ -22,8 +22,7 @@ CREATE TABLE location (
     connection_id NUMBER(10) DEFAULT 0 NOT NULL,
     keepalive NUMBER(10) DEFAULT 0 NOT NULL,
     partition NUMBER(10) DEFAULT 0 NOT NULL,
-    CONSTRAINT location_ruid_idx  UNIQUE (ruid),
-    CONSTRAINT location_connection_idx  UNIQUE (server_id, connection_id)
+    CONSTRAINT location_ruid_idx  UNIQUE (ruid)
 );
 
 CREATE OR REPLACE TRIGGER location_tr
@@ -36,6 +35,7 @@ BEGIN map2users('location'); END;
 /
 CREATE INDEX location_account_contact_idx  ON location (username, domain, contact);
 CREATE INDEX location_expires_idx  ON location (expires);
+CREATE INDEX location_connection_idx  ON location (server_id, connection_id);
 
 INSERT INTO version (table_name, table_version) values ('location','8');
 
