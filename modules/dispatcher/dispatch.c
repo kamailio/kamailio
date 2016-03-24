@@ -1749,16 +1749,25 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri,
 			act.type = SET_HOSTALL_T;
 			act.val[0].type = STRING_ST;
 			if(uri->len>4
-					&& strncasecmp(uri->s,"sip:",4)==0)
+					&& strncasecmp(uri->s,"sip:",4)==0) {
 				act.val[0].u.string = uri->s+4;
-			else
+			} else if(uri->len>5
+					&& strncasecmp(uri->s,"sips:",5)==0) {
+				act.val[0].u.string = uri->s+5;
+			} else {
 				act.val[0].u.string = uri->s;
+			}
 			init_run_actions_ctx(&ra_ctx);
 			if (do_action(&ra_ctx, &act, msg) < 0) {
 				LM_ERR("error while setting host\n");
 				return -1;
 			}
 			break;
+
+		case 2:
+			/* no update to d-uri/r-uri */
+			return 0;
+
 		default:
 			if (set_dst_uri(msg, uri) < 0) {
 				LM_ERR("error while setting dst uri\n");
@@ -1792,7 +1801,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, int mode)
 {
 	int i, cnt;
-	unsigned int hash;
+	unsigned int hash, lhash;
 	int_str avp_val;
 	ds_set_t *idx = NULL;
 	char buf[2+16+1];
@@ -2036,8 +2045,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 			cnt++;
 		}
 
-		/* add to avp */
-
+		/* add to avp in reverse order */
 		for(i=hash-1; i>=0 && cnt<limit; i--)
 		{
 			if(ds_skip_dst(idx->dlist[i].flags)
@@ -2086,7 +2094,10 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 			cnt++;
 		}
 
-		for(i=idx->nr-1; i>hash && cnt<limit; i--)
+		lhash = hash;
+		/* if addr was not set to dst/uri, add it via last operation */
+		if(mode==2) lhash--;
+		for(i=idx->nr-1; i>lhash && cnt<limit; i--)
 		{
 			if(ds_skip_dst(idx->dlist[i].flags)
 					|| (ds_use_default!=0 && i==(idx->nr-1)))
