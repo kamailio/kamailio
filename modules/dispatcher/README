@@ -83,13 +83,14 @@ Alessandro Arrichiello
 
               4.1. ds_select_dst(set, alg[, limit])
               4.2. ds_select_domain(set, alg[, limit])
-              4.3. ds_next_dst()
-              4.4. ds_next_domain()
-              4.5. ds_mark_dst([state])
-              4.6. ds_list_exist(groupid)
-              4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
-              4.8. ds_load_update()
-              4.9. ds_load_unset()
+              4.3. ds_select(set, alg [, limit])
+              4.4. ds_next_dst()
+              4.5. ds_next_domain()
+              4.6. ds_mark_dst([state])
+              4.7. ds_list_exist(groupid)
+              4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
+              4.9. ds_load_update()
+              4.10. ds_load_unset()
 
         5. MI Commands
 
@@ -157,12 +158,14 @@ Alessandro Arrichiello
    1.33. Set the "ds_default_socket" parameter
    1.34. Set the "ds_timer_mode" parameter
    1.35. ds_select_dst usage
-   1.36. ds_mark_dst usage
-   1.37. ds_list_exist usage
-   1.38. ds_is_from_list usage
-   1.39. ds_load_unset usage
-   1.40. dispatcher list file
-   1.41. Kamailio config script - sample dispatcher usage
+   1.36. ds_select_domain usage
+   1.37. ds_select usage
+   1.38. ds_mark_dst usage
+   1.39. ds_list_exist usage
+   1.40. ds_is_from_list usage
+   1.41. ds_load_unset usage
+   1.42. dispatcher list file
+   1.43. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -214,13 +217,14 @@ Chapter 1. Admin Guide
 
         4.1. ds_select_dst(set, alg[, limit])
         4.2. ds_select_domain(set, alg[, limit])
-        4.3. ds_next_dst()
-        4.4. ds_next_domain()
-        4.5. ds_mark_dst([state])
-        4.6. ds_list_exist(groupid)
-        4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
-        4.8. ds_load_update()
-        4.9. ds_load_unset()
+        4.3. ds_select(set, alg [, limit])
+        4.4. ds_next_dst()
+        4.5. ds_next_domain()
+        4.6. ds_mark_dst([state])
+        4.7. ds_list_exist(groupid)
+        4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
+        4.9. ds_load_update()
+        4.10. ds_load_unset()
 
    5. MI Commands
 
@@ -813,13 +817,14 @@ Note
 
    4.1. ds_select_dst(set, alg[, limit])
    4.2. ds_select_domain(set, alg[, limit])
-   4.3. ds_next_dst()
-   4.4. ds_next_domain()
-   4.5. ds_mark_dst([state])
-   4.6. ds_list_exist(groupid)
-   4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
-   4.8. ds_load_update()
-   4.9. ds_load_unset()
+   4.3. ds_select(set, alg [, limit])
+   4.4. ds_next_dst()
+   4.5. ds_next_domain()
+   4.6. ds_mark_dst([state])
+   4.7. ds_list_exist(groupid)
+   4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
+   4.9. ds_load_update()
+   4.10. ds_load_unset()
 
 4.1. ds_select_dst(set, alg[, limit])
 
@@ -916,21 +921,55 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.3. ds_next_dst()
+   Example 1.36. ds_select_domain usage
+...
+$var(a) = 4;
+if(ds_select_domain("1", "$var(a)")) {
+    t_relay();
+    exit;
+}
+...
+
+4.3. ds_select(set, alg [, limit])
+
+   The method selects a destination from addresses set and adds it in the
+   AVPs specified for this module. It is not updating R-URI nor the
+   destination URI. The parameters have same meaning as for
+   ds_select_dst().
+
+   If the bit 2 in 'flags' is set, the rest of the addresses from the
+   destination set is stored in AVP list (limited with an optional 'limit'
+   parameter). You can execute 'ds_next_domain()' or 'ds_next_dst()' to
+   use next address to achieve serial forking to all possible
+   destinations.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.37. ds_select usage
+...
+$var(a) = 4;
+if(ds_select("1", "$var(a)")) {
+    ds_next_domain();
+    t_relay();
+    exit;
+}
+...
+
+4.4. ds_next_dst()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the dst_uri (outbound proxy address).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.4. ds_next_domain()
+4.5. ds_next_domain()
 
    Takes the next destination address from the AVPs with id 'dst_avp_id'
    and sets the domain part of the request URI.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-4.5. ds_mark_dst([state])
+4.6. ds_mark_dst([state])
 
    Mark the last used address from destination set as inactive ("i"/"I"),
    active ("a"/"A"), disabled ("d"/"D") or trying ("t"/"T"). Apart of
@@ -957,7 +996,7 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.36. ds_mark_dst usage
+   Example 1.38. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -967,21 +1006,21 @@ failure_route[tryagain] {
 }
 ...
 
-4.6. ds_list_exist(groupid)
+4.7. ds_list_exist(groupid)
 
    Check if a specific group is defined in dispatcher list or database.
      * groupid - A group ID to check.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.37. ds_list_exist usage
+   Example 1.39. ds_list_exist usage
 ...
 if(ds_list_exist("10")) {
     ...
 }
 ...
 
-4.7. ds_is_from_list([groupid [, mode [, uri] ] ])
+4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
 
    This function returns true, if there is a match of source address or
    uri with an address in the given group of the dispatcher-list;
@@ -1017,7 +1056,7 @@ if(ds_list_exist("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.38. ds_is_from_list usage
+   Example 1.40. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1033,7 +1072,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.8. ds_load_update()
+4.9. ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -1044,14 +1083,14 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.9. ds_load_unset()
+4.10. ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.39. ds_load_unset usage
+   Example 1.41. ds_load_unset usage
 ...
 route {
     ...
@@ -1270,7 +1309,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.40. dispatcher list file
+   Example 1.42. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1295,7 +1334,7 @@ r,opt)
 
    Next picture shows a sample usage of the dispatcher module.
 
-   Example 1.41. Kamailio config script - sample dispatcher usage
+   Example 1.43. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
