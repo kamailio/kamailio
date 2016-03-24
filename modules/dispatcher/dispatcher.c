@@ -96,9 +96,9 @@ unsigned short sock_avp_type;
 pv_elem_t * hash_param_model = NULL;
 
 int probing_threshold = 1; /* number of failed requests, before a destination
-							   is taken into probing */
+							* is taken into probing */
 int inactive_threshold = 1; /* number of replied requests, before a destination
-							   is taken into back in active state */
+							 * is taken into back in active state */
 str ds_ping_method = str_init("OPTIONS");
 str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
