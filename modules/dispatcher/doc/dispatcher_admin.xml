@@ -1050,19 +1050,64 @@ ds_select_dst("1", "4", "3");
 		<para>
 		If the bit 2 in 'flags' is set, the rest of the addresses from the
 		destination set is stored in AVP list (limited with an optional 'limit'
-                parameter). You can use 'ds_next_domain()' to use next address to
+		parameter). You can use 'ds_next_domain()' to use next address to
 		achieve serial forking to all possible destinations.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
- 	</section>
-  	<section>
- 		<title>
- 		<function moreinfo="none">ds_next_dst()</function>
- 		</title>
- 		<para>
- 		Takes the next destination address from the AVPs with id 'dst_avp_id'
+		<example>
+		<title><function>ds_select_domain</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(a) = 4;
+if(ds_select_domain("1", "$var(a)")) {
+    t_relay();
+    exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dispatcher.f.ds_select">
+		<title>
+		<function moreinfo="none">ds_select(set, alg [, limit])</function>
+		</title>
+		<para>
+		The method selects a destination from addresses set and adds it
+		in the AVPs specified for this module. It is not updating R-URI
+		nor the destination URI. The parameters have same
+		meaning as for ds_select_dst().
+		</para>
+		<para>
+		If the bit 2 in 'flags' is set, the rest of the addresses from the
+		destination set is stored in AVP list (limited with an optional 'limit'
+		parameter). You can execute 'ds_next_domain()' or 'ds_next_dst()' to use
+		next address to achieve serial forking to all possible destinations.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_select</function> usage</title>
+		<programlisting format="linespecific">
+...
+$var(a) = 4;
+if(ds_select("1", "$var(a)")) {
+    ds_next_domain();
+    t_relay();
+    exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">ds_next_dst()</function>
+		</title>
+		<para>
+		Takes the next destination address from the AVPs with id 'dst_avp_id'
 		and sets the dst_uri (outbound proxy address).
  		</para>
 		<para>
