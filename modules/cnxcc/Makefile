@@ -10,10 +10,8 @@ NAME=cnxcc.so
 
 ifeq ($(CROSS_COMPILE),)
 HIREDIS_BUILDER = $(shell \
-	if pkg-config --exists libcre; then \
+	if pkg-config --exists hiredis; then \
 		echo 'pkg-config hiredis'; \
-	else \
-		which pcre-config; \
 	fi)
 endif
 
@@ -23,10 +21,31 @@ ifeq ($(HIREDIS_BUILDER),)
 else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
 	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
+
+ifeq ($(HIREDISLIBS),-L -lhiredis)
+		HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags) /opt/local/include
+		HIREDISLIBS = -L/opt/local/lib -lhiredis
 endif
 
-DEFS+=$(HIREDISDEFS)
-LIBS=$(HIREDISLIBS) -levent
+endif
+
+ifeq ($(CROSS_COMPILE),)
+LEVENT_BUILDER = $(shell \
+	if pkg-config --exists libevent; then \
+		echo 'pkg-config libevent'; \
+	fi)
+endif
+
+ifeq ($(LEVENT_BUILDER),)
+	LEVENTDEFS=
+	LEVENTLIBS=-L$(LOCALBASE)/lib -levent
+else
+	LEVENTDEFS = $(shell $(LEVENT_BUILDER) --cflags)
+	LEVENTLIBS = $(shell $(LEVENT_BUILDER) --libs)
+endif
+
+DEFS+=$(HIREDISDEFS) $(LEVENTDEFS)
+LIBS=$(HIREDISLIBS) $(LEVENTLIBS)
 
 DEFS+=-DOPENSER_MOD_INTERFACE
 SERLIBPATH=../../lib
