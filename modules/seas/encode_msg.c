@@ -148,7 +148,7 @@ char get_header_code(struct hdr_field *hf)
  */
 int encode_msg(struct sip_msg *msg,char *payload,int len)
 {
-   int i,j,k,u,request;
+   int i,j=0,k,u,request;
    unsigned short int h;
    struct hdr_field* hf;
    struct msg_start* ms;
