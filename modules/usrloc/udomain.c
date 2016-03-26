@@ -676,6 +676,8 @@ urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 		goto done;
 	}
 
+	if(r==0) goto done;
+
 	for (c = r->contacts; c != NULL; c = c->next) {
 		vals[0].val.str_val.s = c->ruid.s;
 		vals[0].val.str_val.len = c->ruid.len;
