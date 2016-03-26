@@ -360,9 +360,14 @@ unsigned char *crypto_aes_encrypt(EVP_CIPHER_CTX *e, unsigned char *plaintext,
 	int c_len = *len + AES_BLOCK_SIZE - 1, f_len = 0;
 	unsigned char *ciphertext = (unsigned char *)malloc(c_len);
 
+	if(ciphertext == NULL) {
+		LM_ERR("no more system memory\n");
+		return NULL;
+	}
 	/* allows reusing of 'e' for multiple encryption cycles */
 	if(!EVP_EncryptInit_ex(e, NULL, NULL, NULL, NULL)){
 		LM_ERR("failure in EVP_EncryptInit_ex \n");
+		free(ciphertext);
 		return NULL;
 	}
 
@@ -370,12 +375,14 @@ unsigned char *crypto_aes_encrypt(EVP_CIPHER_CTX *e, unsigned char *plaintext,
 	 * generated, *len is the size of plaintext in bytes */
 	if(!EVP_EncryptUpdate(e, ciphertext, &c_len, plaintext, *len)){
 		LM_ERR("failure in EVP_EncryptUpdate \n");
+		free(ciphertext);
 		return NULL;
 	}
 
 	/* update ciphertext with the final remaining bytes */
 	if(!EVP_EncryptFinal_ex(e, ciphertext+c_len, &f_len)){
 		LM_ERR("failure in EVP_EncryptFinal_ex \n");
+		free(ciphertext);
 		return NULL;
 	}
 
@@ -393,18 +400,25 @@ unsigned char *crypto_aes_decrypt(EVP_CIPHER_CTX *e, unsigned char *ciphertext,
 	int p_len = *len, f_len = 0;
 	unsigned char *plaintext = (unsigned char *)malloc(p_len);
 
+	if(plaintext==NULL) {
+		LM_ERR("no more system memory\n");
+		return NULL;
+	}
 	if(!EVP_DecryptInit_ex(e, NULL, NULL, NULL, NULL)){
 		LM_ERR("failure in EVP_DecryptInit_ex \n");
+		free(plaintext);
 		return NULL;
 	}
 
 	if(!EVP_DecryptUpdate(e, plaintext, &p_len, ciphertext, *len)){
 		LM_ERR("failure in EVP_DecryptUpdate\n");
+		free(plaintext);
 		return NULL;
 	}
 
 	if(!EVP_DecryptFinal_ex(e, plaintext+p_len, &f_len)){
 		LM_ERR("failure in EVP_DecryptFinal_ex\n");
+		free(plaintext);
 		return NULL;
 	}
 
