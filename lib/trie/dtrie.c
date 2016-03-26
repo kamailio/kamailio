@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -245,7 +245,7 @@ void **dtrie_longest_match(struct dtrie_node_t *root, const char *number,
 			digit = number[i];
 			if (digit>127) return ret;
 		}
-		
+
 		if (node->child[digit] == NULL) return ret;
 		node = node->child[digit];
 		i++;
@@ -262,7 +262,7 @@ void **dtrie_longest_match(struct dtrie_node_t *root, const char *number,
 void **dtrie_contains(struct dtrie_node_t *root, const char *number,
 		const unsigned int numberlen, const unsigned int branches)
 {
-	int nmatch;
+	int nmatch = 0;
 	void **ret;
 	ret = dtrie_longest_match(root, number, numberlen, &nmatch, branches);
 
