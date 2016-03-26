@@ -7,10 +7,8 @@ NAME=ndb_redis.so
 
 ifeq ($(CROSS_COMPILE),)
 HIREDIS_BUILDER = $(shell \
-	if pkg-config --exists libcre; then \
+	if pkg-config --exists hiredis; then \
 		echo 'pkg-config hiredis'; \
-	else \
-		which pcre-config; \
 	fi)
 endif
 
@@ -20,6 +18,12 @@ ifeq ($(HIREDIS_BUILDER),)
 else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
 	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
+
+ifeq ($(HIREDISLIBS),-L -lhiredis)
+		HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags) /opt/local/include
+		HIREDISLIBS = -L/opt/local/lib -lhiredis
+endif
+
 endif
 
 DEFS+=$(HIREDISDEFS)
