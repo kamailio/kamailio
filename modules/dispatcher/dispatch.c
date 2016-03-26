@@ -113,7 +113,7 @@ int ds_ping_active_init(void)
  */
 int ds_ping_active_get(void)
 {
-	if(_ds_ping_active!=NULL)
+	if(_ds_ping_active==NULL)
 		return -1;
 	return *_ds_ping_active;
 }
@@ -123,7 +123,7 @@ int ds_ping_active_get(void)
  */
 int ds_ping_active_set(int v)
 {
-	if(_ds_ping_active!=NULL)
+	if(_ds_ping_active==NULL)
 		return -1;
 	*_ds_ping_active = v;
 	return 0;
