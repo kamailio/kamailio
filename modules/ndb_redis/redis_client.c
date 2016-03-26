@@ -402,7 +402,8 @@ void * redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv, cons
 	if(rsrv==NULL || rsrv->ctxRedis==NULL)
 	{
 		LM_ERR("no redis context found for server %.*s\n",
-			   rsrv->sname->len, rsrv->sname->s);
+			  (rsrv)?rsrv->sname->len:0,
+			  (rsrv)?rsrv->sname->s:"");
 		return NULL;
 	}
 	if(argc<=0)
