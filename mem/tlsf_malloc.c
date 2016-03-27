@@ -1358,8 +1358,8 @@ int tlsf_malloc_init_pkg_manager(void)
 	ma.xavailable = tlsf_available;
 	ma.xsums      = tlsf_sums;
 	ma.xdestroy   = tlsf_malloc_destroy_pkg_manager;
-	ma.xstats     = tlsf_mod_get_stats;
-	ma.xfstats    = tlsf_mod_free_stats;
+	ma.xmodstats  = tlsf_mod_get_stats;
+	ma.xfmodstats = tlsf_mod_free_stats;
 
 	return pkg_init_api(&ma);
 }
@@ -1508,8 +1508,8 @@ int tlsf_malloc_init_shm_manager(void)
 	ma.xavailable     = tlsf_shm_available;
 	ma.xsums          = tlsf_shm_sums;
 	ma.xdestroy       = tlsf_malloc_destroy_shm_manager;
-	ma.xstats         = tlsf_mod_get_stats;
-	ma.xfstats        = tlsf_mod_free_stats;
+	ma.xmodstats      = tlsf_mod_get_stats;
+	ma.xfmodstats     = tlsf_mod_free_stats;
 
 	if(shm_init_api(&ma)<0) {
 		LM_ERR("cannot initialize the core shm api\n");
