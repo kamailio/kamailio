@@ -1032,8 +1032,8 @@ int qm_malloc_init_pkg_manager(void)
 	ma.xavailable = qm_available;
 	ma.xsums = qm_sums;
 	ma.xdestroy = qm_malloc_destroy_pkg_manager;
-	ma.xstats = qm_mod_get_stats;
-	ma.xfstats = qm_mod_free_stats;
+	ma.xmodstats = qm_mod_get_stats;
+	ma.xfmodstats = qm_mod_free_stats;
 
 	return pkg_init_api(&ma);
 }
@@ -1183,8 +1183,8 @@ int qm_malloc_init_shm_manager(void)
 	ma.xavailable     = qm_shm_available;
 	ma.xsums          = qm_shm_sums;
 	ma.xdestroy       = qm_malloc_destroy_shm_manager;
-	ma.xstats         = qm_mod_get_stats;
-	ma.xfstats        = qm_mod_free_stats;
+	ma.xmodstats      = qm_mod_get_stats;
+	ma.xfmodstats     = qm_mod_free_stats;
 
 	if(shm_init_api(&ma)<0) {
 		LM_ERR("cannot initialize the core shm api\n");
