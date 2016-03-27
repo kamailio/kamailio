@@ -79,9 +79,9 @@ typedef struct sr_pkg_api {
 	/*memory destroy manager*/
 	sr_mem_destroy_f   xdestroy;
 	/*memory stats per module*/
-	sr_mem_mod_get_stats_f  xstats;
+	sr_mem_mod_get_stats_f  xmodstats;
 	/*memory stats free per module*/
-	sr_mem_mod_free_stats_f xfstats;
+	sr_mem_mod_free_stats_f xfmodstats;
 } sr_pkg_api_t;
 
 /*shared memory api*/
@@ -115,9 +115,9 @@ typedef struct sr_shm_api {
 	/*memory destroy manager*/
 	sr_mem_destroy_f   xdestroy;
 	/*memory stats per module*/
-	sr_mem_mod_get_stats_f  xstats;
+	sr_mem_mod_get_stats_f  xmodstats;
 	/*memory stats free per module*/
-	sr_mem_mod_free_stats_f xfstats;
+	sr_mem_mod_free_stats_f xfmodstats;
 } sr_shm_api_t;
 
 #endif
