@@ -46,8 +46,8 @@ int pkg_init_api(sr_pkg_api_t *ap)
 	_pkg_root.xavailable = ap->xavailable;
 	_pkg_root.xsums      = ap->xsums;
 	_pkg_root.xdestroy   = ap->xdestroy;
-	_pkg_root.xstats     = ap->xstats;
-	_pkg_root.xfstats    = ap->xfstats;
+	_pkg_root.xmodstats  = ap->xmodstats;
+	_pkg_root.xfmodstats = ap->xfmodstats;
 	return 0;
 }
 
