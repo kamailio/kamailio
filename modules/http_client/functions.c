@@ -221,9 +221,33 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 	if (res == CURLE_COULDNT_CONNECT) {
 		LM_WARN("failed to connect() to host\n");
 	} else if ( res == CURLE_COULDNT_RESOLVE_HOST ) {
-		LM_WARN("couldn't resolve host\n");
+		LM_WARN("Couldn't resolve host\n");
 	} else if ( res == CURLE_COULDNT_RESOLVE_PROXY ) {
-		LM_WARN("couldn't resolve http_proxy host\n");
+		LM_WARN("Couldn't resolve http_proxy host\n");
+	} else if ( res == CURLE_UNSUPPORTED_PROTOCOL ) {
+		LM_WARN("URL Schema not supported by curl\n");
+	} else if ( res == CURLE_URL_MALFORMAT ) {
+		LM_WARN("Malformed URL used in http_client\n");
+	} else if ( res == CURLE_OUT_OF_MEMORY ) {
+		LM_WARN("Curl library out of memory\n");
+	} else if ( res == CURLE_OPERATION_TIMEDOUT ) {
+		LM_WARN("Curl library timed out on request\n");
+	} else if ( res == CURLE_SSL_CONNECT_ERROR ) {
+		LM_WARN("TLS error in curl connection\n");
+	} else if ( res == CURLE_SSL_CERTPROBLEM ) {
+		LM_WARN("TLS local certificate error\n");
+	} else if ( res == CURLE_SSL_CIPHER ) {
+		LM_WARN("TLS cipher error\n");
+	} else if ( res == CURLE_SSL_CACERT ) {
+		LM_WARN("TLS server certificate validation error (No valid CA cert)\n");
+	} else if ( res == CURLE_SSL_CACERT_BADFILE ) {
+		LM_WARN("TLS CA certificate read error \n");
+	} else if ( res == CURLE_SSL_ISSUER_ERROR ) {
+		LM_WARN("TLS issuer certificate check error \n");
+	} else if ( res == CURLE_PEER_FAILED_VERIFICATION ) {
+		LM_WARN("TLS verification error\n");
+	} else if ( res == CURLE_TOO_MANY_REDIRECTS ) {
+		LM_WARN("Too many redirects\n");
 	} else {
 		LM_ERR("failed to perform curl (%d)\n", res);
 	}
