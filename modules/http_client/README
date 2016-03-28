@@ -38,19 +38,21 @@ Hugh Waite
         3. Parameters
 
               3.1. httpredirect (int)
-              3.2. useragent (string)
-              3.3. maxdatasize (int)
-              3.4. connection_timeout (int)
-              3.5. client_cert (string)
-              3.6. client_key (string)
-              3.7. cacert (string)
-              3.8. cipher_suites (string)
-              3.9. verify_peer (int)
-              3.10. verify_host (int)
-              3.11. tlsversion (int)
-              3.12. authmethod (int)
-              3.13. httpcon (string)
-              3.14. config_file (string)
+              3.2. httpproxy (string)
+              3.3. httpproxyport (string)
+              3.4. useragent (string)
+              3.5. maxdatasize (int)
+              3.6. connection_timeout (int)
+              3.7. client_cert (string)
+              3.8. client_key (string)
+              3.9. cacert (string)
+              3.10. cipher_suites (string)
+              3.11. verify_peer (int)
+              3.12. verify_host (int)
+              3.13. tlsversion (int)
+              3.14. authmethod (int)
+              3.15. httpcon (string)
+              3.16. config_file (string)
 
         4. Functions
 
@@ -83,22 +85,24 @@ Hugh Waite
    List of Examples
 
    1.1. Set httpredirect parameter
-   1.2. Set useragent parameter
-   1.3. Set maxdatasize parameter
-   1.4. Set connection_timeout parameter
-   1.5. Set client_cert parameter
-   1.6. Set client_key parameter
-   1.7. Set cacert parameter
-   1.8. Set cipher_suites parameter
-   1.9. Set verify_peer parameter
-   1.10. Set verify_host parameter
-   1.11. Set tlsversion parameter
-   1.12. Set authmethod parameter
-   1.13. Set httpcon parameter
-   1.14. Set config_file parameter
-   1.15. Short http_client config file
-   1.16. http_connect() usage
-   1.17. curl_http_query() usage
+   1.2. Set httpproxy parameter
+   1.3. Set httpproxyport parameter
+   1.4. Set useragent parameter
+   1.5. Set maxdatasize parameter
+   1.6. Set connection_timeout parameter
+   1.7. Set client_cert parameter
+   1.8. Set client_key parameter
+   1.9. Set cacert parameter
+   1.10. Set cipher_suites parameter
+   1.11. Set verify_peer parameter
+   1.12. Set verify_host parameter
+   1.13. Set tlsversion parameter
+   1.14. Set authmethod parameter
+   1.15. Set httpcon parameter
+   1.16. Set config_file parameter
+   1.17. Short http_client config file
+   1.18. http_connect() usage
+   1.19. curl_http_query() usage
 
 Chapter 1. Admin Guide
 
@@ -113,19 +117,21 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. httpredirect (int)
-        3.2. useragent (string)
-        3.3. maxdatasize (int)
-        3.4. connection_timeout (int)
-        3.5. client_cert (string)
-        3.6. client_key (string)
-        3.7. cacert (string)
-        3.8. cipher_suites (string)
-        3.9. verify_peer (int)
-        3.10. verify_host (int)
-        3.11. tlsversion (int)
-        3.12. authmethod (int)
-        3.13. httpcon (string)
-        3.14. config_file (string)
+        3.2. httpproxy (string)
+        3.3. httpproxyport (string)
+        3.4. useragent (string)
+        3.5. maxdatasize (int)
+        3.6. connection_timeout (int)
+        3.7. client_cert (string)
+        3.8. client_key (string)
+        3.9. cacert (string)
+        3.10. cipher_suites (string)
+        3.11. verify_peer (int)
+        3.12. verify_host (int)
+        3.13. tlsversion (int)
+        3.14. authmethod (int)
+        3.15. httpcon (string)
+        3.16. config_file (string)
 
    4. Functions
 
@@ -191,19 +197,21 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. httpredirect (int)
-   3.2. useragent (string)
-   3.3. maxdatasize (int)
-   3.4. connection_timeout (int)
-   3.5. client_cert (string)
-   3.6. client_key (string)
-   3.7. cacert (string)
-   3.8. cipher_suites (string)
-   3.9. verify_peer (int)
-   3.10. verify_host (int)
-   3.11. tlsversion (int)
-   3.12. authmethod (int)
-   3.13. httpcon (string)
-   3.14. config_file (string)
+   3.2. httpproxy (string)
+   3.3. httpproxyport (string)
+   3.4. useragent (string)
+   3.5. maxdatasize (int)
+   3.6. connection_timeout (int)
+   3.7. client_cert (string)
+   3.8. client_key (string)
+   3.9. cacert (string)
+   3.10. cipher_suites (string)
+   3.11. verify_peer (int)
+   3.12. verify_host (int)
+   3.13. tlsversion (int)
+   3.14. authmethod (int)
+   3.15. httpcon (string)
+   3.16. config_file (string)
 
 3.1. httpredirect (int)
 
@@ -218,41 +226,66 @@ Chapter 1. Admin Guide
 modparam("http_client", "httpredirect", 0)
 ...
 
-3.2. useragent (string)
+3.2. httpproxy (string)
+
+   URL for a HTTP proxy to use as a default proxy for all connections.
+
+   This setting is also available on a per connection basis in the
+   http_client configuration file.
+
+   Example 1.2. Set httpproxy parameter
+...
+modparam("http_client", "httpproxy", "https://superproxy.example.com")
+...
+
+3.3. httpproxyport (string)
+
+   Port number for a HTTP proxy to use as a default proxy port for all
+   connections.
+
+   This setting is also available on a per connection basis in the
+   http_client configuration file.
+
+   Example 1.3. Set httpproxyport parameter
+...
+modparam("http_client", "httpproxyport", 8042)
+...
+
+3.4. useragent (string)
 
    Useragent to use in the HTTP protocol for requests. Defaults to the
    Kamailio SIP useragent string - including software version and
    platform.
 
-   Example 1.2. Set useragent parameter
+   Example 1.4. Set useragent parameter
 ...
 modparam("http_client", "useragent", "Secret HTTP REST grabber 0.42")
 ...
 
-3.3. maxdatasize (int)
+3.5. maxdatasize (int)
 
    Defines the maximum size in bytes for a response. Note that this is
    allocated from pkg memory (process memory) dynamically.
 
    Default value is zero, i.e., the limit on the datasize is disabled.
 
-   Example 1.3. Set maxdatasize parameter
+   Example 1.5. Set maxdatasize parameter
 ...
 modparam("http_client", "maxdatasize", 2000)
 ...
 
-3.4. connection_timeout (int)
+3.6. connection_timeout (int)
 
    Defines in seconds how long Kamailio waits for response from servers.
 
    Default value is zero, i.e., the timeout function is disabled.
 
-   Example 1.4. Set connection_timeout parameter
+   Example 1.6. Set connection_timeout parameter
 ...
 modparam("http_client", "connection_timeout", 2)
 ...
 
-3.5. client_cert (string)
+3.7. client_cert (string)
 
    File name for a TLS client certificate. The certificate needs to be
    encoded in PEM format.
@@ -261,12 +294,12 @@ modparam("http_client", "connection_timeout", 2)
    that if you specify a client cert, you also need to specify the
    client_key.
 
-   Example 1.5. Set client_cert parameter
+   Example 1.7. Set client_cert parameter
 ...
 modparam("http_client", "client_cert", "/var/certs/sollentuna.example.com.cert")
 ...
 
-3.6. client_key (string)
+3.8. client_key (string)
 
    File name for a TLS client key. The key needs to be encoded in PEM
    format.
@@ -275,12 +308,12 @@ modparam("http_client", "client_cert", "/var/certs/sollentuna.example.com.cert")
    used. Note that if you specify a client key, you also need to specify
    the client_cert.
 
-   Example 1.6. Set client_key parameter
+   Example 1.8. Set client_key parameter
 ...
 modparam("http_client", "client_key", "/var/certs/sollentuna.example.com.key")
 ...
 
-3.7. cacert (string)
+3.9. cacert (string)
 
    File name for the trusted TLS CA cert used to verify servers. The
    certificates need to be encoded in PEM format.
@@ -289,12 +322,12 @@ modparam("http_client", "client_key", "/var/certs/sollentuna.example.com.key")
    the host. If tlsverifyhost is on, all TLS connections will fail without
    any CA certificate to validate with.
 
-   Example 1.7. Set cacert parameter
+   Example 1.9. Set cacert parameter
 ...
 modparam("http_client", "cacert", "/var/certs/ca/edvina-sip-ca.pem")
 ...
 
-3.8. cipher_suites (string)
+3.10. cipher_suites (string)
 
    List of allowed cipher suites. See
    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_CIPHER_LIST.html for details
@@ -303,13 +336,13 @@ modparam("http_client", "cacert", "/var/certs/ca/edvina-sip-ca.pem")
    Default value is empty string, i.e. the default list of ciphers in
    libcurl will be used.
 
-   Example 1.8. Set cipher_suites parameter
+   Example 1.10. Set cipher_suites parameter
 ...
 modparam("http_client", "cipher_suites", "ecdhe_ecdsa_aes_128_gcm_sha_256,rsa_ae
 s_128_gcm_sha_256")
 ...
 
-3.9. verify_peer (int)
+3.11. verify_peer (int)
 
    If set to 0, TLS verification of the server certificate is disabled.
    This means that the connection will get encrypted, but there's no
@@ -323,12 +356,12 @@ s_128_gcm_sha_256")
    See the curl documentation for more details.
    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
 
-   Example 1.9. Set verify_peer parameter
+   Example 1.11. Set verify_peer parameter
 ...
 modparam("http_client", "verify_peer", 1)
 ...
 
-3.10. verify_host (int)
+3.12. verify_host (int)
 
    If set to 0, domain verification of the server certificate is disabled.
    This means that the connection will get encrypted but there is no check
@@ -342,12 +375,12 @@ modparam("http_client", "verify_peer", 1)
    See the curl documentation for more details.
    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
 
-   Example 1.10. Set verify_host parameter
+   Example 1.12. Set verify_host parameter
 ...
 modparam("http_client", "verify_host", 2)
 ...
 
-3.11. tlsversion (int)
+3.13. tlsversion (int)
 
    Sets the preferred TLS/SSL version.
 
@@ -363,12 +396,12 @@ modparam("http_client", "verify_host", 2)
    SSL versions are now disabled by default. See the curl documentation
    for more details. http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
 
-   Example 1.11. Set tlsversion parameter
+   Example 1.13. Set tlsversion parameter
 ...
 modparam("http_client", "tlsversion", 6)
 ...
 
-3.12. authmethod (int)
+3.14. authmethod (int)
 
    Sets the preferred authentication mode for HTTP/HTTPS requests. The
    value is a bitmap and multiple methods can be used. Note that in this
@@ -383,13 +416,16 @@ modparam("http_client", "tlsversion", 6)
      * 8 - NTLM authentication
      * 16 - HTTP Digest with IE flavour
 
-   Example 1.12. Set authmethod parameter
+   This is also configurable per connection in the http_client
+   configuration file.
+
+   Example 1.14. Set authmethod parameter
 ...
 # Use the best of BASIC and Digest authentication.
 modparam("http_client", "authmetod", 3)
 ...
 
-3.13. httpcon (string)
+3.15. httpcon (string)
 
    Defines a connection and credentials for the connection for use in a
    connection-oriented function call in this module.
@@ -426,7 +462,7 @@ modparam("http_client", "authmetod", 3)
      * httpredirect Set to 1 for following HTTP 302 redirect. 0 to
        disable. Overrides the default httpredirect modparam.
 
-   Example 1.13. Set httpcon parameter
+   Example 1.15. Set httpcon parameter
 ...
 modparam("http_client", "httpcon", "apione=>http://atlanta.example.com")
 modparam("http_client", "httpcon", "apitwo=>http://atlanta.example.com/api/12")
@@ -436,7 +472,7 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 tstuff;timeout=12")
 ...
 
-3.14. config_file (string)
+3.16. config_file (string)
 
    The file name of a configuration file containing definitions of http
    connections. This is an alternative to the "httpcon" module parameter -
@@ -455,6 +491,7 @@ tstuff;timeout=12")
      * url
      * username
      * password
+     * authmethod
      * failover
      * useragent
      * verify_peer
@@ -473,6 +510,8 @@ tstuff;timeout=12")
      * timeout
      * maxdatasize
      * http_follow_redirect
+     * httpproxy
+     * httpproxyport
 
    See the "httpcon" module parameter for explanation of these settings.
 
@@ -484,12 +523,12 @@ tstuff;timeout=12")
    path and anything else a path relative to the directory of the current
    Kamailio main config file.
 
-   Example 1.14. Set config_file parameter
+   Example 1.16. Set config_file parameter
 ...
 modparam("http_client", "config_file", "httpconnections.cfg)
 ...
 
-   Example 1.15. Short http_client config file
+   Example 1.17. Short http_client config file
 [authapiserver]
 url = https://api.runbo.example.com/v4.2/auth
 timeout = 1
@@ -527,7 +566,7 @@ http_follow_redirect = no
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.16. http_connect() usage
+   Example 1.18. http_connect() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
@@ -565,7 +604,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.17. curl_http_query() usage
+   Example 1.19. curl_http_query() usage
 ...
 # GET-Request
 http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri

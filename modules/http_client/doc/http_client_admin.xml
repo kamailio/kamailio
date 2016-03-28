@@ -98,6 +98,42 @@ modparam("http_client", "httpredirect", 0)
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.p.httpproxy">
+			<title><varname>httpproxy</varname> (string)</title>
+			<para>
+			URL for a HTTP proxy to use as a default proxy for all connections.
+			</para>
+			<para>
+			This setting is also available on a per connection basis in the
+			http_client configuration file.
+			</para>
+			<example>
+			<title>Set <varname>httpproxy</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "httpproxy", "https://superproxy.example.com")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="http_client.p.httpproxyport">
+			<title><varname>httpproxyport</varname> (string)</title>
+			<para>
+			Port number for a HTTP proxy to use as a default proxy port for all connections.
+			</para>
+			<para>
+			This setting is also available on a per connection basis in the
+			http_client configuration file.
+			</para>
+			<example>
+			<title>Set <varname>httpproxyport</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "httpproxyport", 8042)
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="http_client.p.useragent">
 			<title><varname>useragent</varname> (string)</title>
 			<para>
@@ -349,6 +385,9 @@ modparam("http_client", "tlsversion", 6)
 				<listitem><para>16 - HTTP Digest with IE flavour</para></listitem>
 				</itemizedlist>
 			</para>
+			<para>
+			This is also configurable per connection in the http_client configuration file.
+			</para>
 			<example>
 			<title>Set <varname>authmethod</varname> parameter</title>
 				<programlisting format="linespecific">
@@ -460,6 +499,7 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 				<listitem><para>url</para></listitem>
 				<listitem><para>username</para></listitem>
 				<listitem><para>password</para></listitem>
+				<listitem><para>authmethod</para></listitem>
 				<listitem><para>failover</para></listitem>
 				<listitem><para>useragent</para></listitem>
 				<listitem><para>verify_peer</para></listitem>
@@ -481,6 +521,8 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 				<listitem><para>timeout</para></listitem>
 				<listitem><para>maxdatasize</para></listitem>
 				<listitem><para>http_follow_redirect</para></listitem>
+				<listitem><para>httpproxy</para></listitem>
+				<listitem><para>httpproxyport</para></listitem>
 			</itemizedlist>
 			See the "httpcon" module parameter for explanation of these settings.
 			<para>
