@@ -43,6 +43,9 @@
 	been ported from the utils module and now use the same libcurl
 	functions.
 	</para>
+	<para>
+	The module is limited to using HTTP and HTTPS protocols.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
