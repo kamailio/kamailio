@@ -258,31 +258,31 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
 	if (download_size > 0) {
 
-	if (params->oneline) {
-		/* search for line feed */
-		at = memchr(stream.buf, (char)10, download_size);
-		datasize = (double) (at - stream.buf);
-		LM_DBG("  -- curl download size cut to first line: %d \n", (int) datasize);
-	}
-	if (at == NULL) {
-		if (params->maxdatasize && ((unsigned int) download_size) > params->maxdatasize) {
-			/* Limit at maximum data size */
-			datasize = (double) params->maxdatasize;
-			LM_DBG("  -- curl download size cut to maxdatasize : %d \n", (int) datasize);
-		} else {
-			/* Limit at actual downloaded data size */
-			datasize = (double) download_size;
-			LM_DBG("  -- curl download size cut to download_size : %d \n", (int) datasize);
-	    		//at = stream.buf + (unsigned int) download_size;
+		if (params->oneline) {
+			/* search for line feed */
+			at = memchr(stream.buf, (char)10, download_size);
+			datasize = (double) (at - stream.buf);
+			LM_DBG("  -- curl download size cut to first line: %d \n", (int) datasize);
 		}
-	}
+		if (at == NULL) {
+			if (params->maxdatasize && ((unsigned int) download_size) > params->maxdatasize) {
+				/* Limit at maximum data size */
+				datasize = (double) params->maxdatasize;
+				LM_DBG("  -- curl download size cut to maxdatasize : %d \n", (int) datasize);
+			} else {
+				/* Limit at actual downloaded data size */
+				datasize = (double) download_size;
+				LM_DBG("  -- curl download size cut to download_size : %d \n", (int) datasize);
+	    			//at = stream.buf + (unsigned int) download_size;
+			}
+		}
 		/* Create a STR object */
 
 		rval.s = stream.buf;
 		rval.len = datasize;
 		/* Duplicate string to return */
 		pkg_str_dup(_dst, &rval);
-	LM_DBG("curl query result: Length %d %.*s \n", rval.len, rval.len, rval.s);
+		LM_DBG("curl query result: Length %d %.*s \n", rval.len, rval.len, rval.s);
 	} else {
 		_dst->s = NULL;
 		_dst->len = 0;
