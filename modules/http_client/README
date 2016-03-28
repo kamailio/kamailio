@@ -525,6 +525,10 @@ tstuff;timeout=12")
    path and anything else a path relative to the directory of the current
    Kamailio main config file.
 
+   To set a string value to null, in order to override default settings,
+   you can specify an value of "" - two quotation marks. In order to
+   disable a http proxy setting you can set the port to zero.
+
    Example 1.16. Set config_file parameter
 ...
 modparam("http_client", "config_file", "httpconnections.cfg)

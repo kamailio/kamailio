@@ -536,6 +536,11 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 			absolute path and  anything else a path relative to the directory of
 			the current &kamailio; main config file.
 			</para>
+ 			<para>
+			To set a string value to null, in order to override default settings,
+			you can specify an value of "" - two quotation marks. In order to disable
+			a http proxy setting you can set the port to zero.
+			</para>
 			<example>
 			<title>Set <varname>config_file</varname> parameter</title>
 				<programlisting format="linespecific">
