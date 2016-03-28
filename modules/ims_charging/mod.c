@@ -55,9 +55,9 @@ int ro_db_mode = DB_MODE_NONE;
 
 char *domain = "location";
 
-client_ro_cfg cfg = { str_init("scscf.ims.smilecoms.com"),
-    str_init("ims.smilecoms.com"),
-    str_init("ims.smilecoms.com"),
+client_ro_cfg cfg = { str_init(""),
+    str_init(""),
+    str_init(""),
     0
 };
 
@@ -67,8 +67,6 @@ struct dlg_binds dlgb;
 cdp_avp_bind_t *cdp_avp;
 struct tm_binds tmb;
 
-char* rx_dest_realm_s = "ims.smilecoms.com";
-str rx_dest_realm;
 /* Only used if we want to force the Ro peer usually this is configured at a stack level and the first request uses realm routing */
 //char* rx_forced_peer_s = "";
 str ro_forced_peer;

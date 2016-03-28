@@ -208,10 +208,18 @@ AAAMessage * Ro_write_CCR_avps(AAAMessage * ccr, Ro_CCR_t* x) {
 
     if (!ccr) return 0;
 
-    if (!cdp_avp->base.add_Origin_Host(&(ccr->avpList), x->origin_host, 0)) goto error;
-    if (!cdp_avp->base.add_Origin_Realm(&(ccr->avpList), x->origin_realm, 0)) goto error;
-    if (!ro_add_destination_realm_avp(ccr, x->destination_realm)) goto error;
-
+    if (x->origin_host.s && x->origin_host.len > 0) {
+        if (!cdp_avp->base.add_Origin_Host(&(ccr->avpList), x->origin_host, 0)) goto error;
+    }
+    
+    if (x->origin_realm.s && x->origin_realm.len > 0) {
+        if (!cdp_avp->base.add_Origin_Realm(&(ccr->avpList), x->origin_realm, 0)) goto error;
+    }
+    
+    if (x->destination_realm.s && x->destination_realm.len > 0) {
+        if (!ro_add_destination_realm_avp(ccr, x->destination_realm)) goto error;
+    }
+    
     if (!cdp_avp->base.add_Accounting_Record_Type(&(ccr->avpList), x->acct_record_type)) goto error;
     if (!cdp_avp->base.add_Accounting_Record_Number(&(ccr->avpList), x->acct_record_number)) goto error;
 

@@ -180,9 +180,15 @@ Ro_CCR_t * new_Ro_CCR(int32_t acc_record_type, str * user_name, ims_information_
 
     mem_new(x, sizeof (Ro_CCR_t), pkg);
 
-    str_dup(x->origin_host, cfg.origin_host, pkg);
-    str_dup(x->origin_realm, cfg.origin_realm, pkg);
-    str_dup(x->destination_realm, cfg.destination_realm, pkg);
+    if (cfg.origin_host.s && cfg.origin_host.len > 0)
+        str_dup(x->origin_host, cfg.origin_host, pkg);
+    
+    if (cfg.origin_realm.s && cfg.origin_realm.len >0)
+        str_dup(x->origin_realm, cfg.origin_realm, pkg);
+    
+    if (cfg.destination_realm.s && cfg.destination_realm.len > 0)
+        str_dup(x->destination_realm, cfg.destination_realm, pkg);
+    
     x->acct_record_type = acc_record_type;
 
     if (user_name) {
