@@ -384,6 +384,7 @@ modparam("http_client", "tlsversion", 6)
 				<listitem><para>8 - NTLM authentication</para></listitem>
 				<listitem><para>16 - HTTP Digest with IE flavour</para></listitem>
 				</itemizedlist>
+			Default value is 3 - BASIC and Digest authentication.
 			</para>
 			<para>
 			This is also configurable per connection in the http_client configuration file.
