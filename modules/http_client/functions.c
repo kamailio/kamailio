@@ -222,6 +222,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		LM_WARN("failed to connect() to host\n");
 	} else if ( res == CURLE_COULDNT_RESOLVE_HOST ) {
 		LM_WARN("couldn't resolve host\n");
+	} else if ( res == CURLE_COULDNT_RESOLVE_PROXY ) {
+		LM_WARN("couldn't resolve http_proxy host\n");
 	} else {
 		LM_ERR("failed to perform curl (%d)\n", res);
 	}
