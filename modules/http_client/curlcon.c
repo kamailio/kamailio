@@ -66,6 +66,7 @@ typedef struct raw_http_client_conn
 	int timeout;
 	int maxdatasize;
 	int http_follow_redirect;
+	int authmethod;
 
 	struct raw_http_client_conn *next;
 } raw_http_client_conn_t;
@@ -98,8 +99,9 @@ static cfg_option_t http_client_options[] = {
 	{"timeout",              .f = cfg_parse_int_opt},	/* 11 */
 	{"maxdatasize",          .f = cfg_parse_int_opt},	/* 12 */
 	{"httpredirect",         .f = cfg_parse_bool_opt},	/* 13 */
-	{"httpproxy",           .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 14 */
-	{"httpproxyport",      .f = cfg_parse_int_opt},	/* 15 */
+	{"httpproxy",            .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 14 */
+	{"httpproxyport",        .f = cfg_parse_int_opt},	/* 15 */
+	{"authmethod",           .f = cfg_parse_int_opt},	/* 16 */
 	{0}
 };
 
@@ -529,6 +531,7 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 	raw_cc->timeout	= default_connection_timeout;
 	raw_cc->http_follow_redirect = default_http_follow_redirect;
 	raw_cc->tlsversion = default_tls_version;
+	raw_cc->authmethod = default_authmethod;
 
 	for(i = 0; tls_versions[i].name; i++) {
 		tls_versions[i].param = &raw_cc->tlsversion;
@@ -550,6 +553,7 @@ int curl_parse_conn(void *param, cfg_parser_t *parser, unsigned int flags)
 	http_client_options[13].param = &raw_cc->http_follow_redirect;
 	http_client_options[14].param = &raw_cc->http_proxy;
 	http_client_options[15].param = &raw_cc->http_proxy_port;
+	http_client_options[16].param = &raw_cc->authmethod;
 
 	cfg_set_options(parser, http_client_options);
 
@@ -596,6 +600,7 @@ int fixup_raw_http_client_conn_list(void)
 
 		cc->username = raw_cc->username.s ? as_asciiz(&raw_cc->username) : NULL;
 		cc->password = raw_cc->password.s ? as_asciiz(&raw_cc->password) : NULL;
+		cc->authmethod = raw_cc->authmethod;
 		if (raw_cc->failover.s != NULL)
 			pkg_str_dup(&cc->failover, &raw_cc->failover);
 		cc->useragent = as_asciiz(&raw_cc->useragent);

@@ -85,6 +85,7 @@ unsigned int	default_http_proxy_port = 0;		/*!< Default HTTP proxy port to use *
 unsigned int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
 str 		default_useragent = { CURL_USER_AGENT, CURL_USER_AGENT_LEN };	/*!< Default CURL useragent. Default "Kamailio Curl " */
 unsigned int	default_maxdatasize = 0;		/*!< Default download size. 0=disabled */
+unsigned int 	default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;		/*!< authentication method - Basic, Digest or both */
 
 str		http_client_config_file = STR_NULL;
 
@@ -154,6 +155,7 @@ static param_export_t params[] = {
 	{"maxdatasize", PARAM_INT,  &default_maxdatasize },
 	{"config_file", PARAM_STR,  &http_client_config_file },
 	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
+	{"authmetod", PARAM_INT, &default_authmethod },
     	{0, 0, 0}
 };
 

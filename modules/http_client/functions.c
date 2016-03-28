@@ -56,6 +56,7 @@ typedef struct {
     char *cacert;
     char *ciphersuites;
     char *http_proxy;
+    unsigned int authmethod;
     unsigned int http_proxy_port;
     unsigned int tlsversion;
     unsigned int verify_peer;
@@ -155,7 +156,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
     if (params->username) {
 	res |= curl_easy_setopt(curl, CURLOPT_USERNAME, params->username);
-	res |= curl_easy_setopt(curl, CURLOPT_HTTPAUTH, (CURLAUTH_DIGEST|CURLAUTH_BASIC));
+	res |= curl_easy_setopt(curl, CURLOPT_HTTPAUTH, params->authmethod);
     }
     if (params->secret) {
 	res |= curl_easy_setopt(curl, CURLOPT_PASSWORD, params->secret);
@@ -394,6 +395,7 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	memset(&query_params, 0, sizeof(curl_query_t));
 	query_params.username = conn->username;
 	query_params.secret = conn->password;
+	query_params.authmethod = conn->authmethod;
 	query_params.contenttype = contenttype ? (char*)contenttype : "text/plain";
 	query_params.post = postdata;
 	query_params.clientcert = conn->clientcert;
@@ -442,6 +444,7 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	memset(&query_params, 0, sizeof(curl_query_t));
 	query_params.username = NULL;
 	query_params.secret = NULL;
+	query_params.authmethod = default_authmethod;
 	query_params.contenttype = "text/plain";
 	query_params.post = _post;
 	query_params.clientcert = NULL;

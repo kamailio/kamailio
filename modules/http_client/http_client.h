@@ -48,6 +48,8 @@ extern unsigned int	default_http_proxy_port;		/*!< Default HTTP proxy port to us
 extern unsigned int	default_http_follow_redirect;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
 extern str 	default_useragent;			/*!< Default CURL useragent. Default "Kamailio Curl " */
 extern unsigned int	default_maxdatasize;			/*!< Default Maximum download size */
+extern unsigned int 	default_authmethod;		/*!< authentication method - Basic, Digest or both */
+
 
 extern counter_handle_t connections;	/* Number of connection definitions */
 extern counter_handle_t connok;	/* Successful Connection attempts */
@@ -71,6 +73,7 @@ typedef struct _curl_con
 	str schema;			/*!< The URL schema */
 	char *username;			/*!< The username to use for auth */
 	char *password;			/*!< The password to use for auth */
+	unsigned int authmethod;	/*!< Authentication method -digest or basic or both */
 	str failover;			/*!< Another connection to use if this one fails */
 	char *useragent;		/*!< Useragent to use for this connection */
 	char *cacert;			/*!< File name of CA cert to use */
