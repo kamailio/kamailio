@@ -186,6 +186,7 @@ int curl_parse_param(char *val)
 	unsigned int verify_peer = default_tls_verify_peer;
 	unsigned int verify_host = default_tls_verify_host;
 	unsigned int tlsversion = default_tls_version;
+	unsigned int authmethod = default_authmethod;
 
 	str in;
 	char *p;
@@ -434,6 +435,7 @@ int curl_parse_param(char *val)
 	cc->username = username.s ? as_asciiz(&username) : NULL;
 	cc->password = password.s ? as_asciiz(&password) : NULL;
 	cc->schema = schema;
+	cc->authmethod = authmethod;
 	cc->failover = failover;
 	cc->useragent = as_asciiz(&useragent);
 	cc->url = url;
@@ -455,8 +457,8 @@ int curl_parse_param(char *val)
 	LM_DBG("cname: [%.*s] url: [%.*s] username [%s] password [%s] failover [%.*s] timeout [%d] useragent [%s] maxdatasize [%d]\n", 
 			cc->name.len, cc->name.s, cc->url.len, cc->url.s, cc->username ? cc->username : "", cc->password ? cc->password : "",
 			cc->failover.len, cc->failover.s, cc->timeout, cc->useragent, cc->maxdatasize);
-	LM_DBG("cname: [%.*s] client_cert [%s] client_key [%s] ciphersuites [%s] tlsversion [%d] verify_peer [%d] verify_host [%d]\n",
-			cc->name.len, cc->name.s, cc->clientcert, cc->clientkey, cc->ciphersuites, cc->tlsversion, cc->verify_peer, cc->verify_host);
+	LM_DBG("cname: [%.*s] client_cert [%s] client_key [%s] ciphersuites [%s] tlsversion [%d] verify_peer [%d] verify_host [%d] authmethod [%d]\n",
+			cc->name.len, cc->name.s, cc->clientcert, cc->clientkey, cc->ciphersuites, cc->tlsversion, cc->verify_peer, cc->verify_host, cc->authmethod);
 	if (cc->http_proxy_port > 0) {
 		LM_DBG("cname: [%.*s] http_proxy [%s] http_proxy_port [%d]\n",
 		cc->name.len, cc->name.s, cc->http_proxy, cc->http_proxy_port);
