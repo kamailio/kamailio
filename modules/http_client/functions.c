@@ -183,8 +183,11 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     }
 
     if (params->http_proxy  != NULL) {
+	LM_DBG("****** ##### CURL proxy [%s] \n", params->http_proxy);
 	res |= curl_easy_setopt(curl, CURLOPT_PROXY, params->http_proxy);
-    }
+     } else {
+	LM_DBG("****** ##### CURL proxy NOT SET \n");
+     }
 
     if (params->http_proxy_port > 0) {
 	res |= curl_easy_setopt(curl, CURLOPT_PROXYPORT, params->http_proxy_port);
@@ -379,7 +382,12 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	query_params.oneline = 0;
 	query_params.maxdatasize = maxdatasize;
 	query_params.http_proxy_port = conn->http_proxy_port;
-	query_params.http_proxy = conn->http_proxy;
+	if (conn->http_proxy) {
+		query_params.http_proxy = conn->http_proxy;
+		LM_DBG("****** ##### CURL proxy [%s] \n", query_params.http_proxy);
+	} else {
+		LM_DBG("**** Curl HTTP_proxy not set \n");
+	}
 
 	res = curL_query_url(_m, urlbuf, result, &query_params);
 
@@ -421,6 +429,8 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = 1;
 	query_params.maxdatasize = 0;
+	query_params.http_proxy = as_asciiz(&default_http_proxy);
+	query_params.http_proxy_port = default_http_proxy_port;
 
 	res =  curL_query_url(_m, _url, _dst, &query_params);
 
