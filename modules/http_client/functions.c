@@ -132,6 +132,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
     /* Limit to HTTP and HTTPS protocols */
     res = curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+    res = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 
     if (params->post) {
 	char ctype[256];
