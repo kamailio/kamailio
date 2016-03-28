@@ -59,3 +59,6 @@ The http_client module - todo
 
 - API for other modules - done by Hugh Waite
 	- Needs documentation
+
+- Look into graceful failure when we can't resolve host. Right now we return -1 and fail
+  without returning a failure code.
