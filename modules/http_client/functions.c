@@ -258,7 +258,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		pkg_free(stream.buf);
 	}
 	counter_inc(connfail);
-	return -1;
+	return res;
     }
 
     /* HTTP_CODE CHANGED TO CURLINFO_RESPONSE_CODE in curl > 7.10.7 */
