@@ -626,6 +626,7 @@ C_DEFS= $(extra_defs) \
 	 -DSER_VER=$(SER_VER) \
 	 -DCFG_DIR='"$(cfg_target)"'\
 	 -DRUN_DIR='"$(run_target)"'\
+	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DDNS_IP_HACK \
 	 -DUSE_MCAST \
