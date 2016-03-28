@@ -2,21 +2,11 @@ The http_client module - todo
 ======================
 
 - connection parameters
-	timeout=x		- DONE
 	read=line/all		- Implemented in API, but not in parameter
 	tlsverify=on/off
 	failover=httpcon	Other httpcon that can be used for failover in case of 5xx response or timeout
-	httpredirect		- DONE
-	useragent		- DONE
 
 
-- Make sure modparams work
-	httpproxy		- Not working with curl
-	tls cert, key, ca	- Not working with curl yet
-	httpredirect		- done
-	timeout			- done
-	maxdatasize		- done
-	
 - Add XAVP parameter setting before running curl_connect
 
 - save fingerprint of cert for trust-on-first-use procedure
@@ -26,12 +16,10 @@ The http_client module - todo
 	- function in dialplan - httpcon_exists(object)
 	- pv $curlstatus(object) ??
 	- this is per process !!!
+	- can be used to fix the $curlredirect pseudovariable too
 
 - Figure out a way to communicate back the content-type of the response. Another pvar arg?
 	- This is per process!
-
-- pv for curl error codes (result < 100)
-	$curlerror(code)	Result string - DONE
 
 - rpc
 	curl.listcon	list all connection objects with properties
@@ -57,8 +45,3 @@ The http_client module - todo
 	$curl == URL
 	$curlres == result
 
-- API for other modules - done by Hugh Waite
-	- Needs documentation
-
-- Look into graceful failure when we can't resolve host. Right now we return -1 and fail
-  without returning a failure code.
