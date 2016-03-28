@@ -48,8 +48,9 @@ Hugh Waite
               3.9. verify_peer (int)
               3.10. verify_host (int)
               3.11. tlsversion (int)
-              3.12. httpcon (string)
-              3.13. config_file (string)
+              3.12. authmethod (int)
+              3.13. httpcon (string)
+              3.14. config_file (string)
 
         4. Functions
 
@@ -92,11 +93,12 @@ Hugh Waite
    1.9. Set verify_peer parameter
    1.10. Set verify_host parameter
    1.11. Set tlsversion parameter
-   1.12. Set httpcon parameter
-   1.13. Set config_file parameter
-   1.14. Short http_client config file
-   1.15. http_connect() usage
-   1.16. curl_http_query() usage
+   1.12. Set authmethod parameter
+   1.13. Set httpcon parameter
+   1.14. Set config_file parameter
+   1.15. Short http_client config file
+   1.16. http_connect() usage
+   1.17. curl_http_query() usage
 
 Chapter 1. Admin Guide
 
@@ -121,8 +123,9 @@ Chapter 1. Admin Guide
         3.9. verify_peer (int)
         3.10. verify_host (int)
         3.11. tlsversion (int)
-        3.12. httpcon (string)
-        3.13. config_file (string)
+        3.12. authmethod (int)
+        3.13. httpcon (string)
+        3.14. config_file (string)
 
    4. Functions
 
@@ -198,8 +201,9 @@ Chapter 1. Admin Guide
    3.9. verify_peer (int)
    3.10. verify_host (int)
    3.11. tlsversion (int)
-   3.12. httpcon (string)
-   3.13. config_file (string)
+   3.12. authmethod (int)
+   3.13. httpcon (string)
+   3.14. config_file (string)
 
 3.1. httpredirect (int)
 
@@ -364,7 +368,28 @@ modparam("http_client", "verify_host", 2)
 modparam("http_client", "tlsversion", 6)
 ...
 
-3.12. httpcon (string)
+3.12. authmethod (int)
+
+   Sets the preferred authentication mode for HTTP/HTTPS requests. The
+   value is a bitmap and multiple methods can be used. Note that in this
+   case, the CURL library will make an extra request to discover
+   server-supported authentication methods. You may want to use a specific
+   value.
+
+   Valid values are:
+     * 1 - BASIC authentication
+     * 2 - HTTP Digest authentication
+     * 4 - GSS-Negotiate authentication
+     * 8 - NTLM authentication
+     * 16 - HTTP Digest with IE flavour
+
+   Example 1.12. Set authmethod parameter
+...
+# Use the best of BASIC and Digest authentication.
+modparam("http_client", "authmetod", 3)
+...
+
+3.13. httpcon (string)
 
    Defines a connection and credentials for the connection for use in a
    connection-oriented function call in this module.
@@ -401,7 +426,7 @@ modparam("http_client", "tlsversion", 6)
      * httpredirect Set to 1 for following HTTP 302 redirect. 0 to
        disable. Overrides the default httpredirect modparam.
 
-   Example 1.12. Set httpcon parameter
+   Example 1.13. Set httpcon parameter
 ...
 modparam("http_client", "httpcon", "apione=>http://atlanta.example.com")
 modparam("http_client", "httpcon", "apitwo=>http://atlanta.example.com/api/12")
@@ -411,7 +436,7 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 tstuff;timeout=12")
 ...
 
-3.13. config_file (string)
+3.14. config_file (string)
 
    The file name of a configuration file containing definitions of http
    connections. This is an alternative to the "httpcon" module parameter -
@@ -463,12 +488,12 @@ tstuff;timeout=12")
    you can specify an value of "" - two quotation marks. In order to
    disable a http proxy setting you can set the port to zero.
 
-   Example 1.13. Set config_file parameter
+   Example 1.14. Set config_file parameter
 ...
 modparam("http_client", "config_file", "httpconnections.cfg)
 ...
 
-   Example 1.14. Short http_client config file
+   Example 1.15. Short http_client config file
 [authapiserver]
 url = https://api.runbo.example.com/v4.2/auth
 timeout = 1
@@ -506,7 +531,7 @@ http_follow_redirect = no
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.15. http_connect() usage
+   Example 1.16. http_connect() usage
 ...
 modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
 ...
@@ -544,7 +569,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    utils module. It is changed to use the same base library and settings
    as the rest of the functions in this module.
 
-   Example 1.16. curl_http_query() usage
+   Example 1.17. curl_http_query() usage
 ...
 # GET-Request
 http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri
