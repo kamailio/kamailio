@@ -48,8 +48,8 @@ void pkg_print_manager(void);
 #	define pkg_info(mi)    _pkg_root.xinfo(_pkg_root.mem_block, mi)
 #	define pkg_available() _pkg_root.xavailable(_pkg_root.mem_block)
 #	define pkg_sums()      _pkg_root.xsums(_pkg_root.mem_block)
-#	define pkg_mod_get_stats(x)     _pkg_root.xstats(_pkg_root.mem_block, x)
-#	define pkg_mod_free_stats(x)    _pkg_root.xfstats(x)
+#	define pkg_mod_get_stats(x)     _pkg_root.xmodstats(_pkg_root.mem_block, x)
+#	define pkg_mod_free_stats(x)    _pkg_root.xfmodstats(x)
 
 #else /*PKG_MALLOC*/
 /* use system allocator */
