@@ -921,9 +921,9 @@ static const char *rpc_end_dlg_entry_id_doc[2] = {
     "End a given dialog based on [h_entry] [h_id]", 0
 };
 
-
-
-
+static const char *rpc_end_all_active_dlg_doc[2] = {
+     "End all ACTIVE dialogs", 0
+};
 
 /* Wrapper for terminating dialog from API - from other modules */
 static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
@@ -957,10 +957,55 @@ static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 
 }
 
+static void rpc_end_all_active_dlg (rpc_t *rpc, void *c)
+{
+    struct dlg_cell * dlg         = NULL,
+                    * dlg_to_term = NULL;
+    dlg_entry_t     entry;
+
+    unsigned int   i_count = 0,
+                   h_index = 0;
+
+    str rpc_extra_hdrs = {0,0};
+    str dfl_rpc_extra_hdrs = {"Reason: mi_terminated\r\n",23};
+    str reason = {"mi_terminated", 12};
+
+
+    if (!d_table)
+    {
+        rpc->fault(c, 500, "Dialog hash table not initialized");
+        return;
+    }
+    if (!d_table->size)  return;
+
+    rpc_extra_hdrs = dfl_rpc_extra_hdrs;
+    LM_DBG("Setting reason to [%.*s] and extra headers to [%.*s]\n",
+           reason.len, reason.s, rpc_extra_hdrs.len, rpc_extra_hdrs.s);
+
+    for (h_index = 0 ; h_index < d_table->size; h_index++)
+    {
+        entry       = d_table->entries[h_index];
+        dlg_to_term = entry.first;
+        for (; dlg_to_term;)
+        {
+            dlg = dlg_to_term->next ;
+            if (dlg_to_term->state == DLG_STATE_CONFIRMED)
+            {
+                unref_dlg(dlg_to_term, 1);
+                rpc_extra_hdrs = dfl_rpc_extra_hdrs;
+                dlg_terminate(dlg_to_term, NULL, &reason/*reason*/, 2, &rpc_extra_hdrs);
+                i_count++;
+            }
+            dlg_to_term = dlg;
+        }
+    }
+    LM_DBG("Terminated %d active dialogs from rpc call",i_count);
+}
 
 static rpc_export_t rpc_methods[] = {
 	{"dlg2.list", rpc_print_dlgs, rpc_print_dlgs_doc, 0},
         {"dlg2.end_dlg", rpc_end_dlg_entry_id, rpc_end_dlg_entry_id_doc, 0},
+        {"dlg2.end_all_active_dlg", rpc_end_all_active_dlg, rpc_end_all_active_dlg_doc, 0},
     {0, 0, 0, 0}
 };
 
