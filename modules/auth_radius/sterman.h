@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Digest Authentication - Radius support
  *
  * Copyright (C) 2001-2003 FhG Fokus
