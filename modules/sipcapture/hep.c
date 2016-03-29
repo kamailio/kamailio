@@ -66,6 +66,9 @@ int hep_msg_received(void *data)
         len = (unsigned *)srevp[1];
         ri = (struct receive_info *)srevp[2];                        
 
+	correlation_id = NULL;
+	authkey = NULL;
+
 	count++;
         struct hep_hdr *heph;
         /* hep_hdr */
@@ -100,6 +103,9 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
         memset(heptime, 0, sizeof(struct hep_timehdr));
 
         struct hep_ip6hdr *hepip6h = NULL;
+            	        
+	correlation_id = NULL;
+	authkey = NULL;
 
 	hep_offset = 0; 
 	
