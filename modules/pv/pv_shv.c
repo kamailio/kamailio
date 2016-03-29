@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -326,7 +326,7 @@ int pv_parse_shvar_name(pv_spec_p sp, str *in)
 {
 	if(in==NULL || in->s==NULL || sp==NULL)
 		return -1;
-	
+
 	sp->pvp.pvn.type = PV_NAME_PVAR;
 	sp->pvp.pvn.u.dname = (void*)add_shvar(in);
 
@@ -345,13 +345,13 @@ int pv_get_shvar(struct sip_msg *msg,  pv_param_t *param,
 	int len = 0;
 	char *sval = NULL;
 	sh_var_t *shv=NULL;
-	
+
 	if(msg==NULL || res==NULL)
 		return -1;
 
 	if(param==NULL || param->pvn.u.dname==0)
 		return pv_get_null(msg, param, res);
-	
+
 	shv= (sh_var_t*)param->pvn.u.dname;
 
 	lock_shvar(shv);
@@ -371,16 +371,16 @@ int pv_get_shvar(struct sip_msg *msg,  pv_param_t *param,
 		}
 		strncpy(shv_cpy.s, shv->v.value.s.s, shv->v.value.s.len);
 		shv_cpy.len = shv->v.value.s.len;
-		
+
 		unlock_shvar(shv);
-		
+
 		res->rs = shv_cpy;
 		res->flags = PV_VAL_STR;
 	} else {
 		res->ri = shv->v.value.n;
-		
+
 		unlock_shvar(shv);
-		
+
 		sval = sint2str(res->ri, &len);
 		res->rs.s = sval;
 		res->rs.len = len;
@@ -524,15 +524,15 @@ struct mi_root* mi_shvar_get(struct mi_root* cmd_tree, void* param)
 		shv = get_shvar_by_name(&name);
 		if(shv==NULL)
 			return init_mi_tree(404, MI_SSTR("Not found"));
-		
+
 		rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 		if (rpl_tree==NULL)
 			return NULL;
 
 		node = add_mi_node_child(&rpl_tree->node, MI_DUP_VALUE,
 				"VAR",3, name.s, name.len);
-  		if(node == NULL)
-  			goto error;
+		if(node == NULL)
+			goto error;
 		lock_shvar(shv);
 		if(shv->v.flags&VAR_VAL_STR)
 		{
@@ -544,7 +544,7 @@ struct mi_root* mi_shvar_get(struct mi_root* cmd_tree, void* param)
 			}
 			attr = add_mi_attr (node, MI_DUP_VALUE, "value", 5,
 					shv->v.value.s.s, shv->v.value.s.len);
-	  		if(attr == 0)
+			if(attr == 0)
 			{
 				unlock_shvar(shv);
 				goto error;
@@ -559,7 +559,7 @@ struct mi_root* mi_shvar_get(struct mi_root* cmd_tree, void* param)
 			name.s = sint2str(ival, &name.len);
 			attr = add_mi_attr (node, MI_DUP_VALUE, "value",5,
 					name.s, name.len);
-	  		if(attr == 0)
+			if(attr == 0)
 				goto error;
 		}
 
@@ -574,8 +574,8 @@ struct mi_root* mi_shvar_get(struct mi_root* cmd_tree, void* param)
 	{
 		node = add_mi_node_child(&rpl_tree->node, MI_DUP_VALUE,
 				"VAR", 3, shv->name.s, shv->name.len);
-  		if(node == NULL)
-  			goto error;
+		if(node == NULL)
+			goto error;
 
 		lock_shvar(shv);
 		if(shv->v.flags&VAR_VAL_STR)
@@ -588,7 +588,7 @@ struct mi_root* mi_shvar_get(struct mi_root* cmd_tree, void* param)
 			}
 			attr = add_mi_attr (node, MI_DUP_VALUE, "value", 5,
 					shv->v.value.s.s, shv->v.value.s.len);
-	  		if(attr == 0)
+			if(attr == 0)
 			{
 				unlock_shvar(shv);
 				goto error;
@@ -603,7 +603,7 @@ struct mi_root* mi_shvar_get(struct mi_root* cmd_tree, void* param)
 			name.s = sint2str(ival, &name.len);
 			attr = add_mi_attr (node, MI_DUP_VALUE, "value",5,
 					name.s, name.len);
-	  		if(attr == 0)
+			if(attr == 0)
 				goto error;
 		}
 	}
@@ -623,12 +623,12 @@ void rpc_shv_get(rpc_t* rpc, void* c)
 	int allvars = 0;
 	sh_var_t *shv = NULL;
 	void* th;
-        void* ih;
-        void* vh;
+	void* ih;
+	void* vh;
 
 	if (rpc->scan(c, "S", &varname) != 1) {
 		allvars = 1;
-        }
+	}
 
 	if (!allvars) {
 		/* Get one variable value */
@@ -638,11 +638,11 @@ void rpc_shv_get(rpc_t* rpc, void* c)
 			return;
 		}
 		if (rpc->add(c, "{",  &ih) < 0)
-        	{
-               		rpc->fault(c, 500, "Internal error creating rpc");
-                	return;
-        	}
-		
+		{
+			rpc->fault(c, 500, "Internal error creating rpc");
+			return;
+		}
+
 		lock_shvar(shv);
 		if(shv->v.flags&VAR_VAL_STR)
 		{
@@ -665,25 +665,25 @@ void rpc_shv_get(rpc_t* rpc, void* c)
 		return;
 	}
 	if (rpc->add(c, "{", &th) < 0)
-       	{
-         	rpc->fault(c, 500, "Internal error creating rpc");
-               	return;
-       	}
+	{
+		rpc->fault(c, 500, "Internal error creating rpc");
+		return;
+	}
 
 	if(rpc->struct_add(th, "{", "items", &ih) < 0)
-               {
-                         rpc->fault(c, 500, "Internal error creating rpc th");
-                         return;
-               }
+	{
+		rpc->fault(c, 500, "Internal error creating rpc th");
+		return;
+	}
 
 	for(shv=sh_vars; shv; shv=shv->next)
 	{
 		lock_shvar(shv);
 		if(rpc->struct_add(ih, "{", "shv", &vh) < 0)
-               {
-                         rpc->fault(c, 500, "Internal error creating rpc th");
-                         return;
-               }
+		{
+			rpc->fault(c, 500, "Internal error creating rpc th");
+			return;
+		}
 		if(shv->v.flags&VAR_VAL_STR)
 		{
 			if(rpc->struct_add(vh, "sss", "name", shv->name.s, "type", "string", "value", shv->v.value.s.s) < 0)
@@ -718,24 +718,24 @@ void rpc_shv_set(rpc_t* rpc, void* c)
 	if (rpc->scan(c, "S", &varname) != 1) {
 		rpc->fault(c, 500, "Missing parameter varname (Parameters: varname type value)");
 		return;
-        }
+	}
 	LM_DBG("SHV_set Varname %.*s \n", varname.len, varname.s);
 	if (rpc->scan(c, "S", &type) != 1) {
 		rpc->fault(c, 500, "Missing parameter type (Parameters: varname type value)");
 		return;
-        }
+	}
 	if (strcasecmp(type.s, "int") == 0 ) {
 		if (rpc->scan(c, "d", &ival) != 1) {
 			rpc->fault(c, 500, "Missing integer parameter value (Parameters: varname type value)");
 			return;
-        	}
+	}
 		isv.n = ival;
 	} else  if (strcasecmp(type.s, "str") == 0 ) {
 		/* String value */
 		if (rpc->scan(c, "S", &value) != 1) {
 			rpc->fault(c, 500, "Missing parameter value (Parameters: varname type value)");
 			return;
-        	}
+		}
 		isv.s = value;
 		flags = VAR_VAL_STR;
 	} else {
@@ -748,7 +748,7 @@ void rpc_shv_set(rpc_t* rpc, void* c)
 		rpc->fault(c, 404, "Variable not found");
 		return;
 	}
-		
+
 	lock_shvar(shv);
 	if(set_shvar_value(shv, &isv, flags)==NULL)
 	{
@@ -772,7 +772,7 @@ int param_set_xvar( modparam_t type, void* val, int mode)
 	script_var_t *pkv;
 	sh_var_t *shv;
 
-	if(!shm_initialized()!=0)
+	if(!shm_initialized())
 	{
 		LM_ERR("shm not initialized - cannot set value for PVs\n");
 		return -1;
@@ -787,7 +787,7 @@ int param_set_xvar( modparam_t type, void* val, int mode)
 
 	if(*p!='=')
 		goto error;
-	
+
 	s.len = p - s.s;
 	if(s.len == 0)
 		goto error;
@@ -822,7 +822,7 @@ int param_set_xvar( modparam_t type, void* val, int mode)
 		if(set_shvar_value(shv, &isv, flags)==NULL)
 			goto error;
 	}
-	
+
 	return 0;
 error:
 	LM_ERR("unable to set shv parame [%s]\n", s.s);
