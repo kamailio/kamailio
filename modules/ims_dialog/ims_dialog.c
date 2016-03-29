@@ -826,10 +826,13 @@ static int w_is_known_dlg(struct sip_msg *msg) {
 static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *dlg, void *dh)
 {
 	void* dlg_outs_h;
+        void* root;
+        void* roota;
 	struct dlg_cell_out* dlg_out;
 
-	rpc->struct_add(dh, "dd", "Entry", dlg->h_entry, "Id", dlg->h_id);
-	rpc->struct_add(dh, "SSSSSSSsd{",
+        rpc->struct_add(dh, "{", "Dialog", &root);
+	rpc->struct_add(root, "dd", "Entry", dlg->h_entry, "Id", dlg->h_id);
+	rpc->struct_add(root, "SSSSSSSsd[",
 			"RURI", &dlg->req_uri,
 			"From", &dlg->from_uri,
 			"Call-ID", &dlg->callid,
@@ -839,15 +842,17 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, struct dlg_cell *
 			"From Tag", &dlg->from_tag,
 			"State", state_to_char(dlg->state),
 			"Ref", dlg->ref,
-			"dlg_outs", &dlg_outs_h
+			"dlg_outs", &roota
 			);
 
 	lock_get(dlg->dlg_out_entries_lock);
 
 	dlg_out = dlg->dlg_entry_out.first;
 	while (dlg_out) {
-		rpc->struct_add(dlg_outs_h, "dd", "Entry", dlg_out->h_entry, "Id", dlg_out->h_id);
-		dlg_out = dlg_out->next;
+            
+            rpc->struct_add(roota, "{", "dlg_out", &dlg_outs_h);
+            rpc->struct_add(dlg_outs_h, "dd", "Entry", dlg_out->h_entry, "Id", dlg_out->h_id);
+            dlg_out = dlg_out->next;
 	}
 
 	lock_release(dlg->dlg_out_entries_lock);
@@ -875,7 +880,7 @@ static void internal_rpc_print_dlgs(rpc_t *rpc, void *c)
 		rpc->fault(c, 500, "Internal error creating top rpc");
 		return;
 	}
-	if (rpc->struct_add(ah, "d{", "Size", (int) d_table->size, "Dialogs", &dh) < 0) {
+	if (rpc->struct_add(ah, "d[", "Size", (int) d_table->size, "Dialogs", &dh) < 0) {
 		rpc->fault(c, 500, "Internal error creating inner struct");
 		return;
 	}
