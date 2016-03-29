@@ -706,6 +706,61 @@ int get_number_of_valid_contacts(impurecord_t* impu) {
     return ret;
 }
 
+int store_explicit_dereg_contact(struct sip_msg* msg, str ** explicit_dereg_contact, int *num_explicit_dereg_contact) {
+    int bytes_needed_explicit_dereg_contact = 0;
+    int len_num_explicit_dereg_contact = 0;
+    struct hdr_field* h;
+    contact_t* chi; //contact header information
+
+    LM_DBG("This is an explicit deregistration so we need to store the contact URI to send out NOTIFY\n");
+
+    //get lengths
+    for (h = msg->contact; h; h = h->next) {
+        if (h->type == HDR_CONTACT_T && h->parsed) {
+            for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
+                LM_DBG("URI [%.*s] len [%d]\n", chi->uri.len, chi->uri.s, chi->uri.len);
+                (*num_explicit_dereg_contact)++;
+                bytes_needed_explicit_dereg_contact += chi->uri.len;
+                LM_DBG("URI [%.*s] and current bytes needed [%d]\n", chi->uri.len, chi->uri.s, bytes_needed_explicit_dereg_contact);
+
+            }
+        }
+    }
+
+    LM_DBG("We have [%d] explicit contacts of total length [%d] to store\n", (*num_explicit_dereg_contact), bytes_needed_explicit_dereg_contact);
+
+    //now load data
+
+    len_num_explicit_dereg_contact = (sizeof (str)*(*num_explicit_dereg_contact)) + bytes_needed_explicit_dereg_contact;
+
+    *explicit_dereg_contact = (str*) shm_malloc(len_num_explicit_dereg_contact);
+    memset(*explicit_dereg_contact, 0, len_num_explicit_dereg_contact);
+
+    char* ptr = (char*) (*explicit_dereg_contact + *num_explicit_dereg_contact);
+
+    int count = 0;
+    //populate data
+    for (h = msg->contact; h; h = h->next) {
+        if (h->type == HDR_CONTACT_T && h->parsed) {
+            for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
+                LM_DBG("Adding [%.*s] to list of explicit contacts that have been de-reged\n", chi->uri.len, chi->uri.s);
+                (*explicit_dereg_contact)[count].s = ptr;
+                memcpy(ptr, chi->uri.s, chi->uri.len);
+                (*explicit_dereg_contact)[count].len = chi->uri.len;
+                ptr += chi->uri.len;
+                count++;
+            }
+        }
+    }
+
+    if (ptr != ((char*) *explicit_dereg_contact + len_num_explicit_dereg_contact)) {
+        LM_CRIT("buffer overflow\n");
+        return -1;
+    }
+
+    return 1;
+}
+
 /**
  * 
  * @param msg
@@ -726,7 +781,7 @@ int get_number_of_valid_contacts(impurecord_t* impu) {
 int update_contacts(struct sip_msg* msg, udomain_t* _d,
         str* public_identity, int assignment_type, ims_subscription** s,
         str* ccf1, str* ccf2, str* ecf1, str* ecf2, contact_for_header_t** contact_header) {
-    int reg_state, i, j;
+    int reg_state, i, j, k;
     ims_public_identity* pi = 0;
     impurecord_t* impu_rec, *tmp_impu_rec;
     int expires_hdr = -1; //by default registration doesn't expire
@@ -738,6 +793,10 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
     int first_unbarred_impu = 1; //this is used to flag the IMPU as anchor for implicit set
     int is_primary_impu = 0;
     int ret = 1;
+
+    int num_explicit_dereg_contact = 0;
+    str *explicit_dereg_contact = 0;
+
     if (msg) {
         expires_hdr = cscf_get_expires_hdr(msg, 0); //get the expires from the main body of the sip message (global)
     }
@@ -786,7 +845,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             }
             //now build the contact buffer to be include in the reply message and unlock
             build_contact(impu_rec, contact_header);
-            notify_subscribers(impu_rec);
+            notify_subscribers(impu_rec, 0, 0);
             ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_RE_REGISTRATION:
@@ -838,24 +897,24 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         LM_DBG("Ignoring explicit identity <%.*s>, updating later.....\n", public_identity->len, public_identity->s);
                         continue;
                     }
+		ul.lock_udomain(_d, &pi->public_identity);
 
-                    ul.lock_udomain(_d, &pi->public_identity);
                     //update the implicit IMPU with the new data
                     if (ul.update_impurecord(_d, &pi->public_identity, 0,
                             reg_state, -1 /*do not change send sar on delete */, pi->barring, 0, s, ccf1, ccf2, ecf1, ecf2,
                             &impu_rec) != 0) {
                         LM_ERR("Unable to update implicit impurecord for <%.*s>.... continuing\n", pi->public_identity.len, pi->public_identity.s);
-                        ul.unlock_udomain(_d, &pi->public_identity);
+		ul.unlock_udomain(_d, &pi->public_identity);
                         continue;
                     }
 
                     //update the contacts for the explicit IMPU
                     if (update_contacts_helper(msg, impu_rec, assignment_type, expires_hdr) != 0) {
                         LM_ERR("Failed trying to update contacts for re-registration of implicit IMPU <%.*s>.......continuing\n", pi->public_identity.len, pi->public_identity.s);
-                        ul.unlock_udomain(_d, &pi->public_identity);
+		ul.unlock_udomain(_d, &pi->public_identity);
                         continue;
                     }
-                    ul.unlock_udomain(_d, &pi->public_identity);
+		ul.unlock_udomain(_d, &pi->public_identity);
                 }
             }
             ul.lock_subscription(subscription);
@@ -863,14 +922,13 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             LM_DBG("ref count after sub is now %d\n", subscription->ref_count);
             ul.unlock_subscription(subscription);
 
-            ul.lock_udomain(_d, public_identity);
+	    ul.lock_udomain(_d, public_identity);
             //finally we update the explicit IMPU record with the new data
             if (ul.update_impurecord(_d, public_identity, 0, reg_state, -1 /*do not change send sar on delete */, 0 /*this is explicit so barring must be 0*/, 0, s, ccf1, ccf2, ecf1, ecf2, &impu_rec) != 0) {
                 LM_ERR("Unable to update explicit impurecord for <%.*s>\n", public_identity->len, public_identity->s);
             }
-            
-            notify_subscribers(impu_rec);
-            ul.unlock_udomain(_d, public_identity);
+            notify_subscribers(impu_rec, 0, 0);
+	    ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_USER_DEREGISTRATION:
             /*TODO: if its not a star lets find all the contact records and remove them*/
@@ -896,6 +954,15 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         build_expired_contact(chi, contact_header);
                     }
                 }
+            }
+
+            if (store_explicit_dereg_contact(msg, &explicit_dereg_contact, &num_explicit_dereg_contact) == -1) {
+                LM_ERR("Error trying to store explicit dereg contacts\n");
+                goto error;
+            }
+
+            for (k = 0; k < num_explicit_dereg_contact; k++) {
+                LM_DBG("Stored explit contact to dereg: [%.*s]\n", (explicit_dereg_contact)[k].len, (explicit_dereg_contact)[k].s);
             }
 
             //now, we get the subscription
@@ -958,7 +1025,8 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         //                                s = s->next;
                         //                            }
                         //                        }
-                        notify_subscribers(tmp_impu_rec);
+                        notify_subscribers(tmp_impu_rec, (str*) explicit_dereg_contact, num_explicit_dereg_contact);
+
                         for (h = msg->contact; h; h = h->next) {
                             if (h->type == HDR_CONTACT_T && h->parsed) {
                                 for (chi = ((contact_body_t*) h->parsed)->contacts; chi; chi = chi->next) {
@@ -1038,6 +1106,12 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
         default:
             LM_ERR("unimplemented assignment_type when trying to update contacts\n");
     }
+
+    if (explicit_dereg_contact) {
+        shm_free(explicit_dereg_contact);
+    }
+
+
     return ret;
 
 error:

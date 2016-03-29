@@ -79,6 +79,8 @@ typedef struct _reg_notification {
     str record_route;
     str sockinfo_str;
     
+    str *explit_dereg_contact;
+    int num_explit_dereg_contact;
     
     struct _reg_notification *next; /**< next notification in the list	*/
     struct _reg_notification *prev; /**< previous notification in the list	*/
@@ -127,14 +129,14 @@ int publish_reg(struct sip_msg *msg, char *str1, char *str2);
 
 int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str *contact);
 
-int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact);
+int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact, str *explit_dereg_contact, int num_explit_dereg_contact);
 
 
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription);
+str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription, str *explit_dereg_contact, int num_explit_dereg_contact);
 
 str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type);
 
-void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str* impus, int num_impus, int event_type);
+void create_notifications(udomain_t* _t, impurecord_t* r_passed, str *presentity_uri, str *watcher_contact, str* impus, int num_impus, int event_type, str *explit_dereg_contact, int num_explit_dereg_contact);
 
 void notification_event_process();
 
@@ -145,7 +147,7 @@ void send_notification(reg_notification * n);
 void add_notification(reg_notification *n);
 
 reg_notification* new_notification(str subscription_state,
-        str content_type, str** impus, int num_impus, reg_subscriber* r);
+        str content_type, str** impus, int num_impus, reg_subscriber* r, str **explit_dereg_contact, int num_explit_dereg_contact);
 
 dlg_t* build_dlg_t_from_notification(reg_notification* n);
 
@@ -156,6 +158,6 @@ void notify_destroy();
 int aor_to_contact(str* aor, str* contact);
 int contact_port_ip_match(str *c1, str *c2);
 
-int notify_subscribers(impurecord_t* impurecord);
+int notify_subscribers(impurecord_t* impurecord, str *explit_dereg_contact, int num_explit_dereg_contact);
 
 #endif //S_CSCF_REGISTRAR_NOTIFY_H_
