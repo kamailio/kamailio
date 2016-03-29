@@ -45,3 +45,6 @@ The http_client module - todo
 	$curl == URL
 	$curlres == result
 
+
+- Option to try connections at module load with CURLOPT_CONNECT_ONLY
+  just to make sure URLs resolve correctly in DNS and ports are open
