@@ -187,7 +187,10 @@ int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg,
 
     /* extract the contact address */
     if (!msg->contact && (parse_headers(msg, HDR_CONTACT_F, 0) < 0 || !msg->contact)) {
-        LM_ERR("bad sip message or missing Contact hdr\n");
+        if (msg->first_line.type == SIP_REQUEST)
+            LM_ERR("bad sip message or missing Contact hdr for message [%.*s]\n", msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
+        else
+            LM_ERR("bad sip message or missing Contact hdr for message [%.*s]\n", msg->first_line.u.reply.status.len, msg->first_line.u.reply.status.s);
         goto error0;
     }
     if (parse_contact(msg->contact) < 0 ||
