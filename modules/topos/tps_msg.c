@@ -33,6 +33,7 @@
 #include "../../data_lump.h"
 #include "../../forward.h"
 #include "../../trim.h"
+#include "../../dset.h"
 #include "../../msg_translator.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
@@ -253,6 +254,33 @@ int tps_skip_msg(sip_msg_t *msg)
 		return 1;
 
 	return 0;
+}
+
+/**
+ *
+ */
+int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd)
+{
+	if(parse_sip_msg_uri(msg)<0) {
+		LM_ERR("failed to parse r-uri\n");
+		return -1;
+	}
+	if(msg->parsed_uri.user.len<10) {
+		LM_DBG("not an expected user format\n");
+		return 1;
+	}
+	if(memcmp(msg->parsed_uri.user.s, "atpsh-", 6)==0) {
+		ptsd->a_uuid = msg->parsed_uri.user;
+		return 0;
+	}
+	if(memcmp(msg->parsed_uri.user.s, "btpsh-", 6)==0) {
+		ptsd->a_uuid = msg->parsed_uri.user;
+		ptsd->b_uuid = msg->parsed_uri.user;
+		return 0;
+	}
+	LM_DBG("not an expected user prefix\n");
+
+	return 1;
 }
 
 /**
@@ -537,13 +565,110 @@ int tps_reappend_rr(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 /**
  *
  */
+int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
+{
+	str hname = str_init("Route");
+
+	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
 int tps_request_received(sip_msg_t *msg, int dialog)
 {
+	tps_data_t mtsd;
+	tps_data_t stsd;
+	str lkey;
+	str ftag;
+	str nuri;
+	uint32_t direction = TPS_DIR_DOWNSTREAM;
+	int ret;
+
 	if(dialog==0) {
 		/* nothing to do for initial request */
 		return 0;
 	}
+
+	memset(&mtsd, 0, sizeof(tps_data_t));
+	memset(&stsd, 0, sizeof(tps_data_t));
+
+	if(tps_pack_message(msg, &mtsd)<0) {
+		LM_ERR("failed to extract and pack the headers\n");
+		return -1;
+	}
+
+	ret = tps_dlg_message_update(msg, &mtsd);
+	if(ret<0) {
+		LM_ERR("failed to update on dlg message\n");
+		return -1;
+	}
+
+	lkey = msg->callid->body;
+
+	tps_storage_lock_get(&lkey);
+
+	if(tps_storage_load_dialog(msg, &mtsd, &stsd)<0) {
+		goto error;
+	}
+
+	/* detect direction - get from-tag */
+	if(parse_from_header(msg)<0 || msg->from==NULL) {
+		LM_ERR("failed getting 'from' header!\n");
+		goto error;
+	}
+	ftag = get_from(msg)->tag_value;
+
+	if(stsd.a_tag.len!=ftag.len) {
+		direction = TPS_DIR_UPSTREAM;
+	} else {
+		if(memcpy(stsd.a_tag.s, ftag.s, ftag.len)==0) {
+			direction = TPS_DIR_DOWNSTREAM;
+		} else {
+			direction = TPS_DIR_UPSTREAM;
+		}
+	}
+	mtsd.direction = direction;
+
+	tps_storage_lock_release(&lkey);
+
+	if(direction == TPS_DIR_UPSTREAM) {
+		nuri = stsd.a_contact;
+	} else {
+		nuri = stsd.b_contact;
+	}
+	if(nuri.len>0) {
+		if(rewrite_uri(msg, &nuri)<0) {
+			LM_ERR("failed to update r-uri\n");
+			return -1;
+		}
+	}
+
+	if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
+				(direction==TPS_DIR_UPSTREAM)?0:1)<0) {
+		LM_ERR("failed to reappend s-route\n");
+		return -1;
+	}
+	if(direction == TPS_DIR_UPSTREAM) {
+		if(tps_reappend_route(msg, &stsd, &stsd.a_rr, 0)<0) {
+			LM_ERR("failed to reappend a-route\n");
+			return -1;
+		}
+	} else {
+		if(tps_reappend_route(msg, &stsd, &stsd.b_rr, 0)<0) {
+			LM_ERR("failed to reappend b-route\n");
+			return -1;
+		}
+	}
 	return 0;
+
+error:
+	tps_storage_lock_release(&lkey);
+	return -1;
 }
 
 /**
