@@ -407,7 +407,11 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 					return pv_get_null(msg, param, res);
 				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
 					"country","iso_code", NULL
-					) != MMDB_SUCCESS)
+					) != MMDB_SUCCESS
+					&& MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
+						"registered_country","iso_code", NULL
+						) != MMDB_SUCCESS
+					)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
 					gpv->item->r.country.s = (char *)entry_data.utf8_string;
