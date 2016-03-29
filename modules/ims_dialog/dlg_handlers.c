@@ -1341,25 +1341,27 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
         lock_release(dlg->dlg_out_entries_lock);
 
         if (!dlg_out) {
-            if (rpl->via1->branch && (&rpl->via1->branch->value) && (rpl->via1->branch->value.len > 0)) {
-                branch = rpl->via1->branch->value;
-            }
-            
-            LM_DBG("No dlg_out entry found - creating a new dialog_out entry on dialog [%p]\n", dlg);
-            dlg_out = build_new_dlg_out(dlg, &to_uri, &to_tag, &branch);
+            if (rpl->first_line.u.reply.statuscode < 299) { /*we don't care about failure responses to dialog - not necessary to create dialog out...*/
+                if (rpl->via1->branch && (&rpl->via1->branch->value) && (rpl->via1->branch->value.len > 0)) {
+                    branch = rpl->via1->branch->value;
+                }
 
-            link_dlg_out(dlg, dlg_out, 0);
+                LM_DBG("No dlg_out entry found - creating a new dialog_out entry on dialog [%p]\n", dlg);
+                dlg_out = build_new_dlg_out(dlg, &to_uri, &to_tag, &branch);
 
-            /* save callee's cseq, caller cseq, callee contact and callee record route*/
-            if (populate_leg_info(dlg, rpl, t, DLG_CALLEE_LEG, &to_tag) != 0) {
-                LM_ERR("could not add further info to the dlg out\n");
-            }
+                link_dlg_out(dlg, dlg_out, 0);
 
-            if (!dlg_out) {
-                LM_ERR("failed to create new dialog out structure\n");
-                goto done;
-                //TODO do something on this error!
+                /* save callee's cseq, caller cseq, callee contact and callee record route*/
+                if (populate_leg_info(dlg, rpl, t, DLG_CALLEE_LEG, &to_tag) != 0) {
+                    LM_ERR("could not add further info to the dlg out\n");
+                }
 
+                if (!dlg_out) {
+                    LM_ERR("failed to create new dialog out structure\n");
+                    goto done;
+                    //TODO do something on this error!
+
+                }
             }
         } else {
             //This dlg_out already exists, update cseq and contact if present
