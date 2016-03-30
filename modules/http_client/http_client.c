@@ -167,9 +167,6 @@ static pv_export_t mod_pvs[] = {
     {{"curlerror", (sizeof("curlerror")-1)}, /* Curl error codes */
      PVT_OTHER, pv_get_curlerror, 0,
 	pv_parse_curlerror, 0, 0, 0},
-    {{"curlredirect", (sizeof("redirect")-1)}, /* Curl error codes */
-     PVT_OTHER, pv_get_curlredirect, 0,
-	pv_parse_curlredirect, 0, 0, 0},
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -716,31 +713,3 @@ static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *
 	return pv_get_strval(msg, param, res, &curlerr);
 }
 
-/*!
- * Parse arguments to  pv $curlredirect
- */
-static int pv_parse_curlredirect(pv_spec_p sp, str *in)
-{
-	if(sp==NULL || in==NULL || in->len<=0) {
-		return -1;
-	}
-
-	// DO SOMETHING HERE
-	return 0;
-}
-
-/*
- * PV - return curl redirect URL for httpcon
- *	$curlredirect("httpcon");
- */
-static int pv_get_curlredirect(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
-{
-	str redirecturl;
-
-	if(param==NULL) {
-		return -1;
-	}
-
-	// DO SOMETHING HERE
-	return pv_get_strval(msg, param, res, &redirecturl);
-}
