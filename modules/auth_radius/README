@@ -22,6 +22,12 @@ Jan Janak
 
    <jan@iptel.org>
 
+Edited by
+
+Phil Lavin
+
+   <phil.lavin@synety.com>
+
    Copyright © 2002, 2003 FhG FOKUS
 
    Copyright © 2005 Voice Sistem SRL
@@ -47,6 +53,7 @@ Jan Janak
               4.3. auth_extra (string)
               4.4. use_ruri_flag (integer)
               4.5. radius_avps_mode (integer)
+              4.6. append_realm_to_username (integer)
 
         5. Functions
 
@@ -61,8 +68,9 @@ Jan Janak
    1.4. auth_extra parameter usage
    1.5. use_ruri_flag parameter usage
    1.6. radius_avps_mode parameter usage
-   1.7. radius_www_authorize usage
-   1.8. proxy_authorize usage
+   1.7. append_realm_to_username parameter usage
+   1.8. radius_www_authorize usage
+   1.9. proxy_authorize usage
 
 Chapter 1. Admin Guide
 
@@ -82,6 +90,7 @@ Chapter 1. Admin Guide
         4.3. auth_extra (string)
         4.4. use_ruri_flag (integer)
         4.5. radius_avps_mode (integer)
+        4.6. append_realm_to_username (integer)
 
    5. Functions
 
@@ -98,16 +107,17 @@ Chapter 1. Admin Guide
    to the radius server we perform some sanity checks over the credentials
    to make sure that only well formed credentials will get to the server.
    We have implemented radius authentication according to
-   draft-sterman-aaa-sip-00. This module requires radiusclient-ng library
-   version 0.5.0 or higher which is available from
-   http://developer.berlios.de/projects/radiusclient-ng/.
+   draft-sterman-aaa-sip-00. This module requires the radiusclient-ng
+   library version 0.5.0 or higheer or freeradius-client which is
+   available from https://github.com/FreeRADIUS/freeradius-client/. You
+   can also install this library from distribution repositories.
 
 2. Additional Credentials
 
-   When performing authentification, the RADIUS server may include in the
-   response additional credentials. This scheme is very useful in fetching
-   additional user information from the RADIUS server without making extra
-   queries.
+   When performing authentification, the RADIUS server may include
+   additional credentials in the response. This scheme is very useful in
+   fetching additional user information from the RADIUS server without
+   making extra queries.
 
    The additional credentials are embedded in the RADIUS reply as AVPs
    "SIP-AVP". The syntax of the value is:
@@ -141,12 +151,17 @@ Chapter 1. Admin Guide
 
    The module depends on the following modules (in the other words the
    listed modules must be loaded before this module):
-     * modules/auth -- Generic authentication functions
+     * auth -- Generic authentication functions
 
 3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    compilling Kamailio with this module loaded:
+
+   One of these libraries. Notice that development of radiusclient-ng has
+   stopped, as the project merged with freeradius-client.
+     * freeradius-client available from
+       https://github.com/FreeRADIUS/freeradius-client/.
      * radiusclient-ng 0.5.0 or higher -- library and development files.
        See http://developer.berlios.de/projects/radiusclient-ng/.
 
@@ -157,6 +172,7 @@ Chapter 1. Admin Guide
    4.3. auth_extra (string)
    4.4. use_ruri_flag (integer)
    4.5. radius_avps_mode (integer)
+   4.6. append_realm_to_username (integer)
 
 4.1. radius_config (string)
 
@@ -219,6 +235,17 @@ modparam("auth_radius", "use_ruri_flag", 22)
    Example 1.6. radius_avps_mode parameter usage
 modparam("auth_radius", "radius_avps_mode", 1)
 
+4.6. append_realm_to_username (integer)
+
+   If set to 1, the username passed to the RADIUS server will have the
+   digest realm appended to it, if no domain is provided in the digest
+   username.
+
+   Default value is 1.
+
+   Example 1.7. append_realm_to_username parameter usage
+modparam("auth_radius", "append_realm_to_username", 0)
+
 5. Functions
 
    5.1. radius_www_authorize(realm [, uri_user])
@@ -263,7 +290,7 @@ modparam("auth_radius", "radius_avps_mode", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.7. radius_www_authorize usage
+   Example 1.8. radius_www_authorize usage
 ...
     if (!radius_www_authorize("$td")) {
         switch ($rc) {
@@ -315,7 +342,7 @@ modparam("auth_radius", "radius_avps_mode", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.8. proxy_authorize usage
+   Example 1.9. proxy_authorize usage
 ...
     if (!radius_proxy_authorize("$pd", "$pU")) { # Realm and URI user are taken
         switch ($rc) {                           # from P-Preferred-Identity
