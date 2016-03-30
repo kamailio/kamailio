@@ -5,13 +5,14 @@ The http_client module - todo
 	read=line/all		- Implemented in API, but not in parameter
 	tlsverify=on/off
 	failover=httpcon	Other httpcon that can be used for failover in case of 5xx response or timeout
+				not implemented
 
 
 - Add XAVP parameter setting before running curl_connect
 
 - save fingerprint of cert for trust-on-first-use procedure
 
-- status for httpcon-object, needs to be object in process memory, so child_init
+- connection and last status for httpcon-object, needs to be object in process memory, so child_init
 	- if 5xx response or timeout set flag
 	- function in dialplan - httpcon_exists(object)
 	- pv $curlstatus(object) ??
@@ -20,6 +21,12 @@ The http_client module - todo
 
 - Figure out a way to communicate back the content-type of the response. Another pvar arg?
 	- This is per process!
+
+- Reload of configuration file from RPC interface
+	- Need to close connections (if we have open ones according to idea above)
+	- Need to rebuild core httpcon objects and "mirrors" in pkg memory
+	- Can we add a lock to the connection list while switching if we load a new
+          list, then switch active list and then free the old ones
 
 - rpc
 	curl.listcon	list all connection objects with properties
@@ -36,6 +43,7 @@ The http_client module - todo
 	curl.addcon	add connection object
 	curl.rmcon	remove connection object
 
+	Maybe RPC commands to change default settings for proxys
 
 - Async - event_route when done
 	(with and without suspending transaction)
@@ -51,3 +59,25 @@ The http_client module - todo
 
 - Make it possible to define modparams in any order. For now, httpcon definitions only use default
   values from modparam's defined on lines above in the config file. (issue #541)
+
+
+Issues in the bug tracker
+-------------------------
+- https://github.com/kamailio/kamailio/issues/542  - open
+  Support connection reuse. Needs private memory structures to track connections
+
+
+Solved issues
+--------------
+- https://github.com/kamailio/kamailio/issues/541 - closed
+  Support setting proxy 
+  Comitted another patch, which included default and per-connection proxy
+  settings. 
+- https://github.com/kamailio/kamailio/issues/515 - closed
+  Support various auth methods - digest, basic etc
+  Comitted another patch, which included default and per-connection settings
+- https://github.com/kamailio/kamailio/pull/481 - closed
+  Support TLS client certificates
+- https://github.com/kamailio/kamailio/pull/435 - closed
+  Pull request that fixed a lot of issues.
+
