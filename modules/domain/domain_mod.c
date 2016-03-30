@@ -288,9 +288,9 @@ static void domain_rpc_reload(rpc_t* rpc, void* ctx)
 	rpc->fault(ctx, 400, "Reload of domain tables failed");
     }
     lock_release(reload_lock);
-    rpc->add(c, "d", 200);
-    rpc->add(c, "s", "OK");
-    rpc->send(c);
+    rpc->add(ctx, "d", 200);
+    rpc->add(ctx, "s", "OK");
+    rpc->send(ctx);
 
 }
 
