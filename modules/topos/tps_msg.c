@@ -908,6 +908,10 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 		tps_reinsert_contact(msg, ptsd, &ptsd->bs_contact);
 	}
 
+	if(dialog!=0) {
+		tps_storage_end_dialog(msg, &mtsd, ptsd);
+	}
+
 done:
 	tps_storage_lock_release(&lkey);
 	return 0;

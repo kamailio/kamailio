@@ -85,6 +85,7 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 
 int tps_storage_lock_set_init(void);
 int tps_storage_lock_get(str *lkey);

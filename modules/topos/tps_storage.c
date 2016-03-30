@@ -978,7 +978,6 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db1_res_t* db_res = NULL;
 	int nr_keys;
 	int nr_ucols;
-	int n;
 	int ret;
 
 	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
@@ -1041,6 +1040,72 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 			nr_ucols++;
 		}
 	}
+	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
+		LM_ERR("failed to perform use table\n");
+		return -1;
+	}
+
+	if(_tpsdbf.update(_tps_db_handle, db_keys, db_ops, db_vals,
+				db_ucols, db_uvals, nr_keys, nr_ucols)!=0) {
+		LM_ERR("failed to do db update for [%.*s]!\n",
+				md->a_uuid.len, md->a_uuid.s);
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	db_key_t db_keys[4];
+	db_op_t  db_ops[4];
+	db_val_t db_vals[4];
+	db_key_t db_ucols[TPS_NR_KEYS];
+	db_val_t db_uvals[TPS_NR_KEYS];
+	db1_res_t* db_res = NULL;
+	int nr_keys;
+	int nr_ucols;
+
+	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
+		return -1;
+
+	if(md->s_method_id != METHOD_BYE) {
+		return 0;
+	}
+
+	memset(db_ucols, 0, TPS_NR_KEYS*sizeof(db_key_t));
+	memset(db_uvals, 0, TPS_NR_KEYS*sizeof(db_val_t));
+
+	nr_keys = 0;
+	nr_ucols = 0;
+
+	db_keys[nr_keys]=&td_col_a_uuid;
+	db_ops[nr_keys]=OP_EQ;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].nul = 0;
+	if(sd->a_uuid.len>0 && sd->a_uuid.s[0]=='a') {
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->a_uuid);
+	} else {
+		if(sd->b_uuid.len<=0) {
+			LM_ERR("no valid dlg uuid\n");
+			return -1;
+		}
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->b_uuid);
+	}
+	nr_keys++;
+
+	db_ucols[nr_ucols] = &td_col_rectime;
+	db_uvals[nr_ucols].type = DB1_DATETIME;
+	db_uvals[nr_ucols].val.time_val = time(NULL);
+	nr_ucols++;
+
+	db_ucols[nr_ucols] = &td_col_iflags;
+	db_uvals[nr_ucols].type = DB1_INT;
+	db_uvals[nr_ucols].val.int_val = 0;
+	nr_ucols++;
+
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
 		return -1;
