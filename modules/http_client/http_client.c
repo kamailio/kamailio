@@ -1,6 +1,6 @@
 /*
  * http_client Module
- * Copyright (C) 2015 Edvina AB, Olle E. Johansson
+ * Copyright (C) 2015-2016 Edvina AB, Olle E. Johansson
  *
  * Based on part of the utils module and part
  * of the json-rpc-c module
@@ -60,6 +60,7 @@
 #include "../../rpc_lookup.h"
 #include "../../config.h"
 #include "../../lvalue.h"
+#include "../../pt.h"		/* Process table */
 
 #include "functions.h"
 #include "curlcon.h"
@@ -167,7 +168,7 @@ static pv_export_t mod_pvs[] = {
     {{"curlerror", (sizeof("curlerror")-1)}, /* Curl error codes */
      PVT_OTHER, pv_get_curlerror, 0,
 	pv_parse_curlerror, 0, 0, 0},
-    {{"curlredirect", (sizeof("redirect")-1)}, /* Curl error codes */
+    {{"curlredirect", (sizeof("redirect")-1)}, /* Curl last redirect url - not implemented yet */
      PVT_OTHER, pv_get_curlredirect, 0,
 	pv_parse_curlredirect, 0, 0, 0},
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
@@ -299,9 +300,12 @@ int curl_support_ipv6()
 /* Child initialization function */
 static int child_init(int rank)
 {	
+	int i = my_pid();
+
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN) {
 		return 0; /* do nothing for the main process */
 	}
+	LM_DBG("*** http_client module initializing process %d\n", i);
 
     	return 0;
 }
