@@ -1000,7 +1000,6 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_val_t db_vals[4];
 	db_key_t db_ucols[TPS_NR_KEYS];
 	db_val_t db_uvals[TPS_NR_KEYS];
-	db1_res_t* db_res = NULL;
 	int nr_keys;
 	int nr_ucols;
 	int ret;
@@ -1089,7 +1088,6 @@ int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_val_t db_vals[4];
 	db_key_t db_ucols[TPS_NR_KEYS];
 	db_val_t db_uvals[TPS_NR_KEYS];
-	db1_res_t* db_res = NULL;
 	int nr_keys;
 	int nr_ucols;
 
