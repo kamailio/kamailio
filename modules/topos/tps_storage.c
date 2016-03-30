@@ -326,7 +326,7 @@ error:
 /**
  *
  */
-int tps_storage_record(sip_msg_t *msg, tps_data_t *td)
+int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
 {
 	int ret;
 
@@ -336,7 +336,7 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td)
 	if(ret<0) goto error;
 	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) goto error;
-	if(td->s_method_id!=METHOD_MESSAGE) {
+	if(dialog==0) {
 		ret = tps_db_insert_dialog(td);
 		if(ret<0) goto error;
 	}
