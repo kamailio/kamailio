@@ -49,6 +49,7 @@
 extern int _tps_param_mask_callid;
 
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
+str _sr_hname_xuuid = str_init("P-SR-XUID");
 
 /**
  *
@@ -155,7 +156,8 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 	hs.len = hname->len + 2 + hbody->len;
 	hs.s  = (char*)pkg_malloc(hs.len + 3);
 	if (hs.s==NULL) {
-		LM_ERR("no pkg memory left\n");
+		LM_ERR("no pkg memory left (%.*s - %d)\n",
+				hname->len, hname->s, hs.len);
 		return -1;
 	}
 	memcpy(hs.s, hname->s, hname->len);
@@ -528,9 +530,6 @@ int tps_get_xbranch(sip_msg_t *msg, str *hbody)
 	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
 		return -1;
 	}
-	if(tps_add_headers(msg, &_sr_hname_xbranch, hbody, 0)<0) {
-		return -1;
-	}
 
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
@@ -547,6 +546,53 @@ int tps_get_xbranch(sip_msg_t *msg, str *hbody)
 	return -1;
 }
 
+
+/**
+ *
+ */
+int tps_append_xuuid(sip_msg_t *msg, str *hbody)
+{
+	if(tps_add_headers(msg, &_sr_hname_xuuid, hbody, 0)<0) {
+		LM_ERR("failed to add xuuid header [%.*s]/%d\n",
+				hbody->len, hbody->s, hbody->len);
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+int tps_remove_xuuid(sip_msg_t *msg)
+{
+	return tps_remove_name_headers(msg, &_sr_hname_xuuid);
+}
+
+/**
+ *
+ */
+int tps_get_xuuid(sip_msg_t *msg, str *hbody)
+{
+	hdr_field_t *hf;
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		return -1;
+	}
+
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		if(_sr_hname_xuuid.len==hf->name.len
+				&& strncasecmp(_sr_hname_xuuid.s, hf->name.s,
+					hf->name.len)==0) {
+			break;
+		}
+	}
+	if(hf!=NULL) {
+		*hbody = hf->body;
+		return 0;
+	}
+	return -1;
+}
 
 /**
  *
@@ -568,6 +614,39 @@ int tps_reappend_rr(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 {
 	str hname = str_init("Route");
+	int i;
+	int c;
+	str sb;
+
+	if(hbody==NULL || hbody->s==NULL || hbody->len<=0)
+		return 0;
+
+	if(rev==1) {
+		c = 0;
+		sb.len = 1;
+		for(i=hbody->len-2; i>=0; i++) {
+			if(hbody->s[i]==',') {
+				c = 1;
+				if(sb.len>0) {
+					sb.s = hbody->s + i + 1;
+					if(tps_add_headers(msg, &hname, &sb, 0)<0) {
+						return -1;
+					}
+				}
+				sb.len = 0;
+			}
+			sb.len++;
+		}
+		if(c==1) {
+			if(sb.len>0) {
+				sb.s = hbody->s;
+				if(tps_add_headers(msg, &hname, &sb, 0)<0) {
+					return -1;
+				}
+			}
+			return 0;
+		}
+	}
 
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;
@@ -637,9 +716,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	tps_storage_lock_release(&lkey);
 
 	if(direction == TPS_DIR_UPSTREAM) {
-		nuri = stsd.a_contact;
-	} else {
 		nuri = stsd.b_contact;
+	} else {
+		nuri = stsd.a_contact;
 	}
 	if(nuri.len>0) {
 		if(rewrite_uri(msg, &nuri)<0) {
@@ -663,6 +742,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			LM_ERR("failed to reappend b-route\n");
 			return -1;
 		}
+	}
+	if(dialog!=0) {
+		tps_append_xuuid(msg, &stsd.a_uuid);
 	}
 	return 0;
 
@@ -751,12 +833,15 @@ error:
 int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 {
 	tps_data_t mtsd;
+	tps_data_t btsd;
 	tps_data_t stsd;
 	tps_data_t *ptsd;
 	str lkey;
+	str xuuid;
 	int direction = TPS_DIR_DOWNSTREAM;
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
+	memset(&btsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
 	ptsd = &mtsd;
 
@@ -765,15 +850,29 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 		return -1;
 	}
 
+	if(dialog!=0) {
+		if(tps_get_xuuid(msg, &xuuid)<0) {
+			LM_DBG("no x-uuid header - nothing to do\n");
+			return 0;
+		}
+		mtsd.a_uuid = xuuid;
+		tps_remove_xuuid(msg);
+	}
+
 	lkey = msg->callid->body;
 
 	tps_storage_lock_get(&lkey);
-	if(dialog==0) {
-		if(tps_storage_load_branch(msg, &mtsd, &stsd)!=0) {
-			if(tps_storage_record(msg, ptsd)<0) {
-				goto error;
-			}
-		} else {
+
+	if(tps_storage_load_branch(msg, &mtsd, &btsd)!=0) {
+		if(tps_storage_record(msg, ptsd, dialog)<0) {
+			goto error;
+		}
+	} else {
+		ptsd = &btsd;
+	}
+
+	if(dialog!=0) {
+		if(tps_storage_load_dialog(msg, &btsd, &stsd)==0) {
 			ptsd = &stsd;
 		}
 	}
@@ -822,7 +921,7 @@ int tps_response_sent(sip_msg_t *msg)
 	tps_data_t btsd;
 	str lkey;
 	int direction = TPS_DIR_UPSTREAM;
-	str xvbranch;
+	str xvbranch = {0, 0};
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
