@@ -668,6 +668,8 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
 
+	LM_DBG("handling incoming request\n");
+
 	if(dialog==0) {
 		/* nothing to do for initial request */
 		return 0;
@@ -765,6 +767,8 @@ int tps_response_received(sip_msg_t *msg)
 	str ftag;
 	uint32_t direction;
 
+	LM_DBG("handling incoming response\n");
+
 	if(msg->first_line.u.reply.statuscode==100) {
 		/* nothing to do - it should be absorbed */
 		return 0;
@@ -840,6 +844,8 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	str xuuid;
 	int direction = TPS_DIR_DOWNSTREAM;
 
+	LM_DBG("handling outgoing request\n");
+
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
@@ -872,7 +878,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	}
 
 	if(dialog!=0) {
-		if(tps_storage_load_dialog(msg, &btsd, &stsd)==0) {
+		if(tps_storage_load_dialog(msg, &mtsd, &stsd)==0) {
 			ptsd = &stsd;
 		}
 	}
@@ -922,6 +928,8 @@ int tps_response_sent(sip_msg_t *msg)
 	str lkey;
 	int direction = TPS_DIR_UPSTREAM;
 	str xvbranch = {0, 0};
+
+	LM_DBG("handling outgoing response\n");
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
