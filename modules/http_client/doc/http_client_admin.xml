@@ -417,6 +417,12 @@ modparam("http_client", "authmetod", 3)
 			address given in the function call will be appended to the base URL in the connection definition.
 			</para>
 			<para>
+			The HTTP connection will be defined using default values in modparam's above the definition
+			of the httpcon in the configuration file. Also note that connections can be defined in a
+			separate text file if you have many parameters per connection, or want to use a per-connection
+			setting that can be set in that file but not in the httpcon modparam, like authmethod.
+			</para>
+			<para>
 			<emphasis>
 				By default, no connections are defined.
 			</emphasis>
