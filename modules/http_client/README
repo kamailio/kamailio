@@ -503,7 +503,6 @@ tstuff;timeout=12")
      * username
      * password
      * authmethod
-     * failover
      * useragent
      * verify_peer
      * verify_host
