@@ -1,9 +1,9 @@
 /**
  * Copyright (C) 2009
  *
- * This file is part of SIP-Router.org, a free SIP server.
+ * This file is part of Kamailio.org, a free SIP server.
  *
- * SIP-Router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version

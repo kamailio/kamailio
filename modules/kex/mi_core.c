@@ -1,6 +1,4 @@
 /*
- * $Id: mi_core.c 4762 2008-08-28 11:27:31Z henningw $
- *
  * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,10 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- *
- * history:
- * ---------
- *  2006-09-08  first version (bogdan)
  */
 
 
