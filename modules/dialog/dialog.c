@@ -1759,10 +1759,10 @@ static void rpc_dlg_terminate_dlg(rpc_t *rpc,void *c){
 
         if(ret>=0){
                 LM_WARN("Dialog is terminated callid: '%.*s' \n",callid.len, callid.s);
+                dlg_release(dlg);
                 rpc->add(c, "d", 200);
                 rpc->add(c, "s", "OK");
                 rpc->send(c);
-                dlg_release(dlg);
         }
 }
 
