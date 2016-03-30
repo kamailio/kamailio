@@ -153,7 +153,7 @@ int authx_xkey_add_params(str *sparam)
 	param_hooks_t phooks;
 	param_t *pit=NULL;
 	auth_xkey_t tmp;
-	unsigned int uv;
+	unsigned int uv = 0;
 
 	if (parse_params(sparam, CLASS_ANY, &phooks, &params_list)<0)
 		return -1;
