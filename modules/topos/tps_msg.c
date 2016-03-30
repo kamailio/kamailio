@@ -644,8 +644,12 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 	tps_storage_lock_get(&lkey);
 	if(dialog==0) {
-		if(tps_storage_record(msg, ptsd)<0) {
-			goto error;
+		if(tps_storage_load_branch(msg, &mtsd, &stsd)!=0) {
+			if(tps_storage_record(msg, ptsd)<0) {
+				goto error;
+			}
+		} else {
+			ptsd = &stsd;
 		}
 	}
 
@@ -667,7 +671,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	tps_remove_headers(msg, HDR_CONTACT_T);
 	tps_remove_headers(msg, HDR_VIA_T);
 
-	tps_reinsert_via(msg, ptsd, &ptsd->x_via1);
+	tps_reinsert_via(msg, &mtsd, &mtsd.x_via1);
 	if(direction==TPS_DIR_UPSTREAM) {
 		tps_reinsert_contact(msg, ptsd, &ptsd->as_contact);
 	} else {

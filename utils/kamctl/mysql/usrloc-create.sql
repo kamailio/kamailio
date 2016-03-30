@@ -22,12 +22,12 @@ CREATE TABLE `location` (
     `connection_id` INT(11) DEFAULT 0 NOT NULL,
     `keepalive` INT(11) DEFAULT 0 NOT NULL,
     `partition` INT(11) DEFAULT 0 NOT NULL,
-    CONSTRAINT ruid_idx UNIQUE (`ruid`),
-    CONSTRAINT connection_idx UNIQUE (`server_id`, `connection_id`)
+    CONSTRAINT ruid_idx UNIQUE (`ruid`)
 );
 
 CREATE INDEX account_contact_idx ON location (`username`, `domain`, `contact`);
 CREATE INDEX expires_idx ON location (`expires`);
+CREATE INDEX connection_idx ON location (`server_id`, `connection_id`);
 
 INSERT INTO version (table_name, table_version) values ('location','8');
 

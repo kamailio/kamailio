@@ -113,7 +113,7 @@ int ds_ping_active_init(void)
  */
 int ds_ping_active_get(void)
 {
-	if(_ds_ping_active!=NULL)
+	if(_ds_ping_active==NULL)
 		return -1;
 	return *_ds_ping_active;
 }
@@ -123,7 +123,7 @@ int ds_ping_active_get(void)
  */
 int ds_ping_active_set(int v)
 {
-	if(_ds_ping_active!=NULL)
+	if(_ds_ping_active==NULL)
 		return -1;
 	*_ds_ping_active = v;
 	return 0;
@@ -305,7 +305,7 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 
 	/* skip IPv6 references if IPv6 lookups are disabled */
 	if (default_core_cfg.dns_try_ipv6 == 0 &&
-	        puri.host.s[0] == '[' && puri.host.s[puri.host.len-1] == ']') {
+			puri.host.s[0] == '[' && puri.host.s[puri.host.len-1] == ']') {
 		LM_DBG("skipping IPv6 record %.*s\n", puri.host.len, puri.host.s);
 		return 0;
 	}
@@ -496,7 +496,7 @@ int dp_init_relative_weights(ds_set_t *dset)
 
 	if(dset==NULL || dset->dlist==NULL)
 		return -1;
-	
+
 	int rw_sum = 0;
 	/* find the sum of relative weights*/
 	for(j=0; j<dset->nr; j++){
@@ -514,9 +514,9 @@ int dp_init_relative_weights(ds_set_t *dset)
 	for(j=0; j<dset->nr; j++)
 	{
 		if( ds_skip_dst(dset->dlist[j].flags ) )
-			continue;	
+			continue;
 
-		int current_slice = dset->dlist[j].attrs.rweight*100/rw_sum;  //truncate here; 
+		int current_slice = dset->dlist[j].attrs.rweight*100/rw_sum;  //truncate here;
 		for(k=0; k<current_slice; k++)
 		{
 			dset->rwlist[t] = (unsigned int)j;
@@ -525,7 +525,7 @@ int dp_init_relative_weights(ds_set_t *dset)
 	}
 	/* if the array was not completely filled (i.e., the sum of rweights is
 	 * less than 100 due to truncated), then use last address to fill the rest */
-	unsigned int last_insert = t>0? dset->rwlist[t-1] : (unsigned int)(dset->nr-1); 
+	unsigned int last_insert = t>0? dset->rwlist[t-1] : (unsigned int)(dset->nr-1);
 	for(j=t; j<100; j++)
 		dset->rwlist[j] = last_insert;
 
@@ -1765,7 +1765,7 @@ static inline int ds_update_dst(struct sip_msg *msg, str *uri,
 				return -1;
 			}
 			/* dst_uri changes, so it makes sense to re-use the current uri for
-			   forking */
+			 * forking */
 			ruri_mark_new(); /* re-use uri for serial forking */
 			break;
 	}
@@ -2487,7 +2487,7 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 
 
 /**
- recalculate relative states if some destination state was changed
+ * recalculate relative states if some destination state was changed
  */
 int ds_reinit_rweight_on_state_change(int old_state, int new_state, ds_set_t *dset)
 {
@@ -2495,7 +2495,7 @@ int ds_reinit_rweight_on_state_change(int old_state, int new_state, ds_set_t *ds
 		LM_ERR("destination set is null\n");
 		return -1;
 	}
-	if (	(!ds_skip_dst(old_state) && ds_skip_dst(new_state)) ||
+	if ( (!ds_skip_dst(old_state) && ds_skip_dst(new_state)) ||
 		(ds_skip_dst(old_state) && !ds_skip_dst(new_state)) )
 	{
 		dp_init_relative_weights(dset);
@@ -2804,8 +2804,8 @@ static void ds_options_callback( struct cell *t, int type,
 	{
 		/* Set the according entry back to "Active" */
 		state = 0;
-		if (ds_probing_mode==DS_PROBE_ALL || 
-                    ((ds_probing_mode==DS_PROBE_ONLYFLAGGED)
+		if (ds_probing_mode==DS_PROBE_ALL ||
+				((ds_probing_mode==DS_PROBE_ONLYFLAGGED)
 						&& (ds_get_state(group, &uri) & DS_PROBING_DST)))
 			state |= DS_PROBING_DST;
 

@@ -20,11 +20,16 @@
 #ifndef _sr_pkg_h_
 #define _sr_pkg_h_
 
-#ifdef PKG_MALLOC
-
 #include "memapi.h"
 
 extern sr_pkg_api_t _pkg_root;
+
+int pkg_init_api(sr_pkg_api_t *ap);
+int pkg_init_manager(char *name);
+void pkg_destroy_manager(void);
+void pkg_print_manager(void);
+
+#ifdef PKG_MALLOC
 
 #ifdef DBG_SR_MEMORY
 #	define pkg_malloc(s)      _pkg_root.xmalloc(_pkg_root.mem_block, (s), _SRC_LOC_, \
@@ -43,13 +48,8 @@ extern sr_pkg_api_t _pkg_root;
 #	define pkg_info(mi)    _pkg_root.xinfo(_pkg_root.mem_block, mi)
 #	define pkg_available() _pkg_root.xavailable(_pkg_root.mem_block)
 #	define pkg_sums()      _pkg_root.xsums(_pkg_root.mem_block)
-#	define pkg_mod_get_stats(x)     _pkg_root.xstats(_pkg_root.mem_block, x)
-#	define pkg_mod_free_stats(x)    _pkg_root.xfstats(x)
-
-int pkg_init_api(sr_pkg_api_t *ap);
-int pkg_init_manager(char *name);
-void pkg_destroy_manager(void);
-void pkg_print_manager(void);
+#	define pkg_mod_get_stats(x)     _pkg_root.xmodstats(_pkg_root.mem_block, x)
+#	define pkg_mod_free_stats(x)    _pkg_root.xfmodstats(x)
 
 #else /*PKG_MALLOC*/
 /* use system allocator */
@@ -74,6 +74,8 @@ void pkg_print_manager(void);
 #	define pkg_info(mi) do{ memset((mi),0, sizeof(*(mi))); } while(0)
 #	define pkg_available() 0
 #	define pkg_sums() do{}while(0)
+#	define pkg_mod_get_stats(x)     do{}while(0)
+#	define pkg_mod_free_stats(x)    do{}while(0)
 #endif /*PKG_MALLOC*/
 
 #endif

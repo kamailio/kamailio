@@ -577,7 +577,7 @@ int fixup_raw_http_client_conn_list(void)
 		schema.s = raw_cc->url.s;
 		pos = schema.s;
 		end = raw_cc->url.s + raw_cc->url.len;
-		while (pos != '\0' && (pos < end))
+		while ((pos < end) && (*pos != '\0'))
 		{
 			if (*pos == ':') break;
 			pos++;

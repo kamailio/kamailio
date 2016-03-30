@@ -1067,8 +1067,8 @@ int fm_malloc_init_pkg_manager(void)
 	ma.xavailable = fm_available;
 	ma.xsums      = fm_sums;
 	ma.xdestroy   = fm_malloc_destroy_pkg_manager;
-	ma.xstats     = fm_mod_get_stats;
-	ma.xfstats    = fm_mod_free_stats;
+	ma.xmodstats  = fm_mod_get_stats;
+	ma.xfmodstats = fm_mod_free_stats;
 
 	return pkg_init_api(&ma);
 }
@@ -1218,8 +1218,8 @@ int fm_malloc_init_shm_manager(void)
 	ma.xavailable     = fm_shm_available;
 	ma.xsums          = fm_shm_sums;
 	ma.xdestroy       = fm_malloc_destroy_shm_manager;
-	ma.xstats         = fm_mod_get_stats;
-	ma.xfstats        = fm_mod_free_stats;
+	ma.xmodstats      = fm_mod_get_stats;
+	ma.xfmodstats     = fm_mod_free_stats;
 
 	if(shm_init_api(&ma)<0) {
 		LM_ERR("cannot initialize the core shm api\n");
