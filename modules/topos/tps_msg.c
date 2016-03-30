@@ -624,7 +624,7 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 	if(rev==1) {
 		c = 0;
 		sb.len = 1;
-		for(i=hbody->len-2; i>=0; i++) {
+		for(i=hbody->len-2; i>=0; i--) {
 			if(hbody->s[i]==',') {
 				c = 1;
 				if(sb.len>0) {
@@ -707,7 +707,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	if(stsd.a_tag.len!=ftag.len) {
 		direction = TPS_DIR_UPSTREAM;
 	} else {
-		if(memcpy(stsd.a_tag.s, ftag.s, ftag.len)==0) {
+		if(memcmp(stsd.a_tag.s, ftag.s, ftag.len)==0) {
 			direction = TPS_DIR_DOWNSTREAM;
 		} else {
 			direction = TPS_DIR_UPSTREAM;
@@ -718,9 +718,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	tps_storage_lock_release(&lkey);
 
 	if(direction == TPS_DIR_UPSTREAM) {
-		nuri = stsd.b_contact;
-	} else {
 		nuri = stsd.a_contact;
+	} else {
+		nuri = stsd.b_contact;
 	}
 	if(nuri.len>0) {
 		if(rewrite_uri(msg, &nuri)<0) {
@@ -804,7 +804,7 @@ int tps_response_received(sip_msg_t *msg)
 	if(stsd.a_tag.len!=ftag.len) {
 		direction = TPS_DIR_UPSTREAM;
 	} else {
-		if(memcpy(stsd.a_tag.s, ftag.s, ftag.len)==0) {
+		if(memcmp(stsd.a_tag.s, ftag.s, ftag.len)==0) {
 			direction = TPS_DIR_DOWNSTREAM;
 		} else {
 			direction = TPS_DIR_UPSTREAM;

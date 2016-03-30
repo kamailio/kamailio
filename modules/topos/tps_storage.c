@@ -311,10 +311,18 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		LM_ERR("bad Contact header\n");
 		return -1;
 	}
-	if(dir==TPS_DIR_DOWNSTREAM) {
-		td->a_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
+	if(msg->first_line.type==SIP_REQUEST) {
+		if(dir==TPS_DIR_DOWNSTREAM) {
+			td->a_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
+		} else {
+			td->b_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
+		}
 	} else {
-		td->b_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
+		if(dir==TPS_DIR_DOWNSTREAM) {
+			td->b_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
+		} else {
+			td->a_contact = ((contact_body_t*)msg->contact->parsed)->contacts->uri;
+		}
 	}
 
 	return 0;
@@ -862,21 +870,38 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
 		return -1;
 
+	if(md->a_uuid.len<=0 && md->b_uuid.len<=0) {
+		LM_ERR("no dlg uuid provided\n");
+		return -1;
+	}
+
 	nr_keys = 0;
 	nr_cols = 0;
 
-	db_keys[nr_keys]=&td_col_a_uuid;
 	db_ops[nr_keys]=OP_EQ;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
-	if(md->a_uuid.len>0 && md->a_uuid.s[0]=='a') {
-		db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
-	} else {
-		if(md->b_uuid.len<=0) {
-			LM_ERR("no valid dlg uuid\n");
-			return -1;
+	db_vals[nr_keys].val.str_val.len = 0;
+	if(md->a_uuid.len>0) {
+		if(md->a_uuid.s[0]=='a') {
+			db_keys[nr_keys]=&td_col_a_uuid;
+			db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
+		} else if(md->a_uuid.s[0]=='b') {
+			db_keys[nr_keys]=&td_col_b_uuid;
+			db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
 		}
-		db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uuid);
+	} else {
+		if(md->b_uuid.s[0]=='a') {
+			db_keys[nr_keys]=&td_col_a_uuid;
+			db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uuid);
+		} else if(md->b_uuid.s[0]=='b') {
+			db_keys[nr_keys]=&td_col_b_uuid;
+			db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uuid);
+		}
+	}
+	if(db_vals[nr_keys].val.str_val.len<=0) {
+		LM_ERR("invalid dlg uuid provided\n");
+		return -1;
 	}
 	nr_keys++;
 
