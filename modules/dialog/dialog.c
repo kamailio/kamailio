@@ -1698,6 +1698,9 @@ static const char *rpc_print_dlg_ctx_doc[2] = {
 static const char *rpc_end_dlg_entry_id_doc[2] = {
 	"End a given dialog based on [h_entry] [h_id]", 0
 };
+static const char *rpc_dlg_terminate_dlg_doc[2] = {
+        "End a given dialog based on callid", 0
+};
 static const char *rpc_profile_get_size_doc[2] = {
 	"Returns the number of dialogs belonging to a profile", 0
 };
@@ -1722,6 +1725,48 @@ static void rpc_print_dlg(rpc_t *rpc, void *c) {
 static void rpc_print_dlg_ctx(rpc_t *rpc, void *c) {
 	internal_rpc_print_single_dlg(rpc, c, 1);
 }
+static void rpc_dlg_terminate_dlg(rpc_t *rpc,void *c){
+        str callid = {NULL,0};
+        str ftag = {NULL,0};
+        str ttag = {NULL,0};
+
+        dlg_cell_t * dlg = NULL;
+        unsigned int dir;
+        int ret=0;
+        dir = 0;
+
+
+        if(rpc->scan(c, ".S.S.S", &callid,&ftag,&ttag)<3)
+        {
+                LM_ERR("Unable to read the parameters dlg_terminate_dlg \n" );
+                rpc->fault(c, 400, "Need a Callid ,from tag ,to tag");
+                return;
+        }
+
+        dlg=get_dlg(&callid,&ftag,&ttag,&dir);
+
+        if(dlg==NULL){
+                LM_ERR("Couldnt find callid in dialog '%.*s' \n",callid.len, callid.s);
+                rpc->fault(c, 500, "Couldnt find callid in dialog");
+                return;
+        }
+
+        LM_DBG("Dialog is found with callid  for terminate rpc '%.*s' \n",callid.len, callid.s);
+
+        ret=dlg_bye_all(dlg,NULL);
+
+        LM_DBG("Dialog bye return code %d \n",ret);
+
+        if(ret>=0){
+                LM_WARN("Dialog is terminated callid: '%.*s' \n",callid.len, callid.s);
+                rpc->add(c, "d", 200);
+                rpc->add(c, "s", "OK");
+                rpc->send(c);
+                dlg_release(dlg);
+        }
+}
+
+
 static void rpc_end_dlg_entry_id(rpc_t *rpc, void *c) {
 	unsigned int h_entry, h_id;
 	dlg_cell_t * dlg = NULL;
@@ -1812,5 +1857,6 @@ static rpc_export_t rpc_methods[] = {
 	{"dlg.profile_get_size", rpc_profile_get_size, rpc_profile_get_size_doc, 0},
 	{"dlg.profile_list", rpc_profile_print_dlgs, rpc_profile_print_dlgs_doc, RET_ARRAY},
 	{"dlg.bridge_dlg", rpc_dlg_bridge, rpc_dlg_bridge_doc, 0},
+	{"dlg.dlg_terminate_dlg", rpc_dlg_terminate_dlg, rpc_dlg_terminate_dlg_doc, 0},
 	{0, 0, 0, 0}
 };
