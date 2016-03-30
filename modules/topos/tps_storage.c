@@ -1009,6 +1009,21 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_rr);
 	nr_ucols++;
 
+	if(msg->first_line.type==SIP_REPLY) {
+		if(sd->b_tag.len<=0
+				&& msg->first_line.u.reply.statuscode>=200
+				&& msg->first_line.u.reply.statuscode<300) {
+			db_ucols[nr_ucols] = &td_col_b_tag;
+			db_uvals[nr_ucols].type = DB1_STR;
+			db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_tag);
+			nr_ucols++;
+
+			db_ucols[nr_ucols] = &td_col_iflags;
+			db_uvals[nr_ucols].type = DB1_INT;
+			db_uvals[nr_ucols].val.int_val = 1;
+			nr_ucols++;
+		}
+	}
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
 		return -1;
