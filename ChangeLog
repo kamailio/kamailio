@@ -2,6 +2,54 @@
 
 ===================== Changes Since Version 4.3.0 ===========================
 
+commit 665000690364dd2c0b59184885064d93343901bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 15:27:20 2016 +0200
+
+    auth_xkeys: init var to get rid of compile warnings
+    
+    (cherry picked from commit f8a924874a17e15511ccf1f5ca284c5e2247d805)
+
+commit c1c1b39b25eb70bfc512ac9d9fee28355cce3cfb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 15:25:29 2016 +0200
+
+    pkg/deb: version set to 4.4.0 in spec files
+
+commit a1f27b008994f309731818649274d449e1a28f71
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 15:03:47 2016 +0200
+
+    cnxcc: incude stdlib.h to get rid of compile warnings for malloc/free
+    
+    (cherry picked from commit 8a8ed04d2bbd0547a08eeec328268cd171cc9419)
+
+commit b944dad974cd55a05c2f2811af5606b3c6cae2b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 14:59:56 2016 +0200
+
+    Makefile.defs: version set to 4.4.0
+
+commit 6bd9386e001f5843f5a46c387587e71a7d89c942
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Wed Mar 30 15:03:05 2016 +0200
+
+    http_client Remove the last traces of $curlredirect
+    
+    Will continue working with this in master
+
+commit 9589a0168c632e8d934ea45889352864e82d19d3
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Wed Mar 30 15:01:45 2016 +0200
+
+    http_client.c Remove code that doesn't even try to work
+
+commit 5eabc7e56bd32694438801cc7730109e8d4c2359
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Mar 30 14:56:12 2016 +0200
+
+    ChangeLog: refreshed the relevant changelog content for v4.4.0
+
 commit 82a7f3c0f47d764ec734676c4da1a6a81ef81141
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Wed Mar 30 14:50:06 2016 +0200
