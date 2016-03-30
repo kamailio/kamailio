@@ -19,14 +19,14 @@ I. About Kamailio
 =================
 
 Kamailio is an industrial-strength, free server for realtime communication,
-based on the Session Initiation Protocol (SIP RFC3261). 
+based on the Session Initiation Protocol (SIP RFC3261).
 
 It is engineered to power Realtime Communications such as IP telephony and
 presence infrastructures up to large scale. With embedded support for
 WebSockets/WebRTC, HTTP, XSRP and XMLrpc as well as Json-rpc it's a modern
 server, up to date with current standards on IPv4/IPv6 and TLS security.
 
-Kamailio keeps track of users, sets up multimedia sessions, relays instant 
+Kamailio keeps track of users, sets up multimedia sessions, relays instant
 messages and creates space for new plug-in applications. Its proven
 interoperability guarantees seamless integration with components from other
 vendors, eliminating the risk of a single-vendor trap. Kamailio has
@@ -58,7 +58,7 @@ II. Feature List
 Please visit http://www.kamailio.org/ for the most up-to-date feature list.
 Note that as features easily are added as modules, changes can occur quickly.
 
-Most of Kamailio's features are implemented as plug-in modules. See 
+Most of Kamailio's features are implemented as plug-in modules. See
 our web site for a current list.
 
 III. Getting started
@@ -73,7 +73,7 @@ The INSTALL document provides more details and guidelines that will help with
 the installation.
 
 Kamailio is composed of a core and additional modules. For each module
-there is a README with documentation on how to configure and use the 
+there is a README with documentation on how to configure and use the
 module. These are available in each modules source code directory as well
 as on the kamailio.org web site.
 
@@ -86,7 +86,7 @@ IV. About kamailio.org
 The Kamailio project has roots in a line of projects starting with SIP Express
 Router, then OpenSER and now Kamailio. A merge project was started during the
 fall of 2008 by developers from the OpenSER project, recently renamed to
-Kamailio.org and SIP Express Router (SER) from iptel.org. 
+Kamailio.org and SIP Express Router (SER) from iptel.org.
 
 Kamailio is the result of a merge of the code base and years of experience from
 both developer teams. During the development of the release 4.0, autumn-winter
@@ -98,15 +98,16 @@ See http://www.kamailio.org/ for the story of SER, OpenSER and Kamailio.
 V. Obtaining Help
 =================
 
-We offer best-effort free support for Kamailio. "best-effort" means 
-that we try to solve your problems via email as soon as we can, 
-subject to available manpower. 
+We offer best-effort free support for Kamailio. "best-effort" means
+that we try to solve your problems via email as soon as we can,
+subject to available manpower.
 
-To receive feedback to your inquiries, we recommend you to subscribe 
-to the sr-users mailing list and post your queries there. This mailing 
-list is set up for mutual help by the community of Kamailio users and developers. 
-To participate in the mailing list, subscribe at the following web address: 
-         http://lists.sip-router.org/mailman/listinfo/sr-users
+To receive feedback to your inquiries, we recommend you to subscribe
+to the sr-users mailing list and post your queries there. This mailing
+list is set up for mutual help by the community of Kamailio users and developers.
+To participate in the mailing list, subscribe at the following web address:
+
+        http://lists.sip-router.org/mailman/listinfo/sr-users
 
 The IRC channel #kamailio on freenode.net is a place where to meet and discuss
 with other members of Kamailio community.
@@ -130,8 +131,9 @@ project on Github:
 VII. More Information
 =====================
 
-Most up-to-date information is always available at our website,
-                 http://www.kamailio.org/
+Most up-to-date information is always available at our website:
+
+        http://www.kamailio.org/
 
 Particularly, it includes:
 - administrator's guide
