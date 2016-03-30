@@ -210,9 +210,6 @@ Chapter 1. Admin Guide
    If set to 1, enabled, http_client will follow HTTP 302 Redirects. If
    set to 0, http_client will not follow redirects. Default is 1, enabled.
 
-   The latest redirect URL will be stored in the $curlredirect
-   pseudovariable.
-
    Example 1.1. Set httpredirect parameter
 ...
 modparam("http_client", "httpredirect", 0)
