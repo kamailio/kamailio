@@ -48,3 +48,6 @@ The http_client module - todo
 
 - Option to try connections at module load with CURLOPT_CONNECT_ONLY
   just to make sure URLs resolve correctly in DNS and ports are open
+
+- Make it possible to define modparams in any order. For now, httpcon definitions only use default
+  values from modparam's defined on lines above in the config file. (issue #541)
