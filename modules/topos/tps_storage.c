@@ -539,17 +539,18 @@ int tps_db_clean_dialogs(void)
 {
 	db_key_t db_keys[2];
 	db_val_t db_vals[2];
-	db_op_t  db_ops[2] = { OP_LEQ };
+	db_op_t  db_ops[2];
 	int nr_keys;
 
 	nr_keys = 0;
 
 	LM_DBG("cleaning expired dialog records\n");
 
-	db_keys[0] = &td_col_rectime;
-	db_vals[0].type = DB1_DATETIME;
-	db_vals[0].nul = 0;
-	db_vals[0].val.time_val = time(NULL) - _tps_dialog_expire;
+	db_keys[nr_keys] = &td_col_rectime;
+	db_ops[nr_keys] = OP_LEQ;
+	db_vals[nr_keys].type = DB1_DATETIME;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.time_val = time(NULL) - _tps_dialog_expire;
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
@@ -560,6 +561,21 @@ int tps_db_clean_dialogs(void)
 	if (_tpsdbf.delete(_tps_db_handle, db_keys, db_ops, db_vals, nr_keys) < 0) {
 		LM_DBG("failed to clean expired dialog records\n");
 	}
+
+	/* dialog not confirmed - delete dlg after branch expires */
+	db_vals[0].val.time_val = time(NULL) - _tps_branch_expire;
+
+	db_keys[nr_keys] = &td_col_iflags;
+	db_ops[nr_keys] = OP_EQ;
+	db_vals[nr_keys].type = DB1_INT;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.int_val = 0;
+	nr_keys++;
+
+	if (_tpsdbf.delete(_tps_db_handle, db_keys, db_ops, db_vals, nr_keys) < 0) {
+		LM_DBG("failed to clean expired dialog records\n");
+	}
+
 	return 0;
 }
 
@@ -670,17 +686,18 @@ int tps_db_clean_branches(void)
 {
 	db_key_t db_keys[2];
 	db_val_t db_vals[2];
-	db_op_t  db_ops[2] = { OP_LEQ };
+	db_op_t  db_ops[2];
 	int nr_keys;
 
 	nr_keys = 0;
 
 	LM_DBG("cleaning expired branch records\n");
 
-	db_keys[0] = &tt_col_rectime;
-	db_vals[0].type = DB1_DATETIME;
-	db_vals[0].nul = 0;
-	db_vals[0].val.time_val = time(NULL) - _tps_branch_expire;
+	db_keys[nr_keys] = &tt_col_rectime;
+	db_ops[nr_keys] = OP_LEQ;
+	db_vals[nr_keys].type = DB1_DATETIME;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.time_val = time(NULL) - _tps_branch_expire;
 	nr_keys++;
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
