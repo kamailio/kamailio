@@ -1,4 +1,6 @@
-# Kamailio - The Open Source SIP Server [![Build Status](https://travis-ci.org/kamailio/kamailio.svg?branch=master)](https://travis-ci.org/kamailio/kamailio)
+# Kamailio - The Open Source SIP Server
+
+[![Build Status](https://travis-ci.org/kamailio/kamailio.svg?branch=master)](https://travis-ci.org/kamailio/kamailio)
 
 Project Website:
 
@@ -36,7 +38,7 @@ Main License: GPLv2.
 
 Each source code file refers to the license and copyright details in the top of the file. Most of the code is licensed under GPLv2, some parts of the code are licensed under BSD.
 
-### License of New Code Contributions
+### License Of New Code Contributions
 
 New contributions to the core and several main modules (auth, corex, sl, tls, tm) have to be done under the BSD license. New contributions under the GPL must grant the GPL-OpenSSL linking exception. Contributions to existing components released under BSD must be done under BSD as well.
 
@@ -69,13 +71,13 @@ Repositories for Linux packages:
   * deb: https://www.kamailio.org/wiki/packages/debs
   * rpm: https://www.kamailio.org/wiki/packages/rpms
 
-## Issues and bug reports
+## Issues And Bug Reports
 
 To report a bug or make a request for new features, use the Issues Page in the Kamailio Github project:
 
   * https://github.com/kamailio/kamailio/issues
 
-## Open Support and Community Discussions
+## Open Support And Community Discussions
 
 ### Mailing Lists
 
@@ -102,13 +104,13 @@ An open IRC discussion channel is managed by the community:
   * irc server: irc.freenode.net
   * irc channel: #kamailio
 
-## Useful Resources:
+## Useful Resources
 
 News:
 
   * http://www.kamailio.org/w/category/news/
 
-## Travis-ci/Testing build environment
+## Travis-CI - Testing Build Environment
 
  * [travis-ci](https://travis-ci.org/kamailio/kamailio/builds/)
  * [docker build](/test/travis/README.md)
