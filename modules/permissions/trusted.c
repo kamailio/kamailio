@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * allow_trusted related functions
  *
  * Copyright (C) 2003-2012 Juha Heinanen
@@ -19,6 +21,9 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ * History:
+ * --------
+ *  2004-06-07  updated to the new DB api, moved reload_trusted_table (andrei)
  */
 
 #include <sys/types.h>
