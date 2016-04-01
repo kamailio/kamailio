@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * PERMISSIONS module
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
@@ -22,9 +20,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-09-03  replaced /usr/local/et/ser/ with CFG_DIR (andrei)
  */
  
 #ifndef PERMISSIONS_H

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Header file for trusted.c implementing allow_trusted function
  *
  * Copyright (C) 2003-2008 Juha Heinanen
