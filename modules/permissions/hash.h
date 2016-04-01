@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Header file for trusted and address hash table functions
  *
  * Copyright (C) 2003-2006 Juha Heinanen

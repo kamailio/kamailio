@@ -30,7 +30,7 @@
 #include <string.h> 
 #include "../../dprint.h"
 #include "rerrno.h"
-#include "reg_mod.h"
+#include "registrar.h"
 #include "common.h"
 #include "config.h"
 

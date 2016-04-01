@@ -35,7 +35,7 @@
 #include "../../action.h"
 #include "../../lib/kcore/faked_msg.h"
 #include "../usrloc/usrloc.h"
-#include "reg_mod.h"
+#include "registrar.h"
 #include "common.h"
 #include "regpv.h"
 

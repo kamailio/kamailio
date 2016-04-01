@@ -33,7 +33,7 @@
 #include "my_cmd.h"
 
 #include "my_con.h"
-#include "mysql_mod.h"
+#include "db_mysql.h"
 #include "my_fld.h"
 
 #include "../../mem/mem.h"

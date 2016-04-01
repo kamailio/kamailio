@@ -1,6 +1,4 @@
 /* 
- * $Id$ 
- *
  * Flatstore module interface
  *
  * Copyright (C) 2004 FhG Fokus
@@ -21,10 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-03-11  updated to the new module exports interface (andrei)
- *  2003-03-16  flags export parameter added (janakj)
  */
 
 #include <string.h>
@@ -35,7 +29,7 @@
 #include "km_flat_con.h"
 #include "km_flatstore_mod.h"
 #include "km_flatstore.h"
-#include "flatstore_mod.h"
+#include "db_flatstore.h"
 
 
 static int parse_flat_url(const str* url, str* path)

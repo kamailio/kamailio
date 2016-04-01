@@ -21,7 +21,7 @@
 
 #include "my_con.h"
 
-#include "mysql_mod.h"
+#include "db_mysql.h"
 #include "my_uri.h"
 
 #include "../../mem/mem.h"

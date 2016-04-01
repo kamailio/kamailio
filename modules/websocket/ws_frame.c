@@ -44,7 +44,7 @@
 #include "../../mem/mem.h"
 #include "ws_conn.h"
 #include "ws_frame.h"
-#include "ws_mod.h"
+#include "websocket.h"
 #include "ws_handshake.h"
 #include "config.h"
 

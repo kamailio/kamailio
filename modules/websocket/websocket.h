@@ -1,8 +1,5 @@
 /*
- * $Id$ 
- *
- * Copyright (C) 2001-2003 FhG Fokus
- * Copyright (C) 2008 1&1 Internet AG
+ * Copyright (C) 2012-2013 Crocodile RCS Ltd
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -19,25 +16,30 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
+ *
  */
 
-/*! \file
- *  \brief DB_POSTGRES :: Core
- *  \ingroup db_postgres
- *  Module: \ref db_postgres
- */
+#ifndef _WEBSOCKET_H
+#define _WEBSOCKET_H
 
-#ifndef _KM_DB_POSTGRES_H
-#define _KM_DB_POSTGRES_H
+#include "../../locking.h"
+#include "../../kstats_types.h"
+#include "../sl/sl.h"
 
-#include "../../lib/srdb1/db.h"
+enum
+{
+	SUB_PROTOCOL_SIP  = (1 << 0),
+	SUB_PROTOCOL_MSRP = (1 << 1)
+};
 
-int db_postgres_bind_api(db_func_t *dbb);
+extern sl_api_t ws_slb;
+extern gen_lock_t *ws_stats_lock;
 
-int km_postgres_mod_init(void);
+extern int ws_ping_interval;	/* time (in seconds) between sending Pings */
 
-int pg_init_lock_set(int sz);
-
-void pg_destroy_lock_set(void);
-
-#endif /* _KM_DB_POSTGRES_H */
+#endif /* _WEBSOCKET_H */

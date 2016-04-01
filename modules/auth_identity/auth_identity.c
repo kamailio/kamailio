@@ -1,16 +1,14 @@
 /*
- * $Id$
- *
  * Copyright (c) 2007 iptelorg GmbH
  *
- * This file is part of sip-router, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
- * sip-router is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * sip-router is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -22,12 +20,12 @@
 
 /*!
  * \file
- * \brief SIP-router auth-identity :: Module interface
+ * \brief Kamailio auth-identity :: Module interface
  * \ingroup auth-identity
  * Module: \ref auth-identity
  */
 
-/*! \defgroup auth-identity SIP-router SIP identity support
+/*! \defgroup auth-identity Kamailio SIP identity support
  *
  * Auth Identity module provides functionalities for securely identifying
  * originators of SIP messages. This module has two basic service:
