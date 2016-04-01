@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * POSTGRES module, portions of this code were templated using
  * the mysql module, thus it's similarity.
  *
@@ -22,10 +20,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
  *
  */
 

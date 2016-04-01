@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2006 Norman Brandinger
  * Copyright (C) 2008 1&1 Internet AG
@@ -21,41 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- * 2006-07-28 within pg_get_result(): added check to immediatly return of no 
- *            result set was returned added check to only execute 
- *            convert_result() if PGRES_TUPLES_OK added safety check to avoid 
- *            double pg_free_result() (norm)
- * 2006-08-07 Rewrote pg_get_result().
- *            Additional debugging lines have been placed through out the code.
- *            Added Asynchronous Command Processing (PQsendQuery/PQgetResult) 
- *            instead of PQexec. this was done in preparation of adding FETCH 
- *            support.  Note that PQexec returns a result pointer while 
- *            PQsendQuery does not.  The result set pointer is obtained from 
- *            a call (or multiple calls) to PQgetResult.
- *            Removed transaction processing calls (BEGIN/COMMIT/ROLLBACK) as 
- *            they added uneeded overhead.  Klaus' testing showed in excess of 
- *            1ms gain by removing each command.  In addition, Kamailio only 
- *            issues single queries and is not, at this time transaction aware.
- *            The transaction processing routines have been left in place 
- *            should this support be needed in the future.
- *            Updated logic in pg_query / pg_raw_query to accept a (0) result 
- *            set (_r) parameter.  In this case, control is returned
- *            immediately after submitting the query and no call to 
- *            pg_get_results() is performed. This is a requirement for 
- *            FETCH support. (norm)
- * 2006-10-27 Added fetch support (norm)
- *            Removed dependency on aug_* memory routines (norm)
- *            Added connection pooling support (norm)
- *            Standardized API routines to pg_* names (norm)
- * 2006-11-01 Updated pg_insert(), pg_delete(), pg_update() and 
- *            pg_get_result() to handle failed queries.  Detailed warnings 
- *            along with the text of the failed query is now displayed in the 
- *            log. Callers of these routines can now assume that a non-zero 
- *            rc indicates the query failed and that remedial action may need 
- *            to be taken. (norm)
  */
 
 /*! \file
