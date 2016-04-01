@@ -22,7 +22,7 @@
 
 /*!
  * \file
- * \brief Kamailio auth-identity :: Dynamic strings
+ * \brief SIP-router auth-identity :: Dynamic strings
  * \ingroup auth-identity
  * Module: \ref auth-identity
  */

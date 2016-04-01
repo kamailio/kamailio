@@ -22,7 +22,7 @@
 
 /*!
  * \file
- * \brief Kamailio auth-identity :: Crypt
+ * \brief SIP-router auth-identity :: Crypt
  * \ingroup auth-identity
  * Module: \ref auth-identity
  */
