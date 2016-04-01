@@ -35,7 +35,7 @@
 #include "km_flat_con.h"
 #include "km_flatstore_mod.h"
 #include "km_flatstore.h"
-#include "flatstore_mod.h"
+#include "db_flatstore.h"
 
 
 static int parse_flat_url(const str* url, str* path)

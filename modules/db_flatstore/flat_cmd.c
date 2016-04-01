@@ -32,7 +32,7 @@
 
 #include "flat_cmd.h"
 #include "flat_con.h"
-#include "flatstore_mod.h"
+#include "db_flatstore.h"
 
 #include "../../mem/mem.h"
 
