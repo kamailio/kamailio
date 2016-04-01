@@ -20,12 +20,12 @@
 
 /*!
  * \file
- * \brief SIP-router auth-identity :: Module interface
+ * \brief Kamailio auth-identity :: Module interface
  * \ingroup auth-identity
  * Module: \ref auth-identity
  */
 
-/*! \defgroup auth-identity SIP-router SIP identity support
+/*! \defgroup auth-identity Kamailio SIP identity support
  *
  * Auth Identity module provides functionalities for securely identifying
  * originators of SIP messages. This module has two basic service:

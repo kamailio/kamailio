@@ -20,7 +20,7 @@
 
 /*!
  * \file
- * \brief SIP-router auth-identity :: Crypt
+ * \brief Kamailio auth-identity :: Crypt
  * \ingroup auth-identity
  * Module: \ref auth-identity
  */

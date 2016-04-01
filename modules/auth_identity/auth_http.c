@@ -21,7 +21,7 @@
 
 /*!
  * \file
- * \brief SIP-router auth-identity :: HTTP
+ * \brief Kamailio auth-identity :: HTTP
  * \ingroup auth-identity
  * Module: \ref auth-identity
  */
