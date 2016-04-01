@@ -1,6 +1,4 @@
 /* 
- * $Id$ 
- *
  * Digest Authentication - Radius support
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,13 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2003-03-09: Based on auth_mod.c from radius_auth (janakj)
- *  2003-03-11: New module interface (janakj)
- *  2003-03-16: flags export parameter added (janakj)
- *  2003-03-19: all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
- *  2006-03-01: pseudo variables support for domain name (bogdan)
  */
 
 
