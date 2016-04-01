@@ -27,7 +27,7 @@
 /** \file 
  * Flatstore module interface.
  */
-#include "db_flatstore.h"
+#include "flatstore_mod.h"
 #include "km_flatstore_mod.h"
 #include "flat_con.h"
 #include "flat_cmd.h"

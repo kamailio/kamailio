@@ -29,7 +29,7 @@
  */
 
 #include "flat_con.h"
-#include "db_flatstore.h"
+#include "flatstore_mod.h"
 #include "flat_uri.h"
 
 #include "../../mem/mem.h"
