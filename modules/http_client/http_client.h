@@ -63,12 +63,20 @@ typedef struct {
 	size_t		max_size;
 } curl_res_stream_t;
 
+enum connection_status {
+	AVAILABLE = 0,			/*!< Available */
+	NOTREACHABLE,			/*!< Failure */
+	DISABLED,			/*!< Disabled by action (RPC etc) */
+	/* DELETED */				/*!< Should be deleted by pkg process, not listed */
+};
 
-/*! Predefined connection objects */
+
+/*! Predefined connection objects  - stored in shared memory */
 typedef struct _curl_con
 {
 	str name;			/*!< Connection name */
 	unsigned int conid;		/*!< Connection ID */
+	enum connection_status connstate;	/*!< Connection status */
 	str url;			/*!< The URL without schema (host + base URL)*/
 	str schema;			/*!< The URL schema */
 	char *username;			/*!< The username to use for auth */
@@ -88,12 +96,25 @@ typedef struct _curl_con
 	int timeout;			/*!< Timeout for this connection */
 	unsigned int maxdatasize;	/*!< Maximum data download on GET or POST */
 	curl_res_stream_t *stream;	/*!< Curl stream */
-	struct _curl_con *next;		/*!< next connection */
-	char redirecturl[512];		/*!< Last redirect URL - to use for $curlredirect(curlcon) pv */
 	char *http_proxy;			/*!< HTTP proxy for this connection */
 	unsigned int http_proxy_port;	/*!< HTTP proxy port for this connection */
+	struct _curl_con *next;		/*!< next connection */
 } curl_con_t;
 
+
+/*! Per-process copy of connection object -stored in pkg memory */
+typedef struct _curl_con_pkg
+{
+	unsigned int conid;		/*!< Connection ID (referring to core connection id */
+	char redirecturl[512];		/*!< Last redirect URL - to use for $curlredirect(curlcon) pv */
+	unsigned int last_result;	/*!< Last result of accessing this connection */
+	struct _curl_con_pkg *next;		/*!< next connection */
+	char result_content_type[512];		/*!< Response content-type */
+
+	/* Potential candidates:	Last TLS fingerprint used 
+
+	*/
+} curl_con_pkg_t;
 
 /*! Returns true if CURL supports TLS */
 extern int curl_support_tls();

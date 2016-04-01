@@ -40,7 +40,8 @@
 #define KEYVALUE_TYPE_PARAMS	1
 
 
-curl_con_t *_curl_con_root = NULL;
+curl_con_t *_curl_con_root = NULL;		/*!< Shared memory list of connections */
+curl_con_pkg_t *_curl_con_pkg_root = NULL;	/*!< Package memory list of connection states, last result */
 
 /* Forward declaration */
 curl_con_t *curl_init_con(str *name);
@@ -140,6 +141,23 @@ curl_con_t* curl_get_connection(str *name)
 		cc = cc->next;
 	}
 	LM_DBG("curl_get_connection no success in looking for httpcon: [%.*s]\n", name->len, name->s);
+	return NULL;
+}
+
+/*! Find package memory structure for a connection */
+curl_con_pkg_t* curl_get_pkg_connection(curl_con_t *con)
+{
+	curl_con_pkg_t *ccp;
+
+	ccp = _curl_con_pkg_root;
+	while(ccp)
+	{
+		if (ccp->conid == con->conid) {
+			return ccp;
+		}
+		ccp = ccp->next;
+	}
+	LM_DBG("curl_get_pkg_connection no success in looking for pkg memory for httpcon: [%.*s]\n", con->name.len, con->name.s);
 	return NULL;
 }
 
@@ -683,6 +701,7 @@ error:
 curl_con_t *curl_init_con(str *name)
 {
 	curl_con_t *cc;
+	curl_con_pkg_t *ccp;
 	unsigned int conid;
 
 	conid = core_case_hash(name, 0, 0);
@@ -700,17 +719,34 @@ curl_con_t *curl_init_con(str *name)
 		cc = cc->next;
 	}
 
-	cc = (curl_con_t*) pkg_malloc(sizeof(curl_con_t));
+	cc = (curl_con_t*) shm_malloc(sizeof(curl_con_t));	/* Connection structures are shared by all children processes */
 	if(cc == NULL)
 	{
-		LM_ERR("no pkg memory\n");
+		LM_ERR("no shm memory\n");
 		return NULL;
 	}
+
+	/* Each structure is allocated in package memory so each process can write into it without
+	   any locks or such stuff */
+	ccp = (curl_con_pkg_t*) pkg_malloc(sizeof(curl_con_pkg_t));
+	if(ccp == NULL)
+	{
+		shm_free(ccp);
+		LM_ERR("no shm memory\n");
+		return NULL;
+	}
+
 	memset(cc, 0, sizeof(curl_con_t));
 	cc->next = _curl_con_root;
 	cc->conid = conid;
 	_curl_con_root = cc;
 	cc->name = *name;
+
+	/* Put the new ccp first in line */
+	memset(ccp, 0, sizeof(curl_con_pkg_t));
+	ccp->next = _curl_con_pkg_root;
+	ccp->conid = conid;
+	_curl_con_pkg_root = ccp;
 
 	LM_INFO("CURL: Added connection [%.*s]\n", name->len, name->s);
 	return cc;

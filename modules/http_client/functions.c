@@ -1,5 +1,5 @@
 /*
- * script functions of http_client module
+ * Script functions of http_client module
  *
  * Copyright (C) 2015 Olle E. Johansson, Edvina AB
  *
@@ -65,6 +65,7 @@ typedef struct {
     unsigned int http_follow_redirect;
     unsigned int oneline;
     unsigned int maxdatasize;
+    curl_con_pkg_t *pconn;
 } curl_query_t;
 
 /* Forward declaration */
@@ -119,6 +120,11 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     struct curl_slist *headerlist = NULL;
 
     memset(&stream, 0, sizeof(curl_res_stream_t));
+    if(params->pconn) {
+    	params->pconn->result_content_type[0] = '\0';
+    	params->pconn->redirecturl[0] = '\0';
+    }
+
     stream.max_size = (size_t) params->maxdatasize;
 
     curl = curl_easy_init();
@@ -257,6 +263,9 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		LM_ERR("failed to perform curl (%d)\n", res);
 	}
 
+	if (params->pconn) {
+		params->pconn->last_result = res;
+	}
 	curl_easy_cleanup(curl);
 	if(stream.buf) {
 		pkg_free(stream.buf);
@@ -269,13 +278,27 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
     if(res == CURLE_OK) {
     	char *ct;
+	char *url;
 
     	/* ask for the content-type of the response */
     	res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+	res |= curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
 
     	if(ct) {
         	LM_DBG("We received Content-Type: %s\n", ct);
+    		if (params->pconn) {
+			strncpy(params->pconn->result_content_type, ct, sizeof(params->pconn->result_content_type));
+		}
         }
+    	if(url) {
+        	LM_DBG("We visited URL: %s\n", url);
+    		if (params->pconn) {
+			strncpy(params->pconn->redirecturl, url , sizeof(params->pconn->redirecturl));
+		}
+        }
+    }
+    if (params->pconn) {
+    	params->pconn->last_result = stat;
     }
 
     if ((stat >= 200) && (stat < 500)) {
@@ -335,6 +358,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url, str* result, const char *contenttype, const str* post)
 {
 	curl_con_t *conn = NULL;
+	curl_con_pkg_t *pconn = NULL;
 	char *urlbuf = NULL;
 	char *postdata = NULL;
 	curl_query_t query_params;
@@ -353,6 +377,12 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 		LM_ERR("No cURL connection found: %.*s\n", connection->len, connection->s);
 		return -1;
 	}
+	pconn = curl_get_pkg_connection(conn);
+	if (pconn == NULL) {
+		LM_ERR("No cURL connection data found: %.*s\n", connection->len, connection->s);
+		return -1;
+	}
+
 	LM_DBG("******** CURL Connection found %.*s\n", connection->len, connection->s);
 	maxdatasize = conn->maxdatasize;
 
@@ -414,6 +444,7 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	query_params.oneline = 0;
 	query_params.maxdatasize = maxdatasize;
 	query_params.http_proxy_port = conn->http_proxy_port;
+	query_params.pconn = pconn;
 	if (conn->http_proxy) {
 		query_params.http_proxy = conn->http_proxy;
 		LM_DBG("****** ##### CURL proxy [%s] \n", query_params.http_proxy);
