@@ -33,7 +33,7 @@
 #include "../../pvar.h"
 #include "../../lib/kcore/radius.h"
 #include "../../mem/mem.h"
-#include "authrad_mod.h"
+#include "auth_radius.h"
 #include "authorize.h"
 #include "extra.h"
 
