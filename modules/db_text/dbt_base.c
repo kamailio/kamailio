@@ -27,7 +27,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
  
-#include "db_text.h"
+#include "dbtext.h"
 #include "dbt_res.h"
 #include "dbt_api.h"
 
