@@ -23,7 +23,7 @@
  *  @{
  */
  
-#include "db_mysql.h"
+#include "mysql_mod.h"
 #include "km_db_mysql.h"
 
 #include "my_uri.h"
