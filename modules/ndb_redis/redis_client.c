@@ -42,6 +42,9 @@ static redisc_server_t *_redisc_srv_list=NULL;
 static redisc_reply_t *_redisc_rpl_list=NULL;
 
 extern int init_without_redis;
+extern int redis_connect_timeout_param;
+extern int redis_cmd_timeout_param;
+
 
 /**
  *
@@ -52,10 +55,14 @@ int redisc_init(void)
 	unsigned int port, db;
 	redisc_server_t *rsrv=NULL;
 	param_t *pit = NULL;
-	struct timeval tv;
+        struct timeval tv_conn;
+        struct timeval tv_cmd;
 
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
+        tv_conn.tv_sec = (int) redis_connect_timeout_param / 1000;
+        tv_conn.tv_usec = (int) (redis_connect_timeout_param % 1000) * 1000;
+
+        tv_cmd.tv_sec = (int) redis_cmd_timeout_param / 1000;
+        tv_cmd.tv_usec = (int) (redis_cmd_timeout_param % 1000) * 1000;
 
 	if(_redisc_srv_list==NULL)
 	{
@@ -92,9 +99,9 @@ int redisc_init(void)
 
 		if(unix_sock_path != NULL) {
 			LM_DBG("Connecting to unix socket: %s\n", unix_sock_path);
-			rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv);
+			rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv_conn);
 		} else {
-			rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv);
+			rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv_conn);
 		}
 
 		if(!rsrv->ctxRedis)
@@ -103,6 +110,8 @@ int redisc_init(void)
 			goto err2;
 		if ((pass != NULL) && redisc_check_auth(rsrv, pass))
 			goto err2;
+                if (redisSetTimeout(rsrv->ctxRedis, tv_cmd))
+                        goto err2;
 		if (redisCommandNR(rsrv->ctxRedis, "PING"))
 			goto err2;
 		if (redisCommandNR(rsrv->ctxRedis, "SELECT %i", db))
@@ -266,10 +275,15 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	char *addr, *pass, *unix_sock_path = NULL;
 	unsigned int port, db;
 	param_t *pit = NULL;
-	struct timeval tv;
+        struct timeval tv_conn;
+        struct timeval tv_cmd;
 
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
+        tv_conn.tv_sec = (int) redis_connect_timeout_param / 1000;
+        tv_conn.tv_usec = (int) (redis_connect_timeout_param % 1000) * 1000;
+
+        tv_cmd.tv_sec = (int) redis_cmd_timeout_param / 1000;
+        tv_cmd.tv_usec = (int) (redis_cmd_timeout_param % 1000) * 1000;
+
 	addr = "127.0.0.1";
 	port = 6379;
 	db = 0;
@@ -299,9 +313,9 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	}
 
 	if(unix_sock_path != NULL) {
-		rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv);
+		rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv_conn);
 	} else {
-		rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv);
+		rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv_conn);
 	}
 	if(!rsrv->ctxRedis)
 		goto err;
@@ -309,6 +323,8 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 		goto err2;
 	if ((pass != NULL) && redisc_check_auth(rsrv, pass))
 		goto err2;
+        if (redisSetTimeout(rsrv->ctxRedis, tv_cmd))
+                goto err2;
 	if (redisCommandNR(rsrv->ctxRedis, "PING"))
 		goto err2;
 	if (redisCommandNR(rsrv->ctxRedis, "SELECT %i", db))

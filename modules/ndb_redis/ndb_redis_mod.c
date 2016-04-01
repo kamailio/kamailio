@@ -43,6 +43,8 @@ MODULE_VERSION
 
 int redis_srv_param(modparam_t type, void *val);
 int init_without_redis = 0;
+int redis_connect_timeout_param = 1000;
+int redis_cmd_timeout_param = 1000;
 
 static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 		char* sres);
@@ -87,6 +89,8 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"server",         PARAM_STRING|USE_FUNC_PARAM, (void*)redis_srv_param},
 	{"init_without_redis", INT_PARAM, &init_without_redis},
+        {"connect_timeout", INT_PARAM, &redis_connect_timeout_param},
+        {"cmd_timeout", INT_PARAM, &redis_cmd_timeout_param},
 	{0, 0, 0}
 };
 
