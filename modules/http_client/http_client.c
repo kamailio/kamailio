@@ -107,12 +107,16 @@ static int fixup_curl_connect(void** param, int param_no);
 static int fixup_free_curl_connect(void** param, int param_no);
 static int fixup_curl_connect_post(void** param, int param_no);
 static int fixup_free_curl_connect_post(void** param, int param_no);
+static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url, char* _result, char* _ctype, char* _data);
+
+static int fixup_curl_get_redirect(void** param, int param_no);
+static int fixup_free_curl_get_redirect(void** param, int param_no);
+static int w_curl_get_redirect(struct sip_msg* _m, char* _con, char* _result);
 
 /* Wrappers for http_query to be defined later */
 static int w_http_query(struct sip_msg* _m, char* _url, char* _result);
 static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result);
 static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _result);
-static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url, char* _result, char* _ctype, char* _data);
 
 /* forward function */
 static int curl_con_param(modparam_t type, void* val);
@@ -120,6 +124,9 @@ static int pv_parse_curlerror(pv_spec_p sp, str *in);
 static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_curlredirect(pv_spec_p sp, str *in);
 static int pv_get_curlredirect(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+
+static int pv_get_httpresult(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_httpresult(pv_spec_p sp, str *in);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
@@ -134,6 +141,9 @@ static cmd_export_t cmds[] = {
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {"http_connect", (cmd_function)w_curl_connect_post, 5, fixup_curl_connect_post,
      fixup_free_curl_connect_post,
+     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+    {"http_get_redirect", (cmd_function)w_curl_get_redirect, 2, fixup_curl_get_redirect,
+     fixup_free_curl_get_redirect,
      REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
     {"bind_http_client",  (cmd_function)bind_httpc_api,  0, 0, 0, 0},
 };
@@ -166,11 +176,8 @@ static param_export_t params[] = {
  */
 static pv_export_t mod_pvs[] = {
     {{"curlerror", (sizeof("curlerror")-1)}, /* Curl error codes */
-     PVT_OTHER, pv_get_curlerror, 0,
-	pv_parse_curlerror, 0, 0, 0},
-    {{"curlredirect", (sizeof("redirect")-1)}, /* Curl last redirect url - not implemented yet */
-     PVT_OTHER, pv_get_curlredirect, 0,
-	pv_parse_curlredirect, 0, 0, 0},
+     PVT_OTHER, pv_get_curlerror, 0, pv_parse_curlerror, 0, 0, 0},
+
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -492,7 +499,6 @@ static int fixup_free_curl_connect(void** param, int param_no)
  * Wrapper for Curl_connect (GET)
  */
 static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _result) {
-/* int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* _url, str* _result, const str *contenttype, const str* _post); */
 
 	str con = {NULL,0};
 	str url = {NULL,0};
@@ -720,31 +726,79 @@ static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *
 	return pv_get_strval(msg, param, res, &curlerr);
 }
 
-/*!
- * Parse arguments to  pv $curlredirect
- */
-static int pv_parse_curlredirect(pv_spec_p sp, str *in)
-{
-	if(sp==NULL || in==NULL || in->len<=0) {
-		return -1;
-	}
 
-	// DO SOMETHING HERE
+/*
+ * Fix curl_get_redirect params: connection(string/pvar) url (string that may contain pvars) and
+ * result (writable pvar).
+ */
+static int fixup_curl_get_redirect(void** param, int param_no)
+{
+    if (param_no == 1) {	/* Connection name */
+	/* We want char * strings */
 	return 0;
+    }
+    if (param_no == 2) {	/* PVAR to store result in */
+	if (fixup_pvar_null(param, 1) != 0) {
+	    LM_ERR("failed to fixup result pvar\n");
+	    return -1;
+	}
+	if (((pv_spec_t *)(*param))->setf == NULL) {
+	    LM_ERR("result pvar is not writeble\n");
+	    return -1;
+	}
+	return 0;
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
 }
 
 /*
- * PV - return curl redirect URL for httpcon
- *	$curlredirect("httpcon");
+ * Free curl_get_redirect params.
  */
-static int pv_get_curlredirect(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+static int fixup_free_curl_get_redirect(void** param, int param_no)
 {
-	str redirecturl;
+    if (param_no == 1) {
+	/* Char strings don't need freeing */
+	return 0;
+    }
+    if (param_no == 2) {
+        return fixup_free_spve_null(param, 1);
+    }
 
-	if(param==NULL) {
-		return -1;
-	}
-
-	// DO SOMETHING HERE
-	return pv_get_strval(msg, param, res, &redirecturl);
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
 }
+
+/*
+ * Wrapper for Curl_redirect
+ */
+static int w_curl_get_redirect(struct sip_msg* _m, char* _con, char* _result) {
+
+	str con = {NULL,0};
+	str result = {NULL,0};
+	pv_spec_t *dst;
+	pv_value_t val;
+	int ret = 0;
+
+	if (_con == NULL || _result == NULL) {
+		LM_ERR("Invalid parameter\n");
+	}
+	con.s = _con;
+	con.len = strlen(con.s);
+
+	LM_DBG("**** Curl Connection %s Result var %s\n", _con, _result);
+
+	ret = curl_get_redirect(_m, &con,  &result);
+
+	val.rs = result;
+	val.flags = PV_VAL_STR;
+	dst = (pv_spec_t *)_result;
+	dst->setf(_m, &dst->pvp, (int)EQ_T, &val);
+
+	if (result.s != NULL)
+		pkg_free(result.s);
+
+	return ret;
+}
+

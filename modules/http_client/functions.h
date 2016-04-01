@@ -39,6 +39,9 @@
  */
 int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* _url, str* _result, const char *contenttype, const str* _post);
 
+/*! Get redirect URL from last connection pkg memory storage */
+int curl_get_redirect(struct sip_msg* _m, const str *connection, str* result);
+
 
 
 /* 

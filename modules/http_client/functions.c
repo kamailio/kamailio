@@ -329,7 +329,6 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 			}
 		}
 		/* Create a STR object */
-
 		rval.s = stream.buf;
 		rval.len = datasize;
 		/* Duplicate string to return */
@@ -353,6 +352,40 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     return stat;
 }
 
+/*! Run a query based on a connection definition */
+int curl_get_redirect(struct sip_msg* _m, const str *connection, str* result)
+{
+	curl_con_t *conn = NULL;
+	curl_con_pkg_t *pconn = NULL;
+	str rval;
+	result->s = NULL;
+	result->len = 0;
+
+	/* Find connection if it exists */
+	if (!connection) {
+		LM_ERR("No cURL connection specified\n");
+		return -1;
+	}
+	LM_DBG("******** CURL Connection %.*s\n", connection->len, connection->s);
+	conn = curl_get_connection((str*)connection);
+	if (conn == NULL) {
+		LM_ERR("No cURL connection found: %.*s\n", connection->len, connection->s);
+		return -1;
+	}
+	pconn = curl_get_pkg_connection(conn);
+	if (pconn == NULL) {
+		LM_ERR("No cURL connection data found: %.*s\n", connection->len, connection->s);
+		return -1;
+	}
+		/* Create a STR object */
+	rval.s = pconn->redirecturl;
+	rval.len = strlen(pconn->redirecturl);
+	/* Duplicate string to return */
+	pkg_str_dup(result, &rval);
+	LM_DBG("curl last redirect URL: Length %d %.*s \n", rval.len, rval.len, rval.s);
+
+	return 1;
+}
 
 /*! Run a query based on a connection definition */
 int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url, str* result, const char *contenttype, const str* post)
