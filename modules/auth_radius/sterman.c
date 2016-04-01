@@ -29,7 +29,7 @@
 #include "../../ut.h"
 #include "../../modules/auth/api.h"
 #include "sterman.h"
-#include "auth_radius.h"
+#include "authrad_mod.h"
 #include "extra.h"
 
 #include <stdlib.h>
