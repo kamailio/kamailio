@@ -2304,7 +2304,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		<para>Name: <emphasis>dlg.list</emphasis></para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		serctl dlg_list
+		kamcmd dlg_list
 		</programlisting>
 		</section>
 
@@ -2318,7 +2318,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		<para>Name: <emphasis>dlg.list_ctx</emphasis></para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		serctl dlg.list_ctx
+		kamcmd dlg.list_ctx
 		</programlisting>
 		</section>
 
@@ -2341,10 +2341,9 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		serctl dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+		kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 		</programlisting>
 		</section>
-
 		<section>
 		<title><varname>dlg.dlg_list_ctx</varname></title>
 		<para>
@@ -2357,10 +2356,36 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		serctl dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+		kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 		</programlisting>
 		</section>
-
+		<section>
+		<title><varname>dlg.terminate_dlg</varname></title>
+		<para>
+		Terminates an ongoing dialog by sending BYE in both directions,
+		matching the dialog on call-id, from tag and to tag.
+		</para>
+		<para>Name: <emphasis>dlg.terminate_dlg</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>callid</emphasis> - callid of dialog to be terminated
+			</para></listitem>
+			<listitem><para>
+				<emphasis>from_tag</emphasis> -  from tag of the dialog to terminated
+			</para></listitem>
+			<listitem><para>
+				<emphasis>totag</emphasis> -  to tag of the dialog to terminated
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		The command works only for confirmed dialogs.
+		</para>
+		<para>RPC Command Format:</para>
+		<programlisting  format="linespecific">
+		kamcmd dlg.dlg_terminate_dlg callid12345 fromtag123 totag123
+		</programlisting>
+		</section>
 		<section>
 			<title><varname>dlg.end_dlg</varname></title>
 			<para>
@@ -2388,10 +2413,9 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		serctl dlg.end_dlg 342 56
+		kamcmd dlg.end_dlg 342 56
 		</programlisting>
 		</section>
-
 		<section>
 		<title><varname>dlg.profile_get_size</varname></title>
 		<para>
@@ -2416,7 +2440,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		serctl dlg.dlg.profile_get_size inbound_calls
+		kamcmd dlg.dlg.profile_get_size inbound_calls
 		</programlisting>
 		</section>
 
@@ -2444,7 +2468,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		serctl dlg.profile_list inbound_calls
+		kamcmd dlg.profile_list inbound_calls
 		</programlisting>
 		</section>
 
@@ -2469,7 +2493,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		serctl dlg.list from to op
+		kamcmd dlg.list from to op
 		</programlisting>
 		</section>
 	</section>
