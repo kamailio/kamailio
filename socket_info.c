@@ -1205,16 +1205,18 @@ int add_interfaces(char* if_name, int family, unsigned short port,
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
 	{
+#ifdef AF_PACKET
 		/* skip AF_PACKET addr family since it is of no use later on */
 		if (ifa->ifa_addr->sa_family == AF_PACKET)
 			continue;
+#endif
 		if (if_name && strcmp(if_name, ifa->ifa_name))
 			continue;
 		if (family && family != ifa->ifa_addr->sa_family)
 			continue;
 		sockaddr2ip_addr(&addr, (struct sockaddr*)ifa->ifa_addr);
 		tmp=ip_addr2a(&addr);
-		if (ifa->ifa_flags & IFF_LOOPBACK) 
+		if (ifa->ifa_flags & IFF_LOOPBACK)
 			flags = SI_IS_LO;
 		else
 			flags = SI_NONE;
