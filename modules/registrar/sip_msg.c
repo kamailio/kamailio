@@ -33,7 +33,7 @@
 #include "../../parser/parse_expires.h"  
 #include "../../ut.h"
 #include "../../qvalue.h"
-#include "reg_mod.h"                     /* Module parameters */
+#include "registrar.h"                     /* Module parameters */
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"
 #include "sip_msg.h"

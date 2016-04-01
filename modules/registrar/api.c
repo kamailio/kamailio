@@ -26,7 +26,7 @@
 
 #include "../../dprint.h"
 
-#include "reg_mod.h"
+#include "registrar.h"
 #include "lookup.h"
 #include "save.h"
 #include "api.h"

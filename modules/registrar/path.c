@@ -32,7 +32,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../lib/kcore/strcommon.h"
 #include "path.h"
-#include "reg_mod.h"
+#include "registrar.h"
 
 
 /*! \brief
