@@ -32,7 +32,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "mysql_mod.h"
+#include "db_mysql.h"
 
 /*! \brief
  * Create a new connection structure,
