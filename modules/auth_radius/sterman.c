@@ -1,4 +1,6 @@
 /* 
+ * $Id$
+ *
  * Digest Authentication - Radius support
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -19,6 +21,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ * History:
+ * -------
+ * 2003-03-09: Based on digest.c from radius_auth module (janakj)
+ * 2005-07-08: Radius AVP may contain any kind of Kamailio AVP - ID/name or
+ *             int/str value (bogdan)
+ * 2005-07-08: old RPID RADIUS AVP compatibility droped (bogdan)
  */
 
 
