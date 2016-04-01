@@ -32,7 +32,7 @@
 #include "../../lib/kmi/tree.h"
 #include "../../mem/mem.h"
 #include "ws_conn.h"
-#include "ws_mod.h"
+#include "websocket.h"
 
 /* Maximum number of connections to display when using the ws.dump MI command */
 #define MAX_WS_CONNS_DUMP	50
