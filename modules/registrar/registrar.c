@@ -53,7 +53,7 @@
 #include "lookup.h"
 #include "regpv.h"
 #include "reply.h"
-#include "reg_mod.h"
+#include "registrar.h"
 #include "config.h"
 
 MODULE_VERSION

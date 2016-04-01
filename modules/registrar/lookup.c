@@ -41,7 +41,7 @@
 #include "../usrloc/usrloc.h"
 #include "common.h"
 #include "regtime.h"
-#include "reg_mod.h"
+#include "registrar.h"
 #include "lookup.h"
 #include "config.h"
 
