@@ -36,7 +36,7 @@
 #include "../../data_lump_rpl.h"
 #include "../usrloc/usrloc.h"
 #include "rerrno.h"
-#include "registrar.h"
+#include "reg_mod.h"
 #include "regtime.h"
 #include "reply.h"
 #include "config.h"

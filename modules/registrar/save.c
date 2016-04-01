@@ -56,7 +56,7 @@
 #include "sip_msg.h"
 #include "rerrno.h"
 #include "reply.h"
-#include "registrar.h"
+#include "reg_mod.h"
 #include "regtime.h"
 #include "path.h"
 #include "save.h"
