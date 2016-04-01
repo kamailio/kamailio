@@ -4,14 +4,14 @@
  * Copyright (C) 2005-2014 Juha Heinanen
  * Copyright (C) 2006 Voice Sistem SRL
  *
- * This file is part of Kamailio, a free SIP server.
+ * This file is part of SIP Router, a free SIP server.
  *
- * Kamailio is free software; you can redistribute it and/or modify
+ * SIP Router is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * Kamailio is distributed in the hope that it will be useful,
+ * SIP Router is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -20,16 +20,32 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ * History:
+ * -------
+ *  2005-02-14: Introduced lcr module (jh)
+ *  2005-02-20: Added sequential forking functions (jh)
+ *  2005-02-25: Added support for int AVP names, combined addr and port
+ *              AVPs (jh)
+ *  2005-07-28: Added support for gw URI scheme and transport, 
+ *              backport from ser (kd)
+ *  2005-08-20: Added support for gw prefixes (jh)
+ *  2005-09-03: Request-URI user part can be modified between load_gws()
+ *              and first next_gw() calls.
+ *  2008-10-10: Database values are now checked and from/to_gw functions
+ *              execute in O(logN) time.
+ *  2008-11-26: Added timer based check of gateways (shurik)
+ *  2009-05-12  added RPC support (andrei)
+ *  2009-06-21  Added support for more than one lcr instance and
+                gw defunct capability (jh)
  */
-
 /*!
  * \file
- * \brief Kamailio LCR :: Module interface
+ * \brief SIP-router LCR :: Module interface
  * \ingroup lcr
  * Module: \ref lcr
  */
 
-/*! \defgroup lcr Kamailio Least Cost Routing Module
+/*! \defgroup lcr SIP-router Least Cost Routing Module
  *
  * The Least Cost Routing (LCR) module implements capability to serially
  * forward a request to one or more gateways so that the order in which
