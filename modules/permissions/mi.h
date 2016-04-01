@@ -1,5 +1,4 @@
 /*
- *
  * Header file for permissions MI functions
  *
  * Copyright (C) 2006 Juha Heinanen

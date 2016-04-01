@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * PERMISSIONS module
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
