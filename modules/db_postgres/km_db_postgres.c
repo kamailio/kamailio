@@ -1,4 +1,6 @@
 /*
+ * $Id$ 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2008 1&1 Internet AG
  *
@@ -37,7 +39,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_query.h"
 #include "km_dbase.h"
-#include "db_postgres.h"
+#include "km_db_postgres.h"
 
 
 /*MODULE_VERSION*/

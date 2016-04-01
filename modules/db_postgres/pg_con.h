@@ -1,18 +1,24 @@
 /* 
- * PostgreSQL Database Driver for Kamailio
+ * $Id$ 
+ *
+ * PostgreSQL Database Driver for SER
  *
  * Portions Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2003 August.Net Services, LLC
  * Portions Copyright (C) 2005-2008 iptelorg GmbH
  *
- * This file is part of Kamailio, a free SIP server.
+ * This file is part of SER, a free SIP server.
  *
- * Kamailio is free software; you can redistribute it and/or modify it under the
+ * SER is free software; you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version
  *
- * Kamailio is distributed in the hope that it will be useful, but WITHOUT ANY
+ * For a license to use the ser software under conditions other than those
+ * described here, or to purchase support for this software, please contact
+ * iptel.org by e-mail at the following addresses: info@iptel.org
+ *
+ * SER is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
  * details.
@@ -76,7 +82,7 @@ int pg_con(db_con_t* con);
 
 
 /** Establish a new connection to server.  
- * This function is called when a Kamailio module calls db_connect to establish a
+ * This function is called when a SER module calls db_connect to establish a
  * new connection to the database server. After the connection is established
  * the function sends an SQL query to the server to determine the format of
  * timestamp fields and also obtains the list of supported field types.

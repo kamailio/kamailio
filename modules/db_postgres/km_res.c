@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2006 Norman Brandinger
  * Copyright (C) 2008 1&1 Internet AG
@@ -19,6 +21,17 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ * History
+ * -------
+ * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
+ *
+ * 2006-07-26 added BPCHAROID as a valid type for DB1_STRING conversions
+ *            this removes the "unknown type 1042" log messages (norm)
+ *
+ * 2006-10-27 Added fetch support (norm)
+ *            Removed dependency on aug_* memory routines (norm)
+ *            Added connection pooling support (norm)
+ *            Standardized API routines to pg_* names (norm)
  */
 
 /*! \file
