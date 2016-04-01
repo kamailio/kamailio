@@ -1,4 +1,6 @@
 /* 
+ * $Id$
+ *
  * Flatstore module connection pool
  *
  * Copyright (C) 2004 FhG Fokus

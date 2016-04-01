@@ -1,4 +1,6 @@
 /* 
+ * $Id$ 
+ *
  * Flatstore module interface
  *
  * Copyright (C) 2004 FhG Fokus
@@ -18,6 +20,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+/*
+ * History:
+ * --------
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
  */
 
 #ifndef _KM_FLATSTORE_H

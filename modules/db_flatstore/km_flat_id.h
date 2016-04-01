@@ -1,4 +1,6 @@
 /* 
+ * $Id$
+ *
  * Flatstore connection identifier
  *
  * Copyright (C) 2004 FhG Fokus
