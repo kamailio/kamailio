@@ -12,11 +12,7 @@ Edited by
 
 Bogdan-Andrei Iancu
 
-Edited by
-
 Carsten Bock
-
-Edited by
 
 Alex Balashov
 
@@ -139,10 +135,11 @@ Alex Balashov
               9.2. dlg.list_ctx
               9.3. dlg.dlg_list
               9.4. dlg.dlg_list_ctx
-              9.5. dlg.end_dlg
-              9.6. dlg.profile_get_size
-              9.7. dlg.profile_list
-              9.8. dlg.bridge_dlg
+              9.5. dlg.terminate_dlg
+              9.6. dlg.end_dlg
+              9.7. dlg.profile_get_size
+              9.8. dlg.profile_list
+              9.9. dlg.bridge_dlg
 
         10. Exported pseudo-variables
 
@@ -354,10 +351,11 @@ Chapter 1. Admin Guide
         9.2. dlg.list_ctx
         9.3. dlg.dlg_list
         9.4. dlg.dlg_list_ctx
-        9.5. dlg.end_dlg
-        9.6. dlg.profile_get_size
-        9.7. dlg.profile_list
-        9.8. dlg.bridge_dlg
+        9.5. dlg.terminate_dlg
+        9.6. dlg.end_dlg
+        9.7. dlg.profile_get_size
+        9.8. dlg.profile_list
+        9.9. dlg.bridge_dlg
 
    10. Exported pseudo-variables
 
@@ -1783,10 +1781,11 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    9.2. dlg.list_ctx
    9.3. dlg.dlg_list
    9.4. dlg.dlg_list_ctx
-   9.5. dlg.end_dlg
-   9.6. dlg.profile_get_size
-   9.7. dlg.profile_list
-   9.8. dlg.bridge_dlg
+   9.5. dlg.terminate_dlg
+   9.6. dlg.end_dlg
+   9.7. dlg.profile_get_size
+   9.8. dlg.profile_list
+   9.9. dlg.bridge_dlg
 
 9.1. dlg.list
 
@@ -1795,7 +1794,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    Name: dlg.list
 
    RPC Command Format:
-                serctl dlg_list
+                kamcmd dlg_list
 
 9.2. dlg.list_ctx
 
@@ -1805,7 +1804,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    Name: dlg.list_ctx
 
    RPC Command Format:
-                serctl dlg.list_ctx
+                kamcmd dlg.list_ctx
 
 9.3. dlg.dlg_list
 
@@ -1820,7 +1819,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
        listed.
 
    RPC Command Format:
-                serctl dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+                kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 
 9.4. dlg.dlg_list_ctx
 
@@ -1833,9 +1832,26 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    Parameters: see "dlg_list"
 
    RPC Command Format:
-                serctl dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+                kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 
-9.5. dlg.end_dlg
+9.5. dlg.terminate_dlg
+
+   Terminates an ongoing dialog by sending BYE in both directions,
+   matching the dialog on call-id, from tag and to tag.
+
+   Name: dlg.terminate_dlg
+
+   Parameters:
+     * callid - callid of dialog to be terminated
+     * from_tag - from tag of the dialog to terminated
+     * totag - to tag of the dialog to terminated
+
+   The command works only for confirmed dialogs.
+
+   RPC Command Format:
+                kamcmd dlg.dlg_terminate_dlg callid12345 fromtag123 totag123
+
+9.6. dlg.end_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions.
 
@@ -1851,9 +1867,9 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    command.
 
    RPC Command Format:
-                serctl dlg.end_dlg 342 56
+                kamcmd dlg.end_dlg 342 56
 
-9.6. dlg.profile_get_size
+9.7. dlg.profile_get_size
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1869,9 +1885,9 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
      * value (optional)- string value to further restrict the check;
 
    RPC Command Format:
-                serctl dlg.dlg.profile_get_size inbound_calls
+                kamcmd dlg.dlg.profile_get_size inbound_calls
 
-9.7. dlg.profile_list
+9.8. dlg.profile_list
 
    Lists all the dialogs belonging to a profile. If the profile supports
    values, the check can be reinforced to take into account a specific
@@ -1887,9 +1903,9 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
      * value (optional)- string value to further restrict the check;
 
    RPC Command Format:
-                serctl dlg.profile_list inbound_calls
+                kamcmd dlg.profile_list inbound_calls
 
-9.8. dlg.bridge_dlg
+9.9. dlg.bridge_dlg
 
    Bridge two SIP addresses into a call using INVITE(hold)-REFER-BYE
    mechanism.
@@ -1902,7 +1918,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
      * op (optional) - outbound proxy SIP address
 
    RPC Command Format:
-                serctl dlg.list from to op
+                kamcmd dlg.list from to op
 
 10. Exported pseudo-variables
 
