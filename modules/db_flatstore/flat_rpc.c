@@ -31,7 +31,7 @@
  */
 
 #include "flat_rpc.h"
-#include "flatstore_mod.h"
+#include "db_flatstore.h"
 #include "km_flatstore_mod.h"
 
 #include <time.h>

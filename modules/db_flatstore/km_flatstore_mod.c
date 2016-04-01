@@ -33,7 +33,7 @@
 #include "../../rpc_lookup.h"
 #include "km_flatstore.h"
 #include "km_flatstore_mod.h"
-#include "flatstore_mod.h"
+#include "db_flatstore.h"
 
 /*MODULE_VERSION*/
 
