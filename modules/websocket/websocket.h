@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef _WS_MOD_H
-#define _WS_MOD_H
+#ifndef _WEBSOCKET_H
+#define _WEBSOCKET_H
 
 #include "../../locking.h"
 #include "../../kstats_types.h"
@@ -42,4 +42,4 @@ extern gen_lock_t *ws_stats_lock;
 
 extern int ws_ping_interval;	/* time (in seconds) between sending Pings */
 
-#endif /* _WS_MOD_H */
+#endif /* _WEBSOCKET_H */

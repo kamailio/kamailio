@@ -40,7 +40,7 @@
 #include "ws_conn.h"
 #include "ws_handshake.h"
 #include "ws_frame.h"
-#include "ws_mod.h"
+#include "websocket.h"
 #include "config.h"
 
 MODULE_VERSION
