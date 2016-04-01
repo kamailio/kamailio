@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 1&1 Internet AG
  *
  * This file is part of Kamailio, a free SIP server.

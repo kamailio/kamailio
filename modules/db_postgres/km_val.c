@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2008 1&1 Internet AG
  *
@@ -13,19 +11,13 @@
  *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- * 2003-04-14 gmtime changed to localtime because mktime later
- *            expects localtime, changed daylight saving bug
- *            previously found in mysql module (janakj)
  */
 
 /*! \file
