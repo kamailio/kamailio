@@ -41,7 +41,7 @@
 #include "../tls/tls_cfg.h"
 #include "ws_conn.h"
 #include "ws_handshake.h"
-#include "websocket.h"
+#include "ws_mod.h"
 #include "config.h"
 
 #define WS_VERSION		(13)

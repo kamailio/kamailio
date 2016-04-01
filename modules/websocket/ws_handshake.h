@@ -29,7 +29,7 @@
 
 #include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
-#include "websocket.h"
+#include "ws_mod.h"
 
 #define DEFAULT_SUB_PROTOCOLS	(SUB_PROTOCOL_SIP | SUB_PROTOCOL_MSRP)
 #define SUB_PROTOCOL_ALL	(SUB_PROTOCOL_SIP | SUB_PROTOCOL_MSRP)
