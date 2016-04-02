@@ -211,6 +211,9 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
     res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long) 1);
     res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) params->timeout);
     res |= curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long) params->http_follow_redirect);
+    if (params->http_follow_redirect) {
+	LM_DBG("****** ##### Following redirects for this request! \n");
+    }
 
 
     res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
