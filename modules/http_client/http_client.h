@@ -28,31 +28,33 @@
  * Module: \ref http_client
  */
 
-#ifndef CURL_H
-#define CURL_H
+#ifndef HTTP_CLIENT_H
+#define HTTP_CLIENT_H
+
+#include <curl/curl.h>
 
 #include "../../str.h"
 #include "../../counters.h"
 #include "../../lib/srdb1/db.h"
 
 extern unsigned int	default_connection_timeout;
-extern char	*default_tls_cacert;			/*!< File name: Default CA cert to use for curl TLS connection */
-extern str	default_tls_clientcert;		/*!< File name: Default client certificate to use for curl TLS connection */
-extern str	default_tls_clientkey;			/*!< File name: Key in PEM format that belongs to client cert */
-extern str	default_cipher_suite_list;			/*!< List of allowed cipher suites */
+extern char		*default_tls_cacert;		/*!< File name: Default CA cert to use for curl TLS connection */
+extern str		default_tls_clientcert;		/*!< File name: Default client certificate to use for curl TLS connection */
+extern str		default_tls_clientkey;		/*!< File name: Key in PEM format that belongs to client cert */
+extern str		default_cipher_suite_list;	/*!< List of allowed cipher suites */
 extern unsigned int	default_tls_version;		/*!< 0 = Use libcurl default */
 extern unsigned int	default_tls_verify_peer;	/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
 extern unsigned int	default_tls_verify_host;	/*!< 0 = Do not verify TLS server CN/SAN. 2 = Verify TLS server CN/SAN (default) */
-extern str 	default_http_proxy;			/*!< Default HTTP proxy to use */
-extern unsigned int	default_http_proxy_port;		/*!< Default HTTP proxy port to use */
+extern str 		default_http_proxy;		/*!< Default HTTP proxy to use */
+extern unsigned int	default_http_proxy_port;	/*!< Default HTTP proxy port to use */
 extern unsigned int	default_http_follow_redirect;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
-extern str 	default_useragent;			/*!< Default CURL useragent. Default "Kamailio Curl " */
-extern unsigned int	default_maxdatasize;			/*!< Default Maximum download size */
+extern str 		default_useragent;		/*!< Default CURL useragent. Default "Kamailio Curl " */
+extern unsigned int	default_maxdatasize;		/*!< Default Maximum download size */
 extern unsigned int 	default_authmethod;		/*!< authentication method - Basic, Digest or both */
-
+extern unsigned int     default_keep_connections;	/*!< Keep http connections open for reuse */
 
 extern counter_handle_t connections;	/* Number of connection definitions */
-extern counter_handle_t connok;	/* Successful Connection attempts */
+extern counter_handle_t connok;		/* Successful Connection attempts */
 extern counter_handle_t connfail;	/* Failed Connection attempts */
 
 /* Curl  stream object  */
@@ -92,6 +94,7 @@ typedef struct _curl_con
 	unsigned int verify_peer;	/*!< TRUE if server cert to be verified */
 	unsigned int verify_host;	/*!< TRUE if server CN/SAN to be verified */
 	int http_follow_redirect;	/*!< TRUE if we should follow HTTP 302 redirects */
+	unsigned int keep_connections;	/*!< TRUE to keep curl connections open */
 	unsigned int port;		/*!< The port to connect to */
 	int timeout;			/*!< Timeout for this connection */
 	unsigned int maxdatasize;	/*!< Maximum data download on GET or POST */
@@ -108,12 +111,13 @@ typedef struct _curl_con_pkg
 	unsigned int conid;		/*!< Connection ID (referring to core connection id */
 	char redirecturl[512];		/*!< Last redirect URL - to use for $curlredirect(curlcon) pv */
 	unsigned int last_result;	/*!< Last result of accessing this connection */
-	struct _curl_con_pkg *next;		/*!< next connection */
 	char result_content_type[512];		/*!< Response content-type */
+	CURL *curl;			/*!< Curl connection handle */
 
 	/* Potential candidates:	Last TLS fingerprint used 
 
 	*/
+	struct _curl_con_pkg *next;		/*!< next connection */
 } curl_con_pkg_t;
 
 /*! Returns true if CURL supports TLS */
@@ -122,4 +126,4 @@ extern int curl_support_tls();
 /*! Returns TRUE if curl supports IPv6 */
 extern int curl_support_ipv6();
 
-#endif /* CURL_H */
+#endif /* HTTP_CLIENT_H */

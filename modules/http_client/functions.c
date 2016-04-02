@@ -33,8 +33,6 @@
  */
 
 
-#include <curl/curl.h>
-
 #include "../../mod_fix.h"
 #include "../../pvar.h"
 #include "../../route_struct.h"
@@ -47,25 +45,26 @@
 
 
 typedef struct {
-    char *username;
-    char *secret;
-    char *contenttype;
-    char *post;
-    char *clientcert;
-    char *clientkey;
-    char *cacert;
-    char *ciphersuites;
-    char *http_proxy;
-    unsigned int authmethod;
-    unsigned int http_proxy_port;
-    unsigned int tlsversion;
-    unsigned int verify_peer;
-    unsigned int verify_host;
-    unsigned int timeout;
-    unsigned int http_follow_redirect;
-    unsigned int oneline;
-    unsigned int maxdatasize;
-    curl_con_pkg_t *pconn;
+	char *username;
+	char *secret;
+	char *contenttype;
+	char *post;
+	char *clientcert;
+	char *clientkey;
+	char *cacert;
+	char *ciphersuites;
+	char *http_proxy;
+	unsigned int authmethod;
+	unsigned int http_proxy_port;
+	unsigned int tlsversion;
+	unsigned int verify_peer;
+	unsigned int verify_host;
+	unsigned int timeout;
+	unsigned int http_follow_redirect;
+	unsigned int oneline;
+	unsigned int maxdatasize;
+	unsigned int keep_connections;
+	curl_con_pkg_t *pconn;
 } curl_query_t;
 
 /* Forward declaration */
@@ -80,28 +79,28 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
  */
 size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 {
-    curl_res_stream_t *stream = (curl_res_stream_t *) stream_ptr;
+	curl_res_stream_t *stream = (curl_res_stream_t *) stream_ptr;
 
 
-    if (stream->max_size == 0 || stream->curr_size < stream->max_size) {
-        char *tmp = (char *) pkg_realloc(stream->buf, stream->curr_size + (size * nmemb));
+	if (stream->max_size == 0 || stream->curr_size < stream->max_size) {
+	    char *tmp = (char *) pkg_realloc(stream->buf, stream->curr_size + (size * nmemb));
 
-        if (tmp == NULL) {
-            LM_ERR("cannot allocate memory for stream\n");
-            return CURLE_WRITE_ERROR;
-    	}
-        stream->buf = tmp;
+	    if (tmp == NULL) {
+	        LM_ERR("cannot allocate memory for stream\n");
+	        return CURLE_WRITE_ERROR;
+		}
+	    stream->buf = tmp;
 
-    	memcpy(&stream->buf[stream->pos], (char *) ptr, (size * nmemb));
+		memcpy(&stream->buf[stream->pos], (char *) ptr, (size * nmemb));
 
-        stream->curr_size += ((size * nmemb));
-    	stream->pos += (size * nmemb);
+	    stream->curr_size += ((size * nmemb));
+		stream->pos += (size * nmemb);
 
-    }  else {
-    	LM_DBG("****** ##### CURL Max datasize exceeded: max  %u current %u\n", (unsigned int) stream->max_size, (unsigned int)stream->curr_size);
-    }
+	}  else {
+		LM_DBG("****** ##### CURL Max datasize exceeded: max  %u current %u\n", (unsigned int) stream->max_size, (unsigned int)stream->curr_size);
+	}
 
-    return size * nmemb;
+	return size * nmemb;
  }
 
 
@@ -109,250 +108,270 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
  */
 static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const curl_query_t * const params)
 {
-    CURL *curl;
-    CURLcode res;  
-    char *at = NULL;
-    curl_res_stream_t stream;
-    long stat;
-    str rval;
-    double download_size;
-    double total_time;
-    struct curl_slist *headerlist = NULL;
+	CURL *curl;
+	CURLcode res;  
+	char *at = NULL;
+	curl_res_stream_t stream;
+	long stat;
+	str rval;
+	double download_size;
+	double total_time;
+	struct curl_slist *headerlist = NULL;
 
-    memset(&stream, 0, sizeof(curl_res_stream_t));
-    if(params->pconn) {
-    	params->pconn->result_content_type[0] = '\0';
-    	params->pconn->redirecturl[0] = '\0';
-    }
-
-    stream.max_size = (size_t) params->maxdatasize;
-
-    curl = curl_easy_init();
-    if (curl == NULL) {
-	LM_ERR("failed to initialize curl\n");
-	return -1;
-    }
-
-    LM_DBG("****** ##### CURL URL [%s] \n", _url);
-    res = curl_easy_setopt(curl, CURLOPT_URL, _url);
-
-    /* Limit to HTTP and HTTPS protocols */
-    res = curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
-    res = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
-
-    if (params->post) {
-	char ctype[256];
-
-	ctype[0] = '\0';
-	snprintf(ctype, sizeof(ctype), "Content-Type: %s", params->contenttype);
-
-        /* Now specify we want to POST data */ 
-	res |= curl_easy_setopt(curl, CURLOPT_POST, 1L);
-	/* Set the content-type of the DATA */
-	headerlist = curl_slist_append(headerlist, ctype);
-	res |= curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
-
-	/* Tell CURL we want to upload using POST */
-
-	res |= curl_easy_setopt(curl, CURLOPT_POSTFIELDS, params->post);
-
-    }
-
-    if (params->maxdatasize) {
-	/* Maximum data size to download - we always download full response, but
-	   cut it off before moving to pvar */
-	LM_DBG("****** ##### CURL Max datasize %u\n", params->maxdatasize);
-    }
-
-    if (params->username) {
-	res |= curl_easy_setopt(curl, CURLOPT_USERNAME, params->username);
-	res |= curl_easy_setopt(curl, CURLOPT_HTTPAUTH, params->authmethod);
-    }
-    if (params->secret) {
-	res |= curl_easy_setopt(curl, CURLOPT_PASSWORD, params->secret);
-    }
-
-    /* Client certificate */
-    if (params->clientcert != NULL && params->clientkey != NULL) {
-        res |= curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-        res |= curl_easy_setopt(curl, CURLOPT_SSLCERT, params->clientcert);
-
-        res |= curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "PEM");
-        res |= curl_easy_setopt(curl, CURLOPT_SSLKEY, params->clientkey);
-    }
-
-    if (params->cacert != NULL) {
-        res |= curl_easy_setopt(curl, CURLOPT_CAINFO, params->cacert);
-    }
-
-    if (params->tlsversion != CURL_SSLVERSION_DEFAULT) {
-        res |= curl_easy_setopt(curl, CURLOPT_SSLVERSION, (long) params->tlsversion);
-    }
-
-    if (params->ciphersuites != NULL) {
-        res |= curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST, params->ciphersuites);
-    }
-
-    if (params->http_proxy  != NULL) {
-	LM_DBG("****** ##### CURL proxy [%s] \n", params->http_proxy);
-	res |= curl_easy_setopt(curl, CURLOPT_PROXY, params->http_proxy);
-     } else {
-	LM_DBG("****** ##### CURL proxy NOT SET \n");
-     }
-
-    if (params->http_proxy_port > 0) {
-	res |= curl_easy_setopt(curl, CURLOPT_PROXYPORT, params->http_proxy_port);
-    }
-
-
-    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long) params->verify_peer);
-    res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long) params->verify_host?2:0);
-
-    res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long) 1);
-    res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) params->timeout);
-    res |= curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long) params->http_follow_redirect);
-    if (params->http_follow_redirect) {
-	LM_DBG("****** ##### Following redirects for this request! \n");
-    }
-
-
-    res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
-    res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
-
-
-    if (res != CURLE_OK) {
-	/* PANIC */
-	LM_ERR("Could not set CURL options. Library error \n");
-    } else {
-   	res = curl_easy_perform(curl);  
-    }
-    if (headerlist) {
-    	curl_slist_free_all(headerlist);
-    }
-
-    if (res != CURLE_OK) {
-	/* http://curl.haxx.se/libcurl/c/libcurl-errors.html */
-	if (res == CURLE_COULDNT_CONNECT) {
-		LM_WARN("failed to connect() to host\n");
-	} else if ( res == CURLE_COULDNT_RESOLVE_HOST ) {
-		LM_WARN("Couldn't resolve host\n");
-	} else if ( res == CURLE_COULDNT_RESOLVE_PROXY ) {
-		LM_WARN("Couldn't resolve http_proxy host\n");
-	} else if ( res == CURLE_UNSUPPORTED_PROTOCOL ) {
-		LM_WARN("URL Schema not supported by curl\n");
-	} else if ( res == CURLE_URL_MALFORMAT ) {
-		LM_WARN("Malformed URL used in http_client\n");
-	} else if ( res == CURLE_OUT_OF_MEMORY ) {
-		LM_WARN("Curl library out of memory\n");
-	} else if ( res == CURLE_OPERATION_TIMEDOUT ) {
-		LM_WARN("Curl library timed out on request\n");
-	} else if ( res == CURLE_SSL_CONNECT_ERROR ) {
-		LM_WARN("TLS error in curl connection\n");
-	} else if ( res == CURLE_SSL_CERTPROBLEM ) {
-		LM_WARN("TLS local certificate error\n");
-	} else if ( res == CURLE_SSL_CIPHER ) {
-		LM_WARN("TLS cipher error\n");
-	} else if ( res == CURLE_SSL_CACERT ) {
-		LM_WARN("TLS server certificate validation error (No valid CA cert)\n");
-	} else if ( res == CURLE_SSL_CACERT_BADFILE ) {
-		LM_WARN("TLS CA certificate read error \n");
-	} else if ( res == CURLE_SSL_ISSUER_ERROR ) {
-		LM_WARN("TLS issuer certificate check error \n");
-	} else if ( res == CURLE_PEER_FAILED_VERIFICATION ) {
-		LM_WARN("TLS verification error\n");
-	} else if ( res == CURLE_TOO_MANY_REDIRECTS ) {
-		LM_WARN("Too many redirects\n");
-	} else {
-		LM_ERR("failed to perform curl (%d)\n", res);
-	}
-
-	if (params->pconn) {
-		params->pconn->last_result = res;
-	}
-	curl_easy_cleanup(curl);
-	if(stream.buf) {
-		pkg_free(stream.buf);
-	}
-	counter_inc(connfail);
-	return res;
-    }
-
-    /* HTTP_CODE CHANGED TO CURLINFO_RESPONSE_CODE in curl > 7.10.7 */
-    curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
-    if(res == CURLE_OK) {
-    	char *ct;
-	char *url;
-
-    	/* ask for the content-type of the response */
-    	res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
-	res |= curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
-
-    	if(ct) {
-        	LM_DBG("We received Content-Type: %s\n", ct);
-    		if (params->pconn) {
-			strncpy(params->pconn->result_content_type, ct, sizeof(params->pconn->result_content_type));
+	memset(&stream, 0, sizeof(curl_res_stream_t));
+	if(params->pconn) {
+		params->pconn->result_content_type[0] = '\0';
+		params->pconn->redirecturl[0] = '\0';
+		if (params->pconn->curl) {
+			curl = params->pconn->curl;	/* Reuse existing handle */
 		}
-        }
-    	if(url) {
-        	LM_DBG("We visited URL: %s\n", url);
-    		if (params->pconn) {
+	}
+
+	stream.max_size = (size_t) params->maxdatasize;
+
+	if (curl == (CURL *) NULL) {
+		curl = curl_easy_init();
+	}
+	if (curl == NULL) {
+		LM_ERR("failed to initialize curl\n");
+		return -1;
+	}
+
+	LM_DBG("****** ##### CURL URL [%s] \n", _url);
+	res = curl_easy_setopt(curl, CURLOPT_URL, _url);
+
+	/* Limit to HTTP and HTTPS protocols */
+	res = curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+	res = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+
+	if (params->post) {
+		char ctype[256];
+
+		ctype[0] = '\0';
+		snprintf(ctype, sizeof(ctype), "Content-Type: %s", params->contenttype);
+
+	    	/* Now specify we want to POST data */ 
+		res |= curl_easy_setopt(curl, CURLOPT_POST, 1L);
+		/* Set the content-type of the DATA */
+		headerlist = curl_slist_append(headerlist, ctype);
+		res |= curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
+
+		/* Tell CURL we want to upload using POST */
+
+		res |= curl_easy_setopt(curl, CURLOPT_POSTFIELDS, params->post);
+
+	} else {
+		/* Reset post option */
+		res |= curl_easy_setopt(curl, CURLOPT_POST, 0L);
+	}
+
+	if (params->maxdatasize) {
+		/* Maximum data size to download - we always download full response, but
+	   	cut it off before moving to pvar */
+		LM_DBG("****** ##### CURL Max datasize %u\n", params->maxdatasize);
+	}
+
+	if (params->username) {
+		res |= curl_easy_setopt(curl, CURLOPT_USERNAME, params->username);
+		res |= curl_easy_setopt(curl, CURLOPT_HTTPAUTH, params->authmethod);
+	}
+	if (params->secret) {
+		res |= curl_easy_setopt(curl, CURLOPT_PASSWORD, params->secret);
+	}
+
+	/* Client certificate */
+	if (params->clientcert != NULL && params->clientkey != NULL) {
+	    	res |= curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
+	    	res |= curl_easy_setopt(curl, CURLOPT_SSLCERT, params->clientcert);
+
+	    	res |= curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "PEM");
+	    	res |= curl_easy_setopt(curl, CURLOPT_SSLKEY, params->clientkey);
+	}
+
+	if (params->cacert != NULL) {
+	    	res |= curl_easy_setopt(curl, CURLOPT_CAINFO, params->cacert);
+	}
+
+	if (params->tlsversion != CURL_SSLVERSION_DEFAULT) {
+	    	res |= curl_easy_setopt(curl, CURLOPT_SSLVERSION, (long) params->tlsversion);
+	}
+
+	if (params->ciphersuites != NULL) {
+	    	res |= curl_easy_setopt(curl, CURLOPT_SSL_CIPHER_LIST, params->ciphersuites);
+	}
+
+	if (params->http_proxy  != NULL) {
+		LM_DBG("****** ##### CURL proxy [%s] \n", params->http_proxy);
+		res |= curl_easy_setopt(curl, CURLOPT_PROXY, params->http_proxy);
+	 } else {
+		LM_DBG("****** ##### CURL proxy NOT SET \n");
+	 }
+
+	if (params->http_proxy_port > 0) {
+		res |= curl_easy_setopt(curl, CURLOPT_PROXYPORT, params->http_proxy_port);
+	}
+
+
+	res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long) params->verify_peer);
+	res |= curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long) params->verify_host?2:0);
+
+	res |= curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long) 1);
+	res |= curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) params->timeout);
+	res |= curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, (long) params->http_follow_redirect);
+	if (params->http_follow_redirect) {
+		LM_DBG("****** ##### Following redirects for this request! \n");
+	}
+
+
+	res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
+	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
+
+
+	if (res != CURLE_OK) {
+		/* PANIC */
+		LM_ERR("Could not set CURL options. Library error \n");
+	} else {
+   		res = curl_easy_perform(curl);  
+	}
+	if (headerlist) {
+		curl_slist_free_all(headerlist);
+	}
+
+	if (res != CURLE_OK) {
+		/* http://curl.haxx.se/libcurl/c/libcurl-errors.html */
+		if (res == CURLE_COULDNT_CONNECT) {
+			LM_WARN("failed to connect() to host\n");
+		} else if ( res == CURLE_COULDNT_RESOLVE_HOST ) {
+			LM_WARN("Couldn't resolve host\n");
+		} else if ( res == CURLE_COULDNT_RESOLVE_PROXY ) {
+			LM_WARN("Couldn't resolve http_proxy host\n");
+		} else if ( res == CURLE_UNSUPPORTED_PROTOCOL ) {
+			LM_WARN("URL Schema not supported by curl\n");
+		} else if ( res == CURLE_URL_MALFORMAT ) {
+			LM_WARN("Malformed URL used in http_client\n");
+		} else if ( res == CURLE_OUT_OF_MEMORY ) {
+			LM_WARN("Curl library out of memory\n");
+		} else if ( res == CURLE_OPERATION_TIMEDOUT ) {
+			LM_WARN("Curl library timed out on request\n");
+		} else if ( res == CURLE_SSL_CONNECT_ERROR ) {
+			LM_WARN("TLS error in curl connection\n");
+		} else if ( res == CURLE_SSL_CERTPROBLEM ) {
+			LM_WARN("TLS local certificate error\n");
+		} else if ( res == CURLE_SSL_CIPHER ) {
+			LM_WARN("TLS cipher error\n");
+		} else if ( res == CURLE_SSL_CACERT ) {
+			LM_WARN("TLS server certificate validation error (No valid CA cert)\n");
+		} else if ( res == CURLE_SSL_CACERT_BADFILE ) {
+			LM_WARN("TLS CA certificate read error \n");
+		} else if ( res == CURLE_SSL_ISSUER_ERROR ) {
+			LM_WARN("TLS issuer certificate check error \n");
+		} else if ( res == CURLE_PEER_FAILED_VERIFICATION ) {
+			LM_WARN("TLS verification error\n");
+		} else if ( res == CURLE_TOO_MANY_REDIRECTS ) {
+			LM_WARN("Too many redirects\n");
+		} else {
+			LM_ERR("failed to perform curl (%d)\n", res);
+		}
+
+		if (params->pconn) {
+			params->pconn->last_result = res;
+			if (params->keep_connections) {
+				params->pconn->curl = curl;	/* Save connection, don't close */
+			} else {
+				/* Cleanup and close - bye bye and thank you for all the bytes */
+				curl_easy_cleanup(curl);
+			}
+		} else {
+			curl_easy_cleanup(curl);
+		}
+		if(stream.buf) {
+			pkg_free(stream.buf);
+		}
+		counter_inc(connfail);
+		return res;
+	}
+
+	/* HTTP_CODE CHANGED TO CURLINFO_RESPONSE_CODE in curl > 7.10.7 */
+	curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &stat);
+	if(res == CURLE_OK) {
+		char *ct;
+		char *url;
+
+		/* ask for the content-type of the response */
+		res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &ct);
+		res |= curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
+
+		if(ct) {
+	    		LM_DBG("We received Content-Type: %s\n", ct);
+			if (params->pconn) {
+				strncpy(params->pconn->result_content_type, ct, sizeof(params->pconn->result_content_type));
+			}
+	    	}
+		if(url) {
+	    		LM_DBG("We visited URL: %s\n", url);
+			if (params->pconn) {
 			strncpy(params->pconn->redirecturl, url , sizeof(params->pconn->redirecturl));
 		}
-        }
-    }
-    if (params->pconn) {
-    	params->pconn->last_result = stat;
-    }
-
-    if ((stat >= 200) && (stat < 500)) {
-	double datasize = download_size;
-
-	curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
-    	curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
-	LM_DBG("  -- curl download size: %u Time : %ld \n", (unsigned int)download_size, (long) total_time);
-
-	if (download_size > 0) {
-
-		if (params->oneline) {
-			/* search for line feed */
-			at = memchr(stream.buf, (char)10, download_size);
-			datasize = (double) (at - stream.buf);
-			LM_DBG("  -- curl download size cut to first line: %d \n", (int) datasize);
-		}
-		if (at == NULL) {
-			if (params->maxdatasize && ((unsigned int) download_size) > params->maxdatasize) {
-				/* Limit at maximum data size */
-				datasize = (double) params->maxdatasize;
-				LM_DBG("  -- curl download size cut to maxdatasize : %d \n", (int) datasize);
-			} else {
-				/* Limit at actual downloaded data size */
-				datasize = (double) download_size;
-				LM_DBG("  -- curl download size cut to download_size : %d \n", (int) datasize);
-	    			//at = stream.buf + (unsigned int) download_size;
-			}
-		}
-		/* Create a STR object */
-		rval.s = stream.buf;
-		rval.len = datasize;
-		/* Duplicate string to return */
-		pkg_str_dup(_dst, &rval);
-		LM_DBG("curl query result: Length %d %.*s \n", rval.len, rval.len, rval.s);
-	} else {
-		_dst->s = NULL;
-		_dst->len = 0;
+	    }
 	}
-    }
-    if (stat == 200) {
-	counter_inc(connok);
-    } else {
-	counter_inc(connfail);
-    }
+	if (params->pconn) {
+		params->pconn->last_result = stat;
+	}
 
-    /* CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ... ); */
-    curl_easy_cleanup(curl);
-    if (stream.buf != NULL)
+	if ((stat >= 200) && (stat < 500)) {
+		double datasize = download_size;
+
+		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
+		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
+		LM_DBG("  -- curl download size: %u Time : %ld \n", (unsigned int)download_size, (long) total_time);
+
+		if (download_size > 0) {
+
+			if (params->oneline) {
+				/* search for line feed */
+				at = memchr(stream.buf, (char)10, download_size);
+				datasize = (double) (at - stream.buf);
+				LM_DBG("  -- curl download size cut to first line: %d \n", (int) datasize);
+			}
+			if (at == NULL) {
+				if (params->maxdatasize && ((unsigned int) download_size) > params->maxdatasize) {
+					/* Limit at maximum data size */
+					datasize = (double) params->maxdatasize;
+					LM_DBG("  -- curl download size cut to maxdatasize : %d \n", (int) datasize);
+				} else {
+					/* Limit at actual downloaded data size */
+					datasize = (double) download_size;
+					LM_DBG("  -- curl download size cut to download_size : %d \n", (int) datasize);
+	    				//at = stream.buf + (unsigned int) download_size;
+				}
+			}
+			/* Create a STR object */
+			rval.s = stream.buf;
+			rval.len = datasize;
+			/* Duplicate string to return */
+			pkg_str_dup(_dst, &rval);
+			LM_DBG("curl query result: Length %d %.*s \n", rval.len, rval.len, rval.s);
+		} else {
+			_dst->s = NULL;
+			_dst->len = 0;
+		}
+	}
+	if (stat == 200) {
+		counter_inc(connok);
+	} else {
+		counter_inc(connfail);
+	}
+
+	/* CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ... ); */
+	if (params->pconn && params->keep_connections) {
+		params->pconn->curl = curl;	/* Save connection, don't close */
+	} else {
+		curl_easy_cleanup(curl);
+	}
+	if (stream.buf != NULL) {
 	    pkg_free(stream.buf);
-    return stat;
+	}
+	return stat;
 }
 
 /*! Run a query based on a connection definition */
@@ -455,10 +474,10 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 		/* Allocated using pkg_memory */
 		postdata = as_asciiz((str*)post);
 		if (postdata  == NULL) {
-        	    ERR("Curl: No memory left\n");
+	    	    ERR("Curl: No memory left\n");
 		    res = -1;
 		    goto error;
-                }
+	            }
 		LM_DBG("***** #### ***** CURL POST data: %s Content-type %s\n", postdata, contenttype);
 	}
 

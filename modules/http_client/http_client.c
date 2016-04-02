@@ -75,15 +75,16 @@ MODULE_VERSION
 /* Module parameter variables */
 unsigned int	default_connection_timeout = 4;
 char		*default_tls_cacert = NULL;		/*!< File name: Default CA cert to use for curl TLS connection */
-str		default_tls_clientcert = STR_NULL;		/*!< File name: Default client certificate to use for curl TLS connection */
-str		default_tls_clientkey = STR_NULL;		/*!< File name: Key in PEM format that belongs to client cert */
-str		default_cipher_suite_list = STR_NULL;		/*!< List of allowed cipher suites */
+str		default_tls_clientcert = STR_NULL;	/*!< File name: Default client certificate to use for curl TLS connection */
+str		default_tls_clientkey = STR_NULL;	/*!< File name: Key in PEM format that belongs to client cert */
+str		default_cipher_suite_list = STR_NULL;	/*!< List of allowed cipher suites */
 unsigned int	default_tls_version = 0;		/*!< 0 = Use libcurl default */
 unsigned int	default_tls_verify_peer = 1;		/*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
 unsigned int	default_tls_verify_host = 2;		/*!< 0 = Do not verify TLS server CN/SAN  2 = Verify TLS server CN/SAN (default) */
 str 		default_http_proxy = STR_NULL;		/*!< Default HTTP proxy to use */
 unsigned int	default_http_proxy_port = 0;		/*!< Default HTTP proxy port to use */
 unsigned int	default_http_follow_redirect = 0;	/*!< Follow HTTP redirects CURLOPT_FOLLOWLOCATION */
+unsigned int	default_keep_connections = 0;		/*!< Keep http connections open for reuse */
 str 		default_useragent = { CURL_USER_AGENT, CURL_USER_AGENT_LEN };	/*!< Default CURL useragent. Default "Kamailio Curl " */
 unsigned int	default_maxdatasize = 0;		/*!< Default download size. 0=disabled */
 unsigned int 	default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;		/*!< authentication method - Basic, Digest or both */
