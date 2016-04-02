@@ -637,6 +637,38 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.f.http_get_redirect">
+			<title>
+				<function moreinfo="none">http_get_redirect(connection, result)</function>
+			</title>
+			<para>
+			When a http connection gets a redirect and the connection is configured to follow
+			redirects (301,302) then the target URL, the result of the redirects can be
+			retrieved with this function after a successful connection.
+	    	        </para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>connection</emphasis> - the name of an existing
+						HTTP connection, definied by a httpcon modparam.
+					</para>
+					<para>
+						<emphasis>result</emphasis> - The name of a pseudo variable that
+						will contain the last used URL.
+					</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>http_get_redirect()</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "httpredirect", 1);
+...
+http_get_redirect("apiserver", "$var(targeturl)");
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="http_client.f.curl_http_query">
 			<title>
 				<function moreinfo="none">http_client_query(url, [post-data], result)</function>
