@@ -17,10 +17,10 @@
  */
 
 /**
- * \defgroup mem SIP-router memory manager
- * \brief  SIP-router internal memory manager
+ * \defgroup mem Kamailio memory manager
+ * \brief  Kamailio internal memory manager
  * 
- * SIP-router internal memory manager for private (per process) and shared
+ * Kamailio internal memory manager for private (per process) and shared
  * memory pools. It provides several different strategies for the memory
  * management, like really fast, with extended debugging and also plain system
  * memory management.
