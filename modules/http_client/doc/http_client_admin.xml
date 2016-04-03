@@ -538,6 +538,7 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 				<listitem><para>username</para></listitem>
 				<listitem><para>password</para></listitem>
 				<listitem><para>authmethod</para></listitem>
+				<listitem><para>keep_connections</para></listitem>
 				<listitem><para>useragent</para></listitem>
 				<listitem><para>verify_peer</para></listitem>
 				<listitem><para>verify_host</para></listitem>

@@ -530,6 +530,7 @@ tstuff;timeout=12")
      * username
      * password
      * authmethod
+     * keep_connections
      * useragent
      * verify_peer
      * verify_host
