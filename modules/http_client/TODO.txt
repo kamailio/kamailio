@@ -1,5 +1,7 @@
 The http_client module - todo
 ======================
+- clean up			
+  Clean up curl connections, pconn and conn objects at exit time. Just to be nice.
 
 - connection parameters
 	read=line/all		- Implemented in API, but not in parameter
@@ -12,15 +14,14 @@ The http_client module - todo
 
 - save fingerprint of cert for trust-on-first-use procedure
 
-- connection and last status for httpcon-object, needs to be object in process memory, so child_init
-
+- connection and last status for httpcon-object, needs to be object in process memory
+	- done.
 	- test what happens if we allocate curlcon objects in shared memory and use locks
 		Code implemeneted in git master branch for testing
 	- if 5xx response or timeout set flag
 	- function in dialplan - httpcon_exists(object)
 	- pv $curlstatus(object) ??
 	- this is per process !!!
-	- can be used to fix the $curlredirect pseudovariable too
 
 - Figure out a way to communicate back the content-type of the response. Another pvar arg?
 	- This is per process!
@@ -28,6 +29,8 @@ The http_client module - todo
 - Reload of configuration file from RPC interface
 	- Need to close connections (if we have open ones according to idea above)
 	- Need to rebuild core httpcon objects and "mirrors" in pkg memory
+		- Should we just abandon old pkg objects and let them rot away
+		  in space and time?
 	- Can we add a lock to the connection list while switching if we load a new
           list, then switch active list and then free the old ones
 
