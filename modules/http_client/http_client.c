@@ -123,11 +123,6 @@ static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _re
 static int curl_con_param(modparam_t type, void* val);
 static int pv_parse_curlerror(pv_spec_p sp, str *in);
 static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
-static int pv_parse_curlredirect(pv_spec_p sp, str *in);
-static int pv_get_curlredirect(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
-
-static int pv_get_httpresult(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
-static int pv_parse_httpresult(pv_spec_p sp, str *in);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
