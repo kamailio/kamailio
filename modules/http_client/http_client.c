@@ -168,6 +168,7 @@ static param_export_t params[] = {
 	{"config_file", PARAM_STR,  &http_client_config_file },
 	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
 	{"authmetod", PARAM_INT, &default_authmethod },
+	{"keep_connections", PARAM_INT, &default_keep_connections },
     	{0, 0, 0}
 };
 
@@ -283,6 +284,8 @@ static int mod_init(void)
 	LM_DBG("**** init curl: SSL Version: %d \n", default_tls_version);
 	LM_DBG("**** init curl: verifypeer: %d verifyhost: %d\n", default_tls_verify_peer, default_tls_verify_host);
 	LM_DBG("**** init curl: HTTP Proxy: %.*s Port %d\n", default_http_proxy.len, default_http_proxy.s, default_http_proxy_port);
+	LM_DBG("**** init curl: Auth method: %d \n", default_authmethod);
+	LM_DBG("**** init curl: Keep Connections open: %d \n", default_keep_connections);
 
 	LM_DBG("Extra: Curl supports %s %s %s \n",
 			(curl_info->features & CURL_VERSION_SSL ? "SSL" : ""),

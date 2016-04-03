@@ -207,6 +207,7 @@ int curl_parse_param(char *val)
 	unsigned int verify_host = default_tls_verify_host;
 	unsigned int tlsversion = default_tls_version;
 	unsigned int authmethod = default_authmethod;
+	unsigned int keep_connections = default_keep_connections;
 
 	str in;
 	char *p;
@@ -456,6 +457,7 @@ int curl_parse_param(char *val)
 	cc->password = password.s ? as_asciiz(&password) : NULL;
 	cc->schema = schema;
 	cc->authmethod = authmethod;
+	cc->keep_connections = keep_connections;
 	cc->failover = failover;
 	cc->useragent = as_asciiz(&useragent);
 	cc->url = url;
@@ -474,9 +476,9 @@ int curl_parse_param(char *val)
 	}
 	cc->http_follow_redirect = http_follow_redirect;
 
-	LM_DBG("cname: [%.*s] url: [%.*s] username [%s] password [%s] failover [%.*s] timeout [%d] useragent [%s] maxdatasize [%d]\n", 
+	LM_DBG("cname: [%.*s] url: [%.*s] username [%s] password [%s] failover [%.*s] timeout [%d] useragent [%s] maxdatasize [%d] keep_connections [%d]\n", 
 			cc->name.len, cc->name.s, cc->url.len, cc->url.s, cc->username ? cc->username : "", cc->password ? cc->password : "",
-			cc->failover.len, cc->failover.s, cc->timeout, cc->useragent, cc->maxdatasize);
+			cc->failover.len, cc->failover.s, cc->timeout, cc->useragent, cc->maxdatasize, cc->keep_connections);
 	LM_DBG("cname: [%.*s] client_cert [%s] client_key [%s] ciphersuites [%s] tlsversion [%d] verify_peer [%d] verify_host [%d] authmethod [%d]\n",
 			cc->name.len, cc->name.s, cc->clientcert, cc->clientkey, cc->ciphersuites, cc->tlsversion, cc->verify_peer, cc->verify_host, cc->authmethod);
 	if (cc->http_proxy_port > 0) {
@@ -752,6 +754,7 @@ curl_con_t *curl_init_con(str *name)
 	memset(ccp, 0, sizeof(curl_con_pkg_t));
 	ccp->next = _curl_con_pkg_root;
 	ccp->conid = conid;
+	ccp->curl = NULL;
 	_curl_con_pkg_root = ccp;
 
 	LM_INFO("CURL: Added connection [%.*s]\n", name->len, name->s);

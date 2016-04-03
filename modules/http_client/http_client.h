@@ -111,8 +111,11 @@ typedef struct _curl_con_pkg
 	unsigned int conid;		/*!< Connection ID (referring to core connection id */
 	char redirecturl[512];		/*!< Last redirect URL - to use for $curlredirect(curlcon) pv */
 	unsigned int last_result;	/*!< Last result of accessing this connection */
-	char result_content_type[512];		/*!< Response content-type */
+	char result_content_type[512];	/*!< Response content-type */
 	CURL *curl;			/*!< Curl connection handle */
+	double querytime;		/*!< Seconds used for last request */
+	double connecttime;		/*!< Seconds used for connecting last request inc TLS setup  - see
+					     https://curl.haxx.se/libcurl/c/CURLINFO_APPCONNECT_TIME.html */
 
 	/* Potential candidates:	Last TLS fingerprint used 
 

@@ -43,7 +43,6 @@
 #include "http_client.h"
 #include "curlcon.h"
 
-
 typedef struct {
 	char *username;
 	char *secret;
@@ -108,32 +107,35 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
  */
 static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const curl_query_t * const params)
 {
-	CURL *curl;
+	CURL *curl = NULL;;
 	CURLcode res;  
 	char *at = NULL;
 	curl_res_stream_t stream;
 	long stat;
 	str rval;
 	double download_size;
-	double total_time;
 	struct curl_slist *headerlist = NULL;
 
 	memset(&stream, 0, sizeof(curl_res_stream_t));
+	stream.max_size = (size_t) params->maxdatasize;
+
 	if(params->pconn) {
+		LM_DBG("****** ##### We have a pconn - keep_connections: %d!\n", params->keep_connections);
 		params->pconn->result_content_type[0] = '\0';
 		params->pconn->redirecturl[0] = '\0';
-		if (params->pconn->curl) {
+		if (params->pconn->curl != NULL) {
+			LM_DBG("         ****** ##### Reusing existing connection if possible\n");
 			curl = params->pconn->curl;	/* Reuse existing handle */
+			curl_easy_reset(curl);		/* Reset handle */
 		}
 	}
 
-	stream.max_size = (size_t) params->maxdatasize;
 
-	if (curl == (CURL *) NULL) {
+	if (curl == NULL) {
 		curl = curl_easy_init();
 	}
 	if (curl == NULL) {
-		LM_ERR("failed to initialize curl\n");
+		LM_ERR("Failed to initialize curl connection\n");
 		return -1;
 	}
 
@@ -231,7 +233,18 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		/* PANIC */
 		LM_ERR("Could not set CURL options. Library error \n");
 	} else {
-   		res = curl_easy_perform(curl);  
+		double totaltime, connecttime;
+
+		res = curl_easy_perform(curl);
+
+		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &totaltime);
+		curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &connecttime);
+		LM_DBG("**** HTTP Call performed in %f s (connect time %f) \n", totaltime, connecttime);
+		if (params->pconn) {
+			params->pconn->querytime = totaltime;
+			params->pconn->connecttime = connecttime;
+		}
+
 	}
 	if (headerlist) {
 		curl_slist_free_all(headerlist);
@@ -275,13 +288,11 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 
 		if (params->pconn) {
 			params->pconn->last_result = res;
-			if (params->keep_connections) {
-				params->pconn->curl = curl;	/* Save connection, don't close */
-			} else {
-				/* Cleanup and close - bye bye and thank you for all the bytes */
-				curl_easy_cleanup(curl);
-			}
+		}
+		if (params->pconn && params->keep_connections) {
+			params->pconn->curl = curl;	/* Save connection, don't close */
 		} else {
+			/* Cleanup and close - bye bye and thank you for all the bytes */
 			curl_easy_cleanup(curl);
 		}
 		if(stream.buf) {
@@ -322,8 +333,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		double datasize = download_size;
 
 		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
-		curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total_time);
-		LM_DBG("  -- curl download size: %u Time : %ld \n", (unsigned int)download_size, (long) total_time);
+		LM_DBG("  -- curl download size: %u \n", (unsigned int)download_size);
 
 		if (download_size > 0) {
 
@@ -496,6 +506,7 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	query_params.verify_host = conn->verify_host;
 	query_params.timeout = conn->timeout;
 	query_params.http_follow_redirect = conn->http_follow_redirect;
+	query_params.keep_connections = conn->keep_connections;
 	query_params.oneline = 0;
 	query_params.maxdatasize = maxdatasize;
 	query_params.http_proxy_port = conn->http_proxy_port;
