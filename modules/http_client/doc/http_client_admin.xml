@@ -402,6 +402,34 @@ modparam("http_client", "authmetod", 3)
 				</programlisting>
 			</example>
 		</section>
+		<section id="http_client.p.keep_connections">
+			<title><varname>keep_connections</varname> (int)</title>
+			<para>
+			If an HTTP server is accessed multiple times keeping the connection open for reuse
+			saves a significant amount of time, especially if TLS is used. If this function
+			is enabled, the Curl library will try to reuse existing open connections. The
+			HTTP server will have to support this feature and keep connections open for it
+			to work properly.
+			</para>
+			<para>
+			Valid values are:
+				<itemizedlist>
+				<listitem><para>0 - Close connections after request (default)</para></listitem>
+				<listitem><para>1 - Reuse connections</para></listitem>
+				</itemizedlist>
+			</para>
+			<para>
+			This is also configurable per connection in the http_client configuration file.
+			</para>
+			<example>
+			<title>Set <varname>keep_connections</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("http_client", "keep_connections", 1)
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="http_client.p.httpcon">
 			<title><varname>httpcon</varname> (string)</title>
 			<para>
