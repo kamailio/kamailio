@@ -30,20 +30,6 @@
  * @ingroup atomic
  */
 
-/* 
- * History:
- * --------
- *  2006-03-24  created by andrei
- *  2007-05-11  added atomic_add and atomic_cmpxchg (andrei)
- *  2007-05-18  reverted to addic instead of addi - sometimes gcc uses
- *               r0 as the second operand in addi and  addi rD,r0, val
- *               is a special case, equivalent with rD=0+val and not
- *               rD=r0+val (andrei)
- *  2007-05-29  added membar_depends(), membar_*_atomic_op and
- *                membar_*_atomic_setget (andrei)
- */
-
-
 #ifndef _atomic_ppc_h
 #define _atomic_ppc_h
 

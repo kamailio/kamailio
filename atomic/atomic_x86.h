@@ -31,15 +31,6 @@
  * - __CPU_i386  (486+, 32 bit)
  * @ingroup atomic
  */
-/* 
- * History:
- * --------
- *  2006-03-08  created by andrei
- *  2007-05-07  added cmpxchg (andrei)
- *  2007-05-08  added atomic_add (andrei)
- *  2007-05-29  added membar_depends(), membar_*_atomic_op and
- *                membar_*_atomic_setget (andrei)
- */
 
 #ifndef _atomic_x86_h
 #define _atomic_x86_h

@@ -35,14 +35,6 @@
  * @ingroup atomic
  */
 
-/* 
- * History:
- * --------
- *  2006-03-08  created by andrei
- *  2007-05-13  split from atomic_ops.h (andrei)
- */
-
-
 #ifndef __atomic_native
 #define __atomic_native
 

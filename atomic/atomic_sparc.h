@@ -26,14 +26,6 @@
  * @ingroup atomic
  */
 
-/* 
- * History:
- * --------
- *  2006-03-28  created by andrei
- *  2007-05-29  added membar_depends(), membar_*_atomic_op and
- *                membar_*_atomic_setget (andrei)
- */
-
 
 #ifndef _atomic_sparc_h
 #define _atomic_sparc_h

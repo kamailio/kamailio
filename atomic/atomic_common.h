@@ -15,10 +15,10 @@
  */
 
 /**
- * @defgroup atomic SIP-router atomic operations
- * @brief  SIP-router atomic operations and memory barriers support
+ * @defgroup atomic Kamailio atomic operations
+ * @brief  Kamailio atomic operations and memory barriers support
  * 
- * SIP-router atomic operations and memory barriers support for different CPU
+ * Kamailio atomic operations and memory barriers support for different CPU
  * architectures implemented in assembler. It also provides some generic
  * fallback code for architectures not currently supported.
  */
@@ -31,14 +31,6 @@
  * see atomic_ops.h for more info.
  * @ingroup atomic
  */
-
-/* 
- * History:
- * --------
- *  2006-03-08  created by andrei
- *  2007-05-13  split from atomic_ops.h (andrei)
- */
-
 
 #ifndef __atomic_common
 #define __atomic_common

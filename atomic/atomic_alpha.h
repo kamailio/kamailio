@@ -27,14 +27,6 @@
  * - __CPU_alpha
  * @ingroup atomic
  */
-/* 
- * History:
- * --------
- *  2006-03-31  created by andrei
- *  2007-05-10  added atomic_add & atomic_cmpxchg (andrei)
- *  2007-05-29  added membar_depends(), membar_*_atomic_op and
- *                membar_*_atomic_setget (andrei)
- */
 
 
 #ifndef _atomic_alpha_h
