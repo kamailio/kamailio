@@ -82,17 +82,17 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 
 
 	if (stream->max_size == 0 || stream->curr_size < stream->max_size) {
-	    char *tmp = (char *) pkg_realloc(stream->buf, stream->curr_size + (size * nmemb));
+		char *tmp = (char *) pkg_realloc(stream->buf, stream->curr_size + (size * nmemb));
 
-	    if (tmp == NULL) {
-	        LM_ERR("cannot allocate memory for stream\n");
-	        return CURLE_WRITE_ERROR;
+	    	if (tmp == NULL) {
+	        	LM_ERR("cannot allocate memory for stream\n");
+	        	return CURLE_WRITE_ERROR;
 		}
-	    stream->buf = tmp;
+	    	stream->buf = tmp;
 
 		memcpy(&stream->buf[stream->pos], (char *) ptr, (size * nmemb));
 
-	    stream->curr_size += ((size * nmemb));
+	    	stream->curr_size += ((size * nmemb));
 		stream->pos += (size * nmemb);
 
 	}  else {
@@ -321,9 +321,9 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		if(url) {
 	    		LM_DBG("We visited URL: %s\n", url);
 			if (params->pconn) {
-			strncpy(params->pconn->redirecturl, url , sizeof(params->pconn->redirecturl));
-		}
-	    }
+				strncpy(params->pconn->redirecturl, url , sizeof(params->pconn->redirecturl));
+			}
+	    	}
 	}
 	if (params->pconn) {
 		params->pconn->last_result = stat;
@@ -379,7 +379,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		curl_easy_cleanup(curl);
 	}
 	if (stream.buf != NULL) {
-	    pkg_free(stream.buf);
+		pkg_free(stream.buf);
 	}
 	return stat;
 }
@@ -455,8 +455,7 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	if (url && (url->len > 0) && (url->s != NULL)) {
 		int url_len = conn->schema.len + 3 + conn->url.len + 1 + url->len + 1;
 		urlbuf = pkg_malloc(url_len);
-		if (urlbuf == NULL)
-		{
+		if (urlbuf == NULL) {
 			res = -1;
 			goto error;
 		}
@@ -468,8 +467,7 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	} else {
 		int url_len = conn->schema.len + 3 + conn->url.len + 1;
 		urlbuf = pkg_malloc(url_len);
-		if (urlbuf == NULL)
-		{
+		if (urlbuf == NULL) {
 			res = -1;
 			goto error;
 		}
@@ -484,10 +482,10 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 		/* Allocated using pkg_memory */
 		postdata = as_asciiz((str*)post);
 		if (postdata  == NULL) {
-	    	    ERR("Curl: No memory left\n");
-		    res = -1;
-		    goto error;
-	            }
+	    	    	ERR("Curl: No memory left\n");
+		    	res = -1;
+		    	goto error;
+	        }
 		LM_DBG("***** #### ***** CURL POST data: %s Content-type %s\n", postdata, contenttype);
 	}
 

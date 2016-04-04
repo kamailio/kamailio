@@ -164,7 +164,7 @@ static param_export_t params[] = {
 	{"httpcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)curl_con_param},
 	{"authmetod", PARAM_INT, &default_authmethod },
 	{"keep_connections", PARAM_INT, &default_keep_connections },
-    	{0, 0, 0}
+	{0, 0, 0}
 };
 
 
@@ -172,26 +172,26 @@ static param_export_t params[] = {
  * \brief Exported Pseudo variables
  */
 static pv_export_t mod_pvs[] = {
-    {{"curlerror", (sizeof("curlerror")-1)}, /* Curl error codes */
-     PVT_OTHER, pv_get_curlerror, 0, pv_parse_curlerror, 0, 0, 0},
+	{{"curlerror", (sizeof("curlerror")-1)}, /* Curl error codes */
+	PVT_OTHER, pv_get_curlerror, 0, pv_parse_curlerror, 0, 0, 0},
 
-    {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
 /* Module interface */
 struct module_exports exports = {
-    "http_client",
-    DEFAULT_DLFLAGS, /* dlopen flags */
-    cmds,      /* Exported functions */
-    params,    /* Exported parameters */
-    0,         /* exported statistics */
-    0,   	/* exported MI functions */
-    mod_pvs,         /* exported pseudo-variables */
-    0,         /* extra processes */
-    mod_init,  /* module initialization function */
-    0,         /* response function*/
-    destroy,   /* destroy function */
-    child_init /* per-child init function */
+	"http_client",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,      /* Exported functions */
+	params,    /* Exported parameters */
+	0,         /* exported statistics */
+	0,   	/* exported MI functions */
+	mod_pvs,         /* exported pseudo-variables */
+	0,         /* extra processes */
+	mod_init,  /* module initialization function */
+	0,         /* response function*/
+	destroy,   /* destroy function */
+	child_init /* per-child init function */
 };
 
 counter_handle_t connections;	/* Number of connection definitions */
@@ -350,24 +350,24 @@ error:
  */
 static int fixup_http_query_get(void** param, int param_no)
 {
-    if (param_no == 1) {
-	return fixup_spve_null(param, 1);
-    }
-
-    if (param_no == 2) {
-	if (fixup_pvar_null(param, 1) != 0) {
-	    LM_ERR("failed to fixup result pvar\n");
-	    return -1;
+	if (param_no == 1) {
+		return fixup_spve_null(param, 1);
 	}
-	if (((pv_spec_t *)(*param))->setf == NULL) {
-	    LM_ERR("result pvar is not writeble\n");
-	    return -1;
-	}
-	return 0;
-    }
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 2) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -376,7 +376,7 @@ static int fixup_http_query_get(void** param, int param_no)
 static int fixup_free_http_query_get(void** param, int param_no)
 {
     if (param_no == 1) {
-        return fixup_free_spve_null(param, 1);
+		return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 2) {
@@ -401,7 +401,7 @@ static int fixup_curl_connect(void** param, int param_no)
     }
     /* URL and data may contain pvar */
     if (param_no == 2) {
-        return fixup_spve_null(param, 1);
+		return fixup_spve_null(param, 1);
     }
     if (param_no == 3) {
 	if (fixup_pvar_null(param, 1) != 0) {
@@ -433,7 +433,7 @@ static int fixup_curl_connect_post(void** param, int param_no)
     }
     /* URL and data may contain pvar */
     if (param_no == 2 || param_no == 4) {
-        return fixup_spve_null(param, 1);
+		return fixup_spve_null(param, 1);
     }
     if (param_no == 5) {
 	if (fixup_pvar_null(param, 1) != 0) {
@@ -462,7 +462,7 @@ static int fixup_free_curl_connect_post(void** param, int param_no)
 	return 0;
     }
     if (param_no == 2 || param_no == 4) {
-        return fixup_free_spve_null(param, 1);
+		return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 5) {
@@ -483,7 +483,7 @@ static int fixup_free_curl_connect(void** param, int param_no)
 	return 0;
     }
     if (param_no == 2) {
-        return fixup_free_spve_null(param, 1);
+		return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 3) {
@@ -607,7 +607,7 @@ static int fixup_http_query_post(void** param, int param_no)
 static int fixup_free_http_query_post(void** param, int param_no)
 {
     if ((param_no == 1) || (param_no == 2)) {
-        return fixup_free_spve_null(param, 1);
+		return fixup_free_spve_null(param, 1);
     }
 
     if (param_no == 3) {
@@ -757,16 +757,16 @@ static int fixup_curl_get_redirect(void** param, int param_no)
  */
 static int fixup_free_curl_get_redirect(void** param, int param_no)
 {
-    if (param_no == 1) {
-	/* Char strings don't need freeing */
-	return 0;
-    }
-    if (param_no == 2) {
-        return fixup_free_spve_null(param, 1);
-    }
+	if (param_no == 1) {
+		/* Char strings don't need freeing */
+		return 0;
+	}
+	if (param_no == 2) {
+		return fixup_free_spve_null(param, 1);
+	}
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
