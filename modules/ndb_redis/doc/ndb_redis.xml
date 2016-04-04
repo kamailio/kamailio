@@ -9,38 +9,43 @@
 ]>
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
-    <bookinfo>
-	<title>NDB_REDIS Module</title>
-	<productname class="trade">sip-router.org</productname>
-	<authorgroup>
-	    <author>
-		<firstname>Daniel-Constantin</firstname>
-		<surname>Mierla</surname>
-		<email>miconda@gmail.com</email>
-	    </author>
-	    <editor>
-		<firstname>Daniel-Constantin</firstname>
-		<surname>Mierla</surname>
-		<email>miconda@gmail.com</email>
-	    </editor>
-	    <author>
-		<firstname>Vicente</firstname>
-		<surname>Hernando</surname>
-		<email>vhernando@systemonenoc.com</email>
-	    </author>
-	</authorgroup>
-	<copyright>
-	    <year>2011</year>
-	    <holder>asipto.com</holder>
-	</copyright>
-	<copyright>
-	    <year>2012</year>
-	    <holder>www.systemonenoc.com</holder>
-	</copyright>
-    </bookinfo>
-    <toc></toc>
-    
-    <xi:include href="ndb_redis_admin.xml"/>
-    
-    
+	<bookinfo>
+		<title>NDB_REDIS Module</title>
+		<productname class="trade">sip-router.org</productname>
+		<authorgroup>
+			<author>
+				<firstname>Daniel-Constantin</firstname>
+				<surname>Mierla</surname>
+				<email>miconda@gmail.com</email>
+			</author>
+			<editor>
+				<firstname>Daniel-Constantin</firstname>
+				<surname>Mierla</surname>
+				<email>miconda@gmail.com</email>
+			</editor>
+			<author>
+				<firstname>Vicente</firstname>
+				<surname>Hernando</surname>
+				<email>vhernando@systemonenoc.com</email>
+			</author>
+			<author>
+				<firstname>Morten</firstname>
+				<surname>Isaksen</surname>
+				<email>misak@uni-tel.dk</email>
+			</author>
+		</authorgroup>
+		<copyright>
+			<year>2011</year>
+			<holder>asipto.com</holder>
+		</copyright>
+		<copyright>
+			<year>2012</year>
+			<holder>www.systemonenoc.com</holder>
+		</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="ndb_redis_admin.xml"/>
+
+
 </book>

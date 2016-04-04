@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -112,15 +112,55 @@ modparam("ndb_redis", "init_without_redis", 1)
 			</programlisting>
 		</example>
 	</section>
+	<section id="ndb_redis.p.connect_timeout">
+		<title><varname>connect_timeout</varname> (int)</title>
+		<para>
+			The timeout when connecting to the redis server
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1000 ms.
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>connect_timeout</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("ndb_redis", "connect_timeout", 500)
+...
+			</programlisting>
+		</example>
+	</section>
+	<section id="ndb_redis.p.cmd_timeout">
+		<title><varname>cmd_timeout</varname> (int)</title>
+		<para>
+			The timeout for each query to the redis server. If the redis server does
+			not reply within the timeout value, the command will fail and kamailio will
+			continue executing the cfg file.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1000 ms.
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>cmd_timeout</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("ndb_redis", "cmd_timeout", 500)
+...
+			</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
 	<title>Functions</title>
 	<section id="ndb_redis.f.redis_cmd">
-	    <title>
+		<title>
 		<function moreinfo="none">redis_cmd(srvname, command, ..., replyid)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 			Send a command to REDIS server identified by srvname. The reply will
 			be stored in a local container identified by replyid. All the
 			parameters can be strings with pseudo-variables that are evaluated
@@ -194,7 +234,7 @@ if(redis_cmd("srvN", "HMGET foo_key field1 field3", "r")) {
 }
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 	<section id="ndb_redis.f.redis_free">
 	<title>

@@ -43,6 +43,8 @@ MODULE_VERSION
 
 int redis_srv_param(modparam_t type, void *val);
 int init_without_redis = 0;
+int redis_connect_timeout_param = 1000;
+int redis_cmd_timeout_param = 1000;
 
 static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 		char* sres);
@@ -87,6 +89,8 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"server",         PARAM_STRING|USE_FUNC_PARAM, (void*)redis_srv_param},
 	{"init_without_redis", INT_PARAM, &init_without_redis},
+	{"connect_timeout", INT_PARAM, &redis_connect_timeout_param},
+	{"cmd_timeout", INT_PARAM, &redis_cmd_timeout_param},
 	{0, 0, 0}
 };
 
@@ -114,10 +118,9 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
 
-	if(redisc_init()<0)
-	{
-	  LM_ERR("failed to initialize redis connections\n");
-	  return -1;
+	if(redisc_init()<0) {
+		LM_ERR("failed to initialize redis connections\n");
+		return -1;
 	}
 	return 0;
 }
@@ -553,7 +556,7 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 					if(pos!=-1)
 						return pv_get_null(msg, param, res);
 					return pv_get_sintval(msg, param, res,
-										  (int)rpv->reply->rplRedis->integer);
+									(int)rpv->reply->rplRedis->integer);
 				case REDIS_REPLY_ARRAY:
 					if(pos<0 || pos>=(int)rpv->reply->rplRedis->elements)
 						return pv_get_null(msg, param, res);
@@ -566,7 +569,7 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 							return pv_get_strval(msg, param, res, &s);
 						case REDIS_REPLY_INTEGER:
 							return pv_get_sintval(msg, param, res,
-												  (int)rpv->reply->rplRedis->element[pos]->integer);
+										(int)rpv->reply->rplRedis->element[pos]->integer);
 						default:
 							return pv_get_null(msg, param, res);
 					}
@@ -583,7 +586,8 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 		case 3:
 			/* size */
 			if(rpv->reply->rplRedis->type == REDIS_REPLY_ARRAY) {
-				return pv_get_uintval(msg, param, res, (unsigned int)rpv->reply->rplRedis->elements);
+				return pv_get_uintval(msg, param, res,
+						(unsigned int)rpv->reply->rplRedis->elements);
 			} else {
 				return pv_get_null(msg, param, res);
 			}
@@ -591,14 +595,15 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 			/* type */
 			if(pos==-1)
 				return pv_get_sintval(msg, param, res,
-									  rpv->reply->rplRedis->type);
+								rpv->reply->rplRedis->type);
 			if(rpv->reply->rplRedis->type != REDIS_REPLY_ARRAY)
 				return pv_get_null(msg, param, res);
 			if(pos<0 || pos>=(int)rpv->reply->rplRedis->elements)
 				return pv_get_null(msg, param, res);
 			if(rpv->reply->rplRedis->element[pos]==NULL)
 				return pv_get_null(msg, param, res);
-			return pv_get_sintval(msg, param, res, rpv->reply->rplRedis->element[pos]->type);
+			return pv_get_sintval(msg, param, res,
+					rpv->reply->rplRedis->element[pos]->type);
 		default:
 			/* We do nothing. */
 			return pv_get_null(msg, param, res);

@@ -42,6 +42,9 @@ static redisc_server_t *_redisc_srv_list=NULL;
 static redisc_reply_t *_redisc_rpl_list=NULL;
 
 extern int init_without_redis;
+extern int redis_connect_timeout_param;
+extern int redis_cmd_timeout_param;
+
 
 /**
  *
@@ -52,10 +55,14 @@ int redisc_init(void)
 	unsigned int port, db;
 	redisc_server_t *rsrv=NULL;
 	param_t *pit = NULL;
-	struct timeval tv;
+	struct timeval tv_conn;
+	struct timeval tv_cmd;
 
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
+	tv_conn.tv_sec = (int) redis_connect_timeout_param / 1000;
+	tv_conn.tv_usec = (int) (redis_connect_timeout_param % 1000) * 1000;
+
+	tv_cmd.tv_sec = (int) redis_cmd_timeout_param / 1000;
+	tv_cmd.tv_usec = (int) (redis_cmd_timeout_param % 1000) * 1000;
 
 	if(_redisc_srv_list==NULL)
 	{
@@ -92,9 +99,9 @@ int redisc_init(void)
 
 		if(unix_sock_path != NULL) {
 			LM_DBG("Connecting to unix socket: %s\n", unix_sock_path);
-			rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv);
+			rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv_conn);
 		} else {
-			rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv);
+			rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv_conn);
 		}
 
 		if(!rsrv->ctxRedis)
@@ -102,6 +109,8 @@ int redisc_init(void)
 		if (rsrv->ctxRedis->err)
 			goto err2;
 		if ((pass != NULL) && redisc_check_auth(rsrv, pass))
+			goto err2;
+		if (redisSetTimeout(rsrv->ctxRedis, tv_cmd))
 			goto err2;
 		if (redisCommandNR(rsrv->ctxRedis, "PING"))
 			goto err2;
@@ -115,10 +124,10 @@ int redisc_init(void)
 err2:
 	if (unix_sock_path != NULL) {
 		LM_ERR("error communicating with redis server [%.*s] (unix:%s db:%d): %s\n",
-			   rsrv->sname->len, rsrv->sname->s, unix_sock_path, db, rsrv->ctxRedis->errstr);
+				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db, rsrv->ctxRedis->errstr);
 	} else {
 		LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): %s\n",
-			   rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
+				rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
 	}
 	if (init_without_redis==1)
 	{
@@ -130,10 +139,10 @@ err2:
 err:
 	if (unix_sock_path != NULL) {
 		LM_ERR("failed to connect to redis server [%.*s] (unix:%s db:%d)\n",
-			   rsrv->sname->len, rsrv->sname->s, unix_sock_path, db);
+				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db);
 	} else {
 		LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
-			   rsrv->sname->len, rsrv->sname->s, addr, port, db);
+				rsrv->sname->len, rsrv->sname->s, addr, port, db);
 	}
 	if (init_without_redis==1)
 	{
@@ -266,10 +275,15 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	char *addr, *pass, *unix_sock_path = NULL;
 	unsigned int port, db;
 	param_t *pit = NULL;
-	struct timeval tv;
+	struct timeval tv_conn;
+	struct timeval tv_cmd;
 
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
+	tv_conn.tv_sec = (int) redis_connect_timeout_param / 1000;
+	tv_conn.tv_usec = (int) (redis_connect_timeout_param % 1000) * 1000;
+
+	tv_cmd.tv_sec = (int) redis_cmd_timeout_param / 1000;
+	tv_cmd.tv_usec = (int) (redis_cmd_timeout_param % 1000) * 1000;
+
 	addr = "127.0.0.1";
 	port = 6379;
 	db = 0;
@@ -299,15 +313,17 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	}
 
 	if(unix_sock_path != NULL) {
-		rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv);
+		rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv_conn);
 	} else {
-		rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv);
+		rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv_conn);
 	}
 	if(!rsrv->ctxRedis)
 		goto err;
 	if (rsrv->ctxRedis->err)
 		goto err2;
 	if ((pass != NULL) && redisc_check_auth(rsrv, pass))
+		goto err2;
+	if (redisSetTimeout(rsrv->ctxRedis, tv_cmd))
 		goto err2;
 	if (redisCommandNR(rsrv->ctxRedis, "PING"))
 		goto err2;
@@ -319,18 +335,18 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 err2:
 	if (unix_sock_path != NULL) {
 		LM_ERR("error communicating with redis server [%.*s] (unix:%s db:%d): %s\n",
-			   rsrv->sname->len, rsrv->sname->s, unix_sock_path, db, rsrv->ctxRedis->errstr);
+				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db, rsrv->ctxRedis->errstr);
 	} else {
 		LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): %s\n",
-			   rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
+				rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
 	}
 err:
 	if (unix_sock_path != NULL) {
 		LM_ERR("failed to connect to redis server [%.*s] (unix:%s db:%d)\n",
-			   rsrv->sname->len, rsrv->sname->s, unix_sock_path, db);
+				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db);
 	} else {
 		LM_ERR("failed to connect to redis server [%.*s] (%s:%d/%d)\n",
-			   rsrv->sname->len, rsrv->sname->s, addr, port, db);
+				rsrv->sname->len, rsrv->sname->s, addr, port, db);
 	}
 	return -1;
 }
@@ -429,8 +445,8 @@ void * redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv, cons
 	if(rsrv==NULL || rsrv->ctxRedis==NULL)
 	{
 		LM_ERR("no redis context found for server %.*s\n",
-			  (rsrv)?rsrv->sname->len:0,
-			  (rsrv)?rsrv->sname->s:"");
+				(rsrv)?rsrv->sname->len:0,
+				(rsrv)?rsrv->sname->s:"");
 		return NULL;
 	}
 	if(argc<=0)
@@ -461,7 +477,7 @@ void * redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv, cons
 	else
 	{
 		LM_ERR("Unable to reconnect to server: %.*s\n",
-			   rsrv->sname->len, rsrv->sname->s);
+				rsrv->sname->len, rsrv->sname->s);
 		return NULL;
 	}
 
@@ -528,7 +544,7 @@ int redisc_free_reply(str *name)
 	while(rpl) {
 
 		if(rpl->hname==hid && rpl->rname.len==name->len
-		   && strncmp(rpl->rname.s, name->s, name->len)==0) {
+				&& strncmp(rpl->rname.s, name->s, name->len)==0) {
 			if(rpl->rplRedis) {
 				freeReplyObject(rpl->rplRedis);
 				rpl->rplRedis = NULL;
