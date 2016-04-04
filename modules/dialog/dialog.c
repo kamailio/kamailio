@@ -104,6 +104,7 @@ int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
 static int _dlg_track_cseq_updates = 0;
+int dlg_ka_failed_limit = 1;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
@@ -221,10 +222,10 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"dlg_set_timeout", (cmd_function)w_dlg_set_timeout,  3,fixup_igp_all,
 			0, ANY_ROUTE },
-	{"dlg_set_timeout_by_profile", 
+	{"dlg_set_timeout_by_profile",
 		(cmd_function) w_dlg_set_timeout_by_profile2, 2, fixup_profile,
 			0, ANY_ROUTE },
-	{"dlg_set_timeout_by_profile", 
+	{"dlg_set_timeout_by_profile",
 		(cmd_function) w_dlg_set_timeout_by_profile3, 3, fixup_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
@@ -293,6 +294,7 @@ static param_export_t mod_params[]={
 	{ "track_cseq_updates",    PARAM_INT, &_dlg_track_cseq_updates  },
 	{ "lreq_callee_headers",   PARAM_STR, &dlg_lreq_callee_headers  },
 	{ "db_skip_load",          INT_PARAM, &db_skip_load             },
+	{ "ka_failed_limit",       INT_PARAM, &dlg_ka_failed_limit      },
 	{ 0,0,0 }
 };
 

@@ -53,8 +53,11 @@
 
 extern str dlg_extra_hdrs;
 extern str dlg_lreq_callee_headers;
+extern int dlg_ka_failed_limit;
 
-
+/**
+ *
+ */
 int free_tm_dlg(dlg_t *td)
 {
 	if(td)
@@ -241,7 +244,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 /* callback function to handle responses to the keep-alive request */
 void dlg_ka_cb_all(struct cell* t, int type, struct tmcb_params* ps, int dir)
 {
-
+	int tend;
 	dlg_cell_t* dlg;
 	dlg_iuid_t *iuid = NULL;
 
@@ -269,12 +272,26 @@ void dlg_ka_cb_all(struct cell* t, int type, struct tmcb_params* ps, int dir)
 			LM_DBG("skip updating non-confirmed dialogs\n");
 			goto done;
 		}
-		if(update_dlg_timer(&dlg->tl, 10)<0) {
-			LM_ERR("failed to update dialog lifetime\n");
-			goto done;
+		tend = 0;
+		if(dir==DLG_CALLER_LEG) {
+			dlg->ka_src_counter++;
+			if(dlg->ka_src_counter>=dlg_ka_failed_limit) {
+				tend = 1;
+			}
+		} else {
+			dlg->ka_dst_counter++;
+			if(dlg->ka_dst_counter>=dlg_ka_failed_limit) {
+				tend = 1;
+			}
 		}
-		dlg->lifetime = 10;
-		dlg->dflags |= DLG_FLAG_CHANGED;
+		if(tend) {
+			if(update_dlg_timer(&dlg->tl, 10)<0) {
+				LM_ERR("failed to update dialog lifetime\n");
+				goto done;
+			}
+			dlg->lifetime = 10;
+			dlg->dflags |= DLG_FLAG_CHANGED;
+		}
 	}
 
 done:
