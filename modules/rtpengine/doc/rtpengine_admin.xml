@@ -702,6 +702,11 @@ rtpengine_offer();
 		on INVITE for the cases the &sdp; bodies are in INVITE and 200 OK and on 200 OK
 		when &sdp; bodies are in 200 OK and ACK.
                 </para>
+                <para>
+		The function will return true on success and false (-1) on various failures,
+		like using rtp_engine_offer() on a SIP MESSAGE request or communication with
+		rtpengine fails.
+                </para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>

@@ -63,13 +63,24 @@ Richard Fuchs
               4.1. rtpengine_sock (string)
               4.2. rtpengine_disable_tout (integer)
               4.3. rtpengine_tout_ms (integer)
-              4.4. queried_nodes_limit (integer)
-              4.5. rtpengine_retr (integer)
-              4.6. extra_id_pv (string)
-              4.7. setid_avp (string)
-              4.8. force_send_interface (string)
-              4.9. write_sdp_pv (string)
-              4.10. rtp_inst_pvar (string)
+              4.4. rtpengine_allow_op (integer)
+              4.5. queried_nodes_limit (integer)
+              4.6. rtpengine_retr (integer)
+              4.7. extra_id_pv (string)
+              4.8. setid_avp (string)
+              4.9. force_send_interface (string)
+              4.10. read_sdp_pv (string)
+              4.11. write_sdp_pv (string)
+              4.12. rtp_inst_pvar (string)
+              4.13. hash_table_size (integer)
+              4.14. hash_table_tout (integer)
+              4.15. db_url (string)
+              4.16. table_name (string)
+              4.17. setid_col (string)
+              4.18. url_col (string)
+              4.19. weight_col (string)
+              4.20. disabled_col (string)
+              4.21. setid_default (string)
 
         5. Functions
 
@@ -89,6 +100,8 @@ Richard Fuchs
               7.1. nh_enable_rtpp proxy_url/all 0/1
               7.2. nh_show_rtpp proxy_url/all
               7.3. nh_ping_rtpp proxy_url/all
+              7.4. nh_reload_rtpp
+              7.5. nh_show_hash_total
 
    2. Frequently Asked Questions
 
@@ -97,23 +110,37 @@ Richard Fuchs
    1.1. Set rtpengine_sock parameter
    1.2. Set rtpengine_disable_tout parameter
    1.3. Set rtpengine_tout_ms parameter
-   1.4. Set queried_nodes_limit parameter
-   1.5. Set rtpengine_retr parameter
-   1.6. Set extra_id_pv parameter
-   1.7. Set setid_avp parameter
-   1.8. Set force_send_interface parameter
-   1.9. Set write_sdp_pv parameter
-   1.10. Set rtp_inst_pvar parameter
-   1.11. set_rtpengine_set usage
-   1.12. rtpengine_offer usage
-   1.13. rtpengine_answer usage
-   1.14. rtpengine_delete usage
-   1.15. rtpengine_manage usage
-   1.16. start_recording usage
-   1.17. $rtpstat Usage
-   1.18. nh_enable_rtpp usage
-   1.19. nh_show_rtpp usage
-   1.20. nh_ping_rtpp usage
+   1.4. Set rtpengine_allow_op parameter
+   1.5. Set queried_nodes_limit parameter
+   1.6. Set rtpengine_retr parameter
+   1.7. Set extra_id_pv parameter
+   1.8. Set setid_avp parameter
+   1.9. Set force_send_interface parameter
+   1.10. Set read_sdp_pv parameter
+   1.11. Set write_sdp_pv parameter
+   1.12. Set rtp_inst_pvar parameter
+   1.13. Set hash_table_size parameter
+   1.14. Set hash_table_tout parameter
+   1.15. Set db_url parameter
+   1.16. Set table_name parameter
+   1.17. Setup rtpengine table
+   1.18. Set setid_col parameter
+   1.19. Set url_col parameter
+   1.20. Set weight_col parameter
+   1.21. Set disabled_col parameter
+   1.22. Set setid_default parameter
+   1.23. set_rtpengine_set usage
+   1.24. rtpengine_offer usage
+   1.25. rtpengine_answer usage
+   1.26. rtpengine_delete usage
+   1.27. rtpengine_manage usage
+   1.28. start_recording usage
+   1.29. $rtpstat Usage
+   1.30. nh_enable_rtpp usage
+   1.31. nh_show_rtpp usage
+   1.32. nh_ping_rtpp usage
+   1.33. nh_reload_rtpp usage
+   1.34. nh_show_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -131,13 +158,24 @@ Chapter 1. Admin Guide
         4.1. rtpengine_sock (string)
         4.2. rtpengine_disable_tout (integer)
         4.3. rtpengine_tout_ms (integer)
-        4.4. queried_nodes_limit (integer)
-        4.5. rtpengine_retr (integer)
-        4.6. extra_id_pv (string)
-        4.7. setid_avp (string)
-        4.8. force_send_interface (string)
-        4.9. write_sdp_pv (string)
-        4.10. rtp_inst_pvar (string)
+        4.4. rtpengine_allow_op (integer)
+        4.5. queried_nodes_limit (integer)
+        4.6. rtpengine_retr (integer)
+        4.7. extra_id_pv (string)
+        4.8. setid_avp (string)
+        4.9. force_send_interface (string)
+        4.10. read_sdp_pv (string)
+        4.11. write_sdp_pv (string)
+        4.12. rtp_inst_pvar (string)
+        4.13. hash_table_size (integer)
+        4.14. hash_table_tout (integer)
+        4.15. db_url (string)
+        4.16. table_name (string)
+        4.17. setid_col (string)
+        4.18. url_col (string)
+        4.19. weight_col (string)
+        4.20. disabled_col (string)
+        4.21. setid_default (string)
 
    5. Functions
 
@@ -157,6 +195,8 @@ Chapter 1. Admin Guide
         7.1. nh_enable_rtpp proxy_url/all 0/1
         7.2. nh_show_rtpp proxy_url/all
         7.3. nh_ping_rtpp proxy_url/all
+        7.4. nh_reload_rtpp
+        7.5. nh_show_hash_total
 
 1. Overview
 
@@ -202,6 +242,31 @@ Chapter 1. Admin Guide
    the set was selected using setid_avp, the avp needs to be set only once
    before rtpengine_offer() or rtpengine_manage() call.
 
+   From the current implementation point of view, the sets of rtpproxy
+   nodes are shared memory(shm), so all processes can see a common list of
+   nodes. There is no locking when setting the nodes enabled/disabled (to
+   keep the memory access as fast as possible). Thus, problems related to
+   node state might appear for concurent processes that might set the
+   nodes enabled/disabled(e.g. by fifo command). This robustness problems
+   are overcomed as follows.
+
+   If the current process sees the selected node as disabled, the node is
+   force tested before the current process actually takes the disabled
+   decision. If the test succeeds, the process will set the node as
+   enabled (but other concurrent process might still see it as disabled).
+   .
+
+   If the current process sees the selected node as enabled, it does no
+   additional checks and sends the command which will fail in case the
+   machine is actually broken. The process will set the node as disabled
+   (but other concurrent process might still see it as enabled).
+
+   The 'kamctl fifo' commands (including rtpengin ones) are executed by an
+   exclusive process which operate on the same shared memory node list.
+
+   All the nodes are pinged in the beginning by all the processes, even if
+   the node list is shared memory.
+
 3. Dependencies
 
    3.1. Kamailio Modules
@@ -224,13 +289,24 @@ Chapter 1. Admin Guide
    4.1. rtpengine_sock (string)
    4.2. rtpengine_disable_tout (integer)
    4.3. rtpengine_tout_ms (integer)
-   4.4. queried_nodes_limit (integer)
-   4.5. rtpengine_retr (integer)
-   4.6. extra_id_pv (string)
-   4.7. setid_avp (string)
-   4.8. force_send_interface (string)
-   4.9. write_sdp_pv (string)
-   4.10. rtp_inst_pvar (string)
+   4.4. rtpengine_allow_op (integer)
+   4.5. queried_nodes_limit (integer)
+   4.6. rtpengine_retr (integer)
+   4.7. extra_id_pv (string)
+   4.8. setid_avp (string)
+   4.9. force_send_interface (string)
+   4.10. read_sdp_pv (string)
+   4.11. write_sdp_pv (string)
+   4.12. rtp_inst_pvar (string)
+   4.13. hash_table_size (integer)
+   4.14. hash_table_tout (integer)
+   4.15. db_url (string)
+   4.16. table_name (string)
+   4.17. setid_col (string)
+   4.18. url_col (string)
+   4.19. weight_col (string)
+   4.20. disabled_col (string)
+   4.21. setid_default (string)
 
 4.1. rtpengine_sock (string)
 
@@ -278,7 +354,30 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 modparam("rtpengine", "rtpengine_tout_ms", 2000)
 ...
 
-4.4. queried_nodes_limit (integer)
+4.4. rtpengine_allow_op (integer)
+
+   Enable this to allow finishing the current sessions while denying new
+   sessions for the manually deactivated nodes via kamctl command i.e.
+   "disabled(permanent)" nodes. Probably the manually deactivated machine
+   is still running(did not crash).
+
+   This is useful when deactivating a node for maintanance and reject new
+   sessions but allow current ones to finish.
+
+   The behaviour is the same for a rtpengine deleted table node. When the
+   node is deleted from the table and the table reloaded (see
+   nh_reload_rtpp) the node actually is disabled(permanent) and hidden for
+   display. Next time the same node will be added in the table, and the
+   content reloaded, it will be updated and re-displayed.
+
+   Default value is "0" to keep the current behaviour.
+
+   Example 1.4. Set rtpengine_allow_op parameter
+...
+modparam("rtpengine", "rtpengine_allow_op", 1)
+...
+
+4.5. queried_nodes_limit (integer)
 
    The total number of nodes inside a set (sets are configurable via
    rtpengine_sock function) to be queried before giving up establishing a
@@ -288,24 +387,24 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
    By default all nodes in a set are tried before giving up communicating
    with the rtpengines.
 
-   Example 1.4. Set queried_nodes_limit parameter
+   Example 1.5. Set queried_nodes_limit parameter
 ...
 modparam("rtpengine", "queried_nodes_limit", 5)
 ...
 
-4.5. rtpengine_retr (integer)
+4.6. rtpengine_retr (integer)
 
    How many times the module should retry to send and receive after
    timeout was generated.
 
    Default value is "5".
 
-   Example 1.5. Set rtpengine_retr parameter
+   Example 1.6. Set rtpengine_retr parameter
 ...
 modparam("rtpengine", "rtpengine_retr", 2)
 ...
 
-4.6. extra_id_pv (string)
+4.7. extra_id_pv (string)
 
    The parameter sets the PV defination to use when the "b" parameter is
    used on rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
@@ -313,12 +412,12 @@ modparam("rtpengine", "rtpengine_retr", 2)
 
    Default is empty, the "b" parameter may not be used then.
 
-   Example 1.6. Set extra_id_pv parameter
+   Example 1.7. Set extra_id_pv parameter
 ...
 modparam("rtpengine", "extra_id_pv", "$avp(extra_id)")
 ...
 
-4.7. setid_avp (string)
+4.8. setid_avp (string)
 
    The parameter defines an AVP that, if set, determines which RTP proxy
    set rtpengine_offer(), rtpengine_answer(), rtpengine_delete(), and
@@ -326,12 +425,12 @@ modparam("rtpengine", "extra_id_pv", "$avp(extra_id)")
 
    There is no default value.
 
-   Example 1.7. Set setid_avp parameter
+   Example 1.8. Set setid_avp parameter
 ...
 modparam("rtpengine", "setid_avp", "$avp(setid)")
 ...
 
-4.8. force_send_interface (string)
+4.9. force_send_interface (string)
 
    Forces all control messages between the SIP proxy and the RTP proxy to
    be sent from the specified local interface. Both IPv4 and IPv6
@@ -345,14 +444,32 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
 
    There is no default value.
 
-   Example 1.8. Set force_send_interface parameter
+   Example 1.9. Set force_send_interface parameter
 ...
 modparam("rtpengine", "force_send_interface", "10.3.7.123")
 modparam("rtpengine", "force_send_interface", "2001:8d8:1ff:10c0:9a90:96ff:fea8:
 fd99")
 ...
 
-4.9. write_sdp_pv (string)
+4.10. read_sdp_pv (string)
+
+   If this parameter is set to a valid AVP or script var specifier,
+   rtpengine will take the input SDP from this pv instead of the message
+   body.
+
+   There is no default value.
+
+   Example 1.10. Set read_sdp_pv parameter
+...
+modparam("rtpengine", "read_sdp_pv", "$var(sdp)")
+...
+route {
+        ...
+        $var(sdp) = $rb + "a=foo:bar\r\n";
+        rtpengine_manage();
+}
+
+4.11. write_sdp_pv (string)
 
    If this parameter is set to a valid AVP or script var specifier, the
    SDP returned by rtpengine in the offer/answer operations is returned in
@@ -360,14 +477,17 @@ fd99")
 
    There is no default value.
 
-   Example 1.9. Set write_sdp_pv parameter
+   Example 1.11. Set write_sdp_pv parameter
 ...
 modparam("rtpengine", "write_sdp_pv", "$avp(sdp)")
-  ...  or
-modparam("rtpengine", "write_sdp_pv", "$pv(sdp)")
 ...
+route {
+        ...
+        rtpengine_manage();
+        set_body("$avp(sdp)a=baz123\r\n", "application/sdp");
+}
 
-4.10. rtp_inst_pvar (string)
+4.12. rtp_inst_pvar (string)
 
    A pseudo variable to store the chosen RTP Engine IP address. If this
    parameter is set, the IP address and port of the instance chosen will
@@ -375,9 +495,165 @@ modparam("rtpengine", "write_sdp_pv", "$pv(sdp)")
 
    By default, this parameter is not set.
 
-   Example 1.10. Set rtp_inst_pvar parameter
+   Example 1.12. Set rtp_inst_pvar parameter
 ...
-modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
+modparam("rtpengine", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
+...
+
+4.13. hash_table_size (integer)
+
+   Size of the hash table. Default value is 256.
+
+   NOTE: If configured size is less than 1, the size will be defaulted to
+   1.
+
+   Example 1.13. Set hash_table_size parameter
+...
+modparam("rtpengine", "hash_table_size", "123")
+...
+
+4.14. hash_table_tout (integer)
+
+   Number of seconds after an rtpengine hash table entry is marked for
+   deletion. By default, this parameter is set to 3600 (seconds).
+
+   To maintain information about a selected rtp machine node, for a given
+   call, entries are added in a hashtable of (callid, node) pairs. When
+   command comes, lookup callid. If found, return chosen node. If not
+   found, choose a new node, insert it in the hastable and return the
+   chosen node.
+
+   NOTE: In the current implementation, the actual deletion happens on the
+   fly, while insert/remove/lookup the hastable, only for the entries in
+   the insert/remove/lookup path.
+
+   NOTE: When configuring this parameter, one should consider maximum call
+   time VS share memory for unfinished calls.
+
+   Example 1.14. Set hash_table_tout parameter
+...
+modparam("rtpengine", "hash_table_tout", "300")
+...
+
+4.15. db_url (string)
+
+   The rtpengine datablase url. If present and valid, it activates
+   database mode. Node information is read from database, not from config.
+
+   By default, the datablase url is NULL (not set).
+
+   Example 1.15. Set db_url parameter
+...
+modparam("rtpengine", "db_url", "mysql://pass@localhost/db")
+...
+
+4.16. table_name (string)
+
+   The rtpengine table name. If database mode is activated (i.e. valid
+   db_url), set the name of rtpengine table, on startup.
+
+   By default, the rtpengine table name is "rtpengine".
+
+   NOTE: One needs to add the version of the rtpengine table in the
+   version table. The current version is version 1.
+
+   Example 1.16. Set table_name parameter
+...
+modparam("rtpengine", "table_name", "rtpengine_table_name")
+...
+
+   Example 1.17. Setup rtpengine table
+mysql> describe rtpengine;
++----------+------------------+------+-----+---------------------+-------+
+| Field    | Type             | Null | Key | Default             | Extra |
++----------+------------------+------+-----+---------------------+-------+
+| setid    | int(10) unsigned | NO   | PRI | 0                   |       |
+| url      | varchar(64)      | NO   | PRI | NULL                |       |
+| weight   | int(10) unsigned | NO   |     | 1                   |       |
+| disabled | int(1)           | NO   |     | 0                   |       |
+| stamp    | datetime         | NO   |     | 1900-01-01 00:00:01 |       |
++----------+------------------+------+-----+---------------------+-------+
+
+mysql> select * from rtpengine;
++-------+---------------------------+--------+----------+---------------------+
+| setid | url                       | weight | disabled | stamp               |
++-------+---------------------------+--------+----------+---------------------+
+|     0 | udp:rtpproxy1.domain:8800 |      1 |        0 | 2016-03-10 10:30:54 |
+|     0 | udp:rtpproxy2.domain:8800 |      1 |        1 | 2016-03-10 10:30:54 |
++-------+---------------------------+--------+----------+---------------------+
+
+mysql> select * from version;
++---------------------------+---------------+
+| table_name                | table_version |
++---------------------------+---------------+
+| rtpengine                 |             1 |
++---------------------------+---------------+
+
+4.17. setid_col (string)
+
+   Column name in the rtpengine table. If database mode is activated (i.e.
+   valid db_url), set the setid of rtp nodes according to this column, on
+   startup. The MySQL value for this column should be INT UNSIGNED.
+
+   By default, the column name is "setid".
+
+   Example 1.18. Set setid_col parameter
+...
+modparam("rtpengine", "setid_col", "setid_column_name")
+...
+
+4.18. url_col (string)
+
+   Column name in the rtpengine table. If database mode is activated (i.e.
+   valid db_url), set the url of rtp nodes according to this column, on
+   startup. The MySQL value for this column should be VARCHAR.
+
+   By default, the column name is "url".
+
+   Example 1.19. Set url_col parameter
+...
+modparam("rtpengine", "url_col", "url_column_name")
+...
+
+4.19. weight_col (string)
+
+   Column name in the rtpengine table. If database mode is activated (i.e.
+   valid db_url), set the weight of rtp nodes according to this column, on
+   startup. The column value has priority over the URL weight. The MySQL
+   value for this column should be INT UNSIGNED.
+
+   By default, the column name is "weight".
+
+   Example 1.20. Set weight_col parameter
+...
+modparam("rtpengine", "weight_col", "weight_column_name")
+...
+
+4.20. disabled_col (string)
+
+   Column name in the rtpengine table. If database mode is activated (i.e.
+   valid db_url), set the state of rtp nodes according to this column, on
+   startup. The MySQL value for this column should be INT.
+
+   By default, the column name is "disabled".
+
+   Example 1.21. Set disabled_col parameter
+...
+modparam("rtpengine", "disabled_col", "disabled_column_name")
+...
+
+4.21. setid_default (string)
+
+   The default set of nodes to be used.
+
+   By default, the setid is 0.
+
+   NOTE that if setid_avp is configured, this value will be ignored and
+   the active set will be chosen according to the setid_avp.
+
+   Example 1.22. Set setid_default parameter
+...
+modparam("rtpengine", "setid_default", 11)
 ...
 
 5. Functions
@@ -411,7 +687,7 @@ modparam("rtpproxy", "rtp_inst_pvar", "$avp(RTP_INSTANCE)")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.11. set_rtpengine_set usage
+   Example 1.23. set_rtpengine_set usage
 ...
 set_rtpengine_set("2");
 rtpengine_offer();
@@ -422,6 +698,10 @@ rtpengine_offer();
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on INVITE for the cases the SDP bodies are in INVITE and
    200 OK and on 200 OK when SDP bodies are in 200 OK and ACK.
+
+   The function will return true on success and false (-1) on various
+   failures, like using rtp_engine_offer() on a SIP MESSAGE request or
+   communication with rtpengine fails.
 
    Meaning of the parameters is as follows:
      * flags - flags to turn on some features.
@@ -612,7 +892,7 @@ rtpengine_offer();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. rtpengine_offer usage
+   Example 1.24. rtpengine_offer usage
 route {
 ...
     if (is_method("INVITE")) {
@@ -656,7 +936,7 @@ onreply_route[2]
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.13. rtpengine_answer usage
+   Example 1.25. rtpengine_answer usage
 
    See rtpengine_offer() function example above for example.
 
@@ -669,7 +949,7 @@ onreply_route[2]
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.14. rtpengine_delete usage
+   Example 1.26. rtpengine_delete usage
 ...
 rtpengine_delete();
 ...
@@ -699,7 +979,7 @@ rtpengine_delete();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. rtpengine_manage usage
+   Example 1.27. rtpengine_manage usage
 ...
 rtpengine_manage();
 ...
@@ -712,7 +992,7 @@ rtpengine_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.16. start_recording usage
+   Example 1.28. start_recording usage
 ...
 start_recording();
 ...
@@ -728,7 +1008,7 @@ start_recording();
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.17. $rtpstat Usage
+   Example 1.29. $rtpstat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
@@ -738,6 +1018,8 @@ start_recording();
    7.1. nh_enable_rtpp proxy_url/all 0/1
    7.2. nh_show_rtpp proxy_url/all
    7.3. nh_ping_rtpp proxy_url/all
+   7.4. nh_reload_rtpp
+   7.5. nh_show_hash_total
 
 7.1. nh_enable_rtpp proxy_url/all 0/1
 
@@ -765,7 +1047,7 @@ start_recording();
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.18. nh_enable_rtpp usage
+   Example 1.30. nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 $ kamctl fifo nh_enable_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -788,7 +1070,7 @@ $ kamctl fifo nh_enable_rtpp all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.19. nh_show_rtpp usage
+   Example 1.31. nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp udp:192.168.2.133:8081
 $ kamctl fifo nh_show_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -808,11 +1090,36 @@ $ kamctl fifo nh_show_rtpp all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.20. nh_ping_rtpp usage
+   Example 1.32. nh_ping_rtpp usage
 ...
 $ kamctl fifo nh_ping_rtpp udp:192.168.2.133:8081
 $ kamctl fifo nh_ping_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
 $ kamctl fifo nh_ping_rtpp all
+...
+
+7.4. nh_reload_rtpp
+
+   Reloads the database node table content if configured. Returns specific
+   message related to success, failure and no db_url configured.
+
+   NOTE: The current behaviour updates the nodes state or creates new ones
+   or hides old ones, based on the database content. If allow_op modparam
+   is enabled, the sessions are still allowed to finish for the hidden old
+   nodes.
+
+   Example 1.33. nh_reload_rtpp usage
+...
+$ kamctl fifo nh_reload_rtpp
+...
+
+7.5. nh_show_hash_total
+
+   Print the total number of hash entries in the hash table at a given
+   moment.
+
+   Example 1.34. nh_show_hash_total usage
+...
+$ kamctl fifo nh_show_hash_total
 ...
 
 Chapter 2. Frequently Asked Questions
