@@ -239,7 +239,8 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 
 /* callback function to handle responses to the keep-alive request */
-void dlg_ka_cb(struct cell* t, int type, struct tmcb_params* ps){
+void dlg_ka_cb_all(struct cell* t, int type, struct tmcb_params* ps, int dir)
+{
 
 	dlg_cell_t* dlg;
 	dlg_iuid_t *iuid = NULL;
@@ -281,6 +282,17 @@ done:
 	dlg_iuid_sfree(iuid);
 }
 
+/* callback function to handle responses to the keep-alive request to src */
+void dlg_ka_cb_src(struct cell* t, int type, struct tmcb_params* ps)
+{
+	dlg_ka_cb_all(t, type, ps, DLG_CALLER_LEG);
+}
+
+/* callback function to handle responses to the keep-alive request to dst */
+void dlg_ka_cb_dst(struct cell* t, int type, struct tmcb_params* ps)
+{
+	dlg_ka_cb_all(t, type, ps, DLG_CALLEE_LEG);
+}
 
 static inline int build_extra_hdr(struct dlg_cell * cell, str *extra_hdrs,
 		str *str_hdr)
@@ -440,10 +452,10 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir)
 
 	if(dir==DLG_CALLEE_LEG && dlg_lreq_callee_headers.len>0) {
 		set_uac_req(&uac_r, &met, &dlg_lreq_callee_headers, NULL, di,
-				TMCB_LOCAL_COMPLETED, dlg_ka_cb, (void*)iuid);
+				TMCB_LOCAL_COMPLETED, dlg_ka_cb_dst, (void*)iuid);
 	} else {
 		set_uac_req(&uac_r, &met, NULL, NULL, di, TMCB_LOCAL_COMPLETED,
-				dlg_ka_cb, (void*)iuid);
+				(dir==DLG_CALLEE_LEG)?dlg_ka_cb_dst:dlg_ka_cb_src, (void*)iuid);
 	}
 	result = d_tmb.t_request_within(&uac_r);
 

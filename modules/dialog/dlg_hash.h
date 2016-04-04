@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -48,7 +48,7 @@
 /* events for dialog processing */
 #define DLG_EVENT_TDEL         1 /*!< transaction was destroyed */
 #define DLG_EVENT_RPL1xx       2 /*!< 1xx request */
-#define DLG_EVENT_RPL2xx       3 /*!< 2xx request */ 
+#define DLG_EVENT_RPL2xx       3 /*!< 2xx request */
 #define DLG_EVENT_RPL3xx       4 /*!< 3xx request */
 #define DLG_EVENT_REQPRACK     5 /*!< PRACK request */
 #define DLG_EVENT_REQACK       6 /*!< ACK request */
@@ -128,6 +128,8 @@ typedef struct dlg_cell
 	struct dlg_head_cbl  cbs;		/*!< dialog callbacks */
 	struct dlg_profile_link *profile_links; /*!< dialog profiles */
 	struct dlg_var       *vars;		/*!< dialog variables */
+	unsigned int         ka_src_counter;	/*!< keepalive src (caller) counter */
+	unsigned int         ka_dst_counter;	/*!< keepalive dst (callee) counter */
 } dlg_cell_t;
 
 
@@ -322,9 +324,9 @@ dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid);
  * \brief Get dialog that correspond to CallId, From Tag and To Tag
  *
  * Get dialog that correspond to CallId, From Tag and To Tag.
- * See RFC 3261, paragraph 4. Overview of Operation:                 
- * "The combination of the To tag, From tag, and Call-ID completely  
- * defines a peer-to-peer SIP relationship between [two UAs] and is 
+ * See RFC 3261, paragraph 4. Overview of Operation:
+ * "The combination of the To tag, From tag, and Call-ID completely
+ * defines a peer-to-peer SIP relationship between [two UAs] and is
  * referred to as a dialog."
  * Note that the caller is responsible for decrementing (or reusing)
  * the reference counter by one again iff a dialog has been found.
@@ -458,9 +460,10 @@ struct mi_root * mi_terminate_dlgs(struct mi_root *cmd_tree, void *param );
  * \return 1 if dialog structure and message content matches, 0 otherwise
  */
 static inline int match_dialog(dlg_cell_t *dlg, str *callid,
-							   str *ftag, str *ttag, unsigned int *dir) {
+		str *ftag, str *ttag, unsigned int *dir)
+{
 	if (dlg->tag[DLG_CALLEE_LEG].len == 0) {
-        // dialog to tag is undetermined ATM.
+		// dialog to tag is undetermined ATM.
 		if (*dir==DLG_DIR_DOWNSTREAM) {
 			if (dlg->callid.len == callid->len &&
 				dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
@@ -485,9 +488,9 @@ static inline int match_dialog(dlg_cell_t *dlg, str *callid,
 
 				*dir = DLG_DIR_UPSTREAM;
 				return 1;
-			} else if (dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
-					   strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
-					   strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+			} else if (dlg->tag[DLG_CALLER_LEG].len == ftag->len
+					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0
+					&& strncmp(dlg->callid.s, callid->s, callid->len)==0) {
 
 				*dir = DLG_DIR_DOWNSTREAM;
 				return 1;
@@ -525,10 +528,10 @@ static inline int match_dialog(dlg_cell_t *dlg, str *callid,
 				*dir = DLG_DIR_UPSTREAM;
 				return 1;
 			} else if (dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
-					   dlg->tag[DLG_CALLEE_LEG].len == ttag->len &&
-					   strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
-					   strncmp(dlg->tag[DLG_CALLEE_LEG].s, ttag->s, ttag->len)==0 &&
-					   strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+						dlg->tag[DLG_CALLEE_LEG].len == ttag->len &&
+						strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
+						strncmp(dlg->tag[DLG_CALLEE_LEG].s, ttag->s, ttag->len)==0 &&
+						strncmp(dlg->callid.s, callid->s, callid->len)==0) {
 
 				*dir = DLG_DIR_DOWNSTREAM;
 				return 1;
@@ -537,8 +540,8 @@ static inline int match_dialog(dlg_cell_t *dlg, str *callid,
 			 * runs on 200ok but with initial INVITE that has no to-tag */
 			if(ttag->len==0 && dlg->state==DLG_STATE_CONFIRMED_NA
 					&& dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
-					   strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
-					   strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+						strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
+						strncmp(dlg->callid.s, callid->s, callid->len)==0) {
 
 				*dir = DLG_DIR_DOWNSTREAM;
 				return 1;
