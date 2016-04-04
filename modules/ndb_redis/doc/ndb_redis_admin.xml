@@ -112,6 +112,30 @@ modparam("ndb_redis", "init_without_redis", 1)
 			</programlisting>
 		</example>
 	</section>
+	<section id="ndb_redis.p.connect_timeout">
+		<title><varname>connect_timeout</varname> (int)</title>
+		<para>
+			The timeout when connecting to the redis server
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1000 ms.
+		</emphasis>
+		</para>
+	</section>
+	<section id="ndb_redis.p.cmd_timeout">
+		<title><varname>cmd_timeout</varname> (int)</title>
+		<para>
+			The timeout for each query to the redis server. If the redis server does 
+			not reply within the timeout value, the command will fail and kamailio will
+			continue executing the cfg file.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1000 ms.
+		</emphasis>
+		</para>
+	</section>
 	</section>
 
 	<section>
