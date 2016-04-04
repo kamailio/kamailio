@@ -509,10 +509,10 @@ char *sr_memmng_pkg = NULL;
 char *sr_memmng_shm = NULL;
 
 /* call it before exiting; if show_status==1, mem status is displayed */
-void cleanup(show_status)
+void cleanup(int show_status)
 {
 	int memlog;
-	
+
 	/*clean-up*/
 #ifndef SHM_SAFE_MALLOC
 	if (_shm_lock)
