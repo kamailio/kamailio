@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -24,6 +24,7 @@
 
 #include "../../sr_module.h"
 #include "../../pvar.h"
+#include "../../lvalue.h"
 #include "../../mod_fix.h"
 #include "../../lib/kmi/mi.h"
 #include "../../rpc.h"
@@ -123,19 +124,19 @@ static pv_export_t mod_pvs[] = {
 		0, 0, pv_init_iname, 5},
 	{{"aa", (sizeof("aa")-1)}, /* auth algorithm */
 		PVT_OTHER, pv_get_authattr, 0,
-		0, 0, pv_init_iname, 6},	
+		0, 0, pv_init_iname, 6},
 	{{"adn", (sizeof("adn")-1)}, /* auth nonce */
 		PVT_OTHER, pv_get_authattr, 0,
-		0, 0, pv_init_iname, 7},	
+		0, 0, pv_init_iname, 7},
 	{{"adc", (sizeof("adc")-1)}, /* auth cnonce */
 		PVT_OTHER, pv_get_authattr, 0,
-		0, 0, pv_init_iname, 8},	
+		0, 0, pv_init_iname, 8},
 	{{"adr", (sizeof("adr")-1)}, /* auth response */
 		PVT_OTHER, pv_get_authattr, 0,
-		0, 0, pv_init_iname, 9},	
+		0, 0, pv_init_iname, 9},
 	{{"ado", (sizeof("ado")-1)}, /* auth opaque */
 		PVT_OTHER, pv_get_authattr, 0,
-		0, 0, pv_init_iname, 10},	
+		0, 0, pv_init_iname, 10},
 	{{"Au", (sizeof("Au")-1)}, /* */
 		PVT_OTHER, pv_get_acc_username, 0,
 		0, 0, pv_init_iname, 1},
@@ -475,7 +476,7 @@ static pv_export_t mod_pvs[] = {
 
 static int add_avp_aliases(modparam_t type, void* val);
 
-static param_export_t params[]={ 
+static param_export_t params[]={
 	{"shvset",              PARAM_STRING|USE_FUNC_PARAM, (void*)param_set_shvar },
 	{"varset",              PARAM_STRING|USE_FUNC_PARAM, (void*)param_set_var },
 	{"avp_aliases",         PARAM_STRING|USE_FUNC_PARAM, (void*)add_avp_aliases },
@@ -502,16 +503,19 @@ static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
 static int w_var_to_xavp(sip_msg_t *msg, char *p1, char *p2);
 static int w_xavp_to_var(sip_msg_t *msg, char *p1);
 
+int pv_evalx_fixup(void** param, int param_no);
+int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt);
+
 static int pv_init_rpc(void);
 int pv_register_api(pv_api_t*);
 
 static cmd_export_t cmds[]={
-	{"pv_isset",  (cmd_function)pv_isset,  1, fixup_pvar_null, 0, 
+	{"pv_isset",  (cmd_function)pv_isset,  1, fixup_pvar_null, 0,
 		ANY_ROUTE },
-	{"pv_unset",  (cmd_function)pv_unset,  1, fixup_pvar_null, 0, 
+	{"pv_unset",  (cmd_function)pv_unset,  1, fixup_pvar_null, 0,
 		ANY_ROUTE },
 #ifdef WITH_XAVP
-	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0, 
+	{"pv_xavp_print",  (cmd_function)pv_xavp_print,  0, 0, 0,
 		ANY_ROUTE },
 	{"pv_var_to_xavp",  (cmd_function)w_var_to_xavp, 2, 0, 0,
 		ANY_ROUTE },
@@ -535,6 +539,8 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE },
 	{"sbranch_reset",     (cmd_function)w_sbranch_reset,     0, 0, 0,
 		ANY_ROUTE },
+	{"pv_evalx",          (cmd_function)w_pv_evalx,    2, pv_evalx_fixup,
+		0, ANY_ROUTE },
 	/* API exports */
 	{"pv_register_api",   (cmd_function)pv_register_api,     NO_SCRIPT, 0, 0},
 	{0,0,0,0,0,0}
@@ -610,7 +616,7 @@ static int pv_isset(struct sip_msg* msg, char* pvid, char *foo)
 static int pv_unset(struct sip_msg* msg, char* pvid, char *foo)
 {
 	pv_spec_t *sp;
-	
+
 	sp = (pv_spec_t*)pvid;
 	pv_set_spec_value(msg, sp, 0, NULL);
 
@@ -786,6 +792,91 @@ static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2)
 	return 1;
 }
 
+int pv_evalx_fixup(void** param, int param_no)
+{
+	pv_spec_t *spec=NULL;
+	pv_elem_t *pvmodel=NULL;
+	str tstr;
+
+	if(param_no==1) {
+		spec = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+		if(spec==NULL) {
+			LM_ERR("out of pkg\n");
+			return -1;
+		}
+		memset(spec, 0, sizeof(pv_spec_t));
+		tstr.s = (char*)(*param);
+		tstr.len = strlen(tstr.s);
+		if(pv_parse_spec(&tstr, spec)==NULL) {
+			LM_ERR("unknown script variable in first parameter\n");
+			pkg_free(spec);
+			return -1;
+		}
+		if(!pv_is_w(spec)) {
+			LM_ERR("read-only script variable in first parameter\n");
+			pkg_free(spec);
+			return -1;
+		}
+		*param = spec;
+	} else if(param_no==2) {
+		pvmodel = 0;
+		tstr.s = (char*)(*param);
+		tstr.len = strlen(tstr.s);
+		if(pv_parse_format(&tstr, &pvmodel)<0) {
+			LM_ERR("error in second parameter\n");
+			return -1;
+		}
+		*param = pvmodel;
+	}
+	return 0;
+}
+
+int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt)
+{
+	pv_spec_t *ispec=NULL;
+	pv_elem_t *imodel=NULL;
+	pv_elem_t *xmodel=NULL;
+	str tstr = {0, 0};
+	pv_value_t val;
+
+	ispec = (pv_spec_t*)dst;
+
+	imodel = (pv_elem_t*)fmt;
+
+	memset(&val, 0, sizeof(pv_value_t));
+
+	if(pv_printf_s(msg, imodel, &tstr)!=0) {
+		LM_ERR("cannot eval second parameter\n");
+		goto error;
+	}
+
+	if(pv_parse_format(&tstr, &xmodel)<0) {
+		LM_ERR("error in parsing evaluated second parameter\n");
+		return -1;
+	}
+
+	if(pv_printf_s(msg, xmodel, &val.rs)!=0) {
+		LM_ERR("cannot eval reparsed value of second parameter\n");
+		pv_elem_free_all(xmodel);
+		goto error;
+	}
+
+	val.flags = PV_VAL_STR;
+	if(ispec->setf(msg, &ispec->pvp, EQ_T, &val)<0) {
+		LM_ERR("setting PV failed\n");
+		pv_elem_free_all(xmodel);
+		goto error;
+	}
+	pv_elem_free_all(xmodel);
+
+	return 1;
+error:
+	return -1;
+}
+
+/**
+ *
+ */
 static const char* rpc_shv_set_doc[2] = {
 	"Set a shared variable (args: name type value)",
 	0
