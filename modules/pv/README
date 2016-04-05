@@ -11,11 +11,11 @@ Daniel-Constantin Mierla
 
    <daniel@asipto.com>
 
-   Copyright (c) 2008-2011 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2008-2011 Daniel-Constantin Mierla (asipto.com)
 
-   Copyright (c) 2011 Juha Heinanen
+   Copyright © 2011 Juha Heinanen
 
-   Copyright (c) 2013 Olle E. Johansson, Edvina AB
+   Copyright © 2013 Olle E. Johansson, Edvina AB
      __________________________________________________________________
 
    Table of Contents
@@ -48,6 +48,7 @@ Daniel-Constantin Mierla
               4.10. pv_xavp_print()
               4.11. pv_var_to_xavp(varname, xname)
               4.12. pv_xavp_to_var(xname)
+              4.13. pv_evalx(dst, fmt)
 
         5. MI Commands
 
@@ -76,8 +77,9 @@ Daniel-Constantin Mierla
    1.13. pv_xavp_print() usage
    1.14. pv_var_to_xavp() usage
    1.15. pv_xavp_to_var() usage
-   1.16. shv_set usage
-   1.17. shv_get usage
+   1.16. pv_xavp_to_var() usage
+   1.17. shv_set usage
+   1.18. shv_get usage
 
 Chapter 1. Admin Guide
 
@@ -109,6 +111,7 @@ Chapter 1. Admin Guide
         4.10. pv_xavp_print()
         4.11. pv_var_to_xavp(varname, xname)
         4.12. pv_xavp_to_var(xname)
+        4.13. pv_evalx(dst, fmt)
 
    5. MI Commands
 
@@ -215,6 +218,7 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
    4.10. pv_xavp_print()
    4.11. pv_var_to_xavp(varname, xname)
    4.12. pv_xavp_to_var(xname)
+   4.13. pv_evalx(dst, fmt)
 
 4.1. pv_isset(pvar)
 
@@ -247,7 +251,7 @@ if(pv_isset("$avp(s:x)"))
 pv_unset("$avp(s:x)");
 ...
 
-4.3.  is_int(pvar)
+4.3. is_int(pvar)
 
    Function checks if pvar argument contains integer value and returns 1
    if it does and -1 otherwise.
@@ -261,7 +265,7 @@ if (is_int("$var(foo)")) {
 }
 ...
 
-4.4.  typeof(pvar, vtype)
+4.4. typeof(pvar, vtype)
 
    Returns true if the type of pseudo-variable matches the second
    parameter. The second parameter can be: 'int' - type is integer; 'str'
@@ -276,7 +280,7 @@ if (typeof("$var(foo)", "str")) {
 }
 ...
 
-4.5.  not_empty(pvar)
+4.5. not_empty(pvar)
 
    Returns true if the pseudo-variables has the type string and is not
    empty value.
@@ -290,7 +294,7 @@ if (not_empty("$var(foo)")) {
 }
 ...
 
-4.6.  xavp_params_explode(sparams, xname)
+4.6. xavp_params_explode(sparams, xname)
 
    Convert a parameters string in xavp atributes.
 
@@ -311,7 +315,7 @@ xavp_params_explode("a=b;c=d;e=d", "x");
 #    $xavp(x=>e) = "f";
 ...
 
-4.7.  sbranch_set_ruri()
+4.7. sbranch_set_ruri()
 
    Use the attributes from static branch ($sbranch(key) variable) to set
    request URI and the other fields of the branch associated with request
@@ -332,7 +336,7 @@ $sbranch(send_socket) =  "udp:127.0.0.1:5060";
 sbranch_set_ruri();
 ...
 
-4.8.  sbranch_append()
+4.8. sbranch_append()
 
    Use the attributes from static branch ($sbranch(key) variable) to
    append a new branch to destination set. It is an alternative to
@@ -353,7 +357,7 @@ $sbranch(send_socket) =  "udp:127.0.0.1:5060";
 sbranch_append();
 ...
 
-4.9.  sbranch_reset()
+4.9. sbranch_reset()
 
    Reset the content of static branch ($sbranch(key) variable.
 
@@ -364,7 +368,7 @@ sbranch_append();
 sbranch_reset();
 ...
 
-4.10.  pv_xavp_print()
+4.10. pv_xavp_print()
 
    Print all XAVPs to the syslog using INFO log level.
 
@@ -375,7 +379,7 @@ sbranch_reset();
 pv_xavp_print();
 ...
 
-4.11.  pv_var_to_xavp(varname, xname)
+4.11. pv_var_to_xavp(varname, xname)
 
    Copy script variables values to a xavp.
 
@@ -399,7 +403,7 @@ $xavp("ok[0]=>temp") now is 3
 $xavp("ok[0]=>foo") now is "foo indeed"
 ...
 
-4.12.  pv_xavp_to_var(xname)
+4.12. pv_xavp_to_var(xname)
 
    Copy xavp values to vars. Reverse of pv_var_to_xavp().
 
@@ -413,6 +417,24 @@ pv_xavp_to_var("bar");
 ...
 $var("temp") now is 3
 $var("foo") now is "foo indeed"
+...
+
+4.13. pv_evalx(dst, fmt)
+
+   The fmt string is evaluated twice for exiting variables, the result is
+   stored in dst variable. The dst must be the name of a writable
+   variable. The fmt can contain variables that have a value containing
+   other variables.
+
+   Function can be used from ANY_ROUTE.
+
+   Example 1.16. pv_xavp_to_var() usage
+...
+$var(x) = "test";
+$var(y) = "$var(x)"
+pv_evalx("$var(z)", "$var(y) one");
+
+# - the value of $var(z) is "test one"
 ...
 
 5. MI Commands
@@ -438,7 +460,7 @@ $var("foo") now is "foo indeed"
                 _value_
                 _empty_line_
 
-   Example 1.16. shv_set usage
+   Example 1.17. shv_set usage
 ...
 $ kamctl fifo shv_set debug int 0
 ...
@@ -456,7 +478,7 @@ $ kamctl fifo shv_set debug int 0
                 _name_
                 _empty_line_
 
-   Example 1.17. shv_get usage
+   Example 1.18. shv_get usage
 ...
 $ kamctl fifo shv_get debug
 $ kamctl fifo shv_get
