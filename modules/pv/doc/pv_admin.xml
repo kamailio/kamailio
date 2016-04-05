@@ -450,6 +450,33 @@ $var("foo") now is "foo indeed"
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.pv_evalx">
+			<title>
+				<function moreinfo="none">pv_evalx(dst, fmt)</function>
+			</title>
+			<para>
+				The fmt string is evaluated twice for exiting variables,
+				the result is stored in dst variable. The dst must be the
+				name of a writable variable. The fmt can contain variables
+				that have a value containing other variables.
+			</para>
+
+			<para>
+			Function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pv_xavp_to_var()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(x) = "test";
+$var(y) = "$var(x)"
+pv_evalx("$var(z)", "$var(y) one");
+
+# - the value of $var(z) is "test one"
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>
