@@ -292,6 +292,14 @@ void dlg_ka_cb_all(struct cell* t, int type, struct tmcb_params* ps, int dir)
 			dlg->lifetime = 10;
 			dlg->dflags |= DLG_FLAG_CHANGED;
 		}
+	} else {
+		if (dlg->state == DLG_STATE_CONFIRMED) {
+			if(dir==DLG_CALLER_LEG) {
+				dlg->ka_src_counter = 0;
+			} else {
+				dlg->ka_dst_counter = 0;
+			}
+		}
 	}
 
 done:
