@@ -1205,9 +1205,12 @@ int add_interfaces(char* if_name, int family, unsigned short port,
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
 	{
+		/* skip if no IP addr associated with the interface */
+		if (ifa->ifa_addr==0)
+			continue;
 #ifdef AF_PACKET
 		/* skip AF_PACKET addr family since it is of no use later on */
-		if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_PACKET)
+		if (ifa->ifa_addr->sa_family == AF_PACKET)
 			continue;
 #endif
 		if (if_name && strcmp(if_name, ifa->ifa_name))
