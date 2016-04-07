@@ -320,6 +320,7 @@ extern char *default_routename;
 %token LOGNAME
 %token LOGCOLOR
 %token LOGPREFIX
+%token LOGPREFIXMODE
 %token LOGENGINETYPE
 %token LOGENGINEDATA
 %token LISTEN
@@ -777,6 +778,8 @@ assign_stm:
 	| LOGCOLOR EQUAL error { yyerror("boolean value expected"); }
 	| LOGPREFIX EQUAL STRING { log_prefix_fmt=$3; }
 	| LOGPREFIX EQUAL error { yyerror("string value expected"); }
+	| LOGPREFIXMODE EQUAL NUMBER { log_prefix_mode=$3; }
+	| LOGPREFIXMODE EQUAL error { yyerror("number expected"); }
 	| LOGENGINETYPE EQUAL STRING { _km_log_engine_type=$3; }
 	| LOGENGINETYPE EQUAL error { yyerror("string value expected"); }
 	| LOGENGINEDATA EQUAL STRING { _km_log_engine_data=$3; }

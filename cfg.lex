@@ -290,6 +290,7 @@ LOGFACILITY	log_facility
 LOGNAME		log_name
 LOGCOLOR	log_color
 LOGPREFIX	log_prefix
+LOGPREFIXMODE	log_prefix_mode
 LOGENGINETYPE	log_engine_type
 LOGENGINEDATA	log_engine_data
 LISTEN		listen
@@ -673,6 +674,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOGNAME}	{ yylval.strval=yytext; return LOGNAME; }
 <INITIAL>{LOGCOLOR}	{ yylval.strval=yytext; return LOGCOLOR; }
 <INITIAL>{LOGPREFIX}	{ yylval.strval=yytext; return LOGPREFIX; }
+<INITIAL>{LOGPREFIXMODE}	{ yylval.strval=yytext; return LOGPREFIXMODE; }
 <INITIAL>{LOGENGINETYPE}	{ yylval.strval=yytext; return LOGENGINETYPE; }
 <INITIAL>{LOGENGINEDATA}	{ yylval.strval=yytext; return LOGENGINEDATA; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }

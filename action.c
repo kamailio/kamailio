@@ -1546,8 +1546,14 @@ int run_actions(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0))
 			ms = TICKS_TO_MS(get_ticks_raw());
 		_cfg_crt_action = t;
+		if(unlikely(log_prefix_mode==1)) {
+			log_prefix_set(msg);
+		}
 		ret=do_action(h, t, msg);
 		_cfg_crt_action = 0;
+		if(unlikely(log_prefix_mode==1)) {
+			log_prefix_set(msg);
+		}
 		if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)) {
 			ms = TICKS_TO_MS(get_ticks_raw()) - ms;
 			if(ms >= cfg_get(core, core_cfg, latency_limit_action)) {

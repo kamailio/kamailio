@@ -123,6 +123,7 @@ extern int log_stderr;
 extern int log_color;
 extern char *log_prefix_fmt;
 extern str *log_prefix_val;
+extern int log_prefix_mode;
 extern char *_km_log_engine_type;
 extern char *_km_log_engine_data;
 

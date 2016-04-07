@@ -432,6 +432,7 @@ void dprint_color_update(int level, char f, char b)
 
 /* log_prefix functionality */
 str *log_prefix_val = NULL;
+int log_prefix_mode = 0;
 static pv_elem_t *log_prefix_pvs = NULL;
 
 #define LOG_PREFIX_SIZE	1024
