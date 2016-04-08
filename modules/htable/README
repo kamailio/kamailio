@@ -11,9 +11,13 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
+Edited by
+
 Alex Balashov
 
    <abalashov@evaristesys.com>
+
+Edited by
 
 Ovidiu Sas
 
@@ -206,16 +210,16 @@ $sht(a=>test) = 1;
 $sht(a=>$ci::srcip) = $si;
 ...
 
-   Next example shows a way to protect against dictionary attacks. If
-   someone fails to authenticate 3 times, it is forbidden for 15min.
+   The next example shows a way to protect against dictionary attacks. If
+   someone fails to authenticate 3 times, it is forbidden for 15 minutes.
    Authenticatiion against database is expensive as it does a select on
-   the "subscriberthe" table. By disabling the DB auth for 15min,
+   the "subscriber" table. By disabling the DB auth for 15 minutes,
    resources on the server are saved and time to discover the password is
    increased substantially. Additional alerting can be done by writing a
    message to syslog or sending email, etc.
 
    To implement the logic, two hash table variables are used: one counting
-   the failed authentications per user and one for storing the time of
+   the failed authentications per user and one for storing the time of the
    last authentication attempt. To ensure a unique name per user, the hash
    table uses a combination of authentication username and text
    "::auth_count" and "::last_auth".
@@ -426,9 +430,9 @@ $ kamcmd htable.dump htable
        the table is 2^size. The possible range for this value is from 2 to
        31, smaller or larger values will be increased to 3 (8 slots) or
        decreased to 14 (16384 slots).
-     * autoexpire -time in seconds to delete an item from hash table if no
-       update was done to it. If is missing or set to 0, the items won't
-       expire.
+     * autoexpire -time in seconds to delete an item from a hash table if
+       no update was done to it. If is missing or set to 0, the items
+       won't expire.
      * dbtable - name of database to be loaded at startup in hash table.
        If empty or missing, no data will be loaded.
      * cols - the column names of the database table. They must be
@@ -684,7 +688,7 @@ sht_reset("ha$var(x)");
 
 4.5. sht_lock(htable=>key)
 
-   Lock the slot in htable corespoding to the key item. Note that the
+   Lock the slot in htable corresponding to the key item. Note that the
    locking is re-entrant for the process, therefore the lock and unlock
    should be done by the same process.
 
