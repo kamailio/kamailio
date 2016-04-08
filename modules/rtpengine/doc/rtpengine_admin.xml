@@ -958,6 +958,11 @@ rtpengine_offer();
 				SDES-authenticated_srtp</emphasis> - the opposites of the flags above. Useful
 				if accepting these parameters is not desired and they should be rejected instead.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>unidirectional</emphasis> - allows kernelization of one-way streams
+				in the Sipwise rtpengine proxy. This is especially useful when the first call leg is handled
+				by some rtpengine machine while the second call leg is handled by other rtpengine machine.
+				</para></listitem>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
