@@ -664,6 +664,7 @@ C_DEFS= $(extra_defs) \
 # debugging symbols in all cases (-g). --andrei
 
 # memory managers and related debug mode
+C_DEFS+= -DMEM_JOIN_FREE
 # enable f_malloc
 C_DEFS+= -DF_MALLOC
 # enable q_malloc
