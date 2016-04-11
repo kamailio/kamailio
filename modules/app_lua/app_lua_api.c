@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2010-2016 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -77,7 +77,7 @@ static sr_lua_script_ver_t *sr_lua_script_ver = NULL;
 int lua_sr_alloc_script_ver(void)
 {
 	int size = _sr_L_env.nload;
-	
+
 	sr_lua_script_ver = (sr_lua_script_ver_t *) shm_malloc(sizeof(sr_lua_script_ver_t));
 	if(sr_lua_script_ver==NULL)
 	{

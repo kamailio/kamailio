@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2010-2016 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -117,7 +117,7 @@ static int mod_init(void)
 	if(lua_sr_init_mod()<0)
 		return -1;
 
-	if(app_lua_init_rpc()<0)  
+	if(app_lua_init_rpc()<0)
 	{
 		LM_ERR("failed to register RPC commands\n");
 		return -1;

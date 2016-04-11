@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2010-2016 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -878,7 +878,7 @@ static int lua_sr_pv_get (lua_State *L)
 {
 	str pvn;
 	pv_spec_t *pvs;
-    pv_value_t val;
+	pv_value_t val;
 	sr_lua_env_t *env_L;
 	int pl;
 
@@ -928,7 +928,7 @@ static int lua_sr_pv_seti (lua_State *L)
 {
 	str pvn;
 	pv_spec_t *pvs;
-    pv_value_t val;
+	pv_value_t val;
 	sr_lua_env_t *env_L;
 	int pl;
 
@@ -947,7 +947,7 @@ static int lua_sr_pv_seti (lua_State *L)
 	memset(&val, 0, sizeof(pv_value_t));
 	val.ri = lua_tointeger(L, -1);
 	val.flags |= PV_TYPE_INT|PV_VAL_INT;
-	
+
 	pvn.s = (char*)lua_tostring(L, -2);
 	if(pvn.s==NULL || env_L->msg==NULL)
 		return 0;
@@ -982,7 +982,7 @@ static int lua_sr_pv_sets (lua_State *L)
 {
 	str pvn;
 	pv_spec_t *pvs;
-    pv_value_t val;
+	pv_value_t val;
 	sr_lua_env_t *env_L;
 	int pl;
 
@@ -997,7 +997,7 @@ static int lua_sr_pv_sets (lua_State *L)
 	if(!lua_isstring(L, -1))
 	{
 		LM_ERR("Cannot convert to a string when assigning value to variable: %s\n",
-			   lua_tostring(L, -2));
+				lua_tostring(L, -2));
 		return 0;
 	}
 
@@ -1005,7 +1005,7 @@ static int lua_sr_pv_sets (lua_State *L)
 	val.rs.s = (char*)lua_tostring(L, -1);
 	val.rs.len = strlen(val.rs.s);
 	val.flags |= PV_VAL_STR;
-	
+
 	pvn.s = (char*)lua_tostring(L, -2);
 	if(pvn.s==NULL || env_L->msg==NULL)
 		return 0;
@@ -1040,7 +1040,7 @@ static int lua_sr_pv_unset (lua_State *L)
 {
 	str pvn;
 	pv_spec_t *pvs;
-    pv_value_t val;
+	pv_value_t val;
 	sr_lua_env_t *env_L;
 	int pl;
 
@@ -1082,7 +1082,7 @@ static int lua_sr_pv_is_null (lua_State *L)
 {
 	str pvn;
 	pv_spec_t *pvs;
-    pv_value_t val;
+	pv_value_t val;
 	sr_lua_env_t *env_L;
 	int pl;
 

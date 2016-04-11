@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2010-2016 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *

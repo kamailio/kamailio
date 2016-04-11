@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2010-2016 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -180,7 +180,7 @@ static rls_api_t _lua_rlsb;
 static alias_db_api_t _lua_alias_dbb;
 
 /**
- * msilo 
+ * msilo
  */
 static msilo_api_t _lua_msilob;
 
@@ -242,7 +242,7 @@ static int lua_sr_sl_send_reply (lua_State *L)
 
 	if(code<100 || code>=800)
 		return app_lua_return_error(L);
-	
+
 	txt.s = (char*)lua_tostring(L, -1);
 	if(txt.s==NULL || env_L->msg==NULL)
 		return app_lua_return_error(L);
@@ -2292,7 +2292,7 @@ static int lua_sr_pres_auth_status(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE))
 	{
 		LM_WARN("weird: presence function executed but module not registered\n");
@@ -2315,7 +2315,7 @@ static int lua_sr_pres_auth_status(lua_State *L)
 	param[0].len = strlen(param[0].s);
 	param[1].s = (char *) lua_tostring(L, -1);
 	param[1].len = strlen(param[1].s);
-	
+
 	ret = _lua_presenceb.pres_auth_status(env_L->msg, param[0], param[1]);
 	return app_lua_return_int(L, ret);
 }
@@ -2329,7 +2329,7 @@ static int lua_sr_pres_handle_publish(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE))
 	{
 		LM_WARN("weird: presence function executed but module not registered\n");
@@ -2361,7 +2361,7 @@ static int lua_sr_pres_handle_subscribe(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE))
 	{
 		LM_WARN("weird: presence function executed but module not registered\n");
@@ -2419,7 +2419,7 @@ static int lua_sr_pres_check_basic(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE_XML))
 	{
 		LM_WARN("weird: presence_xml function executed but module not registered\n");
@@ -2442,7 +2442,7 @@ static int lua_sr_pres_check_basic(lua_State *L)
 	param[0].len = strlen(param[0].s);
 	param[1].s = (char *) lua_tostring(L, -1);
 	param[1].len = strlen(param[1].s);
-	
+
 	ret = _lua_presence_xmlb.pres_check_basic(env_L->msg, param[0], param[1]);
 	return app_lua_return_int(L, ret);
 }
@@ -2457,7 +2457,7 @@ static int lua_sr_pres_check_activities(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PRESENCE_XML))
 	{
 		LM_WARN("weird: presence_xml function executed but module not registered\n");
@@ -2480,7 +2480,7 @@ static int lua_sr_pres_check_activities(lua_State *L)
 	param[0].len = strlen(param[0].s);
 	param[1].s = (char *) lua_tostring(L, -1);
 	param[1].len = strlen(param[1].s);
-	
+
 	ret = _lua_presence_xmlb.pres_check_activities(env_L->msg, param[0], param[1]);
 	return app_lua_return_int(L, ret);
 }
@@ -2504,7 +2504,7 @@ static int lua_sr_textops_is_privacy(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_TEXTOPS))
 	{
 		LM_WARN("weird: textops function executed but module not registered\n");
@@ -2525,7 +2525,7 @@ static int lua_sr_textops_is_privacy(lua_State *L)
 
 	param[0].s = (char *) lua_tostring(L, -1);
 	param[0].len = strlen(param[0].s);
-	
+
 	ret = _lua_textopsb.is_privacy(env_L->msg, &param[0]);
 	return app_lua_return_int(L, ret);
 }
@@ -2547,7 +2547,7 @@ static int lua_sr_pua_usrloc_set_publish(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_PUA_USRLOC))
 	{
 		LM_WARN("weird: pua_usrloc function executed but module not registered\n");
@@ -2587,7 +2587,7 @@ static int lua_sr_siputils_has_totag(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SIPUTILS))
 	{
 		LM_WARN("weird: siputils function executed but module not registered\n");
@@ -2620,7 +2620,7 @@ static int lua_sr_siputils_is_uri_user_e164(lua_State *L)
 	str param[1];
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_SIPUTILS))
 	{
 		LM_WARN("weird: siputils function executed but module not registered\n");
@@ -2641,7 +2641,7 @@ static int lua_sr_siputils_is_uri_user_e164(lua_State *L)
 
 	param[0].s = (char *) lua_tostring(L, -1);
 	param[0].len = strlen(param[0].s);
-	
+
 	ret = _lua_siputilsb.is_uri_user_e164(&param[0]);
 	if (ret < 0)
 		return app_lua_return_false(L);
@@ -2667,7 +2667,7 @@ static int lua_sr_rls_handle_subscribe(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RLS))
 	{
 		LM_WARN("weird: rls function executed but module not registered\n");
@@ -2714,7 +2714,7 @@ static int lua_sr_rls_handle_notify(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_RLS))
 	{
 		LM_WARN("weird: rls function executed but module not registered\n");
@@ -2756,7 +2756,7 @@ static int lua_sr_alias_db_lookup(lua_State *L)
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
-	
+
 	if(!(_sr_lua_exp_reg_mods&SR_LUA_EXP_MOD_ALIAS_DB))
 	{
 		LM_WARN("weird: alias_db function executed but module not registered\n");
@@ -2777,7 +2777,7 @@ static int lua_sr_alias_db_lookup(lua_State *L)
 
 	param[0].s = (char *) lua_tostring(L, -1);
 	param[0].len = strlen(param[0].s);
-	
+
 	ret = _lua_alias_dbb.alias_db_lookup(env_L->msg, param[0]);
 	return app_lua_return_int(L, ret);
 }
@@ -2920,7 +2920,7 @@ static int lua_sr_uac_replace_x(lua_State *L, int htype)
 		param[0].len = 0;
 		param[1].s = (char *) lua_tostring(L, -1);
 		param[1].len = strlen(param[1].s);
-	
+
 	}
 	else if (lua_gettop(L) == 2)
 	{
@@ -3148,14 +3148,14 @@ static int lua_sr_mq_add(lua_State *L)
 		LM_WARN("invalid number of parameters from Lua\n");
 		return app_lua_return_error(L);
 	}
-	
+
 	param[0].s = (char *) lua_tostring(L, -3);
 	param[0].len = strlen(param[0].s);
 	param[1].s = (char *) lua_tostring(L, -2);
 	param[1].len = strlen(param[1].s);
 	param[2].s = (char *) lua_tostring(L, -1);
 	param[2].len = strlen(param[2].s);
-	
+
 	ret = _lua_mqb.add(&param[0], &param[1], &param[2]);
 	return app_lua_return_int(L, ret);
 }
