@@ -182,6 +182,7 @@ void lua_sr_openlibs(lua_State *L)
 {
 	lua_sr_core_openlibs(L);
 	lua_sr_exp_openlibs(L);
+	lua_sr_kemi_register_core(L);
 }
 
 /**

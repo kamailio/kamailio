@@ -38,6 +38,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../lib/kcore/cmpapi.h"
 #include "../../xavp.h"
+#include "../../kemi.h"
 
 #include "app_lua_api.h"
 #include "app_lua_sr.h"
@@ -1417,4 +1418,266 @@ void lua_sr_core_openlibs(lua_State *L)
 	luaL_openlib(L, "sr.hdr",  _sr_hdr_Map,  0);
 	luaL_openlib(L, "sr.pv",   _sr_pv_Map,   0);
 	luaL_openlib(L, "sr.xavp", _sr_xavp_Map, 0);
+}
+
+
+/**
+ *
+ */
+static int lua_sr_kemi_dbg(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_DBG("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
+static int lua_sr_kemi_err(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_ERR("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
+static int lua_sr_kemi_info(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_INFO("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+
+/**
+ *
+ */
+static sr_kemi_t _sr_kemi_core[] = {
+	{ str_init(""), str_init("dbg"),
+		SR_KEMIP_NONE, lua_sr_kemi_dbg,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("err"),
+		SR_KEMIP_NONE, lua_sr_kemi_err,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("info"),
+		SR_KEMIP_NONE, lua_sr_kemi_info,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int sr_kemi_return(lua_State* L, sr_kemi_t *ket, int rc)
+{
+	if(ket->rtype==SR_KEMIP_INT) {
+		lua_pushinteger(L, rc);
+		return 1;
+	}
+	if(ket->rtype==SR_KEMIP_BOOL && rc!=0) {
+		return app_lua_return_true(L);
+	}
+	return app_lua_return_false(L);
+}
+
+/**
+ *
+ */
+int sr_kemi_exec_func(lua_State* L, str *mname, str *fname)
+{
+	int i;
+	int pdelta;
+	int argc;
+	int ret;
+	sr_kemi_t *ket = NULL;
+	sr_kemi_val_t vps[SR_KEMI_PARAMS_MAX];
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(mname->len<=0) {
+		pdelta = 1;
+		for(i=0; ; i++) {
+			ket = &_sr_kemi_core[i];
+			if(ket->fname.len==fname->len
+					&& strncasecmp(ket->fname.s, fname->s, fname->len)==0) {
+				break;
+			}
+		}
+	} else {
+		pdelta = 2;
+	}
+	if(ket==NULL) {
+		return app_lua_return_false(L);
+	}
+
+	argc = lua_gettop(L);
+	if(argc==0 && ket->ptypes[0]==SR_KEMIP_NONE) {
+		ret = ((sr_kemi_fm_f)(ket->func))(env_L->msg);
+		return sr_kemi_return(L, ket, ret);
+	}
+	if(argc==0 && ket->ptypes[0]!=SR_KEMIP_NONE) {
+		LM_ERR("invalid number of parameters for: %.*s\n",
+				fname->len, fname->s);
+		return app_lua_return_false(L);
+	}
+
+	if(argc>=SR_KEMI_PARAMS_MAX+pdelta) {
+		LM_ERR("too many parameters for: %.*s\n",
+				fname->len, fname->s);
+		return app_lua_return_false(L);
+	}
+
+	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
+		if(ket->ptypes[i]==SR_KEMIP_NONE) {
+			break;
+		} else if(ket->ptypes[i]==SR_KEMIP_STR) {
+			vps[i].s.s = (char*)lua_tostring(L, i+pdelta+1);
+			vps[i].s.len = strlen(vps[i].s.s);
+			LM_DBG("param[%d] for: %.*s is str: %.*s\n", i,
+				fname->len, fname->s, vps[i].s.len, vps[i].s.s);
+		} else if(ket->ptypes[i]==SR_KEMIP_INT) {
+			vps[i].n = lua_tointeger(L, i+pdelta+1);
+			LM_DBG("param[%d] for: %.*s is int: %d\n", i,
+				fname->len, fname->s, vps[i].n);
+		} else {
+			LM_ERR("unknown parameter type %d (%d)\n", ket->ptypes[i], i);
+			return app_lua_return_false(L);
+		}
+	}
+	switch(i) {
+		case 1:
+			if(ket->ptypes[0]==SR_KEMIP_INT) {
+				ret = ((sr_kemi_fmn_f)(ket->func))(env_L->msg, vps[0].n);
+			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
+				ret = ((sr_kemi_fms_f)(ket->func))(env_L->msg, &vps[0].s);
+			} else {
+				LM_ERR("invalid parameters for: %.*s\n",
+						fname->len, fname->s);
+				return app_lua_return_false(L);
+			}
+		break;
+		case 2:
+			if(ket->ptypes[0]==SR_KEMIP_INT) {
+				if(ket->ptypes[1]==SR_KEMIP_INT) {
+					ret = ((sr_kemi_fmnn_f)(ket->func))(env_L->msg, vps[0].n, vps[1].n);
+				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
+					ret = ((sr_kemi_fmns_f)(ket->func))(env_L->msg, vps[0].n, &vps[1].s);
+				} else {
+					LM_ERR("invalid parameters for: %.*s\n",
+							fname->len, fname->s);
+					return app_lua_return_false(L);
+				}
+			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
+				if(ket->ptypes[1]==SR_KEMIP_INT) {
+					ret = ((sr_kemi_fmsn_f)(ket->func))(env_L->msg, &vps[0].s, vps[1].n);
+				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
+					ret = ((sr_kemi_fmss_f)(ket->func))(env_L->msg, &vps[0].s, &vps[1].s);
+				} else {
+					LM_ERR("invalid parameters for: %.*s\n",
+							fname->len, fname->s);
+					return app_lua_return_false(L);
+				}
+			} else {
+				LM_ERR("invalid parameters for: %.*s\n",
+						fname->len, fname->s);
+				return app_lua_return_false(L);
+			}
+		break;
+		case 3:
+			LM_ERR("too many parameters for: %.*s\n",
+					fname->len, fname->s);
+			return app_lua_return_false(L);
+		break;
+		case 4:
+			LM_ERR("too many parameters for: %.*s\n",
+					fname->len, fname->s);
+			return app_lua_return_false(L);
+		break;
+		case 5:
+			LM_ERR("too many parameters for: %.*s\n",
+					fname->len, fname->s);
+			return app_lua_return_false(L);
+		break;
+		case 6:
+			LM_ERR("too many parameters for: %.*s\n",
+					fname->len, fname->s);
+			return app_lua_return_false(L);
+		break;
+		default:
+			LM_ERR("too many parameters for: %.*s\n",
+					fname->len, fname->s);
+			return app_lua_return_false(L);
+	}
+	return app_lua_return_false(L);
+}
+
+/**
+ *
+ */
+int sr_kemi_KSR_C(lua_State* L)
+{
+	str mname = str_init("");
+	str fname;
+
+	fname.s = (char*)lua_tostring(L, 1);
+	if(fname.s==NULL) {
+		LM_ERR("null function name");
+		return app_lua_return_false(L);
+	}
+	fname.len = strlen(fname.s);
+	LM_DBG("function execution of: %s\n", fname.s);
+	return sr_kemi_exec_func(L, &mname, &fname);
+}
+
+/**
+ *
+ */
+int sr_kemi_KSR_MOD_C(lua_State* L)
+{
+	str mname;
+	str fname;
+	mname.s = (char*)lua_tostring(L, 1);
+	fname.s = (char*)lua_tostring(L, 2);
+	if(mname.s==NULL || fname.s==NULL) {
+		LM_ERR("null params: %p %p\n", mname.s, fname.s);
+		return app_lua_return_false(L);
+	}
+	mname.len = strlen(mname.s);
+	fname.len = strlen(fname.s);
+	LM_DBG("module function execution of: %s.%s\n", mname.s, fname.s);
+	return sr_kemi_exec_func(L, &mname, &fname);
+}
+
+
+/**
+ *
+ */
+void lua_sr_kemi_register_core(lua_State *L)
+{
+	int ret;
+
+	lua_register(L, "KSR_C", sr_kemi_KSR_C);
+	lua_register(L, "KSR_MOD_C", sr_kemi_KSR_MOD_C);
+
+	ret = luaL_dostring(L,
+			"KSR = {}\n"
+			"KSR.__index = function (table, key)\n"
+			"  return function (...)\n"
+			"    return KSR_C(key, ...)\n"
+			"  end\n"
+			"end\n"
+			"setmetatable(KSR, KSR)\n"
+		);
+	LM_DBG("pushin lua KSR table definition returned %d\n", ret);
 }
