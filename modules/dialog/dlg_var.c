@@ -878,7 +878,7 @@ int pv_parse_dlg_name(pv_spec_p sp, str *in)
 		break;
 		case 13: 
 			if(strncmp(in->s, "from_bindaddr", 13)==0)
-				sp->pvp.pvn.u.isname.name.n = 2;
+				sp->pvp.pvn.u.isname.name.n = 20;
 			else goto error;
 		break;
 		default:
