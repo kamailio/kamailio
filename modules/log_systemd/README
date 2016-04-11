@@ -27,11 +27,13 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. sd_journal_print(level, text)
+              4.2. sd_journal_send_xavp(name)
 
    List of Examples
 
    1.1. Core Logging Replacement with Systemd
    1.2. sd_journal_print usage
+   1.3. sd_journal_send_xavp usage
 
 Chapter 1. Admin Guide
 
@@ -47,6 +49,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. sd_journal_print(level, text)
+        4.2. sd_journal_send_xavp(name)
 
 1. Overview
 
@@ -88,6 +91,7 @@ loadmodule "log_systemd.so"
 4. Functions
 
    4.1. sd_journal_print(level, text)
+   4.2. sd_journal_send_xavp(name)
 
 4.1.  sd_journal_print(level, text)
 
@@ -104,3 +108,38 @@ loadmodule "log_systemd.so"
 ...
    sd_journal_print("LOG_INFO", "R-URI is $ru\n");
 ...
+
+4.2.  sd_journal_send_xavp(name)
+
+   Creates a structured log event in journald.
+
+   The sd_journal_send_xavp(name) function sends a log event in journald,
+   based on the fields provided in the xavp whose root name is specified
+   as parameter. This function is a wrapper for journald's
+   sd_journal_send() function, and allows to specify as many custom fields
+   as desired (see sd_journal_send(3)).
+
+   The xavp given as parameter must contain child AVPs with names
+   conforming to journald's field name policy (only uppercase letters,
+   numbers and underscore), otherwise they will be discarded by journald.
+
+   Some field name have a default meaning for journald:
+     * MESSAGE: the human-readable message string for this entry.
+     * PRIORTTY: integer priority value between 0 ("emerg") and 7
+       ("debug")
+     * (...) (see systemd.journald-fields(7))
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.3. sd_journal_send_xavp usage
+request_route {
+    $xavp(event=>MESSAGE) = $rm + " request logged with journald";
+    $xavp(event[0]=>SIP_MESSAGE) = $mb;
+# don't forget the '[0]', otherwise kamailio will create and
+# stack new AVPs (see pseudovariable documentation) over the previous one
+    $xavp(event[0]=>SIP_CALL_ID) = $ci;
+    $xavp(event[0]=>SIP_SRC_PORT) = $sp;
+    $xavp(event[0]=>PRIORITY) = 6;
+    sd_journal_send_xavp("event");
+(...)
+}
