@@ -235,7 +235,6 @@ int erl_init_ec(ei_cnode *ec, const str *alivename, const str *hostname, const s
 	char nodename[MAXNODELEN];
 
 	int result;
-	int port;
 
 	/* copy the nodename into something we can modify */
 	if (snprintf(nodename, MAXNODELEN, "%.*s@%.*s", STR_FMT(alivename), STR_FMT(hostname)) >= MAXNODELEN) {
@@ -255,8 +254,6 @@ int erl_init_ec(ei_cnode *ec, const str *alivename, const str *hostname, const s
 		LM_CRIT("failed to initialize self as cnode name %s\n", nodename);
 		return -1;
 	}
-
-	port = sockaddr_port(addr);
 
 	LM_DBG("initialized ec for cnode '%s' on %.*s[%s] creation %d.\n", nodename, STR_FMT(hostname), ip_addr2strz(&ip), creation);
 
