@@ -25,19 +25,19 @@
 #include "str.h"
 #include "parser/msg_parser.h"
 
-#define SR_KEMIP_NONE	(0)
-#define SR_KEMIP_INT	(1<<0)
-#define SR_KEMIP_STR	(1<<1)
-#define SR_KEMIP_BOOL	(1<<2)
+#define SR_KEMIP_NONE	(0)		/* no type */
+#define SR_KEMIP_INT	(1<<0)	/* type integer */
+#define SR_KEMIP_STR	(1<<1)	/* type str* */
+#define SR_KEMIP_BOOL	(1<<2)	/* type boolean (0/1) */
 
 #define SR_KEMI_PARAMS_MAX	6
 
 typedef struct sr_kemi {
-	str mname;
-	str fname;
-	int rtype;
-	void *func;
-	int ptypes[SR_KEMI_PARAMS_MAX];
+	str mname; /* sub-module name */
+	str fname; /* function name */
+	int rtype; /* return type (supported SR_KEMIP_INT/BOOL) */
+	void *func; /* pointer to the C function to be executed */
+	int ptypes[SR_KEMI_PARAMS_MAX]; /* array with the type of parameters */
 } sr_kemi_t;
 
 typedef struct sr_kemi_item {
