@@ -145,3 +145,71 @@ sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname)
 	}
 	return NULL;
 }
+
+/**
+ *
+ */
+
+#define SR_KEMI_ENG_LIST_MAX_SIZE	8
+static sr_kemi_eng_t _sr_kemi_eng_list[SR_KEMI_ENG_LIST_MAX_SIZE];
+sr_kemi_eng_t *_sr_kemi_eng = NULL;
+static int _sr_kemi_eng_list_size=0;
+
+/**
+ *
+ */
+int sr_kemi_eng_register(str *ename, sr_kemi_eng_route_f froute)
+{
+	int i;
+
+	for(i=0; i<_sr_kemi_eng_list_size; i++) {
+		if(_sr_kemi_eng_list[i].ename.len==ename->len
+				&& strncasecmp(_sr_kemi_eng_list[i].ename.s, ename->s,
+					ename->len)==0) {
+			/* found */
+			return 1;
+		}
+	}
+	if(_sr_kemi_eng_list_size>=SR_KEMI_ENG_LIST_MAX_SIZE) {
+		LM_ERR("too many config routing engines registered\n");
+		return -1;
+	}
+	if(ename->len>=SR_KEMI_BNAME_SIZE) {
+		LM_ERR("config routing engine name too long\n");
+		return -1;
+	}
+	strncpy(_sr_kemi_eng_list[_sr_kemi_eng_list_size].bname,
+			ename->s, ename->len);
+	_sr_kemi_eng_list[_sr_kemi_eng_list_size].ename.s
+			= _sr_kemi_eng_list[_sr_kemi_eng_list_size].bname;
+	_sr_kemi_eng_list[_sr_kemi_eng_list_size].ename.len = ename->len;
+	_sr_kemi_eng_list[_sr_kemi_eng_list_size].ename.s[ename->len] = 0;
+	_sr_kemi_eng_list[_sr_kemi_eng_list_size].froute = froute;
+	_sr_kemi_eng_list_size++;
+
+	return 0;
+}
+
+/**
+ *
+ */
+int sr_kemi_eng_set(str *ename, str *cpath)
+{
+	int i;
+
+	for(i=0; i<_sr_kemi_eng_list_size; i++) {
+		if(_sr_kemi_eng_list[i].ename.len==ename->len
+				&& strncasecmp(_sr_kemi_eng_list[i].ename.s, ename->s,
+					ename->len)==0) {
+			/* found */
+			_sr_kemi_eng = &_sr_kemi_eng_list[i];
+			return 0;
+		}
+	}
+	return -1;
+}
+
+sr_kemi_eng_t* sr_kemi_eng_get(void)
+{
+	return _sr_kemi_eng;
+}

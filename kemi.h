@@ -89,4 +89,17 @@ int sr_kemi_modules_add(sr_kemi_t *klist);
 int sr_kemi_modules_size_get(void);
 sr_kemi_module_t* sr_kemi_modules_get(void);
 
+typedef int (*sr_kemi_eng_route_f)(sip_msg_t*, int, str *);
+
+#define SR_KEMI_BNAME_SIZE	256
+typedef struct sr_kemi_eng {
+	char bname[SR_KEMI_BNAME_SIZE];
+	str  ename;
+	sr_kemi_eng_route_f froute;
+} sr_kemi_eng_t;
+
+int sr_kemi_eng_register(str *ename, sr_kemi_eng_route_f froute);
+int sr_kemi_eng_set(str *ename, str *cpath);
+sr_kemi_eng_t* sr_kemi_eng_get(void);
+
 #endif
