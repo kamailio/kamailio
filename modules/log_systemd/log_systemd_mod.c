@@ -31,6 +31,8 @@
 #include "../../ut.h"
 #include "../../mod_fix.h"
 
+#include "journal_send.h"
+
 MODULE_VERSION
 
 static int _lc_log_systemd = 0;
@@ -41,10 +43,13 @@ static int  child_init(int);
 static void mod_destroy(void);
 
 static int w_sd_journal_print(struct sip_msg* msg, char* lev, char* txt);
+static int w_sd_journal_send_xavp(struct sip_msg* msg, char* xname, char*);
 
 
 static cmd_export_t cmds[]={
 	{"sd_journal_print", (cmd_function)w_sd_journal_print, 2, fixup_spve_spve,
+		0, ANY_ROUTE},
+	{"sd_journal_send_xavp", (cmd_function)w_sd_journal_send_xavp, 1, fixup_spve_spve,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -162,4 +167,15 @@ void _lc_core_log_systemd(int lpriority, const char *format, ...)
 	n += vsnprintf(obuf+n, LC_LOG_MSG_MAX_SIZE - n, format, arglist);
 	va_end(arglist);
 	sd_journal_print(priority, "%.*s", n, obuf);
+}
+
+static int w_sd_journal_send_xavp(struct sip_msg* msg, char* xname, char* foo) {
+	str sxname;
+
+	if(fixup_get_svalue(msg, (gparam_t*)xname, &sxname)!=0) {
+		LM_ERR("unable to get xname parameter\n");
+		return -1;
+	}
+
+	return k_sd_journal_send_xavp(&sxname);
 }
