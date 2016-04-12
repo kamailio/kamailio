@@ -46,6 +46,11 @@ typedef struct sr_kemi_item {
 	struct sr_kemi_item *next;
 } sr_kemi_item_t;
 
+typedef struct sr_kemi_module {
+	str mname;
+	sr_kemi_t *kexp;
+} sr_kemi_module_t;
+
 typedef union {
 	int n;
 	str s;
@@ -73,5 +78,15 @@ typedef int (*sr_kemi_fmsnn_f)(sip_msg_t*, str*, int, int);
 typedef int (*sr_kemi_fmsns_f)(sip_msg_t*, str*, int, str*);
 typedef int (*sr_kemi_fmssn_f)(sip_msg_t*, str*, str*, int);
 typedef int (*sr_kemi_fmsss_f)(sip_msg_t*, str*, str*, str*);
+
+typedef int (*sr_kemi_fmssss_f)(sip_msg_t*, str*, str*, str*, str*);
+typedef int (*sr_kemi_fmsssss_f)(sip_msg_t*, str*, str*, str*, str*, str*);
+typedef int (*sr_kemi_fmssssss_f)(sip_msg_t*, str*, str*, str*, str*, str*, str*);
+
+sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname);
+
+int sr_kemi_modules_add(sr_kemi_t *klist);
+int sr_kemi_modules_size_get(void);
+sr_kemi_module_t* sr_kemi_modules_get(void);
 
 #endif
