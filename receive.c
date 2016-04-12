@@ -54,6 +54,7 @@
 #include "tcp_options.h" /* for access to tcp_accept_aliases*/
 #include "cfg/cfg.h"
 #include "core_stats.h"
+#include "kemi.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
@@ -125,6 +126,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 #endif
 	str inb;
 	sr_net_info_t netinfo;
+	sr_kemi_eng_t *keng = NULL;
 
 	if(sr_event_enabled(SREV_NET_DATA_RECV)) {
 		if(sip_check_fline(buf, len)==0) {
@@ -237,9 +239,20 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 		set_route_type(REQUEST_ROUTE);
 		/* exec the routing script */
-		if (run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0)<0){
-			LM_WARN("error while trying script\n");
-			goto error_req;
+		if(unlikely(main_rt.rlist[DEFAULT_RT]==NULL)) {
+			keng = sr_kemi_eng_get();
+			if(keng==NULL) {
+				LM_ERR("no config routing engine registered\n");
+				goto error_req;
+			}
+			if(keng->froute(msg, REQUEST_ROUTE, NULL)<0) {
+				LM_NOTICE("negative return code from engine function\n");
+			}
+		} else {
+			if (run_top_route(main_rt.rlist[DEFAULT_RT], msg, 0)<0){
+				LM_WARN("error while trying script\n");
+				goto error_req;
+			}
 		}
 
 #ifdef STATS
@@ -283,7 +296,15 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* exec the onreply routing script */
 		if (onreply_rt.rlist[DEFAULT_RT]){
 			set_route_type(CORE_ONREPLY_ROUTE);
-			ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
+			ret = 1;
+			if(unlikely(main_rt.rlist[DEFAULT_RT]==NULL)) {
+				keng = sr_kemi_eng_get();
+				if(keng!=NULL) {
+					ret = keng->froute(msg, REQUEST_ROUTE, NULL);
+				}
+			} else {
+				ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
+			}
 #ifndef NO_ONREPLY_ROUTE_ERROR
 			if (unlikely(ret<0)){
 				LM_WARN("error while trying onreply script\n");
