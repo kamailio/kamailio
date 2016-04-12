@@ -29,6 +29,7 @@
 #include "../../mod_fix.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
+#include "../../kemi.h"
 
 #include "app_lua_api.h"
 
@@ -103,9 +104,49 @@ struct module_exports exports = {
 	child_init      /* per child init function */
 };
 
+/**
+ *
+ */
+int sr_kemi_config_engine_lua(sip_msg_t *msg, int rtype, str *rname)
+{
+	int ret;
+
+	if(rtype==REQUEST_ROUTE) {
+		ret = app_lua_run(msg, "ksr_request_route", NULL, NULL, NULL);
+	} else if(rtype==CORE_ONREPLY_ROUTE) {
+		ret = app_lua_run(msg, "ksr_reply_route", NULL, NULL, NULL);
+	} else {
+		if(rname!=NULL) {
+			LM_ERR("route type %d with name [%.*s] not implemented\n",
+				rtype, rname->len, rname->s);
+		} else {
+			LM_ERR("route type %d with no name not implemented\n",
+				rtype);
+		}
+	}
+
+	if(rname!=NULL) {
+		LM_DBG("execution of route type %d with name [%.*s] returned %d\n",
+				rtype, rname->len, rname->s, ret);
+	} else {
+		LM_DBG("execution of route type %d with no name returned %d\n",
+			rtype, ret);
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
+	str ename = str_init("lua");
+
 	*dlflags = RTLD_NOW | RTLD_GLOBAL;
+
+	sr_kemi_eng_register(&ename, sr_kemi_config_engine_lua);
+
 	return 0;
 }
 
