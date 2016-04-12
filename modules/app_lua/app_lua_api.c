@@ -621,8 +621,8 @@ int app_lua_runstring(struct sip_msg *msg, char *script)
 /**
  *
  */
-int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
-		char *p3)
+int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
+		char *p3, int emode)
 {
 	int n;
 	int ret;
@@ -648,13 +648,17 @@ int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 	lua_getglobal(_sr_L_env.LL, func);
 	if(!lua_isfunction(_sr_L_env.LL, -1))
 	{
-		LM_ERR("no such function [%s] in lua scripts\n", func);
-		LM_ERR("top stack type [%d - %s]\n",
+		if(emode) {
+			LM_ERR("no such function [%s] in lua scripts\n", func);
+			LM_ERR("top stack type [%d - %s]\n",
 				lua_type(_sr_L_env.LL, -1),
 				lua_typename(_sr_L_env.LL,lua_type(_sr_L_env.LL, -1)));
-		txt = (char*)lua_tostring(_sr_L_env.LL, -1);
-		LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
-		return -1;
+			txt = (char*)lua_tostring(_sr_L_env.LL, -1);
+			LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
+			return -1;
+		} else {
+			return 1;
+		}
 	}
 	n = 0;
 	if(p1!=NULL)
@@ -685,6 +689,15 @@ int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+int app_lua_run(sip_msg_t *msg, char *func, char *p1, char *p2,
+		char *p3)
+{
+	return app_lua_run_ex(msg, func, p1, p2, p3, 1);
 }
 
 void app_lua_dump_stack(lua_State *L)

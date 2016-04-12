@@ -112,9 +112,9 @@ int sr_kemi_config_engine_lua(sip_msg_t *msg, int rtype, str *rname)
 	int ret;
 
 	if(rtype==REQUEST_ROUTE) {
-		ret = app_lua_run(msg, "ksr_request_route", NULL, NULL, NULL);
+		ret = app_lua_run_ex(msg, "ksr_request_route", NULL, NULL, NULL, 1);
 	} else if(rtype==CORE_ONREPLY_ROUTE) {
-		ret = app_lua_run(msg, "ksr_reply_route", NULL, NULL, NULL);
+		ret = app_lua_run_ex(msg, "ksr_reply_route", NULL, NULL, NULL, 0);
 	} else {
 		if(rname!=NULL) {
 			LM_ERR("route type %d with name [%.*s] not implemented\n",

@@ -72,8 +72,10 @@ int sr_lua_reload_module(unsigned int reload);
 int app_lua_dostring(struct sip_msg *msg, char *script);
 int app_lua_dofile(struct sip_msg *msg, char *script);
 int app_lua_runstring(struct sip_msg *msg, char *script);
-int app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
+int app_lua_run(sip_msg_t *msg, char *func, char *p1, char *p2,
 		char *p3);
+int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
+		char *p3, int emode);
 
 #define SRLUA_FALSE	0
 #define SRLUA_TRUE	1
