@@ -226,7 +226,7 @@ int init_cnode_sockets(int cnode_id)
 	io_handler_ins(phandler);
 
 	/* start epmd handler - publish Kamailo C node */
-	if (epmd_init((epmd_handler_t*)phandler) < 0 ) {
+	if (epmd_init((epmd_handler_t*)phandler, &alivename) < 0 ) {
 		return -1;
 	}
 

@@ -39,9 +39,9 @@
 /**
  * \brief Initialize EPMD handler
  */
-int epmd_init(epmd_handler_t *epmd)
+int epmd_init(epmd_handler_t *epmd, str *alivename)
 {
-	epmd->sockfd = erl_init_node(&epmd->ec, &cnode_alivename, &cnode_host, &cookie);
+	epmd->sockfd = erl_init_node(&epmd->ec, alivename, &cnode_host, &cookie);
 	epmd->handle_f = handle_epmd;
 	epmd->wait_tmo_f = NULL;
 	epmd->destroy_f  = NULL;

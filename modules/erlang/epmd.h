@@ -55,7 +55,7 @@ typedef struct epmd_handler_s
 
 } epmd_handler_t;
 
-int epmd_init(epmd_handler_t *epmd);
+int epmd_init(epmd_handler_t *epmd, str *alivename);
 int handle_epmd(handler_common_t *phandler);
 
 #endif /* EPMD_H_ */
