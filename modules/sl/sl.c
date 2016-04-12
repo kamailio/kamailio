@@ -50,6 +50,7 @@
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
 #include "../../mem/mem.h"
+#include "../../kemi.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -497,5 +498,29 @@ static int bind_sl(sl_api_t* api)
 	api->get_reply_totag = get_reply_totag;
 	api->register_cb = sl_register_callback;
 
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sl_kemi_exports[] = {
+	{ str_init("sl"), str_init("sreply"),
+		SR_KEMIP_INT, sl_send_reply_str,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sl"), str_init("freply"),
+		SR_KEMIP_INT, send_reply,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sl_kemi_exports);
 	return 0;
 }
