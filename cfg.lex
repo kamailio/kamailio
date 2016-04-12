@@ -452,6 +452,8 @@ LOADMODULE	loadmodule
 LOADPATH	"loadpath"|"mpath"
 MODPARAM        modparam
 
+CFGENGINE	"cfgengine"
+
 /* values */
 YES			"yes"|"true"|"on"|"enable"
 NO			"no"|"false"|"off"|"disable"
@@ -916,6 +918,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
+<INITIAL>{CFGENGINE}	{ count(); yylval.strval=yytext; return CFGENGINE; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{ADDEQ}          { count(); return ADDEQ; }

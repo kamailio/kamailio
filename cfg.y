@@ -67,6 +67,7 @@
 #include "msg_translator.h"
 #include "async_task.h"
 
+#include "kemi.h"
 #include "ppcfg.h"
 #include "pvapi.h"
 #include "config.h"
@@ -390,6 +391,7 @@ extern char *default_routename;
 %token LOADMODULE
 %token LOADPATH
 %token MODPARAM
+%token CFGENGINE
 %token MAXBUFFER
 %token SQL_BUFFER_SIZE
 %token USER
@@ -1643,6 +1645,21 @@ module_stm:
 		}
 	}
 	| MODPARAM error { yyerror("Invalid arguments"); }
+	| CFGENGINE STRING {
+		if(sr_kemi_eng_setz($2, NULL)) {
+			yyerror("Can't set config routing engine");
+			YYABORT;
+		}
+	}
+	| CFGENGINE error	{ yyerror("string expected"); }
+	| CFGENGINE EQUAL STRING {
+		if(sr_kemi_eng_setz($3, NULL)) {
+			yyerror("Can't set config routing engine");
+			YYABORT;
+		}
+	}
+	| CFGENGINE EQUAL error	{ yyerror("string expected"); }
+
 	;
 ip:
 	ipv4  { $$=$1; }
