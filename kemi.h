@@ -100,6 +100,7 @@ typedef struct sr_kemi_eng {
 
 int sr_kemi_eng_register(str *ename, sr_kemi_eng_route_f froute);
 int sr_kemi_eng_set(str *ename, str *cpath);
+int sr_kemi_eng_setz(char *ename, char *cpath);
 sr_kemi_eng_t* sr_kemi_eng_get(void);
 
 #endif

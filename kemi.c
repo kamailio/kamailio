@@ -187,6 +187,9 @@ int sr_kemi_eng_register(str *ename, sr_kemi_eng_route_f froute)
 	_sr_kemi_eng_list[_sr_kemi_eng_list_size].froute = froute;
 	_sr_kemi_eng_list_size++;
 
+	LM_DBG("registered config routing enginge [%.*s]",
+			ename->len, ename->s);
+
 	return 0;
 }
 
@@ -196,6 +199,14 @@ int sr_kemi_eng_register(str *ename, sr_kemi_eng_route_f froute)
 int sr_kemi_eng_set(str *ename, str *cpath)
 {
 	int i;
+
+	/* skip native and default */
+	if(ename->len==6 && strncasecmp(ename->s, "native", 6)==0) {
+		return 0;
+	}
+	if(ename->len==7 && strncasecmp(ename->s, "default", 7)==0) {
+		return 0;
+	}
 
 	for(i=0; i<_sr_kemi_eng_list_size; i++) {
 		if(_sr_kemi_eng_list[i].ename.len==ename->len
@@ -208,6 +219,27 @@ int sr_kemi_eng_set(str *ename, str *cpath)
 	}
 	return -1;
 }
+
+/**
+ *
+ */
+int sr_kemi_eng_setz(char *ename, char *cpath)
+{
+	str sname;
+	str spath;
+
+	sname.s = ename;
+	sname.len = strlen(ename);
+
+	if(cpath!=0) {
+		spath.s = cpath;
+		spath.len = strlen(cpath);
+		return sr_kemi_eng_set(&sname, &spath);
+	} else {
+		return sr_kemi_eng_set(&sname, NULL);
+	}
+}
+
 
 sr_kemi_eng_t* sr_kemi_eng_get(void)
 {
