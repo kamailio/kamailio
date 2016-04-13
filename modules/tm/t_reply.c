@@ -993,7 +993,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 			if(unlikely(keng!=NULL)) {
 				if(keng->froute(&faked_req, FAILURE_ROUTE,
 						sr_kemi_cbname_lookup_idx(on_failure))<0) {
-					LM_ERR("error running failure kemi callback\n");
+					LM_ERR("error running failure route kemi callback\n");
 				}
 			} else {
 				if (run_top_route(failure_rt.rlist[on_failure], &faked_req, 0)<0)

@@ -58,6 +58,7 @@
 #include "../../dst_blacklist.h"
 #endif
 #include "../../atomic_ops.h" /* membar_depends() */
+#include "../../kemi.h"
 
 
 extern int tm_failure_exec_mode;
@@ -152,6 +153,8 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	struct socket_info *force_send_socket_bak;
 	struct dest_info *dst;
 	struct run_act_ctx ctx;
+	struct run_act_ctx *bctx;
+	sr_kemi_eng_t *keng;
 
 	shbuf=0;
 	ret=E_UNSPEC;
@@ -340,10 +343,20 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 				/* set the new values */
 				i_req->fwd_send_flags=snd_flags /* intial value  */;
 				set_force_socket(i_req, fsocket);
-				if (run_top_route(branch_rt.rlist[branch_route], i_req, &ctx)
-						< 0)
-				{
-					LOG(L_DBG, "negative return code in run_top_route\n");
+				keng = sr_kemi_eng_get();
+				if(unlikely(keng!=NULL)) {
+					bctx = sr_kemi_act_ctx_get();
+					sr_kemi_act_ctx_set(&ctx);
+					if(keng->froute(i_req, BRANCH_ROUTE,
+							sr_kemi_cbname_lookup_idx(branch_route))<0) {
+						LM_ERR("error running branch route kemi callback\n");
+					}
+					sr_kemi_act_ctx_set(bctx);
+				} else {
+					if (run_top_route(branch_rt.rlist[branch_route],
+								i_req, &ctx) < 0) {
+						LOG(L_DBG, "negative return code in run_top_route\n");
+					}
 				}
 				/* update dst send_flags  and send socket*/
 				snd_flags=i_req->fwd_send_flags;
