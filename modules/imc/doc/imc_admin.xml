@@ -16,15 +16,16 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module offers support for instant message conference. It
-		follows the architecture of IRC channels, you can send commands
-		embedded in MESSAGE body, because there are just a few SIP UA clients
+		This module offers support for instant message conference using
+		SIP MESSAGE requests. It follows the architecture of IRC channels.
+		The conferences are managed by commands that can be sent embedded
+		in the MESSAGE body, because there are just a few SIP UA implementations
 		which have GUI for IM conferencing.
 	</para>
 	<para>
-	You have to define an URI corresponding to im conferencing manager, where
-	user can send commands to create a new conference room. Once the conference
-	room is created, users can send commands directly to conferece's URI.
+	By sending a SIP MESSAGE a configured SIP URI to the IM conferencing manager,
+	the user can send commands to manage conference rooms. Once the conference
+	room is created, users can send commands directly to conference's URI.
 	</para>
 	<para>
 	To ease the integration in the configuration file, the interpreter of
@@ -151,7 +152,8 @@ modparam("imc", "hash_size", 8)
 	<section>
 		<title><varname>imc_cmd_start_char</varname> (str)</title>
 		<para>
-	The character which indicates that the body of the message is a command.
+		The character which indicates that the body of the message is 
+		a command.
 		</para>
 		<para>
 		<emphasis>
@@ -170,11 +172,11 @@ modparam("imc", "imc_cmd_start_char", "#")
 	<section>
 		<title><varname>outbound_proxy</varname> (str)</title>
 		<para>
-	   The SIP address used as next hop when sending the message. Very
-   useful when using &kamailio; with a domain name not in DNS, or
-   when using a separate &kamailio; instance for imc processing. If
-   not set, the message will be sent to the address in destination
-   URI.
+	   		The SIP address used as next hop when sending the message. Very
+   			useful when using &kamailio; with a domain name not in DNS, or
+   			when using a separate &kamailio; instance for imc processing. If
+   			not set, the message will be sent to the address in destination
+   			URI.
 		</para>
 		<para>
 		<emphasis>
@@ -220,8 +222,9 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 		<function moreinfo="none">imc_manager()</function>
 		</title>
 		<para>
-		Handles Message method.It detects if the body of the message is a
-		conference command.If so it executes it, otherwise it sends the
+		THis function handles incoming MESSAGE requests.
+		If detects if the body of the message is a
+		conference command it executes it, otherwise it sends the
 		message to all the members in the room. 
 		</para>
 		<para>
@@ -263,7 +266,7 @@ if(is_method("MESSAGE)
 		</para>
 		<para>Parameters: none</para>
 
-        <para>
+        	<para>
 		MI FIFO Command Format:
 		</para>
         <programlisting  format="linespecific">
@@ -272,7 +275,7 @@ if(is_method("MESSAGE)
 		</programlisting>
 	</section>
 
-    <section>
+    	<section>
 		<title>
 		<function moreinfo="none">imc_list_members</function>
 		</title>
@@ -285,21 +288,21 @@ if(is_method("MESSAGE)
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>_room_ : the room for which you want to list the members</para></listitem>
-        </itemizedlist>
+       		 </itemizedlist>
 
-        <para>
+        	<para>
 		MI FIFO Command Format:
 		</para>
         <programlisting  format="linespecific">
-		:imc_list_members:_reply_fifo_file_
-		_room_
-		_empty_line_
-		</programlisting>
+	:imc_list_members:_reply_fifo_file_
+	_room_
+	_empty_line_
+	</programlisting>
 	</section>
-	</section>
+</section>
 
 
-	<section>
+<section>
 	<title>Statistics</title>
 	<section>
 		<title>
@@ -309,10 +312,10 @@ if(is_method("MESSAGE)
 		Number of active IM Conferencing rooms.
 		</para>
 	</section>
-	</section>
+</section>
 
 	
-	<section>
+<section>
 	<title>IMC Commands</title>
 		<para>
 		A command is identified by the starting character. A command must be
