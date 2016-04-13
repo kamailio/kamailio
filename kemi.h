@@ -24,6 +24,7 @@
 
 #include "str.h"
 #include "parser/msg_parser.h"
+#include "action.h"
 
 #define SR_KEMIP_NONE	(0)		/* no type */
 #define SR_KEMIP_INT	(1<<0)	/* type integer */
@@ -106,5 +107,8 @@ sr_kemi_eng_t* sr_kemi_eng_get(void);
 int sr_kemi_cbname_list_init(void);
 int sr_kemi_cbname_lookup_name(str *name);
 str* sr_kemi_cbname_lookup_idx(int idx);
+
+void sr_kemi_act_ctx_set(run_act_ctx_t *ctx);
+run_act_ctx_t* sr_kemi_act_ctx_get(void);
 
 #endif

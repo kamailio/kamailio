@@ -67,6 +67,27 @@ sr_kemi_module_t* sr_kemi_modules_get(void)
 /**
  *
  */
+static run_act_ctx_t *_sr_kemi_act_ctx = NULL;
+
+/**
+ *
+ */
+void sr_kemi_act_ctx_set(run_act_ctx_t *ctx)
+{
+	_sr_kemi_act_ctx = ctx;
+}
+
+/**
+ *
+ */
+run_act_ctx_t* sr_kemi_act_ctx_get(void)
+{
+	return _sr_kemi_act_ctx;
+}
+
+/**
+ *
+ */
 static int lua_sr_kemi_dbg(sip_msg_t *msg, str *txt)
 {
 	if(txt!=NULL && txt->s!=NULL)
@@ -97,6 +118,17 @@ static int lua_sr_kemi_info(sip_msg_t *msg, str *txt)
 /**
  *
  */
+static int lua_sr_kemi_drop(sip_msg_t *msg)
+{
+	if(_sr_kemi_act_ctx==NULL)
+		return 0;
+	_sr_kemi_act_ctx->run_flags |= EXIT_R_F|DROP_R_F;
+	return 0;
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, lua_sr_kemi_dbg,
@@ -111,6 +143,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("info"),
 		SR_KEMIP_NONE, lua_sr_kemi_info,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("drop"),
+		SR_KEMIP_NONE, lua_sr_kemi_drop,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
