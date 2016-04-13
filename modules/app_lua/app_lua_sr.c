@@ -1478,6 +1478,7 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 		return app_lua_return_false(L);
 	}
 
+	memset(vps, 0, SR_KEMI_PARAMS_MAX*sizeof(sr_kemi_val_t));
 	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
 		if(ket->ptypes[i]==SR_KEMIP_NONE) {
 			break;
