@@ -1542,9 +1542,79 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 			}
 		break;
 		case 3:
-			LM_ERR("invalid parameters for: %.*s\n",
-					fname->len, fname->s);
-			return app_lua_return_false(L);
+			if(ket->ptypes[0]==SR_KEMIP_INT) {
+				if(ket->ptypes[1]==SR_KEMIP_INT) {
+					if(ket->ptypes[2]==SR_KEMIP_INT) {
+						ret = ((sr_kemi_fmnnn_f)(ket->func))(env_L->msg,
+								vps[0].n, vps[1].n, vps[2].n);
+						return sr_kemi_return(L, ket, ret);
+					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
+						ret = ((sr_kemi_fmnns_f)(ket->func))(env_L->msg,
+								vps[0].n, vps[1].n, &vps[2].s);
+						return sr_kemi_return(L, ket, ret);
+					} else {
+						LM_ERR("invalid parameters for: %.*s\n",
+								fname->len, fname->s);
+						return app_lua_return_false(L);
+					}
+				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
+					if(ket->ptypes[2]==SR_KEMIP_INT) {
+						ret = ((sr_kemi_fmnsn_f)(ket->func))(env_L->msg,
+								vps[0].n, &vps[1].s, vps[2].n);
+						return sr_kemi_return(L, ket, ret);
+					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
+						ret = ((sr_kemi_fmnss_f)(ket->func))(env_L->msg,
+								vps[0].n, &vps[1].s, &vps[2].s);
+						return sr_kemi_return(L, ket, ret);
+					} else {
+						LM_ERR("invalid parameters for: %.*s\n",
+								fname->len, fname->s);
+						return app_lua_return_false(L);
+					}
+				} else {
+					LM_ERR("invalid parameters for: %.*s\n",
+							fname->len, fname->s);
+					return app_lua_return_false(L);
+				}
+			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
+				if(ket->ptypes[1]==SR_KEMIP_INT) {
+					if(ket->ptypes[2]==SR_KEMIP_INT) {
+						ret = ((sr_kemi_fmsnn_f)(ket->func))(env_L->msg,
+								&vps[0].s, vps[1].n, vps[2].n);
+						return sr_kemi_return(L, ket, ret);
+					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
+						ret = ((sr_kemi_fmsns_f)(ket->func))(env_L->msg,
+								&vps[0].s, vps[1].n, &vps[2].s);
+						return sr_kemi_return(L, ket, ret);
+					} else {
+						LM_ERR("invalid parameters for: %.*s\n",
+								fname->len, fname->s);
+						return app_lua_return_false(L);
+					}
+				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
+					if(ket->ptypes[2]==SR_KEMIP_INT) {
+						ret = ((sr_kemi_fmssn_f)(ket->func))(env_L->msg,
+								&vps[0].s, &vps[1].s, vps[2].n);
+						return sr_kemi_return(L, ket, ret);
+					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
+						ret = ((sr_kemi_fmsss_f)(ket->func))(env_L->msg,
+								&vps[0].s, &vps[1].s, &vps[2].s);
+						return sr_kemi_return(L, ket, ret);
+					} else {
+						LM_ERR("invalid parameters for: %.*s\n",
+								fname->len, fname->s);
+						return app_lua_return_false(L);
+					}
+				} else {
+					LM_ERR("invalid parameters for: %.*s\n",
+							fname->len, fname->s);
+					return app_lua_return_false(L);
+				}
+			} else {
+				LM_ERR("invalid parameters for: %.*s\n",
+						fname->len, fname->s);
+				return app_lua_return_false(L);
+			}
 		break;
 		case 4:
 			if(ket->ptypes[0]==SR_KEMIP_STR
