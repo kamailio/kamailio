@@ -66,6 +66,7 @@
 #include "../../globals.h"
 #include "../../timer_ticks.h"
 #include "../../mod_fix.h"
+#include "../../kemi.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -1264,7 +1265,7 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
+static int t_release(sip_msg_t* msg)
 {
 	struct cell *t;
 	int ret;
@@ -1285,6 +1286,10 @@ inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 	return 1;
 }
 
+inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
+{
+	return t_release(msg);
+}
 
 inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
 {
@@ -2314,3 +2319,184 @@ static rpc_export_t tm_rpc[] = {
 	{0, 0, 0, 0}
 };
 
+/**
+ *
+ */
+static int ki_t_on_failure(sip_msg_t *msg, str *rname)
+{
+	int ridx;
+	sr_kemi_eng_t *keng;
+
+	if(rname==NULL || rname->s==NULL || rname->len<=0 || rname->s[0]=='\0') {
+		ridx = 0;
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			ridx = route_get(&failure_rt, rname->s);
+		} else {
+			ridx = sr_kemi_cbname_lookup_name(rname);
+		}
+	}
+	if(ridx<0) { ridx = 0; }
+
+	t_on_failure(ridx);
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_t_on_branch_failure(sip_msg_t *msg, str *rname)
+{
+	int ridx;
+	sr_kemi_eng_t *keng;
+
+	if(rname==NULL || rname->s==NULL || rname->len<=0 || rname->s[0]=='\0') {
+		ridx = 0;
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			ridx = route_get(&event_rt, rname->s);
+		} else {
+			ridx = sr_kemi_cbname_lookup_name(rname);
+		}
+	}
+	if(ridx<0) { ridx = 0; }
+
+	t_on_branch_failure(ridx);
+	return 1;
+}
+
+
+/**
+ *
+ */
+static int ki_t_on_branch(sip_msg_t *msg, str *rname)
+{
+	int ridx;
+	sr_kemi_eng_t *keng;
+
+	if(rname==NULL || rname->s==NULL || rname->len<=0 || rname->s[0]=='\0') {
+		ridx = 0;
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			ridx = route_get(&branch_rt, rname->s);
+		} else {
+			ridx = sr_kemi_cbname_lookup_name(rname);
+		}
+	}
+	if(ridx<0) { ridx = 0; }
+
+	t_on_branch(ridx);
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_t_on_reply(sip_msg_t *msg, str *rname)
+{
+	int ridx;
+	sr_kemi_eng_t *keng;
+
+	if(rname==NULL || rname->s==NULL || rname->len<=0 || rname->s[0]=='\0') {
+		ridx = 0;
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			ridx = route_get(&onreply_rt, rname->s);
+		} else {
+			ridx = sr_kemi_cbname_lookup_name(rname);
+		}
+	}
+	if(ridx<0) { ridx = 0; }
+
+	t_on_reply(ridx);
+	return 1;
+}
+
+/**
+ *
+ */
+static int ki_t_relay(sip_msg_t *msg)
+{
+	return _w_t_relay_to(msg, (struct proxy_l *)0, PROTO_NONE);
+}
+
+/**
+ *
+ */
+static int ki_t_reply(sip_msg_t *msg, int code, str *reason)
+{
+	return w_t_reply_wrp(msg, (unsigned int)code, reason->s);
+}
+
+/**
+ *
+ */
+static sr_kemi_t tm_kemi_exports[] = {
+	{ str_init("tm"), str_init("t_relay"),
+		SR_KEMIP_INT, ki_t_relay,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_on_branch"),
+		SR_KEMIP_INT, ki_t_on_branch,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_on_failure"),
+		SR_KEMIP_INT, ki_t_on_failure,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_on_branch_failure"),
+		SR_KEMIP_INT, ki_t_on_branch_failure,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_on_reply"),
+		SR_KEMIP_INT, ki_t_on_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_reply"),
+		SR_KEMIP_INT, ki_t_reply,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_check_trans"),
+		SR_KEMIP_INT, t_check_trans,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_is_canceled"),
+		SR_KEMIP_INT, t_is_canceled,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_newtran"),
+		SR_KEMIP_INT, t_newtran,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_release"),
+		SR_KEMIP_INT, t_release,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_replicate"),
+		SR_KEMIP_INT, t_replicate_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(tm_kemi_exports);
+	return 0;
+}
