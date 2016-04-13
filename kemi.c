@@ -24,6 +24,8 @@
 #include <stdlib.h>
 
 #include "dprint.h"
+#include "locking.h"
+#include "mem/shm.h"
 
 #include "kemi.h"
 
@@ -91,7 +93,6 @@ static int lua_sr_kemi_info(sip_msg_t *msg, str *txt)
 		LM_INFO("%.*s", txt->len, txt->s);
 	return 0;
 }
-
 
 /**
  *
@@ -208,6 +209,10 @@ int sr_kemi_eng_set(str *ename, str *cpath)
 		return 0;
 	}
 
+	if(sr_kemi_cbname_list_init()<0) {
+		return -1;
+	}
+
 	for(i=0; i<_sr_kemi_eng_list_size; i++) {
 		if(_sr_kemi_eng_list[i].ename.len==ename->len
 				&& strncasecmp(_sr_kemi_eng_list[i].ename.s, ename->s,
@@ -240,8 +245,127 @@ int sr_kemi_eng_setz(char *ename, char *cpath)
 	}
 }
 
-
+/**
+ *
+ */
 sr_kemi_eng_t* sr_kemi_eng_get(void)
 {
 	return _sr_kemi_eng;
+}
+
+/**
+ *
+ */
+#define KEMI_CBNAME_MAX_LEN	128
+#define KEMI_CBNAME_LIST_SIZE	256
+
+typedef struct sr_kemi_cbname {
+	str name;
+	char bname[KEMI_CBNAME_MAX_LEN];
+} sr_kemi_cbname_t;
+
+static gen_lock_t *_sr_kemi_cbname_lock = 0;
+static sr_kemi_cbname_t *_sr_kemi_cbname_list = NULL;
+static int _sr_kemi_cbname_list_size = 0;
+
+/**
+ *
+ */
+int sr_kemi_cbname_list_init(void)
+{
+	if(_sr_kemi_cbname_list!=NULL) {
+		return 0;
+	}
+	if ( (_sr_kemi_cbname_lock=lock_alloc())==0) {
+		LM_CRIT("failed to alloc lock\n");
+		return -1;
+	}
+	if (lock_init(_sr_kemi_cbname_lock)==0 ) {
+		LM_CRIT("failed to init lock\n");
+		lock_dealloc(_sr_kemi_cbname_lock);
+		_sr_kemi_cbname_lock = NULL;
+		return -1;
+	}
+	_sr_kemi_cbname_list
+			= shm_malloc(KEMI_CBNAME_LIST_SIZE*sizeof(sr_kemi_cbname_t));
+	if(_sr_kemi_cbname_list==NULL) {
+		LM_ERR("no more shared memory\n");
+		lock_destroy(_sr_kemi_cbname_lock);
+		lock_dealloc(_sr_kemi_cbname_lock);
+		_sr_kemi_cbname_lock = NULL;
+		return -1;
+	}
+	memset(_sr_kemi_cbname_list, 0,
+			KEMI_CBNAME_LIST_SIZE*sizeof(sr_kemi_cbname_t));
+	return 0;
+}
+
+/**
+ *
+ */
+int sr_kemi_cbname_lookup_name(str *name)
+{
+	int n;
+	int i;
+
+	if(_sr_kemi_cbname_list==NULL) {
+		return 0;
+	}
+	if(name->len >= KEMI_CBNAME_MAX_LEN) {
+		LM_ERR("callback name is too long [%.*s] (max: %d)\n",
+				name->len, name->s, KEMI_CBNAME_MAX_LEN);
+		return 0;
+	}
+	n = _sr_kemi_cbname_list_size;
+
+	for(i=0; i<n; i++) {
+		if(_sr_kemi_cbname_list[i].name.len==name->len
+				&& strncmp(_sr_kemi_cbname_list[i].name.s,
+						name->s, name->len)==0) {
+			return i+1;
+		}
+	}
+
+	/* not found -- add it */
+	lock_get(_sr_kemi_cbname_lock);
+
+	/* check if new callback were indexed meanwhile */
+	for(; i<_sr_kemi_cbname_list_size; i++) {
+		if(_sr_kemi_cbname_list[i].name.len==name->len
+				&& strncmp(_sr_kemi_cbname_list[i].name.s,
+						name->s, name->len)==0) {
+			return i+1;
+		}
+	}
+	if(_sr_kemi_cbname_list_size>=KEMI_CBNAME_LIST_SIZE) {
+		lock_release(_sr_kemi_cbname_lock);
+		LM_ERR("no more space to index callbacks\n");
+		return 0;
+	}
+	strncpy(_sr_kemi_cbname_list[i].bname, name->s, name->len);
+	_sr_kemi_cbname_list[i].bname[name->len] = '\0';
+	_sr_kemi_cbname_list[i].name.s = _sr_kemi_cbname_list[i].bname;
+	_sr_kemi_cbname_list[i].name.len = name->len;
+	_sr_kemi_cbname_list_size++;
+	n = _sr_kemi_cbname_list_size;
+	lock_release(_sr_kemi_cbname_lock);
+	return n;
+}
+
+/**
+ *
+ */
+str* sr_kemi_cbname_lookup_idx(int idx)
+{
+	int n;
+
+	if(_sr_kemi_cbname_list==NULL) {
+		return NULL;
+	}
+	n = _sr_kemi_cbname_list_size;
+	if(idx<1 || idx>n) {
+		LM_ERR("index %d is out of range\n", idx);
+		return NULL;
+	}
+	return &_sr_kemi_cbname_list[idx-1].name;
 }

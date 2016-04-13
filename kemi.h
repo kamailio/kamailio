@@ -103,4 +103,8 @@ int sr_kemi_eng_set(str *ename, str *cpath);
 int sr_kemi_eng_setz(char *ename, char *cpath);
 sr_kemi_eng_t* sr_kemi_eng_get(void);
 
+int sr_kemi_cbname_list_init(void);
+int sr_kemi_cbname_lookup_name(str *name);
+str* sr_kemi_cbname_lookup_idx(int idx);
+
 #endif
