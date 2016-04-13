@@ -40,14 +40,14 @@
 #endif
 
 
-struct run_act_ctx{
+typedef struct run_act_ctx {
 	int rec_lev;
 	int run_flags;
 	int last_retcode; /* return from last route */
 #ifdef USE_LONGJMP
 	jmp_buf jmp_env;
 #endif
-};
+} run_act_ctx_t;
 
 
 #define init_run_actions_ctx(ph) \
