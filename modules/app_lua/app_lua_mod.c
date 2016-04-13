@@ -111,10 +111,33 @@ int sr_kemi_config_engine_lua(sip_msg_t *msg, int rtype, str *rname)
 {
 	int ret;
 
+	ret = -1;
 	if(rtype==REQUEST_ROUTE) {
 		ret = app_lua_run_ex(msg, "ksr_request_route", NULL, NULL, NULL, 1);
 	} else if(rtype==CORE_ONREPLY_ROUTE) {
 		ret = app_lua_run_ex(msg, "ksr_reply_route", NULL, NULL, NULL, 0);
+	} else if(rtype==BRANCH_ROUTE) {
+		if(rname!=NULL && rname->s!=NULL) {
+			ret = app_lua_run_ex(msg, rname->s, NULL, NULL, NULL, 0);
+		}
+	} else if(rtype==FAILURE_ROUTE) {
+		if(rname!=NULL && rname->s!=NULL) {
+			ret = app_lua_run_ex(msg, rname->s, NULL, NULL, NULL, 0);
+		}
+	} else if(rtype==BRANCH_FAILURE_ROUTE) {
+		if(rname!=NULL && rname->s!=NULL) {
+			ret = app_lua_run_ex(msg, rname->s, NULL, NULL, NULL, 0);
+		}
+	} else if(rtype==TM_ONREPLY_ROUTE) {
+		if(rname!=NULL && rname->s!=NULL) {
+			ret = app_lua_run_ex(msg, rname->s, NULL, NULL, NULL, 0);
+		}
+	} else if(rtype==ONSEND_ROUTE) {
+		ret = app_lua_run_ex(msg, "ksr_onsend_route", NULL, NULL, NULL, 0);
+	} else if(rtype==EVENT_ROUTE) {
+		if(rname!=NULL && rname->s!=NULL) {
+			ret = app_lua_run_ex(msg, rname->s, NULL, NULL, NULL, 0);
+		}
 	} else {
 		if(rname!=NULL) {
 			LM_ERR("route type %d with name [%.*s] not implemented\n",
