@@ -73,6 +73,7 @@
 #include "../../sr_compat.h"
 #include "../../receive.h"
 #include "../../onsend.h"
+#include "../../kemi.h"
 #include "t_stats.h"
 #include "uac.h"
 
@@ -949,6 +950,7 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	static struct sip_msg faked_req;
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_failure;
+	sr_kemi_eng_t *keng = NULL;
 
 	on_failure = t->uac[picked_branch].on_failure;
 
@@ -987,8 +989,16 @@ int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		t->flags &= ~T_ASYNC_SUSPENDED;
 		if (exec_pre_script_cb(&faked_req, FAILURE_CB_TYPE)>0) {
 			/* run a failure_route action if some was marked */
-			if (run_top_route(failure_rt.rlist[on_failure], &faked_req, 0)<0)
-				LOG(L_ERR, "ERROR: run_failure_handlers: Error in run_top_route\n");
+			keng = sr_kemi_eng_get();
+			if(unlikely(keng!=NULL)) {
+				if(keng->froute(&faked_req, FAILURE_ROUTE,
+						sr_kemi_cbname_lookup_idx(on_failure))<0) {
+					LM_ERR("error running failure kemi callback\n");
+				}
+			} else {
+				if (run_top_route(failure_rt.rlist[on_failure], &faked_req, 0)<0)
+					LM_ERR("error running run_top_route for failure handler\n");
+			}
 			exec_post_script_cb(&faked_req, FAILURE_CB_TYPE);
 		}
 		/* update message flags, if changed in failure route */
