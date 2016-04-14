@@ -1451,6 +1451,11 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 
 	env_L = sr_lua_env_get();
 
+	if(env_L==NULL || env_L->msg==NULL) {
+		LM_ERR("invalid Lua environment attributes\n");
+		return app_lua_return_false(L);
+	}
+
 	ket = sr_kemi_lookup(mname, midx, fname);
 	if(ket==NULL) {
 		return app_lua_return_false(L);
@@ -1462,11 +1467,11 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 	}
 
 	argc = lua_gettop(L);
-	if(argc==0 && ket->ptypes[0]==SR_KEMIP_NONE) {
+	if(argc==pdelta && ket->ptypes[0]==SR_KEMIP_NONE) {
 		ret = ((sr_kemi_fm_f)(ket->func))(env_L->msg);
 		return sr_kemi_return(L, ket, ret);
 	}
-	if(argc==0 && ket->ptypes[0]!=SR_KEMIP_NONE) {
+	if(argc==pdelta && ket->ptypes[0]!=SR_KEMIP_NONE) {
 		LM_ERR("invalid number of parameters for: %.*s\n",
 				fname->len, fname->s);
 		return app_lua_return_false(L);
