@@ -1226,7 +1226,7 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
         // get to tag
         LM_DBG("Extracting to-tag from reply");
         if (!rpl->to && ((parse_headers(rpl, HDR_TO_F, 0) < 0) || !rpl->to)) {
-            LM_ERR("bad reply or missing TO hdr :-/\n");
+            LM_DBG("bad reply or missing TO hdr :-/\n");
             to_tag.s = 0;
             to_tag.len = 0;
         } else {
@@ -1235,7 +1235,7 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
 
             to_tag = get_to(rpl)->tag_value;
             if (to_tag.s == 0 || to_tag.len == 0) {
-                LM_ERR("missing TAG param in TO hdr :-/\n");
+                LM_DBG("missing TAG param in TO hdr :-/\n");
                 to_tag.s = 0;
                 to_tag.len = 0;
                 //Here we assume that the transaction module timer will remove any early dialogs
@@ -1377,7 +1377,7 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
 
             /* extract the contact address to update if present*/
             if (!rpl->contact && (parse_headers(rpl, HDR_CONTACT_F, 0) < 0 || !rpl->contact)) {
-                LM_ERR("Can not update callee contact: bad sip message or missing Contact hdr\n");
+                LM_DBG("Can not update callee contact: bad sip message or missing Contact hdr\n");
             } else if (parse_contact(rpl->contact) < 0 ||
                     ((contact_body_t *) rpl->contact->parsed)->contacts == NULL ||
                     ((contact_body_t *) rpl->contact->parsed)->contacts->next != NULL) {
