@@ -2343,6 +2343,7 @@ int reply_received( struct sip_msg  *p_msg )
 		 */
 		if(unlikely(keng!=NULL)) {
 			bctx = sr_kemi_act_ctx_get();
+			init_run_actions_ctx(&ctx);
 			sr_kemi_act_ctx_set(&ctx);
 			keng->froute(p_msg, TM_ONREPLY_ROUTE,
 					sr_kemi_cbname_lookup_idx(onreply_route));

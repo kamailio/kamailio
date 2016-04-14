@@ -328,7 +328,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	ret=t_forward_nonack(t, p_msg, proxy, proto);
 handle_ret:
 	if (ret<=0) {
-		DBG( "ERROR:tm:t_relay_to:  t_forward_nonack returned error \n");
+		DBG( "t_forward_nonack returned error %d (%d)\n", ret, ser_error);
 		/* we don't want to pass upstream any reply regarding replicating
 		 * a request; replicated branch must stop at us*/
 		if (likely(!replicate)) {

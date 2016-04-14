@@ -346,6 +346,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 				keng = sr_kemi_eng_get();
 				if(unlikely(keng!=NULL)) {
 					bctx = sr_kemi_act_ctx_get();
+					init_run_actions_ctx(&ctx);
 					sr_kemi_act_ctx_set(&ctx);
 					if(keng->froute(i_req, BRANCH_ROUTE,
 							sr_kemi_cbname_lookup_idx(branch_route))<0) {
