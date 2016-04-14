@@ -125,11 +125,6 @@ int sr_event_register_cb(int type, sr_event_cb_f f)
 					_sr_events_list.run_action = f;
 				else return -1;
 			break;
-		case SREV_PKG_UPDATE_STATS:
-				if(_sr_events_list.pkg_update_stats==0)
-					_sr_events_list.pkg_update_stats = f;
-				else return -1;
-			break;
 		case SREV_NET_DGRAM_IN:
 				if(_sr_events_list.net_dgram_in==0)
 					_sr_events_list.net_dgram_in = f;
@@ -251,12 +246,6 @@ int sr_event_exec(int type, void *data)
 					ret = _sr_events_list.run_action(data);
 					return ret;
 				} else return 1;
-		case SREV_PKG_UPDATE_STATS:
-				if(unlikely(_sr_events_list.pkg_update_stats!=0))
-				{
-					ret = _sr_events_list.pkg_update_stats(data);
-					return ret;
-				} else return 1;
 		case SREV_NET_DGRAM_IN:
 				if(unlikely(_sr_events_list.net_dgram_in!=0))
 				{
@@ -336,8 +325,6 @@ int sr_event_enabled(int type)
 				return (_sr_events_list.core_stats!=0)?1:0;
 		case SREV_CFG_RUN_ACTION:
 				return (_sr_events_list.run_action!=0)?1:0;
-		case SREV_PKG_UPDATE_STATS:
-				return (_sr_events_list.pkg_update_stats!=0)?1:0;
 		case SREV_NET_DGRAM_IN:
 				return (_sr_events_list.net_dgram_in!=0)?1:0;
 		case SREV_TCP_HTTP_100C:
