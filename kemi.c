@@ -304,7 +304,7 @@ typedef struct sr_kemi_cbname {
 
 static gen_lock_t *_sr_kemi_cbname_lock = 0;
 static sr_kemi_cbname_t *_sr_kemi_cbname_list = NULL;
-static int _sr_kemi_cbname_list_size = 0;
+static int *_sr_kemi_cbname_list_size = NULL;
 
 /**
  *
@@ -324,10 +324,20 @@ int sr_kemi_cbname_list_init(void)
 		_sr_kemi_cbname_lock = NULL;
 		return -1;
 	}
+	_sr_kemi_cbname_list_size = shm_malloc(sizeof(int));
+	if(_sr_kemi_cbname_list_size==NULL) {
+		lock_destroy(_sr_kemi_cbname_lock);
+		lock_dealloc(_sr_kemi_cbname_lock);
+		LM_ERR("no more shared memory\n");
+		return -1;
+	}
+	*_sr_kemi_cbname_list_size = 0;
 	_sr_kemi_cbname_list
 			= shm_malloc(KEMI_CBNAME_LIST_SIZE*sizeof(sr_kemi_cbname_t));
 	if(_sr_kemi_cbname_list==NULL) {
 		LM_ERR("no more shared memory\n");
+		shm_free(_sr_kemi_cbname_list_size);
+		_sr_kemi_cbname_list_size = NULL;
 		lock_destroy(_sr_kemi_cbname_lock);
 		lock_dealloc(_sr_kemi_cbname_lock);
 		_sr_kemi_cbname_lock = NULL;
@@ -354,7 +364,7 @@ int sr_kemi_cbname_lookup_name(str *name)
 				name->len, name->s, KEMI_CBNAME_MAX_LEN);
 		return 0;
 	}
-	n = _sr_kemi_cbname_list_size;
+	n = *_sr_kemi_cbname_list_size;
 
 	for(i=0; i<n; i++) {
 		if(_sr_kemi_cbname_list[i].name.len==name->len
@@ -368,14 +378,14 @@ int sr_kemi_cbname_lookup_name(str *name)
 	lock_get(_sr_kemi_cbname_lock);
 
 	/* check if new callback were indexed meanwhile */
-	for(; i<_sr_kemi_cbname_list_size; i++) {
+	for(; i<*_sr_kemi_cbname_list_size; i++) {
 		if(_sr_kemi_cbname_list[i].name.len==name->len
 				&& strncmp(_sr_kemi_cbname_list[i].name.s,
 						name->s, name->len)==0) {
 			return i+1;
 		}
 	}
-	if(_sr_kemi_cbname_list_size>=KEMI_CBNAME_LIST_SIZE) {
+	if(*_sr_kemi_cbname_list_size>=KEMI_CBNAME_LIST_SIZE) {
 		lock_release(_sr_kemi_cbname_lock);
 		LM_ERR("no more space to index callbacks\n");
 		return 0;
@@ -384,10 +394,10 @@ int sr_kemi_cbname_lookup_name(str *name)
 	_sr_kemi_cbname_list[i].bname[name->len] = '\0';
 	_sr_kemi_cbname_list[i].name.s = _sr_kemi_cbname_list[i].bname;
 	_sr_kemi_cbname_list[i].name.len = name->len;
-	_sr_kemi_cbname_list_size++;
-	n = _sr_kemi_cbname_list_size;
+	i++;
+	*_sr_kemi_cbname_list_size = i;
 	lock_release(_sr_kemi_cbname_lock);
-	return n;
+	return i;
 }
 
 /**
@@ -400,7 +410,7 @@ str* sr_kemi_cbname_lookup_idx(int idx)
 	if(_sr_kemi_cbname_list==NULL) {
 		return NULL;
 	}
-	n = _sr_kemi_cbname_list_size;
+	n = *_sr_kemi_cbname_list_size;
 	if(idx<1 || idx>n) {
 		LM_ERR("index %d is out of range\n", idx);
 		return NULL;
