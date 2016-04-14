@@ -141,7 +141,8 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
         LM_DBG("There is transaction data this must have been called from save or assign server unreg");
         data = (saved_transaction_t*) param;
         if (tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
-            LM_ERR("t_continue: transaction not found\n");
+            LM_ERR("t_continue: transaction not found and t is now pointing to %p and will be set to NULL\n", t);
+            t = NULL;
             rerrno = R_SAR_FAILED;
             goto error_no_send;
         }
