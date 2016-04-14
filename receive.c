@@ -117,6 +117,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 {
 	struct sip_msg* msg;
 	struct run_act_ctx ctx;
+	struct run_act_ctx *bctx;
 	int ret;
 #ifdef STATS
 	int skipped = 1;
@@ -294,14 +295,16 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		}
 
 		/* exec the onreply routing script */
-		if (onreply_rt.rlist[DEFAULT_RT]){
+		keng = sr_kemi_eng_get();
+		if (onreply_rt.rlist[DEFAULT_RT]!=NULL || keng!=NULL){
 			set_route_type(CORE_ONREPLY_ROUTE);
 			ret = 1;
-			if(unlikely(main_rt.rlist[DEFAULT_RT]==NULL)) {
-				keng = sr_kemi_eng_get();
-				if(keng!=NULL) {
-					ret = keng->froute(msg, REQUEST_ROUTE, NULL);
-				}
+			if(unlikely(keng!=NULL)) {
+				bctx = sr_kemi_act_ctx_get();
+				init_run_actions_ctx(&ctx);
+				sr_kemi_act_ctx_set(&ctx);
+				ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL);
+				sr_kemi_act_ctx_set(bctx);
 			} else {
 				ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
 			}
