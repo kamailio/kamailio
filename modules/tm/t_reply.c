@@ -2341,6 +2341,7 @@ int reply_received( struct sip_msg  *p_msg )
 		/* Pre- and post-script callbacks have already
 		 * been executed by the core. (Miklos)
 		 */
+		keng = sr_kemi_eng_get();
 		if(unlikely(keng!=NULL)) {
 			bctx = sr_kemi_act_ctx_get();
 			init_run_actions_ctx(&ctx);
