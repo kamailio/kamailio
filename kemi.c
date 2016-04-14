@@ -122,6 +122,7 @@ static int lua_sr_kemi_drop(sip_msg_t *msg)
 {
 	if(_sr_kemi_act_ctx==NULL)
 		return 0;
+	LM_DBG("drop action executed inside embedded interpreter\n");
 	_sr_kemi_act_ctx->run_flags |= EXIT_R_F|DROP_R_F;
 	return 0;
 }
