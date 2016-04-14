@@ -2144,6 +2144,8 @@ int reply_received( struct sip_msg  *p_msg )
 #endif
 	struct tmcb_params onsend_params;
 	struct run_act_ctx ctx;
+	struct run_act_ctx *bctx;
+	sr_kemi_eng_t *keng = NULL;
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -2330,7 +2332,15 @@ int reply_received( struct sip_msg  *p_msg )
 		/* Pre- and post-script callbacks have already
 		 * been executed by the core. (Miklos)
 		 */
-		run_top_route(onreply_rt.rlist[onreply_route], p_msg, &ctx);
+		if(unlikely(keng!=NULL)) {
+			bctx = sr_kemi_act_ctx_get();
+			sr_kemi_act_ctx_set(&ctx);
+			keng->froute(p_msg, BRANCH_ROUTE,
+					sr_kemi_cbname_lookup_idx(onreply_route));
+			sr_kemi_act_ctx_set(bctx);
+		} else {
+			run_top_route(onreply_rt.rlist[onreply_route], p_msg, &ctx);
+		}
 
 		/* restore brach last_received as before executing onreply_route */
 		uac->last_received = last_uac_status;
