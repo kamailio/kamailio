@@ -505,12 +505,12 @@ static int bind_sl(sl_api_t* api)
  *
  */
 static sr_kemi_t sl_kemi_exports[] = {
-	{ str_init("sl"), str_init("sreply"),
+	{ str_init("sl"), str_init("sl_send_reply"),
 		SR_KEMIP_INT, sl_send_reply_str,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("sl"), str_init("freply"),
+	{ str_init("sl"), str_init("send_reply"),
 		SR_KEMIP_INT, send_reply,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
