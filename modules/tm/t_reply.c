@@ -1022,6 +1022,7 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	static struct sip_msg faked_req;
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_branch_failure;
+	sr_kemi_eng_t *keng = NULL;
 
 	on_branch_failure = t->uac[picked_branch].on_branch_failure;
 
@@ -1057,8 +1058,16 @@ int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		t->on_branch_failure = 0;
 		if (exec_pre_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE)>0) {
 			/* run a branch_failure_route action if some was marked */
-			if (run_top_route(event_rt.rlist[on_branch_failure], &faked_req, 0)<0)
-				LOG(L_ERR, "error in run_top_route\n");
+			keng = sr_kemi_eng_get();
+			if(unlikely(keng!=NULL)) {
+				if(keng->froute(&faked_req, BRANCH_FAILURE_ROUTE,
+						sr_kemi_cbname_lookup_idx(on_branch_failure))<0) {
+					LM_ERR("error running branch failure route kemi callback\n");
+				}
+			} else {
+				if (run_top_route(event_rt.rlist[on_branch_failure], &faked_req, 0)<0)
+					LOG(L_ERR, "error in run_top_route\n");
+			}
 			exec_post_script_cb(&faked_req, BRANCH_FAILURE_CB_TYPE);
 		}
 		/* update message flags, if changed in branch_failure route */
@@ -2335,7 +2344,7 @@ int reply_received( struct sip_msg  *p_msg )
 		if(unlikely(keng!=NULL)) {
 			bctx = sr_kemi_act_ctx_get();
 			sr_kemi_act_ctx_set(&ctx);
-			keng->froute(p_msg, BRANCH_ROUTE,
+			keng->froute(p_msg, TM_ONREPLY_ROUTE,
 					sr_kemi_cbname_lookup_idx(onreply_route));
 			sr_kemi_act_ctx_set(bctx);
 		} else {
