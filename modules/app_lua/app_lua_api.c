@@ -549,13 +549,15 @@ int app_lua_return_true(lua_State *L)
 /**
  *
  */
-int app_lua_dostring(struct sip_msg *msg, char *script)
+int app_lua_dostring(sip_msg_t *msg, char *script)
 {
 	int ret;
 	char *txt;
+	sip_msg_t *bmsg;
 
 	LM_DBG("executing Lua string: [[%s]]\n", script);
 	LM_DBG("lua top index is: %d\n", lua_gettop(_sr_L_env.L));
+	bmsg = _sr_L_env.msg;
 	_sr_L_env.msg = msg;
 	ret = luaL_dostring(_sr_L_env.L, script);
 	if(ret!=0)
@@ -564,20 +566,22 @@ int app_lua_dostring(struct sip_msg *msg, char *script)
 		LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
 		lua_pop (_sr_L_env.L, 1);
 	}
-	_sr_L_env.msg = 0;
+	_sr_L_env.msg = bmsg;
 	return (ret==0)?1:-1;
 }
 
 /**
  *
  */
-int app_lua_dofile(struct sip_msg *msg, char *script)
+int app_lua_dofile(sip_msg_t *msg, char *script)
 {
 	int ret;
 	char *txt;
+	sip_msg_t *bmsg;
 
 	LM_DBG("executing Lua file: [[%s]]\n", script);
 	LM_DBG("lua top index is: %d\n", lua_gettop(_sr_L_env.L));
+	bmsg = _sr_L_env.msg;
 	_sr_L_env.msg = msg;
 	ret = luaL_dofile(_sr_L_env.L, script);
 	if(ret!=0)
@@ -586,17 +590,18 @@ int app_lua_dofile(struct sip_msg *msg, char *script)
 		LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
 		lua_pop(_sr_L_env.L, 1);
 	}
-	_sr_L_env.msg = 0;
+	_sr_L_env.msg = bmsg;
 	return (ret==0)?1:-1;
 }
 
 /**
  *
  */
-int app_lua_runstring(struct sip_msg *msg, char *script)
+int app_lua_runstring(sip_msg_t *msg, char *script)
 {
 	int ret;
 	char *txt;
+	sip_msg_t *bmsg;
 
 	if(_sr_L_env.LL==NULL)
 	{
@@ -606,6 +611,7 @@ int app_lua_runstring(struct sip_msg *msg, char *script)
 
 	LM_DBG("running Lua string: [[%s]]\n", script);
 	LM_DBG("lua top index is: %d\n", lua_gettop(_sr_L_env.LL));
+	bmsg = _sr_L_env.msg;
 	_sr_L_env.msg = msg;
 	ret = luaL_dostring(_sr_L_env.LL, script);
 	if(ret!=0)
@@ -614,7 +620,7 @@ int app_lua_runstring(struct sip_msg *msg, char *script)
 		LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
 		lua_pop (_sr_L_env.LL, 1);
 	}
-	_sr_L_env.msg = 0;
+	_sr_L_env.msg = bmsg;
 	return (ret==0)?1:-1;
 }
 
@@ -627,6 +633,7 @@ int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	int n;
 	int ret;
 	char *txt;
+	sip_msg_t *bmsg;
 
 	if(_sr_L_env.LL==NULL)
 	{
@@ -676,9 +683,10 @@ int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 			}
 		}
 	}
+	bmsg = _sr_L_env.msg;
 	_sr_L_env.msg = msg;
 	ret = lua_pcall(_sr_L_env.LL, n, 0, 0);
-	_sr_L_env.msg = 0;
+	_sr_L_env.msg = bmsg;
 	if(ret!=0)
 	{
 		LM_ERR("error executing: %s (err: %d)\n", func, ret);
