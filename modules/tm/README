@@ -2585,7 +2585,9 @@ if(!t_relay()) {
 
 5.46. t_replicate([params])
 
-   Replicate the SIP request to a specific address.
+   Replicate the SIP request to a specific address. Return values are the
+   same as for t_relay(). Note that responses to the replicated request
+   are suppressed and will not show up in any reply_route.
 
    There are several function prototypes:
      * t_replicate([uri]),

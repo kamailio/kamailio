@@ -1508,7 +1508,10 @@ if(!t_relay()) {
 	    <function>t_replicate([params])</function>
 	</title>
 	<para>
-		Replicate the SIP request to a specific address.
+		Replicate the SIP request to a specific address. Return
+		values are the same as for <function>t_relay()</function>.
+		Note that responses to the replicated request are suppressed
+		and will not show up in any reply_route.
 	</para>
 	<para>
 		There are several function prototypes:
