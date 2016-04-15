@@ -45,7 +45,6 @@ use Kamailio::VDB::Result;
 use Kamailio::VDB::Value;
 use Kamailio::VDB::VTab;
 
-use UNIVERSAL qw ( can );
 
 our @ISA = qw ( Kamailio::Utils::Debug );
 
@@ -87,12 +86,12 @@ sub use_table {
 
 		Kamailio::log(L_DBG, "perlvdb:VDB: Setting VTab: v is $v (pkg is $pkg, func/method is $3)\n");
 
-		if (can($pkg, $3)) {
+		if ($pkg->can($3)) {
 			$self->{vtabs}->{$v} = new Kamailio::VDB::VTab( func => $pkg . "::" . $3);
-		} elsif (can($v, "init")) {
+		} elsif ($v->can("init")) {
 			$v->init();
 			$self->{vtabs}->{$v} = new Kamailio::VDB::VTab( obj => $v );
-		} elsif (can($v, "new")) {
+		} elsif ($v->can("new")) {
 			my $obj = $v->new();
 			$self->{vtabs}->{$v} = new Kamailio::VDB::VTab( obj => $obj );
 		} else {
