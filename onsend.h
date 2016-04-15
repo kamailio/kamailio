@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -34,6 +34,7 @@
 #include "route.h"
 #include "script_cb.h"
 #include "sr_compat.h"
+#include "kemi.h"
 
 struct onsend_info{
 	union sockaddr_union* to;       /* dest info */
@@ -58,10 +59,12 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 	struct onsend_info onsnd_info = {0};
 	int ret;
 	struct run_act_ctx ra_ctx;
+	struct run_act_ctx *bctx;
 	int backup_route_type;
 	snd_flags_t fwd_snd_flags_bak;
 	snd_flags_t rpl_snd_flags_bak;
-	
+	sr_kemi_eng_t *keng = NULL;
+
 	ret=1;
 	if (onsend_rt.rlist[DEFAULT_RT]){
 		onsnd_info.to=&dst->to;
@@ -78,7 +81,17 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 			rpl_snd_flags_bak=orig_msg->rpl_send_flags;
 			orig_msg->fwd_send_flags=dst->send_flags; /* intial value */
 			init_run_actions_ctx(&ra_ctx);
-			ret=run_actions(&ra_ctx, onsend_rt.rlist[DEFAULT_RT], orig_msg);
+
+			keng = sr_kemi_eng_get();
+			if(unlikely(keng!=NULL)) {
+				bctx = sr_kemi_act_ctx_get();
+				sr_kemi_act_ctx_set(&ra_ctx);
+				ret=keng->froute(orig_msg, ONSEND_ROUTE, NULL);
+				sr_kemi_act_ctx_set(bctx);
+			} else {
+				ret=run_actions(&ra_ctx, onsend_rt.rlist[DEFAULT_RT], orig_msg);
+			}
+
 			/* update dst send_flags */
 			dst->send_flags=orig_msg->fwd_send_flags;
 			/* restore orig_msg flags */
