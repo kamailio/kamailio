@@ -52,7 +52,6 @@ package Kamailio::LDAPUtils::LDAPConnection;
 use Kamailio::LDAPUtils::LDAPConf;
 use Net::LDAP;
 use Authen::SASL;
-use UNIVERSAL qw( isa );
 
 my $ldap_singleton = undef;
 
@@ -185,7 +184,7 @@ sub search {
 
     my $ldap = undef;
 
-    if( isa($conf ,"Kamailio::LDAPUtils::LDAPConnection") ) {
+    if( $conf->isa("Kamailio::LDAPUtils::LDAPConnection") ) {
       $ldap = $conf;
     } else {
       if( ! $ldap_singleton ) {
