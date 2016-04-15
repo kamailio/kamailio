@@ -1511,7 +1511,7 @@ event_route[usrloc:contact-expired] {
 				</para>
 				</listitem>	  
 				<listitem>
-				<para><emphasis>reg-id</emphasis> - reg-id value
+				<para><emphasis>regid</emphasis> - reg-id value
 				</para>
 				</listitem>	  
 				<listitem>
@@ -1547,6 +1547,7 @@ if(reg_fetch_contacts("location", "$fu", "caller"))
     xlog("caller=&gt;received:   $(ulc(caller=&gt;received)[$var(i)])\n");
     xlog("caller=&gt;expires:    $(ulc(caller=&gt;expires)[$var(i)])\n");
     xlog("caller=&gt;callid:     $(ulc(caller=&gt;callid)[$var(i)])\n");
+    xlog("caller=&gt;regid:      $(ulc(caller=&gt;regid)[$var(i)])\n");
     xlog("caller=&gt;q:          $(ulc(caller=&gt;q)[$var(i)])\n");
     xlog("caller=&gt;cseq:       $(ulc(caller=&gt;cseq)[$var(i)])\n");
     xlog("caller=&gt;flags:      $(ulc(caller=&gt;flags)[$var(i)])\n");
