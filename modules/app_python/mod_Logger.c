@@ -46,16 +46,16 @@
  */
 static PyObject *logger_LM_GEN1(PyObject *self, PyObject *args)
 {
-    int log_level;
-    char *msg;
+	int log_level;
+	char *msg;
 
-    if (!PyArg_ParseTuple(args, "is:LM_GEN1", &log_level, &msg))
-        return NULL;
+	if (!PyArg_ParseTuple(args, "is:LM_GEN1", &log_level, &msg))
+		return NULL;
 
-    LM_GEN1(log_level, "%s", msg);
+	LM_GEN1(log_level, "%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 /*
@@ -63,17 +63,17 @@ static PyObject *logger_LM_GEN1(PyObject *self, PyObject *args)
  */
 static PyObject *logger_LM_GEN2(PyObject *self, PyObject *args)
 {
-    int log_facility;
-    int log_level;
-    char *msg;
+	int log_facility;
+	int log_level;
+	char *msg;
 
-    if(!PyArg_ParseTuple(args, "iis:LM_GEN2", &log_facility, &log_level, &msg))
-        return NULL;
+	if(!PyArg_ParseTuple(args, "iis:LM_GEN2", &log_facility, &log_level, &msg))
+		return NULL;
 
-    LM_GEN2(log_facility, log_level, "%s", msg);
+	LM_GEN2(log_facility, log_level, "%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 /*
@@ -81,15 +81,15 @@ static PyObject *logger_LM_GEN2(PyObject *self, PyObject *args)
  */
 static PyObject *logger_LM_ALERT(PyObject *self, PyObject *args)
 {
-    char *msg;
+	char *msg;
 
-    if(!PyArg_ParseTuple(args, "s:LM_ALERT", &msg))
-        return NULL;
+	if(!PyArg_ParseTuple(args, "s:LM_ALERT", &msg))
+		return NULL;
 
-    LM_ALERT("%s", msg);
+	LM_ALERT("%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 
@@ -98,15 +98,15 @@ static PyObject *logger_LM_ALERT(PyObject *self, PyObject *args)
  */
 static PyObject *logger_LM_CRIT(PyObject *self, PyObject *args)
 {
-    char *msg;
+	char *msg;
 
-    if(!PyArg_ParseTuple(args, "s:LM_CRIT", &msg))
-        return NULL;
+	if(!PyArg_ParseTuple(args, "s:LM_CRIT", &msg))
+		return NULL;
 
-    LM_CRIT("%s", msg);
+	LM_CRIT("%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 /*
@@ -114,15 +114,15 @@ static PyObject *logger_LM_CRIT(PyObject *self, PyObject *args)
  */
 static PyObject *logger_LM_WARN(PyObject *self, PyObject *args)
 {
-    char *msg;
+	char *msg;
 
-    if(!PyArg_ParseTuple(args, "s:LM_WARN", &msg))
-        return NULL;
+	if(!PyArg_ParseTuple(args, "s:LM_WARN", &msg))
+		return NULL;
 
-    LM_WARN("%s", msg);
+	LM_WARN("%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 /*
@@ -130,15 +130,15 @@ static PyObject *logger_LM_WARN(PyObject *self, PyObject *args)
  */
 static PyObject *logger_LM_NOTICE(PyObject *self, PyObject *args)
 {
-    char *msg;
+	char *msg;
 
-    if(!PyArg_ParseTuple(args, "s:LM_NOTICE", &msg))
-        return NULL;
+	if(!PyArg_ParseTuple(args, "s:LM_NOTICE", &msg))
+		return NULL;
 
-    LM_NOTICE("%s", msg);
+	LM_NOTICE("%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 /*
@@ -146,15 +146,15 @@ static PyObject *logger_LM_NOTICE(PyObject *self, PyObject *args)
  */
 static PyObject *logger_LM_ERR(PyObject *self, PyObject *args)
 {
-    char *msg;
+	char *msg;
 
-    if(!PyArg_ParseTuple(args, "s:LM_ERR", &msg))
-        return NULL;
+	if(!PyArg_ParseTuple(args, "s:LM_ERR", &msg))
+		return NULL;
 
-    LM_ERR("%s", msg);
+	LM_ERR("%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 /*
@@ -162,15 +162,15 @@ static PyObject *logger_LM_ERR(PyObject *self, PyObject *args)
  */
 static PyObject *logger_LM_INFO(PyObject *self, PyObject *args)
 {
-    char *msg;
+	char *msg;
 
-    if(!PyArg_ParseTuple(args, "s:LM_INFO", &msg))
-        return NULL;
+	if(!PyArg_ParseTuple(args, "s:LM_INFO", &msg))
+		return NULL;
 
-    LM_INFO("%s", msg);
+	LM_INFO("%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 /*
@@ -178,69 +178,69 @@ static PyObject *logger_LM_INFO(PyObject *self, PyObject *args)
  */
 static PyObject *logger_LM_DBG(PyObject *self, PyObject *args)
 {
-    char *msg;
+	char *msg;
 
-    if(!PyArg_ParseTuple(args, "s:LM_DBG", &msg))
-        return NULL;
+	if(!PyArg_ParseTuple(args, "s:LM_DBG", &msg))
+		return NULL;
 
-    LM_DBG("%s", msg);
+	LM_DBG("%s", msg);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 PyMethodDef LoggerMethods[] = {
-    {"LM_GEN1",		(PyCFunction)logger_LM_GEN1,		METH_VARARGS, "Print GEN1 message."},
-    {"LM_GEN2",		(PyCFunction)logger_LM_GEN2,		METH_VARARGS, "Print GEN2 message."},
-    {"LM_ALERT",	(PyCFunction)logger_LM_ALERT,		METH_VARARGS, "Print alert message."},
-    {"LM_CRIT",		(PyCFunction)logger_LM_CRIT,		METH_VARARGS, "Print critical message."},
-    {"LM_ERR",		(PyCFunction)logger_LM_ERR,		METH_VARARGS, "Print error message."},
-    {"LM_WARN",		(PyCFunction)logger_LM_WARN,		METH_VARARGS, "Print warning message."},
-    {"LM_NOTICE",	(PyCFunction)logger_LM_NOTICE,		METH_VARARGS, "Print notice message."},
-    {"LM_INFO",		(PyCFunction)logger_LM_INFO,		METH_VARARGS, "Print info message."},
-    {"LM_DBG",		(PyCFunction)logger_LM_DBG,		METH_VARARGS, "Print debug message."},
-    {NULL, 		NULL, 			0, 		NULL}
+	{"LM_GEN1",		(PyCFunction)logger_LM_GEN1,		METH_VARARGS, "Print GEN1 message."},
+	{"LM_GEN2",		(PyCFunction)logger_LM_GEN2,		METH_VARARGS, "Print GEN2 message."},
+	{"LM_ALERT",	(PyCFunction)logger_LM_ALERT,		METH_VARARGS, "Print alert message."},
+	{"LM_CRIT",		(PyCFunction)logger_LM_CRIT,		METH_VARARGS, "Print critical message."},
+	{"LM_ERR",		(PyCFunction)logger_LM_ERR,		METH_VARARGS, "Print error message."},
+	{"LM_WARN",		(PyCFunction)logger_LM_WARN,		METH_VARARGS, "Print warning message."},
+	{"LM_NOTICE",	(PyCFunction)logger_LM_NOTICE,		METH_VARARGS, "Print notice message."},
+	{"LM_INFO",		(PyCFunction)logger_LM_INFO,		METH_VARARGS, "Print info message."},
+	{"LM_DBG",		(PyCFunction)logger_LM_DBG,		METH_VARARGS, "Print debug message."},
+	{NULL, 		NULL, 			0, 		NULL}
 };
 
 void init_mod_Logger(void)
 {
-    logger_module = Py_InitModule("Router.Logger", LoggerMethods);
-    PyDict_SetItemString(main_module_dict, "Logger", logger_module);
+	logger_module = Py_InitModule("Router.Logger", LoggerMethods);
+	PyDict_SetItemString(main_module_dict, "Logger", logger_module);
 
-    /*
-    * Log levels
-    * Reference: dprint.h
-    */
-    PyModule_AddObject(logger_module, "L_ALERT",  PyInt_FromLong((long)L_ALERT));
-    PyModule_AddObject(logger_module, "L_BUG",    PyInt_FromLong((long)L_BUG));
-    PyModule_AddObject(logger_module, "L_CRIT2",  PyInt_FromLong((long)L_CRIT2)); /* like L_CRIT, but adds prefix */
-    PyModule_AddObject(logger_module, "L_CRIT",   PyInt_FromLong((long)L_CRIT));  /* no prefix added */
-    PyModule_AddObject(logger_module, "L_ERR",    PyInt_FromLong((long)L_ERR));
-    PyModule_AddObject(logger_module, "L_WARN",   PyInt_FromLong((long)L_WARN));
-    PyModule_AddObject(logger_module, "L_NOTICE", PyInt_FromLong((long)L_NOTICE));
-    PyModule_AddObject(logger_module, "L_INFO",   PyInt_FromLong((long)L_INFO));
-    PyModule_AddObject(logger_module, "L_DBG",    PyInt_FromLong((long)L_DBG));
+	/*
+	 * Log levels
+	 * Reference: dprint.h
+	 */
+	PyModule_AddObject(logger_module, "L_ALERT",  PyInt_FromLong((long)L_ALERT));
+	PyModule_AddObject(logger_module, "L_BUG",    PyInt_FromLong((long)L_BUG));
+	PyModule_AddObject(logger_module, "L_CRIT2",  PyInt_FromLong((long)L_CRIT2)); /* like L_CRIT, but adds prefix */
+	PyModule_AddObject(logger_module, "L_CRIT",   PyInt_FromLong((long)L_CRIT));  /* no prefix added */
+	PyModule_AddObject(logger_module, "L_ERR",    PyInt_FromLong((long)L_ERR));
+	PyModule_AddObject(logger_module, "L_WARN",   PyInt_FromLong((long)L_WARN));
+	PyModule_AddObject(logger_module, "L_NOTICE", PyInt_FromLong((long)L_NOTICE));
+	PyModule_AddObject(logger_module, "L_INFO",   PyInt_FromLong((long)L_INFO));
+	PyModule_AddObject(logger_module, "L_DBG",    PyInt_FromLong((long)L_DBG));
 
-    /*
-    * Facility
-    * Reference: dprint.h
-    */
-    PyModule_AddObject(logger_module, "DEFAULT_FACILITY", PyInt_FromLong((long)DEFAULT_FACILITY));
+	/*
+	 * Facility
+	 * Reference: dprint.h
+	 */
+	PyModule_AddObject(logger_module, "DEFAULT_FACILITY", PyInt_FromLong((long)DEFAULT_FACILITY));
 
-    Py_INCREF(logger_module);
+	Py_INCREF(logger_module);
 
 #ifdef WITH_EXTRA_DEBUG
-    LM_ERR("Module 'Router.Logger' has been initialized\n");
+	LM_ERR("Module 'Router.Logger' has been initialized\n");
 #endif
 
 }
 
 void destroy_mod_Logger(void)
 {
-    Py_XDECREF(logger_module);
+	Py_XDECREF(logger_module);
 
 #ifdef WITH_EXTRA_DEBUG
-    LM_ERR("Module 'Router.Logger' has been destroyed\n");
+	LM_ERR("Module 'Router.Logger' has been destroyed\n");
 #endif
 
 }

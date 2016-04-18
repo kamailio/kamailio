@@ -42,41 +42,41 @@
 #include "mod_Ranks.h"
 
 PyMethodDef RanksMethods[] = {
-    {NULL, NULL, 0, NULL}
+	{NULL, NULL, 0, NULL}
 };
 
 void init_mod_Ranks(void)
 {
-    ranks_module = Py_InitModule("Router.Ranks", RanksMethods);
-    PyDict_SetItemString(main_module_dict, "Ranks", ranks_module);
+	ranks_module = Py_InitModule("Router.Ranks", RanksMethods);
+	PyDict_SetItemString(main_module_dict, "Ranks", ranks_module);
 
-    PyModule_AddObject(ranks_module, "PROC_MAIN",		PyInt_FromLong((long)PROC_MAIN));		
-    PyModule_AddObject(ranks_module, "PROC_TIMER",		PyInt_FromLong((long)PROC_TIMER));
-    PyModule_AddObject(ranks_module, "PROC_RPC",		PyInt_FromLong((long)PROC_RPC));
-    PyModule_AddObject(ranks_module, "PROC_FIFO",		PyInt_FromLong((long)PROC_FIFO));
-    PyModule_AddObject(ranks_module, "PROC_TCP_MAIN",		PyInt_FromLong((long)PROC_TCP_MAIN));
-    PyModule_AddObject(ranks_module, "PROC_UNIXSOCK",		PyInt_FromLong((long)PROC_UNIXSOCK));
-    PyModule_AddObject(ranks_module, "PROC_ATTENDANT",		PyInt_FromLong((long)PROC_ATTENDANT));
-    PyModule_AddObject(ranks_module, "PROC_INIT",		PyInt_FromLong((long)PROC_INIT));
-    PyModule_AddObject(ranks_module, "PROC_NOCHLDINIT",		PyInt_FromLong((long)PROC_NOCHLDINIT));
-    PyModule_AddObject(ranks_module, "PROC_SIPINIT",		PyInt_FromLong((long)PROC_SIPINIT));
-    PyModule_AddObject(ranks_module, "PROC_SIPRPC",		PyInt_FromLong((long)PROC_SIPRPC));
-    PyModule_AddObject(ranks_module, "PROC_MIN",		PyInt_FromLong((long)PROC_MIN));
+	PyModule_AddObject(ranks_module, "PROC_MAIN",		PyInt_FromLong((long)PROC_MAIN));
+	PyModule_AddObject(ranks_module, "PROC_TIMER",		PyInt_FromLong((long)PROC_TIMER));
+	PyModule_AddObject(ranks_module, "PROC_RPC",		PyInt_FromLong((long)PROC_RPC));
+	PyModule_AddObject(ranks_module, "PROC_FIFO",		PyInt_FromLong((long)PROC_FIFO));
+	PyModule_AddObject(ranks_module, "PROC_TCP_MAIN",		PyInt_FromLong((long)PROC_TCP_MAIN));
+	PyModule_AddObject(ranks_module, "PROC_UNIXSOCK",		PyInt_FromLong((long)PROC_UNIXSOCK));
+	PyModule_AddObject(ranks_module, "PROC_ATTENDANT",		PyInt_FromLong((long)PROC_ATTENDANT));
+	PyModule_AddObject(ranks_module, "PROC_INIT",		PyInt_FromLong((long)PROC_INIT));
+	PyModule_AddObject(ranks_module, "PROC_NOCHLDINIT",		PyInt_FromLong((long)PROC_NOCHLDINIT));
+	PyModule_AddObject(ranks_module, "PROC_SIPINIT",		PyInt_FromLong((long)PROC_SIPINIT));
+	PyModule_AddObject(ranks_module, "PROC_SIPRPC",		PyInt_FromLong((long)PROC_SIPRPC));
+	PyModule_AddObject(ranks_module, "PROC_MIN",		PyInt_FromLong((long)PROC_MIN));
 
-    Py_INCREF(ranks_module);
+	Py_INCREF(ranks_module);
 
 #ifdef WITH_EXTRA_DEBUG
-    LM_ERR("Module 'Router.Ranks' has been initialized\n");
+	LM_ERR("Module 'Router.Ranks' has been initialized\n");
 #endif
 
 }
 
 void destroy_mod_Ranks(void)
 {
-    Py_XDECREF(ranks_module);
+	Py_XDECREF(ranks_module);
 
 #ifdef WITH_EXTRA_DEBUG
-    LM_ERR("Module 'Router.Ranks' has been destroyed\n");
+	LM_ERR("Module 'Router.Ranks' has been destroyed\n");
 #endif
 
 }

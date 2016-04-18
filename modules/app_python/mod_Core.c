@@ -42,27 +42,27 @@
 #include "mod_Core.h"
 
 PyMethodDef CoreMethods[] = {
-    {NULL, NULL, 0, NULL}
+	{NULL, NULL, 0, NULL}
 };
 
 void init_mod_Core(void)
 {
-    core_module = Py_InitModule("Router.Core", CoreMethods);
-    PyDict_SetItemString(main_module_dict, "Core", core_module);
+	core_module = Py_InitModule("Router.Core", CoreMethods);
+	PyDict_SetItemString(main_module_dict, "Core", core_module);
 
-    Py_INCREF(core_module);
+	Py_INCREF(core_module);
 
 #ifdef WITH_EXTRA_DEBUG
-    LM_ERR("Module 'Router.Core' has been initialized\n");
+	LM_ERR("Module 'Router.Core' has been initialized\n");
 #endif
 
 }
 
 void destroy_mod_Core(void)
 {
-    Py_XDECREF(core_module);
+	Py_XDECREF(core_module);
 #ifdef WITH_EXTRA_DEBUG
-    LM_ERR("Module 'Router.Core' has been destroyed\n");
+	LM_ERR("Module 'Router.Core' has been destroyed\n");
 #endif
 
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 Sippy Software, Inc., http://www.sippysoft.com
  *
  * This file is part of Kamailio, a free SIP server.
@@ -38,11 +38,11 @@
 
 int ap_init_modules(void)
 {
-    init_mod_Router();
-    init_mod_Core();
-    init_mod_Ranks();
-    init_mod_Logger();
+	init_mod_Router();
+	init_mod_Core();
+	init_mod_Ranks();
+	init_mod_Logger();
 
-    return 0;
+	return 0;
 }
 
