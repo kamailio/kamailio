@@ -79,13 +79,13 @@ void python_handle_exception(const char *fmt, ...)
 	}
 
 	buflen = 1;
-	buf = (char *)pkg_realloc(NULL, buflen * sizeof(char *));
+	buf = (char *)pkg_realloc(NULL, buflen * sizeof(char));
 	if (!buf)
 	{
 		LM_ERR("python_handle_exception(): Can't allocate memory (%lu bytes), pkg_realloc() has failed. Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
 		return;
 	}
-	memset(buf, 0, sizeof(char *));
+	memset(buf, 0, buflen * sizeof(char));
 
 	for (i = 0; i < PySequence_Size(pResult); i++) {
 		line = PySequence_GetItem(pResult, i);
