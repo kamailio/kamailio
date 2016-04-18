@@ -41,29 +41,29 @@
 
 
 PyMethodDef RouterMethods[] = {
-    {NULL, NULL, 0, NULL}
+	{NULL, NULL, 0, NULL}
 };
 
 void init_mod_Router(void)
 {
-    main_module = Py_InitModule("Router", RouterMethods);
-    main_module_dict = PyModule_GetDict(main_module);
+	main_module = Py_InitModule("Router", RouterMethods);
+	main_module_dict = PyModule_GetDict(main_module);
 
-    Py_INCREF(main_module);
+	Py_INCREF(main_module);
 
 #ifdef WITH_EXTRA_DEBUG
-    LM_ERR("Module 'Router' has been initialized\n");
+	LM_ERR("Module 'Router' has been initialized\n");
 #endif
 
 }
 
 void destroy_mod_Router(void)
 {
-    Py_XDECREF(main_module);
-    Py_XDECREF(main_module_dict);
+	Py_XDECREF(main_module);
+	Py_XDECREF(main_module_dict);
 
 #ifdef WITH_EXTRA_DEBUG
-    LM_ERR("Module 'Router' has been destroyed\n");
+	LM_ERR("Module 'Router' has been destroyed\n");
 #endif
 
 }
