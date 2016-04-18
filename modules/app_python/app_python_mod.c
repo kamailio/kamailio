@@ -24,6 +24,7 @@
 
 #include "../../str.h"
 #include "../../sr_module.h"
+#include "../../kemi.h"
 
 #include "python_exec.h"
 #include "python_iface.h"
@@ -35,6 +36,8 @@
 #include "mod_Core.h"
 #include "mod_Ranks.h"
 #include "mod_Logger.h"
+
+#include "apy_kemi.h"
 
 MODULE_VERSION
 
@@ -86,6 +89,21 @@ struct module_exports exports = {
 	child_init                      /* per-child init function */
 };
 
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	str ename = str_init("python");
+
+	sr_kemi_eng_register(&ename, sr_kemi_config_engine_python);
+
+	return 0;
+}
+
+/**
+ *
+ */
 static int mod_init(void)
 {
 	char *dname_src, *bname_src;
@@ -259,6 +277,9 @@ static int mod_init(void)
 	return 0;
 }
 
+/**
+ *
+ */
 static int child_init(int rank)
 {
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
@@ -370,6 +391,9 @@ static int child_init(int rank)
 	return rval;
 }
 
+/**
+ *
+ */
 static void mod_destroy(void)
 {
 	if (dname)

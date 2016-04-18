@@ -47,7 +47,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 
 	pFunc = PyObject_GetAttrString(handler_obj, fname);
 	if (pFunc == NULL || !PyCallable_Check(pFunc)) {
-		if(emode==0) {
+		if(emode==1) {
 			LM_ERR("%s not found or is not callable\n", fname);
 		} else {
 			LM_DBG("%s not found or is not callable\n", fname);
@@ -55,7 +55,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		Py_XDECREF(pFunc);
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
-		if(emode==0) {
+		if(emode==1) {
 			return -1;
 		} else {
 			return 1;
@@ -130,7 +130,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
  */
 int python_exec1(sip_msg_t *_msg, char *method_name, char *foobar)
 {
-	return apy_exec(_msg, method_name, NULL, 0);
+	return apy_exec(_msg, method_name, NULL, 1);
 }
 
 /**
@@ -138,5 +138,5 @@ int python_exec1(sip_msg_t *_msg, char *method_name, char *foobar)
  */
 int python_exec2(sip_msg_t *_msg, char *method_name, char *mystr)
 {
-	return apy_exec(_msg, method_name, mystr, 0);
+	return apy_exec(_msg, method_name, mystr, 1);
 }
