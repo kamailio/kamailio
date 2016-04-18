@@ -1908,7 +1908,7 @@ static struct mi_root* sip_capture_mi(struct mi_root* cmd_tree, void* param )
 		*capture_on_flag = 0;
 		return init_mi_tree( 200, MI_SSTR(MI_OK));
 	} else {
-		return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
+		return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
 	}
 }
 
