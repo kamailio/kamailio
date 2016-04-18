@@ -183,6 +183,10 @@ Chapter 1. Admin Guide
    and get access to parts of the reply. This function has been ported
    from the utils module and now use the same libcurl functions.
 
+   The http_client module use the CURL library setting up connections. The
+   CURL library by default use the system configured DNS resolvers, not
+   the Kamailio resolver.
+
    The module is limited to using HTTP and HTTPS protocols.
 
 2. Dependencies

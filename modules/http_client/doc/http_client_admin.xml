@@ -44,6 +44,11 @@
 	functions.
 	</para>
 	<para>
+	The http_client module use the CURL library setting up connections.
+	The CURL library by default use the system configured DNS resolvers,
+	not the Kamailio resolver.
+	</para>
+	<para>
 	The module is limited to using HTTP and HTTPS protocols.
 	</para>
 	</section>
