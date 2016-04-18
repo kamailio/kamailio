@@ -2276,10 +2276,10 @@ int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_re
 
 
 	/* type of proto */
-	if (hg->proto_t->data == 5) sco.type = 1;
+	if (hg->proto_t->data == 5) sco.type = 3;
 	else if (hg->proto_t->data == 32) sco.type = 2;
-	else if (hg->proto_t->data == 99) sco.type = 1;
-	else if (hg->proto_t->data == 100) sco.type = 1;
+	else if (hg->proto_t->data == 99) sco.type = 4;
+	else if (hg->proto_t->data == 100) sco.type = 5;
 
 
 	/*source ip*/
