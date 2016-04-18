@@ -50,7 +50,7 @@ static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy(void);
 
-PyObject *handler_obj;
+PyObject *_sr_apy_handler_obj;
 
 char *dname = NULL, *bname = NULL;
 
@@ -239,12 +239,12 @@ static int mod_init(void)
 		return -1;
 	}
 
-	handler_obj = PyObject_CallObject(pFunc, pArgs);
+	_sr_apy_handler_obj = PyObject_CallObject(pFunc, pArgs);
 
 	Py_XDECREF(pFunc);
 	Py_XDECREF(pArgs);
 
-	if (handler_obj == Py_None) {
+	if (_sr_apy_handler_obj == Py_None) {
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_TypeError, "Function '%s' of module '%s' has returned None. Should be a class instance.", mod_init_fname.s, bname);
 		python_handle_exception("mod_init");
@@ -255,13 +255,13 @@ static int mod_init(void)
 
 	if (PyErr_Occurred()) {
 		python_handle_exception("mod_init");
-		Py_XDECREF(handler_obj);
+		Py_XDECREF(_sr_apy_handler_obj);
 		Py_DECREF(format_exc_obj);
 		PyEval_ReleaseLock();
 		return -1;
 	}
 
-	if (handler_obj == NULL) {
+	if (_sr_apy_handler_obj == NULL) {
 		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_TypeError, "Function '%s' of module '%s' has returned not returned object. Should be a class instance.", mod_init_fname.s, bname);
@@ -290,7 +290,7 @@ static int child_init(int rank)
 	PyThreadState_Swap(myThreadState);
 
 	// get instance class name
-	classname = get_instance_class_name(handler_obj);
+	classname = get_instance_class_name(_sr_apy_handler_obj);
 	if (classname == NULL)
 	{
 		if (!PyErr_Occurred())
@@ -302,7 +302,7 @@ static int child_init(int rank)
 		return -1;
 	}
 
-	pFunc = PyObject_GetAttrString(handler_obj, child_init_mname.s);
+	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, child_init_mname.s);
 
 	if (pFunc == NULL) {
 		python_handle_exception("child_init");

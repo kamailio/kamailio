@@ -35,17 +35,30 @@
 #include "python_msgobj.h"
 #include "python_support.h"
 
+static sr_apy_env_t _sr_apy_env = {0};
 
+/**
+ *
+ */
+sr_apy_env_t *sr_apy_env_get()
+{
+	return &_sr_apy_env;
+}
+
+/**
+ *
+ */
 int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 {
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
-	PyObject *msg;
+	PyObject *pmsg;
 	int rval;
 
+	_sr_apy_env.msg = _msg;
 	PyEval_AcquireLock();
 	PyThreadState_Swap(myThreadState);
 
-	pFunc = PyObject_GetAttrString(handler_obj, fname);
+	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, fname);
 	if (pFunc == NULL || !PyCallable_Check(pFunc)) {
 		if(emode==1) {
 			LM_ERR("%s not found or is not callable\n", fname);
@@ -55,6 +68,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		Py_XDECREF(pFunc);
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
+		_sr_apy_env.msg = NULL;
 		if(emode==1) {
 			return -1;
 		} else {
@@ -62,37 +76,40 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		}
 	}
 
-	msg = newmsgobject(_msg);
-	if (msg == NULL) {
+	pmsg = newmsgobject(_msg);
+	if (pmsg == NULL) {
 		LM_ERR("can't create MSGtype instance\n");
 		Py_DECREF(pFunc);
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
+		_sr_apy_env.msg = NULL;
 		return -1;
 	}
 
 	pArgs = PyTuple_New(fparam == NULL ? 1 : 2);
 	if (pArgs == NULL) {
 		LM_ERR("PyTuple_New() has failed\n");
-		msg_invalidate(msg);
-		Py_DECREF(msg);
+		msg_invalidate(pmsg);
+		Py_DECREF(pmsg);
 		Py_DECREF(pFunc);
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
+		_sr_apy_env.msg = NULL;
 		return -1;
 	}
-	PyTuple_SetItem(pArgs, 0, msg);
-	/* Tuple steals msg */
+	PyTuple_SetItem(pArgs, 0, pmsg);
+	/* Tuple steals pmsg */
 
 	if (fparam != NULL) {
 		pValue = PyString_FromString(fparam);
 		if (pValue == NULL) {
 			LM_ERR("PyString_FromString(%s) has failed\n", fparam);
-			msg_invalidate(msg);
+			msg_invalidate(pmsg);
 			Py_DECREF(pArgs);
 			Py_DECREF(pFunc);
 			PyThreadState_Swap(NULL);
 			PyEval_ReleaseLock();
+			_sr_apy_env.msg = NULL;
 			return -1;
 		}
 		PyTuple_SetItem(pArgs, 1, pValue);
@@ -100,7 +117,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	}
 
 	pResult = PyObject_CallObject(pFunc, pArgs);
-	msg_invalidate(msg);
+	msg_invalidate(pmsg);
 	Py_DECREF(pArgs);
 	Py_DECREF(pFunc);
 	if (PyErr_Occurred()) {
@@ -108,6 +125,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		python_handle_exception("python_exec2");
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
+		_sr_apy_env.msg = NULL;
 		return -1;
 	}
 
@@ -115,6 +133,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		LM_ERR("PyObject_CallObject() returned NULL\n");
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
+		_sr_apy_env.msg = NULL;
 		return -1;
 	}
 
@@ -122,6 +141,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	Py_DECREF(pResult);
 	PyThreadState_Swap(NULL);
 	PyEval_ReleaseLock();
+	_sr_apy_env.msg = NULL;
 	return rval;
 }
 

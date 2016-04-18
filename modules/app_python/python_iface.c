@@ -35,6 +35,8 @@
 #include "mod_Ranks.h"
 #include "mod_Logger.h"
 
+#include "apy_kemi.h"
+
 
 int ap_init_modules(void)
 {
@@ -42,6 +44,7 @@ int ap_init_modules(void)
 	init_mod_Core();
 	init_mod_Ranks();
 	init_mod_Logger();
+	if(sr_apy_init_ksr()<0) return -1;
 
 	return 0;
 }

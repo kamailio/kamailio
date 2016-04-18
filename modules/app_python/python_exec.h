@@ -24,6 +24,12 @@
 
 #include "../../parser/msg_parser.h"
 
+typedef struct sr_apy_env {
+	sip_msg_t *msg;
+} sr_apy_env_t;
+
+sr_apy_env_t *sr_apy_env_get();
+
 int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode);
 int python_exec1(sip_msg_t *, char *, char *);
 int python_exec2(sip_msg_t *, char *, char *);

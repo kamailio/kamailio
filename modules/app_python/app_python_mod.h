@@ -24,7 +24,7 @@
 
 #include <Python.h>
 
-extern PyObject *handler_obj;
+extern PyObject *_sr_apy_handler_obj;
 extern PyObject *format_exc_obj;
 extern PyThreadState *myThreadState;
 
