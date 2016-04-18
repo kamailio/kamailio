@@ -66,6 +66,7 @@ The http_client module - todo
 - Make it possible to define modparams in any order. For now, httpcon definitions only use default
   values from modparam's defined on lines above in the config file. (issue #541)
 
+- Option to configure DNS resolvers for CURL to use
 
 Issues in the bug tracker
 -------------------------
