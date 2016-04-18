@@ -44,6 +44,7 @@ int worker_init(worker_handler_t *phandler, int fd, const ei_cnode *ec)
 	phandler->sockfd = fd;
 	phandler->ec = *ec;
 	phandler->next = NULL;
+	phandler->new = NULL;
 
 	return 0;
 }
