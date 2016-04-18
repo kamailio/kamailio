@@ -24,6 +24,7 @@
 
 #include "../../dprint.h"
 #include "../../route.h"
+#include "../../kemi.h"
 
 #include "python_exec.h"
 #include "apy_kemi.h"
@@ -81,4 +82,12 @@ int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname)
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+int sr_apy_init_ksr(void)
+{
+	return 0;
 }

@@ -26,7 +26,7 @@
 #include <Python.h>
 #include <libgen.h>
 
-PyObject *logger_module;
+extern PyObject *_sr_apy_logger_module;
 
 extern PyMethodDef LoggerMethods[];
 

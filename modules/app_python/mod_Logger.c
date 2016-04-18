@@ -41,6 +41,8 @@
 #include "mod_Router.h"
 #include "mod_Logger.h"
 
+PyObject *_sr_apy_logger_module = NULL;
+
 /*
  * Python method: LM_GEN1(self, int log_level, str msg)
  */
@@ -204,30 +206,40 @@ PyMethodDef LoggerMethods[] = {
 
 void init_mod_Logger(void)
 {
-	logger_module = Py_InitModule("Router.Logger", LoggerMethods);
-	PyDict_SetItemString(main_module_dict, "Logger", logger_module);
+	_sr_apy_logger_module = Py_InitModule("Router.Logger", LoggerMethods);
+	PyDict_SetItemString(_sr_apy_main_module_dict, "Logger", _sr_apy_logger_module);
 
 	/*
 	 * Log levels
 	 * Reference: dprint.h
 	 */
-	PyModule_AddObject(logger_module, "L_ALERT",  PyInt_FromLong((long)L_ALERT));
-	PyModule_AddObject(logger_module, "L_BUG",    PyInt_FromLong((long)L_BUG));
-	PyModule_AddObject(logger_module, "L_CRIT2",  PyInt_FromLong((long)L_CRIT2)); /* like L_CRIT, but adds prefix */
-	PyModule_AddObject(logger_module, "L_CRIT",   PyInt_FromLong((long)L_CRIT));  /* no prefix added */
-	PyModule_AddObject(logger_module, "L_ERR",    PyInt_FromLong((long)L_ERR));
-	PyModule_AddObject(logger_module, "L_WARN",   PyInt_FromLong((long)L_WARN));
-	PyModule_AddObject(logger_module, "L_NOTICE", PyInt_FromLong((long)L_NOTICE));
-	PyModule_AddObject(logger_module, "L_INFO",   PyInt_FromLong((long)L_INFO));
-	PyModule_AddObject(logger_module, "L_DBG",    PyInt_FromLong((long)L_DBG));
+	PyModule_AddObject(_sr_apy_logger_module, "L_ALERT",
+			PyInt_FromLong((long)L_ALERT));
+	PyModule_AddObject(_sr_apy_logger_module, "L_BUG",
+			PyInt_FromLong((long)L_BUG));
+	PyModule_AddObject(_sr_apy_logger_module, "L_CRIT2",
+			PyInt_FromLong((long)L_CRIT2)); /* like L_CRIT, but adds prefix */
+	PyModule_AddObject(_sr_apy_logger_module, "L_CRIT",
+			PyInt_FromLong((long)L_CRIT));  /* no prefix added */
+	PyModule_AddObject(_sr_apy_logger_module, "L_ERR",
+			PyInt_FromLong((long)L_ERR));
+	PyModule_AddObject(_sr_apy_logger_module, "L_WARN",
+			PyInt_FromLong((long)L_WARN));
+	PyModule_AddObject(_sr_apy_logger_module, "L_NOTICE",
+			PyInt_FromLong((long)L_NOTICE));
+	PyModule_AddObject(_sr_apy_logger_module, "L_INFO",
+			PyInt_FromLong((long)L_INFO));
+	PyModule_AddObject(_sr_apy_logger_module, "L_DBG",
+			PyInt_FromLong((long)L_DBG));
 
 	/*
 	 * Facility
 	 * Reference: dprint.h
 	 */
-	PyModule_AddObject(logger_module, "DEFAULT_FACILITY", PyInt_FromLong((long)DEFAULT_FACILITY));
+	PyModule_AddObject(_sr_apy_logger_module, "DEFAULT_FACILITY",
+			PyInt_FromLong((long)DEFAULT_FACILITY));
 
-	Py_INCREF(logger_module);
+	Py_INCREF(_sr_apy_logger_module);
 
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router.Logger' has been initialized\n");
@@ -237,7 +249,7 @@ void init_mod_Logger(void)
 
 void destroy_mod_Logger(void)
 {
-	Py_XDECREF(logger_module);
+	Py_XDECREF(_sr_apy_logger_module);
 
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router.Logger' has been destroyed\n");

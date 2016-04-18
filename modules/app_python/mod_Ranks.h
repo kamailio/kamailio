@@ -25,7 +25,7 @@
 #include <Python.h>
 #include <libgen.h>
 
-PyObject *ranks_module;
+extern PyObject *_sr_apy_ranks_module;
 
 extern PyMethodDef RanksMethods[];
 

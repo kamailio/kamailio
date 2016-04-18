@@ -26,7 +26,7 @@
 #include <Python.h>
 #include <libgen.h>
 
-PyObject *core_module;
+extern PyObject *_sr_apy_core_module;
 
 extern PyMethodDef CoreMethods[];
 

@@ -25,8 +25,8 @@
 #include <Python.h>
 #include <libgen.h>
 
-PyObject *main_module;
-PyObject *main_module_dict;
+extern PyObject *_sr_apy_main_module;
+extern PyObject *_sr_apy_main_module_dict;
 
 extern PyMethodDef RouterMethods[];
 
