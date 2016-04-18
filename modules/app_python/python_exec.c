@@ -31,7 +31,7 @@
 #include "../../parser/parse_uri.h"
 
 #include "python_exec.h"
-#include "python_mod.h"
+#include "app_python_mod.h"
 #include "python_msgobj.h"
 #include "python_support.h"
 

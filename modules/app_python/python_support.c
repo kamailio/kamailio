@@ -26,7 +26,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 
-#include "python_mod.h"
+#include "app_python_mod.h"
 #include "python_support.h"
 
 void python_handle_exception(const char *fmt, ...)
