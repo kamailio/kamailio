@@ -29,6 +29,98 @@
 
 #include "kemi.h"
 
+
+/**
+ *
+ */
+static run_act_ctx_t *_sr_kemi_act_ctx = NULL;
+
+/**
+ *
+ */
+void sr_kemi_act_ctx_set(run_act_ctx_t *ctx)
+{
+	_sr_kemi_act_ctx = ctx;
+}
+
+/**
+ *
+ */
+run_act_ctx_t* sr_kemi_act_ctx_get(void)
+{
+	return _sr_kemi_act_ctx;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_dbg(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_DBG("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_err(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_ERR("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_info(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_INFO("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_drop(sip_msg_t *msg)
+{
+	if(_sr_kemi_act_ctx==NULL)
+		return 0;
+	LM_DBG("drop action executed inside embedded interpreter\n");
+	_sr_kemi_act_ctx->run_flags |= EXIT_R_F|DROP_R_F;
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t _sr_kemi_core[] = {
+	{ str_init(""), str_init("dbg"),
+		SR_KEMIP_NONE, sr_kemi_core_dbg,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("err"),
+		SR_KEMIP_NONE, sr_kemi_core_err,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("info"),
+		SR_KEMIP_NONE, sr_kemi_core_info,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("drop"),
+		SR_KEMIP_NONE, sr_kemi_core_drop,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
 #define SR_KEMI_MODULES_MAX_SIZE	1024
 static int _sr_kemi_modules_size = 1;
 static sr_kemi_module_t _sr_kemi_modules[SR_KEMI_MODULES_MAX_SIZE];
@@ -40,6 +132,11 @@ int sr_kemi_modules_add(sr_kemi_t *klist)
 {
 	if(_sr_kemi_modules_size>=SR_KEMI_MODULES_MAX_SIZE) {
 		return -1;
+	}
+	if(_sr_kemi_modules_size==1) {
+		LM_DBG("adding core module\n");
+		_sr_kemi_modules[0].mname = _sr_kemi_core[0].mname;
+		_sr_kemi_modules[0].kexp = _sr_kemi_core;
 	}
 	LM_DBG("adding module: %.*s\n", klist[0].mname.len, klist[0].mname.s);
 	_sr_kemi_modules[_sr_kemi_modules_size].mname = klist[0].mname;
@@ -67,97 +164,6 @@ sr_kemi_module_t* sr_kemi_modules_get(void)
 /**
  *
  */
-static run_act_ctx_t *_sr_kemi_act_ctx = NULL;
-
-/**
- *
- */
-void sr_kemi_act_ctx_set(run_act_ctx_t *ctx)
-{
-	_sr_kemi_act_ctx = ctx;
-}
-
-/**
- *
- */
-run_act_ctx_t* sr_kemi_act_ctx_get(void)
-{
-	return _sr_kemi_act_ctx;
-}
-
-/**
- *
- */
-static int lua_sr_kemi_dbg(sip_msg_t *msg, str *txt)
-{
-	if(txt!=NULL && txt->s!=NULL)
-		LM_DBG("%.*s", txt->len, txt->s);
-	return 0;
-}
-
-/**
- *
- */
-static int lua_sr_kemi_err(sip_msg_t *msg, str *txt)
-{
-	if(txt!=NULL && txt->s!=NULL)
-		LM_ERR("%.*s", txt->len, txt->s);
-	return 0;
-}
-
-/**
- *
- */
-static int lua_sr_kemi_info(sip_msg_t *msg, str *txt)
-{
-	if(txt!=NULL && txt->s!=NULL)
-		LM_INFO("%.*s", txt->len, txt->s);
-	return 0;
-}
-
-/**
- *
- */
-static int lua_sr_kemi_drop(sip_msg_t *msg)
-{
-	if(_sr_kemi_act_ctx==NULL)
-		return 0;
-	LM_DBG("drop action executed inside embedded interpreter\n");
-	_sr_kemi_act_ctx->run_flags |= EXIT_R_F|DROP_R_F;
-	return 0;
-}
-
-/**
- *
- */
-static sr_kemi_t _sr_kemi_core[] = {
-	{ str_init(""), str_init("dbg"),
-		SR_KEMIP_NONE, lua_sr_kemi_dbg,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init(""), str_init("err"),
-		SR_KEMIP_NONE, lua_sr_kemi_err,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init(""), str_init("info"),
-		SR_KEMIP_NONE, lua_sr_kemi_info,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-	{ str_init(""), str_init("drop"),
-		SR_KEMIP_NONE, lua_sr_kemi_drop,
-		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
-
-	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
-};
-
-/**
- *
- */
 sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname)
 {
 	int i;
@@ -173,7 +179,7 @@ sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname)
 		}
 	} else {
 		if(midx>0 && midx<SR_KEMI_MODULES_MAX_SIZE) {
-			for(i=0; _sr_kemi_core[i].fname.s!=NULL; i++) {
+			for(i=0; _sr_kemi_modules[midx].kexp[i].fname.s!=NULL; i++) {
 				ket = &_sr_kemi_modules[midx].kexp[i];
 				if(ket->fname.len==fname->len
 						&& strncasecmp(ket->fname.s, fname->s, fname->len)==0) {
