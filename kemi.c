@@ -164,7 +164,7 @@ sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname)
 	sr_kemi_t *ket;
 
 	if(mname==NULL || mname->len<=0) {
-		for(i=0; ; i++) {
+		for(i=0; _sr_kemi_core[i].fname.s!=NULL; i++) {
 			ket = &_sr_kemi_core[i];
 			if(ket->fname.len==fname->len
 					&& strncasecmp(ket->fname.s, fname->s, fname->len)==0) {
@@ -173,7 +173,7 @@ sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname)
 		}
 	} else {
 		if(midx>0 && midx<SR_KEMI_MODULES_MAX_SIZE) {
-			for(i=0; ; i++) {
+			for(i=0; _sr_kemi_core[i].fname.s!=NULL; i++) {
 				ket = &_sr_kemi_modules[midx].kexp[i];
 				if(ket->fname.len==fname->len
 						&& strncasecmp(ket->fname.s, fname->s, fname->len)==0) {
