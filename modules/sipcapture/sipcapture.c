@@ -1556,7 +1556,6 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	struct timeval tvb;
 	struct timezone tz;
 	char tmp_node[100];
-	char rtpinfo[256];
 	unsigned int len = 0;
 
 	LM_DBG("CAPTURE DEBUG...\n");
@@ -1812,19 +1811,8 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	}
 	/* RTP-RxStat */
 	else if((tmphdr[3] = get_hdr_by_name(msg,"RTP-RxStat", 10)) != NULL) {
-		if(tmphdr[3]->body.len > 250) tmphdr[3]->body.len = 250;
-
-		memcpy(&rtpinfo, tmphdr[3]->body.s, tmphdr[3]->body.len);
-		len = tmphdr[3]->body.len;
-		if((tmphdr[3] = get_hdr_by_name(msg,"RTP-TxStat", 10)) != NULL) {
-			memcpy(&rtpinfo[len], ", ", 2);
-			if((len + 2 + tmphdr[3]->body.len) > 256) tmphdr[3]->body.len = 256 - (len+2);
-			memcpy(&rtpinfo[len+2], tmphdr[3]->body.s, tmphdr[3]->body.len);
-		}
-		sco.rtp_stat.s =  rtpinfo;
-		sco.rtp_stat.len =  strlen(rtpinfo);
+		sco.rtp_stat =  tmphdr[3]->body;
 	}
-
 
 	else { EMPTY_STR(sco.rtp_stat); }
 
@@ -1920,7 +1908,7 @@ static struct mi_root* sip_capture_mi(struct mi_root* cmd_tree, void* param )
 		*capture_on_flag = 0;
 		return init_mi_tree( 200, MI_SSTR(MI_OK));
 	} else {
-		return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
+		return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
 	}
 }
 
