@@ -240,7 +240,7 @@ ht_t* ht_get_table(str *name)
 	ht = _ht_root;
 	while(ht!=NULL)
 	{
-		if(htid == ht->htid && name->len==ht->name.len 
+		if(htid == ht->htid && name->len==ht->name.len
 				&& strncmp(name->s, ht->name.s, name->len)==0)
 		{
 			LM_DBG("htable found [%.*s]\n", name->len, name->s);
@@ -266,7 +266,7 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 	ht = _ht_root;
 	while(ht!=NULL)
 	{
-		if(htid == ht->htid && name->len==ht->name.len 
+		if(htid == ht->htid && name->len==ht->name.len
 				&& strncmp(name->s, ht->name.s, name->len)==0)
 		{
 			LM_ERR("htable already configured [%.*s]\n", name->len, name->s);
@@ -461,7 +461,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 		return -1;
 
 	hid = ht_compute_hash(name);
-	
+
 	idx = ht_get_entry(hid, ht->htsize);
 
 	now = 0;
@@ -477,7 +477,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 	}
 	while(it!=NULL && it->cellid == hid)
 	{
-		if(name->len==it->name.len 
+		if(name->len==it->name.len
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
 			/* update value */
@@ -491,7 +491,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 						it->value.s.len = val->s.len;
 						memcpy(it->value.s.s, val->s.s, val->s.len);
 						it->value.s.s[it->value.s.len] = '\0';
-						
+
 						if(ht->updateexpire)
 							it->expire = now + ht->htexpire;
 					} else {
@@ -602,20 +602,20 @@ int ht_del_cell(ht_t *ht, str *name)
 		return -1;
 
 	hid = ht_compute_hash(name);
-	
+
 	idx = ht_get_entry(hid, ht->htsize);
 
 	/* head test and return */
 	if(ht->entries[idx].first==NULL)
 		return 0;
-	
+
 	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 		it = it->next;
 	while(it!=NULL && it->cellid == hid)
 	{
-		if(name->len==it->name.len 
+		if(name->len==it->name.len
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
 			/* found */
@@ -781,20 +781,20 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 		return NULL;
 
 	hid = ht_compute_hash(name);
-	
+
 	idx = ht_get_entry(hid, ht->htsize);
 
 	/* head test and return */
 	if(ht->entries[idx].first==NULL)
 		return NULL;
-	
+
 	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
 	while(it!=NULL && it->cellid < hid)
 		it = it->next;
 	while(it!=NULL && it->cellid == hid)
 	{
-		if(name->len==it->name.len 
+		if(name->len==it->name.len
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
 			/* found */
@@ -938,12 +938,12 @@ int ht_table_spec(char *spec)
 			if(str2int(&tok, &updateexpire) != 0)
 				goto error;
 
-			LM_DBG("htable [%.*s] - updateexpire [%u]\n", name.len, name.s, updateexpire); 
+			LM_DBG("htable [%.*s] - updateexpire [%u]\n", name.len, name.s, updateexpire);
 		} else if(pit->name.len == 12 && strncmp(pit->name.s, "dmqreplicate", 12) == 0) {
 			if(str2int(&tok, &dmqreplicate) != 0)
 				goto error;
 
-			LM_DBG("htable [%.*s] - dmqreplicate [%u]\n", name.len, name.s, dmqreplicate); 
+			LM_DBG("htable [%.*s] - dmqreplicate [%u]\n", name.len, name.s, dmqreplicate);
 		} else { goto error; }
 	}
 
@@ -1129,7 +1129,7 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 		return 0;
 
 	hid = ht_compute_hash(name);
-	
+
 	idx = ht_get_entry(hid, ht->htsize);
 
 	now = 0;
@@ -1144,7 +1144,7 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 		it = it->next;
 	while(it!=NULL && it->cellid == hid)
 	{
-		if(name->len==it->name.len 
+		if(name->len==it->name.len
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
 			/* update value */
@@ -1174,7 +1174,7 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 		return 0;
 
 	hid = ht_compute_hash(name);
-	
+
 	idx = ht_get_entry(hid, ht->htsize);
 
 	now = time(NULL);
@@ -1184,7 +1184,7 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 		it = it->next;
 	while(it!=NULL && it->cellid == hid)
 	{
-		if(name->len==it->name.len 
+		if(name->len==it->name.len
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
 			/* update value */
@@ -1410,18 +1410,18 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 								cnt++;
 						break;
 						case 2: /* rlike */
-							if(sval.len<=tval.len 
+							if(sval.len<=tval.len
 									&& strncmp(sval.s,
 										tval.s+tval.len-sval.len, sval.len)==0)
 								cnt++;
 						break;
 						case 3: /* llike */
-							if(sval.len<=tval.len 
+							if(sval.len<=tval.len
 									&& strncmp(sval.s, tval.s, sval.len)==0)
 								cnt++;
 						break;
 						case 4: /* str eq */
-							if(sval.len==tval.len 
+							if(sval.len==tval.len
 									&& strncmp(sval.s, tval.s, sval.len)==0)
 								cnt++;
 						break;

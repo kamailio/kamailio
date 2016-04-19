@@ -74,7 +74,7 @@ int ht_db_init_con(void)
 	if (!DB_CAPABILITY(ht_dbf, DB_CAP_ALL))
 	{
 		LM_ERR("database module does not "
-		    "implement all functions needed by the module\n");
+				"implement all functions needed by the module\n");
 		return -1;
 	}
 	return 0;
@@ -89,10 +89,10 @@ int ht_db_open_con(void)
 	ht_db_con = ht_dbf.init(&ht_db_url);
 	if(ht_db_con==NULL)
 	{
-		LM_ERR("failed to connect to the database\n");        
+		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
-	
+
 	LM_DBG("database connection opened successfully\n");
 	return 0;
 }
@@ -435,7 +435,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 							goto error;
 					}
 				}
-				
+
 				if(ht_set_cell(ht, &hname, (vtype)?0:AVP_VAL_STR, &val, mode))
 				{
 					LM_ERR("error adding to hash table\n");
@@ -451,7 +451,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 					}
 				}
 			}
-	 	}
+		}
 		if (DB_CAPABILITY(ht_dbf, DB_CAP_FETCH)) {
 			if(ht_dbf.fetch_result(ht_db_con, &db_res, ht_fetch_rows)<0) {
 				LM_ERR("Error while fetching!\n");
