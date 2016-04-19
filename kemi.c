@@ -25,6 +25,8 @@
 
 #include "dprint.h"
 #include "locking.h"
+#include "data_lump.h"
+#include "data_lump_rpl.h"
 #include "mem/shm.h"
 
 #include "kemi.h"
@@ -121,8 +123,150 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 
+/**
+ *
+ */
+static int sr_kemi_hdr_append(sip_msg_t *msg, str *txt)
+{
+	struct lump* anchor;
+	struct hdr_field *hf;
+	char *hdr;
+
+	if(txt==NULL || txt->s==NULL || msg==NULL)
+		return -1;
+
+	LM_DBG("append hf: %.*s\n", txt->len, txt->s);
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+
+	hf = msg->last_header;
+	hdr = (char*)pkg_malloc(txt->len);
+	if(hdr==NULL) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(hdr, txt->s, txt->len);
+	anchor = anchor_lump(msg,
+				hf->name.s + hf->len - msg->buf, 0, 0);
+	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0)
+	{
+		LM_ERR("can't insert lump\n");
+		pkg_free(hdr);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_hdr_remove(sip_msg_t *msg, str *txt)
+{
+	struct lump* anchor;
+	struct hdr_field *hf;
+
+	if(txt==NULL || txt->s==NULL || msg==NULL)
+		return -1;
+
+	LM_DBG("remove hf: %.*s\n", txt->len, txt->s);
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hf->name.len==txt->len
+				&& strncasecmp(hf->name.s, txt->s, txt->len)==0) {
+			anchor=del_lump(msg,
+					hf->name.s - msg->buf, hf->len, 0);
+			if (anchor==0) {
+				LM_ERR("cannot remove hdr %.*s\n", txt->len, txt->s);
+				return -1;
+			}
+		}
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_hdr_insert(sip_msg_t *msg, str *txt)
+{
+	struct lump* anchor;
+	struct hdr_field *hf;
+	char *hdr;
+
+	if(txt==NULL || txt->s==NULL || msg==NULL)
+		return -1;
+
+	LM_DBG("insert hf: %.*s\n", txt->len, txt->s);
+	hf = msg->headers;
+	hdr = (char*)pkg_malloc(txt->len);
+	if(hdr==NULL) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+	memcpy(hdr, txt->s, txt->len);
+	anchor = anchor_lump(msg, hf->name.s + hf->len - msg->buf, 0, 0);
+	if(insert_new_lump_before(anchor, hdr, txt->len, 0) == 0) {
+		LM_ERR("can't insert lump\n");
+		pkg_free(hdr);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int sr_kemi_hdr_append_to_reply(sip_msg_t *msg, str *txt)
+{
+	if(txt==NULL || txt->s==NULL || msg==NULL)
+		return -1;
+
+	LM_DBG("append to reply: %.*s\n", txt->len, txt->s);
+
+	if(add_lump_rpl(msg, txt->s, txt->len, LUMP_RPL_HDR)==0) {
+		LM_ERR("unable to add reply lump\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static sr_kemi_t _sr_kemi_hdr[] = {
+	{ str_init("hdr"), str_init("append"),
+		SR_KEMIP_INT, sr_kemi_hdr_append,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("insert"),
+		SR_KEMIP_INT, sr_kemi_hdr_insert,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("remove"),
+		SR_KEMIP_INT, sr_kemi_hdr_remove,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("hdr"), str_init("append_to_reply"),
+		SR_KEMIP_INT, sr_kemi_hdr_append_to_reply,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
 #define SR_KEMI_MODULES_MAX_SIZE	1024
-static int _sr_kemi_modules_size = 1;
+static int _sr_kemi_modules_size = 0;
 static sr_kemi_module_t _sr_kemi_modules[SR_KEMI_MODULES_MAX_SIZE];
 
 /**
@@ -133,10 +277,15 @@ int sr_kemi_modules_add(sr_kemi_t *klist)
 	if(_sr_kemi_modules_size>=SR_KEMI_MODULES_MAX_SIZE) {
 		return -1;
 	}
-	if(_sr_kemi_modules_size==1) {
+	if(_sr_kemi_modules_size==0) {
 		LM_DBG("adding core module\n");
-		_sr_kemi_modules[0].mname = _sr_kemi_core[0].mname;
-		_sr_kemi_modules[0].kexp = _sr_kemi_core;
+		_sr_kemi_modules[_sr_kemi_modules_size].mname = _sr_kemi_core[0].mname;
+		_sr_kemi_modules[_sr_kemi_modules_size].kexp = _sr_kemi_core;
+		_sr_kemi_modules_size++;
+		LM_DBG("adding hdr module\n");
+		_sr_kemi_modules[_sr_kemi_modules_size].mname = _sr_kemi_hdr[0].mname;
+		_sr_kemi_modules[_sr_kemi_modules_size].kexp = _sr_kemi_hdr;
+		_sr_kemi_modules_size++;
 	}
 	LM_DBG("adding module: %.*s\n", klist[0].mname.len, klist[0].mname.s);
 	_sr_kemi_modules[_sr_kemi_modules_size].mname = klist[0].mname;
