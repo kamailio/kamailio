@@ -11,13 +11,9 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-Edited by
-
 Alex Balashov
 
    <abalashov@evaristesys.com>
-
-Edited by
 
 Ovidiu Sas
 
@@ -782,7 +778,8 @@ sht_iterator_end("i1");
      * $shtcn(htable=>key)
      * $shtcv(htable=>key)
      * $shtinc(htable=>key)
-     * $shtval(htable=>key)
+     * $shtitkey(iname)
+     * $shtitval(iname)
      * $shtrecord(attribute)
 
    Exported pseudo-variables are documented at
