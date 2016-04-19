@@ -1737,7 +1737,11 @@ void lua_sr_kemi_register_core(lua_State *L)
 			"end\n"
 			"setmetatable(KSR, KSR)\n"
 		);
-	LM_DBG("pushin lua KSR table definition returned %d\n", ret);
+
+	/* special modules - pv.get(...) can return int or str */
+	luaL_openlib(L, "KSR.pv",   _sr_pv_Map,   0);
+
+	LM_DBG("pushing lua KSR table definition returned %d\n", ret);
 }
 
 /**
@@ -1766,7 +1770,8 @@ void lua_sr_kemi_register_module(lua_State *L, str *mname, int midx)
 		);
 	ret = luaL_dostring(L, sbuf);
 
-	LM_DBG("pushin lua KSR table definition returned %d\n", ret);
+	LM_DBG("pushing lua KSR.%.*s table definition returned %d\n",
+			mname->len, mname->s, ret);
 }
 
 /**
