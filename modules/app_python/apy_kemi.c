@@ -30,6 +30,7 @@
 #include "../../mem/pkg.h"
 
 #include "python_exec.h"
+#include "apy_kemi_export.h"
 #include "apy_kemi.h"
 
 /**
@@ -90,13 +91,10 @@ int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname)
 /**
  *
  */
-static PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args)
+PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 {
-	str mname = str_init("");
-	int midx = 0;
-	str fname = str_init("");
+	str fname;
 	int i;
-	PyTypeObject *pto;
 	sr_kemi_t *ket = NULL;
 	sr_kemi_val_t vps[SR_KEMI_PARAMS_MAX];
 	sr_apy_env_t *env_P;
@@ -109,26 +107,19 @@ static PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args)
 		return Py_None;
 	}
 
-	if(self!=NULL) {
-		pto = Py_TYPE(self);
-		if(pto==NULL) {
-			Py_INCREF(Py_None);
-			return Py_None;
-		}
-		LM_DBG("execution of method: %s\n", pto->tp_name);
-		fname.s = (char*)pto->tp_name;
-		fname.len = strlen(fname.s);
-	} else {
-		fname.s = "[test]";
-		fname.len = strlen(fname.s);
-		LM_DBG("execution of method: %.*s\n", fname.len, fname.s);
-	}
-
-	ket = sr_kemi_lookup(&mname, midx, &fname);
+	ket = sr_apy_kemi_export_get(idx);
 	if(ket==NULL) {
 		Py_INCREF(Py_None);
 		return Py_None;
 	}
+	if(ket->mname.len>0) {
+		LM_DBG("execution of method: %.*s\n", ket->fname.len, ket->fname.s);
+	} else {
+		LM_DBG("execution of method: %.*s.%.*s\n",
+				ket->mname.len, ket->mname.s,
+				ket->fname.len, ket->fname.s);
+	}
+	fname = ket->fname;
 
 	memset(vps, 0, SR_KEMI_PARAMS_MAX*sizeof(sr_kemi_val_t));
 	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
@@ -174,6 +165,30 @@ PyMethodDef *_sr_KSRMethods = NULL;
 /**
  *
  */
+static int sr_apy_kemi_f_dbg(sip_msg_t *msg, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL)
+		LM_DBG("%.*s", txt->len, txt->s);
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t _sr_apy_kemi_test[] = {
+	{ str_init("test"), str_init("dbg"),
+		SR_KEMIP_NONE, sr_apy_kemi_f_dbg,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+
+/**
+ *
+ */
 int sr_apy_init_ksr(void)
 {
 	_sr_KSRMethods = pkg_malloc(SR_APY_KSR_METHOS_SIZE * sizeof(PyMethodDef));
@@ -183,8 +198,8 @@ int sr_apy_init_ksr(void)
 	}
 	memset(_sr_KSRMethods, 0, SR_APY_KSR_METHOS_SIZE * sizeof(PyMethodDef));
 
-	_sr_KSRMethods[0].ml_name = "test";
-	_sr_KSRMethods[0].ml_meth = (PyCFunction)sr_apy_kemi_exec_func;
+	_sr_KSRMethods[0].ml_name = _sr_apy_kemi_test[0].fname.s;
+	_sr_KSRMethods[0].ml_meth = sr_apy_kemi_export_associate(&_sr_apy_kemi_test[0]);
 	_sr_KSRMethods[0].ml_flags = METH_VARARGS;
 	_sr_KSRMethods[0].ml_doc = "Kamailio function";
 
