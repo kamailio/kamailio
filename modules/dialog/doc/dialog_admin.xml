@@ -1248,6 +1248,13 @@ modparam("dialog", "ka_timer", 10)
 			The value represents the number of seconds.
 		</para>
 		<para>
+			If the requests times out (generating a 408) or if the
+			UA responds with 481 the lifetime is set to 10 seconds.
+			When lifetime expires the dialog will be terminated.
+			Any other response (including error responses) will
+			reset the timers.
+		</para>
+		<para>
 		<emphasis>
 			Default value is <quote>0</quote> (no keep alive). The lowest
 			settable interval is 30 seconds.
