@@ -1147,7 +1147,8 @@ modparam("dialog", "ka_timer", 10)
    dialog setup or previous keep-alive. The value represents the number of
    seconds.
 
-   Default value is "0" (no keep alive).
+   Default value is "0" (no keep alive). The lowest settable interval is
+   30 seconds.
 
    Example 1.49. Set ka_interval parameter
 ...

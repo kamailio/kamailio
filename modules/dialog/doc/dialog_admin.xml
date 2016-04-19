@@ -1249,7 +1249,8 @@ modparam("dialog", "ka_timer", 10)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>0</quote> (no keep alive).
+			Default value is <quote>0</quote> (no keep alive). The lowest
+			settable interval is 30 seconds.
 		</emphasis>
 		</para>
 		<example>
