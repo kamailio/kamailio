@@ -53,8 +53,11 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	PyObject *pFunc, *pArgs, *pValue, *pResult;
 	PyObject *pmsg;
 	int rval;
+	sip_msg_t *bmsg;
 
+	bmsg = _sr_apy_env.msg;
 	_sr_apy_env.msg = _msg;
+
 	PyEval_AcquireLock();
 	PyThreadState_Swap(myThreadState);
 
@@ -68,7 +71,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		Py_XDECREF(pFunc);
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
-		_sr_apy_env.msg = NULL;
+		_sr_apy_env.msg = bmsg;
 		if(emode==1) {
 			return -1;
 		} else {
@@ -82,7 +85,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		Py_DECREF(pFunc);
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
-		_sr_apy_env.msg = NULL;
+		_sr_apy_env.msg = bmsg;
 		return -1;
 	}
 
@@ -94,7 +97,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		Py_DECREF(pFunc);
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
-		_sr_apy_env.msg = NULL;
+		_sr_apy_env.msg = bmsg;
 		return -1;
 	}
 	PyTuple_SetItem(pArgs, 0, pmsg);
@@ -109,7 +112,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 			Py_DECREF(pFunc);
 			PyThreadState_Swap(NULL);
 			PyEval_ReleaseLock();
-			_sr_apy_env.msg = NULL;
+			_sr_apy_env.msg = bmsg;
 			return -1;
 		}
 		PyTuple_SetItem(pArgs, 1, pValue);
@@ -125,7 +128,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		python_handle_exception("python_exec2");
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
-		_sr_apy_env.msg = NULL;
+		_sr_apy_env.msg = bmsg;
 		return -1;
 	}
 
@@ -133,7 +136,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 		LM_ERR("PyObject_CallObject() returned NULL\n");
 		PyThreadState_Swap(NULL);
 		PyEval_ReleaseLock();
-		_sr_apy_env.msg = NULL;
+		_sr_apy_env.msg = bmsg;
 		return -1;
 	}
 
@@ -141,7 +144,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	Py_DECREF(pResult);
 	PyThreadState_Swap(NULL);
 	PyEval_ReleaseLock();
-	_sr_apy_env.msg = NULL;
+	_sr_apy_env.msg = bmsg;
 	return rval;
 }
 
