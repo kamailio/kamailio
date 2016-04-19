@@ -18,8 +18,8 @@
 	<para>
 	Kamailio can behave as a stateful proxy through the TM module.  However, 
 	"stateful" in this context refers to <emphasis>transaction</emphasis> 
-	state, not dialog state.  Certain applications benefit from the proxy's
-	awareness of "calls", not just SIP transactions.
+	state, not dialog state.  Certain applications may benefit from an
+	awareness of "calls" in the proxy, not just SIP transactions.
 	</para>
 	<para>For example, a common need is to limit the number of calls that can 
 	be made concurrently by an endpoint, account, user group, etc.  In order 
@@ -29,14 +29,15 @@
 	common application discussed for illustrative purposes; there are many others.  
 	</para>
 	<para>
-	The dialog module provides dialog awareness for the &kamailio; proxy. Its
+	The dialog module provides dialog awareness for the &kamailio; proxy. It's
 	functionality is to keep track of the current dialogs, to offer information
 	about them (e.g. how many dialogs are active), and to manage various 
-	characteristics of dialogs. The module exports several functions that could be 
-	used directly from the configuration route script.
+	characteristics of dialogs. The module exports several functions that can be 
+	used directly from the configuration route script as well as functions for
+	the RPC interface.
 	</para>
 	<para>
-	This module also provides a foundational API on which to build 
+	This module also provides a API foundation on which to build 
 	more complex dialog-oriented functionality in other &kamailio; modules.
 	</para>
 	</section>
@@ -45,15 +46,15 @@
 	<title>How it works</title>
 	<para>
 	To create the dialog associated with an initial request, the flag
-	<quote>dlg_flag</quote> (<xref linkend="dlg-flag-id"/>) must be set before
+	<quote>dlg_flag</quote> (<xref linkend="dialog.p.flag"/>) must be set before
 	creating the corresponding transaction.
 	</para>
 	<para>
 	The dialog is automatically destroyed when a <quote>BYE</quote> is
 	received. In case of no <quote>BYE</quote>, the dialog lifetime is
 	controlled via the default timeout (see <quote>default_timeout</quote>
-	- <xref linkend="default-timeout-id"/>) and custom timeout (see
-	<quote>timeout_avp</quote> - <xref linkend="timeout-avp-id"/>). The
+	- <xref linkend="dialog.p.default_timeout"/>) and custom timeout (see
+	<quote>timeout_avp</quote> - <xref linkend="dialog.p.timeout_avp"/>). The
 	dialog timeout is reset each time a sequential request is processed.
 	</para>
 	</section>
@@ -63,7 +64,7 @@
 	<para>
 	Dialog profiling is a mechanism that helps in classifying, sorting and
 	keeping track of certain types of dialogs.  The classification criteria
-	can be any attributes desired by the user;  they can come from SIP message
+	can be any attributes desired by the administrator;  it can be SIP message
 	attributes, other pseudo-variables, custom values, etc.  
 	Dialogs can be dynamically added into one or more profile
 	tables.  Logically, each profile table can have a special meaning (like
@@ -150,7 +151,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="dialog.p.enable_stats">
 		<title><varname>enable_stats</varname> (integer)</title>
 		<para>
 		If statistics support should be enabled or not. Via statistics
@@ -172,7 +173,7 @@ modparam("dialog", "enable_stats", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.hash_size">
 		<title><varname>hash_size</varname> (integer)</title>
 		<para>
 		The size of the hash table internally used to keep the dialogs. A
@@ -180,7 +181,7 @@ modparam("dialog", "enable_stats", 0)
 		must be a power of two.
 		</para>
 		<para>
-		IMPORTANT: If dialogs' information should be stored in a database,
+		IMPORTANT: If dialog information should be stored in a database,
 		a constant hash_size should be used, otherwise the restoring process
 		will not take place. If you really want to modify the hash_size, you
 		must delete all table's rows before restarting the server.
@@ -200,7 +201,7 @@ modparam("dialog", "hash_size", 1024)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.rr_param">
 		<title><varname>rr_param</varname> (string)</title>
 		<para>
 		Name of the Record-Route parameter used to store the dialog cookie.
@@ -222,7 +223,7 @@ modparam("dialog", "rr_param", "xyz")
 		</example>
 	</section>
 
-	<section id="dlg-flag-id">
+	<section id="dialog.p.flag">
 		<title><varname>dlg_flag</varname> (integer)</title>
 		<para>
 		Flag to be used for marking if a dialog should be constructed for the
@@ -243,7 +244,7 @@ modparam("dialog", "dlg_flag", 4)
 		</example>
 	</section>
 
-	<section id="timeout-avp-id">
+	<section id="dialog.p.timeout_avp">
 		<title><varname>timeout_avp</varname> (string)</title>
 		<para>
 		The specification of an AVP that contains a custom timeout value (in seconds)
@@ -265,7 +266,7 @@ modparam("dialog", "timeout_avp", "$avp(i:10)")
 		</example>
 	</section>
 
-	<section id="default-timeout-id">
+	<section id="dialog.p.default_timeout">
 		<title><varname>default_timeout</varname> (integer)</title>
 		<para>
 		The default dialog timeout (in seconds), in the absence of a custom
@@ -286,7 +287,7 @@ modparam("dialog", "default_timeout", 21600)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.dlg_extra_hdrs">
 		<title><varname>dlg_extra_hdrs</varname> (string)</title>
 		<para>
 		A string containing the extra headers (full format, with EOH)
@@ -307,7 +308,7 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.dlg_match_mode">
 		<title><varname>dlg_match_mode</varname> (integer)</title>
 		<para>
 		How the sequential requests should be matched against the known dialogs.
@@ -358,7 +359,7 @@ modparam("dialog", "dlg_match_mode", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.detect_spirals">
 		<title><varname>detect_spirals</varname> (integer)</title>
 		<para>
 			Whether spirals (i.e., messages routed through the proxy multiple times)
@@ -382,10 +383,10 @@ modparam("dialog", "detect_spirals", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		If you want to store the information about the dialogs in a database,
+		In order to store information about dialogs in a database,
 		a database URL must be specified.
 		</para>
 		<para>
@@ -403,7 +404,7 @@ modparam("dialog", "db_url", "&exampledb;")
 		</example>
 	</section>
 
-<section>
+	<section id="dialog.p.db_mode">
 		<title><varname>db_mode</varname> (integer)</title>
 		<para>
 		Mode of synchronisation of dialog information from memory to an
@@ -419,7 +420,7 @@ modparam("dialog", "db_url", "&exampledb;")
 			</para></listitem>
 			<listitem><para>
 				<emphasis>1 - REALTIME</emphasis> - any dialog information
-				changes will be reflected into the database immediatly.
+				changes will be reflected into the database immediately.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>2 - DELAYED</emphasis> - the dialog information
@@ -446,15 +447,17 @@ modparam("dialog", "db_mode", 1)
 		</example>
 	</section>
 
-<section>
+	<section id="dialog.p.update_period">
 		<title><varname>db_update_period</varname> (integer)</title>
 		<para>
-			The interval (seconds) at which to update dialogs' information, if you chose to store the dialogs' info at a given interval.
-			Too short an interval will generate intensive database operations, while an excessively long one will miss dialogs with a short lifetime.
+			The interval (seconds) at which to update dialogs' information,
+			if the server is configured to store the dialog information at a given interval.
+			Too short an interval will generate intensive database operations,
+			while an excessively long one will miss dialogs with a short lifetime.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>60</quote>.
+			Default value is <quote>60</quote> seconds.
 		</emphasis>
 		</para>
 		<example>
@@ -467,12 +470,15 @@ modparam("dialog", "db_update_period", 120)
 		</example>
 	</section>
 
-<section>
+	<section id="dialog.p.db_fetch_rows">
 		<title><varname>db_fetch_rows</varname> (integer)</title>
 		<para>
-			The number of the rows to be fetched at once from database when loading the dialog records at startup from the database.
-			This value can be used to tune the load time at startup. For 1MB of private memory (default), it should be below 400.
-			The database driver must support the fetch_result() capability. A value of 0 means the database fetch is not limited.
+			The number of the rows to be fetched at once from database 
+			when loading the dialog records at startup from the database.
+			This value can be used to tune the load time at startup. 
+			For 1MB of private memory (default), it should be below 400.
+			The database driver must support the fetch_result() capability. 
+			A value of 0 means the database fetch is not limited.
 		</para>
 		<para>
 		<emphasis>
@@ -489,10 +495,11 @@ modparam("dialog", "db_fetch_rows", 500)
 		</example>
 	</section>
 
-<section>
+	<section id="dialog.p.db_skip_load">
 		<title><varname>db_skip_load</varname> (integer)</title>
 		<para>
-			Set db_skip_load to 1, to skip the loading of dialogs from the database alltogether.
+			Set db_skip_load to 1, to skip the loading of dialog data
+			from the database.
 		</para>
 		<para>
 		<emphasis>
@@ -511,11 +518,10 @@ modparam("dialog", "db_skip_load", 1)
 
 
 
-	<section>
+	<section id="dialog.p.table_name">
 		<title><varname>table_name</varname> (string)</title>
 		<para>
-		If you want to store the information about the dialogs in a
-		database a table name must be specified.
+		Database table name used for storing dialog information.
 		</para>
 		<para>
 		<emphasis>
@@ -532,10 +538,10 @@ modparam("dialog", "table_name", "my_dialog")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.callid_column">
 		<title><varname>callid_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the dialogs' callid.
+			The column name in the database to store the dialog call-id.
 		</para>
 		<para>
 		<emphasis>
@@ -552,11 +558,11 @@ modparam("dialog", "callid_column", "callid_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.from_uri_column">
 		<title><varname>from_uri_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the caller's
-			sip address.
+			SIP address (URI).
 		</para>
 		<para>
 		<emphasis>
@@ -573,10 +579,10 @@ modparam("dialog", "from_uri_column", "from_uri_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.from_tag_column">
 		<title><varname>from_tag_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the From tag from
+			The column name in the database to store the From header tag from
 			the INVITE request.
 		</para>
 		<para>
@@ -594,10 +600,10 @@ modparam("dialog", "from_tag_column", "from_tag_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.to_uri_column">
 		<title><varname>to_uri_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the callee's sip address.
+			The column name in the database to store the callee's SIP address (URI).
 		</para>
 		<para>
 		<emphasis>
@@ -615,10 +621,10 @@ modparam("dialog", "to_uri_column", "to_uri_c_name")
 	</section>
 
 
-	<section>
+	<section id="dialog.p.to_tag_column">
 		<title><varname>to_tag_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the To tag from
+			The column name in the database to store the To header tag from
 			the 200 OK response to the INVITE request, if present.
 		</para>
 		<para>
@@ -636,10 +642,10 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.from_cseq_column">
 		<title><varname>from_cseq_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the cseq from caller
+			The column name in the database to store the Cseq from caller
 			side.
 		</para>
 		<para>
@@ -651,13 +657,13 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 		<title>Set <varname>from_cseq_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "from_cseq_column", "column_name")
+modparam("dialog", "from_cseq_column", "from_cseq")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.to_cseq_column">
 		<title><varname>to_cseq_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the cseq from callee
@@ -672,13 +678,13 @@ modparam("dialog", "from_cseq_column", "column_name")
 		<title>Set <varname>to_cseq_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "to_cseq_column", "column_name")
+modparam("dialog", "to_cseq_column", "to_cseq")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.from_route_column">
 		<title><varname>from_route_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the route records from
@@ -693,13 +699,13 @@ modparam("dialog", "to_cseq_column", "column_name")
 		<title>Set <varname>from_route_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "from_route_column", "column_name")
+modparam("dialog", "from_route_column", "rroute_from")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.to_route_column">
 		<title><varname>to_route_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the route records from
@@ -714,13 +720,13 @@ modparam("dialog", "from_route_column", "column_name")
 		<title>Set <varname>to_route_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "to_route_column", "column_name")
+modparam("dialog", "to_route_column", "rroute_to")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.from_contact_column">
 		<title><varname>from_contact_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the caller's contact
@@ -735,13 +741,13 @@ modparam("dialog", "to_route_column", "column_name")
 		<title>Set <varname>from_contact_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "from_contact_column", "column_name")
+modparam("dialog", "from_contact_column", "from_contact_uri")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.to_contact_column">
 		<title><varname>to_contact_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the callee's contact
@@ -756,13 +762,13 @@ modparam("dialog", "from_contact_column", "column_name")
 		<title>Set <varname>to_contact_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "to_contact_column", "column_name")
+modparam("dialog", "to_contact_column", "to_contact_uri")
 ...
 </programlisting>
 		</example>
 	</section>
 
-<section>
+	<section id="dialog.p.from_sock_column">
 		<title><varname>from_sock_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the information about
@@ -777,13 +783,13 @@ modparam("dialog", "to_contact_column", "column_name")
 		<title>Set <varname>from_sock_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "from_sock_column", "column_name")
+modparam("dialog", "from_sock_column", "socket_from")
 ...
 </programlisting>
 		</example>
 	</section>
 
-<section>
+	<section id="dialog.p.to_sock_column">
 		<title><varname>to_sock_column</varname> (string)</title>
 		<para>
 			The column name in the database to store information about the
@@ -798,13 +804,13 @@ modparam("dialog", "from_sock_column", "column_name")
 		<title>Set <varname>to_sock_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "to_sock_column", "column_name")
+modparam("dialog", "to_sock_column", "socket_to")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.h_id_column">
 		<title><varname>h_id_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the dialogs'
@@ -825,10 +831,10 @@ modparam("dialog", "h_id_column", "hash_id_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.h_entry_column">
 		<title><varname>h_entry_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the dialogs' hash
+			The column name in the database to store the dialog's hash
 			entry information.
 		</para>
 		<para>
@@ -846,11 +852,11 @@ modparam("dialog", "h_entry_column", "h_entry_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.state_column">
 		<title><varname>state_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the
-			dialogs' state information.
+			dialog's state information.
 		</para>
 		<para>
 		<emphasis>
@@ -867,11 +873,11 @@ modparam("dialog", "state_column", "state_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.start_time_column">
 		<title><varname>start_time_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the
-			dialogs' start time information.
+			dialog's start time information.
 		</para>
 		<para>
 		<emphasis>
@@ -888,10 +894,10 @@ modparam("dialog", "start_time_column", "start_time_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.timeout_column">
 		<title><varname>timeout_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the dialogs' timeout.
+			The column name in the database to store the dialog's timeout.
 		</para>
 		<para>
 		<emphasis>
@@ -908,10 +914,10 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.sflags_column">
 		<title><varname>sflags_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the script flags.
+			The column name in the database to store the dialog script flags.
 		</para>
 		<para>
 		<emphasis>
@@ -927,7 +933,7 @@ modparam("dialog", "sflags_column", "s_flags")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="dialog.p.toroute_column">
 		<title><varname>toroute_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the index of the
@@ -948,11 +954,11 @@ modparam("dialog", "toroute_column", "timeout_route")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.vars_table_name">
 		<title><varname>vars_table_name</varname> (string)</title>
 		<para>
-		If you want to store the variables for a dialog in a
-		database a table name must be specified.
+		If you want to store the dialog variables (<quote>$dlg_var(name)</quote>)
+		for a dialog in a database a table name must be specified.
 		</para>
 		<para>
 		<emphasis>
@@ -969,10 +975,10 @@ modparam("dialog", "vars_table_name", "my_dialog_vars")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.vars_h_id_column">
 		<title><varname>vars_h_id_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the dialogs'
+			The column name in the database to store the dialog's
 			hash id information (as a reference to the dialog table).
 		</para>
 		<para>
@@ -990,10 +996,10 @@ modparam("dialog", "vars_h_id_column", "vars_h_id_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.vars_h_entry_column">
 		<title><varname>vars_h_entry_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the dialogs'
+			The column name in the database to store the dialog's
 			hash entry information (as a reference to the dialog table).
 		</para>
 		<para>
@@ -1011,10 +1017,11 @@ modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.vars_key_column">
 		<title><varname>vars_key_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the keys of a variable.
+			The column name in the database to store the names (keys) of a dialog
+			variable.
 		</para>
 		<para>
 		<emphasis>
@@ -1031,10 +1038,11 @@ modparam("dialog", "vars_key_column", "vars_key_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.vars_value_column">
 		<title><varname>vars_value_column</varname> (string)</title>
 		<para>
-			The column name in the database to store the keys of a variable.
+			The column name in the database to store the values of a 
+			dialog variable.
 		</para>
 		<para>
 		<emphasis>
@@ -1051,10 +1059,11 @@ modparam("dialog", "vars_value_column", "vars_value_name")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.profiles_with_value">
 		<title><varname>profiles_with_value</varname> (string)</title>
 		<para>
-			List of names for profiles with values.
+			List of names for profiles with values, separated
+			with semi-colon ";".
 		</para>
 		<para>
 		<emphasis>
@@ -1071,10 +1080,11 @@ modparam("dialog", "profiles_with_value", "caller ; my_profile")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.profiles_no_value">
 		<title><varname>profiles_no_value</varname> (string)</title>
 		<para>
-			List of names for profiles without values.
+			List of names for profiles without values, separated	
+			with semi-colon ";".
 		</para>
 		<para>
 		<emphasis>
@@ -1091,7 +1101,7 @@ modparam("dialog", "profiles_no_value", "inbound ; outbound")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.bridge_controller">
 		<title><varname>bridge_controller</varname> (string)</title>
 		<para>
 			SIP address to be used in From header when initiating a call bridge.
@@ -1111,7 +1121,7 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.bridge_contact">
 		<title><varname>bridge_contact</varname> (string)</title>
 		<para>
 			SIP address to be used in Contact header when doing a call bridge.
@@ -1131,16 +1141,16 @@ modparam("dialog", "bridge_contact", "sip:ctd@127.0.0.1:5060")
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.initial_cbs_inscript">
 		<title><varname>initial_cbs_inscript</varname> (int)</title>
 		<para>
-            If the initial dialog callbacks (i.e., DLGCB_CREATED and
-            DLGCB_SPIRALED) should be executed in-script or post-script.
-            If dlg_manage() is not used, the setting of this parameter does
-            not matter; otherwise, initial callbacks will be executed
-            directly after dlg_manage() is called if this parameter is
-            enabled. If it is disabled, initial callback execution will be
-            postponed until configuration script execution completes.
+            	If the initial dialog callbacks (i.e., DLGCB_CREATED and
+            	DLGCB_SPIRALED) should be executed in-script or post-script.
+            	If dlg_manage() is not used, the setting of this parameter does
+            	not matter; otherwise, initial callbacks will be executed
+            	directly after dlg_manage() is called if this parameter is
+            	enabled. If it is disabled, initial callback execution will be
+            	postponed until configuration script execution completes.
 		</para>
 		<para>
 		The supported values are:
@@ -1152,8 +1162,8 @@ modparam("dialog", "bridge_contact", "sip:ctd@127.0.0.1:5060")
 			</para></listitem>
 			<listitem><para>
 				<emphasis>1 - IN-SCRIPT</emphasis> - execute initial
-                callbacks during script execution, i.e., right after
-                dlg_manage() is called;
+                		callbacks during script execution, i.e., right after
+                		dlg_manage() is called;
 			</para></listitem>
 		</itemizedlist>
 		<para>
@@ -1171,7 +1181,7 @@ modparam("dialog", "initial_cbs_inscript", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.send_bye">
 		<title><varname>send_bye</varname> (int)</title>
 		<para>
 			If set to 1, BYE requests will be sent out for each dialog that
@@ -1193,7 +1203,7 @@ modparam("dialog", "send_bye", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.wait_ack">
 		<title><varname>wait_ack</varname> (int)</title>
 		<para>
 			If set to 1, dialog will be keept a bit longer in memory
@@ -1216,7 +1226,7 @@ modparam("dialog", "wait_ack", 0)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.ka_timer">
 		<title><varname>ka_timer</varname> (int)</title>
 		<para>
 			Keep-alive timer step - how often to execute the callback to
@@ -1238,7 +1248,7 @@ modparam("dialog", "ka_timer", 10)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.ka_interval">
 		<title><varname>ka_interval</varname> (int)</title>
 		<para>
 			The interval between keep alives within dialog (SIP OPTIONS
@@ -1270,10 +1280,10 @@ modparam("dialog", "ka_interval", 300)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.timeout_noreset">
 		<title><varname>timeout_noreset</varname> (int)</title>
 		<para>
-           If set to 1, the dialog timeout won't be reset each
+           		If set to 1, the dialog timeout won't be reset each
 			time a sequential request is processed.
 			It is an alternative to dlg_set_property("timeout-noreset") for all dialogs.
 		</para>
@@ -1295,12 +1305,13 @@ modparam("dialog", "timeout_noreset", 1)
 	<section id="dialog.p.timer_procs">
 		<title><varname>timer_procs</varname> (int)</title>
 		<para>
-			If set to 1, the dialog will run own timer process to execute
-			dialog timeout tasks.
+			If set to 1, the dialog module will start a separate 
+			dialog timer process to execute dialog timeout tasks.
+			The default is to use the core timer process.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>0</quote> (use core time process).
+			Default value is <quote>0</quote> (use core timer process).
 		</emphasis>
 		</para>
 		<example>
@@ -1368,7 +1379,7 @@ modparam("dialog", "lreq_callee_headers", "TH: dlh\r\n")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="dialog.f.set_dlg_profile">
 		<title>
 		<function moreinfo="none">set_dlg_profile(profile,[value])</function>
 		</title>
@@ -1407,7 +1418,7 @@ set_dlg_profile("caller","$fu");
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.unset_dlg_profile">
 		<title>
 		<function moreinfo="none">unset_dlg_profile(profile,[value])</function>
 		</title>
@@ -1445,7 +1456,7 @@ unset_dlg_profile("caller","$fu");
 	</section>
 
 
-	<section>
+	<section id="dialog.f.is_in_profile">
 		<title>
 		<function moreinfo="none">is_in_profile(profile,[value])</function>
 		</title>
@@ -1490,7 +1501,7 @@ if (is_in_profile("caller","XX")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.get_profile_size">
 		<title>
 		<function moreinfo="none">get_profile_size(profile,[value],size)</function>
 		</title>
@@ -1538,7 +1549,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_isflagset">
 		<title>
 		<function moreinfo="none">dlg_isflagset(flag)</function>
 		</title>
@@ -1570,12 +1581,12 @@ if(dlg_isflagset("1"))
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_setflag">
 		<title>
 		<function moreinfo="none">dlg_setflag(flag)</function>
 		</title>
 		<para>
-		Set the dialog flag.
+		Set a dialog flag.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -1599,7 +1610,7 @@ dlg_setflag("1");
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_resetflag">
 		<title>
 		<function moreinfo="none">dlg_resetflag(flag)</function>
 		</title>
@@ -1628,7 +1639,7 @@ redlg_setflag("1");
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_bye">
 		<title>
 		<function moreinfo="none">dlg_bye(side)</function>
 		</title>
@@ -1657,7 +1668,7 @@ dlg_bye("all");
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_refer">
 		<title>
 		<function moreinfo="none">dlg_refer(side, address)</function>
 		</title>
@@ -1690,7 +1701,7 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_manage">
 		<title>
 		<function moreinfo="none">dlg_manage()</function>
 		</title>
@@ -1723,7 +1734,7 @@ route {
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_bridge">
 		<title>
 		<function moreinfo="none">dlg_bridge(from, to, op)</function>
 		</title>
@@ -1760,7 +1771,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_get">
 		<title>
 		<function moreinfo="none">dlg_get(callid, ftag, ttag)</function>
 		</title>
@@ -1800,7 +1811,7 @@ if(dlg_get("abcdef", "123", "456"))
 		</example>
 	</section>
 	
-	<section>
+	<section id="dialog.f.is_known_dlg">
 		<title>
 		<function moreinfo="none">is_known_dlg()</function>
 		</title>
@@ -1836,7 +1847,7 @@ if(!uri == myself) {
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_set_timeout">
 		<title>
 		<function moreinfo="none">dlg_set_timeout(timeout [, h_entry, h_id])</function>
 		</title>
@@ -1880,7 +1891,7 @@ if(dlg_set_timeout("180", "123", "456"))
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.f.dlg_set_timeout_by_profile">
 		<title>
 		<function moreinfo="none">dlg_set_timeout_by_profile(profile, [value], timeout)</function>
 		</title>
@@ -1918,7 +1929,7 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 	</section>
 
 
-	<section>
+	<section id="dialog.f.dlg_set_property">
 		<title>
 		<function moreinfo="none">dlg_set_property(attr)</function>
 		</title>
@@ -1950,14 +1961,14 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 			within dialog, with the scope of detecting if the destination is
 			still in the call. If the keep alive request results in a local
 			timeout or '481 Call Leg/Transaction Does Not Exist', then the
-            dialog is ended from the server.
+            		dialog is ended from the server.
 		</para>
 		<para>
-            If 'timeout-noreset' is set, dialog timeout won't be reset upon reception
-            of in-dialog messages (default behavior).
+            		If 'timeout-noreset' is set, dialog timeout won't be reset upon reception
+            		of in-dialog messages (default behavior).
 		</para>
 		<para>
-		This function can be used from ANY_ROUTE.
+			This function can be used from ANY_ROUTE.
 		</para>
 		<example>
 		<title><function>dlg_set_property</function> usage</title>
