@@ -119,6 +119,7 @@ struct fm_block{
 	unsigned long used; /** allocated size*/
 	unsigned long real_used; /** used + malloc overhead */
 	unsigned long max_real_used;
+	unsigned long ffrags;
 #endif
 	
 	struct fm_frag* first_frag;

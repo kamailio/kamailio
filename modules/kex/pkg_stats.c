@@ -49,6 +49,7 @@ typedef struct pkg_proc_stats {
 	unsigned int used;
 	unsigned int available;
 	unsigned int real_used;
+	unsigned long total_frags;
 } pkg_proc_stats_t;
 
 /**
@@ -142,6 +143,15 @@ static int pkg_proc_update_real_used(void *data)
 	return 0;
 }
 
+static int pkg_proc_update_frags(void *data)
+{
+	if(_pkg_proc_stats_list==NULL)
+		return -1;
+	if(process_no>=_pkg_proc_stats_no)
+		return -1;
+	_pkg_proc_stats_list[process_no].total_frags = (long)data;
+	return 0;
+}
 /**
  *
  */
@@ -149,6 +159,7 @@ int register_pkg_proc_stats(void)
 {
 	sr_event_register_cb(SREV_PKG_SET_USED, pkg_proc_update_used);
 	sr_event_register_cb(SREV_PKG_SET_REAL_USED, pkg_proc_update_real_used);
+	sr_event_register_cb(SREV_PKG_SET_FRAGS, pkg_proc_update_frags);
 	return 0;
 }
 
@@ -238,13 +249,15 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "dddddd",
+			
+			if(rpc->struct_add(th, "ddddddd",
 							"entry",     i,
 							"pid",       _pkg_proc_stats_list[i].pid,
 							"rank",      _pkg_proc_stats_list[i].rank,
 							"used",      _pkg_proc_stats_list[i].used,
 							"free",      _pkg_proc_stats_list[i].available,
-							"real_used", _pkg_proc_stats_list[i].real_used
+							"real_used", _pkg_proc_stats_list[i].real_used,
+							"total_frags", _pkg_proc_stats_list[i].total_frags
 						)<0)
 			{
 				rpc->fault(ctx, 500, "Internal error creating rpc");
