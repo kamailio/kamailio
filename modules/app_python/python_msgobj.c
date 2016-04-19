@@ -72,9 +72,7 @@ static PyObject *msg_copy(msgobject *self)
 
 static PyObject *msg_rewrite_ruri(msgobject *self, PyObject *args)
 {
-	char *ruri;
-	struct action act;
-	struct run_act_ctx ra_ctx;
+	str nuri;
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
@@ -88,19 +86,13 @@ static PyObject *msg_rewrite_ruri(msgobject *self, PyObject *args)
 		return Py_None;
 	}
 
-	if(!PyArg_ParseTuple(args, "s:rewrite_ruri", &ruri))
+	if(!PyArg_ParseTuple(args, "s:rewrite_ruri", &nuri.s))
 		return NULL;
 
-	memset(&act, '\0', sizeof(act));
+	nuri.len = strlen(nuri.s);
 
-	act.type = SET_URI_T;
-	act.val[0].type = STRING_ST;
-	act.val[0].u.str.s = ruri;
-	act.val[0].u.str.len = strlen(ruri);
-
-	init_run_actions_ctx(&ra_ctx);
-	if (do_action(&ra_ctx, &act, self->msg) < 0) {
-		LM_ERR("Error in do_action\n");
+	if(rewrite_uri(self->msg, &nuri)<0) {
+		LM_ERR("failed to update r-uri with [%.*s]\n", nuri.len, nuri.s);
 	}
 
 	Py_INCREF(Py_None);
