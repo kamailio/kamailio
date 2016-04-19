@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -250,7 +250,7 @@ static int child_init(int rank)
 
 	if (rank!=PROC_INIT)
 		return 0;
-	
+
 	rt = route_get(&event_rt, "htable:mod-init");
 	if(rt>=0 && event_rt.rlist[rt]!=NULL) {
 		LM_DBG("executing event_route[htable:mod-init] (%d)\n", rt);
@@ -573,7 +573,7 @@ static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
 
 	if(ht_db_url.len<=0)
 		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-	
+
 	if(ht_db_init_con()!=0)
 		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
 	if(ht_db_open_con()!=0)
@@ -884,7 +884,7 @@ static void htable_rpc_get(rpc_t* rpc, void* c) {
 			goto error;
 		}
 	}
-	
+
 error:
 	/* Release the allocated memory */
 	ht_cell_pkg_free(htc);
@@ -910,7 +910,7 @@ static void htable_rpc_sets(rpc_t* rpc, void* c) {
 		rpc->fault(c, 500, "No such htable");
 		return;
 	}
-	
+
 	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0) {
 		LM_ERR("dmq relication failed\n");
 	}
@@ -948,7 +948,7 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname, 0, &keyvalue, 1)!=0) {
 		LM_ERR("dmq relication failed\n");
 	}
-	
+
 	if(ht_set_cell(ht, &keyname, 0, &keyvalue, 1)!=0)
 	{
 		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
