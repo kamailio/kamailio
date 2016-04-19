@@ -28,6 +28,7 @@
 #include "../../route.h"
 #include "../../fmsg.h"
 #include "../../kemi.h"
+#include "../../pvar.h"
 #include "../../mem/pkg.h"
 
 #include "python_exec.h"
@@ -107,6 +108,14 @@ PyObject *sr_apy_kemi_return_false(void)
 	return Py_False;
 }
 
+/**
+ *
+ */
+PyObject *sr_apy_kemi_return_none(void)
+{
+	Py_INCREF(Py_None);
+	return Py_None;
+}
 
 /**
  *
@@ -116,6 +125,13 @@ PyObject *sr_apy_kemi_return_int(sr_kemi_t *ket, int rval)
 	return PyInt_FromLong((long)rval);
 }
 
+/**
+ *
+ */
+PyObject *sr_apy_kemi_return_str(sr_kemi_t *ket, char *sval, int slen)
+{
+	return PyString_FromStringAndSize(sval, slen);
+}
 /**
  *
  */
@@ -434,6 +450,311 @@ static sr_kemi_t _sr_apy_kemi_test[] = {
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int pl;
+	sr_apy_env_t *env_P;
+	sip_msg_t *lmsg = NULL;
+
+	env_P = sr_apy_env_get();
+
+	if(env_P==NULL) {
+		LM_ERR("invalid Python environment attributes\n");
+		return sr_apy_kemi_return_none();
+	}
+	if(env_P->msg==NULL) {
+		lmsg = faked_msg_next();
+	} else {
+		lmsg = env_P->msg;
+	}
+
+	if(!PyArg_ParseTuple(args, "s:pv.get", &pvn.s)) {
+		LM_ERR("unable to retrieve str param\n");
+		return sr_apy_kemi_return_none();
+	}
+
+	if(pvn.s==NULL || lmsg==NULL) {
+		LM_ERR("invalid context attributes\n");
+		return sr_apy_kemi_return_none();
+	}
+
+	pvn.len = strlen(pvn.s);
+	LM_DBG("pv get: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return sr_apy_kemi_return_none();
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return sr_apy_kemi_return_none();
+	}
+	memset(&val, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(lmsg, pvs, &val) != 0)
+	{
+		LM_ERR("unable to get pv value for [%s]\n", pvn.s);
+		return sr_apy_kemi_return_none();
+	}
+	if(val.flags&PV_VAL_NULL) {
+		return sr_apy_kemi_return_none();
+	}
+	if(val.flags&PV_TYPE_INT) {
+		return sr_apy_kemi_return_int(NULL, val.ri);
+	}
+	return sr_apy_kemi_return_str(NULL, val.rs.s, val.rs.len);
+}
+
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_seti(PyObject *self, PyObject *args)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int pl;
+	sr_apy_env_t *env_P;
+	sip_msg_t *lmsg = NULL;
+
+	env_P = sr_apy_env_get();
+
+	if(env_P==NULL) {
+		LM_ERR("invalid Python environment attributes\n");
+		return sr_apy_kemi_return_false();
+	}
+	if(env_P->msg==NULL) {
+		lmsg = faked_msg_next();
+	} else {
+		lmsg = env_P->msg;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	if(!PyArg_ParseTuple(args, "si:pv.seti", &pvn.s, &val.ri)) {
+		LM_ERR("unable to retrieve str-int params\n");
+		return sr_apy_kemi_return_false();
+	}
+
+	if(pvn.s==NULL || lmsg==NULL) {
+		LM_ERR("invalid context attributes\n");
+		return sr_apy_kemi_return_false();
+	}
+	val.flags |= PV_TYPE_INT|PV_VAL_INT;
+	pvn.len = strlen(pvn.s);
+
+	LM_DBG("pv set: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return sr_apy_kemi_return_false();
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return sr_apy_kemi_return_false();
+	}
+	if(pv_set_spec_value(lmsg, pvs, 0, &val)<0)
+	{
+		LM_ERR("unable to set pv [%s]\n", pvn.s);
+		return sr_apy_kemi_return_false();
+	}
+	return sr_apy_kemi_return_true();
+}
+
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_sets(PyObject *self, PyObject *args)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int pl;
+	sr_apy_env_t *env_P;
+	sip_msg_t *lmsg = NULL;
+
+	env_P = sr_apy_env_get();
+
+	if(env_P==NULL) {
+		LM_ERR("invalid Python environment attributes\n");
+		return sr_apy_kemi_return_false();
+	}
+	if(env_P->msg==NULL) {
+		lmsg = faked_msg_next();
+	} else {
+		lmsg = env_P->msg;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	if(!PyArg_ParseTuple(args, "ss:pv.sets", &pvn.s, &val.rs.s)) {
+		LM_ERR("unable to retrieve str-int params\n");
+		return sr_apy_kemi_return_false();
+	}
+
+	if(pvn.s==NULL || val.rs.s==NULL || lmsg==NULL) {
+		LM_ERR("invalid context attributes\n");
+		return sr_apy_kemi_return_false();
+	}
+
+	val.rs.len = strlen(val.rs.s);
+	val.flags |= PV_VAL_STR;
+
+	pvn.len = strlen(pvn.s);
+	LM_DBG("pv set: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return sr_apy_kemi_return_false();
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return sr_apy_kemi_return_false();
+	}
+	if(pv_set_spec_value(lmsg, pvs, 0, &val)<0) {
+		LM_ERR("unable to set pv [%s]\n", pvn.s);
+		return sr_apy_kemi_return_false();
+	}
+
+	return sr_apy_kemi_return_true();
+}
+
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_unset(PyObject *self, PyObject *args)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int pl;
+	sr_apy_env_t *env_P;
+	sip_msg_t *lmsg = NULL;
+
+	env_P = sr_apy_env_get();
+
+	if(env_P==NULL) {
+		LM_ERR("invalid Python environment attributes\n");
+		return sr_apy_kemi_return_false();
+	}
+	if(env_P->msg==NULL) {
+		lmsg = faked_msg_next();
+	} else {
+		lmsg = env_P->msg;
+	}
+
+	if(!PyArg_ParseTuple(args, "s:pv.unset", &pvn.s)) {
+		LM_ERR("unable to retrieve str param\n");
+		return sr_apy_kemi_return_false();
+	}
+
+	if(pvn.s==NULL || lmsg==NULL) {
+		LM_ERR("invalid context attributes\n");
+		return sr_apy_kemi_return_false();
+	}
+
+	pvn.len = strlen(pvn.s);
+	LM_DBG("pv unset: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return sr_apy_kemi_return_false();
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return sr_apy_kemi_return_false();
+	}
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags |= PV_VAL_NULL;
+	if(pv_set_spec_value(lmsg, pvs, 0, &val)<0) {
+		LM_ERR("unable to unset pv [%s]\n", pvn.s);
+		return sr_apy_kemi_return_false();
+	}
+
+	return sr_apy_kemi_return_true();
+}
+
+/**
+ *
+ */
+static PyObject *sr_apy_kemi_f_pv_is_null(PyObject *self, PyObject *args)
+{
+	str pvn;
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int pl;
+	sr_apy_env_t *env_P;
+	sip_msg_t *lmsg = NULL;
+
+	env_P = sr_apy_env_get();
+
+	if(env_P==NULL) {
+		LM_ERR("invalid Python environment attributes\n");
+		return sr_apy_kemi_return_false();
+	}
+	if(env_P->msg==NULL) {
+		lmsg = faked_msg_next();
+	} else {
+		lmsg = env_P->msg;
+	}
+
+	if(!PyArg_ParseTuple(args, "s:pv.unset", &pvn.s)) {
+		LM_ERR("unable to retrieve str param\n");
+		return sr_apy_kemi_return_false();
+	}
+
+	if(pvn.s==NULL || lmsg==NULL) {
+		LM_ERR("invalid context attributes\n");
+		return sr_apy_kemi_return_false();
+	}
+
+
+	pvn.len = strlen(pvn.s);
+	LM_DBG("pv is null test: %s\n", pvn.s);
+	pl = pv_locate_name(&pvn);
+	if(pl != pvn.len) {
+		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
+		return sr_apy_kemi_return_false();
+	}
+	pvs = pv_cache_get(&pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
+		return sr_apy_kemi_return_true();
+	}
+	memset(&val, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(lmsg, pvs, &val) != 0) {
+		LM_NOTICE("unable to get pv value for [%s]\n", pvn.s);
+		return sr_apy_kemi_return_true();
+	}
+	if(val.flags&PV_VAL_NULL) {
+		return sr_apy_kemi_return_true();
+	} else {
+		return sr_apy_kemi_return_false();
+	}
+}
+
+static PyMethodDef _sr_apy_kemi_pv_Methods[] = {
+	{"get",		sr_apy_kemi_f_pv_get,		METH_VARARGS,
+		NAME " - pv get value"},
+	{"seti",	sr_apy_kemi_f_pv_seti,		METH_VARARGS,
+		NAME " - pv set int value"},
+	{"sets",	sr_apy_kemi_f_pv_sets,		METH_VARARGS,
+		NAME " - pv set str value"},
+	{"unset",	sr_apy_kemi_f_pv_unset,		METH_VARARGS,
+		NAME " - pv uset value (assign $null)"},
+	{"is_null",	sr_apy_kemi_f_pv_is_null,	METH_VARARGS,
+		NAME " - pv test if it is $null"},
+
+	{NULL, 		NULL, 			0, 		NULL}
+};
+
 
 /**
  *
@@ -504,6 +825,15 @@ int sr_apy_init_ksr(void)
 	Py_INCREF(_sr_apy_ksr_module);
 
 	m = 0;
+
+	/* special sub-modules - pv.get() can return int or string */
+	_sr_apy_ksr_modules_list[m] = Py_InitModule("KSR.pv",
+			_sr_apy_kemi_pv_Methods);
+	PyDict_SetItemString(_sr_apy_ksr_module_dict,
+			"pv", _sr_apy_ksr_modules_list[m]);
+	Py_INCREF(_sr_apy_ksr_modules_list[m]);
+	m++;
+
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
 			n++;
