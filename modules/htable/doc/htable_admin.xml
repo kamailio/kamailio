@@ -913,7 +913,10 @@ sht_iterator_end("i1");
 				<emphasis>$shtinc(htable=>key)</emphasis>
 			</para></listitem>
 			<listitem><para>
-				<emphasis>$shtval(htable=>key)</emphasis>
+				<emphasis>$shtitkey(iname)</emphasis>
+			</para></listitem>
+			<listitem><para>
+				<emphasis>$shtitval(iname)</emphasis>
 			</para></listitem>
 			<listitem><para>
 				<emphasis>$shtrecord(attribute)</emphasis>
