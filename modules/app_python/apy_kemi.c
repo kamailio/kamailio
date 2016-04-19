@@ -160,28 +160,68 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 	}
 
 	memset(vps, 0, SR_KEMI_PARAMS_MAX*sizeof(sr_kemi_val_t));
-	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
-		if(ket->ptypes[i]==SR_KEMIP_NONE) {
-			break;
-		} else if(ket->ptypes[i]==SR_KEMIP_STR) {
-			if(!PyArg_ParseTuple(args, "s:kemi-param", &vps[i].s.s)) {
-				LM_ERR("unable to retrieve str param %d\n", i);
-				return sr_apy_kemi_return_false();
-			}
-			vps[i].s.len = strlen(vps[i].s.s);
-			LM_DBG("param[%d] for: %.*s is str: %.*s\n", i,
-				fname.len, fname.s, vps[i].s.len, vps[i].s.s);
-		} else if(ket->ptypes[i]==SR_KEMIP_INT) {
-			if(!PyArg_ParseTuple(args, "i:kemi-param", &vps[i].n)) {
-				LM_ERR("unable to retrieve int param %d\n", i);
+	if(ket->ptypes[1]==SR_KEMIP_NONE) {
+		i = 1;
+		if(ket->ptypes[0]==SR_KEMIP_INT) {
+			if(!PyArg_ParseTuple(args, "i:kemi-param-n", &vps[0].n)) {
+				LM_ERR("unable to retrieve int param %d\n", 0);
 				return sr_apy_kemi_return_false();
 			}
 			LM_DBG("param[%d] for: %.*s is int: %d\n", i,
-				fname.len, fname.s, vps[i].n);
+				fname.len, fname.s, vps[0].n);
 		} else {
-			LM_ERR("unknown parameter type %d (%d)\n", ket->ptypes[i], i);
-			return sr_apy_kemi_return_false();
+			if(!PyArg_ParseTuple(args, "s:kemi-param-s", &vps[0].s.s)) {
+				LM_ERR("unable to retrieve str param %d\n", 0);
+				return sr_apy_kemi_return_false();
+			}
+			vps[0].s.len = strlen(vps[0].s.s);
+			LM_DBG("param[%d] for: %.*s is str: %.*s\n", i,
+				fname.len, fname.s, vps[0].s.len, vps[0].s.s);
 		}
+	} else if(ket->ptypes[2]==SR_KEMIP_NONE) {
+		i = 2;
+		if(ket->ptypes[0]==SR_KEMIP_INT && ket->ptypes[1]==SR_KEMIP_INT) {
+			if(!PyArg_ParseTuple(args, "ii:kemi-param-n", &vps[0].n, &vps[1].n)) {
+				LM_ERR("unable to retrieve int-int params %d\n", i);
+				return sr_apy_kemi_return_false();
+			}
+			LM_DBG("params[%d] for: %.*s are int-int: [%d] [%d]\n", i,
+				fname.len, fname.s, vps[0].n, vps[1].n);
+		} else if(ket->ptypes[0]==SR_KEMIP_INT && ket->ptypes[1]==SR_KEMIP_STR) {
+			if(!PyArg_ParseTuple(args, "is:kemi-param-n", &vps[0].n, &vps[1].s.s)) {
+				LM_ERR("unable to retrieve int-str params %d\n", i);
+				return sr_apy_kemi_return_false();
+			}
+			vps[1].s.len = strlen(vps[1].s.s);
+			LM_DBG("params[%d] for: %.*s are int-str: [%d] [%.*s]\n", i,
+				fname.len, fname.s, vps[0].n, vps[1].s.len, vps[1].s.s);
+		} else if(ket->ptypes[0]==SR_KEMIP_STR && ket->ptypes[1]==SR_KEMIP_INT) {
+			if(!PyArg_ParseTuple(args, "si:kemi-param-n", &vps[0].s.s, &vps[1].n)) {
+				LM_ERR("unable to retrieve str-int params %d\n", i);
+				return sr_apy_kemi_return_false();
+			}
+			vps[0].s.len = strlen(vps[0].s.s);
+			LM_DBG("params[%d] for: %.*s are str-int: [%.*s] [%d]\n", i,
+				fname.len, fname.s, vps[0].s.len, vps[0].s.s, vps[1].n);
+		} else {
+			if(!PyArg_ParseTuple(args, "ss:kemi-param-ss", &vps[0].s.s, &vps[1].s.s)) {
+				LM_ERR("unable to retrieve str-str param %d\n", i);
+				return sr_apy_kemi_return_false();
+			}
+			vps[0].s.len = strlen(vps[0].s.s);
+			vps[1].s.len = strlen(vps[1].s.s);
+			LM_DBG("params[%d] for: %.*s are str: [%.*s] [%.*s]\n", i,
+				fname.len, fname.s, vps[0].s.len, vps[0].s.s,
+				vps[1].s.len, vps[1].s.s);
+		}
+
+	} else if(ket->ptypes[3]==SR_KEMIP_NONE) {
+		i = 3;
+		LM_ERR("not implemented yet\n");
+		return sr_apy_kemi_return_false();
+	} else {
+		LM_ERR("not implemented yet\n");
+		return sr_apy_kemi_return_false();
 	}
 
 	switch(i) {
