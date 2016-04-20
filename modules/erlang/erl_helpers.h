@@ -141,6 +141,7 @@ do { \
 	ei_s_print_term(&pbuf, pidbuf.buff, &i); \
 	ei_x_print_reg_msg(buf, pbuf, send); \
 	free(pbuf); \
+	ei_x_free(&pidbuf); \
 } while(0)
 
 int ei_decode_strorbin(char *buf, int *index, int maxlen, char *dst);
