@@ -31,6 +31,9 @@
 #define SR_KEMIP_STR	(1<<1)	/* type str* */
 #define SR_KEMIP_BOOL	(1<<2)	/* type boolean (0/1) */
 
+#define SR_KEMI_FALSE	0
+#define SR_KEMI_TRUE	1
+
 #define SR_KEMI_PARAMS_MAX	6
 
 typedef struct sr_kemi {

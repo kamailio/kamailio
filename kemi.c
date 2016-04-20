@@ -24,10 +24,12 @@
 #include <stdlib.h>
 
 #include "dprint.h"
+#include "forward.h"
 #include "locking.h"
 #include "data_lump.h"
 #include "data_lump_rpl.h"
 #include "mem/shm.h"
+#include "parser/parse_uri.h"
 
 #include "kemi.h"
 
@@ -98,6 +100,34 @@ static int sr_kemi_core_drop(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_myself(sip_msg_t *msg, str *uri)
+{
+	struct sip_uri puri;
+	int ret;
+
+	if(uri==NULL || uri->s==NULL) {
+		return SR_KEMI_FALSE;
+	}
+	if(uri->len>4 && (strncmp(uri->s, "sip:", 4)==0
+				|| strncmp(uri->s, "sips:", 5)==0)) {
+		if(parse_uri(uri->s, uri->len, &puri)!=0) {
+			LM_ERR("failed to parse uri [%.*s]\n", uri->len, uri->s);
+			return SR_KEMI_FALSE;
+		}
+		ret = check_self(&puri.host, (puri.port.s)?puri.port_no:0,
+				(puri.transport_val.s)?puri.proto:0);
+	} else {
+		ret = check_self(uri, 0, 0);
+	}
+	if(ret==1) {
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -117,6 +147,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("drop"),
 		SR_KEMIP_NONE, sr_kemi_core_drop,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_myself"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_myself,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
