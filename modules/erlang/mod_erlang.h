@@ -63,7 +63,7 @@ typedef enum {
 typedef struct erl_param_s {
 	erl_param_type type;
 	union {
-		fparam_t fp;
+		fparam_t *fp;
 		pv_spec_t sp;
 	} value;
 } erl_param_t;
