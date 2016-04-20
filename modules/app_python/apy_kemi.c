@@ -122,6 +122,13 @@ PyObject *sr_apy_kemi_return_none(void)
  */
 PyObject *sr_apy_kemi_return_int(sr_kemi_t *ket, int rval)
 {
+	if(ket!=NULL && ket->rtype==SR_KEMIP_BOOL) {
+		if(rval==SR_KEMI_TRUE) {
+			return sr_apy_kemi_return_true();
+		} else {
+			return sr_apy_kemi_return_false();
+		}
+	}
 	return PyInt_FromLong((long)rval);
 }
 
