@@ -113,7 +113,7 @@ SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
 RELEASE:=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS := $(shell uname -s | sed -e s/SunOS/solaris/ -e s/CYGWIN.*/cygwin/ \
-		 | tr "[A-Z]" "[a-z]")
+		 | tr "[A-Z]" "[a-z]" | tr "/" "_")
 
 ifeq ($(OS),solaris)
 	GETARCH=isainfo -n
@@ -386,6 +386,13 @@ man_dir = man/
 data_dir = $(MAIN_NAME)/
 
 ifeq ($(OS), linux)
+	doc_dir = share/doc/$(MAIN_NAME)/
+	man_dir = share/man/
+	data_dir = share/$(MAIN_NAME)/
+	LOCALBASE ?= /usr/local
+endif
+
+ifeq ($(OS), gnu_kfreebsd)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = share/man/
 	data_dir = share/$(MAIN_NAME)/
@@ -1746,6 +1753,38 @@ ifeq ($(OS), linux)
 	ifeq ($(shell [ $(OSREL_N) -ge 2005070 ] && echo has_futex), has_futex)
 		ifeq ($(use_futex), yes)
 			C_DEFS+=-DUSE_FUTEX
+		endif
+	endif
+	ifeq ($(NO_SELECT),)
+		C_DEFS+=-DHAVE_SELECT
+	endif
+endif
+
+ifeq ($(OS), gnu_kfreebsd)
+# by default use futexes if available
+	use_futex= yes
+	C_DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
+			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
+			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER -DUSE_RAW_SOCKS
+	ifneq ($(found_lock_method), yes)
+		#C_DEFS+= -DUSE_POSIX_SEM
+		C_DEFS+=-DUSE_PTHREAD_MUTEX
+		LIBS+= -lpthread
+		#C_DEFS+= -DUSE_SYSV_SEM  # try posix sems
+		found_lock_method=yes
+	else
+		ifneq (,$(findstring -DUSE_POSIX_SEM, $(C_DEFS)))
+			LIBS+=-lpthread
+		endif
+		ifneq (,$(findstring -DUSE_PTHREAD_MUTEX, $(C_DEFS)))
+			LIBS+=-lpthread
+		endif
+	endif
+
+	# check for ver >= 4.1
+	ifeq ($(shell [ $(OSREL_N) -gt 4001 ] && echo has_kqueue), has_kqueue)
+		ifeq ($(NO_KQUEUE),)
+			C_DEFS+=-DHAVE_KQUEUE
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
