@@ -26,6 +26,8 @@
 #include "dprint.h"
 #include "forward.h"
 #include "locking.h"
+#include "dset.h"
+#include "action.h"
 #include "data_lump.h"
 #include "data_lump_rpl.h"
 #include "mem/shm.h"
@@ -88,6 +90,31 @@ static int sr_kemi_core_info(sip_msg_t *msg, str *txt)
 /**
  *
  */
+static int sr_kemi_core_log(sip_msg_t *msg, str *level, str *txt)
+{
+	if(txt!=NULL && txt->s!=NULL) {
+		if(level==NULL || level->s==NULL) {
+			LM_ERR("%s", txt->s);
+		} else {
+			if(strcasecmp(level->s, "dbg")==0) {
+				LM_DBG("%s", txt->s);
+			} else if(strcasecmp(level->s, "info")==0) {
+				LM_INFO("%s", txt->s);
+			} else if(strcasecmp(level->s, "warn")==0) {
+				LM_WARN("%s", txt->s);
+			} else if(strcasecmp(level->s, "crit")==0) {
+				LM_CRIT("%s", txt->s);
+			} else {
+				LM_ERR("%s", txt->s);
+			}
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_drop(sip_msg_t *msg)
 {
 	if(_sr_kemi_act_ctx==NULL)
@@ -128,6 +155,272 @@ static int sr_kemi_core_is_myself(sip_msg_t *msg, str *uri)
 /**
  *
  */
+static int sr_kemi_core_setflag(sip_msg_t *msg, int flag)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	setflag(msg, flag);
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_resetflag(sip_msg_t *msg, int flag)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	resetflag(msg, flag);
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_isflagset(sip_msg_t *msg, int flag)
+{
+	int ret;
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	ret = isflagset(msg, flag);
+	if(ret>0)
+		return SR_KEMI_TRUE;
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_setbiflag(sip_msg_t *msg, int flag, int branch)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	setbflag(branch, flag);
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_resetbiflag(sip_msg_t *msg, int flag, int branch)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	resetbflag(branch, flag);
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_isbiflagset(sip_msg_t *msg, int flag, int branch)
+{
+	int ret;
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	ret = isbflagset(branch, flag);
+	if(ret>0)
+		return SR_KEMI_TRUE;
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_setbflag(sip_msg_t *msg, int flag)
+{
+	return sr_kemi_core_setbiflag(msg, flag, 0);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_resetbflag(sip_msg_t *msg, int flag)
+{
+	return sr_kemi_core_resetbiflag(msg, flag, 0);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_isbflagset(sip_msg_t *msg, int flag)
+{
+	return sr_kemi_core_isbiflagset(msg, flag, 0);
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_seturi(sip_msg_t *msg, str *uri)
+{
+	if(uri==NULL || uri->s==NULL) {
+		LM_ERR("invalid uri parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(rewrite_uri(msg, uri)<0) {
+		LM_ERR("updating r-uri failed\n");
+		return SR_KEMI_FALSE;
+	}
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_setuser(sip_msg_t *msg, str *user)
+{
+	struct action  act;
+	struct run_act_ctx h;
+
+	if(user==NULL || user->s==NULL) {
+		LM_ERR("invalid user parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg==NULL) {
+		LM_WARN("invalid user parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	memset(&act, 0, sizeof(act));
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = user->s;
+	act.type = SET_USER_T;
+	init_run_actions_ctx(&h);
+	if (do_action(&h, &act, msg)<0) {
+		LM_ERR("do action failed\n");
+		return SR_KEMI_FALSE;
+	}
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_sethost(sip_msg_t *msg, str *host)
+{
+	struct action  act;
+	struct run_act_ctx h;
+
+	if(host==NULL || host->s==NULL) {
+		LM_ERR("invalid host parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	memset(&act, 0, sizeof(act));
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = host->s;
+	act.type = SET_HOST_T;
+	init_run_actions_ctx(&h);
+	if (do_action(&h, &act, msg)<0)
+	{
+		LM_ERR("do action failed\n");
+		return SR_KEMI_FALSE;
+	}
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_setdsturi(sip_msg_t *msg, str *uri)
+{
+	if(uri==NULL || uri->s==NULL) {
+		LM_ERR("invalid uri parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	if(set_dst_uri(msg, uri)<0) {
+		LM_ERR("setting dst uri failed\n");
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_resetdsturi(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid parameters from\n");
+		return SR_KEMI_FALSE;
+	}
+
+	reset_dst_uri(msg);
+	return SR_KEMI_TRUE;
+}
+
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -144,6 +437,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init(""), str_init("log"),
+		SR_KEMIP_NONE, sr_kemi_core_log,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init(""), str_init("drop"),
 		SR_KEMIP_NONE, sr_kemi_core_drop,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -151,6 +449,76 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_myself"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_myself,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("setflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_setflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("resetflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_resetflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("isflagset"),
+		SR_KEMIP_BOOL, sr_kemi_core_isflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("setbflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_setbflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("resetbflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_resetbflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("isbflagset"),
+		SR_KEMIP_BOOL, sr_kemi_core_isbflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("setbiflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_setbiflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("resetbiflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_resetbiflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("isbiflagset"),
+		SR_KEMIP_BOOL, sr_kemi_core_isbiflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("seturi"),
+		SR_KEMIP_BOOL, sr_kemi_core_seturi,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("setuser"),
+		SR_KEMIP_BOOL, sr_kemi_core_setuser,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("sethost"),
+		SR_KEMIP_BOOL, sr_kemi_core_sethost,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("setdsturi"),
+		SR_KEMIP_BOOL, sr_kemi_core_setdsturi,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("resetdsturi"),
+		SR_KEMIP_BOOL, sr_kemi_core_resetdsturi,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
