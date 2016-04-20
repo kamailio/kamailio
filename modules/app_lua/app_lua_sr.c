@@ -1430,7 +1430,7 @@ int sr_kemi_return(lua_State* L, sr_kemi_t *ket, int rc)
 		lua_pushinteger(L, rc);
 		return 1;
 	}
-	if(ket->rtype==SR_KEMIP_BOOL && rc!=0) {
+	if(ket->rtype==SR_KEMIP_BOOL && rc!=SR_KEMI_FALSE) {
 		return app_lua_return_true(L);
 	}
 	return app_lua_return_false(L);
