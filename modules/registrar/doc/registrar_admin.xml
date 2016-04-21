@@ -1443,7 +1443,7 @@ event_route[usrloc:contact-expired] {
 				</para>
 				</listitem>	  
 				<listitem>
-				<para><emphasis>domain</emphasis> - use location domain name
+				<para><emphasis>domain</emphasis> - used location domain/table name
 				</para>
 				</listitem>	  
 				<listitem>

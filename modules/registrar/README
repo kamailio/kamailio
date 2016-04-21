@@ -1075,7 +1075,7 @@ event_route[usrloc:contact-expired] {
 
    The "attr" can be:
      * aor - address of record
-     * domain - use location domain name
+     * domain - used location domain/table name
      * aorhash - hash id for the record
      * addr - contact address
      * path - path vector
