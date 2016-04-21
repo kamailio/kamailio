@@ -76,7 +76,7 @@ CREATE TABLE mtrees (
 
 /** parameters */
 static str db_url = str_init(DEFAULT_DB_URL);
-static str db_table = str_init("");
+static str db_table = str_init("mtrees");
 static str tname_column   = str_init("tname");
 static str tprefix_column = str_init("tprefix");
 static str tvalue_column  = str_init("tvalue");
