@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Various URI checks
  *
  * Copyright (C) 2001-2004 FhG FOKUS
@@ -21,9 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2003-03-26 created by janakj
  */
 
 

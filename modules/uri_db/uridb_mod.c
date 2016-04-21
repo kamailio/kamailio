@@ -1,6 +1,4 @@
 /* 
- * $Id$ 
- *
  * Various URI related functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -21,14 +19,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- *  2003-03-11: New module interface (janakj)
- *  2003-03-16: flags export parameter added (janakj)
- *  2003-03-19  replaces all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- *  2003-04-05: default_uri #define used (jiri)
- *  2004-03-20: has_totag introduced (jiri)
- *  2004-06-07  updated to the new DB api (andrei)
  */
 
 
@@ -51,7 +41,7 @@ MODULE_VERSION
  * an backwards incompatible way
  */
 #define URI_TABLE_VERSION 1
-#define SUBSCRIBER_TABLE_VERSION 6
+#define SUBSCRIBER_TABLE_VERSION 8
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
@@ -171,13 +161,13 @@ static int mod_init(void)
 	} else {
 		if (use_uri_table) {
 			if (ver != URI_TABLE_VERSION) {
-			LM_ERR("Invalid table version of the uri table\n");
-			return -1;
+				LM_ERR("Invalid table version of the uri table. Expected %d, database is %d\n", URI_TABLE_VERSION, ver);
+				return -1;
 			}
 		} else {
 			if (ver != SUBSCRIBER_TABLE_VERSION) {
-			LM_ERR("Invalid table version of the subscriber table\n");
-			return -1;
+				LM_ERR("Invalid table version of the subscriber table. Expected %d, database is %d\n", SUBSCRIBER_TABLE_VERSION, ver);
+				return -1;
 			}
 		}
 	}
