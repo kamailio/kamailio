@@ -39,6 +39,7 @@
 #include "../../pvapi.h"
 #include "../../lvalue.h"
 #include "../../mod_fix.h"
+#include "../../kemi.h"
 #include "../../modules/sl/sl.h"
 #include "auth_mod.h"
 #include "challenge.h"
@@ -1169,5 +1170,37 @@ static int fixup_auth_get_www_authenticate(void **param, int param_no)
 			}
 			return 0;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_auth_exports[] = {
+	{ str_init("auth"), str_init("consume_credentials"),
+		SR_KEMIP_INT, consume_credentials,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth"), str_init("auth_challenge"),
+		SR_KEMIP_INT, auth_challenge,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth"), str_init("pv_auth_check"),
+		SR_KEMIP_INT, pv_auth_check,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_auth_exports);
 	return 0;
 }
