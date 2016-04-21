@@ -19,6 +19,22 @@
  *
  *
  */
+/*!
+ * \file
+ * \brief SCA shared call appearance module
+ * \ingroup sca
+ * - Module: \ref sca
+ * \author Andrew Mortensen
+ */
+
+/*!
+ * \defgroup sca :: The Kamailio shared call appearance Module
+ *
+ * The sca module implements Shared Call Appearances. It handles SUBSCRIBE messages for call-info 
+ * and line-seize events, and sends call-info NOTIFYs to line subscribers to implement line bridging.
+ * The module implements SCA as defined in Broadworks SIP Access Side Extensions Interface 
+ * Specifications, Release 13.0, version 1, sections 2, 3 and 4.
+ */
 #include "sca_common.h"
 
 #include <sys/types.h>
@@ -127,8 +143,7 @@ struct module_exports	exports = {
 };
 
 
-    static int
-sca_bind_sl( sca_mod *scam, sl_api_t *sl_api )
+static int sca_bind_sl( sca_mod *scam, sl_api_t *sl_api )
 {
     sl_cbelem_t		sl_cbe;
 
@@ -136,7 +151,7 @@ sca_bind_sl( sca_mod *scam, sl_api_t *sl_api )
     assert( sl_api != NULL );
 
     if ( sl_load_api( sl_api ) != 0 ) {
-	LM_ERR( "Failed to initialize required sl API" );
+	LM_ERR( "Failed to initialize required sl API. Check if the \"sl\" module is loaded.\n" );
 	return( -1 );
     }
     scam->sl_api = sl_api;
@@ -145,27 +160,26 @@ sca_bind_sl( sca_mod *scam, sl_api_t *sl_api )
     sl_cbe.cbf = (sl_cbf_f)sca_call_info_sl_reply_cb;
 
     if ( scam->sl_api->register_cb( &sl_cbe ) < 0 ) {
-	LM_ERR( "Failed to register sl reply callback" );
+	LM_ERR( "Failed to register sl reply callback\n" );
 	return( -1 );
     }
 
     return( 0 );
 }
 
-    static int
-sca_bind_srdb1( sca_mod *scam, db_func_t *db_api )
+static int sca_bind_srdb1( sca_mod *scam, db_func_t *db_api )
 {
     db1_con_t	*db_con = NULL;
     int		rc = -1;
 
     if ( db_bind_mod( scam->cfg->db_url, db_api ) != 0 ) {
-	LM_ERR( "Failed to initialize required DB API" );
+	LM_ERR( "Failed to initialize required DB API\n" );
 	goto done;
     }
     scam->db_api = db_api;
 
     if ( !DB_CAPABILITY( (*db_api), DB_CAP_ALL )) {
-	LM_ERR( "Selected database %.*s lacks required capabilities",
+	LM_ERR( "Selected database %.*s lacks required capabilities\n",
 		STR_FMT( scam->cfg->db_url ));
 	goto done;
     }
@@ -173,16 +187,16 @@ sca_bind_srdb1( sca_mod *scam, db_func_t *db_api )
     /* ensure database exists and table schemas are correct */
     db_con = db_api->init( scam->cfg->db_url );
     if ( db_con == NULL ) {
-	LM_ERR( "sca_bind_srdb1: failed to connect to DB %.*s",
+	LM_ERR( "sca_bind_srdb1: failed to connect to DB %.*s\n",
 		STR_FMT( scam->cfg->db_url ));
 	goto done;
     }
 
     if ( db_check_table_version( db_api, db_con,
 	    scam->cfg->subs_table, SCA_DB_SUBSCRIPTIONS_TABLE_VERSION ) < 0 ) {
-	LM_ERR( "Version check of %.*s table in DB %.*s failed",
+	LM_ERR( "Version check of %.*s table in DB %.*s failed\n",
 		STR_FMT( scam->cfg->subs_table ), STR_FMT( scam->cfg->db_url ));
-	LM_ERR( "%.*s table version %d required",
+	LM_ERR( "%.*s table version %d required\n",
 		STR_FMT( scam->cfg->subs_table ),
 		SCA_DB_SUBSCRIPTIONS_TABLE_VERSION );
 	goto done;
@@ -200,12 +214,11 @@ done:
     return( rc );
 }
 
-    static int
-sca_set_config( sca_mod *scam )
+static int sca_set_config( sca_mod *scam )
 {
     scam->cfg = (sca_config *)shm_malloc( sizeof( sca_config ));
     if ( scam->cfg == NULL ) {
-	LM_ERR( "Failed to shm_malloc module configuration" );
+	LM_ERR( "Failed to shm_malloc module configuration\n" );
 	return( -1 );
     }
     memset(scam->cfg, 0, sizeof( sca_config ));
@@ -215,19 +228,19 @@ sca_set_config( sca_mod *scam )
     }
 
     if ( !db_url.s || db_url.len<=0 ) {
-	LM_ERR( "sca_set_config: db_url must be set!" );
+	LM_ERR( "sca_set_config: db_url must be set!\n" );
 	return( -1 );
     }
     scam->cfg->db_url = &db_url;
 
     if ( !db_subs_table.s || db_subs_table.len<=0 ) {
-	LM_ERR( "sca_set_config: subs_table must be set!" );
+	LM_ERR( "sca_set_config: subs_table must be set!\n" );
 	return( -1 );
     }
     scam->cfg->subs_table = &db_subs_table;
 
     if ( !db_state_table.s || db_state_table.len<=0 ) {
-	LM_ERR( "sca_set_config: state_table must be set!" );
+	LM_ERR( "sca_set_config: state_table must be set!\n" );
 	return( -1 );
     }
     scam->cfg->state_table = &db_state_table;
@@ -260,7 +273,7 @@ sca_child_init( int rank )
 			    NULL, /* parameter passed to callback */
 			    sca->cfg->db_update_interval ) < 0 ) {
 	    LM_ERR( "sca_child_init: failed to register subscription DB "
-		    "sync timer process" );
+		    "sync timer process\n" );
 	    return( -1 );
 	}
 
@@ -268,66 +281,61 @@ sca_child_init( int rank )
     }
 
     if ( sca->db_api == NULL || sca->db_api->init == NULL ) {
-	LM_CRIT( "sca_child_init: DB API not loaded!" );
+	LM_CRIT( "sca_child_init: DB API not loaded!\n" );
 	return( -1 );
     }
 
     return( 0 );
 }
 
-    static int
-sca_mod_init( void )
+static int sca_mod_init( void )
 {
     sca = (sca_mod *)shm_malloc( sizeof( sca_mod ));
     if ( sca == NULL ) {
-	LM_ERR( "Failed to shm_malloc module object" );
+	LM_ERR( "Failed to shm_malloc module object\n" );
 	return( -1 );
     }
     memset( sca, 0, sizeof( sca_mod ));
 
     if ( sca_set_config( sca ) != 0 ) {
-	LM_ERR( "Failed to set configuration" );
+	LM_ERR( "Failed to set configuration\n" );
 	goto error;
     }
 
     if ( rpc_register_array( sca_rpc ) != 0 ) {
-	LM_ERR( "Failed to register RPC commands" );
+	LM_ERR( "Failed to register RPC commands\n" );
 	goto error;
     }
 
     if ( sca_bind_srdb1( sca, &dbf ) != 0 ) {
-	LM_ERR( "Failed to initialize required DB API" );
+	LM_ERR( "Failed to initialize required DB API\n" );
 	goto error;
     }
 
     if ( load_tm_api( &tmb ) != 0 ) {
-	LM_ERR( "Failed to initialize required tm API" );
+	LM_ERR( "Failed to initialize required tm API. Check that the \"tm\" module is loaded before this module.\n" );
 	goto error;
     }
     sca->tm_api = &tmb;
 
     if ( sca_bind_sl( sca, &slb ) != 0 ) {
-	LM_ERR( "Failed to initialize required sl API" );
+	LM_ERR( "Failed to initialize required sl API. Check that the \"sl\" module is loaded before this module.\n" );
 	goto error;
     }
     
-    if ( sca_hash_table_create( &sca->subscriptions,
-			sca->cfg->hash_table_size ) != 0 ) {
-	LM_ERR( "Failed to create subscriptions hash table" );
+    if ( sca_hash_table_create( &sca->subscriptions, sca->cfg->hash_table_size ) != 0 ) {
+	LM_ERR( "Failed to create subscriptions hash table\n" );
 	goto error;
     }
-    if ( sca_hash_table_create( &sca->appearances,
-			sca->cfg->hash_table_size ) != 0 ) {
-	LM_ERR( "Failed to create appearances hash table" );
+    if ( sca_hash_table_create( &sca->appearances, sca->cfg->hash_table_size ) != 0 ) {
+	LM_ERR( "Failed to create appearances hash table\n" );
 	goto error;
     }
 
     sca_subscriptions_restore_from_db( sca );
 
-    register_timer( sca_subscription_purge_expired, sca,
-		    sca->cfg->purge_expired_interval );
-    register_timer( sca_appearance_purge_stale, sca,
-		    sca->cfg->purge_expired_interval );
+    register_timer( sca_subscription_purge_expired, sca, sca->cfg->purge_expired_interval );
+    register_timer( sca_appearance_purge_stale, sca, sca->cfg->purge_expired_interval );
 
     /*
      * register separate timer process to write subscriptions to DB.
@@ -337,7 +345,7 @@ sca_mod_init( void )
      */
     register_dummy_timers( 1 );
 
-    LM_INFO( "initialized" );
+    LM_INFO( "SCA initialized \n" );
 
     return( 0 );
 
@@ -359,19 +367,18 @@ error:
     return( -1 );
 }
 
-    void
-sca_mod_destroy( void )
+void sca_mod_destroy( void )
 {
 	if(sca==0)
 		return;
 
-    /* write back to the DB to retain most current subscription info */
-    if ( sca_subscription_db_update() != 0 ) {
+    	/* write back to the DB to retain most current subscription info */
+    	if ( sca_subscription_db_update() != 0 ) {
 		if(sca && sca->cfg && sca->cfg->db_url) {
-			LM_ERR( "sca_mod_destroy: failed to save current subscriptions "
+			LM_ERR( "sca_mod_destroy: failed to save current subscriptions \n"
 				"in DB %.*s", STR_FMT( sca->cfg->db_url ));
 		}
-    }
+    	}
 
-    sca_db_disconnect();
+    	sca_db_disconnect();
 }
