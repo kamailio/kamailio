@@ -1102,7 +1102,7 @@ static const luaL_Reg _sr_rr_Map [] = {
 };
 
 
-static int lua_sr_auth_challenge(lua_State *L, int hftype)
+static int lua_sr_auth_challenge_hftype(lua_State *L, int hftype)
 {
 	int ret;
 	str realm = {0, 0};
@@ -1134,7 +1134,7 @@ static int lua_sr_auth_challenge(lua_State *L, int hftype)
 		return app_lua_return_error(L);
 	}
 	realm.len = strlen(realm.s);
-	ret = _lua_authb.auth_challenge(env_L->msg, &realm, flags, hftype);
+	ret = _lua_authb.auth_challenge_hftype(env_L->msg, &realm, flags, hftype);
 
 	return app_lua_return_int(L, ret);
 }
@@ -1144,7 +1144,7 @@ static int lua_sr_auth_challenge(lua_State *L, int hftype)
  */
 static int lua_sr_auth_www_challenge(lua_State *L)
 {
-	return lua_sr_auth_challenge(L, HDR_AUTHORIZATION_T);
+	return lua_sr_auth_challenge_hftype(L, HDR_AUTHORIZATION_T);
 }
 
 /**
@@ -1152,7 +1152,7 @@ static int lua_sr_auth_www_challenge(lua_State *L)
  */
 static int lua_sr_auth_proxy_challenge(lua_State *L)
 {
-	return lua_sr_auth_challenge(L, HDR_PROXYAUTH_T);
+	return lua_sr_auth_challenge_hftype(L, HDR_PROXYAUTH_T);
 }
 
 /**
