@@ -84,6 +84,7 @@ typedef int (*sr_kemi_fmssn_f)(sip_msg_t*, str*, str*, int);
 typedef int (*sr_kemi_fmsss_f)(sip_msg_t*, str*, str*, str*);
 
 typedef int (*sr_kemi_fmssss_f)(sip_msg_t*, str*, str*, str*, str*);
+typedef int (*sr_kemi_fmssnn_f)(sip_msg_t*, str*, str*, int, int);
 typedef int (*sr_kemi_fmsssss_f)(sip_msg_t*, str*, str*, str*, str*, str*);
 typedef int (*sr_kemi_fmssssss_f)(sip_msg_t*, str*, str*, str*, str*, str*, str*);
 
