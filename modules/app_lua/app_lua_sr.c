@@ -1630,6 +1630,13 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 				ret = ((sr_kemi_fmssss_f)(ket->func))(env_L->msg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s);
 				return sr_kemi_return(L, ket, ret);
+			} else if(ket->ptypes[0]==SR_KEMIP_STR
+					|| ket->ptypes[1]==SR_KEMIP_STR
+					|| ket->ptypes[2]==SR_KEMIP_INT
+					|| ket->ptypes[3]==SR_KEMIP_INT) {
+				ret = ((sr_kemi_fmssnn_f)(ket->func))(env_L->msg,
+						&vps[0].s, &vps[1].s, vps[2].n, vps[3].n);
+				return sr_kemi_return(L, ket, ret);
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname->len, fname->s);
