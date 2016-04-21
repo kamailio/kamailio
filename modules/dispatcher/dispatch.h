@@ -114,7 +114,7 @@ int ds_reinit_state(int group, str *address, int state);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_print_mi_list(struct mi_node* rpl);
-int ds_print_sets(void);
+int ds_log_sets(void);
 int ds_list_exist(int set);
 
 
@@ -178,8 +178,13 @@ typedef struct _ds_set
 	ds_dest_t *dlist;
 	unsigned int wlist[100];
 	unsigned int rwlist[100];
-	struct _ds_set *next;
+	struct _ds_set *next[2];
+	int longer:2;
 } ds_set_t;
+#define AVL_LEFT 0
+#define AVL_RIGHT 1
+#define AVL_NEITHER -1
+#define AVL_BALANCED(n) (n->longer < 0)
 
 ds_set_t *ds_get_list(void);
 int ds_get_list_nr(void);
@@ -187,6 +192,10 @@ int ds_get_list_nr(void);
 int ds_ping_active_init(void);
 int ds_ping_active_get(void);
 int ds_ping_active_set(int v);
+
+ds_set_t* ds_avl_insert( ds_set_t** root, int id, int* setn ); /// Create if not exist and return ds_set_t by id
+ds_set_t* ds_avl_find( ds_set_t* node, int id );
+void ds_avl_destroy( ds_set_t** node );
 
 #endif
 
