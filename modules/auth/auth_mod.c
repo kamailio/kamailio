@@ -79,7 +79,7 @@ static int pv_www_authenticate(struct sip_msg* msg, char* realm,
 static int pv_www_authenticate2(struct sip_msg* msg, char* realm,
 		char *passwd, char *flags, char *method);
 static int fixup_pv_auth(void **param, int param_no);
-static int pv_auth_check(sip_msg_t *msg, char *realm,
+static int w_pv_auth_check(sip_msg_t *msg, char *realm,
 		char *passwd, char *flags, char *checks);
 static int fixup_pv_auth_check(void **param, int param_no);
 
@@ -161,7 +161,7 @@ static cmd_export_t cmds[] = {
 		fixup_auth_get_www_authenticate, REQUEST_ROUTE},
 	{"has_credentials",        w_has_credentials,                    1,
 		fixup_spve_null, REQUEST_ROUTE},
-	{"pv_auth_check",         (cmd_function)pv_auth_check,           4,
+	{"pv_auth_check",         (cmd_function)w_pv_auth_check,           4,
 		fixup_pv_auth_check, REQUEST_ROUTE},
 	{"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
 	{0, 0, 0, 0, 0}
@@ -689,18 +689,79 @@ error:
 /**
  *
  */
-static int pv_auth_check(sip_msg_t *msg, char *realm,
+static int pv_auth_check(sip_msg_t *msg, str *srealm, str *spasswd, int vflags,
+		int vchecks)
+{
+	int ret;
+	hdr_field_t *hdr;
+	sip_uri_t *uri = NULL;
+	sip_uri_t *turi = NULL;
+	sip_uri_t *furi = NULL;
+	str suser;
+
+	if(msg->REQ_METHOD==METHOD_REGISTER)
+		ret = pv_authenticate(msg, srealm, spasswd, vflags, HDR_AUTHORIZATION_T,
+				&msg->first_line.u.request.method);
+	else
+		ret = pv_authenticate(msg, srealm, spasswd, vflags, HDR_PROXYAUTH_T,
+				&msg->first_line.u.request.method);
+
+	if(ret==AUTH_OK && (vchecks&AUTH_CHECK_ID_F)) {
+		hdr = (msg->proxy_auth==0)?msg->authorization:msg->proxy_auth;
+		suser = ((auth_body_t*)(hdr->parsed))->digest.username.user;
+
+		if((furi=parse_from_uri(msg))==NULL)
+			return AUTH_ERROR;
+
+		if(msg->REQ_METHOD==METHOD_REGISTER || msg->REQ_METHOD==METHOD_PUBLISH) {
+			if((turi=parse_to_uri(msg))==NULL)
+				return AUTH_ERROR;
+			uri = turi;
+		} else {
+			uri = furi;
+		}
+		if(suser.len!=uri->user.len
+				|| strncmp(suser.s, uri->user.s, suser.len)!=0)
+			return AUTH_USER_MISMATCH;
+
+		if(msg->REQ_METHOD==METHOD_REGISTER || msg->REQ_METHOD==METHOD_PUBLISH) {
+			/* check from==to */
+			if(furi->user.len!=turi->user.len
+					|| strncmp(furi->user.s, turi->user.s, furi->user.len)!=0)
+				return AUTH_USER_MISMATCH;
+			if(auth_use_domain!=0 && (furi->host.len!=turi->host.len
+						|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0))
+				return AUTH_USER_MISMATCH;
+			/* check r-uri==from for publish */
+			if(msg->REQ_METHOD==METHOD_PUBLISH) {
+				if(parse_sip_msg_uri(msg)<0)
+					return AUTH_ERROR;
+				uri = &msg->parsed_uri;
+				if(furi->user.len!=uri->user.len
+						|| strncmp(furi->user.s, uri->user.s, furi->user.len)!=0)
+					return AUTH_USER_MISMATCH;
+				if(auth_use_domain!=0 && (furi->host.len!=uri->host.len
+							|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0))
+					return AUTH_USER_MISMATCH;
+			}
+		}
+		return AUTH_OK;
+	}
+
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_pv_auth_check(sip_msg_t *msg, char *realm,
 		char *passwd, char *flags, char *checks)
 {
 	int vflags = 0;
 	int vchecks = 0;
 	str srealm  = {0, 0};
 	str spasswd = {0, 0};
-	int ret;
-	hdr_field_t *hdr;
-	sip_uri_t *uri = NULL;
-	sip_uri_t *turi = NULL;
-	sip_uri_t *furi = NULL;
+
 
 	if(msg==NULL) {
 		LM_ERR("invalid msg parameter\n");
@@ -747,58 +808,9 @@ static int pv_auth_check(sip_msg_t *msg, char *realm,
 	}
 	LM_DBG("realm [%.*s] flags [%d] checks [%d]\n", srealm.len, srealm.s,
 			vflags, vchecks);
-
-	if(msg->REQ_METHOD==METHOD_REGISTER)
-		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
-				&msg->first_line.u.request.method);
-	else
-		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
-				&msg->first_line.u.request.method);
-
-	if(ret==AUTH_OK && (vchecks&AUTH_CHECK_ID_F)) {
-		hdr = (msg->proxy_auth==0)?msg->authorization:msg->proxy_auth;
-		srealm = ((auth_body_t*)(hdr->parsed))->digest.username.user;
-
-		if((furi=parse_from_uri(msg))==NULL)
-			return AUTH_ERROR;
-
-		if(msg->REQ_METHOD==METHOD_REGISTER || msg->REQ_METHOD==METHOD_PUBLISH) {
-			if((turi=parse_to_uri(msg))==NULL)
-				return AUTH_ERROR;
-			uri = turi;
-		} else {
-			uri = furi;
-		}
-		if(srealm.len!=uri->user.len
-				|| strncmp(srealm.s, uri->user.s, srealm.len)!=0)
-			return AUTH_USER_MISMATCH;
-
-		if(msg->REQ_METHOD==METHOD_REGISTER || msg->REQ_METHOD==METHOD_PUBLISH) {
-			/* check from==to */
-			if(furi->user.len!=turi->user.len
-					|| strncmp(furi->user.s, turi->user.s, furi->user.len)!=0)
-				return AUTH_USER_MISMATCH;
-			if(auth_use_domain!=0 && (furi->host.len!=turi->host.len
-						|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0))
-				return AUTH_USER_MISMATCH;
-			/* check r-uri==from for publish */
-			if(msg->REQ_METHOD==METHOD_PUBLISH) {
-				if(parse_sip_msg_uri(msg)<0)
-					return AUTH_ERROR;
-				uri = &msg->parsed_uri;
-				if(furi->user.len!=uri->user.len
-						|| strncmp(furi->user.s, uri->user.s, furi->user.len)!=0)
-					return AUTH_USER_MISMATCH;
-				if(auth_use_domain!=0 && (furi->host.len!=uri->host.len
-							|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0))
-					return AUTH_USER_MISMATCH;
-			}
-		}
-		return AUTH_OK;
-	}
-
-	return ret;
+	return pv_auth_check(msg, &srealm, &spasswd, vflags, vchecks);
 }
+
 
 /**
  * @brief fixup function for pv_{www,proxy}_authenticate
