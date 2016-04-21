@@ -38,10 +38,11 @@ MODULE_VERSION
 /*
  * Version of domain table required by the module,
  * increment this value if you change the table in
- * an backwards incompatible way
+ * an backwards incompatible way. The subscriber
+ * table version needs to be the same as auth_db use.
  */
 #define URI_TABLE_VERSION 1
-#define SUBSCRIBER_TABLE_VERSION 8
+#define SUBSCRIBER_TABLE_VERSION 6	/* From auth_db */
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
