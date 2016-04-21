@@ -36,6 +36,7 @@
 
 MODULE_VERSION
 
+/* Note: If this is changed, please also change version in the uri_db module */
 #define TABLE_VERSION 6
 
 /*
@@ -98,7 +99,7 @@ static cmd_export_t cmds[] = {
 	{"www_authenticate",   (cmd_function)www_authenticate,   2, auth_fixup, 0,
 		REQUEST_ROUTE},
 	{"www_authenticate",   (cmd_function)www_authenticate2,  3, auth_fixup, 0,
-REQUEST_ROUTE},
+		REQUEST_ROUTE},
 	{"proxy_authorize",    (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
 		REQUEST_ROUTE},
 	{"proxy_authenticate", (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
@@ -363,21 +364,24 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 			pve->text.s = sep + 1;
 			pve->text.len = end - pve->text.s;
 			trim(&pve->text);
-			if (pve->text.len == 0)
+			if (pve->text.len == 0) {
 				goto parse_error;
+			}
 			/* set pv spec */
 			pv.s = p;
 			pv.len = sep - p;
 			trim(&pv);
-			if (pv.len == 0)
+			if (pv.len == 0) {
 				goto parse_error;
+			}
 		} else {
 			/* no pv, only column name */
 			pve->text.s = p;
 			pve->text.len = end - pve->text.s;
 			trim(&pve->text);
-			if (pve->text.len == 0)
+			if (pve->text.len == 0) {
 				goto parse_error;
+			}
 			/* create an avp definition for the spec parser */
 			pv.s = (char*)pkg_malloc(pve->text.len + 7);
 			if (pv.s == NULL) {
@@ -403,10 +407,12 @@ int parse_aaa_pvs(char *definition, pv_elem_t **pv_def, int *cnt)
 		pve = 0;
 		/* go to the end */
 		p = end;
-		if (*p==';')
+		if (*p==';') {
 			p++;
-		if (*p==0)
+		}
+		if (*p==0) {
 			break;
+		}
 	}
 
 	return 0;
