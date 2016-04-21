@@ -1,21 +1,21 @@
 /*
  * Digest Authentication Module
- * 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
+ *
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
@@ -42,28 +42,28 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body,
  * @param check_hdr  pointer to the function checking Authorization header field
  */
 auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
-						struct hdr_field**  hdr,
-						check_auth_hdr_t check_auth_hdr)
+		struct hdr_field**  hdr,
+		check_auth_hdr_t check_auth_hdr)
 {
 	int ret;
 	auth_body_t* c;
 	check_auth_hdr_t check_hf;
 	auth_result_t    auth_rv;
 
-	     /* ACK and CANCEL must be always authenticated, there is
-	      * no way how to challenge ACK and CANCEL cannot be
-	      * challenged because it must have the same CSeq as
-	      * the request to be canceled.
-	      * PRACK is also not authenticated
-	      */
+	/* ACK and CANCEL must be always authenticated, there is
+	 * no way how to challenge ACK and CANCEL cannot be
+	 * challenged because it must have the same CSeq as
+	 * the request to be canceled.
+	 * PRACK is also not authenticated
+	 */
 
 	if (msg->REQ_METHOD & (METHOD_ACK|METHOD_CANCEL|METHOD_PRACK))
 		return AUTHENTICATED;
 
-	     /* Try to find credentials with corresponding realm
-	      * in the message, parse them and return pointer to
-	      * parsed structure
-	      */
+	/* Try to find credentials with corresponding realm
+	 * in the message, parse them and return pointer to
+	 * parsed structure
+	 */
 	strip_realm(realm);
 	ret = find_credentials(msg, realm, hftype, hdr);
 	if (ret < 0) {
@@ -75,10 +75,10 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 		return NO_CREDENTIALS;
 	}
 
-	     /* Pointer to the parsed credentials */
+	/* Pointer to the parsed credentials */
 	c = (auth_body_t*)((*hdr)->parsed);
 
-	    /* digest headers are in c->digest */
+	/* digest headers are in c->digest */
 	DBG("auth: digest-algo: %.*s parsed value: %d\n",
 			c->digest.alg.alg_str.len, c->digest.alg.alg_str.s,
 			c->digest.alg.alg_parsed);
@@ -88,7 +88,7 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 		return ERROR;
 	}
 
-	    /* check authorization header field's validity */
+	/* check authorization header field's validity */
 	if (check_auth_hdr == NULL) {
 		check_hf = auth_check_hdr_md5;
 	} else {	/* use check function of external authentication module */
@@ -98,23 +98,23 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	if (!check_hf(msg, c, &auth_rv)) {
 		return auth_rv;
 	}
-	
+
 	return DO_AUTHENTICATION;
 }
 
 /**
- * TODO move it to rfc2617.c 
- * 
+ * TODO move it to rfc2617.c
+ *
  * @param auth_res return value of authentication. Maybe the it will be not affected.
  * @result if authentication should continue (1) or not (0)
- * 
+ *
  */
 static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 		auth_result_t* auth_res)
 {
 	int ret;
-	
-	    /* Check credentials correctness here */
+
+	/* Check credentials correctness here */
 	if (check_dig_cred(&auth->digest) != E_DIG_OK) {
 		LOG(L_ERR, "auth:pre_auth: Credentials are not filled properly\n");
 		*auth_res = BAD_CREDENTIALS;
@@ -125,8 +125,8 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 	if (ret!=0){
 		if (ret==3 || ret==4){
 			/* failed auth_extra_checks or stale */
-			auth->stale=1; /* we mark the nonce as stale 
-							(hack that makes our life much easier) */
+			auth->stale=1; /* we mark the nonce as stale
+							* (hack that makes our life much easier) */
 			*auth_res = STALE_NONCE;
 			return 0;
 		} else if (ret==6) {
@@ -153,14 +153,14 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 	c = (auth_body_t*)((hdr)->parsed);
 
 	if (c->stale ) {
-		if ((msg->REQ_METHOD == METHOD_ACK) || 
-		    (msg->REQ_METHOD == METHOD_CANCEL)) {
-			     /* Method is ACK or CANCEL, we must accept stale
-			      * nonces because there is no way how to challenge
-			      * with new nonce (ACK has no response associated 
-			      * and CANCEL must have the same CSeq as the request 
-			      * to be canceled)
-			      */
+		if ((msg->REQ_METHOD == METHOD_ACK) ||
+				(msg->REQ_METHOD == METHOD_CANCEL)) {
+			/* Method is ACK or CANCEL, we must accept stale
+			 * nonces because there is no way how to challenge
+			 * with new nonce (ACK has no response associated
+			 * and CANCEL must have the same CSeq as the request
+			 * to be canceled)
+			 */
 		} else {
 			c->stale = 1;
 			res = NOT_AUTHENTICATED;
@@ -192,9 +192,9 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * from the user agent
 	 */
 	calc_response(ha1, &(cred->nonce),
-				  &(cred->nc), &(cred->cnonce),
-				  &(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
-				  method, &(cred->uri), hent, resp);
+			&(cred->nc), &(cred->cnonce),
+			&(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
+			method, &(cred->uri), hent, resp);
 
 	DBG("check_response: Our result = \'%s\'\n", resp);
 

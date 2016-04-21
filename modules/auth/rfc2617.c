@@ -1,22 +1,22 @@
 /*
  * Digest Authentication Module
  * Digest response calculation as per RFC2617
- * 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
+ *
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
@@ -36,7 +36,7 @@ inline void cvt_hex(HASH _b, HASHHEX _h)
 {
 	unsigned short i;
 	unsigned char j;
-	
+
 	for (i = 0; i < HASHLEN; i++) {
 		j = (_b[i] >> 4) & 0xf;
 		if (j <= 9) {
@@ -58,15 +58,15 @@ inline void cvt_hex(HASH _b, HASHHEX _h)
 }
 
 
-/* 
- * calculate H(A1) as per spec 
+/*
+ * calculate H(A1) as per spec
  */
 void calc_HA1(ha_alg_t _alg, str* _username, str* _realm, str* _password,
-	      str* _nonce, str* _cnonce, HASHHEX _sess_key)
+		str* _nonce, str* _cnonce, HASHHEX _sess_key)
 {
 	MD5_CTX Md5Ctx;
 	HASH HA1;
-	
+
 	MD5Init(&Md5Ctx);
 	MD5Update(&Md5Ctx, _username->s, _username->len);
 	MD5Update(&Md5Ctx, ":", 1);
@@ -89,26 +89,26 @@ void calc_HA1(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 }
 
 
-/* 
- * calculate request-digest/response-digest as per HTTP Digest spec 
+/*
+ * calculate request-digest/response-digest as per HTTP Digest spec
  */
 void calc_response(HASHHEX _ha1,      /* H(A1) */
-		   str* _nonce,       /* nonce from server */
-		   str* _nc,          /* 8 hex digits */
-		   str* _cnonce,      /* client nonce */
-		   str* _qop,         /* qop-value: "", "auth", "auth-int" */
-		   int _auth_int,     /* 1 if auth-int is used */
-		   str* _method,      /* method from the request */
-		   str* _uri,         /* requested URL */
-		   HASHHEX _hentity,  /* H(entity body) if qop="auth-int" */
-		   HASHHEX _response) /* request-digest or response-digest */
+		str* _nonce,       /* nonce from server */
+		str* _nc,          /* 8 hex digits */
+		str* _cnonce,      /* client nonce */
+		str* _qop,         /* qop-value: "", "auth", "auth-int" */
+		int _auth_int,     /* 1 if auth-int is used */
+		str* _method,      /* method from the request */
+		str* _uri,         /* requested URL */
+		HASHHEX _hentity,  /* H(entity body) if qop="auth-int" */
+		HASHHEX _response) /* request-digest or response-digest */
 {
 	MD5_CTX Md5Ctx;
 	HASH HA2;
 	HASH RespHash;
 	HASHHEX HA2Hex;
-	
-	     /* calculate H(A2) */
+
+	/* calculate H(A2) */
 	MD5Init(&Md5Ctx);
 	MD5Update(&Md5Ctx, _method->s, _method->len);
 	MD5Update(&Md5Ctx, ":", 1);
@@ -122,7 +122,7 @@ void calc_response(HASHHEX _ha1,      /* H(A1) */
 	MD5Final(HA2, &Md5Ctx);
 	cvt_hex(HA2, HA2Hex);
 
-	     /* calculate response */
+	/* calculate response */
 	MD5Init(&Md5Ctx);
 	MD5Update(&Md5Ctx, _ha1, HASHHEXLEN);
 	MD5Update(&Md5Ctx, ":", 1);

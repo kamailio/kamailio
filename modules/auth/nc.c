@@ -1,21 +1,21 @@
 /*
  * Digest Authentication Module
- * 
+ *
  * Copyright (C) 2008 iptelorg GmbH
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
+ *
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
@@ -23,8 +23,8 @@
 
 int nc_enabled=0;
 unsigned nc_array_k;    /* array size bits (k in 2^k) */
-unsigned nc_array_size; /* 2^k == 1<<nc_array_bits (in nc_t and not 
-					  unsigned ints)*/
+unsigned nc_array_size; /* 2^k == 1<<nc_array_bits (in nc_t and not
+						 * unsigned ints)*/
 
 #ifdef USE_NC
 
@@ -45,7 +45,7 @@ static unsigned int* nc_array=0;
 unsigned nc_partition_size; /* array partition == nc_array_size/nc_pool_no*/
 unsigned nc_partition_k;    /* k such that 2^k==nc_partition_size */
 unsigned nc_partition_mask; /* mask for computing the real idx. inside
-							   one partition */
+							 * one partition */
 
 
 /* returns -1 on error, 0 on success */
@@ -97,7 +97,7 @@ int init_nonce_count()
 				" memory(%ld bytes)\n", size, max_mem);
 	}
 	nc_array_size=size;
-	
+
 	if (nid_pool_no>=nc_array_size){
 		ERR("auth: nid_pool_no (%d) too high for the configured "
 				"nc_array_size (%d)\n", nid_pool_no, nc_array_size);
@@ -108,7 +108,7 @@ int init_nonce_count()
 	nc_partition_mask=(1<<nc_partition_k)-1;
 	assert(nc_partition_size == nc_array_size/nid_pool_no);
 	assert(1<<(nc_partition_k+nid_pool_k) == nc_array_size);
-	
+
 	if ((nid_t)nc_partition_size >= ((nid_t)(-1)/NID_INC)){
 		ERR("auth: nc_array_size too big, try decreasing it or increasing"
 				"the number of pools/partitions\n");
@@ -121,8 +121,7 @@ int init_nonce_count()
 				"nc_array_size/nid_pool_no >= %d\n",
 				nid_pool_no, orig_array_size, MIN_NC_ARRAY_PARTITION);
 	}
-	
-	
+
 	/*  array size should be multiple of sizeof(unsigned int) since we
 	 *  access it as an uint array */
 	nc_array=shm_malloc(sizeof(nc_t)*ROUND_INT(nc_array_size));
@@ -182,7 +181,7 @@ void destroy_nonce_count()
  * WARNING: NID_INC * nc_partition_size must fit inside an nidx_t*/
 #define  nc_id_check_overflow(id,  pool) \
 	((nid_t)(nid_get((pool))-(id)) >= \
-	 	((nid_t)NID_INC*nc_partition_size))
+		((nid_t)NID_INC*nc_partition_size))
 
 /* re-init the stored nc for nonce id in pool p */
 nid_t nc_new(nid_t id, unsigned char p)
@@ -190,7 +189,7 @@ nid_t nc_new(nid_t id, unsigned char p)
 	unsigned int i;
 	unsigned  n, r;
 	unsigned int v, new_v;
-	
+
 	n=get_nc_array_raw_idx(id, p); /* n-th nc_t */
 	i=get_nc_array_uint_idx(n);  /* aray index i, corresponding to n */
 	r=get_nc_int_pos(n);  /* byte/short inside the uint corresponding to n */
@@ -205,7 +204,7 @@ nid_t nc_new(nid_t id, unsigned char p)
 
 
 
-/* check if nonce-count nc w/ index i is expected/valid and if so it 
+/* check if nonce-count nc w/ index i is expected/valid and if so it
  * updated the stored nonce-count
  * returns: 0 - ok, < 0 some error:
  * NC_INV_POOL      (pool number is invalid/corrupted)
@@ -219,7 +218,7 @@ enum nc_check_ret nc_check_val(nid_t id, unsigned pool, unsigned int nc)
 	unsigned int i;
 	unsigned n, r;
 	unsigned int v, crt_nc, new_v;
-	
+
 	if (unlikely(pool>=nid_pool_no))
 		return NC_INV_POOL;
 	if (unlikely(nc_id_check_overflow(id, pool)))

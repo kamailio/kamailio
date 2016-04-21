@@ -1,22 +1,22 @@
 /*
  * Digest Authentication Module
  * Nonce related functions
- * 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
+ *
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
@@ -44,17 +44,17 @@
  *   MD5(expire | since | secret1) (16)  \
  *   [|   MD5(info(auth_extra_checks) | secret2) (16) ]
  * if nonce-count or one-time nonces are enabled, the format changes to:
- *  bin_nonce = 
- * bin_nonce =  expire_timestamp(4) | since_timestamp(4) | 
- *  MD5(expire | since | nid | pf | secret1) [ | MD5... ] | nid(4) | pf(1) 
- * where pf is 1 byte, first 2 bits are flags, and the other 6 are 
+ *  bin_nonce =
+ * bin_nonce =  expire_timestamp(4) | since_timestamp(4) |
+ *  MD5(expire | since | nid | pf | secret1) [ | MD5... ] | nid(4) | pf(1)
+ * where pf is 1 byte, first 2 bits are flags, and the other 6 are
  * the pool no:
  * bit7 : on => nid & pool are valid for nonce-count
  * bit6 : on => nid & pool are valid for one-time nonce
  */
 #if defined USE_NC || defined USE_OT_NONCE
-#define NF_VALID_NC_ID 128 
-#define NF_VALID_OT_ID  64 
+#define NF_VALID_NC_ID 128
+#define NF_VALID_OT_ID  64
 
 #define NF_POOL_NO_MASK  63
 #endif
@@ -76,7 +76,7 @@ struct bin_nonce_str{
 #if defined USE_NC || defined USE_OT_NONCE
 	unsigned int nid_i;
 	unsigned char nid_pf; /* pool no & flags:
-						 	  bits 7, 6 = flags, bits 5..0 pool no*/ 
+							* bits 7, 6 = flags, bits 5..0 pool no*/
 #endif /* USE_NC || USE_OT_NONCE */
 };
 
@@ -88,7 +88,7 @@ struct bin_nonce_small_str{
 #if defined USE_NC || defined USE_OT_NONCE
 	unsigned int nid_i;
 	unsigned char nid_pf; /* pool no & flags:
-							  bits 7, 6 = flags, bits 5..0 pool no*/ 
+							* bits 7, 6 = flags, bits 5..0 pool no*/
 #endif /* USE_NC || USE_OT_NONCE */
 };
 
@@ -153,9 +153,9 @@ union bin_nonce{
 #endif /* USE_NC || USE_OT_NONCE */
 
 /* minimum nonce length in binary form (not converted to base64/hex):
- * expires_t | since_t | MD5(expires_t | since_t | s1) => 4 + 4 + 16 = 24 
+ * expires_t | since_t | MD5(expires_t | since_t | s1) => 4 + 4 + 16 = 24
  * If nc_enabled the nonce will be bigger:
- * expires_t | since_t | MD5... | nonce_id | flag+pool_no(1 byte) 
+ * expires_t | since_t | MD5... | nonce_id | flag+pool_no(1 byte)
  * => 4 + 4 + 16 + 4 + 1 = 29, but we always return the minimum */
 #define MIN_BIN_NONCE_LEN (4 + 4 + 16)
 
@@ -170,7 +170,7 @@ union bin_nonce{
 #define MAX_NONCE_LEN  base64_enc_len(MAX_BIN_NONCE_LEN)
 /*
  * Minimum length of the nonce string
- * nonce = expires_TIMESTAMP[4 chars] since_TIMESTAMP[4 chars] 
+ * nonce = expires_TIMESTAMP[4 chars] since_TIMESTAMP[4 chars]
  * MD5SUM(expires_TIMESTAMP, since_TIMESTAMP, SECRET1)[16 chars]
  */
 #define MIN_NONCE_LEN base64_enc_len(MIN_BIN_NONCE_LEN)
