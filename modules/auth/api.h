@@ -1,21 +1,21 @@
 /*
  * Digest Authentication Module
- * 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
+ *
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
@@ -69,10 +69,10 @@ typedef enum auth_result {
 	AUTHENTICATED,      /* Authenticated by default, no digest authentication necessary */
 	BAD_CREDENTIALS,    /* Digest credentials are malformed */
 	CREATE_CHALLENGE,   /* when AKAv1-MD5 is used first request does not contain credentials,
-	                     * only usename, realm and algorithm. Server should get Authentication
-	                     * Vector from AuC/HSS, create challenge and send it to the UE. */
+						 * only usename, realm and algorithm. Server should get Authentication
+						 * Vector from AuC/HSS, create challenge and send it to the UE. */
 	DO_RESYNCHRONIZATION   /* When AUTS is received we need do resynchronization
-	                        * of sequnce numbers with mobile station. */
+							* of sequnce numbers with mobile station. */
 } auth_result_t;
 
 
@@ -88,10 +88,10 @@ int check_auth_hdr(struct sip_msg* msg, auth_body_t* auth_body,
  * ACK and CANCEL
  */
 typedef auth_result_t (*pre_auth_t)(struct sip_msg* msg, str* realm,
-				    hdr_types_t hftype, struct hdr_field** hdr,
+					hdr_types_t hftype, struct hdr_field** hdr,
 					check_auth_hdr_t check_auth_hdr);
 auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
-		       struct hdr_field** hdr, check_auth_hdr_t check_auth_hdr);
+			struct hdr_field** hdr, check_auth_hdr_t check_auth_hdr);
 
 
 /*
@@ -122,10 +122,10 @@ int consume_credentials(struct sip_msg* msg);
  * Auth module API
  */
 typedef struct auth_api_s {
-    pre_auth_t pre_auth;                  /* The function to be called before authentication */
-    post_auth_t post_auth;                /* The function to be called after authentication */
-    build_challenge_hf_t build_challenge; /* Function to build digest challenge header */
-    struct qp* qop;                       /* qop module parameter */
+	pre_auth_t pre_auth;                  /* The function to be called before authentication */
+	post_auth_t post_auth;                /* The function to be called after authentication */
+	build_challenge_hf_t build_challenge; /* Function to build digest challenge header */
+	struct qp* qop;                       /* qop module parameter */
 	calc_HA1_t         calc_HA1;
 	calc_response_t    calc_response;
 	check_response_t   check_response;

@@ -1,21 +1,21 @@
 /*
  * Digest Authentication Module
- * 
+ *
  * Copyright (C) 2001-2003 FhG Fokus
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
+ *
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
@@ -118,18 +118,18 @@ str proxy_challenge_header = STR_STATIC_INIT("Proxy-Authenticate");
 str www_challenge_header = STR_STATIC_INIT("WWW-Authenticate");
 
 struct qp auth_qop = {
-    STR_STATIC_INIT("auth"),
-    QOP_AUTH
+	STR_STATIC_INIT("auth"),
+	QOP_AUTH
 };
 
 static struct qp auth_qauth = {
-    STR_STATIC_INIT("auth"),
-    QOP_AUTH
+	STR_STATIC_INIT("auth"),
+	QOP_AUTH
 };
 
 static struct qp auth_qauthint = {
-    STR_STATIC_INIT("auth-int"),
-    QOP_AUTHINT
+	STR_STATIC_INIT("auth-int"),
+	QOP_AUTHINT
 };
 
 /*! SL API structure */
@@ -139,32 +139,32 @@ sl_api_t slb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"consume_credentials",    w_consume_credentials,                0,
-			0, REQUEST_ROUTE},
-    {"www_challenge",          (cmd_function)www_challenge,          2,
-			fixup_auth_challenge, REQUEST_ROUTE},
-    {"proxy_challenge",        (cmd_function)proxy_challenge,        2,
-			fixup_auth_challenge, REQUEST_ROUTE},
-    {"auth_challenge",         (cmd_function)w_auth_challenge,       2,
-			fixup_auth_challenge, REQUEST_ROUTE},
-    {"pv_www_authorize",       (cmd_function)pv_www_authenticate,    3,
-			fixup_pv_auth, REQUEST_ROUTE},
-    {"pv_www_authenticate",    (cmd_function)pv_www_authenticate,    3,
-			fixup_pv_auth, REQUEST_ROUTE},
-    {"pv_www_authenticate",    (cmd_function)pv_www_authenticate2,   4,
-			fixup_pv_auth, REQUEST_ROUTE},
-    {"pv_proxy_authorize",     (cmd_function)pv_proxy_authenticate,  3,
-			fixup_pv_auth, REQUEST_ROUTE},
-    {"pv_proxy_authenticate",  (cmd_function)pv_proxy_authenticate,  3,
-			fixup_pv_auth, REQUEST_ROUTE},
-    {"auth_get_www_authenticate",  (cmd_function)w_auth_get_www_authenticate,  3,
-			fixup_auth_get_www_authenticate, REQUEST_ROUTE},
-    {"has_credentials",        w_has_credentials,                    1,
-			fixup_spve_null, REQUEST_ROUTE},
-    {"pv_auth_check",         (cmd_function)pv_auth_check,           4,
-			fixup_pv_auth_check, REQUEST_ROUTE},
-    {"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
-    {0, 0, 0, 0, 0}
+	{"consume_credentials",    w_consume_credentials,                0,
+		0, REQUEST_ROUTE},
+	{"www_challenge",          (cmd_function)www_challenge,          2,
+		fixup_auth_challenge, REQUEST_ROUTE},
+	{"proxy_challenge",        (cmd_function)proxy_challenge,        2,
+		fixup_auth_challenge, REQUEST_ROUTE},
+	{"auth_challenge",         (cmd_function)w_auth_challenge,       2,
+		fixup_auth_challenge, REQUEST_ROUTE},
+	{"pv_www_authorize",       (cmd_function)pv_www_authenticate,    3,
+		fixup_pv_auth, REQUEST_ROUTE},
+	{"pv_www_authenticate",    (cmd_function)pv_www_authenticate,    3,
+		fixup_pv_auth, REQUEST_ROUTE},
+	{"pv_www_authenticate",    (cmd_function)pv_www_authenticate2,   4,
+		fixup_pv_auth, REQUEST_ROUTE},
+	{"pv_proxy_authorize",     (cmd_function)pv_proxy_authenticate,  3,
+		fixup_pv_auth, REQUEST_ROUTE},
+	{"pv_proxy_authenticate",  (cmd_function)pv_proxy_authenticate,  3,
+		fixup_pv_auth, REQUEST_ROUTE},
+	{"auth_get_www_authenticate",  (cmd_function)w_auth_get_www_authenticate,  3,
+		fixup_auth_get_www_authenticate, REQUEST_ROUTE},
+	{"has_credentials",        w_has_credentials,                    1,
+		fixup_spve_null, REQUEST_ROUTE},
+	{"pv_auth_check",         (cmd_function)pv_auth_check,           4,
+		fixup_pv_auth_check, REQUEST_ROUTE},
+	{"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
+	{0, 0, 0, 0, 0}
 };
 
 
@@ -172,14 +172,14 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-    {"secret",                 PARAM_STRING, &sec_param             },
-    {"nonce_expire",           PARAM_INT,    &nonce_expire          },
+	{"secret",                 PARAM_STRING, &sec_param             },
+	{"nonce_expire",           PARAM_INT,    &nonce_expire          },
 	{"nonce_auth_max_drift",   PARAM_INT,    &nonce_auth_max_drift  },
-    {"protect_contacts",       PARAM_INT,    &protect_contacts      },
-    {"challenge_attr",         PARAM_STR,    &challenge_attr        },
-    {"proxy_challenge_header", PARAM_STR,    &proxy_challenge_header},
-    {"www_challenge_header",   PARAM_STR,    &www_challenge_header  },
-    {"qop",                    PARAM_STR,    &auth_qop.qop_str      },
+	{"protect_contacts",       PARAM_INT,    &protect_contacts      },
+	{"challenge_attr",         PARAM_STR,    &challenge_attr        },
+	{"proxy_challenge_header", PARAM_STR,    &proxy_challenge_header},
+	{"www_challenge_header",   PARAM_STR,    &www_challenge_header  },
+	{"qop",                    PARAM_STR,    &auth_qop.qop_str      },
 	{"auth_checks_register",   PARAM_INT,    &auth_checks_reg       },
 	{"auth_checks_no_dlg",     PARAM_INT,    &auth_checks_ood       },
 	{"auth_checks_in_dlg",     PARAM_INT,    &auth_checks_ind       },
@@ -190,10 +190,10 @@ static param_export_t params[] = {
 	{"otn_in_flight_no",       PARAM_INT,    &otn_in_flight_no      },
 	{"otn_in_flight_order",    PARAM_INT,    &otn_in_flight_k       },
 	{"nid_pool_no",            PARAM_INT,    &nid_pool_no           },
-    {"force_stateless_reply",  PARAM_INT,    &force_stateless_reply },
+	{"force_stateless_reply",  PARAM_INT,    &force_stateless_reply },
 	{"realm_prefix",           PARAM_STRING, &auth_realm_prefix.s   },
-    {"use_domain",             PARAM_INT,    &auth_use_domain       },
-    {0, 0, 0}
+	{"use_domain",             PARAM_INT,    &auth_use_domain       },
+	{0, 0, 0}
 };
 
 
@@ -201,15 +201,15 @@ static param_export_t params[] = {
  * Module interface
  */
 struct module_exports exports = {
-    "auth",
-    cmds,
-    0,          /* RPC methods */
-    params,
-    mod_init,   /* module initialization function */
-    0,          /* response function */
-    destroy,    /* destroy function */
-    0,          /* oncancel function */
-    0           /* child initialization function */
+	"auth",
+	cmds,
+	0,          /* RPC methods */
+	params,
+	mod_init,   /* module initialization function */
+	0,          /* response function */
+	destroy,    /* destroy function */
+	0,          /* oncancel function */
+	0           /* child initialization function */
 };
 
 
@@ -219,47 +219,47 @@ struct module_exports exports = {
  */
 static inline int generate_random_secret(void)
 {
-    int i;
-    
-    sec_rand1 = (char*)pkg_malloc(RAND_SECRET_LEN);
-    sec_rand2 = (char*)pkg_malloc(RAND_SECRET_LEN);
-    if (!sec_rand1 || !sec_rand2) {
-	LOG(L_ERR, "auth:generate_random_secret: No memory left\n");
-	if (sec_rand1){
-		pkg_free(sec_rand1);
-		sec_rand1=0;
+	int i;
+
+	sec_rand1 = (char*)pkg_malloc(RAND_SECRET_LEN);
+	sec_rand2 = (char*)pkg_malloc(RAND_SECRET_LEN);
+	if (!sec_rand1 || !sec_rand2) {
+		LOG(L_ERR, "auth:generate_random_secret: No memory left\n");
+		if (sec_rand1){
+			pkg_free(sec_rand1);
+			sec_rand1=0;
+		}
+		return -1;
 	}
-	return -1;
-    }
-    
-    /* srandom(time(0));  -- seeded by core */
-    
-    for(i = 0; i < RAND_SECRET_LEN; i++) {
-	sec_rand1[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
-    }
-    
-    secret1.s = sec_rand1;
-    secret1.len = RAND_SECRET_LEN;
-	
-    for(i = 0; i < RAND_SECRET_LEN; i++) {
-	sec_rand2[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
-    }
-    
-    secret2.s = sec_rand2;
-    secret2.len = RAND_SECRET_LEN;
-    
-	 /* DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
-    
-    return 0;
+
+	/* srandom(time(0));  -- seeded by core */
+
+	for(i = 0; i < RAND_SECRET_LEN; i++) {
+		sec_rand1[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+	}
+
+	secret1.s = sec_rand1;
+	secret1.len = RAND_SECRET_LEN;
+
+	for(i = 0; i < RAND_SECRET_LEN; i++) {
+		sec_rand2[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+	}
+
+	secret2.s = sec_rand2;
+	secret2.len = RAND_SECRET_LEN;
+
+	/* DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
+
+	return 0;
 }
 
 
 static int mod_init(void)
 {
-    str attr;
-    
-    DBG("auth module - initializing\n");
-    
+	str attr;
+
+	DBG("auth module - initializing\n");
+
 	auth_realm_prefix.len = strlen(auth_realm_prefix.s);
 
 	/* bind the SL API */
@@ -269,17 +269,17 @@ static int mod_init(void)
 	}
 
 	/* If the parameter was not used */
-    if (sec_param == 0) {
+	if (sec_param == 0) {
 		/* Generate secret using random generator */
 		if (generate_random_secret() < 0) {
 			LOG(L_ERR, "auth:mod_init: Error while generating random secret\n");
 			return -3;
 		}
-    } else {
+	} else {
 		/* Otherwise use the parameter's value */
 		secret1.s = sec_param;
 		secret1.len = strlen(secret1.s);
-		
+
 		if (auth_checks_reg || auth_checks_ind || auth_checks_ood) {
 			/* divide the secret in half: one half for secret1 and one half for
 			 *  secret2 */
@@ -288,27 +288,27 @@ static int mod_init(void)
 			secret2.s = secret1.s + secret1.len;
 			if (secret2.len < 16) {
 				WARN("auth: consider a longer secret when extra auth checks are"
-					 " enabled (the config secret is divided in 2!)\n");
+						" enabled (the config secret is divided in 2!)\n");
 			}
 		}
-    }
-    
-    if ((!challenge_attr.s || challenge_attr.len == 0) ||
-		challenge_attr.s[0] != '$') {
+	}
+
+	if ((!challenge_attr.s || challenge_attr.len == 0) ||
+			challenge_attr.s[0] != '$') {
 		ERR("auth: Invalid value of challenge_attr module parameter\n");
 		return -1;
-    }
-    
-    attr.s = challenge_attr.s + 1;
-    attr.len = challenge_attr.len - 1;
-    
-    if (parse_avp_ident(&attr, &challenge_avpid) < 0) {
+	}
+
+	attr.s = challenge_attr.s + 1;
+	attr.len = challenge_attr.len - 1;
+
+	if (parse_avp_ident(&attr, &challenge_avpid) < 0) {
 		ERR("auth: Error while parsing value of challenge_attr module"
 				" parameter\n");
 		return -1;
-    }
-	
-    parse_qop(&auth_qop);
+	}
+
+	parse_qop(&auth_qop);
 	switch(auth_qop.qop_parsed){
 		case QOP_OTHER:
 			ERR("auth: Unsupported qop parameter value\n");
@@ -318,7 +318,7 @@ static int mod_init(void)
 			if (nc_enabled){
 #ifndef USE_NC
 				WARN("auth: nounce count support enabled from config, but"
-					" disabled at compile time (recompile with -DUSE_NC)\n");
+						" disabled at compile time (recompile with -DUSE_NC)\n");
 				nc_enabled=0;
 #else
 				if (nid_crt==0)
@@ -344,7 +344,7 @@ static int mod_init(void)
 	if (otn_enabled){
 #ifdef USE_OT_NONCE
 		if (nid_crt==0) init_nonce_id();
-		if (init_ot_nonce()!=0) 
+		if (init_ot_nonce()!=0)
 			return -1;
 #else
 		WARN("auth: one-time-nonce support enabled from config, but "
@@ -353,14 +353,14 @@ static int mod_init(void)
 #endif /* USE_OT_NONCE */
 	}
 
-    return 0;
+	return 0;
 }
 
 
 static void destroy(void)
 {
-    if (sec_rand1) pkg_free(sec_rand1);
-    if (sec_rand2) pkg_free(sec_rand2);
+	if (sec_rand1) pkg_free(sec_rand1);
+	if (sec_rand2) pkg_free(sec_rand2);
 #ifdef USE_NC
 	destroy_nonce_count();
 #endif
@@ -378,30 +378,30 @@ static void destroy(void)
  */
 int consume_credentials(struct sip_msg* msg)
 {
-    struct hdr_field* h;
-    int len;
+	struct hdr_field* h;
+	int len;
 
 	/* skip requests that can't be authenticated */
 	if (msg->REQ_METHOD & (METHOD_ACK|METHOD_CANCEL|METHOD_PRACK))
 		return -1;
-    get_authorized_cred(msg->authorization, &h);
-    if (!h) {
+	get_authorized_cred(msg->authorization, &h);
+	if (!h) {
 		get_authorized_cred(msg->proxy_auth, &h);
-		if (!h) { 
+		if (!h) {
 			LOG(L_ERR, "auth:consume_credentials: No authorized "
 					"credentials found (error in scripts)\n");
 			return -1;
 		}
-    }
-    
-    len = h->len;
-    
-    if (del_lump(msg, h->name.s - msg->buf, len, 0) == 0) {
+	}
+
+	len = h->len;
+
+	if (del_lump(msg, h->name.s - msg->buf, len, 0) == 0) {
 		LOG(L_ERR, "auth:consume_credentials: Can't remove credentials\n");
 		return -1;
-    }
-    
-    return 1;
+	}
+
+	return 1;
 }
 
 /**
@@ -417,7 +417,7 @@ int w_consume_credentials(struct sip_msg* msg, char* s1, char* s2)
  */
 int w_has_credentials(sip_msg_t *msg, char* realm, char* s2)
 {
-    str srealm  = {0, 0};
+	str srealm  = {0, 0};
 	hdr_field_t *hdr = NULL;
 	int ret;
 
@@ -450,8 +450,8 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 	struct hdr_field* h;
 	auth_body_t* cred;
 	int ret;
-    str hf = {0, 0};
-    avp_value_t val;
+	str hf = {0, 0};
+	avp_value_t val;
 	static char ha1[256];
 	struct qp *qop = NULL;
 
@@ -537,13 +537,13 @@ end:
 			qop = &auth_qauth;
 		}
 		if (get_challenge_hf(msg, (cred ? cred->stale : 0),
-				realm, NULL, NULL, qop, hftype, &hf) < 0) {
+					realm, NULL, NULL, qop, hftype, &hf) < 0) {
 			ERR("Error while creating challenge\n");
 			ret = AUTH_ERROR;
 		} else {
 			val.s = hf;
 			if(add_avp(challenge_avpid.flags | AVP_VAL_STR,
-							challenge_avpid.name, val) < 0) {
+						challenge_avpid.name, val) < 0) {
 				LM_ERR("Error while creating attribute with challenge\n");
 				ret = AUTH_ERROR;
 			}
@@ -560,9 +560,9 @@ end:
 static int pv_proxy_authenticate(struct sip_msg *msg, char* realm,
 		char *passwd, char *flags)
 {
-    int vflags = 0;
-    str srealm  = {0, 0};
-    str spasswd = {0, 0};
+	int vflags = 0;
+	str srealm  = {0, 0};
+	str spasswd = {0, 0};
 
 	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
 		LM_ERR("failed to get realm value\n");
@@ -589,7 +589,7 @@ static int pv_proxy_authenticate(struct sip_msg *msg, char* realm,
 		goto error;
 	}
 	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
-				&msg->first_line.u.request.method);
+			&msg->first_line.u.request.method);
 
 error:
 	return AUTH_ERROR;
@@ -601,9 +601,9 @@ error:
 static int pv_www_authenticate(struct sip_msg *msg, char* realm,
 		char *passwd, char *flags)
 {
-    int vflags = 0;
-    str srealm  = {0, 0};
-    str spasswd = {0, 0};
+	int vflags = 0;
+	str srealm  = {0, 0};
+	str spasswd = {0, 0};
 
 	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
 		LM_ERR("failed to get realm value\n");
@@ -630,7 +630,7 @@ static int pv_www_authenticate(struct sip_msg *msg, char* realm,
 		goto error;
 	}
 	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
-				&msg->first_line.u.request.method);
+			&msg->first_line.u.request.method);
 
 error:
 	return AUTH_ERROR;
@@ -639,10 +639,10 @@ error:
 static int pv_www_authenticate2(struct sip_msg *msg, char* realm,
 		char *passwd, char *flags, char *method)
 {
-    int vflags = 0;
-    str srealm  = {0, 0};
-    str spasswd = {0, 0};
-    str smethod = {0, 0};
+	int vflags = 0;
+	str srealm  = {0, 0};
+	str spasswd = {0, 0};
+	str smethod = {0, 0};
 
 	if (get_str_fparam(&srealm, msg, (fparam_t*)realm) < 0) {
 		LM_ERR("failed to get realm value\n");
@@ -680,7 +680,7 @@ static int pv_www_authenticate2(struct sip_msg *msg, char* realm,
 	}
 
 	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
-				&smethod);
+			&smethod);
 
 error:
 	return AUTH_ERROR;
@@ -692,10 +692,10 @@ error:
 static int pv_auth_check(sip_msg_t *msg, char *realm,
 		char *passwd, char *flags, char *checks)
 {
-    int vflags = 0;
-    int vchecks = 0;
-    str srealm  = {0, 0};
-    str spasswd = {0, 0};
+	int vflags = 0;
+	int vchecks = 0;
+	str srealm  = {0, 0};
+	str spasswd = {0, 0};
 	int ret;
 	hdr_field_t *hdr;
 	sip_uri_t *uri = NULL;
@@ -750,10 +750,10 @@ static int pv_auth_check(sip_msg_t *msg, char *realm,
 
 	if(msg->REQ_METHOD==METHOD_REGISTER)
 		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
-					&msg->first_line.u.request.method);
+				&msg->first_line.u.request.method);
 	else
 		ret = pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_PROXYAUTH_T,
-					&msg->first_line.u.request.method);
+				&msg->first_line.u.request.method);
 
 	if(ret==AUTH_OK && (vchecks&AUTH_CHECK_ID_F)) {
 		hdr = (msg->proxy_auth==0)?msg->authorization:msg->proxy_auth;
@@ -770,7 +770,7 @@ static int pv_auth_check(sip_msg_t *msg, char *realm,
 			uri = furi;
 		}
 		if(srealm.len!=uri->user.len
-					|| strncmp(srealm.s, uri->user.s, srealm.len)!=0)
+				|| strncmp(srealm.s, uri->user.s, srealm.len)!=0)
 			return AUTH_USER_MISMATCH;
 
 		if(msg->REQ_METHOD==METHOD_REGISTER || msg->REQ_METHOD==METHOD_PUBLISH) {
@@ -779,7 +779,7 @@ static int pv_auth_check(sip_msg_t *msg, char *realm,
 					|| strncmp(furi->user.s, turi->user.s, furi->user.len)!=0)
 				return AUTH_USER_MISMATCH;
 			if(auth_use_domain!=0 && (furi->host.len!=turi->host.len
-					|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0))
+						|| strncmp(furi->host.s, turi->host.s, furi->host.len)!=0))
 				return AUTH_USER_MISMATCH;
 			/* check r-uri==from for publish */
 			if(msg->REQ_METHOD==METHOD_PUBLISH) {
@@ -790,9 +790,9 @@ static int pv_auth_check(sip_msg_t *msg, char *realm,
 						|| strncmp(furi->user.s, uri->user.s, furi->user.len)!=0)
 					return AUTH_USER_MISMATCH;
 				if(auth_use_domain!=0 && (furi->host.len!=uri->host.len
-						|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0))
+							|| strncmp(furi->host.s, uri->host.s, furi->host.len)!=0))
 					return AUTH_USER_MISMATCH;
-				}
+			}
 		}
 		return AUTH_OK;
 	}
@@ -848,9 +848,9 @@ static int fixup_pv_auth_check(void **param, int param_no)
  *
  */
 static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
-					char *hdr, int hdr_len)
+		char *hdr, int hdr_len)
 {
-        str reason_str;
+	str reason_str;
 
 	/* Add new headers if there are any */
 	if ((hdr!=NULL) && (hdr_len>0)) {
@@ -864,8 +864,8 @@ static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
 	reason_str.len = strlen(reason);
 
 	return force_stateless_reply ?
-	    slb.sreply(msg, code, &reason_str) :
-	    slb.freply(msg, code, &reason_str);
+		slb.sreply(msg, code, &reason_str) :
+		slb.freply(msg, code, &reason_str);
 }
 
 /**
@@ -874,8 +874,8 @@ static int auth_send_reply(struct sip_msg *msg, int code, char *reason,
 int auth_challenge_helper(struct sip_msg *msg, str *realm, int flags, int hftype,
 		str *res)
 {
-    int ret, stale;
-    str hf = {0, 0};
+	int ret, stale;
+	str hf = {0, 0};
 	struct qp *qop = NULL;
 
 	ret = -1;
@@ -886,17 +886,17 @@ int auth_challenge_helper(struct sip_msg *msg, str *realm, int flags, int hftype
 		qop = &auth_qauth;
 	}
 	if (flags & 16) {
-	    stale = 1;
+		stale = 1;
 	} else {
-	    stale = 0;
+		stale = 0;
 	}
 	if (get_challenge_hf(msg, stale, realm, NULL, NULL, qop, hftype, &hf)
-	    < 0) {
+			< 0) {
 		ERR("Error while creating challenge\n");
 		ret = -2;
 		goto error;
 	}
-	
+
 	ret = 1;
 	if(res!=NULL)
 	{
@@ -908,12 +908,12 @@ int auth_challenge_helper(struct sip_msg *msg, str *realm, int flags, int hftype
 			if(auth_send_reply(msg, 401, "Unauthorized",
 						hf.s, hf.len) <0 )
 				ret = -3;
-		break;
+			break;
 		case HDR_PROXYAUTH_T:
 			if(auth_send_reply(msg, 407, "Proxy Authentication Required",
 						hf.s, hf.len) <0 )
 				ret = -3;
-		break;
+			break;
 	}
 	if(hf.s) pkg_free(hf.s);
 	return ret;
@@ -1130,15 +1130,15 @@ static int fixup_auth_get_www_authenticate(void **param, int param_no)
 		case 2:
 			return fixup_var_int_12(param, 1);
 		case 3:
-		if (fixup_pvar_null(param, 1) != 0) {
-		    LM_ERR("failed to fixup result pvar\n");
-		    return -1;
-		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
-		    LM_ERR("result pvar is not writeble\n");
-		    return -1;
-		}
-		return 0;
+			if (fixup_pvar_null(param, 1) != 0) {
+				LM_ERR("failed to fixup result pvar\n");
+				return -1;
+			}
+			if (((pv_spec_t *)(*param))->setf == NULL) {
+				LM_ERR("result pvar is not writeble\n");
+				return -1;
+			}
+			return 0;
 	}
 	return 0;
 }

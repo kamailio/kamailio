@@ -1,23 +1,23 @@
 /*
  * Digest Authentication Module
- * 
+ *
  * one-time nonce support
  *
  * Copyright (C) 2008 iptelorg GmbH
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
- * 
+ *
  * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
- * 
+ *
  * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
+ *
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
@@ -46,7 +46,7 @@ static otn_cell_t * otn_array=0;
 unsigned otn_partition_size; /* partition==otn_in_flight_no/nid_pool_no*/
 unsigned otn_partition_k;    /* k such that 2^k==otn_partition_size */
 unsigned otn_partition_mask; /* mask for computing the real idx. inside
-							   one partition */
+								* one partition */
 
 
 /* returns -1 on error, 0 on success */
@@ -97,7 +97,7 @@ int init_ot_nonce()
 				" memory(%ld bytes)\n", size, max_mem);
 	}
 	otn_in_flight_no=size;
-	
+
 	if (nid_pool_no>=otn_in_flight_no/(8*sizeof(otn_cell_t))){
 		ERR("auth: nid_pool_no (%d) too high for the configured "
 				"otn_in_flight_no (%d)\n", nid_pool_no, otn_in_flight_no);
@@ -108,7 +108,7 @@ int init_ot_nonce()
 	otn_partition_mask=(1<<otn_partition_k)-1;
 	assert(otn_partition_size == otn_in_flight_no/nid_pool_no);
 	assert(1<<(otn_partition_k+nid_pool_k) == otn_in_flight_no);
-	
+
 	if ((nid_t)otn_partition_size >= ((nid_t)(-1)/NID_INC)){
 		ERR("auth: otn_in_flight_no too big, try decreasing it or increasing"
 				"the number of pools/partitions, such that "
@@ -123,8 +123,7 @@ int init_ot_nonce()
 				"otn_array_size/nid_pool_no >= %d\n",
 				nid_pool_no, orig_array_size, MIN_OTN_PARTITION);
 	}
-	
-	
+
 	/*  array size should be multiple of sizeof(otn_cell_t) since we
 	 *  access it as an otn_cell_t array */
 	otn_array=shm_malloc(ROUND2TYPE((otn_in_flight_no+7)/8, otn_cell_t));
@@ -174,14 +173,14 @@ void destroy_ot_nonce()
  * WARNING: NID_INC * otn_partition_size must fit inside an nidx_t*/
 #define  otn_id_check_overflow(id,  pool) \
 	((nid_t)(nid_get((pool))-(id)) >= \
-	 	((nid_t)NID_INC*otn_partition_size))
+		((nid_t)NID_INC*otn_partition_size))
 
 /* re-init the stored nc for nonce id in pool p */
 nid_t otn_new(nid_t id, unsigned char p)
 {
 	unsigned int i;
 	unsigned  n, b;
-	
+
 	n=get_otn_array_bit_idx(id, p); /* n-th bit */
 	i=get_otn_array_cell_idx(n);    /* aray index i, corresponding to n */
 	b=get_otn_cell_bit(n);          /* bit pos corresponding to n */
@@ -208,7 +207,7 @@ enum otn_check_ret otn_check_id(nid_t id, unsigned pool)
 	unsigned int i;
 	unsigned n, b;
 	otn_cell_t v, b_mask;
-	
+
 	if (unlikely(pool>=nid_pool_no))
 		return OTN_INV_POOL;
 	if (unlikely(otn_id_check_overflow(id, pool)))
@@ -217,7 +216,7 @@ enum otn_check_ret otn_check_id(nid_t id, unsigned pool)
 	i=get_otn_array_cell_idx(n);    /* aray index i, corresponding to n */
 	b=get_otn_cell_bit(n);          /* bit pos corresponding to n */
 	b_mask= (otn_cell_t)1<<b;
-	
+
 #ifdef OTN_CELL_T_LONG
 	v=atomic_get_long(&oth_array[i]);
 	if (unlikely(v & b_mask))
