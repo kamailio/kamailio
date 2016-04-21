@@ -105,9 +105,9 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr);
 typedef int (*check_response_t)(dig_cred_t* cred, str* method, char* ha1);
 int auth_check_response(dig_cred_t* cred, str* method, char* ha1);
 
-typedef int (*auth_challenge_f)(struct sip_msg *msg, str *realm, int flags,
+typedef int (*auth_challenge_hftype_f)(struct sip_msg *msg, str *realm, int flags,
 		int hftype);
-int auth_challenge(struct sip_msg *msg, str *realm, int flags,
+int auth_challenge_hftype(struct sip_msg *msg, str *realm, int flags,
 		int hftype);
 
 typedef int (*pv_authenticate_f)(struct sip_msg *msg, str *realm, str *passwd,
@@ -129,7 +129,7 @@ typedef struct auth_api_s {
 	calc_HA1_t         calc_HA1;
 	calc_response_t    calc_response;
 	check_response_t   check_response;
-	auth_challenge_f   auth_challenge;
+	auth_challenge_hftype_f   auth_challenge_hftype;
 	pv_authenticate_f  pv_authenticate;
 	consume_credentials_f consume_credentials;
 } auth_api_s_t;

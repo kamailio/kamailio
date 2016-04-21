@@ -942,9 +942,26 @@ error:
 /**
  *
  */
-int auth_challenge(struct sip_msg *msg, str *realm, int flags, int hftype)
+int auth_challenge_hftype(struct sip_msg *msg, str *realm, int flags, int hftype)
 {
 	return auth_challenge_helper(msg, realm, flags, hftype, NULL);
+}
+
+/**
+ *
+ */
+int auth_challenge(sip_msg_t *msg, str *realm, int flags)
+{
+	int htype;
+
+	if(msg==NULL) return -1;
+
+	if(msg->REQ_METHOD==METHOD_REGISTER)
+		htype = HDR_AUTHORIZATION_T;
+	else
+		htype = HDR_PROXYAUTH_T;
+
+	return auth_challenge_helper(msg, realm, flags, htype, NULL);
 }
 
 /**
@@ -970,7 +987,7 @@ static int proxy_challenge(struct sip_msg *msg, char* realm, char *flags)
 		goto error;
 	}
 
-	return auth_challenge(msg, &srealm, vflags, HDR_PROXYAUTH_T);
+	return auth_challenge_hftype(msg, &srealm, vflags, HDR_PROXYAUTH_T);
 
 error:
 	if(!(vflags&4)) {
@@ -1003,7 +1020,7 @@ static int www_challenge(struct sip_msg *msg, char* realm, char *flags)
 		goto error;
 	}
 
-	return auth_challenge(msg, &srealm, vflags, HDR_AUTHORIZATION_T);
+	return auth_challenge_hftype(msg, &srealm, vflags, HDR_AUTHORIZATION_T);
 
 error:
 	if(!(vflags&4)) {
@@ -1041,9 +1058,9 @@ static int w_auth_challenge(struct sip_msg *msg, char* realm, char *flags)
 	}
 
 	if(msg->REQ_METHOD==METHOD_REGISTER)
-		return auth_challenge(msg, &srealm, vflags, HDR_AUTHORIZATION_T);
+		return auth_challenge_hftype(msg, &srealm, vflags, HDR_AUTHORIZATION_T);
 	else
-		return auth_challenge(msg, &srealm, vflags, HDR_PROXYAUTH_T);
+		return auth_challenge_hftype(msg, &srealm, vflags, HDR_PROXYAUTH_T);
 
 error:
 	if(!(vflags&4)) {

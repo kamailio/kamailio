@@ -226,7 +226,7 @@ int bind_auth_s(auth_api_s_t* api)
 	api->calc_HA1 = calc_HA1;
 	api->calc_response = calc_response;
 	api->check_response = auth_check_response;
-	api->auth_challenge = auth_challenge;
+	api->auth_challenge_hftype = auth_challenge_hftype;
 	api->pv_authenticate = pv_authenticate;
 	api->consume_credentials = consume_credentials;
 	return 0;
