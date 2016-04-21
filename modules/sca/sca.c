@@ -173,7 +173,7 @@ static int sca_bind_srdb1( sca_mod *scam, db_func_t *db_api )
     int		rc = -1;
 
     if ( db_bind_mod( scam->cfg->db_url, db_api ) != 0 ) {
-	LM_ERR( "Failed to initialize required DB API\n" );
+	LM_ERR( "Failed to initialize required DB API - %.*s\n", STR_FMT( scam->cfg->db_url));
 	goto done;
     }
     scam->db_api = db_api;
