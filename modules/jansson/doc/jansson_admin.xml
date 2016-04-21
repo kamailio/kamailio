@@ -73,6 +73,9 @@
             The path string supports dot delimited notation (e.g. foo.bar.baz), array notation (e.g. [0]), or a combination of the two (e.g. foo.bar[0][1].baz).
         </para>
         <para>
+            Returns FALSE if the data can not be parsed, TRUE otherwise.
+        </para>
+        <para>
             The function can put a string, integer, null, or new json string into destination.
  	    If the key/path can't be found in the JSON data structure, the pvar is not changed. If it had a previous
 	    value, that value remains unchanged.
@@ -81,8 +84,10 @@
         <title><function>jansson_get</function> usage</title>
         <programlisting format="linespecific">
 ...
-jansson_get("inner.deep.list[3]", $var(myjson), "$var(n)");
-xlog("foo is $var(n)");
+if(!jansson_get("inner.deep.list[3]", $var(myjson), "$var(n)")) {
+	xlog("L_ERR", "Can't parse json data");
+}
+xlog("L_INFO", "foo is $var(n)");
 ...
         </programlisting>
         </example>
