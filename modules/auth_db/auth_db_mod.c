@@ -29,6 +29,7 @@
 #include "../../error.h"
 #include "../../mod_fix.h"
 #include "../../trim.h"
+#include "../../kemi.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../modules/auth/api.h"
@@ -104,7 +105,7 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"proxy_authenticate", (cmd_function)proxy_authenticate, 2, auth_fixup, 0,
 		REQUEST_ROUTE},
-	{"auth_check",         (cmd_function)auth_check,         3, auth_check_fixup, 0,
+	{"auth_check",         (cmd_function)w_auth_check,       3, auth_check_fixup, 0,
 		REQUEST_ROUTE},
 	{"is_subscriber",      (cmd_function)w_is_subscriber,    3, auth_check_fixup, 0,
 		ANY_ROUTE},
@@ -211,6 +212,37 @@ static void destroy(void)
 	}
 }
 
+/**
+ *
+ */
+static int is_subscriber(sip_msg_t *msg, str *suri, str *stable, int iflags)
+{
+	int ret;
+	sip_uri_t puri;
+
+	if (suri->len<=0) {
+		LM_ERR("invalid uri parameter - empty value\n");
+		return -1;
+	}
+	if(parse_uri(suri->s, suri->len, &puri)<0){
+		LM_ERR("invalid uri parameter format\n");
+		return -1;
+	}
+	if (stable->len<=0) {
+		LM_ERR("invalid table parameter - empty value\n");
+		return -1;
+	}
+
+	LM_DBG("uri [%.*s] table [%.*s] flags [%d]\n", suri->len, suri->s,
+			stable->len,  stable->s, iflags);
+	ret = fetch_credentials(msg, &puri.user,
+				(iflags&AUTH_DB_SUBS_USE_DOMAIN)?&puri.host:NULL,
+				stable, iflags);
+
+	if(ret>=0)
+		return 1;
+	return ret;
+}
 
 /**
  * check if the subscriber identified by _uri has a valid record in
@@ -222,8 +254,6 @@ static int w_is_subscriber(sip_msg_t *msg, char *_uri, char* _table,
 	str suri;
 	str stable;
 	int iflags = 0;
-	int ret;
-	sip_uri_t puri;
 
 	if(msg==NULL || _uri==NULL || _table==NULL || _flags==NULL) {
 		LM_ERR("invalid parameters\n");
@@ -235,22 +265,8 @@ static int w_is_subscriber(sip_msg_t *msg, char *_uri, char* _table,
 		return -1;
 	}
 
-	if (suri.len==0) {
-		LM_ERR("invalid uri parameter - empty value\n");
-		return -1;
-	}
-	if(parse_uri(suri.s, suri.len, &puri)<0){
-		LM_ERR("invalid uri parameter format\n");
-		return -1;
-	}
-
 	if (get_str_fparam(&stable, msg, (fparam_t*)_table) < 0) {
 		LM_ERR("failed to get table value\n");
-		return -1;
-	}
-
-	if (stable.len==0) {
-		LM_ERR("invalid table parameter - empty value\n");
 		return -1;
 	}
 
@@ -259,16 +275,7 @@ static int w_is_subscriber(sip_msg_t *msg, char *_uri, char* _table,
 		LM_ERR("invalid flags parameter\n");
 		return -1;
 	}
-
-	LM_DBG("uri [%.*s] table [%.*s] flags [%d]\n", suri.len, suri.s,
-			stable.len,  stable.s, iflags);
-	ret = fetch_credentials(msg, &puri.user,
-				(iflags&AUTH_DB_SUBS_USE_DOMAIN)?&puri.host:NULL,
-				&stable, iflags);
-
-	if(ret>=0)
-		return 1;
-	return ret;
+	return is_subscriber(msg, &suri, &stable, iflags);
 }
 
 /*
@@ -425,4 +432,32 @@ error:
 	*pv_def = 0;
 	*cnt = 0;
 	return -1;
+}
+
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_auth_db_exports[] = {
+	{ str_init("auth_db"), str_init("auth_check"),
+		SR_KEMIP_INT, auth_check,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth_db"), str_init("is_subscriber"),
+		SR_KEMIP_INT, is_subscriber,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_auth_db_exports);
+	return 0;
 }

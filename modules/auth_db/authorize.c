@@ -437,68 +437,45 @@ int www_authenticate2(struct sip_msg* _m, char* _realm, char* _table, char *_met
 					&smethod);
 }
 
-/*
- * Authenticate using WWW/Proxy-Authorize header field
+/**
+ *
  */
-int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
+int auth_check(sip_msg_t *_m, str *srealm, str *stable, int iflags)
 {
-	str srealm;
-	str stable;
-	int iflags;
 	int ret;
 	hdr_field_t *hdr;
 	sip_uri_t *uri = NULL;
 	sip_uri_t *turi = NULL;
 	sip_uri_t *furi = NULL;
+	str suser;
 
 	if ((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
 		return AUTH_OK;
 	}
 
-	if(_m==NULL || _realm==NULL || _table==NULL || _flags==NULL) {
-		LM_ERR("invalid parameters\n");
-		return AUTH_ERROR;
-	}
-
-	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
-		LM_ERR("failed to get realm value\n");
-		return AUTH_ERROR;
-	}
-
-	if (srealm.len==0) {
+	if (srealm->len<=0) {
 		LM_ERR("invalid realm parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 
-	if (get_str_fparam(&stable, _m, (fparam_t*)_table) < 0) {
-		LM_ERR("failed to get realm value\n");
-		return AUTH_ERROR;
-	}
-
-	if (stable.len==0) {
+	if (stable->len==0) {
 		LM_ERR("invalid table parameter - empty value\n");
 		return AUTH_ERROR;
 	}
 
-	if(fixup_get_ivalue(_m, (gparam_p)_flags, &iflags)!=0)
-	{
-		LM_ERR("invalid flags parameter\n");
-		return -1;
-	}
-
-	LM_DBG("realm [%.*s] table [%.*s] flags [%d]\n", srealm.len, srealm.s,
-			stable.len,  stable.s, iflags);
+	LM_DBG("realm [%.*s] table [%.*s] flags [%d]\n", srealm->len, srealm->s,
+			stable->len,  stable->s, iflags);
 
 	hdr = NULL;
 	if(_m->REQ_METHOD==METHOD_REGISTER)
-		ret = digest_authenticate_hdr(_m, &srealm, &stable, HDR_AUTHORIZATION_T,
+		ret = digest_authenticate_hdr(_m, srealm, stable, HDR_AUTHORIZATION_T,
 						&_m->first_line.u.request.method, &hdr);
 	else
-		ret = digest_authenticate_hdr(_m, &srealm, &stable, HDR_PROXYAUTH_T,
+		ret = digest_authenticate_hdr(_m, srealm, stable, HDR_PROXYAUTH_T,
 						&_m->first_line.u.request.method, &hdr);
 
 	if(ret==AUTH_OK && hdr!=NULL && (iflags&AUTH_CHECK_ID_F)) {
-		srealm = ((auth_body_t*)(hdr->parsed))->digest.username.user;
+		suser = ((auth_body_t*)(hdr->parsed))->digest.username.user;
 
 		if((furi=parse_from_uri(_m))==NULL)
 			return AUTH_ERROR;
@@ -514,8 +491,8 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 				&& (_m->REQ_METHOD==METHOD_INVITE || _m->REQ_METHOD==METHOD_BYE
 					|| _m->REQ_METHOD==METHOD_PRACK || _m->REQ_METHOD==METHOD_UPDATE
 					|| _m->REQ_METHOD==METHOD_MESSAGE))) {
-			if(srealm.len!=uri->user.len
-						|| strncmp(srealm.s, uri->user.s, srealm.len)!=0) {
+			if(suser.len!=uri->user.len
+						|| strncmp(suser.s, uri->user.s, suser.len)!=0) {
 				LM_DBG("authentication username mismatch with from/to username\n");
 				return AUTH_USER_MISMATCH;
 			}
@@ -554,6 +531,42 @@ int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags)
 	}
 
 	return ret;
+}
+
+/*
+ * Authenticate using WWW/Proxy-Authorize header field
+ */
+int w_auth_check(sip_msg_t *_m, char* _realm, char* _table, char *_flags)
+{
+	str srealm;
+	str stable;
+	int iflags;
+
+	if ((_m->REQ_METHOD == METHOD_ACK) || (_m->REQ_METHOD == METHOD_CANCEL)) {
+		return AUTH_OK;
+	}
+
+	if(_m==NULL || _realm==NULL || _table==NULL || _flags==NULL) {
+		LM_ERR("invalid parameters\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	if (get_str_fparam(&stable, _m, (fparam_t*)_table) < 0) {
+		LM_ERR("failed to get realm value\n");
+		return AUTH_ERROR;
+	}
+
+	if(fixup_get_ivalue(_m, (gparam_p)_flags, &iflags)!=0)
+	{
+		LM_ERR("invalid flags parameter\n");
+		return -1;
+	}
+	return auth_check(_m, &srealm, &stable, iflags);
 }
 
 

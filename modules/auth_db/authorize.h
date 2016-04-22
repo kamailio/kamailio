@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -47,7 +47,8 @@ int www_authenticate2(struct sip_msg* _msg, char* _realm, char* _table, char *_m
 /*
  * Authenticate using WWW/Proxy-Authorize header field
  */
-int auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags);
+int auth_check(sip_msg_t *_m, str *srealm, str *stable, int iflags);
+int w_auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags);
 
 
 #define AUTH_DB_SUBS_USE_DOMAIN	1<<0
