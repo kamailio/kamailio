@@ -1,6 +1,4 @@
-/*
- * $Id$
- *
+/**
  * MAXFWD module
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -17,21 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-03-11  updated to the new module interface (andrei)
- *  2003-03-16  flags export parameter added (janakj)
- *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
- *  2004-08-15  max value of max-fwd header is configurable via max_limit
- *              module param (bogdan)
- *  2005-09-15  max_limit param cannot be disabled anymore (according to RFC)
- *              (bogdan)
- *  2005-11-03  is_maxfwd_lt() function added; MF value saved in 
- *              msg->maxforwards->parsed (bogdan)
  */
 
 

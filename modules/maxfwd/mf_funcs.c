@@ -15,16 +15,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
- * History:
- * ----------
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2002-01-28 scratchpad removed (jiri)
- * 2004-08-15 max value of max-fwd header is configurable (bogdan)
- * 2005-11-03 MF value saved in msg->maxforwards->parsed (bogdan)
  */
 
 
@@ -40,7 +33,7 @@
 #define MF_HDR "Max-Forwards: "
 #define MF_HDR_LEN (sizeof(MF_HDR) - 1)
 
-/* do a tricky thing and keep the parsed value of MAXFWD hdr incremented 
+/* do a tricky thing and keep the parsed value of MAXFWD hdr incremented
  * by one in order to make difference between 0 (not set)
  * and 0 (zero value) - bogdan */
 #define IS_MAXWD_STORED(_msg_) \
@@ -51,7 +44,7 @@
 	(((int)(long)(_msg_)->maxforwards->parsed)-1)
 
 /* looks for the MAX FORWARDS header
-   returns its value, -1 if is not present or -2 for error */
+	* returns its value, -1 if is not present or -2 for error */
 int is_maxfwd_present( struct sip_msg* msg , str *foo)
 {
 	int x, err;
