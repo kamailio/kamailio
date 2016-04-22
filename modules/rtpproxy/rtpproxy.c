@@ -218,11 +218,12 @@
 #include "../../mod_fix.h"
 #include "../../dset.h"
 #include "../../route.h"
+#include "../../kemi.h"
 #include "../../modules/tm/tm_load.h"
 #include "rtpproxy.h"
 #include "rtpproxy_funcs.h"
 #include "rtpproxy_stream.h"
- 
+
 MODULE_VERSION
 
 #if !defined(AF_LOCAL)
@@ -3045,3 +3046,57 @@ int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri) {
 	return 0;
 }
 
+/**
+ *
+ */
+static int ki_rtpproxy_manage0(sip_msg_t *msg)
+{
+	return rtpproxy_manage(msg, NULL, NULL);
+}
+
+/**
+ *
+ */
+static int ki_rtpproxy_manage(sip_msg_t *msg, str *flags)
+{
+	return rtpproxy_manage(msg, ((flags && flags->len>0)?flags->s:NULL), NULL);
+}
+
+/**
+ *
+ */
+static int ki_rtpproxy_manage_ip(sip_msg_t *msg, str *flags, str *mip)
+{
+	/* str->s from kemi params is zero-terminated */
+	return rtpproxy_manage(msg, ((flags && flags->len>0)?flags->s:NULL),
+			((mip && mip->len>0)?mip->s:NULL));
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_rtpproxy_exports[] = {
+	{ str_init("rtpproxy"), str_init("rtpproxy_manage0"),
+		SR_KEMIP_INT, ki_rtpproxy_manage0,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rtpproxy"), str_init("rtpproxy_manage"),
+		SR_KEMIP_INT, ki_rtpproxy_manage,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rtpproxy"), str_init("rtpproxy_manage_ip"),
+		SR_KEMIP_INT, ki_rtpproxy_manage_ip,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_rtpproxy_exports);
+	return 0;
+}
