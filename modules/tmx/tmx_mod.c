@@ -36,6 +36,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../dset.h"
+#include "../../kemi.h"
 
 #include "t_var.h"
 #include "t_mi.h"
@@ -723,7 +724,7 @@ static int fixup_t_continue(void** param, int param_no)
 /**
  *
  */
-static int w_t_precheck_trans(sip_msg_t *msg, char *p1, char *p2)
+static int t_precheck_trans(sip_msg_t *msg)
 {
 	int ret;
 
@@ -731,6 +732,14 @@ static int w_t_precheck_trans(sip_msg_t *msg, char *p1, char *p2)
 	if(ret>0)
 		return 1;
 	return (ret-1);
+}
+
+/**
+ *
+ */
+static int w_t_precheck_trans(sip_msg_t *msg, char *p1, char *p2)
+{
+	return t_precheck_trans(msg);
 }
 
 /**
@@ -855,3 +864,25 @@ unsigned long tmx_stats_rld_rcv_rpls(void)
 }
 
 #endif
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_tmx_exports[] = {
+	{ str_init("tmx"), str_init("t_precheck_trans"),
+		SR_KEMIP_INT, t_precheck_trans,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_tmx_exports);
+	return 0;
+}
