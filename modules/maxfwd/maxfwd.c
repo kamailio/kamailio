@@ -30,6 +30,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
+#include "../../kemi.h"
 #include "../../mem/mem.h"
 #include "../../cfg/cfg.h"
 #include "mf_funcs.h"
@@ -216,5 +217,27 @@ int bind_maxfwd(maxfwd_api_t *api)
 	}
 	api->process_maxfwd = process_maxfwd_header;
 
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_maxfwd_exports[] = {
+	{ str_init("maxfwd"), str_init("process_maxfwd"),
+		SR_KEMIP_INT, process_maxfwd_header,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_maxfwd_exports);
 	return 0;
 }
