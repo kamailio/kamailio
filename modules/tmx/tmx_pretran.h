@@ -23,7 +23,7 @@
  * \ingroup tm
  * - Module: \ref tm
  */
-		       
+
 #ifndef _TMX_PRETRANS_H_
 #define _TMX_PRETRANS_H_
 

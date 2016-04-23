@@ -81,11 +81,11 @@ int tmx_init_pretran_table(void)
 		return -1;
 	/* get the highest power of two less than number of processes */
 	n = -1;
-    while (pn >> ++n > 0);
-    n--;
-    if(n<=1) n = 2;
-    if(n>8) n = 8;
-     _tmx_ptran_size = 1<<n;
+	while (pn >> ++n > 0);
+	n--;
+	if(n<=1) n = 2;
+	if(n>8) n = 8;
+	_tmx_ptran_size = 1<<n;
 
 	_tmx_ptran_table = (pretran_slot_t*)shm_malloc(_tmx_ptran_size*sizeof(pretran_slot_t));
 	if(_tmx_ptran_table == NULL) {
@@ -148,7 +148,7 @@ void tmx_pretran_unlink_safe(int slotid)
 	if(_tmx_proc_ptran->prev==NULL) {
 		_tmx_ptran_table[slotid].plist = _tmx_proc_ptran->next;
 		if(_tmx_ptran_table[slotid].plist!=NULL)
-				_tmx_ptran_table[slotid].plist->prev = NULL;
+			_tmx_ptran_table[slotid].plist->prev = NULL;
 	} else {
 		_tmx_proc_ptran->prev->next = _tmx_proc_ptran->next;
 		if(_tmx_proc_ptran->next)
@@ -169,7 +169,7 @@ void tmx_pretran_unlink(void)
 	if(_tmx_proc_ptran==NULL)
 		return;
 
-	slotid = _tmx_proc_ptran->hid & (_tmx_ptran_size-1);	
+	slotid = _tmx_proc_ptran->hid & (_tmx_ptran_size-1);
 	lock_get(&_tmx_ptran_table[slotid].lock);
 	tmx_pretran_unlink_safe(slotid);
 	lock_release(&_tmx_ptran_table[slotid].lock);
@@ -256,7 +256,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 		_tmx_proc_ptran->pid = my_pid();
 	}
 	dsize = scallid.len + scseqnum.len + scseqmet.len
-			+ sftag.len + 4;
+		+ sftag.len + 4;
 	if(likely(vbr!=NULL)) {
 		svbranch = vbr->value;
 		trim(&svbranch);
@@ -284,26 +284,26 @@ int tmx_check_pretran(sip_msg_t *msg)
 	_tmx_proc_ptran->callid.s[_tmx_proc_ptran->callid.len] = '\0';
 
 	_tmx_proc_ptran->ftag.s = _tmx_proc_ptran->callid.s
-			+ _tmx_proc_ptran->callid.len + 1;
+		+ _tmx_proc_ptran->callid.len + 1;
 	memcpy(_tmx_proc_ptran->ftag.s, sftag.s, sftag.len);
 	_tmx_proc_ptran->ftag.len = sftag.len;
 	_tmx_proc_ptran->ftag.s[_tmx_proc_ptran->ftag.len] = '\0';
 
 	_tmx_proc_ptran->cseqnum.s = _tmx_proc_ptran->ftag.s
-			+ _tmx_proc_ptran->ftag.len + 1;
+		+ _tmx_proc_ptran->ftag.len + 1;
 	memcpy(_tmx_proc_ptran->cseqnum.s, scseqnum.s, scseqnum.len);
 	_tmx_proc_ptran->cseqnum.len = scseqnum.len;
 	_tmx_proc_ptran->cseqnum.s[_tmx_proc_ptran->cseqnum.len] = '\0';
 
 	_tmx_proc_ptran->cseqmet.s = _tmx_proc_ptran->cseqnum.s
-			+ _tmx_proc_ptran->cseqnum.len + 1;
+		+ _tmx_proc_ptran->cseqnum.len + 1;
 	memcpy(_tmx_proc_ptran->cseqmet.s, scseqmet.s, scseqmet.len);
 	_tmx_proc_ptran->cseqmet.len = scseqmet.len;
 	_tmx_proc_ptran->cseqmet.s[_tmx_proc_ptran->cseqmet.len] = '\0';
 
 	if(likely(vbr!=NULL)) {
 		_tmx_proc_ptran->vbranch.s = _tmx_proc_ptran->cseqmet.s
-				+ _tmx_proc_ptran->cseqmet.len + 1;
+			+ _tmx_proc_ptran->cseqmet.len + 1;
 		memcpy(_tmx_proc_ptran->vbranch.s, svbranch.s, svbranch.len);
 		_tmx_proc_ptran->vbranch.len = svbranch.len;
 		_tmx_proc_ptran->vbranch.s[_tmx_proc_ptran->vbranch.len] = '\0';
@@ -336,22 +336,22 @@ int tmx_check_pretran(sip_msg_t *msg)
 						it->vbranch.s, it->vbranch.len)!=0)
 				continue;
 			/* shall stop by matching magic cookie?
-			if (vbr && vbr->value.s && vbr->value.len > MCOOKIE_LEN
-					&& memcmp(vbr->value.s, MCOOKIE, MCOOKIE_LEN)==0) {
-				LM_DBG("rfc3261 cookie found in Via branch\n");
-			}
-			*/
+			 *  if (vbr && vbr->value.s && vbr->value.len > MCOOKIE_LEN
+			 *  && memcmp(vbr->value.s, MCOOKIE, MCOOKIE_LEN)==0) {
+			 *  LM_DBG("rfc3261 cookie found in Via branch\n");
+			 *  }
+			 */
 		}
 		if(memcmp(_tmx_proc_ptran->callid.s,
-						it->callid.s, it->callid.len)!=0
+					it->callid.s, it->callid.len)!=0
 				|| memcmp(_tmx_proc_ptran->ftag.s,
-						it->ftag.s, it->ftag.len)!=0
+					it->ftag.s, it->ftag.len)!=0
 				|| memcmp(_tmx_proc_ptran->cseqnum.s,
-						it->cseqnum.s, it->cseqnum.len)!=0)
+					it->cseqnum.s, it->cseqnum.len)!=0)
 			continue;
 		if((it->cseqmetid==METHOD_OTHER || it->cseqmetid==METHOD_UNDEF)
 				&& memcmp(_tmx_proc_ptran->cseqmet.s,
-						it->cseqmet.s, it->cseqmet.len)!=0)
+					it->cseqmet.s, it->cseqmet.len)!=0)
 			continue;
 		LM_DBG("matched another pre-transaction by pid %d for [%.*s]\n",
 				it->pid, it->callid.len, it->callid.s);

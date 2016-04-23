@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -58,7 +58,7 @@ static inline int uri2su(str *uri, union sockaddr_union *to_su, int proto)
 		return -1;
 	}
 
-	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
+	hostent2su(to_su, &proxy->host, proxy->addr_idx,
 		(proxy->port) ? proxy->port : SIP_PORT);
 	proto = proxy->proto;
 
@@ -173,14 +173,14 @@ static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l, struct 
 	for (; hf; hf=hf->next) {
 		if (tm_skip_hf(hf)) continue;
 
-		begin=needle=hf->name.s; 
+		begin=needle=hf->name.s;
 		hf_avail=hf->len;
 
 		/* substitution loop */
 		while(hf_avail) {
 			d=memchr(needle, SUBST_CHAR, hf_avail);
 			if (!d || d+1>=needle+hf_avail) { /* nothing to substitute */
-				new=append_str_list(begin, hf_avail, &last, &total_len); 
+				new=append_str_list(begin, hf_avail, &last, &total_len);
 				if (!new) goto error;
 				break;
 			} else {
@@ -189,7 +189,7 @@ static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l, struct 
 				switch(*d) {
 					case SUBST_CHAR:	/* double SUBST_CHAR: IP */
 						/* string before substitute */
-						new=append_str_list(begin, frag_len, &last, &total_len); 
+						new=append_str_list(begin, frag_len, &last, &total_len);
 						if (!new) goto error;
 						/* substitute */
 						if (!sock_name) {
@@ -412,7 +412,7 @@ static void mi_uac_dlg_hdl( struct cell *t, int type, struct tmcb_params *ps )
 		pkg_free(text.s);
 		mi_print_uris( &rpl_tree->node, 0 );
 		add_mi_node_child( &rpl_tree->node, 0, 0, 0, ".",1);
-	} else { 
+	} else {
 		addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%d %.*s",
 			ps->rpl->first_line.u.reply.statuscode,
 			ps->rpl->first_line.u.reply.reason.len,
@@ -439,13 +439,13 @@ done:
 
 
 /*
-  Syntax of "t_uac_dlg" :
-    method
-    RURI
-    NEXT_HOP
-    socket
-    headers
-    [Body]
+ * Syntax of "t_uac_dlg" :
+ *   method
+ *   RURI
+ *   NEXT_HOP
+ *   socket
+ *   headers
+ *   [Body]
 */
 struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 {
@@ -520,7 +520,7 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 		hdrs = &node->value;
 		/* use SIP parser to look at what is in the FIFO request */
 		memset( &tmp_msg, 0, sizeof(struct sip_msg));
-		tmp_msg.len = hdrs->len; 
+		tmp_msg.len = hdrs->len;
 		tmp_msg.buf = tmp_msg.unparsed = hdrs->s;
 		if (parse_headers( &tmp_msg, HDR_EOH_F, 0) == -1 )
 			return init_mi_tree( 400, "Bad headers", 11);
@@ -619,9 +619,9 @@ struct mi_root*  mi_tm_uac_dlg(struct mi_root* cmd_tree, void* param)
 
 
 /*
-  Syntax of "t_uac_cancel" :
-    callid
-    cseq
+ * Syntax of "t_uac_cancel" :
+ *   callid
+ *   cseq
 */
 struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param)
 {
@@ -650,8 +650,8 @@ struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param)
 
 
 /*
-  Syntax of "t_hash" :
-    no nodes
+ * Syntax of "t_hash" :
+ *   no nodes
 */
 struct mi_root* mi_tm_hash(struct mi_root* cmd_tree, void* param)
 {
@@ -703,13 +703,13 @@ error:
 
 
 /*
-  Syntax of "t_reply" :
-  code
-  reason
-  trans_id
-  to_tag
-  new headers
-  [Body]
+ * Syntax of "t_reply" :
+ * code
+ * reason
+ * trans_id
+ * to_tag
+ * new headers
+ * [Body]
 */
 struct mi_root* mi_tm_reply(struct mi_root* cmd_tree, void* param)
 {
@@ -774,7 +774,7 @@ struct mi_root* mi_tm_reply(struct mi_root* cmd_tree, void* param)
 	if (node)
 		body = node->value;
 
-	/* it's refcounted now, t_reply_with body unrefs for me -- I can 
+	/* it's refcounted now, t_reply_with body unrefs for me -- I can
 	 * continue but may not use T anymore  */
 	n = _tmx_tmb.t_reply_with_body(trans, rpl_code, &reason, &body,
 			&new_hdrs, &totag);
@@ -786,14 +786,14 @@ struct mi_root* mi_tm_reply(struct mi_root* cmd_tree, void* param)
 }
 
 /*
-  Syntax of "t_reply_callid" :
-  code
-  reason
-  callid
-  cseq
-  to_tag
-  new headers
-  [Body]
+ * Syntax of "t_reply_callid" :
+ * code
+ * reason
+ * callid
+ * cseq
+ * to_tag
+ * new headers
+ * [Body]
 */
 struct mi_root* mi_tm_reply_callid(struct mi_root* cmd_tree, void* param)
 {

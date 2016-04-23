@@ -556,7 +556,7 @@ int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
 		switch (get_route_type()) {
 			case CORE_ONREPLY_ROUTE:
 				/*  t_check() above has the side effect of setting T and
-					REFerencing T => we must unref and unset it for the 
+					REFerencing T => we must unref and unset it for the
 					main/core onreply_route. */
 				_tmx_tmb.t_unref(msg);
 				/* no break */

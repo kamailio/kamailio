@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*! \file
@@ -59,12 +59,12 @@ static void destroy(void);
 static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2);
 static int fixup_cancel_branches(void** param, int param_no);
 static int w_t_cancel_callid_3(struct sip_msg* msg, char *cid, char *cseq,
-				char *flag);
+		char *flag);
 static int w_t_cancel_callid_4(struct sip_msg* msg, char *cid, char *cseq,
-				char *flag, char *creason);
+		char *flag, char *creason);
 static int fixup_cancel_callid(void** param, int param_no);
 static int t_reply_callid(struct sip_msg* msg, char *cid, char *cseq,
-				char *rc, char *rs);
+		char *rc, char *rs);
 static int fixup_reply_callid(void** param, int param_no);
 
 static int t_flush_flags(struct sip_msg* msg, char*, char* );
@@ -140,19 +140,19 @@ static stat_export_t mod_stats[] = {
 static pv_export_t mod_pvs[] = {
 	{ {"T_branch_idx", sizeof("T_branch_idx")-1}, PVT_OTHER,
 		pv_get_tm_branch_idx, 0,
-		 0, 0, 0, 0 },
+		0, 0, 0, 0 },
 	{ {"T_reply_ruid", sizeof("T_reply_ruid")-1}, PVT_OTHER,
 		pv_get_tm_reply_ruid, 0,
-		 0, 0, 0, 0 },
+		0, 0, 0, 0 },
 	{ {"T_reply_code", sizeof("T_reply_code")-1}, PVT_OTHER,
 		pv_get_tm_reply_code, 0,
-		 0, 0, 0, 0 },
+		0, 0, 0, 0 },
 	{ {"T_reply_reason", sizeof("T_reply_reason")-1}, PVT_OTHER,
 		pv_get_tm_reply_reason, 0,
-		 0, 0, 0, 0 },
+		0, 0, 0, 0 },
 	{ {"T_reply_last", sizeof("T_reply_last")-1}, PVT_OTHER,
 		pv_get_tm_reply_last_received, 0,
-		 0, 0, 0, 0 },
+		0, 0, 0, 0 },
 	{ {"T_inv", sizeof("T_inv")-1}, PVT_OTHER, pv_get_t_var_inv, 0,
 		pv_parse_t_var_name, 0, 0, 0 },
 	{ {"T_req", sizeof("T_req")-1}, PVT_OTHER, pv_get_t_var_req, 0,
@@ -186,17 +186,17 @@ static cmd_export_t cmds[]={
 	{"t_reply_callid", (cmd_function)t_reply_callid,    4,
 		fixup_reply_callid, 0, ANY_ROUTE },
 	{"t_flush_flags",   (cmd_function)t_flush_flags,    0, 0,
-			0, ANY_ROUTE  },
+		0, ANY_ROUTE  },
 	{"t_is_failure_route",   (cmd_function)t_is_failure_route,   0, 0,
-			0, ANY_ROUTE  },
+		0, ANY_ROUTE  },
 	{"t_is_branch_route",    (cmd_function)t_is_branch_route,    0, 0,
-			0, ANY_ROUTE  },
+		0, ANY_ROUTE  },
 	{"t_is_reply_route",    (cmd_function)t_is_reply_route,    0, 0,
-			0, ANY_ROUTE  },
+		0, ANY_ROUTE  },
 	{"t_is_request_route",    (cmd_function)t_is_request_route,    0, 0,
-			0, ANY_ROUTE  },
+		0, ANY_ROUTE  },
 	{"t_suspend",    (cmd_function)w_t_suspend,    0, 0,
-			0, ANY_ROUTE  },
+		0, ANY_ROUTE  },
 	{"t_continue", (cmd_function)w_t_continue,     3,
 		fixup_t_continue, 0, ANY_ROUTE },
 	{"t_reuse_branch", (cmd_function)w_t_reuse_branch, 0, 0, 0,
@@ -345,7 +345,7 @@ static int t_cancel_branches(struct sip_msg* msg, char *k, char *s2)
 			if(msg->first_line.u.reply.statuscode>=200)
 				break;
 			cancel_data.cancel_bitmap = 1<<idx;
-		break;
+			break;
 		default:
 			if (msg->first_line.u.reply.statuscode>=200)
 				/* prepare cancel for every branch except idx */
@@ -678,30 +678,30 @@ static int w_t_reuse_branch(struct sip_msg* msg, char *p1, char *p2)
 	/* first get the transaction */
 	if (_tmx_tmb.t_check(msg, 0) == -1) return -1;
 	if ((t = _tmx_tmb.t_gett()) == 0) {
-	    LM_ERR("no transaction\n");
-	    return -1;
+		LM_ERR("no transaction\n");
+		return -1;
 	}
 	switch (get_route_type()) {
-	case BRANCH_FAILURE_ROUTE:
-	    /* use the reason of the winning reply */
-	    if ((branch = _tmx_tmb.t_get_picked_branch()) < 0) {
-		LM_CRIT("no picked branch (%d) for a final response"
-			" in MODE_ONFAILURE\n", branch);
-		return -1;
-	    }
-	    rewrite_uri(msg, &(t->uac[branch].uri));
-	    set_ruid(msg, &(t->uac[branch].ruid));
-	    if (t->uac[branch].path.len) {
-		set_path_vector(msg, &(t->uac[branch].path));
-	    } else {
-		reset_path_vector(msg);
-	    }
-	    setbflagsval(0, t->uac[branch].branch_flags);
-	    set_instance(msg, &(t->uac[branch].instance));
-	    return 1;
-	default:
-	    LM_ERR("unsupported route_type %d\n", get_route_type());
-	    return -1;
+		case BRANCH_FAILURE_ROUTE:
+			/* use the reason of the winning reply */
+			if ((branch = _tmx_tmb.t_get_picked_branch()) < 0) {
+				LM_CRIT("no picked branch (%d) for a final response"
+						" in MODE_ONFAILURE\n", branch);
+				return -1;
+			}
+			rewrite_uri(msg, &(t->uac[branch].uri));
+			set_ruid(msg, &(t->uac[branch].ruid));
+			if (t->uac[branch].path.len) {
+				set_path_vector(msg, &(t->uac[branch].path));
+			} else {
+				reset_path_vector(msg);
+			}
+			setbflagsval(0, t->uac[branch].branch_flags);
+			set_instance(msg, &(t->uac[branch].instance));
+			return 1;
+		default:
+			LM_ERR("unsupported route_type %d\n", get_route_type());
+			return -1;
 	}
 }
 

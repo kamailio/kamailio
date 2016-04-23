@@ -23,7 +23,7 @@
  * \ingroup tm
  * - Module: \ref tm
  */
-		       
+
 #ifndef _T_VAR_H_
 #define _T_VAR_H_
 
@@ -45,7 +45,7 @@ int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
 int pv_get_tm_reply_ruid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
-		    pv_value_t *res);
+		pv_value_t *res);
 int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
