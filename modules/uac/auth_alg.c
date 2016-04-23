@@ -19,6 +19,13 @@
  *
  */
 
+/*!
+ * \file
+ * \brief Kamailio uac :: Authentication
+ * \ingroup uac
+ * Module: \ref uac
+ */
+
 
 #include "../../md5.h"
 

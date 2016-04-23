@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/*!
+ * \file
+ * \brief Kamailio uac :: UAC send functions
+ * \ingroup uac
+ * Module: \ref uac
+ */
+
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../route.h"
@@ -794,10 +801,10 @@ int uac_req_send(void)
 	}
 	uac_r.callid = (_uac_req.s_callid.len <= 0) ? NULL : &_uac_req.s_callid;
 	ret = tmb.t_request(&uac_r,  /* UAC Req */
-						&_uac_req.s_ruri,        /* Request-URI */
-						(_uac_req.s_turi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_turi, /* To */
-						(_uac_req.s_furi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_furi, /* From */
-						(_uac_req.s_ouri.len<=0)?NULL:&_uac_req.s_ouri /* outbound uri */
+			&_uac_req.s_ruri,        /* Request-URI */
+			(_uac_req.s_turi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_turi, /* To */
+			(_uac_req.s_furi.len<=0)?&_uac_req.s_ruri:&_uac_req.s_furi, /* From */
+			(_uac_req.s_ouri.len<=0)?NULL:&_uac_req.s_ouri /* outbound uri */
 		);
 
 	if(ret<0) {

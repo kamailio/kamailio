@@ -19,6 +19,12 @@
  *
  */
 
+/*!
+ * \file
+ * \brief Kamailio uac :: Authentication
+ * \ingroup uac
+ * Module: \ref uac
+ */
 
 #include <ctype.h>
 #include <string.h>
@@ -250,8 +256,7 @@ static inline struct uac_credential *lookup_realm( str *realm)
 }
 
 
-static inline struct uac_credential *get_avp_credential(struct sip_msg *msg,
-																str *realm)
+static inline struct uac_credential *get_avp_credential(struct sip_msg *msg, str *realm)
 {
 	static struct uac_credential crd;
 	pv_value_t pv_val;
@@ -266,8 +271,9 @@ static inline struct uac_credential *get_avp_credential(struct sip_msg *msg,
 		crd.realm = pv_val.rs;
 		/* is it the domain we are looking for? */
 		if (realm->len!=crd.realm.len ||
-		  strncmp( realm->s, crd.realm.s, realm->len)!=0 )
+		  strncmp( realm->s, crd.realm.s, realm->len)!=0 ) {
 			return 0;
+		}
 	}
 
 	/* get username and password */

@@ -19,6 +19,12 @@
  *
  */
 
+/*!
+ * \file
+ * \brief Kamailio uac :: header replacement/retrieval functions
+ * \ingroup uac
+ * Module: \ref uac
+ */
 
 #include <ctype.h>
 

@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/*!
+ * \file
+ * \brief Kamailio uac :: The SIP UA registration client module
+ * \ingroup uac
+ * Module: \ref uac
+ */
+
 #include <time.h>
 
 #include "../../dprint.h"
