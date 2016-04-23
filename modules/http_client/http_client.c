@@ -126,28 +126,28 @@ static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-    {"http_client_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
-     fixup_free_http_query_get,
-     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"http_client_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
-     fixup_free_http_query_post,
-     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"http_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
-     fixup_free_curl_connect,
-     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"http_connect", (cmd_function)w_curl_connect_post, 5, fixup_curl_connect_post,
-     fixup_free_curl_connect_post,
-     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"http_get_redirect", (cmd_function)w_curl_get_redirect, 2, fixup_curl_get_redirect,
-     fixup_free_curl_get_redirect,
-     REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-    {"bind_http_client",  (cmd_function)bind_httpc_api,  0, 0, 0, 0},
+	{"http_client_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
+	 	fixup_free_http_query_get,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_client_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
+		fixup_free_http_query_post,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_connect", (cmd_function)w_curl_connect, 3, fixup_curl_connect,
+		fixup_free_curl_connect,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_connect", (cmd_function)w_curl_connect_post, 5, fixup_curl_connect_post,
+		fixup_free_curl_connect_post,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"http_get_redirect", (cmd_function)w_curl_get_redirect, 2, fixup_curl_get_redirect,
+		fixup_free_curl_get_redirect,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"bind_http_client",  (cmd_function)bind_httpc_api,  0, 0, 0, 0},
 };
 
 
 /* Exported parameters */
 static param_export_t params[] = {
-    	{"connection_timeout", PARAM_INT, &default_connection_timeout},
+	{"connection_timeout", PARAM_INT, &default_connection_timeout},
 	{"cacert", PARAM_STRING,  &default_tls_cacert },
 	{"client_cert", PARAM_STR, &default_tls_clientcert },
 	{"client_key", PARAM_STR, &default_tls_clientkey },
@@ -214,9 +214,9 @@ static void destroy_shmlock(void)
 /* Init counters */
 static void curl_counter_init()
 {
-        counter_register(&connections, "httpclient", "connections", 0, 0, 0, "Counter of connection definitions (httpcon)", 0);
-        counter_register(&connok, "httpclient", "connok", 0, 0, 0, "Counter of successful connections (200 OK)", 0);
-        counter_register(&connfail, "httpclient", "connfail", 0, 0, 0, "Counter of failed connections (not 200 OK)", 0);
+	counter_register(&connections, "httpclient", "connections", 0, 0, 0, "Counter of connection definitions (httpcon)", 0);
+	counter_register(&connok, "httpclient", "connok", 0, 0, 0, "Counter of successful connections (200 OK)", 0);
+	counter_register(&connfail, "httpclient", "connfail", 0, 0, 0, "Counter of failed connections (not 200 OK)", 0);
 }
 
 
@@ -234,10 +234,10 @@ static int mod_init(void)
 	curl_info = curl_version_info(CURLVERSION_NOW);
 
 	if(curl_init_rpc() < 0)
-        {
-                LM_ERR("failed to register RPC commands\n");
-                return -1;
-        }
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 
 	if (init_shmlock() != 0) {
 		LM_CRIT("cannot initialize shmlock.\n");
@@ -313,7 +313,7 @@ static int child_init(int rank)
 	}
 	LM_DBG("*** http_client module initializing process %d\n", i);
 
-    	return 0;
+	return 0;
 }
 
 
@@ -375,16 +375,16 @@ static int fixup_http_query_get(void** param, int param_no)
  */
 static int fixup_free_http_query_get(void** param, int param_no)
 {
-    if (param_no == 1) {
+	if (param_no == 1) {
 		return fixup_free_spve_null(param, 1);
-    }
+	}
 
-    if (param_no == 2) {
+	if (param_no == 2) {
 	return fixup_free_pvar_null(param, 1);
-    }
-    
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	}
+	
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 
@@ -395,28 +395,28 @@ static int fixup_free_http_query_get(void** param, int param_no)
 static int fixup_curl_connect(void** param, int param_no)
 {
 
-    if (param_no == 1) {
+	if (param_no == 1) {
 	/* We want char * strings */
-	return 0;
-    }
-    /* URL and data may contain pvar */
-    if (param_no == 2) {
+		return 0;
+	}
+	/* URL and data may contain pvar */
+	if (param_no == 2) {
 		return fixup_spve_null(param, 1);
-    }
-    if (param_no == 3) {
-	if (fixup_pvar_null(param, 1) != 0) {
-	    LM_ERR("failed to fixup result pvar\n");
-	    return -1;
 	}
-	if (((pv_spec_t *)(*param))->setf == NULL) {
-	    LM_ERR("result pvar is not writeble\n");
-	    return -1;
+	if (param_no == 3) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
 	}
-	return 0;
-    }
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -427,28 +427,28 @@ static int fixup_curl_connect(void** param, int param_no)
 static int fixup_curl_connect_post(void** param, int param_no)
 {
 
-    if (param_no == 1 || param_no == 3) {
-	/* We want char * strings */
-	return 0;
-    }
-    /* URL and data may contain pvar */
-    if (param_no == 2 || param_no == 4) {
+	if (param_no == 1 || param_no == 3) {
+		/* We want char * strings */
+		return 0;
+	}
+	/* URL and data may contain pvar */
+	if (param_no == 2 || param_no == 4) {
 		return fixup_spve_null(param, 1);
-    }
-    if (param_no == 5) {
-	if (fixup_pvar_null(param, 1) != 0) {
-	    LM_ERR("failed to fixup result pvar\n");
-	    return -1;
 	}
-	if (((pv_spec_t *)(*param))->setf == NULL) {
-	    LM_ERR("result pvar is not writeble\n");
-	    return -1;
+	if (param_no == 5) {
+		if (fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
 	}
-	return 0;
-    }
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 
@@ -457,20 +457,20 @@ static int fixup_curl_connect_post(void** param, int param_no)
  */
 static int fixup_free_curl_connect_post(void** param, int param_no)
 {
-    if (param_no == 1 || param_no == 3) {
-	/* Char strings don't need freeing */
-	return 0;
-    }
-    if (param_no == 2 || param_no == 4) {
+	if (param_no == 1 || param_no == 3) {
+		/* Char strings don't need freeing */
+		return 0;
+	}
+	if (param_no == 2 || param_no == 4) {
 		return fixup_free_spve_null(param, 1);
-    }
+	}
 
-    if (param_no == 5) {
-	return fixup_free_pvar_null(param, 1);
-    }
-    
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 5) {
+		return fixup_free_pvar_null(param, 1);
+	}
+	
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -478,20 +478,20 @@ static int fixup_free_curl_connect_post(void** param, int param_no)
  */
 static int fixup_free_curl_connect(void** param, int param_no)
 {
-    if (param_no == 1) {
-	/* Char strings don't need freeing */
-	return 0;
-    }
-    if (param_no == 2) {
+	if (param_no == 1) {
+		/* Char strings don't need freeing */
+		return 0;
+	}
+	if (param_no == 2) {
 		return fixup_free_spve_null(param, 1);
-    }
+	}
 
-    if (param_no == 3) {
-	return fixup_free_pvar_null(param, 1);
-    }
-    
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 3) {
+		return fixup_free_pvar_null(param, 1);
+	}
+	
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
@@ -581,24 +581,24 @@ static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url, char
  */
 static int fixup_http_query_post(void** param, int param_no)
 {
-    if ((param_no == 1) || (param_no == 2)) {
-	return fixup_spve_null(param, 1);
-    }
-
-    if (param_no == 3) {
-	if (fixup_pvar_null(param, 1) != 0) {
-	    LM_ERR("failed to fixup result pvar\n");
-	    return -1;
+	if ((param_no == 1) || (param_no == 2)) {
+		return fixup_spve_null(param, 1);
 	}
-	if (((pv_spec_t *)(*param))->setf == NULL) {
-	    LM_ERR("result pvar is not writeble\n");
-	    return -1;
-	}
-	return 0;
-    }
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 3) {
+		if (fixup_pvar_null(param, 1) != 0) {
+	    		LM_ERR("failed to fixup result pvar\n");
+	    		return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+	    		LM_ERR("result pvar is not writeble\n");
+	    		return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*!
@@ -606,16 +606,16 @@ static int fixup_http_query_post(void** param, int param_no)
  */
 static int fixup_free_http_query_post(void** param, int param_no)
 {
-    if ((param_no == 1) || (param_no == 2)) {
+	if ((param_no == 1) || (param_no == 2)) {
 		return fixup_free_spve_null(param, 1);
-    }
+	}
 
-    if (param_no == 3) {
-	return fixup_free_pvar_null(param, 1);
-    }
-    
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	if (param_no == 3) {
+		return fixup_free_pvar_null(param, 1);
+	}
+	
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*!
@@ -732,24 +732,24 @@ static int pv_get_curlerror(struct sip_msg *msg, pv_param_t *param, pv_value_t *
  */
 static int fixup_curl_get_redirect(void** param, int param_no)
 {
-    if (param_no == 1) {	/* Connection name */
-	/* We want char * strings */
-	return 0;
-    }
-    if (param_no == 2) {	/* PVAR to store result in */
-	if (fixup_pvar_null(param, 1) != 0) {
-	    LM_ERR("failed to fixup result pvar\n");
-	    return -1;
+	if (param_no == 1) {	/* Connection name */
+		/* We want char * strings */
+		return 0;
 	}
-	if (((pv_spec_t *)(*param))->setf == NULL) {
-	    LM_ERR("result pvar is not writeble\n");
-	    return -1;
+	if (param_no == 2) {	/* PVAR to store result in */
+		if (fixup_pvar_null(param, 1) != 0) {
+	    		LM_ERR("failed to fixup result pvar\n");
+	    		return -1;
+		}
+		if (((pv_spec_t *)(*param))->setf == NULL) {
+	    		LM_ERR("result pvar is not writeble\n");
+	    		return -1;
+		}
+		return 0;
 	}
-	return 0;
-    }
 
-    LM_ERR("invalid parameter number <%d>\n", param_no);
-    return -1;
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 /*
