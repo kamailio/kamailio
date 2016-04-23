@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -119,11 +119,11 @@ void free_hash_table(struct trusted_list** table)
 }
 
 
-/* 
+/*
  * Add <src_ip, proto, pattern, ruri_pattern, tag, priority> into hash table, where proto is integer
  * representation of string argument proto.
  */
-int hash_table_insert(struct trusted_list** table, char* src_ip, 
+int hash_table_insert(struct trusted_list** table, char* src_ip,
 		char* proto, char* pattern, char* ruri_pattern, char* tag, int priority)
 {
 	struct trusted_list *np;
@@ -243,7 +243,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 }
 
 
-/* 
+/*
  * Check if an entry exists in hash table that has given src_ip and protocol
  * value and pattern that matches to From URI.  If an entry exists and tag_avp
  * has been defined, tag of the entry is added as a value to tag_avp.
@@ -284,58 +284,58 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 	}
 
 	for (np = table[perm_hash(src_ip)]; np != NULL; np = np->next) {
-	    if ((np->src_ip.len == src_ip.len) && 
-		(strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
-		((np->proto == PROTO_NONE) || (proto == PROTO_NONE) ||
-		 (np->proto == proto))) {
-		if (IS_SIP(msg)) {
-		    if (np->pattern) {
-		        if (regcomp(&preg, np->pattern, REG_NOSUB)) {
-			    LM_ERR("invalid regular expression\n");
-			    if (!np->ruri_pattern) {
-				continue;
-			    }
-		        }
-		        if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
-			    regfree(&preg);
-			    continue;
-		        }
-		        regfree(&preg);
-		    }
-		    if (np->ruri_pattern) {
-			if (regcomp(&preg, np->ruri_pattern, REG_NOSUB)) {
-			    LM_ERR("invalid regular expression\n");
-			    continue;
+		if ((np->src_ip.len == src_ip.len) &&
+				(strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
+				((np->proto == PROTO_NONE) || (proto == PROTO_NONE) ||
+				(np->proto == proto))) {
+			if (IS_SIP(msg)) {
+				if (np->pattern) {
+					if (regcomp(&preg, np->pattern, REG_NOSUB)) {
+						LM_ERR("invalid regular expression\n");
+						if (!np->ruri_pattern) {
+							continue;
+						}
+					}
+					if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+						regfree(&preg);
+						continue;
+					}
+					regfree(&preg);
+				}
+				if (np->ruri_pattern) {
+					if (regcomp(&preg, np->ruri_pattern, REG_NOSUB)) {
+						LM_ERR("invalid regular expression\n");
+						continue;
+					}
+					if (regexec(&preg, ruri_string, 0, (regmatch_t *)0, 0)) {
+						regfree(&preg);
+						continue;
+					}
+					regfree(&preg);
+				}
 			}
-			if (regexec(&preg, ruri_string, 0, (regmatch_t *)0, 0)) {
-			    regfree(&preg);
-			    continue;
+			/* Found a match */
+			if (tag_avp.n && np->tag.s) {
+				val.s = np->tag;
+				if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
+					LM_ERR("setting of tag_avp failed\n");
+					return -1;
+				}
 			}
-			regfree(&preg);
-		    }
+			if (!peer_tag_mode)
+				return 1;
+			count++;
 		}
-		/* Found a match */
-		if (tag_avp.n && np->tag.s) {
-		    val.s = np->tag;
-		    if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
-			LM_ERR("setting of tag_avp failed\n");
-			return -1;
-		    }
-		}
-		if (!peer_tag_mode)
-		    return 1;
-		count++;
-	    }
 	}
 	if (!count)
-	    return -1;
-	else 
-	    return count;
+		return -1;
+	else
+		return count;
 }
 
 
 /*! \brief
- * MI Interface :: Print trusted entries stored in hash table 
+ * MI Interface :: Print trusted entries stored in hash table
  */
 int hash_table_mi_print(struct trusted_list** table, struct mi_node* rpl)
 {
@@ -363,7 +363,7 @@ int hash_table_mi_print(struct trusted_list** table, struct mi_node* rpl)
 }
 
 /*! \brief
- * RPC interface :: Print trusted entries stored in hash table 
+ * RPC interface :: Print trusted entries stored in hash table
  */
 int hash_table_rpc_print(struct trusted_list** hash_table, rpc_t* rpc, void* c)
 {
@@ -381,13 +381,13 @@ int hash_table_rpc_print(struct trusted_list** hash_table, rpc_t* rpc, void* c)
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
-			if(rpc->struct_add(th, "d{", 
-					"table", i,
-					"item", &ih) < 0)
-                        {
-                                rpc->fault(c, 500, "Internal error creating rpc ih");
-                                return -1;
-                        }
+			if(rpc->struct_add(th, "d{",
+						"table", i,
+						"item", &ih) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc ih");
+				return -1;
+			}
 
 			if(rpc->struct_add(ih, "s", "ip", np->src_ip.s) < 0)
 			{
@@ -409,7 +409,7 @@ int hash_table_rpc_print(struct trusted_list** hash_table, rpc_t* rpc, void* c)
 	return 0;
 }
 
-/* 
+/*
  * Free contents of hash table, it doesn't destroy the
  * hash table itself
  */
@@ -467,7 +467,7 @@ void free_addr_hash_table(struct addr_list** table)
 }
 
 
-/* 
+/*
  * Add <grp, ip_addr, port> into hash table
  */
 int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
@@ -510,7 +510,7 @@ int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
 }
 
 
-/* 
+/*
  * Check if an entry exists in hash table that has given group, ip_addr, and
  * port.  Port 0 in hash table matches any port.
  */
@@ -545,10 +545,10 @@ int match_addr_hash_table(struct addr_list** table, unsigned int group,
 }
 
 
-/* 
+/*
  * Check if an ip_addr/port entry exists in hash table in any group.
  * Returns first group in which ip_addr/port is found.
- * Port 0 in hash table matches any port. 
+ * Port 0 in hash table matches any port.
  */
 int find_group_in_addr_hash_table(struct addr_list** table,
 		ip_addr_t *addr, unsigned int port)
@@ -580,7 +580,7 @@ int find_group_in_addr_hash_table(struct addr_list** table,
 }
 
 /*! \brief
- * MI: Print addresses stored in hash table 
+ * MI: Print addresses stored in hash table
  */
 int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
 {
@@ -602,7 +602,7 @@ int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
 }
 
 /*! \brief
- * RPC: Print addresses stored in hash table 
+ * RPC: Print addresses stored in hash table
  */
 int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c)
 {
@@ -621,14 +621,14 @@ int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c)
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = table[i];
 		while (np) {
-			if(rpc->struct_add(th, "dd{", 
-					"table", i,
-					"group", np->grp,
-					"item", &ih) < 0)
-                        {
-                                rpc->fault(c, 500, "Internal error creating rpc ih");
-                                return -1;
-                        }
+			if(rpc->struct_add(th, "dd{",
+						"table", i,
+						"group", np->grp,
+						"item", &ih) < 0)
+			{
+				rpc->fault(c, 500, "Internal error creating rpc ih");
+				return -1;
+			}
 
 			if(rpc->struct_add(ih, "s", "ip", ip_addr2a(&np->addr)) < 0)
 			{
@@ -648,7 +648,7 @@ int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c)
 }
 
 
-/* 
+/*
  * Free contents of hash table, it doesn't destroy the
  * hash table itself
  */
@@ -676,8 +676,8 @@ struct subnet* new_subnet_table(void)
 {
 	struct subnet* ptr;
 
-	/* subnet record [PERM_MAX_SUBNETS] contains in its grp field 
-	   the number of subnet records in the subnet table */
+	/* subnet record [PERM_MAX_SUBNETS] contains in its grp field
+	 * the number of subnet records in the subnet table */
 	ptr = (struct subnet *)shm_malloc
 		(sizeof(struct subnet) * (PERM_MAX_SUBNETS + 1));
 	if (!ptr) {
@@ -689,7 +689,7 @@ struct subnet* new_subnet_table(void)
 }
 
 
-/* 
+/*
  * Add <grp, subnet, mask, port, tag> into subnet table so that table is
  * kept in increasing ordered according to grp.
  */
@@ -742,7 +742,7 @@ int subnet_table_insert(struct subnet* table, unsigned int grp,
 }
 
 
-/* 
+/*
  * Check if an entry exists in subnet table that matches given group, ip_addr,
  * and port.  Port 0 in subnet table matches any port.
  */
@@ -762,7 +762,7 @@ int match_subnet_table(struct subnet* table, unsigned int grp,
 
 	while ((i < count) && (table[i].grp == grp)) {
 		if (((table[i].port == port) || (table[i].port == 0))
-			&& (ip_addr_match_net(addr, &table[i].subnet, table[i].mask)==0))
+				&& (ip_addr_match_net(addr, &table[i].subnet, table[i].mask)==0))
 		{
 			if (tag_avp.n && table[i].tag.s) {
 				val.s = table[i].tag;
@@ -780,7 +780,7 @@ int match_subnet_table(struct subnet* table, unsigned int grp,
 }
 
 
-/* 
+/*
  * Check if an entry exists in subnet table that matches given ip_addr,
  * and port.  Port 0 in subnet table matches any port.  Return group of
  * first match or -1 if no match is found.
@@ -796,7 +796,7 @@ int find_group_in_subnet_table(struct subnet* table,
 	i = 0;
 	while (i < count) {
 		if ( ((table[i].port == port) || (table[i].port == 0))
-			&& (ip_addr_match_net(addr, &table[i].subnet, table[i].mask)==0))
+				&& (ip_addr_match_net(addr, &table[i].subnet, table[i].mask)==0))
 		{
 			if (tag_avp.n && table[i].tag.s) {
 				val.s = table[i].tag;
@@ -814,8 +814,8 @@ int find_group_in_subnet_table(struct subnet* table,
 }
 
 
-/* 
- * Print subnets stored in subnet table 
+/*
+ * Print subnets stored in subnet table
  */
 int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl)
 {
@@ -836,7 +836,7 @@ int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl)
 }
 
 /*! \brief
- * RPC interface :: Print subnet entries stored in hash table 
+ * RPC interface :: Print subnet entries stored in hash table
  */
 int subnet_table_rpc_print(struct subnet* table, rpc_t* rpc, void* c)
 {
@@ -854,14 +854,14 @@ int subnet_table_rpc_print(struct subnet* table, rpc_t* rpc, void* c)
 	}
 
 	for (i = 0; i < count; i++) {
-		if(rpc->struct_add(th, "dd{", 
-				"id", i,
-				"group", table[i].grp,
-				"item", &ih) < 0)
-                {
-                        rpc->fault(c, 500, "Internal error creating rpc ih");
-                        return -1;
-                }
+		if(rpc->struct_add(th, "dd{",
+					"id", i,
+					"group", table[i].grp,
+					"item", &ih) < 0)
+		{
+			rpc->fault(c, 500, "Internal error creating rpc ih");
+			return -1;
+		}
 
 		if(rpc->struct_add(ih, "s", "ip", ip_addr2a(&table[i].subnet)) < 0)
 		{
@@ -880,7 +880,7 @@ int subnet_table_rpc_print(struct subnet* table, rpc_t* rpc, void* c)
 }
 
 
-/* 
+/*
  * Empty contents of subnet table
  */
 void empty_subnet_table(struct subnet *table)
@@ -940,7 +940,7 @@ struct domain_name_list** new_domain_name_table(void)
 }
 
 
-/* 
+/*
  * Free contents of hash table, it doesn't destroy the
  * hash table itself
  */
@@ -973,7 +973,7 @@ void free_domain_name_table(struct domain_name_list** table)
 }
 
 
-/* 
+/*
  * Check if an entry exists in hash table that has given group, domain_name, and
  * port.  Port 0 in hash table matches any port.
  */
@@ -1005,10 +1005,10 @@ int match_domain_name_table(struct domain_name_list** table, unsigned int group,
 }
 
 
-/* 
+/*
  * Check if an domain_name/port entry exists in hash table in any group.
  * Returns first group in which ip_addr/port is found.
- * Port 0 in hash table matches any port. 
+ * Port 0 in hash table matches any port.
  */
 int find_group_in_domain_name_table(struct domain_name_list** table,
 		str *domain_name, unsigned int port)
@@ -1027,7 +1027,7 @@ int find_group_in_domain_name_table(struct domain_name_list** table,
 }
 
 
-/* 
+/*
  * Add <grp, domain_name, port> into hash table
  */
 int domain_name_table_insert(struct domain_name_list** table, unsigned int grp,
@@ -1071,7 +1071,7 @@ int domain_name_table_insert(struct domain_name_list** table, unsigned int grp,
 
 
 /*! \brief
- * RPC: Print addresses stored in hash table 
+ * RPC: Print addresses stored in hash table
  */
 int domain_name_table_rpc_print(struct domain_name_list** table, rpc_t* rpc, void* c)
 {
@@ -1090,10 +1090,10 @@ int domain_name_table_rpc_print(struct domain_name_list** table, rpc_t* rpc, voi
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = table[i];
 		while (np) {
-			if(rpc->struct_add(th, "dd{", 
-					"table", i,
-					"group", np->grp,
-					"item", &ih) < 0) {
+			if(rpc->struct_add(th, "dd{",
+						"table", i,
+						"group", np->grp,
+						"item", &ih) < 0) {
 				rpc->fault(c, 500, "Internal error creating rpc ih");
 				return -1;
 			}
@@ -1114,7 +1114,7 @@ int domain_name_table_rpc_print(struct domain_name_list** table, rpc_t* rpc, voi
 }
 
 /*! \brief
- * MI: Print domain name stored in hash table 
+ * MI: Print domain name stored in hash table
  */
 int domain_name_table_mi_print(struct domain_name_list** table, struct mi_node* rpl)
 {

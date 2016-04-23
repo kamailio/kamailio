@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -184,7 +184,7 @@ int reload_address_table(void)
 		if ( ipa==NULL )
 		{
 			LM_DBG("Domain name: %.*s\n", ips.len, ips.s);
-		//	goto dberror;
+			//	goto dberror;
 		} else {
 			if(ipa->af == AF_INET6) {
 				if((int)mask<0 || mask>128) {
@@ -211,8 +211,8 @@ int reload_address_table(void)
 						gid, ips.s, port);
 			} else {
 				if (subnet_table_insert(new_subnet_table, gid, ipa, mask,
-								port, tagv)
-							== -1) {
+							port, tagv)
+						== -1) {
 					LM_ERR("subnet table problem\n");
 					perm_dbf.free_result(db_handle, res);
 					return -1;
@@ -221,9 +221,9 @@ int reload_address_table(void)
 						gid, ips.s, port, mask);
 			}
 		} else {
-				if (domain_name_table_insert(new_domain_name_table, gid, &ips,
-							port, tagv)
-						== -1) {
+			if (domain_name_table_insert(new_domain_name_table, gid, &ips,
+						port, tagv)
+					== -1) {
 				LM_ERR("domain name table problem\n");
 				perm_dbf.free_result(db_handle, res);
 				return -1;
@@ -443,18 +443,43 @@ void clean_addresses(void)
 }
 
 
+int allow_address(sip_msg_t *_msg, int addr_group, str *ips, int port)
+{
+	struct ip_addr *ipa;
+
+	ipa=strtoipX(ips);
+
+	if ( ipa ) {
+		if (addr_hash_table
+				&& match_addr_hash_table(*addr_hash_table, addr_group,
+					ipa, (unsigned int)port) == 1) {
+			return 1;
+		} else {
+			if(subnet_table) {
+				return match_subnet_table(*subnet_table, addr_group, ipa,
+						(unsigned int)port);
+			}
+		}
+	} else {
+		if(domain_list_table) {
+			return match_domain_name_table(*domain_list_table, addr_group, ips,
+					(unsigned int)port);
+		}
+	}
+	return -1;
+}
+
 /*
  * Checks if an entry exists in cached address table that belongs to a
  * given address group and has given ip address and port.  Port value
  * 0 in cached address table matches any port.
  */
-int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
+int w_allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
 		char* _port_sp)
 {
-	unsigned int port;
+	int port;
 	int addr_group;
 	str ips;
-	struct ip_addr *ipa;
 
 	if(fixup_get_ivalue(_msg, (gparam_p)_addr_group, &addr_group) !=0 ) {
 		LM_ERR("cannot get group value\n");
@@ -467,47 +492,17 @@ int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
 		return -1;
 	}
 
-	ipa=strtoipX(&ips);
-
 	if (_port_sp==NULL
-			|| (fixup_get_ivalue(_msg, (gparam_p)_port_sp, (int*)&port) < 0)) {
+			|| (fixup_get_ivalue(_msg, (gparam_p)_port_sp, &port) < 0)) {
 		LM_ERR("cannot get value of port pvar\n");
 		return -1;
 	}
 
-	if ( ipa ) {
-		if (addr_hash_table
-				&& match_addr_hash_table(*addr_hash_table, addr_group,
-					ipa, port) == 1) {
-			return 1;
-		} else {
-			if(subnet_table) {
-				return match_subnet_table(*subnet_table, addr_group, ipa, port);
-			}
-		}
-	} else {
-		if(domain_list_table) {
-			return match_domain_name_table(*domain_list_table, addr_group, &ips, port);
-		}
-	}
-	return -1;
+	return allow_address(_msg, addr_group, &ips, port);
 }
 
-
-/*
- * allow_source_address("group") equals to allow_address("group", "$si", "$sp")
- * but is faster.
- */
-int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2) 
+int allow_source_address(sip_msg_t *_msg, int addr_group)
 {
-	int addr_group = 1;
-
-	if(_addr_group!=NULL
-			&& fixup_get_ivalue(_msg, (gparam_p)_addr_group, &addr_group) !=0 ) {
-		LM_ERR("cannot get group value\n");
-		return -1;
-	}
-
 	LM_DBG("looking for <%u, %x, %u>\n",
 			addr_group, _msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
 
@@ -517,11 +512,27 @@ int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
 	} else {
 		if(subnet_table) {
 			return match_subnet_table(*subnet_table, addr_group,
-				&_msg->rcv.src_ip,
-				_msg->rcv.src_port);
+					&_msg->rcv.src_ip,
+					_msg->rcv.src_port);
 		}
 	}
 	return -1;
+}
+
+/*
+ * w_allow_source_address("group") equals to allow_address("group", "$si", "$sp")
+ * but is faster.
+ */
+int w_allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
+{
+	int addr_group = 1;
+
+	if(_addr_group!=NULL
+			&& fixup_get_ivalue(_msg, (gparam_p)_addr_group, &addr_group) !=0 ) {
+		LM_ERR("cannot get group value\n");
+		return -1;
+	}
+	return allow_source_address(_msg, addr_group);
 }
 
 
@@ -530,7 +541,7 @@ int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
  * subnet table in any group. If yes, returns that group. If not returns -1.
  * Port value 0 in cached address and group table matches any port.
  */
-int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2) 
+int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
 {
 	int group = -1;
 
@@ -538,7 +549,7 @@ int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2)
 			_msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
 	if(addr_hash_table) {
 		group = find_group_in_addr_hash_table(*addr_hash_table,
-					&_msg->rcv.src_ip, _msg->rcv.src_port);
+				&_msg->rcv.src_ip, _msg->rcv.src_port);
 		LM_DBG("Found <%d>\n", group);
 
 		if (group != -1) return group;
@@ -586,7 +597,7 @@ int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port)
 				ips.len, ips.s, port);
 		if(addr_hash_table) {
 			group = find_group_in_addr_hash_table(*addr_hash_table,
-						ipa, port);
+					ipa, port);
 			LM_DBG("Found address in group <%d>\n", group);
 
 			if (group != -1) return group;
@@ -595,7 +606,7 @@ int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port)
 			LM_DBG("looking for <%.*s, %u> in subnet table\n",
 					ips.len, ips.s, port);
 			group = find_group_in_subnet_table(*subnet_table,
-						ipa, port);
+					ipa, port);
 			LM_DBG("Found a match of subnet in group <%d>\n", group);
 		}
 	} else {
@@ -603,7 +614,7 @@ int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port)
 				ips.len, ips.s, port);
 		if(domain_list_table) {
 			group = find_group_in_domain_name_table(*domain_list_table,
-						&ips, port);
+					&ips, port);
 			LM_DBG("Found a match of domain_name in group <%d>\n", group);
 		}
 	}

@@ -16,12 +16,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
- 
+
 #ifndef PERMISSIONS_H
 #define PERMISSIONS_H 1
 
@@ -62,8 +62,8 @@ extern int peer_tag_mode; /* Matching mode */
 
 
 typedef struct int_or_pvar {
-    unsigned int i;
-    pv_spec_t *pvar;  /* zero if int */
+	unsigned int i;
+	pv_spec_t *pvar;  /* zero if int */
 } int_or_pvar_t;
 
 #define DISABLE_CACHE 0

@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -42,6 +42,7 @@
 #include "../../ut.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
+#include "../../kemi.h"
 
 MODULE_VERSION
 
@@ -88,7 +89,7 @@ static int check_all_branches = 1;
 
 int _perm_max_subnets = 512;
 
-/*  
+/*
  * Convert the name of the files into table index
  */
 static int load_fixup(void** param, int param_no);
@@ -142,11 +143,11 @@ static cmd_export_t cmds[] = {
 		fixup_free_spve_spve, ANY_ROUTE},
 	{"allow_uri",      (cmd_function)allow_uri, 2, double_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_address",  (cmd_function)allow_address, 3, fixup_allow_address,
+	{"allow_address",  (cmd_function)w_allow_address, 3, fixup_allow_address,
 		0, ANY_ROUTE},
-	{"allow_source_address", (cmd_function)allow_source_address, 1, fixup_igp_null, 0,
+	{"allow_source_address", (cmd_function)w_allow_source_address, 1, fixup_igp_null, 0,
 		ANY_ROUTE},
-	{"allow_source_address", (cmd_function)allow_source_address, 0, 0, 0,
+	{"allow_source_address", (cmd_function)w_allow_source_address, 0, 0, 0,
 		ANY_ROUTE},
 	{"allow_source_address_group", (cmd_function)allow_source_address_group, 0, 0, 0,
 		ANY_ROUTE},
@@ -331,7 +332,7 @@ static char* get_plain_uri(const str* uri)
  * -1:	deny
  * 1:	allow
  */
-static int check_routing(struct sip_msg* msg, int idx) 
+static int check_routing(struct sip_msg* msg, int idx)
 {
 	struct hdr_field *from;
 	int len, q;
@@ -436,7 +437,7 @@ check_branches:
 }
 
 
-/*  
+/*
  * Convert the name of the files into table index
  */
 static int load_fixup(void** param, int param_no)
@@ -502,7 +503,7 @@ static int single_fixup(void** param, int param_no)
 
 	strcpy(buffer, (char*)*param);
 	strcat(buffer, allow_suffix);
-	tmp = buffer; 
+	tmp = buffer;
 	ret = load_fixup(&tmp, 1);
 
 	strcpy(buffer + param_len, deny_suffix);
@@ -544,7 +545,7 @@ static int double_fixup(void** param, int param_no)
 
 		strcpy(buffer, (char*)*param);
 		strcat(buffer, allow_suffix);
-		tmp = buffer; 
+		tmp = buffer;
 		ret = load_fixup(&tmp, 1);
 
 		strcpy(buffer + param_len, deny_suffix);
@@ -588,7 +589,7 @@ static int double_fixup(void** param, int param_no)
 
 
 /*
- * module initialization function 
+ * module initialization function
  */
 static int mod_init(void)
 {
@@ -667,10 +668,10 @@ static int mi_addr_child_init(void)
 }
 
 
-/* 
- * destroy function 
+/*
+ * destroy function
  */
-static void mod_exit(void) 
+static void mod_exit(void)
 {
 	int i;
 
@@ -716,7 +717,7 @@ int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 /*
  * Test of REGISTER messages. Creates To-Contact pairs and compares them
  * against rules in allow and deny files passed as parameters. The function
- * iterates over all Contacts and creates a pair with To for each contact 
+ * iterates over all Contacts and creates a pair with To for each contact
  * found. That allows to restrict what IPs may be used in registrations, for
  * example
  */
@@ -832,7 +833,7 @@ int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file)
  * -1:	deny
  * 1:	allow
  */
-static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp) 
+static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 {
 	struct hdr_field *from;
 	int idx, len;
@@ -1029,5 +1030,32 @@ static int permissions_init_rpc(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_maxfwd_exports[] = {
+	{ str_init("permissions"), str_init("allow_source_address"),
+		SR_KEMIP_INT, allow_source_address,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("permissions"), str_init("allow_address"),
+		SR_KEMIP_INT, allow_source_address,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_maxfwd_exports);
 	return 0;
 }

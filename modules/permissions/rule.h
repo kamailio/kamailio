@@ -15,12 +15,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
- 
+
 #ifndef RULE_H
 #define RULE_H 1
 
@@ -35,7 +35,7 @@ typedef struct rule_struct rule;
 
 struct expression_struct;
 typedef struct expression_struct expression;
-	
+
 rule *new_rule(void);
 void free_rule(rule *r);
 void print_rule(rule *r);

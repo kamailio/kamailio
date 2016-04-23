@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -66,13 +66,13 @@ int reload_trusted_table(void)
 	char *pattern, *ruri_pattern, *tag;
 
 	if (hash_table == 0) {
-	    LM_ERR("in-memory hash table not initialized\n");
-	    return -1;
+		LM_ERR("in-memory hash table not initialized\n");
+		return -1;
 	}
 
 	if (db_handle == 0) {
-	    LM_ERR("no connection to database\n");
-	    return -1;
+		LM_ERR("no connection to database\n");
+		return -1;
 	}
 
 	cols[0] = &source_col;
@@ -103,59 +103,59 @@ int reload_trusted_table(void)
 	row = RES_ROWS(res);
 
 	LM_DBG("number of rows in trusted table: %d\n", RES_ROW_N(res));
-		
+
 	for (i = 0; i < RES_ROW_N(res); i++) {
-	    val = ROW_VALUES(row + i);
-	    if ((ROW_N(row + i) == 6) &&
-		((VAL_TYPE(val) == DB1_STRING) || (VAL_TYPE(val) == DB1_STR) ) && 
-		!VAL_NULL(val) &&
-		((VAL_TYPE(val + 1) == DB1_STRING) || (VAL_TYPE(val + 1) == DB1_STR))
-		&& !VAL_NULL(val + 1) &&
-		(VAL_NULL(val + 2) ||
-		 (((VAL_TYPE(val + 2) == DB1_STRING) || (VAL_TYPE(val + 2) == DB1_STR)) &&
-		!VAL_NULL(val + 2))) && (VAL_NULL(val + 3) ||
-		 (((VAL_TYPE(val + 3) == DB1_STRING) || (VAL_TYPE(val + 3) == DB1_STR) )&&
-		!VAL_NULL(val + 3))) && (VAL_NULL(val + 4) ||
-		 (((VAL_TYPE(val + 4) == DB1_STRING) || (VAL_TYPE(val + 4) == DB1_STR) )&&
-		!VAL_NULL(val + 4)))) {
-		if (VAL_NULL(val + 2)) {
-		    pattern = 0;
+		val = ROW_VALUES(row + i);
+		if ((ROW_N(row + i) == 6) &&
+				((VAL_TYPE(val) == DB1_STRING) || (VAL_TYPE(val) == DB1_STR) ) &&
+				!VAL_NULL(val) &&
+				((VAL_TYPE(val + 1) == DB1_STRING) || (VAL_TYPE(val + 1) == DB1_STR))
+				&& !VAL_NULL(val + 1) &&
+				(VAL_NULL(val + 2) ||
+				(((VAL_TYPE(val + 2) == DB1_STRING) || (VAL_TYPE(val + 2) == DB1_STR)) &&
+				!VAL_NULL(val + 2))) && (VAL_NULL(val + 3) ||
+				(((VAL_TYPE(val + 3) == DB1_STRING) || (VAL_TYPE(val + 3) == DB1_STR) )&&
+				!VAL_NULL(val + 3))) && (VAL_NULL(val + 4) ||
+				(((VAL_TYPE(val + 4) == DB1_STRING) || (VAL_TYPE(val + 4) == DB1_STR) )&&
+				!VAL_NULL(val + 4)))) {
+			if (VAL_NULL(val + 2)) {
+				pattern = 0;
+			} else {
+				pattern = (char *)VAL_STRING(val + 2);
+			}
+			if (VAL_NULL(val + 3)) {
+				ruri_pattern = 0;
+			} else {
+				ruri_pattern = (char *)VAL_STRING(val + 3);
+			}
+			if (VAL_NULL(val + 4)) {
+				tag = 0;
+			} else {
+				tag = (char *)VAL_STRING(val + 4);
+			}
+			if (VAL_NULL(val + 5)) {
+				priority = 0;
+			} else {
+				priority = (int)VAL_INT(val + 5);
+			}
+			if (hash_table_insert(new_hash_table,
+						(char *)VAL_STRING(val),
+						(char *)VAL_STRING(val + 1),
+						pattern, ruri_pattern, tag, priority) == -1) {
+				LM_ERR("hash table problem\n");
+				perm_dbf.free_result(db_handle, res);
+				empty_hash_table(new_hash_table);
+				return -1;
+			}
+			LM_DBG("tuple <%s, %s, %s, %s, %s> inserted into trusted hash "
+					"table\n", VAL_STRING(val), VAL_STRING(val + 1),
+					pattern, ruri_pattern, tag);
 		} else {
-		    pattern = (char *)VAL_STRING(val + 2);
+			LM_ERR("database problem\n");
+			perm_dbf.free_result(db_handle, res);
+			empty_hash_table(new_hash_table);
+			return -1;
 		}
-		if (VAL_NULL(val + 3)) {
-		    ruri_pattern = 0;
-		} else {
-		    ruri_pattern = (char *)VAL_STRING(val + 3);
-		}
-		if (VAL_NULL(val + 4)) {
-		    tag = 0;
-		} else {
-		    tag = (char *)VAL_STRING(val + 4);
-		}
-		if (VAL_NULL(val + 5)) {
-		    priority = 0;
-		} else {
-		    priority = (int)VAL_INT(val + 5);
-		}
-		if (hash_table_insert(new_hash_table,
-				      (char *)VAL_STRING(val),
-				      (char *)VAL_STRING(val + 1),
-				      pattern, ruri_pattern, tag, priority) == -1) {
-		    LM_ERR("hash table problem\n");
-		    perm_dbf.free_result(db_handle, res);
-		    empty_hash_table(new_hash_table);
-		    return -1;
-		}
-		LM_DBG("tuple <%s, %s, %s, %s, %s> inserted into trusted hash "
-		    "table\n", VAL_STRING(val), VAL_STRING(val + 1),
-		    pattern, ruri_pattern, tag);
-	    } else {
-		LM_ERR("database problem\n");
-		perm_dbf.free_result(db_handle, res);
-		empty_hash_table(new_hash_table);
-		return -1;
-	    }
 	}
 
 	perm_dbf.free_result(db_handle, res);
@@ -165,7 +165,7 @@ int reload_trusted_table(void)
 	empty_hash_table(old_hash_table);
 
 	LM_DBG("trusted table reloaded successfully.\n");
-	
+
 	return 1;
 }
 
@@ -178,7 +178,7 @@ int init_trusted(void)
 	/* Check if hash table needs to be loaded from trusted table */
 	if (!db_url.s) {
 		LM_INFO("db_url parameter of permissions module not set, "
-			"disabling allow_trusted\n");
+				"disabling allow_trusted\n");
 		return 0;
 	} else {
 		if (db_bind_mod(&db_url, &perm_dbf) < 0) {
@@ -210,10 +210,10 @@ int init_trusted(void)
 
 		hash_table_1 = new_hash_table();
 		if (!hash_table_1) return -1;
-		
+
 		hash_table_2  = new_hash_table();
 		if (!hash_table_2) goto error;
-		
+
 		hash_table = (struct trusted_list ***)shm_malloc
 			(sizeof(struct trusted_list **));
 		if (!hash_table) goto error;
@@ -271,7 +271,7 @@ int init_child_trusted(int rank)
 	}
 
 	if (db_check_table_version(&perm_dbf, db_handle, &trusted_table,
-				   TABLE_VERSION) < 0) {
+				TABLE_VERSION) < 0) {
 		LM_ERR("error during table version check.\n");
 		perm_dbf.close(db_handle);
 		return -1;
@@ -286,13 +286,13 @@ int init_child_trusted(int rank)
  */
 int mi_init_trusted(void)
 {
-    if (!db_url.s) return 0;
-    db_handle = perm_dbf.init(&db_url);
-    if (!db_handle) {
-	LM_ERR("unable to connect database\n");
-	return -1;
-    }
-    return 0;
+	if (!db_url.s) return 0;
+	db_handle = perm_dbf.init(&db_url);
+	if (!db_handle) {
+		LM_ERR("unable to connect database\n");
+		return -1;
+	}
+	return 0;
 }
 
 
@@ -313,10 +313,10 @@ void clean_trusted(void)
  */
 static inline int match_proto(const char *proto_string, int proto_int)
 {
-        if ((proto_int == PROTO_NONE) ||
-	                (strcasecmp(proto_string, "any") == 0))
-	        return 1;
-	
+	if ((proto_int == PROTO_NONE) ||
+			(strcasecmp(proto_string, "any") == 0))
+		return 1;
+
 	if (proto_int == PROTO_UDP) {
 		if (strcasecmp(proto_string, "udp") == 0) {
 			return 1;
@@ -324,7 +324,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_TCP) {
 		if (strcasecmp(proto_string, "tcp") == 0) {
 			return 1;
@@ -332,7 +332,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_TLS) {
 		if (strcasecmp(proto_string, "tls") == 0) {
 			return 1;
@@ -340,7 +340,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_SCTP) {
 		if (strcasecmp(proto_string, "sctp") == 0) {
 			return 1;
@@ -356,7 +356,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
 			return 0;
 		}
 	}
-	
+
 	if (proto_int == PROTO_WSS) {
 		if (strcasecmp(proto_string, "wss") == 0) {
 			return 1;
@@ -410,40 +410,40 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 	for(i = 0; i < RES_ROW_N(_r); i++) {
 		val = ROW_VALUES(row + i);
 		if ((ROW_N(row + i) == 4) &&
-		    (VAL_TYPE(val) == DB1_STRING) && !VAL_NULL(val) &&
-		    match_proto(VAL_STRING(val), proto) &&
-		    (VAL_NULL(val + 1) ||
-		      ((VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1))) &&
-		    (VAL_NULL(val + 2) ||
-		      ((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))) &&
-		    (VAL_NULL(val + 3) ||
-		      ((VAL_TYPE(val + 3) == DB1_STRING) && !VAL_NULL(val + 3))))
+				(VAL_TYPE(val) == DB1_STRING) && !VAL_NULL(val) &&
+				match_proto(VAL_STRING(val), proto) &&
+				(VAL_NULL(val + 1) ||
+				((VAL_TYPE(val + 1) == DB1_STRING) && !VAL_NULL(val + 1))) &&
+				(VAL_NULL(val + 2) ||
+				((VAL_TYPE(val + 2) == DB1_STRING) && !VAL_NULL(val + 2))) &&
+				(VAL_NULL(val + 3) ||
+				((VAL_TYPE(val + 3) == DB1_STRING) && !VAL_NULL(val + 3))))
 		{
 			if (IS_SIP(msg)) {
-			    if (!VAL_NULL(val + 1)) {
-				if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
-					LM_ERR("invalid regular expression\n");
-					if (VAL_NULL(val + 2)) {
+				if (!VAL_NULL(val + 1)) {
+					if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
+						LM_ERR("invalid regular expression\n");
+						if (VAL_NULL(val + 2)) {
+							continue;
+						}
+					}
+					if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+						regfree(&preg);
 						continue;
 					}
-				}
-				if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
 					regfree(&preg);
-					continue;
 				}
-				regfree(&preg);
-			    }
-			    if (!VAL_NULL(val + 2)) {
-				if (regcomp(&preg, (char *)VAL_STRING(val + 2), REG_NOSUB)) {
-					LM_ERR("invalid regular expression\n");
-					continue;
-				}
-				if (regexec(&preg, ruri_string, 0, (regmatch_t *)0, 0)) {
+				if (!VAL_NULL(val + 2)) {
+					if (regcomp(&preg, (char *)VAL_STRING(val + 2), REG_NOSUB)) {
+						LM_ERR("invalid regular expression\n");
+						continue;
+					}
+					if (regexec(&preg, ruri_string, 0, (regmatch_t *)0, 0)) {
+						regfree(&preg);
+						continue;
+					}
 					regfree(&preg);
-					continue;
 				}
-				regfree(&preg);
-			    }
 			}
 			/* Found a match */
 			if (tag_avp.n && !VAL_NULL(val + 3)) {
@@ -454,14 +454,14 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
 					return -1;
 				}
 			}
-			if (!peer_tag_mode) 
+			if (!peer_tag_mode)
 				return 1;
 			count++;
 		}
 	}
 	if (!count)
 		return -1;
-	else 
+	else
 		return count;
 }
 
@@ -470,22 +470,22 @@ static int match_res(struct sip_msg* msg, int proto, db1_res_t* _r)
  * Checks based on given source IP address and protocol, and From URI
  * of request if request can be trusted without authentication.
  */
-int allow_trusted(struct sip_msg* msg, char *src_ip, int proto) 
+int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 {
 	int result;
 	db1_res_t* res = NULL;
-	
+
 	db_key_t keys[1];
 	db_val_t vals[1];
 	db_key_t cols[4];
 
 	if (db_mode == DISABLE_CACHE) {
 		db_key_t order = &priority_col;
-	
-	        if (db_handle == 0) {
-		    LM_ERR("no connection to database\n");
-		    return -1;
-	        }
+
+		if (db_handle == 0) {
+			LM_ERR("no connection to database\n");
+			return -1;
+		}
 
 		keys[0] = &source_col;
 		cols[0] = &proto_col;
@@ -497,13 +497,13 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 			LM_ERR("failed to use trusted table\n");
 			return -1;
 		}
-		
+
 		VAL_TYPE(vals) = DB1_STRING;
 		VAL_NULL(vals) = 0;
 		VAL_STRING(vals) = src_ip;
 
 		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 4, order,
-				   &res) < 0){
+					&res) < 0){
 			LM_ERR("failed to query database\n");
 			return -1;
 		}
@@ -512,7 +512,7 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 			perm_dbf.free_result(db_handle, res);
 			return -1;
 		}
-		
+
 		result = match_res(msg, proto, res);
 		perm_dbf.free_result(db_handle, res);
 		return result;
@@ -526,10 +526,10 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
  * Checks based on request's source address, protocol, and From URI
  * if request can be trusted without authentication.
  */
-int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2) 
+int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2)
 {
-    return allow_trusted(_msg, ip_addr2a(&(_msg->rcv.src_ip)),
-			 _msg->rcv.proto);
+	return allow_trusted(_msg, ip_addr2a(&(_msg->rcv.src_ip)),
+			_msg->rcv.proto);
 }
 
 
@@ -537,64 +537,64 @@ int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2)
  * Checks based on source address and protocol given in pvar arguments and
  * and requests's From URI, if request can be trusted without authentication.
  */
-int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp) 
+int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp)
 {
-    str src_ip, proto;
-    int proto_int;
+	str src_ip, proto;
+	int proto_int;
 
-    if (_src_ip_sp==NULL
-	|| (fixup_get_svalue(_msg, (gparam_p)_src_ip_sp, &src_ip) != 0)) {
-	LM_ERR("src_ip param does not exist or has no value\n");
-	return -1;
-    }
-    
-    if (_proto_sp==NULL
-	|| (fixup_get_svalue(_msg, (gparam_p)_proto_sp, &proto) != 0)) {
-	LM_ERR("proto param does not exist or has no value\n");
-	return -1;
-    }
+	if (_src_ip_sp==NULL
+			|| (fixup_get_svalue(_msg, (gparam_p)_src_ip_sp, &src_ip) != 0)) {
+		LM_ERR("src_ip param does not exist or has no value\n");
+		return -1;
+	}
 
-    if(proto.len<2 || proto.len>4)
-	goto error;
+	if (_proto_sp==NULL
+			|| (fixup_get_svalue(_msg, (gparam_p)_proto_sp, &proto) != 0)) {
+		LM_ERR("proto param does not exist or has no value\n");
+		return -1;
+	}
 
-    switch(proto.s[0]) {
-    case 'a': case 'A':
-	if (proto.len==3 && strncasecmp(proto.s, "any", 3) == 0) {
-	    proto_int = PROTO_NONE;
-	} else goto error;
-	break;
-    case 'u': case 'U':
-	if (proto.len==3 && strncasecmp(proto.s, "udp", 3) == 0) {
-	    proto_int = PROTO_UDP;
-	} else goto error;
-	break;
-    case 't': case 'T':
-	if (proto.len==3 && strncasecmp(proto.s, "tcp", 3) == 0) {
-	    proto_int = PROTO_TCP;
-	} else if (proto.len==3 && strncasecmp(proto.s, "tls", 3) == 0) {
-	    proto_int = PROTO_TLS;
-	} else goto error;
-	break;
-    case 's': case 'S':
-	if (proto.len==4 && strncasecmp(proto.s, "sctp", 4) == 0) {
-	    proto_int = PROTO_SCTP;
-	} else goto error;
-	break;
-    case 'w': case 'W':
-	if (proto.len==2 && strncasecmp(proto.s, "ws", 2) == 0) {
-	    proto_int = PROTO_WS;
-	} else if (proto.len==3 && strncasecmp(proto.s, "wss", 3) == 0) {
-	    proto_int = PROTO_WSS;
-	} else goto error;
-        break;
-    default:
-	goto error;
-    }
+	if(proto.len<2 || proto.len>4)
+		goto error;
 
-    return allow_trusted(_msg, src_ip.s, proto_int);
+	switch(proto.s[0]) {
+		case 'a': case 'A':
+			if (proto.len==3 && strncasecmp(proto.s, "any", 3) == 0) {
+				proto_int = PROTO_NONE;
+			} else goto error;
+			break;
+		case 'u': case 'U':
+			if (proto.len==3 && strncasecmp(proto.s, "udp", 3) == 0) {
+				proto_int = PROTO_UDP;
+			} else goto error;
+			break;
+		case 't': case 'T':
+			if (proto.len==3 && strncasecmp(proto.s, "tcp", 3) == 0) {
+				proto_int = PROTO_TCP;
+			} else if (proto.len==3 && strncasecmp(proto.s, "tls", 3) == 0) {
+				proto_int = PROTO_TLS;
+			} else goto error;
+			break;
+		case 's': case 'S':
+			if (proto.len==4 && strncasecmp(proto.s, "sctp", 4) == 0) {
+				proto_int = PROTO_SCTP;
+			} else goto error;
+			break;
+		case 'w': case 'W':
+			if (proto.len==2 && strncasecmp(proto.s, "ws", 2) == 0) {
+				proto_int = PROTO_WS;
+			} else if (proto.len==3 && strncasecmp(proto.s, "wss", 3) == 0) {
+				proto_int = PROTO_WSS;
+			} else goto error;
+			break;
+		default:
+			goto error;
+	}
+
+	return allow_trusted(_msg, src_ip.s, proto_int);
 error:
-    LM_ERR("unknown protocol %.*s\n", proto.len, proto.s);
-    return -1;
+	LM_ERR("unknown protocol %.*s\n", proto.len, proto.s);
+	return -1;
 }
 
 

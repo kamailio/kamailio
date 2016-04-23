@@ -15,23 +15,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef ADDRESS_H
 #define ADDRESS_H
-		
+
 #include "../../parser/msg_parser.h"
 
 
 /* Pointer to current address hash table pointer */
-extern struct addr_list ***addr_hash_table; 
+extern struct addr_list ***addr_hash_table;
 
 
 /* Pointer to current subnet table */
-extern struct subnet **subnet_table; 
+extern struct subnet **subnet_table;
 
 
 /* Pointer to current domain name table */
@@ -67,20 +67,24 @@ int reload_address_table_cmd(void);
 void clean_addresses(void);
 
 
+int allow_address(sip_msg_t *_msg, int addr_group, str *ips, int port);
+
 /*
  * Checks if an entry exists in cached address table that belongs to a
  * given address group and has given ip address and port.  Port value
  * 0 in cached address table matches any port.
  */
-int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
-		  char* _port_sp);
+int w_allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
+		char* _port_sp);
 
+
+int allow_source_address(sip_msg_t *_msg, int addr_group);
 
 /*
- * allow_source_address("group") equals to allow_address("group", "$si", "$sp")
+ * w_allow_source_address("group") equals to allow_address("group", "$si", "$sp")
  * but is faster.
  */
-int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2);
+int w_allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2);
 
 
 /*

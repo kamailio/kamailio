@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -106,11 +106,11 @@ void rpc_trusted_dump(rpc_t* rpc, void* c) {
  */
 struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
 {
-    if (reload_address_table_cmd () == 1) {
-	return init_mi_tree( 200, MI_SSTR(MI_OK));
-    } else {
-	return init_mi_tree( 400, MI_SSTR("Address table reload failed"));
-    }
+	if (reload_address_table_cmd () == 1) {
+		return init_mi_tree( 200, MI_SSTR(MI_OK));
+	} else {
+		return init_mi_tree( 400, MI_SSTR("Address table reload failed"));
+	}
 }
 
 /*! \brief
@@ -131,18 +131,18 @@ void rpc_address_reload(rpc_t* rpc, void* c) {
  */
 struct mi_root* mi_address_dump(struct mi_root *cmd_tree, void *param)
 {
-    struct mi_root* rpl_tree;
-    
-    rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
-    if (rpl_tree==NULL) return 0;
-    
-    if(addr_hash_table_mi_print(*addr_hash_table, &rpl_tree->node) <  0) {
-	LM_ERR("failed to add a node\n");
-	free_mi_tree(rpl_tree);
-	return 0;
-    }
+	struct mi_root* rpl_tree;
 
-    return rpl_tree;
+	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
+	if (rpl_tree==NULL) return 0;
+
+	if(addr_hash_table_mi_print(*addr_hash_table, &rpl_tree->node) <  0) {
+		LM_ERR("failed to add a node\n");
+		free_mi_tree(rpl_tree);
+		return 0;
+	}
+
+	return rpl_tree;
 }
 
 /*! \brief
@@ -167,18 +167,18 @@ void rpc_address_dump(rpc_t* rpc, void* c) {
  */
 struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
 {
-    struct mi_root* rpl_tree;
-    
-    rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
-    if (rpl_tree==NULL) return 0;
-    
-    if(subnet_table && subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
-	LM_ERR("failed to add a node\n");
-	free_mi_tree(rpl_tree);
-	return 0;
-    }
+	struct mi_root* rpl_tree;
 
-    return rpl_tree;
+	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
+	if (rpl_tree==NULL) return 0;
+
+	if(subnet_table && subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
+		LM_ERR("failed to add a node\n");
+		free_mi_tree(rpl_tree);
+		return 0;
+	}
+
+	return rpl_tree;
 }
 
 /*! \brief
@@ -239,51 +239,51 @@ void rpc_domain_name_dump(rpc_t* rpc, void* c) {
  */
 struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
 {
-    struct mi_node *node;
-    str *basenamep, *urip, *contactp;
-    char basename[MAX_FILE_LEN + 1];
-    char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1]; 
-    unsigned int allow_suffix_len;
+	struct mi_node *node;
+	str *basenamep, *urip, *contactp;
+	char basename[MAX_FILE_LEN + 1];
+	char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1];
+	unsigned int allow_suffix_len;
 
-    node = cmd->node.kids;
-    if (node == NULL || node->next == NULL || node->next->next == NULL ||
-	node->next->next->next != NULL)
-	return init_mi_tree(400, MI_SSTR(MI_MISSING_PARM));
-    
-    /* look for base name */
-    basenamep = &node->value;
-    if (basenamep == NULL)
-	return init_mi_tree(404, MI_SSTR("Basename is NULL"));
-    allow_suffix_len = strlen(allow_suffix);
-    if (basenamep->len + allow_suffix_len + 1 > MAX_FILE_LEN)
-	return init_mi_tree(404, MI_SSTR("Basename is too long"));
-    memcpy(basename, basenamep->s, basenamep->len);
-    memcpy(basename + basenamep->len, allow_suffix, allow_suffix_len);
-    basename[basenamep->len + allow_suffix_len] = 0;
+	node = cmd->node.kids;
+	if (node == NULL || node->next == NULL || node->next->next == NULL ||
+			node->next->next->next != NULL)
+		return init_mi_tree(400, MI_SSTR(MI_MISSING_PARM));
 
-    /* look for uri */
-    urip = &node->next->value;
-    if (urip == NULL)
-	return init_mi_tree(404, MI_SSTR("URI is NULL"));
-    if (urip->len > MAX_URI_SIZE)
-	return init_mi_tree(404, MI_SSTR("URI is too long"));
-    memcpy(uri, urip->s, urip->len);
-    uri[urip->len] = 0;
+	/* look for base name */
+	basenamep = &node->value;
+	if (basenamep == NULL)
+		return init_mi_tree(404, MI_SSTR("Basename is NULL"));
+	allow_suffix_len = strlen(allow_suffix);
+	if (basenamep->len + allow_suffix_len + 1 > MAX_FILE_LEN)
+		return init_mi_tree(404, MI_SSTR("Basename is too long"));
+	memcpy(basename, basenamep->s, basenamep->len);
+	memcpy(basename + basenamep->len, allow_suffix, allow_suffix_len);
+	basename[basenamep->len + allow_suffix_len] = 0;
 
-    /* look for contact */
-    contactp = &node->next->next->value;
-    if (contactp == NULL)
-	return init_mi_tree(404, MI_SSTR("Contact is NULL"));
-    if (contactp->len > MAX_URI_SIZE)
-	return init_mi_tree(404, MI_SSTR("Contact is too long"));
-    memcpy(contact, contactp->s, contactp->len);
-    contact[contactp->len] = 0;
+	/* look for uri */
+	urip = &node->next->value;
+	if (urip == NULL)
+		return init_mi_tree(404, MI_SSTR("URI is NULL"));
+	if (urip->len > MAX_URI_SIZE)
+		return init_mi_tree(404, MI_SSTR("URI is too long"));
+	memcpy(uri, urip->s, urip->len);
+	uri[urip->len] = 0;
 
-    if (allow_test(basename, uri, contact) == 1) {
-	return init_mi_tree(200, MI_SSTR(MI_OK));
-    } else {
-	return init_mi_tree(403, MI_SSTR("Forbidden"));
-    }
+	/* look for contact */
+	contactp = &node->next->next->value;
+	if (contactp == NULL)
+		return init_mi_tree(404, MI_SSTR("Contact is NULL"));
+	if (contactp->len > MAX_URI_SIZE)
+		return init_mi_tree(404, MI_SSTR("Contact is too long"));
+	memcpy(contact, contactp->s, contactp->len);
+	contact[contactp->len] = 0;
+
+	if (allow_test(basename, uri, contact) == 1) {
+		return init_mi_tree(200, MI_SSTR(MI_OK));
+	} else {
+		return init_mi_tree(403, MI_SSTR("Forbidden"));
+	}
 }
 
 /*! \brief
@@ -291,9 +291,9 @@ struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
  */
 void rpc_test_uri(rpc_t* rpc, void* c)
 {
-    	str basenamep, urip, contactp;
+	str basenamep, urip, contactp;
 	char basename[MAX_FILE_LEN + 1];
-	char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1]; 
+	char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1];
 	unsigned int allow_suffix_len;
 
 	if (rpc->scan(c, "S", &basenamep) != 1) {
@@ -310,7 +310,7 @@ void rpc_test_uri(rpc_t* rpc, void* c)
 	}
 
 	/* For some reason, rtp->scan doesn't set the length properly */
-    	if (contactp.len > MAX_URI_SIZE) {
+	if (contactp.len > MAX_URI_SIZE) {
 		rpc->fault(c, 500, "Contact is too long");
 		return;
 	}
@@ -323,10 +323,10 @@ void rpc_test_uri(rpc_t* rpc, void* c)
 	memcpy(basename, basenamep.s, basenamep.len);
 	memcpy(basename + basenamep.len, allow_suffix, allow_suffix_len);
 	basename[basenamep.len + allow_suffix_len] = 0;
-    	memcpy(uri, urip.s, urip.len);
+	memcpy(uri, urip.s, urip.len);
 	memcpy(contact, contactp.s, contactp.len);
 	contact[contactp.len] = 0;
-    	uri[urip.len] = 0;
+	uri[urip.len] = 0;
 
 	if (allow_test(basename, uri, contact) == 1) {
 		rpc->rpl_printf(c, "Allowed");
