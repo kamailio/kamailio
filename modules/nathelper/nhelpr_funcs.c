@@ -14,16 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-11-06  body len is computed using the message len (it's
- *               not taken any more from the msg. content-length) (andrei)
- *  2008-08-30  body len is taken from Conent-length header as it is more 
- *               reliable (UDP packages may contain garbage at the end)(bogdan)
  */
 
 #include <stdio.h>
@@ -111,7 +105,7 @@ int check_content_type(struct sip_msg *msg)
 	if (str_type.len>=15 && (*str_type.s=='m' || *str_type.s=='M')
 			&& strncasecmp(str_type.s, "multipart/mixed", 15) == 0) {
 		return 2;
-    }
+	}
 	p = str_type.s;
 	advance(p,4,str_type,error_1);
 	x = READ(p-4);
@@ -172,13 +166,13 @@ int extract_body(struct sip_msg *msg, str *body )
 	char *rest, *p1, *p2;
 	struct hdr_field hf;
 	unsigned int mime;
-	
+
 	body->s = get_body(msg);
 	if (body->s==0) {
 		LM_ERR("failed to get the message body\n");
 		goto error;
 	}
-	
+
 	/*
 	 * Better use the content-len value - no need of any explicit
 	 * parcing as get_body() parsed all headers and Conten-Length
@@ -201,7 +195,7 @@ int extract_body(struct sip_msg *msg, str *body )
 		goto error;
 	}
 
-	/* no need for parse_headers(msg, EOH), get_body will 
+	/* no need for parse_headers(msg, EOH), get_body will
 	 * parse everything */
 	/*is the content type correct?*/
 	if((ret = check_content_type(msg))==-1)
@@ -292,22 +286,21 @@ done:
 int
 get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
 {
+	if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
+		return -1;
+	if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
+		LM_ERR("failed to parse Contact body\n");
+		return -1;
+	}
+	*_c = ((contact_body_t*)_m->contact->parsed)->contacts;
+	if (*_c == NULL)
+		/* no contacts found */
+		return -1;
 
-        if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
-                return -1;
-        if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
-                LM_ERR("failed to parse Contact body\n");
-                return -1;
-        }
-        *_c = ((contact_body_t*)_m->contact->parsed)->contacts;
-        if (*_c == NULL)
-                /* no contacts found */
-                return -1;
-
-        if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-                LM_ERR("failed to parse Contact URI [%.*s]\n",
-                        (*_c)->uri.len, ((*_c)->uri.s)?(*_c)->uri.s:"");
-                return -1;
-        }
-        return 0;
+	if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
+		LM_ERR("failed to parse Contact URI [%.*s]\n",
+			(*_c)->uri.len, ((*_c)->uri.s)?(*_c)->uri.s:"");
+		return -1;
+	}
+	return 0;
 }
