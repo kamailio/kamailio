@@ -30,7 +30,7 @@
 #include "../../ut.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
-#include "uridb_mod.h"
+#include "uri_db.h"
 #include "checks.h"
 
 MODULE_VERSION

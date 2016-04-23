@@ -29,7 +29,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../ut.h"                   /* Handy utilities */
 #include "../../lib/srdb1/db.h"                /* Database API */
-#include "uridb_mod.h"
+#include "uri_db.h"
 #include "checks.h"
 
 static db1_con_t* db_handle = 0;   /* Database connection handle */
