@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -354,15 +354,15 @@ int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
 		return -1;
 	}
 
-	/* Remove visual separators before converting to SIP URI. Don't remove 
-	   visual separators in TEL URI parameters (after the first ";") */
+	/* Remove visual separators before converting to SIP URI. Don't remove
+	 * visual separators in TEL URI parameters (after the first ";") */
 	for (i=0, j=0; i < uri.len; i++) {
 		if (in_tel_parameters == 0) {
 			if (uri.s[i] == ';')
 				in_tel_parameters = 1;
 		}
 		if (in_tel_parameters == 0) {
-			if ((uri.s[i] != '-') && (uri.s[i] != '.') && 
+			if ((uri.s[i] != '-') && (uri.s[i] != '.') &&
 					(uri.s[i] != '(') && (uri.s[i] != ')'))
 				tel_uri.s[j++] = tolower(uri.s[i]);
 		} else {

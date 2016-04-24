@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -97,7 +97,7 @@ void get_rpid_avp( int_str *rpid_avp_p, int *rpid_avp_type_p )
 
 /*!
  * \brief Check if user is a E164 number
- * \param _user user 
+ * \param _user user
  * \note Copy of is_e164 from enum module
  * \return 1 if its a E164 number, -1 if not
  */
@@ -105,7 +105,7 @@ static inline int is_e164(str* _user)
 {
 	int i;
 	char c;
-	
+
 	if ((_user->len > 2) && (_user->len < 17) && ((_user->s)[0] == '+')) {
 		for (i = 1; i < _user->len; i++) {
 			c = (_user->s)[i];
@@ -113,7 +113,7 @@ static inline int is_e164(str* _user)
 		}
 		return 1;
 	} else {
-	    return -1;
+		return -1;
 	}
 }
 
@@ -128,18 +128,18 @@ static inline int is_e164(str* _user)
 static inline int append_rpid_helper(struct sip_msg* _m, str *_s)
 {
 	struct lump* anchor;
-	
+
 	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse message\n");
 		return -1;
 	}
-	
+
 	anchor = anchor_lump(_m, _m->unparsed - _m->buf, 0, 0);
 	if (!anchor) {
 		LM_ERR("can't get anchor\n");
 		return -2;
 	}
-	
+
 	if (!insert_new_lump_before(anchor, _s->s, _s->len, 0)) {
 		LM_ERR("can't insert lump\n");
 		return -3;
@@ -321,8 +321,8 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 
 	if (parse_uri(tmp.s, tmp.len, &uri) < 0) {
-	    LM_ERR("failed to parse RPID URI\n");
-	    goto err;
+		LM_ERR("failed to parse RPID URI\n");
+		goto err;
 	}
 
 	return is_e164(&uri.user);

@@ -155,7 +155,7 @@ static unsigned int hash(char *buf, int len)
 	unsigned int retval = 0;
 	MD5_CTX md5context;
 	char digest[16];
-	
+
 	MD5Init(&md5context);
 	MD5Update(&md5context, buf, len);
 	MD5Final(digest, &md5context);
@@ -196,7 +196,7 @@ static void insert(str callid)
 {
 	unsigned int index = hash(callid.s, callid.len) & HASHTABLEMASK;
 	struct ring_record_t* rr;
-	
+
 	remove_timeout(index);
 	rr = shm_malloc(sizeof(struct ring_record_t));
 	assert(rr);
@@ -261,7 +261,7 @@ static int conv183(struct sip_msg *msg)
 	char *chunk3_start;
 	int chunk3_len;
 	char *chunk3_dst;
-	
+
 	if (del1_start>del2_start) {
 		char *tmp = del1_start;
 		del1_start = del2_start;

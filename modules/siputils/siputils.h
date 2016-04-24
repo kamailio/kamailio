@@ -45,13 +45,13 @@ int bind_siputils(siputils_api_t* api);
 
 inline static int siputils_load_api(siputils_api_t *pxb)
 {
-        bind_siputils_t bind_siputils_exports;
-        if (!(bind_siputils_exports = (bind_siputils_t)find_export("bind_siputils", 1, 0)))
-        {
-                LM_ERR("Failed to import bind_siputils\n");
-                return -1;
-        }
-        return bind_siputils_exports(pxb);
+	bind_siputils_t bind_siputils_exports;
+	if (!(bind_siputils_exports = (bind_siputils_t)find_export("bind_siputils", 1, 0)))
+	{
+		LM_ERR("Failed to import bind_siputils\n");
+		return -1;
+	}
+	return bind_siputils_exports(pxb);
 }
 
 #endif

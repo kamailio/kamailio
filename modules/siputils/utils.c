@@ -41,7 +41,7 @@
 
 int
 patch (struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
-       unsigned int newlen)
+		unsigned int newlen)
 {
 	int off;
 	struct lump *anchor;
@@ -105,8 +105,7 @@ patch_content_length (struct sip_msg *msg, unsigned int newValue)
 	}
 	memcpy (s, pos, len);
 	/* perhaps we made it and no one called int2str,might use sprintf */
-	if (patch
-	    (msg, contentLength->body.s, contentLength->body.len, s, len) < 0)
+	if (patch(msg, contentLength->body.s, contentLength->body.len, s, len)<0)
 	{
 		pkg_free (s);
 		LM_ERR("lumping failed\n");

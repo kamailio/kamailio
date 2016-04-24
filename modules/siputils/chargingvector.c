@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -80,7 +80,7 @@ static void sip_generate_charging_vector(char * pcv)
 					if (in->s_addr == LOOPBACK_IP )
 					{
 						if ( ip.s_addr  == 0 )
-						{  
+						{
 							ip=*in;
 						}
 					}
@@ -105,7 +105,7 @@ static void sip_generate_charging_vector(char * pcv)
 	{
 		if ( idx < 7 )
 		{
-			// 3-6 =IP 
+			// 3-6 =IP
 			newConferenceIdentifier[idx]=((ip.s_addr>>(ipx*8))&0xff);
 			ipx++;
 		}
@@ -221,13 +221,13 @@ static int sip_get_charging_vector(struct sip_msg *msg, struct hdr_field ** hf_p
 
 		if ( cmp_hdrname_str(&hf->name, &hdrname) == 0)
 		{
-			/* 
+			/*
 			 * append p charging vector valus after the header name "P-Charging-Vector" and
 			 * the ": " (+2)
 			 */
 			char * pcv_body = pcv_buf + strlen(P_CHARGING_VECTOR) + 2;
 
-			if (hf->body.len > 0) 
+			if (hf->body.len > 0)
 			{
 				memcpy( pcv_body, hf->body.s, hf->body.len );
 				pcv.len = hf->body.len + strlen(P_CHARGING_VECTOR) + 2;
@@ -265,7 +265,7 @@ static int  sip_remove_charging_vector(struct sip_msg *msg, struct hdr_field *hf
 	if ( hf != NULL )
 	{
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
-		if (l==0) 
+		if (l==0)
 		{
 			LM_ERR("no memory\n");
 			return -1;
@@ -284,7 +284,7 @@ static int sip_add_charging_vector(struct sip_msg *msg)
 	char * s;
 
 	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
-	if(anchor == 0) 
+	if(anchor == 0)
 	{
 		LM_ERR("can't get anchor\n");
 		return -1;
@@ -311,7 +311,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 	int generate_pcv = 0;
 	int remove_pcv = 0;
 	int replace_pcv = 0;
-	int i;    
+	int i;
 	str flag_str;
 	struct hdr_field * hf_pcv = NULL;
 
@@ -358,7 +358,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 		if (i <= 0) return i;
 	}
 
-	/* Generate PCV if 
+	/* Generate PCV if
 	 * - we were asked to generate it and it could not be obtained from the inbound packet
 	 * - or if we were asked to replace it alltogether regardless its former value
 	 */
@@ -379,8 +379,8 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 
 		sip_generate_charging_vector(pcv_value);
 
-		pcv.len = snprintf( pcv_body, PVC_BUF_SIZE - 19, "icid-value=%.*s; icid-generated-at=%.*s\r\n", 32, pcv_value, 
-				msg->rcv.bind_address->address_str.len, 
+		pcv.len = snprintf( pcv_body, PVC_BUF_SIZE - 19, "icid-value=%.*s; icid-generated-at=%.*s\r\n", 32, pcv_value,
+				msg->rcv.bind_address->address_str.len,
 				msg->rcv.bind_address->address_str.s );
 		pcv.len += 19;
 
@@ -441,7 +441,7 @@ int pv_get_charging_vector(struct sip_msg *msg, pv_param_t *param, pv_value_t *r
 					break;
 			}
 
-			if ( pcv_pv.len > 0 ) 
+			if ( pcv_pv.len > 0 )
 				return pv_get_strval(msg, param, res, &pcv_pv );
 			else
 				LM_WARN("No value for pseudo-var $pcv but status was %d.\n", pcv_status);
