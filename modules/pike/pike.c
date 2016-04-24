@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -35,6 +35,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../timer.h"
 #include "../../locking.h"
+#include "../../kemi.h"
 #include "ip_tree.h"
 #include "timer.h"
 #include "pike_mi.h"
@@ -63,7 +64,7 @@ struct list_link*       timer = 0;
 
 
 static cmd_export_t cmds[]={
-	{"pike_check_req", (cmd_function)pike_check_req,  0,  0, 0, REQUEST_ROUTE},
+	{"pike_check_req", (cmd_function)w_pike_check_req,  0,  0, 0, REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -180,4 +181,24 @@ static int pike_exit(void)
 	return 0;
 }
 
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_pike_exports[] = {
+	{ str_init("pike"), str_init("pike_check_req"),
+		SR_KEMIP_INT, pike_check_req,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_pike_exports);
+	return 0;
+}

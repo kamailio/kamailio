@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -87,10 +87,10 @@ void unlock_tree_branch(unsigned char b);
 struct ip_node* get_tree_branch(unsigned char b);
 
 typedef enum {
-        NODE_STATUS_OK    = 0,
-        NODE_STATUS_WARM  = 1,
-        NODE_STATUS_HOT   = 2,
-        NODE_STATUS_ALL   = 3   /** used for status matching */
+	NODE_STATUS_OK    = 0,
+	NODE_STATUS_WARM  = 1,
+	NODE_STATUS_HOT   = 2,
+	NODE_STATUS_ALL   = 3   /** used for status matching */
 } node_status_t;
 node_status_t node_status(struct ip_node *node);
 extern char *node_status_array[];

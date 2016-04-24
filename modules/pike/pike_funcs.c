@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -53,7 +53,7 @@ void pike_counter_init()
 
 
 
-int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
+int pike_check_req(sip_msg_t *msg)
 {
 	struct ip_node *node;
 	struct ip_node *father;
@@ -96,7 +96,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	lock_get(timer_lock);
 	if ( flags&NEW_NODE ) {
 		/* put this node into the timer list and remove its
-		   father only if this has one kid and is not a LEAF_NODE*/
+		 * father only if this has one kid and is not a LEAF_NODE*/
 		node->expires =  get_ticks() + timeout;
 		append_to_timer( timer, &(node->timer_ll) );
 		node->flags |= NODE_INTIMER_FLAG;
@@ -124,7 +124,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 			/* tree leafs which are not potential red nodes are not update in
 			 * order to make them to expire */
 			/* debug */
-			assert( has_timer_set(&(node->timer_ll)) 
+			assert( has_timer_set(&(node->timer_ll))
 				&& (node->flags&(NODE_EXPIRED_FLAG|NODE_INTIMER_FLAG)) );
 			/* if node exprired, ignore the current hit and let is
 			 * expire in timer process */
@@ -134,7 +134,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 			}
 		} else {
 			/* debug */
-			assert( !has_timer_set(&(node->timer_ll)) 
+			assert( !has_timer_set(&(node->timer_ll))
 				&& !(node->flags&(NODE_INTIMER_FLAG|NODE_EXPIRED_FLAG)) );
 			/* debug */
 			assert( !(node->flags&NODE_IPLEAF_FLAG) && node->kids );
@@ -159,6 +159,10 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 }
 
 
+int w_pike_check_req(struct sip_msg *msg, char *foo, char *bar)
+{
+	return pike_check_req(msg);
+}
 
 void clean_routine(unsigned int ticks , void *param)
 {
@@ -216,7 +220,7 @@ void clean_routine(unsigned int ticks , void *param)
 				continue;
 
 			/* process the node */
-			LM_DBG("clean node %p (kids=%p; hits=[%d,%d];leaf=[%d,%d])\n", 
+			LM_DBG("clean node %p (kids=%p; hits=[%d,%d];leaf=[%d,%d])\n",
 				node,node->kids,
 				node->hits[PREV_POS],node->hits[CURR_POS],
 				node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS]);

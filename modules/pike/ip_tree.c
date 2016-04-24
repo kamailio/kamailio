@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -141,7 +141,7 @@ error:
 	return -1;
 }
 
-unsigned int get_max_hits() { return root != 0 ? root->max_hits : -1; } 
+unsigned int get_max_hits() { return root != 0 ? root->max_hits : -1; }
 
 /* destroy an ip_node and all nodes under it; the nodes must be first removed
  * from any other lists/timers */
@@ -234,15 +234,15 @@ struct ip_node *split_node(struct ip_node* dad, unsigned char byte)
 
 #define is_hot_non_leaf(_node) \
 	( (_node)->hits[PREV_POS]>=root->max_hits>>2 ||\
-	  (_node)->hits[CURR_POS]>=root->max_hits>>2 ||\
-	  (((_node)->hits[PREV_POS]+(_node)->hits[CURR_POS])>>1)>=\
-		 root->max_hits>>2 )
+		(_node)->hits[CURR_POS]>=root->max_hits>>2 ||\
+		(((_node)->hits[PREV_POS]+(_node)->hits[CURR_POS])>>1)>=\
+			root->max_hits>>2 )
 
 #define is_hot_leaf(_node) \
 	( (_node)->leaf_hits[PREV_POS]>=root->max_hits ||\
-	  (_node)->leaf_hits[CURR_POS]>=root->max_hits ||\
-	  (((_node)->leaf_hits[PREV_POS]+(_node)->leaf_hits[CURR_POS])>>1)>=\
-		 root->max_hits )
+		(_node)->leaf_hits[CURR_POS]>=root->max_hits ||\
+		(((_node)->leaf_hits[PREV_POS]+(_node)->leaf_hits[CURR_POS])>>1)>=\
+			root->max_hits )
 
 #define is_warm_leaf(_node) \
 	( (_node)->hits[CURR_POS]>=root->max_hits>>2 )
@@ -260,13 +260,13 @@ int is_node_hot_leaf(struct ip_node *node)
 char *node_status_array[] = {"", "WARM", "HOT", "ALL"};
 node_status_t node_status(struct ip_node *node)
 {
-        if ( is_hot_leaf(node) )
-                return NODE_STATUS_HOT;
+	if ( is_hot_leaf(node) )
+		return NODE_STATUS_HOT;
 
-        if ( is_warm_leaf(node) )
-                return NODE_STATUS_WARM;
+	if ( is_warm_leaf(node) )
+		return NODE_STATUS_WARM;
 
-        return NODE_STATUS_OK;
+	return NODE_STATUS_OK;
 }
 
 
