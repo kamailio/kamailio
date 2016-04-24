@@ -29,21 +29,21 @@
 #include "../../sr_module.h"
 #include "../../parser/msg_parser.h"
 
-typedef int (*regapi_save_f)(struct sip_msg *msg, char *table, int flags);
-int regapi_save(struct sip_msg *msg, char *table, int flags);
+typedef int (*regapi_save_f)(sip_msg_t *msg, str *table, int flags);
+int regapi_save(sip_msg_t *msg, str *table, int flags);
 
-typedef int (*regapi_save_uri_f)(struct sip_msg *msg, char *table, int flags, str *uri);
-int regapi_save_uri(struct sip_msg *msg, char *table, int flags, str *uri);
+typedef int (*regapi_save_uri_f)(sip_msg_t *msg, str *table, int flags, str *uri);
+int regapi_save_uri(sip_msg_t *msg, str *table, int flags, str *uri);
 
-typedef int (*regapi_lookup_f)(struct sip_msg *msg, char *table);
-int regapi_lookup(struct sip_msg *msg, char *table);
+typedef int (*regapi_lookup_f)(sip_msg_t *msg, str *table);
+int regapi_lookup(sip_msg_t *msg, str *table);
 
-typedef int (*regapi_lookup_uri_f)(struct sip_msg *msg, char *table, str *uri);
-int regapi_lookup_uri(struct sip_msg *msg, char *table, str *uri);
-int regapi_lookup_to_dset(struct sip_msg *msg, char *table, str *uri);
+typedef int (*regapi_lookup_uri_f)(sip_msg_t *msg, str *table, str *uri);
+int regapi_lookup_uri(sip_msg_t *msg, str *table, str *uri);
+int regapi_lookup_to_dset(sip_msg_t *msg, str *table, str *uri);
 
-typedef int (*regapi_set_q_override_f)(struct sip_msg *msg, str *new_q);
-int regapi_set_q_override(struct sip_msg *msg, str *new_q);
+typedef int (*regapi_set_q_override_f)(sip_msg_t *msg, str *new_q);
+int regapi_set_q_override(sip_msg_t *msg, str *new_q);
 
 /**
  * @brief REGISTRAR API structure
