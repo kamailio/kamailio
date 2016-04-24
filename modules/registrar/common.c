@@ -15,10 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *	
+ *
  */
 
 /*!
@@ -27,7 +27,7 @@
  * \ingroup registrar
  */
 
-#include <string.h> 
+#include <string.h>
 #include "../../dprint.h"
 #include "rerrno.h"
 #include "reg_mod.h"
@@ -48,7 +48,7 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 	int user_len;
 	str *uri;
 	str realm_prefix = {0};
-	
+
 	memset(aor_buf, 0, MAX_AOR_LEN);
 	uri=_uri;
 
@@ -62,7 +62,7 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 		LM_ERR("failed to parse AoR [%.*s]\n", uri->len, uri->s);
 		return -1;
 	}
-	
+
 	if ( (puri->user.len + puri->host.len + 1) > MAX_AOR_LEN
 	|| puri->user.len > USERNAME_MAX_SIZE
 	||  puri->host.len > DOMAIN_MAX_SIZE ) {
@@ -86,7 +86,7 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 		if (user_len)
 			aor_buf[_a->len++] = '@';
 		/* strip prefix (if defined) */
- 		realm_prefix.len = cfg_get(registrar, registrar_cfg, realm_pref).len;
+		realm_prefix.len = cfg_get(registrar, registrar_cfg, realm_pref).len;
 		if(realm_prefix.len>0) {
 			realm_prefix.s = cfg_get(registrar, registrar_cfg, realm_pref).s;
 			LM_DBG("realm prefix is [%.*s]\n", realm_prefix.len,

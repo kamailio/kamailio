@@ -15,16 +15,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
  * \file
  * \brief SIP registrar module - export contacts as PV
- * \ingroup registrar   
- */  
+ * \ingroup registrar
+ */
 
 
 #include <string.h>
@@ -301,7 +301,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 			break;
 		pa.s++;
 	}
-	
+
 	if(pa.s >= in->s + in->len - 2)
 	{
 		LM_ERR("invalid contact pv name %.*s\n", in->len, in->s);
@@ -339,17 +339,17 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 
 	switch(pa.len)
 	{
-		case 1: 
+		case 1:
 			if(strncmp(pa.s, "q", 1)==0)
 				rp->attr = 8;
 			else goto error;
 		break;
-		case 3: 
+		case 3:
 			if(strncmp(pa.s, "aor", 3)==0)
 				rp->attr = 0;
 			else goto error;
 		break;
-		case 4: 
+		case 4:
 			if(strncmp(pa.s, "addr", 4)==0)
 				rp->attr = 3;
 			else if(strncmp(pa.s, "path", 4)==0)
@@ -360,7 +360,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 18;
 			else goto error;
 		break;
-		case 5: 
+		case 5:
 			if(strncmp(pa.s, "flags", 5)==0)
 				rp->attr = 10;
 			else if(strncmp(pa.s, "count", 5)==0)
@@ -371,7 +371,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 21;
 			else goto error;
 		break;
-		case 6: 
+		case 6:
 			if(strncmp(pa.s, "domain", 6)==0)
 				rp->attr = 1;
 			else if(strncmp(pa.s, "callid", 6)==0)
@@ -382,7 +382,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 14;
 			else goto error;
 		break;
-		case 7: 
+		case 7:
 			if(strncmp(pa.s, "aorhash", 7)==0)
 				rp->attr = 2;
 			else if(strncmp(pa.s, "expires", 7)==0)
@@ -391,7 +391,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 16;
 			else goto error;
 		break;
-		case 8: 
+		case 8:
 			if(strncmp(pa.s, "received", 8)==0)
 				rp->attr = 5;
 			else if(strncmp(pa.s, "modified", 8)==0)
@@ -400,7 +400,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 				rp->attr = 20;
 			else goto error;
 		break;
-		case 10: 
+		case 10:
 			if(strncmp(pa.s, "user_agent", 10)==0)
 				rp->attr = 12;
 			else goto error;
@@ -504,7 +504,7 @@ int pv_fetch_contacts(struct sip_msg* msg, char* table, char* uri,
 		memcpy(c0->c.s, ptr->c.s, ptr->c.len);
 		c0->c.len = ptr->c.len;
 		p = c0->c.s + c0->c.len;
-		
+
 		if(ptr->received.s!=NULL)
 		{
 			c0->received.s = p;

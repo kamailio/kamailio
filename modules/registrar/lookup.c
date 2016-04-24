@@ -15,16 +15,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 /*!
  * \file
  * \brief SIP registrar module - lookup contacts in usrloc
- * \ingroup registrar  
- */  
+ * \ingroup registrar
+ */
 
 
 #include <string.h>
@@ -82,14 +82,14 @@ int reg_cmp_instances(str *i1, str *i2)
  * Lookup a contact in usrloc and rewrite R-URI if found
  */
 int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri) {
-     return lookup_helper(_m, _d, _uri, 0);
+	return lookup_helper(_m, _d, _uri, 0);
 }
 
 /*! \brief
  * Lookup a contact in usrloc and add the records to the dset structure
  */
 int lookup_to_dset(struct sip_msg* _m, udomain_t* _d, str* _uri) {
-     return lookup_helper(_m, _d, _uri, 1);
+	return lookup_helper(_m, _d, _uri, 1);
 }
 
 /*! \brief
@@ -168,7 +168,7 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
-	
+
 	if (extract_aor((_uri)?_uri:&uri, &aor, &puri) < 0) {
 		LM_ERR("failed to extract address of record\n");
 		return -3;
@@ -340,26 +340,26 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 		}
 
 		if (ptr->instance.len) {
-		    if (set_instance(_m, &(ptr->instance)) < 0) {
+			if (set_instance(_m, &(ptr->instance)) < 0) {
 				ret = -3;
 				goto done;
-		    }
+			}
 		}
-		
+
 		_m->reg_id = ptr->reg_id;
 
 		if (ptr->ruid.len) {
-		    if (set_ruid(_m, &(ptr->ruid)) < 0) {
+			if (set_ruid(_m, &(ptr->ruid)) < 0) {
 				ret = -3;
 				goto done;
-		    }
+			}
 		}
 
 		if (ptr->user_agent.len) {
-		    if (set_ua(_m, &(ptr->user_agent)) < 0) {
+			if (set_ua(_m, &(ptr->user_agent)) < 0) {
 				ret = -3;
 				goto done;
-		    }
+			}
 		}
 
 		set_ruri_q(ptr->q);
@@ -422,18 +422,18 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 				path_dst.len = 0;
 			}
 
-			/* The same as for the first contact applies for branches 
+			/* The same as for the first contact applies for branches
 			 * regarding path vs. received. */
 			LM_DBG("instance is %.*s\n",
-			       ptr->instance.len, ptr->instance.s);
+				ptr->instance.len, ptr->instance.s);
 			if (append_branch(_m, &ptr->c,
-					  path_dst.len?&path_dst:&ptr->received,
-					  path_dst.len?&path_str:0, ptr->q, ptr->cflags,
-					  ptr->sock,
-					  ptr->instance.len?&(ptr->instance):0,
-				          ptr->instance.len?ptr->reg_id:0,
-					  &ptr->ruid, &ptr->user_agent)
-			    == -1) {
+					path_dst.len?&path_dst:&ptr->received,
+					path_dst.len?&path_str:0, ptr->q, ptr->cflags,
+					ptr->sock,
+					ptr->instance.len?&(ptr->instance):0,
+						ptr->instance.len?ptr->reg_id:0,
+						&ptr->ruid, &ptr->user_agent)
+					== -1) {
 				LM_ERR("failed to append a branch\n");
 				/* Also give a chance to the next branches*/
 				continue;
@@ -484,19 +484,19 @@ int clear_ruri_branch(sip_msg_t *msg)
  */
 int reset_ruri_branch(sip_msg_t *msg)
 {
-    if(msg==NULL)
-        return -1;
+	if(msg==NULL)
+		return -1;
 
-    reset_dst_uri(msg);
-    reset_path_vector(msg);
-    set_ruri_q(Q_UNSPECIFIED);
-    reset_force_socket(msg);
-    setbflagsval(0, 0);
-    reset_instance(msg);
-    msg->reg_id = 0;
-    reset_ruid(msg);
-    reset_ua(msg);
-    return 0;
+	reset_dst_uri(msg);
+	reset_path_vector(msg);
+	set_ruri_q(Q_UNSPECIFIED);
+	reset_force_socket(msg);
+	setbflagsval(0, 0);
+	reset_instance(msg);
+	msg->reg_id = 0;
+	reset_ruid(msg);
+	reset_ua(msg);
+	return 0;
 }
 
 /*! \brief
@@ -681,12 +681,12 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag, in
 			else uri = _m->first_line.u.request.uri;
 		}
 	}
-	
+
 	if (extract_aor(&uri, &aor, NULL) < 0) {
 		LM_ERR("failed to extract address of record\n");
 		return -1;
 	}
-	
+
 	ul.lock_udomain(_d, &aor);
 	res = ul.get_urecord(_d, &aor, &r);
 
@@ -726,17 +726,17 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag, in
 			if(!VALID_CONTACT(ptr, act_time)) continue;
 			if (match_callid.s && /* optionally enforce tighter matching w/ Call-ID */
 				match_callid.len > 0 &&
-				(match_callid.len != ptr->callid.len || 
+				(match_callid.len != ptr->callid.len ||
 				memcmp(match_callid.s, ptr->callid.s, match_callid.len)))
 				continue;
 			if (match_received.s && /* optionally enforce tighter matching w/ ip:port */
 				match_received.len > 0 &&
-				(match_received.len != ptr->received.len || 
+				(match_received.len != ptr->received.len ||
 				memcmp(match_received.s, ptr->received.s, match_received.len)))
 				continue;
 			if (match_contact.s && /* optionally enforce tighter matching w/ Contact */
 				match_contact.len > 0 &&
-				(match_contact.len != ptr->c.len || 
+				(match_contact.len != ptr->c.len ||
 				memcmp(match_contact.s, ptr->c.s, match_contact.len)))
 				continue;
 

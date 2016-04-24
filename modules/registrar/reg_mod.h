@@ -1,4 +1,4 @@
-/* 
+/*
  * registrar module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -24,8 +24,8 @@
 /*!
  * \file
  * \brief SIP registrar module - interface
- * \ingroup registrar   
- */  
+ * \ingroup registrar
+ */
 
 
 #ifndef REG_MOD_H
@@ -37,7 +37,7 @@
 #include "../usrloc/usrloc.h"
 #include "../../modules/sl/sl.h"
 
-/* if DB support is used, this values must not exceed the 
+/* if DB support is used, this values must not exceed the
  * storage capacity of the DB columns! See db/schema/entities.xml */
 #define CONTACT_MAX_SIZE       255
 #define RECEIVED_MAX_SIZE      255
@@ -62,8 +62,8 @@
 #define REG_REGID_ALWAYS        1
 
 /* Maximum of 999 to keep flow-timer to 3 digits
-   - make sure to update reply.c:add_flow_timer() if the number of digits
-     increases! */
+ * - make sure to update reply.c:add_flow_timer() if the number of digits
+ *   increases! */
 #define REG_FLOW_TIMER_MAX	999
 
 extern int nat_flag;

@@ -15,16 +15,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 /*!
  * \file
  * \brief SIP registrar module - Helper functions for Path support
- * \ingroup registrar   
- */  
+ * \ingroup registrar
+ */
 
 
 #include "../../data_lump.h"
@@ -98,11 +98,11 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 			free_params(params);
 
 			if (hooks.contact.received) {
-			        uri_str.s = uri_buf;
+				uri_str.s = uri_buf;
 				uri_str.len = MAX_URI_SIZE;
-			        if (unescape_user(&(hooks.contact.received->body), &uri_str) < 0) {
-				        LM_ERR("unescaping received failed\n");
-				        goto error;
+				if (unescape_user(&(hooks.contact.received->body), &uri_str) < 0) {
+					LM_ERR("unescaping received failed\n");
+					goto error;
 				}
 				*received = uri_str;
 				LM_DBG("received is <%.*s>\n", received->len, received->s);
