@@ -62,7 +62,7 @@ int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	}
 
 	/* calculate the length and allocated the mem */
-	rpl_hf.len = ACPT_STR_LEN + ACPT_ENC_STR_LEN + ACPT_LAN_STR_LEN + 
+	rpl_hf.len = ACPT_STR_LEN + ACPT_ENC_STR_LEN + ACPT_LAN_STR_LEN +
 			SUPT_STR_LEN + 4*HF_SEP_STR_LEN + opt_accept.len + opt_accept_enc.len
 			+ opt_accept_lang.len + opt_supported.len;
 	rpl_hf.s = (char*)pkg_malloc(rpl_hf.len);
