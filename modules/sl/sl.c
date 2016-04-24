@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -106,24 +106,24 @@ static param_export_t params[] = {
 	{"default_reason", PARAM_STR, &default_reason},
 	{"bind_tm",        PARAM_INT, &sl_bind_tm},
 
-    {0, 0, 0}
+	{0, 0, 0}
 };
-    
+
 
 #ifdef STATIC_SL
 struct module_exports sl_exports = {
 #else
 struct module_exports exports= {
 #endif
-    "sl",
-    cmds,
-    sl_rpc,     /* RPC methods */
-    params,     /* param exports */
-    mod_init,   /* module initialization function */
-    (response_function) 0,
-    mod_destroy,
-    0,
-    child_init  /* per-child init function */
+	"sl",
+	cmds,
+	sl_rpc,     /* RPC methods */
+	params,     /* param exports */
+	mod_init,   /* module initialization function */
+	(response_function) 0,
+	mod_destroy,
+	0,
+	child_init  /* per-child init function */
 };
 
 
@@ -200,17 +200,17 @@ static void mod_destroy()
  */
 static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
 {
-    int code, ret;
-    str reason;
-    char* r;
+	int code, ret;
+	str reason;
+	char* r;
 
-    if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
 		code = default_code;
-    }
-    
-    if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+	}
+
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
 		reason = default_reason;
-    }
+	}
 
 	if(reason.s[reason.len-1]=='\0') {
 		r = reason.s;
@@ -219,8 +219,9 @@ static int w_sl_send_reply(struct sip_msg* msg, char* p1, char* p2)
 		if (r == NULL) r = default_reason.s;
 	}
 	ret = sl_send_reply(msg, code, r);
-    if ((r!=reason.s) && (r!=default_reason.s)) pkg_free(r);
-    return ret;
+	if ((r!=reason.s) && (r!=default_reason.s)) pkg_free(r);
+
+	return ret;
 }
 
 
@@ -245,7 +246,7 @@ static int w_sl_reply_error( struct sip_msg* msg, char* str, char* str2)
  */
 int send_reply(struct sip_msg *msg, int code, str *reason)
 {
-    char *r = NULL;
+	char *r = NULL;
 	struct cell *t;
 	int ret = 1;
 
@@ -295,16 +296,16 @@ error:
  */
 static int w_send_reply(struct sip_msg* msg, char* p1, char* p2)
 {
-    int code;
-    str reason;
+	int code;
+	str reason;
 
-    if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
+	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
 		code = default_code;
-    }
+	}
 
-    if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
+	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
 		reason = default_reason;
-    }
+	}
 
 	return send_reply(msg, code, &reason);
 }
@@ -513,6 +514,11 @@ static sr_kemi_t sl_kemi_exports[] = {
 	{ str_init("sl"), str_init("send_reply"),
 		SR_KEMIP_INT, send_reply,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sl"), str_init("sl_reply_error"),
+		SR_KEMIP_INT, sl_reply_error,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
