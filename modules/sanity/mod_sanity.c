@@ -27,6 +27,7 @@
 #include "../../sr_module.h"
 #include "../../ut.h"
 #include "../../error.h"
+#include "../../kemi.h"
 
 MODULE_VERSION
 
@@ -252,6 +253,26 @@ static int w_sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
 }
 
 /**
+ *
+ */
+static int ki_sanity_check(sip_msg_t *msg, int mflags, int uflags)
+{
+	int ret;
+	ret =  sanity_check(msg, mflags, uflags);
+	return (ret==SANITY_CHECK_FAILED)?-1:ret;
+}
+
+/**
+ *
+ */
+static int ki_sanity_check_defaults(sip_msg_t *msg)
+{
+	int ret;
+	ret =  sanity_check(msg, default_msg_checks, default_uri_checks);
+	return (ret==SANITY_CHECK_FAILED)?-1:ret;
+}
+
+/**
  * load sanity module API
  */
 static int bind_sanity(sanity_api_t* api)
@@ -263,5 +284,32 @@ static int bind_sanity(sanity_api_t* api)
 	api->check          = sanity_check;
 	api->check_defaults = sanity_check_defaults;
 
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_sanity_exports[] = {
+	{ str_init("maxfwd"), str_init("sanity_check"),
+		SR_KEMIP_INT, ki_sanity_check,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("maxfwd"), str_init("sanity_check_defaults"),
+		SR_KEMIP_INT, ki_sanity_check_defaults,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_sanity_exports);
 	return 0;
 }

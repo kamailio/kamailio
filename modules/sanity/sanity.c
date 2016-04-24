@@ -139,7 +139,7 @@ strl* parse_str_list(str* _string) {
 		memset(pl->next, 0, sizeof(strl));
 		pl->next->string.s = comma + 1;
 		pl->next->string.len = pl->string.len
-									- (pl->next->string.s - pl->string.s);
+			- (pl->next->string.s - pl->string.s);
 		pl->string.len = comma - pl->string.s;
 		trim_trailing(&(pl->string));
 		pl = pl->next;
@@ -191,7 +191,7 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 
 	if (_msg->first_line.u.request.version.len != 0) {
 		sep = q_memchr(_msg->first_line.u.request.version.s, '/',
-						_msg->first_line.u.request.version.len);
+				_msg->first_line.u.request.version.len);
 		if (sep == NULL) {
 			LOG(L_WARN, "sanity_check(): check_ruri_sip_version():"
 					" failed to find / in ruri version\n");
@@ -201,8 +201,8 @@ int check_ruri_sip_version(struct sip_msg* _msg) {
 		version.len = _msg->first_line.u.request.version.len - (version.s - _msg->first_line.u.request.version.s);
 
 		if (version.len != SIP_VERSION_TWO_POINT_ZERO_LENGTH ||
-			(memcmp(version.s, SIP_VERSION_TWO_POINT_ZERO, 
-				SIP_VERSION_TWO_POINT_ZERO_LENGTH) != 0)) {
+				(memcmp(version.s, SIP_VERSION_TWO_POINT_ZERO,
+						SIP_VERSION_TWO_POINT_ZERO_LENGTH) != 0)) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
 				if (sanity_reply(_msg, 505, "Version Not Supported (R-URI)")
 						< 0) {
@@ -299,29 +299,29 @@ int check_via_sip_version(struct sip_msg* _msg) {
 
 	// FIXME via parser fails on non 2.0 number
 	if (parse_headers(_msg, HDR_VIA1_F, 0) != 0) {
-		LOG(L_WARN, "sanity_check(): check_via_sip_version():"
-			" failed to parse the first Via header\n");
-		return SANITY_CHECK_FAILED;
+	LOG(L_WARN, "sanity_check(): check_via_sip_version():"
+	" failed to parse the first Via header\n");
+	return SANITY_CHECK_FAILED;
 	}
 
 	if (_msg->via1->version.len != 3 ||
-			memcmp(_msg->via1->version.s, SIP_VERSION_TWO_POINT_ZERO, 
-					SIP_VERSION_TWO_POINT_ZERO_LENGTH ) != 0) {
-		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (sanity_reply(_msg, 505, "Version Not Supported (Via)") < 0) {
-				LOG(L_WARN, "sanity_check(): check_via_sip_version():"
-					" failed to send 505 via sl reply\n");
-			}
-		}
-		DBG("check_via_sip_version failed\n");
-		return SANITY_CHECK_FAILED;
+	memcmp(_msg->via1->version.s, SIP_VERSION_TWO_POINT_ZERO,
+	SIP_VERSION_TWO_POINT_ZERO_LENGTH ) != 0) {
+	if (_msg->REQ_METHOD != METHOD_ACK) {
+	if (sanity_reply(_msg, 505, "Version Not Supported (Via)") < 0) {
+	LOG(L_WARN, "sanity_check(): check_via_sip_version():"
+	" failed to send 505 via sl reply\n");
+	}
+	}
+	DBG("check_via_sip_version failed\n");
+	return SANITY_CHECK_FAILED;
 	}
 #ifdef EXTRA_DEBUG
-	DBG("check_via_sip_version passed\n");
+DBG("check_via_sip_version passed\n");
 #endif
 
-	return SANITY_CHECK_PASSED;
-	*/
+return SANITY_CHECK_PASSED;
+*/
 }
 
 /* compare the protocol string in the Via header with the transport */
@@ -337,112 +337,112 @@ int check_via_protocol(struct sip_msg* _msg) {
 
 	// FIXME via parser fails on unknown transport
 	if (parse_headers(_msg, HDR_VIA1_F, 0) != 0) {
-		LOG(L_WARN, "sanity_check(): check_via_protocol():"
-			" failed to parse the first Via header\n");
-		return SANITY_CHECK_FAILED;
+	LOG(L_WARN, "sanity_check(): check_via_protocol():"
+	" failed to parse the first Via header\n");
+	return SANITY_CHECK_FAILED;
 	}
 	if (_msg->via1->transport.len != 3 &&
-			_msg->via1->transport.len != 4) {
-		if (_msg->REQ_METHOD != METHOD_ACK) {
-			if (sanity_reply(_msg, 400, "Unsupported Transport in Topmost Via")
-					< 0) {
-				LOG(L_WARN, "sanity_check(): check_via_protocol():"
-					" failed to send 400 via sl reply\n");
-			}
-		}
-		DBG("check_via_protocol failed\n");
-		return SANITY_CHECK_FAILED;
+	_msg->via1->transport.len != 4) {
+	if (_msg->REQ_METHOD != METHOD_ACK) {
+	if (sanity_reply(_msg, 400, "Unsupported Transport in Topmost Via")
+	< 0) {
+	LOG(L_WARN, "sanity_check(): check_via_protocol():"
+	" failed to send 400 via sl reply\n");
+	}
+	}
+	DBG("check_via_protocol failed\n");
+	return SANITY_CHECK_FAILED;
 	}
 	switch (_msg->rcv.proto) {
-		case PROTO_UDP:
-			if (memcmp(_msg->via1->transport.s, "UDP", 3) != 0) {
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400,
-							"Transport Missmatch in Topmost Via") < 0) {
-						LOG(L_WARN, "sanity_check(): check_via_protocol():"
-								" failed to send 505 via sl reply\n");
-					}
-				}
-				DBG("check_via_protocol failed\n");
-				return SANITY_CHECK_FAILED;
-			}
-			break;
-		case PROTO_TCP:
-			if (memcmp(_msg->via1->transport.s, "TCP", 3) != 0) {
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400,
-							"Transport Missmatch in Topmost Via") < 0) {
-						LOG(L_WARN, "sanity_check(): check_via_protocol():"
-								" failed to send 505 via sl reply\n");
-					}
-				}
-				DBG("check_via_protocol failed\n");
-				return SANITY_CHECK_FAILED;
-			}
-			break;
-		case PROTO_TLS:
-			if (memcmp(_msg->via1->transport.s, "TLS", 3) != 0) {
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400,
-							"Transport Missmatch in Topmost Via") < 0) {
-						LOG(L_WARN, "sanity_check(): check_via_protocol():"
-								" failed to send 505 via sl reply\n");
-					}
-				}
-				DBG("check_via_protocol failed\n");
-				return SANITY_CHECK_FAILED;
-			}
-			break;
-		case PROTO_SCTP:
-			if (memcmp(_msg->via1->transport.s, "SCTP", 4) != 0) {
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400,
-							"Transport Missmatch in Topmost Via") < 0) {
-						LOG(L_WARN, "sanity_check(): check_via_protocol():"
-								" failed to send 505 via sl reply\n");
-					}
-				}
-				DBG("check_via_protocol failed\n");
-				return SANITY_CHECK_FAILED;
-			}
-			break;
-		case PROTO_WS:
-			if (memcmp(_msg->via1->transport.s, "WS", 2) != 0) {
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400,
-							"Transport Missmatch in Topmost Via") < 0) {
-						LOG(L_WARN, "sanity_check(): check_via_protocol():"
-								" failed to send 505 via sl reply\n");
-					}
-				}
-				DBG("check_via_protocol failed\n");
-				return SANITY_CHECK_FAILED;
-			}
-			break;
-		case PROTO_WSS:
-			if (memcmp(_msg->via1->transport.s, "WSS", 3) != 0) {
-				if (_msg->REQ_METHOD != METHOD_ACK) {
-					if (sanity_reply(_msg, 400,
-							"Transport Missmatch in Topmost Via") < 0) {
-						LOG(L_WARN, "sanity_check(): check_via_protocol():"
-								" failed to send 505 via sl reply\n");
-					}
-				}
-				DBG("check_via_protocol failed\n");
-				return SANITY_CHECK_FAILED;
-			}
-			break;
-		default:
-			LOG(L_WARN, "sanity_check(): check_via_protocol():"
-					" unknown protocol in received structure\n");
-			return SANITY_CHECK_FAILED;
+	case PROTO_UDP:
+	if (memcmp(_msg->via1->transport.s, "UDP", 3) != 0) {
+	if (_msg->REQ_METHOD != METHOD_ACK) {
+	if (sanity_reply(_msg, 400,
+	"Transport Missmatch in Topmost Via") < 0) {
+	LOG(L_WARN, "sanity_check(): check_via_protocol():"
+	" failed to send 505 via sl reply\n");
 	}
+	}
+	DBG("check_via_protocol failed\n");
+	return SANITY_CHECK_FAILED;
+	}
+	break;
+	case PROTO_TCP:
+	if (memcmp(_msg->via1->transport.s, "TCP", 3) != 0) {
+	if (_msg->REQ_METHOD != METHOD_ACK) {
+	if (sanity_reply(_msg, 400,
+	"Transport Missmatch in Topmost Via") < 0) {
+	LOG(L_WARN, "sanity_check(): check_via_protocol():"
+	" failed to send 505 via sl reply\n");
+	}
+	}
+	DBG("check_via_protocol failed\n");
+	return SANITY_CHECK_FAILED;
+	}
+	break;
+	case PROTO_TLS:
+	if (memcmp(_msg->via1->transport.s, "TLS", 3) != 0) {
+	if (_msg->REQ_METHOD != METHOD_ACK) {
+	if (sanity_reply(_msg, 400,
+	"Transport Missmatch in Topmost Via") < 0) {
+	LOG(L_WARN, "sanity_check(): check_via_protocol():"
+	" failed to send 505 via sl reply\n");
+	}
+	}
+	DBG("check_via_protocol failed\n");
+	return SANITY_CHECK_FAILED;
+	}
+	break;
+	case PROTO_SCTP:
+	if (memcmp(_msg->via1->transport.s, "SCTP", 4) != 0) {
+	if (_msg->REQ_METHOD != METHOD_ACK) {
+	if (sanity_reply(_msg, 400,
+	"Transport Missmatch in Topmost Via") < 0) {
+	LOG(L_WARN, "sanity_check(): check_via_protocol():"
+	" failed to send 505 via sl reply\n");
+	}
+	}
+	DBG("check_via_protocol failed\n");
+	return SANITY_CHECK_FAILED;
+}
+break;
+case PROTO_WS:
+if (memcmp(_msg->via1->transport.s, "WS", 2) != 0) {
+	if (_msg->REQ_METHOD != METHOD_ACK) {
+		if (sanity_reply(_msg, 400,
+					"Transport Missmatch in Topmost Via") < 0) {
+			LOG(L_WARN, "sanity_check(): check_via_protocol():"
+					" failed to send 505 via sl reply\n");
+		}
+	}
+	DBG("check_via_protocol failed\n");
+	return SANITY_CHECK_FAILED;
+}
+break;
+case PROTO_WSS:
+if (memcmp(_msg->via1->transport.s, "WSS", 3) != 0) {
+	if (_msg->REQ_METHOD != METHOD_ACK) {
+		if (sanity_reply(_msg, 400,
+					"Transport Missmatch in Topmost Via") < 0) {
+			LOG(L_WARN, "sanity_check(): check_via_protocol():"
+					" failed to send 505 via sl reply\n");
+		}
+	}
+	DBG("check_via_protocol failed\n");
+	return SANITY_CHECK_FAILED;
+}
+break;
+default:
+LOG(L_WARN, "sanity_check(): check_via_protocol():"
+		" unknown protocol in received structure\n");
+return SANITY_CHECK_FAILED;
+}
 #ifdef EXTRA_DEBUG
-	DBG("check_via_protocol passed\n");
+DBG("check_via_protocol passed\n");
 #endif
 
-	return SANITY_CHECK_PASSED;
-	*/
+return SANITY_CHECK_PASSED;
+*/
 }
 
 /* compare the method in the CSeq header with the request line value */
@@ -470,11 +470,11 @@ int check_cseq_method(struct sip_msg* _msg) {
 			return SANITY_CHECK_FAILED;
 		}
 
-		if (((struct cseq_body*)_msg->cseq->parsed)->method.len != 
-					_msg->first_line.u.request.method.len ||
-			memcmp(((struct cseq_body*)_msg->cseq->parsed)->method.s, 
-				_msg->first_line.u.request.method.s,
-				((struct cseq_body*)_msg->cseq->parsed)->method.len) != 0) {
+		if (((struct cseq_body*)_msg->cseq->parsed)->method.len !=
+				_msg->first_line.u.request.method.len ||
+				memcmp(((struct cseq_body*)_msg->cseq->parsed)->method.s,
+					_msg->first_line.u.request.method.s,
+					((struct cseq_body*)_msg->cseq->parsed)->method.len) != 0) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
 				if (sanity_reply(_msg, 400,
 							"CSeq method does not match request method") < 0) {
@@ -678,7 +678,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 				if (l_pr->string.len == r_pr->string.len &&
 						/* FIXME tokens are case in-sensitive */
 						memcmp(l_pr->string.s, r_pr->string.s,
-								l_pr->string.len) == 0) {
+							l_pr->string.len) == 0) {
 					break;
 				}
 				l_pr = l_pr->next;
@@ -777,7 +777,7 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 			if (_msg->REQ_METHOD != METHOD_ACK) {
 				if (sanity_reply(_msg, 400, "Missing From Header") < 0) {
 					LOG(L_WARN, "sanity_check(): check_parse_uris():"
-						" failed to send 400 via sl reply (missing From)\n");
+							" failed to send 400 via sl reply (missing From)\n");
 				}
 			}
 			return SANITY_CHECK_FAILED;
@@ -816,18 +816,18 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 #ifdef EXTRA_DEBUG
 			DBG("check_parse_uris(): parsing From URI\n");
 #endif
-			if (parse_uri(((struct to_body*)_msg->from->parsed)->uri.s, 
-					((struct to_body*)_msg->from->parsed)->uri.len, &uri) != 0) {
-			    LOG(L_WARN, "sanity_check(): check_parse_uris():"
+			if (parse_uri(((struct to_body*)_msg->from->parsed)->uri.s,
+						((struct to_body*)_msg->from->parsed)->uri.len, &uri) != 0) {
+				LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to parse From uri\n");
-			    if (_msg->REQ_METHOD != METHOD_ACK) {
-				if (sanity_reply(_msg, 400, "Bad From URI") < 0) {
-				    LOG(L_WARN, "sanity_check(): check_parse_uris():"
-							" failed to send 400 via sl reply"
-							" (bad from uri)\n");
+				if (_msg->REQ_METHOD != METHOD_ACK) {
+					if (sanity_reply(_msg, 400, "Bad From URI") < 0) {
+						LOG(L_WARN, "sanity_check(): check_parse_uris():"
+								" failed to send 400 via sl reply"
+								" (bad from uri)\n");
+					}
 				}
-			    }
-			    return SANITY_CHECK_FAILED;
+				return SANITY_CHECK_FAILED;
 			}
 			/* FIXME: we should store this parsed struct somewhere so that
 			 * it could be re-used */
@@ -868,8 +868,8 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 #ifdef EXTRA_DEBUG
 			DBG("check_parse_uris(): parsing To URI\n");
 #endif
-			if (parse_uri(((struct to_body*)_msg->to->parsed)->uri.s, 
-					((struct to_body*)_msg->to->parsed)->uri.len, &uri) != 0) {
+			if (parse_uri(((struct to_body*)_msg->to->parsed)->uri.s,
+						((struct to_body*)_msg->to->parsed)->uri.len, &uri) != 0) {
 				LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to parse To uri\n");
 				if (_msg->REQ_METHOD != METHOD_ACK) {
@@ -914,9 +914,9 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 				return SANITY_CHECK_FAILED;
 			}
 			if (parse_uri(
-				((struct contact_body*)_msg->contact->parsed)->contacts->uri.s,
-				((struct contact_body*)_msg->contact->parsed)->contacts->uri.len,
-				&uri) != 0) {
+						((struct contact_body*)_msg->contact->parsed)->contacts->uri.s,
+						((struct contact_body*)_msg->contact->parsed)->contacts->uri.len,
+						&uri) != 0) {
 				LOG(L_WARN, "sanity_check(): check_parse_uris():"
 						" failed to parse Contact uri\n");
 				if (_msg->REQ_METHOD != METHOD_ACK) {
@@ -943,79 +943,79 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
  */
 int check_digest(struct sip_msg* msg, int checks)
 {
-    struct hdr_field* ptr;
-    dig_cred_t* cred;
-    int ret;
-    int hf_type;
+	struct hdr_field* ptr;
+	dig_cred_t* cred;
+	int ret;
+	int hf_type;
 
-    if (parse_headers(msg, HDR_EOH_F, 0) != 0) {
-	LOG(L_ERR, "sanity_check(): check_digest:"
-			" failed to parse proxy require header\n");
-	return SANITY_CHECK_FAILED;
-    }
+	if (parse_headers(msg, HDR_EOH_F, 0) != 0) {
+		LOG(L_ERR, "sanity_check(): check_digest:"
+				" failed to parse proxy require header\n");
+		return SANITY_CHECK_FAILED;
+	}
 
-    if (!msg->authorization && !msg->proxy_auth) {
+	if (!msg->authorization && !msg->proxy_auth) {
 #ifdef EXTRA_DEBUG
-	DBG("sanity_check(): check_digest: Nothing to check\n");
+		DBG("sanity_check(): check_digest: Nothing to check\n");
 #endif
+		return SANITY_CHECK_PASSED;
+	}
+
+	if (msg->authorization) {
+		hf_type = HDR_AUTHORIZATION_T;
+		ptr = msg->authorization;
+	} else {
+		hf_type = HDR_PROXYAUTH_T;
+		ptr = msg->proxy_auth;
+	}
+	while(ptr) {
+		if ((ret = parse_credentials(ptr)) != 0) {
+			DBG("sanity_check(): check_digest: Cannot parse credentials: %d\n",
+					ret);
+			return SANITY_CHECK_FAILED;
+		}
+
+		cred = &((auth_body_t*)ptr->parsed)->digest;
+
+		if (check_dig_cred(cred) != E_DIG_OK) {
+#ifdef EXTRA_DEBUG
+			DBG("sanity_check(): check_digest: Digest credentials malformed\n");
+#endif
+			return SANITY_CHECK_FAILED;
+		}
+
+		if (cred->username.whole.len == 0) {
+#ifdef EXTRA_DEBUG
+			DBG("sanity_check(): check_digest: Empty username\n");
+#endif
+			return SANITY_CHECK_FAILED;
+		}
+
+		if (cred->nonce.len == 0) {
+#ifdef EXTRA_DEBUG
+			DBG("sanity_check(): check_digest: Empty nonce attribute\n");
+#endif
+			return SANITY_CHECK_FAILED;
+		}
+
+		if (cred->response.len == 0) {
+#ifdef EXTRA_DEBUG
+			DBG("sanity_check(): check_digest: Empty response attribute\n");
+#endif
+			return SANITY_CHECK_FAILED;
+		}
+
+		do {
+			ptr = ptr->next;
+		} while(ptr && ptr->type != hf_type);
+
+		if (!ptr && hf_type == HDR_AUTHORIZATION_T) {
+			hf_type = HDR_PROXYAUTH_T;
+			ptr = msg->proxy_auth;
+		}
+	}
+
 	return SANITY_CHECK_PASSED;
-    }
-
-    if (msg->authorization) {
-	hf_type = HDR_AUTHORIZATION_T;
-	ptr = msg->authorization;
-    } else {
-	hf_type = HDR_PROXYAUTH_T;
-	ptr = msg->proxy_auth;
-    }
-    while(ptr) {
-	if ((ret = parse_credentials(ptr)) != 0) {
-	    DBG("sanity_check(): check_digest: Cannot parse credentials: %d\n",
-				ret);
-	    return SANITY_CHECK_FAILED;
-	}
-
-	cred = &((auth_body_t*)ptr->parsed)->digest;
-
-	if (check_dig_cred(cred) != E_DIG_OK) {
-#ifdef EXTRA_DEBUG
-	    DBG("sanity_check(): check_digest: Digest credentials malformed\n");
-#endif
-	    return SANITY_CHECK_FAILED;
-	}
-
-	if (cred->username.whole.len == 0) {
-#ifdef EXTRA_DEBUG
-	    DBG("sanity_check(): check_digest: Empty username\n");
-#endif
-	    return SANITY_CHECK_FAILED;
-	}
-	
-	if (cred->nonce.len == 0) {
-#ifdef EXTRA_DEBUG
-	    DBG("sanity_check(): check_digest: Empty nonce attribute\n");
-#endif
-	    return SANITY_CHECK_FAILED;
-	}
-
-	if (cred->response.len == 0) {
-#ifdef EXTRA_DEBUG
-	    DBG("sanity_check(): check_digest: Empty response attribute\n");
-#endif
-	    return SANITY_CHECK_FAILED;
-	}
-
-	do {
-	    ptr = ptr->next;
-	} while(ptr && ptr->type != hf_type);
-
-	if (!ptr && hf_type == HDR_AUTHORIZATION_T) {
-	    hf_type = HDR_PROXYAUTH_T;
-	    ptr = msg->proxy_auth;
-	}
-    }
-
-    return SANITY_CHECK_PASSED;
 }
 
 
