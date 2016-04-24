@@ -409,7 +409,7 @@ static int sr_kemi_core_setdsturi(sip_msg_t *msg, str *uri)
 static int sr_kemi_core_resetdsturi(sip_msg_t *msg)
 {
 	if(msg==NULL) {
-		LM_WARN("invalid parameters from\n");
+		LM_WARN("invalid msg parameter\n");
 		return SR_KEMI_FALSE;
 	}
 
@@ -417,6 +417,19 @@ static int sr_kemi_core_resetdsturi(sip_msg_t *msg)
 	return SR_KEMI_TRUE;
 }
 
+/**
+ *
+ */
+static int sr_kemi_core_force_rport(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		LM_WARN("invalid msg parameter\n");
+		return SR_KEMI_FALSE;
+	}
+
+	msg->msg_flags|=FL_FORCE_RPORT;
+	return SR_KEMI_TRUE;
+}
 
 /**
  *
@@ -520,6 +533,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("resetdsturi"),
 		SR_KEMIP_BOOL, sr_kemi_core_resetdsturi,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("force_rport"),
+		SR_KEMIP_BOOL, sr_kemi_core_force_rport,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
