@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -37,6 +37,7 @@
 #include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"
+#include "../../kemi.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
@@ -76,7 +77,7 @@ static int w_record_route_advertised_address(struct sip_msg *, char *, char *);
 static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
 static int w_is_direction(struct sip_msg *,char *, char *);
-static int remove_record_route(sip_msg_t*, char*, char*);
+static int w_remove_record_route(sip_msg_t*, char*, char*);
 /* PV functions */
 static int pv_get_route_uri_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_from_tag_initial(sip_msg_t *msg, pv_param_t *param,
@@ -108,7 +109,7 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE},
 	{"is_direction",         (cmd_function)w_is_direction, 		1, direction_fixup, 0,
 			REQUEST_ROUTE},
-	{"remove_record_route",  remove_record_route, 0, 0, 0,
+	{"remove_record_route",  w_remove_record_route, 0, 0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 	{"load_rr",              (cmd_function)load_rr, 				0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
@@ -118,7 +119,7 @@ static cmd_export_t cmds[] = {
 /*!
  * \brief Exported parameters
  */
-static param_export_t params[] ={ 
+static param_export_t params[] ={
 	{"append_fromtag",	INT_PARAM, &append_fromtag},
 	{"enable_double_rr",	INT_PARAM, &enable_double_rr},
 	{"enable_full_lr",		INT_PARAM, &enable_full_lr},
@@ -135,16 +136,16 @@ static param_export_t params[] ={
  * \brief Exported Pseudo variables
  */
 static pv_export_t mod_pvs[] = {
-    {{"route_uri", (sizeof("route_uri")-1)}, /* URI of the first Route-Header */
+	{{"route_uri", (sizeof("route_uri")-1)}, /* URI of the first Route-Header */
 		PVT_OTHER, pv_get_route_uri_f, 0, 0, 0, 0, 0},
-    {{"fti", (sizeof("fti")-1)}, /* From-Tag as for initial request */
+	{{"fti", (sizeof("fti")-1)}, /* From-Tag as for initial request */
 		PVT_OTHER, pv_get_from_tag_initial, 0, 0, 0, 0, 0},
-    {{"tti", (sizeof("tti")-1)}, /* To-Tag as for response to initial request */
+	{{"tti", (sizeof("tti")-1)}, /* To-Tag as for response to initial request */
 		PVT_OTHER, pv_get_to_tag_initial, 0, 0, 0, 0, 0},
 	{ {"rdir", (sizeof("rdir")-1)}, PVT_OTHER, pv_get_rdir, 0,
 		pv_parse_rdir_name, 0, 0, 0 },
 
-    {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
 
@@ -178,8 +179,8 @@ static int mod_init(void)
 #ifdef ENABLE_USER_CHECK
 	if(i_user.s && rr_obb.use_outbound)
 	{
-    LM_ERR("cannot use \"ignore_user\" with outbound\n");
-    return -1;
+		LM_ERR("cannot use \"ignore_user\" with outbound\n");
+		return -1;
 	}
 #endif
 
@@ -266,7 +267,30 @@ static int w_loose_route(struct sip_msg *msg, char *p1, char *p2)
 }
 
 /**
- * wrapper for record_route(msg, params)
+ * common wrapper for record_route(msg, params)
+ */
+static int ki_record_route_params(sip_msg_t *msg, str *params)
+{
+	if (msg->msg_flags & FL_RR_ADDED) {
+		LM_ERR("Double attempt to record-route\n");
+		return -1;
+	}
+
+	if ( record_route( msg, params )<0 )
+		return -1;
+
+	if(get_route_type()!=BRANCH_ROUTE)
+		msg->msg_flags |= FL_RR_ADDED;
+	return 1;
+}
+
+static int ki_record_route(sip_msg_t *msg)
+{
+	return ki_record_route_params( msg, 0 );
+}
+
+/**
+ * config wrapper for record_route(msg, params)
  */
 static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 {
@@ -281,12 +305,8 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 		LM_ERR("failed to print the format\n");
 		return -1;
 	}
-	if ( record_route( msg, key?&s:0 )<0 )
-		return -1;
 
-	if(get_route_type()!=BRANCH_ROUTE)
-		msg->msg_flags |= FL_RR_ADDED;
-	return 1;
+	return ki_record_route_params( msg, key?&s:0 );
 }
 
 
@@ -362,10 +382,31 @@ static int w_add_rr_param(struct sip_msg *msg, char *key, char *foo)
 }
 
 
+static int ki_add_rr_param(sip_msg_t *msg, str *sparam)
+{
+	return ((add_rr_param( msg, sparam)==0)?1:-1);
+}
+
 
 static int w_check_route_param(struct sip_msg *msg,char *re, char *foo)
 {
 	return ((check_route_param(msg,(regex_t*)re)==0)?1:-1);
+}
+
+
+static int ki_check_route_param(sip_msg_t *msg, str *sre)
+{
+	int ret;
+	regex_t re;
+
+	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+		LM_ERR("bad re %s\n", sre->s);
+		return -1;
+	}
+	ret = check_route_param(msg, &re);
+	regfree(&re);
+
+	return ((ret==0)?1:-1);
 }
 
 
@@ -381,7 +422,7 @@ static int w_is_direction(struct sip_msg *msg,char *dir, char *foo)
  */
 static int
 pv_get_route_uri_f(struct sip_msg *msg, pv_param_t *param,
-		  pv_value_t *res)
+		pv_value_t *res)
 {
 	struct hdr_field* hdr;
 	rr_t* rt;
@@ -396,8 +437,8 @@ pv_get_route_uri_f(struct sip_msg *msg, pv_param_t *param,
 	if (parse_headers(msg, HDR_ROUTE_F, 0) == -1) {
 		LM_ERR("while parsing message\n");
 		return -1;
-    	}
-	
+	}
+
 	if (!msg->route) {
 		LM_INFO("No route header present.\n");
 		return -1;
@@ -407,11 +448,11 @@ pv_get_route_uri_f(struct sip_msg *msg, pv_param_t *param,
 	/* Parse the contents of the header: */
 	if (parse_rr(hdr) == -1) {
 		LM_ERR("Error while parsing Route header\n");
-                return -1;
+		return -1;
 	}
 
 
-	/* Retrieve the Route-Header */	
+	/* Retrieve the Route-Header */
 	rt = (rr_t*)hdr->parsed;
 	uri = rt->nameaddr.uri;
 
@@ -451,21 +492,21 @@ static void free_rr_lump(struct lump **list)
 				if (!(foo->flags&LUMPFLAG_SHMEM))
 					pkg_free(foo);
 			}
-			
+
 			if (first_shmem && (lump->flags&LUMPFLAG_SHMEM)) {
 				/* This is the first element of the
 				shmemzied lump list, we can not unlink it!
 				It wound corrupt the list otherwise if we
 				are in failure_route. -- No problem, only the
 				anchor is left in the list */
-				
+
 				LM_DBG("lump %p is left in the list\n",
 						lump);
-				
+
 				if (lump->len)
-				    LM_CRIT("lump %p can not be removed, but len=%d\n",
+					LM_CRIT("lump %p can not be removed, but len=%d\n",
 						lump, lump->len);
-						
+
 				prev_lump=lump;
 			} else {
 				if (prev_lump) prev_lump->next = lump->next;
@@ -489,11 +530,21 @@ static void free_rr_lump(struct lump **list)
 /*
  * Remove Record-Route header from message lumps
  */
-static int remove_record_route(sip_msg_t* _m, char* _s1, char* _s2)
+static int w_remove_record_route(sip_msg_t* _m, char* _s1, char* _s2)
 {
 	free_rr_lump(&(_m->add_rm));
 	return 1;
 }
+
+/*
+ * Remove Record-Route header from message lumps
+ */
+static int remove_record_route(sip_msg_t* _m)
+{
+	free_rr_lump(&(_m->add_rm));
+	return 1;
+}
+
 
 /**
  *
@@ -631,4 +682,51 @@ static int pv_get_rdir(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				return pv_get_uintval(msg, param, res, RR_FLOW_UPSTREAM);
 			return pv_get_uintval(msg, param, res, RR_FLOW_DOWNSTREAM);
 	}
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_rr_exports[] = {
+	{ str_init("rr"), str_init("record_route"),
+		SR_KEMIP_INT, ki_record_route,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("record_route_params"),
+		SR_KEMIP_INT, ki_record_route_params,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("loose_route"),
+		SR_KEMIP_INT, loose_route,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("remove_record_route"),
+		SR_KEMIP_INT, remove_record_route,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("add_rr_param"),
+		SR_KEMIP_INT, ki_add_rr_param,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("rr"), str_init("check_route_param"),
+		SR_KEMIP_INT, ki_check_route_param,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_rr_exports);
+	return 0;
 }
