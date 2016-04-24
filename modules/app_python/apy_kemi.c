@@ -400,10 +400,12 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			if(ket->ptypes[0]==SR_KEMIP_INT) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
 					if(ket->ptypes[2]==SR_KEMIP_INT) {
+						/* nnn */
 						ret = ((sr_kemi_fmnnn_f)(ket->func))(lmsg,
 								vps[0].n, vps[1].n, vps[2].n);
 						return sr_kemi_apy_return_int(ket, ret);
 					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
+						/* nns */
 						ret = ((sr_kemi_fmnns_f)(ket->func))(lmsg,
 								vps[0].n, vps[1].n, &vps[2].s);
 						return sr_kemi_apy_return_int(ket, ret);
@@ -414,10 +416,12 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					}
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
 					if(ket->ptypes[2]==SR_KEMIP_INT) {
+						/* nsn */
 						ret = ((sr_kemi_fmnsn_f)(ket->func))(lmsg,
 								vps[0].n, &vps[1].s, vps[2].n);
 						return sr_kemi_apy_return_int(ket, ret);
 					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
+						/* nss */
 						ret = ((sr_kemi_fmnss_f)(ket->func))(lmsg,
 								vps[0].n, &vps[1].s, &vps[2].s);
 						return sr_kemi_apy_return_int(ket, ret);
@@ -434,10 +438,12 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
 					if(ket->ptypes[2]==SR_KEMIP_INT) {
+						/* snn */
 						ret = ((sr_kemi_fmsnn_f)(ket->func))(lmsg,
 								&vps[0].s, vps[1].n, vps[2].n);
 						return sr_kemi_apy_return_int(ket, ret);
 					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
+						/* sns */
 						ret = ((sr_kemi_fmsns_f)(ket->func))(lmsg,
 								&vps[0].s, vps[1].n, &vps[2].s);
 						return sr_kemi_apy_return_int(ket, ret);
@@ -448,10 +454,12 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					}
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
 					if(ket->ptypes[2]==SR_KEMIP_INT) {
+						/* ssn */
 						ret = ((sr_kemi_fmssn_f)(ket->func))(lmsg,
 								&vps[0].s, &vps[1].s, vps[2].n);
 						return sr_kemi_apy_return_int(ket, ret);
 					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
+						/* sss */
 						ret = ((sr_kemi_fmsss_f)(ket->func))(lmsg,
 								&vps[0].s, &vps[1].s, &vps[2].s);
 						return sr_kemi_apy_return_int(ket, ret);
@@ -476,6 +484,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					|| ket->ptypes[1]==SR_KEMIP_STR
 					|| ket->ptypes[2]==SR_KEMIP_STR
 					|| ket->ptypes[3]==SR_KEMIP_STR) {
+				/* ssss */
 				ret = ((sr_kemi_fmssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s);
 				return sr_kemi_apy_return_int(ket, ret);
@@ -483,6 +492,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					|| ket->ptypes[1]==SR_KEMIP_STR
 					|| ket->ptypes[2]==SR_KEMIP_INT
 					|| ket->ptypes[3]==SR_KEMIP_INT) {
+				/* ssnn */
 				ret = ((sr_kemi_fmssnn_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, vps[2].n, vps[3].n);
 				return sr_kemi_apy_return_int(ket, ret);
@@ -498,6 +508,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					|| ket->ptypes[2]==SR_KEMIP_STR
 					|| ket->ptypes[3]==SR_KEMIP_STR
 					|| ket->ptypes[4]==SR_KEMIP_STR) {
+				/* sssss */
 				ret = ((sr_kemi_fmsssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s,
 						&vps[4].s);
@@ -515,6 +526,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					|| ket->ptypes[3]==SR_KEMIP_STR
 					|| ket->ptypes[4]==SR_KEMIP_STR
 					|| ket->ptypes[5]==SR_KEMIP_STR) {
+				/* ssssss */
 				ret = ((sr_kemi_fmssssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s,
 						&vps[4].s, &vps[5].s);
