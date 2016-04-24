@@ -19,15 +19,18 @@
  *
 */
 
-#ifndef _PYTHON_MSGOBJ_H
-#define  _PYTHON_MSGOBJ_H
+#ifndef _MSGOBJ_STRUCT_H
+#define  _MSGOBJ_STRUCT_H
 
 #include "../../parser/msg_parser.h"
 
 #include <Python.h>
 
-PyObject *newmsgobject(struct sip_msg *);
-int python_msgobj_init(void);
-void msg_invalidate(PyObject *);
+typedef struct {
+	PyObject_HEAD
+	struct sip_msg *msg;
+} msgobject;
+
+PyObject *msg_call_function(msgobject *, PyObject *);
 
 #endif

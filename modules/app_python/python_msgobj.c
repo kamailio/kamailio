@@ -27,12 +27,8 @@
 #include "../../dset.h"
 #include "../../parser/msg_parser.h"
 
+#include "msgobj_struct.h"
 #include "structmember.h"
-
-typedef struct {
-	PyObject_HEAD
-	struct sip_msg *msg;
-} msgobject;
 
 static PyTypeObject MSGtype;
 
@@ -165,7 +161,7 @@ static PyObject *msg_getHeader(msgobject *self, PyObject *args)
 	return PyString_FromStringAndSize(hbody->s, hbody->len);
 }
 
-static PyObject *msg_call_function(msgobject *self, PyObject *args)
+PyObject *msg_call_function(msgobject *self, PyObject *args)
 {
 	int i, rval;
 	char *fname, *arg1, *arg2;
@@ -263,11 +259,16 @@ PyDoc_STRVAR(copy_doc,
 		Return a copy (``clone'') of the msg object.");
 
 static PyMethodDef msg_methods[] = {
-	{"copy",          (PyCFunction)msg_copy,          METH_NOARGS,		copy_doc},
-	{"rewrite_ruri",  (PyCFunction)msg_rewrite_ruri,  METH_VARARGS,		"Rewrite Request-URI."},
-	{"set_dst_uri",   (PyCFunction)msg_set_dst_uri,   METH_VARARGS,		"Set destination URI."},
-	{"getHeader",     (PyCFunction)msg_getHeader,     METH_VARARGS,		"Get SIP header field by name."},
-	{"call_function", (PyCFunction)msg_call_function, METH_VARARGS,		"Invoke function exported by the other module."},
+	{"copy",          (PyCFunction)msg_copy,          METH_NOARGS,
+		copy_doc},
+	{"rewrite_ruri",  (PyCFunction)msg_rewrite_ruri,  METH_VARARGS,
+		"Rewrite Request-URI."},
+	{"set_dst_uri",   (PyCFunction)msg_set_dst_uri,   METH_VARARGS,
+		"Set destination URI."},
+	{"getHeader",     (PyCFunction)msg_getHeader,     METH_VARARGS,
+		"Get SIP header field by name."},
+	{"call_function", (PyCFunction)msg_call_function, METH_VARARGS,
+		"Invoke function exported by the other module."},
 	{NULL, NULL, 0, NULL} /* sentinel */
 };
 

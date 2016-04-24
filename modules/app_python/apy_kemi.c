@@ -31,6 +31,7 @@
 #include "../../pvar.h"
 #include "../../mem/pkg.h"
 
+#include "msgobj_struct.h"
 #include "python_exec.h"
 #include "apy_kemi_export.h"
 #include "apy_kemi.h"
@@ -547,7 +548,7 @@ PyMethodDef *_sr_KSRMethods = NULL;
 /**
  *
  */
-static int sr_apy_kemi_f_dbg(sip_msg_t *msg, str *txt)
+static int sr_apy_kemi_f_ktest(sip_msg_t *msg, str *txt)
 {
 	if(txt!=NULL && txt->s!=NULL)
 		LM_DBG("%.*s", txt->len, txt->s);
@@ -559,7 +560,7 @@ static int sr_apy_kemi_f_dbg(sip_msg_t *msg, str *txt)
  */
 static sr_kemi_t _sr_apy_kemi_test[] = {
 	{ str_init(""), str_init("ktest"),
-		SR_KEMIP_NONE, sr_apy_kemi_f_dbg,
+		SR_KEMIP_NONE, sr_apy_kemi_f_ktest,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -832,7 +833,6 @@ static PyObject *sr_apy_kemi_f_pv_is_null(PyObject *self, PyObject *args)
 		return sr_apy_kemi_return_false();
 	}
 
-
 	pvn.len = strlen(pvn.s);
 	LM_DBG("pv is null test: %s\n", pvn.s);
 	pl = pv_locate_name(&pvn);
@@ -872,6 +872,14 @@ static PyMethodDef _sr_apy_kemi_pv_Methods[] = {
 	{NULL, 		NULL, 			0, 		NULL}
 };
 
+/**
+ *
+ */
+static PyMethodDef _sr_apy_kemi_x_Methods[] = {
+	{"modf", (PyCFunction)msg_call_function, METH_VARARGS,
+		"Invoke function exported by the other module."},
+	{NULL, NULL, 0, NULL} /* sentinel */
+};
 
 /**
  *
@@ -948,6 +956,13 @@ int sr_apy_init_ksr(void)
 			_sr_apy_kemi_pv_Methods);
 	PyDict_SetItemString(_sr_apy_ksr_module_dict,
 			"pv", _sr_apy_ksr_modules_list[m]);
+	Py_INCREF(_sr_apy_ksr_modules_list[m]);
+	m++;
+	/* special sub-modules - x.modf() can have variable number of params */
+	_sr_apy_ksr_modules_list[m] = Py_InitModule("KSR.x",
+			_sr_apy_kemi_x_Methods);
+	PyDict_SetItemString(_sr_apy_ksr_module_dict,
+			"x", _sr_apy_ksr_modules_list[m]);
 	Py_INCREF(_sr_apy_ksr_modules_list[m]);
 	m++;
 
