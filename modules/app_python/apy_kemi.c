@@ -94,7 +94,7 @@ int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname)
 /**
  *
  */
-PyObject *sr_apy_kemi_return_true(void)
+PyObject *sr_kemi_apy_return_true(void)
 {
 	Py_INCREF(Py_True);
 	return Py_True;
@@ -103,7 +103,7 @@ PyObject *sr_apy_kemi_return_true(void)
 /**
  *
  */
-PyObject *sr_apy_kemi_return_false(void)
+PyObject *sr_kemi_apy_return_false(void)
 {
 	Py_INCREF(Py_False);
 	return Py_False;
@@ -121,13 +121,13 @@ PyObject *sr_apy_kemi_return_none(void)
 /**
  *
  */
-PyObject *sr_apy_kemi_return_int(sr_kemi_t *ket, int rval)
+PyObject *sr_kemi_apy_return_int(sr_kemi_t *ket, int rval)
 {
 	if(ket!=NULL && ket->rtype==SR_KEMIP_BOOL) {
 		if(rval==SR_KEMI_TRUE) {
-			return sr_apy_kemi_return_true();
+			return sr_kemi_apy_return_true();
 		} else {
-			return sr_apy_kemi_return_false();
+			return sr_kemi_apy_return_false();
 		}
 	}
 	return PyInt_FromLong((long)rval);
@@ -157,7 +157,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 
 	if(env_P==NULL) {
 		LM_ERR("invalid Python environment attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	if(env_P->msg==NULL) {
 		lmsg = faked_msg_next();
@@ -167,7 +167,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 
 	ket = sr_apy_kemi_export_get(idx);
 	if(ket==NULL) {
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	if(ket->mname.len>0) {
 		LM_DBG("execution of method: %.*s\n", ket->fname.len, ket->fname.s);
@@ -180,7 +180,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 
 	if(ket->ptypes[0]==SR_KEMIP_NONE) {
 		ret = ((sr_kemi_fm_f)(ket->func))(lmsg);
-		return sr_apy_kemi_return_int(ket, ret);
+		return sr_kemi_apy_return_int(ket, ret);
 	}
 
 	memset(vps, 0, SR_KEMI_PARAMS_MAX*sizeof(sr_kemi_val_t));
@@ -189,14 +189,14 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		if(ket->ptypes[0]==SR_KEMIP_INT) {
 			if(!PyArg_ParseTuple(args, "i:kemi-param-n", &vps[0].n)) {
 				LM_ERR("unable to retrieve int param %d\n", 0);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			LM_DBG("param[%d] for: %.*s is int: %d\n", i,
 				fname.len, fname.s, vps[0].n);
 		} else {
 			if(!PyArg_ParseTuple(args, "s:kemi-param-s", &vps[0].s.s)) {
 				LM_ERR("unable to retrieve str param %d\n", 0);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[0].s.len = strlen(vps[0].s.s);
 			LM_DBG("param[%d] for: %.*s is str: %.*s\n", i,
@@ -207,14 +207,14 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		if(ket->ptypes[0]==SR_KEMIP_INT && ket->ptypes[1]==SR_KEMIP_INT) {
 			if(!PyArg_ParseTuple(args, "ii:kemi-param-nn", &vps[0].n, &vps[1].n)) {
 				LM_ERR("unable to retrieve int-int params %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			LM_DBG("params[%d] for: %.*s are int-int: [%d] [%d]\n", i,
 				fname.len, fname.s, vps[0].n, vps[1].n);
 		} else if(ket->ptypes[0]==SR_KEMIP_INT && ket->ptypes[1]==SR_KEMIP_STR) {
 			if(!PyArg_ParseTuple(args, "is:kemi-param-ns", &vps[0].n, &vps[1].s.s)) {
 				LM_ERR("unable to retrieve int-str params %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[1].s.len = strlen(vps[1].s.s);
 			LM_DBG("params[%d] for: %.*s are int-str: [%d] [%.*s]\n", i,
@@ -222,7 +222,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		} else if(ket->ptypes[0]==SR_KEMIP_STR && ket->ptypes[1]==SR_KEMIP_INT) {
 			if(!PyArg_ParseTuple(args, "si:kemi-param-sn", &vps[0].s.s, &vps[1].n)) {
 				LM_ERR("unable to retrieve str-int params %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[0].s.len = strlen(vps[0].s.s);
 			LM_DBG("params[%d] for: %.*s are str-int: [%.*s] [%d]\n", i,
@@ -230,7 +230,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		} else {
 			if(!PyArg_ParseTuple(args, "ss:kemi-param-ss", &vps[0].s.s, &vps[1].s.s)) {
 				LM_ERR("unable to retrieve str-str param %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[0].s.len = strlen(vps[0].s.s);
 			vps[1].s.len = strlen(vps[1].s.s);
@@ -246,7 +246,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			if(!PyArg_ParseTuple(args, "iii:kemi-param-nnn", &vps[0].n,
 						&vps[1].n, &vps[2].n)) {
 				LM_ERR("unable to retrieve int-int-int params %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			LM_DBG("params[%d] for: %.*s are int-int-int: [%d] [%d] [%d]\n",
 					i, fname.len, fname.s, vps[0].n, vps[1].n, vps[2].n);
@@ -255,7 +255,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			if(!PyArg_ParseTuple(args, "isi:kemi-param-nsn", &vps[0].n,
 						&vps[1].s.s, &vps[2].n)) {
 				LM_ERR("unable to retrieve int-str-int params %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[1].s.len = strlen(vps[1].s.s);
 			LM_DBG("params[%d] for: %.*s are int-str-int: [%d] [%.*s] [%d]\n", i,
@@ -265,7 +265,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			if(!PyArg_ParseTuple(args, "sii:kemi-param-snn", &vps[0].s.s,
 						&vps[1].n, &vps[2].n)) {
 				LM_ERR("unable to retrieve str-int-int params %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[0].s.len = strlen(vps[0].s.s);
 			LM_DBG("params[%d] for: %.*s are str-int: [%.*s] [%d] [%d]\n", i,
@@ -276,7 +276,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			if(!PyArg_ParseTuple(args, "ssi:kemi-param-ssn", &vps[0].s.s,
 						&vps[1].s.s, &vps[2].n)) {
 				LM_ERR("unable to retrieve str-str-int param %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[0].s.len = strlen(vps[0].s.s);
 			vps[1].s.len = strlen(vps[1].s.s);
@@ -289,7 +289,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			if(!PyArg_ParseTuple(args, "sss:kemi-param-sss", &vps[0].s.s,
 						&vps[1].s.s, &vps[2].s.s)) {
 				LM_ERR("unable to retrieve str-str-str param %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[0].s.len = strlen(vps[0].s.s);
 			vps[1].s.len = strlen(vps[1].s.s);
@@ -300,7 +300,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					vps[1].s.len, vps[1].s.s, vps[2].s.len, vps[2].s.s);
 		} else {
 			LM_ERR("not implemented yet\n");
-			return sr_apy_kemi_return_false();
+			return sr_kemi_apy_return_false();
 		}
 	} else if(ket->ptypes[4]==SR_KEMIP_NONE) {
 		i = 4;
@@ -311,7 +311,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			if(!PyArg_ParseTuple(args, "ssss:kemi-param-ssss",
 						&vps[0].s.s, &vps[1].s.s, &vps[2].s.s, &vps[3].s.s)) {
 				LM_ERR("unable to retrieve str-str-str-str params %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[0].s.len = strlen(vps[0].s.s);
 			vps[1].s.len = strlen(vps[1].s.s);
@@ -329,7 +329,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 			if(!PyArg_ParseTuple(args, "ssii:kemi-param-ssnn",
 						&vps[0].s.s, &vps[1].s.s, &vps[2].n, &vps[3].n)) {
 				LM_ERR("unable to retrieve str-str-int-int params %d\n", i);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 			vps[0].s.len = strlen(vps[0].s.s);
 			vps[1].s.len = strlen(vps[1].s.s);
@@ -339,61 +339,61 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 				vps[1].s.len, vps[1].s.s, vps[2].n, vps[3].n);
 		} else {
 			LM_ERR("not implemented yet\n");
-			return sr_apy_kemi_return_false();
+			return sr_kemi_apy_return_false();
 		}
 	} else if(ket->ptypes[5]==SR_KEMIP_NONE) {
 		i = 5;
 		LM_ERR("not implemented yet\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	} else {
 		i = 6;
 		LM_ERR("not implemented yet\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
 	switch(i) {
 		case 1:
 			if(ket->ptypes[0]==SR_KEMIP_INT) {
 				ret = ((sr_kemi_fmn_f)(ket->func))(lmsg, vps[0].n);
-				return sr_apy_kemi_return_int(ket, ret);
+				return sr_kemi_apy_return_int(ket, ret);
 			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
 				ret = ((sr_kemi_fms_f)(ket->func))(lmsg, &vps[0].s);
-				return sr_apy_kemi_return_int(ket, ret);
+				return sr_kemi_apy_return_int(ket, ret);
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname.len, fname.s);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 		break;
 		case 2:
 			if(ket->ptypes[0]==SR_KEMIP_INT) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
 					ret = ((sr_kemi_fmnn_f)(ket->func))(lmsg, vps[0].n, vps[1].n);
-					return sr_apy_kemi_return_int(ket, ret);
+					return sr_kemi_apy_return_int(ket, ret);
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
 					ret = ((sr_kemi_fmns_f)(ket->func))(lmsg, vps[0].n, &vps[1].s);
-					return sr_apy_kemi_return_int(ket, ret);
+					return sr_kemi_apy_return_int(ket, ret);
 				} else {
 					LM_ERR("invalid parameters for: %.*s\n",
 							fname.len, fname.s);
-					return sr_apy_kemi_return_false();
+					return sr_kemi_apy_return_false();
 				}
 			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
 					ret = ((sr_kemi_fmsn_f)(ket->func))(lmsg, &vps[0].s, vps[1].n);
-					return sr_apy_kemi_return_int(ket, ret);
+					return sr_kemi_apy_return_int(ket, ret);
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
 					ret = ((sr_kemi_fmss_f)(ket->func))(lmsg, &vps[0].s, &vps[1].s);
-					return sr_apy_kemi_return_int(ket, ret);
+					return sr_kemi_apy_return_int(ket, ret);
 				} else {
 					LM_ERR("invalid parameters for: %.*s\n",
 							fname.len, fname.s);
-					return sr_apy_kemi_return_false();
+					return sr_kemi_apy_return_false();
 				}
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname.len, fname.s);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 		break;
 		case 3:
@@ -402,73 +402,73 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					if(ket->ptypes[2]==SR_KEMIP_INT) {
 						ret = ((sr_kemi_fmnnn_f)(ket->func))(lmsg,
 								vps[0].n, vps[1].n, vps[2].n);
-						return sr_apy_kemi_return_int(ket, ret);
+						return sr_kemi_apy_return_int(ket, ret);
 					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
 						ret = ((sr_kemi_fmnns_f)(ket->func))(lmsg,
 								vps[0].n, vps[1].n, &vps[2].s);
-						return sr_apy_kemi_return_int(ket, ret);
+						return sr_kemi_apy_return_int(ket, ret);
 					} else {
 						LM_ERR("invalid parameters for: %.*s\n",
 								fname.len, fname.s);
-						return sr_apy_kemi_return_false();
+						return sr_kemi_apy_return_false();
 					}
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
 					if(ket->ptypes[2]==SR_KEMIP_INT) {
 						ret = ((sr_kemi_fmnsn_f)(ket->func))(lmsg,
 								vps[0].n, &vps[1].s, vps[2].n);
-						return sr_apy_kemi_return_int(ket, ret);
+						return sr_kemi_apy_return_int(ket, ret);
 					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
 						ret = ((sr_kemi_fmnss_f)(ket->func))(lmsg,
 								vps[0].n, &vps[1].s, &vps[2].s);
-						return sr_apy_kemi_return_int(ket, ret);
+						return sr_kemi_apy_return_int(ket, ret);
 					} else {
 						LM_ERR("invalid parameters for: %.*s\n",
 								fname.len, fname.s);
-						return sr_apy_kemi_return_false();
+						return sr_kemi_apy_return_false();
 					}
 				} else {
 					LM_ERR("invalid parameters for: %.*s\n",
 							fname.len, fname.s);
-					return sr_apy_kemi_return_false();
+					return sr_kemi_apy_return_false();
 				}
 			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
 				if(ket->ptypes[1]==SR_KEMIP_INT) {
 					if(ket->ptypes[2]==SR_KEMIP_INT) {
 						ret = ((sr_kemi_fmsnn_f)(ket->func))(lmsg,
 								&vps[0].s, vps[1].n, vps[2].n);
-						return sr_apy_kemi_return_int(ket, ret);
+						return sr_kemi_apy_return_int(ket, ret);
 					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
 						ret = ((sr_kemi_fmsns_f)(ket->func))(lmsg,
 								&vps[0].s, vps[1].n, &vps[2].s);
-						return sr_apy_kemi_return_int(ket, ret);
+						return sr_kemi_apy_return_int(ket, ret);
 					} else {
 						LM_ERR("invalid parameters for: %.*s\n",
 								fname.len, fname.s);
-						return sr_apy_kemi_return_false();
+						return sr_kemi_apy_return_false();
 					}
 				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
 					if(ket->ptypes[2]==SR_KEMIP_INT) {
 						ret = ((sr_kemi_fmssn_f)(ket->func))(lmsg,
 								&vps[0].s, &vps[1].s, vps[2].n);
-						return sr_apy_kemi_return_int(ket, ret);
+						return sr_kemi_apy_return_int(ket, ret);
 					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
 						ret = ((sr_kemi_fmsss_f)(ket->func))(lmsg,
 								&vps[0].s, &vps[1].s, &vps[2].s);
-						return sr_apy_kemi_return_int(ket, ret);
+						return sr_kemi_apy_return_int(ket, ret);
 					} else {
 						LM_ERR("invalid parameters for: %.*s\n",
 								fname.len, fname.s);
-						return sr_apy_kemi_return_false();
+						return sr_kemi_apy_return_false();
 					}
 				} else {
 					LM_ERR("invalid parameters for: %.*s\n",
 							fname.len, fname.s);
-					return sr_apy_kemi_return_false();
+					return sr_kemi_apy_return_false();
 				}
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname.len, fname.s);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 		break;
 		case 4:
@@ -478,18 +478,18 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					|| ket->ptypes[3]==SR_KEMIP_STR) {
 				ret = ((sr_kemi_fmssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s);
-				return sr_apy_kemi_return_int(ket, ret);
+				return sr_kemi_apy_return_int(ket, ret);
 			} else if(ket->ptypes[0]==SR_KEMIP_STR
 					|| ket->ptypes[1]==SR_KEMIP_STR
 					|| ket->ptypes[2]==SR_KEMIP_INT
 					|| ket->ptypes[3]==SR_KEMIP_INT) {
 				ret = ((sr_kemi_fmssnn_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, vps[2].n, vps[3].n);
-				return sr_apy_kemi_return_int(ket, ret);
+				return sr_kemi_apy_return_int(ket, ret);
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname.len, fname.s);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 		break;
 		case 5:
@@ -501,11 +501,11 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 				ret = ((sr_kemi_fmsssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s,
 						&vps[4].s);
-				return sr_apy_kemi_return_int(ket, ret);
+				return sr_kemi_apy_return_int(ket, ret);
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname.len, fname.s);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 		break;
 		case 6:
@@ -518,20 +518,20 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 				ret = ((sr_kemi_fmssssss_f)(ket->func))(lmsg,
 						&vps[0].s, &vps[1].s, &vps[2].s, &vps[3].s,
 						&vps[4].s, &vps[5].s);
-				return sr_apy_kemi_return_int(ket, ret);
+				return sr_kemi_apy_return_int(ket, ret);
 			} else {
 				LM_ERR("invalid parameters for: %.*s\n",
 						fname.len, fname.s);
-				return sr_apy_kemi_return_false();
+				return sr_kemi_apy_return_false();
 			}
 		break;
 		default:
 			LM_ERR("invalid parameters for: %.*s\n",
 					fname.len, fname.s);
-			return sr_apy_kemi_return_false();
+			return sr_kemi_apy_return_false();
 	}
 
-	return sr_apy_kemi_return_false();
+	return sr_kemi_apy_return_false();
 }
 
 /**
@@ -624,7 +624,7 @@ static PyObject *sr_apy_kemi_f_pv_get(PyObject *self, PyObject *args)
 		return sr_apy_kemi_return_none();
 	}
 	if(val.flags&PV_TYPE_INT) {
-		return sr_apy_kemi_return_int(NULL, val.ri);
+		return sr_kemi_apy_return_int(NULL, val.ri);
 	}
 	return sr_apy_kemi_return_str(NULL, val.rs.s, val.rs.len);
 }
@@ -645,7 +645,7 @@ static PyObject *sr_apy_kemi_f_pv_seti(PyObject *self, PyObject *args)
 
 	if(env_P==NULL) {
 		LM_ERR("invalid Python environment attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	if(env_P->msg==NULL) {
 		lmsg = faked_msg_next();
@@ -656,12 +656,12 @@ static PyObject *sr_apy_kemi_f_pv_seti(PyObject *self, PyObject *args)
 	memset(&val, 0, sizeof(pv_value_t));
 	if(!PyArg_ParseTuple(args, "si:pv.seti", &pvn.s, &val.ri)) {
 		LM_ERR("unable to retrieve str-int params\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
 	if(pvn.s==NULL || lmsg==NULL) {
 		LM_ERR("invalid context attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	val.flags |= PV_TYPE_INT|PV_VAL_INT;
 	pvn.len = strlen(pvn.s);
@@ -670,19 +670,19 @@ static PyObject *sr_apy_kemi_f_pv_seti(PyObject *self, PyObject *args)
 	pl = pv_locate_name(&pvn);
 	if(pl != pvn.len) {
 		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	pvs = pv_cache_get(&pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	if(pv_set_spec_value(lmsg, pvs, 0, &val)<0)
 	{
 		LM_ERR("unable to set pv [%s]\n", pvn.s);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
-	return sr_apy_kemi_return_true();
+	return sr_kemi_apy_return_true();
 }
 
 /**
@@ -701,7 +701,7 @@ static PyObject *sr_apy_kemi_f_pv_sets(PyObject *self, PyObject *args)
 
 	if(env_P==NULL) {
 		LM_ERR("invalid Python environment attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	if(env_P->msg==NULL) {
 		lmsg = faked_msg_next();
@@ -712,12 +712,12 @@ static PyObject *sr_apy_kemi_f_pv_sets(PyObject *self, PyObject *args)
 	memset(&val, 0, sizeof(pv_value_t));
 	if(!PyArg_ParseTuple(args, "ss:pv.sets", &pvn.s, &val.rs.s)) {
 		LM_ERR("unable to retrieve str-int params\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
 	if(pvn.s==NULL || val.rs.s==NULL || lmsg==NULL) {
 		LM_ERR("invalid context attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
 	val.rs.len = strlen(val.rs.s);
@@ -728,19 +728,19 @@ static PyObject *sr_apy_kemi_f_pv_sets(PyObject *self, PyObject *args)
 	pl = pv_locate_name(&pvn);
 	if(pl != pvn.len) {
 		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	pvs = pv_cache_get(&pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	if(pv_set_spec_value(lmsg, pvs, 0, &val)<0) {
 		LM_ERR("unable to set pv [%s]\n", pvn.s);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
-	return sr_apy_kemi_return_true();
+	return sr_kemi_apy_return_true();
 }
 
 /**
@@ -759,7 +759,7 @@ static PyObject *sr_apy_kemi_f_pv_unset(PyObject *self, PyObject *args)
 
 	if(env_P==NULL) {
 		LM_ERR("invalid Python environment attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	if(env_P->msg==NULL) {
 		lmsg = faked_msg_next();
@@ -769,12 +769,12 @@ static PyObject *sr_apy_kemi_f_pv_unset(PyObject *self, PyObject *args)
 
 	if(!PyArg_ParseTuple(args, "s:pv.unset", &pvn.s)) {
 		LM_ERR("unable to retrieve str param\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
 	if(pvn.s==NULL || lmsg==NULL) {
 		LM_ERR("invalid context attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
 	pvn.len = strlen(pvn.s);
@@ -782,21 +782,21 @@ static PyObject *sr_apy_kemi_f_pv_unset(PyObject *self, PyObject *args)
 	pl = pv_locate_name(&pvn);
 	if(pl != pvn.len) {
 		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	pvs = pv_cache_get(&pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags |= PV_VAL_NULL;
 	if(pv_set_spec_value(lmsg, pvs, 0, &val)<0) {
 		LM_ERR("unable to unset pv [%s]\n", pvn.s);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
-	return sr_apy_kemi_return_true();
+	return sr_kemi_apy_return_true();
 }
 
 /**
@@ -815,7 +815,7 @@ static PyObject *sr_apy_kemi_f_pv_is_null(PyObject *self, PyObject *args)
 
 	if(env_P==NULL) {
 		LM_ERR("invalid Python environment attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	if(env_P->msg==NULL) {
 		lmsg = faked_msg_next();
@@ -825,12 +825,12 @@ static PyObject *sr_apy_kemi_f_pv_is_null(PyObject *self, PyObject *args)
 
 	if(!PyArg_ParseTuple(args, "s:pv.unset", &pvn.s)) {
 		LM_ERR("unable to retrieve str param\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
 	if(pvn.s==NULL || lmsg==NULL) {
 		LM_ERR("invalid context attributes\n");
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 
 	pvn.len = strlen(pvn.s);
@@ -838,22 +838,22 @@ static PyObject *sr_apy_kemi_f_pv_is_null(PyObject *self, PyObject *args)
 	pl = pv_locate_name(&pvn);
 	if(pl != pvn.len) {
 		LM_ERR("invalid pv [%s] (%d/%d)\n", pvn.s, pl, pvn.len);
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 	pvs = pv_cache_get(&pvn);
 	if(pvs==NULL) {
 		LM_ERR("cannot get pv spec for [%s]\n", pvn.s);
-		return sr_apy_kemi_return_true();
+		return sr_kemi_apy_return_true();
 	}
 	memset(&val, 0, sizeof(pv_value_t));
 	if(pv_get_spec_value(lmsg, pvs, &val) != 0) {
 		LM_NOTICE("unable to get pv value for [%s]\n", pvn.s);
-		return sr_apy_kemi_return_true();
+		return sr_kemi_apy_return_true();
 	}
 	if(val.flags&PV_VAL_NULL) {
-		return sr_apy_kemi_return_true();
+		return sr_kemi_apy_return_true();
 	} else {
-		return sr_apy_kemi_return_false();
+		return sr_kemi_apy_return_false();
 	}
 }
 
