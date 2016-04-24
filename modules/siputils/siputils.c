@@ -63,6 +63,7 @@
 #include "../../ut.h"
 #include "../../mod_fix.h"
 #include "../../error.h"
+#include "../../kemi.h"
 #include "../../parser/parse_option_tags.h"
 
 #include "ring.h"
@@ -124,7 +125,7 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE},
 	{"is_user",            (cmd_function)is_user,           1, fixup_str_null,
 		0, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"has_totag", 	       (cmd_function)has_totag,         0, 0,
+	{"has_totag", 	       (cmd_function)w_has_totag,         0, 0,
 		0, ANY_ROUTE},
 	{"uri_param",          (cmd_function)uri_param_1,       1, fixup_str_null,
 		0, REQUEST_ROUTE|LOCAL_ROUTE},
@@ -282,7 +283,7 @@ int bind_siputils(siputils_api_t* api)
 	}
 
 	get_rpid_avp( &api->rpid_avp, &api->rpid_avp_type );
-	api->has_totag = has_totag;
+	api->has_totag = w_has_totag;
 	api->is_uri_user_e164 = is_uri_user_e164;
 
 	return 0;
@@ -449,5 +450,42 @@ static int fixup_option(void** param, int param_no) {
 	}
 
 	*param = (void *)(long)res;
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_siputils_exports[] = {
+	{ str_init("siputils"), str_init("has_totag"),
+		SR_KEMIP_INT, has_totag,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_request"),
+		SR_KEMIP_INT, is_request,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_reply"),
+		SR_KEMIP_INT, is_reply,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_first_hop"),
+		SR_KEMIP_INT, is_first_hop,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_siputils_exports);
 	return 0;
 }

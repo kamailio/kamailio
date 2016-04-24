@@ -62,6 +62,17 @@ int w_is_request(struct sip_msg* msg, char *foo, char *bar)
 	return -1;
 }
 
+int is_request(struct sip_msg* msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REQUEST)
+		return 1;
+
+	return -1;
+}
+
 /**
  * return 1 (true) if the SIP message type is reply
  */
@@ -76,11 +87,23 @@ int w_is_reply(struct sip_msg* msg, char *foo, char *bar)
 	return -1;
 }
 
+int is_reply(struct sip_msg* msg)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)
+		return 1;
+
+	return -1;
+}
+
+
 /*
  * Checks if From includes a To-tag -- good to identify
  * if a request creates a new dialog
  */
-int has_totag(struct sip_msg* _m, char* _foo, char* _bar)
+int has_totag(struct sip_msg* _m)
 {
 	str tag;
 
@@ -101,6 +124,10 @@ int has_totag(struct sip_msg* _m, char* _foo, char* _bar)
 	return 1;
 }
 
+int w_has_totag(struct sip_msg* _m, char* _foo, char* _bar)
+{
+	return has_totag(_m);
+}
 
 /*
  * Check if the username matches the username in credentials

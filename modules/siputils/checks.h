@@ -45,7 +45,8 @@ int is_user(struct sip_msg* _msg, char* _user, char* _str2);
 /*
  * Check if message includes a to-tag
  */
-int has_totag(struct sip_msg* _m, char* _foo, char* _bar);
+int has_totag(struct sip_msg* _m);
+int w_has_totag(struct sip_msg* _m, char* _foo, char* _bar);
 
 
 /*
@@ -100,11 +101,13 @@ int set_uri_host(struct sip_msg* _m, char* _uri, char* _value);
  * Return true (1) if SIP message is request, otherwise false (-1)
  */
 int w_is_request(struct sip_msg* msg, char *foo, char *bar);
+int is_request(struct sip_msg* msg);
 
 /*
  * Return true (1) if SIP message is reply, otherwise false (-1)
  */
 int w_is_reply(struct sip_msg* msg, char *foo, char *bar);
+int is_reply(struct sip_msg* msg);
 
 /*
  * Find if Request URI has a given parameter with matching value

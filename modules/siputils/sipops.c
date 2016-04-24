@@ -140,7 +140,7 @@ int w_is_supported(sip_msg_t *msg, char *_option, char *p2)
 }
 
 
-int w_is_first_hop(sip_msg_t *msg, char *p1, char *p2)
+int is_first_hop(sip_msg_t *msg)
 {
 	int ret;
 	rr_t* r = NULL;
@@ -204,4 +204,9 @@ int w_is_first_hop(sip_msg_t *msg, char *p1, char *p2)
 	} else {
 		return -1;
 	}
+}
+
+int w_is_first_hop(sip_msg_t *msg, char *p1, char *p2)
+{
+	return is_first_hop(msg);
 }
