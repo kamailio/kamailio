@@ -866,8 +866,8 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 	/* first get the transaction */
 	if (t_check(msg, 0 ) == -1) return -1;
 	if ((t = get_t()) == 0) {
-		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
-				"which has no T-state established\n");
+		LM_ERR("cannot check status for a reply"
+				" which has no T-state established\n");
 		goto error;
 	}
 	backup = 0;
@@ -923,12 +923,12 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 				/* t_pick_branch() retuns error also when there are only
 				 * blind UACs. Let us give it another chance including the
 				 * blind branches. */
-				LOG(L_DBG, "DEBUG: t_check_status: t_pick_branch returned error, "
-						"trying t_pick_branch_blind\n");
+				LM_DBG("t_pick_branch returned error,"
+						" trying t_pick_branch_blind\n");
 				ret = t_pick_branch_blind(t, &lowest_status);
 			}
 			if (ret < 0) {
-				LOG(L_CRIT,"BUG:t_check_status: t_pick_branch failed to get "
+				LM_CRIT("BUG: t_pick_branch failed to get"
 						" a final response in FAILURE_ROUTE\n");
 				goto error;
 			}
@@ -938,12 +938,12 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 			status = int2str(t->uac[get_t_branch()].last_received, 0);
 			break;
 		default:
-			LOG(L_ERR,"ERROR:t_check_status: unsupported route type %d\n",
+			LM_ERR("unsupported route type %d\n",
 					get_route_type());
 			goto error;
 	}
 
-	DBG("DEBUG:t_check_status: checked status is <%s>\n",status);
+	LM_DBG("checked status is <%s>\n",status);
 	/* do the checking */
 	n = regexec(re, status, 1, &pmatch, 0);
 
@@ -1352,7 +1352,7 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 }
 
 
-static int w_t_is_set(struct sip_msg* msg, char *target, char *foo )
+static int t_is_set(struct sip_msg* msg, str *target)
 {
 	int r;
 	tm_cell_t *t = NULL;
@@ -1361,7 +1361,7 @@ static int w_t_is_set(struct sip_msg* msg, char *target, char *foo )
 	t = get_t();
 	if (t==T_UNDEFINED) t = NULL;
 
-	switch(target[0]) {
+	switch(target->s[0]) {
 		case 'b':
 			if(t==NULL)
 				r = get_on_branch();
@@ -1383,6 +1383,14 @@ static int w_t_is_set(struct sip_msg* msg, char *target, char *foo )
 	}
 	if(r) return 1;
 	return -1;
+}
+
+static int w_t_is_set(struct sip_msg* msg, char *target, char *foo)
+{
+	str s = STR_NULL;
+
+	s.s = target;
+	return t_is_set(msg, &s);
 }
 
 static int fixup_t_is_set(void** param, int param_no)
@@ -1849,8 +1857,8 @@ int t_is_canceled(struct sip_msg* msg)
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if ((t==0) || (t==T_UNDEFINED)){
-		LOG(L_ERR, "ERROR: t_is_canceled: cannot check a message "
-				"for which no T-state has been established\n");
+		LM_ERR("cannot check a message"
+				" for which no T-state has been established\n");
 		ret=-1;
 	}else{
 		ret=(t->flags & T_CANCELED)?1:-1;
@@ -1872,8 +1880,8 @@ int t_is_retr_async_reply(struct sip_msg* msg)
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if ((t==0) || (t==T_UNDEFINED)){
-		LOG(L_ERR, "ERROR: t_is_retr_async_reply: cannot check a message "
-				"for which no T-state has been established\n");
+		LM_ERR("cannot check a message"
+				" for which no T-state has been established\n");
 		ret=-1;
 	}else{
 		LOG(L_DBG, "TRANSACTION FLAGS IS %d\n", t->flags);
@@ -1881,6 +1889,7 @@ int t_is_retr_async_reply(struct sip_msg* msg)
 	}
 	return ret;
 }
+
 static int w_t_is_retr_async_reply(struct sip_msg* msg, char* foo, char* bar)
 {
 	return t_is_retr_async_reply(msg);
@@ -2488,6 +2497,11 @@ static sr_kemi_t tm_kemi_exports[] = {
 	},
 	{ str_init("tm"), str_init("t_replicate"),
 		SR_KEMIP_INT, t_replicate_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tm"), str_init("t_is_set"),
+		SR_KEMIP_INT, t_is_set,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
