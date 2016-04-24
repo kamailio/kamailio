@@ -67,13 +67,13 @@ typedef int (*sr_kemi_fm_f)(sip_msg_t*);
 typedef int (*sr_kemi_fmn_f)(sip_msg_t*, int);
 typedef int (*sr_kemi_fms_f)(sip_msg_t*, str*);
 
-/* sip_msg_t and two int|str param */
+/* sip_msg_t and two int|str params */
 typedef int (*sr_kemi_fmnn_f)(sip_msg_t*, int, int);
 typedef int (*sr_kemi_fmns_f)(sip_msg_t*, int, str*);
 typedef int (*sr_kemi_fmsn_f)(sip_msg_t*, str*, int);
 typedef int (*sr_kemi_fmss_f)(sip_msg_t*, str*, str*);
 
-/* sip_msg_t and three int|str param */
+/* sip_msg_t and three int|str params */
 typedef int (*sr_kemi_fmnnn_f)(sip_msg_t*, int, int, int);
 typedef int (*sr_kemi_fmnns_f)(sip_msg_t*, int, int, str*);
 typedef int (*sr_kemi_fmnsn_f)(sip_msg_t*, int, str*, int);
@@ -83,9 +83,14 @@ typedef int (*sr_kemi_fmsns_f)(sip_msg_t*, str*, int, str*);
 typedef int (*sr_kemi_fmssn_f)(sip_msg_t*, str*, str*, int);
 typedef int (*sr_kemi_fmsss_f)(sip_msg_t*, str*, str*, str*);
 
+/* sip_msg_t and four int|str params */
 typedef int (*sr_kemi_fmssss_f)(sip_msg_t*, str*, str*, str*, str*);
 typedef int (*sr_kemi_fmssnn_f)(sip_msg_t*, str*, str*, int, int);
+
+/* sip_msg_t and five int|str params */
 typedef int (*sr_kemi_fmsssss_f)(sip_msg_t*, str*, str*, str*, str*, str*);
+
+/* sip_msg_t and six int|str params */
 typedef int (*sr_kemi_fmssssss_f)(sip_msg_t*, str*, str*, str*, str*, str*, str*);
 
 sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname);
