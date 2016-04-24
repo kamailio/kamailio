@@ -86,6 +86,7 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 	struct cell     *orig_t;
 	struct sip_msg *orig_msg;
 	int ret;
+	str stable;
 
 	orig_t = _tmb.t_gett();
 
@@ -113,10 +114,12 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 
 	orig_msg = t->uas.request;
 
+	stable.s = table;
+	stable.len = strlen(stable.s);
 	if(uri==NULL || uri->s==NULL || uri->len<=0) {
-		ret = _regapi.lookup_to_dset(orig_msg, table, NULL);
+		ret = _regapi.lookup_to_dset(orig_msg, &stable, NULL);
 	} else {
-		ret = _regapi.lookup_to_dset(orig_msg, table, uri);
+		ret = _regapi.lookup_to_dset(orig_msg, &stable, uri);
 	}
 
 	if(ret != 1) {
@@ -124,14 +127,14 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 		ret = -4;
 		goto done;
 	}
-	
+
 	ret = _tmb.t_append_branches();
 
 done:
-	/* unref the transaction which had been referred by t_lookup_ident() call. 
+	/* unref the transaction which had been referred by t_lookup_ident() call.
 	 * Restore the original transaction (if any) */
 	if(t) _tmb.unref_cell(t);
 	_tmb.t_sett(orig_t, T_BR_UNDEFINED);
-	
+
 	return ret;
 }
