@@ -18,7 +18,7 @@
  */
 
 /*!
- * \file 
+ * \file
  * \brief Registrar :: Configuration
  * \ingroup Registrar
  */
@@ -41,7 +41,7 @@ struct cfg_group_registrar	default_registrar_cfg = {
 		0,	/* case_sensitive */
 		Q_UNSPECIFIED,	/* default_q */
 		1	/* append_branches */
-	    };
+	};
 
 void	*registrar_cfg = &default_registrar_cfg;
 
