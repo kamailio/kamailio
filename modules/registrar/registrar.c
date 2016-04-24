@@ -47,6 +47,7 @@
 #include "../../lib/srutils/sruid.h"
 #include "../../modules/sl/sl.h"
 #include "../../mod_fix.h"
+#include "../../kemi.h"
 
 #include "save.h"
 #include "api.h"
@@ -746,4 +747,51 @@ void default_expires_range_update(str* gname, str* name){
 
 void expires_range_update(str* gname, str* name){
 	update_stat(expire_range_stat, cfg_get(registrar, registrar_cfg, expires_range));
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_registrar_exports[] = {
+	{ str_init("registrar"), str_init("save"),
+		SR_KEMIP_INT, regapi_save,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("save_uri"),
+		SR_KEMIP_INT, regapi_save_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("lookup"),
+		SR_KEMIP_INT, regapi_lookup,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("lookup_uri"),
+		SR_KEMIP_INT, regapi_lookup_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("lookup_to_dset"),
+		SR_KEMIP_INT, regapi_lookup_to_dset,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("registered"),
+		SR_KEMIP_INT, regapi_registered,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_registrar_exports);
+	return 0;
 }

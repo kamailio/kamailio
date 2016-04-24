@@ -37,6 +37,7 @@ int regapi_save_uri(sip_msg_t *msg, str *table, int flags, str *uri);
 
 typedef int (*regapi_lookup_f)(sip_msg_t *msg, str *table);
 int regapi_lookup(sip_msg_t *msg, str *table);
+int regapi_registered(sip_msg_t *msg, str *table);
 
 typedef int (*regapi_lookup_uri_f)(sip_msg_t *msg, str *table, str *uri);
 int regapi_lookup_uri(sip_msg_t *msg, str *table, str *uri);
