@@ -1687,6 +1687,14 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 /**
  *
  */
+static const luaL_Reg _sr_kemi_x_Map [] = {
+	{"modf",         lua_sr_modf},
+	{NULL, NULL}
+};
+
+/**
+ *
+ */
 int sr_kemi_KSR_C(lua_State* L)
 {
 	str mname = str_init("");
@@ -1747,6 +1755,7 @@ void lua_sr_kemi_register_core(lua_State *L)
 
 	/* special modules - pv.get(...) can return int or str */
 	luaL_openlib(L, "KSR.pv",   _sr_pv_Map,   0);
+	luaL_openlib(L, "KSR.x",   _sr_kemi_x_Map,   0);
 
 	LM_DBG("pushing lua KSR table definition returned %d\n", ret);
 }
