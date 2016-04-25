@@ -476,6 +476,7 @@ extern char *default_routename;
 %token SERVER_ID
 %token MAX_RECURSIVE_LEVEL
 %token MAX_BRANCHES_PARAM
+%token LATENCY_CFG_LOG
 %token LATENCY_LOG
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
@@ -1521,6 +1522,8 @@ assign_stm:
     | MAX_BRANCHES_PARAM EQUAL NUMBER { sr_dst_max_branches = $3; }
     | LATENCY_LOG EQUAL NUMBER { default_core_cfg.latency_log=$3; }
 	| LATENCY_LOG EQUAL error  { yyerror("number  expected"); }
+    | LATENCY_CFG_LOG EQUAL NUMBER { default_core_cfg.latency_cfg_log=$3; }
+	| LATENCY_CFG_LOG EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_DB EQUAL NUMBER { default_core_cfg.latency_limit_db=$3; }
 	| LATENCY_LIMIT_DB EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_ACTION EQUAL NUMBER { default_core_cfg.latency_limit_action=$3; }
@@ -1531,7 +1534,7 @@ assign_stm:
 	| ONSEND_RT_REPLY EQUAL error { yyerror("int value expected"); }
 	| UDP_MTU EQUAL NUMBER { default_core_cfg.udp_mtu=$3; }
 	| UDP_MTU EQUAL error { yyerror("number expected"); }
-	| FORCE_RPORT EQUAL NUMBER 
+	| FORCE_RPORT EQUAL NUMBER
 		{ default_core_cfg.force_rport=$3; fix_global_req_flags(0, 0); }
 	| FORCE_RPORT EQUAL error { yyerror("boolean value expected"); }
 	| UDP_MTU_TRY_PROTO EQUAL proto

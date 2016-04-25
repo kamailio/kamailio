@@ -104,6 +104,7 @@ struct cfg_group_core {
 	int mem_safety; /*!< memory safety control option */
 	int mem_join; /*!< memory free fragments join option */
 	int corelog; /*!< log level for non-critcal core error messages */
+	int latency_cfg_log; /*!< log level for printing latency of routing blocks */
 	int latency_log; /*!< log level for latency limits messages */
 	int latency_limit_db; /*!< alert limit of running db commands */
 	int latency_limit_action; /*!< alert limit of running cfg actions */

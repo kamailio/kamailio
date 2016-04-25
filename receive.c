@@ -121,10 +121,13 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	int ret;
 #ifdef STATS
 	int skipped = 1;
+	int stats_on = 1;
+#else
+	int stats_on = 0;
+#endif
 	struct timeval tvb, tve;
 	struct timezone tz;
-	unsigned int diff;
-#endif
+	unsigned int diff = 0;
 	str inb;
 	sr_net_info_t netinfo;
 	sr_kemi_eng_t *keng = NULL;
@@ -222,9 +225,10 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 
 	/*	skip: */
 		LM_DBG("preparing to run routing scripts...\n");
-#ifdef  STATS
-		gettimeofday( & tvb, &tz );
-#endif
+		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
+				|| stats_on==1) {
+			gettimeofday( & tvb, &tz );
+		}
 		/* execute pre-script callbacks, if any; -jiri */
 		/* if some of the callbacks said not to continue with
 		 * script processing, don't do so
@@ -256,14 +260,18 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			}
 		}
 
+		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
+				|| stats_on==1) {
+			gettimeofday( & tve, &tz );
+			diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
+			LOG(cfg_get(core, core_cfg, latency_cfg_log),
+					"request-route executed in: %d usec\n", diff);
 #ifdef STATS
-		gettimeofday( & tve, &tz );
-		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
-		stats->processed_requests++;
-		stats->acc_req_time += diff;
-		LM_DBG("successfully ran routing scripts...(%d usec)\n", diff);
-		STATS_RX_REQUEST( msg->first_line.u.request.method_value );
+			stats->processed_requests++;
+			stats->acc_req_time += diff;
+			STATS_RX_REQUEST( msg->first_line.u.request.method_value );
 #endif
+		}
 
 		/* execute post request-script callbacks */
 		exec_post_script_cb(msg, REQUEST_CB_TYPE);
@@ -276,8 +284,11 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			goto error02;
 		}
 
+		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
+				|| stats_on==1) {
+			gettimeofday( & tvb, &tz );
+		}
 #ifdef STATS
-		gettimeofday( & tvb, &tz );
 		STATS_RX_RESPONSE ( msg->first_line.u.reply.statuscode / 100 );
 #endif
 
@@ -322,13 +333,17 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		/* send the msg */
 		forward_reply(msg);
 	skip_send_reply:
+		if(is_printable(cfg_get(core, core_cfg, latency_cfg_log))
+				|| stats_on==1) {
+			gettimeofday( & tve, &tz );
+			diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
+			LOG(cfg_get(core, core_cfg, latency_cfg_log),
+					"reply-route executed in: %d usec\n", diff);
 #ifdef STATS
-		gettimeofday( & tve, &tz );
-		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
-		stats->processed_responses++;
-		stats->acc_res_time+=diff;
-		LM_DBG("successfully ran reply processing...(%d usec)\n", diff);
+			stats->processed_responses++;
+			stats->acc_res_time+=diff;
 #endif
+		}
 
 		/* execute post reply-script callbacks */
 		exec_post_script_cb(msg, ONREPLY_CB_TYPE);

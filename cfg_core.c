@@ -116,6 +116,7 @@ struct cfg_group_core default_core_cfg = {
 	0, /*!< mem_safety - 0 disabled */
 	0, /*!< mem_join - 0 disabled */
 	L_ERR, /*!< corelog */
+	L_DBG, /*!< latency cfg log */
 	L_ERR, /*!< latency log */
 	0, /*!< latency limit db */
 	0 /*!< latency limit action */
@@ -128,7 +129,7 @@ static int check_raw_sock_support(void* cfg_h, str* gname, str* name,
 									void** v)
 {
 	int val;
-	
+
 	val = (int)(long)(*v);
 #ifndef USE_RAW_SOCKS
 	if (val > 0) {
@@ -314,6 +315,8 @@ cfg_def_t core_cfg_def[] = {
 		"join free memory fragments"},
 	{"corelog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for non-critical core error messages"},
+	{"latency_cfg_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"log level for printing latency of routing blocks"},
 	{"latency_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for latency limits alert messages"},
 	{"latency_limit_db",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
