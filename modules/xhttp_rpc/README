@@ -22,22 +22,20 @@ Alex Balashov
    1. Admin Guide
 
         1. Overview
+        2. Limitations
+        3. Dependencies
 
-              1.1. Limitations
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        2. Dependencies
+        4. Parameters
 
-              2.1. Kamailio Modules
-              2.2. External Libraries or Applications
+              4.1. xhttp_rpc_root (str)
+              4.2. xhttp_rpc_buf_size (str)
 
-        3. Parameters
+        5. Functions
 
-              3.1. xhttp_rpc_root (str)
-              3.2. xhttp_rpc_buf_size (str)
-
-        4. Functions
-
-              4.1. dispatch_xhttp_rpc()
+              5.1. dispatch_xhttp_rpc()
 
         5. Usage
 
@@ -52,28 +50,24 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
+   2. Limitations
+   3. Dependencies
 
-        1.1. Limitations
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
 
-   2. Dependencies
+   4. Parameters
 
-        2.1. Kamailio Modules
-        2.2. External Libraries or Applications
+        4.1. xhttp_rpc_root (str)
+        4.2. xhttp_rpc_buf_size (str)
 
-   3. Parameters
+   5. Functions
 
-        3.1. xhttp_rpc_root (str)
-        3.2. xhttp_rpc_buf_size (str)
-
-   4. Functions
-
-        4.1. dispatch_xhttp_rpc()
+        5.1. dispatch_xhttp_rpc()
 
    5. Usage
 
 1. Overview
-
-   1.1. Limitations
 
    This module provides an HTTP transport layer implementation for the RPC
    management interface in a human-readable format.
@@ -81,7 +75,7 @@ Chapter 1. Admin Guide
    The xHTTP_RPC module uses the xHTTP module to handle HTTP requests.
    Read the documentation of the xHTTP module for more details.
 
-1.1. Limitations
+2. Limitations
 
      * This module does not implement asynchronous RPC commands. It is
        unlikely that asynchronous RPC commands will be executed from an
@@ -96,28 +90,28 @@ Chapter 1. Admin Guide
        command is not in the expected format, it will be dropped from the
        initial xhttp_rpc home page menu.
 
-2. Dependencies
+3. Dependencies
 
-   2.1. Kamailio Modules
-   2.2. External Libraries or Applications
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
 
-2.1. Kamailio Modules
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * xhttp - xHTTP.
 
-2.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None
 
-3. Parameters
+4. Parameters
 
-   3.1. xhttp_rpc_root (str)
-   3.2. xhttp_rpc_buf_size (str)
+   4.1. xhttp_rpc_root (str)
+   4.2. xhttp_rpc_buf_size (str)
 
-3.1. xhttp_rpc_root (str)
+4.1. xhttp_rpc_root (str)
 
    Specifies the root path for RPC http requests. The link to the RPC web
    interface must be constructed using the following pattern:
@@ -130,7 +124,7 @@ Chapter 1. Admin Guide
 modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
 ...
 
-3.2. xhttp_rpc_buf_size (str)
+4.2. xhttp_rpc_buf_size (str)
 
    Specifies the maximum length of the buffer (in bytes) used to write the
    RPC reply information in order to build the HTML response.
@@ -143,11 +137,9 @@ modparam("xhttp_rpc", "xhttp_rpc_root", "http_rpc")
 modparam("xhttp", "xhttp_rpc_buf_size", 1024)
 ...
 
-4. Functions
+5. Functions
 
-   4.1. dispatch_xhttp_rpc()
-
-4.1. dispatch_xhttp_rpc()
+5.1.  dispatch_xhttp_rpc()
 
    Handle the HTTP request and generate a response.
 

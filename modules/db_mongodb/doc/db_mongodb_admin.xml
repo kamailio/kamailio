@@ -28,11 +28,10 @@
 		You can read more about MongoDB at:
 		<ulink url="http://www.mongodb.org">http://www.mongodb.org</ulink>.
 	</para>
+	</section>
 
 	<section>
 	<title>Limitations</title>
-	<itemizedlist>
-	<listitem>
 	<para>
 		This module has implemented the equivalent operations for INSERT,
 		UPDATE, DELETE and SELECT. The match condition (WHERE clause)
@@ -41,9 +40,6 @@
 		implemented inside this module, use ndb_mongodb for sending any
 		kind of command to a MongoDB server.
 	</para>
-	</listitem>
-	</itemizedlist>
-	</section>
 	</section>
 
 	<section>

@@ -28,6 +28,7 @@
 		The JSONRPC-S module uses the xHTTP module to handle HTTP/S requests.
 		Read the documentation of the xHTTP module for more details.
 	</para>
+	</section>
 
 	<section>
 	<title>Limitations</title>
@@ -47,7 +48,6 @@
 	</para>
 	</listitem>
 	</itemizedlist>
-	</section>
 	</section>
 
 	<section>

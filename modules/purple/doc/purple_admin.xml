@@ -50,9 +50,11 @@
 	<programlisting>
 		export LD_PRELOAD=$LD_PRELOAD:/usr/local/lib/libpurple.so
 	</programlisting>
+	</section>
+	<section>
+	<title>Known limitations</title>
 	<para>
-		Limitations: doesn't implement authorization requests from external
-		accounts to SIP.
+		Doesn't implement authorization requests from external accounts to SIP.
 	</para>
 	</section>
 
