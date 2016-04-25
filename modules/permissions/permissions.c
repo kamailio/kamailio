@@ -1036,7 +1036,7 @@ static int permissions_init_rpc(void)
 /**
  *
  */
-static sr_kemi_t sr_kemi_maxfwd_exports[] = {
+static sr_kemi_t sr_kemi_permissions_exports[] = {
 	{ str_init("permissions"), str_init("allow_source_address"),
 		SR_KEMIP_INT, allow_source_address,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -1056,6 +1056,6 @@ static sr_kemi_t sr_kemi_maxfwd_exports[] = {
  */
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	sr_kemi_modules_add(sr_kemi_maxfwd_exports);
+	sr_kemi_modules_add(sr_kemi_permissions_exports);
 	return 0;
 }
