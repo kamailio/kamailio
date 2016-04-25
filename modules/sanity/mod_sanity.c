@@ -291,12 +291,12 @@ static int bind_sanity(sanity_api_t* api)
  *
  */
 static sr_kemi_t sr_kemi_sanity_exports[] = {
-	{ str_init("maxfwd"), str_init("sanity_check"),
+	{ str_init("sanity"), str_init("sanity_check"),
 		SR_KEMIP_INT, ki_sanity_check,
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("maxfwd"), str_init("sanity_check_defaults"),
+	{ str_init("sanity"), str_init("sanity_check_defaults"),
 		SR_KEMIP_INT, ki_sanity_check_defaults,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
