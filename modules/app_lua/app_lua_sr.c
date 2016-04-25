@@ -1458,6 +1458,10 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 
 	ket = sr_kemi_lookup(mname, midx, fname);
 	if(ket==NULL) {
+		LM_ERR("cannot find function (%d): %.*s.%.*s\n", midx,
+				(mname && mname->len>0)?mname->len:0,
+				(mname && mname->len>0)?mname->s:"",
+				fname->len, fname->s);
 		return app_lua_return_false(L);
 	}
 	if(mname->len<=0) {
