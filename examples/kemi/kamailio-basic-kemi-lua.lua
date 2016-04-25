@@ -32,7 +32,7 @@ function ksr_request_route()
 	end
 
 	-- handle requests within SIP dialogs
-	ksr_route_withindlg();
+	if ksr_route_withindlg()==-255 then return 1; end
 
 	-- -- only initial requests (no To tag)
 
