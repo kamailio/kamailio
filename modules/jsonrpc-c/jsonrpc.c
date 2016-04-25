@@ -70,34 +70,38 @@ jsonrpc_request_t* build_jsonrpc_request(char *method, json_object *params, char
 	return req;
 }
 
-json_object* build_jsonrpc_notification(char *method, json_object *params) 
+json_object* build_jsonrpc_notification(char *method, json_object *params)
 {
 	json_object *req = json_object_new_object();
 	json_object_object_add(req, "jsonrpc", json_object_new_string("2.0"));
 	json_object_object_add(req, "method", json_object_new_string(method));
 	json_object_object_add(req, "params", params);
 
-	return req; 
+	return req;
 }
 
 
 int handle_jsonrpc_response(json_object *response)
 {
-	jsonrpc_request_t *req;	
-	json_object *_id = json_object_object_get(response, "id");
-	int id = json_object_get_int(_id);
-	
+	jsonrpc_request_t *req;
+	json_object *_id = NULL;
+	int id = 0;
+	json_object *result = NULL;
+
+	json_object_object_get_ex(response, "id", &_id);
+	id = json_object_get_int(_id);
 	if (!(req = get_request(id))) {
 		json_object_put(response);
 		return -1;
 	}
 
-	json_object *result = json_object_object_get(response, "result");
-	
+	json_object_object_get_ex(response, "result", &result);
+
 	if (result) {
 		req->cbfunc(result, req->cbdata, 0);
 	} else {
-		json_object *error = json_object_object_get(response, "error");
+		json_object *error = NULL;
+		json_object_object_get_ex(response, "error", &error);
 		if (error) {
 			req->cbfunc(error, req->cbdata, 1);
 		} else {
@@ -105,7 +109,7 @@ int handle_jsonrpc_response(json_object *response)
 			return -1;
 		}
 	}
-	
+
 	if (req->timer_ev) {
 		close(req->timerfd);
 		event_del(req->timer_ev);
@@ -125,14 +129,14 @@ jsonrpc_request_t* get_request(int id) {
 	int key = id_hash(id);
 	jsonrpc_request_t *req, *prev_req = NULL;
 	req = request_table[key];
-	
+
 	while (req && req->id != id) {
 		prev_req = req;
 		if (!(req = req->next)) {
 			break;
 		};
 	}
-	
+
 	if (req && req->id == id) {
 		if (prev_req != NULL) {
 			prev_req-> next = req->next;
