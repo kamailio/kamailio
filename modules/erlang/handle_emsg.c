@@ -571,7 +571,9 @@ int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *
 	ctx.size = arity;
 
 	/* call rpc */
+	rex_call_in_progress = 1;
 	exp->function(&erl_rpc_func_param,(void*)&ctx);
+	rex_call_in_progress = 0;
 
 	if (ctx.no_params)
 	{
@@ -813,19 +815,15 @@ int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg * msg)
 			LM_ERR("ei_send failed on node=<%s> socket=<%d>, %s\n",
 					phandler->ec.thisnodename,phandler->sockfd, strerror(erl_errno));
 		}
-
-		/* reset pid */
-		cnode_reply_to_pid = NULL;
-		return ret;
 	}
 	else
 	{
 		LM_DBG("** no reply **\n");
-
-		/* reset pid */
-		cnode_reply_to_pid = NULL;
-		return 0;
 	}
+
+	/* reset pid */
+	cnode_reply_to_pid = NULL;
+	return 0;
 }
 
 void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref, const char *type, const char *msg )
