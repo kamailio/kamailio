@@ -22,6 +22,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include <ei.h>
@@ -43,7 +44,7 @@ int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg * msg);
 int handle_rpc_response(cnode_handler_t *phandler, erlang_msg * msg, int arity);
 int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *pid);
 int handle_net_kernel(cnode_handler_t *phandler, erlang_msg * msg);
-void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref, const char *type, const char *msg );
+void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref, const char *type, const char *msg, ...);
 
 int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 {
@@ -826,8 +827,16 @@ int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg * msg)
 	return 0;
 }
 
-void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref, const char *type, const char *msg )
+void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref, const char *type, const char *msg, ... )
 {
+	char buffer[256];
+	va_list args;
+	va_start (args, msg);
+
+	vsnprintf (buffer, 255, msg, args);
+
+	va_end (args);
+
 	ei_x_encode_tuple_header(response, 2);
 
 	if (ref->with_node)
@@ -842,5 +851,5 @@ void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref, const char *typ
 
 	ei_x_encode_tuple_header(response,2);
 	ei_x_encode_atom(response, type);
-	ei_x_encode_string(response, msg);
+	ei_x_encode_string(response, buffer);
 }
