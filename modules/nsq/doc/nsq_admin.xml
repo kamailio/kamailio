@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+	<title>&adminguide;</title>
+
+
+    <section>
+    <title>Overview</title>
+    <para> The NSQ module an NSQ consumer. It exposes only consume capabilities into Kamailio.
+    </para>
+<para>
+From a high-level, the purpose of the module might be for things like:
+<itemizedlist>
+<listitem>
+<para>
+Provide a real-time integration into your program, instead of your database, so you can overlay additional logic in your preferred language while also utilizing a message bus
+</para>
+</listitem>
+<listitem>
+<para>
+Utilize messaging to have a distributed messaging layer, such that machines processing requests/responses/events can go up/down or share the workload and your Kamailio node will still be happy
+</para>
+</listitem>
+</itemizedlist>
+</para>
+
+
+<para>
+supported operations are:
+<itemizedlist>
+<listitem>
+<para>
+subscribe to a Topic and Channel
+</para>
+</listitem>
+</itemizedlist>
+</para>
+<para>
+The NSQ module also has support to publish updates to presence module through the nsq_pua_publish function
+</para>
+
+</section>
+    <section>
+    <title>How it works</title>
+<para>
+The module works with a main forked process that does the communication with NSQ for consuming messages. When it consumes a message it defers the process to a worker process so that it doesn't block this main process.
+</para>
+    <section>
+    <title>event routes</title>
+    <para>
+The worker process issues an event-route where we can act on the received payload. The name of the event-route is composed by values extracted from the payload.
+    </para>
+    <para>
+    NSQ module will try to execute the event route from most significant to less significant.
+    define the event route like event_route[nsq:consumer-event[-payload_key_value[-payload_subkey_value]]]
+    </para>
+    <para>
+    we can set the key/subkey pair on a subscription base. check the payload on subscribe.
+    </para>
+        <example>
+        <title>define the event route</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "consumer_event_key", "Event-Category")
+modparam("nsq", "consumer_event_sub_key", "Event-Name")
+...
+
+event_route[nsq:consumer-event-presence-update]
+{
+# presence is the value extracted from Event-Category field in json payload
+# update is the value extracted from Event-Name field in json payload
+xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{kznsqjson,From})");
+...
+}
+
+event_route[nsq:consumer-event-presence]
+{
+# presence is the value extracted from Event-Category field in json payload
+xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.json,From})");
+...
+}
+
+event_route[nsq:consumer-event-event-category-event-name]
+{
+# event-category is the name of the consumer_event_key parameter
+# event-name is the name of the consumer_event_sub_key parameter
+# this event route is executed if we can't find the previous
+...
+}
+
+event_route[nsq:consumer-event-event-category]
+{
+# event-category is the name of the consumer_event_key parameter
+# this event route is executed if we can't find the previous
+...
+}
+
+event_route[nsq:consumer-event]
+{
+# this event route is executed if we can't find the previous
+}
+
+</programlisting>
+        </example>
+</section>
+    <section>
+    <title>aknowledge messages</title>
+<para>
+Consumed messages have the option of being acknowledge in two ways:
+<itemizedlist>
+<listitem>
+<para>
+immediately when received
+</para>
+</listitem>
+<listitem>
+<para>
+after processing by the worker
+</para>
+</listitem>
+</itemizedlist>
+
+    </para>
+
+</section>
+    </section>
+
+    <section>
+    <title>Dependencies</title>
+    <section>
+        <title>&kamailio; Modules</title>
+        <para>
+        The following modules must be loaded before this module:
+            <itemizedlist>
+            <listitem>
+            <para>
+                <emphasis>none</emphasis>.
+            </para>
+            </listitem>
+            </itemizedlist>
+        </para>
+    </section>
+    <section>
+        <title>External Libraries or Applications</title>
+        <itemizedlist>
+            <listitem>
+            <para>
+                <emphasis>libev</emphasis>.
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+                <emphasis>libjson</emphasis>.
+            </para>
+            </listitem>
+            <listitem>
+            <para>
+                <emphasis>libevbuffsock</emphasis>.
+            </para>
+            </listitem>
+			<listitem>
+            <para>
+                <emphasis>libnsq</emphasis>.
+            </para>
+            </listitem>
+        </itemizedlist>
+
+        </section>
+    </section>
+
+
+    <section>
+    <title>Parameters</title>
+    <section>
+    <title>NSQ related</title>
+    <section>
+        <title><varname>lookupd_address</varname>(str)</title>
+        <para>
+        The nsqlookupd address.
+        </para>
+        <para>
+        <emphasis>Default value is 127.0.0.1</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>lookupd_address</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "lookupd_address", "nsqlookupd.mydomain.com")
+...
+</programlisting>
+        </example>
+    </section>
+    <section>
+        <title><varname>lookupd_port</varname>(int)</title>
+        <para>
+        The nsqlookupd TCP port.
+        </para>
+        <para>
+        <emphasis>Default value is 4161.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>lookupd_port</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "lookupd_port", 4161)
+...
+</programlisting>
+        </example>
+    </section>
+
+	<section>
+        <title><varname>nsqd_address</varname>(str)</title>
+        <para>
+        The nsqd address. You can specify connecting directly to nsqd instead of using nsqlookupd.
+        </para>
+        <para>
+        <emphasis>Default value is 127.0.0.1</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>nsqd_address</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "nsqd_address", "nsqd.mydomain.com")
+...
+</programlisting>
+        </example>
+    </section>
+    <section>
+        <title><varname>nsqd_port</varname>(int)</title>
+        <para>
+        The nsqd TCP port.
+        </para>
+        <para>
+        <emphasis>Default value is 4150.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>nsqd_port</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "nsqd_port", 4150)
+...
+</programlisting>
+        </example>
+    </section>
+
+	<section>
+        <title><varname>consumer_use_nsqd</varname>(int)</title>
+        <para>
+        Set to 1 if you'd like to connect to nsqd instead of nsqlookupd.
+        </para>
+        <para>
+        <emphasis>Default value is 0.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>consumer_use_nsqd</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "consumer_use_nsqd", 1)
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>consumer_event_key</varname>(str)</title>
+        <para>
+        The default name of the field in json payload to compose the event name 1st part
+        </para>
+        <para>
+        <emphasis>Default value is <quote>Event-Category</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>consumer_event_key</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "consumer_event_key", "My-JSON-Field-Name")
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>consumer_event_sub_key</varname>(str)</title>
+        <para>
+        The default name of the field in json payload to compose the event name 2nd part
+        </para>
+        <para>
+        <emphasis>Default value is <quote>Event-Name</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>consumer_event_sub_key</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "consumer_event_sub_key", "My-JSON-SubField-Name")
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>max_in_flight</varname>(int)</title>
+        <para>
+        The number of messages the consumer can receive before nsqd expects a response.
+        </para>
+        <para>
+        <emphasis>Default value is 1.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>max_in_flight</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "max_in_flight", 2)
+...
+</programlisting>
+        </example>
+    </section>
+
+	<section>
+        <title><varname>consumer_workers</varname>(int)</title>
+        <para>
+        Number of consumer connections to NSQ per topic_channel.
+        </para>
+        <para>
+        <emphasis>Default value is 4.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>consumer_workers</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "consumer_workers", 2)
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>topic_channel</varname>(str)</title>
+        <para>
+        The NSQ Topic and Channel. Delimiter-separated by <quote>:</quote>. It be set multiple times to subscribe to multiple topics and channels. The value of consumer_workers is allocated per topic_channel.
+        </para>
+        <para>
+        <emphasis>Default value is <quote>Kamailio-Topic:Kamailio-Channel</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>topic_channel</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "topic_channel", "My-NSQ-Topic:My-NSQ-Channel")
+modparam("nsq", "topic_channel", "My-NSQ-Topic-2:My-NSQ-Channel-2")
+...
+</programlisting>
+        </example>
+    </section>
+
+    </section>
+
+
+
+    <section>
+    <title>presence related</title>
+    <section>
+        <title><varname>db_url</varname>(str)</title>
+        <para>
+        The database for the presentity table.
+        </para>
+        <para>If set, the nsq_pua_publish function will update the presentity status in the database.
+        </para>
+        <para>
+        <emphasis>Default value is <quote>NULL</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>db_url</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "db_url", "&defaultdb;")
+...
+</programlisting>
+        </example>
+    </section>
+
+    <section>
+        <title><varname>presentity_table</varname>(str)</title>
+        <para>
+        The name of the presentity table in the database.
+        </para>
+        <para>
+        <emphasis>Default value is <quote>presentity</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>presentity_table</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("nsq", "presentity_table", "my_presentity_table")
+...
+</programlisting>
+        </example>
+    </section>
+
+
+    </section>
+
+
+
+
+
+</section>
+<section>
+    <title>Functions</title>
+
+    <section>
+    <title>presence related</title>
+    <section>
+        <title>
+        <function moreinfo="none">nsq_pua_publish(json_payload)</function>
+        </title>
+        <para>
+        The function build presentity state from json_payload and updates presentity table.
+        </para>
+        <para>
+        This function can be used from ANY ROUTE.
+        </para>
+
+        <example>
+        <title><function>nsq_pua_publish</function> usage</title>
+        <programlisting format="linespecific">
+...
+event_route[nsq:consumer-event-presence-update]
+{
+    xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.json,From})");
+    nsq_pua_publish($nsqE);
+    pres_refresh_watchers("$(nsqE{nsq.json,From})", "$(nsqE{nsq.json,Event-Package})", 1);
+}
+...
+</programlisting>
+        </example>
+    </section>
+
+
+</section>
+
+</section>
+
+        <section>
+        <title>Exported pseudo-variables</title>
+        <itemizedlist>
+            <listitem>
+            <para>
+                <emphasis>$nsqE</emphasis>
+                Contains the payload of a consumed message
+            </para>
+            </listitem>
+        </itemizedlist>
+    </section>
+
+        <section>
+        <title>Transformations</title>
+        <para>The prefix for nsq transformations is nsq.</para>
+        <itemizedlist>
+            <listitem><para>
+                <emphasis>json</emphasis>
+            </para>
+        <example>
+        <title><function>nsq.json</function> usage</title>
+        <programlisting format="linespecific">
+...
+#nsq_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
+$du = $nsqE{nsq.json,Channels[0].switch_url};
+if($du != $null) {
+  xlog("L_INFO", "$ci|log|user channels found redirecting call to $du");
+  return;
+}
+...
+</programlisting>
+        </example>
+
+            </listitem>
+
+        </itemizedlist>
+    </section>
+
+
+</chapter>
+

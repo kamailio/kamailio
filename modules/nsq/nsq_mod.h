@@ -1,0 +1,68 @@
+#ifndef __NSQ_MOD_H_
+#define __NSQ_MOD_H_
+
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include "../../cfg/cfg_struct.h"
+#include "../../lib/srdb1/db.h"
+#include "nsq_reader.h"
+#include "nsq_trans.h"
+#include "nsq_pua.h"
+
+#define DBN_DEFAULT_NO_WORKERS 4
+#define LOOKUPD_ADDRESS "127.0.0.1"
+#define CONSUMER_EVENT_KEY "Event-Category"
+#define CONSUMER_EVENT_SUB_KEY "Event-Name"
+#define DEFAULT_CHANNEL "Kamailio-Channel"
+#define DEFAULT_TOPIC "Kamailio-Topic"
+#define NSQD_ADDRESS "127.0.0.1"
+#define PRESENTITY_TABLE "presentity"
+
+typedef struct nsq_topic_channel
+{
+	char *topic;
+	char *channel;
+	struct nsq_topic_channel *next;
+} nsq_topic_channel_t;
+
+
+int nsq_workers = 1;
+int nsq_max_in_flight = 1;
+int consumer_use_nsqd = 0;
+str nsq_lookupd_address = str_init(LOOKUPD_ADDRESS);
+int lookupd_port = 4161;
+str nsq_event_key = str_init(CONSUMER_EVENT_KEY);
+str nsq_event_sub_key = str_init(CONSUMER_EVENT_SUB_KEY);
+str nsqd_address = str_init(NSQD_ADDRESS);
+int nsqd_port = 4150;
+int dbn_pua_mode = 1;
+int dbn_include_entity = 1;
+
+nsq_topic_channel_t *tc_list = NULL;
+str nsq_json_escape_str = str_init("%");
+char nsq_json_escape_char = '%';
+
+int nsq_topic_channel_counter = 0;
+int dbn_consumer_workers = DBN_DEFAULT_NO_WORKERS;
+int startup_time = 0;
+int *nsq_worker_pipes_fds = NULL;
+int *nsq_worker_pipes = NULL;
+int nsq_cmd_pipe = 0;
+int nsq_cmd_pipe_fds[2] = {-1,-1};
+
+/* database connection */
+db1_con_t *nsq_pa_db = NULL;
+db_func_t nsq_pa_dbf;
+str nsq_presentity_table = str_init(PRESENTITY_TABLE);
+str nsq_db_url = {NULL, 0};
+
+static int mod_init(void);
+static int mod_child_init(int);
+static int nsq_add_topic_channel(modparam_t type, void* val);
+static void free_tc_list(nsq_topic_channel_t *tc_list);
+static void mod_destroy(void);
+
+int nsq_pv_get_event_payload(struct sip_msg*, pv_param_t*, pv_value_t*);
+
+#endif
