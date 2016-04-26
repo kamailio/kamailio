@@ -415,6 +415,36 @@ int handle_net_kernel(cnode_handler_t *phandler, erlang_msg * msg)
 int erlang_whereis(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *pid)
 {
 	ei_x_buff *response = &phandler->response;
+	ei_x_buff *request = &phandler->request;
+	char route[sizeof("erlang:")+MAXATOMLEN] = "erlang:";
+	int arity;
+	int type;
+	int rt;
+
+	ei_decode_list_header(request->buff,&request->index,&arity);
+
+	if (arity != 1) {
+		response->index = 1;
+		encode_error_msg(response, ref, "badarith", "undefined function erlang:whereis/%d",arity);
+		return 0;
+	}
+
+	ei_get_type(request->buff,&request->index,&type,&arity);
+
+	if (type != ERL_ATOM_EXT) {
+		response->index = 1;
+		encode_error_msg(response, ref, "badarg", "bad argument");
+		return 0;
+	}
+
+	ei_decode_atom(request->buff,&request->index,route+sizeof("erlang:")-1);
+
+	rt = route_get(&event_rt, route);
+	if (rt < 0 || event_rt.rlist[rt] == NULL) {
+		LM_WARN("can't find pseudo process %s\n", route);
+		ei_x_encode_atom(response,"undefined");
+		return 0;
+	}
 
 	ei_x_encode_pid(response,&phandler->ec.self);
 
@@ -430,6 +460,7 @@ static int handle_erlang_calls(cnode_handler_t *phandler,erlang_ref_ex_t *ref, e
 		return erlang_whereis(phandler,ref,pid);
 	}
 	else {
+		response->index = 1;
 		encode_error_msg(response, ref, "badrpc", "Method Not Found");
 	}
 
