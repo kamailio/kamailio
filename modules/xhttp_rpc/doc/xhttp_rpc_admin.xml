@@ -18,11 +18,12 @@
 	<para>
 		This module provides an HTTP transport layer implementation for
 		the RPC management interface in a human-readable format.
-	<para>
 	</para>
+	<para>
 		The xHTTP_RPC module uses the xHTTP module to handle HTTP requests.
 		Read the documentation of the xHTTP module for more details.
 	</para>
+	</section>
 
 	<section>
 	<title>Limitations</title>
@@ -52,7 +53,6 @@
 	</para>
 	</listitem>
 	</itemizedlist>
-	</section>
 	</section>
 
 	<section>

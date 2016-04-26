@@ -19,24 +19,25 @@ Eric Ptak
    1. Admin Guide
 
         1. Overview
-        2. Dependencies
+        2. Known limitations
+        3. Dependencies
 
-              2.1. Kamailio Modules
-              2.2. External Libraries or Applications
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        3. Database
-        4. Parameters
+        4. Database
+        5. Parameters
 
-              4.1. db_url (str)
-              4.2. db_table (str)
-              4.3. httpProxy_host (str)
-              4.4. httpProxy_port (int)
+              5.1. db_url (str)
+              5.2. db_table (str)
+              5.3. httpProxy_host (str)
+              5.4. httpProxy_port (int)
 
-        5. Functions
+        6. Functions
 
-              5.1. purple_send_message()
-              5.2. purple_handle_publish()
-              5.3. purple_handle_subscribe()
+              6.1. purple_send_message()
+              6.2. purple_handle_publish()
+              6.3. purple_handle_subscribe()
 
    List of Examples
 
@@ -56,24 +57,25 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
-   2. Dependencies
+   2. Known limitations
+   3. Dependencies
 
-        2.1. Kamailio Modules
-        2.2. External Libraries or Applications
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
 
-   3. Database
-   4. Parameters
+   4. Database
+   5. Parameters
 
-        4.1. db_url (str)
-        4.2. db_table (str)
-        4.3. httpProxy_host (str)
-        4.4. httpProxy_port (int)
+        5.1. db_url (str)
+        5.2. db_table (str)
+        5.3. httpProxy_host (str)
+        5.4. httpProxy_port (int)
 
-   5. Functions
+   6. Functions
 
-        5.1. purple_send_message()
-        5.2. purple_handle_publish()
-        5.3. purple_handle_subscribe()
+        6.1. purple_send_message()
+        6.2. purple_handle_publish()
+        6.3. purple_handle_subscribe()
 
 1. Overview
 
@@ -100,28 +102,29 @@ Chapter 1. Admin Guide
    Before starting Kamailio use (adapt the path to your environment):
                 export LD_PRELOAD=$LD_PRELOAD:/usr/local/lib/libpurple.so
 
-   Limitations: doesn't implement authorization requests from external
-   accounts to SIP.
+2. Known limitations
 
-2. Dependencies
+   Doesn't implement authorization requests from external accounts to SIP.
 
-   2.1. Kamailio Modules
-   2.2. External Libraries or Applications
+3. Dependencies
 
-2.1. Kamailio Modules
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
+
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * presence*.
      * pua.
      * database driver module (db_mysql, ...).
 
-2.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * libpurple, e.g. from pidgin 2.5.2.
 
-3. Database
+4. Database
 
    The database is used to map SIP URIs with external accounts (eg. MSN).
 
@@ -167,25 +170,25 @@ CREATE TABLE purplemap (
 );
 ...
 
-4. Parameters
+5. Parameters
 
-   4.1. db_url (str)
-   4.2. db_table (str)
-   4.3. httpProxy_host (str)
-   4.4. httpProxy_port (int)
+   5.1. db_url (str)
+   5.2. db_table (str)
+   5.3. httpProxy_host (str)
+   5.4. httpProxy_port (int)
 
-4.1. db_url (str)
+5.1. db_url (str)
 
    The URL to connect to database.
 
-   Default value is “mysql://openserro:openserro@localhost/openser”.
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.4. Set db_url parameter
 ...
 modparam("purple", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-4.2. db_table (str)
+5.2. db_table (str)
 
    Database table name.
 
@@ -196,7 +199,7 @@ modparam("purple", "db_url", "dbdriver://username:password@dbhost/dbname")
 modparam("purple", "db_table", "purplemap")
 ...
 
-4.3. httpProxy_host (str)
+5.3. httpProxy_host (str)
 
    Address of HTTP proxy.
 
@@ -207,7 +210,7 @@ modparam("purple", "db_table", "purplemap")
 modparam("purple", "httpProxy_host", "10.26.52.12")
 ...
 
-4.4. httpProxy_port (int)
+5.4. httpProxy_port (int)
 
    Port of HTTP proxy.
 
@@ -218,13 +221,13 @@ modparam("purple", "httpProxy_host", "10.26.52.12")
 modparam("purple", "httpProxy_port", 3128)
 ...
 
-5. Functions
+6. Functions
 
-   5.1. purple_send_message()
-   5.2. purple_handle_publish()
-   5.3. purple_handle_subscribe()
+   6.1. purple_send_message()
+   6.2. purple_handle_publish()
+   6.3. purple_handle_subscribe()
 
-5.1.  purple_send_message()
+6.1.  purple_send_message()
 
    Send message to a purple destination.
 
@@ -241,7 +244,7 @@ if (is_method("MESSAGE")) {
 }
 ...
 
-5.2.  purple_handle_publish()
+6.2.  purple_handle_publish()
 
    Handle PUBLISH to a purple destination.
 
@@ -256,7 +259,7 @@ if(is_method("PUBLISH")) {
 }
 ...
 
-5.3.  purple_handle_subscribe()
+6.3.  purple_handle_subscribe()
 
    Handle SUBSCRIBE to a purple destination.
 

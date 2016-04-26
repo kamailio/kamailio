@@ -206,14 +206,14 @@ suser:supasswd:xxx:alpha.org:xxx
 </programlisting>
 		</example>
 		</section>
-		<section>
-		<title>Existing limitations</title>
+	</section>
+	<section>
+	<title>Known limitations</title>
 		<para>This database interface does not support data insertion with
 			default values. All such values specified in the database template
 			are ignored. So its advisable to specify all data for a column at
 			insertion operations.
 		</para>
-		</section>
 	</section>
 	<section>
 	<title>Dependencies</title>

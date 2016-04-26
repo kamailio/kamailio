@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2014 asipto.com
+   Copyright Â© 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -18,15 +18,13 @@ Daniel-Constantin Mierla
    1. Admin Guide
 
         1. Overview
+        2. Limitations
+        3. Dependencies
 
-              1.1. Limitations
+              3.1. Kamailio Modules
+              3.2. External Libraries or Applications
 
-        2. Dependencies
-
-              2.1. Kamailio Modules
-              2.2. External Libraries or Applications
-
-        3. Usage
+        4. Usage
 
    List of Examples
 
@@ -37,19 +35,15 @@ Chapter 1. Admin Guide
    Table of Contents
 
    1. Overview
+   2. Limitations
+   3. Dependencies
 
-        1.1. Limitations
+        3.1. Kamailio Modules
+        3.2. External Libraries or Applications
 
-   2. Dependencies
-
-        2.1. Kamailio Modules
-        2.2. External Libraries or Applications
-
-   3. Usage
+   4. Usage
 
 1. Overview
-
-   1.1. Limitations
 
    This module provides DB APIv1 connector for MongoDB NoSQL server.
 
@@ -60,33 +54,33 @@ Chapter 1. Admin Guide
 
    You can read more about MongoDB at: http://www.mongodb.org.
 
-1.1. Limitations
+2. Limitations
 
-     * This module has implemented the equivalent operations for INSERT,
-       UPDATE, DELETE and SELECT. The match condition (WHERE clause) works
-       with the operators: equal, not equal, greater than, less than,
-       equal or greater than, equal or less than. Raw query is not
-       implemented inside this module, use ndb_mongodb for sending any
-       kind of command to a MongoDB server.
+   This module has implemented the equivalent operations for INSERT,
+   UPDATE, DELETE and SELECT. The match condition (WHERE clause) works
+   with the operators: equal, not equal, greater than, less than, equal or
+   greater than, equal or less than. Raw query is not implemented inside
+   this module, use ndb_mongodb for sending any kind of command to a
+   MongoDB server.
 
-2. Dependencies
+3. Dependencies
 
-   2.1. Kamailio Modules
-   2.2. External Libraries or Applications
+   3.1. Kamailio Modules
+   3.2. External Libraries or Applications
 
-2.1. Kamailio Modules
+3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * none.
 
-2.2. External Libraries or Applications
+3.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * mongo-c-driver - available at
        https://github.com/mongodb/mongo-c-driver
 
-3. Usage
+4. Usage
 
    Load the module and set the the DB URL for specific modules to:
    mongodb://username:password@host:port/database. Username, password and

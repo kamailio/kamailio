@@ -23,18 +23,23 @@
 		Perl-like substitutions, checks for method type, header presence,
 		insert of new header and date, etc.
 	</para>
+	</section>
 	<section>
-		<title>Known Limitations</title>
-		<para>
-		search ignores folded lines. For example, 
+	<title>Known Limitations</title>
+	<para>
+		Search functions are applied to the original request,
+		i.e., they ignore all changes resulting from message
+		processing in &kamailio; script.
+	</para>
+	<para>
+		Search ignores folded lines. For example, 
 		search(<quote>(From|f):.*@foo.bar</quote>)
 		doesn't match the following From header field:
-		</para>
-		<programlisting format="linespecific">
+<programlisting format="linespecific">
 From: medabeda 
  &lt;sip:medameda@foo.bar&gt;;tag=1234
 </programlisting>
-	</section>
+	</para>
 	</section>
 
 	<section>
@@ -1571,14 +1576,6 @@ remove_body_part("application/vnd.cirpack.isdn-ext");
 		</example>
 	</section>
 
-	</section>
-	<section>
-		<title>Known Limitations</title>
-		<para>
-			Search functions are applied to the original request,
-			i.e., they ignore all changes resulting from message
-			processing in &kamailio; script.
-		</para>
 	</section>
 </chapter>
 

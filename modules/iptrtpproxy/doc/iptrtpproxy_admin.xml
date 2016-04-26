@@ -48,10 +48,11 @@
 	When a message containing SDP offer/answer is being processed then current codecs
 	and streams may be inspected, removed or signallized according a codec set.
 	</para>
+    </section>
 
 
-	<para>
-	Limitations:
+    <section id="iptrtpproxy.known_limitations">
+	<title>Known limitations</title>
 	<itemizedlist>
 		<listitem>
 			<para>
@@ -64,7 +65,6 @@
 			</para>
 		</listitem>
 	</itemizedlist>
-	</para>
     </section>
 
 	<section id="iptrtpproxy.dep">
