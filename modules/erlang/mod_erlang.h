@@ -39,6 +39,8 @@ extern int rpc_reply_with_struct;
 extern str erlang_nodename;
 extern str erlang_node_sname;
 
+extern int rex_call_in_progress;
+
 /* sockets kamailio <-> cnode */
 extern int *usocks[2];
 
