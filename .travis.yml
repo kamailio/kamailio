@@ -14,7 +14,7 @@ branches:
 notifications:
   irc:
     channels:
-      - "chat.freenode.net#Kamailio"
+      - "chat.freenode.net#kamailio-dev"
     on_success: never
     on_failure: always
   email:
