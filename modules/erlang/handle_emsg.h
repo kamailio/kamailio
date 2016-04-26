@@ -27,6 +27,8 @@
 #include "erl_helpers.h"
 #include "cnode.h"
 
+extern int rex_in_progress;
+
 int handle_erlang_msg(cnode_handler_t *handler, erlang_msg * msg);
 
 #endif /* HANDLE_EMSG_H_ */

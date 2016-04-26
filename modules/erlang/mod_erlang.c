@@ -88,6 +88,8 @@ int rpc_reply_with_struct = 0;
 str erlang_nodename  = STR_NULL;
 str erlang_node_sname = STR_NULL;
 
+int rex_call_in_progress = 0;
+
 int *usocks[2];
 int csockfd;
 
