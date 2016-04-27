@@ -1,11 +1,14 @@
 ## Kamailio - equivalent of routing blocks in Python
+##
 ## KSR - the new dynamic object exporting Kamailio functions
 ## Router - the old object exporting Kamailio functions
 ##
+
 import sys
 import Router.Logger as Logger
 import KSR as KSR
 
+# global variables corresponding to defined values (e.g., flags) in kamailio.cfg
 FLT_ACC=1
 FLT_ACCMISSED=2
 FLT_ACCFAILED=3
@@ -14,26 +17,29 @@ FLT_NATS=5
 FLB_NATB=6
 FLB_NATSIPPING=7
 
-def dumpObj(obj):
-    for attr in dir(obj):
-        # KSR.info("obj.%s = %s\n" % (attr, getattr(obj, attr)));
-        Logger.LM_INFO("obj.%s = %s\n" % (attr, getattr(obj, attr)));
 
+# global function to instantiate a kamailio class object
+# -- executed when kamailio app_python module is initialized
 def mod_init():
     KSR.info("===== from Python mod init\n");
     # dumpObj(KSR);
     return kamailio();
 
+
+# -- {start defining kamailio class}
 class kamailio:
     def __init__(self):
         KSR.info('===== kamailio.__init__\n');
 
 
+    # executed when kamailio child processes are initialized
     def child_init(self, rank):
         KSR.info('===== kamailio.child_init(%d)\n' % rank);
         return 0;
 
 
+    # SIP request routing
+    # -- equivalent of request_route{}
     def ksr_request_route(self, msg):
         # KSR.info("===== request - from kamailio python script\n");
         # KSR.info("===== method [%s] r-uri [%s]\n" % (KSR.pv.get("$rm"),KSR.pv.get("$ru")));
@@ -326,6 +332,7 @@ class kamailio:
 
 
     # Manage outgoing branches
+    # -- equivalent of branch_route[...]{}
     def ksr_branch_manage(self, msg):
         KSR.dbg("new branch ["+ str(KSR.pv.get("$T_branch_idx"))
                     + " to "+ KSR.pv.get("$ru") + "\n");
@@ -334,6 +341,7 @@ class kamailio:
 
 
     # Manage incoming replies
+    # -- equivalent of onreply_route[...]{}
     def ksr_onreply_manage(self, msg):
         KSR.dbg("incoming reply\n");
         scode = KSR.pv.get("$rs");
@@ -344,6 +352,7 @@ class kamailio:
 
 
     # Manage failure routing cases
+    # -- equivalent of failure_route[...]{}
     def ksr_failure_manage(self, msg):
         if self.ksr_route_natmanage()==-255 : return 1;
 
@@ -353,7 +362,19 @@ class kamailio:
         return 1;
 
 
+    # SIP response handling
+    # -- equivalent of reply_route{}
     def ksr_reply_route(self, msg):
         KSR.info("===== response - from kamailio python script\n");
         return 1;
+
+
+# -- {end defining kamailio class}
+
+
+# global helper function for debugging purposes
+def dumpObj(obj):
+    for attr in dir(obj):
+        # KSR.info("obj.%s = %s\n" % (attr, getattr(obj, attr)));
+        Logger.LM_INFO("obj.%s = %s\n" % (attr, getattr(obj, attr)));
 
