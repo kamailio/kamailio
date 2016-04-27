@@ -1691,8 +1691,24 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 /**
  *
  */
+static int sr_kemi_lua_exit (lua_State *L)
+{
+	str *s;
+
+	LM_DBG("script exit call\n");
+	s = sr_kemi_lua_exit_string_get();
+	lua_getglobal(L, "error");
+	lua_pushstring(L, s->s);
+	lua_call(L, 1, 0);
+	return 0;
+}
+
+/**
+ *
+ */
 static const luaL_Reg _sr_kemi_x_Map [] = {
-	{"modf",         lua_sr_modf},
+	{"modf",      lua_sr_modf},
+	{"exit",      sr_kemi_lua_exit},
 	{NULL, NULL}
 };
 

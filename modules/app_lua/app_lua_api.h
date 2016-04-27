@@ -87,5 +87,7 @@ int app_lua_return_error(lua_State *L);
 
 void app_lua_dump_stack(lua_State *L);
 
+str* sr_kemi_lua_exit_string_get(void);
+
 #endif
 
