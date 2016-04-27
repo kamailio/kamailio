@@ -154,7 +154,7 @@ end
 
 -- Handle requests within SIP dialogs
 function ksr_route_withindlg()
-	if KSR.siputils.has_totag()<0 then return -255; end
+	if KSR.siputils.has_totag()<0 then return 1; end
 
 	-- sequential request withing a dialog should
 	-- take the path determined by record-routing
