@@ -14,7 +14,7 @@ FLB_NATSIPPING=7
 -- SIP request routing
 -- equivalent of request_route{}
 function ksr_request_route()
-	-- KSR.sl.sl_send_reply("100","Intelligent trying");
+	-- KSR.sl.sl_send_reply(100,"Intelligent trying");
 	-- KSR.info("===== request - from kamailio lua script\n");
 
 	-- per request initial checks
@@ -68,7 +68,7 @@ function ksr_request_route()
 
 	if KSR.pv.is_null("$rU") then
 		-- request with no Username in RURI
-		KSR.sl.sl_send_reply("484","Address Incomplete");
+		KSR.sl.sl_send_reply(484,"Address Incomplete");
 		return 1;
 	end
 
@@ -127,19 +127,19 @@ function ksr_route_reqinit()
 	if (not KSR.pv.is_null("$ua"))
 			and (string.find(KSR.pv.get("$ua"), "friendly-scanner")
 				or string.find(KSR.pv.get("$ua"), "sipcli")) then
-		KSR.sl.sl_send_reply("200", "OK");
+		KSR.sl.sl_send_reply(200, "OK");
 		return -255;
 	end
 
 	if KSR.maxfwd.process_maxfwd(10) < 0 then
-		KSR.sl.sl_send_reply("483","Too Many Hops");
+		KSR.sl.sl_send_reply(483,"Too Many Hops");
 		return -255;
 	end
 
 	if KSR.pv.get("$rm")=="OPTIONS"
 			and KSR.is_myself(KSR.pv.get("$ru"))
 			and KSR.pv.is_null("$rU") then
-		KSR.sl.sl_send_reply("200","Keepalive");
+		KSR.sl.sl_send_reply(200,"Keepalive");
 		return -255;
 	end
 
@@ -185,7 +185,7 @@ function ksr_route_withindlg()
 			return -255;
 		end
 	end
-	KSR.sl.sl_send_reply("404", "Not here");
+	KSR.sl.sl_send_reply(404, "Not here");
 	return -255;
 end
 
@@ -231,7 +231,7 @@ end
 function ksr_route_auth()
 
 	if KSR.pv.get("$rm")~="REGISTER" then
-		if KSR.permissions.allow_source_address("1")>0 then
+		if KSR.permissions.allow_source_address(1)>0 then
 			-- source IP allowed
 			return 1;
 		end
@@ -240,7 +240,7 @@ function ksr_route_auth()
 	if KSR.pv.get("$rm")=="REGISTER" or KSR.is_myself(KSR.pv.get("$fu")) then
 		-- authenticate requests
 		if KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0 then
-			KSR.auth.auth_challenge(KSR.pv.get("$fd"), "0");
+			KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
 			return -255;
 		end
 		-- user authenticated - remove auth header
@@ -253,7 +253,7 @@ function ksr_route_auth()
 	-- a local destination, otherwise deny, not an open relay here
 	if (not KSR.is_myself(KSR.pv.get("$fu"))
 			and (not KSR.is_myself(KSR.pv.get("$ru")))) then
-		KSR.sl.sl_send_reply("403","Not relaying");
+		KSR.sl.sl_send_reply(403,"Not relaying");
 		return -255;
 	end
 
