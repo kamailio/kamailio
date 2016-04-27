@@ -1,8 +1,10 @@
 -- Kamailio - equivalent of routing blocks in Lua
+--
 -- KSR - the new dynamic object exporting Kamailio functions
 -- sr - the old static object exporting Kamailio functions
 --
 
+-- global variables corresponding to defined values (e.g., flags) in kamailio.cfg
 FLT_ACC=1
 FLT_ACCMISSED=2
 FLT_ACCFAILED=3
@@ -322,6 +324,7 @@ function ksr_route_sipout()
 end
 
 -- Manage outgoing branches
+-- equivalent of branch_route[...]{}
 function ksr_branch_manage()
 	KSR.dbg("new branch [".. KSR.pv.get("$T_branch_idx]")
 				.. " to ".. KSR.pv.get("$ru") .. "\n");
@@ -330,6 +333,7 @@ function ksr_branch_manage()
 end
 
 -- Manage incoming replies
+-- equivalent of onreply_route[...]{}
 function ksr_onreply_manage()
 	KSR.dbg("incoming reply\n");
 	local scode = KSR.pv.get("$rs");
@@ -340,6 +344,7 @@ function ksr_onreply_manage()
 end
 
 -- Manage failure routing cases
+-- equivalent of failure_route[...]{}
 function ksr_failure_manage()
 	if ksr_route_natmanage()==-255 then return 1; end
 
@@ -349,7 +354,7 @@ function ksr_failure_manage()
 	return 1;
 end
 
--- SIP response routing
+-- SIP response handling
 -- equivalent of reply_route{}
 function ksr_reply_route()
 	KSR.info("===== response - from kamailio lua script\n");
