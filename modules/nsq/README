@@ -43,14 +43,14 @@ Emmanuel Schmidbauer
                     4.1.9. consumer_workers(int)
                     4.1.10. topic_channel(str)
 
-              4.2. presence related
+              4.2. Presence Related
 
                     4.2.1. db_url(str)
                     4.2.2. presentity_table(str)
 
         5. Functions
 
-              5.1. presence related
+              5.1. Presence Pelated
 
                     5.1.1. nsq_pua_publish(json_payload)
 
@@ -105,14 +105,14 @@ Chapter 1. Admin Guide
               4.1.9. consumer_workers(int)
               4.1.10. topic_channel(str)
 
-        4.2. presence related
+        4.2. Presence Related
 
               4.2.1. db_url(str)
               4.2.2. presentity_table(str)
 
    5. Functions
 
-        5.1. presence related
+        5.1. Presence Pelated
 
               5.1.1. nsq_pua_publish(json_payload)
 
@@ -121,10 +121,10 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The NSQ module an NSQ consumer. It exposes only consume capabilities
-   into Kamailio.
+   The module provides an NSQ consumer for Kamailio configuration file.
+   You can read more about NSQ at nsq.io.
 
-   From a high-level, the purpose of the module might be for things like:
+   From a high-level perspective, the module may be used for:
      * Provide a real-time integration into your program, instead of your
        database, so you can overlay additional logic in your preferred
        language while also utilizing a message bus
@@ -170,39 +170,41 @@ modparam("nsq", "consumer_event_sub_key", "Event-Name")
 
 event_route[nsq:consumer-event-presence-update]
 {
-# presence is the value extracted from Event-Category field in json payload
-# update is the value extracted from Event-Name field in json payload
-xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{kznsq
-json,From})");
-...
+        # presence is the value extracted from Event-Category field in json payl
+oad
+        # update is the value extracted from Event-Name field in json payload
+        xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(ns
+qE{kznsqjson,From})");
+        ...
 }
 
 event_route[nsq:consumer-event-presence]
 {
-# presence is the value extracted from Event-Category field in json payload
-xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.j
-son,From})");
-...
+        # presence is the value extracted from Event-Category field in json payl
+oad
+        xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(ns
+qE{nsq.json,From})");
+        ...
 }
 
 event_route[nsq:consumer-event-event-category-event-name]
 {
-# event-category is the name of the consumer_event_key parameter
-# event-name is the name of the consumer_event_sub_key parameter
-# this event route is executed if we can't find the previous
-...
+        # event-category is the name of the consumer_event_key parameter
+        # event-name is the name of the consumer_event_sub_key parameter
+        # this event route is executed if we can't find the previous
+        ...
 }
 
 event_route[nsq:consumer-event-event-category]
 {
-# event-category is the name of the consumer_event_key parameter
-# this event route is executed if we can't find the previous
-...
+        # event-category is the name of the consumer_event_key parameter
+        # this event route is executed if we can't find the previous
+        ...
 }
 
 event_route[nsq:consumer-event]
 {
-# this event route is executed if we can't find the previous
+        # this event route is executed if we can't find the previous
 }
 
 2.2. aknowledge messages
@@ -243,7 +245,7 @@ event_route[nsq:consumer-event]
         4.1.9. consumer_workers(int)
         4.1.10. topic_channel(str)
 
-   4.2. presence related
+   4.2. Presence Related
 
         4.2.1. db_url(str)
         4.2.2. presentity_table(str)
@@ -367,7 +369,7 @@ modparam("nsq", "topic_channel", "My-NSQ-Topic:My-NSQ-Channel")
 modparam("nsq", "topic_channel", "My-NSQ-Topic-2:My-NSQ-Channel-2")
 ...
 
-4.2. presence related
+4.2. Presence Related
 
 4.2.1. db_url(str)
 
@@ -396,11 +398,11 @@ modparam("nsq", "presentity_table", "my_presentity_table")
 
 5. Functions
 
-   5.1. presence related
+   5.1. Presence Pelated
 
         5.1.1. nsq_pua_publish(json_payload)
 
-5.1. presence related
+5.1. Presence Pelated
 
 5.1.1. nsq_pua_publish(json_payload)
 
@@ -413,11 +415,11 @@ modparam("nsq", "presentity_table", "my_presentity_table")
 ...
 event_route[nsq:consumer-event-presence-update]
 {
-    xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{n
-sq.json,From})");
-    nsq_pua_publish($nsqE);
-    pres_refresh_watchers("$(nsqE{nsq.json,From})", "$(nsqE{nsq.json,Event-Packa
-ge})", 1);
+        xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(ns
+qE{nsq.json,From})");
+        nsq_pua_publish($nsqE);
+        pres_refresh_watchers("$(nsqE{nsq.json,From})", "$(nsqE{nsq.json,Event-P
+ackage})", 1);
 }
 ...
 
@@ -434,7 +436,7 @@ ge})", 1);
 #nsq_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
 $du = $nsqE{nsq.json,Channels[0].switch_url};
 if($du != $null) {
-  xlog("L_INFO", "$ci|log|user channels found redirecting call to $du");
-  return;
+        xlog("L_INFO", "$ci|log|user channels found redirecting call to $du");
+        return;
 }
 ...
