@@ -52,13 +52,13 @@ void python_handle_exception(const char *fmt, ...)
 	PyErr_Fetch(&exception, &v, &tb);
 	PyErr_Clear();
 	if (exception == NULL) {
-		LM_ERR("python_handle_exception(): Can't get traceback, PyErr_Fetch() has failed.\n");
+		LM_ERR("Can't get traceback, PyErr_Fetch() has failed.\n");
 		return;
 	}
 
 	PyErr_NormalizeException(&exception, &v, &tb);
 	if (exception == NULL) {
-		LM_ERR("python_handle_exception(): Can't get traceback, PyErr_NormalizeException() has failed.\n");
+		LM_ERR("Can't get traceback, PyErr_NormalizeException() has failed.\n");
 		return;
 	}
 
@@ -67,14 +67,14 @@ void python_handle_exception(const char *fmt, ...)
 	Py_XDECREF(v);
 	Py_XDECREF(tb);
 	if (args == NULL) {
-		LM_ERR("python_handle_exception(): Can't get traceback, PyTuple_Pack() has failed.\n");
+		LM_ERR("Can't get traceback, PyTuple_Pack() has failed.\n");
 		return;
 	}
 
 	pResult = PyObject_CallObject(format_exc_obj, args);
 	Py_DECREF(args);
 	if (pResult == NULL) {
-		LM_ERR("python_handle_exception(): Can't get traceback, traceback.format_exception() has failed.\n");
+		LM_ERR("Can't get traceback, traceback.format_exception() has failed.\n");
 		return;
 	}
 
@@ -82,7 +82,8 @@ void python_handle_exception(const char *fmt, ...)
 	buf = (char *)pkg_realloc(NULL, buflen * sizeof(char));
 	if (!buf)
 	{
-		LM_ERR("python_handle_exception(): Can't allocate memory (%lu bytes), pkg_realloc() has failed. Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
+		LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed."
+				" Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
 		return;
 	}
 	memset(buf, 0, buflen * sizeof(char));
@@ -90,7 +91,7 @@ void python_handle_exception(const char *fmt, ...)
 	for (i = 0; i < PySequence_Size(pResult); i++) {
 		line = PySequence_GetItem(pResult, i);
 		if (line == NULL) {
-			LM_ERR("python_handle_exception(): Can't get traceback, PySequence_GetItem() has failed.\n");
+			LM_ERR("Can't get traceback, PySequence_GetItem() has failed.\n");
 			Py_DECREF(pResult);
 			if (buf)
 				pkg_free(buf);
@@ -100,7 +101,7 @@ void python_handle_exception(const char *fmt, ...)
 		msg = PyString_AsString(line);
 
 		if (msg == NULL) {
-			LM_ERR("python_handle_exception(): Can't get traceback, PyString_AsString() has failed.\n");
+			LM_ERR("Can't get traceback, PyString_AsString() has failed.\n");
 			Py_DECREF(line);
 			Py_DECREF(pResult);
 			if (buf)
@@ -114,7 +115,8 @@ void python_handle_exception(const char *fmt, ...)
 		buf = (char *)pkg_realloc(buf, buflen * sizeof(char *));
 		if (!buf)
 		{
-			LM_ERR("python_handle_exception(): Can't allocate memory (%lu bytes), pkg_realloc() has failed. Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
+			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed."
+					" Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
 			Py_DECREF(line);
 			Py_DECREF(pResult);
 			return;
@@ -146,14 +148,15 @@ PyObject *InitTracebackModule()
 
 	pModule = PyImport_ImportModule("traceback");
 	if (pModule == NULL) {
-		LM_ERR("InitTracebackModule(): Cannot import module 'traceback'.\n");
+		LM_ERR("Cannot import module 'traceback'.\n");
 		return NULL;
 	}
 
 	pTracebackObject = PyObject_GetAttrString(pModule, "format_exception");
 	Py_DECREF(pModule);
 	if (pTracebackObject == NULL || !PyCallable_Check(pTracebackObject)) {
-		LM_ERR("InitTracebackModule(): AttributeError: 'module' object 'traceback' has no attribute 'format_exception'.\n");
+		LM_ERR("AttributeError: 'module' object 'traceback' has no attribute"
+				" 'format_exception'.\n");
 		Py_XDECREF(pTracebackObject);
 		return NULL;
 	}
@@ -173,7 +176,8 @@ char *make_message(const char *fmt, ...)
 	p = (char *)pkg_realloc(NULL, size * sizeof(char *));
 	if (!p)
 	{
-		LM_ERR("make_message(): Can't allocate memory (%lu bytes), pkg_malloc() has failed: Not enough memory.\n", (unsigned long)(size * sizeof(char *)));
+		LM_ERR("Can't allocate memory (%lu bytes), pkg_malloc() has failed:"
+				" Not enough memory.\n", (unsigned long)(size * sizeof(char *)));
 		return NULL;
 	}
 	memset(p, 0, size * sizeof(char *));
@@ -195,7 +199,8 @@ char *make_message(const char *fmt, ...)
 		np = (char *)pkg_realloc(p, size * sizeof(char *));
 		if (!np)
 		{
-			LM_ERR("make_message(): Can't allocate memory (%lu bytes), pkg_realloc() has failed: Not enough memory.\n", (unsigned long)size * sizeof(char *));
+			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed:"
+					" Not enough memory.\n", (unsigned long)size * sizeof(char *));
 			if (p)
 				pkg_free(p);
 			return NULL;
