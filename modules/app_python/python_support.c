@@ -39,6 +39,7 @@ void python_handle_exception(const char *fmt, ...)
 	PyObject *line;
 	int i;
 	char *srcbuf;
+	int exc_exit = 0;
 
 	// We don't want to generate traceback when no errors occured
 	if (!PyErr_Occurred())
@@ -62,6 +63,7 @@ void python_handle_exception(const char *fmt, ...)
 		return;
 	}
 
+	exc_exit = PyErr_GivenExceptionMatches(exception, PyExc_SystemExit);
 	args = PyTuple_Pack(3, exception, v, tb ? tb : Py_None);
 	Py_XDECREF(exception);
 	Py_XDECREF(v);
@@ -127,10 +129,19 @@ void python_handle_exception(const char *fmt, ...)
 		Py_DECREF(line);
 	}
 
-	if (srcbuf == NULL)
-		LM_ERR("Unhandled exception in the Python code:\n%s", buf);
-	else
-		LM_ERR("%s: Unhandled exception in the Python code:\n%s", srcbuf, buf);
+	if (srcbuf == NULL) {
+		if(exc_exit) {
+			LM_DBG("Unhandled exception in the Python code:\n%s", buf);
+		} else {
+			LM_ERR("Unhandled exception in the Python code:\n%s", buf);
+		}
+	} else {
+		if(exc_exit) {
+			LM_DBG("%s: Unhandled exception in the Python code:\n%s", srcbuf, buf);
+		} else {
+			LM_ERR("%s: Unhandled exception in the Python code:\n%s", srcbuf, buf);
+		}
+	}
 
 	if (buf)
 		pkg_free(buf);
