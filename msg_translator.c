@@ -1688,7 +1688,8 @@ int get_boundary(struct sip_msg* msg, str* boundary)
 		msg->content_type->body.len);
 	if (params.s == NULL)
 	{
-		LM_ERR("Content-Type hdr has no params\n");
+		LM_INFO("Content-Type hdr has no params <%.*s>\n",
+				msg->content_type->body.len, msg->content_type->body.s);
 		return -1;
 	}
 	params.len = msg->content_type->body.len -
@@ -1749,7 +1750,10 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 		}
 		tmp.s = buf.s;
 		t = tmp.len = buf.len;
-		if(get_boundary(msg, &ob)!=0) return -1;
+		if(get_boundary(msg, &ob)!=0) {
+			if(tmp.s) pkg_free(tmp.s);
+			return -1;
+		}
 		if(str_append(&ob, &bsuffix, &b)!=0) {
 			LM_ERR("Can't append suffix to boundary\n");
 			goto error;
