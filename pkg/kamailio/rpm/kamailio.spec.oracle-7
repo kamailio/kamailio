@@ -37,6 +37,7 @@ URL:          http://kamailio.org/
 Vendor:       kamailio.org
 BuildRoot:    %{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:    kamailio-mysql < %ver, kamailio-postgres < %ver, kamailio-unixodbc < %ver, kamailio-ldap < %ver, kamailio-xmlrpc < %ver, kamailio-perl < %ver, kamailio-python < %ver, kamailio-lua < %ver, kamailio-utils < %ver, kamailio-purple < %ver, kamailio-memcached  < %ver, kamailio-tls  < %ver, kamailio-xmpp  < %ver, kamailio-cpl  < %ver, kamailio-snmpstats  < %ver, kamailio-carrierroute  < %ver, kamailio-presence  < %ver, kamailio-radius  < %ver, kamailio-geoip  < %ver
+Requires:     shadow-utils
 BuildRequires:  make flex bison pcre-devel
 
 %description
