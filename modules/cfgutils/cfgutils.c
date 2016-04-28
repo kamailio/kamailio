@@ -19,11 +19,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Softwar
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * cfgutils module: random probability functions for Kamailio;
+ */
+
+/**
+ * cfgutils module: various config functions for Kamailio;
  * it provide functions to make a decision in the script
  * of the server based on a probability function.
  * The benefit of this module is the value of the probability function
@@ -33,7 +35,7 @@
  * specific time interval.
  *
  * gflags module: global flags; it keeps a bitmap of flags
- * in shared memory and may be used to change behaviour 
+ * in shared memory and may be used to change behaviour
  * of server based on value of the flags. E.g.,
  *    if (is_gflag("1")) { t_relay_to_udp("10.0.0.1","5060"); }
  *    else { t_relay_to_udp("10.0.0.2","5060"); }
@@ -73,6 +75,7 @@
 #include "../../locking.h"
 #include "../../route.h"
 #include "../../rpc_lookup.h"
+#include "../../kemi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -101,8 +104,8 @@ static int set_gflag(struct sip_msg*, char *, char *);
 static int reset_gflag(struct sip_msg*, char *, char *);
 static int is_gflag(struct sip_msg*, char *, char *);
 
-static int cfg_lock(struct sip_msg*, char *, char *);
-static int cfg_unlock(struct sip_msg*, char *, char *);
+static int w_cfg_lock(struct sip_msg*, char *, char *);
+static int w_cfg_unlock(struct sip_msg*, char *, char *);
 
 static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param );
@@ -177,9 +180,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"is_gflag",     (cmd_function)is_gflag,    1,   fixup_gflags, 0,
 		ANY_ROUTE},
-	{"lock",         (cmd_function)cfg_lock,    1,   fixup_spve_null, 0,
+	{"lock",         (cmd_function)w_cfg_lock,    1,   fixup_spve_null, 0,
 		ANY_ROUTE},
-	{"unlock",       (cmd_function)cfg_unlock,  1,   fixup_spve_null, 0,
+	{"unlock",       (cmd_function)w_cfg_unlock,  1,   fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"core_hash",    (cmd_function)w_core_hash, 3,   fixup_core_hash, 0,
 		ANY_ROUTE},
@@ -821,7 +824,7 @@ static int dbg_shm_summary(struct sip_msg* msg, char* foo, char* bar)
 	return 1;
 }
 
-int cfg_lock_helper(str *lkey, int mode)
+static int cfg_lock_helper(str *lkey, int mode)
 {
 	unsigned int pos;
 	pos = core_case_hash(lkey, 0, _cfg_lock_size);
@@ -833,7 +836,17 @@ int cfg_lock_helper(str *lkey, int mode)
 	return 1;
 }
 
-int cfg_lock_wrapper(struct sip_msg *msg, gparam_p key, int mode)
+static int cfg_lock(str *lkey)
+{
+	return cfg_lock_helper(lkey, 0);
+}
+
+static int cfg_unlock(str *lkey)
+{
+	return cfg_lock_helper(lkey, 1);
+}
+
+static int w_cfg_lock_wrapper(struct sip_msg *msg, gparam_p key, int mode)
 {
 	str s;
 	if(fixup_get_svalue(msg, key, &s)!=0)
@@ -844,18 +857,18 @@ int cfg_lock_wrapper(struct sip_msg *msg, gparam_p key, int mode)
 	return cfg_lock_helper(&s, mode);
 }
 
-static int cfg_lock(struct sip_msg *msg, char *key, char *s2)
+static int w_cfg_lock(struct sip_msg *msg, char *key, char *s2)
 {
 	if(_cfg_lock_set==NULL || key==NULL)
 		return -1;
-	return cfg_lock_wrapper(msg, (gparam_p)key, 0);
+	return w_cfg_lock_wrapper(msg, (gparam_p)key, 0);
 }
 
-static int cfg_unlock(struct sip_msg *msg, char *key, char *s2)
+static int w_cfg_unlock(struct sip_msg *msg, char *key, char *s2)
 {
 	if(_cfg_lock_set==NULL || key==NULL)
 		return -1;
-	return cfg_lock_wrapper(msg, (gparam_p)key, 1);
+	return w_cfg_lock_wrapper(msg, (gparam_p)key, 1);
 }
 
 /*! Check if a route block exists - only request routes
@@ -1038,5 +1051,33 @@ int bind_cfgutils(cfgutils_api_t *api)
 	api->mlock   = cfgutils_lock;
 	api->munlock = cfgutils_unlock;
 
+	return 0;
+}
+
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_cfgutils_exports[] = {
+	{ str_init("cfgutils"), str_init("lock"),
+		SR_KEMIP_INT, cfg_lock,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("unlock"),
+		SR_KEMIP_INT, cfg_unlock,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_cfgutils_exports);
 	return 0;
 }
