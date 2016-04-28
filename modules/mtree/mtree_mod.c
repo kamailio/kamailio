@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -42,6 +40,7 @@
 #include "../../parser/parse_from.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
+#include "../../kemi.h"
 
 #include "mtree.h"
 
@@ -114,8 +113,8 @@ static int  child_init(int rank);
 static int  mi_child_init(void);
 static int mtree_init_rpc(void);
 
-static int mt_match(struct sip_msg *msg, gparam_t *dm, gparam_t *var,
-		gparam_t *mode);
+static int mt_match(sip_msg_t *msg, str *tname, str *tomatch,
+		int mval);
 
 static struct mi_root* mt_mi_reload(struct mi_root*, void* param);
 static struct mi_root* mt_mi_list(struct mi_root*, void* param);
@@ -397,33 +396,13 @@ static int fixup_mt_match(void** param, int param_no)
 
 
 /* use tree tn, match var, by mode, output in avp params */
-static int mt_match(struct sip_msg *msg, gparam_t *tn, gparam_t *var,
-		gparam_t *mode)
+static int mt_match(sip_msg_t *msg, str *tname, str *tomatch,
+		int mval)
 {
-	str tname;
-	str tomatch;
-	int mval;
 	m_tree_t *tr = NULL;
 
-	if(msg==NULL)
-	{
+	if(msg==NULL) {
 		LM_ERR("received null msg\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, tn, &tname)<0)
-	{
-		LM_ERR("cannot get the tree name\n");
-		return -1;
-	}
-	if(fixup_get_svalue(msg, var, &tomatch)<0)
-	{
-		LM_ERR("cannot get the match var\n");
-		return -1;
-	}
-	if(fixup_get_ivalue(msg, mode, &mval)<0)
-	{
-		LM_ERR("cannot get the mode\n");
 		return -1;
 	}
 
@@ -437,18 +416,17 @@ again:
 	mt_tree_refcnt++;
 	lock_release( mt_lock );
 
-	tr = mt_get_tree(&tname);
-	if(tr==NULL)
-	{
+	tr = mt_get_tree(tname);
+	if(tr==NULL) {
 		/* no tree with such name*/
 		goto error;
 	}
 
-	if(mt_match_prefix(msg, tr, &tomatch, mval)<0)
+	if(mt_match_prefix(msg, tr, tomatch, mval)<0)
 	{
 		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
-				tname.len, tname.s,
-				tomatch.len, tomatch.s);
+				tname->len, tname->s,
+				tomatch->len, tomatch->s);
 		goto error;
 	}
 
@@ -464,10 +442,36 @@ error:
 	return -1;
 }
 
-static int w_mt_match(struct sip_msg* msg, char* str1, char* str2,
-		char* str3)
+static int w_mt_match(struct sip_msg* msg, char* ptn, char* pvar,
+		char* pmode)
 {
-	return mt_match(msg, (gparam_t*)str1, (gparam_t*)str2, (gparam_t*)str3);
+	str tname;
+	str tomatch;
+	int mval;
+
+	if(msg==NULL)
+	{
+		LM_ERR("received null msg\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)ptn, &tname)<0)
+	{
+		LM_ERR("cannot get the tree name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pvar, &tomatch)<0)
+	{
+		LM_ERR("cannot get the match var\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)pmode, &mval)<0)
+	{
+		LM_ERR("cannot get the mode\n");
+		return -1;
+	}
+
+	return mt_match(msg, &tname, &tomatch, mval);
 }
 
 int mt_param(modparam_t type, void *val)
@@ -1426,4 +1430,26 @@ error:
 	lock_release( mt_lock );
 
 	return rpl_tree;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_mtree_exports[] = {
+	{ str_init("mtree"), str_init("mt_match"),
+		SR_KEMIP_INT, mt_match,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_mtree_exports);
+	return 0;
 }
