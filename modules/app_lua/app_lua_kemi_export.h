@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -19,15 +19,26 @@
  *
  */
 
-#ifndef _APP_LUA_SR_H_
-#define _APP_LUA_SR_H_
+/**
+ * this file is generated - do not edit
+ */
+
+#ifndef __APP_LUA_KEMI_EXPORT_H__
+#define __APP_LUA_KEMI_EXPORT_H__
 
 #include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+#include "../../kemi.h"
 
-void lua_sr_core_openlibs(lua_State *L);
-void lua_sr_kemi_register_libs(lua_State *L);
+#define SR_KEMI_LUA_EXPORT_SIZE	1024
 
-int sr_kemi_lua_exec_func(lua_State* L, int eidx);
+typedef struct sr_kemi_lua_export {
+	lua_CFunction pfunc;
+	sr_kemi_t *ket;
+} sr_kemi_lua_export_t;
+
+sr_kemi_t *sr_kemi_lua_export_get(int idx);
+lua_CFunction sr_kemi_lua_export_associate(sr_kemi_t *ket);
 
 #endif
-
