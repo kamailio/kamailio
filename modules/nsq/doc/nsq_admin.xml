@@ -471,11 +471,9 @@ event_route[nsq:consumer-event-presence-update]
 					<title><function>nsq.json</function> usage</title>
 <programlisting format="linespecific">
 ...
-#nsq_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
-$du = $nsqE{nsq.json,Channels[0].switch_url};
-if($du != $null) {
-	xlog("L_INFO", "$ci|log|user channels found redirecting call to $du");
-	return;
+$var(Custom-Data) = $(nsqE{nsq.json,Custom-Data});
+if($var(Custom-Data) != $null) {
+	xlog("L_INFO", "$ci|log|custom data: $var(Custom-Data)");
 }
 ...
 </programlisting>
