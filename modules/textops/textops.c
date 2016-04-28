@@ -1763,6 +1763,8 @@ int set_multibody_helper(struct sip_msg* msg, char* p1, char* p2, char* p3)
 	}
 	pkg_free(nbb);
 	if(nc.s!=NULL) pkg_free(nc.s);
+	if(convert && nb.s!=NULL) pkg_free(nb.s);
+	if(convert && oc.s!=NULL) pkg_free(oc.s);
 	LM_DBG("set flag FL_BODY_MULTIPART\n");
 	msg->msg_flags |= FL_BODY_MULTIPART;
 	return 1;
