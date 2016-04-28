@@ -82,7 +82,7 @@
 
 
 #ifndef UNIX_PATH_MAX
-#define UNIX_PATH_MAX 100
+#define UNIX_PATH_MAX 104
 #endif
 
 static char id[]="$Id$";
