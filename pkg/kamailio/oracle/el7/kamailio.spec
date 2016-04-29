@@ -328,7 +328,7 @@ install -m755 $RPM_SOURCE_DIR/kamailio.sysconfig \
 rm -rf "$RPM_BUILD_ROOT"
 
 %post
-/bin/systemctl enable kamailio
+/bin/systemctl daemon-reload
 
 %preun
 if [ $1 = 0 ]; then
