@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008-2014 Elena-Ramona Modroiu (asipto.com)
+ * Copyright (C) 2008-2016 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -36,6 +36,7 @@
 #include "../../ut.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
+#include "../../kemi.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/faked_msg.h"
 
@@ -464,6 +465,47 @@ static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo)
 	return 1;
 }
 
+static int ki_ht_slot_xlock(sip_msg_t *msg, str *htname, str *skey, int lmode)
+{
+	ht_t *ht;
+	unsigned int hid;
+	unsigned int idx;
+
+	ht = ht_get_table(htname);
+	if(ht==NULL) {
+		LM_ERR("cannot get hash table by name [%.*s] (%d)\n",
+				htname->len, htname->s, lmode);
+		return -1;
+	}
+
+	hid = ht_compute_hash(skey);
+
+	idx = ht_get_entry(hid, ht->htsize);
+
+	if(lmode==0) {
+		LM_DBG("locking slot %.*s[%u] for key %.*s\n",
+				htname->len, htname->s,
+				idx, skey->len, skey->s);
+		ht_slot_lock(ht, idx);
+	} else {
+		LM_DBG("unlocking slot %.*s[%u] for key %.*s\n",
+				htname->len, htname->s,
+				idx, skey->len, skey->s);
+		ht_slot_unlock(ht, idx);
+	}
+	return 1;
+}
+
+static int ki_ht_slot_lock(sip_msg_t *msg, str *htname, str *skey)
+{
+	return ki_ht_slot_xlock(msg, htname, skey, 0);
+}
+
+static int ki_ht_slot_unlock(sip_msg_t *msg, str *htname, str *skey)
+{
+	return ki_ht_slot_xlock(msg, htname, skey, 1);
+}
+
 /**
  * lock the slot for a given key in a hash table
  */
@@ -497,7 +539,7 @@ static int w_ht_slot_lock(struct sip_msg* msg, char* key, char* foo)
 
 	idx = ht_get_entry(hid, hpv->ht->htsize);
 
-	LM_DBG("unlocking slot %.*s[%u] for key %.*s\n",
+	LM_DBG("locking slot %.*s[%u] for key %.*s\n",
 			hpv->htname.len, hpv->htname.s,
 			idx, skey.len, skey.s);
 
@@ -1254,5 +1296,32 @@ static int htable_init_rpc(void)
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_htable_exports[] = {
+	{ str_init("htable"), str_init("sht_lock"),
+		SR_KEMIP_INT, ki_ht_slot_lock,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_unlock"),
+		SR_KEMIP_INT, ki_ht_slot_unlock,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_htable_exports);
 	return 0;
 }
