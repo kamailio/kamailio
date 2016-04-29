@@ -4,6 +4,14 @@
 -- sr - the old static object exporting Kamailio functions
 --
 
+-- Relevant remarks:
+--  * return code -255 is used to propagate the 'exit' behaviour to the
+--  parent route block. The alternative is to use KSR.sr.exit() instead
+--  of return -255. Do not use native Lua exit(), that kills the Lua
+--  interpreter and implicitely stops Kamailio as the Lua interpreter is
+--  embedded
+
+
 -- global variables corresponding to defined values (e.g., flags) in kamailio.cfg
 FLT_ACC=1
 FLT_ACCMISSED=2
