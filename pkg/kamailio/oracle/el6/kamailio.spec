@@ -319,8 +319,8 @@ install -m755 $RPM_SOURCE_DIR/kamailio.default \
 
 
 %pre
-/sbin/groupadd -r kamailio 2> /dev/null || :
-/sbin/useradd -r -g kamailio -s /bin/false -c "Kamailio daemon" -d \
+/usr/sbin/groupadd -r kamailio 2> /dev/null || :
+/usr/sbin/useradd -r -g kamailio -s /bin/false -c "Kamailio daemon" -d \
                   %{_libdir}/kamailio kamailio 2> /dev/null || :
 
 
