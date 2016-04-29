@@ -20,8 +20,8 @@ Emmanuel Schmidbauer
         1. Overview
         2. How it works
 
-              2.1. event routes
-              2.2. aknowledge messages
+              2.1. Event Routes
+              2.2. Aknowledge Messages
 
         3. Dependencies
 
@@ -52,7 +52,7 @@ Emmanuel Schmidbauer
 
    List of Examples
 
-   1.1. define the event route
+   1.1. Define the event routes
    1.2. Set lookupd_address parameter
    1.3. Set lookupd_port parameter
    1.4. Set nsqd_address parameter
@@ -75,8 +75,8 @@ Chapter 1. Admin Guide
    1. Overview
    2. How it works
 
-        2.1. event routes
-        2.2. aknowledge messages
+        2.1. Event Routes
+        2.2. Aknowledge Messages
 
    3. Dependencies
 
@@ -108,33 +108,35 @@ Chapter 1. Admin Guide
 1. Overview
 
    The module provides an NSQ consumer for Kamailio configuration file.
-   You can read more about NSQ at nsq.io.
+   NSQ is a real time distributed messaging platofrm, more details about
+   it can be found at nsq.io.
 
    From a high-level perspective, the module may be used for:
-     * Provide a real-time integration into your program, instead of your
-       database, so you can overlay additional logic in your preferred
-       language while also utilizing a message bus
-     * Utilize messaging to have a distributed messaging layer, such that
-       machines processing requests/responses/events can go up/down or
-       share the workload and your Kamailio node will still be happy
+     * Provide a real-time integration with you Kamailio configuration
+       file, which can be used as alternative to interact with a database,
+       allowing to overlay additional logic in your preferred language
+       while utilizing a message bus.
+     * Rely on a distributed messaging layer, such that machines
+       processing requests/responses/events can go up/down or share the
+       workload, whithout impacting Kamailio's activity.
 
-   supported operations are:
-     * subscribe to a Topic and Channel
+   Supported NSQ operations are:
+     * Subscribe to a Topic and Channel
 
    The NSQ module also has support to publish updates to presence module
-   through the nsq_pua_publish function
+   through the nsq_pua_publish() function.
 
 2. How it works
 
-   2.1. event routes
-   2.2. aknowledge messages
+   2.1. Event Routes
+   2.2. Aknowledge Messages
 
-   The module works with a main forked process that does the communication
-   with NSQ for consuming messages. When it consumes a message it defers
-   the process to a worker process so that it doesn't block this main
-   process.
+   The module creates an additional NSQ manager process that does the
+   communication with NSQ for consuming messages. This one defers the
+   message for processing to other NSQ worker processs so that it doesn't
+   block itself, nor the SIP worker processes.
 
-2.1. event routes
+2.1. Event Routes
 
    The worker process issues an event-route where we can act on the
    received payload. The name of the event-route is composed by values
@@ -148,7 +150,7 @@ Chapter 1. Admin Guide
    we can set the key/subkey pair on a subscription base. check the
    payload on subscribe.
 
-   Example 1.1. define the event route
+   Example 1.1. Define the event routes
 ...
 modparam("nsq", "consumer_event_key", "Event-Category")
 modparam("nsq", "consumer_event_sub_key", "Event-Name")
@@ -193,7 +195,7 @@ event_route[nsq:consumer-event]
         # this event route is executed if we can't find the previous
 }
 
-2.2. aknowledge messages
+2.2. Aknowledge Messages
 
    Consumed messages have the option of being acknowledge in two ways:
      * immediately when received

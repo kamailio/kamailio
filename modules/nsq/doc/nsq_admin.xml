@@ -16,19 +16,25 @@
 	<section>
 		<title>Overview</title>
 		<para>The module provides an NSQ consumer for &kamailio; configuration file.
-			You can read more about NSQ at <ulink url="http://nsq.io">nsq.io</ulink>.
+			NSQ is a real time distributed messaging platofrm, more details about it
+			can be found at <ulink url="http://nsq.io">nsq.io</ulink>.
 		</para>
 		<para>
 			From a high-level perspective, the module may be used for:
 			<itemizedlist>
 				<listitem>
 					<para>
-						Provide a real-time integration into your program, instead of your database, so you can overlay additional logic in your preferred language while also utilizing a message bus
+						Provide a real-time integration with you &kamailio; configuration file,
+						which can be used as alternative to interact with a database, allowing
+						to overlay additional logic in your preferred language
+						while utilizing a message bus.
 					</para>
 				</listitem>
 				<listitem>
 					<para>
-						Utilize messaging to have a distributed messaging layer, such that machines processing requests/responses/events can go up/down or share the workload and your Kamailio node will still be happy
+						Rely on a distributed messaging layer, such that machines processing
+						requests/responses/events can go up/down or share the workload,
+						whithout impacting Kamailio's activity.
 					</para>
 				</listitem>
 			</itemizedlist>
@@ -36,27 +42,30 @@
 
 
 		<para>
-			supported operations are:
+			Supported NSQ operations are:
 			<itemizedlist>
 				<listitem>
 					<para>
-						subscribe to a Topic and Channel
+						Subscribe to a Topic and Channel
 					</para>
 				</listitem>
 			</itemizedlist>
 		</para>
 		<para>
-			The NSQ module also has support to publish updates to presence module through the nsq_pua_publish function
+			The NSQ module also has support to publish updates to presence module through
+			the nsq_pua_publish() function.
 		</para>
 
 	</section>
 	<section>
 		<title>How it works</title>
 		<para>
-			The module works with a main forked process that does the communication with NSQ for consuming messages. When it consumes a message it defers the process to a worker process so that it doesn't block this main process.
+			The module creates an additional NSQ manager process that does the communication
+			with NSQ for consuming messages. This one defers the message for processing to
+			other NSQ worker processs so that it doesn't block itself, nor the SIP worker processes.
 		</para>
 		<section>
-			<title>event routes</title>
+			<title>Event Routes</title>
 			<para>
 				The worker process issues an event-route where we can act on the received payload. The name of the event-route is composed by values extracted from the payload.
 			</para>
@@ -68,7 +77,7 @@
 				we can set the key/subkey pair on a subscription base. check the payload on subscribe.
 			</para>
 			<example>
-				<title>define the event route</title>
+				<title>Define the event routes</title>
 <programlisting format="linespecific">
 ...
 modparam("nsq", "consumer_event_key", "Event-Category")
@@ -114,7 +123,7 @@ event_route[nsq:consumer-event]
 			</example>
 		</section>
 		<section>
-			<title>aknowledge messages</title>
+			<title>Aknowledge Messages</title>
 			<para>
 				Consumed messages have the option of being acknowledge in two ways:
 				<itemizedlist>
