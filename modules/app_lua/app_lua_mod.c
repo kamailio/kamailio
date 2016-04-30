@@ -32,6 +32,7 @@
 #include "../../kemi.h"
 
 #include "app_lua_api.h"
+#include "app_lua_kemi_export.h"
 
 MODULE_VERSION
 
@@ -461,11 +462,65 @@ static void app_lua_rpc_list(rpc_t* rpc, void* ctx)
 	return;
 }
 
+
+static const char* app_lua_rpc_api_list_doc[2] = {
+	"list kemi exports to lua",
+	0
+};
+
+static void app_lua_rpc_api_list(rpc_t* rpc, void* ctx)
+{
+	int i;
+	int n;
+	sr_kemi_t *ket;
+	void* th;
+	void* sh;
+	void* ih;
+
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+	n = 0;
+	for(i=0; i<SR_KEMI_LUA_EXPORT_SIZE; i++) {
+		ket = sr_kemi_lua_export_get(i);
+		if(ket==NULL) continue;
+		n++;
+	}
+
+	if(rpc->struct_add(th, "d[",
+				"msize", n,
+				"methods",  &ih)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error array structure");
+		return;
+	}
+	for(i=0; i<SR_KEMI_LUA_EXPORT_SIZE; i++) {
+		ket = sr_kemi_lua_export_get(i);
+		if(ket==NULL) continue;
+		if(rpc->struct_add(ih, "{", "func", &sh)<0) {
+			rpc->fault(ctx, 500, "Internal error internal structure");
+			return;
+		}
+		if(rpc->struct_add(sh, "SSSS",
+				"ret", sr_kemi_param_map_get_name(ket->rtype),
+				"module", &ket->mname,
+				"name", &ket->fname,
+				"params", sr_kemi_param_map_get_params(ket->ptypes))<0) {
+			LM_ERR("failed to add the structure with attributes (%d)\n", i);
+			rpc->fault(ctx, 500, "Internal error creating dest struct");
+			return;
+		}
+	}
+}
+
 rpc_export_t app_lua_rpc_cmds[] = {
 	{"app_lua.reload", app_lua_rpc_reload,
 		app_lua_rpc_reload_doc, 0},
 	{"app_lua.list", app_lua_rpc_list,
 		app_lua_rpc_list_doc, 0},
+	{"app_lua.api_list", app_lua_rpc_api_list,
+		app_lua_rpc_api_list_doc, 0},
 	{0, 0, 0, 0}
 };
 
