@@ -120,4 +120,7 @@ str* sr_kemi_cbname_lookup_idx(int idx);
 void sr_kemi_act_ctx_set(run_act_ctx_t *ctx);
 run_act_ctx_t* sr_kemi_act_ctx_get(void);
 
+str *sr_kemi_param_map_get_name(int ptype);
+str *sr_kemi_param_map_get_params(int *ptypes);
+
 #endif

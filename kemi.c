@@ -1014,3 +1014,63 @@ str* sr_kemi_cbname_lookup_idx(int idx)
 	}
 	return &_sr_kemi_cbname_list[idx-1].name;
 }
+
+/**
+ *
+ */
+typedef struct sr_kemi_param_map {
+	int ptype;
+	str pname;
+} sr_kemi_param_map_t;
+
+/**
+ *
+ */
+static sr_kemi_param_map_t _sr_kemi_param_map[] = {
+	{ SR_KEMIP_NONE, str_init("none") },
+	{ SR_KEMIP_INT,  str_init("int") },
+	{ SR_KEMIP_STR,  str_init("str") },
+	{ SR_KEMIP_BOOL, str_init("bool") },
+	{ 0, STR_NULL }
+};
+
+/**
+ *
+ */
+str *sr_kemi_param_map_get_name(int ptype)
+{
+	int i;
+
+	for(i=0; _sr_kemi_param_map[i].pname.s!=NULL; i++) {
+		if(_sr_kemi_param_map[i].ptype==ptype)
+			return &_sr_kemi_param_map[i].pname;
+	}
+	return NULL;
+}
+
+/**
+ *
+ */
+str *sr_kemi_param_map_get_params(int *ptypes)
+{
+	int i;
+	static char pbuf[64];
+	static str sret = STR_NULL;
+	str *pn;
+
+	pbuf[0] = '\0';
+	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
+		if(ptypes[i]==SR_KEMIP_NONE) break;
+		if(i>0) strcat(pbuf, ", ");
+		pn = sr_kemi_param_map_get_name(ptypes[i]);
+		if(pn==NULL) return NULL;
+		strcat(pbuf, pn->s);
+	}
+	if(pbuf[0]=='\0') {
+		pn = sr_kemi_param_map_get_name(SR_KEMIP_NONE);
+		strcat(pbuf, pn->s);
+	}
+	sret.s = pbuf;
+	sret.len = strlen(sret.s);
+	return &sret;
+}
