@@ -30,6 +30,7 @@
 #define SR_KEMIP_INT	(1<<0)	/* type integer */
 #define SR_KEMIP_STR	(1<<1)	/* type str* */
 #define SR_KEMIP_BOOL	(1<<2)	/* type boolean (0/1) */
+#define SR_KEMIP_INTSTR	(1<<3)	/* type integer or str* */
 
 #define SR_KEMI_FALSE	0
 #define SR_KEMI_TRUE	1

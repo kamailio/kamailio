@@ -1027,10 +1027,11 @@ typedef struct sr_kemi_param_map {
  *
  */
 static sr_kemi_param_map_t _sr_kemi_param_map[] = {
-	{ SR_KEMIP_NONE, str_init("none") },
-	{ SR_KEMIP_INT,  str_init("int") },
-	{ SR_KEMIP_STR,  str_init("str") },
-	{ SR_KEMIP_BOOL, str_init("bool") },
+	{ SR_KEMIP_NONE,   str_init("none") },
+	{ SR_KEMIP_INT,    str_init("int") },
+	{ SR_KEMIP_STR,    str_init("str") },
+	{ SR_KEMIP_BOOL,   str_init("bool") },
+	{ SR_KEMIP_INTSTR, str_init("int-str") },
 	{ 0, STR_NULL }
 };
 
