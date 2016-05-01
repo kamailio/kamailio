@@ -1556,7 +1556,6 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	struct timeval tvb;
 	struct timezone tz;
 	char tmp_node[100];
-	unsigned int len = 0;
 
 	LM_DBG("CAPTURE DEBUG...\n");
 
