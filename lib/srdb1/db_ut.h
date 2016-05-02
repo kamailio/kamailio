@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -113,6 +113,7 @@ int db_double2str(double _v, char* _s, int* _l);
  */
 int db_time2str(time_t _v, char* _s, int* _l);
 
+int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode);
 
 /**
  * Converts a char into a time_t value.
@@ -189,7 +190,7 @@ int db_print_set(const db1_con_t* _c, char* _b, const int _l,
 
 /**
  * Convert db_val_t to pv_spec_t
- * 
+ *
  * \param msg sip msg structure
  * \param dbval database value
  * \param pvs pv_spec where to put the database value
