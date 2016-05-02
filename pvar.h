@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -70,8 +70,8 @@
 							&& (pv)->pvp.pvn.u.isname.type&AVP_NAME_STR)
 #define pv_is_w(pv)	((pv)->setf!=NULL)
 
-enum _pv_type { 
-	PVT_NONE=0,           PVT_EMPTY,             PVT_NULL, 
+enum _pv_type {
+	PVT_NONE=0,           PVT_EMPTY,             PVT_NULL,
 	PVT_MARKER,           PVT_AVP,               PVT_HDR,
 	PVT_RURI,             PVT_RURI_USERNAME,     PVT_RURI_DOMAIN,
 	PVT_DSTURI,           PVT_COLOR,             PVT_BRANCH,
@@ -280,7 +280,7 @@ typedef struct _trans {
 typedef char* (*tr_parsef_t)(str *, trans_t *);
 typedef struct _tr_export {
 	str tclass;
-	tr_parsef_t tparse; 
+	tr_parsef_t tparse;
 } tr_export_t, *tr_export_p;
 
 char* tr_lookup(str *in, trans_t **tr);
