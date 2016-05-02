@@ -1,0 +1,2 @@
+# Kamailio (OpenSER) messages, make sure this spacing is done with tabs, spaces may cause errors
+local0.*                                            -/var/log/kamailio
