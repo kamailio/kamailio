@@ -264,8 +264,10 @@ inline int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode)
 	}
 	*_l = l;
 
-	if(_qmode) *(_s + l) = '\'';
-	*_l = l + 2;
+	if(_qmode) {
+		*(_s + l) = '\'';
+		*_l = l + 2;
+	}
 	return 0;
 }
 
