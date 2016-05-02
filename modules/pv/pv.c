@@ -835,7 +835,6 @@ int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt)
 {
 	pv_spec_t *ispec=NULL;
 	pv_elem_t *imodel=NULL;
-	pv_elem_t *xmodel=NULL;
 	str tstr = {0, 0};
 	pv_value_t val;
 
@@ -850,24 +849,16 @@ int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt)
 		goto error;
 	}
 
-	if(pv_parse_format(&tstr, &xmodel)<0) {
-		LM_ERR("error in parsing evaluated second parameter\n");
-		return -1;
-	}
-
-	if(pv_printf_s(msg, xmodel, &val.rs)!=0) {
+	if(pv_eval_str(msg, &val.rs, &tstr)<0){
 		LM_ERR("cannot eval reparsed value of second parameter\n");
-		pv_elem_free_all(xmodel);
-		goto error;
+		return -1;
 	}
 
 	val.flags = PV_VAL_STR;
 	if(ispec->setf(msg, &ispec->pvp, EQ_T, &val)<0) {
 		LM_ERR("setting PV failed\n");
-		pv_elem_free_all(xmodel);
 		goto error;
 	}
-	pv_elem_free_all(xmodel);
 
 	return 1;
 error:
