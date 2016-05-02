@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -41,8 +41,8 @@
 #ifndef __OS_solaris
 	#define _XOPEN_SOURCE 600          /* glibc2 on linux, bsd */
 	#define _BSD_SOURCE 1              /* needed on linux to "fix" the effect
-										 of the above define on 
-										 features.h/unistd.h syscall() */
+										* of the above define on
+										* features.h/unistd.h syscall() */
 #else
 	#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
 #endif
@@ -74,13 +74,13 @@ inline int db_str2int(const char* _s, int* _v)
 	char* p = NULL;
 
 	if (!_s || !_v) {
-	       LM_ERR("Invalid parameter value\n");
-	       return -1;
+		LM_ERR("Invalid parameter value\n");
+		return -1;
 	}
 
 	tmp = strtoul(_s, &p, 10);
-	if ((tmp == ULONG_MAX && errno == ERANGE) || 
-	    (tmp < INT_MIN) || (tmp > UINT_MAX)) {
+	if ((tmp == ULONG_MAX && errno == ERANGE) ||
+				(tmp < INT_MIN) || (tmp > UINT_MAX)) {
 		LM_ERR("Value out of range\n");
 		return -1;
 	}
@@ -100,8 +100,8 @@ inline int db_str2longlong(const char* _s, long long * _v)
 	char* p = NULL;
 
 	if (!_s || !_v) {
-	       LM_ERR("Invalid parameter value\n");
-	       return -1;
+		LM_ERR("Invalid parameter value\n");
+		return -1;
 	}
 
 	tmp = strtoll(_s, &p, 10);
@@ -204,7 +204,7 @@ inline int db_double2str(double _v, char* _s, int* _l)
 }
 
 
-/* 
+/*
  * Convert a string to time_t
  */
 inline int db_str2time(const char* _s, time_t* _v)
@@ -217,7 +217,7 @@ inline int db_str2time(const char* _s, time_t* _v)
 	}
 
 	/* Convert database time representation to time_t structure
-	   It is necessary to zero tm structure first */
+	 * It is necessary to zero tm structure first */
 	memset(&time, '\0', sizeof(struct tm));
 	if (strptime(_s, "%Y-%m-%d %H:%M:%S", &time) == NULL) {
 		LM_ERR("Error during time conversion\n");
@@ -228,7 +228,7 @@ inline int db_str2time(const char* _s, time_t* _v)
 	* so let mktime to guess it. This eliminates the bug when
 	* contacts reloaded from the database have different time
 	* of expiration by one hour when daylight saving is used
-	*/ 
+	*/
 	time.tm_isdst = -1;
 	*_v = mktime(&time);
 
@@ -236,7 +236,10 @@ inline int db_str2time(const char* _s, time_t* _v)
 }
 
 
-inline int db_time2str(time_t _v, char* _s, int* _l)
+/**
+ *
+ */
+inline int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode)
 {
 	struct tm* t;
 	int l;
@@ -246,7 +249,7 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 		return -1;
 	}
 
-	*_s++ = '\'';
+	if(_qmode) *_s++ = '\'';
 
 	/* Convert time_t structure to format accepted by the database */
 	t = localtime(&_v);
@@ -261,11 +264,18 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 	}
 	*_l = l;
 
-	*(_s + l) = '\'';
+	if(_qmode) *(_s + l) = '\'';
 	*_l = l + 2;
 	return 0;
 }
 
+/**
+ *
+ */
+inline int db_time2str(time_t _v, char* _s, int* _l)
+{
+	return db_time2str_ex(_v, _s, _l, 1);
+}
 
 /*
  * Print list of columns separated by comma
@@ -382,7 +392,7 @@ int db_print_where(const db1_con_t* _c, char* _b, const int _l, const db_key_t* 
 	}
 	return len;
 
- error:
+error:
 	LM_ERR("Error in snprintf\n");
 	return -1;
 }
@@ -422,7 +432,7 @@ int db_print_set(const db1_con_t* _c, char* _b, const int _l, const db_key_t* _k
 	}
 	return len;
 
- error:
+error:
 	LM_ERR("Error in snprintf\n");
 	return -1;
 }
@@ -484,7 +494,7 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 			break;
 			default:
 				LM_NOTICE("unknown field type: %d, setting value to null\n",
-				          dbval->type);
+							dbval->type);
 				pv.flags = PV_VAL_NULL;
 		}
 	}
