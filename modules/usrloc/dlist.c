@@ -124,7 +124,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	/* get the current time in DB format */
 	now.len = 25;
 	now.s = now_s;
-	if (db_time2str( time(0), now.s, &now.len)!=0) {
+	if (db_time2str_ex( time(0), now.s, &now.len, 0)!=0) {
 		LM_ERR("failed to print now time\n");
 		return -1;
 	}
