@@ -300,5 +300,7 @@ typedef struct _pv_xavp_name {
 	struct _pv_xavp_name *next;
 } pv_xavp_name_t;
 
+int pv_eval_str(sip_msg_t *msg, str *dst, str *src);
+
 #endif
 
