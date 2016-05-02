@@ -764,13 +764,14 @@ int enum_query(struct sip_msg* _msg, str* suffix, str* service)
 		return -1;
 	}
 
-	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
-		LM_ERR("R-URI user is not an E164 number\n");
-		return -1;
-	}
-
 	user_s = _msg->parsed_uri.user.s;
 	user_len = _msg->parsed_uri.user.len;
+
+	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
+		LM_ERR("R-URI user '<%.*s>' is not an E164 number\n",
+		user_len, user_s);
+		return -1;
+	}
 
 	memcpy(&(string[0]), user_s, user_len);
 	string[user_len] = (char)0;
