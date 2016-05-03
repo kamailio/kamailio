@@ -1,7 +1,5 @@
 /*
- * $Id$
- *
- * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2011-2016 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -15,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -147,8 +145,8 @@ struct module_exports exports= {
 	0           /* per-child init function */
 };
 
-/** 
- * 
+/**
+ *
  */
 static int mod_init(void)
 {
@@ -354,7 +352,7 @@ int sdp_remove_codecs_by_id(sip_msg_t* msg, str* codecs)
 			if(!sdp_stream) break;
 
 			LM_DBG("stream %d of %d - payloads [%.*s]\n",
-					sdp_stream_num, sdp_session_num, 
+					sdp_stream_num, sdp_session_num,
 					sdp_stream->payloads.len, sdp_stream->payloads.s);
 			sdp_codecs = sdp_stream->payloads;
 			tmp_codecs = *codecs;
@@ -756,7 +754,7 @@ static int w_sdp_keep_codecs_by_name(sip_msg_t* msg, char* codecs, char* media)
 	return 1;
 }
 
-/** 
+/**
  * @brief check 'media' matches the value of any 'm=value ...' lines
  * @return -1 - error; 0 - not found; 1 - found
  */
@@ -1006,7 +1004,7 @@ static int w_sdp_remove_media(sip_msg_t* msg, char* media, char *bar)
 }
 
 
-/** 
+/**
  * @brief check 'media' matches the value of any 'm=media port value ...' lines
  * @return -1 - error; 0 - not found; 1 - found
  */
@@ -1040,13 +1038,13 @@ static int sdp_with_transport(sip_msg_t *msg, str *transport, int like)
 					sdp_stream_num, sdp_session_num,
 					sdp_stream->transport.len, sdp_stream->transport.s);
 			if (like == 0) {
-			    if(transport->len==sdp_stream->transport.len
-			       && strncasecmp(sdp_stream->transport.s, transport->s,
-					      transport->len)==0)
+				if(transport->len==sdp_stream->transport.len
+						&& strncasecmp(sdp_stream->transport.s, transport->s,
+							transport->len)==0)
 				return 1;
 			} else {
-			    if (ser_memmem(sdp_stream->transport.s, transport->s,
-					   sdp_stream->transport.len, transport->len)!=NULL)
+				if (ser_memmem(sdp_stream->transport.s, transport->s,
+						sdp_stream->transport.len, transport->len)!=NULL)
 				return 1;
 			}
 			sdp_stream_num++;
@@ -1057,83 +1055,83 @@ static int sdp_with_transport(sip_msg_t *msg, str *transport, int like)
 	return 0;
 }
 
-/** 
+/**
  * @brief assigns common media transport (if any) of 'm' lines to pv argument
  * @return -1 - error; 0 - not found; 1 - found
  */
 static int w_sdp_transport(sip_msg_t* msg, char *avp)
 {
-    int_str avp_val;
-    int_str avp_name;
-    static unsigned short avp_type = 0;
-    str s;
-    pv_spec_t *avp_spec = NULL;
-    int sdp_session_num;
-    int sdp_stream_num;
-    sdp_session_cell_t* sdp_session;
-    sdp_stream_cell_t* sdp_stream;
-    str *transport;
+	int_str avp_val;
+	int_str avp_name;
+	static unsigned short avp_type = 0;
+	str s;
+	pv_spec_t *avp_spec = NULL;
+	int sdp_session_num;
+	int sdp_stream_num;
+	sdp_session_cell_t* sdp_session;
+	sdp_stream_cell_t* sdp_stream;
+	str *transport;
 
-    s.s = avp; s.len = strlen(s.s);
-    if (pv_locate_name(&s) != s.len) {
-	LM_ERR("invalid avp parameter %s\n", avp);
-	return -1;
-    }
-    if (((avp_spec = pv_cache_get(&s)) == NULL)
-	|| avp_spec->type!=PVT_AVP) {
-	LM_ERR("malformed or non AVP %s\n", avp);
-	return -1;
-    }
-    if (pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type) != 0) {
-	LM_ERR("invalid AVP definition %s\n", avp);
-	return -1;
-    }
+	s.s = avp; s.len = strlen(s.s);
+	if (pv_locate_name(&s) != s.len) {
+		LM_ERR("invalid avp parameter %s\n", avp);
+		return -1;
+	}
+	if (((avp_spec = pv_cache_get(&s)) == NULL)
+			|| avp_spec->type!=PVT_AVP) {
+		LM_ERR("malformed or non AVP %s\n", avp);
+		return -1;
+	}
+	if (pv_get_avp_name(0, &avp_spec->pvp, &avp_name, &avp_type) != 0) {
+		LM_ERR("invalid AVP definition %s\n", avp);
+		return -1;
+	}
 
-    if(parse_sdp(msg) < 0) {
-	LM_ERR("unable to parse sdp\n");
-	return -1;
-    }
+	if(parse_sdp(msg) < 0) {
+		LM_ERR("unable to parse sdp\n");
+		return -1;
+	}
 
-    sdp_session_num = 0;
-    transport = (str *)NULL;
+	sdp_session_num = 0;
+	transport = (str *)NULL;
 
-    for (;;) {
-	sdp_session = get_sdp_session(msg, sdp_session_num);
-	if (!sdp_session) break;
-	sdp_stream_num = 0;
 	for (;;) {
-	    sdp_stream = get_sdp_stream(msg, sdp_session_num,
+		sdp_session = get_sdp_session(msg, sdp_session_num);
+		if (!sdp_session) break;
+		sdp_stream_num = 0;
+		for (;;) {
+			sdp_stream = get_sdp_stream(msg, sdp_session_num,
 					sdp_stream_num);
-	    if (!sdp_stream) break;
-	    LM_DBG("stream %d of %d - transport [%.*s]\n",
-		   sdp_stream_num, sdp_session_num,
-		   sdp_stream->transport.len, sdp_stream->transport.s);
-	    if (transport) {
-		if (transport->len != sdp_stream->transport.len
-		    || strncasecmp(sdp_stream->transport.s, transport->s,
-				   transport->len) != 0) {
-		    LM_DBG("no common transport\n");
-		    return -2;
+			if (!sdp_stream) break;
+			LM_DBG("stream %d of %d - transport [%.*s]\n",
+			sdp_stream_num, sdp_session_num,
+			sdp_stream->transport.len, sdp_stream->transport.s);
+			if (transport) {
+				if (transport->len != sdp_stream->transport.len
+						|| strncasecmp(sdp_stream->transport.s, transport->s,
+								transport->len) != 0) {
+					LM_DBG("no common transport\n");
+					return -2;
+				}
+			} else {
+				transport = &sdp_stream->transport;
+			}
+			sdp_stream_num++;
 		}
-	    } else {
-		transport = &sdp_stream->transport;
-	    }
-	    sdp_stream_num++;
+		sdp_session_num++;
 	}
-	sdp_session_num++;
-    }
-    if (transport) {
-	avp_val.s.s = transport->s;
-	avp_val.s.len = transport->len;
-	LM_DBG("found common transport '%.*s'\n",
-	       transport->len, transport->s);
-	if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0) {
-	    LM_ERR("failed to add transport avp");
-	    return -1;
+	if (transport) {
+		avp_val.s.s = transport->s;
+		avp_val.s.len = transport->len;
+		LM_DBG("found common transport '%.*s'\n",
+				transport->len, transport->s);
+		if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0) {
+			LM_ERR("failed to add transport avp");
+			return -1;
+		}
 	}
-    }
 
-    return 1;
+	return 1;
 }
 
 
@@ -1569,30 +1567,30 @@ static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar)
  */
 int sdp_with_ice(sip_msg_t* msg)
 {
-    str ice, body;
+	str ice, body;
 
-    ice.s = "a=candidate";
-    ice.len = 11;
+	ice.s = "a=candidate";
+	ice.len = 11;
 
-    body.s = get_body(msg);
-    if (body.s == NULL) {
-	LM_DBG("failed to get the message body\n");
-	return -1;
-    }
+	body.s = get_body(msg);
+	if (body.s == NULL) {
+		LM_DBG("failed to get the message body\n");
+		return -1;
+	}
 
-    body.len = msg->len -(int)(body.s - msg->buf);
-    if (body.len == 0) {
-	LM_DBG("message body has length zero\n");
-	return -1;
-    }
+	body.len = msg->len -(int)(body.s - msg->buf);
+	if (body.len == 0) {
+		LM_DBG("message body has length zero\n");
+		return -1;
+	}
 
-    if (ser_memmem(body.s, ice.s, body.len, ice.len) != NULL) {
-	LM_DBG("found ice attribute\n");
-	return 1;
-    } else {
-	LM_DBG("didn't find ice attribute\n");
-	return -1;
-    }
+	if (ser_memmem(body.s, ice.s, body.len, ice.len) != NULL) {
+		LM_DBG("found ice attribute\n");
+		return 1;
+	} else {
+		LM_DBG("didn't find ice attribute\n");
+		return -1;
+	}
 }
 
 /**
@@ -1600,7 +1598,7 @@ int sdp_with_ice(sip_msg_t* msg)
  */
 static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar)
 {
-    return sdp_with_ice(msg);
+	return sdp_with_ice(msg);
 }
 
 /**
