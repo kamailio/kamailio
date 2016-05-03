@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -47,7 +45,7 @@ Registry:
 PT        encoding name   audio/video (A/V)  clock rate (Hz)  channels (audio)  Reference
 --------  --------------  -----------------  ---------------  ----------------  ---------
 0         PCMU            A                  8000             1                 [RFC3551]
-1         Reserved	  
+1         Reserved
 2         Reserved
 3         GSM             A                  8000             1                 [RFC3551]
 4         G723            A                  8000             1                 [Kumar][RFC3551]
@@ -84,7 +82,7 @@ PT        encoding name   audio/video (A/V)  clock rate (Hz)  channels (audio)  
 35-71     Unassigned      ?
 72-76     Reserved for RTCP conflict avoidance                                  [RFC3551]
 77-95     Unassigned      ?
-96-127    dynamic         ?                                                     [RFC3551] 
+96-127    dynamic         ?                                                     [RFC3551]
 
 
 Registry Name: RTP Payload Format media types
@@ -271,8 +269,8 @@ int str_find_token(str *text, str *result, char delim)
 		return -1;
 	if(text->s[0] == delim)
 	{
-		 text->s += 1;
-		 text->len -= 1;
+		text->s += 1;
+		text->len -= 1;
 	}
 	trim_leading(text);
 	result->s = text->s;
