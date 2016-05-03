@@ -176,6 +176,7 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 	sr_xavp_t *xavp=NULL;
 	sr_xavp_t *list=NULL;
 	str xname = {"ruid", 4};
+	str ename = {"expires", 7};
 	sr_xval_t xval;
 
 
@@ -334,8 +335,17 @@ int build_contact(sip_msg_t *msg, ucontact_t* c, str *host)
 				memset(&xval, 0, sizeof(sr_xval_t));
 				xval.type = SR_XTYPE_STR;
 				xval.v.s = c->ruid;
+
 				if(xavp_add_value(&xname, &xval, &xavp)==NULL) {
 					LM_ERR("cannot add ruid value to xavp\n");
+				}
+				/* Add contact expiry */
+				memset(&xval, 0, sizeof(sr_xval_t));
+				xval.type = SR_XTYPE_INT;
+				xval.v.i = (int)(c->expires - act_time);
+
+				if(xavp_add_value(&ename, &xval, &xavp)==NULL) {
+					LM_ERR("cannot add expires value to xavp\n");
 				}
 			}
 		}

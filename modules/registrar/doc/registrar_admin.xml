@@ -755,6 +755,11 @@ modparam("registrar", "xavp_cfg", "reg")
 		</listitem>
 		<listitem>
 			<para>
+				<emphasis>expires</emphasis> - the record's expires value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
 				<emphasis>received</emphasis> - the record's received value.
 			</para>
 		</listitem>

@@ -3,6 +3,7 @@ registrar Module
 Jan Janak
 
    FhG FOKUS
+   <jan@iptel.org>
 
 Daniel-Constantin Mierla
 
@@ -12,9 +13,16 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
+Olle E. Johansson
+
+   Edvina AB
+   <oej@edvina.net>
+
 Edited by
 
 Jan Janak
+
+   <jan@iptel.org>
 
 Edited by
 
@@ -679,6 +687,7 @@ modparam("registrar", "xavp_cfg", "reg")
    $xavp(class[0]=>attribute). Valid inner XAVP names:
      * ruid - the record's internal unique id.
      * contact - the record's contact value.
+     * expires - the record's expires value.
      * received - the record's received value.
 
    For example. if this parameter is set to 'ulrcd', then values are set
