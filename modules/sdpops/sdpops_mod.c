@@ -63,6 +63,10 @@ static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_get_line_startswith(sip_msg_t* msg, char *foo, char *bar);
 
 
+static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+static int pv_parse_sdp_name(pv_spec_p sp, str *in);
+
 static int mod_init(void);
 
 static cmd_export_t cmds[] = {
@@ -116,11 +120,9 @@ static cmd_export_t cmds[] = {
 };
 
 static pv_export_t mod_pvs[] = {
-#if 0
 	{{"sdp", (sizeof("sdp")-1)}, /* */
 		PVT_OTHER, pv_get_sdp, 0,
-		0, 0, 0, 0},
-#endif
+		pv_parse_sdp_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -1740,4 +1742,63 @@ int bind_sdpops(struct sdpops_binds *sob){
 	sob->sdp_remove_codecs_by_id = sdp_remove_codecs_by_id;
 	sob->sdp_remove_codecs_by_name = sdp_remove_codecs_by_name;
 	return 0;
+}
+
+/**
+ *
+ */
+static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	sdp_info_t *sdp = NULL;
+
+	if(msg==NULL || param==NULL)
+		return -1;
+
+	if(parse_sdp(msg) < 0) {
+		LM_INFO("Unable to parse sdp\n");
+		return pv_get_null(msg, param, res);
+	}
+	sdp = (sdp_info_t*)msg->body;
+
+	if (sdp==NULL) {
+		LM_DBG("No SDP\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_strval(msg, param, res, &sdp->raw_sdp);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+static int pv_parse_sdp_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 4:
+			if(strncmp(in->s, "body", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV sdp name %.*s\n", in->len, in->s);
+	return -1;
 }
