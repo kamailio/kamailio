@@ -254,7 +254,7 @@ static inline int is_e164(str* _user)
 	int i;
 	char c;
 	
-	if ((_user->len > 2) && (_user->len < MAX_NUM_LEN) && ((_user->s)[0] == '+')) {
+	if ((_user->len > 1) && (_user->len < MAX_NUM_LEN) && ((_user->s)[0] == '+')) {
 		for (i = 1; i < _user->len; i++) {
 			c = (_user->s)[i];
 			if ((c < '0') || (c > '9')) return -1;
@@ -762,13 +762,14 @@ int enum_query(struct sip_msg* _msg, str* suffix, str* service)
 		return -1;
 	}
 
-	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
-		LM_ERR("R-URI user is not an E164 number\n");
-		return -1;
-	}
-
 	user_s = _msg->parsed_uri.user.s;
 	user_len = _msg->parsed_uri.user.len;
+
+	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
+		LM_ERR("R-URI user '<%.*s>' is not an E164 number\n",
+		user_len, user_s);
+		return -1;
+	}
 
 	memcpy(&(string[0]), user_s, user_len);
 	string[user_len] = (char)0;
