@@ -48,10 +48,13 @@ static struct hdr_field* act_contact;
  */
 static inline int randomize_expires( int expires, int range )
 {
-	/* if no range is given just return expires */
-	if(range == 0) return expires;
+	int range_min;
 
-	int range_min = expires - (float)range/100 * expires;
+	/* if no range is given just return expires */
+	if(range == 0)
+		return expires;
+
+	range_min = expires - (float)range/100 * expires;
 
 	return range_min + (float)(rand()%100)/100 * ( expires - range_min );
 }
@@ -240,9 +243,10 @@ contact_t* get_next_contact(contact_t* _c)
  * 3) If the message contained no expires header field, use
  *    the default value
  */
-void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
+void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e, int novariation)
 {
 	int range = 0;
+
 	if (!_ep || !_ep->body.len) {
 		*_e = get_expires_hf(_m);
 
@@ -263,7 +267,9 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 
 	if ( *_e != 0 )
 	{
-		*_e = randomize_expires( *_e, range );
+		if (!novariation) {
+			*_e = randomize_expires( *_e, range );
+		}
 
 		if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
 			*_e = cfg_get(registrar, registrar_cfg, min_expires);

@@ -815,6 +815,8 @@ modparam("registrar", "flow_timer", 25)
             other contact addresses for AoR not matching current
             registration, remove them. This mode ensures one contact per
             AoR (user).
+          + 0x08 - Do not apply expires_range or default_expires_range to
+            this registration.
        The flags may be given in decimal or hexa format.
      * uri (optional - flags param has to be set and can be 0 for default
        behavior) - SIP URI to do be used instead of To header URI. It can

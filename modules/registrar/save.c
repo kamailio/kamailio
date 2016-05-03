@@ -70,7 +70,7 @@ static int q_override_msg_id;
 static qvalue_t q_override_value;
 
 /*! \brief
- * Process request that contained a star, in that case,
+ * Process request that contained a star (*) as a contact, in that case,
  * we will remove all bindings with the given username
  * from the usrloc and return 200 OK response
  */
@@ -448,7 +448,7 @@ int reg_get_crt_max_contacts(void)
  * and insert all contacts from the message that have expires
  * > 0
  */
-static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, int _use_regid)
+static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, int _use_regid, int novariation)
 {
 	ucontact_info_t* ci;
 	urecord_t* r = NULL;
@@ -482,7 +482,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 	maxc = reg_get_crt_max_contacts();
 	for( num=0,r=0,ci=0 ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
-		calc_contact_expires(_m, _c->expires, &expires);
+		calc_contact_expires(_m, _c->expires, &expires, novariation);
 		/* Skip contacts with zero expires */
 		if (expires == 0)
 			continue;
@@ -592,7 +592,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
-		calc_contact_expires(_m, _c->expires, &e);
+		calc_contact_expires(_m, _c->expires, &e, 0);
 
 		ret = ul.get_ucontact_by_instance( _r, &_c->uri, ci, &cont);
 		if (ret==-1) {
@@ -632,7 +632,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
  */
-static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, int _use_regid)
+static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, int _use_regid, int novariation)
 {
 	ucontact_info_t *ci;
 	ucontact_t *c, *ptr, *ptr0;
@@ -679,7 +679,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 	updated=0;
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
-		calc_contact_expires(_m, _c->expires, &expires);
+		calc_contact_expires(_m, _c->expires, &expires, novariation);
 
 		/* pack the contact info */
 		if ( (ci=pack_ci( 0, _c, expires, 0, _use_regid))==0 ) {
@@ -817,7 +817,7 @@ error:
  * contained some contact header fields
  */
 static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
-		str* _a, int _mode, int _use_regid)
+		str* _a, int _mode, int _use_regid, int novariation)
 {
 	int res;
 	int ret;
@@ -839,7 +839,7 @@ static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
 	}
 
 	if (res == 0) { /* Contacts found */
-		if ((ret=update_contacts(_m, r, _mode, _use_regid)) < 0) {
+		if ((ret=update_contacts(_m, r, _mode, _use_regid, novariation)) < 0) {
 			build_contact(_m, r->contacts, &u->host);
 			ul.release_urecord(r);
 			ul.unlock_udomain(_d, _a);
@@ -848,7 +848,7 @@ static inline int add_contacts(struct sip_msg* _m, udomain_t* _d,
 		build_contact(_m, r->contacts, &u->host);
 		ul.release_urecord(r);
 	} else {
-		if (insert_contacts(_m, _d, _a, _use_regid) < 0) {
+		if (insert_contacts(_m, _d, _a, _use_regid, novariation) < 0) {
 			ul.unlock_udomain(_d, _a);
 			return -4;
 		}
@@ -876,6 +876,8 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	param_t *params;
 	contact_t *contact;
 	int use_ob = 1, use_regid = 1;
+	int novariation = 0;
+
 
 	u = parse_to_uri(_m);
 	if(u==NULL)
@@ -973,6 +975,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 	}
 
 	mem_only = is_cflag_set(REG_SAVE_MEM_FL)?FL_MEM:FL_NONE;
+	novariation = is_cflag_set(REG_SAVE_NOVARIATION_FL)? 1:0;
 
 	if (c == 0) {
 		if (st) {
@@ -984,7 +987,7 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 		}
 	} else {
 		mode = is_cflag_set(REG_SAVE_REPL_FL)?1:0;
-		if ((ret=add_contacts(_m, (udomain_t*)_d, &aor, mode, use_regid)) < 0)
+		if ((ret=add_contacts(_m, (udomain_t*)_d, &aor, mode, use_regid, novariation)) < 0)
 			goto error;
 		ret = (ret==0)?1:ret;
 	}

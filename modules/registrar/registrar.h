@@ -49,10 +49,11 @@
 #define PATH_MODE_LAZY		1
 #define PATH_MODE_OFF		0
 
-#define REG_SAVE_MEM_FL     (1<<0)
-#define REG_SAVE_NORPL_FL   (1<<1)
-#define REG_SAVE_REPL_FL    (1<<2)
-#define REG_SAVE_ALL_FL     ((1<<3)-1)
+#define REG_SAVE_MEM_FL     	(1<<0)
+#define REG_SAVE_NORPL_FL   	(1<<1)
+#define REG_SAVE_REPL_FL    	(1<<2)
+#define REG_SAVE_NOVARIATION_FL (1<<3)
+#define REG_SAVE_ALL_FL     ((1<<4)-1)
 
 #define REG_OUTBOUND_NONE	0
 #define REG_OUTBOUND_SUPPORTED	1
