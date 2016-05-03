@@ -1406,14 +1406,15 @@ static int w_sdp_get(sip_msg_t* msg, char *avp)
 	}
 	sdp = (sdp_info_t*)msg->body;
 
-	if (sdp_missing) {
+	if (sdp==NULL) {
 		LM_DBG("No SDP\n");
 		return -2;
-	} else {
-		avp_val.s.s = sdp->raw_sdp.s;
-		avp_val.s.len = sdp->raw_sdp.len;
-		LM_DBG("Found SDP %.*s\n", sdp->raw_sdp.len, sdp->raw_sdp.s);
 	}
+
+	avp_val.s.s = sdp->raw_sdp.s;
+	avp_val.s.len = sdp->raw_sdp.len;
+	LM_DBG("Found SDP %.*s\n", sdp->raw_sdp.len, sdp->raw_sdp.s);
+
 	if (add_avp(AVP_VAL_STR | avp_type, avp_name, avp_val) != 0)
 	{
 		LM_ERR("Failed to add SDP avp");
