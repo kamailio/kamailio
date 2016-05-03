@@ -1405,6 +1405,7 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 		return -1;
 	}
 	type=xml_get_type(dbl);
+	LM_DBG("xmrpc parameter type: %d\n", type);
 	switch(type){
 		case XML_T_STR:
 		case XML_T_TXT:
@@ -1421,7 +1422,7 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 			return -1;
 	}
 	if (type == XML_T_TXT)
-		val_str = (char*)dbl->content;
+		val_str = (char*)xmlNodeGetContent(dbl);
 	else
 		val_str = (char*)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
 
