@@ -19,9 +19,7 @@ include /usr/share/dpkg/buildflags.mk
 #export DH_VERBOSE=1
 
 export JAVA_HOME=/usr/lib/jvm/java-gcj
-
-# choose freeradius
-export FREERADIUS=1
+export RADCLI=1
 
 # modules not in the "main" kamailio package
 EXCLUDED_MODULES=
