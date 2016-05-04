@@ -73,6 +73,7 @@ unsigned int *session_id2;		/**< counter for second part of the session id */
  */
 inline void AAASessionsLock(unsigned int hash)
 {
+	if(_sr_destroy_modules_phase==1) return;
 	if ( hash >=0 && hash < sessions_hash_size ){
 		lock_get(sessions[hash].lock);
 	}
@@ -86,6 +87,7 @@ inline void AAASessionsLock(unsigned int hash)
  */
 inline void AAASessionsUnlock(unsigned int hash)
 {
+	if(_sr_destroy_modules_phase==1) return;
 
 	if ( hash >=0 && hash < sessions_hash_size ){
 		lock_release(sessions[hash].lock);
