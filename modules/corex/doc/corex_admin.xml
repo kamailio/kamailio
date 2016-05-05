@@ -73,7 +73,7 @@
 
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="corex.p.alias_subdomains">
 	    <title><varname>alias_subdomains</varname> (string)</title>
 	    <para>
 		Register a domain and all its sub-domains to match the <quote>myself</quote>
@@ -96,7 +96,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 </programlisting>
 	    </example>
 	</section>
-    <section>
+    <section id="corex.p.network_io_intercept">
         <title><varname>network_io_intercept</varname> (int)</title>
         <para>
             If set to non-zero then raw data received from a remote host or about to
@@ -118,7 +118,7 @@ modparam("corex", "network_io_intercept", 1)
 </programlisting>
         </example>
     </section>
-    <section>
+    <section id="corex.p.min_msg_len">
         <title><varname>min_msg_len</varname> (int)</title>
         <para>
             Minimum content length of the packet to execute the event_route[network:msg].
@@ -138,7 +138,7 @@ modparam("corex", "min_msg_len", 32)
 </programlisting>
         </example>
     </section>
-    <section>
+    <section id="corex.p.msg_avp">
         <title><varname>msg_avp</varname> (string)</title>
         <para>
             AVP name to store modified content to be set in the packet. If not set in
@@ -163,7 +163,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="corex.f.append_branch">
 	    <title>
 		<function moreinfo="none">append_branch([ uri, [ q ] ])</function>
 	    </title>
@@ -205,7 +205,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
 	    </example>
 	</section>
 
-	<section>
+	<section id="corex.f.send">
 		<title>
 			<function moreinfo="none">send([ host [ :port ] ])</function>
 		</title>
@@ -240,7 +240,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
 		</example>
 	</section>
 
-	<section>
+	<section id="corex.f.send_tcp">
 		<title>
 			<function moreinfo="none">send_tcp([ host [ :port ] ])</function>
 		</title>
@@ -251,7 +251,7 @@ modparam("corex", "msg_avp", "$avp(msg)")
 		</para>
 	</section>
 
-	<section>
+	<section id="corex.f.send_data">
 		<title>
 			<function moreinfo="none">send_data(uri, data)</function>
 		</title>
@@ -272,14 +272,14 @@ modparam("corex", "msg_avp", "$avp(msg)")
 </programlisting>
 		</example>
 	</section>
-    <section>
+    <section id="corex.f.is_incoming">
 		<title>
 			<function moreinfo="none">is_incoming()</function>
 		</title>
         <para>
             Returns true if contents of message buffer $mb are the data received from
             remote host, otherwise false indicating that the contents of $mb are data
-            that is about to be sent out to remote host. This only works if 
+            that is about to be sent out to remote host. This only works if
 			network_io_intercept parameter is set to non-zero.
         </para>
         <para>
@@ -414,7 +414,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 
 	<section>
 	<title>RPC Commands</title>
-	<section>
+	<section id="corex.rpc.list_sockets">
 		<title>
 		<function moreinfo="none">corex.list_sockets</function>
 		</title>
@@ -428,7 +428,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 		&sercmd; corex.list_sockets
 		</programlisting>
     </section>
-	<section>
+	<section id="corex.rpc.list_aliases">
 		<title>
 		<function moreinfo="none">corex.list_aliases</function>
 		</title>
@@ -443,7 +443,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 		&sercmd; corex.list_aliases
 		</programlisting>
     </section>
-	<section>
+	<section id="corex.rpc.shm_status">
 		<title>
 		<function moreinfo="none">corex.shm_status</function>
 		</title>
@@ -457,7 +457,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 		&sercmd; corex.shm_status
 		</programlisting>
 	</section>
-	<section>
+	<section id="corex.rpc.shm_summary">
 		<title>
 		<function moreinfo="none">corex.shm_summary</function>
 		</title>
@@ -471,7 +471,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
 		&sercmd; corex.shm_summary
 		</programlisting>
     </section>
-	<section>
+	<section id="corex.rpc.pkg_summary">
 		<title>
 		<function moreinfo="none">corex.pkg_summary</function>
 		</title>
