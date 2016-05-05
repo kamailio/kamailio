@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "mod.h"
@@ -68,7 +66,7 @@ unsigned int workerq_length_threshold_percentage = 0;	/**< default threshold for
 extern dp_config *config; 				/**< DiameterPeer configuration structure */
 
 #define EXP_FUNC(NAME) \
-		{#NAME, (cmd_function)NAME, NO_SCRIPT, 0, 0},
+{#NAME, (cmd_function)NAME, NO_SCRIPT, 0, 0},
 /**
  * Exported functions. This is the API available for use from other SER modules.
  * If you require more, please add them here.
@@ -107,55 +105,55 @@ static cmd_export_t cdp_cmds[] = {
 	{"load_cdp",					(cmd_function)load_cdp, 				NO_SCRIPT, 0, 0},
 
 	EXP_FUNC(AAACreateRequest)
-	EXP_FUNC(AAACreateResponse)
-	EXP_FUNC(AAAFreeMessage)
+		EXP_FUNC(AAACreateResponse)
+		EXP_FUNC(AAAFreeMessage)
 
 
-	EXP_FUNC(AAACreateAVP)
-	EXP_FUNC(AAAAddAVPToMessage)
-	EXP_FUNC(AAAAddAVPToList)
-	EXP_FUNC(AAAFindMatchingAVP)
-	EXP_FUNC(AAAFindMatchingAVPList)
-	EXP_FUNC(AAAGetNextAVP)
-	EXP_FUNC(AAAFreeAVP)
-	EXP_FUNC(AAAFreeAVPList)
-	EXP_FUNC(AAAGroupAVPS)
-	EXP_FUNC(AAAUngroupAVPS)
+		EXP_FUNC(AAACreateAVP)
+		EXP_FUNC(AAAAddAVPToMessage)
+		EXP_FUNC(AAAAddAVPToList)
+		EXP_FUNC(AAAFindMatchingAVP)
+		EXP_FUNC(AAAFindMatchingAVPList)
+		EXP_FUNC(AAAGetNextAVP)
+		EXP_FUNC(AAAFreeAVP)
+		EXP_FUNC(AAAFreeAVPList)
+		EXP_FUNC(AAAGroupAVPS)
+		EXP_FUNC(AAAUngroupAVPS)
 
-	EXP_FUNC(AAASendMessage)
-	EXP_FUNC(AAASendMessageToPeer)
-	EXP_FUNC(AAASendRecvMessage)
-	EXP_FUNC(AAASendRecvMessageToPeer)
-
-
-	EXP_FUNC(AAAAddRequestHandler)
-	EXP_FUNC(AAAAddResponseHandler)
+		EXP_FUNC(AAASendMessage)
+		EXP_FUNC(AAASendMessageToPeer)
+		EXP_FUNC(AAASendRecvMessage)
+		EXP_FUNC(AAASendRecvMessageToPeer)
 
 
-	EXP_FUNC(AAACreateTransaction)
-	EXP_FUNC(AAADropTransaction)
+		EXP_FUNC(AAAAddRequestHandler)
+		EXP_FUNC(AAAAddResponseHandler)
 
 
-	EXP_FUNC(AAACreateSession)
-	EXP_FUNC(AAAMakeSession)
-	EXP_FUNC(AAAGetSession)
-	EXP_FUNC(AAADropSession)
-	EXP_FUNC(AAASessionsLock)
-	EXP_FUNC(AAASessionsUnlock)
+		EXP_FUNC(AAACreateTransaction)
+		EXP_FUNC(AAADropTransaction)
 
-	EXP_FUNC(AAACreateClientAuthSession)
-	EXP_FUNC(AAACreateServerAuthSession)
-	EXP_FUNC(AAAGetAuthSession)
-	EXP_FUNC(AAADropAuthSession)
-	EXP_FUNC(AAATerminateAuthSession)
 
-	EXP_FUNC(AAACreateCCAccSession)
-	EXP_FUNC(AAAStartChargingCCAccSession)
-	EXP_FUNC(AAAGetCCAccSession)
-	EXP_FUNC(AAADropCCAccSession)
-	EXP_FUNC(AAATerminateCCAccSession)
+		EXP_FUNC(AAACreateSession)
+		EXP_FUNC(AAAMakeSession)
+		EXP_FUNC(AAAGetSession)
+		EXP_FUNC(AAADropSession)
+		EXP_FUNC(AAASessionsLock)
+		EXP_FUNC(AAASessionsUnlock)
 
-	{ 0, 0, 0, 0, 0 }
+		EXP_FUNC(AAACreateClientAuthSession)
+		EXP_FUNC(AAACreateServerAuthSession)
+		EXP_FUNC(AAAGetAuthSession)
+		EXP_FUNC(AAADropAuthSession)
+		EXP_FUNC(AAATerminateAuthSession)
+
+		EXP_FUNC(AAACreateCCAccSession)
+		EXP_FUNC(AAAStartChargingCCAccSession)
+		EXP_FUNC(AAAGetCCAccSession)
+		EXP_FUNC(AAADropCCAccSession)
+		EXP_FUNC(AAATerminateCCAccSession)
+
+		{ 0, 0, 0, 0, 0 }
 };
 
 
@@ -201,10 +199,10 @@ static int cdp_init( void )
 		LM_ERR("failed to register RPC commands for CDP module\n");
 		return -1;
 	}
-	
+
 	if (cdp_init_counters() != 0) {
-	    LM_ERR("Failed to register counters for CDP modules\n");
-	    return -1;
+		LM_ERR("Failed to register counters for CDP modules\n");
+		return -1;
 	}
 
 	if (!diameter_peer_init(config_file)){

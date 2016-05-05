@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef DIAMETER_CODE_AVP_H_
@@ -48,9 +46,9 @@
 
 /** Standard AVP Codes */
 typedef enum {
-	
+
 	/* RFC 3588 */
-	
+
 	AVP_User_Name                     =    1,
 	AVP_User_Password				  =    2, //RFC4005
 	AVP_NAS_IP_Addresss				  =    4, //RFC4005
@@ -126,15 +124,15 @@ typedef enum {
 	AVP_Framed_Interface_Id           =   96, //RFC4005
 	AVP_Framed_IPv6_Prefix            =   97, //RFC4005
 	AVP_Framed_IPv6_Route			  =   98, //RFC4005
-#define AVP_Login_IPv6_Host				  98	
+#define AVP_Login_IPv6_Host				  98
 	AVP_Framed_IPv6_Pool			  =  100, //RFC4005
-	
+
 	AVP_MIP6_Feature_Vector			  =  124, //RFC5447
 	AVP_MIP6_Home_Link_Prefix		  =  125, //RFC5447
-	
+
 	AVP_Host_IP_Address               =  257,
 	AVP_Auth_Application_Id           =  258,
-	AVP_Acct_Application_Id           =  259,	
+	AVP_Acct_Application_Id           =  259,
 	AVP_Vendor_Specific_Application_Id=  260,
 	AVP_Redirect_Host_Usage			  =  261,
 	AVP_Redirect_Max_Cache_Time       =  262,
@@ -170,30 +168,30 @@ typedef enum {
 	AVP_Experimental_Result			  =  297,
 	AVP_Experimental_Result_Code      =  298,
 	AVP_Inband_Security_Id			  =  299,
-	
+
 	AVP_E2E_Sequence				  =  300,
 	AVP_Accounting_Input_Octets		  =  363, //RFC4005
 	AVP_Accounting_Output_Octets	  =  364, //RFC4005
 	AVP_Accounting_Input_Packets	  =  365, //RFC4005
 	AVP_Accounting_Output_Packets	  =  366, //RFC4005
-	
+
 	/* RFC 4004 */
-	AVP_MIP_Reg_Request               =  320, 
-	AVP_MIP_Reg_Reply                 =  321, 
-	AVP_MIP_MN_AAA_Auth               =  322, 
-	AVP_MIP_Mobile_Node_Address       =  333, 
-	AVP_MIP_Home_Agent_Address        =  334, 
-	AVP_MIP_Candidate_Home_Agent_Host =  336, 
-	AVP_MIP_Feature_Vector            =  337, 
-	AVP_MIP_Auth_Input_Data_Length    =  338, 
-	AVP_MIP_Authenticator_Length      =  339, 
-	AVP_MIP_Authenticator_Offset      =  340, 
-	AVP_MIP_MN_AAA_SPI                =  341, 
-	AVP_MIP_Filter_Rule               =  342, 
-	AVP_MIP_FA_Challenge              =  344, 
-	AVP_MIP_Originating_Foreign_AAA   =  347, 
-	AVP_MIP_Home_Agent_Host           =  348, 
-	
+	AVP_MIP_Reg_Request               =  320,
+	AVP_MIP_Reg_Reply                 =  321,
+	AVP_MIP_MN_AAA_Auth               =  322,
+	AVP_MIP_Mobile_Node_Address       =  333,
+	AVP_MIP_Home_Agent_Address        =  334,
+	AVP_MIP_Candidate_Home_Agent_Host =  336,
+	AVP_MIP_Feature_Vector            =  337,
+	AVP_MIP_Auth_Input_Data_Length    =  338,
+	AVP_MIP_Authenticator_Length      =  339,
+	AVP_MIP_Authenticator_Offset      =  340,
+	AVP_MIP_MN_AAA_SPI                =  341,
+	AVP_MIP_Filter_Rule               =  342,
+	AVP_MIP_FA_Challenge              =  344,
+	AVP_MIP_Originating_Foreign_AAA   =  347,
+	AVP_MIP_Home_Agent_Host           =  348,
+
 	/* RFC 4005 */
 	AVP_NAS_Filter_Rule				  =  400,
 	AVP_Tunneling					  =  401,
@@ -204,13 +202,13 @@ typedef enum {
 	AVP_Accounting_Auth_Method		  =  406,
 	AVP_QoS_Filter_Rule				  =  407,
 	AVP_Origin_AAA_Protocol			  =  408,
-	
+
 	/* RFC 4006 */
 	AVP_CC_Correlation_Id			  =  411,
 	AVP_CC_Input_Octets				  =  412,
 	AVP_CC_Money                      =  413,
 	AVP_CC_Output_Octets              =  414,
-	AVP_CC_Request_Number             =  415, 
+	AVP_CC_Request_Number             =  415,
 	AVP_CC_Request_Type               =  416,
 	AVP_CC_Service_Specific_Units     =  417,
 	AVP_CC_Session_Failover           =  418,
@@ -238,35 +236,35 @@ typedef enum {
 	AVP_Service_Parameter_Info        =  440,
 	AVP_Service_Parameter_Type        =  441,
 	AVP_Service_Parameter_Value       =  442,
-	AVP_Subscription_Id				  =  443, 
+	AVP_Subscription_Id				  =  443,
 	AVP_Subscription_Id_Data		  =  444,
 	AVP_Unit_Value                    =  445,
 	AVP_Used_Service_Unit             =  446,
 	AVP_Value_Digits                  =  447,
 	AVP_Validity_Time                 =  448,
-	AVP_Final_Unit_Action			  =  449, 
+	AVP_Final_Unit_Action			  =  449,
 	AVP_Subscription_Id_Type		  =  450,
-	AVP_Tariff_Time_Change            =  451, 
+	AVP_Tariff_Time_Change            =  451,
 	AVP_Tariff_Change_Usage           =  452,
 	AVP_G_S_U_Pool_Identifier         =  453,
 	AVP_CC_Unit_Type                  =  454,
 	AVP_Multiple_Services_Indicator   =  455,
 	AVP_Multiple_Services_Credit_Control=456,
 	AVP_G_S_U_Pool_Reference          =  457,
-	AVP_User_Equipment_Info	          =  458, 
-	AVP_User_Equipment_Info_Type      =  459, 
+	AVP_User_Equipment_Info	          =  458,
+	AVP_User_Equipment_Info_Type      =  459,
 	AVP_User_Equipment_Info_Value	  =  460,
 	AVP_Service_Context_Id            =  461,
-	
-	
+
+
 	AVP_Accounting_Record_Type        =  480,
 	AVP_Accounting_Realtime_Required  =  483,
 	AVP_Accounting_Record_Number      =  485,
 	AVP_MIP6_Agent_Info				  =  486, //RFC5447
-	
-	AVP_Service_Selection			  =  493, //RFC5778  
+
+	AVP_Service_Selection			  =  493, //RFC5778
 	AVP_Call_Id                       =  494,
-	
+
 }AAA_AVPCodeNr;
 
 enum {
@@ -294,7 +292,7 @@ enum  {
 enum  {
 	AVP_Credit_Control_Failure_Handling_Terminate			= 0,
 	AVP_Credit_Control_Failure_Handling_Continue			= 1,
-	AVP_Credit_Control_Failure_Handling_Retry_And_Terminate	= 2,	
+	AVP_Credit_Control_Failure_Handling_Retry_And_Terminate	= 2,
 };
 
 enum  {
@@ -362,32 +360,32 @@ enum {
 typedef enum
 {
 	AVP_NAS_Port_Type_Async					= 0,
-	AVP_NAS_Port_Type_Sync 					= 1, 
-	AVP_NAS_Port_Type_ISDN_Sync 			= 2, 
+	AVP_NAS_Port_Type_Sync 					= 1,
+	AVP_NAS_Port_Type_ISDN_Sync 			= 2,
 	AVP_NAS_Port_Type_ISDN_Async_V120 		= 3,
 	AVP_NAS_Port_Type_ISDN_Async_V110		= 4,
-	AVP_NAS_Port_Type_Virtual				= 5, 
-	AVP_NAS_Port_Type_PIAFS					= 6, 	
-	AVP_NAS_Port_Type_HDLC_Clear_Channel	= 7, 
-	AVP_NAS_Port_Type_X_25					= 8, 
-	AVP_NAS_Port_Type_X_75					= 9, 
+	AVP_NAS_Port_Type_Virtual				= 5,
+	AVP_NAS_Port_Type_PIAFS					= 6,
+	AVP_NAS_Port_Type_HDLC_Clear_Channel	= 7,
+	AVP_NAS_Port_Type_X_25					= 8,
+	AVP_NAS_Port_Type_X_75					= 9,
 	AVP_NAS_Port_Type_G_3_Fax				=10,
-	AVP_NAS_Port_Type_Symmetric_DSL			=11, 	
+	AVP_NAS_Port_Type_Symmetric_DSL			=11,
 	AVP_NAS_Port_Type_ADSL_CAP				=12,
-	AVP_NAS_Port_Type_ADSL_DMT				=13, 
-	AVP_NAS_Port_Type_IDSL					=14, 
-	AVP_NAS_Port_Type_Ethernet				=15, 
-	AVP_NAS_Port_Type_xDSL					=16, 
-	AVP_NAS_Port_Type_Cable					=17, 
+	AVP_NAS_Port_Type_ADSL_DMT				=13,
+	AVP_NAS_Port_Type_IDSL					=14,
+	AVP_NAS_Port_Type_Ethernet				=15,
+	AVP_NAS_Port_Type_xDSL					=16,
+	AVP_NAS_Port_Type_Cable					=17,
 	AVP_NAS_Port_Type_Wireless_Other		=18,
 	AVP_NAS_Port_Type_Wireless_IEEE_802_11	=19,
-	AVP_NAS_Port_Type_Token_Ring			=20, 
+	AVP_NAS_Port_Type_Token_Ring			=20,
 	AVP_NAS_Port_Type_FDDI					=21,
 	AVP_NAS_Port_Type_Wireless_CDMA2000		=22,
 	AVP_NAS_Port_Type_Wireless_UMTS			=23,
 	AVP_NAS_Port_Type_Wireless_1X_EV		=24,
 	AVP_NAS_Port_Type_IAPP  				=25
-}	nas_port_type;						
+}	nas_port_type;
 
 enum {
 	AVP_Prompt_No_Echo	= 0,
@@ -448,7 +446,7 @@ enum {
 	AVP_Login_Service_Rlogin			= 1,
 	AVP_Login_Service_TCP_Clear			= 2,
 	AVP_Login_Service_PortMaster		= 3,
-	AVP_Login_Service_LAT				= 4,		
+	AVP_Login_Service_LAT				= 4,
 	AVP_Login_Service_X25_PAD			= 5,
 	AVP_Login_Service_X25_T3POS			= 6,
 	AVP_Login_Service_TCP_Clear_Quiet	= 7,
@@ -535,7 +533,7 @@ enum {
 	AVP_Accounting_Record_Type_Event_Record		= 1,
 	AVP_Accounting_Record_Type_Start_Record		= 2,
 	AVP_Accounting_Record_Type_Interim_Record	= 3,
-	AVP_Accounting_Record_Type_Stop_Record		= 4,			
+	AVP_Accounting_Record_Type_Stop_Record		= 4,
 };
 
 
@@ -543,10 +541,10 @@ enum {
 
 
 typedef enum {
-        Permanent_Termination   = 0,
-        New_Server_Assigned     = 1,
-        Server_Change           = 2,
-        Remove_S_CSCF           = 3,
+	Permanent_Termination   = 0,
+	New_Server_Assigned     = 1,
+	Server_Change           = 2,
+	Remove_S_CSCF           = 3,
 }AAA_AVPReasonCode;
 
 typedef enum {

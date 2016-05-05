@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef DIAMETER_EPC_CODE_AVP_H_
@@ -50,7 +48,7 @@
 
 /** 3GPP AVP Codes */
 enum {
-/**   1 to 255 reserved for backward compatibility with Radius TS29.061	*/
+	/**   1 to 255 reserved for backward compatibility with Radius TS29.061	*/
 
 	AVP_EPC_3GPP_IMSI									= 1,
 	AVP_EPC_3GPP_Charging_Id							= 2,
@@ -76,15 +74,15 @@ enum {
 	AVP_EPC_3GPP_MS_TimeZone							= 23,
 	AVP_EPC_3GPP_Allocate_IP_Type						= 27,
 	AVP_EPC_RAI											= 909, //TS29.061
-/** 256 to 299 reserved for future use										*/
+	/** 256 to 299 reserved for future use										*/
 
 
-/** 300 to 399 reserved for TS29.234											*/
+	/** 300 to 399 reserved for TS29.234											*/
 	AVP_EPC_3GPP_AAA_Server_Name	  					= 318, //TS29.234
-	
-/** 400 to 499 reserved for TS29.109 */
-		
-/** 500 to 599 reserved for TS29.209											*/
+
+	/** 400 to 499 reserved for TS29.109 */
+
+	/** 500 to 599 reserved for TS29.209											*/
 	AVP_EPC_Abort_Cause									= 500,
 	AVP_EPC_Access_Network_Charging_Address				= 501,
 	AVP_EPC_Access_Network_Charging_Identifier			= 502,
@@ -112,12 +110,12 @@ enum {
 	AVP_EPC_Service_URN									= 525,
 	AVP_EPC_Acceptable_Service_Info						= 526,
 	AVP_EPC_Service_Info_Status							= 527,
-/** 600 to 699 reserved for TS29.229											*/
-/** 700 to 799 reserved for TS29.329											*/
-	
-/** 800 to 899 reserved for TS29.299											*/
+	/** 600 to 699 reserved for TS29.229											*/
+	/** 700 to 799 reserved for TS29.329											*/
 
-/** 32.299 Partial																*/
+	/** 800 to 899 reserved for TS29.299											*/
+
+	/** 32.299 Partial																*/
 	AVP_EPC_Event_Type									= 823,
 	AVP_EPC_SIP_Method									= 824,
 	AVP_EPC_Event										= 825,
@@ -167,68 +165,68 @@ enum {
 	AVP_EPC_Address_Domain								= 898,
 	AVP_EPC_Address_Type								= 899,
 	AVP_EPC_CN_IP_Multicast_Distribution				= 921,
-	
-/** 1000   from TS29.212 */
+
+	/** 1000   from TS29.212 */
 	AVP_EPC_Bearer_Usage								= 1000,
- 	AVP_EPC_Charging_Rule_Install						= 1001,
- 	AVP_EPC_Charging_Rule_Remove						= 1002,
- 	AVP_EPC_Charging_Rule_Definition					= 1003,
- 	AVP_EPC_Charging_Rule_Base_Name						= 1004,
- 	AVP_EPC_Charging_Rule_Name							= 1005,
- 	AVP_EPC_Event_Trigger								= 1006,
- 	AVP_EPC_Metering_Method								= 1007,
- 	AVP_EPC_Offline										= 1008,
- 	AVP_EPC_Online										= 1009,
- 	AVP_EPC_Precedence									= 1010,
- 	AVP_EPC_Reporting_Level								= 1011,
- 	AVP_EPC_TFT_Filter									= 1012,
- 	AVP_EPC_TFT_Packet_Filter_Information				= 1013,
- 	AVP_EPC_ToS_Traffic_Class							= 1014,
- 	AVP_EPC_QoS_Bandwidth								= 1015,  //Not used in the EPC
- 	AVP_EPC_QoS_Information								= 1016,
- 	AVP_EPC_QoS_Jitter									= 1017,  //Not used in the EPC
- 	AVP_EPC_Charging_Rule_Report						= 1018,
- 	AVP_EPC_PCC_Rule_Status								= 1019,
- 	AVP_EPC_Bearer_Identifier							= 1020,
- 	AVP_EPC_Bearer_Operation							= 1021,
- 	AVP_EPC_Access_Network_Charging_Identifier_Gx		= 1022,
- 	AVP_EPC_Bearer_Control_Mode							= 1023,
- 	AVP_EPC_Network_Request_Support						= 1024,
- 	AVP_EPC_Guaranteed_Bitrate_DL						= 1025,
- 	AVP_EPC_Guaranteed_Bitrate_UL						= 1026,
- 	AVP_EPC_IP_CAN_Type									= 1027,
- 	AVP_EPC_QoS_Class_Identifier						= 1028,
- 	AVP_EPC_QoS_Negotiation								= 1029,
- 	AVP_EPC_QoS_Upgrade									= 1030,
- 	AVP_EPC_Rule_Failure_Code							= 1031,
- 	AVP_EPC_RAT_Type									= 1032,
- 	AVP_EPC_Event_Report_Indication						= 1033,
- 	AVP_EPC_Allocation_Retention_Priority				= 1034,
- 	AVP_EPC_CoA_IP_Address								= 1035,
- 	AVP_EPC_Tunnel_Header_Filter						= 1036,
- 	AVP_EPC_Tunnel_Header_Length						= 1037,
- 	AVP_EPC_Tunnel_Information							= 1038,
- 	AVP_EPC_CoA_Information								= 1039,
- 	AVP_EPC_APN_Aggregate_Max_Bitrate_DL				= 1040,
- 	AVP_EPC_APN_Aggregate_Max_Bitrate_UL				= 1041,
- 	AVP_EPC_Revalidation_Time							= 1042,
- 	AVP_EPC_Rule_Activation_Time						= 1043,
- 	AVP_EPC_Rule_DeActivation_Time						= 1044,
- 	AVP_EPC_Session_Release_Cause						= 1045,
- 	AVP_EPC_ARP_Value									= 1046, //Depends on the version
- 	AVP_EPC_Priority_Level								= 1046,
- 	AVP_EPC_Pre_emption_Capability						= 1047,
- 	AVP_EPC_Pre_emption_Vulnerability					= 1048,
- 	AVP_EPC_Default_EPS_Bearer_QoS						= 1049,
- 	AVP_EPC_AN_GW_Address								= 1050,
- 	AVP_EPC_QoS_Rule_Install							= 1051, //Gxx
- 	AVP_EPC_QoS_Rule_Remove								= 1052,
- 	AVP_EPC_QoS_Rule_Definition							= 1053,
- 	AVP_EPC_QoS_Rule_Name								= 1054,
- 	AVP_EPC_QoS_Rule_Report								= 1055,
- 	AVP_EPC_Security_Parameter_Index					= 1056,
- 	AVP_EPC_Flow_Label									= 1057,
- 	AVP_EPC_Flow_Information							= 1058,
+	AVP_EPC_Charging_Rule_Install						= 1001,
+	AVP_EPC_Charging_Rule_Remove						= 1002,
+	AVP_EPC_Charging_Rule_Definition					= 1003,
+	AVP_EPC_Charging_Rule_Base_Name						= 1004,
+	AVP_EPC_Charging_Rule_Name							= 1005,
+	AVP_EPC_Event_Trigger								= 1006,
+	AVP_EPC_Metering_Method								= 1007,
+	AVP_EPC_Offline										= 1008,
+	AVP_EPC_Online										= 1009,
+	AVP_EPC_Precedence									= 1010,
+	AVP_EPC_Reporting_Level								= 1011,
+	AVP_EPC_TFT_Filter									= 1012,
+	AVP_EPC_TFT_Packet_Filter_Information				= 1013,
+	AVP_EPC_ToS_Traffic_Class							= 1014,
+	AVP_EPC_QoS_Bandwidth								= 1015,  //Not used in the EPC
+	AVP_EPC_QoS_Information								= 1016,
+	AVP_EPC_QoS_Jitter									= 1017,  //Not used in the EPC
+	AVP_EPC_Charging_Rule_Report						= 1018,
+	AVP_EPC_PCC_Rule_Status								= 1019,
+	AVP_EPC_Bearer_Identifier							= 1020,
+	AVP_EPC_Bearer_Operation							= 1021,
+	AVP_EPC_Access_Network_Charging_Identifier_Gx		= 1022,
+	AVP_EPC_Bearer_Control_Mode							= 1023,
+	AVP_EPC_Network_Request_Support						= 1024,
+	AVP_EPC_Guaranteed_Bitrate_DL						= 1025,
+	AVP_EPC_Guaranteed_Bitrate_UL						= 1026,
+	AVP_EPC_IP_CAN_Type									= 1027,
+	AVP_EPC_QoS_Class_Identifier						= 1028,
+	AVP_EPC_QoS_Negotiation								= 1029,
+	AVP_EPC_QoS_Upgrade									= 1030,
+	AVP_EPC_Rule_Failure_Code							= 1031,
+	AVP_EPC_RAT_Type									= 1032,
+	AVP_EPC_Event_Report_Indication						= 1033,
+	AVP_EPC_Allocation_Retention_Priority				= 1034,
+	AVP_EPC_CoA_IP_Address								= 1035,
+	AVP_EPC_Tunnel_Header_Filter						= 1036,
+	AVP_EPC_Tunnel_Header_Length						= 1037,
+	AVP_EPC_Tunnel_Information							= 1038,
+	AVP_EPC_CoA_Information								= 1039,
+	AVP_EPC_APN_Aggregate_Max_Bitrate_DL				= 1040,
+	AVP_EPC_APN_Aggregate_Max_Bitrate_UL				= 1041,
+	AVP_EPC_Revalidation_Time							= 1042,
+	AVP_EPC_Rule_Activation_Time						= 1043,
+	AVP_EPC_Rule_DeActivation_Time						= 1044,
+	AVP_EPC_Session_Release_Cause						= 1045,
+	AVP_EPC_ARP_Value									= 1046, //Depends on the version
+	AVP_EPC_Priority_Level								= 1046,
+	AVP_EPC_Pre_emption_Capability						= 1047,
+	AVP_EPC_Pre_emption_Vulnerability					= 1048,
+	AVP_EPC_Default_EPS_Bearer_QoS						= 1049,
+	AVP_EPC_AN_GW_Address								= 1050,
+	AVP_EPC_QoS_Rule_Install							= 1051, //Gxx
+	AVP_EPC_QoS_Rule_Remove								= 1052,
+	AVP_EPC_QoS_Rule_Definition							= 1053,
+	AVP_EPC_QoS_Rule_Name								= 1054,
+	AVP_EPC_QoS_Rule_Report								= 1055,
+	AVP_EPC_Security_Parameter_Index					= 1056,
+	AVP_EPC_Flow_Label									= 1057,
+	AVP_EPC_Flow_Information							= 1058,
 	AVP_EPC_Packet_Filter_Content						= 1059,
 	AVP_EPC_Packet_Filter_Identifier					= 1060,
 	AVP_EPC_Packet_Filter_Information					= 1061,
@@ -236,9 +234,9 @@ enum {
 	AVP_EPC_Resource_Allocation_Notification			= 1063, //Gx
 	AVP_EPC_Session_Linking_Indicator					= 1064,
 	AVP_EPC_PDN_Connection_ID							= 1065,
- 	
-/** TS 32.299  */
-	
+
+	/** TS 32.299  */
+
 	AVP_EPC_Additional_Type_Information					= 1205,
 	AVP_EPC_Content_Size								= 1206,
 	AVP_EPC_Additional_Content_Information				= 1207,
@@ -263,9 +261,9 @@ enum {
 	AVP_EPC_AF_Correlation_Information					= 1276,
 	AVP_EPC_Alternate_Charged_Party_Address				= 1280,
 	AVP_EPC_Media_Initiator_Party						= 1288,
-	
-	
-/** TS 29.272  */
+
+
+	/** TS 29.272  */
 	AVP_EPC_Subscription_Data							= 1400,
 	AVP_EPC_Terminal_Information						= 1401,
 	AVP_EPC_IMEI										= 1402,
@@ -317,7 +315,7 @@ enum {
 	AVP_EPC_XRES										= 1448,
 	AVP_EPC_AUTN										= 1449,
 	AVP_EPC_KASME										= 1450,
-	
+
 	AVP_EPC_Trace_Collection_Entity						= 1452,
 	AVP_EPC_Kc											= 1453,
 	AVP_EPC_SRES										= 1454,
@@ -326,7 +324,7 @@ enum {
 	AVP_EPC_Roaming_Restricted_Due_To_Unsupported_Feature = 1457,
 	AVP_EPC_Trace_Data									= 1458,
 	AVP_EPC_Trace_Reference								= 1459,
-	
+
 	AVP_EPC_Trace_Depth									= 1462,
 	AVP_EPC_Trace_NE_Type_List							= 1463,
 	AVP_EPC_Trace_Interface_List						= 1464,
@@ -361,16 +359,16 @@ enum {
 	AVP_EPC_Homogenous_Support_of_IMS_Over_PS_Sessions	= 1493,
 	AVP_EPC_Last_UE_Activity_Time						= 1494,
 
-/** TS 29.273  */	
-	
+	/** TS 29.273  */
+
 	AVP_EPC_Non_3GPP_User_Data							= 1500,
 	AVP_EPC_Non_3GPP_IP_Access							= 1501,
 	AVP_EPC_Non_3GPP_IP_Access_APN						= 1502,
 	AVP_EPC_ANID										= 1504,
 	AVP_EPC_Trace_Info									= 1505,
-	
-/** TS 32.299  */
-	
+
+	/** TS 32.299  */
+
 	AVP_EPC_Client_Address								= 2018,
 	AVP_EPC_Carrier_Select_Routing_Information			= 2023,
 	AVP_EPC_Associated_Party_Address					= 2035,
@@ -393,7 +391,7 @@ enum {
 	AVP_EPC_Content_ID									= 2116,
 	AVP_EPC_Content_Provide_ID							= 2117,
 	AVP_EPC_SIP_Request_Timestamp_Fraction				= 2301,
-	AVP_EPC_SIP_Response_Timestamp_Fraction				= 2302,	
+	AVP_EPC_SIP_Response_Timestamp_Fraction				= 2302,
 	AVP_EPC_Account_Expiration							= 2309,
 	AVP_EPC_AoC_Cost_Format								= 2310,
 	AVP_EPC_AoC_Service									= 2311,
@@ -401,25 +399,25 @@ enum {
 	AVP_EPC_AoC_Service_Type							= 2313,
 	AVP_EPC_AoC_Subscription_Information				= 2314,
 	AVP_EPC_Outgoing_Session_Id							= 2320,
-	
-	
-	
-/** 2400 to 2407 reserved for TS29.173											*/
+
+
+
+	/** 2400 to 2407 reserved for TS29.173											*/
 
 	AVP_EPC_GMLC_Address								= 2405,
-	
-	
-	
-/** Not yet allocated */	
 
-	AVP_EPC_PDN_Gw_Address								= 42002, 
-	AVP_EPC_PDN_Gw_Name									= 42003, 
-	AVP_EPC_PDN_Gw_Identity								= 42004, 
-	AVP_EPC_QoS_Profile_Name							= 42005, 
-	AVP_EPC_GG_Enforce									= 42006, 
-	AVP_EPC_GG_IP										= 42007, 
-	AVP_EPC_UE_Locator									= 42008, 
-	AVP_EPC_UE_Locator_Id_Group							= 42009, 
+
+
+	/** Not yet allocated */
+
+	AVP_EPC_PDN_Gw_Address								= 42002,
+	AVP_EPC_PDN_Gw_Name									= 42003,
+	AVP_EPC_PDN_Gw_Identity								= 42004,
+	AVP_EPC_QoS_Profile_Name							= 42005,
+	AVP_EPC_GG_Enforce									= 42006,
+	AVP_EPC_GG_IP										= 42007,
+	AVP_EPC_UE_Locator									= 42008,
+	AVP_EPC_UE_Locator_Id_Group							= 42009,
 };
 
 /** Flow-Usage AVP */
@@ -477,7 +475,7 @@ enum {
 	AVP_EPC_Network_Request_Support_Supported				=1
 };
 
-/** IP-CAN Type TS 29.212 */ 
+/** IP-CAN Type TS 29.212 */
 enum {
 	AVP_EPC_IPCAN_Type_3GPP_GPRS 	= 0,
 	AVP_EPC_IPCAN_Type_DOCSIS 		= 1,
@@ -541,10 +539,10 @@ enum {
 };
 
 /** Event-Trigger TS 29.212*/
-enum {	
-	AVP_EPC_Event_Trigger_SGSN_CHANGE 							=0, 
+enum {
+	AVP_EPC_Event_Trigger_SGSN_CHANGE 							=0,
 	AVP_EPC_Event_Trigger_QOS_CHANGE 							=1,
-	AVP_EPC_Event_Trigger_RAT_CHANGE 							=2,	
+	AVP_EPC_Event_Trigger_RAT_CHANGE 							=2,
 	AVP_EPC_Event_Trigger_TFT_CHANGE 							=3,
 	AVP_EPC_Event_Trigger_PLMN_CHANGE 							=4,
 	AVP_EPC_Event_Trigger_LOSS_OF_BEARER 						=5,
@@ -554,10 +552,10 @@ enum {
 	AVP_EPC_Event_Trigger_RESOURCES_LIMITATION 					=9, //Release 7
 	AVP_EPC_Event_Trigger_MAX_NR_BEARERS_REACHED 				=10, //Release 7
 	AVP_EPC_Event_Trigger_QOS_CHANGE_EXCEEDING_AUTHORIZATION	=11,
-	AVP_EPC_Event_Trigger_RAI_CHANGE							=12, 
+	AVP_EPC_Event_Trigger_RAI_CHANGE							=12,
 	AVP_EPC_Event_Trigger_USER_LOCATION_CHANGE 					=13,
-	AVP_EPC_Event_Trigger_NO_EVENT_TRIGGER						=14,	 
-	AVP_EPC_Event_Trigger_OUT_OF_CREDIT							=15, 
+	AVP_EPC_Event_Trigger_NO_EVENT_TRIGGER						=14,
+	AVP_EPC_Event_Trigger_OUT_OF_CREDIT							=15,
 	AVP_EPC_Event_Trigger_RELLOCATION_OF_CREDIT					=16,
 	AVP_EPC_Event_Trigger_REVALIDATION_TIMEOUT					=17,
 	AVP_EPC_Event_Trigger_IP_ADDRESS_ALLOCATE					=18,
@@ -599,8 +597,8 @@ enum {
 	AVP_EPC_Subscription_Id_Type_End_User_E164					= 0,
 	AVP_EPC_Subscription_Id_Type_End_User_IMSI					= 1,
 	AVP_EPC_Subscription_Id_Type_End_User_SIP_URI				= 2,
-	AVP_EPC_Subscription_Id_Type_End_User_NAI					= 3,	
-	AVP_EPC_Subscription_Id_Type_End_User_Private				= 4,	
+	AVP_EPC_Subscription_Id_Type_End_User_NAI					= 3,
+	AVP_EPC_Subscription_Id_Type_End_User_Private				= 4,
 };
 
 enum {
@@ -648,46 +646,46 @@ enum {
 
 enum {
 	AVP_EPC_ULR_Flags_Single_Registration_Indication				= 1<<0,
-	AVP_EPC_ULR_Flags_S6a_Indicator									= 1<<1,	
-	AVP_EPC_ULR_Flags_Skip_Subscriber_Data							= 1<<2,			
-	AVP_EPC_ULR_Flags_GPRS_Subscription_Data_Indicator				= 1<<3,			
-	AVP_EPC_ULR_Flags_Node_Type_Indicator							= 1<<4,			
-	AVP_EPC_ULR_Flags_Initial_Attach_Indicator						= 1<<5,			
-	AVP_EPC_ULR_Flags_PS_LCS_Not_Supported_By_UE					= 1<<6,			
+	AVP_EPC_ULR_Flags_S6a_Indicator									= 1<<1,
+	AVP_EPC_ULR_Flags_Skip_Subscriber_Data							= 1<<2,
+	AVP_EPC_ULR_Flags_GPRS_Subscription_Data_Indicator				= 1<<3,
+	AVP_EPC_ULR_Flags_Node_Type_Indicator							= 1<<4,
+	AVP_EPC_ULR_Flags_Initial_Attach_Indicator						= 1<<5,
+	AVP_EPC_ULR_Flags_PS_LCS_Not_Supported_By_UE					= 1<<6,
 };
 
 enum {
-	AVP_EPC_ULA_Flags_Separation_Indication							= 1<<0,			
+	AVP_EPC_ULA_Flags_Separation_Indication							= 1<<0,
 };
 
 enum {
 	AVP_EPC_Feature_List_ODB_all_APN								= 1<<0,
-	AVP_EPC_Feature_List_ODB_HPLMN_APN								= 1<<1,	
-	AVP_EPC_Feature_List_ODB_VPLMN_APN								= 1<<2,			
-	AVP_EPC_Feature_List_ODB_all_OG									= 1<<3,			
-	AVP_EPC_Feature_List_ODB_all_InternationalOG					= 1<<4,			
-	AVP_EPC_Feature_List_ODB_all_InternationalOGNoToHPLMN_Country	= 1<<5,			
-	AVP_EPC_Feature_List_ODB_all_InterzonalIOG						= 1<<6,			
-	AVP_EPC_Feature_List_ODB_all_InterzonalIOGNotToHPLMN_Country	= 1<<7,			
-	AVP_EPC_Feature_List_ODB_all_InterzonalIOGAndInternationalOGNotToHPLMN_Country = 1<<8,			
-	AVP_EPC_Feature_List_RegSub										= 1<<9,			
-	AVP_EPC_Feature_List_Trace										= 1<<10,			
-	AVP_EPC_Feature_List_LCS_all_PrivExcep							= 1<<11,			
-	AVP_EPC_Feature_List_LCS_Universal								= 1<<12,			
-	AVP_EPC_Feature_List_LCS_CallSessionRelated						= 1<<13,			
-	AVP_EPC_Feature_List_LCS_CallSessionUnrelated					= 1<<14,			
-	AVP_EPC_Feature_List_LCS_PLMNOperator							= 1<<15,			
-	AVP_EPC_Feature_List_LCS_Service_Type							= 1<<16,			
-	AVP_EPC_Feature_List_LCS_all_MOLR_SS							= 1<<17,			
-	AVP_EPC_Feature_List_LCS_BasicShelfLocation						= 1<<18,			
-	AVP_EPC_Feature_List_LCS_AutonomousSelfLocation					= 1<<19,			
-	AVP_EPC_Feature_List_LCS_TransferToThirdParty					= 1<<20,			
+	AVP_EPC_Feature_List_ODB_HPLMN_APN								= 1<<1,
+	AVP_EPC_Feature_List_ODB_VPLMN_APN								= 1<<2,
+	AVP_EPC_Feature_List_ODB_all_OG									= 1<<3,
+	AVP_EPC_Feature_List_ODB_all_InternationalOG					= 1<<4,
+	AVP_EPC_Feature_List_ODB_all_InternationalOGNoToHPLMN_Country	= 1<<5,
+	AVP_EPC_Feature_List_ODB_all_InterzonalIOG						= 1<<6,
+	AVP_EPC_Feature_List_ODB_all_InterzonalIOGNotToHPLMN_Country	= 1<<7,
+	AVP_EPC_Feature_List_ODB_all_InterzonalIOGAndInternationalOGNotToHPLMN_Country = 1<<8,
+	AVP_EPC_Feature_List_RegSub										= 1<<9,
+	AVP_EPC_Feature_List_Trace										= 1<<10,
+	AVP_EPC_Feature_List_LCS_all_PrivExcep							= 1<<11,
+	AVP_EPC_Feature_List_LCS_Universal								= 1<<12,
+	AVP_EPC_Feature_List_LCS_CallSessionRelated						= 1<<13,
+	AVP_EPC_Feature_List_LCS_CallSessionUnrelated					= 1<<14,
+	AVP_EPC_Feature_List_LCS_PLMNOperator							= 1<<15,
+	AVP_EPC_Feature_List_LCS_Service_Type							= 1<<16,
+	AVP_EPC_Feature_List_LCS_all_MOLR_SS							= 1<<17,
+	AVP_EPC_Feature_List_LCS_BasicShelfLocation						= 1<<18,
+	AVP_EPC_Feature_List_LCS_AutonomousSelfLocation					= 1<<19,
+	AVP_EPC_Feature_List_LCS_TransferToThirdParty					= 1<<20,
 	AVP_EPC_Feature_List_SM_Mo_PP									= 1<<21,
-	AVP_EPC_Feature_List_Barring_OutgoingCalls						= 1<<22,			
-	AVP_EPC_Feature_List_BAOC										= 1<<23,			
-	AVP_EPC_Feature_List_BOIC										= 1<<24,			
-	AVP_EPC_Feature_List_BOICExHC									= 1<<25,			
-	AVP_EPC_Feature_List_T_ADSDataRetrieval							= 1<<26,			
+	AVP_EPC_Feature_List_Barring_OutgoingCalls						= 1<<22,
+	AVP_EPC_Feature_List_BAOC										= 1<<23,
+	AVP_EPC_Feature_List_BOIC										= 1<<24,
+	AVP_EPC_Feature_List_BOICExHC									= 1<<25,
+	AVP_EPC_Feature_List_T_ADSDataRetrieval							= 1<<26,
 };
 
 enum {
@@ -712,19 +710,19 @@ enum {
 
 enum {
 	AVP_EPC_DSR_Flags_Regional_Subscription_Withdrawal				= 1<<0,
-	AVP_EPC_DSR_Flags_Complete_APN_Configuration_Profile_Withdrawal	= 1<<1,	
-	AVP_EPC_DSR_Flags_Subscribed_Charging_Characteristics_Withdrawal= 1<<2,			
-	AVP_EPC_DSR_Flags_PDN_Subscription_Contexts_Withdrawal			= 1<<3,			
-	AVP_EPC_DSR_Flags_STN_SR										= 1<<4,			
-	AVP_EPC_DSR_Flags_Complete_PDP_Context_List_Withdrawal			= 1<<5,			
-	AVP_EPC_DSR_Flags_PDP_Contexts_Withdrawal						= 1<<6,			
-	AVP_EPC_DSR_Flags_Roaming_Restricted_Due_To_Unsupported_Feature	= 1<<7,			
-	AVP_EPC_DSR_Flags_Trace_Data_Withdrawal							= 1<<8,			
-	AVP_EPC_DSR_Flags_CSG_Deleted									= 1<<9,			
-	AVP_EPC_DSR_Flags_APN_OI_Replacement							= 1<<10,			
-	AVP_EPC_DSR_Flags_GMLC_List_Withdrawal							= 1<<11,			
-	AVP_EPC_DSR_Flags_LCS_Withdrawal								= 1<<12,			
-	AVP_EPC_DSR_Flags_SMS_Withdrawal								= 1<<13,			
+	AVP_EPC_DSR_Flags_Complete_APN_Configuration_Profile_Withdrawal	= 1<<1,
+	AVP_EPC_DSR_Flags_Subscribed_Charging_Characteristics_Withdrawal= 1<<2,
+	AVP_EPC_DSR_Flags_PDN_Subscription_Contexts_Withdrawal			= 1<<3,
+	AVP_EPC_DSR_Flags_STN_SR										= 1<<4,
+	AVP_EPC_DSR_Flags_Complete_PDP_Context_List_Withdrawal			= 1<<5,
+	AVP_EPC_DSR_Flags_PDP_Contexts_Withdrawal						= 1<<6,
+	AVP_EPC_DSR_Flags_Roaming_Restricted_Due_To_Unsupported_Feature	= 1<<7,
+	AVP_EPC_DSR_Flags_Trace_Data_Withdrawal							= 1<<8,
+	AVP_EPC_DSR_Flags_CSG_Deleted									= 1<<9,
+	AVP_EPC_DSR_Flags_APN_OI_Replacement							= 1<<10,
+	AVP_EPC_DSR_Flags_GMLC_List_Withdrawal							= 1<<11,
+	AVP_EPC_DSR_Flags_LCS_Withdrawal								= 1<<12,
+	AVP_EPC_DSR_Flags_SMS_Withdrawal								= 1<<13,
 };
 
 enum {
@@ -738,23 +736,23 @@ enum {
 
 enum {
 	AVP_EPC_Operator_Determined_Barring_All_Packet_Oriented_Services_Barred						= 1<<0,
-	AVP_EPC_Operator_Determined_Barring_Roamer_Access_HPLMN_AP_Barred							= 1<<1,	
-	AVP_EPC_Operator_Determined_Barring_Roamer_Access_To_VPLMN_AP_Barred						= 1<<2,			
-	AVP_EPC_Operator_Determined_Barring_Outgoing_Calls											= 1<<3,			
-	AVP_EPC_Operator_Determined_Barring_Outgoing_International_Calls							= 1<<4,			
-	AVP_EPC_Operator_Determined_Barring_Outgoing_International_Calls_Except_To_HPLMN_Country	= 1<<5,			
-	AVP_EPC_Operator_Determined_Barring_Outgoing_Inter_zonal_Calls								= 1<<6,			
-	AVP_EPC_Operator_Determined_Barring_Outgoing_Inter_zonal_Calls_Except_To_HPLMN_Country		= 1<<7,			
-	AVP_EPC_Operator_Determined_Barring_Outgoing_International_Calls_Except_To_HPLMN_Country_and_All_Inter_zonal_Calls = 1<<8,			
+	AVP_EPC_Operator_Determined_Barring_Roamer_Access_HPLMN_AP_Barred							= 1<<1,
+	AVP_EPC_Operator_Determined_Barring_Roamer_Access_To_VPLMN_AP_Barred						= 1<<2,
+	AVP_EPC_Operator_Determined_Barring_Outgoing_Calls											= 1<<3,
+	AVP_EPC_Operator_Determined_Barring_Outgoing_International_Calls							= 1<<4,
+	AVP_EPC_Operator_Determined_Barring_Outgoing_International_Calls_Except_To_HPLMN_Country	= 1<<5,
+	AVP_EPC_Operator_Determined_Barring_Outgoing_Inter_zonal_Calls								= 1<<6,
+	AVP_EPC_Operator_Determined_Barring_Outgoing_Inter_zonal_Calls_Except_To_HPLMN_Country		= 1<<7,
+	AVP_EPC_Operator_Determined_Barring_Outgoing_International_Calls_Except_To_HPLMN_Country_and_All_Inter_zonal_Calls = 1<<8,
 };
 
 enum {
 	AVP_EPC_Access_Restriction_Data_UTRAN_Not_Allowed					= 1<<0,
-	AVP_EPC_Access_Restriction_Data_GERAN_Not_Allowed					= 1<<1,	
-	AVP_EPC_Access_Restriction_Data_GAN_Not_Allowed 					= 1<<2,			
-	AVP_EPC_Access_Restriction_Data_I_HSPA_Evolution_Not_Allowed		= 1<<3,			
-	AVP_EPC_Access_Restriction_Data_E_UTRA_Not_Allowed					= 1<<4,			
-	AVP_EPC_Access_Restriction_Data_HO_To_Non_3GPP_Access_Not_Allowed 	= 1<<5,		
+	AVP_EPC_Access_Restriction_Data_GERAN_Not_Allowed					= 1<<1,
+	AVP_EPC_Access_Restriction_Data_GAN_Not_Allowed 					= 1<<2,
+	AVP_EPC_Access_Restriction_Data_I_HSPA_Evolution_Not_Allowed		= 1<<3,
+	AVP_EPC_Access_Restriction_Data_E_UTRA_Not_Allowed					= 1<<4,
+	AVP_EPC_Access_Restriction_Data_HO_To_Non_3GPP_Access_Not_Allowed 	= 1<<5,
 };
 
 enum {
@@ -800,7 +798,7 @@ enum {
 	AVP_EPC_PDN_Type_IPv6											= 1,
 	AVP_EPC_PDN_Type_IPv4v6											= 2,
 	AVP_EPC_PDN_Type_IPv4_or_IPv6									= 3,
-			
+
 };
 
 enum {
@@ -830,7 +828,7 @@ enum {
 	AVP_EPC_PLMN_Client_O_And_M_HPLMN								= 1,
 	AVP_EPC_PLMN_Client_O_And_M_VPLMN								= 2,
 	AVP_EPC_PLMN_Client_Anonymous_Location							= 3,
-	AVP_EPC_PLMN_Client_Target_UE_Subscribed_Services				= 4,		
+	AVP_EPC_PLMN_Client_Target_UE_Subscribed_Services				= 4,
 };
 
 enum {
@@ -866,7 +864,7 @@ enum {
 };
 
 enum {
-	AVP_EPC_Current_Location_Retrieved_Active_Location_Retrieval	= 0			
+	AVP_EPC_Current_Location_Retrieved_Active_Location_Retrieval	= 0
 };
 
 enum {
@@ -885,7 +883,7 @@ enum {
 	AVP_EPC_Node_Functionality_IBCF		= 7,
 	AVP_EPC_Node_Functionality_S_GW		= 8,
 	AVP_EPC_Node_Functionality_P_GW		= 9,
-	AVP_EPC_Node_Functionality_HSGW		= 10,	
+	AVP_EPC_Node_Functionality_HSGW		= 10,
 };
 
 enum {
@@ -906,7 +904,7 @@ enum {
 enum {
 	AVP_EPC_Media_Initiator_Flag_Called_Party		= 0,
 	AVP_EPC_Media_Initiator_Flag_Calling_Party		= 1,
-	AVP_EPC_Media_Initiator_Flag_Unknown			= 2,	
+	AVP_EPC_Media_Initiator_Flag_Unknown			= 2,
 };
 
 enum {

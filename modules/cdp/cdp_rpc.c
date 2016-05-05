@@ -63,73 +63,73 @@ static void cdp_rpc_disable_peer(rpc_t* rpc, void* ctx)
 
 static void cdp_rpc_list_peers(rpc_t* rpc, void* ctx)
 {
-    void *peers_header;
-    void *peers_container;
-    void *peerdetail_container;
-    void *peerapplication_container;
-    peer *i, *j;
-    int c;
-    char buf[100];
+	void *peers_header;
+	void *peers_container;
+	void *peerdetail_container;
+	void *peerapplication_container;
+	peer *i, *j;
+	int c;
+	char buf[100];
 
-    if (rpc->add(ctx, "{", &peers_header) < 0) {
-            rpc->fault(ctx, 500, "Internal error creating top rpc");
-            return;
-    }
+	if (rpc->add(ctx, "{", &peers_header) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating top rpc");
+		return;
+	}
 
-    if (rpc->struct_add(peers_header, "SSddddddd{",
-                            "Realm", &config->realm,
-                            "Identity", &config->identity,
-                            "Accept unknown peers", config->accept_unknown_peers,
-                            "Connect timeout", config->connect_timeout,
-                            "Transaction timeout", config->transaction_timeout,
-                            "Default auth session timeout", config->default_auth_session_timeout,
-                            "Queue length", config->queue_length,
-                            "Workers", config->workers,
-                            "Peer count", config->peers_cnt,
-                            "Peers", &peers_container) < 0) {
-            rpc->fault(ctx, 500, "Internal error creating peers header struct");
-            return;
-    }
+	if (rpc->struct_add(peers_header, "SSddddddd{",
+				"Realm", &config->realm,
+				"Identity", &config->identity,
+				"Accept unknown peers", config->accept_unknown_peers,
+				"Connect timeout", config->connect_timeout,
+				"Transaction timeout", config->transaction_timeout,
+				"Default auth session timeout", config->default_auth_session_timeout,
+				"Queue length", config->queue_length,
+				"Workers", config->workers,
+				"Peer count", config->peers_cnt,
+				"Peers", &peers_container) < 0) {
+		rpc->fault(ctx, 500, "Internal error creating peers header struct");
+		return;
+	}
 
-    lock_get(peer_list_lock);
-    i = peer_list->head;
-    while (i) {
-    		lock_get(i->lock);
-    		if (rpc->struct_add(peers_container, "S{",
-                            "FQDN", &i->fqdn,
-                            "Details", &peerdetail_container) < 0) {
-                    rpc->fault(ctx, 500, "Internal error creating peers container struct");
-                    lock_release(i->lock);
-                    return;
-            }
-            if (rpc->struct_add(peerdetail_container, "ssd",
-                    "State", dp_states[(int)i->state],
-                    "Disabled", i->disabled?"True":"False",
-            		"Last used", i->last_selected) < 0) {
-                    rpc->fault(ctx, 500, "Internal error creating peer detail container struct");
-                    lock_release(i->lock);
-                    return;
-            }
-            if (rpc->struct_add(peerdetail_container, "{", "Applications", &peerapplication_container) < 0) {
-            	rpc->fault(ctx, 500, "Internal error creating peer application container struct");
-            	lock_release(i->lock);
-            	return;
-            }
+	lock_get(peer_list_lock);
+	i = peer_list->head;
+	while (i) {
+		lock_get(i->lock);
+		if (rpc->struct_add(peers_container, "S{",
+					"FQDN", &i->fqdn,
+					"Details", &peerdetail_container) < 0) {
+			rpc->fault(ctx, 500, "Internal error creating peers container struct");
+			lock_release(i->lock);
+			return;
+		}
+		if (rpc->struct_add(peerdetail_container, "ssd",
+					"State", dp_states[(int)i->state],
+					"Disabled", i->disabled?"True":"False",
+					"Last used", i->last_selected) < 0) {
+			rpc->fault(ctx, 500, "Internal error creating peer detail container struct");
+			lock_release(i->lock);
+			return;
+		}
+		if (rpc->struct_add(peerdetail_container, "{", "Applications", &peerapplication_container) < 0) {
+			rpc->fault(ctx, 500, "Internal error creating peer application container struct");
+			lock_release(i->lock);
+			return;
+		}
 
-            for (c = 0; c < i->applications_cnt; c++) {
-            	snprintf(buf, 100, "%d:%d", i->applications[c].id, i->applications[c].vendor);
-            	if (rpc->struct_add(peerapplication_container, "s",
+		for (c = 0; c < i->applications_cnt; c++) {
+			snprintf(buf, 100, "%d:%d", i->applications[c].id, i->applications[c].vendor);
+			if (rpc->struct_add(peerapplication_container, "s",
 						"appid:vendorid", buf) < 0) {
-					rpc->fault(ctx, 500, "Internal error creating appid/vendorid information");
-					lock_release(i->lock);
-					return;
-				}
-            }
-            j=i;
-            i = i->next;
-            lock_release(j->lock);
-    }
-    lock_release(peer_list_lock);
+				rpc->fault(ctx, 500, "Internal error creating appid/vendorid information");
+				lock_release(i->lock);
+				return;
+			}
+		}
+		j=i;
+		i = i->next;
+		lock_release(j->lock);
+	}
+	lock_release(peer_list_lock);
 }
 
 rpc_export_t cdp_rpc[] = {

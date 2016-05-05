@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
  *
@@ -104,26 +102,26 @@ typedef struct _peer_t{
 
 	app_config *applications;/**< list of supported applications */
 	int applications_cnt;	/**< size of list of supporter applications*/
-	
+
 	gen_lock_t *lock;		/**< lock for operations with this peer */
-	
+
 	peer_state_t state;		/**< state of the peer */
 	int I_sock;				/**< socket used as initiator */
 	int R_sock;				/**< socket used as receiver */
-	
+
 	time_t activity;		/**< timestamp of last activity */
 	time_t last_selected;	/**< timestamp this peer was last selected for routing - used in least recently used load balancing across metric */
 	int is_dynamic;			/**< whether this peer was accepted although it was not initially configured */
 	int disabled;			/**< administratively enable/disable a peer - ie remove/re-add from service dynamically */
 	int waitingDWA;			/**< if a Diameter Watch-dog Request was sent out and waiting for an answer */
-	
+
 	str send_pipe_name;		/**< pipe to signal messages to be sent out*/
-	
+
 	int fd_exchange_pipe_local;	/**< pipe to communicate with the receiver process and exchange a file descriptor - local end, to read from */
 	int fd_exchange_pipe;	/**< pipe to communicate with the receiver process and exchange a file descriptor */
 
 	AAAMessage *r_cer;      /**< the cer received from R-connection */
-	
+
 	struct _peer_t *next;	/**< next peer in the peer list */
 	struct _peer_t *prev;	/**< previous peer in the peer list */
 } peer;
@@ -131,6 +129,6 @@ typedef struct _peer_t{
 peer* new_peer(str fqdn,str realm,int port,str src_addr);
 void free_peer(peer *x,int locked);
 
-inline void touch_peer(peer *p);
+void touch_peer(peer *p);
 
 #endif

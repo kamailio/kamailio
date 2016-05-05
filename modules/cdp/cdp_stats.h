@@ -4,11 +4,11 @@
 #include "../../counters.h"
 
 struct cdp_counters_h {
-    counter_handle_t timeout;
-    counter_handle_t replies_received;
-    counter_handle_t replies_response_time;
-    counter_handle_t avg_response_time;
-    counter_handle_t queuelength;
+	counter_handle_t timeout;
+	counter_handle_t replies_received;
+	counter_handle_t replies_response_time;
+	counter_handle_t avg_response_time;
+	counter_handle_t queuelength;
 };
 
 int cdp_init_counters();

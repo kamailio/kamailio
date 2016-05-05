@@ -18,35 +18,35 @@ int get_accounting_record_type(AAAMessage* msg) {
 }
 
 int get_result_code(AAAMessage* msg) {
-    AAA_AVP *avp;
-    AAA_AVP_LIST list;
-    list.head = 0;
-    list.tail = 0;
-    int rc = -1;
+	AAA_AVP *avp;
+	AAA_AVP_LIST list;
+	list.head = 0;
+	list.tail = 0;
+	int rc = -1;
 
-    if (!msg) goto error;
+	if (!msg) goto error;
 
-    for (avp = msg->avpList.tail; avp; avp = avp->prev) {
+	for (avp = msg->avpList.tail; avp; avp = avp->prev) {
 
-        if (avp->code == AVP_Result_Code) {
-            rc = get_4bytes(avp->data.s);
-            goto finish;
-        } else if (avp->code == AVP_Experimental_Result) {
-            list = AAAUngroupAVPS(avp->data);
-            for (avp = list.head; avp; avp = avp->next) {
-                if (avp->code == AVP_IMS_Experimental_Result_Code) {
-                    rc = get_4bytes(avp->data.s);
-                    AAAFreeAVPList(&list);
-                    goto finish;
-                }
-            }
-            AAAFreeAVPList(&list);
-        }
-    }
+		if (avp->code == AVP_Result_Code) {
+			rc = get_4bytes(avp->data.s);
+			goto finish;
+		} else if (avp->code == AVP_Experimental_Result) {
+			list = AAAUngroupAVPS(avp->data);
+			for (avp = list.head; avp; avp = avp->next) {
+				if (avp->code == AVP_IMS_Experimental_Result_Code) {
+					rc = get_4bytes(avp->data.s);
+					AAAFreeAVPList(&list);
+					goto finish;
+				}
+			}
+			AAAFreeAVPList(&list);
+		}
+	}
 finish:
-    return rc;
+	return rc;
 error:
-    LM_ERR("get_result_code(): no AAAMessage or Result Code not found\n");
-    return -1;
+	LM_ERR("get_result_code(): no AAAMessage or Result Code not found\n");
+	return -1;
 }
 
