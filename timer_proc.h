@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -41,8 +41,8 @@ int register_basic_timers(int timers);
 
 /**
  * \brief Forks a separate simple sleep() periodic timer
- * 
- * Forks a very basic periodic timer process, that just sleep()s for 
+ *
+ * Forks a very basic periodic timer process, that just sleep()s for
  * the specified interval and then calls the timer function.
  * The new "basic timer" process execution start immediately, the sleep()
  * is called first (so the first call to the timer function will happen
@@ -63,8 +63,8 @@ int fork_basic_timer(int child_id, char* desc, int make_sock,
 
 /**
  * \brief Forks a separate simple milisecond-sleep() periodic timer
- * 
- * Forks a very basic periodic timer process, that just ms-sleep()s for 
+ *
+ * Forks a very basic periodic timer process, that just ms-sleep()s for
  * the specified interval and then calls the timer function.
  * The new "basic timer" process execution start immediately, the ms-sleep()
  * is called first (so the first call to the timer function will happen
@@ -82,7 +82,7 @@ int fork_basic_utimer(int child_id, char* desc, int make_sock,
 						timer_function* f, void* param, int uinterval);
 /**
  * \brief Forks a timer process based on the local timer
- * 
+ *
  * Forks a separate timer process running a local_timer.h type of timer
  * A pointer to the local_timer handle (allocated in shared memory) is
  * returned in lt_h. It can be used to add/delete more timers at runtime
@@ -91,10 +91,10 @@ int fork_basic_utimer(int child_id, char* desc, int make_sock,
  * used (all the calls to local_timer* must be enclosed by locks if it
  * cannot be guaranteed that they cannot execute in the same time)
  * The timer "engine" must be run manually from the child process. For
- * example a very simple local timer process that just runs a single 
+ * example a very simple local timer process that just runs a single
  * periodic timer can be started in the following way:
  * struct local_timer* lt_h;
- * 
+ *
  * pid=fork_local_timer_process(...., &lt_h);
  * if (pid==0){
  *          timer_init(&my_timer, my_timer_f, 0, 0);

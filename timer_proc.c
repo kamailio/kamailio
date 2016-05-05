@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -48,8 +48,8 @@ int register_basic_timers(int timers)
 
 /**
  * \brief Forks a separate simple sleep() periodic timer
- * 
- * Forks a very basic periodic timer process, that just sleep()s for 
+ *
+ * Forks a very basic periodic timer process, that just sleep()s for
  * the specified interval and then calls the timer function.
  * The new "basic timer" process execution start immediately, the sleep()
  * is called first (so the first call to the timer function will happen
@@ -67,7 +67,7 @@ int fork_basic_timer(int child_id, char* desc, int make_sock,
 						timer_function* f, void* param, int interval)
 {
 	int pid;
-	
+
 	pid=fork_process(child_id, desc, make_sock);
 	if (pid<0) return -1;
 	if (pid==0){
@@ -77,7 +77,7 @@ int fork_basic_timer(int child_id, char* desc, int make_sock,
 			sleep(interval);
 			cfg_update();
 			f(get_ticks(), param); /* ticks in s for compatibility with old
-									  timers */
+									* timers */
 		}
 	}
 	/* parent */
@@ -86,8 +86,8 @@ int fork_basic_timer(int child_id, char* desc, int make_sock,
 
 /**
  * \brief Forks a separate simple microsecond-sleep() periodic timer
- * 
- * Forks a very basic periodic timer process, that just us-sleep()s for 
+ *
+ * Forks a very basic periodic timer process, that just us-sleep()s for
  * the specified interval and then calls the timer function.
  * The new "basic timer" process execution start immediately, the us-sleep()
  * is called first (so the first call to the timer function will happen
@@ -106,7 +106,7 @@ int fork_basic_utimer(int child_id, char* desc, int make_sock,
 {
 	int pid;
 	ticks_t ts;
-	
+
 	pid=fork_process(child_id, desc, make_sock);
 	if (pid<0) return -1;
 	if (pid==0){
@@ -126,7 +126,7 @@ int fork_basic_utimer(int child_id, char* desc, int make_sock,
 
 /**
  * \brief Forks a timer process based on the local timer
- * 
+ *
  * Forks a separate timer process running a local_timer.h type of timer
  * A pointer to the local_timer handle (allocated in shared memory) is
  * returned in lt_h. It can be used to add/delete more timers at runtime
@@ -135,10 +135,10 @@ int fork_basic_utimer(int child_id, char* desc, int make_sock,
  * used (all the calls to local_timer* must be enclosed by locks if it
  * cannot be guaranteed that they cannot execute in the same time)
  * The timer "engine" must be run manually from the child process. For
- * example a very simple local timer process that just runs a single 
+ * example a very simple local timer process that just runs a single
  * periodic timer can be started in the following way:
  * struct local_timer* lt_h;
- * 
+ *
  * pid=fork_local_timer_process(...., &lt_h);
  * if (pid==0){
  *          timer_init(&my_timer, my_timer_f, 0, 0);
@@ -157,7 +157,7 @@ int fork_local_timer_process(int child_id, char* desc, int make_sock,
 {
 	int pid;
 	struct local_timer* lt;
-	
+
 	lt=shm_malloc(sizeof(*lt));
 	if (lt==0) goto error;
 	if (init_local_timer(lt, get_ticks_raw())<0) goto error;
@@ -186,7 +186,7 @@ int register_sync_timers(int timers)
 /**
  * \brief Forks a separate simple sleep() -&- sync periodic timer
  *
- * Forks a very basic periodic timer process, that just sleep()s for 
+ * Forks a very basic periodic timer process, that just sleep()s for
  * the specified interval and then calls the timer function.
  * The new "sync timer" process execution start immediately, the sleep()
  * is called first (so the first call to the timer function will happen
@@ -222,7 +222,7 @@ int fork_sync_timer(int child_id, char* desc, int make_sock,
 			ts1 = get_ticks_raw();
 			cfg_update();
 			f(TICKS_TO_S(ts1), param); /* ticks in sec for compatibility with old
-									  timers */
+										* timers */
 			/* adjust the next sleep duration */
 			ts2 = interval - TICKS_TO_MS(get_ticks_raw()) + TICKS_TO_MS(ts1);
 		}
@@ -235,7 +235,7 @@ int fork_sync_timer(int child_id, char* desc, int make_sock,
 /**
  * \brief Forks a separate simple microsecond-sleep() -&- sync periodic timer
  *
- * Forks a very basic periodic timer process, that just us-sleep()s for 
+ * Forks a very basic periodic timer process, that just us-sleep()s for
  * the specified interval and then calls the timer function.
  * The new "sync timer" process execution start immediately, the us-sleep()
  * is called first (so the first call to the timer function will happen
