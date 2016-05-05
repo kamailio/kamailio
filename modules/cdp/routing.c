@@ -1,25 +1,16 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
- * The initial version of this code was written by Dragos Vingarzan
- * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
- * Fruanhofer Institute. It was and still is maintained in a separate
- * branch of the original SER. We are therefore migrating it to
- * Kamailio/SR and look forward to maintaining it from here on out.
- * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ *
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,11 +28,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
+
+#include "../../ser_time.h"
 
 #include "routing.h"
 #include "config.h"
@@ -58,7 +51,7 @@ int gcount = 0;
  * Returns if the peer advertised support for an Application ID
  * @param p - the peer to check
  * @param app_id - the application id to look for
- * @param vendor_id - the vendor id to look for, 0 if not vendor specific 
+ * @param vendor_id - the vendor id to look for, 0 if not vendor specific
  * @returns 0 if not found, 1 if found
  */
 int peer_handles_application(peer *p, int app_id, int vendor_id) {
@@ -138,8 +131,8 @@ peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, in
             p = peers[j];
         }
     }
-    
-    clock_gettime(CLOCK_REALTIME, &time_spec);
+
+    ser_clock_gettime(&time_spec);
 
     p->last_selected = (time_spec.tv_sec*1000000) + round(time_spec.tv_nsec / 1.0e3); // Convert nanoseconds to microseconds
     LM_DBG("chosen peer [%.*s]\n", p->fqdn.len, p->fqdn.s);
