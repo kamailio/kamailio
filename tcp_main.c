@@ -2751,7 +2751,7 @@ int tcp_init(struct socket_info* sock_info)
 	optval = tos;
 	if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval, 
 				sizeof(optval)) ==-1){
-		LM_WARN("setsockopt tos: %s\n", strerror(errno));
+		LM_WARN("setsockopt tos: %s (%d)\n", strerror(errno), tos);
 		/* continue since this is not critical */
 	}
 #ifdef HAVE_TCP_DEFER_ACCEPT
