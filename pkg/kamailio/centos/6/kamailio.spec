@@ -86,6 +86,16 @@ BuildRequires:	epel-release, libconfuse-devel
 The carrierroute module for Kamailio.
 
 
+%package	cnxcc
+Summary:	Module which provides a mechanism to limit call duration based on credit information parameters for Kamailio.
+Group:		System Environment/Daemons
+Requires:	libevent, hiredis, kamailio = %ver
+BuildRequires:	libevent-devel, hiredis-devel
+
+%description	cnxcc
+Module which provides a mechanism to limit call duration based on credit information parameters for Kamailio.
+
+
 %package	cpl
 Summary:	CPL (Call Processing Language) interpreter for Kamailio.
 Group:		System Environment/Daemons
@@ -466,7 +476,7 @@ make cfg prefix=/usr cfg_prefix=$RPM_BUILD_ROOT basedir=$RPM_BUILD_ROOT \
 make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 	jabber ndb_cassandra osp" \
-	group_include="kstandard kautheph kberkeley kcarrierroute kcpl \
+	group_include="kstandard kautheph kberkeley kcarrierroute kcnxcc kcpl \
 	kdnssec kgeoip kgzcompress kims kjava kjson kldap klua kmemcached \
 	kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpurple kpython \
 	kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
@@ -484,7 +494,7 @@ make utils
 make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 	iptrtpproxy jabber osp" \
-	group_include="kstandard kautheph kberkeley kcarrierroute kcpl \
+	group_include="kstandard kautheph kberkeley kcarrierroute kcnxcc kcpl \
 	kdnssec kgeoip kgzcompress kims kjava kjson kldap klua kmemcached \
 	kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpurple kpython \
 	kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
@@ -555,7 +565,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.cfg_db
 %doc %{_docdir}/kamailio/modules/README.cfg_rpc
 %doc %{_docdir}/kamailio/modules/README.cfgutils
-%doc %{_docdir}/kamailio/modules/README.cnxcc
 %doc %{_docdir}/kamailio/modules/README.corex
 %doc %{_docdir}/kamailio/modules/README.counters
 %doc %{_docdir}/kamailio/modules/README.ctl
@@ -699,7 +708,6 @@ fi
 %{_libdir}/kamailio/modules/cfg_db.so
 %{_libdir}/kamailio/modules/cfg_rpc.so
 %{_libdir}/kamailio/modules/cfgutils.so
-%{_libdir}/kamailio/modules/cnxcc.so
 %{_libdir}/kamailio/modules/corex.so
 %{_libdir}/kamailio/modules/counters.so
 %{_libdir}/kamailio/modules/ctl.so
@@ -856,6 +864,11 @@ fi
 %{_docdir}/kamailio/modules/README.carrierroute
 %{_libdir}/kamailio/modules/carrierroute.so
 
+
+%files		cnxcc
+%defattr(-,root,root)
+%{_docdir}/kamailio/modules/README.cnxcc
+%{_libdir}/kamailio/modules/cnxcc.so
 
 %files		cpl
 %defattr(-,root,root)
