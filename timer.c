@@ -37,6 +37,12 @@
 #include <stdlib.h> /* random, debugging only */
 #include "error.h"
 #include "signals.h"
+
+#ifdef __OS_darwin
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 /*
 #include "config.h"
 */
@@ -1151,6 +1157,24 @@ void slow_timer_main()
 		UNLOCK_SLOW_TIMER_LIST();
 	}
 
+}
+
+int ser_clock_gettime(struct timespec *ts)
+{
+#ifdef __OS_darwin
+	clock_serv_t cclock;
+	mach_timespec_t mts;
+
+	/* OS X does not have clock_gettime, use clock_get_time */
+	host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+	clock_get_time(cclock, &mts);
+	mach_port_deallocate(mach_task_self(), cclock);
+	ts->tv_sec = mts.tv_sec;
+	ts->tv_nsec = mts.tv_nsec;
+	return 0;
+#else
+	return clock_gettime(CLOCK_REALTIME, ts);
+#endif
 }
 
 #endif

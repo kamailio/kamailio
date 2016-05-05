@@ -37,4 +37,7 @@ time_t ser_time(time_t* t);
  * WARNING: ignores tz (it's obsolete anyway) */
 int ser_gettimeofday(struct timeval* tv, const struct timezone *tz);
 
+/* portable implementation for clock_gettime(CLOCK_REALTIME, ts) */
+int ser_clock_gettime(struct timespec *ts);
+
 #endif /* _ser_time_h */
