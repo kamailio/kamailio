@@ -139,7 +139,7 @@ routing_entry *new_routing_entry();
 void free_dp_config(dp_config *x);
 void free_routing_realm(routing_realm *rr);
 void free_routing_entry(routing_entry *re);
-inline void log_dp_config(dp_config *x);
+void log_dp_config(dp_config *x);
 
 xmlDocPtr parse_dp_config_file(char* filename);
 xmlDocPtr parse_dp_config_str(str config_str);

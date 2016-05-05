@@ -173,7 +173,7 @@ inline void free_dp_config(dp_config *x)
 /**
  * Log the dp_config to output, for debug purposes.
  */
-inline void log_dp_config(dp_config *x)
+void log_dp_config(dp_config *x)
 {
 	int i;
 	LM_DBG("Diameter Peer Config:\n");

@@ -12,7 +12,7 @@
 /**
  * update Granted Service Unit timers based on CCR
  */
-inline void update_gsu_request_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
+void update_gsu_request_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
 	AAA_AVP *avp;
 
 	avp = AAAFindMatchingAVP(msg, 0, AVP_Event_Timestamp, 0, 0);
@@ -24,7 +24,7 @@ inline void update_gsu_request_timers(cdp_cc_acc_session_t* session, AAAMessage*
 /**
  * update Granted Service Unit timers based on CCA, for onw we assume on one MSCC per session and only TIME based supported
  */
-inline void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
+void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
 	AAA_AVP *avp;
 	AAA_AVP_LIST mscc_avp_list;
 	AAA_AVP_LIST y;
@@ -89,7 +89,7 @@ inline void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage
  * @param msg  - AAAMessage
  * @returns 0 if msg should be given to the upper layer 1 if not
  */
-inline int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* msg)
+int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* msg)
 {
 	cdp_cc_acc_session_t* x;
 	int ret = 0;
