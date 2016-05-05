@@ -3,6 +3,7 @@ timer module
 Tomas Mandys
 
    Iptel.org
+   <tomas dot mandys at iptel dot org>
 
    Copyright © 2007 iptelorg GmbH
      __________________________________________________________________
@@ -13,6 +14,10 @@ Tomas Mandys
 
         1. Overview
         2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
         3. ABNF syntax
         4. Parameters
 
@@ -41,6 +46,10 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
    3. ABNF syntax
    4. Parameters
 
@@ -56,11 +65,25 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The module supports triggering specific route block on timer.
+   The module supports triggering a specific route block on a specific
+   timer. The timer can be activated and de-activated from the routing
+   script at runtime.
 
 2. Dependencies
 
-   none
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none.
 
 3. ABNF syntax
 
@@ -81,13 +104,15 @@ Chapter 1. Admin Guide
    The format is:
                         declare_timer = declare_timer_syntax
 
-   timer_id is timer identifier, route is handler to be called when timer
-   is triggered, interval is timer interval in milliseconds, slow_fast
-   determines if handler will be hooked in slow or fast timer queue, fast
-   timer handler returns as quickly as possible, slow timer handler may
-   spend longer time, see kamailio/doc/timers.txt documentation. Use
-   enable to enable timer when Kamailio is starting, otherwise use
-   timer_enable to start it later.
+     * timer_id is timer identifier,
+     * route is handler to be called when timer is triggered,
+     * interval is timer interval in milliseconds,
+     * slow_fast determines if handler will be hooked in slow or fast
+       timer queue, fast timer handler returns as quickly as possible,
+       slow timer handler may spend longer time, see
+       kamailio/doc/timers.txt documentation.
+     * enable - enable timer when Kamailio is starting, otherwise use
+       timer_enable to start it later.
 
    Example 1.1. Example declare_timer
         ...
@@ -106,8 +131,9 @@ le");
    Enable/disable timer route specified by timer_id. Because of timer core
    API the callback is not disabled immediately but is removed from
    handler by itself not to decrease performance. Disabling and enabling
-   in sequence may be tricky. timer_id references to timer declared by
-   declare_timer.
+   in sequence may be tricky.
+     * timer_id references to timer declared by declare_timer.
+     * enable_distable - set to 1 to enable timer, to 0 to disable.
 
    Example 1.2. timer_enable usage
         ...
@@ -162,8 +188,8 @@ route["ONTIMER2"] {
    Example 1.6. Using timer module for testing a functionality
 
    The timer module may be used to test a functionality being developed
-   and not requiring real request.A developer may put tested code in route
-   section which is called once after Kamailio starts.
+   and not requiring real request. A developer may put tested code in
+   route section which is called once after Kamailio starts.
 loadmodule "timer";
 loadmodule "xprint";
 
