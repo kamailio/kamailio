@@ -278,6 +278,28 @@ modparam("presence", "notifier_processes", 2)
 		</example>
 	</section>
 
+	<section id="presence.p.force_delete">
+		<title><varname>force_delete</varname> (int)</title>
+		<para>
+		Enabling this parameter will delete expired presentity records without updating watchers.
+		</para>
+		<para>
+		Set this parameter to <quote>1<quote> to enable.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>force_delete</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "force_delete", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="presence.p.to_tag_pref">
 		<title><varname>to_tag_pref</varname> (str)</title>
 		<para>
