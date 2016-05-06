@@ -68,6 +68,7 @@ typedef struct _evapi_env {
 typedef struct _evapi_msg {
 	str data;
 	str tag;
+	int unicast;
 } evapi_msg_t;
 
 #define EVAPI_MAX_CLIENTS	8
@@ -263,6 +264,9 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 							wlen, emsg->data.len, _evapi_clients[i].sock, i);
 				}
 				n++;
+				if (emsg->unicast){
+					break;
+				}
 			}
 		}
 	}
@@ -638,7 +642,7 @@ int evapi_run_worker(int prank)
 /**
  *
  */
-int evapi_relay_multicast(str *evdata, str *ctag)
+int _evapi_relay(str *evdata, str *ctag, int unicast)
 {
 #define EVAPI_RELAY_FORMAT "%d:%.*s,"
 
@@ -680,6 +684,10 @@ int evapi_relay_multicast(str *evdata, str *ctag)
 		emsg->tag.len = ctag->len;
 	}
 
+	if (unicast){
+		emsg->unicast = unicast;
+	}
+
 	LM_DBG("sending [%p] [%.*s] (%d)\n", emsg, emsg->data.len, emsg->data.s, emsg->data.len);
 	len = write(_evapi_notify_sockets[1], &emsg, sizeof(evapi_msg_t*));
 	if(len<=0) {
@@ -694,7 +702,21 @@ int evapi_relay_multicast(str *evdata, str *ctag)
  */
 int evapi_relay(str *evdata)
 {
-	return evapi_relay_multicast(evdata, NULL);
+	return _evapi_relay(evdata, NULL, 0);
+}
+
+/**
+ *
+ */
+int evapi_relay_multicast(str *evdata, str *ctag){
+	return _evapi_relay(evdata, ctag, 0);
+}
+
+/**
+ *
+ */
+int evapi_relay_unicast(str *evdata, str *ctag){
+	return _evapi_relay(evdata, ctag, 1);
 }
 
 #if 0
