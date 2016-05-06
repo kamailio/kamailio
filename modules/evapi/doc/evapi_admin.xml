@@ -213,12 +213,39 @@ evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>evapi_evapi</function> usage</title>
+		<title><function>evapi_close</function> usage</title>
 		<programlisting format="linespecific">
 ...
 event_route[evapi:connection-new] {
   if($evapi(srcaddr)!="127.0.0.1") {
     evapi_close();
+    exit;
+  }
+}
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="evapi.f.evapi_set_tag">
+	    <title>
+		<function moreinfo="none">evapi_set_tag(tname)</function>
+	    </title>
+	    <para>
+			Set tag name for current client connection. The parameters
+			has to be a string up to 64 characters. It can also be
+			a variable holding such string.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>evapi_set_tag</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[evapi:connection-new] {
+  if($evapi(srcaddr)=="127.0.0.1") {
+    evapi_set_tag("local");
     exit;
   }
 }
