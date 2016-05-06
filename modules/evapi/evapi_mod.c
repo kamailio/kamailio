@@ -59,6 +59,7 @@ static void mod_destroy(void);
 static int w_evapi_relay(sip_msg_t* msg, char* evdata, char* p2);
 static int w_evapi_async_relay(sip_msg_t* msg, char* evdata, char* p2);
 static int w_evapi_close(sip_msg_t* msg, char* p1, char* p2);
+static int w_evapi_set_tag(sip_msg_t* msg, char* ptag, char* p2);
 static int fixup_evapi_relay(void** param, int param_no);
 
 static cmd_export_t cmds[]={
@@ -69,6 +70,8 @@ static cmd_export_t cmds[]={
 	{"evapi_close",       (cmd_function)w_evapi_close,       0, NULL,
 		0, ANY_ROUTE},
 	{"evapi_close",       (cmd_function)w_evapi_close,       1, NULL,
+		0, ANY_ROUTE},
+	{"evapi_set_tag",       (cmd_function)w_evapi_set_tag,   1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -316,4 +319,19 @@ static int w_evapi_close(sip_msg_t* msg, char* p1, char* p2)
 	if(ret>=0)
 		return ret+1;
 	return ret;
+}
+
+/**
+ *
+ */
+static int w_evapi_set_tag(sip_msg_t* msg, char* ptag, char* p2)
+{
+	str stag;
+	if(fixup_get_svalue(msg, (gparam_t*)ptag, &stag)!=0) {
+		LM_ERR("no tag name\n");
+		return -1;
+	}
+	if(evapi_set_tag(msg, &stag)<0)
+		return -1;
+	return 1;
 }
