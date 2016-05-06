@@ -127,10 +127,10 @@ modparam("evapi", "netstring_format", 0)
 	<section>
 	<title>Functions</title>
 	<section id="evapi.f.evapi_relay">
-	    <title>
+		<title>
 		<function moreinfo="none">evapi_relay(evdata)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Relay the event data given as parameter to connected applications.
 		</para>
 		<para>
@@ -154,7 +154,7 @@ modparam("evapi", "netstring_format", 0)
 evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 ...
 </programlisting>
-	    </example>
+		</example>
 		<para>
 		The above exaple will send the following message over tcp:
 		</para>
@@ -168,14 +168,14 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 },
 ...
 </programlisting>
-	    </example>
+		</example>
 	</section>
 
 	<section id="evapi.f.evapi_async_relay">
-	    <title>
+		<title>
 		<function moreinfo="none">evapi_async_relay(evdata)</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Relay the event data given as parameter to connected applications. Before
 		evaluating the parameter, the request processing is suspended using
 		tm module (using the t_suspend()/t_continue() framework). The routing
@@ -199,14 +199,53 @@ evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
         " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
 ...
 </programlisting>
-	    </example>
+		</example>
+	</section>
+
+	<section id="evapi.f.evapi_multicast">
+		<title>
+		<function moreinfo="none">evapi_multicast(evdata, etag)</function>
+		</title>
+		<para>
+		Relay the event data given as parameter to connections that match
+		the tag provided by etag value. The etag can be a variable. For more
+		see evapi_relay() and evapi_set_tag().
+		</para>
+		<example>
+		<title><function>evapi_multicast</function> usage</title>
+		<programlisting format="linespecific">
+...
+evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="evapi.f.evapi_async_multicast">
+		<title>
+		<function moreinfo="none">evapi_async_multicast(evdata, etag)</function>
+		</title>
+		<para>
+		Async relay the event data given as parameter to connections that match
+		the tag provided by etag value. The etag can be a variable. For more
+		see evapi_async_relay() and evapi_set_tag().
+		</para>
+		<example>
+		<title><function>evapi_async_multicast</function> usage</title>
+		<programlisting format="linespecific">
+...
+evapi_async_multicast("{ \"event\": \"suspend\",\n \"data\":"
+    " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
+...
+</programlisting>
+		</example>
 	</section>
 
 	<section id="evapi.f.evapi_close">
-	    <title>
+		<title>
 		<function moreinfo="none">evapi_close()</function>
-	    </title>
-	    <para>
+		</title>
+		<para>
 		Close evapi current client connection.
 		</para>
 		<para>
