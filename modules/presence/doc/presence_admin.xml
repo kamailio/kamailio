@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding='ISO-8859-1'?>
+ <?xml version="1.0" encoding='ISO-8859-1'?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
@@ -11,12 +11,12 @@
 
 <chapter>
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para> The Presence module implements the core functionality of SIP event notification.
 	It handles PUBLISH and SUBSCRIBE messages and generates
-	NOTIFY messages in a general, event independent way. It is extensible and allows registering 
+	NOTIFY messages in a general, event independent way. It is extensible and allows registering
 	events to it from other &kamailio; modules.
 	Supported SIP event packages are presence, presence.winfo, dialog;sla from the presence_xml
 	module and message-summary from the presence_mwi module.
@@ -26,7 +26,7 @@
 	For subscriptions it supports the 4 storage modes: Memory Only, Write Back,
 	Write Through and DB Only. For publishes, it stores the state documents in
 	database only(because of the large size) and it can store a publish cache in
-	memory to avoid unnecessairy database queries. Read the 
+	memory to avoid unnecessairy database queries. Read the
 	<emphasis>subs_db_mode</emphasis> and <emphasis>publ_cache</emphasis> parameter
 	sections to decide which is the best storage configuration for you.
 	</para>
@@ -35,7 +35,7 @@
 	This mode of operation is enabled if the db_url parameter is not set to any value.
 	</para>
 	<para>
-	The &kamailio; Presence module implements the specifications in: RFC3265, RFC3856, RFC3857, 
+	The &kamailio; Presence module implements the specifications in: RFC3265, RFC3856, RFC3857,
 	RFC3858.
 	</para>
 	</section>
@@ -78,7 +78,7 @@
 
 		</section>
 	</section>
-	
+
 	<section>
 	<title>Parameters</title>
 	<section id="presence.p.db_url">
@@ -87,7 +87,7 @@
 		The database url.
 		</para>
 		<para>If set, the module is a fully operational
-		presence server. Otherwise, it is used as a 'library', for 
+		presence server. Otherwise, it is used as a 'library', for
 		its exported functions.
 		</para>
 		<para>
@@ -97,7 +97,7 @@
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence", "db_url", 
+modparam("presence", "db_url",
 	"&defaultdb;")
 ...
 </programlisting>
@@ -124,7 +124,7 @@ modparam("presence", "presentity_table", "presentity")
 	<section id="presence.p.active_watchers_table">
 		<title><varname>active_watchers_table</varname>(str)</title>
 		<para>
-		The name of the db table where active subscription information is stored. 
+		The name of the db table where active subscription information is stored.
 		</para>
 		<para>
 		<emphasis>	Default value is <quote>active_watchers</quote>.
@@ -397,7 +397,7 @@ modparam("presence", "max_expires", 3600)
 <section id="presence.p.server_address">
 		<title><varname>server_address</varname> (str)</title>
 		<para>
-		The presence server address which will become the value of Contact header filed 
+		The presence server address which will become the value of Contact header filed
 		for 200 OK replies to SUBSCRIBE and PUBLISH and in NOTIFY messages.
 		</para>
 		<example>
@@ -547,7 +547,7 @@ modparam("presence", "pres_htable_size", 11)
 	<section id="presence.p.send_fast_notify">
 		<title><varname>send_fast_notify</varname> (int)</title>
 		<para>
-		This parameter enables or disables the sending of an initial empty NOTIFY after a SUBSCRIBE/reSUBSCRIBE. 
+		This parameter enables or disables the sending of an initial empty NOTIFY after a SUBSCRIBE/reSUBSCRIBE.
 		This caused problems for MWI application, because some CPEs (like Samsung) fail to understand an empty
 		NOTIFY to an message-summary event. This parameter is enabled by default, thus addering to the standard.
 		</para>
@@ -638,8 +638,8 @@ modparam("presence", "fetch_rows", 1000)
 		with a MySQL-Databases in "DB-Only" mode.
 	    </para>
 	    <para>
-		In order to use the Presence-Module in "DB_ONLY"-mode with a 
-		MySQL-Backend, set this parameter to "0", otherwise the 
+		In order to use the Presence-Module in "DB_ONLY"-mode with a
+		MySQL-Backend, set this parameter to "0", otherwise the
 		MySQL-Operations will fail. The Presence-Module will generate
 		a "500 Server error" due to the failed MySQL-queries.
 	    </para>
@@ -794,17 +794,17 @@ modparam("presence", "retrieve_order", 1)
 		<function moreinfo="none">handle_publish([sender_uri])</function>
 		</title>
 		<para>
-		Handles PUBLISH requests by storing and updating 
-		published information in memory cache and database, then calls functions to send 
+		Handles PUBLISH requests by storing and updating
+		published information in memory cache and database, then calls functions to send
 		NOTIFY messages when changes in the published information occur.
-		It takes one argument -> sender_uri. The parameter was added 
+		It takes one argument -> sender_uri. The parameter was added
 		for enabling BLA implementation. If present, notification of
 		a change in published state is not sent to the respective uri
 		even though a subscription exists.
 		It should be taken from the Sender header. It was left at the
-		decision of the administrator whether or not to transmit the 
-		content of this header as parameter for handle_publish, to 
-		prevent security problems.  
+		decision of the administrator whether or not to transmit the
+		content of this header as parameter for handle_publish, to
+		prevent security problems.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -840,7 +840,7 @@ modparam("presence", "retrieve_order", 1)
 		else
 			handle_publish();
 		t_release();
-	} 
+	}
 ...
 </programlisting>
 		</example>
@@ -851,8 +851,8 @@ modparam("presence", "retrieve_order", 1)
 		<function moreinfo="none">handle_subscribe([watcher_uri])</function>
 		</title>
 		<para>
-		The function which handles SUBSCRIBE requests. It stores or 
-		updates information in memory and database and calls functions to send NOTIFY 
+		The function which handles SUBSCRIBE requests. It stores or
+		updates information in memory and database and calls functions to send NOTIFY
 		messages when a SUBSCRIBE which initiate a dialog is received.
 		</para>
 		<para>
@@ -1131,11 +1131,11 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 
 <section>
 	<title>Pseudo Variables</title>
-		
+
 		<section>
 			<title><varname>$subs(attr)</varname></title>
 			<para>
-				Access the attributes of handled subscription. 
+				Access the attributes of handled subscription.
 				It must be used after a successful call of
 				<quote>handle_subscription()</quote> or in the following events.
 			<itemizedlist>
@@ -1147,7 +1147,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 				<para><emphasis>present:notify-reply</emphasis> - after notify is sent
 				</para>
 				</listitem>
-			</itemizedlist>	  
+			</itemizedlist>
 			</para>
 			<para>
 			The <quote>attr</quote> can be:
@@ -1156,27 +1156,27 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 				<listitem>
 				<para><emphasis>uri</emphasis> - subscription presentity uri
 				</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 				<para><emphasis>pres_uri</emphasis> - alias for presentity uri
 				</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 				<para><emphasis>to_user</emphasis>
 				</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 				<para><emphasis>to_domain</emphasis>
 				</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 				<para><emphasis>from_user</emphasis>
 				</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 				<para><emphasis>from_domain</emphasis>
 				</para>
-				</listitem>	  
+				</listitem>
 				<listitem>
 				<para><emphasis>watcher_username</emphasis>
 				</para>
@@ -1263,18 +1263,18 @@ if(handle_subscription())
 				 </programlisting>
 			</example>
 		</section>
-		
+
 		<section>
 			<title><varname>$notify_reply(attr)</varname></title>
 			<para>
-				Access the reply message received when notifying subscriber. 
+				Access the reply message received when notifying subscriber.
 				It must be used in the following events.
 			<itemizedlist>
 				<listitem>
 				<para><emphasis>present:notify-reply</emphasis> - after notify is sent
 				</para>
 				</listitem>
-			</itemizedlist>	  
+			</itemizedlist>
 			</para>
 			<para>
 			The <quote>attr</quote> can be any pseudo var that accesses attributes of msg
@@ -1320,8 +1320,8 @@ event_route[presence:notify-reply]
 	<title>Installation</title>
 	<para>
 	The module requires 3 tables in the &kamailio; database: "presentity",
-	"active_watchers" and "watchers". The SQL 
-	syntax to create them can be found in presence-create.sql     
+	"active_watchers" and "watchers". The SQL
+	syntax to create them can be found in presence-create.sql
 	script in the database directories in the kamailio/scripts folder.
 	You can also find the complete database documentation on the
 	project webpage, &kamailiodbdocslink;.
