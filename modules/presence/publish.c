@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -22,7 +22,7 @@
 /*!
  * \file
  * \brief Kamailio presence module :: Support for PUBLISH handling
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
@@ -31,10 +31,10 @@
 #include "../../ut.h"
 #include "../../str.h"
 #include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h" 
-#include "../../parser/parse_expires.h" 
-#include "../../parser/parse_event.h" 
-#include "../../parser/parse_content.h" 
+#include "../../parser/parse_uri.h"
+#include "../../parser/parse_expires.h"
+#include "../../parser/parse_event.h"
+#include "../../parser/parse_content.h"
 #include "../../lock_ops.h"
 #include "../../hashes.h"
 #include "../../lib/kcore/cmpapi.h"
@@ -73,7 +73,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	static str query_str;
 
 	LM_DBG("cleaning expired presentity information\n");
-	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR("in use_table\n");
 		return ;
@@ -143,7 +143,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 				LM_ERR("constructing uri\n");
 				goto error;
 			}
-		
+
 			/* delete from hash table */
 			if(publ_cache_enabled && delete_phtable(&uri, pres.event->evp->type)< 0)
 			{
@@ -154,7 +154,15 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
 				pres.user.len,pres.user.s, pres.domain.len, pres.domain.s);
 
-			if (pres_notifier_processes > 0)
+			if (pres_force_delete == 1)
+			{
+				if (delete_presentity(&pres) < 0)
+				{
+					LM_ERR("Deleting presentity\n");
+					goto error;
+				}
+			}
+			else if (pres_notifier_processes > 0)
 			{
 				if ((num_watchers = publ_notify_notifier(uri, pres.event)) < 0)
 				{
@@ -181,7 +189,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			}
 			else
 			{
-				if(pres.event->get_rules_doc && 
+				if(pres.event->get_rules_doc &&
 					pres.event->get_rules_doc(&pres.user,
 									&pres.domain,
 									&rules_doc)< 0)
@@ -221,7 +229,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	if (pres_notifier_processes == 0)
 	{
 delete_pres:
-		if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, n_db_cols) < 0) 
+		if (pa_dbf.delete(pa_db, db_keys, db_ops, db_vals, n_db_cols) < 0)
 			LM_ERR("failed to delete expired records from DB\n");
 	}
 
@@ -277,9 +285,9 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		goto error;
 	}
 	memset(&body, 0, sizeof(str));
-	
+
 	/* inspecting the Event header field */
-	
+
 	if(msg->event && msg->event->body.len > 0)
 	{
 		if (!msg->event->parsed && (parse_event(msg->event) < 0))
@@ -299,7 +307,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	{
 		goto unsupported_event;
 	}
-	
+
 	/* examine the SIP-If-Match header field */
 	hdr = msg->headers;
 	while (hdr!= NULL)
@@ -333,7 +341,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 			ERR_MEM(PKG_MEM_STR);
 		}
 		memcpy(etag.s, hdr->body.s, hdr->body.len );
-		etag.len = hdr->body.len; 	 
+		etag.len = hdr->body.len;
 		etag.s[ etag.len] = '\0';
 		LM_DBG("existing etag  = %.*s \n", etag.len, etag.s);
 	}
@@ -350,7 +358,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		LM_DBG("Expires header found, value= %d\n", lexpire);
 
 	}
-	else 
+	else
 	{
 		LM_DBG("'expires' not found; default=%d\n",	event->default_expires);
 		lexpire = event->default_expires;
@@ -362,20 +370,20 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	if(parse_sip_msg_uri(msg)< 0)
 	{
 		LM_ERR("parsing Request URI\n");
-		reply_code= 400; 
+		reply_code= 400;
 		reply_str= pu_400a_rpl;
 		goto error;
 	}
 	pres_user= msg->parsed_uri.user;
 	pres_domain= msg->parsed_uri.host;
 
-	if (!msg->content_length) 
+	if (!msg->content_length)
 	{
 		LM_ERR("no Content-Length header found!\n");
-		reply_code= 400; 
+		reply_code= 400;
 		reply_str= pu_400a_rpl;
 		goto error;
-	}	
+	}
 
 	/* process the body */
 	if ( get_content_length(msg) == 0 )
@@ -392,10 +400,10 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	else
 	{
 		body.s=get_body(msg);
-		if (body.s== NULL) 
+		if (body.s== NULL)
 		{
 			LM_ERR("cannot extract body\n");
-			reply_code= 400; 
+			reply_code= 400;
 			reply_str= pu_400a_rpl;
 			goto error;
 		}
@@ -404,10 +412,10 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if(sphere_enable && event->evp->type == EVENT_PRESENCE &&
 				get_content_type(msg)== SUBTYPE_PIDFXML)
 		{
-			sphere= extract_sphere(body);			
+			sphere= extract_sphere(body);
 		}
 
-	}	
+	}
 	memset(&puri, 0, sizeof(struct sip_uri));
 	if(sender_uri)
 	{
@@ -415,7 +423,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if(sender== NULL)
 		{
 			ERR_MEM(PKG_MEM_STR);
-		}	
+		}
 		if(pv_printf(msg, (pv_elem_t*)sender_uri, buf, &buf_len)<0)
 		{
 			LM_ERR("cannot print the format\n");
@@ -424,11 +432,11 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if(parse_uri(buf, buf_len, &puri)!=0)
 		{
 			LM_ERR("bad sender SIP address!\n");
-			reply_code= 400; 
+			reply_code= 400;
 			reply_str= pu_400a_rpl;
 			goto error;
-		} 
-		else 
+		}
+		else
 		{
 			LM_DBG("using user id [%.*s]\n",buf_len,buf);
 		}
@@ -475,14 +483,14 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	return 1;
 
 unsupported_event:
-	
+
 	LM_WARN("Missing or unsupported event header field value\n");
-		
+
 	if(msg->event && msg->event->body.s && msg->event->body.len>0)
 		LM_ERR("    event=[%.*s]\n", msg->event->body.len, msg->event->body.s);
 
 	reply_code= BAD_EVENT_CODE;
-	reply_str=	pu_489_rpl; 
+	reply_str=	pu_489_rpl;
 
 error:
 	if(sent_reply== 0)
@@ -492,7 +500,7 @@ error:
 			LM_ERR("failed to send error reply\n");
 		}
 	}
-	
+
 	if(presentity)
 		pkg_free(presentity);
 	if(etag.s)
