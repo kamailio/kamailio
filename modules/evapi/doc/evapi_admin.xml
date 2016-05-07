@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -215,7 +215,7 @@ evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
 		<title><function>evapi_multicast</function> usage</title>
 		<programlisting format="linespecific">
 ...
-evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx");
+evapi_multicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx");
 ...
 </programlisting>
 		</example>
@@ -235,6 +235,45 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx")
 		<programlisting format="linespecific">
 ...
 evapi_async_multicast("{ \"event\": \"suspend\",\n \"data\":"
+    " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="evapi.f.evapi_unicast">
+		<title>
+		<function moreinfo="none">evapi_unicast(evdata, etag)</function>
+		</title>
+		<para>
+		Relay the event data given as parameter to the first connection that
+		match the tag provided by etag value. The etag can be a variable. For
+		more see evapi_relay() and evapi_set_tag().
+		</para>
+		<example>
+		<title><function>evapi_unicast</function> usage</title>
+		<programlisting format="linespecific">
+...
+evapi_unicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="evapi.f.evapi_async_unicast">
+		<title>
+		<function moreinfo="none">evapi_async_unicast(evdata, etag)</function>
+		</title>
+		<para>
+		Async relay the event data given as parameter to the first connection
+		that match the tag provided by etag value. The etag can be a variable.
+		For more see evapi_async_relay() and evapi_set_tag().
+		</para>
+		<example>
+		<title><function>evapi_async_unicast</function> usage</title>
+		<programlisting format="linespecific">
+...
+evapi_async_unicast("{ \"event\": \"suspend\",\n \"data\":"
     " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
 ...
 </programlisting>

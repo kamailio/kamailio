@@ -37,6 +37,7 @@ int evapi_run_worker(int prank);
 
 int evapi_relay(str *evdata);
 int evapi_relay_multicast(str *evdata, str *ctag);
+int evapi_relay_unicast(str *evdata, str *ctag);
 
 void evapi_init_environment(int dformat);
 
