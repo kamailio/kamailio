@@ -284,7 +284,7 @@ modparam("presence", "notifier_processes", 2)
 		Enabling this parameter will delete expired presentity records without updating watchers.
 		</para>
 		<para>
-		Set this parameter to <quote>1<quote> to enable.
+		Set this parameter to <quote>1</quote> to enable.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>0</quote>.
