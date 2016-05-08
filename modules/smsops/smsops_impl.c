@@ -603,7 +603,7 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) {
 	if (param==NULL)
 		return -1;
-	
+
 	if (!rp_send_data) {
 		rp_send_data = (sms_rp_data_t*)pkg_malloc(sizeof(struct _sms_rp_data));
 		if (!rp_send_data) {
@@ -655,6 +655,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->originator.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->originator.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->originator.len = val->rs.len;
 			memcpy(rp_send_data->originator.s, val->rs.s, val->rs.len);
 			break;
@@ -671,6 +675,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->destination.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->destination.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->destination.len = val->rs.len;
 			memcpy(rp_send_data->destination.s, val->rs.s, val->rs.len);
 			break;
@@ -754,6 +762,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->pdu.payload.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->pdu.payload.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->pdu.payload.len = val->rs.len;
 			memcpy(rp_send_data->pdu.payload.s, val->rs.s, val->rs.len);
 			break;
@@ -770,6 +782,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->pdu.destination.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->pdu.destination.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->pdu.destination.len = val->rs.len;
 			memcpy(rp_send_data->pdu.destination.s, val->rs.s, val->rs.len);
 			break;
@@ -786,6 +802,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->pdu.originating_address.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->pdu.originating_address.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->pdu.originating_address.len = val->rs.len;
 			memcpy(rp_send_data->pdu.originating_address.s, val->rs.s, val->rs.len);
 			break;
