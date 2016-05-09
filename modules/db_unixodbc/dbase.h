@@ -93,6 +93,13 @@ int db_unixodbc_replace(const db1_con_t* handle, const db_key_t* keys, const db_
 		const int n, const int _un, const int _m);
 
 /*
+ * Just like insert, but update the row if it exists or insert it if not. This function is used when
+ * the odbc replace query is not supported.
+ */
+int db_unixodbc_update_or_insert(const db1_con_t* handle, const db_key_t* keys, const db_val_t* vals,
+		const int n, const int _un, const int _m);
+
+/*
  * Store name of table that will be used by
  * subsequent database functions
  */

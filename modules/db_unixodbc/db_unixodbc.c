@@ -37,6 +37,7 @@
 int ping_interval = 5 * 60; /* Default is 5 minutes */
 int auto_reconnect = 1;     /* Default is enabled */
 int use_escape_common = 0;  /* Enable common escaping */
+int replace_query = 1;      /* Enable ODBC replace query */
 
 MODULE_VERSION
 
@@ -59,6 +60,7 @@ static param_export_t params[] = {
 	{"ping_interval",     INT_PARAM, &ping_interval},
 	{"auto_reconnect",    INT_PARAM, &auto_reconnect},
 	{"use_escape_common", INT_PARAM, &use_escape_common},
+	{"replace_query", INT_PARAM, &replace_query},
 	{0, 0, 0}
 };
 
@@ -95,7 +97,10 @@ int db_unixodbc_bind_api(db_func_t *dbb)
 	dbb->insert           = db_unixodbc_insert;
 	dbb->delete           = db_unixodbc_delete; 
 	dbb->update           = db_unixodbc_update;
-	dbb->replace          = db_unixodbc_replace;
+	if (replace_query)
+		dbb->replace      = db_unixodbc_replace;
+	else
+		dbb->replace      = db_unixodbc_update_or_insert;
 
 	return 0;
 }
