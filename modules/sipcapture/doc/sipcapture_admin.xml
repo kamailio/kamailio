@@ -108,7 +108,7 @@ modparam("sipcapture", "db_url", "mysql://user:passwd@host/dbname")
 		</para>
 		<para>
 		<emphasis>
-			Default value is "sip_capture".
+			Default value is "sip_capture". Only for Homer 3. For Homer 5, please use an argument for the sip_capture function.
 		</emphasis>
 		</para>
 		<example>
