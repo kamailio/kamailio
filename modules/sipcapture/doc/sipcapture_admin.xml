@@ -507,7 +507,9 @@ modparam("sipcapture", "topoh_unmask", 1)
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-		<para><emphasis>table</emphasis> - The table where HEP SIP message will be stored.		
+		<para><emphasis>table</emphasis> - The table where HEP SIP message will be stored. Homer 5 use now tables with datestamp. 
+		To generate an automatic table's name please use strftime parameters. I.e. $var(table) = "sip_capture_call_%Y%m%d" and set the variable
+		as an argument of the sip_capture function.
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -553,7 +555,7 @@ sip_capture("sip_capture_call_20160124");
 			Default value is "NULL".
 		</emphasis>
 		<example>
-		<title><function>sip_capture()</function> usage</title>
+		<title><function>report_capture()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 report_capture();
@@ -641,7 +643,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 		Before running &kamailio; with the sipcapture module, you have to setup the database 
 		tables where the module will store the data. For that, if the table were not 
 		created by the installation script or you choose to install everything by 
-		yourself you can use the sipcapture_create.sql, <acronym>SQL</acronym> script 
+		yourself you can use the homer_databases.sql, <acronym>SQL</acronym> script 
 		in the sql folder of sipcapture module as template. You can also find the 
 		complete database documentation on the project webpage, &kamailiodbdocslink;.
 		</para>
@@ -651,7 +653,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 	<itemizedlist>
 		<listitem>
 		1. Only one capturing mode on RAW socket is supported: IPIP or monitoring/mirroring port. 
-		   Don't activate both at the same time.
+		   Don't activate both at the same time. Obsolete. Please use HEP mirroring now.
 		</listitem>
 		<listitem>
 		2. Mirroring port capturing works only on Linux.

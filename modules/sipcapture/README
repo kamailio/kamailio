@@ -10,9 +10,11 @@ Alexandr Dubovikov
 
    <alexandr.dubovikov@gmail.com>
 
-   Copyright � 2011 QSC AG
+   Copyright © 2011-15 SIPCAPTURE ORG
 
-   Copyright � 2011 http://www.qsc.de
+   Copyright © 2011 QSC AG
+
+   Copyright © 2011 http://www.qsc.de
      __________________________________________________________________
 
    Table of Contents
@@ -87,7 +89,7 @@ Alexandr Dubovikov
    1.19. Set callid_aleg_header parameter
    1.20. Set topoh_unmask parameter
    1.21. sip_capture() usage
-   1.22. sip_capture() usage
+   1.22. report_capture() usage
 
 Chapter 1. Admin Guide
 
@@ -466,13 +468,17 @@ modparam("sipcapture", "topoh_unmask", 1)
    4.1. sip_capture([table])
    4.2. report_capture([table],[data])
 
-4.1. sip_capture([table])
+4.1.  sip_capture([table])
 
    Store the current processed HEP/IPIP SIP message in database. It is
    stored in the form prior applying changes made to it.
 
    Meaning of the parameters is as follows:
-     * table - The table where HEP SIP message will be stored.
+     * table - The table where HEP SIP message will be stored. Homer 5 use
+       now tables with datestamp. To generate an automatic table's name
+       please use strftime parameters. I.e. $var(table) =
+       "sip_capture_call_%Y%m%d" and set the variable as an argument of
+       the sip_capture function.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
@@ -485,7 +491,7 @@ sip_capture();
 sip_capture("sip_capture_call_20160124");
 ...
 
-4.2. report_capture([table],[data])
+4.2.  report_capture([table],[data])
 
    Store the current processed HEP REPORT message in database.
 
@@ -497,7 +503,7 @@ sip_capture("sip_capture_call_20160124");
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.22. sip_capture() usage
+   Example 1.22. report_capture() usage
 ...
 report_capture();
 ...
@@ -510,7 +516,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 
    5.1. sip_capture
 
-5.1. sip_capture
+5.1.  sip_capture
 
    Name: sip_capture
 
@@ -520,7 +526,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message capturing (as string "on" or "off" )
+       status of the SIP message capturing (as string “on” or “off” )
        without changing anything.
 
    MI FIFO Command Format:
@@ -532,7 +538,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
 
    6.1. sipcapture.status param
 
-6.1. sipcapture.status param
+6.1.  sipcapture.status param
 
    Name: sipcapture.status
 
@@ -540,7 +546,7 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
      * on or off: turns on/off SIP message capturing. Possible values are:
           + on
           + off
-     * "check" does not change sipcapture status, just reports the current
+     * “check” does not change sipcapture status, just reports the current
        status.
 
 7. Database setup
@@ -548,13 +554,14 @@ report_capture("report_data", "{\"MOS\":4.1,\"PACKET_LOST\":100"});
    Before running Kamailio with the sipcapture module, you have to setup
    the database tables where the module will store the data. For that, if
    the table were not created by the installation script or you choose to
-   install everything by yourself you can use the sipcapture_create.sql,
-   SQL script in the sql folder of sipcapture module as template. You can
-   also find the complete database documentation on the project webpage,
+   install everything by yourself you can use the homer_databases.sql, SQL
+   script in the sql folder of sipcapture module as template. You can also
+   find the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
 8. Limitations
 
      * 1. Only one capturing mode on RAW socket is supported: IPIP or
        monitoring/mirroring port. Don't activate both at the same time.
+       Obsolete. Please use HEP mirroring now.
      * 2. Mirroring port capturing works only on Linux.
