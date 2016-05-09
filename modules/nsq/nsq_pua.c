@@ -277,7 +277,7 @@ int nsq_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
 	str from_realm = { 0, 0 }, to_realm = { 0, 0 };
 	str callid = { 0, 0 }, fromtag = { 0, 0 }, totag = { 0, 0 };
 	str mwi_user = { 0, 0 }, mwi_waiting = { 0, 0 },
-		mwi_new = { 0, 0 }, mwi_saved = { 0, 0 },
+		mwi_voice_message = { 0, 0 }, mwi_new = { 0, 0 }, mwi_saved = { 0, 0 },
 		mwi_urgent = { 0, 0 }, mwi_urgent_saved = { 0, 0 },
 		mwi_account = { 0, 0 }, mwi_body = { 0, 0 };
 	int expires = 0;
@@ -301,6 +301,7 @@ int nsq_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
 
 	json_extract_field(MWI_JSON_TO, mwi_user);
 	json_extract_field(MWI_JSON_WAITING, mwi_waiting);
+	json_extract_field(MWI_JSON_VOICE_MESSAGE, mwi_voice_message);
 	json_extract_field(MWI_JSON_NEW, mwi_new);
 	json_extract_field(MWI_JSON_SAVED, mwi_saved);
 	json_extract_field(MWI_JSON_URGENT, mwi_urgent);
@@ -314,10 +315,15 @@ int nsq_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
 			expires += (int)time(NULL);
 	}
 
-	sprintf(body, MWI_BODY, mwi_waiting.len, mwi_waiting.s,
-	    mwi_account.len, mwi_account.s, mwi_new.len, mwi_new.s,
-	    mwi_saved.len, mwi_saved.s, mwi_urgent.len, mwi_urgent.s,
-	    mwi_urgent_saved.len, mwi_urgent_saved.s);
+	if (mwi_voice_message.len > 0) {
+		sprintf(body, MWI_BODY_VOICE_MESSAGE, mwi_waiting.len, mwi_waiting.s,
+		    mwi_account.len, mwi_account.s, mwi_voice_message.len, mwi_voice_message.s);
+	} else {
+		sprintf(body, MWI_BODY, mwi_waiting.len, mwi_waiting.s,
+		    mwi_account.len, mwi_account.s, mwi_new.len, mwi_new.s,
+		    mwi_saved.len, mwi_saved.s, mwi_urgent.len, mwi_urgent.s,
+		    mwi_urgent_saved.len, mwi_urgent_saved.s);
+	}
 
 	mwi_body.s = body;
 	mwi_body.len = strlen(body);

@@ -38,6 +38,7 @@
 #define BLF_JSON_CONTACT   	"Contact"
 #define BLF_JSON_EVENT_PKG      "Event-Package"
 #define MWI_JSON_WAITING        "Messages-Waiting"
+#define MWI_JSON_VOICE_MESSAGE  "MWI-Voice-Message"
 #define MWI_JSON_NEW            "Messages-New"
 #define MWI_JSON_SAVED          "Messages-Saved"
 #define MWI_JSON_URGENT         "Messages-Urgent"
@@ -50,6 +51,7 @@
 #define MWI_BODY_BUFFER_SIZE 2048
 #define PRESENCE_BODY_BUFFER_SIZE 4096
 
+#define MWI_BODY_VOICE_MESSAGE "Messages-Waiting: %.*s\r\nMessage-Account: %.*s\r\nVoice-Message: %.*s\r\n"
 #define MWI_BODY             "Messages-Waiting: %.*s\r\nMessage-Account: %.*s\r\nVoice-Message: %.*s/%.*s (%.*s/%.*s)\r\n"
 #define PRESENCE_BODY        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
 <presence xmlns=\"urn:ietf:params:xml:ns:pidf\" xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" xmlns:c=\"urn:ietf:params:xml:ns:pidf:cipid\" entity=\"%s\"> \
