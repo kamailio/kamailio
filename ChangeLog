@@ -1,3 +1,895 @@
+===================== 2016-05-10 Version 4.4.1 Released =====================
+
+===================== Changes Since Version 4.4.0 ===========================
+
+commit 8ccc17f316731492e668d2de0d07b6eb1e5cb4fc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 10 16:45:21 2016 +0200
+
+    Makefile.defs: version set to 4.4.1
+
+commit 5e699d7bcdcffa457e3ff1945c5783e039c57380
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 10 16:41:13 2016 +0200
+
+    pkg/rpm: spec updated to 4.4.1 for centos, fedora and oracle-el
+
+commit ea95ff497fbeb9742ff7af395e907a94814547c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 10 16:39:04 2016 +0200
+
+    pkg/rpm: version set to 4.4.1 in rpm specs
+
+commit f8449978ff36daba233b21c0017179f55815ebce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 10 16:31:14 2016 +0200
+
+    modules: acc_radius, kazoo, misc_radius - regenerated readmes
+
+commit b09fc298bc21248486801c38a60fdb5829ea14e8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 10 16:27:18 2016 +0200
+
+    misc_radius: fixed missing ending of docbook tag
+    
+    (cherry picked from commit 17ebcb3ed9c62302c3950fd378401460bef1a6a0)
+
+commit 436bd786616cdce3b15069eb1ba08aeb853916cd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 10 16:26:29 2016 +0200
+
+    acc_radius: fixed ending docbook tags
+    
+    (cherry picked from commit a2419ccee9a4d2f0f84fc871dbc8afdd3cf7f471)
+
+commit 4ebbbaeaf3c2a2feb30266a7995fa334e3c0fe7b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 10 12:07:55 2016 +0200
+
+    pkg/kamailio/deb: set version to 4.4.1
+
+commit 56bc38856944ca7f8fdbef32c6430b4dac049634
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 3 10:18:14 2016 +0200
+
+    pkg/kamailio/deb: use libradcli-dev for radius
+    
+    https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=822338
+    
+    kamailio-radius-modules depends on libfreeradius-client
+    libfreeradius-client has been deprecated in favor of radcli[1]
+    
+    (cherry picked from commit e0cb17c329c0f6fa03e55cf041d1ba2a97b6e64f)
+
+commit 25d1ab175d0abd75bf90db6d8bc9d5a10b03d958
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Tue May 10 08:10:51 2016 +0200
+
+    [acc|misc]_radius: update documentation related to radius client libs_
+    
+    (cherry picked from commit d4710de1f4e6009598acdf3d837991346023f30e)
+
+commit 956d7f29bb99dec6d6dbc0fff2f5df72d38679fc
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Tue May 10 08:10:20 2016 +0200
+
+    core: support radius radcli lib
+    
+    (cherry picked from commit 8aae606809be6160dd48708788051bf7a4a6bc42)
+
+commit a164d19bbe74720ac428a2efd6074397cfb5180e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 8 09:41:15 2016 +0200
+
+    smsops: safety checks for pkg malloc in pv get handler
+    
+    (cherry picked from commit d4a2ba2ef4323b4306109ab5ecccd1368e8c5f82)
+
+commit a588ced38ff3460469e0d46a31c5786cb57fcaf8
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Mon May 9 09:31:02 2016 +0200
+
+    modules/sipcapture updated modparam description
+    
+    (cherry picked from commit 6e9f1c045ae827ea4f6bec8ab62187ec41788255)
+
+commit a2697207977e43784fe8eba632b7f88f4c641802
+Author: Alexandr Dubovikov <alexandr.dubovikov@gmail.com>
+Date:   Mon May 9 09:21:32 2016 +0200
+
+    updated SQL and docs
+    
+    (cherry picked from commit 76649e4bced09b45d5c470a696168929e1758111)
+
+commit 1fb9685ea83353a1d32edd7f94f3b4dc7b755258
+Author: Tsvetomir Dimitrov <tsv.dimitrov@gmail.com>
+Date:   Sat May 7 09:10:01 2016 +0200
+
+    pkg/rpm: added missing modules to the SPEC file for CentOS 6
+    
+    - cnxcc added as separate package
+    - GH #597
+    
+    (cherry picked from commit 35a861a89e946a771623001f36dc3d17117be602)
+
+commit e16a2373eeb7e9add61058bda3ab2d5c3cee437e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 7 08:58:16 2016 +0200
+
+    smsops: safety check for pkg malloc result
+    
+    - allocated the biggest possible size to simplify the checks
+    
+    (cherry picked from commit fd01e587ed115a21284d27d7f402d51dc6f8743a)
+
+commit 31b69ed11536e1dd7ce4baef25d2da91697f1e74
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 6 14:03:03 2016 +0200
+
+    kazoo: added some docs for pua_mode param based on lists discussions
+    
+    (cherry picked from commit df30b8c7c6021d84f560a6fb7d82a11cd0e1b3d5)
+
+commit fdeba44e840616e08a2309eb3cf1517a34ea29fa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 5 10:10:59 2016 +0200
+
+    core: print tos value if socket option for it cannot be set
+    
+    - to help with GH #598
+    
+    (cherry picked from commit 0118338d82e2471572990a1ea09593265161e4a4)
+
+commit c5c4610fa293ce8afc15bd6cc04897e34fde797f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 5 10:02:34 2016 +0200
+
+    corex: add section ids to docs
+    
+    (cherry picked from commit cb41e0146a73d9c91b0c590d65094e300ef67933)
+
+commit 316925662a3be833693eba6a2895b41661b4d0db
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 5 07:47:36 2016 +0200
+
+    cdp: use the function to check if it is shutdown phase
+    
+    - global variable is not accessible directly, breaking the build - issue
+      introduced with previous commit
+    
+    (cherry picked from commit e70283a0b6010e4a4c567a50b9008e0d7c1e27d5)
+
+commit b696390ac29225dd29bdeb1ec8fe01690e1c2608
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 4 20:01:37 2016 +0200
+
+    cdp: don't lock anymore for session during shutdown callbacks
+    
+    - if sigterm killed a worker in a locked zone, results in a deadlock at
+      shutdown. The cleanup is done by a sigle process, no other processes
+      run, therefore no more race
+    
+    (cherry picked from commit f3f87ca550d44364e3c6cc1653970258fdffaa2c)
+
+commit f739c6d0a861fce1808a93e4660546c746dc7672
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 3 10:18:11 2016 +0200
+
+    sdpops: safety check if sdp pointer is null inside sdp_get()
+    
+    (cherry picked from commit cd67fbb8ecb83944f458ec8a127adc14d5b38aeb)
+
+commit 2189d14f20cf52c4802baffc258ecd5b9127c0c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 3 08:48:02 2016 +0200
+
+    sdpops: removed svn $Id$ lines, coherent indentation and whitespacing
+    
+    - added license header text
+    
+    (cherry picked from commit c4299225989d9ccf47c18e50b0014025270c65c7)
+
+commit 6f60780e3fa3d8314e77b9960c04a127ede86b1f
+Author: Konstantin S. Vishnivetsky <voip-projects@vishnivetsky.ru>
+Date:   Mon May 2 16:03:50 2016 +0200
+
+    pkg/rpm: added folders with rpm specs for oracle el6 and el7
+    
+    (cherry picked from commit e72c7e068dd510a56033ce422343675aa0fdafe7)
+
+commit c29e524283b50b74f61e704f0e32b86c7941da6b
+Author: Jonas BÃ¶ttner <boettner@sipgate.de>
+Date:   Mon May 2 14:20:25 2016 +0200
+
+    enum: print out malformed uri in enum_query()
+    
+    - previous error message did not show up the username part of r-uri.
+      therefor debugging was difficult.
+    
+    (cherry picked from commit fd3c30f981d97622fb99f2122ce0bc950774edfb)
+
+commit aa39e12bf63a325effa52eae924a946005baee3c
+Author: Jonas BÃ¶ttner <boettner@sipgate.de>
+Date:   Mon May 2 14:19:30 2016 +0200
+
+    enum: single digit is valid in function enum_query
+    
+    - is_e164() returns true for a single digit (previously two digits)
+    
+    (cherry picked from commit 86ecdb2ec109af536efa70c2b0e4b93c4072e8b5)
+
+commit 1851ba4c67c8bfa48ae5f65ccecee076960870f8
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 29 13:55:00 2016 +0200
+
+    msilo Minor edits to the README
+    
+    - Move the database field definitions close to the table definition
+    - Fix typos, rewrite some parts
+    
+    (cherry picked from commit ceccf4b9d178e895ae5972f2cddf28e3ef108910)
+
+commit e1b8cc38ba493f6de6a3c70519fb327841efad94
+Author: Konstantin S. Vishnivetsky <voip-projects@vishnivetsky.ru>
+Date:   Thu Apr 28 22:55:12 2016 +0200
+
+    pkg: added rpm spec file for Oracle Enterprise Linux 7
+    
+    - includes adding shadow-utils dependency added to make %pre scriplet
+      work properly
+    - baed on PR #588
+    
+    (cherry picked from commit b7ec49886264b52b15d22b80c1c74ac40a6fb314)
+
+commit ea20338f8786fac2bb290a610f938fec8e7ece54
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 3 16:59:06 2016 +0200
+
+    xmlrpc: user libxml function to get content of node if type not provided for param
+    
+    - it is considered to be string according to specs
+    - old implementation was using the pointer inside the xmlNode struct,
+      which may not be available later to free again by xmlrpc module
+      garbage collector
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit 6b23c27d8406780083a6b7bb774efa2a53aea540)
+
+commit 72ddb3a70dfc88404eacf0a878f36cc56de2e74e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 2 11:46:30 2016 +0200
+
+    lib/srdb1: adjust the length of str time representation for no-quotes
+    
+    - used only by usrloc fix done in previous commit
+    
+    (cherry picked from commit f54c723d9d8b8dcd0ad09c3787f3bb2e823d82b8)
+
+commit ffbc7449e315847a43e36ceab2cdc3fe05396115
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 2 10:26:35 2016 +0200
+
+    usrloc: don't quote string representation of time for fetching contacts query
+    
+    - the db api adds quites around string values
+    - it results in double quotation, rising db query error
+    - reported by Giovanni Mele
+    
+    (cherry picked from commit aeb85ae3d9097bfd6aaad92a1d5b0c682bf5162c)
+
+commit ea7d88c8a857a53f071e85eb6e467b6ca1a52c73
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 2 10:25:21 2016 +0200
+
+    lib/srdb1: added helper function to convert time to unquoted string
+    
+    (cherry picked from commit b3da13a1025f4380c4929fd53b619ca7fdd09a9d)
+
+commit 964c05c334b4bba0c2eeac20d9b8cc188927d0f4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Apr 30 09:57:54 2016 +0200
+
+    async: fixed list format for dependencies in docs
+    
+    (cherry picked from commit 4463258d5bb8cb1460f51791d2c3a367ec68e5fb)
+
+commit d82249bb42513e9c06828cae350e01b89a16b77e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 2 08:51:44 2016 +0200
+
+    core: pv - coherent indentation and whitespacing
+    
+    (cherry picked from commit 4ffe8b0f917ec49b3f68afa99d65e384fb011283)
+
+commit f1fc28d0e42980dfc027b6631b1b807deb7f1a98
+Author: sergey-vb <sergey.v.basov@gmail.com>
+Date:   Thu Apr 28 22:32:14 2016 +0200
+
+    core: fix leak in case of error to get boundary inside check_boundaries()
+    
+    - impacted setting multi-part body function
+    
+    (cherry picked from commit 2b427a33937c6a86ab231de39d5a4574309dbfc6)
+
+commit 3550a23ac6a5845839b114b22077978da95740f2
+Author: sergey-vb <sergey.v.basov@gmail.com>
+Date:   Thu Apr 28 22:31:05 2016 +0200
+
+    textops: fix memory leak in when converting body to multipart with set_body_multipart()
+    
+    (cherry picked from commit 61435f40f0f4ca25521f7f1b8515e47954a69b2d)
+
+commit 3fd830cfe3bea3f5dde50a26f5ae40b835f7aad0
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Thu Apr 28 15:02:29 2016 +0300
+
+    lib/binrpc modules/ctl utils/kamcmd : set UNIX_PATH_MAX to lowest common value
+    
+    sockaddr_un.sun_path[] seem to be either 104 or 108 in following Unices:
+    104 - NetBSD, OpenBSD, FreeBSD, DragonFly BSD, MINIX, XNU(Apple OS X)
+    108 - illumos, Solaris, Linux
+    
+    (cherry picked from commit bc783befbda947a7d789eebd70c64ec736892df5)
+
+commit 24c6d38f93bc033cd79b90d4a4a24c99597f777c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 24 20:13:44 2016 +0200
+
+    registrar: coherent indentation and whitespacing
+    
+    (cherry picked from commit 90350e2a71c86e71f81590c80ad714cec6c7ea80)
+
+commit d59d68c367f17e54606e5edac22a1b653b1e91ad
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Apr 24 18:59:38 2016 +0200
+
+    siputils: coherent indentation and whitespacing
+    
+    (cherry picked from commit 5a31031e62f8872eafc79b41e9594f2f1289f8c3)
+
+commit e082fdc7e401d7f719eb6e12d6b57e2e2fd69215
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 21 13:25:33 2016 +0200
+
+    auth: coherent indentation and white spacing
+    
+    (cherry picked from commit c4b6428ce71e6d1b18ba2ea6b99c369864b56710)
+
+commit 2e179048a0ffb26719644f293cfd063b0fd6aad6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 19 10:41:02 2016 +0200
+
+    htable: refreshed the readme file
+    
+    (cherry picked from commit 6adb2fac4a59a35fb1238b4eca5fd8e93c3659c9)
+
+commit f583f0751a7e78bc8ba5ed19ff7fbfea68ce4f6e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 19 10:40:20 2016 +0200
+
+    htable: coherent indentation and whitespacing
+    
+    (cherry picked from commit 79ad0e2d8a926e867b1f9e69a065e9b1727671ea)
+
+commit 56f5009939e058ac4a9bc356f85b32ca35dc20bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 19 10:39:55 2016 +0200
+
+    htable: updated the list of exported variables
+    
+    (cherry picked from commit 866270a7cc45205deab5b067be68e5c6a66704e8)
+
+commit 2181edd60a2597a75eef7e2529faf0ed7948c1c7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 18 12:52:25 2016 +0200
+
+    app_python: fix of buf memory allocation size for chars
+    
+    (cherry picked from commit 5042f309739460ad87dc9a064c43e602602da703)
+
+commit 0110a8b55ba9d48aa22123802d2a562fa2e89195
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 18 12:35:36 2016 +0200
+
+    app_python: coherent indetation and whitespacing
+    
+    (cherry picked from commit 8d7c12ab295fdb41390dd56744cc0b012851788b)
+
+commit d8a893d45d891bc3f8d00e3e76c9cd92195e164c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 12 13:48:22 2016 +0200
+
+    core: receive.c coherent indentation
+    
+    (cherry picked from commit 7de8a92fd805b73495cc929cf9ca981ecd509c9a)
+
+commit 3616af6b5f2aae383c93507563a33913e3f723e9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 11 12:57:31 2016 +0200
+
+    Makefile.rules: added target tags as alias for target TAGS
+    
+    (cherry picked from commit b024f5aea72f172b39dd4d8947934be52f07dbe4)
+
+commit 74052b4a0f50b19d42a6fbcae3df38136046f993
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 4 08:53:12 2016 +0200
+
+    core: declare function parameter type to get rid of compile warning
+    
+    (cherry picked from commit ad2f899c1ad75c2b636cb17b6c1c49cb38daab27)
+
+commit 66e1479260a3a657c86e0a9d0ae3fd5c71954f95
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Tue Apr 26 15:49:00 2016 +0200
+
+    erlang: fix where is registered pseudo process
+    
+    - check is event route exist for queried registered process
+    - check argument type and function arity
+    - ensure error message proper formatted
+    
+    (cherry picked from commit 0f52906f28fdf38e56fd37e6ed34155b2deee505)
+
+commit d29ff6a5f31f76ab9fb4e423c88b8c1cc9d4627d
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Tue Apr 26 14:04:41 2016 +0200
+
+    erlang: extend error message function with variable number of arguments
+    
+    - wrap around vsnprintf
+    
+    (cherry picked from commit 3d002d8f42eb24e978bc86cd3b4565872e65eb1e)
+
+commit dc58d67e400334759185b0eb672160482e067c74
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Apr 26 10:57:34 2016 +0200
+
+    travis-ci: IRC notifications to #kamailio-dev channel
+    
+    (cherry picked from commit 0dfd44a0502abbf20269d73a230be983cbb97b8d)
+
+commit 3fdf0463e2290ae891587dbac8cbd6b2d0e722fd
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Tue Apr 26 09:55:43 2016 +0200
+
+    erlang: fix function call in event route
+    
+    - allow call functions for RPC and message send in event route
+    - detect RPC loop
+    - function/api call is possible in event route if event route is not
+    triggered by handling REX call (avoid deadlock)
+    
+    (cherry picked from commit b0c04dd2eff3f288ac98c0074683db150727227a)
+
+commit 615b252510cee01dc6f24ac7d12f07dcb6b50366
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 20 12:02:09 2016 +0200
+
+    Makefile.defs: detect kfreebsd OS and set its default compile flags
+    
+    - combine the options of Linux with FreeBSD to use kqueue if available
+    - reported by Victor Seva, GH #576
+    
+    (cherry picked from commit 4c6f879563adbbdee7c730549533a0d852e6cbef)
+
+commit 71f329c971d6ad18f7eda16a2b50b25e9efd3236
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 20 11:59:25 2016 +0200
+
+    core: remove ending parenthesis in ifdef condition
+    
+    warning: ISO C99 requires whitespace after the macro name
+    sched_yield.h:34:20: warning: extra tokens at end of #ifndef directive
+     #ifndef sched_yield()
+    
+    - reported by Victore Seva, GH #576
+    
+    (cherry picked from commit 34b67125424da7ce86b5cac77e30af0711fafac1)
+
+commit 528842d4dfea3d6785e6cee0cd3fb6411ee3dc7d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 25 08:56:00 2016 +0200
+
+    jsonrpc-c: replaced use of obsolete function json_object_object_get()
+    
+    (cherry picked from commit be02b3f11c269d3eeeb52e1cd0056d7d77be2e4c)
+
+commit 2700d7b8df738f9e5db82dca87cbab5549f2e0d1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 25 08:54:45 2016 +0200
+
+    json: replaced use of obsolete function json_object_object_get()
+    
+    - reported by Olle E. Johansson, GH #579
+    
+    (cherry picked from commit 8b9fd4fa40abfc40ecd537948036aa91b908615d)
+
+commit bf76f94e939c0d96ca25a2d75623e7fcff78c01e
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Wed Apr 20 11:36:40 2016 +0200
+
+    erlang: fix parsing function params
+    
+    - remove double parsing function params
+    - free memory used in parsing params
+    
+    (cherry picked from commit 28b320088fcad8b8875f0528873a49cba9c74619)
+
+commit 2c650622cf7cd37dc1c5177ad314681113ac324d
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Wed Apr 20 11:10:39 2016 +0200
+
+    erlang: fix memory leak in debug macro
+    
+    - free temporary used encoding buffer
+    
+    (cherry picked from commit 2b11990929ae1d097bfb66848136bd247130263b)
+
+commit 8d07ef72e8280b4367e430bf081d54e0a0b5f4c1
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Mon Apr 18 11:30:23 2016 +0200
+
+    erlang: fix uninitialized member variable
+    
+    - avoid conditional jump on uninitialized value
+    
+    (cherry picked from commit 0e3b19f4b99ea0b9e4eff2decb641e5da2488573)
+
+commit c302b9e920342869721342c42f9014bd079fb456
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Apr 19 21:24:31 2016 +0200
+
+    dialog Update README with explanation of in-dialog request behaviour
+    
+    (cherry picked from commit 19ef4f6ec8c22848eb4386f5f4996d5091c65688)
+
+commit 19d4d3f5a1a49335377c9befd238b729b957f42b
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Apr 19 14:11:33 2016 +0200
+
+    dialog Document shortest ka_interval
+    
+    (cherry picked from commit 9710f1c92baee8ec379d64b75531bed5cf7695fb)
+
+commit 22003d5cba54b5c0d0f0af06f62be24190bef231
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon Apr 18 13:43:15 2016 +0200
+
+    http_client Clarify DNS resolver use for CURL
+    
+    (cherry picked from commit e85706b549e691404e3caf401fa4cf86c5ab90de)
+
+commit 3356d6aca4c85e7c086b1d46cf06e56635fd4739
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Apr 15 09:09:08 2016 +0200
+
+    app_perl: Fix "use UNIVERSAL" is a fatal error since perl 5.22
+    
+    * Author: JuliÃ¡n Moreno PatiÃ±o <julian@debian.org>
+    * Fix #516
+    * from: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=821039
+    
+    (cherry picked from commit b77ed54d33f171d170ca89252f0a31a0d23996fa)
+
+commit 3e29e0bcfb14f0e95639eb99b777da84d46becf1
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Wed Apr 13 00:34:41 2016 +0200
+
+    erlang: fix compile warning unused but set variable
+    
+    - get rid of this variable
+    
+    (cherry picked from commit 32c3435c8122903958834002ba843b93c49495f0)
+
+commit 297d9732504290a1209ae7cf883127fadc1156aa
+Author: Seudin Kasumovic <seudin.kasumovic@gmail.com>
+Date:   Wed Apr 13 00:15:56 2016 +0200
+
+    erlang: fix register server process with the local name server epmd
+    
+    - use correct alive name when number of C nodes greater then 1
+    - fix error check on register server process
+    
+    (cherry picked from commit 6f268b5a9d0bd07e689c401cb7221bb0f2c5f8be)
+
+commit 02b17b881d63fe91221f5673dd3418831c943bd0
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Mon Apr 11 18:53:05 2016 +0200
+
+    dialog: fix $dlg(from_bindaddr) getter
+
+commit 1ec385ccd9054952b86cc976ae1debe70dc8d297
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Mon Apr 11 17:02:03 2016 +0200
+
+    dialog: fix $dlg(from_bindaddr) name parsing
+    
+    (cherry picked from commit f95789fd39fcce7b3aa3a0ab8665664afd8bc196)
+
+commit b21b9cd9cb6a08b9bfc9d025b4e6a64a12e50d65
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 8 15:10:55 2016 +0200
+
+    Makefile.defs: re-enable mem join define
+    
+    - lost when introduced the option to select the memory manager by
+      command line parameter -x
+    
+    (cherry picked from commit 33c6aafcd46269ce283908f49fbf70b9d73624b1)
+
+commit 49ec5fa5d9bb939b80ef3994b5f0c04e7525ab9f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 6 19:22:58 2016 +0200
+
+    core: common check for ifa->ifa_addr in add_intefaces
+    
+    - if no ip address associated with the network interface, it is not
+      useful anyhow
+    
+    (cherry picked from commit c395ae00d7970be0a857265e9324a50bcb00f4d0)
+
+commit 6684be6b4c405ab24dd6a5a19267ceef6aa95503
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 6 18:55:57 2016 +0200
+
+    core: check if ifa_addr field is set while trying to skip AF_PACKET interfaces
+    
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit 1545b8de396e8e5d0ef24c9102beff18b3cf36e5)
+
+commit 87af066010ca0b89a4752fe593c091253b842d6c
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Sun Apr 3 21:45:37 2016 +0200
+
+    evapi Fix URL to library home page in README
+
+commit cf3457fd35909993c3e354e726d243f137dfe227
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:28:50 2016 +0200
+
+    Revert "db_flatstore Edit source code headers - change product name to Kamailio etc"
+    
+    This reverts commit 9ecf2492b1952d71d4ec89ba4df5fde428a86a94.
+
+commit 5d1f2e8ca6c44f35b070157c06811a8834615e47
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:28:39 2016 +0200
+
+    Revert "db_flatstore Rename core module file to match module name"
+    
+    This reverts commit ddb1069e7c03544f80fc728503b7df1005ccf54d.
+
+commit cb8fd2fa94599dd37607c511c7dac2d12188cc57
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:28:27 2016 +0200
+
+    Revert "registrar Rename core file to match module name"
+    
+    This reverts commit 932a08610b6d3d3537414d4dc401cf8a8942282c.
+
+commit eb6254b9e82e650f2471ba4a5f58636580cd66cd
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:28:15 2016 +0200
+
+    Revert "db_postgres Rename core files to match module name, rename SER to Kamailio and remove svn ID's"
+    
+    This reverts commit a4b3dfd711af986f3992ded4bf608eb0f60dea6f.
+
+commit 26aa3b6c27e3598b075d923203af5af31f7c0efc
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:27:59 2016 +0200
+
+    Revert "db_text Change core source code file name to match module name"
+    
+    This reverts commit 44c2ebd7ae7e744880af0397703dd405e8eb5d52.
+
+commit 947b86ca81d8f0205205f3bb8328b8110eb1daa2
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:27:44 2016 +0200
+
+    Revert "db_mysql Rename core source code file to match module name"
+    
+    This reverts commit 29fda7288eba52ca73c893cb534bd14c66749827.
+
+commit 7c62633751f6405ab183f054701280ab32b444ae
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:27:30 2016 +0200
+
+    Revert "auth_identity Change product name"
+    
+    This reverts commit 9aaff8933f4f4ee0da6accbf7773334fb187274b.
+
+commit d1b906d0c2acbec5f9daa22805d0a45211d60486
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:27:19 2016 +0200
+
+    Revert "lcr Change name of software, remove SVN ID and history"
+    
+    This reverts commit 853fadd1cd90460d78e8563d611e444dc786e654.
+
+commit 53a75276dec8d274b0ca843ce1e6773cfca3828f
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:27:05 2016 +0200
+
+    Revert "Dispatcher Minor edit to have proper name in source code file"
+    
+    This reverts commit 651407857d129f464515c5cf80ce687257066395.
+
+commit d6abbc8e86ec43c216ba78197dfcf082507d6ca4
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:26:55 2016 +0200
+
+    Revert "mediaproxy Rename SIP-router to Kamailio"
+    
+    This reverts commit 38a9ae753b4d68d8c229366fd4254839536e5669.
+
+commit 7371ed72e20b7d25aa527d78a1fd50366e61a2ed
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:26:32 2016 +0200
+
+    Revert "auth_identity Remove SVN ID's"
+    
+    This reverts commit 39360d98a6c1f80daa67fd1348fdab63bd8a5822.
+
+commit 22ac262cc88cdb78fba1329333412c7f7447128f
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:26:20 2016 +0200
+
+    Revert "auth_radius Remove SVN ID's and history comments"
+    
+    This reverts commit 706e58ff60003a6dca09ad79efef7f1a423d232e.
+
+commit 52160709baae08cde3902410a9a7b579d40445cd
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:26:10 2016 +0200
+
+    Revert "auth_radius Rename module core file"
+    
+    This reverts commit db4b4b68ff91a8e2f00864b29af010514eadf233.
+
+commit 5534237dd155474932a518366b5f1c63f15bdef7
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:26:00 2016 +0200
+
+    Revert "websocket Rename core module name for consistensy"
+    
+    This reverts commit ac2043d1c0a4c921c0d41e5a1a9ff33530449bb6.
+
+commit 4bb26a40f9a14e9d703d899abe76abee0fd5057d
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 20:25:44 2016 +0200
+
+    Revert "permissions remove svn ID's and history from source code"
+    
+    This reverts commit 1538ba701438bf0bfc610af284d67987b9b47bb6.
+
+commit 9ecf2492b1952d71d4ec89ba4df5fde428a86a94
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 18:25:42 2016 +0200
+
+    db_flatstore Edit source code headers - change product name to Kamailio etc
+
+commit ddb1069e7c03544f80fc728503b7df1005ccf54d
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 18:22:39 2016 +0200
+
+    db_flatstore Rename core module file to match module name
+    
+    Issue #82
+
+commit 932a08610b6d3d3537414d4dc401cf8a8942282c
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 18:17:06 2016 +0200
+
+    registrar Rename core file to match module name
+    
+    Issue #82
+
+commit a4b3dfd711af986f3992ded4bf608eb0f60dea6f
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 18:14:04 2016 +0200
+
+    db_postgres Rename core files to match module name, rename SER to Kamailio and remove svn ID's
+    
+    Issue #82
+
+commit 44c2ebd7ae7e744880af0397703dd405e8eb5d52
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 18:05:33 2016 +0200
+
+    db_text Change core source code file name to match module name
+    
+    Issue #82
+
+commit 29fda7288eba52ca73c893cb534bd14c66749827
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 18:03:10 2016 +0200
+
+    db_mysql Rename core source code file to match module name
+    
+    Issue #82
+
+commit 9aaff8933f4f4ee0da6accbf7773334fb187274b
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:59:59 2016 +0200
+
+    auth_identity Change product name
+
+commit 853fadd1cd90460d78e8563d611e444dc786e654
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:58:38 2016 +0200
+
+    lcr Change name of software, remove SVN ID and history
+
+commit 651407857d129f464515c5cf80ce687257066395
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:54:48 2016 +0200
+
+    Dispatcher Minor edit to have proper name in source code file
+
+commit 38a9ae753b4d68d8c229366fd4254839536e5669
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:53:04 2016 +0200
+
+    mediaproxy Rename SIP-router to Kamailio
+
+commit 39360d98a6c1f80daa67fd1348fdab63bd8a5822
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:51:52 2016 +0200
+
+    auth_identity Remove SVN ID's
+
+commit 706e58ff60003a6dca09ad79efef7f1a423d232e
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:47:59 2016 +0200
+
+    auth_radius Remove SVN ID's and history comments
+
+commit db4b4b68ff91a8e2f00864b29af010514eadf233
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:46:36 2016 +0200
+
+    auth_radius Rename module core file
+    
+    Issue #82
+
+commit ac2043d1c0a4c921c0d41e5a1a9ff33530449bb6
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:42:31 2016 +0200
+
+    websocket Rename core module name for consistensy
+    
+    Issue #82
+
+commit 1538ba701438bf0bfc610af284d67987b9b47bb6
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Apr 1 17:36:39 2016 +0200
+
+    permissions remove svn ID's and history from source code
+
+commit e6dd2c172be3712e8c468cbe7e55ba94d81a7b62
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 1 11:10:46 2016 +0200
+
+    core: test if AF_PACKET is defined at compile time
+    
+    - mac os x (and perhaps *BSDs) doesn't have it
+    
+    (cherry picked from commit 8543993e1f702aef80887c0e72b9bf67c62c1617)
+
+commit 4992dfbb9f15cfb8ade99be4e6d3087146cb8e22
+Author: schoberw <walter.schober@neotel.at>
+Date:   Fri Apr 1 10:34:11 2016 +0200
+
+    core: skip address family AF_PACKET on -l iface_name
+    
+    - socket_info.c: getifaddrs() returns AF_PACKET, AF_INET and AF_INET6 addressed of an interface.
+      AF_PACKET are of no use and breaks startup with an -l eth0:5060 cmd line param
+    (cherry picked from commit d7fca53e8c5409849ec044098a143e7254129c00)
+
+
 ===================== 2016-03-30 Version 4.4.0 Released =====================
 
 ===================== Changes Since Version 4.3.0 ===========================
