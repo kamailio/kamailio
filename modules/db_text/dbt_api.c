@@ -73,7 +73,14 @@ static int dbt_get_columns(db1_res_t* _r, dbt_result_p _dres)
 		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n",
 				(int)sizeof(str), col,
 				RES_NAMES(_r)[col]);
-		RES_NAMES(_r)[col]->s = _dres->colv[col].name.s;
+
+		RES_NAMES(_r)[col]->s = pkg_malloc(strlen(_dres->colv[col].name.s)+1);
+		if (! RES_NAMES(_r)[col]->s) {
+			LM_ERR("no private memory left\n");
+			db_free_columns(_r);
+			return -4;
+		}
+		strcpy(RES_NAMES(_r)[col]->s, _dres->colv[col].name.s);
 		RES_NAMES(_r)[col]->len = _dres->colv[col].name.len;
 
 		switch(_dres->colv[col].type)

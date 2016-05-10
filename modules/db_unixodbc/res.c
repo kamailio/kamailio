@@ -93,7 +93,13 @@ int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			// FIXME should we fail here completly?
 		}
 		/* The pointer that is here returned is part of the result structure. */
-		RES_NAMES(_r)[col]->s = columnname;
+		RES_NAMES(_r)[col]->s = pkg_malloc(strlen(columnname)+1);
+		if (! RES_NAMES(_r)[col]->s) {
+			LM_ERR("no private memory left\n");
+			db_free_columns(_r);
+			return -4;
+		}
+		strcpy(RES_NAMES(_r)[col]->s, columnname);
 		RES_NAMES(_r)[col]->len = namelength;
 
 		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_r)[col], col,

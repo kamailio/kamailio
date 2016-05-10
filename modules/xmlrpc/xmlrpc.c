@@ -145,7 +145,7 @@
 
 MODULE_VERSION
 
-#if defined (__OS_darwin) || defined (__OS_freebsd)
+#if defined (__OS_darwin) || defined (__OS_freebsd) || defined (__clang__)
 /* redeclaration of functions from stdio.h throws errors */
 #else
 int snprintf(char *str, size_t size, const char *format, ...);
