@@ -50,11 +50,13 @@
 			</para>
 			<itemizedlist>
 				<listitem>
-				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or freeradius-client 
-				or higher.
-				See <ulink 
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher,
+				<emphasis>freeradius-client</emphasis> <ulink
 				url='https://github.com/FreeRADIUS/freeradius-client/'>
-				https://github.com/FreeRADIUS/freeradius-client/</ulink>.
+				https://github.com/FreeRADIUS/freeradius-client/</ulink> or
+				<emphasis>radcli</emphasis> <ulink
+				url='http://radcli.github.io/radcli/'
+				http://radcli.github.io/radcli/</ulink>.
 				</para>
 				</listitem>
 				<listitem>
@@ -62,6 +64,13 @@
 				<emphasis>freeradius-client</emphasis> library can be used after 
 				setting FREERADIUS variable in source code with 
 				<emphasis>'export FREERADIUS=1'</emphasis> before compile.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				<emphasis>radcli</emphasis> library can be used after
+				setting RADCLI variable in source code with
+				<emphasis>'export RADCLI=1'</emphasis> before compile.
 				</para>
 				</listitem>
 			</itemizedlist>
