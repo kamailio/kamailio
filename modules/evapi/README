@@ -35,8 +35,10 @@ Daniel-Constantin Mierla
               4.2. evapi_async_relay(evdata)
               4.3. evapi_multicast(evdata, etag)
               4.4. evapi_async_multicast(evdata, etag)
-              4.5. evapi_close()
-              4.6. evapi_set_tag(tname)
+              4.5. evapi_unicast(evdata, etag)
+              4.6. evapi_async_unicast(evdata, etag)
+              4.7. evapi_close()
+              4.8. evapi_set_tag(tname)
 
         5. Event routes
 
@@ -56,8 +58,10 @@ Daniel-Constantin Mierla
    1.6. evapi_async_relay usage
    1.7. evapi_multicast usage
    1.8. evapi_async_multicast usage
-   1.9. evapi_close usage
-   1.10. evapi_set_tag usage
+   1.9. evapi_unicast usage
+   1.10. evapi_async_unicast usage
+   1.11. evapi_close usage
+   1.12. evapi_set_tag usage
 
 Chapter 1. Admin Guide
 
@@ -81,8 +85,10 @@ Chapter 1. Admin Guide
         4.2. evapi_async_relay(evdata)
         4.3. evapi_multicast(evdata, etag)
         4.4. evapi_async_multicast(evdata, etag)
-        4.5. evapi_close()
-        4.6. evapi_set_tag(tname)
+        4.5. evapi_unicast(evdata, etag)
+        4.6. evapi_async_unicast(evdata, etag)
+        4.7. evapi_close()
+        4.8. evapi_set_tag(tname)
 
    5. Event routes
 
@@ -167,8 +173,10 @@ modparam("evapi", "netstring_format", 0)
    4.2. evapi_async_relay(evdata)
    4.3. evapi_multicast(evdata, etag)
    4.4. evapi_async_multicast(evdata, etag)
-   4.5. evapi_close()
-   4.6. evapi_set_tag(tname)
+   4.5. evapi_unicast(evdata, etag)
+   4.6. evapi_async_unicast(evdata, etag)
+   4.7. evapi_close()
+   4.8. evapi_set_tag(tname)
 
 4.1. evapi_relay(evdata)
 
@@ -230,8 +238,8 @@ evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
 
    Example 1.7. evapi_multicast usage
 ...
-evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx")
-;
+evapi_multicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "ta
+gx");
 ...
 
 4.4. evapi_async_multicast(evdata, etag)
@@ -246,13 +254,37 @@ evapi_async_multicast("{ \"event\": \"suspend\",\n \"data\":"
     " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
 ...
 
-4.5. evapi_close()
+4.5. evapi_unicast(evdata, etag)
+
+   Relay the event data given as parameter to the first connection that
+   match the tag provided by etag value. The etag can be a variable. For
+   more see evapi_relay() and evapi_set_tag().
+
+   Example 1.9. evapi_unicast usage
+...
+evapi_unicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx
+");
+...
+
+4.6. evapi_async_unicast(evdata, etag)
+
+   Async relay the event data given as parameter to the first connection
+   that match the tag provided by etag value. The etag can be a variable.
+   For more see evapi_async_relay() and evapi_set_tag().
+
+   Example 1.10. evapi_async_unicast usage
+...
+evapi_async_unicast("{ \"event\": \"suspend\",\n \"data\":"
+    " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
+...
+
+4.7. evapi_close()
 
    Close evapi current client connection.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. evapi_close usage
+   Example 1.11. evapi_close usage
 ...
 event_route[evapi:connection-new] {
   if($evapi(srcaddr)!="127.0.0.1") {
@@ -262,7 +294,7 @@ event_route[evapi:connection-new] {
 }
 ...
 
-4.6. evapi_set_tag(tname)
+4.8. evapi_set_tag(tname)
 
    Set tag name for current client connection. The parameters has to be a
    string up to 64 characters. It can also be a variable holding such
@@ -270,7 +302,7 @@ event_route[evapi:connection-new] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. evapi_set_tag usage
+   Example 1.12. evapi_set_tag usage
 ...
 event_route[evapi:connection-new] {
   if($evapi(srcaddr)=="127.0.0.1") {

@@ -16,7 +16,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright © 2002, 2003 FhG FOKUS
+   Copyright � 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -36,6 +36,7 @@ Daniel-Constantin Mierla
               3.3. radius_missed_flag (integer)
               3.4. service_type (integer)
               3.5. radius_extra (string)
+              3.6. rad_time_mode(integer)
 
         4. Functions
 
@@ -48,7 +49,8 @@ Daniel-Constantin Mierla
    1.3. radius_missed_flag example
    1.4. service_type example
    1.5. radius_extra example
-   1.6. acc_rad_request usage
+   1.6. rad_time_mode example
+   1.7. acc_rad_request usage
 
 Chapter 1. Admin Guide
 
@@ -67,6 +69,7 @@ Chapter 1. Admin Guide
         3.3. radius_missed_flag (integer)
         3.4. service_type (integer)
         3.5. radius_extra (string)
+        3.6. rad_time_mode(integer)
 
    4. Functions
 
@@ -97,8 +100,13 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * radiusclient-ng 0.5.0 or higher. See
-       http://developer.berlios.de/projects/radiusclient-ng/.
+     * radiusclient-ng 0.5.0 or higher, freeradius-client
+       https://github.com/FreeRADIUS/freeradius-client/ or radcli
+       http://radcli.github.io/radcli/.
+     * freeradius-client library can be used after setting FREERADIUS
+       variable in source code with 'export FREERADIUS=1' before compile.
+     * radcli library can be used after setting RADCLI variable in source
+       code with 'export RADCLI=1' before compile.
 
 3. Parameters
 
@@ -107,6 +115,7 @@ Chapter 1. Admin Guide
    3.3. radius_missed_flag (integer)
    3.4. service_type (integer)
    3.5. radius_extra (string)
+   3.6. rad_time_mode(integer)
 
 3.1. radius_config (string)
 
@@ -119,7 +128,7 @@ Chapter 1. Admin Guide
    If the parameter is set to empty string, the RADIUS accounting support
    will be disabled (even if compiled).
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.1. radius_config example
 ...
@@ -172,22 +181,41 @@ modparam("acc_radius", "service_type", 16)
 modparam("acc_radius", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 ...
 
+3.6. rad_time_mode(integer)
+
+   Radius Event-Timestamp for accounting.
+
+   Values can be:
+     * 0 - (default), format is only unix timestamp for Event-Timestamp
+       (For example: 1445590624)
+     * 1 - format is unix timestamp with microseconds in Addition, it
+       needs to change Event-Timestamp attribute type in dictionary to
+       string both radius server and client (For example:
+       1445590624.377372)
+
+   Default value is 0 (Unix timestamp).
+
+   Example 1.6. rad_time_mode example
+...
+modparam("acc_radius", "rad_time_mode", 1)
+...
+
 4. Functions
 
    4.1. acc_rad_request(comment)
 
-4.1.  acc_rad_request(comment)
+4.1. acc_rad_request(comment)
 
    Like acc_log_request of acc module, acc_rad_request reports on a SIP
    request event. It reports to radius server as configured in
-   “radius_config”.
+   "radius_config".
 
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.6. acc_rad_request usage
+   Example 1.7. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 ...
