@@ -70,11 +70,6 @@ int              spiral_detected = -1;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
 
-/* statistic variables */
-extern stat_var *early_dlgs; 		/*!< number of early dialogs */
-extern stat_var *processed_dlgs;	/*!< number of processed dialogs */
-extern stat_var *expired_dlgs;		/*!< number of expired dialogs */
-extern stat_var *failed_dlgs;		/*!< number of failed dialogs */
 
 extern pv_elem_t *ruri_param_model;	/*!< pv-string to get r-uri */
 
