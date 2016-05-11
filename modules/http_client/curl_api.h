@@ -32,9 +32,12 @@
 #include "functions.h"
 
 typedef int (*httpcapi_httpconnect_f)(struct sip_msg *msg, const str *connection, const str* _url, str* _result, const char *contenttype, const str* _post);
+typedef int (*httpcapi_httpquery_f)(struct sip_msg* _m, char* _url, str* _dst, char* _post);
+
 
 typedef struct httpc_api {
 	httpcapi_httpconnect_f	http_connect;
+	httpcapi_httpquery_f	http_query;
 } httpc_api_t;
 
 typedef int (*bind_httpc_api_f)(httpc_api_t *api);

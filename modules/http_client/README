@@ -84,6 +84,8 @@ Hugh Waite
               1.1. http_connect(msg, connection, url, result,
                       content_type, post)
 
+              1.2. http_query(msg, url, dest, post)
+
    List of Examples
 
    1.1. Set httpredirect parameter
@@ -739,13 +741,18 @@ Chapter 2. Developer Guide
         1.1. http_connect(msg, connection, url, result, content_type,
                 post)
 
+        1.2. http_query(msg, url, dest, post)
+
 1. Available Functions
 
    1.1. http_connect(msg, connection, url, result, content_type, post)
+   1.2. http_query(msg, url, dest, post)
 
 1.1. http_connect(msg, connection, url, result, content_type, post)
 
-   Sends HTTP GET or POST request to a given connection.
+   Sends HTTP GET or POST request to a given connection. If content_type
+   and post are NULL GET will be used. If post is not null the data will
+   be POSTed using the specified content_type.
 
    Returns the status code of the HTTP response (if >= 100), or a curl
    error code (if < 100)
@@ -769,3 +776,22 @@ Chapter 2. Developer Guide
      * const str *post
        A string containing the message body to send. Use NULL when a
        message body is not required.
+
+1.2. http_query(msg, url, dest, post)
+
+   Sends HTTP GET or POST request to a given connection. If post data is
+   defined, POST will be used, otherwise GET. The default settings defined
+   as module params of the http_client module will be used for the
+   connection.
+
+   Meaning of the parameters is as follows:
+     * struct sip_msg *msg
+       The current sip message structure.
+     * const char *url
+       A string that will be used as the URL specified in the connection.
+     * str *dest
+       A pointer to a string that will contain the first line of the
+       response body. On success, the data is allocated in pkg memory by
+       the http_client module and must be freed by the caller.
+     * const char *post
+       If not null, the data will be posted to the URL.

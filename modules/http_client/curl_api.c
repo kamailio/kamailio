@@ -29,6 +29,7 @@ int bind_httpc_api(httpc_api_t *api)
 		return -1;
 	}
 	api->http_connect = curl_con_query_url;
+	api->http_query = http_query;
 
 	return 0;
 }

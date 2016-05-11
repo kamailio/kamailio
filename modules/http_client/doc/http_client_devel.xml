@@ -19,7 +19,9 @@
 			<function moreinfo="none">http_connect(msg, connection, url, result, content_type, post)</function>
 			</title>
 			<para>
-			Sends HTTP GET or POST request to a given connection.
+			Sends HTTP GET or POST request to a given connection. If content_type and post
+			are NULL GET will be used. If post is not null the data will be POSTed using
+			the specified content_type.
 			</para>
 			<para>
 			Returns the status code of the HTTP response (if &gt;= 100), or a curl error code (if &lt; 100)
@@ -65,6 +67,46 @@
 				<para>
 				A string containing the message body to send.
 				Use NULL when a message body is not required.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</section>
+		<section>
+			<title>
+			<function moreinfo="none">http_query(msg, url, dest, post)</function>
+			</title>
+			<para>
+			Sends HTTP GET or POST request to a given connection. If post data 
+			is defined, POST will be used, otherwise GET. The default settings
+			defined as module params of the http_client module will be used for
+			the connection.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>struct sip_msg *msg</emphasis></para>
+				<para>
+				The current sip message structure.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const char *url</emphasis></para>
+				<para>
+				A string that will be used as the URL specified in the connection.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>str *dest</emphasis></para>
+				<para>
+				A pointer to a string that will contain the first line of the response body.
+				On success, the data is allocated in pkg memory by the http_client module
+				and must be freed by the caller.
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>const char *post</emphasis></para>
+				<para>
+				If not null, the data will be posted to the URL.
 				</para>
 			</listitem>
 			</itemizedlist>
