@@ -12,10 +12,12 @@ changes to this document in a pull request.
 ### Table Of Contents ###
 
   * [Overview](#overview)
-  * [Basic Rules](#basic-rules)
-  * [Commit Message Format](#commit-message-format)
-    * [Examples Of Commit Messages](#examples-of-commit-messages)
-    * [See Also](#see-also)
+  * [Contributing Code Or Content](#contributing-code-or-content)
+    * [Basic Rules](#basic-rules)
+    * [Commit Message Format](#commit-message-format)
+      * [Examples Of Commit Messages](#examples-of-commit-messages)
+      * [See Also](#see-also)
+  * [Reporting Issues](#reporting-issues)
   * [License](#license)
     * [License Of New Code Contributions](#license-of-new-code-contributions)
   * [Further Assistance](#further-assistance)
@@ -28,7 +30,8 @@ contribution to code or documentation is very welcome and appreciated.
 In order to be easily able to track the changes and have a coherent ChangLog
 and commit history, there are several *rules* required for each contribution.
 
-## Basic Rules ##
+## Contributing Code Or Content ##
+### Basic Rules ###
 
   * github pull requests are the favourited mechanism to submit contributions
   (patches)
@@ -72,7 +75,7 @@ and commit history, there are several *rules* required for each contribution.
     regenerated in the corresponding branch.
 
 
-## Commit Message Format ##
+### Commit Message Format ###
 
 Please create the commit messages following the GIT convention:
 
@@ -93,7 +96,7 @@ Please start always with the prefix of the component (subsystem) that is modifie
   * lib_name: critical bug fix for abc case
   * kamctl: added support for management of module xyz
 
-### Examples Of Commit Messages ###
+#### Examples Of Commit Messages ####
 
   * change to usrloc module from modules
 
@@ -116,7 +119,7 @@ core: loadpath can now use a list of directories
   be loaded and the search will stop).
 ```
 
-### See Also ###
+#### See Also ####
 
   * [Creating Good Commit Messages](http://www.kernel.org/pub/software/scm/git/docs/user-manual.html#creating-good-commit-messages)
   * http://www.tpope.net/node/106
@@ -124,6 +127,28 @@ core: loadpath can now use a list of directories
 The above content about commit message format is taken from Kamailio wiki page:
   * https://www.kamailio.org/wiki/devel/git-commit-guidelines
   * it is recommended you read that one as well.
+
+## Reporting Issues ##
+
+Whenever reporting an issue, along with the description of the problems, try to
+include following details:
+
+  * kamailio version you are using
+    * the output of: **kamailio -v**
+  * the operating system being used
+  * the CPU architecture
+
+Always useful to have:
+
+  * whenever there is a crash with a corefile, send the backtrace
+    * the output of **bt full** in **gbd**
+  * log messages printed by kamailio in syslog file
+  * *pcap* or *ngrep* capture of SIP packets causing the issue
+  * config file snippets which expose the issues
+
+Note: replace any sensitive information in the content you add to the issue
+(e.g., passwords in modparams can be replaced with xyz, each IP address can be
+replaced with tokens like a.b.c.d, f.g.h.j).
 
 ## License ##
 
