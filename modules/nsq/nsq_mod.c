@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * NSQ module interface
  *
  * Copyright (C) 2016 Weave Communications
