@@ -327,7 +327,7 @@ int nsq_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
 			expires += (int)time(NULL);
 	}
 
-	if (mwi_new.len > 0)
+	if (mwi_new.len > 0) {
 		sprintf(body, MWI_BODY, mwi_waiting.len, mwi_waiting.s,
 		    mwi_account.len, mwi_account.s, mwi_new.len, mwi_new.s,
 		    mwi_saved.len, mwi_saved.s, mwi_urgent.len, mwi_urgent.s,
