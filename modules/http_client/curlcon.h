@@ -39,6 +39,10 @@ extern curl_con_t *_curl_con_root;
  */
 unsigned int curl_connection_count();
 
+/*! Check if CURL connection exists
+ */
+int http_connection_exists(str *name);
+
 int http_client_load_config(str *config_file);
 
 int curl_parse_param(char *val);

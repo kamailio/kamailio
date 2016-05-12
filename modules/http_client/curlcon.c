@@ -124,6 +124,20 @@ unsigned int curl_connection_count()
 }
 
 
+/*! Check if CURL connection exists
+ */
+int http_connection_exists(str *name)
+{
+	curl_con_t *cc;
+
+	if (curl_get_connection(name) != NULL) {
+		return 1;
+	}
+
+	LM_DBG("curl_connection_exists no success in looking for httpcon: [%.*s]\n", name->len, name->s);
+	return 0;
+}
+
 /*! Find CURL connection by name
  */
 curl_con_t* curl_get_connection(str *name)

@@ -73,6 +73,19 @@
 		</section>
 		<section>
 			<title>
+			<function moreinfo="none">int http_connection_exists(str *connection)</function>
+			</title>
+			<para>
+			Check if a connection definition exists. Connections are defined as modparam's
+			in the http_client modules.
+			</para>
+			<para>
+			Returns 1 if the connection exists, 0 if a connection with the given name can't
+			be found.
+			</para>
+		</section>
+		<section>
+			<title>
 			<function moreinfo="none">http_query(msg, url, dest, post)</function>
 			</title>
 			<para>
