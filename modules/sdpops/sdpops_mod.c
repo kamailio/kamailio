@@ -403,7 +403,7 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
-	body.len = msg->len - (body.s - msg->buf);
+
 	if (body.len==0) {
 		LM_DBG("message body has zero length\n");
 		return -1;
