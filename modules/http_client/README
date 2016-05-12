@@ -84,7 +84,8 @@ Hugh Waite
               1.1. http_connect(msg, connection, url, result,
                       content_type, post)
 
-              1.2. http_query(msg, url, dest, post)
+              1.2. int http_connection_exists(str *connection)
+              1.3. http_query(msg, url, dest, post)
 
    List of Examples
 
@@ -741,12 +742,14 @@ Chapter 2. Developer Guide
         1.1. http_connect(msg, connection, url, result, content_type,
                 post)
 
-        1.2. http_query(msg, url, dest, post)
+        1.2. int http_connection_exists(str *connection)
+        1.3. http_query(msg, url, dest, post)
 
 1. Available Functions
 
    1.1. http_connect(msg, connection, url, result, content_type, post)
-   1.2. http_query(msg, url, dest, post)
+   1.2. int http_connection_exists(str *connection)
+   1.3. http_query(msg, url, dest, post)
 
 1.1. http_connect(msg, connection, url, result, content_type, post)
 
@@ -777,7 +780,15 @@ Chapter 2. Developer Guide
        A string containing the message body to send. Use NULL when a
        message body is not required.
 
-1.2. http_query(msg, url, dest, post)
+1.2. int http_connection_exists(str *connection)
+
+   Check if a connection definition exists. Connections are defined as
+   modparam's in the http_client modules.
+
+   Returns 1 if the connection exists, 0 if a connection with the given
+   name can't be found.
+
+1.3. http_query(msg, url, dest, post)
 
    Sends HTTP GET or POST request to a given connection. If post data is
    defined, POST will be used, otherwise GET. The default settings defined
