@@ -74,7 +74,9 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 	LM_DBG("-<%d>-->[%.*s] \n",cmd_len,cmd_len,cmd);
 #endif
 	/* send the command to the modem */
-	write(mdm->fd,cmd,cmd_len);
+	if (write(mdm->fd,cmd,cmd_len)<0) {
+		LM_ERR("write error: %s\n", strerror(errno));
+	}
 	tcdrain(mdm->fd);
 
 	/* read from the modem */
