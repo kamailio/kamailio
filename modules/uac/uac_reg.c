@@ -648,11 +648,8 @@ int reg_ht_rm(reg_uac_t *reg)
 /**
  *
  */
-int reg_ht_update_attrs(reg_uac_t *reg)
+int reg_ht_update_attrs(reg_uac_t *cur, reg_uac_t *reg)
 {
-	unsigned int slot;
-	reg_item_t *ri = NULL;
-
 	if(_reg_htable==NULL)
 	{
 		LM_ERR("reg hash table not initialized\n");
@@ -670,31 +667,18 @@ int reg_ht_update_attrs(reg_uac_t *reg)
 		return -1;
 	}
 
-	slot = reg_get_entry(reg->h_user, _reg_htable->htsize);
-	lock_get(&_reg_htable->entries[slot].lock);
-	ri = _reg_htable->entries[slot].byuser;
-	while(ri) {
-		if(ri->r->l_uuid.len == reg->l_uuid.len
-				&& strncmp(ri->r->l_uuid.s, reg->l_uuid.s, reg->l_uuid.len)==0)
-		{
-			/* record found */
-			strncpy(ri->r->auth_password.s, reg->auth_password.s, reg->auth_password.len);
-			ri->r->auth_password.len = reg->auth_password.len;
-			ri->r->auth_password.s[reg->auth_password.len] = '\0';
-			strncpy(ri->r->auth_proxy.s, reg->auth_proxy.s, reg->auth_proxy.len);
-			ri->r->auth_proxy.len = reg->auth_proxy.len;
-			ri->r->auth_proxy.s[reg->auth_proxy.len] = '\0';
-			if(reg->flags & UAC_REG_DISABLED)
-				ri->r->flags |= UAC_REG_DISABLED;
-			else
-				ri->r->flags &= ~UAC_REG_DISABLED;
-			lock_release(&_reg_htable->entries[slot].lock);
-			return 0;
-		}
-		ri = ri->next;
-	}
-	lock_release(&_reg_htable->entries[slot].lock);
-	return -1;
+	strncpy(cur->auth_password.s, reg->auth_password.s, reg->auth_password.len);
+	cur->auth_password.len = reg->auth_password.len;
+	cur->auth_password.s[reg->auth_password.len] = '\0';
+	strncpy(cur->auth_proxy.s, reg->auth_proxy.s, reg->auth_proxy.len);
+	cur->auth_proxy.len = reg->auth_proxy.len;
+	cur->auth_proxy.s[reg->auth_proxy.len] = '\0';
+	if(reg->flags & UAC_REG_DISABLED)
+		ri->r->flags |= UAC_REG_DISABLED;
+	else
+		ri->r->flags &= ~UAC_REG_DISABLED;
+
+	return 0;
 }
 
 /**
@@ -1490,14 +1474,14 @@ int uac_reg_db_refresh(str *pl_uuid)
 	lock_get(_reg_htable_gc_lock);
 	if((cur_reg=reg_ht_get_byuuid(pl_uuid))!=NULL)
 	{
-		lock_release(cur_reg->lock);
-		if(reg_ht_update_attrs(&reg)<0)
+		if(reg_ht_update_attrs(cur_reg, &reg)<0)
 		{
 			lock_release(cur_reg->lock);
 			lock_release(_reg_htable_gc_lock);
 			LM_ERR("Error updating reg to htable\n");
 			goto error;
 		}
+		lock_release(cur_reg->lock);
 	} else {
 		if(reg_ht_add(&reg)<0)
 		{
