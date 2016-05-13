@@ -17,33 +17,25 @@
 		<firstname>Olle E.</firstname>
 		<surname>Johansson</surname>
 		<affiliation><orgname>Edvina AB</orgname></affiliation>
-		<address>
-			<email>oej@edvina.net</email>
-		</address>
+		<email>oej@edvina.net</email>
 		</author>
 		<author>
 		<firstname>Juha</firstname>
 		<surname>Heinanen</surname>
 		<affiliation><orgname>TutPro Inc.</orgname></affiliation>
-		<address>
-			<email>jh@tutpro.com</email>
-		</address>
+		<email>jh@tutpro.com</email>
 		</author>
 		<author>
 		<firstname>Carsten</firstname>
 		<surname>Bock</surname>
 		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
-		<address>
-			<email>carsten@ng-voice.com</email>
-		</address>
+		<email>carsten@ng-voice.com</email>
 		</author>
 		<author>
 		<firstname>Hugh</firstname>
 		<surname>Waite</surname>
 		<affiliation><orgname>Xura Inc</orgname></affiliation>
-		<address>
-			<email>hugh.waite@xura.com</email>
-		</address>
+		<email>hugh.waite@xura.com</email>
 		</author>
 	</authorgroup>
 	<copyright>

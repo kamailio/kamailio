@@ -1,4 +1,9 @@
 /*
+ * $Id$
+ *
+ * Kazoo module interface
+ *
+ * Copyright (C) 2010-2014 2600Hz
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -16,6 +21,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * Contributor(s):
+ * Emmanuel Schmidbauer <emmanuel@getweave.com>
+ *
+ * History:
+ * --------
+ * 2014-08  first version (2600hz)
+ * 2016-03  port to NSQ Module (Weave Communications)
  */
 
 #include "../presence/bind_presence.h"
@@ -315,14 +327,17 @@ int nsq_pua_publish_mwi_to_presentity(struct json_object *json_obj) {
 			expires += (int)time(NULL);
 	}
 
-	if (mwi_voice_message.len > 0) {
-		sprintf(body, MWI_BODY_VOICE_MESSAGE, mwi_waiting.len, mwi_waiting.s,
-		    mwi_account.len, mwi_account.s, mwi_voice_message.len, mwi_voice_message.s);
-	} else {
+	if (mwi_new.len > 0) {
 		sprintf(body, MWI_BODY, mwi_waiting.len, mwi_waiting.s,
 		    mwi_account.len, mwi_account.s, mwi_new.len, mwi_new.s,
 		    mwi_saved.len, mwi_saved.s, mwi_urgent.len, mwi_urgent.s,
 		    mwi_urgent_saved.len, mwi_urgent_saved.s);
+	} else if (mwi_voice_message.len > 0) {
+		sprintf(body, MWI_BODY_VOICE_MESSAGE, mwi_waiting.len, mwi_waiting.s,
+		    mwi_account.len, mwi_account.s, mwi_voice_message.len, mwi_voice_message.s);
+	} else {
+		sprintf(body, MWI_BODY_NO_VOICE_MESSAGE, mwi_waiting.len, mwi_waiting.s,
+		    mwi_account.len, mwi_account.s);
 	}
 
 	mwi_body.s = body;

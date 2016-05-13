@@ -35,6 +35,7 @@
 #include "../../ut.h"
 #include "../../hashes.h"
 #include "../../lib/kmi/mi.h"
+#include "../../lib/kcore/statistics.h"
 #include "dlg_timer.h"
 #include "dlg_var.h"
 #include "dlg_hash.h"

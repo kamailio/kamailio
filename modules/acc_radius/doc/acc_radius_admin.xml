@@ -55,7 +55,7 @@
 				url='https://github.com/FreeRADIUS/freeradius-client/'>
 				https://github.com/FreeRADIUS/freeradius-client/</ulink> or
 				<emphasis>radcli</emphasis> <ulink
-				url='http://radcli.github.io/radcli/'
+					url='http://radcli.github.io/radcli/'>
 				http://radcli.github.io/radcli/</ulink>.
 				</para>
 				</listitem>

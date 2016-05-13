@@ -149,9 +149,14 @@ Chapter 1. Admin Guide
 2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
-   compilling Kamailio with this module loaded:
-     * radiusclient-ng 0.5.6 or higher -- library and development files.
-       See http://developer.berlios.de/projects/radiusclient-ng/.
+   running Kamailio with this module loaded:
+     * radiusclient-ng 0.5.0 or higher, freeradius-client
+       https://github.com/FreeRADIUS/freeradius-client/ or radcli
+       http://radcli.github.io/radcli/.
+     * freeradius-client library can be used after setting FREERADIUS
+       variable in source code with 'export FREERADIUS=1' before compile.
+     * radcli library can be used after setting RADCLI variable in source
+       code with 'export RADCLI=1' before compile.
 
 3. Parameters
 

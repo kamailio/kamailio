@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * NSQ module interface
  *
  * Copyright (C) 2016 Weave Communications
@@ -68,14 +70,14 @@ static param_export_t params[]=
 
 static void free_tc_list(nsq_topic_channel_t *tcl)
 {
-	nsq_topic_channel_t *tc, *prev_tc;
+	nsq_topic_channel_t *tc, *tc0;
 	tc = tcl;
 	while (tc) {
-		prev_tc = tc;
-		tc = tc->next;
+		tc0 = tc->next;
 		free(tc->topic);
 		free(tc->channel);
-		pkg_free(prev_tc);
+		pkg_free(tc);
+		tc = tc0;
 	}
 	tcl = NULL;
 }

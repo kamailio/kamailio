@@ -81,6 +81,10 @@ int db_free_columns(db1_res_t* _r)
 	for(col = 0; col < RES_COL_N(_r); col++) {
 		if (RES_NAMES(_r)[col]!=NULL) {
 			LM_DBG("freeing RES_NAMES[%d] at %p\n", col, RES_NAMES(_r)[col]);
+			/* free column name if it was allocated */
+			if ((RES_COL_FLAGS(_r) & DB1_FCOL_FREE) && RES_NAMES(_r)[col]->s != NULL) {
+				pkg_free(RES_NAMES(_r)[col]->s);
+			}
 			pkg_free((str *)RES_NAMES(_r)[col]);
 			RES_NAMES(_r)[col] = NULL;
 		}
