@@ -574,7 +574,7 @@ int reg_ht_add(reg_uac_t *reg)
   */
 int reg_ht_rm(reg_uac_t *reg)
 {
-	unsigned int slot;
+	unsigned int slot1, slot2;
 	reg_item_t *it = NULL;
 	reg_item_t *prev = NULL;
 	int found = 0;
@@ -586,9 +586,8 @@ int reg_ht_rm(reg_uac_t *reg)
 	}
 
 	/* by uuid */
-	slot = reg_get_entry(reg->h_uuid, _reg_htable->htsize);
-	lock_get(&_reg_htable->entries[slot].lock);
-	it = _reg_htable->entries[slot].byuuid;
+	slot1 = reg_get_entry(reg->h_uuid, _reg_htable->htsize);
+	it = _reg_htable->entries[slot1].byuuid;
 	while (it)
 	{
 		if (it->r == reg)
@@ -596,8 +595,8 @@ int reg_ht_rm(reg_uac_t *reg)
 			if (prev)
 				prev->next=it->next;
 			else
-				_reg_htable->entries[slot].byuuid = it->next;
-			_reg_htable->entries[slot].isize--;
+				_reg_htable->entries[slot1].byuuid = it->next;
+			_reg_htable->entries[slot1].isize--;
 			shm_free(it);
 			found = 1;
 			break;
@@ -605,13 +604,14 @@ int reg_ht_rm(reg_uac_t *reg)
 		prev = it;
 		it = it->next;
 	}
-	lock_release(&_reg_htable->entries[slot].lock);
 
 	/* by user */
 	prev = NULL;
-	slot = reg_get_entry(reg->h_user, _reg_htable->htsize);
-	lock_get(&_reg_htable->entries[slot].lock);
-	it = _reg_htable->entries[slot].byuser;
+	slot2 = reg_get_entry(reg->h_user, _reg_htable->htsize);
+	if (slot2 != slot1) {
+		lock_get(&_reg_htable->entries[slot2].lock);
+	}
+	it = _reg_htable->entries[slot2].byuser;
 	while (it)
 	{
 		if (it->r == reg)
@@ -619,8 +619,8 @@ int reg_ht_rm(reg_uac_t *reg)
 			if (prev)
 				prev->next=it->next;
 			else
-				_reg_htable->entries[slot].byuser = it->next;
-			_reg_htable->entries[slot].usize--;
+				_reg_htable->entries[slot2].byuser = it->next;
+			_reg_htable->entries[slot2].usize--;
 			shm_free(it);
 			break;
 		}
@@ -629,7 +629,10 @@ int reg_ht_rm(reg_uac_t *reg)
 	}
 
 	shm_free(reg);
-	lock_release(&_reg_htable->entries[slot].lock);
+	if (slot2 != slot1) {
+		lock_release(&_reg_htable->entries[slot2].lock);
+	}
+	lock_release(&_reg_htable->entries[slot1].lock);
 
 	if (found) {
 		counter_add(regtotal, -1);
@@ -1953,6 +1956,36 @@ static void rpc_uac_reg_refresh(rpc_t* rpc, void* ctx)
 	}
 }
 
+static const char* rpc_uac_reg_remove_doc[2] = {
+	"Remove a record from memory.",
+	0
+};
+
+static void rpc_uac_reg_remove(rpc_t* rpc, void* ctx)
+{
+	int ret;
+	str l_uuid;
+	reg_uac_t *reg;
+
+	if(rpc->scan(ctx, "S", &l_uuid)<1)
+	{
+		rpc->fault(ctx, 400, "Invalid Parameters");
+		return;
+	}
+	reg = reg_ht_get_byuuid(&l_uuid);
+	if (!reg) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	}
+
+	ret = reg_ht_rm(reg);
+	if(ret<0) {
+		rpc->fault(ctx, 500, "Failed to remove record - check log messages");
+		return;
+	}
+}
+
+
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, RET_ARRAY},
 	{"uac.reg_info", rpc_uac_reg_info, rpc_uac_reg_info_doc, 0},
@@ -1960,6 +1993,7 @@ rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_disable", rpc_uac_reg_disable, rpc_uac_reg_disable_doc, 0},
 	{"uac.reg_reload",  rpc_uac_reg_reload,  rpc_uac_reg_reload_doc,  0},
 	{"uac.reg_refresh", rpc_uac_reg_refresh, rpc_uac_reg_refresh_doc, 0},
+	{"uac.reg_remove", rpc_uac_reg_remove, rpc_uac_reg_remove_doc, 0},
 	{0, 0, 0, 0}
 };
 
