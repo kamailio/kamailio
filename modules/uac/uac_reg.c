@@ -1465,7 +1465,7 @@ nextrec:
 	reg_dbf.free_result(reg_db_con, db_res);
 	reg_dbf.close(reg_db_con);
 
-	return 0;
+	return 1;
 
 error:
 	if (reg_db_con) {
@@ -1760,13 +1760,13 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 
 	if(rpc->scan(ctx, "S.S", &attr, &val)<2)
 	{
-		rpc->fault(ctx, 500, "Invalid Parameters");
+		rpc->fault(ctx, 400, "Invalid Parameters");
 		return;
 	}
 	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL)
 	{
 		LM_ERR("bad parameter values\n");
-		rpc->fault(ctx, 500, "Invalid Parameter Values");
+		rpc->fault(ctx, 400, "Invalid Parameter Values");
 		return;
 	}
 
@@ -1789,8 +1789,8 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 				rval = &reg->r->auth_username;
 			} else {
 				lock_release(&_reg_htable->entries[i].lock);
-				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
-				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
+				LM_ERR("unsupported filter attribute %.*s\n", attr.len, attr.s);
+				rpc->fault(ctx, 400, "Unsupported Filter Attribtue");
 				return;
 			}
 
@@ -1807,6 +1807,7 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 		}
 		lock_release(&_reg_htable->entries[i].lock);
 	}
+	rpc->fault(ctx, 404, "Record not found");
 }
 
 
@@ -1826,13 +1827,13 @@ static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 
 	if(rpc->scan(ctx, "S.S", &attr, &val)<2)
 	{
-		rpc->fault(ctx, 500, "Invalid Parameters");
+		rpc->fault(ctx, 400, "Invalid Parameters");
 		return;
 	}
 	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL)
 	{
 		LM_ERR("bad parameter values\n");
-		rpc->fault(ctx, 500, "Invalid Parameter Values");
+		rpc->fault(ctx, 400, "Invalid Parameter Values");
 		return;
 	}
 
@@ -1853,8 +1854,8 @@ static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 				rval = &reg->r->auth_username;
 			} else {
 				lock_release(&_reg_htable->entries[i].lock);
-				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
-				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
+				LM_ERR("unsupported filter attribute %.*s\n", attr.len, attr.s);
+				rpc->fault(ctx, 400, "Unsupported Filter Attribtue");
 				return;
 			}
 
@@ -1873,6 +1874,7 @@ static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 		}
 		lock_release(&_reg_htable->entries[i].lock);
 	}
+	rpc->fault(ctx, 404, "Record not found");
 }
 
 static const char* rpc_uac_reg_enable_doc[2] = {
@@ -1930,12 +1932,15 @@ static void rpc_uac_reg_refresh(rpc_t* rpc, void* ctx)
 
 	if(rpc->scan(ctx, "S", &l_uuid)<1)
 	{
-		rpc->fault(ctx, 500, "Invalid Parameters");
+		rpc->fault(ctx, 400, "Invalid Parameters");
 		return;
 	}
 
 	ret =  uac_reg_db_refresh(&l_uuid);
-	if(ret<0) {
+	if(ret==0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if(ret<0) {
 		rpc->fault(ctx, 500, "Failed to refresh record - check log messages");
 		return;
 	}
