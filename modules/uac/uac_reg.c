@@ -773,6 +773,54 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 	return NULL;
 }
 
+int reg_ht_get_byfilter(reg_uac_t **reg, str *attr, str *val)
+{
+	int i;
+	str *rval;
+	reg_item_t *it;
+
+	/* try to use the hash table indices */
+	if(attr->len==6 && strncmp(attr->s, "l_uuid", 6)==0) {
+		*reg = reg_ht_get_byuuid(val);
+		return *reg != NULL;
+	}
+	if(attr->len==10 && strncmp(attr->s, "l_username", 10)==0) {
+		*reg = reg_ht_get_byuser(val, NULL);
+		return *reg != NULL;
+	}
+
+	/* check _all_ records */
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		lock_get(&_reg_htable->entries[i].lock);
+		/* walk through entries */
+		it = _reg_htable->entries[i].byuuid;
+		while(it)
+		{
+			if(attr->len==10 && strncmp(attr->s, "r_username", 10)==0) {
+				rval = &it->r->r_username;
+			} else if(attr->len==13 && strncmp(attr->s, "auth_username", 13)==0) {
+				rval = &it->r->auth_username;
+			} else {
+				lock_release(&_reg_htable->entries[i].lock);
+				LM_ERR("unsupported filter attribute %.*s\n", attr->len, attr->s);
+				return -1;
+			}
+
+			if(rval->len==val->len && strncmp(val->s, rval->s, val->len)==0) {
+				/* found */
+				*reg = it->r;
+				(*reg)->lock = &_reg_htable->entries[i].lock;
+				return 1;
+			}
+			it = it->next;
+		}
+		lock_release(&_reg_htable->entries[i].lock);
+	}
+	*reg = NULL;
+	return 0;
+}
+
 int uac_reg_tmdlg(dlg_t *tmdlg, sip_msg_t *rpl)
 {
 	if(tmdlg==NULL || rpl==NULL)
@@ -1745,12 +1793,10 @@ static const char* rpc_uac_reg_info_doc[2] = {
 
 static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 {
-	int i;
-	reg_item_t *reg = NULL;
-	time_t tn;
+	reg_uac_t *reg = NULL;
 	str attr = {0};
 	str val = {0};
-	str *rval;
+	int ret;
 
 	if(_reg_htable==NULL)
 	{
@@ -1770,54 +1816,27 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	tn = time(NULL);
-
-	for(i=0; i<_reg_htable->htsize; i++)
-	{
-		/* walk through entries */
-		lock_get(&_reg_htable->entries[i].lock);
-		reg = _reg_htable->entries[i].byuuid;
-		while(reg)
-		{
-			if(attr.len==10 && strncmp(attr.s, "l_username", 10)==0) {
-				rval = &reg->r->l_username;
-			} else if(attr.len==10 && strncmp(attr.s, "r_username", 10)==0) {
-				rval = &reg->r->r_username;
-			} else if(attr.len==6 && strncmp(attr.s, "l_uuid", 6)==0) {
-				rval = &reg->r->l_uuid;
-			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
-				rval = &reg->r->auth_username;
-			} else {
-				lock_release(&_reg_htable->entries[i].lock);
-				LM_ERR("unsupported filter attribute %.*s\n", attr.len, attr.s);
-				rpc->fault(ctx, 400, "Unsupported Filter Attribtue");
-				return;
-			}
-
-			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
-				if (rpc_uac_reg_add_node_helper(rpc, ctx, reg->r, tn)<0)
-				{
-					lock_release(&_reg_htable->entries[i].lock);
-					return;
-				}
-				lock_release(&_reg_htable->entries[i].lock);
-				return;
-			}
-			reg = reg->next;
-		}
-		lock_release(&_reg_htable->entries[i].lock);
+	ret = reg_ht_get_byfilter(&reg, &attr, &val);
+	if (ret == 0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if (ret < 0) {
+		rpc->fault(ctx, 400, "Unsupported filter attribute");
+		return;
 	}
-	rpc->fault(ctx, 404, "Record not found");
+
+	rpc_uac_reg_add_node_helper(rpc, ctx, reg, time(NULL));
+	lock_release(reg->lock);
+	return;
 }
 
 
 static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 {
-	int i;
-	reg_item_t *reg = NULL;
+	reg_uac_t *reg = NULL;
 	str attr = {0};
 	str val = {0};
-	str *rval;
+	int ret;
 
 	if(_reg_htable==NULL)
 	{
@@ -1837,44 +1856,24 @@ static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 		return;
 	}
 
-	for(i=0; i<_reg_htable->htsize; i++)
-	{
-		lock_get(&_reg_htable->entries[i].lock);
-		/* walk through entries */
-		reg = _reg_htable->entries[i].byuuid;
-		while(reg)
-		{
-			if(attr.len==10 && strncmp(attr.s, "l_username", 10)==0) {
-				rval = &reg->r->l_username;
-			} else if(attr.len==10 && strncmp(attr.s, "r_username", 10)==0) {
-				rval = &reg->r->r_username;
-			} else if(attr.len==6 && strncmp(attr.s, "l_uuid", 6)==0) {
-				rval = &reg->r->l_uuid;
-			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
-				rval = &reg->r->auth_username;
-			} else {
-				lock_release(&_reg_htable->entries[i].lock);
-				LM_ERR("unsupported filter attribute %.*s\n", attr.len, attr.s);
-				rpc->fault(ctx, 400, "Unsupported Filter Attribtue");
-				return;
-			}
-
-			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
-				/* found */
-				if(mode==1) {
-					reg->r->flags |= fval;
-				} else {
-					reg->r->flags &= ~fval;
-				}
-				reg->r->timer_expires = time(NULL) + 1;
-				lock_release(&_reg_htable->entries[i].lock);
-				return;
-			}
-			reg = reg->next;
-		}
-		lock_release(&_reg_htable->entries[i].lock);
+	ret = reg_ht_get_byfilter(&reg, &attr, &val);
+	if (ret == 0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if (ret < 0) {
+		rpc->fault(ctx, 400, "Unsupported filter attribute");
+		return;
 	}
-	rpc->fault(ctx, 404, "Record not found");
+
+	if(mode==1) {
+		reg->flags |= fval;
+	} else {
+		reg->flags &= ~fval;
+	}
+	reg->timer_expires = time(NULL) + 1;
+
+	lock_release(reg->lock);
+	return;
 }
 
 static const char* rpc_uac_reg_enable_doc[2] = {
