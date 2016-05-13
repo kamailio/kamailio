@@ -1985,6 +1985,50 @@ static void rpc_uac_reg_remove(rpc_t* rpc, void* ctx)
 	}
 }
 
+static const char* rpc_uac_reg_add_doc[2] = {
+	"Add a record to memory.",
+	0
+};
+
+static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
+{
+	int ret;
+	reg_uac_t reg;
+	reg_uac_t *cur_reg;
+
+	if(rpc->scan(ctx, "SSSSSSSSSddd",
+				&reg.l_uuid,
+				&reg.l_username,
+				&reg.l_domain,
+				&reg.r_username,
+				&reg.r_domain,
+				&reg.realm,
+				&reg.auth_username,
+				&reg.auth_password,
+				&reg.auth_proxy,
+				&reg.expires,
+				&reg.flags,
+				&reg.reg_delay
+			)<1)
+	{
+		rpc->fault(ctx, 400, "Invalid Parameters");
+		return;
+	}
+
+	cur_reg = reg_ht_get_byuuid(&reg.l_uuid);
+	if (cur_reg) {
+		lock_release(cur_reg->lock);
+		rpc->fault(ctx, 409, "uuid already exists");
+		return;
+	}
+
+	ret = reg_ht_add(&reg);
+	if(ret<0) {
+		rpc->fault(ctx, 500, "Failed to add record - check log messages");
+		return;
+	}
+}
+
 
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, RET_ARRAY},
@@ -1994,6 +2038,7 @@ rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_reload",  rpc_uac_reg_reload,  rpc_uac_reg_reload_doc,  0},
 	{"uac.reg_refresh", rpc_uac_reg_refresh, rpc_uac_reg_refresh_doc, 0},
 	{"uac.reg_remove", rpc_uac_reg_remove, rpc_uac_reg_remove_doc, 0},
+	{"uac.reg_add", rpc_uac_reg_add, rpc_uac_reg_add_doc, 0},
 	{0, 0, 0, 0}
 };
 
