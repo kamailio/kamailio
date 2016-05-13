@@ -301,6 +301,8 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	int action, expires, cseq, flags, cflags, q, last_modified, methods, reg_id;
 	str aor, ruid, c, received, path, callid, user_agent, instance;
 
+	action = expires = cseq = flags = cflags = q = last_modified = methods = reg_id = 0;
+
 	parse_from_header(msg);
 	body = ((struct to_body*)msg->from->parsed)->uri;
 
