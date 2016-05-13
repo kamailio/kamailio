@@ -1666,6 +1666,41 @@ error:
 	return -1;
 }
 
+static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, time_t tn)
+{
+	void* th;
+	str none = {"none", 4};
+
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error creating rpc");
+		return -1;
+	}
+	if (rpc->struct_add(th, "SSSSSSSSSdddddd",
+				"l_uuid",        &reg->l_uuid,
+				"l_username",    &reg->l_username,
+				"l_domain",      &reg->l_domain,
+				"r_username",    &reg->r_username,
+				"r_domain",      &reg->r_domain,
+				"realm",         &reg->realm,
+				"auth_username", &reg->auth_username,
+				"auth_password", &reg->auth_password,
+				"auth_proxy",    (reg->auth_proxy.len)?
+				&reg->auth_proxy:&none,
+				"expires",       (int)reg->expires,
+				"flags",         (int)reg->flags,
+				"diff_expires",  (int)(reg->timer_expires - tn),
+				"timer_expires", (int)reg->timer_expires,
+				"reg_init",      (int)reg->reg_init,
+				"reg_delay",     (int)reg->reg_delay
+				)<0) {
+		rpc->fault(ctx, 500, "Internal error adding item");
+		return -1;
+	}
+	return 0;
+}
+
 static const char* rpc_uac_reg_dump_doc[2] = {
 	"Dump the contents of user registrations table.",
 	0
@@ -1675,8 +1710,6 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 {
 	int i;
 	reg_item_t *reg = NULL;
-	void* th;
-	str none = {"none", 4};
 	time_t tn;
 
 	if(_reg_htable==NULL)
@@ -1694,33 +1727,9 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 		reg = _reg_htable->entries[i].byuuid;
 		while(reg)
 		{
-			/* add entry node */
-			if (rpc->add(ctx, "{", &th) < 0)
-			{
-				rpc->fault(ctx, 500, "Internal error creating rpc");
-				return;
-			}
-			if(rpc->struct_add(th, "SSSSSSSSSdddddd",
-						"l_uuid",        &reg->r->l_uuid,
-						"l_username",    &reg->r->l_username,
-						"l_domain",      &reg->r->l_domain,
-						"r_username",    &reg->r->r_username,
-						"r_domain",      &reg->r->r_domain,
-						"realm",         &reg->r->realm,
-						"auth_username", &reg->r->auth_username,
-						"auth_password", &reg->r->auth_password,
-						"auth_proxy",    (reg->r->auth_proxy.len)?
-						&reg->r->auth_proxy:&none,
-						"expires",       (int)reg->r->expires,
-						"flags",         (int)reg->r->flags,
-						"diff_expires",  (int)(reg->r->timer_expires - tn),
-						"timer_expires", (int)reg->r->timer_expires,
-						"reg_init",      (int)reg->r->reg_init,
-						"reg_delay",     (int)reg->r->reg_delay
-						)<0)
+			if (rpc_uac_reg_add_node_helper(rpc, ctx, reg->r, tn)<0)
 			{
 				lock_release(&_reg_htable->entries[i].lock);
-				rpc->fault(ctx, 500, "Internal error adding item");
 				return;
 			}
 			reg = reg->next;
@@ -1738,8 +1747,6 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 {
 	int i;
 	reg_item_t *reg = NULL;
-	void* th;
-	str none = {"none", 4};
 	time_t tn;
 	str attr = {0};
 	str val = {0};
@@ -1788,31 +1795,9 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 			}
 
 			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
-				/* add entry node */
-				if (rpc->add(ctx, "{", &th) < 0)
-				{
-					rpc->fault(ctx, 500, "Internal error creating rpc");
-					return;
-				}
-				if(rpc->struct_add(th, "SSSSSSSSSdddd",
-							"l_uuid",        &reg->r->l_uuid,
-							"l_username",    &reg->r->l_username,
-							"l_domain",      &reg->r->l_domain,
-							"r_username",    &reg->r->r_username,
-							"r_domain",      &reg->r->r_domain,
-							"realm",         &reg->r->realm,
-							"auth_username", &reg->r->auth_username,
-							"auth_password", &reg->r->auth_password,
-							"auth_proxy",    (reg->r->auth_proxy.len)?
-							&reg->r->auth_proxy:&none,
-							"expires",       (int)reg->r->expires,
-							"flags",         (int)reg->r->flags,
-							"diff_expires",  (int)(reg->r->timer_expires - tn),
-							"timer_expires", (int)reg->r->timer_expires
-							)<0)
+				if (rpc_uac_reg_add_node_helper(rpc, ctx, reg->r, tn)<0)
 				{
 					lock_release(&_reg_htable->entries[i].lock);
-					rpc->fault(ctx, 500, "Internal error adding item");
 					return;
 				}
 				lock_release(&_reg_htable->entries[i].lock);
