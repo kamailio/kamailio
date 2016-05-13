@@ -568,6 +568,79 @@ int reg_ht_add(reg_uac_t *reg)
 }
 
 
+ /**
+  *
+  */
+int reg_ht_rm(reg_uac_t *reg)
+{
+	unsigned int slot;
+	reg_item_t *it = NULL;
+	reg_item_t *prev = NULL;
+	int found = 0;
+
+	if (reg == NULL)
+	{
+		LM_ERR("bad parameter\n");
+		return -1;
+	}
+
+	/* by uuid */
+	slot = reg_get_entry(reg->h_uuid, _reg_htable->htsize);
+	lock_get(&_reg_htable->entries[slot].lock);
+	it = _reg_htable->entries[slot].byuuid;
+	while (it)
+	{
+		if (it->r == reg)
+		{
+			if (prev)
+				prev->next=it->next;
+			else
+				_reg_htable->entries[slot].byuuid = it->next;
+			_reg_htable->entries[slot].isize--;
+			shm_free(it);
+			found = 1;
+			break;
+		}
+		prev = it;
+		it = it->next;
+	}
+	lock_release(&_reg_htable->entries[slot].lock);
+
+	/* by user */
+	prev = NULL;
+	slot = reg_get_entry(reg->h_user, _reg_htable->htsize);
+	lock_get(&_reg_htable->entries[slot].lock);
+	it = _reg_htable->entries[slot].byuser;
+	while (it)
+	{
+		if (it->r == reg)
+		{
+			if (prev)
+				prev->next=it->next;
+			else
+				_reg_htable->entries[slot].byuser = it->next;
+			_reg_htable->entries[slot].usize--;
+			shm_free(it);
+			break;
+		}
+		prev = it;
+		it = it->next;
+	}
+
+	shm_free(reg);
+	lock_release(&_reg_htable->entries[slot].lock);
+
+	if (found) {
+		counter_add(regtotal, -1);
+		if(reg->flags & UAC_REG_ONLINE)
+			counter_add(regactive, -1);
+		if(reg->flags & UAC_REG_DISABLED)
+			counter_add(regdisabled, -1);
+	}
+	return 0;
+}
+
+
 /**
  *
  */
