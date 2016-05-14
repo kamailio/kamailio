@@ -34,7 +34,8 @@ Matthew Williams
 
               4.1. janssonrpc_notification(conn, method, parameters)
               4.2. janssonrpc_request(conn, method, params[, options]])
-              4.3. Error Handling
+
+        5. Error Handling
 
    List of Examples
 
@@ -67,7 +68,8 @@ Chapter 1. Admin Guide
 
         4.1. janssonrpc_notification(conn, method, parameters)
         4.2. janssonrpc_request(conn, method, params[, options]])
-        4.3. Error Handling
+
+   5. Error Handling
 
 1. Overview
 
@@ -187,7 +189,6 @@ modparam("janssonrpc-s", "retry_codes", "-32603, -32000..-32099");
 
    4.1. janssonrpc_notification(conn, method, parameters)
    4.2. janssonrpc_request(conn, method, params[, options]])
-   4.3. Error Handling
 
 4.1. janssonrpc_notification(conn, method, parameters)
 
@@ -261,7 +262,7 @@ route[RESPONSE] {
 }
 ...
 
-4.3. Error Handling
+5. Error Handling
 
    When a route is specified as part of the janssonrpc_request() function,
    a JSON object is stored in the result pseudo-variable (see
