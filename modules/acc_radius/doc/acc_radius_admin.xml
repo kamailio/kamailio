@@ -11,20 +11,20 @@
 <!-- Acc Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-		ACC_RADIUS module is used to account transaction information to 
+		ACC_RADIUS module is used to account transaction information to
 		<acronym>RADIUS</acronym> server. It binds to ACC module API and uses the
 		same accounting mechanisms as for other backends.
 	</para>
 	<para>
 		Therefore you need this module just to send accounting data to a
 		RADIUS server - for more documentation regarding accounting, see the ACC
-		readme. 
+		readme.
 	</para>
 	</section>
 
@@ -33,7 +33,7 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words 
+			The module depends on the following modules (in the other words
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 				<listitem>
@@ -45,7 +45,7 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-			The following libraries or applications must be installed 
+			The following libraries or applications must be installed
 			before running &kamailio; with this module loaded:
 			</para>
 			<itemizedlist>
@@ -61,8 +61,8 @@
 				</listitem>
 				<listitem>
 				<para>
-				<emphasis>freeradius-client</emphasis> library can be used after 
-				setting FREERADIUS variable in source code with 
+				<emphasis>freeradius-client</emphasis> library can be used after
+				setting FREERADIUS variable in source code with
 				<emphasis>'export FREERADIUS=1'</emphasis> before compile.
 				</para>
 				</listitem>
@@ -79,14 +79,14 @@
 
 	<section id="ACC-param-id">
 	<title>Parameters</title>
-	<section>
+	<section id="acc_radius.p.radius_config">
 		<title><varname>radius_config</varname> (string)</title>
 		<para>
-		<emphasis>This parameter is radius specific.</emphasis> Path to 
-		radius client configuration file, set the referred config file 
-		correctly and specify there address of server, shared secret 
+		<emphasis>This parameter is radius specific.</emphasis> Path to
+		radius client configuration file, set the referred config file
+		correctly and specify there address of server, shared secret
 		(should equal that in /usr/local/etc/raddb/clients for
-		freeRadius servers) and dictionary, see etc for an example of 
+		freeRadius servers) and dictionary, see etc for an example of
 		config file and dictionary.
 		</para>
 		<para>
@@ -105,10 +105,10 @@ modparam("acc_radius", "radius_config", "/etc/radiusclient/radiusclient.conf")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc_radius.p.radius_flag">
 		<title><varname>radius_flag</varname> (integer)</title>
 		<para>
-		Request flag which needs to be set to account a 
+		Request flag which needs to be set to account a
 		transaction -- RADIUS specific.
 		</para>
 		<para>
@@ -123,10 +123,10 @@ modparam("acc_radius", "radius_flag", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc_radius.p.radius_missed_flag">
 		<title><varname>radius_missed_flag</varname> (integer)</title>
 		<para>
-		Request flag which needs to be set to account missed 
+		Request flag which needs to be set to account missed
 		calls -- RADIUS specific.
 		</para>
 		<para>
@@ -141,7 +141,7 @@ modparam("acc_radius", "radius_missed_flag", 3)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc_radius.p.service_type">
 		<title><varname>service_type</varname> (integer)</title>
 		<para>
 		Radius service type used for accounting.
@@ -158,7 +158,7 @@ modparam("acc_radius", "service_type", 16)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc_radius.p.radius_extra">
 		<title><varname>radius_extra</varname> (string)</title>
 		<para>
 		Extra values to be logged via RADIUS - RADIUS specific.
@@ -175,10 +175,10 @@ modparam("acc_radius", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="acc_radius.p.rad_time_mod">
 		<title><varname>rad_time_mode</varname>(integer)</title>
 		<para>
-		Radius Event-Timestamp for accounting. 
+		Radius Event-Timestamp for accounting.
 		</para>
 		<para>
 		Values can be:
@@ -194,8 +194,8 @@ modparam("acc_radius", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 			both radius server and client
 			(For example: 1445590624.377372)   </para>
 		</listitem>
- 		</itemizedlist>
-		
+		</itemizedlist>
+
 		<para>
 		Default value is 0 (Unix timestamp).
 		</para>
@@ -212,14 +212,14 @@ modparam("acc_radius", "rad_time_mode", 1)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="acc_radius.f.acc_rad_request">
 		<title>
 			<function moreinfo="none">acc_rad_request(comment)</function>
 		</title>
 		<para>
-		Like <function moreinfo="none">acc_log_request</function> of acc module, 
-		<function moreinfo="none">acc_rad_request</function> reports on 
-		a SIP request event. It reports to radius server as configured in 
+		Like <function moreinfo="none">acc_log_request</function> of acc module,
+		<function moreinfo="none">acc_rad_request</function> reports on
+		a SIP request event. It reports to radius server as configured in
 		<quote>radius_config</quote>.
 		</para>
 		<para>
