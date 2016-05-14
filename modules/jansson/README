@@ -23,17 +23,13 @@ Matthew Williams
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Parameters
+        3. Functions
 
-              3.1.
-
-        4. Functions
-
-              4.1. jansson_get(key/path, src, dst)
-              4.2. jansson_set(type, key/path, value, result)
-              4.3. jansson_append(type, key/path, value, result)
-              4.4. jansson_array_size(key/path, src, dst)
-              4.5. jansson_get_field(src, field_name, dst)
+              3.1. jansson_get(key/path, src, dst)
+              3.2. jansson_set(type, key/path, value, result)
+              3.3. jansson_append(type, key/path, value, result)
+              3.4. jansson_array_size(key/path, src, dst)
+              3.5. jansson_get_field(src, field_name, dst)
 
    List of Examples
 
@@ -54,17 +50,13 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Parameters
+   3. Functions
 
-        3.1.
-
-   4. Functions
-
-        4.1. jansson_get(key/path, src, dst)
-        4.2. jansson_set(type, key/path, value, result)
-        4.3. jansson_append(type, key/path, value, result)
-        4.4. jansson_array_size(key/path, src, dst)
-        4.5. jansson_get_field(src, field_name, dst)
+        3.1. jansson_get(key/path, src, dst)
+        3.2. jansson_set(type, key/path, value, result)
+        3.3. jansson_append(type, key/path, value, result)
+        3.4. jansson_array_size(key/path, src, dst)
+        3.5. jansson_get_field(src, field_name, dst)
 
 1. Overview
 
@@ -87,21 +79,15 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * jansson (http://www.digip.org/jansson/), tested with: 2.2+
 
-3. Parameters
+3. Functions
 
-   3.1.
+   3.1. jansson_get(key/path, src, dst)
+   3.2. jansson_set(type, key/path, value, result)
+   3.3. jansson_append(type, key/path, value, result)
+   3.4. jansson_array_size(key/path, src, dst)
+   3.5. jansson_get_field(src, field_name, dst)
 
-   None
-
-4. Functions
-
-   4.1. jansson_get(key/path, src, dst)
-   4.2. jansson_set(type, key/path, value, result)
-   4.3. jansson_append(type, key/path, value, result)
-   4.4. jansson_array_size(key/path, src, dst)
-   4.5. jansson_get_field(src, field_name, dst)
-
-4.1. jansson_get(key/path, src, dst)
+3.1. jansson_get(key/path, src, dst)
 
    Copy the value at the location 'path' from the json object 'src' and
    store it in pvar 'dst'.
@@ -121,7 +107,7 @@ jansson_get("inner.deep.list[3]", $var(myjson), "$var(n)");
 xlog("foo is $var(n)");
 ...
 
-4.2. jansson_set(type, key/path, value, result)
+3.2. jansson_set(type, key/path, value, result)
 
    Insert 'value' as 'type' at location 'path' into 'result'.
 
@@ -156,7 +142,7 @@ jansson_set("str", "myobj.foo", "baz", "$var(myjson)");
 :3.14159, "myobj":{"foo":"baz"}}'
 ...
 
-4.3. jansson_append(type, key/path, value, result)
+3.3. jansson_append(type, key/path, value, result)
 
    Like jansson_set but can be used to append to arrays. It can also be
    used to combine two json objects.
@@ -190,7 +176,7 @@ jansson_append('obj', "", '{"a":1, "b":100}', "$var(newobj)");
 # $var(newobj) == '{"a":1,"b":100","c":3}';
 ...
 
-4.4. jansson_array_size(key/path, src, dst)
+3.4. jansson_array_size(key/path, src, dst)
 
    Puts the size of the array in 'src' at location 'path' into the pvar
    'dst'.
@@ -222,7 +208,7 @@ while($var(count) < $var(appendme_size)) {
 }
 ...
 
-4.5. jansson_get_field(src, field_name, dst)
+3.5. jansson_get_field(src, field_name, dst)
 
    Copy field 'field_name' from json object 'src' and store it in pvar
    'dst'.
