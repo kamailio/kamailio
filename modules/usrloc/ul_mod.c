@@ -407,8 +407,10 @@ static int child_init(int _rank)
 			return 0;
 		case DB_ONLY:
 		case WRITE_THROUGH:
-			/* connect to db only from SIP workers, TIMER and MAIN processes */
-			if (_rank<=0 && _rank!=PROC_TIMER && _rank!=PROC_MAIN)
+			/* connect to db only from SIP workers, TIMER and MAIN processes,
+			 *  and RPC processes */
+			if (_rank<=0 && _rank!=PROC_TIMER && _rank!=PROC_MAIN
+					 && _rank!=PROC_RPC)
 				return 0;
 			break;
 		case WRITE_BACK:
