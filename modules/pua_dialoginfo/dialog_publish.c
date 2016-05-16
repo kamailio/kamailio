@@ -383,7 +383,7 @@ void dialog_publish_multi(char *state, struct str_list* ruris, str *entity, str 
 	str *localtarget, str *remotetarget, unsigned short do_pubruri_localcheck) {
 
 	while(ruris) {
-		LM_INFO("CALLING dialog_publish for URI %.*s\n",ruris->s.len, ruris->s.s);
+		LM_DBG("CALLING dialog_publish for URI %.*s\n",ruris->s.len, ruris->s.s);
 		dialog_publish(state,&(ruris->s),entity,peer,callid,initiator,lifetime,localtag,remotetag,localtarget,remotetarget,do_pubruri_localcheck);
 		ruris=ruris->next;
 	}
