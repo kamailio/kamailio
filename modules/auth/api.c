@@ -29,6 +29,7 @@
 #include "../../ut.h"
 #include "auth_mod.h"
 #include "nonce.h"
+#include "rfc2617_sha256.h"
 
 static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body,
 		auth_result_t* auth_res);
@@ -176,14 +177,14 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
  */
 int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 {
-	HASHHEX resp, hent;
+	HASHHEX_SHA256 resp, hent;
 
 	/*
 	 * First, we have to verify that the response received has
 	 * the same length as responses created by us
 	 */
-	if (cred->response.len != 32) {
-		DBG("check_response: Receive response len != 32\n");
+	if (cred->response.len != hash_hex_len) {
+		DBG("check_response: Receive response len != %d\n", hash_hex_len);
 		return BAD_CREDENTIALS;
 	}
 
@@ -202,7 +203,7 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * And simply compare the strings, the user is
 	 * authorized if they match
 	 */
-	if (!memcmp(resp, cred->response.s, 32)) {
+	if (!memcmp(resp, cred->response.s, hash_hex_len)) {
 		DBG("check_response: Authorization is OK\n");
 		return AUTHENTICATED;
 	} else {

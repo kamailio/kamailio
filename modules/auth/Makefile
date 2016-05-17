@@ -15,4 +15,6 @@ DEFS+=-DUSE_NC -DUSE_OT_NONCE
 
 DEFS+=-DSER_MOD_INTERFACE
 
+SERLIBPATH=../../lib
+SER_LIBS+=$(SERLIBPATH)/srutils/srutils
 include ../../Makefile.modules

@@ -48,6 +48,7 @@
 #include "nc.h"
 #include "ot_nonce.h"
 #include "rfc2617.h"
+#include "rfc2617_sha256.h"
 
 MODULE_VERSION
 
@@ -133,6 +134,14 @@ static struct qp auth_qauthint = {
 	QOP_AUTHINT
 };
 
+/* Hash algorithm used for digest authentication, MD5 if empty */
+str auth_algorithm = {"", 0};
+int hash_hex_len;
+
+calc_HA1_t calc_HA1;
+calc_response_t calc_response;
+
+
 /*! SL API structure */
 sl_api_t slb;
 
@@ -194,6 +203,7 @@ static param_export_t params[] = {
 	{"force_stateless_reply",  PARAM_INT,    &force_stateless_reply },
 	{"realm_prefix",           PARAM_STRING, &auth_realm_prefix.s   },
 	{"use_domain",             PARAM_INT,    &auth_use_domain       },
+	{"algorithm",              PARAM_STR,    &auth_algorithm        },
 	{0, 0, 0}
 };
 
@@ -352,6 +362,21 @@ static int mod_init(void)
 				"disabled at compile time (recompile with -DUSE_OT_NONCE)\n");
 		otn_enabled=0;
 #endif /* USE_OT_NONCE */
+	}
+	
+	if (auth_algorithm.len == 0 || strcmp(auth_algorithm.s, "MD5") == 0) {
+		hash_hex_len = HASHHEXLEN;
+		calc_HA1 = calc_HA1_md5;
+		calc_response = calc_response_md5;
+	}
+	else if (strcmp(auth_algorithm.s, "SHA-256") == 0) {
+		hash_hex_len = HASHHEXLEN_SHA256;
+		calc_HA1 = calc_HA1_sha256;
+		calc_response = calc_response_sha256;
+	}
+	else {
+		ERR("auth: Invalid algorithm provided. Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
+		return -1;
 	}
 
 	return 0;
@@ -538,7 +563,7 @@ end:
 			qop = &auth_qauth;
 		}
 		if (get_challenge_hf(msg, (cred ? cred->stale : 0),
-					realm, NULL, NULL, qop, hftype, &hf) < 0) {
+					realm, NULL, (auth_algorithm.len ? &auth_algorithm : NULL), qop, hftype, &hf) < 0) {
 			ERR("Error while creating challenge\n");
 			ret = AUTH_ERROR;
 		} else {
@@ -903,7 +928,7 @@ int auth_challenge_helper(struct sip_msg *msg, str *realm, int flags, int hftype
 	} else {
 		stale = 0;
 	}
-	if (get_challenge_hf(msg, stale, realm, NULL, NULL, qop, hftype, &hf)
+	if (get_challenge_hf(msg, stale, realm, NULL, (auth_algorithm.len ? &auth_algorithm : NULL), qop, hftype, &hf)
 			< 0) {
 		ERR("Error while creating challenge\n");
 		ret = -2;
