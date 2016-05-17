@@ -28,6 +28,7 @@
 #endif
 #define _XOPEN_SOURCE_EXTENDED 1  /* solaris */
 #define _SVID_SOURCE 1            /* timegm */
+#define _DEFAULT_SOURCE 1         /* _SVID_SOURCE is deprecated */
 
 #include <strings.h>
 #include <time.h>
