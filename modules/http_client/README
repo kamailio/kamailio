@@ -510,6 +510,10 @@ modparam("http_client", "keep_connections", 1)
        maxdatasize modparam setting.
      * httpredirect Set to 1 for following HTTP 302 redirect. 0 to
        disable. Overrides the default httpredirect modparam.
+     * failover The name of another httpcon connection to use with the
+       same arguments in case a connection with this http_con fails.
+       Failure is either a connection failure or a response code of 500 or
+       above.
 
    Example 1.16. Set httpcon parameter
 ...
@@ -518,7 +522,7 @@ modparam("http_client", "httpcon", "apitwo=>http://atlanta.example.com/api/12")
 modparam("http_client", "httpcon", "apithree=>http://annabella:mysecret@atlanta.
 example.com/api/12")
 modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
-tstuff;timeout=12")
+tstuff;timeout=12;failover=apione")
 ...
 
 3.17. config_file (string)
@@ -561,6 +565,7 @@ tstuff;timeout=12")
      * http_follow_redirect
      * httpproxy
      * httpproxyport
+     * failover
 
    See the "httpcon" module parameter for explanation of these settings.
 
