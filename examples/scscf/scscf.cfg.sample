@@ -1,40 +1,45 @@
-# IP-Adress for incoming SIP-Traffic, in the following format:
-listen=udp:141.0.21.99:5060
-listen=tcp:192.168.2.1:5060
+# SIP / UDP
+listen=udp:11.22.33.44:6060
+# SIP / TCP
+#listen=tcp:11.22.33.44:6060
+# SIP / TCP/TLS
+#listen=tls:11.22.33.44:6061
 
-#!define NETWORKNAME "ims.imscore.org"
-#!define NETWORKNAME_ESC "ims\.imscore\.org"
-#!define HOSTNAME "scscf-1.imscore.org"
-#!define URI "sip:scscf-1.imscore.org:5060"
-#!define HOSTNAME_ESC "scscf-1\.imscore\.org"
+#!define NETWORKNAME "ims.mnc001.mcc001.3gppnetwork.org"
+#!define HOSTNAME "scscf.mnc001.mcc001.3gppnetwork.org"
+#!define URI "sip:scscf.mnc001.mcc001.3gppnetwork.org:6060"
 
-alias=scscf-1.imscore.org
+alias=scscf.mnc001.mcc001.3gppnetwork.org
 
 # ENUM-Server to query:
-#!define ENUM_SUFFIX "imscore.org."
+#!define ENUM_SUFFIX "mnc001.mcc001.3gppnetwork.org."
 
 # SIP-Address of capturing node, if not set, capturing is disabled.
-#!define CAPTURE_NODE "sip:10.1.8.55"
+##!define CAPTURE_NODE "sip:127.0.0.1:9060"
 
 # Connection URL for the database:
-#!define DB_URL "con1=>mysql://scscf:heslo@192.168.5.1/scscf"
-#!define DB_URL2 "con2=>mysql://scscf:heslo@10.1.27.217/scscf"
+# For use with a single database:
+##!define DB_URL "mysql://scscf:heslo@127.0.0.1/scscf"
+
+# For use with DB_Cluster: con1 (primary), con2 (backup)
+##!define DB_URL "con1=>mysql://scscf:heslo@127.0.0.1/scscf"
+##!define DB_URL2 "con2=>mysql://scscf:heslo@127.0.0.1/scscf"
 
 # Select Authorization Algorhithm:
 ##!define REG_AUTH_DEFAULT_ALG "AKAv1-MD5"
 ##!define REG_AUTH_DEFAULT_ALG "AKAv2-MD5"
-#!define REG_AUTH_DEFAULT_ALG "MD5"
+##!define REG_AUTH_DEFAULT_ALG "MD5"
 ##!define REG_AUTH_DEFAULT_ALG "CableLabs-Digest"
 ##!define REG_AUTH_DEFAULT_ALG "3GPP-Digest"
 ##!define REG_AUTH_DEFAULT_ALG "TISPAN-HTTP_DIGEST_MD5"
 # Let the HSS decide
-##!define REG_AUTH_DEFAULT_ALG "HSS-Selected"
+#!define REG_AUTH_DEFAULT_ALG "HSS-Selected"
 
 # Number of TCP Processes
 #!define TCP_PROCESSES 3
 
 ##!define RO_FORCED_PEER "32260@3gpp.org"
-#!define RO_DESTINATION "hssocs.imscore.org"
+#!define RO_DESTINATION "hssocs.voiceblue.com"
 #!define RO_ROOT "32260@3gpp.org"
 #!define RO_EXT "ext"
 #!define RO_MNC "07"
@@ -43,9 +48,9 @@ alias=scscf-1.imscore.org
 #!define RO_RELEASE "8"
 # See http://tools.ietf.org/html/rfc4006#section-4.1.2 for the definition of the Service-Context
 
-#!define XMLRPC_WHITELIST_1 "127.0.0.1"
-#!define XMLRPC_WHITELIST_2 "10.1.8.55"
-#!define XMLRPC_WHITELIST_3 "192.168.2.1"
+##!define XMLRPC_WHITELIST_1 "127.0.0.1"
+##!define XMLRPC_WHITELIST_2 "127.0.0.1"
+##!define XMLRPC_WHITELIST_3 "127.0.0.1"
 
 # Several features can be enabled using '#!define WITH_FEATURE' directives:
 #
@@ -68,6 +73,7 @@ alias=scscf-1.imscore.org
 #
 # Enabled Features for this host:
 ##!define WITH_DEBUG
-#!define WITH_XMLRPC
-#!define WITH_RO
-
+##!define WITH_XMLRPC
+##!define WITH_RO
+##!define WITH_RO_TERM
+##!define WITH_AUTH
