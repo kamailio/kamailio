@@ -54,8 +54,8 @@
 #ifndef __OS_solaris
 	#undef _XOPEN_SOURCE
 	#undef _XOPEN_SOURCE_EXTENDED
-#else
-	#undef _XOPEN_SOURCE_EXTENDED 1   /* solaris */
+#else  /* solaris */
+	#undef _XOPEN_SOURCE_EXTENDED
 #endif
 
 #include <limits.h>
