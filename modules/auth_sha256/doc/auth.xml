@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+	 <!-- Include general documentation entities -->
+	 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+	 %docentities;
+	]
+>
+
+<book id="auth" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>The Auth Module</title>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jan@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>TutPro Inc</orgname></affiliation>
+		<email>jh@song.fi</email>
+	    </author>
+	    <author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		<email>miconda@gmail.com</email>
+	    </author>
+	</authorgroup>
+
+	<copyright>
+	    <year>2002</year>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+
+    </bookinfo>
+    <toc></toc>
+
+
+    <chapter>
+	<title>Admin Guide</title>
+    <section id="auth.overview">
+	<title>Overview</title>
+	<para>
+	    This is a generic module that itself doesn't provide all functions
+	    necessary for authentication but provides functions that are needed
+	    by all other authentication related modules (so called
+	    authentication backends).
+	</para>
+	<para>
+	    We decided to divide the authentication code into several modules
+	    because there are now more than one backends (currently database
+	    authentication and radius are supported). This allows us to create
+	    separate packages so users can install and load only the required
+	    functionality. This also allows us to avoid unnecessary
+	    dependencies in the binary packages.
+	</para>
+    </section>
+
+    <section id="auth.dep">
+	<title>Dependencies</title>
+	<para>
+	    The module does not depend on any other module.
+	</para>
+    </section>
+    
+    <xi:include href="auth_params.xml"/>
+    <xi:include href="auth_functions.xml"/>
+
+    </chapter>
+</book>
