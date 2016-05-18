@@ -11,6 +11,8 @@ struct dialog_ng_counters_h {
 
 };
 
+struct dialog_ng_counters_h dialog_ng_cnts_h;
+
 int dialog_ng_stats_init();
 void dialog_ng_stats_destroy();
 
