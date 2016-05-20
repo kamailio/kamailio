@@ -1762,7 +1762,6 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 				default:
 					LM_ERR("can't get authorization hash\n");
 					return -1;
-					break;
 			}
 			break;
 		case 6: /* random selection */
