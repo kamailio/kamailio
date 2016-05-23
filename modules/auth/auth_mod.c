@@ -363,6 +363,21 @@ static int mod_init(void)
 		otn_enabled=0;
 #endif /* USE_OT_NONCE */
 	}
+	
+	if (auth_algorithm.len == 0 || strcmp(auth_algorithm.s, "MD5") == 0) {
+		hash_hex_len = HASHHEXLEN;
+		calc_HA1 = calc_HA1_md5;
+		calc_response = calc_response_md5;
+	}
+	else if (strcmp(auth_algorithm.s, "SHA-256") == 0) {
+		hash_hex_len = HASHHEXLEN_SHA256;
+		calc_HA1 = calc_HA1_sha256;
+		calc_response = calc_response_sha256;
+	}
+	else {
+		ERR("auth: Invalid algorithm provided. Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
+		return -1;
+	}
 
 	if (auth_algorithm.len == 0 || strcmp(auth_algorithm.s, "MD5") == 0) {
 		hash_hex_len = HASHHEXLEN;
