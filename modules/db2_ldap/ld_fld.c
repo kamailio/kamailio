@@ -35,6 +35,7 @@
 #define _SVID_SOURCE 1 /* timegm */
 
 #define _BSD_SOURCE /* snprintf */
+#define _DEFAULT_SOURCE 1 /* _BSD_SOURCE is deprecated */
 
 #include "ld_fld.h"
 

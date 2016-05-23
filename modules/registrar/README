@@ -980,6 +980,12 @@ add_sock_hdr("Sock-Info");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
+   Return values:
+     * 0 - Successfully deleted contact(s)
+     * -1 - Failed to extract or parse address of record from argument
+     * -2 - Error in unregistering user
+     * -3 - Contacts for AOR not found
+
    Example 1.33. unregister usage
 ...
 unregister("location", "$ru");

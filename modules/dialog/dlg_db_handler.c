@@ -37,6 +37,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../str.h"
 #include "../../socket_info.h"
+#include "../../lib/kcore/statistics.h"
 #include "dlg_hash.h"
 #include "dlg_var.h"
 #include "dlg_profile.h"
@@ -377,8 +378,10 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 			if (dlg->state==DLG_STATE_CONFIRMED_NA ||
 			dlg->state==DLG_STATE_CONFIRMED) {
 				active_dlgs_cnt++;
+				if_update_stat(dlg_enable_stats, active_dlgs, 1);
 			} else if (dlg->state==DLG_STATE_EARLY) {
 				early_dlgs_cnt++;
+				if_update_stat(dlg_enable_stats, early_dlgs, 1);
 			}
 
 			dlg->tl.timeout = (unsigned int)(VAL_INT(values+9));

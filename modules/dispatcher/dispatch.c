@@ -225,6 +225,7 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 	param_hooks_t phooks;
 	param_t *pit=NULL;
 	str param;
+	int tmp_rweight = 0;
 
 	if(attrs==NULL || attrs->len<=0)
 		return 0;
@@ -260,7 +261,7 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 			dest->attrs.socket = pit->body;
 		}else if(pit->name.len==7
 				&& strncasecmp(pit->name.s, "rweight", 7)==0) {
-			int tmp_rweight;
+			tmp_rweight = 0;
 			str2sint(&pit->body, &tmp_rweight);
 			if ( tmp_rweight>=1 && tmp_rweight<=100 ) {
 				dest->attrs.rweight = tmp_rweight;
@@ -1893,7 +1894,6 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 				default:
 					LM_ERR("can't get authorization hash\n");
 					return -1;
-					break;
 			}
 			break;
 		case 6: /* random selection */

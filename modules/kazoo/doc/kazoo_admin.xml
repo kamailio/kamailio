@@ -556,7 +556,25 @@ modparam("kazoo", "presentity_table", "my_presentity_table")
         </example>
     </section>
 
-    
+    <section id="kazoo.p.pua_mode">
+        <title><varname>pua_mode</varname>(int)</title>
+		<para>
+			Control if the module has to connect to presence database tables.
+			Set it to 0 to not connect to database.
+		</para>
+        <para>
+        <emphasis>Default value is <quote>1</quote>.</emphasis>
+        </para>
+        <example>
+        <title>Set <varname>pua_mode</varname> parameter</title>
+        <programlisting format="linespecific">
+...
+modparam("kazoo", "pua_mode", 0)
+...
+</programlisting>
+        </example>
+    </section>
+
     </section>
     
     

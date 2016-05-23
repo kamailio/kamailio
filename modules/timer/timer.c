@@ -110,14 +110,16 @@ static int sel_timer(str* res, select_t* s, struct sip_msg* msg) {
 
 static int sel_enabled(str* res, select_t* s, struct sip_msg* msg) {
 	static char buf[2] = "01";
-	if (!msg) return sel_timer(res, s, msg);
+	if (!msg)
+		return sel_timer(res, s, msg);
 	res->len = 1;
 	res->s = &buf[(((struct timer_action*) s->params[2].v.p)->link->flags & F_TIMER_ACTIVE) != 0];
 	return 0;
 }
 
 static int sel_executed(str* res, select_t* s, struct sip_msg* msg) {
-	if (!timer_executed) return 1;
+	if (!timer_executed)
+		return 1;
 	res->s = timer_executed->timer_name;
 	res->len = strlen(res->s);
 	return 0;
@@ -204,8 +206,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 	        /* end critical section */
 		return 0;   /* do no call more */
 	}
-	else
-        	return (ticks_t)(-1); /* periodical */
+        return (ticks_t)(-1); /* periodical */
 }
 
 static int timer_enable_fixup(void** param, int param_no) {
@@ -291,7 +292,8 @@ static int declare_timer(modparam_t type, char* param) {
 	timer_name = 0;
 	save_p = p = param;
 	eat_alphanum(p);
-	if (*p != '=' || p == save_p) goto err;
+	if (*p != '=' || p == save_p)
+		goto err;
 	*p = '\0';
 	timer_name = save_p;
 	p++;
@@ -311,8 +313,10 @@ static int declare_timer(modparam_t type, char* param) {
 	route_no = n;
 
 	save_p = p;
-	if (!get_next_part(&p, &s, ',')) goto err;
-	if (str2int(&s, &interval) < 0) goto err;
+	if (!get_next_part(&p, &s, ','))
+		goto err;
+	if (str2int(&s, &interval) < 0)
+		goto err;
 
 	save_p = p;
 	flags = 0;

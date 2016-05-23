@@ -84,6 +84,9 @@ static int clean_period=100;
 static int db_update_period=100;
 int pres_local_log_level = L_INFO;
 
+static char * pres_log_facility_str = 0; /*!< Syslog: log facility that is used */
+int pres_local_log_facility;
+
 /* database connection */
 db1_con_t *pa_db = NULL;
 db_func_t pa_dbf;
@@ -155,6 +158,7 @@ int publ_cache_enabled = 1;
 int pres_waitn_time = 5;
 int pres_notifier_poll_rate = 10;
 int pres_notifier_processes = 1;
+int pres_force_delete = 0;
 str pres_xavp_cfg = {0};
 int pres_retrieve_order = 0;
 
@@ -199,6 +203,7 @@ static param_export_t params[]={
 	{ "waitn_time",             INT_PARAM, &pres_waitn_time },
 	{ "notifier_poll_rate",     INT_PARAM, &pres_notifier_poll_rate },
 	{ "notifier_processes",     INT_PARAM, &pres_notifier_processes },
+	{ "force_delete",           INT_PARAM, &pres_force_delete },
 	{ "to_tag_pref",            PARAM_STRING, &to_tag_pref },
 	{ "expires_offset",         INT_PARAM, &expires_offset },
 	{ "max_expires",            INT_PARAM, &max_expires },
@@ -215,6 +220,7 @@ static param_export_t params[]={
 	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
 	{ "db_table_lock_type",     INT_PARAM, &db_table_lock_type},
 	{ "local_log_level",        PARAM_INT, &pres_local_log_level},
+	{ "local_log_facility",     PARAM_STR, &pres_log_facility_str},
 	{ "subs_remove_match",      PARAM_INT, &pres_subs_remove_match},
 	{ "xavp_cfg",               PARAM_STR, &pres_xavp_cfg},
 	{ "retrieve_order",         PARAM_INT, &pres_retrieve_order},
@@ -429,6 +435,24 @@ static int mod_init(void)
 		}
 
 		register_basic_timers(pres_notifier_processes);
+	}
+
+	if (pres_force_delete > 0)
+		pres_force_delete = 1;
+
+	if (pres_log_facility_str) {
+		int tmp = str2facility(pres_log_facility_str);
+
+		if (tmp != -1) {
+			pres_local_log_facility = tmp;
+		}
+		else {
+			LM_ERR("invalid log facility configured\n");
+			return -1;
+		}
+	}
+	else {
+		pres_local_log_facility = cfg_get(core, core_cfg, log_facility);
 	}
 
 	if (db_table_lock_type != 1)

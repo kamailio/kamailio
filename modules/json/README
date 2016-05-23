@@ -47,7 +47,10 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module provides operations on json strings.
+   This is a simple module allowing to retrieve values from a JSON string.
+
+   For more complex operations with JSON documents, see the JANSSON
+   module.
 
 2. Dependencies
 

@@ -38,8 +38,12 @@
 
 struct db_row;
 
+/* -- column name flags -- */
+/* column name must be freed when db result is destroyed */
+#define DB1_FCOL_FREE	(1<<1)
+
 /**
- * This type represents a result returned by db_query function (see below). The 
+ * This type represents a result returned by db_query function (see below). The
  * result can consist of zero or more rows (see db_row_t description).
  *
  * Note: A variable of type db1_res_t returned by db_query function uses dynamicaly
@@ -54,6 +58,7 @@ typedef struct db1_res {
 		db_key_t* names;   /**< Column names                    */
 		db_type_t* types;  /**< Column types                    */
 		int n;             /**< Number of columns               */
+		int cflags;        /**< Flags of columns                */
 	} col;
 	struct db_row* rows;   /**< Rows                            */
 	int n;                 /**< Number of rows in current fetch */
@@ -69,6 +74,8 @@ typedef struct db1_res {
 #define RES_TYPES(re) ((re)->col.types)
 /** Return the number of columns */
 #define RES_COL_N(re) ((re)->col.n)
+/** Return the flags of columns */
+#define RES_COL_FLAGS(re) ((re)->col.cflags)
 /** Return the result rows */
 #define RES_ROWS(re)  ((re)->rows)
 /** Return the number of current result rows */

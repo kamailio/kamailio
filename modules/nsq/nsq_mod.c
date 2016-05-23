@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * NSQ module interface
  *
  * Copyright (C) 2016 Weave Communications
@@ -18,6 +20,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * This module was based on the Kazoo module created by 2600hz.
+ * Thank you to 2600hz and their brilliant VoIP developers.
  *
  * History:
  * --------
@@ -65,14 +70,14 @@ static param_export_t params[]=
 
 static void free_tc_list(nsq_topic_channel_t *tcl)
 {
-	nsq_topic_channel_t *tc, *prev_tc;
+	nsq_topic_channel_t *tc, *tc0;
 	tc = tcl;
 	while (tc) {
-		prev_tc = tc;
-		tc = tc->next;
+		tc0 = tc->next;
 		free(tc->topic);
 		free(tc->channel);
-		pkg_free(prev_tc);
+		pkg_free(tc);
+		tc = tc0;
 	}
 	tcl = NULL;
 }

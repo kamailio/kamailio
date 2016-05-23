@@ -58,17 +58,33 @@ static void mod_destroy(void);
 
 static int w_evapi_relay(sip_msg_t* msg, char* evdata, char* p2);
 static int w_evapi_async_relay(sip_msg_t* msg, char* evdata, char* p2);
+static int w_evapi_multicast(sip_msg_t* msg, char* evdata, char* ptag);
+static int w_evapi_async_multicast(sip_msg_t* msg, char* evdata, char* ptag);
+static int w_evapi_unicast(sip_msg_t *msg, char *evdata, char *ptag);
+static int w_evapi_async_unicast(sip_msg_t *msg, char *evdata, char *ptag);
 static int w_evapi_close(sip_msg_t* msg, char* p1, char* p2);
+static int w_evapi_set_tag(sip_msg_t* msg, char* ptag, char* p2);
 static int fixup_evapi_relay(void** param, int param_no);
+static int fixup_evapi_multicast(void** param, int param_no);
 
 static cmd_export_t cmds[]={
-	{"evapi_relay",       (cmd_function)w_evapi_relay,       1, fixup_evapi_relay,
+	{"evapi_relay",			(cmd_function)w_evapi_relay,		1, fixup_evapi_relay,
 		0, ANY_ROUTE},
-	{"evapi_async_relay", (cmd_function)w_evapi_async_relay, 1, fixup_evapi_relay,
+	{"evapi_async_relay",	(cmd_function)w_evapi_async_relay, 	1, fixup_evapi_relay,
 		0, REQUEST_ROUTE},
-	{"evapi_close",       (cmd_function)w_evapi_close,       0, NULL,
+	{"evapi_multicast",		(cmd_function)w_evapi_multicast,	2, fixup_evapi_multicast,
 		0, ANY_ROUTE},
-	{"evapi_close",       (cmd_function)w_evapi_close,       1, NULL,
+	{"evapi_async_multicast", (cmd_function)w_evapi_async_multicast,	2, fixup_evapi_multicast,
+		0, REQUEST_ROUTE},
+	{"evapi_unicast", 		(cmd_function)w_evapi_unicast,		2, fixup_evapi_multicast,
+		0, ANY_ROUTE},
+	{"evapi_async_unicast", (cmd_function)w_evapi_async_unicast,2, fixup_evapi_multicast,
+		0, REQUEST_ROUTE},
+	{"evapi_close",       	(cmd_function)w_evapi_close,		0, NULL,
+		0, ANY_ROUTE},
+	{"evapi_close",       	(cmd_function)w_evapi_close,		1, NULL,
+		0, ANY_ROUTE},
+	{"evapi_set_tag",       (cmd_function)w_evapi_set_tag,		1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -301,9 +317,228 @@ static int w_evapi_async_relay(sip_msg_t *msg, char *evdata, char *p2)
 /**
  *
  */
+static int w_evapi_multicast(sip_msg_t *msg, char *evdata, char *ptag)
+{
+	str sdata;
+	str stag;
+
+	if(evdata==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+		LM_ERR("unable to get data\n");
+		return -1;
+	}
+	if(sdata.s==NULL || sdata.len == 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ptag, &stag)!=0) {
+		LM_ERR("unable to get tag\n");
+		return -1;
+	}
+	if(stag.s==NULL || stag.len == 0) {
+		LM_ERR("invalid tag parameter\n");
+		return -1;
+	}
+	if(evapi_relay_multicast(&sdata, &stag)<0) {
+		LM_ERR("failed to relay event: [[%.*s]] to [%.*s] \n",
+				sdata.len, sdata.s, stag.len, stag.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_evapi_async_multicast(sip_msg_t *msg, char *evdata, char *ptag)
+{
+	str sdata;
+	str stag;
+	unsigned int tindex;
+	unsigned int tlabel;
+	tm_cell_t *t = 0;
+
+	if(evdata==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(tmb.t_suspend==NULL) {
+		LM_ERR("evapi async relay is disabled - tm module not loaded\n");
+		return -1;
+	}
+
+	t = tmb.t_gett();
+	if (t==NULL || t==T_UNDEFINED)
+	{
+		if(tmb.t_newtran(msg)<0)
+		{
+			LM_ERR("cannot create the transaction\n");
+			return -1;
+		}
+		t = tmb.t_gett();
+		if (t==NULL || t==T_UNDEFINED)
+		{
+			LM_ERR("cannot lookup the transaction\n");
+			return -1;
+		}
+	}
+	if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
+	{
+		LM_ERR("failed to suspend request processing\n");
+		return -1;
+	}
+
+	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
+
+	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+		LM_ERR("unable to get data\n");
+		return -1;
+	}
+	if(sdata.s==NULL || sdata.len == 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ptag, &stag)!=0) {
+		LM_ERR("unable to get tag\n");
+		return -1;
+	}
+	if(stag.s==NULL || stag.len == 0) {
+		LM_ERR("invalid tag parameter\n");
+		return -1;
+	}
+
+	if(evapi_relay_multicast(&sdata, &stag)<0) {
+		LM_ERR("failed to relay event: [[%.*s]] to [%.*s] \n",
+				sdata.len, sdata.s, stag.len, stag.s);
+		return -2;
+	}
+	return 1;
+}
+
+
+/**
+ *
+ */
+static int w_evapi_unicast(sip_msg_t *msg, char *evdata, char *ptag)
+{
+	str sdata;
+	str stag;
+
+	if(evdata==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+		LM_ERR("unable to get data\n");
+		return -1;
+	}
+	if(sdata.s==NULL || sdata.len == 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ptag, &stag)!=0) {
+		LM_ERR("unable to get tag\n");
+		return -1;
+	}
+	if(stag.s==NULL || stag.len == 0) {
+		LM_ERR("invalid tag parameter\n");
+		return -1;
+	}
+	if(evapi_relay_unicast(&sdata, &stag)<0) {
+		LM_ERR("failed to relay event: [[%.*s]] to [%.*s] \n",
+				sdata.len, sdata.s, stag.len, stag.s);
+		return -1;
+	}
+	return 1;
+}
+
+
+static int w_evapi_async_unicast(sip_msg_t *msg, char *evdata, char *ptag)
+{
+	str sdata;
+	str stag;
+	unsigned int tindex;
+	unsigned int tlabel;
+	tm_cell_t *t = 0;
+
+	if(evdata==0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(tmb.t_suspend==NULL) {
+		LM_ERR("evapi async relay is disabled - tm module not loaded\n");
+		return -1;
+	}
+
+	t = tmb.t_gett();
+	if (t==NULL || t==T_UNDEFINED)
+	{
+		if(tmb.t_newtran(msg)<0)
+		{
+			LM_ERR("cannot create the transaction\n");
+			return -1;
+		}
+		t = tmb.t_gett();
+		if (t==NULL || t==T_UNDEFINED)
+		{
+			LM_ERR("cannot lookup the transaction\n");
+			return -1;
+		}
+	}
+	if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
+	{
+		LM_ERR("failed to suspend request processing\n");
+		return -1;
+	}
+
+	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
+
+	if(fixup_get_svalue(msg, (gparam_t*)evdata, &sdata)!=0) {
+		LM_ERR("unable to get data\n");
+		return -1;
+	}
+	if(sdata.s==NULL || sdata.len == 0) {
+		LM_ERR("invalid data parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ptag, &stag)!=0) {
+		LM_ERR("unable to get tag\n");
+		return -1;
+	}
+	if(stag.s==NULL || stag.len == 0) {
+		LM_ERR("invalid tag parameter\n");
+		return -1;
+	}
+
+	if(evapi_relay_unicast(&sdata, &stag)<0) {
+		LM_ERR("failed to relay event: [[%.*s]] to [%.*s] \n",
+				sdata.len, sdata.s, stag.len, stag.s);
+		return -2;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
 static int fixup_evapi_relay(void** param, int param_no)
 {
 	return fixup_spve_null(param, param_no);
+}
+
+/**
+ *
+ */
+static int fixup_evapi_multicast(void** param, int param_no)
+{
+	return fixup_spve_spve(param, param_no);
 }
 
 /**
@@ -316,4 +551,19 @@ static int w_evapi_close(sip_msg_t* msg, char* p1, char* p2)
 	if(ret>=0)
 		return ret+1;
 	return ret;
+}
+
+/**
+ *
+ */
+static int w_evapi_set_tag(sip_msg_t* msg, char* ptag, char* p2)
+{
+	str stag;
+	if(fixup_get_svalue(msg, (gparam_t*)ptag, &stag)!=0) {
+		LM_ERR("no tag name\n");
+		return -1;
+	}
+	if(evapi_set_tag(msg, &stag)<0)
+		return -1;
+	return 1;
 }

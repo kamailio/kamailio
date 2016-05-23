@@ -72,8 +72,8 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mono/' ${DIST}/rules
 sed -i -e 's/db-util/db4.8-util/' ${DIST}/control
 
 # use old radius-client-ng
-sed -i 's/libfreeradius-client-dev/libradiusclient-ng-dev/' ${DIST}/control
-sed -i -e '/FREERADIUS/d' ${DIST}/rules
+sed -i 's/libradcli-dev/libradiusclient-ng-dev/' ${DIST}/control
+sed -i -e '/RADCLI/d' ${DIST}/rules
 
 # use old json
 sed -i 's/libjson-c-dev/libjson0-dev/' ${DIST}/control

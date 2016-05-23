@@ -38,7 +38,8 @@ if [ "${ret}" -ne 0 ] ; then
 fi
 
 # Borken SDP should give 500 response
-sipsak -f 60-message-sdp0.sip -L -s sip:127.0.0.1 -v > ${TMPFILE}
+FILE="60-message-sdp0.sip"
+sipsak -f ${FILE} -L -s sip:127.0.0.1 -v > ${TMPFILE}
 ret=$?
 if [ "${ret}" -eq 1 ] ; then
 	ret=0
@@ -66,8 +67,22 @@ for i in 1 2 3 4 5 6 7; do
 			ret=1
 			echo "found ${PREFIXAFTER} lines that should be deleted (${FILE})"
 		fi
+	else
+		echo "invalid sipsak return: ${ret}"
 	fi
 done
+
+# Empty body should get 500 response
+FILE="60-message-sdp8.sip"
+sipsak -f ${FILE} -L -s sip:127.0.0.1 -v > ${TMPFILE}
+ret=$?
+if [ "${ret}" -eq 1 ] ; then
+	ret=0
+else
+	echo "empty body not rejected"
+	ret=1
+	exit ${ret}
+fi
 
 ${KILL}
 

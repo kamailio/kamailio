@@ -18,8 +18,6 @@ DPKG_EXPORT_BUILDFLAGS = 1
 #export DH_VERBOSE=1
 
 
-# choose freeradius
-
 # modules not in the "main" kamailio package
 EXCLUDED_MODULES=
 

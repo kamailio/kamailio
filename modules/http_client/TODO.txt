@@ -68,10 +68,33 @@ The http_client module - todo
 
 - Option to configure DNS resolvers for CURL to use
 
+
+Development API
+---------------
+- xcap_client needs to add headers:
+  char* hdr_name= NULL;
+
+                memset(buf, 0, 128* sizeof(char));
+                match_header= buf;
+
+                hdr_name= (match_type==IF_MATCH)?"If-Match":"If-None-Match";
+
+                len=sprintf(match_header, "%s: %s\n", hdr_name, match_etag);
+
+                match_header[len]= '\0';
+  https://curl.haxx.se/libcurl/c/CURLOPT_HEADERFUNCTION.html
+
+- It also does get a headers from the reply, which needs a callback
+- auth_identify sets the CURLOPT_CAINFO option
+  https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html
+  This can be set in the httpconf object
+
+
+
 Issues in the bug tracker
 -------------------------
-- https://github.com/kamailio/kamailio/issues/542  - open
-  Support connection reuse. Needs private memory structures to track connections
+
+- none
 
 
 Solved issues
@@ -87,4 +110,6 @@ Solved issues
   Support TLS client certificates
 - https://github.com/kamailio/kamailio/pull/435 - closed
   Pull request that fixed a lot of issues.
+- https://github.com/kamailio/kamailio/issues/542  - closed
+  Support connection reuse. Needs private memory structures to track connections
 

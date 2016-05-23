@@ -12,25 +12,15 @@ Edited by
 
 Maxim Sobolev
 
-Edited by
-
 Bogdan-Andrei Iancu
-
-Edited by
 
 Juha Heinanen
 
-Edited by
-
 Sas Ovidiu
-
-Edited by
 
 Carsten Bock
 
    ng-voice GmbH
-
-Edited by
 
 Richard Fuchs
 
@@ -889,6 +879,10 @@ rtpengine_offer();
             SDES-authenticated_srtp - the opposites of the flags above.
             Useful if accepting these parameters is not desired and they
             should be rejected instead.
+          + unidirectional - allows kernelization of one-way streams in
+            the Sipwise rtpengine proxy. This is especially useful when
+            the first call leg is handled by some rtpengine machine while
+            the second call leg is handled by other rtpengine machine.
 
    This function can be used from ANY_ROUTE.
 

@@ -349,7 +349,12 @@ static int w_file_read(sip_msg_t *msg, char *fn, char *vn)
 		fclose(f);
 		return -1;
 	}
-	fread(content, fsize, 1, f);
+	if(fread(content, fsize, 1, f) != fsize) {
+		if(ferror(f)) {
+			LM_ERR("error reading from file: %.*s\n",
+				fname.len, fname.s);
+		}
+	}
 	fclose(f);
 	content[fsize] = 0;
 

@@ -542,7 +542,8 @@ unlock("$rU");
 
 4.17. check_route_exists(route)
 
-   Check if a route block exists
+   Check if a route block exists. It returns true (1) on found and false
+   on not found or error.
 
    Parameters:
 
@@ -553,7 +554,7 @@ unlock("$rU");
 
    Example 1.21. check_route_exists() usage
 ...
-if(check_route_exists("FROGJUMP") {
+if(check_route_exists("JUMP") {
         $var(jumping_frogs) = 1;
 };
 ...
@@ -562,6 +563,9 @@ if(check_route_exists("FROGJUMP") {
 
    Execute a routing block only if it is defined. If it's not defined,
    silently move to the next action in the configuration script.
+
+   It returns the code of last action in the route block, if that exists,
+   or false if the route doesn't exists or was an error executing it.
 
    Parameters:
 
@@ -572,7 +576,9 @@ if(check_route_exists("FROGJUMP") {
 
    Example 1.22. route_if_exists() usage
 ...
-route_if_exists("PRESENCE_SANTA_CLAUS");
+if(route_if_exists("JUMP")) {
+    exit;
+}
 ...
 
 4.19. core_hash(string1, string2, size)

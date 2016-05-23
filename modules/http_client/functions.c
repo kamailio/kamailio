@@ -53,6 +53,7 @@ typedef struct {
 	char *cacert;
 	char *ciphersuites;
 	char *http_proxy;
+	char *failovercon;
 	unsigned int authmethod;
 	unsigned int http_proxy_port;
 	unsigned int tlsversion;
@@ -66,8 +67,6 @@ typedef struct {
 	curl_con_pkg_t *pconn;
 } curl_query_t;
 
-/* Forward declaration */
-static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const curl_query_t * const query_params);
 
 /* 
  * curl write function that saves received data as zero terminated
@@ -101,6 +100,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 
 	return size * nmemb;
  }
+
 
 
 /*! Send query to server, optionally post data.
@@ -246,6 +246,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		}
 
 	}
+
+	/* Cleanup */
 	if (headerlist) {
 		curl_slist_free_all(headerlist);
 	}
@@ -299,6 +301,10 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 			pkg_free(stream.buf);
 		}
 		counter_inc(connfail);
+		if (params->failovercon != NULL) {
+			LM_ERR("FATAL FAILURE: Trying failover to curl con (%s)\n", params->failovercon);
+			return (1000 + res);
+		}
 		return res;
 	}
 
@@ -370,6 +376,12 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		counter_inc(connok);
 	} else {
 		counter_inc(connfail);
+		if (stat >= 500) {
+			if (params->failovercon != NULL) {
+				LM_ERR("FAILURE: Trying failover to curl con (%s)\n", params->failovercon);
+				return (1000 + stat);
+			}
+		}
 	}
 
 	/* CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ... ); */
@@ -419,8 +431,9 @@ int curl_get_redirect(struct sip_msg* _m, const str *connection, str* result)
 	return 1;
 }
 
+
 /*! Run a query based on a connection definition */
-int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url, str* result, const char *contenttype, const str* post)
+int curl_con_query_url_f(struct sip_msg* _m, const str *connection, const str* url, str* result, const char *contenttype, const str* post, int failover)
 {
 	curl_con_t *conn = NULL;
 	curl_con_pkg_t *pconn = NULL;
@@ -508,6 +521,7 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	query_params.oneline = 0;
 	query_params.maxdatasize = maxdatasize;
 	query_params.http_proxy_port = conn->http_proxy_port;
+	query_params.failovercon = conn->failover.s ? as_asciiz(&conn->failover) : NULL;
 	query_params.pconn = pconn;
 	if (conn->http_proxy) {
 		query_params.http_proxy = conn->http_proxy;
@@ -517,6 +531,16 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	}
 
 	res = curL_query_url(_m, urlbuf, result, &query_params);
+
+	if (res > 1000 && conn->failover.s) {
+		int counter = failover + 1;
+		if (counter >= 2) {
+			LM_DBG("**** No more failovers - returning failure\n");
+			return (res - 1000);
+		}
+		/* Time for failover */
+		return curl_con_query_url_f(_m, &conn->failover, url, result, contenttype, post, counter);
+	}
 
 	LM_DBG("***** #### ***** CURL DONE : %s \n", urlbuf);
 error:
@@ -529,6 +553,11 @@ error:
 	return res;
 }
 
+/* Wrapper */
+int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url, str* result, const char *contenttype, const str* post)
+{
+	return curl_con_query_url_f(_m, connection, url, result, contenttype, post, 0);
+}
 
 /*!
  * Performs http_query and saves possible result (first body line of reply)

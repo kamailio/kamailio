@@ -11,14 +11,13 @@
 <book id="timer" xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
         <title>timer module</title>
+	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 	    <author>
 		<firstname>Tomas</firstname>
 		<surname>Mandys</surname>
 		<affiliation><orgname>Iptel.org</orgname></affiliation>
-		<address>
-		    <email>tomas dot mandys at iptel dot org</email>
-		</address>
+	        <email>tomas dot mandys at iptel dot org</email>
 	    </author>
 	</authorgroup>
 	<copyright>
@@ -34,16 +33,42 @@
     <section id="timer.overview">
 		<title>Overview</title>
 		<para>
-		The module supports triggering specific route block on timer.
+		The module supports triggering a specific route block on a specific timer.
+		The timer can be activated and de-activated from the routing script at runtime.
+
 		</para>
     </section>
 
 	<section id="timer.dep">
-		<title>Dependencies</title>
-				   
+	   <title>Dependencies</title>
+	   <section>
+		<title>&kamailio; Modules</title>
 		<para>
-		none
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+			none
+			</para>
+			</listitem>
+			</itemizedlist>
 		</para>
+	   </section>
+	   <section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be
+		installed before  
+		running &kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	   </section>
 	</section>
 
 	<section id="timer.syntax">
@@ -73,11 +98,28 @@
 			declare_timer = declare_timer_syntax
 			</programlisting>
 			<para>
-			<emphasis>timer_id</emphasis> is timer identifier, <emphasis>route</emphasis> is handler to be called when
-			timer is triggered, <emphasis>interval</emphasis> is timer interval in milliseconds, <emphasis>slow_fast</emphasis>
-			determines if handler will be hooked in slow or fast timer queue, fast timer handler returns
-			as quickly as possible, slow timer handler may spend longer time, see kamailio/doc/timers.txt documentation. Use <emphasis>enable</emphasis>
-			to enable timer when &kamailio; is starting, otherwise use <function>timer_enable</function> to start it later.		
+				<itemizedlist>
+				<listitem>
+				<emphasis>timer_id</emphasis> is timer identifier,
+				</listitem>
+				<listitem>
+				<emphasis>route</emphasis> is handler to be called when
+				timer is triggered,
+				</listitem>
+				<listitem>
+				<emphasis>interval</emphasis> is timer interval in milliseconds,
+				</listitem>
+				<listitem>
+				<emphasis>slow_fast</emphasis> determines if handler will be
+				hooked in slow or fast timer queue, fast timer handler returns
+				as quickly as possible, slow timer handler may spend longer time,
+				see kamailio/doc/timers.txt documentation. 
+				</listitem>
+				<listitem>
+				<emphasis>enable</emphasis> - enable timer when &kamailio; is starting,
+				otherwise use <function>timer_enable</function> to start it later.		
+				</listitem>
+				</itemizedlist>
 			</para>
 			<example>
 				<title>Example <varname>declare_timer</varname></title>
@@ -99,11 +141,21 @@
 				<function>timer_enable(timer_id, enable_disable)</function>
 			</title>
 			<para>
-				Enable/disable timer route specified by <varname>timer_id</varname>. Because of timer core API the callback
-				is not disabled immediately but is removed from handler by itself not to decrease performance.
+				Enable/disable timer route specified by <varname>timer_id</varname>.
+				Because of timer core API the callback
+				is not disabled immediately but is removed from handler by
+				itself not to decrease performance.
 				Disabling and enabling in sequence may be tricky.
-								  
-				<emphasis>timer_id</emphasis> references to timer declared by <varname>declare_timer</varname>.
+				<itemizedlist>
+				<listitem>
+				<emphasis>timer_id</emphasis> references to timer declared by 
+				<varname>declare_timer</varname>.
+				</listitem>
+				<listitem>
+				<emphasis>enable_distable</emphasis> - set to 1 to enable timer,
+				to 0 to disable.
+				</listitem>
+				</itemizedlist>
 			</para>
 
 			<example>
@@ -193,7 +245,7 @@ route["ONTIMER2"] {
 			<title>Using timer module for testing a functionality</title>
 			<para>
 				The timer module may be used to test a functionality being developed and 
-				not requiring real request.A developer may put tested code in route section
+				not requiring real request. A developer may put tested code in route section
 				which is called once after &kamailio; starts.
 			</para>
 			<programlisting>

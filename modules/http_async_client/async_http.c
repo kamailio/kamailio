@@ -94,6 +94,26 @@ int async_http_init_sockets(async_http_worker_t *worker)
 	return 0;
 }
 
+static inline char *strfindcasestrz(str *haystack, char *needlez)                                                                                                                                                                                                              
+{
+    int i,j;
+    str needle;
+
+    needle.s = needlez;
+    needle.len = strlen(needlez);
+    for(i=0;i<haystack->len-needle.len;i++) {
+        for(j=0;j<needle.len;j++) {
+            if ( !((haystack->s[i+j]==needle.s[j]) ||
+                    ( isalpha((int)haystack->s[i+j])
+                        && ((haystack->s[i+j])^(needle.s[j]))==0x20 )) )
+                break;
+        }
+        if (j==needle.len)
+            return haystack->s+i;
+    }
+    return 0;
+}
+
 void async_http_cb(struct http_m_reply *reply, void *param)
 {
 	async_query_t *aq;
@@ -101,6 +121,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	unsigned int tindex;
 	unsigned int tlabel;
 	struct cell *t = NULL;
+	char *p;
 	sip_msg_t *fmsg;
 
 	if (reply->result != NULL) {
@@ -119,6 +140,18 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 		ah_error.len = strlen(ah_error.s);
 	} else {
 		/* success */
+		
+		/* check for HTTP Via header
+     	 * - HTTP Via format is different that SIP Via
+     	 * - workaround: replace with Hia to be ignored by SIP parser
+     	 */
+    	if((p=strfindcasestrz(reply->result, "\nVia:"))!=NULL)
+    	{
+        	p++;
+        	*p = 'H';
+        	LM_DBG("replaced HTTP Via with Hia [[\n%.*s]]\n", reply->result->len, reply->result->s);
+    	}
+
 		ah_reply->buf = reply->result->s;
 		ah_reply->len = reply->result->len;
 

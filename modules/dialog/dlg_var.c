@@ -29,6 +29,7 @@
 #include "../../route.h"
 #include "../../script_cb.h"
 #include "../../pvapi.h"
+#include "../../lib/kcore/statistics.h"
 
 #include "dlg_var.h"
 #include "dlg_hash.h"

@@ -1,8 +1,9 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 voice-system.ro
- * Copyright (C) 2009 asipto.com
+ * Kazoo module interface
+ *
+ * Copyright (C) 2010-2014 2600Hz
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -20,10 +21,9 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- */
-
-/*! \file
- * \brief Support for transformations
+ * History:
+ * --------
+ * 2014-08  first version (2600hz)
  */
 
 #include <stdio.h>

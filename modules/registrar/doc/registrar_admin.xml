@@ -1286,6 +1286,31 @@ add_sock_hdr("Sock-Info");
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
+		<para>
+		Return values:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>0</emphasis> - Successfully deleted contact(s)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>-1</emphasis> - Failed to extract or parse address of record from argument
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>-2</emphasis> - Error in unregistering user
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>-3</emphasis> - Contacts for AOR not found
+			</para>
+		</listitem>
+		</itemizedlist>
 		<example>
 		<title><function>unregister</function> usage</title>
 		<programlisting format="linespecific">

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DiameterPeer 
+	FQDN="scscf.mnc001.mcc001.3gppnetwork.org"
+	Realm="ims.mnc001.mcc001.3gppnetwork.org"
+	Vendor_Id="10415"
+	Product_Name="CDiameterPeer"
+	AcceptUnknownPeers="1"
+	DropUnknownOnDisconnect="1"
+	Tc="30"
+	Workers="16"
+	QueueLength="32"
+	TransactionTimeout="5"
+	SessionsHashSize="128"
+	DefaultAuthSessionTimeout="3600"
+	MaxAuthSessionTimeout="3600"
+>
+	<Peer FQDN="hss.mnc001.mcc001.3gppnetwork.org" Realm="ims.mnc001.mcc001.3gppnetwork.org" port="3868"/>
+		
+	<Acceptor port="3870" bind="11.22.33.44"/>
+
+	<Auth id="16777216" vendor="10415"/><!-- 3GPP Cx -->
+	<Auth id="16777216" vendor="4491"/><!-- CableLabs Cx -->
+	<Auth id="16777216" vendor="13019"/><!-- ETSI/TISPAN Cx -->
+	<Auth id="16777216" vendor="0"/><!-- ETSI/TISPAN Cx -->
+
+	<Auth id="4" vendor="10415"/> <!--3GPP Ro -->
+        <Acct id="4" vendor="10415" />
+
+        <!-- 
+                Supported Vendor IDs - list of values which will be sent in the CER/CEA in the
+                Supported-Vendor-ID AVPs
+        -->
+        <SupportedVendor vendor="10415" />
+
+	<DefaultRoute FQDN="hss.mnc001.mcc001.3gppnetwork.org" metric="10"/>
+</DiameterPeer>

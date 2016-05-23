@@ -13,11 +13,11 @@ Klaus Darilion
    IPCom (Module implementation was partly sponsored by Silver Server
    (www.sil.at))
 
-Edited by
-
 Klaus Darilion
 
    IPCom
+
+Phil Lavin
 
    Copyright © 2006 Voice Sistem SRL
 
@@ -49,6 +49,7 @@ Klaus Darilion
               5.9. pubruri_callee_avp (int)
               5.10. pubruri_caller_dlg_var (str)
               5.11. pubruri_callee_dlg_var (int)
+              5.12. callee_trying (int)
 
         6. Functions
 
@@ -65,6 +66,7 @@ Klaus Darilion
    1.9. Set pubruri_callee_avp parameter
    1.10. Set pubruri_caller_avp parameter
    1.11. Set pubruri_callee_dlg_var parameter
+   1.12. Set callee_trying parameter
 
 Chapter 1. Admin Guide
 
@@ -91,6 +93,7 @@ Chapter 1. Admin Guide
         5.9. pubruri_callee_avp (int)
         5.10. pubruri_caller_dlg_var (str)
         5.11. pubruri_callee_dlg_var (int)
+        5.12. callee_trying (int)
 
    6. Functions
 
@@ -270,6 +273,7 @@ Chapter 1. Admin Guide
    5.9. pubruri_callee_avp (int)
    5.10. pubruri_caller_dlg_var (str)
    5.11. pubruri_callee_dlg_var (int)
+   5.12. callee_trying (int)
 
 5.1. include_callid (int)
 
@@ -426,6 +430,18 @@ modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
    Example 1.11. Set pubruri_callee_dlg_var parameter
 ...
 modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
+...
+
+5.12. callee_trying (int)
+
+   If this parameter is set, a "Trying" state will be sent for both the
+   caller and callee, rather than just the caller.
+
+   Default value is "0".
+
+   Example 1.12. Set callee_trying parameter
+...
+modparam("pua_dialoginfo", "callee_trying", 1)
 ...
 
 6. Functions

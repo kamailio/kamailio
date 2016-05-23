@@ -42,6 +42,7 @@
 	#define _BSD_SOURCE 1				/* needed on linux to "fix" the effect
 										  of the above define on
 										  features.h/unistd.h syscall() */
+	#define _DEFAULT_SOURCE 1         /* _BSD_SOURCE is deprecated */
    #define _DARWIN_C_SOURCE 1
 #else
 	#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
