@@ -386,13 +386,8 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 {
 	str body = {NULL, 0};
 
-	if(parse_sdp(msg) < 0) {
+	if(parse_sdp(msg) != 0) {
 		LM_ERR("Unable to parse SDP\n");
-		return -1;
-	}
-
-	if(msg->body == NULL) {
-		LM_DBG("No SDP body\n");
 		return -1;
 	}
 
@@ -403,7 +398,7 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
-	body.len = msg->len - (body.s - msg->buf);
+
 	if (body.len==0) {
 		LM_DBG("message body has zero length\n");
 		return -1;
