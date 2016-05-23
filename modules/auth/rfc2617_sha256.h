@@ -23,56 +23,41 @@
  */
 
 
-#ifndef RFC2617_H
-#define RFC2617_H
+#ifndef RFC2617_SHA256_H
+#define RFC2617_SHA256_H
 
 #include "../../str.h"
+#include "rfc2617.h"
 
 
-#define HASHLEN 16
-typedef char HASH[HASHLEN];
+#define HASHLEN_SHA256 32
+typedef unsigned char HASH_SHA256[HASHLEN_SHA256];
 
 
-#define HASHHEXLEN 32
-typedef char HASHHEX[HASHHEXLEN+1];
-
-
-/*
- * Type of algorithm used
- */
-typedef enum {
-	HA_MD5,      /* Plain MD5 */
-	HA_MD5_SESS  /* MD5-Session */
-} ha_alg_t;
+#define HASHHEXLEN_SHA256 64
+typedef char HASHHEX_SHA256[HASHHEXLEN_SHA256+1];
 
 
 /*
  * Convert to hex form
  */
-void cvt_hex(HASH Bin, HASHHEX Hex);
+void cvt_hex_sha256(HASH_SHA256 Bin, HASHHEX_SHA256 Hex);
 
 
 /*
  * calculate H(A1) as per HTTP Digest spec
  */
-typedef void (*calc_HA1_t)(ha_alg_t _alg,      /* Type of algorithm */
+void calc_HA1_sha256(ha_alg_t _alg,      /* Type of algorithm */
 		str* _username,     /* username */
 		str* _realm,        /* realm */
 		str* _password,     /* password */
 		str* _nonce,        /* nonce string */
 		str* _cnonce,       /* cnonce */
-		HASHHEX _sess_key); /* Result will be stored here */
-void calc_HA1_md5(ha_alg_t _alg,      /* Type of algorithm */
-		str* _username,     /* username */
-		str* _realm,        /* realm */
-		str* _password,     /* password */
-		str* _nonce,        /* nonce string */
-		str* _cnonce,       /* cnonce */
-		HASHHEX _sess_key); /* Result will be stored here */
+		HASHHEX_SHA256 _sess_key); /* Result will be stored here */
 
 
 /* calculate request-digest/response-digest as per HTTP Digest spec */
-typedef void (*calc_response_t)(HASHHEX _ha1,       /* H(A1) */
+void calc_response_sha256(HASHHEX_SHA256 _ha1,       /* H(A1) */
 		str* _nonce,        /* nonce from server */
 		str* _nc,           /* 8 hex digits */
 		str* _cnonce,       /* client nonce */
@@ -80,17 +65,7 @@ typedef void (*calc_response_t)(HASHHEX _ha1,       /* H(A1) */
 		int _auth_int,      /* 1 if auth-int is used */
 		str* _method,       /* method from the request */
 		str* _uri,          /* requested URL */
-		HASHHEX _hentity,   /* H(entity body) if qop="auth-int" */
-		HASHHEX _response); /* request-digest or response-digest */
-void calc_response_md5(HASHHEX _ha1,       /* H(A1) */
-		str* _nonce,        /* nonce from server */
-		str* _nc,           /* 8 hex digits */
-		str* _cnonce,       /* client nonce */
-		str* _qop,          /* qop-value: "", "auth", "auth-int" */
-		int _auth_int,      /* 1 if auth-int is used */
-		str* _method,       /* method from the request */
-		str* _uri,          /* requested URL */
-		HASHHEX _hentity,   /* H(entity body) if qop="auth-int" */
-		HASHHEX _response); /* request-digest or response-digest */
+		HASHHEX_SHA256 _hentity,   /* H(entity body) if qop="auth-int" */
+		HASHHEX_SHA256 _response); /* request-digest or response-digest */
 
-#endif /* RFC2617_H */
+#endif /* RFC2617_SHA256_H */
