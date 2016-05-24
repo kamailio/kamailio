@@ -417,6 +417,12 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
    parameter is set to 1. This will result in more memory usage and bigger
    exporter structure.
 
+   If you enable this setting and NOT use it (i.e. not check the SNMP
+   tables for registrations) an internal memory queue of usrloc changes
+   will keep growing in shared (core) memory. To release the queue memory,
+   run snmpwalk or use a monitoring tool to check the tables with regular
+   intervals.
+
    Default value is "0" (don't export).
 
    Example 1.8. Setting the export_registrar parameter
