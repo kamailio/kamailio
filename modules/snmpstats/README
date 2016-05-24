@@ -138,29 +138,46 @@ Chapter 1. Admin Guide
    KAMAILIO-SIP-COMMON-MIB, and KAMAILIO-SIP-SERVER-MIB. But briefly,
    these scalars are:
 
-   kamailioSIPProtocolVersion, kamailioSIPServiceStartTime,
-   kamailioSIPEntityType, kamailioSIPSummaryInRequests,
-   kamailioSIPSummaryOutRequest, kamailioSIPSummaryInResponses,
-   kamailioSIPSummaryOutResponses, kamailioSIPSummaryTotalTransactions,
-   kamailioSIPCurrentTransactions, kamailioSIPNumUnsupportedUris,
-   kamailioSIPNumUnsupportedMethods, kamailioSIPOtherwiseDiscardedMsgs,
-   kamailioSIPProxyStatefulness kamailioSIPProxyRecordRoute,
-   kamailioSIPProxyAuthMethod, kamailioSIPNumProxyRequireFailures,
-   kamailioSIPRegMaxContactExpiryDuration, kamailioSIPRegMaxUsers,
-   kamailioSIPRegCurrentUsers, kamailioSIPRegDfltRegActiveInterval,
-   kamailioSIPRegAcceptedRegistrations,
-   kamailioSIPRegRejectedRegistrations, kamailioMsgQueueDepth.
-   kamailioCurNumDialogs, kamailioCurNumDialogsInProgress,
-   kamailioCurNumDialogsInSetup, kamailioTotalNumFailedDialogSetups
+     * kamailioSIPProtocolVersion
+     * kamailioSIPServiceStartTime
+     * kamailioSIPEntityType
+     * kamailioSIPSummaryInRequests
+     * kamailioSIPSummaryOutRequest
+     * kamailioSIPSummaryInResponses
+     * kamailioSIPSummaryOutResponses
+     * kamailioSIPSummaryTotalTransactions
+     * kamailioSIPCurrentTransactions
+     * kamailioSIPNumUnsupportedUris
+     * kamailioSIPNumUnsupportedMethods
+     * kamailioSIPOtherwiseDiscardedMsgs
+     * kamailioSIPProxyStatefulness kamailioSIPProxyRecordRoute
+     * kamailioSIPProxyAuthMethod
+     * kamailioSIPNumProxyRequireFailures
+     * kamailioSIPRegMaxContactExpiryDuration
+     * kamailioSIPRegMaxUsers
+     * kamailioSIPRegCurrentUsers
+     * kamailioSIPRegDfltRegActiveInterval
+     * kamailioSIPRegAcceptedRegistrations
+     * kamailioSIPRegRejectedRegistrations
+     * kamailioMsgQueueDepth
+     * kamailioCurNumDialogs
+     * kamailioCurNumDialogsInProgress
+     * kamailioCurNumDialogsInSetup
+     * kamailioTotalNumFailedDialogSetups
 
    There are also scalars associated with alarms. They are as follows:
 
-   kamailioMsgQueueMinorThreshold, kamailioMsgQueueMajorThreshold,
-   kamailioMsgQueueDepthAlarmStatus, kamailioMsgQueueDepthMinorAlarm,
-   kamailioMsgQueueDepthMajorAlarm, kamailioDialogLimitMinorThreshold,
-   kamailioDialogLimitMajorThreshold, kamailioDialogUsageState,
-   kamailioDialogLimitAlarmStatus, kamailioDialogLimitMinorAlarm,
-   kamailioDialogLimitMajorAlarm
+     * kamailioMsgQueueMinorThreshold
+     * kamailioMsgQueueMajorThreshold
+     * kamailioMsgQueueDepthAlarmStatus
+     * kamailioMsgQueueDepthMinorAlarm
+     * kamailioMsgQueueDepthMajorAlarm
+     * kamailioDialogLimitMinorThreshold
+     * kamailioDialogLimitMajorThreshold
+     * kamailioDialogUsageState
+     * kamailioDialogLimitAlarmStatus
+     * kamailioDialogLimitMinorAlarm
+     * kamailioDialogLimitMajorAlarm
 
    In Kamailio 4.1 a set of new OIDs was added to reflect the Kamailio
    configuration, the version, core status (memory, connections),
