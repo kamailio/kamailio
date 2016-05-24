@@ -600,7 +600,10 @@ int reg_ht_update_attrs(reg_uac_t *reg)
 			strncpy(ri->r->auth_proxy.s, reg->auth_proxy.s, reg->auth_proxy.len);
 			ri->r->auth_proxy.len = reg->auth_proxy.len;
 			ri->r->auth_proxy.s[reg->auth_proxy.len] = '\0';
-			if(reg->flags & UAC_REG_DISABLED) ri->r->flags |= UAC_REG_DISABLED;
+			if(reg->flags & UAC_REG_DISABLED)
+				ri->r->flags |= UAC_REG_DISABLED;
+			else
+				ri->r->flags &= ~UAC_REG_DISABLED;
 			lock_release(&_reg_htable->entries[slot].lock);
 			return 0;
 		}
