@@ -728,11 +728,12 @@ resetdebug();
 			NOTE: Only the module functions that <emphasis>directly</emphasis> calls shm_alloc or
             pkg_alloc are taken into consideration.
 		</para>
-		<para>The firt parameter can be:</para>
+		<para>The first parameter can be one of the following:</para>
 		<itemizedlist>
 		<listitem>
 			<para>
-				<emphasis>module_name</emphasis> - print statistics for specific module.
+				<emphasis>module_name</emphasis> - print statistics for specific module. Either 
+				a module name (like "usrloc") or "core" for the &kamailio; core.
 			</para>
 		</listitem>
 		<listitem>
@@ -746,7 +747,7 @@ resetdebug();
 		<itemizedlist>
 		<listitem>
 			<para>
-				<emphasis>pkg</emphasis> - print private memory statistics.
+				<emphasis>pkg</emphasis> - print private (process) memory statistics.
 			</para>
 		</listitem>
 		<listitem>
