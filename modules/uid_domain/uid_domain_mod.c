@@ -433,7 +433,7 @@ static int db_load_domain(domain_t** d, unsigned long flags, str* domain)
 static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
 {
 	str domain, tmp;
-	domain_t* d;
+	domain_t* d = NULL;
 	int ret = -1;
 
 	if (get_str_fparam(&domain, msg, (fparam_t*)fp) != 0) {
@@ -527,13 +527,12 @@ int reload_domain_list(void)
 
 static int lookup_domain_fixup(void** param, int param_no)
 {
-	unsigned long flags;
+	unsigned long flags=0;
 	char* s;
 
 	if (param_no == 1) {
 		/* Determine the track and class of attributes to be loaded */
 		s = (char*)*param;
-		flags = 0;
 		if (*s != '$' || (strlen(s) != 3)) {
 			ERR("Invalid parameter value, $xy expected\n");
 			return -1;
