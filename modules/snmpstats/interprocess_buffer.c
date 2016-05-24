@@ -85,11 +85,11 @@ int initInterprocessBuffers(void)
 	frontRegUserTableBuffer =  shm_malloc(sizeof(interprocessBuffer_t));
 	endRegUserTableBuffer   =  shm_malloc(sizeof(interprocessBuffer_t));
 
-    if(frontRegUserTableBuffer == NULL || endRegUserTableBuffer == NULL)
-    {
-        LM_ERR("no more shared memory\n");
-        return -1;
-    }
+	if(frontRegUserTableBuffer == NULL || endRegUserTableBuffer == NULL)
+	{
+		LM_ERR("no more shared memory\n");
+		return -1;
+	}
 
 	memset(frontRegUserTableBuffer, 0x00, sizeof(interprocessBuffer_t));
 	memset(endRegUserTableBuffer,   0x00, sizeof(interprocessBuffer_t));
@@ -101,27 +101,27 @@ int initInterprocessBuffers(void)
 	interprocessCBLock = lock_alloc();
 	if(interprocessCBLock==NULL)
 	{
-        LM_ERR("cannot allocate the lock\n");
-        shm_free(frontRegUserTableBuffer);
-        frontRegUserTableBuffer = NULL;
-        shm_free(endRegUserTableBuffer);
-        endRegUserTableBuffer = NULL;
-        return -1;
+		LM_ERR("cannot allocate the lock\n");
+		shm_free(frontRegUserTableBuffer);
+		frontRegUserTableBuffer = NULL;
+		shm_free(endRegUserTableBuffer);
+		endRegUserTableBuffer = NULL;
+		return -1;
 	}
 	lock_init(interprocessCBLock);
 
 	hashTable = createHashTable(HASH_SIZE);
-    if(hashTable == NULL)
-    {
-        LM_ERR("no more shared memory\n");
+	if(hashTable == NULL)
+	{
+		LM_ERR("no more shared memory\n");
 		lock_destroy(interprocessCBLock);
 		lock_dealloc(interprocessCBLock);
-        shm_free(frontRegUserTableBuffer);
-        frontRegUserTableBuffer = NULL;
-        shm_free(endRegUserTableBuffer);
-        endRegUserTableBuffer = NULL;
-        return -1;
-    }
+		shm_free(frontRegUserTableBuffer);
+		frontRegUserTableBuffer = NULL;
+		shm_free(endRegUserTableBuffer);
+		endRegUserTableBuffer = NULL;
+		return -1;
+	}
 
 	return 1;
 }
@@ -178,7 +178,7 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 
 	/* This is the first element to be added. */
 	if (frontRegUserTableBuffer->next == NULL) {
-		frontRegUserTableBuffer->next     = currentBufferElement;
+		frontRegUserTableBuffer->next = currentBufferElement;
 	} else {
 		endRegUserTableBuffer->next->next = currentBufferElement;
 	}
@@ -356,12 +356,12 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 
 void freeInterprocessBuffer(void)
 {
-    interprocessBuffer_t *currentBuffer, *previousBuffer;
+	interprocessBuffer_t *currentBuffer, *previousBuffer;
 
 	if (frontRegUserTableBuffer==NULL
 			|| frontRegUserTableBuffer->next == NULL
 			|| endRegUserTableBuffer==NULL) {
-        LM_DBG("Nothing to clean\n");
+		LM_DBG("Nothing to clean\n");
 		return;
 	}
 
@@ -373,18 +373,18 @@ void freeInterprocessBuffer(void)
 
 	while (currentBuffer != NULL) {
 
-        previousBuffer = currentBuffer;
-        currentBuffer = currentBuffer->next;
-        shm_free(previousBuffer->stringName);
-        shm_free(previousBuffer->stringContact);
-        shm_free(previousBuffer);
+		previousBuffer = currentBuffer;
+		currentBuffer = currentBuffer->next;
+		shm_free(previousBuffer->stringName);
+		shm_free(previousBuffer->stringContact);
+		shm_free(previousBuffer);
 
 	}
 
-    if(frontRegUserTableBuffer)
-        shm_free(frontRegUserTableBuffer);
+	if(frontRegUserTableBuffer)
+		shm_free(frontRegUserTableBuffer);
 
-    if(endRegUserTableBuffer)
-        shm_free(endRegUserTableBuffer);
+	if(endRegUserTableBuffer)
+		shm_free(endRegUserTableBuffer);
 
 }
