@@ -508,6 +508,7 @@ static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _re
 
 	if (_con == NULL || _url == NULL || _result == NULL) {
 		LM_ERR("Invalid parameter\n");
+		return -1;
 	}
 	con.s = _con;
 	con.len = strlen(con.s);
@@ -546,6 +547,7 @@ static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url, char
 
 	if (_con == NULL || _url == NULL || _data == NULL || _result == NULL) {
 		LM_ERR("Invalid parameter\n");
+		return -1;
 	}
 	con.s = _con;
 	con.len = strlen(con.s);
@@ -782,6 +784,7 @@ static int w_curl_get_redirect(struct sip_msg* _m, char* _con, char* _result) {
 
 	if (_con == NULL || _result == NULL) {
 		LM_ERR("Invalid parameter\n");
+		return -1;
 	}
 	con.s = _con;
 	con.len = strlen(con.s);
