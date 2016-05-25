@@ -626,13 +626,13 @@ void * capture_mode_init(str *name, str * params) {
 	return n;
 
 error:
-	if (n->name.s){
-		pkg_free(n->name.s);
-	}
-	if (n->table_names){
-		pkg_free(n->table_names);
-	}
 	if (n){
+		if (n->name.s){
+			pkg_free(n->name.s);
+		}
+		if (n->table_names){
+			pkg_free(n->table_names);
+		}
 		pkg_free(n);
 	}
 	return 0;
