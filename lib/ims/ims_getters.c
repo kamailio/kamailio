@@ -132,9 +132,9 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm) {
 	}
 		
 	if (realm.len && realm.s) {
-		ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
+		ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
 		if (ret < 0) {
-			ret = find_credentials(msg, &realm, HDR_PROXYAUTH_F, &h);
+			ret = find_credentials(msg, &realm, HDR_PROXYAUTH_T, &h);
 			if (ret < 0) {
 				goto fallback;
 			} else {
@@ -202,7 +202,7 @@ str cscf_get_private_identity_from(struct sip_msg *msg, str realm)
 	}
         
         if (realm.len && realm.s) {
-            ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
+            ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
             if (ret < 0) {
                     goto fallback;
             } else 
