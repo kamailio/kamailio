@@ -101,7 +101,7 @@ static inline int do_auth(struct sip_msg *_m, struct hdr_field *_h, str *_realm,
 	ret = eph_auth_api.check_response(&cred->digest, _method, ha1);
 	if (ret == AUTHENTICATED)
 	{
-		if (eph_auth_api.post_auth(_m, _h) != AUTHENTICATED)
+		if (eph_auth_api.post_auth(_m, _h, ha1) != AUTHENTICATED)
 		{
 			return AUTH_ERROR;
 		}
