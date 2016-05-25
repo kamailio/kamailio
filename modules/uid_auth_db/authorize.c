@@ -288,7 +288,7 @@ static inline int check_all_ha1(struct sip_msg* msg, struct hdr_field* hdr,
 					}
 
 					if (!check_response(dig, method, ha1)) {
-						if (auth_api.post_auth(msg, hdr) == AUTHENTICATED) {
+						if (auth_api.post_auth(msg, hdr, ha1) == AUTHENTICATED) {
 							generate_avps(*res, row);
 							return 0;
 						}
@@ -416,7 +416,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
     
 	/* Recalculate response, it must be same to authorize successfully */
 	if (!check_response(&(cred->digest), &msg->first_line.u.request.method, ha1)) {
-		switch(auth_api.post_auth(msg, h)) {
+		switch(auth_api.post_auth(msg, h, ha1)) {
 		case ERROR:
 		case BAD_CREDENTIALS:
 			ret = -2; 
