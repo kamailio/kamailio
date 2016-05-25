@@ -137,6 +137,7 @@ static struct qp auth_qauthint = {
 /* Hash algorithm used for digest authentication, MD5 if empty */
 str auth_algorithm = {"", 0};
 int hash_hex_len;
+int add_authinfo_hdr = 0; /* should an Authentication-Info header be added on 200 OK responses? */
 
 calc_HA1_t calc_HA1;
 calc_response_t calc_response;
@@ -204,6 +205,7 @@ static param_export_t params[] = {
 	{"realm_prefix",           PARAM_STRING, &auth_realm_prefix.s   },
 	{"use_domain",             PARAM_INT,    &auth_use_domain       },
 	{"algorithm",              PARAM_STR,    &auth_algorithm        },
+	{"add_authinfo_hdr",       INT_PARAM,    &add_authinfo_hdr      },
 	{0, 0, 0}
 };
 
@@ -538,7 +540,7 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 	ret = auth_check_response(&(cred->digest), method, ha1);
 	if(ret==AUTHENTICATED) {
 		ret = AUTH_OK;
-		switch(post_auth(msg, h)) {
+		switch(post_auth(msg, h, ha1)) {
 			case AUTHENTICATED:
 				break;
 			default:
