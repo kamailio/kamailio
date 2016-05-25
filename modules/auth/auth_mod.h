@@ -44,6 +44,7 @@ extern str proxy_challenge_header;
 extern str www_challenge_header;
 extern struct qp auth_qop;
 extern str auth_algorithm;
+extern int add_authinfo_hdr; /* should an Authentication-Info header be added on 200 OK responses? */
 
 extern int hash_hex_len;
 extern calc_HA1_t calc_HA1;

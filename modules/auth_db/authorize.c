@@ -299,7 +299,7 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 	ret = auth_api.check_response(&(cred->digest), method, ha1);
 	if(ret==AUTHENTICATED) {
 		ret = AUTH_OK;
-		switch(auth_api.post_auth(msg, h)) {
+		switch(auth_api.post_auth(msg, h, ha1)) {
 			case AUTHENTICATED:
 				generate_avps(msg, result);
 				break;

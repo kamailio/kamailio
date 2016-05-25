@@ -178,7 +178,7 @@ inline static int calc_bin_nonce_md5(union bin_nonce* b_nonce, int cfg,
  *                  return error immediately. After a succesfull call it will
  *                  contain the size of nonce written into the buffer,
  *                  without the terminating 0.
- * @param cfg This is the value of one of the tree module parameters that
+ * @param cfg This is the value of one of the three module parameters that
  *            control which optional checks are enabled/disabled and which
  *            parts of the message will be included in the nonce string.
  * @param since Time when nonce was created, i.e. nonce is valid since <valid_since> up to <expires>

@@ -73,6 +73,66 @@ void strip_realm(str* _realm)
 	return;
 }
 
+/**
+ * Calculate a new nonce.
+ * @param nonce  Pointer to a buffer of *nonce_len. It must have enough
+ *               space to hold the nonce. MAX_NONCE_LEN should be always
+ *               safe.
+ * @param nonce_len A value/result parameter. Initially it contains the
+ *                  nonce buffer length. If the length is too small, it
+ *                  will be set to the needed length and the function will
+ *                  return error immediately. After a succesfull call it will
+ *                  contain the size of nonce written into the buffer,
+ *                  without the terminating 0.
+ * @param cfg This is the value of one of the three module parameters that
+ *            control which optional checks are enabled/disabled and which
+ *            parts of the message will be included in the nonce string.
+ * @param msg     The message for which the nonce is computed. If
+ *                auth_extra_checks is set, the MD5 of some fields of the
+ *                message will be included in the  generated nonce.
+ * @return 0 on success and -1 on error
+ */
+int calc_new_nonce(char* nonce, int *nonce_len, int cfg, struct sip_msg* msg)
+{
+	int t;
+#if defined USE_NC || defined USE_OT_NONCE
+	unsigned int n_id;
+	unsigned char pool;
+	unsigned char pool_flags;
+#endif
+
+	t=time(0);
+#if defined USE_NC || defined USE_OT_NONCE
+	if (nc_enabled || otn_enabled){
+		pool=nid_get_pool();
+		n_id=nid_inc(pool);
+		pool_flags=0;
+#ifdef USE_NC
+		if (nc_enabled){
+			nc_new(n_id, pool);
+			pool_flags|=  NF_VALID_NC_ID;
+		}
+#endif
+#ifdef USE_OT_NONCE
+		if (otn_enabled){
+			otn_new(n_id, pool);
+			pool_flags|= NF_VALID_OT_ID;
+		}
+#endif
+	}else{
+		pool=0;
+		pool_flags=0;
+		n_id=0;
+	}
+	return calc_nonce(nonce, nonce_len, cfg, t, t + nonce_expire, n_id,
+				pool | pool_flags,
+				&secret1, &secret2, msg);
+#else  /* USE_NC || USE_OT_NONCE*/
+	return calc_nonce(nonce, nonce_len, cfg, t, t + nonce_expire,
+				&secret1, &secret2, msg);
+#endif /* USE_NC || USE_OT_NONCE */
+}
+
 
 /**
  * Create and return {WWW,Proxy}-Authenticate header field
@@ -93,12 +153,6 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 	char *p;
 	str* hfn, hf;
 	int nonce_len, l, cfg;
-	int t;
-#if defined USE_NC || defined USE_OT_NONCE
-	unsigned int n_id;
-	unsigned char pool;
-	unsigned char pool_flags;
-#endif
 
 	if(!ahf)
 	{
@@ -183,42 +237,13 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 	}
 	else {
 		l=nonce_len;
-		t=time(0);
-#if defined USE_NC || defined USE_OT_NONCE
-		if (nc_enabled || otn_enabled){
-			pool=nid_get_pool();
-			n_id=nid_inc(pool);
-			pool_flags=0;
-#ifdef USE_NC
-			if (nc_enabled){
-				nc_new(n_id, pool);
-				pool_flags|=  NF_VALID_NC_ID;
-			}
-#endif
-#ifdef USE_OT_NONCE
-			if (otn_enabled){
-				otn_new(n_id, pool);
-				pool_flags|= NF_VALID_OT_ID;
-			}
-#endif
-		}else{
-			pool=0;
-			pool_flags=0;
-			n_id=0;
+		if (calc_new_nonce(p, &l, cfg, msg) != 0)
+		{
+			ERR("auth: calc_nonce failed (len %d, needed %d)\n",
+					nonce_len, l);
+			pkg_free(hf.s);
+			return -1;
 		}
-		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, n_id,
-					pool | pool_flags,
-					&secret1, &secret2, msg) != 0)
-#else  /* USE_NC || USE_OT_NONCE*/
-			if (calc_nonce(p, &l, cfg, t, t + nonce_expire,
-						&secret1, &secret2, msg) != 0)
-#endif /* USE_NC || USE_OT_NONCE */
-			{
-				ERR("auth: calc_nonce failed (len %d, needed %d)\n",
-						nonce_len, l);
-				pkg_free(hf.s);
-				return -1;
-			}
 		p += l;
 	}
 	*p = '"'; p++;
