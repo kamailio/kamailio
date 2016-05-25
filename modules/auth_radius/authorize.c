@@ -172,7 +172,7 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
     }
 
     if (res == 1) {
-	switch(auth_api.post_auth(_msg, h)) {
+	switch(auth_api.post_auth(_msg, h, NULL)) {
 	default:
 	    BUG("unexpected reply '%d'.\n",
 		auth_api.pre_auth(_msg, &domain, _hftype, &h, NULL));
