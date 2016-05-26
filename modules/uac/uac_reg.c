@@ -1172,7 +1172,7 @@ int uac_reg_load_db(void)
 		}
 	} else {
 		if((ret=reg_dbf.query(reg_db_con, NULL, NULL, NULL, db_cols,
-						0, 10, 0, &db_res))!=0
+						0, 12, 0, &db_res))!=0
 				|| RES_ROW_N(db_res)<=0 )
 		{
 			reg_dbf.free_result(reg_db_con, db_res);
