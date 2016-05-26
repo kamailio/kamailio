@@ -1530,7 +1530,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 		{
 			res->rs = avp_value.s;
 		} else {
-			res->rs.s = int2str(avp_value.n, &res->rs.len);
+			res->rs.s = sint2str(avp_value.n, &res->rs.len);
 			res->ri = avp_value.n;
 			res->flags |= PV_VAL_INT|PV_TYPE_INT;
 		}
@@ -1556,7 +1556,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			{
 				res->rs = avp_value.s;
 			} else {
-				res->rs.s = int2str(avp_value.n, &res->rs.len);
+				res->rs.s = sint2str(avp_value.n, &res->rs.len);
 			}
 			
 			if(p-p_ini+res->rs.len+1>p_size)
@@ -1591,7 +1591,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			{
 				res->rs = avp_value.s;
 			} else {
-				res->rs.s = int2str(avp_value.n, &res->rs.len);
+				res->rs.s = sint2str(avp_value.n, &res->rs.len);
 				res->ri = avp_value.n;
 				res->flags |= PV_VAL_INT|PV_TYPE_INT;
 			}
@@ -1609,7 +1609,7 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 		{
 			res->rs = avp_value.s;
 		} else {
-			res->rs.s = int2str(avp_value.n, &res->rs.len);
+			res->rs.s = sint2str(avp_value.n, &res->rs.len);
 			res->ri = avp_value.n;
 			res->flags |= PV_VAL_INT|PV_TYPE_INT;
 		}
