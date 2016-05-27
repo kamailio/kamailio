@@ -248,7 +248,9 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1) {
        the type of the columns. Please note that only these two datatypes
        are supported, other datatypes will/may be converted to string.
 
-   This function can be used from ANY_ROUTE.
+   This function can be used from ANY_ROUTE. Returns -1 on Error, 1 on
+   successful query, 2 if query provided no result set, 3 if result is
+   ignored (no result parameter given)
 
    Example 1.5. sql_pvquery() usage
 ...

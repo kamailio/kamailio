@@ -338,7 +338,9 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1) {
 		</listitem>
 		</itemizedlist>
 		<para>
-			This function can be used from ANY_ROUTE.
+			This function can be used from ANY_ROUTE. Returns -1 on Error,
+			1 on successful query, 2 if query provided no result set,
+			3 if result is ignored (no result parameter given)
 		</para>
 		<example>
 		<title><function>sql_pvquery()</function> usage</title>
