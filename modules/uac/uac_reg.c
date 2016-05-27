@@ -1079,7 +1079,7 @@ void uac_reg_timer(unsigned int ticks)
 		if(reg.attr.len == 0) { \
 			LM_ERR("empty value not allowed for column[%d]='%.*s' - ignoring record\n", \
 					pos, db_cols[pos]->len, db_cols[pos]->s); \
-			continue; \
+			goto nextrec; \
 		} \
 	} \
 } while(0);
@@ -1178,7 +1178,7 @@ int uac_reg_load_db(void)
 	do {
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
-			memset(&reg, 0, sizeof(reg_uac_t));;
+			memset(&reg, 0, sizeof(reg_uac_t));
 			/* check for NULL values ?!?! */
 			reg_db_set_attr(l_uuid, 0);
 			reg_db_set_attr(l_username, 1);
@@ -1205,6 +1205,8 @@ int uac_reg_load_db(void)
 				LM_ERR("Error adding reg to htable\n");
 				goto error;
 			}
+nextrec:
+			;
 		}
 		if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
 			if(reg_dbf.fetch_result(reg_db_con, &db_res, reg_fetch_rows)<0) {
@@ -1310,8 +1312,10 @@ int uac_reg_db_refresh(str *pl_uuid)
 		}
 	}
 
-	memset(&reg, 0, sizeof(reg_uac_t));;
+	memset(&reg, 0, sizeof(reg_uac_t));
+	/* only one record - use FOR to catch 'contunue' on invalid set attr */
 	i = 0;
+
 	/* check for NULL values ?!?! */
 	reg_db_set_attr(l_uuid, 0);
 	reg_db_set_attr(l_username, 1);
@@ -1350,6 +1354,8 @@ int uac_reg_db_refresh(str *pl_uuid)
 		}
 	}
 	lock_release(_reg_htable_gc_lock);
+
+nextrec:
 
 	reg_dbf.free_result(reg_db_con, db_res);
 	reg_dbf.close(reg_db_con);
