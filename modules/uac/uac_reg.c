@@ -1079,7 +1079,7 @@ void uac_reg_timer(unsigned int ticks)
 		if(reg.attr.len == 0) { \
 			LM_ERR("empty value not allowed for column[%d]='%.*s' - ignoring record\n", \
 					pos, db_cols[pos]->len, db_cols[pos]->s); \
-			continue; \
+			goto nextrec; \
 		} \
 	} \
 } while(0);
@@ -1178,7 +1178,7 @@ int uac_reg_load_db(void)
 	do {
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
-			memset(&reg, 0, sizeof(reg_uac_t));;
+			memset(&reg, 0, sizeof(reg_uac_t));
 			/* check for NULL values ?!?! */
 			reg_db_set_attr(l_uuid, 0);
 			reg_db_set_attr(l_username, 1);
@@ -1205,6 +1205,8 @@ int uac_reg_load_db(void)
 				LM_ERR("Error adding reg to htable\n");
 				goto error;
 			}
+nextrec:
+			;
 		}
 		if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
 			if(reg_dbf.fetch_result(reg_db_con, &db_res, reg_fetch_rows)<0) {
@@ -1312,46 +1314,48 @@ int uac_reg_db_refresh(str *pl_uuid)
 
 	memset(&reg, 0, sizeof(reg_uac_t));
 	/* only one record - use FOR to catch 'contunue' on invalid set attr */
-	for(i=0; i<1; i++) {
-		/* check for NULL values ?!?! */
-		reg_db_set_attr(l_uuid, 0);
-		reg_db_set_attr(l_username, 1);
-		reg_db_set_attr(l_domain, 2);
-		reg_db_set_attr(r_username, 3);
-		reg_db_set_attr(r_domain, 4);
-		/* realm may be empty */
-		if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
-			reg.realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
-			reg.realm.len = strlen(reg.realm.s);
-		}
-		reg_db_set_attr(auth_username, 6);
-		reg_db_set_attr(auth_password, 7);
-		reg_db_set_attr(auth_proxy, 8);
-		reg.expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
-		reg.h_uuid = reg_compute_hash(&reg.l_uuid);
-		reg.h_user = reg_compute_hash(&reg.l_username);
-		reg.flags = (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
-		reg.reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
+	i = 0;
 
-		lock_get(_reg_htable_gc_lock);
-		if(reg_ht_get_byuuid(pl_uuid)!=NULL)
-		{
-			if(reg_ht_update_attrs(&reg)<0)
-			{
-				lock_release(_reg_htable_gc_lock);
-				LM_ERR("Error updating reg to htable\n");
-				goto error;
-			}
-		} else {
-			if(reg_ht_add(&reg)<0)
-			{
-				lock_release(_reg_htable_gc_lock);
-				LM_ERR("Error adding reg to htable\n");
-				goto error;
-			}
-		}
-		lock_release(_reg_htable_gc_lock);
+	/* check for NULL values ?!?! */
+	reg_db_set_attr(l_uuid, 0);
+	reg_db_set_attr(l_username, 1);
+	reg_db_set_attr(l_domain, 2);
+	reg_db_set_attr(r_username, 3);
+	reg_db_set_attr(r_domain, 4);
+	/* realm may be empty */
+	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
+		reg.realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
+		reg.realm.len = strlen(reg.realm.s);
 	}
+	reg_db_set_attr(auth_username, 6);
+	reg_db_set_attr(auth_password, 7);
+	reg_db_set_attr(auth_proxy, 8);
+	reg.expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
+	reg.h_uuid = reg_compute_hash(&reg.l_uuid);
+	reg.h_user = reg_compute_hash(&reg.l_username);
+	reg.flags = (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
+	reg.reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
+
+	lock_get(_reg_htable_gc_lock);
+	if(reg_ht_get_byuuid(pl_uuid)!=NULL)
+	{
+		if(reg_ht_update_attrs(&reg)<0)
+		{
+			lock_release(_reg_htable_gc_lock);
+			LM_ERR("Error updating reg to htable\n");
+			goto error;
+		}
+	} else {
+		if(reg_ht_add(&reg)<0)
+		{
+			lock_release(_reg_htable_gc_lock);
+			LM_ERR("Error adding reg to htable\n");
+			goto error;
+		}
+	}
+	lock_release(_reg_htable_gc_lock);
+
+nextrec:
 
 	reg_dbf.free_result(reg_db_con, db_res);
 	reg_dbf.close(reg_db_con);
