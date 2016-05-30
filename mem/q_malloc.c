@@ -202,6 +202,7 @@ struct qm_block* qm_malloc_init(char* address, unsigned long size, int type)
 	if (size < init_overhead)
 	{
 		/* not enough mem to create our control structures !!!*/
+		LOG(L_ERR, "qm_malloc_init(%lu); No memory left to create control structures!\n", size);
 		return 0;
 	}
 	end=start+size;
@@ -285,6 +286,7 @@ static inline struct qm_frag* qm_find_free(struct qm_block* qm,
 	/*try in a bigger bucket*/
 	}
 	/* not found */
+	LOG(L_ERR, "qm_find_free(%p, %lu); Free fragment not found!\n", qm, size);
 	return 0;
 }
 
@@ -413,6 +415,13 @@ void* qm_malloc(void* qmp, unsigned long size)
 #endif
 		return (char*)f+sizeof(struct qm_frag);
 	}
+
+#ifdef DBG_QM_MALLOC
+	LOG(L_ERR, "qm_malloc(%p, %lu) called from %s: %s(%d), module: %s; Free fragment not found!\n", qm, size, file, func, line, mname);
+#else
+	LOG(L_ERR, "qm_malloc(%p, %lu); Free fragment not found!\n", qm, size);
+#endif
+
 	return 0;
 }
 
@@ -653,6 +662,12 @@ void* qm_realloc(void* qmp, void* p, unsigned long size)
 				if (ptr){
 					/* copy, need by libssl */
 					memcpy(ptr, p, orig_size);
+				} else {
+#ifdef DBG_QM_MALLOC
+					LOG(L_ERR, "qm_realloc(%p, %lu) called from %s: %s(%d), module: %s; qm_malloc() failed!\n", qm, size, file, func, line, mname);
+#else
+					LOG(L_ERR, "qm_realloc(%p, %lu); qm_malloc() failed!\n", qm, size);
+#endif
 				}
 	#ifdef DBG_QM_MALLOC
 				qm_free(qm, p, file, func, line, mname);
