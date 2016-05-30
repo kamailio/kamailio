@@ -2707,7 +2707,7 @@ int tcp_init(struct socket_info* sock_info)
 		}
 	}
 #endif
-	
+
 	addr=&sock_info->su;
 	/* sock_info->proto=PROTO_TCP; */
 	if (init_su(addr, &sock_info->address, sock_info->port_no)<0){
@@ -2749,10 +2749,18 @@ int tcp_init(struct socket_info* sock_info)
 #endif
 	/* tos */
 	optval = tos;
-	if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval, 
-				sizeof(optval)) ==-1){
-		LM_WARN("setsockopt tos: %s (%d)\n", strerror(errno), tos);
-		/* continue since this is not critical */
+	if(sock_info->address.af==AF_INET){
+		if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval,
+					sizeof(optval)) ==-1){
+			LM_WARN("setsockopt tos: %s (%d)\n", strerror(errno), tos);
+			/* continue since this is not critical */
+		}
+	} else if(sock_info->address.af==AF_INET6){
+		if (setsockopt(sock_info->socket, IPPROTO_IPV6, IPV6_TCLASS,
+					(void*)&optval, sizeof(optval)) ==-1) {
+			LM_WARN("setsockopt v6 tos: %s (%d)\n", strerror(errno), tos);
+			/* continue since this is not critical */
+		}
 	}
 #ifdef HAVE_TCP_DEFER_ACCEPT
 	/* linux only */
