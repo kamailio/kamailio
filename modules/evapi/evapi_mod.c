@@ -168,7 +168,7 @@ static int child_init(int rank)
 		return 0;
 	}
 
-	pid=fork_process(PROC_NOCHLDINIT, "EvAPI Dispatcher", 1);
+	pid=fork_process(PROC_RPC, "EvAPI Dispatcher", 1);
 	if (pid<0)
 		return -1; /* error */
 	if(pid==0) {
