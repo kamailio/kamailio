@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright Â© 2014 asipto.com
+   Copyright © 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -79,6 +79,8 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * mongo-c-driver - available at
        https://github.com/mongodb/mongo-c-driver
+       Note: if you use tls module, use at least mongo-c-driver v1.2.1 -
+       there were reports of issues inside earlier versions of the driver.
 
 4. Usage
 
