@@ -336,6 +336,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	if (size < init_overhead)
 	{
 		/* not enough mem to create our control structures !!!*/
+		LOG(L_ERR, "fm_malloc_init(%lu); No memory left to create control structures!\n", size);
 		return 0;
 	}
 	end=start+size;
@@ -408,6 +409,8 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, unsigned long size)
 		}
 		frag = nxt;
 	}
+
+	LOG(L_ERR, "fm_search_defrag(%p, %lu); Free fragment not found!\n", qm, size);
 
 	return 0;
 }
@@ -487,6 +490,12 @@ void* fm_malloc(void* qmp, unsigned long size)
 	frag = fm_search_defrag(qm, size);
 
 	if(frag) goto finish;
+
+#ifdef DBG_F_MALLOC
+        LOG(L_ERR, "fm_malloc(%p, %lu) called from %s: %s(%d), module: %s; Free fragment not found!\n", qm, size, file, func, line, mname);
+#else
+        LOG(L_ERR, "fm_malloc(%p, %lu); Free fragment not found!\n", qm, size);
+#endif
 
 	return 0;
 
@@ -715,6 +724,12 @@ void* fm_realloc(void* qmp, void* p, unsigned long size)
 			if (ptr){
 				/* copy, need by libssl */
 				memcpy(ptr, p, orig_size);
+			} else {
+#ifdef DBG_F_MALLOC
+				LOG(L_ERR, "fm_realloc(%p, %lu) called from %s: %s(%d), module: %s; fm_malloc() failed!\n", qm, size, file, func, line, mname);
+#else
+				LOG(L_ERR, "fm_realloc(%p, %lu); fm_malloc() failed!\n", qm, size);
+#endif
 			}
 	#ifdef DBG_F_MALLOC
 			fm_free(qm, p, file, func, line, mname);
