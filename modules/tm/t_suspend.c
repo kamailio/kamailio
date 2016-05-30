@@ -204,8 +204,11 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	t->flags |= T_ASYNC_CONTINUE;   /* we can now know anywhere in kamailio
 					 * that we are executing post a suspend */
 
+	/* transaction is no longer suspended, resetting the SUSPEND flag */
+	t->flags &= ~T_ASYNC_SUSPENDED;
+
 	/* which route block type were we in when we were suspended */
-	cb_type =  FAILURE_CB_TYPE;;
+	cb_type =  FAILURE_CB_TYPE;
 	switch (t->async_backup.backup_route) {
 		case REQUEST_ROUTE:
 			cb_type = FAILURE_CB_TYPE;
@@ -231,7 +234,6 @@ int t_continue(unsigned int hash_index, unsigned int label,
 				/* Either t_continue() has already been
 				* called or the branch has already timed out.
 				* Needless to continue. */
-				t->flags &= ~T_ASYNC_SUSPENDED;
 				UNLOCK_ASYNC_CONTINUE(t);
 				UNREF(t); /* t_unref would kill the transaction */
 				return 1;
@@ -456,14 +458,10 @@ done:
 		t->uac[branch].reply = 0;
 	}
 
-	/*This transaction is no longer suspended so unsetting the SUSPEND flag*/
-	t->flags &= ~T_ASYNC_SUSPENDED;
-
 
 	return 0;
 
 kill_trans:
-	t->flags &= ~T_ASYNC_SUSPENDED;
 	/* The script has hopefully set the error code. If not,
 	 * let us reply with a default error. */
 	if ((kill_transaction_unsafe(t,
