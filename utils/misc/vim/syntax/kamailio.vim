@@ -45,7 +45,7 @@ syn region	kamailioString			matchgroup=Normal start='"' skip='\\"' end='"' conta
 syn match	kamailioVariable		"$[a-zA-Z_][a-zA-Z0-9_]*\(([^)]\+)\)\?" contained
 syn match	kamailioIdentifier		'[a-zA-Z_][a-zA-Z0-9_]*' contained
 syn keyword	kamailioStatement	route if else switch case default break exit return drop while include_file import_file contained
-syn keyword	kamailioSpecial			yes no on off true false enabled disabled contained
+syn keyword	kamailioSpecial			yes no on off true false enabled disabled LOG_LOCAL0 LOG_LOCAL1 LOG_LOCAL2 LOG_LOCAL3 LOG_LOCAL4 LOG_LOCAL5 LOG_LOCAL6 LOG_LOCAL7 contained
 
 syn keyword	kamailioCoreKeyword	af dst_ip dst_port from_uri method msg:len proto status snd_af snd_ip snd_port snd_proto src_ip src_port to_af to_ip to_port to_proto to_uri uri uri:host uri:port contained
 
