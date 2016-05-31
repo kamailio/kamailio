@@ -58,6 +58,11 @@ Pawel Kuzak
         5. MI Commands
 
               5.1. reload_blacklist
+              5.2. dump_blacklist
+              5.3. check_blacklist prefix
+              5.4. check_whitelist prefix
+              5.5. check_userblacklist user [domain] prefix
+              5.6. check_userwhitelist user [domain] prefix
 
         6. Installation and Running
 
@@ -84,8 +89,13 @@ Pawel Kuzak
    1.17. check_blacklist usage
    1.18. check_whitelist usage
    1.19. reload_blacklist usage
-   1.20. Example database content - globalblacklist table
-   1.21. Example database content - userblacklist table
+   1.20. dump_blacklist usage
+   1.21. check_blacklist usage
+   1.22. check_whitelist usage
+   1.23. check_userblacklist usage
+   1.24. check_userwhitelist usage
+   1.25. Example database content - globalblacklist table
+   1.26. Example database content - userblacklist table
 
 Chapter 1. Admin Guide
 
@@ -128,6 +138,11 @@ Chapter 1. Admin Guide
    5. MI Commands
 
         5.1. reload_blacklist
+        5.2. dump_blacklist
+        5.3. check_blacklist prefix
+        5.4. check_whitelist prefix
+        5.5. check_userblacklist user [domain] prefix
+        5.6. check_userwhitelist user [domain] prefix
 
    6. Installation and Running
 
@@ -425,6 +440,11 @@ if (!check_whitelist("globalblacklist")) {
 5. MI Commands
 
    5.1. reload_blacklist
+   5.2. dump_blacklist
+   5.3. check_blacklist prefix
+   5.4. check_whitelist prefix
+   5.5. check_userblacklist user [domain] prefix
+   5.6. check_userwhitelist user [domain] prefix
 
 5.1. reload_blacklist
 
@@ -432,9 +452,81 @@ if (!check_whitelist("globalblacklist")) {
    database tables for the global blacklist have been changed.
 
    Example 1.19. reload_blacklist usage
-...
-kamctl fifo reload_blacklist
-...
+                                        ...
+                                        kamctl fifo reload_blacklist
+                                        ...
+
+5.2. dump_blacklist
+
+   Dumps the default, in memory, global_blacklist content to stdout. Note
+   that a reload_blacklist should be issued before, in order to see the
+   latest content of the database.
+
+   Example 1.20. dump_blacklist usage
+                                        ...
+                                        kamctl fifo reload_blacklist
+                                        kamctl fifo dump_blacklist
+                                        ...
+
+5.3. check_blacklist prefix
+
+   Searches in the default, in memory, global list. Finds the longest
+   prefix that matches the given prefix parameter. Returns true if the
+   prefix is found and the whitelist is not set. Returns false otherwise -
+   either prefix found and whitelist set or prefix not found. Note that a
+   reload_blacklist should be issued before, in order to check through the
+   latest content of the database.
+
+   Example 1.21. check_blacklist usage
+                                        ...
+                                        kamctl fifo reload_blacklist
+                                        kamctl fifo check_blacklist prefix
+                                        ...
+
+5.4. check_whitelist prefix
+
+   Searches in the default, in memory, global list. Finds the longest
+   prefix that matches the given prefix parameter. Returns true if the
+   prefix is found and the whitelist is set. Returns false otherwise -
+   either prefix found and whitelist not set or prefix not found. Note
+   that a reload_blacklist should be issued before, in order to check
+   through the latest content of the database.
+
+   Example 1.22. check_whitelist usage
+                                        ...
+                                        kamctl fifo reload_blacklist
+                                        kamctl fifo check_whitelist prefix
+                                        ...
+
+5.5. check_userblacklist user [domain] prefix
+
+   Searches in the default user list table. Finds the longest prefix for
+   the given user@domain that matches the given prefix parameter. Returns
+   true if the prefix is found and the whitelist is not set. Returns false
+   otherwise - either prefix found and whitelist set or prefix not found.
+   Note that the domain parameter is optional. If not given, the second
+   parameter is the considered to be the prefix.
+
+   Example 1.23. check_userblacklist usage
+                                        ...
+                                        kamctl fifo check_userblacklist user [do
+main] prefix
+                                        ...
+
+5.6. check_userwhitelist user [domain] prefix
+
+   Searches in the default user list table. Finds the longest prefix for
+   the given user@domain that matches the given prefix parameter. Returns
+   true if the prefix is found and the whitelist is set. Returns false
+   otherwise - either prefix found and whitelist not set or prefix not
+   found. Note that the domain parameter is optional. If not given, the
+   second parameter is the considered to be the prefix.
+
+   Example 1.24. check_userwhitelist usage
+                                        ...
+                                        kamctl fifo check_userwhitelist user [do
+main] prefix
+                                        ...
 
 6. Installation and Running
 
@@ -453,7 +545,7 @@ kamctl fifo reload_blacklist
    complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.20. Example database content - globalblacklist table
+   Example 1.25. Example database content - globalblacklist table
 ...
 +----+-----------+-----------+
 | id | prefix    | whitelist |
@@ -470,7 +562,7 @@ kamctl fifo reload_blacklist
    "123455787" are also blacklisted, because the longest prefix will be
    matched.
 
-   Example 1.21. Example database content - userblacklist table
+   Example 1.26. Example database content - userblacklist table
 ...
 +----+----------------+-------------+-----------+-----------+
 | id | username       | domain      | prefix    | whitelist |
