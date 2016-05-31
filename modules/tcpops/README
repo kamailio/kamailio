@@ -8,9 +8,9 @@ Olle E. Johansson
 
    Edvina AB
 
-   Copyright Â© 2015 Orange
+   Copyright © 2015 Orange
 
-   Copyright Â© 2015 Edvina AB, Sollentuna, Sweden
+   Copyright © 2015 Edvina AB, Sollentuna, Sweden
      __________________________________________________________________
 
    Table of Contents
@@ -67,7 +67,7 @@ Chapter 1. Admin Guide
 
    Note: the keepalive functions only work on systems with the
    HAVE_TCP_KEEPIDLE, HAVE_TCP_KEEPCNT and HAVE_TCP_KEEPINTVL macros
-   defined (currently only Linux).
+   defined (Linux, FreeBSD, DragonFly BSD, NetBSD).
 
 2. Parameters
 
@@ -101,12 +101,12 @@ modparam("tcpops", "closed_event", 0)
    3.5. tcp_set_connection_lifetime([conid], lifetime)
    3.6. tcp_enable_closed_event([conid])
 
-3.1.  tcp_conid_alive(conid)
+3.1. tcp_conid_alive(conid)
 
    Check the state of a TCP or WS connection ID
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the Kamailio internal connection id (as in the
+     * conid (optional): the Kamailio internal connection id (as in the
        $conid pseudovariable).
 
    Retuns values:
@@ -123,12 +123,12 @@ modparam("tcpops", "closed_event", 0)
         }
 ...
 
-3.2.  tcp_conid_state(conid)
+3.2. tcp_conid_state(conid)
 
    Check the state of a TCP or WS connection ID
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the Kamailio internal connection id (as in the
+     * conid (optional): the Kamailio internal connection id (as in the
        $conid pseudovariable).
 
    Retuns values:
@@ -154,12 +154,12 @@ modparam("tcpops", "closed_event", 0)
         }
 ...
 
-3.3.  tcp_keepalive_enable([conid], idle, count, interval)
+3.3. tcp_keepalive_enable([conid], idle, count, interval)
 
    Enables keepalive on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which TCP
+     * conid (optional): the kamailio internal connection id on which TCP
        keepalive will be enabled. If no parameter is given, the keepalive
        mechanism will be enabled on the current message source connection.
      * idle (seconds): the time before the first keepalive packet is sent
@@ -189,12 +189,12 @@ onreply_route[foo] {
         ...
 }
 
-3.4.  tcp_keepalive_disable([conid])
+3.4. tcp_keepalive_disable([conid])
 
    Disables keepalive on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which TCP
+     * conid (optional): the kamailio internal connection id on which TCP
        keepalive will be disabled. If no parameter is given, the keepalive
        mechanism will be disabled on the current message source
        connection.
@@ -220,12 +220,12 @@ onreply_route[foo] {
         ...
 }
 
-3.5.  tcp_set_connection_lifetime([conid], lifetime)
+3.5. tcp_set_connection_lifetime([conid], lifetime)
 
    Sets the connection lifetime of a connection (TCP).
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which to
+     * conid (optional): the kamailio internal connection id on which to
        set the new lifetime. If no parameter is given, it will be set on
        the current message source connection.
      * lifetime (seconds): the new connection lifetime.
@@ -247,7 +247,7 @@ request_route {
         ...
 }
 
-3.6.  tcp_enable_closed_event([conid])
+3.6. tcp_enable_closed_event([conid])
 
    Explicitly enables the "tcp:closed" event route on a TCP connection.
 
