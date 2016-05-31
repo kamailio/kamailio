@@ -10,13 +10,19 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Edited by
+
 Carsten Bock
 
    ng-voice GmbH
 
+Edited by
+
 Olle E. Johansson
 
    Edvina AB
+
+Edited by
 
 Alessandro Arrichiello
 
@@ -1705,4 +1711,5 @@ Chapter 2. Frequently Asked Questions
 
    How can I report a bug?
 
-   Please follow the guidelines provided at: http://sip-router.org/tracker
+   Please follow the guidelines provided at:
+   https://github.com/kamailio/kamailio/issues
