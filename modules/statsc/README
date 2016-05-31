@@ -129,6 +129,8 @@ modparam("statsc", "items", 200)
    Example 1.3. Set track parameter
 ...
 modparam("statsc", "track", "req.received=rcv_requests")
+modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
+)
 ...
 
 4. RPC Commands
