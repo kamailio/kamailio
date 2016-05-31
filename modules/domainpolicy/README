@@ -151,7 +151,7 @@ Chapter 1. Admin Guide
 
    This is URL of the database to be used.
 
-   Default value is "mysql://openser:openserrw@localhost/openser"
+   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio"
 
    Example 1.1. Setting db_url parameter
 modparam("domainpolicy", "db_url", "postgres://proxy:frog23@db.sip-router.org/si
