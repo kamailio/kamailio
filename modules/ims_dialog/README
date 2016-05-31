@@ -20,9 +20,15 @@ Edited by
 
 Bogdan-Andrei Iancu
 
+Edited by
+
 Carsten Bock
 
+Edited by
+
 Jason Penton
+
+Edited by
 
 Richard Good
 
@@ -1092,4 +1098,4 @@ Chapter 3. Frequently Asked Questions
    How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+   https://github.com/kamailio/kamailio/issues.
