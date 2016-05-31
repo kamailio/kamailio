@@ -29,6 +29,7 @@ Daniel-Constantin Mierla
               3.2. timeout_interval (integer)
               3.3. auto_reconnect (integer)
               3.4. insert_delayed (integer)
+              3.5. update_affected_found (integer)
 
         4. Functions
         5. Installation
@@ -40,9 +41,10 @@ Daniel-Constantin Mierla
    1.2. Set timeout_interval parameter
    1.3. Set auto_reconnect parameter
    1.4. Set insert_delayed parameter
-   1.5. Set a my.cnf group in db_url parameter
-   1.6. Adding a kamailio group to my.cnf
-   1.7. Using [client] and specific group
+   1.5. Set update_affected_found parameter
+   1.6. Set a my.cnf group in db_url parameter
+   1.7. Adding a kamailio group to my.cnf
+   1.8. Using [client] and specific group
 
 Chapter 1. Admin Guide
 
@@ -60,6 +62,7 @@ Chapter 1. Admin Guide
         3.2. timeout_interval (integer)
         3.3. auto_reconnect (integer)
         3.4. insert_delayed (integer)
+        3.5. update_affected_found (integer)
 
    4. Functions
    5. Installation
@@ -93,6 +96,7 @@ Chapter 1. Admin Guide
    3.2. timeout_interval (integer)
    3.3. auto_reconnect (integer)
    3.4. insert_delayed (integer)
+   3.5. update_affected_found (integer)
 
 3.1. ping_interval (integer)
 
@@ -148,6 +152,18 @@ modparam("db_mysql", "auto_reconnect", 0)
 modparam("db_mysql", "insert_delayed", 1)
 ...
 
+3.5. update_affected_found (integer)
+
+   If set to 1, all UPDATE SQL queries will return the number of matched
+   rows instead of the number of "updated" rows.
+
+   Default value is 0 (1 - on / 0 - off).
+
+   Example 1.5. Set update_affected_found parameter
+...
+modparam("db_mysql", "update_affected_found", 1)
+...
+
 4. Functions
 
    No function exported to be used from configuration file.
@@ -174,12 +190,12 @@ modparam("db_mysql", "insert_delayed", 1)
      * mysql://user:pass@[group]/db
      * mysql://[group]/db
 
-   Example 1.5. Set a my.cnf group in db_url parameter
+   Example 1.6. Set a my.cnf group in db_url parameter
 ...
 modparam("usrloc", "db_url", "mysql://[kamailio]/kamailio)
 ...
 
-   Example 1.6. Adding a kamailio group to my.cnf
+   Example 1.7. Adding a kamailio group to my.cnf
 ...
 [kamailio]
 socket = /path/to/mysql.sock
@@ -193,7 +209,7 @@ default-character-set = utf8
    both your specific group and the client group, then the value is taken
    from the last one.
 
-   Example 1.7. Using [client] and specific group
+   Example 1.8. Using [client] and specific group
 ...
 [client]
 socket = /var/run/mysql/mysqld.sock
