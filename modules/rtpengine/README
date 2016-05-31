@@ -12,15 +12,25 @@ Edited by
 
 Maxim Sobolev
 
+Edited by
+
 Bogdan-Andrei Iancu
+
+Edited by
 
 Juha Heinanen
 
+Edited by
+
 Sas Ovidiu
+
+Edited by
 
 Carsten Bock
 
    ng-voice GmbH
+
+Edited by
 
 Richard Fuchs
 
@@ -1178,4 +1188,4 @@ nnection ICE=force RTP/SAVPF");
    How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+   https://github.com/kamailio/kamailio/issues.
