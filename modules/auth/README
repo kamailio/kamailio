@@ -44,6 +44,7 @@ Daniel-Constantin Mierla
               3.16. realm_prefix (string)
               3.17. use_domain (boolean)
               3.18. algorithm (string)
+              3.19. add_authinfo_hdr (boolean)
 
         4. Functions
 
@@ -75,15 +76,16 @@ Daniel-Constantin Mierla
    1.14. realm_prefix parameter example
    1.15. force_stateless_reply example
    1.16. use SHA-256 example
-   1.17. consume_credentials example
+   1.17. add Authentication-Info header example
    1.18. consume_credentials example
-   1.19. www_challenge usage
-   1.20. proxy_challenge usage
-   1.21. auth_challenge usage
-   1.22. pv_www_authenticate usage
-   1.23. pv_proxy_authenticate usage
-   1.24. pv_auth_check usage
-   1.25. auth_get_www_authenticate
+   1.19. consume_credentials example
+   1.20. www_challenge usage
+   1.21. proxy_challenge usage
+   1.22. auth_challenge usage
+   1.23. pv_www_authenticate usage
+   1.24. pv_proxy_authenticate usage
+   1.25. pv_auth_check usage
+   1.26. auth_get_www_authenticate
 
 Chapter 1. Admin Guide
 
@@ -111,6 +113,7 @@ Chapter 1. Admin Guide
         3.16. realm_prefix (string)
         3.17. use_domain (boolean)
         3.18. algorithm (string)
+        3.19. add_authinfo_hdr (boolean)
 
    4. Functions
 
@@ -162,6 +165,7 @@ Chapter 1. Admin Guide
    3.16. realm_prefix (string)
    3.17. use_domain (boolean)
    3.18. algorithm (string)
+   3.19. add_authinfo_hdr (boolean)
 
 3.1. auth_checks_register (flags)
 
@@ -638,7 +642,7 @@ modparam("auth", "use_domain", 1)
 
    Configure hash algorithm used for digest authentication. Possible
    values are "MD5" or "SHA-256". If left empty MD5 is used. If specified,
-   the specified algorithm is used and is also but in the 'algorithm'
+   the specified algorithm is used and is also put in the 'algorithm'
    field of the challenge header.
 
    Warning: SHA-256 hash values take twice the space of MD5 hash values.
@@ -650,6 +654,24 @@ modparam("auth", "use_domain", 1)
    Example 1.16. use SHA-256 example
 ...
 modparam("auth", "algorithm", "SHA-256")
+...
+
+3.19. add_authinfo_hdr (boolean)
+
+   Should an Authentication-Info header be added on 200 OK responses? The
+   Authentication-Info header offers mutual authentication. The server
+   proves to the client that it knows the user's secret.
+
+   The header also includes the next nonce which may be used by the client
+   in a future request. If one_time_nonce is enabled, a new nonce is
+   calculated for the next nonce. Otherwise the current nonce is used for
+   the next nonce.
+
+   The default value is 0 (no).
+
+   Example 1.17. add Authentication-Info header example
+...
+modparam("auth", "add_authinfo_hdr", yes)
 ...
 
 4. Functions
@@ -674,7 +696,7 @@ modparam("auth", "algorithm", "SHA-256")
    little bit shorter. The function must be called after www_authorize,
    proxy_authorize, www_authenticate or proxy_authenticate.
 
-   Example 1.17. consume_credentials example
+   Example 1.18. consume_credentials example
 ...
 if (www_authenticate("realm", "subscriber")) {
     consume_credentials();
@@ -687,7 +709,7 @@ if (www_authenticate("realm", "subscriber")) {
    Proxy-Authorization header with provided realm. The parameter can be
    string with pseudo-variables.
 
-   Example 1.18. consume_credentials example
+   Example 1.19. consume_credentials example
 ...
 if (has_credentials("myrealm")) {
     ...
@@ -724,7 +746,7 @@ if (has_credentials("myrealm")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.19. www_challenge usage
+   Example 1.20. www_challenge usage
 ...
 if (!www_authenticate("$td", "subscriber")) {
         www_challenge("$td", "1");
@@ -746,7 +768,7 @@ if (!www_authenticate("$td", "subscriber")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.20. proxy_challenge usage
+   Example 1.21. proxy_challenge usage
 ...
 if (!proxy_authenticate("$fd", "subscriber")) {
         proxy_challenge("$fd", "1");
@@ -765,7 +787,7 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.21. auth_challenge usage
+   Example 1.22. auth_challenge usage
 ...
 if (!auth_check("$fd", "subscriber", "1")) {
         auth_challenge("$fd", "1");
@@ -817,7 +839,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.22. pv_www_authenticate usage
+   Example 1.23. pv_www_authenticate usage
 ...
 if (!pv_www_authenticate("$td", "123abc", "0")) {
         www_challenge("$td", "1");
@@ -839,7 +861,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.23. pv_proxy_authenticate usage
+   Example 1.24. pv_proxy_authenticate usage
 ...
 $avp(password)="xyz";
 if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
@@ -870,7 +892,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.24. pv_auth_check usage
+   Example 1.25. pv_auth_check usage
 ...
 $avp(password)="xyz";
 if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
@@ -888,7 +910,7 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. auth_get_www_authenticate
+   Example 1.26. auth_get_www_authenticate
 ...
 if (auth_get_www_authenticate("$fd", "0", "$var(wauth)")) {
         xlog("www authenticate header is [$var(wauth)]\n");
