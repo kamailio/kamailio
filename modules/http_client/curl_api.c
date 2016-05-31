@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Hugh Waite
+ * Copyright (C) 2016 Edvina AB, Olle E. Johansson
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -31,6 +32,7 @@ int bind_httpc_api(httpc_api_t *api)
 	api->http_connect = curl_con_query_url;
 	api->http_query = http_query;
 	api->http_connection_exists = http_connection_exists;
+	api->http_get_content_type = http_get_content_type;
 
 	return 0;
 }

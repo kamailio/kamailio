@@ -124,6 +124,21 @@
 			</listitem>
 			</itemizedlist>
 		</section>
+		<section>
+			<title>
+			<function moreinfo="none">http_get_content_type(str connection)</function>
+			</title>
+			<para>
+			Get the content-type of the last result for this connection. This will
+			be something like "text/html" for html or "application/json" for JSON data.
+			</para>
+			<para>
+			Result will be a pointer to a char string (char *). This is per process,
+			so the connection will have to be done in the same process. Returns a NULL
+			pointer if the connection does not exist or there's no previous connection
+			data delivered.
+			</para>
+		</section>
 
 
 	</section>

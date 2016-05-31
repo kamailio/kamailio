@@ -90,6 +90,7 @@ Hugh Waite
 
               1.2. int http_connection_exists(str *connection)
               1.3. http_query(msg, url, dest, post)
+              1.4. http_get_content_type(str connection)
 
    List of Examples
 
@@ -753,12 +754,14 @@ Chapter 2. Developer Guide
 
         1.2. int http_connection_exists(str *connection)
         1.3. http_query(msg, url, dest, post)
+        1.4. http_get_content_type(str connection)
 
 1. Available Functions
 
    1.1. http_connect(msg, connection, url, result, content_type, post)
    1.2. int http_connection_exists(str *connection)
    1.3. http_query(msg, url, dest, post)
+   1.4. http_get_content_type(str connection)
 
 1.1. http_connect(msg, connection, url, result, content_type, post)
 
@@ -815,3 +818,14 @@ Chapter 2. Developer Guide
        the http_client module and must be freed by the caller.
      * const char *post
        If not null, the data will be posted to the URL.
+
+1.4. http_get_content_type(str connection)
+
+   Get the content-type of the last result for this connection. This will
+   be something like "text/html" for html or "application/json" for JSON
+   data.
+
+   Result will be a pointer to a char string (char *). This is per
+   process, so the connection will have to be done in the same process.
+   Returns a NULL pointer if the connection does not exist or there's no
+   previous connection data delivered.
