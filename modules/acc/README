@@ -22,6 +22,8 @@ Bogdan-Andrei Iancu
    Voice Sistem SRL
    <bogdan@voice-system.ro>
 
+Edited by
+
 Sven Knoblich
 
    1&1 Internet AG
@@ -1584,4 +1586,4 @@ Chapter 2. Frequently Asked Questions
    How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://sip-router.org/tracker.
+   https://github.com/kamailio/kamailio/issues.
