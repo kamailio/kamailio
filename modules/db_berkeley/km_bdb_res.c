@@ -79,8 +79,13 @@ int bdb_get_columns(table_p _tp, db1_res_t* _res, int* _lres, int _nc)
 		LM_DBG("allocate %lu bytes for RES_NAMES[%d] at %p\n",
 			(unsigned long)sizeof(str), col, RES_NAMES(_res)[col]);
 
-		/* The pointer that is here returned is part of the result structure. */
-		RES_NAMES(_res)[col]->s = cp->name.s;
+		RES_NAMES(_res)[col]->s = pkg_malloc(strlen(cp->name.s)+1);
+		if (! RES_NAMES(_res)[col]->s) {
+			LM_ERR("no private memory left\n");
+			db_free_columns(_res);
+			return -4;
+		}
+		strcpy(RES_NAMES(_res)[col]->s, cp->name.s);
 		RES_NAMES(_res)[col]->len = cp->name.len;
 
 		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_res)[col]

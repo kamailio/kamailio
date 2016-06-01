@@ -83,8 +83,13 @@ int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r)
 		LM_DBG("allocate %lu bytes for RES_NAMES[%d] at %p\n",
 				(unsigned long)sizeof(str), col, RES_NAMES(_r)[col]);
 
-		/* The pointer that is here returned is part of the result structure. */
-		RES_NAMES(_r)[col]->s = fields[col].name;
+		RES_NAMES(_r)[col]->s = pkg_malloc(strlen(fields[col].name)+1);
+		if (! RES_NAMES(_r)[col]->s) {
+			LM_ERR("no private memory left\n");
+			db_free_columns(_r);
+			return -4;
+		}
+		strcpy(RES_NAMES(_r)[col]->s, fields[col].name);
 		RES_NAMES(_r)[col]->len = strlen(fields[col].name);
 
 		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_r)[col], col,
