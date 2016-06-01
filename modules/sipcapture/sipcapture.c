@@ -94,7 +94,7 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 40
+#define NR_KEYS 41
 #define RTCP_NR_KEYS 12
 
 #define MAX_HEADERS 16
@@ -1451,15 +1451,20 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[38].nul = 0;
 	db_vals[38].val.str_val = sco->ruri_domain;
 
-	db_keys[39] = &msg_column;
-	db_vals[39].type = DB1_BLOB;
+	db_keys[39] = &diversion_column;
+	db_vals[39].type = DB1_STR;
 	db_vals[39].nul = 0;
+	db_vals[39].val.str_val = sco->diversion;
+
+	db_keys[40] = &msg_column;
+	db_vals[40].type = DB1_BLOB;
+	db_vals[40].nul = 0;
 
 	/*we don't have empty spaces now */
 	tmp.s = sco->msg.s;
 	tmp.len = sco->msg.len;
 
-	db_vals[39].val.blob_val = tmp;
+	db_vals[40].val.blob_val = tmp;
 
 	if (dtable){
 		table = dtable;
