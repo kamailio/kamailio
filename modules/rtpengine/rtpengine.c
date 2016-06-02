@@ -2020,13 +2020,9 @@ static void mod_destroy(void)
 
 static char * gencookie(void)
 {
-	static char cook[COOKIE_SIZE];
-	char hostname[HOSTNAME_SIZE];
+	static char cook[34];
 
-	if (gethostname(hostname, HOSTNAME_SIZE - 1) < 0)
-		strcpy(hostname, "host");
-	snprintf(cook, COOKIE_SIZE, "%s_%d_%u ", hostname, (int)mypid, myseqn);
-
+	snprintf(cook, 34, "%d_%d_%u ", server_id, (int)mypid, myseqn);
 	myseqn++;
 	return cook;
 }
