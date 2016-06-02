@@ -10,7 +10,11 @@ Matthew Williams
 
    <matthew@flowroute.com>
 
-   Copyright © 2013 Flowroute LLC (flowroute.com)
+Carsten Bock
+
+   <carsten@ng-voice.com>
+
+   Copyright Â© 2013 Flowroute LLC (flowroute.com)
      __________________________________________________________________
 
    Table of Contents
@@ -87,7 +91,7 @@ Chapter 1. Admin Guide
    3.4. jansson_array_size(key/path, src, dst)
    3.5. jansson_get_field(src, field_name, dst)
 
-3.1. jansson_get(key/path, src, dst)
+3.1.  jansson_get(key/path, src, dst)
 
    Copy the value at the location 'path' from the json object 'src' and
    store it in pvar 'dst'.
@@ -103,6 +107,9 @@ Chapter 1. Admin Guide
    the pvar is not changed. If it had a previous value, that value remains
    unchanged.
 
+   Note: For JSON-Integer values exceeding the C-Integer boundaries, a
+   String representing the number is returned.
+
    Example 1.1. jansson_get usage
 ...
 if(!jansson_get("inner.deep.list[3]", $var(myjson), "$var(n)")) {
@@ -111,7 +118,7 @@ if(!jansson_get("inner.deep.list[3]", $var(myjson), "$var(n)")) {
 xlog("L_INFO", "foo is $var(n)");
 ...
 
-3.2. jansson_set(type, key/path, value, result)
+3.2.  jansson_set(type, key/path, value, result)
 
    Insert 'value' as 'type' at location 'path' into 'result'.
 
@@ -121,6 +128,10 @@ xlog("L_INFO", "foo is $var(n)");
    'array', 'true', 'false', and 'null' as well as abbriviated names such
    as 'int', 'str', and 'obj'. 'value' is ignored when type is 'true',
    'false', or 'null'.
+
+   Note: If you want to insert a JSON-Integer value exceeding the
+   C-Integer boundaries (e.g. C-type long), the a the number can be
+   provided as a string.
 
    Example 1.2. jansson_set usage
 ...
@@ -146,7 +157,7 @@ jansson_set("str", "myobj.foo", "baz", "$var(myjson)");
 :3.14159, "myobj":{"foo":"baz"}}'
 ...
 
-3.3. jansson_append(type, key/path, value, result)
+3.3.  jansson_append(type, key/path, value, result)
 
    Like jansson_set but can be used to append to arrays. It can also be
    used to combine two json objects.
@@ -180,7 +191,7 @@ jansson_append('obj', "", '{"a":1, "b":100}', "$var(newobj)");
 # $var(newobj) == '{"a":1,"b":100","c":3}';
 ...
 
-3.4. jansson_array_size(key/path, src, dst)
+3.4.  jansson_array_size(key/path, src, dst)
 
    Puts the size of the array in 'src' at location 'path' into the pvar
    'dst'.
@@ -212,7 +223,7 @@ while($var(count) < $var(appendme_size)) {
 }
 ...
 
-3.5. jansson_get_field(src, field_name, dst)
+3.5.  jansson_get_field(src, field_name, dst)
 
    Copy field 'field_name' from json object 'src' and store it in pvar
    'dst'.
