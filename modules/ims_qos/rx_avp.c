@@ -489,7 +489,7 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 	// Get A=RS-bandwidth from SDP-Reply:
         bandwidth = sdp_b_value(rpl_raw_payload, "RS");
         LM_DBG("Answer: Got bandwidth %i from b=RS-Line\n", bandwidth);
-	if (bandwidth > 0) {
+	if (bandwidth >= 0) {
 		// Add AVP
 		set_4bytes(x,bandwidth);
 		rs_bw = cdpb.AAACreateAVP(AVP_EPC_RS_Bandwidth,
@@ -501,7 +501,7 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 	// Get A=RS-bandwidth from SDP-Reply:
         bandwidth = sdp_b_value(rpl_raw_payload, "RR");
         LM_DBG("Answer: Got bandwidth %i from b=RR-Line\n", bandwidth);
-	if (bandwidth > 0) {
+	if (bandwidth >= 0) {
 		// Add AVP
 		set_4bytes(x,bandwidth);
 		rr_bw = cdpb.AAACreateAVP(AVP_EPC_RR_Bandwidth,

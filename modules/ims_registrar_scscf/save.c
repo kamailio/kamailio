@@ -111,7 +111,7 @@ static inline int randomize_expires(int expires, int range) {
 static inline int calc_contact_expires(contact_t *c, unsigned int expires_hdr, int sos_reg) {
     unsigned int r;
 
-    if (expires_hdr > 0)
+    if (expires_hdr >= 0)
         r = expires_hdr;
     else {
         r = (sos_reg > 0) ? default_registrar_cfg.em_default_expires : default_registrar_cfg.default_expires;
