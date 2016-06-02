@@ -1149,7 +1149,7 @@ char* get_sphere(str* pres_uri)
 	}
 
 	if(pres_retrieve_order==1) {
-		query_str = str_priority_col;
+		query_str = pres_retrieve_order_by;
 	} else {
 		query_str = str_received_time_col;
 	}
