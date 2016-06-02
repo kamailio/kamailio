@@ -161,6 +161,7 @@ int pres_notifier_processes = 1;
 int pres_force_delete = 0;
 str pres_xavp_cfg = {0};
 int pres_retrieve_order = 0;
+str pres_retrieve_order_by = str_init("priority");
 
 int db_table_lock_type = 1;
 db_locking_t db_table_lock = DB_LOCKING_WRITE;
@@ -224,6 +225,7 @@ static param_export_t params[]={
 	{ "subs_remove_match",      PARAM_INT, &pres_subs_remove_match},
 	{ "xavp_cfg",               PARAM_STR, &pres_xavp_cfg},
 	{ "retrieve_order",         PARAM_INT, &pres_retrieve_order},
+	{ "retrieve_order_by",      PARAM_STR, &pres_retrieve_order_by},
 	{ "sip_uri_match",          PARAM_INT, &pres_uri_match},
 	{0,0,0}
 };
