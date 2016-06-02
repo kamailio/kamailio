@@ -780,7 +780,8 @@ if(is_method("PUBLISH")) {
 	    <title><varname>retrieve_order</varname> (int)</title>
 	    <para>
 		If set to 0, presentity records are retrieve by received_time order.
-		if set to 1, presentity records are retrieve by priority order.
+		If set to 1, presentity records are retrieve by the value of
+		retrieve_order_by parameter.
 	    </para>
 	    <para>
 		<emphasis>
@@ -792,6 +793,28 @@ if(is_method("PUBLISH")) {
 		<programlisting format="linespecific">
 ...
 modparam("presence", "retrieve_order", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+
+	<section id="presence.p.retrieve_order_by">
+	    <title><varname>retrieve_order_by</varname> (str)</title>
+	    <para>
+		Used to set the order-by of the db query for fetching the presence
+		records when retrieve_order is set to 1.
+	    </para>
+	    <para>
+		<emphasis>
+			Default value is <quote>priority</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>retrieve_order_by</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "retrieve_order_by", "priority, received_time")
 ...
 </programlisting>
 	    </example>
