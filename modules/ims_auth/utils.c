@@ -239,7 +239,7 @@ str ims_get_auts(struct sip_msg *msg, str realm, int is_proxy_auth)
 		return auts;
 	}
 
-	ret = find_credentials(msg, &realm, is_proxy_auth ? HDR_PROXYAUTH_F : HDR_AUTHORIZATION_F, &h);
+	ret = find_credentials(msg, &realm, is_proxy_auth ? HDR_PROXYAUTH_T : HDR_AUTHORIZATION_T, &h);
 	if (ret < 0) {
 		LM_ERR("Error while looking for credentials.\n");
 		return auts;
@@ -283,7 +283,7 @@ str ims_get_nonce(struct sip_msg *msg, str realm)
 		return nonce;
 	}
 
-	ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
+	ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
 	if (ret < 0) {
 		LM_ERR("Error while looking for credentials.\n");
 		return nonce;
