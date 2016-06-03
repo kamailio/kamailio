@@ -52,6 +52,7 @@ static int fixup_free_testcurl_connect(void** param, int param_no);
 static int fixup_testcurl_connect_post(void** param, int param_no);
 static int fixup_free_testcurl_connect_post(void** param, int param_no);
 static int w_testcurl_connect(struct sip_msg* _m, char* _con, char * _url, char* _result);
+static httpc_api_t httpapi;
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
@@ -83,12 +84,12 @@ struct module_exports exports = {
 	child_init /* per-child init function */
 };
 
+
 /* Module initialization function */
 static int mod_init(void)
 {
 	
 	LM_DBG("init httpapitest module\n");
-	httpc_api_t httpapi;
 
 	if (httpc_load_api(&httpapi) != 0) {
 		LM_ERR("Can not bind to http_client API \n");
@@ -199,7 +200,9 @@ static int w_testcurl_connect(struct sip_msg* _m, char* _con, char * _url, char*
 
 	LM_DBG("**** Curl Connection %s URL %s Result var %s\n", _con, _url, _result);
 
-	ret = curl_con_query_url(_m, &con, &url, &result, NULL, NULL);
+	
+	/* API    http_connect(msg, connection, url, result, content_type, post) */
+	ret = httpapi.http_connect(_m, &con, &url, &result, NULL, NULL);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
