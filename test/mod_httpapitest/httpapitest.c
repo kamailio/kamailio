@@ -55,7 +55,7 @@ static int w_testcurl_connect(struct sip_msg* _m, char* _con, char * _url, char*
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"test_http_connect", (cmd_function)w_testcurl_connect, 2, fixup_testcurl_connect,
+	{"test_http_connect", (cmd_function)w_testcurl_connect, 3, fixup_testcurl_connect,
 	 	fixup_free_testcurl_connect,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 };
