@@ -49,7 +49,7 @@ typedef int (*bind_httpc_api_f)(httpc_api_t *api);
 int bind_httpc_api(httpc_api_t *api);
 
 /**
- * @brief Load the CURL API
+ * @brief Load the http_client API
  */
 static inline int httpc_load_api(httpc_api_t *api)
 {
