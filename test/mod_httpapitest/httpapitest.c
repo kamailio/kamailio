@@ -56,6 +56,7 @@ static httpc_api_t httpapi;
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
+	/* Test_http_connect(connection, <URL>, <result pvar>)  - HTTP GET */
 	{"test_http_connect", (cmd_function)w_testcurl_connect, 3, fixup_testcurl_connect,
 	 	fixup_free_testcurl_connect,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
@@ -123,20 +124,24 @@ static void destroy(void)
 
 
 /*
- * Fix curl_connect params: connection(string/pvar) url (string that may contain pvars) and
- * result (writable pvar).
+ * Fix test_curl_connect params: 
+ * 1. connection(string/pvar) 
+ * 2. url (string that may contain pvars) and
+ * 3. result (writable pvar).
  */
 static int fixup_testcurl_connect(void** param, int param_no)
 {
 
+	/* 1. Connection */
 	if (param_no == 1) {
 		/* We want char * strings */
 		return 0;
 	}
-	/* URL and data may contain pvar */
+	/* 2. URL and data may contain pvar */
 	if (param_no == 2) {
 		return fixup_spve_null(param, 1);
 	}
+	/* 3. PVAR for result */
 	if (param_no == 3) {
 		if (fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("failed to fixup result pvar\n");
