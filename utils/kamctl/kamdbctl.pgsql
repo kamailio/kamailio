@@ -1,4 +1,3 @@
-# $Id$
 #
 # Script for adding and dropping Kamailio Postgres tables
 #

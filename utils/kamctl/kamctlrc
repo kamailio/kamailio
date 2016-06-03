@@ -1,5 +1,3 @@
-# $Id$
-#
 # The Kamailio configuration file for the control tools.
 #
 # Here you can set variables used in the kamctl and kamdbctl setup

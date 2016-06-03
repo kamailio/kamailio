@@ -1,5 +1,4 @@
 #
-# $Id$
 #
 # control tool for maintaining Kamailio
 #
