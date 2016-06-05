@@ -265,6 +265,13 @@ static int __mod_init(void) {
 	_data.channel.credit_data_by_client	= shm_malloc(sizeof(struct str_hash_table));
 	_data.channel.call_data_by_cid = shm_malloc(sizeof(struct str_hash_table));
 
+	memset(_data.time.credit_data_by_client, 0, sizeof(struct str_hash_table));
+	memset(_data.time.call_data_by_cid, 0, sizeof(struct str_hash_table));
+	memset(_data.money.credit_data_by_client, 0, sizeof(struct str_hash_table));
+	memset(_data.money.call_data_by_cid, 0, sizeof(struct str_hash_table));
+	memset(_data.channel.credit_data_by_client, 0, sizeof(struct str_hash_table));
+	memset(_data.channel.call_data_by_cid, 0, sizeof(struct str_hash_table));
+
 	_data.stats = (stats_t *) shm_malloc(sizeof(stats_t));
 
 	if (!_data.stats) {
@@ -655,17 +662,19 @@ static void __stop_billing(str *callid) {
 	 * Remove (and free) the call from the list of calls of the current credit_data
 	 */
 	clist_rm(call, next, prev);
-	/* 
-	 * don't free the call if all the credit data is being deallocated,
-	 * it will be freed by terminate_all_calls()
+	
+	/* return if credit_data is being deallocated.
+	 * the call and the credit data will be freed by terminate_all_calls()
 	 */
-	if (!credit_data->deallocating) {
-		__free_call(call);
+	if (credit_data->deallocating) {
+		return;
 	}
 
+	__free_call(call);
 	/*
 	 * In case there are no active calls for a certain client, we remove the client-id from the hash table.
 	 * This way, we can save memory for useful clients.
+	 *
 	 */
 	if (credit_data->number_of_calls == 0) {
 		LM_DBG("Removing client [%.*s] and its calls from the list\n", credit_data->call_list->client_id.len, credit_data->call_list->client_id.s);
@@ -882,9 +891,29 @@ exit:
 }
 
 // must be called with lock held on credit_data
+/* terminate all calls and remove credit_data */
 void terminate_all_calls(credit_data_t *credit_data) {
 	call_t *call = NULL,
            *tmp = NULL;
+	struct str_hash_entry *cd_entry = NULL;
+	hash_tables_t *hts      = NULL;
+
+	switch(credit_data->type) {
+        case CREDIT_MONEY:
+            hts =  &_data.money;
+            break;
+        case CREDIT_TIME:
+            hts =  &_data.time;
+            break;
+        case CREDIT_CHANNEL:
+            hts =  &_data.channel;
+            break;
+        default:
+            LM_ERR("BUG: Something went terribly wrong\n");
+            return;
+    }
+    
+	cd_entry = str_hash_get(hts->credit_data_by_client, credit_data->call_list->client_id.s, credit_data->call_list->client_id.len);
 
 	credit_data->deallocating = 1;
 
@@ -902,6 +931,36 @@ void terminate_all_calls(credit_data_t *credit_data) {
 			LM_WARN("invalid call structure %p\n", call);
 		}
 	}
+
+	cnxcc_lock(hts->lock);
+
+	if (_data.redis) {                                                                                                                                                               
+		redis_clean_up_if_last(credit_data);
+		shm_free(credit_data->str_id);
+	}
+    
+	/*
+     * Remove the credit_data_t from the hash table
+	 */
+	str_hash_del(cd_entry);
+    
+	cnxcc_unlock(hts->lock);
+    
+	/*
+	 * Free client_id in list's root
+	 */
+	shm_free(credit_data->call_list->client_id.s);
+	shm_free(credit_data->call_list);
+    
+	/*
+	 * Release the lock since we are going to free the entry down below
+	 */
+	cnxcc_unlock(credit_data->lock);
+    
+	/*
+	 * Free the whole entry
+	 */
+	__free_credit_data_hash_entry(cd_entry);
 }
 
 /*
@@ -1098,6 +1157,11 @@ no_memory:
 
 static credit_data_t *__alloc_new_credit_data(str *client_id, credit_type_t type) {
 	credit_data_t *credit_data = shm_malloc(sizeof(credit_data_t));;
+
+	if (credit_data == NULL)
+		goto no_memory;
+	
+	memset(credit_data, 0, sizeof(credit_data_t));
 
 	cnxcc_lock_init(credit_data->lock);
 
