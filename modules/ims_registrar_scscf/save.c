@@ -509,19 +509,6 @@ static inline int is_impu_registered(udomain_t* _d, str* public_identity) {
     return ret;
 }
 
-struct sip_msg* get_request_from_reply(struct sip_msg *reply) {
-    struct cell *t;
-    t = tmb.t_gett();
-    if (!t || t == (void*) - 1) {
-        LM_ERR("get_request_from_reply: Reply without transaction\n");
-        return 0;
-    }
-    if (t)
-        return t->uas.request;
-    else
-        return 0;
-}
-
 /**
  * update the contacts for a public identity. Make sure you have the lock on the domain before calling this
  * returns 0 on success, -1 on failure

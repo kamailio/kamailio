@@ -44,26 +44,25 @@
  */ 
 
 
-#ifndef SAVE_H
-#define SAVE_H
+#ifndef PVT_MESSAGE_H
+#define PVT_MESSAGE_H
 
 
 #include "../../parser/msg_parser.h"
-#include "../ims_usrloc_scscf/usrloc.h"
-#include "reply.h"
 
+struct _pv_req_data {
+    struct cell *T;
+    struct sip_msg msg;
+    struct sip_msg *tmsgp;
+    unsigned int id;
+    char *buf;
+    int buf_size;
+};
 
-/*! \brief
- * Process REGISTER request and save it's contacts
- */
-int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction, char* route);
+void pv_tmx_data_init(void);
 
-int save(struct sip_msg* msg, char* str1, char* route);
+int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst);
 
-int unregister(struct sip_msg* _m, char* _d, char* _uri);
+struct sip_msg* get_request_from_tx(struct cell* t);
 
-int update_contacts(struct sip_msg* msg, udomain_t* _d,
-        str* public_identity, int assignment_type, ims_subscription** s,
-        str* ccf1, str* ccf2, str* ecf1, str* ecf2, contact_for_header_t** contact_header);
-
-#endif /* SAVE_H */
+#endif /* PVT_MESSAGE_H */
