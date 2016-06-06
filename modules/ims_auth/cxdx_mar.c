@@ -54,13 +54,13 @@
 #include "authorize.h"
 #include "../../lib/ims/ims_getters.h"
 #include "utils.h"
+#include "pvt_message.h"
 
 static str empty_s = {0, 0};
-
 static str s_empty = {0, 0};
 extern str auth_scheme_types[];
-
 extern str scscf_name_str;
+extern struct _pv_req_data _pv_treq;
 
 //we use pseudo variables to communicate back to config file this takes the result and converys to a return code, publishes it a pseudo variable
 
@@ -118,7 +118,9 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     str private_identity = {0,0};
 	str public_identity = {0,0};
     str algorithm;
+    struct sip_msg* req;
 
+    
     if (is_timeout) {
     	update_stat(stat_mar_timeouts, 1);
         LM_ERR("Transaction timeout - did not get MAA\n");
@@ -139,27 +141,29 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
         result = CSCF_RETURN_ERROR;
         goto error1;
     }
+    
+    req = get_request_from_tx(t);
+    if (req == NULL) {
+        goto error;
+    }
 
     /* get the private_identity */
-	/* private_identity = cscf_get_private_identity(t->uas.request, data->realm);*/
 	private_identity = cxdx_get_user_name(maa);
 	if (!private_identity.len) {
         LM_ERR("No private identity specified (Authorization: username)\n");
-        stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_PRIVATE);
+        stateful_request_reply_async(t, req, 403, MSG_403_NO_PRIVATE);
         result = CSCF_RETURN_FALSE;
         goto error;
     }
 
-	    /* get the public_identity */
-	    /*public_identity = cscf_get_public_identity(t->uas.request);*/
-	
+       /* get the public_identity */
 	avp = cxdx_get_next_public_identity(maa, 0, AVP_IMS_Public_Identity,IMS_vendor_id_3GPP,__FUNCTION__);
 	if (avp) {
 		public_identity = avp->data;
 	}
 	if (!public_identity.len) {
         LM_ERR("No public identity specified (To:)\n");
-        stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_PUBLIC);
+        stateful_request_reply_async(t, req, 403, MSG_403_NO_PUBLIC);
         result = CSCF_RETURN_FALSE;
         goto error;
     }
@@ -277,7 +281,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
     }   
 
     if (!(rc) && !(experimental_rc)) {
-        stateful_request_reply_async(t, t->uas.request, 480, MSG_480_DIAMETER_MISSING_AVP);
+        stateful_request_reply_async(t, req, 480, MSG_480_DIAMETER_MISSING_AVP);
         result = CSCF_RETURN_FALSE;
         goto done;
     }
@@ -286,26 +290,26 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
         case -1:
             switch (experimental_rc) {
                 case RC_IMS_DIAMETER_ERROR_USER_UNKNOWN:
-                    stateful_request_reply_async(t, t->uas.request, 403, MSG_403_USER_UNKNOWN);
+                    stateful_request_reply_async(t, req, 403, MSG_403_USER_UNKNOWN);
                     result = CSCF_RETURN_FALSE;
                     break;
                 case RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH:
-                    stateful_request_reply_async(t, t->uas.request, 403, MSG_403_IDENTITIES_DONT_MATCH);
+                    stateful_request_reply_async(t, req, 403, MSG_403_IDENTITIES_DONT_MATCH);
                     result = CSCF_RETURN_FALSE;
                     break;
                 case RC_IMS_DIAMETER_ERROR_AUTH_SCHEME_NOT_SUPPORTED:
-                    stateful_request_reply_async(t, t->uas.request, 403, MSG_403_AUTH_SCHEME_UNSOPPORTED);
+                    stateful_request_reply_async(t, req, 403, MSG_403_AUTH_SCHEME_UNSOPPORTED);
                     result = CSCF_RETURN_FALSE;
                     break;
 
                 default:
-                    stateful_request_reply_async(t, t->uas.request, 403, MSG_403_UNKOWN_EXPERIMENTAL_RC);
+                    stateful_request_reply_async(t, req, 403, MSG_403_UNKOWN_EXPERIMENTAL_RC);
                     result = CSCF_RETURN_FALSE;
             }
             break;
 
         case AAA_UNABLE_TO_COMPLY:
-            stateful_request_reply_async(t, t->uas.request, 403, MSG_403_UNABLE_TO_COMPLY);
+            stateful_request_reply_async(t, req, 403, MSG_403_UNABLE_TO_COMPLY);
             result = CSCF_RETURN_FALSE;
             break;
 
@@ -314,7 +318,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
             break;
 
         default:
-            stateful_request_reply_async(t, t->uas.request, 403, MSG_403_UNKOWN_RC);
+            stateful_request_reply_async(t, req, 403, MSG_403_UNKOWN_RC);
             result = CSCF_RETURN_FALSE;
     }
 
@@ -323,14 +327,14 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *maa, long elaps
 success:
 
     if (!sip_number_auth_items || !items_found) {
-        stateful_request_reply_async(t, t->uas.request, 403, MSG_403_NO_AUTH_DATA);
+        stateful_request_reply_async(t, req, 403, MSG_403_NO_AUTH_DATA);
         result = CSCF_RETURN_FALSE;
         goto done;
     }
 
     avlist = shm_malloc(sizeof (auth_vector *) * sip_number_auth_items);
     if (!avlist) {
-        stateful_request_reply_async(t, t->uas.request, 403, MSG_480_HSS_ERROR);
+        stateful_request_reply_async(t, req, 403, MSG_480_HSS_ERROR);
         result = CSCF_RETURN_FALSE;
         goto done;
     }
@@ -365,7 +369,7 @@ success:
                         tmp->authenticate.len, etsi_nonce.s);
 
                 calc_response(ha1_hex, &etsi_nonce, &empty_s, &empty_s,
-                        &empty_s, 0, &(t->uas.request->first_line.u.request.method),
+                        &empty_s, 0, &(req->first_line.u.request.method),
                         &scscf_name_str, 0, result_hex);
                 pkg_free(etsi_nonce.s);
 
@@ -376,7 +380,7 @@ success:
                             "HA1=\t|%s|\nNonce=\t|%.*s|\nMethod=\t|%.*s|\nuri=\t|%.*s|\nxresHSS=\t|%.*s|\nxresSCSCF=\t|%s|\n",
                             ha1_hex,
                             tmp->authenticate.len, tmp->authenticate.s,
-                            t->uas.request->first_line.u.request.method.len, t->uas.request->first_line.u.request.method.s,
+                            req->first_line.u.request.method.len, req->first_line.u.request.method.s,
                             scscf_name_str.len, scscf_name_str.s,
                             tmp->response_auth.len, tmp->response_auth.s,
                             result_hex);
@@ -418,16 +422,16 @@ success:
     }
 
     if (!data->is_resync) {
-		if (!pack_challenge(t->uas.request, data->realm, avlist[0], data->is_proxy_auth)) {
-			stateful_request_reply_async(t, t->uas.request, 500, MSG_500_PACK_AV);
+		if (!pack_challenge(req, data->realm, avlist[0], data->is_proxy_auth)) {
+			stateful_request_reply_async(t, req, 500, MSG_500_PACK_AV);
 			result = CSCF_RETURN_FALSE;
 			goto done;
 		}
 
 		if (data->is_proxy_auth)
-			stateful_request_reply_async(t, t->uas.request, 407, MSG_407_CHALLENGE);
+			stateful_request_reply_async(t, req, 407, MSG_407_CHALLENGE);
 		else
-			stateful_request_reply_async(t, t->uas.request, 401, MSG_401_CHALLENGE);
+			stateful_request_reply_async(t, req, 401, MSG_401_CHALLENGE);
     }
 
 done:
@@ -470,7 +474,7 @@ done:
     //make sure we delete any private lumps we created
     create_return_code(result);
     if (t) {
-        del_nonshm_lump_rpl(&t->uas.request->reply_lump);
+        //del_nonshm_lump_rpl(&req->reply_lump);
         tmb.unref_cell(t);
     }
     tmb.t_continue(data->tindex, data->tlabel, data->act);
@@ -481,7 +485,7 @@ error:
     //don't need to set result code as by default it is ERROR!
 
     if (t) {
-        del_nonshm_lump_rpl(&t->uas.request->reply_lump);
+        //del_nonshm_lump_rpl(&t->uas.request->reply_lump);
         tmb.unref_cell(t);
     }
     tmb.t_continue(data->tindex, data->tlabel, data->act);
