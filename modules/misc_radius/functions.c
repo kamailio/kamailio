@@ -44,7 +44,7 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 	char *end;
 
 	/* empty? */
-	if (vp->lvalue==0 || vp->strvalue==0)
+	if (vp->lvalue==0)
 		goto error;
 
 	p = vp->strvalue;
