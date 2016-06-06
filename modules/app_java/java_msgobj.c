@@ -230,7 +230,7 @@ jobject *fill_sipmsg_object(JNIEnv *env, struct sip_msg *msg)
         LM_ERR("%s: Can't find symbol org.siprouter.SipMsg.add_to_branch_s\n", APP_NAME);
         return NULL;
     }
-    jStrParam = (*env)->NewStringUTF(env, (msg->add_to_branch_len <= 0 || msg->add_to_branch_s == NULL) ? "" : strdup(msg->add_to_branch_s));
+    jStrParam = (*env)->NewStringUTF(env, (msg->add_to_branch_len <= 0) ? "" : strdup(msg->add_to_branch_s));
     (*env)->SetObjectField(env, SipMsgInstance, fid, jStrParam);
     if ((*env)->ExceptionCheck(env))
     {
