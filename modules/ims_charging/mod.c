@@ -515,7 +515,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	} else if (dir == RO_TERM_DIRECTION){
 		//get callee IMPU from called part id - if not present then skip this
 		if ((identity = cscf_get_public_identity_from_called_party_id(msg, &h)).len == 0) {
-			LM_WARN("No P-Called-Identity hdr found - will not get callbacks if this IMPU is removed to terminate call");
+			LM_DBG("No P-Called-Identity hdr found - will not get callbacks if this IMPU is removed to terminate call");
 			goto send_ccr;
 		}
 		//get callee contact from request URI
