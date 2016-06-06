@@ -135,6 +135,39 @@ str rx_forced_peer = str_init("");
 static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *id, int id_type);
 static int w_rx_aar_register(struct sip_msg *msg, char *route, char* str1, char *bar);
 
+struct _pv_req_data {
+    struct cell *T;
+    struct sip_msg msg;
+    struct sip_msg *tmsgp;
+    unsigned int id;
+    char *buf;
+    int buf_size;
+};
+
+static struct _pv_req_data _pv_treq;
+
+static void pv_tmx_data_init(void) {
+    memset(&_pv_treq, 0, sizeof (struct _pv_req_data));
+}
+
+static int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst) {
+    dst->id = src->id;
+    dst->rcv = src->rcv;
+    dst->set_global_address = src->set_global_address;
+    dst->set_global_port = src->set_global_port;
+    dst->flags = src->flags;
+    dst->fwd_send_flags = src->fwd_send_flags;
+    dst->rpl_send_flags = src->rpl_send_flags;
+    dst->force_send_socket = src->force_send_socket;
+
+    if (parse_msg(dst->buf, dst->len, dst) != 0) {
+        LM_ERR("parse msg failed\n");
+        return -1;
+    }
+    return 0;
+}
+
+
 static cmd_export_t cmds[] = {
     { "Rx_AAR", (cmd_function) w_rx_aar, 4, fixup_aar, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
     { "Rx_AAR_Register", (cmd_function) w_rx_aar_register, 2, fixup_aar_register, 0, REQUEST_ROUTE},
@@ -230,6 +263,8 @@ static int mod_init(void) {
 	    LM_ERR("Failed to register counters for ims_qos module\n");
 	    return -1;
 	}
+
+    pv_tmx_data_init();
 
     return 0;
 error:
@@ -576,6 +611,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     int ret = CSCF_RETURN_ERROR;
     int result = CSCF_RETURN_ERROR;
     struct cell *t;
+    struct sip_msg* orig_sip_request_msg = NULL;
 
     AAASession* auth_session = 0;
     rx_authsessiondata_t* rx_authdata_p = 0;
@@ -636,12 +672,68 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
         return result;
     }
 
+    if (t->uas.status >= 200) {
+        LM_DBG("trasaction sent out a final response already - %d\n",
+                t->uas.status);
+        return result;
+    }
+
+
+    /*  we may need the request message from here on.. if there are headers we need that were not parsed in the original request
+        (which we cannot assume) then we would pollute the shm_msg t->uas.request if we did any parsing on it. Instead, we need to 
+        make a private copy of the message and free it when we are done 
+     */
+    if (_pv_treq.T != t || t->uas.request != _pv_treq.tmsgp
+            && t->uas.request->id != _pv_treq.id) {
+
+        /* make a copy */
+        if (_pv_treq.buf == NULL || _pv_treq.buf_size < t->uas.request->len + 1) {
+            if (_pv_treq.buf != NULL)
+                pkg_free(_pv_treq.buf);
+            if (_pv_treq.tmsgp)
+                free_sip_msg(&_pv_treq.msg);
+            _pv_treq.tmsgp = NULL;
+            _pv_treq.id = 0;
+            _pv_treq.T = NULL;
+            _pv_treq.buf_size = t->uas.request->len + 1;
+            _pv_treq.buf = (char*) pkg_malloc(_pv_treq.buf_size * sizeof (char));
+            if (_pv_treq.buf == NULL) {
+                LM_ERR("no more pkg\n");
+                _pv_treq.buf_size = 0;
+                return -1;
+            }
+        }
+        if (_pv_treq.tmsgp)
+            free_sip_msg(&_pv_treq.msg);
+        memset(&_pv_treq.msg, 0, sizeof (struct sip_msg));
+        memcpy(_pv_treq.buf, t->uas.request->buf, t->uas.request->len);
+        _pv_treq.buf[t->uas.request->len] = '\0';
+        _pv_treq.msg.len = t->uas.request->len;
+        _pv_treq.msg.buf = _pv_treq.buf;
+        _pv_treq.tmsgp = t->uas.request;
+        _pv_treq.id = t->uas.request->id;
+        _pv_treq.T = t;
+
+
+        if (pv_t_copy_msg(t->uas.request, &_pv_treq.msg) != 0) {
+            pkg_free(_pv_treq.buf);
+            _pv_treq.buf_size = 0;
+            _pv_treq.buf = NULL;
+            _pv_treq.tmsgp = NULL;
+            _pv_treq.T = NULL;
+            return -1;
+        }
+    }
+
+    orig_sip_request_msg = &_pv_treq.msg;
+
+
     //we dont apply QoS if its not a reply to an INVITE! or UPDATE or PRACK!
     if ((t->method.len == 5 && memcmp(t->method.s, "PRACK", 5) == 0)
             || (t->method.len == 6 && (memcmp(t->method.s, "INVITE", 6) == 0
             || memcmp(t->method.s, "UPDATE", 6) == 0))) {
         if (cscf_get_content_length(msg) == 0
-                || cscf_get_content_length(t->uas.request) == 0) {
+                || cscf_get_content_length(orig_sip_request_msg) == 0) {
             LM_DBG("No SDP offer answer -> therefore we can not do Rx AAR");
             //goto aarna; //AAR na if we dont have offer/answer pair
             return result;
@@ -761,11 +853,11 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 	} else {
 	    if (dlg_direction == DLG_MOBILE_ORIGINATING) {
 		LM_DBG("originating direction\n");
-                uri = cscf_get_asserted_identity(t->uas.request, 1);
+                uri = cscf_get_asserted_identity(orig_sip_request_msg, 0);
 		if (uri.len == 0) {
 		    LM_ERR("No P-Asserted-Identity hdr found in request. Using From hdr in req - we shouldn't have to do this");
 
-		    if (!cscf_get_from_uri(t->uas.request, &uri)) {
+		    if (!cscf_get_from_uri(orig_sip_request_msg, &uri)) {
 			    LM_ERR("Error assigning P-Asserted-Identity using From hdr in req");
 			    goto error;
 		    }
@@ -776,7 +868,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		} else {
                     get_identifier(&uri);
                     //free this cscf_get_asserted_identity allocates it
-                    pkg_free(uri.s);
+                    //                    pkg_free(uri.s);
 		}
 	    } else {
 		LM_DBG("terminating direction\n");
@@ -785,7 +877,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		    LM_DBG("No P-Asserted-Identity hdr found in response. Using Called party id in resp");
 		    //get identity from called party id
 		    //getting called asserted identity
-                    uri = cscf_get_public_identity_from_called_party_id(t->uas.request, &h);
+                    uri = cscf_get_public_identity_from_called_party_id(orig_sip_request_msg, &h);
 		    if (uri.len == 0) {
 			LM_ERR("No P-Called-Party hdr found in response. Using req URI from dlg - we shouldn't have to do this");
 			//get dialog and get the req URI from there
@@ -821,19 +913,19 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 	if (dlg_direction == DLG_MOBILE_ORIGINATING) {
 	    LM_DBG("originating direction\n");
 	    //get ip from request sdp (we use first SDP session)
-	    if (parse_sdp(t->uas.request) < 0) {
+	    if (parse_sdp(orig_sip_request_msg) < 0) {
 		LM_ERR("Unable to parse req SDP\n");
 		goto error;
 	    }
 
-	    sdp_session = get_sdp_session(t->uas.request, 0);
+	    sdp_session = get_sdp_session(orig_sip_request_msg, 0);
 	    if (!sdp_session) {
 		    LM_ERR("Missing SDP session information from req\n");
 		    goto error;
 	    }
 	    ip = sdp_session->ip_addr;
 	    ip_version = sdp_session->pf;
-	    free_sdp((sdp_info_t**) (void*) &t->uas.request->body);
+	    free_sdp((sdp_info_t**) (void*) &orig_sip_request_msg->body);
 
 	} else {
 	    LM_DBG("terminating direction\n");
@@ -883,9 +975,10 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     } else {
         LM_DBG("Update AAR session for this dialog in mode %s\n", direction);
         //check if this is triggered by a 183 - if so break here as its probably a re-transmit
-        if((msg->first_line).u.reply.statuscode == 183) {
-            LM_ERR("Received a 183 for a diameter session that already exists - just going to ignore this\n");
+        if ((msg->first_line).u.reply.statuscode == 183) {
+            LM_DBG("Received a 183 for a diameter session that already exists - just going to ignore this\n");
             cdpb.AAASessionsUnlock(auth_session->hash);
+            result = CSCF_RETURN_TRUE;
             goto ignore;
         }
         saved_t_data->aar_update = 1;//this is an update aar - we set this so on async_aar we know this is an update and act accordingly
@@ -899,7 +992,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
     }
 
     LM_DBG("Sending Rx AAR");
-    ret = rx_send_aar(t->uas.request, msg, auth_session, direction, saved_t_data);
+    ret = rx_send_aar(orig_sip_request_msg, msg, auth_session, direction, saved_t_data);
 
     if (!ret) {
         LM_ERR("Failed to send AAR\n");
