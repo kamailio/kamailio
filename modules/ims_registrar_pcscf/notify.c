@@ -176,7 +176,7 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
         LM_DBG("Setting received port in search to %d\n", ci.received_port);
         ci.received_proto = received_proto;
         LM_DBG("Setting received proto in search to %d\n", ci.received_proto);
-        ci.searchflag = (1 << SEARCH_RECEIVED);
+        ci.searchflag = SEARCH_RECEIVED;
     } else {
         LM_DBG("Contact in NOTIFY does not have an alias....\n");
     }
