@@ -400,12 +400,16 @@ tls_domains_cfg_t* tls_load_config(str* filename)
 				pkg_free(file_path);
 				file_path = NULL;
 				while (read(in_fd, &ch, 1)) {
-					write(out_fd, &ch, 1);
+					if (write(out_fd, &ch, 1)<0) {
+						LOG(L_ERR, "write error: %s\n", strerror(errno));
+					}
 				}
 				close(in_fd);
 				in_fd = 0;
 				ch = '\n';
-				write(out_fd, &ch, 1);
+				if (write(out_fd, &ch, 1)<0) {
+					LOG(L_ERR, "write error: %s\n", strerror(errno));
+				}
 			}
 		}
 		closedir(dir);
