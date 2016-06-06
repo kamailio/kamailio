@@ -75,7 +75,7 @@ unsigned int *session_id2;		/**< counter for second part of the session id */
 inline void AAASessionsLock(unsigned int hash)
 {
 	if(destroy_modules_phase()) return;
-	if ( hash >=0 && hash < sessions_hash_size ){
+	if ( hash < sessions_hash_size ){
 		lock_get(sessions[hash].lock);
 	}
 	else {
@@ -90,7 +90,7 @@ inline void AAASessionsUnlock(unsigned int hash)
 {
 	if(destroy_modules_phase()) return;
 
-	if ( hash >=0 && hash < sessions_hash_size ){
+	if ( hash < sessions_hash_size ){
 		lock_release(sessions[hash].lock);
 	}
 	else {
@@ -332,7 +332,7 @@ void del_session(cdp_session_t *x)
 	if (!x) return;
 
 	hash = x->hash;
-	if (hash < 0 || hash >= sessions_hash_size) {
+	if (hash >= sessions_hash_size) {
 		LM_ERR("del_session: x->hash :%d out of range of sessions_hash_size: %d !\n",hash, sessions_hash_size);
 		return;
 	}
