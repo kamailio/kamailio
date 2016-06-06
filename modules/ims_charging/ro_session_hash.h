@@ -65,6 +65,7 @@ struct ro_session {
     unsigned int h_id;
     time_t start_time;
     time_t last_event_timestamp;
+    time_t last_event_timestamp_backup;
     enum ro_session_event_type event_type;
     int auth_appid;
     int auth_session_type;

@@ -80,23 +80,6 @@ void credit_control_session_callback(int event, void* session) {
 }
 
 /**
- * Retrieves the SIP request that generated a diameter transaction
- * @param hash - the tm hash value for this request
- * @param label - the tm label value for this request
- * @returns the SIP request
- */
-struct sip_msg * trans_get_request_from_current_reply() {
-    struct cell *t;
-    t = tmb.t_gett();
-    if (!t || t == (void*) - 1) {
-        LM_ERR("trans_get_request_from_current_reply: Reply without transaction\n");
-        return 0;
-    }
-    if (t) return t->uas.request;
-    else return 0;
-}
-
-/**
  * Create and add an AVP to a list of AVPs.
  * @param list - the AVP list to add to
  * @param d - the payload data
@@ -643,7 +626,9 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     }
 
     LM_DBG("Sending CCR Diameter message.\n");
-
+    ro_session->last_event_timestamp_backup = ro_session->last_event_timestamp;
+    ro_session->last_event_timestamp = get_current_time_micro(); /*this is to make sure that if we get a term request now that we don't double bill for this time we are about to bill for in the interim */
+    
     cdpb.AAASessionsUnlock(auth->hash);
 
     if (ro_forced_peer.len > 0) {
@@ -691,10 +676,12 @@ error:
 static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
     struct interim_ccr *i_req = (struct interim_ccr *) param;
     Ro_CCA_t * ro_cca_data = NULL;
+    int error_or_timeout = 0;
 
     if (is_timeout) {
         counter_inc(ims_charging_cnts_h.ccr_timeouts);
         LM_ERR("Transaction timeout - did not get CCA\n");
+        error_or_timeout = 1;
         goto error;
     }
 
@@ -703,11 +690,13 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
 
     if (!i_req) {
         LM_ERR("This is so wrong: ro session is NULL\n");
+        error_or_timeout = 1;
         goto error;
     }
 
     if (cca == NULL) {
         LM_ERR("Error reserving credit for CCA.\n");
+        error_or_timeout = 1;
         goto error;
     }
 
@@ -715,11 +704,13 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
 
     if (ro_cca_data == NULL) {
         LM_ERR("Could not parse CCA message response.\n");
+        error_or_timeout = 1;
         goto error;
     }
 
     if (ro_cca_data->resultcode != 2001) {
         LM_ERR("Got bad CCA result code [%d] - reservation failed", ro_cca_data->resultcode);
+        error_or_timeout = 1;
         goto error;
     } else {
         LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i].\n", ro_cca_data->mscc->granted_service_unit->cc_time, ro_cca_data->mscc->validity_time);
@@ -753,7 +744,7 @@ error:
     }
 
 success:
-    resume_ro_session_ontimeout(i_req);
+    resume_ro_session_ontimeout(i_req, error_or_timeout);
 }
 
 long get_current_time_micro() {
