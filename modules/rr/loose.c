@@ -977,7 +977,9 @@ int check_route_param(struct sip_msg * msg, regex_t* re)
 		return -1;
 
 	/* include also the first ';' */
-	for( params=routed_params ; params.s[0]!=';' ; params.s--,params.len++ );
+	params=routed_params;
+	params.s--;
+	params.len++;
 
 	/* do the well-known trick to convert to null terminted */
 	bk = params.s[params.len];
