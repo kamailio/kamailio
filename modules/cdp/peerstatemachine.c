@@ -519,7 +519,7 @@ error:
  * @param p - peer to send to
  * @returns the new state for the peer
  */
-peer_state_t I_Snd_Conn_Req(peer *p)
+peer_event_t I_Snd_Conn_Req(peer *p)
 {
 	LM_INFO("I_Snd_Conn_Req(): Peer %.*s \n",
 			p->fqdn.len,p->fqdn.s);
