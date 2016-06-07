@@ -39,132 +39,133 @@ Olle E. Johansson
 
         1. Overview
         2. How it works
-        3. Dialog profiling
-        4. Dependencies
+        3. Dialog states
+        4. Dialog profiling
+        5. Dependencies
 
-              4.1. Kamailio Modules
-              4.2. External Libraries or Applications
+              5.1. Kamailio Modules
+              5.2. External Libraries or Applications
 
-        5. Parameters
+        6. Parameters
 
-              5.1. enable_stats (integer)
-              5.2. hash_size (integer)
-              5.3. rr_param (string)
-              5.4. dlg_flag (integer)
-              5.5. timeout_avp (string)
-              5.6. default_timeout (integer)
-              5.7. dlg_extra_hdrs (string)
-              5.8. dlg_match_mode (integer)
-              5.9. detect_spirals (integer)
-              5.10. db_url (string)
-              5.11. db_mode (integer)
-              5.12. db_update_period (integer)
-              5.13. db_fetch_rows (integer)
-              5.14. db_skip_load (integer)
-              5.15. table_name (string)
-              5.16. call_id_column (string)
-              5.17. from_uri_column (string)
-              5.18. from_tag_column (string)
-              5.19. to_uri_column (string)
-              5.20. to_tag_column (string)
-              5.21. from_cseq_column (string)
-              5.22. to_cseq_column (string)
-              5.23. from_route_column (string)
-              5.24. to_route_column (string)
-              5.25. from_contact_column (string)
-              5.26. to_contact_column (string)
-              5.27. from_sock_column (string)
-              5.28. to_sock_column (string)
-              5.29. h_id_column (string)
-              5.30. h_entry_column (string)
-              5.31. state_column (string)
-              5.32. start_time_column (string)
-              5.33. timeout_column (string)
-              5.34. sflags_column (string)
-              5.35. toroute_name_column (string)
-              5.36. vars_table_name (string)
-              5.37. vars_h_id_column (string)
-              5.38. vars_h_entry_column (string)
-              5.39. vars_key_column (string)
-              5.40. vars_value_column (string)
-              5.41. profiles_with_value (string)
-              5.42. profiles_no_value (string)
-              5.43. bridge_controller (string)
-              5.44. bridge_contact (string)
-              5.45. initial_cbs_inscript (int)
-              5.46. send_bye (int)
-              5.47. wait_ack (int)
-              5.48. ka_timer (int)
-              5.49. ka_interval (int)
-              5.50. timeout_noreset (int)
-              5.51. timer_procs (int)
-              5.52. track_cseq_updates (int)
-              5.53. lreq_callee_headers (string)
+              6.1. enable_stats (integer)
+              6.2. hash_size (integer)
+              6.3. rr_param (string)
+              6.4. dlg_flag (integer)
+              6.5. timeout_avp (string)
+              6.6. default_timeout (integer)
+              6.7. dlg_extra_hdrs (string)
+              6.8. dlg_match_mode (integer)
+              6.9. detect_spirals (integer)
+              6.10. db_url (string)
+              6.11. db_mode (integer)
+              6.12. db_update_period (integer)
+              6.13. db_fetch_rows (integer)
+              6.14. db_skip_load (integer)
+              6.15. table_name (string)
+              6.16. call_id_column (string)
+              6.17. from_uri_column (string)
+              6.18. from_tag_column (string)
+              6.19. to_uri_column (string)
+              6.20. to_tag_column (string)
+              6.21. from_cseq_column (string)
+              6.22. to_cseq_column (string)
+              6.23. from_route_column (string)
+              6.24. to_route_column (string)
+              6.25. from_contact_column (string)
+              6.26. to_contact_column (string)
+              6.27. from_sock_column (string)
+              6.28. to_sock_column (string)
+              6.29. h_id_column (string)
+              6.30. h_entry_column (string)
+              6.31. state_column (string)
+              6.32. start_time_column (string)
+              6.33. timeout_column (string)
+              6.34. sflags_column (string)
+              6.35. toroute_name_column (string)
+              6.36. vars_table_name (string)
+              6.37. vars_h_id_column (string)
+              6.38. vars_h_entry_column (string)
+              6.39. vars_key_column (string)
+              6.40. vars_value_column (string)
+              6.41. profiles_with_value (string)
+              6.42. profiles_no_value (string)
+              6.43. bridge_controller (string)
+              6.44. bridge_contact (string)
+              6.45. initial_cbs_inscript (int)
+              6.46. send_bye (int)
+              6.47. wait_ack (int)
+              6.48. ka_timer (int)
+              6.49. ka_interval (int)
+              6.50. timeout_noreset (int)
+              6.51. timer_procs (int)
+              6.52. track_cseq_updates (int)
+              6.53. lreq_callee_headers (string)
 
-        6. Functions
+        7. Functions
 
-              6.1. set_dlg_profile(profile,[value])
-              6.2. unset_dlg_profile(profile,[value])
-              6.3. is_in_profile(profile,[value])
-              6.4. get_profile_size(profile,[value],size)
-              6.5. dlg_isflagset(flag)
-              6.6. dlg_setflag(flag)
-              6.7. dlg_resetflag(flag)
-              6.8. dlg_bye(side)
-              6.9. dlg_refer(side, address)
-              6.10. dlg_manage()
-              6.11. dlg_bridge(from, to, op)
-              6.12. dlg_get(callid, ftag, ttag)
-              6.13. is_known_dlg()
-              6.14. dlg_set_timeout(timeout [, h_entry, h_id])
-              6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
-              6.16. dlg_set_property(attr)
-              6.17. dlg_remote_profile(cmd, profile, value, uid, expires)
+              7.1. set_dlg_profile(profile,[value])
+              7.2. unset_dlg_profile(profile,[value])
+              7.3. is_in_profile(profile,[value])
+              7.4. get_profile_size(profile,[value],size)
+              7.5. dlg_isflagset(flag)
+              7.6. dlg_setflag(flag)
+              7.7. dlg_resetflag(flag)
+              7.8. dlg_bye(side)
+              7.9. dlg_refer(side, address)
+              7.10. dlg_manage()
+              7.11. dlg_bridge(from, to, op)
+              7.12. dlg_get(callid, ftag, ttag)
+              7.13. is_known_dlg()
+              7.14. dlg_set_timeout(timeout [, h_entry, h_id])
+              7.15. dlg_set_timeout_by_profile(profile, [value], timeout)
+              7.16. dlg_set_property(attr)
+              7.17. dlg_remote_profile(cmd, profile, value, uid, expires)
 
-        7. Statistics
+        8. Statistics
 
-              7.1. active_dialogs
-              7.2. early_dialogs
-              7.3. processed_dialogs
-              7.4. expired_dialogs
-              7.5. failed_dialogs
+              8.1. active_dialogs
+              8.2. early_dialogs
+              8.3. processed_dialogs
+              8.4. expired_dialogs
+              8.5. failed_dialogs
 
-        8. MI Commands
+        9. MI Commands
 
-              8.1. dlg_list
-              8.2. dlg_list_ctx
-              8.3. dlg_end_dlg
-              8.4. dlg_terminate_dlg
-              8.5. profile_get_size
-              8.6. profile_list_dlgs
-              8.7. dlg_bridge
+              9.1. dlg_list
+              9.2. dlg_list_ctx
+              9.3. dlg_end_dlg
+              9.4. dlg_terminate_dlg
+              9.5. profile_get_size
+              9.6. profile_list_dlgs
+              9.7. dlg_bridge
 
-        9. Exported RPC Functions
+        10. Exported RPC Functions
 
-              9.1. dlg.list
-              9.2. dlg.list_ctx
-              9.3. dlg.dlg_list
-              9.4. dlg.dlg_list_ctx
-              9.5. dlg.terminate_dlg
-              9.6. dlg.end_dlg
-              9.7. dlg.profile_get_size
-              9.8. dlg.profile_list
-              9.9. dlg.bridge_dlg
+              10.1. dlg.list
+              10.2. dlg.list_ctx
+              10.3. dlg.dlg_list
+              10.4. dlg.dlg_list_ctx
+              10.5. dlg.terminate_dlg
+              10.6. dlg.end_dlg
+              10.7. dlg.profile_get_size
+              10.8. dlg.profile_list
+              10.9. dlg.bridge_dlg
 
-        10. Exported pseudo-variables
+        11. Exported pseudo-variables
 
-              10.1. $DLG_count
-              10.2. $DLG_status
-              10.3. $DLG_lifetime
-              10.4. $dlg(...)
-              10.5. $dlg_ctx(...)
-              10.6. $dlg_var(key)
+              11.1. $DLG_count
+              11.2. $DLG_status
+              11.3. $DLG_lifetime
+              11.4. $dlg(...)
+              11.5. $dlg_ctx(...)
+              11.6. $dlg_var(key)
 
-        11. Event Routes
+        12. Event Routes
 
-              11.1. event_route[dialog:start]
-              11.2. event_route[dialog:end]
-              11.3. event_route[dialog:failed]
+              12.1. event_route[dialog:start]
+              12.2. event_route[dialog:end]
+              12.3. event_route[dialog:failed]
 
    2. Developer Guide
 
@@ -255,132 +256,133 @@ Chapter 1. Admin Guide
 
    1. Overview
    2. How it works
-   3. Dialog profiling
-   4. Dependencies
+   3. Dialog states
+   4. Dialog profiling
+   5. Dependencies
 
-        4.1. Kamailio Modules
-        4.2. External Libraries or Applications
+        5.1. Kamailio Modules
+        5.2. External Libraries or Applications
 
-   5. Parameters
+   6. Parameters
 
-        5.1. enable_stats (integer)
-        5.2. hash_size (integer)
-        5.3. rr_param (string)
-        5.4. dlg_flag (integer)
-        5.5. timeout_avp (string)
-        5.6. default_timeout (integer)
-        5.7. dlg_extra_hdrs (string)
-        5.8. dlg_match_mode (integer)
-        5.9. detect_spirals (integer)
-        5.10. db_url (string)
-        5.11. db_mode (integer)
-        5.12. db_update_period (integer)
-        5.13. db_fetch_rows (integer)
-        5.14. db_skip_load (integer)
-        5.15. table_name (string)
-        5.16. call_id_column (string)
-        5.17. from_uri_column (string)
-        5.18. from_tag_column (string)
-        5.19. to_uri_column (string)
-        5.20. to_tag_column (string)
-        5.21. from_cseq_column (string)
-        5.22. to_cseq_column (string)
-        5.23. from_route_column (string)
-        5.24. to_route_column (string)
-        5.25. from_contact_column (string)
-        5.26. to_contact_column (string)
-        5.27. from_sock_column (string)
-        5.28. to_sock_column (string)
-        5.29. h_id_column (string)
-        5.30. h_entry_column (string)
-        5.31. state_column (string)
-        5.32. start_time_column (string)
-        5.33. timeout_column (string)
-        5.34. sflags_column (string)
-        5.35. toroute_name_column (string)
-        5.36. vars_table_name (string)
-        5.37. vars_h_id_column (string)
-        5.38. vars_h_entry_column (string)
-        5.39. vars_key_column (string)
-        5.40. vars_value_column (string)
-        5.41. profiles_with_value (string)
-        5.42. profiles_no_value (string)
-        5.43. bridge_controller (string)
-        5.44. bridge_contact (string)
-        5.45. initial_cbs_inscript (int)
-        5.46. send_bye (int)
-        5.47. wait_ack (int)
-        5.48. ka_timer (int)
-        5.49. ka_interval (int)
-        5.50. timeout_noreset (int)
-        5.51. timer_procs (int)
-        5.52. track_cseq_updates (int)
-        5.53. lreq_callee_headers (string)
+        6.1. enable_stats (integer)
+        6.2. hash_size (integer)
+        6.3. rr_param (string)
+        6.4. dlg_flag (integer)
+        6.5. timeout_avp (string)
+        6.6. default_timeout (integer)
+        6.7. dlg_extra_hdrs (string)
+        6.8. dlg_match_mode (integer)
+        6.9. detect_spirals (integer)
+        6.10. db_url (string)
+        6.11. db_mode (integer)
+        6.12. db_update_period (integer)
+        6.13. db_fetch_rows (integer)
+        6.14. db_skip_load (integer)
+        6.15. table_name (string)
+        6.16. call_id_column (string)
+        6.17. from_uri_column (string)
+        6.18. from_tag_column (string)
+        6.19. to_uri_column (string)
+        6.20. to_tag_column (string)
+        6.21. from_cseq_column (string)
+        6.22. to_cseq_column (string)
+        6.23. from_route_column (string)
+        6.24. to_route_column (string)
+        6.25. from_contact_column (string)
+        6.26. to_contact_column (string)
+        6.27. from_sock_column (string)
+        6.28. to_sock_column (string)
+        6.29. h_id_column (string)
+        6.30. h_entry_column (string)
+        6.31. state_column (string)
+        6.32. start_time_column (string)
+        6.33. timeout_column (string)
+        6.34. sflags_column (string)
+        6.35. toroute_name_column (string)
+        6.36. vars_table_name (string)
+        6.37. vars_h_id_column (string)
+        6.38. vars_h_entry_column (string)
+        6.39. vars_key_column (string)
+        6.40. vars_value_column (string)
+        6.41. profiles_with_value (string)
+        6.42. profiles_no_value (string)
+        6.43. bridge_controller (string)
+        6.44. bridge_contact (string)
+        6.45. initial_cbs_inscript (int)
+        6.46. send_bye (int)
+        6.47. wait_ack (int)
+        6.48. ka_timer (int)
+        6.49. ka_interval (int)
+        6.50. timeout_noreset (int)
+        6.51. timer_procs (int)
+        6.52. track_cseq_updates (int)
+        6.53. lreq_callee_headers (string)
 
-   6. Functions
+   7. Functions
 
-        6.1. set_dlg_profile(profile,[value])
-        6.2. unset_dlg_profile(profile,[value])
-        6.3. is_in_profile(profile,[value])
-        6.4. get_profile_size(profile,[value],size)
-        6.5. dlg_isflagset(flag)
-        6.6. dlg_setflag(flag)
-        6.7. dlg_resetflag(flag)
-        6.8. dlg_bye(side)
-        6.9. dlg_refer(side, address)
-        6.10. dlg_manage()
-        6.11. dlg_bridge(from, to, op)
-        6.12. dlg_get(callid, ftag, ttag)
-        6.13. is_known_dlg()
-        6.14. dlg_set_timeout(timeout [, h_entry, h_id])
-        6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
-        6.16. dlg_set_property(attr)
-        6.17. dlg_remote_profile(cmd, profile, value, uid, expires)
+        7.1. set_dlg_profile(profile,[value])
+        7.2. unset_dlg_profile(profile,[value])
+        7.3. is_in_profile(profile,[value])
+        7.4. get_profile_size(profile,[value],size)
+        7.5. dlg_isflagset(flag)
+        7.6. dlg_setflag(flag)
+        7.7. dlg_resetflag(flag)
+        7.8. dlg_bye(side)
+        7.9. dlg_refer(side, address)
+        7.10. dlg_manage()
+        7.11. dlg_bridge(from, to, op)
+        7.12. dlg_get(callid, ftag, ttag)
+        7.13. is_known_dlg()
+        7.14. dlg_set_timeout(timeout [, h_entry, h_id])
+        7.15. dlg_set_timeout_by_profile(profile, [value], timeout)
+        7.16. dlg_set_property(attr)
+        7.17. dlg_remote_profile(cmd, profile, value, uid, expires)
 
-   7. Statistics
+   8. Statistics
 
-        7.1. active_dialogs
-        7.2. early_dialogs
-        7.3. processed_dialogs
-        7.4. expired_dialogs
-        7.5. failed_dialogs
+        8.1. active_dialogs
+        8.2. early_dialogs
+        8.3. processed_dialogs
+        8.4. expired_dialogs
+        8.5. failed_dialogs
 
-   8. MI Commands
+   9. MI Commands
 
-        8.1. dlg_list
-        8.2. dlg_list_ctx
-        8.3. dlg_end_dlg
-        8.4. dlg_terminate_dlg
-        8.5. profile_get_size
-        8.6. profile_list_dlgs
-        8.7. dlg_bridge
+        9.1. dlg_list
+        9.2. dlg_list_ctx
+        9.3. dlg_end_dlg
+        9.4. dlg_terminate_dlg
+        9.5. profile_get_size
+        9.6. profile_list_dlgs
+        9.7. dlg_bridge
 
-   9. Exported RPC Functions
+   10. Exported RPC Functions
 
-        9.1. dlg.list
-        9.2. dlg.list_ctx
-        9.3. dlg.dlg_list
-        9.4. dlg.dlg_list_ctx
-        9.5. dlg.terminate_dlg
-        9.6. dlg.end_dlg
-        9.7. dlg.profile_get_size
-        9.8. dlg.profile_list
-        9.9. dlg.bridge_dlg
+        10.1. dlg.list
+        10.2. dlg.list_ctx
+        10.3. dlg.dlg_list
+        10.4. dlg.dlg_list_ctx
+        10.5. dlg.terminate_dlg
+        10.6. dlg.end_dlg
+        10.7. dlg.profile_get_size
+        10.8. dlg.profile_list
+        10.9. dlg.bridge_dlg
 
-   10. Exported pseudo-variables
+   11. Exported pseudo-variables
 
-        10.1. $DLG_count
-        10.2. $DLG_status
-        10.3. $DLG_lifetime
-        10.4. $dlg(...)
-        10.5. $dlg_ctx(...)
-        10.6. $dlg_var(key)
+        11.1. $DLG_count
+        11.2. $DLG_status
+        11.3. $DLG_lifetime
+        11.4. $dlg(...)
+        11.5. $dlg_ctx(...)
+        11.6. $dlg_var(key)
 
-   11. Event Routes
+   12. Event Routes
 
-        11.1. event_route[dialog:start]
-        11.2. event_route[dialog:end]
-        11.3. event_route[dialog:failed]
+        12.1. event_route[dialog:start]
+        12.2. event_route[dialog:end]
+        12.3. event_route[dialog:failed]
 
 1. Overview
 
@@ -410,17 +412,27 @@ Chapter 1. Admin Guide
 2. How it works
 
    To create the dialog associated with an initial request, the flag
-   "dlg_flag" (Section 5.4, "dlg_flag (integer)") must be set before
+   "dlg_flag" (Section 6.4, "dlg_flag (integer)") must be set before
    creating the corresponding transaction.
 
    The dialog is automatically destroyed when a "BYE" is received. In case
    of no "BYE", the dialog lifetime is controlled via the default timeout
-   (see "default_timeout" - Section 5.6, "default_timeout (integer)") and
-   custom timeout (see "timeout_avp" - Section 5.5, "timeout_avp
+   (see "default_timeout" - Section 6.6, "default_timeout (integer)") and
+   custom timeout (see "timeout_avp" - Section 6.5, "timeout_avp
    (string)"). The dialog timeout is reset each time a sequential request
    is processed.
 
-3. Dialog profiling
+3. Dialog states
+
+   Dialogs have states that are shown in the RPC interface as well as
+   stored in the database.
+     * 1 : Unconfirmed dialog
+     * 2 : Early dialog (ringing)
+     * 3 : Confirmed dialog (waiting for ACK)
+     * 4 : Confirmed dialog (active call)
+     * 5 : Deleted dialog
+
+4. Dialog profiling
 
    Dialog profiling is a mechanism that helps in classifying, sorting and
    keeping track of certain types of dialogs. The classification criteria
@@ -450,81 +462,81 @@ Chapter 1. Admin Guide
    and sequential requests) and in the branch, failure and reply routes of
    the original request.
 
-4. Dependencies
+5. Dependencies
 
-   4.1. Kamailio Modules
-   4.2. External Libraries or Applications
+   5.1. Kamailio Modules
+   5.2. External Libraries or Applications
 
-4.1. Kamailio Modules
+5.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * TM - Transaction module
      * RR - Record-Route module
      * PV - Pseudovariables module
 
-4.2. External Libraries or Applications
+5.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
      * None.
 
-5. Parameters
+6. Parameters
 
-   5.1. enable_stats (integer)
-   5.2. hash_size (integer)
-   5.3. rr_param (string)
-   5.4. dlg_flag (integer)
-   5.5. timeout_avp (string)
-   5.6. default_timeout (integer)
-   5.7. dlg_extra_hdrs (string)
-   5.8. dlg_match_mode (integer)
-   5.9. detect_spirals (integer)
-   5.10. db_url (string)
-   5.11. db_mode (integer)
-   5.12. db_update_period (integer)
-   5.13. db_fetch_rows (integer)
-   5.14. db_skip_load (integer)
-   5.15. table_name (string)
-   5.16. call_id_column (string)
-   5.17. from_uri_column (string)
-   5.18. from_tag_column (string)
-   5.19. to_uri_column (string)
-   5.20. to_tag_column (string)
-   5.21. from_cseq_column (string)
-   5.22. to_cseq_column (string)
-   5.23. from_route_column (string)
-   5.24. to_route_column (string)
-   5.25. from_contact_column (string)
-   5.26. to_contact_column (string)
-   5.27. from_sock_column (string)
-   5.28. to_sock_column (string)
-   5.29. h_id_column (string)
-   5.30. h_entry_column (string)
-   5.31. state_column (string)
-   5.32. start_time_column (string)
-   5.33. timeout_column (string)
-   5.34. sflags_column (string)
-   5.35. toroute_name_column (string)
-   5.36. vars_table_name (string)
-   5.37. vars_h_id_column (string)
-   5.38. vars_h_entry_column (string)
-   5.39. vars_key_column (string)
-   5.40. vars_value_column (string)
-   5.41. profiles_with_value (string)
-   5.42. profiles_no_value (string)
-   5.43. bridge_controller (string)
-   5.44. bridge_contact (string)
-   5.45. initial_cbs_inscript (int)
-   5.46. send_bye (int)
-   5.47. wait_ack (int)
-   5.48. ka_timer (int)
-   5.49. ka_interval (int)
-   5.50. timeout_noreset (int)
-   5.51. timer_procs (int)
-   5.52. track_cseq_updates (int)
-   5.53. lreq_callee_headers (string)
+   6.1. enable_stats (integer)
+   6.2. hash_size (integer)
+   6.3. rr_param (string)
+   6.4. dlg_flag (integer)
+   6.5. timeout_avp (string)
+   6.6. default_timeout (integer)
+   6.7. dlg_extra_hdrs (string)
+   6.8. dlg_match_mode (integer)
+   6.9. detect_spirals (integer)
+   6.10. db_url (string)
+   6.11. db_mode (integer)
+   6.12. db_update_period (integer)
+   6.13. db_fetch_rows (integer)
+   6.14. db_skip_load (integer)
+   6.15. table_name (string)
+   6.16. call_id_column (string)
+   6.17. from_uri_column (string)
+   6.18. from_tag_column (string)
+   6.19. to_uri_column (string)
+   6.20. to_tag_column (string)
+   6.21. from_cseq_column (string)
+   6.22. to_cseq_column (string)
+   6.23. from_route_column (string)
+   6.24. to_route_column (string)
+   6.25. from_contact_column (string)
+   6.26. to_contact_column (string)
+   6.27. from_sock_column (string)
+   6.28. to_sock_column (string)
+   6.29. h_id_column (string)
+   6.30. h_entry_column (string)
+   6.31. state_column (string)
+   6.32. start_time_column (string)
+   6.33. timeout_column (string)
+   6.34. sflags_column (string)
+   6.35. toroute_name_column (string)
+   6.36. vars_table_name (string)
+   6.37. vars_h_id_column (string)
+   6.38. vars_h_entry_column (string)
+   6.39. vars_key_column (string)
+   6.40. vars_value_column (string)
+   6.41. profiles_with_value (string)
+   6.42. profiles_no_value (string)
+   6.43. bridge_controller (string)
+   6.44. bridge_contact (string)
+   6.45. initial_cbs_inscript (int)
+   6.46. send_bye (int)
+   6.47. wait_ack (int)
+   6.48. ka_timer (int)
+   6.49. ka_interval (int)
+   6.50. timeout_noreset (int)
+   6.51. timer_procs (int)
+   6.52. track_cseq_updates (int)
+   6.53. lreq_callee_headers (string)
 
-5.1. enable_stats (integer)
+6.1. enable_stats (integer)
 
    If statistics support should be enabled or not. Via statistics
    variables, the module provide information about the dialog processing.
@@ -537,7 +549,7 @@ Chapter 1. Admin Guide
 modparam("dialog", "enable_stats", 0)
 ...
 
-5.2. hash_size (integer)
+6.2. hash_size (integer)
 
    The size of the hash table internally used to keep the dialogs. A
    larger table is much faster but consumes more memory. The hash size
@@ -555,7 +567,7 @@ modparam("dialog", "enable_stats", 0)
 modparam("dialog", "hash_size", 1024)
 ...
 
-5.3. rr_param (string)
+6.3. rr_param (string)
 
    Name of the Record-Route parameter used to store the dialog cookie. It
    is used for the fast matching of sequential requests to tracked
@@ -568,7 +580,7 @@ modparam("dialog", "hash_size", 1024)
 modparam("dialog", "rr_param", "xyz")
 ...
 
-5.4. dlg_flag (integer)
+6.4. dlg_flag (integer)
 
    Flag to be used for marking if a dialog should be constructed for the
    current request (this make sense only for initial requests).
@@ -580,7 +592,7 @@ modparam("dialog", "rr_param", "xyz")
 modparam("dialog", "dlg_flag", 4)
 ...
 
-5.5. timeout_avp (string)
+6.5. timeout_avp (string)
 
    The specification of an AVP that contains a custom timeout value (in
    seconds) for the dialog. It may be used only in a request (initial or
@@ -593,7 +605,7 @@ modparam("dialog", "dlg_flag", 4)
 modparam("dialog", "timeout_avp", "$avp(i:10)")
 ...
 
-5.6. default_timeout (integer)
+6.6. default_timeout (integer)
 
    The default dialog timeout (in seconds), in the absence of a custom
    value provided in an AVP.
@@ -605,7 +617,7 @@ modparam("dialog", "timeout_avp", "$avp(i:10)")
 modparam("dialog", "default_timeout", 21600)
 ...
 
-5.7. dlg_extra_hdrs (string)
+6.7. dlg_extra_hdrs (string)
 
    A string containing the extra headers (full format, with EOH) to be
    added to requests generated locally by the module (like BYEs).
@@ -617,7 +629,7 @@ modparam("dialog", "default_timeout", 21600)
 modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 ...
 
-5.8. dlg_match_mode (integer)
+6.8. dlg_match_mode (integer)
 
    How the sequential requests should be matched against the known
    dialogs. The modes are a combination of matching based on a cookie
@@ -648,7 +660,7 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 modparam("dialog", "dlg_match_mode", 1)
 ...
 
-5.9. detect_spirals (integer)
+6.9. detect_spirals (integer)
 
    Whether spirals (i.e., messages routed through the proxy multiple
    times) should be detected.
@@ -665,7 +677,7 @@ modparam("dialog", "dlg_match_mode", 1)
 modparam("dialog", "detect_spirals", 1)
 ...
 
-5.10. db_url (string)
+6.10. db_url (string)
 
    In order to store information about dialogs in a database, a database
    URL must be specified.
@@ -677,7 +689,7 @@ modparam("dialog", "detect_spirals", 1)
 modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-5.11. db_mode (integer)
+6.11. db_mode (integer)
 
    Mode of synchronisation of dialog information from memory to an
    underlying database (if desired):
@@ -698,7 +710,7 @@ modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname")
 modparam("dialog", "db_mode", 1)
 ...
 
-5.12. db_update_period (integer)
+6.12. db_update_period (integer)
 
    The interval (seconds) at which to update dialogs' information, if the
    server is configured to store the dialog information at a given
@@ -713,7 +725,7 @@ modparam("dialog", "db_mode", 1)
 modparam("dialog", "db_update_period", 120)
 ...
 
-5.13. db_fetch_rows (integer)
+6.13. db_fetch_rows (integer)
 
    The number of the rows to be fetched at once from database when loading
    the dialog records at startup from the database. This value can be used
@@ -729,7 +741,7 @@ modparam("dialog", "db_update_period", 120)
 modparam("dialog", "db_fetch_rows", 500)
 ...
 
-5.14. db_skip_load (integer)
+6.14. db_skip_load (integer)
 
    Set db_skip_load to 1, to skip the loading of dialog data from the
    database.
@@ -741,7 +753,7 @@ modparam("dialog", "db_fetch_rows", 500)
 modparam("dialog", "db_skip_load", 1)
 ...
 
-5.15. table_name (string)
+6.15. table_name (string)
 
    Database table name used for storing dialog information.
 
@@ -752,7 +764,7 @@ modparam("dialog", "db_skip_load", 1)
 modparam("dialog", "table_name", "my_dialog")
 ...
 
-5.16. call_id_column (string)
+6.16. call_id_column (string)
 
    The column name in the database to store the dialog call-id.
 
@@ -763,7 +775,7 @@ modparam("dialog", "table_name", "my_dialog")
 modparam("dialog", "call_id_column", "callid_c_name")
 ...
 
-5.17. from_uri_column (string)
+6.17. from_uri_column (string)
 
    The column name in the database to store the caller's SIP address
    (URI).
@@ -775,7 +787,7 @@ modparam("dialog", "call_id_column", "callid_c_name")
 modparam("dialog", "from_uri_column", "from_uri_c_name")
 ...
 
-5.18. from_tag_column (string)
+6.18. from_tag_column (string)
 
    The column name in the database to store the From header tag from the
    INVITE request.
@@ -787,7 +799,7 @@ modparam("dialog", "from_uri_column", "from_uri_c_name")
 modparam("dialog", "from_tag_column", "from_tag_c_name")
 ...
 
-5.19. to_uri_column (string)
+6.19. to_uri_column (string)
 
    The column name in the database to store the callee's SIP address
    (URI).
@@ -799,7 +811,7 @@ modparam("dialog", "from_tag_column", "from_tag_c_name")
 modparam("dialog", "to_uri_column", "to_uri_c_name")
 ...
 
-5.20. to_tag_column (string)
+6.20. to_tag_column (string)
 
    The column name in the database to store the To header tag from the 200
    OK response to the INVITE request, if present.
@@ -811,7 +823,7 @@ modparam("dialog", "to_uri_column", "to_uri_c_name")
 modparam("dialog", "to_tag_column", "to_tag_c_name")
 ...
 
-5.21. from_cseq_column (string)
+6.21. from_cseq_column (string)
 
    The column name in the database to store the Cseq from caller side.
 
@@ -822,7 +834,7 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 modparam("dialog", "from_cseq_column", "from_cseq")
 ...
 
-5.22. to_cseq_column (string)
+6.22. to_cseq_column (string)
 
    The column name in the database to store the cseq from callee side.
 
@@ -833,7 +845,7 @@ modparam("dialog", "from_cseq_column", "from_cseq")
 modparam("dialog", "to_cseq_column", "to_cseq")
 ...
 
-5.23. from_route_column (string)
+6.23. from_route_column (string)
 
    The column name in the database to store the route records from caller
    side (proxy to caller).
@@ -845,7 +857,7 @@ modparam("dialog", "to_cseq_column", "to_cseq")
 modparam("dialog", "from_route_column", "rroute_from")
 ...
 
-5.24. to_route_column (string)
+6.24. to_route_column (string)
 
    The column name in the database to store the route records from callee
    side (proxy to callee).
@@ -857,7 +869,7 @@ modparam("dialog", "from_route_column", "rroute_from")
 modparam("dialog", "to_route_column", "rroute_to")
 ...
 
-5.25. from_contact_column (string)
+6.25. from_contact_column (string)
 
    The column name in the database to store the caller's contact uri.
 
@@ -868,7 +880,7 @@ modparam("dialog", "to_route_column", "rroute_to")
 modparam("dialog", "from_contact_column", "from_contact_uri")
 ...
 
-5.26. to_contact_column (string)
+6.26. to_contact_column (string)
 
    The column name in the database to store the callee's contact uri.
 
@@ -879,7 +891,7 @@ modparam("dialog", "from_contact_column", "from_contact_uri")
 modparam("dialog", "to_contact_column", "to_contact_uri")
 ...
 
-5.27. from_sock_column (string)
+6.27. from_sock_column (string)
 
    The column name in the database to store the information about the
    local interface receiving the traffic from caller.
@@ -891,7 +903,7 @@ modparam("dialog", "to_contact_column", "to_contact_uri")
 modparam("dialog", "from_sock_column", "socket_from")
 ...
 
-5.28. to_sock_column (string)
+6.28. to_sock_column (string)
 
    The column name in the database to store information about the local
    interface receiving the traffic from callee.
@@ -903,7 +915,7 @@ modparam("dialog", "from_sock_column", "socket_from")
 modparam("dialog", "to_sock_column", "socket_to")
 ...
 
-5.29. h_id_column (string)
+6.29. h_id_column (string)
 
    The column name in the database to store the dialogs' hash id
    information.
@@ -915,7 +927,7 @@ modparam("dialog", "to_sock_column", "socket_to")
 modparam("dialog", "h_id_column", "hash_id_c_name")
 ...
 
-5.30. h_entry_column (string)
+6.30. h_entry_column (string)
 
    The column name in the database to store the dialog's hash entry
    information.
@@ -927,7 +939,7 @@ modparam("dialog", "h_id_column", "hash_id_c_name")
 modparam("dialog", "h_entry_column", "h_entry_c_name")
 ...
 
-5.31. state_column (string)
+6.31. state_column (string)
 
    The column name in the database to store the dialog's state
    information.
@@ -939,7 +951,7 @@ modparam("dialog", "h_entry_column", "h_entry_c_name")
 modparam("dialog", "state_column", "state_c_name")
 ...
 
-5.32. start_time_column (string)
+6.32. start_time_column (string)
 
    The column name in the database to store the dialog's start time
    information.
@@ -951,7 +963,7 @@ modparam("dialog", "state_column", "state_c_name")
 modparam("dialog", "start_time_column", "start_time_c_name")
 ...
 
-5.33. timeout_column (string)
+6.33. timeout_column (string)
 
    The column name in the database to store the dialog's timeout.
 
@@ -962,7 +974,7 @@ modparam("dialog", "start_time_column", "start_time_c_name")
 modparam("dialog", "timeout_column", "timeout_c_name")
 ...
 
-5.34. sflags_column (string)
+6.34. sflags_column (string)
 
    The column name in the database to store the dialog script flags.
 
@@ -973,7 +985,7 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 modparam("dialog", "sflags_column", "s_flags")
 ...
 
-5.35. toroute_name_column (string)
+6.35. toroute_name_column (string)
 
    The column name in the database to store the index of the route to be
    executed at timeout.
@@ -985,7 +997,7 @@ modparam("dialog", "sflags_column", "s_flags")
 modparam("dialog", "toroute_name_column", "timeout_route")
 ...
 
-5.36. vars_table_name (string)
+6.36. vars_table_name (string)
 
    If you want to store the dialog variables ("$dlg_var(name)") for a
    dialog in a database a table name must be specified.
@@ -997,7 +1009,7 @@ modparam("dialog", "toroute_name_column", "timeout_route")
 modparam("dialog", "vars_table_name", "my_dialog_vars")
 ...
 
-5.37. vars_h_id_column (string)
+6.37. vars_h_id_column (string)
 
    The column name in the database to store the dialog's hash id
    information (as a reference to the dialog table).
@@ -1009,7 +1021,7 @@ modparam("dialog", "vars_table_name", "my_dialog_vars")
 modparam("dialog", "vars_h_id_column", "vars_h_id_name")
 ...
 
-5.38. vars_h_entry_column (string)
+6.38. vars_h_entry_column (string)
 
    The column name in the database to store the dialog's hash entry
    information (as a reference to the dialog table).
@@ -1021,7 +1033,7 @@ modparam("dialog", "vars_h_id_column", "vars_h_id_name")
 modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
 ...
 
-5.39. vars_key_column (string)
+6.39. vars_key_column (string)
 
    The column name in the database to store the names (keys) of a dialog
    variable.
@@ -1033,7 +1045,7 @@ modparam("dialog", "vars_h_entry_column", "vars_h_entry_name")
 modparam("dialog", "vars_key_column", "vars_key_name")
 ...
 
-5.40. vars_value_column (string)
+6.40. vars_value_column (string)
 
    The column name in the database to store the values of a dialog
    variable.
@@ -1045,7 +1057,7 @@ modparam("dialog", "vars_key_column", "vars_key_name")
 modparam("dialog", "vars_value_column", "vars_value_name")
 ...
 
-5.41. profiles_with_value (string)
+6.41. profiles_with_value (string)
 
    List of names for profiles with values, separated with semi-colon ";".
 
@@ -1056,7 +1068,7 @@ modparam("dialog", "vars_value_column", "vars_value_name")
 modparam("dialog", "profiles_with_value", "caller ; my_profile")
 ...
 
-5.42. profiles_no_value (string)
+6.42. profiles_no_value (string)
 
    List of names for profiles without values, separated with semi-colon
    ";".
@@ -1068,7 +1080,7 @@ modparam("dialog", "profiles_with_value", "caller ; my_profile")
 modparam("dialog", "profiles_no_value", "inbound ; outbound")
 ...
 
-5.43. bridge_controller (string)
+6.43. bridge_controller (string)
 
    SIP address to be used in From header when initiating a call bridge.
 
@@ -1079,7 +1091,7 @@ modparam("dialog", "profiles_no_value", "inbound ; outbound")
 modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 ...
 
-5.44. bridge_contact (string)
+6.44. bridge_contact (string)
 
    SIP address to be used in Contact header when doing a call bridge.
 
@@ -1090,7 +1102,7 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
 modparam("dialog", "bridge_contact", "sip:ctd@127.0.0.1:5060")
 ...
 
-5.45. initial_cbs_inscript (int)
+6.45. initial_cbs_inscript (int)
 
    If the initial dialog callbacks (i.e., DLGCB_CREATED and
    DLGCB_SPIRALED) should be executed in-script or post-script. If
@@ -1113,7 +1125,7 @@ modparam("dialog", "bridge_contact", "sip:ctd@127.0.0.1:5060")
 modparam("dialog", "initial_cbs_inscript", 0)
 ...
 
-5.46. send_bye (int)
+6.46. send_bye (int)
 
    If set to 1, BYE requests will be sent out for each dialog that timed
    out. It is an alternative to $dlg_ctx(timeout_bye)=1 for all dialogs.
@@ -1125,7 +1137,7 @@ modparam("dialog", "initial_cbs_inscript", 0)
 modparam("dialog", "send_bye", 1)
 ...
 
-5.47. wait_ack (int)
+6.47. wait_ack (int)
 
    If set to 1, dialog will be keept a bit longer in memory in order to
    absorb the ACK negative replies of initial INVITE. If not, the dialog
@@ -1139,7 +1151,7 @@ modparam("dialog", "send_bye", 1)
 modparam("dialog", "wait_ack", 0)
 ...
 
-5.48. ka_timer (int)
+6.48. ka_timer (int)
 
    Keep-alive timer step - how often to execute the callback to send
    dialog keep alives (SIP OPTIONS requests within dialog). The value
@@ -1152,7 +1164,7 @@ modparam("dialog", "wait_ack", 0)
 modparam("dialog", "ka_timer", 10)
 ...
 
-5.49. ka_interval (int)
+6.49. ka_interval (int)
 
    The interval between keep alives within dialog (SIP OPTIONS requests),
    sent to caller or callee. The keep alive request will be sent by the
@@ -1173,7 +1185,7 @@ modparam("dialog", "ka_timer", 10)
 modparam("dialog", "ka_interval", 300)
 ...
 
-5.50. timeout_noreset (int)
+6.50. timeout_noreset (int)
 
    If set to 1, the dialog timeout won't be reset each time a sequential
    request is processed. It is an alternative to
@@ -1186,7 +1198,7 @@ modparam("dialog", "ka_interval", 300)
 modparam("dialog", "timeout_noreset", 1)
 ...
 
-5.51. timer_procs (int)
+6.51. timer_procs (int)
 
    If set to 1, the dialog module will start a separate dialog timer
    process to execute dialog timeout tasks. The default is to use the core
@@ -1199,7 +1211,7 @@ modparam("dialog", "timeout_noreset", 1)
 modparam("dialog", "timer_procs", 1)
 ...
 
-5.52. track_cseq_updates (int)
+6.52. track_cseq_updates (int)
 
    Enable the callbacks for tracking if CSeq number needs to be updated.
    It is the case when the INVITE has to be authenticated to downstream
@@ -1216,7 +1228,7 @@ modparam("dialog", "timer_procs", 1)
 modparam("dialog", "track_cseq_updates", 1)
 ...
 
-5.53. lreq_callee_headers (string)
+6.53. lreq_callee_headers (string)
 
    SIP headers to be added when sending local generated requests (e.g.,
    BYE) to callee. It can be useful when you use topoh module with call-id
@@ -1229,27 +1241,27 @@ modparam("dialog", "track_cseq_updates", 1)
 modparam("dialog", "lreq_callee_headers", "TH: dlh\r\n")
 ...
 
-6. Functions
+7. Functions
 
-   6.1. set_dlg_profile(profile,[value])
-   6.2. unset_dlg_profile(profile,[value])
-   6.3. is_in_profile(profile,[value])
-   6.4. get_profile_size(profile,[value],size)
-   6.5. dlg_isflagset(flag)
-   6.6. dlg_setflag(flag)
-   6.7. dlg_resetflag(flag)
-   6.8. dlg_bye(side)
-   6.9. dlg_refer(side, address)
-   6.10. dlg_manage()
-   6.11. dlg_bridge(from, to, op)
-   6.12. dlg_get(callid, ftag, ttag)
-   6.13. is_known_dlg()
-   6.14. dlg_set_timeout(timeout [, h_entry, h_id])
-   6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
-   6.16. dlg_set_property(attr)
-   6.17. dlg_remote_profile(cmd, profile, value, uid, expires)
+   7.1. set_dlg_profile(profile,[value])
+   7.2. unset_dlg_profile(profile,[value])
+   7.3. is_in_profile(profile,[value])
+   7.4. get_profile_size(profile,[value],size)
+   7.5. dlg_isflagset(flag)
+   7.6. dlg_setflag(flag)
+   7.7. dlg_resetflag(flag)
+   7.8. dlg_bye(side)
+   7.9. dlg_refer(side, address)
+   7.10. dlg_manage()
+   7.11. dlg_bridge(from, to, op)
+   7.12. dlg_get(callid, ftag, ttag)
+   7.13. is_known_dlg()
+   7.14. dlg_set_timeout(timeout [, h_entry, h_id])
+   7.15. dlg_set_timeout_by_profile(profile, [value], timeout)
+   7.16. dlg_set_property(attr)
+   7.17. dlg_remote_profile(cmd, profile, value, uid, expires)
 
-6.1. set_dlg_profile(profile,[value])
+7.1. set_dlg_profile(profile,[value])
 
    Inserts the current dialog into a profile. Note that if the profile
    does not support values, they will be silently discarded. Also, there
@@ -1271,7 +1283,7 @@ set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
 ...
 
-6.2. unset_dlg_profile(profile,[value])
+7.2. unset_dlg_profile(profile,[value])
 
    Removes the current dialog from a profile.
 
@@ -1290,7 +1302,7 @@ unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
 ...
 
-6.3. is_in_profile(profile,[value])
+7.3. is_in_profile(profile,[value])
 
    Checks if the current dialog belongs to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1318,7 +1330,7 @@ if (is_in_profile("caller","XX")) {
 }
 ...
 
-6.4. get_profile_size(profile,[value],size)
+7.4. get_profile_size(profile,[value],size)
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1345,7 +1357,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
     xlog("currently, the user $fu has $avp(size) active outgoing calls\n");
 ...
 
-6.5. dlg_isflagset(flag)
+7.5. dlg_isflagset(flag)
 
    Check if the dialog flag is set or not.
 
@@ -1363,7 +1375,7 @@ if(dlg_isflagset("1"))
 }
 ...
 
-6.6. dlg_setflag(flag)
+7.6. dlg_setflag(flag)
 
    Set a dialog flag.
 
@@ -1378,7 +1390,7 @@ if(dlg_isflagset("1"))
 dlg_setflag("1");
 ...
 
-6.7. dlg_resetflag(flag)
+7.7. dlg_resetflag(flag)
 
    Reset the dialog flag.
 
@@ -1393,7 +1405,7 @@ dlg_setflag("1");
 redlg_setflag("1");
 ...
 
-6.8. dlg_bye(side)
+7.8. dlg_bye(side)
 
    Send BYE to both parties of a dialog.
 
@@ -1409,7 +1421,7 @@ redlg_setflag("1");
 dlg_bye("all");
 ...
 
-6.9. dlg_refer(side, address)
+7.9. dlg_refer(side, address)
 
    Refer the 'side' to a new SIP 'address'.
 
@@ -1426,7 +1438,7 @@ dlg_bye("all");
 dlg_refer("caller", "sip:announcement@kamailio.org");
 ...
 
-6.10. dlg_manage()
+7.10. dlg_manage()
 
    Process current SIP request with dialog module. It is an alternative to
    setting dialog flag for initial INVITE and Route-parameter-callback
@@ -1450,7 +1462,7 @@ route {
 }
 ...
 
-6.11. dlg_bridge(from, to, op)
+7.11. dlg_bridge(from, to, op)
 
    Bridge 'from' SIP address to 'to' SIP address via outbound proxy 'op'.
 
@@ -1468,7 +1480,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
 ...
 
-6.12. dlg_get(callid, ftag, ttag)
+7.12. dlg_get(callid, ftag, ttag)
 
    Search and set current dialog based on Call-ID, From-Tag and To-Tag
    parameters.
@@ -1489,7 +1501,7 @@ if(dlg_get("abcdef", "123", "456"))
 }
 ...
 
-6.13. is_known_dlg()
+7.13. is_known_dlg()
 
    This function checks if the current SIP message being processed belongs
    to any transaction within an active dialog that the dialog module is
@@ -1514,7 +1526,7 @@ if(!uri == myself) {
 }
 ...
 
-6.14. dlg_set_timeout(timeout [, h_entry, h_id])
+7.14. dlg_set_timeout(timeout [, h_entry, h_id])
 
    Set the dialog timeout. Dialog timeout will be updated if it was
    already set. If h_entry and h_id parameters are not provided, the
@@ -1537,7 +1549,7 @@ if(dlg_set_timeout("180", "123", "456"))
 }
 ...
 
-6.15. dlg_set_timeout_by_profile(profile, [value], timeout)
+7.15. dlg_set_timeout_by_profile(profile, [value], timeout)
 
    Like dlg_set_timeout(), but simultaneously sets the timeout of all
    dialogs in a given profile. Can be constrained by profile value.
@@ -1559,7 +1571,7 @@ if(dlg_set_timeout("180", "123", "456"))
 dlg_set_timeout_by_profile("users", "abc123", "3");
 ...
 
-6.16. dlg_set_property(attr)
+7.16. dlg_set_property(attr)
 
    Set a dialog property - an attribute that enable/disable various
    behaviours (e.g., sending keep alive requests).
@@ -1590,7 +1602,7 @@ dlg_set_property("ka-dst");
 dlg_set_property("timeout-noreset");
 ...
 
-6.17. dlg_remote_profile(cmd, profile, value, uid, expires)
+7.17. dlg_remote_profile(cmd, profile, value, uid, expires)
 
    Manage remote profile via config file. A remote profile item is
    considered when the dialog is not managed by this server instance. The
@@ -1617,46 +1629,46 @@ $var(exp) = 3600 + $Ts;
 dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 ...
 
-7. Statistics
+8. Statistics
 
-   7.1. active_dialogs
-   7.2. early_dialogs
-   7.3. processed_dialogs
-   7.4. expired_dialogs
-   7.5. failed_dialogs
+   8.1. active_dialogs
+   8.2. early_dialogs
+   8.3. processed_dialogs
+   8.4. expired_dialogs
+   8.5. failed_dialogs
 
-7.1. active_dialogs
+8.1. active_dialogs
 
    Returns the number of current active dialogs (may be confirmed or not).
 
-7.2. early_dialogs
+8.2. early_dialogs
 
    Returns the number of early dialogs.
 
-7.3. processed_dialogs
+8.3. processed_dialogs
 
    Returns the total number of processed dialogs (terminated, expired or
    active) from the startup.
 
-7.4. expired_dialogs
+8.4. expired_dialogs
 
    Returns the total number of expired dialogs from the startup.
 
-7.5. failed_dialogs
+8.5. failed_dialogs
 
    Returns the number of failed dialogs.
 
-8. MI Commands
+9. MI Commands
 
-   8.1. dlg_list
-   8.2. dlg_list_ctx
-   8.3. dlg_end_dlg
-   8.4. dlg_terminate_dlg
-   8.5. profile_get_size
-   8.6. profile_list_dlgs
-   8.7. dlg_bridge
+   9.1. dlg_list
+   9.2. dlg_list_ctx
+   9.3. dlg_end_dlg
+   9.4. dlg_terminate_dlg
+   9.5. profile_get_size
+   9.6. profile_list_dlgs
+   9.7. dlg_bridge
 
-8.1. dlg_list
+9.1. dlg_list
 
    Lists the description of a dialog or of all dialogs (calls). If only
    one dialogs is to be listed, the dialog identifiers are to be passed as
@@ -1679,7 +1691,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
                 abcdrssfrs122444@192.168.1.1
                 AAdfeEFF33
 
-8.2. dlg_list_ctx
+9.2. dlg_list_ctx
 
    The same as the "dlg_list" but including in the dialog description the
    associated context from modules sitting on top of the dialog module.
@@ -1692,7 +1704,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
                 :dlg_list_ctx:_reply_fifo_file_
                 _empty_line_
 
-8.3. dlg_end_dlg
+9.3. dlg_end_dlg
 
    Terminates a confirmed dialog by sending BYE requests in both
    directions.
@@ -1716,7 +1728,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
                 56
                 _empty_line_
 
-8.4. dlg_terminate_dlg
+9.4. dlg_terminate_dlg
 
    Terminates a singe dialog, identified by a Call-ID.
 
@@ -1738,7 +1750,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
                 abcdrssfrs122444@192.168.1.1
                 AAdfeEFF33
 
-8.5. profile_get_size
+9.5. profile_get_size
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1758,7 +1770,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
                 inbound_calls
                 _empty_line_
 
-8.6. profile_list_dlgs
+9.6. profile_list_dlgs
 
    Lists all the dialogs belonging to a profile. If the profile supports
    values, the check can be reinforced to take into account a specific
@@ -1778,7 +1790,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
                 inbound_calls
                 _empty_line_
 
-8.7. dlg_bridge
+9.7. dlg_bridge
 
    Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE
    mechanism.
@@ -1797,19 +1809,19 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
                 op
                 _empty_line_
 
-9. Exported RPC Functions
+10. Exported RPC Functions
 
-   9.1. dlg.list
-   9.2. dlg.list_ctx
-   9.3. dlg.dlg_list
-   9.4. dlg.dlg_list_ctx
-   9.5. dlg.terminate_dlg
-   9.6. dlg.end_dlg
-   9.7. dlg.profile_get_size
-   9.8. dlg.profile_list
-   9.9. dlg.bridge_dlg
+   10.1. dlg.list
+   10.2. dlg.list_ctx
+   10.3. dlg.dlg_list
+   10.4. dlg.dlg_list_ctx
+   10.5. dlg.terminate_dlg
+   10.6. dlg.end_dlg
+   10.7. dlg.profile_get_size
+   10.8. dlg.profile_list
+   10.9. dlg.bridge_dlg
 
-9.1. dlg.list
+10.1. dlg.list
 
    Lists the description of all dialogs (calls).
 
@@ -1818,7 +1830,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg_list
 
-9.2. dlg.list_ctx
+10.2. dlg.list_ctx
 
    The same as the "dlg_list" but including in the dialog description the
    associated context from modules sitting on top of the dialog module.
@@ -1828,7 +1840,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.list_ctx
 
-9.3. dlg.dlg_list
+10.3. dlg.dlg_list
 
    Lists the description of one dialog. The dialog identifiers are to be
    passed as parameter (callid and fromtag).
@@ -1843,7 +1855,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 
-9.4. dlg.dlg_list_ctx
+10.4. dlg.dlg_list_ctx
 
    The same as the "dlg.list_ctx" but including in the dialog description
    the associated context from modules sitting on top of the dialog
@@ -1856,7 +1868,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 
-9.5. dlg.terminate_dlg
+10.5. dlg.terminate_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions,
    matching the dialog on call-id, from tag and to tag.
@@ -1873,7 +1885,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.dlg_terminate_dlg callid12345 fromtag123 totag123
 
-9.6. dlg.end_dlg
+10.6. dlg.end_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions.
 
@@ -1891,7 +1903,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.end_dlg 342 56
 
-9.7. dlg.profile_get_size
+10.7. dlg.profile_get_size
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1909,7 +1921,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.dlg.profile_get_size inbound_calls
 
-9.8. dlg.profile_list
+10.8. dlg.profile_list
 
    Lists all the dialogs belonging to a profile. If the profile supports
    values, the check can be reinforced to take into account a specific
@@ -1927,7 +1939,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.profile_list inbound_calls
 
-9.9. dlg.bridge_dlg
+10.9. dlg.bridge_dlg
 
    Bridge two SIP addresses into a call using INVITE(hold)-REFER-BYE
    mechanism.
@@ -1942,20 +1954,20 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.list from to op
 
-10. Exported pseudo-variables
+11. Exported pseudo-variables
 
-   10.1. $DLG_count
-   10.2. $DLG_status
-   10.3. $DLG_lifetime
-   10.4. $dlg(...)
-   10.5. $dlg_ctx(...)
-   10.6. $dlg_var(key)
+   11.1. $DLG_count
+   11.2. $DLG_status
+   11.3. $DLG_lifetime
+   11.4. $dlg(...)
+   11.5. $dlg_ctx(...)
+   11.6. $dlg_var(key)
 
-10.1. $DLG_count
+11.1. $DLG_count
 
    Returns the number of current active dialogs (may be confirmed or not).
 
-10.2. $DLG_status
+11.2. $DLG_status
 
    Returns the status of the dialog corresponding to the processed
    sequential request. This PV will be available only for sequential
@@ -1967,7 +1979,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
      * 4 - Confirmed by a final reply and ACK received.
      * 5 - Dialog ended.
 
-10.3. $DLG_lifetime
+11.3. $DLG_lifetime
 
    Returns the duration (in seconds) of the dialog corresponding to the
    processed sequential request. The duration is calculated from the
@@ -1976,15 +1988,15 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    NULL will be returned if there is no dialog for the request.
 
-10.4. $dlg(...)
+11.4. $dlg(...)
 
    Access to dialog attributes.
 
-10.5. $dlg_ctx(...)
+11.5. $dlg_ctx(...)
 
    Access to dialog context attributes.
 
-10.6. $dlg_var(key)
+11.6. $dlg_var(key)
 
    This is a read/write variable that can be used to store custom values
    assigned with a dialog (e.g. the URI of a billing-server, an assigned
@@ -1993,21 +2005,21 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    Note: You will receive "NULL", if there is no dialog for this request.
 
-11. Event Routes
+12. Event Routes
 
-   11.1. event_route[dialog:start]
-   11.2. event_route[dialog:end]
-   11.3. event_route[dialog:failed]
+   12.1. event_route[dialog:start]
+   12.2. event_route[dialog:end]
+   12.3. event_route[dialog:failed]
 
-11.1. event_route[dialog:start]
+12.1. event_route[dialog:start]
 
    Executed when 200OK for INVITE is processed.
 
-11.2. event_route[dialog:end]
+12.2. event_route[dialog:end]
 
    Executed when BYE is processed or dialog timed out.
 
-11.3. event_route[dialog:failed]
+12.3. event_route[dialog:failed]
 
    Executed when dialog is not completed (+300 reply to INVITE).
 
