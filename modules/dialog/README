@@ -432,6 +432,9 @@ Chapter 1. Admin Guide
      * 4 : Confirmed dialog (active call)
      * 5 : Deleted dialog
 
+   The early and deleted dialog states are not updated in database
+   storage.
+
 4. Dialog profiling
 
    Dialog profiling is a mechanism that helps in classifying, sorting and

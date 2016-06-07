@@ -81,6 +81,8 @@
 			<para><emphasis>5</emphasis> : Deleted dialog</para>
 		</listitem>
 	</itemizedlist>
+	<para>The early and deleted dialog states are not updated in database storage.
+	</para>
 	</section>
 
 	<section>
