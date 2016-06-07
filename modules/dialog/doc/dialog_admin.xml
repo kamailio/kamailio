@@ -935,7 +935,7 @@ modparam("dialog", "sflags_column", "s_flags")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>toroute</quote>.
+			Default value is <quote>toroute_name</quote>.
 		</emphasis>
 		</para>
 		<example>
