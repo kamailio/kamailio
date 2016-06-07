@@ -431,10 +431,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 			
             counter_add(ims_charging_cnts_h.billed_secs, used_secs);
 
-            if (ro_session->callid.s != NULL
-                    && ro_session->dlg_h_entry >= 0U
-                    && ro_session->dlg_h_id >= 0U
-                    && ro_session->ro_session_id.s != NULL) {
+            if (ro_session->callid.s != NULL && ro_session->ro_session_id.s != NULL) {
                 LM_DBG("Found a session to re-apply for timing [%.*s] and user is [%.*s]\n",
                         ro_session->ro_session_id.len,
                         ro_session->ro_session_id.s,
