@@ -362,9 +362,10 @@ int km_bdb_query(db1_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	table_p _tp = NULL;
 	char kbuf[MAX_ROW_SIZE];
 	char dbuf[MAX_ROW_SIZE];
-	u_int32_t i, len, ret; 
+	u_int32_t i, len;
 	int klen=MAX_ROW_SIZE;
 	int *lkey=NULL, *lres=NULL;
+	int ret;
 	DBT key, data;
 	DB *db;
 	DBC *dbcp;

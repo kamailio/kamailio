@@ -58,6 +58,30 @@
 	dialog timeout is reset each time a sequential request is processed.
 	</para>
 	</section>
+	<section>
+	<title>Dialog states</title>
+	<para>
+	Dialogs have states that are shown in the RPC interface as well as stored
+	in the database. 
+	</para>
+	<itemizedlist>
+		<listitem>
+			<para><emphasis>1</emphasis> : Unconfirmed dialog</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>2</emphasis> : Early dialog (ringing)</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>3</emphasis> : Confirmed dialog (waiting for ACK)</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>4</emphasis> : Confirmed dialog (active call)</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>5</emphasis> : Deleted dialog</para>
+		</listitem>
+	</itemizedlist>
+	</section>
 
 	<section>
 	<title>Dialog profiling</title>
@@ -538,8 +562,8 @@ modparam("dialog", "table_name", "my_dialog")
 		</example>
 	</section>
 
-	<section id="dialog.p.callid_column">
-		<title><varname>callid_column</varname> (string)</title>
+	<section id="dialog.p.call_id_column">
+		<title><varname>call_id_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the dialog call-id.
 		</para>
@@ -549,10 +573,10 @@ modparam("dialog", "table_name", "my_dialog")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>callid_column</varname> parameter</title>
+		<title>Set <varname>call_id_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "callid_column", "callid_c_name")
+modparam("dialog", "call_id_column", "callid_c_name")
 ...
 </programlisting>
 		</example>
@@ -933,22 +957,22 @@ modparam("dialog", "sflags_column", "s_flags")
 </programlisting>
 		</example>
 	</section>
-	<section id="dialog.p.toroute_column">
-		<title><varname>toroute_column</varname> (string)</title>
+	<section id="dialog.p.toroute_name_column">
+		<title><varname>toroute_name_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the index of the
 			route to be executed at timeout.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>toroute</quote>.
+			Default value is <quote>toroute_name</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>toroute_column</varname> parameter</title>
+		<title>Set <varname>toroute_name_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "toroute_column", "timeout_route")
+modparam("dialog", "toroute_name_column", "timeout_route")
 ...
 </programlisting>
 		</example>

@@ -52,10 +52,12 @@ static int fixup_free_testcurl_connect(void** param, int param_no);
 static int fixup_testcurl_connect_post(void** param, int param_no);
 static int fixup_free_testcurl_connect_post(void** param, int param_no);
 static int w_testcurl_connect(struct sip_msg* _m, char* _con, char * _url, char* _result);
+static httpc_api_t httpapi;
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"test_http_connect", (cmd_function)w_testcurl_connect, 2, fixup_testcurl_connect,
+	/* Test_http_connect(connection, <URL>, <result pvar>)  - HTTP GET */
+	{"test_http_connect", (cmd_function)w_testcurl_connect, 3, fixup_testcurl_connect,
 	 	fixup_free_testcurl_connect,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 };
@@ -83,12 +85,12 @@ struct module_exports exports = {
 	child_init /* per-child init function */
 };
 
+
 /* Module initialization function */
 static int mod_init(void)
 {
 	
 	LM_DBG("init httpapitest module\n");
-	httpc_api_t httpapi;
 
 	if (httpc_load_api(&httpapi) != 0) {
 		LM_ERR("Can not bind to http_client API \n");
@@ -122,20 +124,24 @@ static void destroy(void)
 
 
 /*
- * Fix curl_connect params: connection(string/pvar) url (string that may contain pvars) and
- * result (writable pvar).
+ * Fix test_curl_connect params: 
+ * 1. connection(string/pvar) 
+ * 2. url (string that may contain pvars) and
+ * 3. result (writable pvar).
  */
 static int fixup_testcurl_connect(void** param, int param_no)
 {
 
+	/* 1. Connection */
 	if (param_no == 1) {
 		/* We want char * strings */
 		return 0;
 	}
-	/* URL and data may contain pvar */
+	/* 2. URL and data may contain pvar */
 	if (param_no == 2) {
 		return fixup_spve_null(param, 1);
 	}
+	/* 3. PVAR for result */
 	if (param_no == 3) {
 		if (fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("failed to fixup result pvar\n");
@@ -199,7 +205,9 @@ static int w_testcurl_connect(struct sip_msg* _m, char* _con, char * _url, char*
 
 	LM_DBG("**** Curl Connection %s URL %s Result var %s\n", _con, _url, _result);
 
-	ret = curl_con_query_url(_m, &con, &url, &result, NULL, NULL);
+	
+	/* API    http_connect(msg, connection, url, result, content_type, post) */
+	ret = httpapi.http_connect(_m, &con, &url, &result, NULL, NULL);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;

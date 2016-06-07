@@ -434,7 +434,7 @@ done:
  * @param resultCode - code to set as result
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
-AAAResultCode  AAASetMessageResultCode(
+AAAReturnCode  AAASetMessageResultCode(
 		AAAMessage *message,
 		AAAResultCode resultCode)
 {

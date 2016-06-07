@@ -84,7 +84,7 @@ struct sip_msg* get_request_from_tx(struct cell *t) {
         (which we cannot assume) then we would pollute the shm_msg t->uas.request if we did any parsing on it. Instead, we need to 
         make a private copy of the message and free it when we are done 
          */
-        if (_pv_treq.T != t || t->uas.request != _pv_treq.tmsgp
+        if ((_pv_treq.T != t || t->uas.request != _pv_treq.tmsgp)
                 && t->uas.request->id != _pv_treq.id) {
 
             /* make a copy */
@@ -101,7 +101,7 @@ struct sip_msg* get_request_from_tx(struct cell *t) {
                 if (_pv_treq.buf == NULL) {
                     LM_ERR("no more pkg\n");
                     _pv_treq.buf_size = 0;
-                    return -1;
+                    return 0;
                 }
             }
             if (_pv_treq.tmsgp)
@@ -122,7 +122,7 @@ struct sip_msg* get_request_from_tx(struct cell *t) {
                 _pv_treq.buf = NULL;
                 _pv_treq.tmsgp = NULL;
                 _pv_treq.T = NULL;
-                return -1;
+                return 0;
             }
         }
 
