@@ -24,7 +24,7 @@ Andrei Pelinescu-Onciul
               3.7. binrpc_max_body_size (integer)
               3.8. binrpc_struct_max_body_size (integer)
 
-        4. SIP-router RPC Functions
+        4. RPC Functions
 
               4.1. ctl.listen
               4.2. ctl.connections
@@ -62,7 +62,7 @@ Chapter 1. Admin Guide
         3.7. binrpc_max_body_size (integer)
         3.8. binrpc_struct_max_body_size (integer)
 
-   4. SIP-router RPC Functions
+   4. RPC Functions
 
         4.1. ctl.listen
         4.2. ctl.connections
@@ -103,9 +103,9 @@ $ kamcmd ps
 
 2. BINRPC
 
-   binrpc is a ser proprietary binary protocol for invoking rpcs. It was
-   designed such that it would minimize the packet sizes and it would be
-   very fast to parse (as opposed to XML-rpc).
+   binrpc is a Kamailio proprietary binary protocol for invoking rpcs. It
+   was designed such that it would minimize the packet sizes and it would
+   be very fast to parse (as opposed to XML-rpc).
 
    The binrpc encoding format is fully documented inside
    modules/ctl/binrpc.h.
@@ -183,7 +183,9 @@ modparam("ctl", "mode", 0600) # permissions
    Default: not set (the user under which SER runs).
 
    Example 1.4. Set user parameter
+...
 modparam("ctl", "user", "andrei")
+...
 
 3.4. group (integer or string)
 
@@ -192,7 +194,9 @@ modparam("ctl", "user", "andrei")
    Default: not set (the group under which SER runs).
 
    Example 1.5. Set group parameter
+...
 modparam("ctl", "group", 100)
+...
 
 3.5. fifo (integer)
 
@@ -207,11 +211,13 @@ modparam("ctl", "group", 100)
    Default: not set (no fifo will be used).
 
    Example 1.6. Set fifo parameter
+...
 # old fifo support
 modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # clasic fifo
 modparam("ctl", "fifo", "/tmp/ser_fifo2")
 modparam("ctl", "fifo", "udp:*:2050")              # fifo protocol over udp
 modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
+...
 
 3.6. autoconversion (integer)
 
@@ -228,7 +234,9 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
    modifier).
 
    Example 1.7. Set the autoconversion parameter
+...
 modparam("ctl", "autoconversion", 1)
+...
 
 3.7. binrpc_max_body_size (integer)
 
@@ -238,7 +246,9 @@ modparam("ctl", "autoconversion", 1)
    Default: 32 (meaning 32KB);
 
    Example 1.8. Set the binrpc_max_body_size parameter
+...
 modparam("ctl", "binrpc_max_body_size", 16)
+...
 
 3.8. binrpc_struct_max_body_size (integer)
 
@@ -248,9 +258,11 @@ modparam("ctl", "binrpc_max_body_size", 16)
    Default: 8 (meaning 8KB);
 
    Example 1.9. Set the binrpc_struct_max_body_size parameter
+...
 modparam("ctl", "binrpc_struct_max_body_size", 4)
+...
 
-4. SIP-router RPC Functions
+4. RPC Functions
 
    4.1. ctl.listen
    4.2. ctl.connections
