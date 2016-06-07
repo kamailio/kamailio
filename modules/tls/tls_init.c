@@ -543,8 +543,10 @@ int init_tls_h(void)
 #endif
 	ssl_version=SSLeay();
 	/* check if version have the same major minor and fix level
-	 * (e.g. 0.9.8a & 0.9.8c are ok, but 0.9.8 and 0.9.9x are not) */
-	if ((ssl_version>>8)!=(OPENSSL_VERSION_NUMBER>>8)){
+	 * (e.g. 0.9.8a & 0.9.8c are ok, but 0.9.8 and 0.9.9x are not)
+	 * - values is represented as 0xMMNNFFPPS: major minor fix patch status
+	 *   0x00090705f == 0.9.7e release */
+	if ((ssl_version>>12)!=(OPENSSL_VERSION_NUMBER>>12)){
 		LOG(L_CRIT, "ERROR: tls: init_tls_h: installed openssl library "
 				"version is too different from the library the ser tls module "
 				"was compiled with: installed \"%s\" (0x%08lx), compiled "
