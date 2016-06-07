@@ -933,8 +933,8 @@ modparam("dialog", "sflags_column", "s_flags")
 </programlisting>
 		</example>
 	</section>
-	<section id="dialog.p.toroute_column">
-		<title><varname>toroute_column</varname> (string)</title>
+	<section id="dialog.p.toroute_name_column">
+		<title><varname>toroute_name_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the index of the
 			route to be executed at timeout.
@@ -945,10 +945,10 @@ modparam("dialog", "sflags_column", "s_flags")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>toroute_column</varname> parameter</title>
+		<title>Set <varname>toroute_name_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "toroute_column", "timeout_route")
+modparam("dialog", "toroute_name_column", "timeout_route")
 ...
 </programlisting>
 		</example>

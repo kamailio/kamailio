@@ -81,7 +81,7 @@ Olle E. Johansson
               5.32. start_time_column (string)
               5.33. timeout_column (string)
               5.34. sflags_column (string)
-              5.35. toroute_column (string)
+              5.35. toroute_name_column (string)
               5.36. vars_table_name (string)
               5.37. vars_h_id_column (string)
               5.38. vars_h_entry_column (string)
@@ -212,7 +212,7 @@ Olle E. Johansson
    1.32. Set start_time_column parameter
    1.33. Set timeout_column parameter
    1.34. Set sflags_column parameter
-   1.35. Set toroute_column parameter
+   1.35. Set toroute_name_column parameter
    1.36. Set vars_table_name parameter
    1.37. Set vars_h_id_column parameter
    1.38. Set vars_h_entry_column parameter
@@ -297,7 +297,7 @@ Chapter 1. Admin Guide
         5.32. start_time_column (string)
         5.33. timeout_column (string)
         5.34. sflags_column (string)
-        5.35. toroute_column (string)
+        5.35. toroute_name_column (string)
         5.36. vars_table_name (string)
         5.37. vars_h_id_column (string)
         5.38. vars_h_entry_column (string)
@@ -504,7 +504,7 @@ Chapter 1. Admin Guide
    5.32. start_time_column (string)
    5.33. timeout_column (string)
    5.34. sflags_column (string)
-   5.35. toroute_column (string)
+   5.35. toroute_name_column (string)
    5.36. vars_table_name (string)
    5.37. vars_h_id_column (string)
    5.38. vars_h_entry_column (string)
@@ -973,16 +973,16 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 modparam("dialog", "sflags_column", "s_flags")
 ...
 
-5.35. toroute_column (string)
+5.35. toroute_name_column (string)
 
    The column name in the database to store the index of the route to be
    executed at timeout.
 
    Default value is "toroute_name".
 
-   Example 1.35. Set toroute_column parameter
+   Example 1.35. Set toroute_name_column parameter
 ...
-modparam("dialog", "toroute_column", "timeout_route")
+modparam("dialog", "toroute_name_column", "timeout_route")
 ...
 
 5.36. vars_table_name (string)
