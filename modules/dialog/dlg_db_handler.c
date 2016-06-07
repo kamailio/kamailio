@@ -145,33 +145,32 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int
 	}
 
 	if (dlg_connect_db(db_url)!=0){
-		LM_ERR("unable to connect to the database\n");
+		LM_ERR("Unable to connect to the database\n");
 		return -1;
 	}
 
 	if(db_check_table_version(&dialog_dbf, dialog_db_handle, &dialog_table_name, DLG_TABLE_VERSION) < 0) {
-		LM_ERR("error during dialog-table version check.\n");
+		LM_ERR("Error during dialog table version check. Please check the database structure.\n");
 		return -1;
 	}
 
 	if(db_check_table_version(&dialog_dbf, dialog_db_handle, &dialog_vars_table_name, DLG_VARS_TABLE_VERSION) < 0) {
-		LM_ERR("error during dialog-vars version check.\n");
+		LM_ERR("Error during dialog-vars table version check. Please check the database structure\n");
 		return -1;
 	}
 
-	if( (dlg_db_mode==DB_MODE_DELAYED) && 
-	(register_timer( dialog_update_db, 0, db_update_period)<0 )) {
-		LM_ERR("failed to register update db\n");
+	if( (dlg_db_mode==DB_MODE_DELAYED) && (register_timer( dialog_update_db, 0, db_update_period)<0 )) {
+		LM_ERR("Failed to register update db timer\n");
 		return -1;
 	}
 
 	if ( db_skip_load == 0 ) {
 		if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows) ) !=0 ){
-			LM_ERR("unable to load the dialog data\n");
+			LM_ERR("Unable to load the dialog data\n");
 			return -1;
 		}
 		if( (load_dialog_vars_from_db(fetch_num_rows) ) !=0 ){
-			LM_ERR("unable to load the dialog data\n");
+			LM_ERR("Unable to load the dialog variable data\n");
 			return -1;
 		}
 	}
@@ -212,12 +211,12 @@ static int use_dialog_table(void)
 static int use_dialog_vars_table(void)
 {
 	if(!dialog_db_handle){
-		LM_ERR("invalid database handle\n");
+		LM_ERR("invalid database handle for dialog_vars\n");
 		return -1;
 	}
 
 	if (dialog_dbf.use_table(dialog_db_handle, &dialog_vars_table_name) < 0) {
-		LM_ERR("Error in use_table\n");
+		LM_ERR("Error in use_table for dialog_vars\n");
 		return -1;
 	}
 
@@ -404,8 +403,7 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 
 			if ( (dlg_set_leg_info( dlg, &from_tag, &rroute1, &contact1,
 			&cseq1, DLG_CALLER_LEG)!=0) ||
-			(dlg_set_leg_info( dlg, &to_tag, &rroute2, &contact2,
-			&cseq2, DLG_CALLEE_LEG)!=0) ) {
+			(dlg_set_leg_info( dlg, &to_tag, &rroute2, &contact2, &cseq2, DLG_CALLEE_LEG)!=0) ) {
 				LM_ERR("dlg_set_leg_info failed\n");
 				dlg_unref(dlg,1);
 				continue;
