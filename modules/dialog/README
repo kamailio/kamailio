@@ -978,7 +978,7 @@ modparam("dialog", "sflags_column", "s_flags")
    The column name in the database to store the index of the route to be
    executed at timeout.
 
-   Default value is "toroute".
+   Default value is "toroute_name".
 
    Example 1.35. Set toroute_column parameter
 ...
