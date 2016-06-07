@@ -74,7 +74,7 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
 			    pv_spec_t * _uri_user, hdr_types_t _hftype)
 {
     int res;
-    auth_result_t ret;
+    auth_cfg_result_t ret;
     struct hdr_field* h;
     auth_body_t* cred;
     str *uri_user;

@@ -373,7 +373,7 @@ success:
                         &scscf_name_str, 0, result_hex);
                 pkg_free(etsi_nonce.s);
 
-                if (!tmp->response_auth.len == 32
+                if (tmp->response_auth.len != 32
                         || strncasecmp(tmp->response_auth.s, result_hex, 32)) {
                     LM_ERR("The HSS' Response-Auth is different from what we compute locally!\n"
                             " BUT! If you sent an MAR with auth scheme unknown (HSS-Selected Authentication), this is normal.\n"
