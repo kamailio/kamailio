@@ -62,7 +62,7 @@ Olle E. Johansson
               5.13. db_fetch_rows (integer)
               5.14. db_skip_load (integer)
               5.15. table_name (string)
-              5.16. callid_column (string)
+              5.16. call_id_column (string)
               5.17. from_uri_column (string)
               5.18. from_tag_column (string)
               5.19. to_uri_column (string)
@@ -193,7 +193,7 @@ Olle E. Johansson
    1.13. Set db_fetch_rows parameter
    1.14. Set db_skip_load parameter
    1.15. Set table_name parameter
-   1.16. Set callid_column parameter
+   1.16. Set call_id_column parameter
    1.17. Set from_uri_column parameter
    1.18. Set from_tag_column parameter
    1.19. Set to_uri_column parameter
@@ -278,7 +278,7 @@ Chapter 1. Admin Guide
         5.13. db_fetch_rows (integer)
         5.14. db_skip_load (integer)
         5.15. table_name (string)
-        5.16. callid_column (string)
+        5.16. call_id_column (string)
         5.17. from_uri_column (string)
         5.18. from_tag_column (string)
         5.19. to_uri_column (string)
@@ -485,7 +485,7 @@ Chapter 1. Admin Guide
    5.13. db_fetch_rows (integer)
    5.14. db_skip_load (integer)
    5.15. table_name (string)
-   5.16. callid_column (string)
+   5.16. call_id_column (string)
    5.17. from_uri_column (string)
    5.18. from_tag_column (string)
    5.19. to_uri_column (string)
@@ -752,15 +752,15 @@ modparam("dialog", "db_skip_load", 1)
 modparam("dialog", "table_name", "my_dialog")
 ...
 
-5.16. callid_column (string)
+5.16. call_id_column (string)
 
    The column name in the database to store the dialog call-id.
 
    Default value is "callid".
 
-   Example 1.16. Set callid_column parameter
+   Example 1.16. Set call_id_column parameter
 ...
-modparam("dialog", "callid_column", "callid_c_name")
+modparam("dialog", "call_id_column", "callid_c_name")
 ...
 
 5.17. from_uri_column (string)

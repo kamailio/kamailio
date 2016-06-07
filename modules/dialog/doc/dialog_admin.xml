@@ -538,8 +538,8 @@ modparam("dialog", "table_name", "my_dialog")
 		</example>
 	</section>
 
-	<section id="dialog.p.callid_column">
-		<title><varname>callid_column</varname> (string)</title>
+	<section id="dialog.p.call_id_column">
+		<title><varname>call_id_column</varname> (string)</title>
 		<para>
 			The column name in the database to store the dialog call-id.
 		</para>
@@ -549,10 +549,10 @@ modparam("dialog", "table_name", "my_dialog")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>callid_column</varname> parameter</title>
+		<title>Set <varname>call_id_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "callid_column", "callid_c_name")
+modparam("dialog", "call_id_column", "callid_c_name")
 ...
 </programlisting>
 		</example>
