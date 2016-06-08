@@ -145,6 +145,7 @@ char prefix='a';
 int startup_time=0;
 str db_url = {0, 0};
 int expires_offset = 0;
+uint32_t add_expires_offset = 0;
 uint32_t min_expires= 0;
 int min_expires_action= 1;
 uint32_t max_expires= 3600;
@@ -207,6 +208,7 @@ static param_export_t params[]={
 	{ "force_delete",           INT_PARAM, &pres_force_delete },
 	{ "to_tag_pref",            PARAM_STRING, &to_tag_pref },
 	{ "expires_offset",         INT_PARAM, &expires_offset },
+	{ "add_expires_offset",     INT_PARAM, &add_expires_offset },
 	{ "max_expires",            INT_PARAM, &max_expires },
 	{ "min_expires",            INT_PARAM, &min_expires },
 	{ "min_expires_action",     INT_PARAM, &min_expires_action },
