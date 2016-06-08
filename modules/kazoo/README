@@ -10,7 +10,7 @@ Luis Azedo
 
    <luis@2600hz.com>
 
-   Copyright � 2010, 2014 2600hz
+   Copyright © 2010, 2014 2600hz
      __________________________________________________________________
 
    Table of Contents
@@ -370,7 +370,7 @@ modparam("kazoo", "amqp_consumer_processes", 10)
    The default name of the field in json payload to compose the event name
    1st part
 
-   Default value is "Event-Category".
+   Default value is “Event-Category”.
 
    Example 1.4. Set amqp_consumer_event_key parameter
 ...
@@ -382,7 +382,7 @@ modparam("kazoo", "amqp_consumer_event_key", "My-JSON-Field-Name")
    The default name of the field in json payload to compose the event name
    2nd part
 
-   Default value is "Event-Name".
+   Default value is “Event-Name”.
 
    Example 1.5. Set amqp_consumer_event_subkey parameter
 ...
@@ -571,7 +571,7 @@ route[SOME_ROUTE]
    If set, the kazoo_ppua_publish function will update the presentity
    status in the database.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.18. Set db_url parameter
 ...
@@ -582,7 +582,7 @@ modparam("kazoo", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 
    The name of the presentity table in the database.
 
-   Default value is "presentity".
+   Default value is “presentity”.
 
    Example 1.19. Set presentity_table parameter
 ...
@@ -594,7 +594,7 @@ modparam("kazoo", "presentity_table", "my_presentity_table")
    Control if the module has to connect to presence database tables. Set
    it to 0 to not connect to database.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.20. Set pua_mode parameter
 ...
@@ -625,7 +625,7 @@ modparam("kazoo", "pua_mode", 0)
 
 5.1. amqp related
 
-5.1.1. kazoo_publish(exchange, routing_key, json_payload)
+5.1.1.  kazoo_publish(exchange, routing_key, json_payload)
 
    The function publishes a json payload to rabbitmq. The routing_key
    parameter should be encoded.
@@ -643,7 +643,7 @@ $var(amqp_routing_key) = "registration.success." + $(fd{kz.encode}) + "." + $fU;
 kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 ...
 
-5.1.2. kazoo_query(exchange, routing_key, json_payload [, target_var])
+5.1.2.  kazoo_query(exchange, routing_key, json_payload [, target_var])
 
    The function publishes a json payload to rabbitmq, waits for a
    correlated messageand puts the result in target_var. The routing_key
@@ -669,7 +669,7 @@ var(amqp_result)")) {
 }
 ...
 
-5.1.3. kazoo_subscribe(exchange, exchange_type, queue, routing_key)
+5.1.3.  kazoo_subscribe(exchange, exchange_type, queue, routing_key)
 
    The function subscribes to exchange/type on queue with routing_key. The
    routing_key parameter should be encoded.
@@ -690,7 +690,7 @@ event_route[kazoo:consumer-event]
 }
 ...
 
-5.1.4. kazoo_subscribe(json_description)
+5.1.4.  kazoo_subscribe(json_description)
 
    The function takes additional parameters to the subscribe function.
 
@@ -726,7 +726,7 @@ event_route[kazoo:consumer-event]
 
 5.2. presence related
 
-5.2.1. kazoo_pua_publish(json_payload)
+5.2.1.  kazoo_pua_publish(json_payload)
 
    The function build presentity state from json_payload and updates
    presentity table.
@@ -747,7 +747,7 @@ son,From})");
 
 5.3. other
 
-5.3.1. kazoo_encode(to_encode, target_var)
+5.3.1.  kazoo_encode(to_encode, target_var)
 
    The function encodes the 1st parameter for amqp and puts the result in
    the 2nd parameter.
@@ -760,7 +760,7 @@ kazoo_encode("$ci", "$var(callid_encoded)");
 $var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
 ...
 
-5.3.2. kazoo_json(json_payload, field, target_var)
+5.3.2.  kazoo_json(json_payload, field, target_var)
 
    The function extracts the value from a json payload and puts the result
    in the 3rd parameter. It can use nested values for the query part.

@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2008 http://www.asipto.com
+   Copyright © 2008 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -97,7 +97,7 @@ Chapter 1. Admin Guide
      * Access via pseudo-variables - the content of the SQL query result
        is accessible via pseudo-variables. Please note that only integer
        and string variables are supported at the moment because of the
-       internal usage of "AVPs" to hold the values. So it is not possible
+       internal usage of “AVPs” to hold the values. So it is not possible
        for example to return floating point or big integer values this
        way.
      * Array indexes - fast access to result values via array position:
@@ -138,7 +138,7 @@ Chapter 1. Admin Guide
    This parameter may be set multiple times to get many DB connections in
    the same configuration file.
      * connection_name - string specifying the name of a database
-       connection. This string is used by the "sql_query()" function to
+       connection. This string is used by the “sql_query()” function to
        refer to the DB connection.
      * database_url - Standardized Kamailio database URL used to connect
        to database.
@@ -180,11 +180,11 @@ modparam("sqlops", "sqlres", "ra")
      * 1 - query successful, at least one row in resultset (for SELECTs)
      * 2 - query successful, no rows returned
 
-4.1. sql_query(connection, query[, result])
+4.1.  sql_query(connection, query[, result])
 
    Make an SQL query using 'connection' and store data in 'result'.
      * connection - the name of the connection to be used for the query
-       (defined via the "sqlcon" parameter).
+       (defined via the “sqlcon” parameter).
      * query - SQL query string or pseudo-variables containing SQL query.
      * result - string name to identify the result. Will be used by
        $dbr(...) pseudo-variable to access result attributes. If omitted,
@@ -203,11 +203,11 @@ xlog("number of rows in table domain: $dbr(ra=>rows)\n");
 sql_result_free("ra");
 ...
 
-4.2. sql_xquery(connection, query, result)
+4.2.  sql_xquery(connection, query, result)
 
    Make an SQL query using 'connection' and store data in 'result' xavp.
      * connection - the name of the connection to be used for the query
-       (defined via the "sqlcon" parameter).
+       (defined via the “sqlcon” parameter).
      * query - SQL query string or pseudo-variables containing SQL query.
      * result - string name to identify the result xavp. Each row will be
        added to this xavp, each column can be accessed by its name.
@@ -226,15 +226,15 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1) {
 }
 ..
 
-4.3. sql_pvquery(connection, query, result)
+4.3.  sql_pvquery(connection, query, result)
 
    Make an SQL query using 'connection' and store data in arbitrary pseudo
    variables specified by 'result' parameter.
      * connection - the name of the connection to be used for query
-       (defined via the "sqlcon" parameter).
+       (defined via the “sqlcon” parameter).
      * query - SQL query string or pseudo-variables containing SQL query.
      * result - a list with PV names where to store the result. The format
-       is "$pv;$pv;...". Every PV that is writable may be used (for
+       is “$pv;$pv;...”. Every PV that is writable may be used (for
        example $var, $avp, $xavp, $ru, $du, $sht, etc).
        The PV are assigned values in the following order: last row to
        first row, first field to last field. Assignment has the same
@@ -260,7 +260,7 @@ sql_pvquery("ca", "select 'col1', 2, NULL, 'sip:test@example.com'",
         "$var(a), $avp(col2), $xavp(item[0]=>s), $ru");
 ...
 
-4.4. sql_result_free(result)
+4.4.  sql_result_free(result)
 
    Free data in SQL 'result'.
 
@@ -276,7 +276,7 @@ xlog("number of rows in table domain: $dbr(ra=>rows)\n");
 sql_result_free("ra");
 ...
 
-4.5. sql_query_async(connection, query)
+4.5.  sql_query_async(connection, query)
 
    Make an async SQL query using 'connection', if implemented by db driver
    module (e.g., db_mysql). The query is executed in another process and
@@ -285,7 +285,7 @@ sql_result_free("ra");
    update...). Note that async_workers core parameter must be set in order
    to enable the asyncronous framework needed by this function.
      * connection - the name of the connection to be used for the query
-       (defined via "sqlcon" parameter).
+       (defined via “sqlcon” parameter).
      * query - SQL query string or pseudo-variables containing SQL query.
 
    This function can be used from ANY_ROUTE.
@@ -306,10 +306,10 @@ sql_query_async("ca", "delete from domain");
 
    Access hash table entries.
 
-   The "result" must be the name identifying a SQL result (third parameter
+   The “result” must be the name identifying a SQL result (third parameter
    of sql_query(...)).
 
-   The "key" can be:
+   The “key” can be:
      * rows - return the number of rows in query result
      * cols - return the number of columns in the result.
      * [row,col] - return the value at position (row,col) in the result
@@ -374,7 +374,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
    connection. It's primary use is to get the number of rows affected by
    UPDATE, INSERT and DELETE queries.
 
-   "con" must be the name identifying a DB connection.
+   “con” must be the name identifying a DB connection.
 
    Example 1.9. $sqlrows(con) usage
 ...
