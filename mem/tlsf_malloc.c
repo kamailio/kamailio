@@ -1138,10 +1138,10 @@ void tlsf_meminfo(tlsf_t pool, struct mem_info *info)
 	info->total_size = control->total_size;
 }
 
-size_t tlsf_available(tlsf_t pool)
+unsigned long tlsf_available(tlsf_t pool)
 {
 	control_t* control = tlsf_cast(control_t*, pool);
-	return control->total_size - control->real_used;
+	return (unsigned long)(control->total_size - control->real_used);
 }
 
 void tlsf_status(tlsf_t pool)
