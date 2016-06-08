@@ -20,27 +20,29 @@
 #ifndef _sr_mem_api_
 #define _sr_mem_api_
 
+#include <string.h>
+
 #include "src_loc.h"
 #include "meminfo.h"
 #include "memdbg.h"
 
 #ifdef DBG_SR_MEMORY
 
-typedef void* (*sr_malloc_f)(void* mbp, unsigned long size,
+typedef void* (*sr_malloc_f)(void* mbp, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname);
 typedef void  (*sr_free_f)(void* mbp, void* p, const char* file, const char* func,
 					unsigned int line, const char* mname);
-typedef void* (*sr_realloc_f)(void* mbp, void* p, unsigned long size,
+typedef void* (*sr_realloc_f)(void* mbp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname);
-typedef void* (*sr_resize_f)(void* mbp, void* p, unsigned long size,
+typedef void* (*sr_resize_f)(void* mbp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname);
 
 #else /*DBG_SR_MEMORY*/
 
-typedef void* (*sr_malloc_f)(void* mbp, unsigned long size);
+typedef void* (*sr_malloc_f)(void* mbp, size_t size);
 typedef void  (*sr_free_f)(void* mbp, void* p);
-typedef void* (*sr_realloc_f)(void* mbp, void* p, unsigned long size);
-typedef void* (*sr_resize_f)(void* mbp, void* p, unsigned long size);
+typedef void* (*sr_realloc_f)(void* mbp, void* p, size_t size);
+typedef void* (*sr_resize_f)(void* mbp, void* p, size_t size);
 
 #endif /*DBG_SR_MEMORY*/
 
