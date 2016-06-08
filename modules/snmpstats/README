@@ -12,9 +12,9 @@ Edited by
 
 Olle E. Johansson
 
-   Copyright � 2006 SOMA Networks, Inc.
+   Copyright © 2006 SOMA Networks, Inc.
 
-   Copyright � 2013 Edvina AB, Sollentuna, Sweden
+   Copyright © 2013 Edvina AB, Sollentuna, Sweden
      __________________________________________________________________
 
    Table of Contents
@@ -407,7 +407,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
    the master agent. You can use this parameter to set the path to your
    instance of NetSNMP's snmpget program.
 
-   Default value is "/usr/local/bin/".
+   Default value is “/usr/local/bin/”.
 
    Example 1.6. Setting the snmpgetPath parameter
 ...
@@ -421,7 +421,7 @@ modparam("snmpstats", "snmpgetPath",     "/my/custom/path/")
    the master agent. If you have defined a custom community string for the
    snmp daemon, you need to specify it with this parameter.
 
-   Default value is "public".
+   Default value is “public”.
 
    Example 1.7. Setting the snmpCommunity parameter
 ...
@@ -440,7 +440,7 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
    run snmpwalk or use a monitoring tool to check the tables with regular
    intervals.
 
-   Default value is "0" (don't export).
+   Default value is “0” (don't export).
 
    Example 1.8. Setting the export_registrar parameter
 ...
@@ -465,7 +465,7 @@ modparam("snmpstats", "export_registrar", 1)
    There are several things that need to be done to get the SNMPStats
    module compiled and up and running.
 
-6.1. Compiling the SNMPStats Module
+6.1.  Compiling the SNMPStats Module
 
    In order for the SNMPStats module to compile, you will need at least
    version 5.3 of the NetSNMP source code. The source can be found at:
@@ -487,7 +487,7 @@ modparam("snmpstats", "export_registrar", 1)
    recommended you install NetSNMP from source to avoid bringing in
    excessive dependencies to the SNMPStats module.
 
-6.2. Configuring NetSNMP to allow connections from the SNMPStats module.
+6.2.  Configuring NetSNMP to allow connections from the SNMPStats module.
 
    The SNMPStats module will communicate with the NetSNMP Master Agent.
    This communication happens over a protocol known as AgentX. This means
@@ -519,7 +519,7 @@ modparam("snmpstats", "export_registrar", 1)
    This tells NetSNMP to act as a master agent, listening on the localhost
    UDP interface at port 705.
 
-6.3. Configuring the SNMPStats module for communication with a Master Agent
+6.3.  Configuring the SNMPStats module for communication with a Master Agent
 
    The previous section explained how to set up a NetSNMP master agent to
    accept AgentX connections. We now need to tell the SNMPStats module how
@@ -539,7 +539,7 @@ modparam("snmpstats", "export_registrar", 1)
    be present on the same machine as Kamailio. localhost could be replaced
    with any other machine.
 
-6.4. Testing for a proper Configuration
+6.4.  Testing for a proper Configuration
 
    As a quick test to make sure that the SNMPStats module sub-agent can
    succesfully connect to the NetSNMP Master agent, start snmpd with the
