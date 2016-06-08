@@ -134,11 +134,11 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type);
  * \return address of allocated memory
  */
 #ifdef DBG_F_MALLOC
-void* fm_malloc(void* qmp, unsigned long size,
+void* fm_malloc(void* qmp, size_t size,
 					const char* file, const char* func, unsigned int line,
 					const char* mname);
 #else
-void* fm_malloc(void* qmp, unsigned long size);
+void* fm_malloc(void* qmp, size_t size);
 #endif
 
 
@@ -167,10 +167,10 @@ void  fm_free(void* qmp, void* p);
  * \return reallocated memory block
  */
 #ifdef DBG_F_MALLOC
-void* fm_realloc(void* qmp, void* p, unsigned long size,
+void* fm_realloc(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char *mname);
 #else
-void*  fm_realloc(void* qmp, void* p, unsigned long size);
+void*  fm_realloc(void* qmp, void* p, size_t size);
 #endif
 
 
