@@ -10,14 +10,18 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
+		Note: the module is not actively maintained and may be deprecated
+		in the near future.
+	</para>
+	<para>
 		Purple module is a multi-protocol instant-messaging gateway module
-		which use <emphasis>libpurple</emphasis>, the library that Pidgin 
+		which use <emphasis>libpurple</emphasis>, the library that Pidgin
 		(ex-gaim) is based on.
 	</para>
 	<para>
