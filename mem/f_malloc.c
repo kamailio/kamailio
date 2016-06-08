@@ -262,19 +262,19 @@ static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
  * \param size fragement size
  */
 static inline
-#ifdef DBG_F_MALLOC 
+#ifdef DBG_F_MALLOC
 void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
-					unsigned long size,
+					size_t size,
 					const char* file, const char* func, unsigned int line,
 					const char* mname)
 #else
 void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
-					unsigned long size)
+					size_t size)
 #endif
 {
-	unsigned long rest;
+	size_t rest;
 	struct fm_frag* n;
-	
+
 	rest=frag->size-size;
 #ifdef MEM_FRAG_AVOIDANCE
 	if ((rest> (FRAG_OVERHEAD+F_MALLOC_OPTIMIZE))||
@@ -316,7 +316,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	char* end;
 	struct fm_block* qm;
 	unsigned long init_overhead;
-	
+
 	/* make address and size multiple of 8*/
 	start=(char*)ROUNDUP((unsigned long) address);
 	DBG("fm_malloc_init: F_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
@@ -331,8 +331,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	size=ROUNDDOWN(size);
 
 	init_overhead=INIT_OVERHEAD;
-	
-	
+
 	if (size < init_overhead)
 	{
 		/* not enough mem to create our control structures !!!*/
@@ -378,7 +377,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
  * \param size memory allocation size
  * \return address of allocated memory
  */
-struct fm_frag* fm_search_defrag(struct fm_block* qm, unsigned long size)
+struct fm_frag* fm_search_defrag(struct fm_block* qm, size_t size)
 {
 	struct fm_frag* frag;
 	struct fm_frag* nxt;
@@ -424,10 +423,10 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, unsigned long size)
  * \return address of allocated memory
  */
 #ifdef DBG_F_MALLOC
-void* fm_malloc(void* qmp, unsigned long size, const char* file,
+void* fm_malloc(void* qmp, size_t size, const char* file,
                     const char* func, unsigned int line, const char* mname)
 #else
-void* fm_malloc(void* qmp, unsigned long size)
+void* fm_malloc(void* qmp, size_t size)
 #endif
 {
 	struct fm_block* qm;
@@ -634,17 +633,17 @@ void fm_free(void* qmp, void* p)
  * \return reallocated memory block
  */
 #ifdef DBG_F_MALLOC
-void* fm_realloc(void* qmp, void* p, unsigned long size,
+void* fm_realloc(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line,
 					const char *mname)
 #else
-void* fm_realloc(void* qmp, void* p, unsigned long size)
+void* fm_realloc(void* qmp, void* p, size_t size)
 #endif
 {
 	struct fm_block* qm;
 	struct fm_frag *f;
-	unsigned long diff;
-	unsigned long orig_size;
+	size_t diff;
+	size_t orig_size;
 	struct fm_frag *n;
 	void *ptr;
 
@@ -1095,7 +1094,7 @@ static struct fm_block *_fm_shm_block = 0;
 
 /*SHM wrappers to sync the access to memory block*/
 #ifdef DBG_F_MALLOC
-void* fm_shm_malloc(void* qmp, unsigned long size,
+void* fm_shm_malloc(void* qmp, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1104,7 +1103,7 @@ void* fm_shm_malloc(void* qmp, unsigned long size,
 	shm_unlock();
 	return r;
 }
-void* fm_shm_realloc(void* qmp, void* p, unsigned long size,
+void* fm_shm_realloc(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1113,7 +1112,7 @@ void* fm_shm_realloc(void* qmp, void* p, unsigned long size,
 	shm_unlock();
 	return r;
 }
-void* fm_shm_resize(void* qmp, void* p, unsigned long size,
+void* fm_shm_resize(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1131,7 +1130,7 @@ void fm_shm_free(void* qmp, void* p, const char* file, const char* func,
 	shm_unlock();
 }
 #else
-void* fm_shm_malloc(void* qmp, unsigned long size)
+void* fm_shm_malloc(void* qmp, size_t size)
 {
 	void *r;
 	shm_lock();
@@ -1139,7 +1138,7 @@ void* fm_shm_malloc(void* qmp, unsigned long size)
 	shm_unlock();
 	return r;
 }
-void* fm_shm_realloc(void* qmp, void* p, unsigned long size)
+void* fm_shm_realloc(void* qmp, void* p, size_t size)
 {
 	void *r;
 	shm_lock();
@@ -1147,7 +1146,7 @@ void* fm_shm_realloc(void* qmp, void* p, unsigned long size)
 	shm_unlock();
 	return r;
 }
-void* fm_shm_resize(void* qmp, void* p, unsigned long size)
+void* fm_shm_resize(void* qmp, void* p, size_t size)
 {
 	void *r;
 	shm_lock();
