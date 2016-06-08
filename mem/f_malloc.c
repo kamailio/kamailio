@@ -322,8 +322,9 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	DBG("fm_malloc_init: F_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
 			F_MALLOC_OPTIMIZE, F_MALLOC_OPTIMIZE/ROUNDTO);
 	DBG("fm_malloc_init: F_HASH_SIZE=%lu, fm_block size=%lu\n",
-			F_HASH_SIZE, (long)sizeof(struct fm_block));
-	DBG("fm_malloc_init(%p, %lu), start=%p\n", address, size, start);
+			F_HASH_SIZE, (unsigned long)sizeof(struct fm_block));
+	DBG("fm_malloc_init(%p, %lu), start=%p\n", address, (unsigned long)size,
+			start);
 
 	if (size<start-address) return 0;
 	size-=(start-address);
@@ -335,7 +336,8 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size, int type)
 	if (size < init_overhead)
 	{
 		/* not enough mem to create our control structures !!!*/
-		LOG(L_ERR, "fm_malloc_init(%lu); No memory left to create control structures!\n", size);
+		LOG(L_ERR, "fm_malloc_init(%lu); No memory left to create control structures!\n",
+				(unsigned long)size);
 		return 0;
 	}
 	end=start+size;
@@ -409,7 +411,8 @@ struct fm_frag* fm_search_defrag(struct fm_block* qm, size_t size)
 		frag = nxt;
 	}
 
-	LOG(L_ERR, "fm_search_defrag(%p, %lu); Free fragment not found!\n", qm, size);
+	LOG(L_ERR, "fm_search_defrag(%p, %lu); Free fragment not found!\n", qm,
+			(unsigned long)size);
 
 	return 0;
 }
@@ -437,8 +440,8 @@ void* fm_malloc(void* qmp, size_t size)
 	qm = (struct fm_block*)qmp;
 	
 #ifdef DBG_F_MALLOC
-	MDBG("fm_malloc(%p, %lu) called from %s: %s(%d)\n", qm, size, file, func,
-			line);
+	MDBG("fm_malloc(%p, %lu) called from %s: %s(%d)\n", qm,
+			(unsigned long)size, file, func, line);
 #endif
 	/*malloc(0) should return a valid pointer according to specs*/
 	if(unlikely(size==0)) size=4;
@@ -491,9 +494,11 @@ void* fm_malloc(void* qmp, size_t size)
 	if(frag) goto finish;
 
 #ifdef DBG_F_MALLOC
-        LOG(L_ERR, "fm_malloc(%p, %lu) called from %s: %s(%d), module: %s; Free fragment not found!\n", qm, size, file, func, line, mname);
+        LOG(L_ERR, "fm_malloc(%p, %lu) called from %s: %s(%d), module: %s; Free fragment not found!\n",
+				qm, (unsigned long)size, file, func, line, mname);
 #else
-        LOG(L_ERR, "fm_malloc(%p, %lu); Free fragment not found!\n", qm, size);
+        LOG(L_ERR, "fm_malloc(%p, %lu); Free fragment not found!\n",
+				qm, (unsigned long)size);
 #endif
 
 	return 0;
@@ -518,7 +523,7 @@ finish:
 	frag->func=func;
 	frag->mname=mname;
 	frag->line=line;
-	MDBG("fm_malloc(%p, %lu) returns address %p \n", qm, size,
+	MDBG("fm_malloc(%p, %lu) returns address %p \n", qm, (unsigned long)size,
 		(char*)frag+sizeof(struct fm_frag));
 #endif
 	frag->check=ST_CHECK_PATTERN;
@@ -650,8 +655,8 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	qm = (struct fm_block*)qmp;
 
 #ifdef DBG_F_MALLOC
-	MDBG("fm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p, size,
-			file, func, line);
+	MDBG("fm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p,
+			(unsigned long)size, file, func, line);
 	if ((p)&&(p>(void*)qm->last_frag || p<(void*)qm->first_frag)){
 		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!) - "
 				"aborting\n", p);
@@ -683,7 +688,8 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	if (f->size > size){
 		/* shrink */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: shrinking from %lu to %lu\n", f->size, size);
+		MDBG("fm_realloc: shrinking from %lu to %lu\n", f->size,
+				(unsigned long)size);
 		fm_split_frag(qm, f, size, file, "frag. from fm_realloc", line, mname);
 #else
 		fm_split_frag(qm, f, size);
@@ -691,7 +697,8 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 	}else if (f->size<size){
 		/* grow */
 #ifdef DBG_F_MALLOC
-		MDBG("fm_realloc: growing from %lu to %lu\n", f->size, size);
+		MDBG("fm_realloc: growing from %lu to %lu\n", f->size,
+				(unsigned long)size);
 #endif
 		diff=size-f->size;
 		n=FRAG_NEXT(f);
@@ -725,9 +732,11 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 				memcpy(ptr, p, orig_size);
 			} else {
 #ifdef DBG_F_MALLOC
-				LOG(L_ERR, "fm_realloc(%p, %lu) called from %s: %s(%d), module: %s; fm_malloc() failed!\n", qm, size, file, func, line, mname);
+				LOG(L_ERR, "fm_realloc(%p, %lu) called from %s: %s(%d), module: %s; fm_malloc() failed!\n",
+						qm, (unsigned long)size, file, func, line, mname);
 #else
-				LOG(L_ERR, "fm_realloc(%p, %lu); fm_malloc() failed!\n", qm, size);
+				LOG(L_ERR, "fm_realloc(%p, %lu); fm_malloc() failed!\n",
+						qm, (unsigned long)size);
 #endif
 			}
 	#ifdef DBG_F_MALLOC
@@ -741,7 +750,7 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 		/* do nothing */
 #ifdef DBG_F_MALLOC
 		MDBG("fm_realloc: doing nothing, same size: %lu - %lu\n", 
-				f->size, size);
+				f->size, (unsigned long)size);
 #endif
 	}
 #ifdef DBG_F_MALLOC
