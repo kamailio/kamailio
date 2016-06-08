@@ -1,5 +1,7 @@
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
+
+# to generate readme file on a system without java, use DOCBUILD=yes in make command
 
 include ../../Makefile.defs
 auto_gen=
