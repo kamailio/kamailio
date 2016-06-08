@@ -26,7 +26,9 @@ LIBS += $(shell pkg-config libgcj --libs) -L$(JAVA_HOME)/lib  -ljvm
 # At this point I don't see any universal method as explicit setting this variable at the compile phase.
 # -- ez
 ifeq ($(shell [ -d "${JAVA_HOME}" -a -f "$(JAVA_HOME)/include/jni.h" -a -f "$(JAVA_HOME)/lib/libjvm.so" ] && echo 1 || echo 0),0)
-    $(error Can't locate Java Development Kit. You have to specify environment JAVA_HOME to build app_java)
+ifneq ($(DOCBUILD),yes)
+$(error Cannot locate Java Development Kit. You have to specify environment JAVA_HOME to build app_java)
+endif
 endif
 
 ifeq ($(OS), freebsd)
