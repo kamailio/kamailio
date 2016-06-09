@@ -4,7 +4,7 @@ Elena-Ramona Modroiu
 
    Asipto
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
    This module provides the possibility to print user formatted log or
    debug messages from SER scripts, similar to printf function but now a
    specifier is replaced with a part of the SIP request. Section 2,
-   "Implemented Specifiers" shows what can be printed out.
+   “Implemented Specifiers” shows what can be printed out.
 
 2. Implemented Specifiers
 
@@ -172,7 +172,7 @@ modparam("xprint", "buf_size", 8192)
    4.1. xplog(level, format)
    4.2. xpdbg(format)
 
-4.1. xplog(level, format)
+4.1.  xplog(level, format)
 
    Print a formated message using LOG function.
 
@@ -193,7 +193,7 @@ modparam("xprint", "buf_size", 8192)
 xplog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 ...
 
-4.2. xpdbg(format)
+4.2.  xpdbg(format)
 
    Print a formatted message using DBG function.
 
@@ -245,7 +245,7 @@ Chapter 2. Developer Guide
 
 1.1. Functions
 
-1.1.1. int xbind(xl_api_t *xl_api)
+1.1.1.  int xbind(xl_api_t *xl_api)
 
    Bind to the xprint module API.
 
@@ -256,7 +256,7 @@ Chapter 2. Developer Guide
 
    Return value: 0 - success, <0 - error.
 
-1.1.2. int xparse(char *s, xl_elog_p *el)
+1.1.2.  int xparse(char *s, xl_elog_p *el)
 
    Parse an xl-formatted string in private memory.
 
@@ -266,12 +266,12 @@ Chapter 2. Developer Guide
 
    Return value: 0 - success, <0 - error.
 
-1.1.3. int shm_xparse(char *s, xl_elog_p *el)
+1.1.3.  int shm_xparse(char *s, xl_elog_p *el)
 
    Parse an xl-formatted string in shared memory. See xparse() function
    for details.
 
-1.1.4. int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
+1.1.4.  int xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
 
    Parse an xl-formatted string in private memory. This function is able
    to identify regular expression back references, for example \1, \2,
@@ -298,26 +298,26 @@ Chapter 2. Developer Guide
 
    Return value: 0 - success, <0 - error.
 
-1.1.5. int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
+1.1.5.  int shm_xparse2(char *s, xl_elog_p *el, xl_parse_cb cb)
 
    Parse an xl-formatted string in shared memory supporting regular
    expression back references. See xparse2() function for details.
 
-1.1.6. xfree(xl_elog_p el)
+1.1.6.  xfree(xl_elog_p el)
 
    Free the xl-lib list allocated by xparse() or xparse2().
 
    Meaning of the parameters is as follows:
      * el - xl-lib list to be freed.
 
-1.1.7. shm_xfree(xl_elog_p el)
+1.1.7.  shm_xfree(xl_elog_p el)
 
    Free the xl-lib list allocated by shm_xparse() or shm_xparse2().
 
    Meaning of the parameters is as follows:
      * el - xl-lib list to be freed.
 
-1.1.8. int xprint(struct sip_msg* msg, xl_elog_p el, char *buf, int *len)
+1.1.8.  int xprint(struct sip_msg* msg, xl_elog_p el, char *buf, int *len)
 
    Evaluate the xl-formatted string and print the result into a buffer.
 
@@ -330,6 +330,6 @@ Chapter 2. Developer Guide
 
    Return value: 0 - success, <0 - error.
 
-1.1.9. str *xnulstr()
+1.1.9.  str *xnulstr()
 
    Return the string "<null>".

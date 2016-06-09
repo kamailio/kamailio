@@ -22,11 +22,11 @@ Carsten Bock
 
    ng-voice GmbH
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
 
-   Copyright � 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright � 2015 ng-voice GmbH
+   Copyright © 2015 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -312,8 +312,8 @@ Chapter 1. Admin Guide
        check the Call-ID only (independent of the Contact-Header or Path).
 
    To find out how to control/select the contact maching algorithm, please
-   see the module parameter matching_mode - Section 3.26, "matching_mode
-   (integer)".
+   see the module parameter matching_mode - Section 3.26, “matching_mode
+   (integer)”.
 
 2. Dependencies
 
@@ -382,7 +382,7 @@ Chapter 1. Admin Guide
    is or not natted). This is a branch flag and it will be imported and
    used by all other modules depending of usrloc module.
 
-   Default value is "not set".
+   Default value is “not set”.
 
    Example 1.1. Set nat_bflag parameter
 ...
@@ -393,7 +393,7 @@ modparam("usrloc", "nat_bflag", 3)
 
    Name of database column containing usernames.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.2. Set user_column parameter
 ...
@@ -404,7 +404,7 @@ modparam("usrloc", "user_column", "username")
 
    Name of database column containing domains.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.3. Set user_column parameter
 ...
@@ -415,7 +415,7 @@ modparam("usrloc", "domain_column", "domain")
 
    Name of database column containing contacts.
 
-   Default value is "contact".
+   Default value is “contact”.
 
    Example 1.4. Set contact_column parameter
 ...
@@ -426,7 +426,7 @@ modparam("usrloc", "contact_column", "contact")
 
    Name of database column containing expires value.
 
-   Default value is "expires".
+   Default value is “expires”.
 
    Example 1.5. Set expires_column parameter
 ...
@@ -437,7 +437,7 @@ modparam("usrloc", "expires_column", "expires")
 
    Name of database column containing q values.
 
-   Default value is "q".
+   Default value is “q”.
 
    Example 1.6. Set q_column parameter
 ...
@@ -448,7 +448,7 @@ modparam("usrloc", "q_column", "q")
 
    Name of database column containing Call-ID values.
 
-   Default value is "callid".
+   Default value is “callid”.
 
    Example 1.7. Set callid_column parameter
 ...
@@ -459,7 +459,7 @@ modparam("usrloc", "callid_column", "callid")
 
    Name of database column containing Cseq.
 
-   Default value is "cseq".
+   Default value is “cseq”.
 
    Example 1.8. Set cseq_column parameter
 ...
@@ -470,7 +470,7 @@ modparam("usrloc", "cseq_column", "cseq")
 
    Name of database column containing supported methods.
 
-   Default value is "methods".
+   Default value is “methods”.
 
    Example 1.9. Set methods_column parameter
 ...
@@ -481,7 +481,7 @@ modparam("usrloc", "methods_column", "methods")
 
    Name of database column to save the internal flags of the record.
 
-   Default value is "flags".
+   Default value is “flags”.
 
    Example 1.10. Set flags_column parameter
 ...
@@ -492,7 +492,7 @@ modparam("usrloc", "flags_column", "flags")
 
    Name of database column to save the branch/contact flags of the record.
 
-   Default value is "cflags".
+   Default value is “cflags”.
 
    Example 1.11. Set cflags_column parameter
 ...
@@ -503,7 +503,7 @@ modparam("usrloc", "cflags_column", "cflags")
 
    Name of database column containing user-agent values.
 
-   Default value is "user_agent".
+   Default value is “user_agent”.
 
    Example 1.12. Set user_agent_column parameter
 ...
@@ -515,7 +515,7 @@ modparam("usrloc", "user_agent_column", "user_agent")
    Name of database column containing the source IP, port, and protocol
    from the REGISTER message.
 
-   Default value is "received".
+   Default value is “received”.
 
    Example 1.13. Set received_column parameter
 ...
@@ -527,7 +527,7 @@ modparam("usrloc", "received_column", "received")
    Name of database column containing the received socket information
    (IP:port) for the REGISTER message.
 
-   Default value is "socket".
+   Default value is “socket”.
 
    Example 1.14. Set socket_column parameter
 ...
@@ -538,7 +538,7 @@ modparam("usrloc", "socket_column", "socket")
 
    Name of database column containing the Path header.
 
-   Default value is "path".
+   Default value is “path”.
 
    Example 1.15. Set path_column parameter
 ...
@@ -549,7 +549,7 @@ modparam("usrloc", "path_column", "path")
 
    Name of database column containing the Kamailio record unique id.
 
-   Default value is "ruid".
+   Default value is “ruid”.
 
    Example 1.16. Set ruid_column parameter
 ...
@@ -561,7 +561,7 @@ modparam("usrloc", "ruid_column", "myruid")
    Name of database column containing the SIP instance ID (GRUU -
    RFC5627). This is a unique device identifier - UUID.
 
-   Default value is "instance".
+   Default value is “instance”.
 
    Example 1.17. Set instance_column parameter
 ...
@@ -572,7 +572,7 @@ modparam("usrloc", "instance_column", "myinstance")
 
    Name of database table column containing the value for server id.
 
-   Default value is "server_id".
+   Default value is “server_id”.
 
    Example 1.18. Set server_id_column parameter
 ...
@@ -583,7 +583,7 @@ modparam("usrloc", "server_id_column", "srv_id")
 
    Name of database table column containing the value for connection id.
 
-   Default value is "connection_id".
+   Default value is “connection_id”.
 
    Example 1.19. Set connection_id_column parameter
 ...
@@ -595,7 +595,7 @@ modparam("usrloc", "connection_id_column", "con_id")
    Name of database table column containing the value for keepalive
    status.
 
-   Default value is "keepalive".
+   Default value is “keepalive”.
 
    Example 1.20. Set keepalive_column parameter
 ...
@@ -608,7 +608,7 @@ modparam("usrloc", "keepalive_column", "kalive")
    identifing the user (along with the username part). Useful in multi
    domain scenarios. Non 0 value means true.
 
-   Default value is "0 (false)".
+   Default value is “0 (false)”.
 
    Example 1.21. Set use_domain parameter
 ...
@@ -620,7 +620,7 @@ modparam("usrloc", "use_domain", 1)
    If the user's contacts should be kept timestamp ordered; otherwise the
    contact will be ordered based on q value. Non 0 value means true.
 
-   Default value is "0 (false)".
+   Default value is “0 (false)”.
 
    Example 1.22. Set desc_time_order parameter
 ...
@@ -644,7 +644,7 @@ modparam("usrloc", "timer_interval", 120)
 
    URL of the database that should be used.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.24. Set db_url parameter
 ...
@@ -705,7 +705,7 @@ modparam("usrloc", "db_mode", 2)
 3.26. matching_mode (integer)
 
    What contact matching algorithm to be used. Refer to section
-   Section 1.1, "Contact matching" for the description of the algorithms.
+   Section 1.1, “Contact matching” for the description of the algorithms.
 
    The parameter may take the following values:
      * 0 - CONTACT ONLY based matching algorithm.
@@ -735,7 +735,7 @@ modparam("usrloc", "matching_mode", 1)
 
    A value of 0 disable the retransmission detection.
 
-   Default value is "20 seconds".
+   Default value is “20 seconds”.
 
    Example 1.27. Set cseq_delay parameter
 ...
@@ -749,7 +749,7 @@ modparam("usrloc", "cseq_delay", 5)
    startup. For 1MB of private memory (default) it should be below 4000.
    The database driver must support fetch_result() capability.
 
-   Default value is "2000".
+   Default value is “2000”.
 
    Example 1.28. Set fetch_rows parameter
 ...
@@ -762,7 +762,7 @@ modparam("usrloc", "fetch_rows", 3000)
    location records is 2^hash_size. For hash_size=4, the number of slots
    of the hash table is 16.
 
-   Default value is "10" (1024 slots).
+   Default value is “10” (1024 slots).
 
    Example 1.29. Set hash_size parameter
 ...
@@ -776,7 +776,7 @@ modparam("usrloc", "hash_size", 12)
    parameter only to load tables that are not used by registrar module
    directly in configuration file.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.30. Set preload parameter
 ...
@@ -789,7 +789,7 @@ modparam("usrloc", "preload", "location")
    UPDATE DB operations. It is recommended to set this parameter if you
    use Cassandra as a DB backend.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.31. Set db_update_as_insert parameter
 ...
@@ -804,7 +804,7 @@ modparam("usrloc", "db_update_as_insert", 1)
    parameter is ignored - e.g., MySQL and Postgres DB connectors offer
    affected_rows().
 
-   Default value is "0" (no DB INSERT).
+   Default value is “0” (no DB INSERT).
 
    Example 1.32. Set db_check_update parameter
 ...
@@ -818,7 +818,7 @@ modparam("usrloc", "db_check_update", 1)
    set to 0, no dedicated timer is started, the one from core will be
    used.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.33. Set timer_procs parameter
 ...
@@ -832,7 +832,7 @@ modparam("usrloc", "timer_procs", 4)
    xavp_contact must also be set to the same value to use the
    t_load_contacts and t_next_contacts functions.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.34. Set xavp_contact parameter
 ...
@@ -845,7 +845,7 @@ modparam("usrloc", "xavp_contact", "ulattrs")
    value. If it is set to 0, the old style using aor, contact and call-id
    is done.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.35. Set db_ops_ruid parameter
 ...
@@ -858,7 +858,7 @@ modparam("usrloc", "db_ops_ruid", 0)
    TCP/TLS/WS/WSS transports when it looses corresponding tcp connections.
    Does not currently work in DB-Only scheme.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.36. Set handle_lost_tcp parameter
 ...
@@ -870,7 +870,7 @@ modparam("usrloc", "handle_lost_tcp", 1)
    If set to 1, Kamailio will close the TCP connection when a contact has
    expired, if the corresponding transport is TCP/TLS/WS/WSS.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.37. Set close_expired_tcp parameter
 ...
@@ -885,7 +885,7 @@ modparam("usrloc", "close_expired_tcp", 1)
    expected to be on default type 'DATETIME'. When it is 1, the database
    columns types have to be changed manually to 'BIGINT'.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.38. Set expires_type parameter
 ...
@@ -900,7 +900,7 @@ modparam("usrloc", "expires_type", 1)
    (working for MySQL, PostgreSQL, ...). If it is set to 1, the query
    required by Oracle is used.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.39. Set db_raw_fetch_type parameter
 ...
@@ -912,7 +912,7 @@ modparam("usrloc", "db_raw_fetch_type", 1)
    If set to 1, the insert operation to database will add null values in
    the sql statement.
 
-   Default value is "0" (don't add null fields in insert statement).
+   Default value is “0” (don't add null fields in insert statement).
 
    Example 1.40. Set db_insert_null parameter
 ...
@@ -925,7 +925,7 @@ modparam("usrloc", "db_insert_null", 1)
    database, if socket value of the record does not in kamailio listening
    socket list.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.41. Set skip_remote_socket parameter
 ...
@@ -938,7 +938,7 @@ modparam("usrloc", "skip_remote_socket", 1)
    for db_mode WRITE-BACK and WRITE-THROUGH. It uses the secondary timer
    process.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.42. Set db_timer_clean parameter
 ...
@@ -958,7 +958,7 @@ modparam("usrloc", "db_timer_clean", 1)
    5.5. ul_add
    5.6. ul_show_contact
 
-5.1. ul_rm
+5.1.  ul_rm
 
    Deletes an entire AOR record (including its contacts).
 
@@ -967,7 +967,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-5.2. ul_rm_contact
+5.2.  ul_rm_contact
 
    Deletes a contact from an AOR record.
 
@@ -977,20 +977,20 @@ modparam("usrloc", "db_timer_clean", 1)
        only if use_domain option is on).
      * contact - exact contact to be removed
 
-5.3. ul_dump
+5.3.  ul_dump
 
    Dumps the entire content of the USRLOC in memory cache
 
    Parameters:
      * brief - (optional, may not be present); if equals to string
-       "brief", a brief dump will be done (only AOR and contacts, with no
+       “brief”, a brief dump will be done (only AOR and contacts, with no
        other details)
 
-5.4. ul_flush
+5.4.  ul_flush
 
    Triggers the flush of USRLOC memory cache into DB.
 
-5.5. ul_add
+5.5.  ul_add
 
    Adds a new contact for an user AOR.
 
@@ -1006,7 +1006,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
 
-5.6. ul_show_contact
+5.6.  ul_show_contact
 
    Dumps the contacts of an user AOR.
 
@@ -1027,14 +1027,14 @@ modparam("usrloc", "db_timer_clean", 1)
    6.8. ul.db_contacts
    6.9. ul.db_expired_contacts
 
-6.1. ul.dump
+6.1.  ul.dump
 
    Dumps the content of the location table
 
    Parameters:
      * None.
 
-6.2. ul.lookup table AOR
+6.2.  ul.lookup table AOR
 
    Looks up the contents of an AOR entry in the location table
 
@@ -1043,7 +1043,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-6.3. ul.rm table AOR
+6.3.  ul.rm table AOR
 
    Deletes an entire AOR record (including its contacts).
 
@@ -1052,7 +1052,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-6.4. ul.rm_contact table AOR contact
+6.4.  ul.rm_contact table AOR contact
 
    Deletes a contact from an AOR record.
 
@@ -1062,11 +1062,11 @@ modparam("usrloc", "db_timer_clean", 1)
        only if use_domain option is on).
      * contact - exact contact to be removed
 
-6.5. ul.flush
+6.5.  ul.flush
 
    Triggers the flush of USRLOC memory cache into DB.
 
-6.6. ul.add
+6.6.  ul.add
 
    Adds a new contact for an user AOR.
 
@@ -1082,7 +1082,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
 
-6.7. ul.db_users
+6.7.  ul.db_users
 
    Tell number of different users (AoRs) in a location table that have
    unexpired contacts.
@@ -1091,7 +1091,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * table name - location table where the users are looked for, for
        example, location.
 
-6.8. ul.db_contacts
+6.8.  ul.db_contacts
 
    Tell number of unexpired contacts in a location table.
 
@@ -1099,7 +1099,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * table name - location table where the contacts are looked for, for
        example, location.
 
-6.9. ul.db_expired_contacts
+6.9.  ul.db_expired_contacts
 
    Tell number of expired contacts in a location table.
 
@@ -1188,7 +1188,7 @@ Chapter 2. Developer Guide
    1.15. ul_register_ulcb(type ,callback, param)
    1.16. ul_get_num_users()
 
-1.1. ul_register_domain(name)
+1.1.  ul_register_domain(name)
 
    The function registers a new domain. Domain is just another name for
    table used in registrar. The function is called from fixups in
@@ -1203,7 +1203,7 @@ Chapter 2. Developer Guide
      * const char* name - Name of the domain (also called table) to be
        registered.
 
-1.2. ul_insert_urecord(domain, aor, rec)
+1.2.  ul_insert_urecord(domain, aor, rec)
 
    The function creates a new record structure and inserts it in the
    specified domain. The record is structure that contains all the
@@ -1218,7 +1218,7 @@ Chapter 2. Developer Guide
 
      * urecord_t** rec - The newly created record structure.
 
-1.3. ul_delete_urecord(domain, aor)
+1.3.  ul_delete_urecord(domain, aor)
 
    The function deletes all the contacts bound with the given Address Of
    Record.
@@ -1230,7 +1230,7 @@ Chapter 2. Developer Guide
      * str* aor - Address of record (aka username) of the record, that
        should be deleted.
 
-1.4. ul_delete_urecord_by_ruid(domain, ruid)
+1.4.  ul_delete_urecord_by_ruid(domain, ruid)
 
    The function deletes from given domain a contact with given ruid.
 
@@ -1240,7 +1240,7 @@ Chapter 2. Developer Guide
 
      * str* ruid - ruid of contact that should be deleted.
 
-1.5. ul_get_urecord(domain, aor)
+1.5.  ul_get_urecord(domain, aor)
 
    The function returns pointer to record with given Address of Record.
 
@@ -1250,7 +1250,7 @@ Chapter 2. Developer Guide
 
      * str* aor - Address of Record of request record.
 
-1.6. ul_lock_udomain(domain)
+1.6.  ul_lock_udomain(domain)
 
    The function lock the specified domain, it means, that no other
    processes will be able to access during the time. This prevents race
@@ -1261,14 +1261,14 @@ Chapter 2. Developer Guide
    Meaning of the parameters is as follows:
      * udomain_t* domain - Domain to be locked.
 
-1.7. ul_unlock_udomain(domain)
+1.7.  ul_unlock_udomain(domain)
 
    Unlock the specified domain previously locked by ul_lock_udomain.
 
    Meaning of the parameters is as follows:
      * udomain_t* domain - Domain to be unlocked.
 
-1.8. ul_release_urecord(record)
+1.8.  ul_release_urecord(record)
 
    Do some sanity checks - if all contacts have been removed, delete the
    entire record structure.
@@ -1276,7 +1276,7 @@ Chapter 2. Developer Guide
    Meaning of the parameters is as follows:
      * urecord_t* record - Record to be released.
 
-1.9. ul_insert_ucontact(record, contact, expires, q, callid, cseq, flags,
+1.9.  ul_insert_ucontact(record, contact, expires, q, callid, cseq, flags,
 cont, ua, sock)
 
    The function inserts a new contact in the given record with specified
@@ -1297,7 +1297,7 @@ cont, ua, sock)
      * struct socket_info *sock - socket on which the REGISTER message was
        received on.
 
-1.10. ul_delete_ucontact (record, contact)
+1.10.  ul_delete_ucontact (record, contact)
 
    The function deletes given contact from record.
 
@@ -1307,7 +1307,7 @@ cont, ua, sock)
 
      * ucontact_t* contact - Contact to be deleted.
 
-1.11. ul_get_ucontact(record, contact)
+1.11.  ul_get_ucontact(record, contact)
 
    The function tries to find contact with given Contact URI and returns
    pointer to structure representing the contact.
@@ -1317,13 +1317,13 @@ cont, ua, sock)
 
      * str_t* contact - URI of the request contact.
 
-1.12. ul_get_all_ucontacts (buf, len, flags)
+1.12.  ul_get_all_ucontacts (buf, len, flags)
 
    The function retrieves all contacts of all registered users and returns
    them in the caller-supplied buffer. If the buffer is too small, the
    function returns positive value indicating how much additional space
    would be necessary to accommodate all of them. Please note that the
-   positive return value should be used only as a "hint", as there is no
+   positive return value should be used only as a “hint”, as there is no
    guarantee that during the time between two subsequent calls number of
    registered contacts will remain the same.
 
@@ -1338,7 +1338,7 @@ cont, ua, sock)
 
      * unsigned int flags - Flags that must be set.
 
-1.13. ul_update_ucontact(contact, expires, q, callid, cseq, set, res, ua,
+1.13.  ul_update_ucontact(contact, expires, q, callid, cseq, set, res, ua,
 sock)
 
    The function updates contact with new values.
@@ -1357,7 +1357,7 @@ sock)
      * struct socket_info *sock - socket on which the REGISTER message was
        received on.
 
-1.14. ul_bind_ursloc( api )
+1.14.  ul_bind_ursloc( api )
 
    The function imports all functions that are exported by the USRLOC
    module. Overs for other modules which want to user the internal USRLOC
@@ -1366,7 +1366,7 @@ sock)
    Meaning of the parameters is as follows:
      * usrloc_api_t* api - USRLOC API
 
-1.15. ul_register_ulcb(type ,callback, param)
+1.15.  ul_register_ulcb(type ,callback, param)
 
    The function register with USRLOC a callback function to be called when
    some event occures inside USRLOC.
@@ -1379,6 +1379,6 @@ sock)
      * void *param - some parameter to be passed to the callback each time
        when it is called.
 
-1.16. ul_get_num_users()
+1.16.  ul_get_num_users()
 
    The function loops through all domains summing up the number of users.

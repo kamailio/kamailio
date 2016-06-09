@@ -38,12 +38,14 @@ Klaus Darilion
         3. Parameters
 
               3.1. force_single_dialog (int)
+              3.2. force_dummy_dialog (int)
 
         4. Functions
 
    List of Examples
 
    1.1. Set parameter
+   1.2. Set parameter
 
 Chapter 1. Admin Guide
 
@@ -58,6 +60,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. force_single_dialog (int)
+        3.2. force_dummy_dialog (int)
 
    4. Functions
 
@@ -189,6 +192,7 @@ alice@example    server     server     bob@example   watcher@example
 3. Parameters
 
    3.1. force_single_dialog (int)
+   3.2. force_dummy_dialog (int)
 
 3.1. force_single_dialog (int)
 
@@ -210,6 +214,22 @@ alice@example    server     server     bob@example   watcher@example
    Example 1.1. Set parameter
 ...
 modparam("presence_dialoginfo", "force_single_dialog", 1)
+...
+
+3.2. force_dummy_dialog (int)
+
+   By default the module returns null body if there are no bodies to
+   aggregate. some sip clients like Bria expect at least one dialog. you
+   can activate this parameter to send a dummy dialog.
+
+   If this parameter is set and there are no dialog bodies to aggregate,
+   it will return a dummy dialog.
+
+   Default value is “0”.
+
+   Example 1.2. Set parameter
+...
+modparam("presence_dialoginfo", "force_dummy_dialog", 1)
 ...
 
 4. Functions

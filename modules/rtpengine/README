@@ -36,15 +36,15 @@ Richard Fuchs
 
    Sipwise GmbH
 
-   Copyright � 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2008 Sippy Software, Inc.
 
-   Copyright � 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright � 2009-2014 TuTPro Inc.
+   Copyright © 2009-2014 TuTPro Inc.
 
-   Copyright � 2010 VoIPEmbedded Inc.
+   Copyright © 2010 VoIPEmbedded Inc.
 
-   Copyright � 2013-2015 Sipwise GmbH
+   Copyright © 2013-2015 Sipwise GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -217,7 +217,7 @@ Chapter 1. Admin Guide
    The module allows definition of several sets of rtpproxies.
    Load-balancing will be performed over a set and the admin has the
    ability to choose what set should be used. The set is selected via its
-   id - the id being defined with the set. Refer to the "rtpengine_sock"
+   id - the id being defined with the set. Refer to the “rtpengine_sock”
    module parameter definition for syntax description.
 
    The balancing inside a set is done automatically by the module based on
@@ -313,7 +313,7 @@ Chapter 1. Admin Guide
    Definition of socket(s) used to connect to (a set) RTP proxy. It may
    specify a UNIX socket or an IPv4/IPv6 UDP socket.
 
-   Default value is "NONE" (disabled).
+   Default value is “NONE” (disabled).
 
    Example 1.1. Set rtpengine_sock parameter
 ...
@@ -335,7 +335,7 @@ modparam("rtpengine", "rtpengine_sock",
    rtpengine module will not attempt to establish communication to that
    RTP proxy for rtpengine_disable_tout seconds.
 
-   Default value is "60".
+   Default value is “60”.
 
    Example 1.2. Set rtpengine_disable_tout parameter
 ...
@@ -347,7 +347,7 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
    Timeout value expressed in milliseconds in waiting for reply from RTP
    proxy.
 
-   Default value is "1000".
+   Default value is “1000”.
 
    Example 1.3. Set rtpengine_tout_ms parameter
 ...
@@ -370,7 +370,7 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
    display. Next time the same node will be added in the table, and the
    content reloaded, it will be updated and re-displayed.
 
-   Default value is "0" to keep the current behaviour.
+   Default value is “0” to keep the current behaviour.
 
    Example 1.4. Set rtpengine_allow_op parameter
 ...
@@ -397,7 +397,7 @@ modparam("rtpengine", "queried_nodes_limit", 5)
    How many times the module should retry to send and receive after
    timeout was generated.
 
-   Default value is "5".
+   Default value is “5”.
 
    Example 1.6. Set rtpengine_retr parameter
 ...
@@ -406,11 +406,11 @@ modparam("rtpengine", "rtpengine_retr", 2)
 
 4.7. extra_id_pv (string)
 
-   The parameter sets the PV defination to use when the "b" parameter is
+   The parameter sets the PV defination to use when the “b” parameter is
    used on rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
    rtpengine_manage() command.
 
-   Default is empty, the "b" parameter may not be used then.
+   Default is empty, the “b” parameter may not be used then.
 
    Example 1.7. Set extra_id_pv parameter
 ...
@@ -665,7 +665,7 @@ modparam("rtpengine", "setid_default", 11)
    5.5. rtpengine_manage([flags])
    5.6. start_recording()
 
-5.1. set_rtpengine_set(setid[, setid])
+5.1.  set_rtpengine_set(setid[, setid])
 
    Sets the ID of the RTP proxy set to be used for the next
    rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
@@ -693,7 +693,7 @@ set_rtpengine_set("2");
 rtpengine_offer();
 ...
 
-5.2. rtpengine_offer([flags])
+5.2.  rtpengine_offer([flags])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on INVITE for the cases the SDP bodies are in INVITE and
@@ -705,31 +705,31 @@ rtpengine_offer();
 
    Meaning of the parameters is as follows:
      * flags - flags to turn on some features.
-       The "flags" string is a list of space-separated items. Each item is
-       either an individual token, or a token in "key=value" format. The
+       The “flags” string is a list of space-separated items. Each item is
+       either an individual token, or a token in “key=value” format. The
        possible tokens are described below.
-          + via-branch=... - Include the "branch" value of one of the
-            "Via" headers in the request to the RTP proxy. Possible values
-            are: "1" - use the first "Via" header; "2" - use the second
-            "Via" header; "auto" - use the first "Via" header if this is a
-            request, or the second one if this is a reply; "extra" - don't
+          + via-branch=... - Include the “branch” value of one of the
+            “Via” headers in the request to the RTP proxy. Possible values
+            are: “1” - use the first “Via” header; “2” - use the second
+            “Via” header; “auto” - use the first “Via” header if this is a
+            request, or the second one if this is a reply; “extra” - don't
             take the value from a header, but instead use the value of the
-            "extra_id_pv" variable. This can be used to create one media
+            “extra_id_pv” variable. This can be used to create one media
             session per branch on the RTP proxy. When sending a subsequent
-            "delete" command to the RTP proxy, you can then stop just the
+            “delete” command to the RTP proxy, you can then stop just the
             session for a specific branch when passing the flag '1' or '2'
-            in the "rtpengine_delete", or stop all sessions for a call
+            in the “rtpengine_delete”, or stop all sessions for a call
             when not passing one of those two flags there. This is
             especially useful if you have serially forked call scenarios
-            where the RTP proxy gets an "offer" command for a new branch,
-            and then a "delete" command for the previous branch, which
+            where the RTP proxy gets an “offer” command for a new branch,
+            and then a “delete” command for the previous branch, which
             would otherwise delete the full call, breaking the subsequent
-            "answer" for the new branch. This flag is only supported by
+            “answer” for the new branch. This flag is only supported by
             the Sipwise rtpengine RTP proxy at the moment!
           + asymmetric - flags that UA from which message is received
             doesn't support symmetric RTP. Disables learning of endpoint
             addresses in the Sipwise rtpengine proxy.
-          + force-answer - force "answer", that is, only rewrite SDP when
+          + force-answer - force “answer”, that is, only rewrite SDP when
             corresponding session already exists in the RTP proxy. By
             default is on when the session is to be completed.
           + direction=... - this option specifies a logical network
@@ -741,17 +741,17 @@ rtpengine_offer();
             interface that the target should be using. For example, if the
             SIP message was sent by an endpoint on a private network and
             will be sent to an endpoint on the public internet, you would
-            use "direction=priv direction=pub" if those two logical
-            network interfaces were called "priv" and "pub" in your RTP
+            use “direction=priv direction=pub” if those two logical
+            network interfaces were called “priv” and “pub” in your RTP
             proxy's configuration respectively. The direction must only be
             specified in for initial SDP offer; answers or subsequent
             offers can omit this option.
-          + internal, external - shorthand for "direction=internal" and
-            "direction=external" respectively. Useful for brevity or as
+          + internal, external - shorthand for “direction=internal” and
+            “direction=external” respectively. Useful for brevity or as
             legacy option if the RTP proxy only supports two network
             interfaces instead of multiple, arbitrarily named ones.
-          + auto-bridge - this flag an alternative to the "internal" and
-            "external" flags in order to do automatic bridging between
+          + auto-bridge - this flag an alternative to the “internal” and
+            “external” flags in order to do automatic bridging between
             IPv4 on the "internal network" and IPv6 on the "external
             network". Instead of explicitly instructing the RTP proxy to
             select a particular address family, the distinction is done by
@@ -759,14 +759,14 @@ rtpengine_offer();
             supported by Sipwise rtpengine.
           + address-family=... - instructs the RTP proxy that the
             recipient of this SDP body expects to see addresses of a
-            particular family. Possible values are "IP4" and "IP6". For
+            particular family. Possible values are “IP4” and “IP6”. For
             example, if the SDP body contains IPv4 addresses but the
-            recipient only speaks IPv6, you would use "address-family=IP6"
+            recipient only speaks IPv6, you would use “address-family=IP6”
             to bridge between the two address families.
             Sipwise rtpengine remembers the address family preference of
             each party after it has seen an SDP body from them. This means
             that normally it is only necessary to explicitly specify the
-            address family in the "offer", but not in the "answer".
+            address family in the “offer”, but not in the “answer”.
             Note: Please note, that this will only work properly with
             non-dual-stack user-agents or with dual-stack clients
             according to RFC6157 (which suggest ICE for Dual-Stack
@@ -807,15 +807,15 @@ rtpengine_offer();
             G.729 going from 10ms to 100ms saves two thirds of the network
             bandwith. Not supported by Sipwise rtpengine.
           + ICE=... - controls the RTP proxy's behaviour regarding ICE
-            attributes within the SDP body. Possible values are: "force" -
+            attributes within the SDP body. Possible values are: “force” -
             discard any ICE attributes already present in the SDP body and
             then generate and insert new ICE data, leaving itself as the
-            only ICE candidates; "force-relay" - discard any "relay" type
+            only ICE candidates; “force-relay” - discard any “relay” type
             ICE attributes already present in the SDP body and then
-            generate and insert itself as the only ICE "relay" candidates;
-            "remove" instructs the RTP proxy to discard any ICE attributes
+            generate and insert itself as the only ICE “relay” candidates;
+            “remove” instructs the RTP proxy to discard any ICE attributes
             and not insert any new ones into the SDP. The default (if no
-            "ICE=..." is given at all), new ICE data will only be
+            “ICE=...” is given at all), new ICE data will only be
             generated if no ICE was present in the SDP originally;
             otherwise the RTP proxy will only insert itself as additional
             ICE candidate. Other SDP substitutions (c=, m=, etc) are
@@ -823,20 +823,20 @@ rtpengine_offer();
           + RTP, SRTP, AVP, AVPF - These flags control the RTP transport
             protocol that should be used towards the recipient of the SDP.
             If none of them are specified, the protocol given in the SDP
-            is left untouched. Otherwise, the "SRTP" flag indicates that
-            SRTP should be used, while "RTP" indicates that SRTP should
-            not be used. "AVPF" indicates that the advanced RTCP profile
-            with feedback messages should be used, and "AVP" indicates
+            is left untouched. Otherwise, the “SRTP” flag indicates that
+            SRTP should be used, while “RTP” indicates that SRTP should
+            not be used. “AVPF” indicates that the advanced RTCP profile
+            with feedback messages should be used, and “AVP” indicates
             that the regular RTCP profile should be used. See also the
             next set of flags below.
           + RTP/AVP, RTP/SAVP, RTP/AVPF, RTP/SAVPF - these serve as an
             alternative, more explicit way to select between the different
             RTP protocols and profiles supported by the RTP proxy. For
-            example, giving the flag "RTP/SAVPF" has the same effect as
-            giving the two flags "SRTP AVPF".
-          + to-tag - force inclusion of the "To" tag. Normally, the "To"
-            tag is always included when present, except for "delete"
-            messages. Including the "To" tag in a "delete" messages allows
+            example, giving the flag “RTP/SAVPF” has the same effect as
+            giving the two flags “SRTP AVPF”.
+          + to-tag - force inclusion of the “To” tag. Normally, the “To”
+            tag is always included when present, except for “delete”
+            messages. Including the “To” tag in a “delete” messages allows
             you to be more selective about which dialogues within a call
             are being torn down.
           + rtcp-mux-demux - if rtcp-mux (RFC 5761) was offered, make the
@@ -844,20 +844,20 @@ rtpengine_offer();
             of this message.
           + rtcp-mux-reject - if rtcp-mux was offered, make the RTP proxy
             reject the offer, but still offer it to the recipient. Can be
-            combined with "rtcp-mux-offer" to always offer it.
+            combined with “rtcp-mux-offer” to always offer it.
           + rtcp-mux-offer - make the RTP proxy offer rtcp-mux to the
             recipient of this message, regardless of whether it was
             offered originally or not.
           + rtcp-mux-accept - if rtcp-mux was offered, make the RTP proxy
             accept the offer and also offer it to the recipient of this
-            message. Can be combined with "rtcp-mux-offer" to always offer
+            message. Can be combined with “rtcp-mux-offer” to always offer
             it.
           + media-address=... - force a particular media address to be
             used in the SDP body. Address family is detected
             automatically.
           + TOS=... - change the IP TOS value for all outgoing RTP packets
             within the entire call in both directions. Only honoured in an
-            "offer", ignored for an "answer". Valid values are 0 through
+            “offer”, ignored for an “answer”. Valid values are 0 through
             255, given in decimal. If this option is not specified, the
             TOS value will revert to the default TOS (normally 184). A
             value of -1 may be used to leave the currently used TOS
@@ -876,8 +876,8 @@ rtpengine_offer();
             recommended as it allows media streams to be hijacked by an
             attacker.
           + DTLS=... - influence the behaviour of DTLS-SRTP. Possible
-            values are "no" or "off" to suppress offering or accepting
-            DTLS-SRTP, and "passive" to prefer participating in DTLS-SRTP
+            values are “no” or “off” to suppress offering or accepting
+            DTLS-SRTP, and “passive” to prefer participating in DTLS-SRTP
             in a passive role.
           + SDES-off - don't offer SDES when it normally would. In an SRTP
             context, this leaves DTLS-SRTP as the only other option.
@@ -928,7 +928,7 @@ onreply_route[2]
 ...
 }
 
-5.3. rtpengine_answer([flags])
+5.3.  rtpengine_answer([flags])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on 200 OK for the cases the SDP bodies are in INVITE and
@@ -944,12 +944,12 @@ onreply_route[2]
 
    See rtpengine_offer() function example above for example.
 
-5.4. rtpengine_delete([flags])
+5.4.  rtpengine_delete([flags])
 
    Tears down the RTPProxy session for the current call.
 
    See rtpengine_offer() function description above for the meaning of the
-   parameters. Note that not all flags make sense for a "delete".
+   parameters. Note that not all flags make sense for a “delete”.
 
    This function can be used from ANY_ROUTE.
 
@@ -958,7 +958,7 @@ onreply_route[2]
 rtpengine_delete();
 ...
 
-5.5. rtpengine_manage([flags])
+5.5.  rtpengine_manage([flags])
 
    Manage the RTPProxy session - it combines the functionality of
    rtpengine_offer(), rtpengine_answer() and rtpengine_delete(), detecting
@@ -988,7 +988,7 @@ rtpengine_delete();
 rtpengine_manage();
 ...
 
-5.6. start_recording()
+5.6.  start_recording()
 
    This function will send a signal to the RTP proxy to record the RTP
    stream on the RTP proxy. This function is not supported by Sipwise
@@ -1051,7 +1051,7 @@ start_recording();
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.30. nh_enable_rtpp usage
+   Example 1.30.  nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 $ kamctl fifo nh_enable_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -1074,7 +1074,7 @@ $ kamctl fifo nh_enable_rtpp all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.31. nh_show_rtpp usage
+   Example 1.31.  nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp udp:192.168.2.133:8081
 $ kamctl fifo nh_show_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -1094,7 +1094,7 @@ $ kamctl fifo nh_show_rtpp all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.32. nh_ping_rtpp usage
+   Example 1.32.  nh_ping_rtpp usage
 ...
 $ kamctl fifo nh_ping_rtpp udp:192.168.2.133:8081
 $ kamctl fifo nh_ping_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -1111,7 +1111,7 @@ $ kamctl fifo nh_ping_rtpp all
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
-   Example 1.33. nh_reload_rtpp usage
+   Example 1.33.  nh_reload_rtpp usage
 ...
 $ kamctl fifo nh_reload_rtpp
 ...
@@ -1121,43 +1121,43 @@ $ kamctl fifo nh_reload_rtpp
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.34. nh_show_hash_total usage
+   Example 1.34.  nh_show_hash_total usage
 ...
 $ kamctl fifo nh_show_hash_total
 ...
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. How do I migrate from "rtpproxy" or "rtpproxy-ng" to "rtpengine"?
+   2.1. How do I migrate from “rtpproxy” or “rtpproxy-ng” to “rtpengine”?
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
 
    2.1.
 
-   How do I migrate from "rtpproxy" or "rtpproxy-ng" to "rtpengine"?
+   How do I migrate from “rtpproxy” or “rtpproxy-ng” to “rtpengine”?
 
    For the most part, only the names of the functions have changed, with
-   "rtpproxy" in each name replaced with "rtpengine". For example,
-   "rtpproxy_manage()" has become "rtpengine_manage()". A few name
+   “rtpproxy” in each name replaced with “rtpengine”. For example,
+   “rtpproxy_manage()” has become “rtpengine_manage()”. A few name
    duplications have also been resolved, for example there is now a single
-   "rtpengine_delete()" instead of "unforce_rtp_proxy()" and the identical
-   "rtpproxy_destroy()".
+   “rtpengine_delete()” instead of “unforce_rtp_proxy()” and the identical
+   “rtpproxy_destroy()”.
 
    The largest difference to the old module is how flags are passed to
-   "rtpengine_offer()", "rtpengine_answer()", "rtpengine_manage()" and
-   "rtpengine_delete()". Instead of having a string of single-letter
+   “rtpengine_offer()”, “rtpengine_answer()”, “rtpengine_manage()” and
+   “rtpengine_delete()”. Instead of having a string of single-letter
    flags, they now take a string of space-separated items, with each item
-   being either a single token (word) or a "key=value" pair.
+   being either a single token (word) or a “key=value” pair.
 
-   For example, if you had a call "rtpproxy_offer("FRWOC+PS");", this
+   For example, if you had a call “rtpproxy_offer("FRWOC+PS");”, this
    would then become:
 rtpengine_offer("force trust-address symmetric replace-origin replace-session-co
 nnection ICE=force RTP/SAVPF");
 
    Finally, if you were using the second paramater (explicit media
    address) to any of these functions, this has been replaced by the
-   "media-address=..." option within the first string of flags.
+   “media-address=...” option within the first string of flags.
 
    2.2.
 

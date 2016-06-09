@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2004-2008 Juha Heinanen
+   Copyright © 2004-2008 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -47,7 +47,7 @@ Daniel-Constantin Mierla
 
    List of Examples
 
-   1.1. "SIP-AVP" RADIUS AVP exmaples
+   1.1. “SIP-AVP” RADIUS AVP exmaples
    1.2. radius_config parameter usage
    1.3. caller_service_type parameter usage
    1.4. callee_service_type parameter usage
@@ -113,7 +113,7 @@ Chapter 1. Admin Guide
      * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
      * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
 
-   Example 1.1. "SIP-AVP" RADIUS AVP exmaples
+   Example 1.1. “SIP-AVP” RADIUS AVP exmaples
 ....
 "email:joe@yahoo.com"
     -> STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
@@ -126,7 +126,7 @@ Chapter 1. Admin Guide
 ....
 
    Unlike in old avp_radius module, functions radius_load_calle[re]_avps()
-   do not prefix string names of AVPs by string "caller_" or "callee_"
+   do not prefix string names of AVPs by string “caller_” or “callee_”
    depending if caller's or callee's attributes were loaded. If you need
    these prefixes, make your RADIUS server to prepend them into attribute
    names when it constructs reply items.
@@ -177,7 +177,7 @@ Chapter 1. Admin Guide
    This is the location of the configuration file of radius client
    libraries.
 
-   Default value is "/usr/local/etc/radiusclient-ng/radiusclient.conf".
+   Default value is “/usr/local/etc/radiusclient-ng/radiusclient.conf”.
 
    Example 1.2. radius_config parameter usage
 ...
@@ -188,7 +188,7 @@ modparam("misc_radius", "radius_config", "/etc/radiusclient.conf")
    This is the value of the Service-Type radius attribute to be used, when
    caller's attributes are loaded.
 
-   Default value is dictionary value of "SIP-Caller-AVPs" Service-Type.
+   Default value is dictionary value of “SIP-Caller-AVPs” Service-Type.
 
    Example 1.3. caller_service_type parameter usage
 ...
@@ -199,7 +199,7 @@ modparam("misc_radius", "caller_service_type", 18)
    This is the value of the Service-Type radius attribute to be used, when
    callee's attributes are loaded.
 
-   Default value is dictionary value of "SIP-Callee-AVPs" Service-Type.
+   Default value is dictionary value of “SIP-Callee-AVPs” Service-Type.
 
    Example 1.4. callee_service_type parameter usage
 ...
@@ -210,7 +210,7 @@ modparam("misc_radius", "callee_service_type", 19)
    This is the value of Service-Type RADIUS attribute to be used, when
    radius_is_user_in() function is called.
 
-   Default value is dictionary value of "Group-Check" Service-Type.
+   Default value is dictionary value of “Group-Check” Service-Type.
 
    Example 1.5. group_service_type parameter usage
 ...
@@ -221,7 +221,7 @@ modparam("misc_radius", "group_service_type", 20)
    This is the value of Service-Type RADIUS attribute to be used, when
    radius_does_uri[_user]_exist() function is called.
 
-   Default value is dictionary value of "Call-Check" Service-Type.
+   Default value is dictionary value of “Call-Check” Service-Type.
 
    Example 1.6. uri_service_type parameter usage
 ...
@@ -302,7 +302,7 @@ modparam("misc_radius", "use_sip_uri_host", 1)
    as AVPs in radius_load_caller_avps and radius_load_callee_avps with
    name as radius attribute name and value as radius attribute value.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.12. common_response parameter usage
 ...
@@ -344,7 +344,7 @@ eout#161 next-hop-ip:h323/0001111@myvoip-gate.kamailio.org"
 4.1. radius_load_caller_avps(caller)
 
    The functions loads caller's attributes from radius and stores them
-   into AVPs. Parameter "caller" is a string that may contain pseudo
+   into AVPs. Parameter “caller” is a string that may contain pseudo
    variables. It indicates the user, whose attributes are loaded.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -359,7 +359,7 @@ radius_load_caller_avps("$au@$ar");     # take caller from Authorization
 4.2. radius_load_callee_avps(callee)
 
    The functions loads callee's attributes from radius and stores them
-   into AVPs. Parameter "callee" is a string that may contain pseudo
+   into AVPs. Parameter “callee” is a string that may contain pseudo
    variables. It indicates the user, whose attributes are loaded.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.

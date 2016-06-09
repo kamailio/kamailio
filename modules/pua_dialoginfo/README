@@ -23,9 +23,9 @@ Edited by
 
 Phil Lavin
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
 
-   Copyright � 2008 Klaus Darilion IPCom
+   Copyright © 2008 Klaus Darilion IPCom
      __________________________________________________________________
 
    Table of Contents
@@ -284,7 +284,7 @@ Chapter 1. Admin Guide
    If this parameter is set, the optional call-id will be put into the
    dialog element. This is needed for call-pickup features.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.1. Set include_callid parameter
 ...
@@ -296,7 +296,7 @@ modparam("pua_dialoginfo", "include_callid", 0)
    If this parameter is set, the local and remote tag will be put into the
    dialog element. This is needed for call-pickup features.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.2. Set include_tags parameter
 ...
@@ -309,7 +309,7 @@ modparam("pua_dialoginfo", "include_tags", 0)
    be put into the dialog element. This is needed for call-pickup
    features.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.3. Set include_localremote parameter
 ...
@@ -325,7 +325,7 @@ modparam("pua_dialoginfo", "include_localremote", 0)
    dialog module. If used, the value should at least be a few seconds more
    than the fr_inv_timer of the tm module.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.4. Set override_lifetime parameter
 ...
@@ -344,7 +344,7 @@ modparam("pua_dialoginfo", "override_lifetime", 300)
    the buggy Linksys SPA962 phones. SNOM phones work well with the default
    setting.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.5. Set caller_confirmed parameter
 ...
@@ -357,7 +357,7 @@ modparam("pua_dialoginfo", "caller_confirmed", 1)
    not set, PUBLISH requests are sent out only if their R-URI is local
    (according to myself).
 
-   Default value is "-1".
+   Default value is “-1”.
 
    Example 1.6. Set send_publish_flag parameter
 ...
@@ -369,7 +369,7 @@ modparam("pua_dialoginfo", "send_publish_flag", 8)
    Get Publish R-Uri from avps (see corresponding avp params), not from
    reqeust to/from uri.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.7. Set use_pubruri_avps parameter
 ...
@@ -385,7 +385,7 @@ modparam("pua_dialoginfo", "use_pubruri_avps", 1)
    corresponding PUBLISH-request is generated. If no AVP with the
    specified name exists, no caller-related PUBLISH requests are sent.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.8. Set pubruri_caller_avp parameter
 ...
@@ -401,7 +401,7 @@ modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
    corresponding PUBLISH-request is generated. If no AVP with the
    specified name exists, no callee-related PUBLISH requests are sent.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.9. Set pubruri_callee_avp parameter
 ...
@@ -415,7 +415,7 @@ modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
    value after Kamailio restart. If not set, loaded dialogs at restart are
    no longer sending notifications. New dialogs are working fine.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.10. Set pubruri_caller_avp parameter
 ...
@@ -429,7 +429,7 @@ modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
    value after Kamailio restart. If not set, loaded dialogs at restart are
    no longer sending notifications. New dialogs are working fine.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.11. Set pubruri_callee_dlg_var parameter
 ...
@@ -441,7 +441,7 @@ modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
    If this parameter is set, a "Trying" state will be sent for both the
    caller and callee, rather than just the caller.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.12. Set callee_trying parameter
 ...

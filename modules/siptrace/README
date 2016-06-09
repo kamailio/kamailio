@@ -16,9 +16,9 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010 asipto.com
+   Copyright © 2010 asipto.com
 
-   Copyright � 2006 voice-system.ro
+   Copyright © 2006 voice-system.ro
      __________________________________________________________________
 
    Table of Contents
@@ -144,7 +144,7 @@ Chapter 1. Admin Guide
    There are two ways of storing information:
      * by calling the sip_trace() method explicitely in the Kamailio
        configuration file. In this case the original message is processed.
-     * by setting the flag equal with the value of "trace_flag" (e.g.,
+     * by setting the flag equal with the value of “trace_flag” (e.g.,
        setflag(__trace_flag__)) parameter of the module. In this case, the
        message sent forward is processed. The logging mechanism is based
        on TM/SL callbacks, so only messages processed with the TM module
@@ -210,7 +210,7 @@ modparam("siptrace", "db_url", "mysql://user:passwd@host/dbname")
 
    Name of the table where to store the SIP messages.
 
-   Default value is "sip_trace".
+   Default value is “sip_trace”.
 
    Example 1.2. Set sip_trace parameter
 ...
@@ -242,7 +242,7 @@ modparam("siptrace", "trace_on", 1)
 3.5. traced_user_avp (str)
 
    The name of the AVP storing the SIP URI of the traced user. If the AVP
-   is set, messages are stored in database table and the "traced_user"
+   is set, messages are stored in database table and the “traced_user”
    column is filled with AVP's value. You can store the message many times
    for many users by having multiple values for this AVP.
 
@@ -257,10 +257,10 @@ modparam("siptrace", "traced_user_avp", "$avp(s:user)")
 3.6. trace_table_avp (str)
 
    The name of the AVP storing the name of the table where to store the
-   SIP messages. If it is not set, the value of "table" parameter is used.
+   SIP messages. If it is not set, the value of “table” parameter is used.
    In this way one can select dynamically where to store the traced
    messages. The table must exists, and must have the same structure as
-   the "sip_trace" table.
+   the “sip_trace” table.
 
    Default value is "NULL" (feature disabled).
 
@@ -286,7 +286,7 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 
    Parameter to enable/disable inserts to the database from this Kamailio.
 
-   In case we only want to send the SIP messages to the "duplicate_uri"
+   In case we only want to send the SIP messages to the “duplicate_uri”
    and not store the information to the local database we can set this to
    "0".
 
@@ -299,7 +299,7 @@ modparam("siptrace", "trace_to_database", 0)
 
 3.9. trace_local_ip (str)
 
-   The address to be used in "fromip" field for locally generated
+   The address to be used in “fromip” field for locally generated
    messages. If not set, the module sets it to the address of the socket
    that will be used to send the message.
 
@@ -331,9 +331,9 @@ modparam("siptrace", "trace_sl_acks", 0)
 
    Parameter to enable/disable writing of x-headers.
 
-   Stores "fromip", "toip", "method" and "direction" in "X-Siptrace-*"
+   Stores “fromip”, “toip”, “method” and “direction” in “X-Siptrace-*”
    headers. This allows to transmit them to a second Kamailio server using
-   the "duplicate_uri" feature. Because the headers are added after the
+   the “duplicate_uri” feature. Because the headers are added after the
    data is written to the database, the headers only show up in the
    packets sent by duplicate_uri.
 
@@ -354,7 +354,7 @@ modparam("siptrace", "xheaders_write", 0)
 
    Parameter to enable/disable reading of x-headers.
 
-   Reads and removes the "X-Siptrace-*" headers. Packets not containing
+   Reads and removes the “X-Siptrace-*” headers. Packets not containing
    the headers are neither stored to the database nor relayed
    (duplicate_uri). See xheaders_write for further information.
 
@@ -378,8 +378,8 @@ modparam("siptrace", "hep_mode_on", 1)
 
 3.14. hep_version (integer)
 
-   The parameter indicate the version of the HEP protocol. Can be "1" or
-   "2". In HEPv2 the timestamp and capture agent ID will be included to
+   The parameter indicate the version of the HEP protocol. Can be “1” or
+   “2”. In HEPv2 the timestamp and capture agent ID will be included to
    HEP header.
 
    Default value is "1".
@@ -403,8 +403,8 @@ modparam("siptrace", "hep_capture_id", 234)
 
 3.16. trace_delayed (integer)
 
-   Use "INSERT DELAYED" to store to database when it is available, instead
-   of "INSERT".
+   Use “INSERT DELAYED” to store to database when it is available, instead
+   of “INSERT”.
 
    Default value is 0 (off).
 
@@ -444,7 +444,7 @@ modparam("siptrace", "trace_mode", 1)
 
    4.1. sip_trace([address])
 
-4.1. sip_trace([address])
+4.1.  sip_trace([address])
 
    Store or forward the current processed SIP message in database. It is
    stored in the form prior applying changes made to it.
@@ -469,7 +469,7 @@ sip_trace("sip:10.1.1.2:5085");
 
    5.1. sip_trace
 
-5.1. sip_trace
+5.1.  sip_trace
 
    Name: sip_trace
 
@@ -478,7 +478,7 @@ sip_trace("sip:10.1.1.2:5085");
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message tracing (as string "on" or "off" )
+       status of the SIP message tracing (as string “on” or “off” )
        without changing anything.
 
    MI FIFO Command Format:
@@ -490,7 +490,7 @@ sip_trace("sip:10.1.1.2:5085");
 
    6.1. siptrace.status param
 
-6.1. siptrace.status param
+6.1.  siptrace.status param
 
    Name: siptrace.status
 
@@ -498,7 +498,7 @@ sip_trace("sip:10.1.1.2:5085");
      * on or off: turns on/off SIP message tracing.. Possible values are:
           + on
           + off
-     * "check" does not change siptrace status, just reports the current
+     * “check” does not change siptrace status, just reports the current
        status.
 
 7. Database setup

@@ -11,11 +11,11 @@ Daniel-Constantin Mierla
 
    <daniel@asipto.com>
 
-   Copyright � 2008-2011 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2008-2011 Daniel-Constantin Mierla (asipto.com)
 
-   Copyright � 2011 Juha Heinanen
+   Copyright © 2011 Juha Heinanen
 
-   Copyright � 2013 Olle E. Johansson, Edvina AB
+   Copyright © 2013 Olle E. Johansson, Edvina AB
      __________________________________________________________________
 
    Table of Contents
@@ -160,11 +160,11 @@ Chapter 1. Admin Guide
    _value_
      * _name_: shared variable name
      * _type_: type of the value
-          + "i": integer value
-          + "s": string value
+          + “i”: integer value
+          + “s”: string value
      * _value_: value to be set
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. shvset parameter usage
 ...
@@ -181,11 +181,11 @@ modparam("pv", "shvset", "pstngw=s:sip:10.10.10.10")
    _value_
      * _name_: shared variable name
      * _type_: type of the value
-          + "i": integer value
-          + "s": string value
+          + “i”: integer value
+          + “s”: string value
      * _value_: value to be set
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.2. varset parameter usage
 ...
@@ -251,7 +251,7 @@ if(pv_isset("$avp(s:x)"))
 pv_unset("$avp(s:x)");
 ...
 
-4.3. is_int(pvar)
+4.3.  is_int(pvar)
 
    Function checks if pvar argument contains integer value and returns 1
    if it does and -1 otherwise.
@@ -265,7 +265,7 @@ if (is_int("$var(foo)")) {
 }
 ...
 
-4.4. typeof(pvar, vtype)
+4.4.  typeof(pvar, vtype)
 
    Returns true if the type of pseudo-variable matches the second
    parameter. The second parameter can be: 'int' - type is integer; 'str'
@@ -280,7 +280,7 @@ if (typeof("$var(foo)", "str")) {
 }
 ...
 
-4.5. not_empty(pvar)
+4.5.  not_empty(pvar)
 
    Returns true if the pseudo-variables has the type string and is not
    empty value.
@@ -294,7 +294,7 @@ if (not_empty("$var(foo)")) {
 }
 ...
 
-4.6. xavp_params_explode(sparams, xname)
+4.6.  xavp_params_explode(sparams, xname)
 
    Convert a parameters string in xavp atributes.
 
@@ -315,7 +315,7 @@ xavp_params_explode("a=b;c=d;e=d", "x");
 #    $xavp(x=>e) = "f";
 ...
 
-4.7. sbranch_set_ruri()
+4.7.  sbranch_set_ruri()
 
    Use the attributes from static branch ($sbranch(key) variable) to set
    request URI and the other fields of the branch associated with request
@@ -336,7 +336,7 @@ $sbranch(send_socket) =  "udp:127.0.0.1:5060";
 sbranch_set_ruri();
 ...
 
-4.8. sbranch_append()
+4.8.  sbranch_append()
 
    Use the attributes from static branch ($sbranch(key) variable) to
    append a new branch to destination set. It is an alternative to
@@ -357,7 +357,7 @@ $sbranch(send_socket) =  "udp:127.0.0.1:5060";
 sbranch_append();
 ...
 
-4.9. sbranch_reset()
+4.9.  sbranch_reset()
 
    Reset the content of static branch ($sbranch(key) variable.
 
@@ -368,7 +368,7 @@ sbranch_append();
 sbranch_reset();
 ...
 
-4.10. pv_xavp_print()
+4.10.  pv_xavp_print()
 
    Print all XAVPs to the syslog using INFO log level.
 
@@ -379,7 +379,7 @@ sbranch_reset();
 pv_xavp_print();
 ...
 
-4.11. pv_var_to_xavp(varname, xname)
+4.11.  pv_var_to_xavp(varname, xname)
 
    Copy script variables values to a xavp.
 
@@ -403,7 +403,7 @@ $xavp("ok[0]=>temp") now is 3
 $xavp("ok[0]=>foo") now is "foo indeed"
 ...
 
-4.12. pv_xavp_to_var(xname)
+4.12.  pv_xavp_to_var(xname)
 
    Copy xavp values to vars. Reverse of pv_var_to_xavp().
 
@@ -419,7 +419,7 @@ $var("temp") now is 3
 $var("foo") now is "foo indeed"
 ...
 
-4.13. pv_evalx(dst, fmt)
+4.13.  pv_evalx(dst, fmt)
 
    The fmt string is evaluated twice for exiting variables, the result is
    stored in dst variable. The dst must be the name of a writable
@@ -449,8 +449,8 @@ pv_evalx("$var(z)", "$var(y) one");
    Parameters:
      * _name_: shared variable name
      * _type_: type of the value
-          + "int": integer value
-          + "str": string value
+          + “int”: integer value
+          + “str”: string value
      * _value_: value to be set
 
    MI FIFO Command Format:
@@ -496,8 +496,8 @@ $ kamctl fifo shv_get
    Parameters:
      * _name_: shared variable name
      * _type_: type of the value
-          + "int": integer value
-          + "str": string value
+          + “int”: integer value
+          + “str”: string value
      * _value_: value to be set
 
 6.2. pv.shvGet

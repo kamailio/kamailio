@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2016 asipto.com
+   Copyright Â© 2016 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -127,7 +127,7 @@ modparam("crypto", "register_callid", 1)
    4.1. crypto_aes_encrypt(text, key, res)
    4.2. crypto_aes_decrypt(text, key, res)
 
-4.1. crypto_aes_encrypt(text, key, res)
+4.1.  crypto_aes_encrypt(text, key, res)
 
    Encrypts the text with the key using AES encryption algorithm. The
    result is encoded in base64 format and stored in res. The parameter res
@@ -141,7 +141,7 @@ modparam("crypto", "register_callid", 1)
 crypto_aes_encrypt("$rb", "my-secret-key", "$var(encrypted)");
 ...
 
-4.2. crypto_aes_decrypt(text, key, res)
+4.2.  crypto_aes_decrypt(text, key, res)
 
    Decrypts the text with the key using AES encryption algorithm. The text
    has to be encoded in base64 format. The parameter res must be a

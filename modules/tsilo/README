@@ -10,7 +10,7 @@ Federico Cabiddu
 
    <federico.cabiddu@gmail.com>
 
-   Copyright � 2015 Federico Cabiddu
+   Copyright © 2015 Federico Cabiddu
      __________________________________________________________________
 
    Table of Contents
@@ -96,7 +96,7 @@ Chapter 1. Admin Guide
    (R-URI) and add branches to them later if new contacts for the AOR are
    added.
 
-   For each message, the modules stores "Request-URI" ("R-URI"), URI and
+   For each message, the modules stores “Request-URI” (“R-URI”), URI and
    the internal transaction index and label.
 
    When a transaction is destroyed by the TM module, it is removed from
@@ -133,7 +133,7 @@ Chapter 1. Admin Guide
    must be a power of two, otherwise it will be rounded down to the
    nearest power of two.
 
-   Default value is "2048".
+   Default value is “2048”.
 
    Example 1.1. Set hash_size parameter
 ...
@@ -146,7 +146,7 @@ modparam("tsilo", "hash_size", 1024)
    storing and retrieving users' transactions. Useful in multi domain
    scenarios. Non 0 value means true.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.2. Set use_domain parameter
 ...

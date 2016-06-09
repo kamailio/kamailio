@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -98,7 +98,7 @@ Chapter 1. Admin Guide
    The default domain to use when constructing the presentity URI if it is
    missing from stored AOR in the usrloc table (in memory or database).
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set default_domain parameter
 ...
@@ -110,7 +110,7 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
    The prefix used when constructing the entity attribute to be added to a
    presence node in the XML PIDF document. (ex: pres:user@domain ).
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.2. Set presentity_prefix parameter
 ...
@@ -122,7 +122,7 @@ modparam("pua_usrloc", "entity_prefix", "pres")
    Which branch flag to be used to select the contact addresses for which
    to generate PUBLISH. Valid values are 0 to 31.
 
-   Default value is "-1" (disabled).
+   Default value is “-1” (disabled).
 
    Example 1.3. Set branch_flag parameter
 ...
@@ -133,7 +133,7 @@ modparam("pua_usrloc", "branch_flag", 9)
 
    4.1. pua_set_publish()
 
-4.1. pua_set_publish()
+4.1.  pua_set_publish()
 
    The function is used to mark REGISTER requests that have to issue a
    PUBLISH. The PUBLISH is issued when REGISTER is saved in location

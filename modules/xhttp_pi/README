@@ -10,7 +10,7 @@ Ovidiu Sas
 
    <osas@voipembedded.com>
 
-   Copyright © 2012-2013 VoIP Embedded Inc.
+   Copyright Â© 2012-2013 VoIP Embedded Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -286,7 +286,7 @@ modparam("xhttp", "framework", "/usr/local/etc/kamailio/pi_framework.xml")
 
    7.1. dispatch_xhttp_pi()
 
-7.1. dispatch_xhttp_pi()
+7.1.  dispatch_xhttp_pi()
 
    Handle the HTTP request and generate a response.
 
@@ -314,7 +314,7 @@ event_route[xhttp:request] {
 
    8.1. xhttp_pi.reload
 
-8.1. xhttp_pi.reload
+8.1.  xhttp_pi.reload
 
    Reloads the xml framework.
 

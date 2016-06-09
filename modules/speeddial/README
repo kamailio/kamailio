@@ -10,7 +10,7 @@ Elena-Ramona Modroiu
 
    <ramona@rosdev.ro>
 
-   Copyright � 2004 Voice Sistem SRL
+   Copyright © 2004 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -134,7 +134,7 @@ modparam("speeddial", "db_url", "mysql://openser:xxx@localhost/openser")
    The name of column storing the user name of the owner of the speed dial
    record.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.2. Set user_column parameter
 ...
@@ -146,7 +146,7 @@ modparam("speeddial", "user_column", "userid")
    The name of column storing the domain of the owner of the speed dial
    record.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.3. Set domain_column parameter
 ...
@@ -157,7 +157,7 @@ modparam("speeddial", "domain_column", "userdomain")
 
    The name of the column storing the user part of the short dial address.
 
-   Default value is "sd_username".
+   Default value is “sd_username”.
 
    Example 1.4. Set sd_user_column parameter
 ...
@@ -168,7 +168,7 @@ modparam("speeddial", "sd_user_column", "short_user")
 
    The name of the column storing the domain of the short dial address.
 
-   Default value is "sd_domain".
+   Default value is “sd_domain”.
 
    Example 1.5. Set sd_domain_column parameter
 ...
@@ -180,7 +180,7 @@ modparam("speeddial", "sd_domain_column", "short_domain")
    The name of the column containing the URI that will be use to replace
    the short dial URI.
 
-   Default value is "new_uri".
+   Default value is “new_uri”.
 
    Example 1.6. Set new_uri_column parameter
 ...
@@ -217,7 +217,7 @@ modparam("speeddial", "use_domain", 1)
 
    4.1. sd_lookup(table [, owner])
 
-4.1. sd_lookup(table [, owner])
+4.1.  sd_lookup(table [, owner])
 
    The function lookups the short dial number from R-URI in 'table' and
    replaces the R-URI with associated address.

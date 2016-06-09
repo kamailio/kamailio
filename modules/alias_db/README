@@ -14,9 +14,9 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright � 2008 asipto.com
+   Copyright © 2008 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -126,7 +126,7 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -137,7 +137,7 @@ modparam("alias_db", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    Name of the column storing username.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.2. Set user_column parameter
 ...
@@ -148,7 +148,7 @@ modparam("alias_db", "user_column", "susername")
 
    Name of the column storing user's domain.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.3. Set domain_column parameter
 ...
@@ -159,7 +159,7 @@ modparam("alias_db", "domain_column", "sdomain")
 
    Name of the column storing alias username.
 
-   Default value is "alias_username".
+   Default value is “alias_username”.
 
    Example 1.4. Set alias_user_column parameter
 ...
@@ -170,7 +170,7 @@ modparam("alias_db", "alias_user_column", "auser")
 
    Name of the column storing alias domain.
 
-   Default value is "alias_domain".
+   Default value is “alias_domain”.
 
    Example 1.5. Set alias_domain_column parameter
 ...
@@ -183,7 +183,7 @@ modparam("alias_db", "alias_domain_column", "adomain")
    for alias. If set to 0, the domain from R-URI is not used, if set to 1
    the domain from R-URI is used.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.6. Set use_domain parameter
 ...
@@ -195,7 +195,7 @@ modparam("alias_db", "use_domain", 1)
    Specifies the prefix to be stripped from the domain in R-URI before
    doing the search.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.7. Set domain_prefix parameter
 ...
@@ -207,7 +207,7 @@ modparam("alias_db", "domain_prefix", "sip.")
    If the alias resolves to many SIP IDs, the first is replacing the
    R-URI, the rest are added as branches.
 
-   Default value is "0" (0 - don't add branches; 1 - add branches).
+   Default value is “0” (0 - don't add branches; 1 - add branches).
 
    Example 1.8. Set append_branches parameter
 ...
@@ -218,7 +218,7 @@ modparam("alias_db", "append_branches", 1)
 
    4.1. alias_db_lookup(table_name)
 
-4.1. alias_db_lookup(table_name)
+4.1.  alias_db_lookup(table_name)
 
    The function takes the R-URI and search to see whether it is an alias
    or not. If it is an alias for a local user, the R-URI is replaced with

@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010 asipto.com
+   Copyright © 2010 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -44,10 +44,10 @@ Daniel-Constantin Mierla
 
    List of Examples
 
-   1.1. Set the "db_url" parameter
-   1.2. Set the "xcap_table" parameter
+   1.1. Set the “db_url” parameter
+   1.2. Set the “xcap_table” parameter
    1.3. Set url_match parameter
-   1.4. Set the "buf_size" parameter
+   1.4. Set the “buf_size” parameter
    1.5. Set xml_ns parameter
    1.6. Set directory_scheme parameter
    1.7. Set directory_hostname parameter
@@ -146,9 +146,9 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
-   Example 1.1. Set the "db_url" parameter
+   Example 1.1. Set the “db_url” parameter
 ...
 modparam("xcap_server", "db_url", "mysql://user:passwd@host.com/dbname")
 ...
@@ -157,9 +157,9 @@ modparam("xcap_server", "db_url", "mysql://user:passwd@host.com/dbname")
 
    The name of table where to store the xcap documents.
 
-   Default value is "xcap".
+   Default value is “xcap”.
 
-   Example 1.2. Set the "xcap_table" parameter
+   Example 1.2. Set the “xcap_table” parameter
 ...
 modparam("xcap_server", "xcap_table", "xcapdocs")
 ...
@@ -179,9 +179,9 @@ modparam("xcap_server", "xcap_root", "/xcap-root/")
 
    Size of local buffer for handling XCAP documents.
 
-   Default value is "1024".
+   Default value is “1024”.
 
-   Example 1.4. Set the "buf_size" parameter
+   Example 1.4. Set the “buf_size” parameter
 ...
 modparam("xcap_server", "buf_size", 2048)
 ...
@@ -252,7 +252,7 @@ modparam("xcap_server", "directory_hostname", "xcap.example.com")
    4.2. xcaps_get(uri, path)
    4.3. xcaps_del(uri, path)
 
-4.1. xcaps_put(uri, path, doc)
+4.1.  xcaps_put(uri, path, doc)
 
    Handle XCAP PUT command.
 
@@ -272,7 +272,7 @@ event_route[xhttp:request] {
 }
 ...
 
-4.2. xcaps_get(uri, path)
+4.2.  xcaps_get(uri, path)
 
    Handle XCAP GET command.
 
@@ -292,7 +292,7 @@ event_route[xhttp:request] {
 }
 ...
 
-4.3. xcaps_del(uri, path)
+4.3.  xcaps_del(uri, path)
 
    Handle XCAP DELETE command.
 

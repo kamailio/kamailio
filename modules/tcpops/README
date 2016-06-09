@@ -8,9 +8,9 @@ Olle E. Johansson
 
    Edvina AB
 
-   Copyright © 2015 Orange
+   Copyright Â© 2015 Orange
 
-   Copyright © 2015 Edvina AB, Sollentuna, Sweden
+   Copyright Â© 2015 Edvina AB, Sollentuna, Sweden
      __________________________________________________________________
 
    Table of Contents
@@ -101,7 +101,7 @@ modparam("tcpops", "closed_event", 0)
    3.5. tcp_set_connection_lifetime([conid], lifetime)
    3.6. tcp_enable_closed_event([conid])
 
-3.1. tcp_conid_alive(conid)
+3.1.  tcp_conid_alive(conid)
 
    Check the state of a TCP or WS connection ID
 
@@ -123,7 +123,7 @@ modparam("tcpops", "closed_event", 0)
         }
 ...
 
-3.2. tcp_conid_state(conid)
+3.2.  tcp_conid_state(conid)
 
    Check the state of a TCP or WS connection ID
 
@@ -154,7 +154,7 @@ modparam("tcpops", "closed_event", 0)
         }
 ...
 
-3.3. tcp_keepalive_enable([conid], idle, count, interval)
+3.3.  tcp_keepalive_enable([conid], idle, count, interval)
 
    Enables keepalive on a TCP connection.
 
@@ -189,7 +189,7 @@ onreply_route[foo] {
         ...
 }
 
-3.4. tcp_keepalive_disable([conid])
+3.4.  tcp_keepalive_disable([conid])
 
    Disables keepalive on a TCP connection.
 
@@ -220,7 +220,7 @@ onreply_route[foo] {
         ...
 }
 
-3.5. tcp_set_connection_lifetime([conid], lifetime)
+3.5.  tcp_set_connection_lifetime([conid], lifetime)
 
    Sets the connection lifetime of a connection (TCP).
 
@@ -247,7 +247,7 @@ request_route {
         ...
 }
 
-3.6. tcp_enable_closed_event([conid])
+3.6.  tcp_enable_closed_event([conid])
 
    Explicitly enables the "tcp:closed" event route on a TCP connection.
 

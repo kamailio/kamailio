@@ -4,7 +4,7 @@ Nils Ohlmeier
 
    iptelorg GmbH
 
-   Copyright � 2006 iptelorg GmbH
+   Copyright © 2006 iptelorg GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -113,7 +113,7 @@ Chapter 1. Admin Guide
    of the sanity_check function. The integer value is the sum of the check
    numbers which should be executed by default.
 
-   Default value is "999". This resolves to the following list of checks:
+   Default value is “999”. This resolves to the following list of checks:
    ruri_sip_version (1), ruri_scheme (2), required_headers (4),
    cseq_method (32), cseq_value (64), cotent_length (128), expires_value
    (256), proxy_require (512).
@@ -154,7 +154,7 @@ modparam("sanity", "proxy_require", "foo, bar")
    automatically if the sanity checks fail. Default value is 1 (auto
    drop). If set to 0, sanity_check() function will return -1 (false) to
    configuration file, allowing to write log messages for example - be
-   sure you "exit" execution of config without sending a SIP reply because
+   sure you “exit” execution of config without sending a SIP reply because
    it is sent by module itself.
 
    Example 1.4. Set autodrop parameter
@@ -166,7 +166,7 @@ modparam("sanity", "autodrop", 1)
 
    4.1. sanity_check([msg_checks [, uri_checks]])
 
-4.1. sanity_check([msg_checks [, uri_checks]])
+4.1.  sanity_check([msg_checks [, uri_checks]])
 
    This function makes a row of sanity checks over the given SIP request.
    The behavior of the function is also controlled by autodrop parameter.

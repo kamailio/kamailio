@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright � 2007 Voice Sistem SRL
+   Copyright © 2007 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -223,7 +223,7 @@ Chapter 1. Admin Guide
 
    The database url.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -241,7 +241,7 @@ modparam("rls", "db_url", "dbdriver://username:password@dbhost/dbname")
    same time. This parameter enables each server to have its own (possibly
    local) rls_presentity table.
 
-   Default value is a mirror of the "db_url" setting.
+   Default value is a mirror of the “db_url” setting.
 
    Example 1.2. Set rlpres_db_url parameter
 ...
@@ -253,7 +253,7 @@ modparam("rls", "rlpres_db_url", "dbdriver://username:password@dbhost/dbname")
    The xcap database url. This parameter only needs to be specified if the
    rls db and integerated xcap server db have different urls.
 
-   Default value is a mirror of the "db_url" setting.
+   Default value is a mirror of the “db_url” setting.
 
    Example 1.3. Set xcap_db_url parameter
 ...
@@ -267,7 +267,7 @@ modparam("rls", "xcap_db_url", "dbdriver://username:password@dbhost/dbname")
    in a database, allowing scalability at the expense of speed. Mode 1 is
    reserved.
 
-   Default value is "0"
+   Default value is “0”
 
    Example 1.4. Set db_mode parameter
 ...
@@ -281,7 +281,7 @@ modparam("rls", "db_mode", 2)
    the name of the table must be the same as the one set for the
    xcap_client module.
 
-   Default value is "xcap".
+   Default value is “xcap”.
 
    Example 1.5. Set xcap_table parameter
 ...
@@ -293,7 +293,7 @@ modparam("rls", "xcap_table", "xcaps");
    The name of the db table where resource lists subscription information
    is stored.
 
-   Default value is "rls_watchers".
+   Default value is “rls_watchers”.
 
    Example 1.6. Set rlsubs_table parameter
 ...
@@ -305,7 +305,7 @@ modparam("rls", "rlsubs_table", "rls_subscriptions")
    The name of the db table where notified event specific information is
    stored.
 
-   Default value is "rls_presentity".
+   Default value is “rls_presentity”.
 
    Example 1.7. Set rlpres_table parameter
 ...
@@ -317,7 +317,7 @@ modparam("rls", "rlpres_table", "rls_notify")
    The period at which to check for expired information. 0 means do not
    check.
 
-   Default value is "100".
+   Default value is “100”.
 
    Example 1.8. Set clean_period parameter
 ...
@@ -332,7 +332,7 @@ modparam("rls", "clean_period", 100)
    rls_watchers on different timeouts. This is useful when they are in
    different databases.
 
-   Default value is "-1".
+   Default value is “-1”.
 
    Example 1.9. Set rlpres_clean_period parameter
 ...
@@ -346,7 +346,7 @@ modparam("rls", "rlpres_clean_period", 100)
    presence state of the subscribed list or watcher information within
    this many seconds of a change occurring.
 
-   Default value is "5".
+   Default value is “5”.
 
    Example 1.10. Set waitn_time parameter
 ...
@@ -363,7 +363,7 @@ modparam("rls", "waitn_time", 10)
    Separate notifier processes are only run when db_mode is 2 (DB only
    mode).
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.11. Set notifier_poll_rate parameter
 ...
@@ -377,7 +377,7 @@ modparam("rls", "notifier_poll_rate", 20)
    Separate notifier processes are only run when db_mode is 2 (DB only
    mode).
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.12. Set notifier_processes parameter
 ...
@@ -388,7 +388,7 @@ modparam("rls", "notifier_processes", 2)
 
    The maximum accepted expires for a subscription to a list.
 
-   Default value is "7200".
+   Default value is “7200”.
 
    Example 1.13. Set max_expires parameter
 ...
@@ -406,7 +406,7 @@ modparam("rls", "max_expires", 10800)
    seconds ago are deleted from the database. Negative offsets are treated
    as though an offset of zero was specifed.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.14. Set expires_offset parameter
 ...
@@ -419,7 +419,7 @@ modparam("rls", "expires_offset", 0)
    This parameter will be used as the power of 2 when computing table
    size.
 
-   Default value is "9 (512)".
+   Default value is “9 (512)”.
 
    Example 1.15. Set hash_size parameter
 ...
@@ -430,7 +430,7 @@ modparam("rls", "hash_size", 11)
 
    The address of the xcap server.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.16. Set hash_size parameter
 ...
@@ -442,7 +442,7 @@ modparam("rls", "xcap_root", "http://192.168.2.132/xcap-root:800")
    This parameter should be set if only integrated xcap servers are used
    to store resource lists.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.17. Set integrated_xcap_server parameter
 ...
@@ -457,7 +457,7 @@ modparam("rls", "integrated_xcap_server", 1)
    same machine, to call handle_subscribe on the message causing this
    code.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.18. Set to_presence_code parameter
 ...
@@ -470,7 +470,7 @@ modparam("rls", "to_presence_code", 10)
    should also be handled by RLS they should be added using this
    parameter. It can be set more than once.
 
-   Default value is ""presence"".
+   Default value is “"presence"”.
 
    Example 1.19. Set rls_event parameter
 ...
@@ -482,7 +482,7 @@ modparam("rls", "rls_event", "dialog;sla")
    The SIP address where to send RLS subscriptions (outbound proxy address
    as SIP URI).
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.20. Set outbound_proxy parameter
 ...
@@ -562,7 +562,7 @@ modparam("rls", "max_backend_subs", 30)
    4.2. rls_handle_notify()
    4.3. rls_update_subs(uri, event)
 
-4.1. rls_handle_subscribe([watcher_uri])
+4.1.  rls_handle_subscribe([watcher_uri])
 
    This function detects if a Subscribe message should be handled by RLS.
    If not it replies with the configured to_presence_code. If it is, it
@@ -600,7 +600,7 @@ For rls only:
 
 ...
 
-4.2. rls_handle_notify()
+4.2.  rls_handle_notify()
 
    This function can be used from REQUEST_ROUTE.
 
@@ -610,7 +610,7 @@ if(method=="NOTIFY")
     rls_handle_notify();
 ...
 
-4.3. rls_update_subs(uri, event)
+4.3.  rls_update_subs(uri, event)
 
    This function can be used in configuration to trigger updates to
    resource list subscriptions (for example, after the contents of a
@@ -643,7 +643,7 @@ Within event_route[xhttp:request]:
 
    5.1. rls_cleanup
 
-5.1. rls_cleanup
+5.1.  rls_cleanup
 
    Manually triggers the cleanup functions forthe rls_watchers and
    rls_presentity tables. Useful if you have set clean_period to zero or

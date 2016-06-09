@@ -8,7 +8,7 @@ Daniel-Constantin Mierla
 
    asipto.com
 
-   Copyright © 2003 FhG FOKUS
+   Copyright Â© 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -185,7 +185,7 @@ modparam("sl", "bind_tm", 0)  # feature disabled
    3.3. sl_reply_error()
    3.4. sl_forward _reply([ code, [ reason ] ])
 
-3.1. sl_send_reply(code, reason)
+3.1.  sl_send_reply(code, reason)
 
    For the current request, a reply is sent back having the given code and
    text reason. The reply is sent stateless, totally independent of the
@@ -211,7 +211,7 @@ modparam("sl", "bind_tm", 0)  # feature disabled
 sl_send_reply("404", "Not found");
 ...
 
-3.2. send_reply(code, reason)
+3.2.  send_reply(code, reason)
 
    For the current request, a reply is sent back having the given code and
    text reason. The reply is sent stateful or stateless, depending of the
@@ -233,7 +233,7 @@ send_reply("404", "Not found");
 send_reply("403", "Invalid user - $fU");
 ...
 
-3.3. sl_reply_error()
+3.3.  sl_reply_error()
 
    Sends back an error reply describing the nature of the last internal
    error. Usually this function should be used after a script function
@@ -244,7 +244,7 @@ send_reply("403", "Invalid user - $fU");
 sl_reply_error();
 ...
 
-3.4. sl_forward _reply([ code, [ reason ] ])
+3.4.  sl_forward _reply([ code, [ reason ] ])
 
    Forward statelessy the current received SIP reply, with the option to
    change the status code and reason text. The new code has to be in the

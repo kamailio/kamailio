@@ -14,7 +14,7 @@ Pawel Kuzak
    1&1 Internet AG
    <pawel.kuzak@1und1.de>
 
-   Copyright � 2008 1&1 Internet AG
+   Copyright © 2008 1&1 Internet AG
      __________________________________________________________________
 
    Table of Contents
@@ -215,7 +215,7 @@ Chapter 1. Admin Guide
    If set to non-zero value, the domain column in the userblacklist table
    is used.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.1. Set use_domain parameter
 ...
@@ -231,7 +231,7 @@ modparam("userblacklist", "use_domain", 1)
    matching. Please be aware that memory requirements for storing the
    routing tree in shared memory will also increase by a factor of 12.8.
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.2. Set match_mode parameter
 ...
@@ -242,7 +242,7 @@ modparam("userblacklist", "match_mode", 128)
 
    URL to the database containing the data.
 
-   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.3. Set db_url parameter
 ...
@@ -254,7 +254,7 @@ modparam("userblacklist", "db_url", "dbdriver://username:password@dbhost/dbname"
 
    Name of the userblacklist table for the userblacklist module.
 
-   Default value is "userblacklist".
+   Default value is “userblacklist”.
 
    Example 1.4. Set userblacklist_table parameter
 ...
@@ -312,7 +312,7 @@ modparam("userblacklist", "userblacklist_whitelist_col", "whitelist")
    note that this table is used when the check_blacklist function is
    called with no parameters.
 
-   Default value is "globalblacklist".
+   Default value is “globalblacklist”.
 
    Example 1.10. Set globalblacklist_table parameter
 ...
@@ -366,7 +366,7 @@ modparam("userblacklist", "globalblacklist_description_col", "description")
    4.3. check_blacklist ([string table])
    4.4. check_whitelist (string table)
 
-4.1. check_user_blacklist (string user, string domain, string number, string
+4.1.  check_user_blacklist (string user, string domain, string number, string
 table)
 
    Finds the longest prefix that matches the request URI user (or the
@@ -387,7 +387,7 @@ if (!check_user_blacklist("$avp(i:80)", "$avp(i:82)")) {
 }
 ...
 
-4.2. check_user_whitelist (string user, string domain, string number, string
+4.2.  check_user_whitelist (string user, string domain, string number, string
 table)
 
    Finds the longest prefix that matches the request URI user (or the
@@ -408,7 +408,7 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)")) {
 }
 ...
 
-4.3. check_blacklist ([string table])
+4.3.  check_blacklist ([string table])
 
    Finds the longest prefix that matches the request URI for the given
    table. If a match is found and it is not set to whitelist, false is
@@ -423,7 +423,7 @@ if (!check_blacklist("globalblacklist")) {
 }
 ...
 
-4.4. check_whitelist (string table)
+4.4.  check_whitelist (string table)
 
    Finds the longest prefix that matches the request URI for the given
    table. If a match is found and it is set to whitelist, true is
@@ -446,7 +446,7 @@ if (!check_whitelist("globalblacklist")) {
    5.5. check_userblacklist user [domain] prefix
    5.6. check_userwhitelist user [domain] prefix
 
-5.1. reload_blacklist
+5.1.  reload_blacklist
 
    Reload the internal global blacklist cache. This is necessary after the
    database tables for the global blacklist have been changed.
@@ -456,7 +456,7 @@ if (!check_whitelist("globalblacklist")) {
                                         kamctl fifo reload_blacklist
                                         ...
 
-5.2. dump_blacklist
+5.2.  dump_blacklist
 
    Dumps the default, in memory, global_blacklist content to stdout. Note
    that a reload_blacklist should be issued before, in order to see the
@@ -468,7 +468,7 @@ if (!check_whitelist("globalblacklist")) {
                                         kamctl fifo dump_blacklist
                                         ...
 
-5.3. check_blacklist prefix
+5.3.  check_blacklist prefix
 
    Searches in the default, in memory, global list. Finds the longest
    prefix that matches the given prefix parameter. Returns true if the
@@ -483,7 +483,7 @@ if (!check_whitelist("globalblacklist")) {
                                         kamctl fifo check_blacklist prefix
                                         ...
 
-5.4. check_whitelist prefix
+5.4.  check_whitelist prefix
 
    Searches in the default, in memory, global list. Finds the longest
    prefix that matches the given prefix parameter. Returns true if the
@@ -498,7 +498,7 @@ if (!check_whitelist("globalblacklist")) {
                                         kamctl fifo check_whitelist prefix
                                         ...
 
-5.5. check_userblacklist user [domain] prefix
+5.5.  check_userblacklist user [domain] prefix
 
    Searches in the default user list table. Finds the longest prefix for
    the given user@domain that matches the given prefix parameter. Returns
@@ -513,7 +513,7 @@ if (!check_whitelist("globalblacklist")) {
 main] prefix
                                         ...
 
-5.6. check_userwhitelist user [domain] prefix
+5.6.  check_userwhitelist user [domain] prefix
 
    Searches in the default user list table. Finds the longest prefix for
    the given user@domain that matches the given prefix parameter. Returns
@@ -558,8 +558,8 @@ main] prefix
 ...
 
    This table will setup a global blacklist for all numbers, only allowing
-   calls starting with "1". Numbers that starts with "123456" and
-   "123455787" are also blacklisted, because the longest prefix will be
+   calls starting with “1”. Numbers that starts with “123456” and
+   “123455787” are also blacklisted, because the longest prefix will be
    matched.
 
    Example 1.26. Example database content - userblacklist table
@@ -578,7 +578,7 @@ main] prefix
 ...
 
    This table will setup user specific blacklists for certain usernames.
-   For example for user "49721123456788" the prefix "1234" will be not
-   allowed, but the number "123456788" is allowed. Additionally a domain
+   For example for user “49721123456788” the prefix “1234” will be not
+   allowed, but the number “123456788” is allowed. Additionally a domain
    could be specified that is used for username matching if the
-   "use_domain" parameter is set.
+   “use_domain” parameter is set.

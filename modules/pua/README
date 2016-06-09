@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -179,7 +179,7 @@ Chapter 1. Admin Guide
    information. This parameter will be used as the power of 2 when
    computing table size.
 
-   Default value is "9".
+   Default value is “9”.
 
    Example 1.1. Set hash_size parameter
 ...
@@ -190,7 +190,7 @@ modparam("pua", "hash_size", 11)
 
    Database url.
 
-   Default value is ">mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “>mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.2. Set db_url parameter
 ...
@@ -201,7 +201,7 @@ modparam("pua", "db_url" "dbdriver://username:password@dbhost/dbname")
 
    The name of the database table.
 
-   Default value is "pua".
+   Default value is “pua”.
 
    Example 1.3. Set db_table parameter
 ...
@@ -212,7 +212,7 @@ modparam("pua", "db_table", "pua")
 
    The inferior expires limit for both Publish and Subscribe.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.4. Set min_expires parameter
 ...
@@ -224,7 +224,7 @@ modparam("pua", "min_expires", 0)
    The default expires value used in case this information is not
    provisioned.
 
-   Default value is "3600".
+   Default value is “3600”.
 
    Example 1.5. Set default_expires parameter
 ...
@@ -238,7 +238,7 @@ modparam("pua", "default_expires", 3600)
    expired messages. Setting a value less than or equal to zero, disables
    updates.
 
-   Default value is "100".
+   Default value is “100”.
 
    Example 1.6. Set update_period parameter
 ...
@@ -268,7 +268,7 @@ modparam("pua", "outbound_proxy", "sip:outbound.example.com")
    presence_dialoginfo module) it makes no sense to waste CPU resources
    for parsing the XML body and the parameter should be set to 0.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.8. Set dlginfo_increase_version parameter
 ...
@@ -286,7 +286,7 @@ modparam("pua", "dlginfo_increase_version", 1)
    presence_reginfo module) it makes no sense to waste CPU resources for
    parsing the XML body and the parameter should be set to 0.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.9. Set reginfo_increase_version parameter
 ...
@@ -300,7 +300,7 @@ modparam("pua", "reginfo_increase_version", 1)
    in a database, allowing scalability at the expense of speed. Mode 1 is
    reserved.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.10. Set db_mode parameter
 ...
@@ -330,7 +330,7 @@ modparam("pua", "db_table_lock_write", 0)
    anyway. Set this parameter to 0 to disable checking of remote contact
    for SUBSCRIBE dialog matching.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.12. Set check_remote_contact parameter
 ...
@@ -352,7 +352,7 @@ modparam("pua", "fetch_rows", 1000)
 
    4.1. pua_update_contact()
 
-4.1. pua_update_contact()
+4.1.  pua_update_contact()
 
    The remote target can be updated by the Contact of a subsequent in
    dialog request. In the PUA watcher case (sending a SUBSCRIBE messages),
@@ -377,7 +377,7 @@ if(method=="NOTIFY")
 
    5.1. pua_cleanup
 
-5.1. pua_cleanup
+5.1.  pua_cleanup
 
    Manually triggers the cleanup functions for the pua table. Useful if
    you have set update_period to zero or less.
@@ -412,7 +412,7 @@ Chapter 2. Developer Guide
    The module provides the following functions that can be used by other
    Kamailio modules.
 
-1. bind_pua(pua_api_t* api)
+1.  bind_pua(pua_api_t* api)
 
    This function binds the pua modules and fills the structure with the
    two exported functions.
@@ -428,7 +428,7 @@ typedef struct pua_api {
 } pua_api_t;
 ...
 
-2. send_publish
+2.  send_publish
 
    Field type:
 ...
@@ -470,7 +470,7 @@ typedef struct publ_info
 }publ_info_t;
 ...
 
-3. send_subscribe
+3.  send_subscribe
 
    Field type:
 ...
@@ -509,7 +509,7 @@ typedef struct subs_info
 }subs_info_t;
 ...
 
-4. is_dialog
+4.  is_dialog
 
    Field type:
 ...
@@ -528,7 +528,7 @@ typedef int  (*query_dialog_t)(ua_pres_t* presentity);
         }
 ...
 
-5. register_puacb
+5.  register_puacb
 
    Field type:
 ...
@@ -557,7 +557,7 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
 typedef int (pua_cb)(ua_pres_t* hentity, struct sip_msg*);
 ...
 
-6. add_event
+6.  add_event
 
    Field type:
 ...

@@ -15,7 +15,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -620,7 +620,7 @@ modparam("auth", "force_stateless_reply", 1)
    to SRV records (not all SIP clients support SRV lookup), a subdomain of
    the master domain can be defined for SIP purposes (like
    sip.mydomain.net pointing to same IP address as the SRV record for
-   mydomain.net). By ignoring the realm_prefix "sip.", at authentication,
+   mydomain.net). By ignoring the realm_prefix “sip.”, at authentication,
    sip.example.com will be equivalent to example.com .
 
    Default value is empty string.
@@ -716,7 +716,7 @@ if (has_credentials("myrealm")) {
 }
 ...
 
-4.3. www_challenge(realm, flags)
+4.3.  www_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a WWW-Authorize
    header field containing a digest challenge, it will put the header
@@ -730,7 +730,7 @@ if (has_credentials("myrealm")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string "". In case of REGISTER requests, the
+       It must not be empty string “”. In case of REGISTER requests, the
        To header field domain (e.g., variable $td) can be used (because
        this header field represents the user being registered), for all
        other messages From header field domain can be used (e.g., variable
@@ -753,7 +753,7 @@ if (!www_authenticate("$td", "subscriber")) {
 }
 ...
 
-4.4. proxy_challenge(realm, flags)
+4.4.  proxy_challenge(realm, flags)
 
    The function challenges a user agent. It will generate a
    Proxy-Authorize header field containing a digest challenge, it will put
@@ -775,7 +775,7 @@ if (!proxy_authenticate("$fd", "subscriber")) {
 };
 ...
 
-4.5. auth_challenge(realm, flags)
+4.5.  auth_challenge(realm, flags)
 
    The function challenges a user agent for authentication. It combines
    the functions www_challenge() and proxy_challenge(), by calling
@@ -794,7 +794,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 };
 ...
 
-4.6. pv_www_authenticate(realm, passwd, flags [, method])
+4.6.  pv_www_authenticate(realm, passwd, flags [, method])
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -817,7 +817,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
      * realm - Realm is a opaque string that the user agent should present
        to the user so he can decide what username and password to use.
        Usually this is domain of the host the server is running on.
-       It must not be empty string "". In case of REGISTER requests To
+       It must not be empty string “”. In case of REGISTER requests To
        header field domain (e.g., varibale $td) can be used (because this
        header field represents a user being registered), for all other
        messages From header field domain can be used (e.g., varibale $fd).
@@ -846,7 +846,7 @@ if (!pv_www_authenticate("$td", "123abc", "0")) {
 };
 ...
 
-4.7. pv_proxy_authenticate(realm, passwd, flags)
+4.7.  pv_proxy_authenticate(realm, passwd, flags)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will succeed
@@ -869,7 +869,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 };
 ...
 
-4.8. pv_auth_check(realm, passwd, flags, checks)
+4.8.  pv_auth_check(realm, passwd, flags, checks)
 
    The function combines the functionalities of pv_www_authenticate and
    pv_proxy_authenticate, first being exectuted if the SIP request is a
@@ -900,7 +900,7 @@ if (!pv_auth_check("$fd", "$avp(password)", "0", "1")) {
 };
 ...
 
-4.9. auth_get_www_authenticate(realm, flags, pvdest)
+4.9.  auth_get_www_authenticate(realm, flags, pvdest)
 
    Build WWW-Authentication header and set the resulting value in 'pvdest'
    pseudo-variable parameter.

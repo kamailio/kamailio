@@ -16,7 +16,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright � 2012 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2012 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -113,7 +113,7 @@ Chapter 1. Admin Guide
    Set the path to the Mono assembly to be loaded at startup. You can use
    mono_run(param) to execute the assembly at runtime.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.1. Set load parameter
 ...
@@ -125,7 +125,7 @@ modparam("app_mono", "load", "/usr/local/etc/kamailio/mono/myscript.exe")
    4.1. mono_exec(path [, param])
    4.2. mono_run([param])
 
-4.1. mono_exec(path [, param])
+4.1.  mono_exec(path [, param])
 
    Execute the managed code assembly stored in 'path'. The path can be a
    string with pseudo-variables evaluated at runtime. A second parameter
@@ -140,7 +140,7 @@ modparam("app_mono", "load", "/usr/local/etc/kamailio/mono/myscript.exe")
 mono_exec("/usr/local/etc/kamailio/mono/myscript.exe");
 ...
 
-4.2. mono_run([param])
+4.2.  mono_run([param])
 
    Execute the assembly specified by 'load' module parameter. The assembly
    is loaded at startup, so changes to it will be effective only after

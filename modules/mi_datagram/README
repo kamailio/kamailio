@@ -8,7 +8,7 @@ Edited by
 
 Andreea-Ancuta Onofrei
 
-   Copyright � 2007 Voice Sistem SRL
+   Copyright © 2007 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -194,7 +194,7 @@ modparam("mi_datagram", "socket_timeout", 2000)
    Strings to be used for line indentation. As the MI data structure is
    tree oriendeted, the depth level will printed as identation.
 
-   Default value is ""\t" (TAB)".
+   Default value is “"\t" (TAB)”.
 
    Example 1.7. Set reply_ident parameter
 ...
@@ -207,8 +207,8 @@ modparam("mi_datagram", "reply_ident", "    ")
 
 6. Example
 
-   This is an example showing the DATAGRAM format for the "get_statistics
-   dialog: tm:" MI commad: response.
+   This is an example showing the DATAGRAM format for the “get_statistics
+   dialog: tm:” MI commad: response.
 
    Example 1.8. DATAGRAM request
 :get_statistics:\n
@@ -225,44 +225,44 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   Both UNIX and UDP type of socket can be created simultaneusly?
+       Both UNIX and UDP type of socket can be created simultaneusly?
 
-   This version supports only one kind of socket at a time. If there are
-   more than one value set for socket_name the last one will take effect.
+       This version supports only one kind of socket at a time. If there are
+       more than one value set for socket_name the last one will take effect.
 
    2.2.
 
-   Is there a limit in the datagram request's size?
+       Is there a limit in the datagram request's size?
 
-   The maximum length of a datagram request or reply is 65457 bytes.
+       The maximum length of a datagram request or reply is 65457 bytes.
 
    2.3.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.4.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    2.5.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   https://github.com/kamailio/kamailio/issues.
+       Please follow the guidelines provided at:
+       https://github.com/kamailio/kamailio/issues.

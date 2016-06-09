@@ -20,7 +20,7 @@ Klaus Darilion
 
    <klaus.darilion@enum.at>
 
-   Copyright � 2002, 2003, 2006 Juha Heinanen, Otmar Lendl, Klaus Darilion
+   Copyright © 2002, 2003, 2006 Juha Heinanen, Otmar Lendl, Klaus Darilion
      __________________________________________________________________
 
    Table of Contents
@@ -151,7 +151,7 @@ Chapter 1. Admin Guide
 
    This is URL of the database to be used.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio"
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”
 
    Example 1.1. Setting db_url parameter
 modparam("domainpolicy", "db_url", "postgres://proxy:frog23@db.sip-router.org/si
@@ -161,7 +161,7 @@ pdb")
 
    Name of table containing the local support domain policy setup.
 
-   Default value is "domainpolicy".
+   Default value is “domainpolicy”.
 
    Example 1.2. Setting dp_table parameter
 modparam("domainpolicy", "dp_table", "supportedpolicies")
@@ -171,7 +171,7 @@ modparam("domainpolicy", "dp_table", "supportedpolicies")
    Name of column containing the domain policy rule name which is equal to
    the URI as published in the domain policy NAPTRs.
 
-   Default value is "rule".
+   Default value is “rule”.
 
    Example 1.3. Setting dp_col_rule parameter
 modparam("domainpolicy", "dp_col_rule", "rules")
@@ -183,7 +183,7 @@ modparam("domainpolicy", "dp_col_rule", "rules")
    draft-lendl-speermint-technical-policy-00, this is "std". For direct
    domain lookups, this is "dom".
 
-   Default value is "type".
+   Default value is “type”.
 
    Example 1.4. Setting dp_col_rule parameter
 modparam("domainpolicy", "dp_col_type", "type")
@@ -193,7 +193,7 @@ modparam("domainpolicy", "dp_col_type", "type")
    Name of column containing the AVP's name. If the rule stored in this
    row triggers, than dp_can_connect() will add an AVP with that name.
 
-   Default value is "att".
+   Default value is “att”.
 
    Example 1.5. Setting dp_col_att parameter
 modparam("domainpolicy", "dp_col_att", "attribute")
@@ -203,7 +203,7 @@ modparam("domainpolicy", "dp_col_att", "attribute")
    Name of column containing the value for AVPs created by
    dp_can_connect().
 
-   Default value is "val".
+   Default value is “val”.
 
    Example 1.6. Setting dp_col_val parameter
 modparam("domainpolicy", "dp_col_val", "values")
@@ -213,7 +213,7 @@ modparam("domainpolicy", "dp_col_val", "values")
    This parameter defines the name of the AVP where dp_apply_policy() will
    look for an override port number.
 
-   Default value is "portoverride".
+   Default value is “portoverride”.
 
    Example 1.7. Setting port_override_avp parameter
 # string named AVP
@@ -223,7 +223,7 @@ modparam("domainpolicy", "port_override_avp", "portoverride")
 
    Name of the AVP which contains the override transport setting.
 
-   Default value is "transportoverride".
+   Default value is “transportoverride”.
 
    Example 1.8. Setting transport_override_avp parameter
 # string named AVP
@@ -233,7 +233,7 @@ modparam("domainpolicy", "transport_override_avp", "transportoverride")
 
    Name of the AVP which contains a domain replacement.
 
-   Default value is "domainreplacement".
+   Default value is “domainreplacement”.
 
    Example 1.9. Setting domain_replacement_avp parameter
 # string named AVP
@@ -243,7 +243,7 @@ modparam("domainpolicy", "domain_replacement_avp", "domainreplacement")
 
    Name of the AVP which contains a domain prefix.
 
-   Default value is "domainprefix".
+   Default value is “domainprefix”.
 
    Example 1.10. Setting domain_prefix_avp parameter
 # string named AVP
@@ -253,7 +253,7 @@ modparam("domainpolicy", "domain_prefix_avp", "domainprefix")
 
    Name of the AVP which contains a domain suffix.
 
-   Default value is "domainsuffix".
+   Default value is “domainsuffix”.
 
    Example 1.11. Setting domain_suffix_avp parameter
 # string named AVP
@@ -267,7 +267,7 @@ modparam("domainpolicy", "domain_suffix_avp", "domainsuffix")
    this AVP and if defined, it will force the send socket to its value
    (similar to the force_send_socket core function).
 
-   Default value is "sendsocket".
+   Default value is “sendsocket”.
 
    Example 1.12. Setting send_socket_avp parameter
 # string named AVP

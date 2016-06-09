@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright © 2007 Voice Sistem SRL
+   Copyright Â© 2007 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -106,7 +106,7 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 
    Functions exported to be used in configuration file.
 
-4.1. pua_xmpp_notify()
+4.1.  pua_xmpp_notify()
 
    Function that handles Notify messages addressed to a user from an xmpp
    domain. It requires filtering after method and domain in configuration
@@ -124,7 +124,7 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
         }
 ...
 
-4.2. pua_xmpp_req_winfo(request_uri, expires)
+4.2.  pua_xmpp_req_winfo(request_uri, expires)
 
    Function called when a Subscribe addressed to a user from a xmpp domain
    is received. It calls sending a Subscribe for winfo for the user, and

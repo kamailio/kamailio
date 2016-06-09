@@ -28,11 +28,11 @@ Phil Lavin
 
    <phil.lavin@synety.com>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
 
-   Copyright � 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright � 2008-2010 Juha Heinanen
+   Copyright © 2008-2010 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -62,7 +62,7 @@ Phil Lavin
 
    List of Examples
 
-   1.1. "SIP-AVP" RADIUS AVP exmaples
+   1.1. “SIP-AVP” RADIUS AVP exmaples
    1.2. radius_config parameter usage
    1.3. service_type parameter usage
    1.4. auth_extra parameter usage
@@ -120,7 +120,7 @@ Chapter 1. Admin Guide
    making extra queries.
 
    The additional credentials are embedded in the RADIUS reply as AVPs
-   "SIP-AVP". The syntax of the value is:
+   “SIP-AVP”. The syntax of the value is:
      * value = SIP_AVP_NAME SIP_AVP_VALUE
      * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
      * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
@@ -130,7 +130,7 @@ Chapter 1. Admin Guide
 
    The RPID value may be fetch via this mechanism.
 
-   Example 1.1. "SIP-AVP" RADIUS AVP exmaples
+   Example 1.1. “SIP-AVP” RADIUS AVP exmaples
 ....
 "email:joe@yahoo.com"
     - STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
@@ -179,7 +179,7 @@ Chapter 1. Admin Guide
    This is the location of the configuration file of radius client
    libraries.
 
-   Default value is "/usr/local/etc/radiusclient-ng/radiusclient.conf".
+   Default value is “/usr/local/etc/radiusclient-ng/radiusclient.conf”.
 
    Example 1.2. radius_config parameter usage
 modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
@@ -190,7 +190,7 @@ modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
    default should be fine for most people. See your radius client include
    files for numbers to be put in this parameter if you need to change it.
 
-   Default value is "15".
+   Default value is “15”.
 
    Example 1.3. service_type parameter usage
 modparam("auth_radius", "service_type", 15)
@@ -219,7 +219,7 @@ modparam("auth_radius", "auth_extra", "Acct-Session-Id=$ci")
    authentication. At the time of this writing, certain versions of
    Linksys WRT54GL are known to do that.
 
-   Default value is "-1".
+   Default value is “-1”.
 
    Example 1.5. use_ruri_flag parameter usage
 modparam("auth_radius", "use_ruri_flag", 22)

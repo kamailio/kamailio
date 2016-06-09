@@ -32,7 +32,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2014, 2013, 2007, 2008, 2004 Edvina AB, 1und1 Internet AG,
+   Copyright © 2014, 2013, 2007, 2008, 2004 Edvina AB, 1und1 Internet AG,
    BASIS AudioNet GmbH, Elena-Ramona Modroiu, Juha Heinanen, FhG FOKUS
      __________________________________________________________________
 
@@ -195,10 +195,10 @@ Chapter 1. Admin Guide
 
    The cfgutils module can be used to introduce randomness to the
    behaviour of the server. It provides setup functions and the
-   "rand_event" function. This function return either true or false,
+   “rand_event” function. This function return either true or false,
    depending on a random value and a specified probability. E.g. if you
    set via fifo or script a probability value of 5%, then 5% of all calls
-   to rand_event will return true. The pseudovariable "$RANDOM" could be
+   to rand_event will return true. The pseudovariable “$RANDOM” could be
    used to introduce random values e.g. into a SIP reply.
 
    The benefit of this module is the probability of the decision can be
@@ -208,20 +208,20 @@ Chapter 1. Admin Guide
 
    The module exports commands to FIFO server that can be used to change
    the global settings via FIFO interface. The FIFO commands are:
-   "set_prob", "reset_prob" and "get_prob".
+   “set_prob”, “reset_prob” and “get_prob”.
 
    This module can be used for simple load-shedding, e.g. reply 5% of the
    Invites with a 503 error and a adequate random Retry-After value.
 
    The module provides as well functions to delay the execution of the
-   server. The functions "sleep" and "usleep" could be used to let the
+   server. The functions “sleep” and “usleep” could be used to let the
    server wait a specific time interval.
 
    It can also hash the config file used from the server with a (weak)
    cryptographic hash function on startup. This value is saved and can be
    later compared to the actual hash, to detect modifications of this file
    after the server start. This functions are available as the FIFO
-   commands "check_config_hash" and "get_config_hash".
+   commands “check_config_hash” and “get_config_hash”.
 
    The gflags functionality (global flags) keeps a bitmap of flags in
    shared memory and may be used to change behaviour of server based on
@@ -257,7 +257,7 @@ Chapter 1. Admin Guide
 
    The initial value of the probability.
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.1. initial_probability parameter usage
 modparam("cfgutils", "initial_probability", 15)
@@ -277,7 +277,7 @@ modparam("cfgutils", "hash_file", "/etc/kamailio/kamailio.cfg")
 
    The initial value of global flags bitmap.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.3. initial parameter usage
 modparam("cfgutils", "initial_gflags", 15)
@@ -287,7 +287,7 @@ modparam("cfgutils", "initial_gflags", 15)
    Size of lock set - the value is used as power of two to compute the
    size of lock array.
 
-   Default value is "0" - no lock set created.
+   Default value is “0” - no lock set created.
 
    Example 1.4. lock_set_size parameter usage
 modparam("cfgutils", "lock_set_size", 4)
@@ -331,9 +331,9 @@ if (rand_event()) {
 
 4.2. rand_set_prob(probabiltiy)
 
-   Set the "probability" of the decision.
+   Set the “probability” of the decision.
 
-   "probability" can have a value from the range 0..100.
+   “probability” can have a value from the range 0..100.
 
    Example 1.6. rand_set_prob() usage
 ...
@@ -357,7 +357,7 @@ rand_reset_prob();
 ...
 rand_get_prob();
 
-4.5. sleep(time)
+4.5.  sleep(time)
 
    Waits "time" seconds.
 
@@ -372,7 +372,7 @@ rand_get_prob();
 sleep("1");
 ...
 
-4.6. usleep(time)
+4.6.  usleep(time)
 
    Waits "time" micro-seconds.
 
@@ -388,7 +388,7 @@ sleep("1");
 usleep("5000");
 ...
 
-4.7. abort()
+4.7.  abort()
 
    Debugging function that aborts the server. Depending on the
    configuration of the server a core dump will be created.
@@ -401,7 +401,7 @@ usleep("5000");
 abort();
 ...
 
-4.8. pkg_status()
+4.8.  pkg_status()
 
    Debugging function that dumps the status for the private (PKG) memory.
    This information is logged to the default log facility, depending on
@@ -416,7 +416,7 @@ abort();
 pkg_status();
 ...
 
-4.9. pkg_summary()
+4.9.  pkg_summary()
 
    Debugging function that dumps the summary for the private (PKG) memory
    usage. This information is logged to the default log facility,
@@ -431,7 +431,7 @@ pkg_status();
 pkg_summary();
 ...
 
-4.10. shm_status()
+4.10.  shm_status()
 
    Debugging function that dumps the status for the shared (SHM) memory.
    This information is logged to the default log facility, depending on
@@ -446,7 +446,7 @@ pkg_summary();
 shm_status();
 ...
 
-4.11. shm_summary()
+4.11.  shm_summary()
 
    Debugging function that dumps the summary for the shared (SHM) memory
    usage. This information is logged to the default log facility,
@@ -463,9 +463,9 @@ shm_summary();
 
 4.12. set_gflag(flag)
 
-   Set the bit at the position "flag" in global flags.
+   Set the bit at the position “flag” in global flags.
 
-   "flag" can have a value in the range of 0..31.
+   “flag” can have a value in the range of 0..31.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -477,9 +477,9 @@ set_gflag("4");
 
 4.13. reset_gflag(flag)
 
-   Reset the bit at the position "flag" in global flags.
+   Reset the bit at the position “flag” in global flags.
 
-   "flag" can have a value in the range of 0..31.
+   “flag” can have a value in the range of 0..31.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -491,9 +491,9 @@ reset_gflag("4");
 
 4.14. is_gflag(flag)
 
-   Check if bit at the position "flag" in global flags is set.
+   Check if bit at the position “flag” in global flags is set.
 
-   "flag" can have a value in the range of 0..31.
+   “flag” can have a value in the range of 0..31.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -516,7 +516,7 @@ if(is_gflag("4"))
    after another lock() unless you are sure the keys hit different array
    entries.
 
-   "key" can be static string or string with PVs.
+   “key” can be static string or string with PVs.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -530,7 +530,7 @@ lock("$rU");
 
    Unlock the key.
 
-   "key" can be static string or string with PVs.
+   “key” can be static string or string with PVs.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -547,7 +547,7 @@ unlock("$rU");
 
    Parameters:
 
-   "name" of a route block in the config file, like "route[FROGJUMP]"
+   “name” of a route block in the config file, like “route[FROGJUMP]”
 
    This function can be used from any route. You can only check for
    route[] blocks, not reply, event or other routes.
@@ -569,7 +569,7 @@ if(check_route_exists("JUMP") {
 
    Parameters:
 
-   "name" of a route block in the config file, like "route[FROGJUMP]"
+   “name” of a route block in the config file, like “route[FROGJUMP]”
 
    This function can be used from any route. You can only execute it for
    route[] blocks, not reply, event or other routes.
@@ -591,10 +591,10 @@ if(route_if_exists("JUMP")) {
    security related purposes.
 
    Parameters:
-     * "string1" first string to hash
-     * "string2" (optional) second string to hash (set to "" if not
+     * “string1” first string to hash
+     * “string2” (optional) second string to hash (set to "" if not
        needed)
-     * "size" size of the hash space (used as a power of 2)
+     * “size” size of the hash space (used as a power of 2)
 
    This function can be used from ANY_ROUTE.
 
@@ -638,7 +638,7 @@ $ kamctl fifo rand_set_prob 10
 
    This command don't need a parameter.
 
-   Example 1.25. rand_reset_prob usage
+   Example 1.25.  rand_reset_prob usage
 ...
 $ kamctl fifo rand_reset_prob
 ...
@@ -702,7 +702,7 @@ $ kamctl fifo set_gflag 0x3
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.30. reset_gflag usage
+   Example 1.30.  reset_gflag usage
 ...
 $ kamctl fifo reset_gflag 1
 $ kamctl fifo reset_gflag 0x3
@@ -741,7 +741,7 @@ TRUE
    Return the bitmap with all flags. The function gets no parameters and
    returns the bitmap in hexadecimal and decimal format.
 
-   Example 1.32. get_gflags usage
+   Example 1.32.  get_gflags usage
 ...
 $ kamctl fifo get_gflags
 0x3039
@@ -775,7 +775,7 @@ $ kamctl cfgutils.set_gflag s:1
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.34. cfgutils.reset_gflag usage
+   Example 1.34.  cfgutils.reset_gflag usage
 ...
 $ kamctl cfgutils.reset_gflag s:0x1
 ...

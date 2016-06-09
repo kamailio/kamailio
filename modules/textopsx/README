@@ -9,7 +9,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright © 2003 FhG FOKUS
+   Copyright Â© 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -109,7 +109,7 @@ Chapter 1. Admin Guide
    2.13. exclude_hf_value(hf, hvalue)
    2.14. hf_value_exists(hf, hvalue)
 
-2.1. msg_apply_changes()
+2.1.  msg_apply_changes()
 
    Use this function to apply changes performed on SIP message content. Be
    careful when using this function; due to special handling of changes to
@@ -138,7 +138,7 @@ if(msg_apply_changes())
 }
 ...
 
-2.2. change_reply_status(code, reason)
+2.2.  change_reply_status(code, reason)
 
    Intercept a SIP reply (in an onreply_route) and change its status code
    and reason phrase prior to forwarding it.
@@ -159,7 +159,7 @@ onreply_route {
 }
 ...
 
-2.3. remove_body()
+2.3.  remove_body()
 
    Use this function to remove the body of SIP requests or replies.
 
@@ -170,7 +170,7 @@ onreply_route {
 remove_body();
 ...
 
-2.4. keep_hf([regexp])
+2.4.  keep_hf([regexp])
 
    Remove headers that don't match the regular expression regexp. Several
    header are ignored always (thus not removed): Via, From, To, Call-ID,
@@ -186,7 +186,7 @@ remove_body();
 keep_hf("User-Agent");
 ...
 
-2.5. fnmatch(value, expr [, flags])
+2.5.  fnmatch(value, expr [, flags])
 
    Match the value against the expr using shell-style pattern for file
    name matching (see man page for C function fnmatch()). It is known to
@@ -205,7 +205,7 @@ if(fnmatch("$rU", "123*"))
 }
 ...
 
-2.6. append_hf_value(hf, hvalue)
+2.6.  append_hf_value(hf, hvalue)
 
    Append new header value after an existing header, if no index acquired
    append at the end of list. Note that a header may consist of comma
@@ -225,7 +225,7 @@ append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if n
 ot exists add new header
 ...
 
-2.7. insert_hf_value(hf, hvalue)
+2.7.  insert_hf_value(hf, hvalue)
 
    Insert new header value before an existing header, if no index acquired
    insert before first hf header. Note that a header may consist of comma
@@ -245,7 +245,7 @@ insert_hf_value("foo", "$avp(foo)")   # add new header at the top of list
 insert_hf_value("foo[1]", "gogo") # try add to the first header
 ...
 
-2.8. remove_hf_value(hf_par)
+2.8.  remove_hf_value(hf_par)
 
    Remove the header value from existing header, Note that a header may
    consist of comma delimited list of values.
@@ -264,7 +264,7 @@ remove_hf_value("foo.bar")  # delete parameter
 remove_hf_value("foo[*].bar") # for each foo delete bar parameters
 ...
 
-2.9. remove_hf_value2(hf_par)
+2.9.  remove_hf_value2(hf_par)
 
    Remove specified header or parameter. It is expected header in
    Authorization format (comma delimiters are not treated as multi-value
@@ -285,7 +285,7 @@ remove_hf_value2("foo.bar")  # delete parameter
 remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
 ...
 
-2.10. assign_hf_value(hf, hvalue)
+2.10.  assign_hf_value(hf, hvalue)
 
    Assign value to specified header value / param.
 
@@ -307,7 +307,7 @@ assign_hf_value("foo[*]", "")  # remove all foo's, empty value remains
 assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
 ...
 
-2.11. assign_hf_value2(hf, hvalue)
+2.11.  assign_hf_value2(hf, hvalue)
 
    Assign value to specified header. It is expected header in
    Authorization format (comma delimiters are not treated as multi-value
@@ -327,7 +327,7 @@ assign_hf_value2("foo[-1]", "gogo")  # foo[last_foo]
 assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
 ...
 
-2.12. include_hf_value(hf, hvalue)
+2.12.  include_hf_value(hf, hvalue)
 
    Add value in set if not exists, eg. "Supported: path,100rel".
 
@@ -340,7 +340,7 @@ assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
 include_hf_value("Supported", "path");
 ...
 
-2.13. exclude_hf_value(hf, hvalue)
+2.13.  exclude_hf_value(hf, hvalue)
 
    Remove value from set if exists, eg. "Supported: path,100rel".
 
@@ -353,7 +353,7 @@ include_hf_value("Supported", "path");
 exclude_hf_value("Supported", "100rel");
 ...
 
-2.14. hf_value_exists(hf, hvalue)
+2.14.  hf_value_exists(hf, hvalue)
 
    Check if value exists in set. Alternate select
    @hf_value_exists.HF.VALUE may be used. It returns one or zero.

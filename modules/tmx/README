@@ -22,7 +22,7 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright � 2009 Daniel-Constantin Mierla
+   Copyright © 2009 Daniel-Constantin Mierla
      __________________________________________________________________
 
    Table of Contents
@@ -178,7 +178,7 @@ Chapter 1. Admin Guide
 
    3.1. precheck_trans
 
-3.1. precheck_trans
+3.1.  precheck_trans
 
    Enable/disable transaction pre-check via t_precheck_trans() function.
    If set to 0, the internal structures are not created at startup and the
@@ -206,7 +206,7 @@ modparam("tmx", "precheck_trans", 0)
    4.11. t_reuse_branch()
    4.12. t_precheck_trans()
 
-4.1. t_cancel_branches(which)
+4.1.  t_cancel_branches(which)
 
    Cancel branches of an active SIP transaction. The function can be
    called for a SIP reply that will identify the current branch.
@@ -225,7 +225,7 @@ if (t_cancel_branches("all")) {
 }
 ...
 
-4.2. t_cancel_callid(callid, cseq, flag [, rcode])
+4.2.  t_cancel_callid(callid, cseq, flag [, rcode])
 
    Cancel first INVITE transaction identified by callid and cseq. It sets
    the flag if the value is greater than zero
@@ -250,7 +250,7 @@ if (t_cancel_callid("123qaz", "5", "22", "200")) {
 }
 ...
 
-4.3. t_reply_callid(callid, cseq, code, reason)
+4.3.  t_reply_callid(callid, cseq, code, reason)
 
    Send reply to first transaction identified by callid and cseq.
 
@@ -269,7 +269,7 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 }
 ...
 
-4.4. t_flush_flags()
+4.4.  t_flush_flags()
 
    Flush the flags from current SIP message into the already created
    transaction. It make sense only in routing block if the transaction was
@@ -282,7 +282,7 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 t_flush_flags();
 ...
 
-4.5. t_is_failure_route()
+4.5.  t_is_failure_route()
 
    Returns true if the top-executed route block is failure_route.
 
@@ -299,7 +299,7 @@ route[abc] {
 }
 ...
 
-4.6. t_is_branch_route()
+4.6.  t_is_branch_route()
 
    Returns true if the top-executed route block is branch_route.
 
@@ -316,7 +316,7 @@ route[abc] {
 }
 ...
 
-4.7. t_is_reply_route()
+4.7.  t_is_reply_route()
 
    Returns true if the top-executed route block is reply_route.
 
@@ -333,7 +333,7 @@ route[abc] {
 }
 ...
 
-4.8. t_is_request_route()
+4.8.  t_is_request_route()
 
    Returns true if the top-executed route block is request_route.
 
@@ -350,7 +350,7 @@ route[abc] {
 }
 ...
 
-4.9. t_suspend()
+4.9.  t_suspend()
 
    Suspend the execution of SIP request in a transaction. If transaction
    was not created yet, it is created by this function. Returns true in
@@ -368,7 +368,7 @@ if(t_suspend())
 }
 ...
 
-4.10. t_continue(tindex, tlabel, rtname)
+4.10.  t_continue(tindex, tlabel, rtname)
 
    Continue the execution of the transaction identified by tindex and
    tlabel with the actions defined in route[rtname].
@@ -388,7 +388,7 @@ if(t_suspend())
 t_continue('123', '456', 'MYROUTE');
 ...
 
-4.11. t_reuse_branch()
+4.11.  t_reuse_branch()
 
    Creates new "main" branch by making copy of branch-failure branch.
    Currently the following branch attributes are copied from
@@ -407,7 +407,7 @@ event_route [tm:branch-failure:contact] {
 }
 ...
 
-4.12. t_precheck_trans()
+4.12.  t_precheck_trans()
 
    Check if current processed message is handled by other process. This
    function is useful to catch retransmissions before transaction is
@@ -453,22 +453,22 @@ event_route [tm:branch-failure:contact] {
    6.4. t_reply
    6.5. t_reply_callid
 
-6.1. t_uac_dlg
+6.1.  t_uac_dlg
 
    Generates and sends a local SIP request.
 
    Parameters:
      * method - request method
      * RURI - request SIP URI
-     * NEXT HOP - next hop SIP URI (OBP); use "." if no value.
-     * socket - local socket to be used for sending the request; use "."
+     * NEXT HOP - next hop SIP URI (OBP); use “.” if no value.
+     * socket - local socket to be used for sending the request; use “.”
        if no value.
      * headers - set of additional headers to be added to the request; at
-       least "From" and "To" headers must be specify)
+       least “From” and “To” headers must be specify)
      * body - (optional, may not be present) request body (if present,
-       requires the "Content-Type" and "Content-length" headers)
+       requires the “Content-Type” and “Content-length” headers)
 
-6.2. t_uac_cancel
+6.2.  t_uac_cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
@@ -476,14 +476,14 @@ event_route [tm:branch-failure:contact] {
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
 
-6.3. t_hash
+6.3.  t_hash
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
      * none
 
-6.4. t_reply
+6.4.  t_reply
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -493,11 +493,11 @@ event_route [tm:branch-failure:contact] {
      * trans_id - transaction identifier (has the hash_entry:label format)
      * to_tag - To tag to be added to TO header
      * new_headers - extra headers to be appended to the reply; use a dot
-       (".") char only if there are no headers;
+       (“.”) char only if there are no headers;
      * body - (optional, may not be present) reply body (if present,
-       requires the "Content-Type" and "Content-length" headers)
+       requires the “Content-Type” and “Content-length” headers)
 
-6.5. t_reply_callid
+6.5.  t_reply_callid
 
    Generates and sends a reply for an existing inbound SIP transaction.
 
@@ -508,9 +508,9 @@ event_route [tm:branch-failure:contact] {
      * cseq - SIP CSeq header
      * to_tag - To tag to be added to TO header
      * new_headers - extra headers to be appended to the reply; use a dot
-       (".") char only if there are no headers;
+       (“.”) char only if there are no headers;
      * body - (optional, may not be present) reply body (if present,
-       requires the "Content-Type" and "Content-length" headers)
+       requires the “Content-Type” and “Content-length” headers)
 
 7. Statistics
 
@@ -530,7 +530,7 @@ event_route [tm:branch-failure:contact] {
    7.14. rpl_sent
 
    Exported statistics are listed in the next sections. All statistics
-   except "inuse_transactions" can be reset.
+   except “inuse_transactions” can be reset.
 
 7.1. UAS_transactions
 

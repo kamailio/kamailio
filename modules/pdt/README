@@ -11,11 +11,11 @@ Elena-Ramona Modroiu
 
    <ramona@asipto.com>
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
 
-   Copyright � 2004 Voice Sistem SRL
+   Copyright © 2004 Voice Sistem SRL
 
-   Copyright � 2008 Elena-Ramona Modroiu
+   Copyright © 2008 Elena-Ramona Modroiu
      __________________________________________________________________
 
    Table of Contents
@@ -181,7 +181,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 
    URL of the database table to be used.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.2. Set db_url parameter
 ...
@@ -192,7 +192,7 @@ modparam("pdt", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    Table name.
 
-   Default value is "pdt".
+   Default value is “pdt”.
 
    Example 1.3. Set db_table parameter
 ...
@@ -203,7 +203,7 @@ modparam("pdt", "db_table", "pdt")
 
    Name of 'sdomain' column.
 
-   Default value is "sdomain".
+   Default value is “sdomain”.
 
    Example 1.4. Set sdomain_column parameter
 ...
@@ -214,7 +214,7 @@ modparam("pdt", "domain_column", "source_domain")
 
    Name of 'prefix' column.
 
-   Default value is "prefix".
+   Default value is “prefix”.
 
    Example 1.5. Set prefix_column parameter
 ...
@@ -225,7 +225,7 @@ modparam("pdt", "prefix_column", "prefix")
 
    Name of 'domain' column.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.6. Set domain_column parameter
 ...
@@ -262,7 +262,7 @@ modparam("pdt", "fetch_rows", 4000)
 
    The list with characters allowed in prefix.
 
-   Default value is "0123456789".
+   Default value is “0123456789”.
 
    Example 1.9. Set char_list parameter
 ...
@@ -288,7 +288,7 @@ modparam("pdt", "check_domain", 0)
    4.3. prefix2domain()
    4.4. pd_translate(sdomain, rewrite_mode)
 
-4.1. prefix2domain(rewrite_mode, multidomain_mode)
+4.1.  prefix2domain(rewrite_mode, multidomain_mode)
 
    Build a new URI if it is necessary. Returns 1 when the translation was
    made or there was nothing to translate (user part of the URI is empty,
@@ -305,14 +305,14 @@ modparam("pdt", "check_domain", 0)
    of source domain. This can be achieved inserting in the database
    entries where sdomain has the value "*".
 
-   The "rewrite_mode" parameter specifies whether to strip or not the
+   The “rewrite_mode” parameter specifies whether to strip or not the
    prefix from user part. The possible values are:
      * 0: the prefix is removed along with the leading prefix.
      * 1: only the leading prefix is removed.
      * 2: the user part of the URI is not changed.
      * $PV : any PV holding one of the above values.
 
-   The "multidomain_mode" parameter specifies the kind of multidomain
+   The “multidomain_mode” parameter specifies the kind of multidomain
    support to use. The possible values are:
      * 0 : Translation of URI regardless of source domain.
      * 1 : Translation of URI using as source domain the domain in
@@ -332,7 +332,7 @@ $var(a) = 1;
 prefix2domain("$var(a)", "2");
 ...
 
-4.2. prefix2domain(rewrite_mode)
+4.2.  prefix2domain(rewrite_mode)
 
    The same as prefix2domain(rewrite_mode, "0"), that is without
    multidomain support, translation of URI being done regardless of the
@@ -341,14 +341,14 @@ prefix2domain("$var(a)", "2");
 prefix2domain("2");
 ...
 
-4.3. prefix2domain()
+4.3.  prefix2domain()
 
    The same as prefix2domain("0", "0").
 ...
 prefix2domain();
 ...
 
-4.4. pd_translate(sdomain, rewrite_mode)
+4.4.  pd_translate(sdomain, rewrite_mode)
 
    Translate R-URI based on source domain and longest prefix matching.
    Returns 1 when the translation was made or there was nothing to
@@ -357,11 +357,11 @@ prefix2domain();
    The translation is done based on lookup up for an entry in the database
    where the sdomain parameter equals the sdomain in database table.
 
-   The "sdomain" parameter specifies the source domain to be used to match
+   The “sdomain” parameter specifies the source domain to be used to match
    the longest prefix. Can be a static string or dynamic parameter with
    variables inside.
 
-   The "rewrite_mode" parameter specifies whether to strip or not the
+   The “rewrite_mode” parameter specifies whether to strip or not the
    prefix from user part. The possible values are:
      * 0: the prefix is removed along with the leading prefix.
      * 1: only the leading prefix is removed.
@@ -389,7 +389,7 @@ pd_translate("*", "$var(a)");
    changes made via these commands are applied to database and the cache
    is updated correspondingly.
 
-5.1. pdt_list
+5.1.  pdt_list
 
    Produces a listing of the entries prefixes/domains/sdomains.
 
@@ -413,14 +413,14 @@ pd_translate("*", "$var(a)");
                 _empty_line_
 
    Examples:
-     * "pdt_list siph 2 ." : Lists the entries where sdomain is starting
+     * “pdt_list siph 2 .” : Lists the entries where sdomain is starting
        with 'siph', prefix is starting with '2' and domain is anything
-     * "pdt_list siph 2" : Lists the entries where sdomain is starting
+     * “pdt_list siph 2” : Lists the entries where sdomain is starting
        with 'siph', prefix is starting with '2' and domain is anything
-     * "pdt_list . 2 open" : Lists the entries where sdomain is anything,
+     * “pdt_list . 2 open” : Lists the entries where sdomain is anything,
        prefix starts with '2' and domain starts with 'open'.
 
-5.2. pdt_reload
+5.2.  pdt_reload
 
    Reload all sdomain-prefix-domain records from database.
 

@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -225,7 +225,7 @@ Chapter 1. Admin Guide
    startup. You can change the value at runtime without restart, globally
    or per process.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.1. Set cfgtrace parameter
 ...
@@ -237,7 +237,7 @@ modparam("debugger", "cfgtrace", 1)
    Control whether every line (global) breakpoint is enabled or disabled
    at startup.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.2. Set breakpoint parameter
 ...
@@ -248,7 +248,7 @@ modparam("debugger", "breakpoint", 1)
 
    What log level is to be used to print module-specific messages.
 
-   Default value is "-1" (L_ERR).
+   Default value is “-1” (L_ERR).
 
    Example 1.3. Set log_level parameter
 ...
@@ -259,7 +259,7 @@ modparam("debugger", "log_level", 1)
 
    What log level name is to be used to print cfg trace messages.
 
-   Default value is "NULL" (use default log names).
+   Default value is “NULL” (use default log names).
 
    Example 1.4. Set log_level_name parameter
 ...
@@ -272,7 +272,7 @@ modparam("debugger", "log_level_name", "exec")
    using this setting, you can configure syslog to send debug messages to
    a separate log channel, like a specific kamailio-debug log file.
 
-   Default value is "NULL" (default from core).
+   Default value is “NULL” (default from core).
 
    Example 1.5. Set log_facility parameter
 ...
@@ -283,7 +283,7 @@ modparam("debugger", "log_facility", "LOG_DAEMON")
 
    String to print before any module-specific messages.
 
-   Default value is "*** cfgtrace:".
+   Default value is “*** cfgtrace:”.
 
    Example 1.6. Set log_prefix parameter
 ...
@@ -295,7 +295,7 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
    Microseconds to sleep before checking for new commands when waiting at
    a breakpoint.
 
-   Default value is "100000" (that is 0.1 sec).
+   Default value is “100000” (that is 0.1 sec).
 
    Example 1.7. Set step_usleep parameter
 ...
@@ -309,7 +309,7 @@ modparam("debugger", "step_usleep", 500000)
    blocking RPC process forever in case the worker process 'forgets' to
    write back a reply.
 
-   Default value is "200".
+   Default value is “200”.
 
    Example 1.8. Set step_loops parameter
 ...
@@ -325,7 +325,7 @@ modparam("debugger", "step_loops", 100)
    configured by mod_level or mod_facility. This parameter is accesible
    readonly via the Kamailio config framework.
 
-   Default value is "0" - feature disabled.
+   Default value is “0” - feature disabled.
 
    Example 1.9. Set mod_hash_size parameter
 ...
@@ -338,7 +338,7 @@ modparam("debugger", "mod_hash_size", 5)
    This parameter is tunable via the Kamailio config framework. To use per
    module log level you also have to set mod_hash_size.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.10. Set mod_level_mode parameter
 ...
@@ -364,7 +364,7 @@ modparam("debugger", "mod_level", "tm=3")
    This parameter is tunable via the Kamailio config framework. To use per
    module log facility you also have to set mod_hash_size.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.12. Set mod_facility_mode parameter
 ...
@@ -393,7 +393,7 @@ modparam("debugger", "mod_facility", "debugger=LOG_LOCAL1")
    Enable or disable log assign actions on config (0 - disabled, 1 -
    enabled).
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.14. Set log_assign parameter
 ...
@@ -405,7 +405,7 @@ modparam("debugger", "log_assign", 1)
    If set, before each config action is done pkg memory check, useful to
    detect buffer overflows.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.15. Set cfgpkgcheck parameter
 ...
@@ -417,7 +417,7 @@ modparam("debugger", "cfgpkgcheck", 1)
    Used to enable or disable the ability to reset the msgid ($mi) through
    the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
 
-   Default value is "0" - feature disabled.
+   Default value is “0” - feature disabled.
 
    Example 1.16. Set reset_msgid parameter
 ...
@@ -429,7 +429,7 @@ modparam("debugger", "reset_msgid", 1)
    Control whether the cfgt module is enabled or disabled at startup.
    Module cfgt needs to be loaded before.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.17. Set cfgtest parameter
 ...
@@ -443,7 +443,7 @@ modparam("debugger", "cfgtest", 1)
    4.2. dbg_pv_dump([mask] [, level])
    4.3. dbg_sip_msg([log_level], [facility])
 
-4.1. dbg_breakpoint(mode)
+4.1.  dbg_breakpoint(mode)
 
    Anchor a breakpoint at the current line of the config (the one on which
    this function is called). The 'mode' specifies whether the breakpoint
@@ -458,7 +458,7 @@ if($si=="10.0.0.10")
         dbg_breakpoint("1");
 ...
 
-4.2. dbg_pv_dump([mask] [, level])
+4.2.  dbg_pv_dump([mask] [, level])
 
    Prints the content of pv_cache on json format. Defaults are mask=31 and
    level = "L_DBG"
@@ -503,7 +503,7 @@ vp(x)":[{"different":["foo"]},{"other":[2,1],"more":["hi","bye"]}],"$T_branch_id
 x":0,"$var(empty)":0}
  ...
 
-4.3. dbg_sip_msg([log_level], [facility])
+4.3.  dbg_sip_msg([log_level], [facility])
 
    Prints how the sip message would look like if it would be sent out at
    that point in the config(i.e. if the current lump lists would have been
@@ -616,7 +616,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    6.8. dbg.get_mod_level
    6.9. dbg.get_mod_facility
 
-6.1. dbg.ls
+6.1.  dbg.ls
 
    List Kamailio processes with info related to interactive debugging.
 
@@ -630,7 +630,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
                 dbg.ls
                 dbg.ls 1234
 
-6.2. dbg.trace
+6.2.  dbg.trace
 
    Control config script running trace.
 
@@ -647,7 +647,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
                 dbg.trace off
                 dbg.trace on 1234
 
-6.3. dbg.bp
+6.3.  dbg.bp
 
    Control breakpoints and config execution.
 
@@ -685,7 +685,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
                 dbg.bp eval 1234 $fu
                 dbg.bp move 1234
 
-6.4. dbg.mod_level
+6.4.  dbg.mod_level
 
    Specify module log level.
 
@@ -699,7 +699,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
                 dbg.mod_level core 3
                 dbg.mod_level tm 3
 
-6.5. dbg.reset_msgid
+6.5.  dbg.reset_msgid
 
    Resets the message sequence ($mi). Internally there is no real change.
    This can be useful for unit test cases in order to be able to replicate
@@ -711,7 +711,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                 dbg.reset_msgid
 
-6.6. dbg.set_mod_level
+6.6.  dbg.set_mod_level
 
    Set the module log level. If module does not exist in kamailio, the
    entry in the level hashtable is still added for the bogus module.
@@ -721,7 +721,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                         dbg.set_mod_level core 1
 
-6.7. dbg.set_mod_facility
+6.7.  dbg.set_mod_facility
 
    Set the module log facility. If module does not exist in kamailio, the
    entry in the facility hashtable is still added for the bogus module.
@@ -731,7 +731,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                         dbg.set_mod_facility core LOG_LOCAL1
 
-6.8. dbg.get_mod_level
+6.8.  dbg.get_mod_level
 
    Get the module log level. If mod_name does not exist in the level
    hashtable, returns the config file value.
@@ -741,7 +741,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                         dbg.get_mod_level core
 
-6.9. dbg.get_mod_facility
+6.9.  dbg.get_mod_facility
 
    Get the module log facility. If mod_name does not exist in the facility
    hashtable, returns the config file value.

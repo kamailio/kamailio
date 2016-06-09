@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2016 asipto.com
+   Copyright © 2016 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -137,7 +137,7 @@ modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
 
    4.1. statsc.exec
 
-4.1. statsc.exec
+4.1.  statsc.exec
 
    Get the report of recorded statistics.
 
@@ -145,8 +145,8 @@ modparam("statsc", "track", "req.received=rcv_requests;rpl.received=rcv_replies"
 
    Parameters:
      * _type_ :
-          + "list": list recorded values
-          + "diff": show diff between recorded values
+          + “list”: list recorded values
+          + “diff”: show diff between recorded values
      * _name_: (optional) name of the statistic to show the report for. If
        missing or set to 'all', then the reports for all recorded
        statistics are done.

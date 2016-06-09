@@ -11,7 +11,7 @@ Lucian Balaceanu
    1&1 Internet AG
    <lucian.balaceanu@1and1.ro>
 
-   Copyright � 2007 1&1 Internet AG
+   Copyright © 2007 1&1 Internet AG
      __________________________________________________________________
 
    Table of Contents
@@ -274,7 +274,7 @@ Chapter 1. Admin Guide
    use the lcr and dispatcher module.
 
    Starting with version 3.1 , if you want to use this module in failure
-   routes, it is not needed to call"append_branch()" after rewriting the
+   routes, it is not needed to call“append_branch()” after rewriting the
    request URI in order to relay the message to the new target. Its also
    supportes the usage of database derived failure routing descisions with
    the carrierfailureroute table.
@@ -291,7 +291,7 @@ Chapter 1. Admin Guide
        needs the capability to issue raw queries. Its not possible to use
        the dbtext or db_berkeley module at the moment.
      * The tm module, when you want to use the $T_reply_code
-       pseudo-variable in the "cr_next_domain" function.
+       pseudo-variable in the “cr_next_domain” function.
 
 3. Parameters
 
@@ -313,7 +313,7 @@ Chapter 1. Admin Guide
 
    The name of the table containing the subscribers
 
-   Default value is "subscriber".
+   Default value is “subscriber”.
 
    Example 1.1. Set subscriber_table parameter
 ...
@@ -325,7 +325,7 @@ modparam("carrierroute", "subscriber_table", "subscriber")
    The name of the column in the subscriber table containing the
    usernames.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.2. Set subscriber_user_col parameter
 ...
@@ -337,7 +337,7 @@ modparam("carrierroute", "subscriber_user_col", "username")
    The name of the column in the subscriber table containing the domain of
    the subscriber.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.3. Set subscriber_domain_col parameter
 ...
@@ -349,7 +349,7 @@ modparam("carrierroute", "subscriber_domain_col", "domain")
    The name of the column in the subscriber table containing the carrier
    id of the subscriber.
 
-   Default value is "cr_preferred_carrier".
+   Default value is “cr_preferred_carrier”.
 
    Example 1.4. Set subscriber_carrier_col parameter
 ...
@@ -361,7 +361,7 @@ modparam("carrierroute", "subscriber_carrier_col", "cr_preferred_carrier")
    Specifies whether the module loads its config data from a file or from
    a database. Possible values are file or db.
 
-   Default value is "file".
+   Default value is “file”.
 
    Example 1.5. Set config_source parameter
 ...
@@ -372,7 +372,7 @@ modparam("carrierroute", "config_source", "file")
 
    Specifies the path to the config file.
 
-   Default value is "/etc/kamailio/carrierroute.conf".
+   Default value is “/etc/kamailio/carrierroute.conf”.
 
    Example 1.6. Set config_file parameter
 ...
@@ -384,7 +384,7 @@ modparam("carrierroute", "config_file", "/etc/kamailio/carrierroute.conf")
    The name of the carrier tree used per default (if the current
    subscriber has no preferred tree)
 
-   Default value is "default".
+   Default value is “default”.
 
    Example 1.7. Set default_tree parameter
 ...
@@ -397,7 +397,7 @@ modparam("carrierroute", "default_tree", "default")
    use the domain part for user matching or not. This parameter is tunable
    via the ser cfg framework.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.8. Set use_domain parameter
 ...
@@ -411,7 +411,7 @@ modparam("carrierroute", "use_domain", 0)
    1, the default tree is used. Otherwise, cr_user_rewrite_uri returns an
    error. This parameter is tunable via the ser cfg framework.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.9. Set fallback_default parameter
 ...
@@ -426,7 +426,7 @@ modparam("carrierroute", "fallback_default", 1)
    The database driver must support the fetch_result() capability. This
    parameter is tunable via the ser cfg framework.
 
-   Default value is "2000".
+   Default value is “2000”.
 
    Example 1.10. Set fetch_rows parameter
 ...
@@ -439,7 +439,7 @@ modparam("carrierroute", "fetch_rows", 3000)
    carrierroute/carrierfailureroute database tables. This reduces the
    shared memory used by the module.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.11. Unset db_load_description parameter
 ...
@@ -455,7 +455,7 @@ modparam("carrierroute", "db_load_description", 0)
    matching. Please be aware that memory requirements for storing the
    routing tree in shared memory will also increase by a factor of 12.8.
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.12. Set match_mode parameter
 ...
@@ -468,7 +468,7 @@ modparam("carrierroute", "match_mode", 10)
    failurerouting cases destinations that previously failed are avoided.
    Possible values are 0 (off), 1 (on). Also see cr_route section.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.13. Set avoid_failed_destinations parameter
 ...
@@ -505,13 +505,13 @@ cr_user_rewrite_uri(uri, domain)
 cr_tree_rewrite_uri(tree, domain)
 -> cr_route(tree, domain, "$rU", "$rU", "call_id")
 
-4.1. cr_user_carrier(user, domain, dstavp)
+4.1.  cr_user_carrier(user, domain, dstavp)
 
    This function loads the carrier and stores it in an AVP. It cannot be
    used in the config file mode, as it needs a mapping of the given user
    to a certain carrier. The is derived from a database entry belonging to
    the user parameter. This mapping must be available in the table that is
-   specified in the "subscriber_table" variable. This data is not cached
+   specified in the “subscriber_table” variable. This data is not cached
    in memory, that means for every execution of this function a database
    query will be done.
 
@@ -522,7 +522,7 @@ cr_tree_rewrite_uri(tree, domain)
        string any pseudo-variable could be used as input.
      * dstavp - Name of the AVP where to store the carrier id.
 
-4.2. cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source,
+4.2.  cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source,
 descavp)
 
    This function searches for the longest match for the user given in
@@ -548,7 +548,7 @@ descavp)
 
    If flags and masks values are specified in the routing rule, they will
    be compared by this function to the message flags. Specify a flag and
-   mask value of "0" to match to all possible message flags (this is the
+   mask value of “0” to match to all possible message flags (this is the
    default value). If flags and mask are not zero, and no match to the
    message flags is possible, no routing will be done. The calculation of
    the hash and the load-balancing is done after the flags matching.
@@ -571,7 +571,7 @@ descavp)
      * decsavp - Name of the AVP where to store the description. This
        parameter is optional.
 
-4.3. cr_nofallback_route(carrier, domain, prefix_matching, rewrite_user,
+4.3.  cr_nofallback_route(carrier, domain, prefix_matching, rewrite_user,
 hash_source, descavp)
 
    This function searches for the longest match for the user given in
@@ -612,7 +612,7 @@ hash_source, descavp)
      * descavp - Name of the AVP where to store the description. This
        parameter is optional.
 
-4.4. cr_next_domain(carrier, domain, prefix_matching, host, reply_code,
+4.4.  cr_next_domain(carrier, domain, prefix_matching, host, reply_code,
 dstavp)
 
    This function searches for the longest match for the user given in
@@ -857,7 +857,7 @@ failure_route[1] {
    Don't use a hash index value of zero. If you ommit the hash completly,
    the module gives them a autogenerated value, starting from one.
 
-   Use the "NULL" prefix to specify an empty prefix in the config file.
+   Use the “NULL” prefix to specify an empty prefix in the config file.
    Please note that the prefix is matched against the request URI (or to
    URI), if they did not contain a valid (numerical) URI, no match is
    possible. So for loadbalancing purposes e.g. for your registrars, you
@@ -948,21 +948,21 @@ domain register {
 +----+---------+--------+-------------+-------+------+---------------+
 ...
 
-   This table contains three routes to two gateways for the "49" prefix,
+   This table contains three routes to two gateways for the “49” prefix,
    and a default route for other prefixes over carrier 2 and carrier 1.
    The gateways for the default carrier will be used for functions that
    don't support the user specific carrier lookup. The routing rules for
-   carrier 1 and carrier 2 for the "49" prefix contains a additional rule
+   carrier 1 and carrier 2 for the “49” prefix contains a additional rule
    with the domain 2, that can be used for example as fallback if the
    gateways in domain 1 are not reachable. Two more fallback rules (domain
    3 and 4) for carrier 1 are also supplied to support the functionality
    of the carrierfailureroute table example that is provided in the next
    section.
 
-   This table provides also a "carrier 1" routing rule for the "49"
+   This table provides also a “carrier 1” routing rule for the “49”
    prefix, that is only choosen if some message flags are set. If this
-   flags are not set, the other two rules are used. The "strip", "mask"
-   and "comment" colums are omitted for brevity.
+   flags are not set, the other two rules are used. The “strip”, “mask”
+   and “comment” colums are omitted for brevity.
 
    Example 1.23. Example database content - simple carrierfailureroute
    table
@@ -975,10 +975,10 @@ domain register {
 +----+---------+--------+---------------+------------+-------------+
 ...
 
-   This table contains two failure routes for the "gw.carrier1-1" and "-2"
+   This table contains two failure routes for the “gw.carrier1-1” and “-2”
    gateways. For any (failure) reply code the respective next domain is
    choosen. After that no more failure routes are available, an error will
-   be returned from the "cr_next_domain" function. Not all table colums
+   be returned from the “cr_next_domain” function. Not all table colums
    are show here for brevity.
 
    For each failure route domain and carrier that is added to the
@@ -1041,7 +1041,7 @@ domain register {
 
 7.3. User specific routing
 
-   For a functional routing the "cr_preferred_carrier" column must be
+   For a functional routing the “cr_preferred_carrier” column must be
    added to the subscriber table (or to the table and column that you
    specified as modul parameter) to choose the actual carrier for the
    users.
@@ -1093,7 +1093,7 @@ Chapter 2. Module parameter for database access.
 
    URL to the database containing the data.
 
-   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 2.1. Set db_url parameter
 ...
@@ -1104,7 +1104,7 @@ modparam("carrierroute", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    Name of the carrierroute table for the carrierroute module.
 
-   Default value is "carrierroute".
+   Default value is “carrierroute”.
 
    Example 2.2. Set carrierroute_table parameter
 ...
@@ -1247,7 +1247,7 @@ modparam("carrierroute", "carrierroute_description_col", "description")
 
    Name of the carrierfailureroute table for the carrierroute module.
 
-   Default value is "carrierfailureroute".
+   Default value is “carrierfailureroute”.
 
    Example 2.15. Set carrierfailureroute_table parameter
 ...
@@ -1358,7 +1358,7 @@ modparam("carrierroute", "carrierfailureroute_description_col", "description")
 
    Name of the carrier_name table for the carrierroute module.
 
-   Default value is "carrier_name".
+   Default value is “carrier_name”.
 
    Example 2.26. Set carrier_name_table parameter
 ...
@@ -1387,7 +1387,7 @@ modparam("carrierroute", "carrier_name_carrier_col", "carrier")
 
    Name of the domain_name table for the carrierroute module.
 
-   Default value is "domain_name".
+   Default value is “domain_name”.
 
    Example 2.29. Set domain_name_table parameter
 ...

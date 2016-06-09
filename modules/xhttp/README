@@ -16,7 +16,7 @@ Alex Balashov
 
    <abalashov@evaristesys.com>
 
-   Copyright © 2010 asipto.com
+   Copyright Â© 2010 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -169,7 +169,7 @@ modparam("xhttp", "url_match", "^/sip/")
 
    5.1. xhttp_reply(code, reason, ctype, body)
 
-5.1. xhttp_reply(code, reason, ctype, body)
+5.1.  xhttp_reply(code, reason, ctype, body)
 
    Send back a reply with content-type and body.
 

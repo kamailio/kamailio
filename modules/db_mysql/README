@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -117,8 +117,8 @@ modparam("db_mysql", "ping_interval", 600)
    retries are done from the driver before it gives up.
 
    The read timeout parameter is ignored on MySQL driver versions prior to
-   "5.1.12", "5.0.25" and "4.1.22". The write timeout parameter is ignored
-   on versions prior to "5.1.12" and "5.0.25", the "4.1" release don't
+   “5.1.12”, “5.0.25” and “4.1.22”. The write timeout parameter is ignored
+   on versions prior to “5.1.12” and “5.0.25”, the “4.1” release don't
    support it at all.
 
    Default value is 2 (6 sec).

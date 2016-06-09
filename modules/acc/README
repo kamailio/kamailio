@@ -29,11 +29,11 @@ Sven Knoblich
    1&1 Internet AG
    <sven.knoblich@1und1.de>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
 
-   Copyright � 2004, 2006 Voice Sistem SRL
+   Copyright © 2004, 2006 Voice Sistem SRL
 
-   Copyright � 2011 1&1 Internet AG
+   Copyright © 2011 1&1 Internet AG
    Revision History
    Revision $Revision$ $Date$
      __________________________________________________________________
@@ -323,7 +323,7 @@ Chapter 1. Admin Guide
 
    To account a transaction and to choose which set of backends to be
    used, the script writer just has to set some flags (see the module
-   parameters section for flag definitions Section 6, "Parameters"). If
+   parameters section for flag definitions Section 6, “Parameters”). If
    the accounting flag for a specific backend is set, the acc module will
    then report on completed transaction. A typical usage of the module
    takes no acc-specific script command -- the functionality binds
@@ -335,7 +335,7 @@ Chapter 1. Admin Guide
    The accounting module will log by default a fixed set of attributes for
    the transaction - if you customize your accounting by adding more
    information to be logged, please see the next chapter about extra
-   accounting - Section 2, "Extra accounting".
+   accounting - Section 2, “Extra accounting”.
 
    The fixed minimal accounting information is:
      * Request Method name
@@ -362,7 +362,7 @@ Chapter 1. Admin Guide
        gateway). However, CDR-base logging has the option to log existing
        information from expired dialogs (the dlg_vars in cdr_extra) Please
        see cdr_expired_dlg_enable parameter - Section 6.40,
-       "cdr_expired_dlg_enable (integer)".
+       “cdr_expired_dlg_enable (integer)”.
 
    The SQL backend support is compiled in the module. For RADIUS and
    DIAMETER you need to enable it by recompiling the module with properly
@@ -574,21 +574,21 @@ Note
    message is never transmitted. You can toggle on/off the generation of
    CDR-based logging in such cases with only the dlg_vars showing by using
    the cdr_expired_dlg_enable parameter - Section 6.40,
-   "cdr_expired_dlg_enable (integer)". Default behavior is not logging.
+   “cdr_expired_dlg_enable (integer)”. Default behavior is not logging.
 
 4.2. CDR Extra
 
-   This section is similar to the "LOG accounting" part of Section 2,
-   "Extra accounting".
+   This section is similar to the “LOG accounting” part of Section 2,
+   “Extra accounting”.
 
 4.2.1. Definitions and syntax
 
    Selection of extra information is done similar to the transaction extra
-   Section 2.2, "Definitions and syntax".
+   Section 2.2, “Definitions and syntax”.
      * cdr_extra = cdr_extra_definition (';'cdr_extra_definition)*
      * cdr_extra_definition = cdr_log_name '=' pseudo_variable
 
-   See also Section 6.43, "cdr_extra (string)".
+   See also Section 6.43, “cdr_extra (string)”.
 
    The full list of supported pseudo-variables in Sip-Router is available
    at: http://sip-router.org/wiki/cookbooks/pseudo-variables/devel
@@ -597,7 +597,7 @@ Note
 
 4.3.1. Overview
 
-   As mentioned in Section 3, "Multi Call-Legs accounting", a leg
+   As mentioned in Section 3, “Multi Call-Legs accounting”, a leg
    represents a parallel or forwarded call. In contrast to the normal
    accounting the cdr logging uses dialogs instead of transaction to log
    data. This may reduce the amount of information but it also make it
@@ -608,7 +608,7 @@ Note
 4.3.2. Configuration
 
    When you route messages multiple times through your proxy (e.g. to
-   handle "call-forwardings") you have to use detect_spirals from the
+   handle “call-forwardings”) you have to use detect_spirals from the
    dialog modules. Otherwise the proxy can't identify and reuse existing
    dialogs.
 
@@ -661,9 +661,9 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    listed modules must be loaded before this module):
      * tm -- Transaction Manager
      * a database module -- If SQL support is used.
-     * rr -- Record Route, if "detect_direction" module parameter is
+     * rr -- Record Route, if “detect_direction” module parameter is
        enabled.
-     * dialog -- Dialog, if "cdr_enable" module parameter is enabled.
+     * dialog -- Dialog, if “cdr_enable” module parameter is enabled.
 
 5.2. External Libraries or Applications
 
@@ -843,7 +843,7 @@ modparam("acc", "acc_prepare_always", 1)
 6.9. multi_leg_info (string)
 
    Defines the AVP set to be used in per-call-leg accounting. See
-   Section 3, "Multi Call-Legs accounting" for a detailed description of
+   Section 3, “Multi Call-Legs accounting” for a detailed description of
    the Multi Call-Legs accounting.
 
    If empty, the multi-leg accounting support will be disabled.
@@ -914,7 +914,7 @@ modparam("acc", "log_facility", "LOG_DAEMON")
 
 6.14. log_extra (string)
 
-   Extra values to be logged. See section Section 2, "Extra accounting"
+   Extra values to be logged. See section Section 2, “Extra accounting”
    for more details.
 
    Default value is NULL.
@@ -935,7 +935,7 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
    If the parameter is set to empty string, the RADIUS accounting support
    will be disabled (even if compiled).
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.15. radius_config example
 ...
@@ -980,7 +980,7 @@ modparam("acc", "service_type", 16)
 6.19. radius_extra (string)
 
    Extra values to be logged via RADIUS - RADIUS specific. See section
-   Section 2, "Extra accounting" for more details.
+   Section 2, “Extra accounting” for more details.
 
    Default value is NULL.
 
@@ -1018,7 +1018,7 @@ modparam("acc", "db_missed_flag", 3)
    Table name of accounting successfull calls -- database specific. It can
    contain config variables that will be evaluated at runtime.
 
-   Default value is "acc"
+   Default value is “acc”
 
    Example 1.22. db_table_acc example
 ...
@@ -1031,7 +1031,7 @@ modparam("acc", "db_table_acc", "acc_$time(year)_$time(mon)")
    Table name for accounting missed calls -- database specific. It can
    contain config variables that will be evaluated at runtime.
 
-   Default value is "missed_calls"
+   Default value is “missed_calls”
 
    Example 1.23. db_table_missed_calls example
 ...
@@ -1043,7 +1043,7 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
    SQL address -- database specific. If is set to NULL or emty string, the
    SQL support is disabled.
 
-   Default value is "NULL" (SQL disabled).
+   Default value is “NULL” (SQL disabled).
 
    Example 1.24. db_url example
 ...
@@ -1055,7 +1055,7 @@ modparam("acc", "db_url", "mysql://user:password@localhost/kamailio")
    Column name in accounting table to store the request's method name as
    string.
 
-   Default value is "method".
+   Default value is “method”.
 
    Example 1.25. acc_method_column example
 ...
@@ -1066,7 +1066,7 @@ modparam("acc", "acc_method_column", "method")
 
    Column name in accounting table to store the From header TAG parameter.
 
-   Default value is "from_tag".
+   Default value is “from_tag”.
 
    Example 1.26. acc_from_tag_column example
 ...
@@ -1077,7 +1077,7 @@ modparam("acc", "acc_from_tag_column", "from_tag")
 
    Column name in accounting table to store the To header TAG parameter.
 
-   Default value is "to_tag".
+   Default value is “to_tag”.
 
    Example 1.27. acc_to_tag_column example
 ...
@@ -1088,7 +1088,7 @@ modparam("acc", "acc_to_tag_column", "to_tag")
 
    Column name in accounting table to store the request's Callid value.
 
-   Default value is "callid".
+   Default value is “callid”.
 
    Example 1.28. acc_callid_column example
 ...
@@ -1100,7 +1100,7 @@ modparam("acc", "acc_callid_column", "callid")
    Column name in accounting table to store the final reply's numric code
    value in string format.
 
-   Default value is "sip_code".
+   Default value is “sip_code”.
 
    Example 1.29. acc_sip_code_column example
 ...
@@ -1112,7 +1112,7 @@ modparam("acc", "acc_sip_code_column", "sip_code")
    Column name in accounting table to store the final reply's reason
    phrase value.
 
-   Default value is "sip_reason".
+   Default value is “sip_reason”.
 
    Example 1.30. acc_sip_reason_column example
 ...
@@ -1124,7 +1124,7 @@ modparam("acc", "acc_sip_reason_column", "sip_reason")
    Column name in accounting table to store the time stamp of the
    transaction completion in date-time format.
 
-   Default value is "time".
+   Default value is “time”.
 
    Example 1.31. acc_time_column example
 ...
@@ -1134,7 +1134,7 @@ modparam("acc", "acc_time_column", "time")
 6.32. db_extra (string)
 
    Extra values to be logged into database - DB specific. See section
-   Section 2, "Extra accounting" for more details.
+   Section 2, “Extra accounting” for more details.
 
    Default value is NULL.
 
@@ -1191,7 +1191,7 @@ modparam("acc", "diameter_missed_flag", 3)
    Hostname of the machine where the DIAMETER Client is running --
    DIAMETER specific.
 
-   Default value is "localhost".
+   Default value is “localhost”.
 
    Example 1.36. diameter_client_host example
 ...
@@ -1213,7 +1213,7 @@ modparam("acc", "diameter_client_port", 3000)
 6.38. diameter_extra (string)
 
    Extra values to be logged via DIAMETER - DIAMETER specific. See section
-   Section 2, "Extra accounting" for more details.
+   Section 2, “Extra accounting” for more details.
 
    Default value is NULL.
 
@@ -1272,7 +1272,7 @@ modparam("acc", "cdr_facility", "LOG_DAEMON")
 6.43. cdr_extra (string)
 
    Set of pseudo-variables defining custom CDR fields. See Section 4.2,
-   "CDR Extra" for more details.
+   “CDR Extra” for more details.
 
    Default value is NULL.
 
@@ -1448,7 +1448,7 @@ modparam("acc", "cdr_on_failed", 0)
    7.3. acc_rad_request(comment)
    7.4. acc_diam_request(comment)
 
-7.1. acc_log_request(comment)
+7.1.  acc_log_request(comment)
 
    acc_request reports on a request, for example, it can be used to report
    on missed calls to off-line users who are replied 404 - Not Found. To
@@ -1469,10 +1469,10 @@ $avp(reason) = "Not found";
 acc_log_request("$var(code) Error: $avp(reason)");
 ...
 
-7.2. acc_db_request(comment, table)
+7.2.  acc_db_request(comment, table)
 
    Like acc_log_request, acc_db_request reports on a request. The report
-   is sent to database at "db_url", in the table referred to in the second
+   is sent to database at “db_url”, in the table referred to in the second
    action parameter.
 
    Meaning of the parameters is as follows:
@@ -1490,10 +1490,10 @@ acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 ...
 
-7.3. acc_rad_request(comment)
+7.3.  acc_rad_request(comment)
 
    Like acc_log_request, acc_rad_request reports on a request. It reports
-   to radius server as configured in "radius_config".
+   to radius server as configured in “radius_config”.
 
    Meaning of the parameters is as follows:
      * comment - Comment to be appended. The string can contain any number
@@ -1507,7 +1507,7 @@ acc_rad_request("Some comment");
 acc_rad_request("$var(code) Error: $avp(reason)");
 ...
 
-7.4. acc_diam_request(comment)
+7.4.  acc_diam_request(comment)
 
    Like acc_log_request, acc_diam_request reports on a request. It reports
    to the configured Diameter server.
@@ -1535,55 +1535,55 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happend with old log_fmt parameter
+       What happend with old log_fmt parameter
 
-   The parameter became obsolete with the restructure of the data logged
-   by ACC module (refer to the Overview chapter). For similar behaviour
-   you can use the extra accouting (see the coresponding chapter).
+       The parameter became obsolete with the restructure of the data logged
+       by ACC module (refer to the Overview chapter). For similar behaviour
+       you can use the extra accouting (see the coresponding chapter).
 
    2.2.
 
-   What happend with old multi_leg_enabled parameter
+       What happend with old multi_leg_enabled parameter
 
-   The parameter becaome obsolete by the addition of the new
-   multi_leg_info parameter. The multi-leg accouting is automatically
-   enabled when multi_leg_info is defined.
+       The parameter becaome obsolete by the addition of the new
+       multi_leg_info parameter. The multi-leg accouting is automatically
+       enabled when multi_leg_info is defined.
 
    2.3.
 
-   What happend with old src_leg_avp_id and dst_leg_avp_id parameters
+       What happend with old src_leg_avp_id and dst_leg_avp_id parameters
 
-   The parameter was replaced by the more generic new parameter
-   multi_leg_info. This allows logging (per-leg) of more information than
-   just dst and src.
+       The parameter was replaced by the more generic new parameter
+       multi_leg_info. This allows logging (per-leg) of more information than
+       just dst and src.
 
    2.4.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.5.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on one of our
-   mailing lists:
-     * User Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
-     * Developer Mailing List -
-       http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
+       First at all check if your question was already answered on one of our
+       mailing lists:
+         * User Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users
+         * Developer Mailing List -
+           http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev
 
-   E-mails regarding any stable Kamailio release should be sent to
-   <sr-users@lists.sip-router.org> and e-mails regarding development
-   versions should be sent to <sr-dev@lists.sip-router.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <sr-users@lists.sip-router.org> and e-mails regarding development
+       versions should be sent to <sr-dev@lists.sip-router.org>.
 
-   If you want to keep the mail private, send it to
-   <sr-users@lists.sip-router.org>.
+       If you want to keep the mail private, send it to
+       <sr-users@lists.sip-router.org>.
 
    2.6.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   https://github.com/kamailio/kamailio/issues.
+       Please follow the guidelines provided at:
+       https://github.com/kamailio/kamailio/issues.

@@ -10,7 +10,7 @@ Matthew Williams
 
    <matthew@flowroute.com>
 
-   Copyright © 2011 Flowroute LLC (flowroute.com)
+   Copyright Â© 2011 Flowroute LLC (flowroute.com)
      __________________________________________________________________
 
    Table of Contents
@@ -72,7 +72,7 @@ Chapter 1. Admin Guide
 
    3.1. json_get_field(json_string, field_name, destination)
 
-3.1. json_get_field(json_string, field_name, destination)
+3.1.  json_get_field(json_string, field_name, destination)
 
    Copy field 'field_name' from json object 'json_string' and store it in
    pvar 'destination'.
