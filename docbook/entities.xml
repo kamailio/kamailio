@@ -16,7 +16,7 @@
 <!ENTITY kamcmd "kamcmd">
 
 <!ENTITY kamailiohome "http://www.kamailio.org/">
-<!ENTITY kamailiobugs "http://sip-router.org/tracker">
+<!ENTITY kamailiobugs "https://github.com/kamailio/kamailio/issues">
 <!ENTITY kamailiohelp "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users">
 <!ENTITY kamailiousers "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users">
 <!ENTITY kamailiodev "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev">
