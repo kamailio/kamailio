@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>This module provides C-API functions to enable &kamailio; to be
-	used as an outbound Edge Proxy (see RFC 5626 section 5).</para>
+	used as an outbound Edge Proxy (see &rfc5626; section 5).</para>
 	<para>The <emphasis>path</emphasis> and <emphasis>rr</emphasis> will
 	bind to this module if it is loaded before they are.</para>
 	<section>
@@ -463,7 +463,7 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 		&kamailio; with this module loaded:
 		<itemizedlist>
 		<listitem>
-		<para><emphasis>OpenSSL</emphasis>.</para>
+		<para><emphasis>&openssl;</emphasis>.</para>
 		</listitem>
 		</itemizedlist>
 		</para>
