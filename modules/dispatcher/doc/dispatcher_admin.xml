@@ -1350,7 +1350,7 @@ onreply_route {
 </programlisting>
 		</example>
  	</section>
-	<section id="dispatcher.f.reload">
+	<section id="dispatcher.f.ds_reload">
 		<title>
 		<function moreinfo="none">ds_reload()</function>
 		</title>
