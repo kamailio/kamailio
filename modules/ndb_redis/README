@@ -117,8 +117,8 @@ Chapter 1. Admin Guide
    Example 1.1. Set server parameter
 ...
 modparam("ndb_redis", "server", "name=srvN;addr=127.0.0.1;port=6379;db=1")
-modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4;pass=m
-ypassword")
+modparam("ndb_redis", "server", "name=srvX;addr=127.0.0.2;port=6379;db=4;pass=my
+password")
 
 # Unix domain socket
 modparam("ndb_redis", "server", "name=srvY;unix=/tmp/redis.sock;db=3")
