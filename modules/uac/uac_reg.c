@@ -822,6 +822,10 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				goto done;
 			}
 		}
+
+		LM_DBG("sip response %d while registering [%.*s] with no match\n",
+				ps->code, ri->l_uuid.len, ri->l_uuid.s);
+		goto done;
 	}
 
 	if(ps->code == 401 || ps->code == 407)
@@ -858,7 +862,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			}
 		}
 		cred.realm = auth.realm;
-		cred.user = ri->auth_username; 
+		cred.user = ri->auth_username;
 		cred.passwd = ri->auth_password;
 		cred.next = NULL;
 
@@ -927,8 +931,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 		ri->flags |= UAC_REG_AUTHSENT;
 		return;
-	} else
-	{
+	} else {
 		LM_ERR("got sip response %d while registering [%.*s]\n",
 				ps->code, ri->l_uuid.len, ri->l_uuid.s);
 		goto error;
