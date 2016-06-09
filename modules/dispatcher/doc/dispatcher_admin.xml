@@ -1350,6 +1350,20 @@ onreply_route {
 </programlisting>
 		</example>
  	</section>
+	<section id="dispatcher.f.reload">
+		<title>
+		<function moreinfo="none">ds_reload()</function>
+		</title>
+		<para>
+		Reloads the groups and included destinations. The command is
+		disabled for call load based dispatching (algorithm 10) since
+		removal of destinations may leave the list of active
+		calls with broken references.
+		</para>
+		<para>
+		Name: <emphasis>ds_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 
 	<section>
