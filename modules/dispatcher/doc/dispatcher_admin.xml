@@ -1365,6 +1365,7 @@ onreply_route {
 		This function can be used from ANY_ROUTE.
 		</para>
 	</section>
+	</section>
 
 	<section>
 	<title>MI Commands</title>
