@@ -66,10 +66,11 @@ Daniel-Constantin Mierla
               4.13. reset_gflag(flag)
               4.14. is_gflag(flag)
               4.15. lock(key)
-              4.16. unlock(key)
-              4.17. check_route_exists(route)
-              4.18. route_if_exists(route)
-              4.19. core_hash(string1, string2, size)
+              4.16. trylock(key)
+              4.17. unlock(key)
+              4.18. check_route_exists(route)
+              4.19. route_if_exists(route)
+              4.20. core_hash(string1, string2, size)
 
         5. MI Commands
 
@@ -114,23 +115,24 @@ Daniel-Constantin Mierla
    1.17. reset_gflag() usage
    1.18. is_gflag() usage
    1.19. lock() usage
-   1.20. unlock() usage
-   1.21. check_route_exists() usage
-   1.22. route_if_exists() usage
-   1.23. core_hash() usage
-   1.24. rand_set_prob usage
-   1.25. rand_reset_prob usage
-   1.26. rand_get_prob usage
-   1.27. check_config_hash usage
-   1.28. get_config_hash usage
-   1.29. set_gflag usage
-   1.30. reset_gflag usage
-   1.31. is_gflag usage
-   1.32. get_gflags usage
-   1.33. cfgutils.set_gflag usage
-   1.34. cfgutils.reset_gflag usage
-   1.35. cfgutils.is_gflag usage
-   1.36. RANDOM pseudo-variable usage
+   1.20. trylock() usage
+   1.21. unlock() usage
+   1.22. check_route_exists() usage
+   1.23. route_if_exists() usage
+   1.24. core_hash() usage
+   1.25. rand_set_prob usage
+   1.26. rand_reset_prob usage
+   1.27. rand_get_prob usage
+   1.28. check_config_hash usage
+   1.29. get_config_hash usage
+   1.30. set_gflag usage
+   1.31. reset_gflag usage
+   1.32. is_gflag usage
+   1.33. get_gflags usage
+   1.34. cfgutils.set_gflag usage
+   1.35. cfgutils.reset_gflag usage
+   1.36. cfgutils.is_gflag usage
+   1.37. RANDOM pseudo-variable usage
 
 Chapter 1. Admin Guide
 
@@ -162,10 +164,11 @@ Chapter 1. Admin Guide
         4.13. reset_gflag(flag)
         4.14. is_gflag(flag)
         4.15. lock(key)
-        4.16. unlock(key)
-        4.17. check_route_exists(route)
-        4.18. route_if_exists(route)
-        4.19. core_hash(string1, string2, size)
+        4.16. trylock(key)
+        4.17. unlock(key)
+        4.18. check_route_exists(route)
+        4.19. route_if_exists(route)
+        4.20. core_hash(string1, string2, size)
 
    5. MI Commands
 
@@ -309,10 +312,11 @@ modparam("cfgutils", "lock_set_size", 4)
    4.13. reset_gflag(flag)
    4.14. is_gflag(flag)
    4.15. lock(key)
-   4.16. unlock(key)
-   4.17. check_route_exists(route)
-   4.18. route_if_exists(route)
-   4.19. core_hash(string1, string2, size)
+   4.16. trylock(key)
+   4.17. unlock(key)
+   4.18. check_route_exists(route)
+   4.19. route_if_exists(route)
+   4.20. core_hash(string1, string2, size)
 
 4.1. rand_event()
 
@@ -526,7 +530,25 @@ if(is_gflag("4"))
 lock("$rU");
 ...
 
-4.16. unlock(key)
+4.16. trylock(key)
+
+   Try to lock the key. If the lock can not be obtained (possibly already
+   locked), the function returns an error and script execution continues.
+
+   “key” can be static string or string with PVs.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+
+   Example 1.20. trylock() usage
+...
+if (trylock("$rU")) {
+        xlog("L_INFO", "Doing some cool stuff\n");
+        unlock("$rU");
+}
+...
+
+4.17. unlock(key)
 
    Unlock the key.
 
@@ -535,12 +557,12 @@ lock("$rU");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
-   Example 1.20. unlock() usage
+   Example 1.21. unlock() usage
 ...
 unlock("$rU");
 ...
 
-4.17. check_route_exists(route)
+4.18. check_route_exists(route)
 
    Check if a route block exists. It returns true (1) on found and false
    on not found or error.
@@ -552,14 +574,14 @@ unlock("$rU");
    This function can be used from any route. You can only check for
    route[] blocks, not reply, event or other routes.
 
-   Example 1.21. check_route_exists() usage
+   Example 1.22. check_route_exists() usage
 ...
 if(check_route_exists("JUMP") {
         $var(jumping_frogs) = 1;
 };
 ...
 
-4.18. route_if_exists(route)
+4.19. route_if_exists(route)
 
    Execute a routing block only if it is defined. If it's not defined,
    silently move to the next action in the configuration script.
@@ -574,14 +596,14 @@ if(check_route_exists("JUMP") {
    This function can be used from any route. You can only execute it for
    route[] blocks, not reply, event or other routes.
 
-   Example 1.22. route_if_exists() usage
+   Example 1.23. route_if_exists() usage
 ...
 if(route_if_exists("JUMP")) {
     exit;
 }
 ...
 
-4.19. core_hash(string1, string2, size)
+4.20. core_hash(string1, string2, size)
 
    Exported function that enables the core_hash() function to be used from
    the configuration file.
@@ -598,7 +620,7 @@ if(route_if_exists("JUMP")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. core_hash() usage
+   Example 1.24. core_hash() usage
 ...
 core_hash("$ci", "", 4);
 ...
@@ -627,7 +649,7 @@ core_hash("$ci", "", 4);
 
    The parameter value must be a number from 0 to 100.
 
-   Example 1.24. rand_set_prob usage
+   Example 1.25. rand_set_prob usage
 ...
 $ kamctl fifo rand_set_prob 10
 ...
@@ -638,7 +660,7 @@ $ kamctl fifo rand_set_prob 10
 
    This command don't need a parameter.
 
-   Example 1.25.  rand_reset_prob usage
+   Example 1.26.  rand_reset_prob usage
 ...
 $ kamctl fifo rand_reset_prob
 ...
@@ -649,7 +671,7 @@ $ kamctl fifo rand_reset_prob
 
    The function return the actual probability value.
 
-   Example 1.26. rand_get_prob usage
+   Example 1.27. rand_get_prob usage
 ...
 $ kamctl fifo get_prob
 The actual probability is 50 percent.
@@ -663,7 +685,7 @@ The actual probability is 50 percent.
    there are not identical, 404 if no file for hashing has been configured
    and 500 on errors. Additional a short text message is printed.
 
-   Example 1.27. check_config_hash usage
+   Example 1.28. check_config_hash usage
 ...
 $ kamctl fifo check_config_hash
 The actual config file hash is identical to the stored one.
@@ -676,7 +698,7 @@ The actual config file hash is identical to the stored one.
    The function returns 200 OK and the hash value on success or 404 if no
    file for hashing has been configured.
 
-   Example 1.28. get_config_hash usage
+   Example 1.29. get_config_hash usage
 ...
 $ kamctl fifo get_config_hash
 1580a37104eb4de69ab9f31ce8d6e3e0
@@ -689,7 +711,7 @@ $ kamctl fifo get_config_hash
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.29. set_gflag usage
+   Example 1.30. set_gflag usage
 ...
 $ kamctl fifo set_gflag 1
 $ kamctl fifo set_gflag 0x3
@@ -702,7 +724,7 @@ $ kamctl fifo set_gflag 0x3
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.30.  reset_gflag usage
+   Example 1.31.  reset_gflag usage
 ...
 $ kamctl fifo reset_gflag 1
 $ kamctl fifo reset_gflag 0x3
@@ -718,7 +740,7 @@ $ kamctl fifo reset_gflag 0x3
    The function returns TRUE if all the flags from the set are set and
    FALSE if at least one is not set.
 
-   Example 1.31. is_gflag usage
+   Example 1.32. is_gflag usage
 ...
 $ kamctl fifo set_gflag 1024
 $ kamctl fifo is_gflag 1024
@@ -741,7 +763,7 @@ TRUE
    Return the bitmap with all flags. The function gets no parameters and
    returns the bitmap in hexadecimal and decimal format.
 
-   Example 1.32.  get_gflags usage
+   Example 1.33.  get_gflags usage
 ...
 $ kamctl fifo get_gflags
 0x3039
@@ -761,7 +783,7 @@ $ kamctl fifo get_gflags
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.33. cfgutils.set_gflag usage
+   Example 1.34. cfgutils.set_gflag usage
 ...
 $ kamctl cfgutils.set_gflag s:1
 ...
@@ -775,7 +797,7 @@ $ kamctl cfgutils.set_gflag s:1
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.34.  cfgutils.reset_gflag usage
+   Example 1.35.  cfgutils.reset_gflag usage
 ...
 $ kamctl cfgutils.reset_gflag s:0x1
 ...
@@ -788,7 +810,7 @@ $ kamctl cfgutils.reset_gflag s:0x1
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.
 
-   Example 1.35. cfgutils.is_gflag usage
+   Example 1.36. cfgutils.is_gflag usage
 ...
 $ kamctl cfgutils.set_gflag s:1024
 $ kamctl cfgutils.is_gflag s:1024
@@ -808,7 +830,7 @@ TRUE
 
    Returns a random value from the [0 - 2^31) range.
 
-   Example 1.36. RANDOM pseudo-variable usage
+   Example 1.37. RANDOM pseudo-variable usage
 ...
 if (rand_event()) {
   $avp(i:10) = ($RANDOM / 16777216); # 2^24
