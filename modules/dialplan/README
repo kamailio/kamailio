@@ -16,6 +16,10 @@ Edited by
 
 Olle E. Johansson
 
+Edited by
+
+Luis Martin
+
    Copyright © 2007-2008 Voice Sistem SRL
 
    Copyright © 2008-2010 Juha Heinanen
@@ -54,6 +58,7 @@ Olle E. Johansson
         6. Functions
 
               6.1. dp_translate(id, [src[/dest]])
+              6.2. dp_reload()
 
         7. MI Commands
 
@@ -120,6 +125,7 @@ Chapter 1. Admin Guide
    6. Functions
 
         6.1. dp_translate(id, [src[/dest]])
+        6.2. dp_reload()
 
    7. MI Commands
 
@@ -376,6 +382,7 @@ modparam("dialplan", "match_dynamic", 1)
 6. Functions
 
    6.1. dp_translate(id, [src[/dest]])
+   6.2. dp_reload()
 
 6.1.  dp_translate(id, [src[/dest]])
 
@@ -424,6 +431,16 @@ $avp(s:src) = $ruri.user;
 dp_translate("$var(x)", "$avp(s:src)/$var(y)");
 xlog("translated to var $var(y) \n");
 ...
+
+6.2.  dp_reload()
+
+   Forces an update of the translation rules from the database.
+
+   Name: dp_reload
+
+   Parameters: none
+
+   This function can be used from ANY_ROUTE.
 
 7. MI Commands
 
