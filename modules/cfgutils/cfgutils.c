@@ -1089,7 +1089,7 @@ int bind_cfgutils(cfgutils_api_t *api)
 
 
 /**
- *
+ * KEMI exports
  */
 static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	{ str_init("cfgutils"), str_init("lock"),
@@ -1099,6 +1099,11 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	},
 	{ str_init("cfgutils"), str_init("unlock"),
 		SR_KEMIP_INT, cfg_unlock,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("trylock"),
+		SR_KEMIP_INT, cfg_trylock,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
