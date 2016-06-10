@@ -836,6 +836,7 @@ static int w_ds_reload(struct sip_msg* msg)
 			LM_ERR("Error reloading from db\n");
 			return -1;
 	}
+	LM_DBG("reloaded dispatcher\n");
 	return 1;
 }
 
