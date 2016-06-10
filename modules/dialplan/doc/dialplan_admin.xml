@@ -496,6 +496,22 @@ xlog("translated to var $var(y) \n");
 
 	</section>
 
+	<section id="dispatcher.f.dp_reload">
+		<title>
+		<function moreinfo="none">dp_reload()</function>
+		</title>
+		<para>
+		Forces an update of the translation rules from the database.
+		</para>
+		<para>
+		Name: <emphasis>dp_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+	</section>
+
 	</section>
 
 

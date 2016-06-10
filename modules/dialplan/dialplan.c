@@ -73,6 +73,7 @@ static struct mi_root * mi_reload_rules(struct mi_root *cmd_tree,void *param);
 static struct mi_root * mi_translate(struct mi_root *cmd_tree, void *param);
 static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2);
 static int dp_trans_fixup(void ** param, int param_no);
+static int dp_reload_f(struct sip_msg* msg);
 
 str attr_pvar_s = STR_NULL;
 pv_spec_t * attr_pvar = NULL;
@@ -110,6 +111,8 @@ static cmd_export_t cmds[]={
 	{"dp_translate",(cmd_function)dp_translate_f,	2,	dp_trans_fixup,  0,
 		ANY_ROUTE},
 	{"dp_translate",(cmd_function)dp_translate_f,	1,	dp_trans_fixup,  0,
+		ANY_ROUTE},
+	{"dp_reload",(cmd_function)dp_reload_f,	0, 0,  0,
 		ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
@@ -450,6 +453,27 @@ static int dp_trans_fixup(void ** param, int param_no){
 error:
 	LM_ERR("failed to parse param %i\n", param_no);
 	return E_INVALID_PARAMS;
+}
+
+static int dp_reload_f(struct sip_msg* msg)
+{
+	struct mi_root* rpl_tree= NULL;
+
+	if (dp_connect_db() < 0) {
+		LM_ERR("failed to reload rules fron database (db connect)\n");
+		return -1;
+	}
+
+	if(dp_load_db() != 0){
+		LM_ERR("failed to reload rules fron database (db load)\n");
+		dp_disconnect_db();
+		return -1;
+	}
+
+	dp_disconnect_db();
+
+	LM_DBG("reloaded dialplan\n");
+	return 1;
 }
 
 
