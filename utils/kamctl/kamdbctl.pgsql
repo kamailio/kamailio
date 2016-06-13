@@ -43,7 +43,7 @@ fi
 if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="postgres"
 	if [ ! -r ~/.pgpass ]; then
-		merr "~./pgpass does not exist, please create this file and support proper credentials for user postgres."
+		merr "~/.pgpass does not exist, please create this file and support proper credentials for user postgres."
 		merr "Note: you need at least postgresql>= 7.3"
 		exit 1
 	fi
