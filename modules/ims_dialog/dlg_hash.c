@@ -187,7 +187,7 @@ static void destroy_entry_out(struct dlg_entry_out *d_entry_out) {
  * \brief Destroy a dialog, run callbacks and free memory
  * \param dlg destroyed dialog
  */
-inline void destroy_dlg(struct dlg_cell *dlg) {
+void destroy_dlg(struct dlg_cell *dlg) {
     int ret = 0;
     struct dlg_var *var;
 
