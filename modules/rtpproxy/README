@@ -454,7 +454,8 @@ rtpproxy_offer();
             “delete” command for the previous branch, which would
             otherwise delete the full call, breaking the subsequent
             “lookup” for the new branch. This flag is only supported by
-            the ngcp-mediaproxy-ng rtpproxy at the moment!
+            the ngcp-mediaproxy-ng rtpproxy (now named rtpengine) at the
+            moment!
           + 2 - append second Via branch to Call-ID when sending command
             to rtpproxy. See flag '1' for its meaning.
           + 3 - behave like flag 1 is set for a request and like flag 2 is
@@ -601,7 +602,8 @@ onreply_route[2]
             “delete” command for the previous branch, which would
             otherwise delete the full call, breaking the subsequent
             “lookup” for the new branch. This flag is only supported by
-            the ngcp-mediaproxy-ng rtpproxy at the moment!
+            the ngcp-mediaproxy-ng rtpproxy (now named rtpengine) at the
+            moment!
           + 2 - append second Via branch to Call-ID when sending command
             to rtpproxy. See flag '1' for its meaning.
           + b - append branch specific variable to Call-ID when sending
