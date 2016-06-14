@@ -28,6 +28,10 @@ Alessandro Arrichiello
 
    Hewlett Packard
 
+Edited by
+
+Luis Martin
+
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice Sistem
@@ -97,6 +101,7 @@ Alessandro Arrichiello
               4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
               4.9. ds_load_update()
               4.10. ds_load_unset()
+              4.11. ds_reload()
 
         5. MI Commands
 
@@ -231,6 +236,7 @@ Chapter 1. Admin Guide
         4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
         4.9. ds_load_update()
         4.10. ds_load_unset()
+        4.11. ds_reload()
 
    5. MI Commands
 
@@ -831,6 +837,7 @@ Note
    4.8. ds_is_from_list([groupid [, mode [, uri] ] ])
    4.9. ds_load_update()
    4.10. ds_load_unset()
+   4.11. ds_reload()
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1119,6 +1126,16 @@ onreply_route {
     ...
 }
 ...
+
+4.11.  ds_reload()
+
+   Reloads the groups and included destinations.
+
+   Name: ds_reload
+
+   Parameters: none
+
+   This function can be used from ANY_ROUTE.
 
 5. MI Commands
 
