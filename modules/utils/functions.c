@@ -168,6 +168,7 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post, char* _h
 
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, (long)1);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)http_query_timeout);
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent);
 
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);

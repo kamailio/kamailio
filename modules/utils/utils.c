@@ -67,6 +67,7 @@ static char* mp_filter = "";
 static char* mp_proxy  = "";
 str xcap_table= str_init("xcap");
 str pres_db_url = {0, 0};
+str user_agent= str_init("");
 
 /* lock for configuration access */
 static gen_lock_t *conf_lock = NULL;
@@ -123,6 +124,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"pres_db_url", PARAM_STR, &pres_db_url},
 	{"xcap_table", PARAM_STR, &xcap_table},
+	{"user_agent", PARAM_STR, &user_agent},
 	{"http_query_timeout", INT_PARAM, &http_query_timeout},
 	{"http_response_trim", INT_PARAM, &http_response_trim},
 	{"http_response_mode", INT_PARAM, &http_response_mode},
