@@ -161,6 +161,7 @@ static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list2(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list3(struct sip_msg*, char*, char*, char*);
 static int w_ds_list_exist(struct sip_msg*, char*);
+static int w_ds_reload(struct sip_msg* msg);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
 static int fixup_ds_list_exist(void** param,int param_no);
@@ -211,6 +212,8 @@ static cmd_export_t cmds[]={
 		0, 0, ANY_ROUTE},
 	{"bind_dispatcher",   (cmd_function)bind_dispatcher,  0,
 		0, 0, 0},
+	{"ds_reload", (cmd_function)w_ds_reload, 0,
+		0, 0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -820,6 +823,21 @@ static int ds_warn_fixup(void** param, int param_no)
 				" are NULL -- feature disabled\n");
 	}
 	return 0;
+}
+
+static int w_ds_reload(struct sip_msg* msg)
+{
+	if(!ds_db_url.s) {
+		if (ds_load_list(dslistfile)!=0)
+			LM_ERR("Error reloading from list\n");
+			return -1;
+	} else {
+		if(ds_reload_db()<0)
+			LM_ERR("Error reloading from db\n");
+			return -1;
+	}
+	LM_DBG("reloaded dispatcher\n");
+	return 1;
 }
 
 /************************** MI STUFF ************************/
