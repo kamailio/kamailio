@@ -275,7 +275,7 @@ int peer_timer(time_t now,void *ptr)
 		}
 
 		if (p->activity+config->tc<=now){
-			LM_INFO("peer_timer(): Peer %.*s \tState %d \n",p->fqdn.len,p->fqdn.s,p->state);
+			LM_DBG("peer_timer(): Peer %.*s \tState %d \n",p->fqdn.len,p->fqdn.s,p->state);
 			switch (p->state){
 				/* initiating connection */
 				case Closed:
