@@ -35,6 +35,35 @@
 		Returns a negative value on failure -- you may still want to send a
 	    negative reply upstream statelessly not to leave upstream UAC in lurch.
 	</para>
+
+	<para>In case of error, the function returns the following codes:</para>
+	<itemizedlist>
+		<listitem>
+		<para><emphasis>-1</emphasis> - generic internal error
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>-2</emphasis> - bad message (parsing errors)
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>-3</emphasis> - no destination available (no branches were
+			added or request already cancelled)
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>-4</emphasis> - bad destination (unresolvable address)
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>-5</emphasis> - destination filtered (black listed)
+		</para>
+		</listitem>
+		<listitem>
+		<para><emphasis>-6</emphasis> - generic send failed
+		</para>
+		</listitem>
+	</itemizedlist>
 	<example>
 	    <title><function>t_relay</function> usage</title>
 	    <programlisting>
