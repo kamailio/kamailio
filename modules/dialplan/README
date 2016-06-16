@@ -16,11 +16,15 @@ Edited by
 
 Olle E. Johansson
 
-   Copyright � 2007-2008 Voice Sistem SRL
+Edited by
 
-   Copyright � 2008-2010 Juha Heinanen
+Luis Martin
 
-   Copyright � 2014 Olle E. Johansson, Edvina AB
+   Copyright © 2007-2008 Voice Sistem SRL
+
+   Copyright © 2008-2010 Juha Heinanen
+
+   Copyright © 2014 Olle E. Johansson, Edvina AB
      __________________________________________________________________
 
    Table of Contents
@@ -54,6 +58,7 @@ Olle E. Johansson
         6. Functions
 
               6.1. dp_translate(id, [src[/dest]])
+              6.2. dp_reload()
 
         7. MI Commands
 
@@ -120,6 +125,7 @@ Chapter 1. Admin Guide
    6. Functions
 
         6.1. dp_translate(id, [src[/dest]])
+        6.2. dp_reload()
 
    7. MI Commands
 
@@ -222,7 +228,7 @@ Chapter 1. Admin Guide
 
    The translation rules will be loaded using this database URL.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -233,7 +239,7 @@ modparam("dialplan", "db_url", "mysql://user:passwb@localhost/db")
 
    The name of the database table used to load the translation rules.
 
-   Default value is "dialplan".
+   Default value is “dialplan”.
 
    Example 1.2. Set table_name parameter
 ...
@@ -244,7 +250,7 @@ modparam("dialplan", "table_name", "my_table")
 
    The column name used to store the dialplan group ID.
 
-   Default value is "dpid".
+   Default value is “dpid”.
 
    Example 1.3. Set dpid_col parameter
 ...
@@ -256,7 +262,7 @@ modparam("dialplan", "dpid_col", "column_name")
    The column name used to store the priority of the corresponding rule
    from the database row.
 
-   Default value is "pr".
+   Default value is “pr”.
 
    Example 1.4. Set pr_col parameter
 ...
@@ -267,7 +273,7 @@ modparam("dialplan", "pr_col", "column_name")
 
    The column name used to store the type of matching of the rule.
 
-   Default value is "match_op".
+   Default value is “match_op”.
 
    Example 1.5. Set match_op_col parameter
 ...
@@ -278,7 +284,7 @@ modparam("dialplan", "match_op_col", "column_name")
 
    The column name to store the rule match expression.
 
-   Default value is "match_exp".
+   Default value is “match_exp”.
 
    Example 1.6. Set match_exp_col parameter
 ...
@@ -290,7 +296,7 @@ modparam("dialplan", "match_exp_col", "column_name")
    The column name to store the length of a string matching the match
    expression.
 
-   Default value is "match_len".
+   Default value is “match_len”.
 
    Example 1.7. Set pr_col parameter
 ...
@@ -301,7 +307,7 @@ modparam("dialplan", "match_len_col", "column_name")
 
    The column name to store the rule's substitution expression.
 
-   Default value is "subst_exp".
+   Default value is “subst_exp”.
 
    Example 1.8. Set pr_col parameter
 ...
@@ -312,7 +318,7 @@ modparam("dialplan", "subst_exp_col", "column_name")
 
    The column name to store the rule's replacement expression.
 
-   Default value is "repl_exp".
+   Default value is “repl_exp”.
 
    Example 1.9. Set repl_exp_col parameter
 ...
@@ -324,7 +330,7 @@ modparam("dialplan", "repl_exp_col", "column_name")
    The column name to store the rule's attributes to be set after match
    (see attrs_pvar )
 
-   Default value is "attrs".
+   Default value is “attrs”.
 
    Example 1.10. Set attrs_col parameter
 ...
@@ -335,9 +341,9 @@ modparam("dialplan", "attrs_col", "column_name")
 
    The pseudovariable used to store the rule's attributes, after
    translation (when dp_translate() succeeds). This parameter can be an
-   "AVP" or a script variable ("$var()")..
+   “AVP” or a script variable (“$var()”)..
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.11. Set attrs_pvar parameter
 ...
@@ -348,7 +354,7 @@ modparam("dialplan", "attrs_pvar", "$avp(s:dest)")
 
    The number of rows to be fetched at once from database
 
-   Default value is "1000".
+   Default value is “1000”.
 
    Example 1.12. Set fetch_rows parameter
 ...
@@ -366,7 +372,7 @@ modparam("dialplan", "fetch_rows", 4000)
    without script variables are pre-compiled even if this parameter is
    enabled.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.13. Set match_dynamic parameter
 ...
@@ -376,13 +382,14 @@ modparam("dialplan", "match_dynamic", 1)
 6. Functions
 
    6.1. dp_translate(id, [src[/dest]])
+   6.2. dp_reload()
 
-6.1. dp_translate(id, [src[/dest]])
+6.1.  dp_translate(id, [src[/dest]])
 
-   Will try to translate "src" into "dest" according to the translation
-   rules in the dialplan identified by "id" . If src/dest is missing the
-   default parameter "ruri.user/ruri.user" will be used, thus translating
-   the request URI user part. If only "dest" is missing, only matching and
+   Will try to translate “src” into “dest” according to the translation
+   rules in the dialplan identified by “id” . If src/dest is missing the
+   default parameter “ruri.user/ruri.user” will be used, thus translating
+   the request URI user part. If only “dest” is missing, only matching and
    storing of the matching rule's attributes is done.
 
    Returns 1, if translation succeeded, -1 in case of some error occurred,
@@ -424,6 +431,16 @@ $avp(s:src) = $ruri.user;
 dp_translate("$var(x)", "$avp(s:src)/$var(y)");
 xlog("translated to var $var(y) \n");
 ...
+
+6.2.  dp_reload()
+
+   Forces an update of the translation rules from the database.
+
+   Name: dp_reload
+
+   Parameters: none
+
+   This function can be used from ANY_ROUTE.
 
 7. MI Commands
 

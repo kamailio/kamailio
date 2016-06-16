@@ -4,7 +4,7 @@ Andrew Mortensen
 
    University of Pennsylvania
 
-   Copyright � 2012 Andrew Mortensen, admorten@isc.upenn.edu
+   Copyright © 2012 Andrew Mortensen, admorten@isc.upenn.edu
      __________________________________________________________________
 
    Table of Contents
@@ -232,7 +232,7 @@ modparam( "sca", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio" )
 
    Name of the database table where call-info subscriptions are written.
 
-   Default value is "sca_subscriptions".
+   Default value is “sca_subscriptions”.
 
    Example 1.6. Set subs_table parameter:
 ...

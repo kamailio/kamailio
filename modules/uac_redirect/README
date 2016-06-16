@@ -8,7 +8,7 @@ Edited by
 
 Bogdan-Andrei Iancu
 
-   Copyright � 2005 Voice Sistem
+   Copyright © 2005 Voice Sistem
      __________________________________________________________________
 
    Table of Contents
@@ -100,7 +100,7 @@ Chapter 1. Admin Guide
        allow a strict control of the contacts to be used for redirection.
 
    When selecting from a 3xx branch the contacts to be used, the contacts
-   will be ordered and prioritized based on the "q" value.
+   will be ordered and prioritized based on the “q” value.
 
 2. Accounting
 
@@ -148,10 +148,10 @@ Chapter 1. Admin Guide
 
 4.1. default_filter (string)
 
-   The default behavior in filtering contacts. It may be "accept" or
-   "deny".
+   The default behavior in filtering contacts. It may be “accept” or
+   “deny”.
 
-   The default value is "accept".
+   The default value is “accept”.
 
    Example 1.1. Set default_filter module parameter
 ...
@@ -161,7 +161,7 @@ modparam("uac_redirect","default_filter","deny")
 4.2. deny_filter (string)
 
    The regular expression for default deny filtering. It make sens to be
-   defined on only if the default_filter parameter is set to "accept". All
+   defined on only if the default_filter parameter is set to “accept”. All
    contacts matching the deny_filter will be rejected; the rest of them
    will be accepted for redirection.
 
@@ -179,7 +179,7 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 4.3. accept_filter (string)
 
    The regular expression for default accept filtering. It make sens to be
-   defined on only if the default_filter parameter is set to "deny". All
+   defined on only if the default_filter parameter is set to “deny”. All
    contacts matching the accept_filter will be accepted; the rest of them
    will be rejected for redirection.
 
@@ -207,7 +207,7 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
      * acc_rad_request
      * acc_diam_request
 
-   The default value is "acc_log_request".
+   The default value is “acc_log_request”.
 
    Example 1.4. Set acc_function parameter
 ...
@@ -217,12 +217,12 @@ modparam("uac_redirect","acc_function","acc_db_request")
 4.5. acc_db_table (string)
 
    Specifies the accounting table to be used if DB accounting was chosen
-   (acc_function was set to "acc_db_request"). Just be defining this
+   (acc_function was set to “acc_db_request”). Just be defining this
    parameter, the accounting support will not be enabled. Accounting may
    only be enabled via two parameters set_accept_filter() scripting
    function.
 
-   The default value is "acc".
+   The default value is “acc”.
 
    Example 1.5. Set acc_db_table parameter
 ...
@@ -256,7 +256,7 @@ branch_route[1] {
    5.3. get_redirects(max)
    5.4. get_redirects(max,reason)
 
-5.1. set_deny_filter(filter,flags)
+5.1.  set_deny_filter(filter,flags)
 
    Sets additional deny filters. Maximum 6 may be combined. This
    additional filter will apply only to the current message - it will not
@@ -277,7 +277,7 @@ set_deny_filter(".*@domain2.net","reset_all");
 set_deny_filter(".*@domain1.net","");
 ...
 
-5.2. set_accept_filter(filter,flags)
+5.2.  set_accept_filter(filter,flags)
 
    Sets additional accept filters. Maximum 6 may be combined. This
    additional filter will apply only to the current message - it will not
@@ -298,7 +298,7 @@ set_accept_filter(".*@domain2.net","reset_added");
 set_accept_filter(".*@domain1.net","");
 ...
 
-5.3. get_redirects(max)
+5.3.  get_redirects(max)
 
    The function may be called only from failure routes. It will extract
    the contacts from all 3xx branches and append them as new branches.
@@ -311,11 +311,11 @@ set_accept_filter(".*@domain1.net","");
      * max_total = number of total contacts to be selected
      * max_branch = number of contacts per branch to be selected
 
-   Both "max_total" and "max_branch" are positive integer. To specify
+   Both “max_total” and “max_branch” are positive integer. To specify
    unlimited values, use 0 value or "*" character.
 
    NOTE that during the selection process, each set of contacts from a
-   specific branch are ordered based on "q" value.
+   specific branch are ordered based on “q” value.
 
    This function will produce no accounting records.
 
@@ -333,7 +333,7 @@ get_redirects("6:*");
 get_redirects("*");
 ...
 
-5.4. get_redirects(max,reason)
+5.4.  get_redirects(max,reason)
 
    The function has same functionality as get_redirects(max) function, but
    it will produce accounting records.

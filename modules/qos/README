@@ -8,7 +8,7 @@ Edited by
 
 Ovidiu Sas
 
-   Copyright � 2008 SOMA Networks, Inc.
+   Copyright © 2008 SOMA Networks, Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -127,7 +127,7 @@ Chapter 1. Admin Guide
 
    This parameter must be set or the module will not load.
 
-   Default value is "Not set!".
+   Default value is “Not set!”.
 
    Example 1.1. Set qos_flag parameter
 ...
@@ -176,7 +176,7 @@ Chapter 2. Developer Guide
 
    1.1. register_qoscb (qos, type, cb, param)
 
-1.1. register_qoscb (qos, type, cb, param)
+1.1.  register_qoscb (qos, type, cb, param)
 
    Register a new callback to the qos.
 
@@ -195,7 +195,7 @@ Chapter 2. Developer Guide
           + QOSCB_REMOVE_SDP - called when an existing SDP is removed -
             it's a per qos type.
           + QOSCB_TERMINATED - called when the qos is terminated.
-     * qos_cb cb - callback function to be called. Prototype is: "void
+     * qos_cb cb - callback function to be called. Prototype is: “void
        (qos_cb) (struct qos_ctx_st *qos, int type, struct qos_cb_params
-       *params); "
+       *params); ”
      * void *param - parameter to be passed to the callback function.

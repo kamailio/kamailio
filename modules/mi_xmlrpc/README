@@ -12,7 +12,7 @@ Edited by
 
 Juha Heinanen
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -120,7 +120,7 @@ Chapter 1. Admin Guide
 
    If libxmlrpc-c3[-dev] package is not available on your system, you may
    check if packages for your OS are not available on the
-   "xmlrpc-c"project ( http://xmlrpc-c.sourceforge.net/). Otherwise you
+   “xmlrpc-c”project ( http://xmlrpc-c.sourceforge.net/). Otherwise you
    need to install the library and devel headers from the sources.
 
 4. Parameters
@@ -190,8 +190,8 @@ modparam("mi_xmlrpc", "buffer_size", 8192)
 
 6. Example
 
-   This is an example showing the xmlrpc format for the "get_statistics
-   dialog: tm:" MI commad: response.
+   This is an example showing the xmlrpc format for the “get_statistics
+   dialog: tm:” MI commad: response.
 
    Example 1.5. XMLRPC request
 POST /RPC2 HTTP/1.0

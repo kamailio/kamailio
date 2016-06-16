@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Edvina AB
  * Copyright (C) 2007 1&1 Internet AG
  * Copyright (C) 2007 BASIS AudioNet GmbH
@@ -106,6 +104,7 @@ static int is_gflag(struct sip_msg*, char *, char *);
 
 static int w_cfg_lock(struct sip_msg*, char *, char *);
 static int w_cfg_unlock(struct sip_msg*, char *, char *);
+static int w_cfg_trylock(struct sip_msg*, char *, char *);
 
 static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param );
@@ -183,6 +182,8 @@ static cmd_export_t cmds[]={
 	{"lock",         (cmd_function)w_cfg_lock,    1,   fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"unlock",       (cmd_function)w_cfg_unlock,  1,   fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"trylock",       (cmd_function)w_cfg_trylock,  1,   fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"core_hash",    (cmd_function)w_core_hash, 3,   fixup_core_hash, 0,
 		ANY_ROUTE},
@@ -828,11 +829,28 @@ static int cfg_lock_helper(str *lkey, int mode)
 {
 	unsigned int pos;
 	pos = core_case_hash(lkey, 0, _cfg_lock_size);
+
 	LM_DBG("cfg_lock mode %d on %u\n", mode, pos);
-	if(mode==0)
+
+	if(mode==0) {
+		/* Lock */
 		lock_set_get(_cfg_lock_set, pos);
-	else
+	} else if (mode == 1) {
+		/* Unlock */
 		lock_set_release(_cfg_lock_set, pos);
+	} else {
+		int res;
+		/* Trylock */
+		res = lock_set_try(_cfg_lock_set, pos);
+		if (res != 0) {
+			LM_DBG("Failed to trylock \n");
+			/* Failed to lock */
+			return -1;
+		}
+		LM_DBG("Succeeded with trylock \n");
+		/* Succeeded in locking */
+		return 1;
+	}
 	return 1;
 }
 
@@ -844,6 +862,11 @@ static int cfg_lock(str *lkey)
 static int cfg_unlock(str *lkey)
 {
 	return cfg_lock_helper(lkey, 1);
+}
+
+static int cfg_trylock(str *lkey)
+{
+	return cfg_lock_helper(lkey, 2);
 }
 
 static int w_cfg_lock_wrapper(struct sip_msg *msg, gparam_p key, int mode)
@@ -869,6 +892,13 @@ static int w_cfg_unlock(struct sip_msg *msg, char *key, char *s2)
 	if(_cfg_lock_set==NULL || key==NULL)
 		return -1;
 	return w_cfg_lock_wrapper(msg, (gparam_p)key, 1);
+}
+
+static int w_cfg_trylock(struct sip_msg *msg, char *key, char *s2)
+{
+	if(_cfg_lock_set==NULL || key==NULL)
+		return -1;
+	return w_cfg_lock_wrapper(msg, (gparam_p)key, 2);
 }
 
 /*! Check if a route block exists - only request routes
@@ -1059,7 +1089,7 @@ int bind_cfgutils(cfgutils_api_t *api)
 
 
 /**
- *
+ * KEMI exports
  */
 static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	{ str_init("cfgutils"), str_init("lock"),
@@ -1069,6 +1099,11 @@ static sr_kemi_t sr_kemi_cfgutils_exports[] = {
 	},
 	{ str_init("cfgutils"), str_init("unlock"),
 		SR_KEMIP_INT, cfg_unlock,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("cfgutils"), str_init("trylock"),
+		SR_KEMIP_INT, cfg_trylock,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

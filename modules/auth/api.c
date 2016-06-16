@@ -27,9 +27,12 @@
 #include "../../parser/digest/digest.h"
 #include "../../sr_module.h"
 #include "../../ut.h"
+#include "../../data_lump_rpl.h"
 #include "auth_mod.h"
 #include "nonce.h"
+#include "ot_nonce.h"
 #include "rfc2617_sha256.h"
+#include "challenge.h"
 
 static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body,
 		auth_result_t* auth_res);
@@ -142,14 +145,60 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 	return 1;
 }
 
+/**
+ * Adds the Authentication-Info header, based on the credentials sent by a successful REGISTER.
+ * @param msg - SIP message to add the header to
+ * @returns 1 on success, 0 on error
+ */
+static int add_authinfo_resp_hdr(struct sip_msg *msg, char* next_nonce, int nonce_len, str qop, char* rspauth, str cnonce, str nc)
+{
+	str authinfo_hdr;
+	static const char authinfo_fmt[] = "Authentication-Info: "
+			"nextnonce=\"%.*s\", "
+			"qop=%.*s, "
+			"rspauth=\"%.*s\", "
+			"cnonce=\"%.*s\", "
+			"nc=%.*s\r\n";
+
+	authinfo_hdr.len = sizeof (authinfo_fmt) + nonce_len + qop.len + hash_hex_len + cnonce.len + nc.len - 20 /* format string parameters */ - 1 /* trailing \0 */;
+	authinfo_hdr.s = pkg_malloc(authinfo_hdr.len + 1);
+
+	if (!authinfo_hdr.s) {
+		LM_ERR("add_authinfo_resp_hdr: Error allocating %d bytes\n", authinfo_hdr.len);
+		goto error;
+	}
+	snprintf(authinfo_hdr.s, authinfo_hdr.len + 1, authinfo_fmt,
+			nonce_len, next_nonce,
+			qop.len, qop.s,
+			hash_hex_len, rspauth,
+			cnonce.len, cnonce.s,
+			nc.len, nc.s);
+	LM_DBG("authinfo hdr built: %.*s", authinfo_hdr.len, authinfo_hdr.s);
+	if (add_lump_rpl(msg, authinfo_hdr.s, authinfo_hdr.len, LUMP_RPL_HDR)!=0) {
+		LM_DBG("authinfo hdr added");
+		pkg_free(authinfo_hdr.s);
+		return 1;
+	}
+error:
+	if (authinfo_hdr.s) pkg_free(authinfo_hdr.s);
+	return 0;
+}
+
 /*
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
+auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1)
 {
 	int res = AUTHENTICATED;
 	auth_body_t* c;
+	dig_cred_t* d;
+	HASHHEX_SHA256 rspauth;
+#ifdef USE_OT_NONCE
+	char next_nonce[MAX_NONCE_LEN];
+	int nonce_len;
+	int cfg;
+#endif
 
 	c = (auth_body_t*)((hdr)->parsed);
 
@@ -165,6 +214,45 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 		} else {
 			c->stale = 1;
 			res = NOT_AUTHENTICATED;
+		}
+	}
+	else if (add_authinfo_hdr) {
+		if (unlikely(!ha1)) {
+			LM_ERR("add_authinfo_hdr is configured but the auth_* module "
+					"you are using does not provide the ha1 value to post_auth\n");
+		}
+		else {
+			d = &c->digest;
+
+			/* calculate rspauth */
+			calc_response(ha1,
+					&d->nonce,
+					&d->nc,
+					&d->cnonce,
+					&d->qop.qop_str,
+					d->qop.qop_parsed == QOP_AUTHINT,
+					0, /* method is empty for rspauth */
+					&d->uri,
+					NULL, /* TODO should be H(entity-body) if auth-int should be supported */
+					rspauth);
+
+			/* calculate new next nonce if otn is enabled */
+#ifdef USE_OT_NONCE
+			if (otn_enabled) {
+				cfg = get_auth_checks(msg);
+				nonce_len = sizeof(next_nonce);
+				if (unlikely(calc_new_nonce(next_nonce, &nonce_len, cfg, msg) != 0)) {
+					LM_ERR("auth: calc_nonce failed (len %d, needed %d). authinfo hdr is not added.\n",
+							(int) sizeof(next_nonce), nonce_len);
+				}
+				else {
+					add_authinfo_resp_hdr(msg, next_nonce, nonce_len, d->qop.qop_str, rspauth, d->cnonce, d->nc);
+				}
+			}
+			else
+#endif
+			/* use current nonce as next nonce */
+			add_authinfo_resp_hdr(msg, d->nonce.s, d->nonce.len, d->qop.qop_str, rspauth, d->cnonce, d->nc);
 		}
 	}
 

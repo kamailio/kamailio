@@ -138,6 +138,8 @@ int create_new_callsessiondata(str* callid, str* ftag, str* ttag, str* identifie
 	call_session_data->first_new_flow_description=0;
 	call_session_data->ip_version = ip_version;
 	call_session_data->identifier_type = identifier_type;
+        
+        call_session_data->session_has_been_opened = 0; /*0 has not been opened 1 has been opened*/
 	
 	char *p = (char*)(call_session_data + 1);
 

@@ -332,6 +332,10 @@ static str rollback = str_init("ROLLBACK");
 static str autocommit_on = str_init("SET AUTOCOMMIT=1");
 
 static inline void start_dbtransaction() {
+    
+    if (db_mode == NO_DB) 
+        return;
+    
     if (ul_dbf.raw_query(ul_dbh, &autocommit_off, NULL) < 0) {
         LM_ERR("could not "
                 "set autocommit off!\n");

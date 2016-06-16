@@ -284,15 +284,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (strncmp("shm", memory_manager, 3) == 0) {
-		curl_memory_manager = 0;
-	} else if (strncmp("sys", memory_manager, 3) == 0) {
-		curl_memory_manager = 1;
-	} else {
-		LM_ERR("invalid memory_manager parameter: '%s'\n", memory_manager);
-		return -1;
-	}
-
 	/* init faked sip msg */
 	if(faked_msg_init()<0) {
 		LM_ERR("failed to init faked sip msg\n");
@@ -581,7 +572,7 @@ static int w_http_set_tls_client_cert(sip_msg_t* msg, char* sc, char*foo)
 		return -1;
 	}
 
-        return set_query_param(&ah_params.tls_client_cert, _tls_client_cert);
+	return set_query_param(&ah_params.tls_client_cert, _tls_client_cert);
 }
 
 static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*foo)
@@ -593,7 +584,7 @@ static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*foo)
 		return -1;
 	}
 
-        return set_query_param(&ah_params.tls_client_key, _tls_client_key);
+	return set_query_param(&ah_params.tls_client_key, _tls_client_key);
 }
 
 static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*foo)
@@ -605,7 +596,7 @@ static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*foo)
 		return -1;
 	}
 
-        return set_query_param(&ah_params.tls_ca_path, _tls_ca_path);
+	return set_query_param(&ah_params.tls_ca_path, _tls_ca_path);
 }
 
 /*

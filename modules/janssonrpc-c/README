@@ -10,7 +10,7 @@ Matthew Williams
 
    <matthew@flowroute.com>
 
-   Copyright � 2013 Flowroute LLC (flowroute.com)
+   Copyright © 2013 Flowroute LLC (flowroute.com)
      __________________________________________________________________
 
    Table of Contents
@@ -131,7 +131,7 @@ modparam("janssonrpc-c", "min_srv_ttl", 30)
    The PV spec where to store the result of a call to
    janssonrpc_request(). It can be any writtable PV.
 
-   Default value is "$var(jsrpc_result)".
+   Default value is “$var(jsrpc_result)”.
 
    Example 1.2. Set result_pv parameter
 ...
@@ -190,7 +190,7 @@ modparam("janssonrpc-s", "retry_codes", "-32603, -32000..-32099");
    4.1. janssonrpc_notification(conn, method, parameters)
    4.2. janssonrpc_request(conn, method, params[, options]])
 
-4.1. janssonrpc_notification(conn, method, parameters)
+4.1.  janssonrpc_notification(conn, method, parameters)
 
      * conn - name for a collection of servers (required)
      * method - jsonrpc method (required)
@@ -212,7 +212,7 @@ janssonrpc_notification("user_db", "update_user", '{"id": 1234, "name": "Daniel"
 }');
 ...
 
-4.2. janssonrpc_request(conn, method, params[, options]])
+4.2.  janssonrpc_request(conn, method, params[, options]])
 
    The conn, method, params, and options can be a static string or a
    dynamic string value with config variables.
@@ -262,7 +262,7 @@ route[RESPONSE] {
 }
 ...
 
-5. Error Handling
+5.  Error Handling
 
    When a route is specified as part of the janssonrpc_request() function,
    a JSON object is stored in the result pseudo-variable (see

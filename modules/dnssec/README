@@ -2,7 +2,7 @@ Dnssec Module
 
 Marius Zbihlei
 
-   Copyright © 2013
+   Copyright Â© 2013
      __________________________________________________________________
 
    Table of Contents
@@ -120,5 +120,6 @@ Chapter 1. Admin Guide
  ...
  modparam("dnssec", "general_query_flags", 1) # QUERY_DONT_VALIDATE disable vali
 dation
- modparam("dnssec", "general_query_flags", 10) # QUERY_IGNORE_SKEW | QUERY_NO_DLV
+ modparam("dnssec", "general_query_flags", 10) # QUERY_IGNORE_SKEW | QUERY_NO_DL
+V
  ...

@@ -12,7 +12,7 @@
 	<sectioninfo>
 	</sectioninfo>
 
-	<title>SIP-router RPC Functions</title>
+	<title>RPC Functions</title>
 
 	<section id="ctl.listen">
 	<title> <function>ctl.listen</function></title>

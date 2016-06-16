@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2014 asipto.com
+   Copyright Â© 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -178,7 +178,7 @@ modparam("evapi", "netstring_format", 0)
    4.7. evapi_close()
    4.8. evapi_set_tag(tname)
 
-4.1. evapi_relay(evdata)
+4.1.  evapi_relay(evdata)
 
    Relay the event data given as parameter to connected applications.
 
@@ -208,7 +208,7 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 },
 ...
 
-4.2. evapi_async_relay(evdata)
+4.2.  evapi_async_relay(evdata)
 
    Relay the event data given as parameter to connected applications.
    Before evaluating the parameter, the request processing is suspended
@@ -230,7 +230,7 @@ evapi_async_relay("{ \"event\": \"suspend\",\n \"data\":"
         " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}");
 ...
 
-4.3. evapi_multicast(evdata, etag)
+4.3.  evapi_multicast(evdata, etag)
 
    Relay the event data given as parameter to connections that match the
    tag provided by etag value. The etag can be a variable. For more see
@@ -242,7 +242,7 @@ evapi_multicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "ta
 gx");
 ...
 
-4.4. evapi_async_multicast(evdata, etag)
+4.4.  evapi_async_multicast(evdata, etag)
 
    Async relay the event data given as parameter to connections that match
    the tag provided by etag value. The etag can be a variable. For more
@@ -254,7 +254,7 @@ evapi_async_multicast("{ \"event\": \"suspend\",\n \"data\":"
     " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
 ...
 
-4.5. evapi_unicast(evdata, etag)
+4.5.  evapi_unicast(evdata, etag)
 
    Relay the event data given as parameter to the first connection that
    match the tag provided by etag value. The etag can be a variable. For
@@ -266,7 +266,7 @@ evapi_unicast("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}", "tagx
 ");
 ...
 
-4.6. evapi_async_unicast(evdata, etag)
+4.6.  evapi_async_unicast(evdata, etag)
 
    Async relay the event data given as parameter to the first connection
    that match the tag provided by etag value. The etag can be a variable.
@@ -278,7 +278,7 @@ evapi_async_unicast("{ \"event\": \"suspend\",\n \"data\":"
     " { \"index\": \"$T(id_index)\", \"label\": \"$T(id_label)\" }\n}", "tagx");
 ...
 
-4.7. evapi_close()
+4.7.  evapi_close()
 
    Close evapi current client connection.
 
@@ -294,7 +294,7 @@ event_route[evapi:connection-new] {
 }
 ...
 
-4.8. evapi_set_tag(tname)
+4.8.  evapi_set_tag(tname)
 
    Set tag name for current client connection. The parameters has to be a
    string up to 64 characters. It can also be a variable holding such
@@ -318,7 +318,7 @@ event_route[evapi:connection-new] {
    5.2. evapi:connection-closed
    5.3. evapi:message-received
 
-5.1. evapi:connection-new
+5.1.  evapi:connection-new
 
    If defined, the module calls event_route[evapi:connection-new] when a
    new client is connected.
@@ -328,7 +328,7 @@ event_route[evapi:connection-new] {
 }
 ...
 
-5.2. evapi:connection-closed
+5.2.  evapi:connection-closed
 
    If defined, the module calls event_route[evapi:connection-closed] when
    a client connection is closed.
@@ -338,7 +338,7 @@ event_route[evapi:connection-closed] {
 }
 ...
 
-5.3. evapi:message-received
+5.3.  evapi:message-received
 
    If defined, the module calls event_route[evapi:message-received] when a
    message is received from a client.

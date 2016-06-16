@@ -72,6 +72,9 @@
  	    If the key/path can't be found in the JSON data structure, the pvar is not changed. If it had a previous
 	    value, that value remains unchanged.
         </para>
+        <para>
+            <emphasis>Note:</emphasis> For JSON-Integer values exceeding the C-Integer boundaries, a String representing the number is returned.
+        </para>
         <example>
         <title><function>jansson_get</function> usage</title>
         <programlisting format="linespecific">
@@ -97,6 +100,9 @@ xlog("L_INFO", "foo is $var(n)");
         <para>
             Valid 'type' parameters are 'integer', 'real', 'string', 'object', 'array', 'true', 'false', and 'null'  as well as
             abbriviated names such as 'int', 'str', and 'obj'. 'value' is ignored when type is 'true', 'false', or 'null'.
+        </para>
+        <para>
+            <emphasis>Note:</emphasis> If you want to insert a JSON-Integer value exceeding the C-Integer boundaries (e.g. C-type long), the a the number can be provided as a string.
         </para>
         <example>
         <title><function>jansson_set</function> usage</title>

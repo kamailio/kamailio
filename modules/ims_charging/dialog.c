@@ -72,19 +72,18 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
     session->event_type = answered;
     session->active = 1;
 
-
     /* check to make sure that the validity of the credit is enough for the bundle */
     int ret = 0;
-    LM_DBG("we were granted %d seconds (valud for %d seconds) and it's been %d seconds since we requested\n", (int)session->reserved_secs, (int)session->valid_for, (int)time_since_last_event);
+    LM_DBG("we were granted %d seconds (valid for %d seconds) and it's been %d seconds since we requested\n", (int)session->reserved_secs, (int)session->valid_for, (int)time_since_last_event);
     if (session->reserved_secs < (session->valid_for - time_since_last_event)) {
         if (session->reserved_secs > ro_timer_buffer/*TIMEOUTBUFFER*/) {
-            ret = insert_ro_timer(&session->ro_tl, session->reserved_secs - ro_timer_buffer); //subtract 5 seconds so as to get more credit before we run out
+            ret = insert_ro_timer(&session->ro_tl, session->reserved_secs - (session->is_final_allocation?0:ro_timer_buffer)); //subtract 5 seconds so as to get more credit before we run out
         } else {
             ret = insert_ro_timer(&session->ro_tl, session->reserved_secs);
         }
     } else {
         if (session->valid_for > ro_timer_buffer) {
-            ret = insert_ro_timer(&session->ro_tl, session->valid_for - ro_timer_buffer); //subtract 5 seconds so as to get more credit before we run out
+            ret = insert_ro_timer(&session->ro_tl, session->valid_for - (session->is_final_allocation?0:ro_timer_buffer)); //subtract 5 seconds so as to get more credit before we run out
         } else {
             ret = insert_ro_timer(&session->ro_tl, session->valid_for);
         }

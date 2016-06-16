@@ -34,6 +34,9 @@
 #include "config.h"
 
 struct cfg_group_tm	default_tm_cfg = {
+	"trying -- your call is important to us",	/* tm_auto_inv_100_r */
+	"Server Internal Error",	/* default_reason */
+	STR_NULL,	/* ac_extra_hdrs */
 	/* should be request-uri matching used as a part of pre-3261
 	 * transaction matching, as the standard wants us to do so
 	 * (and is reasonable to do so, to be able to distinguish
@@ -65,16 +68,13 @@ struct cfg_group_tm	default_tm_cfg = {
 	MAX_NONINV_LIFETIME,	/* tm_max_noninv_lifetime */
 	1,	/* noisy_ctimer */
 	1,	/* tm_auto_inv_100 */
-	"trying -- your call is important to us",	/* tm_auto_inv_100_r */
 	500,	/* tm_unix_tx_timeout -- 500 ms by default */
 	1,	/* restart_fr_on_each_reply */
 	0,	/* pass_provisional_replies */
 	1,	/* tm_aggregate_auth */
 	UM_CANCEL_STATEFULL,	/* unmatched_cancel */
 	500,	/* default_code */
-	"Server Internal Error",	/* default_reason */
 	1,	/* reparse_invite */
-	STR_NULL,	/* ac_extra_hdrs */
 
 	0,	/* tm_blst_503 -- if 1 blacklist 503 sources, using tm_blst_503_min,
 		 * tm_blst_503_max, tm_blst_503_default and the Retry-After header
@@ -100,6 +100,15 @@ struct cfg_group_tm	default_tm_cfg = {
 void	*tm_cfg = &default_tm_cfg;
 
 cfg_def_t	tm_cfg_def[] = {
+	{"auto_inv_100_reason",	CFG_VAR_STRING,	0, 0, 0, 0,
+		"reason text of the automatically send 100 to an INVITE"},
+	{"default_reason",	CFG_VAR_STRING,	0, 0, 0, 0,
+		"default SIP reason phrase sent by t_reply(), if the function "
+		"cannot retrieve its parameters"},
+	{"ac_extra_hdrs",	CFG_VAR_STR,	0, 0, 0, 0,
+		"header fields prefixed by this parameter value are included "
+		"in the CANCEL and negative ACK messages if they were present "
+		"in the outgoing INVITE (depends on reparse_invite)"},
 	{"ruri_matching",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"perform Request URI check in transaction matching"},
 	{"via1_matching",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
@@ -136,8 +145,6 @@ cfg_def_t	tm_cfg_def[] = {
 		"will be always replied"},
 	{"auto_inv_100",	CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"automatically send 100 to an INVITE"},
-	{"auto_inv_100_reason",	CFG_VAR_STRING,	0, 0, 0, 0,
-		"reason text of the automatically send 100 to an INVITE"},   
 	{"unix_tx_timeout",	CFG_VAR_INT,	0, 0, 0, 0,
 		"Unix socket transmission timeout, in milliseconds"},
 	{"restart_fr_on_each_reply",	CFG_VAR_INT | CFG_ATOMIC ,	0, 1, 0, 0,
@@ -155,17 +162,10 @@ cfg_def_t	tm_cfg_def[] = {
 	{"default_code",	CFG_VAR_INT | CFG_ATOMIC,	400, 699, 0, 0,
 		"default SIP response code sent by t_reply(), if the function "
 		"cannot retrieve its parameters"},
-	{"default_reason",	CFG_VAR_STRING,	0, 0, 0, 0,
-		"default SIP reason phrase sent by t_reply(), if the function "
-		"cannot retrieve its parameters"},
 	{"reparse_invite",	CFG_VAR_INT,	0, 1, 0, 0,
 		"if set to 1, the CANCEL and negative ACK requests are "
 		"constructed from the INVITE message which was sent out "
 		"instead of building them from the received request"},
-	{"ac_extra_hdrs",	CFG_VAR_STR,	0, 0, 0, 0,
-		"header fields prefixed by this parameter value are included "
-		"in the CANCEL and negative ACK messages if they were present "
-		"in the outgoing INVITE (depends on reparse_invite)"},
 	{"blst_503",		CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"if set to 1, blacklist 503 SIP response sources"},
 	{"blst_503_def_timeout",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,

@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -49,15 +49,26 @@ Daniel-Constantin Mierla
               4.2. dbg_pv_dump([mask] [, level])
               4.3. dbg_sip_msg([log_level], [facility])
 
-        5. Exported RPC Functions
+        5. Exported MI Functions
 
-              5.1. dbg.ls
-              5.2. dbg.trace
-              5.3. dbg.bp
-              5.4. dbg.mod_level
-              5.5. dbg.reset_msgid
+              5.1. set_dbg_mod_level mod_name level
+              5.2. set_dbg_mod_facility mod_name facility
+              5.3. get_dbg_mod_level mod_name
+              5.4. get_dbg_mod_facility mod_name
 
-        6. Usage
+        6. Exported RPC Functions
+
+              6.1. dbg.ls
+              6.2. dbg.trace
+              6.3. dbg.bp
+              6.4. dbg.mod_level
+              6.5. dbg.reset_msgid
+              6.6. dbg.set_mod_level
+              6.7. dbg.set_mod_facility
+              6.8. dbg.get_mod_level
+              6.9. dbg.get_mod_facility
+
+        7. Usage
 
    List of Examples
 
@@ -81,6 +92,10 @@ Daniel-Constantin Mierla
    1.18. dbg_breakpoint usage
    1.19. dbg_pv_dump usage
    1.20. dbg_sip_msg usage
+   1.21. set_dbg_mod_level usage
+   1.22. set_dbg_mod_facility usage
+   1.23. get_dbg_mod_level usage
+   1.24. get_dbg_mod_facility usage
 
 Chapter 1. Admin Guide
 
@@ -118,15 +133,26 @@ Chapter 1. Admin Guide
         4.2. dbg_pv_dump([mask] [, level])
         4.3. dbg_sip_msg([log_level], [facility])
 
-   5. Exported RPC Functions
+   5. Exported MI Functions
 
-        5.1. dbg.ls
-        5.2. dbg.trace
-        5.3. dbg.bp
-        5.4. dbg.mod_level
-        5.5. dbg.reset_msgid
+        5.1. set_dbg_mod_level mod_name level
+        5.2. set_dbg_mod_facility mod_name facility
+        5.3. get_dbg_mod_level mod_name
+        5.4. get_dbg_mod_facility mod_name
 
-   6. Usage
+   6. Exported RPC Functions
+
+        6.1. dbg.ls
+        6.2. dbg.trace
+        6.3. dbg.bp
+        6.4. dbg.mod_level
+        6.5. dbg.reset_msgid
+        6.6. dbg.set_mod_level
+        6.7. dbg.set_mod_facility
+        6.8. dbg.get_mod_level
+        6.9. dbg.get_mod_facility
+
+   7. Usage
 
 1. Overview
 
@@ -162,6 +188,11 @@ Chapter 1. Admin Guide
    The following modules must be loaded before this module:
      * none.
 
+   NOTE: Due to the debugger module child_init() function, one should load
+   the module first in the module sequence in order to initialize
+   _dbg_pid_list. Otherwise, another module (i.e. p_usrloc) forking a
+   process with rank != PROC_INIT will fail.
+
 2.2. External Libraries or Applications
 
    The following libraries or applications must be installed before
@@ -194,7 +225,7 @@ Chapter 1. Admin Guide
    startup. You can change the value at runtime without restart, globally
    or per process.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.1. Set cfgtrace parameter
 ...
@@ -206,7 +237,7 @@ modparam("debugger", "cfgtrace", 1)
    Control whether every line (global) breakpoint is enabled or disabled
    at startup.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.2. Set breakpoint parameter
 ...
@@ -217,7 +248,7 @@ modparam("debugger", "breakpoint", 1)
 
    What log level is to be used to print module-specific messages.
 
-   Default value is "-1" (L_ERR).
+   Default value is “-1” (L_ERR).
 
    Example 1.3. Set log_level parameter
 ...
@@ -228,7 +259,7 @@ modparam("debugger", "log_level", 1)
 
    What log level name is to be used to print cfg trace messages.
 
-   Default value is "NULL" (use default log names).
+   Default value is “NULL” (use default log names).
 
    Example 1.4. Set log_level_name parameter
 ...
@@ -241,7 +272,7 @@ modparam("debugger", "log_level_name", "exec")
    using this setting, you can configure syslog to send debug messages to
    a separate log channel, like a specific kamailio-debug log file.
 
-   Default value is "NULL" (default from core).
+   Default value is “NULL” (default from core).
 
    Example 1.5. Set log_facility parameter
 ...
@@ -252,7 +283,7 @@ modparam("debugger", "log_facility", "LOG_DAEMON")
 
    String to print before any module-specific messages.
 
-   Default value is "*** cfgtrace:".
+   Default value is “*** cfgtrace:”.
 
    Example 1.6. Set log_prefix parameter
 ...
@@ -264,7 +295,7 @@ modparam("debugger", "log_prefix", "from-debugger-with-love:")
    Microseconds to sleep before checking for new commands when waiting at
    a breakpoint.
 
-   Default value is "100000" (that is 0.1 sec).
+   Default value is “100000” (that is 0.1 sec).
 
    Example 1.7. Set step_usleep parameter
 ...
@@ -278,7 +309,7 @@ modparam("debugger", "step_usleep", 500000)
    blocking RPC process forever in case the worker process 'forgets' to
    write back a reply.
 
-   Default value is "200".
+   Default value is “200”.
 
    Example 1.8. Set step_loops parameter
 ...
@@ -294,7 +325,7 @@ modparam("debugger", "step_loops", 100)
    configured by mod_level or mod_facility. This parameter is accesible
    readonly via the Kamailio config framework.
 
-   Default value is "0" - feature disabled.
+   Default value is “0” - feature disabled.
 
    Example 1.9. Set mod_hash_size parameter
 ...
@@ -307,7 +338,7 @@ modparam("debugger", "mod_hash_size", 5)
    This parameter is tunable via the Kamailio config framework. To use per
    module log level you also have to set mod_hash_size.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.10. Set mod_level_mode parameter
 ...
@@ -333,7 +364,7 @@ modparam("debugger", "mod_level", "tm=3")
    This parameter is tunable via the Kamailio config framework. To use per
    module log facility you also have to set mod_hash_size.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.12. Set mod_facility_mode parameter
 ...
@@ -362,7 +393,7 @@ modparam("debugger", "mod_facility", "debugger=LOG_LOCAL1")
    Enable or disable log assign actions on config (0 - disabled, 1 -
    enabled).
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.14. Set log_assign parameter
 ...
@@ -374,7 +405,7 @@ modparam("debugger", "log_assign", 1)
    If set, before each config action is done pkg memory check, useful to
    detect buffer overflows.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.15. Set cfgpkgcheck parameter
 ...
@@ -386,7 +417,7 @@ modparam("debugger", "cfgpkgcheck", 1)
    Used to enable or disable the ability to reset the msgid ($mi) through
    the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
 
-   Default value is "0" - feature disabled.
+   Default value is “0” - feature disabled.
 
    Example 1.16. Set reset_msgid parameter
 ...
@@ -398,7 +429,7 @@ modparam("debugger", "reset_msgid", 1)
    Control whether the cfgt module is enabled or disabled at startup.
    Module cfgt needs to be loaded before.
 
-   Default value is "0" (disabled).
+   Default value is “0” (disabled).
 
    Example 1.17. Set cfgtest parameter
 ...
@@ -521,15 +552,71 @@ P-Hint: My hint
 ------------------------------- SIP body diffs --------------------------------
 -------------------------- END OF SIP message debug ---------------------------
 
-5. Exported RPC Functions
+5. Exported MI Functions
 
-   5.1. dbg.ls
-   5.2. dbg.trace
-   5.3. dbg.bp
-   5.4. dbg.mod_level
-   5.5. dbg.reset_msgid
+   5.1. set_dbg_mod_level mod_name level
+   5.2. set_dbg_mod_facility mod_name facility
+   5.3. get_dbg_mod_level mod_name
+   5.4. get_dbg_mod_facility mod_name
 
-5.1.  dbg.ls
+5.1. set_dbg_mod_level mod_name level
+
+   Set the module log level. If module does not exist in kamailio, the
+   entry in the level hashtable is still added for the bogus module.
+
+   Example 1.21. set_dbg_mod_level usage
+...
+$ kamctl fifo set_dbg_mod_level core 2
+$ kamctl fifo set_dbg_mod_level debugger 3
+...
+
+5.2. set_dbg_mod_facility mod_name facility
+
+   Set the mod_name log facility. If mod_name does not exist in kamailio,
+   the entry in the facility hashtable is still added for the bogus
+   mod_name.
+
+   Example 1.22. set_dbg_mod_facility usage
+...
+$ kamctl fifo set_dbg_mod_facility core LOG_LOCAL1
+$ kamctl fifo set_dbg_mod_facility debugger LOG_LOCAL0
+...
+
+5.3. get_dbg_mod_level mod_name
+
+   Get the mod_name log level. If mod_name does not exist in the level
+   hashtable, returns the config file value.
+
+   Example 1.23. get_dbg_mod_level usage
+...
+$ kamctl fifo get_dbg_mod_level core
+$ kamctl fifo get_dbg_mod_level debugger
+...
+
+5.4. get_dbg_mod_facility mod_name
+
+   Get the mod_name log facility. If mod_name does not exist in the
+   facility hashtable, returns the config file value.
+
+   Example 1.24. get_dbg_mod_facility usage
+...
+$ kamctl fifo get_dbg_mod_facility core
+$ kamctl fifo get_dbg_mod_facility debugger
+...
+
+6. Exported RPC Functions
+
+   6.1. dbg.ls
+   6.2. dbg.trace
+   6.3. dbg.bp
+   6.4. dbg.mod_level
+   6.5. dbg.reset_msgid
+   6.6. dbg.set_mod_level
+   6.7. dbg.set_mod_facility
+   6.8. dbg.get_mod_level
+   6.9. dbg.get_mod_facility
+
+6.1.  dbg.ls
 
    List Kamailio processes with info related to interactive debugging.
 
@@ -543,7 +630,7 @@ P-Hint: My hint
                 dbg.ls
                 dbg.ls 1234
 
-5.2.  dbg.trace
+6.2.  dbg.trace
 
    Control config script running trace.
 
@@ -560,7 +647,7 @@ P-Hint: My hint
                 dbg.trace off
                 dbg.trace on 1234
 
-5.3.  dbg.bp
+6.3.  dbg.bp
 
    Control breakpoints and config execution.
 
@@ -598,7 +685,7 @@ P-Hint: My hint
                 dbg.bp eval 1234 $fu
                 dbg.bp move 1234
 
-5.4.  dbg.mod_level
+6.4.  dbg.mod_level
 
    Specify module log level.
 
@@ -612,7 +699,7 @@ P-Hint: My hint
                 dbg.mod_level core 3
                 dbg.mod_level tm 3
 
-5.5.  dbg.reset_msgid
+6.5.  dbg.reset_msgid
 
    Resets the message sequence ($mi). Internally there is no real change.
    This can be useful for unit test cases in order to be able to replicate
@@ -624,7 +711,47 @@ P-Hint: My hint
    Examples of use with kamcmd:
                 dbg.reset_msgid
 
-6. Usage
+6.6.  dbg.set_mod_level
+
+   Set the module log level. If module does not exist in kamailio, the
+   entry in the level hashtable is still added for the bogus module.
+
+   Name: dbg.set_mod_level
+
+   Examples of use with kamcmd:
+                        dbg.set_mod_level core 1
+
+6.7.  dbg.set_mod_facility
+
+   Set the module log facility. If module does not exist in kamailio, the
+   entry in the facility hashtable is still added for the bogus module.
+
+   Name: dbg.set_mod_facility
+
+   Examples of use with kamcmd:
+                        dbg.set_mod_facility core LOG_LOCAL1
+
+6.8.  dbg.get_mod_level
+
+   Get the module log level. If mod_name does not exist in the level
+   hashtable, returns the config file value.
+
+   Name: dbg.get_mod_level
+
+   Examples of use with kamcmd:
+                        dbg.get_mod_level core
+
+6.9.  dbg.get_mod_facility
+
+   Get the module log facility. If mod_name does not exist in the facility
+   hashtable, returns the config file value.
+
+   Name: dbg.get_mod_facility
+
+   Examples of use with kamcmd:
+                        dbg.get_mod_facility core
+
+7. Usage
 
    A common usage is to investigate the execution path for a specific SIP
    message. Just enable cfg running trace, send the message and watch the

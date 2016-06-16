@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2014 asipto.com
+   Copyright Â© 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -126,7 +126,7 @@ modparam("nosip", "msg_skip", "^GET ")
 
    4.1. event_route[nosip:msg]
 
-4.1. event_route[nosip:msg]
+4.1.  event_route[nosip:msg]
 
    Event route block to be executed when a non-sip message is received by
    a SIP worker process.

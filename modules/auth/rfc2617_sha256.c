@@ -115,7 +115,9 @@ void calc_response_sha256(HASHHEX_SHA256 _ha1,      /* H(A1) */
 
 	/* calculate H(A2) */
 	sr_SHA256_Init(&Sha256Ctx);
-	SHA256_Update(&Sha256Ctx, _method->s, _method->len);
+	if (_method) {
+		SHA256_Update(&Sha256Ctx, _method->s, _method->len);
+	}
 	SHA256_Update(&Sha256Ctx, ":", 1);
 	SHA256_Update(&Sha256Ctx, _uri->s, _uri->len);
 

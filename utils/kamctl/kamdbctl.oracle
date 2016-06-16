@@ -1,5 +1,4 @@
 #!/bin/sh
-# $Id$
 #
 # Script for adding and dropping Kamailio Oracle tables
 #

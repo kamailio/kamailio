@@ -73,6 +73,7 @@
 #include "cxdx_callbacks.h"
 #include "registrar_notify.h"
 #include "../cdp_avp/mod_export.h"
+#include "pvt_message.h"
 
 MODULE_VERSION
 
@@ -110,6 +111,8 @@ str scscf_name_str = str_init("sip:scscf2.ims.smilecoms.com:6060"); /* default s
 str scscf_serviceroute_uri_str; /* Service Route URI */
 
 char *domain = "location";  ///TODO should be configurable mod param
+
+struct _pv_req_data _pv_treq;
 
 /*! \brief Module init & destroy function */
 static int mod_init(void);
@@ -344,6 +347,8 @@ static int mod_init(void) {
                 scscf_name_str.s, scscf_name_str.len);
         scscf_serviceroute_uri_str.len += scscf_name_str.len;
     }
+    
+    pv_tmx_data_init();
 
     /* </build required strings> */
 

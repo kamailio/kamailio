@@ -607,7 +607,10 @@ int reg_ht_update_attrs(reg_uac_t *reg)
 			strncpy(ri->r->auth_proxy.s, reg->auth_proxy.s, reg->auth_proxy.len);
 			ri->r->auth_proxy.len = reg->auth_proxy.len;
 			ri->r->auth_proxy.s[reg->auth_proxy.len] = '\0';
-			if(reg->flags & UAC_REG_DISABLED) ri->r->flags |= UAC_REG_DISABLED;
+			if(reg->flags & UAC_REG_DISABLED)
+				ri->r->flags |= UAC_REG_DISABLED;
+			else
+				ri->r->flags &= ~UAC_REG_DISABLED;
 			lock_release(&_reg_htable->entries[slot].lock);
 			return 0;
 		}
@@ -819,6 +822,10 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				goto done;
 			}
 		}
+
+		LM_DBG("sip response %d while registering [%.*s] with no match\n",
+				ps->code, ri->l_uuid.len, ri->l_uuid.s);
+		goto done;
 	}
 
 	if(ps->code == 401 || ps->code == 407)
@@ -855,7 +862,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 			}
 		}
 		cred.realm = auth.realm;
-		cred.user = ri->auth_username; 
+		cred.user = ri->auth_username;
 		cred.passwd = ri->auth_password;
 		cred.next = NULL;
 
@@ -924,8 +931,7 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 		ri->flags |= UAC_REG_AUTHSENT;
 		return;
-	} else
-	{
+	} else {
 		LM_ERR("got sip response %d while registering [%.*s]\n",
 				ps->code, ri->l_uuid.len, ri->l_uuid.s);
 		goto error;
@@ -1086,7 +1092,7 @@ void uac_reg_timer(unsigned int ticks)
 		if(reg.attr.len == 0) { \
 			LM_ERR("empty value not allowed for column[%d]='%.*s' - ignoring record\n", \
 					pos, db_cols[pos]->len, db_cols[pos]->s); \
-			continue; \
+			goto nextrec; \
 		} \
 	} \
 } while(0);
@@ -1169,7 +1175,7 @@ int uac_reg_load_db(void)
 		}
 	} else {
 		if((ret=reg_dbf.query(reg_db_con, NULL, NULL, NULL, db_cols,
-						0, 10, 0, &db_res))!=0
+						0, 12, 0, &db_res))!=0
 				|| RES_ROW_N(db_res)<=0 )
 		{
 			reg_dbf.free_result(reg_db_con, db_res);
@@ -1185,7 +1191,7 @@ int uac_reg_load_db(void)
 	do {
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
-			memset(&reg, 0, sizeof(reg_uac_t));;
+			memset(&reg, 0, sizeof(reg_uac_t));
 			/* check for NULL values ?!?! */
 			reg_db_set_attr(l_uuid, 0);
 			reg_db_set_attr(l_username, 1);
@@ -1212,6 +1218,8 @@ int uac_reg_load_db(void)
 				LM_ERR("Error adding reg to htable\n");
 				goto error;
 			}
+nextrec:
+			;
 		}
 		if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
 			if(reg_dbf.fetch_result(reg_db_con, &db_res, reg_fetch_rows)<0) {
@@ -1317,8 +1325,10 @@ int uac_reg_db_refresh(str *pl_uuid)
 		}
 	}
 
-	memset(&reg, 0, sizeof(reg_uac_t));;
+	memset(&reg, 0, sizeof(reg_uac_t));
+	/* only one record - use FOR to catch 'contunue' on invalid set attr */
 	i = 0;
+
 	/* check for NULL values ?!?! */
 	reg_db_set_attr(l_uuid, 0);
 	reg_db_set_attr(l_username, 1);
@@ -1357,6 +1367,8 @@ int uac_reg_db_refresh(str *pl_uuid)
 		}
 	}
 	lock_release(_reg_htable_gc_lock);
+
+nextrec:
 
 	reg_dbf.free_result(reg_db_con, db_res);
 	reg_dbf.close(reg_db_con);

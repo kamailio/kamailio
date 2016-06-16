@@ -67,7 +67,7 @@ Chapter 1. Admin Guide
 
    Note: the keepalive functions only work on systems with the
    HAVE_TCP_KEEPIDLE, HAVE_TCP_KEEPCNT and HAVE_TCP_KEEPINTVL macros
-   defined (currently only Linux).
+   defined (Linux, FreeBSD, DragonFly BSD, NetBSD).
 
 2. Parameters
 
@@ -106,7 +106,7 @@ modparam("tcpops", "closed_event", 0)
    Check the state of a TCP or WS connection ID
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the Kamailio internal connection id (as in the
+     * conid (optional): the Kamailio internal connection id (as in the
        $conid pseudovariable).
 
    Retuns values:
@@ -128,7 +128,7 @@ modparam("tcpops", "closed_event", 0)
    Check the state of a TCP or WS connection ID
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the Kamailio internal connection id (as in the
+     * conid (optional): the Kamailio internal connection id (as in the
        $conid pseudovariable).
 
    Retuns values:
@@ -159,7 +159,7 @@ modparam("tcpops", "closed_event", 0)
    Enables keepalive on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which TCP
+     * conid (optional): the kamailio internal connection id on which TCP
        keepalive will be enabled. If no parameter is given, the keepalive
        mechanism will be enabled on the current message source connection.
      * idle (seconds): the time before the first keepalive packet is sent
@@ -194,7 +194,7 @@ onreply_route[foo] {
    Disables keepalive on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which TCP
+     * conid (optional): the kamailio internal connection id on which TCP
        keepalive will be disabled. If no parameter is given, the keepalive
        mechanism will be disabled on the current message source
        connection.
@@ -225,7 +225,7 @@ onreply_route[foo] {
    Sets the connection lifetime of a connection (TCP).
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which to
+     * conid (optional): the kamailio internal connection id on which to
        set the new lifetime. If no parameter is given, it will be set on
        the current message source connection.
      * lifetime (seconds): the new connection lifetime.

@@ -87,7 +87,7 @@ void ro_timer_routine(unsigned int ticks, void * attr);
  */
 void ro_session_ontimeout(struct ro_tl *tl);
 
-void resume_ro_session_ontimeout(struct interim_ccr *i_req);
+void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeour_or_error);
 
 #endif	/* RO_TIMER_H */
 

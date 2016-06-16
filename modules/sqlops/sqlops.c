@@ -26,10 +26,9 @@
  */
 
 /*! \defgroup sqlops Kamailio :: SQL Operations
- *  \note Kamailio module - part of modules_k
-
+ *
  * The module adds support for raw SQL queries in the configuration file.
-
+ *
  */
 
 

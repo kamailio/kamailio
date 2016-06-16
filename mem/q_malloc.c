@@ -188,8 +188,9 @@ struct qm_block* qm_malloc_init(char* address, unsigned long size, int type)
 	DBG("qm_malloc_init: QM_OPTIMIZE=%lu, /ROUNDTO=%lu\n",
 			QM_MALLOC_OPTIMIZE, QM_MALLOC_OPTIMIZE/ROUNDTO);
 	DBG("qm_malloc_init: QM_HASH_SIZE=%lu, qm_block size=%lu\n",
-			QM_HASH_SIZE, (long)sizeof(struct qm_block));
-	DBG("qm_malloc_init(%p, %lu), start=%p\n", address, size, start);
+			QM_HASH_SIZE, (unsigned long)sizeof(struct qm_block));
+	DBG("qm_malloc_init(%p, %lu), start=%p\n", address,
+			(unsigned long)size, start);
 	if (size<start-address) return 0;
 	size-=(start-address);
 	if (size <(MIN_FRAG_SIZE+FRAG_OVERHEAD)) return 0;
@@ -197,11 +198,14 @@ struct qm_block* qm_malloc_init(char* address, unsigned long size, int type)
 	
 	init_overhead=ROUNDUP(sizeof(struct qm_block))+sizeof(struct qm_frag)+
 		sizeof(struct qm_frag_end);
-	DBG("qm_malloc_init: size= %lu, init_overhead=%lu\n", size, init_overhead);
+	DBG("qm_malloc_init: size= %lu, init_overhead=%lu\n",
+			(unsigned long)size, init_overhead);
 	
 	if (size < init_overhead)
 	{
 		/* not enough mem to create our control structures !!!*/
+		LOG(L_ERR, "qm_malloc_init(%lu); No memory left to create control structures!\n",
+				(unsigned long)size);
 		return 0;
 	}
 	end=start+size;
@@ -262,12 +266,12 @@ static inline void qm_detach_free(struct qm_block* qm, struct qm_frag* frag)
 
 #ifdef DBG_QM_MALLOC
 static inline struct qm_frag* qm_find_free(struct qm_block* qm, 
-											unsigned long size,
+											size_t size,
 											int *h,
 											unsigned int *count)
 #else
 static inline struct qm_frag* qm_find_free(struct qm_block* qm, 
-											unsigned long size,
+											size_t size,
 											int* h)
 #endif
 {
@@ -285,6 +289,8 @@ static inline struct qm_frag* qm_find_free(struct qm_block* qm,
 	/*try in a bigger bucket*/
 	}
 	/* not found */
+	LOG(L_ERR, "qm_find_free(%p, %lu); Free fragment not found!\n",
+			qm, (unsigned long)size);
 	return 0;
 }
 
@@ -293,13 +299,13 @@ static inline struct qm_frag* qm_find_free(struct qm_block* qm,
  * new_size < size & rounded-up already!*/
 static inline
 #ifdef DBG_QM_MALLOC
-int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned long new_size,
+int split_frag(struct qm_block* qm, struct qm_frag* f, size_t new_size,
 				const char* file, const char* func, unsigned int line, const char *mname)
 #else
-int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned long new_size)
+int split_frag(struct qm_block* qm, struct qm_frag* f, size_t new_size)
 #endif
 {
-	unsigned long rest;
+	size_t rest;
 	struct qm_frag* n;
 	struct qm_frag_end* end;
 	
@@ -341,11 +347,11 @@ int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned long new_size)
 
 
 #ifdef DBG_QM_MALLOC
-void* qm_malloc(void* qmp, unsigned long size,
+void* qm_malloc(void* qmp, size_t size,
 					const char* file, const char* func, unsigned int line,
 					const char *mname)
 #else
-void* qm_malloc(void* qmp, unsigned long size)
+void* qm_malloc(void* qmp, size_t size)
 #endif
 {
 	struct qm_block* qm;
@@ -359,8 +365,8 @@ void* qm_malloc(void* qmp, unsigned long size)
 	
 #ifdef DBG_QM_MALLOC
 	list_cntr = 0;
-	MDBG("qm_malloc(%p, %lu) called from %s: %s(%d)\n", qm, size, file, func,
-			line);
+	MDBG("qm_malloc(%p, %lu) called from %s: %s(%d)\n",
+			qm, (unsigned long)size, file, func, line);
 #endif
 	/*malloc(0) should return a valid pointer according to specs*/
 	if(unlikely(size==0)) size=4;
@@ -404,7 +410,8 @@ void* qm_malloc(void* qmp, unsigned long size)
 			FRAG_END(f)->check2=END_CHECK_PATTERN2;*/
 		MDBG("qm_malloc(%p, %lu) returns address %p frag. %p (size=%lu) on %d"
 				" -th hit\n",
-			 qm, size, (char*)f+sizeof(struct qm_frag), f, f->size, list_cntr );
+			 qm, (unsigned long)size, (char*)f+sizeof(struct qm_frag), f,
+			 f->size, list_cntr);
 #endif
 #ifdef MALLOC_STATS
 		if(qm->type==MEM_TYPE_PKG) {
@@ -413,6 +420,15 @@ void* qm_malloc(void* qmp, unsigned long size)
 #endif
 		return (char*)f+sizeof(struct qm_frag);
 	}
+
+#ifdef DBG_QM_MALLOC
+	LOG(L_ERR, "qm_malloc(%p, %lu) called from %s: %s(%d), module: %s; Free fragment not found!\n",
+			qm, (unsigned long)size, file, func, line, mname);
+#else
+	LOG(L_ERR, "qm_malloc(%p, %lu); Free fragment not found!\n",
+			qm, (unsigned long)size);
+#endif
+
 	return 0;
 }
 
@@ -427,7 +443,7 @@ void qm_free(void* qmp, void* p)
 {
 	struct qm_block* qm;
 	struct qm_frag* f;
-	unsigned long size;
+	size_t size;
 #ifdef MEM_JOIN_FREE
 	struct qm_frag* next;
 	struct qm_frag* prev;
@@ -542,24 +558,25 @@ void qm_free(void* qmp, void* p)
 
 
 #ifdef DBG_QM_MALLOC
-void* qm_realloc(void* qmp, void* p, unsigned long size,
+void* qm_realloc(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line,
 					const char *mname)
 #else
-void* qm_realloc(void* qmp, void* p, unsigned long size)
+void* qm_realloc(void* qmp, void* p, size_t size)
 #endif
 {
 	struct qm_block* qm;
 	struct qm_frag* f;
-	unsigned long diff;
-	unsigned long orig_size;
+	size_t diff;
+	size_t orig_size;
 	struct qm_frag* n;
 	void* ptr;
 
 	qm = (struct qm_block*)qmp;
 
 #ifdef DBG_QM_MALLOC
-	MDBG("qm_realloc(%p, %p, %lu) called from %s: %s(%d)\n", qm, p, size,
+	MDBG("qm_realloc(%p, %p, %lu) called from %s: %s(%d)\n",
+			qm, p, (unsigned long)size,
 			file, func, line);
 	if ((p)&&(p>(void*)qm->last_frag_end || p<(void*)qm->first_frag)){
 		LOG(L_CRIT, "BUG: qm_free: bad pointer %p (out of memory block!) - "
@@ -600,7 +617,8 @@ void* qm_realloc(void* qmp, void* p, unsigned long size)
 		orig_size=f->size;
 		/* shrink */
 #ifdef DBG_QM_MALLOC
-		MDBG("qm_realloc: shrinking from %lu to %lu\n", f->size, size);
+		MDBG("qm_realloc: shrinking from %lu to %lu\n",
+				f->size, (unsigned long)size);
 		if(split_frag(qm, f, size, file, "fragm. from qm_realloc", line, mname)!=0){
 		MDBG("qm_realloc : shrinked successful\n");
 #else
@@ -617,7 +635,8 @@ void* qm_realloc(void* qmp, void* p, unsigned long size)
 	}else if (f->size < size){
 		/* grow */
 #ifdef DBG_QM_MALLOC
-		MDBG("qm_realloc: growing from %lu to %lu\n", f->size, size);
+		MDBG("qm_realloc: growing from %lu to %lu\n",
+				f->size, (unsigned long)size);
 #endif
 			orig_size=f->size;
 			diff=size-f->size;
@@ -653,6 +672,14 @@ void* qm_realloc(void* qmp, void* p, unsigned long size)
 				if (ptr){
 					/* copy, need by libssl */
 					memcpy(ptr, p, orig_size);
+				} else {
+#ifdef DBG_QM_MALLOC
+					LOG(L_ERR, "qm_realloc(%p, %lu) called from %s: %s(%d), module: %s; qm_malloc() failed!\n",
+							qm, (unsigned long)size, file, func, line, mname);
+#else
+					LOG(L_ERR, "qm_realloc(%p, %lu); qm_malloc() failed!\n",
+							qm, (unsigned long)size);
+#endif
 				}
 	#ifdef DBG_QM_MALLOC
 				qm_free(qm, p, file, func, line, mname);
@@ -665,7 +692,7 @@ void* qm_realloc(void* qmp, void* p, unsigned long size)
 		/* do nothing */
 #ifdef DBG_QM_MALLOC
 		MDBG("qm_realloc: doing nothing, same size: %lu - %lu\n",
-				f->size, size);
+				f->size, (unsigned long)size);
 #endif
 	}
 #ifdef DBG_QM_MALLOC
@@ -1045,7 +1072,7 @@ static struct qm_block *_qm_shm_block = 0;
 
 /*SHM wrappers to sync the access to memory block*/
 #ifdef DBG_QM_MALLOC
-void* qm_shm_malloc(void* qmp, unsigned long size,
+void* qm_shm_malloc(void* qmp, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1054,7 +1081,7 @@ void* qm_shm_malloc(void* qmp, unsigned long size,
 	shm_unlock();
 	return r;
 }
-void* qm_shm_realloc(void* qmp, void* p, unsigned long size,
+void* qm_shm_realloc(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1063,7 +1090,7 @@ void* qm_shm_realloc(void* qmp, void* p, unsigned long size,
 	shm_unlock();
 	return r;
 }
-void* qm_shm_resize(void* qmp, void* p, unsigned long size,
+void* qm_shm_resize(void* qmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1081,7 +1108,7 @@ void qm_shm_free(void* qmp, void* p, const char* file, const char* func,
 	shm_unlock();
 }
 #else
-void* qm_shm_malloc(void* qmp, unsigned long size)
+void* qm_shm_malloc(void* qmp, size_t size)
 {
 	void *r;
 	shm_lock();
@@ -1089,7 +1116,7 @@ void* qm_shm_malloc(void* qmp, unsigned long size)
 	shm_unlock();
 	return r;
 }
-void* qm_shm_realloc(void* qmp, void* p, unsigned long size)
+void* qm_shm_realloc(void* qmp, void* p, size_t size)
 {
 	void *r;
 	shm_lock();
@@ -1097,7 +1124,7 @@ void* qm_shm_realloc(void* qmp, void* p, unsigned long size)
 	shm_unlock();
 	return r;
 }
-void* qm_shm_resize(void* qmp, void* p, unsigned long size)
+void* qm_shm_resize(void* qmp, void* p, size_t size)
 {
 	void *r;
 	shm_lock();

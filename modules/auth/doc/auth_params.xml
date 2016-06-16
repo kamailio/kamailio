@@ -695,29 +695,55 @@ modparam("auth", "use_domain", 1)
 	</section>
 
 	<section id="auth.p.algorithm">
-	<title><varname>algorithm</varname> (string)</title>
-	<para>
-	   Configure hash algorithm used for digest authentication.
-	   Possible values are "MD5" or "SHA-256". If left empty MD5 is used.
-	   If specified, the specified algorithm is used and is also but in
-	   the 'algorithm' field of the challenge header.
-   </para>
-   <para>
-	   Warning: SHA-256 hash values take twice the space of MD5 hash values.
-	   So a buffer overflow might occur if this option is used in combination
-	   with another auth_* module that does not allocate at least 65 bytes to
-	   store hash values.
-	   SHA-256 can safely be used with the module auth_db as it allocates 256 bytes
-	   to store HA1 values.
-	</para>
-	<example>
-	   <title>use SHA-256 example</title>
-	   <programlisting>
+		<title><varname>algorithm</varname> (string)</title>
+		<para>
+			Configure hash algorithm used for digest authentication.
+			Possible values are "MD5" or "SHA-256". If left empty MD5 is used.
+			If specified, the specified algorithm is used and is also put in
+			the 'algorithm' field of the challenge header.
+		</para>
+		<para>
+			Warning: SHA-256 hash values take twice the space of MD5 hash values.
+			So a buffer overflow might occur if this option is used in combination
+			with another auth_* module that does not allocate at least 65 bytes to
+			store hash values.
+			SHA-256 can safely be used with the module auth_db as it allocates 256 bytes
+			to store HA1 values.
+		</para>
+		<example>
+			<title>use SHA-256 example</title>
+			<programlisting>
 ...
 modparam("auth", "algorithm", "SHA-256")
 ...
-	   </programlisting>
-	</example>
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="auth.p.add_authinfo_hdr">
+		<title><varname>add_authinfo_hdr</varname> (boolean)</title>
+		<para>
+			Should an Authentication-Info header be added on 200 OK responses?
+			The Authentication-Info header offers mutual authentication.
+			The server proves to the client that it knows the user's secret.
+		</para>
+		<para>
+			The header also includes the next nonce which may be used by the client
+			in a future request.
+			If one_time_nonce is enabled, a new nonce is calculated for the next nonce.
+			Otherwise the current nonce is used for the next nonce.
+		</para>
+		<para>
+			The default value is 0 (no).
+		</para>
+		<example>
+			<title>add Authentication-Info header example</title>
+			<programlisting>
+...
+modparam("auth", "add_authinfo_hdr", yes)
+...
+			</programlisting>
+		</example>
 	</section>
 
 </section>

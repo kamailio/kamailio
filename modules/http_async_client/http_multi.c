@@ -401,7 +401,7 @@ int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
 	g->multi = curl_multi_init();
 	LM_DBG("curl_multi %p initialized on global %p (evbase %p)\n", g->multi, g, evbase);
 
-    g->timer_event = evtimer_new(g->evbase, timer_cb, g);
+	g->timer_event = evtimer_new(g->evbase, timer_cb, g);
 
 	/* setup the generic multi interface options we want */
 	curl_multi_setopt(g->multi, CURLMOPT_SOCKETFUNCTION, sock_cb);

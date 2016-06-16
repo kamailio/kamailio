@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -120,7 +120,7 @@ int t_suspend(struct sip_msg *msg,
 		if (t_check( msg  , &branch )==-1){
 			LOG(L_ERR, "ERROR: t_suspend_reply: " \
 				"failed find UAC branch\n");
-			return -1; 
+			return -1;
 		}
 		LM_DBG("found a a match with branch id [%d] - "
 				"cloning reply message to t->uac[branch].reply\n", branch);
@@ -204,8 +204,11 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	t->flags |= T_ASYNC_CONTINUE;   /* we can now know anywhere in kamailio
 					 * that we are executing post a suspend */
 
+	/* transaction is no longer suspended, resetting the SUSPEND flag */
+	t->flags &= ~T_ASYNC_SUSPENDED;
+
 	/* which route block type were we in when we were suspended */
-	cb_type =  FAILURE_CB_TYPE;;
+	cb_type =  FAILURE_CB_TYPE;
 	switch (t->async_backup.backup_route) {
 		case REQUEST_ROUTE:
 			cb_type = FAILURE_CB_TYPE;
@@ -222,16 +225,15 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	}
 
 	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
-		branch = t->async_backup.blind_uac;	/* get the branch of the blind UAC setup 
+		branch = t->async_backup.blind_uac;	/* get the branch of the blind UAC setup
 			* during suspend */
 		if (branch >= 0) {
 			stop_rb_timers(&t->uac[branch].request);
- 
+
 			if (t->uac[branch].last_received != 0) {
 				/* Either t_continue() has already been
 				* called or the branch has already timed out.
 				* Needless to continue. */
-				t->flags &= ~T_ASYNC_SUSPENDED;
 				UNLOCK_ASYNC_CONTINUE(t);
 				UNREF(t); /* t_unref would kill the transaction */
 				return 1;
@@ -254,7 +256,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 
 		/* We should not reset kr here to 0 as it's quite possible before continuing the dev. has correctly set the
 		 * kr by, for example, sending a transactional reply in code - resetting here will cause a dirty log message
-		 * "WARNING: script writer didn't release transaction" to appear in log files. TODO: maybe we need to add 
+		 * "WARNING: script writer didn't release transaction" to appear in log files. TODO: maybe we need to add
 		 * a special kr for async?
 		 * reset_kr();
 		 */
@@ -312,12 +314,11 @@ int t_continue(unsigned int hash_index, unsigned int label,
 				" - resetting the suspend branch flag\n");
 
 		if (t->uac[branch].reply) {
-		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
-                } else {
+			t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
+		} else {
 			LM_WARN("no reply in t_continue for branch. not much we can do\n");
 			return 0;
 		}
-                
 		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
 
 		faked_env( t, t->uac[branch].reply, 1);
@@ -372,7 +373,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 				cleanup_uac_timers( t );
 				/* 2xx is a special case: we can have a COMPLETED request
 				* with branches still open => we have to cancel them */
-				if (is_invite(t) && cancel_data.cancel_bitmap) 
+				if (is_invite(t) && cancel_data.cancel_bitmap)
 					cancel_uacs( t, &cancel_data,  F_CANCEL_B_KILL);
 				/* FR for negative INVITES, WAIT anything else */
 				/* Call to set_final_timer is embedded in relay_reply to avoid
@@ -404,7 +405,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			restart_rb_fr(& t->uac[branch].request, t->fr_inv_timeout);
 			t->uac[branch].request.flags|=F_RB_FR_INV; /* mark fr_inv */
 		}
-            
+
 	}
 
 done:
@@ -414,7 +415,7 @@ done:
 		/* unref the transaction */
 		t_unref(t->uas.request);
 	} else {
-		tm_ctx_set_branch_index(T_BR_UNDEFINED);        
+		tm_ctx_set_branch_index(T_BR_UNDEFINED);
 		/* unref the transaction */
 		t_unref(t->uac[branch].reply);
 		LOG(L_DBG,"DEBUG: t_continue_reply: Freeing earlier cloned reply\n");
@@ -457,14 +458,10 @@ done:
 		t->uac[branch].reply = 0;
 	}
 
-	/*This transaction is no longer suspended so unsetting the SUSPEND flag*/
-	t->flags &= ~T_ASYNC_SUSPENDED;
-
 
 	return 0;
 
 kill_trans:
-	t->flags &= ~T_ASYNC_SUSPENDED;
 	/* The script has hopefully set the error code. If not,
 	 * let us reply with a default error. */
 	if ((kill_transaction_unsafe(t,
@@ -495,7 +492,7 @@ kill_trans:
  * after t_suspend() has already been executed in the same
  * process, and it turns out that the transaction should
  * not have been suspended.
- * 
+ *
  * Return value:
  * 	0  - success
  * 	<0 - failure
@@ -504,7 +501,7 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 {
 	struct cell	*t;
 	int	branch;
-	
+
 	t = get_t();
 	if (!t || t == T_UNDEFINED) {
 		LOG(L_ERR, "ERROR: t_revoke_suspend: " \
@@ -519,7 +516,7 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 			"transaction id mismatch\n");
 		return -1;
 	}
-        
+
 	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
 		/* The transaction does not need to be locked because this
 		* function is either executed from the original route block
@@ -556,8 +553,8 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 
 		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
 		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
-        }
-	
+	}
+
 	return 0;
 }
 

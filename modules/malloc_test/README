@@ -1,12 +1,11 @@
-
 The malloc_test Module
 
 Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright © 2010 iptelorg GmbH
-     _________________________________________________________________
+   Copyright Â© 2010 iptelorg GmbH
+     __________________________________________________________________
 
    Table of Contents
 
@@ -27,9 +26,9 @@ Andrei Pelinescu-Onciul
               4.1. mt.mem_alloc size [unit]
               4.2. mt.mem_free [size] [unit]
               4.3. mt.mem_used [unit]
-              4.4. mt.mem_rnd_alloc min max total [unit] 
+              4.4. mt.mem_rnd_alloc min max total [unit]
               4.5. mt.mem_test_start min max total min_int max_int
-                      total_time [unit] 
+                      total_time [unit]
 
               4.6. mt.mem_test_stop id
               4.7. mt.mem_test_destroy id
@@ -38,8 +37,8 @@ Andrei Pelinescu-Onciul
 
    List of Examples
 
-   1.1. Set check_content in the config file 
-   1.2. Set check_content at runtime via sercmd 
+   1.1. Set check_content in the config file
+   1.2. Set check_content at runtime via sercmd
    1.3. men_alloc usage
    1.4. mem_free usage
    1.5. mt.mem_alloc usage
@@ -71,9 +70,9 @@ Chapter 1. Admin Guide
         4.1. mt.mem_alloc size [unit]
         4.2. mt.mem_free [size] [unit]
         4.3. mt.mem_used [unit]
-        4.4. mt.mem_rnd_alloc min max total [unit] 
+        4.4. mt.mem_rnd_alloc min max total [unit]
         4.5. mt.mem_test_start min max total min_int max_int total_time
-                [unit] 
+                [unit]
 
         4.6. mt.mem_test_stop id
         4.7. mt.mem_test_destroy id
@@ -82,8 +81,8 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This  is a debugging/test module. It implements functions (both script
-   and  rpcs)  that  can  be used to stress the memory allocator or force
+   This is a debugging/test module. It implements functions (both script
+   and rpcs) that can be used to stress the memory allocator or force
    memory leaks.
 
 Warning
@@ -96,7 +95,7 @@ Warning
 
 2.1. check_content
 
-   When  doing  the  tests,  check also for the possibility of the memory
+   When doing the tests, check also for the possibility of the memory
    being overwritten. When activated, the allocated memory will be filled
    with a special pattern, that will be checked on free.
 
@@ -104,10 +103,10 @@ Warning
 
    It can be changed also at runtime, via the rpc interface.
 
-   Example 1.1.  Set check_content in the config file 
+   Example 1.1.  Set check_content in the config file
 modparam("malloc_test", "check_content", 1)
 
-   Example 1.2.  Set check_content at runtime via sercmd 
+   Example 1.2.  Set check_content at runtime via sercmd
 $ kamcmd cfg.set_now_int malloc_test check_content 1
 
 3. Functions
@@ -121,7 +120,7 @@ $ kamcmd cfg.set_now_int malloc_test check_content 1
 
 Note
 
-   This  is a debugging function for simulating memory leaks or stressing
+   This is a debugging function for simulating memory leaks or stressing
    the memory allocator. It should not be used in production setups
 
    Example 1.3. men_alloc usage
@@ -135,7 +134,7 @@ mem_alloc(1048576); # 1MB
 
 Note
 
-   This  is a debugging function for simulating memory leaks or stressing
+   This is a debugging function for simulating memory leaks or stressing
    the memory allocator. It should not be used in production setups
 
    Example 1.4. mem_free usage
@@ -148,9 +147,8 @@ mem_free();
    4.1. mt.mem_alloc size [unit]
    4.2. mt.mem_free [size] [unit]
    4.3. mt.mem_used [unit]
-   4.4. mt.mem_rnd_alloc min max total [unit] 
+   4.4. mt.mem_rnd_alloc min max total [unit]
    4.5. mt.mem_test_start min max total min_int max_int total_time [unit]
-          
    4.6. mt.mem_test_stop id
    4.7. mt.mem_test_destroy id
    4.8. mt.mem_test_destroy_all id
@@ -158,7 +156,7 @@ mem_free();
 
 4.1.  mt.mem_alloc size [unit]
 
-   Allocates  the  specified number of bytes. unit is optional and can be
+   Allocates the specified number of bytes. unit is optional and can be
    one of:
      * b - bytes
      * k - KB
@@ -170,7 +168,7 @@ mem_free();
 
 4.2.  mt.mem_free [size] [unit]
 
-   Frees  at  least  size  bytes  from  the  memory  allocated  by  other
+   Frees at least size bytes from the memory allocated by other
    malloc_test functions (e.g. mt.mem_alloc).
 
    size is optional. If missing, everything will be freed.
@@ -186,7 +184,7 @@ mem_free();
 
 4.3.  mt.mem_used [unit]
 
-   Returns/displays  how  many  bytes  are allocated. The default unit is
+   Returns/displays how many bytes are allocated. The default unit is
    bytes (for all the possible units see above).
 
    unit is optional and can be one of:
@@ -201,8 +199,8 @@ mem_free();
 
 4.4. mt.mem_rnd_alloc min max total [unit]
 
-   Allocates  total_size  memory, in pieces of random size between min ..
-   max  (inclusive). unit is optional and represents the unit for all the
+   Allocates total_size memory, in pieces of random size between min ..
+   max (inclusive). unit is optional and represents the unit for all the
    given sizes (see above).
 
    Example 1.8. mt.mem_rnd_alloc usage
@@ -210,12 +208,12 @@ mem_free();
 
 4.5.  mt.mem_test_start min max total min_int max_int total_time [unit]
 
-   Starts  a  malloc  test  that  will take total_time to execute. Memory
-   allocations  will  be  performed  at intervals randomly chosen between
-   min_int  and  max_int  (in  ms).  Each allocation will have a randomly
+   Starts a malloc test that will take total_time to execute. Memory
+   allocations will be performed at intervals randomly chosen between
+   min_int and max_int (in ms). Each allocation will have a randomly
    chosen size between min and max unit bytes. After total unit bytes are
-   allocated,  everything is released/freed again and the allocations are
-   restarted.  All  the  times  are  expressed  in  milliseconds. unit is
+   allocated, everything is released/freed again and the allocations are
+   restarted. All the times are expressed in milliseconds. unit is
    optional and represents the unit for all the given sizes (see above).
 
    Several tests can be run in parallel.
@@ -235,8 +233,8 @@ mem_free();
 
 4.7.  mt.mem_test_destroy id
 
-   Destroys  the  test  indentified  by  id (besides stopping it, it also
-   frees all the data, including the statistics).
+   Destroys the test indentified by id (besides stopping it, it also frees
+   all the data, including the statistics).
 
    Example 1.11. mt.mem_test_destroy usage
  $ kamcmd mt.mem_test_destroy 1
@@ -250,10 +248,10 @@ mem_free();
 
 4.9.  mt.mem_test_list [id] [unit]
 
-   Returns/displays  data about the test identified by id, or if no id is
+   Returns/displays data about the test identified by id, or if no id is
    specified, it lists all the tests (running or stopped).
 
-   unit  is optional. The default is is bytes (for all the possible units
+   unit is optional. The default is is bytes (for all the possible units
    see above).
 
    Example 1.13. mt.mem_test_list usage

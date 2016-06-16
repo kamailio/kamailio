@@ -46,8 +46,8 @@
 #include "reg_mod.h"
 #include "lookup.h"
 #include "config.h"
-
 #include "save.h"
+#include "pvt_message.h"
 
 #define allowed_method(_msg, _c) \
 	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
@@ -365,7 +365,7 @@ int term_impu_registered(struct sip_msg* _m, char* _t, char* _s) {
         return -1;
     }
     if (req->first_line.type != SIP_REQUEST) {
-        req = get_request_from_reply(req);
+        req = get_request_from_tx(0);
     }
 
     if (_m->new_uri.s) uri = _m->new_uri;

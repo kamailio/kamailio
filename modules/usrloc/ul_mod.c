@@ -105,7 +105,6 @@ static int ul_preload_index = 0;
 static int ul_preload_param(modparam_t type, void* val);
 
 extern int bind_usrloc(usrloc_api_t* api);
-extern int ul_locks_no;
 int ul_db_update_as_insert = 0;
 int ul_timer_procs = 0;
 int ul_db_check_update = 0;
@@ -314,7 +313,6 @@ static int mod_init(void)
 		ul_hash_size = 512;
 	else
 		ul_hash_size = 1<<ul_hash_size;
-	ul_locks_no = ul_hash_size;
 
 	/* check matching mode */
 	switch (matching_mode) {
@@ -325,12 +323,6 @@ static int mod_init(void)
 			break;
 		default:
 			LM_ERR("invalid matching mode %d\n", matching_mode);
-	}
-
-	if(ul_init_locks()!=0)
-	{
-		LM_ERR("locks array initialization failed\n");
-		return -1;
 	}
 
 	/* Register cache timer */
@@ -493,7 +485,6 @@ static void destroy(void)
 {
 	/* we need to sync DB in order to flush the cache */
 	if (ul_dbh) {
-		ul_unlock_locks();
 		if (synchronize_all_udomains(0, 1) != 0) {
 			LM_ERR("flushing cache failed\n");
 		}
@@ -501,7 +492,6 @@ static void destroy(void)
 	}
 
 	free_all_udomains();
-	ul_destroy_locks();
 
 	/* free callbacks list */
 	destroy_ulcb_list();

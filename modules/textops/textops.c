@@ -973,7 +973,8 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 				if (find_line_start(boundary.s, boundary.len, &start,
 					&len))
 				{
-					if (del_lump(msg, start - msg->buf, len, 0) == 0)
+					/* we need to remove \r\n too */
+					if (del_lump(msg, (start-2) - msg->buf, len+2, 0) == 0)
 					{
 						LM_ERR("deleting lump <%.*s> failed\n", len, start);
 						goto err;

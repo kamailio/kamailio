@@ -68,6 +68,10 @@
 				<emphasis>mongo-c-driver</emphasis> - available at
 				<ulink url="https://github.com/mongodb/mongo-c-driver">https://github.com/mongodb/mongo-c-driver</ulink>
 			</para>
+			<para>
+				Note: if you use tls module, use at least mongo-c-driver v1.2.1
+				- there were reports of issues inside earlier versions of the driver.
+			</para>
 			</listitem>
 			</itemizedlist>
 		</para>

@@ -1926,7 +1926,7 @@ __dialog_ended(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
     if ((int)(long)*_params->param == MPActive) {
         end_media_session(dlg->callid, dlg->tag[DLG_CALLER_LEG], dlg->tag[DLG_CALLEE_LEG]);
-        *_params->param = MPInactive;
+        *_params->param = NULL;
     }
 }
 

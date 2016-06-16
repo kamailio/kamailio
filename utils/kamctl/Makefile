@@ -1,4 +1,3 @@
-# $Id$
 COREPATH=../..
 include $(COREPATH)/Makefile.defs
 include $(COREPATH)/config.mak

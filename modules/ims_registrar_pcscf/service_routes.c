@@ -228,6 +228,9 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d, enum pcontact_reg_st
 	search_ci.received_port = _m->rcv.src_port;
 	search_ci.received_proto = _m->rcv.proto;
 	search_ci.searchflag = SEARCH_RECEIVED;
+	if (is_registered_fallback2ip == 1) {
+		search_ci.searchflag = SEARCH_NORMAL;
+	} 
 	search_ci.via_host = host;
 	search_ci.via_port = port;
 	search_ci.via_prot = proto;
@@ -255,8 +258,20 @@ tryagain:
 		LM_INFO("Contact not found based on Contact-header, trying IP/Port/Proto\n");
 		//			received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
 		//			received_host.s = srcip;
+		search_ci.searchflag = SEARCH_RECEIVED;
 		if (ul.get_pcontact(_d, &search_ci, &c) == 1) {
 			LM_DBG("No entry in usrloc for %.*s:%i (Proto %i) found!\n", received_host.len, received_host.s, _m->rcv.src_port, _m->rcv.proto);
+		} else {
+			if (checkcontact(_m, c) != 0) {
+				c = NULL;
+			}
+		}
+	}
+
+	if ((c == NULL) && (is_registered_fallback2ip == 2)) {
+		LM_INFO("Contact not found based on IP/Port/Proto, trying Contact-header\n");
+		search_ci.searchflag = SEARCH_NORMAL;
+		if (ul.get_pcontact(_d, &search_ci, &c) == 1) {
 		} else {
 			if (checkcontact(_m, c) != 0) {
 				c = NULL;

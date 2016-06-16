@@ -108,10 +108,10 @@ static inline int randomize_expires(int expires, int range) {
  * 3) If the message contained no expires header field, use
  *    the default value
  */
-static inline int calc_contact_expires(contact_t *c, unsigned int expires_hdr, int sos_reg) {
+static inline int calc_contact_expires(contact_t *c, int expires_hdr, int sos_reg) {
     unsigned int r;
 
-    if (expires_hdr >= 0)
+    if (expires_hdr >= 0U)
         r = expires_hdr;
     else {
         r = (sos_reg > 0) ? default_registrar_cfg.em_default_expires : default_registrar_cfg.default_expires;
@@ -509,24 +509,11 @@ static inline int is_impu_registered(udomain_t* _d, str* public_identity) {
     return ret;
 }
 
-struct sip_msg* get_request_from_reply(struct sip_msg *reply) {
-    struct cell *t;
-    t = tmb.t_gett();
-    if (!t || t == (void*) - 1) {
-        LM_ERR("get_request_from_reply: Reply without transaction\n");
-        return 0;
-    }
-    if (t)
-        return t->uas.request;
-    else
-        return 0;
-}
-
 /**
  * update the contacts for a public identity. Make sure you have the lock on the domain before calling this
  * returns 0 on success, -1 on failure
  */
-static inline int update_contacts_helper(struct sip_msg* msg, impurecord_t* impu_rec, int assignment_type, unsigned int expires_hdr) {
+static inline int update_contacts_helper(struct sip_msg* msg, impurecord_t* impu_rec, int assignment_type, int expires_hdr) {
     struct hdr_field* h;
     contact_t* chi; //contact header information
     ucontact_info_t* ci; //ucontact info

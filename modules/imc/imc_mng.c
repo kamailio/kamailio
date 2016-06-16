@@ -91,14 +91,15 @@ int imc_htable_destroy(void)
 	for(i=0; i<imc_hash_size; i++)
 	{
 		lock_destroy(&_imc_htable[i].lock);
-		if(_imc_htable[i].rooms==NULL)
+		if(_imc_htable[i].rooms==NULL) {
 			continue;
-			irp = _imc_htable[i].rooms;
-			while(irp){
-				irp_temp = irp->next;
-				imc_del_room(&irp->name, &irp->domain);
-				irp = irp_temp;
-			}
+		}
+		irp = _imc_htable[i].rooms;
+		while(irp){
+			irp_temp = irp->next;
+			imc_del_room(&irp->name, &irp->domain);
+			irp = irp_temp;
+		}
 	}
 	shm_free(_imc_htable);
 	_imc_htable = NULL;
@@ -253,12 +254,14 @@ int imc_del_room(str* name, str* domain)
 				&& !strncasecmp(irp->name.s, name->s, name->len)
 				&& !strncasecmp(irp->domain.s, domain->s, domain->len))
 		{
-			if(irp->prev==NULL)
+			if(irp->prev==NULL) {
 				_imc_htable[hidx].rooms = irp->next;
-			else
+			} else {
 				irp->prev->next = irp->next;
-			if(irp->next!=NULL)
+			}
+			if(irp->next!=NULL) {
 				irp->next->prev = irp->prev;
+			}
 
 			/* delete members */
 			imp = irp->members;
@@ -327,9 +330,9 @@ imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags)
 
 	room->nr_of_members++;
 	
-	if(room->members==NULL)
+	if(room->members==NULL) {
 		room->members = imp;
-	else {
+	} else {
 		imp->next = room->members->next;
 		if((room->members)->next!=NULL)
 			((room->members)->next)->prev = imp;

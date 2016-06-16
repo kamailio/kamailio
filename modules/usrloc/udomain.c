@@ -35,6 +35,7 @@
 #include "../../socket_info.h"
 #include "../../ut.h"
 #include "../../hashes.h"
+#include "../../sr_module.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
@@ -89,7 +90,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 		goto error0;
 	}
 	memset(*_d, 0, sizeof(udomain_t));
-	
+
 	(*_d)->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * _s);
 	if (!(*_d)->table) {
 		LM_ERR("no memory left 2\n");
@@ -97,9 +98,12 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	}
 
 	(*_d)->name = _n;
-	
+
 	for(i = 0; i < _s; i++) {
-		init_slot(*_d, &((*_d)->table[i]), i);
+		if(init_slot(*_d, &((*_d)->table[i]), i)<0) {
+			LM_ERR("failed to init hash table slot %d\n", i);
+			goto error2;
+		}
 	}
 
 	(*_d)->size = _s;
@@ -145,9 +149,7 @@ void free_udomain(udomain_t* _d)
 	
 	if (_d->table) {
 		for(i = 0; i < _d->size; i++) {
-			lock_ulslot(_d, i);
 			deinit_slot(_d->table + i);
-			unlock_ulslot(_d, i);
 		}
 		shm_free(_d->table);
 	}
@@ -1005,7 +1007,7 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep)
 
 	for(i=istart; i<_d->size; i+=istep)
 	{
-		lock_ulslot(_d, i);
+		if(likely(destroy_modules_phase()==0)) lock_ulslot(_d, i);
 
 		ptr = _d->table[i].first;
 
@@ -1020,7 +1022,7 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep)
 				ptr = ptr->next;
 			}
 		}
-		unlock_ulslot(_d, i);
+		if(likely(destroy_modules_phase()==0)) unlock_ulslot(_d, i);
 	}
 }
 
@@ -1037,11 +1039,7 @@ void lock_udomain(udomain_t* _d, str* _aor)
 	{
 		sl = ul_get_aorhash(_aor) & (_d->size - 1);
 
-#ifdef GEN_LOCK_T_PREFERED
-		lock_get(_d->table[sl].lock);
-#else
-		ul_lock_idx(_d->table[sl].lockidx);
-#endif
+		rec_lock_get(&_d->table[sl].rlock);
 	}
 }
 
@@ -1057,11 +1055,7 @@ void unlock_udomain(udomain_t* _d, str* _aor)
 	if (db_mode!=DB_ONLY)
 	{
 		sl = ul_get_aorhash(_aor) & (_d->size - 1);
-#ifdef GEN_LOCK_T_PREFERED
-		lock_release(_d->table[sl].lock);
-#else
-		ul_release_idx(_d->table[sl].lockidx);
-#endif
+		rec_lock_release(&_d->table[sl].rlock);
 	}
 }
 
@@ -1073,11 +1067,7 @@ void unlock_udomain(udomain_t* _d, str* _aor)
 void lock_ulslot(udomain_t* _d, int i)
 {
 	if (db_mode!=DB_ONLY)
-#ifdef GEN_LOCK_T_PREFERED
-		lock_get(_d->table[i].lock);
-#else
-		ul_lock_idx(_d->table[i].lockidx);
-#endif
+		rec_lock_get(&_d->table[i].rlock);
 }
 
 
@@ -1089,11 +1079,7 @@ void lock_ulslot(udomain_t* _d, int i)
 void unlock_ulslot(udomain_t* _d, int i)
 {
 	if (db_mode!=DB_ONLY)
-#ifdef GEN_LOCK_T_PREFERED
-		lock_release(_d->table[i].lock);
-#else
-		ul_release_idx(_d->table[i].lockidx);
-#endif
+		rec_lock_release(&_d->table[i].rlock);
 }
 
 

@@ -16,7 +16,7 @@ Daniel-Constantin Mierla
    asipto.com
    <miconda@gmail.com>
 
-   Copyright � 2002, 2003 FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -128,7 +128,7 @@ Chapter 1. Admin Guide
    If the parameter is set to empty string, the RADIUS accounting support
    will be disabled (even if compiled).
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. radius_config example
 ...
@@ -204,11 +204,11 @@ modparam("acc_radius", "rad_time_mode", 1)
 
    4.1. acc_rad_request(comment)
 
-4.1. acc_rad_request(comment)
+4.1.  acc_rad_request(comment)
 
    Like acc_log_request of acc module, acc_rad_request reports on a SIP
    request event. It reports to radius server as configured in
-   "radius_config".
+   “radius_config”.
 
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.

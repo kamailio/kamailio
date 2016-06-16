@@ -10,7 +10,7 @@ Emmanuel Schmidbauer
 
    <emmanuel@getweave.com>
 
-   Copyright � 2016 Weave Communications
+   Copyright © 2016 Weave Communications
      __________________________________________________________________
 
    Table of Contents
@@ -306,7 +306,7 @@ modparam("nsq", "consumer_use_nsqd", 1)
 
    Usage: nsq related.
 
-   Default value is "Event-Category".
+   Default value is “Event-Category”.
 
    Example 1.7. Set consumer_event_key parameter
 ...
@@ -320,7 +320,7 @@ modparam("nsq", "consumer_event_key", "My-JSON-Field-Name")
 
    Usage: nsq related.
 
-   Default value is "Event-Name".
+   Default value is “Event-Name”.
 
    Example 1.8. Set consumer_event_sub_key parameter
 ...
@@ -356,13 +356,13 @@ modparam("nsq", "consumer_workers", 2)
 
 4.10. topic_channel(str)
 
-   The NSQ Topic and Channel. Delimiter-separated by ":". It be set
+   The NSQ Topic and Channel. Delimiter-separated by “:”. It be set
    multiple times to subscribe to multiple topics and channels. The value
    of consumer_workers is allocated per topic_channel.
 
    Usage: nsq related.
 
-   Default value is "Kamailio-Topic:Kamailio-Channel".
+   Default value is “Kamailio-Topic:Kamailio-Channel”.
 
    Example 1.11. Set topic_channel parameter
 ...
@@ -379,7 +379,7 @@ modparam("nsq", "topic_channel", "My-NSQ-Topic-2:My-NSQ-Channel-2")
 
    Usage: presence related.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.12. Set db_url parameter
 ...
@@ -390,7 +390,7 @@ modparam("nsq", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 
    The name of the presentity table in the database.
 
-   Default value is "presentity".
+   Default value is “presentity”.
 
    Example 1.13. Set presentity_table parameter
 ...
@@ -401,7 +401,7 @@ modparam("nsq", "presentity_table", "my_presentity_table")
 
    5.1. nsq_pua_publish(json_payload)
 
-5.1. nsq_pua_publish(json_payload)
+5.1.  nsq_pua_publish(json_payload)
 
    The function build presentity state from json_payload and updates
    presentity table.

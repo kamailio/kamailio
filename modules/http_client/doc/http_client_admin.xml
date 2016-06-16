@@ -62,7 +62,7 @@
 			<listitem>
 			<para>
 			TLS - if you use TLS connections (https) the tls module should be
-			loaded first in order to initialize OpenSSL properly.
+			loaded first in order to initialize &openssl; properly.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -77,7 +77,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libcurl</emphasis>.
+				<emphasis>&libcurl;</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>

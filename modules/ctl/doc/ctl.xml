@@ -51,7 +51,7 @@
 		line mode.
 		<example>
 		<title><function>&sercmd; example</function> usage</title>
-		<programlisting>
+		<programlisting format="linespecific">
 
 $ &sercmd; ps
 11262	attendant
@@ -65,6 +65,7 @@ $ &sercmd; ps
 11275	tcp receiver child=0
 11276	tcp receiver child=1
 11277	tcp main process
+
 		</programlisting>
 		</example>
 	See <ulink url='http://git.sip-router.org/cgi-bin/gitweb.cgi?p=sip-router;a=blob;f=utils/sercmd/EXAMPLES' >utils/&sercmd;/EXAMPLES</ulink>
@@ -74,7 +75,7 @@ $ &sercmd; ps
 	<section id="ctl.binrpc">
 	<title>BINRPC</title>
 	<para>
-		binrpc is a ser proprietary binary protocol for invoking rpcs.
+		binrpc is a &kamailio; proprietary binary protocol for invoking rpcs.
 		It was designed such that it would minimize the packet sizes and it
 		would be very fast to parse (as opposed to XML-rpc).
 	</para>

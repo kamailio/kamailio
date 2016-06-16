@@ -97,6 +97,8 @@ MODULE_VERSION
 #define	NAT_UAC_TEST_S_1918			0x08
 #define	NAT_UAC_TEST_RPORT			0x10
 
+#define COOKIE_SIZE					128
+#define HOSTNAME_SIZE				100
 
 #define DEFAULT_RTPP_SET_ID			0
 #define MAX_RTPP_TRIED_NODES			50
@@ -2016,12 +2018,11 @@ static void mod_destroy(void)
 }
 
 
-
 static char * gencookie(void)
 {
 	static char cook[34];
 
-	sprintf(cook, "%d_%u ", (int)mypid, myseqn);
+	snprintf(cook, 34, "%d_%d_%u ", server_id, (int)mypid, myseqn);
 	myseqn++;
 	return cook;
 }

@@ -34,17 +34,17 @@ Federico Cabiddu
 
         3. Parameters
 
-              3.1. workers (int)
-              3.2. connection_timeout (str)
-              3.3. hash_size (str)
-              3.4. tls_version (int)
-              3.5. tls_verify_host (int)
-              3.6. tls_verify_peer (int)
-              3.7. curl_verbose (int)
+              3.1. workers (integer)
+              3.2. connection_timeout (integer)
+              3.3. hash_size (integer)
+              3.4. tls_version (integer)
+              3.5. tls_verify_host (integer)
+              3.6. tls_verify_peer (integer)
+              3.7. curl_verbose (integer)
               3.8. memory_manager (string)
-              3.9. tls_client_cert (int)
-              3.10. tls_client_key (int)
-              3.11. tls_ca_path (int)
+              3.9. tls_client_cert (string)
+              3.10. tls_client_key (string)
+              3.11. tls_ca_path (string)
 
         4. Functions
 
@@ -104,17 +104,17 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. workers (int)
-        3.2. connection_timeout (str)
-        3.3. hash_size (str)
-        3.4. tls_version (int)
-        3.5. tls_verify_host (int)
-        3.6. tls_verify_peer (int)
-        3.7. curl_verbose (int)
+        3.1. workers (integer)
+        3.2. connection_timeout (integer)
+        3.3. hash_size (integer)
+        3.4. tls_version (integer)
+        3.5. tls_verify_host (integer)
+        3.6. tls_verify_peer (integer)
+        3.7. curl_verbose (integer)
         3.8. memory_manager (string)
-        3.9. tls_client_cert (int)
-        3.10. tls_client_key (int)
-        3.11. tls_ca_path (int)
+        3.9. tls_client_cert (string)
+        3.10. tls_client_key (string)
+        3.11. tls_ca_path (string)
 
    4. Functions
 
@@ -160,19 +160,19 @@ Chapter 1. Admin Guide
 
 3. Parameters
 
-   3.1. workers (int)
-   3.2. connection_timeout (str)
-   3.3. hash_size (str)
-   3.4. tls_version (int)
-   3.5. tls_verify_host (int)
-   3.6. tls_verify_peer (int)
-   3.7. curl_verbose (int)
+   3.1. workers (integer)
+   3.2. connection_timeout (integer)
+   3.3. hash_size (integer)
+   3.4. tls_version (integer)
+   3.5. tls_verify_host (integer)
+   3.6. tls_verify_peer (integer)
+   3.7. curl_verbose (integer)
    3.8. memory_manager (string)
-   3.9. tls_client_cert (int)
-   3.10. tls_client_key (int)
-   3.11. tls_ca_path (int)
+   3.9. tls_client_cert (string)
+   3.10. tls_client_key (string)
+   3.11. tls_ca_path (string)
 
-3.1. workers (int)
+3.1. workers (integer)
 
    Number of worker processes to be started to send HTTP requests and
    asynchronously handle responses.
@@ -184,10 +184,10 @@ Chapter 1. Admin Guide
 modparam("http_async_client", "workers", 2)
 ...
 
-3.2. connection_timeout (str)
+3.2. connection_timeout (integer)
 
-   Defines in milliseconds how long Kamailio waits for response from HTTP
-   server.
+   Defines in milliseconds how long Kamailio waits for a response from
+   HTTP server.
 
    Default value is 500ms.
 
@@ -196,7 +196,7 @@ modparam("http_async_client", "workers", 2)
 modparam("http_async_client", "connection_timeout", 1000)
 ...
 
-3.3. hash_size (str)
+3.3. hash_size (integer)
 
    The size of the hash table internally used to keep the requests. A
    larger table is much faster but consumes more memory. The hash size
@@ -210,7 +210,7 @@ modparam("http_async_client", "connection_timeout", 1000)
 modparam("http_async_client", "hash_size", 1024)
 ...
 
-3.4. tls_version (int)
+3.4. tls_version (integer)
 
    For HTTPS connections, what's the preferred SSL version.
    http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
@@ -222,7 +222,7 @@ modparam("http_async_client", "hash_size", 1024)
 modparam("http_async_client", "tls_version", 6)
 ...
 
-3.5. tls_verify_host (int)
+3.5. tls_verify_host (integer)
 
    For HTTPS connections, whether the client should verify the server
    host. http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
@@ -234,7 +234,7 @@ modparam("http_async_client", "tls_version", 6)
 modparam("http_async_client", "tls_verify_host", 0)
 ...
 
-3.6. tls_verify_peer (int)
+3.6. tls_verify_peer (integer)
 
    For HTTPS connections, whether the client should verify the server
    identity. http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
@@ -246,9 +246,9 @@ modparam("http_async_client", "tls_verify_host", 0)
 modparam("http_async_client", "tls_verify_peer", 0)
 ...
 
-3.7. curl_verbose (int)
+3.7. curl_verbose (integer)
 
-   If defined to a non-zero value, extra informations from cURL (request
+   If defined to a non-zero value, extra information from cURL (request
    and response headers) will be included in the kamailio logs, with
    LM_INFO priority.
 
@@ -280,10 +280,10 @@ modparam("http_async_client", "curl_verbose", 1)
 modparam("http_async_client", "memory_manager", "sys")
 ...
 
-3.9. tls_client_cert (int)
+3.9. tls_client_cert (string)
 
    For HTTPS connections, the file path of the TLS client certificate to
-   be used http://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html
+   be used. http://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html
 
    Default value is NULL (not used). Default type is PEM.
 
@@ -293,9 +293,9 @@ modparam("http_async_client", "tls_client_cert", "/etc/kamailio/ssl/clientcert.p
 em")
 ...
 
-3.10. tls_client_key (int)
+3.10. tls_client_key (string)
 
-   For HTTPS connections, the file path of the TLS client certificate key
+   For HTTPS connections, the file path of the TLS client certificate key.
    http://curl.haxx.se/libcurl/c/CURLOPT_SSLKEY.html
 
    Default value is NULL (not used).
@@ -306,7 +306,7 @@ modparam("http_async_client", "tls_client_key", "/etc/kamailio/ssl/clientcert.ke
 y")
 ...
 
-3.11. tls_ca_path (int)
+3.11. tls_ca_path (string)
 
    The path of the directory holding the CA certificates.
    http://curl.haxx.se/libcurl/c/CURLOPT_CAPATH.html
@@ -338,7 +338,7 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 
    Unless a specific HTTP method was specified using
    http_async_set_method(), it defaults to a GET request, or to a POST
-   request if “post_data” is issued as second argument.
+   request if “post_data” is provided as second argument.
 
    Parameter “post_data”, optional, which is sent as the body of the
    request, may also contain pseudo variables.
@@ -526,7 +526,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 
 4.10.  http_set_tls_ca_path(path)
 
-   For the next HTTP connection, what CA certificate files to use.
+   For the next HTTP connection, what CA certificate path to use.
 
    Default: the global value set as tls_ca_path module parameter.
 
@@ -557,10 +557,10 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
        http_set_tls_client_cert())
      * tls_client_key: sets the client certificate key to use (see
        http_set_tls_client_key())
-     * tls_ca_path: sets the CA certificate files to use (see
+     * tls_ca_path: sets the CA certificate path to use (see
        http_set_tls_ca_path())
-     * suspend: if set to 0 doesn't suspend the current transaction before
-       performing the query (see http_async_suspend())
+     * suspend: if set to 0 it doesn't suspend the current transaction
+       before performing the query (see http_async_suspend())
 
    Example 1.22. $http_req(key) variable usage
 ...

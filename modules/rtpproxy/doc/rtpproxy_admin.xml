@@ -11,16 +11,16 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
 		This is a module that enables media streams to be proxied
 		via an rtpproxy.  Rtpproxies know to work with this module
 		are Sippy RTPproxy <ulink url="http://www.rtpproxy.org"></ulink>
-		and ngcp-rtpproxy-ng 
+		and ngcp-rtpproxy-ng
 		<ulink url="http://deb.sipwise.com/spce/2.6/pool/main/n/ngcp-mediaproxy-ng"></ulink>.
 		Some features of the rtpproxy module apply only to one of the two rtpproxies.
 	</para>
@@ -95,7 +95,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="rtpproxy.p.rtpproxy_sock">
 		<title><varname>rtpproxy_sock</varname> (string)</title>
 		<para>
 		Used to define the list of RTPPRoxy instances to connect to.
@@ -129,7 +129,7 @@ modparam("rtpproxy", "rtpproxy_sock",
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.rtpproxy_disable_tout">
 		<title><varname>rtpproxy_disable_tout</varname> (integer)</title>
 		<para>
 		Once RTPProxy was found unreachable and marked as disabled, the rtpproxy
@@ -150,7 +150,7 @@ modparam("rtpproxy", "rtpproxy_disable_tout", 20)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.rtpproxy_tout">
 		<title><varname>rtpproxy_tout</varname> (integer)</title>
 		<para>
 		Timeout value in waiting for reply from RTPProxy.
@@ -169,7 +169,7 @@ modparam("rtpproxy", "rtpproxy_tout", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.rtpproxy_retr">
 		<title><varname>rtpproxy_retr</varname> (integer)</title>
 		<para>
 		How many times the module should retry to send and receive after
@@ -189,11 +189,11 @@ modparam("rtpproxy", "rtpproxy_retr", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.nortpproxy_str">
 		<title><varname>nortpproxy_str</varname> (string)</title>
 		<para>
 		This parameter sets the SDP attribute used by rtpproxy to mark
-		the message's SDP attachemnt with information that it have 
+		the message's SDP attachemnt with information that it have
 		already been changed.
 		</para>
 		<para>
@@ -216,7 +216,7 @@ modparam("rtpproxy", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.timeout_socket">
 		<title><varname>timeout_socket</varname> (string)</title>
 		<para>
 		The parameter sets the RTP timeout socket, which is transmitted to the RTP-Proxy.
@@ -240,7 +240,7 @@ modparam("rtpproxy", "timeout_socket", "xmlrpc:http://127.0.0.1:8000/RPC2")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.ice_candidate_priority_avp">
 		<title><varname>ice_candidate_priority_avp</varname> (string)</title>
 		<para>
 		If specified and if value of the avp value is not 0,
@@ -268,7 +268,7 @@ modparam("rtpproxy", "ice_candidate_priority_avp", "$avp(ice_priority)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.extra_id_pv">
 		<title><varname>extra_id_pv</varname> (string)</title>
 		<para>
 			The parameter sets the PV defination to use when the <quote>b</quote>
@@ -286,7 +286,7 @@ modparam("rtpproxy", "extra_id_pv", "$avp(extra_id)")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
 			The database URL to load rtp_proxy sets from.
@@ -304,7 +304,7 @@ modparam("rtpproxy", "db_url", "mysql://user:passwb@localhost/database")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.table_name">
 		<title><varname>table_name</varname> (string)</title>
 		<para>
 			The name of the table containing the rtpproxy sets.
@@ -321,7 +321,7 @@ modparam("rtpproxy", "table_name", "my_rtpp_sets")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.p.rtp_inst_pvar">
 		<title><varname>rtp_inst_pvar</varname> (string)</title>
 		<para>
 			A pseudo variable to store the chosen RTPProxy address.
@@ -356,7 +356,7 @@ xlog("L_INFO", "Chose rtpp instance $var(RTP_INSTANCE)\n");
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="rtpproxy.f.set_rtp_proxy_set">
 		<title>
 		<function moreinfo="none">set_rtp_proxy_set(setid)</function>
 		</title>
@@ -380,7 +380,7 @@ rtpproxy_offer();
 </programlisting>
 		</example>
 	</section>
-        <section>
+        <section id="rtpproxy.f.rtpproxy_ofrer">
                 <title>
                 <function moreinfo="none">rtpproxy_offer([flags [, ip_address]])</function>
                 </title>
@@ -405,11 +405,11 @@ rtpproxy_offer();
 				passing the flag '1' or '2' in the <quote>unforce_rtpproxy</quote>, or stop
 				all sessions for a call when not passing one of those two flags there. This is
 				especially useful if you have serially forked call scenarios where rtpproxy
-				gets an <quote>update</quote> command for a new branch, and then a 
+				gets an <quote>update</quote> command for a new branch, and then a
 				<quote>delete</quote> command for the previous branch, which would otherwise
 				delete the full call, breaking the subsequent <quote>lookup</quote> for the
-				new branch. <emphasis>This flag is only supported by the ngcp-mediaproxy-ng 
-				rtpproxy at the moment!</emphasis>
+				new branch. <emphasis>This flag is only supported by the ngcp-mediaproxy-ng
+				rtpproxy (now named rtpengine) at the moment!</emphasis>
 				</para></listitem>
 				<listitem><para>
 				<emphasis>2</emphasis> - append second Via branch to Call-ID when sending
@@ -555,7 +555,7 @@ onreply_route[2]
 </programlisting>
                 </example>
 	</section>
-        <section>
+        <section id="rtpproxy.f.rtpproxy_answer">
                 <title>
                 <function moreinfo="none">rtpproxy_answer([flags [, ip_address]])</function>
                 </title>
@@ -580,7 +580,7 @@ onreply_route[2]
 		</para>
 		</example>
         </section>
-	<section>
+	<section id="rtpproxy.f.rtpproxy_destroy">
 		<title>
 		<function moreinfo="none">rtpproxy_destroy([flags])</function>
 		</title>
@@ -605,11 +605,11 @@ onreply_route[2]
 				passing the flag '1' or '2' in the <quote>unforce_rtpproxy</quote>, or stop
 				all sessions for a call when not passing one of those two flags there. This is
 				especially useful if you have serially forked call scenarios where rtpproxy
-				gets an <quote>update</quote> command for a new branch, and then a 
+				gets an <quote>update</quote> command for a new branch, and then a
 				<quote>delete</quote> command for the previous branch, which would otherwise
 				delete the full call, breaking the subsequent <quote>lookup</quote> for the
-				new branch. <emphasis>This flag is only supported by the ngcp-mediaproxy-ng 
-				rtpproxy at the moment!</emphasis>
+				new branch. <emphasis>This flag is only supported by the ngcp-mediaproxy-ng
+				rtpproxy (now named rtpengine) at the moment!</emphasis>
 				</para></listitem>
 				<listitem><para>
 				<emphasis>2</emphasis> - append second Via branch to Call-ID when sending
@@ -634,7 +634,7 @@ rtpproxy_destroy();
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="rtpproxy.f.unforce_rtp_proxy">
 		<title>
 		<function moreinfo="none">unforce_rtp_proxy()</function>
 		</title>
@@ -643,7 +643,7 @@ rtpproxy_destroy();
 		</para>
 	</section>
 
-    <section>
+    <section id="rtpproxy.f.rtpproxy_manage">
         <title>
         <function moreinfo="none">rtpproxy_manage([flags [, ip_address]])</function>
         </title>
@@ -710,7 +710,7 @@ rtpproxy_manage();
 		</example>
         </section>
 
-	<section id="rtpproxy_stream2uac">
+	<section id="rtpproxy.f.rtpproxy_stream2uac">
 	<title>
 	    <function>rtpproxy_stream2uac(prompt_name, count)</function>,
 	</title>
@@ -774,7 +774,7 @@ rtpproxy_manage();
 	    </programlisting>
 	</example>
 	</section>
-	<section id="rtpproxy_stream2uas">
+	<section id="rtpproxy.f.rtpproxy_stream2uas">
 	<title>
 	    <function>rtpproxy_stream2uas(prompt_name, count)</function>
 	</title>
@@ -782,7 +782,7 @@ rtpproxy_manage();
 		See function <function>rtpproxy_stream2uac(prompt_name, count)</function>.
 	</para>
 	</section>
-	<section id="rtpproxy_stop_stream2uac">
+	<section id="rtpproxy.f.rtpproxy_stop_stream2uac">
 	<title>
 	    <function>rtpproxy_stop_stream2uac()</function>,
 	</title>
@@ -796,13 +796,13 @@ rtpproxy_manage();
 	    These functions can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 	</para>
 	</section>
-	<section>
+	<section id="rtpproxy.f.start_recording">
 		<title>
 		<function moreinfo="none">start_recording()</function>
 		</title>
 		<para>
 		This function will send a signal to the RTP-Proxy to record
-		the RTP stream on the RTP-Proxy. 
+		the RTP stream on the RTP-Proxy.
 		<emphasis>This function is only supported by Sippy RTPproxy at the moment!</emphasis>
 		</para>
 		<para>
@@ -817,7 +817,7 @@ start_recording();
 		</programlisting>
 		</example>
 	</section>
-	<section id="rtpproxy_stop_stream2uas">
+	<section id="rtpproxy.f.rtpproxy_stop_stream2uas">
 	<title>
 	    <function>rtpproxy_stop_stream2uas(prompt_name, count)</function>
 	</title>
@@ -831,7 +831,7 @@ start_recording();
 
 	<section>
 		<title>Exported Pseudo Variables</title>
-		<section>
+		<section id="rtpproxy.pv.rtpstat">
 			<title><function moreinfo="none">$rtpstat</function></title>
 			<para>
 			Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from the RTP-Proxy
@@ -880,7 +880,7 @@ $ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 			</programlisting>
 			</example>
 		</section>
-				
+
 			<section>
 			<title><function moreinfo="none">nh_show_rtpp</function></title>
 			<para>

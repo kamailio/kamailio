@@ -76,7 +76,7 @@ typedef AAAReturnCode  (*AAAFreeAVPList_f)(AAA_AVP_LIST *avpList);
 
 
 
-AAAResultCode AAASetMessageResultCode(AAAMessage *message,AAAResultCode resultCode);
+AAAReturnCode AAASetMessageResultCode(AAAMessage *message,AAAResultCode resultCode);
 
 void AAAPrintMessage(AAAMessage *msg);
 

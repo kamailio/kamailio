@@ -1138,10 +1138,10 @@ void tlsf_meminfo(tlsf_t pool, struct mem_info *info)
 	info->total_size = control->total_size;
 }
 
-size_t tlsf_available(tlsf_t pool)
+unsigned long tlsf_available(tlsf_t pool)
 {
 	control_t* control = tlsf_cast(control_t*, pool);
-	return control->total_size - control->real_used;
+	return (unsigned long)(control->total_size - control->real_used);
 }
 
 void tlsf_status(tlsf_t pool)
@@ -1370,7 +1370,7 @@ static tlsf_t _tlsf_shm_block = 0;
 
 /*SHM wrappers to sync the access to memory block*/
 #ifdef DBG_TLSF_MALLOC
-void* tlsf_shm_malloc(void* tlsfmp, unsigned long size,
+void* tlsf_shm_malloc(void* tlsfmp, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1379,7 +1379,7 @@ void* tlsf_shm_malloc(void* tlsfmp, unsigned long size,
 	shm_unlock();
 	return r;
 }
-void* tlsf_shm_realloc(void* tlsfmp, void* p, unsigned long size,
+void* tlsf_shm_realloc(void* tlsfmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1388,7 +1388,7 @@ void* tlsf_shm_realloc(void* tlsfmp, void* p, unsigned long size,
 	shm_unlock();
 	return r;
 }
-void* tlsf_shm_resize(void* tlsfmp, void* p, unsigned long size,
+void* tlsf_shm_resize(void* tlsfmp, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char* mname)
 {
 	void *r;
@@ -1406,7 +1406,7 @@ void tlsf_shm_free(void* tlsfmp, void* p, const char* file, const char* func,
 	shm_unlock();
 }
 #else
-void* tlsf_shm_malloc(void* tlsfmp, unsigned long size)
+void* tlsf_shm_malloc(void* tlsfmp, size_t size)
 {
 	void *r;
 	shm_lock();
@@ -1414,7 +1414,7 @@ void* tlsf_shm_malloc(void* tlsfmp, unsigned long size)
 	shm_unlock();
 	return r;
 }
-void* tlsf_shm_realloc(void* tlsfmp, void* p, unsigned long size)
+void* tlsf_shm_realloc(void* tlsfmp, void* p, size_t size)
 {
 	void *r;
 	shm_lock();
@@ -1422,7 +1422,7 @@ void* tlsf_shm_realloc(void* tlsfmp, void* p, unsigned long size)
 	shm_unlock();
 	return r;
 }
-void* tlsf_shm_resize(void* tlsfmp, void* p, unsigned long size)
+void* tlsf_shm_resize(void* tlsfmp, void* p, size_t size)
 {
 	void *r;
 	shm_lock();

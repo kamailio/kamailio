@@ -12,11 +12,13 @@ Edited by
 
 Anca-Maria Vamanu
 
+Edited by
+
 Juha Heinanen
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
 
-   Copyright � 2009 Juha Heinanen
+   Copyright © 2009 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -57,10 +59,12 @@ Juha Heinanen
               3.24. fetch_rows (integer)
               3.25. db_table_lock_type (integer)
               3.26. local_log_level (int)
-              3.27. subs_remove_match (int)
-              3.28. xavp_cfg (str)
-              3.29. retrieve_order (int)
-              3.30. sip_uri_match (int)
+              3.27. local_log_facility (int)
+              3.28. subs_remove_match (int)
+              3.29. xavp_cfg (str)
+              3.30. retrieve_order (int)
+              3.31. retrieve_order_by (str)
+              3.32. sip_uri_match (int)
 
         4. Functions
 
@@ -140,18 +144,20 @@ Juha Heinanen
    1.24. Set fetch_rows parameter
    1.25. Set db_table_lock_type parameter
    1.26. Set local_log_level parameter
-   1.27. Set subs_remove_match parameter
-   1.28. Set xavp_cfg parameter
-   1.29. Set retrieve_order parameter
-   1.30. Set sip_uri_match parameter
-   1.31. handle_publish usage
-   1.32. handle_subscribe usage
-   1.33. pres_auth_status usage
-   1.34. pres_refresh_watchers usage
-   1.35. pres_update_watchers usage
-   1.36. $subs(name) usage
-   1.37. $notify_reply(name) usage
-   1.38. $notify_reply(name) usage
+   1.27. Set local_log_facility parameter
+   1.28. Set subs_remove_match parameter
+   1.29. Set xavp_cfg parameter
+   1.30. Set retrieve_order parameter
+   1.31. Set retrieve_order_by parameter
+   1.32. Set sip_uri_match parameter
+   1.33. handle_publish usage
+   1.34. handle_subscribe usage
+   1.35. pres_auth_status usage
+   1.36. pres_refresh_watchers usage
+   1.37. pres_update_watchers usage
+   1.38. $subs(name) usage
+   1.39. $notify_reply(name) usage
+   1.40. $notify_reply(name) usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -192,10 +198,12 @@ Chapter 1. Admin Guide
         3.24. fetch_rows (integer)
         3.25. db_table_lock_type (integer)
         3.26. local_log_level (int)
-        3.27. subs_remove_match (int)
-        3.28. xavp_cfg (str)
-        3.29. retrieve_order (int)
-        3.30. sip_uri_match (int)
+        3.27. local_log_facility (int)
+        3.28. subs_remove_match (int)
+        3.29. xavp_cfg (str)
+        3.30. retrieve_order (int)
+        3.31. retrieve_order_by (str)
+        3.32. sip_uri_match (int)
 
    4. Functions
 
@@ -296,10 +304,12 @@ Chapter 1. Admin Guide
    3.24. fetch_rows (integer)
    3.25. db_table_lock_type (integer)
    3.26. local_log_level (int)
-   3.27. subs_remove_match (int)
-   3.28. xavp_cfg (str)
-   3.29. retrieve_order (int)
-   3.30. sip_uri_match (int)
+   3.27. local_log_facility (int)
+   3.28. subs_remove_match (int)
+   3.29. xavp_cfg (str)
+   3.30. retrieve_order (int)
+   3.31. retrieve_order_by (str)
+   3.32. sip_uri_match (int)
 
 3.1. db_url(str)
 
@@ -308,7 +318,7 @@ Chapter 1. Admin Guide
    If set, the module is a fully operational presence server. Otherwise,
    it is used as a 'library', for its exported functions.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -320,7 +330,7 @@ modparam("presence", "db_url",
 
    The name of the db table where PUBLISH presence information is stored.
 
-   Default value is "presentity".
+   Default value is “presentity”.
 
    Example 1.2. Set presentity_table parameter
 ...
@@ -332,7 +342,7 @@ modparam("presence", "presentity_table", "presentity")
    The name of the db table where active subscription information is
    stored.
 
-   Default value is "active_watchers".
+   Default value is “active_watchers”.
 
    Example 1.3. Set active_watchers_table parameter
 ...
@@ -343,7 +353,7 @@ modparam("presence", "active_watchers_table", "active_watchers")
 
    The name of the db table where subscription states are stored.
 
-   Default value is "watchers".
+   Default value is “watchers”.
 
    Example 1.4. Set watchers_table parameter
 ...
@@ -355,7 +365,7 @@ modparam("presence", "watchers_table", "watchers")
    The period in seconds between checks if there are expired messages
    stored in database.
 
-   Default value is "100". A zero or negative value disables this
+   Default value is “100”. A zero or negative value disables this
    activity.
 
    Example 1.5. Set clean_period parameter
@@ -368,7 +378,7 @@ modparam("presence", "clean_period", 100)
    The period at which to synchronize cached subscriber info with the
    database.
 
-   Default value is "100". A zero or negative value disables
+   Default value is “100”. A zero or negative value disables
    synchronization.
 
    Example 1.6. Set db_update_period parameter
@@ -386,7 +396,7 @@ modparam("presence", "db_update_period", 100)
    than 0. When notifier_processes is less than or equal to 0 NOTIFY
    requests are sent immediately.
 
-   Default value is "5".
+   Default value is “5”.
 
    Example 1.7. Set waitn_time parameter
 ...
@@ -403,7 +413,7 @@ modparam("presence", "waitn_time", 10)
    Separate notifier processes are only run when subs_db_mode is 3 (DB
    only mode).
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.8. Set notifier_poll_rate parameter
 ...
@@ -423,7 +433,7 @@ modparam("presence", "notifier_poll_rate", 20)
    NOTIFY requests can be sent on a dialog at the same time, there are
    race conditions which result in CSeq re-use.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.9. Set notifier_processes parameter
 ...
@@ -435,9 +445,9 @@ modparam("presence", "notifier_processes", 2)
    Enabling this parameter will delete expired presentity records without
    updating watchers.
 
-   Set this parameter to "1" to enable.
+   Set this parameter to “1” to enable.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.10. Set force_delete parameter
 ...
@@ -449,7 +459,7 @@ modparam("presence", "force_delete", 1)
    The prefix used when generating to_tag when sending replies for
    SUBSCRIBE requests.
 
-   Default value is "10".
+   Default value is “10”.
 
    Example 1.11. Set to_tag_pref parameter
 ...
@@ -462,7 +472,7 @@ modparam("presence", "to_tag_pref", 'pres')
    when sending a 200OK for a publish. It is used for forcing the client
    to send an update before the old publish expires.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.12. Set expires_offset parameter
 ...
@@ -474,7 +484,7 @@ modparam("presence", "expires_offset", 10)
    The maximum admissible expires value for PUBLISH/SUBSCRIBE message (in
    seconds).
 
-   Default value is "3600".
+   Default value is “3600”.
 
    Example 1.13. Set max_expires parameter
 ...
@@ -488,7 +498,7 @@ modparam("presence", "max_expires", 3600)
 
    If > 0 then min_expires_action parameter determines the response.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.14. Set min_expires parameter
             ...
@@ -500,12 +510,12 @@ modparam("presence", "max_expires", 3600)
    The action to take when UA sends a expires value less then min_expires.
 
    Possible Values
-     * 1 : RFC Compliant, returns "423 Interval Too Brief"
+     * 1 : RFC Compliant, returns “423 Interval Too Brief”
      * 2 : forces the min_expires value in the subscription
 
    If > 0 then min_expires_action parameter determines the response.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.15. Set min_expires parameter
             ...
@@ -576,7 +586,7 @@ modparam("presence", "subs_db_mode", 1)
    database or there are other external entities inserting data into the
    presentity table.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.18. Set publ_cache parameter
 ...
@@ -589,7 +599,7 @@ modparam("presence", "publ_cache", 0)
    This parameter will be used as the power of 2 when computing table
    size.
 
-   Default value is "9 (512)".
+   Default value is “9 (512)”.
 
    Example 1.19. Set subs_htable_size parameter
 ...
@@ -601,7 +611,7 @@ modparam("presence", "subs_htable_size", 11)
    The size of the in-memory hash table to store publish records. This
    parameter will be used as the power of 2 when computing table size.
 
-   Default value is "9 (512)".
+   Default value is “9 (512)”.
 
    Example 1.20. Set pres_htable_size parameter
 ...
@@ -616,7 +626,7 @@ modparam("presence", "pres_htable_size", 11)
    empty NOTIFY to an message-summary event. This parameter is enabled by
    default, thus addering to the standard.
 
-   Default value is "1 ".
+   Default value is “1 ”.
 
    Example 1.21. Set send_fast_notify parameter
 ...
@@ -631,7 +641,7 @@ modparam("presence", "send_fast_notify", 0)
    this check requires extra processing that should be avoided if this
    feature is not supported by the clients.
 
-   Default value is "0 ".
+   Default value is “0 ”.
 
    Example 1.22. Set enable_sphere_check parameter
 ...
@@ -646,7 +656,7 @@ modparam("presence", "enable_sphere_check", 1)
    on. Disabling this will keep subscriptions active on unreliable
    networks.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.23. Set timeout_rm_subs parameter
 ...
@@ -693,7 +703,19 @@ modparam("presence", "db_table_lock_type", 0)
 modparam("presence", "local_log_level", 3)
 ...
 
-3.27. subs_remove_match (int)
+3.27. local_log_facility (int)
+
+   Control syslog facility for some debug messages inside the module.
+
+   Default value is taken from the core log_facility configuration
+   parameter.
+
+   Example 1.27. Set local_log_facility parameter
+...
+modparam("presence", "local_log_facility", "LOG_LOCAL3")
+...
+
+3.28. subs_remove_match (int)
 
    Control how to match the subscriptions to remove from memory. If set to
    0, then the match is done on To-Tag (local generated), if set to 1,
@@ -702,12 +724,12 @@ modparam("presence", "local_log_level", 3)
 
    Default value is 0.
 
-   Example 1.27. Set subs_remove_match parameter
+   Example 1.28. Set subs_remove_match parameter
 ...
 modparam("presence", "subs_remove_match", 1)
 ...
 
-3.28. xavp_cfg (str)
+3.29. xavp_cfg (str)
 
    The name of the xavp to be used to specify attributes for internal
    processing of presence module.
@@ -723,7 +745,7 @@ modparam("presence", "subs_remove_match", 1)
 
    Default value is empty (not set).
 
-   Example 1.28. Set xavp_cfg parameter
+   Example 1.29. Set xavp_cfg parameter
 ...
 modparam("presence", "xavp_cfg", "pres")
 ...
@@ -732,19 +754,32 @@ if(is_method("PUBLISH")) {
 }
 ...
 
-3.29. retrieve_order (int)
+3.30. retrieve_order (int)
 
-   If set to 0, presentity records are retrieve by received_time order. if
-   set to 1, presentity records are retrieve by priority order.
+   If set to 0, presentity records are retrieve by received_time order. If
+   set to 1, presentity records are retrieve by the value of
+   retrieve_order_by parameter.
 
    Default value is 0.
 
-   Example 1.29. Set retrieve_order parameter
+   Example 1.30. Set retrieve_order parameter
 ...
 modparam("presence", "retrieve_order", 1)
 ...
 
-3.30. sip_uri_match (int)
+3.31. retrieve_order_by (str)
+
+   Used to set the order-by of the db query for fetching the presence
+   records when retrieve_order is set to 1.
+
+   Default value is “priority”.
+
+   Example 1.31. Set retrieve_order_by parameter
+...
+modparam("presence", "retrieve_order_by", "priority, received_time")
+...
+
+3.32. sip_uri_match (int)
 
    The mode used when comparing uris.
 
@@ -752,9 +787,9 @@ modparam("presence", "retrieve_order", 1)
      * 0 : case sensitive
      * 1 : case insensitive
 
-   Default value is "0".
+   Default value is “0”.
 
-   Example 1.30. Set sip_uri_match parameter
+   Example 1.32. Set sip_uri_match parameter
             ...
             modparam("presence", "sip_uri_match", 1)
             ...
@@ -767,7 +802,7 @@ modparam("presence", "retrieve_order", 1)
    4.4. pres_refresh_watchers(uri, event, type[, file_uri, filename])
    4.5. pres_update_watchers(uri, event)
 
-4.1. handle_publish([sender_uri])
+4.1.  handle_publish([sender_uri])
 
    Handles PUBLISH requests by storing and updating published information
    in memory cache and database, then calls functions to send NOTIFY
@@ -787,7 +822,7 @@ modparam("presence", "retrieve_order", 1)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.31. handle_publish usage
+   Example 1.33. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -799,7 +834,7 @@ modparam("presence", "retrieve_order", 1)
         }
 ...
 
-4.2. handle_subscribe([watcher_uri])
+4.2.  handle_subscribe([watcher_uri])
 
    The function which handles SUBSCRIBE requests. It stores or updates
    information in memory and database and calls functions to send NOTIFY
@@ -818,13 +853,13 @@ modparam("presence", "retrieve_order", 1)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.32. handle_subscribe usage
+   Example 1.34. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
 ...
 
-4.3. pres_auth_status(watcher_uri, presentity_uri)
+4.3.  pres_auth_status(watcher_uri, presentity_uri)
 
    The function checks if watcher is authorized to subscribe event
    'presence' of presentity. Both watcher_uri and presentity_uri are
@@ -835,7 +870,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.33. pres_auth_status usage
+   Example 1.35. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -847,7 +882,7 @@ if (method=="MESSAGE") {
 }
 ...
 
-4.4. pres_refresh_watchers(uri, event, type[, file_uri, filename])
+4.4.  pres_refresh_watchers(uri, event, type[, file_uri, filename])
 
    The function can be used in configuration to triger notifies to
    watchers if a change in watchers authorization or in published state
@@ -871,12 +906,12 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.34. pres_refresh_watchers usage
+   Example 1.36. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
 
-4.5. pres_update_watchers(uri, event)
+4.5.  pres_update_watchers(uri, event)
 
    The function can be used in configuration to triger updates to watchers
    status if a change in watchers authorization state occurred (i.e.,
@@ -889,7 +924,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.35. pres_update_watchers usage
+   Example 1.37. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
@@ -899,7 +934,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
    5.1. refreshWatchers
    5.2. cleanup
 
-5.1. refreshWatchers
+5.1.  refreshWatchers
 
    Triggers sending Notify messages to watchers if a change in watchers
    authorization or in published state occurred.
@@ -929,7 +964,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
                 1
                 _empty_line_
 
-5.2. cleanup
+5.2.  cleanup
 
    Manually triggers the cleanup functions for the active_watchers,
    presentity, and watchers tables. Useful if you have set clean_period
@@ -947,7 +982,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 
    6.1. presence.cleanup
 
-6.1. presence.cleanup
+6.1.  presence.cleanup
 
    Manually triggers the cleanup functions for the active_watchers,
    presentity, and watchers tables. Useful if you have set clean_period
@@ -965,11 +1000,11 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 7.1. $subs(attr)
 
    Access the attributes of handled subscription. It must be used after a
-   successful call of "handle_subscription()" or in the following events.
+   successful call of “handle_subscription()” or in the following events.
      * tm:local-request - before notify is sent
      * present:notify-reply - after notify is sent
 
-   The "attr" can be:
+   The “attr” can be:
      * uri - subscription presentity uri
      * pres_uri - alias for presentity uri
      * to_user
@@ -995,7 +1030,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
      * flags
      * user_agent
 
-   Example 1.36. $subs(name) usage
+   Example 1.38. $subs(name) usage
 ...
 if(handle_subscription())
 {
@@ -1009,9 +1044,9 @@ if(handle_subscription())
    used in the following events.
      * present:notify-reply - after notify is sent
 
-   The "attr" can be any pseudo var that accesses attributes of msg
+   The “attr” can be any pseudo var that accesses attributes of msg
 
-   Example 1.37. $notify_reply(name) usage
+   Example 1.39. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
@@ -1027,7 +1062,7 @@ event_route[presence:notify-reply]
 
    Fired after notify reply is received or timeout.
 
-   Example 1.38. $notify_reply(name) usage
+   Example 1.40. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
@@ -1069,7 +1104,7 @@ Chapter 2. Developer Guide
    The module provides the following functions that can be used in other
    Kamailio modules.
 
-1. bind_presence(presence_api_t* api)
+1.  bind_presence(presence_api_t* api)
 
    This function binds the presence modules and fills the structure with
    one exported function -> add_event, which when called adds a new event
@@ -1105,7 +1140,7 @@ typedef struct presence_api {
 }presence_api_t;
 ...
 
-2. add_event
+2.  add_event
 
    Field type:
 ...
@@ -1168,7 +1203,7 @@ makes a
 }pres_ev_t;
 ...
 
-3. get_rules_doc
+3.  get_rules_doc
 
    Filed type:
 ...
@@ -1181,7 +1216,7 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
    auth_rules_doc of the subs_t structure given as a parameter to the
    functions described bellow.
 
-4. get_auth_status
+4.  get_auth_status
 
    This filed is a function to be called for a subscription request to
    return the state for that subscription according to authorization
@@ -1196,7 +1231,7 @@ typedef int (get_rules_doc_t)(str* user, str* domain, str** rules_doc);
 typedef int (is_allowed_t)(struct subscription* subs);
 ...
 
-5. apply_auth_nbody
+5.  apply_auth_nbody
 
    This parameter should be a function to be called for an event that
    requires authorization, when constructing final body. The authorization
@@ -1208,7 +1243,7 @@ typedef int (is_allowed_t)(struct subscription* subs);
 typedef int (apply_auth_t)(str* , struct subscription*, str** );
 ...
 
-6. agg_nbody
+6.  agg_nbody
 
    If present, this field marks that the events requires aggregation of
    states. This function receives a body array and should return the final
@@ -1222,7 +1257,7 @@ typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain,
 str** body_array, int n, int off_index);
 ..
 
-7. free_body
+7.  free_body
 
    This field must be field in if subsequent processing is performed on
    the info from database before being inserted in Notify message body(if
@@ -1234,7 +1269,7 @@ str** body_array, int n, int off_index);
 typedef void(free_body_t)(char* body);
 ..
 
-8. aux_body_processing
+8.  aux_body_processing
 
    This field must be set if the module needs to manipulate the NOTIFY
    body for each watcher. E.g. if the XML body includes a 'version'
@@ -1248,7 +1283,7 @@ typedef void(free_body_t)(char* body);
 typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
 ..
 
-9. aux_free_body
+9.  aux_free_body
 
    This field must be set if the module registers the aux_body_processing
    function and allocates memory for the new modified body. Then, this
@@ -1263,7 +1298,7 @@ typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
 typedef void(free_body_t)(char* body);
 ..
 
-10. evs_publ_handl
+10.  evs_publ_handl
 
    This function is called when handling Publish requests. Most contain
    body correctness check.
@@ -1272,7 +1307,7 @@ typedef void(free_body_t)(char* body);
 typedef int (publ_handling_t)(struct sip_msg*);
 ..
 
-11. evs_subs_handl
+11.  evs_subs_handl
 
    It is not compulsory. Should contain event specific handling for
    Subscription requests.
@@ -1282,7 +1317,7 @@ typedef int (publ_handling_t)(struct sip_msg*);
 typedef int (subs_handling_t)(struct sip_msg*);
 ..
 
-12. contains_event
+12.  contains_event
 
    Field type:
 ..
@@ -1295,7 +1330,7 @@ event_t* parsed_event);
    found. If the second argument is an allocated event_t* structure it
    fills it with the result of the parsing.
 
-13. get_event_list
+13.  get_event_list
 
    Field type:
 ...
@@ -1305,7 +1340,7 @@ typedef int (*get_event_list_t) (str** ev_list);
    This function returns a string representation of the events registered
    in presence module.( used for Allowed-Events header).
 
-14. update_watchers_status
+14.  update_watchers_status
 
    Field type:
 ...
@@ -1319,7 +1354,7 @@ str* rules_doc);
    (used by presence_xml module when notified through an MI command of a
    change in an xcap document).
 
-15. get_sphere
+15.  get_sphere
 
    Field type:
 ...
@@ -1330,7 +1365,7 @@ typedef char* (*pres_get_sphere_t)(str* pres_uri);
    information if this has type RPID. If not found returns NULL. (the
    return value is allocated in private memory and should be freed)
 
-16. get_presentity
+16.  get_presentity
 
    Field type:
 ...
@@ -1346,7 +1381,7 @@ r *contact);
    Once you are finished with the presentity document you must call
    free_presentity to free the allocated memory.
 
-17. free_presentity
+17.  free_presentity
 
    Field type:
 ...

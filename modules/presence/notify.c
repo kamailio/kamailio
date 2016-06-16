@@ -660,7 +660,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	}
 
 	if(pres_retrieve_order==1) {
-		query_str = str_priority_col;
+		query_str = pres_retrieve_order_by;
 	} else {
 		query_str = str_received_time_col;
 	}

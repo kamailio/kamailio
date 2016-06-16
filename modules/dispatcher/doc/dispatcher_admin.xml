@@ -1350,6 +1350,21 @@ onreply_route {
 </programlisting>
 		</example>
  	</section>
+	<section id="dispatcher.f.ds_reload">
+		<title>
+		<function moreinfo="none">ds_reload()</function>
+		</title>
+		<para>
+		Reloads the groups and included destinations.
+		</para>
+		<para>
+		Name: <emphasis>ds_reload</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+	</section>
 	</section>
 
 	<section>

@@ -34,31 +34,38 @@
 			these scalars are:
 			</para>
 			<para>
-			kamailioSIPProtocolVersion, kamailioSIPServiceStartTime, kamailioSIPEntityType,
-			kamailioSIPSummaryInRequests, kamailioSIPSummaryOutRequest, 
-			kamailioSIPSummaryInResponses, kamailioSIPSummaryOutResponses,
-			kamailioSIPSummaryTotalTransactions, kamailioSIPCurrentTransactions, 
-			kamailioSIPNumUnsupportedUris, kamailioSIPNumUnsupportedMethods, 
-			kamailioSIPOtherwiseDiscardedMsgs, kamailioSIPProxyStatefulness
-			kamailioSIPProxyRecordRoute, kamailioSIPProxyAuthMethod, 
-			kamailioSIPNumProxyRequireFailures, kamailioSIPRegMaxContactExpiryDuration,
-			kamailioSIPRegMaxUsers, kamailioSIPRegCurrentUsers, 
-			kamailioSIPRegDfltRegActiveInterval, kamailioSIPRegAcceptedRegistrations,
-			kamailioSIPRegRejectedRegistrations, kamailioMsgQueueDepth.
-			kamailioCurNumDialogs, kamailioCurNumDialogsInProgress, 
-			kamailioCurNumDialogsInSetup, kamailioTotalNumFailedDialogSetups
+			<itemizedlist>
+			<listitem>
+			kamailioSIPProtocolVersion</listitem><listitem> kamailioSIPServiceStartTime</listitem><listitem> kamailioSIPEntityType</listitem><listitem>
+			kamailioSIPSummaryInRequests</listitem><listitem> kamailioSIPSummaryOutRequest</listitem><listitem> 
+			kamailioSIPSummaryInResponses</listitem><listitem> kamailioSIPSummaryOutResponses</listitem><listitem>
+			kamailioSIPSummaryTotalTransactions</listitem><listitem> kamailioSIPCurrentTransactions</listitem><listitem> 
+			kamailioSIPNumUnsupportedUris</listitem><listitem> kamailioSIPNumUnsupportedMethods</listitem><listitem> 
+			kamailioSIPOtherwiseDiscardedMsgs</listitem><listitem> kamailioSIPProxyStatefulness
+			kamailioSIPProxyRecordRoute</listitem><listitem> kamailioSIPProxyAuthMethod</listitem><listitem> 
+			kamailioSIPNumProxyRequireFailures</listitem><listitem> kamailioSIPRegMaxContactExpiryDuration</listitem><listitem>
+			kamailioSIPRegMaxUsers</listitem><listitem> kamailioSIPRegCurrentUsers</listitem><listitem> 
+			kamailioSIPRegDfltRegActiveInterval</listitem><listitem> kamailioSIPRegAcceptedRegistrations</listitem><listitem>
+			kamailioSIPRegRejectedRegistrations</listitem><listitem> kamailioMsgQueueDepth</listitem><listitem>
+			kamailioCurNumDialogs</listitem><listitem> kamailioCurNumDialogsInProgress</listitem><listitem> 
+			kamailioCurNumDialogsInSetup</listitem><listitem> kamailioTotalNumFailedDialogSetups</listitem>
+			</itemizedlist>
 			</para>
 			<para>
 			There are also scalars associated with alarms.  They are as follows:
 			</para>
 
 			<para>
-			kamailioMsgQueueMinorThreshold, kamailioMsgQueueMajorThreshold,
-			kamailioMsgQueueDepthAlarmStatus, kamailioMsgQueueDepthMinorAlarm,
-			kamailioMsgQueueDepthMajorAlarm, kamailioDialogLimitMinorThreshold,
-			kamailioDialogLimitMajorThreshold, kamailioDialogUsageState,
-			kamailioDialogLimitAlarmStatus, kamailioDialogLimitMinorAlarm,
+			<itemizedlist>
+			<listitem>
+			kamailioMsgQueueMinorThreshold</listitem><listitem> kamailioMsgQueueMajorThreshold</listitem><listitem>
+			kamailioMsgQueueDepthAlarmStatus</listitem><listitem> kamailioMsgQueueDepthMinorAlarm</listitem><listitem>
+			kamailioMsgQueueDepthMajorAlarm</listitem><listitem> kamailioDialogLimitMinorThreshold</listitem><listitem>
+			kamailioDialogLimitMajorThreshold</listitem><listitem> kamailioDialogUsageState</listitem><listitem>
+			kamailioDialogLimitAlarmStatus</listitem><listitem> kamailioDialogLimitMinorAlarm</listitem><listitem>
 			kamailioDialogLimitMajorAlarm
+			</listitem>
+			</itemizedlist>
 			</para>
 			<para>
 			In Kamailio 4.1 a set of new OIDs was added to reflect the
@@ -439,6 +446,13 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
 		The SNMPStats module will export registrar (usrloc) records if
 		this parameter is set to 1. This will result in more memory usage
 		and bigger exporter structure.
+		</para>
+		<para>
+		If you enable this setting and NOT use it (i.e. not check the SNMP tables
+		for registrations) an internal memory queue of usrloc changes will
+		keep growing in shared (core) memory. To release the queue memory,
+		run snmpwalk or use a monitoring tool to check the tables with
+		regular intervals.
 		</para>
 
 		<para>

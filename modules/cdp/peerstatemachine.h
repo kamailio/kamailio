@@ -50,7 +50,7 @@
 
 int sm_process(peer *p,peer_event_t event,AAAMessage *msg,int peer_locked,int sock);
 
-peer_state_t I_Snd_Conn_Req(peer *p);
+peer_event_t I_Snd_Conn_Req(peer *p);
 void Cleanup(peer *p,int sock);
 void Error(peer *p, int sock);
 void I_Snd_CER(peer *p);

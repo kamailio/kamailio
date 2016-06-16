@@ -64,7 +64,7 @@ Chapter 1. Admin Guide
    1.2. Flow Timer
 
    This module provides C-API functions to enable Kamailio to be used as
-   an outbound Edge Proxy (see RFC 5626 section 5).
+   an outbound Edge Proxy (see RFC5626 section 5).
 
    The path and rr will bind to this module if it is loaded before they
    are.

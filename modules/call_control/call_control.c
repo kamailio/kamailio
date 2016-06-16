@@ -985,7 +985,7 @@ __dialog_ended(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
         if( !msg || msg == FAKED_REPLY)
             msg = _params->req;
         call_control_stop(msg, dlg->callid);
-        *_params->param = (void*)CCInactive;
+        *_params->param = NULL;
     }
 }
 

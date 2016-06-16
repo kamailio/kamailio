@@ -262,7 +262,7 @@ void ro_timer_routine(unsigned int ticks, void * attr) {
     }
 }
 
-void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
+void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error) {
     time_t now = get_current_time_micro();
     long used_secs;
     struct ro_session_entry *ro_session_entry = NULL;
@@ -277,7 +277,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
     ro_session_lock(ro_session_table, ro_session_entry);
     LM_DBG("credit=%d credit_valid_for=%d", i_req->new_credit, i_req->credit_valid_for);
 
-    used_secs = rint((now - i_req->ro_session->last_event_timestamp) / (float) 1000000);
+    used_secs = rint((now - ((timeout_or_error==1 && i_req->ro_session->last_event_timestamp_backup>0)?i_req->ro_session->last_event_timestamp_backup : i_req->ro_session->last_event_timestamp)) / (float) 1000000);
 
     /* check to make sure diameter server is giving us sane values */
     if (i_req->new_credit > i_req->credit_valid_for) {
@@ -332,7 +332,9 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req) {
         /* just put the timer back in with however many seconds are left (if any!!! in which case we need to kill */
         /* also update the event type to no_more_credit to save on processing the next time we get here */
         i_req->ro_session->event_type = no_more_credit;
+        if (!timeout_or_error)
 		i_req->ro_session->last_event_timestamp = get_current_time_micro();
+        
         int whatsleft = i_req->ro_session->reserved_secs - used_secs;
         if (whatsleft <= 0) {
             // TODO we need to handle this situation more precisely.
@@ -429,10 +431,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
 			
             counter_add(ims_charging_cnts_h.billed_secs, used_secs);
 
-            if (ro_session->callid.s != NULL
-                    && ro_session->dlg_h_entry > 0
-                    && ro_session->dlg_h_id > 0
-                    && ro_session->ro_session_id.s != NULL) {
+            if (ro_session->callid.s != NULL && ro_session->ro_session_id.s != NULL) {
                 LM_DBG("Found a session to re-apply for timing [%.*s] and user is [%.*s]\n",
                         ro_session->ro_session_id.len,
                         ro_session->ro_session_id.s,

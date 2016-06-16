@@ -8,9 +8,9 @@ Carsten Bock
 
    ng-voice GmbH
 
-   Copyright � 2008-2009 Juha Heinanen
+   Copyright © 2008-2009 Juha Heinanen
 
-   Copyright � 2013-2015 Carsten Bock, ng-voice GmbH
+   Copyright © 2013-2015 Carsten Bock, ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -110,7 +110,7 @@ Chapter 1. Admin Guide
    deactivated.
 
    Function xcap_auth_status can be used to check from presence server
-   database, if watcher is authorized to subscribe event "presence" of
+   database, if watcher is authorized to subscribe event “presence” of
    presentity.
 
 2. Dependencies
@@ -179,7 +179,7 @@ modparam("utils", "http_response_trim", 1)
 
    Defines if the forwarding callback should be installed.
 
-   Default value is "0" - disabled.
+   Default value is “0” - disabled.
 
    Example 1.4. Set forward_active parameter
                                         ...
@@ -203,7 +203,7 @@ modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
    Defines the name of the xcap table in the presence server database. See
    the xcap_server module documentation for more information.
 
-   Default value is "xcap".
+   Default value is “xcap”.
 
    Example 1.6. Set xcap_table parameter
 ...
@@ -215,21 +215,21 @@ modparam("utils", "xcap_table", "pres_xcap")
    4.1. http_query(url, [post-data], [header-data], result)
    4.2. xcap_auth_status(watcher_uri, presentity_uri)
 
-4.1. http_query(url, [post-data], [header-data], result)
+4.1.  http_query(url, [post-data], [header-data], result)
 
-   Sends HTTP GET or POST request according to URL given in "url"
+   Sends HTTP GET or POST request according to URL given in “url”
    parameter, which is a string that may contain pseudo variables.
 
-   If you want to make a POST-Request, you have to define the "post"-data,
+   If you want to make a POST-Request, you have to define the “post”-data,
    that should be submitted in that request as the second parameter. If
    this parameter is empty, it is not set.
 
    If you want to add additional headers to the request, you have to
-   define the "header"-data, that should be submitted in that request as
+   define the “header”-data, that should be submitted in that request as
    the third parameter. If this parameter is empty, it is not set.
 
    If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line of
-   the reply's body (if any) is stored in "result" parameter, which must
+   the reply's body (if any) is stored in “result” parameter, which must
    be a writable pseudo variable.
 
    Function returns reply code of HTTP reply or -1 if something went
@@ -267,10 +267,10 @@ switch ($retcode) {
 }
 ...
 
-4.2. xcap_auth_status(watcher_uri, presentity_uri)
+4.2.  xcap_auth_status(watcher_uri, presentity_uri)
 
    Function checks in the presence server database if a watcher is
-   authorized to subscribe to event "presence" of presentity. Sphere
+   authorized to subscribe to event “presence” of presentity. Sphere
    checking is not included.
 
    Both watcher_uri and presentity_uri are pseudo variables. The function

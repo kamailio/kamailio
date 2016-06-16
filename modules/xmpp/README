@@ -10,7 +10,7 @@ Edited by
 
 Andreea Spirea
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -153,11 +153,11 @@ Chapter 1. Admin Guide
    Unless 'gwmap' parameter is set, in both modes (server or component),
    the destination address must have the same pattern:
 
-   "sip:username<delim>jabber_server@gateway_domain"
+   “sip:username<delim>jabber_server@gateway_domain”
 
    From a jabber client's point of view, the destination will look like:
 
-   "sip_username<delim>sip_domain@xmpp_domain"
+   “sip_username<delim>sip_domain@xmpp_domain”
 
    'delim' is a character that can be set via 'domain_separator'
    parameter.
@@ -343,7 +343,7 @@ Chapter 1. Admin Guide
 
    4.1. xmpp_send_message()
 
-4.1. xmpp_send_message()
+4.1.  xmpp_send_message()
 
    Converts SIP messages to XMPP(jabber) messages, in order to be relayed
    to a XMPP(jabber) client.

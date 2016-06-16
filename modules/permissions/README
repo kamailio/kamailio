@@ -274,7 +274,7 @@ Chapter 1. Admin Guide
 
    The function for registration checking is called allow_register and the
    algorithm is very similar to the algorithm described in Section 1.1,
-   "Call Routing". The only difference is in the way how pairs are
+   “Call Routing”. The only difference is in the way how pairs are
    created.
 
    Instead of the From header field the function uses the To header field
@@ -286,7 +286,7 @@ Chapter 1. Admin Guide
    (To, Contact 2), (To, Contact 3), and so on..
 
    The algorithm of matching is the same as described in Section 1.1,
-   "Call Routing".
+   “Call Routing”.
 
 1.3. URI Permissions
 
@@ -414,7 +414,7 @@ Chapter 1. Admin Guide
    don't specify a full pathname then the directory in which is the main
    config file is located will be used.
 
-   Default value is "permissions.allow".
+   Default value is “permissions.allow”.
 
    Example 1.1. Set default_allow_file parameter
 ...
@@ -427,7 +427,7 @@ modparam("permissions", "default_allow_file", "/etc/permissions.allow")
    no parameters. If you don't specify a full pathname then the directory
    in which the main config file is located will be used.
 
-   Default value is "permissions.deny".
+   Default value is “permissions.deny”.
 
    Example 1.2. Set default_deny_file parameter
 ...
@@ -462,7 +462,7 @@ Note
 
    Including leading dot.
 
-   Default value is ".allow".
+   Default value is “.allow”.
 
    Example 1.4. Set allow_suffix parameter
 ...
@@ -479,7 +479,7 @@ Note
 
    Including leading dot.
 
-   Default value is ".deny".
+   Default value is “.deny”.
 
    Example 1.5. Set deny_suffix parameter
 ...
@@ -491,7 +491,7 @@ modparam("permissions", "deny_suffix", ".deny")
    This is URL of the database to be used to store rules used by
    allow_trusted function.
 
-   Default value is "NULL".
+   Default value is “NULL”.
 
    Example 1.6. Set db_url parameter
 ...
@@ -503,7 +503,7 @@ modparam("permissions", "db_url", "dbdriver://username:password@dbhost/dbname")
    The name of the database table containing IP subnets and DNS domain
    names used by allow_address and allow_source_address functions.
 
-   Default value is "address".
+   Default value is “address”.
 
    Example 1.7. Set address_table parameter
 ...
@@ -515,7 +515,7 @@ modparam("permissions", "address_table", "addr")
    Name of address table column containing the group identifier of the
    address.
 
-   Default value is "grp".
+   Default value is “grp”.
 
    Example 1.8. Set grp_col parameter
 ...
@@ -527,7 +527,7 @@ modparam("permissions", "grp_col", "group_id")
    Name of address table column containing the IP address part of the
    address.
 
-   Default value is "ip_addr".
+   Default value is “ip_addr”.
 
    Example 1.9. Set ip_addr_col parameter
 ...
@@ -540,7 +540,7 @@ modparam("permissions", "ip_addr_col", "ip_address")
    address. Possible values are 0-32 for IPv4 and 0-128 for IPv6
    addresses.
 
-   Default value is "mask".
+   Default value is “mask”.
 
    Example 1.10. Set mask_col parameter
 ...
@@ -551,7 +551,7 @@ modparam("permissions", "mask_col", "subnet_length")
 
    Name of address table column containing the port part of the address.
 
-   Default value is "port".
+   Default value is “port”.
 
    Example 1.11. Set port_col parameter
 ...
@@ -575,7 +575,7 @@ modparam("permissions", "db_mode", 1)
    Name of database table containing the matching rules used by the
    allow_trusted function.
 
-   Default value is "trusted".
+   Default value is “trusted”.
 
    Example 1.13. Set trusted_table parameter
 ...
@@ -584,10 +584,10 @@ modparam("permissions", "trusted_table", "pbx")
 
 3.14. source_col (string)
 
-   Name of column in the "trusted" table containing the source IP address
+   Name of column in the “trusted” table containing the source IP address
    that is matched against source IP address of received request.
 
-   Default value is "src_ip".
+   Default value is “src_ip”.
 
    Example 1.14. Set source_col parameter
 ...
@@ -596,13 +596,13 @@ modparam("permissions", "source_col", "source_ip_address")
 
 3.15. proto_col (string)
 
-   Name of column in the "trusted" table containing the transport protocol
+   Name of column in the “trusted” table containing the transport protocol
    that is matched against transport protocol of the received request.
-   Possible values that can be stored in proto_col are "any", "udp",
-   "tcp", "tls", "sctp", "ws", "wss", and "none". Value "any" matches
-   always and value "none" never.
+   Possible values that can be stored in proto_col are “any”, “udp”,
+   “tcp”, “tls”, “sctp”, “ws”, “wss”, and “none”. Value “any” matches
+   always and value “none” never.
 
-   Default value is "proto".
+   Default value is “proto”.
 
    Example 1.15. Set proto_col parameter
 ...
@@ -614,7 +614,7 @@ modparam("permissions", "proto_col", "transport")
    Name of the column trusted table containing a regular expression that
    is matched against the From URI.
 
-   Default value is "from_pattern".
+   Default value is “from_pattern”.
 
    Example 1.16. Set from_col parameter
 ...
@@ -626,7 +626,7 @@ modparam("permissions", "from_col", "regexp")
    Name of the column trusted table containing a regular expression that
    is matched against the Request URI.
 
-   Default value is "ruri_pattern".
+   Default value is “ruri_pattern”.
 
    Example 1.17. Set ruri_col parameter
 ...
@@ -635,11 +635,11 @@ modparam("permissions", "ruri_col", "regexp")
 
 3.18. tag_col (string)
 
-   Name of the column in the "address" or "trusted" table containing a
+   Name of the column in the “address” or “trusted” table containing a
    string that is added as value to peer_tag AVP if peer_tag AVP has been
    defined and if the address or peer matches.
 
-   Default value is "tag".
+   Default value is “tag”.
 
    Example 1.18. Set tag_col parameter
 ...
@@ -654,7 +654,7 @@ modparam("permissions", "tag_col", "peer_tag")
    In non-caching mode, priority order (ASC vs DESC) is determined by
    database.
 
-   Default value is "priority".
+   Default value is “priority”.
 
    Example 1.19. Set priority_col parameter
 ...
@@ -666,7 +666,7 @@ modparam("permissions", "priority_col", "column_name")
    If defined, the AVP will be set as a side effect of allow_trusted call
    to not NULL tag column value of the matching peer.
 
-   Default value is "undefined".
+   Default value is “undefined”.
 
    Example 1.20. Set peer_tag_avp parameter
 ...
@@ -675,12 +675,12 @@ modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 
 3.21. peer_tag_mode (integer)
 
-   Tag mode for allow_trusted. "0" sets only the tag of the first match.
-   "1" adds the tags of all matches to the avp. In addition the return
+   Tag mode for allow_trusted. “0” sets only the tag of the first match.
+   “1” adds the tags of all matches to the avp. In addition the return
    value of allow_trusted is the number of matches. This parameter is not
    used for address table matching functions.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.21. Set peer_tag_mode parameter
 ...
@@ -691,7 +691,7 @@ modparam("permissions", "peer_tag_mode", 1)
 
    The maximum number of subnet addresses to be loaded from address table.
 
-   Default value is "512".
+   Default value is “512”.
 
    Example 1.22. Set max_subnets parameter
 ...
@@ -712,10 +712,10 @@ modparam("permissions", "max_subnets", 1024)
    4.10. allow_address_group(addr, port)
    4.11. allow_trusted([src_ip_pvar, proto_pvar])
 
-4.1. allow_routing()
+4.1.  allow_routing()
 
    Returns true if all pairs constructed as described in Section 1.1,
-   "Call Routing" have appropriate permissions according to the
+   “Call Routing” have appropriate permissions according to the
    configuration files. This function uses default configuration files
    specified in default_allow_file and default_deny_file.
 
@@ -728,10 +728,10 @@ if (allow_routing()) {
 };
 ...
 
-4.2. allow_routing(basename)
+4.2.  allow_routing(basename)
 
    Returns true if all pairs constructed as described in Section 1.1,
-   "Call Routing" have appropriate permissions according to the
+   “Call Routing” have appropriate permissions according to the
    configuration files given as parameters.
 
    Meaning of the parameters is as follows:
@@ -751,10 +751,10 @@ if (allow_routing("basename")) {
 };
 ...
 
-4.3. allow_routing(allow_file,deny_file)
+4.3.  allow_routing(allow_file,deny_file)
 
    Returns true if all pairs constructed as described in Section 1.1,
-   "Call Routing" have appropriate permissions according to the
+   “Call Routing” have appropriate permissions according to the
    configuration files given as parameters.
 
    Meaning of the parameters is as follows:
@@ -776,10 +776,10 @@ if (allow_routing("rules.allow", "rules.deny")) {
 };
 ...
 
-4.4. allow_register(basename)
+4.4.  allow_register(basename)
 
    The function returns true if all pairs constructed as described in
-   Section 1.2, "Registration Permissions" have appropriate permissions
+   Section 1.2, “Registration Permissions” have appropriate permissions
    according to the configuration files given as parameters.
 
    Meaning of the parameters is as follows:
@@ -804,10 +804,10 @@ if (method=="REGISTER") {
 };
 ...
 
-4.5. allow_register(allow_file, deny_file)
+4.5.  allow_register(allow_file, deny_file)
 
    The function returns true if all pairs constructed as described in
-   Section 1.2, "Registration Permissions" have appropriate permissions
+   Section 1.2, “Registration Permissions” have appropriate permissions
    according to the configuration files given as parameters.
 
    Meaning of the parameters is as follows:
@@ -834,10 +834,10 @@ if (method=="REGISTER") {
 };
 ...
 
-4.6. allow_uri(basename, pvar)
+4.6.  allow_uri(basename, pvar)
 
-   Returns true if the pair constructed as described in Section 1.3, "URI
-   Permissions" have appropriate permissions according to the
+   Returns true if the pair constructed as described in Section 1.3, “URI
+   Permissions” have appropriate permissions according to the
    configuration files specified by the parameter.
 
    Meaning of the parameter is as follows:
@@ -861,7 +861,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 };
 ...
 
-4.7. allow_address(group_id, ip_addr_pvar, port_pvar)
+4.7.  allow_address(group_id, ip_addr_pvar, port_pvar)
 
    Returns true if the address and port given as values of pvar arguments
    belonging to a group given as group_id argument matches an IP subnet or
@@ -871,8 +871,8 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
    with the records from that group that are of type exact IP or subnet.
    If the argument is not an IP it is tried to be matched with the records
    that are DNS domain names. No DNS lookup is performed, only strict
-   matching. Cached address table entry containing port value "0" matches
-   any port. The "group_id" argument can be an integer string or a pseudo
+   matching. Cached address table entry containing port value “0” matches
+   any port. The “group_id” argument can be an integer string or a pseudo
    variable.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -892,9 +892,9 @@ if (!allow_address("2", "$avp(dst_adr)", "$avp(dst_port)") {
 };
 ...
 
-4.8. allow_source_address([group_id])
+4.8.  allow_source_address([group_id])
 
-   Equal to "allow_address(group_id, "$si", "$sp")". If 'group_id' is
+   Equal to “allow_address(group_id, "$si", "$sp")”. If 'group_id' is
    missing, the function is equal to allow_address("1", "$si", "$sp").
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -908,7 +908,7 @@ if (!allow_source_address("1")) {
 };
 ...
 
-4.9. allow_source_address_group()
+4.9.  allow_source_address_group()
 
    Checks if source address/port is found in cached address or subnet
    table in any group. If yes, returns that group. If not returns -1. Port
@@ -925,7 +925,7 @@ if ($var(group) != -1) {
 };
 ...
 
-4.10. allow_address_group(addr, port)
+4.10.  allow_address_group(addr, port)
 
    Checks if address/port is found in cached address or subnet table in
    any group. If yes, returns that group. If not returns -1. Port value 0
@@ -943,13 +943,13 @@ if ($var(group) != -1) {
 };
 ...
 
-4.11. allow_trusted([src_ip_pvar, proto_pvar])
+4.11.  allow_trusted([src_ip_pvar, proto_pvar])
 
    Checks based either on request's source address and transport protocol
    or source address and transport protocol given in pvar arguments, and
    From URI of request if request can be trusted without authentication.
-   Returns "1" if a match is found as described in Section 1.5, "Trusted
-   Requests" and "-1" otherwise. If a match is found and peer_tag_avp has
+   Returns “1” if a match is found as described in Section 1.5, “Trusted
+   Requests” and “-1” otherwise. If a match is found and peer_tag_avp has
    been defined, adds a non-NULL tag column value of the matching peer to
    AVP peer_tag_avp.
 
@@ -979,7 +979,7 @@ if (allow_trusted("$si", "$proto")) {
    5.5. trusted_dump
    5.6. allow_uri
 
-5.1. address_reload
+5.1.  address_reload
 
    Causes the permissions module to re-read the contents of address
    database table into cache memory. The in-cache memory entries are for
@@ -988,35 +988,35 @@ if (allow_trusted("$si", "$proto")) {
 
    Parameters: none
 
-5.2. address_dump
+5.2.  address_dump
 
    Causes permissions module to dump contents of cache memory address
    table.
 
    Parameters: none
 
-5.3. subnet_dump
+5.3.  subnet_dump
 
    Causes permissions module to dump contents of cache memory subnet
    table.
 
    Parameters: none
 
-5.4. trusted_reload
+5.4.  trusted_reload
 
    Causes the permissions module to re-read the contents of trusted table
    into cache memory.
 
    Parameters: none
 
-5.5. trusted_dump
+5.5.  trusted_dump
 
    Causes the permissions module to dump the contents of trusted table
    from cache memory.
 
    Parameters: none
 
-5.6. allow_uri
+5.6.  allow_uri
 
    Tests if (URI, Contact) pair is allowed according to the allow/deny
    files. The files must already have been loaded by Kamailio.
@@ -1037,7 +1037,7 @@ if (allow_trusted("$si", "$proto")) {
    6.5. trustedReload
    6.6. trustedDump
 
-6.1. addressReload
+6.1.  addressReload
 
    Causes the permissions module to re-read the contents of address
    database table into cache memory. In cache memory the entries are for
@@ -1046,21 +1046,21 @@ if (allow_trusted("$si", "$proto")) {
 
    Parameters: none
 
-6.2. addressDump
+6.2.  addressDump
 
    Causes the permissions module to dump the contents of cache memory
    address table. (Not the subnet table).
 
    Parameters: none
 
-6.3. subnetDump
+6.3.  subnetDump
 
    Causes permissions module to dump contents of cache memory subnet
    table.
 
    Parameters: none
 
-6.4. testUri basename uri contact
+6.4.  testUri basename uri contact
 
    Tests if the (URI, Contact) pair is allowed according to allow/deny
    files. The files must already have been loaded by Kamailio.
@@ -1072,14 +1072,14 @@ if (allow_trusted("$si", "$proto")) {
      * URI - URI to be tested
      * Contact - Contact to be tested
 
-6.5. trustedReload
+6.5.  trustedReload
 
    Causes the permissions module to re-read the contents of the trusted
    database table into cache memory.
 
    Parameters: none
 
-6.6. trustedDump
+6.6.  trustedDump
 
    Causes the permissions module to dump contents of the trusted database
    table from cache memory.

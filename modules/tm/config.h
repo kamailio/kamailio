@@ -99,6 +99,9 @@
 #define SUBST_CHAR '!'
 
 struct cfg_group_tm {
+	char	*tm_auto_inv_100_r;
+	char	*default_reason;
+	str	ac_extra_hdrs;
 	int	ruri_matching;
 	int	via1_matching;
 	int	callid_matching;
@@ -113,16 +116,13 @@ struct cfg_group_tm {
 	unsigned int	tm_max_noninv_lifetime;
 	int	noisy_ctimer;
 	int	tm_auto_inv_100;
-	char	*tm_auto_inv_100_r;	
 	int	tm_unix_tx_timeout;
 	int	restart_fr_on_each_reply;
 	int	pass_provisional_replies;
 	int	tm_aggregate_auth;
 	int	unmatched_cancel;
 	int	default_code;
-	char	*default_reason;
 	int	reparse_invite;
-	str	ac_extra_hdrs;
 	int	tm_blst_503;
 	int	tm_blst_503_default;
 	int	tm_blst_503_min;

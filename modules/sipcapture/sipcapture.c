@@ -94,7 +94,7 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 40
+#define NR_KEYS 41
 #define RTCP_NR_KEYS 12
 
 #define MAX_HEADERS 16
@@ -181,7 +181,7 @@ static str callid_aleg_column 	= str_init("callid_aleg");
 static str via_1_column 	= str_init("via_1");
 static str via_1_branch_column 	= str_init("via_1_branch");
 static str cseq_column		= str_init("cseq");
-static str diversion_column 	= str_init("diversion_user");
+static str diversion_column 	= str_init("diversion");
 static str reason_column 	= str_init("reason");
 static str content_type_column 	= str_init("content_type");
 static str authorization_column = str_init("auth");
@@ -626,13 +626,13 @@ void * capture_mode_init(str *name, str * params) {
 	return n;
 
 error:
-	if (n->name.s){
-		pkg_free(n->name.s);
-	}
-	if (n->table_names){
-		pkg_free(n->table_names);
-	}
 	if (n){
+		if (n->name.s){
+			pkg_free(n->name.s);
+		}
+		if (n->table_names){
+			pkg_free(n->table_names);
+		}
 		pkg_free(n);
 	}
 	return 0;
@@ -1451,15 +1451,20 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[38].nul = 0;
 	db_vals[38].val.str_val = sco->ruri_domain;
 
-	db_keys[39] = &msg_column;
-	db_vals[39].type = DB1_BLOB;
+	db_keys[39] = &diversion_column;
+	db_vals[39].type = DB1_STR;
 	db_vals[39].nul = 0;
+	db_vals[39].val.str_val = sco->diversion;
+
+	db_keys[40] = &msg_column;
+	db_vals[40].type = DB1_BLOB;
+	db_vals[40].nul = 0;
 
 	/*we don't have empty spaces now */
 	tmp.s = sco->msg.s;
 	tmp.len = sco->msg.len;
 
-	db_vals[39].val.blob_val = tmp;
+	db_vals[40].val.blob_val = tmp;
 
 	if (dtable){
 		table = dtable;

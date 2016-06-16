@@ -22,9 +22,9 @@ Richard Fuchs
 
    <rfuchs@sipwise.com>
 
-   Copyright � 2012 asipto.com
+   Copyright © 2012 asipto.com
 
-   Copyright � 2012 Sipwise GmbH
+   Copyright © 2012 Sipwise GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -119,7 +119,7 @@ modparam("tmrec", "separator", ";")
    4.2. is_leap_year([year])
    4.3. time_period_match(period [, timestamp])
 
-4.1. tmrec_match(timerec [, timestamp])
+4.1.  tmrec_match(timerec [, timestamp])
 
    Match a time recurrence rule against the timestamp (UNIX epoch format).
    If the timestamp parameter is missing, the current UNIX epoch time is
@@ -142,43 +142,43 @@ modparam("tmrec", "separator", ";")
    Description of time recurrence attributes:
      * startdate - date for the start of the first period.
      * duration - the duration of the time period. For a recurring
-       interval, the "duration" parameter MUST be small enough such that
+       interval, the “duration” parameter MUST be small enough such that
        subsequent intervals do not overlap. For non-recurring intervals,
        durations of any positive length are permitted. Zero-length
-       duration means "forever". Negative-length durations are not
+       duration means “forever”. Negative-length durations are not
        allowed.
        See RFC 2445 for the format of duration. In short for common cases
        when the duration doesn't exeed a data, it must start with PT
        followed by the value for hours, minutes or seconds - e.g., a
        duration of 8 hours must be written as PT8H.
-     * frequency - can be one of the following values: "daily" - specify
-       repeating periods based on an interval of a day or more; "weekly" -
+     * frequency - can be one of the following values: “daily” - specify
+       repeating periods based on an interval of a day or more; “weekly” -
        specify repeating periods based on an interval of a week or more;
-       "monthly" - specify repeating periods based on an interval of a
-       month or more; "yearly" - specify repeating periods based on an
+       “monthly” - specify repeating periods based on an interval of a
+       month or more; “yearly” - specify repeating periods based on an
        interval of a year or more. These values are case-insensitive.
      * until - defines an iCalendar COS DATE or DATE-TIME value which
        bounds the recurrence rule in an inclusive manner. If the value
-       specified by "until" is synchronized with the specified recurrence,
+       specified by “until” is synchronized with the specified recurrence,
        this date or date-time becomes the last instance of the recurrence.
        If it is not present, the recurrence is considered to repeat
        forever.
      * interval - a positive integer representing how often the recurrence
-       rule repeats. The default value is "1", meaning every day for a
-       "daily" rule, every week for a "weekly" rule, every month for a
-       "monthly" rule and every year for a "yearly" rule.
+       rule repeats. The default value is “1”, meaning every day for a
+       “daily” rule, every week for a “weekly” rule, every month for a
+       “monthly” rule and every year for a “yearly” rule.
      * byday - a comma-separated list short codes of days of the week. The
-       days are specified as: "MO" for Monday; "TU" for Tuesday; "WE" for
-       Wednesday; "TH" for Thursday; "FR" for Friday; "SA" for Saturday;
-       "SU" for Sunday. These values are case insensitive.
-       Each "byday" value can also be prefixed by a positive (+n) or
+       days are specified as: “MO” for Monday; “TU” for Tuesday; “WE” for
+       Wednesday; “TH” for Thursday; “FR” for Friday; “SA” for Saturday;
+       “SU” for Sunday. These values are case insensitive.
+       Each “byday” value can also be prefixed by a positive (+n) or
        negative (-n) integer. If present, this indicates the n-th
-       occurrence of the specific day within the "monthly" or "yearly"
-       recurrence. For example, within a "monthly" rule, +1MO (or simply
+       occurrence of the specific day within the “monthly” or “yearly”
+       recurrence. For example, within a “monthly” rule, +1MO (or simply
        1MO) represents the first Monday within the month, whereas -1MO
        represents the last Monday of the month. If an integer modifier is
        not present, it means all days of this type within the specified
-       frequency. For example, within a "monthly" rule, MO represents all
+       frequency. For example, within a “monthly” rule, MO represents all
        Mondays within the month.
      * bymonthday - a comma-separated list of days of the month. Valid
        values are 1 to 31 or -31 to -1. For example, -10 represents the
@@ -192,43 +192,43 @@ modparam("tmrec", "separator", ";")
      * bymonth - parameter specifies a comma-separated list of months of
        the year. Valid values are 1 to 12.
 
-   A recurrence is specified by including the "frequency" parameter, which
+   A recurrence is specified by including the “frequency” parameter, which
    indicates the type of the recurrence rule. Parameters other than
-   "startdate" and "duration" SHOULD NOT be specified unless "frequency"
+   “startdate” and “duration” SHOULD NOT be specified unless “frequency”
    is set.
 
-   If invalid byxxx parameter values are found (ie, bymonthday="30" in
+   If invalid byxxx parameter values are found (ie, bymonthday=“30” in
    February), they are simply ignored.
 
    Byxxx parameters modify the recurrence rule matching. The Byxxx rule,
    as an attribute for a period of time which is greater than or equal to
    the frequency, generally reduces or limits the number of occurrences
-   for the recurrence definition. For example, frequency="daily"
-   bymonth="3" reduces the number of recurrence instances from all days
-   (if the "bymonth" parameter is not present) to all days in March. Byxxx
+   for the recurrence definition. For example, frequency=“daily”
+   bymonth=“3” reduces the number of recurrence instances from all days
+   (if the “bymonth” parameter is not present) to all days in March. Byxxx
    parameters for a period of time less than the frequency generally
    increases or expands the number of occurrences of the recurrence. For
-   example, frequency="yearly" bymonth="8,9" increases the number of days
-   within the yearly recurrence set from 1 (if "bymonth" parameter is not
+   example, frequency=“yearly” bymonth=“8,9” increases the number of days
+   within the yearly recurrence set from 1 (if “bymonth” parameter is not
    present) to 2.
 
    If multiple Byxxx parameters are specified, then after evaluating the
-   specified "frequency" and "interval" parameters, the Byxxx parameters
+   specified “frequency” and “interval” parameters, the Byxxx parameters
    are applied to the current set of evaluated occurrences in the
-   following order: "bymonth", "byweekno", "byyearday", "bymonthday",
-   "byday"; then "until" is evaluated.
+   following order: “bymonth”, “byweekno”, “byyearday”, “bymonthday”,
+   “byday”; then “until” is evaluated.
 
    Next is an example of evaluating multiple Byxxx parameters.
 
-   startdate="20100101T093000" duration="PT10H30M" frequency="yearly"
-   interval="4" bymonth="3" byday="SU"
+   startdate=“20100101T093000” duration=“PT10H30M” frequency=“yearly”
+   interval=“4” bymonth=“3” byday=“SU”
 
-   First, the interval="4" would be applied to frequency="yearly" to match
-   on "every 4th year" . Then, bymonth="1" would be applied to match on
-   "every March, every 4th year". Then, byday="SU" would be applied to
-   match on "every Sunday in March, every 4th year, from 9:30 to 20:00 ".
+   First, the interval=“4” would be applied to frequency=“yearly” to match
+   on “every 4th year” . Then, bymonth=“1” would be applied to match on
+   “every March, every 4th year”. Then, byday=“SU” would be applied to
+   match on “every Sunday in March, every 4th year, from 9:30 to 20:00 ”.
    The start and end hours:minutes have been retrieved from the
-   "startdate" and "duration" parameters.
+   “startdate” and “duration” parameters.
 
    This function can be used in ANY_ROUTE.
 
@@ -240,7 +240,7 @@ modparam("tmrec", "separator", ";")
         xdbg("it is with working hours\n");
 ...
 
-4.2. is_leap_year([year])
+4.2.  is_leap_year([year])
 
    Return true if the value from parameter is a leap year. If the
    parameter is missing, then the year from the current time is taken.
@@ -254,7 +254,7 @@ modparam("tmrec", "separator", ";")
 if(is_leap_year("2010"))
 ...
 
-4.3. time_period_match(period [, timestamp])
+4.3.  time_period_match(period [, timestamp])
 
    Matches the point in time specified by the timestamp parameter, or the
    current time if the parameter is missing, against the given period
@@ -287,26 +287,26 @@ if(is_leap_year("2010"))
        the current century.
      * month or mo - Month of the year, either a number between 1 and 12,
        or at least the first 3 letters of a spelled out month name, e.g.
-       "jan", "janua" or "january" will all work.
+       “jan”, “janua” or “january” will all work.
      * week or wk - Week of the month, a number between 1 and 6. The first
        day of the week is Sunday.
      * yday or yd - Day of the year, a number between 1 and 366.
      * mday or md - Day of the month, a number between 1 and 31.
      * wday or wd - Day of the week, either a number between 1 and 7, or
        at least the first 2 letters of a spelled out weekday name
-       (analogous to the "month" scale). Sunday is the first day of the
+       (analogous to the “month” scale). Sunday is the first day of the
        week.
      * hour or hr - A number between 0 and 23. Unlike the Perl
-       Time::Period module, "am" or "pm" specifications are not supported.
+       Time::Period module, “am” or “pm” specifications are not supported.
      * minute or min - A number between 0 and 59.
      * second or sec - A number between 0 and 60 (to allow for leap
        seconds).
 
    The parameters can include pseudo-variables. Whitespace (more
    precisely, the space character only) can occur anywhere, but is
-   optional. Ranges in all scales (with the exception of the "year" scale)
-   are allowed to wrap-around, e.g. a weekday scale of "{fri-tue}" is
-   equivalent to "{fri-sat,sun-tue}".
+   optional. Ranges in all scales (with the exception of the “year” scale)
+   are allowed to wrap-around, e.g. a weekday scale of “{fri-tue}” is
+   equivalent to “{fri-sat,sun-tue}”.
 
    Example 1.4. time_period_match usage
 ...

@@ -10,7 +10,7 @@ Luis Martin Gil
 
    <martingil.luis@gmail.com>
 
-   Copyright © 2013 www.indigital.net
+   Copyright Â© 2013 www.indigital.net
      __________________________________________________________________
 
    Table of Contents
@@ -108,7 +108,7 @@ modparam("ndb_cassandra", "port", 9160)
    4.1. cass_insert(keyspace, column_family, key, column, value)
    4.2. cass_retrieve(keyspace, column_family, key, column, value)
 
-4.1. cass_insert(keyspace, column_family, key, column, value)
+4.1.  cass_insert(keyspace, column_family, key, column, value)
 
    Inserts the value for the given key, column, column_family and
    keyspace. There must be an existing keyspace called 'keyspace' with a
@@ -118,7 +118,7 @@ modparam("ndb_cassandra", "port", 9160)
      * ret < 0, error
      * ret > 0, success
 
-4.2. cass_retrieve(keyspace, column_family, key, column, value)
+4.2.  cass_retrieve(keyspace, column_family, key, column, value)
 
    Retrieves the value for the given key, column, column_family and
    keyspace. There must be an existing keyspace called 'keyspace' with a

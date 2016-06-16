@@ -1520,9 +1520,9 @@ assign_stm:
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
     | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | MAX_BRANCHES_PARAM EQUAL NUMBER { sr_dst_max_branches = $3; }
-    | LATENCY_LOG EQUAL NUMBER { default_core_cfg.latency_log=$3; }
+    | LATENCY_LOG EQUAL intno { default_core_cfg.latency_log=$3; }
 	| LATENCY_LOG EQUAL error  { yyerror("number  expected"); }
-    | LATENCY_CFG_LOG EQUAL NUMBER { default_core_cfg.latency_cfg_log=$3; }
+    | LATENCY_CFG_LOG EQUAL intno { default_core_cfg.latency_cfg_log=$3; }
 	| LATENCY_CFG_LOG EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_DB EQUAL NUMBER { default_core_cfg.latency_limit_db=$3; }
 	| LATENCY_LIMIT_DB EQUAL error  { yyerror("number  expected"); }

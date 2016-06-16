@@ -369,7 +369,7 @@ int build_publish(xmlNodePtr pres_node, int expires)
 			return -1;
 		}
 		strcpy(resource, slash+1);
-		slash= '\0';
+		slash= NULL;
 	}	
 	pres_uri= euri_xmpp_sip(uri);
 	xmlFree(uri);

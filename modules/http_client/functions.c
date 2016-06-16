@@ -593,3 +593,30 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 
 	return res;
 }
+
+
+char *http_get_content_type(const str *connection)
+{
+	curl_con_t *conn = NULL;
+	curl_con_pkg_t *pconn = NULL;
+	str rval;
+
+	/* Find connection if it exists */
+	if (!connection) {
+		LM_ERR("No cURL connection specified\n");
+		return NULL;
+	}
+	LM_DBG("******** CURL Connection %.*s\n", connection->len, connection->s);
+	conn = curl_get_connection((str*)connection);
+	if (conn == NULL) {
+		LM_ERR("No cURL connection found: %.*s\n", connection->len, connection->s);
+		return NULL;
+	}
+	pconn = curl_get_pkg_connection(conn);
+	if (pconn == NULL) {
+		LM_ERR("No cURL connection data found: %.*s\n", connection->len, connection->s);
+		return NULL;
+	}
+
+	return pconn->result_content_type;
+}

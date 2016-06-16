@@ -98,7 +98,9 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
     struct cell *t = 0;
     unsigned int cdp_result;
     int result = CSCF_RETURN_ERROR;
-    
+    rx_authsessiondata_t* p_session_data = 0;
+    AAASession *auth = 0;
+
     LM_DBG("Received AAR callback\n");
     saved_transaction_t* data = (saved_transaction_t*) param;
 
@@ -140,26 +142,44 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
 
     if (cdp_result >= 2000 && cdp_result < 3000) {
         LM_DBG("Success, received code: [%i] from PCRF for AAR request\n", cdp_result);
-	counter_inc(ims_qos_cnts_h.successful_media_aars);
-	
-	LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len, aaa->sessionId->data.s);
+        counter_inc(ims_qos_cnts_h.successful_media_aars);
+
+        LM_DBG("Auth session ID [%.*s]", aaa->sessionId->data.len, aaa->sessionId->data.s);
 
 	if(!data->aar_update) {
-	    LM_DBG("This is an AAA response to an initial AAR");
-	    counter_inc(ims_qos_cnts_h.active_media_rx_sessions);
-	    
-	    str * passed_rx_session_id = shm_malloc(sizeof (struct _str));
-	    passed_rx_session_id->s = 0;
-	    passed_rx_session_id->len = 0;
-	    STR_SHM_DUP(*passed_rx_session_id, aaa->sessionId->data, "cb_passed_rx_session_id");
-	    LM_DBG("passed rx session id [%.*s]", passed_rx_session_id->len, passed_rx_session_id->s);
+            LM_DBG("This is an AAA response to an initial AAR");
+            //need to set Rx auth data to say this session has been successfully opened
+            //This is used elsewhere to prevent acting on termination events when the session has not been opened
+            //getting auth session
+            auth = cdpb.AAAGetAuthSession(aaa->sessionId->data);
+            if (!auth) {
+                LM_DBG("Could not get Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
+                goto error;
+            }
+            //getting session data
+            p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
+            if (!p_session_data) {
+                LM_DBG("Could not get session data on Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
+                if (auth) cdpb.AAASessionsUnlock(auth->hash);
+                goto error;
+            }
+            p_session_data->session_has_been_opened = 1;
+            counter_inc(ims_qos_cnts_h.active_media_rx_sessions);
 
-	    dlgb.register_dlgcb_nodlg(&data->callid, &data->ftag, &data->ttag, DLGCB_TERMINATED | DLGCB_DESTROY | DLGCB_EXPIRED | DLGCB_RESPONSE_WITHIN | DLGCB_CONFIRMED | DLGCB_FAILED, callback_dialog, (void*) (passed_rx_session_id), free_dialog_data);
-	} 
+            if (auth) cdpb.AAASessionsUnlock(auth->hash);
+
+            str * passed_rx_session_id = shm_malloc(sizeof (struct _str));
+            passed_rx_session_id->s = 0;
+            passed_rx_session_id->len = 0;
+            STR_SHM_DUP(*passed_rx_session_id, aaa->sessionId->data, "cb_passed_rx_session_id");
+            LM_DBG("passed rx session id [%.*s]", passed_rx_session_id->len, passed_rx_session_id->s);
+
+            dlgb.register_dlgcb_nodlg(&data->callid, &data->ftag, &data->ttag, DLGCB_TERMINATED | DLGCB_DESTROY | DLGCB_EXPIRED | DLGCB_RESPONSE_WITHIN | DLGCB_CONFIRMED | DLGCB_FAILED, callback_dialog, (void*) (passed_rx_session_id), free_dialog_data);
+        }
         result = CSCF_RETURN_TRUE;
     } else {
         LM_DBG("Received negative reply from PCRF for AAR Request\n");
-	counter_inc(ims_qos_cnts_h.failed_media_aars);
+        counter_inc(ims_qos_cnts_h.failed_media_aars);
         //we don't free rx_authdata_p here - it is free-ed when the CDP session expires
         goto error; // if its not a success then that means i want to reject this call!
     }
@@ -253,52 +273,52 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 
     if (cdp_result >= 2000 && cdp_result < 3000) {
         counter_inc(ims_qos_cnts_h.successful_registration_aars);
-	if (is_rereg) {
+        if (is_rereg) {
             LM_DBG("this is a re-registration, therefore we don't need to do anything except know that the the subscription was successful\n");
             result = CSCF_RETURN_TRUE;
             create_return_code(result);
             goto done;
         }
-	//need to set Rx auth data to say this session has been successfully opened
-	//This is used elsewhere to prevent acting on termination events when the session has not been opened
-	//getting auth session
-	auth = cdpb.AAAGetAuthSession(aaa->sessionId->data);
-	if (!auth) {
-	    LM_DBG("Could not get Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
-	    goto error;
-	}
-	//getting session data
-	p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
-	if (!p_session_data) {
-	    LM_DBG("Could not get session data on Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
-	    if (auth) cdpb.AAASessionsUnlock(auth->hash);
-	    goto error;
-	}
-	p_session_data->session_has_been_opened = 1;
-	counter_inc(ims_qos_cnts_h.active_registration_rx_sessions);
-	
-	if (auth) cdpb.AAASessionsUnlock(auth->hash);
-	
-	
+        //need to set Rx auth data to say this session has been successfully opened
+        //This is used elsewhere to prevent acting on termination events when the session has not been opened
+        //getting auth session
+        auth = cdpb.AAAGetAuthSession(aaa->sessionId->data);
+        if (!auth) {
+            LM_DBG("Could not get Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
+            goto error;
+        }
+        //getting session data
+        p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
+        if (!p_session_data) {
+            LM_DBG("Could not get session data on Auth Session for session id: [%.*s]\n", aaa->sessionId->data.len, aaa->sessionId->data.s);
+            if (auth) cdpb.AAASessionsUnlock(auth->hash);
+            goto error;
+        }
+        p_session_data->session_has_been_opened = 1;
+        counter_inc(ims_qos_cnts_h.active_registration_rx_sessions);
+
+        if (auth) cdpb.AAASessionsUnlock(auth->hash);
+
+
         LM_DBG("Success, received code: [%i] from PCRF for AAR request (contact: [%.*s]), (auth session id: %.*s)\n",
                 cdp_result, local_data->contact.len, local_data->contact.s,
                 local_data->auth_session_id.len, local_data->auth_session_id.s);
         LM_DBG("Registering for Usrloc callbacks on DELETE\n");
 
         ul.lock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
-        
+
         contact_info.received_host = local_data->recv_host;
         contact_info.received_port = local_data->recv_port;
         contact_info.received_proto = local_data->recv_proto;
         contact_info.searchflag = (1 << SEARCH_RECEIVED);
-        
-        
+
+
         contact_info.aor = local_data->contact;
         contact_info.via_host = local_data->via_host;
         contact_info.via_port = local_data->via_port;
         contact_info.via_prot = local_data->via_proto;
-		contact_info.reg_state = PCONTACT_ANY;
-        
+        contact_info.reg_state = PCONTACT_ANY;
+
         if (ul.get_pcontact(domain_t, &contact_info, &pcontact) != 0) {
             LM_ERR("Shouldn't get here, can't find contact....\n");
             ul.unlock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
@@ -327,7 +347,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         result = CSCF_RETURN_TRUE;
     } else {
         LM_DBG("Received negative reply from PCRF for AAR Request\n");
-	counter_inc(ims_qos_cnts_h.failed_registration_aars);
+        counter_inc(ims_qos_cnts_h.failed_registration_aars);
         result = CSCF_RETURN_FALSE;
         goto error;
     }
@@ -372,33 +392,33 @@ int rx_process_aaa(AAAMessage *aaa, unsigned int * rc) {
 
 /** Helper function for adding media component AVPs - uses previously stored flow descriptions not SDP from messages*/
 int add_media_components_using_current_flow_description(AAAMessage* aar, rx_authsessiondata_t *p_session_data) {
-    
+
     flow_description_t *flow_description;
     int add_flow = 1;
-    
+
     flow_description = p_session_data->first_current_flow_description;
     if(!flow_description) {
-	return -1;
+        return -1;
     }
     while (flow_description) {
-	
+
 	if(!authorize_video_flow) {
-	    if (strncmp(flow_description->media.s, "video", 5) == 0) {
-		add_flow = 0;
-	    }
-	}
-	
+            if (strncmp(flow_description->media.s, "video", 5) == 0) {
+                add_flow = 0;
+            }
+        }
+
 	if(add_flow) {
-	    rx_add_media_component_description_avp(aar, flow_description->stream_num,
-		&flow_description->media, &flow_description->req_sdp_ip_addr,
-		&flow_description->req_sdp_port, &flow_description->rpl_sdp_ip_addr,
-		&flow_description->rpl_sdp_port, &flow_description->rpl_sdp_transport,
-		&flow_description->req_sdp_raw_stream,
-		&flow_description->rpl_sdp_raw_stream, flow_description->direction);
-	}
-	
-	flow_description = flow_description->next;
-	add_flow = 1;
+            rx_add_media_component_description_avp(aar, flow_description->stream_num,
+                    &flow_description->media, &flow_description->req_sdp_ip_addr,
+                    &flow_description->req_sdp_port, &flow_description->rpl_sdp_ip_addr,
+                    &flow_description->rpl_sdp_port, &flow_description->rpl_sdp_transport,
+                    &flow_description->req_sdp_raw_stream,
+                    &flow_description->rpl_sdp_raw_stream, flow_description->direction);
+        }
+
+        flow_description = flow_description->next;
+        add_flow = 1;
     }
     return 0;
 }
@@ -461,34 +481,34 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
             //is this a stream to add to AAR.
             if (req_sdp_stream->is_rtp) {
 
-		//check if the src or dst port is 0 and if so then don't add to rx
-		int intportA = atoi(req_sdp_stream->port.s);
-		int intportB = atoi(rpl_sdp_stream->port.s);
+                //check if the src or dst port is 0 and if so then don't add to rx
+                int intportA = atoi(req_sdp_stream->port.s);
+                int intportB = atoi(rpl_sdp_stream->port.s);
 		if(intportA != 0 && intportB != 0){
 			if(!authorize_video_flow) {
-			    if (strncmp(req_sdp_stream->media.s, "video", 5) == 0) {
-				add_flow = 0;
-			    }
-			}
-		    
-			if(add_flow) {
-			//add this to auth session data
-			    add_flow_description((rx_authsessiondata_t*) auth->u.auth.generic_data, sdp_stream_num + 1,
-				    &req_sdp_stream->media, &req_sdp_session->ip_addr,
-				    &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
-				    &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
-				    &req_sdp_stream->raw_stream,
-				    &rpl_sdp_stream->raw_stream, direction, 0 /*This is a new mcd, we are not setting it as active*/);
+                        if (strncmp(req_sdp_stream->media.s, "video", 5) == 0) {
+                            add_flow = 0;
+                        }
+                    }
 
-			    rx_add_media_component_description_avp(aar, sdp_stream_num + 1,
-				    &req_sdp_stream->media, &req_sdp_session->ip_addr,
-				    &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
-				    &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
-				    &req_sdp_stream->raw_stream,
-				    &rpl_sdp_stream->raw_stream, direction);	
-			}
-			add_flow = 1;
-		}
+			if(add_flow) {
+                        //add this to auth session data
+                        add_flow_description((rx_authsessiondata_t*) auth->u.auth.generic_data, sdp_stream_num + 1,
+                                &req_sdp_stream->media, &req_sdp_session->ip_addr,
+                                &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
+                                &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
+                                &req_sdp_stream->raw_stream,
+                                &rpl_sdp_stream->raw_stream, direction, 0 /*This is a new mcd, we are not setting it as active*/);
+
+                        rx_add_media_component_description_avp(aar, sdp_stream_num + 1,
+                                &req_sdp_stream->media, &req_sdp_session->ip_addr,
+                                &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
+                                &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
+                                &req_sdp_stream->raw_stream,
+                                &rpl_sdp_stream->raw_stream, direction);
+                    }
+                    add_flow = 1;
+                }
             }
             sdp_stream_num++;
         }
@@ -508,7 +528,7 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 int rx_send_aar_update_no_video(AAASession* auth) {
 
     AAAMessage* aar = 0;
-    
+
     str identifier;
     int identifier_type;
 
@@ -527,7 +547,7 @@ int rx_send_aar_update_no_video(AAASession* auth) {
     identifier_type = p_session_data->identifier_type;
     recv_ip = p_session_data->ip;
     ip_version = p_session_data->ip_version;
-    
+
     aar = cdpb.AAACreateRequest(IMS_Rx, IMS_AAR, Flag_Proxyable, auth);
 
     LM_DBG("Sending AAR update to remove a video bearer\n");
@@ -568,13 +588,13 @@ int rx_send_aar_update_no_video(AAASession* auth) {
     LM_DBG("Adding service info status...\n");
     /* Add Service-Info-Status AVP, if prelimiary
      * by default(when absent): final status is considered*/
-    
+
     set_4bytes(x,
-	    AVP_EPC_Service_Info_Status_Preliminary_Service_Information);
+            AVP_EPC_Service_Info_Status_Preliminary_Service_Information);
     if (!rx_add_avp(aar, x, 4, AVP_IMS_Service_Info_Status,
-	    AAA_AVP_FLAG_MANDATORY, IMS_vendor_id_3GPP, AVP_DUPLICATE_DATA,
-	    __FUNCTION__))
-	goto error;
+            AAA_AVP_FLAG_MANDATORY, IMS_vendor_id_3GPP, AVP_DUPLICATE_DATA,
+            __FUNCTION__))
+        goto error;
 
     /* Add Auth lifetime AVP */LM_DBG("auth_lifetime %u\n", rx_auth_expiry); //TODO check why this is 0 all the time
     if (rx_auth_expiry) {
@@ -669,7 +689,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
         AAASession* auth, char* direction, saved_transaction_t* saved_t_data) {
 
     AAAMessage* aar = 0;
-    
+
     str identifier;
     int identifier_type;
 
@@ -688,7 +708,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
     identifier_type = p_session_data->identifier_type;
     ip = p_session_data->ip;
     ip_version = p_session_data->ip_version;
-    
+
     /* find direction for AAR (orig/term) */
     //need this to add the media component details
     enum dialog_direction dlg_direction = get_dialog_direction(direction);
@@ -796,7 +816,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
         LM_ERR("Unable to add framed IP AVP\n");
         goto error;
     }
-    
+
     /* Add specific action AVP's */
     rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE
     rx_add_specific_action_avp(aar, 2); // INDICATION_OF_LOSS_OF_BEARER
@@ -807,7 +827,7 @@ int rx_send_aar(struct sip_msg *req, struct sip_msg *res,
     rx_add_specific_action_avp(aar, 12); // ACCESS_NETWORK_INFO_REPORT
 
     show_callsessiondata(p_session_data);
-    
+
     LM_DBG("Unlocking AAA session...\n");
 
     if (auth)
@@ -850,7 +870,7 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     AAA_AVP* avp = 0;
     char x[4];
     str identifier;
-    
+
     str ip;
     uint16_t ip_version;
 
@@ -887,9 +907,9 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     }
 
     /* Add Subscription ID AVP*/
-    
+
     identifier = cscf_get_public_identity(msg);
-    
+
     int identifier_type = AVP_Subscription_Id_Type_SIP_URI; //we only do IMPU now
     rx_add_subscription_id_avp(aar, identifier, identifier_type);
 

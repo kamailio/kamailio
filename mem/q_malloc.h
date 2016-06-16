@@ -128,10 +128,10 @@ struct qm_block{
 struct qm_block* qm_malloc_init(char* address, unsigned long size, int type);
 
 #ifdef DBG_QM_MALLOC
-void* qm_malloc(void*, unsigned long size, const char* file,
+void* qm_malloc(void*, size_t size, const char* file,
 					const char* func, unsigned int line, const char* mname);
 #else
-void* qm_malloc(void*, unsigned long size);
+void* qm_malloc(void*, size_t size);
 #endif
 
 #ifdef DBG_QM_MALLOC
@@ -141,10 +141,10 @@ void  qm_free(void*, void* p, const char* file, const char* func,
 void  qm_free(void*, void* p);
 #endif
 #ifdef DBG_QM_MALLOC
-void* qm_realloc(void*, void* p, unsigned long size,
+void* qm_realloc(void*, void* p, size_t size,
 					const char* file, const char* func, unsigned int line, const char *mname);
 #else
-void* qm_realloc(void*, void* p, unsigned long size);
+void* qm_realloc(void*, void* p, size_t size);
 #endif
 
 void  qm_check(struct qm_block*);

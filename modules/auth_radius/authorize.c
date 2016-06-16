@@ -74,7 +74,7 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
 			    pv_spec_t * _uri_user, hdr_types_t _hftype)
 {
     int res;
-    auth_result_t ret;
+    auth_cfg_result_t ret;
     struct hdr_field* h;
     auth_body_t* cred;
     str *uri_user;
@@ -172,7 +172,7 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
     }
 
     if (res == 1) {
-	switch(auth_api.post_auth(_msg, h)) {
+	switch(auth_api.post_auth(_msg, h, NULL)) {
 	default:
 	    BUG("unexpected reply '%d'.\n",
 		auth_api.pre_auth(_msg, &domain, _hftype, &h, NULL));

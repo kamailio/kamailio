@@ -60,6 +60,7 @@
 #include "authims_mod.h"
 #include "cxdx_mar.h"
 #include "../../lib/ims/useful_defs.h"
+#include "pvt_message.h"
 
 MODULE_VERSION
 
@@ -97,6 +98,8 @@ unsigned char registration_default_algorithm_type = 1; /**< fixed default algori
 
 str cxdx_dest_realm = str_init("ims.smilecoms.com");
 str cxdx_dest_host = str_init("");
+
+struct _pv_req_data _pv_treq;
 
 //Only used if we want to force the Rx peer
 //Usually this is configured at a stack level and the first request uses realm routing
@@ -186,6 +189,7 @@ static int mod_init(void) {
 	}
 #endif
 
+    pv_tmx_data_init();
     /* check the max_nonce_reuse param */
     if (auth_used_vector_timeout < 0) {
         LM_WARN("bad value for auth_used_vector_timeout parameter (=%d), must be positive. Fixed to 3600\n", auth_used_vector_timeout);

@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2016 FhG FOKUS
+   Copyright © 2016 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -103,7 +103,7 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.1. Set db_url parameter
 ...

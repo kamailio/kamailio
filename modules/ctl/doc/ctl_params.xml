@@ -116,7 +116,9 @@ modparam("ctl", "mode", 0600) # permissions
 	<example>
 		<title>Set <varname>user</varname> parameter</title>
 		<programlisting>
+...
 modparam("ctl", "user", "andrei")
+...
 		</programlisting>
 	</example>
 	</section>
@@ -132,7 +134,9 @@ modparam("ctl", "user", "andrei")
 	<example>
 		<title>Set <varname>group</varname> parameter</title>
 		<programlisting>
+...
 modparam("ctl", "group", 100)
+...
 		</programlisting>
 	</example>
 	</section>
@@ -158,11 +162,13 @@ modparam("ctl", "group", 100)
 	<example>
 		<title>Set <varname>fifo</varname> parameter</title>
 		<programlisting>
+...
 # old fifo support
 modparam("ctl", "fifo", "fifo:/tmp/ser_fifo")      # clasic fifo
 modparam("ctl", "fifo", "/tmp/ser_fifo2")       
 modparam("ctl", "fifo", "udp:*:2050")              # fifo protocol over udp
 modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
+...
 		</programlisting>
 	</example>
 	</section>
@@ -188,7 +194,9 @@ modparam("ctl", "fifo", "tcp:*:2050")              # fifo over tcp
 		<title>Set the <varname>autoconversion</varname> parameter
 		</title>
 		<programlisting>
+...
 modparam("ctl", "autoconversion", 1)
+...
 		</programlisting>
 	</example>
 	</section>
@@ -206,7 +214,9 @@ modparam("ctl", "autoconversion", 1)
 		<title>Set the <varname>binrpc_max_body_size</varname> parameter
 		</title>
 		<programlisting>
+...
 modparam("ctl", "binrpc_max_body_size", 16)
+...
 		</programlisting>
 	</example>
 	</section>
@@ -224,7 +234,9 @@ modparam("ctl", "binrpc_max_body_size", 16)
 		<title>Set the <varname>binrpc_struct_max_body_size</varname> parameter
 		</title>
 		<programlisting>
+...
 modparam("ctl", "binrpc_struct_max_body_size", 4)
+...
 		</programlisting>
 	</example>
 	</section>
