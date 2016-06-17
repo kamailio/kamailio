@@ -176,6 +176,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	int reply_status;
 	int do_put_on_wait;
 	struct hdr_field *hdr, *prev = 0, *tmp = 0;
+	int route_type_bk;
 
 	if (t_lookup_ident(&t, hash_index, label) < 0) {
 		LM_ERR("transaction not found\n");
@@ -224,9 +225,10 @@ int t_continue(unsigned int hash_index, unsigned int label,
 			break;
 	}
 
-	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
-		branch = t->async_backup.blind_uac;	/* get the branch of the blind UAC setup
-			* during suspend */
+	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE) {
+		/* resume processing of a sip request */
+		/* get the branch of the blind UAC setup during suspend */
+		branch = t->async_backup.blind_uac;
 		if (branch >= 0) {
 			stop_rb_timers(&t->uac[branch].request);
 
@@ -269,12 +271,15 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		}
 		faked_env( t, &faked_req, 1);
 
+		route_type_bk = get_route_type();
+		set_route_type(FAILURE_ROUTE);
 		/* execute the pre/post -script callbacks based on original route block */
 		if (exec_pre_script_cb(&faked_req, cb_type)>0) {
 			if (run_top_route(route, &faked_req, 0)<0)
 				LM_ERR("failure inside run_top_route\n");
 			exec_post_script_cb(&faked_req, cb_type);
 		}
+		set_route_type(route_type_bk);
 
 		/* TODO: save_msg_lumps should clone the lumps to shm mem */
 
@@ -306,6 +311,7 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		}
 
 	} else {
+		/* resume processing of a sip response */
 		branch = t->async_backup.backup_branch;
 
 		init_cancel_info(&cancel_data);
