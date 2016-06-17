@@ -123,7 +123,12 @@ Chapter 1. Admin Guide
    no longer valid for config processing, like it happens when a broken
    message is received from network).
 
-   This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
+   This function can be used from REQUEST_ROUTE or core REPLY_ROUTE.
+
+   Note: It must be used before the transaction is created in
+   request_route and not inside the onreply_route[name] executed by tm
+   module. Also, do not used after resuming a suspended request or reply,
+   at that moment the transaction is already created.
 
    Example 1.1. msg_apply_changes() usage
 ...
