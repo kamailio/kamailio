@@ -127,7 +127,9 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 	}
 
 	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s->s, _s->len);
-	if (!SQL_SUCCEEDED(ret))
+
+        /* Handle SQL_NO_DATA as a valid return code. DELETE and UPDATE statements may return this return code if nothing was deleted/updated. */
+        if (!SQL_SUCCEEDED(ret) && (ret != SQL_NO_DATA))
 	{
 		SQLCHAR sqlstate[7];
 		LM_ERR("rv=%d. Query= %.*s\n", ret, _s->len, _s->s);
