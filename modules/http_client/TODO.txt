@@ -89,6 +89,8 @@ Development API
   https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html
   This can be set in the httpconf object
 
+- Document that some options like useragent doesn't work in the
+  old http_query function
 
 
 Issues in the bug tracker
