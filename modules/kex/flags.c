@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -28,6 +28,9 @@
 #include "../../mod_fix.h"
 #include "flags.h"
 
+/**
+ *
+ */
 int w_issflagset(struct sip_msg *msg, char *flag, str *s2)
 {
 	int fval=0;
@@ -41,6 +44,9 @@ int w_issflagset(struct sip_msg *msg, char *flag, str *s2)
 	return issflagset((flag_t)fval);
 }
 
+/**
+ *
+ */
 int w_resetsflag(struct sip_msg *msg, char *flag, str *s2)
 {
 	int fval=0;
@@ -54,6 +60,9 @@ int w_resetsflag(struct sip_msg *msg, char *flag, str *s2)
 	return resetsflag((flag_t)fval);
 }
 
+/**
+ *
+ */
 int w_setsflag(struct sip_msg *msg, char *flag, char *s2)
 {
 	int fval=0;
@@ -67,6 +76,9 @@ int w_setsflag(struct sip_msg *msg, char *flag, char *s2)
 	return setsflag((flag_t)fval);
 }
 
+/**
+ *
+ */
 int w_isbflagset(struct sip_msg *msg, char *flag, str *idx)
 {
 	int fval=0;
@@ -91,6 +103,9 @@ int w_isbflagset(struct sip_msg *msg, char *flag, str *idx)
 	return isbflagset(ival, (flag_t)fval);
 }
 
+/**
+ *
+ */
 int w_resetbflag(struct sip_msg *msg, char *flag, str *idx)
 {
 		int fval=0;
@@ -116,6 +131,9 @@ int w_resetbflag(struct sip_msg *msg, char *flag, str *idx)
 
 }
 
+/**
+ *
+ */
 int w_setbflag(struct sip_msg *msg, char *flag, char *idx)
 {
 	int fval=0;
@@ -139,4 +157,3 @@ int w_setbflag(struct sip_msg *msg, char *flag, char *idx)
 	}
 	return setbflag(ival, (flag_t)fval);
 }
-

@@ -159,7 +159,7 @@ static int rpc_mod_print_one(rpc_t *rpc, void *ctx, const char *mname,
 
 /* print memory info for all modules */
 static int rpc_mod_print_all(rpc_t *rpc, void *ctx,
-	mem_counter *pkg_stats, mem_counter *shm_stats, int flag)
+		mem_counter *pkg_stats, mem_counter *shm_stats, int flag)
 {
 	mem_counter *pkg_iter = pkg_stats;
 	mem_counter *shm_iter = shm_stats;
@@ -167,7 +167,7 @@ static int rpc_mod_print_all(rpc_t *rpc, void *ctx,
 	/* print unique module info found in pkg_stats */
 	while (pkg_iter) {
 		if (!rpc_mod_is_printed_one(pkg_stats, pkg_iter)) {
-		   rpc_mod_print_one(rpc, ctx,
+			rpc_mod_print_one(rpc, ctx,
 				pkg_iter->mname, pkg_stats, shm_stats, flag);
 		}
 		pkg_iter = pkg_iter->next;
@@ -175,9 +175,9 @@ static int rpc_mod_print_all(rpc_t *rpc, void *ctx,
 
 	/* print unique module info found in shm_stats and not found in pkg_stats */
 	while (shm_iter) {
-		if (!rpc_mod_is_printed_one(shm_stats, shm_iter) &&
-			!rpc_mod_is_printed_one(pkg_stats, shm_iter)) {
-		   rpc_mod_print_one(rpc, ctx,
+		if (!rpc_mod_is_printed_one(shm_stats, shm_iter)
+				&& !rpc_mod_is_printed_one(pkg_stats, shm_iter)) {
+			rpc_mod_print_one(rpc, ctx,
 				shm_iter->mname, pkg_stats, shm_stats, flag);
 		}
 		shm_iter = shm_iter->next;

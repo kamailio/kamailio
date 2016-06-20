@@ -96,7 +96,7 @@ extern stat_var* unsupported_methods;
 
 /*! \brief Set in get_hdr_field(). */
 extern stat_var* bad_msg_hdr;
- 
+
 int register_mi_stats(void);
 int register_core_stats(void);
 

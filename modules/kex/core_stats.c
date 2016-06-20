@@ -54,7 +54,7 @@ stat_var* err_rpls;				/*!< error replies            */
 stat_var* bad_URIs;				/*!< number of bad URIs       */
 stat_var* unsupported_methods;			/*!< unsupported methods      */
 stat_var* bad_msg_hdr;				/*!< messages with bad header */
- /*! received requests by method  */
+/*! received requests by method  */
 stat_var* rcv_reqs_invite;
 stat_var* rcv_reqs_cancel;
 stat_var* rcv_reqs_ack;
@@ -652,7 +652,7 @@ inline static int mi_add_stat(struct mi_node *rpl, stat_var *stat)
 static void mi_add_grp_vars_cbk(void* r, str* g, str* n, counter_handle_t h)
 {
 	struct mi_node *rpl;
-	
+
 	rpl = r;
 	addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
 							g->len, g->s, n->len, n->s, counter_get_val(h));
