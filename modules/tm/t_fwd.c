@@ -697,6 +697,8 @@ int add_blind_uac( /*struct cell *t*/ )
 	t->flags |= T_NOISY_CTIMER_FLAG;
 	membar_write(); /* to allow lockless prepare_to_cancel() we want to be sure
 					   all the writes finished before updating branch number*/
+
+	t->uac[branch].flags |= TM_UAC_FLAG_BLIND;
 	t->nr_of_outgoings=(branch+1);
 	t->async_backup.blind_uac = branch; /* whenever we create a blind UAC, lets save the current branch
 					 * this is used in async tm processing specifically to be able to route replies
@@ -1266,9 +1268,19 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
 		return;
 	}
-	
+
 	/* determine which branches to cancel ... */
 	prepare_to_cancel(t_invite, &cancel_bm, 0);
+
+	/* no branches to cancel (e.g., a suspended transaction with blind uac) */
+	if (cancel_bm==0){
+		/* no outgoing branches yet => force a reply to the invite */
+		t_reply( t_invite, t_invite->uas.request, 487, CANCELED );
+		DBG("DEBUG: e2e_cancel: e2e cancel -- no active branches\n");
+		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
+		return;
+	}
+
 #ifdef E2E_CANCEL_HOP_BY_HOP
 	/* we don't need to set t_cancel label to be the same as t_invite if
 	 * we do hop by hop cancel. The cancel transaction will have a different 
@@ -1297,7 +1309,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		}
 	}
 #endif /* CANCEL_REASON_SUPPORT */
-	for (i=0; i<t_invite->nr_of_outgoings; i++)
+	for (i=0; i<t_invite->nr_of_outgoings; i++) {
 		if (cancel_bm & (1<<i)) {
 			/* it's safe to get the reply lock since e2e_cancel is
 			 * called with the cancel as the "current" transaction so
@@ -1316,6 +1328,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			if (ret<0) cancel_bm &= ~(1<<i);
 			if (ret<lowest_error) lowest_error=ret;
 		}
+	}
 #ifdef CANCEL_REASON_SUPPORT
 	if (unlikely(free_reason)) {
 		/* reason was not set as the global reason => free it */
