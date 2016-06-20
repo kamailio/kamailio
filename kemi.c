@@ -301,6 +301,52 @@ static int sr_kemi_core_isbflagset(sip_msg_t *msg, int flag)
 /**
  *
  */
+static int sr_kemi_core_setsflag(sip_msg_t *msg, int flag)
+{
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	setsflag(flag);
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_resetsflag(sip_msg_t *msg, int flag)
+{
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	resetsflag(flag);
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_issflagset(sip_msg_t *msg, int flag)
+{
+	int ret;
+
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	ret = issflagset(flag);
+	if(ret>0)
+		return SR_KEMI_TRUE;
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_seturi(sip_msg_t *msg, str *uri)
 {
 	if(uri==NULL || uri->s==NULL) {
@@ -523,6 +569,21 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("isbiflagset"),
 		SR_KEMIP_BOOL, sr_kemi_core_isbiflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("setsflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_setsflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("resetsflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_resetsflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("issflagset"),
+		SR_KEMIP_BOOL, sr_kemi_core_issflagset,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
