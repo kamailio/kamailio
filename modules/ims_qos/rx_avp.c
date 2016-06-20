@@ -63,6 +63,8 @@
 extern struct cdp_binds cdpb;
 extern cdp_avp_bind_t *cdp_avp;
 
+static const int prefix_length_ipv6 = 128;
+
 /**
  * Create and add an AVP to a Diameter message.
  * @param m - Diameter message to add to 
@@ -202,6 +204,7 @@ int rx_add_framed_ip_avp(AAA_AVP_LIST * list, str ip, uint16_t version) {
     } else {
 
         if (inet_pton(AF_INET6, ip_buf, &(ip_adr.addr.ip.v6.s6_addr)) != 1) goto error;
+		ip_adr.prefix = prefix_length_ipv6;
         ret = cdp_avp->nasapp.add_Framed_IPv6_Prefix(list, ip_adr);
     }
 

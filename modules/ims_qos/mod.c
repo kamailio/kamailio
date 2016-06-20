@@ -1190,7 +1190,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 	ip_version = check_ip_version(recv_ip);
 	if (!ip_version)
 	{
-		LM_ERR("check_ip_version returned 0 \n);
+		LM_ERR("check_ip_version returned 0 \n");
 		goto error;
 	}
     recv_port = msg->rcv.src_port;
