@@ -32,6 +32,7 @@
 #include "../../timer_proc.h"
 #include "../../route_struct.h"
 #include "../../async_task.h"
+#include "../../kemi.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_sleep.h"
@@ -44,11 +45,11 @@ static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
 
-static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2);
+static int w_async_sleep(sip_msg_t* msg, char* sec, char* str2);
 static int fixup_async_sleep(void** param, int param_no);
-static int w_async_route(struct sip_msg* msg, char* rt, char* sec);
+static int w_async_route(sip_msg_t* msg, char* rt, char* sec);
 static int fixup_async_route(void** param, int param_no);
-static int w_async_task_route(struct sip_msg* msg, char* rt, char* p2);
+static int w_async_task_route(sip_msg_t* msg, char* rt, char* p2);
 static int fixup_async_task_route(void** param, int param_no);
 
 /* tm */
@@ -92,8 +93,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if (load_tm_api( &tmb ) == -1)
-	{
+	if (load_tm_api( &tmb ) == -1) {
 		LM_ERR("cannot load the TM-functions. Missing TM module?\n");
 		return -1;
 	}
@@ -134,6 +134,7 @@ static int child_init(int rank)
 
 	return 0;
 }
+
 /**
  * destroy module function
  */
@@ -145,11 +146,11 @@ static void mod_destroy(void)
 /**
  *
  */
-static int w_async_sleep(struct sip_msg* msg, char* sec, char* str2)
+static int w_async_sleep(sip_msg_t* msg, char* sec, char* str2)
 {
 	int s;
 	async_param_t *ap;
-	
+
 	if(msg==NULL)
 		return -1;
 
@@ -207,12 +208,37 @@ static int fixup_async_sleep(void** param, int param_no)
 /**
  *
  */
-static int w_async_route(struct sip_msg* msg, char* rt, char* sec)
+int ki_async_route(sip_msg_t *msg, str *rn, int s)
 {
 	cfg_action_t *act;
+	int ri;
+
+	ri = route_get(&main_rt, rn->s);
+	if(ri<0)
+	{
+		LM_ERR("unable to find route block [%.*s]\n", rn->len, rn->s);
+		return -1;
+	}
+	act = main_rt.rlist[ri];
+	if(act==NULL)
+	{
+		LM_ERR("empty action lists in route block [%.*s]\n", rn->len, rn->s);
+		return -1;
+	}
+
+	if(async_sleep(msg, s, act)<0)
+		return -1;
+	/* force exit in config */
+	return 0;
+}
+
+/**
+ *
+ */
+static int w_async_route(sip_msg_t* msg, char* rt, char* sec)
+{
 	int s;
 	str rn;
-	int ri;
 
 	if(msg==NULL)
 		return -1;
@@ -234,24 +260,7 @@ static int w_async_route(struct sip_msg* msg, char* rt, char* sec)
 		LM_ERR("no async interval value\n");
 		return -1;
 	}
-
-	ri = route_get(&main_rt, rn.s);
-	if(ri<0)
-	{
-		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-	act = main_rt.rlist[ri];
-	if(act==NULL)
-	{
-		LM_ERR("empty action lists in route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-
-	if(async_sleep(msg, s, act)<0)
-		return -1;
-	/* force exit in config */
-	return 0;
+	return ki_async_route(msg, &rn, s);
 }
 
 /**
@@ -274,11 +283,36 @@ static int fixup_async_route(void** param, int param_no)
 /**
  *
  */
-static int w_async_task_route(struct sip_msg* msg, char* rt, char* sec)
+int ki_async_task_route(sip_msg_t* msg, str* rn)
 {
 	cfg_action_t *act;
-	str rn;
 	int ri;
+
+	ri = route_get(&main_rt, rn->s);
+	if(ri<0)
+	{
+		LM_ERR("unable to find route block [%.*s]\n", rn->len, rn->s);
+		return -1;
+	}
+	act = main_rt.rlist[ri];
+	if(act==NULL)
+	{
+		LM_ERR("empty action lists in route block [%.*s]\n", rn->len, rn->s);
+		return -1;
+	}
+
+	if(async_send_task(msg, act)<0)
+		return -1;
+	/* force exit in config */
+	return 0;
+}
+
+/**
+ *
+ */
+static int w_async_task_route(sip_msg_t* msg, char* rt, char* sec)
+{
+	str rn;
 
 	if(msg==NULL)
 		return -1;
@@ -288,24 +322,7 @@ static int w_async_task_route(struct sip_msg* msg, char* rt, char* sec)
 		LM_ERR("no async route block name\n");
 		return -1;
 	}
-
-	ri = route_get(&main_rt, rn.s);
-	if(ri<0)
-	{
-		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-	act = main_rt.rlist[ri];
-	if(act==NULL)
-	{
-		LM_ERR("empty action lists in route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-
-	if(async_send_task(msg, act)<0)
-		return -1;
-	/* force exit in config */
-	return 0;
+	return ki_async_task_route(msg, &rn);
 }
 
 /**
@@ -325,5 +342,32 @@ static int fixup_async_task_route(void** param, int param_no)
 			return -1;
 		return 0;
 	}
+	return 0;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_async_exports[] = {
+	{ str_init("async"), str_init("route"),
+		SR_KEMIP_INT, ki_async_route,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("async"), str_init("task_route"),
+		SR_KEMIP_INT, ki_async_task_route,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_async_exports);
 	return 0;
 }
