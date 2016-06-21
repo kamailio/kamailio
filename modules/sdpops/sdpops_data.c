@@ -195,11 +195,11 @@ notfound:
  */
 int sdpops_build_ids_list(sdp_info_t *sdp, str *names, str *ids)
 {
-#define SDPOPS_MAX_LIST_SIZE	64
+#define SDPOPS_MAX_LIST_SIZE	128
 	static char _local_idslist[SDPOPS_MAX_LIST_SIZE];
 	str tmp;
 	str codec;
-#define SDPOPS_CIDS_SIZE	8
+#define SDPOPS_CIDS_SIZE	16
 	str cids[SDPOPS_CIDS_SIZE];
 	char *p;
 	int i;

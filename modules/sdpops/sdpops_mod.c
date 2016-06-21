@@ -34,6 +34,7 @@
 #include "../../trim.h"
 #include "../../data_lump.h"
 #include "../../ut.h"
+#include "../../kemi.h"
 #include "../../parser/parse_content.h"
 
 #include "api.h"
@@ -621,7 +622,7 @@ int sdp_keep_codecs_by_id(sip_msg_t* msg, str* codecs, str *media)
 			LM_DBG("stream %d of %d - payloads [%.*s]\n",
 					sdp_stream_num, sdp_session_num,
 					sdp_stream->payloads.len, sdp_stream->payloads.s);
-			if((media==NULL)
+			if((media==NULL) || (media->len==0)
 					|| (media->len==sdp_stream->media.len
 						&& strncasecmp(sdp_stream->media.s, media->s,
 							media->len)==0))
@@ -1797,4 +1798,46 @@ static int pv_parse_sdp_name(pv_spec_p sp, str *in)
 error:
 	LM_ERR("unknown PV sdp name %.*s\n", in->len, in->s);
 	return -1;
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_sdpops_exports[] = {
+	{ str_init("sdpops"), str_init("remove_codecs_by_name"),
+		SR_KEMIP_INT, sdp_remove_codecs_by_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("remove_codecs_by_id"),
+		SR_KEMIP_INT, sdp_remove_codecs_by_id,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("keep_codecs_by_name"),
+		SR_KEMIP_INT, sdp_keep_codecs_by_name,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("keep_codecs_by_id"),
+		SR_KEMIP_INT, sdp_keep_codecs_by_id,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sdpops"), str_init("remove_media"),
+		SR_KEMIP_INT, sdp_remove_media,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_sdpops_exports);
+	return 0;
 }
