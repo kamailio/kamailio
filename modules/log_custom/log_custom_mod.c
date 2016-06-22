@@ -126,7 +126,7 @@ static int mod_init(void)
 }
 
 /**
- * @brief Initialize async module children
+ * @brief Initialize module children
  */
 static int child_init(int rank)
 {
@@ -142,6 +142,7 @@ static int child_init(int rank)
 			return -1;
 		}
 	}
+	LM_DBG("setting udp-send custom logging function\n");
 	km_log_func_set(&_lc_core_log_udp);
 	_lc_log_udp = 1;
 
