@@ -189,8 +189,8 @@ void _lc_core_log_udp(int lpriority, const char *format, ...)
 	va_start(arglist, format);
 
 	n = 0;
-	n += snprintf(obuf+n, 1024-n, "(%d) ", my_pid());
-	n += vsnprintf(obuf+n, 1024-n, format, arglist);
+	n += snprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, "(%d) ", my_pid());
+	n += vsnprintf(obuf + n, LC_LOG_MSG_MAX_SIZE - n, format, arglist);
 	va_end(arglist);
 	udp_send(&_lc_udp_dst, obuf, n);
 }
