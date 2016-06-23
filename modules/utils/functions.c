@@ -182,5 +182,5 @@ int http_query(struct sip_msg* _m, char* _url, char* _dst, char* _post)
 
 	curl_easy_cleanup(curl);
 	pkg_free(stream.buf);
-	return stat;
+	return (stat!=0)?stat:-1;
 }
