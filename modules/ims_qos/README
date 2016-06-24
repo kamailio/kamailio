@@ -51,6 +51,7 @@ Carsten Bock
               3.10. video_default_bandwidth (integer)
               3.11. early_qosrelease_reason (String)
               3.12. confirmed_qosrelease_headers (String)
+              3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
 
         4. Functions
 
@@ -77,8 +78,9 @@ Carsten Bock
    1.10. video_default_bandwidth parameter usage
    1.11. early_qosrelease_reason parameter usage
    1.12. confirmed_qosrelease_headers parameter usage
-   1.13. Rx_AAR_Register
-   1.14. Rx_AAR
+   1.13. regex_sdp_ip_prefix_to_maintain_in_fd parameter usage
+   1.14. Rx_AAR_Register
+   1.15. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -104,6 +106,7 @@ Chapter 1. Admin Guide
         3.10. video_default_bandwidth (integer)
         3.11. early_qosrelease_reason (String)
         3.12. confirmed_qosrelease_headers (String)
+        3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
 
    4. Functions
 
@@ -156,6 +159,7 @@ Chapter 1. Admin Guide
    3.10. video_default_bandwidth (integer)
    3.11. early_qosrelease_reason (String)
    3.12. confirmed_qosrelease_headers (String)
+   3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
 
 3.1. rx_dest_realm (string)
 
@@ -311,6 +315,23 @@ modparam("ims_qos", "early_qosrelease_reason", "Sorry - QoS failed")
 modparam("ims_qos", "confirmed_qosrelease_headers", "X-Reason: QoS failed\r\n")
 ...
 
+3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
+
+   The flow-description AVP is typically populated using IP:port
+   information present in the SDP. Certain (buggy) UEs can change ports
+   midway during calls which causes the flow-description to no longer
+   match the traffic. This parameter allows the flow-description AVP to
+   use to the any keyword instead of certain IP:port combinations in the
+   SDP. The parameter is a regex that if set replaces all IPs that do not
+   match the regex with the any keyword in the flow-description AVP
+
+   Default value is "", no IPs replaced
+
+   Example 1.13. regex_sdp_ip_prefix_to_maintain_in_fd parameter usage
+...
+modparam("ims_qos", "regex_sdp_ip_prefix_to_maintain_in_fd", "10.21.0.1")
+...
+
 4. Functions
 
    4.1. Rx_AAR_Register(route_block, domain)
@@ -341,7 +362,7 @@ modparam("ims_qos", "confirmed_qosrelease_headers", "X-Reason: QoS failed\r\n")
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.13. Rx_AAR_Register
+   Example 1.14. Rx_AAR_Register
 ...
 if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
     exit;
@@ -383,7 +404,7 @@ route[REG_AAR_REPLY]
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.14. Rx_AAR
+   Example 1.15. Rx_AAR
 ...
 if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
     exit;
