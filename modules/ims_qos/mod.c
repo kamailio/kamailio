@@ -100,6 +100,10 @@ int cdp_event_latency_loglevel = 0; /*log-level to use to report slow processing
 int audio_default_bandwidth = 64;
 int video_default_bandwidth = 128;
 
+//If set then any IP in SDP that does not match this regex is replaced with any in flow description AVP
+//V useful for UEs that change ports mid way through call therefore breaking flow description filters
+str regex_sdp_ip_prefix_to_maintain_in_fd = {0, 0};
+
 int cdp_event_list_size_threshold = 0; /**Threshold for size of cdp event list after which a warning is logged */
 
 stat_var *aars;
@@ -190,6 +194,7 @@ static param_export_t params[] = {
 		{ "early_qosrelease_reason", PARAM_STR, &early_qosrelease_reason},
 		{ "confirmed_qosrelease_headers", PARAM_STR, &confirmed_qosrelease_headers},
 		{ "terminate_dialog_on_rx_failure", INT_PARAM, &terminate_dialog_on_rx_failure},
+		{ "regex_sdp_ip_prefix_to_maintain_in_fd", PARAM_STR, &regex_sdp_ip_prefix_to_maintain_in_fd},
 		{ 0, 0, 0}
 };
 

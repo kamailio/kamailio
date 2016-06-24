@@ -56,12 +56,15 @@
 #include "rx_avp.h"
 #include "mod.h"
 #include "../../parser/sdp/sdp_helpr_funcs.h"
+#include <regex.h>
 
 #include "../../lib/ims/ims_getters.h"
 
 /**< Structure with pointers to cdp funcs, global variable defined in mod.c  */
 extern struct cdp_binds cdpb;
 extern cdp_avp_bind_t *cdp_avp;
+
+extern str regex_sdp_ip_prefix_to_maintain_in_fd;
 
 /**
  * Create and add an AVP to a Diameter message.
@@ -629,12 +632,38 @@ static str from_s = {" from ", 6};
 static str to_s = {" to ", 4};
 //removed final %s - this is options which Rx 29.214 says will not be used for flow-description AVP
 static char * permit_out_with_ports = "permit out %i from %.*s %u to %.*s %u";
+static char * permit_out_with_any_as_dst = "permit out %i from %.*s %u to any";
+//static char * permit_out_with_any_as_src = "permit out %i from any to %.*s %u";
 //static char * permit_out_with_ports = "permit out %i from %.*s %u to %.*s %u %s";
 static char * permit_in_with_ports = "permit in %i from %.*s %u to %.*s %u";
+static char * permit_in_with_any_as_src = "permit in %i from any to %.*s %u";
+//static char * permit_in_with_any_as_dst = "permit in %i from %.*s %u to any";
 //static char * permit_in_with_ports = "permit in %i from %.*s %u to %.*s %u %s";
 
 static unsigned int flowdata_buflen = 0;
 static str flowdata_buf = {0, 0};
+
+#define MAX_MATCH 20
+
+/*! \brief Match pattern against string and store result in pmatch */
+int reg_match(char *pattern, char *string, regmatch_t *pmatch)
+{
+		regex_t preg;
+
+		if (regcomp(&preg, pattern, REG_EXTENDED | REG_NEWLINE)) {
+				return -1;
+		}
+		if (preg.re_nsub > MAX_MATCH) {
+				regfree(&preg);
+				return -2;
+		}
+		if (regexec(&preg, string, MAX_MATCH, pmatch, 0)) {
+				regfree(&preg);
+				return -3;
+		}
+		regfree(&preg);
+		return 0;
+}
 
 AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
 		str *ipA, str *portA,
@@ -659,8 +688,40 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
 		int intportA = atoi(portA->s);
 		int intportB = atoi(portB->s);
 
-		len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-				proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);
+		int useAnyForIpA = 0;
+		int useAnyForIpB = 0;
+
+		if (regex_sdp_ip_prefix_to_maintain_in_fd.len > 0 && regex_sdp_ip_prefix_to_maintain_in_fd.s) {
+				LM_DBG("regex_sdp_ip_prefix_to_maintain_in_fd is set to: [%.*s] therefore we check if we need to replace non matching IPs with any\n",
+						regex_sdp_ip_prefix_to_maintain_in_fd.len, regex_sdp_ip_prefix_to_maintain_in_fd.s);
+				regmatch_t pmatch[MAX_MATCH];
+				if (reg_match(regex_sdp_ip_prefix_to_maintain_in_fd.s, ipA->s, &(pmatch[0]))) {
+						LM_DBG("ipA [%.*s] does not match so will use any instead of ipA", ipA->len, ipA->s);
+						useAnyForIpA = 1;
+				} else {
+						LM_DBG("ipA [%.*s] matches regex so will not use any", ipA->len, ipA->s);
+						useAnyForIpA = 0;
+				}
+				if (reg_match(regex_sdp_ip_prefix_to_maintain_in_fd.s, ipB->s, &(pmatch[0]))) {
+						LM_DBG("ipB [%.*s] does not match so will use any instead of ipB", ipB->len, ipB->s);
+						useAnyForIpB = 1;
+				} else {
+						LM_DBG("ipB [%.*s] matches regex so will not use any", ipB->len, ipB->s);
+						useAnyForIpB = 0;
+				}
+
+		}
+
+		if (!useAnyForIpA && !useAnyForIpB) {
+				len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
+						proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);
+		} else if (useAnyForIpA) {
+				len = (permit_out.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipB->len + 4 +
+						proto_len + portB->len + 1/*nul terminator*/) * sizeof(char);
+		} else if (useAnyForIpB) {
+				len = (permit_out.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipA->len + 4 +
+						proto_len + portA->len + 1/*nul terminator*/) * sizeof(char);
+		}
 
 		if (!flowdata_buf.s || flowdata_buflen < len) {
 				if (flowdata_buf.s)
@@ -684,9 +745,18 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
 
 		/*IMS Flow descriptions*/
 		/*first flow is the receive flow*/
-		flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_int,
-				ipA->len, ipA->s, intportA,
-				ipB->len, ipB->s, intportB);
+		if (!useAnyForIpA && !useAnyForIpB) {
+				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_int,
+						ipA->len, ipA->s, intportA,
+						ipB->len, ipB->s, intportB);
+		} else if (useAnyForIpA) {
+				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst, proto_int,
+						ipB->len, ipB->s, intportB);
+		} else if (useAnyForIpB) {
+				flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_any_as_dst, proto_int,
+						ipA->len, ipA->s, intportA);
+		}
+
 
 		flowdata_buf.len = strlen(flowdata_buf.s);
 		flow_description1 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
@@ -709,9 +779,17 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
 				flowdata_buflen = len2;
 		}
 
-		flowdata_buf.len = snprintf(flowdata_buf.s, len2, permit_in_with_ports, proto_int,
-				ipB->len, ipB->s, intportB,
-				ipA->len, ipA->s, intportA);
+		if (!useAnyForIpA && !useAnyForIpB) {
+				flowdata_buf.len = snprintf(flowdata_buf.s, len2, permit_in_with_ports, proto_int,
+						ipB->len, ipB->s, intportB,
+						ipA->len, ipA->s, intportA);
+		} else if (useAnyForIpA) {
+				flowdata_buf.len = snprintf(flowdata_buf.s, len2, permit_in_with_any_as_src, proto_int,
+						ipB->len, ipB->s, intportB);
+		} else if (useAnyForIpB) {
+				flowdata_buf.len = snprintf(flowdata_buf.s, len2, permit_in_with_any_as_src, proto_int,
+						ipA->len, ipA->s, intportA);
+		}
 
 		flowdata_buf.len = strlen(flowdata_buf.s);
 		flow_description2 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,

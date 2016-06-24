@@ -299,7 +299,31 @@ modparam("ims_qos", "confirmed_qosrelease_headers", "X-Reason: QoS failed\r\n")
         </programlisting>
       </example>
     </section>
+    
+    <section>
+      <title><varname>regex_sdp_ip_prefix_to_maintain_in_fd</varname> (String)</title>
 
+      <para>The flow-description AVP is typically populated using IP:port information
+          present in the SDP.  Certain (buggy) UEs can change ports midway during 
+          calls which causes the flow-description to no longer match the 
+          traffic.  This parameter allows the flow-description AVP to use to the 
+          any keyword instead of certain IP:port combinations in the SDP. The 
+          parameter is a regex that if set replaces all IPs that do not match 
+          the regex with the any keyword in the flow-description AVP</para>
+
+      <para><emphasis> Default value is "", no IPs replaced</emphasis></para>
+
+      <example>
+        <title><varname>regex_sdp_ip_prefix_to_maintain_in_fd</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "regex_sdp_ip_prefix_to_maintain_in_fd", "10.21.0.1")
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
