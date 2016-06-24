@@ -67,6 +67,7 @@
 #include "pvt_message.h"
 
 extern struct cdp_binds cdpb;
+extern unsigned int send_vs_callid_avp;
 
 int create_return_code(int result) {
     int rc;
@@ -345,7 +346,8 @@ int cxdx_send_sar(struct sip_msg *msg, str public_identity, str private_identity
     }
     if (!sar) goto error1;
 
-    if (!cxdx_add_call_id(sar, cscf_get_call_id(msg, &hdr))) goto error1;
+    if (send_vs_callid_avp)
+		if (!cxdx_add_call_id(sar, cscf_get_call_id(msg, &hdr))) goto error1;
     if (!cxdx_add_destination_realm(sar, cxdx_dest_realm)) goto error1;
 
     if (!cxdx_add_vendor_specific_appid(sar, IMS_vendor_id_3GPP, IMS_Cx, 0 /*IMS_Cx*/)) goto error1;

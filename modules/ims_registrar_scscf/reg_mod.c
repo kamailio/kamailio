@@ -94,6 +94,7 @@ char *scscf_user_data_dtd = 0; /* Path to "CxDataType.dtd" */
 char *scscf_user_data_xsd = 0; /* Path to "CxDataType_Rel6.xsd" or "CxDataType_Rel7.xsd" */
 int scscf_support_wildcardPSI = 0;
 int store_data_on_dereg = 0; /**< should we store SAR data on de-registration  */
+unsigned int send_vs_callid_avp = 1;	/* flag to enable/disable proprietary use of a callid AVP. TODO: add call-id as per TS129.229 */
 
 int ue_unsubscribe_on_dereg = 0;  /*many UEs do not unsubscribe on de reg - therefore we should remove their subscription and not send a notify
 				   Some UEs do unsubscribe then everything is fine*/
@@ -271,7 +272,7 @@ static param_export_t params[] = {
     {"user_data_always", INT_PARAM, &user_data_always},
     {"notification_list_size_threshold", INT_PARAM, &notification_list_size_threshold},
     {"notification_processes", INT_PARAM, &notification_processes},
-
+    {"send_vs_callid_avp", INT_PARAM, &send_vs_callid_avp},
     {0, 0, 0}
 };
 
