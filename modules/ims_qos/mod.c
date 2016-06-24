@@ -1033,6 +1033,27 @@ ignore:
 		return result;
 }
 
+uint16_t check_ip_version(str ip)
+{
+		struct addrinfo hint, *res = NULL;
+		memset(&hint, '\0', sizeof(hint));
+		hint.ai_family = AF_UNSPEC;
+		hint.ai_flags = AI_NUMERICHOST;
+		int getaddrret = getaddrinfo(ip.s, NULL, &hint, &res);
+		if (getaddrret) {
+				LM_ERR("GetAddrInfo returned an error !\n");
+				return 0;
+		}
+		if (res->ai_family == AF_INET) {
+				return AF_INET;
+		} else if (res->ai_family == AF_INET6) {
+				return AF_INET6;
+		} else {
+				LM_ERR("unknown IP format \n");
+				return 0;
+		}
+}
+
 /* Wrapper to send AAR from config file - only used for registration */
 static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char* bar)
 {
@@ -1056,6 +1077,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 		str recv_ip;
 		int recv_port;
 		unsigned short recv_proto;
+		uint16_t ip_version;
 
 		struct via_body* vb;
 		unsigned short via_port;
@@ -1181,6 +1203,13 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 		//we use the received IP address for the framed_ip_address 
 		recv_ip.s = ip_addr2a(&msg->rcv.src_ip);
 		recv_ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
+
+		ip_version = check_ip_version(recv_ip);
+		if (!ip_version) {
+				LM_ERR("check_ip_version returned 0 \n");
+				goto error;
+		}
+
 		recv_port = msg->rcv.src_port;
 		recv_proto = msg->rcv.proto;
 
@@ -1227,7 +1256,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 												is_rereg = 1;
 										} else {
 												LM_DBG("Creating new Rx session for contact <%.*s>\n", pcontact->aor.len, pcontact->aor.s);
-												int ret = create_new_regsessiondata(domain_t->name, &pcontact->aor, &recv_ip, AF_INET /* TODO: IPv6 support */, recv_port, recv_proto, &vb->host, vb->port, vb->proto, &rx_regsession_data_p);
+												int ret = create_new_regsessiondata(domain_t->name, &pcontact->aor, &recv_ip, ip_version, recv_port, recv_proto, &vb->host, vb->port, vb->proto, &rx_regsession_data_p);
 												if (!ret) {
 														LM_ERR("Unable to create regsession data parcel for rx_session_id [%.*s]...Aborting\n", pcontact->rx_session_id.len, pcontact->rx_session_id.s);
 														ul.unlock_udomain(domain_t, &vb->host, vb->port, vb->proto);
@@ -1359,6 +1388,7 @@ error:
 		if (!aar_sent) {
 				tmb.t_cancel_suspend(saved_t_data->tindex, saved_t_data->tlabel);
 				if (saved_t_data) {
+
 						free_saved_transaction_global_data(saved_t_data); //only free global data if no AARs were sent. if one was sent we have to rely on the callback (CDP) to free
 						//otherwise the callback will segfault
 				}
@@ -1404,6 +1434,7 @@ static int fixup_aar_register(void** param, int param_no)
 
 				if (ul.register_udomain((char*) *param, &d) < 0) {
 						LM_ERR("Error doing fixup on assign save");
+
 						return -1;
 				}
 				*param = (void*) d;
@@ -1439,6 +1470,7 @@ static int fixup_aar(void** param, int param_no)
 						return 0;
 				}
 				LM_ERR("Bad subscription id: <%s>n", (char*) (*param));
+
 				return E_CFG;
 		}
 
