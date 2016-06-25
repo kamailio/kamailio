@@ -530,7 +530,7 @@ static int w_curl_connect(struct sip_msg* _m, char* _con, char * _url, char* _re
 	if (result.s != NULL)
 		pkg_free(result.s);
 
-	return ret;
+	return (ret==0)?-1:ret;
 }
 
 /*
@@ -573,7 +573,7 @@ static int w_curl_connect_post(struct sip_msg* _m, char* _con, char * _url, char
 	if (result.s != NULL)
 		pkg_free(result.s);
 
-	return ret;
+	return (ret==0)?-1:ret;
 }
 
 
@@ -615,7 +615,7 @@ static int fixup_free_http_query_post(void** param, int param_no)
 	if (param_no == 3) {
 		return fixup_free_pvar_null(param, 1);
 	}
-	
+
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
 }
@@ -644,7 +644,7 @@ static int w_http_query(struct sip_msg* _m, char* _url, char* _result) {
 
 	if (result.s != NULL)
 		pkg_free(result.s);
-	return ret;
+	return (ret==0)?-1:ret;
 }
 
 
@@ -676,7 +676,7 @@ static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* 
 
 	if (result.s != NULL)
 		pkg_free(result.s);
-	return ret;
+	return (ret==0)?-1:ret;
 }
 
 /*!
@@ -688,7 +688,6 @@ static int pv_parse_curlerror(pv_spec_p sp, str *in)
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
 
-	
 	cerr = atoi(in->s);
 	LM_DBG(" =====> CURL ERROR %d \n", cerr);
 	sp->pvp.pvn.u.isname.name.n = cerr;
