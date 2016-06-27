@@ -167,7 +167,7 @@ modparam( "sca", "call_info_max_expires", 1800 )
             <example>
                 <title>Set <varname>line_seize_max_expires</varname>:</title>
                 <programlisting format="linespecific">
-...             
+...
 modparam( "sca", "line_seize_max_expires", 30 )
 ...
                 </programlisting>
@@ -196,7 +196,7 @@ modparam( "sca", "line_seize_max_expires", 30 )
             <example>
                 <title>Set <varname>purge_expired_interval</varname>:</title>
                 <programlisting format="linespecific">
-...             
+...
 modparam( "sca", "purge_expired_interval", 60 )
 ...
                 </programlisting>
@@ -235,7 +235,7 @@ modparam( "sca", "db_url", "&defaultdb;" )
             <example>
                 <title>Set <varname>subs_table</varname> parameter:</title>
                 <programlisting format="linespecific">
-...             
+...
 modparam( "sca", "subs_table", "call_info_subscriptions" )
 ...
                 </programlisting>
@@ -246,7 +246,7 @@ modparam( "sca", "subs_table", "call_info_subscriptions" )
 	    <title><varname>db_update_interval</varname> (integer)</title>
 	    <para>
 		Period in seconds between writes of call-info subscriber
-		information to the database. 
+		information to the database.
 	    </para>
 	    <para>
 		<emphasis>
@@ -350,7 +350,7 @@ if ( is_method( "SUBSCRIBE" )) {
                         <emphasis>1 - successful</emphasis>
                     </para>
                     </listitem>
-                     
+
                     <listitem>
                     <para>
                         <emphasis>-1 - failed, error logged</emphasis>
@@ -361,7 +361,7 @@ if ( is_method( "SUBSCRIBE" )) {
             <example>
                 <title><function>sca_call_info_update</function> usage:</title>
                 <programlisting format="linespecific">
-...             
+...
 route
 {
 ...
@@ -389,7 +389,7 @@ failure_route[FAILURE_ROUTE]
     sca_call_info_update();
 ...
 }
-...             
+...
                 </programlisting>
             </example>
         </section>
@@ -496,7 +496,7 @@ failure_route[FAILURE_ROUTE]
 		</listitem>
 		<listitem>
 		<para>
-		    <emphasis>Appearance State</emphasis> 
+		    <emphasis>Appearance State</emphasis>
 		    (seized, ringing, progressing, active, held, held-private)
 		</para>
 		</listitem>
