@@ -208,22 +208,6 @@ static int check_user_blacklist_fixup(void** param, int param_no)
 			return E_UNSPEC;
 		}
 
-		if(model->spec==NULL || model->spec->getf==NULL) {
-			if(param_no == 1) {
-				if(str2int(&s, (unsigned int*)&model->spec->pvp.pvn.u.isname.name.n) != 0) {
-					LM_ERR("wrong value [%.*s] for parameter %d\n", s.len, s.s, param_no);
-					return E_UNSPEC;
-				}
-			} else {
-				if(param_no == 2 || param_no == 3) {
-					LM_ERR("wrong value [%.*s] for parameter %d\n", s.len, s.s, param_no);
-					return E_UNSPEC;
-				} else {
-					// only a string
-					return 0;
-				}
-			}
-		}
 		*param = (void*)model;
 	} else {
 		LM_ERR("wrong number of parameters\n");
