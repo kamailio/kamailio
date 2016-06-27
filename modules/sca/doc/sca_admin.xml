@@ -102,7 +102,7 @@
 
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="sca.p.hash_table_size">
 	    <title><varname>hash_table_size</varname> (integer)</title>
 	    <para>
 		Size, as a power of two, of the shared memory hash table
@@ -127,7 +127,7 @@ modparam( "sca", "hash_table_size", 8 )
 	    </example>
 	</section>
 
-	<section>
+	<section id="sca.p.call_info_max_expires">
 	    <title><varname>call_info_max_expires</varname> (integer)</title>
 	    <para>
 		The maximum allowed call-info subscription time in seconds.
@@ -147,7 +147,7 @@ modparam( "sca", "call_info_max_expires", 1800 )
 	    </example>
 	</section>
 
-        <section>
+        <section id="sca.p.line_seize_max_expires">
             <title><varname>line_seize_max_expires</varname> (integer)</title>
             <para>
 		The maximum allowed line-seize subscription time in seconds.
@@ -174,7 +174,7 @@ modparam( "sca", "line_seize_max_expires", 30 )
             </example>
         </section>
 
-        <section>
+        <section id="sca.p.purge_expired_interval">
             <title><varname>purge_expired_interval</varname> (integer)</title>
             <para>
 		The period of time in seconds between purges of expired
@@ -203,7 +203,7 @@ modparam( "sca", "purge_expired_interval", 60 )
             </example>
         </section>
 
-	<section>
+	<section id="sca.p.db_url">
 	    <title><varname>db_url</varname> (str)</title>
 	    <para>
 		URL of database to which subscribers will be written.
@@ -221,7 +221,7 @@ modparam( "sca", "db_url", "&defaultdb;" )
 	    </example>
 	</section>
 
-        <section>
+        <section id="sca.p.subs_table">
             <title><varname>subs_table</varname> (str)</title>
             <para>
 		Name of the database table where call-info subscriptions
@@ -242,7 +242,7 @@ modparam( "sca", "subs_table", "call_info_subscriptions" )
             </example>
         </section>
 
-	<section>
+	<section id="sca.p.db_update_interval">
 	    <title><varname>db_update_interval</varname> (integer)</title>
 	    <para>
 		Period in seconds between writes of call-info subscriber
@@ -266,7 +266,7 @@ modparam( "sca", "db_update_interval", 120 )
 
     <section>
 	<title>Functions</title>
-	<section>
+	<section id="sca.f.sca_handle_subscribe">
 	    <title>
 		<function moreinfo="none">sca_handle_subscribe()</function>
 	    </title>
@@ -318,7 +318,7 @@ if ( is_method( "SUBSCRIBE" )) {
 	    </example>
 	</section>
 
-        <section>
+        <section id="sca.f.sca_call_info_update">
             <title>
                 <function moreinfo="none">sca_call_info_update()</function>
             </title>
@@ -398,7 +398,7 @@ failure_route[FAILURE_ROUTE]
     <section>
 	<title>Exported RPC Commands</title>
 
-	<section>
+	<section id="sca.r.all_subscriptions">
 	    <title><varname>sca.all_subscriptions</varname></title>
 	    <para>
 		List all current call-info and line-seize subscriptions.
@@ -417,7 +417,7 @@ failure_route[FAILURE_ROUTE]
 	    </programlisting>
 	</section>
 
-	<section>
+	<section id="sca.r.all_appearances">
             <title><varname>sca.all_appearances</varname></title>
             <para>
 		List all SCA appearances with non-idle state.
@@ -436,7 +436,7 @@ failure_route[FAILURE_ROUTE]
             </programlisting>
         </section>
 
-        <section>
+        <section id="sca.r.seize_appearance">
             <title><varname>sca.seize_appearance</varname></title>
             <para>
 		Seize an appearance index for a specific contact within an
@@ -471,7 +471,7 @@ failure_route[FAILURE_ROUTE]
             </programlisting>
         </section>
 
-        <section>
+        <section id="sca.r.update_appearance">
             <title><varname>sca.update_appearance</varname></title>
             <para>
 		Update the state of an in-use appearance index, and notify
@@ -516,7 +516,7 @@ failure_route[FAILURE_ROUTE]
             </programlisting>
         </section>
 
-        <section>
+        <section id="sca.r.release_appearance">
             <title><varname>sca.release_appearance</varname></title>
             <para>
 		Set a non-idle appearance index to idle and NOTIFY
