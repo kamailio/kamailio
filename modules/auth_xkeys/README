@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2015 asipto.com
+   Copyright Â© 2015 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -141,7 +141,7 @@ modparam("auth_xkeys", "xkey", "id=abc;name=xyz;value=secret;expires=72000")
    4.1. auth_xkeys_add(hdr, kid, alg, data)
    4.2. auth_xkeys_check(hdr, kid, alg, data)
 
-4.1. auth_xkeys_add(hdr, kid, alg, data)
+4.1.  auth_xkeys_add(hdr, kid, alg, data)
 
    Add a header computed with the first key in the group kid, hasing with
    algorithm alg over the content of parameter data. The parameters can
@@ -156,7 +156,7 @@ modparam("auth_xkeys", "xkey", "id=abc;name=xyz;value=secret;expires=72000")
 auth_xkeys_add("X-My-Key", "abc", "sha256", "$Ri:$fu:$ru:$hdr(CSeq)");
 ...
 
-4.2. auth_xkeys_check(hdr, kid, alg, data)
+4.2.  auth_xkeys_check(hdr, kid, alg, data)
 
    Check if the value of header hdr matches the value computed with the
    first key in the group kid, hasing with algorithm alg over the content

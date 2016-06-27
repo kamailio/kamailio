@@ -14,13 +14,15 @@ Juha Heinanen
 
    tutpro.com
 
+Edited by
+
 Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
 
-   Copyright � 2011 Juha Heinanen
+   Copyright © 2011 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -175,7 +177,7 @@ Chapter 1. Admin Guide
 
    URL of the database server to be used.
 
-   Default value is "mysql://kamailio:kamailiorw@localhost/kamailio".
+   Default value is “mysql://kamailio:kamailiorw@localhost/kamailio”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -187,7 +189,7 @@ modparam("mtree", "db_url", "dbdriver://username:password@dbhost/dbname")
    Name of database table where data for trees is stored. It is ignored if
    a 'mtree' parameter is defined.
 
-   Default value is "mtrees".
+   Default value is “mtrees”.
 
    Example 1.2. Set db_table parameter
 ...
@@ -222,7 +224,7 @@ modparam("mtree", "db_table", "mymtrees")
 
    This parameter can be set many times to add more trees in memory.
 
-   Default value is "none".
+   Default value is “none”.
 
    Example 1.3. Set mtree parameter
 ...
@@ -236,7 +238,7 @@ modparam("mtree", "mtree",
 
    Name of 'tname' column.
 
-   Default value is "tname".
+   Default value is “tname”.
 
    Example 1.4. Set tname_column parameter
 ...
@@ -247,7 +249,7 @@ modparam("mtree", "tname_column", "name")
 
    Name of 'tprefix' column.
 
-   Default value is "tprefix".
+   Default value is “tprefix”.
 
    Example 1.5. Set tprefix_column parameter
 ...
@@ -258,7 +260,7 @@ modparam("mtree", "tprefix_column", "prefix")
 
    Name of 'tvalue' column.
 
-   Default value is "tvalue".
+   Default value is “tvalue”.
 
    Example 1.6. Set tvalue_column parameter
 ...
@@ -280,7 +282,7 @@ modparam("mtree", "fetch_rows", 4000)
 
    The list with characters allowed in prefix.
 
-   Default value is "0123456789".
+   Default value is “0123456789”.
 
    Example 1.8. Set char_list parameter
 ...
@@ -292,7 +294,7 @@ modparam("mtree", "char_list", "0123456789*+")
    The PV spec where to store the matched value. It can be any writable
    PV.
 
-   Default value is "$avp(s:tvalue)".
+   Default value is “$avp(s:tvalue)”.
 
    Example 1.9. Set pv_value parameter
 ...
@@ -304,7 +306,7 @@ modparam("mtree", "pv_value", "$var(mtval)")
    The AVP where to store the matched values when mtree is of type 0 or 2
    and mode of mt_match() call has value 2.
 
-   Default value is "$avp(s:tvalues)".
+   Default value is “$avp(s:tvalues)”.
 
    Example 1.10. Set pv_values parameter
 ...
@@ -349,7 +351,7 @@ modparam("mtree", "mt_allow_duplicates", 1)
 
    4.1. mt_match(mtree, pv, mode)
 
-4.1. mt_match(mtree, pv, mode)
+4.1.  mt_match(mtree, pv, mode)
 
    Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
    of 'mode' is NOT 2, sets a value of the longest matching prefix to
@@ -373,7 +375,7 @@ mt_match("mytree", "$rU", "0");
    5.3. mt_summary
    5.4. mt_match
 
-5.1. mt_list
+5.1.  mt_list
 
    List content of a tree.
 
@@ -387,7 +389,7 @@ mt_match("mytree", "$rU", "0");
                 _mtname_
                 _empty_line_
 
-5.2. mt_reload
+5.2.  mt_reload
 
    Reload mtree from database.
 
@@ -402,7 +404,7 @@ mt_match("mytree", "$rU", "0");
                 _mtname_
                 _empty_line_
 
-5.3. mt_summary
+5.3.  mt_summary
 
    List usage summary for all trees.
 
@@ -414,7 +416,7 @@ mt_match("mytree", "$rU", "0");
                 :mt_summary:_reply_fifo_file_
                 _empty_line_
 
-5.4. mt_match
+5.4.  mt_match
 
    Match prefix value against mtree.
 
@@ -438,7 +440,7 @@ mt_match("mytree", "$rU", "0");
    6.2. mtree.reload
    6.3. mtree.match
 
-6.1. mtree.summary
+6.1.  mtree.summary
 
    List usage summary for all trees or for the tree whose name is given as
    parameter.
@@ -446,7 +448,7 @@ mt_match("mytree", "$rU", "0");
    Parameters:
      * _mtree_ - (optional) the name of the tree.
 
-6.2. mtree.reload
+6.2.  mtree.reload
 
    Reload mtree from database to memory.
 
@@ -454,7 +456,7 @@ mt_match("mytree", "$rU", "0");
      * _mtree_
        - name of mtree or empty string meaning all mtrees
 
-6.3. mtree.match
+6.3.  mtree.match
 
    Match prefix value against mtree
 

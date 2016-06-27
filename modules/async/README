@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2011 asipto.com
+   Copyright Â© 2011-2016 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -113,7 +113,7 @@ modparam("async", "workers", 2)
    4.2. async_sleep(seconds)
    4.3. async_task_route(routename)
 
-4.1. async_route(routename, seconds)
+4.1.  async_route(routename, seconds)
 
    Simulate a sleep of 'seconds' and then continue the processing of the
    SIP request with the route[routename]. In case of internal errors, the
@@ -144,7 +144,7 @@ route[RESUME] {
 }
 ...
 
-4.2. async_sleep(seconds)
+4.2.  async_sleep(seconds)
 
    Simulate a sleep of 'seconds' and then continue the processing of SIP
    request with the next action. In case of internal errors, the function
@@ -163,7 +163,7 @@ send_reply("404", "Not found");
 exit;
 ...
 
-4.3. async_task_route(routename)
+4.3.  async_task_route(routename)
 
    Continue the processing of the SIP request with the route[routename] in
    one of the processes from core asynchronous framework. The core

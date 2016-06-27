@@ -4,7 +4,7 @@ Miklos Tirpak
 
    <miklos@iptel.org>
 
-   Copyright � 2007 iptelorg GmbH
+   Copyright © 2007 iptelorg GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
    For example, it can be used to fine-tune values for global parameters
    such as debug, tcp/sctp/dns attributes, without the need of restart.
 
-   RPC connector modules, such as "ctl" or "xmlrpc", although not a
+   RPC connector modules, such as “ctl” or “xmlrpc”, although not a
    dependecy, should be loaded in order to execute the RPC commands
    exported by this module. When the ctl module is loaded, the tool
    'kamcmd' can be used to execute the RPC commands implemented in this

@@ -5,7 +5,7 @@ Christian Schlatter
    University of North Carolina
    <cs@unc.edu>
 
-   Copyright � 2007 University of North Carolina
+   Copyright © 2007 University of North Carolina
      __________________________________________________________________
 
    Table of Contents
@@ -173,26 +173,26 @@ Chapter 1. Admin Guide
 1.1. Usage Basics
 
    LDAP sessions is specified in an external configuration file (as
-   described in Section 3, "LDAP Configuration File"). Each of these LDAP
+   described in Section 3, “LDAP Configuration File”). Each of these LDAP
    sessions includes LDAP server access parameters like server hostname or
    connection timeouts. Normally only a single LDAP session per process
    will be used unless there is a need to access more than one LDAP
    server. The LDAP session name will then be used in the Kamailio
    configuration script to refer to a specific LDAP session.
 
-   The ldap_search function (Section 5.1, "ldap_search(ldap_url)")
+   The ldap_search function (Section 5.1, “ldap_search(ldap_url)”)
    performs an LDAP search operation. It expects an LDAP URL as input
    which includes the LDAP session name and search parameters. The section
-   Section 1.2, "LDAP URLs" provides a quick overview on LDAP URLs.
+   Section 1.2, “LDAP URLs” provides a quick overview on LDAP URLs.
 
    The result of a LDAP search is stored internally and can be accessed
    with one of the ldap_result* functions. ldap_result (Section 5.2,
-   "ldap_result("ldap_attr_name/avp_spec[/avp_type]" [, regex_subst])")
+   “ldap_result("ldap_attr_name/avp_spec[/avp_type]" [, regex_subst])”)
    stores resulting LDAP attribute values as AVPs. ldap_result_check
-   (Section 5.3, "ldap_result_check("ldap_attr_name/string_to_match" [,
-   regex_subst])") is a convenience function to compare a string with LDAP
+   (Section 5.3, “ldap_result_check("ldap_attr_name/string_to_match" [,
+   regex_subst])”) is a convenience function to compare a string with LDAP
    attribute values using regular expression matching. Finally,
-   ldap_result_next (Section 5.4, "ldap_result_next()") allows using LDAP
+   ldap_result_next (Section 5.4, “ldap_result_next()”) allows using LDAP
    search queries that return more than one LDAP entry.
 
    All ldap_result* functions always access the LDAP result set from the
@@ -224,7 +224,7 @@ Chapter 1. Admin Guide
           Comma separated list of LDAP attributes to be returned
 
    scope
-          Scope for LDAP search, valid values are "base", "one", or "sub"
+          Scope for LDAP search, valid values are “base”, “one”, or “sub”
 
    filter
           LDAP search filter definition following rules of RFC 4515
@@ -250,7 +250,7 @@ Note
    as "%3F", since "?" is used as a URL delimiter.
 
    The exported function ldap_filter_url_encode (Section 5.5,
-   "ldap_filter_url_encode(string, avp_spec)") implements RFC 4515/4516
+   “ldap_filter_url_encode(string, avp_spec)”) implements RFC 4515/4516
    LDAP search filter and URL escaping rules.
 
 2. Dependencies
@@ -348,7 +348,7 @@ ldap_version = 2
           currently only supports SIMPLE_AUTH). Empty string enables
           anonymous LDAP bind.
 
-          Default value: "" (empty string --> anonymous bind)
+          Default value: “” (empty string --> anonymous bind)
 
           Example 1.3. ldap_bind_dn example
 
@@ -358,7 +358,7 @@ ldap_bind_dn = "cn=root,dc=example,dc=com";
           Authentication password used to bind to LDAP server
           (SIMPLE_AUTH). Empty string enables anonymous bind.
 
-          Default value: "" (empty string --> anonymous bind)
+          Default value: “” (empty string --> anonymous bind)
 
           Example 1.4. ldap_bind_password example
 
@@ -451,7 +451,7 @@ modparam("ldap", "config_file", "/usr/local/etc/kamailio/ldap.ini")
 
    ldap_url
           An LDAP URL defining the LDAP search operation (refer to
-          Section 1.2, "LDAP URLs" for a description of the LDAP URL
+          Section 1.2, “LDAP URLs” for a description of the LDAP URL
           format). The hostport part must be one of the LDAP session names
           declared in the LDAP configuration script.
 
@@ -915,7 +915,7 @@ typedef int (*ldap_url_search_t)(char* _ldap_url,
    Function arguments:
 
    char* _ldap_url
-          LDAP URL as described in Section 1.2, "LDAP URLs".
+          LDAP URL as described in Section 1.2, “LDAP URLs”.
 
    int* _result_count
           The function stores the number of returned LDAP entries in
@@ -1024,7 +1024,7 @@ typedef int (*ldap_str2scope_t)(char* scope_str);
 2.7. ldap_rfc4515_escape
 
    Applies escaping rules described in Section 5.5,
-   "ldap_filter_url_encode(string, avp_spec)".
+   “ldap_filter_url_encode(string, avp_spec)”.
 typedef int (*ldap_rfc4515_escape_t)(str *sin, str *sout, int url_encode);
 
    Function arguments:

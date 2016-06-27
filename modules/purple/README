@@ -77,6 +77,9 @@ Chapter 1. Admin Guide
 
 1. Overview
 
+   Note: the module is not actively maintained and may be deprecated in
+   the near future.
+
    Purple module is a multi-protocol instant-messaging gateway module
    which use libpurple, the library that Pidgin (ex-gaim) is based on.
 
@@ -178,7 +181,7 @@ CREATE TABLE purplemap (
 
    The URL to connect to database.
 
-   Default value is “mysql://openserro:openserro@localhost/openser”.
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.4. Set db_url parameter
 ...

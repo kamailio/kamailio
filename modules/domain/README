@@ -10,7 +10,7 @@ Juha Heinanen
 
    <jh@tutpro.com>
 
-   Copyright � 2002-2012 Juha Heinanen
+   Copyright © 2002-2012 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -112,18 +112,18 @@ Chapter 1. Admin Guide
 1. Overview
 
    Domain module implements checks that based on domain table determine if
-   a domain is "local". A "local" domain is one that the proxy is
+   a domain is “local”. A “local” domain is one that the proxy is
    responsible for. SIP URIs of local users must have hostpart that is
    equal to one of these domains.
 
    Domain module reads the contents of domain and domain_attrs tables into
    cache memory when the module is loaded. Any changes in domain or
-   domain_attrs tables must thus be followed by "domain.reload" rpc
+   domain_attrs tables must thus be followed by “domain.reload” rpc
    command in order to reflect them in module behavior.
 
    Caching is implemented using a hash table. The size of the hash table
-   is given by HASH_SIZE constant defined in domain_mod.h. Its "factory
-   default" value is 128.
+   is given by HASH_SIZE constant defined in domain_mod.h. Its “factory
+   default” value is 128.
 
 2. Dependencies
 
@@ -147,7 +147,7 @@ Chapter 1. Admin Guide
 
    This is URL of the database to be used.
 
-   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio"
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”
 
    Example 1.1. Setting db_url parameter
 modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
@@ -157,7 +157,7 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
    Name of table containing names of local domains that the proxy is
    responsible for.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.2. Setting domain_table parameter
 modparam("domain", "domain_table", "new_name")
@@ -166,7 +166,7 @@ modparam("domain", "domain_table", "new_name")
 
    Name of table containing attributes of local domains.
 
-   Default value is "domain_attrs".
+   Default value is “domain_attrs”.
 
    Example 1.3. Setting domain_attrs_table parameter
 modparam("domain", "domain_attrs_table", "local_domain_attributes")
@@ -177,7 +177,7 @@ modparam("domain", "domain_attrs_table", "local_domain_attributes")
    domain_attrs tables. In domain table, a did column value may be NULL,
    which means that it has same value as domain column.
 
-   Default value is "did".
+   Default value is “did”.
 
    Example 1.4. Setting did_col parameter
 modparam("domain", "did_col", "domain_did")
@@ -186,7 +186,7 @@ modparam("domain", "did_col", "domain_did")
 
    Name of column containing domain name in domain table.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.5. Setting domain_col parameter
 modparam("domain", "domain_col", "domain_name")
@@ -195,7 +195,7 @@ modparam("domain", "domain_col", "domain_name")
 
    Name of column containing attribute name in domain_attrs table.
 
-   Default value is "name".
+   Default value is “name”.
 
    Example 1.6. Setting name_col parameter
 modparam("domain", "name_col", "attr_name")
@@ -205,7 +205,7 @@ modparam("domain", "name_col", "attr_name")
    Name of column containing attribute type in domain_attrs table. Type
    value 0 is integer and type value 2 is string.
 
-   Default value is "type".
+   Default value is “type”.
 
    Example 1.7. Setting name_col parameter
 modparam("domain", "type_col", "attr_type")
@@ -214,7 +214,7 @@ modparam("domain", "type_col", "attr_type")
 
    Name of column containing attribute value in domain_attrs table.
 
-   Default value is "value".
+   Default value is “value”.
 
    Example 1.8. Setting value_col parameter
 modparam("domain", "value_col", "attr_value")

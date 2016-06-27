@@ -8,7 +8,7 @@ Edited by
 
 Jan Janak
 
-   Copyright � 2004 FhG FOKUS
+   Copyright © 2004 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -95,7 +95,7 @@ Warning
    the parameter to specify additional parameters to be added to the
    header field, see the example.
 
-   Default value is "" (empty string).
+   Default value is “” (empty string).
 
    Example 1.1. suffix usage
 modparam("diversion", "suffix", ";privacy=full")
@@ -158,7 +158,7 @@ Content-Length: 0
 
 Chapter 2. Developer Guide
 
-   According to the specification a new "Diversion" header field should be
+   According to the specification a new “Diversion” header field should be
    inserted as the topmost Diversion header field in the message, that
    means before any other existing Diversion header field in the message.
    In addition to that, the add_diversion function can be called several

@@ -49,6 +49,8 @@ Carsten Bock
               3.8. cdp_event_list_size_threshold (integer)
               3.9. audio_default_bandwidth (integer)
               3.10. video_default_bandwidth (integer)
+              3.11. early_qosrelease_reason (String)
+              3.12. confirmed_qosrelease_headers (String)
 
         4. Functions
 
@@ -73,8 +75,10 @@ Carsten Bock
    1.8. cdp_event_list_size_threshold parameter usage
    1.9. audio_default_bandwidth parameter usage
    1.10. video_default_bandwidth parameter usage
-   1.11. Rx_AAR_Register
-   1.12. Rx_AAR
+   1.11. early_qosrelease_reason parameter usage
+   1.12. confirmed_qosrelease_headers parameter usage
+   1.13. Rx_AAR_Register
+   1.14. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -98,6 +102,8 @@ Chapter 1. Admin Guide
         3.8. cdp_event_list_size_threshold (integer)
         3.9. audio_default_bandwidth (integer)
         3.10. video_default_bandwidth (integer)
+        3.11. early_qosrelease_reason (String)
+        3.12. confirmed_qosrelease_headers (String)
 
    4. Functions
 
@@ -148,6 +154,8 @@ Chapter 1. Admin Guide
    3.8. cdp_event_list_size_threshold (integer)
    3.9. audio_default_bandwidth (integer)
    3.10. video_default_bandwidth (integer)
+   3.11. early_qosrelease_reason (String)
+   3.12. confirmed_qosrelease_headers (String)
 
 3.1. rx_dest_realm (string)
 
@@ -276,6 +284,33 @@ modparam("ims_qos", "audio_default_bandwidth", 32)
 modparam("ims_qos", "video_default_bandwidth", 256)
 ...
 
+3.11. early_qosrelease_reason (String)
+
+   This sets the default Reason, when a call is terminated in early stage
+   due to QoS-failure.
+
+   Default value is "QoS released", an call in early stage would be
+   released with "488 QoS released".
+
+   Example 1.11. early_qosrelease_reason parameter usage
+...
+modparam("ims_qos", "early_qosrelease_reason", "Sorry - QoS failed")
+...
+
+3.12. confirmed_qosrelease_headers (String)
+
+   These headers are added to the BYE-Message, when an confirmed call is
+   terminated due to a QoS failure.
+
+   Default value is "", no Extra-Headers
+
+   The headers must end with CRLF.
+
+   Example 1.12. confirmed_qosrelease_headers parameter usage
+...
+modparam("ims_qos", "confirmed_qosrelease_headers", "X-Reason: QoS failed\r\n")
+...
+
 4. Functions
 
    4.1. Rx_AAR_Register(route_block, domain)
@@ -306,7 +341,7 @@ modparam("ims_qos", "video_default_bandwidth", 256)
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.11. Rx_AAR_Register
+   Example 1.13. Rx_AAR_Register
 ...
 if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
     exit;
@@ -348,7 +383,7 @@ route[REG_AAR_REPLY]
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.12. Rx_AAR
+   Example 1.14. Rx_AAR
 ...
 if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
     exit;

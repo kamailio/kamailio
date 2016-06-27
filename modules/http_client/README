@@ -16,13 +16,13 @@ Hugh Waite
 
    Xura Inc
 
-   Copyright � 2008-2009 Juha Heinanen
+   Copyright © 2008-2009 Juha Heinanen
 
-   Copyright � 2013 Carsten Bock, ng-voice GmbH
+   Copyright © 2013 Carsten Bock, ng-voice GmbH
 
-   Copyright � 2015 Olle E. Johansson, Edvina AB
+   Copyright © 2015 Olle E. Johansson, Edvina AB
 
-   Copyright � 2016 Hugh Waite, Xura Inc
+   Copyright © 2016 Hugh Waite, Xura Inc
      __________________________________________________________________
 
    Table of Contents
@@ -512,7 +512,7 @@ http_follow_redirect = no
    4.1. http_connect(connection, url, [content_type, data,] result)
    4.2. http_client_query(url, [post-data], result)
 
-4.1. http_connect(connection, url, [content_type, data,] result)
+4.1.  http_connect(connection, url, [content_type, data,] result)
 
    Sends HTTP GET or POST request to a given connection. For a POST
    request, content-type can be specified.
@@ -550,16 +550,16 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
 );
 ...
 
-4.2. http_client_query(url, [post-data], result)
+4.2.  http_client_query(url, [post-data], result)
 
-   Sends HTTP GET or POST request according to URL given in "url"
+   Sends HTTP GET or POST request according to URL given in “url”
    parameter, which is a string that may contain pseudo variables.
 
-   If you want to make a POST-Request, you have to define the "post"-data,
+   If you want to make a POST-Request, you have to define the “post”-data,
    that should be submitted in that request as the second parameter.
 
    If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line of
-   the reply's body (if any) is stored in "result" parameter, which must
+   the reply's body (if any) is stored in “result” parameter, which must
    be a writable pseudo variable.
 
    Function returns reply code of HTTP reply or -1 if something went
@@ -596,7 +596,7 @@ switch ($retcode) {
 
    5.1. $curlerror(error)
 
-5.1. $curlerror(error)
+5.1.  $curlerror(error)
 
    The cURL library returns error codes from the protocol used. If an
    error happens, a cURL specific error code below 100 is returned. The
@@ -621,15 +621,15 @@ switch ($retcode) {
    7.2. httpclient.connok
    7.3. httpclient.connfail
 
-7.1. httpclient.connections
+7.1.  httpclient.connections
 
    The number of connection definitions that are in-memory.
 
-7.2. httpclient.connok
+7.2.  httpclient.connok
 
    The number of successful connections since Kamailio start
 
-7.3. httpclient.connfail
+7.3.  httpclient.connfail
 
    The number of failed connections since Kamailio start
 
@@ -646,7 +646,7 @@ Chapter 2. Developer Guide
 
    1.1. http_connect(msg, connection, url, result, content_type, post)
 
-1.1. http_connect(msg, connection, url, result, content_type, post)
+1.1.  http_connect(msg, connection, url, result, content_type, post)
 
    Sends HTTP GET or POST request to a given connection.
 

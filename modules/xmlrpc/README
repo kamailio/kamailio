@@ -4,7 +4,7 @@ Jan Janak
 
    iptelorg GmbH
 
-   Copyright � 2005 iptelorg GmbH
+   Copyright © 2005 iptelorg GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -430,7 +430,7 @@ Content-Length: 276
 3.3. Type Conversion
 
    The data types of the RPC API are converted to the data types of
-   XML-RPC and vice versa. Table 1, "Data Type Conversion" shows for each
+   XML-RPC and vice versa. Table 1, “Data Type Conversion” shows for each
    RPC API data type corresponding XML-RPC data type.
 
    Table 1. Data Type Conversion
@@ -511,6 +511,8 @@ route[XMLRPC]{
      * examples/xmlrpc_test.pl (basic perl application that builds and
        sends an XMLRPC request from its commandline parameters).
      * examples/xmlrpc_test.py (basic python application that builds and
+       sends an XMLRPC request from its commandline parameters).
+     * examples/xmlrpc_test2.py (basic python application that builds and
        sends an XMLRPC request from its commandline parameters).
      * ser_ctl (complex python application that uses the XML-RPC interface
        implemented by the xmlrpc module).
@@ -668,7 +670,7 @@ modparam("xmlrpc", "url_match", "^/RPC2")
    3.1. dispatch_rpc()
    3.2. xmlrpc_reply(code, reason)
 
-3.1. dispatch_rpc()
+3.1.  dispatch_rpc()
 
    This function processes an XMLRPC request, found in the body of the
    request.
@@ -695,7 +697,7 @@ route[XMLRPC]{
         dispatch_rpc();
 }
 
-3.2. xmlrpc_reply(code, reason)
+3.2.  xmlrpc_reply(code, reason)
 
    This function can be called from the config script to directly generate
    an XML-RPC reply.

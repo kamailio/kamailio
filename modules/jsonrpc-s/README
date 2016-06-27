@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2014 asipto.com
+   Copyright © 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -221,7 +221,7 @@ modparam("jsonrpc-s", "fifo_user", "root")
 
    Directory to be used for creating the reply FIFO files.
 
-   Default value is "/tmp/"
+   Default value is “/tmp/”
 
    Example 1.7. Set fifo_reply_dir parameter
 ...
@@ -233,7 +233,7 @@ modparam("jsonrpc-s", "fifo_reply_dir", "/home/kamailio/tmp/")
    4.1. jsonrpc_dispatch()
    4.2. jsonrpc_exec(cmd)
 
-4.1. jsonrpc_dispatch()
+4.1.  jsonrpc_dispatch()
 
    Handle the JSONRPC request and generate a response.
 
@@ -280,7 +280,7 @@ event_route[xhttp:request] {
 }
 ...
 
-4.2. jsonrpc_exec(cmd)
+4.2.  jsonrpc_exec(cmd)
 
    Execute a JSON-RPC command given as a parameter.
 

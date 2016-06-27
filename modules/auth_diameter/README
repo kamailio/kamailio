@@ -8,7 +8,7 @@ Edited by
 
 Elena-Ramona Modroiu
 
-   Copyright � 2003, 2004 FhG FOKUS
+   Copyright © 2003, 2004 FhG FOKUS
      __________________________________________________________________
 
    Table of Contents
@@ -137,7 +137,7 @@ Chapter 1. Admin Guide
 
    Hostname of the machine where the DIAMETER Client is running.
 
-   Default value is "localhost".
+   Default value is “localhost”.
 
    Example 1.2. Set diameter_client_host parameter
 ...
@@ -148,7 +148,7 @@ modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 
    Port number where the DIAMETER Client is listening.
 
-   Default value is "3000".
+   Default value is “3000”.
 
    Example 1.3. Set diameter_client_port parameter
 ...
@@ -160,7 +160,7 @@ modparam("auth_diameter", "diameter_client_port", 3000)
    Specifies whether the domain name part of URI is used when checking the
    user's privileges.
 
-   Default value is "0 (0==false and 1==true )".
+   Default value is “0 (0==false and 1==true )”.
 
    Example 1.4. Set use_domain parameter
 ...
@@ -173,12 +173,12 @@ modparam("auth_diameter", "use_domain", 1)
    4.2. diameter_proxy_authorize(realm)
    4.3. diameter_is_user_in(who, group)
 
-4.1. diameter_www_authorize(realm)
+4.1.  diameter_www_authorize(realm)
 
    SIP Server checks for authorization having a DIAMETER server in
    backend. If no credentials are provided inside the SIP request then a
    challenge is sent back to UAC. If the credentials don't match the ones
-   computed by DISC then "403 Forbidden" is sent back.
+   computed by DISC then “403 Forbidden” is sent back.
 
    Negative codes may be interpreted as follows:
      * -5 (generic error) - some generic error occurred and no reply was
@@ -199,12 +199,12 @@ if(!diameter_www_authorize("siphub.net"))
 };
 ...
 
-4.2. diameter_proxy_authorize(realm)
+4.2.  diameter_proxy_authorize(realm)
 
    SIP Proxy checks for authorization having a DIAMETER server in backend.
    If no credentials are provided inside the SIP request then a challenge
    is sent back to UAC. If the credentials don't match the ones computed
-   by DISC then "403 Forbidden" is sent back. For more about the negative
+   by DISC then “403 Forbidden” is sent back. For more about the negative
    return codes, see the above function.
 
    Meaning of the parameters is as follows:
@@ -221,14 +221,14 @@ if(!diameter_proxy_authorize("siphub.net"))
 };
 ...
 
-4.3. diameter_is_user_in(who, group)
+4.3.  diameter_is_user_in(who, group)
 
    The method performs group membership checking with DISC.
 
    Meaning of the parameters is as follows:
      * who - what header to be used to get the SIP URI that is wanted to
        be checked being member in a certain group. It can be:
-       "Request-URI", "From", "To" or "Credentials".
+       “Request-URI”, “From”, “To” or “Credentials”.
      * group - the group name where to check if the user is part of.
 
    This function can be used from REQUEST_ROUTE.

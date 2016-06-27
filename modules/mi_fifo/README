@@ -8,7 +8,7 @@ Edited by
 
 Bogdan-Andrei Iancu
 
-   Copyright � 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -166,7 +166,7 @@ modparam("mi_fifo", "fifo_user", "root")
 
    Directory to be used for creating the reply FIFO files.
 
-   Default value is "/tmp/"
+   Default value is “/tmp/”
 
    Example 1.5. Set reply_dir parameter
 ...
@@ -178,7 +178,7 @@ modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
    Strings to be used for line indentation. As the MI data structure is
    tree oriented, the depth level will be printed as indentation.
 
-   Default value is ""\t" (TAB)".
+   Default value is “"\t" (TAB)”.
 
    Example 1.6. Set reply_indent parameter
 ...
@@ -191,8 +191,8 @@ modparam("mi_fifo", "reply_indent", "    ")
 
 6. Example
 
-   This is an example showing the FIFO format for the "get_statistics
-   dialog: tm:" MI command response.
+   This is an example showing the FIFO format for the “get_statistics
+   dialog: tm:” MI command response.
 
    Example 1.7. FIFO request
 :get_statistics:reply_fifo\n
