@@ -29,7 +29,7 @@ Andrew Mortensen
         4. Functions
 
               4.1. sca_handle_subscribe()
-              4.2. sca_call_info_update()
+              4.2. sca_call_info_update([mask])
 
         5. Exported RPC Commands
 
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. sca_handle_subscribe()
-        4.2. sca_call_info_update()
+        4.2. sca_call_info_update([mask])
 
    5. Exported RPC Commands
 
@@ -254,7 +254,7 @@ modparam( "sca", "db_update_interval", 120 )
 4. Functions
 
    4.1. sca_handle_subscribe()
-   4.2. sca_call_info_update()
+   4.2. sca_call_info_update([mask])
 
 4.1.  sca_handle_subscribe()
 
@@ -277,14 +277,20 @@ modparam( "sca", "db_update_interval", 120 )
    Example 1.8. sca_handle_subscribe usage:
 ...
 if ( is_method( "SUBSCRIBE" )) {
-    if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
+        if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
         sca_handle_subscribe();
         exit;
-    }
+        }
 }
 ...
 
-4.2.  sca_call_info_update()
+4.2.  sca_call_info_update([mask])
+
+     * mask - integer (optional)
+       controls what to check as shared line (BOTH, CALLER, CALLEE)
+          + 0 - SCA_CALL_INFO_SHARED_NONE (default) check both
+          + 1 - SCA_CALL_INFO_SHARED_CALLER
+          + 2 - SCA_CALL_INFO_SHARED_CALLEE
 
    The sca_call_info_update function updates call state for SCA
    appearances. If a request or response packet contains a Call-Info
@@ -311,28 +317,28 @@ if ( is_method( "SUBSCRIBE" )) {
 route
 {
 ...
-    sca_call_info_update();
+        sca_call_info_update();
 ...
 }
 
 onreply_route[REPLY_ROUTE]
 {
 ...
-    if ( status =~ "[456][0-9][0-9]" ) {
+        if ( status =~ "[456][0-9][0-9]" ) {
         # don't update SCA state here, since there may be
         # failure route processing (e.g., call forwarding).
         # update state in failure route instead.
         break;
-    }
+        }
 
-    sca_call_info_update();
+        sca_call_info_update();
 ...
 }
 
 failure_route[FAILURE_ROUTE]
 {
 ...
-    sca_call_info_update();
+        sca_call_info_update();
 ...
 }
 ...
@@ -354,7 +360,7 @@ failure_route[FAILURE_ROUTE]
    Parameters: none
 
    Example:
-            kamcmd sca.all_subscriptions
+                kamcmd sca.all_subscriptions
 
 5.2. sca.all_appearances
 
@@ -365,7 +371,7 @@ failure_route[FAILURE_ROUTE]
    Parameters: none
 
    Example:
-            kamcmd sca.all_appearances
+                        kamcmd sca.all_appearances
 
 5.3. sca.seize_appearance
 
@@ -380,10 +386,10 @@ failure_route[FAILURE_ROUTE]
      * SCA Contact URI
 
    Example:
-            # seize next available appearance of sip:215@voice.example.com
-            # for contact sip:215@10.0.1.2
-            kamcmd sca.seize_appearance sip:215@voice.example.com sip:215@10.0.1
-.2
+                # seize next available appearance of sip:215@voice.example.com
+                # for contact sip:215@10.0.1.2
+                        kamcmd sca.seize_appearance sip:215@voice.example.com si
+p:215@10.0.1.2
 
 5.4. sca.update_appearance
 
@@ -400,9 +406,10 @@ failure_route[FAILURE_ROUTE]
      * Appearance Display Info (Optional)
 
    Example:
-            # update in-use appearance index 3 of sip:215@voice.example.com
-            # state held.
-            kamcmd sca.update_appearance sip:215@voice.example.com 3 held
+                # update in-use appearance index 3 of sip:215@voice.example.com
+                # state held.
+                        kamcmd sca.update_appearance sip:215@voice.example.com 3
+ held
 
 5.5. sca.release_appearance
 
@@ -416,9 +423,10 @@ failure_route[FAILURE_ROUTE]
      * Appearance Index
 
    Example:
-            # release appearance of sip:215@voice.example.com with
-            # appearance index 3
-            kamcmd sca.release_appearance sip:215@voice.example.com 3
+                # release appearance of sip:215@voice.example.com with
+                # appearance index 3
+                        kamcmd sca.release_appearance sip:215@voice.example.com
+3
 
 6. Sample kamailio.cfg with SCA
 
