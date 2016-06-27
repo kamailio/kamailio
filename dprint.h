@@ -185,11 +185,11 @@ void log_prefix_init(void);
 #ifdef NO_LOG
 
 #	ifdef __SUNPRO_C
-#		define LOG__(facility, level, lname, prefix, fmt, ...)
-#		define LOG_(facility, level, prefix, fmt, ...)
+#		define LOG__(facility, level, lname, prefix, ...)
+#		define LOG_(facility, level, prefix, ...)
 #		define LOG(level, fmt, ...)
-#		define LOG_FC(facility, level, fmt, ...)
-#		define LOG_LN(level, lname, fmt, ...)
+#		define LOG_FC(facility, level, ...)
+#		define LOG_LN(level, lname, ...)
 #	else
 #		define LOG__(facility, level, lname, prefix, fmt, args...)
 #		define LOG_(facility, level, prefix, fmt, args...)
@@ -213,78 +213,78 @@ void log_prefix_init(void);
 #	ifdef __SUNPRO_C
 #		define LOG__(facility, level, lname, prefix, fmt, ...) \
 			do { \
-				if (unlikely(get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
-						DPRINT_NON_CRIT)) { \
+				if (get_debug_level(LOG_MNAME, LOG_MNAME_LEN) >= (level) && \
+						DPRINT_NON_CRIT) { \
+					int __llevel; \
+					__llevel = ((level)<L_ALERT)?L_ALERT:(((level)>L_DBG)?L_DBG:level); \
 					DPRINT_CRIT_ENTER; \
-					if (likely(((level) >= L_ALERT) && ((level) <= L_DBG))){ \
-						if (unlikely(log_stderr)) { \
-							if (unlikely(log_color)) dprint_color(level); \
+					if (unlikely(log_stderr)) { \
+						if (unlikely(log_color)) dprint_color(__llevel); \
+						if(unlikely(log_prefix_val)) { \
+							fprintf(stderr, "%.*s%2d(%d) %s: %s" fmt, \
+								log_prefix_val->len, log_prefix_val->s, \
+								process_no, my_pid(), \
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel), \
+								(prefix) , __VA_ARGS__);\
+						} else { \
 							fprintf(stderr, "%2d(%d) %s: %s" fmt, \
-									process_no, my_pid(), \
-									(lname)?(lname):LOG_LEVEL2NAME(level), (prefix), \
-									__VA_ARGS__); \
-							if (unlikely(log_color)) dprint_color_reset(); \
-						} else { \
-							syslog(LOG2SYSLOG_LEVEL(level) | \
-								   (((facility) != DEFAULT_FACILITY) ? \
-									(facility) : \
-								    get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
-									"%s: %s" fmt, \
-									(lname)?(lname):LOG_LEVEL2NAME(level),\
-									(prefix), __VA_ARGS__); \
+								process_no, my_pid(), \
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel), \
+								(prefix) , __VA_ARGS__);\
 						} \
+						if (unlikely(log_color)) dprint_color_reset(); \
 					} else { \
-						if (log_stderr) { \
-							if (unlikely(log_color)) dprint_color(level); \
-							fprintf(stderr, "%2d(%d) %s" fmt, \
-									process_no, my_pid(), \
-									(prefix),  __VA_ARGS__); \
-							if (unlikely(log_color)) dprint_color_reset(); \
+						if(unlikely(log_prefix_val)) { \
+							_km_log_func(LOG2SYSLOG_LEVEL(__llevel) |\
+							    (((facility) != DEFAULT_FACILITY) ? \
+								(facility) : \
+								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
+								"%.*s%s: %s" fmt,\
+								log_prefix_val->len, log_prefix_val->s, \
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
+								(prefix) , __VA_ARGS__); \
 						} else { \
-							if ((level)<L_ALERT) \
-								syslog(LOG2SYSLOG_LEVEL(L_ALERT) | \
-									   (((facility) != DEFAULT_FACILITY) ? \
-										(facility) : \
-								        get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
-									   "%s" fmt, (prefix), __VA_ARGS__); \
-							else \
-								syslog(LOG2SYSLOG_LEVEL(L_DBG) | \
-									   (((facility) != DEFAULT_FACILITY) ? \
-										(facility) : \
-								        get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
-									   "%s" fmt, (prefix), __VA_ARGS__); \
+							_km_log_func(LOG2SYSLOG_LEVEL(__llevel) |\
+							    (((facility) != DEFAULT_FACILITY) ? \
+								(facility) : \
+								get_debug_facility(LOG_MNAME, LOG_MNAME_LEN)), \
+								"%s: %s" fmt,\
+								(lname)?(lname):LOG_LEVEL2NAME(__llevel),\
+								(prefix) , __VA_ARGS__); \
 						} \
 					} \
 					DPRINT_CRIT_EXIT; \
 				} \
 			} while(0)
 
-#		define LOG_(facility, level, lname, prefix, fmt, ...) \
-	LOG__(facility, level, NULL, prefix, fmt, __VA_ARGS__)
+#		define LOG_(facility, level, ...) \
+	LOG__(facility, level, NULL, __VA_ARGS__, NULL)
 
 #		ifdef LOG_FUNC_NAME
-#			define LOG(level, fmt, ...) \
+#			define LOG(level, ...) \
+				_LOG(level, __VA_ARGS__, NULL)
+#			define _LOG(level, fmt, ...) \
 	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, "%s(): " fmt,\
 				_FUNC_NAME_, __VA_ARGS__)
 
-#			define LOG_FC(facility, level, fmt, ...) \
-	LOG_((facility), (level), LOC_INFO, "%s(): " fmt,\
-				_FUNC_NAME_, __VA_ARGS__)
+#			define LOG_FC(facility, level, ...) \
+				_LOG_FC(facility, level, __VA_ARGS__, NULL)
+#			define _LOG_FC(facility, level, fmt, ...) \
+	LOG_((facility), (level), LOC_INFO, "%s(): " fmt , _FUNC_NAME_, __VA_ARGS__)
 
-#			define LOG_LN(level, lname, fmt, ...) \
+#			define LOG_LN(level, lname, ...) \
+				_LOG_LN(level, lname, __VA_ARGS__, NULL)
+#			define _LOG_LN(level, lname, fmt, ...) \
 	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, "%s(): " fmt,\
 				_FUNC_NAME_, __VA_ARGS__)
 
 #		else /* LOG_FUNC_NAME */
-
-#			define LOG(level, fmt, ...) \
-	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, fmt, __VA_ARGS__)
-
-#			define LOG_FC(facility, level, fmt, ...) \
-	LOG_((facility), (level), LOC_INFO, fmt, __VA_ARGS__)
-
-#			define LOG_LN(level, lname, fmt, ...) \
-	LOG_(DEFAULT_FACILITY, (level), (lname), LOC_INFO, fmt, __VA_ARGS__)
+#			define LOG(level, ...) \
+	LOG_(DEFAULT_FACILITY, (level), LOC_INFO, __VA_ARGS__, NULL)
+#			define LOG_FC(facility, level, ...) \
+	LOG_((facility), (level), LOC_INFO, __VA_ARGS__, NULL)
+#			define LOG_LN(level, lname, ...) \
+	LOG__(DEFAULT_FACILITY, (level), (lname), LOC_INFO, __VA_ARGS__, NULL)
 
 #		endif /* LOG_FUNC_NAME */
 
@@ -381,7 +381,7 @@ void log_prefix_init(void);
 #		define DBG(...)
 #	else
 #		define DBG(...)    LOG(L_DBG, __VA_ARGS__)
-#	endif		
+#	endif
 /*@ } */
 
 /* obsolete, do not use */
