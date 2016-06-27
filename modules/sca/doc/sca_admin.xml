@@ -320,9 +320,22 @@ if ( is_method( "SUBSCRIBE" )) {
 
 		<section id="sca.f.sca_call_info_update">
 			<title>
-				<function moreinfo="none">sca_call_info_update()</function>
+				<function moreinfo="none">sca_call_info_update([mask])</function>
 			</title>
 			<para>
+				<itemizedlist>
+					<listitem>
+						<para><emphasis>mask</emphasis> - integer (optional)</para>
+						<para>controls what to check as shared line (BOTH, CALLER, CALLEE)</para>
+						<itemizedlist>
+							<listitem><para>0 - SCA_CALL_INFO_SHARED_NONE (default) check both</para></listitem>
+							<listitem><para>1 - SCA_CALL_INFO_SHARED_CALLER</para></listitem>
+							<listitem><para>2 - SCA_CALL_INFO_SHARED_CALLEE</para></listitem>
+						</itemizedlist>
+					</listitem>
+				</itemizedlist>
+			</para>
+		<para>
 		The sca_call_info_update function updates call state for
 		SCA appearances. If a request or response packet contains
 		a Call-Info header, the function extracts call state from
