@@ -1,3 +1,1371 @@
+===================== 2016-06-28 Version 4.4.2 Released =====================
+
+===================== Changes Since Version 4.4.1 ===========================
+
+commit 3e7ab9e84893b349bbc819027c963f5c72b922b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 28 15:08:44 2016 +0200
+
+    Makefile.defs: version set to 4.4.2
+
+commit afad9210bd0f3b87ed18182572cc7f233bccd117
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 28 15:00:23 2016 +0200
+
+    pkg/kamailio: version updates in some spec files
+
+commit da1728b658cfb144713ebb9593ae742aeb5ca8fe
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 28 14:55:59 2016 +0200
+
+    pkg/rpm: update spec files for v4.4.2
+
+commit 8c3bf5423fc5d8be97a0a85c47ea4cdc9b59dc1f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 28 14:38:11 2016 +0200
+
+    userblacklist: user core fixup helpers for string parameters
+    
+    - it allows both static and dynamic string parameters
+    - should fix the issue of using static strings, the parameters were no
+      longer evaluated and empty values were used
+    
+    (cherry picked from commit 54562b873c2c3d0a04f0587e7706188a3eb19a74)
+
+commit bd9c32da743edacc8a2d6de48711c709ad1a7845
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jun 28 14:22:36 2016 +0200
+
+    pkg/kamailio/deb: version set to 4.4.2
+
+commit 5f2b1721d1df12c2c3c9f7787b980cfb4e79af52
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jun 28 14:19:34 2016 +0200
+
+    pkg/kamailio/deb: mention that http_client is included at kamailio-utils-modules package
+    
+    (cherry picked from commit 90c90480c0de001c6c3010bae67a617b24b1ee4a)
+
+commit a5866ef926ff6770227931c755188eb6178be07e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 28 12:38:23 2016 +0200
+
+    acc: proper value for double representation of time for db accouting on 32b
+    
+    (cherry picked from commit 4fe259ab61212bed926cff8380239980b4fe6b19)
+
+commit e81e15068b9733c2ed1ec21eb1fb4b5972bde36b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 28 09:42:00 2016 +0200
+
+    http_client: removed unnecessary cloning of proxy parameter
+    
+    - the value is already zero terminated and this way avoid memory leak
+    - wrap returning code to cfg in order to avoid 0 values
+    - backported from master branch commit
+      be677c2f8930f967277438b7b661baeacd7a5a53
+
+commit 0350b416a4d8f09312ecba44bcfd44be15f3545a
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jun 27 16:17:55 2016 +0200
+
+    modules: readme files regenerated - acc ...
+
+commit fcc8266555d8e0846d0330d010b14fd6e8245290
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 27 13:44:00 2016 +0200
+
+    sca: sca_call_info_update() document missing parameter
+    
+    (cherry picked from commit 0d0d42fa4bda5f37618af4c383f40bbb9ba46067)
+
+commit 968afa0ba6a896cdba3a426fafb90607b2c96b12
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 27 13:39:24 2016 +0200
+
+    sca: doc indent using tabs
+    
+    (cherry picked from commit a71aa0d3338a3e925053002d875d5f3ad969065c)
+
+commit 55bca3abc0703a70cc65b769f419a532b820cb08
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 27 13:10:20 2016 +0200
+
+    sca: add section ids
+    
+    (cherry picked from commit 730b4b0ca839bbcf248c3f7ddfee6974c1fa0c84)
+
+commit 1464e0d46da6de4e662ba1fea5dd97c8f9848be6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 27 13:04:06 2016 +0200
+
+    sca: fix indent doc files
+    
+    (cherry picked from commit 6e9061bc101591d8ce8a9c7b7cbf696574d7545d)
+
+commit c64209b200d82c3be78cf32254333f55d0b92afb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 27 13:04:50 2016 +0200
+
+    userblacklist: removed errorneous extra checks in fixup parameters function
+    
+    - parsing the parameters should be enough for validity
+    - no need to attempt to parse to integer first parameter, it's not
+      expected and results in a crash for static string parameters
+    - reported by Jan Hazenberg
+    
+    (cherry picked from commit 5fd2c91f512b7311f11c76023da45758fb8c4365)
+
+commit 5aeffff693e8d7498f25b42ce9949f28901fb953
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 27 11:54:08 2016 +0200
+
+    auth_identity: include openssl/x509_vfy.h
+    
+    - looks like being required by openssl 1.1.0 to get the definition of
+      X509_STORE_CTX
+    - reported by Victor Seva, GH #685
+    
+    (cherry picked from commit 21321c70358997f354326be048b22c7b2dfb045a)
+
+commit 2e82a8bb035843f31a5add7ef83f9c3721f0f657
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Mon Jun 27 12:53:01 2016 +0300
+
+    nat_traversal: set via branch according to "z9hG4bK..." format (instead of "branch=0")
+    
+    (cherry picked from commit 5261c1d0723a5b59edd231c93e42d1c963eb6375)
+
+commit ffd5b68651c24546e38c2dfff4e64937db131077
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Mon Jun 27 12:50:19 2016 +0300
+
+    nathelper: set via branch according to "z9hG4bK..." format (instead of "branch=0")
+    
+    (cherry picked from commit 1edb4298ca5b890c40f9d7df5f29199a90b0c4fd)
+
+commit 00f6c9f6c2f2665d455f9ad686198eae40758c19
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 23 21:04:47 2016 +0200
+
+    utils: safe wrapper in case http status code is returned 0
+    
+    - returning it will stop config processing, replace the return code with
+      -1 in such case
+    
+    (cherry picked from commit afb5bb99960d951217c6c94465cda92b10394e1a)
+
+commit 601f47e71a3980d28663249e77b98a93bfdc27a0
+Author: Spencer Thomason <spencer@whiteskycommunications.com>
+Date:   Fri Jun 24 00:20:13 2016 -0700
+
+    core: fix logging macros for Solaris Studio
+    
+    (cherry picked from commit 5244959b3089370e5df01d26e77d31211fce9370)
+
+commit e3f53ef6158057b090c398f5afc0b2bcdf747430
+Author: Spencer Thomason <spencer@whiteskycommunications.com>
+Date:   Fri Jun 24 00:01:59 2016 -0700
+
+    db_postgres: rename ntohll and htonll functions
+    
+    - fix namespace conflict on platforms where these are present in system libs
+    
+    (cherry picked from commit 2ebdbec8af56027c9c94fe5e67975c9a319b9620)
+
+commit d7ddbd5fa460e701484dc76ba4f0c6b5a9861483
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 23 07:25:47 2016 +0200
+
+    acc: don't multiply seconds with 1000 for time mode 2
+    
+    - it can go out of range for 32bit arch
+    
+    (cherry picked from commit 0c6653bf1c3ee7b64e811bc752e03fa0adfb0dfe)
+
+commit a11ebb7d0e3c5fe7e160a2679a21c7c00bb11e99
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 22 18:41:40 2016 +0200
+
+    log_custom: debug message before setting custom log function
+    
+    (cherry picked from commit 6c36b242f085367dd1d869bfbceb6454dcb2e006)
+
+commit e47f912cc889e7e5ed50304924cb42292cff10be
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 22 18:34:40 2016 +0200
+
+    log_custom: use buffer size for printing functions
+    
+    (cherry picked from commit 071556e9b75557dad756951f2fad71504469ca32)
+
+commit 8814e5fc2e44f792cbff8e83d184034b3d1ebc59
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 20 22:39:08 2016 +0200
+
+    tm: detect blind uac branch to avoid generating cancel for it
+    
+    (cherry picked from commit e36eebf36b72819b1b23c39469d60206f5df2bcf)
+
+commit f087e6211f92484a5f0e625bc145479ba91b31a6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 20 19:16:26 2016 +0200
+
+    tm: cleaned always enabled TM_UAC_FLAGS define
+    
+    (cherry picked from commit 4e7599064a75b8e6d0e6fbf228690cd628bfd508)
+
+commit 6f8ff98f10a6df21a1b669881fef5df91254446b
+Author: Giovanni Mele <giovanni.mele@nagra.com>
+Date:   Fri Jun 17 16:57:48 2016 +0200
+
+    db_unixodbc: do not consider SQL_NO_DATA return code as an error
+    
+    (cherry picked from commit feb195b2d9c801bc3591b1e95de6b70956e76dfe)
+
+commit 81e55b894d1585adb0e48a88460a3b5e6a5ceb4d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 17 15:58:36 2016 +0200
+
+    tm: actions triggered by t_coninue() executed as FAILURE_ROUTE type
+    
+    - the callback for scripting routing blocks are already those for
+      failure route and the transaction is already created, all processing
+      happing in the context of invalidating the "suspended" special branch
+    - should prevent mistaken use of functions restricted for request route,
+      such as msg_apply_changes()
+    - following a report by Victor Seva, GH #676
+    
+    (cherry picked from commit f121e7c099ebf862dedcd5bdc1652d188446aa72)
+
+commit f8aa9240ef8ea284b54789abf5556886066a7fa3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 17 15:24:48 2016 +0200
+
+    textops: more details in doc about limitations of msg_apply_changes()
+    
+    (cherry picked from commit 474ab2280309574236f796f76e3b61251d8d23bd)
+
+commit 57e0caee3ce86aca54f8eb7d15e0e65a5fb942ab
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Wed Jun 15 22:30:07 2016 +0200
+
+    imc Fix formatting
+    
+    (cherry picked from commit 8fa5c9f915b3aadb93835ae18a4f88a08b799f5e)
+
+commit 3c45fb4674837b2302876a116c446e4abdd31196
+Author: Federico Favaro <federico@aereo.lan.athonet.com>
+Date:   Wed Jun 15 09:15:47 2016 +0200
+
+    cdp: Change debug level of peer state to DBG
+    
+    IMHO debug level of message telling the state
+    of the peer should be DBG. If any problem
+    occurs on peers proper message will be written
+    on log. This way we have lighter log
+    
+    (cherry picked from commit 79d022fbd50684e89d98afab66b66c08f259f4eb)
+
+commit df5859f3269acbc2443ef77d951afd9c63ba7465
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 14 15:26:06 2016 +0200
+
+    rtpproxy: added section ids and small adjustments to content and format
+    
+    (cherry picked from commit daa89b4e206dac49607c25bf67748915b9f280a2)
+
+commit 0106c43e75a87d9ead0016489330b66e6c0b0b72
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 13 12:50:04 2016 +0200
+
+    kamdbctl: more error help for missing .pgpass file
+    
+    (cherry picked from commit 8a724a70859f68431094acab2a8f9ce000bbd89b)
+
+commit 21304177dd9586e7bb3a04d40a8329464abcd9c1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 13 12:33:28 2016 +0200
+
+    kamdbct: fixed typo in pgpass name
+    
+    (cherry picked from commit 631b69c43ffccbcecc3f43c3ebe4e614fe5f105d)
+
+commit b3a320a6f7af03f12b832272c5bee3d34d596604
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 10 16:47:02 2016 +0200
+
+    textops: filter_body() remove previous \r\n that belongs to the boundary
+    
+    we were removing only '--boundary\r\n' but we must remove '\r\n--boundary\r\n'
+    
+    (cherry picked from commit c5dca6096785296c89acbfa4b2f7a7fd8a16d9a2)
+
+commit 41fb662fed24e2edab8535059f5e6eb1bd7e0ca0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 9 13:06:20 2016 +0200
+
+    rr: use msg->pid to match cached route params
+    
+    - could be related to GH #663
+    
+    (cherry picked from commit 8f4ec60795294d17597d3bbd20e68f4f03c98495)
+
+commit 1c943ebeb1b4689b36a8d77c3283e0ad894cc403
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 9 13:04:47 2016 +0200
+
+    uac: debug message if contact not matched for 200ok and jump to done
+    
+    (cherry picked from commit 0ad04a5847ceb6709c7c948a5a6ac958555c0265)
+
+commit e6e45a4f1bf6abacdf2485b94e197881eac0c361
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 15:00:48 2016 +0200
+
+    purple: added note in the docs that the module is not actively maintained
+    
+    (cherry picked from commit 4a681437a22ededb8392d06db6bfd0d377649051)
+
+commit 7814715fe05d327d2995d73eab6233b210d63983
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 14:42:03 2016 +0200
+
+    async: small update to copyright year to test auto-generation of readme
+    
+    (cherry picked from commit 8ccb20adf51035aebf4512dbba71c8c1c9db4f92)
+
+commit 6d694df0f0731602768bae2d52871bd3c62e67e3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 14:40:47 2016 +0200
+
+    app_java: added note in makefile about generating the readme on a system without java
+    
+    (cherry picked from commit 816ece3d35fea26d656addb38f73412d3f7c33b3)
+
+commit 6f9f6ae1524a7ccfa6ae297d2c37036bbd2162dd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 13:58:39 2016 +0200
+
+    app_java: skip throwing error of missing java for make readme
+    
+    - controlled by DOCBUILD=yes
+    
+    (cherry picked from commit bb1e6ceadacd2b38826ed996e44cc45f3d8d1a41)
+
+commit 414d750be5117d7fe5fb5fe248b7bcadaec5dfa4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 10:39:25 2016 +0200
+
+    core: mem/tlsf - return unsigned long for function giving available memory
+    
+    - aling it with mem api prototype
+    
+    (cherry picked from commit 0ea1b700458888f60d54f3ebf192e09b9ea56d37)
+
+commit 05f2de7eeec6ee6930b1163b481257488720faff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 10:28:32 2016 +0200
+
+    core: mem - qmalloc - cast size to unsigned long in debug messages
+    
+    - better for compatibility with C sepcs older than C99
+    - newer specs allow %zu, but 'z' specifier is not in older
+      specs, %lu being the safer approach
+    
+    (cherry picked from commit f17ac878a555b9baad3954e0e8c6b390378bad5a)
+
+commit 43dc23cf55bc7d63e0932c909ae3daf65b698c68
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 10:19:20 2016 +0200
+
+    core: mem - fmalloc - cast size to unsigned long in debug messages
+    
+    - better for compatibility with C sepcs older than C99
+    - newer specs allow %zu, but 'z' specifier is not in older specs, %lu
+      being the safer approach
+    
+    (cherry picked from commit 7e8b679b6a2c66b3695da3f1e076cfa525607d34)
+
+commit dc83ca0ba9cf77dd38d45d34294ef3b20de1bc4a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 10:04:08 2016 +0200
+
+    core: mem - use size_t for tlsf memory management functions
+    
+    (cherry picked from commit 587e24a48094ad672aa625461a69363219de6922)
+
+commit eea33aad9bb67e8f4ef7413f44cdf52d1fc35b83
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 10:03:50 2016 +0200
+
+    core: mem - use size_t for qm memory management functions
+    
+    (cherry picked from commit 7a5c95d77f863d4af6115b2b744549bd7fe6fc89)
+
+commit dd2f601207d647c0d7c8e946daaa01eddc095444
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 10:03:18 2016 +0200
+
+    core: mem - use size_t for fm memory management functions
+    
+    (cherry picked from commit b2f1456ae03f2c75aceab8eea177464dc4cc3672)
+
+commit f10511e04712242cd98efa443c1f870a5209db7f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 10:01:51 2016 +0200
+
+    core: mem - use size_t for memory management api prototypes
+    
+    - be compatible with standard malloc(...) prototype
+    
+    (cherry picked from commit bab8a6b172e2a0a6155515587e72d674205dbe0c)
+
+commit 05fe8f8de5d83437f80fe3e18950450eb98e1bce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 7 15:35:04 2016 +0200
+
+    tm: relocated pointers in cfg group structure to align them to 8bytes
+    
+    - cope with stricter cpu architectures like sparc
+    - reported by GH #655
+    
+    (cherry picked from commit 2717aed626b09298d6150c68463cb3bdb1a81906)
+
+commit 96088fc7a1f39544175a4582be1e346db17611b4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 6 17:33:08 2016 +0200
+
+    utils/misc/vim: added few missing tokens to vim syntax highlighting
+    
+    (cherry picked from commit b7e36c57f47d1b17c375db2a554c84100e1f0ee8)
+
+commit c5ae53c738381f9b6d4c6163a6630717e7fb2ed0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 11:47:23 2016 +0200
+
+    tls: fix compilation warning
+    
+    > tls_config.c:403:6: warning: ignoring return value of function declared with warn_unused_result attribute [-Wunused-result]
+    >                                         write(out_fd, &ch, 1);
+    >                                         ^~~~~ ~~~~~~~~~~~~~~
+    > tls_config.c:408:5: warning: ignoring return value of function declared with warn_unused_result attribute [-Wunused-result]
+    >                                 write(out_fd, &ch, 1);
+    >                                 ^~~~~ ~~~~~~~~~~~~~~
+    > 2 warnings generated.
+    
+    (cherry picked from commit f0ac15dc896f959cb92ad85fd1426fac1aa0bb55)
+
+commit a60ba5506c64b7752cf55e9ef3292ce21dcd1741
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 11:41:14 2016 +0200
+
+    app_java: fix compiler warning
+    
+    > java_msgobj.c:233:80: warning: comparison of array 'msg->add_to_branch_s' equal to a null pointer is always false [-Wtautological-pointer-compare]
+    >     jStrParam = (*env)->NewStringUTF(env, (msg->add_to_branch_len <= 0 || msg->add_to_branch_s == NULL) ? "" : strdup(msg->add_to_branch_s));
+    >                                                                           ~~~~~^~~~~~~~~~~~~~~    ~~~~
+    > 1 warning generated.
+    
+    (cherry picked from commit 44d17221c3a72401b1d3157cc969acf07cb80bd0)
+
+commit a0fa55b3bd63b1bbd1d29e9a07d7e6e95fad789b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 10:24:01 2016 +0200
+
+    cdp: fix compilation warnings
+    
+    > peerstatemachine.c:97:19: warning: implicit conversion from enumeration type 'peer_state_t' to different enumeration type 'peer_event_t' [-Wenum-conversion]
+    >                                         next_event = I_Snd_Conn_Req(p);
+    >                                                    ~ ^~~~~~~~~~~~~~~~~
+    > peerstatemachine.c:531:10: warning: implicit conversion from enumeration type 'peer_event_t' to different enumeration type 'peer_state_t' [-Wenum-conversion]
+    >                 return I_Rcv_Conn_NAck;
+    >                 ~~~~~~ ^~~~~~~~~~~~~~~
+    > peerstatemachine.c:534:9: warning: implicit conversion from enumeration type 'peer_event_t' to different enumeration type 'peer_state_t' [-Wenum-conversion]
+    >         return I_Rcv_Conn_Ack;
+    >         ~~~~~~ ^~~~~~~~~~~~~~
+    > 3 warnings generated.
+    
+    (cherry picked from commit 26d1426cfeb926ee440542716e7365d16b627801)
+
+commit b9b1aefa7e7e8d559e86e9cda2075d352a6eee43
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 10:22:57 2016 +0200
+
+    cdp: fix compilation warning
+    
+    > peerstatemachine.c:97:19: warning: implicit conversion from enumeration type 'peer_state_t' to different enumeration type 'peer_event_t' [-Wenum-conversion]
+    >                                         next_event = I_Snd_Conn_Req(p);
+    >                                                    ~ ^~~~~~~~~~~~~~~~~
+    > peerstatemachine.c:531:10: warning: implicit conversion from enumeration type 'peer_event_t' to different enumeration type 'peer_state_t' [-Wenum-conversion]
+    >                 return I_Rcv_Conn_NAck;
+    >                 ~~~~~~ ^~~~~~~~~~~~~~~
+    > peerstatemachine.c:534:9: warning: implicit conversion from enumeration type 'peer_event_t' to different enumeration type 'peer_state_t' [-Wenum-conversion]
+    >         return I_Rcv_Conn_Ack;
+    >         ~~~~~~ ^~~~~~~~~~~~~~
+    > 3 warnings generated.
+    
+    (cherry picked from commit 007bd7e0c874f25ff73bfd36bd210b0fed2bac7a)
+
+commit 83a8709249c4b0197eb78b70bc7e37fdd146f3e4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 10:10:13 2016 +0200
+
+    pua_xmpp: fix compilation warning
+    
+    > xmpp2simple.c:372:10: warning: expression which evaluates to zero treated as a null pointer constant of type 'char *' [-Wnon-literal-null-conversion]
+    >                 slash= '\0';
+    >                        ^~~~
+    > 1 warning generated.
+    
+    (cherry picked from commit c3bbe6e059ade56959b68e6caae2f8521734f502)
+
+commit 7d8e4e6b7b0ad43ec3920ddca941458bfe773841
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 10:05:45 2016 +0200
+
+    peering: fix compilation warning
+    
+    > verify.c:58:30: warning: comparison of array 'vp->strvalue' equal to a null pointer is always false [-Wtautological-pointer-compare]
+    >     if (vp->lvalue==0 || vp->strvalue==0)
+    >                          ~~~~^~~~~~~~  ~
+    > 1 warning generated.
+    
+    (cherry picked from commit bb545d02225f23e7d1d9c950f2e4645db3d33c4f)
+
+commit 3bc6b9123c46dab10a53baafea95a84be62cfbf9
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 10:03:42 2016 +0200
+
+    misc_radius: fix compilation warning
+    
+    > functions.c:47:27: warning: comparison of array 'vp->strvalue' equal to a null pointer is always false [-Wtautological-pointer-compare]
+    >         if (vp->lvalue==0 || vp->strvalue==0)
+    >                              ~~~~^~~~~~~~  ~
+    > 1 warning generated.
+    
+    (cherry picked from commit 4e2f17dfc6ae25739cb40328f3d5636ea1ab6fca)
+
+commit ccb09869abe80d2b5d9d709431c0499514720969
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 09:45:38 2016 +0200
+
+    auth_radius: fix compilation warning
+    
+    > authorize.c:110:8: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >         ret = AUTH_NONCE_REUSED;
+    >             ~ ^~~~~~~~~~~~~~~~~
+    > authorize.c:114:8: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >         ret = AUTH_STALE_NONCE;
+    >             ~ ^~~~~~~~~~~~~~~~
+    > authorize.c:120:8: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >         ret = AUTH_ERROR;
+    >             ~ ^~~~~~~~~~
+    > authorize.c:124:8: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >         ret = AUTH_NO_CREDENTIALS;
+    >             ~ ^~~~~~~~~~~~~~~~~~~
+    > authorize.c:131:8: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >         ret = AUTH_OK;
+    >             ~ ^~~~~~~
+    > authorize.c:148:9: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >                 ret = AUTH_ERROR;
+    >                     ~ ^~~~~~~~~~
+    > authorize.c:153:12: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >             ret = AUTH_ERROR;
+    >                 ~ ^~~~~~~~~~
+    > authorize.c:159:12: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >             ret = AUTH_ERROR;;
+    >                 ~ ^~~~~~~~~~
+    > authorize.c:186:12: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >             ret = AUTH_ERROR;
+    >                 ~ ^~~~~~~~~~
+    > authorize.c:189:12: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >             ret = AUTH_OK;
+    >                 ~ ^~~~~~~
+    > authorize.c:193:8: warning: implicit conversion from enumeration type 'enum auth_cfg_result' to different enumeration type 'auth_result_t' (aka 'enum auth_result') [-Wenum-conversion]
+    >         ret = AUTH_INVALID_PASSWORD;
+    >             ~ ^~~~~~~~~~~~~~~~~~~~~
+    > 11 warnings generated.
+    
+    (cherry picked from commit 1db19f1672ebebcb916f4415c59f5c820a1b0068)
+
+commit de13f20446d0ee18ccc1033858caf21b11cd2437
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 6 09:37:36 2016 +0200
+
+    db_berkeley: fix compilation warning
+    
+    > km_db_berkeley.c:486:58: warning: comparison of unsigned expression < 0 is always false [-Wtautological-compare]
+    >                 if ((ret = bdb_get_columns(_tbc->dtp, *_r, lres, _nc)) < 0)
+    >                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~
+    > km_db_berkeley.c:513:50: warning: comparison of unsigned expression < 0 is always false [-Wtautological-compare]
+    >                         if ((ret=bdb_append_row( *_r, dbuf, lres, i)) < 0)
+    >                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~
+    > km_db_berkeley.c:567:58: warning: comparison of unsigned expression < 0 is always false [-Wtautological-compare]
+    >                 if ((ret = bdb_get_columns(_tbc->dtp, *_r, lres, _nc)) < 0)
+    >                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~
+    > km_db_berkeley.c:572:47: warning: comparison of unsigned expression < 0 is always false [-Wtautological-compare]
+    >                 if ((ret=bdb_convert_row( *_r, dbuf, lres)) < 0)
+    >                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~
+    > 4 warnings generated.
+    
+    (cherry picked from commit 6e376ee273cb95afae31b0183e3b7bf3468c4520)
+
+commit b051f29e2064205d11ebf6f8d6b315089aa7de6f
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri Jun 3 10:34:25 2016 +0200
+
+    kamctl remove svn ID's and history
+    
+    (cherry picked from commit e3cfe2adf3af1cb7b909c5f4d3c7a481d1cfa224)
+
+commit dfc6643fbbfb7f1c469c264e6f93b0be402d5a56
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Thu Jun 2 17:34:39 2016 +0200
+
+    rtpengine: cookie is now $server_id_$mypid_$myseqn
+    
+    (cherry picked from commit 3e92a47fb3c3f4fc97f7e3cdeb33f8b111c6b1f8)
+
+commit f265cad36b2cffc83cfcb517731aea98510cafc2
+Author: Carsten Bock <carsten@ng-voice.com>
+Date:   Thu Jun 2 17:46:51 2016 +0300
+
+    JANSSON: Improved support for JSON-Type "Integer", which can in fact be long (or even long long)
+    
+    (cherry picked from commit 691e088fe5b23faa39c2f32df19690ce4b7a7c7d)
+
+commit 9d6a2aec05c77422a1e90dd89af5f63eed76c374
+Author: Mikko Lehto <mslehto@Ä±ki.fi>
+Date:   Thu Jun 2 16:50:35 2016 +0300
+
+    Revert "modules/ims_qos modules/ims_registrar_scscf: fix comparison of unsigned expression"
+    
+    This reverts commit 94b4c25640c0f486c578a9e0670dad0aa5dda0c1.
+    
+    (cherry picked from commit a787c38c241eec165c2cb8e0362ba68fa769141f)
+
+commit 2d0cb2ca09f0db87e7de02c169841c407bf41cf1
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Thu Jun 2 13:50:02 2016 +0300
+
+    rtpengine: change cookie to hostname_pid_seqno
+    
+    - pid_seqno in gencookie() is not a unique identifictor in a multi kamailio setup
+    
+    (cherry picked from commit 69e57b9260c6c09380fdb9cfd074ea67a459230a)
+
+commit 7b77d4e218224c6fa6f3ccb8280b238da0e5e4e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 2 08:34:16 2016 +0200
+
+    presence: new parameter to set the order by string for fetching records
+    
+    - used when retrieve_order is 1
+    - new param: retrieve_order_by - default value is 'priority'
+    
+    (cherry picked from commit 8c5432e5285564d6104189d6358774b8d8f3382b)
+
+commit c2e87f015f821e44bdb8bbaed8d61e695343ea2d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 31 17:21:29 2016 +0200
+
+    misc/vim: syntax highlighting for log facility values
+    
+    (cherry picked from commit ab079178ab49d8c855f135d85d8e8acfb03ec6bd)
+
+commit c4566aa89a9564859dc856036363cd803219c825
+Author: Dragos Oancea <dragos.oancea@athonet.com>
+Date:   Tue May 31 10:52:18 2016 +0200
+
+    ims_registrar_pcscf: fix getContactP() for is_registered_fallback2ip param - so that script function pcscf_is_registered() actually finds the contact .
+    
+    (cherry picked from commit e88ea4022af341bb67e959c42d2096a42ae3796d)
+
+commit e80eee8be47cfe96fbaa08f96df325bdbfc78b09
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Mon May 30 17:13:28 2016 +0300
+
+    mem: Add on-error log messages for q_/f_ functions
+    
+    Log some errors in case some memory API functions fail.
+    
+    (cherry picked from commit b0dea316a2aa471cf92f122e3432a6549cf0ff5c)
+
+commit 995d4084ebe192a51b89bd6b901e4d4b6ddd9fd7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 30 13:11:06 2016 +0200
+
+    core: setting the equivalent of IP_TOS socket option for IPv6
+    
+    - reported in GH #598
+    
+    (cherry picked from commit ff63e5c79592a37012018660552950a40a1a1581)
+
+commit 761f84a61745e433850cb286da020ea595752784
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 30 12:38:32 2016 +0200
+
+    evapi: start evapi dispatcher process with rpc rank
+    
+    - it may be used for handling responses from external app with sip
+      related functions
+    - reported by GH #622
+    
+    (cherry picked from commit 2d1a7e453301cfdee2c71ccebcd66d86f4c62b3a)
+
+commit fd6501f8fb220408c98daeb2e84cb3e17ade5d7c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 30 12:03:02 2016 +0200
+
+    ndb_mongodb: note about mongodb c driver version and tls
+    
+    (cherry picked from commit d1fbec620bdb923aace665170ddabedddd2a3697)
+
+commit 3968feedcb62ca39ae6088b3ec6c5bec875d6b37
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 30 12:02:23 2016 +0200
+
+    db_mongodb: note about mongodb c driver version and tls
+    
+    (cherry picked from commit 59daee299909a7e27b5d0ec5d9a9967cd1e8e7e3)
+
+commit fbe8523a87637518aa9d1d9d2c2954156959d5f7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 30 11:54:34 2016 +0200
+
+    tm: reset T_ASYNC_SUSPENDED flag at beginning of t_continue()
+    
+    - should allow doing t_suspend() inside the route executed by
+      t_continue()
+    - related to GH #644 and #645
+    
+    (cherry picked from commit 827ec4fc2c9fcc2bf9f814b0545ae64784d8e3b0)
+
+commit 4cc369335494f2be7ac71cbc2662c9635162a47b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 30 10:35:38 2016 +0200
+
+    tm: coherent indentation and whitespacing for t suspend code
+    
+    (cherry picked from commit d85dd4eab4eaf797ecf89a1d3540c02c207d2de4)
+
+commit c67edea82106d40f709fc60c47def88debf0f3c8
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri May 27 16:13:16 2016 +0200
+
+    sqlops Delete comment about modules_k
+    
+    (cherry picked from commit 1b29ea77e1ceef8c74da930c9df88409d47f744e)
+
+commit 3cca0eb13b151b7822ee97d4bcd4e315aaeb77b1
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri May 27 09:53:31 2016 +0200
+
+    acc_radius Remove SVN ID, history
+    
+    (cherry picked from commit 18d614e6c2eb673c08871206e6cdc153cc3c8928)
+
+commit 13a361bec5cb2491ef9bc6f8b917e14e102814d4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 26 16:54:54 2016 +0200
+
+    pv: signed int string representation for avps
+    
+    (cherry picked from commit d6124b3d894b130e3ebeabb247230966a77c9ceb)
+
+commit 52358d298f55e89841fa22899b7cb83826843c30
+Author: Andrew J Robinson <AndyJRobinson@users.noreply.github.com>
+Date:   Thu May 26 16:30:35 2016 +0200
+
+    uac: read all 12 columns from uacreg database table
+    
+    - fix when the database connector does not have DB_CAP_FETCH capability
+    - GH #642
+    
+    (cherry picked from commit d3abee96d9ddfa6b0600d9e7f6864bd5786fdebe)
+
+commit 3e0f2436d57e46dda85a9f875beedbdf3eb7724c
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Wed May 25 13:49:39 2016 +0300
+
+    modules/ims_dialog: fix clang warning -Wparentheses-equality
+    
+    (cherry picked from commit 5395bbe6522ab9b9874162874935119cff8aa764)
+
+commit eb9a338ba563919682e74306c33d87961be17414
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Wed May 25 13:49:21 2016 +0300
+
+    modules/ims_qos modules/ims_registrar_scscf: fix comparison of unsigned expression
+    
+    (cherry picked from commit 94b4c25640c0f486c578a9e0670dad0aa5dda0c1)
+
+commit 3b3481180be9878d8837f49b77cd76284cc11221
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Mon May 23 23:49:59 2016 +0300
+
+    modules/[call_control|mediaproxy]: proper assigment to NULL pointer
+    
+    CC (clang) [M mediaproxy.so]          mediaproxy.o
+    mediaproxy.c:1929:27: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+            *_params->param = MPInactive;
+                              ^~~~~~~~~~
+    
+    (cherry picked from commit 700b334b51b39056c4c0004451ca41304510f164)
+
+commit ad0f9f62fa761dcfcbe4ee21a92acc97be1c9c8f
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue May 24 12:37:44 2016 +0300
+
+    modules/sipcapture: fix possible NULL pointer dereference
+    
+    (cherry picked from commit a9cce1772d25e1f03cec3ee291ae5fb4a945f82f)
+
+commit d84d8a800e504561fe9036bc8e0fd15bd17d334f
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue May 24 12:27:14 2016 +0300
+
+    modules/uid_domain: initialize variables
+    
+    (cherry picked from commit e6a3f6605f50d16f673724a2dc6cf22fc47bc717)
+
+commit b351655cc53342137106cf9d6e4182950ee8ea0e
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue May 24 07:32:33 2016 +0300
+
+    modules/rr: initialize to NULL
+    
+    (cherry picked from commit c00867e50de1c7855fed8a05745086092fef38a5)
+
+commit c95ab90d1f8f6fcf3d172f774c8c501775a35999
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Tue May 24 12:51:06 2016 +0300
+
+    uac: reset UAC_REG_DISABLED flag (if need) after refresh
+    
+    (cherry picked from commit 8e0ae1f825c080a050c7e755eea67d2c56d6841f)
+
+commit 877beb6b77baf44ddab3dc78965b3c065a2c1ee2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 24 09:07:32 2016 +0200
+
+    Makefile.defs: cleaned unnecessary whitespaces
+    
+    (cherry picked from commit 897d8319ddce6b7834c8277ddcc436ffdbe5d164)
+
+commit 82b24524dc6df842d3d1c11bf5f5a1c16f2a8fa5
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Sun May 22 02:43:18 2016 +0300
+
+    modules/presence_conference: re-organize preprocessor symbols
+    
+    Fixes compilation on FreeBSD where no special feature request is needed
+    
+    (cherry picked from commit 9852f751edb99b5190f16ffe68c62eb0f51f85bc)
+
+commit 01698f47ab0be22f0d80cb0a66bbeb92f8177821
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Wed May 18 02:18:52 2016 +0300
+
+    lib/srdb1: fix compiler warning
+    
+    > CC (gcc) [L libsrdb1.so.1.0]            db_ut.o
+    > db_ut.c:57:32: warning: extra tokens at end of #undef directive
+    >   #undef _XOPEN_SOURCE_EXTENDED 1  /* solaris */
+    >                                 ^
+    
+    (cherry picked from commit dee2478e521f2f829c66d025fb6ca17326138910)
+
+commit 6787a5ecfec64202ec80c2e9fe85c149a31e75ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 20 07:16:46 2016 +0200
+
+    dispatcher: get rid of compile warning about unreachable code
+    
+    (cherry picked from commit 5ac0f5c43da106e8130143a2ad83d4a131513a18)
+
+commit cac8f8df9dc1ccd6c97e80aaee1f4f3d766f1f7e
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Wed May 18 20:07:38 2016 +0300
+
+    uac: uac.reg_refresh doc is supplemented
+    
+    (cherry picked from commit 3310aa311b76d44f33cf784d20b874db259b61b2)
+
+commit 14c1376a8b1afecae229124d84acb629b60424cc
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue May 17 14:49:54 2016 +0300
+
+    lib/srutils: fix gcc warning GH#612
+    
+    > sha256.c: In function 'sr_SHA256_Final':
+    > sha256.c:613:3: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+    >    *(sha2_word64*)&context->buffer[SHA256_SHORT_BLOCK_LENGTH] = context->bitcount;
+    >    ^
+    > sha256.c: In function 'SHA512_Last':
+    > sha256.c:930:2: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+    >    *(sha2_word64*)&context->buffer[SHA512_SHORT_BLOCK_LENGTH] = context->bitcount[1];
+    >    ^
+    > sha256.c:931:2: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+    >  *(sha2_word64*)&context->buffer[SHA512_SHORT_BLOCK_LENGTH+8] = context->bitcount[0];
+    >  ^
+    
+    (cherry picked from commit cfccbfa8590dffe9a1282dba6ce757f686f55599)
+
+commit d26f29930d3ccc01419f0868637c7a1f1eb8173d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 17 13:23:11 2016 +0200
+
+    presence_xml: fix compiler warning #612
+    
+    > CC (gcc) [M presence_xml.so]		pidf.o
+    > In file included from /usr/include/time.h:27:0,
+    >                  from pidf.c:50:
+    > /usr/include/features.h:148:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+    >  # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+    
+    (cherry picked from commit 9f1aa931dafc0d654af4d51b5e4ab6a72a71fb0c)
+
+commit ea3002aa6f7d1edf8cb25d9338903049132c33fe
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 17 13:22:18 2016 +0200
+
+    presence_dialoginfo: fix compiler warnings #612
+    
+    > CC (gcc) [M presence_dialoginfo.so]		pidf.o
+    > In file included from /usr/include/time.h:27:0,
+    >                  from pidf.c:48:
+    > /usr/include/features.h:148:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+    >  # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+    
+    (cherry picked from commit e8c7b29e1d051619595f2d45276d8c775bc278a3)
+
+commit 387ed0885d17d8210864b45f43ec0dea564777a4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 17 13:20:45 2016 +0200
+
+    db2_ldap: fix compiler warnings #612
+    
+    > CC (gcc) [M db2_ldap.so]		ld_fld.o
+    > In file included from /usr/include/string.h:25:0,
+    >                  from ../../str.h:24,
+    >                  from ld_cfg.h:30,
+    >                  from ld_fld.h:37,
+    >                  from ld_fld.c:39:
+    > /usr/include/features.h:148:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+    >  # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+    
+    (cherry picked from commit 08927c98edab0c1201138fbd4f9760dcdf3a35c1)
+
+commit 5245837ff6af3c88f5a9bb8ee4f5266379fb97ff
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 17 13:02:22 2016 +0200
+
+    presence_conference: fix compiler warnings #612
+    
+    > CC (gcc) [M presence_conference.so]		pidf.o
+    > In file included from /usr/include/time.h:27:0,
+    >                  from pidf.c:49:
+    > /usr/include/features.h:148:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+    >  # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+    
+    (cherry picked from commit 3976224f6bb4b790b1752a00174439a1e2de1665)
+
+commit 2aa23040971693c9ebc598e3b4bea79e3d2a86de
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 17 12:09:02 2016 +0200
+
+    db_mysql: fix compile warning #612
+    
+    > CC (gcc) [M db_mysql.so]		my_cmd.o
+    > In file included from /usr/include/string.h:25:0,
+    >                  from ../../lib/srdb2/../../str.h:24,
+    >                  from ../../lib/srdb2/db_gen.h:30,
+    >                  from ../../lib/srdb2/db_drv.h:29,
+    >                  from my_cmd.h:25,
+    >                  from my_cmd.c:33:
+    > /usr/include/features.h:148:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+    >  # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+    
+    (cherry picked from commit 3c4fa1250c8c3de74e9415a064ba75f97e1cbb4f)
+
+commit b6d341548abeb85f20c305b4cf0617e8f9a404ee
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri May 13 10:36:45 2016 +0200
+
+    lib/srdb1: fix compiler warning #612
+    
+    > CC (gcc) [L libsrdb1.so.1.0]    db_ut.o
+    > In file included from /usr/include/time.h:27:0,
+    >                  from db_ut.c:50:
+    > /usr/include/features.h:148:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+    >  # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+    
+    (cherry picked from commit 09470aed719b0fad6c600d9c18a339e343550f33)
+
+commit 78192719edaa1327a4420a2f248ee5602eae91aa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 17 08:16:12 2016 +0200
+
+    cfgutils: added more to docs for route exists functions
+    
+    (cherry picked from commit 472782d2f094b1971543b4d0c3733058d9086d78)
+
+commit 0aa9f5458a59909a756b5a6f0d692ec264bb3fa3
+Author: Phil Lavin <phil.lavin@synety.com>
+Date:   Mon May 16 15:17:04 2016 +0100
+
+    pua_dialoginfo: reduce the log level of every call to dialog_publish
+    
+    Change the log level of calls to dialog_publish() from INFO to DBG
+    
+    (cherry picked from commit a5e89b42151ba3697835cff4a2a379422a9afc46)
+
+commit e8a063a7001bad32144765f12928cf188b773e20
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 15 08:52:29 2016 +0200
+
+    usrloc: coonect to db from rpc processes
+    
+    - evapi consumers are using rpc rank and there can be save/lookup
+      operations
+    - reported by GH #622
+    
+    (cherry picked from commit ee11732bdc1637d646b772ce22d43bd571f7a736)
+
+commit c6740e84d2dd42e7aa0da33d18228c516573de46
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 14 10:11:33 2016 +0200
+
+    jansson: removed empty parameters section
+    
+    - added section ids
+    
+    (cherry picked from commit 92dcec82b4f7e0de07e06d51bd57d612c949241c)
+
+commit feaae5a731c35778d8de32a7c87baead2def4987
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat May 14 09:30:55 2016 +0200
+
+    acc_radius: added section ids in docbook
+    
+    (cherry picked from commit 38bdeee32afb895af3a759373e1c29a30e5e5560)
+
+commit 27e2343d5e7da9c03fd37ecbe49e126d4a753d75
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri May 13 10:34:33 2016 +0200
+
+    dispatcher: fix compiler warning #612
+    
+    > CC (gcc) [M dispatcher.so]      dispatch.o
+    > dispatch.c: In function 'ds_set_attrs':
+    > dispatch.c:263:8: warning: 'tmp_rweight' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >     int tmp_rweight;
+    >         ^
+    > make[3]: 'libkmi.so.1.0' is up to date.
+    
+    (cherry picked from commit 6dd4b1f83cb041a42571ef1355832661be0ae492)
+
+commit debffdc10887a0654ce1e6451dead14aa36083b2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri May 13 10:25:42 2016 +0200
+
+    dmq_usrloc: fix compiler warning #612
+    
+    > CC (gcc) [M dmq_usrloc.so]      usrloc_sync.o
+    > usrloc_sync.c: In function 'usrloc_dmq_handle_msg':
+    > usrloc_sync.c:403:12: warning: 'reg_id' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   ci.reg_id = reg_id;
+    >             ^
+    > usrloc_sync.c:401:13: warning: 'methods' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   ci.methods = methods;
+    >              ^
+    > usrloc_sync.c:405:19: warning: 'last_modified' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   ci.last_modified = last_modified;
+    >                    ^
+    > usrloc_sync.c:394:7: warning: 'q' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   ci.q = q;
+    >        ^
+    > usrloc_sync.c:399:12: warning: 'cflags' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   ci.cflags = cflags;
+    >             ^
+    > usrloc_sync.c:397:11: warning: 'flags' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   ci.flags = flags;
+    >            ^
+    > usrloc_sync.c:396:10: warning: 'cseq' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   ci.cseq = cseq;
+    >           ^
+    > usrloc_sync.c:393:13: warning: 'expires' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   ci.expires = expires;
+    >              ^
+    > usrloc_sync.c:407:2: warning: 'action' may be used uninitialized in this function [-Wmaybe-uninitialized]
+    >   switch(action) {
+    >   ^
+    > make[3]: 'libsrutils.so.1.0' is up to date.
+    
+    (cherry picked from commit c7c8d31e4a4f9640673099aa1589e3fe96fad558)
+
+commit 1740d3861d0bcabe3897285fc1f64629da1433a0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu May 12 22:08:28 2016 +0200
+
+    sms: fix compiler warning #612 (#617)
+    
+    * show error message if error in write
+    
+    > CC (clang) [M sms.so]       libsms_modem.o
+    > libsms_modem.c:77:2: warning: ignoring return value of function declared with warn_unused_result attribute [-Wunused-result]
+    >        write(mdm->fd,cmd,cmd_len);
+    >        ^~~~~ ~~~~~~~~~~~~~~~~~~~
+    >1 warning generated.
+    (cherry picked from commit a61ff084bc87c7d3dd05b14afd35795b466d37dc)
+
+commit 644bc141ca91c86fdf83b0998558dd647e6a0693
+Author: Frank Carmickle <frank@silentcircle.com>
+Date:   Thu May 12 18:00:52 2016 +0200
+
+    tm: updated the reason text for canceled branches after one is answered
+    
+    - change answered elsewhere to call completed elsewhere
+    - "Call completed elsewhere", RFC3326, defines this as the string to send
+    - submited by William King <william.king@quentustech.com>, GH #610
+    
+    (cherry picked from commit e75837afc7e146d0f43e637d394146c3f1d05eea)
+
+commit 99e1c33b1bb16959273114eebcf1cf134d75997d
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Jun 9 15:46:27 2016 +0200
+
+    modules: readme files regenerated - dialog ...
+
+commit a3b6c3f836e8988b843eb25d5f553ff554821df8
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Thu Jun 9 15:42:42 2016 +0200
+
+    docbook Update location of our bug tracker
+
+commit b5d274b52619a935a71a346cb7cf24486a8474c5
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Jun 8 14:50:15 2016 +0200
+
+    modules: readme files regenerated - app_mono ...
+
+commit 42be15030909cf31cedbb3642e2a6b51b2b5ae9f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 17 13:24:05 2016 +0200
+
+    xmlrpc: fix compiler warning #612
+    
+    > CC (gcc) [M xmlrpc.so]		xmlrpc.o
+    > In file included from /usr/include/strings.h:26:0,
+    >                  from xmlrpc.c:28:
+    > /usr/include/features.h:148:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+    >  # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+    
+    (cherry picked from commit 947fe8673c3014f4d011583bed95d44408b907f4)
+
+commit 253909bf673c0a59e7adf578bb5df73eb157d0f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 7 15:21:06 2016 +0200
+
+    tls: proper check of libssl versions used for compilation and available on system
+    
+    - shift out the last 12bits, being the patch version and status (see man
+      SSLeay)
+    - reported by Victor Seva, GH #662
+    
+    (cherry picked from commit c38b4c7345a6806f48a0cdb07841e10bc962e1bf)
+
+commit bb07a9d6229bbd191078d3a886b82308d066dbda
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Jun 7 14:25:31 2016 +0200
+
+    dialog Document states of a dialog
+    
+    The states are stored in the state_column in the database, but was only explained in source code previously
+    
+    (cherry picked from commit 50346dbc671078cab8e1d9f21f410a96286c7a83)
+
+commit 9d4e2e1c987e2c5d15dd6f6c434e0467d678a46e
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Jun 7 14:05:17 2016 +0200
+
+    dialog Use correct default name for toroute_name database column
+    
+    (cherry picked from commit 6196309a05c5de13dab2606bd2e227cebd7fa477)
+
+commit 09cb608ee56ca4d336d5a02c8bf2fd5ea05ff4d0
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue Jun 7 13:48:52 2016 +0200
+
+    dialog fix typo in README and doc
+    
+    The call_id_column variable was named callid_column in the doc.
+
+commit 70a2ab1c64bc19d4b67e09b990b78a23593999ce
+Author: jaybeepee <jason.penton@gmail.com>
+Date:   Thu Jun 2 16:30:21 2016 +0200
+
+    modules/ims_usrloc_scscf: do not use DB functions if db_mode not enabled.
+    
+    (cherry picked from commit 06df7d591e56d48ddbc100e5be4dc917731fc1a4)
+
+commit 7a0de650d5d443f84fd3aeb8d6209663074dc6da
+Author: grumvalski <federico.cabiddu@gmail.com>
+Date:   Sun Jun 5 08:27:37 2016 +0200
+
+    cnxcc: release credit_data in terminate_all_calls
+    
+    - GH #563
+    
+    (cherry picked from commit d0bdaa7567240b18794ab7512b09a55767c44240)
+
+commit 12b0480169feab25ad68509c23f472155f10082b
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 3 13:55:42 2016 +0200
+
+    xmlrpc: remove redeclaration of snprintf and vsnprintf
+    
+    compilation was failling with clang:
+    
+    > CC (clang) [M xmlrpc.so]		xmlrpc.o
+    > xmlrpc.c:152:5: error: expected parameter declarator
+    > int snprintf(char *str, size_t size, const char *format, ...);
+    >     ^
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:39: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >                                       ^
+    > /usr/include/features.h:329:31: note: expanded from macro '__USE_FORTIFY_LEVEL'
+    > #  define __USE_FORTIFY_LEVEL 2
+    >                               ^
+    > xmlrpc.c:152:5: error: expected ')'
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:39: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >                                       ^
+    > /usr/include/features.h:329:31: note: expanded from macro '__USE_FORTIFY_LEVEL'
+    > #  define __USE_FORTIFY_LEVEL 2
+    >                               ^
+    > xmlrpc.c:152:5: note: to match this '('
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:28: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >                            ^
+    > xmlrpc.c:152:5: error: conflicting types for '__builtin___snprintf_chk'
+    > int snprintf(char *str, size_t size, const char *format, ...);
+    >     ^
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:3: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >   ^
+    > xmlrpc.c:152:5: note: '__builtin___snprintf_chk' is a builtin with type 'int (char *, unsigned long, int, unsigned long, const char *, ...)'
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:3: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >   ^
+    > 3 errors generated.
+    
+    (cherry picked from commit 358de10a94bef4df6b1811ac8e88ea4e7919542c)
+
+commit e4e5ad4c674d1b27f0c68b7932b679b36e50c08d
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 3 11:17:07 2016 +0200
+
+    travis: remove rebuild twice for MEMDBG test
+    
+    (cherry picked from commit eb0d271af95ba0eb409716335d86351ea9e94343)
+
+commit 520b6fcd3ae75575c61b31a41d49ddaeab87f24f
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 3 11:12:50 2016 +0200
+
+    pkg/kamailio/deb: fix build rule for modules
+    
+    (cherry picked from commit 2115943fb5beb11a4b461c14f16dc42df8f32ab3)
+
+commit e5f76d42e98b70ad77b275c654b48a7f22b2df66
+Merge: 9bbe982 cad6a67
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri May 27 16:14:28 2016 +0200
+
+    Merge branch '4.4' of https://github.com/kamailio/kamailio into 4.4
+    
+    Apologies
+    
+    * '4.4' of https://github.com/kamailio/kamailio:
+      uac: proper skip of uacreg records with empty attributes
+      uac: proper handling of empty attribute for uacreg refresh
+      Makefile.defs: detect gcc 6.x
+
+commit 9bbe98204295df6a0a2eadc6aaf539c6597f99b5
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri May 27 16:12:43 2016 +0200
+
+    sqlops Document return values for sql_query()
+    
+    (cherry picked from commit 639574e79200b5ffae4274b862ad595bd209da24)
+
+commit cad6a67a41c8085f126798859b38a64a7350fbf6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 27 11:39:09 2016 +0200
+
+    uac: proper skip of uacreg records with empty attributes
+    
+    (cherry picked from commit 451b19597c5436ba481a49ecc89cc113829a9425)
+
+commit 3acfc0003915401f1a27120b9a5d329b2e52e78d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 27 11:14:26 2016 +0200
+
+    uac: proper handling of empty attribute for uacreg refresh
+    
+    - reg_db_set_attr() does a continue on empty value, but for this
+      operation was not used inside a loop
+    - reported by Dmitri Savolainen, GH #643
+    
+    (cherry picked from commit a34b382002cf9efe13c913f547ffacec3bd7757f)
+
+commit 6a01019bf63cf897d2430d6ada085cd23465fa79
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 24 00:00:34 2016 +0200
+
+    Makefile.defs: detect gcc 6.x
+    
+    - reported by Anthony Messina, GH #633
+    
+    (cherry picked from commit 1975ebdf37b9ffd325a38960bc0bf417466b432f)
+
+commit d6710fdaf1ea8705655025e231d27828ac89da82
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Tue May 24 10:42:38 2016 +0200
+
+    kex Fix spelling error and add "core" as an example of a module name
+    
+    (cherry picked from commit b5ef63f447e82caf95aa7f03d3c3c0e0e5de5503)
+
+commit 63dea59a507c1e949c4eb605ca5b56163b25c8d4
+Author: Federico Cabiddu <federico.cabiddu@gmail.com>
+Date:   Tue May 17 14:06:56 2016 +0200
+
+    http_async_client: workaround for dealing with HTTP Via format in replies
+    
+    (cherry picked from commit 2449f8591261b207c091f9a44ce6cf40bdb71ab6)
+
+commit 053c522e45fedea8bdb2ed92bd1de0a82331a7bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 12 16:52:34 2016 +0200
+
+    cfgutils: proper check for return code looking up routing block in route_exists()
+    
+    - when the route block doesn't exist, route_lookup() returns -1, which
+      was used to access routing actions due to condition expecting 0 on not
+      found. The fix should avoid crashing by accessing invalid addresses.
+      Reported by Alex Balashov
+    - fixed return codes in the configuration file to follow the rules with
+      positive being evaluated to true and negative to false
+    - route_exists() returns the code returned by running actions, like a
+      classic sub-route execution
+    
+    (cherry picked from commit 6a3fc200b19500ddd6ed9a2236db6e21f777564a)
+
+
 ===================== 2016-05-10 Version 4.4.1 Released =====================
 
 ===================== Changes Since Version 4.4.0 ===========================
