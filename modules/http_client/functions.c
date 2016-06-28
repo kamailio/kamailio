@@ -434,8 +434,12 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = 1;
 	query_params.maxdatasize = 0;
-	query_params.http_proxy = as_asciiz(&default_http_proxy);
-	query_params.http_proxy_port = default_http_proxy_port;
+	if(default_http_proxy.s!=NULL && default_http_proxy.len>0) {
+		query_params.http_proxy = default_http_proxy.s;
+			if(default_http_proxy_port>0) {
+				query_params.http_proxy_port = default_http_proxy_port;
+			}
+	}
 
 	res =  curL_query_url(_m, _url, _dst, &query_params);
 
