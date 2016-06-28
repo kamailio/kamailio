@@ -498,6 +498,8 @@ Description: Provides a set utility functions for Kamailio
  .
  Provides a set of utility functions for Kamailio, which are not related
  to the server configuration.
+ .
+ Includes http client (http_client) module too
 
 Package: kamailio-sctp-modules
 Architecture: linux-any
