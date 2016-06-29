@@ -180,7 +180,7 @@ modparam("pike", "pike_log_level", -1)
    was exceeding the blocking limit.
 
    Return codes:
-     * 1 (true) - IP is not to be blocked or internal error occured.
+     * 1 (true) - IP is not to be blocked or internal error occurred.
 
 Warning
        IMPORTANT: in case of internal error, the function returns true to
