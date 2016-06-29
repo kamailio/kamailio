@@ -180,7 +180,7 @@ int extra2strar( struct extra_attr *extra, struct sip_msg *rq, str *val_arr)
 
 	/* check for overflow */
 	if (n == MAX_EXTRA) {
-	    LM_WARN("array too short -> ommiting extras for accounting\n");
+	    LM_WARN("array too short -> omitting extras for accounting\n");
 	    return -1;
 	}
 

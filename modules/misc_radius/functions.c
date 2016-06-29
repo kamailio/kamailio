@@ -285,7 +285,7 @@ int radius_load_caller_avps(struct sip_msg* _m, char* _caller, char* _s2)
         } else if(res == REJECT_RC){
                 LM_ERR("Authz radius - Load Caller - REJECTED \n");
         } else{
-                LM_ERR("Authz radius - Load Caller - Unkown Response \n");
+                LM_ERR("Authz radius - Load Caller - Unknown Response \n");
         }
 
         rc_avpair_free(send);
@@ -376,7 +376,7 @@ int radius_load_callee_avps(struct sip_msg* _m, char* _callee, char* _s2)
         } else if(res == REJECT_RC){
                 LM_ERR("Authz radius - Load Callee - REJECTED \n");
         } else {
-                LM_ERR("Authz radius - Load Callee - Unkown response \n");
+                LM_ERR("Authz radius - Load Callee - Unknown response \n");
         }
         rc_avpair_free(send);
 
@@ -476,7 +476,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _user, char* _group)
         } else if(res == REJECT_RC){
                 LM_ERR("Authz radius - REJECTED \n");
         } else{
-                LM_ERR("Authz radius - Unkown Response \n");
+                LM_ERR("Authz radius - Unknown Response \n");
         }
 
         rc_avpair_free(send);
@@ -720,7 +720,7 @@ int radius_does_uri_user_exist(struct sip_msg* _m, str user)
         } else if(res == REJECT_RC){
                 LM_ERR("Authz radius  - REJECTED \n");
         } else {
-                LM_ERR("Authz radius  - Unkown response \n");
+                LM_ERR("Authz radius  - Unknown response \n");
         }
  	
  	rc_avpair_free(send);
