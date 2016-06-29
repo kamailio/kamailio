@@ -1702,7 +1702,7 @@ error:
  * Declares all auth vectors as useless when we do a synchronization
  * @param private_identity - the private identity
  * @param public_identity - the public identity
- * @returns 1 on sucess, 0 on error
+ * @returns 1 on success, 0 on error
  */
 int drop_auth_userdata(str private_identity, str public_identity) {
     auth_userdata *aud;
