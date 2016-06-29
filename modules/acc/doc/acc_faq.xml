@@ -17,7 +17,7 @@
 
 	<qandaentry>
 		<question>
-		<para>What happend with old log_fmt parameter</para>
+		<para>What happened with old log_fmt parameter</para>
 		</question>
 		<answer>
 		<para>
@@ -31,7 +31,7 @@
 
 	<qandaentry>
 		<question>
-		<para>What happend with old multi_leg_enabled parameter</para>
+		<para>What happened with old multi_leg_enabled parameter</para>
 		</question>
 		<answer>
 		<para>
@@ -44,7 +44,7 @@
 
 	<qandaentry>
 		<question>
-			<para>What happend with old src_leg_avp_id and dst_leg_avp_id
+			<para>What happened with old src_leg_avp_id and dst_leg_avp_id
 				parameters</para>
 		</question>
 		<answer>

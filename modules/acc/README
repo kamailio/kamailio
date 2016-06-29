@@ -1526,16 +1526,16 @@ acc_diam_request("$var(code) Error: $avp(reason)");
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with old log_fmt parameter
-   2.2. What happend with old multi_leg_enabled parameter
-   2.3. What happend with old src_leg_avp_id and dst_leg_avp_id parameters
+   2.1. What happened with old log_fmt parameter
+   2.2. What happened with old multi_leg_enabled parameter
+   2.3. What happened with old src_leg_avp_id and dst_leg_avp_id parameters
    2.4. Where can I find more about Kamailio?
    2.5. Where can I post a question about this module?
    2.6. How can I report a bug?
 
    2.1.
 
-       What happend with old log_fmt parameter
+       What happened with old log_fmt parameter
 
        The parameter became obsolete with the restructure of the data logged
        by ACC module (refer to the Overview chapter). For similar behaviour
@@ -1543,7 +1543,7 @@ Chapter 2. Frequently Asked Questions
 
    2.2.
 
-       What happend with old multi_leg_enabled parameter
+       What happened with old multi_leg_enabled parameter
 
        The parameter becaome obsolete by the addition of the new
        multi_leg_info parameter. The multi-leg accouting is automatically
@@ -1551,7 +1551,7 @@ Chapter 2. Frequently Asked Questions
 
    2.3.
 
-       What happend with old src_leg_avp_id and dst_leg_avp_id parameters
+       What happened with old src_leg_avp_id and dst_leg_avp_id parameters
 
        The parameter was replaced by the more generic new parameter
        multi_leg_info. This allows logging (per-leg) of more information than
