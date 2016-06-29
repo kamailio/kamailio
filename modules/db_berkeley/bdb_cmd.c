@@ -224,7 +224,7 @@ int bdb_query(db_cmd_t* cmd, bdb_cmd_t *bcmd)
 	db = tp->db;
 	if(db==NULL)
 	{
-		ERR("bdb: db structure not intialized!\n");
+		ERR("bdb: db structure not initialized!\n");
 		return -1;
 	}
 
