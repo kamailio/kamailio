@@ -140,7 +140,7 @@ int mq_head_add(str *name, int msize)
 
 	if(!shm_initialized())
 	{
-		LM_ERR("shm not intialized - cannot define mqueue now\n");
+		LM_ERR("shm not initialized - cannot define mqueue now\n");
 		return 0;
 	}
 
