@@ -111,7 +111,7 @@ Options:
          -g | --grp  name
          --group     name      - select group name used if one cannot be
                                  autodetected (e.g. no default value 
-                                 intializer present in the file).
+                                 initializer present in the file).
          -G | --force-grp name
          --force-group    name - force using a select group name, even if one
                                  is autodetected (see also -g).

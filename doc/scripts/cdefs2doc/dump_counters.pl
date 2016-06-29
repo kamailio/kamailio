@@ -258,7 +258,7 @@ print(STDERR "Parsing file $file...\n") if $dbg;
 # @7705 (var name)  	identifier_node strg: tcp_cfg_def lngt 11
 # @7706 (var type)  	array_type: size:@7709 algn: 32 elts: @2265 domn: @7718
 # @7707 (? next ?  )	function_decl: ....
-# @7708 (intializer)	constructor: lngt: 25
+# @7708 (initializer)	constructor: lngt: 25
 #                                    idx : @20      val : @7723    [...]
 # @7709             	interget_cst: type: @11 low: 5600
 #
