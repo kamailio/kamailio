@@ -219,7 +219,7 @@ modparam("dmq", "multi_notify", 1)
 
    Example 1.5. Set num_workers parameter
 ...
-modparam("dmq", "num_threads", 4)
+modparam("dmq", "num_workers", 4)
 ...
 
 3.5. ping_interval(int)
