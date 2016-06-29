@@ -143,9 +143,9 @@ modparam("tcpops", "closed_event", 0)
 
    -2: Socket has reached EOF
 
-   -3: Socket error has occured. Connection will likely close.
+   -3: Socket error has occurred. Connection will likely close.
 
-   -4: Socket is in unknow bad state. Connection will likely close.
+   -4: Socket is in unknown bad state. Connection will likely close.
 
    Example 1.3. tcp_conid_state usage
 ...
@@ -164,7 +164,7 @@ modparam("tcpops", "closed_event", 0)
        mechanism will be enabled on the current message source connection.
      * idle (seconds): the time before the first keepalive packet is sent
        out.
-     * count: number of non-acked keepalive before reseting the
+     * count: number of non-acked keepalive before resetting the
        connection.
      * interval (seconds): time between two keepalive probes.
 
