@@ -760,7 +760,7 @@ int dbt_sort_result(dbt_result_p _dres, int *_o_l, char *_o_op, int _o_n, int *_
 	_i = setjmp(dbt_sort_jmpenv);  /* exception handling */
 	if (_i)
 	{
-		/* error occured during qsort */
+		/* error occurred during qsort */
 		LM_ERR("qsort aborted\n");
 		pkg_free(_a);
 		return _i;
