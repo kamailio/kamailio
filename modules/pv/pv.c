@@ -470,6 +470,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_K_name, 0, 0, 0 },
 	{ {"expires", (sizeof("expires")-1)}, PVT_OTHER, pv_get_expires, 0,
 		pv_parse_expires_name, 0, 0, 0 },
+	{ {"msg", (sizeof("msg")-1)}, PVT_OTHER, pv_get_msg_attrs, 0,
+		pv_parse_msg_attrs_name, 0, 0, 0 },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

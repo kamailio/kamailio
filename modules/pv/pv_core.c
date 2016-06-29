@@ -32,6 +32,7 @@
 #include "../../lib/kcore/cmpapi.h"
 #include "../../tcp_conn.h"
 #include "../../pvapi.h"
+#include "../../trim.h"
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -3108,6 +3109,107 @@ int pv_get_expires(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_uintval(msg, param, res, exp_min);
 		case 1:
 			return pv_get_uintval(msg, param, res, exp_max);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+int pv_parse_msg_attrs_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 3:
+			if(strncmp(in->s, "len", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "buf", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "body", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "hdrs", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		case 5:
+			if(strncmp(in->s, "fline", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		case 8:
+			if(strncmp(in->s, "body_len", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV expires key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	str s;
+	if(msg==NULL)
+		return pv_get_null(msg, param, res);
+
+	if(param==NULL)
+		return pv_get_null(msg, param, res);
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0: /* length */
+			return pv_get_uintval(msg, param, res, msg->len);
+		case 1: /* buffer */
+			s.s = msg->buf;
+			s.len = msg->len;
+			return pv_get_strval(msg, param, res, &s);
+		case 2: /* body */
+			s.s = get_body(msg);
+			if(s.s == NULL) {
+				LM_DBG("no message body\n");
+				return pv_get_null(msg, param, res);
+			}
+			s.len = msg->buf + msg->len - s.s;
+			return pv_get_strval(msg, param, res, &s);
+		case 3: /* headers */
+			if(msg->unparsed==NULL)
+				return pv_get_null(msg, param, res);
+			s.s = msg->buf + msg->first_line.len;
+			s.len = msg->unparsed - s.s;
+			trim(&s);
+			return pv_get_strval(msg, param, res, &s);
+		case 4: /* first line */
+			s.s = msg->buf;
+			s.len = msg->first_line.len;
+			trim(&s);
+			return pv_get_strval(msg, param, res, &s);
+		case 5: /* body size */
+			s.s = get_body( msg );
+			s.len = 0;
+			if (s.s != NULL)
+				s.len = msg->buf + msg->len - s.s;
+			return pv_get_sintval(msg, param, res, s.len);
+
 		default:
 			return pv_get_null(msg, param, res);
 	}

@@ -330,5 +330,9 @@ int pv_parse_expires_name(pv_spec_p sp, str *in);
 int pv_get_expires(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_parse_msg_attrs_name(pv_spec_p sp, str *in);
+
+int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
 #endif
 
