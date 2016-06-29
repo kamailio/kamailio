@@ -1977,7 +1977,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				}
 			}
 		} else {
-			LM_NOTICE("dst no longer set - skiped sending the reply out\n");
+			LM_NOTICE("dst no longer set - skipped sending the reply out\n");
 		}
 		/* Call put_on_wait() only if we really send out
 		* the reply. It can happen that the reply has been already sent from

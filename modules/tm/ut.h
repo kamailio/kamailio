@@ -214,7 +214,7 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
  *  which a send socket is found will be used. If no send_socket are found,
  *  the first ip is selected.
  *
- * params: dns_h - pointer to a valid dns_srv_handle structure (intialized!) or
+ * params: dns_h - pointer to a valid dns_srv_handle structure (initialized!) or
  *                 null. If null or use_dns_failover==0 normal dns lookup will
  *                 be performed (no failover).
  *         dst   - will be filled
@@ -339,7 +339,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
  *  which a send socket is found will be used. If no send_socket are found,
  *  the first ip is selected.
  *
- * params: dns_h - pointer to a valid dns_srv_handle structure (intialized!) or
+ * params: dns_h - pointer to a valid dns_srv_handle structure (initialized!) or
  *                 null. If null or use_dns_failover==0 normal dns lookup will
  *                 be performed (no failover).
  *         dst   - will be filled

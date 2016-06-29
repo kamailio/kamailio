@@ -142,7 +142,7 @@ void put_on_wait(  struct cell  *Trans  )
 											transaction deleted
 	*/
 	if (timer_add(&Trans->wait_timer, cfg_get(tm, tm_cfg, wait_timeout))==0){
-		/* sucess */
+		/* success */
 		t_stats_wait();
 	}else{
 		DBG("tm: put_on_wait: transaction %p already on wait\n", Trans);

@@ -1895,9 +1895,9 @@ end:
  *
  * return value:
  *    0: the CANCEL was successfully relayed
- *       (or error occured but reply cannot be sent) => DROP
+ *       (or error occurred but reply cannot be sent) => DROP
  *    1: no corresponding INVITE transaction exisis
- *   <0: corresponding INVITE transaction exisis but error occured
+ *   <0: corresponding INVITE transaction exisis but error occurred
  */
 int t_relay_cancel(struct sip_msg* p_msg)
 {
