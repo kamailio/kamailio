@@ -91,7 +91,7 @@ int db_mongodb_bson_filter_add(bson_t *doc, const db_key_t* _k, const db_op_t* _
 		ocmp.s = "$ne";
 		ocmp.len = 3;
 	} else {
-		LM_ERR("unsuported match operator: %s\n", _op[idx]);
+		LM_ERR("unsupported match operator: %s\n", _op[idx]);
 		goto error;
 	}
 
