@@ -195,7 +195,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 	pretran_t *it;
 
 	if(_tmx_ptran_table==NULL) {
-		LM_ERR("pretran hash table not intialized yet\n");
+		LM_ERR("pretran hash table not initialized yet\n");
 		return -1;
 	}
 	if(get_route_type()!=REQUEST_ROUTE) {
