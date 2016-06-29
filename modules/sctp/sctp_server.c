@@ -129,8 +129,8 @@ error:
 
 
 /* check if support fot all the needed sockopts  was compiled;
-   an ascii list of the unsuported options is returned in buf
-   returns 0 on success and  -number of unsuported options on failure
+   an ascii list of the unsupported options is returned in buf
+   returns 0 on success and  -number of unsupported options on failure
    (<0 on failure)
 */
 int sctp_check_compiled_sockopts(char* buf, int size)
@@ -253,7 +253,7 @@ int sctp_get_os_defaults(struct cfg_group_sctp* cfg)
 
 
 /** get the os cfg options from a specific socket.
- *  @param s - intialized sctp socket
+ *  @param s - initialized sctp socket
  *  @param cfg - filled with the os defaults
  *  @return -1 on error, 0 on success
  */
@@ -1971,7 +1971,7 @@ int init_sctp()
 	
 	ret=0;
 	if (INIT_SCTP_STATS()!=0){
-		ERR("sctp init: failed to intialize sctp stats\n");
+		ERR("sctp init: failed to initialize sctp stats\n");
 		goto error;
 	}
 	/* sctp options must be initialized before  calling this function */
