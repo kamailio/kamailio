@@ -579,7 +579,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
    callback routes executed by http_async_query()
      * $http_ok: 1 if cURL executed the request successfully, 0 otherwise
        (check $http_err for details)
-     * $http_err: cURL error string if an error occured, $null otherwise
+     * $http_err: cURL error string if an error occurred, $null otherwise
      * $http_rs: http status
      * $http_rr: http reason phrase
      * $http_hdr(Name): value of the Name header (the $(http_hdr(Name)[N])

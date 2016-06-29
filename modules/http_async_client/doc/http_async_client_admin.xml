@@ -600,7 +600,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 			<emphasis>$http_ok</emphasis>: 1 if cURL executed the request successfully, 0 otherwise (check $http_err for details)
 		</para></listitem>
 		<listitem><para>
-			<emphasis>$http_err</emphasis>: cURL error string if an error occured, $null otherwise
+			<emphasis>$http_err</emphasis>: cURL error string if an error occurred, $null otherwise
 		</para></listitem>
 		<listitem><para>
 			<emphasis>$http_rs</emphasis>: http status
