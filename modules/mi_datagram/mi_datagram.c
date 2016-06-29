@@ -162,7 +162,7 @@ static int mi_mod_init(void)
 		return -1;
 	}
 
-	LM_DBG("the socket's name/addres is %s\n", mi_socket);
+	LM_DBG("the socket's name/address is %s\n", mi_socket);
 
 	memset( &mi_dtgram_addr, 0, sizeof(mi_dtgram_addr) );
 
