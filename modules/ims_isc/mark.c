@@ -269,7 +269,7 @@ int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark) {
  * 			 
  *
  *	@param msg - SIP mesage to mark
- *	@param as - SIP addres of the application server to forward to
+ *	@param as - SIP address of the application server to forward to
  *	@param iscmark - the mark to write
  *	@returns 1 on success, else 0
  */
