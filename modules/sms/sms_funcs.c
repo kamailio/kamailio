@@ -803,11 +803,11 @@ void modem_process(struct modem *mdm)
 	int counter;
 	int dont_wait;
 	int empty_pipe;
-	int cpms_unsuported;
+	int cpms_unsupported;
 	int max_mem=0, used_mem=0;
 
 	sms_messg = 0;
-	cpms_unsuported = 0;
+	cpms_unsupported = 0;
 
 	/* let's open/init the modem */
 	LM_DBG("opening modem\n");
@@ -821,9 +821,9 @@ void modem_process(struct modem *mdm)
 	initmodem(mdm,check_cds_report);
 
 	if ( (max_mem=check_memory(mdm,MAX_MEM))==-1 ) {
-		LM_WARN("CPMS command unsuported! using default values (10,10)\n");
+		LM_WARN("CPMS command unsupported! using default values (10,10)\n");
 		used_mem = max_mem = 10;
-		cpms_unsuported = 1;
+		cpms_unsupported = 1;
 	}
 	LM_DBG("modem maximum memory is %d\n",max_mem);
 
@@ -876,7 +876,7 @@ void modem_process(struct modem *mdm)
 		}/*for*/
 
 		/* let's see if we have incoming sms */
-		if ( !cpms_unsuported )
+		if ( !cpms_unsupported )
 			if ((used_mem = check_memory(mdm,USED_MEM))==-1) {
 				LM_ERR("CPMS command failed! cannot get used mem -> using 10\n");
 				used_mem = 10;
