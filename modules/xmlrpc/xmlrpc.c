@@ -459,7 +459,7 @@ static void clean_context(rpc_ctx_t* ctx);
  * @param reply Pointer to the structure representing the XML-RPC reply
  *              being constructed.
  * @param text The text to be appended to the XML-RPC reply.
- * @return -1 on error, 0 if the text was added successfuly.
+ * @return -1 on error, 0 if the text was added successfully.
  * @sa add_xmlrpc_reply()
  */
 static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
@@ -525,7 +525,7 @@ static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
  * @param reply Pointer to the structure representing the XML-RPC reply
  *              being constructed.
  * @param text The text to be appended to the XML-RPC reply.
- * @return -1 on error, 0 if the text was added successfuly.
+ * @return -1 on error, 0 if the text was added successfully.
  * @sa add_xmlrpc_reply_esc()
  */
 static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
@@ -564,7 +564,7 @@ static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
  * @param offset The position of the first character where the text should be
  *               inserted. 
  * @param text The text to be inserted.
- * @return 0 of the text was inserted successfuly, a negative number on error.
+ * @return 0 of the text was inserted successfully, a negative number on error.
  */
 static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply, unsigned int offset, str* text)
 {
