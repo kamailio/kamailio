@@ -29,7 +29,7 @@
  *                               (last call cycles, max cycles, total cycles,
  *                                no. of profile_start calls, no. of 
  *                                profile_end calls, name use in profile_init)
- * void     profile_init(pd, name) - intialize a profile structure
+ * void     profile_init(pd, name) - initialize a profile structure
  * void     profile_start(pd)      - starts profiling (call before calling
  *                               the target function)
  * void     profile_end(pd)        - stops profiling (call after the target
