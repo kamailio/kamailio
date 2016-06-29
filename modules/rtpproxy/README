@@ -780,14 +780,14 @@ $ kamctl fifo nh_show_rtpp
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happend with “rtpproxy_disable” parameter?
+   2.1. What happened with “rtpproxy_disable” parameter?
    2.2. Where can I find more about Kamailio?
    2.3. Where can I post a question about this module?
    2.4. How can I report a bug?
 
    2.1.
 
-       What happend with “rtpproxy_disable” parameter?
+       What happened with “rtpproxy_disable” parameter?
 
        It was removed as it became obsolete - now “rtpproxy_sock” can take
        empty value to disable the rtpproxy functionality.
