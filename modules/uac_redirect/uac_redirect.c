@@ -326,7 +326,7 @@ static inline void msg_tracer(struct sip_msg* msg, int reset)
 	} else {
 		if (set) {
 			if (id!=msg->id) {
-				LM_WARN("filters set but not used -> reseting to default\n");
+				LM_WARN("filters set but not used -> resetting to default\n");
 				reset_filters();
 				id = msg->id;
 			}
