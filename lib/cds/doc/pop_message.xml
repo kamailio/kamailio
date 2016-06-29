@@ -28,7 +28,7 @@
 
 <refsect1><title>Description</title>
 <para>Removes first message from the queue. If the queue is empty or an error
-occured it returns NULL value. Removed messages are NOT automaticaly freed -
+occurred it returns NULL value. Removed messages are NOT automaticaly freed -
 caller must use <function>free_message</function> or free it itself (see <xref
 linkend="free_message"/>)!
 </para>
@@ -37,7 +37,7 @@ linkend="free_message"/>)!
 
 <refsect1><title>Return value</title>
 <para>Returns pointer to message removed from the queue. If the queue is empty
-or an error occured the return value is NULL.
+or an error occurred the return value is NULL.
 <!-- return value description -->
 </para>
 </refsect1>

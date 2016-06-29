@@ -13,11 +13,11 @@ int get_expiration_value(struct sip_msg *m, int *value);
 int is_terminating_notify(struct sip_msg *m);
 
 /* returns 1 if given extension is in Supported headers, 
- * 0 if not or an error occured while parsing */
+ * 0 if not or an error occurred while parsing */
 int supports_extension(struct sip_msg *m, str *extension);
 
 /* returns 1 if given extension is in Require headers, 
- * 0 if not or an error occured while parsing */
+ * 0 if not or an error occurred while parsing */
 int requires_extension(struct sip_msg *m, str *extension);
 
 /**

@@ -1610,7 +1610,7 @@ repeat_1st_read:
 #endif /* USE_TLS */
 			resp=tcp_read_req(con, &n, &read_flags);
 			if (unlikely(resp<0)){
-				/* some error occured, but on the new fd, not on the tcp
+				/* some error occurred, but on the new fd, not on the tcp
 				 * main fd, so keep the ret value */
 				if (unlikely(resp!=CONN_EOF))
 					con->state=S_CONN_BAD;
@@ -1669,7 +1669,7 @@ repeat_read:
 			resp=tcp_read_req(con, &ret, &read_flags);
 			if (unlikely(resp<0)){
 read_error:
-				ret=-1; /* some error occured */
+				ret=-1; /* some error occurred */
 				if (unlikely(io_watch_del(&io_w, con->fd, idx,
 											IO_FD_CLOSING) < 0)){
 					LM_CRIT("io_watch_del failed for %p id %d fd %d,"

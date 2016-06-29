@@ -168,7 +168,7 @@ int cfg_diff_init(cfg_ctx_t *ctx,
  * return value:
  *	1: valid value is found
  *	0: no more changed value found
- *	-1: error occured
+ *	-1: error occurred
  *
  *
  * can be used as follows:
@@ -184,7 +184,7 @@ int cfg_diff_init(cfg_ctx_t *ctx,
  * }
  * cfg_diff_release(ctx);
  * if (err) {
- *	error occured, the changes cannot be retrieved
+ *	error occurred, the changes cannot be retrieved
  *	...
  * }
  */

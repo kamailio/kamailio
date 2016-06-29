@@ -196,7 +196,7 @@ void daemon_status_no_wait()
 
 /**
  * enable dumpable flag for core dumping after setuid() & friends
- * @return 0 when no critical error occured, -1 on such error
+ * @return 0 when no critical error occurred, -1 on such error
  */
 int enable_dumpable(void)
 {
