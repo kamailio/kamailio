@@ -151,7 +151,7 @@ sh_var_t* add_shvar(str *name)
 
 	if(!shm_initialized())
 	{
-		LM_ERR("shm not intialized - cannot define shm now\n");
+		LM_ERR("shm not initialized - cannot define shm now\n");
 		return 0;
 	}
 
