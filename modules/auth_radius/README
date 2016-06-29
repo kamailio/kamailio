@@ -271,7 +271,7 @@ modparam("auth_radius", "append_realm_to_username", 0)
      * -4 (stale nonce) - stale nonce;
      * -2 (authorization failed) - RADIUS responded with Access Reject
        which may be, for example, due to user not found or wrong password;
-     * -1 (error) - some error occured during authorization (see syslog);
+     * -1 (error) - some error occurred during authorization (see syslog);
 
    This function will perform sanity checks over the received credentials
    and then pass them along to RADIUS server which will verify the

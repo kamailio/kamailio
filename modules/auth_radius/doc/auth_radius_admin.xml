@@ -274,7 +274,7 @@ modparam("auth_radius", "append_realm_to_username", 0)
 			<emphasis>-2 (authorization failed)</emphasis> - RADIUS responded with Access Reject which may be, for example, due to user not found or wrong password;
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-1 (error)</emphasis> - some error occured during authorization (see syslog);
+			<emphasis>-1 (error)</emphasis> - some error occurred during authorization (see syslog);
 			</para></listitem>
 		</itemizedlist>
 		<para>
