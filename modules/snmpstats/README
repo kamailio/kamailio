@@ -200,7 +200,7 @@ Chapter 1. Admin Guide
        The idea is that a network operation centre can be made aware that
        their SIP servers may be overloaded, without having to explicitly
        check for this condition.
-       If a minor or major condition has occured, then a
+       If a minor or major condition has occurred, then a
        kamailioDialogLimitMinorEvent trap or a
        kamailioDialogLimitMajorEvent trap will be generated, respectively.
        The minor and major thresholds are described in the parameters
@@ -340,7 +340,7 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
    consumed by Kamailio. If the number of bytes waiting to be consumed
    exceeds a minor threshold, the SNMPStats module will send out an
    kamailioMsgQueueDepthMinorEvent trap to signal that an alarm condition
-   has occured. The minor threshold is set with the MsgQueueMinorThreshold
+   has occurred. The minor threshold is set with the MsgQueueMinorThreshold
    parameter.
 
    Example 1.2. Setting the MsgQueueMinorThreshold parameter
@@ -357,7 +357,7 @@ modparam("snmpstats", "MsgQueueMinorThreshold", 2000)
    consumed by Kamailio. If the number of bytes waiting to be consumed
    exceeds a major threshold, the SNMPStats module will send out an
    kamailioMsgQueueDepthMajorEvent trap to signal that an alarm condition
-   has occured. The major threshold is set with the MsgQueueMajorThreshold
+   has occurred. The major threshold is set with the MsgQueueMajorThreshold
    parameter.
 
    Example 1.3. Setting the MsgQueueMajorThreshold parameter
@@ -373,7 +373,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
    The SNMPStats module monitors the number of active dialogs. If the
    number of active dialogs exceeds a minor threshold, the SNMPStats
    module will send out an kamailioDialogLimitMinorEvent trap to signal
-   that an alarm condition has occured. The minor threshold is set with
+   that an alarm condition has occurred. The minor threshold is set with
    the dlg_minor_threshold parameter.
 
    Example 1.4. Setting the dlg_minor_threshold parameter
@@ -389,7 +389,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
    The SNMPStats module monitors the number of active dialogs. If the
    number of active dialogs exceeds a major threshold, the SNMPStats
    module will send out an kamailioDialogLimitMajorEvent trap to signal
-   that an alarm condition has occured. The major threshold is set with
+   that an alarm condition has occurred. The major threshold is set with
    the dlg_major_threshold parameter.
 
    Example 1.5. Setting the dlg_major_threshold parameter
