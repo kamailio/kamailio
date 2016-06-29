@@ -41,7 +41,7 @@ void python_handle_exception(const char *fmt, ...)
 	char *srcbuf;
 	int exc_exit = 0;
 
-	// We don't want to generate traceback when no errors occured
+	// We don't want to generate traceback when no errors occurred
 	if (!PyErr_Occurred())
 		return;
 
