@@ -765,7 +765,7 @@ int mt_table_spec(char* val)
 
 	if(!shm_initialized())
 	{
-		LM_ERR("shm not intialized - cannot define mtree now\n");
+		LM_ERR("shm not initialized - cannot define mtree now\n");
 		return 0;
 	}
 
