@@ -734,7 +734,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 
 error:
 
-	LM_ERR("occured\n");
+	LM_ERR("occurred\n");
 	return -1;
 
 }
