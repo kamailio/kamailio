@@ -1329,7 +1329,7 @@ IMPORTFILE      "import_file"
 										case PVAR_P_S: 
 											LOG(L_CRIT, "ERROR: unexpected EOF"
 													" while parsing pvar name"
-													" (%d paranthesis open)\n",
+													" (%d parenthesis open)\n",
 													p_nest);
 											break;
 										case AVP_PVAR_S:

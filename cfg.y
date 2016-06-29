@@ -2620,7 +2620,7 @@ avp_pvar:	AVP_OR_PVAR {
 					lval_tmp->type=LV_PVAR;
 				}
 				$$ = lval_tmp;
-				DBG("parsed ambigous avp/pvar \"%.*s\" to %d\n",
+				DBG("parsed ambiguous avp/pvar \"%.*s\" to %d\n",
 							s_tmp.len, s_tmp.s, lval_tmp->type);
 			}
 	;
