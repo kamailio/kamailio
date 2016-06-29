@@ -57,7 +57,7 @@ static char *custom_tbl_min_value_fld = "min_value";
 static char *custom_tbl_max_value_fld = "max_value";
 static char *custom_tbl_decription_fld = "description";
 
-/* returns -2..error happend in the past, do not try connect again, -1 .. error, 0..OK */
+/* returns -2..error happened in the past, do not try connect again, -1 .. error, 0..OK */
 static int connect_db() {
 	if (db_pid != getpid()) {
 		db_pid = getpid();
