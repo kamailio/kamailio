@@ -89,7 +89,7 @@ int m_apo_escape(char* src, int slen, char* dst, int dlen)
  * - buf: pointer to string for output
  * - bufLen: length of buf param
  *
- * return: >0 length of data copied to buf ; <0 error occured
+ * return: >0 length of data copied to buf ; <0 error occurred
   */
 int timetToSipDateStr(time_t date, char* buf, int bufLen)
 {
