@@ -415,7 +415,7 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
         }else if(rc_result==OK_RC){
                 LM_DBG("Radius accounting - OK \n");
         }else{
-        	LM_ERR("Radius accounting - Unkown response \n");
+        	LM_ERR("Radius accounting - Unknown response \n");
                 goto error;
         }
 
