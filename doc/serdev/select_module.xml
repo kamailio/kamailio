@@ -59,7 +59,7 @@ int <function>select_function_name</function>(str* res, struct select *s, struct
 	that, set param_type to SEL_PARAM_DATA.
 </para>
 <para>
-	Result code of the function declares if the call was sucessful and if the result is
+	Result code of the function declares if the call was successful and if the result is
 	valid string or empty string.
 </para>
 <itemizedlist>
