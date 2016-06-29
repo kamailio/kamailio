@@ -863,7 +863,7 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 	state = ds_parse_flags(sp.s, sp.len);
 	if( state < 0 )
 	{
-		LM_ERR("unknow state value\n");
+		LM_ERR("unknown state value\n");
 		return init_mi_tree(500, "unknown state value", 19);
 	}
 	node = node->next;
@@ -1358,7 +1358,7 @@ static void dispatcher_rpc_set_state(rpc_t* rpc, void* ctx)
 		if((state.len>1) && (state.s[1]=='P' || state.s[1]=='p'))
 			stval |= DS_PROBING_DST;
 	} else {
-		LM_ERR("unknow state value\n");
+		LM_ERR("unknown state value\n");
 		rpc->fault(ctx, 500, "Unknown State Value");
 		return;
 	}
