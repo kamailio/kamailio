@@ -245,7 +245,7 @@ do_read:
 		if(PQstatus(CON_CONNECTION(_con))!=CONNECTION_OK)
 		{
 reset:
-			LM_DBG("reseting the connection to postgress server\n");
+			LM_DBG("resetting the connection to postgress server\n");
 			PQreset(CON_CONNECTION(_con));
 		}
 	}
