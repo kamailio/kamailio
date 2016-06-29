@@ -79,7 +79,7 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 		goto error;
 	}
 
-	DBG("TLS configuration successfuly loaded");
+	DBG("TLS configuration successfully loaded");
 
 	lock_get(tls_domains_cfg_lock);
 

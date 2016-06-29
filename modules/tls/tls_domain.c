@@ -1115,7 +1115,7 @@ static int load_private_key(tls_domain_t* d)
 		}
 	}		
 
-	DBG("%s: Key '%s' successfuly loaded\n",
+	DBG("%s: Key '%s' successfully loaded\n",
 	    tls_domain_str(d), d->pkey_file.s);
 	return 0;
 }

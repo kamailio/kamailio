@@ -176,7 +176,7 @@ error:
 
 /** destroy a buffer queue.
  * Only the content is destroyed (shm_free()'d), the queue head is
- * re-intialized.
+ * re-initialized.
  * WARNING: it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.
  * @param q - buffer queue

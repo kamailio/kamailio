@@ -760,7 +760,7 @@ modparam("tls", "server_name", "kamailio.org")
 9.13. connection_timeout (int)
 
    Sets the amount of time after which an idle TLS connection will be
-   closed, if no I/O ever occured after the initial open. If an I/O event
+   closed, if no I/O ever occurred after the initial open. If an I/O event
    occurs, the timeout will be extended with tcp_connection_lifetime. The
    value is expressed in seconds.
 
