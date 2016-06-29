@@ -515,7 +515,7 @@ enum {
 	AVP_EPC_Rule_Failure_Code_GW_PCEF_Malfunction			=4,
 	AVP_EPC_Rule_Failure_Code_Resources_Limitation			=5,
 	AVP_EPC_Rule_Failure_Code_Max_Nr_Bearers_Reached		=6,
-	AVP_EPC_Rule_Failure_Code_Unkown_Bearer_Id				=7,
+	AVP_EPC_Rule_Failure_Code_Unknown_Bearer_Id				=7,
 	AVP_EPC_Rule_Failure_Code_Missing_Bearer_Id				=8,
 	AVP_EPC_Rule_Failure_Code_Missing_Flow_Description		=9,
 	AVP_EPC_Rule_Failure_Code_Resource_Allocation_Failure	=10,

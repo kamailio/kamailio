@@ -239,6 +239,6 @@ static int cdp_exit( void )
 {
 	LM_INFO("CDiameterPeer child stopping ...\n");
 	diameter_peer_destroy();
-	LM_INFO("... CDiameterPeer child stoped\n");
+	LM_INFO("... CDiameterPeer child stopped\n");
 	return 0;
 }
