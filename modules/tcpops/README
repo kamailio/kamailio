@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
 
 2.1. closed_event (int)
 
-   If set to 0 (gloabbly disabled), the "tcp:closed" event route will
+   If set to 0 (globally disabled), the "tcp:closed" event route will
    never be called on TCP disconnections.
 
    If set to 1 (globally enabled), the "tcp:closed" event route will
@@ -109,7 +109,7 @@ modparam("tcpops", "closed_event", 0)
      * conid (optional): the Kamailio internal connection id (as in the
        $conid pseudovariable).
 
-   Retuns values:
+   Return values:
 
    1: Connection is OK
 
@@ -131,7 +131,7 @@ modparam("tcpops", "closed_event", 0)
      * conid (optional): the Kamailio internal connection id (as in the
        $conid pseudovariable).
 
-   Retuns values:
+   Return values:
 
    1: Connection is OK
 
@@ -159,7 +159,7 @@ modparam("tcpops", "closed_event", 0)
    Enables keepalive on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optional): the kamailio internal connection id on which TCP
+     * conid (optional): the Kamailio internal connection id on which TCP
        keepalive will be enabled. If no parameter is given, the keepalive
        mechanism will be enabled on the current message source connection.
      * idle (seconds): the time before the first keepalive packet is sent
@@ -168,7 +168,7 @@ modparam("tcpops", "closed_event", 0)
        connection.
      * interval (seconds): time between two keepalive probes.
 
-   Retuns 1 on success, -1 on failure.
+   Returns 1 on success, -1 on failure.
 
    Example 1.4. tcp_keepalive_enable usage
 request_route {
@@ -194,12 +194,12 @@ onreply_route[foo] {
    Disables keepalive on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optional): the kamailio internal connection id on which TCP
+     * conid (optional): the Kamailio internal connection id on which TCP
        keepalive will be disabled. If no parameter is given, the keepalive
        mechanism will be disabled on the current message source
        connection.
 
-   Retuns 1 on success, -1 on failure.
+   Returns 1 on success, -1 on failure.
 
    Example 1.5. tcp_keepalive_disable usage
 request_route {
@@ -225,12 +225,12 @@ onreply_route[foo] {
    Sets the connection lifetime of a connection (TCP).
 
    Meaning of the parameters is as follows:
-     * conid (optional): the kamailio internal connection id on which to
+     * conid (optional): the Kamailio internal connection id on which to
        set the new lifetime. If no parameter is given, it will be set on
        the current message source connection.
      * lifetime (seconds): the new connection lifetime.
 
-   Retuns 1 on success, -1 on failure.
+   Returns 1 on success, -1 on failure.
 
    Example 1.6. tcp_set_connection_lifetime usage
 ...
@@ -252,11 +252,11 @@ request_route {
    Explicitly enables the "tcp:closed" event route on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id. If no
+     * conid (optionnal): the Kamailio internal connection id. If no
        parameter is given, it will be enabled on the current message
        source connection.
 
-   Retuns 1 on success, -1 on failure.
+   Returns 1 on success, -1 on failure.
 
    Example 1.7. tcp_set_closed_event usage
 ...
