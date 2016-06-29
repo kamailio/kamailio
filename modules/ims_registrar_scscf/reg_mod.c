@@ -489,12 +489,12 @@ static int mod_init(void) {
 
     if (sock_hdr_name.s) {
         if (sock_hdr_name.len == 0 || sock_flag == -1) {
-            LM_WARN("empty sock_hdr_name or sock_flag no set -> reseting\n");
+            LM_WARN("empty sock_hdr_name or sock_flag no set -> resetting\n");
             sock_hdr_name.len = 0;
             sock_flag = -1;
         }
     } else if (sock_flag != -1) {
-        LM_WARN("sock_flag defined but no sock_hdr_name -> reseting flag\n");
+        LM_WARN("sock_flag defined but no sock_hdr_name -> resetting flag\n");
         sock_flag = -1;
     }
 
