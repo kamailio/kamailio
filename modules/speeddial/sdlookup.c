@@ -173,7 +173,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 
 	if (RES_ROW_N(db_res)<=0 || RES_ROWS(db_res)[0].values[0].nul != 0)
 	{
-		LM_DBG("no sip addres found for R-URI\n");
+		LM_DBG("no sip address found for R-URI\n");
 		if (db_res!=NULL && db_funcs.free_result(db_handle, db_res) < 0)
 			LM_DBG("failed to free result of query\n");
 		return -1;
