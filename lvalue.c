@@ -83,7 +83,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	
 	switch(rv->type){
 		case RV_NONE:
-			BUG("non-intialized rval / rval expr \n");
+			BUG("non-initialized rval / rval expr \n");
 			/* unknown value => reset the avp in function of its type */
 			flags=avp->type;
 			AVP_ASSIGN_NOVAL();
@@ -262,7 +262,7 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	ret=0;
 	switch(rv->type){
 		case RV_NONE:
-			BUG("non-intialized rval / rval expr \n");
+			BUG("non-initialized rval / rval expr \n");
 			PVAR_ASSIGN_NOVAL();
 			ret=-1;
 			break;

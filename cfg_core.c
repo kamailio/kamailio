@@ -140,7 +140,7 @@ static int check_raw_sock_support(void* cfg_h, str* gname, str* name,
 #else /* USE_RAW_SOCKS */
 	if (raw_udp4_send_sock < 0) {
 		if (val > 0) {
-			ERR("could not intialize raw socket on startup, please "
+			ERR("could not initialize raw socket on startup, please "
 					"restart as root or with CAP_NET_RAW\n");
 			return -1;
 		} else if (val < 0) {

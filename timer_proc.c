@@ -323,7 +323,7 @@ int sr_wtimer_add(timer_function* f, void* param, int interval)
 {
 	sr_wtimer_node_t *wt;
 	if(_sr_wtimer==NULL) {
-		LM_ERR("wtimer not intialized\n");
+		LM_ERR("wtimer not initialized\n");
 		return -1;
 	}
 
@@ -371,7 +371,7 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 	uint32_t cs;
 
 	if(_sr_wtimer==NULL) {
-		LM_ERR("wtimer not intialized\n");
+		LM_ERR("wtimer not initialized\n");
 		return;
 	}
 
@@ -409,7 +409,7 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 int sr_wtimer_start(void)
 {
 	if(_sr_wtimer==NULL) {
-		LM_ERR("wtimer not intialized\n");
+		LM_ERR("wtimer not initialized\n");
 		return -1;
 	}
 

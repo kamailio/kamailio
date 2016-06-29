@@ -613,7 +613,7 @@ static char* get_base_name(str* filename)
 
 
 
-/** intialize the config parser.
+/** initialize the config parser.
  * @param basedir - path to the config file name. If 0 the path
  *               (base directory) of the main ser.cfg file will be used, else
  *               basedir will be concatenated to the filename. It will be
