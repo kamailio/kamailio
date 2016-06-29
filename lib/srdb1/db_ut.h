@@ -42,7 +42,7 @@
  *
  * \param _s source value
  * \param _v target value
- * \return zero on sucess, negative on conversion errors
+ * \return zero on success, negative on conversion errors
  */
 int db_str2int(const char* _s, int* _v);
 
@@ -52,7 +52,7 @@ int db_str2int(const char* _s, int* _v);
  *
  * \param _s source value
  * \param _v target value
- * \return zero on sucess, negative on conversion errors
+ * \return zero on success, negative on conversion errors
  */
 int db_str2longlong(const char* _s, long long* _v);
 
@@ -62,7 +62,7 @@ int db_str2longlong(const char* _s, long long* _v);
  *
  * \param _s source value
  * \param _v target value
- * \return zero on sucess, negative on conversion errors
+ * \return zero on success, negative on conversion errors
  */
 int db_str2double(const char* _s, double* _v);
 
@@ -73,7 +73,7 @@ int db_str2double(const char* _s, double* _v);
  * \param _v source value
  * \param _s target value
  * \param _l available length and target length
- * \return zero on sucess, negative on conversion errors
+ * \return zero on success, negative on conversion errors
  */
 int db_int2str(int _v, char* _s, int* _l);
 
@@ -84,7 +84,7 @@ int db_int2str(int _v, char* _s, int* _l);
  * \param _v source value
  * \param _s target value
  * \param _l available length and target length
- * \return zero on sucess, negative on conversion errors
+ * \return zero on success, negative on conversion errors
  */
 int db_longlong2str(long long _v, char* _s, int* _l);
 
@@ -95,7 +95,7 @@ int db_longlong2str(long long _v, char* _s, int* _l);
  * \param _v source value
  * \param _s target value
  * \param _l available length and target length
- * \return zero on sucess, negative on conversion errors
+ * \return zero on success, negative on conversion errors
  */
 int db_double2str(double _v, char* _s, int* _l);
 
@@ -106,7 +106,7 @@ int db_double2str(double _v, char* _s, int* _l);
  * \param _v source value
  * \param _s target value
  * \param _l available length and target length
- * \return zero on sucess, negative on conversion errors
+ * \return zero on success, negative on conversion errors
  * \todo This functions add quotes to the time value. This
  * should be done in the val2str function, as some databases
  * like db_berkeley don't need or like this at all.
@@ -120,7 +120,7 @@ int db_time2str_ex(time_t _v, char* _s, int* _l, int _qmode);
  *
  * \param _s source value
  * \param _v target value
- * \return zero on sucess, negative on conversion errors
+ * \return zero on success, negative on conversion errors
  */
 int db_str2time(const char* _s, time_t* _v);
 

@@ -17,7 +17,7 @@
 	  table. SERWeb can query the table to display the list of placed calls.
 	</db:para>
 	<db:para>
-	  SER records sucessful transactions (those replied with a 2xx final
+	  SER records successful transactions (those replied with a 2xx final
 	  response) into this table. SER never reads or updates rows in the table,
 	  it only inserts new rows into the table. This table can potentially get
 	  big. There will be 1-3 rows per call, depending on the configuration of
