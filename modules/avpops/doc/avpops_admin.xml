@@ -542,7 +542,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 			<para>The function delivers the following return-codes:</para>
 			<itemizedlist>
 			<listitem><para>
-			<emphasis>-1</emphasis> - An error occured while querying the database
+			<emphasis>-1</emphasis> - An error occurred while querying the database
 			(e.g. wrong SQL or database error)
 			</para></listitem>
 			<listitem><para>

@@ -445,7 +445,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
        return floating point or big integer values this way.
 
    The function delivers the following return-codes:
-     * -1 - An error occured while querying the database (e.g. wrong SQL
+     * -1 - An error occurred while querying the database (e.g. wrong SQL
        or database error)
      * 1 - Query was successful
      * -2 - Query was successful, but no rows where returned.

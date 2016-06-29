@@ -227,7 +227,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			} else if (!strcasecmp("uuid",p)) {
 				flags|=AVPOPS_FLAG_UUID0;
 			} else {
-				LM_ERR("unknow flag "
+				LM_ERR("unknown flag "
 					"<%s>\n",p);
 				return E_UNSPEC;
 			}
