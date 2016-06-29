@@ -529,7 +529,7 @@ descavp)
    prefix_matching at the given domain in the given carrier tree. The
    Request URI is rewritten using rewrite_user and the given hash source
    and algorithm. Returns -1 if there is no data found or an empty rewrite
-   host on the longest match is found. On sucess also the description is
+   host on the longest match is found. On success also the description is
    stored in the given AVP (if obmitted, nothing is stored in an AVP).
    This is useful if you need some additional informations that belongs to
    each gw, like the destination or the number of channels.
@@ -1004,7 +1004,7 @@ domain register {
    for example that indicates that ringing has happened. If this flag is
    set, there will be no further forwarding, because next_domain is empty.
    In the second and third routes are certain gateway errors matched, if
-   this errors have occured, then the next domain will be choosen. Note
+   this errors have occurred, then the next domain will be choosen. Note
    that the reply_code must be 3 characters wide, and only the "."
    character is accepted as wildcard.The last route does forwarding
    according some flags, e.g. the customer came from a certain carrier,

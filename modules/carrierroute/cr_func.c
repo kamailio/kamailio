@@ -311,7 +311,7 @@ static void build_used_uris_list(avp_value_t* used_dests, int* no_dests){
 		//LM_DBG("	used_dests[%d]=%.*s \n", (*no_dests)-1, used_dests[(*no_dests)-1].s.len, used_dests[(*no_dests)-1].s.s);
 	}
 
-	//LM_DBG("sucessfully built used_uris list!\n");
+	//LM_DBG("successfully built used_uris list!\n");
 }
 
 int cr_uri_already_used(str dest , avp_value_t* used_dests, int no_dests){
