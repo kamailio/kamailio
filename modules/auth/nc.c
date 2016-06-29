@@ -128,7 +128,7 @@ int init_nonce_count()
 	if (nc_array==0){
 		ERR("auth: init_nonce_count: memory allocation failure, consider"
 				" either decreasing nc_array_size of increasing the"
-				" the shared memory ammount\n");
+				" the shared memory amount\n");
 		goto error;
 	}
 	/* int the nc_array with the max nc value to avoid replay attacks after

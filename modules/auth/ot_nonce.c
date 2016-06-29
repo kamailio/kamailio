@@ -130,7 +130,7 @@ int init_ot_nonce()
 	if (otn_array==0){
 		ERR("auth: init_ot_nonce: memory allocation failure, consider"
 				" either decreasing otn_in_flight_no of increasing the"
-				" the shared memory ammount\n");
+				" the shared memory amount\n");
 		goto error;
 	}
 	/* init the otn_array with 1 for each bit, to avoid replay attacks after
