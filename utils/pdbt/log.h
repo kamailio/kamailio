@@ -48,7 +48,7 @@ void pdb_log(int priority, char * format, ...);
 #define PDB_OK 0              /* Everything ok */
 #define PDB_USE_ERROR 1       /* Wrong usage of application (unknown command, file not found, etc.) */
 #define PDB_NOT_IN_PDB 2      /* A queried number is not in the pdb */
-#define PDB_TIMEOUT 3         /* A timeout (server not responding) occured */
-#define PDB_OTHER 4           /* Another application error occured */
+#define PDB_TIMEOUT 3         /* A timeout (server not responding) occurred */
+#define PDB_OTHER 4           /* Another application error occurred */
 
 #endif
