@@ -43,20 +43,26 @@
 
 #define PDB_VERSION     1
 
+#ifdef __SUNPRO_C
+#define ENUM_ATTR_PACKED enum
+#else
+#define ENUM_ATTR_PACKED enum __attribute__((packed))
+#endif
+
 typedef int16_t carrier_t;
 
-enum __attribute__((packed)) pdb_versions {
+ENUM_ATTR_PACKED pdb_versions {
     PDB_VERSION_1 = 1,
     PDB_VERSION_MAX
 };
 
-enum __attribute__((packed)) pdb_types {
+ENUM_ATTR_PACKED pdb_types {
     PDB_TYPE_REQUEST_ID = 0,    /* request pdb type */
     PDB_TYPE_REPLY_ID,          /* reply pdb type */
     PDB_TYPE_MAX
 };
 
-enum __attribute__((packed)) pdb_codes {
+ENUM_ATTR_PACKED pdb_codes {
     PDB_CODE_DEFAULT = 0,   /* for request */
     PDB_CODE_OK,            /* for response - OK */
     PDB_CODE_NOT_NUMBER,    /* for response - letters found in the number */
