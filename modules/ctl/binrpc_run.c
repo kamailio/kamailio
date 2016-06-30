@@ -486,7 +486,7 @@ static void rpc_fault(struct binrpc_ctx* ctx, int code, char* fmt, ...)
 	va_end(ap);
 
 	len++; /* vnsprintf doesn't include the terminating 0 */
-	return _rpc_fault(ctx, code, buf, len);
+	_rpc_fault(ctx, code, buf, len);
 }
 
 /* Prepare the error reply without sending out the message */
