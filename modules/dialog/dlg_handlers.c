@@ -603,7 +603,7 @@ static void dlg_seq_onreply_helper(struct cell* t, int type,
  */
 static void dlg_seq_up_onreply(struct cell* t, int type, struct tmcb_params *param)
 {
-	return dlg_seq_onreply_helper(t, type, param, DLG_DIR_UPSTREAM);
+	dlg_seq_onreply_helper(t, type, param, DLG_DIR_UPSTREAM);
 }
 
 
@@ -616,7 +616,7 @@ static void dlg_seq_up_onreply(struct cell* t, int type, struct tmcb_params *par
  */
 static void dlg_seq_down_onreply(struct cell* t, int type, struct tmcb_params *param)
 {
-	return dlg_seq_onreply_helper(t, type, param, DLG_DIR_DOWNSTREAM);
+	dlg_seq_onreply_helper(t, type, param, DLG_DIR_DOWNSTREAM);
 }
 
 
