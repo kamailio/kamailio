@@ -229,7 +229,7 @@ char *get_cfg_crt_name(void)
 #define MODF_CALL(f_type, h, msg, src, ...) \
 	do { \
 		cmd=(src)[0].u.data; \
-		ret=((f_type)cmd->function)((msg), __VAR_ARGS__); \
+		ret=((f_type)cmd->function)((msg), __VA_ARGS__); \
 		MODF_HANDLE_RETCODE(h, ret); \
 	} while (0)
 #else  /* ! __SUNPRO_C  (gcc, icc a.s.o) */
@@ -263,7 +263,7 @@ char *get_cfg_crt_name(void)
 	do { \
 		cmd=(src)[0].u.data; \
 		MODF_RVE_PARAM_CONVERT(h, msg, cmd, src, dst); \
-		ret=((f_type)cmd->function)((msg), __VAR_ARGS__); \
+		ret=((f_type)cmd->function)((msg), __VA_ARGS__); \
 		MODF_HANDLE_RETCODE(h, ret); \
 		/* free strings allocated by us or fixups */ \
 		MODF_RVE_PARAM_FREE(cmd, src, dst); \

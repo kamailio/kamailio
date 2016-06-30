@@ -658,7 +658,6 @@ static inline int ip_addr2sbuf(struct ip_addr* ip, char* buff, int len)
 			LM_CRIT("unknown address family %d\n", ip->af);
 			return 0;
 	}
-	return 0;
 }
 
 

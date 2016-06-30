@@ -106,6 +106,10 @@ typedef int fd_type;
 #define FD_TYPE_DEFINED
 #endif
 
+#ifdef __SUNPRO_C
+#pragma weak handle_io
+#endif
+
 /* maps a fd to some other structure; used in almost all cases
  * except epoll and maybe kqueue or /dev/poll */
 struct fd_map{
