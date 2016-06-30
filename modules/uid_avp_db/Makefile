@@ -9,7 +9,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=uid_avp_db.so
 LIBS=
-DEFS += -Wall
 
 DEFS+=-DSER_MOD_INTERFACE
 
