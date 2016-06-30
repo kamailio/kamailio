@@ -254,6 +254,7 @@ ifneq (, $(findstring Sun, $(CC_LONGVER)))
 					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
 	CC_VER=$(CC) $(CC_SHORTVER)
 	MKDEP=$(CC) -xM1
+	CC_MKDEP_OPTS=-xMMD
 endif
 
 ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
@@ -1093,9 +1094,12 @@ endif			#CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
+			C_DEFS+=-DCC_GCC_LIKE_ASM
 			C_DEFS+=-DSPARC64_MODE
-			CFLAGS+= -m64 -g -xO5 -fast -native -xarch=v9 -xCC \
+			CFLAGS+= -m64 -g -xO3 -xtarget=native -xmemalign=8i \
+					-fma=fused -fns=yes \
 					-xc99 # C99 support
+			LDFLAGS+=-m64
 			# -Dinline="" # add this if cc < 5.3 (define inline as null)
 else
 				#other compilers
@@ -1159,7 +1163,9 @@ endif			#CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
-			CFLAGS+= -g -xO5 -fast -native -xCC \
+			C_DEFS+=-DCC_GCC_LIKE_ASM
+			CFLAGS+= -g -xO3 -xtarget=native -xmemalign=4i \
+					-fma=fused -fns=yes \
 					-xc99 # C99 support
 			# -Dinline="" # add this if cc < 5.3 (define inline as null)
 else
@@ -1589,11 +1595,11 @@ ifeq	($(CC_NAME), icc)
 endif
 ifeq	($(CC_NAME), suncc)
 	# -dy?
-	LDFLAGS+=-xO5 $(PROFILE)
+	LDFLAGS+=-xO3 $(PROFILE)
 	MOD_LDFLAGS:=-G $(LDFLAGS)
 	LIB_LDFLAGS:=-G $(LDFLAGS)
-	LIB_SONAME="-h "
-	LD_RPATH=-"-R "
+	LIB_SONAME=-Wl,-h,
+	LD_RPATH=-Wl,-R,
 endif
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
@@ -1650,8 +1656,8 @@ ifeq	($(CC_NAME), suncc)
 		LDFLAGS+=-g $(PROFILE)
 		MOD_LDFLAGS:=-G $(LDFLAGS)
 		LIB_LDFLAGS:=-G $(LDFLAGS)
-		LIB_SONAME="-h "
-		LD_RPATH=-"-R "
+		LIB_SONAME=-Wl,-h,
+		LD_RPATH=-Wl,-R,
 endif
 
 endif #mode=release
@@ -1680,9 +1686,8 @@ MOD_CFLAGS=-Kpic $(CFLAGS)
 LIB_CFLAGS=-Kpic $(CFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
-# FIMXE: use -KPIC instead -xcode ?
-MOD_CFLAGS=-xcode=pic32  $(CFLAGS)
-LIB_CFLAGS=-xcode=pic32  $(CFLAGS)
+MOD_CFLAGS=-xcode=pic32 $(CFLAGS)
+LIB_CFLAGS=-xcode=pic32 $(CFLAGS)
 endif
 ifeq    ($(CC_NAME), clang)
 MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
@@ -1823,7 +1828,7 @@ ifeq  ($(OS), solaris)
 	YACC=yacc
 
 ifeq ($(CC_NAME), suncc)
-	LIBS= -lfast -ldl -lresolv
+	LIBS= -ldl -lresolv
 endif
 	OLD_SOLARIS= $(shell echo "$(OSREL)" | \
 				sed -e 's/^5\.[0-6][^0-9]*$$/yes/' )

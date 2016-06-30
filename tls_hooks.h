@@ -84,7 +84,7 @@ extern struct tls_hooks tls_hook;
 #ifdef __SUNPRO_C
 	#define tls_hook_call(name, ret_not_set, ...) \
 		((tls_hook.name)?(tls_hook.name(__VA_ARGS__)): (ret_not_set))
-	#define tls_hook_call_v(name, __VA_ARGS__) \
+	#define tls_hook_call_v(name, ...) \
 		do{ \
 			if (tls_hook.name) tls_hook.name(__VA_ARGS__); \
 		}while(0)
