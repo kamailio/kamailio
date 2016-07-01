@@ -141,9 +141,9 @@ void log_peer_list()
 
 	LM_DBG("--- Peer List: ---\n");
 	for(p = peer_list->head;p;p = p->next){
-		LM_DBG(ANSI_GREEN" S["ANSI_YELLOW"%s"ANSI_GREEN"] "ANSI_BLUE"%.*s:%d"ANSI_GREEN" D["ANSI_RED"%c"ANSI_GREEN"]\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
+		LM_DBG("State of peer: %s FQDN: %.*s Port: %d Is dynamic %c\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
 		for(i=0;i<p->applications_cnt;i++)
-			LM_DBG(ANSI_YELLOW"\t [%d,%d]"ANSI_GREEN"\n",p->applications[i].id,p->applications[i].vendor);
+			LM_DBG("Application ID: %d, Application Vendor: %d \n",p->applications[i].id,p->applications[i].vendor);
 	}
 	LM_DBG("------------------\n");
 }
@@ -275,7 +275,7 @@ int peer_timer(time_t now,void *ptr)
 		}
 
 		if (p->activity+config->tc<=now){
-			LM_DBG("peer_timer(): Peer %.*s \tState %d \n",p->fqdn.len,p->fqdn.s,p->state);
+			LM_DBG("peer_timer(): Peer %.*s State %d \n",p->fqdn.len,p->fqdn.s,p->state);
 			switch (p->state){
 				/* initiating connection */
 				case Closed:

@@ -99,10 +99,10 @@ static void log_serviced_peers()
 {
 	serviced_peer_t *sp;
 
-	LM_DBG("--- Receiver ["ANSI_BLUE"%s"ANSI_GREEN"] Serviced Peers: ---\n",
+	LM_DBG("--- Receiver %s Serviced Peers: ---\n",
 			pt[process_no].desc);
 	for(sp=serviced_peers;sp;sp=sp->next){
-		LM_DBG(ANSI_GREEN" Peer: ["ANSI_YELLOW"%.*s"ANSI_GREEN"]  TCP Socket: ["ANSI_YELLOW"%d"ANSI_GREEN"] Recv.State: ["ANSI_YELLOW"%d"ANSI_GREEN"]\n",
+		LM_DBG(" Peer: %.*s  TCP Socket: %d  Recv.State: %d \n",
 				sp->p?sp->p->fqdn.len:0,
 				sp->p?sp->p->fqdn.s:0,
 				sp->tcp_socket,
