@@ -616,6 +616,27 @@ static int get_identifier(str* src)
 		return 0;
 }
 
+uint16_t check_ip_version(str ip)
+{
+		struct addrinfo hint, *res = NULL;
+		memset(&hint, '\0', sizeof(hint));
+		hint.ai_family = AF_UNSPEC;
+		hint.ai_flags = AI_NUMERICHOST;
+		int getaddrret = getaddrinfo(ip.s, NULL, &hint, &res);
+		if (getaddrret) {
+				LM_ERR("GetAddrInfo returned an error !\n");
+				return 0;
+		}
+		if (res->ai_family == AF_INET) {
+				return AF_INET;
+		} else if (res->ai_family == AF_INET6) {
+				return AF_INET6;
+		} else {
+				LM_ERR("unknown IP format \n");
+				return 0;
+		}
+}
+
 /* Wrapper to send AAR from config file - this only allows for AAR for calls - not register, which uses r_rx_aar_register
  * return: 1 - success, <=0 failure. 2 - message not a AAR generating message (ie proceed without PCC if you wish)
  */
@@ -639,6 +660,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		int identifier_type;
 		int ip_version = 0;
 		sdp_session_cell_t* sdp_session;
+		sdp_stream_cell_t* sdp_stream;
 		str s_id;
 		struct hdr_field *h = 0;
 		struct dlg_cell* dlg = 0;
@@ -939,13 +961,37 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 						}
 						ip = sdp_session->ip_addr;
 						ip_version = sdp_session->pf;
-						free_sdp((sdp_info_t**) (void*) &orig_sip_request_msg->body);
-
+						
+						LM_DBG("IP retrieved from Request SDP to use for framed IP address: [%.*s]", ip.len, ip.s);
+						
+						if (ip.len <= 0) {
+								LM_DBG("Request SDP connection IP could not be retrieved, so we use SDP stream IP");
+								sdp_stream = get_sdp_stream(orig_sip_request_msg, 0, 0);
+								if (!sdp_stream) {
+										LM_ERR("Missing SDP stream information from request\n");
+										goto error;
+								}
+								
+								ip = sdp_stream->ip_addr;
+								if (ip.len <= 0) {
+										LM_ERR("Request SDP IP information could not be retrieved");
+										goto error;
+								}
+								ip_version = check_ip_version(ip);
+								if (!ip_version) {
+										LM_ERR("check_ip_version returned 0 \n");
+										goto error;
+								}
+								
+						}
+						
+						free_sdp((sdp_info_t**) (void*) &t->uas.request->body);
+						
 				} else {
 						LM_DBG("terminating direction\n");
 						//get ip from reply sdp (we use first SDP session)
 						if (parse_sdp(msg) < 0) {
-								LM_ERR("Unable to parse req SDP\n");
+								LM_ERR("Unable to parse reply SDP\n");
 								goto error;
 						}
 
@@ -956,6 +1002,30 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 						}
 						ip = sdp_session->ip_addr;
 						ip_version = sdp_session->pf;
+						
+						LM_DBG("IP retrieved from Reply SDP to use for framed IP address: [%.*s]", ip.len, ip.s);
+						
+						if (ip.len <= 0) {
+								LM_DBG("Reply SDP connection IP could not be retrieved, so we use SDP stream IP");
+								sdp_stream = get_sdp_stream(msg, 0, 0);
+								if (!sdp_stream) {
+										LM_ERR("Missing SDP stream information from reply\n");
+										goto error;
+								}
+								
+								ip = sdp_stream->ip_addr;
+								if (ip.len <= 0) {
+										LM_ERR("Reply SDP IP information could not be retrieved");
+										goto error;
+								}
+								ip_version = check_ip_version(ip);
+								if (!ip_version) {
+										LM_ERR("check_ip_version returned 0 \n");
+										goto error;
+								}
+								
+						}
+						
 						free_sdp((sdp_info_t**) (void*) &msg->body);
 				}
 
@@ -1031,27 +1101,6 @@ ignore:
 				free_saved_transaction_global_data(saved_t_data); //only free global data if no AARs were sent. if one was sent we have to rely on the callback (CDP) to free
 		//otherwise the callback will segfault
 		return result;
-}
-
-uint16_t check_ip_version(str ip)
-{
-		struct addrinfo hint, *res = NULL;
-		memset(&hint, '\0', sizeof(hint));
-		hint.ai_family = AF_UNSPEC;
-		hint.ai_flags = AI_NUMERICHOST;
-		int getaddrret = getaddrinfo(ip.s, NULL, &hint, &res);
-		if (getaddrret) {
-				LM_ERR("GetAddrInfo returned an error !\n");
-				return 0;
-		}
-		if (res->ai_family == AF_INET) {
-				return AF_INET;
-		} else if (res->ai_family == AF_INET6) {
-				return AF_INET6;
-		} else {
-				LM_ERR("unknown IP format \n");
-				return 0;
-		}
 }
 
 /* Wrapper to send AAR from config file - only used for registration */

@@ -407,7 +407,7 @@ int add_media_components_using_current_flow_description(AAAMessage* aar, rx_auth
                 add_flow = 0;
             }
         }
-
+	
 	if(add_flow) {
             rx_add_media_component_description_avp(aar, flow_description->stream_num,
                     &flow_description->media, &flow_description->req_sdp_ip_addr,
@@ -435,17 +435,17 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
     int add_flow = 1;
 
     if (!req || !rpl) {
-        return CSCF_RETURN_FALSE;
+			goto error;
     }
 
     if (parse_sdp(req) < 0) {
         LM_ERR("Unable to parse req SDP\n");
-        return CSCF_RETURN_FALSE;
+        goto error;
     }
 
     if (parse_sdp(rpl) < 0) {
         LM_ERR("Unable to parse res SDP\n");
-        return CSCF_RETURN_FALSE;
+        goto error;
     }
 
     sdp_session_num = 0;
@@ -465,7 +465,8 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 
             if (!rpl_sdp_session)
                 LM_ERR("Missing SDP session information from rpl\n");
-            break;
+            
+			goto error;
         }
 
         sdp_stream_num = 0;
@@ -492,17 +493,39 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
                     }
 
 			if(add_flow) {
-                        //add this to auth session data
+					
+						str ipA = req_sdp_session->ip_addr;
+						str ipB = rpl_sdp_session->ip_addr;
+
+						if (ipA.len <= 0) {
+								LM_DBG("Request SDP connection IP could not be retrieved, so we use SDP 1st stream IP");
+								ipA = req_sdp_stream->ip_addr;
+								if (ipA.len <= 0) {
+										LM_ERR("Requested SDP IP information could not be retrieved");
+										goto error;
+								}
+						}
+						
+						if (ipB.len <= 0) {
+								LM_DBG("Reply SDP connection IP could not be retrieved, so we use SDP 1st stream IP");
+								ipB = rpl_sdp_stream->ip_addr;
+								if (ipB.len <= 0) {
+										LM_ERR("Request SDP IP information could not be retrieved");
+										goto error;
+								}
+						}
+						
+						//add this to auth session data
                         add_flow_description((rx_authsessiondata_t*) auth->u.auth.generic_data, sdp_stream_num + 1,
-                                &req_sdp_stream->media, &req_sdp_session->ip_addr,
-                                &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
+                                &req_sdp_stream->media, &ipA,
+                                &req_sdp_stream->port, &ipB,
                                 &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
                                 &req_sdp_stream->raw_stream,
                                 &rpl_sdp_stream->raw_stream, direction, 0 /*This is a new mcd, we are not setting it as active*/);
 
                         rx_add_media_component_description_avp(aar, sdp_stream_num + 1,
-                                &req_sdp_stream->media, &req_sdp_session->ip_addr,
-                                &req_sdp_stream->port, &rpl_sdp_session->ip_addr,
+                                &req_sdp_stream->media, &ipA,
+                                &req_sdp_stream->port, &ipB,
                                 &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
                                 &req_sdp_stream->raw_stream,
                                 &rpl_sdp_stream->raw_stream, direction);
@@ -518,6 +541,10 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
     free_sdp((sdp_info_t**) (void*) &req->body);
     free_sdp((sdp_info_t**) (void*) &rpl->body);
 
+	return 1;
+	
+	error:
+	
     return 0;
 }
 
