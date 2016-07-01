@@ -857,7 +857,7 @@ int peer_connect(peer *p)
 	{
 		if (getnameinfo(ainfo->ai_addr,ainfo->ai_addrlen,
 					host,256,serv,256,NI_NUMERICHOST|NI_NUMERICSERV)==0){
-			LM_WARN("peer_connect(): Trying to connect to %s port %s\n",
+			LM_INFO("peer_connect(): Trying to connect to %s port %s\n",
 					host,serv);
 		}
 
@@ -876,11 +876,11 @@ int peer_connect(peer *p)
 			error = getaddrinfo(p->src_addr.s, NULL, &hints, &sainfo);
 
 			if (error!=0){
-				LM_WARN("peer_connect(): error getting client socket on %.*s:%s\n",
+				LM_ERR("peer_connect(): error getting client socket on %.*s:%s\n",
 						p->src_addr.len,p->src_addr.s,gai_strerror(error));
 			} else {
 				if (bind(sock, sainfo->ai_addr, sainfo->ai_addrlen )) {
-					LM_WARN("peer_connect(): error opening client socket on %.*s:%s\n",
+					LM_ERR("peer_connect(): error opening client socket on %.*s:%s\n",
 							p->src_addr.len,p->src_addr.s,strerror(errno));
 				}
 			}
@@ -905,18 +905,18 @@ int peer_connect(peer *p)
 						int  valopt;
 						getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon);
 						if (valopt) {
-							LM_WARN("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(valopt));
+							LM_ERR("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(valopt));
 							close(sock);
 							continue;
 						}
 					}else{
-						LM_WARN("peer_connect(): Timeout or error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
+						LM_ERR("peer_connect(): Timeout or error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
 						close(sock);
 						continue;
 					}
 				}
 			}else{
-				LM_WARN("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
+				LM_ERR("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
 				close(sock);
 				continue;
 			}
