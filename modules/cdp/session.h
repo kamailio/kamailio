@@ -49,6 +49,8 @@
 #include "utils.h"
 #include "diameter.h"
 
+extern unsigned int debug_heavy;
+
 /** Function for callback on session events: timeout, etc. */
 typedef void (AAASessionCallback_f)(int event, void *session);
 

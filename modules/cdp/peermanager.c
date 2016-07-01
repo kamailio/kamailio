@@ -135,17 +135,19 @@ void peer_manager_destroy()
  */
 void log_peer_list()
 {
-	/* must have lock on peer_list_lock when calling this!!! */
-	peer *p;
-	int i;
+	if (debug_heavy) {
+		/* must have lock on peer_list_lock when calling this!!! */
+		peer *p;
+		int i;
 
-	LM_DBG("--- Peer List: ---\n");
-	for(p = peer_list->head;p;p = p->next){
-		LM_DBG("State of peer: %s FQDN: %.*s Port: %d Is dynamic %c\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
-		for(i=0;i<p->applications_cnt;i++)
-			LM_DBG("Application ID: %d, Application Vendor: %d \n",p->applications[i].id,p->applications[i].vendor);
+		LM_DBG("--- Peer List: ---\n");
+		for(p = peer_list->head;p;p = p->next){
+			LM_DBG("State of peer: %s FQDN: %.*s Port: %d Is dynamic %c\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
+			for(i=0;i<p->applications_cnt;i++)
+				LM_DBG("Application ID: %d, Application Vendor: %d \n",p->applications[i].id,p->applications[i].vendor);
+		}
+		LM_DBG("------------------\n");
 	}
-	LM_DBG("------------------\n");
 }
 
 /**
@@ -310,7 +312,10 @@ int peer_timer(time_t now,void *ptr)
 						p->waitingDWA = 1;
 						Snd_DWR(p);
 						touch_peer(p);
-						LM_DBG("Inactivity on peer [%.*s], sending DWR... - if we don't get a reply, the peer will be closed\n", p->fqdn.len, p->fqdn.s);
+						if (debug_heavy)
+						{
+							LM_DBG("Inactivity on peer [%.*s], sending DWR... - if we don't get a reply, the peer will be closed\n", p->fqdn.len, p->fqdn.s);
+						}
 					}
 					break;
 					/* ignored states */
