@@ -37,6 +37,9 @@
 #define HAVE_ASM_INLINE_MEMBAR
 
 
+#ifdef __SUNPRO_C
+#pragma error_messages (off,E_ASM_UNUSED_PARAM)
+#endif
 
 /* try to guess if in SPARC64_MODE */
 #if ! defined SPARC64_MODE && \

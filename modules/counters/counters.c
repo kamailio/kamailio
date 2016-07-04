@@ -288,7 +288,8 @@ static void cnt_get_rpc(rpc_t* rpc, void* c)
 	if (rpc->scan(c, "s", &group) < 1)
 		return;
 	if (rpc->scan(c, "*s", &name) < 1)
-		return cnt_grp_get_all(rpc, c, group);
+		cnt_grp_get_all(rpc, c, group);
+		return;
 	/* group & name read */
 	if (counter_lookup(&h, group, name) < 0) {
 		rpc->fault(c, 400, "non-existent counter %s.%s\n", group, name);
@@ -427,7 +428,7 @@ static void cnt_grp_get_all_rpc(rpc_t* rpc, void* c)
 		/* rpc->fault(c, 400, "group name required"); */
 		return;
 	}
-	return cnt_grp_get_all(rpc, c, group);
+	cnt_grp_get_all(rpc, c, group);
 }
 
 
