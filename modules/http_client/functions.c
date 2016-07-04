@@ -54,6 +54,7 @@ typedef struct {
 	char *ciphersuites;
 	char *http_proxy;
 	char *failovercon;
+	char *useragent;
 	unsigned int authmethod;
 	unsigned int http_proxy_port;
 	unsigned int tlsversion;
@@ -68,11 +69,11 @@ typedef struct {
 } curl_query_t;
 
 
-/* 
+/*
  * curl write function that saves received data as zero terminated
  * to stream. Returns the amount of data taken care of.
  *
- * This function may be called multiple times for larger responses, 
+ * This function may be called multiple times for larger responses,
  * so it reallocs + concatenates the buffer as needed.
  */
 size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
@@ -228,6 +229,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
 
+	if(params->useragent)
+		res |= curl_easy_setopt(curl, CURLOPT_USERAGENT, params->useragent);
 
 	if (res != CURLE_OK) {
 		/* PANIC */
@@ -587,6 +590,9 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = 1;
 	query_params.maxdatasize = 0;
+	if(default_useragent.s!=NULL && default_useragent.len>0) {
+		query_params.useragent = default_useragent.s;
+	}
 	if(default_http_proxy.s!=NULL && default_http_proxy.len>0) {
 		query_params.http_proxy = default_http_proxy.s;
 		if(default_http_proxy_port>0) {
