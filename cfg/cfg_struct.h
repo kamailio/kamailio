@@ -129,6 +129,7 @@ typedef struct _cfg_block {
 	atomic_t	refcnt;		/*!< reference counter,
 					the block is automatically deleted
 					when it reaches 0 */
+	int		_pad;		/*!< force 8 byte alignment */
 	unsigned char	vars[1];	/*!< blob that contains the values */
 } cfg_block_t;
 
