@@ -54,6 +54,7 @@ typedef struct {
 	char *ciphersuites;
 	char *http_proxy;
 	char *failovercon;
+        char *useragent;
 	unsigned int authmethod;
 	unsigned int http_proxy_port;
 	unsigned int tlsversion;
@@ -228,6 +229,7 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
 
+	res |= curl_easy_setopt(curl, CURLOPT_USERAGENT, params->useragent);
 
 	if (res != CURLE_OK) {
 		/* PANIC */
@@ -584,6 +586,7 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.verify_peer = default_tls_verify_peer;
 	query_params.verify_host = default_tls_verify_host;
 	query_params.timeout = default_connection_timeout;
+        query_params.useragent = as_asciiz(&default_useragent);
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = 1;
 	query_params.maxdatasize = 0;
