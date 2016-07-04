@@ -571,7 +571,7 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 		case '{':
 		case '[':
 			LM_ERR("Unsupported param type '%c'\n", *fmt);
-			jsonrpc_fault(ctx, 500, "Unsupported param type");
+			jsonrpc_fault(ctx, 400, "Unsupported param type");
 			goto error;
 		default:
 			LM_ERR("Invalid param type in formatting string: [%c]\n", *fmt);
@@ -1041,7 +1041,7 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	ctx->jreq = srjson_NewDoc(NULL);
 	if(ctx->jreq==NULL) {
 		LM_ERR("Failed to init the json document\n");
-		return NONSIP_MSG_PASS;
+		return NONSIP_MSG_ERROR;
 	}
 
 	ctx->jreq->buf.s = get_body(msg);
@@ -1050,7 +1050,7 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	if(ctx->jreq->root == NULL)
 	{
 		LM_ERR("invalid json doc [[%s]]\n", ctx->jreq->buf.s);
-		return NONSIP_MSG_PASS;
+		return NONSIP_MSG_ERROR;
 	}
 	if (jsonrpc_init_reply(ctx) < 0) goto send_reply;
 
