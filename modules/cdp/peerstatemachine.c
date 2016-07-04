@@ -86,7 +86,7 @@ int sm_process(peer *p,peer_event_t event,AAAMessage *msg,int peer_locked,int so
 	int msg_received=0;
 
 	if (!peer_locked) lock_get(p->lock);
-	LM_DBG("sm_process(): Peer %.*s \tState %s \tEvent %s\n",
+	LM_DBG("sm_process(): Peer %.*s State %s Event %s\n",
 			p->fqdn.len,p->fqdn.s,dp_states[p->state],dp_events[event-101]);
 
 	switch (p->state){

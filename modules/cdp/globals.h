@@ -64,14 +64,4 @@ extern gen_lock_t *shutdownx_lock; /**< lock used on shutdown				*/
 
 extern pid_t *dp_first_pid;		/**< first pid that we started from		*/
 
-/* ANSI Terminal colors */
-#define ANSI_GRAY		"\033[01;30m"
-#define ANSI_BLINK_RED 	"\033[00;31m"
-#define ANSI_RED 		"\033[01;31m"
-#define ANSI_GREEN		"\033[01;32m"
-#define ANSI_YELLOW 	"\033[01;33m"
-#define ANSI_BLUE 		"\033[01;34m"
-#define ANSI_MAGENTA	"\033[01;35m"
-#define ANSI_CYAN		"\033[01;36m"
-#define ANSI_WHITE		"\033[01;37m"
 #endif

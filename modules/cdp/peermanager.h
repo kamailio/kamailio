@@ -56,6 +56,8 @@ typedef struct {
 	peer *tail; /**< last peer in the list */
 } peer_list_t;
 
+extern unsigned int debug_heavy;
+
 int peer_manager_init(dp_config *config);
 
 void peer_manager_destroy();

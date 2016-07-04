@@ -81,6 +81,8 @@ typedef struct _serviced_peer_t {
 	struct _serviced_peer_t *prev; /**< last peer in the list */
 } serviced_peer_t;
 
+extern unsigned int debug_heavy;
+
 int receiver_init(peer *p);
 void receiver_process(peer *p);
 

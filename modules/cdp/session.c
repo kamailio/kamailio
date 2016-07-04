@@ -389,45 +389,47 @@ error:
 
 void cdp_sessions_log()
 {
-	int hash;
-	cdp_session_t *x;
+	if (debug_heavy) {
+		int hash;
+		cdp_session_t *x;
 
-	LM_DBG(ANSI_MAGENTA"------- CDP Sessions ----------------\n"ANSI_GREEN);
-	for(hash=0;hash<sessions_hash_size;hash++){
-		AAASessionsLock(hash);
-		for(x = sessions[hash].head;x;x=x->next) {
-			LM_DBG(ANSI_GRAY" %3u. [%.*s] AppId [%d] Type [%d]\n",
-					hash,
-					x->id.len,x->id.s,
-					x->application_id,
-					x->type);
-			switch (x->type){
-				case AUTH_CLIENT_STATEFULL:
-				case AUTH_SERVER_STATEFULL:
-					LM_DBG(ANSI_GRAY"\tAuth State [%d] Timeout [%d] Lifetime [%d] Grace [%d] Generic [%p] Class [%d]\n",
-							x->u.auth.state,
-							(int)(x->u.auth.timeout-time(0)),
-							x->u.auth.lifetime?(int)(x->u.auth.lifetime-time(0)):-1,
-							(int)(x->u.auth.grace_period),
-							x->u.auth.generic_data,
-							x->u.auth.class);
-					break;
-				case ACCT_CC_CLIENT:
-					LM_DBG(ANSI_GRAY"\tCCAcct State [%d] Charging Active [%c (%d)s] Reserved Units(valid=%ds) [%d] Generic [%p]\n",
-							x->u.cc_acc.state,
-							(x->u.cc_acc.charging_start_time&&x->u.cc_acc.state!=ACC_CC_ST_DISCON)?'Y':'N',
-							x->u.cc_acc.charging_start_time?(int)((int)time(0) - (int)x->u.cc_acc.charging_start_time):-1,
-							x->u.cc_acc.reserved_units?(int)((int)x->u.cc_acc.last_reservation_request_time + x->u.cc_acc.reserved_units_validity_time) - (int)time(0):-1,
-							x->u.cc_acc.reserved_units,
-							x->u.cc_acc.generic_data);
-					break;
-				default:
-					break;
+		LM_DBG("------- CDP Sessions ----------------\n");
+		for(hash=0;hash<sessions_hash_size;hash++){
+			AAASessionsLock(hash);
+			for(x = sessions[hash].head;x;x=x->next) {
+				LM_DBG(" %3u. [%.*s] AppId [%d] Type [%d]\n",
+						hash,
+						x->id.len,x->id.s,
+						x->application_id,
+						x->type);
+				switch (x->type){
+					case AUTH_CLIENT_STATEFULL:
+					case AUTH_SERVER_STATEFULL:
+						LM_DBG("Auth State [%d] Timeout [%d] Lifetime [%d] Grace [%d] Generic [%p] Class [%d]\n",
+								x->u.auth.state,
+								(int)(x->u.auth.timeout-time(0)),
+								x->u.auth.lifetime?(int)(x->u.auth.lifetime-time(0)):-1,
+								(int)(x->u.auth.grace_period),
+								x->u.auth.generic_data,
+								x->u.auth.class);
+						break;
+					case ACCT_CC_CLIENT:
+						LM_DBG("CCAcct State [%d] Charging Active [%c (%d)s] Reserved Units(valid=%ds) [%d] Generic [%p]\n",
+								x->u.cc_acc.state,
+								(x->u.cc_acc.charging_start_time&&x->u.cc_acc.state!=ACC_CC_ST_DISCON)?'Y':'N',
+								x->u.cc_acc.charging_start_time?(int)((int)time(0) - (int)x->u.cc_acc.charging_start_time):-1,
+								x->u.cc_acc.reserved_units?(int)((int)x->u.cc_acc.last_reservation_request_time + x->u.cc_acc.reserved_units_validity_time) - (int)time(0):-1,
+								x->u.cc_acc.reserved_units,
+								x->u.cc_acc.generic_data);
+						break;
+					default:
+						break;
+				}
 			}
+			AAASessionsUnlock(hash);
 		}
-		AAASessionsUnlock(hash);
+		LM_DBG("-------------------------------------\n");
 	}
-	LM_DBG(ANSI_MAGENTA"-------------------------------------\n"ANSI_GREEN);
 }
 
 int cdp_sessions_timer(time_t now, void* ptr)

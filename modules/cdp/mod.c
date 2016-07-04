@@ -62,6 +62,7 @@ unsigned int latency_threshold = 500;			/**< default threshold for Diameter call
 unsigned int *latency_threshold_p = &latency_threshold;
 unsigned int workerq_latency_threshold = 100;	/**< default threshold for putting a task into worker queue (ms) */
 unsigned int workerq_length_threshold_percentage = 0;	/**< default threshold for worker queue length, percentage of max queue length - by default disabled */
+unsigned int debug_heavy = 0;
 
 extern dp_config *config; 				/**< DiameterPeer configuration structure */
 
@@ -166,6 +167,7 @@ static param_export_t cdp_params[] = {
 	{ "latency_threshold", 			PARAM_INT, 		&latency_threshold},		/**<threshold above which we will log*/
 	{ "workerq_latency_threshold", 	PARAM_INT, 		&workerq_latency_threshold},/**<time threshold putting job into queue*/
 	{ "workerq_length_threshold_percentage", 	PARAM_INT, 		&workerq_length_threshold_percentage},/**<queue length threshold - percentage of max queue length*/
+	{"debug_heavy", PARAM_INT, &debug_heavy},
 	{ 0, 0, 0 }
 };
 

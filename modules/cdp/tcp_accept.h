@@ -44,7 +44,7 @@
 #ifndef __TCP_ACCEPT_H
 #define __TCP_ACCEPT_H
 
-
+extern unsigned int debug_heavy;
 
 int create_socket(int listen_port,str bind_to,unsigned int *sock);
 

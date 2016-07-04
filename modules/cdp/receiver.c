@@ -97,18 +97,20 @@ serviced_peer_t *serviced_peers=0; 	/**< pointer to the list of peers serviced b
  */
 static void log_serviced_peers()
 {
-	serviced_peer_t *sp;
+	if (debug_heavy) {
+		serviced_peer_t *sp;
 
-	LM_DBG("--- Receiver ["ANSI_BLUE"%s"ANSI_GREEN"] Serviced Peers: ---\n",
-			pt[process_no].desc);
-	for(sp=serviced_peers;sp;sp=sp->next){
-		LM_DBG(ANSI_GREEN" Peer: ["ANSI_YELLOW"%.*s"ANSI_GREEN"]  TCP Socket: ["ANSI_YELLOW"%d"ANSI_GREEN"] Recv.State: ["ANSI_YELLOW"%d"ANSI_GREEN"]\n",
-				sp->p?sp->p->fqdn.len:0,
-				sp->p?sp->p->fqdn.s:0,
-				sp->tcp_socket,
-				sp->state);
+		LM_DBG("--- Receiver %s Serviced Peers: ---\n",
+				pt[process_no].desc);
+		for(sp=serviced_peers;sp;sp=sp->next){
+			LM_DBG(" Peer: %.*s  TCP Socket: %d  Recv.State: %d \n",
+					sp->p?sp->p->fqdn.len:0,
+					sp->p?sp->p->fqdn.s:0,
+					sp->tcp_socket,
+					sp->state);
+		}
+		LM_DBG("--------------------------------------------------------\n");
 	}
-	LM_DBG("--------------------------------------------------------\n");
 }
 
 
@@ -857,7 +859,7 @@ int peer_connect(peer *p)
 	{
 		if (getnameinfo(ainfo->ai_addr,ainfo->ai_addrlen,
 					host,256,serv,256,NI_NUMERICHOST|NI_NUMERICSERV)==0){
-			LM_WARN("peer_connect(): Trying to connect to %s port %s\n",
+			LM_INFO("peer_connect(): Trying to connect to %s port %s\n",
 					host,serv);
 		}
 
@@ -876,11 +878,11 @@ int peer_connect(peer *p)
 			error = getaddrinfo(p->src_addr.s, NULL, &hints, &sainfo);
 
 			if (error!=0){
-				LM_WARN("peer_connect(): error getting client socket on %.*s:%s\n",
+				LM_ERR("peer_connect(): error getting client socket on %.*s:%s\n",
 						p->src_addr.len,p->src_addr.s,gai_strerror(error));
 			} else {
 				if (bind(sock, sainfo->ai_addr, sainfo->ai_addrlen )) {
-					LM_WARN("peer_connect(): error opening client socket on %.*s:%s\n",
+					LM_ERR("peer_connect(): error opening client socket on %.*s:%s\n",
 							p->src_addr.len,p->src_addr.s,strerror(errno));
 				}
 			}
@@ -905,18 +907,18 @@ int peer_connect(peer *p)
 						int  valopt;
 						getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon);
 						if (valopt) {
-							LM_WARN("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(valopt));
+							LM_ERR("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(valopt));
 							close(sock);
 							continue;
 						}
 					}else{
-						LM_WARN("peer_connect(): Timeout or error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
+						LM_ERR("peer_connect(): Timeout or error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
 						close(sock);
 						continue;
 					}
 				}
 			}else{
-				LM_WARN("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
+				LM_ERR("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
 				close(sock);
 				continue;
 			}
