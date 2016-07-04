@@ -138,7 +138,8 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 
 		/* Connection broken */
 		if( !strncmp((char*)sqlstate,"08003",5) ||
-		    !strncmp((char*)sqlstate,"08S01",5)
+		    !strncmp((char*)sqlstate,"08S01",5) ||
+		    !strncmp((char*)sqlstate,"HY000",5)   /* ODBC 3 General error */
 		    )
 		{
 			ret = reconnect(_h);
