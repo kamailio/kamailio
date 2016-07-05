@@ -15,13 +15,19 @@ rm ${DIST}/kamailio.service
 
 # No mi_xmlrpc module
 sed -i -e '/libxmlrpc-c3-dev/d' -e '/^Package: kamailio-xmlrpc-modules/,/^$/d' \
-	${DIST}/control
+  ${DIST}/control
 sed -i -e 's/ mi_xmlrpc[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mi_xmlrpc/' ${DIST}/rules
 
 # use old libfreeradius
 sed -i 's/libradcli-dev/libfreeradius-client-dev/' ${DIST}/control
 sed -i -e 's/RADCLI/FREERADIUS/' ${DIST}/rules
+
+# no systemd module
+sed -i -e '/libsystemd-dev/d' -e '/^Package: kamailio-systemd-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e 's/ systemd[ ,$]*//' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ systemd/' ${DIST}/rules
 
 # clean backports scripts
 rm -rf ${DIST}/backports

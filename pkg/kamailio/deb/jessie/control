@@ -640,6 +640,20 @@ Description: erlang modules for Kamailio
  This module provides interact with Erlang node. The module allows sending,
  receiving Erlang messages and RPC calls between each other.
 
+Package: kamailio-systemd-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: kamailio (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: systemd logging modules for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This module provides logging to systemd journal.
+
 Package: kamailio-extra-modules
 Architecture: linux-any
 Multi-Arch: same
