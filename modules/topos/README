@@ -112,6 +112,9 @@ modparam("topos", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 3.2. mask_callid (int)
 
+   Note: this functionality is not implemented yet - the parameter is
+   present in order to be in pair with topoh module.
+
    Whether to replace or not the Call-ID with another unique id generated
    by Kamailio.
 
