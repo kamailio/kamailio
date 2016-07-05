@@ -1,3 +1,862 @@
+===================== 2016-07-05 Version 4.2.8 Released =====================
+
+===================== Changes Since Version 4.2.7 ===========================
+
+commit 81d1dcc68c50d1610ac41b5b2dd55f5f8822698e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 5 12:23:56 2016 +0200
+
+    Makefile.defs: version set to 4.2.8
+    
+    - mark the end of planned packaging from branch 4.2
+
+commit f1157ca3002c905b58827b0fb4497804d525ddea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Mar 29 23:12:44 2016 +0200
+
+    pv: fix compile warning for shm_initialized() test
+
+    - coherent whitepacing across the file
+
+    (cherry picked from commit d3d1592eb7148586cb70e93f549ff11fd5cf5316)
+    (cherry picked from commit 75df6618a6eaec8314480de193e2a9a7cbe25324)
+    (cherry picked from commit 4b1c20b0a8ad4eceab93f775933a7a2613d05ff2)
+
+commit 9ec6c89d005269dbaad997a1da53b09729417879
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 5 12:23:13 2016 +0200
+
+    pkg/rpm: version set to 4.2.8 in spec files
+
+commit 97568d7132e9d20dda7866c0a8cbe0277e620f04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 5 12:17:45 2016 +0200
+
+    modules: rebuild of readme files
+
+commit 192965d8636f313f81707a353c95b8b02f4905a0
+Author: Spencer Thomason <spencer@whiteskycommunications.com>
+Date:   Fri Jul 1 09:14:12 2016 -0700
+
+    core: ensure cfg_block structure is 8 byte aligned
+    
+    - prevents bus error on stricter cpu architectures like sparc
+    - reported by GH #655
+    
+    (cherry picked from commit 0fd0715d015a2396b0ec66cb0bc83ec0b61c0d08)
+    (cherry picked from commit 795556061412439618c640ef19e8579486f0c58a)
+    (cherry picked from commit e9bbb8f6d945221a388c5a8bbe5e37ffb873395b)
+
+commit ca1f8cab244ae01aa7779954dd2b0eb209e5b358
+Author: Spencer Thomason <spencer@whiteskycommunications.com>
+Date:   Thu Jun 30 13:35:36 2016 -0700
+
+    uid_avp_db: remove GCC specific -Wall
+    
+    (cherry picked from commit 4fc8d37df84d856b848fd4e894c21e0fbf02bb56)
+    (cherry picked from commit 301017af120d0e7c75821c00dad07892b6a366c2)
+    (cherry picked from commit 75c14e11376e40f9caef0dbda3b0e010e601337f)
+
+commit 84105c578af667bc30d11c76fe908af9c18c4431
+Author: Spencer Thomason <spencer@whiteskycommunications.com>
+Date:   Thu Jun 30 13:22:57 2016 -0700
+
+    ctl: remove return statement from void function
+    
+    (cherry picked from commit 16e6bdf814576e26a5f5f46bdfcb98ab1fd4e04d)
+    (cherry picked from commit c5d8095c7fa548a7199a03bf1f5d69d56202568a)
+    (cherry picked from commit 7a07d5740b9da5827841890ba35811de575e2f84)
+
+commit 5d5d1572c1896c9ec55337c7b318b3a4a981bec3
+Author: Spencer Thomason <spencer@whiteskycommunications.com>
+Date:   Thu Jun 30 13:18:00 2016 -0700
+
+    counters: fix return statement in void function
+    
+    (cherry picked from commit 37355281dffccc42b1d83f413e3d528bdcf6cdd0)
+    (cherry picked from commit 33073d2af70ed0f289de6cfa2d754763e037ce1b)
+    (cherry picked from commit 60585019c82f23f24fe51a2cb3d04db65aed012a)
+
+commit 73dfed5a00677e603f405604333438be1c2068c9
+Author: Giovanni Mele <giovanni.mele@nagra.com>
+Date:   Fri Jul 1 14:51:12 2016 +0200
+
+    db_unixodbc: detect DB disconnection with generic HY000 status
+    
+    (cherry picked from commit d80376f9ea087328a0c46d97b908993baeb5b1b4)
+    (cherry picked from commit e2874495b1ecad9e85b47f6d8bdb847fceb0c3ad)
+    (cherry picked from commit a06d5419699183f98bfb4908d29bd768a0eb0a0a)
+
+commit 4ae0ec89535295f575a349a79160abccb3c77d40
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 5 11:02:39 2016 +0200
+
+    pkg/kamailio/deb: update version to 4.2.8
+
+commit 744a7b5b11335682d3ba93832b56d2e78e2f8c6f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 27 13:04:50 2016 +0200
+
+    userblacklist: removed errorneous extra checks in fixup parameters function
+    
+    - parsing the parameters should be enough for validity
+    - no need to attempt to parse to integer first parameter, it's not
+      expected and results in a crash for static string parameters
+    - reported by Jan Hazenberg
+    
+    (cherry picked from commit 5fd2c91f512b7311f11c76023da45758fb8c4365)
+    (cherry picked from commit c64209b200d82c3be78cf32254333f55d0b92afb)
+    (cherry picked from commit 28aefd8690c79738ec5a8b067502697116cb5058)
+
+commit 86407de9f47b95373c1d36dae639e1f4627f8018
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 27 11:54:08 2016 +0200
+
+    auth_identity: include openssl/x509_vfy.h
+    
+    - looks like being required by openssl 1.1.0 to get the definition of
+      X509_STORE_CTX
+    - reported by Victor Seva, GH #685
+    
+    (cherry picked from commit 21321c70358997f354326be048b22c7b2dfb045a)
+    (cherry picked from commit 5aeffff693e8d7498f25b42ce9949f28901fb953)
+    (cherry picked from commit 72077a32cfc957e7bd8e67b8f0c1e13b1f4847a9)
+
+commit 1cb6271dd7001d3592a2a390f1c19e5d7287564c
+Author: Dmitri Savolainen <savolainen@erinaco.ru>
+Date:   Mon Jun 27 12:50:19 2016 +0300
+
+    nathelper: set via branch according to "z9hG4bK..." format (instead of "branch=0")
+    
+    (cherry picked from commit 1edb4298ca5b890c40f9d7df5f29199a90b0c4fd)
+    (cherry picked from commit ffd5b68651c24546e38c2dfff4e64937db131077)
+    (cherry picked from commit dda0fcdb98c28023e457846f9869849649adaa01)
+
+commit 6d64574118a5ebef70734eafd8f431a3d12c4f6b
+Author: Spencer Thomason <spencer@whiteskycommunications.com>
+Date:   Fri Jun 24 00:01:59 2016 -0700
+
+    db_postgres: rename ntohll and htonll functions
+    
+    - fix namespace conflict on platforms where these are present in system libs
+    
+    (cherry picked from commit 2ebdbec8af56027c9c94fe5e67975c9a319b9620)
+    (cherry picked from commit e3f53ef6158057b090c398f5afc0b2bcdf747430)
+    (cherry picked from commit 1740191c9003d567433fec242fea91ff9353665d)
+
+commit 3f9bb62d87a49000213ac2802758011f962cd991
+Author: Giovanni Mele <giovanni.mele@nagra.com>
+Date:   Fri Jun 17 16:57:48 2016 +0200
+
+    db_unixodbc: do not consider SQL_NO_DATA return code as an error
+    
+    (cherry picked from commit feb195b2d9c801bc3591b1e95de6b70956e76dfe)
+    (cherry picked from commit 6f8ff98f10a6df21a1b669881fef5df91254446b)
+    (cherry picked from commit f525e3e015586c27969499c3e5cd5a8266dc3a85)
+
+commit 6b328141610e99546fc0898a86891e92282b02ae
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 13 12:50:04 2016 +0200
+
+    kamdbctl: more error help for missing .pgpass file
+    
+    (cherry picked from commit 8a724a70859f68431094acab2a8f9ce000bbd89b)
+    (cherry picked from commit 0106c43e75a87d9ead0016489330b66e6c0b0b72)
+    (cherry picked from commit 8ba27582bdb06ed924074bf3cb269bb9196c3405)
+
+commit e649fa956d0c09540e54c7c31c2bcd9a51298f1b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 13 12:33:28 2016 +0200
+
+    kamdbct: fixed typo in pgpass name
+    
+    (cherry picked from commit 631b69c43ffccbcecc3f43c3ebe4e614fe5f105d)
+    (cherry picked from commit 21304177dd9586e7bb3a04d40a8329464abcd9c1)
+    (cherry picked from commit cc7ad9cef88c1075ded746c661fb01bf7c3cd206)
+
+commit 45ef39cb7ce734e79ad71542c73b46b37d1177ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 9 13:06:20 2016 +0200
+
+    rr: use msg->pid to match cached route params
+    
+    - could be related to GH #663
+    
+    (cherry picked from commit 8f4ec60795294d17597d3bbd20e68f4f03c98495)
+    (cherry picked from commit 41fb662fed24e2edab8535059f5e6eb1bd7e0ca0)
+    (cherry picked from commit ecd8874bae478f90147b9031bca9f2a1deb93e14)
+
+commit 311602df8c560500b7e8bf3d9d85bd0db50b16de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 8 13:58:39 2016 +0200
+
+    app_java: skip throwing error of missing java for make readme
+    
+    - controlled by DOCBUILD=yes
+    
+    (cherry picked from commit bb1e6ceadacd2b38826ed996e44cc45f3d8d1a41)
+    (cherry picked from commit 6f9f6ae1524a7ccfa6ae297d2c37036bbd2162dd)
+    (cherry picked from commit 690462c5082924d8707395bdc1fe418edbb8a28e)
+
+commit 7afd55d9ec43927cc764743f9721ced32d047192
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 7 15:35:04 2016 +0200
+
+    tm: relocated pointers in cfg group structure to align them to 8bytes
+    
+    - cope with stricter cpu architectures like sparc
+    - reported by GH #655
+    
+    (cherry picked from commit 2717aed626b09298d6150c68463cb3bdb1a81906)
+    (cherry picked from commit 05fe8f8de5d83437f80fe3e18950450eb98e1bce)
+    (cherry picked from commit d5ebc7b17967c14ce5c006606eda55c7a788187c)
+
+commit efb628e0f4b30b508e87f6d96edcb5ce19a729bd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 6 17:33:08 2016 +0200
+
+    utils/misc/vim: added few missing tokens to vim syntax highlighting
+    
+    (cherry picked from commit b7e36c57f47d1b17c375db2a554c84100e1f0ee8)
+    (cherry picked from commit 96088fc7a1f39544175a4582be1e346db17611b4)
+    (cherry picked from commit 096f56e3d2262aa6be5e106672b41408fb7d1174)
+
+commit 52b9c4c7b681dbf63c99f00b7b70d16e55722a5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 31 17:21:29 2016 +0200
+
+    misc/vim: syntax highlighting for log facility values
+    
+    (cherry picked from commit ab079178ab49d8c855f135d85d8e8acfb03ec6bd)
+    (cherry picked from commit c2e87f015f821e44bdb8bbaed8d61e695343ea2d)
+    (cherry picked from commit d2ef7d99b1b993024188d8594e4b0f44cc2b7428)
+
+commit bdb1f76ce8113cedb07feca9530fef4438d849e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 30 13:11:06 2016 +0200
+
+    core: setting the equivalent of IP_TOS socket option for IPv6
+    
+    - reported in GH #598
+    
+    (cherry picked from commit ff63e5c79592a37012018660552950a40a1a1581)
+    (cherry picked from commit 995d4084ebe192a51b89bd6b901e4d4b6ddd9fd7)
+    (cherry picked from commit bf5df06a84ba76e90c69253e93003ee44f8ebc8e)
+
+commit 7526a0f0aa5f4a113c5f8d184e3c50395649a8e1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 30 12:38:32 2016 +0200
+
+    evapi: start evapi dispatcher process with rpc rank
+    
+    - it may be used for handling responses from external app with sip
+      related functions
+    - reported by GH #622
+    
+    (cherry picked from commit 2d1a7e453301cfdee2c71ccebcd66d86f4c62b3a)
+    (cherry picked from commit 761f84a61745e433850cb286da020ea595752784)
+    (cherry picked from commit 89531bc21705d9da8b8fc24d84027eced7f1ae35)
+
+commit b771c38d028d3915cc0f3cb8ea14417eb9c169e6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 26 16:54:54 2016 +0200
+
+    pv: signed int string representation for avps
+    
+    (cherry picked from commit d6124b3d894b130e3ebeabb247230966a77c9ceb)
+    (cherry picked from commit 13a361bec5cb2491ef9bc6f8b917e14e102814d4)
+    (cherry picked from commit e2b0bab6bedc00cc799006627c0fff6607109df7)
+
+commit dbda69d5b560f9175ccf1f96dadcd11294dc2a00
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Mon May 23 23:49:59 2016 +0300
+
+    modules/[call_control|mediaproxy]: proper assigment to NULL pointer
+    
+    CC (clang) [M mediaproxy.so]          mediaproxy.o
+    mediaproxy.c:1929:27: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+            *_params->param = MPInactive;
+                              ^~~~~~~~~~
+    
+    (cherry picked from commit 700b334b51b39056c4c0004451ca41304510f164)
+    (cherry picked from commit 3b3481180be9878d8837f49b77cd76284cc11221)
+    (cherry picked from commit a64625b52b974ab961b89bce5dc0ea426f042924)
+
+commit eb88633cb594121563c4d6d23635667a289302d1
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Tue May 24 07:32:33 2016 +0300
+
+    modules/rr: initialize to NULL
+    
+    (cherry picked from commit c00867e50de1c7855fed8a05745086092fef38a5)
+    (cherry picked from commit b351655cc53342137106cf9d6e4182950ee8ea0e)
+    (cherry picked from commit 3f1c0e87d0dbadea72aa8238732991f082583494)
+
+commit 1cfef090e524faa4704acccd0e52ecc1bf7549b3
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Wed May 18 02:18:52 2016 +0300
+
+    lib/srdb1: fix compiler warning
+    
+    > CC (gcc) [L libsrdb1.so.1.0]            db_ut.o
+    > db_ut.c:57:32: warning: extra tokens at end of #undef directive
+    >   #undef _XOPEN_SOURCE_EXTENDED 1  /* solaris */
+    >                                 ^
+    
+    (cherry picked from commit dee2478e521f2f829c66d025fb6ca17326138910)
+    (cherry picked from commit 01698f47ab0be22f0d80cb0a66bbeb92f8177821)
+    (cherry picked from commit 6218646c0a0d14ac10d7e6010550c08dc736debb)
+
+commit 7c8fb1164a281342cdd0df722d16a6a8d91f8afc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun May 15 08:52:29 2016 +0200
+
+    usrloc: coonect to db from rpc processes
+    
+    - evapi consumers are using rpc rank and there can be save/lookup
+      operations
+    - reported by GH #622
+    
+    (cherry picked from commit ee11732bdc1637d646b772ce22d43bd571f7a736)
+    (cherry picked from commit e8a063a7001bad32144765f12928cf188b773e20)
+    (cherry picked from commit f071950e55eb32f302e08e60104a9c74ddc9ca62)
+
+commit 9e9907ac324223064aef71828a7b50da71ec3752
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 12 16:52:34 2016 +0200
+
+    cfgutils: proper check for return code looking up routing block in route_exists()
+    
+    - when the route block doesn't exist, route_lookup() returns -1, which
+      was used to access routing actions due to condition expecting 0 on not
+      found. The fix should avoid crashing by accessing invalid addresses.
+      Reported by Alex Balashov
+    - fixed return codes in the configuration file to follow the rules with
+      positive being evaluated to true and negative to false
+    - route_exists() returns the code returned by running actions, like a
+      classic sub-route execution
+    
+    (cherry picked from commit 6a3fc200b19500ddd6ed9a2236db6e21f777564a)
+    (cherry picked from commit 053c522e45fedea8bdb2ed92bd1de0a82331a7bf)
+    (cherry picked from commit 1765ad5cd0740a4a373f2353e88b2137e57af620)
+
+commit 5106823b85a0887fe1de8613088202b419e3cea2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 5 10:10:59 2016 +0200
+
+    core: print tos value if socket option for it cannot be set
+    
+    - to help with GH #598
+    
+    (cherry picked from commit 0118338d82e2471572990a1ea09593265161e4a4)
+    (cherry picked from commit fdeba44e840616e08a2309eb3cf1517a34ea29fa)
+    (cherry picked from commit cf57bee4e77f987c9e3a5a4c8ca36f4e537b95a8)
+
+commit 91e25b5789416c84037ecff97d31ef8c7fc73234
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 3 10:18:11 2016 +0200
+
+    sdpops: safety check if sdp pointer is null inside sdp_get()
+    
+    (cherry picked from commit cd67fbb8ecb83944f458ec8a127adc14d5b38aeb)
+    (cherry picked from commit f739c6d0a861fce1808a93e4660546c746dc7672)
+    (cherry picked from commit f65610f97df68e4a4a3945b85bf06aeca792645f)
+
+commit 754ca85a78b4f9c3d5d24c59ff17cfbddd0030d9
+Author: Jonas BÃ¶ttner <boettner@sipgate.de>
+Date:   Mon May 2 14:20:25 2016 +0200
+
+    enum: print out malformed uri in enum_query()
+    
+    - previous error message did not show up the username part of r-uri.
+      therefor debugging was difficult.
+    
+    (cherry picked from commit fd3c30f981d97622fb99f2122ce0bc950774edfb)
+    (cherry picked from commit c29e524283b50b74f61e704f0e32b86c7941da6b)
+    (cherry picked from commit 3e69b744f268e9508bf0ef7379391155a515174a)
+
+commit f4588649e174b140f5927e09cb9ad55f1abf0db1
+Author: Jonas BÃ¶ttner <boettner@sipgate.de>
+Date:   Mon May 2 14:19:30 2016 +0200
+
+    enum: single digit is valid in function enum_query
+    
+    - is_e164() returns true for a single digit (previously two digits)
+    
+    (cherry picked from commit 86ecdb2ec109af536efa70c2b0e4b93c4072e8b5)
+    (cherry picked from commit aa39e12bf63a325effa52eae924a946005baee3c)
+    (cherry picked from commit 5bf779b54d59e6b6a1d9902719aaca0fb4ae51df)
+
+commit e0a6d4dce5c9478763c386d42d1f8038df0aeb75
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 11 12:57:31 2016 +0200
+
+    Makefile.rules: added target tags as alias for target TAGS
+    
+    (cherry picked from commit b024f5aea72f172b39dd4d8947934be52f07dbe4)
+    (cherry picked from commit 3616af6b5f2aae383c93507563a33913e3f723e9)
+    (cherry picked from commit bf859ba98a3440e99b665de64b28a72815c29510)
+
+commit f2c7e9dd33e448cade335ad15b945d4f5168d652
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 4 08:53:12 2016 +0200
+
+    core: declare function parameter type to get rid of compile warning
+    
+    (cherry picked from commit ad2f899c1ad75c2b636cb17b6c1c49cb38daab27)
+    (cherry picked from commit 74052b4a0f50b19d42a6fbcae3df38136046f993)
+    (cherry picked from commit 1dd63bb8380bd80ba76f9149742c553d79748035)
+
+commit a66d6c847a2625743cf3ac4b726083a2911c7527
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 20 12:02:09 2016 +0200
+
+    Makefile.defs: detect kfreebsd OS and set its default compile flags
+    
+    - combine the options of Linux with FreeBSD to use kqueue if available
+    - reported by Victor Seva, GH #576
+    
+    (cherry picked from commit 4c6f879563adbbdee7c730549533a0d852e6cbef)
+    (cherry picked from commit 615b252510cee01dc6f24ac7d12f07dcb6b50366)
+    (cherry picked from commit 187666d9b99c4cec53930cd0c78e73835ac9f1c4)
+
+commit 6fc48dc4c4c9a1dc22a6fee0700b7581ae0f0ae3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Apr 20 11:59:25 2016 +0200
+
+    core: remove ending parenthesis in ifdef condition
+    
+    warning: ISO C99 requires whitespace after the macro name
+    sched_yield.h:34:20: warning: extra tokens at end of #ifndef directive
+     #ifndef sched_yield()
+    
+    - reported by Victore Seva, GH #576
+    
+    (cherry picked from commit 34b67125424da7ce86b5cac77e30af0711fafac1)
+    (cherry picked from commit 71f329c971d6ad18f7eda16a2b50b25e9efd3236)
+    (cherry picked from commit 0e41c6c5e1a8cd4fc977822f23dd4ec9e58998ad)
+
+commit d5195cd224c5099663a01dc6df08e39923bdf14d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 25 08:56:00 2016 +0200
+
+    jsonrpc-c: replaced use of obsolete function json_object_object_get()
+    
+    (cherry picked from commit be02b3f11c269d3eeeb52e1cd0056d7d77be2e4c)
+    (cherry picked from commit 528842d4dfea3d6785e6cee0cd3fb6411ee3dc7d)
+    (cherry picked from commit b4c92cfdd42b4387375265d96caa4f088c58318a)
+
+commit 418e51d8d535024d5f9a2beb053f3ca81fd6c51b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 25 08:54:45 2016 +0200
+
+    json: replaced use of obsolete function json_object_object_get()
+    
+    - reported by Olle E. Johansson, GH #579
+    
+    (cherry picked from commit 8b9fd4fa40abfc40ecd537948036aa91b908615d)
+    (cherry picked from commit 2700d7b8df738f9e5db82dca87cbab5549f2e0d1)
+    (cherry picked from commit b7ba97429ffd3ed36354f445c98b0d96008df0cc)
+
+commit 1e400bb07a577b05f34be42d5ef62bec1e9d67eb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Mar 27 14:40:09 2016 +0200
+
+    uuid: detect if pkg-config knows about uuid lib
+    
+    (cherry picked from commit 66fc01f48ea2d6fa8f20f39e1bcd01d498f8580d)
+    (cherry picked from commit 21cb1bf26aed825cc0a2e5d7bdee0d61e1a700cc)
+    (cherry picked from commit 0d404973f260d5b4fd3b09a4b8598be8cd5131ac)
+
+commit 96dbe7cb98341970054fbf7eed98e3005bbe63ce
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 26 13:01:01 2016 +0100
+
+    seas: init variable to get rid of compile warning
+    
+    (cherry picked from commit 3a25e489d0ab8d55d4011ccf62de4f3d8d08b028)
+    (cherry picked from commit fd20bff1e420a93be588b2c0dd4189f6f7e8ea0b)
+    (cherry picked from commit 6a9d4f5bc8eca7c98b480be47336d82dd0f7a368)
+
+commit 10b842110b0e006e2648a6380495c5940798ccbd
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 26 12:58:33 2016 +0100
+
+    lib/trie: init variable to get rid of compile warnings
+    
+    (cherry picked from commit 5075cef8230202138bf08c402797d9dffcb8971d)
+    (cherry picked from commit ed9ad742f9e9cd0d6e75dc788923addf9984ce3d)
+    (cherry picked from commit 1242d883f0686512ec58837e615e7df2d276148f)
+
+commit da043c96167b90d13623afa5cd3e7cdb16443a21
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Mar 26 11:26:29 2016 +0100
+
+    ndb_redis: safety check for log message parameters
+    
+    (cherry picked from commit 0a51e8c941b1c916137eb3e57fa7db86ecb9a1f8)
+    (cherry picked from commit b28b3d27597b898add46051f24120f833b035d3d)
+    (cherry picked from commit 0aa54ef107be5d51c15c6d052a62274053482cb1)
+
+commit 6c272d3b1c8f2a3627aa00a8a3a1089b04edab51
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 18 13:23:06 2016 +0100
+
+    dialog: force cleanup of aged terminated dialogs
+    
+    - reported by Dmitri Savolainen, GH #545
+    
+    (cherry picked from commit 23a3481302d5aca04be0e8d10f6d4ce23dbc36aa)
+    (cherry picked from commit 22195053b664d20f4eea78a5bbf228f587a5eab4)
+    (cherry picked from commit 29b483f946e371e067fa14fd20ea617196751c97)
+
+commit b61833fab02fb8a3bc50b1ca30a23de6cfd1c814
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 17 22:47:02 2016 +0100
+
+    pipelimit: set array result tipe for rpc commands
+    
+    - rpc stats and get pipes can return more than one item
+    
+    (cherry picked from commit 1c22f395df81dab09288ff945e97b0040894daaf)
+    (cherry picked from commit 79940803b2a631b21bb851a6380b16806ce31981)
+    (cherry picked from commit 076ea98e8f620c440f54a8b8626761df211567ca)
+
+commit 925d1dd32fe4973b18c95d6e61c13134dd88ff72
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 3 16:59:06 2016 +0200
+
+    xmlrpc: user libxml function to get content of node if type not provided for param
+    
+    - it is considered to be string according to specs
+    - old implementation was using the pointer inside the xmlNode struct,
+      which may not be available later to free again by xmlrpc module
+      garbage collector
+    - reported by Juha Heinanen
+    
+    (cherry picked from commit 6b23c27d8406780083a6b7bb774efa2a53aea540)
+    (cherry picked from commit 45060ef72edf5fdac9376150e60d56ff9458e4ff)
+
+commit a70fa333ecd44c8428ec1fa72f1589ba497e2dc2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Mar 18 13:32:59 2016 +0100
+
+    core: parse content type allows '_' char
+    
+    - reported by Fabio Margarido, GH #547
+    
+    (cherry picked from commit b65927a8f6039810ffdb7b7f31ce2d36c9535fbd)
+    (cherry picked from commit 50df69df2b7a5307802f6dcaac9b90acfbe2b44d)
+    (cherry picked from commit 541fcf7c17bc139089057f93a6bff1c94ddedca5)
+
+commit c5ef48887ead3958d825c93994bc96df637e424e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Mar 14 14:53:20 2016 +0100
+
+    kazoo: KZ_URL_MAX_SIZE set to 100
+    
+    - previous version was too low (50) - reported by Niklas Larsson, GH
+      #529
+    - master and 4.4 has it already increased
+    
+    (cherry picked from commit b40d2ecd35200559f9a1a5408d1cf441cf49cf17)
+
+commit 054f052108a249ab3065cfe34f858e723caf8f6a
+Author: Maksym Sobolyev <sobomax@sippysoft.com>
+Date:   Mon Feb 29 13:28:53 2016 -0800
+
+    Fix IPv6 handling with the default setup. With the current code,
+    it's possible for it to pit IPv6 address, but set adress family
+    to the IP4.
+    
+    (cherry picked from commit 6af319ea9307feb840c9f318954c49c3eac8bbe1)
+    (cherry picked from commit ac9b57a38bf957d5d507f1205de6268bb4c976ce)
+
+commit 0343044e0b0f92c4a136f468e3561f2e228cfc9a
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Mon Feb 29 15:35:41 2016 +0200
+
+    modules/sdpops: reimplement sdp_remove_line_by_prefix() to fix shortcomings
+    
+    - single line match was not removed
+    - multiline match with non-related lines between was not removed
+    
+    (cherry picked from commit 5db4cec2c9e8ab62c711738eae181afa69c1724d)
+    (cherry picked from commit b72f8e045f5cb27ebc94f0e238dd9086aa7e7196)
+
+commit 350b8302cf778478bc2ee88dda0818dc4f37074e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Feb 11 23:07:56 2016 +0100
+
+    registrar: send 400 if the reg-id value is invalid
+    
+    - reported by GH #497
+    
+    (cherry picked from commit f39d144e385f1fbf8759ba03e28e69aeb56d6e6a)
+    (cherry picked from commit d137e228044536a52e377e7af8a6c51b955172c4)
+
+commit 695a1066500d810b875e2c2f42bb298df8dfca93
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 22 00:38:15 2016 +0100
+
+    core: docbook - defined kamcmd entity
+    
+    (cherry picked from commit d5e57d353b2c962902d786ef081ccf06d6a9854e)
+    (cherry picked from commit 0b6bf40689fd066eab4c29da4b92aad92ab4032c)
+
+commit 664a356bcce50798dc84f0f331e3afd8802917b4
+Author: Hugh Waite <hugh.waite@xura.com>
+Date:   Tue Feb 16 17:23:50 2016 +0000
+
+    pv: Fix crash when xavp has no attributes
+    - Fixes the crash reported in #511
+    (cherry picked from commit 19bb634ba043e74480c724fb7ed8a2dad43e8dda)
+    
+    (cherry picked from commit a84d800c491c7d05e7abec1f8fe169c6c52e8e62)
+
+commit cb752f91256ba50e7d0ba0be813a2922f0a2ac05
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 7 20:21:27 2016 +0100
+
+    auth_db: use username when querying for credentials via is_subscriber
+    
+    - for the case when credentials should not be stored, just discover if a
+      record exists for the user
+    - avoids buffer overflow by setting all credentials columns, while
+      trying to use only the first column
+    - reported by Anthony Messina, GH #500
+    
+    (cherry picked from commit adbbe8b62d6b4b95e5ecbab041b93bb3130f1932)
+    (cherry picked from commit 4602f2dc430b97b6e76ae5da9ebf7f2a7984a48c)
+
+commit cb894542da8deaec41fc5c85142c92c93f370c8f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Feb 7 19:55:25 2016 +0100
+
+    presence_mwi: static declaration for inline function for eating spaces
+    
+    - based on a report by Anthony Messina, GH #502
+    - get rid of undefined symbols for some compilers
+    
+    (cherry picked from commit 619988ad6cf54d7e8154a9efb65ce2b9cb475e54)
+    (cherry picked from commit 463f2817e8685d6d1fbc3b4d6486d0aa05e3a48f)
+
+commit 9b281ee279524e33b12de863fba8d51c11f6a392
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 20 18:30:30 2016 +0100
+
+    topoh: proper detection of cancel reply for processing
+    
+    - reported by Alex Balashov
+    
+    (cherry picked from commit 0ce66908ee9da74806e2fa506ef98b5f9043e47c)
+    (cherry picked from commit 3ed6eecd71b3178f6dc7e777ee6fccb1314ef352)
+
+commit 180373327ae5368278e22946280a2be29d39855c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 28 23:11:59 2015 +0100
+
+    permissions: max size of subnet array set to 512
+    
+    - was 128, which can be insufficient for large interconnect
+    
+    (cherry picked from commit 82d7e06b09f02a2e6dab9f171586f9cd6f636f5b)
+    (cherry picked from commit b8dbff13ed9426e909e54442d80621624a28e50f)
+
+commit 851a06c6f6a9f142b6c1fd51cd4a3d5b39ef5831
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 17 13:24:05 2016 +0200
+
+    xmlrpc: fix compiler warning #612
+    
+    > CC (gcc) [M xmlrpc.so]		xmlrpc.o
+    > In file included from /usr/include/strings.h:26:0,
+    >                  from xmlrpc.c:28:
+    > /usr/include/features.h:148:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+    >  # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+    
+    (cherry picked from commit 947fe8673c3014f4d011583bed95d44408b907f4)
+    (cherry picked from commit 42be15030909cf31cedbb3642e2a6b51b2b5ae9f)
+    (cherry picked from commit 1582200618c8be92ac5aab0e15d2aaf82f8bfa57)
+
+commit ec6d396911d48c5300a38935cf6efca20602aeeb
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 3 13:55:42 2016 +0200
+
+    xmlrpc: remove redeclaration of snprintf and vsnprintf
+    
+    compilation was failling with clang:
+    
+    > CC (clang) [M xmlrpc.so]		xmlrpc.o
+    > xmlrpc.c:152:5: error: expected parameter declarator
+    > int snprintf(char *str, size_t size, const char *format, ...);
+    >     ^
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:39: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >                                       ^
+    > /usr/include/features.h:329:31: note: expanded from macro '__USE_FORTIFY_LEVEL'
+    > #  define __USE_FORTIFY_LEVEL 2
+    >                               ^
+    > xmlrpc.c:152:5: error: expected ')'
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:39: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >                                       ^
+    > /usr/include/features.h:329:31: note: expanded from macro '__USE_FORTIFY_LEVEL'
+    > #  define __USE_FORTIFY_LEVEL 2
+    >                               ^
+    > xmlrpc.c:152:5: note: to match this '('
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:28: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >                            ^
+    > xmlrpc.c:152:5: error: conflicting types for '__builtin___snprintf_chk'
+    > int snprintf(char *str, size_t size, const char *format, ...);
+    >     ^
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:3: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >   ^
+    > xmlrpc.c:152:5: note: '__builtin___snprintf_chk' is a builtin with type 'int (char *, unsigned long, int, unsigned long, const char *, ...)'
+    > /usr/include/x86_64-linux-gnu/bits/stdio2.h:69:3: note: expanded from macro 'snprintf'
+    >   __builtin___snprintf_chk (str, len, __USE_FORTIFY_LEVEL - 1, __bos (str), \
+    >   ^
+    > 3 errors generated.
+    
+    (cherry picked from commit 358de10a94bef4df6b1811ac8e88ea4e7919542c)
+    (cherry picked from commit efe5903cd17de9c5d94610e2345254e347e3aeb0)
+
+commit 0a5f99b28d01d79cf2675df6d2a6220167e2476e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 7 15:21:06 2016 +0200
+
+    tls: proper check of libssl versions used for compilation and available on system
+    
+    - shift out the last 12bits, being the patch version and status (see man
+      SSLeay)
+    - reported by Victor Seva, GH #662
+    
+    (cherry picked from commit c38b4c7345a6806f48a0cdb07841e10bc962e1bf)
+    (cherry picked from commit 253909bf673c0a59e7adf578bb5df73eb157d0f2)
+    (cherry picked from commit 5632abc108bf8ed8157a77806ea80b962db3fa4f)
+
+commit 3ae35fa2b43c0fa2f791c8f80053058d50f73e54
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Apr 26 10:57:34 2016 +0200
+
+    travis-ci: IRC notifications to #kamailio-dev channel
+    
+    (cherry picked from commit 0dfd44a0502abbf20269d73a230be983cbb97b8d)
+
+commit 7242132a5521c97517b4e87989413f48592c86d7
+Author: Camille Oudot <camille.oudot@orange.com>
+Date:   Thu Feb 18 11:09:24 2016 +0100
+
+    srutils: change names colliding with libcrypto
+    
+    (cherry picked from commit 4b5da2d909ea3fcd531eecff2f3e02adad26fa27)
+
+commit bc4a545aa050dd36c982bf102464edbc14a88753
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 12 18:04:19 2016 +0100
+
+    seas: safety check for target buffer size before copying message in encode_msg()
+    
+    - avoid buffer overflow for large SIP messages
+    - reported by Stelios Tsampas
+    
+    (cherry picked from commit f50c9c853e7809810099c970780c30b0765b0643)
+    (cherry picked from commit 18cd34781d2bdda9c19314c0494f6a655dbe6089)
+
+commit 05cdb45872af66c733dd810fc7877a0a7fd9bce6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Feb 5 12:07:33 2016 +0100
+
+    Revert "pua_reginfo: use ul.get_urecord_by_ruid instead of ul.get_urecord"
+    
+    This reverts commit eb97d380a2fca3b9ce30596aad9493bc11cd5d8d.
+    
+    Fixes #499
+
+commit f9d55664519e8753dfff1f1a824d207176b04252
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 5 09:18:48 2016 +0100
+
+    corex: fix regression introduced with detection of ipv6 for send()
+    
+    - reported by Paul Arnold, GH #496
+    
+    (cherry picked from commit 8e20a3c5cf3036b203cda629d89659fb1c57c53b)
+    (cherry picked from commit 160ec06e7d7e3f8c46fdc62132c46fd695119572)
+
+commit f5f29ee2e89f1b0662785db0fb09ec34364ed9d7
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Fri Jan 22 14:11:25 2016 +0200
+
+    dtrie: sanity checks
+    
+    Segfaults reported by Igor, on sr-Users mailing list.
+    
+    (cherry picked from commit 825b4fabb9bb4b2cf58dc1205423b8ce5d5e08cc)
+
+commit 7b2208dfb33e84e24ae33124218273cdd4ec1d5d
+Author: Lucian Balaceanu <lucian.balaceanu@1and1.ro>
+Date:   Tue Jan 19 11:09:59 2016 +0200
+
+    carrierroute: fixed possible kamctl fifo segfault
+    
+    - introduced checks to reject contiguous -{OPTION}{PARAMETER} in kamctl fifo commands
+    e.g.: kamctl fifo cr_activate_host "-dproxy -p 49 -h proxy1" is not allowed
+
+commit 727746451baaf0a59225cbdf45474df6eaba2bcc
+Author: Hugh Waite <hugh.waite@xura.com>
+Date:   Thu Jan 7 12:17:03 2016 +0000
+
+    tm: Reset socket variable while forking
+    - Reset sock_str variable so values from previous forks are not stored in contact_flows AVP
+    (cherry picked from commit 53263a2ddad9bb118763516bcd7995652c4fb070)
+
+commit e3197e00458bae2556d38385a45c6132a0393f7a
+Author: Stefan Mititelu <stefan.mititelu@1and1.ro>
+Date:   Thu Jan 7 09:58:42 2016 +0200
+
+    debugger: fix issue #463
+    
+    Don't shm_malloc() while the lock is taken.
+    
+    (cherry picked from commit 3668618369a8a1db8cb3410c0a7f50ce74150cd2)
+
+commit 5093871c5e612c6a949e2b2ab043fbc24551a2ba
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 18:17:48 2015 +0100
+
+    db_mysql: explicitely set the reconenct flag via mysql cloent api
+    
+    - old mode setting connection fied directly still in place, but now
+      should be safer if that changes
+    
+    (cherry picked from commit e89c77f641311415b13b00dc9d469c0424362d53)
+    (cherry picked from commit 8d8a43064f6ba7419473b139997f44bd4ef698a5)
+    
+    Conflicts:
+    	modules/db_mysql/km_my_con.c
+
+commit 7491872348e5e3769ad8c7038fe1c7d15fe1e00c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 18:00:58 2015 +0100
+
+    db_mysql: extended the list of error code when to try to resend query
+    
+    (cherry picked from commit 6a62cc666352fbca7f1cc5a239464b42a7afc2cb)
+    (cherry picked from commit b2361d71de4208227468244754c0fc8229e7bcab)
+
+commit 269e445550ee55b48ff1b92817a46d5084abad5b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 23 17:11:51 2015 +0100
+
+    db_mysql: print error number when failing to do mysql query
+    
+    (cherry picked from commit a1556c0708af959a3816e732a7bd692c5fa5f4dc)
+    (cherry picked from commit 71ff3942698e33e8f2e79c5a5ac2a35a27b060b8)
+
+
 ===================== 2015-12-17 Version 4.2.7 Released =====================
 
 ===================== Changes Since Version 4.2.6 ===========================
