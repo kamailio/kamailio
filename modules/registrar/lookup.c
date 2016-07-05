@@ -756,9 +756,11 @@ int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag,
 				memcmp(match_contact.s, ptr->c.s, match_contact.len)))
 				continue;
 
-			xavp_rcd_helper(ptr);
+			if(!(match_action_flag & 2)) {
+				xavp_rcd_helper(ptr);
+			}
 
-			if(ptr->xavp!=NULL && match_action_flag == 1) {
+			if((ptr->xavp!=NULL) && (match_action_flag & 1)) {
 				sr_xavp_t *xavp = xavp_clone_level_nodata(ptr->xavp);
 				if(xavp_add(xavp, NULL)<0) {
 					LM_ERR("error adding xavp for %.*s after successful match\n",
