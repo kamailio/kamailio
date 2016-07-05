@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -42,7 +42,8 @@
 
 extern int match_mode;
 
-int db_build_userbl_tree(const str *username, const str *domain, const str *table, struct dtrie_node_t *root, int use_domain)
+int db_build_userbl_tree(const str *username, const str *domain,
+		const str *dbtable, struct dtrie_node_t *root, int use_domain)
 {
 	db_key_t columns[2] = { &userblacklist_prefix_col, &userblacklist_whitelist_col };
 	db_key_t key[2] = { &userblacklist_username_col, &userblacklist_domain_col };
@@ -59,13 +60,14 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 	VAL_STR(val + 1).s = domain->s;
 	VAL_STR(val + 1).len = domain->len;
 
-	
-	if (userblacklist_dbf.use_table(userblacklist_dbh, table) < 0) {
-		LM_ERR("cannot use table '%.*s'.\n", table->len, table->s);
+	if (userblacklist_dbf.use_table(userblacklist_dbh, dbtable) < 0) {
+		LM_ERR("cannot use db table '%.*s'.\n", dbtable->len, dbtable->s);
 		return -1;
 	}
-	if (userblacklist_dbf.query(userblacklist_dbh, key, 0, val, columns, (!use_domain) ? (1) : (2), 2, 0, &res) < 0) {
-		LM_ERR("error while executing query.\n");
+	if (userblacklist_dbf.query(userblacklist_dbh, key, 0, val, columns,
+				(!use_domain) ? (1) : (2), 2, 0, &res) < 0) {
+		LM_ERR("error while executing query on db table '%.*s'\n",
+				dbtable->len, dbtable->s);
 		return -1;
 	}
 
@@ -85,8 +87,12 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 					} else {
 						nodeflags=(void *)MARK_WHITELIST;
 					}
-					if (dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val, strlen(RES_ROWS(res)[i].values[0].val.string_val),
-						nodeflags, match_mode) < 0) LM_ERR("could not insert values into trie.\n");
+
+					if (dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val,
+								strlen(RES_ROWS(res)[i].values[0].val.string_val),
+								nodeflags, match_mode) < 0)
+						LM_ERR("could not insert values into trie.\n");
+
 					n++;
 				}
 				else {
@@ -105,20 +111,22 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
  * Rebuild d-tree using database entries
  * \return negative on failure, positive on success, indicating the number of d-tree entries
  */
-int db_reload_source(const str *table, struct dtrie_node_t *root)
+int db_reload_source(const str *dbtable, struct dtrie_node_t *root)
 {
 	db_key_t columns[2] = { &globalblacklist_prefix_col, &globalblacklist_whitelist_col };
 	db1_res_t *res;
 	int i;
 	int n = 0;
 	void *nodeflags;
-	
-	if (userblacklist_dbf.use_table(userblacklist_dbh, table) < 0) {
-		LM_ERR("cannot use table '%.*s'.\n", table->len, table->s);
+
+	if (userblacklist_dbf.use_table(userblacklist_dbh, dbtable) < 0) {
+		LM_ERR("cannot use db table '%.*s'\n", dbtable->len, dbtable->s);
 		return -1;
 	}
-	if (userblacklist_dbf.query(userblacklist_dbh, NULL, NULL, NULL, columns, 0, 2, NULL, &res) < 0) {
-		LM_ERR("error while executing query.\n");
+	if (userblacklist_dbf.query(userblacklist_dbh, NULL, NULL, NULL,
+				columns, 0, 2, NULL, &res) < 0) {
+		LM_ERR("error while executing query on db table '%.*s'\n",
+				dbtable->len, dbtable->s);
 		return -1;
 	}
 
@@ -133,10 +141,17 @@ int db_reload_source(const str *table, struct dtrie_node_t *root)
 					/* LM_DBG("insert into tree prefix %s, whitelist %d",
 						RES_ROWS(res)[i].values[0].val.string_val,
 						RES_ROWS(res)[i].values[1].val.int_val); */
-					if (RES_ROWS(res)[i].values[1].val.int_val == 0) nodeflags=(void *) MARK_BLACKLIST;
-					else nodeflags=(void *)MARK_WHITELIST;
-					if (dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val, strlen(RES_ROWS(res)[i].values[0].val.string_val),
-						nodeflags, match_mode) < 0) LM_ERR("could not insert values into trie.\n");
+					if (RES_ROWS(res)[i].values[1].val.int_val == 0) {
+						nodeflags=(void *)MARK_BLACKLIST;
+					} else {
+						nodeflags=(void *)MARK_WHITELIST;
+					}
+
+					if (dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val,
+								strlen(RES_ROWS(res)[i].values[0].val.string_val),
+								nodeflags, match_mode) < 0)
+						LM_ERR("could not insert values into trie.\n");
+
 					n++;
 				}
 				else {

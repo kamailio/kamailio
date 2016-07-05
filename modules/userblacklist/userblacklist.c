@@ -89,15 +89,19 @@ static int check_user_blacklist_fixup(void** param, int param_no);
 static int check_globalblacklist_fixup(void** param, int param_no);
 
 /* ---- exported commands: */
-static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
-static int check_user_whitelist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
-static int check_user_blacklist2(struct sip_msg *msg, char* str1, char* str2);
-static int check_user_whitelist2(struct sip_msg *msg, char* str1, char* str2);
-static int check_user_blacklist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
-static int check_user_whitelist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
-static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
-static int check_whitelist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
-static int check_globalblacklist(struct sip_msg *msg);
+static int check_user_blacklist(sip_msg_t *msg, char* puser,
+		char* pdomain, char* pnumber, char* ptable);
+static int check_user_whitelist(sip_msg_t *msg, char* puser,
+		char* pdomain, char* pnumber, char* ptable);
+static int check_user_blacklist2(sip_msg_t *msg, char* puser, char* pdomain);
+static int check_user_whitelist2(sip_msg_t *msg, char* puser, char* pdomain);
+static int check_user_blacklist3(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber);
+static int check_user_whitelist3(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber);
+static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1);
+static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1);
+static int check_globalblacklist(sip_msg_t *msg);
 
 
 /* ---- module init functions: */
@@ -116,15 +120,24 @@ struct mi_root * mi_check_userwhitelist(struct mi_root* cmd, void* param);  /* u
 
 
 static cmd_export_t cmds[]={
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist2, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist2, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist3, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist3, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_blacklist", (cmd_function)check_blacklist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_whitelist", (cmd_function)check_whitelist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_blacklist", (cmd_function)check_globalblacklist, 0, check_globalblacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist2, 2,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist2, 2,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist3, 3,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist3, 3,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_blacklist", (cmd_function)check_blacklist, 1,
+		check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_whitelist", (cmd_function)check_whitelist, 1,
+		check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_blacklist", (cmd_function)check_globalblacklist, 0,
+		check_globalblacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ 0, 0, 0, 0, 0, 0}
 };
 
@@ -205,8 +218,8 @@ static int check_user_blacklist_fixup(void** param, int param_no)
 }
 
 
-static int check_user_list(sip_msg_t *msg, char* str1, char* str2,
-		char* str3, char* str4, int listtype)
+static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber, char* ptable, int listtype)
 {
 	str user = { .len = 0, .s = NULL };
 	str domain = { .len = 0, .s = NULL};
@@ -218,25 +231,25 @@ static int check_user_list(sip_msg_t *msg, char* str1, char* str2,
 	char req_number[MAXNUMBERLEN+1];
 
 	/* user */
-	if(fixup_get_svalue(msg, (gparam_t*)str1, &user)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t*)puser, &user)!=0) {
 		LM_ERR("cannot print user pseudo-variable\n");
 		return -1;
 	}
 	/* domain */
-	if(fixup_get_svalue(msg, (gparam_t*)str2, &domain)!=0) {
+	if(fixup_get_svalue(msg, (gparam_t*)pdomain, &domain)!=0) {
 		LM_ERR("cannot print domain pseudo-variable\n");
 		return -1;
 	}
 	/* source number */
-	if(str3 != NULL) {
-		if(fixup_get_svalue(msg, (gparam_t*)str3, &number)!=0) {
+	if(pnumber != NULL) {
+		if(fixup_get_svalue(msg, (gparam_t*)pnumber, &number)!=0) {
 			LM_ERR("cannot print number pseudo-variable\n");
 			return -1;
 		}
 	}
 	/* table name */
-	if(str4 != NULL) {
-		if(fixup_get_svalue(msg, (gparam_t*)str4, &table)!=0) {
+	if(pnumber != NULL) {
+		if(fixup_get_svalue(msg, (gparam_t*)ptable, &table)!=0) {
 			LM_ERR("cannot print number pseudo-variable\n");
 			return -1;
 		}
@@ -304,37 +317,41 @@ static int check_user_list(sip_msg_t *msg, char* str1, char* str2,
 }
 
 
-static int check_user_whitelist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4)
+static int check_user_whitelist(sip_msg_t *msg, char* puser,
+		char* pdomain, char* pnumber, char* ptable)
 {
-	return check_user_list(msg, str1, str2, str3, str4, 1);
+	return check_user_list(msg, puser, pdomain, pnumber, ptable, 1);
 }
 
 
-static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4)
+static int check_user_blacklist(sip_msg_t *msg, char* puser,
+		char* pdomain, char* pnumber, char* ptable)
 {
-	return check_user_list(msg, str1, str2, str3, str4, 0);
+	return check_user_list(msg, puser, pdomain, pnumber, ptable, 0);
 }
 
-static int check_user_whitelist2(struct sip_msg *msg, char* str1, char* str2)
+static int check_user_whitelist2(sip_msg_t *msg, char* puser, char* pdomain)
 {
-	return check_user_list(msg, str1, str2, NULL, NULL, 1);
-}
-
-
-static int check_user_blacklist2(struct sip_msg *msg, char* str1, char* str2)
-{
-	return check_user_list(msg, str1, str2, NULL, NULL, 0);
-}
-
-static int check_user_whitelist3(struct sip_msg *msg, char* str1, char* str2, char* str3)
-{
-	return check_user_list(msg, str1, str2, str3, NULL, 1);
+	return check_user_list(msg, puser, pdomain, NULL, NULL, 1);
 }
 
 
-static int check_user_blacklist3(struct sip_msg *msg, char* str1, char* str2, char* str3)
+static int check_user_blacklist2(sip_msg_t *msg, char* puser, char* pdomain)
 {
-	return check_user_list(msg, str1, str2, str3, NULL, 0);
+	return check_user_list(msg, puser, pdomain, NULL, NULL, 0);
+}
+
+static int check_user_whitelist3(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber)
+{
+	return check_user_list(msg, puser, pdomain, pnumber, NULL, 1);
+}
+
+
+static int check_user_blacklist3(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber)
+{
+	return check_user_list(msg, puser, pdomain, pnumber, NULL, 0);
 }
 
 
@@ -426,7 +443,7 @@ static int check_globalblacklist_fixup(void** param, int param_no)
 	return 0;
 }
 
-static int check_globalblacklist(struct sip_msg* msg)
+static int check_globalblacklist(sip_msg_t* msg)
 {
 	static struct check_blacklist_fs_t* arg = NULL;
 	if(!arg){
@@ -482,7 +499,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 }
 
 
-static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1)
+static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 {
 	void **nodeflags;
 	char *ptr;
@@ -528,7 +545,7 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 	return ret;
 }
 
-static int check_whitelist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1)
+static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 {
 	void **nodeflags;
 	char *ptr;
