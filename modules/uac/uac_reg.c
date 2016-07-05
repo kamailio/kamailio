@@ -868,8 +868,8 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				expires=0;
 				if(c->expires==NULL || c->expires->body.len<=0)
 				{
-					if(ps->rpl->expires!=NULL && ps->rpl->expires->body.len>0)
-						expires = atoi(ps->rpl->expires->body.s);
+					if(ps->rpl->expires!=NULL && parse_expires(ps->rpl->expires)==0)
+						expires = ((exp_body_t *)ps->rpl->expires->parsed)->val;
 				} else {
 					str2int(&c->expires->body, (unsigned int*)(&expires));
 				}
