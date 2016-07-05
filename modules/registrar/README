@@ -926,7 +926,9 @@ lookup_branches("location");
      * match_action (optional) - actions to perform when match is
        positive.
        flag values is as follows:
-          + 1 - set xavp_rcd with value from matched contact
+          + 1 - restore the xavps associated with the matched contact
+          + 2 - skip adding the matched location record attributes to
+            xavp_rcd (e.g., the ruid, contact, received, ...)
 
    This function can be used from ANY_ROUTE.
 
