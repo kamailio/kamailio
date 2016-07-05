@@ -27,6 +27,7 @@ extern int reg_timer_interval;
 extern int reg_retry_interval;
 extern int reg_htable_size;
 extern int reg_fetch_rows;
+extern int reg_keep_callid;
 extern str reg_contact_addr;
 extern str reg_db_url;
 extern str reg_db_table;

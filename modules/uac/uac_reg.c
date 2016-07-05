@@ -58,6 +58,7 @@
 
 #define MAX_UACH_SIZE 2048
 #define UAC_REG_GC_INTERVAL	150
+#define UAC_REG_TM_CALLID_SIZE 90
 
 typedef struct _reg_uac
 {
@@ -72,6 +73,8 @@ typedef struct _reg_uac
 	str   auth_proxy;
 	str   auth_username;
 	str   auth_password;
+	str   callid;
+	unsigned int cseq;
 	unsigned int flags;
 	unsigned int expires;
 	time_t timer_expires;
@@ -112,6 +115,7 @@ int reg_timer_interval = 90;
 int reg_retry_interval = 0;
 int reg_htable_size = 4;
 int reg_fetch_rows = 1000;
+int reg_keep_callid = 0;
 str reg_contact_addr = STR_NULL;
 str reg_db_url = STR_NULL;
 str reg_db_table = str_init("uacreg");
@@ -129,6 +133,7 @@ str expires_column = str_init("expires");
 str flags_column = str_init("flags");
 str reg_delay_column = str_init("reg_delay");
 
+str str_empty = str_init("");
 
 #if 0
 INSERT INTO version (table_name, table_version) values ('uacreg','1');
@@ -518,7 +523,8 @@ int reg_ht_add(reg_uac_t *reg)
 		+ reg->realm.len + 1
 		+ reg->auth_proxy.len + 1
 		+ reg->auth_username.len + 1
-		+ reg->auth_password.len + 1;
+		+ reg->auth_password.len + 1
+		+ (reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0) + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
 	{
@@ -544,6 +550,7 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy, 0);
 	reg_copy_shm(&nr->auth_username, &reg->auth_username, 0);
 	reg_copy_shm(&nr->auth_password, &reg->auth_password, 0);
+	reg_copy_shm(&nr->callid, &str_empty, reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
 
 	reg_ht_add_byuser(nr);
 	reg_ht_add_byuuid(nr);
@@ -875,6 +882,11 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				}
 				ri->timer_expires = ri->timer_expires + expires;
 				ri->flags |= UAC_REG_ONLINE;
+				if (reg_keep_callid && ps->rpl->callid->body.len < UAC_REG_TM_CALLID_SIZE) {
+					ri->callid.len = ps->rpl->callid->body.len;
+					memcpy(ri->callid.s, ps->rpl->callid->body.s, ri->callid.len);
+					str2int(&(get_cseq(ps->rpl)->number), &ri->cseq);
+				}
 				goto done;
 			}
 			if (contact_iterator(&c, ps->rpl, c) < 0)
@@ -1024,6 +1036,7 @@ error:
 		ri->flags |= UAC_REG_DISABLED;
 		counter_inc(regdisabled);
 	}
+	ri->cseq = 0;
 done:
 	if(ri) {
 		ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
@@ -1045,6 +1058,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	str   s_turi;
 	char  b_hdrs[MAX_UACH_SIZE];
 	str   s_hdrs;
+	dlg_t tmdlg;
 
 	if(uac_tmb.t_request==NULL)
 		return -1;
@@ -1079,7 +1093,6 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	}
 	reg->timer_expires = tn;
 	reg->flags |= UAC_REG_ONGOING;
-	reg->flags &= ~UAC_REG_ONLINE;
 	counter_add(regactive, -1);		/* Take it out of the active pool while re-registering */
 	memcpy(uuid, reg->l_uuid.s, reg->l_uuid.len);
 	uuid[reg->l_uuid.len] = '\0';
@@ -1109,12 +1122,34 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	uac_r.cb  = uac_reg_tm_callback;
 	/* Callback parameter */
 	uac_r.cbp = (void*)uuid;
-	ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
-			&s_ruri, /* Request-URI */
-			&s_turi, /* To */
-			&s_turi, /* From */
-			(reg->auth_proxy.len)?&reg->auth_proxy:NULL /* outbound uri */
-			);
+
+	if (reg_keep_callid && reg->flags & UAC_REG_ONLINE
+				&& reg->cseq > 0 && reg->cseq < 2147483638
+				&& reg->callid.len > 0)
+	{
+		/* reregister, reuse callid and cseq */
+		memset(&tmdlg, 0, sizeof(dlg_t));
+		tmdlg.id.call_id = reg->callid;
+		tmdlg.loc_seq.value = reg->cseq;
+		tmdlg.loc_seq.is_set = 1;
+		tmdlg.rem_target = s_ruri;
+		tmdlg.loc_uri = s_turi;
+		tmdlg.rem_uri = s_turi;
+		tmdlg.state= DLG_CONFIRMED;
+		if(reg->auth_proxy.len)
+			tmdlg.dst_uri = reg->auth_proxy;
+		uac_r.dialog = &tmdlg;
+
+		ret = uac_tmb.t_request_within(&uac_r);
+	} else {
+		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
+				&s_ruri, /* Request-URI */
+				&s_turi, /* To */
+				&s_turi, /* From */
+				(reg->auth_proxy.len)?&reg->auth_proxy:NULL /* outbound uri */
+				);
+	}
+	reg->flags &= ~UAC_REG_ONLINE;
 
 	if(ret<0)
 	{

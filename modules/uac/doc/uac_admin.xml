@@ -467,6 +467,26 @@ modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
 			</example>
 		</section>
 
+		<section id="uac.p.reg-keep-callid">
+			<title><varname>reg_keep_callid</varname> (string)</title>
+			<para>
+			If set to 0 (default), a new Call-Id will be generated for each
+			registration attempt.
+			If set to non-zero, the same Call-Id will be used for
+			re-registrations, as recommended by RFC3261 section 10.2.4.
+			A new Call-Id will be generated when a previous registration
+			had failed.
+			</para>
+			<example>
+				<title>Set <varname>reg_keep_callid</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_keep_callid", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section>
