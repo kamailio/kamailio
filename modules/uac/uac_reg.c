@@ -39,6 +39,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
+#include "../../parser/parse_expires.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
@@ -992,7 +993,25 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		ri->flags |= UAC_REG_AUTHSENT;
 		lock_release(ri->lock);
 		return;
-	} else {
+	}
+
+	if (ps->code == 423)   /* Interval too brief, retry with longer expiry */
+	{
+		if (parse_headers(ps->rpl, HDR_EOH_F, 0) == -1) {
+			LM_ERR("failed to parse headers\n");
+			goto error;
+		}
+		if(ps->rpl->min_expires!=NULL && parse_expires(ps->rpl->min_expires)==0) {
+			ri->expires = ((exp_body_t *)ps->rpl->min_expires->parsed)->val;
+		} else {
+			ri->expires *= 2;
+		}
+		LM_DBG("got 423 response while registering [%.*s], set new expires to %d\n",
+				ri->l_uuid.len, ri->l_uuid.s, ri->expires);
+		/* Retry will be done on next timer interval */
+		goto done;
+	} else
+	{
 		LM_ERR("got sip response %d while registering [%.*s]\n",
 				ps->code, ri->l_uuid.len, ri->l_uuid.s);
 		goto error;
