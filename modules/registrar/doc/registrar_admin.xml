@@ -1179,7 +1179,7 @@ lookup_branches("location");
 				<listitem>
 					<para>4 - match_contact</para>
 				</listitem>
-			</itemizedlist>			
+			</itemizedlist>
 		</listitem>
 		<listitem>
 			<para>
@@ -1188,9 +1188,13 @@ lookup_branches("location");
             <para>flag values is as follows:</para>
 			<itemizedlist>
 				<listitem>
-					<para>1 - set xavp_rcd with value from matched contact</para>
+					<para>1 - restore the xavps associated with the matched contact</para>
 				</listitem>
-			</itemizedlist>						
+				<listitem>
+					<para>2 - skip adding the matched location record attributes to xavp_rcd
+					(e.g., the ruid, contact, received, ...)</para>
+				</listitem>
+			</itemizedlist>
 		</listitem>
 		</itemizedlist>
 		<para>
