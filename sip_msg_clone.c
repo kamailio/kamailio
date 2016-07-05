@@ -442,6 +442,7 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 		case HDR_CONTENTLENGTH_T:
 		case HDR_RETRY_AFTER_T:
 		case HDR_EXPIRES_T:
+		case HDR_MIN_EXPIRES_T:
 		case HDR_SUPPORTED_T:
 		case HDR_REQUIRE_T:
 		case HDR_PROXYREQUIRE_T:
@@ -770,6 +771,11 @@ struct sip_msg*  sip_msg_shm_clone( struct sip_msg *org_msg, int *sip_msg_len,
 		case HDR_EXPIRES_T:
 			if (!HOOK_SET(expires)) {
 				new_msg->expires = new_hdr;
+			}
+			break;
+		case HDR_MIN_EXPIRES_T:
+			if (!HOOK_SET(min_expires)) {
+				new_msg->min_expires = new_hdr;
 			}
 			break;
 		case HDR_PROXYAUTH_T:
