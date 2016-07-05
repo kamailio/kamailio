@@ -2,7 +2,7 @@ Memcached Module
 
 Henning Westerholt
 
-   Copyright © 2009 Henning Westerholt
+   Copyright � 2009 Henning Westerholt
      __________________________________________________________________
 
    Table of Contents
@@ -81,7 +81,7 @@ Chapter 1. Admin Guide
    pseudo-variable: $mct(key). Entries are stored and retrieved from an
    external server application.
 
-   The “key” can be a static string and also any existing pseudo-variable.
+   The "key" can be a static string and also any existing pseudo-variable.
    Further interfaces to the functionality provided from memcached are
    also provided, like access to the atomic increment and decrement
    operations.
@@ -188,7 +188,7 @@ xlog("stored value is $mct(test)"); # will return <null>
 
    The servers to connect to. At the moment only one server is supported.
 
-   Default value is “localhost:11211”.
+   Default value is "localhost:11211".
 
    Example 1.5. Set servers parameter
 ...
@@ -212,7 +212,7 @@ modparam("memcached", "servers", "localhost:11211")
    the mct psuedo-variable, or later on by setting a different timeout for
    an existing key with the mctex pseudo-variable.
 
-   Default value is “10800”s (3h).
+   Default value is "10800"s (3h).
 
    Example 1.6. Set expire parameter
 ...
@@ -222,12 +222,12 @@ modparam("memcached", "expire", 10800)
 4.3. mode (integer)
 
    The used storage mode for the memcached module for write access to the
-   hash table. A value of “0” means to set (overwrite) the old value, with
-   a value of “1” the module will not overwrite it. Here every entry to
+   hash table. A value of "0" means to set (overwrite) the old value, with
+   a value of "1" the module will not overwrite it. Here every entry to
    the hash table could be written only once, subsequent inserts will
    fail.
 
-   Default value is “0” (overwrite).
+   Default value is "0" (overwrite).
 
    Example 1.7. Set mode parameter
 ...
@@ -238,7 +238,7 @@ modparam("memcached", "mode", 0)
 
    The timeout for the memcache servers access in milliseconds.
 
-   Default value is “5000” (5s).
+   Default value is "5000" (5s).
 
    Example 1.8. Set timeout parameter
 ...
@@ -255,7 +255,7 @@ modparam("memcached", "timeout", 10000)
    better against memory leaks that could bring down your server, as the
    available memory pool is limited by the Kamailio configuration.
 
-   Default value is “0” (use system memory manager).
+   Default value is "0" (use system memory manager).
 
    Example 1.9. Set memory parameter
 ...
@@ -270,7 +270,7 @@ modparam("memcached", "memory", 1)
    interoperability with existing applications that are not able to set
    this flag, you can force the module to evaluate all values as strings.
 
-   Default value is “0” (don't force string values).
+   Default value is "0" (don't force string values).
 
    Example 1.10. Set stringify parameter
 ...

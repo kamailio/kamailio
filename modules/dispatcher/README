@@ -10,17 +10,15 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-Edited by
-
 Carsten Bock
 
    ng-voice GmbH
 
-   Copyright Â© 2004 FhG FOKUS
+   Copyright © 2004 FhG FOKUS
 
-   Copyright Â© 2005 Voice Sistem
+   Copyright © 2005 Voice Sistem
 
-   Copyright Â© 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -734,10 +732,11 @@ Note
           + "5" - hash over authorization-username (Proxy-Authorization or
             "normal" authorization). If no username is found, round robin
             is used.
-          + "6" - random (using rand()).
+          + "6" - random destination (using rand()).
           + "7" - hash over the content of PVs string. Note: This works
             only when the parameter hash_pvar is set.
-          + "8" - use first destination (good for failover).
+          + "8" - select destination sorted by priority attribute value
+            (serial forking ordered by priority).
           + "9" - use weight based load distribution. You have to set the
             attribute 'weight' per each address in destination set.
           + "10" - use call load distribution. You have to set the

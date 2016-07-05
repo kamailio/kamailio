@@ -6,7 +6,7 @@ Edited by
 
 Marius-Ovidiu Bucur
 
-   Copyright © 2010 Marius-Ovidiu Bucur
+   Copyright � 2010 Marius-Ovidiu Bucur
      __________________________________________________________________
 
    Table of Contents
@@ -81,7 +81,7 @@ Chapter 1. Admin Guide
 
    Control usage of partial state notifiations.
 
-   Default value is “0”.
+   Default value is "0".
 
    Example 1.1. Set use_partial_states parameter
 ...
@@ -92,7 +92,7 @@ modparam("presence_conference", "use_partial_states", 0)
 
    4.1. conference_reset
 
-4.1.  conference_reset
+4.1. conference_reset
 
    Reset internal data.
 

@@ -10,14 +10,12 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-Edited by
-
 Alex Balashov
 
    Evariste Systems LLC
    <abalashov@evaristesys.com>
 
-   Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
+   Copyright � 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -120,7 +118,7 @@ Chapter 1. Admin Guide
 
    Path to the GeoIP database file.
 
-   Default value is “null”.
+   Default value is "null".
 
    Example 1.1. Set path parameter
 ...
@@ -131,7 +129,7 @@ modparam("geoip", "path", "/usr/local/share/GeoLiteCity.dat")
 
    4.1. geoip_match(ipaddr, pvc)
 
-4.1.  geoip_match(ipaddr, pvc)
+4.1. geoip_match(ipaddr, pvc)
 
    Match ipaddr against the GeoIP database and set the pvc container. The
    function has to be called before accessing a key via: $gip(pvc=>key).
@@ -162,4 +160,4 @@ if(geoip_match("$si", "src"))
           + metro - metro code
 
    Exported pseudo-variables are documented at
-   http://www.kamailio.org/dokuwiki/.
+   http://www.kamailio.org/wiki/.

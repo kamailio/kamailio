@@ -2,7 +2,7 @@ mohqueue Module
 
 Robert Boisvert
 
-   Copyright Â© 2013 Robert Boisvert, rdbprog@gmail.com
+   Copyright © 2013 Robert Boisvert, rdbprog@gmail.com
      __________________________________________________________________
 
    Table of Contents
@@ -136,8 +136,8 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url:
 ...
-modparam ("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio
-")
+modparam ("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio"
+)
 ...
 
 3.2. db_qtable and db_ctable (str)
@@ -187,7 +187,7 @@ modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
    4.3. mohq_retrieve (queue_name, URI)
    4.4. mohq_count (queue_name, pvar)
 
-4.1.  mohq_process ()
+4.1. mohq_process ()
 
    Checks to see if the current SIP message involves a queue. If it does
    it will process the message and return a TRUE value.
@@ -224,7 +224,7 @@ request_route {
 }
 ...
 
-4.2.  mohq_send (queue_name)
+4.2. mohq_send (queue_name)
 
    Normally calls enter the queue with an initial INVITE message that 1)
    has a RURI that matches a queue URI and 2) is passed through mohq_proc
@@ -254,7 +254,7 @@ request_route {
   }
 ...
 
-4.3.  mohq_retrieve (queue_name, URI)
+4.3. mohq_retrieve (queue_name, URI)
 
    Retrieves the oldest call in a queue and redirects it to a URI.
    Although the function returns, the transfer of the call may not have
@@ -283,7 +283,7 @@ request_route {
   }
 ...
 
-4.4.  mohq_count (queue_name, pvar)
+4.4. mohq_count (queue_name, pvar)
 
    Finds the number of calls that are in a queue. It will not count calls
    that are in the process of entering or exiting the queue.

@@ -15,9 +15,9 @@ Richard Good
    Smile Communications
    <richard.good@smilecoms.com>
 
-   Copyright Â© 2007 FhG FOKUS
+   Copyright © 2007 FhG FOKUS
 
-   Copyright Â© 2012 Smile Communications
+   Copyright © 2012 Smile Communications
      __________________________________________________________________
 
    Table of Contents
@@ -38,11 +38,12 @@ Richard Good
               3.4. cdp_event_latency (integer)
               3.5. cdp_event_threshold (integer)
               3.6. cdp_event_latency_log (integer)
+              3.7. authorize_video_flow (integer)
 
         4. Functions
 
-              4.1. Rx_AAR_Register(domain)
-              4.2. Rx_AAR(domain)
+              4.1. Rx_AAR_Register(route_block, domain)
+              4.2. Rx_AAR(route_block, direction)
 
         5. Statistics
 
@@ -57,8 +58,9 @@ Richard Good
    1.4. cdp_event_latency parameter usage
    1.5. cdp_event_threshold parameter usage
    1.6. cdp_event_latency_log parameter usage
-   1.7. Rx_AAR_Register
-   1.8. Rx_AAR
+   1.7. authorize_video_flow parameter usage
+   1.8. Rx_AAR_Register
+   1.9. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -78,11 +80,12 @@ Chapter 1. Admin Guide
         3.4. cdp_event_latency (integer)
         3.5. cdp_event_threshold (integer)
         3.6. cdp_event_latency_log (integer)
+        3.7. authorize_video_flow (integer)
 
    4. Functions
 
-        4.1. Rx_AAR_Register(domain)
-        4.2. Rx_AAR(domain)
+        4.1. Rx_AAR_Register(route_block, domain)
+        4.2. Rx_AAR(route_block, direction)
 
    5. Statistics
 
@@ -123,6 +126,7 @@ Chapter 1. Admin Guide
    3.4. cdp_event_latency (integer)
    3.5. cdp_event_threshold (integer)
    3.6. cdp_event_latency_log (integer)
+   3.7. authorize_video_flow (integer)
 
 3.1. rx_dest_realm (string)
 
@@ -138,8 +142,11 @@ modparam("ims_qos", "rx_dest_realm", "ims.smilecoms.com")
 
 3.2. rx_forced_peer (string)
 
-   This is the optional name of the origin host of the Diameter server
-   (typically a PCRF). If not set then realm routing is used.
+   FQDN of the Diameter server (typically a PCRF) to communicate with. If
+   not set then realm routing is used. If you use this, the routing
+   defined in your diameter xml configuration file (CDP) will be ignored
+   and as a result you will lose the benefits of load balancing and
+   failover.
 
    Default value is ''.
 
@@ -199,12 +206,25 @@ modparam("ims_qos", "cdp_event_threshold", 500)
 modparam("ims_qos", "cdp_event_latency_log", 1)
 ...
 
+3.7. authorize_video_flow (integer)
+
+   This is a flag that specifies whether or not to authorize video flows.
+   1 means video flows will be authorized over Rx and 0 means video flows
+   will not be authorized over Rx
+
+   Default value is 1.
+
+   Example 1.7. authorize_video_flow parameter usage
+...
+modparam("ims_qos", "authorize_video_flow", 0)
+...
+
 4. Functions
 
-   4.1. Rx_AAR_Register(domain)
-   4.2. Rx_AAR(domain)
+   4.1. Rx_AAR_Register(route_block, domain)
+   4.2. Rx_AAR(route_block, direction)
 
-4.1. Rx_AAR_Register(domain)
+4.1. Rx_AAR_Register(route_block, domain)
 
    Perform a AAR on Diameter RX interface to subscribe to signalling
    status. This purpose of this is tell a Diameter server (typically a
@@ -213,6 +233,7 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
    see 3GGP TS 29.214.
 
    Meaning of the parameters is as follows:
+     * Route block to resume after async UAR Diameter reply.
      * domain that usrloc_pcscf uses to store user information.
 
    This function can be used from REQUEST_ROUTE.
@@ -220,10 +241,14 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.7. Rx_AAR_Register
+   Example 1.8. Rx_AAR_Register
 ...
-    Rx_AAR_Register("location");
-
+if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
+    exit;
+}
+...
+route[REG_AAR_REPLY]
+{
     switch ($avp(s:aar_return_code)) {
         case 1:
             xlog("L_DBG", "Diameter: AAR success on subscription to signalling\n
@@ -235,37 +260,38 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
             t_reply("403", "Can't register to QoS for signalling");
             exit;
     }
-
 ...
 
-4.2. Rx_AAR(domain)
+4.2. Rx_AAR(route_block, direction)
 
    Perform a AAR on Diameter RX interface to request resource
    authorisation from a Diameter server (typically a PCRF). For more
    details see 3GGP TS 29.214.
 
    Meaning of the parameters is as follows:
-     * domain that usrloc_pcscf uses to store user information.
+     * Route block to resume after async UAR Diameter reply.
+     * directionthe direction of this message - orig, term, etc.
 
    This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.8. Rx_AAR
+   Example 1.9. Rx_AAR
 ...
-    Rx_AAR("location");
-
-    switch ($avp(s:aar_return_code)) {
-        case 1:
-            xlog("L_DBG", "Diameter: AAR success\n");
-            break;
-        default:
-            xlog("L_ERR", "Diameter: AAR failed\n");
-            t_reply("403", "QoS not authorized");
-            exit;
+if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig")==0){
+    exit;
+}
+...
+route[ORIGN_SESSION_AAR_REPLY]
+{
+    if ($avp(s:aar_return_code) != 1) {
+        xlog("L_ERR", "IMS: AAR failed Orig\n");
+        dlg_terminate("all", "Sorry no QoS available");
+    } else {
+        xlog("L_DBG", "Diameter: Orig AAR success on media authorization\n");
     }
-
+}
 ...
 
 5. Statistics

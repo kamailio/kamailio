@@ -5,7 +5,7 @@ Torrey Searle
    Voxbone SA
    <torrey@voxbone.com>
 
-   Copyright © 2013 Voxbone SA
+   Copyright � 2013 Voxbone SA
      __________________________________________________________________
 
    Table of Contents
@@ -102,9 +102,9 @@ Chapter 1. Admin Guide
 3.1. sipt_destination(destination, hops, nai)
 
    updates the IAM in the body if it exists, setting the called party
-   number to “destination” with the nature address specified in “nai” and
+   number to "destination" with the nature address specified in "nai" and
    decrementing the hop counter value if present. If the hop counter
-   header is missing it will be added with the value of “hops”.
+   header is missing it will be added with the value of "hops".
 
    Example 1.1. sipt_destination(destination, hops, nai) usage
 ...
@@ -117,9 +117,9 @@ sipt_destination($rU, 31, 4);
 3.2. sipt_set_calling(origin, nai, presentation, screening)
 
    updates the IAM in the body if it exists, setting (or adding) the
-   calling party number to “origin” with the nature address specified in
-   “nai” and setting the presentation and screening values to
-   “presentation” and “screening”.
+   calling party number to "origin" with the nature address specified in
+   "nai" and setting the presentation and screening values to
+   "presentation" and "screening".
 
    Example 1.2. sipt_set_calling(origin, nai, presentation, screening)
    usage

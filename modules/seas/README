@@ -11,7 +11,7 @@ Elias Baixas
      www.voztele.com
      <elias.baixas@voztele.com>
 
-   Copyright © 2006 VozTelecom Sistemas
+   Copyright � 2006 VozTelecom Sistemas
      __________________________________________________________________
 
    Table of Contents
@@ -348,7 +348,7 @@ t_reply("500","App Server not connected");
    Server, which is in charge of making it reach back to the user. The
    Application Server implements the network protocol, it takes care of
    everything needed for a proper communication between user and server,
-   so the servlet doesn’t have to care about these things. The servlet
+   so the servlet doesn't have to care about these things. The servlet
    uses a set of resources from the Application Server, such as Session
    management, service routing or chaining, and request/response header
    composition.
@@ -462,7 +462,7 @@ ServletException, IOException
    SipServlet UML diagram
 
    The Servlet programming language is JAVA, which offers a wide spectrum
-   of programming API’s dealing with all kinds of techniques, tools and
+   of programming API's dealing with all kinds of techniques, tools and
    resources, which also are available seamlessly from the Servlet
    context.
 
@@ -488,7 +488,7 @@ ServletException, IOException
    Convergence of SIP and HTTP protocols into the same Application Server
    offers, amongst others, the following key advantages:
 
-   -It doesn’t require to have 2 different servers (Http and Sip) so it
+   -It doesn't require to have 2 different servers (Http and Sip) so it
    relieves from maintenance problems, and eases user and configuration
    provisioning.
 
@@ -521,7 +521,7 @@ ServletException, IOException
    -Click-to-dial: users could initiate SIP sessions only by clicking a
    link on a web page, without the need of the Web-Browser being SIP-aware
    nor needing even a SIP phone: the server could handle all the logic so
-   the user who clicked could receive a call from the server’s SIP
+   the user who clicked could receive a call from the server's SIP
    network.
 
 2.2. Configuring WeSIP to work with SEAS
@@ -1016,10 +1016,10 @@ Chapter 2. Developer Guide
    members: name, version, transport, host, proto, port, port_str, params,
    comment, received, rport, etc. each of these members gives quick access
    to each of the parts of the header. For example, a via header like
-   this: “Via: SIP/2.0/UDP 192.168.1.64:5070;branch=z9hG4bK-c02c60cc”
-   would have the member proto pointing to the “U” of “UDP”, and a length
-   of 3, the host member would be pointing to “192.168.1.64” and have a
-   length of 12, the branch member would be pointing to “z9hG4bK-c02c60cc”
+   this: "Via: SIP/2.0/UDP 192.168.1.64:5070;branch=z9hG4bK-c02c60cc"
+   would have the member proto pointing to the "U" of "UDP", and a length
+   of 3, the host member would be pointing to "192.168.1.64" and have a
+   length of 12, the branch member would be pointing to "z9hG4bK-c02c60cc"
    and a length of 16, and so on.
 
    This structure is the result of the parsing. All this meta-information
@@ -1161,7 +1161,7 @@ Chapter 2. Developer Guide
    two past the end of the URI, so that the length of the last header can
    be computed.
 
-   The reason to have the “other parameters” and headers flags at the
+   The reason to have the "other parameters" and headers flags at the
    beginning (just after the strictly URI stuff), is that it will be
    necessary to know the length of the parameters section and the headers
    section. The parameters can appear in an arbitrary order, they won't be
@@ -1206,7 +1206,7 @@ Chapter 2. Developer Guide
 2.2.5. Codification of Accept and Content-Type headers
 
    These two kinds of headers carry mime type and subtype definitions in
-   the form “type/subtype” (ie. text/xml, application/sdp or whatever).
+   the form "type/subtype" (ie. text/xml, application/sdp or whatever).
    For internal handling of this headers, SER codifies the known types and
    subtypes into a single 32 bit integer, with the highest two bytes
    giving the mime type, and the lowest two bytes giving the subtype.
@@ -1374,7 +1374,7 @@ Chapter 2. Developer Guide
 
    }
 
-   this would let in the “results” array all the indexes in the headers
+   this would let in the "results" array all the indexes in the headers
    table that refer to a Route header. Then, the Route codification for
    each of the headers could be reached thanks to the two-byte unsigned
    integer that follows each of the header identifiers.
@@ -1423,7 +1423,7 @@ Chapter 2. Developer Guide
    RequestIn events: they start with the Action length in bytes, then
    follows a byte giving the type of action, then follows the Hash Index
    and the Label associated with the transaction that is being replied,
-   and finally the SIP Message in raw format. It doesn’t use the SEAS
+   and finally the SIP Message in raw format. It doesn't use the SEAS
    codification described above, because SER can easily parse the JAIN
    provided Response to process it and send it out, so the pre-parsing is
    not needed in that direction.
@@ -1431,7 +1431,7 @@ Chapter 2. Developer Guide
    In order to generate Client Transactions, that is, sending SIP Requests
    out, JAIN utilizes another kind of action called Seas Request Action.
    In this case, when JAIN generates the Request to be sent out, it
-   doesn’t have any means to know the transaction identifier (hash index
+   doesn't have any means to know the transaction identifier (hash index
    and label) that will be assigned to it by SER, so a new mechanism has
    bee implemented to correlate JAIN requests to SER transactions.
    Basically, JAIN-SIP assigns a unique identifier (an integer) that is

@@ -10,8 +10,6 @@ Ovidiu Sas
 
    <osas@voipembedded.com>
 
-Edited by
-
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
@@ -220,7 +218,7 @@ modparam("db_text", "db_mode", 1)
 
    4.1. db_text.dump
 
-4.1.  db_text.dump
+4.1. db_text.dump
 
    Write back to hard drive all modified tables.
 

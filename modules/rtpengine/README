@@ -12,39 +12,29 @@ Edited by
 
 Maxim Sobolev
 
-Edited by
-
 Bogdan-Andrei Iancu
-
-Edited by
 
 Juha Heinanen
 
-Edited by
-
 Sas Ovidiu
-
-Edited by
 
 Carsten Bock
 
    ng-voice GmbH
 
-Edited by
-
 Richard Fuchs
 
    Sipwise GmbH
 
-   Copyright (c) 2003-2008 Sippy Software, Inc.
+   Copyright © 2003-2008 Sippy Software, Inc.
 
-   Copyright (c) 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
 
-   Copyright (c) 2009-2014 TuTPro Inc.
+   Copyright © 2009-2014 TuTPro Inc.
 
-   Copyright (c) 2010 VoIPEmbedded Inc.
+   Copyright © 2010 VoIPEmbedded Inc.
 
-   Copyright (c) 2013-2014 Sipwise GmbH
+   Copyright © 2013-2014 Sipwise GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -305,7 +295,7 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
    5.5. rtpengine_manage([flags])
    5.6. start_recording()
 
-5.1.  set_rtpengine_set(setid[, setid])
+5.1. set_rtpengine_set(setid[, setid])
 
    Sets the ID of the RTP proxy set to be used for the next
    rtpengine_delete(), rtpengine_offer(), rtpengine_answer() or
@@ -333,7 +323,7 @@ set_rtpengine_set("2");
 rtpengine_offer();
 ...
 
-5.2.  rtpengine_offer([flags])
+5.2. rtpengine_offer([flags])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on INVITE for the cases the SDP bodies are in INVITE and
@@ -529,7 +519,7 @@ onreply_route[2]
 ...
 }
 
-5.3.  rtpengine_answer([flags])
+5.3. rtpengine_answer([flags])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
    To be invoked on 200 OK for the cases the SDP bodies are in INVITE and
@@ -545,7 +535,7 @@ onreply_route[2]
 
    See rtpengine_offer() function example above for example.
 
-5.4.  rtpengine_delete([flags])
+5.4. rtpengine_delete([flags])
 
    Tears down the RTPProxy session for the current call.
 
@@ -559,7 +549,7 @@ onreply_route[2]
 rtpengine_delete();
 ...
 
-5.5.  rtpengine_manage([flags])
+5.5. rtpengine_manage([flags])
 
    Manage the RTPProxy session - it combines the functionality of
    rtpengine_offer(), rtpengine_answer() and rtpengine_delete(), detecting
@@ -589,7 +579,7 @@ rtpengine_delete();
 rtpengine_manage();
 ...
 
-5.6.  start_recording()
+5.6. start_recording()
 
    This function will send a signal to the RTP proxy to record the RTP
    stream on the RTP proxy. This function is not supported by Sipwise
@@ -636,7 +626,7 @@ start_recording();
    NOTE: if a RTP proxy is defined multiple times (in the same or
    diferente sete), all of its instances will be enables/disabled.
 
-   Example 1.14.  nh_enable_rtpp usage
+   Example 1.14. nh_enable_rtpp usage
 ...
 $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -648,7 +638,7 @@ $ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1.15.  nh_show_rtpp usage
+   Example 1.15. nh_show_rtpp usage
 ...
 $ kamctl fifo nh_show_rtpp
 ...

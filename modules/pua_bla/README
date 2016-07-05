@@ -8,7 +8,7 @@ Edited by
 
 Anca-Maria Vamanu
 
-   Copyright © 2007 Voice Sistem SRL
+   Copyright � 2007 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -99,7 +99,7 @@ Chapter 1. Admin Guide
    The default domain for the registered users to be used when
    constructing the uri for the registrar callback.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.1. Set default_domain parameter
 ...
@@ -113,7 +113,7 @@ modparam("pua_bla", "default_domain", "kamailio.org")
    Publish. It stops sending a Notification with the same information to
    the sender.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.2. Set header_name parameter
 ...
@@ -124,7 +124,7 @@ modparam("pua_bla", "header_name", "Sender")
 
    The outbound_proxy uri to be used when sending Subscribe requests.
 
-   Default value is “NULL”.
+   Default value is "NULL".
 
    Example 1.3. Set outbound_proxy parameter
 ...
@@ -145,7 +145,7 @@ modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
    4.1. bla_set_flag
    4.2. bla_handle_notify
 
-4.1.  bla_set_flag
+4.1. bla_set_flag
 
    The function is used to mark REGISTER requests made to a BLA AOR. The
    modules subscribes to the registered contacts for dialog;sla event.
@@ -156,7 +156,7 @@ if(is_method("REGISTER") && to_uri=~"bla_aor@kamailio.org")
         bla_set_flag();
 ...
 
-4.2.  bla_handle_notify
+4.2. bla_handle_notify
 
    The function handles Notify requests sent from phones on the same BLA
    to the server. The message is transformed in Publish request and passed

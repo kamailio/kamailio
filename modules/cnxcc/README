@@ -4,7 +4,7 @@ Carlos Ruiz Diaz
 
    ConexionGroup S.A.
 
-   Copyright Â© 2013 Carlos Ruiz Diaz, carlos.ruizdiaz@gmail.com
+   Copyright © 2013 Carlos Ruiz Diaz, carlos.ruizdiaz@gmail.com
      __________________________________________________________________
 
    Table of Contents
@@ -157,7 +157,7 @@ modparam("cnxcc", "credit_check_period", 1)
    4.4. cnxcc_set_max_channel()
    4.5. cnxcc_terminate_all()
 
-4.1.  cnxcc_set_max_credit()
+4.1. cnxcc_set_max_credit()
 
    Specifies the initial pulse, final pulse, max credit and cost per
    second of a call. The discount is calculated in pulses (30/6, 1/1, etc)
@@ -176,11 +176,11 @@ $var(cps)   = "2.00";         # cost per second
 $var(initial_p)   = "030";    # intial pulse
 $var(final_p)   = "006";      # final pulse
 
-cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)", "$var(initia
-l_p)", "$var(final_p)");
+cnxcc_set_max_credit("$var(customer)", "$var(credit)", "$var(cps)",
+                     "$var(initial_p)", "$var(final_p)");
 ...
 
-4.2.  cnxcc_set_max_time()
+4.2. cnxcc_set_max_time()
 
    Specifies the amount of time the call should last at most.
 
@@ -196,7 +196,7 @@ $var(max_time) = 120;
 cnxcc_set_max_time("$var(customer)", "$var(max_time)");
 ...
 
-4.3.  cnxcc_update_max_time()
+4.3. cnxcc_update_max_time()
 
    Updates max-time of an established and monitored call. This can be used
    to grant minimum values and to update them every short periods on time
@@ -220,7 +220,7 @@ cnxcc_set_max_time("$var(customer)", "$var(max_time)");
 
 ...
 
-4.4.  cnxcc_set_max_channel()
+4.4. cnxcc_set_max_channel()
 
    Specifies a limit for the number of simultaneous calls
 
@@ -239,24 +239,24 @@ $var(max_chan)  = 2;
 $var(retcode)   = cnxcc_set_max_channels("$var(customer)", "$var(max_chan)");
 
 if ($var(retcode) == -1) {
-        xlog("Error setting up credit control");
-        return;
+    xlog("Error setting up credit control");
+    return;
 }
 
 if ($var(retcode) < -1) {
-        xlog("Too many channels for customer");
-        sl_send_reply(403, "Forbidden");
+    xlog("Too many channels for customer");
+    sl_send_reply(403, "Forbidden");
 
-        if (!cnxcc_terminate_all("$var(customer)")) {
-                xlog("Error terminating customer's calls");
-        }
+    if (!cnxcc_terminate_all("$var(customer)")) {
+        xlog("Error terminating customer's calls");
+    }
 
         exit;
 }
 
 ...
 
-4.5.  cnxcc_terminate_all()
+4.5. cnxcc_terminate_all()
 
    Terminates all calls of the specified customer/profile
 
@@ -269,7 +269,7 @@ if ($var(retcode) < -1) {
 $var(customer)  = "john-doe-123-basic";
 
 if (!cnxcc_terminate_all("$var(customer)")) {
-        xlog("Error terminating customer's calls");
+    xlog("Error terminating customer's calls");
 }
 ...
 
@@ -317,10 +317,9 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 ...
 event_route[cnxcc:call-shutdown]
 {
-        xlog("L_INFO", "[$ci]: call killed");
+    xlog("L_INFO", "[$ci]: call killed");
 
-        # perform some kind of notification, database update, email sending, etc
-.
+    # perform some kind of notification, database update, email sending, etc.
 }
 ...
 
@@ -349,14 +348,13 @@ route[CNXCC]
                           "$var(cost_per_sec)",
                           "$var(i_pulse)",
                           "$var(f_pulse)")) {
-                 xlog("Error setting up credit control");
+             xlog("Error setting up credit control");
         }
 }
 
 event_route[cnxcc:call-shutdown]
 {
         xlog("L_INFO", "[$ci]: call killed");
-
 
 }
 ...

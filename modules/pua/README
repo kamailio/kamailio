@@ -186,7 +186,7 @@ modparam("pua", "hash_size", 11)
 
    Database url.
 
-   Default value is ">mysql://openser:openserrw@localhost/openser".
+   Default value is ">mysql://kamailio:kamailiorw@localhost/kamailio".
 
    Example 1.2. Set db_url parameter
 ...

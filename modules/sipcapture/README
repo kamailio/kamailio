@@ -10,9 +10,9 @@ Alexandr Dubovikov
 
    <alexandr.dubovikov@gmail.com>
 
-   Copyright © 2011 QSC AG
+   Copyright � 2011 QSC AG
 
-   Copyright © 2011 http://www.qsc.de
+   Copyright � 2011 http://www.qsc.de
      __________________________________________________________________
 
    Table of Contents
@@ -426,7 +426,7 @@ modparam("sipcapture", "insert_retry_timeout", 10)
           + on
           + off
        The parameter is optional - if missing, the command will return the
-       status of the SIP message capturing (as string “on” or “off” )
+       status of the SIP message capturing (as string "on" or "off" )
        without changing anything.
 
    MI FIFO Command Format:
@@ -446,7 +446,7 @@ modparam("sipcapture", "insert_retry_timeout", 10)
      * on or off: turns on/off SIP message capturing. Possible values are:
           + on
           + off
-     * “check” does not change sipcapture status, just reports the current
+     * "check" does not change sipcapture status, just reports the current
        status.
 
 6. Database setup

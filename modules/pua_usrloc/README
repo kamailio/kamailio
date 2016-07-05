@@ -133,7 +133,7 @@ modparam("pua_usrloc", "branch_flag", 9)
 
    4.1. pua_set_publish()
 
-4.1.  pua_set_publish()
+4.1. pua_set_publish()
 
    The function is used to mark REGISTER requests that have to issue a
    PUBLISH. The PUBLISH is issued when REGISTER is saved in location

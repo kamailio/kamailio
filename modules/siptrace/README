@@ -10,15 +10,13 @@ Alexandr Dubovikov
 
    <alexandr.dubovikov@gmail.com>
 
-Edited by
-
 Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright (c) 2010 asipto.com
+   Copyright © 2010 asipto.com
 
-   Copyright (c) 2006 voice-system.ro
+   Copyright © 2006 voice-system.ro
      __________________________________________________________________
 
    Table of Contents
@@ -424,7 +422,7 @@ modparam("siptrace", "force_send_sock", "sip:10.1.1.2:5000")
 
    4.1. sip_trace([address])
 
-4.1.  sip_trace([address])
+4.1. sip_trace([address])
 
    Store or forward the current processed SIP message in database. It is
    stored in the form prior applying changes made to it.
@@ -449,7 +447,7 @@ sip_trace("sip:10.1.1.2:5085");
 
    5.1. sip_trace
 
-5.1.  sip_trace
+5.1. sip_trace
 
    Name: sip_trace
 
@@ -470,7 +468,7 @@ sip_trace("sip:10.1.1.2:5085");
 
    6.1. siptrace.status param
 
-6.1.  siptrace.status param
+6.1. siptrace.status param
 
    Name: siptrace.status
 
