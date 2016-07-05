@@ -40,7 +40,7 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   erlang
 
 # module groups to be packaged onto kamailio-extra-modules
-EXTRA_GROUPS=gzcompress uuid ev jansson
+EXTRA_GROUPS=gzcompress uuid ev jansson http_async
 
 # name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
 export LIBDIR ?= lib/$(DEB_HOST_MULTIARCH)

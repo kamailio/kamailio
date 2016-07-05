@@ -565,7 +565,7 @@ Description: extra modules for Kamailio
  proxy server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides: gzcompress uuid ev
+ This package provides: gzcompress uuid ev http_async
 
 Package: kamailio-nth
 Architecture: any
