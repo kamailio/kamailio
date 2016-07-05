@@ -236,7 +236,7 @@ static int check_user_list(sip_msg_t *msg, char* str1, char* str2,
 	}
 	/* table name */
 	if(str4 != NULL) {
-		if(fixup_get_svalue(msg, (gparam_t*)str3, &table)!=0) {
+		if(fixup_get_svalue(msg, (gparam_t*)str4, &table)!=0) {
 			LM_ERR("cannot print number pseudo-variable\n");
 			return -1;
 		}
