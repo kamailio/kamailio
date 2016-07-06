@@ -35,6 +35,7 @@
 
 #include "../../events.h"
 #include "../../ut.h"
+#include "../../data_lump.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
 #include "../../modules/tm/tm_load.h"
@@ -188,7 +189,6 @@ int dlg_cseq_msg_sent(void *data)
 	sip_msg_t msg;
 	str *obuf;
 	unsigned int direction;
-	tm_cell_t *t;
 	unsigned int ninc = 0;
 	unsigned int vinc = 0;
 	dlg_cell_t *dlg = NULL;
@@ -222,7 +222,7 @@ int dlg_cseq_msg_sent(void *data)
 
 	direction = DLG_DIR_NONE;
 	dlg = dlg_lookup_msg_dialog(&msg, &direction);
-	
+
 	if(dlg == NULL) {
 		LM_DBG("no dialog for this request\n");
 		goto done;
@@ -236,18 +236,13 @@ int dlg_cseq_msg_sent(void *data)
 
 	/* check if transaction is marked for a new increment */
 	if(get_cseq(&msg)->method_id!=METHOD_ACK) {
-		t = d_tmb.t_gett();
-		if(t==NULL || t==T_UNDEFINED) {
-			LM_DBG("no transaction for request\n");
-			goto done;
-		}
-		if(t->uas.request==0) {
-			LM_DBG("no uas request - no cseq update needed\n");
-			goto done;
-		}
-		if((t->uas.request->msg_flags&FL_UAC_AUTH)==FL_UAC_AUTH) {
+		if(sr_hdr_get_z(&msg, "P-K-Auth-CSeq")!=NULL) {
 			LM_DBG("uac auth request - cseq inc needed\n");
 			ninc = 1;
+			sr_hdr_del_z(&msg, "P-K-Auth-CSeq");
+		} else {
+			LM_DBG("uac auth request - cseq inc not needed\n");
+			goto done;
 		}
 	}
 
