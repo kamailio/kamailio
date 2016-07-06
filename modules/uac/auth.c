@@ -36,6 +36,7 @@
 #include "../../mem/mem.h"
 #include "../../hashes.h"
 #include "../../dset.h"
+#include "../../srapi.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "auth.h"
@@ -375,7 +376,7 @@ error:
 
 
 
-int uac_auth( struct sip_msg *msg)
+int uac_auth(sip_msg_t *msg)
 {
 	static struct authenticate_body auth;
 	struct uac_credential *crd;
@@ -385,6 +386,7 @@ int uac_auth( struct sip_msg *msg)
 	struct hdr_field *hdr;
 	HASHHEX response;
 	str *new_hdr;
+	sr_cfgenv_t *cenv = NULL;
 
 	/* get transaction */
 	t = uac_tmb.t_gett();
@@ -471,7 +473,13 @@ int uac_auth( struct sip_msg *msg)
 	/* mark request in T with uac auth for increase of cseq via dialog
 	 * - this function is executed in failure route, msg_flags will be
 	 *   reset afterwards by tm fake env */
-	if(t->uas.request) t->uas.request->msg_flags |= FL_UAC_AUTH;
+	if(t->uas.request) {
+		t->uas.request->msg_flags |= FL_UAC_AUTH;
+		cenv = sr_cfgenv_get();
+		if(cenv->cseq_update == 1) {
+			sr_hdr_add_zz(msg, "P-K-Auth-CSeq", "yes");
+		}
+	}
 
 	return 0;
 error:
