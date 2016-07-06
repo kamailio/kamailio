@@ -744,7 +744,7 @@ static int child_init(int rank)
 	}
 
 	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
-	(rank>0 || rank==PROC_TIMER)) ||
+	(rank>0 || rank==PROC_TIMER || rank==PROC_RPC)) ||
 	(dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) ) {
 		if ( dlg_connect_db(&db_url) ) {
 			LM_ERR("failed to connect to database (rank=%d)\n",rank);
