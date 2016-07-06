@@ -66,6 +66,7 @@
 #include "../../parser/parse_to.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../rpc_lookup.h"
+#include "../../srapi.h"
 #include "../rr/api.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"
@@ -459,6 +460,7 @@ static int pv_get_dlg_count(struct sip_msg *msg, pv_param_t *param,
 static int mod_init(void)
 {
 	unsigned int n;
+	sr_cfgenv_t *cenv = NULL;
 
 	if(dlg_ka_interval!=0 && dlg_ka_interval<30) {
 		LM_ERR("ka interval too low (%d), has to be at least 30\n",
@@ -510,7 +512,7 @@ static int mod_init(void)
 	}
 
 	if (timeout_spec.s) {
-		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0 
+		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0
 				&& (timeout_avp.type!=PVT_AVP)){
 			LM_ERR("malformed or non AVP timeout "
 				"AVP definition in '%.*s'\n", timeout_spec.len,timeout_spec.s);
@@ -702,8 +704,11 @@ static int mod_init(void)
 	/* timer process to clean old unconfirmed dialogs */
 	register_sync_timers(1);
 
-	if(_dlg_track_cseq_updates!=0)
+	if(_dlg_track_cseq_updates!=0) {
+		cenv = sr_cfgenv_get();
+		cenv->cseq_update = 1;
 		dlg_register_cseq_callbacks();
+	}
 
 	return 0;
 }
