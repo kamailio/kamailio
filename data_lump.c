@@ -734,3 +734,95 @@ int remove_lump(sip_msg_t *msg, struct lump *l)
 	}
 	return 0;
 }
+
+/**
+ *
+ */
+int sr_hdr_add_zz(sip_msg_t *msg, char *hname, char *hbody)
+{
+	struct lump* anchor;
+	str h;
+	str sname;
+	str sbody;
+
+	sname.s = hname;
+	sname.len = strlen(sname.s);
+	sbody.s = hbody;
+	sbody.len = strlen(sbody.s);
+
+	h.len = sname.len + 2 + sbody.len + 1 + CRLF_LEN;
+	h.s = (char*)pkg_malloc(h.len+1);
+	if(h.s == 0) {
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+	if(anchor == 0)
+	{
+		LM_ERR("cannot get the anchor\n");
+		pkg_free(h.s);
+		return -1;
+	}
+	memcpy(h.s, sname.s, sname.len);
+	memcpy(h.s+sname.len, ": ", 2);
+	memcpy(h.s+sname.len+2, sbody.s, sbody.len);
+	memcpy(h.s+sname.len+2+sbody.len+1, CRLF, CRLF_LEN);
+	h.s[h.len] = '\0';
+	if (insert_new_lump_before(anchor, h.s, h.len, 0) == 0)
+	{
+		LM_ERR("cannot insert lump\n");
+		pkg_free(h.s);
+		return -1;
+	}
+	LM_DBG("added new header [%s]\n", h.s);
+	return 0;
+}
+
+/**
+ *
+ */
+hdr_field_t *sr_hdr_get_z(sip_msg_t *msg, char *hname)
+{
+	hdr_field_t *hf;
+	str sname;
+
+	sname.s = hname;
+	sname.len = strlen(sname.s);
+
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hf->name.len==sname.len
+				&& strncasecmp(hf->name.s, sname.s,
+					sname.len)==0) {
+			return hf;
+
+		}
+	}
+	return NULL;
+}
+
+/**
+ *
+ */
+int sr_hdr_del_z(sip_msg_t *msg, char *hname)
+{
+	hdr_field_t *hf;
+	struct lump* l;
+	str sname;
+
+	sname.s = hname;
+	sname.len = strlen(sname.s);
+
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hf->name.len==sname.len
+				&& strncasecmp(hf->name.s, sname.s,
+					sname.len)==0) {
+			l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
+			if (l==0) {
+				LM_ERR("unable to delete cookie header\n");
+				return -1;
+			}
+			return 0;
+		}
+	}
+	return 0;
+}
