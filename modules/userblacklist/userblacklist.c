@@ -248,9 +248,9 @@ static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
 		}
 	}
 	/* table name */
-	if(pnumber != NULL) {
+	if(ptable != NULL) {
 		if(fixup_get_svalue(msg, (gparam_t*)ptable, &table)!=0) {
-			LM_ERR("cannot print number pseudo-variable\n");
+			LM_ERR("cannot print table pseudo-variable\n");
 			return -1;
 		}
 	}
