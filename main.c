@@ -19,7 +19,7 @@
  *
  */
 
-/** Kamailio core :: main file (init, daemonize, startup) 
+/** Kamailio core :: main file (init, daemonize, startup)
  * @file main.c
  * @ingroup core
  * Module: core
@@ -133,6 +133,7 @@
 #include "async_task.h"
 #include "dset.h"
 #include "timer_proc.h"
+#include "srapi.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -1836,6 +1837,7 @@ int main(int argc, char** argv)
 	debug_flag=0;
 	dont_fork_cnt=0;
 
+	sr_cfgenv_init();
 	daemon_status_init();
 
 	dprint_init_colors();

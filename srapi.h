@@ -27,4 +27,11 @@ int sr_register_callid_func(sr_generate_callid_f f);
 
 sr_generate_callid_f sr_get_callid_func(void);
 
+typedef struct sr_cfgenv {
+	int cseq_update;
+} sr_cfgenv_t;
+
+void sr_cfgenv_init(void);
+sr_cfgenv_t* sr_cfgenv_get(void);
+
 #endif
