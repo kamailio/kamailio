@@ -74,6 +74,7 @@
 #include "../../route.h"
 #include "../../rpc_lookup.h"
 #include "../../kemi.h"
+#include "../../rand/kam_rand.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -736,7 +737,7 @@ static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 	if ((*probability) == 0) return -1;
 	if ((*probability) == 100) return 1;
 
-	tmp = ((double) rand() / RAND_MAX);
+	tmp = ((double) kam_rand() / KAM_RAND_MAX);
 	LM_DBG("generated random %f\n", tmp);
 	if (tmp < ((double) (*probability) / 100)) {
 		LM_DBG("return true\n");
@@ -758,7 +759,7 @@ static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	n = rand();
+	n = kam_rand();
 	ch = int2str(n , &l);
 	res->rs.s = ch;
 	res->rs.len = l;
