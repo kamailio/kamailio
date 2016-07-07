@@ -24,6 +24,13 @@
 #ifndef _hep_h
 #define _hep_h
 
+#include "../../endianness.h"
+
+#ifdef __IS_BIG_ENDIAN
+#define to_le(x) bswap32(x)
+#else
+#define to_le(x) (x)
+#endif
 
 #ifdef __OS_solaris
 typedef uint8_t u_int8_t;
