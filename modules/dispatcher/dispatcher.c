@@ -571,7 +571,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	srand((11+rank)*getpid()*7);
+	kam_srand((11+rank)*getpid()*7);
 
 	return 0;
 }
