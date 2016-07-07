@@ -2,6 +2,7 @@
 #include "utlist.h"
 #include "http.h"
 #include "../../dprint.h"
+#include "../../rand/kam_rand.h"
 
 extern int nsq_max_in_flight;
 
@@ -68,7 +69,7 @@ static void nsq_reader_lookupd_poll_cb(EV_P_ struct ev_timer *w, int revents)
     if (count == 0)
 	idx = 0;
     else
-	idx = rand() % count;
+	idx = kam_rand() % count;
 
 
     i = 0;
@@ -167,6 +168,6 @@ int nsq_reader_connect_to_nsqd(struct NSQReader *rdr, const char *address, int p
 void nsq_run(struct ev_loop *loop)
 {
 	//LM_ERR("nsq_run()!\n");
-    srand(time(NULL));
+    kam_srand(time(NULL));
     ev_loop(loop, 0);
 }
