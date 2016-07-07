@@ -47,6 +47,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../dset.h"
 #include "../../rpc_lookup.h"
+#include "../../rand/kam_rand.h"
 
 #include "dr_load.h"
 #include "prefix_tree.h"
@@ -403,7 +404,7 @@ static int dr_child_init(int rank)
 		LM_ERR("cannot select table \"%.*s\"\n", drg_table.len, drg_table.s);
 		return -1;
 	}
-	srand(getpid()+time(0)+rank);
+	kam_srand(getpid()+time(0)+rank);
 	return 0;
 }
 
@@ -774,7 +775,7 @@ again:
 			} else {
 				if(i-j==2)
 				{
-					local_gwlist[t++]   = j + rand()%2;
+					local_gwlist[t++]   = j + kam_rand()%2;
 					if(sort_order==1)
 					{
 						local_gwlist[t++] = j + (local_gwlist[j]-j+1)%2;
@@ -783,11 +784,11 @@ again:
 						 *  local_gwlist[j+1]);*/
 					}
 				} else {
-					local_gwlist[t++]   = j + rand()%(i-j);
+					local_gwlist[t++]   = j + kam_rand()%(i-j);
 					if(sort_order==1)
 					{
 						do{
-							local_gwlist[t] = j + rand()%(i-j);
+							local_gwlist[t] = j + kam_rand()%(i-j);
 						}while(local_gwlist[t]==local_gwlist[t-1]);
 						t++;
 
@@ -824,7 +825,7 @@ again:
 						}
 					}
 					while ( dr_already_choosen(rt_info, local_gwlist, t-1, local_gwlist[t-1]) ) {
-						local_gwlist[t-1]   = j + rand()%(i-j);
+						local_gwlist[t-1]   = j + kam_rand()%(i-j);
 					}
 				}
 				LM_DBG("The %d gateway is %.*s [%d]\n", t, rt_info->pgwl[local_gwlist[t-1]].pgw->ip.len,
