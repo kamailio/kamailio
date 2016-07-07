@@ -1809,6 +1809,7 @@ static int build_rtpp_socks(unsigned int current_rtpp_no) {
 	for (i = 0; i < rtpp_socks_size; i++) {
 		if (rtpp_socks[i] >= 0) {
 			close(rtpp_socks[i]);
+			rtpp_socks[i] = -1;
 		}
 	}
 
@@ -1818,6 +1819,7 @@ static int build_rtpp_socks(unsigned int current_rtpp_no) {
 		LM_ERR("no more pkg memory for rtpp_socks\n");
 		return -1;
 	}
+	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
 
 	lock_get(rtpp_set_list->rset_head_lock);
 	for (rtpp_list = rtpp_set_list->rset_first; rtpp_list != 0;
@@ -1911,6 +1913,11 @@ child_init(int rank)
 	if(!rtpp_set_list)
 		return 0;
 
+	/* do not init sockets for PROC_INIT and main process when fork=yes */
+	if(rank==PROC_INIT || (rank==PROC_MAIN && dont_fork==0)) {
+		return 0;
+	}
+
 	mypid = getpid();
 
 	lock_get(rtpp_no_lock);
@@ -1921,6 +1928,7 @@ child_init(int rank)
 	if (!rtpp_socks) {
 		return -1;
 	}
+	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
 
 	// vector of pointers to queried nodes
 	queried_nodes_ptr = (struct rtpp_node**)pkg_malloc(queried_nodes_limit * sizeof(struct rtpp_node*));
