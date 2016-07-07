@@ -429,6 +429,24 @@ modparam("uac", "reg_retry_interval", 300)
 			</example>
 		</section>
 
+		<section id="uac.p.reg-random-delay-id">
+			<title><varname>reg_random_delay</varname> (int)</title>
+			<para>
+			Set a random reg_delay for each registration that has
+			reg_delay set to 0 in the database.
+			If set to 0, randomization will be disabled.
+			</para>
+			<para>The default value is 0 sec (disabled)</para>
+			<example>
+				<title>Set <varname>reg_random_delay</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_random_delay", 300)
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="uac.p.reg-db-table-id">
 			<title><varname>reg_db_table</varname> (string)</title>
 			<para>

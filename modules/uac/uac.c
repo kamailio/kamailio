@@ -157,6 +157,7 @@ static param_export_t params[] = {
 	{"reg_timer_interval",	INT_PARAM,			&reg_timer_interval	},
 	{"reg_retry_interval",	INT_PARAM,	  		&reg_retry_interval    },
 	{"reg_keep_callid",	INT_PARAM,			&reg_keep_callid       },
+	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
 	{0, 0, 0}
 };
 

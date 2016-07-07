@@ -116,6 +116,7 @@ int reg_retry_interval = 0;
 int reg_htable_size = 4;
 int reg_fetch_rows = 1000;
 int reg_keep_callid = 0;
+int reg_random_delay = 0;
 str reg_contact_addr = STR_NULL;
 str reg_db_url = STR_NULL;
 str reg_db_table = str_init("uacreg");
@@ -534,7 +535,10 @@ int reg_ht_add(reg_uac_t *reg)
 	memset(nr, 0, sizeof(reg_uac_t) + len);
 	nr->expires = reg->expires;
 	nr->flags   = reg->flags;
-	nr->reg_delay = reg->reg_delay;
+	if (reg->reg_delay)
+		nr->reg_delay = reg->reg_delay;
+	else if (reg_random_delay>0)
+		nr->reg_delay = rand() % reg_random_delay;
 	nr->reg_init  = time(NULL);
 	nr->h_uuid = reg_compute_hash(&reg->l_uuid);
 	nr->h_user = reg_compute_hash(&reg->l_username);
