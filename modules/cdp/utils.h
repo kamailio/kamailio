@@ -50,6 +50,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../locking.h"
 #include "../../pt.h"
+#include "../../rand/kam_rand.h"
 #include "sem.h"
 
 #ifndef LOG_NO_MEM

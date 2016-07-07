@@ -84,10 +84,10 @@ int peer_manager_init(dp_config *config)
 	msg_id_lock = lock_alloc();
 	msg_id_lock = lock_init(msg_id_lock);
 
-	srand((unsigned int)time(0));
-	*hopbyhop_id = rand();
+	kam_srand((unsigned int)time(0));
+	*hopbyhop_id = kam_rand();
 	*endtoend_id = (time(0)&0xFFF)<<20;
-	*endtoend_id |= rand() & 0xFFFFF;
+	*endtoend_id |= kam_rand() & 0xFFFFF;
 
 	for(i=0;i<config->peers_cnt;i++){
 		p = new_peer(config->peers[i].fqdn,config->peers[i].realm,config->peers[i].port,config->peers[i].src_addr);
