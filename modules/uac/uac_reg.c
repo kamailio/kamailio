@@ -57,9 +57,6 @@
 
 #define MAX_UACH_SIZE 2048
 #define UAC_REG_GC_INTERVAL	150
-#define UAC_REG_MAX_PASSWD_SIZE	63
-
-#define UAC_REG_MAX_URI_SIZE 127
 
 typedef struct _reg_uac
 {
@@ -512,28 +509,15 @@ int reg_ht_add(reg_uac_t *reg)
 		LM_ERR("bad parameters: %p/%p\n", reg, _reg_htable);
 		return -1;
 	}
-	if(reg->auth_password.len>UAC_REG_MAX_PASSWD_SIZE)
-	{
-		LM_ERR("bad parameters: %p/%p -- password too long %d\n",
-				reg, _reg_htable, reg->auth_password.len);
-		return -1;
-	}
-	if(reg->auth_proxy.len>UAC_REG_MAX_URI_SIZE)
-	{
-		LM_ERR("bad parameters: %p/%p -- proxy uri too long %d\n",
-				reg, _reg_htable, reg->auth_proxy.len);
-		return -1;
-	}
-
 	len = reg->l_uuid.len + 1
 		+ reg->l_username.len + 1
 		+ reg->l_domain.len + 1
 		+ reg->r_username.len + 1
 		+ reg->r_domain.len + 1
 		+ reg->realm.len + 1
-		+ UAC_REG_MAX_URI_SIZE /*reg->auth_proxy.len*/ + 1
+		+ reg->auth_proxy.len + 1
 		+ reg->auth_username.len + 1
-		+ UAC_REG_MAX_PASSWD_SIZE /*reg->auth_password.len*/ + 1;
+		+ reg->auth_password.len + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
 	{
@@ -556,9 +540,8 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->r_username, &reg->r_username, 0);
 	reg_copy_shm(&nr->r_domain, &reg->r_domain, 0);
 	reg_copy_shm(&nr->realm, &reg->realm, 0);
-	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy, UAC_REG_MAX_URI_SIZE);
+	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy, 0);
 	reg_copy_shm(&nr->auth_username, &reg->auth_username, 0);
-	/* password at the end, to be able to update it easily */
 	reg_copy_shm(&nr->auth_password, &reg->auth_password, 0);
 
 	reg_ht_add_byuser(nr);
@@ -645,45 +628,6 @@ int reg_ht_rm(reg_uac_t *reg)
 }
 
 
-/**
- *
- */
-int reg_ht_update_attrs(reg_uac_t *cur, reg_uac_t *reg)
-{
-	if(_reg_htable==NULL)
-	{
-		LM_ERR("reg hash table not initialized\n");
-		return -1;
-	}
-
-	if(reg->auth_password.len>UAC_REG_MAX_PASSWD_SIZE)
-	{
-		LM_ERR("password is too big: %d\n", reg->auth_password.len);
-		return -1;
-	}
-	if(reg->auth_proxy.len>UAC_REG_MAX_URI_SIZE)
-	{
-		LM_ERR("proxy uri is too big: %d\n", reg->auth_proxy.len);
-		return -1;
-	}
-
-	strncpy(cur->auth_password.s, reg->auth_password.s, reg->auth_password.len);
-	cur->auth_password.len = reg->auth_password.len;
-	cur->auth_password.s[reg->auth_password.len] = '\0';
-	strncpy(cur->auth_proxy.s, reg->auth_proxy.s, reg->auth_proxy.len);
-	cur->auth_proxy.len = reg->auth_proxy.len;
-	cur->auth_proxy.s[reg->auth_proxy.len] = '\0';
-	if(reg->flags & UAC_REG_DISABLED)
-		ri->r->flags |= UAC_REG_DISABLED;
-	else
-		ri->r->flags &= ~UAC_REG_DISABLED;
-
-	return 0;
-}
-
-/**
- *
- */
 reg_uac_t *reg_ht_get_byuuid(str *uuid)
 {
 	unsigned int hash;
@@ -1474,21 +1418,14 @@ int uac_reg_db_refresh(str *pl_uuid)
 	lock_get(_reg_htable_gc_lock);
 	if((cur_reg=reg_ht_get_byuuid(pl_uuid))!=NULL)
 	{
-		if(reg_ht_update_attrs(cur_reg, &reg)<0)
-		{
-			lock_release(cur_reg->lock);
-			lock_release(_reg_htable_gc_lock);
-			LM_ERR("Error updating reg to htable\n");
-			goto error;
-		}
-		lock_release(cur_reg->lock);
-	} else {
-		if(reg_ht_add(&reg)<0)
-		{
-			lock_release(_reg_htable_gc_lock);
-			LM_ERR("Error adding reg to htable\n");
-			goto error;
-		}
+		reg.flags |= (cur_reg->flags & (UAC_REG_ONGOING | UAC_REG_AUTHSENT));
+		reg_ht_rm(cur_reg);
+	}
+	if(reg_ht_add(&reg)<0)
+	{
+		lock_release(_reg_htable_gc_lock);
+		LM_ERR("Error adding reg to htable\n");
+		goto error;
 	}
 	lock_release(_reg_htable_gc_lock);
 
