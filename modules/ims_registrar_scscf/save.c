@@ -109,39 +109,35 @@ static inline int randomize_expires(int expires, int range) {
  *    the default value
  */
 static inline int calc_contact_expires(contact_t *c, int expires_hdr, int sos_reg) {
-    unsigned int r;
-
-    if (expires_hdr >= 0U)
-        r = expires_hdr;
-    else {
-        r = (sos_reg > 0) ? default_registrar_cfg.em_default_expires : default_registrar_cfg.default_expires;
-        goto end;
-    }
-    if (c && c->expires)
-        str2int(&(c->expires->body), (unsigned int*) &r);
-    if (r > 0) {
-        if (!sos_reg && r < default_registrar_cfg.min_expires) {
-            r = default_registrar_cfg.min_expires;
-            goto end;
-        }
-        if (sos_reg && r < default_registrar_cfg.em_min_expires) {
-            r = default_registrar_cfg.em_min_expires;
-            goto end;
-        }
-    }
-    if (!sos_reg && r > default_registrar_cfg.max_expires) {
-        r = default_registrar_cfg.max_expires;
-        goto end;
-    }
-    if (sos_reg && r > default_registrar_cfg.em_max_expires)
-        r = default_registrar_cfg.em_min_expires;
-
+	int r;
+	if(c && c->expires)
+		str2int(&(c->expires->body), (unsigned int*) &r);
+	else if (expires_hdr >= 0)
+		r = expires_hdr;
+	else {
+		r = (sos_reg > 0) ? default_registrar_cfg.em_default_expires : default_registrar_cfg.default_expires;
+		goto end;
+	}
+	if (!sos_reg && r < default_registrar_cfg.min_expires) {
+		r = default_registrar_cfg.min_expires;
+		goto end;
+	}
+	if (sos_reg && r < default_registrar_cfg.em_min_expires) {
+		r = default_registrar_cfg.em_min_expires;
+		goto end;
+	}
+	if (!sos_reg && r > default_registrar_cfg.max_expires) {
+		r = default_registrar_cfg.max_expires;
+		goto end;
+	}
+	if (sos_reg && r > default_registrar_cfg.em_max_expires) {
+		r = default_registrar_cfg.em_min_expires;
+		goto end;
+	}
 end:
-
-    r = randomize_expires(r, default_registrar_cfg.default_expires_range);
-
-    LM_DBG("Calculated expires for contact is %d\n", r);
-    return time(NULL) + r;
+	r = randomize_expires(r, default_registrar_cfg.default_expires_range);
+	LM_DBG("Calculated expires for contact is %d\n", r);
+	return time(NULL) + r;
 }
 
 /*! \brief
