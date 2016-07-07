@@ -176,8 +176,8 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
                 hep_offset+=sizeof(struct hep_timehdr);
                 heptime_tmp = (struct hep_timehdr*) hep_payload;
 
-                heptime->tv_sec = heptime_tmp->tv_sec;
-                heptime->tv_usec = heptime_tmp->tv_usec;
+                heptime->tv_sec = to_le(heptime_tmp->tv_sec);
+                heptime->tv_usec = to_le(heptime_tmp->tv_usec);
                 heptime->captid = heptime_tmp->captid;
         }
 

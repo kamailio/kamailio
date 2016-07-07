@@ -1799,8 +1799,8 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 
 	if(hep_version == 2) {
 
-		hep_time.tv_sec = tvb.tv_sec;
-		hep_time.tv_usec = tvb.tv_usec;
+		hep_time.tv_sec = to_le(tvb.tv_sec);
+		hep_time.tv_usec = to_le(tvb.tv_usec);
 		hep_time.captid = hep_capture_id;
 
 		memcpy((void*)buffer+buflen, &hep_time, sizeof(struct hep_timehdr));
