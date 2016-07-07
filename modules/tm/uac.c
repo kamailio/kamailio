@@ -208,24 +208,22 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	unsigned int hi;
 	int is_ack;
 	ticks_t lifetime;
-#ifdef USE_DNS_FAILOVER
-	struct dns_srv_handle dns_h;
-#endif
 	long nhtype;
 #ifdef WITH_EVENT_LOCAL_REQUEST
 	struct cell *backup_t;
 	int backup_branch;
 	unsigned int backup_msgid;
-	static struct sip_msg lreq;
 	char *buf1;
 	int buf_len1;
 	int sflag_bk;
 	int backup_route_type;
 #endif
+	static struct sip_msg lreq;
 	snd_flags_t snd_flags;
 	tm_xlinks_t backup_xd;
 	tm_xdata_t local_xd;
 	int refresh_shortcuts = 0;
+	int sip_msg_len;
 
 	ret=-1;
 	hi=0; /* make gcc happy */
@@ -237,7 +235,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	 */
 	if ((nhtype = w_calculate_hooks(uac_r->dialog)) < 0)
 		/* if err's returned, the message is incorrect */
-		goto error2;
+		goto error3;
 
 	if (!uac_r->dialog->loc_seq.is_set) {
 		/* this is the first request in the dialog,
@@ -246,57 +244,40 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 		uac_r->dialog->loc_seq.is_set = 1;
 	}
 
+	/* build cell sets X/AVP lists to new transaction structure
+	 * => backup in a tmp struct and restore afterwards */
+	memset(&local_xd, 0, sizeof(tm_xdata_t));
+	tm_xdata_replace(&local_xd, &backup_xd);
+	new_cell = build_cell(0);
+	tm_xdata_replace(0, &backup_xd);
+
+	if (!new_cell) {
+		ret=E_OUT_OF_MEM;
+		LOG(L_ERR, "t_uac: short of cell shmem\n");
+		goto error3;
+	}
+
 	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",uac_r->dialog->hooks.next_hop->len,
 			uac_r->dialog->hooks.next_hop->s);
 	/* new message => take the dialog send_socket if set, or the default
 	  send_socket if not*/
 	SND_FLAGS_INIT(&snd_flags);
 #ifdef USE_DNS_FAILOVER
-	if (cfg_get(core, core_cfg, use_dns_failover)){
-		dns_srv_handle_init(&dns_h);
-		if ((uri2dst2(&dns_h, &dst, uac_r->dialog->send_sock, snd_flags,
-							uac_r->dialog->hooks.next_hop, PROTO_NONE)==0)
+	if ((uri2dst2(cfg_get(core, core_cfg, use_dns_failover) ? &new_cell->uac[0].dns_h : 0,
+			&dst, uac_r->dialog->send_sock, snd_flags,
+			uac_r->dialog->hooks.next_hop, PROTO_NONE)==0)
 				|| (dst.send_sock==0)){
-			dns_srv_handle_put(&dns_h);
-			ser_error = E_NO_SOCKET;
-			ret=ser_error;
-			LOG(L_ERR, "t_uac: no socket found\n");
-			goto error2;
-		}
-		dns_srv_handle_put(&dns_h); /* not needed anymore */
-	}else{
-		if ((uri2dst2(0, &dst, uac_r->dialog->send_sock, snd_flags,
-						uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
-				(dst.send_sock==0)){
-			ser_error = E_NO_SOCKET;
-			ret=ser_error;
-			LOG(L_ERR, "t_uac: no socket found\n");
-			goto error2;
-		}
-	}
 #else /* USE_DNS_FAILOVER */
 	if ((uri2dst2(&dst, uac_r->dialog->send_sock, snd_flags,
 					uac_r->dialog->hooks.next_hop, PROTO_NONE)==0) ||
 			(dst.send_sock==0)){
+#endif /* USE_DNS_FAILOVER */
 		ser_error = E_NO_SOCKET;
 		ret=ser_error;
 		LOG(L_ERR, "t_uac: no socket found\n");
 		goto error2;
 	}
-#endif /* USE_DNS_FAILOVER */
 
-	/* build cell sets X/AVP lists to new transaction structure
-	 * => bakup in a tmp struct and restore afterwards */
-	memset(&local_xd, 0, sizeof(tm_xdata_t));
-	tm_xdata_replace(&local_xd, &backup_xd);
-	new_cell = build_cell(0); 
-	tm_xdata_replace(0, &backup_xd);
-
-	if (!new_cell) {
-		ret=E_OUT_OF_MEM;
-		LOG(L_ERR, "t_uac: short of cell shmem\n");
-		goto error2;
-	}
 	if (uac_r->method->len==INVITE_LEN && memcmp(uac_r->method->s, INVITE, INVITE_LEN)==0){
 		new_cell->flags |= T_IS_INVITE_FLAG;
 		new_cell->flags|=T_AUTO_INV_100 &
@@ -475,6 +456,40 @@ normal_update:
 	}
 #endif
 
+#ifdef USE_DNS_FAILOVER
+	/* Set the outgoing message as UAS, so the failover code has something to work with */
+	if(cfg_get(core, core_cfg, use_dns_failover)) {
+		if (likely(build_sip_msg_from_buf(&lreq, buf, buf_len, inc_msg_no())== 0)) {
+			lreq.force_send_socket = uac_r->dialog->send_sock;
+			lreq.rcv.proto = dst.send_sock->proto;
+			lreq.rcv.src_ip = dst.send_sock->address;
+			su2ip_addr(&lreq.rcv.dst_ip, &dst.to);
+			lreq.rcv.src_port = dst.send_sock->port_no;
+			lreq.rcv.dst_port = su_getport(&dst.to);
+			lreq.rcv.src_su=dst.send_sock->su;
+			lreq.rcv.bind_address=dst.send_sock;
+#ifdef USE_COMP
+			lreq.rcv.comp=dst.comp;
+#endif /* USE_COMP */
+
+			if (parse_headers(&lreq, HDR_EOH_F, 0) == -1) {
+				LM_ERR("failed to parse headers on uas for failover\n");
+			} else {
+				new_cell->uas.request = sip_msg_cloner(&lreq, &sip_msg_len);
+				lreq.buf=0; /* covers the obsolete DYN_BUF */
+				free_sip_msg(&lreq);
+				if (!new_cell->uas.request) {
+					LM_ERR("no more shmem\n");
+					goto error1;
+				}
+				new_cell->uas.end_request=((char*)new_cell->uas.request)+sip_msg_len;
+			}
+		} else {
+			LM_WARN("failed to build uas for failover\n");
+		}
+	}
+#endif /* USE_DNS_FAILOVER */
+
 	new_cell->uac[0].on_reply = new_cell->on_reply;
 	new_cell->uac[0].on_failure = new_cell->on_failure;
 
@@ -518,14 +533,16 @@ normal_update:
 		LOCK_HASH(hi);
 		remove_from_hash_table_unsafe(new_cell);
 		UNLOCK_HASH(hi);
+	}
+
+error2:
 #ifdef TM_DEL_UNREF
+	if (!is_ack) {
 		UNREF_FREE(new_cell);
 	}else
-#else
-	}
 #endif
 		free_cell(new_cell);
-error2:
+error3:
 	return ret;
 }
 
