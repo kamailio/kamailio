@@ -36,6 +36,7 @@
 #include "../../globals.h"
 #include "../../error.h"
 #include "../../char_msg_val.h"
+#include "../../rand/kam_rand.h"
 #include "defs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
@@ -270,7 +271,7 @@ static inline void init_synonym_id( struct sip_msg *p_msg, char *hash )
 		   anything
 		*/
 		/* HACK : not long enough */
-		myrand=rand();
+		myrand=kam_rand();
 		c = hash;
 		size=MD5_LEN;
 		memset(c, '0', size );
@@ -480,7 +481,7 @@ struct s_table* init_hash_table()
 	for(  i=0 ; i<TABLE_ENTRIES; i++ )
 	{
 		init_entry_lock( _tm_table, (_tm_table->entries)+i );
-		_tm_table->entries[i].next_label = rand();
+		_tm_table->entries[i].next_label = kam_rand();
 		/* init cell list */
 		clist_init(&_tm_table->entries[i], next_c, prev_c);
 	}
