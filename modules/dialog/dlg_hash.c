@@ -36,6 +36,7 @@
 #include "../../hashes.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/statistics.h"
+#include "../../rand/kam_rand.h"
 #include "dlg_timer.h"
 #include "dlg_var.h"
 #include "dlg_hash.h"
@@ -298,7 +299,7 @@ int init_dlg_table(unsigned int size)
 			LM_ERR("failed to init lock for slot: %d\n", i);
 			goto error1;
 		}
-		d_table->entries[i].next_id = rand() % (3*size);
+		d_table->entries[i].next_id = kam_rand() % (3*size);
 	}
 
 	return 0;
