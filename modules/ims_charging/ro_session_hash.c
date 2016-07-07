@@ -117,7 +117,7 @@ int init_ro_session_table(unsigned int size) {
 
     for (i = 0; i < size; i++) {
         memset(&(ro_session_table->entries[i]), 0, sizeof (struct ro_session_entry));
-        ro_session_table->entries[i].next_id = rand() % (3*size);
+        ro_session_table->entries[i].next_id = kam_rand() % (3*size);
         ro_session_table->entries[i].lock_idx = i % ro_session_table->locks_no;
     }
 
