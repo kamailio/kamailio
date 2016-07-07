@@ -127,7 +127,9 @@ int t_append_branches(void) {
 		found = 0;
 		for (i=0; i<outgoings; i++) {
 			if (t->uac[i].ruid.len == ruid.len
-					&& !memcmp(t->uac[i].ruid.s, ruid.s, ruid.len)) {
+					&& !memcmp(t->uac[i].ruid.s, ruid.s, ruid.len)
+					&& t->uac[i].uri.len == current_uri.len 
+					&& !memcmp(t->uac[i].uri.s, current_uri.s, current_uri.len)) {
 				LM_DBG("branch already added [%.*s]\n", ruid.len, ruid.s);
 				found = 1;
 				break;
