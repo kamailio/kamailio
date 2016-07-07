@@ -862,6 +862,10 @@ child_init(int rank)
 	if(rtpp_set_list==NULL )
 		return 0;
 
+	if(rank==PROC_INIT || (rank==PROC_MAIN && dont_fork==0)) {
+		return 0;
+	}
+
 	/* Iterate known RTP proxies - create sockets */
 	mypid = getpid();
 
@@ -870,6 +874,7 @@ child_init(int rank)
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
+	memset(rtpp_socks, -1, sizeof(int)*rtpp_no);
 
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != 0;
 			rtpp_list = rtpp_list->rset_next){
