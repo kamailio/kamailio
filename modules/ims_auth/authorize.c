@@ -57,6 +57,7 @@
 #include "../../usr_avp.h"
 #include "../../mod_fix.h"
 #include "../../mem/mem.h"
+#include "../../rand/kam_rand.h"
 #include "../cdp/diameter.h"
 #include "../cdp/diameter_ims_code_result.h"
 
@@ -933,7 +934,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
             int i;
             char y[NONCE_LEN];
             for (i = 0; i < NONCE_LEN; i++)
-                y[i] = (unsigned char) ((int) (256.0 * rand() / (RAND_MAX + 1.0)));
+                y[i] = (unsigned char) ((int) (256.0 * kam_rand() / (KAM_RAND_MAX + 1.0)));
 
             if (unlikely((av->authenticate.len < 2 * NONCE_LEN))) {
                 if (av->authenticate.s) {
@@ -1222,7 +1223,7 @@ auth_vector * new_auth_vector(int item_number, str auth_scheme, str authenticate
             int i;
             char y[NONCE_LEN];
             for (i = 0; i < NONCE_LEN; i++)
-                y[i] = (unsigned char) ((int) (256.0 * rand() / (RAND_MAX + 1.0)));
+                y[i] = (unsigned char) ((int) (256.0 * kam_rand() / (KAM_RAND_MAX + 1.0)));
             x->authenticate.len = 2 * NONCE_LEN;
             x->authenticate.s = shm_malloc(x->authenticate.len);
             if (!x->authenticate.s) {
