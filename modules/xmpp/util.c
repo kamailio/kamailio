@@ -28,11 +28,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 #include "xmpp.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_param.h"
+#include "../../rand/kam_rand.h"
 
 extern param_t *_xmpp_gwmap_list;
 
@@ -271,7 +271,7 @@ char *random_secret(void)
 	int i, r;
 
         for (i = 0; i < 40; i++) {
-            r = (int) (36.0 * rand() / RAND_MAX);
+            r = (int) (36.0 * kam_rand() / KAM_RAND_MAX);
             secret[i] = (r >= 0 && r <= 9) ? (r + 48) : (r + 87);
         }
         secret[40] = '\0';
