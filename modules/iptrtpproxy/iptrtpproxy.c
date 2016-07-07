@@ -48,6 +48,7 @@
 #include "../../select_buf.h"
 #include "../../script_cb.h"
 #include "../../cfg_parser.h"
+#include "../../rand/kam_rand.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -1438,7 +1439,7 @@ ERR("RTPPROXY_DEBUG: session_count: %d, reuse_existing_count: %d\n", global_sdp_
 
 					} else if (ok_stamp == 0) {
 						/* not yet acquired, highest */
-						w = 100000000 + (rand() & 0xFFFF);  /* randomize not yet asked or being hartbeated */
+						w = 100000000 + (kam_rand() & 0xFFFF);  /* randomize not yet asked or being hartbeated */
 					} else {
 						/* middle */
 						w = 1000;
