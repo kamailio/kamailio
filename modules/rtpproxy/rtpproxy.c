@@ -862,6 +862,7 @@ child_init(int rank)
 	if(rtpp_set_list==NULL )
 		return 0;
 
+	/* do not init sockets for PROC_INIT and main process when fork=yes */
 	if(rank==PROC_INIT || (rank==PROC_MAIN && dont_fork==0)) {
 		return 0;
 	}
