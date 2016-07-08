@@ -26,6 +26,7 @@
 #include "sr_module.h"
 #include "socket_info.h"
 #include "rand/fastrand.h"
+#include "rand/kam_rand.h"
 #ifdef PKG_MALLOC
 #include "mem/mem.h"
 #endif
@@ -284,7 +285,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 	
 	
 	child_process_no = *process_count;
-	new_seed1=rand();
+	new_seed1=kam_rand();
 	new_seed2=random();
 	pid = fork();
 	if (pid<0) {
@@ -300,8 +301,8 @@ int fork_process(int child_id, char *desc, int make_sock)
 #ifdef USE_TCP
 		close_extra_socks(child_id, process_no);
 #endif /* USE_TCP */
-		srand(new_seed1);
-		fastrand_seed(rand());
+		kam_srand(new_seed1);
+		fastrand_seed(kam_rand());
 		srandom(new_seed2+time(0));
 		shm_malloc_on_fork();
 #ifdef PROFILING
@@ -419,7 +420,7 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	
 	
 	child_process_no = *process_count;
-	new_seed1=rand();
+	new_seed1=kam_rand();
 	new_seed2=random();
 	pid = fork();
 	if (pid<0) {
@@ -442,8 +443,8 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 			}
 		}
 		daemon_status_on_fork_cleanup();
-		srand(new_seed1);
-		fastrand_seed(rand());
+		kam_srand(new_seed1);
+		fastrand_seed(kam_rand());
 		srandom(new_seed2+time(0));
 		shm_malloc_on_fork();
 #ifdef PROFILING

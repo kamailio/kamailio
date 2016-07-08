@@ -53,7 +53,7 @@ static inline int get_expire_val(void) {
 		return expires;
 	/* select a random value in the range */
 	return expires - (float) range / 100 * expires
-			+ (float) (rand() % 100) / 100 * 2 * (float) range / 100 * expires;
+			+ (float) (kam_rand() % 100) / 100 * 2 * (float) range / 100 * expires;
 }
 
 /*! \brief

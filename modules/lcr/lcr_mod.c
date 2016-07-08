@@ -64,6 +64,7 @@
 #include "../../socket_info.h"
 #include "../../pvar.h"
 #include "../../mod_fix.h"
+#include "../../rand/kam_rand.h"
 #include "hash.h"
 #include "lcr_rpc.h"
 #include "../../rpc_lookup.h"
@@ -1992,7 +1993,7 @@ static int load_gws(struct sip_msg* _m, int argc, action_u_t argv[])
 		matched_gws[gw_index].prefix_len = pl->prefix_len;
 		matched_gws[gw_index].priority = t->priority;
 		matched_gws[gw_index].weight = t->weight *
-		    (rand() >> 8);
+		    (kam_rand() >> 8);
 		matched_gws[gw_index].duplicate = 0;
 		LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
 		       gw_index, t->gw_index, pl->prefix_len,

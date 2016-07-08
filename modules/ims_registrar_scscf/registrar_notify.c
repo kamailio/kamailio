@@ -109,7 +109,7 @@ static inline int randomize_expires(int expires, int range) {
 
     int range_min = expires - (float) range / 100 * expires;
 
-    return range_min + (float) (rand() % 100) / 100 * (expires - range_min);
+    return range_min + (float) (kam_rand() % 100) / 100 * (expires - range_min);
 }
 
 int notify_init() {

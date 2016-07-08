@@ -11,6 +11,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../lib/kmi/mi.h"
+#include "../../rand/kam_rand.h"
 #include "dlg_timer.h"
 #include "dlg_var.h"
 #include "dlg_hash.h"
@@ -130,7 +131,7 @@ int init_dlg_table(unsigned int size) {
 
     for (i = 0; i < size; i++) {
         memset(&(d_table->entries[i]), 0, sizeof (struct dlg_entry));
-        d_table->entries[i].next_id = rand() % (3*size);
+        d_table->entries[i].next_id = kam_rand() % (3*size);
         d_table->entries[i].lock_idx = i % d_table->locks_no;
     }
 

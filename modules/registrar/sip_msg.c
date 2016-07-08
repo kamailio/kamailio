@@ -33,6 +33,7 @@
 #include "../../parser/parse_expires.h"
 #include "../../ut.h"
 #include "../../qvalue.h"
+#include "../../rand/kam_rand.h"
 #include "registrar.h"                     /* Module parameters */
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"
@@ -56,7 +57,7 @@ static inline int randomize_expires( int expires, int range )
 
 	range_min = expires - (float)range/100 * expires;
 
-	return range_min + (float)(rand()%100)/100 * ( expires - range_min );
+	return range_min + (float)(kam_rand()%100)/100 * ( expires - range_min );
 }
 
 

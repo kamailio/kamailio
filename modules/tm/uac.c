@@ -36,6 +36,7 @@
 #include "../../socket_info.h"
 #include "../../compiler_opt.h"
 #include "../../parser/parse_cseq.h"
+#include "../../rand/kam_rand.h"
 #include "config.h"
 #include "ut.h"
 #include "h_table.h"
@@ -75,7 +76,7 @@ int uac_init(void)
 	str src[3];
 	struct socket_info *si;
 
-	if (RAND_MAX < TABLE_ENTRIES) {
+	if (KAM_RAND_MAX < TABLE_ENTRIES) {
 		LOG(L_WARN, "Warning: uac does not spread "
 		    "across the whole hash table\n");
 	}

@@ -56,6 +56,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../usr_avp.h"
+#include "../../rand/kam_rand.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
 #include "../../pt.h"
@@ -1481,7 +1482,7 @@ static int update_pw_dialogs_dbonlymode(subs_t* subs, subs_t** subs_array)
 	db_vals[n_update_cols].nul = 0;
 	if (subs->callid.len == 0 || subs->from_tag.len == 0)
 	{
-		db_vals[n_update_cols].val.int_val = (int) ((rand() / (RAND_MAX + 1.0)) *
+		db_vals[n_update_cols].val.int_val = (int) ((kam_rand() / (KAM_RAND_MAX + 1.0)) *
 				(pres_waitn_time * pres_notifier_poll_rate
 				 * pres_notifier_processes));
 	} else {

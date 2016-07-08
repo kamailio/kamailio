@@ -35,6 +35,7 @@
 #include "../../hashes.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lib/kcore/statistics.h"
+#include "../../rand/kam_rand.h"
 #include "ts_hash.h"
 #include "ts_handlers.h"
 
@@ -111,7 +112,7 @@ int init_ts_table(unsigned int size)
 
 	for( i=0 ; i<size; i++ ) {
 		memset( &(t_table->entries[i]), 0, sizeof(struct ts_entry) );
-		t_table->entries[i].next_id = rand() % (3*size);
+		t_table->entries[i].next_id = kam_rand() % (3*size);
 		t_table->entries[i].lock_idx = i % t_table->locks_no;
 	}
 

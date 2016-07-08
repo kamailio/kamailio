@@ -74,6 +74,7 @@
 #include "../../resolve.h"
 #include "../../receive.h"
 #include "../../mod_fix.h"
+#include "../../rand/kam_rand.h"
 #include "sipcapture.h"
 #include "hash_mode.h"
 #include "hep.h"
@@ -807,7 +808,7 @@ static int mod_init(void)
 	}
 #endif
 
-	srand(time(NULL));
+	kam_srand(time(NULL));
 
 
 	if(db_insert_mode) {
@@ -1481,7 +1482,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 		}
 		else if (c->mtmode == mode_random )
 		{
-			ii = rand() % c->no_tables;
+			ii = kam_rand() % c->no_tables;
 			LM_DBG("rand idx is:%d\n", ii);
 		}
 		else if (c->mtmode == mode_round_robin)

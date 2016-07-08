@@ -57,6 +57,7 @@
 #include "sr_module.h"
 #include "resolve.h"
 #include "forward.h"
+#include "rand/kam_rand.h"
 
 #define RETURN0_res(x) {*res=(x);return 0;}
 #define TRIM_RET0_res(x) {*res=(x);trim(res);return 0;} 
@@ -1508,11 +1509,11 @@ int select_sys_unique(str* res, select_t* s, struct sip_msg* msg) {
 		uniq_id[UNIQUE_ID_PID_LEN+1+UNIQUE_ID_TIME_LEN] = '-';
 
 		/* init random part */
-		for (i = RAND_MAX, rb=0; i; rb++, i>>=1);
+		for (i = KAM_RAND_MAX, rb=0; i; rb++, i>>=1);
 		for (i = UNIQUE_ID_FIX_LEN, cb = 0, x = 0; i < UNIQUE_ID_FIX_LEN+UNIQUE_ID_RAND_LEN; i++) {
 			if (!cb) {
 				cb = rb;
-				x = rand();
+				x = kam_rand();
 			}
 			uniq_id[i] = fourbits2char[x & 0x0F];
 			x >>= rb;

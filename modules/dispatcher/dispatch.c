@@ -472,10 +472,10 @@ void shuffle_uint100array(unsigned int* arr){
 	int k;
 	int j;
 	unsigned int t;
-	srand(time(0));
+	kam_srand(time(0));
 	for (j=0; j<100; j++)
 	{
-		k = j + (rand() % (100-j));
+		k = j + (kam_rand() % (100-j));
 		t = arr[j];
 		arr[j] = arr[k];
 		arr[k] = t;
@@ -1897,7 +1897,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 			}
 			break;
 		case 6: /* random selection */
-			hash = rand() % idx->nr;
+			hash = kam_rand() % idx->nr;
 			break;
 		case 7: /* hash on PV value */
 			if (ds_hash_pvar(msg, &hash)!=0)

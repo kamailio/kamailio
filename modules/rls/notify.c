@@ -37,6 +37,7 @@
 #include "../../parser/parse_cseq.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_rr.h"
+#include "../../rand/kam_rand.h"
 #include "../../modules/tm/dlg.h"
 #include "../presence/utils_func.h"
 #include "../presence/hash.h"
@@ -1112,7 +1113,7 @@ char* generate_string(int length)
 		
 	for(i=0; i<length; i++) 
 	{
-		r= rand() % ('z'- 'A') + 'A';
+		r= kam_rand() % ('z'- 'A') + 'A';
 		if(r>'Z' && r< 'a')
 		r= '0'+ (r- 'Z');
 
@@ -1128,7 +1129,7 @@ char* generate_cid(char* uri, int uri_len)
 	static char cid[512];
 	int len;
 
-	len= sprintf(cid, "%d.%.*s.%d", (int)time(NULL), uri_len, uri, rand());
+	len= sprintf(cid, "%d.%.*s.%d", (int)time(NULL), uri_len, uri, kam_rand());
 	cid[len]= '\0';
 	
 	return cid;

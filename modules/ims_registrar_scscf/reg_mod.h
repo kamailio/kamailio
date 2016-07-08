@@ -51,6 +51,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../qvalue.h"
 #include "../../usr_avp.h"
+#include "../../rand/kam_rand.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "../../modules/sl/sl.h"
 #include "../../modules/tm/tm_load.h"

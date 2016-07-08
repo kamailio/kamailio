@@ -103,6 +103,7 @@
 #include "parser/parse_param.h"
 #include "forward.h"
 #include "str_list.h"
+#include "rand/kam_rand.h"
 
 #define append_str_trans(_dest,_src,_len,_msg) \
 	append_str( (_dest), (_src), (_len) );
@@ -520,7 +521,7 @@ static inline int lump_check_opt(	struct lump *l,
 				return 1;
 			}
 		case COND_IF_RAND:
-			if(rand()>=RAND_MAX/2) {
+			if(kam_rand()>=KAM_RAND_MAX/2) {
 				LUMP_SET_COND_TRUE(l);
 				return 1;
 			} else return 0;

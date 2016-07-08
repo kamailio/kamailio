@@ -118,6 +118,7 @@
 #include "dst_blacklist.h"
 #endif
 #include "rand/fastrand.h" /* seed */
+#include "rand/kam_rand.h"
 
 #include "stats.h"
 #include "counters.h"
@@ -2103,10 +2104,10 @@ try_again:
 	}
 	seed+=getpid()+time(0);
 	LM_DBG("seeding PRNG with %u\n", seed);
-	srand(seed);
-	fastrand_seed(rand());
-	srandom(rand()+time(0));
-	LM_DBG("test random numbers %u %lu %u\n", rand(), random(), fastrand());
+	kam_srand(seed);
+	fastrand_seed(kam_rand());
+	srandom(kam_rand()+time(0));
+	LM_DBG("test random numbers %u %lu %u\n", kam_rand(), random(), fastrand());
 
 	/*register builtin  modules*/
 	register_builtin_modules();
