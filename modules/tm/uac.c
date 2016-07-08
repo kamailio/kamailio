@@ -190,6 +190,162 @@ error:
 	return -1;
 }
 
+
+#if defined(USE_DNS_FAILOVER) || defined(WITH_EVENT_LOCAL_REQUEST)
+static inline int t_build_msg_from_buf(
+			struct sip_msg *msg, char *buf, int buf_len,
+			uac_req_t *uac_r, struct dest_info *dst)
+{
+	if (unlikely(build_sip_msg_from_buf(msg, buf, buf_len, inc_msg_no()) != 0)) {
+		return -1;
+	}
+	msg->force_send_socket = uac_r->dialog->send_sock;
+	msg->rcv.proto = dst->send_sock->proto;
+	msg->rcv.src_ip = dst->send_sock->address;
+	su2ip_addr(&msg->rcv.dst_ip, &dst->to);
+	msg->rcv.src_port = dst->send_sock->port_no;
+	msg->rcv.dst_port = su_getport(&dst->to);
+	msg->rcv.src_su=dst->send_sock->su;
+	msg->rcv.bind_address=dst->send_sock;
+#ifdef USE_COMP
+	msg->rcv.comp=dst->comp;
+#endif /* USE_COMP */
+
+	return 0;
+}
+
+#ifdef WITH_EVENT_LOCAL_REQUEST
+static inline int t_run_local_req(
+		char **buf, int *buf_len,
+		uac_req_t *uac_r,
+		struct cell *new_cell, struct retr_buf *request)
+{
+	static struct sip_msg lreq;
+	struct onsend_info onsnd_info;
+	tm_xlinks_t backup_xd;
+	int sflag_bk;
+	char *buf1;
+	int buf_len1;
+	int backup_route_type;
+	struct cell *backup_t;
+	int backup_branch;
+	unsigned int backup_msgid;
+	int refresh_shortcuts = 0;
+
+	DBG("executing event_route[tm:local-request]\n");
+	if (unlikely(t_build_msg_from_buf(&lreq, *buf, *buf_len, uac_r, &request->dst))) {
+		return -1;
+	}
+	if (unlikely(set_dst_uri(&lreq, uac_r->dialog->hooks.next_hop))) {
+		LM_ERR("failed to set dst_uri");
+		free_sip_msg(&lreq);
+		return -1;
+	}
+	sflag_bk = getsflags();
+	tm_xdata_swap(new_cell, &backup_xd, 0);
+
+	onsnd_info.to=&request->dst.to;
+	onsnd_info.send_sock=request->dst.send_sock;
+	onsnd_info.buf=*buf;
+	onsnd_info.len=*buf_len;
+	p_onsend=&onsnd_info;
+
+	/* run the route */
+	backup_route_type = get_route_type();
+	set_route_type(LOCAL_ROUTE);
+	/* set T to the current transaction */
+	backup_t=get_t();
+	backup_branch=get_t_branch();
+	backup_msgid=global_msg_id;
+	/* fake transaction and message id */
+	global_msg_id=lreq.id;
+	set_t(new_cell, T_BR_UNDEFINED);
+	run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
+	/* restore original environment */
+	set_t(backup_t, backup_branch);
+	global_msg_id=backup_msgid;
+	set_route_type( backup_route_type );
+	p_onsend=0;
+
+	/* restore original environment */
+	tm_xdata_swap(new_cell, &backup_xd, 1);
+	setsflagsval(sflag_bk);
+
+	/* rebuild the new message content */
+	if(lreq.force_send_socket != uac_r->dialog->send_sock) {
+		LM_DBG("Send socket updated to: %.*s",
+				lreq.force_send_socket->address_str.len,
+				lreq.force_send_socket->address_str.s);
+
+		/* rebuild local Via - remove previous value
+			* and add the one for the new send socket */
+		if (!del_lump(&lreq, lreq.h_via1->name.s - lreq.buf,
+					lreq.h_via1->len, 0)) {
+			LM_ERR("Failed to remove previous local Via\n");
+			/* attempt a normal update to give it a chance */
+			goto normal_update;
+		}
+
+		/* reuse same branch value from previous local Via */
+		memcpy(lreq.add_to_branch_s, lreq.via1->branch->value.s,
+				lreq.via1->branch->value.len);
+		lreq.add_to_branch_len = lreq.via1->branch->value.len;
+
+		/* update also info about new destination and send sock */
+		uac_r->dialog->send_sock=lreq.force_send_socket;
+		request->dst.send_sock = lreq.force_send_socket;
+		request->dst.proto = lreq.force_send_socket->proto;
+
+		LM_DBG("apply new updates with Via to sip msg\n");
+		buf1 = build_req_buf_from_sip_req(&lreq,
+				(unsigned int*)&buf_len1, &request->dst, BUILD_IN_SHM);
+		if (likely(buf1)){
+			shm_free(*buf);
+			*buf = buf1;
+			*buf_len = buf_len1;
+			/* a possible change of the method is not handled! */
+			refresh_shortcuts = 1;
+		}
+
+	} else {
+normal_update:
+		if (unlikely(lreq.add_rm || lreq.body_lumps || lreq.new_uri.s)) {
+			LM_DBG("apply new updates without Via to sip msg\n");
+			buf1 = build_req_buf_from_sip_req(&lreq,
+					(unsigned int*)&buf_len1,
+					&request->dst, BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE|
+					BUILD_IN_SHM);
+			if (likely(buf1)){
+				shm_free(*buf);
+				*buf = buf1;
+				*buf_len = buf_len1;
+				/* a possible change of the method is not handled! */
+				refresh_shortcuts = 1;
+			}
+		}
+	}
+
+	/* clean local msg structure */
+	if (unlikely(lreq.new_uri.s))
+	{
+		pkg_free(lreq.new_uri.s);
+		lreq.new_uri.s=0;
+		lreq.new_uri.len=0;
+	}
+	if (unlikely(lreq.dst_uri.s))
+	{
+		pkg_free(lreq.dst_uri.s);
+		lreq.dst_uri.s=0;
+		lreq.dst_uri.len=0;
+	}
+	lreq.buf=0; /* covers the obsolete DYN_BUF */
+	free_sip_msg(&lreq);
+	return refresh_shortcuts;
+}
+#endif /* WITH_EVENT_LOCAL_REQUEST */
+#endif /* defined(USE_DNS_FAILOVER) || defined(WITH_EVENT_LOCAL_REQUEST) */
+
+
 /* WARNING: - dst_cell contains the created cell, but it is un-referenced
  *            (before using it make sure you REF() it first)
  *          - if  ACK (method==ACK), a cell will be created but it will not
@@ -203,27 +359,20 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	struct dest_info dst;
 	struct cell *new_cell;
 	struct retr_buf *request;
-	char* buf;
+	char *buf;
 	int buf_len, ret;
 	unsigned int hi;
 	int is_ack;
 	ticks_t lifetime;
 	long nhtype;
-#ifdef WITH_EVENT_LOCAL_REQUEST
-	struct cell *backup_t;
-	int backup_branch;
-	unsigned int backup_msgid;
-	char *buf1;
-	int buf_len1;
-	int sflag_bk;
-	int backup_route_type;
-#endif
-	static struct sip_msg lreq;
 	snd_flags_t snd_flags;
 	tm_xlinks_t backup_xd;
 	tm_xdata_t local_xd;
 	int refresh_shortcuts = 0;
 	int sip_msg_len;
+#ifdef USE_DNS_FAILOVER
+	static struct sip_msg lreq;
+#endif /* USE_DNS_FAILOVER */
 
 	ret=-1;
 	hi=0; /* make gcc happy */
@@ -330,148 +479,14 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 
 #ifdef WITH_EVENT_LOCAL_REQUEST
 	if (unlikely(goto_on_local_req>=0)) {
-		DBG("executing event_route[tm:local-request]\n");
-		if(likely(build_sip_msg_from_buf(&lreq, buf, buf_len, inc_msg_no())
-					== 0)) {
-			/* fill some field in sip_msg */
-			if (unlikely(set_dst_uri(&lreq, uac_r->dialog->hooks.next_hop))) {
-				LM_ERR("failed to set dst_uri");
-				free_sip_msg(&lreq);
-			} else {
-				struct onsend_info onsnd_info;
-
-				lreq.force_send_socket = uac_r->dialog->send_sock;
-				lreq.rcv.proto = dst.send_sock->proto;
-				lreq.rcv.src_ip = dst.send_sock->address;
-				lreq.rcv.src_port = dst.send_sock->port_no;
-				lreq.rcv.dst_port = su_getport(&dst.to);
-				su2ip_addr(&lreq.rcv.dst_ip, &dst.to);
-				lreq.rcv.src_su=dst.send_sock->su;
-				lreq.rcv.bind_address=dst.send_sock;
-			#ifdef USE_COMP
-				lreq.rcv.comp=dst.comp;
-			#endif /* USE_COMP */
-				sflag_bk = getsflags();
-				tm_xdata_swap(new_cell, &backup_xd, 0);
-
-				onsnd_info.to=&dst.to;
-				onsnd_info.send_sock=dst.send_sock;
-				onsnd_info.buf=buf;
-				onsnd_info.len=buf_len;
-				p_onsend=&onsnd_info;
-
-				/* run the route */
-				backup_route_type = get_route_type();
-				set_route_type(LOCAL_ROUTE);
-				/* set T to the current transaction */
-				backup_t=get_t();
-				backup_branch=get_t_branch();
-				backup_msgid=global_msg_id;
-				/* fake transaction and message id */
-				global_msg_id=lreq.id;
-				set_t(new_cell, T_BR_UNDEFINED);
-				run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
-				/* restore original environment */
-				set_t(backup_t, backup_branch);
-				global_msg_id=backup_msgid;
-				set_route_type( backup_route_type );
-				p_onsend=0;
-
-				/* restore original environment */
-				tm_xdata_swap(new_cell, &backup_xd, 1);
-				setsflagsval(sflag_bk);
-
-				/* rebuild the new message content */
-				if(lreq.force_send_socket != uac_r->dialog->send_sock) {
-					LM_DBG("Send socket updated to: %.*s",
-							lreq.force_send_socket->address_str.len,
-							lreq.force_send_socket->address_str.s);
-
-					/* rebuild local Via - remove previous value
-					 * and add the one for the new send socket */
-					if (!del_lump(&lreq, lreq.h_via1->name.s - lreq.buf,
-								lreq.h_via1->len, 0)) {
-						LM_ERR("Failed to remove previous local Via\n");
-						/* attempt a normal update to give it a chance */
-						goto normal_update;
-					}
-
-					/* reuse same branch value from previous local Via */
-					memcpy(lreq.add_to_branch_s, lreq.via1->branch->value.s,
-							lreq.via1->branch->value.len);
-					lreq.add_to_branch_len = lreq.via1->branch->value.len;
-
-					/* update also info about new destination and send sock */
-					uac_r->dialog->send_sock=lreq.force_send_socket;
-					request->dst.send_sock = lreq.force_send_socket;
-					request->dst.proto = lreq.force_send_socket->proto;
-
-					LM_DBG("apply new updates with Via to sip msg\n");
-					buf1 = build_req_buf_from_sip_req(&lreq,
-							(unsigned int*)&buf_len1, &dst, BUILD_IN_SHM);
-					if (likely(buf1)){
-						shm_free(buf);
-						buf = buf1;
-						buf_len = buf_len1;
-						/* a possible change of the method is not handled! */
-						refresh_shortcuts = 1;
-					}
-
-				} else {
-normal_update:
-					if (unlikely(lreq.add_rm || lreq.body_lumps
-								|| lreq.new_uri.s)) {
-						LM_DBG("apply new updates without Via to sip msg\n");
-						buf1 = build_req_buf_from_sip_req(&lreq,
-								(unsigned int*)&buf_len1,
-								&dst, BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE|
-								BUILD_IN_SHM);
-						if (likely(buf1)){
-							shm_free(buf);
-							buf = buf1;
-							buf_len = buf_len1;
-							/* a possible change of the method is not handled! */
-							refresh_shortcuts = 1;
-						}
-					}
-				}
-
-				/* clean local msg structure */
-				if (unlikely(lreq.new_uri.s))
-				{
-					pkg_free(lreq.new_uri.s);
-					lreq.new_uri.s=0;
-					lreq.new_uri.len=0;
-				}
-				if (unlikely(lreq.dst_uri.s))
-				{
-					pkg_free(lreq.dst_uri.s);
-					lreq.dst_uri.s=0;
-					lreq.dst_uri.len=0;
-				}
-				lreq.buf=0; /* covers the obsolete DYN_BUF */
-				free_sip_msg(&lreq);
-			}
-		}
+		refresh_shortcuts = t_run_local_req(&buf, &buf_len, uac_r, new_cell, request);
 	}
 #endif
 
 #ifdef USE_DNS_FAILOVER
 	/* Set the outgoing message as UAS, so the failover code has something to work with */
 	if(cfg_get(core, core_cfg, use_dns_failover)) {
-		if (likely(build_sip_msg_from_buf(&lreq, buf, buf_len, inc_msg_no())== 0)) {
-			lreq.force_send_socket = uac_r->dialog->send_sock;
-			lreq.rcv.proto = dst.send_sock->proto;
-			lreq.rcv.src_ip = dst.send_sock->address;
-			su2ip_addr(&lreq.rcv.dst_ip, &dst.to);
-			lreq.rcv.src_port = dst.send_sock->port_no;
-			lreq.rcv.dst_port = su_getport(&dst.to);
-			lreq.rcv.src_su=dst.send_sock->su;
-			lreq.rcv.bind_address=dst.send_sock;
-#ifdef USE_COMP
-			lreq.rcv.comp=dst.comp;
-#endif /* USE_COMP */
-
+		if(likely(t_build_msg_from_buf(&lreq, buf, buf_len, uac_r, &dst) == 0)) {
 			if (parse_headers(&lreq, HDR_EOH_F, 0) == -1) {
 				LM_ERR("failed to parse headers on uas for failover\n");
 			} else {
