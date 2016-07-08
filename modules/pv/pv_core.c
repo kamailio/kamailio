@@ -53,6 +53,7 @@
 
 static str str_udp    = { "UDP", 3 };
 static str str_5060   = { "5060", 4 };
+static str str_5061   = { "5061", 4 };
 static str pv_str_1   = { "1", 1 };
 static str pv_uri_scheme[] = {
 		{ "none", 4 },
@@ -95,6 +96,11 @@ int pv_get_udp(struct sip_msg *msg, pv_param_t *param,
 int pv_get_5060(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	return pv_get_strintval(msg, param, res, &str_5060, 5060);
+}
+
+int pv_get_5061(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	return pv_get_strintval(msg, param, res, &str_5061, 5061);
 }
 
 int pv_get_true(struct sip_msg *msg, pv_param_t *param,
@@ -279,8 +285,13 @@ int pv_get_xuri_attr(struct sip_msg *msg, struct sip_uri *parsed_uri,
 			return pv_get_null(msg, param, res);
 		return pv_get_strval(msg, param, res, &parsed_uri->host);
 	} else if(param->pvn.u.isname.name.n==3) /* port */ {
-		if(parsed_uri->port.s==NULL)
-			return pv_get_5060(msg, param, res);
+		if(parsed_uri->port.s==NULL) {
+			if(parsed_uri->proto==PROTO_TLS) {
+				return pv_get_5061(msg, param, res);
+			} else {
+				return pv_get_5060(msg, param, res);
+			}
+		}
 		return pv_get_strintval(msg, param, res, &parsed_uri->port,
 				(int)parsed_uri->port_no);
 	} else if(param->pvn.u.isname.name.n==4) /* protocol */ {
@@ -1140,8 +1151,13 @@ int pv_get_dsturi_attr(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_null(msg, param, res);
 		return pv_get_strval(msg, param, res, &uri.host);
 	} else if(param->pvn.u.isname.name.n==2) /* port */ {
-		if(uri.port.s==NULL)
-			return pv_get_5060(msg, param, res);
+		if(uri.port.s==NULL || uri.port.len<=0) {
+			if(uri.proto==PROTO_TLS) {
+				return pv_get_5061(msg, param, res);
+			} else {
+				return pv_get_5060(msg, param, res);
+			}
+		}
 		return pv_get_strintval(msg, param, res, &uri.port, (int)uri.port_no);
 	} else if(param->pvn.u.isname.name.n==3) /* proto */ {
 		if(uri.transport_val.s==NULL)
