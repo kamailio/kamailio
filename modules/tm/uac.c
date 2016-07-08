@@ -57,6 +57,7 @@
 #include "../../action.h"
 #include "../../onsend.h"
 #include "t_lookup.h"
+#include "t_fwd.h"
 #endif
 
 #define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
@@ -590,23 +591,63 @@ int prepare_req_within(uac_req_t *uac_r,
 	return -1;
 }
 
-static inline void send_prepared_request_impl(struct retr_buf *request, int retransmit)
+static inline int send_prepared_request_impl(struct retr_buf *request, int retransmit, int branch)
 {
+	struct cell *t;
+	struct sip_msg *p_msg;
+	struct ua_client *uac;
+	struct ip_addr ip; /* logging */
+	int ret;
+
+	t = request->my_T;
+	uac = &t->uac[branch];
+	p_msg = t->uas.request;
+
 	if (SEND_BUFFER(request) == -1) {
 		LOG(L_ERR, "t_uac: Attempt to send to precreated request failed\n");
 	}
-	else if (unlikely(has_tran_tmcbs(request->my_T, TMCB_REQUEST_SENT)))
+	else if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
 		/* we don't know the method here */
-			run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, request, 0, 0,
+		run_trans_callbacks_with_buf(TMCB_REQUEST_SENT, &uac->request, 0, 0,
 			TMCB_LOCAL_F);
-	
-	if (retransmit && (start_retr(request)!=0))
-		LOG(L_CRIT, "BUG: t_uac: failed to start retr. for %p\n", request);
+
+	su2ip_addr(&ip, &uac->request.dst.to);
+	DBG("send_prepared_request_impl: uac: %p  branch: %d  to %s:%d\n",
+			uac, branch, ip_addr2a(&ip), su_getport(&uac->request.dst.to));
+
+	if (run_onsend(p_msg, &uac->request.dst, uac->request.buffer,
+			uac->request.buffer_len)==0){
+		uac->last_received=408;
+		su2ip_addr(&ip, &uac->request.dst.to);
+		DBG("t_uac: onsend_route dropped msg. to %s:%d (%d)\n",
+						ip_addr2a(&ip), su_getport(&uac->request.dst.to),
+						uac->request.dst.proto);
+#ifdef USE_DNS_FAILOVER
+		/* if the destination resolves to more ips, add another
+			*  branch/uac */
+		ret = add_uac_dns_fallback(t, p_msg, uac, retransmit);
+		if (ret > 0) {
+			su2ip_addr(&ip, &uac->request.dst.to);
+			DBG("t_uac: send on branch %d failed "
+					"(onsend_route), trying another ip %s:%d (%d)\n",
+					branch, ip_addr2a(&ip),
+					su_getport(&uac->request.dst.to),
+					uac->request.dst.proto);
+			/* success, return new branch */
+			return ret;
+		}
+#endif /* USE_DNS_FAILOVER*/
+		return -1;
+	}
+
+	if (retransmit && (start_retr(&uac->request)!=0))
+		LOG(L_CRIT, "BUG: t_uac: failed to start retr. for %p\n", &uac->request);
+	return 0;
 }
 
 void send_prepared_request(struct retr_buf *request)
 {
-	send_prepared_request_impl(request, 1 /* retransmit */);
+	send_prepared_request_impl(request, 1 /* retransmit */, 0);
 }
 
 /*
@@ -628,11 +669,27 @@ int t_uac_with_ids(uac_req_t *uac_r,
 	struct cell *cell;
 	int ret;
 	int is_ack;
+	int branch_ret;
+	int i;
+	branch_bm_t added_branches = 1;
 
 	ret = t_uac_prepare(uac_r, &request, &cell);
 	if (ret < 0) return ret;
 	is_ack = (uac_r->method->len == 3) && (memcmp("ACK", uac_r->method->s, 3)==0) ? 1 : 0;
-	send_prepared_request_impl(request, !is_ack /* retransmit */);
+
+	/* equivalent loop to the one in t_forward_nonack */
+	for (i=0; i<cell->nr_of_outgoings; i++) {
+		if (added_branches & (1<<i)) {
+			branch_ret=send_prepared_request_impl(request, !is_ack /* retransmit */, i);
+			if (branch_ret>=0){ /* some kind of success */
+				if (branch_ret>i) {
+					/* new branch added */
+					added_branches |= 1<<branch_ret;
+				}
+			}
+		}
+	}
+
 	if (is_ack) {
 		if (cell) free_cell(cell);
 		if (ret_index && ret_label)
