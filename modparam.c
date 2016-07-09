@@ -59,15 +59,17 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 	}
 
 	len = strlen(regex);
-	reg = pkg_malloc(len + 2 + 1);
+	reg = pkg_malloc(len + 4 + 1);
 	if (reg == 0) {
 		LM_ERR("No memory left\n");
 		return -1;
 	}
 	reg[0] = '^';
-	memcpy(reg + 1, regex, len);
-	reg[len + 1] = '$';
-	reg[len + 2] = '\0';
+	reg[1] = '(';
+	memcpy(reg + 2, regex, len);
+	reg[len + 2] = ')';
+	reg[len + 3] = '$';
+	reg[len + 4] = '\0';
 
 	if (regcomp(&preg, reg, REG_EXTENDED | REG_NOSUB | REG_ICASE)) {
 		LM_ERR("Error while compiling regular expression\n");
