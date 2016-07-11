@@ -73,7 +73,13 @@ MODULE_VERSION
  * Module internal functions
  */
 int _compare_ips(char*, size_t, enum enum_ip_type, char*, size_t, enum enum_ip_type);
+int _compare_ips_v4(struct in_addr *ip, char*, size_t);
+int _compare_ips_v6(struct in6_addr *ip, char*, size_t);
 int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask);
+int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen, int netmask);
+int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen, int netmask);
+int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen);
+int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b, char *e);
 
 
 /*
@@ -207,6 +213,32 @@ int _compare_ips(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, 
 	}
 }
 
+int _compare_ips_v4(struct in_addr *ip, char* ip2, size_t len2)
+{
+	struct in_addr in_addr2;
+	char _ip2[INET6_ADDRSTRLEN];
+
+	memcpy(_ip2, ip2, len2);
+	_ip2[len2] = '\0';
+
+	if (inet_pton(AF_INET, _ip2, &in_addr2) == 0)  return 0;
+	if (ip->s_addr == in_addr2.s_addr) return 1;
+	return 0;
+}
+
+int _compare_ips_v6(struct in6_addr *ip, char* ip2, size_t len2)
+{
+	struct in6_addr in6_addr2;
+	char _ip2[INET6_ADDRSTRLEN];
+
+	memcpy(_ip2, ip2, len2);
+	_ip2[len2] = '\0';
+
+	if (inet_pton(AF_INET6, _ip2, &in6_addr2) != 1)  return 0;
+	if (memcmp(ip->s6_addr, in6_addr2.s6_addr, sizeof(ip->s6_addr)) == 0) return 1;
+	return 0;
+}
+
 /*! \brief Return 1 if IP1 is in the subnet given by IP2 and the netmask, 0 otherwise. */
 int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask)
 {
@@ -262,7 +294,130 @@ int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *i
 	}
 }
 
+int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen, int netmask)
+{
+	struct in_addr net_addr;
+	char _net[INET6_ADDRSTRLEN];
+	uint32_t ipv4_mask;
 
+	memcpy(_net, net, netlen);
+	_net[netlen] = '\0';
+
+	if (inet_pton(AF_INET, _net, &net_addr) == 0)  return 0;
+	if (netmask <0 || netmask > 32)  return 0;
+
+	if (netmask == 32) ipv4_mask = 0xFFFFFFFF;
+	else ipv4_mask = htonl(~(0xFFFFFFFF >> netmask));
+
+	if ((ip->s_addr & ipv4_mask) == net_addr.s_addr)
+		return 1;
+	return 0;
+}
+
+int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen, int netmask)
+{
+	struct in6_addr net_addr;
+	char _net[INET6_ADDRSTRLEN];
+	uint8_t ipv6_mask[16];
+	int i;
+
+	memcpy(_net, net, netlen);
+	_net[netlen] = '\0';
+
+	if (inet_pton(AF_INET6, _net, &net_addr) != 1)  return 0;
+	if (netmask <0 || netmask > 128)  return 0;
+	for (i=0; i<16; i++)
+	{
+		if (netmask > ((i+1)*8)) ipv6_mask[i] = 0xFF;
+		else if (netmask > (i*8))  ipv6_mask[i] = ~(0xFF >> (netmask-(i*8)));
+		else ipv6_mask[i] = 0x00;
+	}
+	for (i=0; i<16; i++)  ip->s6_addr[i] &= ipv6_mask[i];
+	if (memcmp(ip->s6_addr, ip->s6_addr, sizeof(net_addr.s6_addr)) == 0)
+		return 1;
+	return 0;
+}
+
+int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen)
+{
+	enum enum_ip_type ip2_type;
+	char *cidr_pos = NULL;
+	int netmask = -1;
+
+	cidr_pos = s + slen - 1;
+	while (cidr_pos > s)
+	{
+		if (*cidr_pos == '/')
+		{
+			slen = (cidr_pos - s);
+			netmask = atoi(cidr_pos+1);
+			break;
+		}
+		cidr_pos--;
+	}
+	switch(ip2_type = ip_parser_execute(s, slen)) {
+		case(ip_type_error):
+			return -1;
+			break;
+		case(ip_type_ipv6_reference):
+			return -1;
+			break;
+		default:
+			break;
+	}
+
+	if(type!=ip2_type) return 0;
+
+	if (netmask == -1)
+	{
+		switch(type){
+		case ip_type_ipv4:
+			if (_compare_ips_v4((struct in_addr *)ip, s, slen))
+				return 1;
+			else
+				return -1;
+			break;
+		case ip_type_ipv6:
+			if (_compare_ips_v6((struct in6_addr *)ip, s, slen))
+				return 1;
+			else
+				return -1;
+			break;
+			break;
+		default:
+			break;
+		}
+	}
+	else
+	{
+		switch(type){
+		case ip_type_ipv4:
+			if (_ip_is_in_subnet_v4((struct in_addr *)ip, s, slen,netmask))
+				return 1;
+			else
+				return -1;
+			break;
+		case ip_type_ipv6:
+			if (_ip_is_in_subnet_v6((struct in6_addr *)ip, s, slen,netmask))
+				return 1;
+			else
+				return -1;
+			break;
+			break;
+		default:
+			break;
+		}
+	}
+	return 0;
+}
+
+int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b, char *e)
+{
+	while(b<e && *b==' ') b++;
+	while(b<e && *(e-1)==' ') e--;
+	if(b==e) return 0;
+	return _ip_is_in_subnet_str(ip,type,b,e-b);
+}
 
 /*
  * Script functions
@@ -529,13 +684,16 @@ static int w_compare_pure_ips(struct sip_msg* _msg, char* _s1, char* _s2)
 }
 
 
-/*! \brief Return true if the first IP (string or pv) is within the subnet defined by the second IP in CIDR notation. IPv6 references not allowed. */
+/*! \brief Return true if the first IP (string or pv) is within the subnet defined by the second commma-separated IP list in CIDR notation. IPv6 references not allowed. */
 static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 {
+	struct in6_addr ip_addr6;
+	struct in_addr ip_addr;
+	int ret;
+	char ip_addr_str[INET6_ADDRSTRLEN],*b,*e;
+	void *ip;
 	str string1, string2;
-	enum enum_ip_type ip1_type, ip2_type;
-	char *cidr_pos = NULL;
-	int netmask = 0;
+	enum enum_ip_type ip1_type;
 
 	if (_s1 == NULL || _s2 == NULL ) {
 		LM_ERR("bad parameters\n");
@@ -561,45 +719,31 @@ static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 		case(ip_type_ipv6_reference):
 			return -1;
 			break;
-		default:
+		case(ip_type_ipv4):
+			memcpy(ip_addr_str, string1.s, string1.len);
+			ip_addr_str[string1.len] = '\0';
+			if(inet_pton(AF_INET, ip_addr_str, &ip_addr) == 0)  return 0;
+			ip = &ip_addr;
 			break;
-	}
-	cidr_pos = string2.s + string2.len - 1;
-	while (cidr_pos > string2.s)
-	{
-		if (*cidr_pos == '/')
-		{
-			string2.len = (cidr_pos - string2.s);
-			netmask = atoi(cidr_pos+1);
-			break;
-		}
-		cidr_pos--;
-	}
-	switch(ip2_type = ip_parser_execute(string2.s, string2.len)) {
-		case(ip_type_error):
-			return -1;
-			break;
-		case(ip_type_ipv6_reference):
-			return -1;
+		case(ip_type_ipv6):
+			memcpy(ip_addr_str, string1.s, string1.len);
+			ip_addr_str[string1.len] = '\0';
+			if (inet_pton(AF_INET6, ip_addr_str, &ip_addr6) != 1)  return 0;
+			ip = &ip_addr6;
 			break;
 		default:
+			return -1;
 			break;
 	}
 
-	if (netmask == 0)
-	{
-		if (_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type))
-			return 1;
-		else
-			return -1;
+	b = string2.s;
+	e = strchr(string2.s,',');
+	for(; e!= NULL; b = e+1, e = strchr(b,',')) {
+		if(b==e) continue;
+		if((ret = _ip_is_in_subnet_str_trimmed(ip,ip1_type,b,e))>0) return ret;
 	}
-	else
-	{
-		if (_ip_is_in_subnet(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type, netmask))
-			return 1;
-		else
-			return -1;
-	}
+	e = string2.s+string2.len;
+	return _ip_is_in_subnet_str_trimmed(ip,ip1_type,b,e);
 }
 
 
