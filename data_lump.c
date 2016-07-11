@@ -766,7 +766,7 @@ int sr_hdr_add_zz(sip_msg_t *msg, char *hname, char *hbody)
 	memcpy(h.s, sname.s, sname.len);
 	memcpy(h.s+sname.len, ": ", 2);
 	memcpy(h.s+sname.len+2, sbody.s, sbody.len);
-	memcpy(h.s+sname.len+2+sbody.len+1, CRLF, CRLF_LEN);
+	memcpy(h.s+sname.len+2+sbody.len, CRLF, CRLF_LEN);
 	h.s[h.len] = '\0';
 	if (insert_new_lump_before(anchor, h.s, h.len, 0) == 0)
 	{
