@@ -115,7 +115,7 @@ struct cfg_group_core default_core_cfg = {
 		4 pkg_sums, 8 shm_sums, 16 short_status */
 	0, /*!< mem_safety - 0 disabled */
 	0, /*!< mem_join - 0 disabled */
-	0, /*!< mem_status_all - 0 only free fragments, 1 all fragements */
+	0, /*!< mem_status_mode - 0 only free fragments, 1 all fragements */
 	L_ERR, /*!< corelog */
 	L_ERR, /*!< latency log */
 	0, /*!< latency limit db */
@@ -313,7 +313,7 @@ cfg_def_t core_cfg_def[] = {
 		"safety level for memory operations"},
 	{"mem_join",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"join free memory fragments"},
-	{"mem_status_all",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+	{"mem_status_mode",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"print status for free or all memory fragments"},
 	{"corelog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for non-critical core error messages"},

@@ -793,7 +793,7 @@ void qm_status(void* qmp)
 			"dumping all alloc'ed. fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
 			,i++){
-		if ((! f->u.is_free) || (cfg_get(core, core_cfg, mem_status_all)!=0)){
+		if ((! f->u.is_free) || (cfg_get(core, core_cfg, mem_status_mode)!=0)){
 			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
 					"   %3d. %c  address=%p frag=%p size=%lu used=%d\n",
 				i,
