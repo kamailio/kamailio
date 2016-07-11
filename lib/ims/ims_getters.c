@@ -96,7 +96,7 @@ contact_body_t *cscf_parse_contacts(struct sip_msg *msg)
 		ptr = msg->contact;
 		while(ptr) {
 			if (ptr->type == HDR_CONTACT_T) {
-				if (msg->contact->parsed==0){					
+				if (ptr->parsed==0){					
 					if (parse_contact(ptr)<0){
 						LM_DBG("error parsing contacts [%.*s]\n",
 								ptr->body.len,ptr->body.s);
