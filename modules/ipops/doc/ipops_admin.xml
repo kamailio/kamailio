@@ -487,12 +487,12 @@ if (is_ip_rfc1918("10.0.123.123")) {
  
     <section id="ipops.f.is_in_subnet">
       <title>
-        <function moreinfo="none">is_in_subnet (ip, subnet)</function>
+        <function moreinfo="none">is_in_subnet (ip, subnets_list)</function>
       </title>
 
       <para>
         Returns TRUE if the first argument is an IP address within the (CIDR notation)
-        subnet in the second argument. FALSE otherwise.
+        subnets list in the second argument. FALSE otherwise.
       </para>
 
       <para>Parameters:</para>
@@ -505,7 +505,7 @@ if (is_ip_rfc1918("10.0.123.123")) {
         </listitem>
         <listitem>
           <para>
-            <emphasis>subnet</emphasis> - string or pseudo-variable containing the (CIDR notation) subnet to evaluate.
+            <emphasis>subnet</emphasis> - string or pseudo-variable containing the (CIDR notation) subnets list to evaluate.
           </para>
         </listitem>
       </itemizedlist>
@@ -522,6 +522,10 @@ if (is_ip_rfc1918("10.0.123.123")) {
 ...
 if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
   xlog("L_INFO", "it's in the subnet\n");
+}
+...
+if (is_in_subnet("10.0.123.123", "10.0.0.0/16,192.168.0.0/24")) {
+  xlog("L_INFO", "it's in the subnets\n");
 }
 ...
         </programlisting>
