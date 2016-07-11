@@ -197,6 +197,7 @@ int dlg_cseq_msg_sent(void *data)
 	char tbuf[BUF_SIZE];
 	int tbuf_len = 0;
 	struct via_body *via;
+	hdr_field_t *hfk = NULL;
 
 	obuf = (str*)data;
 	memset(&msg, 0, sizeof(sip_msg_t));
@@ -236,10 +237,11 @@ int dlg_cseq_msg_sent(void *data)
 
 	/* check if transaction is marked for a new increment */
 	if(get_cseq(&msg)->method_id!=METHOD_ACK) {
-		if(sr_hdr_get_z(&msg, "P-K-Auth-CSeq")!=NULL) {
+		hfk = sr_hdr_get_z(&msg, "P-K-Auth-CSeq");
+		if(hfk!=NULL) {
 			LM_DBG("uac auth request - cseq inc needed\n");
 			ninc = 1;
-			sr_hdr_del_z(&msg, "P-K-Auth-CSeq");
+			/* sr_hdr_del_z(&msg, "P-K-Auth-CSeq"); */
 		} else {
 			LM_DBG("uac auth request - cseq inc not needed\n");
 			goto done;
@@ -301,12 +303,25 @@ int dlg_cseq_msg_sent(void *data)
 		/* add new value */
 		memcpy(tbuf+tbuf_len, nval.s, nval.len);
 		tbuf_len += nval.len;
-		/* copy from after cseq number to the end of sip message */
-		memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
-				msg.buf + msg.len - get_cseq(&msg)->number.s
-				- get_cseq(&msg)->number.len);
-		tbuf_len += msg.buf+msg.len - get_cseq(&msg)->number.s
-				- get_cseq(&msg)->number.len;
+		if(hfk && hfk->name.s > get_cseq(&msg)->number.s) {
+			/* copy from after cseq number to the beginning of hfk */
+			memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
+					hfk->name.s - get_cseq(&msg)->number.s
+					- get_cseq(&msg)->number.len);
+			tbuf_len += hfk->name.s - get_cseq(&msg)->number.s
+					- get_cseq(&msg)->number.len;
+			/* copy from after hfk to the end of sip message */
+			memcpy(tbuf+tbuf_len,  hfk->name.s + hfk->name.len,
+					msg.buf + msg.len - hfk->name.s - hfk->name.len);
+			tbuf_len += msg.buf + msg.len - hfk->name.s - hfk->name.len;
+		} else {
+			/* copy from after cseq number to the end of sip message */
+			memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
+					msg.buf + msg.len - get_cseq(&msg)->number.s
+					- get_cseq(&msg)->number.len);
+			tbuf_len += msg.buf+msg.len - get_cseq(&msg)->number.s
+					- get_cseq(&msg)->number.len;
+		}
 	} else {
 		/* CSeq is before Via */
 		/* copy till beginning of cseq number */
@@ -327,12 +342,25 @@ int dlg_cseq_msg_sent(void *data)
 		tbuf[tbuf_len++] = 's';
 		memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s, get_cseq(&msg)->number.len);
 		tbuf_len += get_cseq(&msg)->number.len;
-		/* copy from after via to the end of sip message */
-		memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
-				msg.buf + msg.len - via->branch->value.s
-				- via->branch->value.len);
-		tbuf_len += msg.buf+msg.len - via->branch->value.s
-				- via->branch->value.len;
+		if(hfk && hfk->name.s > get_cseq(&msg)->number.s) {
+			/* copy from after via to the beginning of hfk */
+			memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
+					hfk->name.s - via->branch->value.s
+					- via->branch->value.len);
+			tbuf_len += hfk->name.s - via->branch->value.s
+					- via->branch->value.len;
+			/* copy from after hfk to the end of sip message */
+			memcpy(tbuf+tbuf_len,  hfk->name.s + hfk->name.len,
+					msg.buf + msg.len - hfk->name.s - hfk->name.len);
+			tbuf_len += msg.buf + msg.len - hfk->name.s - hfk->name.len;
+		} else {
+			/* copy from after via to the end of sip message */
+			memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
+					msg.buf + msg.len - via->branch->value.s
+					- via->branch->value.len);
+			tbuf_len += msg.buf+msg.len - via->branch->value.s
+					- via->branch->value.len;
+		}
 	}
 	/* replace old msg content */
 	obuf->s = pkg_malloc((tbuf_len+1)*sizeof(char));
