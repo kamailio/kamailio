@@ -145,6 +145,10 @@ int tls_init_locks()
 		n_static_locks=0;
 	}
 	if (n_static_locks){
+		if (CRYPTO_get_locking_callback()!=NULL) {
+			LM_CRIT("ssl locking callback already set\n");
+			return -1;
+		}
 		static_locks=lock_set_alloc(n_static_locks);
 		if (static_locks==0){
 			LOG(L_CRIT, "ERROR: tls_init_locking: could not allocate lockset"
