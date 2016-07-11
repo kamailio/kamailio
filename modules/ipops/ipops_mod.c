@@ -535,7 +535,7 @@ static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 	str string1, string2;
 	enum enum_ip_type ip1_type, ip2_type;
 	char *cidr_pos = NULL;
-	int netmask = 0;
+	int netmask = -1;
 
 	if (_s1 == NULL || _s2 == NULL ) {
 		LM_ERR("bad parameters\n");
@@ -586,7 +586,7 @@ static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 			break;
 	}
 
-	if (netmask == 0)
+	if (netmask == -1)
 	{
 		if (_compare_ips(string1.s, string1.len, ip1_type, string2.s, string2.len, ip2_type))
 			return 1;
