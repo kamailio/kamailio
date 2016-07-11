@@ -35,7 +35,7 @@ Iñaki Baz Castillo
               4.7. compare_ips (ip1, ip2)
               4.8. compare_pure_ips (ip1, ip2)
               4.9. is_ip_rfc1918 (ip)
-              4.10. is_in_subnet (ip, subnet)
+              4.10. is_in_subnet (ip, subnets_list)
               4.11. dns_sys_match_ip(hostname, ipaddr)
               4.12. dns_int_match_ip(hostname, ipaddr)
               4.13. dns_query(hostname, pvid)
@@ -80,7 +80,7 @@ Chapter 1. Admin Guide
         4.7. compare_ips (ip1, ip2)
         4.8. compare_pure_ips (ip1, ip2)
         4.9. is_ip_rfc1918 (ip)
-        4.10. is_in_subnet (ip, subnet)
+        4.10. is_in_subnet (ip, subnets_list)
         4.11. dns_sys_match_ip(hostname, ipaddr)
         4.12. dns_int_match_ip(hostname, ipaddr)
         4.13. dns_query(hostname, pvid)
@@ -135,7 +135,7 @@ Chapter 1. Admin Guide
    4.7. compare_ips (ip1, ip2)
    4.8. compare_pure_ips (ip1, ip2)
    4.9. is_ip_rfc1918 (ip)
-   4.10. is_in_subnet (ip, subnet)
+   4.10. is_in_subnet (ip, subnets_list)
    4.11. dns_sys_match_ip(hostname, ipaddr)
    4.12. dns_int_match_ip(hostname, ipaddr)
    4.13. dns_query(hostname, pvid)
@@ -326,15 +326,15 @@ if (is_ip_rfc1918("10.0.123.123")) {
 }
 ...
 
-4.10.  is_in_subnet (ip, subnet)
+4.10.  is_in_subnet (ip, subnets_list)
 
    Returns TRUE if the first argument is an IP address within the (CIDR
-   notation) subnet in the second argument. FALSE otherwise.
+   notation) subnets list in the second argument. FALSE otherwise.
 
    Parameters:
      * ip - string or pseudo-variable containing the ip to evaluate.
      * subnet - string or pseudo-variable containing the (CIDR notation)
-       subnet to evaluate.
+       subnets list to evaluate.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -343,6 +343,10 @@ if (is_ip_rfc1918("10.0.123.123")) {
 ...
 if (is_in_subnet("10.0.123.123", "10.0.123.1/24")) {
   xlog("L_INFO", "it's in the subnet\n");
+}
+...
+if (is_in_subnet("10.0.123.123", "10.0.0.0/16,192.168.0.0/24")) {
+  xlog("L_INFO", "it's in the subnets\n");
 }
 ...
 
