@@ -705,7 +705,7 @@ void qm_check(struct qm_block* qm)
 			(FRAG_END(f)->check2 != END_CHECK_PATTERN2)) {
 			LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p)"
 						" end overwritten(%lx, %lx)!\n",
-					f, (char*)f + sizeof(struct qm_frag), 
+					f, (char*)f + sizeof(struct qm_frag),
 					FRAG_END(f)->check1, FRAG_END(f)->check2);
 			qm_status(qm);
 			abort();
@@ -738,7 +738,7 @@ void qm_status(struct qm_block* qm)
 			qm->used, qm->real_used, qm->size-qm->real_used);
 	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
 			"max used (+overhead)= %lu\n", qm->max_real_used);
-	
+
 	if (mem_summary & 16) return;
 
 	LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
@@ -749,7 +749,7 @@ void qm_status(struct qm_block* qm)
 			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
 					"   %3d. %c  address=%p frag=%p size=%lu used=%d\n",
 				i,
-				(f->u.is_free)?'a':'N',
+				(f->u.is_free)?'A':'N',
 				(char*)f+sizeof(struct qm_frag), f, f->size, FRAG_WAS_USED(f));
 #ifdef DBG_QM_MALLOC
 			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
@@ -758,6 +758,18 @@ void qm_status(struct qm_block* qm)
 			LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
 					"         start check=%lx, end check= %lx, %lx\n",
 				f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
+			if (f->check!=ST_CHECK_PATTERN){
+				LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+						"         * beginning overwritten(%lx)!\n",
+						f->check);
+			}
+			if ((FRAG_END(f)->check1 != END_CHECK_PATTERN1)
+					|| (FRAG_END(f)->check2 != END_CHECK_PATTERN2)) {
+				LOG_(DEFAULT_FACILITY, memlog, "qm_status: ",
+						"         * end overwritten(%lx, %lx)!\n",
+						FRAG_END(f)->check1, FRAG_END(f)->check2);
+			}
+
 #endif
 		}
 	}
@@ -765,7 +777,7 @@ void qm_status(struct qm_block* qm)
 			"dumping free list stats :\n");
 	for(h=0,i=0;h<QM_HASH_SIZE;h++){
 		unused=0;
-		for (f=qm->free_hash[h].head.u.nxt_free,j=0; 
+		for (f=qm->free_hash[h].head.u.nxt_free,j=0;
 				f!=&(qm->free_hash[h].head); f=f->u.nxt_free, i++, j++){
 				if (!FRAG_WAS_USED(f)){
 					unused++;
