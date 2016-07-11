@@ -382,6 +382,7 @@ extern char *default_routename;
 %token MEMSUM
 %token MEMSAFETY
 %token MEMJOIN
+%token MEMSTATUSMODE
 %token CORELOG
 %token SIP_WARNING
 %token SERVER_SIGNATURE
@@ -907,6 +908,8 @@ assign_stm:
 	| MEMSAFETY EQUAL error { yyerror("int value expected"); }
 	| MEMJOIN EQUAL intno { default_core_cfg.mem_join=$3; }
 	| MEMJOIN EQUAL error { yyerror("int value expected"); }
+	| MEMSTATUSMODE EQUAL intno { default_core_cfg.mem_status_mode=$3; }
+	| MEMSTATUSMODE EQUAL error { yyerror("int value expected"); }
 	| CORELOG EQUAL intno { default_core_cfg.corelog=$3; }
 	| CORELOG EQUAL error { yyerror("int value expected"); }
 	| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }

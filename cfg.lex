@@ -353,6 +353,7 @@ MEMDBG		"memdbg"|"mem_dbg"
 MEMSUM		"mem_summary"
 MEMSAFETY	"mem_safety"
 MEMJOIN		"mem_join"
+MEMSTATUSMODE		"mem_status_mode"
 CORELOG		"corelog"|"core_log"
 SIP_WARNING sip_warning
 SERVER_SIGNATURE server_signature
@@ -770,6 +771,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{MEMSUM}	{ count(); yylval.strval=yytext; return MEMSUM; }
 <INITIAL>{MEMSAFETY}	{ count(); yylval.strval=yytext; return MEMSAFETY; }
 <INITIAL>{MEMJOIN}	{ count(); yylval.strval=yytext; return MEMJOIN; }
+<INITIAL>{MEMSTATUSMODE}	{ count(); yylval.strval=yytext; return MEMSTATUSMODE; }
 <INITIAL>{CORELOG}	{ count(); yylval.strval=yytext; return CORELOG; }
 <INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
 <INITIAL>{USER}		{ count(); yylval.strval=yytext; return USER; }
