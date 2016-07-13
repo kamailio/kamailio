@@ -1055,6 +1055,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 						dlgb.set_dlg_var(&callid, &ftag, &ttag,
 								&term_session_key, &auth_session->id);
 				}
+				auth_session->vendor_id = IMS_vendor_id_3GPP;
 				LM_DBG("Attached CDP auth session [%.*s] for Rx to dialog in %s mode\n", auth_session->id.len, auth_session->id.s, direction);
 		} else {
 				LM_DBG("Update AAR session for this dialog in mode %s\n", direction);
@@ -1333,6 +1334,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 														goto error;
 												}
 												auth->u.auth.class = AUTH_CLASS_RXREG;
+												auth->vendor_id = IMS_vendor_id_3GPP;
 										}
 
 										//we are ready to send the AAR async. lets save the local data data
