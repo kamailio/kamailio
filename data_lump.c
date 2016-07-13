@@ -738,19 +738,12 @@ int remove_lump(sip_msg_t *msg, struct lump *l)
 /**
  *
  */
-int sr_hdr_add_zz(sip_msg_t *msg, char *hname, char *hbody)
+int sr_hdr_add(sip_msg_t *msg, str *sname, str *sbody)
 {
 	struct lump* anchor;
 	str h;
-	str sname;
-	str sbody;
 
-	sname.s = hname;
-	sname.len = strlen(sname.s);
-	sbody.s = hbody;
-	sbody.len = strlen(sbody.s);
-
-	h.len = sname.len + 2 + sbody.len + 1 + CRLF_LEN;
+	h.len = sname->len + 2 + sbody->len + 1 + CRLF_LEN;
 	h.s = (char*)pkg_malloc(h.len+1);
 	if(h.s == 0) {
 		LM_ERR("no more pkg\n");
@@ -763,10 +756,10 @@ int sr_hdr_add_zz(sip_msg_t *msg, char *hname, char *hbody)
 		pkg_free(h.s);
 		return -1;
 	}
-	memcpy(h.s, sname.s, sname.len);
-	memcpy(h.s+sname.len, ": ", 2);
-	memcpy(h.s+sname.len+2, sbody.s, sbody.len);
-	memcpy(h.s+sname.len+2+sbody.len, CRLF, CRLF_LEN);
+	memcpy(h.s, sname->s, sname->len);
+	memcpy(h.s+sname->len, ": ", 2);
+	memcpy(h.s+sname->len+2, sbody->s, sbody->len);
+	memcpy(h.s+sname->len+2+sbody->len, CRLF, CRLF_LEN);
 	h.s[h.len] = '\0';
 	if (insert_new_lump_before(anchor, h.s, h.len, 0) == 0)
 	{
@@ -776,6 +769,35 @@ int sr_hdr_add_zz(sip_msg_t *msg, char *hname, char *hbody)
 	}
 	LM_DBG("added new header [%s]\n", h.s);
 	return 0;
+}
+
+/**
+ *
+ */
+int sr_hdr_add_zz(sip_msg_t *msg, char *hname, char *hbody)
+{
+	str sname;
+	str sbody;
+
+	sname.s = hname;
+	sname.len = strlen(sname.s);
+	sbody.s = hbody;
+	sbody.len = strlen(sbody.s);
+
+	return sr_hdr_add(msg, &sname, &sbody);
+}
+
+/**
+ *
+ */
+int sr_hdr_add_zs(sip_msg_t *msg, char *hname, str *sbody)
+{
+	str sname;
+
+	sname.s = hname;
+	sname.len = strlen(sname.s);
+
+	return sr_hdr_add(msg, &sname, sbody);
 }
 
 /**
