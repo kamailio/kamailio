@@ -22,6 +22,7 @@
 #include "../../action.h"
 #include "../../script_cb.h"
 #include "../../dset.h"
+#include "../../cfg/cfg_struct.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -177,6 +178,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 	int do_put_on_wait;
 	struct hdr_field *hdr, *prev = 0, *tmp = 0;
 	int route_type_bk;
+
+	cfg_update();
 
 	if (t_lookup_ident(&t, hash_index, label) < 0) {
 		LM_ERR("transaction not found\n");
