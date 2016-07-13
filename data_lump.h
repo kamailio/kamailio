@@ -87,7 +87,9 @@ void del_nonshm_lump( struct lump** lump_list );
 /*! \brief remove the lump from the internal lists */
 int remove_lump(sip_msg_t *msg, struct lump *l);
 
+int sr_hdr_add(sip_msg_t *msg, str *sname, str *sbody);
 int sr_hdr_add_zz(sip_msg_t *msg, char *hname, char *hbody);
+int sr_hdr_add_zs(sip_msg_t *msg, char *hname, str *sbody);
 int sr_hdr_del_z(sip_msg_t *msg, char *hname);
 hdr_field_t *sr_hdr_get_z(sip_msg_t *msg, char *hname);
 
