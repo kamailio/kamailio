@@ -743,7 +743,7 @@ int sr_hdr_add(sip_msg_t *msg, str *sname, str *sbody)
 	struct lump* anchor;
 	str h;
 
-	h.len = sname->len + 2 + sbody->len + 1 + CRLF_LEN;
+	h.len = sname->len + 2 + sbody->len + CRLF_LEN;
 	h.s = (char*)pkg_malloc(h.len+1);
 	if(h.s == 0) {
 		LM_ERR("no more pkg\n");
@@ -761,7 +761,7 @@ int sr_hdr_add(sip_msg_t *msg, str *sname, str *sbody)
 	memcpy(h.s+sname->len+2, sbody->s, sbody->len);
 	memcpy(h.s+sname->len+2+sbody->len, CRLF, CRLF_LEN);
 	h.s[h.len] = '\0';
-	if (insert_new_lump_before(anchor, h.s, h.len, 0) == 0)
+	if (insert_new_lump_after(anchor, h.s, h.len, 0) == 0)
 	{
 		LM_ERR("cannot insert lump\n");
 		pkg_free(h.s);
