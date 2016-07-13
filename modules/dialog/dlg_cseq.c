@@ -35,9 +35,11 @@
 
 #include "../../events.h"
 #include "../../ut.h"
+#include "../../trim.h"
 #include "../../data_lump.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_cseq.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "dlg_handlers.h"
@@ -102,6 +104,86 @@ int dlg_cseq_prepare_msg(sip_msg_t *msg)
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+int dlg_cseq_update(sip_msg_t *msg)
+{
+	dlg_cell_t *dlg = NULL;
+	unsigned int direction;
+	unsigned int ninc = 0;
+	unsigned int vinc = 0;
+	str nval;
+	str *pval;
+
+	if(dlg_cseq_prepare_msg(msg)!=0) {
+		goto done;
+	}
+	if(msg->first_line.type==SIP_REPLY) {
+		/* nothing to do for outgoing replies */
+		goto done;
+	}
+
+	LM_DBG("initiating cseq updates\n");
+
+	direction = DLG_DIR_NONE;
+	dlg = dlg_lookup_msg_dialog(msg, &direction);
+
+	if(dlg == NULL) {
+		LM_DBG("no dialog for this request\n");
+		goto done;
+	}
+
+	/* supported only for downstrem direction */
+	if(direction != DLG_DIR_DOWNSTREAM) {
+		LM_DBG("request not going downstream (%u)\n", direction);
+		goto done;
+	}
+
+	ninc = 1;
+
+	/* take the increment value from dialog */
+	if((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF) {
+		/* get dialog variable holding cseq diff */
+		pval = get_dlg_variable(dlg, &_dlg_cseq_diff_var_name);
+		if(pval==NULL || pval->s==NULL || pval->len<=0) {
+			LM_DBG("dialog marked with cseq diff but no variable set yet\n");
+			goto done;
+		}
+		if(str2int(pval, &vinc)<0) {
+			LM_ERR("invalid dlg cseq diff var value: %.*s\n",
+					pval->len, pval->s);
+			goto done;
+		}
+	}
+	vinc += ninc;
+	if(vinc==0) {
+		LM_DBG("nothing to increment\n");
+		goto done;
+	}
+	nval.s = int2str(vinc, &nval.len);
+	if(set_dlg_variable(dlg, &_dlg_cseq_diff_var_name, &nval) <0) {
+		LM_ERR("failed to set the dlg cseq diff var\n");
+		goto done;
+	}
+	str2int(&get_cseq(msg)->number, &ninc);
+	vinc += ninc;
+	nval.s = int2str(vinc, &nval.len);
+	trim(&nval);
+
+	LM_DBG("adding auth cseq header value: %.*s\n", nval.len, nval.s);
+	parse_headers(msg, HDR_EOH_F, 0);
+	sr_hdr_add_zs(msg, "P-K-Auth-CSeq", &nval);
+
+done:
+	if(dlg!=NULL) dlg_release(dlg);
+	return 0;
+
+error:
+	if(dlg!=NULL) dlg_release(dlg);
+	return -1;
 }
 
 /**
@@ -189,11 +271,8 @@ int dlg_cseq_msg_sent(void *data)
 	sip_msg_t msg;
 	str *obuf;
 	unsigned int direction;
-	unsigned int ninc = 0;
-	unsigned int vinc = 0;
 	dlg_cell_t *dlg = NULL;
-	str nval;
-	str *pval;
+	str nval = STR_NULL;
 	char tbuf[BUF_SIZE];
 	int tbuf_len = 0;
 	struct via_body *via;
@@ -241,45 +320,23 @@ int dlg_cseq_msg_sent(void *data)
 		hfk = sr_hdr_get_z(&msg, "P-K-Auth-CSeq");
 		if(hfk!=NULL) {
 			LM_DBG("uac auth request - cseq inc needed\n");
-			ninc = 1;
-			/* sr_hdr_del_z(&msg, "P-K-Auth-CSeq"); */
+			nval = hfk->body;
+			trim(&nval);
 		} else {
 			LM_DBG("uac auth request - cseq inc not needed\n");
 			goto done;
 		}
 	}
 
-	/* take the increment value from dialog */
-	if((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF) {
-		/* get dialog variable holding cseq diff */
-		pval = get_dlg_variable(dlg, &_dlg_cseq_diff_var_name);
-		if(pval==NULL || pval->s==NULL || pval->len<=0) {
-			LM_DBG("dialog marked with cseq diff but no variable set yet\n");
-			goto done;
-		}
-		if(str2int(pval, &vinc)<0) {
-			LM_ERR("invalid dlg cseq diff var value: %.*s\n",
-					pval->len, pval->s);
-			goto done;
-		}
-	}
-	vinc += ninc;
-	if(vinc==0) {
-		LM_DBG("nothing to increment\n");
+	if(nval.len<=0) {
 		goto done;
 	}
-	nval.s = int2str(vinc, &nval.len);
+
 	if(msg.len + 3 + 2*nval.len>=BUF_SIZE) {
 		LM_ERR("new messages is too big\n");
 		goto done;
 	}
-	if(set_dlg_variable(dlg, &_dlg_cseq_diff_var_name, &nval) <0) {
-		LM_ERR("failed to set the dlg cseq diff var\n");
-		goto done;
-	}
-	str2int(&get_cseq(&msg)->number, &ninc);
-	vinc += ninc;
-	nval.s = int2str(vinc, &nval.len);
+	LM_DBG("updating cseq to: %.*s\n", nval.len, nval.s);
 
 	/* new cseq value */
 	dlg->iflags |= DLG_IFLAG_CSEQ_DIFF;
