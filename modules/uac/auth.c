@@ -37,6 +37,7 @@
 #include "../../hashes.h"
 #include "../../dset.h"
 #include "../../srapi.h"
+#include "../../parser/parse_cseq.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "auth.h"
@@ -476,8 +477,10 @@ int uac_auth(sip_msg_t *msg)
 	if(t->uas.request) {
 		t->uas.request->msg_flags |= FL_UAC_AUTH;
 		cenv = sr_cfgenv_get();
-		if(cenv->cseq_update == 1) {
-			sr_hdr_add_zz(msg, "P-K-Auth-CSeq", "yes");
+		if(cenv->cb_cseq_update != NULL) {
+			if(cenv->cb_cseq_update(msg)<0) {
+				goto error;
+			}
 		}
 	}
 
