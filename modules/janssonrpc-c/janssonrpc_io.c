@@ -39,6 +39,7 @@
 #include "../../action.h"
 #include "../../route_struct.h"
 #include "../../lvalue.h"
+#include "../../cfg/cfg_struct.h"
 #include "../../rand/fastrand.h"
 #include "../tm/tm_load.h"
 #include "../jansson/jansson_utils.h"
@@ -57,11 +58,15 @@ void io_shutdown(int sig);
 
 int jsonrpc_io_child_process(int cmd_pipe)
 {
+	struct event* pipe_ev = NULL;
+
 	global_ev_base = event_base_new();
 	global_evdns_base = evdns_base_new(global_ev_base, 1);
 
 	set_non_blocking(cmd_pipe);
-	struct event* pipe_ev = event_new(global_ev_base, cmd_pipe, EV_READ | EV_PERSIST, cmd_pipe_cb, NULL);
+	pipe_ev = event_new(global_ev_base, cmd_pipe,
+			EV_READ | EV_PERSIST, cmd_pipe_cb, NULL);
+
 	if(!pipe_ev) {
 		ERR("Failed to create pipe event\n");
 		return -1;
@@ -449,6 +454,7 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		return;
 	}
 
+	cfg_update();
 
 	switch(cmd->type) {
 	case CMD_CLOSE:
