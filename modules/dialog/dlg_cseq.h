@@ -35,4 +35,6 @@
 
 int dlg_register_cseq_callbacks(void);
 
+int dlg_cseq_update(sip_msg_t *msg);
+
 #endif
