@@ -668,12 +668,14 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
     }, blob = {0, 0}, contact = {0, 0}, presentity_uri = {0, 0};
     bin_data x;
     ims_subscription* subscription = 0;
+	ims_subscription* found_subscription = 0;
     impurecord_t* impurecord;
     int impu_id_len;
     ucontact_t* c;
     ucontact_info_t contact_data;
     subscriber_data_t subscriber_data;
     reg_subscriber *reg_subscriber;
+	int must_unref_subscription = 0;
 
     /*
      * the two queries - get the IMPUs, then get associated contacts for each IMPU:
@@ -781,25 +783,50 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 	    if (!VAL_NULL(vals + 8)) {
 		impu_id = VAL_INT(vals + 8);
 	    }
-
+		
+		int leave_slot_locked = 1;
+		int res = get_subscription(&subscription->private_identity, &found_subscription, leave_slot_locked); //leave slot locked in case we need to add.... don't want racing adds
+        if (res != 0) {
+            LM_DBG("No subscription yet for [%.*s]... adding\n", subscription->private_identity.len, subscription->private_identity.s);
+            ref_subscription_unsafe(subscription); //we reference coz we are using it - will be unreferenced later.
+            add_subscription_unsafe(subscription);
+            unlock_subscription_slot(subscription->sl);
+        } else {
+            //TODO: we may want to do a deep comparison of the subscription and update....
+            if (compare_subscription(subscription, found_subscription) != 0) {
+				unref_subscription_unsafe(subscription);	/*we don't need this one from the DB - don't leak it */
+                subscription = found_subscription;
+            } else {
+                // Treat it as a new Subscription - it's not the same as the previous one
+                ref_subscription_unsafe(subscription); //we reference coz we are using it - will be unreferenced later.
+                add_subscription_unsafe(subscription);
+            }
+			ref_subscription_unsafe(subscription);	/*assume we will add to impu - if not, we will unref it*/
+			unlock_subscription_slot(subscription->sl);
+        }
+		
 	    /* insert impu into memory */
 	    lock_udomain(_d, &impu);
 	    if (get_impurecord_unsafe(_d, &impu, &impurecord) != 0) {
-		if (mem_insert_impurecord(_d, &impu, &subscription->private_identity,reg_state, barring,
-			&subscription, &ccf1, &ccf2, &ecf1, &ecf2, &impurecord)
-			!= 0) {
-		    LM_ERR("Unable to insert IMPU into memory [%.*s]\n", impu.len, impu.s);
+			if (mem_insert_impurecord(_d, &impu, &subscription->private_identity,reg_state, barring,
+				&subscription, &ccf1, &ccf2, &ecf1, &ecf2, &impurecord)
+				!= 0) {
+				LM_ERR("Unable to insert IMPU into memory [%.*s]\n", impu.len, impu.s);
+			}
+			/* run the INSERTion callback so REGISTRAR can get into sync - ie subscribe for callbacks on the IMPU.... for NOTIFYs for example*/
+			run_ul_callbacks(NULL, UL_IMPU_INSERT, impurecord, NULL);
+	    } else {
+			/* unref the unused subscription*/
+			must_unref_subscription = 1;
 		}
-                /* run the INSERTion callback so REGISTRAR can get into sync - ie subscribe for callbacks on the IMPU.... for NOTIFYs for example*/
-                run_ul_callbacks(NULL, UL_IMPU_INSERT, impurecord, NULL);
-	    }
 
 	    /* add contacts */
 	    if (impu_id < 0) {
-		LM_ERR("impu_id has not been set [%.*s] - we cannot read contacts or subscribers from DB....aborting preload\n", impu.len, impu.s);
-		//TODO: check frees
-		unlock_udomain(_d, &impu);
-		continue;
+			LM_ERR("impu_id has not been set [%.*s] - we cannot read contacts or subscribers from DB....aborting preload\n", impu.len, impu.s);
+			//TODO: check frees
+			unlock_udomain(_d, &impu);
+			unref_subscription(subscription);
+			continue;
 	    }
 	    impu_id_len = int_to_str_len(impu_id);
 	    len = query_contact.len + impu_id_len + 1/*nul*/;
@@ -812,6 +839,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 		    LM_ERR("mo more pkg mem\n");
 		    //TODO: check free
 		    unlock_udomain(_d, &impu);
+			unref_subscription(subscription);
 		    return -1;
 		}
 		query_buffer_len = len;
@@ -906,12 +934,14 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 			impu.len, impu.s);
 		ul_dbf.free_result(_c, subscriber_rs);
 		unlock_udomain(_d, &impu);
+		unref_subscription(subscription);
 		continue;
 	    }
 	    if (RES_ROW_N(subscriber_rs) == 0) {
 		LM_DBG("no subscriber associated with impu [%.*s]\n", impu.len, impu.s);
 		ul_dbf.free_result(_c, subscriber_rs);
 		unlock_udomain(_d, &impu);
+		unref_subscription(subscription);
 		continue;
 	    }
 
@@ -954,25 +984,27 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 	    ul_dbf.free_result(_c, subscriber_rs);
 
 	    unlock_udomain(_d, &impu);
+		if (must_unref_subscription)
+			unref_subscription(subscription);
 
 	}
 
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
-	    if (ul_dbf.fetch_result(_c, &rs, ul_fetch_rows) < 0) {
-		LM_ERR("fetching rows (1) failed\n");
-		ul_dbf.free_result(_c, rs);
-		return -1;
-	    }
-	} else {
-	    break;
-	}
-    } while (RES_ROW_N(rs) > 0);
+			if (ul_dbf.fetch_result(_c, &rs, ul_fetch_rows) < 0) {
+				LM_ERR("fetching rows (1) failed\n");
+				ul_dbf.free_result(_c, rs);
+				return -1;
+			}
+		} else {
+			break;
+		}
+	} while (RES_ROW_N(rs) > 0);
 
-    ul_dbf.free_result(_c, rs);
+	ul_dbf.free_result(_c, rs);
 
-    LM_DBG("Completed preload_udomain");
+	LM_DBG("Completed preload_udomain");
 
-    return 0;
+	return 0;
 }
 
 int db_link_contact_to_impu(impurecord_t* _r, ucontact_t* _c) {

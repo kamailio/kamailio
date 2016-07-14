@@ -180,5 +180,7 @@ void unref_subscription_unsafe(ims_subscription* s);
 void ref_subscription(ims_subscription* s);
 void unref_subscription(ims_subscription* s);
 
+int compare_subscription(ims_subscription* new, ims_subscription* orig);
+
 #endif
 
