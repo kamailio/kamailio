@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -112,11 +112,11 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 	enum sip_protos uri_proto;
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LOG(L_ERR, "ERROR: uri2proxy: bad_uri: %.*s\n",
-		    uri->len, uri->s );
+		LOG(L_ERR, "ERROR: uri2proxy: bad_uri: [%.*s]\n",
+				uri->len, uri->s );
 		return 0;
 	}
-	
+
 	if (parsed_uri.type==SIPS_URI_T){
 		if (parsed_uri.proto==PROTO_UDP) {
 			LOG(L_ERR, "ERROR: uri2proxy: bad transport for sips uri: %d\n",
@@ -130,9 +130,9 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 		uri_proto=parsed_uri.proto;
 #ifdef HONOR_MADDR
 	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
-		p = mk_proxy(&parsed_uri.maddr_val, 
-					  parsed_uri.port_no, 
-					  get_proto(proto, uri_proto));
+		p = mk_proxy(&parsed_uri.maddr_val,
+				parsed_uri.port_no,
+				get_proto(proto, uri_proto));
 		if (p == 0) {
 			LOG(L_ERR, "ERROR: uri2proxy: bad maddr param in URI <%.*s>\n",
 				uri->len, ZSW(uri->s));
@@ -140,15 +140,15 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 		}
 	} else
 #endif
-	p = mk_proxy(&parsed_uri.host, 
-				  parsed_uri.port_no, 
-				  get_proto(proto, uri_proto));
+	p = mk_proxy(&parsed_uri.host,
+			parsed_uri.port_no,
+			get_proto(proto, uri_proto));
 	if (p == 0) {
 		LOG(L_ERR, "ERROR: uri2proxy: bad host name in URI <%.*s>\n",
-		    uri->len, ZSW(uri->s));
+				uri->len, ZSW(uri->s));
 		return 0;
 	}
-	
+
 	return p;
 }
 
@@ -160,7 +160,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
  *         host - filled with the uri host part
  *         port - filled with the uri port
  *         proto - if != PROTO_NONE, this protocol will be forced over the
- *                 uri_proto, otherwise the uri proto will be used 
+ *                 uri_proto, otherwise the uri proto will be used
  *                 (value/return)
  *         comp - compression (if used)
  * returns 0 on success, < 0 on error
@@ -170,13 +170,13 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 {
 	struct sip_uri parsed_uri;
 	enum sip_protos uri_proto;
-	
+
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
 		LOG(L_ERR, "ERROR: get_uri_send_info: bad_uri: %.*s\n",
 					uri->len, uri->s );
 		return -1;
 	}
-	
+
 	if (parsed_uri.type==SIPS_URI_T){
 		if (parsed_uri.proto==PROTO_UDP) {
 			LOG(L_ERR, "ERROR: get_uri_send_info: bad transport for"
@@ -188,7 +188,7 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 			uri_proto=PROTO_WS;
 	}else
 		uri_proto=parsed_uri.proto;
-	
+
 	*proto= get_proto(*proto, uri_proto);
 #ifdef USE_COMP
 	*comp=parsed_uri.comp;
@@ -196,7 +196,7 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 #ifdef HONOR_MADDR
 	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
 		*host=parsed_uri.maddr_val;
-		DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len, 
+		DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len,
 				parsed_uri.maddr_val.s, parsed_uri.port_no);
 	} else
 #endif
@@ -210,7 +210,7 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
 /*
  * Convert a URI into a dest_info structure.
  * Same as uri2dst, but uses directly force_send_socket instead of msg.
- * If the uri host resolves to multiple ips and dns_h!=0 the first ip for 
+ * If the uri host resolves to multiple ips and dns_h!=0 the first ip for
  *  which a send socket is found will be used. If no send_socket are found,
  *  the first ip is selected.
  *
@@ -218,8 +218,8 @@ inline static int get_uri_send_info(str* uri, str* host, unsigned short* port,
  *                 null. If null or use_dns_failover==0 normal dns lookup will
  *                 be performed (no failover).
  *         dst   - will be filled
- *         force_send_sock - if 0 dst->send_sock will be set to the default 
- *                 (see get_send_socket2()) 
+ *         force_send_sock - if 0 dst->send_sock will be set to the default
+ *                 (see get_send_socket2())
  *         sflags - send flags
  *         uri   - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
@@ -250,11 +250,11 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 #endif
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LOG(L_ERR, "ERROR: uri2dst: bad_uri: %.*s\n",
-		    uri->len, uri->s );
+		LOG(L_ERR, "ERROR: uri2dst: bad_uri: [%.*s]\n",
+				uri->len, uri->s );
 		return 0;
 	}
-	
+
 	if (parsed_uri.type==SIPS_URI_T){
 		if (parsed_uri.proto==PROTO_UDP) {
 			LOG(L_ERR, "ERROR: uri2dst: bad transport for sips uri: %d\n",
@@ -266,7 +266,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 			uri_proto=PROTO_WS;
 	}else
 		uri_proto=parsed_uri.proto;
-	
+
 	init_dest_info(dst);
 	dst->proto= get_proto(proto, uri_proto);
 #ifdef USE_COMP
@@ -276,7 +276,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 #ifdef HONOR_MADDR
 	if (parsed_uri.maddr_val.s && parsed_uri.maddr_val.len) {
 		host=&parsed_uri.maddr_val;
-		DBG("maddr dst: %.*s:%d\n", parsed_uri.maddr_val.len, 
+		DBG("maddr dst: [%.*s:%d]\n", parsed_uri.maddr_val.len,
 								parsed_uri.maddr_val.s, parsed_uri.port_no);
 	} else
 #endif
@@ -309,7 +309,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 				return dst; /* found a good one */
 			}
 		}while(dns_srv_handle_next(dns_h, err));
-		ERR("no corresponding socket for \"%.*s\" af %d\n", host->len, 
+		ERR("no corresponding socket for \"%.*s\" af %d\n", host->len,
 				ZSW(host->s), dst->to.s.sa_family);
 		/* try to continue */
 		return dst;
@@ -335,7 +335,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 
 /*
  * Convert a URI into a dest_info structure
- * If the uri host resolves to multiple ips and dns_h!=0 the first ip for 
+ * If the uri host resolves to multiple ips and dns_h!=0 the first ip for
  *  which a send socket is found will be used. If no send_socket are found,
  *  the first ip is selected.
  *
@@ -344,8 +344,8 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
  *                 be performed (no failover).
  *         dst   - will be filled
  *         msg   -  sip message used to set dst->send_sock and dst->send_flags,
- *                 if 0 dst->send_sock will be set to the default w/o using 
- *                  msg->force_send_socket (see get_send_socket()) and the 
+ *                 if 0 dst->send_sock will be set to the default w/o using
+ *                  msg->force_send_socket (see get_send_socket()) and the
  *                  send_flags will be set to 0.
  *         uri   - uri in str form
  *         proto - if != PROTO_NONE, this protocol will be forced over the
@@ -356,7 +356,7 @@ inline static struct dest_info *uri2dst2(struct dest_info* dst,
 #ifdef USE_DNS_FAILOVER
 inline static struct dest_info *uri2dst(struct dns_srv_handle* dns_h,
 										struct dest_info* dst,
-										struct sip_msg *msg, str *uri, 
+										struct sip_msg *msg, str *uri,
 											int proto )
 {
 	snd_flags_t sflags;
@@ -368,7 +368,7 @@ inline static struct dest_info *uri2dst(struct dns_srv_handle* dns_h,
 }
 #else
 inline static struct dest_info *uri2dst(struct dest_info* dst,
-										struct sip_msg *msg, str *uri, 
+										struct sip_msg *msg, str *uri,
 											int proto )
 {
 	snd_flags_t sflags;
