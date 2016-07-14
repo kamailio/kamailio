@@ -2,7 +2,7 @@
 <!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	[ <!ENTITY % local.common.attrib
-	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'"> 
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
 %docentities;
 
@@ -48,8 +48,13 @@
 			This module implements the TLS transport for &kamailio;
 			using the <ulink url="http://www.openssl.org">OpenSSL library</ulink>
 			(http://www.openssl.org). To enable the &kamailio; TLS support this
-			module must be loaded and <emphasis>enable_tls=yes</emphasis> core setting 
-			must be added to the Kamailio config file 
+			module must be loaded and <emphasis>enable_tls=yes</emphasis> core setting
+			must be added to the Kamailio config file.
+		</para>
+		<para>
+			IMPORTANT: tls module must be loaded before any other &kamailio; module
+			that uses libssl (OpenSSL library). A safe option is to have tls module
+			loaded first (be in the first "loadmodule" inside &kamailio;.cfg).
 		</para>
 	</section>
 	<section id="tls.quick_start">
