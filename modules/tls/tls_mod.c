@@ -1,7 +1,7 @@
 /*
  * TLS module
  *
- * Copyright (C) 2007 iptelorg GmbH 
+ * Copyright (C) 2007 iptelorg GmbH
  * Copyright (C) Motorola Solutions, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -84,7 +84,7 @@ MODULE_VERSION
 
 str sr_tls_xavp_cfg = {0, 0};
 /*
- * Default settings when modparams are used 
+ * Default settings when modparams are used
  */
 static tls_domain_t mod_params = {
 	TLS_DOMAIN_DEF | TLS_DOMAIN_SRV,   /* Domain Type */
@@ -190,11 +190,11 @@ static param_export_t params[] = {
 	{"session_id",          PARAM_STR,    &default_tls_cfg.session_id   },
 	{"config",              PARAM_STR,    &default_tls_cfg.config_file  },
 	{"tls_disable_compression", PARAM_INT,
-										 &default_tls_cfg.disable_compression},
+										&default_tls_cfg.disable_compression},
 	{"ssl_release_buffers",   PARAM_INT, &default_tls_cfg.ssl_release_buffers},
 	{"ssl_freelist_max_len",  PARAM_INT,  &default_tls_cfg.ssl_freelist_max},
 	{"ssl_max_send_fragment", PARAM_INT,
-									   &default_tls_cfg.ssl_max_send_fragment},
+										&default_tls_cfg.ssl_max_send_fragment},
 	{"ssl_read_ahead",        PARAM_INT,    &default_tls_cfg.ssl_read_ahead},
 	{"send_close_notify",   PARAM_INT,    &default_tls_cfg.send_close_notify},
 	{"con_ct_wq_max",      PARAM_INT,    &default_tls_cfg.con_ct_wq_max},
@@ -250,11 +250,11 @@ static struct tls_hooks tls_h = {
 static tls_domains_cfg_t* tls_use_modparams(void)
 {
 	tls_domains_cfg_t* ret;
-	
+
 	ret = tls_new_cfg();
 	if (!ret) return;
 
-	
+
 }
 #endif
 
@@ -330,8 +330,8 @@ static int mod_init(void)
 		goto error;
 	}
 
-	 /* if (init_tls() < 0) return -1; */
-	
+	/* if (init_tls() < 0) return -1; */
+
 	tls_domains_cfg_lock = lock_alloc();
 	if (tls_domains_cfg_lock == 0) {
 		ERR("Unable to create TLS configuration lock\n");
@@ -347,7 +347,7 @@ static int mod_init(void)
 		goto error;
 	}
 	if (cfg_get(tls, tls_cfg, config_file).s) {
-		*tls_domains_cfg = 
+		*tls_domains_cfg =
 			tls_load_config(&cfg_get(tls, tls_cfg, config_file));
 		if (!(*tls_domains_cfg)) goto error;
 	} else {
@@ -376,7 +376,7 @@ static int mod_child(int rank)
 {
 	if (tls_disable || (tls_domains_cfg==0))
 		return 0;
-	/* fix tls config only from the main proc/PROC_INIT., when we know 
+	/* fix tls config only from the main proc/PROC_INIT., when we know
 	 * the exact process number and before any other process starts*/
 	if (rank == PROC_INIT){
 		if (cfg_get(tls, tls_cfg, config_file).s){
@@ -396,7 +396,7 @@ static int mod_child(int rank)
 static void destroy(void)
 {
 	/* tls is destroyed via the registered destroy_tls_h callback
-	   => nothing to do here */
+	 *   => nothing to do here */
 }
 
 
