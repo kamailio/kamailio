@@ -488,6 +488,8 @@ int tls_pre_init(void)
 	if (!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
 #endif
 		ERR("Unable to set the memory allocation functions\n");
+		ERR("Be sure tls module is loaded before any other module using libssl"
+				" (can be loaded first to be safe)\n");
 		return -1;
 	}
 
@@ -509,7 +511,7 @@ int tls_mod_pre_init_h(void)
 		LM_DBG("already mod pre-initialized\n");
 		return 0;
 	}
-	DBG("============= :preparing tls env for modules initialization\n");
+	DBG("preparing tls env for modules initialization\n");
 	SSL_library_init();
 	SSL_load_error_strings();
 	tls_mod_preinitialized=1;
