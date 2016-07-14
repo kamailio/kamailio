@@ -851,7 +851,6 @@ void free_ims_subscription_data(ims_subscription *s) {
 
 }
 
-/* Still needs to be implemented */
 int compare_subscription(ims_subscription* new, ims_subscription* orig) {
     int i, j, k, l;
     LM_DBG("Comparing subscription for IMPI [%.*s]\n", orig->private_identity.len, orig->private_identity.s);
