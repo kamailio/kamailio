@@ -411,6 +411,9 @@ void diameter_peer_destroy()
 	int pid,status;
 	handler *h;
 
+	if (!shutdownx_lock) {
+		return;
+	}
 	lock_get(shutdownx_lock);
 	if (*shutdownx) {
 		/* already other process is cleaning stuff */
