@@ -440,7 +440,7 @@ error:
 int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact, str *explit_dereg_contact, int num_explit_dereg_contact) {
     impurecord_t* r;
     int num_impus;
-    str* impu_list;
+    str* impu_list = 0;
     int res = 0;
     udomain_t* udomain;
 
@@ -483,7 +483,10 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
             LM_DBG("About to ceate notification");
 
             create_notifications(_d, r_passed, presentity_uri, watcher_contact, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
-            return 0;
+            if (impu_list) {
+                    pkg_free(impu_list);
+            }
+			return 0;
             break;
 
             //richard: we only use reg unreg expired and refresh
@@ -510,12 +513,18 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
             //TODO this should be a configurable module param
             if (ul.register_udomain(domain, &udomain) < 0) {
                 LM_ERR("Unable to register usrloc domain....aborting\n");
-                return 0;
+                if (impu_list) {
+                    pkg_free(impu_list);
+                }
+				return 0;
             }
             LM_DBG("About to ceate notification");
 
             create_notifications(_d, r_passed, presentity_uri, watcher_contact, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
-            return 1;
+            if (impu_list) {
+                    pkg_free(impu_list);
+            }
+			return 1;
 
         default:
             LM_ERR("ERR:event_reg: Unknown event %d\n", event_type);
