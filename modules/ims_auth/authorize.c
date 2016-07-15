@@ -727,7 +727,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
     str nonce, response16, nc, cnonce, qop_str = {0, 0}, auts = {0, 0}, body, *next_nonce = &empty_s;
     enum qop_type qop = QOP_UNSPEC;
     str uri = {0, 0};
-    HASHHEX expected, ha1, hbody, rspauth;
+    HASHHEX expected, ha1, hbody = {0}, rspauth;
     int expected_len = 32;
     int expires = 0;
     auth_vector *av = 0;
@@ -1152,6 +1152,8 @@ void auth_data_destroy() {
 auth_vector * new_auth_vector(int item_number, str auth_scheme, str authenticate,
         str authorization, str ck, str ik) {
     auth_vector *x = 0;
+	char base16_ck[32+1] = {0}; 
+	int base16_ck_len = 0;
     x = shm_malloc(sizeof (auth_vector));
     if (!x) {
         LM_ERR("error allocating mem\n");
@@ -1305,7 +1307,9 @@ auth_vector * new_auth_vector(int item_number, str auth_scheme, str authenticate
     x->status = AUTH_VECTOR_UNUSED;
     x->expires = 0;
 
-    LM_DBG("new auth-vector with ck [%.*s] with status %d\n", x->ck.len, x->ck.s, x->status);
+	base16_ck_len = bin_to_base16(x->ck.s, 16, base16_ck);
+	if (base16_ck_len)
+		LM_DBG("new auth-vector with ck [%s] with status %d\n", base16_ck, x->status);
 
 done:
     return x;
