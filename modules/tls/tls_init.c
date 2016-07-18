@@ -478,6 +478,9 @@ end:
  */
 int tls_pre_init(void)
 {
+	void *(*mf)(size_t) = NULL;
+	void *(*rf)(void *, size_t) = NULL;
+	void (*ff)(void *) = NULL;
 	/*
 	 * this has to be called before any function calling CRYPTO_malloc,
 	 * CRYPTO_malloc will set allow_customize in openssl to 0
@@ -488,6 +491,8 @@ int tls_pre_init(void)
 	if (!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
 #endif
 		ERR("Unable to set the memory allocation functions\n");
+		CRYPTO_get_mem_functions(&mf, &rf, &ff);
+		ERR("libssl current mem functions - m: %p r: %p f: %p\n", mf, rf, ff);
 		ERR("Be sure tls module is loaded before any other module using libssl"
 				" (can be loaded first to be safe)\n");
 		return -1;
