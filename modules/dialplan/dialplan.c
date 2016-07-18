@@ -455,10 +455,11 @@ error:
 	return E_INVALID_PARAMS;
 }
 
+/**
+ * trigger reload of dialplan db records from config file
+ */
 static int dp_reload_f(struct sip_msg* msg)
 {
-	struct mi_root* rpl_tree= NULL;
-
 	if (dp_connect_db() < 0) {
 		LM_ERR("failed to reload rules fron database (db connect)\n");
 		return -1;
