@@ -318,9 +318,14 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,subs_t* subs)
 		{
 			found= s->local_cseq +1;
 			ps->next= s->next;
-			if(s->contact.s!=NULL)
+			if(s->contact.s!=NULL) {
 				shm_free(s->contact.s);
-			shm_free(s);
+				s->contact.s = NULL;
+			}
+			if (s) {
+				shm_free(s);
+				s = NULL;
+			}
 			break;
 		}
 		ps= s;
