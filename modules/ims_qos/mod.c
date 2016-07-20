@@ -135,6 +135,9 @@ str rx_dest_realm = str_init("ims.smilecoms.com");
 /* Only used if we want to force the Rx peer usually this is configured at a stack level and the first request uses realm routing */
 str rx_forced_peer = str_init("");
 
+/* P-CSCF IP address to generate the flows for the UE<->PCSCF signaling path */
+str rx_pcscf_ip = str_init("192.168.1.45");
+
 /* commands wrappers and fixups */
 static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *id, int id_type);
 static int w_rx_aar_register(struct sip_msg *msg, char *route, char* str1, char *bar);
@@ -182,6 +185,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 		{ "rx_dest_realm", PARAM_STR, &rx_dest_realm},
+		{ "rx_pcscf_ip", PARAM_STR, &rx_pcscf_ip},
 		{ "rx_forced_peer", PARAM_STR, &rx_forced_peer},
 		{ "rx_auth_expiry", INT_PARAM, &rx_auth_expiry},
 		{ "cdp_event_latency", INT_PARAM, &cdp_event_latency}, /*flag: report slow processing of CDP callback events or not */
