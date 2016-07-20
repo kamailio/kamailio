@@ -209,7 +209,7 @@ peer *get_peer_from_sock(int sock)
 peer *get_peer_from_fqdn(str fqdn,str realm)
 {
 	peer *i;
-	str dumb;
+	str dumb = {0,0};
 
 	lock_get(peer_list_lock);
 	i = peer_list->head;
