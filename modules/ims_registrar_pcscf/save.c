@@ -183,9 +183,9 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 					LM_DBG("contact already exists and is in state (%d) : [%s]\n",pcontact->reg_state, reg_state_to_string(pcontact->reg_state));
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
 						LM_DBG("This is a de-registration for contact <%.*s>\n", c->uri.len, c->uri.s);
-//						if (ul.delete_pcontact(_d, &c->uri, &ci.received_host, ci.received_port, pcontact) != 0) {
-//							LM_ERR("failed to delete pcscf contact <%.*s>\n", c->uri.len, c->uri.s);
-//						}
+						if (ul.delete_pcontact(_d, pcontact) != 0) {
+							LM_ERR("failed to delete pcscf contact <%.*s>\n", c->uri.len, c->uri.s);
+						}
                                                 //TODO_LATEST replace above
 					} else { //update contact
 						LM_DBG("Updating contact: <%.*s>, old expires: %li, new expires: %i which is in %i seconds\n", c->uri.len, c->uri.s,
