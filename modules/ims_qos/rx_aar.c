@@ -77,6 +77,8 @@ extern struct ims_qos_counters_h ims_qos_cnts_h;
 
 extern int authorize_video_flow;
 
+extern str rx_pcscf_ip;
+
 str IMS_Serv_AVP_val = {"IMS Services", 12};
 str IMS_Em_Serv_AVP_val = {"Emergency IMS Call", 18};
 str IMS_Reg_AVP_val = {"IMS Registration", 16};
@@ -897,6 +899,7 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     AAA_AVP* avp = 0;
     char x[4];
     str identifier;
+    str media;
 
     str ip;
     uint16_t ip_version;
@@ -940,8 +943,35 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     int identifier_type = AVP_Subscription_Id_Type_SIP_URI; //we only do IMPU now
     rx_add_subscription_id_avp(aar, identifier, identifier_type);
 
+    /* Create flow description for AF-Signaling */
+    //add this to auth session data
+    media.s = "control";
+    media.len = strlen("control");
+    str raw_stream;
+    raw_stream.s = 0;
+    raw_stream.len = 0;
+
+    char c_port_from[5];
+    str port_from;
+    port_from.len = sprintf(c_port_from, "%u", saved_t_data->via_port);
+    port_from.s = c_port_from;
+
+    char c_port_to[5];
+    str port_to;
+    port_to.len = sprintf(c_port_to, "%u", saved_t_data->recv_port);
+    port_to.s = c_port_to;
+
+    str protocol;
+    protocol.s = "IP";
+    protocol.len = strlen("IP");
+
     /* Add media component description avp for register*/
-    rx_add_media_component_description_avp_register(aar);
+    rx_add_media_component_description_avp(aar, 1,
+               &media, &saved_t_data->via_host,
+               &port_from, &rx_pcscf_ip,
+               &port_to, &protocol,
+               &raw_stream,
+               &raw_stream, DLG_MOBILE_REGISTER);
 
     /* Add specific action AVP's */
     rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE

@@ -76,13 +76,13 @@ int rx_add_avp(AAAMessage *m, char *d, int len, int avp_code,
 
 int rx_add_vendor_specific_application_id_group(AAAMessage *msg, unsigned int vendorid, unsigned int auth_app_id);
 int rx_add_destination_realm_avp(AAAMessage *msg, str data);
-inline int rx_add_subscription_id_avp(AAAMessage *msg, str identifier, int identifier_type);
-inline int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data);
+int rx_add_subscription_id_avp(AAAMessage *msg, str identifier, int identifier_type);
+int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data);
 
-inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, str *media_description, str *ipA, str *portA, str *ipB, str *portB, str *transport, 
+int rx_add_media_component_description_avp(AAAMessage *msg, int number, str *media_description, str *ipA, str *portA, str *ipB, str *portB, str *transport, 
         str *raw_payload, str *rpl_raw_payload, enum dialog_direction dlg_direction);
 
-inline int rx_add_media_component_description_avp_register(AAAMessage *msg);
+int rx_add_media_component_description_avp_register(AAAMessage *msg);
 
 AAA_AVP *rx_create_media_subcomponent_avp(int number, char *proto, str *ipA, str *portA, str *ipB, str *portB);
 
@@ -90,9 +90,9 @@ AAA_AVP *rx_create_media_subcomponent_avp_register();
 
 AAA_AVP* rx_create_codec_data_avp(str *raw_sdp_stream, int number, int direction);
 
-inline int rx_get_result_code(AAAMessage *msg, unsigned int *data);
+int rx_get_result_code(AAAMessage *msg, unsigned int *data);
 unsigned int rx_get_abort_cause(AAAMessage *msg);
 
-inline int rx_add_specific_action_avp(AAAMessage *msg, unsigned int data);
+int rx_add_specific_action_avp(AAAMessage *msg, unsigned int data);
 
 #endif /*__PCC_AVP_H*/
