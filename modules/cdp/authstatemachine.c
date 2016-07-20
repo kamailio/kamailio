@@ -754,12 +754,14 @@ void Send_ASA(cdp_session_t* s, AAAMessage* msg) {
 			// the PCRF because TS 29.214 says no Destination-Host and no Auth-Application-Id
 			// in the ASA
 			LM_INFO("sending ASA to peer %.*s\n", avp->data.len, avp->data.s);
-			peer *p;
-			p = get_peer_by_fqdn(&avp->data);
-			if (!peer_send_msg(p, asa)) {
+			peer *p = get_peer_by_fqdn(&avp->data);
+			if (!p) {
+				LM_ERR("Peer not found\n");
+			}else if (!peer_send_msg(p, asa)) {
 				if (asa) AAAFreeMessage(&asa); //needed in frequency
-			} else
+			} else {
 				LM_INFO("success sending ASA\n");
+			}
 		} else if (!AAASendMessage(asa, 0, 0)) {
 			LM_ERR("Send_ASA() : error sending ASA\n");
 		}
