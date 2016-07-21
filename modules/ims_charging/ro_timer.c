@@ -473,6 +473,9 @@ void ro_session_ontimeout(struct ro_tl *tl) {
         case delayed_delete:
             destroy_ro_session(ro_session);
             return;
+        case pending:
+            /* call is not answered yet. No point asking more credit. Just wait for dialog to progress somehow */
+            return;
         default:
             LM_ERR("Diameter call session - event [%d]\n", ro_session->event_type);
 
