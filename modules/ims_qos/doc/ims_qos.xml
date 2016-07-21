@@ -16,10 +16,10 @@
         <surname/>
 
         <affiliation>
-          <orgname>FhG Fokus</orgname>
+          <orgname>Core Network Dynamics (ex FhG Fokus)</orgname>
         </affiliation>
 
-        <email>Dragos.Vingarzan@fokus.fraunhofer.de</email>
+        <email>dragos@corenetdynamics.com</email>
       </author>
 
       <author>
@@ -70,6 +70,10 @@
     <copyright>
       <year>2015</year>
       <holder>ng-voice GmbH</holder>
+    </copyright>
+    <copyright>
+      <year>2016</year>
+      <holder>Core Network Dynamics GmbH</holder>
     </copyright>
   </bookinfo>
 

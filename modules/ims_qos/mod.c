@@ -3,23 +3,23 @@
  *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +37,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <stdio.h>
@@ -135,6 +135,9 @@ str rx_dest_realm = str_init("ims.smilecoms.com");
 /* Only used if we want to force the Rx peer usually this is configured at a stack level and the first request uses realm routing */
 str rx_forced_peer = str_init("");
 
+/* P-CSCF IP address to generate the flows for the UE<->PCSCF signaling path */
+str af_signaling_ip = str_init("127.0.0.1");
+
 /* commands wrappers and fixups */
 static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *id, int id_type);
 static int w_rx_aar_register(struct sip_msg *msg, char *route, char* str1, char *bar);
@@ -184,6 +187,7 @@ static param_export_t params[] = {
 		{ "rx_dest_realm", PARAM_STR, &rx_dest_realm},
 		{ "rx_forced_peer", PARAM_STR, &rx_forced_peer},
 		{ "rx_auth_expiry", INT_PARAM, &rx_auth_expiry},
+		{ "af_signaling_ip", PARAM_STR, &af_signaling_ip}, /* IP of this P-CSCF, to be used in the flow for the AF-signaling */
 		{ "cdp_event_latency", INT_PARAM, &cdp_event_latency}, /*flag: report slow processing of CDP callback events or not */
 		{ "cdp_event_threshold", INT_PARAM, &cdp_event_threshold}, /*time in ms above which we should report slow processing of CDP callback event*/
 		{ "cdp_event_latency_log", INT_PARAM, &cdp_event_latency_loglevel}, /*log-level to use to report slow processing of CDP callback event*/
@@ -716,8 +720,8 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 
 
 		/*  we may need the request message from here on.. if there are headers we need that were not parsed in the original request
-			(which we cannot assume) then we would pollute the shm_msg t->uas.request if we did any parsing on it. Instead, we need to 
-			make a private copy of the message and free it when we are done 
+			(which we cannot assume) then we would pollute the shm_msg t->uas.request if we did any parsing on it. Instead, we need to
+			make a private copy of the message and free it when we are done
 		 */
 		if ((_pv_treq.T != t || t->uas.request != _pv_treq.tmsgp)
 				&& t->uas.request->id != _pv_treq.id) {
@@ -943,7 +947,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 								identifier_type = AVP_Subscription_Id_Type_SIP_URI; //default is END_USER_SIP_URI
 						}
 				}
-				//IP 
+				//IP
 				//if its mo we use request SDP
 				//if its mt we use reply SDP
 				if (dlg_direction == DLG_MOBILE_ORIGINATING) {
@@ -961,9 +965,9 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 						}
 						ip = sdp_session->ip_addr;
 						ip_version = sdp_session->pf;
-						
+
 						LM_DBG("IP retrieved from Request SDP to use for framed IP address: [%.*s]", ip.len, ip.s);
-						
+
 						if (ip.len <= 0) {
 								LM_DBG("Request SDP connection IP could not be retrieved, so we use SDP stream IP");
 								sdp_stream = get_sdp_stream(orig_sip_request_msg, 0, 0);
@@ -971,7 +975,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 										LM_ERR("Missing SDP stream information from request\n");
 										goto error;
 								}
-								
+
 								ip = sdp_stream->ip_addr;
 								if (ip.len <= 0) {
 										LM_ERR("Request SDP IP information could not be retrieved");
@@ -982,11 +986,11 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 										LM_ERR("check_ip_version returned 0 \n");
 										goto error;
 								}
-								
+
 						}
-						
+
 						free_sdp((sdp_info_t**) (void*) &t->uas.request->body);
-						
+
 				} else {
 						LM_DBG("terminating direction\n");
 						//get ip from reply sdp (we use first SDP session)
@@ -1002,9 +1006,9 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 						}
 						ip = sdp_session->ip_addr;
 						ip_version = sdp_session->pf;
-						
+
 						LM_DBG("IP retrieved from Reply SDP to use for framed IP address: [%.*s]", ip.len, ip.s);
-						
+
 						if (ip.len <= 0) {
 								LM_DBG("Reply SDP connection IP could not be retrieved, so we use SDP stream IP");
 								sdp_stream = get_sdp_stream(msg, 0, 0);
@@ -1012,7 +1016,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 										LM_ERR("Missing SDP stream information from reply\n");
 										goto error;
 								}
-								
+
 								ip = sdp_stream->ip_addr;
 								if (ip.len <= 0) {
 										LM_ERR("Reply SDP IP information could not be retrieved");
@@ -1023,9 +1027,9 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 										LM_ERR("check_ip_version returned 0 \n");
 										goto error;
 								}
-								
+
 						}
-						
+
 						free_sdp((sdp_info_t**) (void*) &msg->body);
 				}
 
@@ -1250,7 +1254,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 				goto error;
 		}
 
-		//we use the received IP address for the framed_ip_address 
+		//we use the received IP address for the framed_ip_address
 		recv_ip.s = ip_addr2a(&msg->rcv.src_ip);
 		recv_ip.len = strlen(ip_addr2a(&msg->rcv.src_ip));
 

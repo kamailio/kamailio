@@ -122,6 +122,29 @@ modparam("ims_qos", "rx_auth_expiry", 14400)
     </section>
 
     <section>
+      <title><varname>af_signaling_ip</varname> (string)</title>
+
+      <para>Defines the IP address to use in the flow description for the
+      media flow of the SIP registration. This is known in EPC as the 
+      AF-Signaling path and usually would create a dedicated bearer for the SIP
+      signaling between the UE IP and the P-CSCF IP. 
+      
+      Usually set this value to the IP address of the P-CSCF.</para>
+
+      <para><emphasis> Default value is 127.0.0.1 - dummy value. </emphasis></para>
+
+      <example>
+        <title><varname>rx_auth_expiry</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "af_signaling_ip", "192.168.1.45")
+...
+        </programlisting>
+      </example>
+    </section>
+    
+    <section>
       <title><varname>cdp_event_latency</varname> (integer)</title>
 
       <para>This is a flag to determine whether or slow CDP responses should

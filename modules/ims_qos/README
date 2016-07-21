@@ -2,8 +2,8 @@ The IMS QoS Module
 
 Dragos Vingarzan
 
-   FhG Fokus
-   <Dragos.Vingarzan@fokus.fraunhofer.de>
+   Core Network Dynamics (ex FhG Fokus)
+   <dragos@corenetdynamics.com>
 
 Jason Penton
 
@@ -25,6 +25,8 @@ Carsten Bock
    Copyright © 2012 Smile Communications
 
    Copyright © 2015 ng-voice GmbH
+
+   Copyright © 2016 Core Network Dynamics GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -42,16 +44,17 @@ Carsten Bock
               3.1. rx_dest_realm (string)
               3.2. rx_forced_peer (string)
               3.3. rx_auth_expiry (integer)
-              3.4. cdp_event_latency (integer)
-              3.5. cdp_event_threshold (integer)
-              3.6. cdp_event_latency_log (integer)
-              3.7. authorize_video_flow (integer)
-              3.8. cdp_event_list_size_threshold (integer)
-              3.9. audio_default_bandwidth (integer)
-              3.10. video_default_bandwidth (integer)
-              3.11. early_qosrelease_reason (String)
-              3.12. confirmed_qosrelease_headers (String)
-              3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
+              3.4. af_signaling_ip (string)
+              3.5. cdp_event_latency (integer)
+              3.6. cdp_event_threshold (integer)
+              3.7. cdp_event_latency_log (integer)
+              3.8. authorize_video_flow (integer)
+              3.9. cdp_event_list_size_threshold (integer)
+              3.10. audio_default_bandwidth (integer)
+              3.11. video_default_bandwidth (integer)
+              3.12. early_qosrelease_reason (String)
+              3.13. confirmed_qosrelease_headers (String)
+              3.14. regex_sdp_ip_prefix_to_maintain_in_fd (String)
 
         4. Functions
 
@@ -69,18 +72,19 @@ Carsten Bock
    1.1. rx_dest_realm parameter usage
    1.2. rx_forced_peer parameter usage
    1.3. rx_auth_expiry parameter usage
-   1.4. cdp_event_latency parameter usage
-   1.5. cdp_event_threshold parameter usage
-   1.6. cdp_event_latency_log parameter usage
-   1.7. authorize_video_flow parameter usage
-   1.8. cdp_event_list_size_threshold parameter usage
-   1.9. audio_default_bandwidth parameter usage
-   1.10. video_default_bandwidth parameter usage
-   1.11. early_qosrelease_reason parameter usage
-   1.12. confirmed_qosrelease_headers parameter usage
-   1.13. regex_sdp_ip_prefix_to_maintain_in_fd parameter usage
-   1.14. Rx_AAR_Register
-   1.15. Rx_AAR
+   1.4. rx_auth_expiry parameter usage
+   1.5. cdp_event_latency parameter usage
+   1.6. cdp_event_threshold parameter usage
+   1.7. cdp_event_latency_log parameter usage
+   1.8. authorize_video_flow parameter usage
+   1.9. cdp_event_list_size_threshold parameter usage
+   1.10. audio_default_bandwidth parameter usage
+   1.11. video_default_bandwidth parameter usage
+   1.12. early_qosrelease_reason parameter usage
+   1.13. confirmed_qosrelease_headers parameter usage
+   1.14. regex_sdp_ip_prefix_to_maintain_in_fd parameter usage
+   1.15. Rx_AAR_Register
+   1.16. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -97,16 +101,17 @@ Chapter 1. Admin Guide
         3.1. rx_dest_realm (string)
         3.2. rx_forced_peer (string)
         3.3. rx_auth_expiry (integer)
-        3.4. cdp_event_latency (integer)
-        3.5. cdp_event_threshold (integer)
-        3.6. cdp_event_latency_log (integer)
-        3.7. authorize_video_flow (integer)
-        3.8. cdp_event_list_size_threshold (integer)
-        3.9. audio_default_bandwidth (integer)
-        3.10. video_default_bandwidth (integer)
-        3.11. early_qosrelease_reason (String)
-        3.12. confirmed_qosrelease_headers (String)
-        3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
+        3.4. af_signaling_ip (string)
+        3.5. cdp_event_latency (integer)
+        3.6. cdp_event_threshold (integer)
+        3.7. cdp_event_latency_log (integer)
+        3.8. authorize_video_flow (integer)
+        3.9. cdp_event_list_size_threshold (integer)
+        3.10. audio_default_bandwidth (integer)
+        3.11. video_default_bandwidth (integer)
+        3.12. early_qosrelease_reason (String)
+        3.13. confirmed_qosrelease_headers (String)
+        3.14. regex_sdp_ip_prefix_to_maintain_in_fd (String)
 
    4. Functions
 
@@ -150,16 +155,17 @@ Chapter 1. Admin Guide
    3.1. rx_dest_realm (string)
    3.2. rx_forced_peer (string)
    3.3. rx_auth_expiry (integer)
-   3.4. cdp_event_latency (integer)
-   3.5. cdp_event_threshold (integer)
-   3.6. cdp_event_latency_log (integer)
-   3.7. authorize_video_flow (integer)
-   3.8. cdp_event_list_size_threshold (integer)
-   3.9. audio_default_bandwidth (integer)
-   3.10. video_default_bandwidth (integer)
-   3.11. early_qosrelease_reason (String)
-   3.12. confirmed_qosrelease_headers (String)
-   3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
+   3.4. af_signaling_ip (string)
+   3.5. cdp_event_latency (integer)
+   3.6. cdp_event_threshold (integer)
+   3.7. cdp_event_latency_log (integer)
+   3.8. authorize_video_flow (integer)
+   3.9. cdp_event_list_size_threshold (integer)
+   3.10. audio_default_bandwidth (integer)
+   3.11. video_default_bandwidth (integer)
+   3.12. early_qosrelease_reason (String)
+   3.13. confirmed_qosrelease_headers (String)
+   3.14. regex_sdp_ip_prefix_to_maintain_in_fd (String)
 
 3.1. rx_dest_realm (string)
 
@@ -200,19 +206,34 @@ modparam("ims_qos", "rx_forced_peer", "pcrf.ims.smilecoms.com")
 modparam("ims_qos", "rx_auth_expiry", 14400)
 ...
 
-3.4. cdp_event_latency (integer)
+3.4. af_signaling_ip (string)
+
+   Defines the IP address to use in the flow description for the media
+   flow of the SIP registration. This is known in EPC as the AF-Signaling
+   path and usually would create a dedicated bearer for the SIP signaling
+   between the UE IP and the P-CSCF IP. Usually set this value to the IP
+   address of the P-CSCF.
+
+   Default value is 127.0.0.1 - dummy value.
+
+   Example 1.4. rx_auth_expiry parameter usage
+...
+modparam("ims_qos", "af_signaling_ip", "192.168.1.45")
+...
+
+3.5. cdp_event_latency (integer)
 
    This is a flag to determine whether or slow CDP responses should be
    reported in the log file. 1 is enabled and 0 is disabled.
 
    Default value is 1.
 
-   Example 1.4. cdp_event_latency parameter usage
+   Example 1.5. cdp_event_latency parameter usage
 ...
 modparam("ims_qos", "cdp_event_latency", 1)
 ...
 
-3.5. cdp_event_threshold (integer)
+3.6. cdp_event_threshold (integer)
 
    This time in milliseconds is the limit we should report a CDP response
    as slow. i.e. if a CDP response exceeds this limit it will be reported
@@ -221,12 +242,12 @@ modparam("ims_qos", "cdp_event_latency", 1)
 
    Default value is 500.
 
-   Example 1.5. cdp_event_threshold parameter usage
+   Example 1.6. cdp_event_threshold parameter usage
 ...
 modparam("ims_qos", "cdp_event_threshold", 500)
 ...
 
-3.6. cdp_event_latency_log (integer)
+3.7. cdp_event_latency_log (integer)
 
    This time log level at which we should report slow CDP responses. 0 is
    ERROR, 1 is WARN, 2 is INFO and 3 is DEBUG. This is only relevant is
@@ -234,12 +255,12 @@ modparam("ims_qos", "cdp_event_threshold", 500)
 
    Default value is 0.
 
-   Example 1.6. cdp_event_latency_log parameter usage
+   Example 1.7. cdp_event_latency_log parameter usage
 ...
 modparam("ims_qos", "cdp_event_latency_log", 1)
 ...
 
-3.7. authorize_video_flow (integer)
+3.8. authorize_video_flow (integer)
 
    This is a flag that specifies whether or not to authorize video flows.
    1 means video flows will be authorized over Rx and 0 means video flows
@@ -247,48 +268,48 @@ modparam("ims_qos", "cdp_event_latency_log", 1)
 
    Default value is 1.
 
-   Example 1.7. authorize_video_flow parameter usage
+   Example 1.8. authorize_video_flow parameter usage
 ...
 modparam("ims_qos", "authorize_video_flow", 0)
 ...
 
-3.8. cdp_event_list_size_threshold (integer)
+3.9. cdp_event_list_size_threshold (integer)
 
    This is a threshold on the size of the cdp event list. Once the queue
    exceeds this length a warning is logged. 0 disables this feature
 
    Default value is 0.
 
-   Example 1.8. cdp_event_list_size_threshold parameter usage
+   Example 1.9. cdp_event_list_size_threshold parameter usage
 ...
 modparam("ims_qos", "cdp_event_list_size_threshold", 10)
 ...
 
-3.9. audio_default_bandwidth (integer)
+3.10. audio_default_bandwidth (integer)
 
    This parameters defines the default bandwidth for Audio, if no
    "b=AS"-Parameter is found in the SDP.
 
    Default value is 64 (64 kBit)
 
-   Example 1.9. audio_default_bandwidth parameter usage
+   Example 1.10. audio_default_bandwidth parameter usage
 ...
 modparam("ims_qos", "audio_default_bandwidth", 32)
 ...
 
-3.10. video_default_bandwidth (integer)
+3.11. video_default_bandwidth (integer)
 
    This parameters defines the default bandwidth for Video, if no
    "b=AS"-Parameter is found in the SDP.
 
    Default value is 128 (128 kBit)
 
-   Example 1.10. video_default_bandwidth parameter usage
+   Example 1.11. video_default_bandwidth parameter usage
 ...
 modparam("ims_qos", "video_default_bandwidth", 256)
 ...
 
-3.11. early_qosrelease_reason (String)
+3.12. early_qosrelease_reason (String)
 
    This sets the default Reason, when a call is terminated in early stage
    due to QoS-failure.
@@ -296,12 +317,12 @@ modparam("ims_qos", "video_default_bandwidth", 256)
    Default value is "QoS released", an call in early stage would be
    released with "488 QoS released".
 
-   Example 1.11. early_qosrelease_reason parameter usage
+   Example 1.12. early_qosrelease_reason parameter usage
 ...
 modparam("ims_qos", "early_qosrelease_reason", "Sorry - QoS failed")
 ...
 
-3.12. confirmed_qosrelease_headers (String)
+3.13. confirmed_qosrelease_headers (String)
 
    These headers are added to the BYE-Message, when an confirmed call is
    terminated due to a QoS failure.
@@ -310,12 +331,12 @@ modparam("ims_qos", "early_qosrelease_reason", "Sorry - QoS failed")
 
    The headers must end with CRLF.
 
-   Example 1.12. confirmed_qosrelease_headers parameter usage
+   Example 1.13. confirmed_qosrelease_headers parameter usage
 ...
 modparam("ims_qos", "confirmed_qosrelease_headers", "X-Reason: QoS failed\r\n")
 ...
 
-3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
+3.14. regex_sdp_ip_prefix_to_maintain_in_fd (String)
 
    The flow-description AVP is typically populated using IP:port
    information present in the SDP. Certain (buggy) UEs can change ports
@@ -327,7 +348,7 @@ modparam("ims_qos", "confirmed_qosrelease_headers", "X-Reason: QoS failed\r\n")
 
    Default value is "", no IPs replaced
 
-   Example 1.13. regex_sdp_ip_prefix_to_maintain_in_fd parameter usage
+   Example 1.14. regex_sdp_ip_prefix_to_maintain_in_fd parameter usage
 ...
 modparam("ims_qos", "regex_sdp_ip_prefix_to_maintain_in_fd", "10.21.0.1")
 ...
@@ -362,7 +383,7 @@ modparam("ims_qos", "regex_sdp_ip_prefix_to_maintain_in_fd", "10.21.0.1")
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.14. Rx_AAR_Register
+   Example 1.15. Rx_AAR_Register
 ...
 if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
     exit;
@@ -404,7 +425,7 @@ route[REG_AAR_REPLY]
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.15. Rx_AAR
+   Example 1.16. Rx_AAR
 ...
 if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
     exit;
