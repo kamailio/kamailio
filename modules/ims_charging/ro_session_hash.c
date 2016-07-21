@@ -220,7 +220,7 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     new_ro_session->reserved_secs = requested_secs;
     new_ro_session->valid_for = validity_timeout;
 
-    new_ro_session->hop_by_hop = 1;
+    new_ro_session->hop_by_hop = 0;
     new_ro_session->next = 0;
     new_ro_session->dlg_h_entry = dlg_h_entry;
     new_ro_session->dlg_h_id = dlg_h_id;
