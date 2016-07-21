@@ -21,7 +21,7 @@ int Ro_write_event_type_avps(AAA_AVP_LIST * avp_list, event_type_t * x) {
             goto error;
 
     if (x->expires)
-        if (!cdp_avp->epcapp.add_Expires(avp_list, *(x->expires)))
+        if (!cdp_avp->epcapp.add_Expires(&aList, *(x->expires)))
             goto error;
 
     if (!cdp_avp->epcapp.add_Event_Type(avp_list, &aList, AVP_FREE_DATA))	//TODO: used to be DONT FREE
