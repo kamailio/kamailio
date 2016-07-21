@@ -280,7 +280,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error
     used_secs = rint((now - ((timeout_or_error==1 && i_req->ro_session->last_event_timestamp_backup>0)?i_req->ro_session->last_event_timestamp_backup : i_req->ro_session->last_event_timestamp)) / (float) 1000000);
 
     /* check to make sure diameter server is giving us sane values */
-    if (i_req->new_credit > i_req->credit_valid_for) {
+    if (i_req->credit_valid_for !=0 && i_req->new_credit > i_req->credit_valid_for) {
         LM_WARN("That's weird, Diameter server gave us credit with a lower validity period :D. Setting reserved time to validity period instead \n");
         i_req->new_credit = i_req->credit_valid_for;
     }
