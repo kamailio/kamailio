@@ -50,6 +50,7 @@
 #include "../../sr_module.h"
 #include "../../timer.h"
 #include "../../dprint.h"
+#include "../../rpc_lookup.h"
 #include "../../error.h"
 #include "../../socket_info.h"
 #include "../../pvar.h"
@@ -74,6 +75,7 @@
 #include "registrar_notify.h"
 #include "../cdp_avp/mod_export.h"
 #include "pvt_message.h"
+#include "reg_rpc.h"
 
 MODULE_VERSION
 
@@ -271,8 +273,9 @@ static param_export_t params[] = {
     {"subscription_expires_range", INT_PARAM, &subscription_expires_range},
     {"user_data_always", INT_PARAM, &user_data_always},
     {"notification_list_size_threshold", INT_PARAM, &notification_list_size_threshold},
-    {"notification_processes", INT_PARAM, &notification_processes},
-    {"send_vs_callid_avp", INT_PARAM, &send_vs_callid_avp},
+	{"notification_processes", INT_PARAM, &notification_processes},
+	{"send_vs_callid_avp", INT_PARAM, &send_vs_callid_avp},
+	
     {0, 0, 0}
 };
 
@@ -318,6 +321,11 @@ static int mod_init(void) {
     str s;
     bind_usrloc_t bind_usrloc;
     qvalue_t dq;
+
+	if (rpc_register_array(reg_rpc) != 0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
     
     callback_singleton = shm_malloc(sizeof (int));
     *callback_singleton = 0;
