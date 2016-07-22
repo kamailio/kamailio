@@ -64,7 +64,7 @@ Richard Good
 
         5. RPC Commands
 
-              5.1. ulpcscf.status
+              5.1. regscscf.dereg_impu
 
         6. Statistics
 
@@ -156,7 +156,7 @@ Chapter 1. Admin Guide
 
    5. RPC Commands
 
-        5.1. ulpcscf.status
+        5.1. regscscf.dereg_impu
 
    6. Statistics
 
@@ -752,13 +752,13 @@ if (can_publish_reg("location")){
 
 5. RPC Commands
 
-   5.1. ulpcscf.status
+   5.1. regscscf.dereg_impu
 
    exported RPC commands.
 
-5.1. ulpcscf.status
+5.1. regscscf.dereg_impu
 
-   Status of pcscf_usrloc, AORs, max slots, etc.
+   Initiate network de-register of IMPU
 
 6. Statistics
 
