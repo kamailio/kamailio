@@ -129,6 +129,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 error:
 	if (r) free_rr(&r);
 	free_rr(head); /* Free any contacts created so far */
+	LM_ERR("Failed parsing rr header body [%.*s]\n", len, ZSW(buf));
 	return -1;
 
 ok:
