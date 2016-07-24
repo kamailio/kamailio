@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -46,7 +46,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 	/* Make a temporary copy of the string pointer */
 	if(buf==0 || len<=0)
 	{
-		DBG("parse_rr_body(): No body for record-route\n");
+		DBG("No body for record-route\n");
 		*head = 0;
 		return -2;
 	}
@@ -57,81 +57,81 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 	last = 0;
 
 	while(1) {
-		     /* Allocate and clear rr structure */
+		/* Allocate and clear rr structure */
 		r = (rr_t*)pkg_malloc(sizeof(rr_t));
 		if (!r) {
-			LOG(L_ERR, "parse_rr(): No memory left\n");
+			LOG(L_ERR, "No memory left\n");
 			goto error;
 		}
 		memset(r, 0, sizeof(rr_t));
-		
-		     /* Parse name-addr part of the header */
+
+		/* Parse name-addr part of the header */
 		if (parse_nameaddr(&s, &r->nameaddr) < 0) {
-			LOG(L_ERR, "parse_rr(): Error while parsing name-addr (%.*s)\n",
+			LOG(L_ERR, "Error while parsing name-addr (%.*s)\n",
 					s.len, ZSW(s.s));
 			goto error;
 		}
 		r->len = r->nameaddr.len;
 
-		     /* Shift just behind the closing > */
+		/* Shift just behind the closing > */
 		s.s = r->nameaddr.name.s + r->nameaddr.len;  /* Point just behind > */
 		s.len -= r->nameaddr.len;
 
 		trim_leading(&s); /* Skip any white-chars */
 
 		if (s.len == 0) goto ok; /* Nothing left, finish */
-		
+
 		if (s.s[0] == ';') {         /* Route parameter found */
 			s.s++;
 			s.len--;
 			trim_leading(&s);
-			
+
 			if (s.len == 0) {
-				LOG(L_ERR, "parse_rr(): Error while parsing params\n");
+				LOG(L_ERR, "Error while parsing params\n");
 				goto error;
 			}
 
-			     /* Parse all parameters */
+			/* Parse all parameters */
 			if (parse_params(&s, CLASS_ANY, &hooks, &r->params) < 0) {
-				LOG(L_ERR, "parse_rr(): Error while parsing params\n");
+				LOG(L_ERR, "Error while parsing params\n");
 				goto error;
 			}
 			r->len = r->params->name.s + r->params->len - r->nameaddr.name.s;
 
-			     /* Copy hooks */
-			     /*r->r2 = hooks.rr.r2; */
+			/* Copy hooks */
+			/*r->r2 = hooks.rr.r2; */
 
 			trim_leading(&s);
 			if (s.len == 0) goto ok;
 		}
 
 		if (s.s[0] != ',') {
-			LOG(L_ERR, "parse_rr(): Invalid character '%c', comma expected\n", s.s[0]);
+			LOG(L_ERR, "Invalid character '%c', comma expected\n", s.s[0]);
 			goto error;
 		}
-		
-		     /* Next character is comma or end of header*/
+
+		/* Next character is comma or end of header*/
 		s.s++;
 		s.len--;
 		trim_leading(&s);
 
 		if (s.len == 0) {
-			LOG(L_ERR, "parse_rr(): Text after comma missing\n");
+			LOG(L_ERR, "Text after comma missing\n");
 			goto error;
 		}
 
-		     /* Append the structure as last parameter of the linked list */
+		/* Append the structure as last parameter of the linked list */
 		if (!*head) *head = r;
 		if (last) last->next = r;
 		last = r;
 	}
 
- error:
+error:
 	if (r) free_rr(&r);
 	free_rr(head); /* Free any contacts created so far */
 	return -1;
 
- ok:
+ok:
 	if (!*head) *head = r;
 	if (last) last->next = r;
 	return 0;
@@ -153,12 +153,12 @@ int parse_rr(struct hdr_field* _h)
 	rr_t* r = NULL;
 
 	if (!_h) {
-		LOG(L_ERR, "parse_rr(): Invalid parameter value\n");
+		LOG(L_ERR, "Invalid parameter value\n");
 		return -1;
 	}
 
 	if (_h->parsed) {
-		     /* Already parsed, return */
+		/* Already parsed, return */
 		return 0;
 	}
 
@@ -242,12 +242,12 @@ static inline void xlate_pointers(rr_t* _orig, rr_t* _r)
 {
 	param_t* ptr;
 	_r->nameaddr.uri.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, _r->nameaddr.uri.s);
-	
+
 	ptr = _r->params;
 	while(ptr) {
-		     /*		if (ptr->type == P_R2) _r->r2 = ptr; */
+		/*		if (ptr->type == P_R2) _r->r2 = ptr; */
 		ptr->name.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, ptr->name.s);
-		ptr->body.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, ptr->body.s);		
+		ptr->body.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, ptr->body.s);
 		ptr = ptr->next;
 	}
 }
@@ -262,7 +262,7 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 	rr_t* res, *prev, *it;
 
 	if (!_new || !_r) {
-		LOG(L_ERR, "duplicate_rr(): Invalid parameter value\n");
+		LOG(L_ERR, "Invalid parameter value\n");
 		return -1;
 	}
 	prev  = NULL;
@@ -279,7 +279,7 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 		if (_shm) res = shm_malloc(sizeof(rr_t) + len);
 		else res = pkg_malloc(sizeof(rr_t) + len);
 		if (!res) {
-			LOG(L_ERR, "duplicate_rr(): No memory left\n");
+			LOG(L_ERR, "No memory left\n");
 			return -2;
 		}
 		memcpy(res, it, sizeof(rr_t));
@@ -294,7 +294,7 @@ static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 		}
 
 		if (ret < 0) {
-			LOG(L_ERR, "duplicate_rr(): Error while duplicating parameters\n");
+			LOG(L_ERR, "Error while duplicating parameters\n");
 			if (_shm) shm_free(res);
 			else pkg_free(res);
 			return -3;
@@ -353,9 +353,9 @@ int print_rr_body(struct hdr_field *iroute, str *oroute, int order,
 	route_len= 0;
 	memset(route, 0, MAX_RR_HDRS*sizeof(str));
 
-	while (iroute!=NULL) 
+	while (iroute!=NULL)
 	{
-		if (parse_rr(iroute) < 0) 
+		if (parse_rr(iroute) < 0)
 		{
 			LM_ERR("failed to parse RR\n");
 			goto error;
@@ -381,18 +381,18 @@ int print_rr_body(struct hdr_field *iroute, str *oroute, int order,
 	}
 
 	for(i=0;i<n;i++){
-		if(!nb_recs || (nb_recs && 
-		 ( (!order&& (i>=*nb_recs)) || (order && (i<=(n-*nb_recs)) )) ) )
+		if(!nb_recs || (nb_recs
+			&& ( (!order&& (i>=*nb_recs)) || (order && (i<=(n-*nb_recs)) )) ) )
 		{
 			route_len+= route[i].len;
 			nr++;
 		}
-	
+
 	}
 
 	if(nb_recs)
 		LM_DBG("skipping %i route records\n", *nb_recs);
-	
+
 	route_len += --nr; /* for commas */
 
 	oroute->s=(char*)pkg_malloc(route_len);
@@ -416,9 +416,9 @@ int print_rr_body(struct hdr_field *iroute, str *oroute, int order,
 				*(cp++) = ',';
 		}
 	} else {
-		
+
 		i = (nb_recs == NULL) ? n-1 : (n-*nb_recs-1);
-			
+
 		while (i>=0)
 		{
 			memcpy(cp, route[i].s, route[i].len);
@@ -442,7 +442,7 @@ error:
 
 
 /*!
- * Path must be available. Function returns the first uri 
+ * Path must be available. Function returns the first uri
  * from Path without any duplication.
  */
 int get_path_dst_uri(str *_p, str *_dst)
@@ -450,7 +450,7 @@ int get_path_dst_uri(str *_p, str *_dst)
 	rr_t *route = 0;
 
 	LM_DBG("path for branch: '%.*s'\n", _p->len, _p->s);
-	if(parse_rr_body(_p->s, _p->len, &route) < 0) {	
+	if(parse_rr_body(_p->s, _p->len, &route) < 0) {
 		LM_ERR("failed to parse Path body\n");
 		return -1;
 	}
@@ -462,6 +462,6 @@ int get_path_dst_uri(str *_p, str *_dst)
 	*_dst = route->nameaddr.uri;
 
 	free_rr(&route);
-	
+
 	return 0;
 }
