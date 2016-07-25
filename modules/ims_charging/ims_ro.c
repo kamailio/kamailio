@@ -638,6 +638,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     }
 
     if (ret != 1) {
+        ccr = 0;	// If an error is returned from cdp AAASendMessage, the message has been freed there
         goto error;
     }
     //    cdpb.AAASessionsUnlock(auth->hash);
