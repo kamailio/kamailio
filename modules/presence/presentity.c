@@ -550,6 +550,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				goto error;
 			}
 
+			free(dialog_id);
+
 			LM_DBG("inserting %d cols into table\n",n_query_cols);
 
 			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0)
@@ -650,9 +652,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				goto error;
 			}
 
+			free(dialog_id);
+
 			if(is_dialog== 1) /* if the new body has a dialog - overwrite */
 			{
-				free(dialog_id);
 				goto after_dialog_check;
 			}
 
