@@ -175,10 +175,10 @@ int check_contacts(struct sip_msg* _m, int* _s)
 
 		*_s = 1;
 	} else { /* The first Contact HF is not star */
-		/* Message must contain no star Contact HF */
-		p = _m->contact->next;
+		p = _m->contact;
 		while(p) {
 			if (p->type == HDR_CONTACT_T) {
+				/* Message must contain no star Contact HF */
 				if (((contact_body_t*)p->parsed)->star == 1) {
 					LM_WARN("star contact cannot be mixed with other contacts\n");
 					rerrno = R_STAR_CONT;
@@ -189,7 +189,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 					if (c->uri.len > CONTACT_MAX_SIZE) {
 						LM_WARN("contact uri is too long: [%.*s]\n", c->uri.len, c->uri.s);
 						rerrno = R_CONTACT_LEN;
-						return 1;						
+						return 1;
 					}
 					if (c->received && c->received->len>RECEIVED_MAX_SIZE) {
 						LM_WARN("received attribute of contact is too long\n");
