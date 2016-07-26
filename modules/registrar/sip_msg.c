@@ -150,12 +150,14 @@ int check_contacts(struct sip_msg* _m, int* _s)
 		/* The first Contact HF is star */
 		/* Expires must be zero */
 		if (get_expires_hf(_m) != 0) {
+			LM_WARN("expires must be 0 for star contact\n");
 			rerrno = R_STAR_EXP;
 			return 1;
 		}
 
 		/* Message must contain no contacts */
 		if (((contact_body_t*)_m->contact->parsed)->contacts) {
+			LM_WARN("star contact cannot be mixed with other contacts\n");
 			rerrno = R_STAR_CONT;
 			return 1;
 		}
@@ -164,6 +166,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 		p = _m->contact->next;
 		while(p) {
 			if (p->type == HDR_CONTACT_T) {
+				LM_WARN("star contact cannot be mixed with other contacts\n");
 				rerrno = R_STAR_CONT;
 				return 1;
 			}
@@ -177,13 +180,19 @@ int check_contacts(struct sip_msg* _m, int* _s)
 		while(p) {
 			if (p->type == HDR_CONTACT_T) {
 				if (((contact_body_t*)p->parsed)->star == 1) {
+					LM_WARN("star contact cannot be mixed with other contacts\n");
 					rerrno = R_STAR_CONT;
 					return 1;
 				}
-				/* check also the lenght of all contacts */
+				/* check also the length of all contacts */
 				for(c=((contact_body_t*)p->parsed)->contacts ; c ; c=c->next) {
-					if (c->uri.len > CONTACT_MAX_SIZE
-							|| (c->received && c->received->len>RECEIVED_MAX_SIZE) ) {
+					if (c->uri.len > CONTACT_MAX_SIZE) {
+						LM_WARN("contact uri is too long: [%.*s]\n", c->uri.len, c->uri.s);
+						rerrno = R_CONTACT_LEN;
+						return 1;						
+					}
+					if (c->received && c->received->len>RECEIVED_MAX_SIZE) {
+						LM_WARN("received attribute of contact is too long\n");
 						rerrno = R_CONTACT_LEN;
 						return 1;
 					}
