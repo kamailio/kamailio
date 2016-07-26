@@ -190,7 +190,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 				}
 				/* check also the length of all contacts */
 				for(c=((contact_body_t*)p->parsed)->contacts ; c ; c=c->next) {
-					if (c->uri.len > CONTACT_MAX_SIZE) {
+					if (c->uri.len > contact_max_size) {
 						LM_WARN("contact uri is too long: [%.*s]\n", c->uri.len, c->uri.s);
 						rerrno = R_CONTACT_LEN;
 						return 1;

@@ -106,6 +106,8 @@ int reg_outbound_mode = 0;
 int reg_regid_mode = 0;
 int reg_flow_timer = 0;
 
+int contact_max_size = 255; /* max size of contact URIs */
+
 str match_callid_name = str_init("match_callid");
 str match_received_name = str_init("match_received");
 str match_contact_name = str_init("match_contact");
@@ -225,6 +227,7 @@ static param_export_t params[] = {
 	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
 	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
+	{"contact_max_size",   INT_PARAM, &contact_max_size					},
 	{0, 0, 0}
 };
 
