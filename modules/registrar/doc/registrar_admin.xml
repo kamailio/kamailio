@@ -929,6 +929,36 @@ modparam("registrar", "flow_timer", 25)
 		</example>
 	</section>
 
+	<section id="registrar.p.contact_max_size">
+		<title><varname>contact_max_size</varname> (integer)</title>
+		<para>
+		Max size of URIs in <quote>Contact:</quote> header.
+		</para>
+		<para>
+		The size of URIs in <quote>Contact:</quote> headers are checked to be
+		lower or equal to this value.
+		A warning is logged and a 400 Bad Request is sent in response to REGISTER
+		requests with contact URIs that are longer than this value.
+		</para>
+		<para>
+		If a database is used then you must make sure that your database model supports
+		strings of the configured size in the column <quote>contact</quote> of the table
+		specified in <quote>save()</quote> function.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 255.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_max_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "contact_max_size", 500)
+...
+		</programlisting>
+		</example>
+	</section>
 
 	</section>
 

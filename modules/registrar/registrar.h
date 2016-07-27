@@ -39,7 +39,7 @@
 
 /* if DB support is used, this values must not exceed the
  * storage capacity of the DB columns! See db/schema/entities.xml */
-#define CONTACT_MAX_SIZE       255
+extern int contact_max_size; /* configurable using module parameter "contact_max_size" instead of compile time constant */
 #define RECEIVED_MAX_SIZE      255
 #define USERNAME_MAX_SIZE      64
 #define DOMAIN_MAX_SIZE        128
