@@ -383,6 +383,8 @@ int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog
 				old_presentity.event = presentity->event;
 				old_presentity.etag = tmp_db_etag;
 
+				LM_WARN("Presentity already exists - deleting it\n");
+
 				delete_presentity(&old_presentity);
 
 				pa_dbf.free_result(pa_db, result);
