@@ -303,6 +303,44 @@ int check_if_dialog(str body, int *is_dialog, char **dialog_id)
 	return 0;
 }
 
+int parse_dialog_state_from_body(str body, int *is_dialog, char **state)
+{
+	xmlDocPtr doc;
+	xmlNodePtr node;
+	xmlNodePtr childNode;
+	char *tmp_state;
+
+	*state = NULL;
+	*is_dialog = 0;
+
+	doc = xmlParseMemory(body.s, body.len);
+	if(doc== NULL)
+	{
+		LM_ERR("failed to parse xml document\n");
+		return -1;
+	}
+
+	node = doc->children;
+	node = xmlNodeGetChildByName(node, "dialog");
+
+	if(node != NULL)
+	{
+		*is_dialog = 1;
+
+		childNode = xmlNodeGetChildByName(node, "state");
+		tmp_state = (char *)xmlNodeGetContent(childNode);
+
+		if (tmp_state != NULL)
+		{
+			*state = strdup(tmp_state);
+			xmlFree(tmp_state);
+		}
+	}
+
+	xmlFreeDoc(doc);
+	return 0;
+}
+
 int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog_id) {
 	db_key_t query_cols[13], result_cols[6];
 	db_op_t  query_ops[13];
@@ -401,6 +439,107 @@ int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog
 	pa_dbf.free_result(pa_db, result);
 	result = NULL;
 	return 0;
+}
+
+int get_dialog_state(presentity_t* presentity, char** state)
+{
+	db_key_t query_cols[13], result_cols[6];
+	db_op_t  query_ops[13];
+	db_val_t query_vals[13];
+	int n_query_cols = 0;
+	int rez_body_col = 0, n_result_cols= 0;
+	db1_res_t *result = NULL;
+	db_row_t *row = NULL;
+	db_val_t *row_vals = NULL;
+	int db_is_dialog = 0;
+	str tmp_db_body;
+	int i = 0, parse_state_result = 0;
+
+	*state = NULL;
+
+	query_cols[n_query_cols] = &str_domain_col;
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = presentity->domain;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_username_col;
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = presentity->user;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_event_col;
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = presentity->event->name;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_etag_col;
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = presentity->etag;
+	n_query_cols++;
+
+	result_cols[rez_body_col=n_result_cols++] = &str_body_col;
+
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
+	{
+		LM_ERR("unsuccessful sql use table\n");
+		return -1;
+	}
+
+	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+	 result_cols, n_query_cols, n_result_cols, 0, &result) < 0)
+	{
+		LM_ERR("unsuccessful sql query\n");
+		return -2;
+	}
+
+	if(result == NULL)
+		return -3;
+
+	// No results from query definitely means no dialog exists
+	if (result->n <= 0)
+		return 0;
+
+	// Loop the rows returned from the DB
+	for (i=0; i < result->n; i++)
+	{
+		row = &result->rows[i];
+		row_vals = ROW_VALUES(row);
+		tmp_db_body.s = (char*)row_vals[rez_body_col].val.string_val;
+		tmp_db_body.len = strlen(tmp_db_body.s);
+
+		parse_state_result = parse_dialog_state_from_body(tmp_db_body, &db_is_dialog, state);
+
+		pa_dbf.free_result(pa_db, result);
+		result = NULL;
+
+		return parse_state_result;
+	}
+
+	pa_dbf.free_result(pa_db, result);
+	result = NULL;
+	return 0;
+}
+
+int is_dialog_terminated(presentity_t* presentity)
+{
+	char *state = NULL;
+	int rtn;
+
+	get_dialog_state(presentity, &state);
+
+	rtn = state && !strcasecmp(state, "terminated");
+
+	free(state);
+
+	return rtn;
 }
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
@@ -826,6 +965,25 @@ after_dialog_check:
 		}
 		else
 			cur_etag= presentity->etag;
+
+		if (is_dialog_terminated(presentity))
+		{
+			LM_WARN("Trying to update an already terminated state. Skipping update.\n");
+
+			/* send 200OK */
+			if (publ_send200ok(msg, presentity->expires, cur_etag)< 0)
+			{
+				LM_ERR("sending 200OK reply\n");
+				goto error;
+			}
+			if (sent_reply) *sent_reply= 1;
+
+			if(etag.s)
+				pkg_free(etag.s);
+			etag.s= NULL;
+
+			goto done;
+		}
 
 		update_keys[n_update_cols] = &str_expires_col;
 		update_vals[n_update_cols].type = DB1_INT;
