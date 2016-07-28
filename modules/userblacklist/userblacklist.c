@@ -534,6 +534,9 @@ static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 			/* LM_DBG("whitelisted"); */
 			ret = 1; /* found, but is whitelisted */
 		}
+		else {
+			LM_DBG("entry %s is blacklisted\n", req_number);
+		}
 	}
 	else {
 		/* LM_ERR("not found"); */
@@ -541,7 +544,6 @@ static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 	}
 	lock_release(lock);
 
-	LM_DBG("entry %s is blacklisted\n", req_number);
 	return ret;
 }
 
@@ -580,6 +582,9 @@ static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 			/* LM_DBG("whitelisted"); */
 			ret = 1; /* found, but is whitelisted */
 		}
+		else {
+			LM_DBG("entry %s is blacklisted\n", req_number);
+		}
 	}
 	else {
 		/* LM_ERR("not found"); */
@@ -587,7 +592,6 @@ static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 	}
 	lock_release(lock);
 
-	LM_DBG("entry %s is blacklisted\n", req_number);
 	return ret;
 }
 
