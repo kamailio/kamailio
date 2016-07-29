@@ -93,14 +93,14 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 
 	tmp=parse_hname(buf, end, hdr);
 	if (hdr->type==HDR_ERROR_T){
-		LOG(L_ERR, "ERROR: get_hdr_field: bad header\n");
+		ERR("bad header\n");
 		goto error;
 	}
 
 	/* eliminate leading whitespace */
 	tmp=eat_lws_end(tmp, end);
 	if (tmp>=end) {
-		LOG(L_ERR, "ERROR: get_hdr_field: HF empty\n");
+		ERR("HF empty\n");
 		goto error;
 	}
 
@@ -115,14 +115,14 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 			via_cnt++;
 			vb=pkg_malloc(sizeof(struct via_body));
 			if (vb==0){
-				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				ERR("out of memory\n");
 				goto error;
 			}
 			memset(vb,0,sizeof(struct via_body));
 			hdr->body.s=tmp;
 			tmp=parse_via(tmp, end, vb);
 			if (vb->error==PARSE_ERROR){
-				LOG(L_ERR, "ERROR: get_hdr_field: bad via\n");
+				ERR("bad via\n");
 				free_via_list(vb);
 				goto error;
 			}
@@ -134,69 +134,64 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 		case HDR_CSEQ_T:
 			cseq_b=pkg_malloc(sizeof(struct cseq_body));
 			if (cseq_b==0){
-				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				ERR("out of memory\n");
 				goto error;
 			}
 			memset(cseq_b, 0, sizeof(struct cseq_body));
 			hdr->body.s=tmp;
 			tmp=parse_cseq(tmp, end, cseq_b);
 			if (cseq_b->error==PARSE_ERROR){
-				LOG(L_ERR, "ERROR: get_hdr_field: bad cseq\n");
+				ERR("bad cseq\n");
 				free_cseq(cseq_b);
 				goto error;
 			}
 			hdr->parsed=cseq_b;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("get_hdr_field: cseq <%.*s>: <%.*s> <%.*s>\n",
-					hdr->name.len, ZSW(hdr->name.s),
-					cseq_b->number.len, ZSW(cseq_b->number.s),
-					cseq_b->method.len, cseq_b->method.s);
+			DBG("cseq <%.*s>: <%.*s> <%.*s>\n", hdr->name.len, ZSW(hdr->name.s),
+					cseq_b->number.len, ZSW(cseq_b->number.s), cseq_b->method.len,
+					cseq_b->method.s);
 			break;
 		case HDR_TO_T:
 			to_b=pkg_malloc(sizeof(struct to_body));
 			if (to_b==0){
-				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				ERR("out of memory\n");
 				goto error;
 			}
 			memset(to_b, 0, sizeof(struct to_body));
 			hdr->body.s=tmp;
 			tmp=parse_to(tmp, end,to_b);
 			if (to_b->error==PARSE_ERROR){
-				LOG(L_ERR, "ERROR: get_hdr_field: bad to header\n");
+				ERR("bad to header\n");
 				free_to(to_b);
 				goto error;
 			}
 			hdr->parsed=to_b;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("DEBUG: get_hdr_field: <%.*s> [%d]; uri=[%.*s] \n",
-				hdr->name.len, ZSW(hdr->name.s),
-				hdr->body.len, to_b->uri.len,ZSW(to_b->uri.s));
-			DBG("DEBUG: to body [%.*s]\n",to_b->body.len,
-				ZSW(to_b->body.s));
+			DBG("<%.*s> [%d]; uri=[%.*s]\n", hdr->name.len, ZSW(hdr->name.s),
+					hdr->body.len, to_b->uri.len, ZSW(to_b->uri.s));
+			DBG("to body [%.*s]\n", to_b->body.len, ZSW(to_b->body.s));
 			break;
 		case HDR_CONTENTLENGTH_T:
 			hdr->body.s=tmp;
 			tmp=parse_content_length(tmp,end, &integer);
 			if (tmp==0){
-				LOG(L_ERR, "ERROR:get_hdr_field: bad content_length header\n");
+				ERR("bad content_length header\n");
 				goto error;
 			}
 			hdr->parsed=(void*)(long)integer;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("DEBUG: get_hdr_body : content_length=%d\n",
-					(int)(long)hdr->parsed);
+			DBG("content_length=%d\n", (int)(long)hdr->parsed);
 			break;
 		case HDR_RETRY_AFTER_T:
 			hdr->body.s=tmp;
 			tmp=parse_retry_after(tmp,end, &uval, &err);
 			if (err){
-				LOG(L_ERR, "ERROR:get_hdr_field: bad retry_after header\n");
+				ERR("bad retry_after header\n");
 				goto error;
 			}
 			hdr->parsed=(void*)(unsigned long)uval;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("DEBUG: get_hdr_body : retry_after=%d\n",
-					(unsigned)(long)hdr->parsed);
+			DBG("retry_after=%d\n", (unsigned)(long)hdr->parsed);
 			break;
 		case HDR_IDENTITY_T:
 		case HDR_DATE_T:
@@ -255,9 +250,7 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 				if (match){
 					match++;
 				}else {
-					LOG(L_ERR,
-							"ERROR: get_hdr_field: bad body for <%s>(%d)\n",
-							hdr->name.s, hdr->type);
+					ERR("bad body for <%s>(%d)\n", hdr->name.s, hdr->type);
 					/* abort(); */
 					tmp=end;
 					goto error;
@@ -268,8 +261,7 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 			hdr->body.len=match-hdr->body.s;
 			break;
 		default:
-			LOG(L_CRIT, "BUG: get_hdr_field: unknown header type %d\n",
-					hdr->type);
+			BUG("unknown header type %d\n", hdr->type);
 			goto error;
 	}
 	/* jku: if \r covered by current length, shrink it */
@@ -277,7 +269,7 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 	hdr->len=tmp-hdr->name.s;
 	return tmp;
 error:
-	DBG("get_hdr_field: error exit\n");
+	DBG("error exit\n");
 	STATS_BAD_MSG_HDR();
 	hdr->type=HDR_ERROR_T;
 	hdr->len=tmp-hdr->name.s;
@@ -319,14 +311,14 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 		orig_flag=0;
 
 #ifdef EXTRA_DEBUG
-	DBG("parse_headers: flags=%llx\n", (unsigned long long)flags);
+	DBG("flags=%llx\n", (unsigned long long)flags);
 #endif
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
 		prefetch_loc_r(tmp+64, 1);
 		hf=pkg_malloc(sizeof(struct hdr_field));
 		if (unlikely(hf==0)){
 			ser_error=E_OUT_OF_MEM;
-			LOG(L_ERR, "ERROR:parse_headers: memory allocation error\n");
+			ERR("memory allocation error\n");
 			goto error;
 		}
 		memset(hf,0, sizeof(struct hdr_field));
@@ -334,8 +326,7 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 		rest=get_hdr_field(tmp, end, hf);
 		switch (hf->type){
 			case HDR_ERROR_T:
-				LOG(L_INFO,"ERROR: bad header field [%.*s]\n",
-					(end-tmp>20)?20:(int)(end-tmp), tmp);
+				ERR("bad header field [%.*s]\n", (end-tmp>20)?20:(int)(end-tmp), tmp);
 				goto  error;
 			case HDR_EOH_T:
 				msg->eoh=tmp; /* or rest?*/
@@ -492,10 +483,9 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				break;
 			case HDR_VIA_T:
 				msg->parsed_flag|=HDR_VIA_F;
-				DBG("parse_headers: Via found, flags=%llx\n",
-						(unsigned long long)flags);
+				DBG("Via found, flags=%llx\n", (unsigned long long)flags);
 				if (msg->via1==0) {
-					DBG("parse_headers: this is the first via\n");
+					DBG("this is the first via\n");
 					msg->h_via1=hf;
 					msg->via1=hf->parsed;
 					if (msg->via1->next){
@@ -506,7 +496,7 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 					msg->h_via2=hf;
 					msg->via2=hf->parsed;
 					msg->parsed_flag|=HDR_VIA2_F;
-					DBG("parse_headers: this is the second via\n");
+					DBG("this is the second via\n");
 				}
 				break;
 			case HDR_DATE_T:
@@ -541,8 +531,7 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				msg->parsed_flag|=HDR_REASON_F;
 				break;
 			default:
-				LOG(L_CRIT, "BUG: parse_headers: unknown header type %d\n",
-							hf->type);
+				BUG("unknown header type %d\n", hf->type);
 				goto error;
 		}
 		/* add the header to the list*/
@@ -554,10 +543,8 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 			msg->last_header=hf;
 		}
 #ifdef EXTRA_DEBUG
-		DBG("header field type %d, name=<%.*s>, body=<%.*s>\n",
-			hf->type,
-			hf->name.len, ZSW(hf->name.s),
-			hf->body.len, ZSW(hf->body.s));
+		DBG("header field type %d, name=<%.*s>, body=<%.*s>\n", hf->type,
+				hf->name.len, ZSW(hf->name.s), hf->body.len, ZSW(hf->body.s));
 #endif
 		tmp=rest;
 	}
@@ -601,22 +588,22 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 	tmp=rest;
 	switch(fl->type){
 		case SIP_INVALID:
-			DBG("parse_msg: invalid message\n");
+			DBG("invalid message\n");
 			goto error;
 			break;
 		case SIP_REQUEST:
 			DBG("SIP Request:\n");
-			DBG(" method:  <%.*s>\n",fl->u.request.method.len,
-				ZSW(fl->u.request.method.s));
-			DBG(" uri:     <%.*s>\n",fl->u.request.uri.len,
-				ZSW(fl->u.request.uri.s));
-			DBG(" version: <%.*s>\n",fl->u.request.version.len,
-				ZSW(fl->u.request.version.s));
+			DBG(" method:  <%.*s>\n", fl->u.request.method.len,
+					ZSW(fl->u.request.method.s));
+			DBG(" uri:     <%.*s>\n", fl->u.request.uri.len,
+					ZSW(fl->u.request.uri.s));
+			DBG(" version: <%.*s>\n", fl->u.request.version.len,
+					ZSW(fl->u.request.version.s));
 			flags=HDR_VIA_F;
 			break;
 		case SIP_REPLY:
 			DBG("SIP Reply  (status):\n");
-			DBG(" version: <%.*s>\n",fl->u.reply.version.len,
+			DBG(" version: <%.*s>\n", fl->u.reply.version.len,
 					ZSW(fl->u.reply.version.s));
 			DBG(" status:  <%.*s>\n", fl->u.reply.status.len,
 					ZSW(fl->u.reply.status.s));
@@ -627,7 +614,7 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 			flags=HDR_VIA_F;
 			break;
 		default:
-			DBG("unknown type %d\n",fl->type);
+			DBG("unknown type %d\n", fl->type);
 			goto error;
 	}
 	msg->unparsed=tmp;
@@ -638,41 +625,30 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 	/* dump parsed data */
 	if (msg->via1){
 		DBG("first via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
-			msg->via1->name.len,
-			ZSW(msg->via1->name.s),
-			msg->via1->version.len,
-			ZSW(msg->via1->version.s),
-			msg->via1->transport.len,
-			ZSW(msg->via1->transport.s),
-			msg->via1->host.len,
-			ZSW(msg->via1->host.s),
-			msg->via1->port_str.len,
-			ZSW(msg->via1->port_str.s),
-			msg->via1->port);
-		if (msg->via1->params.s)  DBG(";<%.*s>",
-				msg->via1->params.len, ZSW(msg->via1->params.s));
+				msg->via1->name.len, ZSW(msg->via1->name.s),
+				msg->via1->version.len, ZSW(msg->via1->version.s),
+				msg->via1->transport.len, ZSW(msg->via1->transport.s),
+				msg->via1->host.len, ZSW(msg->via1->host.s),
+				msg->via1->port_str.len, ZSW(msg->via1->port_str.s),
+				msg->via1->port);
+		if (msg->via1->params.s)
+			DBG(";<%.*s>", msg->via1->params.len, ZSW(msg->via1->params.s));
 		if (msg->via1->comment.s)
-				DBG(" <%.*s>",
-					msg->via1->comment.len, ZSW(msg->via1->comment.s));
+			DBG(" <%.*s>", msg->via1->comment.len, ZSW(msg->via1->comment.s));
 		DBG ("\n");
 	}
 	if (msg->via2){
 		DBG("second via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
-			msg->via2->name.len,
-			ZSW(msg->via2->name.s),
-			msg->via2->version.len,
-			ZSW(msg->via2->version.s),
-			msg->via2->transport.len,
-			ZSW(msg->via2->transport.s),
-			msg->via2->host.len,
-			ZSW(msg->via2->host.s),
-			msg->via2->port_str.len,
-			ZSW(msg->via2->port_str.s),
-			msg->via2->port);
-		if (msg->via2->params.s)  DBG(";<%.*s>",
-				msg->via2->params.len, ZSW(msg->via2->params.s));
-		if (msg->via2->comment.s) DBG(" <%.*s>",
-				msg->via2->comment.len, ZSW(msg->via2->comment.s));
+				msg->via2->name.len, ZSW(msg->via2->name.s),
+				msg->via2->version.len, ZSW(msg->via2->version.s),
+				msg->via2->transport.len, ZSW(msg->via2->transport.s),
+				msg->via2->host.len, ZSW(msg->via2->host.s),
+				msg->via2->port_str.len, ZSW(msg->via2->port_str.s),
+				msg->via2->port);
+		if (msg->via2->params.s)
+			DBG(";<%.*s>", msg->via2->params.len, ZSW(msg->via2->params.s));
+		if (msg->via2->comment.s)
+			DBG(" <%.*s>", msg->via2->comment.len, ZSW(msg->via2->comment.s));
 		DBG ("\n");
 	}
 #endif
@@ -748,7 +724,7 @@ int set_dst_uri(struct sip_msg* const msg, const str* const uri)
 	char* ptr;
 
 	if (unlikely(!msg || !uri)) {
-		LOG(L_ERR, "set_dst_uri: Invalid parameter value\n");
+		ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -760,7 +736,7 @@ int set_dst_uri(struct sip_msg* const msg, const str* const uri)
 	} else {
 		ptr = (char*)pkg_malloc(uri->len);
 		if (!ptr) {
-			LOG(L_ERR, "set_dst_uri: Not enough memory\n");
+			ERR("Not enough memory\n");
 			return -1;
 		}
 
@@ -787,7 +763,7 @@ int set_path_vector(struct sip_msg* msg, str* path)
 	char* ptr;
 
 	if (unlikely(!msg || !path)) {
-		LM_ERR("invalid parameter value\n");
+		ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -799,7 +775,7 @@ int set_path_vector(struct sip_msg* msg, str* path)
 	} else {
 		ptr = (char*)pkg_malloc(path->len);
 		if (!ptr) {
-			LM_ERR("not enough pkg memory\n");
+			ERR("not enough pkg memory\n");
 			return -1;
 		}
 
@@ -829,7 +805,7 @@ int set_instance(struct sip_msg* msg, str* instance)
 	char* ptr;
 
 	if (unlikely(!msg || !instance)) {
-		LM_ERR("invalid instance parameter value\n");
+		ERR("invalid instance parameter value\n");
 		return -1;
 	}
 
@@ -841,7 +817,7 @@ int set_instance(struct sip_msg* msg, str* instance)
 	} else {
 		ptr = (char*)pkg_malloc(instance->len);
 		if (!ptr) {
-			LM_ERR("not enough pkg memory for instance\n");
+			ERR("not enough pkg memory for instance\n");
 			return -1;
 		}
 		memcpy(ptr, instance->s, instance->len);
@@ -868,7 +844,7 @@ int set_ruid(struct sip_msg* msg, str* ruid)
 	char* ptr;
 
 	if (unlikely(!msg || !ruid)) {
-		LM_ERR("invalid ruid parameter value\n");
+		ERR("invalid ruid parameter value\n");
 		return -1;
 	}
 
@@ -880,7 +856,7 @@ int set_ruid(struct sip_msg* msg, str* ruid)
 	} else {
 		ptr = (char*)pkg_malloc(ruid->len);
 		if (!ptr) {
-			LM_ERR("not enough pkg memory for ruid\n");
+			ERR("not enough pkg memory for ruid\n");
 			return -1;
 		}
 		memcpy(ptr, ruid->s, ruid->len);
@@ -907,7 +883,7 @@ int set_ua(struct sip_msg* msg, str* location_ua)
 	char* ptr;
 
 	if (unlikely(!msg || !location_ua)) {
-		LM_ERR("invalid location_ua parameter value\n");
+		ERR("invalid location_ua parameter value\n");
 		return -1;
 	}
 
@@ -919,7 +895,7 @@ int set_ua(struct sip_msg* msg, str* location_ua)
 	} else {
 		ptr = (char*)pkg_malloc(location_ua->len);
 		if (!ptr) {
-			LM_ERR("not enough pkg memory for location_ua\n");
+			ERR("not enough pkg memory for location_ua\n");
 			return -1;
 		}
 		memcpy(ptr, location_ua->s, location_ua->len);
@@ -1049,7 +1025,7 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 	str proto;
 
 	if (!uri || !m) {
-		LM_ERR("invalid parameter value\n");
+		ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -1062,13 +1038,13 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 			break;
 			default:
 				if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
-					LM_ERR("unknown transport protocol\n");
+					ERR("unknown transport protocol\n");
 					return -1;
 				}
 		}
 	} else {
 		if(get_valid_proto_string(m->rcv.proto, 1, 0, &proto)<0) {
-			LM_ERR("unknown transport protocol\n");
+			ERR("unknown transport protocol\n");
 			return -1;
 		}
 	}
@@ -1085,7 +1061,7 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 	}
 
 	if (len > MAX_URI_SIZE) {
-		LM_ERR("buffer too small\n");
+		ERR("buffer too small\n");
 		return -1;
 	}
 
