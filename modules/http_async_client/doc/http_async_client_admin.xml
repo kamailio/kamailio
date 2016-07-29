@@ -209,7 +209,7 @@ modparam("http_async_client", "curl_verbose", 1)
 					<emphasis>shm</emphasis>: curl will use kamailio's SHM pool and memory manager
 				</para></listitem>
 				<listitem><para>
-					<emphasis>sys</emphasis>: curl will use the system memory amd memory manager (malloc, free, ...)
+					<emphasis>sys</emphasis>: curl will use the system memory and memory manager (malloc, free, ...)
 				</para></listitem>
 			</itemizedlist>
 			<para>
