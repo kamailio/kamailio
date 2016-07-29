@@ -65,6 +65,7 @@ enum _hdr_types_t {
 	HDR_CONTENTLENGTH_T			       /*!< Content-Length header field */,
 	HDR_AUTHORIZATION_T			       /*!< Authorization header field */,
 	HDR_EXPIRES_T				       /*!< Expires header field */,
+	HDR_MIN_EXPIRES_T			       /*!< Min-Expires header */,
 	HDR_PROXYAUTH_T				       /*!< Proxy-Authorization hdr field */,
 	HDR_SUPPORTED_T				       /*!< Supported  header field */,
 	HDR_REQUIRE_T				       /*!< Require header */,
@@ -137,6 +138,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_CONTENTLENGTH_F			HDR_F_DEF(CONTENTLENGTH)
 #define HDR_AUTHORIZATION_F			HDR_F_DEF(AUTHORIZATION)
 #define HDR_EXPIRES_F				HDR_F_DEF(EXPIRES)
+#define HDR_MIN_EXPIRES_F			HDR_F_DEF(MIN_EXPIRES)
 #define HDR_PROXYAUTH_F				HDR_F_DEF(PROXYAUTH)
 #define HDR_SUPPORTED_F				HDR_F_DEF(SUPPORTED)
 #define HDR_REQUIRE_F				HDR_F_DEF(REQUIRE)
@@ -217,6 +219,7 @@ static inline int hdr_allocs_parse(struct hdr_field* hdr)
 		case HDR_DIVERSION_T:
 		case HDR_EVENT_T:
 		case HDR_EXPIRES_T:
+		case HDR_MIN_EXPIRES_T:
 		case HDR_FROM_T:
 		case HDR_IDENTITY_INFO_T:
 		case HDR_IDENTITY_T:

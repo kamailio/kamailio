@@ -31,22 +31,37 @@
 #define CASE_MIN_H
 
 
-#define min_se_CASE                  \
-        if (LOWER_BYTE(*p) == 's') {                       \
-                p++;                                       \
-                if (LOWER_BYTE(*p) == 'e') {               \
-                        hdr->type = HDR_MIN_SE_T;          \
-                        p++;                               \
-                        goto dc_end;                       \
-                }                                          \
-        }
+#define RES_CASE                            \
+	switch(LOWER_DWORD(val)) {              \
+		case _res1_:    /* "res:" */        \
+			hdr->type = HDR_MIN_EXPIRES_T;  \
+			hdr->name.len = 11;             \
+			return (p + 4);                 \
+		case _res2_:    /* "res " */        \
+			hdr->type = HDR_MIN_EXPIRES_T;  \
+			p+=4;                           \
+			goto dc_end;                    \
+	}
 
+#define MIN2_CASE                           \
+	if (LOWER_BYTE(*p) == 's') {            \
+		p++;                                \
+		if (LOWER_BYTE(*p) == 'e') {        \
+			hdr->type = HDR_MIN_SE_T;       \
+			p++;                            \
+			goto dc_end;                    \
+		}                                   \
+	} else if (LOWER_DWORD(val) == _expi_) { \
+		p += 4;                             \
+		val = READ(p);                      \
+		RES_CASE;                           \
+	}
 
-#define min_CASE       \
-     p += 4;           \
-     val = READ(p);    \
-     min_se_CASE;      \
-     goto other;       \
+#define min_CASE                            \
+	p += 4;                                 \
+	val = READ(p);                          \
+	MIN2_CASE;                              \
+	goto other;
 
 
 #endif /* CASE_MIN_H */

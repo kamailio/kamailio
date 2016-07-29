@@ -39,6 +39,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
+#include "../../parser/parse_expires.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
@@ -57,9 +58,7 @@
 
 #define MAX_UACH_SIZE 2048
 #define UAC_REG_GC_INTERVAL	150
-#define UAC_REG_MAX_PASSWD_SIZE	63
-
-#define UAC_REG_MAX_URI_SIZE 127
+#define UAC_REG_TM_CALLID_SIZE 90
 
 typedef struct _reg_uac
 {
@@ -74,11 +73,14 @@ typedef struct _reg_uac
 	str   auth_proxy;
 	str   auth_username;
 	str   auth_password;
+	str   callid;
+	unsigned int cseq;
 	unsigned int flags;
 	unsigned int expires;
 	time_t timer_expires;
 	unsigned int reg_delay;
 	time_t reg_init;
+	gen_lock_t *lock;
 } reg_uac_t;
 
 typedef struct _reg_item
@@ -113,6 +115,8 @@ int reg_timer_interval = 90;
 int reg_retry_interval = 0;
 int reg_htable_size = 4;
 int reg_fetch_rows = 1000;
+int reg_keep_callid = 0;
+int reg_random_delay = 0;
 str reg_contact_addr = STR_NULL;
 str reg_db_url = STR_NULL;
 str reg_db_table = str_init("uacreg");
@@ -130,6 +134,7 @@ str expires_column = str_init("expires");
 str flags_column = str_init("flags");
 str reg_delay_column = str_init("reg_delay");
 
+str str_empty = str_init("");
 
 #if 0
 INSERT INTO version (table_name, table_version) values ('uacreg','1');
@@ -511,28 +516,16 @@ int reg_ht_add(reg_uac_t *reg)
 		LM_ERR("bad parameters: %p/%p\n", reg, _reg_htable);
 		return -1;
 	}
-	if(reg->auth_password.len>UAC_REG_MAX_PASSWD_SIZE)
-	{
-		LM_ERR("bad parameters: %p/%p -- password too long %d\n",
-				reg, _reg_htable, reg->auth_password.len);
-		return -1;
-	}
-	if(reg->auth_proxy.len>UAC_REG_MAX_URI_SIZE)
-	{
-		LM_ERR("bad parameters: %p/%p -- proxy uri too long %d\n",
-				reg, _reg_htable, reg->auth_proxy.len);
-		return -1;
-	}
-
 	len = reg->l_uuid.len + 1
 		+ reg->l_username.len + 1
 		+ reg->l_domain.len + 1
 		+ reg->r_username.len + 1
 		+ reg->r_domain.len + 1
 		+ reg->realm.len + 1
-		+ UAC_REG_MAX_URI_SIZE /*reg->auth_proxy.len*/ + 1
+		+ reg->auth_proxy.len + 1
 		+ reg->auth_username.len + 1
-		+ UAC_REG_MAX_PASSWD_SIZE /*reg->auth_password.len*/ + 1;
+		+ reg->auth_password.len + 1
+		+ (reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0) + 1;
 	nr = (reg_uac_t*)shm_malloc(sizeof(reg_uac_t) + len);
 	if(nr==NULL)
 	{
@@ -542,7 +535,10 @@ int reg_ht_add(reg_uac_t *reg)
 	memset(nr, 0, sizeof(reg_uac_t) + len);
 	nr->expires = reg->expires;
 	nr->flags   = reg->flags;
-	nr->reg_delay = reg->reg_delay;
+	if (reg->reg_delay)
+		nr->reg_delay = reg->reg_delay;
+	else if (reg_random_delay>0)
+		nr->reg_delay = rand() % reg_random_delay;
 	nr->reg_init  = time(NULL);
 	nr->h_uuid = reg_compute_hash(&reg->l_uuid);
 	nr->h_user = reg_compute_hash(&reg->l_username);
@@ -555,10 +551,10 @@ int reg_ht_add(reg_uac_t *reg)
 	reg_copy_shm(&nr->r_username, &reg->r_username, 0);
 	reg_copy_shm(&nr->r_domain, &reg->r_domain, 0);
 	reg_copy_shm(&nr->realm, &reg->realm, 0);
-	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy, UAC_REG_MAX_URI_SIZE);
+	reg_copy_shm(&nr->auth_proxy, &reg->auth_proxy, 0);
 	reg_copy_shm(&nr->auth_username, &reg->auth_username, 0);
-	/* password at the end, to be able to update it easily */
 	reg_copy_shm(&nr->auth_password, &reg->auth_password, 0);
+	reg_copy_shm(&nr->callid, &str_empty, reg_keep_callid ? UAC_REG_TM_CALLID_SIZE : 0);
 
 	reg_ht_add_byuser(nr);
 	reg_ht_add_byuuid(nr);
@@ -568,61 +564,82 @@ int reg_ht_add(reg_uac_t *reg)
 }
 
 
-/**
- *
- */
-int reg_ht_update_attrs(reg_uac_t *reg)
+ /**
+  *
+  */
+int reg_ht_rm(reg_uac_t *reg)
 {
-	unsigned int slot;
-	reg_item_t *ri = NULL;
+	unsigned int slot1, slot2;
+	reg_item_t *it = NULL;
+	reg_item_t *prev = NULL;
+	int found = 0;
 
-	if(_reg_htable==NULL)
+	if (reg == NULL)
 	{
-		LM_ERR("reg hash table not initialized\n");
+		LM_ERR("bad parameter\n");
 		return -1;
 	}
 
-	if(reg->auth_password.len>UAC_REG_MAX_PASSWD_SIZE)
+	/* by uuid */
+	slot1 = reg_get_entry(reg->h_uuid, _reg_htable->htsize);
+	it = _reg_htable->entries[slot1].byuuid;
+	while (it)
 	{
-		LM_ERR("password is too big: %d\n", reg->auth_password.len);
-		return -1;
-	}
-	if(reg->auth_proxy.len>UAC_REG_MAX_URI_SIZE)
-	{
-		LM_ERR("proxy uri is too big: %d\n", reg->auth_proxy.len);
-		return -1;
-	}
-
-	slot = reg_get_entry(reg->h_user, _reg_htable->htsize);
-	lock_get(&_reg_htable->entries[slot].lock);
-	ri = _reg_htable->entries[slot].byuser;
-	while(ri) {
-		if(ri->r->l_uuid.len == reg->l_uuid.len
-				&& strncmp(ri->r->l_uuid.s, reg->l_uuid.s, reg->l_uuid.len)==0)
+		if (it->r == reg)
 		{
-			/* record found */
-			strncpy(ri->r->auth_password.s, reg->auth_password.s, reg->auth_password.len);
-			ri->r->auth_password.len = reg->auth_password.len;
-			ri->r->auth_password.s[reg->auth_password.len] = '\0';
-			strncpy(ri->r->auth_proxy.s, reg->auth_proxy.s, reg->auth_proxy.len);
-			ri->r->auth_proxy.len = reg->auth_proxy.len;
-			ri->r->auth_proxy.s[reg->auth_proxy.len] = '\0';
-			if(reg->flags & UAC_REG_DISABLED)
-				ri->r->flags |= UAC_REG_DISABLED;
+			if (prev)
+				prev->next=it->next;
 			else
-				ri->r->flags &= ~UAC_REG_DISABLED;
-			lock_release(&_reg_htable->entries[slot].lock);
-			return 0;
+				_reg_htable->entries[slot1].byuuid = it->next;
+			_reg_htable->entries[slot1].isize--;
+			shm_free(it);
+			found = 1;
+			break;
 		}
-		ri = ri->next;
+		prev = it;
+		it = it->next;
 	}
-	lock_release(&_reg_htable->entries[slot].lock);
-	return -1;
+
+	/* by user */
+	prev = NULL;
+	slot2 = reg_get_entry(reg->h_user, _reg_htable->htsize);
+	if (slot2 != slot1) {
+		lock_get(&_reg_htable->entries[slot2].lock);
+	}
+	it = _reg_htable->entries[slot2].byuser;
+	while (it)
+	{
+		if (it->r == reg)
+		{
+			if (prev)
+				prev->next=it->next;
+			else
+				_reg_htable->entries[slot2].byuser = it->next;
+			_reg_htable->entries[slot2].usize--;
+			shm_free(it);
+			break;
+		}
+		prev = it;
+		it = it->next;
+	}
+
+	shm_free(reg);
+	if (slot2 != slot1) {
+		lock_release(&_reg_htable->entries[slot2].lock);
+	}
+	lock_release(&_reg_htable->entries[slot1].lock);
+
+	if (found) {
+		counter_add(regtotal, -1);
+		if(reg->flags & UAC_REG_ONLINE)
+			counter_add(regactive, -1);
+		if(reg->flags & UAC_REG_DISABLED)
+			counter_add(regdisabled, -1);
+	}
+	return 0;
 }
 
-/**
- *
- */
+
 reg_uac_t *reg_ht_get_byuuid(str *uuid)
 {
 	unsigned int hash;
@@ -637,16 +654,19 @@ reg_uac_t *reg_ht_get_byuuid(str *uuid)
 
 	hash = reg_compute_hash(uuid);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
+	lock_get(&_reg_htable->entries[slot].lock);
 	it = _reg_htable->entries[slot].byuuid;
 	while(it)
 	{
 		if((it->r->h_uuid==hash) && (it->r->l_uuid.len==uuid->len)
 				&& (strncmp(it->r->l_uuid.s, uuid->s, uuid->len)==0))
 		{
+			it->r->lock = &_reg_htable->entries[slot].lock;
 			return it->r;
 		}
 		it = it->next;
 	}
+	lock_release(&_reg_htable->entries[slot].lock);
 	return NULL;
 }
 
@@ -667,10 +687,11 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 
 	hash = reg_compute_hash(user);
 	slot = reg_get_entry(hash, _reg_htable->htsize);
+	lock_get(&_reg_htable->entries[slot].lock);
 	it = _reg_htable->entries[slot].byuser;
 	while(it)
 	{
-		if((it->r->h_uuid==hash) && (it->r->l_username.len==user->len)
+		if((it->r->h_user==hash) && (it->r->l_username.len==user->len)
 				&& (strncmp(it->r->l_username.s, user->s, user->len)==0))
 		{
 			if(domain!=NULL && domain->s!=NULL)
@@ -678,15 +699,66 @@ reg_uac_t *reg_ht_get_byuser(str *user, str *domain)
 				if((it->r->l_domain.len==domain->len)
 						&& (strncmp(it->r->l_domain.s, domain->s, domain->len)==0))
 				{
+					it->r->lock = &_reg_htable->entries[slot].lock;
 					return it->r;
 				}
 			} else {
+				it->r->lock = &_reg_htable->entries[slot].lock;
 				return it->r;
 			}
 		}
 		it = it->next;
 	}
+	lock_release(&_reg_htable->entries[slot].lock);
 	return NULL;
+}
+
+int reg_ht_get_byfilter(reg_uac_t **reg, str *attr, str *val)
+{
+	int i;
+	str *rval;
+	reg_item_t *it;
+
+	/* try to use the hash table indices */
+	if(attr->len==6 && strncmp(attr->s, "l_uuid", 6)==0) {
+		*reg = reg_ht_get_byuuid(val);
+		return *reg != NULL;
+	}
+	if(attr->len==10 && strncmp(attr->s, "l_username", 10)==0) {
+		*reg = reg_ht_get_byuser(val, NULL);
+		return *reg != NULL;
+	}
+
+	/* check _all_ records */
+	for(i=0; i<_reg_htable->htsize; i++)
+	{
+		lock_get(&_reg_htable->entries[i].lock);
+		/* walk through entries */
+		it = _reg_htable->entries[i].byuuid;
+		while(it)
+		{
+			if(attr->len==10 && strncmp(attr->s, "r_username", 10)==0) {
+				rval = &it->r->r_username;
+			} else if(attr->len==13 && strncmp(attr->s, "auth_username", 13)==0) {
+				rval = &it->r->auth_username;
+			} else {
+				lock_release(&_reg_htable->entries[i].lock);
+				LM_ERR("unsupported filter attribute %.*s\n", attr->len, attr->s);
+				return -1;
+			}
+
+			if(rval->len==val->len && strncmp(val->s, rval->s, val->len)==0) {
+				/* found */
+				*reg = it->r;
+				(*reg)->lock = &_reg_htable->entries[i].lock;
+				return 1;
+			}
+			it = it->next;
+		}
+		lock_release(&_reg_htable->entries[i].lock);
+	}
+	*reg = NULL;
+	return 0;
 }
 
 int uac_reg_tmdlg(dlg_t *tmdlg, sip_msg_t *rpl)
@@ -807,13 +879,18 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 				expires=0;
 				if(c->expires==NULL || c->expires->body.len<=0)
 				{
-					if(ps->rpl->expires!=NULL && ps->rpl->expires->body.len>0)
-						expires = atoi(ps->rpl->expires->body.s);
+					if(ps->rpl->expires!=NULL && parse_expires(ps->rpl->expires)==0)
+						expires = ((exp_body_t *)ps->rpl->expires->parsed)->val;
 				} else {
 					str2int(&c->expires->body, (unsigned int*)(&expires));
 				}
 				ri->timer_expires = ri->timer_expires + expires;
 				ri->flags |= UAC_REG_ONLINE;
+				if (reg_keep_callid && ps->rpl->callid->body.len < UAC_REG_TM_CALLID_SIZE) {
+					ri->callid.len = ps->rpl->callid->body.len;
+					memcpy(ri->callid.s, ps->rpl->callid->body.s, ri->callid.len);
+					str2int(&(get_cseq(ps->rpl)->number), &ri->cseq);
+				}
 				goto done;
 			}
 			if (contact_iterator(&c, ps->rpl, c) < 0)
@@ -930,8 +1007,27 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		}
 
 		ri->flags |= UAC_REG_AUTHSENT;
+		lock_release(ri->lock);
 		return;
-	} else {
+	}
+
+	if (ps->code == 423)   /* Interval too brief, retry with longer expiry */
+	{
+		if (parse_headers(ps->rpl, HDR_EOH_F, 0) == -1) {
+			LM_ERR("failed to parse headers\n");
+			goto error;
+		}
+		if(ps->rpl->min_expires!=NULL && parse_expires(ps->rpl->min_expires)==0) {
+			ri->expires = ((exp_body_t *)ps->rpl->min_expires->parsed)->val;
+		} else {
+			ri->expires *= 2;
+		}
+		LM_DBG("got 423 response while registering [%.*s], set new expires to %d\n",
+				ri->l_uuid.len, ri->l_uuid.s, ri->expires);
+		/* Retry will be done on next timer interval */
+		goto done;
+	} else
+	{
 		LM_ERR("got sip response %d while registering [%.*s]\n",
 				ps->code, ri->l_uuid.len, ri->l_uuid.s);
 		goto error;
@@ -944,9 +1040,12 @@ error:
 		ri->flags |= UAC_REG_DISABLED;
 		counter_inc(regdisabled);
 	}
+	ri->cseq = 0;
 done:
-	if(ri)
+	if(ri) {
 		ri->flags &= ~(UAC_REG_ONGOING|UAC_REG_AUTHSENT);
+		lock_release(ri->lock);
+	}
 	shm_free(uuid);
 	counter_inc(regactive);
 }
@@ -963,6 +1062,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	str   s_turi;
 	char  b_hdrs[MAX_UACH_SIZE];
 	str   s_hdrs;
+	dlg_t tmdlg;
 
 	if(uac_tmb.t_request==NULL)
 		return -1;
@@ -984,8 +1084,8 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 				return 2;
 			}
 		}
+		reg->flags |= UAC_REG_INIT;
 	}
-	reg->flags |= UAC_REG_INIT;
 
 	if(reg->timer_expires > tn + reg_timer_interval + 3)
 		return 3;
@@ -997,7 +1097,6 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	}
 	reg->timer_expires = tn;
 	reg->flags |= UAC_REG_ONGOING;
-	reg->flags &= ~UAC_REG_ONLINE;
 	counter_add(regactive, -1);		/* Take it out of the active pool while re-registering */
 	memcpy(uuid, reg->l_uuid.s, reg->l_uuid.len);
 	uuid[reg->l_uuid.len] = '\0';
@@ -1027,12 +1126,34 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 	uac_r.cb  = uac_reg_tm_callback;
 	/* Callback parameter */
 	uac_r.cbp = (void*)uuid;
-	ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
-			&s_ruri, /* Request-URI */
-			&s_turi, /* To */
-			&s_turi, /* From */
-			(reg->auth_proxy.len)?&reg->auth_proxy:NULL /* outbound uri */
-			);
+
+	if (reg_keep_callid && reg->flags & UAC_REG_ONLINE
+				&& reg->cseq > 0 && reg->cseq < 2147483638
+				&& reg->callid.len > 0)
+	{
+		/* reregister, reuse callid and cseq */
+		memset(&tmdlg, 0, sizeof(dlg_t));
+		tmdlg.id.call_id = reg->callid;
+		tmdlg.loc_seq.value = reg->cseq;
+		tmdlg.loc_seq.is_set = 1;
+		tmdlg.rem_target = s_ruri;
+		tmdlg.loc_uri = s_turi;
+		tmdlg.rem_uri = s_turi;
+		tmdlg.state= DLG_CONFIRMED;
+		if(reg->auth_proxy.len)
+			tmdlg.dst_uri = reg->auth_proxy;
+		uac_r.dialog = &tmdlg;
+
+		ret = uac_tmb.t_request_within(&uac_r);
+	} else {
+		ret = uac_tmb.t_request(&uac_r,  /* UAC Req */
+				&s_ruri, /* Request-URI */
+				&s_turi, /* To */
+				&s_turi, /* From */
+				(reg->auth_proxy.len)?&reg->auth_proxy:NULL /* outbound uri */
+				);
+	}
+	reg->flags &= ~UAC_REG_ONLINE;
 
 	if(ret<0)
 	{
@@ -1066,12 +1187,14 @@ void uac_reg_timer(unsigned int ticks)
 	for(i=0; i<_reg_htable->htsize; i++)
 	{
 		/* walk through entries */
+		lock_get(&_reg_htable->entries[i].lock);
 		it = _reg_htable->entries[i].byuuid;
 		while(it)
 		{
 			uac_reg_update(it->r, tn);
 			it = it->next;
 		}
+		lock_release(&_reg_htable->entries[i].lock);
 	}
 
 	if(_reg_htable_gc!=NULL)
@@ -1086,16 +1209,41 @@ void uac_reg_timer(unsigned int ticks)
 
 #define reg_db_set_attr(attr, pos) do { \
 	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[pos])) { \
-		reg.attr.s = \
+		reg->attr.s = \
 		(char*)(RES_ROWS(db_res)[i].values[pos].val.string_val); \
-		reg.attr.len = strlen(reg.attr.s); \
-		if(reg.attr.len == 0) { \
+		reg->attr.len = strlen(reg->attr.s); \
+		if(reg->attr.len == 0) { \
 			LM_ERR("empty value not allowed for column[%d]='%.*s' - ignoring record\n", \
 					pos, db_cols[pos]->len, db_cols[pos]->s); \
-			goto nextrec; \
+			return -1; \
 		} \
 	} \
 } while(0);
+
+
+static inline int uac_reg_db_to_reg(reg_uac_t *reg, db1_res_t* db_res, int i, db_key_t *db_cols)
+{
+	memset(reg, 0, sizeof(reg_uac_t));;
+	/* check for NULL values ?!?! */
+	reg_db_set_attr(l_uuid, 0);
+	reg_db_set_attr(l_username, 1);
+	reg_db_set_attr(l_domain, 2);
+	reg_db_set_attr(r_username, 3);
+	reg_db_set_attr(r_domain, 4);
+	/* realm may be empty */
+	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
+		reg->realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
+		reg->realm.len = strlen(reg->realm.s);
+	}
+	reg_db_set_attr(auth_username, 6);
+	reg_db_set_attr(auth_password, 7);
+	reg_db_set_attr(auth_proxy, 8);
+	reg->expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
+	reg->flags = (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
+	reg->reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
+	return 0;
+}
+
 
 /**
  *
@@ -1191,35 +1339,13 @@ int uac_reg_load_db(void)
 	do {
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
-			memset(&reg, 0, sizeof(reg_uac_t));
-			/* check for NULL values ?!?! */
-			reg_db_set_attr(l_uuid, 0);
-			reg_db_set_attr(l_username, 1);
-			reg_db_set_attr(l_domain, 2);
-			reg_db_set_attr(r_username, 3);
-			reg_db_set_attr(r_domain, 4);
-			/* realm may be empty */
-			if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
-				reg.realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
-				reg.realm.len = strlen(reg.realm.s);
-			}
-			reg_db_set_attr(auth_username, 6);
-			reg_db_set_attr(auth_password, 7);
-			reg_db_set_attr(auth_proxy, 8);
-			reg.expires
-				= (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
-			reg.flags
-				= (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
-			reg.reg_delay
-				= (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
-
+			if(uac_reg_db_to_reg(&reg, db_res, i, db_cols) < 0)
+				continue;
 			if(reg_ht_add(&reg)<0)
 			{
 				LM_ERR("Error adding reg to htable\n");
 				goto error;
 			}
-nextrec:
-			;
 		}
 		if (DB_CAPABILITY(reg_dbf, DB_CAP_FETCH)) {
 			if(reg_dbf.fetch_result(reg_db_con, &db_res, reg_fetch_rows)<0) {
@@ -1254,6 +1380,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db1_con_t *reg_db_con = NULL;
 	db_func_t reg_dbf;
 	reg_uac_t reg;
+	reg_uac_t *cur_reg;
 	db_key_t db_cols[12] = {
 		&l_uuid_column,
 		&l_username_column,
@@ -1272,7 +1399,7 @@ int uac_reg_db_refresh(str *pl_uuid)
 	db_val_t db_vals[1];
 
 	db1_res_t* db_res = NULL;
-	int i, ret;
+	int ret;
 
 	/* binding to db module */
 	if(reg_db_url.s==NULL)
@@ -1325,55 +1452,27 @@ int uac_reg_db_refresh(str *pl_uuid)
 		}
 	}
 
-	memset(&reg, 0, sizeof(reg_uac_t));
-	/* only one record - use FOR to catch 'contunue' on invalid set attr */
-	i = 0;
-
-	/* check for NULL values ?!?! */
-	reg_db_set_attr(l_uuid, 0);
-	reg_db_set_attr(l_username, 1);
-	reg_db_set_attr(l_domain, 2);
-	reg_db_set_attr(r_username, 3);
-	reg_db_set_attr(r_domain, 4);
-	/* realm may be empty */
-	if(!VAL_NULL(&RES_ROWS(db_res)[i].values[5])) {
-		reg.realm.s = (char*)(RES_ROWS(db_res)[i].values[5].val.string_val);
-		reg.realm.len = strlen(reg.realm.s);
-	}
-	reg_db_set_attr(auth_username, 6);
-	reg_db_set_attr(auth_password, 7);
-	reg_db_set_attr(auth_proxy, 8);
-	reg.expires = (unsigned int)RES_ROWS(db_res)[i].values[9].val.int_val;
-	reg.h_uuid = reg_compute_hash(&reg.l_uuid);
-	reg.h_user = reg_compute_hash(&reg.l_username);
-	reg.flags = (unsigned int)RES_ROWS(db_res)[i].values[10].val.int_val;
-	reg.reg_delay = (unsigned int)RES_ROWS(db_res)[i].values[11].val.int_val;
-
-	lock_get(_reg_htable_gc_lock);
-	if(reg_ht_get_byuuid(pl_uuid)!=NULL)
+	if (uac_reg_db_to_reg(&reg, db_res, 0, db_cols)==0)
 	{
-		if(reg_ht_update_attrs(&reg)<0)
+		lock_get(_reg_htable_gc_lock);
+		if((cur_reg=reg_ht_get_byuuid(pl_uuid))!=NULL)
 		{
-			lock_release(_reg_htable_gc_lock);
-			LM_ERR("Error updating reg to htable\n");
-			goto error;
+			reg.flags |= (cur_reg->flags & (UAC_REG_ONGOING | UAC_REG_AUTHSENT));
+			reg_ht_rm(cur_reg);
 		}
-	} else {
 		if(reg_ht_add(&reg)<0)
 		{
 			lock_release(_reg_htable_gc_lock);
 			LM_ERR("Error adding reg to htable\n");
 			goto error;
 		}
+		lock_release(_reg_htable_gc_lock);
 	}
-	lock_release(_reg_htable_gc_lock);
-
-nextrec:
 
 	reg_dbf.free_result(reg_db_con, db_res);
 	reg_dbf.close(reg_db_con);
 
-	return 0;
+	return 1;
 
 error:
 	if (reg_db_con) {
@@ -1427,6 +1526,7 @@ int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 				reg->l_uuid.len, reg->l_uuid.s);
 		s_ruri.s = b_ruri; s_ruri.len = strlen(s_ruri.s);
 	}
+	lock_release(reg->lock);
 	memset(&val, 0, sizeof(pv_value_t));
 	val.flags |= PV_VAL_STR;
 	val.rs = s_ruri;
@@ -1434,6 +1534,50 @@ int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 		return -1;
 
 	return 1;
+}
+
+/**
+ *
+ */
+int uac_reg_status(struct sip_msg *msg, str *src, int mode)
+{
+	struct sip_uri puri;
+	reg_uac_t *reg = NULL;
+	int ret;
+
+	if(mode==0)
+	{
+		reg = reg_ht_get_byuuid(src);
+		if(reg==NULL)
+		{
+			LM_DBG("no uuid: %.*s\n", src->len, src->s);
+			return -1;
+		}
+	} else {
+		if(parse_uri(src->s, src->len, &puri)!=0)
+		{
+			LM_ERR("failed to parse uri\n");
+			return -1;
+		}
+		reg = reg_ht_get_byuser(&puri.user, (reg_use_domain)?&puri.host:NULL);
+		if(reg==NULL)
+		{
+			LM_DBG("no user: %.*s\n", src->len, src->s);
+			return -1;
+		}
+	}
+
+	if ((reg->flags & UAC_REG_ONLINE) && (reg->timer_expires > time(NULL)))
+		ret = 1;
+	else if (reg->flags & UAC_REG_ONGOING)
+		ret = -2;
+	else if (reg->flags & UAC_REG_DISABLED)
+		ret = -3;
+	else
+		ret = -99;
+
+	lock_release(reg->lock);
+	return ret;
 }
 
 /**
@@ -1488,13 +1632,13 @@ int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 	init_run_actions_ctx(&ra_ctx);
 	if (do_action(&ra_ctx, &act, msg) < 0) {
 		LM_ERR("error while setting request uri\n");
-		return -1;
+		goto error;
 	}
 
 	// Set auth_proxy ($du)
 	if (set_dst_uri(msg, &reg->auth_proxy) < 0) {
 		LM_ERR("error while setting outbound proxy\n");
-		return -1;
+		goto error;
 	}
 
 	memset(&val, 0, sizeof(pv_value_t));
@@ -1504,24 +1648,64 @@ int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 	val.rs = reg->realm;
 	if(pv_set_spec_value(msg, &auth_realm_spec, 0, &val)!=0) {
 		LM_ERR("error while setting auth_realm\n");
-		return -1;
+		goto error;
 	}
 
 	// Set auth_username
 	val.rs = reg->auth_username;
 	if(pv_set_spec_value(msg, &auth_username_spec, 0, &val)!=0) {
 		LM_ERR("error while setting auth_username\n");
-		return -1;
+		goto error;
 	}
 
 	// Set auth_password
 	val.rs = reg->auth_password;
 	if(pv_set_spec_value(msg, &auth_password_spec, 0, &val)!=0) {
 		LM_ERR("error while setting auth_password\n");
-		return -1;
+		goto error;
 	}
 
+	lock_release(reg->lock);
 	return 1;
+
+error:
+	lock_release(reg->lock);
+	return -1;
+}
+
+static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, time_t tn)
+{
+	void* th;
+	str none = {"none", 4};
+
+	/* add entry node */
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error creating rpc");
+		return -1;
+	}
+	if (rpc->struct_add(th, "SSSSSSSSSdddddd",
+				"l_uuid",        &reg->l_uuid,
+				"l_username",    &reg->l_username,
+				"l_domain",      &reg->l_domain,
+				"r_username",    &reg->r_username,
+				"r_domain",      &reg->r_domain,
+				"realm",         &reg->realm,
+				"auth_username", &reg->auth_username,
+				"auth_password", &reg->auth_password,
+				"auth_proxy",    (reg->auth_proxy.len)?
+				&reg->auth_proxy:&none,
+				"expires",       (int)reg->expires,
+				"flags",         (int)reg->flags,
+				"diff_expires",  (int)(reg->timer_expires - tn),
+				"timer_expires", (int)reg->timer_expires,
+				"reg_init",      (int)reg->reg_init,
+				"reg_delay",     (int)reg->reg_delay
+				)<0) {
+		rpc->fault(ctx, 500, "Internal error adding item");
+		return -1;
+	}
+	return 0;
 }
 
 static const char* rpc_uac_reg_dump_doc[2] = {
@@ -1533,8 +1717,6 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 {
 	int i;
 	reg_item_t *reg = NULL;
-	void* th;
-	str none = {"none", 4};
 	time_t tn;
 
 	if(_reg_htable==NULL)
@@ -1552,33 +1734,9 @@ static void rpc_uac_reg_dump(rpc_t* rpc, void* ctx)
 		reg = _reg_htable->entries[i].byuuid;
 		while(reg)
 		{
-			/* add entry node */
-			if (rpc->add(ctx, "{", &th) < 0)
-			{
-				rpc->fault(ctx, 500, "Internal error creating rpc");
-				return;
-			}
-			if(rpc->struct_add(th, "SSSSSSSSSdddddd",
-						"l_uuid",        &reg->r->l_uuid,
-						"l_username",    &reg->r->l_username,
-						"l_domain",      &reg->r->l_domain,
-						"r_username",    &reg->r->r_username,
-						"r_domain",      &reg->r->r_domain,
-						"realm",         &reg->r->realm,
-						"auth_username", &reg->r->auth_username,
-						"auth_password", &reg->r->auth_password,
-						"auth_proxy",    (reg->r->auth_proxy.len)?
-						&reg->r->auth_proxy:&none,
-						"expires",       (int)reg->r->expires,
-						"flags",         (int)reg->r->flags,
-						"diff_expires",  (int)(reg->r->timer_expires - tn),
-						"timer_expires", (int)reg->r->timer_expires,
-						"reg_init",      (int)reg->r->reg_init,
-						"reg_delay",     (int)reg->r->reg_delay
-						)<0)
+			if (rpc_uac_reg_add_node_helper(rpc, ctx, reg->r, tn)<0)
 			{
 				lock_release(&_reg_htable->entries[i].lock);
-				rpc->fault(ctx, 500, "Internal error adding item");
 				return;
 			}
 			reg = reg->next;
@@ -1594,14 +1752,10 @@ static const char* rpc_uac_reg_info_doc[2] = {
 
 static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 {
-	int i;
-	reg_item_t *reg = NULL;
-	void* th;
-	str none = {"none", 4};
-	time_t tn;
+	reg_uac_t *reg = NULL;
 	str attr = {0};
 	str val = {0};
-	str *rval;
+	int ret;
 
 	if(_reg_htable==NULL)
 	{
@@ -1611,85 +1765,37 @@ static void rpc_uac_reg_info(rpc_t* rpc, void* ctx)
 
 	if(rpc->scan(ctx, "S.S", &attr, &val)<2)
 	{
-		rpc->fault(ctx, 500, "Invalid Parameters");
+		rpc->fault(ctx, 400, "Invalid Parameters");
 		return;
 	}
 	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL)
 	{
 		LM_ERR("bad parameter values\n");
-		rpc->fault(ctx, 500, "Invalid Parameter Values");
+		rpc->fault(ctx, 400, "Invalid Parameter Values");
 		return;
 	}
 
-	tn = time(NULL);
-
-	for(i=0; i<_reg_htable->htsize; i++)
-	{
-		/* walk through entries */
-		lock_get(&_reg_htable->entries[i].lock);
-		reg = _reg_htable->entries[i].byuuid;
-		while(reg)
-		{
-			if(attr.len==10 && strncmp(attr.s, "l_username", 10)==0) {
-				rval = &reg->r->l_username;
-			} else if(attr.len==10 && strncmp(attr.s, "r_username", 10)==0) {
-				rval = &reg->r->r_username;
-			} else if(attr.len==6 && strncmp(attr.s, "l_uuid", 6)==0) {
-				rval = &reg->r->l_uuid;
-			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
-				rval = &reg->r->auth_username;
-			} else {
-				lock_release(&_reg_htable->entries[i].lock);
-				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
-				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
-				return;
-			}
-
-			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
-				/* add entry node */
-				if (rpc->add(ctx, "{", &th) < 0)
-				{
-					rpc->fault(ctx, 500, "Internal error creating rpc");
-					return;
-				}
-				if(rpc->struct_add(th, "SSSSSSSSSdddd",
-							"l_uuid",        &reg->r->l_uuid,
-							"l_username",    &reg->r->l_username,
-							"l_domain",      &reg->r->l_domain,
-							"r_username",    &reg->r->r_username,
-							"r_domain",      &reg->r->r_domain,
-							"realm",         &reg->r->realm,
-							"auth_username", &reg->r->auth_username,
-							"auth_password", &reg->r->auth_password,
-							"auth_proxy",    (reg->r->auth_proxy.len)?
-							&reg->r->auth_proxy:&none,
-							"expires",       (int)reg->r->expires,
-							"flags",         (int)reg->r->flags,
-							"diff_expires",  (int)(reg->r->timer_expires - tn),
-							"timer_expires", (int)reg->r->timer_expires
-							)<0)
-				{
-					lock_release(&_reg_htable->entries[i].lock);
-					rpc->fault(ctx, 500, "Internal error adding item");
-					return;
-				}
-				lock_release(&_reg_htable->entries[i].lock);
-				return;
-			}
-			reg = reg->next;
-		}
-		lock_release(&_reg_htable->entries[i].lock);
+	ret = reg_ht_get_byfilter(&reg, &attr, &val);
+	if (ret == 0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if (ret < 0) {
+		rpc->fault(ctx, 400, "Unsupported filter attribute");
+		return;
 	}
+
+	rpc_uac_reg_add_node_helper(rpc, ctx, reg, time(NULL));
+	lock_release(reg->lock);
+	return;
 }
 
 
 static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 {
-	int i;
-	reg_item_t *reg = NULL;
+	reg_uac_t *reg = NULL;
 	str attr = {0};
 	str val = {0};
-	str *rval;
+	int ret;
 
 	if(_reg_htable==NULL)
 	{
@@ -1699,53 +1805,34 @@ static void rpc_uac_reg_update_flag(rpc_t* rpc, void* ctx, int mode, int fval)
 
 	if(rpc->scan(ctx, "S.S", &attr, &val)<2)
 	{
-		rpc->fault(ctx, 500, "Invalid Parameters");
+		rpc->fault(ctx, 400, "Invalid Parameters");
 		return;
 	}
 	if(attr.len<=0 || attr.s==NULL || val.len<=0 || val.s==NULL)
 	{
 		LM_ERR("bad parameter values\n");
-		rpc->fault(ctx, 500, "Invalid Parameter Values");
+		rpc->fault(ctx, 400, "Invalid Parameter Values");
 		return;
 	}
 
-	for(i=0; i<_reg_htable->htsize; i++)
-	{
-		lock_get(&_reg_htable->entries[i].lock);
-		/* walk through entries */
-		reg = _reg_htable->entries[i].byuuid;
-		while(reg)
-		{
-			if(attr.len==10 && strncmp(attr.s, "l_username", 10)==0) {
-				rval = &reg->r->l_username;
-			} else if(attr.len==10 && strncmp(attr.s, "r_username", 10)==0) {
-				rval = &reg->r->r_username;
-			} else if(attr.len==6 && strncmp(attr.s, "l_uuid", 6)==0) {
-				rval = &reg->r->l_uuid;
-			} else if(attr.len==13 && strncmp(attr.s, "auth_username", 13)==0) {
-				rval = &reg->r->auth_username;
-			} else {
-				lock_release(&_reg_htable->entries[i].lock);
-				LM_ERR("usupoorted filter attribute %.*s\n", attr.len, attr.s);
-				rpc->fault(ctx, 500, "Unsupported Filter Attribtue");
-				return;
-			}
-
-			if(rval->len==val.len && strncmp(val.s, rval->s, val.len)==0) {
-				/* found */
-				if(mode==1) {
-					reg->r->flags |= fval;
-				} else {
-					reg->r->flags &= ~fval;
-				}
-				reg->r->timer_expires = time(NULL) + 1;
-				lock_release(&_reg_htable->entries[i].lock);
-				return;
-			}
-			reg = reg->next;
-		}
-		lock_release(&_reg_htable->entries[i].lock);
+	ret = reg_ht_get_byfilter(&reg, &attr, &val);
+	if (ret == 0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if (ret < 0) {
+		rpc->fault(ctx, 400, "Unsupported filter attribute");
+		return;
 	}
+
+	if(mode==1) {
+		reg->flags |= fval;
+	} else {
+		reg->flags &= ~fval;
+	}
+	reg->timer_expires = time(NULL) + 1;
+
+	lock_release(reg->lock);
+	return;
 }
 
 static const char* rpc_uac_reg_enable_doc[2] = {
@@ -1803,16 +1890,93 @@ static void rpc_uac_reg_refresh(rpc_t* rpc, void* ctx)
 
 	if(rpc->scan(ctx, "S", &l_uuid)<1)
 	{
-		rpc->fault(ctx, 500, "Invalid Parameters");
+		rpc->fault(ctx, 400, "Invalid Parameters");
 		return;
 	}
 
 	ret =  uac_reg_db_refresh(&l_uuid);
-	if(ret<0) {
+	if(ret==0) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	} else if(ret<0) {
 		rpc->fault(ctx, 500, "Failed to refresh record - check log messages");
 		return;
 	}
 }
+
+static const char* rpc_uac_reg_remove_doc[2] = {
+	"Remove a record from memory.",
+	0
+};
+
+static void rpc_uac_reg_remove(rpc_t* rpc, void* ctx)
+{
+	int ret;
+	str l_uuid;
+	reg_uac_t *reg;
+
+	if(rpc->scan(ctx, "S", &l_uuid)<1)
+	{
+		rpc->fault(ctx, 400, "Invalid Parameters");
+		return;
+	}
+	reg = reg_ht_get_byuuid(&l_uuid);
+	if (!reg) {
+		rpc->fault(ctx, 404, "Record not found");
+		return;
+	}
+
+	ret = reg_ht_rm(reg);
+	if(ret<0) {
+		rpc->fault(ctx, 500, "Failed to remove record - check log messages");
+		return;
+	}
+}
+
+static const char* rpc_uac_reg_add_doc[2] = {
+	"Add a record to memory.",
+	0
+};
+
+static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
+{
+	int ret;
+	reg_uac_t reg;
+	reg_uac_t *cur_reg;
+
+	if(rpc->scan(ctx, "SSSSSSSSSddd",
+				&reg.l_uuid,
+				&reg.l_username,
+				&reg.l_domain,
+				&reg.r_username,
+				&reg.r_domain,
+				&reg.realm,
+				&reg.auth_username,
+				&reg.auth_password,
+				&reg.auth_proxy,
+				&reg.expires,
+				&reg.flags,
+				&reg.reg_delay
+			)<1)
+	{
+		rpc->fault(ctx, 400, "Invalid Parameters");
+		return;
+	}
+
+	cur_reg = reg_ht_get_byuuid(&reg.l_uuid);
+	if (cur_reg) {
+		lock_release(cur_reg->lock);
+		rpc->fault(ctx, 409, "uuid already exists");
+		return;
+	}
+
+	ret = reg_ht_add(&reg);
+	if(ret<0) {
+		rpc->fault(ctx, 500, "Failed to add record - check log messages");
+		return;
+	}
+}
+
 
 rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_dump", rpc_uac_reg_dump, rpc_uac_reg_dump_doc, RET_ARRAY},
@@ -1821,6 +1985,8 @@ rpc_export_t uac_reg_rpc[] = {
 	{"uac.reg_disable", rpc_uac_reg_disable, rpc_uac_reg_disable_doc, 0},
 	{"uac.reg_reload",  rpc_uac_reg_reload,  rpc_uac_reg_reload_doc,  0},
 	{"uac.reg_refresh", rpc_uac_reg_refresh, rpc_uac_reg_refresh_doc, 0},
+	{"uac.reg_remove", rpc_uac_reg_remove, rpc_uac_reg_remove_doc, 0},
+	{"uac.reg_add", rpc_uac_reg_add, rpc_uac_reg_add_doc, 0},
 	{0, 0, 0, 0}
 };
 

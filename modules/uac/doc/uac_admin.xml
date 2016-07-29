@@ -429,6 +429,24 @@ modparam("uac", "reg_retry_interval", 300)
 			</example>
 		</section>
 
+		<section id="uac.p.reg-random-delay-id">
+			<title><varname>reg_random_delay</varname> (int)</title>
+			<para>
+			Set a random reg_delay for each registration that has
+			reg_delay set to 0 in the database.
+			If set to 0, randomization will be disabled.
+			</para>
+			<para>The default value is 0 sec (disabled)</para>
+			<example>
+				<title>Set <varname>reg_random_delay</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_random_delay", 300)
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="uac.p.reg-db-table-id">
 			<title><varname>reg_db_table</varname> (string)</title>
 			<para>
@@ -462,6 +480,26 @@ modparam("uac", "reg_db_table", "uacreg")
 				<programlisting format="linespecific">
 ...
 modparam("uac", "reg_contact_addr", "192.168.1.2:5080")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="uac.p.reg-keep-callid">
+			<title><varname>reg_keep_callid</varname> (string)</title>
+			<para>
+			If set to 0 (default), a new Call-Id will be generated for each
+			registration attempt.
+			If set to non-zero, the same Call-Id will be used for
+			re-registrations, as recommended by RFC3261 section 10.2.4.
+			A new Call-Id will be generated when a previous registration
+			had failed.
+			</para>
+			<example>
+				<title>Set <varname>reg_keep_callid</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_keep_callid", 1)
 ...
 				</programlisting>
 			</example>
@@ -765,6 +803,57 @@ if(uac_reg_lookup("$rU", "$ru"))
 {
     lookup("location");
 }
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="uac.f.uac_reg_status(uuid)">
+			<title>
+				<function moreinfo="none">uac_reg_status(uuid)</function>
+			</title>
+			<para>
+			This function returns the current registration status for the uuid.
+			</para>
+			<para>
+			Return values:
+			<itemizedlist>
+			<listitem>
+				<para>
+				1 - a valid registration exists.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				-1 - uuid does not exist or an error occurred while executing
+				the function.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				-2 - a registration attempt is ongoing (and currently there is
+				no valid registration).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				-3 - registration is disabled.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				-99 - no valid registration, waiting for new registration attempt.
+				</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_reg_status</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(status) = uac_reg_status("$rU");
 ...
 				</programlisting>
 			</example>

@@ -27,6 +27,8 @@ extern int reg_timer_interval;
 extern int reg_retry_interval;
 extern int reg_htable_size;
 extern int reg_fetch_rows;
+extern int reg_keep_callid;
+extern int reg_random_delay;
 extern str reg_contact_addr;
 extern str reg_db_url;
 extern str reg_db_table;
@@ -50,5 +52,6 @@ void uac_reg_timer(unsigned int ticks);
 int uac_reg_init_rpc(void);
 
 int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode);
+int  uac_reg_status(struct sip_msg *msg, str *src, int mode);
 int  uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode);
 #endif

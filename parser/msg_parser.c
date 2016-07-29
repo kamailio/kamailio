@@ -207,6 +207,7 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 		case HDR_MAXFORWARDS_T:
 		case HDR_AUTHORIZATION_T:
 		case HDR_EXPIRES_T:
+		case HDR_MIN_EXPIRES_T:
 		case HDR_PROXYAUTH_T:
 		case HDR_PROXYREQUIRE_T:
 		case HDR_UNSUPPORTED_T:
@@ -396,6 +397,10 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 			case HDR_EXPIRES_T:
 				if (msg->expires==0) msg->expires = hf;
 				msg->parsed_flag|=HDR_EXPIRES_F;
+				break;
+			case HDR_MIN_EXPIRES_T:
+				if (msg->min_expires==0) msg->min_expires = hf;
+				msg->parsed_flag|=HDR_MIN_EXPIRES_F;
 				break;
 			case HDR_PROXYAUTH_T:
 				if (msg->proxy_auth==0) msg->proxy_auth = hf;

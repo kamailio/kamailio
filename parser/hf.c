@@ -98,6 +98,10 @@ void clean_hdr_field(struct hdr_field* const hf)
 			free_expires((exp_body_t**)h_parsed);
 			break;
 
+		case HDR_MIN_EXPIRES_T:
+			free_expires((exp_body_t**)h_parsed);
+			break;
+
 		case HDR_FROM_T:
 			free_to(hf->parsed);
 			break;
