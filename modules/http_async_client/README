@@ -263,7 +263,7 @@ modparam("http_async_client", "curl_verbose", 1)
 
    Choose the memory manager used by curl:
      * shm: curl will use kamailio's SHM pool and memory manager
-     * sys: curl will use the system memory amd memory manager (malloc,
+     * sys: curl will use the system memory and memory manager (malloc,
        free, ...)
 
    Note: if this module is used in conjunction with another module using
