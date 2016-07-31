@@ -119,7 +119,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 	str *pval;
 
 	if(dlg_cseq_prepare_msg(msg)!=0) {
-		goto done;
+		goto error;
 	}
 	if(msg->first_line.type==SIP_REPLY) {
 		/* nothing to do for outgoing replies */
