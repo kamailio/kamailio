@@ -610,7 +610,6 @@ char *http_get_content_type(const str *connection)
 {
 	curl_con_t *conn = NULL;
 	curl_con_pkg_t *pconn = NULL;
-	str rval;
 
 	/* Find connection if it exists */
 	if (!connection) {
