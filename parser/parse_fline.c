@@ -254,7 +254,7 @@ error:
 	};
 error1:
 	fl->type=SIP_INVALID;
-	LOG(L_ERR, "parse_first_line: bad message (offset: %d)\n", offset);
+	LOG(cfg_get(core, core_cfg, corelog), "parse_first_line: bad message (offset: %d)\n", offset);
 	/* skip  line */
 	nl=eat_line(buffer,len);
 	return nl;
