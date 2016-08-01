@@ -65,6 +65,9 @@ str subscriber_id_col = str_init(SUBSCRIBER_ID_COL);
 str query_buffer 		= { 0, 0 };
 int query_buffer_len		= 0;
 
+char* check_contact_links_query = "SELECT * FROM impu_contact WHERE contact_id = (SELECT contact.id from contact WHERE contact.contact='%.*s')";
+int check_contact_links_query_len;
+
 char* impu_contact_insert_query = "INSERT INTO impu_contact (impu_id, contact_id) (SELECT I.id, C.id FROM impu I, contact C WHERE I.impu='%.*s' and C.contact='%.*s')";
 int impu_contact_insert_query_len;
 char* impu_contact_delete_query = "DELETE impu_contact FROM impu_contact INNER JOIN impu ON impu_contact.impu_id = impu.id INNER JOIN contact ON contact.id = impu_contact.contact_id where impu.impu = '%.*s' and contact.contact = '%.*s'";
@@ -1072,6 +1075,37 @@ int db_link_contact_to_impu(impurecord_t* _r, ucontact_t* _c) {
     LM_DBG("Query success\n");
 
     return 0;
+}
+
+int db_check_if_contact_is_linked(ucontact_t* _c) {
+	int len;
+	db1_res_t* rs;
+	int n_res_row = 0;
+
+	len = strlen(check_contact_links_query) + _c->c.len + 1;
+
+	if (!query_buffer_len || query_buffer_len < len) {
+		if (query_buffer.s) {
+			pkg_free(query_buffer.s);
+		}
+		query_buffer.s = (char*) pkg_malloc(len);
+		if (!query_buffer.s) {
+			LM_ERR("no more pkg mem\n");
+			return -1;
+		}
+		query_buffer_len = len;
+
+	}
+
+	snprintf(query_buffer.s,query_buffer_len,check_contact_links_query,_c->c.len,_c->c.s);
+	query_buffer.len = strlen(query_buffer.s);
+	if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
+		LM_ERR("Unable to query DB to check if contact[%.*s] is linked\n", _c->c.len, _c->c.s);
+		return -1;
+	}
+	n_res_row = RES_ROW_N(rs);
+	ul_dbf.free_result(ul_dbh, rs);
+	return n_res_row;
 }
 
 int db_unlink_contact_from_impu(impurecord_t* _r, ucontact_t* _c) {
