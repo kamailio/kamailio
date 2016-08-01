@@ -75,6 +75,9 @@ int impu_subscriber_insert_query_len;
 char* impu_subscriber_delete_query = "DELETE impu_subscriber FROM impu_subscriber INNER JOIN impu on impu_subscriber.impu_id=impu.id INNER JOIN subscriber on impu_subscriber.subscriber_id=subscriber.id WHERE impu.impu='%.*s' AND subscriber.event='%.*s' and subscriber.watcher_contact='%.*s' and subscriber.presentity_uri='%.*s'";
 int impu_subscriber_delete_query_len;
 
+char* delete_unlinked_contact_query = "DELETE from contact";
+int delete_unlinked_contact_query_len;	
+
 
 
 extern db1_con_t* ul_dbh;
@@ -651,6 +654,32 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	return 0;
 }
 
+int delete_all_unlinked_contacts() {
+	int len;
+	db1_res_t* rs;
+	
+	len = strlen(delete_unlinked_contact_query) +1;
+	if (!query_buffer_len || query_buffer_len < len) {
+		if (query_buffer.s) {
+			pkg_free(query_buffer.s);
+		}
+		query_buffer.s = (char*) pkg_malloc(len);
+		if (!query_buffer.s) {
+			LM_ERR("no more pkg mem\n");
+			return -1;
+		}
+		query_buffer_len = len;
+	}
+	snprintf(query_buffer.s,query_buffer_len,delete_unlinked_contact_query);
+	query_buffer.len = strlen(query_buffer.s);
+	
+	if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
+		return -1;
+	}
+	ul_dbf.free_result(ul_dbh,rs);
+	return 0;
+}
+
 int preload_udomain(db1_con_t* _c, udomain_t* _d) {
     db_key_t col[9];
     db_row_t* row;
@@ -717,9 +746,12 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
     }
 
     if (RES_ROW_N(rs) == 0) {
-	LM_DBG("table is empty\n");
-	ul_dbf.free_result(_c, rs);
-	return 0;
+		LM_DBG("IMPU table is empty, removing all unlinked contacts \n");
+		ul_dbf.free_result(_c, rs);
+		if (delete_all_unlinked_contacts() != 0) {
+			LM_ERR("Not able to delete unlinked contacts\n");
+		}
+		return 0;
     }
 
     LM_DBG("preloading S-CSCF usrloc...\n");
