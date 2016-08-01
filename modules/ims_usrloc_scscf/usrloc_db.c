@@ -79,7 +79,7 @@ char* impu_subscriber_delete_query = "DELETE impu_subscriber FROM impu_subscribe
 int impu_subscriber_delete_query_len;
 
 char* delete_unlinked_contact_query = "DELETE from contact";
-int delete_unlinked_contact_query_len;	
+int delete_unlinked_contact_query_len;
 
 
 
@@ -153,7 +153,7 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity,
 	db_key_t key[8];
 	db_val_t val[8];
 	str bin_str;
-	
+
 	LM_DBG("DB: Inserting/Updating IMPU [%.*s]\n", public_identity->len, public_identity->s);
 
 	//serialise ims_subscription
@@ -223,7 +223,7 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity,
 	} else {
 	    val[i].nul = 1;
 	}
-	
+
 	i++;
 
 	if (ul_dbf.use_table(ul_dbh, &impu_table) != 0) {
@@ -236,7 +236,7 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity,
 		bin_free(&x);
 		return -1;
 	}
-	
+
 	if (s)
 	    bin_free(&x);
 
@@ -246,7 +246,7 @@ int db_insert_impurecord(struct udomain* _d, str* public_identity,
 int db_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 	db_key_t key[1];
 	db_val_t val[1];
-	
+
 	LM_DBG("DB: deleting IMPU [%.*s]\n", _r->public_identity.len, _r->public_identity.s);
 
 	key[0] = &impu_col;
@@ -262,7 +262,7 @@ int db_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 		LM_ERR("Unable to delete impu [%.*s] from DB\n", _r->public_identity.len, _r->public_identity.s);
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -271,7 +271,7 @@ static str param_name_and_nody = {"%.*s=%.*s;", 1};
 static str param_name_no_body = {"%.*s;", 1};
 
 int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
-	
+
 	str param_buf, param_pad;
 	param_t * tmp;
 	char param_bufc[MAX_PARAMS_SIZE], param_padc[MAX_PARAMS_SIZE];
@@ -279,12 +279,12 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 	param_buf.len = 0;
 	param_pad.s = param_padc;
 	param_pad.len = 0;
-	
+
 	db_key_t key[7];
 	db_val_t val[7];
-	
+
 	LM_DBG("DB: inserting ucontact [%.*s]\n", _c->c.len, _c->c.s);
-	
+
 	tmp = _c->params;
 	while (tmp) {
 	    if(tmp->body.len > 0) {
@@ -297,7 +297,7 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 	    tmp = tmp->next;
 	}
 	LM_DBG("Converted params to string to insert into db: [%.*s]\n", param_buf.len, param_buf.s);
-	
+
 
 	key[0] = &contact_col;
 	key[1] = &params_col;
@@ -314,7 +314,7 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 	val[1].type = DB1_STR;
 	val[1].nul = 0;
 	val[1].val.str_val = param_buf;
-	
+
 	val[2].type = DB1_STR;
 	val[2].nul = 0;
 	val[2].val.str_val = _c->path;
@@ -374,9 +374,9 @@ int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 	int col_num = 12;
 	db_key_t key[col_num];
 	db_val_t val[col_num];
-	
+
 	LM_DBG("DB: inserting subscriber [%.*s]\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
-	
+
 	key[0] = &sub_watcher_uri_col;
 	key[1] = &sub_watcher_contact_col;
 	key[2] = &sub_presentity_uri_col;
@@ -413,31 +413,31 @@ int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 	val[5].type = DB1_INT;
 	val[5].nul = 0;
 	val[5].val.int_val = _reg_subscriber->version;
-	
+
 	val[6].type = DB1_INT;
 	val[6].nul = 0;
 	val[6].val.int_val = _reg_subscriber->local_cseq;
-	
+
 	val[7].type = DB1_STR;
 	val[7].nul = 0;
 	val[7].val.str_val = _reg_subscriber->call_id;
-	
+
 	val[8].type = DB1_STR;
 	val[8].nul = 0;
 	val[8].val.str_val = _reg_subscriber->from_tag;
-	
+
 	val[9].type = DB1_STR;
 	val[9].nul = 0;
 	val[9].val.str_val = _reg_subscriber->to_tag;
-	
+
 	val[10].type = DB1_STR;
 	val[10].nul = 0;
 	val[10].val.str_val = _reg_subscriber->record_route;
-	
+
 	val[11].type = DB1_STR;
 	val[11].nul = 0;
 	val[11].val.str_val = _reg_subscriber->sockinfo_str;
-	
+
 	if (ul_dbf.use_table(ul_dbh, &subscriber_table) != 0) {
 		LM_ERR("Unable to use table [%.*s]\n", subscriber_table.len, subscriber_table.s);
 		return -1;
@@ -446,7 +446,7 @@ int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 		LM_ERR("Failed to insert/update subscriber record for [%.*s]\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -454,7 +454,7 @@ int db_insert_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 int db_delete_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 	db_key_t key[3];
 	db_val_t val[3];
-	
+
 	LM_DBG("Deleting subscriber binding [%.*s] on impu [%.*s]\n",
 			_reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s,
 			_r->public_identity.len, _r->public_identity.s);
@@ -468,24 +468,24 @@ int db_delete_subscriber(impurecord_t* _r, reg_subscriber* _reg_subscriber) {
 	val[0].type = DB1_INT;
 	val[0].nul = 0;
 	val[0].val.int_val = _reg_subscriber->event;
-		
+
 	key[1] = &sub_watcher_contact_col;
 	val[1].type = DB1_STR;
 	val[1].nul = 0;
 	val[1].val.str_val = _reg_subscriber->watcher_contact;
-	
+
 	key[2] = &sub_presentity_uri_col;
 	val[2].type = DB1_STR;
 	val[2].nul = 0;
 	val[2].val.str_val = _reg_subscriber->presentity_uri;
-	
+
 	if (ul_dbf.delete(ul_dbh, key, 0, val, 3) != 0) {
 		LM_ERR("Unable to delete subscriber [%.*s] from DB\n", _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
 		return -1;
 	}
-	
+
 	return 0;
-	
+
 }
 
 
@@ -516,7 +516,7 @@ int inline int_to_str_len(int i) {
 static inline int dbrow2contact(db_val_t* val, ucontact_info_t* ci) {
 	static str path, user_agent, callid, params;
 	param_hooks_t hooks;
-	
+
 	// Set ci to 0:
 	memset( ci, 0, sizeof(ucontact_info_t));
 
@@ -528,7 +528,7 @@ static inline int dbrow2contact(db_val_t* val, ucontact_info_t* ci) {
 			LM_WARN("Error while parsing parameters: %.*s\n", params.len, params.s);
 		}
 	}
-	
+
 	/* path */
 	if (!VAL_NULL(val + 2)) {
 		path.s = (char*)VAL_STRING(val + 2);
@@ -565,7 +565,7 @@ static inline int dbrow2contact(db_val_t* val, ucontact_info_t* ci) {
 
 static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_data) {
 	static str presentity_uri, watcher_uri, watcher_contact, call_id, from_tag, to_tag, record_route, sockinfo_str;
-	
+
 	/*presentity uri*/
 	if (!VAL_NULL(val)) {
 	    presentity_uri.s = (char*) VAL_STRING(val);
@@ -573,7 +573,7 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	}
 	subscriber_data->presentity_uri = &presentity_uri;
 	LM_DBG("presentity_uri: [%.*s]", subscriber_data->presentity_uri->len, subscriber_data->presentity_uri->s);
-	
+
 	/*watcher_uri*/
 	if (!VAL_NULL(val + 1)) {
 	    watcher_uri.s = (char*) VAL_STRING(val + 1);
@@ -581,7 +581,7 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	}
 	subscriber_data->watcher_uri = &watcher_uri;
 	LM_DBG("watcher_uri: [%.*s]", subscriber_data->watcher_uri->len, subscriber_data->watcher_uri->s);
-	
+
 	/*watcher_contact*/
 	if (!VAL_NULL(val + 2)) {
 	    watcher_contact.s = (char*) VAL_STRING(val + 2);
@@ -589,31 +589,31 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	}
 	subscriber_data->watcher_contact = &watcher_contact;
 	LM_DBG("watcher_contact: [%.*s]", subscriber_data->watcher_contact->len, subscriber_data->watcher_contact->s);
-	
+
 	/*event*/
 	if (!VAL_NULL(val + 3)) {
 	    subscriber_data->event = VAL_INT(val + 3);
 	}
 	LM_DBG("event: [%d]", subscriber_data->event);
-	
+
 	/* expires */
 	if (!VAL_NULL(val + 4)) {
 		subscriber_data->expires = VAL_TIME(val + 4);
 	}
 	LM_DBG("expires: [%d]", subscriber_data->expires);
-	
+
 	/*event*/
 	if (!VAL_NULL(val + 5)) {
 	    subscriber_data->version = VAL_INT(val + 5);
 	}
 	LM_DBG("version: [%d]", subscriber_data->version);
-	
+
 	/*local_cseq*/
 	if (!VAL_NULL(val + 6)) {
 	    subscriber_data->local_cseq = VAL_INT(val + 6);
 	}
 	LM_DBG("local_cseq: [%d]", subscriber_data->local_cseq);
-	
+
 	/* callid */
 	if (!VAL_NULL(val + 7)) {
 		call_id.s = (char*) VAL_STRING(val + 7);
@@ -621,7 +621,7 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	}
 	subscriber_data->callid = &call_id;
 	LM_DBG("callid: [%.*s]", subscriber_data->callid->len, subscriber_data->callid->s);
-	
+
 	/* ftag */
 	if (!VAL_NULL(val + 8)) {
 		from_tag.s = (char*) VAL_STRING(val + 8);
@@ -629,7 +629,7 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	}
 	subscriber_data->ftag = &from_tag;
 	LM_DBG("ftag: [%.*s]", subscriber_data->ftag->len, subscriber_data->ftag->s);
-	
+
 	/* ttag */
 	if (!VAL_NULL(val + 9)) {
 		to_tag.s = (char*) VAL_STRING(val + 9);
@@ -637,7 +637,7 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	}
 	subscriber_data->ttag = &to_tag;
 	LM_DBG("ttag: [%.*s]", subscriber_data->ttag->len, subscriber_data->ttag->s);
-	
+
 	/* record_route */
 	if (!VAL_NULL(val + 10)) {
 		record_route.s = (char*) VAL_STRING(val + 10);
@@ -645,7 +645,7 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	}
 	subscriber_data->record_route = &record_route;
 	LM_DBG("record_route: [%.*s]", subscriber_data->record_route->len, subscriber_data->record_route->s);
-	
+
 	/* sockinfo_str */
 	if (!VAL_NULL(val + 11)) {
 		sockinfo_str.s = (char*) VAL_STRING(val + 11);
@@ -653,14 +653,14 @@ static inline int dbrow2subscriber(db_val_t* val, subscriber_data_t* subscriber_
 	}
 	subscriber_data->sockinfo_str = &sockinfo_str;
 	LM_DBG("sockinfo_str: [%.*s]", subscriber_data->sockinfo_str->len, subscriber_data->sockinfo_str->s);
-	
+
 	return 0;
 }
 
 int delete_all_unlinked_contacts() {
 	int len;
 	db1_res_t* rs;
-	
+
 	len = strlen(delete_unlinked_contact_query) +1;
 	if (!query_buffer_len || query_buffer_len < len) {
 		if (query_buffer.s) {
@@ -673,9 +673,9 @@ int delete_all_unlinked_contacts() {
 		}
 		query_buffer_len = len;
 	}
-	snprintf(query_buffer.s,query_buffer_len,delete_unlinked_contact_query);
+	snprintf(query_buffer.s,query_buffer_len,"%s",delete_unlinked_contact_query);
 	query_buffer.len = strlen(query_buffer.s);
-	
+
 	if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
 		return -1;
 	}
@@ -818,7 +818,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 	    if (!VAL_NULL(vals + 8)) {
 		impu_id = VAL_INT(vals + 8);
 	    }
-		
+
 		int leave_slot_locked = 1;
 		int res = get_subscription(&subscription->private_identity, &found_subscription, leave_slot_locked); //leave slot locked in case we need to add.... don't want racing adds
         if (res != 0) {
@@ -839,7 +839,7 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 			ref_subscription_unsafe(subscription);	/*assume we will add to impu - if not, we will unref it*/
 			unlock_subscription_slot(subscription->sl);
         }
-		
+
 	    /* insert impu into memory */
 	    lock_udomain(_d, &impu);
 	    if (get_impurecord_unsafe(_d, &impu, &impurecord) != 0) {
@@ -904,14 +904,14 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d) {
 				contact.s = (char*) VAL_STRING(contact_vals);
 				contact.len = strlen(contact.s);
 			    }
-                            
+
                             if (contact.len <=0 || !contact.s){
                                    LM_ERR("Unable to insert contact [%.*s] for IMPU [%.*s] into memory... continuing...\n",
 					    contact.len, contact.s,
-					    impu.len, impu.s); 
+					    impu.len, impu.s);
                                    continue;
                             }
-                            
+
 			    if (dbrow2contact(contact_vals, &contact_data) != 0) {
 				LM_ERR("unable to convert contact row from DB into valid data... moving on\n");
 				continue;
@@ -1060,7 +1060,7 @@ int db_link_contact_to_impu(impurecord_t* _r, ucontact_t* _c) {
 	    return -1;
 	}
 	query_buffer_len = len;
-	
+
     }
 
     snprintf(query_buffer.s, query_buffer_len, impu_contact_insert_query, _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
@@ -1126,7 +1126,7 @@ int db_unlink_contact_from_impu(impurecord_t* _r, ucontact_t* _c) {
 	    return -1;
 	}
 	query_buffer_len = len;
-	
+
     }
 
     snprintf(query_buffer.s, query_buffer_len, impu_contact_delete_query, _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
@@ -1149,7 +1149,7 @@ int db_unlink_subscriber_from_impu(impurecord_t* _r, reg_subscriber* _reg_subscr
     int event_len;
 
     LM_DBG("DB: un-linking subscriber to IMPU\n");
-    
+
     event_len = int_to_str_len(_reg_subscriber->event);
     snprintf(event, event_len + 1, "%d", _reg_subscriber->event);
 
@@ -1165,10 +1165,10 @@ int db_unlink_subscriber_from_impu(impurecord_t* _r, reg_subscriber* _reg_subscr
 	    return -1;
 	}
 	query_buffer_len = len;
-	
+
     }
 
-    snprintf(query_buffer.s, query_buffer_len, impu_subscriber_delete_query, _r->public_identity.len, _r->public_identity.s, strlen(event), event, 
+    snprintf(query_buffer.s, query_buffer_len, impu_subscriber_delete_query, _r->public_identity.len, _r->public_identity.s, strlen(event), event,
 	    _reg_subscriber->watcher_contact.len, _reg_subscriber->watcher_contact.s, _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
     query_buffer.len = strlen(query_buffer.s);//len;
 
@@ -1187,9 +1187,9 @@ int db_link_subscriber_to_impu(impurecord_t* _r, reg_subscriber* _reg_subscriber
     db1_res_t* rs;
     char event[11];
     int event_len;
-    
+
     LM_DBG("DB: linking subscriber to IMPU\n");
-    
+
     event_len = int_to_str_len(_reg_subscriber->event);
     snprintf(event, event_len + 1, "%d", _reg_subscriber->event);
 
@@ -1205,10 +1205,10 @@ int db_link_subscriber_to_impu(impurecord_t* _r, reg_subscriber* _reg_subscriber
 	    return -1;
 	}
 	query_buffer_len = len;
-	
+
     }
 
-    snprintf(query_buffer.s, query_buffer_len, impu_subscriber_insert_query, _r->public_identity.len, _r->public_identity.s, strlen(event), event, 
+    snprintf(query_buffer.s, query_buffer_len, impu_subscriber_insert_query, _r->public_identity.len, _r->public_identity.s, strlen(event), event,
 	    _reg_subscriber->watcher_contact.len, _reg_subscriber->watcher_contact.s, _reg_subscriber->presentity_uri.len, _reg_subscriber->presentity_uri.s);
     query_buffer.len = strlen(query_buffer.s);//len;
 

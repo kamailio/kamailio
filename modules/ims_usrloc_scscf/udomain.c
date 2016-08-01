@@ -298,10 +298,10 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
                     abort = 1;
                     break;
                 }
-                LM_DBG("We have a [3gpp=%d] contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d (state: %d)\n", 
+                LM_DBG("We have a [3gpp=%d] contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d (state: %s)\n", 
                         contact_ptr->is_3gpp, i, contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s, 
                         (double) contact_ptr->expires - now, contact_ptr->ref_count,
-                        contact_ptr->state);
+                        get_contact_state_as_string(contact_ptr->state));
                     //contacts are now deleted during impurecord processing
                 if ((contact_ptr->expires-now) <= 0) {
                     if (contact_ptr->state == CONTACT_DELAYED_DELETE) {
