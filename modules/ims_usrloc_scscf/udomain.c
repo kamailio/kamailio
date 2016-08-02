@@ -267,6 +267,7 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
     time_t now;
     int abort = 0;
     int slot;
+	int ref_count_db;
     
     now = time(0);
     
@@ -297,10 +298,10 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
                     abort = 1;
                     break;
                 }
-                LM_DBG("We have a [3gpp=%d] contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d (state: %d)\n", 
+                LM_DBG("We have a [3gpp=%d] contact in the new contact list in slot %d = [%.*s] (%.*s) which expires in %lf seconds and has a ref count of %d (state: %s)\n", 
                         contact_ptr->is_3gpp, i, contact_ptr->aor.len, contact_ptr->aor.s, contact_ptr->c.len, contact_ptr->c.s, 
                         (double) contact_ptr->expires - now, contact_ptr->ref_count,
-                        contact_ptr->state);
+                        get_contact_state_as_string(contact_ptr->state));
                     //contacts are now deleted during impurecord processing
                 if ((contact_ptr->expires-now) <= 0) {
                     if (contact_ptr->state == CONTACT_DELAYED_DELETE) {
@@ -309,7 +310,26 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
                             expired_contacts[num_expired_contacts] = contact_ptr;
                             num_expired_contacts++;
                         } else {
-                            LM_DBG("contact in state CONTACT_DELATED_DELETE still has a ref count of [%d]... not doing anything for now\n", contact_ptr->ref_count);
+							/* we could fall here not because contact is still
+							 referenced but also because we failed before to
+							 get a lock to unref the contact, so we check if
+							 contact is really referenced*/
+							if (db_mode != NO_DB) {
+								LM_DBG("contact in state CONTACT_DELAYED_DELETE still has a ref count of [%d] in memory. Check on DB \n", contact_ptr->ref_count);
+								ref_count_db = db_check_if_contact_is_linked(contact_ptr);
+								if (ref_count_db < 0) {
+									LM_ERR("Unable to check if contact is unlinked\n");
+								} else if (ref_count_db == 0) {
+									LM_DBG("Contact has ref count [%d] but there's no link on the DB. Deleting contact");
+									contact_ptr->ref_count = 0;
+									expired_contacts[num_expired_contacts] = contact_ptr;
+									num_expired_contacts++;
+								} else {
+									LM_DBG("Contact in state CONTACT_DELAYED_DELETE has ref count [%d] on DB", ref_count_db);
+								}
+							} else {
+								LM_DBG("contact in state CONTACT_DELAYED_DELETE still has a ref count of [%d] in memory. Not doing anything for now \n", contact_ptr->ref_count);
+							}
                         }
                     } else if (contact_ptr->state != CONTACT_DELETED) {
                         LM_DBG("expiring contact [%.*s].... setting to CONTACT_EXPIRE_PENDING_NOTIFY\n", contact_ptr->aor.len, contact_ptr->aor.s);

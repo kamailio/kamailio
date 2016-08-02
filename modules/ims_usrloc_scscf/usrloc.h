@@ -377,6 +377,23 @@ static inline char* get_impu_regstate_as_string(enum pi_reg_states reg_state) {
     }
 }
 
+static inline char* get_contact_state_as_string(enum contact_state c_state) {
+    switch(c_state) {
+        case CONTACT_VALID:
+            return "Contact valid";
+        case CONTACT_DELETE_PENDING:
+            return "Contact in delete pending";
+        case CONTACT_EXPIRE_PENDING_NOTIFY:
+            return "Contact expired with pending NOTIFY";
+        case CONTACT_DELETED:
+            return "Contact deleted";
+        case CONTACT_DELAYED_DELETE:
+            return "Contact with delayed delete";
+        default:
+            return "unknown";
+    }
+}
+
 typedef struct _contact_ptr {
     ucontact_t* contact;
     struct contact_ptr* prev;

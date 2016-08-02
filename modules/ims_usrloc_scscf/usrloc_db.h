@@ -77,4 +77,6 @@ int db_link_subscriber_to_impu(impurecord_t* _r, reg_subscriber* _reg_subscriber
 
 int preload_udomain(db1_con_t* _c, udomain_t* _d);
 
+int db_check_if_contact_is_linked(ucontact_t* _c);
+
 #endif /* USRLOC_DB_H_ */
