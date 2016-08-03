@@ -137,6 +137,9 @@ static int sipcapture_fixup(void** param, int param_no);
 static int reportcapture_fixup(void** param, int param_no);
 static int float2int_fixup(void** param, int param_no);
 
+static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_hep_name (pv_spec_p sp, str *in);
+
 static int sip_capture(struct sip_msg *msg, str *dtable,  _capture_mode_data_t *cm_data);
 static int report_capture(struct sip_msg *msg, str *_table, str* _corr, str *_data);
 static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t * _cm_data, char* s2);
@@ -150,10 +153,11 @@ int init_rawsock_children(void);
 int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
 int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip);
-
-
-
+static int nosip_hep_msg(void *data);
 static struct mi_root* sip_capture_mi(struct mi_root* cmd, void* param );
+
+static int hep_version(struct sip_msg *msg);
+
 
 static str db_url		= str_init(DEFAULT_DB_URL);
 static str table_name		= str_init("sip_capture");
@@ -229,6 +233,10 @@ int n_callid_aleg_headers = 0;
 
 struct ifreq ifr; 	/* interface structure */
 
+/* by default nonsip_hook is inactive */
+static int nonsip_hook = 0;
+static int hep_route_no=-1;
+
 static int sc_topoh_unmask = 0;
 static topoh_api_t thb = {0};
 
@@ -269,11 +277,18 @@ static cmd_export_t cmds[] = {
 	{"sip_capture", (cmd_function)w_sip_capture, 2, sipcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 1, reportcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 2, reportcapture_fixup, 0, ANY_ROUTE },
-	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },
+	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },	
 	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0, ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
+
+static pv_export_t mod_pvs[] = {
+        { {"hep", sizeof("hep")-1}, PVT_OTHER, pv_get_hep, 0,
+        pv_parse_hep_name, 0, 0, 0 },
+        { {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+                                
 
 int capture_mode_param(modparam_t type, void *val);
 
@@ -342,7 +357,8 @@ static param_export_t params[] = {
 	{"insert_retries",   		INT_PARAM, &insert_retries },
 	{"insert_retry_timeout",	INT_PARAM, &insert_retry_timeout },
 	{"table_time_sufix",		PARAM_STR, &table_time_sufix },
-	{"topoh_unamsk",			PARAM_INT, &sc_topoh_unmask },
+	{"topoh_unamsk",		PARAM_INT, &sc_topoh_unmask },
+	{"nonsip_hook",			PARAM_INT, &nonsip_hook },
 	{0, 0, 0}
 };
 
@@ -383,7 +399,7 @@ struct module_exports exports = {
 	0,          /*!< exported statistics */
 #endif
 	mi_cmds,    /*!< exported MI functions */
-	0,          /*!< exported pseudo-variables */
+	mod_pvs,          /*!< exported pseudo-variables */
 	0,          /*!< extra processes */
 	mod_init,   /*!< module initialization function */
 	0,          /*!< response function */
@@ -767,6 +783,7 @@ static int mod_init(void)
 
 #ifdef STATISTICS
 
+	int route_no;
 	c = capture_modes_root;
 	while (c){
 		cnt++;
@@ -824,10 +841,36 @@ static int mod_init(void)
 
 	*capture_on_flag = capture_on;
 
-	/* register DGRAM event */
-	if(sr_event_register_cb(SREV_NET_DGRAM_IN, hep_msg_received) < 0) {
-		LM_ERR("failed to register SREV_NET_DGRAM_IN event\n");
-		return -1;
+	if(nonsip_hook)
+	{	        
+        	route_no=route_get(&event_rt, "sipcapture:request");
+	        if (route_no==-1)
+        	{
+                	LM_ERR("failed to find event_route[sipcapture:request]\n");
+	                return -1;
+        	}
+        	
+	        if (event_rt.rlist[route_no]==0)
+        	{
+                	LM_ERR("event_route[sipcapture:request] is empty\n");
+	                return -1;
+        	}
+
+	        hep_route_no=route_no;
+	
+		if(sr_event_register_cb(SREV_RCV_NOSIP, nosip_hep_msg) < 0) 
+		{
+			LM_ERR("failed to register SREV_RCV_NOSIP event\n");
+		  	return -1;		  	                         
+		}
+	}
+	else 
+	{
+		/* register DGRAM event */
+		if(sr_event_register_cb(SREV_NET_DGRAM_IN, hep_msg_received) < 0) {
+			LM_ERR("failed to register SREV_NET_DGRAM_IN event\n");
+			return -1;
+		}
 	}
 
 	if(ipip_capture_on && moni_capture_on) {
@@ -1050,7 +1093,6 @@ static int w_report_capture(struct sip_msg* _m, char* _table, char* _corr, char*
 	if(data.len > 0 && !strncmp(data.s, "report_capture", data.len)) data.len = 0;
 
 	return report_capture(_m, (table.len>0)?&table:NULL, (corr.len>0)?&corr:NULL ,(data.len>0)?&data:NULL );
-
 }
 
 
@@ -2614,3 +2656,168 @@ static int sipcapture_parse_aleg_callid_headers() {
 
 	return n_callid_aleg_headers;
 }
+
+
+static int nosip_hep_msg(void *data)
+{
+        sip_msg_t* msg;
+        char *buf;
+        unsigned int len = 0;
+        struct run_act_ctx ra_ctx;
+        int ret = 0;
+
+        msg = (sip_msg_t*)data;
+        
+        struct hep_hdr *heph;
+        
+        buf = msg->buf;
+        len = msg->len;
+        
+        /* first send to route */
+        init_run_actions_ctx(&ra_ctx);
+        ret = run_actions(&ra_ctx, event_rt.rlist[hep_route_no], msg);
+
+        if(ret != 1) return ret;
+
+        /* hep_hdr */
+        heph = (struct hep_hdr*) msg->buf;
+        
+	if(heph->hp_v == 1 || heph->hp_v == 2)  {
+
+		LOG(L_ERR, "ERROR: HEP v 1/2: v:[%d] l:[%d]\n",heph->hp_v, heph->hp_l);
+		if((len = hepv2_message_parse(buf, len, msg)) < 0) 
+		{		
+   		     LOG(L_ERR, "ERROR: during hepv2 parsing :[%d]\n", len);
+   		     return 0;
+                }
+                
+                buf = msg->buf+len;
+		len = msg->len - len;
+				
+		msg->buf = buf;
+                msg->len = len;
+        }
+        else if(!memcmp(msg->buf, "\x48\x45\x50\x33",4) || !memcmp(msg->buf, "\x45\x45\x50\x31",4)) {
+
+                if((len = hepv3_message_parse(buf, len, msg)) < 0) 
+		{		
+   		     LOG(L_ERR, "ERROR: during hepv3 parsing :[%d]\n", len);
+   		     return 0;
+                }
+                
+                buf = msg->buf+len;
+                len = msg->len - len;
+                
+                msg->buf = buf;
+                msg->len = len;
+        }
+        else {
+
+                LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version or bad length: v:[%d] l:[%d]\n",
+                                                heph->hp_v, heph->hp_l);
+                return -1;
+        }
+
+        if (parse_msg(buf, len, msg)!=0) {
+             LOG(L_ERR, "couldn't parse sip message\n");               
+             return -1;
+        }
+        
+        return ret;
+}
+
+
+static int hep_version(struct sip_msg *msg)
+{
+        struct hep_hdr *heph;
+        /* hep_hdr */
+        heph = (struct hep_hdr*) msg->buf;
+        
+	if(heph->hp_v == 1 || heph->hp_v == 2) return heph->hp_v;
+        else if(!memcmp(msg->buf, "\x48\x45\x50\x33",4) || !memcmp(msg->buf, "\x45\x45\x50\x31",4)) return 3;
+                
+        return -1;
+}
+
+static int fix_hex_int(str *s)
+{
+
+	unsigned int retval=0;
+
+	if (!s->len || !s->s)
+		goto error;
+
+	if (s->len > 2)
+		if ((s->s[0] == '0') && ((s->s[1]|0x20) == 'x')) {
+			if (hexstr2int(s->s+2, s->len-2, &retval)!=0)
+				goto error;
+			else
+				return retval;
+		}
+
+	if (str2int(s, (unsigned int*)&retval)<0)
+		goto error;
+
+
+	return retval;
+
+error:
+	LM_ERR("Invalid value for hex: <%*s>!\n", s->len, s->s);
+	return -1;
+
+}
+
+
+static int pv_parse_hep_name (pv_spec_p sp, str *in)
+{
+	int valchunk = 0;
+
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+        LM_ERR("REQUEST, PRE, %.*s", in->len, in->s);
+
+	switch(in->len)
+	{
+		case 5:
+		{
+			if((valchunk = fix_hex_int(in)) > 0) sp->pvp.pvn.u.isname.name.n = valchunk;
+			else goto error;
+		}
+		break;
+		case 7:
+		{
+		        if(!strncmp(in->s, "version", 7)) sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		}
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown hep name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+
+static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(param==NULL) return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_uintval(msg, param, res, hep_version(msg));						
+		case 1: 
+		        return pv_get_uintval(msg, param, res, hep_version(msg));						
+		default:
+		        return  hepv3_get_chunk(msg, msg->buf, msg->len, param->pvn.u.isname.name.n, param, res);
+	}
+	return 0;
+}
+                        

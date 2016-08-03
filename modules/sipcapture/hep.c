@@ -44,6 +44,7 @@ struct hep_timehdr* heptime;
 int hepv2_received(char *buf, unsigned int len, struct receive_info *ri);
 int hepv3_received(char *buf, unsigned int len, struct receive_info *ri);
 int parsing_hepv3_message(char *buf, unsigned int len);
+
 /**
  * HEP message
  */
@@ -514,6 +515,533 @@ error:
 }
 
 
+int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t* msg) {
+
+	union sockaddr_union from;
+	union sockaddr_union to;
+	char *tmp;
+	struct ip_addr dst_ip, src_ip;
+	struct socket_info* si = 0;
+	int i;
+	char *payload = NULL;
+	unsigned int payload_len = 0;
+        struct hep_chunk *chunk;	
+        struct hep_generic_recv *hg;
+        int totelem = 0;
+        int chunk_vendor=0, chunk_type=0, chunk_length=0;
+        int total_length = 0;
+        int ret = 0;
+        
+	hg = (struct hep_generic_recv*)pkg_malloc(sizeof(struct hep_generic_recv));
+	if(hg==NULL) {
+	        LM_ERR("no more pkg memory left for hg\n");
+	        return -1;
+        }
+	                                                 		
+	memset(hg, 0, sizeof(struct hep_generic_recv));
+
+	
+        memset(heptime, 0, sizeof(struct hep_timehdr));	
+	        
+
+	/* HEADER */
+	hg->header  = (hep_ctrl_t *) (buf);
+
+	/*Packet size */
+	total_length = ntohs(hg->header->length);
+
+	dst_ip.af = 0;
+        src_ip.af = 0;
+                	        
+	payload = NULL;
+	correlation_id = NULL;
+	authkey = NULL;
+
+	i = sizeof(hep_ctrl_t);	        
+	        
+	while(i < total_length) {
+                
+	        /*OUR TMP DATA */                                  
+                tmp = buf+i;
+
+                chunk = (struct hep_chunk*) tmp;
+                             
+                chunk_vendor = ntohs(chunk->vendor_id);                             
+                chunk_type = ntohs(chunk->type_id);
+                chunk_length = ntohs(chunk->length);
+                       
+                /* if chunk_length */
+                if(chunk_length == 0) {
+                        /* BAD LEN we drop this packet */
+                        goto error;
+                }
+
+                /* SKIP not general Chunks */
+                if(chunk_vendor != 0) {
+                        i+=chunk_length;
+                }
+                else {                                                                                                                               
+                        switch(chunk_type) {
+                                     
+                                case 0:
+                                        goto error;
+                                        break;
+                                     
+                                case 1:                                                                          
+                                        hg->ip_family  = (hep_chunk_uint8_t *) (tmp);
+                                        i+=chunk_length;
+                                        totelem++;
+                                        break;
+                                case 2:
+                                        hg->ip_proto  = (hep_chunk_uint8_t *) (tmp);
+                                        i+=chunk_length;
+                                        totelem++;
+                                        break;                                                     
+                                case 3:
+                                        hg->hep_src_ip4  = (hep_chunk_ip4_t *) (tmp);
+                                        i+=chunk_length;
+                                        src_ip.af=AF_INET;
+				        src_ip.len=4;
+				        src_ip.u.addr32[0] = hg->hep_src_ip4->data.s_addr;
+				        totelem++;
+				        break;
+                                case 4:
+                                        hg->hep_dst_ip4  = (hep_chunk_ip4_t *) (tmp);
+                                        i+=chunk_length;                                                     
+					dst_ip.af=AF_INET;
+				        dst_ip.len=4;
+				        dst_ip.u.addr32[0] = hg->hep_dst_ip4->data.s_addr;
+                                        totelem++;
+
+                                        break;
+                                case 5:
+                                        hg->hep_src_ip6  = (hep_chunk_ip6_t *) (tmp);
+                                        i+=chunk_length;
+                                        src_ip.af=AF_INET6;
+				        src_ip.len=16;
+				        memcpy(src_ip.u.addr, &hg->hep_src_ip6->data, 16);
+				        totelem++;
+                                        break;
+                                case 6:
+                                        hg->hep_dst_ip6  = (hep_chunk_ip6_t *) (tmp);
+                                        i+=chunk_length;                                                     
+                                        dst_ip.af=AF_INET6;
+				        dst_ip.len=16;
+				        memcpy(dst_ip.u.addr, &hg->hep_dst_ip6->data, 16);
+				        totelem++;
+                                        break;
+        
+                                case 7:
+                                        hg->src_port  = (hep_chunk_uint16_t *) (tmp);
+                                        msg->rcv.src_port = ntohs(hg->src_port->data);
+                                        i+=chunk_length;                      
+                                        totelem++;
+                                        break;
+
+                                case 8:
+                                        hg->dst_port  = (hep_chunk_uint16_t *) (tmp);
+                                        msg->rcv.dst_port = ntohs(hg->dst_port->data);
+                                        i+=chunk_length;
+                                        totelem++;
+                                        break;
+                                case 9:
+                                        hg->time_sec  = (hep_chunk_uint32_t *) (tmp);
+                                        hg->time_sec->data = ntohl(hg->time_sec->data);
+                                        heptime->tv_sec = hg->time_sec->data;
+                                        i+=chunk_length;
+                                        totelem++;
+                                        break;                                                     
+                                                     
+                                case 10:
+                                        hg->time_usec  = (hep_chunk_uint32_t *) (tmp);
+                                        hg->time_usec->data = ntohl(hg->time_usec->data);
+                                        heptime->tv_usec = hg->time_usec->data;
+                                        i+=chunk_length;
+                                        totelem++;
+                                        break;      
+
+                                case 11:
+                                        hg->proto_t  = (hep_chunk_uint8_t *) (tmp);
+                                        i+=chunk_length;
+                                        totelem++;
+                                        break;                                                                                                                                                         
+
+                                case 12:
+                                        hg->capt_id  = (hep_chunk_uint32_t *) (tmp);
+                                        i+=chunk_length;
+                                        heptime->captid = ntohs(hg->capt_id->data);
+                                        totelem++;
+                                        break;
+
+                                case 13:
+                                        hg->keep_tm  = (hep_chunk_uint16_t *) (tmp);
+                                        i+=chunk_length;
+                                        break;                                                     
+
+                                case 14:
+                                        authkey = (char *) tmp + sizeof(hep_chunk_t);
+                                        i+=chunk_length;                                                                             
+                                        break;
+                                                     
+                                case 15:
+                                        hg->payload_chunk  = (hep_chunk_t *) (tmp);
+                                        payload = (char *) tmp+sizeof(hep_chunk_t);
+                                        payload_len = chunk_length - sizeof(hep_chunk_t);
+                                        i+=chunk_length;
+                                        totelem++;
+                                        break;
+                                case 17:
+                                
+                                        correlation_id = (char *) tmp + sizeof(hep_chunk_t);
+                                        i+=chunk_length;                                                                            
+					break;
+
+                                                     
+                                default:
+                                        i+=chunk_length;
+                                        break;
+                        }                                        
+                }
+        }	                                                                                                          
+                        
+        /* CHECK how much elements */
+        if(totelem < 9) {                        
+                LM_ERR("Not all elements [%d]\n", totelem);                        
+                goto done;
+        }                 
+
+        if ( dst_ip.af == 0 || src_ip.af == 0)  {
+                LM_ERR("NO IP's set\n");
+                goto done;
+        }
+
+                        
+        ip_addr2su(&to, &dst_ip, msg->rcv.dst_port);
+        ip_addr2su(&from, &src_ip, msg->rcv.src_port);
+                        
+        msg->rcv.src_su=from;
+        su2ip_addr(&msg->rcv.src_ip, &from);
+        su2ip_addr(&msg->rcv.dst_ip, &to);
+
+	if(hg->ip_proto->data == IPPROTO_TCP) msg->rcv.proto=PROTO_TCP;
+	else if(hg->ip_proto->data == IPPROTO_UDP) msg->rcv.proto=PROTO_UDP;
+
+        if(payload != NULL) ret = len - payload_len;
+
+	/*TIME*/ 
+        heptime->tv_sec = hg->time_sec->data;
+        heptime->tv_usec = hg->time_usec->data;
+        heptime->captid = ntohs(hg->capt_id->data);
+
+done:
+          
+        //if(si) pkg_free(si);
+        if(hg) pkg_free(hg);                     
+
+        return ret;
+        
+error:
+
+        if(si) pkg_free(si);
+        if(hg) pkg_free(hg);
+                
+        return -1;           
+        
+}
+
+int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t* msg) {
+
+	int hl;
+        struct hep_hdr *heph;
+        struct ip_addr dst_ip, src_ip;
+        char *hep_payload, *end, *hep_ip;
+        struct hep_iphdr *hepiph = NULL;
+
+	struct hep_timehdr* heptime_tmp = NULL;
+        memset(heptime, 0, sizeof(struct hep_timehdr));
+
+        struct hep_ip6hdr *hepip6h = NULL;
+            	        
+	correlation_id = NULL;
+	authkey = NULL;
+
+	hep_offset = 0; 
+	
+	hl = hep_offset = sizeof(struct hep_hdr);
+        end = buf + len;
+        if (unlikely(len<hep_offset)) {
+        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received len less than offset [%i] vs [%i]\n", len, hep_offset);
+                return -1;
+        }
+
+	/* hep_hdr */
+        heph = (struct hep_hdr*) buf;
+
+        switch(heph->hp_f){
+        	case AF_INET:
+                	hl += sizeof(struct hep_iphdr);
+                        break;
+		case AF_INET6:
+                	hl += sizeof(struct hep_ip6hdr);
+                        break;
+		default:
+                        LOG(L_ERR, "ERROR: sipcapture:hep_msg_received:  unsupported family [%d]\n", heph->hp_f);
+                        return -1;
+	}
+
+        /* PROTO */
+        if(heph->hp_p == IPPROTO_UDP) msg->rcv.proto=PROTO_UDP;
+        else if(heph->hp_p == IPPROTO_TCP) msg->rcv.proto=PROTO_TCP;
+        else if(heph->hp_p == IPPROTO_IDP) msg->rcv.proto=PROTO_TLS; /* fake protocol */
+#ifdef USE_SCTP
+        else if(heph->hp_p == IPPROTO_SCTP) msg->rcv.proto=PROTO_SCTP;
+#endif
+        else {
+        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: unknown protocol [%d]\n",heph->hp_p);
+                msg->rcv.proto = PROTO_NONE;
+	}
+
+        hep_ip = buf + sizeof(struct hep_hdr);
+
+        if (unlikely(hep_ip>end)){
+                LOG(L_ERR,"hep_ip is over buf+len\n");
+                return -1;
+        }
+
+	switch(heph->hp_f){
+		case AF_INET:
+                	hep_offset+=sizeof(struct hep_iphdr);
+                        hepiph = (struct hep_iphdr*) hep_ip;
+                        break;
+
+		case AF_INET6:
+                	hep_offset+=sizeof(struct hep_ip6hdr);
+                        hepip6h = (struct hep_ip6hdr*) hep_ip;
+                        break;
+
+	}
+
+	/* VOIP payload */
+        hep_payload = buf + hep_offset;
+
+        if (unlikely(hep_payload>end)){
+        	LOG(L_ERR,"hep_payload is over buf+len\n");
+                return -1;
+	}
+
+	/* timming */
+        if(heph->hp_v == 2) {
+                hep_offset+=sizeof(struct hep_timehdr);
+                heptime_tmp = (struct hep_timehdr*) hep_payload;
+
+                heptime->tv_sec = to_le(heptime_tmp->tv_sec);
+                heptime->tv_usec = to_le(heptime_tmp->tv_usec);
+                heptime->captid = heptime_tmp->captid;
+        }
 
 
+	/* fill ip from the packet to dst_ip && to */
+        switch(heph->hp_f){
+
+		case AF_INET:
+                	dst_ip.af = src_ip.af = AF_INET;
+                        dst_ip.len = src_ip.len = 4 ;
+                        memcpy(&dst_ip.u.addr, &hepiph->hp_dst, 4);
+                        memcpy(&src_ip.u.addr, &hepiph->hp_src, 4);
+                        break;
+
+		case AF_INET6:
+                	dst_ip.af = src_ip.af = AF_INET6;
+                        dst_ip.len = src_ip.len = 16 ;
+                        memcpy(&dst_ip.u.addr, &hepip6h->hp6_dst, 16);
+                        memcpy(&src_ip.u.addr, &hepip6h->hp6_src, 16);
+                        break;
+
+	}
+
+        msg->rcv.src_ip = src_ip;
+        msg->rcv.src_port = ntohs(heph->hp_sport);
+
+        msg->rcv.dst_ip = dst_ip;
+        msg->rcv.dst_port = ntohs(heph->hp_dport);
+
+	return hep_offset;
+}
+
+
+int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len, int req_chunk, pv_param_t *param, pv_value_t *res) {
+
+	str tmpstr;
+	char *tmp;
+	int i;
+        struct hep_chunk *chunk;	
+        struct hep_generic_recv *hg;
+        int chunk_vendor=0, chunk_type=0, chunk_length=0;
+        int total_length = 0;
+        int ret = 0;
+        char ipstr[INET6_ADDRSTRLEN];        
+
+        if(memcmp(buf, "\x48\x45\x50\x33",4) && !memcmp(buf, "\x45\x45\x50\x31",4)) {
+        
+                LM_ERR("not hep 3 protocol");
+                pv_get_uintval(msg, param, res, -1);
+                return -1;        
+        }
+        
+	hg = (struct hep_generic_recv*)pkg_malloc(sizeof(struct hep_generic_recv));
+	if(hg==NULL) {
+	        LM_ERR("no more pkg memory left for hg\n");
+	        return -1;
+        }
+	                                                 		
+	memset(hg, 0, sizeof(struct hep_generic_recv));
+	
+	/* HEADER */
+	hg->header  = (hep_ctrl_t *) (buf);
+
+	/*Packet size */
+	total_length = ntohs(hg->header->length);
+
+	i = sizeof(hep_ctrl_t);	        
+	        
+	while(i < total_length) {
+                
+	        /*OUR TMP DATA */                                  
+                tmp = buf+i;
+
+                chunk = (struct hep_chunk*) tmp;
+                             
+                chunk_vendor = ntohs(chunk->vendor_id);                             
+                chunk_type = ntohs(chunk->type_id);
+                chunk_length = ntohs(chunk->length);
+                       
+                /* if chunk_length */
+                if(chunk_length == 0) {
+                        /* BAD LEN we drop this packet */
+                        goto error;
+                }
+
+                /* SKIP not general Chunks */
+                if(chunk_vendor != 0) {
+                        i+=chunk_length;
+                }
+                else {                 
+                        if(chunk_type != req_chunk)
+                        {
+                                i+=chunk_length;
+                                continue;                        
+                        }              
+                                                                                                                              
+                        switch(chunk_type) {
+                                     
+                                case 0:
+                                        goto error;
+                                        break;
+                                     
+                                case 1:                                                                          
+                                        hg->ip_family  = (hep_chunk_uint8_t *) (tmp);
+                                        ret = pv_get_uintval(msg, param, res, hg->ip_family->data);
+                                        goto done;
+                                case 2:
+                                        hg->ip_proto  = (hep_chunk_uint8_t *) (tmp);
+                                        ret = pv_get_uintval(msg, param, res, hg->ip_proto->data);
+                                        goto done;
+                                case 3:
+                                        hg->hep_src_ip4  = (hep_chunk_ip4_t *) (tmp);
+                                        inet_ntop(AF_INET, &(hg->hep_src_ip4->data), ipstr, INET_ADDRSTRLEN);
+                                        tmpstr.s = ipstr;
+                                        tmpstr.len = strlen(ipstr);
+                                        ret = pv_get_strval(msg, param, res, &tmpstr);
+                                        goto done;
+                                case 4:
+                                        hg->hep_dst_ip4  = (hep_chunk_ip4_t *) (tmp);
+                                        inet_ntop(AF_INET, &(hg->hep_dst_ip4->data), ipstr, INET_ADDRSTRLEN);
+                                        tmpstr.s = ipstr;
+                                        tmpstr.len = strlen(ipstr);
+                                        ret = pv_get_strval(msg, param, res, &tmpstr);
+                                        goto done;
+                                case 5:
+                                        hg->hep_src_ip6  = (hep_chunk_ip6_t *) (tmp);
+                                        inet_ntop(AF_INET6, &(hg->hep_src_ip6->data), ipstr, INET6_ADDRSTRLEN);                                                        
+                                        tmpstr.s = ipstr;
+                                        tmpstr.len = strlen(ipstr);
+                                        ret = pv_get_strval(msg, param, res, &tmpstr);
+                                        goto done;                                                                                
+                                case 6:
+                                        hg->hep_dst_ip6  = (hep_chunk_ip6_t *) (tmp);
+                                        inet_ntop(AF_INET6, &(hg->hep_dst_ip6->data), ipstr, INET6_ADDRSTRLEN);                                                        
+                                        tmpstr.s = ipstr;
+                                        tmpstr.len = strlen(ipstr);
+                                        ret = pv_get_strval(msg, param, res, &tmpstr);
+                                        goto done;
+                                case 7:
+                                        hg->src_port  = (hep_chunk_uint16_t *) (tmp);
+                                        ret = pv_get_uintval(msg, param, res, ntohs(hg->src_port->data));
+                                        break;
+                                case 8:
+                                        hg->dst_port  = (hep_chunk_uint16_t *) (tmp);
+                                        ret = pv_get_uintval(msg, param, res, ntohs(hg->dst_port->data));
+                                        break;
+                                case 9:
+                                        hg->time_sec  = (hep_chunk_uint32_t *) (tmp);
+                                        hg->time_sec->data = ntohl(hg->time_sec->data);
+                                        ret = pv_get_uintval(msg, param, res, hg->time_sec->data);
+                                        goto done;
+                                                     
+                                case 10:
+                                        hg->time_usec  = (hep_chunk_uint32_t *) (tmp);
+                                        hg->time_usec->data = ntohl(hg->time_usec->data);
+                                        ret = pv_get_uintval(msg, param, res, hg->time_usec->data);
+                                        goto done;
+
+                                case 11:
+                                        hg->proto_t  = (hep_chunk_uint8_t *) (tmp);
+                                        ret = pv_get_uintval(msg, param, res, hg->proto_t->data);
+                                        goto done;
+
+                                case 12:
+                                        hg->capt_id  = (hep_chunk_uint32_t *) (tmp);
+                                        ret = pv_get_uintval(msg, param, res, ntohs(hg->capt_id->data));
+                                        goto done;
+
+                                case 13:
+                                        hg->keep_tm  = (hep_chunk_uint16_t *) (tmp);
+                                        ret = pv_get_uintval(msg, param, res, hg->keep_tm->data);                                                                                
+                                        goto done;
+                                case 14:
+                                        tmpstr.s = (char *) tmp + sizeof(hep_chunk_t);
+                                        tmpstr.len = chunk_length - sizeof(hep_chunk_t); 
+                                        ret = pv_get_strval(msg, param, res, &tmpstr);
+                                        goto done;
+                                                     
+                                case 15:
+                                        hg->payload_chunk  = (hep_chunk_t *) (tmp);
+                                        tmpstr.s = (char *) tmp+sizeof(hep_chunk_t);
+                                        tmpstr.len = chunk_length - sizeof(hep_chunk_t);
+                                        ret = pv_get_strval(msg, param, res, &tmpstr);
+                                        goto done;
+                                case 17:                                        
+                                        tmpstr.s = (char *) tmp + sizeof(hep_chunk_t);
+                                        tmpstr.len = chunk_length - sizeof(hep_chunk_t); 
+                                        ret = pv_get_strval(msg, param, res, &tmpstr);                                                                                 
+                                        goto done;
+                                default:
+                                        ret = pv_get_uintval(msg, param, res, -1);
+                                        goto done;                                        
+                        }                                        
+                }
+        }	                                                                                                          
+
+done:
+          
+        //if(si) pkg_free(si);
+        if(hg) pkg_free(hg);                             
+        return ret;
+        
+error:
+
+        if(hg) pkg_free(hg);
+        ret = pv_get_uintval(msg, param, res, -1);                
+        return -1;                   
+}
 
