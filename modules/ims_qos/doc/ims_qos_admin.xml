@@ -122,29 +122,6 @@ modparam("ims_qos", "rx_auth_expiry", 14400)
     </section>
 
     <section>
-      <title><varname>af_signaling_ip</varname> (string)</title>
-
-      <para>Defines the IP address to use in the flow description for the
-      media flow of the SIP registration. This is known in EPC as the 
-      AF-Signaling path and usually would create a dedicated bearer for the SIP
-      signaling between the UE IP and the P-CSCF IP. 
-      
-      Usually set this value to the IP address of the P-CSCF.</para>
-
-      <para><emphasis> Default value is 127.0.0.1 - dummy value. </emphasis></para>
-
-      <example>
-        <title><varname>rx_auth_expiry</varname> parameter usage</title>
-
-        <programlisting format="linespecific">
-...
-modparam("ims_qos", "af_signaling_ip", "192.168.1.45")
-...
-        </programlisting>
-      </example>
-    </section>
-    
-    <section>
       <title><varname>cdp_event_latency</varname> (integer)</title>
 
       <para>This is a flag to determine whether or slow CDP responses should
@@ -347,6 +324,47 @@ modparam("ims_qos", "regex_sdp_ip_prefix_to_maintain_in_fd", "10.21.0.1")
         </programlisting>
       </example>
     </section>
+    
+    <section>
+      <title><varname>terminate_dialog_on_rx_failure</varname> integer</title>
+
+      <para>If set then active dialogs associated with an Rx session are
+      torn down in the Rx session fails</para>
+
+      <para><emphasis> Default value is 1, dialogs are torn down</emphasis></para>
+
+      <example>
+        <title><varname>terminate_dialog_on_rx_failure</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "terminate_dialog_on_rx_failure", 0)
+...
+        </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><varname>delete_contact_on_rx_failure</varname> integer</title>
+
+      <para>If set then contacts associated with signalling Rx sessions are deleted
+if the Rx session fails</para>
+
+      <para><emphasis> Default value is 1, contacts are deleted</emphasis></para>
+
+      <example>
+        <title><varname>delete_contact_on_rx_failure</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "delete_contact_on_rx_failure", 0)
+...
+        </programlisting>
+      </example>
+    </section>
+    
   </section>
 
   <section>
