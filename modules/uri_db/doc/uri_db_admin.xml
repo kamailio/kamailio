@@ -253,6 +253,38 @@ if (check_from()) {
 		</example>
 	</section>
 
+	<section id="uri_db.f.check_uri">
+		<title>
+			<function moreinfo="none">check_uri(uri)</function>
+		</title>
+		<para>
+			Check the username from the given uri against &uri; table (if use_uri_table is set) or
+			digest credentials (no DB backend required).
+		</para>
+        <para>Description of parameters:</para>
+        <itemizedlist>
+            <listitem>
+                <para><emphasis>uri</emphasis> Has to be a valid SIP URI,
+                    used to extract the username from. The parameter can be
+                    a static or dynamic (with variables) string.
+                </para>
+            </listitem>
+        </itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+			<title><function>check_uri</function> usage</title>
+			<programlisting format="linespecific">
+...
+if (check_uri("$var(uri)")) {
+	...
+};
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="uri_db.f.does_uri_exist">
 		<title>
 		<function moreinfo="none">does_uri_exist()</function>
