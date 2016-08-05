@@ -629,6 +629,7 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 				c = 1;
 				if(sb.len>0) {
 					sb.s = hbody->s + i + 1;
+					if(sb.s[sb.len-1]==',') sb.len--;
 					if(tps_add_headers(msg, &hname, &sb, 0)<0) {
 						return -1;
 					}
@@ -640,6 +641,7 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 		if(c==1) {
 			if(sb.len>0) {
 				sb.s = hbody->s;
+				if(sb.s[sb.len-1]==',') sb.len--;
 				if(tps_add_headers(msg, &hname, &sb, 0)<0) {
 					return -1;
 				}
@@ -648,7 +650,9 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 		}
 	}
 
-	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
+	sb = *hbody;
+	if(sb.s[sb.len-1]==',') sb.len--;
+	if(tps_add_headers(msg, &hname, &sb, 0)<0) {
 		return -1;
 	}
 
