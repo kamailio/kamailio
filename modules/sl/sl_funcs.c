@@ -182,6 +182,8 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	
 	sl_run_callbacks(SLCB_REPLY_READY, msg, code, reason, &buf, &dst);
 
+	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
+
 	/* supress multhoming support when sending a reply back -- that makes sure
 	   that replies will come from where requests came in; good for NATs
 	   (there is no known use for mhomed for locally generated replies;
@@ -286,8 +288,6 @@ event_route_error:
 	if (ret<0) {
 		goto error;
 	}
-	
-	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 
 	update_sl_stats(code);
 	return 1;
