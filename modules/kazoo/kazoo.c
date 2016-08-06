@@ -324,6 +324,7 @@ static int mod_child_init(int rank)
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0){
+            if (cfg_child_init()) return -1;
 			kz_amqp_consumer_proc(1);
 		}
 		else {
@@ -331,6 +332,7 @@ static int mod_child_init(int rank)
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0){
+                if (cfg_child_init()) return -1;
 				kz_amqp_publisher_proc(0);
 			}
 			else {
@@ -338,6 +340,7 @@ static int mod_child_init(int rank)
 				if (pid<0)
 					return -1; /* error */
 				if(pid==0){
+                    if (cfg_child_init()) return -1;
 					kz_amqp_timeout_proc(2);
 				}
 				else {
@@ -346,6 +349,7 @@ static int mod_child_init(int rank)
 						if (pid<0)
 							return -1; /* error */
 						if(pid==0){
+                            if (cfg_child_init()) return -1;
 							mod_consumer_proc(i+3);
 						}
 					}
