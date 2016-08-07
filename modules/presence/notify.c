@@ -2126,7 +2126,7 @@ error:
 #define EXTRACT_STRING(strng, chars)\
 			do {\
 			strng.s = (char *) chars;\
-			strng.len = strlen(strng.s);\
+			strng.len = strng.s == NULL ? 0 : strlen(strng.s);\
 			} while(0);
 
 static int unset_watchers_updated_winfo(str *pres_uri)
