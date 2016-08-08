@@ -1832,7 +1832,7 @@ ifeq ($(CC_NAME), suncc)
 endif
 	OLD_SOLARIS= $(shell echo "$(OSREL)" | \
 				sed -e 's/^5\.[0-6][^0-9]*$$/yes/' )
-	LIBS+= -L$(LOCALBASE)/lib -lxnet -lsocket -lnsl
+	LIBS+= -L$(LOCALBASE)/lib -lxnet -lsocket -lnsl -lmd5
 ifeq	($(OLD_SOLARIS), yes)
 		LIBS+=-lposix4
 else
