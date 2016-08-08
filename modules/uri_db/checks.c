@@ -29,6 +29,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../ut.h"                   /* Handy utilities */
 #include "../../lib/srdb1/db.h"                /* Database API */
+#include "../../mod_fix.h"
 #include "uri_db.h"
 #include "checks.h"
 
@@ -169,6 +170,30 @@ int check_from(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 
 	return check_username(_m, &get_from(_m)->parsed_uri);
+}
+
+
+/*
+ *
+ */
+int check_uri(struct sip_msg* msg, char* uri, char* _s2)
+{
+    str suri;
+    struct sip_uri parsed_uri;
+
+    if (fixup_get_svalue(msg, (gparam_t*)uri, &suri) != 0)
+    {
+        ERR("cannot get uri value\n");
+        return -1;
+    }
+
+    if (parse_uri(suri.s, suri.len, &parsed_uri) != 0)
+    {
+        ERR("Error while parsing URI\n");
+        return -1;
+    }
+
+    return check_username(msg, &parsed_uri);
 }
 
 
