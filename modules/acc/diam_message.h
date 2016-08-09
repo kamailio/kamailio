@@ -38,6 +38,7 @@
 
 #include "../../str.h"
 #include "../../mem/mem.h"
+#include "../../endianness.h"
 
 #define ad_malloc	pkg_malloc
 #define ad_free		pkg_free
@@ -68,7 +69,7 @@
 
 /* message codes
  */
-#ifndef WORDS_BIGENDIAN
+#ifndef __IS_BIG_ENDIAN
 	#define AS_MSG_CODE      0x12010000
 	#define AC_MSG_CODE      0x0f010000
 	#define CE_MSG_CODE      0x01010000
