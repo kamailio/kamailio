@@ -15,19 +15,14 @@
 #ifndef _MD5_H_
 #define _MD5_H_
 
+#ifndef __OS_solaris
+
 #define	MD5_BLOCK_LENGTH		64
 #define	MD5_DIGEST_LENGTH		16
 #define	MD5_DIGEST_STRING_LENGTH	(MD5_DIGEST_LENGTH * 2 + 1)
 
 /* Probably not the proper place, but will do for Debian: */
 #include <sys/types.h>
-
-/* fix types for Sun Solaris */
-#if defined(__SVR4) || defined(__sun)
-    typedef uint8_t u_int8_t;
-    typedef uint32_t u_int32_t;
-    typedef uint64_t u_int64_t;
-#endif
 
 typedef struct MD5Context {
 	u_int32_t state[4];			/* state */
@@ -48,5 +43,15 @@ static inline void MD5Update(MD5_CTX *ctx, const char *str, size_t len) {
 static inline void MD5Final(char buf[MD5_DIGEST_LENGTH], MD5_CTX *ctx) {
 	U_MD5Final((unsigned char *)buf, ctx);
 }
+
+#else /* __OS_solaris */
+#include <md5.h>
+
+#define U_MD5Update(ctx, input, len) \
+	MD5Update(ctx, input, len)
+#define U_MD5Final(digest, ctx) \
+	MD5Final(digest, ctx)
+
+#endif /* __OS_solaris */
 
 #endif /* _MD5_H_ */
