@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
+#include "../../endianness.h"
 
 #ifndef MACOS
 #  include <sys/stat.h>
@@ -104,7 +105,7 @@ sha_hash(int *data, int *hash)
 
   for (t=0; t<16; t++) 
     {
-#ifndef WORDS_BIGENDIAN
+#ifndef __IS_BIG_ENDIAN
       W[t]=switch_endianness(data[t]);
 #else 
       W[t]=data[t];
@@ -244,7 +245,7 @@ char *shahash(const char *str)
 				for (i=0; i<14; i++) 
 					((int*)read_buffer)[i]=0;
 			}      
-#ifndef WORDS_BIGENDIAN
+#ifndef __IS_BIG_ENDIAN
 			for (i=0; i<8; i++) 
 			{
 				read_buffer[56+i]=(char)(length>>(56-(i*8))) & 0xff;
