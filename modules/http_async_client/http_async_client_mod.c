@@ -496,11 +496,7 @@ static int w_http_async_post(sip_msg_t *msg, char *query, char* post, char* rt)
 		return -1;
 	}
 
-	if(async_send_query(msg, &sdata, &post_data, act)<0)
-		return -1;
-
-	/* force exit in config */
-	return 0;
+	return async_send_query(msg, &sdata, &post_data, act);
 }
 
 #define _IVALUE_ERROR(NAME) LM_ERR("invalid parameter '" #NAME "' (must be a number)\n")
