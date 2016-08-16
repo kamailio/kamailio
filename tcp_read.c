@@ -287,11 +287,10 @@ again:
 						}
 				}
 				LOG(cfg_get(core, core_cfg, corelog),
-						"error reading: %s (%d) ([%s]:%u -> [%s]:%u)\n",
+						"error reading: %s (%d) ([%s]:%u ->",
 						strerror(errno), errno,
-						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
-
+						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
+				LOG(cfg_get(core, core_cfg, corelog),"-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 				if((errno == ECONNRESET || errno == ETIMEDOUT) && likely(c->rcv.proto_reserved1 != 0)){
 					tcp_make_closed_event(&c->rcv, c);
 				}
@@ -305,9 +304,8 @@ again:
 			if (likely(c->rcv.proto_reserved1 != 0)){
 				tcp_make_closed_event(&c->rcv, c);
 			}
-			LM_DBG("EOF on %p, FD %d ([%s]:%u -> [%s]:%u)\n", c, fd,
-					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+			LM_DBG("EOF on %p, FD %d ([%s]:%u ->", c, fd, ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
+			LM_DBG("-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
