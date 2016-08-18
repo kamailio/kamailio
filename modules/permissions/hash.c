@@ -603,12 +603,13 @@ int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
 int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c)
 {
 	int i;
+	void* t;
 	void* th;
 	void* ih;
 	struct addr_list *np;
 
 
-	if (rpc->add(c, "{", &th) < 0)
+	if (rpc->add(c, "{", &t) < 0)
 	{
 		rpc->fault(c, 500, "Internal error creating rpc");
 		return -1;
@@ -617,6 +618,12 @@ int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c)
 	for (i = 0; i < PERM_HASH_SIZE; i++) {
 		np = table[i];
 		while (np) {
+			if(rpc->array_add(t, "{", &th) < 0)
+                        {
+                                rpc->fault(c, 500, "Internal error creating rpc th");
+                                return -1;
+                        }
+				
 			if(rpc->struct_add(th, "dd{", 
 					"table", i,
 					"group", np->grp,
