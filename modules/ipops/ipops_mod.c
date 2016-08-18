@@ -84,6 +84,7 @@ static int w_is_ipv4(struct sip_msg*, char*);
 static int w_is_ipv6(struct sip_msg*, char*);
 static int w_is_ipv6_reference(struct sip_msg*, char*);
 static int w_ip_type(struct sip_msg*, char*);
+static int w_detailed_ipv6_type(struct sip_msg*, char*);
 static int w_compare_ips(struct sip_msg*, char*, char*);
 static int w_compare_pure_ips(struct sip_msg*, char*, char*);
 static int w_is_ip_rfc1918(struct sip_msg*, char*);
@@ -115,6 +116,10 @@ static cmd_export_t cmds[] =
   { "is_ipv6_reference", (cmd_function)w_is_ipv6_reference, 1, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "ip_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
+  REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
+  { "detailed_ipv4_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
+  REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
+  { "detailed_ipv6_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
@@ -414,6 +419,44 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
   }
 }
 
+
+/*! \brief Return the IP type of the given argument (string or pv): 1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
+static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s)
+{
+  str string;
+
+  if (_s == NULL) {
+    LM_ERR("bad parameter\n");
+    return -2;
+  }
+
+  if (fixup_get_svalue(_msg, (gparam_p)_s, &string))
+  {
+    LM_ERR("cannot print the format for string\n");
+    return -3;
+  }
+
+  /* make IPv6 from reference */
+  if (string.s[0] == '[') {
+      string.s++;
+      string.len -= 2;
+  }
+
+  switch (ip_parser_execute(string.s, string.len)) {
+    case(ip_type_ipv4):
+      return 1;
+      break;
+    case(ip_type_ipv6):
+      return 2;
+      break;
+    case(ip_type_ipv6_reference):
+      return 3;
+      break;
+    default:
+      return -1;
+      break;
+  }
+}
 
 /*! \brief Return true if both IP's (string or pv) are equal. This function also allows comparing an IPv6 with an IPv6 reference. */
 static int w_compare_ips(struct sip_msg* _msg, char* _s1, char* _s2)
