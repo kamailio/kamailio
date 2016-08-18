@@ -845,18 +845,25 @@ int subnet_table_rpc_print(struct subnet* table, rpc_t* rpc, void* c)
 {
 	int i;
 	int count;
+	void* t;
 	void* th;
 	void* ih;
 
 	count = table[PERM_MAX_SUBNETS].grp;
 
-	if (rpc->add(c, "{", &th) < 0)
+	if (rpc->add(c, "[", &t) < 0)
 	{
 		rpc->fault(c, 500, "Internal error creating rpc");
 		return -1;
 	}
 
 	for (i = 0; i < count; i++) {
+		if(rpc->array_add(t, "{", &th) < 0)
+                {
+                        rpc->fault(c, 500, "Internal error creating rpc th");
+                        return -1;
+                }
+
 		if(rpc->struct_add(th, "dd{", 
 				"id", i,
 				"group", table[i].grp,
