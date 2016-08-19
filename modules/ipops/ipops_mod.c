@@ -78,7 +78,7 @@ int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *i
 /*
  * Script functions
  */
-static int w_is_ip(struct sip_msg*, char*);
+    t w_is_ip(struct sip_msg*, char*);
 static int w_is_pure_ip(struct sip_msg*, char*);
 static int w_is_ipv4(struct sip_msg*, char*);
 static int w_is_ipv6(struct sip_msg*, char*);
@@ -117,9 +117,7 @@ static cmd_export_t cmds[] =
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "ip_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-  { "detailed_ipv4_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
-  REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-  { "detailed_ipv6_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
+  { "detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
@@ -152,13 +150,28 @@ struct module_exports exports = {
   0,                         /*!< exported MI functions */
   mod_pvs,                   /*!< exported pseudo-variables */
   0,                         /*!< extra processes */
-  0,                         /*!< module initialization function */
+  mod_init,                  /*!< module initialization function */
   (response_function) 0,     /*!< response handling function */
   0,                         /*!< destroy function */
   0                          /*!< per-child init function */
 };
 
 
+/************* Interface Functions *****************************************/
+
+/**
+ * Initialises the module, i.e. it binds the necessary API functions
+ * and registers the fifo commands
+ *
+ * @return 0 on success, -1 on failure
+ */
+static int mod_init(void) {
+    /* turn detailed_ip_type relevant structures to netowork byte order so no need to
+     * transform each ip to host order before comparing */
+    ipv4ranges_hton();
+    ipv6ranges_hton();
+
+}
 /*
  * Module internal functions
  */
@@ -421,7 +434,7 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
 
 
 /*! \brief Return the IP type of the given argument (string or pv): 1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
-static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s)
+static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *res)
 {
   str string;
 
@@ -442,20 +455,7 @@ static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s)
       string.len -= 2;
   }
 
-  switch (ip_parser_execute(string.s, string.len)) {
-    case(ip_type_ipv4):
-      return 1;
-      break;
-    case(ip_type_ipv6):
-      return 2;
-      break;
-    case(ip_type_ipv6_reference):
-      return 3;
-      break;
-    default:
-      return -1;
-      break;
-  }
+  return ip6_iptype(string.s, string.len, res);
 }
 
 /*! \brief Return true if both IP's (string or pv) are equal. This function also allows comparing an IPv6 with an IPv6 reference. */
