@@ -101,6 +101,7 @@ void destroy_shtable(shtable_t htable, int hash_size)
 		lock_destroy(&htable[i].lock);
 		free_subs_list(htable[i].entries->next, SHM_MEM_TYPE, 1);
 		shm_free(htable[i].entries);
+		htable[i].entries = NULL;
 	}
 	shm_free(htable);
 	htable= NULL;
@@ -334,15 +335,21 @@ void free_subs_list(subs_t* s_array, int mem_type, int ic)
 		s_array= s_array->next;
 		if(mem_type & PKG_MEM_TYPE)
 		{
-			if(ic)
+			if(ic) {
 				pkg_free(s->contact.s);
+				s->contact.s = NULL;
+			}
 			pkg_free(s);
+			s = NULL;
 		}
 		else
 		{
-			if(ic)
+			if(ic) {
 				shm_free(s->contact.s);
+				s->contact.s = NULL;
+			}
 			shm_free(s);
+			s = NULL;
 		}
 	}
 	
