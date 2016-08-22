@@ -74,8 +74,8 @@ static  ip6_node IPv6ranges[IPv6RANGES_SIZE] = {
     //more to come here soon
 };
 
-/*
-int _compare_ips(str string_ip, char *res)
+
+int ip6_iptype(str string_ip, char **res)
 {
   uint32_t in6_addr[4];
   char in6_string[INET6_ADDRSTRLEN];
@@ -92,14 +92,14 @@ int _compare_ips(str string_ip, char *res)
           ((in6_addr[2] & IPv6ranges[i].sub_mask[2]) == IPv6ranges[i].value[2]) &&
           ((in6_addr[3] & IPv6ranges[i].sub_mask[3]) == IPv6ranges[i].value[3])) {
 
-          return IPv6ranges[i].ip_type;
+          *res = IPv6ranges[i].ip_type;
       }
   }
 
   return 1;
 }
-*/
-char* ip6_iptype(str s, uint32_t *ip) {
+
+/*char* ip6_iptype(str s, uint32_t *ip) {
     int i;
     for (i = 0; i < IPv6RANGES_SIZE; i++) {
         if (((ip[0] & IPv6ranges[i].sub_mask[0]) == IPv6ranges[i].value[0]) &&
@@ -111,7 +111,7 @@ char* ip6_iptype(str s, uint32_t *ip) {
     }
     return "PUBLIC";
 }
-
+*/
 char* ip4_iptype(uint32_t ip) {
     int i;
     for (i = 0; i < IPv4RANGES_SIZE; i++) {
