@@ -268,10 +268,14 @@ xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
 	return NULL;
 }
 
-int check_if_dialog(str body, int *is_dialog)
+int check_if_dialog(str body, int *is_dialog, char **dialog_id)
 {
 	xmlDocPtr doc;
 	xmlNodePtr node;
+	char *tmp_dialog_id;
+
+	*dialog_id = NULL;
+	*is_dialog = 0;
 
 	doc = xmlParseMemory(body.s, body.len);
 	if(doc== NULL)
@@ -283,15 +287,121 @@ int check_if_dialog(str body, int *is_dialog)
 	node = doc->children;
 	node = xmlNodeGetChildByName(node, "dialog");
 
-	if(node == NULL)
-		*is_dialog = 0;
-	else
+	if(node != NULL)
+	{
 		*is_dialog = 1;
+		tmp_dialog_id = (char *)xmlGetProp(node, (xmlChar *)"id");
+
+		if (tmp_dialog_id != NULL)
+		{
+			*dialog_id = strdup(tmp_dialog_id);
+			xmlFree(tmp_dialog_id);
+		}
+	}
 
 	xmlFreeDoc(doc);
 	return 0;
 }
 
+int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog_id) {
+	db_key_t query_cols[13], result_cols[6];
+	db_op_t  query_ops[13];
+	db_val_t query_vals[13];
+	int n_query_cols = 0;
+	int rez_body_col = 0, rez_etag_col = 0, n_result_cols= 0;
+	db1_res_t *result = NULL;
+	db_row_t *row = NULL;
+	db_val_t *row_vals = NULL;
+	char* db_dialog_id = NULL;
+	int db_is_dialog = 0;
+	str tmp_db_body, tmp_db_etag;
+	int i = 0;
+	presentity_t old_presentity;
+
+	query_cols[n_query_cols] = &str_domain_col;
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = presentity->domain;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_username_col;
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = presentity->user;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_event_col;
+	query_ops[n_query_cols] = OP_EQ;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = presentity->event->name;
+	n_query_cols++;
+
+	result_cols[rez_body_col=n_result_cols++] = &str_body_col;
+	result_cols[rez_etag_col=n_result_cols++] = &str_etag_col;
+
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
+	{
+		LM_ERR("unsuccessful sql use table\n");
+		return -1;
+	}
+
+	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+	 result_cols, n_query_cols, n_result_cols, 0, &result) < 0)
+	{
+		LM_ERR("unsuccessful sql query\n");
+		return -2;
+	}
+
+	if(result == NULL)
+		return -3;
+
+	// No results from query definitely means no dialog exists
+	if (result->n <= 0)
+		return 0;
+
+	// Loop the rows returned from the DB
+	for (i=0; i < result->n; i++)
+	{
+		row = &result->rows[i];
+		row_vals = ROW_VALUES(row);
+		tmp_db_body.s = (char*)row_vals[rez_body_col].val.string_val;
+		tmp_db_body.len = strlen(tmp_db_body.s);
+
+		tmp_db_etag.s = (char*)row_vals[rez_etag_col].val.string_val;
+		tmp_db_etag.len = strlen(tmp_db_etag.s);
+
+		if (check_if_dialog(tmp_db_body, &db_is_dialog, &db_dialog_id) == 0)
+		{
+			// If ID from DB matches the one we supplied
+			if (db_dialog_id && !strcmp(db_dialog_id, dialog_id))
+			{
+				old_presentity.domain = presentity->domain;
+				old_presentity.user = presentity->user;
+				old_presentity.event = presentity->event;
+				old_presentity.etag = tmp_db_etag;
+
+				LM_WARN("Presentity already exists - deleting it\n");
+
+				delete_presentity(&old_presentity);
+
+				pa_dbf.free_result(pa_db, result);
+				result = NULL;
+				free(db_dialog_id);
+
+				return 1;
+			}
+
+			free(db_dialog_id);
+		}
+	}
+
+	pa_dbf.free_result(pa_db, result);
+	result = NULL;
+	return 0;
+}
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		int new_t, int* sent_reply, char* sphere)
@@ -316,6 +426,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	int ret = -1;
 	int db_record_exists = 0;
 	int num_watchers = 0;
+	char *old_dialog_id = NULL, *dialog_id = NULL;
 
 	if (sent_reply) *sent_reply= 0;
 	if(pres_notifier_processes == 0 && presentity->event->req_auth)
@@ -435,6 +546,14 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				}
 			}
 
+			check_if_dialog(*body, &is_dialog, &dialog_id);
+
+			if (delete_presentity_if_dialog_id_exists(presentity, dialog_id) < 0) {
+				goto error;
+			}
+
+			free(dialog_id);
+
 			LM_DBG("inserting %d cols into table\n",n_query_cols);
 
 			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0)
@@ -529,16 +648,20 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 			old_body.s = (char*)row_vals[rez_body_col].val.string_val;
 			old_body.len = strlen(old_body.s);
-			if(check_if_dialog(*body, &is_dialog)< 0)
+			if(check_if_dialog(*body, &is_dialog, &dialog_id)< 0)
 			{
 				LM_ERR("failed to check if dialog stored\n");
 				goto error;
 			}
 
-			if(is_dialog== 1)  /* if the new body has a dialog - overwrite */
-				goto after_dialog_check;
+			free(dialog_id);
 
-			if(check_if_dialog(old_body, &is_dialog)< 0)
+			if(is_dialog== 1) /* if the new body has a dialog - overwrite */
+			{
+				goto after_dialog_check;
+			}
+
+			if(check_if_dialog(old_body, &is_dialog, &old_dialog_id)< 0)
 			{
 				LM_ERR("failed to check if dialog stored\n");
 				goto error;
@@ -546,6 +669,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 			if(is_dialog==0 ) /* if the old body has no dialog - overwrite */
 				goto after_dialog_check;
+
+			free(old_dialog_id);
 
 			sender.s = (char*)row_vals[rez_sender_col].val.string_val;
 			sender.len= strlen(sender.s);
