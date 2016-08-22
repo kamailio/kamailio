@@ -99,6 +99,26 @@ int ip6_iptype(str string_ip, char **res)
   return 1;
 }
 
+int ip4_iptype(str string_ip, char **res)
+{
+  uint32_t in4_addr;
+  char in4_string[INET_ADDRSTRLEN];
+  int i;
+
+  memcpy(in4_string, string_ip.s, string_ip.len);
+  in4_string[string_ip.len] = '\0';
+
+  if (inet_pton(AF_INET, in4_string, &in4_addr) != 1)  return 0;
+
+  *res = "PUBLIC";
+  for (i = 0; i < IPv4RANGES_SIZE; i++) {
+      if ( (in4_addr & IPv4ranges[i].sub_mask) == IPv4ranges[i].value ) {
+          *res = IPv4ranges[i].ip_type;
+      }
+  }
+  return 1;
+}
+
 /*char* ip6_iptype(str s, uint32_t *ip) {
     int i;
     for (i = 0; i < IPv6RANGES_SIZE; i++) {
@@ -111,7 +131,7 @@ int ip6_iptype(str string_ip, char **res)
     }
     return "PUBLIC";
 }
-*/
+
 char* ip4_iptype(uint32_t ip) {
     int i;
     for (i = 0; i < IPv4RANGES_SIZE; i++) {
@@ -121,6 +141,7 @@ char* ip4_iptype(uint32_t ip) {
     }
     return "PUBLIC";
 }
+*/
 
 void ipv4ranges_hton() {
     int pos;

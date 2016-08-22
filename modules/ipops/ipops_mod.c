@@ -75,7 +75,7 @@ MODULE_VERSION
  */
 int _compare_ips(char*, size_t, enum enum_ip_type, char*, size_t, enum enum_ip_type);
 int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask);
-
+static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,  char *_dst);
 
 /*
  * Script functions
@@ -470,16 +470,16 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
 
 static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *_dst)
 {
-    return detailed_ip_type(AF_INET, _msg, _s, _dst);
+    return _detailed_ip_type(AF_INET, _msg, _s, _dst);
 }
 
 static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *_dst)
 {
-    return detailed_ip_type(AF_INET6, _msg, _s, _dst);
+    return _detailed_ip_type(AF_INET6, _msg, _s, _dst);
 }
 
 /*! \brief Return the IP type of the given argument (string or pv): 1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
-static int detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,  char *_dst)
+static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,  char *_dst)
 {
   str string;
   pv_spec_t *dst;
@@ -498,59 +498,27 @@ static int detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s, 
   }
 
   LM_ERR("!!!!!!! ip to change is %.*s\n", string.len, string.s);
-  /* make IPv6 from reference */
-  if (_type == AF_INET) {
-      if (!ip4_iptype(string, &res)) {
-          LM_ERR("bad ip parameter\n");
+  switch (_type) {
+      case AF_INET:
+          if (!ip4_iptype(string, &res)) {
+              LM_ERR("bad ip parameter\n");
+              return -1;
+          }
+          break;
+      case AF_INET6:
+          /* make IPv6 from reference if needed */
+          if (string.s[0] == '[') {
+              string.s++;
+              string.len -= 2;
+          }
+          LM_ERR("!!!!!!! hi 1 \n");
+          if (!ip6_iptype(string, &res)) {
+              LM_ERR("bad ip parameter\n");
+              return -1;
+          }
+          break;
+      default:
           return -1;
-      }
-  }
-  else {
-      if (string.s[0] == '[') {
-          string.s++;
-          string.len -= 2;
-      }
-      LM_ERR("!!!!!!! hi 1 \n");
-      //
-      if (!ip6_iptype(string, &res)) {
-          LM_ERR("bad ip parameter\n");
-          return -1;
-      }
-  }
-  val.rs.s = res;
-  val.rs.len = strlen(res);
-  val.flags = PV_VAL_STR;
-  dst = (pv_spec_t *)_dst;
-  dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
-  LM_ERR("!!!!!!! hi 2 \n");
-  //return ip6_iptype(string.s, string.len);
-  return 1;
-}
-
-/*! \brief Return the IP type of the given argument (string or pv): 1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
-static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *_dst)
-{
-  str string;
-  pv_spec_t *dst;
-  pv_value_t val;
-  char *res;
-
-  if (_s == NULL) {
-    LM_ERR("bad parameter\n");
-    return -2;
-  }
-
-  if (fixup_get_svalue(_msg, (gparam_p)_s, &string))
-  {
-    LM_ERR("cannot print the format for string\n");
-    return -3;
-  }
-
-  LM_ERR("!!!!!!! ip to change is %.*s\n", string.len, string.s);
-
-  if (!ip4_iptype(string, &res)) {
-      LM_ERR("bad ip parameter\n");
-      return -1;
   }
 
   val.rs.s = res;
@@ -559,7 +527,6 @@ static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *_dst)
   dst = (pv_spec_t *)_dst;
   dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
   LM_ERR("!!!!!!! hi 2 \n");
-  //return ip6_iptype(string.s, string.len);
   return 1;
 }
 

@@ -48,5 +48,6 @@ typedef struct ip6_node {
 void ipv6ranges_hton();
 void ipv4ranges_hton();
 int ip6_iptype(str string_ip, char **res);
+int ip4_iptype(str string_ip, char **res);
 
 #endif
