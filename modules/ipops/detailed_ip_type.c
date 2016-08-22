@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include "../../str.h"
 
 static ip4_node IPv4ranges[IPv4RANGES_SIZE] = {
         { 0xffffffff,  "BROADCAST",  0xffffffff },  // 255.255.255.255/32
@@ -73,7 +74,7 @@ static  ip6_node IPv6ranges[IPv6RANGES_SIZE] = {
     //more to come here soon
 };
 
-
+/*
 int _compare_ips(str string_ip, char *res)
 {
   uint32_t in6_addr[4];
@@ -97,7 +98,7 @@ int _compare_ips(str string_ip, char *res)
 
   return 1;
 }
-
+*/
 char* ip6_iptype(str s, uint32_t *ip) {
     int i;
     for (i = 0; i < IPv6RANGES_SIZE; i++) {
@@ -132,7 +133,6 @@ void ipv4ranges_hton() {
         IPv4ranges[pos].sub_mask = ntohl(tmp);
     }
 }
-
 
 void ipv6ranges_hton() {
     int pos;

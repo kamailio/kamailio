@@ -50,10 +50,12 @@
 #include "../../mod_fix.h"
 #include "../../pvar.h"
 #include "../../resolve.h"
+#include "../../lvalue.h"
 #include "api.h"
 #include "ipops_pv.h"
 #include "ip_parser.h"
 #include "rfc1918_parser.h"
+#include "detailed_ip_type.h"
 
 MODULE_VERSION
 
@@ -78,21 +80,22 @@ int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *i
 /*
  * Script functions
  */
-    t w_is_ip(struct sip_msg*, char*);
+static int w_is_ip(struct sip_msg*, char*);
 static int w_is_pure_ip(struct sip_msg*, char*);
 static int w_is_ipv4(struct sip_msg*, char*);
 static int w_is_ipv6(struct sip_msg*, char*);
 static int w_is_ipv6_reference(struct sip_msg*, char*);
 static int w_ip_type(struct sip_msg*, char*);
-static int w_detailed_ipv6_type(struct sip_msg*, char*);
+static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *res);
 static int w_compare_ips(struct sip_msg*, char*, char*);
 static int w_compare_pure_ips(struct sip_msg*, char*, char*);
 static int w_is_ip_rfc1918(struct sip_msg*, char*);
 static int w_ip_is_in_subnet(struct sip_msg*, char*, char*);
 static int w_dns_sys_match_ip(sip_msg_t*, char*, char*);
 static int w_dns_int_match_ip(sip_msg_t*, char*, char*);
-
+static int fixup_detailed_ipv6_type(void** param, int param_no);
 static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
+static int mod_init(void);
 
 static pv_export_t mod_pvs[] = {
 	{ {"dns", sizeof("dns")-1}, PVT_OTHER, pv_get_dns, 0,
@@ -117,7 +120,7 @@ static cmd_export_t cmds[] =
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "ip_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-  { "detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2, fixup_spve_null, 0,
+  { "detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2, fixup_detailed_ipv6_type, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
@@ -170,8 +173,38 @@ static int mod_init(void) {
      * transform each ip to host order before comparing */
     ipv4ranges_hton();
     ipv6ranges_hton();
-
+    return 0;
 }
+
+
+/* Fixup functions */
+
+/*
+ * Fix detailed_ipv6_type param: result (writable pvar).
+ */
+static int fixup_detailed_ipv6_type(void** param, int param_no)
+{
+    if (param_no == 1) {
+        return fixup_spve_null(param, 1);
+    }
+
+    if (param_no == 2) {
+        if (fixup_pvar_null(param, 1) != 0) {
+            LM_ERR("failed to fixup result pvar\n");
+            return -1;
+        }
+        if (((pv_spec_t *) (*param))->setf == NULL) {
+            LM_ERR("result pvar is not writeble\n");
+            return -1;
+        }
+        return 0;
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
+
+
 /*
  * Module internal functions
  */
@@ -434,9 +467,11 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
 
 
 /*! \brief Return the IP type of the given argument (string or pv): 1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
-static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *res)
+static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *_dst)
 {
   str string;
+  pv_spec_t *dst;
+  pv_value_t val;
 
   if (_s == NULL) {
     LM_ERR("bad parameter\n");
@@ -449,13 +484,22 @@ static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *res)
     return -3;
   }
 
+  LM_ERR("!!!!!!! ip to change is %.*s\n", string.len, string.s);
   /* make IPv6 from reference */
   if (string.s[0] == '[') {
       string.s++;
       string.len -= 2;
   }
-
-  return ip6_iptype(string.s, string.len, res);
+  LM_ERR("!!!!!!! hi 1 \n");
+  //
+  val.rs.s = "Ana are";
+  val.rs.len = 7;
+  val.flags = PV_VAL_STR;
+  dst = (pv_spec_t *)_dst;
+  dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
+  LM_ERR("!!!!!!! hi 2 \n");
+  //return ip6_iptype(string.s, string.len);
+  return 1;
 }
 
 /*! \brief Return true if both IP's (string or pv) are equal. This function also allows comparing an IPv6 with an IPv6 reference. */

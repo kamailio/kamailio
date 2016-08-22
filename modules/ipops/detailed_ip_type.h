@@ -27,8 +27,11 @@
 #ifndef _IPOPS_DETAILED_IP_TYPE_H
 #define _IPOPS_DETAILED_IP_TYPE_H
 
-#define IPv4RANGES_SIZE 15
-#define IPv6RANGES_SIZE 19
+#define IPv4RANGES_SIZE 16
+#define IPv6RANGES_SIZE 20
+
+#include <stdint.h>
+#include "../../str.h"
 
 typedef struct ip4_node {
     uint32_t value;
@@ -44,5 +47,6 @@ typedef struct ip6_node {
 
 void ipv6ranges_hton();
 void ipv4ranges_hton();
+char* ip6_iptype(str s, uint32_t *ip);
 
 #endif
