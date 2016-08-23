@@ -27,8 +27,10 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <unistd.h>
 #include "../../str.h"
 #include "detailed_ip_type.h"
+#include "../../dprint.h"
 
 static ip4_node IPv4ranges[IPv4RANGES_SIZE] = {
         { 0xffffffff,  "BROADCAST",  0xffffffff },  // 255.255.255.255/32
@@ -43,10 +45,10 @@ static ip4_node IPv4ranges[IPv4RANGES_SIZE] = {
         { 0xac100000,  "PRIVATE",    0xfffe0000 },  // 172.16/12
         { 0x64400000,  "SHARED",     0xffc00000 },  // 100.64/10
         { 0x7f000000,  "LOOPBACK",   0xff000000 },  // 127.0/8
-        { 0xa0000000,  "PRIVATE",    0xff000000 },  // 10/8
+        { 0x0a000000,  "PRIVATE",    0xff000000 },  // 10/8
         { 0x0,         "PRIVATE",    0xff000000 },  // 0/8
         { 0xf0000000,  "RESERVED",   0xf0000000 },  // 240/4
-        { 0xe0000000,  "MULTICAST",  0xf0000000 }  // 224/4
+        { 0xe0000000,  "MULTICAST",  0xf0000000 }   // 224/4
 };
 
 static  ip6_node IPv6ranges[IPv6RANGES_SIZE] = {
@@ -75,10 +77,10 @@ static  ip6_node IPv6ranges[IPv6RANGES_SIZE] = {
     { {0x04000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xFC000000, 0x00000000, 0x00000000, 0x00000000} },  //400::/6
     { {0xF8000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xFC000000, 0x00000000, 0x00000000, 0x00000000} },  //F800::/6
     { {0xF8000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xFC000000, 0x00000000, 0x00000000, 0x00000000} },  // F800::/6
-    { {0x08000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xF8000000, 0x00000000, 0x00000000, 0x00000000} },   //0800::/5
+    { {0x08000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xF8000000, 0x00000000, 0x00000000, 0x00000000} },  //0800::/5
     { {0xF0000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xF8000000, 0x00000000, 0x00000000, 0x00000000} },  // F000::/5
     { {0xE0000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xF0000000, 0x00000000, 0x00000000, 0x00000000} },  // E000::/4
-    { {0xC0000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xE0000000, 0x00000000, 0x00000000, 0x00000000} }  // C000::/3
+    { {0xC0000000, 0x00000000, 0x00000000, 0x00000000} , "RESERVED",            {0xE0000000, 0x00000000, 0x00000000, 0x00000000} }   // C000::/3
 };
 
 
@@ -98,12 +100,12 @@ int ip6_iptype(str string_ip, char **res)
           ((in6_addr[1] & IPv6ranges[i].sub_mask[1]) == IPv6ranges[i].value[1]) &&
           ((in6_addr[2] & IPv6ranges[i].sub_mask[2]) == IPv6ranges[i].value[2]) &&
           ((in6_addr[3] & IPv6ranges[i].sub_mask[3]) == IPv6ranges[i].value[3])) {
-
           *res = IPv6ranges[i].ip_type;
+          return 1;
       }
   }
-
-  return 1;
+  /* the ip must be in the interval, else there is some problem */
+  return 0;
 }
 
 int ip4_iptype(str string_ip, char **res)
@@ -121,34 +123,11 @@ int ip4_iptype(str string_ip, char **res)
   for (i = 0; i < IPv4RANGES_SIZE; i++) {
       if ( (in4_addr & IPv4ranges[i].sub_mask) == IPv4ranges[i].value ) {
           *res = IPv4ranges[i].ip_type;
+          return 1;
       }
   }
   return 1;
 }
-
-/*char* ip6_iptype(str s, uint32_t *ip) {
-    int i;
-    for (i = 0; i < IPv6RANGES_SIZE; i++) {
-        if (((ip[0] & IPv6ranges[i].sub_mask[0]) == IPv6ranges[i].value[0]) &&
-            ((ip[1] & IPv6ranges[i].sub_mask[1]) == IPv6ranges[i].value[1]) &&
-            ((ip[2] & IPv6ranges[i].sub_mask[2]) == IPv6ranges[i].value[2]) &&
-            ((ip[3] & IPv6ranges[i].sub_mask[3]) == IPv6ranges[i].value[3])) {
-            return IPv6ranges[i].ip_type;
-        }
-    }
-    return "PUBLIC";
-}
-
-char* ip4_iptype(uint32_t ip) {
-    int i;
-    for (i = 0; i < IPv4RANGES_SIZE; i++) {
-        if ( (ip & IPv4ranges[i].sub_mask) == IPv4ranges[i].value ) {
-            return IPv4ranges[i].ip_type;
-        }
-    }
-    return "PUBLIC";
-}
-*/
 
 void ipv4ranges_hton() {
     int pos;
