@@ -94,7 +94,8 @@ static int w_is_ip_rfc1918(struct sip_msg*, char*);
 static int w_ip_is_in_subnet(struct sip_msg*, char*, char*);
 static int w_dns_sys_match_ip(sip_msg_t*, char*, char*);
 static int w_dns_int_match_ip(sip_msg_t*, char*, char*);
-static int fixup_detailed_ipv6_type(void** param, int param_no);
+static int fixup_detailed_ip_type(void** param, int param_no);
+static int fixup_free_detailed_ip_type(void** param, int param_no);
 static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
 static int mod_init(void);
 
@@ -121,10 +122,10 @@ static cmd_export_t cmds[] =
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "ip_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-  { "detailed_ipv4_type", (cmd_function)w_detailed_ipv4_type, 2, fixup_detailed_ipv6_type, 0,
-  ANY_ROUTE },
-  { "detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2, fixup_detailed_ipv6_type, 0,
-  ANY_ROUTE },
+  { "detailed_ipv4_type", (cmd_function)w_detailed_ipv4_type, 2,
+  fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
+  { "detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2,
+  fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
   { "compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
   { "compare_pure_ips", (cmd_function)w_compare_pure_ips, 2, fixup_spve_spve, 0,
@@ -185,7 +186,7 @@ static int mod_init(void) {
 /*
  * Fix detailed_ipv6_type param: result (writable pvar).
  */
-static int fixup_detailed_ipv6_type(void** param, int param_no)
+static int fixup_detailed_ip_type(void** param, int param_no)
 {
     if (param_no == 1) {
         return fixup_spve_null(param, 1);
@@ -207,7 +208,20 @@ static int fixup_detailed_ipv6_type(void** param, int param_no)
     return -1;
 }
 
+static int fixup_free_detailed_ip_type(void** param, int param_no)
+{
+    if (param_no == 1) {
+    LM_WARN("free function has not been defined for spve\n");
+    return 0;
+    }
 
+    if (param_no == 2) {
+    return fixup_free_pvar_null(param, 1);
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
 /*
  * Module internal functions
  */
@@ -497,7 +511,6 @@ static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,
     return -3;
   }
 
-  LM_ERR("!!!!!!! ip to change is %.*s\n", string.len, string.s);
   switch (_type) {
       case AF_INET:
           if (!ip4_iptype(string, &res)) {
@@ -511,7 +524,6 @@ static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,
               string.s++;
               string.len -= 2;
           }
-          LM_ERR("!!!!!!! hi 1 \n");
           if (!ip6_iptype(string, &res)) {
               LM_ERR("bad ip parameter\n");
               return -1;
@@ -526,7 +538,6 @@ static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,
   val.flags = PV_VAL_STR;
   dst = (pv_spec_t *)_dst;
   dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
-  LM_ERR("!!!!!!! hi 2 \n");
   return 1;
 }
 
