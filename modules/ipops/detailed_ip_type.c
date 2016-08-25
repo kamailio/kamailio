@@ -28,9 +28,10 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
+#include "../../dprint.h"
+#include "../../trim.h"
 #include "../../str.h"
 #include "detailed_ip_type.h"
-#include "../../dprint.h"
 
 static ip4_node IPv4ranges[IPv4RANGES_SIZE] = {
         { 0xffffffff,  "BROADCAST",  0xffffffff },  // 255.255.255.255/32
@@ -91,6 +92,7 @@ int ip6_iptype(str string_ip, char **res)
   char in6_string[INET6_ADDRSTRLEN];
   int i;
 
+  trim(&string_ip);
   if (string_ip.len >= INET6_ADDRSTRLEN)
         return 0;
 
@@ -118,6 +120,7 @@ int ip4_iptype(str string_ip, char **res)
   char in4_string[INET_ADDRSTRLEN];
   int i;
 
+  trim(&string_ip);
   if (string_ip.len >= INET_ADDRSTRLEN)
       return 0;
 
