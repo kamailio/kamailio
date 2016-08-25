@@ -88,6 +88,7 @@ static int w_is_ipv6_reference(struct sip_msg*, char*);
 static int w_ip_type(struct sip_msg*, char*);
 static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *res);
 static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *res);
+static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *res);
 static int w_compare_ips(struct sip_msg*, char*, char*);
 static int w_compare_pure_ips(struct sip_msg*, char*, char*);
 static int w_is_ip_rfc1918(struct sip_msg*, char*);
@@ -125,6 +126,8 @@ static cmd_export_t cmds[] =
   { "detailed_ipv4_type", (cmd_function)w_detailed_ipv4_type, 2,
   fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
   { "detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2,
+  fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
+  { "detailed_ip_type", (cmd_function)w_detailed_ip_type, 2,
   fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
   { "compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve, 0,
   REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
@@ -484,12 +487,18 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
 
 static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *_dst)
 {
-    return _detailed_ip_type(AF_INET, _msg, _s, _dst);
+    return _detailed_ip_type(ip_type_ipv4, _msg, _s, _dst);
 }
 
 static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *_dst)
 {
-    return _detailed_ip_type(AF_INET6, _msg, _s, _dst);
+    return _detailed_ip_type(ip_type_ipv6, _msg, _s, _dst);
+}
+
+static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *_dst)
+{
+    /* `ip_type_error` should read `unknown type` */
+    return _detailed_ip_type(ip_type_error, _msg, _s, _dst);
 }
 
 /*! \brief Return the IP type of the given argument (string or pv): 1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
@@ -499,6 +508,7 @@ static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,
   pv_spec_t *dst;
   pv_value_t val;
   char *res;
+  unsigned int assumed_type;
 
   if (_s == NULL) {
     LM_ERR("bad parameter\n");
@@ -511,15 +521,18 @@ static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,
     return -3;
   }
 
-  switch (_type) {
-      case AF_INET:
+  assumed_type = (ip_type_error == _type)? ip_parser_execute(string.s, string.len) : _type;
+
+  switch (assumed_type) {
+      case ip_type_ipv4:
           if (!ip4_iptype(string, &res)) {
               LM_ERR("bad ip parameter\n");
               return -1;
           }
           break;
-      case AF_INET6:
-          /* make IPv6 from reference if needed */
+      case ip_type_ipv6_reference:
+      case ip_type_ipv6:
+          /* consider this reference */
           if (string.s[0] == '[') {
               string.s++;
               string.len -= 2;
