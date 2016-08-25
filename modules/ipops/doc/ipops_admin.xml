@@ -359,6 +359,205 @@ switch($rc) {
 
     </section>
 
+    <section id="ipops.f.detailed_ip_type">
+      <title>
+        <function moreinfo="none">detailed_ip_type (ip, result)</function>
+      </title>
+
+      <para>
+        Returns the detailed type of the given IP () (see http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.txt, http://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.txt, RFC 5735 and RFC 6598: PRIVATE, SHARED, LOOPBACK, IPV4MAP, DISCARD etc).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+	</listitem>
+        <listitem> 
+   	  <para>
+            <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
+          </para>
+          <para>
+            <itemizedlist>
+              <listitem>  
+		<emphasis> IPv4 </emphasis> - PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+ 	      </listitem>
+	      <listitem>  
+		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST     
+ 	      </listitem>              
+  	    </itemizedlist>		
+	  </para>	
+        </listitem>
+      </itemizedlist>
+
+      <para>Return value:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>1</emphasis> - successful operation
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>negative value</emphasis> - error occured
+          </para>
+        </listitem>       
+      </itemizedlist>
+
+      <para>
+        This function can be used from ALL ROUTES
+      </para>
+
+      <example>
+        <title>
+          <function>detailed_ip_type</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+    detailed_ip_type("192.168.1.2","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+...
+        </programlisting>
+      </example>
+
+    </section>
+
+    <section id="ipops.f.detailed_ipv4_type">
+      <title>
+        <function moreinfo="none">detailed_ipv4_type (ip, result)</function>
+      </title>
+
+      <para>
+        Returns the detailed type of the given IP () (see RFC 5735 and RFC 6598).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+	</listitem>
+        <listitem> 
+   	  <para>
+            <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
+          </para>
+          <para>
+            <itemizedlist>
+              <listitem>  
+		<emphasis> IPv4 </emphasis> - PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+ 	      </listitem>	                 
+  	    </itemizedlist>		
+	  </para>	
+        </listitem>
+      </itemizedlist>
+
+      <para>Return value:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>1</emphasis> - successful operation
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>negative value</emphasis> - error occured
+          </para>
+        </listitem>       
+      </itemizedlist>
+
+      <para>
+        This function can be used from ALL ROUTES
+      </para>
+
+      <example>
+        <title>
+          <function>detailed_ipv4_type</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+    detailed_ipv4_type("192.168.1.2","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+...
+        </programlisting>
+      </example>
+
+    </section>	
+
+    <section id="ipops.f.detailed_ipv6_type">
+      <title>
+        <function moreinfo="none">detailed_ipv6_type (ip, result)</function>
+      </title>
+
+      <para>
+        Returns the detailed type of the given IP () (see http://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.txt, http://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.txt).
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>ip</emphasis> - String or pseudo-variable containing the IP to evaluate.
+          </para>
+	</listitem>
+        <listitem> 
+   	  <para>
+            <emphasis>result</emphasis> - String or pseudo-variable containing the detailed type of the IP.
+          </para>
+          <para>
+            <itemizedlist>
+              <listitem>  
+		<emphasis> IPv6 </emphasis> - PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+ 	      </listitem>	                 
+  	    </itemizedlist>		
+	  </para>	
+        </listitem>
+      </itemizedlist>
+
+      <para>Return value:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>1</emphasis> - successful operation
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>negative value</emphasis> - error occured
+          </para>
+        </listitem>       
+      </itemizedlist>
+
+      <para>
+        This function can be used from ALL ROUTES
+      </para>
+
+      <example>
+        <title>
+          <function>detailed_ipv6_type</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+    detailed_ipv6_type("2001:8d8:7c0:402:217:72:194:30","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");
+
+    detailed_ipv6_type("[2001:8d8:7c0:402:217:72:194:30]","$var(result)");
+    xlog("L_ERR","IP address is of detailed type: $var(result) ");	
+...
+        </programlisting>
+      </example>
+
+    </section>	
+
+
     <section id="ipops.f.compare_ips">
       <title>
         <function moreinfo="none">compare_ips (ip1, ip2)</function>
