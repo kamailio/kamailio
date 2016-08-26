@@ -42,7 +42,7 @@ int sca_get_msg_contact_uri(sip_msg_t *msg, str *contact_uri) {
 	assert(contact_uri != NULL);
 
 	if (SCA_HEADER_EMPTY(msg->contact)) {
-		LM_DBG( "Empty Contact header" );
+		LM_DBG( "Empty Contact header\n" );
 		contact_uri->s = NULL;
 		contact_uri->len = 0;
 
@@ -50,24 +50,24 @@ int sca_get_msg_contact_uri(sip_msg_t *msg, str *contact_uri) {
 	}
 
 	if (parse_contact(msg->contact) < 0) {
-		LM_ERR( "Failed to parse Contact header: %.*s",
+		LM_ERR( "Failed to parse Contact header: %.*s\n",
 				STR_FMT( &msg->contact->body ));
 		return (-1);
 	}
 	if ((contact_body = (contact_body_t *) msg->contact->parsed) == NULL) {
-		LM_ERR( "Invalid Contact header: %.*s", STR_FMT( &msg->contact->body ));
+		LM_ERR( "Invalid Contact header: %.*s\n", STR_FMT( &msg->contact->body ));
 		return (-1);
 	}
 	if (contact_body->star) {
-		LM_ERR( "Invalid Contact header: SCA Contact must not be \"*\"" );
+		LM_ERR( "Invalid Contact header: SCA Contact must not be \"*\"\n" );
 		return (-1);
 	}
 	if (contact_body->contacts == NULL) {
-		LM_ERR( "Invalid Contact header: parser found no contacts" );
+		LM_ERR( "Invalid Contact header: parser found no contacts\n" );
 		return (-1);
 	}
 	if (contact_body->contacts->next) {
-		LM_ERR( "Invalid Contact header: Contact may only contain one URI" );
+		LM_ERR( "Invalid Contact header: Contact may only contain one URI\n" );
 		return (-1);
 	}
 
@@ -83,11 +83,11 @@ int sca_get_msg_cseq_number(sip_msg_t *msg) {
 	assert(msg != NULL);
 
 	if (SCA_HEADER_EMPTY(msg->cseq)) {
-		LM_ERR( "Empty Cseq header" );
+		LM_ERR( "Empty Cseq header\n" );
 		return (-1);
 	}
 	if (str2int(&(get_cseq( msg )->number), (unsigned int *) &cseq) != 0) {
-		LM_ERR( "Bad Cseq header: %.*s", STR_FMT( &msg->cseq->body ));
+		LM_ERR( "Bad Cseq header: %.*s\n", STR_FMT( &msg->cseq->body ));
 		return (-1);
 	}
 
@@ -99,7 +99,7 @@ int sca_get_msg_cseq_method(sip_msg_t *msg) {
 	assert(msg != NULL);
 
 	if (SCA_HEADER_EMPTY(msg->cseq)) {
-		LM_ERR( "Empty Cseq header" );
+		LM_ERR( "Empty Cseq header\n" );
 		return (-1);
 	}
 
@@ -113,22 +113,22 @@ int sca_get_msg_from_header(sip_msg_t *msg, struct to_body **from) {
 	assert(from != NULL);
 
 	if (SCA_HEADER_EMPTY(msg->from)) {
-		LM_ERR( "Empty From header" );
+		LM_ERR( "Empty From header\n" );
 		return (-1);
 	}
 	if (parse_from_header(msg) < 0) {
-		LM_ERR( "Bad From header" );
+		LM_ERR( "Bad From header\n" );
 		return (-1);
 	}
 	f = get_from(msg);
 	if (SCA_STR_EMPTY(&f->tag_value)) {
-		LM_ERR( "Bad From header: no tag parameter" );
+		LM_ERR( "Bad From header: no tag parameter\n" );
 		return (-1);
 	}
 
 	/* ensure the URI is parsed for future use */
 	if (parse_uri(f->uri.s, f->uri.len, GET_FROM_PURI(msg)) < 0) {
-		LM_ERR( "Failed to parse From URI %.*s", STR_FMT( &f->uri ));
+		LM_ERR( "Failed to parse From URI %.*s\n", STR_FMT( &f->uri ));
 		return (-1);
 	}
 
@@ -145,7 +145,7 @@ int sca_get_msg_to_header(sip_msg_t *msg, struct to_body **to) {
 	assert(to != NULL);
 
 	if (SCA_HEADER_EMPTY(msg->to)) {
-		LM_ERR( "Empty To header" );
+		LM_ERR( "Empty To header\n" );
 		return (-1);
 	}
 	t = get_to(msg);
@@ -153,7 +153,7 @@ int sca_get_msg_to_header(sip_msg_t *msg, struct to_body **to) {
 		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, /* end of buffer */
 		&parsed_to);
 		if (parsed_to.error != PARSE_OK) {
-			LM_ERR( "Bad To header" );
+			LM_ERR( "Bad To header\n" );
 			return (-1);
 		}
 		t = &parsed_to;
@@ -161,7 +161,7 @@ int sca_get_msg_to_header(sip_msg_t *msg, struct to_body **to) {
 
 	/* ensure the URI is parsed for future use */
 	if (parse_uri(t->uri.s, t->uri.len, GET_TO_PURI(msg)) < 0) {
-		LM_ERR( "Failed to parse To URI %.*s", STR_FMT( &t->uri ));
+		LM_ERR( "Failed to parse To URI %.*s\n", STR_FMT( &t->uri ));
 		return (-1);
 	}
 
@@ -280,7 +280,7 @@ int sca_aor_create_from_info(str *aor, uri_type type, str *user, str *domain,
 
 	aor->s = (char *) pkg_malloc(len);
 	if (aor->s == NULL) {
-		LM_ERR( "sca_aor_create_from_info: pkg_malloc %d bytes failed", len );
+		LM_ERR( "sca_aor_create_from_info: pkg_malloc %d bytes failed\n", len );
 		return (-1);
 	}
 
@@ -335,39 +335,39 @@ int sca_create_canonical_aor_for_ua(sip_msg_t *msg, str *c_aor, int ua_opts) {
 
 	if ((ua_opts & SCA_AOR_TYPE_UAC)) {
 		if (sca_get_msg_from_header(msg, &tf) < 0) {
-			LM_ERR( "sca_create_canonical_aor: failed to get From header" );
+			LM_ERR( "sca_create_canonical_aor: failed to get From header\n" );
 			goto done;
 		}
 	} else {
 		if (sca_get_msg_to_header(msg, &tf) < 0) {
-			LM_ERR( "sca_create_canonical_aor: failed to get To header" );
+			LM_ERR( "sca_create_canonical_aor: failed to get To header\n" );
 			goto done;
 		}
 	}
 
 	if (sca_uri_extract_aor(&tf->uri, &tf_aor) < 0) {
 		LM_ERR( "sca_create_canonical_aor: failed to extract AoR from "
-				"URI <%.*s>", STR_FMT( &tf->uri ));
+				"URI <%.*s>\n", STR_FMT( &tf->uri ));
 		goto done;
 	}
 
 	memset(&c_uri, 0, sizeof(sip_uri_t));
 	if ((rc = sca_get_msg_contact_uri(msg, &contact_uri)) < 0) {
 		LM_ERR( "sca_create_canonical_aor: failed to get contact URI from "
-				"Contact <%.*s>", STR_FMT( &msg->contact->body ));
+				"Contact <%.*s>\n", STR_FMT( &msg->contact->body ));
 		goto done;
 	}
 	if (rc > 0) {
 		if (parse_uri(contact_uri.s, contact_uri.len, &c_uri) < 0) {
 			LM_ERR( "sca_create_canonical_aor: failed to parse Contact URI "
-					"<%.*s>", STR_FMT( &contact_uri ));
+					"<%.*s>\n", STR_FMT( &contact_uri ));
 			rc = -1;
 			goto done;
 		}
 	}
 
 	if ( SCA_STR_EMPTY(&c_uri.user) ||
-	SCA_STR_EQ( &c_uri.user, &tf->parsed_uri.user )) {
+			SCA_STR_EQ( &c_uri.user, &tf->parsed_uri.user )) {
 		/* empty contact header or Contact user matches To/From AoR */
 		c_aor->s = (char *) pkg_malloc(tf_aor.len);
 		c_aor->len = tf_aor.len;
@@ -377,7 +377,7 @@ int sca_create_canonical_aor_for_ua(sip_msg_t *msg, str *c_aor, int ua_opts) {
 		if (sca_aor_create_from_info(c_aor, c_uri.type, &c_uri.user,
 				&tf->parsed_uri.host, &tf->parsed_uri.port) < 0) {
 			LM_ERR( "sca_create_canonical_aor: failed to create AoR from "
-					"Contact <%.*s> and URI <%.*s>",
+					"Contact <%.*s> and URI <%.*s>\n",
 					STR_FMT( &contact_uri ), STR_FMT( &tf_aor ));
 			goto done;
 		}
@@ -403,10 +403,10 @@ int sca_call_is_held(sip_msg_t *msg) {
 
 	rc = parse_sdp(msg);
 	if (rc < 0) {
-		LM_ERR( "sca_call_is_held: parse_sdp body failed" );
+		LM_ERR( "sca_call_is_held: parse_sdp body failed\n" );
 		return (0);
 	} else if (rc > 0) {
-		LM_DBG( "sca_call_is_held: parse_sdp returned %d, no SDP body", rc );
+		LM_DBG( "sca_call_is_held: parse_sdp returned %d, no SDP body\n", rc );
 		return (0);
 	}
 

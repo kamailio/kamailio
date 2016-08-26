@@ -64,7 +64,7 @@
 
 #define SCA_STR_APPEND_L( str1, str1_lim, s2, s2_len ) \
 	if ((str1)->len + (s2_len) >= (str1_lim)) { \
-	    LM_ERR( "Failed to append to str: too long" ); \
+	    LM_ERR( "Failed to append to str: too long\n" ); \
 	} else { \
 	    SCA_STR_APPEND((str1), (s2), (s2_len)); \
 	    (str1_lim) -= (s2_len); \
@@ -79,7 +79,7 @@
 
 #define SCA_STR_APPEND_CSTR_L( str1, str1_lim, cstr1 ) \
 	if ((str1)->len + strlen(cstr1) >= (str1_lim)) { \
-	    LM_ERR( "Failed to append to str: too long" ); \
+	    LM_ERR( "Failed to append to str: too long\n" ); \
 	} else { \
 	    SCA_STR_APPEND_CSTR((str1), (cstr1)); \
 	}

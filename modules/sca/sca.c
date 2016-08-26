@@ -51,12 +51,15 @@ static void sca_mod_destroy(void);
 static int sca_set_config(sca_mod *);
 
 /* EXPORTED COMMANDS */
-static cmd_export_t cmds[] = { { "sca_handle_subscribe", sca_handle_subscribe,
-		0, NULL, REQUEST_ROUTE }, { "sca_call_info_update",
-		sca_call_info_update, 0, NULL,
-		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE }, {
-		"sca_call_info_update", sca_call_info_update, 1, fixup_var_int_1,
-		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+static cmd_export_t cmds[] = {
+		{ "sca_handle_subscribe", sca_handle_subscribe,
+				0, NULL, REQUEST_ROUTE },
+		{ "sca_call_info_update",sca_call_info_update,
+				0, NULL,
+				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+		{"sca_call_info_update", sca_call_info_update,
+				1, fixup_var_int_1,
+				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 		{ NULL, NULL, -1, 0, 0 }, };
 
 /* EXPORTED RPC INTERFACE */
@@ -92,15 +95,16 @@ int call_info_max_expires = 3600;
 int line_seize_max_expires = 15;
 int purge_expired_interval = 120;
 
-static param_export_t params[] = { { "outbound_proxy", PARAM_STR,
-		&outbound_proxy }, { "db_url", PARAM_STR, &db_url }, { "subs_table",
-		PARAM_STR, &db_subs_table },
-		{ "state_table", PARAM_STR, &db_state_table }, { "db_update_interval",
-				INT_PARAM, &db_update_interval }, { "hash_table_size",
-				INT_PARAM, &hash_table_size }, { "call_info_max_expires",
-				INT_PARAM, &call_info_max_expires }, { "line_seize_max_expires",
-				INT_PARAM, &line_seize_max_expires }, {
-				"purge_expired_interval", INT_PARAM, &purge_expired_interval },
+static param_export_t params[] = {
+		{ "outbound_proxy", PARAM_STR, &outbound_proxy },
+		{ "db_url", PARAM_STR, &db_url },
+		{ "subs_table", PARAM_STR, &db_subs_table },
+		{ "state_table", PARAM_STR, &db_state_table },
+		{ "db_update_interval", INT_PARAM, &db_update_interval },
+		{ "hash_table_size", INT_PARAM, &hash_table_size },
+		{ "call_info_max_expires", INT_PARAM, &call_info_max_expires },
+		{ "line_seize_max_expires", INT_PARAM, &line_seize_max_expires },
+		{ "purge_expired_interval", INT_PARAM, &purge_expired_interval },
 		{ NULL, 0, NULL }, };
 
 /* MODULE EXPORTS */
@@ -122,7 +126,7 @@ static int sca_bind_sl(sca_mod *scam, sl_api_t *sl_api) {
 	assert(sl_api != NULL);
 
 	if (sl_load_api(sl_api) != 0) {
-		LM_ERR( "Failed to initialize required sl API" );
+		LM_ERR( "Failed to initialize required sl API\n" );
 		return (-1);
 	}
 	scam->sl_api = sl_api;
@@ -131,7 +135,7 @@ static int sca_bind_sl(sca_mod *scam, sl_api_t *sl_api) {
 	sl_cbe.cbf = (sl_cbf_f) sca_call_info_sl_reply_cb;
 
 	if (scam->sl_api->register_cb(&sl_cbe) < 0) {
-		LM_ERR( "Failed to register sl reply callback" );
+		LM_ERR( "Failed to register sl reply callback\n" );
 		return (-1);
 	}
 
@@ -143,13 +147,13 @@ static int sca_bind_srdb1(sca_mod *scam, db_func_t *db_api) {
 	int rc = -1;
 
 	if (db_bind_mod(scam->cfg->db_url, db_api) != 0) {
-		LM_ERR( "Failed to initialize required DB API" );
+		LM_ERR( "Failed to initialize required DB API\n" );
 		goto done;
 	}
 	scam->db_api = db_api;
 
 	if (!DB_CAPABILITY((*db_api), DB_CAP_ALL)) {
-		LM_ERR( "Selected database %.*s lacks required capabilities",
+		LM_ERR( "Selected database %.*s lacks required capabilities\n",
 				STR_FMT( scam->cfg->db_url ));
 		goto done;
 	}
@@ -157,16 +161,16 @@ static int sca_bind_srdb1(sca_mod *scam, db_func_t *db_api) {
 	/* ensure database exists and table schemas are correct */
 	db_con = db_api->init(scam->cfg->db_url);
 	if (db_con == NULL) {
-		LM_ERR( "sca_bind_srdb1: failed to connect to DB %.*s",
+		LM_ERR( "sca_bind_srdb1: failed to connect to DB %.*s\n",
 				STR_FMT( scam->cfg->db_url ));
 		goto done;
 	}
 
 	if (db_check_table_version(db_api, db_con, scam->cfg->subs_table,
 			SCA_DB_SUBSCRIPTIONS_TABLE_VERSION) < 0) {
-		LM_ERR( "Version check of %.*s table in DB %.*s failed",
+		LM_ERR( "Version check of %.*s table in DB %.*s failed\n",
 				STR_FMT( scam->cfg->subs_table ), STR_FMT( scam->cfg->db_url ));
-		LM_ERR( "%.*s table version %d required",
+		LM_ERR( "%.*s table version %d required\n",
 				STR_FMT( scam->cfg->subs_table ),
 				SCA_DB_SUBSCRIPTIONS_TABLE_VERSION );
 		goto done;
@@ -186,7 +190,7 @@ static int sca_bind_srdb1(sca_mod *scam, db_func_t *db_api) {
 static int sca_set_config(sca_mod *scam) {
 	scam->cfg = (sca_config *) shm_malloc(sizeof(sca_config));
 	if (scam->cfg == NULL) {
-		LM_ERR( "Failed to shm_malloc module configuration" );
+		LM_ERR( "Failed to shm_malloc module configuration\n" );
 		return (-1);
 	}
 	memset(scam->cfg, 0, sizeof(sca_config));
@@ -196,19 +200,19 @@ static int sca_set_config(sca_mod *scam) {
 	}
 
 	if (!db_url.s || db_url.len <= 0) {
-		LM_ERR( "sca_set_config: db_url must be set!" );
+		LM_ERR( "sca_set_config: db_url must be set!\n" );
 		return (-1);
 	}
 	scam->cfg->db_url = &db_url;
 
 	if (!db_subs_table.s || db_subs_table.len <= 0) {
-		LM_ERR( "sca_set_config: subs_table must be set!" );
+		LM_ERR( "sca_set_config: subs_table must be set!\n" );
 		return (-1);
 	}
 	scam->cfg->subs_table = &db_subs_table;
 
 	if (!db_state_table.s || db_state_table.len <= 0) {
-		LM_ERR( "sca_set_config: state_table must be set!" );
+		LM_ERR( "sca_set_config: state_table must be set!\n" );
 		return (-1);
 	}
 	scam->cfg->state_table = &db_state_table;
@@ -238,7 +242,7 @@ static int sca_child_init(int rank) {
 		NULL, /* parameter passed to callback */
 		sca->cfg->db_update_interval) < 0) {
 			LM_ERR( "sca_child_init: failed to register subscription DB "
-					"sync timer process" );
+					"sync timer process\n" );
 			return (-1);
 		}
 
@@ -246,7 +250,7 @@ static int sca_child_init(int rank) {
 	}
 
 	if (sca->db_api == NULL || sca->db_api->init == NULL) {
-		LM_CRIT( "sca_child_init: DB API not loaded!" );
+		LM_CRIT( "sca_child_init: DB API not loaded!\n" );
 		return (-1);
 	}
 
@@ -256,45 +260,45 @@ static int sca_child_init(int rank) {
 static int sca_mod_init(void) {
 	sca = (sca_mod *) shm_malloc(sizeof(sca_mod));
 	if (sca == NULL) {
-		LM_ERR( "Failed to shm_malloc module object" );
+		LM_ERR( "Failed to shm_malloc module object\n" );
 		return (-1);
 	}
 	memset(sca, 0, sizeof(sca_mod));
 
 	if (sca_set_config(sca) != 0) {
-		LM_ERR( "Failed to set configuration" );
+		LM_ERR( "Failed to set configuration\n" );
 		goto error;
 	}
 
 	if (rpc_register_array(sca_rpc) != 0) {
-		LM_ERR( "Failed to register RPC commands" );
+		LM_ERR( "Failed to register RPC commands\n" );
 		goto error;
 	}
 
 	if (sca_bind_srdb1(sca, &dbf) != 0) {
-		LM_ERR( "Failed to initialize required DB API" );
+		LM_ERR( "Failed to initialize required DB API\n" );
 		goto error;
 	}
 
 	if (load_tm_api(&tmb) != 0) {
-		LM_ERR( "Failed to initialize required tm API" );
+		LM_ERR( "Failed to initialize required tm API\n" );
 		goto error;
 	}
 	sca->tm_api = &tmb;
 
 	if (sca_bind_sl(sca, &slb) != 0) {
-		LM_ERR( "Failed to initialize required sl API" );
+		LM_ERR( "Failed to initialize required sl API\n" );
 		goto error;
 	}
 
 	if (sca_hash_table_create(&sca->subscriptions, sca->cfg->hash_table_size)
 			!= 0) {
-		LM_ERR( "Failed to create subscriptions hash table" );
+		LM_ERR( "Failed to create subscriptions hash table\n" );
 		goto error;
 	}
 	if (sca_hash_table_create(&sca->appearances, sca->cfg->hash_table_size)
 			!= 0) {
-		LM_ERR( "Failed to create appearances hash table" );
+		LM_ERR( "Failed to create appearances hash table\n" );
 		goto error;
 	}
 
@@ -313,7 +317,7 @@ static int sca_mod_init(void) {
 	 */
 	register_dummy_timers(1);
 
-	LM_INFO( "initialized" );
+	LM_INFO( "initialized\n" );
 
 	return (0);
 
@@ -342,7 +346,7 @@ void sca_mod_destroy(void) {
 	if (sca_subscription_db_update() != 0) {
 		if (sca && sca->cfg && sca->cfg->db_url) {
 			LM_ERR( "sca_mod_destroy: failed to save current subscriptions "
-					"in DB %.*s", STR_FMT( sca->cfg->db_url ));
+					"in DB %.*s\n", STR_FMT( sca->cfg->db_url ));
 		}
 	}
 

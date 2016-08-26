@@ -103,7 +103,7 @@ void sca_db_subscriptions_set_value_for_column(int column, db_val_t *row_values,
 
 	default:
 		LM_WARN( "sca_db_subscriptions_set_value_for_column: unrecognized "
-				"column index %d, treating as INT", column );
+				"column index %d, treating as INT\n", column );
 		/* fall through */
 
 	case SCA_DB_SUBS_EVENT_COL:

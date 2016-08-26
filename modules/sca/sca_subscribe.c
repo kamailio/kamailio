@@ -44,22 +44,24 @@ const str SCA_METHOD_SUBSCRIBE = STR_STATIC_INIT( "SUBSCRIBE" );
 struct sca_sub_state_table {
 	int state;
 	char *state_name;
-} state_table[] = { { SCA_SUBSCRIPTION_STATE_ACTIVE, "active" }, {
-		SCA_SUBSCRIPTION_STATE_PENDING, "pending" }, {
-		SCA_SUBSCRIPTION_STATE_TERMINATED, "terminated" }, {
-		SCA_SUBSCRIPTION_STATE_TERMINATED_DEACTIVATED,
-		"terminated;reason=deactivated" }, {
-		SCA_SUBSCRIPTION_STATE_TERMINATED_GIVEUP, "terminated;reason=giveup" },
+} state_table[] = {
+		{SCA_SUBSCRIPTION_STATE_ACTIVE, "active" },
+		{SCA_SUBSCRIPTION_STATE_PENDING, "pending" },
+		{SCA_SUBSCRIPTION_STATE_TERMINATED, "terminated" },
+		{SCA_SUBSCRIPTION_STATE_TERMINATED_DEACTIVATED,
+				"terminated;reason=deactivated" },
+		{SCA_SUBSCRIPTION_STATE_TERMINATED_GIVEUP,
+				"terminated;reason=giveup" },
 		{ SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
-				"terminated;reason=noresource" }, {
-				SCA_SUBSCRIPTION_STATE_TERMINATED_PROBATION,
-				"terminated;reason=probation" }, {
-				SCA_SUBSCRIPTION_STATE_TERMINATED_REJECTED,
-				"terminated;reason=rejected" }, {
-				SCA_SUBSCRIPTION_STATE_TERMINATED_TIMEOUT,
+				"terminated;reason=noresource" },
+		{SCA_SUBSCRIPTION_STATE_TERMINATED_PROBATION,
+				"terminated;reason=probation" },\
+		{SCA_SUBSCRIPTION_STATE_TERMINATED_REJECTED,
+				"terminated;reason=rejected" },
+		{SCA_SUBSCRIPTION_STATE_TERMINATED_TIMEOUT,
 				"terminated;reason=timeout" },
-
-		{ -1, NULL }, };
+		{ -1, NULL },
+};
 
 void sca_subscription_state_to_str(int state, str *state_str_out) {
 	assert(state >= 0);
@@ -82,7 +84,7 @@ void sca_subscription_purge_expired(unsigned int ticks, void *param) {
 	assert(scam != NULL);
 	assert(scam->subscriptions != NULL);
 
-	LM_INFO( "SCA: purging expired subscriptions" );
+	LM_INFO( "SCA: purging expired subscriptions\n" );
 
 	ht = scam->subscriptions;
 	for (i = 0; i < ht->size; i++) {
@@ -103,7 +105,7 @@ void sca_subscription_purge_expired(unsigned int ticks, void *param) {
 
 				if (sca_notify_subscriber(scam, sub, sub->index) < 0) {
 					LM_ERR( "Failed to send subscription expired "
-							"NOTIFY %s subscriber %.*s",
+							"NOTIFY %s subscriber %.*s\n",
 							sca_event_name_from_type( sub->event ),
 							STR_FMT( &sub->subscriber ));
 
@@ -117,14 +119,14 @@ void sca_subscription_purge_expired(unsigned int ticks, void *param) {
 						if (sca_appearance_release_index(sca, &sub->target_aor,
 								sub->index) < 0) {
 							LM_ERR( "Failed to release seized %.*s "
-									"appearance-index %d",
+									"appearance-index %d\n",
 									STR_FMT( &sub->target_aor ), sub->index );
 						}
 
 						if (sca_notify_call_info_subscribers(sca,
 								&sub->target_aor) < 0) {
 							LM_ERR( "SCA %s NOTIFY to all %.*s "
-									"subscribers failed",
+									"subscribers failed\n",
 									sca_event_name_from_type( sub->event ),
 									STR_FMT( &sub->target_aor ));
 							/*
@@ -142,7 +144,7 @@ void sca_subscription_purge_expired(unsigned int ticks, void *param) {
 			 * send notifies to others in group if necessary.
 			 */
 
-			LM_INFO( "%s subscription from %.*s expired, deleting",
+			LM_INFO( "%s subscription from %.*s expired, deleting\n",
 					sca_event_name_from_type( sub->event ),
 					STR_FMT( &sub->subscriber ));
 
@@ -242,7 +244,7 @@ int sca_subscriptions_restore_from_db(sca_mod *scam) {
 	db_con = scam->db_api->init(scam->cfg->db_url);
 	if (db_con == NULL) {
 		LM_ERR( "sca_subscriptions_restore_from_db: failed to connect "
-				"to DB %.*s", STR_FMT( scam->cfg->db_url ));
+				"to DB %.*s\n", STR_FMT( scam->cfg->db_url ));
 		return (-1);
 	}
 
@@ -251,7 +253,7 @@ int sca_subscriptions_restore_from_db(sca_mod *scam) {
 	column_names = sca_db_subscriptions_columns();
 	if (column_names == NULL) {
 		LM_ERR( "sca_subscriptions_restore_from_db: failed to get "
-				"column names for SCA subscriptions table" );
+				"column names for SCA subscriptions table\n" );
 		goto done;
 	}
 
@@ -265,12 +267,12 @@ int sca_subscriptions_restore_from_db(sca_mod *scam) {
 	switch (rc) {
 	default:
 	case -1:
-		LM_ERR( "sca_subscriptions_restore_from_db: query failed" );
+		LM_ERR( "sca_subscriptions_restore_from_db: query failed\n" );
 		goto done;
 
 	case 0:
 		LM_WARN( "sca_subscriptions_restore_from_db: DB module does "
-				"not support fetch, query returning all values..." );
+				"not support fetch, query returning all values...\n" );
 		/* fall through */
 
 	case 1:
@@ -293,13 +295,13 @@ int sca_subscriptions_restore_from_db(sca_mod *scam) {
 
 			if (sca_subscription_from_db_row_values(row_values, &sub) < 0) {
 				LM_ERR( "sca_subscriptions_restore_from_db: skipping bad result "
-						"at index %d", i );
+						"at index %d\n", i );
 				continue;
 			}
 
 			if (sca_subscription_copy_subscription_key(&sub, &sub_key) < 0) {
 				LM_ERR( "sca_subscriptions_restore_from_db: failed to copy "
-						"subscription key %.*s%s", STR_FMT( &sub.subscriber ),
+						"subscription key %.*s%s\n", STR_FMT( &sub.subscriber ),
 						sca_event_name_from_type( sub.event ));
 				continue;
 			}
@@ -312,7 +314,7 @@ int sca_subscriptions_restore_from_db(sca_mod *scam) {
 			if (sca_subscription_save_unsafe(scam, &sub, idx,
 					SCA_SUBSCRIPTION_CREATE_OPT_RAW_EXPIRES) < 0) {
 				LM_ERR( "sca_subscriptions_restore_from_db: failed to restore "
-						"%s subscription from %.*s to the hash table",
+						"%s subscription from %.*s to the hash table\n",
 						sca_event_name_from_type( sub.event ),
 						STR_FMT( &sub.subscriber ));
 
@@ -329,7 +331,7 @@ int sca_subscriptions_restore_from_db(sca_mod *scam) {
 	/* clear all records from table, let timer process repopulate it */
 	if (scam->db_api->delete(db_con, NULL, NULL, NULL, 0) < 0) {
 		LM_ERR( "sca_subscriptions_restore_from_db: failed to delete "
-				"records from table after restoring" );
+				"records from table after restoring\n" );
 		goto done;
 	}
 
@@ -377,7 +379,7 @@ static int sca_subscription_db_update_subscriber(db1_con_t *db_con,
 			update_columns, update_values, query_column_idx, update_column_idx)
 			< 0) {
 		LM_ERR( "sca_subscription_db_update_subscriber: failed to update "
-				"%s subscriber %.*s in DB",
+				"%s subscriber %.*s in DB\n",
 				sca_event_name_from_type( sub->event ),
 				STR_FMT( &sub->subscriber ));
 		return (-1);
@@ -402,7 +404,7 @@ static int sca_subscription_db_insert_subscriber(db1_con_t *db_con,
 	column_names = sca_db_subscriptions_columns();
 	if (column_names == NULL) {
 		LM_ERR( "sca_subscriptions_restore_from_db: failed to get "
-				"column names for SCA subscriptions table" );
+				"column names for SCA subscriptions table\n" );
 		return (-1);
 	}
 
@@ -413,7 +415,7 @@ static int sca_subscription_db_insert_subscriber(db1_con_t *db_con,
 	/* XXX array boundary checking */
 	if (sca_subscription_to_db_row_values(sub, insert_values) != 0) {
 		LM_ERR( "sca_subscription_db_insert_subscriber: failed to set "
-				"DB row values for INSERT of %s subscriber %.*s",
+				"DB row values for INSERT of %s subscriber %.*s\n",
 				sca_event_name_from_type( sub->event ),
 				STR_FMT( &sub->subscriber ));
 		return (-1);
@@ -422,7 +424,7 @@ static int sca_subscription_db_insert_subscriber(db1_con_t *db_con,
 	if (sca->db_api->insert(db_con, insert_columns, insert_values,
 	SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS) < 0) {
 		LM_ERR( "sca_subscription_db_insert_subscriber: failed to insert "
-				"%s subscriber %.*s in DB subscription table",
+				"%s subscriber %.*s in DB subscription table\n",
 				sca_event_name_from_type( sub->event ),
 				STR_FMT( &sub->subscriber ));
 		return (-1);
@@ -450,7 +452,7 @@ int sca_subscription_db_delete_expired(db1_con_t *db_con) {
 	if (sca->db_api->delete(db_con, delete_columns, delete_ops, delete_values,
 			kv_count) < 0) {
 		LM_ERR( "sca_subscription_db_delete_expired: failed to delete "
-				"subscriptions expired before %ld", (long int)now );
+				"subscriptions expired before %ld\n", (long int)now );
 		return (-1);
 	}
 
@@ -468,13 +470,13 @@ int sca_subscription_db_update(void) {
 
 	db_con = sca_db_get_connection();
 	if (db_con == NULL) {
-		LM_ERR( "sca_subscription_db_update: failed to connect to DB %.*s",
+		LM_ERR( "sca_subscription_db_update: failed to connect to DB %.*s\n",
 				STR_FMT( sca->cfg->db_url ));
 		goto done;
 	}
 	if (sca->db_api->use_table(db_con, sca->cfg->subs_table) < 0) {
 		LM_ERR( "sca_subscription_db_update: failed to in-use table "
-				"for DB %.*s", STR_FMT( sca->cfg->db_url ));
+				"for DB %.*s\n", STR_FMT( sca->cfg->db_url ));
 		goto done;
 	}
 
@@ -501,14 +503,14 @@ int sca_subscription_db_update(void) {
 			if (sub->db_cmd_flag == SCA_DB_FLAG_INSERT) {
 				if (sca_subscription_db_insert_subscriber(db_con, sub) < 0) {
 					LM_ERR( "sca_subscription_db_update: failed to insert "
-							"%s subscriber %.*s into subscription DB",
+							"%s subscriber %.*s into subscription DB\n",
 							sca_event_name_from_type( sub->event ),
 							STR_FMT( &sub->subscriber ));
 				}
 			} else if (sub->db_cmd_flag == SCA_DB_FLAG_UPDATE) {
 				if (sca_subscription_db_update_subscriber(db_con, sub) < 0) {
 					LM_ERR( "sca_subscription_db_update: failed to insert "
-							"%s subscriber %.*s into subscription DB",
+							"%s subscriber %.*s into subscription DB\n",
 							sca_event_name_from_type( sub->event ),
 							STR_FMT( &sub->subscriber ));
 				}
@@ -526,7 +528,7 @@ int sca_subscription_db_update(void) {
 void sca_subscription_db_update_timer(unsigned int ticks, void *param) {
 	if (sca_subscription_db_update() != 0) {
 		LM_ERR( "sca_subscription_db_update_timer: failed to update "
-				"subscriptions in DB %.*s", STR_FMT( sca->cfg->db_url ));
+				"subscriptions in DB %.*s\n", STR_FMT( sca->cfg->db_url ));
 	}
 }
 
@@ -545,7 +547,7 @@ int sca_subscription_aor_has_subscribers(int event, str *aor) {
 	sub_key.s = (char *) pkg_malloc(len);
 	if (sub_key.s == NULL) {
 		LM_ERR( "Failed to pkg_malloc key to look up %s "
-				"subscription for %.*s", event_name, STR_FMT( aor ));
+				"subscription for %.*s\n", event_name, STR_FMT( aor ));
 		return (-1);
 	}
 	SCA_STR_COPY(&sub_key, aor);
@@ -587,7 +589,7 @@ sca_subscription_create(str *aor, int event, str *subscriber,
 
 	sub = (sca_subscription *) shm_malloc(len);
 	if (sub == NULL) {
-		LM_ERR( "Failed to create %s subscription for %.*s: out of memory",
+		LM_ERR( "Failed to create %s subscription for %.*s: out of memory\n",
 				sca_event_name_from_type( event ), STR_FMT( subscriber ));
 		goto error;
 	}
@@ -634,7 +636,7 @@ sca_subscription_create(str *aor, int event, str *subscriber,
 	sub->dialog.id.s = (char *) shm_malloc(len);
 	if (sub->dialog.id.s == NULL) {
 		LM_ERR( "Failed to shm_malloc space for %.*s %s subscription dialog: "
-				"out of memory", STR_FMT( &sub->subscriber ),
+				"out of memory\n", STR_FMT( &sub->subscriber ),
 				sca_event_name_from_type( sub->event ));
 		goto error;
 	}
@@ -683,7 +685,7 @@ void sca_subscription_free(void *value) {
 		return;
 	}
 
-	LM_DBG( "Freeing %s subscription from %.*s",
+	LM_DBG( "Freeing %s subscription from %.*s\n",
 			sca_event_name_from_type( sub->event ),
 			STR_FMT( &sub->subscriber ));
 
@@ -699,7 +701,7 @@ void sca_subscription_print(void *value) {
 
 	LM_DBG( "%.*s %s (%d) %.*s, expires: %ld, index: %d, "
 			"dialog %.*s;%.*s;%.*s, record_route: %.*s, "
-			"notify_cseq: %d, subscribe_cseq: %d",
+			"notify_cseq: %d, subscribe_cseq: %d\n",
 			STR_FMT( &sub->target_aor ),
 			sca_event_name_from_type( sub->event ),
 			sub->event,
@@ -735,7 +737,7 @@ int sca_subscription_save_unsafe(sca_mod *scam, sca_subscription *sub,
 
 	if (sca_appearance_register(scam, &sub->target_aor) < 0) {
 		LM_ERR( "sca_subscription_save: sca_appearance_register failed, "
-				"still saving subscription from %.*s",
+				"still saving subscription from %.*s\n",
 				STR_FMT( &sub->subscriber ));
 	}
 
@@ -758,28 +760,28 @@ static int sca_subscription_update_unsafe(sca_mod *scam,
 	char *dlg_id_tmp;
 
 	if (sub_idx < 0 || sub_idx > scam->subscriptions->size) {
-		LM_ERR( "Invalid hash table index %d", sub_idx );
+		LM_ERR( "Invalid hash table index %d\n", sub_idx );
 		goto done;
 	}
 
 	/* sanity checks first */
 	if (saved_sub->event != update_sub->event) {
 		LM_ERR( "Event mismatch for in-dialog SUBSCRIBE from %.*s: "
-				"%s != %s", STR_FMT( &update_sub->subscriber ),
+				"%s != %s\n", STR_FMT( &update_sub->subscriber ),
 				sca_event_name_from_type( saved_sub->event ),
 				sca_event_name_from_type( update_sub->event ));
 		goto done;
 	}
 	if (!STR_EQ(saved_sub->subscriber, update_sub->subscriber)) {
 		LM_ERR( "Contact mismatch for in-dialog SUBSCRIBE from %.*s: "
-				"%.*s != %.*s", STR_FMT( &update_sub->subscriber ),
+				"%.*s != %.*s\n", STR_FMT( &update_sub->subscriber ),
 				STR_FMT( &update_sub->subscriber ),
 				STR_FMT( &saved_sub->subscriber ));
 		goto done;
 	}
 	if (!STR_EQ(saved_sub->target_aor, update_sub->target_aor)) {
 		LM_ERR( "AoR mismatch for in-dialog SUBSCRIBE from %.*s: "
-				"%.*s != %.*s", STR_FMT( &update_sub->subscriber ),
+				"%.*s != %.*s\n", STR_FMT( &update_sub->subscriber ),
 				STR_FMT( &update_sub->target_aor ),
 				STR_FMT( &saved_sub->target_aor ));
 		goto done;
@@ -806,7 +808,7 @@ static int sca_subscription_update_unsafe(sca_mod *scam,
 		dlg_id_tmp = (char *) shm_malloc(len);
 		if (dlg_id_tmp == NULL) {
 			LM_ERR( "Failed to replace %.*s %s subscription dialog: "
-					"shm_malloc failed", STR_FMT( &update_sub->subscriber ),
+					"shm_malloc failed\n", STR_FMT( &update_sub->subscriber ),
 					sca_event_name_from_type( update_sub->event ));
 			/* XXX should remove subscription entirely here? */
 		} else {
@@ -854,7 +856,7 @@ static int sca_subscription_update_unsafe(sca_mod *scam,
 		update_sub->rr.s = (char *) pkg_malloc(saved_sub->rr.len);
 		if (update_sub->rr.s == NULL) {
 			LM_ERR( "sca_subscription_update_unsafe: pkg_malloc record-route "
-					"value %.*s failed", STR_FMT( &saved_sub->rr ));
+					"value %.*s failed\n", STR_FMT( &saved_sub->rr ));
 			goto done;
 		}
 
@@ -880,7 +882,7 @@ static int sca_subscription_copy_subscription_key(sca_subscription *sub,
 
 	key_out->s = (char *) pkg_malloc(len);
 	if (key_out->s == NULL) {
-		LM_ERR( "Failed to pkg_malloc space for subscription key" );
+		LM_ERR( "Failed to pkg_malloc space for subscription key\n" );
 		return (-1);
 	}
 
@@ -903,7 +905,7 @@ int sca_subscription_delete_subscriber_for_event(sca_mod *scam, str *subscriber,
 	len += event->len;
 
 	if (len >= sizeof(skbuf)) {
-		LM_ERR( "Subscription key %.*s%.*s: too long",
+		LM_ERR( "Subscription key %.*s%.*s: too long\n",
 				STR_FMT( aor ), STR_FMT( event ));
 		return (-1);
 	}
@@ -949,7 +951,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	/* parse required info first */
 	if (!SCA_HEADER_EMPTY(msg->expires)) {
 		if (parse_expires(msg->expires) < 0) {
-			LM_ERR( "Failed to parse Expires header" );
+			LM_ERR( "Failed to parse Expires header\n" );
 			goto error;
 		}
 
@@ -972,21 +974,21 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	}
 
 	if (SCA_HEADER_EMPTY(msg->to)) {
-		LM_ERR( "Empty To header" );
+		LM_ERR( "Empty To header\n" );
 		goto error;
 	}
 	if (SCA_HEADER_EMPTY(msg->callid)) {
-		LM_ERR( "Empty Call-ID header" );
+		LM_ERR( "Empty Call-ID header\n" );
 		goto error;
 	}
 
 	/* XXX move to static inline function */
 	if (SCA_HEADER_EMPTY(msg->cseq)) {
-		LM_ERR( "Empty CSeq header" );
+		LM_ERR( "Empty CSeq header\n" );
 		goto error;
 	}
 	if (str2int(&(get_cseq( msg )->number), &cseq) != 0) {
-		LM_ERR( "Bad Cseq header: %.*s",
+		LM_ERR( "Bad Cseq header: %.*s\n",
 				msg->cseq->body.len, msg->cseq->body.s );
 		goto error;
 	}
@@ -997,16 +999,16 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	}
 
 	if (SCA_HEADER_EMPTY(msg->from)) {
-		LM_ERR( "Empty From header" );
+		LM_ERR( "Empty From header\n" );
 		goto error;
 	}
 	if (parse_from_header(msg) < 0) {
-		LM_ERR( "Bad From header" );
+		LM_ERR( "Bad From header\n" );
 		goto error;
 	}
 	from = (struct to_body *) msg->from->parsed;
 	if (SCA_STR_EMPTY(&from->tag_value)) {
-		LM_ERR( "No from-tag in From header" );
+		LM_ERR( "No from-tag in From header\n" );
 		goto error;
 	}
 
@@ -1015,7 +1017,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		&tmp_to);
 
 		if (tmp_to.error != PARSE_OK) {
-			LM_ERR( "Bad To header" );
+			LM_ERR( "Bad To header\n" );
 			goto error;
 		}
 		to = &tmp_to;
@@ -1029,7 +1031,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		 * old subscription should be dumped & appropriate NOTIFYs sent.
 		 */
 		if (scam->sl_api->get_reply_totag(msg, &to_tag) < 0) {
-			LM_ERR( "Failed to generate to-tag for reply to SUBSCRIBE %.*s",
+			LM_ERR( "Failed to generate to-tag for reply to SUBSCRIBE %.*s\n",
 					STR_FMT( &REQ_LINE( msg ).uri ));
 			goto error;
 		}
@@ -1037,7 +1039,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		if (!SCA_HEADER_EMPTY(msg->record_route)) {
 			if (print_rr_body(msg->record_route, &req_sub->rr, 0, NULL) < 0) {
 				LM_ERR( "Failed to parse Record-Route header %.*s in "
-						"SUBSCRIBE %.*s from %.*s",
+						"SUBSCRIBE %.*s from %.*s\n",
 						STR_FMT( &msg->record_route->body ),
 						STR_FMT( &REQ_LINE( msg ).uri ),
 						STR_FMT( &contact_uri ));
@@ -1048,7 +1050,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 
 	req_sub->subscriber = contact_uri;
 	if (sca_uri_extract_aor(&REQ_LINE( msg ).uri, &req_sub->target_aor) < 0) {
-		LM_ERR( "Failed to extract AoR from RURI %.*s",
+		LM_ERR( "Failed to extract AoR from RURI %.*s\n",
 				STR_FMT( &REQ_LINE( msg ).uri ));
 		goto error;
 	}
@@ -1070,7 +1072,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 
 	req_sub->dialog.to_tag.s = pkg_malloc(to_tag.len);
 	if (req_sub->dialog.to_tag.s == NULL) {
-		LM_ERR( "Failed to pkg_malloc space for to-tag %.*s",
+		LM_ERR( "Failed to pkg_malloc space for to-tag %.*s\n",
 				STR_FMT( &to_tag ));
 		goto error;
 	}
@@ -1109,13 +1111,13 @@ int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2) {
 	int released = 0;
 
 	if (parse_headers(msg, HDR_EOH_F, 0) < 0) {
-		LM_ERR( "header parsing failed: bad request" );
+		LM_ERR( "header parsing failed: bad request\n" );
 		SCA_SUB_REPLY_ERROR(sca, 400, "Bad Request", msg);
 		return (-1);
 	}
 
 	if (!STR_EQ(REQ_LINE( msg ).method, SCA_METHOD_SUBSCRIBE)) {
-		LM_ERR( "bad request method %.*s", STR_FMT( &REQ_LINE( msg ).method ));
+		LM_ERR( "bad request method %.*s\n", STR_FMT( &REQ_LINE( msg ).method ));
 		SCA_SUB_REPLY_ERROR(sca, 500, "Internal server error - config", msg);
 		return (-1);
 	}
@@ -1225,7 +1227,7 @@ int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2) {
 						&req_sub.subscriber);
 				if (released) {
 					LM_INFO( "sca_handle_subscribe: released %d appearances "
-							"for subscriber %.*s", released,
+							"for subscriber %.*s\n", released,
 							STR_FMT( &req_sub.subscriber ));
 				}
 			}
@@ -1282,7 +1284,7 @@ int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2) {
 	}
 
 	if (sca_notify_subscriber(sca, &req_sub, app_idx) < 0) {
-		LM_ERR( "SCA %s SUBSCRIBE+NOTIFY for %.*s failed",
+		LM_ERR( "SCA %s SUBSCRIBE+NOTIFY for %.*s failed\n",
 				sca_event_name_from_type( req_sub.event ),
 				STR_FMT( &req_sub.subscriber ));
 		/*
@@ -1294,7 +1296,7 @@ int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2) {
 
 	if (req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE || released) {
 		if (sca_notify_call_info_subscribers(sca, &req_sub.target_aor) < 0) {
-			LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
+			LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed\n",
 					sca_event_name_from_type( req_sub.event ),
 					STR_FMT( &req_sub.target_aor ));
 			goto done;
@@ -1325,7 +1327,7 @@ int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 
 	if (event_type != SCA_EVENT_TYPE_CALL_INFO
 			&& event_type != SCA_EVENT_TYPE_LINE_SEIZE) {
-		LM_ERR( "sca_subscription_reply: unrecognized event type %d",
+		LM_ERR( "sca_subscription_reply: unrecognized event type %d\n",
 				event_type );
 		return (-1);
 	}
@@ -1336,7 +1338,7 @@ int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 		len = snprintf(extra_headers.s, sizeof(hdr_buf), "Event: %s%s",
 				sca_event_name_from_type(event_type), CRLF);
 		if (len >= sizeof(hdr_buf) || len < 0) {
-			LM_ERR( "sca_subscription_reply: extra headers too long" );
+			LM_ERR( "sca_subscription_reply: extra headers too long\n" );
 			return (-1);
 		}
 		extra_headers.len = len;
@@ -1352,7 +1354,7 @@ int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 				sizeof(hdr_buf) - extra_headers.len, "Expires: %d%s", expires,
 				CRLF);
 		if (len >= (sizeof(hdr_buf) - extra_headers.len) || len < 0) {
-			LM_ERR( "sca_subscription_reply: extra headers too long" );
+			LM_ERR( "sca_subscription_reply: extra headers too long\n" );
 			return (-1);
 		}
 		extra_headers.len += len;
@@ -1384,7 +1386,7 @@ int sca_subscription_terminate(sca_mod *scam, str *aor, int event,
 	int len;
 
 	if (!(opts & SCA_SUBSCRIPTION_TERMINATE_OPT_UNSUBSCRIBE)) {
-		LM_ERR( "sca_subscription_terminate: invalid opts 0x%x", opts );
+		LM_ERR( "sca_subscription_terminate: invalid opts 0x%x\n", opts );
 		return (-1);
 	}
 
@@ -1393,7 +1395,7 @@ int sca_subscription_terminate(sca_mod *scam, str *aor, int event,
 	sub_key.s = (char *) pkg_malloc(len);
 	if (sub_key.s == NULL) {
 		LM_ERR( "Failed to pkg_malloc key to look up %s "
-				"subscription for %.*s", event_name, STR_FMT( aor ));
+				"subscription for %.*s\n", event_name, STR_FMT( aor ));
 		return (-1);
 	}
 	SCA_STR_COPY(&sub_key, aor);
@@ -1414,7 +1416,7 @@ int sca_subscription_terminate(sca_mod *scam, str *aor, int event,
 	sca_hash_table_unlock_index(sca->subscriptions, slot_idx);
 
 	if (ent == NULL) {
-		LM_DBG( "No %s subscription for %.*s", event_name,
+		LM_DBG( "No %s subscription for %.*s\n", event_name,
 				STR_FMT( subscriber ));
 		return (0);
 	}
@@ -1427,7 +1429,7 @@ int sca_subscription_terminate(sca_mod *scam, str *aor, int event,
 	sca_subscription_print(sub);
 
 	if (sca_notify_subscriber(sca, sub, sub->index) < 0) {
-		LM_ERR( "SCA %s NOTIFY to %.*s failed",
+		LM_ERR( "SCA %s NOTIFY to %.*s failed\n",
 				event_name, STR_FMT( &sub->subscriber ));
 
 		/* fall through, we might be able to notify the others */
@@ -1438,7 +1440,7 @@ int sca_subscription_terminate(sca_mod *scam, str *aor, int event,
 		if (sca_appearance_release_index(sca, &sub->target_aor, sub->index)
 				== SCA_APPEARANCE_OK) {
 			if (sca_notify_call_info_subscribers(sca, &sub->target_aor) < 0) {
-				LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed",
+				LM_ERR( "SCA %s NOTIFY to all %.*s subscribers failed\n",
 						event_name, STR_FMT( &sub->target_aor ));
 				/* fall through, not much we can do about it */
 			}

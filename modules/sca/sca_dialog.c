@@ -37,7 +37,7 @@ int sca_dialog_build_from_tags(sca_dialog *dialog, int maxlen, str *call_id,
 	}
 
 	if (len >= maxlen) {
-		LM_ERR( "sca_dialog_build_from_tags: tags too long" );
+		LM_ERR( "sca_dialog_build_from_tags: tags too long\n" );
 		return (-1);
 	}
 
@@ -74,7 +74,7 @@ int sca_dialog_create_replaces_header(sca_dialog *dlg, str *replaces_hdr) {
 	if ( SCA_STR_EMPTY(&dlg->call_id) || SCA_STR_EMPTY( &dlg->from_tag ) ||
 	SCA_STR_EMPTY( &dlg->to_tag )) {
 		LM_ERR( "sca_dialog_create_replaces_header: dialog %.*s is not a "
-				"confirmed dialog, cannot build Replaces header",
+				"confirmed dialog, cannot build Replaces header\n",
 				STR_FMT( &dlg->id ));
 		return (-1);
 	}

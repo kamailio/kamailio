@@ -33,14 +33,14 @@ int sca_hash_table_create(sca_hash_table **ht, unsigned int size) {
 
 	*ht = shm_malloc(sizeof(sca_hash_table));
 	if (*ht == NULL) {
-		LM_ERR( "Failed to shm_malloc space for hash table" );
+		LM_ERR( "Failed to shm_malloc space for hash table\n" );
 		return (-1);
 	}
 
 	(*ht)->size = size;
 	(*ht)->slots = (sca_hash_slot *) shm_malloc(size * sizeof(sca_hash_slot));
 	if ((*ht)->slots == NULL) {
-		LM_ERR( "Failed to shm_malloc hash table slots" );
+		LM_ERR( "Failed to shm_malloc hash table slots\n" );
 		shm_free(*ht);
 		*ht = NULL;
 		return (-1);
@@ -49,7 +49,7 @@ int sca_hash_table_create(sca_hash_table **ht, unsigned int size) {
 
 	for (i = 0; i < (*ht)->size; i++) {
 		if (lock_init(&(*ht)->slots[i].lock) == NULL) {
-			LM_ERR( "Failed to initialized lock in hash table slot %d", i );
+			LM_ERR( "Failed to initialized lock in hash table slot %d\n", i );
 			shm_free(*ht);
 			*ht = NULL;
 			return (-1);
@@ -71,7 +71,7 @@ int sca_hash_table_slot_kv_insert_unsafe(sca_hash_slot *slot, void *value,
 
 	new_entry = (sca_hash_entry *) shm_malloc(sizeof(sca_hash_entry));
 	if (new_entry == NULL) {
-		LM_ERR( "Failed to shm_malloc new hash table entry for slot %p", slot );
+		LM_ERR( "Failed to shm_malloc new hash table entry for slot %p\n", slot );
 		return (-1);
 	}
 	new_entry->value = value;
@@ -281,7 +281,7 @@ static void sca_hash_slot_print(sca_hash_slot *hs) {
 		if (e->description != NULL) {
 			e->description(e->value);
 		} else {
-			LM_DBG( "0x%p", e->value );
+			LM_DBG( "0x%p\n", e->value );
 		}
 	}
 }

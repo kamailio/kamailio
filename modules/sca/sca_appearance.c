@@ -44,11 +44,16 @@ STR_STATIC_INIT("held-private");
 const str SCA_APPEARANCE_STATE_STR_UNKNOWN = STR_STATIC_INIT( "unknown" );
 
 /* STR_ACTIVE is repeated, once for ACTIVE_PENDING, once for ACTIVE */
-const str *state_names[] = { &SCA_APPEARANCE_STATE_STR_IDLE,
-		&SCA_APPEARANCE_STATE_STR_SEIZED, &SCA_APPEARANCE_STATE_STR_PROGRESSING,
-		&SCA_APPEARANCE_STATE_STR_ALERTING, &SCA_APPEARANCE_STATE_STR_ACTIVE,
-		&SCA_APPEARANCE_STATE_STR_ACTIVE, &SCA_APPEARANCE_STATE_STR_HELD,
-		&SCA_APPEARANCE_STATE_STR_HELD_PRIVATE, };
+const str *state_names[] = {
+		&SCA_APPEARANCE_STATE_STR_IDLE,
+		&SCA_APPEARANCE_STATE_STR_SEIZED,
+		&SCA_APPEARANCE_STATE_STR_PROGRESSING,
+		&SCA_APPEARANCE_STATE_STR_ALERTING,
+		&SCA_APPEARANCE_STATE_STR_ACTIVE,
+		&SCA_APPEARANCE_STATE_STR_ACTIVE,
+		&SCA_APPEARANCE_STATE_STR_HELD,
+		&SCA_APPEARANCE_STATE_STR_HELD_PRIVATE,
+};
 #define SCA_APPEARANCE_STATE_NAME_COUNT \
 	( sizeof( state_names ) / sizeof( state_names[ 0 ] ))
 
@@ -94,7 +99,7 @@ sca_appearance *sca_appearance_create(int appearance_index, str *owner_uri) {
 
 	new_appearance = (sca_appearance *) shm_malloc(sizeof(sca_appearance));
 	if (new_appearance == NULL) {
-		LM_ERR( "Failed to shm_malloc new sca_appearance for %.*s, index %d",
+		LM_ERR( "Failed to shm_malloc new sca_appearance for %.*s, index %d\n",
 				STR_FMT( owner_uri ), appearance_index );
 		goto error;
 	}
@@ -102,7 +107,7 @@ sca_appearance *sca_appearance_create(int appearance_index, str *owner_uri) {
 
 	new_appearance->owner.s = (char *) shm_malloc(owner_uri->len);
 	if (new_appearance->owner.s == NULL) {
-		LM_ERR( "Failed to shm_malloc space for owner %.*s, index %d",
+		LM_ERR( "Failed to shm_malloc space for owner %.*s, index %d\n",
 				STR_FMT( owner_uri ), appearance_index );
 		goto error;
 	}
@@ -182,7 +187,7 @@ static sca_appearance_list *sca_appearance_list_create(sca_mod *scam, str *aor) 
 	len = sizeof(sca_appearance_list) + aor->len;
 	app_list = (sca_appearance_list *) shm_malloc(len);
 	if (app_list == NULL) {
-		LM_ERR( "Failed to shm_malloc sca_appearance_list for %.*s",
+		LM_ERR( "Failed to shm_malloc sca_appearance_list for %.*s\n",
 				STR_FMT( aor ));
 		return (NULL);
 	}
@@ -237,7 +242,7 @@ sca_appearance *sca_appearance_list_unlink_index(sca_appearance_list *app_list,
 	}
 
 	if (app == NULL) {
-		LM_ERR( "Tried to remove inactive %.*s appearance at index %d",
+		LM_ERR( "Tried to remove inactive %.*s appearance at index %d\n",
 				STR_FMT( &app_list->aor ), idx );
 	}
 
@@ -284,12 +289,12 @@ void sca_appearance_list_print(void *value) {
 	sca_appearance *app;
 	str state_str = STR_NULL;
 
-	LM_INFO( "Appearance state for AoR %.*s:", STR_FMT( &app_list->aor ));
+	LM_INFO( "Appearance state for AoR %.*s:\n", STR_FMT( &app_list->aor ));
 
 	for (app = app_list->appearances; app != NULL; app = app->next) {
 		sca_appearance_state_to_str(app->state, &state_str);
 		LM_INFO( "index: %d, state: %.*s, uri: %.*s, owner: %.*s, "
-				"callee: %.*s, dialog: %.*s;%.*s;%.*s",
+				"callee: %.*s, dialog: %.*s;%.*s;%.*s\n",
 				app->index, STR_FMT( &state_str ),
 				STR_FMT( &app->uri ), STR_FMT( &app->owner ),
 				STR_FMT( &app->callee ), STR_FMT( &app->dialog.call_id ),
@@ -302,7 +307,7 @@ void sca_appearance_list_free(void *value) {
 	sca_appearance_list *app_list = (sca_appearance_list *) value;
 	sca_appearance *app, *app_tmp;
 
-	LM_DBG( "Freeing appearance list for AoR %.*s", STR_FMT( &app_list->aor ));
+	LM_DBG( "Freeing appearance list for AoR %.*s\n", STR_FMT( &app_list->aor ));
 
 	for (app = app_list->appearances; app != NULL; app = app_tmp) {
 		app_tmp = app->next;
@@ -335,7 +340,7 @@ int sca_appearance_register(sca_mod *scam, str *aor) {
 			sca_appearance_list_aor_cmp, sca_appearance_list_print,
 			sca_appearance_list_free) < 0) {
 		LM_ERR( "sca_appearance_register: failed to insert appearance list "
-				"for %.*s", STR_FMT( aor ));
+				"for %.*s\n", STR_FMT( aor ));
 		goto done;
 	}
 
@@ -353,7 +358,7 @@ int sca_appearance_unregister(sca_mod *scam, str *aor) {
 	if (sca_uri_is_shared_appearance(scam, aor)) {
 		if ((rc = sca_hash_table_kv_delete(scam->appearances, aor)) == 0) {
 			rc = 1;
-			LM_INFO( "unregistered SCA AoR %.*s", STR_FMT( aor ));
+			LM_INFO( "unregistered SCA AoR %.*s\n", STR_FMT( aor ));
 		}
 	}
 
@@ -373,7 +378,7 @@ sca_appearance_seize_index_unsafe(sca_mod *scam, str *aor, str *owner_uri,
 	app_list = sca_hash_table_slot_kv_find_unsafe(slot, aor);
 	if (app_list == NULL) {
 		LM_ERR( "sca_appearance_seize_index_unsafe: no appearance list for "
-				"%.*s", STR_FMT( aor ));
+				"%.*s\n", STR_FMT( aor ));
 		goto done;
 	}
 
@@ -395,7 +400,7 @@ sca_appearance_seize_index_unsafe(sca_mod *scam, str *aor, str *owner_uri,
 
 	app = sca_appearance_create(app_idx, owner_uri);
 	if (app == NULL) {
-		LM_ERR( "Failed to create new appearance for %.*s at index %d",
+		LM_ERR( "Failed to create new appearance for %.*s at index %d\n",
 				STR_FMT( owner_uri ), app_idx );
 		error = SCA_APPEARANCE_ERR_MALLOC;
 		goto done;
@@ -457,7 +462,7 @@ sca_appearance_seize_next_available_unsafe(sca_mod *scam, str *aor,
 		if (sca_hash_table_slot_kv_insert_unsafe(slot, app_list,
 				sca_appearance_list_aor_cmp, sca_appearance_list_print,
 				sca_appearance_list_free) < 0) {
-			LM_ERR( "Failed to insert appearance list for %.*s",
+			LM_ERR( "Failed to insert appearance list for %.*s\n",
 					STR_FMT( aor ));
 			goto done;
 		}
@@ -469,7 +474,7 @@ sca_appearance_seize_next_available_unsafe(sca_mod *scam, str *aor,
 
 	app = sca_appearance_create(idx, owner_uri);
 	if (app == NULL) {
-		LM_ERR( "Failed to create new appearance for %.*s at index %d",
+		LM_ERR( "Failed to create new appearance for %.*s at index %d\n",
 				STR_FMT( owner_uri ), idx );
 		goto done;
 	}
@@ -522,7 +527,7 @@ int sca_appearance_update_owner_unsafe(sca_appearance *app, str *owner) {
 	app->owner.s = (char *) shm_malloc(owner->len);
 	if (app->owner.s == NULL) {
 		LM_ERR( "sca_appearance_update_owner_unsafe: shm_malloc for new "
-				"owner %.*s failed: out of memory", STR_FMT( owner ));
+				"owner %.*s failed: out of memory\n", STR_FMT( owner ));
 		goto error;
 	}
 	SCA_STR_COPY(&app->owner, owner);
@@ -553,7 +558,7 @@ int sca_appearance_update_callee_unsafe(sca_appearance *app, str *callee) {
 	app->callee.s = (char *) shm_malloc(callee->len);
 	if (app->callee.s == NULL) {
 		LM_ERR( "sca_appearance_update_owner_unsafe: shm_malloc for new "
-				"callee %.*s failed: out of memory", STR_FMT( callee ));
+				"callee %.*s failed: out of memory\n", STR_FMT( callee ));
 		goto error;
 	}
 	SCA_STR_COPY(&app->callee, callee);
@@ -601,7 +606,7 @@ int sca_appearance_update_dialog_unsafe(sca_appearance *app, str *call_id,
 	app->dialog.id.s = (char *) shm_malloc(len);
 	if (app->dialog.id.s == NULL) {
 		LM_ERR( "sca_appearance_update_dialog_unsafe: shm_malloc new dialog "
-				"failed: out of memory" );
+				"failed: out of memory\n" );
 		goto error;
 	}
 	SCA_STR_COPY(&app->dialog.id, call_id);
@@ -663,7 +668,7 @@ int sca_appearance_update_unsafe(sca_appearance *app, int state, str *display,
 		}
 		app->uri.s = (char *) shm_malloc(len);
 		if (app->uri.s == NULL) {
-			LM_ERR( "shm_malloc %d bytes returned NULL", uri->len );
+			LM_ERR( "shm_malloc %d bytes returned NULL\n", uri->len );
 			rc = SCA_APPEARANCE_ERR_MALLOC;
 			goto done;
 		}
@@ -695,7 +700,7 @@ int sca_appearance_update_unsafe(sca_appearance *app, int state, str *display,
 			app->dialog.id.s = (char *) shm_malloc(dialog->id.len);
 			if (app->dialog.id.s == NULL) {
 				LM_ERR( "sca_appearance_update_unsafe: shm_malloc dialog id "
-						"failed: out of shared memory" );
+						"failed: out of shared memory\n" );
 				/* XXX this seems bad enough to abort... */
 				return (-1);
 			}
@@ -728,7 +733,7 @@ int sca_appearance_update_unsafe(sca_appearance *app, int state, str *display,
 			app->owner.s = (char *) shm_malloc(owner->len);
 			if (app->owner.s == NULL) {
 				LM_ERR( "sca_appearance_update_unsafe: shm_malloc "
-						"appearance owner URI failed: out of shared memory" );
+						"appearance owner URI failed: out of shared memory\n" );
 				return (-1);
 			}
 			SCA_STR_COPY(&app->owner, owner);
@@ -744,7 +749,7 @@ int sca_appearance_update_unsafe(sca_appearance *app, int state, str *display,
 			app->callee.s = (char *) shm_malloc(callee->len);
 			if (app->callee.s == NULL) {
 				LM_ERR( "sca_appearance_update_unsafe: shm_malloc "
-						"appearance callee URI failed: out of shared memory" );
+						"appearance callee URI failed: out of shared memory\n" );
 				return (-1);
 			}
 			SCA_STR_COPY(&app->callee, callee);
@@ -837,7 +842,7 @@ int sca_appearance_state_for_index(sca_mod *scam, str *aor, int idx) {
 
 	app_list = sca_hash_table_slot_kv_find_unsafe(slot, aor);
 	if (app_list == NULL) {
-		LM_DBG( "%.*s has no in-use appearances", STR_FMT( aor ));
+		LM_DBG( "%.*s has no in-use appearances\n", STR_FMT( aor ));
 		goto done;
 	}
 
@@ -847,7 +852,7 @@ int sca_appearance_state_for_index(sca_mod *scam, str *aor, int idx) {
 		}
 	}
 	if (app == NULL) {
-		LM_WARN( "%.*s appearance-index %d is not in use",
+		LM_WARN( "%.*s appearance-index %d is not in use\n",
 				STR_FMT( aor ), idx );
 		goto done;
 	}
@@ -880,7 +885,7 @@ int sca_appearance_update_index(sca_mod *scam, str *aor, int idx, int state,
 	app_list = sca_hash_table_slot_kv_find_unsafe(slot, aor);
 	if (app_list == NULL) {
 		LM_WARN( "Cannot update %.*s index %d to state %.*s: %.*s has no "
-				"in-use appearances", STR_FMT( aor ), idx,
+				"in-use appearances\n", STR_FMT( aor ), idx,
 				STR_FMT( &state_str ), STR_FMT( aor ));
 		rc = SCA_APPEARANCE_ERR_NOT_IN_USE;
 		goto done;
@@ -896,7 +901,7 @@ int sca_appearance_update_index(sca_mod *scam, str *aor, int idx, int state,
 		}
 	}
 	if (app == NULL) {
-		LM_WARN( "Cannot update %.*s index %d to %.*s: index %d not in use",
+		LM_WARN( "Cannot update %.*s index %d to %.*s: index %d not in use\n",
 				STR_FMT( aor ), idx, STR_FMT( &state_str ), idx );
 		rc = SCA_APPEARANCE_ERR_INDEX_INVALID;
 		goto done;
@@ -924,7 +929,7 @@ int sca_appearance_update_index(sca_mod *scam, str *aor, int idx, int state,
 		app->uri.s = (char *) shm_malloc(len);
 		if (app->uri.s == NULL) {
 			LM_ERR( "Failed to update %.*s index %d uri to %.*s: "
-					"shm_malloc %d bytes returned NULL",
+					"shm_malloc %d bytes returned NULL\n",
 					STR_FMT( aor ), idx, STR_FMT( uri ), uri->len );
 			rc = SCA_APPEARANCE_ERR_MALLOC;
 			goto done;
@@ -1003,14 +1008,14 @@ int sca_appearance_release_index(sca_mod *scam, str *aor, int idx) {
 		}
 	}
 	if (app_list == NULL) {
-		LM_ERR( "No appearances for %.*s", STR_FMT( aor ));
+		LM_ERR( "No appearances for %.*s\n", STR_FMT( aor ));
 		rc = SCA_APPEARANCE_ERR_NOT_IN_USE;
 		goto done;
 	}
 
 	app = sca_appearance_list_unlink_index(app_list, idx);
 	if (app == NULL) {
-		LM_ERR( "Failed to unlink %.*s appearance-index %d: invalid index",
+		LM_ERR( "Failed to unlink %.*s appearance-index %d: invalid index\n",
 				STR_FMT( aor ), idx );
 		rc = SCA_APPEARANCE_ERR_INDEX_INVALID;
 		goto done;
@@ -1046,7 +1051,7 @@ int sca_appearance_owner_release_all(str *aor, str *owner) {
 	released = 0;
 
 	if (app_list == NULL) {
-		LM_DBG( "sca_appearance_owner_release_all: No appearances for %.*s",
+		LM_DBG( "sca_appearance_owner_release_all: No appearances for %.*s\n",
 				STR_FMT( aor ));
 		goto done;
 	}
@@ -1094,7 +1099,7 @@ sca_appearance_for_index_unsafe(sca_mod *scam, str *aor, int app_idx,
 		}
 	}
 	if (app_list == NULL) {
-		LM_ERR( "No appearances for %.*s", STR_FMT( aor ));
+		LM_ERR( "No appearances for %.*s\n", STR_FMT( aor ));
 		return (NULL);
 	}
 
@@ -1125,7 +1130,7 @@ sca_appearance_for_dialog_unsafe(sca_mod *scam, str *aor, sca_dialog *dialog,
 		}
 	}
 	if (app_list == NULL) {
-		LM_ERR( "No appearances for %.*s", STR_FMT( aor ));
+		LM_ERR( "No appearances for %.*s\n", STR_FMT( aor ));
 		return (NULL);
 	}
 
@@ -1156,7 +1161,7 @@ sca_appearance_for_tags_unsafe(sca_mod *scam, str *aor, str *call_id,
 	if (sca_dialog_build_from_tags(&dialog, sizeof(dlg_buf), call_id, from_tag,
 			to_tag) < 0) {
 		LM_ERR( "sca_appearance_for_tags_unsafe: failed to build dialog "
-				"from tags" );
+				"from tags\n" );
 		return (NULL);
 	}
 
@@ -1176,7 +1181,7 @@ sca_appearance_unlink_by_tags(sca_mod *scam, str *aor, str *call_id,
 			slot_idx);
 	if (app == NULL) {
 		LM_ERR( "sca_appearance_unlink_by_tags: no appearances found for %.*s "
-				"with dialog %.*s;%.*s;%.*s", STR_FMT( aor ),
+				"with dialog %.*s;%.*s;%.*s\n", STR_FMT( aor ),
 				STR_FMT( call_id ), STR_FMT( from_tag ), STR_FMT( to_tag ));
 		goto done;
 	}
@@ -1185,7 +1190,7 @@ sca_appearance_unlink_by_tags(sca_mod *scam, str *aor, str *call_id,
 			app->index);
 	if (unl_app == NULL || unl_app != app) {
 		LM_ERR( "sca_appearance_unlink_by_tags: failed to unlink %.*s "
-				"appearance-index %d", STR_FMT( aor ), app->index );
+				"appearance-index %d\n", STR_FMT( aor ), app->index );
 		app = NULL;
 		goto done;
 	}
@@ -1213,7 +1218,7 @@ void sca_appearance_purge_stale(unsigned int ticks, void *param) {
 	int unlinked;
 	time_t now, ttl;
 
-	LM_INFO( "SCA: purging stale appearances" );
+	LM_INFO( "SCA: purging stale appearances\n" );
 
 	assert(scam != NULL);
 	assert(scam->appearances != NULL);
@@ -1277,7 +1282,7 @@ void sca_appearance_purge_stale(unsigned int ticks, void *param) {
 						sizeof(struct notify_list));
 				if (tmp_nl == NULL) {
 					LM_ERR( "sca_appearance_purge_stale: failed to pkg_malloc "
-							"notify list entry for %.*s",
+							"notify list entry for %.*s\n",
 							STR_FMT( &app_list->aor ));
 					continue;
 				}
@@ -1285,7 +1290,7 @@ void sca_appearance_purge_stale(unsigned int ticks, void *param) {
 				tmp_nl->aor.s = (char *) pkg_malloc(app_list->aor.len);
 				if (tmp_nl->aor.s == NULL) {
 					LM_ERR( "sca_appearance_purge_stale: failed to pkg_malloc "
-							"space for copy of %.*s",
+							"space for copy of %.*s\n",
 							STR_FMT( &app_list->aor ));
 					pkg_free(tmp_nl);
 					continue;
@@ -1304,11 +1309,11 @@ void sca_appearance_purge_stale(unsigned int ticks, void *param) {
 			tmp_nl = notify_list->next;
 
 			LM_INFO( "sca_appearance_purge_stale: notifying %.*s call-info "
-					"subscribers", STR_FMT( &notify_list->aor ));
+					"subscribers\n", STR_FMT( &notify_list->aor ));
 
 			if (sca_notify_call_info_subscribers(scam, &notify_list->aor) < 0) {
 				LM_ERR( "sca_appearance_purge_stale: failed to send "
-						"call-info NOTIFY %.*s subscribers",
+						"call-info NOTIFY %.*s subscribers\n",
 						STR_FMT( &notify_list->aor ));
 				/* fall through, free memory anyway */
 			}

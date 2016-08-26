@@ -45,7 +45,7 @@ static int sca_call_info_domain_from_uri(str *uri, str *domain) {
 		/* may be a sip:domain URI */
 		domain->s = memchr(uri->s, ':', uri->len);
 		if (domain->s == NULL) {
-			LM_ERR( "Bad URI %.*s", STR_FMT( uri ));
+			LM_ERR( "Bad URI %.*s\n", STR_FMT( uri ));
 			return (-1);
 		}
 	}
@@ -134,7 +134,7 @@ static int sca_call_info_header_append_appearances(sca_mod *scam,
 		}
 
 		if ((maxlen - len) < 0) {
-			LM_ERR( "Call-Info header for AoR %.*s is too long",
+			LM_ERR( "Call-Info header for AoR %.*s is too long\n",
 					STR_FMT( &sub->target_aor ));
 			len = -1;
 			goto done;
@@ -201,7 +201,7 @@ static int sca_call_info_build_idle_value(sca_mod *scam, str *aor, char *hdrbuf,
 	int len;
 
 	if (sca_call_info_domain_from_uri(aor, &idle_domain) < 0) {
-		LM_ERR( "Failed to extract domain from %.*s for idle domain",
+		LM_ERR( "Failed to extract domain from %.*s for idle domain\n",
 				STR_FMT( aor ));
 		return (-1);
 	}
@@ -211,7 +211,7 @@ static int sca_call_info_build_idle_value(sca_mod *scam, str *aor, char *hdrbuf,
 			STR_FMT(&idle_domain), SCA_APPEARANCE_INDEX_STR.s,
 			SCA_APPEARANCE_STATE_STR.s, SCA_APPEARANCE_STATE_STR_IDLE.s, CRLF);
 	if (len >= maxlen) {
-		LM_ERR( "Failed to add idle appearance: Call-Info header too long" );
+		LM_ERR( "Failed to add idle appearance: Call-Info header too long\n" );
 		len = -1;
 
 		/* snprintf can also return negative. we catch that in the caller. */
@@ -244,7 +244,7 @@ int sca_call_info_build_header(sca_mod *scam, sca_subscription *sub,
 		len = sca_call_info_build_idle_value(scam, &sub->target_aor,
 				hdrbuf + usedlen, maxlen - usedlen);
 		if (len < 0 || len + usedlen >= maxlen) {
-			LM_ERR( "Cannot build idle Call-Info value: buffer too small" );
+			LM_ERR( "Cannot build idle Call-Info value: buffer too small\n" );
 			return (-1);
 		}
 		usedlen += len;
@@ -301,7 +301,7 @@ int sca_call_info_append_header_for_appearance_index(sca_subscription *sub,
 	return (len);
 
 	error:
-	LM_ERR( "Failed to append Call-Info header for %.*s appearance index %d",
+	LM_ERR( "Failed to append Call-Info header for %.*s appearance index %d\n",
 			STR_FMT( &sub->subscriber ), appearance_index );
 	return (-1);
 }
@@ -332,7 +332,7 @@ int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info) {
 	assert(call_info != NULL);
 
 	if (SCA_STR_EMPTY(hdr_body)) {
-		LM_ERR( "Call-Info header body is empty" );
+		LM_ERR( "Call-Info header body is empty\n" );
 		return (-1);
 	}
 
@@ -345,18 +345,18 @@ int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info) {
 
 	p = hdr_body->s;
 	if (memcmp(p, "<sip:", strlen("<sip:")) != 0) {
-		LM_ERR( "Bad Call-Info header body: must begin with \"<sip:\"" );
+		LM_ERR( "Bad Call-Info header body: must begin with \"<sip:\"\n" );
 		return (-1);
 	}
 	/* +5 == strlen( "<sip:" ) */
 	semi = memchr(p + 5, ';', hdr_body->len);
 	if (semi == NULL) {
 		LM_ERR( "Bad Call-Info header body: missing ';' between uri and "
-				"%.*s", STR_FMT( &SCA_APPEARANCE_INDEX_STR ));
+				"%.*s\n", STR_FMT( &SCA_APPEARANCE_INDEX_STR ));
 		return (-1);
 	}
 	if (*(semi - 1) != '>') {
-		LM_ERR( "Bad Call-Info header body: SCA URI missing '>' terminator" );
+		LM_ERR( "Bad Call-Info header body: SCA URI missing '>' terminator\n" );
 		return (-1);
 	}
 
@@ -367,14 +367,14 @@ int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info) {
 	p++;
 	if (memcmp(p, SCA_APPEARANCE_INDEX_STR.s, SCA_APPEARANCE_INDEX_STR.len)
 			!= 0) {
-		LM_ERR( "Bad Call-Info header body: does not begin with %.*s",
+		LM_ERR( "Bad Call-Info header body: does not begin with %.*s\n",
 				STR_FMT( &SCA_APPEARANCE_INDEX_STR ));
 		return (-1);
 	}
 
 	p += SCA_APPEARANCE_INDEX_STR.len;
 	if (*p != '=') {
-		LM_ERR( "Bad Call-Info header body: missing '=' after %.*s",
+		LM_ERR( "Bad Call-Info header body: missing '=' after %.*s\n",
 				STR_FMT( &SCA_APPEARANCE_INDEX_STR ));
 		return (-1);
 	}
@@ -390,7 +390,7 @@ int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info) {
 
 	if (str2int(&s, (unsigned int *) &call_info->index) != 0) {
 		LM_ERR( "Bad Call-Info header: failed to convert %.*s %.*s to an "
-				"integer", STR_FMT( &SCA_APPEARANCE_INDEX_STR ), STR_FMT( &s ));
+				"integer\n", STR_FMT( &SCA_APPEARANCE_INDEX_STR ), STR_FMT( &s ));
 		return (-1);
 	}
 
@@ -403,14 +403,14 @@ int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info) {
 	p += (len + 1);
 	if (memcmp(p, SCA_APPEARANCE_STATE_STR.s, SCA_APPEARANCE_STATE_STR.len)
 			!= 0) {
-		LM_ERR( "Bad Call-Info header: missing %.*s",
+		LM_ERR( "Bad Call-Info header: missing %.*s\n",
 				STR_FMT( &SCA_APPEARANCE_STATE_STR ));
 		return (-1);
 	}
 
 	p += SCA_APPEARANCE_STATE_STR.len;
 	if (*p != '=') {
-		LM_ERR( "Bad Call-Info header body: missing '=' after %.*s",
+		LM_ERR( "Bad Call-Info header body: missing '=' after %.*s\n",
 				STR_FMT( &SCA_APPEARANCE_STATE_STR ));
 		return (-1);
 
@@ -427,7 +427,7 @@ int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info) {
 
 	call_info->state = sca_appearance_state_from_str(&s);
 	if (call_info->state == SCA_APPEARANCE_STATE_UNKNOWN) {
-		LM_ERR( "Bad Call-Info header: unrecognized state \"%.*s\"",
+		LM_ERR( "Bad Call-Info header: unrecognized state \"%.*s\"\n",
 				STR_FMT( &s ));
 		return (-1);
 	}
@@ -440,14 +440,14 @@ int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info) {
 	/* advance length of state + semi-colon */
 	p += (len + 1);
 	if (memcmp(p, SCA_APPEARANCE_URI_STR.s, SCA_APPEARANCE_URI_STR.len) != 0) {
-		LM_ERR( "Bad Call-Info header: missing %.*s",
+		LM_ERR( "Bad Call-Info header: missing %.*s\n",
 				STR_FMT( &SCA_APPEARANCE_URI_STR ));
 		return (-1);
 	}
 
 	p += SCA_APPEARANCE_URI_STR.len;
 	if (*p != '=') {
-		LM_ERR( "Bad Call-Info header: missing '=' after %.*s",
+		LM_ERR( "Bad Call-Info header: missing '=' after %.*s\n",
 				STR_FMT( &SCA_APPEARANCE_URI_STR ));
 		return (-1);
 	}
@@ -457,7 +457,7 @@ int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info) {
 	call_info->uri.len = (hdr_body->s + hdr_body->len) - p;
 
 	if (SCA_STR_EMPTY(&call_info->uri)) {
-		LM_ERR( "Bad Call-Info header: empty %.*s",
+		LM_ERR( "Bad Call-Info header: empty %.*s\n",
 				STR_FMT( &SCA_APPEARANCE_URI_STR ));
 		return (-1);
 	}
@@ -478,7 +478,7 @@ static int sca_call_info_header_remove(sip_msg_t *msg) {
 
 	/* all headers must be parsed before using del_lump */
 	if (parse_headers(msg, HDR_EOH_F, 0) < 0) {
-		LM_ERR( "Failed to parse_headers" );
+		LM_ERR( "Failed to parse_headers\n" );
 		return (-1);
 	}
 
@@ -499,7 +499,7 @@ static int sca_call_info_header_remove(sip_msg_t *msg) {
 		ci_hdr_lump = del_lump(msg, hdr->name.s - msg->buf, hdr->len,
 				HDR_OTHER_T);
 		if (ci_hdr_lump == NULL) {
-			LM_ERR( "Failed to del_lump Call-Info header" );
+			LM_ERR( "Failed to del_lump Call-Info header\n" );
 			rc = -1;
 			break;
 		}
@@ -532,7 +532,7 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 			slot_idx);
 	if (app == NULL) {
 		LM_ERR( "sca_call_info_seize_held_call: no active appearances for "
-				"%.*s", STR_FMT( from_aor ));
+				"%.*s\n", STR_FMT( from_aor ));
 		goto done;
 	}
 
@@ -550,7 +550,7 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 		goto done;
 	}
 
-	LM_DBG( "sca_call_info_seize_held_call: seizing %.*s index %d, callee %.*s",
+	LM_DBG( "sca_call_info_seize_held_call: seizing %.*s index %d, callee %.*s\n",
 			STR_FMT( from_aor ), app->index, STR_FMT( &app->callee ));
 
 	/* rewrite the RURI to use the callee in this SCA dialog */
@@ -561,7 +561,7 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 		 */
 
 		LM_DBG( "SCA caller retrieving held call, but RURI was already "
-				"rewritten as %.*s. Overwriting with %.*s.",
+				"rewritten as %.*s. Overwriting with %.*s.\n",
 				STR_FMT( &msg->new_uri ), STR_FMT( &app->callee ));
 
 		pkg_free(msg->new_uri.s);
@@ -573,7 +573,7 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	msg->new_uri.s = (char *) pkg_malloc(app->callee.len);
 	if (msg->new_uri.s == NULL) {
 		LM_ERR( "sca_call_info_seize_held_call: pkg_malloc new RURI %.*s "
-				"failed", STR_FMT( &app->callee ));
+				"failed\n", STR_FMT( &app->callee ));
 		goto done;
 	}
 	SCA_STR_COPY(&msg->new_uri, &app->callee);
@@ -603,7 +603,7 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	/* pkg_malloc's replaces_hdr.s, which is free'd if added as lump */
 	if (sca_dialog_create_replaces_header(&app->dialog, &replaces_hdr) < 0) {
 		LM_ERR( "sca_call_info_seize_held_call: failed to create Replaces "
-				"header for %.*s from dialog %.*s",
+				"header for %.*s from dialog %.*s\n",
 				STR_FMT( from_aor ), STR_FMT( &app->dialog.id ));
 		goto done;
 	}
@@ -613,7 +613,7 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	if (sca_uri_build_aor(&callee_aor, sizeof(callee_buf), &app->callee,
 			from_aor) < 0) {
 		LM_ERR( "sca_call_info_seize_held_call: failed to create To AoR "
-				"from %.*s and %.*s", STR_FMT( &app->callee ),
+				"from %.*s and %.*s\n", STR_FMT( &app->callee ),
 				STR_FMT( from_aor ));
 		pkg_free(replaces_hdr.s);
 		goto done;
@@ -621,20 +621,20 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 
 	/* all headers must be parsed before using lump functions */
 	if (parse_headers(msg, HDR_EOH_F, 0) < 0) {
-		LM_ERR( "Failed to parse_headers" );
+		LM_ERR( "Failed to parse_headers\n" );
 		goto done;
 	}
 
 	anchor = anchor_lump(msg, msg->eoh - msg->buf, 0, HDR_OTHER_T);
 	if (anchor == NULL) {
-		LM_ERR( "Failed to anchor lump" );
+		LM_ERR( "Failed to anchor lump\n" );
 		goto done;
 	}
 
 	/* append the Replaces header before the sdp body */
 	if (insert_new_lump_before(anchor, replaces_hdr.s, replaces_hdr.len,
 			HDR_OTHER_T) == NULL) {
-		LM_ERR( "Failed to add Replaces header %.*s", STR_FMT( &replaces_hdr ));
+		LM_ERR( "Failed to add Replaces header %.*s\n", STR_FMT( &replaces_hdr ));
 		pkg_free(replaces_hdr.s);
 		goto done;
 	}
@@ -653,14 +653,14 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	 */
 
 	if (sca_appearance_update_owner_unsafe(app, contact_uri) < 0) {
-		LM_ERR( "sca_call_info_seize_held_call: failed to update owner" );
+		LM_ERR( "sca_call_info_seize_held_call: failed to update owner\n" );
 		pkg_free(replaces_hdr.s);
 		goto done;
 	}
 
 	if (sca_appearance_update_dialog_unsafe(app, &msg->callid->body,
 			&from->tag_value, &to->tag_value) < 0) {
-		LM_ERR( "sca_call_info_seize_held_call: failed to update dialog" );
+		LM_ERR( "sca_call_info_seize_held_call: failed to update dialog\n" );
 		goto done;
 	}
 
@@ -676,7 +676,7 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 					&prev_totag, NULL, slot_idx);
 			if (app == NULL) {
 				LM_ERR( "sca_call_info_seize_held_call: failed to find "
-						"appearance of %.*s with dialog %.*s;%.*s",
+						"appearance of %.*s with dialog %.*s;%.*s\n",
 						STR_FMT( &callee_aor ), STR_FMT( &prev_callid ),
 						STR_FMT( &prev_totag ));
 				goto done;
@@ -686,13 +686,13 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 
 			if (sca_appearance_update_callee_unsafe(app, contact_uri) < 0) {
 				LM_ERR( "sca_call_info_seize_held_call: "
-						"failed to update callee" );
+						"failed to update callee\n" );
 				goto done;
 			}
 			if (sca_appearance_update_dialog_unsafe(app, &msg->callid->body,
 					&to->tag_value, &from->tag_value) < 0) {
 				LM_ERR( "sca_call_info_seize_held_call: "
-						"failed to update dialog" );
+						"failed to update dialog\n" );
 				goto done;
 			}
 		}
@@ -723,7 +723,7 @@ static int sca_call_info_uri_update(str *aor, sca_call_info *call_info,
 	assert(call_info != NULL);
 
 	LM_DBG( "sca_call_info_uri_update for %.*s: From: <%.*s> To: <%.*s> "
-			"Contact: <%.*s> Call-ID: %.*s Call-Info: appearance-index=%d",
+			"Contact: <%.*s> Call-ID: %.*s Call-Info: appearance-index=%d\n",
 			STR_FMT( aor ), STR_FMT( &from->uri ), STR_FMT( &to->uri ),
 			STR_FMT( contact_uri ), STR_FMT( call_id ), call_info->index );
 
@@ -734,7 +734,7 @@ static int sca_call_info_uri_update(str *aor, sca_call_info *call_info,
 	dialog.id.s = dlg_buf;
 	if (sca_dialog_build_from_tags(&dialog, sizeof(dlg_buf), call_id, to_tag,
 			from_tag) < 0) {
-		LM_ERR( "sca_call_info_uri_update: Failed to build dialog from tags" );
+		LM_ERR( "sca_call_info_uri_update: Failed to build dialog from tags\n" );
 		return (-1);
 	}
 
@@ -744,12 +744,12 @@ static int sca_call_info_uri_update(str *aor, sca_call_info *call_info,
 	app = sca_appearance_for_index_unsafe(sca, aor, call_info->index, slot_idx);
 	if (app == NULL) {
 		LM_DBG( "sca_call_info_uri_update: no appearance found for %.*s "
-				"index %d, looking up by dialog...", STR_FMT( aor ),
+				"index %d, looking up by dialog...\n", STR_FMT( aor ),
 				call_info->index );
 		app = sca_appearance_for_dialog_unsafe(sca, aor, &dialog, slot_idx);
 	}
 	if (app != NULL) {
-		LM_DBG( "sca_call_info_uri_update: setting owner to %.*s",
+		LM_DBG( "sca_call_info_uri_update: setting owner to %.*s\n",
 				STR_FMT( contact_uri ));
 
 		if (sca_appearance_update_unsafe(app, call_info->state, NULL, NULL,
@@ -757,7 +757,7 @@ static int sca_call_info_uri_update(str *aor, sca_call_info *call_info,
 			sca_appearance_state_to_str(call_info->state, &state_str);
 			LM_ERR( "sca_call_info_uri_update: failed to update appearance "
 					"%.*s appearance-index %d with dialog id %.*s to "
-					"state %.*s", STR_FMT( &app->owner ), app->index,
+					"state %.*s\n", STR_FMT( &app->owner ), app->index,
 					STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
 			goto done;
 		}
@@ -768,12 +768,12 @@ static int sca_call_info_uri_update(str *aor, sca_call_info *call_info,
 				call_info->index, slot_idx, NULL);
 		if (app == NULL) {
 			LM_ERR( "sca_call_info_uri_update: failed to seize index %d "
-					"for %.*s", call_info->index, STR_FMT( contact_uri ));
+					"for %.*s\n", call_info->index, STR_FMT( contact_uri ));
 			goto done;
 		}
 
 		LM_DBG( "sca_call_info_uri_update: seized %d for %.*s: From: <%.*s> "
-				"To: <%.*s> Call-ID: <%.*s> Dialog: <%.*s>" , app->index,
+				"To: <%.*s> Call-ID: <%.*s> Dialog: <%.*s>\n" , app->index,
 				STR_FMT( &app->owner ), STR_FMT( &from->uri ),
 				STR_FMT( &to->uri ), STR_FMT( call_id ),
 				STR_FMT( &app->dialog.id ));
@@ -784,7 +784,7 @@ static int sca_call_info_uri_update(str *aor, sca_call_info *call_info,
 			sca_appearance_state_to_str(call_info->state, &state_str);
 			LM_ERR( "sca_call_info_uri_update: failed to update appearance "
 					"%.*s appearance-index %d with dialog id %.*s to "
-					"state %.*s", STR_FMT( &app->owner ), app->index,
+					"state %.*s\n", STR_FMT( &app->owner ), app->index,
 					STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
 			goto done;
 		}
@@ -824,7 +824,7 @@ static int sca_call_info_is_line_seize_reinvite(sip_msg_t *msg,
 	ruri = GET_RURI(msg);
 	if (sca_uri_extract_aor(ruri, &ruri_aor) < 0) {
 		LM_ERR( "sca_call_info_is_line_seize_reinvite: failed to extract "
-				"AoR from RURI %.*s", STR_FMT( ruri ));
+				"AoR from RURI %.*s\n", STR_FMT( ruri ));
 		return (0);
 	}
 
@@ -835,7 +835,7 @@ static int sca_call_info_is_line_seize_reinvite(sip_msg_t *msg,
 	state = sca_appearance_state_for_index(sca, from_aor, call_info->index);
 	if (state != SCA_APPEARANCE_STATE_HELD) {
 		LM_DBG( "sca_call_info_is_line_seize_reinvite: new INVITE to "
-				"%.*s from %.*s appearance-index %d (not seizing held line)",
+				"%.*s from %.*s appearance-index %d (not seizing held line)\n",
 				STR_FMT( to_aor ), STR_FMT( from_aor ), call_info->index );
 		return (0);
 	}
@@ -856,12 +856,12 @@ static void sca_call_info_local_error_reply_handler(sip_msg_t *msg, int status) 
 
 	if (sca_get_msg_from_header(msg, &from) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to get From header from "
-				"request before stateless reply with %d", status );
+				"request before stateless reply with %d\n", status );
 		return;
 	}
 	if (sca_uri_extract_aor(&from->uri, &aor) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to extract AoR "
-				"from URI %.*s", STR_FMT( &from->uri ));
+				"from URI %.*s\n", STR_FMT( &from->uri ));
 		return;
 	}
 
@@ -873,13 +873,13 @@ static void sca_call_info_local_error_reply_handler(sip_msg_t *msg, int status) 
 
 	if (sca_get_msg_contact_uri(msg, &contact_uri) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to get Contact from "
-				"request before stateless reply with %d", status );
+				"request before stateless reply with %d\n", status );
 		return;
 	}
 
 	if (sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to get To header from "
-				"request before stateless reply with %d", status );
+				"request before stateless reply with %d\n", status );
 		return;
 	}
 
@@ -899,7 +899,7 @@ static void sca_call_info_local_error_reply_handler(sip_msg_t *msg, int status) 
 			SCA_SUBSCRIPTION_TERMINATE_OPT_DEFAULT);
 	if (rc < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to terminate "
-				"line-seize subscription for %.*s", STR_FMT( &contact_uri ));
+				"line-seize subscription for %.*s\n", STR_FMT( &contact_uri ));
 	} else if (rc == 0) {
 		/* no line-seize subscription found */
 		app = sca_appearance_unlink_by_tags(sca, &aor, &msg->callid->body,
@@ -908,7 +908,7 @@ static void sca_call_info_local_error_reply_handler(sip_msg_t *msg, int status) 
 			sca_appearance_free(app);
 			if (sca_notify_call_info_subscribers(sca, &aor) < 0) {
 				LM_ERR( "sca_call_info_local_error_reply: failed to send "
-						"call-info NOTIFY to %.*s subscribers",
+						"call-info NOTIFY to %.*s subscribers\n",
 						STR_FMT( &aor ));
 			}
 		}
@@ -945,7 +945,7 @@ int sca_call_info_invite_request_handler(sip_msg_t *msg,
 	if (sca->tm_api->register_tmcb(msg, NULL, TMCB_E2EACK_IN,
 			sca_call_info_ack_cb, NULL, NULL) < 0) {
 		LM_ERR( "sca_call_info_invite_request_handler: failed to register "
-				"callback for INVITE %.*s ACK", STR_FMT( from_aor ));
+				"callback for INVITE %.*s ACK\n", STR_FMT( from_aor ));
 		goto done;
 	}
 
@@ -963,7 +963,7 @@ int sca_call_info_invite_request_handler(sip_msg_t *msg,
 	if (sca->tm_api->register_tmcb(msg, NULL, TMCB_RESPONSE_READY,
 			sca_call_info_response_ready_cb, NULL, NULL) < 0) {
 		LM_ERR( "sca_call_info_invite_request_handler: failed to register "
-				"callback for INVITE %.*s ACK", STR_FMT( from_aor ));
+				"callback for INVITE %.*s ACK\n", STR_FMT( from_aor ));
 		goto done;
 	}
 
@@ -990,20 +990,20 @@ int sca_call_info_invite_request_handler(sip_msg_t *msg,
 	dialog.id.s = dlg_buf;
 	if (sca_dialog_build_from_tags(&dialog, sizeof(dlg_buf), &msg->callid->body,
 			&from->tag_value, &to->tag_value) < 0) {
-		LM_ERR( "Failed to build dialog from tags" );
+		LM_ERR( "Failed to build dialog from tags\n" );
 		return (-1);
 	}
 
 	if (sca_appearance_update_index(sca, from_aor, call_info->index, state,
 			NULL, NULL, &dialog) != SCA_APPEARANCE_OK) {
 		sca_appearance_state_to_str(state, &state_str);
-		LM_ERR( "Failed to update %.*s appearance-index %d to %.*s",
+		LM_ERR( "Failed to update %.*s appearance-index %d to %.*s\n",
 				STR_FMT( from_aor ), call_info->index,
 				STR_FMT( &state_str ));
 	}
 
 	if (sca_notify_call_info_subscribers(sca, from_aor) < 0) {
-		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on INVITE",
+		LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on INVITE\n",
 				STR_FMT( from_aor ));
 		goto done;
 	}
@@ -1035,7 +1035,7 @@ int sca_call_info_invite_reply_18x_handler(sip_msg_t *msg,
 
 	if (!sca_uri_lock_if_shared_appearance(sca, from_aor, &slot_idx)) {
 		LM_DBG( "sca_call_info_invite_reply_18x_handler: From-AoR %.*s is "
-				"not a shared appearance", STR_FMT( from_aor ));
+				"not a shared appearance\n", STR_FMT( from_aor ));
 		return (1);
 	}
 
@@ -1049,7 +1049,7 @@ int sca_call_info_invite_reply_18x_handler(sip_msg_t *msg,
 	owner.s = (char *) pkg_malloc(app->owner.len);
 	if (owner.s == NULL) {
 		LM_ERR( "sca_call_info_invite_18x_reply_handler: failed to "
-				"pkg_malloc %d bytes to clone <%.*s>",
+				"pkg_malloc %d bytes to clone <%.*s>\n",
 				app->owner.len, STR_FMT( &app->owner ));
 		goto done;
 	}
@@ -1070,14 +1070,14 @@ int sca_call_info_invite_reply_18x_handler(sip_msg_t *msg,
 				&owner, SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
 				SCA_SUBSCRIPTION_TERMINATE_OPT_UNSUBSCRIBE) < 0) {
 			LM_ERR( "sca_call_info_invite_reply_18x_handler: "
-					"failed to terminate line-seize subscription for %.*s",
+					"failed to terminate line-seize subscription for %.*s\n",
 					STR_FMT( &owner ));
 			rc = -1;
 		}
 
 		if (sca_notify_call_info_subscribers(sca, from_aor) < 0) {
 			LM_ERR( "sca_call_info_invite_reply_18x_handler: "
-					"failed to NOTIFY %.*s call-info subscribers",
+					"failed to NOTIFY %.*s call-info subscribers\n",
 					STR_FMT( from_aor ));
 			rc = -1;
 		}
@@ -1099,13 +1099,13 @@ static int sca_call_info_insert_asserted_identity(sip_msg_t *msg, str *display,
 
 	anchor = anchor_lump(msg, msg->eoh - msg->buf, 0, HDR_OTHER_T);
 	if (anchor == NULL) {
-		LM_ERR( "Failed to anchor lump" );
+		LM_ERR( "Failed to anchor lump\n" );
 		goto done;
 	}
 
 	if (sca_create_canonical_aor_for_ua(msg, &aor, ua_type) < 0) {
 		LM_ERR( "sca_call_info_insert_asserted_identity: failed to create "
-				"canonical AoR" );
+				"canonical AoR\n" );
 		goto done;
 	}
 
@@ -1119,7 +1119,7 @@ static int sca_call_info_insert_asserted_identity(sip_msg_t *msg, str *display,
 
 	hdr.s = (char *) pkg_malloc(len);
 	if (hdr.s == NULL) {
-		LM_ERR( "insert_asserted_identity: pkg_malloc %d bytes failed", len );
+		LM_ERR( "insert_asserted_identity: pkg_malloc %d bytes failed\n", len );
 		goto done;
 	}
 
@@ -1145,7 +1145,7 @@ static int sca_call_info_insert_asserted_identity(sip_msg_t *msg, str *display,
 
 	/* append the PAI header before the sdp body */
 	if (insert_new_lump_before(anchor, hdr.s, hdr.len, HDR_PAI_T) == NULL) {
-		LM_ERR( "Failed to add PAI header %.*s", STR_FMT( &hdr ));
+		LM_ERR( "Failed to add PAI header %.*s\n", STR_FMT( &hdr ));
 		goto done;
 	}
 
@@ -1186,7 +1186,7 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 	if (sca_call_info_insert_asserted_identity(msg, &to->display,
 			SCA_AOR_TYPE_UAS) < 0) {
 		LM_WARN( "sca_call_info_invite_reply_200_handler: failed to "
-				"add P-Asserted-Identity header to response from %.*s",
+				"add P-Asserted-Identity header to response from %.*s\n",
 				STR_FMT( contact_uri ));
 	}
 
@@ -1221,19 +1221,19 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 	if (sca_dialog_build_from_tags(&dialog, sizeof(dlg_buf), &msg->callid->body,
 			&from->tag_value, &to->tag_value) < 0) {
 		LM_ERR( "sca_call_info_invite_handler: failed to build sca_dialog "
-				"from tags" );
+				"from tags\n" );
 		rc = -1;
 		goto done;
 	}
 
 	if (parse_uri(contact_uri->s, contact_uri->len, &c_uri) < 0) {
 		LM_ERR( "sca_call_info_invite_200_reply_handler: "
-				"parse_uri <%.*s> failed", STR_FMT( contact_uri ));
+				"parse_uri <%.*s> failed\n", STR_FMT( contact_uri ));
 		goto done;
 	}
 	if (sca_create_canonical_aor(msg, &app_uri_aor) < 0) {
 		LM_ERR( "sca_call_info_invite_200_reply_handler: "
-				"sca_create_canonical_aor failed" );
+				"sca_create_canonical_aor failed\n" );
 		goto done;
 	}
 
@@ -1242,7 +1242,7 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 		sca_appearance_state_to_str(state, &state_str);
 		LM_ERR( "sca_call_info_invite_handler: failed to update appearance "
 				"%.*s appearance-index %d with dialog id %.*s to "
-				"state %.*s", STR_FMT( &app->owner ), app->index,
+				"state %.*s\n", STR_FMT( &app->owner ), app->index,
 				STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
 		rc = -1;
 		goto done;
@@ -1260,7 +1260,7 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 	if (rc == 1) {
 		if (sca_notify_call_info_subscribers(sca, from_aor) < 0) {
 			LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on "
-					"200 OK reply to INVITE", STR_FMT( from_aor ));
+					"200 OK reply to INVITE\n", STR_FMT( from_aor ));
 			rc = -1;
 		}
 	}
@@ -1293,7 +1293,7 @@ static int sca_call_info_invite_reply_error_handler(sip_msg_t *msg,
 				&from->tag_value, NULL);
 		if (app == NULL) {
 			LM_ERR( "sca_call_info_invite_reply_error_handler: failed to "
-					"look up dialog for failed INVITE %.*s from %.*s",
+					"look up dialog for failed INVITE %.*s from %.*s\n",
 					STR_FMT( &to->uri ), STR_FMT( from_aor ));
 			return (-1);
 		}
@@ -1301,7 +1301,7 @@ static int sca_call_info_invite_reply_error_handler(sip_msg_t *msg,
 
 		if (sca_notify_call_info_subscribers(sca, from_aor) < 0) {
 			LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on "
-					"failed INVITE", STR_FMT( from_aor ));
+					"failed INVITE\n", STR_FMT( from_aor ));
 			return (-1);
 		}
 	}
@@ -1317,11 +1317,11 @@ void sca_call_info_ack_from_handler(sip_msg_t *msg, str *from_aor, str *to_aor) 
 	int state = SCA_APPEARANCE_STATE_IDLE;
 
 	if (sca_get_msg_from_header(msg, &from) < 0) {
-		LM_ERR( "sca_call_info_ack_cb: failed to get From-header" );
+		LM_ERR( "sca_call_info_ack_cb: failed to get From-header\n" );
 		return;
 	}
 	if (sca_get_msg_to_header(msg, &to) < 0) {
-		LM_ERR( "sca_call_info_ack_cb: failed to get To-header" );
+		LM_ERR( "sca_call_info_ack_cb: failed to get To-header\n" );
 		return;
 	}
 
@@ -1330,7 +1330,7 @@ void sca_call_info_ack_from_handler(sip_msg_t *msg, str *from_aor, str *to_aor) 
 				&from->tag_value, NULL, slot_idx);
 		if (app == NULL) {
 			LM_ERR( "sca_call_info_ack_cb: No appearance for %.*s matching "
-					"call-id <%.*s> and from-tag <%.*s>", STR_FMT( from_aor ),
+					"call-id <%.*s> and from-tag <%.*s>\n", STR_FMT( from_aor ),
 					STR_FMT( &msg->callid->body ), STR_FMT( &from->tag_value ));
 			goto done;
 		}
@@ -1361,7 +1361,7 @@ void sca_call_info_ack_from_handler(sip_msg_t *msg, str *from_aor, str *to_aor) 
 
 		if (state != SCA_APPEARANCE_STATE_IDLE) {
 			if (sca_notify_call_info_subscribers(sca, from_aor) < 0) {
-				LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on INVITE",
+				LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on INVITE\n",
 						STR_FMT( from_aor ));
 			}
 		}
@@ -1385,11 +1385,11 @@ void sca_call_info_ack_cb(struct cell *t, int type, struct tmcb_params *params) 
 	}
 
 	if (sca_get_msg_to_header(params->req, &to) < 0) {
-		LM_ERR( "sca_call_info_ack_cb: failed to get To-header" );
+		LM_ERR( "sca_call_info_ack_cb: failed to get To-header\n" );
 		goto done;
 	}
 	if (sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
-		LM_ERR( "sca_call_info_ack_cb: failed to extract To AoR from %.*s",
+		LM_ERR( "sca_call_info_ack_cb: failed to extract To AoR from %.*s\n",
 				STR_FMT( &to->uri ));
 		goto done;
 	}
@@ -1397,7 +1397,7 @@ void sca_call_info_ack_cb(struct cell *t, int type, struct tmcb_params *params) 
 	sca_call_info_ack_from_handler(params->req, &from_aor, &to_aor);
 
 	if (!sca_uri_lock_if_shared_appearance(sca, &to_aor, &slot_idx)) {
-		LM_DBG( "sca_call_info_ack_cb: %.*s is not a shared appearance",
+		LM_DBG( "sca_call_info_ack_cb: %.*s is not a shared appearance\n",
 				STR_FMT( &to_aor ));
 		goto done;
 	}
@@ -1406,7 +1406,7 @@ void sca_call_info_ack_cb(struct cell *t, int type, struct tmcb_params *params) 
 	app = sca_appearance_for_tags_unsafe(sca, &to_aor,
 			&params->req->callid->body, &to->tag_value, NULL, slot_idx);
 	if (app && app->state == SCA_APPEARANCE_STATE_ACTIVE_PENDING) {
-		LM_DBG( "promoting %.*s appearance-index %d to active",
+		LM_DBG( "promoting %.*s appearance-index %d to active\n",
 				STR_FMT( &to_aor ), app->index );
 		sca_appearance_update_state_unsafe(app, SCA_APPEARANCE_STATE_ACTIVE);
 	}
@@ -1417,7 +1417,7 @@ void sca_call_info_ack_cb(struct cell *t, int type, struct tmcb_params *params) 
 
 	if (sca_notify_call_info_subscribers(sca, &to_aor) < 0) {
 		LM_ERR( "sca_call_info_ack_cb: failed to call-info "
-				"NOTIFY %.*s subscribers", STR_FMT( &to_aor ));
+				"NOTIFY %.*s subscribers\n", STR_FMT( &to_aor ));
 		goto done;
 	}
 
@@ -1433,7 +1433,7 @@ static int sca_call_info_invite_handler(sip_msg_t *msg,
 
 	if (SCA_STR_EMPTY(contact_uri)) {
 		LM_DBG( "sca_call_info_invite_handler: Contact header is empty. "
-				"(From: %.*s To: %.*s)", STR_FMT( from_aor ),
+				"(From: %.*s To: %.*s)\n", STR_FMT( from_aor ),
 				STR_FMT( to_aor ));
 		return (1);
 	}
@@ -1491,7 +1491,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 			slot_idx = sca_uri_lock_shared_appearance(sca, from_aor);
 			if (slot_idx < 0) {
 				LM_ERR( "sca_call_info_bye_handler: failed to acquire "
-						"lock for %.*s, appearance-index %.d",
+						"lock for %.*s, appearance-index %.d\n",
 						STR_FMT( from_aor ), call_info->index );
 				goto done;
 			}
@@ -1507,7 +1507,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 			}
 			if (app == NULL) {
 				LM_ERR( "sca_call_info_bye_handler: %.*s "
-						"dialog leg %.*s;%.*s is not active",
+						"dialog leg %.*s;%.*s is not active\n",
 						STR_FMT( from_aor ),
 						STR_FMT( &msg->callid->body ),
 						STR_FMT( &from->tag_value ));
@@ -1519,7 +1519,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 				if (!sca_appearance_list_unlink_appearance(app->appearance_list,
 						&app)) {
 					LM_ERR( "sca_call_info_bye_handler: failed to unlink "
-							"%.*s appearance-index %d, owner %.*s",
+							"%.*s appearance-index %d, owner %.*s\n",
 							STR_FMT( &app->owner ), app->index,
 							STR_FMT( &app->owner ));
 					goto done;
@@ -1531,7 +1531,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 
 				if (sca_notify_call_info_subscribers(sca, from_aor) < 0) {
 					LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
-							"on BYE", STR_FMT( &to->uri ));
+							"on BYE\n", STR_FMT( &to->uri ));
 					goto done;
 				}
 			}
@@ -1544,7 +1544,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 
 		if (SCA_CALL_INFO_IS_SHARED_CALLEE(call_info)) {
 			if (!sca_uri_lock_if_shared_appearance(sca, to_aor, &slot_idx)) {
-				LM_DBG( "BYE from non-SCA %.*s to non-SCA %.*s",
+				LM_DBG( "BYE from non-SCA %.*s to non-SCA %.*s\n",
 						STR_FMT( from_aor ), STR_FMT( to_aor ));
 				rc = 1;
 				goto done;
@@ -1554,7 +1554,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 					&msg->callid->body, &to->tag_value, NULL, slot_idx);
 			if (app == NULL) {
 				LM_INFO( "sca_call_info_bye_handler: no in-use callee "
-						"appearance for BYE %.*s from %.*s, call-ID %.*s",
+						"appearance for BYE %.*s from %.*s, call-ID %.*s\n",
 						STR_FMT( to_aor ), STR_FMT( from_aor ),
 						STR_FMT( &msg->callid->body ));
 				rc = 1;
@@ -1565,7 +1565,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 				if (!sca_appearance_list_unlink_appearance(app->appearance_list,
 						&app)) {
 					LM_ERR( "sca_call_info_bye_handler: failed to unlink "
-							"%.*s appearance-index %d, owner %.*s",
+							"%.*s appearance-index %d, owner %.*s\n",
 							STR_FMT( &app->owner ), app->index,
 							STR_FMT( &app->owner ));
 					goto done;
@@ -1577,7 +1577,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 
 				if (sca_notify_call_info_subscribers(sca, to_aor) < 0) {
 					LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
-							"on BYE", STR_FMT( to_aor ));
+							"on BYE\n", STR_FMT( to_aor ));
 					goto done;
 				}
 			}
@@ -1596,21 +1596,21 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 			}
 			if (app == NULL) {
 				LM_DBG( "sca_call_info_bye_handler: no appearance found "
-						"for callee %.*s, call-ID %.*s",
+						"for callee %.*s, call-ID %.*s\n",
 						STR_FMT( to_aor ), STR_FMT( &msg->callid->body ));
 				rc = 1;
 				goto done;
 			}
 
 			LM_INFO( "sca_call_info_bye_handler: found in-use call appearance "
-					"for callee %.*s, call-ID %.*s",
+					"for callee %.*s, call-ID %.*s\n",
 					STR_FMT( to_aor ), STR_FMT( &msg->callid->body ));
 
 			if (SCA_STR_EQ(&app->dialog.call_id, &msg->callid->body)) {
 				if (!sca_appearance_list_unlink_appearance(app->appearance_list,
 						&app)) {
 					LM_ERR( "sca_call_info_bye_handler: failed to unlink "
-							"%.*s appearance-index %d, owner %.*s",
+							"%.*s appearance-index %d, owner %.*s\n",
 							STR_FMT( &app->owner ), app->index,
 							STR_FMT( &app->owner ));
 					goto done;
@@ -1622,7 +1622,7 @@ static int sca_call_info_bye_handler(sip_msg_t *msg, sca_call_info *call_info,
 
 				if (sca_notify_call_info_subscribers(sca, to_aor) < 0) {
 					LM_ERR( "Failed to call-info NOTIFY %.*s subscribers "
-							"on BYE", STR_FMT( to_aor ));
+							"on BYE\n", STR_FMT( to_aor ));
 					goto done;
 				}
 			}
@@ -1660,7 +1660,7 @@ static int sca_call_info_cancel_handler(sip_msg_t *msg,
 			sca_appearance_free(app);
 
 			if (sca_notify_call_info_subscribers(sca, from_aor) < 0) {
-				LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on CANCEL",
+				LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on CANCEL\n",
 						STR_FMT( from_aor ));
 				rc = -1;
 			}
@@ -1675,7 +1675,7 @@ static int sca_call_info_cancel_handler(sip_msg_t *msg,
 			sca_appearance_free(app);
 
 			if (sca_notify_call_info_subscribers(sca, to_aor) < 0) {
-				LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on CANCEL",
+				LM_ERR( "Failed to call-info NOTIFY %.*s subscribers on CANCEL\n",
 						STR_FMT( to_aor ));
 				rc = -1;
 			}
@@ -1716,13 +1716,13 @@ void sca_call_info_sl_reply_cb(void *cb_arg) {
 	msg = slcbp->req;
 	if (sca_get_msg_from_header(msg, &from) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to get From header from "
-				"request before stateless reply with %d %.*s",
+				"request before stateless reply with %d %.*s\n",
 				slcbp->code, STR_FMT( slcbp->reason ));
 		return;
 	}
 	if (sca_uri_extract_aor(&from->uri, &aor) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to extract AoR "
-				"from URI %.*s", STR_FMT( &from->uri ));
+				"from URI %.*s\n", STR_FMT( &from->uri ));
 		return;
 	}
 
@@ -1734,14 +1734,14 @@ void sca_call_info_sl_reply_cb(void *cb_arg) {
 
 	if (sca_get_msg_contact_uri(msg, &contact_uri) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to get Contact from "
-				"request before stateless reply with %d %.*s",
+				"request before stateless reply with %d %.*s\n",
 				slcbp->code, STR_FMT( slcbp->reason ));
 		return;
 	}
 
 	if (sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to get To header from "
-				"request before stateless reply with %d %.*s",
+				"request before stateless reply with %d %.*s\n",
 				slcbp->code, STR_FMT( slcbp->reason ));
 		return;
 	}
@@ -1750,7 +1750,7 @@ void sca_call_info_sl_reply_cb(void *cb_arg) {
 			&contact_uri, SCA_SUBSCRIPTION_STATE_TERMINATED_NORESOURCE,
 			SCA_SUBSCRIPTION_TERMINATE_OPT_DEFAULT) < 0) {
 		LM_ERR( "sca_call_info_sl_reply_cb: failed to terminate "
-				"line-seize subscription for %.*s", STR_FMT( &contact_uri ));
+				"line-seize subscription for %.*s\n", STR_FMT( &contact_uri ));
 		return;
 	}
 }
@@ -1808,19 +1808,19 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 	}
 	if (i >= n_dispatch) {
 		LM_DBG( "BUG: sca module does not support Call-Info headers "
-				"in %.*s requests", STR_FMT( &get_cseq( msg )->method ));
+				"in %.*s requests\n", STR_FMT( &get_cseq( msg )->method ));
 		return (1);
 	}
 
 	if (parse_headers(msg, HDR_EOH_F, 0) < 0) {
-		LM_ERR( "header parsing failed: bad request" );
+		LM_ERR( "header parsing failed: bad request\n" );
 		return (-1);
 	}
 
 	if (p1 != NULL) {
 		if (get_int_fparam(&update_mask, msg, (fparam_t *) p1) < 0) {
 			LM_ERR( "sca_call_info_update: argument 1: bad value "
-					"(integer expected)" );
+					"(integer expected)\n" );
 			return (-1);
 		}
 
@@ -1835,7 +1835,7 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 
 		default:
 			LM_ERR( "sca_call_info_update: argument 1: invalid value "
-					"(0, 1 or 2 expected)" );
+					"(0, 1 or 2 expected)\n" );
 			return (-1);
 		}
 	}
@@ -1845,18 +1845,18 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 	if (!SCA_HEADER_EMPTY(call_info_hdr)) {
 		/* this needs to accomodate comma-separated appearance info */
 		if (sca_call_info_body_parse(&call_info_hdr->body, &call_info) < 0) {
-			LM_ERR( "Bad Call-Info header body: %.*s",
+			LM_ERR( "Bad Call-Info header body: %.*s\n",
 					STR_FMT( &call_info_hdr->body ));
 			return (-1);
 		}
 	}
 
 	if (sca_get_msg_from_header(msg, &from) < 0) {
-		LM_ERR( "Bad From header" );
+		LM_ERR( "Bad From header\n" );
 		return (-1);
 	}
 	if (sca_get_msg_to_header(msg, &to) < 0) {
-		LM_ERR( "Bad To header" );
+		LM_ERR( "Bad To header\n" );
 		return (-1);
 	}
 
@@ -1865,12 +1865,12 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 	if (rc > 0) {
 		/* Contact header in packet */
 		if (parse_uri(contact_uri.s, contact_uri.len, &c_uri) < 0) {
-			LM_ERR( "Failed to parse Contact URI %.*s",
+			LM_ERR( "Failed to parse Contact URI %.*s\n",
 					STR_FMT( &contact_uri ));
 			return (-1);
 		}
 	} else if (rc < 0) {
-		LM_ERR( "Bad Contact" );
+		LM_ERR( "Bad Contact\n" );
 		return (-1);
 	}
 	/* reset rc to -1 so we don't end up returning 0 to the script */
@@ -1884,13 +1884,13 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 		aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
 
 		if (sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
-			LM_ERR( "Failed to extract AoR from To URI %.*s",
+			LM_ERR( "Failed to extract AoR from To URI %.*s\n",
 					STR_FMT( &to->uri ));
 			goto done;
 		}
 	} else {
 		if (sca_uri_extract_aor(&from->uri, &from_aor) < 0) {
-			LM_ERR( "Failed to extract AoR from From URI %.*s",
+			LM_ERR( "Failed to extract AoR from From URI %.*s\n",
 					STR_FMT( &from->uri ));
 			goto done;
 		}
@@ -1931,12 +1931,12 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 	}
 
 	if (sca_call_info_header_remove(msg) < 0) {
-		LM_ERR( "Failed to remove Call-Info header" );
+		LM_ERR( "Failed to remove Call-Info header\n" );
 		return (-1);
 	}
 
 	if (call_info.ua_shared == SCA_CALL_INFO_SHARED_NONE) {
-		LM_DBG( "Neither %.*s nor %.*s are SCA AoRs",
+		LM_DBG( "Neither %.*s nor %.*s are SCA AoRs\n",
 				STR_FMT( &from_aor ), STR_FMT( &to_aor ));
 		goto done;
 	}
@@ -1944,7 +1944,7 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 	rc = call_info_dispatch[i].handler(msg, &call_info, from, to, &from_aor,
 			&to_aor, &contact_uri);
 	if (rc < 0) {
-		LM_ERR( "Failed to update Call-Info state for %.*s",
+		LM_ERR( "Failed to update Call-Info state for %.*s\n",
 				STR_FMT( &contact_uri ));
 	}
 

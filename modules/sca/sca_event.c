@@ -64,7 +64,7 @@ int sca_event_append_header_for_type(int event_type, char *hdrbuf, int maxlen) {
 	len = snprintf(hdrbuf, maxlen, "Event: %s%s",
 			sca_event_name_from_type(event_type), CRLF);
 	if (len >= maxlen) {
-		LM_ERR( "%s Event header too long",
+		LM_ERR( "%s Event header too long\n",
 				sca_event_name_from_type( event_type));
 		return (-1);
 	}

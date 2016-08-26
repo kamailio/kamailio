@@ -96,7 +96,7 @@ void sca_rpc_show_all_subscriptions(rpc_t *rpc, void *ctx) {
 						(long) (sub->expires - now), STR_FMT(&sub_state));
 			} else {
 				LM_ERR( "sca_rpc_show_all_subscriptions: parse_uri %.*s "
-						"failed, dumping unparsed info",
+						"failed, dumping unparsed info\n",
 						STR_FMT( &sub->target_aor ));
 				rc = rpc->rpl_printf(ctx, "%.*s %.*s %s %ld %.*s",
 						STR_FMT(&sub->target_aor), STR_FMT(&sub->subscriber),
