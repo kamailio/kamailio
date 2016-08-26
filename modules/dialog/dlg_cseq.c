@@ -186,6 +186,61 @@ error:
 	return -1;
 }
 
+
+/**
+ *
+ */
+int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
+		unsigned int direction)
+{
+	str nval;
+	str *pval;
+
+	if(dlg_cseq_prepare_msg(msg)!=0) {
+		goto error;
+	}
+	if(msg->first_line.type==SIP_REPLY) {
+		/* nothing to do for outgoing replies */
+		goto done;
+	}
+
+	LM_DBG("initiating cseq refresh\n");
+
+	/* supported only for downstrem direction */
+	if(direction != DLG_DIR_DOWNSTREAM) {
+		LM_DBG("request not going downstream (%u)\n", direction);
+		goto done;
+	}
+
+	/* take the increment value from dialog */
+	if(!((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF)) {
+		LM_DBG("no cseq refresh required\n");
+		goto done;
+	}
+
+	/* get dialog variable holding cseq diff */
+	pval = get_dlg_variable(dlg, &_dlg_cseq_diff_var_name);
+	if(pval==NULL || pval->s==NULL || pval->len<=0) {
+		LM_DBG("dialog marked with cseq diff but no variable set yet\n");
+		goto done;
+	}
+
+	nval = *pval;
+	trim(&nval);
+
+	LM_DBG("adding cseq refresh header value: %.*s\n", nval.len, nval.s);
+	parse_headers(msg, HDR_EOH_F, 0);
+	sr_hdr_add_zs(msg, "P-K-CSeq-Refresh", &nval);
+
+done:
+	if(dlg!=NULL) dlg_release(dlg);
+	return 0;
+
+error:
+	if(dlg!=NULL) dlg_release(dlg);
+	return -1;
+}
+
 /**
  *
  */
@@ -319,15 +374,22 @@ int dlg_cseq_msg_sent(void *data)
 		parse_headers(&msg, HDR_EOH_F, 0);
 		hfk = sr_hdr_get_z(&msg, "P-K-Auth-CSeq");
 		if(hfk!=NULL) {
-			LM_DBG("uac auth request - cseq inc needed\n");
+			LM_DBG("new cseq inc requested\n");
 			nval = hfk->body;
 			trim(&nval);
 		} else {
-			LM_DBG("uac auth request - cseq inc not needed\n");
-			goto done;
+			LM_DBG("new cseq inc not requested\n");
 		}
 	}
 
+	if(nval.len<=0) {
+		hfk = sr_hdr_get_z(&msg, "P-K-CSeq-Refresh");
+		if(hfk!=NULL) {
+			LM_DBG("cseq refresh requested\n");
+			nval = hfk->body;
+			trim(&nval);
+		}
+	}
 	if(nval.len<=0) {
 		goto done;
 	}

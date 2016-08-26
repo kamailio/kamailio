@@ -48,6 +48,7 @@
 #include "dlg_hash.h"
 #include "dlg_timer.h"
 #include "dlg_cb.h"
+#include "dlg_cseq.h"
 #include "dlg_handlers.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
@@ -1158,7 +1159,7 @@ dlg_cell_t *dlg_get_msg_dialog(sip_msg_t *msg)
 
 /*!
  * \brief Function that is registered as RR callback for dialog tracking
- * 
+ *
  * Function that is registered as RR callback for dialog tracking. It
  * sets the appropriate events after the SIP method and run the state
  * machine to update the dialog state. It updates then the saved
@@ -1250,7 +1251,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	}
 
 	if (dlg==0) {
-		if (pre_match_parse( req, &callid, &ftag, &ttag, 1)<0)
+		if (pre_match_parse(req, &callid, &ftag, &ttag, 1)<0)
 			return;
 		/* TODO - try to use the RR dir detection to speed up here the
 		 * search -bogdan */
@@ -1266,6 +1267,12 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
     set_current_dialog( req, dlg);
     _dlg_ctx.iuid.h_entry = dlg->h_entry;
     _dlg_ctx.iuid.h_id = dlg->h_id;
+
+	if(dlg->iflags & DLG_IFLAG_CSEQ_DIFF) {
+		if(dlg_cseq_refresh(req, dlg, dir)<0) {
+			LM_ERR("failed to refresh cseq update\n");
+		}
+	}
 
 	if (req->first_line.u.request.method_value != METHOD_ACK) {
 		iuid = dlg_get_iuid_shm_clone(dlg);
