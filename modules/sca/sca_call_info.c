@@ -737,8 +737,8 @@ static int sca_call_info_uri_update(str *aor, sca_call_info *call_info,
 	}
 
 	dialog.id.s = dlg_buf;
-	if (sca_dialog_build_from_tags(&dialog, sizeof(dlg_buf), call_id, to_tag,
-			from_tag) < 0) {
+	if (sca_dialog_build_from_tags(&dialog, sizeof(dlg_buf), call_id, from_tag,
+			to_tag) < 0) {
 		LM_ERR( "sca_call_info_uri_update: Failed to build dialog from tags\n" );
 		return (-1);
 	}
