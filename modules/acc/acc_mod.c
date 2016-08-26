@@ -68,12 +68,14 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../str.h"
 #include "../rr/api.h"
+#include "../../mod_fix.h"
 #include "acc.h"
 #include "acc_api.h"
 #include "acc_mod.h"
 #include "acc_extra.h"
 #include "acc_logic.h"
 #include "acc_cdr.h"
+#include "chargingvector.h"
 
 #ifdef RAD_ACC
 #include "../../lib/kcore/radius.h"
@@ -248,6 +250,7 @@ static cmd_export_t cmds[] = {
 		acc_fixup, free_acc_fixup,
 		ANY_ROUTE},
 #endif
+        {"acc_charging_vector", (cmd_function) acc_handle_pcv, 1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"bind_acc",    (cmd_function)bind_acc, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -324,6 +327,19 @@ static param_export_t params[] = {
 	{0,0,0}
 };
 
+static pv_export_t mod_acc_pvs[] = 
+{
+	{ {"pcv", (sizeof("pcv")-1)}, /* */
+		PVT_OTHER, pv_get_charging_vector, 0,
+		0, 0, pv_init_iname, 1},
+	{ {"pcv.genaddr", (sizeof("pcv.genaddr")-1)}, /* */
+		PVT_OTHER, pv_get_charging_vector, 0,
+		0, 0, pv_init_iname, 2},
+	{ {"pcv.value", (sizeof("pcv.value")-1)}, /* */
+		PVT_OTHER, pv_get_charging_vector, 0,
+		0, 0, pv_init_iname, 3},
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 struct module_exports exports= {
 	"acc",
@@ -332,7 +348,7 @@ struct module_exports exports= {
 	params,     /* exported params */
 	0,          /* exported statistics */
 	0,          /* exported MI functions */
-	0,          /* exported pseudo-variables */
+	mod_acc_pvs, /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* initialization module */
 	0,          /* response function */
