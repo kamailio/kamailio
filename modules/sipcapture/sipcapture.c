@@ -2669,7 +2669,7 @@ static int nosip_hep_msg(void *data)
 {
         sip_msg_t* msg;
         char *buf;
-        unsigned int len = 0;
+        int len = 0;
         struct run_act_ctx ra_ctx;
         int ret = 0;
 
