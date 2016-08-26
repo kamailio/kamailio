@@ -806,6 +806,11 @@ static int sca_call_info_is_line_seize_reinvite(sip_msg_t *msg,
 	str ruri_aor;
 	int state;
 
+	LM_DBG( "For From-AOR %.*s To-AOR: %.*s: From: <%.*s> To: <%.*s> "
+			"Call-Info: appearance-index=%d",
+			STR_FMT( from_aor ), STR_FMT( to_aor ), STR_FMT( &from->uri ),
+			STR_FMT( &to->uri ), call_info->index );
+
 	/*
 	 * a handset in an SCA group is attempting to seize a held line if:
 	 *		the RURI, From URI and To URI are identical;
@@ -839,6 +844,8 @@ static int sca_call_info_is_line_seize_reinvite(sip_msg_t *msg,
 				STR_FMT( to_aor ), STR_FMT( from_aor ), call_info->index );
 		return (0);
 	}
+	LM_DBG( "reINVITE to %.*s from %.*s appearance-index %d (seizing held line)\n",
+			STR_FMT( to_aor ), STR_FMT( from_aor ), call_info->index );
 
 	return (1);
 }
@@ -938,6 +945,11 @@ int sca_call_info_invite_request_handler(sip_msg_t *msg,
 	int state = SCA_APPEARANCE_STATE_UNKNOWN;
 	int rc = -1;
 
+	LM_DBG( "For From-AOR %.*s To-AOR: %.*s: From: <%.*s> To: <%.*s> "
+			"Contact: <%.*s> Call-Info: appearance-index=%d",
+			STR_FMT( from_aor ), STR_FMT( to_aor ),STR_FMT( &from->uri ), STR_FMT( &to->uri ),
+			STR_FMT( contact_uri ), call_info->index );
+
 	/*
 	 * if we get here, one of the legs is an SCA endpoint. we want to know
 	 * when the e2e ACK comes in so we can notify other members of the group.
@@ -1022,6 +1034,11 @@ int sca_call_info_invite_reply_18x_handler(sip_msg_t *msg,
 	int slot_idx = -1;
 	int rc = -1;
 	int notify = 0;
+
+	LM_DBG( "For From-AOR %.*s To-AOR: %.*s: From: <%.*s> To: <%.*s> "
+			"Contact: <%.*s> Call-Info: appearance-index=%d",
+			STR_FMT( from_aor ), STR_FMT( to_aor ),STR_FMT( &from->uri ), STR_FMT( &to->uri ),
+			STR_FMT( contact_uri ), call_info->index );
 
 	switch (msg->REPLY_STATUS) {
 	case 180:
@@ -1167,12 +1184,18 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 	sca_appearance *app;
 	sca_dialog dialog;
 	sip_uri_t c_uri;
+	hdr_field_t *hdr;
 	char dlg_buf[1024];
 	str app_uri_aor = STR_NULL;
 	str state_str = STR_NULL;
 	int state = SCA_APPEARANCE_STATE_UNKNOWN;
 	int slot_idx = -1;
 	int rc = -1;
+
+	LM_DBG( "For From-AOR %.*s To-AOR: %.*s: From: <%.*s> To: <%.*s> "
+			"Contact: <%.*s> Call-Info: appearance-index=%d\n",
+			STR_FMT( from_aor ), STR_FMT( to_aor ),STR_FMT( &from->uri ), STR_FMT( &to->uri ),
+			STR_FMT( contact_uri ), call_info->index );
 
 	if (SCA_CALL_INFO_IS_SHARED_CALLEE(call_info)) {
 		rc = sca_call_info_uri_update(to_aor, call_info, from, to, contact_uri,
@@ -1860,6 +1883,9 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 		return (-1);
 	}
 
+	// XXX This is double code of what a portion of the
+	// sca_create_canonical_aor does and is called further down
+	// and the c_uri var is not used anywhere in this function.
 	memset(&c_uri, 0, sizeof(sip_uri_t));
 	rc = sca_get_msg_contact_uri(msg, &contact_uri);
 	if (rc > 0) {
@@ -1913,15 +1939,15 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 	}
 
 	if (call_info_hdr == NULL) {
-		if ( SCA_CALL_INFO_IS_SHARED_CALLER(&call_info) &&
-		msg->first_line.type == SIP_REQUEST) {
+		if ( SCA_CALL_INFO_IS_SHARED_CALLER(&call_info) && 
+			msg->first_line.type == SIP_REQUEST) {
 			if (!sca_subscription_aor_has_subscribers(SCA_EVENT_TYPE_CALL_INFO,
 					&from_aor)) {
 				call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLER;
 				sca_appearance_unregister(sca, &from_aor);
 			}
 		} else if ( SCA_CALL_INFO_IS_SHARED_CALLEE(&call_info) &&
-		msg->first_line.type == SIP_REPLY) {
+				msg->first_line.type == SIP_REPLY) {
 			if (!sca_subscription_aor_has_subscribers(SCA_EVENT_TYPE_CALL_INFO,
 					&to_aor)) {
 				call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLEE;
@@ -1940,6 +1966,11 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 				STR_FMT( &from_aor ), STR_FMT( &to_aor ));
 		goto done;
 	}
+
+	LM_DBG( "Calling Dispatch Id: %d handler with From-AOR: %.*s To-AOR: %.*s "
+			"From-URI: <%.*s> To-URI: <%.*s> Contact-URI: <%.*s>\n",
+			i, STR_FMT( &from_aor ), STR_FMT( &to_aor ),STR_FMT( &from->uri ),
+			STR_FMT( &to->uri ), STR_FMT( &contact_uri ));
 
 	rc = call_info_dispatch[i].handler(msg, &call_info, from, to, &from_aor,
 			&to_aor, &contact_uri);

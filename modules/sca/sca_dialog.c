@@ -31,6 +31,9 @@ int sca_dialog_build_from_tags(sca_dialog *dialog, int maxlen, str *call_id,
 	assert(call_id != NULL);
 	assert(from_tag != NULL);
 
+	LM_DBG( "From-Tag: %.*s To-Tag: %.*s CallId: %.*s\n",
+			STR_FMT(from_tag), STR_FMT(to_tag), STR_FMT(call_id));
+
 	len = call_id->len + from_tag->len;
 	if (!SCA_STR_EMPTY(to_tag)) {
 		len += to_tag->len;
@@ -70,6 +73,8 @@ int sca_dialog_create_replaces_header(sca_dialog *dlg, str *replaces_hdr) {
 	int len;
 
 	assert(replaces_hdr != NULL);
+
+	LM_DBG( "Called\n" );
 
 	if ( SCA_STR_EMPTY(&dlg->call_id) || SCA_STR_EMPTY( &dlg->from_tag ) ||
 	SCA_STR_EMPTY( &dlg->to_tag )) {
