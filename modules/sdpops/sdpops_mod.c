@@ -537,7 +537,7 @@ static int w_sdp_remove_codecs_by_id(sip_msg_t* msg, char* codecs, char* media)
 		}
 	}
 
-	if(sdp_remove_codecs_by_id(msg, &lcodecs)<0)
+	if(sdp_remove_codecs_by_id(msg, &lcodecs, &lmedia)<0)
 		return -1;
 	return 1;
 }
