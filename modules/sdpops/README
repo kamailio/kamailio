@@ -26,8 +26,8 @@ Daniel-Constantin Mierla
         3. Parameters
         4. Functions
 
-              4.1. sdp_remove_codecs_by_id(list)
-              4.2. sdp_remove_codecs_by_name(list)
+              4.1. sdp_remove_codecs_by_id(list [, mtype])
+              4.2. sdp_remove_codecs_by_name(list [, mtype])
               4.3. sdp_remove_line_by_prefix(string)
               4.4. sdp_keep_codecs_by_id(list [, mtype])
               4.5. sdp_keep_codecs_by_name(list [, mtype])
@@ -81,8 +81,8 @@ Chapter 1. Admin Guide
    3. Parameters
    4. Functions
 
-        4.1. sdp_remove_codecs_by_id(list)
-        4.2. sdp_remove_codecs_by_name(list)
+        4.1. sdp_remove_codecs_by_id(list [, mtype])
+        4.2. sdp_remove_codecs_by_name(list [, mtype])
         4.3. sdp_remove_line_by_prefix(string)
         4.4. sdp_keep_codecs_by_id(list [, mtype])
         4.5. sdp_keep_codecs_by_name(list [, mtype])
@@ -133,8 +133,8 @@ Chapter 1. Admin Guide
 
 4. Functions
 
-   4.1. sdp_remove_codecs_by_id(list)
-   4.2. sdp_remove_codecs_by_name(list)
+   4.1. sdp_remove_codecs_by_id(list [, mtype])
+   4.2. sdp_remove_codecs_by_name(list [, mtype])
    4.3. sdp_remove_line_by_prefix(string)
    4.4. sdp_keep_codecs_by_id(list [, mtype])
    4.5. sdp_keep_codecs_by_name(list [, mtype])
@@ -153,7 +153,7 @@ Chapter 1. Admin Guide
    4.18. sdp_with_ice()
    4.19. sdp_get_line_startswith(avpvar, string)
 
-4.1.  sdp_remove_codecs_by_id(list)
+4.1.  sdp_remove_codecs_by_id(list [, mtype])
 
    Remove the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one item or
@@ -168,14 +168,19 @@ Chapter 1. Admin Guide
 sdp_remove_codecs_by_id("0");
 # remove PCMU, PCMA and GSM
 sdp_remove_codecs_by_id("0,8,3");
+sdp_remove_codecs_by_id("17", "audio");
+sdp_remove_codecs_by_id("23", "video");
 ...
 
-4.2.  sdp_remove_codecs_by_name(list)
+4.2.  sdp_remove_codecs_by_name(list [, mtype])
 
    Remove the codecs provided in the parameter 'list' from all media
    streams found in SDP payload. The parameter 'list' must be one item or
    a comma separated list of codec names. The parameter can be a static
    string or a variable holding the list of codec names.
+
+   Optional parameter mtype can be provided to apply the operations only
+   to the streams matching m=mtype.
 
    This function can be used from ANY_ROUTE.
 
@@ -191,6 +196,9 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 
    Remove all SDP attribute lines beginning with 'string' in all media
    streams.
+
+   Optional parameter mtype can be provided to apply the operations only
+   to the streams matching m=mtype.
 
    This function can be used from ANY_ROUTE.
 
