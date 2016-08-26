@@ -1481,9 +1481,6 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
         LM_DBG("dialog %p failed (negative reply)\n", dlg);
         /* dialog setup not completed (3456XX) */
         run_dlg_callbacks(DLGCB_FAILED, dlg, req, rpl, DLG_DIR_UPSTREAM, 0);
-        /* do unref */
-        if (unref)
-            unref_dlg(dlg, unref);
 
         if (old_state == DLG_STATE_EARLY)
             counter_add(dialog_ng_cnts_h.early, -1);
