@@ -1265,15 +1265,28 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 		goto done;
 	}
 
-	if (sca_appearance_update_unsafe(app, state, &to->display, &app_uri_aor,
-			&dialog, NULL, contact_uri) < 0) {
-		sca_appearance_state_to_str(state, &state_str);
-		LM_ERR( "sca_call_info_invite_handler: failed to update appearance "
-				"%.*s appearance-index %d with dialog id %.*s to "
-				"state %.*s\n", STR_FMT( &app->owner ), app->index,
-				STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
-		rc = -1;
-		goto done;
+	if (SCA_STR_EQ(from_aor, to_aor)) {
+		if (sca_appearance_update_unsafe(app, state, NULL, NULL,
+				&dialog, NULL, contact_uri) < 0) {
+			sca_appearance_state_to_str(state, &state_str);
+			LM_ERR( "sca_call_info_invite_handler: failed to update appearance "
+					"%.*s appearance-index %d with dialog id %.*s to "
+					"state %.*s", STR_FMT( &app->owner ), app->index,
+					STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
+			rc = -1;
+			goto done;
+		}
+	} else {
+		if (sca_appearance_update_unsafe(app, state, &to->display, &app_uri_aor,
+				&dialog, NULL, contact_uri) < 0) {
+			sca_appearance_state_to_str(state, &state_str);
+			LM_ERR( "sca_call_info_invite_handler: failed to update appearance "
+					"%.*s appearance-index %d with dialog id %.*s to "
+					"state %.*s\n", STR_FMT( &app->owner ), app->index,
+					STR_FMT( &app->dialog.id ), STR_FMT( &state_str ));
+			rc = -1;
+			goto done;
+		}
 	}
 
 	rc = 1;
