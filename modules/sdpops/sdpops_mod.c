@@ -515,6 +515,7 @@ static int w_sdp_remove_line_by_prefix(sip_msg_t* msg, char* prefix, char* bar)
 static int w_sdp_remove_codecs_by_id(sip_msg_t* msg, char* codecs, char* media)
 {
 	str lcodecs = {0, 0};
+	str lmedia = {0, 0};
 
 	if(codecs==0)
 	{
@@ -1837,12 +1838,12 @@ error:
 static sr_kemi_t sr_kemi_sdpops_exports[] = {
 	{ str_init("sdpops"), str_init("remove_codecs_by_name"),
 		SR_KEMIP_INT, sdp_remove_codecs_by_name,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("sdpops"), str_init("remove_codecs_by_id"),
 		SR_KEMIP_INT, sdp_remove_codecs_by_id,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("sdpops"), str_init("keep_codecs_by_name"),
