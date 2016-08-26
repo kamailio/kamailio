@@ -32,9 +32,12 @@
 #define _DLG_CSEQ_H_
 
 #include "../../parser/msg_parser.h"
+#include "dlg_hash.h"
 
 int dlg_register_cseq_callbacks(void);
 
 int dlg_cseq_update(sip_msg_t *msg);
+int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
+		unsigned int direction);
 
 #endif
