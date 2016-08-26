@@ -525,6 +525,11 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	int slot_idx = -1;
 	int rc = -1;
 
+	LM_DBG( "From-AOR:%.*s To-AOR:%.*s From-URI:<%.*s> To-URI:<%.*s> "
+			"Contact: <%.*s> Call-Info: appearance-index=%d",
+			STR_FMT( from_aor ), STR_FMT( to_aor ),STR_FMT( &from->uri ),
+			STR_FMT( &to->uri ), STR_FMT( contact_uri ), call_info->index );
+
 	slot_idx = sca_hash_table_index_for_key(sca->appearances, from_aor);
 	sca_hash_table_lock_index(sca->appearances, slot_idx);
 
@@ -1940,7 +1945,7 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2) {
 
 	if (call_info_hdr == NULL) {
 		if ( SCA_CALL_INFO_IS_SHARED_CALLER(&call_info) && 
-			msg->first_line.type == SIP_REQUEST) {
+				msg->first_line.type == SIP_REQUEST) {
 			if (!sca_subscription_aor_has_subscribers(SCA_EVENT_TYPE_CALL_INFO,
 					&from_aor)) {
 				call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLER;
