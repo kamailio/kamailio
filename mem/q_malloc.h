@@ -116,6 +116,7 @@ struct qm_block{
 	unsigned long used; /* alloc'ed size*/
 	unsigned long real_used; /* used+malloc overhead*/
 	unsigned long max_real_used;
+	unsigned long ffrags;
 	
 	struct qm_frag* first_frag;
 	struct qm_frag_end* last_frag_end;

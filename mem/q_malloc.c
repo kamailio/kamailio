@@ -183,6 +183,7 @@ static inline void qm_insert_free(struct qm_block* qm, struct qm_frag* frag)
 	frag->u.nxt_free=f;
 	FRAG_END(f)->prev_free=frag;
 	qm->free_hash[hash].no++;
+	qm->ffrags++;
 }
 
 
@@ -389,6 +390,7 @@ void* qm_malloc(struct qm_block* qm, unsigned long size)
 		/*mark it as "busy"*/
 		f->u.is_free=0;
 		qm->free_hash[hash].no--;
+		qm->ffrags--;
 		/* we ignore split return */
 #ifdef DBG_QM_MALLOC
 		split_frag(qm, f, size, file, "fragm. from qm_malloc", line);
@@ -402,6 +404,7 @@ void* qm_malloc(struct qm_block* qm, unsigned long size)
 #ifdef MALLOC_STATS
 		sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
 		sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+		sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 #ifdef DBG_QM_MALLOC
 		f->file=file;
@@ -485,6 +488,7 @@ void qm_free(struct qm_block* qm, void* p)
 #ifdef MALLOC_STATS
 	sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
 	sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+	sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 
 #ifdef MEM_JOIN_FREE
@@ -505,6 +509,7 @@ void qm_free(struct qm_block* qm, void* p)
 			size+=next->size+FRAG_OVERHEAD;
 			qm->real_used-=FRAG_OVERHEAD;
 			qm->free_hash[GET_HASH(next->size)].no--; /* FIXME slow */
+			qm->ffrags--;
 		}
 	
 		if (f > qm->first_frag){
@@ -520,6 +525,7 @@ void qm_free(struct qm_block* qm, void* p)
 				size+=prev->size+FRAG_OVERHEAD;
 				qm->real_used-=FRAG_OVERHEAD;
 				qm->free_hash[GET_HASH(prev->size)].no--; /* FIXME slow */
+				qm->ffrags--;
 				f=prev;
 			}
 		}
@@ -608,6 +614,7 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 #ifdef MALLOC_STATS
 			sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
 			sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+			sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 		}
 		
@@ -624,6 +631,7 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 				/* join  */
 				qm_detach_free(qm, n);
 				qm->free_hash[GET_HASH(n->size)].no--; /*FIXME: slow*/
+				qm->ffrags--;
 				f->size+=n->size+FRAG_OVERHEAD;
 				qm->real_used-=FRAG_OVERHEAD;
 				FRAG_END(f)->size=f->size;
@@ -642,6 +650,7 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 #ifdef MALLOC_STATS
 				sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
 				sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+				sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 			}else{
 				/* could not join => realloc */
@@ -814,11 +823,7 @@ void qm_status(struct qm_block* qm)
 /* fills a malloc info structure with info about the block
  * if a parameter is not supported, it will be filled with 0 */
 void qm_info(struct qm_block* qm, struct mem_info* info)
-{
-	int r;
-	long total_frags;
-	
-	total_frags=0;
+{	
 	memset(info,0, sizeof(*info));
 	info->total_size=qm->size;
 	info->min_frag=MIN_FRAG_SIZE;
@@ -826,10 +831,7 @@ void qm_info(struct qm_block* qm, struct mem_info* info)
 	info->used=qm->used;
 	info->real_used=qm->real_used;
 	info->max_used=qm->max_real_used;
-	for(r=0;r<QM_HASH_SIZE; r++){
-		total_frags+=qm->free_hash[r].no;
-	}
-	info->total_frags=total_frags;
+	info->total_frags=qm->ffrags;
 }
 
 

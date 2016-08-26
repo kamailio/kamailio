@@ -213,6 +213,7 @@ static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
 	/*insert it here*/
 	frag->u.nxt_free=*f;
 	*f=frag;
+	qm->ffrags++;
 	qm->free_hash[hash].no++;
 #ifdef F_MALLOC_HASH_BITMAP
 	fm_bmp_set(qm, hash);
@@ -257,6 +258,7 @@ void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 		qm->real_used+=FRAG_OVERHEAD;
 #ifdef MALLOC_STATS
 		sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+		sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 #endif
 #ifdef DBG_F_MALLOC
@@ -420,6 +422,7 @@ found:
 	frag=*f;
 	*f=frag->u.nxt_free;
 	frag->u.nxt_free=0; /* mark it as 'taken' */
+	qm->ffrags--;	
 	qm->free_hash[hash].no--;
 #ifdef F_MALLOC_HASH_BITMAP
 	if (qm->free_hash[hash].no==0)
@@ -448,6 +451,7 @@ found:
 #ifdef MALLOC_STATS
 	sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
 	sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+	sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 #endif
 	FRAG_MARK_USED(frag); /* mark it as used */
@@ -482,6 +486,7 @@ static void fm_join_frag(struct fm_block* qm, struct fm_frag* f)
 	}
 	/* detach */
 	*pf=n->u.nxt_free;
+	qm->ffrags--;
 	qm->free_hash[hash].no--;
 #ifdef F_MALLOC_HASH_BITMAP
 	if (qm->free_hash[hash].no==0)
@@ -549,6 +554,7 @@ void fm_free(struct fm_block* qm, void* p)
 #ifdef MALLOC_STATS
 	sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
 	sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+	sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 #endif
 #ifdef DBG_F_MALLOC
@@ -635,6 +641,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #ifdef MALLOC_STATS
 		sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
 		sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+		sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 #endif
 	}else if (f->size<size){
@@ -660,6 +667,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 			}
 			/* detach */
 			*pf=n->u.nxt_free;
+			qm->ffrags--;
 			qm->free_hash[hash].no--;
 #ifdef F_MALLOC_HASH_BITMAP
 			if (qm->free_hash[hash].no==0)
@@ -688,6 +696,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #ifdef MALLOC_STATS
 			sr_event_exec(SREV_PKG_SET_USED, (void*)qm->used);
 			sr_event_exec(SREV_PKG_SET_REAL_USED, (void*)qm->real_used);
+			sr_event_exec(SREV_PKG_SET_FRAGS, (void*)qm->ffrags);
 #endif
 		#endif
 		}else{
