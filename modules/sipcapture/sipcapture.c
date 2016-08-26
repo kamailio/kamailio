@@ -1860,7 +1860,14 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	else if((tmphdr[3] = get_hdr_by_name(msg,"RTP-RxStat", 10)) != NULL) {
 		sco.rtp_stat =  tmphdr[3]->body;
 	}
-
+	/* X-RTP-Stat-Add */
+	else if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat-Add", 14)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}
+	/* X-RTP-Stat-T38 */
+	else if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat-T38", 14)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}
 	else { EMPTY_STR(sco.rtp_stat); }
 
 
