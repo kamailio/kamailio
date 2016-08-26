@@ -72,7 +72,7 @@
 #define VARS_KEY_COL				"dialog_key"
 #define VARS_VALUE_COL				"dialog_value"
 #define DIALOG_VARS_TABLE_NAME		"dialog_vars"
-#define DLG_VARS_TABLE_VERSION		1
+#define DLG_VARS_TABLE_VERSION		7
 #define DIALOG_VARS_TABLE_COL_NO 	4
 
 /*every minute the dialogs' information will be refreshed*/
