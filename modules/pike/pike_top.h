@@ -24,6 +24,8 @@
 #include "ip_tree.h"
 #include "../../ip_addr.h"
 
+#define PIKE_BUFF_SIZE  128
+
 struct TopListItem_t {
 	int             addr_len;
 	unsigned char   ip_addr[45];	/*!< Make room for IPv6 */
