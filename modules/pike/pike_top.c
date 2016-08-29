@@ -33,7 +33,6 @@
 static struct TopListItem_t *top_list_root = 0;
 static struct TopListItem_t *top_list_iter = 0;
 
-#define PIKE_BUFF_SIZE	128
 static char buff[PIKE_BUFF_SIZE];
 
 struct TopListItem_t *pike_top_get_root() { return top_list_root; }
