@@ -28,6 +28,7 @@ typedef int (*sdp_with_transport_t)(struct sip_msg*, str*, int);
 typedef int (*sdp_with_ice_t)(struct sip_msg*);
 typedef int (*sdp_keep_media_t)(struct sip_msg*, str*, str*);
 typedef int (*sdp_remove_media_t)(struct sip_msg*, str*);
+typedef int (*sdp_remove_media_type_t)(struct sip_msg*, str*, str*);
 
 typedef struct sdpops_binds {
 	sdp_with_media_t     sdp_with_media;
@@ -41,8 +42,8 @@ typedef struct sdpops_binds {
 	sdp_remove_media_t   sdp_remove_media;
 	sdp_remove_media_t   sdp_remove_transport;
 	sdp_remove_media_t   sdp_remove_line_by_prefix;
-	sdp_remove_media_t   sdp_remove_codecs_by_id;
-	sdp_remove_media_t   sdp_remove_codecs_by_name;
+	sdp_remove_media_type_t   sdp_remove_codecs_by_id;
+	sdp_remove_media_type_t   sdp_remove_codecs_by_name;
 } sdpops_api_t;
 
 typedef int (*bind_sdpops_f)(sdpops_api_t*);

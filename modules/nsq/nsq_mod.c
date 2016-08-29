@@ -273,7 +273,7 @@ int nsq_consumer_worker_proc(int cmd_pipe, char *topic, char *channel)
 
 	LM_DBG("NSQ Worker connecting to NSQ Topic [%s] and NSQ Channel [%s]\n", topic, channel);
 	// setup the reader
-	rdr = new_nsq_reader(loop, topic, channel, (void *)ctx, NULL, NULL, nsq_message_handler);
+	rdr = new_nsq_reader(loop, topic, channel, (void *)ctx, NULL, NULL, NULL, nsq_message_handler);
 
 	if (consumer_use_nsqd == 0) {
 		snprintf(address, 128, "%.*s", nsq_lookupd_address.len, nsq_lookupd_address.s);

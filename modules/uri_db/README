@@ -41,7 +41,8 @@ Bogdan-Andrei Iancu
 
               4.1. check_to()
               4.2. check_from()
-              4.3. does_uri_exist()
+              4.3. check_uri(uri)
+              4.4. does_uri_exist()
 
    List of Examples
 
@@ -54,7 +55,8 @@ Bogdan-Andrei Iancu
    1.7. Set use_domain parameter
    1.8. check_to usage
    1.9. check_from usage
-   1.10. does_uri_exist usage
+   1.10. check_uri usage
+   1.11. does_uri_exist usage
 
 Chapter 1. Admin Guide
 
@@ -80,7 +82,8 @@ Chapter 1. Admin Guide
 
         4.1. check_to()
         4.2. check_from()
-        4.3. does_uri_exist()
+        4.3. check_uri(uri)
+        4.4. does_uri_exist()
 
 1. Overview
 
@@ -204,7 +207,8 @@ modparam("uri_db", "use_domain", 1)
 
    4.1. check_to()
    4.2. check_from()
-   4.3. does_uri_exist()
+   4.3. check_uri(uri)
+   4.4. does_uri_exist()
 
 4.1.  check_to()
 
@@ -234,7 +238,25 @@ if (check_from()) {
 };
 ...
 
-4.3.  does_uri_exist()
+4.3.  check_uri(uri)
+
+   Check the username from the given uri against URI table (if
+   use_uri_table is set) or digest credentials (no DB backend required).
+
+   Description of parameters:
+     * uri Has to be a valid SIP URI, used to extract the username from.
+       The parameter can be a static or dynamic (with variables) string.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.10. check_uri usage
+...
+if (check_uri("$var(uri)")) {
+        ...
+};
+...
+
+4.4.  does_uri_exist()
 
    Check if username in the request URI belongs to an existing user.
 
@@ -243,7 +265,7 @@ if (check_from()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.10. does_uri_exist usage
+   Example 1.11. does_uri_exist usage
 ...
 if (does_uri_exist()) {
         ...

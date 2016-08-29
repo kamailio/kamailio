@@ -1840,8 +1840,16 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 		sco.originator_port = 0;
 	}
 
+	/* X-RTP-Stat-Add */
+	if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat-Add", 14)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}
+	/* X-RTP-Stat-T38 */
+	else if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat-T38", 14)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}
 	/* X-RTP-Stat */
-	if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat", 10)) != NULL) {
+	else if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat", 10)) != NULL) {
 		sco.rtp_stat =  tmphdr[3]->body;
 	}
 	/* P-RTP-Stat */
@@ -1860,9 +1868,7 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	else if((tmphdr[3] = get_hdr_by_name(msg,"RTP-RxStat", 10)) != NULL) {
 		sco.rtp_stat =  tmphdr[3]->body;
 	}
-
 	else { EMPTY_STR(sco.rtp_stat); }
-
 
 	/* PROTO TYPE */
 	sco.proto = msg->rcv.proto;
@@ -2662,7 +2668,7 @@ static int nosip_hep_msg(void *data)
 {
         sip_msg_t* msg;
         char *buf;
-        unsigned int len = 0;
+        int len = 0;
         struct run_act_ctx ra_ctx;
         int ret = 0;
 

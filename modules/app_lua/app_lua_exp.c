@@ -2220,7 +2220,7 @@ static int lua_sr_sdpops_remove_codecs_by_id(lua_State *L)
 	codecs.s = (char*)lua_tostring(L, -1);
 	codecs.len = strlen(codecs.s);
 
-	ret = _lua_sdpopsb.sdp_remove_codecs_by_id(env_L->msg, &codecs);
+	ret = _lua_sdpopsb.sdp_remove_codecs_by_id(env_L->msg, &codecs, NULL);
 
 	return app_lua_return_int(L, ret);
 }
@@ -2257,7 +2257,7 @@ static int lua_sr_sdpops_remove_codecs_by_name(lua_State *L)
 	codecs.s = (char*)lua_tostring(L, -1);
 	codecs.len = strlen(codecs.s);
 
-	ret = _lua_sdpopsb.sdp_remove_codecs_by_name(env_L->msg, &codecs);
+	ret = _lua_sdpopsb.sdp_remove_codecs_by_name(env_L->msg, &codecs, NULL);
 
 	return app_lua_return_int(L, ret);
 }

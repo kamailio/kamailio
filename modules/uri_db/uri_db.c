@@ -30,6 +30,7 @@
 #include "../../ut.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../mod_fix.h"
 #include "uri_db.h"
 #include "checks.h"
 
@@ -78,6 +79,8 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"check_from",     (cmd_function)check_from,     0, 0, 0,
 		REQUEST_ROUTE},
+	{"check_uri",      (cmd_function)check_uri,      1, fixup_spve_null, 0,
+        REQUEST_ROUTE},
 	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist,
 		REQUEST_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}

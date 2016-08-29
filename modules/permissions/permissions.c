@@ -1016,8 +1016,8 @@ rpc_export_t permissions_rpc[] = {
 	{"permissions.trustedReload", rpc_trusted_reload, rpc_trusted_reload_doc, 0},
 	{"permissions.addressReload", rpc_address_reload, rpc_address_reload_doc, 0},
 	{"permissions.trustedDump", rpc_trusted_dump, rpc_trusted_dump_doc, 0},
-	{"permissions.addressDump", rpc_address_dump, rpc_address_dump_doc, 0},
-	{"permissions.subnetDump", rpc_subnet_dump, rpc_subnet_dump_doc, 0},
+	{"permissions.addressDump", rpc_address_dump, rpc_address_dump_doc, RET_ARRAY},
+	{"permissions.subnetDump", rpc_subnet_dump, rpc_subnet_dump_doc, RET_ARRAY},
 	{"permissions.domainDump", rpc_domain_name_dump, rpc_domain_name_dump_doc, 0},
 	{"permissions.testUri", rpc_test_uri, rpc_test_uri_doc, 0},
 	{0, 0, 0, 0}

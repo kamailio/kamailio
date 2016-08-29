@@ -215,6 +215,7 @@ void free_hdr_field_lst(struct hdr_field* hf)
 		hf=hf->next;
 		clean_hdr_field(foo);
 		pkg_free(foo);
+		foo = 0;
 	}
 }
 

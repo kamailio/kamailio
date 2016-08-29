@@ -102,9 +102,12 @@ void free_lump_rpl(struct lump_rpl* lump)
 {
 	if (lump) {
 		if (!((lump->flags)&LUMP_RPL_NOFREE) && ((lump->flags)&LUMP_RPL_NODUP)
-		&& lump->text.s)
+		&& lump->text.s) {
 			pkg_free(lump->text.s);
+			lump->text.s = 0;
+		}
 		pkg_free(lump);
+		lump = 0;
 	}
 }
 

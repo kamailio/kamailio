@@ -298,9 +298,8 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 
 	/* extract the contact address */
 	if(parse_headers(msg, HDR_CONTACT_F, 0)<0 || msg->contact==NULL) {
-		if(td->s_method_id == METHOD_MESSAGE
-				|| td->s_method_id == METHOD_OPTIONS) {
-			/* no contact required for MESSAGE - done */
+		if(td->s_method_id != METHOD_INVITE) {
+			/* no mandatory contact unless is INVITE - done */
 			return 0;
 		}
 		LM_ERR("bad sip message or missing Contact hdr\n");

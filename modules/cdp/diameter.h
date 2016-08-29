@@ -47,6 +47,7 @@
 
 #include "utils.h"
 #include <ctype.h>
+#include "../../endianness.h"
 
 #include "diameter_code_result.h"
 #include "diameter_code_avp.h"
@@ -104,7 +105,7 @@
 	AVP_VENDOR_ID_SIZE*(((_flags_)&AAA_AVP_FLAG_VENDOR_SPECIFIC)!=0) )
 
 /* mesage codes */
-#ifndef WORDS_BIGENDIAN
+#ifndef __IS_BIG_ENDIAN
 	#define AS_MSG_CODE      0x12010000
 	#define AC_MSG_CODE      0x0f010000
 	#define CE_MSG_CODE      0x01010000
