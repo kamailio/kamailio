@@ -44,7 +44,6 @@ typedef struct _mq_item
 {
 	str key;
 	str val;
-	struct _mq_item *prev;
 	struct _mq_item *next;
 } mq_item_t;
 
@@ -266,8 +265,6 @@ int mq_head_fetch(str *name)
 	mh->ifirst = mh->ifirst->next;
 	if(mh->ifirst==NULL) {
 		mh->ilast = NULL;
-	} else {
-		mh->ifirst->prev = NULL;
 	}
 	mh->csize--;
 
@@ -332,7 +329,6 @@ int mq_item_add(str *qname, str *key, str *val)
 		mh->ilast = mi;
 	} else {
 		mh->ilast->next = mi;
-		mi->prev = mh->ilast;
 		mh->ilast = mi;
 	}
 	mh->csize++;
@@ -341,9 +337,9 @@ int mq_item_add(str *qname, str *key, str *val)
 		mi = mh->ifirst;
 		mh->ifirst = mh->ifirst->next;
 		if(mh->ifirst==NULL)
+		{
 			mh->ilast = NULL;
-		else
-			mh->ifirst->prev = NULL;
+		}
 		mh->csize--;
 		shm_free(mi);
 	}

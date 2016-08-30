@@ -396,7 +396,7 @@ int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
 		return -1;
 
 	/* statefull replies have the branch_index set */
-	if(msg->first_line.type == SIP_REPLY && route_type != CORE_ONREPLY_ROUTE) {
+	if(msg->first_line.type == SIP_REPLY) {
 		tcx = _tmx_tmb.tm_ctx_get();
 		if(tcx != NULL)
 			idx = tcx->branch_index;
