@@ -296,6 +296,7 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 	int i;
 	int vlen;
 	int r2;
+	int isreq;
 
 	if(ptsd->cp==NULL) {
 		ptsd->cp = ptsd->cbuf;
@@ -344,6 +345,7 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 	ptsd->s_rr.len = 0;
 	i = 0;
 	r2 = 0;
+	isreq = (msg->first_line.type==SIP_REQUEST)?1:0;
 	for(hdr=msg->record_route; hdr; hdr=next_sibling_hdr(hdr)) {
 		if (parse_rr(hdr) < 0) {
 			LM_ERR("failed to parse RR\n");
@@ -356,67 +358,84 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 				LM_ERR("no more spage to pack rr headers\n");
 				return -1;
 			}
-			if(i>1) {
-				if(i==2 &&r2==0) {
-					ptsd->s_rr.len = ptsd->a_rr.len;
+			if(isreq==1) {
+				/* sip request - get a+s-side record route */
+				if(i>1) {
+					if(i==2 &&r2==0) {
+						ptsd->s_rr.len = ptsd->a_rr.len;
+					}
+					if(i==3 &&r2==1) {
+						ptsd->s_rr.len = ptsd->a_rr.len;
+					}
+					*ptsd->cp = ',';
+					ptsd->cp++;
+					ptsd->a_rr.len++;
 				}
-				if(i==3 &&r2==1) {
-					ptsd->s_rr.len = ptsd->a_rr.len;
+				*ptsd->cp = '<';
+				if(i==1) {
+					ptsd->a_rr.s = ptsd->cp;
+					ptsd->s_rr.s = ptsd->cp;
 				}
-				*ptsd->cp = ',';
+				if(i==2 && r2==0) {
+					ptsd->a_rr.s = ptsd->cp;
+					ptsd->a_rr.len = 0;
+				}
+				if(i==3 && r2==1) {
+					ptsd->a_rr.s = ptsd->cp;
+					ptsd->a_rr.len = 0;
+				}
+
 				ptsd->cp++;
 				ptsd->a_rr.len++;
-			}
-			*ptsd->cp = '<';
-			if(i==1) {
-				ptsd->a_rr.s = ptsd->cp;
-				ptsd->s_rr.s = ptsd->cp;
-			}
-			if(i==2 && r2==0) {
-				ptsd->a_rr.s = ptsd->cp;
-				ptsd->a_rr.len = 0;
-			}
-			if(i==3 && r2==1) {
-				ptsd->a_rr.s = ptsd->cp;
-				ptsd->a_rr.len = 0;
-			}
 
-			ptsd->cp++;
-			ptsd->a_rr.len++;
-
-			memcpy(ptsd->cp, rr->nameaddr.uri.s, rr->nameaddr.uri.len);
-			if(i==1) {
-				ptsd->bs_contact.s = ptsd->cp;
-				ptsd->bs_contact.len = rr->nameaddr.uri.len;
-				if(_strnstr(ptsd->bs_contact.s, ";r2=on",
-							ptsd->bs_contact.len)==0) {
-					LM_DBG("single record routing by proxy\n");
-					ptsd->as_contact.s = ptsd->cp;
-					ptsd->as_contact.len = rr->nameaddr.uri.len;
+				memcpy(ptsd->cp, rr->nameaddr.uri.s, rr->nameaddr.uri.len);
+				if(i==1) {
+					ptsd->bs_contact.s = ptsd->cp;
+					ptsd->bs_contact.len = rr->nameaddr.uri.len;
+					if(_strnstr(ptsd->bs_contact.s, ";r2=on",
+								ptsd->bs_contact.len)==0) {
+						LM_DBG("single record routing by proxy\n");
+						ptsd->as_contact.s = ptsd->cp;
+						ptsd->as_contact.len = rr->nameaddr.uri.len;
+					} else {
+						r2 = 1;
+					}
 				} else {
-					r2 = 1;
+					if(i==2 && ptsd->as_contact.len==0) {
+						LM_DBG("double record routing by proxy\n");
+						ptsd->as_contact.s = ptsd->cp;
+						ptsd->as_contact.len = rr->nameaddr.uri.len;
+					}
 				}
+				ptsd->a_rr.len += rr->nameaddr.uri.len;
+				ptsd->cp += rr->nameaddr.uri.len;
+				*ptsd->cp = '>';
+				ptsd->cp++;
+				ptsd->a_rr.len++;
 			} else {
-				if(i==2 && ptsd->as_contact.len==0) {
-					LM_DBG("double record routing by proxy\n");
-					ptsd->as_contact.s = ptsd->cp;
-					ptsd->as_contact.len = rr->nameaddr.uri.len;
-				}
+				/* sip response - get b-side record route */
+				*ptsd->cp = '<';
+				ptsd->b_rr.s = ptsd->cp;
+				ptsd->cp++;
+				ptsd->b_rr.len++;
+				memcpy(ptsd->cp, rr->nameaddr.uri.s, rr->nameaddr.uri.len);
+				ptsd->cp += rr->nameaddr.uri.len;
+				ptsd->b_rr.len += rr->nameaddr.uri.len;
+				*ptsd->cp = '>';
+				ptsd->cp++;
+				ptsd->b_rr.len++;
 			}
-			ptsd->a_rr.len += rr->nameaddr.uri.len;
-			ptsd->cp += rr->nameaddr.uri.len;
-			*ptsd->cp = '>';
-			ptsd->cp++;
-			ptsd->a_rr.len++;
 		}
 	}
-	if(i==1) {
-		ptsd->s_rr.len = ptsd->a_rr.len;
-		ptsd->a_rr.len = 0;
-	}
-	if(i==2 && r2==1) {
-		ptsd->s_rr.len = ptsd->a_rr.len;
-		ptsd->a_rr.len = 0;
+	if(isreq==1) {
+		if(i==1) {
+			ptsd->s_rr.len = ptsd->a_rr.len;
+			ptsd->a_rr.len = 0;
+		}
+		if(i==2 && r2==1) {
+			ptsd->s_rr.len = ptsd->a_rr.len;
+			ptsd->a_rr.len = 0;
+		}
 	}
 	LM_DBG("compacted headers - a_rr: [%.*s](%d) - b_rr: [%.*s](%d)"
 			" - s_rr: [%.*s](%d)\n",
