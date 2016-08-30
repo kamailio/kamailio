@@ -28,6 +28,7 @@
 #define SCA_H
 
 struct _sca_config {
+	str *outbound_proxy;
 	str *db_url;
 	str *subs_table;
 	str *state_table;

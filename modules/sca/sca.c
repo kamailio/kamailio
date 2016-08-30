@@ -67,44 +67,38 @@ static void sca_mod_destroy(void);
 static int sca_set_config(sca_mod *);
 
 /* EXPORTED COMMANDS */
-static cmd_export_t cmds[] = {
-		{ "sca_handle_subscribe", sca_handle_subscribe,
-				0, NULL, REQUEST_ROUTE },
-		{ "sca_call_info_update", sca_call_info_update,
-				0, NULL, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-		{"sca_call_info_update", sca_call_info_update,
-				1, fixup_var_int_1, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-		{ NULL, NULL, -1, 0, 0 },
-};
+static cmd_export_t cmds[] = { { "sca_handle_subscribe", sca_handle_subscribe,
+		0, NULL, REQUEST_ROUTE }, { "sca_call_info_update",
+		sca_call_info_update, 0, NULL,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE }, {
+		"sca_call_info_update", sca_call_info_update, 1, fixup_var_int_1,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+		{ NULL, NULL, -1, 0, 0 }, };
 
 /* EXPORTED RPC INTERFACE */
-static rpc_export_t sca_rpc[] = {
-		{ "sca.all_subscriptions", sca_rpc_show_all_subscriptions,
-				sca_rpc_show_all_subscriptions_doc, 0 },
+static rpc_export_t sca_rpc[] = { { "sca.all_subscriptions",
+		sca_rpc_show_all_subscriptions, sca_rpc_show_all_subscriptions_doc, 0 },
 		{ "sca.subscription_count", sca_rpc_subscription_count,
-				sca_rpc_subscription_count_doc, 0 },
-		{ "sca.show_subscription", sca_rpc_show_subscription,
-				sca_rpc_show_subscription_doc, 0 },
-		{"sca.subscribers", sca_rpc_show_subscribers,
-				sca_rpc_show_subscribers_doc, 0 },
-		{"sca.deactivate_all_subscriptions", sca_rpc_deactivate_all_subscriptions,
-				sca_rpc_deactivate_all_subscriptions_doc, 0 },
-		{"sca.deactivate_subscription", sca_rpc_deactivate_subscription,
-				sca_rpc_deactivate_subscription_doc, 0 },
-		{"sca.all_appearances", sca_rpc_show_all_appearances,
-				sca_rpc_show_all_appearances_doc, 0 },
-		{ "sca.show_appearance", sca_rpc_show_appearance,
-				sca_rpc_show_appearance_doc, 0 },
-		{"sca.seize_appearance", sca_rpc_seize_appearance,
-				sca_rpc_seize_appearance_doc, 0 },
-		{ "sca.update_appearance", sca_rpc_update_appearance,
-				sca_rpc_update_appearance_doc, 0 },
-		{"sca.release_appearance", sca_rpc_release_appearance,
-				sca_rpc_release_appearance_doc, 0 },
-		{ NULL, NULL, NULL, 0 },
-};
+				sca_rpc_subscription_count_doc, 0 }, { "sca.show_subscription",
+				sca_rpc_show_subscription, sca_rpc_show_subscription_doc, 0 }, {
+				"sca.subscribers", sca_rpc_show_subscribers,
+				sca_rpc_show_subscribers_doc, 0 }, {
+				"sca.deactivate_all_subscriptions",
+				sca_rpc_deactivate_all_subscriptions,
+				sca_rpc_deactivate_all_subscriptions_doc, 0 }, {
+				"sca.deactivate_subscription", sca_rpc_deactivate_subscription,
+				sca_rpc_deactivate_subscription_doc, 0 }, {
+				"sca.all_appearances", sca_rpc_show_all_appearances,
+				sca_rpc_show_all_appearances_doc, 0 }, { "sca.show_appearance",
+				sca_rpc_show_appearance, sca_rpc_show_appearance_doc, 0 }, {
+				"sca.seize_appearance", sca_rpc_seize_appearance,
+				sca_rpc_seize_appearance_doc, 0 }, { "sca.update_appearance",
+				sca_rpc_update_appearance, sca_rpc_update_appearance_doc, 0 }, {
+				"sca.release_appearance", sca_rpc_release_appearance,
+				sca_rpc_release_appearance_doc, 0 }, { NULL, NULL, NULL, 0 }, };
 
 /* EXPORTED PARAMETERS */
+str outbound_proxy = STR_NULL;
 str db_url = STR_STATIC_INIT( DEFAULT_DB_URL );
 str db_subs_table = STR_STATIC_INIT( "sca_subscriptions" );
 str db_state_table = STR_STATIC_INIT( "sca_state" );
@@ -114,29 +108,27 @@ int call_info_max_expires = 3600;
 int line_seize_max_expires = 15;
 int purge_expired_interval = 120;
 
-static param_export_t params[] = {
-		{ "db_url", PARAM_STR, &db_url },
-		{ "subs_table", PARAM_STR, &db_subs_table },
-		{ "state_table", PARAM_STR, &db_state_table },
-		{ "db_update_interval", INT_PARAM, &db_update_interval },
-		{ "hash_table_size", INT_PARAM, &hash_table_size },
-		{ "call_info_max_expires", INT_PARAM, &call_info_max_expires },
-		{ "line_seize_max_expires", INT_PARAM, &line_seize_max_expires },
-		{"purge_expired_interval", INT_PARAM, &purge_expired_interval },
-		{ NULL, 0, NULL },
-};
+static param_export_t params[] = { { "outbound_proxy", PARAM_STR,
+		&outbound_proxy }, { "db_url", PARAM_STR, &db_url }, { "subs_table",
+		PARAM_STR, &db_subs_table },
+		{ "state_table", PARAM_STR, &db_state_table }, { "db_update_interval",
+				INT_PARAM, &db_update_interval }, { "hash_table_size",
+				INT_PARAM, &hash_table_size }, { "call_info_max_expires",
+				INT_PARAM, &call_info_max_expires }, { "line_seize_max_expires",
+				INT_PARAM, &line_seize_max_expires }, {
+				"purge_expired_interval", INT_PARAM, &purge_expired_interval },
+		{ NULL, 0, NULL }, };
 
 /* MODULE EXPORTS */
-struct module_exports exports = {
-		"sca", /* module name */
-		cmds, /* exported functions */
-		NULL, /* RPC methods */
-		params, /* exported parameters */
-		sca_mod_init, /* module initialization function */
-		NULL, /* response handling function */
-		sca_mod_destroy, /* destructor function */
-		NULL, /* oncancel function */
-		sca_child_init, /* per-child initialization function */
+struct module_exports exports = { "sca", /* module name */
+cmds, /* exported functions */
+NULL, /* RPC methods */
+params, /* exported parameters */
+sca_mod_init, /* module initialization function */
+NULL, /* response handling function */
+sca_mod_destroy, /* destructor function */
+NULL, /* oncancel function */
+sca_child_init, /* per-child initialization function */
 };
 
 static int sca_bind_sl(sca_mod *scam, sl_api_t *sl_api) {
@@ -214,6 +206,10 @@ static int sca_set_config(sca_mod *scam) {
 		return (-1);
 	}
 	memset(scam->cfg, 0, sizeof(sca_config));
+
+	if (outbound_proxy.s) {
+		scam->cfg->outbound_proxy = &outbound_proxy;
+	}
 
 	if (!db_url.s || db_url.len <= 0) {
 		LM_ERR( "sca_set_config: db_url must be set!\n" );
