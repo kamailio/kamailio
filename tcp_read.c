@@ -1275,7 +1275,7 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 	struct dest_info dst;
 	char c;
 	int ret;
-		
+
 		bytes=-1;
 		total_bytes=0;
 		resp=CONN_RELEASE;
@@ -1289,6 +1289,15 @@ again:
 			else
 #endif
 				bytes=tcp_read_headers(con, read_flags);
+
+			if (unlikely(bytes==-1)){
+				LOG(cfg_get(core, core_cfg, corelog),
+						"ERROR: tcp_read_req: error reading - c: %p r: %p\n",
+						con, req);
+				resp=CONN_ERROR;
+				goto end_req;
+			}
+
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
 			LM_DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
@@ -1298,12 +1307,6 @@ again:
 					*(req->parsed-1), (int)(req->parsed-req->start),
 					req->start);
 #endif
-			if (unlikely(bytes==-1)){
-				LOG(cfg_get(core, core_cfg, corelog),
-						"ERROR: tcp_read_req: error reading \n");
-				resp=CONN_ERROR;
-				goto end_req;
-			}
 			total_bytes+=bytes;
 			/* eof check:
 			 * is EOF if eof on fd and req.  not complete yet,
