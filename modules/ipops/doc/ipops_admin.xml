@@ -383,7 +383,7 @@ switch($rc) {
           <para>
             <itemizedlist>
               <listitem>  
-		<emphasis> IPv4 </emphasis> - PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+		<emphasis> IPv4 </emphasis> - PUBLIC, RIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
  	      </listitem>
 	      <listitem>  
 		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST     
@@ -450,7 +450,7 @@ switch($rc) {
           <para>
             <itemizedlist>
               <listitem>  
-		<emphasis> IPv4 </emphasis> - PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+		<emphasis> IPv4 </emphasis> - PUBLIC, PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
  	      </listitem>	                 
   	    </itemizedlist>		
 	  </para>	
@@ -514,7 +514,7 @@ switch($rc) {
           <para>
             <itemizedlist>
               <listitem>  
-		<emphasis> IPv6 </emphasis> - PRIVATE, SHARED, LOOPBACK, LINK-LOCAL, RESERVED, TEST-NET, 6TO4-RELAY, MULTICAST, BROADCAST     
+		<emphasis> IPv6 </emphasis> - UNSPECIFIED,  LOOPBACK, IPV4MAP, RESERVED, DISCARD, GLOBAL-UNICAST, TEREDO, BMWG, DOCUMENTATION, ORCHID, 6TO4, UNIQUE-LOCAL-UNICAST, LINK-LOCAL-UNICAST, MULTICAST    
  	      </listitem>	                 
   	    </itemizedlist>		
 	  </para>	
