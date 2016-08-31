@@ -1313,7 +1313,7 @@ again:
 			 * if req. is complete we might have a second unparsed
 			 * request after it, so postpone release_with_eof
 			 */
-			if (unlikely((con->state==S_CONN_EOF) && 
+			if (unlikely((con->state==S_CONN_EOF) &&
 						(! TCP_REQ_COMPLETE(req)))) {
 				LM_DBG("EOF\n");
 				resp=CONN_EOF;
@@ -1321,10 +1321,19 @@ again:
 			}
 		}
 		if (unlikely(req->error!=TCP_REQ_OK)){
-			LM_ERR("bad request, state=%d, error=%d buf:\n%.*s\nparsed:\n%.*s\n",
+			if(req->buf!=NULL && req->start!=NULL && req->pos!=NULL
+					&& req->pos>=req->buf && req->parsed>=req->start) {
+				LM_ERR("bad request, state=%d, error=%d buf:\n%.*s\nparsed:\n%.*s\n",
 					req->state, req->error,
 					(int)(req->pos-req->buf), req->buf,
 					(int)(req->parsed-req->start), req->start);
+			} else {
+				LM_ERR("bad request, state=%d, error=%d buf:%d - %p,"
+						" parsed:%d - %p\n",
+					req->state, req->error,
+					(int)(req->pos-req->buf), req->buf,
+					(int)(req->parsed-req->start), req->start);
+			}
 			LM_DBG("received from: port %d\n", con->rcv.src_port);
 			print_ip("received from: ip", &con->rcv.src_ip, "\n");
 			resp=CONN_ERROR;
