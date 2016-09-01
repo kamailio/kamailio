@@ -383,9 +383,10 @@ int dlg_cseq_msg_sent(void *data)
 		goto done;
 	}
 
+	parse_headers(&msg, HDR_EOH_F, 0);
+
 	/* check if transaction is marked for a new increment */
 	if(get_cseq(&msg)->method_id!=METHOD_ACK) {
-		parse_headers(&msg, HDR_EOH_F, 0);
 		hfk = sr_hdr_get_z(&msg, "P-K-Auth-CSeq");
 		if(hfk!=NULL) {
 			LM_DBG("new cseq inc requested\n");
@@ -405,6 +406,7 @@ int dlg_cseq_msg_sent(void *data)
 		}
 	}
 	if(nval.len<=0) {
+		LM_DBG("cseq refresh requested, but no new value found\n");
 		goto done;
 	}
 
