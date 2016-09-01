@@ -50,11 +50,11 @@ typedef enum {
 #define PATH_PREFIX_LEN		(sizeof(PATH_PREFIX)-1)
 
 const static char *proto_strings[] = {
-	[PROTO_TCP] = "%3Btransport%3Dtcp",
-	[PROTO_TLS] = "%3Btransport%3Dtls",
-	[PROTO_SCTP] = "%3Btransport%3Dsctp",
-	[PROTO_WS] = "%3Btransport%3Dws",
-	[PROTO_WSS] = "%3Btransport%3Dws",
+	[PROTO_TCP] = ";transport=tcp",
+	[PROTO_TLS] = ";transport=tls",
+	[PROTO_SCTP] = ";transport=sctp",
+	[PROTO_WS] = ";transport=ws",
+	[PROTO_WSS] = ";transport=ws",
 };
 
 static int prepend_path(struct sip_msg* _m, str *user, path_param_t param, str *add_params)
@@ -66,7 +66,7 @@ static int prepend_path(struct sip_msg* _m, str *user, path_param_t param, str *
 	struct hdr_field *hf;
 
 	/* maximum possible length of suffix */
-	suffix_len = strlen(";lr;received=sip::12345%3Btransport%3Dsctp;ob;>\r\n")
+	suffix_len = strlen(";lr;received=sip::12345;transport=sctp;ob;>\r\n")
 			+ IP_ADDR_MAX_STR_SIZE + 2 + (add_params ? add_params->len : 0) + 1;
 
 	cp = suffix = pkg_malloc(suffix_len);
