@@ -98,7 +98,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -113,7 +113,7 @@
 
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="path.p.use_received">
 		<title><varname>use_received</varname> (int)</title>
 		<para>
 		If set to 1, the <quote>received</quote> parameter of the first Route &uri; is evaluated and
@@ -137,12 +137,12 @@ modparam("path", "use_received", 1)
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="path.f.add_path">
 		<title>
 		<function moreinfo="none">add_path()</function>
 		</title>
 		<para>
-		This function is used to insert a Path header in the form 
+		This function is used to insert a Path header in the form
 		<quote>Path: &lt;sip:1.2.3.4;lr&gt;</quote>, where <quote>1.2.3.4</quote> is the address
 		of the outgoing interface.
 		</para>
@@ -170,12 +170,12 @@ if (!add_path()) {
 		</example>
 	</section>
 
-	<section>
+	<section id="path.f.add_path_u">
 		<title>
 		<function moreinfo="none">add_path(user)</function>
 		</title>
 		<para>
-		This function adds a Path header in the form 
+		This function adds a Path header in the form
 		<quote>Path: &lt;sip:user@1.2.3.4;lr&gt;</quote>.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
@@ -203,12 +203,12 @@ if (!add_path("loadbalancer")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="path.f.add_path_up">
 		<title>
 		<function moreinfo="none">add_path(user, parameters)</function>
 		</title>
 		<para>
-		This function adds a Path header in the form 
+		This function adds a Path header in the form
 		<quote>Path: &lt;sip:user@1.2.3.4;lr&gt;</quote> and appends the
 		given <emphasis>parameters</emphasis> as additional URI parameters.
 		</para>
@@ -245,13 +245,13 @@ if (!add_path("loadbalancer", "ob")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="path.f.add_path_rcv">
 		<title>
 		<function moreinfo="none">add_path_received()</function>
 		</title>
 		<para>
-		This function adds a Path header in the form 
-		<quote>Path: &lt;sip:1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting its own 
+		This function adds a Path header in the form
+		<quote>Path: &lt;sip:1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting its own
 		outgoing address as domain-part, and the address the request has been received from as
 		received-parameter.
 		</para>
@@ -271,14 +271,14 @@ if (!add_path_received()) {
 		</example>
 	</section>
 
-	<section>
+	<section id="path.f.add_path_rcv_u">
 		<title>
 		<function moreinfo="none">add_path_received(user)</function>
 		</title>
 		<para>
-		This function adds a Path header in the form 
+		This function adds a Path header in the form
 		<quote>Path: &lt;sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting
-		'user' as username part of address, its own 
+		'user' as username part of address, its own
 		outgoing address as domain-part, and the address the request has been received from as
 		received-parameter.
 		</para>
@@ -298,14 +298,14 @@ if (!add_path_received("inbound")) {
 		</example>
 	</section>
 
-	<section>
+	<section id="path.f.add_path_rcv_up">
 		<title>
 		<function moreinfo="none">add_path_received(user, parameters)</function>
 		</title>
 		<para>
-		This function adds a Path header in the form 
+		This function adds a Path header in the form
 		<quote>Path: &lt;sip:user@1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>, setting
-		'user' as username part of address, its own 
+		'user' as username part of address, its own
 		outgoing address as domain-part, and the address the request has been received from as
 		received-parameter.
 		</para>
