@@ -51,10 +51,12 @@
 #include "../../mod_fix.h"
 #include "../../pvar.h"
 #include "../../resolve.h"
+#include "../../lvalue.h"
 #include "api.h"
 #include "ipops_pv.h"
 #include "ip_parser.h"
 #include "rfc1918_parser.h"
+#include "detailed_ip_type.h"
 
 MODULE_VERSION
 
@@ -80,6 +82,7 @@ int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen, int netmas
 int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen, int netmask);
 int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen);
 int _ip_is_in_subnet_str_trimmed(void *ip, enum enum_ip_type type, char *b, char *e);
+static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,  char *_dst);
 
 
 /*
@@ -91,15 +94,20 @@ static int w_is_ipv4(struct sip_msg*, char*);
 static int w_is_ipv6(struct sip_msg*, char*);
 static int w_is_ipv6_reference(struct sip_msg*, char*);
 static int w_ip_type(struct sip_msg*, char*);
+static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *res);
+static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *res);
+static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *res);
 static int w_compare_ips(struct sip_msg*, char*, char*);
 static int w_compare_pure_ips(struct sip_msg*, char*, char*);
 static int w_is_ip_rfc1918(struct sip_msg*, char*);
 static int w_ip_is_in_subnet(struct sip_msg*, char*, char*);
 static int w_dns_sys_match_ip(sip_msg_t*, char*, char*);
 static int w_dns_int_match_ip(sip_msg_t*, char*, char*);
-
+static int fixup_detailed_ip_type(void** param, int param_no);
+static int fixup_free_detailed_ip_type(void** param, int param_no);
 static int w_dns_query(struct sip_msg* msg, char* str1, char* str2);
 static int w_srv_query(struct sip_msg* msg, char* str1, char* str2);
+static int mod_init(void);
 
 static pv_export_t mod_pvs[] = {
 	{ {"dns", sizeof("dns")-1}, PVT_OTHER, pv_get_dns, 0,
@@ -128,6 +136,12 @@ static cmd_export_t cmds[] =
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
 	{ "ip_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
+	{ "detailed_ipv4_type", (cmd_function)w_detailed_ipv4_type, 2,
+		fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
+	{ "detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2,
+		fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
+	{ "detailed_ip_type", (cmd_function)w_detailed_ip_type, 2,
+		fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
 	{ "compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
 	{ "compare_pure_ips", (cmd_function)w_compare_pure_ips, 2, fixup_spve_spve, 0,
@@ -161,12 +175,63 @@ struct module_exports exports = {
 	0,                         /*!< exported MI functions */
 	mod_pvs,                   /*!< exported pseudo-variables */
 	0,                         /*!< extra processes */
-	0,                         /*!< module initialization function */
+	mod_init,                  /*!< module initialization function */
 	(response_function) 0,     /*!< response handling function */
 	0,                         /*!< destroy function */
 	0                          /*!< per-child init function */
 };
 
+
+static int mod_init(void) {
+    /* turn detailed_ip_type relevant structures to netowork byte order so no need to
+     * transform each ip to host order before comparing */
+    ipv4ranges_hton();
+    ipv6ranges_hton();
+    return 0;
+}
+
+
+/* Fixup functions */
+
+/*
+ * Fix detailed_ipv6_type param: result (writable pvar).
+ */
+static int fixup_detailed_ip_type(void** param, int param_no)
+{
+    if (param_no == 1) {
+        return fixup_spve_null(param, 1);
+    }
+
+    if (param_no == 2) {
+        if (fixup_pvar_null(param, 1) != 0) {
+            LM_ERR("failed to fixup result pvar\n");
+            return -1;
+        }
+        if (((pv_spec_t *) (*param))->setf == NULL) {
+            LM_ERR("result pvar is not writeble\n");
+            return -1;
+        }
+        return 0;
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
+
+static int fixup_free_detailed_ip_type(void** param, int param_no)
+{
+    if (param_no == 1) {
+    //LM_WARN("free function has not been defined for spve\n");
+    return 0;
+    }
+
+    if (param_no == 2) {
+    return fixup_free_pvar_null(param, 1);
+    }
+
+    LM_ERR("invalid parameter number <%d>\n", param_no);
+    return -1;
+}
 
 /*
  * Module internal functions
@@ -577,6 +642,73 @@ static int w_ip_type(struct sip_msg* _msg, char* _s)
 	}
 }
 
+static int w_detailed_ipv4_type(struct sip_msg* _msg, char* _s,  char *_dst)
+{
+    return _detailed_ip_type(ip_type_ipv4, _msg, _s, _dst);
+}
+
+static int w_detailed_ipv6_type(struct sip_msg* _msg, char* _s,  char *_dst)
+{
+    return _detailed_ip_type(ip_type_ipv6, _msg, _s, _dst);
+}
+
+static int w_detailed_ip_type(struct sip_msg* _msg, char* _s,  char *_dst)
+{
+    /* `ip_type_error` should read `unknown type` */
+    return _detailed_ip_type(ip_type_error, _msg, _s, _dst);
+}
+
+static int _detailed_ip_type(unsigned int _type, struct sip_msg* _msg, char* _s,  char *_dst)
+{
+  str string;
+  pv_spec_t *dst;
+  pv_value_t val;
+  char *res;
+  unsigned int assumed_type;
+
+  if (_s == NULL) {
+    LM_ERR("bad parameter\n");
+    return -2;
+  }
+
+  if (fixup_get_svalue(_msg, (gparam_p)_s, &string))
+  {
+    LM_ERR("cannot print the format for string\n");
+    return -3;
+  }
+
+  assumed_type = (ip_type_error == _type)? ip_parser_execute(string.s, string.len) : _type;
+
+  switch (assumed_type) {
+      case ip_type_ipv4:
+          if (!ip4_iptype(string, &res)) {
+              LM_ERR("bad ip parameter\n");
+              return -1;
+          }
+          break;
+      case ip_type_ipv6_reference:
+      case ip_type_ipv6:
+          /* consider this reference */
+          if (string.s[0] == '[') {
+              string.s++;
+              string.len -= 2;
+          }
+          if (!ip6_iptype(string, &res)) {
+              LM_ERR("bad ip parameter\n");
+              return -1;
+          }
+          break;
+      default:
+          return -1;
+  }
+
+  val.rs.s = res;
+  val.rs.len = strlen(res);
+  val.flags = PV_VAL_STR;
+  dst = (pv_spec_t *)_dst;
+  dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
+  return 1;
+}
 
 /*! \brief Return true if both IP's (string or pv) are equal. This function also allows comparing an IPv6 with an IPv6 reference. */
 static int w_compare_ips(struct sip_msg* _msg, char* _s1, char* _s2)
