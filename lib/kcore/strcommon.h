@@ -46,5 +46,7 @@ int escape_param(str *sin, str *sout);
 
 int unescape_param(str *sin, str *sout);
 
+int escape_csv(str *sin, str *sout);
+
 #endif
 

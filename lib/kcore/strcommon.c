@@ -373,3 +373,32 @@ int escape_param(str *sin, str *sout)
     return 0;
 }
 
+/*! \brief
+ * escapes a string to use as a CSV field, as specified in RFC4180:
+ * - enclose sting in double quotes
+ * - escape double quotes with a second double quote
+ */
+int escape_csv(str *sin, str *sout)
+{
+    char *at, *p;
+
+    if (sin==NULL || sout==NULL || sin->s==NULL || sout->s==NULL ||
+        sin->len<0 || sout->len < 2*sin->len+3)
+        return -1;
+
+    at = sout->s;
+    p  = sin->s;
+    *at++ = '"';
+    while (p < sin->s+sin->len) {
+		if(*p == '"') {
+			*at++ = '"';
+		}
+        *at++ = *p++;
+    }
+    *at++ = '"';
+    *at = 0;
+    sout->len = at - sout->s;
+    LM_DBG("escaped string is <%s>\n", sout->s);
+
+    return 0;
+}
