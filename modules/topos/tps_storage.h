@@ -34,6 +34,9 @@
 #define TPS_DIR_DOWNSTREAM	0
 #define TPS_DIR_UPSTREAM	1
 
+#define TPS_IFLAG_INIT	1
+#define TPS_IFLAG_DLGON	2
+
 #define TPS_DATA_SIZE	8192
 typedef struct tps_data {
 	char cbuf[TPS_DATA_SIZE];
