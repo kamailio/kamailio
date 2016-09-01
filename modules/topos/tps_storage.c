@@ -871,7 +871,7 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		return -1;
 
 	if(md->a_uuid.len<=0 && md->b_uuid.len<=0) {
-		LM_ERR("no dlg uuid provided\n");
+		LM_DBG("no dlg uuid provided\n");
 		return -1;
 	}
 
