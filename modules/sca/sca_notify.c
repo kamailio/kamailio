@@ -22,6 +22,7 @@
 #include <assert.h>
 
 #include "sca.h"
+#include "sca_appearance.h"
 #include "sca_call_info.h"
 #include "sca_event.h"
 #include "sca_notify.h"
@@ -261,7 +262,13 @@ static int sca_notify_subscriber_internal(sca_mod *scam, sca_subscription *sub,
 {
 	uac_req_t request;
 	dlg_t *dlg = NULL;
+	str state_str = STR_NULL;
 	int rc = -1;
+
+	sca_appearance_state_to_str(sub->state, &state_str);
+	LM_DBG("SCA: NOTIFYing subscriber '%.*s' of event '%s' with a state of '%.*s' to index '%d'\n",
+			STR_FMT(&sub->subscriber), sca_event_name_from_type(sub->event),
+			STR_FMT(&state_str), sub->index);
 
 	dlg = sca_notify_dlg_for_subscription(sub);
 	if (dlg == NULL) {
@@ -298,8 +305,9 @@ int sca_notify_subscriber(sca_mod *scam, sca_subscription *sub, int app_idx)
 	str headers = STR_NULL;
 	char hdrbuf[SCA_HEADERS_MAX_LEN];
 
-	headers.s = hdrbuf;
+	LM_DBG("NOTIFYing subscriber because of a SUBSCRIPTION request\n");
 
+	headers.s = hdrbuf;
 	if (sca_notify_build_headers_from_info(&headers, sizeof(hdrbuf), scam, sub,
 			app_idx) < 0) {
 		LM_ERR("Failed to build NOTIFY headers\n");
@@ -328,8 +336,10 @@ int sca_notify_call_info_subscribers(sca_mod *scam, str *subscription_aor)
 	assert(scam->subscriptions != NULL);
 	assert(!SCA_STR_EMPTY(subscription_aor));
 
-	event_name = sca_event_name_from_type(SCA_EVENT_TYPE_CALL_INFO);
+	LM_DBG("Notifying ALL subscribers of AOR %.*s due to a SUBSCRIBTION request\n",
+			STR_FMT(subscription_aor));
 
+	event_name = sca_event_name_from_type(SCA_EVENT_TYPE_CALL_INFO);
 	if (subscription_aor->len + strlen(event_name) >= sizeof(keybuf)) {
 		LM_ERR("Hash key %.*s + %s is too long\n",
 				STR_FMT(subscription_aor), event_name);
