@@ -24,7 +24,7 @@
 #include "sca_util.h"
 
 #include "../../parser/sdp/sdp.h"
-
+extern int log_stderr;
 int sca_get_msg_method(sip_msg_t *msg)
 {
 	assert(msg != NULL);
