@@ -193,6 +193,8 @@ error:
 int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 		unsigned int direction)
 {
+	unsigned int ninc = 0;
+	unsigned int vinc = 0;
 	str nval;
 	str *pval;
 
@@ -225,7 +227,19 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 		goto done;
 	}
 
-	nval = *pval;
+	if(str2int(pval, &vinc)<0) {
+		LM_ERR("invalid dlg cseq diff var value: %.*s\n",
+					pval->len, pval->s);
+		goto done;
+	}
+	if(vinc==0) {
+		LM_DBG("nothing to increment\n");
+		goto done;
+	}
+
+	str2int(&get_cseq(msg)->number, &ninc);
+	vinc += ninc;
+	nval.s = int2str(vinc, &nval.len);
 	trim(&nval);
 
 	LM_DBG("adding cseq refresh header value: %.*s\n", nval.len, nval.s);
@@ -291,9 +305,9 @@ int dlg_cseq_msg_received(void *data)
 	}
 	LM_DBG("via cseq cookie [%.*s] val [%.*s]\n", vcseq.len, vcseq.s,
 			vcseq.len-3, vcseq.s+3);
-	if(vcseq.len-3<get_cseq(&msg)->number.len) {
+	if(vcseq.len-3>get_cseq(&msg)->number.len) {
 		/* higher lenght to update - wrong */
-		LM_DBG("cseq in message (%d) longer than in via (%d)\n",
+		LM_DBG("cseq in message (%d) shorter than in via (%d)\n",
 				get_cseq(&msg)->number.len, vcseq.len-3);
 		goto done;
 	}
@@ -369,9 +383,10 @@ int dlg_cseq_msg_sent(void *data)
 		goto done;
 	}
 
+	parse_headers(&msg, HDR_EOH_F, 0);
+
 	/* check if transaction is marked for a new increment */
 	if(get_cseq(&msg)->method_id!=METHOD_ACK) {
-		parse_headers(&msg, HDR_EOH_F, 0);
 		hfk = sr_hdr_get_z(&msg, "P-K-Auth-CSeq");
 		if(hfk!=NULL) {
 			LM_DBG("new cseq inc requested\n");
@@ -391,6 +406,7 @@ int dlg_cseq_msg_sent(void *data)
 		}
 	}
 	if(nval.len<=0) {
+		LM_DBG("cseq refresh requested, but no new value found\n");
 		goto done;
 	}
 

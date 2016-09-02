@@ -54,6 +54,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/pv/pv_api.h"
 
+
 #include "async_http.h"
 
 MODULE_VERSION
@@ -227,6 +228,18 @@ struct module_exports exports = {
 };
 
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	pv_register_api_t pvra;
+
+	pvra = (pv_register_api_t)find_export("pv_register_api", NO_SCRIPT, 0);
+	if (!pvra) {
+		LM_ERR("Cannot import pv functions (pv module must be loaded before this module)\n");
+		return -1;
+	}
+	pvra(&pv_api);
+	return 0;
+}
 
 /**
  * init module function
@@ -234,7 +247,6 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	unsigned int n;
-	pv_register_api_t pvra;
 	LM_INFO("Initializing Http Async module\n");
 
 #ifdef STATISTICS
@@ -294,13 +306,6 @@ static int mod_init(void)
 		LM_INFO("cannot load the TM-functions - async relay disabled\n");
 		memset(&tmb, 0, sizeof(tm_api_t));
 	}
-
-	pvra = (pv_register_api_t)find_export("pv_register_api", NO_SCRIPT, 0);
-	if (!pvra) {
-		LM_ERR("Cannot import pv functions (pv module must be loaded before this module)\n");
-		return -1;
-	}
-	pvra(&pv_api);
 
 	/* allocate workers array */
 	workers = shm_malloc(num_workers * sizeof(*workers));

@@ -1352,6 +1352,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 		drop_replies = failure_reply_mode;
 		replies_dropped = 0;
+		tm_ctx_set_branch_index(picked_branch);
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
 						|| Trans->uac[picked_branch].on_failure )) {

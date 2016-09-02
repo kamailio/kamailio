@@ -1300,7 +1300,7 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 	struct dest_info dst;
 	char c;
 	int ret;
-		
+
 		bytes=-1;
 		total_bytes=0;
 		resp=CONN_RELEASE;
@@ -1314,6 +1314,15 @@ again:
 			else
 #endif
 				bytes=tcp_read_headers(con, read_flags);
+
+			if (unlikely(bytes==-1)){
+				LOG(cfg_get(core, core_cfg, corelog),
+						"ERROR: tcp_read_req: error reading - c: %p r: %p\n",
+						con, req);
+				resp=CONN_ERROR;
+				goto end_req;
+			}
+
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
 			LM_DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
@@ -1323,19 +1332,13 @@ again:
 					*(req->parsed-1), (int)(req->parsed-req->start),
 					req->start);
 #endif
-			if (unlikely(bytes==-1)){
-				LOG(cfg_get(core, core_cfg, corelog),
-						"ERROR: tcp_read_req: error reading \n");
-				resp=CONN_ERROR;
-				goto end_req;
-			}
 			total_bytes+=bytes;
 			/* eof check:
 			 * is EOF if eof on fd and req.  not complete yet,
 			 * if req. is complete we might have a second unparsed
 			 * request after it, so postpone release_with_eof
 			 */
-			if (unlikely((con->state==S_CONN_EOF) && 
+			if (unlikely((con->state==S_CONN_EOF) &&
 						(! TCP_REQ_COMPLETE(req)))) {
 				LM_DBG("EOF\n");
 				resp=CONN_EOF;
@@ -1343,10 +1346,19 @@ again:
 			}
 		}
 		if (unlikely(req->error!=TCP_REQ_OK)){
-			LM_ERR("bad request, state=%d, error=%d buf:\n%.*s\nparsed:\n%.*s\n",
+			if(req->buf!=NULL && req->start!=NULL && req->pos!=NULL
+					&& req->pos>=req->buf && req->parsed>=req->start) {
+				LM_ERR("bad request, state=%d, error=%d buf:\n%.*s\nparsed:\n%.*s\n",
 					req->state, req->error,
 					(int)(req->pos-req->buf), req->buf,
 					(int)(req->parsed-req->start), req->start);
+			} else {
+				LM_ERR("bad request, state=%d, error=%d buf:%d - %p,"
+						" parsed:%d - %p\n",
+					req->state, req->error,
+					(int)(req->pos-req->buf), req->buf,
+					(int)(req->parsed-req->start), req->start);
+			}
 			LM_DBG("received from: port %d\n", con->rcv.src_port);
 			print_ip("received from: ip", &con->rcv.src_ip, "\n");
 			resp=CONN_ERROR;

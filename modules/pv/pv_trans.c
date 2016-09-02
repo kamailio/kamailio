@@ -514,6 +514,17 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			val->flags = PV_VAL_STR;
 			val->rs = st;
 			break;
+		case TR_S_ESCAPECSV:
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			st.s = _tr_buffer;
+			st.len = TR_BUFFER_SIZE;
+			if (escape_csv(&val->rs, &st))
+				return -1;
+			memset(val, 0, sizeof(pv_value_t));
+			val->flags = PV_VAL_STR;
+			val->rs = st;
+			break;
 		case TR_S_SUBSTR:
 			if(tp==NULL || tp->next==NULL)
 			{
@@ -2092,6 +2103,9 @@ char* tr_parse_string(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==14 && strncasecmp(name.s, "unescape.param", 14)==0) {
 		t->subtype = TR_S_UNESCAPEPARAM;
+		goto done;
+	} else if(name.len==10 && strncasecmp(name.s, "escape.csv", 10)==0) {
+		t->subtype = TR_S_ESCAPECSV;
 		goto done;
 	} else if(name.len==8 && strncasecmp(name.s, "prefixes", 8)==0) {
 		t->subtype = TR_S_PREFIXES;
