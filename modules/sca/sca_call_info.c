@@ -530,6 +530,11 @@ int sca_call_info_seize_held_call(sip_msg_t *msg, sca_call_info *call_info,
 	int slot_idx = -1;
 	int rc = -1;
 
+	LM_DBG( "From-AOR:%.*s To-AOR:%.*s From-URI:<%.*s> To-URI:<%.*s> "
+			"Contact: <%.*s> Call-Info: appearance-index=%d\n",
+			STR_FMT(from_aor), STR_FMT(to_aor),STR_FMT(&from->uri),
+			STR_FMT(&to->uri), STR_FMT(contact_uri), call_info->index);
+
 	slot_idx = sca_hash_table_index_for_key(sca->appearances, from_aor);
 	sca_hash_table_lock_index(sca->appearances, slot_idx);
 
@@ -803,6 +808,10 @@ static int sca_call_info_is_line_seize_reinvite(sip_msg_t *msg,
 	str ruri_aor;
 	int state;
 
+	LM_DBG("For From-AOR %.*s To-AOR: %.*s: From: <%.*s> To: <%.*s> "
+			"Call-Info: appearance-index=%d\n",
+			STR_FMT(from_aor), STR_FMT(to_aor), STR_FMT(&from->uri),
+			STR_FMT(&to->uri), call_info->index);
 
 	// a handset in an SCA group is attempting to seize a held line if:
 	//		the RURI, From URI and To URI are identical;
@@ -834,6 +843,8 @@ static int sca_call_info_is_line_seize_reinvite(sip_msg_t *msg,
 				STR_FMT(to_aor), STR_FMT(from_aor), call_info->index);
 		return (0);
 	}
+	LM_DBG("reINVITE to %.*s from %.*s appearance-index %d (seizing held line)\n",
+			STR_FMT(to_aor), STR_FMT(from_aor), call_info->index);
 
 	return (1);
 }
@@ -934,6 +945,11 @@ int sca_call_info_invite_request_handler(sip_msg_t *msg,
 	int state = SCA_APPEARANCE_STATE_UNKNOWN;
 	int rc = -1;
 
+	LM_DBG("For From-AOR %.*s To-AOR: %.*s: From: <%.*s> To: <%.*s> "
+			"Contact: <%.*s> Call-Info: appearance-index=%d\n",
+			STR_FMT(from_aor), STR_FMT(to_aor),STR_FMT(&from->uri), STR_FMT(&to->uri),
+			STR_FMT(contact_uri), call_info->index);
+
 	// if we get here, one of the legs is an SCA endpoint. we want to know
 	// when the e2e ACK comes in so we can notify other members of the group.
 	if (sca->tm_api->register_tmcb(msg, NULL, TMCB_E2EACK_IN,
@@ -1015,6 +1031,11 @@ int sca_call_info_invite_reply_18x_handler(sip_msg_t *msg,
 	int slot_idx = -1;
 	int rc = -1;
 	int notify = 0;
+
+	LM_DBG("For From-AOR %.*s To-AOR: %.*s: From: <%.*s> To: <%.*s> "
+			"Contact: <%.*s> Call-Info: appearance-index=%d",
+			STR_FMT(from_aor), STR_FMT(to_aor),STR_FMT(&from->uri), STR_FMT(&to->uri),
+			STR_FMT(contact_uri), call_info->index);
 
 	switch (msg->REPLY_STATUS) {
 	case 180:
@@ -1168,6 +1189,11 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 	int state = SCA_APPEARANCE_STATE_UNKNOWN;
 	int slot_idx = -1;
 	int rc = -1;
+
+	LM_DBG("For From-AOR %.*s To-AOR: %.*s: From: <%.*s> To: <%.*s> "
+			"Contact: <%.*s> Call-Info: appearance-index=%d\n",
+			STR_FMT(from_aor), STR_FMT(to_aor),STR_FMT(&from->uri), STR_FMT(&to->uri),
+			STR_FMT(contact_uri), call_info->index);
 
 	if (SCA_CALL_INFO_IS_SHARED_CALLEE(call_info)) {
 		rc = sca_call_info_uri_update(to_aor, call_info, from, to, contact_uri,
@@ -1939,6 +1965,11 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2)
 				STR_FMT(&from_aor), STR_FMT(&to_aor));
 		goto done;
 	}
+
+	LM_DBG( "Calling Dispatch Id: %d handler with From-AOR: %.*s To-AOR: %.*s "
+			"From-URI: <%.*s> To-URI: <%.*s> Contact-URI: <%.*s>\n",
+			i, STR_FMT(&from_aor), STR_FMT(&to_aor),STR_FMT(&from->uri),
+			STR_FMT(&to->uri), STR_FMT(&contact_uri));
 
 	rc = call_info_dispatch[i].handler(msg, &call_info, from, to, &from_aor,
 			&to_aor, &contact_uri);
