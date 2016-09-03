@@ -1196,7 +1196,8 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 			STR_FMT(from_aor), STR_FMT(to_aor),STR_FMT(&from->uri), STR_FMT(&to->uri),
 			STR_FMT(contact_uri), call_info->index);
 
-	if (SCA_CALL_INFO_IS_SHARED_CALLEE(call_info)) {
+	if (SCA_CALL_INFO_IS_SHARED_CALLEE(call_info) &&
+			(!SCA_STR_EQ(from_aor, to_aor))) {
 		rc = sca_call_info_uri_update(to_aor, call_info, from, to, contact_uri,
 				&msg->callid->body);
 	}
