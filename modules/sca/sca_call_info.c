@@ -1252,11 +1252,6 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 				"parse_uri <%.*s> failed\n", STR_FMT(contact_uri));
 		goto done;
 	}
-	if (sca_create_canonical_aor(msg, &app_uri_aor) < 0) {
-		LM_ERR("sca_call_info_invite_200_reply_handler: "
-				"sca_create_canonical_aor failed\n");
-		goto done;
-	}
 
 	// If the 'from_aor' and 'to_aor' don't match then we need to get the
 	// 'to_display' and 'app_uri_aor' variable values for a 200 reply for an
