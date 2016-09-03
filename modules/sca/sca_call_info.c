@@ -1186,6 +1186,7 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 	char dlg_buf[1024];
 	str app_uri_aor = STR_NULL;
 	str state_str = STR_NULL;
+	str to_display = STR_NULL;
 	int state = SCA_APPEARANCE_STATE_UNKNOWN;
 	int slot_idx = -1;
 	int rc = -1;
@@ -1256,7 +1257,20 @@ static int sca_call_info_invite_reply_200_handler(sip_msg_t *msg,
 		goto done;
 	}
 
-	if (sca_appearance_update_unsafe(app, state, &to->display, &app_uri_aor,
+	// If the 'from_aor' and 'to_aor' don't match then we need to get the
+	// 'to_display' and 'app_uri_aor' variable values for a 200 reply for an
+	// INVITE for the call to sca_appearance_update_unsafe(). Otherwise its a
+	// 200 reply for a reINVITE and the 'to_display' and 'app_uri_aor' are
+	// already set to NULL and that won't change the appearance-uri.
+	if (!SCA_STR_EQ(from_aor, to_aor)) {
+		to_display = to->display;
+		if (sca_create_canonical_aor(msg, &app_uri_aor) < 0) {
+			LM_ERR( "sca_call_info_invite_200_reply_handler: "
+					"sca_create_canonical_aor failed\n" );
+			goto done;
+		}
+	}
+	if (sca_appearance_update_unsafe(app, state, &to_display, &app_uri_aor,
 			&dialog, NULL, contact_uri) < 0) {
 		sca_appearance_state_to_str(state, &state_str);
 		LM_ERR("sca_call_info_invite_handler: failed to update appearance "
