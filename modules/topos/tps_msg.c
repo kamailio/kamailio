@@ -121,7 +121,7 @@ int tps_remove_headers(sip_msg_t *msg, uint32_t hdr)
 			continue;
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0) {
-			LM_ERR("no memory\n");
+			LM_ERR("failed to remove the header\n");
 			return -1;
 		}
 	}
