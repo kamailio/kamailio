@@ -746,8 +746,8 @@ http_get_redirect("apiserver", "$var(targeturl)");
 				<programlisting format="linespecific">
 ...
 # GET-Request
-http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-	   "$var(result)")
+http_client_query("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "$var(result)");
 switch ($retcode) {
        ...
 }
@@ -756,8 +756,8 @@ switch ($retcode) {
 				<programlisting format="linespecific">
 ...
 # POST-Request
-http_client_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-	   "$var(result)")
+http_client_query("http://api.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "$var(result)");
 switch ($retcode) {
        ...
 }
@@ -791,7 +791,6 @@ switch ($retcode) {
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>No parameters</para></listitem>
-			
 		</itemizedlist>
 		</section>
 	</section>
