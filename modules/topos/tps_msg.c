@@ -166,7 +166,7 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 	memcpy(hs.s + hname->len + 2, hbody->s, hbody->len);
 
 	/* add end of header if not present */
-	if(hs.s[hname->len + 2 + hbody->len]!='\n') {
+	if(hs.s[hname->len + 2 + hbody->len - 1]!='\n') {
 		hs.s[hname->len + 2 + hbody->len] = '\r';
 		hs.s[hname->len + 2 + hbody->len+1] = '\n';
 		hs.len += 2;
