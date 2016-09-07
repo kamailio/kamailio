@@ -1234,9 +1234,9 @@ IMPORTFILE      "import_file"
 
 <INITIAL>{COM_LINE}!{SER_CFG}{CR}		{ count();
 											sr_cfg_compat=SR_COMPAT_SER;}
-<INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count(); 
+<INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count();
 											sr_cfg_compat=SR_COMPAT_KAMAILIO;}
-<INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count(); 
+<INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count();
 												sr_cfg_compat=SR_COMPAT_MAX;}
 
 <INITIAL>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count(); pp_define_set_type(0);
@@ -1245,6 +1245,12 @@ IMPORTFILE      "import_file"
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <INITIAL>{PREP_START}{REDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(2);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<DEFINE_ID>{ID}{MINUS}          {	count();
+									LOG(L_CRIT,
+										"error at %s line %d: '-' not allowed\n",
+										(finame)?finame:"cfg", line);
+									exit(-1);
+								}
 <DEFINE_ID>{ID}                 {	count();
 									if (pp_define(yyleng, yytext)) return 1;
 									state = DEFINE_EOL_S; BEGIN(DEFINE_EOL); }
@@ -1272,6 +1278,12 @@ IMPORTFILE      "import_file"
 <INITIAL,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(0)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
+<IFDEF_ID>{ID}{MINUS}           { count();
+									LOG(L_CRIT,
+										"error at %s line %d: '-' not allowed\n",
+										(finame)?finame:"cfg", line);
+									exit(-1);
+								}
 <IFDEF_ID>{ID}                { count();
                                 pp_ifdef_var(yyleng, yytext);
                                 state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
