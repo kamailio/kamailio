@@ -892,9 +892,8 @@ event_route[uac:reply] {
 8.6.  uac.reg_refresh
 
    Load one record by l_uuid from database for remote registrations. If
-   the record exists in memory, its authentication password, flags and
-   proxy are updated, otherwise a new record is added. The command has a
-   parameter, which is the value of l_uuid field.
+   the record exists in memory, it will be replaced with the new values
+   loaded from database.
 
    Example 1.36. uac.reg_refresh usage
 ...
