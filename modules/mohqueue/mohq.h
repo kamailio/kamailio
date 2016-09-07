@@ -131,6 +131,7 @@ typedef struct
 **********/
 
 extern mod_data *pmod_data;
+extern pv_spec_t *prtp_pv;
 extern rtpmap prtpmap [];
 
 #endif /* MOHQ_H */
