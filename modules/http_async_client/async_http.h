@@ -37,6 +37,7 @@
 #define RB_AVP_NAME_LENGTH 7
 #define ERROR_AVP_NAME "http_error"
 #define ERROR_AVP_NAME_LENGTH 10
+#define MAX_ID_LEN 32
 
 #include <curl/curl.h>
 #include <event2/event.h>
@@ -97,6 +98,7 @@ extern struct query_params ah_params;
 typedef struct async_query {
 	str query;
 	str post;
+	char id[MAX_ID_LEN+1];
 	unsigned int tindex;
 	unsigned int tlabel;
 	struct query_params query_params;

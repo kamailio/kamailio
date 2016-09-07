@@ -61,6 +61,9 @@ MODULE_VERSION
 
 extern int  num_workers;
 
+extern unsigned int q_idx;
+extern char q_id[MAX_ID_LEN+1];
+
 int http_timeout = 500; /* query timeout in ms */
 int hash_size = 2048;
 int tls_version = 0; // Use default SSL version in HTTPS requests (see curl/curl.h)
@@ -103,6 +106,7 @@ static int ah_get_msg_buf(struct sip_msg *msg, pv_param_t *param, pv_value_t *re
 static int ah_get_msg_len(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int ah_parse_req_name(pv_spec_p sp, str *in);
 static int ah_set_req(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+static int ah_get_id(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 
 static str pv_str_1 = {"1", 1};
@@ -209,6 +213,9 @@ static pv_export_t pvs[] = {
 	{STR_STATIC_INIT("http_req"),
 		PVT_OTHER, pv_get_null, ah_set_req,
 		ah_parse_req_name, 0, 0, 0},
+	{STR_STATIC_INIT("http_req_id"),
+		PVT_OTHER, ah_get_id, 0,
+		0, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -335,6 +342,10 @@ static int child_init(int rank)
 
 	if(num_workers<=0)
 		return 0;
+
+	/* initialize query counter and id */
+	q_idx = 0;
+	q_id[0] = '\0';
 
 	if (rank==PROC_INIT) {
 		for(i=0; i<num_workers; i++) {
@@ -680,6 +691,10 @@ AH_WRAP_GET_PV(ah_get_msg_len,     get_msg_len)
 
 static int w_pv_parse_hdr_name(pv_spec_p sp, str *in) {
 	return pv_api.parse_hdr_name(sp, in);
+}
+
+static int ah_get_id(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
+	return pv_get_strlval(msg, param, res, q_id, strlen(q_id));
 }
 
 static int ah_get_ok(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {

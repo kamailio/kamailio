@@ -60,6 +60,8 @@ async_http_worker_t *workers;
 int num_workers = 1;
 
 struct query_params ah_params;
+unsigned int q_idx;
+char q_id[MAX_ID_LEN+1];
 
 int async_http_init_worker(int prank, async_http_worker_t* worker)
 {
@@ -163,7 +165,10 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	}
 
 	aq = param;
+	strncpy(q_id, aq->id, strlen(aq->id));
+	
 	act = (cfg_action_t*)aq->param;
+
 	if (aq->query_params.suspend_transaction) {
 		tindex = aq->tindex;
 		tlabel = aq->tlabel;
@@ -365,6 +370,10 @@ int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act)
 	aq->query_params.timeout = ah_params.timeout;
 	aq->query_params.headers = ah_params.headers;
 	aq->query_params.method = ah_params.method;
+
+	q_idx++;
+	snprintf(q_id, MAX_ID_LEN+1, "%u-%u", (unsigned int)getpid(), q_idx);
+	strncpy(aq->id, q_id, strlen(q_id));
 
 	aq->query_params.tls_client_cert.s = NULL;
 	aq->query_params.tls_client_cert.len = 0;

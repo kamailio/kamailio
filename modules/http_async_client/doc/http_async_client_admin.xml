@@ -566,6 +566,23 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 
 <section>
 	<title>Pseudo Variables</title>
+	<para>The <literal>$http_req_id</literal> read-only variable can be used in REQUEST_ROUTE to retrive the unique identifier for a query after sending it or in the HTTP callback route to retrive the id of the query the reply belongs to. Useful mainly in non-transactional context.</para>
+	<example>
+		<title><literal>$http_req_id</literal> variable usage</title>
+		<programlisting format="linespecific">
+...
+$http_req(suspend) = 0;  
+
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
+
+xlog("L_INFO", "Query id: $http_query_id");
+...
+route[HTTP_REPLY] {
+xlog("L_INFO", "received reply for query $http_query_id\n");
+}
+...
+		</programlisting>
+	</example>
 	<para>The <literal>$http_req(key)</literal> write-only variable can be used to set custom parameters before sending a HTTP query</para>
 	<para>setting this variable has the same effect than using the <literal>http_set_*()</literal>functions</para>
 	<para><literal>key</literal> can be one of:</para>
