@@ -237,7 +237,7 @@ modparam("utils", "xcap_table", "pres_xcap")
 ...
 # GET-Request
 http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-           "$var(result)")
+           "$var(result)");
 switch ($retcode) {
        ...
 }
@@ -247,7 +247,7 @@ switch ($retcode) {
 ...
 # POST-Request
 http_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-           "$var(result)")
+           "$var(result)");
 switch ($retcode) {
        ...
 }
@@ -257,7 +257,7 @@ switch ($retcode) {
 ...
 # GET-Request with additional headers and Post-Data.
 http_query("http://tutpro.com/index.php", "{ "alert": "Alert text goes here" }", "Content-Type: application/json"
-           "$var(result)")
+           "$var(result)");
 switch ($retcode) {
        ...
 }
