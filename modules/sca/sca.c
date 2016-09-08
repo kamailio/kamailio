@@ -125,6 +125,7 @@ int hash_table_size = -1;
 int call_info_max_expires = 3600;
 int line_seize_max_expires = 15;
 int purge_expired_interval = 120;
+int onhold_bflag = -1;
 
 static param_export_t params[] = {
 		{"outbound_proxy", PARAM_STR, &outbound_proxy},
@@ -136,6 +137,7 @@ static param_export_t params[] = {
 		{"call_info_max_expires", INT_PARAM, &call_info_max_expires},
 		{"line_seize_max_expires", INT_PARAM, &line_seize_max_expires},
 		{"purge_expired_interval", INT_PARAM, &purge_expired_interval},
+		{"onhold_bflag", INT_PARAM, &onhold_bflag},
 		{NULL, 0, NULL},
 };
 
@@ -265,6 +267,11 @@ static int sca_set_config(sca_mod *scam)
 	scam->cfg->call_info_max_expires = call_info_max_expires;
 	scam->cfg->line_seize_max_expires = line_seize_max_expires;
 	scam->cfg->purge_expired_interval = purge_expired_interval;
+	if(onhold_bflag > 31) {
+		LM_ERR("sca_set_config: onhold_bflag value > 31\n");
+		return (-1);
+	}
+	scam->cfg->onhold_bflag = onhold_bflag;
 
 	return (0);
 }
