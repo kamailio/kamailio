@@ -90,7 +90,8 @@ Federico Cabiddu
    1.19. http_set_tls_client_cert() usage
    1.20. http_set_tls_client_key() usage
    1.21. http_set_tls_ca_path() usage
-   1.22. $http_req(key) variable usage
+   1.22. $http_req_id variable usage
+   1.23. $http_req(key) variable usage
 
 Chapter 1. Admin Guide
 
@@ -539,6 +540,24 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 
 5. Pseudo Variables
 
+   The $http_req_id read-only variable can be used in REQUEST_ROUTE to
+   retrive the unique identifier for a query after sending it or in the
+   HTTP callback route to retrive the id of the query the reply belongs
+   to. Useful mainly in non-transactional context.
+
+   Example 1.22. $http_req_id variable usage
+...
+$http_req(suspend) = 0;
+
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
+
+xlog("L_INFO", "Query id: $http_query_id");
+...
+route[HTTP_REPLY] {
+xlog("L_INFO", "received reply for query $http_query_id\n");
+}
+...
+
    The $http_req(key) write-only variable can be used to set custom
    parameters before sending a HTTP query
 
@@ -562,7 +581,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
      * suspend: if set to 0 it doesn't suspend the current transaction
        before performing the query (see http_async_suspend())
 
-   Example 1.22. $http_req(key) variable usage
+   Example 1.23. $http_req(key) variable usage
 ...
 $http_req(all) = $null;                    # reset the parameters
 $http_req(timeout) = 100;                  # 100 ms
