@@ -575,18 +575,18 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
    Example 1.17. curl_http_query() usage
 ...
 # GET-Request
-http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri
-=$(fu{s.escape.param})",
-           "$var(result)")
+http_client_query("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(
+fu{s.escape.param})",
+           "$var(result)");
 switch ($retcode) {
        ...
 }
 ...
 ...
 # POST-Request
-http_client_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&f_
-uri=$(fu{s.escape.param})",
-           "$var(result)")
+http_client_query("http://api.com/index.php", "r_uri=$(ru{s.escape.param})&f_uri
+=$(fu{s.escape.param})",
+           "$var(result)");
 switch ($retcode) {
        ...
 }

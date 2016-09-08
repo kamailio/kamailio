@@ -31,6 +31,10 @@ Olle E. Johansson
               3.5. tcp_set_connection_lifetime([conid], lifetime)
               3.6. tcp_enable_closed_event([conid])
 
+        4. Event routes
+
+              4.1. tcp:closed
+
    List of Examples
 
    1.1. Set closed_event parameter
@@ -58,6 +62,10 @@ Chapter 1. Admin Guide
         3.4. tcp_keepalive_disable([conid])
         3.5. tcp_set_connection_lifetime([conid], lifetime)
         3.6. tcp_enable_closed_event([conid])
+
+   4. Event routes
+
+        4.1. tcp:closed
 
 1. Overview
 
@@ -277,3 +285,22 @@ request_route {
 event_route[tcp:closed] {
         xlog("connection $conid was closed");
 }
+
+4. Event routes
+
+   4.1. tcp:closed
+
+4.1.  tcp:closed
+
+   This route is called when a socket is closed by the remote party, or
+   reset, or timeout. The corresponding $conid variable will be available
+   in the event route.
+
+   Whether this route is always called, never, or on a per socket basis is
+   controlled by the closed_event parameter.
+
+...
+event_route[tcp:closed] {
+    xlog("L_INFO", "TCP connection closed ($conid)\n");
+}
+...

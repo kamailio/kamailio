@@ -579,8 +579,11 @@ avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
           + name = ( avp_name | avp_alias ) ['/'flags]
           + flags = 'g' | 'G' | 'd' | 'D' | 'n' | 'N' | 's' | 'S'
 
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+   NOTE: if a list of AVPs is copied/moved (flag g|G), then the order of
+   the values is reversed. Copy/move twice in order to get the same order
+   as in original list.
+
+   This function can be used from ANY_ROUTE.
 
    Example 1.19. avp_copy usage
 ...

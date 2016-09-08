@@ -191,7 +191,11 @@ Chapter 1. Admin Guide
    This module implements the TLS transport for Kamailio using the OpenSSL
    library (http://www.openssl.org). To enable the Kamailio TLS support
    this module must be loaded and enable_tls=yes core setting must be
-   added to the Kamailio config file
+   added to the Kamailio config file.
+
+   IMPORTANT: tls module must be loaded before any other Kamailio module
+   that uses libssl (OpenSSL library). A safe option is to have tls module
+   loaded first (be in the first "loadmodule" inside Kamailio.cfg).
 
 2. Quick Start
 
