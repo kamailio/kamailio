@@ -51,6 +51,7 @@ static char *_evapi_bind_param = NULL;
 static int   _evapi_netstring_format_param = 1;
 
 static tm_api_t tmb;
+static int   _evapi_dispatcher_pid = -1;
 
 static int  mod_init(void);
 static int  child_init(int);
@@ -180,16 +181,24 @@ static int child_init(int rank)
 	}
 
 	if (rank!=PROC_MAIN) {
-		evapi_close_notify_sockets_parent();
+		if(_evapi_dispatcher_pid!=getpid()) {
+			evapi_close_notify_sockets_parent();
+		}
 		return 0;
 	}
 
-	pid=fork_process(PROC_RPC, "EvAPI Dispatcher", 1);
+	pid=fork_process(PROC_NOCHLDINIT, "EvAPI Dispatcher", 1);
 	if (pid<0)
 		return -1; /* error */
 	if(pid==0) {
 		/* child */
+		_evapi_dispatcher_pid = getpid();
 
+		/* do child init to allow execution of rpc like functions */
+		if(init_child(PROC_RPC) < 0) {
+			LM_DBG("failed to do RPC child init for dispatcher\n");
+			return -1;
+		}
 		/* initialize the config framework */
 		if (cfg_child_init())
 			return -1;

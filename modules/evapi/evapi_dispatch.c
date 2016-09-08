@@ -271,6 +271,8 @@ int evapi_dispatch_notify(evapi_msg_t *emsg)
 		}
 	}
 
+	LM_DBG("the message was sent to %d clients\n", n);
+
 	return n;
 }
 
