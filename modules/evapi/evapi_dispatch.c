@@ -221,6 +221,8 @@ int evapi_dispatch_notify(char *obuf, int olen)
 		}
 	}
 
+	LM_DBG("the message was sent to %d clients\n", n);
+
 	return n;
 }
 
