@@ -425,10 +425,10 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 
 		/*media-sub-component*/
 		if (dlg_direction != DLG_MOBILE_ORIGINATING) {
-				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport->s, ipA, portA, ipB, portB);
+				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipA, portA, ipB, portB);
 				cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
 		} else {
-				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport->s, ipB, portB, ipA, portA);
+				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipB, portB, ipA, portA);
 				cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
 		}
 
@@ -668,15 +668,12 @@ int reg_match(char *pattern, char *string, regmatch_t *pmatch)
 		return 0;
 }
 
-AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
+AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 		str *ipA, str *portA,
 		str *ipB, str *portB)
 {
-
 		str data;
 		int len, len2;
-		//    str flow_data = {0, 0};
-		//    str flow_data2 = {0, 0};
 		AAA_AVP *flow_description1 = 0, *flow_description2 = 0, *flow_number = 0;
 		AAA_AVP *flow_usage = 0;
 
@@ -685,14 +682,18 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, char* proto,
 		list.head = 0;
 		char x[4];
 		char *proto_nr = 0;
-		if (strcasecmp(proto,"IP") == 0) {
+		if (proto->len == 2 && strncasecmp(proto->s,"IP", proto->len) == 0) {
 			proto_nr = "ip";
-		} else if (strcasecmp(proto,"UDP") == 0) {
+		} else if (proto->len == 2 && strncasecmp(proto->s,"UDP", proto->len) == 0) {
 			proto_nr = "17";
-		} else if (strcasecmp(proto,"TCP") == 0) {
+		} else if (proto->len == 3 && strncasecmp(proto->s,"TCP", proto->len) == 0) {
 			proto_nr = "6";
+		} else if (proto->len == 7 && strncasecmp(proto->s,"RTP/AVP", proto->len) == 0) {
+			proto_nr = "17";	/* for now we just use UDP for all RTP */
+		} else if (proto->len == 8 && strncasecmp(proto->s,"RTP/SAVP", proto->len) == 0) {
+			proto_nr = "17";	/* for now we just use UDP for all RTP */
 		} else {
-			LOG(L_ERR, "Not yet implemented for protocol %s\n", proto);
+			LOG(L_ERR, "Not yet implemented for protocol %.*s\n", proto->len, proto->s);
 			return 0;
 		}
 		int proto_len = strlen(proto_nr);

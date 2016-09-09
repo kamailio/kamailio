@@ -84,7 +84,7 @@ int rx_add_media_component_description_avp(AAAMessage *msg, int number, str *med
 
 int rx_add_media_component_description_avp_register(AAAMessage *msg);
 
-AAA_AVP *rx_create_media_subcomponent_avp(int number, char *proto, str *ipA, str *portA, str *ipB, str *portB);
+AAA_AVP *rx_create_media_subcomponent_avp(int number, str *proto, str *ipA, str *portA, str *ipB, str *portB);
 
 AAA_AVP *rx_create_media_subcomponent_avp_register();
 
