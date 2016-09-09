@@ -1816,7 +1816,7 @@ struct sca_call_info_dispatch call_info_dispatch[] = {
 #define SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC	(1 << 0)
 #define SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC	(1 << 1)
 
-int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2)
+int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
 {
 	sca_call_info call_info;
 	hdr_field_t *call_info_hdr;
@@ -1886,11 +1886,23 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2)
 		}
 	}
 
-	if (sca_get_msg_from_header(msg, &from) < 0) {
+	if (p3 != NULL) {
+		if (sca_get_pv_from_header(msg, &from, (pv_spec_t *) p3) < 0) {
+			LM_ERR("Bad From pvar\n");
+			return (-1);
+		}
+	}
+	else if (sca_get_msg_from_header(msg, &from) < 0) {
 		LM_ERR("Bad From header\n");
 		return (-1);
 	}
-	if (sca_get_msg_to_header(msg, &to) < 0) {
+	if (p2 != NULL) {
+		if (sca_get_pv_to_header(msg, &to, (pv_spec_t *) p2) < 0) {
+			LM_ERR("Bad To pvar\n");
+			return (-1);
+		}
+	}
+	else if (sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR("Bad To header\n");
 		return (-1);
 	}

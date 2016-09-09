@@ -40,6 +40,7 @@
 
 #include "../../timer.h"
 #include "../../timer_proc.h"
+#include "../../mod_fix.h"
 
 #include "sca.h"
 #include "sca_appearance.h"
@@ -69,6 +70,8 @@ static int sca_mod_init(void);
 static int sca_child_init(int);
 static void sca_mod_destroy(void);
 static int sca_set_config(sca_mod *);
+int fixup_ciu(void **, int);
+int fixup_free_ciu(void **param, int param_no);
 
 /*
  * EXPORTED COMMANDS
@@ -78,9 +81,13 @@ static cmd_export_t cmds[] = {
 				REQUEST_ROUTE},
 		{"sca_call_info_update", (cmd_function)sca_call_info_update, 0, NULL, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update, 1, fixup_var_int_1, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{0, 0, 0, 0, 0, 0},
+		{"sca_call_info_update", (cmd_function)sca_call_info_update, 1,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+		{"sca_call_info_update", (cmd_function)sca_call_info_update, 2,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+		{"sca_call_info_update", (cmd_function)sca_call_info_update, 3,
+			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+		{ 0, 0, 0, 0, 0, 0 }
 };
 
 /*
@@ -399,4 +406,30 @@ void sca_mod_destroy(void)
 	}
 
 	sca_db_disconnect();
+}
+
+int fixup_ciu(void **param, int param_no)
+{
+	switch (param_no) {
+		case 1:
+			return fixup_var_int_1(param, param_no);
+		case 2:
+		case 3:
+			return fixup_spve_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
+}
+
+int fixup_free_ciu(void **param, int param_no)
+{
+	switch (param_no) {
+		case 1:
+			return 0;
+		case 2:
+		case 3:
+			return fixup_free_spve_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
 }

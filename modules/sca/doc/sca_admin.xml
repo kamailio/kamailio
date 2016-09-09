@@ -342,7 +342,7 @@ if ( is_method( "SUBSCRIBE" )) {
 
 		<section id="sca.f.sca_call_info_update">
 			<title>
-				<function moreinfo="none">sca_call_info_update([mask])</function>
+				<function moreinfo="none">sca_call_info_update([mask, to, from])</function>
 			</title>
 			<para>
 				<itemizedlist>
@@ -354,6 +354,14 @@ if ( is_method( "SUBSCRIBE" )) {
 							<listitem><para>1 - SCA_CALL_INFO_SHARED_CALLER</para></listitem>
 							<listitem><para>2 - SCA_CALL_INFO_SHARED_CALLEE</para></listitem>
 						</itemizedlist>
+					</listitem>
+					<listitem>
+						<para><emphasis>to</emphasis> - string (optional)</para>
+						<para>string to use as To and skip parsing To header from the message. The parameter allows pseudo-variables usage</para>
+					</listitem>
+					<listitem>
+						<para><emphasis>from</emphasis> - string (optional)</para>
+						<para>string to use as From and skip parsing From header from the message. The parameter allows pseudo-variables usage</para>
 					</listitem>
 				</itemizedlist>
 			</para>
@@ -400,7 +408,7 @@ if ( is_method( "SUBSCRIBE" )) {
 route
 {
 ...
-	sca_call_info_update();
+	sca_call_info_update(0, "$var(to)", "$var(from)@$var(domain)");
 ...
 }
 
