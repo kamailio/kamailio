@@ -1279,6 +1279,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 				if (h->type == HDR_CONTACT_T && h->parsed) {
 						for (c = ((contact_body_t*) h->parsed)->contacts; c; c = c->next) {
 								ul.lock_udomain(domain_t, &vb->host, vb->port, vb->proto);
+								memset(&contact_info, 0, sizeof(struct pcontact_info));
 								contact_info.aor = c->uri;
 								contact_info.via_host = vb->host;
 								contact_info.via_port = vb->port;

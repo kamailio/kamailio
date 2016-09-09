@@ -308,7 +308,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         LM_DBG("Registering for Usrloc callbacks on DELETE\n");
 
         ul.lock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
-
+		memset(&contact_info, 0, sizeof(struct pcontact_info));
         contact_info.received_host = local_data->recv_host;
         contact_info.received_port = local_data->recv_port;
         contact_info.received_proto = local_data->recv_proto;
