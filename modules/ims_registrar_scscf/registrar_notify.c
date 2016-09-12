@@ -1697,7 +1697,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
 
         res = ul.get_impurecord(_t, (&impu_list[i]), &r);
         if (res != 0) {
-            LM_WARN("impu disappeared, ignoring it\n");
+            LM_DBG("impu disappeared, ignoring it\n");
             //            if (domain_locked) {
             ul.unlock_udomain(_t, &impu_list[i]);
             //            }
