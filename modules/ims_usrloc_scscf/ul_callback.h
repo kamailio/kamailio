@@ -67,7 +67,8 @@ struct impurecord;
 #define UL_IMPU_DELETE_CONTACT		(1<<12)		/* explciti contact delete from IMPU (dereg) */
 #define UL_IMPU_DELETE_CONTACT_IMPLICIT	(1<<13)		/* implicit contact delete frim IMPU (expiry, etc) */
 #define UL_IMPU_EXPIRE_CONTACT		(1<<14)		/* a new contact has been inserted for this IMPU */
-#define ULCB_MAX               	((1<<15)-1)
+#define UL_IMPU_UNREG_NC                (1<<15)                /* Unregistered no contacts */
+#define ULCB_MAX               	((1<<16)-1)
 
 /*! \brief callback function prototype */
 typedef void (ul_cb) (struct impurecord* r, struct ucontact *c, int type, void *param);

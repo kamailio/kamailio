@@ -473,7 +473,11 @@ static inline void process_impurecord(impurecord_t* _r) {
     } else {
         if (!hascontacts) {
             LM_DBG("This impu is not to be deleted but has no contacts - changing state to IMPU_UNREGISTERED\n");
-            _r->reg_state = IMPU_UNREGISTERED;
+			//run callback  here UL_IMPU_UNREG_NC for UL_IMPU_UNREG_NC
+			if (_r->reg_state != IMPU_UNREGISTERED && exists_ulcb_type(_r->cbs, UL_IMPU_UNREG_NC)) {
+				run_ul_callbacks(_r->cbs, UL_IMPU_UNREG_NC, _r, 0);
+			}
+			_r->reg_state = IMPU_UNREGISTERED;
         }
     }
     
