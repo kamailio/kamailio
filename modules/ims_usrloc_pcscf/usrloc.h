@@ -70,6 +70,8 @@
 
 #define VALID_CONTACT(c, t)   ((c->expires>t) || (c->expires==0))
 
+#define SEARCH_SERVICE_ROUTES 1<<0      /* bitmap of extra search functionality when searching for contacts */
+
 struct hslot; /*!< Hash table slot */
 struct socket_info;
 
@@ -178,6 +180,7 @@ static inline char* reg_state_to_string(enum pcontact_reg_states reg_state) {
 
 typedef struct pcontact_info {
     unsigned short searchflag; /*!search flag - what to search on */
+    unsigned short extra_search_criteria;
     str aor; /* contact uri */
     str via_host;
     unsigned short via_port;

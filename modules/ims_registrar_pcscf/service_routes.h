@@ -26,6 +26,8 @@
 #include "../../parser/msg_parser.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 
+#define MAXROUTES 10
+#define MAXROUTESIZE 255
 /**
  * Check, if a user-agent follows the indicated service-routes
  */

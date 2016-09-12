@@ -448,7 +448,7 @@ error:
  * @return 0 if found <>0 if not
  */
 int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact** _c) {
-	unsigned int sl, i, aorhash, params_len, has_rinstance=0;
+	unsigned int sl, i, j, aorhash, params_len, has_rinstance=0;
 	struct pcontact* c;
 	struct sip_uri needle_uri;
         char *params, *sep;
@@ -527,14 +527,34 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 					continue;
 				}
 			}
+			
+			if ((contact_info->extra_search_criteria & SEARCH_SERVICE_ROUTES) && contact_info->num_service_routes > 0) {
+				LM_DBG("have %d service routes to search for\n", contact_info->num_service_routes);
+				if (contact_info->num_service_routes != c->num_service_routes) {
+					c = c->next;
+					LM_DBG("number of service routes do not match - failing\n");
+					continue;
+				} 
+				for (j=0; j<contact_info->num_service_routes; j++) {
+					if (contact_info->service_routes[j].len != c->service_routes[j].len || memcmp(contact_info->service_routes[j].s, c->service_routes[j].s, c->service_routes[j].len) != 0) {
+						LM_DBG("service route at position %d does not match - looking for [%.*s] and contact has [%.*s]... continuing\n", 
+							j,
+							contact_info->service_routes[j].len, contact_info->service_routes[j].s,
+							c->service_routes[j].len, c->service_routes[j].s);
+						c = c->next;
+						continue;
+					}
+				}
+			}
+			
 			//finally check state being searched for
 			if ( (contact_info->reg_state != PCONTACT_ANY) && ((contact_info->reg_state & c->reg_state) == 0)) {
 				LM_DBG("can't find contact for requested reg state [%d] - (have [%d])\n", contact_info->reg_state, c->reg_state);
 				c = c->next;
 				continue;
-                        }
-                    *_c = c;
-                    return 0;
+			}
+			*_c = c;
+			return 0;
 		}
 		
 		c = c->next;
