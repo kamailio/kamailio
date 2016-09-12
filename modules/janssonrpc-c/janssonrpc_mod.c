@@ -159,7 +159,7 @@ static int child_init(int rank)
 {
 	int pid;
 
-	if (rank>PROC_MAIN)
+	if (rank!=PROC_INIT)
 		cmd_pipe = pipe_fds[1];
 
 	if (rank!=PROC_MAIN)
