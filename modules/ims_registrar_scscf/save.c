@@ -617,7 +617,7 @@ static inline int unregister_contact(contact_t* chi, contact_state_t state) {
     //    }
 
     if (ul.get_ucontact(&chi->uri, &callid, &path, 0/*cseq*/, &ucontact) != 0) {
-        LM_ERR("Can't unregister contact that does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
+        LM_DBG("Can't unregister contact that does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
         //        ul.unlock_udomain(_d, public_identity);
         goto error;
     }
@@ -930,7 +930,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         }
                         calc_contact_expires(chi, expires_hdr, sos);
                         if (unregister_contact(chi, CONTACT_DELETE_PENDING) != 0) {
-                            LM_ERR("Unable to remove contact <%.*s\n", chi->uri.len, chi->uri.s);
+                            LM_DBG("Unable to remove contact <%.*s\n", chi->uri.len, chi->uri.s);
 
                         }
                         //add this contact to the successful unregistered in the 200OK so the PCSCF can also see what is de-registered
@@ -951,7 +951,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             //now, we get the subscription
             ul.lock_udomain(_d, public_identity);
             if (ul.get_impurecord(_d, public_identity, &impu_rec) != 0) {
-                LM_ERR("Error retrieving impu record on explicit de-reg nothing we can do from here on... aborting..\n");
+                LM_DBG("Error retrieving impu record on explicit de-reg nothing we can do from here on... aborting..\n");
                 ul.unlock_udomain(_d, public_identity);
                 goto error;
             }
@@ -1347,7 +1347,7 @@ int save(struct sip_msg* msg, char* str1, char *route) {
             //lets update the contacts - we need to know if all were deleted or not for the public identity
             int res = update_contacts(msg, _d, &public_identity, sar_assignment_type, 0, 0, 0, 0, 0, &contact_header);
             if (res <= 0) {
-                LM_ERR("Error processing REGISTER for de-registration\n");
+                LM_DBG("Error processing REGISTER for de-registration\n");
                 free_contact_buf(contact_header);
                 rerrno = R_SAR_FAILED;
                 goto error;
@@ -1424,7 +1424,7 @@ int save(struct sip_msg* msg, char* str1, char *route) {
 
     create_return_code(CSCF_RETURN_ERROR);
 
-    LM_DBG("Suspending SIP TM transaction\n");
+    LM_DBG("Suspending SIP TM transaction with index [%d] and label [%d]\n", saved_t->tindex, saved_t->tlabel);
     if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) != 0) {
         LM_ERR("failed to suspend the TM processing\n");
         free_saved_transaction_data(saved_t);
