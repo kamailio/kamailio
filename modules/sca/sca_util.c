@@ -18,11 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA. 02110-1301 USA
  */
 #include "sca_common.h"
-
+#include "sca.h"
 #include <assert.h>
 
 #include "sca_util.h"
-
+#include "../../dset.h"
 #include "../../parser/sdp/sdp.h"
 
 int sca_get_msg_method(sip_msg_t *msg)
@@ -419,6 +419,10 @@ int sca_call_is_held(sip_msg_t *msg)
 	int is_held = 0;
 	int rc;
 
+	if(sca->cfg->onhold_bflag >= 0) {
+		LM_DBG("sca_call_is_held: skip parse_sdp and use onhold_bflag\n");
+		return isbflagset(0, (flag_t)sca->cfg->onhold_bflag);
+	}
 	rc = parse_sdp(msg);
 	if (rc < 0) {
 		LM_ERR("sca_call_is_held: parse_sdp body failed\n");
