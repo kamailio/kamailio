@@ -174,7 +174,7 @@ int rx_add_framed_ip_avp(AAA_AVP_LIST * list, str ip, uint16_t version)
 		ip_address_prefix ip_adr;
 		int ret = 0;
 
-		if (ip.len < 0) return 0;
+		if (ip.len <= 0) return 0;
 		if (version == AF_INET) {
 				if (ip.len > INET_ADDRSTRLEN)
 						goto error;
@@ -673,8 +673,8 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 		str *ipB, str *portB)
 {
 		str data;
-		int len, len2;
-		AAA_AVP *flow_description1 = 0, *flow_description2 = 0, *flow_number = 0;
+		int len, len2, len3;
+		AAA_AVP *flow_description1 = 0, *flow_description2 = 0, *flow_description3 = 0, *flow_description4 = 0, *flow_number = 0;
 		AAA_AVP *flow_usage = 0;
 
 		AAA_AVP_LIST list;
@@ -731,9 +731,13 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 		} else if (useAnyForIpA) {
 				len = (permit_out.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipB->len + 4 +
 						proto_len + portB->len + 1/*nul terminator*/) * sizeof(char);
+				len3 = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
+						proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);
 		} else if (useAnyForIpB) {
 				len = (permit_out.len + from_s.len + to_s.len + 3 /*for 'any'*/ + ipA->len + 4 +
 						proto_len + portA->len + 1/*nul terminator*/) * sizeof(char);
+				len3 = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
+						proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);
 		}
 
 		if (!flowdata_buf.s || flowdata_buflen < len) {
@@ -778,6 +782,36 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 				AVP_DUPLICATE_DATA);
 		cdpb.AAAAddAVPToList(&list, flow_description1);
 
+		//Extra flow for some devices - if you have any any filter also include the specific one
+		if (regex_sdp_ip_prefix_to_maintain_in_fd.len > 0 && regex_sdp_ip_prefix_to_maintain_in_fd.s && (useAnyForIpA || useAnyForIpB)) {
+				
+				LM_DBG("This is to fix some devices that want specific and any any filters");
+				
+				len2 = len3;
+				if (!flowdata_buf.s || flowdata_buflen <= len2) {
+						if (flowdata_buf.s)
+								pkg_free(flowdata_buf.s);
+						flowdata_buf.s = (char*) pkg_malloc(len2);
+						if (!flowdata_buf.s) {
+								LM_ERR("PCC_create_media_component: out of memory \
+																		when allocating %i bytes in pkg\n", len2);
+								return NULL;
+						}
+						flowdata_buflen = len2;
+				}
+				
+				flowdata_buf.len = snprintf(flowdata_buf.s, len3, permit_out_with_ports, proto_nr,
+						ipA->len, ipA->s, intportA,
+						ipB->len, ipB->s, intportB);
+				flowdata_buf.len = strlen(flowdata_buf.s);
+				flow_description3 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+						IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+						AVP_DUPLICATE_DATA);
+				cdpb.AAAAddAVPToList(&list, flow_description3);
+
+		}
+		
 		/*second flow*/
 		len2 = len - (permit_out.len - permit_in.len) * sizeof(char);
 		if (!flowdata_buf.s || flowdata_buflen <= len2) {
@@ -810,6 +844,32 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 				IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
 				AVP_DUPLICATE_DATA);
 		cdpb.AAAAddAVPToList(&list, flow_description2);
+		
+		//Extra flow for some devices - if you have any any filter also include the specific one
+		if (regex_sdp_ip_prefix_to_maintain_in_fd.len > 0 && regex_sdp_ip_prefix_to_maintain_in_fd.s && (useAnyForIpA || useAnyForIpB)) {
+				len2 = len3 - (permit_out.len - permit_in.len) * sizeof(char);
+				if (!flowdata_buf.s || flowdata_buflen <= len2) {
+						if (flowdata_buf.s)
+								pkg_free(flowdata_buf.s);
+						flowdata_buf.s = (char*) pkg_malloc(len2);
+						if (!flowdata_buf.s) {
+								LM_ERR("PCC_create_media_component: out of memory \
+																		when allocating %i bytes in pkg\n", len2);
+								return NULL;
+						}
+						flowdata_buflen = len2;
+				}
+				
+				flowdata_buf.len = snprintf(flowdata_buf.s, len2, permit_in_with_ports, proto_nr,
+						ipB->len, ipB->s, intportB,
+						ipA->len, ipA->s, intportA);
+				flowdata_buf.len = strlen(flowdata_buf.s);
+				flow_description4 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
+						AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
+						IMS_vendor_id_3GPP, flowdata_buf.s, flowdata_buf.len,
+						AVP_DUPLICATE_DATA);
+				cdpb.AAAAddAVPToList(&list, flow_description4);
+		}
 
 		set_4bytes(x, AVP_EPC_Flow_Usage_No_Information);
 		flow_usage = cdpb.AAACreateAVP(AVP_IMS_Flow_Usage,
@@ -1032,4 +1092,5 @@ inline int rx_add_specific_action_avp(AAAMessage *msg, unsigned int data)
 				AVP_DUPLICATE_DATA,
 				__FUNCTION__);
 }
+
 
