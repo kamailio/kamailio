@@ -74,13 +74,13 @@ static int sca_set_config(sca_mod *);
  * EXPORTED COMMANDS
  */
 static cmd_export_t cmds[] = {
-		{"sca_handle_subscribe", sca_handle_subscribe, 0, NULL,
+		{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe, 0, NULL, 0,
 				REQUEST_ROUTE},
-		{"sca_call_info_update", sca_call_info_update, 0, NULL,
+		{"sca_call_info_update", (cmd_function)sca_call_info_update, 0, NULL, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", sca_call_info_update, 1, fixup_var_int_1,
+		{"sca_call_info_update", (cmd_function)sca_call_info_update, 1, fixup_var_int_1, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{NULL, NULL, -1, 0, 0},
+		{0, 0, 0, 0, 0, 0},
 };
 
 /*
@@ -144,16 +144,19 @@ static param_export_t params[] = {
 /*
  * MODULE EXPORTS
  */
-struct module_exports exports = {
-		"sca", // module name
-		cmds, // exported functions
-		NULL, // RPC methods
-		params, // exported parameters
-		sca_mod_init, // module initialization function
-		NULL, // response handling function
-		sca_mod_destroy, // destructor function
-		NULL, // oncancel function
-		sca_child_init, // per-child initialization function
+struct module_exports exports= {
+	"sca",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,
+	params,
+	0,          /* exported statistics */
+	0,          /* exported MI functions */
+	0,          /* exported pseudo-variables */
+	0,          /* extra processes */
+	sca_mod_init,
+	0,
+	sca_mod_destroy,
+	sca_child_init  /* per-child init function */
 };
 
 static int sca_bind_sl(sca_mod *scam, sl_api_t *sl_api)
