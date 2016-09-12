@@ -187,6 +187,9 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
             rerrno = R_SAR_FAILED;
             goto error;
         }
+		
+		LM_DBG("callid for found transaction is [%.*s]\n", req->callid->body.len, req->callid->body.s);
+
 
         cxdx_get_result_code(saa, &rc);
         cxdx_get_experimental_result_code(saa, &experimental_rc);
@@ -336,6 +339,7 @@ int cxdx_send_sar(struct sip_msg *msg, str public_identity, str private_identity
     AAASession *session = 0;
     unsigned int hash = 0, label = 0;
     struct hdr_field *hdr;
+	str call_id;
 
     session = cdpb.AAACreateSession(0);
 
@@ -346,8 +350,14 @@ int cxdx_send_sar(struct sip_msg *msg, str public_identity, str private_identity
     }
     if (!sar) goto error1;
 
-    if (send_vs_callid_avp)
-		if (!cxdx_add_call_id(sar, cscf_get_call_id(msg, &hdr))) goto error1;
+    if (msg && send_vs_callid_avp) {
+		call_id = cscf_get_call_id(msg, &hdr);
+		if (call_id.len>0 && call_id.s) {
+			if (!cxdx_add_call_id(sar, call_id)) 
+				LM_WARN("Failed to add call-id to SAR.... continuing... assuming non-critical\n");
+		}
+	}
+	
     if (!cxdx_add_destination_realm(sar, cxdx_dest_realm)) goto error1;
 
     if (!cxdx_add_vendor_specific_appid(sar, IMS_vendor_id_3GPP, IMS_Cx, 0 /*IMS_Cx*/)) goto error1;
