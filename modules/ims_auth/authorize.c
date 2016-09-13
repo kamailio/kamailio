@@ -1307,9 +1307,11 @@ auth_vector * new_auth_vector(int item_number, str auth_scheme, str authenticate
     x->status = AUTH_VECTOR_UNUSED;
     x->expires = 0;
 
-	base16_ck_len = bin_to_base16(x->ck.s, 16, base16_ck);
-	if (base16_ck_len)
-		LM_DBG("new auth-vector with ck [%s] with status %d\n", base16_ck, x->status);
+	if (x->ck.len > 0 && x->ck.s) {
+		base16_ck_len = bin_to_base16(x->ck.s, 16, base16_ck);
+		if (base16_ck_len)
+			LM_DBG("new auth-vector with ck [%s] with status %d\n", base16_ck, x->status);
+	}
 
 done:
     return x;
