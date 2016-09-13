@@ -290,6 +290,15 @@ int auth_client_statefull_sm_process(cdp_session_t* s, int event, AAAMessage* ms
 
 					//LM_INFO("state machine: i was in idle and i am going to pending\n");
 					break;
+				
+				/* Just in case we have some lost sessions */
+				case AUTH_EV_SESSION_TIMEOUT:
+				case AUTH_EV_SESSION_GRACE_TIMEOUT:
+				    LM_ERR("auth_client_statefull_sm_process(): Received TIMEOUT - clean up session to avoid stale sessions\n");
+					cdp_session_cleanup(s, msg);
+					s = 0;
+					break;
+					
 				default:
 					LM_ERR("auth_client_statefull_sm_process(): Received invalid event %d while in state %s!(data %p)\n",
 							event, auth_states[x->state], x->generic_data);
