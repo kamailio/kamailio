@@ -1342,7 +1342,7 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
 
         if (!dlg_out) {
             if (rpl->first_line.u.reply.statuscode < 299) { /*we don't care about failure responses to dialog - not necessary to create dialog out...*/
-                if (rpl->via1->branch && (rpl->via1->branch->value.len > 0)) {
+                if (rpl->via1->branch && (&rpl->via1->branch->value) && (rpl->via1->branch->value.len > 0)) {
                     branch = rpl->via1->branch->value;
                 }
 
