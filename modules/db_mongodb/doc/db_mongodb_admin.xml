@@ -73,8 +73,13 @@
 				<ulink url="https://github.com/mongodb/mongo-c-driver">https://github.com/mongodb/mongo-c-driver</ulink>
 			</para>
 			<para>
-				Note: if you use tls module, use at least mongo-c-driver v1.2.1
-				- there were reports of issues inside earlier versions of the driver.
+				Note: if you use tls module, use at least mongo-c-driver v1.3.5
+				and compile the library by configuring it without automatic init
+				and cleanup (you have to run:
+				'./configure --disable-automatic-init-and-cleanup') -- this
+				option is planned to be removed in future versions. An alternative
+				for v1.3.5 could be the patch from:
+				https://github.com/miconda/mongo-c-driver/commit/51d95009de39eaeca48491682a5ffec4f83cde55
 			</para>
 			</listitem>
 			</itemizedlist>
