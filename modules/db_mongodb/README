@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2014 asipto.com
+   Copyright Â© 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -85,8 +85,14 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * mongo-c-driver - available at
        https://github.com/mongodb/mongo-c-driver
-       Note: if you use tls module, use at least mongo-c-driver v1.2.1 -
-       there were reports of issues inside earlier versions of the driver.
+       Note: if you use tls module, use at least mongo-c-driver v1.3.5 and
+       compile the library by configuring it without automatic init and
+       cleanup (you have to run: './configure
+       --disable-automatic-init-and-cleanup') -- this option is planned to
+       be removed in future versions. An alternative for v1.3.5 could be
+       the patch from:
+       https://github.com/miconda/mongo-c-driver/commit/51d95009de39eaeca4
+       8491682a5ffec4f83cde55
 
 3. Usage
 

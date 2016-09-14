@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2014 asipto.com
+   Copyright Â© 2014 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -98,8 +98,14 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * mongo-c-driver - available at
        https://github.com/mongodb/mongo-c-driver
-       Note: if you use tls module, use at least mongo-c-driver v1.2.1 -
-       there were reports of issues inside earlier versions of the driver.
+       Note: if you use tls module, use at least mongo-c-driver v1.3.5 and
+       compile the library by configuring it without automatic init and
+       cleanup (you have to run: './configure
+       --disable-automatic-init-and-cleanup') -- this option is planned to
+       be removed in future versions. An alternative for v1.3.5 could be
+       the patch from:
+       https://github.com/miconda/mongo-c-driver/commit/51d95009de39eaeca4
+       8491682a5ffec4f83cde55
 
 3. Parameters
 
@@ -135,7 +141,7 @@ modparam("ndb_mongodb", "server", "name=mgs2;uri='mongodb://127.0.0.2/kamailio'"
    4.5. mongodb_next(replyid)
    4.6. mongodb_free(replyid)
 
-4.1. mongodb_cmd(srvname, dbname, cname, command, replyid)
+4.1.  mongodb_cmd(srvname, dbname, cname, command, replyid)
 
    Send a valid command to MongoDB server identified by srvname. The reply
    will be stored in a local container identified by replyid. All the
@@ -167,7 +173,7 @@ if(mongodb_cmd("mgs1", "kamailio", "acc", "{ \"collStats\": \"acc\" }", "mgr1"))
 }
 ...
 
-4.2. mongodb_cmd_simple(srvname, dbname, cname, command, replyid)
+4.2.  mongodb_cmd_simple(srvname, dbname, cname, command, replyid)
 
    Send a valid command to MongoDB server identified by srvname. The reply
    will be stored in a local container identified by replyid. All the
@@ -193,7 +199,7 @@ mgr1")) {
 }
 ...
 
-4.3. mongodb_find(srvname, dbname, cname, command, replyid)
+4.3.  mongodb_find(srvname, dbname, cname, command, replyid)
 
    Send a find command to MongoDB server identified by srvname. The reply
    will be stored in a local container identified by replyid. All the
@@ -222,7 +228,7 @@ if(mongodb_find("mgs1", "kamailio", "acc", "{ \"src_user\" : \"111\" }", "mgr1")
 }
 ...
 
-4.4. mongodb_find_one(srvname, dbname, cname, command, replyid)
+4.4.  mongodb_find_one(srvname, dbname, cname, command, replyid)
 
    Similar to mongodb_find(...), but it stops searching after first match,
    returning the result with one object - faster when expecting to have a
@@ -239,7 +245,7 @@ if(mongodb_find_one("mgs1", "kamailio", "subscriber", "{ \"username\" : \"111\"
 }
 ...
 
-4.5. mongodb_next(replyid)
+4.5.  mongodb_next(replyid)
 
    Moves to next document in a MongoDB reply. This function can be used
    after a succesful mongodb_cmd() or mongodb_find(). It returns true if
@@ -258,7 +264,7 @@ if(mongodb_find("mgs1", "kamailio", "acc", "{ \"src_user\" : \"111\" }", "mgr1")
 mongodb_free("mgr1");
 ...
 
-4.6. mongodb_free(replyid)
+4.6.  mongodb_free(replyid)
 
    Frees data in a previous reply from memory. After this function call,
    accessing to a freed replyid returns null value.
