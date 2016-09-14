@@ -420,8 +420,6 @@ Description: Provides a set utility functions for Kamailio
  .
  Provides a set of utility functions for Kamailio, which are not related
  to the server configuration.
- .
- Includes http client (http_client) module too
 
 Package: kamailio-tls-modules
 Architecture: linux-any
@@ -498,6 +496,20 @@ Description: extra modules for Kamailio
  per second even on low-budget hardware.
  .
  This package provides: gzcompress uuid ev http_async
+
+Package: kamailio-http-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: kamailio (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: http modules for Kamailio
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides: http_client http_async_client
 
 Package: kamailio-nth
 Architecture: any

@@ -31,7 +31,7 @@ EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy java dnssec sctp purple 
 # Note: the order is important (should be in dependency order, the one
 # on which other depend first)
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
-			   ldap xml perl utils lua memcached \
+			   ldap xml perl utils http lua memcached \
 			   snmpstats carrierroute xmpp cpl python geoip\
 			   sqlite json ims \
 			   tls outbound websocket autheph \
