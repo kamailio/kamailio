@@ -37,7 +37,7 @@
 extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
 extern client_ro_cfg cfg;
-extern struct dlg_binds dlgb;
+extern ims_dlg_api_t dlgb;
 extern cdp_avp_bind_t *cdp_avp;
 extern str ro_forced_peer;
 extern int ro_db_mode;

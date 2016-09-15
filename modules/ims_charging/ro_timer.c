@@ -23,7 +23,7 @@
 extern int interim_request_credits;
 extern int ro_timer_buffer;
 extern int ro_db_mode;
-extern struct dlg_binds dlgb;
+extern ims_dlg_api_t dlgb;
 extern struct ims_charging_counters_h ims_charging_cnts_h;
 
 /*! global dialog timer */

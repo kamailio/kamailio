@@ -63,7 +63,7 @@ client_ro_cfg cfg = { str_init(""),
 
 extern struct ims_charging_counters_h ims_charging_cnts_h;
 struct cdp_binds cdpb;
-struct dlg_binds dlgb;
+ims_dlg_api_t dlgb;
 cdp_avp_bind_t *cdp_avp;
 struct tm_binds tmb;
 
@@ -198,7 +198,7 @@ static int mod_init(void) {
 		goto error;
 	}
 
-	if (load_dlg_api(&dlgb) != 0) { /* load the dialog API */
+	if (load_ims_dlg_api(&dlgb) != 0) { /* load the dialog API */
 		LM_ERR("can't load Dialog API\n");
 		goto error;
 	}
