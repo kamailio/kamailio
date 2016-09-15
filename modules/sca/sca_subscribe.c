@@ -952,6 +952,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	unsigned int expires = 0,
 	max_expires;
 	unsigned int cseq;
+	str *ruri = NULL;
 
 	assert(req_sub != NULL);
 
@@ -1032,6 +1033,12 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		to = &tmp_to;
 	}
 
+	if (parse_sip_msg_uri(msg) < 0) {
+		LM_ERR("Error while parsing the Request-URI\n");
+		goto error;
+	}
+	ruri = GET_RURI(msg);
+
 	to_tag = to->tag_value;
 	if (to_tag.s == NULL) {
 		// XXX need hook to detect when we have a subscription and the
@@ -1039,7 +1046,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 		// old subscription should be dumped & appropriate NOTIFYs sent.
 		if (scam->sl_api->get_reply_totag(msg, &to_tag) < 0) {
 			LM_ERR("Failed to generate to-tag for reply to SUBSCRIBE %.*s\n",
-					STR_FMT(&REQ_LINE(msg).uri));
+					STR_FMT(ruri));
 			goto error;
 		}
 
@@ -1048,7 +1055,7 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 				LM_ERR("Failed to parse Record-Route header %.*s in "
 						"SUBSCRIBE %.*s from %.*s\n",
 						STR_FMT(&msg->record_route->body),
-						STR_FMT(&REQ_LINE(msg).uri),
+						STR_FMT(ruri),
 						STR_FMT(&contact_uri));
 				goto error;
 			}
@@ -1056,9 +1063,9 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 	}
 
 	req_sub->subscriber = contact_uri;
-	if (sca_uri_extract_aor(&REQ_LINE(msg).uri, &req_sub->target_aor) < 0) {
+	if (sca_uri_extract_aor(ruri, &req_sub->target_aor) < 0) {
 		LM_ERR("Failed to extract AoR from RURI %.*s\n",
-				STR_FMT(&REQ_LINE(msg).uri));
+				STR_FMT(ruri));
 		goto error;
 	}
 	req_sub->event = event_type;
