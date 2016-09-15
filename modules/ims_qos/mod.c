@@ -88,7 +88,7 @@ int authorize_video_flow = 1; //by default we authorize resources for video flow
 
 struct tm_binds tmb;
 struct cdp_binds cdpb;
-struct dlg_binds dlgb;
+ims_dlg_api_t dlgb;
 bind_usrloc_t bind_usrloc;
 cdp_avp_bind_t *cdp_avp;
 usrloc_api_t ul;
@@ -244,7 +244,7 @@ static int mod_init(void)
 		}
 
 		/* load the dialog API */
-		if (load_dlg_api(&dlgb) != 0) {
+		if (load_ims_dlg_api(&dlgb) != 0) {
 				LM_ERR("can't load Dialog API\n");
 				goto error;
 		}
