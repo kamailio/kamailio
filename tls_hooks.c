@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 iptelorg GmbH 
+ * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,7 +34,7 @@ static int tls_hooks_loaded=0;
 
 int register_tls_hooks(struct tls_hooks* h)
 {
-	if (!tls_disable){
+	if (!tls_disable) {
 		tls_hook=*h;
 		tls_hooks_loaded++;
 		return 0;
@@ -47,7 +47,7 @@ int tls_init(struct socket_info* si)
 {
 	if (tls_hook.init_si)
 		return tls_hook.init_si(si);
-		return -1;
+	return -1;
 }
 
 int tls_has_init_si()
