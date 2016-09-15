@@ -451,6 +451,7 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 	unsigned int sl, i, j, aorhash, params_len, has_rinstance=0;
 	struct pcontact* c;
 	struct sip_uri needle_uri;
+	int serviceroutematch;
         char *params, *sep;
         str rinstance = {0, 0};
         
@@ -535,15 +536,21 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 					LM_DBG("number of service routes do not match - failing\n");
 					continue;
 				} 
+				
+				serviceroutematch = 1;
 				for (j=0; j<contact_info->num_service_routes; j++) {
 					if (contact_info->service_routes[j].len != c->service_routes[j].len || memcmp(contact_info->service_routes[j].s, c->service_routes[j].s, c->service_routes[j].len) != 0) {
-						LM_DBG("service route at position %d does not match - looking for [%.*s] and contact has [%.*s]... continuing\n", 
+						LM_DBG("service route at position %d does not match - looking for [%.*s] and contact has [%.*s]... continuing to next contact check\n", 
 							j,
 							contact_info->service_routes[j].len, contact_info->service_routes[j].s,
 							c->service_routes[j].len, c->service_routes[j].s);
-						c = c->next;
-						continue;
+						serviceroutematch = 0;
+						break;
 					}
+				}
+				if (serviceroutematch == 0) {
+					c = c->next;
+					continue;
 				}
 			}
 			
