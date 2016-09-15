@@ -114,7 +114,11 @@ int check_x509_subj(X509 *pcert, str* sdom)
 
 			if (actname->type == GEN_DNS || actname->type == GEN_URI) {
 				/* we've found one */
+#if OPENSSL_VERSION_NUMBER >= 0x010100000L
 				altptr = (char *)ASN1_STRING_get0_data(actname->d.ia5);
+#else
+				altptr = (char *)ASN1_STRING_data(actname->d.ia5);
+#endif
 				if (actname->type == GEN_URI) {
 					if (parse_uri(altptr, strlen(altptr), &suri) != 0) {
 						continue;
