@@ -12,7 +12,7 @@
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "../../modules/ims_dialog/dlg_hash.h"
 
-extern struct dlg_binds dlgb;
+extern ims_dlg_api_t dlgb;
 
 /*------------------------------------------------------------------------------------\
 | Our call back handler function that handles |confirmed|expired|terminated|destroy.  |

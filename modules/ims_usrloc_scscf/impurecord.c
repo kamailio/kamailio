@@ -81,7 +81,7 @@ extern shtable_t sub_dialog_table;
 extern struct contact_list* contact_list;
 extern struct ims_subscription_list* ims_subscription_list;
 
-extern struct dlg_binds dlgb;
+extern ims_dlg_api_t dlgb;
 
 static ucontact_t* contacts_to_expire [MAX_CONTACTS_PER_IMPU]; //this is done to prevent fragmentation of memory...
 static int num_contacts_to_expire;

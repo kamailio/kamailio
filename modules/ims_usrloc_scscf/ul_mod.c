@@ -117,7 +117,7 @@ str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 unsigned int nat_bflag = (unsigned int)-1;
 unsigned int init_flag = 0;
 
-struct dlg_binds dlgb;
+ims_dlg_api_t dlgb;
 
 int sub_dialog_hash_size = 9;
 shtable_t sub_dialog_table;
@@ -199,7 +199,6 @@ struct module_exports exports = {
  */
 static int mod_init(void) {
 	int i;
-	load_dlg_f load_dlg;
 	if (usrloc_debug){
 		LM_INFO("Logging usrloc records to %.*s\n", usrloc_debug_file.len, usrloc_debug_file.s);
 		debug_file = fopen(usrloc_debug_file.s, "a");
@@ -346,13 +345,7 @@ static int mod_init(void) {
 		}
 	}
 
-	if (!(load_dlg = (load_dlg_f) find_export("load_dlg", 0, 0))) { /* bind to dialog module */
-		LM_ERR("can not import load_dlg. This module requires Kamailio dialog module.\n");
-	}
-	if (load_dlg(&dlgb) == -1) {
-		return -1;
-	}
-	if (load_dlg_api(&dlgb) != 0) { /* load the dialog API */
+	if (load_ims_dlg_api(&dlgb) != 0) { /* load the dialog API */
 		LM_ERR("can't load Dialog API\n");
 		return -1;
 	}
