@@ -120,7 +120,7 @@ static cmd_export_t cmds[] = {
    {"dlg_get", (cmd_function)w_dlg_get, 3, fixup_dlg_bridge, 0, ANY_ROUTE },
     {"is_known_dlg", (cmd_function) w_is_known_dlg, 0, NULL,
         0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-    {"load_dlg", (cmd_function) load_dlg, 0, 0, 0, 0},
+    {"load_ims_dlg", (cmd_function)load_ims_dlg, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0}
 };
 
@@ -349,7 +349,7 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 	return 1;
 }
 
-int load_dlg(struct dlg_binds *dlgb) {
+int load_ims_dlg(ims_dlg_api_t *dlgb) {
 
     dlgb->register_dlgcb = register_dlgcb;
     dlgb->register_dlgcb_nodlg = register_dlgcb_nodlg;
