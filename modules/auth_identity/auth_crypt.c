@@ -35,6 +35,7 @@
 #include <openssl/sha.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include <openssl/crypto.h>
 #include <openssl/x509_vfy.h>
 
 #include "../../mem/mem.h"
@@ -113,7 +114,7 @@ int check_x509_subj(X509 *pcert, str* sdom)
 
 			if (actname->type == GEN_DNS || actname->type == GEN_URI) {
 				/* we've found one */
-				altptr = (char *)ASN1_STRING_data(actname->d.ia5);
+				altptr = (char *)ASN1_STRING_get0_data(actname->d.ia5);
 				if (actname->type == GEN_URI) {
 					if (parse_uri(altptr, strlen(altptr), &suri) != 0) {
 						continue;
@@ -161,22 +162,30 @@ int check_x509_subj(X509 *pcert, str* sdom)
 
 int verify_x509(X509 *pcert, X509_STORE *pcacerts)
 {
-	X509_STORE_CTX ca_ctx;
+	X509_STORE_CTX *ca_ctx = NULL;
 	char *strerr;
 
-
-	if (X509_STORE_CTX_init(&ca_ctx, pcacerts, pcert, NULL) != 1) {
-		LOG(L_ERR, "AUTH_IDENTITY:verify_x509: Unable to init X509 store ctx\n");
+	ca_ctx = X509_STORE_CTX_new();
+	if(ca_ctx==NULL) {
+		LM_ERR("cannot get a x509 context\n");
 		return -1;
 	}
 
-	if (X509_verify_cert(&ca_ctx) != 1) {
-		strerr = (char *) X509_verify_cert_error_string(ca_ctx.error);
+	if (X509_STORE_CTX_init(ca_ctx, pcacerts, pcert, NULL) != 1) {
+		LOG(L_ERR, "AUTH_IDENTITY:verify_x509: Unable to init X509 store ctx\n");
+		X509_STORE_CTX_free(ca_ctx);
+		return -1;
+	}
+
+	if (X509_verify_cert(ca_ctx) != 1) {
+		strerr = (char *)X509_verify_cert_error_string(X509_STORE_CTX_get_error(ca_ctx));
 		LOG(L_ERR, "AUTH_IDENTITY VERIFIER: Certificate verification error: %s\n", strerr);
-		X509_STORE_CTX_cleanup(&ca_ctx);
+		X509_STORE_CTX_cleanup(ca_ctx);
+		X509_STORE_CTX_free(ca_ctx);
 		return -2;
 	}
-	X509_STORE_CTX_cleanup(&ca_ctx);
+	X509_STORE_CTX_cleanup(ca_ctx);
+	X509_STORE_CTX_free(ca_ctx);
 
 	LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Certificate is valid\n");
 
