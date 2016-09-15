@@ -56,8 +56,8 @@ static str pu_500_rpl  = str_init("Server Internal Error");
 static str pu_489_rpl  = str_init("Bad Event");
 static str pu_423_rpl  = str_init("Interval Too Brief");
 
-int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
-		str* local_contact)
+static int send_2XX_reply(sip_msg_t *msg, int reply_code,
+		unsigned int lexpire, str *local_contact)
 {
 	str hdr_append = {0, 0};
 	str tmp;
@@ -1335,7 +1335,7 @@ error:
 }
 
 
-int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
+int extract_sdialog_info_ex(subs_t* subs, struct sip_msg* msg, uint32_t miexp,
 		uint32_t mexp, int* to_tag_gen, str scontact,
 		str watcher_user, str watcher_domain,
 		int* reply_code, str* reply_str)
@@ -1349,20 +1349,15 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 	struct sip_uri uri;
 
 	/* examine the expire header field */
-	if(msg->expires && msg->expires->body.len > 0)
-	{
-		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
-		{
+	if(msg->expires && msg->expires->body.len > 0) {
+		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0)) {
 			LM_ERR("cannot parse Expires header\n");
 			goto error;
 		}
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-		LM_DBG("'Expires' header found, value= %d\n", lexpire);
-
-	}
-	else
-	{
-		LM_DBG("'expires' not found; default=%d\n",subs->event->default_expires);
+		LM_DBG("'Expires' header found, value= %u\n", lexpire);
+	} else {
+		LM_DBG("'expires' not found; default=%u\n",subs->event->default_expires);
 		lexpire = subs->event->default_expires;
 	}
 	if(lexpire > mexp)
@@ -1370,34 +1365,32 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 
 	if (lexpire && miexp && lexpire < miexp) {
 		if(min_expires_action == 1) {
-			LM_DBG("subscription expiration invalid , requested=%d, minimum=%d, returning error \"423 Interval Too brief\"\n", lexpire, miexp);
+			LM_DBG("subscription expiration invalid , requested=%u, minimum=%u,"
+					" returning error \"423 Interval Too brief\"\n",
+					lexpire, miexp);
 			*reply_code = INTERVAL_TOO_BRIEF;
 			*reply_str = pu_423_rpl;
 			goto error;
 		} else {
-			LM_DBG("subscription expiration set to minimum (%d) for requested (%d)\n", lexpire, miexp);
+			LM_DBG("subscription expiration set to minimum (%u) for requested"
+					" (%u)\n", lexpire, miexp);
 			lexpire = miexp;
 		}
 	}
 
 	subs->expires = lexpire;
 
-	if( msg->to==NULL || msg->to->body.s==NULL)
-	{
+	if( msg->to==NULL || msg->to->body.s==NULL) {
 		LM_ERR("cannot parse TO header\n");
 		goto error;
 	}
 	/* examine the to header */
-	if(msg->to->parsed != NULL)
-	{
+	if(msg->to->parsed != NULL) {
 		pto = (struct to_body*)msg->to->parsed;
 		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
-	}
-	else
-	{
+	} else {
 		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
-		if( TO.uri.len <= 0 )
-		{
+		if( TO.uri.len <= 0 ) {
 			LM_DBG("'To' header NOT parsed\n");
 			goto error;
 		}
@@ -1405,15 +1398,11 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 	}
 
 	if( pto->parsed_uri.user.s && pto->parsed_uri.host.s &&
-			pto->parsed_uri.user.len && pto->parsed_uri.host.len)
-	{
+			pto->parsed_uri.user.len && pto->parsed_uri.host.len) {
 		subs->to_user = pto->parsed_uri.user;
 		subs->to_domain = pto->parsed_uri.host;
-	}
-	else
-	{
-		if(parse_uri(pto->uri.s, pto->uri.len, &uri)< 0)
-		{
+	} else {
+		if(parse_uri(pto->uri.s, pto->uri.len, &uri)< 0) {
 			LM_ERR("while parsing uri\n");
 			goto error;
 		}
@@ -1422,13 +1411,11 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 	}
 
 	/* examine the from header */
-	if (!msg->from || !msg->from->body.s)
-	{
+	if (!msg->from || !msg->from->body.s) {
 		LM_DBG("cannot find 'from' header!\n");
 		goto error;
 	}
-	if (msg->from->parsed == NULL)
-	{
+	if (msg->from->parsed == NULL) {
 		LM_DBG("'From' header not parsed\n");
 		/* parsing from header */
 		if ( parse_from_header( msg )<0 )
@@ -1440,15 +1427,11 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 	pfrom = (struct to_body*)msg->from->parsed;
 
 	if( pfrom->parsed_uri.user.s && pfrom->parsed_uri.host.s &&
-			pfrom->parsed_uri.user.len && pfrom->parsed_uri.host.len)
-	{
+			pfrom->parsed_uri.user.len && pfrom->parsed_uri.host.len) {
 		subs->from_user = pfrom->parsed_uri.user;
 		subs->from_domain = pfrom->parsed_uri.host;
-	}
-	else
-	{
-		if(parse_uri(pfrom->uri.s, pfrom->uri.len, &uri)< 0)
-		{
+	} else {
+		if(parse_uri(pfrom->uri.s, pfrom->uri.len, &uri)< 0) {
 			LM_ERR("while parsing uri\n");
 			goto error;
 		}
@@ -1460,61 +1443,50 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 	subs->watcher_domain = watcher_domain;
 
 	/* get to_tag if the message does not have a to_tag*/
-	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
-	{
+	if (pto->tag_value.s==NULL || pto->tag_value.len==0 ) {
 		LM_DBG("generating to_tag\n");
 		*to_tag_gen = 1;
 		rtag_value.len = 0;
-		if(slb.get_reply_totag(msg, &rtag_value)<0 || rtag_value.len <= 0)
-		{
+		if(slb.get_reply_totag(msg, &rtag_value)<0 || rtag_value.len <= 0) {
 			LM_ERR("while creating to_tag\n");
 			goto error;
 		}
-	}
-	else
-	{
+	} else {
 		*to_tag_gen = 0;
 		rtag_value=pto->tag_value;
 	}
 	subs->to_tag = rtag_value;
 
-	if( msg->callid==NULL || msg->callid->body.s==NULL)
-	{
+	if( msg->callid==NULL || msg->callid->body.s==NULL) {
 		LM_ERR("cannot parse callid header\n");
 		goto error;
 	}
 	subs->callid = msg->callid->body;
 
-	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
-	{
+	if( msg->cseq==NULL || msg->cseq->body.s==NULL) {
 		LM_ERR("cannot parse cseq header\n");
 		goto error;
 	}
-	if (str2int( &(get_cseq(msg)->number), &subs->remote_cseq)!=0 )
-	{
+	if (str2int( &(get_cseq(msg)->number), &subs->remote_cseq)!=0 ) {
 		LM_ERR("cannot parse cseq number\n");
 		goto error;
 	}
-	if( msg->contact==NULL || msg->contact->body.s==NULL)
-	{
+	if( msg->contact==NULL || msg->contact->body.s==NULL) {
 		LM_ERR("cannot parse contact header\n");
 		goto error;
 	}
-	if( parse_contact(msg->contact) <0 )
-	{
+	if( parse_contact(msg->contact) <0 ) {
 		LM_ERR(" cannot parse contact"
 				" header\n");
 		goto error;
 	}
 	b= (contact_body_t* )msg->contact->parsed;
 
-	if(b == NULL)
-	{
+	if(b == NULL) {
 		LM_ERR("cannot parse contact header\n");
 		goto error;
 	}
-	if(b->star || b->contacts==NULL)
-	{
+	if(b->star || b->contacts==NULL) {
 		LM_ERR("Wrong contact header\n");
 		goto error;
 	}
@@ -1524,29 +1496,24 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 	LM_DBG("subs->contact= %.*s - len = %d\n",subs->contact.len,
 			subs->contact.s, subs->contact.len);
 
-	if (EVENT_DIALOG_SLA(subs->event->evp))
-	{
+	if (EVENT_DIALOG_SLA(subs->event->evp)) {
 		/* user_contact@from_domain */
-		if(parse_uri(subs->contact.s, subs->contact.len, &uri)< 0)
-		{
+		if(parse_uri(subs->contact.s, subs->contact.len, &uri)< 0) {
 			LM_ERR("failed to parse contact uri\n");
 			goto error;
 		}
-		if(uandd_to_uri(uri.user, subs->from_domain, &subs->pres_uri)< 0)
-		{
+		if(uandd_to_uri(uri.user, subs->from_domain, &subs->pres_uri)< 0) {
 			LM_ERR("failed to construct uri\n");
 			goto error;
 		}
-		LM_DBG("&&&&&&&&&&&&&&& dialog pres_uri= %.*s\n",
+		LM_DBG("dialog pres_uri= %.*s\n",
 				subs->pres_uri.len, subs->pres_uri.s);
 	}
 
 	/*process record route and add it to a string*/
-	if(*to_tag_gen && msg->record_route!=NULL)
-	{
+	if(*to_tag_gen && msg->record_route!=NULL) {
 		rt = print_rr_body(msg->record_route, &rec_route, 0, 0);
-		if(rt != 0)
-		{
+		if(rt != 0) {
 			LM_ERR("processing the record route [%d]\n", rt);
 			rec_route.s=NULL;
 			rec_route.len=0;
@@ -1557,8 +1524,7 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 
 	subs->sockinfo_str= msg->rcv.bind_address->sock_str;
 
-	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
-	{
+	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0) {
 		LM_ERR("no from tag value present\n");
 		goto error;
 	}
@@ -1566,16 +1532,14 @@ int extract_sdialog_info_ex(subs_t* subs,struct sip_msg* msg, uint32_t miexp,
 
 	subs->version = 1;
 
-	if((!scontact.s) || (scontact.len== 0))
-	{
-		if(ps_fill_local_contact(msg, &subs->local_contact)<0)
-		{
+	if((!scontact.s) || (scontact.len== 0)) {
+		if(ps_fill_local_contact(msg, &subs->local_contact)<0) {
 			LM_ERR("cannot get local contact address\n");
 			goto error;
 		}
-	}
-	else
+	} else {
 		subs->local_contact= scontact;
+	}
 
 	if (parse_headers(msg, HDR_USERAGENT_F, 0) != -1 && msg->user_agent &&
 			msg->user_agent->body.len>0 && msg->user_agent->body.len<MAX_UA_SIZE) {

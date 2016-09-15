@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -22,7 +22,7 @@
 /*!
  * \file
  * \brief Kamailio presence module :: Events
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
@@ -47,14 +47,14 @@ typedef int (publ_handling_t)(struct sip_msg*);
 typedef int (subs_handling_t)(struct sip_msg*);
 
 typedef str* (agg_nbody_t)(str* pres_user, str* pres_domain, str** body_array, int n, int off_index);
-/* params for agg_body_t 
+/* params for agg_body_t
  *	body_array= an array with all the bodies stored for that resource
  *	n= the number of bodies
  *	off_index= the index of the registration(etag) for which a Publish
  *				with Expires: 0 has just been received
  *	*/
 typedef str* (aux_body_processing_t)(struct subscription *subs, str* body);
-/* params for agg_body_t 
+/* params for agg_body_t
  *	subs= a subscription structure to manipulate the body for a certain watcher
  *	body= the original body
  *
@@ -79,16 +79,16 @@ struct pres_ev
 	str name;
 	event_t* evp;
 	str content_type;
-	int default_expires;
+	unsigned int default_expires;
 	int type; /* category type: WINFO_TIPE, PUBL_TYPE, ...*/
 	int etag_not_new;
 	/*
 	 *  0 - the standard mechanism (allocating new etag for each Publish)
-	 *  1 - allocating an etag only for an initial Publish 
+	 *  1 - allocating an etag only for an initial Publish
 	 * */
 	/* fileds that deal with authorization rules*/
 	/*
-	 *  req_auth -> flag 0  - if not require 
+	 *  req_auth -> flag 0  - if not require
 	 *  is_watcher_allowed  - get subscription state from xcap rules
 	 *  apply_auth_nbody    - alter the body according to authorization rules
 	 */
@@ -97,17 +97,17 @@ struct pres_ev
 	get_pidf_doc_t* get_pidf_doc;
 	apply_auth_t*  apply_auth_nbody;
 	is_allowed_t*  get_auth_status;
-	
+
 	/* an agg_body_t function should be registered if the event permits having
 	 * multiple published states and requires an aggregation of the information
-	 * otherwise, this field should be NULL and the last published state is taken 
-	 * when constructing Notify msg 
+	 * otherwise, this field should be NULL and the last published state is taken
+	 * when constructing Notify msg
 	 * */
 	agg_nbody_t* agg_nbody;
 	publ_handling_t  * evs_publ_handl;
 	subs_handling_t  * evs_subs_handl;
 	free_body_t* free_body;
-	/* sometimes it is necessary that a module make changes for a body for each 
+	/* sometimes it is necessary that a module make changes for a body for each
 	 * active watcher (e.g. setting the "version" parameter in an XML document.
 	 * If a module registers the aux_body_processing callback, it gets called for
 	 * each watcher. It either gets the body received by the PUBLISH, or the body
@@ -119,9 +119,9 @@ struct pres_ev
 	 */
 	aux_body_processing_t* aux_body_processing;
 	free_body_t* aux_free_body;
-	struct pres_ev* wipeer;			
+	struct pres_ev* wipeer;
 	struct pres_ev* next;
-	
+
 };
 typedef struct pres_ev pres_ev_t;
 
@@ -129,7 +129,7 @@ typedef struct evlist
 {
 	int ev_count;
 	pres_ev_t* events;
-}evlist_t;	
+} evlist_t;
 
 evlist_t* init_evlist(void);
 
