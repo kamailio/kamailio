@@ -158,7 +158,7 @@ static int w_crypto_aes_encrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	str keys;
 	pv_spec_t *dst;
 	pv_value_t val;
-	EVP_CIPHER_CTX en;
+	EVP_CIPHER_CTX *en = NULL;
 	str etext;
 
 	if (fixup_get_svalue(msg, (gparam_t*)inb, &ins) != 0) {
@@ -169,17 +169,24 @@ static int w_crypto_aes_encrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 		LM_ERR("cannot get key value\n");
 		return -1;
 	}
+	en = EVP_CIPHER_CTX_new();
+	if(en==NULL) {
+		LM_ERR("cannot get new cipher context\n");
+		return -1;
+	}
 	dst = (pv_spec_t*)outb;
 
 	/* gen key and iv. init the cipher ctx object */
 	if (crypto_aes_init((unsigned char *)keys.s, keys.len,
-				(unsigned char*)((_crypto_salt_param)?_crypto_salt:0), &en, NULL)) {
+				(unsigned char*)((_crypto_salt_param)?_crypto_salt:0), en, NULL)) {
+		EVP_CIPHER_CTX_free(en);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}
 	etext.len = ins.len;
-	etext.s = (char *)crypto_aes_encrypt(&en, (unsigned char *)ins.s, &etext.len);
+	etext.s = (char *)crypto_aes_encrypt(en, (unsigned char *)ins.s, &etext.len);
 	if(etext.s==NULL) {
+		EVP_CIPHER_CTX_free(en);
 		LM_ERR("AES encryption failed\n");
 		return -1;
 	}
@@ -189,6 +196,7 @@ static int w_crypto_aes_encrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	val.rs.len = base64_enc((unsigned char *)etext.s, etext.len,
 					(unsigned char *)val.rs.s, pv_get_buffer_size()-1);
 	if (val.rs.len < 0) {
+		EVP_CIPHER_CTX_free(en);
 		LM_ERR("base64 output of encrypted value is too large (need %d)\n",
 				-val.rs.len);
 		goto error;
@@ -198,12 +206,14 @@ static int w_crypto_aes_encrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
 	free(etext.s);
-	EVP_CIPHER_CTX_cleanup(&en);
+	EVP_CIPHER_CTX_cleanup(en);
+	EVP_CIPHER_CTX_free(en);
 	return 1;
 
 error:
 	free(etext.s);
-	EVP_CIPHER_CTX_cleanup(&en);
+	EVP_CIPHER_CTX_cleanup(en);
+	EVP_CIPHER_CTX_free(en);
 	return -1;
 }
 
@@ -238,7 +248,7 @@ static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	str keys;
 	pv_spec_t *dst;
 	pv_value_t val;
-	EVP_CIPHER_CTX de;
+	EVP_CIPHER_CTX *de=NULL;
 	str etext;
 
 	if (fixup_get_svalue(msg, (gparam_t*)inb, &ins) != 0) {
@@ -249,11 +259,17 @@ static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 		LM_ERR("cannot get key value\n");
 		return -1;
 	}
+	de = EVP_CIPHER_CTX_new();
+	if(de==NULL) {
+		LM_ERR("cannot get new cipher context\n");
+		return -1;
+	}
 	dst = (pv_spec_t*)outb;
 
 	/* gen key and iv. init the cipher ctx object */
 	if (crypto_aes_init((unsigned char *)keys.s, keys.len,
-				(unsigned char*)((_crypto_salt_param)?_crypto_salt:0), NULL, &de)) {
+				(unsigned char*)((_crypto_salt_param)?_crypto_salt:0), NULL, de)) {
+		EVP_CIPHER_CTX_free(de);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}
@@ -263,14 +279,16 @@ static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	etext.len = base64_dec((unsigned char *)ins.s, ins.len,
 					(unsigned char *)etext.s, pv_get_buffer_size()-1);
 	if (etext.len < 0) {
+		EVP_CIPHER_CTX_free(de);
 		LM_ERR("base64 inpuy with encrypted value is too large (need %d)\n",
 				-etext.len);
 		return -1;
 	}
 	val.rs.len = etext.len;
-	val.rs.s = (char *)crypto_aes_decrypt(&de, (unsigned char *)etext.s,
+	val.rs.s = (char *)crypto_aes_decrypt(de, (unsigned char *)etext.s,
 			&val.rs.len);
 	if(val.rs.s==NULL) {
+		EVP_CIPHER_CTX_free(de);
 		LM_ERR("AES decryption failed\n");
 		return -1;
 	}
@@ -279,7 +297,8 @@ static int w_crypto_aes_decrypt(sip_msg_t* msg, char* inb, char* keyb, char* out
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
 	free(val.rs.s);
-	EVP_CIPHER_CTX_cleanup(&de);
+	EVP_CIPHER_CTX_cleanup(de);
+	EVP_CIPHER_CTX_free(de);
 	return 1;
 }
 
@@ -433,7 +452,8 @@ int crypto_aes_test(void)
 {
 	/* "opaque" encryption, decryption ctx structures
 	 * that libcrypto uses to record status of enc/dec operations */
-	EVP_CIPHER_CTX en, de;
+	EVP_CIPHER_CTX *en = NULL;
+	EVP_CIPHER_CTX *de = NULL;
 
 
 	/* The salt paramter is used as a salt in the derivation:
@@ -448,12 +468,23 @@ int crypto_aes_test(void)
 		NULL
 	};
 
+	en = EVP_CIPHER_CTX_new();
+	if(en==NULL) {
+		LM_ERR("cannot get new cipher context\n");
+		return -1;
+	}
+	de = EVP_CIPHER_CTX_new();
+	if(de==NULL) {
+		EVP_CIPHER_CTX_free(en);
+		LM_ERR("cannot get new cipher context\n");
+		return -1;
+	}
 	/* the key_data for testing */
 	key_data = (unsigned char *)"kamailio-sip-server";
 	key_data_len = strlen((const char *)key_data);
 
 	/* gen key and iv. init the cipher ctx object */
-	if (crypto_aes_init(key_data, key_data_len, salt, &en, &de)) {
+	if (crypto_aes_init(key_data, key_data_len, salt, en, de)) {
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}
@@ -471,8 +502,8 @@ int crypto_aes_test(void)
 		 * a legal C string */
 		olen = len = strlen(input[i])+1;
 
-		ciphertext = crypto_aes_encrypt(&en, (unsigned char *)input[i], &len);
-		plaintext = (char *)crypto_aes_decrypt(&de, ciphertext, &len);
+		ciphertext = crypto_aes_encrypt(en, (unsigned char *)input[i], &len);
+		plaintext = (char *)crypto_aes_decrypt(de, ciphertext, &len);
 
 		if (strncmp(plaintext, input[i], olen))
 			LM_ERR("FAIL: enc/dec failed for \"%s\"\n", input[i]);
@@ -483,8 +514,10 @@ int crypto_aes_test(void)
 		free(plaintext);
 	}
 
-	EVP_CIPHER_CTX_cleanup(&de);
-	EVP_CIPHER_CTX_cleanup(&en);
+	EVP_CIPHER_CTX_cleanup(de);
+	EVP_CIPHER_CTX_free(de);
+	EVP_CIPHER_CTX_cleanup(en);
+	EVP_CIPHER_CTX_free(en);
 
 	return 0;
 }
