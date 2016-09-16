@@ -48,7 +48,7 @@ Federico Cabiddu
 
         4. Functions
 
-              4.1. http_async_query(url, [post_data], route_name)
+              4.1. http_async_query(url, route_name)
               4.2. http_async_suspend(suspend)
               4.3. tls_verify_host(verify)
               4.4. tls_verify_peer(verify)
@@ -119,7 +119,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. http_async_query(url, [post_data], route_name)
+        4.1. http_async_query(url, route_name)
         4.2. http_async_suspend(suspend)
         4.3. tls_verify_host(verify)
         4.4. tls_verify_peer(verify)
@@ -321,7 +321,7 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 
 4. Functions
 
-   4.1. http_async_query(url, [post_data], route_name)
+   4.1. http_async_query(url, route_name)
    4.2. http_async_suspend(suspend)
    4.3. tls_verify_host(verify)
    4.4. tls_verify_peer(verify)
@@ -332,17 +332,10 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
    4.9. http_set_tls_client_key(path)
    4.10. http_set_tls_ca_path(path)
 
-4.1.  http_async_query(url, [post_data], route_name)
+4.1.  http_async_query(url, route_name)
 
    Sends HTTP(S) request asyncronously to the URL given in “url”
    parameter, which is a string that may contain pseudo variables.
-
-   Unless a specific HTTP method was specified using
-   http_async_set_method(), it defaults to a GET request, or to a POST
-   request if “post_data” is provided as second argument.
-
-   Parameter “post_data”, optional, which is sent as the body of the
-   request, may also contain pseudo variables.
 
    Parameter “route_name” defines the route to be executed upon reception
    of HTTP reply, on error or on timeout. If a transaction exists before
@@ -567,9 +560,10 @@ xlog("L_INFO", "received reply for query $http_query_id\n");
    key can be one of:
      * all: if set to $null, resets all the parameters to their default
        value (the ones defined in modparam)
-     * hdr: sets/modifies/remove a HTTP header (see http_append_header()).
-       N.B.: setting this variable multiple times will add several headers
-       to the query.
+     * hdr: sets/modifies/removes a HTTP header (see
+       http_append_header()). N.B.: setting this variable multiple times
+       will add several headers to the query.
+     * body: sets/modifies/removes the request body
      * method: sets the HTTP method (see http_set_method())
      * timeout: sets the HTTP timeout (see http_set_timeout())
      * tls_client_cert: sets the client certificate to use (see
