@@ -412,7 +412,7 @@ int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
 	return init_http_m_table(hash_size);
 }
 
-int new_request(str *query, str *post, http_m_params_t *query_params, http_multi_cbe_t cb, void *param)
+int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb, void *param)
 {
 
 	LM_DBG("received query %.*s with timeout %d, tls_verify_peer %d, tls_verify_host %d (param=%p)\n", 
@@ -490,16 +490,9 @@ int new_request(str *query, str *post, http_m_params_t *query_params, http_multi
 		curl_easy_setopt(cell->easy, CURLOPT_HTTPHEADER, cell->params.headers);
 	}
 
-	if (post && post->s && post->len) {
-		curl_easy_setopt(cell->easy, CURLOPT_POST, 1L);
-		cell->post_data = shm_malloc(post->len + 1);
-		if (cell->post_data == NULL) {
-			LM_ERR("cannot allocate pkg memory for post\n");
-			goto error;
-		}
-		strncpy(cell->post_data, post->s, post->len);
-		cell->post_data[post->len] = '\0';
-		curl_easy_setopt(cell->easy, CURLOPT_POSTFIELDS, cell->post_data);
+	if (cell->params.body.s && cell->params.body.len) {
+		curl_easy_setopt(cell->easy, CURLOPT_POSTFIELDSIZE, (long)cell->params.body.len);
+		curl_easy_setopt(cell->easy, CURLOPT_COPYPOSTFIELDS, cell->params.body.s);
 	}
 
 	switch (cell->params.method) {

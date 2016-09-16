@@ -300,16 +300,10 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 	<title>Functions</title>
 	<section id="http_async_client.f.http_async_query">
 	    <title>
-		<function moreinfo="none">http_async_query(url, [post_data], route_name)</function>
+		<function moreinfo="none">http_async_query(url, route_name)</function>
 	    </title>
         <para>
             Sends HTTP(S) request asyncronously to the URL given in <quote>url</quote> parameter, which is a string that may contain pseudo variables.
-        </para>
-        <para>
-            Unless a specific HTTP method was specified using <emphasis>http_async_set_method()</emphasis>, it defaults to a GET request, or to a POST request if <quote>post_data</quote> is provided as second argument.
-        </para>
-        <para>
-            Parameter <quote>post_data</quote>, optional, which is sent as the body of the request, may also contain pseudo variables.
         </para>
         <para>
 			Parameter <quote>route_name</quote> defines the route to be executed upon reception of HTTP reply, on error or on timeout. 
@@ -588,7 +582,8 @@ xlog("L_INFO", "received reply for query $http_query_id\n");
 	<para><literal>key</literal> can be one of:</para>
 	<itemizedlist>
 		<listitem><para><emphasis>all</emphasis>: if set to <literal>$null</literal>, resets all the parameters to their default value (the ones defined in modparam)</para></listitem>
-		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/remove a HTTP header (see <emphasis>http_append_header()</emphasis>). N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
+		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/removes a HTTP header (see <emphasis>http_append_header()</emphasis>). N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
+		<listitem><para><emphasis>body</emphasis>: sets/modifies/removes the request body</para></listitem>
 		<listitem><para><emphasis>method</emphasis>: sets the HTTP method (see <emphasis>http_set_method()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout (see <emphasis>http_set_timeout()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use (see <emphasis>http_set_tls_client_cert()</emphasis>)</para></listitem>

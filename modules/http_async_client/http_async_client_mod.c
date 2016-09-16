@@ -80,8 +80,7 @@ static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
 
-static int w_http_async_get(sip_msg_t* msg, char* query, char* rt);
-static int w_http_async_post(sip_msg_t* msg, char* query, char* post, char* rt);
+static int w_http_async_query(sip_msg_t* msg, char* query, char* rt);
 static int w_tls_verify_host(sip_msg_t* msg, char* vh, char*);
 static int w_tls_verify_peer(sip_msg_t* msg, char* vp, char*);
 static int w_http_async_suspend_transaction(sip_msg_t* msg, char* vp, char*);
@@ -92,8 +91,7 @@ static int w_http_set_tls_client_cert(sip_msg_t* msg, char* sc, char*);
 static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*);
 static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*);
 static int set_query_param(str* param, str input);
-static int fixup_http_async_get(void** param, int param_no);
-static int fixup_http_async_post(void** param, int param_no);
+static int fixup_http_async_query(void** param, int param_no);
 
 /* pv api binding */
 static int ah_get_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -129,13 +127,12 @@ enum http_req_name_t {
 	E_HRN_ALL = 0,
 	E_HRN_HDR, E_HRN_METHOD, E_HRN_TIMEOUT,
 	E_HRN_TLS_CA_PATH, E_HRN_TLS_CLIENT_KEY,
-	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND
+	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND,
+	E_HRN_BODY
 };
 
 static cmd_export_t cmds[]={
-	{"http_async_query",  (cmd_function)w_http_async_get, 2, fixup_http_async_get,
-		0, ANY_ROUTE},
-	{"http_async_query", (cmd_function)w_http_async_post, 3, fixup_http_async_post,
+	{"http_async_query",  (cmd_function)w_http_async_query, 2, fixup_http_async_query,
 		0, ANY_ROUTE},
 	{"tls_verify_host", (cmd_function)w_tls_verify_host, 1, fixup_igp_all,
 		0, ANY_ROUTE},
@@ -408,7 +405,7 @@ static void mod_destroy(void)
 /**
  *
  */
-static int w_http_async_get(sip_msg_t *msg, char *query, char* rt)
+static int w_http_async_query(sip_msg_t *msg, char *query, char* rt)
 {
 	str sdata;
 	cfg_action_t *act;
@@ -446,64 +443,8 @@ static int w_http_async_get(sip_msg_t *msg, char *query, char* rt)
 		return -1;
 	}
 
-	return async_send_query(msg, &sdata, NULL, act);
+	return async_send_query(msg, &sdata, act);
 
-}
-
-/**
- *
- */
-static int w_http_async_post(sip_msg_t *msg, char *query, char* post, char* rt)
-{
-	str sdata;
-	str post_data;
-	cfg_action_t *act;
-	str rn;
-	int ri;
-
-	if(msg==NULL)
-		return -1;
-
-	if(fixup_get_svalue(msg, (gparam_t*)query, &sdata)!=0) {
-		LM_ERR("unable to get data\n");
-		return -1;
-	}
-
-	if(sdata.s==NULL || sdata.len == 0) {
-		LM_ERR("invalid data parameter\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_t*)post, &post_data)!=0) {
-		LM_ERR("unable to get post data\n");
-		return -1;
-	}
-
-	if(post_data.s==NULL || post_data.len == 0) {
-		LM_ERR("invalid post data parameter\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_t*)rt, &rn)!=0)
-	{
-		LM_ERR("no route block name\n");
-		return -1;
-	}
-
-	ri = route_get(&main_rt, rn.s);
-	if(ri<0)
-	{
-		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-	act = main_rt.rlist[ri];
-	if(act==NULL)
-	{
-		LM_ERR("empty action lists in route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-
-	return async_send_query(msg, &sdata, &post_data, act);
 }
 
 #define _IVALUE_ERROR(NAME) LM_ERR("invalid parameter '" #NAME "' (must be a number)\n")
@@ -635,28 +576,12 @@ static int set_query_param(str* param, str input)
 /**
  *
  */
-static int fixup_http_async_get(void** param, int param_no)
+static int fixup_http_async_query(void** param, int param_no)
 {
 	if (param_no == 1) {
 		return fixup_spve_null(param, 1);
 	}
 	if (param_no == 2) {
-		return fixup_var_str_12(param, param_no);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/**
- *
- */
-static int fixup_http_async_post(void** param, int param_no)
-{
-	if (param_no == 1 || param_no == 2) {
-		return fixup_spve_null(param, 1);
-	}
-	if (param_no == 3) {
 		return fixup_var_str_12(param, param_no);
 	}
 
@@ -734,6 +659,11 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 				sp->pvp.pvn.u.isname.name.n = E_HRN_ALL;
 			else if(strncmp(in->s, "hdr", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_HDR;
+			else goto error;
+			break;
+		case 4:
+			if(strncmp(in->s, "body", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_BODY;
 			else goto error;
 			break;
 		case 6:
@@ -867,6 +797,15 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 			ah_params.suspend_transaction = tval->ri?1:0;
 		} else {
 			ah_params.suspend_transaction = 1;
+		}
+		break;
+	case E_HRN_BODY:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(body)\n");
+				return -1;
+			}
+			set_query_param(&ah_params.body, tval->rs);
 		}
 		break;
 	}
