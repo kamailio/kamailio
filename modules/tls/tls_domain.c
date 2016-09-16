@@ -107,19 +107,31 @@ static unsigned char dh3072_g[] = { 0x02 };
 
 static void setup_dh(SSL_CTX *ctx)
 {
-   DH *dh;
+	DH *dh;
+	BIGNUM *p;
+	BIGNUM *g;
 
-   dh = DH_new();
-   if (dh == NULL) {
-      return;
-   }
+	dh = DH_new();
+	if (dh == NULL) {
+		return;
+	}
 
-   dh->p = BN_bin2bn(dh3072_p, sizeof(dh3072_p), NULL);
-   dh->g = BN_bin2bn(dh3072_g, sizeof(dh3072_g), NULL);
-   if (dh->p == NULL || dh->g == NULL) {
-      DH_free(dh);
-      return;
-   }
+	p = BN_bin2bn(dh3072_p, sizeof(dh3072_p), NULL);
+	g = BN_bin2bn(dh3072_g, sizeof(dh3072_g), NULL);
+
+	if (p == NULL || g == NULL) {
+		DH_free(dh);
+		return;
+	}
+
+#if (OPENSSL_VERSION_NUMBER >= 0x1010000fL)
+	/* libssl >= v1.1.0 */
+	DH_set0_pqg(dh, p, NULL, g);
+#else
+	dh->p = p;
+	dh->g = g;
+#endif
+
 
    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_DH_USE);
    SSL_CTX_set_tmp_dh(ctx, dh);
@@ -713,11 +725,13 @@ static void sr_ssl_ctx_info_callback(const SSL *ssl, int event, int ret)
 		if(data==0)
 			data = (struct tls_extra_data*)SSL_get_app_data(ssl);
 		LOG(tls_dbg, "SSL handshake done\n");
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 		/* CVE-2009-3555 - disable renegotiation */
 		if (ssl->s3) {
 			LOG(tls_dbg, "SSL disable renegotiation\n");
 			ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
 		}
+#endif
 		data->flags |= F_TLS_CON_HANDSHAKED;
 	}
 }
@@ -835,6 +849,7 @@ static int tls_ssl_ctx_mode(SSL_CTX* ctx, long mode, void* clear)
  */
 static int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
 {
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 	if (val >= 0)
 #if OPENSSL_VERSION_NUMBER >= 0x01000000L
 #ifndef OPENSSL_NO_BUF_FREELISTS
@@ -843,6 +858,7 @@ static int tls_ssl_ctx_set_freelist(SSL_CTX* ctx, long val, void* unused)
 #endif
 #if defined (OPENSSL_NO_BUF_FREELISTS) || OPENSSL_VERSION_NUMBER < 0x01000000L
 		return -1;
+#endif
 #endif
 	return 0;
 }
@@ -927,7 +943,7 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 	/* SSL_set_SSL_CTX only sets the correct certificate parameters, but does
 	   set the proper verify options. Thus this will be done manually! */
 
-	SSL_set_options(ssl, SSL_CTX_get_options(ssl->ctx));
+	SSL_set_options(ssl, SSL_CTX_get_options(SSL_get_SSL_CTX(ssl)));
 	if ((SSL_get_verify_mode(ssl) == SSL_VERIFY_NONE) ||
 				(SSL_num_renegotiations(ssl) == 0)) {
 		/*
@@ -937,8 +953,8 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 		 * Otherwise, we would possibly reset a per-directory
 		 * configuration which was put into effect by ssl_hook_access.
 		 */
-		SSL_set_verify(ssl, SSL_CTX_get_verify_mode(ssl->ctx),
-			SSL_CTX_get_verify_callback(ssl->ctx));
+		SSL_set_verify(ssl, SSL_CTX_get_verify_mode(SSL_get_SSL_CTX(ssl)),
+			SSL_CTX_get_verify_callback(SSL_get_SSL_CTX(ssl)));
 	}
 
 	return SSL_TLSEXT_ERR_OK;

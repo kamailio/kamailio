@@ -269,6 +269,7 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 
 #else /*TLS_MALLOC_DBG */
 
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 static void* ser_malloc(size_t size)
 {
 	return shm_malloc(size);
@@ -279,9 +280,22 @@ static void* ser_realloc(void *ptr, size_t size)
 {
 		return shm_realloc(ptr, size);
 }
+#else
+static void* ser_malloc(size_t size, const char *fname, int fline)
+{
+	return shm_malloc(size);
+}
+
+
+static void* ser_realloc(void *ptr, size_t size, const char *fname, int fline)
+{
+		return shm_realloc(ptr, size);
+}
+#endif
 
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 static void ser_free(void *ptr)
 {
 	/* The memory functions provided to openssl needs to behave like standard
@@ -294,6 +308,14 @@ static void ser_free(void *ptr)
 		shm_free(ptr);
 	}
 }
+#else
+static void ser_free(void *ptr, const char *fname, int fline)
+{
+	if (ptr) {
+		shm_free(ptr);
+	}
+}
+#endif
 
 
 /*
@@ -338,10 +360,12 @@ static void init_ssl_methods(void)
 	ssl_methods[TLS_USE_SSLv23 - 1] = SSLv23_method();
 
 	/* only specific SSL or TLS version */
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 #ifndef OPENSSL_NO_SSL2
 	ssl_methods[TLS_USE_SSLv2_cli - 1] = SSLv2_client_method();
 	ssl_methods[TLS_USE_SSLv2_srv - 1] = SSLv2_server_method();
 	ssl_methods[TLS_USE_SSLv2 - 1] = SSLv2_method();
+#endif
 #endif
 
 #ifndef OPENSSL_NO_SSL3_METHOD
@@ -384,6 +408,7 @@ static void init_ssl_methods(void)
  */
 static int init_tls_compression(void)
 {
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 #if OPENSSL_VERSION_NUMBER >= 0x00908000L
 	int n, r;
 	STACK_OF(SSL_COMP)* comp_methods;
@@ -468,6 +493,7 @@ static int init_tls_compression(void)
 	}
 end:
 #endif /* OPENSSL_VERSION_NUMBER >= 0.9.8 */
+#endif /* OPENSSL_VERSION_NUMBER < 1.1.0 */
 	return 0;
 }
 
@@ -478,9 +504,16 @@ end:
  */
 int tls_pre_init(void)
 {
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 	void *(*mf)(size_t) = NULL;
 	void *(*rf)(void *, size_t) = NULL;
 	void (*ff)(void *) = NULL;
+#else
+	void *(*mf)(size_t, const char *, int) = NULL;
+	void *(*rf)(void *, size_t, const char *, int) = NULL;
+	void (*ff)(void *, const char *, int) = NULL;
+#endif
+
 	/*
 	 * this has to be called before any function calling CRYPTO_malloc,
 	 * CRYPTO_malloc will set allow_customize in openssl to 0
