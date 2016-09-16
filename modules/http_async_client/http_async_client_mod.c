@@ -75,6 +75,7 @@ str tls_client_key = STR_STATIC_INIT(""); // client SSL certificate key path, de
 str tls_ca_path = STR_STATIC_INIT(""); // certificate authority dir path, defaults to NULL
 static char *memory_manager = "shm";
 extern int curl_memory_manager;
+unsigned int default_authmethod = CURLAUTH_BASIC | CURLAUTH_DIGEST;
 
 static int  mod_init(void);
 static int  child_init(int);
@@ -128,7 +129,8 @@ enum http_req_name_t {
 	E_HRN_HDR, E_HRN_METHOD, E_HRN_TIMEOUT,
 	E_HRN_TLS_CA_PATH, E_HRN_TLS_CLIENT_KEY,
 	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND,
-	E_HRN_BODY
+	E_HRN_BODY, E_HRN_AUTHMETHOD, E_HRN_USERNAME,
+	E_HRN_PASSWORD
 };
 
 static cmd_export_t cmds[]={
@@ -156,17 +158,18 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-{"workers",					INT_PARAM,   &num_workers},
-	{"connection_timeout",	INT_PARAM,   &http_timeout},
-	{"hash_size",			INT_PARAM,   &hash_size},
-	{"tls_version",			INT_PARAM,   &tls_version},
-	{"tls_verify_host",		INT_PARAM,   &tls_verify_host},
-	{"tls_verify_peer",		INT_PARAM,   &tls_verify_peer},
-	{"curl_verbose",		INT_PARAM,   &curl_verbose},
-	{"tls_client_cert",		PARAM_STR,   &tls_client_cert},
-	{"tls_client_key",		PARAM_STR,   &tls_client_key},
-	{"tls_ca_path",			PARAM_STR,   &tls_ca_path},
-	{"memory_manager",	PARAM_STRING,&memory_manager},
+	{"workers",				INT_PARAM,		&num_workers},
+	{"connection_timeout",	INT_PARAM,		&http_timeout},
+	{"hash_size",			INT_PARAM,		&hash_size},
+	{"tls_version",			INT_PARAM,		&tls_version},
+	{"tls_verify_host",		INT_PARAM,		&tls_verify_host},
+	{"tls_verify_peer",		INT_PARAM,		&tls_verify_peer},
+	{"curl_verbose",		INT_PARAM,		&curl_verbose},
+	{"tls_client_cert",		PARAM_STR,		&tls_client_cert},
+	{"tls_client_key",		PARAM_STR,		&tls_client_key},
+	{"tls_ca_path",			PARAM_STR,		&tls_ca_path},
+	{"memory_manager",		PARAM_STRING,	&memory_manager},
+	{"authmethod",			PARAM_INT,		&default_authmethod },
 	{0, 0, 0}
 };
 
@@ -573,6 +576,33 @@ static int set_query_param(str* param, str input)
 	return 1;
 }
 
+/*
+ * Helper to copy input string parameter into a query char* parameter
+ */
+static int set_query_cparam(char** param, str input)
+{
+	if (*param) {
+		shm_free(*param);
+		*param = NULL;
+	}
+
+	if (input.s && input.len > 0) {
+		*param = shm_malloc(input.len+1);
+	
+		if(*param == NULL) {
+			LM_ERR("error in shm_malloc\n");
+			return -1;
+		}
+
+		strncpy(*param, input.s, input.len);
+		(*param)[input.len] = '\0';
+		
+		LM_DBG("param set to '%s'\n", *param);
+	}
+
+	return 1;
+}
+
 /**
  *
  */
@@ -676,6 +706,18 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 				sp->pvp.pvn.u.isname.name.n = E_HRN_TIMEOUT;
 			else if(strncmp(in->s, "suspend", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_SUSPEND;
+			else goto error;
+			break;
+		case 8:
+			if(strncmp(in->s, "username", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_USERNAME;
+			else if(strncmp(in->s, "password", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_PASSWORD;
+			else goto error;
+			break;
+		case 10:
+			if(strncmp(in->s, "authmethod", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_AUTHMETHOD;
 			else goto error;
 			break;
 		case 11:
@@ -806,6 +848,35 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 				return -1;
 			}
 			set_query_param(&ah_params.body, tval->rs);
+		}
+		break;
+	case E_HRN_AUTHMETHOD:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("invalid value type for $http_req(authmethod)\n");
+				return -1;
+			}
+			ah_params.authmethod = tval->ri;
+		} else {
+			ah_params.authmethod = default_authmethod;
+		}
+		break;
+	case E_HRN_USERNAME:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(username)\n");
+				return -1;
+			}
+			set_query_cparam(&ah_params.username, tval->rs);
+		}
+		break;
+	case E_HRN_PASSWORD:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(password)\n");
+				return -1;
+			}
+			set_query_cparam(&ah_params.password, tval->rs);
 		}
 		break;
 	}

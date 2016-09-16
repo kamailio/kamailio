@@ -589,6 +589,25 @@ xlog("L_INFO", "received reply for query $http_query_id\n");
 		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use (see <emphasis>http_set_tls_client_cert()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use (see <emphasis>http_set_tls_client_key()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate path to use (see <emphasis>http_set_tls_ca_path()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>authmethod</emphasis>: 
+			Sets the preferred authentication mode for HTTP/HTTPS requests. The value is a bitmap
+                        and multiple methods can be used. Note that in this case, the CURL library will make an
+                        extra request to discover server-supported authentication methods. You may want to use
+                        a specific value.
+                        <para>
+                        Valid values are:
+                                <itemizedlist>
+                                <listitem><para>1 - BASIC authentication</para></listitem>
+                                <listitem><para>2 - HTTP Digest authentication</para></listitem>
+                                <listitem><para>4 - GSS-Negotiate authentication</para></listitem>
+                                <listitem><para>8 - NTLM authentication</para></listitem>
+                                <listitem><para>16 - HTTP Digest with IE flavour</para></listitem>
+                                </itemizedlist>
+                        Default value is 3 - BASIC and Digest authentication.
+                        </para>	
+		</para></listitem>
+		<listitem><para><emphasis>username</emphasis>: sets the username to use for authenticated requests</para></listitem>
+		<listitem><para><emphasis>password</emphasis>: sets the password to use for authenticated requests</para></listitem>
 		<listitem><para><emphasis>suspend</emphasis>: if set to 0 it doesn't suspend the current transaction before performing the query (see <emphasis>http_async_suspend()</emphasis>)</para></listitem>
 	</itemizedlist>
 	<example>

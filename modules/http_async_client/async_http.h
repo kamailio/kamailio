@@ -59,6 +59,7 @@ extern str tls_client_cert;
 extern str tls_client_key;
 extern str tls_ca_path;
 
+extern unsigned int default_authmethod;
 
 typedef struct async_http_worker {
 	int notication_socket[2];
@@ -92,6 +93,10 @@ struct query_params {
 	str tls_client_key;
 	str tls_ca_path;
 	str body;
+
+	unsigned int authmethod;
+	char* username;
+	char* password;
 };
 
 extern struct query_params ah_params;
@@ -160,6 +165,16 @@ static inline void free_async_query(async_query_t *aq)
 		shm_free(aq->query_params.body.s);
 		aq->query_params.body.s = NULL;
 		aq->query_params.body.len = 0;
+	}
+
+	if (aq->query_params.username) {
+		shm_free(aq->query_params.username);
+		aq->query_params.username = NULL;
+	}
+
+	if (aq->query_params.password) {
+		shm_free(aq->query_params.password);
+		aq->query_params.password = NULL;
 	}
 
 	shm_free(aq);

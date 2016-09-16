@@ -511,6 +511,18 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb, 
 	default:
 		break;
 	}
+
+	if (cell->params.username) {
+		curl_easy_setopt(cell->easy, CURLOPT_USERNAME, cell->params.username);
+		curl_easy_setopt(cell->easy, CURLOPT_HTTPAUTH, cell->params.authmethod);
+
+		LM_DBG("set username to %s [authmethod %u]\n", cell->params.username, cell->params.authmethod);
+	}
+
+	if (cell->params.password) {
+		curl_easy_setopt(cell->easy, CURLOPT_PASSWORD, cell->params.password);
+	}
+
 	LM_DBG("Adding easy %p to multi %p (%.*s)\n", cell->easy, g->multi, query->len, query->s);
 	rc = curl_multi_add_handle(g->multi, cell->easy);
 	if (check_mcode(rc, cell->error) < 0) {

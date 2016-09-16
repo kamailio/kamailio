@@ -74,6 +74,10 @@ typedef struct hm_params {
 	str tls_client_key;
 	str tls_ca_path;
 	str body;
+	
+	unsigned int authmethod;
+	char* username;
+	char* password;
 } http_m_params_t;
 
 typedef struct http_m_cell
