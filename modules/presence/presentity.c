@@ -494,7 +494,7 @@ int get_dialog_state(presentity_t* presentity, char** state)
 	}
 
 	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-	 result_cols, n_query_cols, n_result_cols, 0, &result) < 0)
+				result_cols, n_query_cols, n_result_cols, 0, &result) < 0)
 	{
 		LM_ERR("unsuccessful sql query\n");
 		return -2;
@@ -515,7 +515,8 @@ int get_dialog_state(presentity_t* presentity, char** state)
 		tmp_db_body.s = (char*)row_vals[rez_body_col].val.string_val;
 		tmp_db_body.len = strlen(tmp_db_body.s);
 
-		parse_state_result = parse_dialog_state_from_body(tmp_db_body, &db_is_dialog, state);
+		parse_state_result = parse_dialog_state_from_body(tmp_db_body,
+				&db_is_dialog, state);
 
 		pa_dbf.free_result(pa_db, result);
 		result = NULL;
@@ -966,23 +967,25 @@ after_dialog_check:
 		else
 			cur_etag= presentity->etag;
 
-		if (is_dialog_terminated(presentity))
-		{
-			LM_WARN("Trying to update an already terminated state. Skipping update.\n");
-
-			/* send 200OK */
-			if (publ_send200ok(msg, presentity->expires, cur_etag)< 0)
+		if (presentity->event->evp->type==EVENT_DIALOG) {
+			if(is_dialog_terminated(presentity))
 			{
-				LM_ERR("sending 200OK reply\n");
-				goto error;
+				LM_WARN("Trying to update an already terminated state."
+						" Skipping update.\n");
+
+				/* send 200OK */
+				if (publ_send200ok(msg, presentity->expires, cur_etag)< 0) {
+					LM_ERR("sending 200OK reply\n");
+					goto error;
+				}
+				if (sent_reply) *sent_reply= 1;
+
+				if(etag.s)
+					pkg_free(etag.s);
+				etag.s= NULL;
+
+				goto done;
 			}
-			if (sent_reply) *sent_reply= 1;
-
-			if(etag.s)
-				pkg_free(etag.s);
-			etag.s= NULL;
-
-			goto done;
 		}
 
 		update_keys[n_update_cols] = &str_expires_col;
