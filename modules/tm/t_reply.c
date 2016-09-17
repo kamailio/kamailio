@@ -2058,7 +2058,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 	}
 	UNLOCK_REPLIES(t);
-		
+
 	if (local_winner >= 0
 		&& cfg_get(tm, tm_cfg, pass_provisional_replies)
 		&& winning_code < 200) {
@@ -2069,7 +2069,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 										winning_msg, winning_code);
 			}
 	}
-	
+
 	if (local_winner>=0 && winning_code>=200 ) {
 		DBG("DEBUG: local transaction completed %d/%d (totag retr: %d/%d)\n",
 				winning_code, local_winner, totag_retr, t->tmcb_hl.reg_types);
@@ -2174,7 +2174,7 @@ int reply_received( struct sip_msg  *p_msg )
 			DBG("DEBUG: reply to local CANCEL processed\n");
 			goto done;
 	}
-	
+
 	onreply_route=uac->on_reply;
 	if ( msg_status >= 200 ){
 #ifdef TM_ONREPLY_FINAL_DROP_OK
@@ -2187,7 +2187,7 @@ int reply_received( struct sip_msg  *p_msg )
 #endif /* TM_ONREPLY_FINAL_DROP_OK */
 			/* stop final response timer  & retr. if I got a
 			   final response */
-			stop_rb_timers(&uac->request); 
+			stop_rb_timers(&uac->request);
 		/* acknowledge negative INVITE replies (do it before detailed
 		 * on_reply processing, which may take very long, like if it
 		 * is attempted to establish a TCP connection to a fail-over dst */
@@ -2195,23 +2195,24 @@ int reply_received( struct sip_msg  *p_msg )
 			if (msg_status >= 300) {
 				ack = build_ack(p_msg, t, branch, &ack_len);
 				if (ack) {
-					if (SEND_PR_BUFFER(&uac->request, ack, ack_len)>=0)
-						if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))){ 
-							INIT_TMCB_ONSEND_PARAMS(onsend_params, 
+					if (SEND_PR_BUFFER(&uac->request, ack, ack_len)>=0) {
+						if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))){
+							INIT_TMCB_ONSEND_PARAMS(onsend_params,
 									t->uas.request, p_msg, &uac->request,
 									&uac->request.dst, ack, ack_len,
 									TMCB_LOCAL_F, branch, TYPE_LOCAL_ACK);
 							run_trans_callbacks_off_params(TMCB_REQUEST_SENT, t,
 							                               &onsend_params);
 						}
-						if (unlikely(has_tran_tmcbs(t, TMCB_ACK_NEG_IN))){
-							INIT_TMCB_ONSEND_PARAMS(onsend_params,
-									t->uas.request, p_msg, &uac->request,
-									&uac->request.dst, ack, ack_len,
-									TMCB_LOCAL_F, branch, TYPE_LOCAL_ACK);
-							run_trans_callbacks_off_params(TMCB_ACK_NEG_IN, t,
-							                               &onsend_params);
-						}
+					}
+					if (unlikely(has_tran_tmcbs(t, TMCB_ACK_NEG_IN))){
+						INIT_TMCB_ONSEND_PARAMS(onsend_params,
+								t->uas.request, p_msg, &uac->request,
+								&uac->request.dst, ack, ack_len,
+								TMCB_LOCAL_F, branch, TYPE_LOCAL_ACK);
+						run_trans_callbacks_off_params(TMCB_ACK_NEG_IN, t,
+						                               &onsend_params);
+					}
 					shm_free(ack);
 				}
 			} else if (is_local(t) /*&& 200 <= msg_status < 300*/) {
@@ -2220,7 +2221,7 @@ int reply_received( struct sip_msg  *p_msg )
 					if (msg_send(&lack_dst, ack, ack_len)<0)
 						LOG(L_ERR, "Error while sending local ACK\n");
 					else if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT))){
-							INIT_TMCB_ONSEND_PARAMS(onsend_params, 
+							INIT_TMCB_ONSEND_PARAMS(onsend_params,
 									t->uas.request, p_msg, &uac->request,
 									&lack_dst, ack, ack_len, TMCB_LOCAL_F,
 									branch, TYPE_LOCAL_ACK);
@@ -2252,7 +2253,7 @@ int reply_received( struct sip_msg  *p_msg )
 			}else if (atomic_cmpxchg_long((void*)&uac->local_cancel.buffer, 0,
 										(long)BUSY_BUFFER)==0){
 				/* try to rebuild it if empty (not set or marked as BUSY).
-				 * if BUSY or set just exit, a cancel will be (or was) sent 
+				 * if BUSY or set just exit, a cancel will be (or was) sent
 				 * shortly on this branch */
 				DBG("tm: reply_received: branch CANCEL created\n");
 #ifdef CANCEL_REASON_SUPPORT
@@ -2394,13 +2395,13 @@ int reply_received( struct sip_msg  *p_msg )
 										p_msg->rcv.proto, &p_msg->rcv.src_su)
 			){
 			blst_503_timeout=cfg_get(tm, tm_cfg, tm_blst_503_default);
-			if ((parse_headers(p_msg, HDR_RETRY_AFTER_F, 0)==0) && 
+			if ((parse_headers(p_msg, HDR_RETRY_AFTER_F, 0)==0) &&
 				(p_msg->parsed_flag & HDR_RETRY_AFTER_F)){
 				for (hf=p_msg->headers; hf; hf=hf->next)
 					if (hf->type==HDR_RETRY_AFTER_T){
 						/* found */
 						blst_503_timeout=(unsigned)(unsigned long)hf->parsed;
-						blst_503_timeout=MAX_unsigned(blst_503_timeout, 
+						blst_503_timeout=MAX_unsigned(blst_503_timeout,
 									cfg_get(tm, tm_cfg, tm_blst_503_min));
 						blst_503_timeout=MIN_unsigned(blst_503_timeout,
 									cfg_get(tm, tm_cfg, tm_blst_503_max));
@@ -2435,7 +2436,7 @@ int reply_received( struct sip_msg  *p_msg )
 			}
 		}
 #endif
-        
+
 	if (unlikely(p_msg->msg_flags&FL_RPL_SUSPENDED)) {
 		goto skip_send_reply;
 		/* suspend the reply (async), no error */
@@ -2472,7 +2473,7 @@ int reply_received( struct sip_msg  *p_msg )
 			cleanup_uac_timers( t );
 			/* 2xx is a special case: we can have a COMPLETED request
 			 * with branches still open => we have to cancel them */
-			if (is_invite(t) && cancel_data.cancel_bitmap) 
+			if (is_invite(t) && cancel_data.cancel_bitmap)
 				cancel_uacs( t, &cancel_data,  F_CANCEL_B_KILL);
 			/* FR for negative INVITES, WAIT anything else */
 			/* Call to set_final_timer is embedded in relay_reply to avoid
@@ -2498,7 +2499,7 @@ int reply_received( struct sip_msg  *p_msg )
 		restart_rb_fr(& uac->request, t->fr_inv_timeout);
 		uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
 	} /* provisional replies */
-        
+
 skip_send_reply:
 
 	if (likely(replies_locked)){
