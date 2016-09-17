@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,16 +13,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2003-11-06  body len is computed using the message len (it's
- *               not taken any more from the msg. content-length) (andrei)
- *  2008-08-30  body len is taken from Conent-length header as it is more 
- *               reliable (UDP packages may contain garbage at the end)(bogdan)
  */
 
 #include <stdio.h>
@@ -54,16 +46,16 @@
 #define advance(_ptr,_n,_str,_error) \
 	do{\
 		if ((_ptr)+(_n)>(_str).s+(_str).len)\
-			goto _error;\
+		goto _error;\
 		(_ptr) = (_ptr) + (_n);\
 	}while(0);
 #define one_of_16( _x , _t ) \
 	(_x==_t[0]||_x==_t[15]||_x==_t[8]||_x==_t[2]||_x==_t[3]||_x==_t[4]\
-	||_x==_t[5]||_x==_t[6]||_x==_t[7]||_x==_t[1]||_x==_t[9]||_x==_t[10]\
-	||_x==_t[11]||_x==_t[12]||_x==_t[13]||_x==_t[14])
+	 ||_x==_t[5]||_x==_t[6]||_x==_t[7]||_x==_t[1]||_x==_t[9]||_x==_t[10]\
+	 ||_x==_t[11]||_x==_t[12]||_x==_t[13]||_x==_t[14])
 #define one_of_8( _x , _t ) \
 	(_x==_t[0]||_x==_t[7]||_x==_t[1]||_x==_t[2]||_x==_t[3]||_x==_t[4]\
-	||_x==_t[5]||_x==_t[6])
+	 ||_x==_t[5]||_x==_t[6])
 
 
 
@@ -104,7 +96,7 @@ int check_content_type(struct sip_msg *msg)
 	if (!msg->content_type)
 	{
 		LM_WARN("the header Content-TYPE is absent!"
-			"let's assume the content is text/plain ;-)\n");
+				"let's assume the content is text/plain ;-)\n");
 		return 1;
 	}
 
@@ -112,7 +104,7 @@ int check_content_type(struct sip_msg *msg)
 	if (str_type.len>=15 && (*str_type.s=='m' || *str_type.s=='M')
 			&& strncasecmp(str_type.s, "multipart/mixed", 15) == 0) {
 		return 2;
-    }
+	}
 	p = str_type.s;
 	advance(p,4,str_type,error_1);
 	x = READ(p-4);
@@ -174,13 +166,13 @@ int extract_body(struct sip_msg *msg, str *body )
 	char *rest, *p1, *p2;
 	struct hdr_field hf;
 	unsigned int mime;
-	
+
 	body->s = get_body(msg);
 	if (body->s==0) {
 		LM_ERR("failed to get the message body\n");
 		goto error;
 	}
-	
+
 	/*
 	 * Better use the content-len value - no need of any explicit
 	 * parcing as get_body() parsed all headers and Conten-Length
@@ -203,7 +195,7 @@ int extract_body(struct sip_msg *msg, str *body )
 		goto error;
 	}
 
-	/* no need for parse_headers(msg, EOH), get_body will 
+	/* no need for parse_headers(msg, EOH), get_body will
 	 * parse everything */
 	/*is the content type correct?*/
 	if((ret = check_content_type(msg))==-1)
@@ -248,7 +240,7 @@ int extract_body(struct sip_msg *msg, str *body )
 				return -1;
 			if(hf.type==HDR_CONTENTTYPE_T) {
 				if(decode_mime_type(hf.body.s, hf.body.s + hf.body.len,
-						&mime)==NULL)
+							&mime)==NULL)
 					return -1;
 				if (((((unsigned int)mime)>>16) == TYPE_APPLICATION)
 						&& ((mime&0x00ff) == SUBTYPE_SDP)) {
@@ -288,31 +280,31 @@ done:
  * pattern b2 of size len2 in memory block b1 of size len1 or
  * NULL if none is found. Obtained from NetBSD.
  */
-void *
+	void *
 ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 {
-        /* Initialize search pointer */
-        char *sp = (char *) b1;
+	/* Initialize search pointer */
+	char *sp = (char *) b1;
 
-        /* Initialize pattern pointer */
-        char *pp = (char *) b2;
+	/* Initialize pattern pointer */
+	char *pp = (char *) b2;
 
-        /* Initialize end of search address space pointer */
-        char *eos = sp + len1 - len2;
+	/* Initialize end of search address space pointer */
+	char *eos = sp + len1 - len2;
 
-        /* Sanity check */
-        if(!(b1 && b2 && len1 && len2))
-                return NULL;
+	/* Sanity check */
+	if(!(b1 && b2 && len1 && len2))
+		return NULL;
 
-        while (sp <= eos) {
-                if (*sp == *pp)
-                        if (memcmp(sp, pp, len2) == 0)
-                                return sp;
+	while (sp <= eos) {
+		if (*sp == *pp)
+			if (memcmp(sp, pp, len2) == 0)
+				return sp;
 
-                        sp++;
-        }
+		sp++;
+	}
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -325,24 +317,24 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
  * (so make sure it is, before calling this function or
  *  it might fail even if the message _has_ a callid)
  */
-int
+	int
 get_callid(struct sip_msg* _m, str* _cid)
 {
 
-        if ((parse_headers(_m, HDR_CALLID_F, 0) == -1)) {
-                LM_ERR("failed to parse call-id header\n");
-                return -1;
-        }
+	if ((parse_headers(_m, HDR_CALLID_F, 0) == -1)) {
+		LM_ERR("failed to parse call-id header\n");
+		return -1;
+	}
 
-        if (_m->callid == NULL) {
-                LM_ERR("call-id not found\n");
-                return -1;
-        }
+	if (_m->callid == NULL) {
+		LM_ERR("call-id not found\n");
+		return -1;
+	}
 
-        _cid->s = _m->callid->body.s;
-        _cid->len = _m->callid->body.len;
-        trim(_cid);
-        return 0;
+	_cid->s = _m->callid->body.s;
+	_cid->len = _m->callid->body.len;
+	trim(_cid);
+	return 0;
 }
 
 /*
@@ -350,79 +342,79 @@ get_callid(struct sip_msg* _m, str* _cid)
  * assumes the to header is already parsed, so
  * make sure it really is before calling this function
  */
-int
+	int
 get_to_tag(struct sip_msg* _m, str* _tag)
 {
 
-        if (!_m->to) {
-                LM_ERR("To header field missing\n");
-                return -1;
-        }
+	if (!_m->to) {
+		LM_ERR("To header field missing\n");
+		return -1;
+	}
 
-        if (get_to(_m)->tag_value.len) {
-                _tag->s = get_to(_m)->tag_value.s;
-                _tag->len = get_to(_m)->tag_value.len;
-        } else {
-                _tag->s = NULL; /* fixes gcc 4.0 warnings */
-                _tag->len = 0;
-        }
+	if (get_to(_m)->tag_value.len) {
+		_tag->s = get_to(_m)->tag_value.s;
+		_tag->len = get_to(_m)->tag_value.len;
+	} else {
+		_tag->s = NULL; /* fixes gcc 4.0 warnings */
+		_tag->len = 0;
+	}
 
-        return 0;
+	return 0;
 }
 
 /*
  * Extract tag from From header field of a request
  */
-int
+	int
 get_from_tag(struct sip_msg* _m, str* _tag)
 {
 
-        if (parse_from_header(_m)<0) {
-                LM_ERR("failed to parse From header\n");
-                return -1;
-        }
+	if (parse_from_header(_m)<0) {
+		LM_ERR("failed to parse From header\n");
+		return -1;
+	}
 
-        if (get_from(_m)->tag_value.len) {
-                _tag->s = get_from(_m)->tag_value.s;
-                _tag->len = get_from(_m)->tag_value.len;
-        } else {
-                _tag->s = NULL; /* fixes gcc 4.0 warnings */
-                _tag->len = 0;
-        }
+	if (get_from(_m)->tag_value.len) {
+		_tag->s = get_from(_m)->tag_value.s;
+		_tag->len = get_from(_m)->tag_value.len;
+	} else {
+		_tag->s = NULL; /* fixes gcc 4.0 warnings */
+		_tag->len = 0;
+	}
 
-        return 0;
+	return 0;
 }
 
 /*
  * Extract URI from the Contact header field
  */
-int
+	int
 get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
 {
 
-        if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
-                return -1;
-        if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
-                LM_ERR("failed to parse Contact body\n");
-                return -1;
-        }
-        *_c = ((contact_body_t*)_m->contact->parsed)->contacts;
-        if (*_c == NULL)
-                /* no contacts found */
-                return -1;
+	if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
+		return -1;
+	if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
+		LM_ERR("failed to parse Contact body\n");
+		return -1;
+	}
+	*_c = ((contact_body_t*)_m->contact->parsed)->contacts;
+	if (*_c == NULL)
+		/* no contacts found */
+		return -1;
 
-        if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-                LM_ERR("failed to parse Contact URI [%.*s]\n",
-                        (*_c)->uri.len, ((*_c)->uri.s)?(*_c)->uri.s:"");
-                return -1;
-        }
-        return 0;
+	if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
+		LM_ERR("failed to parse Contact URI [%.*s]\n",
+				(*_c)->uri.len, ((*_c)->uri.s)?(*_c)->uri.s:"");
+		return -1;
+	}
+	return 0;
 }
 
 /*
  * Extract branch from Via header
  */
-int
+	int
 get_via_branch(struct sip_msg* msg, int vianum, str* _branch)
 {
 	struct via_body *via;
