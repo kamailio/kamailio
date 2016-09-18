@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -22,7 +22,7 @@
 /*!
  * \file
  * \brief Kamailio presence module :: Events
- * \ingroup presence 
+ * \ingroup presence
  */
 
 
@@ -31,9 +31,9 @@
 #include <string.h>
 #include "../../str.h"
 #include "../../dprint.h"
-#include "../../parser/parse_event.h" 
-#include "../../mem/shm_mem.h" 
-#include "../../mem/mem.h" 
+#include "../../parser/parse_event.h"
+#include "../../mem/shm_mem.h"
+#include "../../mem/mem.h"
 #include "event_list.h"
 #include "hash.h"
 
@@ -89,7 +89,7 @@ event_t* shm_copy_event(event_t* e)
 			ev->params.hooks.event_dialog.from_tag = p2;
 		if (e->params.hooks.event_dialog.to_tag == p1)
 			ev->params.hooks.event_dialog.to_tag = p2;
-		if (e->params.hooks.event_dialog.include_session_description == p1) 
+		if (e->params.hooks.event_dialog.include_session_description == p1)
 			ev->params.hooks.event_dialog.include_session_description = p2;
 		if (e->params.hooks.event_dialog.sla == p1)
 			ev->params.hooks.event_dialog.sla = p2;
@@ -109,7 +109,7 @@ void shm_free_event(event_t* ev)
 {
 	if(ev== NULL)
 		return;
-	
+
 	if(ev->name.s)
 		shm_free(ev->name.s);
 
@@ -141,7 +141,7 @@ int add_event(pres_ev_t* event)
 		LM_ERR("NULL content_type param\n");
 		return -1;
 	}
-	
+
 	ev= contains_event(&event->name, &parsed_event);
 	if(ev== NULL)
 	{
@@ -182,7 +182,7 @@ int add_event(pres_ev_t* event)
 	if(ev->content_type.s== NULL)
 	{
 		ERR_MEM(SHARE_MEM);
-	}	
+	}
 	ev->content_type.len= event->content_type.len;
 	memcpy(ev->content_type.s, event->content_type.s, event->content_type.len);
 
@@ -191,7 +191,7 @@ int add_event(pres_ev_t* event)
 		if(*sep=='.') break;
 	if(sep>=parsed_event.name.s+parsed_event.name.len) sep=0;
 	if(sep && strncmp(sep+1, "winfo", 5)== 0)
-	{	
+	{
 		ev->type= WINFO_TYPE;
 		wipeer_name.s= parsed_event.name.s;
 		wipeer_name.len= sep - parsed_event.name.s;
@@ -203,7 +203,7 @@ int add_event(pres_ev_t* event)
 		}
 	}
 	else
-	{	
+	{
 		ev->type= PUBL_TYPE;
 		if (parsed_event.name.len + 6 > 50) {
 			LM_ERR("buffer too small\n");
@@ -221,11 +221,11 @@ int add_event(pres_ev_t* event)
 					parsed_event.name.len,parsed_event.name.s);
 		}
 	}
-	
-	if(ev->wipeer)	
+
+	if(ev->wipeer)
 		ev->wipeer->wipeer= ev;
 
-	if(event->req_auth && 
+	if(event->req_auth &&
 		( event->get_auth_status==0 ||event->get_rules_doc== 0))
 	{
 		LM_ERR("bad event structure\n");
@@ -251,7 +251,7 @@ int add_event(pres_ev_t* event)
 		EvList->events= ev;
 	}
 	EvList->ev_count++;
-	
+
 	LM_DBG("successfully added event: %.*s - len= %d\n",ev->name.len,
 			ev->name.s, ev->name.len);
 done:
@@ -261,7 +261,7 @@ error:
 	free_event_params(parsed_event.params.list, PKG_MEM_TYPE);
 	if(ev && not_in_list)
 	{
-		free_pres_event(ev);	
+		free_pres_event(ev);
 	}
 	return -1;
 }
@@ -294,16 +294,16 @@ evlist_t* init_evlist(void)
 	}
 	list->ev_count= 0;
 	list->events= NULL;
-	
+
 	return list;
-}	
+}
 
 pres_ev_t* contains_event(str* sname, event_t* parsed_event)
 {
 	event_t event;
 	event_t *pe;
 	pres_ev_t* e;
-	
+
 	pe = (parsed_event)?parsed_event:&event;
 
 	memset(pe, 0, sizeof(event_t));
@@ -336,7 +336,7 @@ void free_event_params(param_t* params, int mem_type)
 			pkg_free(t1);
 		t1= t2;
 	}
-	
+
 }
 
 pres_ev_t* search_event(event_t* event)
@@ -358,11 +358,11 @@ pres_ev_t* search_event(event_t* event)
 			{
 				return pres_ev;
 			}
-	
+
 			/* search all parameters in event in ev */
 			if(search_event_params(event, pres_ev->evp)< 0)
 				goto cont;
-			
+
 			/* search all parameters in ev in event */
 			if(search_event_params(pres_ev->evp, event)< 0)
 				goto cont;
@@ -386,19 +386,20 @@ int search_event_params(event_t* ev, event_t* searched_ev)
 	{
 		p= searched_ev->params.list;
 		found= 0;
-	
+
 		while(p)
 		{
-			if(p->name.len== ps->name.len && 
-				strncmp(p->name.s,ps->name.s, ps->name.len)== 0)
+			if(p->name.len== ps->name.len &&
+				strncmp(p->name.s,ps->name.s, ps->name.len)== 0) {
 				if((p->body.s== 0 && ps->body.s== 0) ||
-					(p->body.len== ps->body.len && 
+					(p->body.len== ps->body.len &&
 					strncmp(p->body.s,ps->body.s,ps->body.len)== 0))
 				{
 					found= 1;
 					break;
 				}
-				p= p->next;
+			}
+			p= p->next;
 		}
 		if(found== 0)
 			return -1;
@@ -409,15 +410,15 @@ int search_event_params(event_t* ev, event_t* searched_ev)
 
 }
 int get_event_list(str** ev_list)
-{	
+{
 	pres_ev_t* ev= EvList->events;
 	int i;
 	str* list;
 	*ev_list= NULL;
-	
+
 	if(EvList->ev_count== 0)
 		return 0;
-	
+
 	list= (str*)pkg_malloc(sizeof(str));
 	if(list== NULL)
 	{
@@ -433,36 +434,34 @@ int get_event_list(str** ev_list)
 		return -1;
 	}
 	list->s[0]= '\0';
-	
+
 	for(i= 0; i< EvList->ev_count; i++)
 	{
 		if(i> 0)
 		{
 			memcpy(list->s+ list->len, ", ", 2);
 			list->len+= 2;
-		}	
+		}
 		memcpy(list->s+ list->len, ev->name.s, ev->name.len );
 		list->len+= ev->name.len ;
 		ev= ev->next;
 	}
-	
+
 	*ev_list= list;
 	return 0;
 }
 
 void destroy_evlist(void)
 {
-    pres_ev_t* e1, *e2;
-    if (EvList) 
-	{
+	pres_ev_t* e1, *e2;
+	if (EvList) {
 		e1= EvList->events;
-		while(e1)
-	    {
+		while(e1) {
 			e2= e1->next;
 			free_pres_event(e1);
 			e1= e2;
-	    }	
+		}
 		shm_free(EvList);
-    }
+	}
 }
 
