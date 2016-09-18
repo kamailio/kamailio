@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -26,7 +26,7 @@
 #include "../../str.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
- 
+
 #include "db_text.h"
 #include "dbt_res.h"
 #include "dbt_api.h"
@@ -35,16 +35,16 @@
 
 int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 {
-    int res = -1;
-    int i, len;
-    char* table_ptr = NULL;
-    char* fields_end_ptr = NULL;
-    char* fields_ptr = NULL;
-    char* where_ptr = NULL;
-    char* order_start_ptr = NULL;
-    char** tokens = NULL;
-    str table;
-    dbt_table_p _tbc = NULL;
+	int res = -1;
+	int i, len;
+	char* table_ptr = NULL;
+	char* fields_end_ptr = NULL;
+	char* fields_ptr = NULL;
+	char* where_ptr = NULL;
+	char* order_start_ptr = NULL;
+	char** tokens = NULL;
+	str table;
+	dbt_table_p _tbc = NULL;
 	int cols;
 	int n = 0;
 	int ncols = 0;
@@ -58,39 +58,39 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 
 	LM_DBG("SQLRAW : %.*s\n", _s->len, _s->s);
 
-    fields_end_ptr = strcasestr(_s->s, " from ");
-    if(fields_end_ptr == NULL)
-    	return res;
+	fields_end_ptr = strcasestr(_s->s, " from ");
+	if(fields_end_ptr == NULL)
+		return res;
 
-    len = fields_end_ptr - (_s->s + 6) + 1;
-    fields_ptr = pkg_malloc(len);
-    strncpy(fields_ptr, _s->s + 6, len);
-    fields_ptr[len] = '\0';
-    fields_ptr = dbt_trim(fields_ptr);
+	len = fields_end_ptr - (_s->s + 6) + 1;
+	fields_ptr = pkg_malloc(len);
+	strncpy(fields_ptr, _s->s + 6, len);
+	fields_ptr[len] = '\0';
+	fields_ptr = dbt_trim(fields_ptr);
 
-    order_start_ptr = strcasestr(_s->s, " order by ");
-    if(order_start_ptr != NULL) {
-    	*order_start_ptr = '\0';
-    	order_start_ptr += 10;
-    }
+	order_start_ptr = strcasestr(_s->s, " order by ");
+	if(order_start_ptr != NULL) {
+		*order_start_ptr = '\0';
+		order_start_ptr += 10;
+	}
 
 
-    where_ptr = strcasestr(_s->s, " where ");
-    if(where_ptr == NULL) {
-    	len = strlen(fields_end_ptr + 6);
-    } else {
-    	len = where_ptr - (fields_end_ptr + 6);
-    	nc = dbt_build_where(where_ptr + 7, &_k, &_op, &_v);
-    }
+	where_ptr = strcasestr(_s->s, " where ");
+	if(where_ptr == NULL) {
+		len = strlen(fields_end_ptr + 6);
+	} else {
+		len = where_ptr - (fields_end_ptr + 6);
+		nc = dbt_build_where(where_ptr + 7, &_k, &_op, &_v);
+	}
 
-    table_ptr = pkg_malloc(len);
-    strncpy(table_ptr, fields_end_ptr + 6, len);
-    table_ptr[len] = '\0';
-    dbt_trim(table_ptr);
+	table_ptr = pkg_malloc(len);
+	strncpy(table_ptr, fields_end_ptr + 6, len);
+	table_ptr[len] = '\0';
+	dbt_trim(table_ptr);
 
-    table.s = table_ptr;
-    table.len = len;
-    LM_DBG("using table '%.*s'\n", table.len, table.s);
+	table.s = table_ptr;
+	table.len = len;
+	LM_DBG("using table '%.*s'\n", table.len, table.s);
 
 	if(dbt_use_table(_h, &table) != 0) {
 		LM_ERR("use table is invalid %.*s\n", table.len, table.s);
@@ -104,30 +104,30 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 		goto error;
 	}
 
-    tokens = dbt_str_split(fields_ptr, ',', &ncols);
-    pkg_free(fields_ptr);
-    fields_ptr = NULL;
-    if (!tokens) {
+	tokens = dbt_str_split(fields_ptr, ',', &ncols);
+	pkg_free(fields_ptr);
+	fields_ptr = NULL;
+	if (!tokens) {
 		LM_ERR("error extracting tokens\n");
-    	goto error;
-    }
+		goto error;
+	}
 
-    if(ncols == 1 && strncmp(*tokens, "*", 1) == 0) {
-    	cols = _tbc->nrcols;
-    	result_cols = pkg_malloc(sizeof(db_key_t) * cols);
-    	memset(result_cols, 0, sizeof(db_key_t) * cols);
-    	for(n=0; n < cols; n++) {
-    		result_cols[n] = &_tbc->colv[n]->name;
-    	}
-    } else {
-    	cols = ncols;
-    	result_cols = pkg_malloc(sizeof(db_key_t) * cols);
-    	memset(result_cols, 0, sizeof(db_key_t) * cols);
-    	for(n=0; *(tokens + n); n++) {
-    		result_cols[n]->s = *(tokens + n);
-    		result_cols[n]->len = strlen(*(tokens + n));
-    	}
-    }
+	if(ncols == 1 && strncmp(*tokens, "*", 1) == 0) {
+		cols = _tbc->nrcols;
+		result_cols = pkg_malloc(sizeof(db_key_t) * cols);
+		memset(result_cols, 0, sizeof(db_key_t) * cols);
+		for(n=0; n < cols; n++) {
+			result_cols[n] = &_tbc->colv[n]->name;
+		}
+	} else {
+		cols = ncols;
+		result_cols = pkg_malloc(sizeof(db_key_t) * cols);
+		memset(result_cols, 0, sizeof(db_key_t) * cols);
+		for(n=0; *(tokens + n); n++) {
+			result_cols[n]->s = *(tokens + n);
+			result_cols[n]->len = strlen(*(tokens + n));
+		}
+	}
 
 
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
@@ -141,28 +141,28 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 
 error:
 
-    if(_tbc)
-        dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-    
+	if(_tbc)
+		dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+
 	if(tokens) {
-	    for (i = 0; *(tokens + i); i++) {
-	    	pkg_free(*(tokens + i));
-	    }
-	    pkg_free(tokens);
+		for (i = 0; *(tokens + i); i++) {
+			pkg_free(*(tokens + i));
+		}
+		pkg_free(tokens);
 	}
-    if(fields_ptr)
-    	pkg_free(fields_ptr);
+	if(fields_ptr)
+		pkg_free(fields_ptr);
 
-    if(table_ptr)
-    	pkg_free(table_ptr);
+	if(table_ptr)
+		pkg_free(table_ptr);
 
-    dbt_clean_where(nc, _k, _op, _v);
+	dbt_clean_where(nc, _k, _op, _v);
 
-    if(result_cols) {
-    	pkg_free(result_cols);
-    }
+	if(result_cols) {
+		pkg_free(result_cols);
+	}
 
- 	return res;
+	return res;
 }
 
 int dbt_raw_query_update(db1_con_t* _h, str* _s, db1_res_t** _r)
@@ -281,26 +281,26 @@ int dbt_raw_query_delete(db1_con_t* _h, str* _s, db1_res_t** _r)
 
 	LM_DBG("SQLRAW : %.*s\n", _s->len, _s->s);
 
-    fields_end_ptr = strcasestr(_s->s, " from ");
-    if(fields_end_ptr == NULL)
-    	return res;
+	fields_end_ptr = strcasestr(_s->s, " from ");
+	if(fields_end_ptr == NULL)
+		return res;
 
 	where_ptr = strcasestr(_s->s, " where ");
-    if(where_ptr == NULL) {
-    	len = strlen(fields_end_ptr + 6);
-    } else {
-    	len = where_ptr - (fields_end_ptr + 6);
-    	nkeys = dbt_build_where(where_ptr + 7, &_k, &_op1, &_kv);
-    }
+	if(where_ptr == NULL) {
+		len = strlen(fields_end_ptr + 6);
+	} else {
+		len = where_ptr - (fields_end_ptr + 6);
+		nkeys = dbt_build_where(where_ptr + 7, &_k, &_op1, &_kv);
+	}
 
-    table_ptr = pkg_malloc(len);
-    strncpy(table_ptr, fields_end_ptr + 6, len);
-    table_ptr[len] = '\0';
-    dbt_trim(table_ptr);
+	table_ptr = pkg_malloc(len);
+	strncpy(table_ptr, fields_end_ptr + 6, len);
+	table_ptr[len] = '\0';
+	dbt_trim(table_ptr);
 
-    table.s = table_ptr;
-    table.len = len;
-    LM_DBG("using table '%.*s'\n", table.len, table.s);
+	table.s = table_ptr;
+	table.len = len;
+	LM_DBG("using table '%.*s'\n", table.len, table.s);
 
 	if(dbt_use_table(_h, &table) != 0) {
 		LM_ERR("use table is invalid %.*s\n", table.len, table.s);
