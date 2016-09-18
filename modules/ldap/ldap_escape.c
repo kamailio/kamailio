@@ -29,8 +29,6 @@
 #include <ctype.h>
 #include "ldap_escape.h"
 
-static const char hex[] = "0123456789ABCDEF";
-
 /*
 * escape string following RFC 4515 (LDAP filter syntax) escaping rules:
 *
@@ -48,8 +46,8 @@ static const char hex[] = "0123456789ABCDEF";
 int ldap_rfc4515_escape(str *sin, str *sout, int url_encode)
 {
 	char *src, *dst;
-	
-	if (sin == NULL || sout == NULL || sin->s == NULL || sout->s == NULL 
+
+	if (sin == NULL || sout == NULL || sin->s == NULL || sout->s == NULL
 			|| sin->len <= 0 || sout->len < 3*sin->len+1)
 	{
 		return -1;
