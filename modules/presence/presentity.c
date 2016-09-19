@@ -503,9 +503,11 @@ int get_dialog_state(presentity_t* presentity, char** state)
 	if(result == NULL)
 		return -3;
 
-	// No results from query definitely means no dialog exists
-	if (result->n <= 0)
+	/* no results from query definitely means no dialog exists */
+	if (result->n <= 0) {
+		pa_dbf.free_result(pa_db, result);
 		return 0;
+	}
 
 	// Loop the rows returned from the DB
 	for (i=0; i < result->n; i++)
