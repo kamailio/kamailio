@@ -1,0 +1,244 @@
+RABBITMQ Module
+
+Carsten Bock
+
+   ng-voice GmbH
+
+Edited by
+
+Stefan-Cristian Mititelu
+
+   <stefan.mititelu@onem.com>
+
+   Copyright © 2016 ONEm Communications Ltd.
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio modules
+              2.2. External libraries or applications
+
+        3. Parameters
+
+              3.1. username (string)
+              3.2. password (string)
+              3.3. host (string)
+              3.4. vhost (string)
+              3.5. port (int)
+              3.6. timeout_sec (int)
+              3.7. timeout_usec (int)
+
+        4. Functions
+
+              4.1. rabbitmq_publish(exchange, routing_key, content_type,
+                      messagebody)
+
+              4.2. rabbitmq_publish_consume(exchange, routing_key,
+                      content_type, messagebody, reply)
+
+   List of Examples
+
+   1.1. Set the “username” parameter
+   1.2. Set the “password” parameter
+   1.3. Set the “host” parameter
+   1.4. Set the “vhost” parameter
+   1.5. Set the “port” parameter
+   1.6. Set the “timeout_sec” parameter
+   1.7. Set the “timeout_usec” parameter
+   1.8. rabbitmq_publish usage
+   1.9. rabbitmq_publish_consume usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio modules
+        2.2. External libraries or applications
+
+   3. Parameters
+
+        3.1. username (string)
+        3.2. password (string)
+        3.3. host (string)
+        3.4. vhost (string)
+        3.5. port (int)
+        3.6. timeout_sec (int)
+        3.7. timeout_usec (int)
+
+   4. Functions
+
+        4.1. rabbitmq_publish(exchange, routing_key, content_type,
+                messagebody)
+
+        4.2. rabbitmq_publish_consume(exchange, routing_key, content_type,
+                messagebody, reply)
+
+1. Overview
+
+   This module offers amqp communication using librabbitmq. This module
+   was created based on rabbitmq-c C client. An new amqp connection is
+   setup on a per-children basis, when Kamailio starts. If connection is
+   lost, the process tries to re-establish it when a new amqp action is
+   required.
+
+   Currently librabbitmq offers no async API, but sync API, with a
+   timeout. See below link for updates on this issue:
+     * https://github.com/alanxz/rabbitmq-c/issues/370.
+
+2. Dependencies
+
+   2.1. Kamailio modules
+   2.2. External libraries or applications
+
+2.1. Kamailio modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External libraries or applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module:
+     * librabbitmq-dev.
+
+3. Parameters
+
+   3.1. username (string)
+   3.2. password (string)
+   3.3. host (string)
+   3.4. vhost (string)
+   3.5. port (int)
+   3.6. timeout_sec (int)
+   3.7. timeout_usec (int)
+
+3.1. username (string)
+
+   The user name of amqp connection.
+
+   Default value is “"guest"”.
+
+   Example 1.1. Set the “username” parameter
+...
+modparam("rabbitmq", "username", "user")
+...
+
+3.2. password (string)
+
+   The password of amqp connection.
+
+   Default value is “"guest"”.
+
+   Example 1.2. Set the “password” parameter
+...
+modparam("rabbitmq", "password", "pass")
+...
+
+3.3. host (string)
+
+   The host of amqp connection.
+
+   Default value is “"localhost"”.
+
+   Example 1.3. Set the “host” parameter
+...
+modparam("rabbitmq", "host", "127.0.0.1")
+...
+
+3.4. vhost (string)
+
+   The vhost of the amqp connection.
+
+   Default value is “"/"”.
+
+   Example 1.4. Set the “vhost” parameter
+...
+modparam("rabbitmq", "vhost", "/vhost")
+...
+
+3.5. port (int)
+
+   The port of the amqp connection.
+
+   Default value is “5672”.
+
+   Example 1.5. Set the “port” parameter
+...
+modparam("rabbitmq", "port", 5672)
+...
+
+3.6. timeout_sec (int)
+
+   The timeout in seconds. The timeout_sec + timeout_usec combination
+   gives the time to wait for an amqp reply, when
+   rabbitmq_publish_consume() is used.
+
+   Default value is “1”.
+
+   Example 1.6. Set the “timeout_sec” parameter
+...
+modparam("rabbitmq", "timeout_sec", 1)
+...
+
+3.7. timeout_usec (int)
+
+   The timeout in micro seconds. The timeout_sec + timeout_usec
+   combination gives the time to wait for an amqp reply, when
+   rabbitmq_publish_consume() is used.
+
+   Default value is “0”.
+
+   Example 1.7. Set the “timeout_usec” parameter
+...
+modparam("rabbitmq", "timeout_usec", 0)
+...
+
+4. Functions
+
+   4.1. rabbitmq_publish(exchange, routing_key, content_type, messagebody)
+
+   4.2. rabbitmq_publish_consume(exchange, routing_key, content_type,
+          messagebody, reply)
+
+4.1.  rabbitmq_publish(exchange, routing_key, content_type, messagebody)
+
+   The function publishes messagebody without waiting for a reply.
+
+   Meaning of the parameters is as follows:
+     * exchange - the amqp exchange.
+     * routing_key - the amqp routing_key.
+     * content_type - the content_type of the messagebody.
+     * messagebody - the messagebody to be published.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.8. rabbitmq_publish usage
+rabbitmq_publish("exchange", "routing_key", "application/json", "$avp(json_reque
+st)");
+
+4.2.  rabbitmq_publish_consume(exchange, routing_key, content_type,
+messagebody, reply)
+
+   The function publishes messagebody and waits timeoute_sec +
+   timeout_usec for a reply. If the reply comes, one can read it in the
+   reply avp.
+
+   Meaning of the parameters is as follows:
+     * exchange - the amqp exchange.
+     * routing_key - the amqp routing_key.
+     * content_type - the content_type of the messagebody.
+     * messagebody - the messagebody to be published.
+     * reply - the consumed reply.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.9. rabbitmq_publish_consume usage
+rabbitmq_publish_consume("exchange", "routing_key", "application/json", "$avp(js
+on_request)", "$avp(json_reply)");
