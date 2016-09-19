@@ -123,8 +123,18 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	curr->len = param->len;
 	curr->type = param->type;
 	curr->next = 0;
-	if (shm_str_dup(&curr->body, &param->body) < 0) goto error;
-	if (shm_str_dup(&curr->name, &param->name) < 0) goto error;
+	if (param->body.len > 0 && param->body.s) {
+		if (shm_str_dup(&curr->body, &param->body) < 0) goto error;
+	} else {
+		curr->body.s = 0;
+		curr->body.len = 0;
+	}
+	if (param->name.len > 0 && param->name.s) {
+		if (shm_str_dup(&curr->name, &param->name) < 0) goto error;
+	} else {
+		curr->name.s = 0;
+		curr->name.len = 0;
+	}
 	
 	if(first) {
 	    c->params = curr;
@@ -138,15 +148,24 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
     }
     
     if (shm_str_dup(&c->c, _contact) < 0) goto error;
-    if (shm_str_dup(&c->callid, _ci->callid) < 0) goto error;
-    if (shm_str_dup(&c->user_agent, _ci->user_agent) < 0) goto error;
-    if (shm_str_dup(&c->aor, _aor) < 0) goto error;
-    if (shm_str_dup(&c->domain, _dom) < 0) goto error;
+	
+	if (_ci->callid && _ci->callid->len > 0) {
+		if (shm_str_dup(&c->callid, _ci->callid) < 0) goto error;
+	}
+	if (_ci->user_agent && _ci->user_agent->len > 0) {
+		if (shm_str_dup(&c->user_agent, _ci->user_agent) < 0) goto error;
+	}
+	if (_aor && _aor->len > 0) {
+		if (shm_str_dup(&c->aor, _aor) < 0) goto error;
+	}
+	if (_dom && _dom->len > 0) {
+		if (shm_str_dup(&c->domain, _dom) < 0) goto error;
+	}
     
-    if (_ci->received.s && _ci->received.len) {
+    if (_ci->received.len > 0) {
         if (shm_str_dup(&c->received, &_ci->received) < 0) goto error;
     }
-    if (_ci->path && _ci->path->len) {
+    if (_ci->path && _ci->path->len > 0) {
         if (shm_str_dup(&c->path, _ci->path) < 0) goto error;
     }
     
