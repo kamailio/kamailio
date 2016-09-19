@@ -175,7 +175,7 @@ mod_list_uuid=uuid
 # - modules depending on ev library
 mod_list_ev=evapi
 
-# - modules depending on kazoo/rabitmq
+# - modules depending on kazoo/rabbitmq
 mod_list_kazoo=kazoo
 
 # - modules depending on mongodb
@@ -192,6 +192,9 @@ mod_list_systemd=log_systemd
 
 # - modules depending on libnsq (+libev libevbuffsock liblcurl libjson-c) library
 mod_list_nsq=nsq
+
+# - modules depending on librabbitmq library
+mod_list_rabbitmq=rabbitmq
 
 # - all modules
 mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
@@ -220,7 +223,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_mongodb) $(mod_list_cnxcc) \
 			   $(mod_list_jansson) $(mod_list_geoip2) \
 			   $(mod_list_erlang) $(mod_list_systemd) \
-			   $(mod_list_http_async) $(mod_list_nsq))
+			   $(mod_list_http_async) $(mod_list_nsq) \
+			   $(mod_list_rabbitmq))
 
 
 
@@ -413,6 +417,9 @@ module_group_ksystemd=$(mod_list_systemd)
 
 # K nsq modules
 module_group_knsq=$(mod_list_nsq)
+
+# K rabbitmq modules
+module_group_krabbitmq=$(mod_list_rabbitmq)
 
 # list of static modules
 #
