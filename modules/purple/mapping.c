@@ -133,8 +133,11 @@ char *find_sip_user(char *extern_user) {
 	
 	if (result == NULL)
 		return NULL;
-	if (result->n <= 0)
+
+	if (result->n <= 0) {
+		pa_dbf.free_result(pa_db, result);
 		return NULL;
+	}
 
 	row = &result->rows[0];
 	row_vals = ROW_VALUES(row);
@@ -208,6 +211,7 @@ extern_account_t *find_accounts(char* sip_user, int* count) {
 		return NULL;
 	}
 	if (result->n <= 0) {
+		pa_dbf.free_result(pa_db, result);
 		LM_ERR("result count = %d\n", result->n);
 		return NULL;
 	}
@@ -290,8 +294,11 @@ extern_user_t *find_users(char *sip_user, int* count) {
 
 	if (result == NULL)
 		return NULL;
-	if (result->n <= 0)
+
+	if (result->n <= 0) {
+		pa_dbf.free_result(pa_db, result);
 		return NULL;
+	}
 
 	users = (extern_user_t*) pkg_malloc(sizeof(extern_user_t)*result->n);
 
