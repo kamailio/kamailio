@@ -1,10 +1,11 @@
-/* vim:set ft=c ts=2 sw=2 sts=2 et cindent: */
-#ifndef librabbitmq_examples_utils_h
-#define librabbitmq_examples_utils_h
-
 /*
- * ***** BEGIN LICENSE BLOCK *****
- * Version: MIT
+ * MIT License
+ *
+ * Portions created by ONEm Communications Ltd. are Copyright (c) 2016
+ * ONEm Communications Ltd. All Rights Reserved.
+ *
+ * Portions created by ng-voice are Copyright (c) 2016
+ * ng-voice. All Rights Reserved.
  *
  * Portions created by Alan Antonuk are Copyright (c) 2012-2013
  * Alan Antonuk. All Rights Reserved.
@@ -34,8 +35,10 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * ***** END LICENSE BLOCK *****
  */
+
+#ifndef librabbitmq_examples_utils_h
+#define librabbitmq_examples_utils_h
 
 #include "../../dprint.h"
 
