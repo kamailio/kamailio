@@ -70,6 +70,10 @@ static int sca_mod_init(void);
 static int sca_child_init(int);
 static void sca_mod_destroy(void);
 static int sca_set_config(sca_mod *);
+static int sca_call_info_update_0_f(sip_msg_t* msg);
+static int sca_call_info_update_1_f(sip_msg_t* msg, char*);
+static int sca_call_info_update_2_f(sip_msg_t* msg, char* , char*);
+static int sca_call_info_update_3_f(sip_msg_t* msg, char* , char*, char *);
 int fixup_ciu(void **, int);
 int fixup_free_ciu(void **param, int param_no);
 
@@ -79,13 +83,13 @@ int fixup_free_ciu(void **param, int param_no);
 static cmd_export_t cmds[] = {
 		{"sca_handle_subscribe", (cmd_function)sca_handle_subscribe, 0, NULL, 0,
 				REQUEST_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update, 0, NULL, 0,
+		{"sca_call_info_update", (cmd_function)sca_call_info_update_0_f, 0, NULL, 0,
 				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update, 1,
+		{"sca_call_info_update", (cmd_function)sca_call_info_update_1_f, 1,
 			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update, 2,
+		{"sca_call_info_update", (cmd_function)sca_call_info_update_2_f, 2,
 			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-		{"sca_call_info_update", (cmd_function)sca_call_info_update, 3,
+		{"sca_call_info_update", (cmd_function)sca_call_info_update_3_f, 3,
 			fixup_ciu, fixup_free_ciu, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 		{ 0, 0, 0, 0, 0, 0 }
 };
@@ -406,6 +410,21 @@ void sca_mod_destroy(void)
 	}
 
 	sca_db_disconnect();
+}
+
+static int sca_call_info_update_0_f(sip_msg_t* msg) {
+	return sca_call_info_update(msg, NULL, NULL, NULL);
+}
+static int sca_call_info_update_1_f(sip_msg_t* msg, char* p1) {
+	return sca_call_info_update(msg, p1, NULL, NULL);
+}
+static int sca_call_info_update_2_f(sip_msg_t* msg, char* p1, char* p2) {
+	return sca_call_info_update(msg, p1, p2, NULL);
+}
+static int sca_call_info_update_3_f(sip_msg_t* msg,
+	char* p1, char* p2, char * p3)
+{
+	return sca_call_info_update(msg, p1, p2, p3);
 }
 
 int fixup_ciu(void **param, int param_no)
