@@ -1,0 +1,335 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Kamailio
+Upstream-Contact: sr-dev@lists.sip-router.org
+Source: http://www.kamailio.org/pub/kamailio/
+
+Files: *
+Copyright:
+ 2001-2003 FhG Fokus
+ 2006-2010 iptelorg GmbH
+ Various others (see AUTHORS file)
+License: GPL-2.0+
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
+
+Files: debian/*
+Copyright: 2012, 2013, 2014 Victor Seva <linuxmaniac@torreviejawireless.org>
+           2009, 2010, 2011, Daniel-Constantin Mierla <miconda@gmail.com>
+           2010, Jon Bonilla <manwe@aholab.ehu.es>
+           2009, Jonas Bergler <jonas.bergler@staff.snap.net.nz>
+           2009, Henning Westerholt <henning.westerholt@1und1.de>
+           2007, Julien BLACHE <jblache@debian.org>
+License: GPL-2+
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
+
+
+Files: atomic/* atomic_ops.* basex.* bit_*.c char_msg_val.h compiler_opt.h
+ core_stats.h counters.* endianness.* futexlock.h hashes.h io_wait.*
+ kstats_types.h lib/kcore/kstats_wrapper.* lock_ops.c lock_ops_init.h
+ lvalue.* mem/ll_malloc.* mem/memdbg.h mem/sf_malloc.* mi/*.h mod_fix.*
+ modules/tm/rpc_uac.* modules/counters/counters.c modules/tls/sbufq.h
+ modules/tls/tls_bio.* modules/tls/tls_cfg.* modules/tls/tls_cfg.h
+ modules/tls/tls_ct_wrq.* modules/tls/tls_ct_q.h modules/tls/tls_domain.*
+ modules/tls/tls_server.h modules/tls/tls_locking.* modules/tls/tls_rpc.*
+ modules/tls/tls_server.c modules/malloc_test/malloc_test.c modules/blst/blst.c
+ parser/case_p_* parser/case_reas.h pvapi.h pv_core.* rand/fastrand.* raw_*
+ rpc_lookup.* rvalue.* sctp_* ser_time.h shm_init.* sip_msg_clone.* sock_ut.*
+ sr_compat.* str_hash.h switch.* tcp_ev.h tcp_int_send.h tcp_options.*
+ tcp_read.h tcp_stats.* timer_proc.* tls_hooks.* tls_hooks_init.h ver.*
+Copyright: 2006-2010 iptelorg GmbH
+License: ISC
+
+Files: modules/tls/tls_select.* modules/tls/tls_dump_vf.*
+Copyright: 2005-2010 iptelorg GmbH
+License: GPL-2 + OpenSSL exception
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
+
+Files: modules/websocket/* modules/outbound/* modules/auth_ephemeral/*
+Copyright: 2012-2013 Crocodile RCS Ltd
+License: GPL-2 + OpenSSL exception
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
+
+Files: daemonize.* fastlock.h lock_ops.h mem/mem.* mem/f_malloc.h
+ mem/meminfo.h mem/memtest.c mem/shm_mem.c mem/q_malloc.h mem/q_malloc.c
+ mem/shm_mem.h mem/f_malloc.c modules/tls/tls_rpc.c modules/tls/tls_server.c
+ modules/tls/tls_domain.c modules/tls/tls_domain.h modules/tls/tls_server.h
+ modules/tls/tls_rpc.h pt.c pt.h sched_yield.h ut.c ut.h
+Copyright: 2001-2003 FhG Fokus
+License: ISC
+
+Files: events.* modules/topoh/*
+Copyright: 2009 SIP-Router.org
+License: ISC
+
+Files: modules/mi_rpc/mi_rpc_mod.c modules/pv/pv_xavp.*
+ modules/usrloc/ul_rpc.* ppcfg.* xavp.*
+Copyright: 2009-2010 Daniel-Constantin Mierla (asipto.com)
+License: ISC
+
+Files: obsolete/jabber_k/tree234.*
+Copyright: 1999, 2000, 2001, Simon Tatham
+License: Expat
+ Permission is hereby granted, free of charge, to any person
+ obtaining a copy of this software and associated documentation
+ files (the "Software"), to deal in the Software without
+ restriction, including without limitation the rights to use,
+ copy, modify, merge, publish, distribute, sublicense, and/or
+ sell copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following
+ conditions:
+ .
+ The above copyright notice and this permission notice shall be
+ included in all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ NONINFRINGEMENT.  IN NO EVENT SHALL SIMON TATHAM BE LIABLE FOR
+ ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+
+Files: modules/xmpp/xsnprintf.c obsolete/jabber_s/xsnprintf.c obsolete/jabber_k/xsnprintf.c
+Copyright: 1995-1998, The Apache Group
+License: Apache-1.0
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ .
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
+ .
+ 3. All advertising materials mentioning features or use of this
+    software must display the following acknowledgment:
+    "This product includes software developed by the Apache Group
+    for use in the Apache HTTP server project (http://www.apache.org/)."
+ .
+ 4. The names "Apache Server" and "Apache Group" must not be used to
+    endorse or promote products derived from this software without
+    prior written permission.
+ .
+ 5. Redistributions of any form whatsoever must retain the following
+    acknowledgment:
+    "This product includes software developed by the Apache Group
+    for use in the Apache HTTP server project (http://www.apache.org/)."
+ .
+ THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
+ EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+ ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: modules/mi_xmlrpc/abyss*
+Copyright: 2000, Moez Mahfoudh <mmoez@bigfoot.com>
+License: BSD-3-clause
+
+Files: list.h
+Copyright: 1991, 1993 The Regents of the University of California
+License: BSD-3-clause
+
+Files: modules/tm/t_serial.*
+Copyright: 2008 Juha Heinanen
+License: BSD-2-clause
+
+Files: parser/sdp/sdp.* parser/sdp/sdp_helpr_funcs.* parser/sdp/sdp_cloner.h
+Copyright:
+ 2008-2009 SOMA Networks, INC.
+ 2010 VoIP Embedded, Inc
+License: BSD-2-clause
+
+Files: modules/tls/fixed_c_zlib.h
+Copyright:1998-2005 The OpenSSL Project
+Comment: file copied from OpenSSL 0.9.8, refers to OpenSSL License. Note that
+ this code will not build by default in the Debian packaging.
+License: OpenSSL
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ .
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
+ .
+ 3. All advertising materials mentioning features or use of this
+    software must display the following acknowledgment:
+    "This product includes software developed by the OpenSSL Project
+    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ .
+ 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+    endorse or promote products derived from this software without
+    prior written permission. For written permission, please contact
+    openssl-core@openssl.org.
+ .
+ 5. Products derived from this software may not be called "OpenSSL"
+    nor may "OpenSSL" appear in their names without prior written
+    permission of the OpenSSL Project.
+ .
+ 6. Redistributions of any form whatsoever must retain the following
+    acknowledgment:
+    "This product includes software developed by the OpenSSL Project
+    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ .
+ THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Files: md5.* md5utils.c
+Copyright: 1991-2, RSA Data Security, Inc
+Comment: Note that md5.c and md5.h have been replaced in the patches
+ plum_md5*.patch .
+ .
+ As for md5utils.c, according to a mail from Upstream (Daniel-Constantin
+ Mierla): while the initial commit log for it states that it is derived
+ from mddriver.c of RFC 1321, it seems that it was, in fact, written from
+ scratch by Jiri Kuthan (a core developer of SER at that time, working for
+ FhG Fokus Institute). As you can see it's rather trivial and uses a data
+ type of SER ("str").  I didn't reimplement it as it's too trivial and
+ looks like there's no other way to implement it.
+License: RSA-MD5
+ License to copy and use this software is granted provided that it
+ is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+ Algorithm" in all material mentioning or referencing this software
+ or this function.
+ .
+ License is also granted to make and use derivative works provided
+ that such works are identified as "derived from the RSA Data
+ Security, Inc. MD5 Message-Digest Algorithm" in all material
+ mentioning or referencing the derived work.
+ .
+ RSA Data Security, Inc. makes no representations concerning either
+ the merchantability of this software or the suitability of this
+ software for any particular purpose. It is provided "as is"
+ without express or implied warranty of any kind.
+ .
+ These notices must be retained in any copies of any part of this
+ documentation and/or software.
+
+Files: mem/dl_*
+Copyright: n/a
+License: public-domain
+ This is a version (aka dlmalloc) of malloc/free/realloc written by
+ Doug Lea and released to the public domain, as explained at
+ http://creativecommons.org/licenses/publicdomain.  Send questions,
+ comments, complaints, performance data, etc to dl@cs.oswego.edu
+
+Files: rand/isaac/*
+Copyright: n/a
+License: public-domain
+ By Bob Jenkins.  My random number generator, ISAAC.  Public Domain.
+
+License: ISC
+ Permission to use, copy, modify, and distribute this software for any
+ purpose with or without fee is hereby granted, provided that the above
+ copyright notice and this permission notice appear in all copies.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Files: lib/srutils/srjson.*
+Copyright: 2009 Dave Gamble
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ ,
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+
+License: BSD-3-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 4. Neither the name of the University nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+License: BSD-2-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ .
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE FREEBSD PROJECT ``AS IS'' AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+ EVENT SHALL THE FREEBSD PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

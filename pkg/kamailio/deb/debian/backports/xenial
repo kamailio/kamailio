@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Hook for automatic backports at buildserver.net
+#
+# Target dist: Ubuntu xenial
+DIST=xenial
+
+rm -rf ${DIST}
+cp -r debian ${DIST}
+
+# mi_xmlrpc module
+sed -i 's/libxmlrpc-c3-dev/libxmlrpc-core-c3-dev/' ${DIST}/control
+
+# clean backports scripts
+rm -rf ${DIST}/backports
+exit 0
