@@ -400,7 +400,7 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 
 
 
-char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff, 
+char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff,
 					int body_only)
 {
 	char* buf;
@@ -414,7 +414,8 @@ char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff,
 	body=get_body(msg);
 	if (body==0){
 		ser_error=E_BAD_REQ;
-		LM_ERR("no message body found (missing crlf?)");
+		LM_ERR("no message body found (missing crlf?) [[%.*s]]\n",
+				msg->len, msg->buf);
 		return 0;
 	}
 	value=msg->len-(int)(body-msg->buf)+diff;
