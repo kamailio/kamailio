@@ -743,13 +743,19 @@ int sr_hdr_add(sip_msg_t *msg, str *sname, str *sbody)
 	struct lump* anchor;
 	str h;
 
+	parse_headers(msg, HDR_EOH_F, 0);
+	if(msg->last_header == 0) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
 	h.len = sname->len + 2 + sbody->len + CRLF_LEN;
 	h.s = (char*)pkg_malloc(h.len+1);
 	if(h.s == 0) {
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
-	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
+	anchor = anchor_lump(msg, msg->last_header->name.s + msg->last_header->len
+					- msg->buf, 0, 0);
 	if(anchor == 0)
 	{
 		LM_ERR("cannot get the anchor\n");
