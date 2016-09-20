@@ -481,7 +481,7 @@ static inline void process_impurecord(impurecord_t* _r) {
         }
     }
     
-    if (dbwork) {
+    if (dbwork && db_mode != NO_DB) {
         if (ul_dbf.raw_query(ul_dbh, &commit, NULL) < 0) {
             LM_ERR("transaction commit "
                     "failed.\n");
