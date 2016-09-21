@@ -167,6 +167,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
             }
             p_session_data->session_has_been_opened = 1;
             counter_inc(ims_qos_cnts_h.active_media_rx_sessions);
+			counter_inc(ims_qos_cnts_h.media_rx_sessions);
 
             if (auth) cdpb.AAASessionsUnlock(auth->hash);
 
