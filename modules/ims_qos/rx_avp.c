@@ -390,7 +390,7 @@ inline static unsigned int sdp_b_value(str * payload, char * subtype)
 }
 
 inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, str *media_description, str *ipA, str *portA, str *ipB, str *portB, str *transport,
-		str *req_raw_payload, str *rpl_raw_payload, enum dialog_direction dlg_direction)
+		str *req_raw_payload, str *rpl_raw_payload, enum dialog_direction dlg_direction, int flow_usage_type)
 {
 		str data;
 		AAA_AVP_LIST list;
@@ -425,10 +425,10 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 
 		/*media-sub-component*/
 		if (dlg_direction != DLG_MOBILE_ORIGINATING) {
-				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipA, portA, ipB, portB);
+				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipA, portA, ipB, portB, flow_usage_type);
 				cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
 		} else {
-				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipB, portB, ipA, portA);
+				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipB, portB, ipA, portA, flow_usage_type);
 				cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
 		}
 
@@ -670,7 +670,7 @@ int reg_match(char *pattern, char *string, regmatch_t *pmatch)
 
 AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 		str *ipA, str *portA,
-		str *ipB, str *portB)
+		str *ipB, str *portB, int flow_usage_type)
 {
 		str data;
 		int len, len2, len3;
@@ -871,7 +871,7 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 				cdpb.AAAAddAVPToList(&list, flow_description4);
 		}
 
-		set_4bytes(x, AVP_EPC_Flow_Usage_No_Information);
+		set_4bytes(x, flow_usage_type);
 		flow_usage = cdpb.AAACreateAVP(AVP_IMS_Flow_Usage,
 				AAA_AVP_FLAG_MANDATORY | AAA_AVP_FLAG_VENDOR_SPECIFIC,
 				IMS_vendor_id_3GPP, x, 4,

@@ -80,11 +80,11 @@ int rx_add_subscription_id_avp(AAAMessage *msg, str identifier, int identifier_t
 int rx_add_auth_application_id_avp(AAAMessage *msg, unsigned int data);
 
 int rx_add_media_component_description_avp(AAAMessage *msg, int number, str *media_description, str *ipA, str *portA, str *ipB, str *portB, str *transport, 
-        str *raw_payload, str *rpl_raw_payload, enum dialog_direction dlg_direction);
+        str *raw_payload, str *rpl_raw_payload, enum dialog_direction dlg_direction, int flow_usage_type);
 
 int rx_add_media_component_description_avp_register(AAAMessage *msg);
 
-AAA_AVP *rx_create_media_subcomponent_avp(int number, str *proto, str *ipA, str *portA, str *ipB, str *portB);
+AAA_AVP *rx_create_media_subcomponent_avp(int number, str *proto, str *ipA, str *portA, str *ipB, str *portB, int flow_usage_type);
 
 AAA_AVP *rx_create_media_subcomponent_avp_register();
 

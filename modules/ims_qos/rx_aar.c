@@ -416,7 +416,7 @@ int add_media_components_using_current_flow_description(AAAMessage* aar, rx_auth
                     &flow_description->req_sdp_port, &flow_description->rpl_sdp_ip_addr,
                     &flow_description->rpl_sdp_port, &flow_description->rpl_sdp_transport,
                     &flow_description->req_sdp_raw_stream,
-                    &flow_description->rpl_sdp_raw_stream, flow_description->direction);
+                    &flow_description->rpl_sdp_raw_stream, flow_description->direction, AVP_EPC_Flow_Usage_No_Information);
         }
 
         flow_description = flow_description->next;
@@ -530,7 +530,7 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
                                 &req_sdp_stream->port, &ipB,
                                 &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
                                 &req_sdp_stream->raw_stream,
-                                &rpl_sdp_stream->raw_stream, direction);
+                                &rpl_sdp_stream->raw_stream, direction, AVP_EPC_Flow_Usage_No_Information);
                     }
                     add_flow = 1;
                 }
@@ -965,13 +965,14 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     protocol.s = "IP";
     protocol.len = strlen("IP");
 
+    //rx_add_media_component_description_avp_register(aar);
     /* Add media component description avp for register*/
     rx_add_media_component_description_avp(aar, 1,
                &media, &saved_t_data->via_host,
                &port_from, &af_signaling_ip,
                &port_to, &protocol,
                &raw_stream,
-               &raw_stream, DLG_MOBILE_REGISTER);
+               &raw_stream, DLG_MOBILE_REGISTER, AVP_EPC_Flow_Usage_AF_Signaling);
 
     /* Add specific action AVP's */
     rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE
