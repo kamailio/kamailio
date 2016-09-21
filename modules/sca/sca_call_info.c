@@ -1842,6 +1842,12 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
 		}
 	}
 	if (i >= n_dispatch) {
+		if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
+			(msg->cseq==NULL)))
+		{
+			LM_ERR("no CSEQ header\n");
+			return (1);
+		}
 		LM_DBG("BUG: sca module does not support Call-Info headers "
 				"in %.*s requests\n", STR_FMT(&get_cseq(msg)->method));
 		return (1);
