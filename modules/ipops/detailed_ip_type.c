@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+#if defined (__OS_freebsd)
+#include <sys/socket.h>
+#endif
 #include <string.h>
 #include <unistd.h>
 #include "../../dprint.h"
