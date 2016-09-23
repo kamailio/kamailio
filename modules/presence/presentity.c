@@ -691,13 +691,13 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			}
 
 			check_if_dialog(*body, &is_dialog, &dialog_id);
+			if (is_dialog == 1) {
+				if (delete_presentity_if_dialog_id_exists(presentity, dialog_id) < 0) {
+					goto error;
+				}
 
-			if (delete_presentity_if_dialog_id_exists(presentity, dialog_id) < 0) {
-				goto error;
+				free(dialog_id);
 			}
-
-			free(dialog_id);
-
 			LM_DBG("inserting %d cols into table\n",n_query_cols);
 
 			if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols) < 0)
