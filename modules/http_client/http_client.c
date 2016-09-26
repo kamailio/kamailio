@@ -142,6 +142,7 @@ static cmd_export_t cmds[] = {
 		fixup_free_curl_get_redirect,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"bind_http_client",  (cmd_function)bind_httpc_api,  0, 0, 0, 0},
+	{0,0,0,0,0,0}
 };
 
 
