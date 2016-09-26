@@ -47,6 +47,7 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 extern int _dmq_usrloc_sync;
 extern int _dmq_usrloc_batch_size;
 extern int _dmq_usrloc_batch_usleep;
+extern str _dmq_usrloc_domain;
 
 static int add_contact(str aor, ucontact_info_t* ci)
 {
@@ -56,7 +57,7 @@ static int add_contact(str aor, ucontact_info_t* ci)
 	str contact;
 	int res;
 
-	if (dmq_ul.get_udomain("location", &_d) < 0) {
+	if (dmq_ul.get_udomain(_dmq_usrloc_domain.s, &_d) < 0) {
 		LM_ERR("Failed to get domain\n");
 		return -1;
 	}
@@ -109,7 +110,7 @@ static int delete_contact(str aor, ucontact_info_t* ci)
 	urecord_t* r;
 	ucontact_t* c;
 
-        if (dmq_ul.get_udomain("location", &_d) < 0) {
+        if (dmq_ul.get_udomain(_dmq_usrloc_domain.s, &_d) < 0) {
                 LM_ERR("Failed to get domain\n");
                 return -1;
         }
@@ -159,7 +160,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 		goto done;
 	}
 
-	if (dmq_ul.get_udomain("location", &_d) < 0) {
+	if (dmq_ul.get_udomain(_dmq_usrloc_domain.s, &_d) < 0) {
 		LM_ERR("Failed to get domain\n");
 		goto done;
 	}
