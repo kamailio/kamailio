@@ -426,10 +426,12 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 		/*media-sub-component*/
 		if (dlg_direction != DLG_MOBILE_ORIGINATING) {
 				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipA, portA, ipB, portB, flow_usage_type);
-				cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
+				if (media_sub_component[media_sub_component_number])
+					cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
 		} else {
 				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipB, portB, ipA, portA, flow_usage_type);
-				cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
+				if (media_sub_component[media_sub_component_number])
+					cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
 		}
 
 
@@ -691,6 +693,8 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 		} else if (proto->len == 7 && strncasecmp(proto->s,"RTP/AVP", proto->len) == 0) {
 			proto_nr = "17";	/* for now we just use UDP for all RTP */
 		} else if (proto->len == 8 && strncasecmp(proto->s,"RTP/SAVP", proto->len) == 0) {
+			proto_nr = "17";	/* for now we just use UDP for all RTP */
+		} else if (proto->len == 8 && strncasecmp(proto->s,"RTP/AVPF", proto->len) == 0) {
 			proto_nr = "17";	/* for now we just use UDP for all RTP */
 		} else {
 			LOG(L_ERR, "Not yet implemented for protocol %.*s\n", proto->len, proto->s);
