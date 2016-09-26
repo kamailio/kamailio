@@ -362,7 +362,7 @@ static inline void process_impurecord(impurecord_t* _r) {
     ucontact_t* ptr;
     int hascontacts;
     udomain_t* _d;
-    reg_subscriber *s;
+    reg_subscriber *s, *next;
     subs_t* sub_dialog;
     int dbwork = 0;
 
@@ -371,6 +371,7 @@ static inline void process_impurecord(impurecord_t* _r) {
     s = _r->shead;
     LM_DBG("Checking validity of IMPU: <%.*s> registration subscriptions\n", _r->public_identity.len, _r->public_identity.s);
     while (s) {
+		next = s->next;
         if (!valid_subscriber(s, act_time)) {
             LM_DBG("DBG:registrar_timer: Subscriber with watcher_contact <%.*s> and presentity uri <%.*s> expired and removed.\n",
                     s->watcher_contact.len, s->watcher_contact.s, s->presentity_uri.len, s->presentity_uri.s);
@@ -397,7 +398,7 @@ static inline void process_impurecord(impurecord_t* _r) {
             lock_release(&sub_dialog_table[sl].lock);
             mustdeleteimpu = 0;
         }
-        s = s->next;
+        s = next;
     }
 
     LM_DBG("\tPublic Identity %.*s, Barred: [%d], State: [%s]\n",
