@@ -247,11 +247,9 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 	sr_hdr_add_zs(msg, "P-K-CSeq-Refresh", &nval);
 
 done:
-	if(dlg!=NULL) dlg_release(dlg);
 	return 0;
 
 error:
-	if(dlg!=NULL) dlg_release(dlg);
 	return -1;
 }
 
