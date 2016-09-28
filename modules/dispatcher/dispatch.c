@@ -1449,7 +1449,8 @@ int ds_get_leastloaded(ds_set_t *dset)
 	for(j=0; j<dset->nr; j++)
 	{
 		if(!ds_skip_dst(dset->dlist[j].flags)
-				&& dset->dlist[j].dload<dset->dlist[j].attrs.maxload)
+				&& (dset->dlist[j].attrs.maxload == 0
+					|| dset->dlist[j].dload<dset->dlist[j].attrs.maxload))
 		{
 			if(dset->dlist[j].dload<t)
 			{
