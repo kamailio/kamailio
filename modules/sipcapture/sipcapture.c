@@ -2348,7 +2348,6 @@ int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_re
 	if(correlation_id) {
 		corrtmp.s = correlation_id;
 		corrtmp.len = strlen(correlation_id);
-		if(!strncmp(log_table, "rtcp_capture",12)) corrtmp.len--;
 	}
 
 	db_keys[0] = &date_column;
@@ -2523,7 +2522,6 @@ static int report_capture(struct sip_msg *msg, str *_table, str* _corr,  str *_d
 	else if(correlation_id) {
 		corrtmp.s = correlation_id;
 		corrtmp.len = strlen(correlation_id);
-		if(!strncmp(_table->s, "rtcp_capture",12)) corrtmp.len--;
 	}
 
 	db_keys[0] = &date_column;
