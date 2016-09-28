@@ -92,7 +92,7 @@ void credit_control_session_callback(int event, void* session) {
  * @param func - the name of the calling function, for debugging purposes
  * @returns 1 on success or 0 on failure
  */
-static inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
+inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
         int flags, int vendorid, int data_do, const char *func) {
     AAA_AVP *avp;
     if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
