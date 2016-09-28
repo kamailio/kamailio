@@ -30,6 +30,7 @@ void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) 
 	AAA_AVP_LIST y;
 	AAA_AVP *z;
 
+	y.head = y.tail = 0;
 	avp = AAAFindMatchingAVP(msg, 0, AVP_Multiple_Services_Credit_Control, 0, 0);
 	if (!avp) {
 		LM_WARN("Trying to update GSU timers but there is no MSCC AVP in the CCA response\n");
@@ -76,8 +77,11 @@ void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) 
 		mscc_avp = mscc_avp->next;
 	}
 
-	AAAFreeAVPList(&mscc_avp_list);
-	AAAFreeAVPList(&y);
+	if (mscc_avp_list.head);
+		AAAFreeAVPList(&mscc_avp_list);
+	
+	if (y.head)
+		AAAFreeAVPList(&y);
 }
 
 
