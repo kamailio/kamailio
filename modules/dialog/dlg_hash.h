@@ -387,8 +387,10 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode);
  * \param dlg dialog
  * \param cnt decrement for the reference counter
  */
-void dlg_unref(dlg_cell_t *dlg, unsigned int cnt);
+void dlg_unref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
+		int fline);
 
+#define dlg_unref(dlg, cnt) dlg_unref_helper((dlg), (cnt), __FILE__, __LINE__)
 
 /*!
  * \brief Refefence a dialog with locking
@@ -396,8 +398,10 @@ void dlg_unref(dlg_cell_t *dlg, unsigned int cnt);
  * \param dlg dialog
  * \param cnt increment for the reference counter
  */
-void dlg_ref(dlg_cell_t *dlg, unsigned int cnt);
+void dlg_ref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
+		int fline);
 
+#define dlg_ref(dlg, cnt) dlg_ref_helper((dlg), (cnt), __FILE__, __LINE__)
 
 /*!
  * \brief Release a dialog from ref counter by 1

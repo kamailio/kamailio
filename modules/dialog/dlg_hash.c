@@ -894,10 +894,12 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode)
  * \param dlg dialog
  * \param cnt increment for the reference counter
  */
-void dlg_ref(dlg_cell_t *dlg, unsigned int cnt)
+void dlg_ref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
+		int fline)
 {
 	dlg_entry_t *d_entry;
 
+	LM_DBG("ref op on %p with %d from %s:%d\n", dlg, cnt, fname, fline);
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
 	dlg_lock( d_table, d_entry);
@@ -912,10 +914,12 @@ void dlg_ref(dlg_cell_t *dlg, unsigned int cnt)
  * \param dlg dialog
  * \param cnt decrement for the reference counter
  */
-void dlg_unref(dlg_cell_t *dlg, unsigned int cnt)
+void dlg_unref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
+		int fline)
 {
 	dlg_entry_t *d_entry;
 
+	LM_DBG("unref op on %p with %d from %s:%d\n", dlg, cnt, fname, fline);
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
 	dlg_lock( d_table, d_entry);
