@@ -178,10 +178,15 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 				ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port,
 				(int)msg->rcv.proto);
 			sr_core_ert_run(msg, SR_CORE_ERT_RECEIVE_PARSE_ERROR);
-		}		
+		}
 		else if(ret == NONSIP_MSG_DROP) goto error02;
 	}
-	LM_DBG("After parse_msg...\n");
+	LM_DBG("--- received sip message - %s - call-id: [%.*s] - cseq: [%.*s]\n",
+			(msg->first_line.type==SIP_REQUEST)?"request":"reply",
+			(msg->callid && msg->callid->body.s)?msg->callid->body.len:0,
+			(msg->callid && msg->callid->body.s)?msg->callid->body.s:"",
+			(msg->cseq && msg->cseq->body.s)?msg->cseq->body.len:0,
+			(msg->cseq && msg->cseq->body.s)?msg->cseq->body.s:"");
 
 	/* set log prefix */
 	log_prefix_set(msg);
