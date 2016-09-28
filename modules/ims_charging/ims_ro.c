@@ -64,6 +64,7 @@ extern int video_rating_group;
 
 static int create_cca_return_code(int result);
 static int create_cca_result_code(int result);
+static int create_cca_fui_avps(int action, str* redirecturi);
 static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
@@ -1246,6 +1247,8 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     struct cell *t = NULL;
     struct session_setup_data *ssd = (struct session_setup_data *) param;
     int error_code = RO_RETURN_ERROR;
+	str *redirecturi = 0;
+	int fui_action = 0;
 
     if (is_timeout) {
         counter_inc(ims_charging_cnts_h.ccr_timeouts);
@@ -1289,7 +1292,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     if (!ro_cca_data) {
         LM_ERR("Could not parse CCA message response.\n");
         error_code = RO_RETURN_ERROR;
-	create_cca_result_code(0);
+		create_cca_result_code(0);
         goto error0;
     }
     
@@ -1301,6 +1304,40 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
         error_code = RO_RETURN_FALSE;
         goto error1;
     }
+
+	if (ro_cca_data->mscc->final_unit_action) {
+		fui_action = ro_cca_data->mscc->final_unit_action->action;
+
+		if (fui_action == AVP_Final_Unit_Action_Redirect) {
+			if (ro_cca_data->mscc->final_unit_action->redirect_server) {
+				LM_DBG("FUI with action: [%d]", ro_cca_data->mscc->final_unit_action->action);
+
+				if (ro_cca_data->mscc->final_unit_action->action == AVP_Final_Unit_Action_Redirect) {
+					LM_DBG("Have REDIRECT action with address type of [%d]\n", ro_cca_data->mscc->final_unit_action->redirect_server->address_type);
+					if (ro_cca_data->mscc->final_unit_action->redirect_server->address_type == AVP_Redirect_Address_Type_SIP_URI) {
+						LM_DBG("SIP URI for redirect is [%.*s] with len of %d\n",
+							ro_cca_data->mscc->final_unit_action->redirect_server->server_address->len, ro_cca_data->mscc->final_unit_action->redirect_server->server_address->s,
+							ro_cca_data->mscc->final_unit_action->redirect_server->server_address->len);
+						redirecturi = ro_cca_data->mscc->final_unit_action->redirect_server->server_address;
+					} else {
+						LM_DBG("we don't cater for any redirect action which is not a SIP URI... ignoring [%d]\n", ro_cca_data->mscc->final_unit_action->redirect_server->address_type);
+					}
+				} else {
+					LM_DBG("ignoring final unit action which is not REDIRECT - [%d]\n", fui_action);
+				}
+			}
+		}
+	}
+	
+	/* create the AVPs cca_redirect_uri and cca_fui_action  for export to cfg file */
+	create_cca_fui_avps(fui_action, redirecturi);
+	
+	/* check result code at mscc level */
+	if (ro_cca_data->mscc->resultcode != 2001) {
+		LM_DBG("CCA failure at MSCC level with resultcode [%d]\n", ro_cca_data->mscc->resultcode);
+		error_code = RO_RETURN_FALSE;
+        goto error1;
+	}
 
     LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i]\n",
             ro_cca_data->mscc->granted_service_unit->cc_time,
@@ -1451,8 +1488,40 @@ static int create_cca_result_code(int result) {
     return 1;
 }
 
+static int create_cca_fui_avps(int action, str* redirecturi) {
+	int_str action_avp_val, action_avp_name, redirecturi_avp_val, redirecturi_avp_name;
+    action_avp_name.s.s = RO_AVP_CCA_FUI_ACTION;
+    action_avp_name.s.len = RO_AVP_CCA_FUI_ACTION_LENGTH;
+	redirecturi_avp_name.s.s = RO_AVP_CCA_FUI_REDIRECT_URI;
+    redirecturi_avp_name.s.len = RO_AVP_CCA_FUI_REDIRECT_URI_LENGTH;
+    char buf[10];
+	int rc;
+	
+    action_avp_val.n = action;
+    action_avp_val.s.len = snprintf(buf, 10, "%i", action);
+    action_avp_val.s.s = buf;
 
+    rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, action_avp_name, action_avp_val);
 
+    if (rc < 0)
+        LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_ACTION"] AVP\n");
+    else
+        LM_DBG("Created AVP ["RO_AVP_CCA_FUI_ACTION"] successfully: value=[%d]\n", action);
+	
+	if (redirecturi && redirecturi->len >0 && redirecturi->s) {
+		redirecturi_avp_val.s.len = redirecturi->len;
+		redirecturi_avp_val.s.s = redirecturi->s;
+
+		rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, redirecturi_avp_name, redirecturi_avp_val);
+
+		if (rc < 0)
+			LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_REDIRECT_URI"] AVP\n");
+		else
+			LM_DBG("Created AVP ["RO_AVP_CCA_FUI_REDIRECT_URI"] successfully: value=[%.*s]\n", redirecturi->len, redirecturi->s);
+	}
+	
+    return 1;
+}
 
 static int get_mac_avp_value(struct sip_msg *msg, str *value) {
     str mac_avp_name_str = str_init(RO_MAC_AVP_NAME);

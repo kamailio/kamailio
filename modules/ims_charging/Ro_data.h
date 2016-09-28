@@ -363,13 +363,20 @@ typedef struct {
 } granted_services_unit_t;
 
 typedef struct {
+    uint32_t address_type;
+    str* server_address;
+} redirect_server_t;
+
+typedef struct {
     uint32_t action;
+    redirect_server_t *redirect_server;
 } final_unit_indication_t;
 
 typedef struct {
     granted_services_unit_t *granted_service_unit;
     uint32_t validity_time;
     final_unit_indication_t *final_unit_action;
+    uint32_t resultcode;
 } multiple_services_credit_control_t;
 
 typedef struct {

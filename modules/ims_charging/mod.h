@@ -48,6 +48,12 @@
 #define RO_AVP_CCA_RESULT_CODE "cca_result_code"
 #define RO_AVP_CCA_RESULT_CODE_LENGTH 15
 
+#define RO_AVP_CCA_FUI_ACTION "cca_fui_action"
+#define RO_AVP_CCA_FUI_ACTION_LENGTH 14
+
+#define RO_AVP_CCA_FUI_REDIRECT_URI "cca_redirect_uri"
+#define RO_AVP_CCA_FUI_REDIRECT_URI_LENGTH 16
+
 #define RO_MAC_AVP_NAME	"$avp(ro_mac_value)"
 
 #define DB_DEFAULT_UPDATE_PERIOD	60
