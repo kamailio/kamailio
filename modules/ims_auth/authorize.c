@@ -1689,12 +1689,13 @@ int add_auth_vector(str private_identity, str public_identity, auth_vector * av)
         private_identity.len, private_identity.s, aud->hash);
 
 
-    av->prev = aud->tail;
-    av->next = 0;
+    av->prev = 0;
+    if (aud->head) {
+        av->next = aud->head;
+        aud->head->prev = av;
+    }
 
-    if (!aud->head) aud->head = av;
-    if (aud->tail) aud->tail->next = av;
-    aud->tail = av;
+    aud->head = av;
 
     auth_data_unlock(aud->hash);
     return 1;
