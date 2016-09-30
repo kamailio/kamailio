@@ -1899,19 +1899,19 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	else { EMPTY_STR(sco.rtp_stat); }
 	
 	/* Custom - field1 */
-	else if(custom_field1_header.len > 0 && (tmphdr[4] = get_hdr_by_name(msg,custom_field1_header.s, custom_field1_header.len)) != NULL) {
+	if(custom_field1_header.len > 0 && (tmphdr[4] = get_hdr_by_name(msg,custom_field1_header.s, custom_field1_header.len)) != NULL) {
 		sco.custom1 =  tmphdr[4]->body;
 	}
 	else { EMPTY_STR(sco.custom1); }
 	
 	/* Custom - field2 */
-	else if(custom_field3_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
+	if(custom_field3_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
 		sco.custom2 =  tmphdr[5]->body;
 	}
 	else { EMPTY_STR(sco.custom2); }
 	
 	/* Custom - field3 */
-	else if(custom_field3_header.len > 0 && (tmphdr[6] = get_hdr_by_name(msg,custom_field3_header.s, custom_field3_header.len)) != NULL) {
+	if(custom_field3_header.len > 0 && (tmphdr[6] = get_hdr_by_name(msg,custom_field3_header.s, custom_field3_header.len)) != NULL) {
 		sco.custom3 =  tmphdr[6]->body;
 	}
 	else { EMPTY_STR(sco.custom3); }
