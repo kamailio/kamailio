@@ -95,7 +95,7 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 41
+#define NR_KEYS 44
 #define RTCP_NR_KEYS 12
 
 #define MAX_HEADERS 16
@@ -205,9 +205,16 @@ static str family_column 	= str_init("family");
 static str type_column 		= str_init("type");
 static str node_column 		= str_init("node");
 static str msg_column 		= str_init("msg");
+static str custom_field1_column = str_init("custom_field1");
+static str custom_field2_column = str_init("custom_field2");
+static str custom_field3_column = str_init("custom_field3");
 static str capture_node 	= str_init("homer01");
 static str star_contact		= str_init("*");
 static str callid_aleg_header   = str_init("X-CID");
+static str custom_field1_header   = str_init("Mac");
+static str custom_field2_header   = str_init("IP");
+static str custom_field3_header   = str_init("Port");
+
 
 int raw_sock_desc = -1; /* raw socket used for ip packets */
 unsigned int raw_sock_children = 1;
@@ -341,6 +348,9 @@ static param_export_t params[] = {
 	{"type_column",			PARAM_STR, &type_column  },
 	{"node_column",			PARAM_STR, &node_column  },
 	{"msg_column",			PARAM_STR, &msg_column   },
+	{"custom_field1_column",	PARAM_STR, &custom_field1_column   },
+	{"custom_field2_column",	PARAM_STR, &custom_field2_column   },
+	{"custom_field3_column",	PARAM_STR, &custom_field3_column   },
 	{"capture_on",           	INT_PARAM, &capture_on          },
 	{"capture_node",     		PARAM_STR, &capture_node     	},
 	{"raw_sock_children",  		INT_PARAM, &raw_sock_children   },
@@ -353,6 +363,9 @@ static param_export_t params[] = {
 	{"promiscious_on",  		INT_PARAM, &promisc_on   },
 	{"raw_moni_bpf_on",  		INT_PARAM, &bpf_on   },
 	{"callid_aleg_header",          PARAM_STR, &callid_aleg_header},
+	{"custom_field1_header",        PARAM_STR, &custom_field1_header},
+	{"custom_field2_header",        PARAM_STR, &custom_field2_header},
+	{"custom_field3_header",        PARAM_STR, &custom_field3_header},
 	{"capture_mode",		PARAM_STRING|USE_FUNC_PARAM, (void *)capture_mode_param},
 	{"insert_retries",   		INT_PARAM, &insert_retries },
 	{"insert_retry_timeout",	INT_PARAM, &insert_retry_timeout },
@@ -1508,6 +1521,21 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	tmp.len = sco->msg.len;
 
 	db_vals[40].val.blob_val = tmp;
+	
+	db_keys[41] = &custom_field1_column;
+	db_vals[41].type = DB1_STR;
+	db_vals[41].nul = 0;
+	db_vals[41].val.str_val = sco->custom1;
+	
+	db_keys[42] = &custom_field2_column;
+	db_vals[42].type = DB1_STR;
+	db_vals[42].nul = 0;
+	db_vals[42].val.str_val = sco->custom2;
+	
+	db_keys[43] = &custom_field3_column;
+	db_vals[43].type = DB1_STR;
+	db_vals[43].nul = 0;
+	db_vals[43].val.str_val = sco->custom3;
 
 	if (dtable){
 		table = dtable;
@@ -1597,7 +1625,7 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	struct _sipcapture_object sco;
 	struct sip_uri from, to, contact;
 	struct hdr_field *hook1 = NULL;
-	hdr_field_t *tmphdr[4];
+	hdr_field_t *tmphdr[7];
 	contact_body_t*  cb=0;
 	char buf_ip[IP_ADDR_MAX_STR_SIZE+12];
 	char *port_str = NULL, *tmp = NULL;
@@ -1869,6 +1897,24 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 		sco.rtp_stat =  tmphdr[3]->body;
 	}
 	else { EMPTY_STR(sco.rtp_stat); }
+	
+	/* Custom - field1 */
+	else if(custom_field1_header.len > 0 && (tmphdr[4] = get_hdr_by_name(msg,custom_field1_header.s, custom_field1_header.len)) != NULL) {
+		sco.custom1 =  tmphdr[4]->body;
+	}
+	else { EMPTY_STR(sco.custom1); }
+	
+	/* Custom - field2 */
+	else if(custom_field3_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
+		sco.custom2 =  tmphdr[5]->body;
+	}
+	else { EMPTY_STR(sco.custom2); }
+	
+	/* Custom - field3 */
+	else if(custom_field3_header.len > 0 && (tmphdr[6] = get_hdr_by_name(msg,custom_field3_header.s, custom_field3_header.len)) != NULL) {
+		sco.custom3 =  tmphdr[6]->body;
+	}
+	else { EMPTY_STR(sco.custom3); }
 
 	/* PROTO TYPE */
 	sco.proto = msg->rcv.proto;
