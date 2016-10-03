@@ -338,7 +338,7 @@ static int w_ro_set_session_id_avp(struct sip_msg *msg, char *str1, char *str2) 
     //set avp response with session id
     res = create_response_avp_string("ro_session_id", &ro_session->ro_session_id);
     dlgb.release_dlg(dlg);
-    unref_ro_session(ro_session, 1);
+    unref_ro_session(ro_session, 1, 1);
     return res;
 }
 
@@ -425,7 +425,7 @@ static int w_ro_ccr_stop(struct sip_msg *msg, char* c_direction, char* _code, ch
     ro_session->active = -1;
 //    counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
 done:
-    unref_ro_session_unsafe(ro_session, 1, ro_session_entry);
+    unref_ro_session(ro_session, 1, 0);
     ro_session_unlock(ro_session_table, ro_session_entry);
     dlgb.release_dlg(dlg);
     return RO_RETURN_TRUE;
@@ -537,7 +537,7 @@ send_ccr:
 	//if it already exists then we go to done
 	if (single_ro_session_per_dialog && (ro_session = lookup_ro_session(dlg->h_entry, &dlg->callid, 0, 0))) {
 	    LM_DBG("single_ro_session_per_dialog = 1 and ro_session already exists for this dialog -so we don't need to send another one\n");
-	    unref_ro_session(ro_session,1);//for the lookup ro session ref
+	    unref_ro_session(ro_session,1,1);//for the lookup ro session ref
 	    goto done;
 	}
 	

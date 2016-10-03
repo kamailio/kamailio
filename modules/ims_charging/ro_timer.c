@@ -319,7 +319,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error
             LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
                     i_req->ro_session->ro_session_id.len, i_req->ro_session->ro_session_id.s);
         } else {
-            ref_ro_session_unsafe(i_req->ro_session, 1);
+            ref_ro_session(i_req->ro_session, 1, 0);
         }
 
         if (ro_db_mode == DB_MODE_REALTIME) {
@@ -359,7 +359,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error
                 LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
                         i_req->ro_session->ro_session_id.len, i_req->ro_session->ro_session_id.s);
             } else {
-                ref_ro_session_unsafe(i_req->ro_session, 1);
+                ref_ro_session(i_req->ro_session, 1, 0);
             }
         }
     }
@@ -368,7 +368,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error
     // if call was forcefully terminated, the lock was released before dlgb.lookup_terminate_dlg() function call.
     //
     if (!call_terminated) {
-        unref_ro_session_unsafe(i_req->ro_session, 1, ro_session_entry); //unref from the initial timer that fired this event.
+        unref_ro_session(i_req->ro_session, 1, 0); //unref from the initial timer that fired this event.
         ro_session_unlock(ro_session_table, ro_session_entry);
     }
 
@@ -464,7 +464,7 @@ void ro_session_ontimeout(struct ro_tl *tl) {
                     LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
                             ro_session->ro_session_id.len, ro_session->ro_session_id.s);
                 } else {
-                    ref_ro_session_unsafe(ro_session, 1);
+                    ref_ro_session(ro_session, 1, 0);
                     return;
                 }
                 LM_ERR("Immediately killing call due to unknown error\n");

@@ -667,10 +667,7 @@ error:
     // since callback function will be never called because of the error, we need to release the lock on the session
     // to it can be reused later.
     //
-    struct ro_session_entry *ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
-    ro_session_lock(ro_session_table, ro_session_entry);
-    unref_ro_session_unsafe(ro_session, 1, ro_session_entry); //unref from the initial timer that fired this event.
-    ro_session_unlock(ro_session_table, ro_session_entry);
+	unref_ro_session(ro_session, 1, 1);
 
     return;
 }
@@ -1372,7 +1369,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
         };
     }
 
-    unref_ro_session(ssd->ro_session, 1); /* release our reference */
+    unref_ro_session(ssd->ro_session, 1, 1); /* release our reference */
 
     create_cca_return_code(RO_RETURN_TRUE);
 
