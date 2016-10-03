@@ -137,6 +137,7 @@ int call_info_max_expires = 3600;
 int line_seize_max_expires = 15;
 int purge_expired_interval = 120;
 int onhold_bflag = -1;
+str server_address = STR_NULL;
 
 static param_export_t params[] = {
 		{"outbound_proxy", PARAM_STR, &outbound_proxy},
@@ -149,6 +150,7 @@ static param_export_t params[] = {
 		{"line_seize_max_expires", INT_PARAM, &line_seize_max_expires},
 		{"purge_expired_interval", INT_PARAM, &purge_expired_interval},
 		{"onhold_bflag", INT_PARAM, &onhold_bflag},
+		{"server_address", PARAM_STR, &server_address},
 		{NULL, 0, NULL},
 };
 
@@ -286,6 +288,10 @@ static int sca_set_config(sca_mod *scam)
 		return (-1);
 	}
 	scam->cfg->onhold_bflag = onhold_bflag;
+
+	if (server_address.s) {
+		scam->cfg->server_address = &server_address;
+	}
 
 	return (0);
 }

@@ -283,6 +283,27 @@ modparam("sca", "onhold_bflag", 15)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="sca.p.server_address">
+		<title><varname>server_address</varname> (string)</title>
+		<para>
+		The server address which will become the value of Contact header filed
+		for NOTIFY messages.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sca", "server_address", "sip:10.10.10.10:5060")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
