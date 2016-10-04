@@ -584,8 +584,9 @@ error:
 str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 		str* contact)
 {
-	db_key_t query_cols[3];
-	db_val_t query_vals[3];
+	db_key_t query_cols[4];
+	db_val_t query_vals[4];
+	db_op_t query_ops[4];
 	db_key_t result_cols[3];
 	db1_res_t *result = NULL;
 	int body_col, etag_col= 0, sender_col;
@@ -635,18 +636,28 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.host;
+	query_ops[n_query_cols] = OP_EQ;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_username_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.user;
+	query_ops[n_query_cols] = OP_EQ;
 	n_query_cols++;
 
 	query_cols[n_query_cols] = &str_event_col;
 	query_vals[n_query_cols].type = DB1_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= event->name;
+	query_ops[n_query_cols] = OP_EQ;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_expires_col;
+	query_vals[n_query_cols].type = DB1_INT;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.int_val= (int)time(NULL);
+	query_ops[n_query_cols] = OP_GT;
 	n_query_cols++;
 
 	result_cols[body_col=n_result_cols++] = &str_body_col;
@@ -664,7 +675,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	} else {
 		query_str = str_received_time_col;
 	}
-	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
+	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 		 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0) 
 	{
 		LM_ERR("failed to query %.*s table\n", presentity_table.len, presentity_table.s);
