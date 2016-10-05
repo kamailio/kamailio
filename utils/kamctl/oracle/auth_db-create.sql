@@ -2,7 +2,7 @@ CREATE TABLE subscriber (
     id NUMBER(10) PRIMARY KEY,
     username VARCHAR2(64) DEFAULT '',
     domain VARCHAR2(64) DEFAULT '',
-    password VARCHAR2(25) DEFAULT '',
+    password VARCHAR2(64) DEFAULT '',
     email_address VARCHAR2(64) DEFAULT '',
     ha1 VARCHAR2(64) DEFAULT '',
     ha1b VARCHAR2(64) DEFAULT '',

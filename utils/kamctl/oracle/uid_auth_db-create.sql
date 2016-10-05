@@ -3,7 +3,7 @@ CREATE TABLE uid_credentials (
     auth_username VARCHAR2(64),
     did VARCHAR2(64) DEFAULT '_default',
     realm VARCHAR2(64),
-    password VARCHAR2(28) DEFAULT '',
+    password VARCHAR2(64) DEFAULT '',
     flags NUMBER(10) DEFAULT 0 NOT NULL,
     ha1 VARCHAR2(32),
     ha1b VARCHAR2(32) DEFAULT '',

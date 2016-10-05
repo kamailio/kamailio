@@ -2,7 +2,7 @@ CREATE TABLE subscriber (
     id SERIAL PRIMARY KEY NOT NULL,
     username VARCHAR(64) DEFAULT '' NOT NULL,
     domain VARCHAR(64) DEFAULT '' NOT NULL,
-    password VARCHAR(25) DEFAULT '' NOT NULL,
+    password VARCHAR(64) DEFAULT '' NOT NULL,
     email_address VARCHAR(64) DEFAULT '' NOT NULL,
     ha1 VARCHAR(64) DEFAULT '' NOT NULL,
     ha1b VARCHAR(64) DEFAULT '' NOT NULL,

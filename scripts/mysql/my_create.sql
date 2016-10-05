@@ -67,7 +67,7 @@ CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL DEFAULT '_default',
     realm VARCHAR(64) NOT NULL,
-    password VARCHAR(28) NOT NULL DEFAULT '',
+    password VARCHAR(64) NOT NULL DEFAULT '',
     flags INT NOT NULL DEFAULT '0',
     ha1 VARCHAR(32) NOT NULL,
     ha1b VARCHAR(32) NOT NULL DEFAULT '',
