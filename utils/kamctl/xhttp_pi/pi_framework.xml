@@ -709,6 +709,7 @@
 		<column><field>record_route</field><type>DB1_BLOB</type></column>
 		<column><field>notify_cseq</field><type>DB1_INT</type></column>
 		<column><field>subscribe_cseq</field><type>DB1_INT</type></column>
+		<column><field>server_id</field><type>DB1_INT</type></column>
 	</db_table>
 	<!-- Declaration of sip_trace table-->
 	<db_table id="sip_trace">
@@ -3701,6 +3702,7 @@
 				<col><field>record_route</field></col>
 				<col><field>notify_cseq</field></col>
 				<col><field>subscribe_cseq</field></col>
+				<col><field>server_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3719,6 +3721,7 @@
 				<col><field>record_route</field></col>
 				<col><field>notify_cseq</field></col>
 				<col><field>subscribe_cseq</field></col>
+				<col><field>server_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -3740,6 +3743,7 @@
 				<col><field>record_route</field></col>
 				<col><field>notify_cseq</field></col>
 				<col><field>subscribe_cseq</field></col>
+				<col><field>server_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>
