@@ -36,6 +36,7 @@ const str SCA_DB_TO_TAG_COL_NAME = STR_STATIC_INIT("to_tag");
 const str SCA_DB_RECORD_ROUTE_COL_NAME = STR_STATIC_INIT("record_route");
 const str SCA_DB_NOTIFY_CSEQ_COL_NAME = STR_STATIC_INIT("notify_cseq");
 const str SCA_DB_SUBSCRIBE_CSEQ_COL_NAME = STR_STATIC_INIT("subscribe_cseq");
+const str SCA_DB_SERVER_ID_COL_NAME = STR_STATIC_INIT("server_id");
 
 void sca_db_subscriptions_get_value_for_column(int column, db_val_t *row_values,
 		void *column_value)
@@ -63,6 +64,7 @@ void sca_db_subscriptions_get_value_for_column(int column, db_val_t *row_values,
 	case SCA_DB_SUBS_STATE_COL:
 	case SCA_DB_SUBS_NOTIFY_CSEQ_COL:
 	case SCA_DB_SUBS_SUBSCRIBE_CSEQ_COL:
+	case SCA_DB_SUBS_SERVER_ID_COL:
 		*((int *) column_value) = row_values[column].val.int_val;
 		break;
 
@@ -112,6 +114,7 @@ void sca_db_subscriptions_set_value_for_column(int column, db_val_t *row_values,
 	case SCA_DB_SUBS_STATE_COL:
 	case SCA_DB_SUBS_NOTIFY_CSEQ_COL:
 	case SCA_DB_SUBS_SUBSCRIBE_CSEQ_COL:
+	case SCA_DB_SUBS_SERVER_ID_COL:
 		row_values[column].val.int_val = *((int *) column_value);
 		row_values[column].type = DB1_INT;
 		row_values[column].nul = 0;
@@ -129,6 +132,7 @@ str **sca_db_subscriptions_columns(void)
 			(str *) &SCA_DB_RECORD_ROUTE_COL_NAME,
 			(str *) &SCA_DB_NOTIFY_CSEQ_COL_NAME,
 			(str *) &SCA_DB_SUBSCRIBE_CSEQ_COL_NAME,
+			(str *) &SCA_DB_SERVER_ID_COL_NAME,
 			NULL};
 
 	return (subs_columns);
