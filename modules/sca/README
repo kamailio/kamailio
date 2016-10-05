@@ -26,6 +26,7 @@ Andrew Mortensen
               3.6. subs_table (str)
               3.7. db_update_interval (integer)
               3.8. onhold_bflag (integer)
+              3.9. server_address (string)
 
         4. Functions
 
@@ -52,9 +53,10 @@ Andrew Mortensen
    1.6. Set subs_table parameter:
    1.7. Set db_update_interval:
    1.8. Set onhold_bflag parameter
-   1.9. sca_handle_subscribe usage:
-   1.10. sca_call_info_update usage:
-   1.11. kamailio.cfg
+   1.9. Set server_address parameter
+   1.10. sca_handle_subscribe usage:
+   1.11. sca_call_info_update usage:
+   1.12. kamailio.cfg
 
 Chapter 1. Admin Guide
 
@@ -75,6 +77,7 @@ Chapter 1. Admin Guide
         3.6. subs_table (str)
         3.7. db_update_interval (integer)
         3.8. onhold_bflag (integer)
+        3.9. server_address (string)
 
    4. Functions
 
@@ -160,6 +163,7 @@ Chapter 1. Admin Guide
    3.6. subs_table (str)
    3.7. db_update_interval (integer)
    3.8. onhold_bflag (integer)
+   3.9. server_address (string)
 
 3.1. hash_table_size (integer)
 
@@ -267,6 +271,18 @@ modparam( "sca", "db_update_interval", 120 )
 modparam("sca", "onhold_bflag", 15)
 ...
 
+3.9. server_address (string)
+
+   The server address which will become the value of Contact header filed
+   for NOTIFY messages.
+
+   Default value is "" (disabled).
+
+   Example 1.9. Set server_address parameter
+...
+modparam("sca", "server_address", "sip:10.10.10.10:5060")
+...
+
 4. Functions
 
    4.1. sca_handle_subscribe()
@@ -290,7 +306,7 @@ modparam("sca", "onhold_bflag", 15)
      * 1 - successful
      * -1 - failed, error logged
 
-   Example 1.9. sca_handle_subscribe usage:
+   Example 1.10. sca_handle_subscribe usage:
 ...
 if ( is_method( "SUBSCRIBE" )) {
         if ( $hdr(Event) == "call-info" || $hdr(Event) == "line-seize" ) {
@@ -334,7 +350,7 @@ if ( is_method( "SUBSCRIBE" )) {
      * 1 - successful
      * -1 - failed, error logged
 
-   Example 1.10. sca_call_info_update usage:
+   Example 1.11. sca_call_info_update usage:
 ...
 route
 {
@@ -455,7 +471,7 @@ p:215@10.0.1.2
    The following is a basic kamailio.cfg providing Shared Call Appearances
    to local subscribers. It has been tested with Polycom handsets.
 
-   Example 1.11. kamailio.cfg
+   Example 1.12. kamailio.cfg
 ##
 #!KAMAILIO
 #
