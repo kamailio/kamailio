@@ -43,7 +43,7 @@ MODULE_VERSION
  * table version needs to be the same as auth_db use.
  */
 #define URI_TABLE_VERSION 1
-#define SUBSCRIBER_TABLE_VERSION 6	/* From auth_db */
+#define SUBSCRIBER_TABLE_VERSION 7	/* From auth_db */
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
