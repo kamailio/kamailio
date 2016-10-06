@@ -11,6 +11,7 @@
 		<column><field>realm</field><type>DB1_STR</type></column>
 		<column><field>auth_username</field><type>DB1_STR</type></column>
 		<column><field>auth_password</field><type>DB1_STR</type></column>
+		<column><field>auth_ha1</field><type>DB1_STR</type></column>
 		<column><field>auth_proxy</field><type>DB1_STR</type></column>
 		<column><field>expires</field><type>DB1_INT</type></column>
 		<column><field>flags</field><type>DB1_INT</type></column>

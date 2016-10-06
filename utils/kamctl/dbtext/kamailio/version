@@ -52,11 +52,11 @@ sca_subscriptions:2
 silo:8
 sip_trace:4
 speed_dial:2
-subscriber:6
+subscriber:7
 topos_d:1
 topos_t:1
 trusted:6
-uacreg:2
+uacreg:3
 uid_credentials:7
 uid_domain:2
 uid_domain_attrs:1

@@ -115,7 +115,7 @@ sip_trace|4
 speed_dial|
 speed_dial|2
 subscriber|
-subscriber|6
+subscriber|7
 topos_d|
 topos_d|1
 topos_t|
@@ -123,7 +123,7 @@ topos_t|1
 trusted|
 trusted|6
 uacreg|
-uacreg|2
+uacreg|3
 uid_credentials|
 uid_credentials|7
 uid_domain|

@@ -82,9 +82,9 @@
 		<column><field>username</field><type>DB1_STR</type></column>
 		<column><field>domain</field><type>DB1_STR</type></column>
 		<column><field>password</field><type>DB1_STR</type></column>
-		<column><field>email_address</field><type>DB1_STR</type></column>
 		<column><field>ha1</field><type>DB1_STR</type></column>
 		<column><field>ha1b</field><type>DB1_STR</type></column>
+		<column><field>email_address</field><type>DB1_STR</type></column>
 		<column><field>rpid</field><type>DB1_STR</type></column>
 	</db_table>
 	<!-- Declaration of usr_preferences table-->
@@ -822,6 +822,7 @@
 		<column><field>realm</field><type>DB1_STR</type></column>
 		<column><field>auth_username</field><type>DB1_STR</type></column>
 		<column><field>auth_password</field><type>DB1_STR</type></column>
+		<column><field>auth_ha1</field><type>DB1_STR</type></column>
 		<column><field>auth_proxy</field><type>DB1_STR</type></column>
 		<column><field>expires</field><type>DB1_INT</type></column>
 		<column><field>flags</field><type>DB1_INT</type></column>
@@ -1217,9 +1218,9 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
+				<col><field>email_address</field></col>
 				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
@@ -1230,9 +1231,9 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
+				<col><field>email_address</field></col>
 				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
@@ -1246,9 +1247,9 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
+				<col><field>email_address</field></col>
 				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
@@ -4117,6 +4118,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
@@ -4135,6 +4137,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
@@ -4156,6 +4159,7 @@
 				<col><field>realm</field></col>
 				<col><field>auth_username</field></col>
 				<col><field>auth_password</field></col>
+				<col><field>auth_ha1</field></col>
 				<col><field>auth_proxy</field></col>
 				<col><field>expires</field></col>
 				<col><field>flags</field></col>
