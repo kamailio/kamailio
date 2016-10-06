@@ -38,7 +38,7 @@
 MODULE_VERSION
 
 /* Note: If this is changed, please also change version in the uri_db module */
-#define TABLE_VERSION 6
+#define TABLE_VERSION 7
 
 /*
  * Module destroy function prototype
