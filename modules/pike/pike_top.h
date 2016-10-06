@@ -38,13 +38,16 @@ struct TopListItem_t {
 };
 
 // returns 1 when OK and 0 when failed
-int pike_top_add_entry( unsigned char *ip_addr, int addr_len, unsigned short leaf_hits[2], unsigned short hits[2], unsigned int expires, node_status_t status );
+int pike_top_add_entry( unsigned char *ip_addr, int addr_len,
+		unsigned short leaf_hits[2], unsigned short hits[2],
+		unsigned int expires, node_status_t status );
 
 struct TopListItem_t *pike_top_get_root();
 void pike_top_list_clear();
 
 /* helpful functions */
-char *pike_top_print_addr( unsigned char *ip_addr, int addrlen, char *buff, int buffsize );
+char *pike_top_print_addr( unsigned char *ip_addr, int addrlen,
+		char *buff, int buffsize );
 
 
 #endif // PIKE_TOP_H
