@@ -335,6 +335,19 @@ typedef struct tcp_event_info {
 	struct tcp_connection *con;
 } tcp_event_info_t;
 
+enum tcp_closed_reason {
+	TCP_CLOSED_EOF = 0,
+	TCP_CLOSED_TIMEOUT,
+	TCP_CLOSED_RESET,
+
+	_TCP_CLOSED_REASON_MAX /* /!\ keep this one always at the end */
+};
+
+typedef struct tcp_closed_event_info {
+	enum tcp_closed_reason reason;
+	struct tcp_connection *con;
+} tcp_closed_event_info_t;
+
 typedef struct ws_event_info {
 	int type;
 	char *buf;
