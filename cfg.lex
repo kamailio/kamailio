@@ -496,7 +496,7 @@ COLON		":"
 STAR		\*
 DOT			\.
 CR			\n
-EVENT_RT_NAME [a-zA-Z][0-9a-zA-Z-]*(":"[a-zA-Z][0-9a-zA-Z-]*)+
+EVENT_RT_NAME [a-zA-Z][0-9a-zA-Z-]*(":"[a-zA-Z][0-9a-zA-Z_-]*)+
 
 
 COM_LINE	"#"|"//"
