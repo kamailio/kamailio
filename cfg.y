@@ -465,6 +465,7 @@ extern char *default_routename;
 %token RT_TIMER2_POLICY
 %token MCAST_LOOPBACK
 %token MCAST_TTL
+%token MCAST
 %token TOS
 %token PMTU_DISCOVERY
 %token KILL_TIMEOUT
@@ -1479,6 +1480,21 @@ assign_stm:
 		#endif
 	}
 	| MCAST_TTL EQUAL error { yyerror("number expected"); }
+	| MCAST EQUAL ID {
+		#ifdef USE_MCAST
+			mcast=$3;
+		#else
+			warn("no multicast support compiled in");
+		#endif
+	}
+	| MCAST EQUAL STRING {
+		#ifdef USE_MCAST
+			mcast=$3;
+		#else
+			warn("no multicast support compiled in");
+		#endif
+	}
+	| MCAST EQUAL error { yyerror("string expected"); }
 	| TOS EQUAL NUMBER { tos=$3; }
 	| TOS EQUAL ID { if (strcasecmp($3,"IPTOS_LOWDELAY")) {
 			tos=IPTOS_LOWDELAY;

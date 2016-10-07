@@ -427,6 +427,7 @@ RT_TIMER2_PRIO		"rt_timer2_prio"|"rt_stimer_prio"
 RT_TIMER2_POLICY	"rt_timer2_policy"|"rt_stimer_policy"
 MCAST_LOOPBACK		"mcast_loopback"
 MCAST_TTL		"mcast_ttl"
+MCAST		"mcast"
 TOS			"tos"
 PMTU_DISCOVERY	"pmtu_discovery"
 KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
@@ -894,6 +895,8 @@ IMPORTFILE      "import_file"
 									return MCAST_LOOPBACK; }
 <INITIAL>{MCAST_TTL}		{	count(); yylval.strval=yytext;
 									return MCAST_TTL; }
+<INITIAL>{MCAST}		{	count(); yylval.strval=yytext;
+									return MCAST; }
 <INITIAL>{TOS}			{	count(); yylval.strval=yytext;
 									return TOS; }
 <INITIAL>{PMTU_DISCOVERY}		{	count(); yylval.strval=yytext;
