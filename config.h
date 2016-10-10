@@ -90,13 +90,16 @@
 #define SERVER_HDR_LEN (sizeof(SERVER_HDR)-1)
 
 #define MAX_WARNING_LEN  256
-		
+
 #define MY_BRANCH ";branch="
 #define MY_BRANCH_LEN (sizeof(MY_BRANCH) - 1)
 
 #define MAX_PORT_LEN 7 /* ':' + max 5 letters + \0 */
+
 #define CRLF "\r\n"
 #define CRLF_LEN (sizeof(CRLF) - 1)
+#define CRLFCRLF "\r\n\r\n"
+#define CRLFCRLF_LEN (sizeof(CRLFCRLF) - 1)
 
 #define RECEIVED        ";received="
 #define RECEIVED_LEN (sizeof(RECEIVED) - 1)
