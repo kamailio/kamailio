@@ -411,6 +411,7 @@ int reply_to_via=0;
 #ifdef USE_MCAST
 int mcast_loopback = 0;
 int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
+char* mcast = 0;
 #endif /* USE_MCAST */
 
 int tos = IPTOS_LOWDELAY;
