@@ -686,8 +686,10 @@ int ws_frame_receive(void *data)
 				frame.payload_data);
 			update_stat(ws_sip_received_frames, 1);
 
-			if(frame.payload_len==CRLF_LEN
+			if((frame.payload_len==CRLF_LEN
 					&& strncmp(frame.payload_data, CRLF, CRLF_LEN)==0)
+					|| (frame.payload_len==CRLFCRLF_LEN
+					&& strncmp(frame.payload_data, CRLFCRLF, CRLFCRLF_LEN)==0))
 			{
 				ws_send_crlf(frame.wsc, opcode);
 				wsconn_put(frame.wsc);
