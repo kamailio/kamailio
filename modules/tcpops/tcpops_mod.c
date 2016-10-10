@@ -118,11 +118,17 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (tcp_closed_event /* register event only if tcp_closed_event != 0 */
-		&& (sr_event_register_cb(SREV_TCP_CLOSED, tcpops_handle_tcp_closed) != 0))
-	{
-		LM_ERR("problem registering tcpops_handle_tcp_closed call-back\n");
-		return -1;
+	if (tcp_closed_event) {
+		/* register event only if tcp_closed_event != 0 */
+		if (sr_event_register_cb(SREV_TCP_CLOSED, tcpops_handle_tcp_closed) != 0) {
+			LM_ERR("problem registering tcpops_handle_tcp_closed call-back\n");
+			return -1;
+		}
+
+		/* get event routes */
+		tcp_closed_routes[TCP_CLOSED_EOF] = route_get(&event_rt, "tcp:closed");
+		tcp_closed_routes[TCP_CLOSED_TIMEOUT] = route_get(&event_rt, "tcp:timeout");
+		tcp_closed_routes[TCP_CLOSED_RESET] = route_get(&event_rt, "tcp:reset");
 	}
 
 	return 0;

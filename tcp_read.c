@@ -186,17 +186,16 @@ int tcp_http11_continue(struct tcp_connection *c)
 }
 #endif /* HTTP11 */
 
-static int tcp_make_closed_event(struct receive_info* rcv_info, struct tcp_connection* con)
+static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_reason reason)
 {
 	int ret;
-	tcp_event_info_t tev;
+	tcp_closed_event_info_t tev;
 
 	ret = 0;
 	LM_DBG("TCP closed event creation triggered\n");
 	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
-		memset(&tev, 0, sizeof(tcp_event_info_t));
-		tev.type = SREV_TCP_CLOSED;
-		tev.rcv = rcv_info;
+		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
+		tev.reason = reason;
 		tev.con = con;
 		ret = sr_event_exec(SREV_TCP_CLOSED, (void*)(&tev));
 	} else {
@@ -291,19 +290,18 @@ again:
 						strerror(errno), errno,
 						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
 				LOG(cfg_get(core, core_cfg, corelog),"-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
-				if((errno == ECONNRESET || errno == ETIMEDOUT) && likely(c->rcv.proto_reserved1 != 0)){
-					tcp_make_closed_event(&c->rcv, c);
+				if (errno == ETIMEDOUT) {
+					tcp_emit_closed_event(c, TCP_CLOSED_TIMEOUT);
+				} else if (errno == ECONNRESET) {
+					tcp_emit_closed_event(c, TCP_CLOSED_RESET);
 				}
-
 				return -1;
 			}
 		}else if (unlikely((bytes_read==0) || 
 					(*flags & RD_CONN_FORCE_EOF))){
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
-			if (likely(c->rcv.proto_reserved1 != 0)){
-				tcp_make_closed_event(&c->rcv, c);
-			}
+			tcp_emit_closed_event(c, TCP_CLOSED_EOF);
 			LM_DBG("EOF on %p, FD %d ([%s]:%u ->", c, fd, ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
 			LM_DBG("-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		}else{

@@ -38,6 +38,9 @@
 /* globally enabled by default */
 int tcp_closed_event = 1;
 
+int tcp_closed_routes[_TCP_CLOSED_REASON_MAX] =
+	{[0 ... sizeof(tcp_closed_routes)/sizeof(*tcp_closed_routes)-1] = -1};
+
 /**
  * gets the fd of the current message source connection
  *
@@ -192,20 +195,14 @@ int tcpops_set_connection_lifetime(struct tcp_connection* con, int time) {
 	return 1;
 }
 
-static void tcpops_tcp_closed_run_route(struct tcp_connection *con)
+static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 {
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
 
-	LM_DBG("tcp_closed_run_route event_route[tcp:closed]\n");
-
-	rt = route_get(&event_rt, "tcp:closed");
-	if (rt < 0 || event_rt.rlist[rt] == NULL)
-	{
-		LM_DBG("route does not exist");
-		return;
-	}
+	rt = tcp_closed_routes[tev->reason];
+	if (rt == -1) return;
 
 	if (faked_msg_init() < 0)
 	{
@@ -213,7 +210,7 @@ static void tcpops_tcp_closed_run_route(struct tcp_connection *con)
 		return;
 	}
 	fmsg = faked_msg_next();
-	fmsg->rcv = con->rcv;
+	fmsg->rcv = tev->con->rcv;
 
 	backup_rt = get_route_type();
 	set_route_type(EVENT_ROUTE);
@@ -224,7 +221,7 @@ static void tcpops_tcp_closed_run_route(struct tcp_connection *con)
 
 int tcpops_handle_tcp_closed(void *data)
 {
-	tcp_event_info_t *tev = (tcp_event_info_t *) data;
+	tcp_closed_event_info_t *tev = (tcp_closed_event_info_t *) data;
 
 	if (tev == NULL || tev->con == NULL) {
 		LM_WARN("received bad TCP closed event\n");
@@ -234,7 +231,7 @@ int tcpops_handle_tcp_closed(void *data)
 	/* run event route if tcp_closed_event == 1 or if the
 	 * F_CONN_CLOSE_EV flag is explicitly set */
 	if (tcp_closed_event == 1 || (tev->con->flags & F_CONN_CLOSE_EV))
-		tcpops_tcp_closed_run_route(tev->con);
+		tcpops_tcp_closed_run_route(tev);
 
 	return 0;
 }
