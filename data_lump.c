@@ -773,7 +773,7 @@ int sr_hdr_add(sip_msg_t *msg, str *sname, str *sbody)
 		pkg_free(h.s);
 		return -1;
 	}
-	LM_DBG("added new header [%s]\n", h.s);
+	LM_DBG("added new header (%d) [%s]\n", h.len, h.s);
 	return 0;
 }
 
