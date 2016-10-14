@@ -1099,3 +1099,45 @@ int get_src_uri(sip_msg_t *m, int tmode, str *uri)
 
 	return 0;
 }
+
+/*! \brief returns a pointer to the begining of the msg's body
+ */
+char* get_body(sip_msg_t* const msg)
+{
+	int offset;
+	unsigned int len;
+
+	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 )
+		return 0;
+
+	if (msg->unparsed) {
+		len=(unsigned int)(msg->unparsed-msg->buf);
+	} else {
+		return 0;
+	}
+
+	if ((len+2<=msg->len) && (strncmp(CRLF,msg->unparsed,CRLF_LEN)==0) ) {
+		offset = CRLF_LEN;
+	} else if ( (len+1<=msg->len) &&
+				(*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' ) ) {
+		offset = 1;
+	} else {
+		return 0;
+	}
+
+	return msg->unparsed + offset;
+}
+
+/*! \brief make sure all HFs needed for transaction identification have been
+   parsed; return 0 if those HFs can't be found
+*/
+int check_transaction_quadruple(sip_msg_t* const msg)
+{
+	if ( parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F,0)!=-1
+		&& msg->from && msg->to && msg->callid && msg->cseq ) {
+		return 1;
+	} else {
+		ser_error=E_BAD_TUPEL;
+		return 0;
+	}
+}
