@@ -102,7 +102,7 @@ int alias_db_lookup(struct sip_msg* _msg, str table_s, char* flags)
 	db_vals[0].val.str_val.s = _msg->parsed_uri.user.s;
 	db_vals[0].val.str_val.len = _msg->parsed_uri.user.len;
 
-	if (use_domain)
+	if ( ((unsigned long)flags&ALIAS_NO_DOMAIN_FLAG)==0 )
 	{
 		db_vals[1].type = DB1_STR;
 		db_vals[1].nul = 0;
@@ -120,8 +120,9 @@ int alias_db_lookup(struct sip_msg* _msg, str table_s, char* flags)
 	}
 	
 	adbf.use_table(db_handle, &table_s);
-	if(adbf.query(db_handle, db_keys, NULL, db_vals, db_cols,
-		(use_domain)?2:1 /*no keys*/, 2 /*no cols*/, NULL, &db_res)!=0)
+	if(adbf.query( db_handle, db_keys, NULL, db_vals, db_cols,
+		((unsigned long)flags&ALIAS_NO_DOMAIN_FLAG)?1:2 /*no keys*/, 2 /*no cols*/,
+		NULL, &db_res)!=0)
 	{
 		LM_ERR("failed to query database\n");
 		goto err_server;

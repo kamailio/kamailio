@@ -164,28 +164,6 @@ modparam("alias_db", "alias_domain_column", "adomain")
 	</section>
 	
 	<section>
-		<title><varname>use_domain</varname> (int)</title>
-		<para>
-		Specifies whether to use or not the domain from R-URI when searching
-		for alias. If set to 0, the domain from R-URI is not used, if set to
-		1 the domain from R-URI is used.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>0</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>use_domain</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("alias_db", "use_domain", 1)
-...
-</programlisting>
-		</example>
-	</section>
-	
-	<section>
 		<title><varname>domain_prefix</varname> (str)</title>
 		<para>
 		Specifies the prefix to be stripped from the domain in R-URI before
@@ -256,6 +234,12 @@ modparam("alias_db", "append_branches", 1)
 			(char based flags) to control the alias lookup process:
 			<itemizedlist>
 			<listitem>
+				<para><emphasis>d</emphasis> - do not use domain URI part in
+				the alias lookup query (use only a username-based lookup). By
+				default, both username and domain are used.
+				</para>
+			</listitem>
+			<listitem>
 				<para><emphasis>r</emphasis> - do reverse alias lookup - lookup
 				for the alias mapped to the current URI (URI 2 alias 
 				translation); normally, the function looks up for the URI 
@@ -273,7 +257,7 @@ modparam("alias_db", "append_branches", 1)
 		<title><function>alias_db_lookup()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-alias_db_lookup("dbaliases", "r");
+alias_db_lookup("dbaliases", "rd");
 alias_db_lookup("dba_$(rU{s.substr,0,1})");
 ...
 </programlisting>

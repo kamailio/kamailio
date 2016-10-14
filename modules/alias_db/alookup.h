@@ -33,6 +33,7 @@
 #include "../../parser/msg_parser.h"
 
 #define ALIAS_REVERT_FLAG      (1<<0)
+#define ALIAS_NO_DOMAIN_FLAG   (1<<1)
 
 int alias_db_lookup(struct sip_msg* _msg, str _table, char* flags);
 
