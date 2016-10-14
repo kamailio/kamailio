@@ -49,12 +49,13 @@
 
 
 #include "../../parser/msg_parser.h"
+#include "../tm/tm_load.h"
 
 struct _pv_req_data {
-    struct cell *T;
     struct sip_msg msg;
     struct sip_msg *tmsgp;
-    unsigned int id;
+    unsigned int index;
+    unsigned int label;
     char *buf;
     int buf_size;
 };
