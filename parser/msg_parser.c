@@ -1107,12 +1107,15 @@ char* get_body(sip_msg_t* const msg)
 	int offset;
 	unsigned int len;
 
-	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 )
+	if ( parse_headers(msg, HDR_EOH_F, 0)==-1 ) {
+		LM_ERR("failed to parse to end of headers\n");
 		return 0;
+	}
 
 	if (msg->unparsed) {
 		len=(unsigned int)(msg->unparsed-msg->buf);
 	} else {
+		LM_ERR("unparsed hook for end of headers is not set\n");
 		return 0;
 	}
 
@@ -1122,6 +1125,8 @@ char* get_body(sip_msg_t* const msg)
 				(*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' ) ) {
 		offset = 1;
 	} else {
+		LM_ERR("failed to locate end of headers (%p %p - %d %d [%s])\n",
+				msg->buf, msg->unparsed, msg->len, len, msg->unparsed);
 		return 0;
 	}
 
@@ -1129,7 +1134,7 @@ char* get_body(sip_msg_t* const msg)
 }
 
 /*! \brief make sure all HFs needed for transaction identification have been
-   parsed; return 0 if those HFs can't be found
+ * parsed; return 0 if those HFs can't be found
 */
 int check_transaction_quadruple(sip_msg_t* const msg)
 {
