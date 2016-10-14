@@ -36,6 +36,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../mod_fix.h"
 #include "../../dset.h"
+#include "../../lvalue.h"
 
 #include "alias_db.h"
 #include "alookup.h"
@@ -235,5 +236,54 @@ int alias_db_lookup(struct sip_msg* _msg, str table, char *flags)
 
 	return alias_db_query(_msg, table, &_msg->parsed_uri,(unsigned long)flags,
 	set_alias_to_ruri, NULL);
+}
+
+inline int set_alias_to_pvar(struct sip_msg* _msg, str *alias, int no, void *p)
+{
+	pv_value_t val;
+	pv_spec_t *pvs=(pv_spec_t*)p;
+
+	if(no && !ald_append_branches)
+		return 0;
+
+	/* set the PVAR */
+	val.flags = PV_VAL_STR;
+	val.ri = 0;
+	val.rs = *alias;
+
+	if(pv_set_spec_value(_msg, pvs, (int)(no?EQ_T:ASSIGN_T), &val)<0)
+	{
+		LM_ERR("setting PV AVP failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+int alias_db_find(struct sip_msg* _msg, str table, char* _in, char* _out,
+	char* flags)
+{
+	pv_value_t val;
+	struct sip_uri puri;
+
+	/* get the input value */
+	if (pv_get_spec_value(_msg, (pv_spec_t*)_in, &val)!=0)
+	{
+		LM_ERR("failed to get PV value\n");
+		return -1;
+	}
+	if ( (val.flags&PV_VAL_STR)==0 )
+	{
+		LM_ERR("PV vals is not string\n");
+		return -1;
+	}
+	if (parse_uri(val.rs.s, val.rs.len, &puri)<0)
+	{
+		LM_ERR("failed to parse uri %.*s\n",val.rs.len,val.rs.s);
+		return -1;
+	}
+
+	return alias_db_query(_msg, table, &puri, (unsigned long)flags,
+			set_alias_to_pvar, _out);
 }
 

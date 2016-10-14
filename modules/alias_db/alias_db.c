@@ -56,8 +56,10 @@ static int mod_init(void);
 
 /* Fixup function */
 static int lookup_fixup(void** param, int param_no);
+static int find_fixup(void** param, int param_no);
 
 static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* flags);
+static int w_alias_db_find(struct sip_msg* _msg, char* _table, char* _in, char* _out, char* flags);
 
 /* Module parameter variables */
 static str db_url       = str_init(DEFAULT_RODB_URL);
@@ -77,6 +79,10 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE|FAILURE_ROUTE},
 	{"alias_db_lookup", (cmd_function)w_alias_db_lookup, 2, lookup_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE},
+	{"alias_db_find", (cmd_function)w_alias_db_find, 3, find_fixup, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"alias_db_find", (cmd_function)w_alias_db_find, 4, find_fixup, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"bind_alias_db",   (cmd_function)bind_alias_db, 1, 0, 0,
 		0},
 	{0, 0, 0, 0, 0, 0}
@@ -159,6 +165,39 @@ static int lookup_fixup(void** param, int param_no)
 }
 
 
+static int find_fixup(void** param, int param_no)
+{
+	pv_spec_t *sp;
+
+	if (param_no==1)
+	{
+		/* string or pseudo-var - table name */
+		return fixup_spve_null(param, 1);
+	} else if(param_no==2) {
+		/* pseudo-var - source URI */
+		return fixup_pvar_null(param, 1);
+	} else if(param_no==3) {
+		/* pvar (AVP or VAR) - destination URI */
+		if (fixup_pvar_null(param, 1))
+			return E_CFG;
+		sp = (pv_spec_t*)*param;
+		if (sp->type!=PVT_AVP && sp->type!=PVT_SCRIPTVAR)
+		{
+			LM_ERR("PV type %d (param 3) cannot be written\n", sp->type);
+			pv_spec_free(sp);
+			return E_CFG;
+		}
+		return 0;
+	} else if (param_no==4) {
+		/* string - flags  ? */
+		return alias_flags_fixup(param);
+	} else {
+		LM_CRIT(" invalid number of params %d \n",param_no);
+		return -1;
+	}
+}
+
+
 /**
  *
  */
@@ -222,6 +261,19 @@ static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* flags)
         }
 
         return alias_db_lookup(_msg, table_s, flags);
+}
+
+static int w_alias_db_find(struct sip_msg* _msg, char* _table, char* _in, char* _out, char* flags)
+{
+        str table_s;
+
+        if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
+        {
+                LM_ERR("invalid table parameter\n");
+                return -1;
+        }
+
+        return alias_db_find(_msg, table_s, _in, _out, flags);
 }
 
 int bind_alias_db(struct alias_db_binds *pxb)

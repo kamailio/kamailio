@@ -42,6 +42,7 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. alias_db_lookup(table_name [,flags])
+              4.2. alias_db_find(table_name, input, output [,flags])
 
    2. Frequently Asked Questions
 
@@ -55,6 +56,7 @@ Daniel-Constantin Mierla
    1.6. Set domain_prefix parameter
    1.7. Set append_branches parameter
    1.8. alias_db_lookup() usage
+   1.9. alias_db_find() usage
 
 Chapter 1. Admin Guide
 
@@ -79,6 +81,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. alias_db_lookup(table_name [,flags])
+        4.1. alias_db_find(table_name, input, output [,flags])
 
 1. Overview
 
@@ -202,6 +205,7 @@ modparam("alias_db", "append_branches", 1)
 4. Functions
 
    4.1. alias_db_lookup(table_name [,flags])
+   4.2. alias_db_lookup(table_name [,flags])
 
 4.1.  alias_db_lookup(table_name [,flags])
 
@@ -231,6 +235,47 @@ modparam("alias_db", "append_branches", 1)
 ...
 alias_db_lookup("dbaliases", "rd");
 alias_db_lookup("dba_$(rU{s.substr,0,1})");
+...
+
+1.4.2.  alias_db_find( table_name , input, output [,flags] )
+
+   The function is very similar to alias_db_lookup(), but instead
+   of using fixed input (RURI) and output (RURI) is able to get
+   the input SIP URI from a pseudo-variable and place the result
+   back also in a pseudo-variable.
+
+   The function is useful as the alias lookup does not affect the
+   request itself (no RURI changes), can be used in a reply
+   context (as it does not work with RURI only) and can be used
+   for others URI than the RURI (To URI, From URI, custom URI).
+
+   The function returns TRUE if any alias mapping was found and
+   returned.
+
+   Meaning of the parameters is as follows:
+     * table_name - any PV (string or PV or mix) the name of the
+       table where to search for alias.
+     * input - any PV (string or PV or mix) carrying the SIP URI
+       that needs to be looked up.
+     * output - PV (AVP or script VAR) where to place the SIP URI
+       resulting from the alias lookup.
+     * flags (optional) - set of flags (char based flags) to
+       control the alias lookup process:
+          - d - do not use domain URI part in the alias lookup
+            query (use only a username-based lookup). By default,
+            both username and domain are used.
+          - r - do revers alias lookup - lookup for the alias
+            mapped to the current URI (URI 2 alias translation);
+            normally, the function looks up for the URI mapped to
+            the alias (alias 2 URI translation).
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   LOCAL_ROUTE, STARTUP_ROUTE, FAILURE_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.9. alias_db_find() usage
+...
+# do revers alias lookup and find the alias for the FROM URI
+alias_db_find("dbaliases" , "$fu", "$avp(from_alias)", "r");
 ...
 
 Chapter 2. Frequently Asked Questions

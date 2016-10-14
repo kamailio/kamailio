@@ -3,9 +3,11 @@
 #include "../../str.h"
 
 typedef int (*alias_db_lookup_t)(struct sip_msg*, str table, char* flags);
+typedef int (*alias_db_find_t)(struct sip_msg*, str table, char* _in, char* _out, char *flags);
 
 typedef struct alias_db_binds {
 	alias_db_lookup_t alias_db_lookup;
+	alias_db_find_t alias_db_find;
 } alias_db_api_t;
 
 typedef int (*bind_alias_db_f)(alias_db_api_t*);
