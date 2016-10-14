@@ -54,7 +54,10 @@ static int child_init(int rank);
 /* Module initialization function prototype */
 static int mod_init(void);
 
-static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2);
+/* Fixup function */
+static int lookup_fixup(void** param, int param_no);
+
+static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* flags);
 
 /* Module parameter variables */
 static str db_url       = str_init(DEFAULT_RODB_URL);
@@ -71,7 +74,9 @@ db_func_t adbf;  /* DB functions */
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"alias_db_lookup", (cmd_function)w_alias_db_lookup, 1, fixup_spve_null, 0,
+	{"alias_db_lookup", (cmd_function)w_alias_db_lookup, 1, lookup_fixup, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE},
+	{"alias_db_lookup", (cmd_function)w_alias_db_lookup, 2, lookup_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE},
 	{"bind_alias_db",   (cmd_function)bind_alias_db, 1, 0, 0,
 		0},
@@ -110,6 +115,48 @@ struct module_exports exports = {
 };
 
 
+static int alias_flags_fixup(void** param)
+{
+	char *c;
+	unsigned int flags;
+
+	c = (char*)*param;
+	flags = 0;
+	while (*c) {
+		switch (*c)
+		{
+			case 'r':
+			case 'R':
+				flags |= ALIAS_REVERT_FLAG;
+				break;
+			default:
+				LM_ERR("unsupported flag '%c'\n",*c);
+				return -1;
+		}
+		c++;
+	}
+	pkg_free(*param);
+	*param = (void*)(unsigned long)flags;
+	return 0;
+}
+
+
+static int lookup_fixup(void** param, int param_no)
+{
+	if (param_no==1)
+	{
+		/* string or pseudo-var - table name */
+		return fixup_spve_null(param, 1);
+	} else if (param_no==2) {
+		/* string - flags ? */
+		return alias_flags_fixup(param);
+	} else {
+		LM_CRIT(" invalid number of params %d \n",param_no);
+		return -1;
+	}
+}
+
+
 /**
  *
  */
@@ -134,7 +181,7 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-  /* Find a database module */
+	/* Find a database module */
 	if (db_bind_mod(&db_url, &adbf))
 	{
 		LM_ERR("unable to bind database module\n");
@@ -143,7 +190,7 @@ static int mod_init(void)
 	if (!DB_CAPABILITY(adbf, DB_CAP_QUERY))
 	{
 		LM_CRIT("database modules does not "
-			"provide all functions needed by avpops module\n");
+			"provide all functions needed by alias_db module\n");
 		return -1;
 	}
 
@@ -162,7 +209,7 @@ static void destroy(void)
 	}
 }
 
-static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
+static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* flags)
 {
         str table_s;
 
@@ -172,7 +219,7 @@ static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
                 return -1;
         }
 
-        return alias_db_lookup(_msg, table_s);
+        return alias_db_lookup(_msg, table_s, flags);
 }
 
 int bind_alias_db(struct alias_db_binds *pxb)

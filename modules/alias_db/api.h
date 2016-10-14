@@ -2,7 +2,7 @@
 #define ALIASDB_API_H
 #include "../../str.h"
 
-typedef int (*alias_db_lookup_t)(struct sip_msg*, str table);
+typedef int (*alias_db_lookup_t)(struct sip_msg*, str table, char* flags);
 
 typedef struct alias_db_binds {
 	alias_db_lookup_t alias_db_lookup;

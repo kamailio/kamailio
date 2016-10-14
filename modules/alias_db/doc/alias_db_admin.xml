@@ -233,7 +233,7 @@ modparam("alias_db", "append_branches", 1)
 	<title>Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">alias_db_lookup(table_name)</function>
+		<function moreinfo="none">alias_db_lookup(table_name [,flags])</function>
 		</title>
 		<para>
 		The function takes the R-URI and search to see whether it is an alias
@@ -251,6 +251,20 @@ modparam("alias_db", "append_branches", 1)
 				where to search for alias. It can include pseudo-variables.
 			</para>
 		</listitem>
+		<listitem>
+			<para><emphasis>flags</emphasis> (optional) - set of flags 
+			(char based flags) to control the alias lookup process:
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>r</emphasis> - do reverse alias lookup - lookup
+				for the alias mapped to the current URI (URI 2 alias 
+				translation); normally, the function looks up for the URI 
+				mapped to the alias (alias 2 URI translation).
+				</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -259,7 +273,7 @@ modparam("alias_db", "append_branches", 1)
 		<title><function>alias_db_lookup()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-alias_db_lookup("dbaliases");
+alias_db_lookup("dbaliases", "r");
 alias_db_lookup("dba_$(rU{s.substr,0,1})");
 ...
 </programlisting>

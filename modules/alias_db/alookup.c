@@ -70,17 +70,32 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 /**
  *
  */
-int alias_db_lookup(struct sip_msg* _msg, str table_s)
+int alias_db_lookup(struct sip_msg* _msg, str table_s, char* flags)
 {
 	str user_s;
-	db_key_t db_keys[2] = {&alias_user_column, &alias_domain_column};
+	db_key_t db_keys[2];
 	db_val_t db_vals[2];
-	db_key_t db_cols[] = {&user_column, &domain_column};
+	db_key_t db_cols[2];
 	db1_res_t* db_res = NULL;
 	int i;
 
 	if (parse_sip_msg_uri(_msg) < 0)
 		return -1;
+
+	if ((unsigned long)flags&ALIAS_REVERT_FLAG)
+	{
+		/* revert lookup: user->alias */
+		db_keys[0] = &user_column;
+		db_keys[1] = &domain_column;
+		db_cols[0] = &alias_user_column;
+		db_cols[1] = &alias_domain_column;
+	} else {
+		/* normal lookup: alias->user */
+		db_keys[0] = &alias_user_column;
+		db_keys[1] = &alias_domain_column;
+		db_cols[0] = &user_column;
+		db_cols[1] = &domain_column;
+	}
 	
 	db_vals[0].type = DB1_STR;
 	db_vals[0].nul = 0;

@@ -32,6 +32,8 @@
 
 #include "../../parser/msg_parser.h"
 
-int alias_db_lookup(struct sip_msg* _msg, str _table);
+#define ALIAS_REVERT_FLAG      (1<<0)
+
+int alias_db_lookup(struct sip_msg* _msg, str _table, char* flags);
 
 #endif /* _ALOOKUP_H_ */
