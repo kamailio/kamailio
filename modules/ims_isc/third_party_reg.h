@@ -75,7 +75,7 @@ typedef struct _r_third_party_reg {
     str path;                       /* Path header  */
 } r_third_party_registration;
 
-int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark);
+int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark, udomain_t* d);
 
 int r_send_third_party_reg(r_third_party_registration *r, int duration);
 
