@@ -68,6 +68,7 @@ str domain_column       = str_init("domain");
 str alias_user_column   = str_init("alias_username");
 str alias_domain_column = str_init("alias_domain");
 str domain_prefix       = {NULL, 0};
+int use_domain          = 0;
 int ald_append_branches = 0;
 
 db1_con_t* db_handle;   /* Database connection handle */
@@ -96,6 +97,7 @@ static param_export_t params[] = {
 	{"domain_column",       PARAM_STR, &domain_column },
 	{"alias_user_column",   PARAM_STR, &alias_user_column   },
 	{"alias_domain_column", PARAM_STR, &alias_domain_column },
+	{"use_domain",          INT_PARAM, &use_domain      },
 	{"domain_prefix",       PARAM_STR, &domain_prefix },
 	{"append_branches",     INT_PARAM, &ald_append_branches   },
 	{0, 0, 0}
@@ -126,6 +128,12 @@ static int alias_flags_fixup(void** param)
 
 	c = (char*)*param;
 	flags = 0;
+
+	if(!use_domain)
+	{
+		flags |= ALIAS_NO_DOMAIN_FLAG;
+	}
+
 	while (*c) {
 		switch (*c)
 		{

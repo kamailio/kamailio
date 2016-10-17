@@ -164,6 +164,28 @@ modparam("alias_db", "alias_domain_column", "adomain")
 	</section>
 	
 	<section>
+		<title><varname>use_domain</varname> (int)</title>
+		<para>
+		Specifies whether to use or not the domain from R-URI when searching
+		for alias. If set to 0, the domain from R-URI is not used, if set to
+		1 the domain from R-URI is used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "use_domain", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>domain_prefix</varname> (str)</title>
 		<para>
 		Specifies the prefix to be stripped from the domain in R-URI before
@@ -306,8 +328,8 @@ alias_db_lookup("dba_$(rU{s.substr,0,1})");
 			<itemizedlist>
 			<listitem>
 				<para><emphasis>d</emphasis> - do not use domain URI part in
-				the alias lookup query (use only a username-based lookup). By
-				default, both username and domain are used.
+				the alias lookup query (use only a username-based lookup).
+				Default depends on the module parameter use_domain.
 				</para>
 			</listitem>
 			<listitem>
@@ -333,6 +355,7 @@ alias_db_find("dbaliases" , "$fu", "$avp(from_alias)", "r");
 ...
 </programlisting>
 		</example>
+	</section>
 	</section>
 </chapter>
 
