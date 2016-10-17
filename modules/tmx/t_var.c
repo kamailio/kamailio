@@ -32,10 +32,10 @@
 #include "t_var.h"
 
 struct _pv_tmx_data {
-	struct cell *T;
+	unsigned int index;
+	unsigned int label;
 	struct sip_msg msg;
 	struct sip_msg *tmsgp;
-	unsigned int id;
 	char *buf;
 	int buf_size;
 };
@@ -99,8 +99,7 @@ int pv_t_update_req(struct sip_msg *msg)
 	if(t->uas.request==NULL)
 		return 1;
 
-	if(_pv_treq.T==t && t->uas.request==_pv_treq.tmsgp
-			&& t->uas.request->id==_pv_treq.id)
+	if (_pv_treq.label == t->label && _pv_treq.index == t->hash_index)  
 		return 0;
 
 	/* make a copy */
@@ -111,8 +110,8 @@ int pv_t_update_req(struct sip_msg *msg)
 		if(_pv_treq.tmsgp)
 			free_sip_msg(&_pv_treq.msg);
 		_pv_treq.tmsgp = NULL;
-		_pv_treq.id = 0;
-		_pv_treq.T = NULL;
+		_pv_treq.index = 0;
+		_pv_treq.label = 0;
 		_pv_treq.buf_size = t->uas.request->len+1;
 		_pv_treq.buf = (char*)pkg_malloc(_pv_treq.buf_size*sizeof(char));
 		if(_pv_treq.buf==NULL)
@@ -130,8 +129,8 @@ int pv_t_update_req(struct sip_msg *msg)
 	_pv_treq.msg.len = t->uas.request->len;
 	_pv_treq.msg.buf = _pv_treq.buf;
 	_pv_treq.tmsgp = t->uas.request;
-	_pv_treq.id = t->uas.request->id;
-	_pv_treq.T = t;
+	_pv_treq.index = t->hash_index;
+	_pv_treq.label = t->label;
 
 
 	if(pv_t_copy_msg(t->uas.request, &_pv_treq.msg)!=0)
@@ -140,7 +139,8 @@ int pv_t_update_req(struct sip_msg *msg)
 		_pv_treq.buf_size = 0;
 		_pv_treq.buf = NULL;
 		_pv_treq.tmsgp = NULL;
-		_pv_treq.T = NULL;
+		_pv_treq.index = 0;
+		_pv_treq.label = 0;
 		return -1;
 	}
 
@@ -175,8 +175,7 @@ int pv_t_update_rpl(struct sip_msg *msg)
 	if(t->uac[branch].reply==NULL || t->uac[branch].reply==FAKED_REPLY)
 		return 1;
 
-	if(_pv_trpl.T==t && t->uac[branch].reply==_pv_trpl.tmsgp
-			&& t->uac[branch].reply->id==_pv_trpl.id)
+	if (_pv_trpl.label == t->label && _pv_trpl.index == t->hash_index)  
 		return 0;
 
 	/* make a copy */
@@ -187,8 +186,8 @@ int pv_t_update_rpl(struct sip_msg *msg)
 		if(_pv_trpl.tmsgp)
 			free_sip_msg(&_pv_trpl.msg);
 		_pv_trpl.tmsgp = NULL;
-		_pv_trpl.id = 0;
-		_pv_trpl.T = NULL;
+		_pv_trpl.index = 0;
+		_pv_trpl.label = 0;
 		_pv_trpl.buf_size = t->uac[branch].reply->len+1;
 		_pv_trpl.buf = (char*)pkg_malloc(_pv_trpl.buf_size*sizeof(char));
 		if(_pv_trpl.buf==NULL)
@@ -206,8 +205,8 @@ int pv_t_update_rpl(struct sip_msg *msg)
 	_pv_trpl.msg.len = t->uac[branch].reply->len;
 	_pv_trpl.msg.buf = _pv_trpl.buf;
 	_pv_trpl.tmsgp = t->uac[branch].reply;
-	_pv_trpl.id = t->uac[branch].reply->id;
-	_pv_trpl.T = t;
+	_pv_trpl.index = t->hash_index;
+	_pv_trpl.label = t->label;
 
 	if(pv_t_copy_msg(t->uac[branch].reply, &_pv_trpl.msg)!=0)
 	{
@@ -215,7 +214,8 @@ int pv_t_update_rpl(struct sip_msg *msg)
 		_pv_trpl.buf_size = 0;
 		_pv_trpl.buf = NULL;
 		_pv_trpl.tmsgp = NULL;
-		_pv_trpl.T = NULL;
+		_pv_trpl.index = 0;
+		_pv_trpl.label = 0;
 		return -1;
 	}
 
@@ -241,8 +241,7 @@ int pv_t_update_inv(struct sip_msg *msg)
 		return 1;
 	}
 
-	if(_pv_tinv.T==t && t->uas.request==_pv_tinv.tmsgp
-			&& t->uas.request->id==_pv_tinv.id)
+	if (_pv_tinv.label == t->label && _pv_tinv.index == t->hash_index)  
 		goto done;
 
 	/* make a copy */
@@ -253,8 +252,8 @@ int pv_t_update_inv(struct sip_msg *msg)
 		if(_pv_tinv.tmsgp)
 			free_sip_msg(&_pv_tinv.msg);
 		_pv_tinv.tmsgp = NULL;
-		_pv_tinv.id = 0;
-		_pv_tinv.T = NULL;
+		_pv_tinv.index = 0;
+		_pv_tinv.label = 0;
 		_pv_tinv.buf_size = t->uas.request->len+1;
 		_pv_tinv.buf = (char*)pkg_malloc(_pv_tinv.buf_size*sizeof(char));
 		if(_pv_tinv.buf==NULL)
@@ -272,8 +271,8 @@ int pv_t_update_inv(struct sip_msg *msg)
 	_pv_tinv.msg.len = t->uas.request->len;
 	_pv_tinv.msg.buf = _pv_tinv.buf;
 	_pv_tinv.tmsgp = t->uas.request;
-	_pv_tinv.id = t->uas.request->id;
-	_pv_tinv.T = t;
+	_pv_tinv.index = t->hash_index;
+	_pv_tinv.label = t->label;
 
 
 	if(pv_t_copy_msg(t->uas.request, &_pv_tinv.msg)!=0)
@@ -282,7 +281,8 @@ int pv_t_update_inv(struct sip_msg *msg)
 		_pv_tinv.buf_size = 0;
 		_pv_tinv.buf = NULL;
 		_pv_tinv.tmsgp = NULL;
-		_pv_tinv.T = NULL;
+		_pv_tinv.index = 0;
+		_pv_tinv.label = 0;
 		goto error;
 	}
 
