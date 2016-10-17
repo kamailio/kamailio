@@ -145,6 +145,10 @@ static int alias_flags_fixup(void** param)
 			case 'R':
 				flags |= ALIAS_REVERT_FLAG;
 				break;
+			case 'u':
+			case 'U':
+				flags &= ~ALIAS_NO_DOMAIN_FLAG;
+				break;
 			default:
 				LM_ERR("unsupported flag '%c'\n",*c);
 				return -1;

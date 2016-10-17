@@ -245,6 +245,8 @@ modparam("alias_db", "append_branches", 1)
             mapped to the current URI (URI 2 alias translation);
             normally, the function looks up for the URI mapped to
             the alias (alias 2 URI translation).
+          - u - use domain URI part in the alias lookup query.
+            Default depends on the module parameter use_domain.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -285,6 +287,8 @@ alias_db_lookup("dba_$(rU{s.substr,0,1})");
             mapped to the current URI (URI 2 alias translation);
             normally, the function looks up for the URI mapped to
             the alias (alias 2 URI translation).
+          - u - use domain URI part in the alias lookup query.
+            Default depends on the module parameter use_domain.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    LOCAL_ROUTE, STARTUP_ROUTE, FAILURE_ROUTE and ONREPLY_ROUTE.
