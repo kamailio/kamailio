@@ -53,12 +53,9 @@ static str _dlg_cseq_diff_var_name = str_init("cseq_diff");
 /**
  *
  */
-int dlg_cseq_prepare_msg(sip_msg_t *msg)
+static int dlg_cseq_prepare_msg(sip_msg_t *msg)
 {
-	if (parse_msg(msg->buf, msg->len, msg)!=0) {
-		LM_DBG("outbuf buffer parsing failed!");
-		return 1;
-	}
+	LM_DBG("prepare msg for cseq update operations\n");
 
 	if(msg->first_line.type==SIP_REQUEST) {
 		if(!IS_SIP(msg))
@@ -104,6 +101,19 @@ int dlg_cseq_prepare_msg(sip_msg_t *msg)
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+static int dlg_cseq_prepare_new_msg(sip_msg_t *msg)
+{
+	LM_DBG("prepare new msg for cseq update operations\n");
+	if (parse_msg(msg->buf, msg->len, msg)!=0) {
+		LM_DBG("outbuf buffer parsing failed!");
+		return 1;
+	}
+	return dlg_cseq_prepare_msg(msg);
 }
 
 /**
@@ -268,7 +278,7 @@ int dlg_cseq_msg_received(void *data)
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
 
-	if(dlg_cseq_prepare_msg(&msg)!=0) {
+	if(dlg_cseq_prepare_new_msg(&msg)!=0) {
 		goto done;
 	}
 
@@ -350,7 +360,7 @@ int dlg_cseq_msg_sent(void *data)
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
 
-	if(dlg_cseq_prepare_msg(&msg)!=0) {
+	if(dlg_cseq_prepare_new_msg(&msg)!=0) {
 		goto done;
 	}
 
