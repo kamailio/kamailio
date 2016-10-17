@@ -36,6 +36,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../mod_fix.h"
 #include "../../dset.h"
+#include "../../lvalue.h"
 
 #include "alias_db.h"
 #include "alookup.h"
@@ -44,69 +45,66 @@
 
 extern db_func_t adbf;  /* DB functions */
 
+extern int alias_db_use_domain;
+
 char useruri_buf[MAX_USERURI_SIZE];
 
-/**
- * Rewrite Request-URI
- */
-static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
-{
-	struct action act;
-	struct run_act_ctx ra_ctx;
-
-	memset(&act, 0, sizeof(act));
-	act.type = SET_URI_T;
-	act.val[0].type = STRING_ST;
-	act.val[0].u.string = _s;
-	init_run_actions_ctx(&ra_ctx);
-	if (do_action(&ra_ctx, &act, _m) < 0)
-	{
-		LM_ERR("do_action failed\n");
-		return -1;
-	}
-	return 0;
-}
+typedef int (*set_alias_f)(struct sip_msg* _msg, str *alias, int no, void *p);
 
 /**
  *
  */
-int alias_db_lookup(struct sip_msg* _msg, str table_s)
+static int alias_db_query(struct sip_msg* _msg, str table,
+			struct sip_uri *puri, unsigned long flags,
+			set_alias_f set_alias, void *param)
 {
 	str user_s;
-	db_key_t db_keys[2] = {&alias_user_column, &alias_domain_column};
+	db_key_t db_keys[2];
 	db_val_t db_vals[2];
-	db_key_t db_cols[] = {&user_column, &domain_column};
+	db_key_t db_cols[2];
 	db1_res_t* db_res = NULL;
 	int i;
 
-	if (parse_sip_msg_uri(_msg) < 0)
-		return -1;
-	
+	if (flags&ALIAS_REVERSE_FLAG)
+	{
+		/* revert lookup: user->alias */
+		db_keys[0] = &user_column;
+		db_keys[1] = &domain_column;
+		db_cols[0] = &alias_user_column;
+		db_cols[1] = &alias_domain_column;
+	} else {
+		/* normal lookup: alias->user */
+		db_keys[0] = &alias_user_column;
+		db_keys[1] = &alias_domain_column;
+		db_cols[0] = &user_column;
+		db_cols[1] = &domain_column;
+	}
+
 	db_vals[0].type = DB1_STR;
 	db_vals[0].nul = 0;
-	db_vals[0].val.str_val.s = _msg->parsed_uri.user.s;
-	db_vals[0].val.str_val.len = _msg->parsed_uri.user.len;
+	db_vals[0].val.str_val.s = puri->user.s;
+	db_vals[0].val.str_val.len = puri->user.len;
 
-	if (use_domain)
-	{
+	if ( flags&ALIAS_DOMAIN_FLAG ) {
 		db_vals[1].type = DB1_STR;
 		db_vals[1].nul = 0;
-		db_vals[1].val.str_val.s = _msg->parsed_uri.host.s;
-		db_vals[1].val.str_val.len = _msg->parsed_uri.host.len;
-	
+		db_vals[1].val.str_val.s = puri->host.s;
+		db_vals[1].val.str_val.len = puri->host.len;
+
 		if (domain_prefix.s && domain_prefix.len>0
-			&& domain_prefix.len<_msg->parsed_uri.host.len
-			&& strncasecmp(_msg->parsed_uri.host.s,domain_prefix.s,
+				&& domain_prefix.len<puri->host.len
+				&& strncasecmp(puri->host.s,domain_prefix.s,
 				domain_prefix.len)==0)
 		{
 			db_vals[1].val.str_val.s   += domain_prefix.len;
 			db_vals[1].val.str_val.len -= domain_prefix.len;
 		}
 	}
-	
-	adbf.use_table(db_handle, &table_s);
-	if(adbf.query(db_handle, db_keys, NULL, db_vals, db_cols,
-		(use_domain)?2:1 /*no keys*/, 2 /*no cols*/, NULL, &db_res)!=0)
+
+	adbf.use_table(db_handle, &table);
+	if(adbf.query( db_handle, db_keys, NULL, db_vals, db_cols,
+		(flags&ALIAS_DOMAIN_FLAG)?2:1 /*no keys*/, 2 /*no cols*/,
+		NULL, &db_res)!=0)
 	{
 		LM_ERR("failed to query database\n");
 		goto err_server;
@@ -188,25 +186,12 @@ int alias_db_lookup(struct sip_msg* _msg, str table_s)
 				}
 				goto err_server;
 		}
+		user_s.s = useruri_buf;
 		/* set the URI */
-		LM_DBG("new URI [%d] is [%s]\n", i, useruri_buf);
-		if(i==0)
-		{
-			if(rewrite_ruri(_msg, useruri_buf)<0)
-			{
-				LM_ERR("cannot replace the R-URI\n");
-				goto err_server;
-			}
-			if(ald_append_branches==0)
-				break;
-		} else {
-			user_s.s = useruri_buf;
-			if (append_branch(_msg, &user_s, 0, 0, MIN_Q, 0, 0,
-					  0, 0, 0, 0) == -1)
-			{
-				LM_ERR("error while appending branches\n");
-				goto err_server;
-			}
+		LM_DBG("new URI [%d] is [%.*s]\n", i, user_s.len ,user_s.s );
+		if (set_alias(_msg, &user_s, i, param)!=0) {
+			LM_ERR("error while setting alias\n");
+			goto err_server;
 		}
 	}
 
@@ -223,3 +208,90 @@ err_server:
 		LM_DBG("failed to freeing result of query\n");
 	return -1;
 }
+
+int set_alias_to_ruri(struct sip_msg* _msg, str *alias, int no, void *p)
+{
+	/* set the RURI */
+	if(no==0)
+	{
+		if(rewrite_uri(_msg, alias)<0)
+		{
+			LM_ERR("cannot replace the R-URI\n");
+			return -1;
+		}
+	} else if (ald_append_branches) {
+		if (append_branch(_msg, alias, 0, 0, MIN_Q, 0, 0, 0, 0, 0, 0) == -1)
+		{
+			LM_ERR("error while appending branches\n");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+
+int alias_db_lookup_ex(struct sip_msg* _msg, str table, unsigned long flags)
+{
+	if (parse_sip_msg_uri(_msg) < 0)
+		return -1;
+
+	return alias_db_query(_msg, table, &_msg->parsed_uri, flags,
+			set_alias_to_ruri, NULL);
+}
+
+int alias_db_lookup(struct sip_msg* _msg, str table)
+{
+	unsigned long flags = 0;
+	if(alias_db_use_domain) flags = ALIAS_DOMAIN_FLAG;
+	return alias_db_lookup_ex(_msg, table, flags);
+}
+
+inline int set_alias_to_pvar(struct sip_msg* _msg, str *alias, int no, void *p)
+{
+	pv_value_t val;
+	pv_spec_t *pvs=(pv_spec_t*)p;
+
+	if(no && !ald_append_branches)
+		return 0;
+
+	/* set the PVAR */
+	val.flags = PV_VAL_STR;
+	val.ri = 0;
+	val.rs = *alias;
+
+	if(pv_set_spec_value(_msg, pvs, (int)(no?EQ_T:ASSIGN_T), &val)<0)
+	{
+		LM_ERR("setting PV AVP failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+int alias_db_find(struct sip_msg* _msg, str table, char* _in, char* _out,
+	char* flags)
+{
+	pv_value_t val;
+	struct sip_uri puri;
+
+	/* get the input value */
+	if (pv_get_spec_value(_msg, (pv_spec_t*)_in, &val)!=0)
+	{
+		LM_ERR("failed to get PV value\n");
+		return -1;
+	}
+	if ( (val.flags&PV_VAL_STR)==0 )
+	{
+		LM_ERR("PV vals is not string\n");
+		return -1;
+	}
+	if (parse_uri(val.rs.s, val.rs.len, &puri)<0)
+	{
+		LM_ERR("failed to parse uri %.*s\n",val.rs.len,val.rs.s);
+		return -1;
+	}
+
+	return alias_db_query(_msg, table, &puri, (unsigned long)flags,
+			set_alias_to_pvar, _out);
+}
+
