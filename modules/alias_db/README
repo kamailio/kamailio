@@ -42,7 +42,8 @@ Daniel-Constantin Mierla
 
         4. Functions
 
-              4.1. alias_db_lookup(table_name)
+              4.1. alias_db_lookup(table_name [,flags])
+              4.2. alias_db_find( table_name , input, output [,flags] )
 
    List of Examples
 
@@ -55,6 +56,7 @@ Daniel-Constantin Mierla
    1.7. Set domain_prefix parameter
    1.8. Set append_branches parameter
    1.9. alias_db_lookup() usage
+   1.10. alias_db_find() usage
 
 Chapter 1. Admin Guide
 
@@ -79,7 +81,8 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. alias_db_lookup(table_name)
+        4.1. alias_db_lookup(table_name [,flags])
+        4.2. alias_db_find( table_name , input, output [,flags] )
 
 1. Overview
 
@@ -216,9 +219,10 @@ modparam("alias_db", "append_branches", 1)
 
 4. Functions
 
-   4.1. alias_db_lookup(table_name)
+   4.1. alias_db_lookup(table_name [,flags])
+   4.2. alias_db_find( table_name , input, output [,flags] )
 
-4.1.  alias_db_lookup(table_name)
+4.1.  alias_db_lookup(table_name [,flags])
 
    The function takes the R-URI and search to see whether it is an alias
    or not. If it is an alias for a local user, the R-URI is replaced with
@@ -230,11 +234,64 @@ modparam("alias_db", "append_branches", 1)
    Meaning of the parameters is as follows:
      * table_name - the name of the table where to search for alias. It
        can include pseudo-variables.
+     * flags (optional) - set of flags (char based flags) to control the
+       alias lookup process:
+          + d - do not use domain URI part in the alias lookup query (use
+            only a username-based lookup). By default, both username and
+            domain are used.
+          + r - do reverse alias lookup - lookup for the alias mapped to
+            the current URI (URI 2 alias translation); normally, the
+            function looks up for the URI mapped to the alias (alias 2 URI
+            translation).
+          + u - use domain URI part in the alias lookup query. Default
+            depends on the module parameter use_domain.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.9. alias_db_lookup() usage
 ...
-alias_db_lookup("dbaliases");
+alias_db_lookup("dbaliases", "rd");
 alias_db_lookup("dba_$(rU{s.substr,0,1})");
+...
+
+4.2.  alias_db_find( table_name , input, output [,flags] )
+
+   The function is very similar to alias_db_lookup(), but instead of using
+   fixed input (RURI) and output (RURI) is able to get the input SIP URI
+   from a pseudo-variable and place the result back also in a
+   pseudo-variable.
+
+   The function is useful as the alias lookup does not affect the request
+   itself (no RURI changes), can be used in a reply context (as it does
+   not work with RURI only) and can be used for others URI than the RURI
+   (To URI, From URI, custom URI).
+
+   The function returns TRUE if any alias mapping was found and returned.
+
+   Meaning of the parameters is as follows:
+     * table_name - any PV (string or PV or mix) the name of the table
+       where to search for alias.
+     * input - any PV (string or PV or mix) carrying the SIP URI that
+       needs to be looked up.
+     * output - PV (AVP or script VAR) where to place the SIP URI
+       resulting from the alias lookup.
+     * flags (optional) - set of flags (char based flags) to control the
+       alias lookup process:
+          + d - do not use domain URI part in the alias lookup query (use
+            only a username-based lookup). Default depends on the module
+            parameter use_domain.
+          + r - do reverse alias lookup - lookup for the alias mapped to
+            the current URI (URI 2 alias translation); normally, the
+            function looks up for the URI mapped to the alias (alias 2 URI
+            translation).
+          + u - use domain URI part in the alias lookup query. Default
+            depends on the module parameter use_domain.
+
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+   LOCAL_ROUTE, STARTUP_ROUTE, FAILURE_ROUTE and ONREPLY_ROUTE.
+
+   Example 1.10. alias_db_find() usage
+...
+# do reverse alias lookup and find the alias for the FROM URI
+alias_db_find("dbaliases" , "$fu", "$avp(from_alias)", "r");
 ...
