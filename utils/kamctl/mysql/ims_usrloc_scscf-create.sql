@@ -39,9 +39,9 @@ CREATE TABLE `impu_contact` (
 INSERT INTO version (table_name, table_version) values ('subscriber','6');
 CREATE TABLE `subscriber` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `watcher_uri` varchar(50) NOT NULL,
-  `watcher_contact` varchar(50) NOT NULL,
-  `presentity_uri` varchar(50) NOT NULL,
+  `watcher_uri` varchar(100) NOT NULL,
+  `watcher_contact` varchar(100) NOT NULL,
+  `presentity_uri` varchar(100) NOT NULL,
   `event` int(11) NOT NULL,
   `expires` datetime NOT NULL,
   `version` int(11) NOT NULL,
