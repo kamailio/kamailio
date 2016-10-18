@@ -449,7 +449,7 @@ if(rtplen != prtpstat->len)
   LM_ERR ("Unable to find RTPSTAT pv!\n");
   goto initerr;
   }
-prtp_pv = pv_cache_get (&prtpstat);
+prtp_pv = pv_cache_get (prtpstat);
 if(!prtp_pv)
   {
   LM_ERR ("Unable to find pv spec for RTPSTAT!\n");
