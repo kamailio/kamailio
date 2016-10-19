@@ -641,6 +641,7 @@ struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param)
 
 	init_cancel_info(&cancel_data);
 	cancel_data.cancel_bitmap = ~0; /*all branches*/
+	_tmx_tmb.prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	_tmx_tmb.cancel_uacs(trans, &cancel_data, 0);
 
 	_tmx_tmb.unref_cell(trans);
