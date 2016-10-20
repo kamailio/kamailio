@@ -41,6 +41,7 @@
  */
 
 #include "stats.h"
+#include "registrar_notify.h"
 
 int register_stats() {
 	//SAR
@@ -66,3 +67,8 @@ unsigned long get_avg_sar_response_time() {
 
 	return get_stat_val(sar_replies_response_time)/rpls_received;
 }
+
+unsigned long get_notification_list_size() {
+	return notification_list->size;
+}
+

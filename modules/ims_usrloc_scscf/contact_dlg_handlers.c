@@ -44,8 +44,7 @@ void contact_dlg_create_handler(struct dlg_cell* dlg, int cb_types, struct dlg_c
  * @return 0 on success, anything else on failure
  */
 static inline int find_contact_from_impu(impurecord_t* impu, str* search_aor, ucontact_t** scontact) {
-    
-    int iCount = 0;
+	impu_contact_t *impucontact;
     short i_searchlen;
     char *s_term;
     
@@ -61,17 +60,19 @@ static inline int find_contact_from_impu(impurecord_t* impu, str* search_aor, uc
         return 1;
     }        
     i_searchlen = s_term - search_aor->s;
-    for (;iCount < impu->num_contacts ; ++iCount)
-    {                
-        if( impu->newcontacts[iCount] && impu->newcontacts[iCount]->aor.s[i_searchlen] == '@' 
-                                      && (memcmp(impu->newcontacts[iCount]->aor.s, search_aor->s, i_searchlen) == 0))           
-        {
-            *scontact = impu->newcontacts[iCount];  
-            return 0;
-        }        
-        if (impu->newcontacts[iCount])
-           LM_DBG("Skipping %.*s\n",impu->newcontacts[iCount]->aor.len,impu->newcontacts[iCount]->aor.s);
-    }    
+	
+	impucontact = impu->linked_contacts.head;
+	
+    while (impucontact) {
+		if (impucontact->contact && impucontact->contact->aor.s[i_searchlen] == '@'
+			&& (memcmp(impucontact->contact->aor.s, search_aor->s, i_searchlen) == 0)) {
+			*scontact = impucontact->contact;
+			return 0;
+		}
+		if (impucontact->contact)
+			LM_DBG("Skipping %.*s\n", impucontact->contact->aor.len, impucontact->contact->aor.s);
+		impucontact = impucontact->next;
+	}    
     return 1;
 }
 

@@ -102,10 +102,11 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
     dlist_t *p;
     impurecord_t *r;
     ucontact_t *c;
+	impu_contact_t *impucontact;
     void *cp;
     int shortage;
     int needed;
-    int i,j=0;
+    int i;
     cp = buf;
     shortage = 0;
     /* Reserve space for terminating 0000 */
@@ -125,7 +126,9 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 		continue;
 	    }
 	    for (r = p->d->table[i].first; r != NULL; r = r->next) {
-		while (j<MAX_CONTACTS_PER_IMPU && (c = r->newcontacts[j++])) {
+			impucontact = r->linked_contacts.head;
+		while (impucontact) {
+			c = impucontact->contact;
 		    if (c->c.len <= 0)
 			continue;
 		    /*

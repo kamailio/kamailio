@@ -496,7 +496,7 @@ static inline int is_impu_registered(udomain_t* _d, str* public_identity) {
         }
 
         //check valid contacts
-        if ((impu->num_contacts <= 0) || (impu->newcontacts[0] == 0)) {
+        if ((impu->linked_contacts.numcontacts <= 0) || (impu->linked_contacts.head == 0)) {
             LM_DBG("IMPU <%.*s> has no valid contacts\n", public_identity->len, public_identity->s);
             ret = 0;
         }
@@ -675,15 +675,19 @@ error:
 int get_number_of_valid_contacts(impurecord_t* impu) {
     int i;
     int ret = 0;
+	impu_contact_t *impucontact;
     get_act_time();
-    for (i = 0; i < impu->num_contacts; i++) {
-        if (impu->newcontacts[i]) {
-            if VALID_CONTACT(impu->newcontacts[i], act_time)
+	
+	impucontact = impu->linked_contacts.head;
+    while (impucontact) {
+        if (impucontact->contact) {
+            if VALID_CONTACT(impucontact->contact, act_time)
                 ret++;
         } else {
             //if we hit a null ref then we are at the end of the list.
             return ret;
         }
+		impucontact = impucontact->next;
     }
 
     return ret;

@@ -96,6 +96,7 @@ int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 int usrloc_debug 	= 0;
 int scscf_support_wildcardPSI = 0;
 int unreg_validity = 1800;				/*!< default validity time in secs for unreg assignment to SCSCF */
+int maxcontact_3gpp = 0;                                               /*!< max number of 3GPP contacts allowed per IMPU */
 int maxcontact = 0;						/*!< max number of contacts allowed per IMPU */
 int maxcontact_behaviour = 0;			/*!< max contact behaviour - 0-disabled(default),1-reject,2-overwrite*/
 
@@ -165,6 +166,7 @@ static param_export_t params[] = {
     {"unreg_validity",		INT_PARAM, &unreg_validity},
     {"maxcontact_behaviour",INT_PARAM, &maxcontact_behaviour},
     {"maxcontact",			INT_PARAM, &maxcontact},
+	{"maxcontact_3gpp",     INT_PARAM, &maxcontact_3gpp},
 	{"max_subscribes",		INT_PARAM, &max_subscribes},
     {"sub_dialog_hash_size",INT_PARAM, &sub_dialog_hash_size},
     {"db_mode",				INT_PARAM, &db_mode},

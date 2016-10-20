@@ -95,9 +95,12 @@ static inline unsigned int calc_buf_len(impurecord_t* impurec) {
     int i=0;
     ucontact_t* c;
     param_t *tmp;
+	impu_contact_t *impucontact;
 
     len = 0;
-    while (i<MAX_CONTACTS_PER_IMPU && (c=impurec->newcontacts[i])) {
+	impucontact = impurec->linked_contacts.head;
+    while (impucontact) {
+		c = impucontact->contact;
         if (VALID_CONTACT(c, act_time)) {
             if (len) len += CONTACT_SEP_LEN;
             len += 2 /* < > */ + c->c.len;
@@ -137,7 +140,7 @@ static inline unsigned int calc_buf_len(impurecord_t* impurec) {
                 tmp=tmp->next;
             }
         }
-	i++;
+		impucontact = impucontact->next;
     }
 
     if (len) len += CONTACT_BEGIN_LEN + CRLF_LEN;
@@ -429,6 +432,7 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
     param_t* tmp;
     *contact_header = 0;
     int i=0;
+	impu_contact_t *impucontact;
 
     contact_for_header_t* tmp_contact_header = shm_malloc(sizeof (contact_for_header_t));
     if (!tmp_contact_header) {
@@ -449,7 +453,9 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
 
         fl = 0;
 	    
-        while (i<MAX_CONTACTS_PER_IMPU && (c=impurec->newcontacts[i])) {
+		impucontact = impurec->linked_contacts.head;
+        while (impucontact) {
+			c = impucontact->contact;
             if (VALID_CONTACT(c, act_time)) {
                 if (fl) {
                     memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
@@ -527,9 +533,8 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
                     tmp = tmp->next;
                 }
             }
-	    i++;
+			impucontact = impucontact->next;
         }
-
         memcpy(p, CRLF, CRLF_LEN);
         p += CRLF_LEN;
 
