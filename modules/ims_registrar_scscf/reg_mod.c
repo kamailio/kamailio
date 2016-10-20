@@ -172,6 +172,7 @@ int subscription_expires_range = 0;
 int contact_expires_buffer_percentage = 10;     /**< percentage we expiry for contact we will substrace from reg response to UE */
 
 int notification_list_size_threshold = 0; /**Threshold for size of notification list after which a warning is logged */
+int max_notification_list_size = 0;
 
 int notification_processes = 4; /*Number of processes that processes the notification queue*/
 
@@ -264,7 +265,6 @@ static param_export_t params[] = {
     {"store_profile_dereg", INT_PARAM, &store_data_on_dereg},
     {"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
     {"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
-
     {"subscription_default_expires", INT_PARAM, &subscription_default_expires},
     {"subscription_min_expires", INT_PARAM, &subscription_min_expires},
     {"subscription_max_expires", INT_PARAM, &subscription_max_expires},
@@ -273,9 +273,9 @@ static param_export_t params[] = {
     {"subscription_expires_range", INT_PARAM, &subscription_expires_range},
     {"user_data_always", INT_PARAM, &user_data_always},
     {"notification_list_size_threshold", INT_PARAM, &notification_list_size_threshold},
+	{"max_notification_list_size", INT_PARAM, &max_notification_list_size},
 	{"notification_processes", INT_PARAM, &notification_processes},
 	{"send_vs_callid_avp", INT_PARAM, &send_vs_callid_avp},
-	
     {0, 0, 0}
 };
 
@@ -288,6 +288,7 @@ stat_export_t mod_stats[] = {
     {"accepted_regs", 0, &accepted_registrations},
     {"rejected_regs", 0, &rejected_registrations},
     {"sar_avg_response_time", STAT_IS_FUNC, (stat_var**) get_avg_sar_response_time},
+	{"notifies_in_q", STAT_IS_FUNC, (stat_var**) get_notification_list_size},
     {"sar_timeouts", 0, (stat_var**) & stat_sar_timeouts},
     {0, 0, 0}
 };

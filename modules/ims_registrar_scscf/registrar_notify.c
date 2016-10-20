@@ -71,14 +71,10 @@
 #define EVENT_REFRESHED 4
 #define EVENT_EXPIRED 5
 
-/**
- * Initializes the reg notifications list.
- */
-reg_notification_list *notification_list = 0; //< List of pending notifications
-
 extern struct tm_binds tmb;
 
 extern int notification_list_size_threshold;
+extern int max_notification_list_size;
 
 extern int subscription_default_expires;
 extern int subscription_min_expires;
@@ -407,7 +403,6 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
 	
     while (impucontact) {
 		c = impucontact->contact;
-    while (j < MAX_CONTACTS_PER_IMPU && (c = r->newcontacts[j])) {
         if (c->path.len) {
             LM_DBG("Path: <%.*s>.\n",
                     c->path.len, c->path.s);
@@ -524,8 +519,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
                 }
 				return 0;
             }
-            LM_DBG("About to ceate notification");
-
+            LM_DBG("About to create notification");
             create_notifications(_d, r_passed, presentity_uri, watcher_contact, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
             if (impu_list) {
                     pkg_free(impu_list);
@@ -1714,7 +1708,6 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
 
         LM_DBG("Retrieved IMPU record");
 
-        j = 0;
         terminate_impu = 1;
 		
 		impucontact = r->linked_contacts.head;
@@ -1742,7 +1735,6 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
         pad.len = strlen(pad.s);
         STR_APPEND(buf, pad);
 
-        j = 0;
         LM_DBG("Scrolling through contact for this IMPU");
         //        if (contact && !domain_locked /* we're dealing with the primary impu most likely related to de-reg */) {
         //            LM_DBG("We're dealing with the primary IMPU here AND a contact was passed in - must have been an explicit dereg\n");
@@ -1835,7 +1827,6 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
             impurecord = r->linked_contacts.head;
             while (impurecord) {
 				c_tmp = impurecord->contact;
-            while (i < MAX_CONTACTS_PER_IMPU && (c_tmp = r->newcontacts[i])) {
                 if ((strncasecmp(c_tmp->c.s, c->c.s, c_tmp->c.len) != 0) && ((c_tmp->expires - act_time) > 0)) {
                     LM_DBG("IMPU <%.*s> has another active contact <%.*s> so will set its state to active\n",
                             r->public_identity.len, r->public_identity.s, c_tmp->c.len, c_tmp->c.s);
@@ -2207,6 +2198,12 @@ void add_notification(reg_notification * n) {
     } else {
         LM_DBG("Notification exists");
     }
+	
+	if (max_notification_list_size > 0 && ((notification_list->size+1) > max_notification_list_size )) {
+		LM_WARN("Dropping notification, list too big [%d]\n", notification_list->size);
+		return;
+	}
+	
     LM_DBG("Adding to notification list");
     lock_get(notification_list->lock);
     n->next = 0;
