@@ -385,7 +385,7 @@ int term_impu_registered(struct sip_msg* _m, char* _t, char* _s) {
 
     if (res != 0) {
         ul.unlock_udomain((udomain_t*) _t, &uri);
-        LM_ERR("failed to query for terminating IMPU or not found <%.*s>\n", uri.len, uri.s);
+        LM_DBG("failed to query for terminating IMPU or not found <%.*s>\n", uri.len, uri.s);
         return -1;
     }
 
