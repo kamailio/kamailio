@@ -295,6 +295,20 @@ typedef struct contact_dialog_data {
     struct contact_dialog_data* prev; /*!< Previous contact in the linked list */
 } contact_dialog_data_t;
 
+
+typedef struct impu_contact_holder {
+    unsigned int numcontacts;
+    unsigned int num3gppcontacts;
+    struct impu_contact *head;
+    struct impu_contact *tail;
+} impu_contact_holder_t;
+
+typedef struct impu_contact {
+    struct ucontact *contact;
+    struct impu_contact *next;
+    struct impu_contact *prev;
+} impu_contact_t;
+
 /*! \brief Main structure for handling of registered Contact data */
 typedef struct ucontact {
     gen_lock_t *lock;           /**< we have to lock the contact as it is shared by many impu structs and has reference conting	*/
@@ -419,8 +433,7 @@ typedef struct impurecord {
     enum pi_reg_states reg_state;
     ims_subscription *s; 			/**< subscription to which it belongs 		*/
     str ccf1, ccf2, ecf1, ecf2; 	/**< charging functions						*/
-    ucontact_t* newcontacts[MAX_CONTACTS_PER_IMPU];
-    int num_contacts;
+    impu_contact_holder_t linked_contacts;
     reg_subscriber *shead, *stail; 	/**< list of subscribers attached			*/
     time_t expires; 				/*!< timer when this IMPU expires - currently only used for unreg IMPU */
     int send_sar_on_delete;			/* used to distinguish between explicit contact removal and contact expiry - SAR only sent on contact expiry*/

@@ -137,8 +137,10 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
 
     i = 0;
 
-    if (impu_rec->num_contacts > 0 && impu_rec->newcontacts[0]) {
-	while (i < MAX_CONTACTS_PER_IMPU && (contact = impu_rec->newcontacts[i++])) {
+	
+	impucontact = impu_rec->linked_contacts.head;
+	while (impucontact) {
+		contact = impucontact->contact;
 	    //contact is not null terminated so we need to create a null terminated version
 	    if (!contact_buf.s || (contact_buf.len <= contact->c.len)) {
 		if (contact_buf.s && contact_buf.len <= contact->c.len) {
@@ -170,7 +172,7 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
 		unlock_udomain(domain, &impu);
 		return;
 	    }
-	    contact = contact->next;
+	    impucontact = impucontact->next;
 	}
     }
 
