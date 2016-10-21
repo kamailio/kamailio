@@ -1,4 +1,4 @@
-/* 
+/*
  * ALIAS_DB Module
  *
  * Copyright (C) 2004 Voice Sistem SRL
@@ -58,8 +58,11 @@ static int find_fixup(void** param, int param_no);
 
 static int w_alias_db_lookup1(struct sip_msg* _msg, char* _table, char* p2);
 static int w_alias_db_lookup2(struct sip_msg* _msg, char* _table, char* flags);
-static int w_alias_db_find(struct sip_msg* _msg, char* _table, char* _in,
+static int w_alias_db_find3(struct sip_msg* _msg, char* _table, char* _in,
+		char* _out);
+static int w_alias_db_find4(struct sip_msg* _msg, char* _table, char* _in,
 		char* _out, char* flags);
+
 
 /* Module parameter variables */
 static str db_url       = str_init(DEFAULT_RODB_URL);
@@ -80,9 +83,9 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE|FAILURE_ROUTE},
 	{"alias_db_lookup", (cmd_function)w_alias_db_lookup2, 2, lookup_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE},
-	{"alias_db_find", (cmd_function)w_alias_db_find, 3, find_fixup, 0,
+	{"alias_db_find", (cmd_function)w_alias_db_find3, 3, find_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"alias_db_find", (cmd_function)w_alias_db_find, 4, find_fixup, 0,
+	{"alias_db_find", (cmd_function)w_alias_db_find4, 4, find_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"bind_alias_db",   (cmd_function)bind_alias_db, 1, 0, 0,
 		0},
@@ -291,7 +294,26 @@ static int w_alias_db_lookup2(struct sip_msg* _msg, char* _table, char* flags)
 	return alias_db_lookup_ex(_msg, table_s, (unsigned long)flags);
 }
 
-static int w_alias_db_find(struct sip_msg* _msg, char* _table, char* _in,
+static int w_alias_db_find3(struct sip_msg* _msg, char* _table, char* _in,
+		char* _out)
+{
+	str table_s;
+	unsigned long flags;
+
+	flags = 0;
+	if(alias_db_use_domain) {
+		flags |= ALIAS_DOMAIN_FLAG;
+	}
+
+	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0) {
+		LM_ERR("invalid table parameter\n");
+		return -1;
+	}
+
+	return alias_db_find(_msg, table_s, _in, _out, (char*)flags);
+}
+
+static int w_alias_db_find4(struct sip_msg* _msg, char* _table, char* _in,
 		char* _out, char* flags)
 {
 	str table_s;
