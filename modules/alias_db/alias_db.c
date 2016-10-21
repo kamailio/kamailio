@@ -1,6 +1,4 @@
 /* 
- * $Id$
- *
  * ALIAS_DB Module
  *
  * Copyright (C) 2004 Voice Sistem SRL
@@ -17,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -58,8 +56,10 @@ static int mod_init(void);
 static int lookup_fixup(void** param, int param_no);
 static int find_fixup(void** param, int param_no);
 
-static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* flags);
-static int w_alias_db_find(struct sip_msg* _msg, char* _table, char* _in, char* _out, char* flags);
+static int w_alias_db_lookup1(struct sip_msg* _msg, char* _table, char* p2);
+static int w_alias_db_lookup2(struct sip_msg* _msg, char* _table, char* flags);
+static int w_alias_db_find(struct sip_msg* _msg, char* _table, char* _in,
+		char* _out, char* flags);
 
 /* Module parameter variables */
 static str db_url       = str_init(DEFAULT_RODB_URL);
@@ -76,9 +76,9 @@ db_func_t adbf;  /* DB functions */
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"alias_db_lookup", (cmd_function)w_alias_db_lookup, 1, lookup_fixup, 0,
+	{"alias_db_lookup", (cmd_function)w_alias_db_lookup1, 1, lookup_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE},
-	{"alias_db_lookup", (cmd_function)w_alias_db_lookup, 2, lookup_fixup, 0,
+	{"alias_db_lookup", (cmd_function)w_alias_db_lookup2, 2, lookup_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE},
 	{"alias_db_find", (cmd_function)w_alias_db_find, 3, find_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
@@ -261,41 +261,58 @@ static void destroy(void)
 	}
 }
 
-static int w_alias_db_lookup(struct sip_msg* _msg, char* _table, char* flags)
+static int w_alias_db_lookup1(struct sip_msg* _msg, char* _table, char* p2)
 {
-        str table_s;
+	str table_s;
+	unsigned long flags;
 
-        if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
-        {
-                LM_ERR("invalid table parameter\n");
-                return -1;
-        }
+	flags = 0;
+	if(alias_db_use_domain) {
+		flags |= ALIAS_DOMAIN_FLAG;
+	}
 
-        return alias_db_lookup_ex(_msg, table_s, (unsigned long)flags);
+	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0) {
+		LM_ERR("invalid table parameter\n");
+		return -1;
+	}
+
+	return alias_db_lookup_ex(_msg, table_s, flags);
 }
 
-static int w_alias_db_find(struct sip_msg* _msg, char* _table, char* _in, char* _out, char* flags)
+static int w_alias_db_lookup2(struct sip_msg* _msg, char* _table, char* flags)
 {
-        str table_s;
+	str table_s;
 
-        if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
-        {
-                LM_ERR("invalid table parameter\n");
-                return -1;
-        }
+	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0) {
+		LM_ERR("invalid table parameter\n");
+        return -1;
+	}
 
-        return alias_db_find(_msg, table_s, _in, _out, flags);
+	return alias_db_lookup_ex(_msg, table_s, (unsigned long)flags);
+}
+
+static int w_alias_db_find(struct sip_msg* _msg, char* _table, char* _in,
+		char* _out, char* flags)
+{
+	str table_s;
+
+	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0) {
+		LM_ERR("invalid table parameter\n");
+		return -1;
+	}
+
+	return alias_db_find(_msg, table_s, _in, _out, flags);
 }
 
 int bind_alias_db(struct alias_db_binds *pxb)
 {
-        if (pxb == NULL) {
-            LM_WARN("bind_alias_db: Cannot load alias_db API into a NULL pointer\n");
-            return -1;
-        }
+	if (pxb == NULL) {
+		LM_WARN("bind_alias_db: Cannot load alias_db API into a NULL pointer\n");
+		return -1;
+	}
 
-        pxb->alias_db_lookup = alias_db_lookup;
-        pxb->alias_db_lookup_ex = alias_db_lookup_ex;
-        pxb->alias_db_find = alias_db_find;
-        return 0;
+	pxb->alias_db_lookup = alias_db_lookup;
+	pxb->alias_db_lookup_ex = alias_db_lookup_ex;
+	pxb->alias_db_find = alias_db_find;
+	return 0;
 }
