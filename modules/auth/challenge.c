@@ -162,18 +162,16 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 
 	strip_realm(realm);
 	if (realm) {
-		DEBUG("build_challenge_hf: realm='%.*s'\n", realm->len, realm->s);
+		LM_DBG("realm='%.*s'\n", realm->len, realm->s);
 	}
 	if (nonce) {
-		DEBUG("build_challenge_hf: nonce='%.*s'\n", nonce->len, nonce->s);
+		LM_DBG("nonce='%.*s'\n", nonce->len, nonce->s);
 	}
 	if (algorithm) {
-		DEBUG("build_challenge_hf: algorithm='%.*s'\n", algorithm->len,
-				algorithm->s);
+		LM_DBG("algorithm='%.*s'\n", algorithm->len, algorithm->s);
 	}
 	if (qop && qop->qop_parsed != QOP_UNSPEC) {
-		DEBUG("build_challenge_hf: qop='%.*s'\n", qop->qop_str.len,
-				qop->qop_str.s);
+		LM_DBG("qop='%.*s'\n", qop->qop_str.len, qop->qop_str.s);
 	}
 
 	if (hftype == HDR_PROXYAUTH_T) {
@@ -220,7 +218,7 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 	hf.len += CRLF_LEN;
 	p = hf.s = pkg_malloc(hf.len);
 	if (!hf.s) {
-		ERR("auth: No memory left (%d bytes)\n", hf.len);
+		LM_ERR("No memory left (%d bytes)\n", hf.len);
 		return -1;
 	}
 
@@ -239,8 +237,7 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 		l=nonce_len;
 		if (calc_new_nonce(p, &l, cfg, msg) != 0)
 		{
-			ERR("auth: calc_nonce failed (len %d, needed %d)\n",
-					nonce_len, l);
+			LM_ERR("calc_nonce failed (len %d, needed %d)\n", nonce_len, l);
 			pkg_free(hf.s);
 			return -1;
 		}
@@ -308,7 +305,7 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 	val.s = hf;
 	if(add_avp(challenge_avpid.flags | AVP_VAL_STR, challenge_avpid.name, val)
 			< 0) {
-		ERR("auth: Error while creating attribute with challenge\n");
+		LM_ERR("Error while creating attribute with challenge\n");
 		pkg_free(hf.s);
 		return -1;
 	}

@@ -71,35 +71,35 @@ int init_ot_nonce()
 	}
 	size=1UL<<otn_in_flight_k; /* ROUNDDOWN to 2^otn_in_flight_k */
 	if (size < MIN_OTN_IN_FLIGHT){
-		WARN("auth: one-time-nonce maximum in-flight nonces is very low (%d),"
+		LM_WARN("one-time-nonce maximum in-flight nonces is very low (%d),"
 				" consider increasing otn_in_flight_no to at least %d\n",
 				orig_array_size, MIN_OTN_IN_FLIGHT);
 	}
 	if (size > MAX_OTN_IN_FLIGHT){
-		WARN("auth: one-time-nonce maximum in-flight nonces is too high (%d),"
+		LM_WARN("one-time-nonce maximum in-flight nonces is too high (%d),"
 				" consider decreasing otn_in_flight_no to at least %d\n",
 				orig_array_size, MAX_OTN_IN_FLIGHT);
 	}
 	if (size!=otn_in_flight_no){
 		if (orig_array_size!=0)
-			INFO("auth: otn_in_flight_no rounded down to %ld\n", size);
+			LM_INFO("otn_in_flight_no rounded down to %ld\n", size);
 		else
-			INFO("auth: otn_in_flight_no set to %ld\n", size);
+			LM_INFO("otn_in_flight_no set to %ld\n", size);
 	}
 	max_mem=shm_available();
 	if (size/8 >= max_mem){
-		ERR("auth: otn_in_flight_no (%ld) is too big for the configured "
+		LM_ERR("otn_in_flight_no (%ld) is too big for the configured "
 				"amount of shared memory (%ld bytes)\n", size, max_mem);
 		return -1;
 	}else if (size/8 >= max_mem/2){
-		WARN("auth: the currently configured otn_in_flight_no (%ld)  "
+		LM_WARN("the currently configured otn_in_flight_no (%ld)  "
 				"would use more then 50%% of the available shared"
 				" memory(%ld bytes)\n", size, max_mem);
 	}
 	otn_in_flight_no=size;
 
 	if (nid_pool_no>=otn_in_flight_no/(8*sizeof(otn_cell_t))){
-		ERR("auth: nid_pool_no (%d) too high for the configured "
+		LM_ERR("nid_pool_no (%d) too high for the configured "
 				"otn_in_flight_no (%d)\n", nid_pool_no, otn_in_flight_no);
 		return -1;
 	}
@@ -110,14 +110,14 @@ int init_ot_nonce()
 	assert(1<<(otn_partition_k+nid_pool_k) == otn_in_flight_no);
 
 	if ((nid_t)otn_partition_size >= ((nid_t)(-1)/NID_INC)){
-		ERR("auth: otn_in_flight_no too big, try decreasing it or increasing"
+		LM_ERR("otn_in_flight_no too big, try decreasing it or increasing"
 				"the number of pools/partitions, such that "
 				"otn_in_flight_no/nid_pool_no < %d\n",
 				(unsigned int)((nid_t)(-1)/NID_INC));
 		return -1;
 	}
 	if (otn_partition_size  < MIN_OTN_PARTITION){
-		WARN("auth: one-time-nonces in-flight nonces very low,"
+		LM_WARN("one-time-nonces in-flight nonces very low,"
 				" consider either decreasing nid_pool_no (%d) or "
 				" increasing otn_array_size (%d) such that "
 				"otn_array_size/nid_pool_no >= %d\n",
@@ -128,7 +128,7 @@ int init_ot_nonce()
 	 *  access it as an otn_cell_t array */
 	otn_array=shm_malloc(ROUND2TYPE((otn_in_flight_no+7)/8, otn_cell_t));
 	if (otn_array==0){
-		ERR("auth: init_ot_nonce: memory allocation failure, consider"
+		LM_ERR("init_ot_nonce: memory allocation failure, consider"
 				" either decreasing otn_in_flight_no of increasing the"
 				" the shared memory amount\n");
 		goto error;
