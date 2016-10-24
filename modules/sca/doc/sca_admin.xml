@@ -288,7 +288,7 @@ modparam("sca", "onhold_bflag", 15)
 		<title><varname>server_address</varname> (string)</title>
 		<para>
 		The server address which will become the value of Contact header filed
-		for NOTIFY messages.
+		for reply messages.
 		</para>
 		<para>
 		<emphasis>

@@ -1377,7 +1377,12 @@ int sca_subscription_reply(sca_mod *scam, int status_code, char *status_msg,
 		extra_headers.len = len;
 
 		SCA_STR_APPEND_CSTR(&extra_headers, "Contact: ");
-		SCA_STR_APPEND(&extra_headers, &REQ_LINE(msg).uri);
+		if (sca->cfg->server_address != NULL) {
+			SCA_STR_APPEND( &extra_headers, sca->cfg->server_address);
+		}
+		else {
+			SCA_STR_APPEND( &extra_headers, &REQ_LINE( msg ).uri );
+		}
 		SCA_STR_APPEND_CSTR(&extra_headers, CRLF);
 
 		SCA_STR_COPY_CSTR(&extra_headers,
