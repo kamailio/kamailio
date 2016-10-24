@@ -428,15 +428,18 @@ int jsonrpc_send(str conn, jsonrpc_request_t* req, bool notify_only)
 	if(ns) pkg_free(ns);
 	if(json) free(json);
 
-	if (sent && notify_only == false) {
+	if (sent) {
+		if (notify_only == true) { // free the request if using janssonrpc_notification function
+			free_request(req);
+		} else {
+			const struct timeval tv = ms_to_tv(req->timeout);
 
-		const struct timeval tv = ms_to_tv(req->timeout);
-
-		req->timeout_ev = evtimer_new(global_ev_base, timeout_cb, (void*)req);
-		if(event_add(req->timeout_ev, &tv)<0) {
-			ERR("event_add failed while setting request timer (%s).",
-					strerror(errno));
-			return -1;
+			req->timeout_ev = evtimer_new(global_ev_base, timeout_cb, (void*)req);
+			if(event_add(req->timeout_ev, &tv)<0) {
+				ERR("event_add failed while setting request timer (%s).",
+						strerror(errno));
+				return -1;
+			}
 		}
 	}
 
