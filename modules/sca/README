@@ -261,8 +261,9 @@ modparam( "sca", "db_update_interval", 120 )
 
 3.8. onhold_bflag (integer)
 
-   Which branch flag should be used by the module to identify if the call
-   is on-hold instead of parsing the sdp.
+   When bflag is set the media will be treated as on-hold and sdp parse
+   will be skipped. If the bflag is not set the sdp will be parsed to
+   detect on-hold.
 
    Default value is -1 (disabled).
 
