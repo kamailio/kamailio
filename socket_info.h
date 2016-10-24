@@ -44,6 +44,8 @@
 int socket2str(char* s, int* len, struct socket_info* si);
 int socketinfo2str(char* s, int* len, struct socket_info* si, int mode);
 
+/* Helper macro that results in the default port based on the protocol */
+#define proto_default_port(proto) ((proto==PROTO_TLS)?SIPS_PORT:SIP_PORT)
 
 /* struct socket_info is defined in ip_addr.h */
 
