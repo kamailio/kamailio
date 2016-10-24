@@ -178,60 +178,28 @@ int sca_get_msg_to_header(sip_msg_t *msg, struct to_body **to)
 	return (0);
 }
 
-int sca_get_pv_from_header(sip_msg_t *msg, struct to_body **from, pv_spec_t *sp)
+/*
+ * caller needs to call free_to for *body
+ */
+int sca_build_to_body_from_uri(sip_msg_t *msg, struct to_body **body, str *uri)
 {
-	struct to_body parsed_from;
-	pv_value_t pv_val;
-
 	assert(msg != NULL);
-	assert(from != NULL);
-	assert(sp != NULL);
+	assert(body != NULL);
+	assert(uri != NULL);
 
-	if (pv_get_spec_value(msg, sp, &pv_val) < 0) {
-		LM_ERR("can't get value from to_pvar\n");
-		return (-1);
+	*body = pkg_malloc(sizeof(struct to_body));
+	if(*body == NULL) {
+		LM_ERR("cannot allocate pkg memory\n");
+		return(-1);
 	}
-	if (pv_val.flags & PV_VAL_STR) {
-		parse_to(pv_val.rs.s, pv_val.rs.s + pv_val.rs.len + 1, &parsed_from);
-		if (parsed_from.error != PARSE_OK) {
-			LM_ERR("Bad From value from from_pvar\n");
-			return (-1);
-		}
-		*from = &parsed_from;
-		return (0);
-	}
-	else {
-		LM_ERR("value from from_pvar is not a string\n");
-	}
-	return (-1);
-}
 
-int sca_get_pv_to_header(sip_msg_t *msg, struct to_body **to, pv_spec_t *sp)
-{
-	struct to_body parsed_to;
-	pv_value_t pv_val;
-
-	assert(msg != NULL);
-	assert(to != NULL);
-	assert(sp != NULL);
-
-	if (pv_get_spec_value(msg, sp, &pv_val) < 0) {
-		LM_ERR("can't get value from to_pvar\n");
-		return (-1);
+	parse_to(uri->s, uri->s + uri->len + 1, *body);
+	if ((*body)->error != PARSE_OK) {
+		LM_ERR("Bad uri value[%.*s]\n", STR_FMT(uri));
+		free_to(*body);
+		return(-1);
 	}
-	if (pv_val.flags & PV_VAL_STR) {
-		parse_to(pv_val.rs.s, pv_val.rs.s + pv_val.rs.len + 1, &parsed_to);
-		if (parsed_to.error != PARSE_OK) {
-			LM_ERR("Bad To value from to_pvar\n");
-			return (-1);
-		}
-		*to = &parsed_to;
-		return (0);
-	}
-	else {
-		LM_ERR("value from to_pvar is not a string\n");
-	}
-	return (-1);
+	return (0);
 }
 
 /*
