@@ -827,8 +827,9 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 
 			if (!use_ob) {
-				si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
-				if (si) {
+				if ((si = grep_sock_info( &puri.host, puri.port_no?puri.port_no:proto_default_port(puri.proto), puri.proto)) != 0) {
+					set_force_socket(_m, si);
+				} else if ((si = grep_sock_info( &puri.host, puri.port_no, puri.proto)) != 0) {
 					set_force_socket(_m, si);
 				} else {
 					if (enable_socket_mismatch_warning) {
