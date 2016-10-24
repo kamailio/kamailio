@@ -1082,14 +1082,17 @@ int sca_subscription_from_request(sca_mod *scam, sip_msg_t *msg, int event_type,
 				goto error;
 			}
 		}
+		if (sca_uri_extract_aor(ruri, &req_sub->target_aor) < 0) {
+			LM_ERR("Failed to extract AoR from RURI %.*s\n", STR_FMT(ruri));
+			goto error;
+		}
+	}
+	else {
+		/* we are in-dialog */
+		req_sub->target_aor = to->uri;
 	}
 
 	req_sub->subscriber = contact_uri;
-	if (sca_uri_extract_aor(ruri, &req_sub->target_aor) < 0) {
-		LM_ERR("Failed to extract AoR from RURI %.*s\n",
-				STR_FMT(ruri));
-		goto error;
-	}
 	req_sub->event = event_type;
 	req_sub->index = SCA_CALL_INFO_APPEARANCE_INDEX_ANY;
 	req_sub->expires = expires;
