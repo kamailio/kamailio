@@ -425,12 +425,30 @@ static int sca_call_info_update_1_f(sip_msg_t* msg, char* p1) {
 	return sca_call_info_update(msg, p1, NULL, NULL);
 }
 static int sca_call_info_update_2_f(sip_msg_t* msg, char* p1, char* p2) {
-	return sca_call_info_update(msg, p1, p2, NULL);
+	str uri_to = STR_NULL;
+	if(get_str_fparam(&uri_to, msg, (gparam_p)p2)!=0)
+	{
+		LM_ERR("unable to get value from param pvar_to\n");
+		return -1;
+	}
+	return sca_call_info_update(msg, p1, &uri_to, NULL);
 }
 static int sca_call_info_update_3_f(sip_msg_t* msg,
 	char* p1, char* p2, char * p3)
 {
-	return sca_call_info_update(msg, p1, p2, p3);
+	str uri_to = STR_NULL;
+	str uri_from = STR_NULL;
+	if(get_str_fparam(&uri_to, msg, (gparam_p)p2)!=0)
+	{
+		LM_ERR("unable to get value from param pvar_to\n");
+		return -1;
+	}
+	if(get_str_fparam(&uri_from, msg, (gparam_p)p3)!=0)
+	{
+		LM_ERR("unable to get value from param pvar_from\n");
+		return -1;
+	}
+	return sca_call_info_update(msg, p1, &uri_to, &uri_from);
 }
 
 int fixup_ciu(void **param, int param_no)

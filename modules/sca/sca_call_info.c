@@ -1816,7 +1816,7 @@ struct sca_call_info_dispatch call_info_dispatch[] = {
 #define SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC	(1 << 0)
 #define SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC	(1 << 1)
 
-int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
+int sca_call_info_update(sip_msg_t *msg, char *p1, str *uri_to, str *uri_from)
 {
 	sca_call_info call_info;
 	hdr_field_t *call_info_hdr;
@@ -1827,6 +1827,7 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
 	str to_aor = STR_NULL;
 	str contact_uri = STR_NULL;
 	int aor_flags = SCA_CALL_INFO_UPDATE_FLAG_DEFAULT;
+	int to_body_flags = SCA_CALL_INFO_UPDATE_FLAG_DEFAULT;
 	int n_dispatch;
 	int i;
 	int method;
@@ -1892,25 +1893,33 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
 		}
 	}
 
-	if (p3 != NULL) {
-		if (sca_get_pv_from_header(msg, &from, (pv_spec_t *) p3) < 0) {
-			LM_ERR("Bad From pvar\n");
+	if (uri_from != NULL) {
+		if(sca_build_to_body_from_uri(msg, &from, uri_from)<0){
+			LM_ERR("Bad From uri from param\n");
 			return (-1);
 		}
+		LM_DBG("from[%.*s] param\n", STR_FMT(uri_from));
+		to_body_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
+		from_aor.s = uri_from->s;
+		from_aor.len = uri_from->len;
 	}
 	else if (sca_get_msg_from_header(msg, &from) < 0) {
 		LM_ERR("Bad From header\n");
 		return (-1);
 	}
-	if (p2 != NULL) {
-		if (sca_get_pv_to_header(msg, &to, (pv_spec_t *) p2) < 0) {
-			LM_ERR("Bad To pvar\n");
-			return (-1);
+	if (uri_to != NULL) {
+		if(sca_build_to_body_from_uri(msg, &to, uri_to)<0){
+			LM_ERR("Bad From uri to param\n");
+			goto done;
 		}
+		LM_DBG("to[%.*s] param\n", STR_FMT(uri_to));
+		to_body_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
+		to_aor.s = uri_to->s;
+		to_aor.len = uri_to->len;
 	}
 	else if (sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR("Bad To header\n");
-		return (-1);
+		goto done;
 	}
 
 	memset(&c_uri, 0, sizeof(sip_uri_t));
@@ -1920,22 +1929,24 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
 		if (parse_uri(contact_uri.s, contact_uri.len, &c_uri) < 0) {
 			LM_ERR("Failed to parse Contact URI %.*s\n",
 					STR_FMT(&contact_uri));
-			return (-1);
+			rc = -1;
+			goto done;
 		}
 	} else if (rc < 0) {
 		LM_ERR("Bad Contact\n");
-		return (-1);
+		goto done;
 	}
 	// reset rc to -1 so we don't end up returning 0 to the script
 	rc = -1;
 
 	// reconcile mismatched Contact users and To/From URIs
 	if (msg->first_line.type == SIP_REQUEST) {
-		if (sca_create_canonical_aor(msg, &from_aor) < 0) {
-			return (-1);
+		if (uri_from==NULL) {
+			if (sca_create_canonical_aor(msg, &from_aor) < 0) {
+				goto done;
+			}
+			aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
 		}
-		aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
-
 		if (sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
 			LM_ERR("Failed to extract AoR from To URI %.*s\n",
 					STR_FMT(&to->uri));
@@ -1947,11 +1958,16 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
 					STR_FMT(&from->uri));
 			goto done;
 		}
-		if (sca_create_canonical_aor(msg, &to_aor) < 0) {
-			return (-1);
+		if (uri_to==NULL) {
+			if (sca_create_canonical_aor(msg, &to_aor) < 0) {
+				goto done;
+			}
+			aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
 		}
-		aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
 	}
+
+	LM_DBG("to_aor[%.*s] from_aor[%.*s]\n",
+		STR_FMT(&to_aor), STR_FMT(&from_aor));
 
 	// early check to see if we're dealing with any SCA endpoints
 	if (sca_uri_is_shared_appearance(sca, &from_aor)) {
@@ -1985,7 +2001,7 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
 
 	if (sca_call_info_header_remove(msg) < 0) {
 		LM_ERR("Failed to remove Call-Info header\n");
-		return (-1);
+		goto done;
 	}
 
 	if (call_info.ua_shared == SCA_CALL_INFO_SHARED_NONE) {
@@ -2014,6 +2030,16 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2, char *p3)
 	if ((aor_flags & SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC)) {
 		if (to_aor.s != NULL) {
 			pkg_free(to_aor.s);
+		}
+	}
+	if ((to_body_flags & SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC)) {
+		if (from != NULL) {
+			free_to(from);
+		}
+	}
+	if ((to_body_flags & SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC)) {
+		if (to != NULL) {
+			free_to(to);
 		}
 	}
 
