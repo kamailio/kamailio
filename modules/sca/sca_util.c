@@ -444,8 +444,10 @@ int sca_call_is_held(sip_msg_t *msg)
 	int rc;
 
 	if(sca->cfg->onhold_bflag >= 0) {
-		LM_DBG("sca_call_is_held: skip parse_sdp and use onhold_bflag\n");
-		return isbflagset(0, (flag_t)sca->cfg->onhold_bflag);
+		if (isbflagset(0, (flag_t)sca->cfg->onhold_bflag)==1) {
+			LM_DBG("onhold_bflag set, skip parse_sdp and set held\n");
+			return ( 1 );
+		}
 	}
 	rc = parse_sdp(msg);
 	if (rc < 0) {
@@ -464,6 +466,7 @@ int sca_call_is_held(sip_msg_t *msg)
 				stream != NULL;
 				n_str++, stream = get_sdp_stream(msg, n_sess, n_str)) {
 			if (stream->is_on_hold) {
+				LM_DBG("sca_call_is_held: parse_sdp detected stream is on hold\n");
 				is_held = 1;
 				goto done;
 			}
