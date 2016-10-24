@@ -274,7 +274,7 @@ modparam("sca", "onhold_bflag", 15)
 3.9. server_address (string)
 
    The server address which will become the value of Contact header filed
-   for NOTIFY messages.
+   for reply messages.
 
    Default value is "" (disabled).
 
