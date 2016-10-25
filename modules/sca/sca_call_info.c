@@ -1900,8 +1900,11 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, str *uri_to, str *uri_from)
 		}
 		LM_DBG("from[%.*s] param\n", STR_FMT(uri_from));
 		to_body_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
-		from_aor.s = uri_from->s;
-		from_aor.len = uri_from->len;
+		if (sca_uri_extract_aor(&from->uri, &from_aor) < 0) {
+			LM_ERR("Failed to extract AoR from From URI %.*s\n",
+					STR_FMT(&from->uri));
+			goto done;
+		}
 	}
 	else if (sca_get_msg_from_header(msg, &from) < 0) {
 		LM_ERR("Bad From header\n");
@@ -1914,8 +1917,11 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, str *uri_to, str *uri_from)
 		}
 		LM_DBG("to[%.*s] param\n", STR_FMT(uri_to));
 		to_body_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
-		to_aor.s = uri_to->s;
-		to_aor.len = uri_to->len;
+		if (sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
+			LM_ERR("Failed to extract AoR from To URI %.*s\n",
+					STR_FMT(&to->uri));
+			goto done;
+		}
 	}
 	else if (sca_get_msg_to_header(msg, &to) < 0) {
 		LM_ERR("Bad To header\n");
@@ -1947,16 +1953,20 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, str *uri_to, str *uri_from)
 			}
 			aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
 		}
-		if (sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
-			LM_ERR("Failed to extract AoR from To URI %.*s\n",
-					STR_FMT(&to->uri));
-			goto done;
+		if (uri_to==NULL) {
+			if (sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
+				LM_ERR("Failed to extract AoR from To URI %.*s\n",
+						STR_FMT(&to->uri));
+				goto done;
+			}
 		}
 	} else {
-		if (sca_uri_extract_aor(&from->uri, &from_aor) < 0) {
-			LM_ERR("Failed to extract AoR from From URI %.*s\n",
-					STR_FMT(&from->uri));
-			goto done;
+		if (uri_from==NULL) {
+			if (sca_uri_extract_aor(&from->uri, &from_aor) < 0) {
+				LM_ERR("Failed to extract AoR from From URI %.*s\n",
+						STR_FMT(&from->uri));
+				goto done;
+			}
 		}
 		if (uri_to==NULL) {
 			if (sca_create_canonical_aor(msg, &to_aor) < 0) {
