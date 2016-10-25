@@ -70,7 +70,7 @@ script_var_t* add_var(str *name, int vtype)
 		return 0;
 	}
 	it->name.len = name->len;
-	strncpy(it->name.s, name->s, name->len);
+	memcpy(it->name.s, name->s, name->len);
 	it->name.s[it->name.len] = '\0';
 
 	if(vtype==VAR_TYPE_NULL) {
@@ -133,7 +133,7 @@ script_var_t* set_var_value(script_var_t* var, int_str *value, int flags)
 			}
 			var->v.flags |= VAR_VAL_STR;
 		}
-		strncpy(var->v.value.s.s, value->s.s, value->s.len);
+		memcpy(var->v.value.s.s, value->s.s, value->s.len);
 		var->v.value.s.len = value->s.len;
 		var->v.value.s.s[value->s.len] = '\0';
 	} else {
