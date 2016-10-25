@@ -43,8 +43,13 @@
 #include "dlg_profile.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
+#include "dlg_dmq.h"
 
 extern int dlg_ka_interval;
+
+extern int dlg_enable_dmq;
+extern int dlg_id_offset;
+extern int dlg_id_increment;
 
 /*! global dialog table */
 struct dlg_table *d_table = 0;
@@ -347,6 +352,8 @@ void destroy_dlg(struct dlg_cell *dlg)
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, NULL, NULL, DLG_DIR_NONE, 0);
 
+	if (dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) )
+		dlg_dmq_replicate_action(DLG_DMQ_RM, dlg, 0, 0);
 
 	/* delete the dialog from DB*/
 	if (dlg_db_mode)
@@ -410,6 +417,7 @@ void destroy_dlg_table(void)
 		while (dlg) {
 			l_dlg = dlg;
 			dlg = dlg->next;
+			l_dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
 			destroy_dlg(l_dlg);
 		}
 		lock_destroy(&d_table->entries[i].lock);
