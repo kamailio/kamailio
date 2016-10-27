@@ -125,11 +125,11 @@ static inline int sb_add(struct string_buffer *sb, str *nstr)
 	int rsize = sb->len + nstr->len;
 	int asize;
 	char *newp;
-	
+
 	if (rsize > sb->size) {
 		asize = rsize - sb->size;
-		new_size = sb->size + (asize / sb->increment  + 
-							   (asize % sb->increment > 0)) * sb->increment;
+		new_size = sb->size + (asize / sb->increment
+						+ (asize % sb->increment > 0)) * sb->increment;
 		newp = pkg_malloc(new_size);
 		if (!newp) {
 			ERR("postgres: No memory left\n");
@@ -142,8 +142,10 @@ static inline int sb_add(struct string_buffer *sb, str *nstr)
 		sb->s = newp;
 		sb->size = new_size;
 	}
-	memcpy(sb->s + sb->len, nstr->s, nstr->len);
-	sb->len += nstr->len;
+	if(sb->s) {
+		memcpy(sb->s + sb->len, nstr->s, nstr->len);
+		sb->len += nstr->len;
+	}
 	return 0;
 }
 
