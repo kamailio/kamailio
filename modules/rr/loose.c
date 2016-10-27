@@ -832,10 +832,10 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 					set_force_socket(_m, si);
 				} else {
 					if (enable_socket_mismatch_warning) {
-						LM_WARN("no socket found for match second RR (%.*s)\n",
+						LM_WARN("no socket found to match second RR (%.*s)\n",
 								rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 						if(!is_myself(&puri)) {
-						LM_WARN("second RR uri si not myself (%.*s)\n",
+							LM_WARN("second RR uri is not myself (%.*s)\n",
 								rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
 						}
 					}
