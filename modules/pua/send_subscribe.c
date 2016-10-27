@@ -895,13 +895,13 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 		memcpy(hentity->outbound_proxy->s, subs->outbound_proxy->s, subs->outbound_proxy->len);
 		hentity->outbound_proxy->len= subs->outbound_proxy->len;
 		size+= subs->outbound_proxy->len;
-	}	
+	}
 
 	if(subs->id.s)
 	{
 		CONT_COPY(hentity, hentity->id, subs->id)
 	}
-	
+
 	if(subs->remote_contact.s)
 	{
 		CONT_COPY(hentity, hentity->remote_contact, subs->remote_contact)
@@ -918,11 +918,11 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 		size+= subs->extra_headers->len;
 	}
 	/* copy dialog information */
-	
+
 	CONT_COPY(hentity, hentity->to_tag, subs->to_tag)
 	CONT_COPY(hentity, hentity->from_tag, subs->from_tag)
 	CONT_COPY(hentity, hentity->call_id, subs->call_id)
-	
+
 	if(expires< 0)
 		hentity->desired_expires= 0;
 	else
@@ -930,12 +930,12 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 
 	hentity->flag= subs->flag;
 	hentity->event= subs->event;
-	hentity->ua_flag= hentity->ua_flag;
+	hentity->ua_flag= subs->ua_flag;
 	hentity->cb_param= subs->cb_param;
 
 	return hentity;
 
-}	
+}
 
 
 /**
