@@ -104,6 +104,8 @@ int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq
 	/* received dmq message */
 	LM_DBG("dmq message received\n");
 
+	srjson_InitDoc(&jdoc, NULL);
+
 	if(!msg->content_length) {
 		LM_ERR("no content length header found\n");
 		goto invalid;
@@ -125,7 +127,6 @@ int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq
 	/* parse body */
 	LM_DBG("body: %.*s\n", body.len, body.s);
 
-	srjson_InitDoc(&jdoc, NULL);
 	jdoc.buf = body;
 
 	if(jdoc.root == NULL) {
