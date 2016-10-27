@@ -125,7 +125,7 @@ static inline int find_first_route(struct sip_msg* _m)
 static inline int is_myself(sip_uri_t *_puri)
 {
 	int ret;
-	
+
 	ret = check_self(&_puri->host,
 			_puri->port_no?_puri->port_no:SIP_PORT, 0);/* match all protos*/
 	if (ret < 0) return 0;
@@ -138,7 +138,7 @@ static inline int is_myself(sip_uri_t *_puri)
 		return 0;
 	}
 #endif
-	
+
 	if(ret==1) {
 		/* match on host:port, but if gruu, then fail */
 		if(_puri->gr.s!=NULL)
@@ -831,8 +831,14 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				if (si) {
 					set_force_socket(_m, si);
 				} else {
-					if (enable_socket_mismatch_warning)
-						LM_WARN("no socket found for match second RR\n");
+					if (enable_socket_mismatch_warning) {
+						LM_WARN("no socket found for match second RR (%.*s)\n",
+								rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
+						if(!is_myself(&puri)) {
+						LM_WARN("second RR uri si not myself (%.*s)\n",
+								rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
+						}
+					}
 				}
 			}
 
