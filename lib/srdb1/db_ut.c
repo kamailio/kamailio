@@ -345,7 +345,7 @@ int db_print_where(const db1_con_t* _c, char* _b, const int _l, const db_key_t* 
 		if (_o && strncmp(_o[i], OP_BITWISE_AND, 1) == 0) {
 			char tmp_buf[16];
 			int tmp_len = 15;
-			memset(tmp_buf, '0', 16);
+			memset(tmp_buf, 0, 16);
 			if ((*val2str)(_c, &(_v[i]), tmp_buf, &tmp_len) < 0) {
 				LM_ERR("Error while converting value to string\n");
 				return -1;
