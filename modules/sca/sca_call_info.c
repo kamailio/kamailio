@@ -1822,6 +1822,7 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2)
 	hdr_field_t *call_info_hdr;
 	struct to_body *from;
 	struct to_body *to;
+	sip_uri_t c_uri;
 	str from_aor = STR_NULL;
 	str to_aor = STR_NULL;
 	str contact_uri = STR_NULL;
@@ -1894,30 +1895,45 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2)
 		return (-1);
 	}
 
+	memset(&c_uri, 0, sizeof(sip_uri_t));
+	rc = sca_get_msg_contact_uri(msg, &contact_uri);
+	if (rc > 0) {
+		// Contact header in packet
+		if (parse_uri(contact_uri.s, contact_uri.len, &c_uri) < 0) {
+			LM_ERR("Failed to parse Contact URI %.*s\n",
+					STR_FMT(&contact_uri));
+			return (-1);
+		}
+	} else if (rc < 0) {
+		LM_ERR("Bad Contact\n");
+		return (-1);
+	}
+	// reset rc to -1 so we don't end up returning 0 to the script
+	rc = -1;
+
 	// reconcile mismatched Contact users and To/From URIs
 	if (msg->first_line.type == SIP_REQUEST) {
 		if (sca_create_canonical_aor(msg, &from_aor) < 0) {
 			return (-1);
 		}
+		aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
+
 		if (sca_uri_extract_aor(&to->uri, &to_aor) < 0) {
 			LM_ERR("Failed to extract AoR from To URI %.*s\n",
 					STR_FMT(&to->uri));
 			goto done;
 		}
-		aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_FROM_ALLOC;
 	} else {
-		if (sca_create_canonical_aor(msg, &to_aor) < 0) {
-			return (-1);
-		}
 		if (sca_uri_extract_aor(&from->uri, &from_aor) < 0) {
 			LM_ERR("Failed to extract AoR from From URI %.*s\n",
 					STR_FMT(&from->uri));
 			goto done;
 		}
+		if (sca_create_canonical_aor(msg, &to_aor) < 0) {
+			return (-1);
+		}
 		aor_flags |= SCA_CALL_INFO_UPDATE_FLAG_TO_ALLOC;
 	}
-
-	sca_get_msg_contact_uri(msg, &contact_uri);
 
 	// early check to see if we're dealing with any SCA endpoints
 	if (sca_uri_is_shared_appearance(sca, &from_aor)) {
@@ -1933,14 +1949,14 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, char *p2)
 
 	if (call_info_hdr == NULL) {
 		if (SCA_CALL_INFO_IS_SHARED_CALLER(&call_info) &&
-				msg->first_line.type == SIP_REQUEST) {
+		msg->first_line.type == SIP_REQUEST) {
 			if (!sca_subscription_aor_has_subscribers(SCA_EVENT_TYPE_CALL_INFO,
 					&from_aor)) {
 				call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLER;
 				sca_appearance_unregister(sca, &from_aor);
 			}
 		} else if (SCA_CALL_INFO_IS_SHARED_CALLEE(&call_info) &&
-				msg->first_line.type == SIP_REPLY) {
+		msg->first_line.type == SIP_REPLY) {
 			if (!sca_subscription_aor_has_subscribers(SCA_EVENT_TYPE_CALL_INFO,
 					&to_aor)) {
 				call_info.ua_shared &= ~SCA_CALL_INFO_SHARED_CALLEE;
