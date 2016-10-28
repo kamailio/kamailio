@@ -833,7 +833,7 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 	}
 	hentity->flag= subs->source_flag;
 	hentity->event= subs->event;
-	hentity->ua_flag= subs->ua_flag;
+	hentity->ua_flag= ua_flag;
 	hentity->cb_param= subs->cb_param;
 	return hentity;
 
@@ -930,7 +930,7 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 
 	hentity->flag= subs->flag;
 	hentity->event= subs->event;
-	hentity->ua_flag= subs->ua_flag;
+	hentity->ua_flag= ua_flag;
 	hentity->cb_param= subs->cb_param;
 
 	return hentity;
