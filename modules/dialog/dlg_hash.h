@@ -69,6 +69,7 @@
 
 #define DLG_FLAG_TM            (1<<9) /*!< dialog is set in transaction */
 #define DLG_FLAG_EXPIRED       (1<<10)/*!< dialog is expired */
+#define DLG_FLAG_CHANGED_PROF  (1<<10)/*!< dialog-profiles changed DMQ*/
 
 /* internal flags stored in db */
 #define DLG_IFLAG_TIMEOUTBYE        (1<<0) /*!< send bye on time-out */
@@ -77,6 +78,7 @@
 #define DLG_IFLAG_TIMER_NORESET     (1<<3) /*!< don't reset dialog timers on in-dialog messages reception */
 #define DLG_IFLAG_CSEQ_DIFF         (1<<4) /*!< CSeq changed in dialog */
 #define DLG_IFLAG_PRACK             (1<<5) /*!< PRACK was routed during initial state */
+#define DLG_IFLAG_DMQ_SYNC          (1<<5) /*!< sync this dialog via dmq DMQ*/
 
 #define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
 #define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */

@@ -426,6 +426,12 @@ static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 				srjson_DestroyDoc(&jdoc);
 			}
 			dlg->iflags = (unsigned int)VAL_INT(values+22);
+
+			if (!dlg->bind_addr[DLG_CALLER_LEG] || !dlg->bind_addr[DLG_CALLEE_LEG]) {
+				/* non-local socket, probably not our dialog */
+				dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
+			}
+
 			if(dlg->state==DLG_STATE_DELETED) {
 				/* end_ts used for force clean up not stored - set it to now */
 				dlg->end_ts = (unsigned int)time(0);
