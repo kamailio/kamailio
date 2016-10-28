@@ -299,10 +299,11 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	srjson_t *it = NULL;
 	static ucontact_info_t ci;
 
-	int action, expires, cseq, flags, cflags, q, last_modified, methods, reg_id;
+	int action, expires, cseq, flags, cflags, q, last_modified, reg_id;
 	str aor, ruid, c, received, path, callid, user_agent, instance;
+	unsigned int methods;
 
-	action = expires = cseq = flags = cflags = q = last_modified = methods = reg_id = 0;
+	action = expires = cseq = flags = cflags = q = last_modified = reg_id = methods = 0;
 
 	parse_from_header(msg);
 	body = ((struct to_body*)msg->from->parsed)->uri;
@@ -368,7 +369,7 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 		} else if (strcmp(it->string, "instance")==0) {
 			instance.s = it->valuestring;
 			instance.len = strlen(instance.s);
-		} else if (strcmp(it->string, "expires")==0) { //
+		} else if (strcmp(it->string, "expires")==0) {
 			expires = it->valueint;
 		} else if (strcmp(it->string, "cseq")==0) {
 			cseq = it->valueint;
@@ -381,7 +382,7 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 		} else if (strcmp(it->string, "last_modified")==0) {
 			last_modified = it->valueint;
 		} else if (strcmp(it->string, "methods")==0) {
-			methods = it->valueint;
+			methods = it->valuedouble;
 		} else if (strcmp(it->string, "reg_id")==0) {
 			reg_id = it->valueint;
 		} else {
