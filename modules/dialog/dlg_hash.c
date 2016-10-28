@@ -48,8 +48,6 @@
 extern int dlg_ka_interval;
 
 extern int dlg_enable_dmq;
-extern int dlg_id_offset;
-extern int dlg_id_increment;
 
 /*! global dialog table */
 struct dlg_table *d_table = 0;

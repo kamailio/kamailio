@@ -109,8 +109,6 @@ static int _dlg_track_cseq_updates = 0;
 int dlg_ka_failed_limit = 1;
 
 int dlg_enable_dmq = 0;
-int dlg_id_offset = 1;
-int dlg_id_increment = 1;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
@@ -302,9 +300,6 @@ static param_export_t mod_params[]={
 	{ "db_skip_load",          INT_PARAM, &db_skip_load             },
 	{ "ka_failed_limit",       INT_PARAM, &dlg_ka_failed_limit      },
 	{ "enable_dmq",            INT_PARAM, &dlg_enable_dmq           },
-	{ "id_offset",             INT_PARAM, &dlg_id_offset            },
-	{ "id_increment",          INT_PARAM, &dlg_id_increment         },
-
 	{ 0,0,0 }
 };
 
