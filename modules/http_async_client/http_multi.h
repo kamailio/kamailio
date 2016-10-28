@@ -61,7 +61,7 @@ int multi_timer_cb(CURLM *multi, long timeout_ms, struct http_m_global *g);
 void timer_cb(int fd, short kind, void *userp);
 int sock_cb(CURL *e, curl_socket_t s, int what, void *cbp, void *sockp);
 int check_mcode(CURLMcode code, char *error);
-int new_request(str *query, str *post, http_m_params_t *query_params, http_multi_cbe_t cb, void *param);
+int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb, void *param);
 void check_multi_info(struct http_m_global *g);
 void setsock(struct http_m_cell *cell, curl_socket_t s, CURL* e, int act);
 void addsock(curl_socket_t s, CURL *easy, int action, struct http_m_global *g);

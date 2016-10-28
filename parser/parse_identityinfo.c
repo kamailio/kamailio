@@ -53,14 +53,15 @@ void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 					status=II_URI_BEGIN;
 					mainstatus = II_M_URI_BEGIN;
 					ii_b->uri.s = p + 1;
-				} else
+				} else {
 					goto parseerror;
-					break;
+				}
+				break;
 			case 'h':
 			case 'H': /* "http://" or "https://" part  */
 				switch (status) {
 					case II_URI_BEGIN:
-						if (end - p <= 8 || strncasecmp(p,"http",strlen("http")))
+						if (end - p <= 8 || strncasecmp(p, "http", 4))
 							goto parseerror;
 						p+=4;
 						if (*p == 's' || *p == 'S') p++;
@@ -168,7 +169,7 @@ void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 						p=eat_lws_end(p, end);
 						/*check if the header ends here*/
 						if (p>=end) {
-							LOG(L_ERR, "ERROR: parse_identityinfo: strange EoHF\n");
+							LM_ERR("strange EoHF\n");
 							goto parseerror;
 						}
 						ii_b->error=PARSE_OK;
@@ -201,7 +202,8 @@ void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 						if (mainstatus == II_M_SEMIC) {
 							mainstatus = II_M_TAG;
 							status = II_TAG;
-							if (end - p <= 3 || strncasecmp(p,"alg",strlen("alg")))
+							if (end - p <= 3
+									|| strncasecmp(p,"alg",strlen("alg")))
 								goto parseerror;
 							p+=2;
 						} else
@@ -293,9 +295,9 @@ void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 					case II_URI_IPV4:
 					case II_URI_IPV6:
 						if (isalnum(*p)
-						    || *p == '-'
-						    || *p == '.'
-						    || *p == ':' )
+								|| *p == '-'
+								|| *p == '.'
+								|| *p == ':' )
 						break;
 					case II_START:
 						goto parseerror;
@@ -308,9 +310,8 @@ void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 	return ;
 
 parseerror:
-	LOG( L_ERR , "ERROR: parse_identityinfo: "
-	"unexpected char [%c] in status %d: <<%.*s>> .\n",
-	*p,status, (int)(p-buffer), ZSW(p));
+	LM_ERR("unexpected char [%c] in status %d: <<%.*s>> .\n",
+			*p,status, (int)(p-buffer), ZSW(p));
 	return ;
 }
 
@@ -320,9 +321,9 @@ int parse_identityinfo_header(struct sip_msg *msg)
 
 
 	if ( !msg->identity_info
-		 && (parse_headers(msg,HDR_IDENTITY_INFO_F,0)==-1
-			 || !msg->identity_info) ) {
-		LOG(L_ERR,"ERROR:parse_identityinfo_header: bad msg or missing IDENTITY-INFO header\n");
+			&& (parse_headers(msg,HDR_IDENTITY_INFO_F,0)==-1
+				|| !msg->identity_info) ) {
+		LM_ERR("bad msg or missing IDENTITY-INFO header\n");
 		goto error;
 	}
 
@@ -338,8 +339,8 @@ int parse_identityinfo_header(struct sip_msg *msg)
 	memset(identityinfo_b, 0, sizeof(*identityinfo_b));
 
 	parse_identityinfo(msg->identity_info->body.s,
-					   msg->identity_info->body.s + msg->identity_info->body.len+1,
-					   identityinfo_b);
+			msg->identity_info->body.s + msg->identity_info->body.len+1,
+			identityinfo_b);
 	if (identityinfo_b->error==PARSE_ERROR){
 		free_identityinfo(identityinfo_b);
 		goto error;

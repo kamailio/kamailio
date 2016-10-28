@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) username(str) domain(str) password(str) email_address(str) ha1(str) ha1b(str) rpid(str)
+id(int) username(str) domain(str) password(str) ha1(str) ha1b(str) email_address(str) rpid(str)
 METADATA_KEY
 1 2 
 METADATA_READONLY

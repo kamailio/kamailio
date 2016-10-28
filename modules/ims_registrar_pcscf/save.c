@@ -120,7 +120,10 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 	struct sip_uri puri;
 	struct pcontact_info ci;
 	pcontact_t* pcontact;
-        unsigned short port;
+	unsigned short port, proto;
+	char *alias_start, *p, *port_s, *proto_s;
+	char portbuf[5];
+	str alias_s;
 
 	pcscf_act_time();
 	local_time_now = time_now;
@@ -134,7 +137,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 	memset(&ci, 0, sizeof(struct pcontact_info));
 
 	for (h = rpl->contact; h; h = h->next) {
-		if (h->type == HDR_CONTACT_T && h->parsed)
+		if (h->type == HDR_CONTACT_T && h->parsed) {
 			for (c = ((contact_body_t*) h->parsed)->contacts; c; c = c->next) {
 				expires = calc_contact_expires(c, expires_hdr, local_time_now);
 				if (parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
@@ -149,18 +152,48 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 				ci.service_routes = service_route;
 				ci.num_service_routes = service_route_cnt;
 				ci.reg_state = PCONTACT_REGISTERED|PCONTACT_REG_PENDING|PCONTACT_REG_PENDING_AAR;   //we don't want to add contacts that did not come through us (pcscf)
-
-                                if (c->uri.len > 6 && (_strnistr(c->uri.s, "alias=", c->uri.len))) {
-                                    LM_DBG("contact has an alias - we can use that as the received.... - TODO\n");
-                                }
+				
 				ci.received_host.len = 0;
 				ci.received_host.s = 0;
 				ci.received_port = 0;
 				ci.received_proto = 0;
-				port = puri.port_no?puri.port_no:5060;
-                                ci.via_host = puri.host;
-                                ci.via_port = port;
-                                ci.via_prot = puri.proto;
+				port = puri.port_no ? puri.port_no : 5060;
+				ci.via_host = puri.host;
+				ci.via_port = port;
+				ci.via_prot = puri.proto;
+				ci.searchflag = SEARCH_NORMAL; /* this must be reset for each contact iteration */
+
+				if (puri.params.len > 6 && (alias_start = _strnistr(puri.params.s, "alias=", puri.params.len)) != NULL) {
+					LM_DBG("contact has an alias [%.*s] - we can use that as the received\n", puri.params.len, puri.params.s);
+					alias_s.len = puri.params.len - (alias_start - puri.params.s) - 6;
+					alias_s.s = alias_start + 6;
+					LM_DBG("alias [%.*s]\n", alias_s.len, alias_s.s);
+					p = _strnistr(alias_s.s, "~", alias_s.len);
+					if (p!=NULL) {
+						ci.received_host.s = alias_s.s;
+						ci.received_host.len = p - alias_s.s;
+						LM_DBG("alias(host) [%.*s]\n", ci.received_host.len, ci.received_host.s);
+						port_s = p+1;
+						p = _strnistr(port_s, "~", alias_s.len - ci.received_host.len);
+						if (p!=NULL) {
+							LM_DBG("alias(port) [%.*s]\n", (int)(p - port_s) , port_s);
+							memset(portbuf, 0, 5);
+							memcpy(portbuf, port_s, (p-port_s));
+							port = atoi(portbuf);
+							LM_DBG("alias(port) [%d]\n", port);
+							
+							proto_s = p + 1;
+							memset(portbuf, 0, 5);
+							memcpy(portbuf, proto_s, 1);
+							proto = atoi(portbuf);
+							LM_DBG("alias(proto) [%d]\n", proto);
+							ci.received_port = port;
+							ci.received_proto = proto;
+							ci.searchflag = SEARCH_RECEIVED;
+						}
+					}
+				} 
+				
 				ul.lock_udomain(_d, &puri.host, port, puri.proto);
 				if (ul.get_pcontact(_d, &ci, &pcontact) != 0) { //need to insert new contact
 					if ((expires-local_time_now)<=0) { //remove contact - de-register
@@ -202,6 +235,7 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 next_contact:
 				ul.unlock_udomain(_d, &puri.host, port, puri.proto);
 			}
+		}
 	}
 	return 1;
 }

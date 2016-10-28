@@ -112,7 +112,7 @@ subs_t* search_shtable(shtable_t htable,str callid,str to_tag,
 {
 	subs_t* s;
 
-	s= htable[hash_code].entries->next;
+	s= htable[hash_code].entries?htable[hash_code].entries->next:NULL;
 
 	while(s)
 	{
@@ -292,7 +292,7 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,subs_t* subs)
 	lock_get(&htable[hash_code].lock);
 	
 	ps= htable[hash_code].entries;
-	s= ps->next;
+	s= ps?ps->next:NULL;
 		
 	while(s)
 	{

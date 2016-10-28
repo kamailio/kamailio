@@ -168,7 +168,8 @@ int checkcontact(struct sip_msg* _m, pcontact_t * c) {
  * get PContact-Structure for message
  * (search only once per Request)
  */
-pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d, enum pcontact_reg_states reg_state) {
+
+pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d, enum pcontact_reg_states reg_state, char service_routes[][MAXROUTESIZE], int num_service_routes) {
 	ppublic_t * p;
 	contact_body_t *b = 0;
 	contact_t *ct;
@@ -182,6 +183,7 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d, enum pcontact_reg_st
 	int mustRetryViaSearch = 0;
 	int mustRetryReceivedSearch = 0;
 
+	LM_DBG("number of service routes to look for is %d\n", num_service_routes);
     b = cscf_parse_contacts(_m);
 
     if (_m->first_line.type == SIP_REPLY && _m->contact && _m->contact->parsed && b->contacts) {
@@ -222,12 +224,14 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d, enum pcontact_reg_st
         current_msg_id = _m->id;
         c = NULL;
 	//search_ci.reg_state = PCONTACT_REGISTERED;          //we can do this because this function is always called expecting a REGISTERED contact
-        search_ci.reg_state = reg_state;
+	memset(&search_ci, 0, sizeof(struct pcontact_info));
+    search_ci.reg_state = reg_state;
 	search_ci.received_host.s = received_host.s;
 	search_ci.received_host.len = received_host.len;
 	search_ci.received_port = _m->rcv.src_port;
 	search_ci.received_proto = _m->rcv.proto;
 	search_ci.searchflag = SEARCH_RECEIVED;
+	search_ci.num_service_routes = 0;
 	if (is_registered_fallback2ip == 1) {
 		search_ci.searchflag = SEARCH_NORMAL;
 	} 
@@ -236,6 +240,21 @@ pcontact_t * getContactP(struct sip_msg* _m, udomain_t* _d, enum pcontact_reg_st
 	search_ci.via_prot = proto;
 	search_ci.aor.s = 0;
 	search_ci.aor.len = 0;
+	
+	int size = num_service_routes==0?1:num_service_routes;
+	str s_service_routes[size];
+	int i;
+	for (i=0;i<num_service_routes;i++) {
+		s_service_routes[i].s = service_routes[i];
+		s_service_routes[i].len = strlen(service_routes[i]);
+		LM_DBG("Setting service routes str for pos %d to %.*s", i, s_service_routes[i].len, s_service_routes[i].s);
+	}
+	if (num_service_routes > 0) {
+		LM_DBG("asked to search for specific service routes...\n");
+		search_ci.service_routes = s_service_routes;
+		search_ci.num_service_routes = num_service_routes;
+		search_ci.extra_search_criteria = SEARCH_SERVICE_ROUTES;
+	}
 
 //	b = cscf_parse_contacts(_m);
 tryagain:
@@ -335,30 +354,84 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 	int i;
 	struct hdr_field *hdr;
 	rr_t *r;
-//	char srcip[20];
-//	str received_host;
+	char routes[MAXROUTES][MAXROUTESIZE];
+	unsigned int num_routes = 0;
 	
-        struct via_body * vb;
-        unsigned short port;
-        unsigned short proto;
+	struct via_body * vb;
+	unsigned short port;
+	unsigned short proto;
 	/* Contact not found => not following service-routes */
-	if (c == NULL) return -1;
+//	if (c == NULL) return -1;
 
 	/* Search for the first Route-Header: */
 	if (find_first_route(_m) < 0) return -1;
 
-	LM_DBG("Got %i Route-Headers.\n", c->num_service_routes);
+//	LM_DBG("Got %i Route-Headers.\n", c->num_service_routes);
 
-//	received_host.len = ip_addr2sbuf(&_m->rcv.src_ip, srcip, sizeof(srcip));
-//	received_host.s = srcip;
-        vb = cscf_get_ue_via(_m);
-        port = vb->port?vb->port:5060;
-        proto = vb->proto;
+	vb = cscf_get_ue_via(_m);
+	port = vb->port?vb->port:5060;
+	proto = vb->proto;
 	
 	/* Lock this record while working with the data: */
 	ul.lock_udomain(_d, &vb->host, port, proto);
-        
-	pcontact_t * c = getContactP(_m, _d, PCONTACT_REGISTERED);
+    
+	if (_m->route) {
+		hdr = _m->route;
+		r = (rr_t*)hdr->parsed;
+		//get rid of ourselves from route header
+		if (r) {
+			LM_DBG("Route is %.*s\n", r->nameaddr.uri.len, r->nameaddr.uri.s);
+			while (r && (parse_uri(r->nameaddr.uri.s, r->nameaddr.uri.len, &uri) == 0)
+			  && check_self(&uri.host,uri.port_no?uri.port_no:SIP_PORT,0)) {
+				LM_DBG("Self\n");
+				/* Check for more headers and fail, if it was the last one
+				   Check, if service-routes are indicated.
+				   If yes, request is not following service-routes */
+				if (find_next_route(_m, &hdr) != 0) 
+					r = NULL;
+				else 
+					r = (rr_t*)hdr->parsed;
+				
+				LM_DBG("hdr is %p\n", hdr);
+				LM_DBG("r is %p\n", r);
+				if (r)
+					LM_DBG("Next Route is %.*s\n", r->nameaddr.uri.len, r->nameaddr.uri.s);
+			}
+			
+			int i = 0;
+			while (r) {
+				memset(routes[i],0,MAXROUTESIZE);
+				memcpy(routes[i], r->nameaddr.uri.s, r->nameaddr.uri.len);
+				
+				if (find_next_route(_m, &hdr) != 0) 
+					r = NULL;
+				else 
+					r = (rr_t*)hdr->parsed;
+				
+				i += 1;
+				num_routes += 1;
+			}
+			
+			LM_DBG("num_routes is %d\n", num_routes);
+			for (i=0; i<num_routes; i++) {
+				LM_DBG("route %d for checking is %s\n", i, routes[i]);
+			}
+			pcontact_t * c = getContactP(_m, _d, PCONTACT_REGISTERED, routes, num_routes);
+			if (!c) {
+				LM_DBG("no contact found in usrloc when checking for service route\n");
+				goto error;
+			}
+			
+			LM_DBG("we have a contact which satisifes the routes...\n");
+			ul.unlock_udomain(_d, &vb->host, port, proto);
+			return 1;
+		}
+	} else {
+		LM_DBG("Request doesn't have any route headers to check service-route...ignoring\n");
+		goto error;
+	}
+	
+	pcontact_t * c = getContactP(_m, _d, PCONTACT_REGISTERED, 0, 0);
 	if (!c) {
 		LM_DBG("no contact found in usrloc when checking for service route\n");
 		goto error;
@@ -455,7 +528,7 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 	str new_route_header;
 	struct lump* lmp = NULL;
 	char * buf;
-	pcontact_t * c = getContactP(_m, _d, PCONTACT_REGISTERED);
+	pcontact_t * c = getContactP(_m, _d, PCONTACT_REGISTERED,0 ,0);
 //	char srcip[20];
 //	str received_host;
         struct via_body* vb;
@@ -560,7 +633,7 @@ error:
  * Check, if source is registered.
  */
 int is_registered(struct sip_msg* _m, udomain_t* _d) {
-	if (getContactP(_m, _d, PCONTACT_REGISTERED) != NULL) return 1;
+	if (getContactP(_m, _d, PCONTACT_REGISTERED, 0 ,0) != NULL) return 1;
 	return -1;	
 }
 
@@ -599,7 +672,7 @@ int assert_identity(struct sip_msg* _m, udomain_t* _d, str identity) {
 	}
 	LM_DBG("Identity to assert: %.*s\n", identity.len, identity.s);
 	
-	if (getContactP(_m, _d, PCONTACT_REGISTERED|PCONTACT_REG_PENDING_AAR|PCONTACT_REG_PENDING) != NULL) {
+	if (getContactP(_m, _d, PCONTACT_REGISTERED|PCONTACT_REG_PENDING_AAR|PCONTACT_REG_PENDING, 0, 0) != NULL) {
 		for (p = c->head; p; p = p->next) {
 			LM_DBG("Public identity: %.*s\n", p->public_identity.len, p->public_identity.s);
 			    /* Check length: */
@@ -687,6 +760,8 @@ int pcscf_unregister(udomain_t* _d, str * uri, str * received_host, int received
     	memset(&ci, 0, sizeof (struct pcontact_info));
 
 	pcontact_info_t search_ci;
+	memset(&ci, 0, sizeof(struct pcontact_info));
+	
 	sip_uri_t contact_uri;
         if (parse_uri(uri->s, uri->len, &contact_uri) != 0) {
             LM_WARN("Failed to parse aor [%.*s]\n", uri->len, uri->s);

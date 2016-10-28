@@ -121,7 +121,7 @@ int tps_remove_headers(sip_msg_t *msg, uint32_t hdr)
 			continue;
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0) {
-			LM_ERR("no memory\n");
+			LM_ERR("failed to remove the header\n");
 			return -1;
 		}
 	}
@@ -166,7 +166,7 @@ int tps_add_headers(sip_msg_t *msg, str *hname, str *hbody, int hpos)
 	memcpy(hs.s + hname->len + 2, hbody->s, hbody->len);
 
 	/* add end of header if not present */
-	if(hs.s[hname->len + 2 + hbody->len]!='\n') {
+	if(hs.s[hname->len + 2 + hbody->len - 1]!='\n') {
 		hs.s[hname->len + 2 + hbody->len] = '\r';
 		hs.s[hname->len + 2 + hbody->len+1] = '\n';
 		hs.len += 2;
@@ -637,7 +637,7 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 	int c;
 	str sb;
 
-	if(hbody==NULL || hbody->s==NULL || hbody->len<=0)
+	if(hbody==NULL || hbody->s==NULL || hbody->len<=0 || hbody->s[0]=='\0')
 		return 0;
 
 	if(rev==1) {
@@ -670,7 +670,10 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 	}
 
 	sb = *hbody;
-	if(sb.s[sb.len-1]==',') sb.len--;
+	if(sb.len>0 && sb.s[sb.len-1]==',') sb.len--;
+	trim_zeros_lr(&sb);
+	trim(&sb);
+	if(sb.len>0 && sb.s[sb.len-1]==',') sb.len--;
 	if(tps_add_headers(msg, &hname, &sb, 0)<0) {
 		return -1;
 	}

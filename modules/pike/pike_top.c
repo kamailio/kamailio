@@ -37,7 +37,8 @@ static char buff[PIKE_BUFF_SIZE];
 
 struct TopListItem_t *pike_top_get_root() { return top_list_root; }
 
-char *pike_top_print_addr( unsigned char *ip, int iplen, char *buff, int buffsize )
+char *pike_top_print_addr( unsigned char *ip, int iplen, char *buff,
+		int buffsize )
 {
 	unsigned short *ipv6_ptr = (unsigned short *)ip;
 	memset(buff, 0, PIKE_BUFF_SIZE*sizeof(char));
@@ -52,8 +53,10 @@ char *pike_top_print_addr( unsigned char *ip, int iplen, char *buff, int buffsiz
 	}
 	else {
 		sprintf( buff, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
-				htons(ipv6_ptr[0]), htons(ipv6_ptr[1]), htons(ipv6_ptr[2]), htons(ipv6_ptr[3]),
-				htons(ipv6_ptr[4]), htons(ipv6_ptr[5]), htons(ipv6_ptr[6]), htons(ipv6_ptr[7]));
+				htons(ipv6_ptr[0]), htons(ipv6_ptr[1]), htons(ipv6_ptr[2]),
+				htons(ipv6_ptr[3]),
+				htons(ipv6_ptr[4]), htons(ipv6_ptr[5]), htons(ipv6_ptr[6]),
+				htons(ipv6_ptr[7]));
 	}
 
 	return buff;
@@ -65,9 +68,12 @@ static char *print_addr(unsigned char *ip, int iplen)
 	return pike_top_print_addr(ip, iplen, buff, sizeof(buff));
 }
 
-int pike_top_add_entry( unsigned char *ip_addr, int addr_len, unsigned short leaf_hits[2], unsigned short hits[2], unsigned int expires, node_status_t status )
+int pike_top_add_entry( unsigned char *ip_addr, int addr_len,
+		unsigned short leaf_hits[2], unsigned short hits[2],
+		unsigned int expires, node_status_t status )
 {
-	struct TopListItem_t *new_item = (struct TopListItem_t *)malloc(sizeof(struct TopListItem_t));
+	struct TopListItem_t *new_item
+				= (struct TopListItem_t *)malloc(sizeof(struct TopListItem_t));
 
 	print_addr(ip_addr, addr_len);
 	DBG("pike_top_add_enrty(ip: %s, leaf_hits[%d,%d], hits[%d,%d],"

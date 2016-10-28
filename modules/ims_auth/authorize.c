@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
  * 
@@ -157,7 +155,7 @@ unsigned char get_auth_scheme_type(str scheme) {
     return AUTH_UNKNOWN;
 }
 
-static inline int get_ha1(struct username* _username, str* _domain,
+static int get_ha1(struct username* _username, str* _domain,
         const str* _table, char* _ha1, db1_res_t** res) {
 
     return 0;
@@ -175,7 +173,7 @@ static int digest_authenticate(struct sip_msg* msg, str *realm,
  * Starts the reg_await_timer for an authentication vector.
  * @param av - the authentication vector
  */
-inline void start_reg_await_timer(auth_vector *av) {
+void start_reg_await_timer(auth_vector *av) {
     av->expires = get_ticks() + auth_vector_timeout;
     av->status = AUTH_VECTOR_SENT;
 }
@@ -1087,7 +1085,7 @@ error:
  * Locks the required slot of the auth_data.
  * @param hash - the index of the slot
  */
-inline void auth_data_lock(unsigned int hash) {
+void auth_data_lock(unsigned int hash) {
     lock_get(auth_data[(hash)].lock);
 }
 
@@ -1095,7 +1093,7 @@ inline void auth_data_lock(unsigned int hash) {
  * UnLocks the required slot of the auth_data
  * @param hash - the index of the slot
  */
-inline void auth_data_unlock(unsigned int hash) {
+void auth_data_unlock(unsigned int hash) {
     lock_release(auth_data[(hash)].lock);
 }
 
@@ -1307,9 +1305,11 @@ auth_vector * new_auth_vector(int item_number, str auth_scheme, str authenticate
     x->status = AUTH_VECTOR_UNUSED;
     x->expires = 0;
 
-	base16_ck_len = bin_to_base16(x->ck.s, 16, base16_ck);
-	if (base16_ck_len)
-		LM_DBG("new auth-vector with ck [%s] with status %d\n", base16_ck, x->status);
+	if (x->ck.len > 0 && x->ck.s) {
+		base16_ck_len = bin_to_base16(x->ck.s, 16, base16_ck);
+		if (base16_ck_len)
+			LM_DBG("new auth-vector with ck [%s] with status %d\n", base16_ck, x->status);
+	}
 
 done:
     return x;
@@ -1395,7 +1395,7 @@ void free_auth_userdata(auth_userdata * aud) {
  * @param public_identity - the public identity
  * @returns the hash % Auth_data->size
  */
-inline unsigned int get_hash_auth(str private_identity, str public_identity) {
+unsigned int get_hash_auth(str private_identity, str public_identity) {
 if (av_check_only_impu)
 	return core_hash(&public_identity, 0, act_auth_data_hash_size);
 else
@@ -1689,12 +1689,13 @@ int add_auth_vector(str private_identity, str public_identity, auth_vector * av)
         private_identity.len, private_identity.s, aud->hash);
 
 
-    av->prev = aud->tail;
-    av->next = 0;
+    av->prev = 0;
+    if (aud->head) {
+        av->next = aud->head;
+        aud->head->prev = av;
+    }
 
-    if (!aud->head) aud->head = av;
-    if (aud->tail) aud->tail->next = av;
-    aud->tail = av;
+    aud->head = av;
 
     auth_data_unlock(aud->hash);
     return 1;

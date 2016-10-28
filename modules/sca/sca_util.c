@@ -18,11 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA. 02110-1301 USA
  */
 #include "sca_common.h"
-
+#include "sca.h"
 #include <assert.h>
 
 #include "sca_util.h"
-
+#include "../../dset.h"
 #include "../../parser/sdp/sdp.h"
 
 int sca_get_msg_method(sip_msg_t *msg)
@@ -175,6 +175,30 @@ int sca_get_msg_to_header(sip_msg_t *msg, struct to_body **to)
 
 	*to = t;
 
+	return (0);
+}
+
+/*
+ * caller needs to call free_to for *body
+ */
+int sca_build_to_body_from_uri(sip_msg_t *msg, struct to_body **body, str *uri)
+{
+	assert(msg != NULL);
+	assert(body != NULL);
+	assert(uri != NULL);
+
+	*body = pkg_malloc(sizeof(struct to_body));
+	if(*body == NULL) {
+		LM_ERR("cannot allocate pkg memory\n");
+		return(-1);
+	}
+
+	parse_to(uri->s, uri->s + uri->len + 1, *body);
+	if ((*body)->error != PARSE_OK) {
+		LM_ERR("Bad uri value[%.*s]\n", STR_FMT(uri));
+		free_to(*body);
+		return(-1);
+	}
 	return (0);
 }
 
@@ -419,6 +443,12 @@ int sca_call_is_held(sip_msg_t *msg)
 	int is_held = 0;
 	int rc;
 
+	if(sca->cfg->onhold_bflag >= 0) {
+		if (isbflagset(0, (flag_t)sca->cfg->onhold_bflag)==1) {
+			LM_DBG("onhold_bflag set, skip parse_sdp and set held\n");
+			return ( 1 );
+		}
+	}
 	rc = parse_sdp(msg);
 	if (rc < 0) {
 		LM_ERR("sca_call_is_held: parse_sdp body failed\n");
@@ -436,6 +466,7 @@ int sca_call_is_held(sip_msg_t *msg)
 				stream != NULL;
 				n_str++, stream = get_sdp_stream(msg, n_sess, n_str)) {
 			if (stream->is_on_hold) {
+				LM_DBG("sca_call_is_held: parse_sdp detected stream is on hold\n");
 				is_held = 1;
 				goto done;
 			}

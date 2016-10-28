@@ -184,10 +184,6 @@ void free_http_m_cell(struct http_m_cell *cell)
 
 	if (cell->url) shm_free(cell->url);
 
-	if (cell->post_data) {
-		shm_free(cell->post_data);
-	}
-
 	shm_free(cell);
 }
 

@@ -37,6 +37,8 @@ struct _sca_config {
 	int call_info_max_expires;
 	int line_seize_max_expires;
 	int purge_expired_interval;
+	int onhold_bflag;
+	str *server_address;
 };
 typedef struct _sca_config sca_config;
 

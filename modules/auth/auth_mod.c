@@ -238,7 +238,7 @@ static inline int generate_random_secret(void)
 	sec_rand1 = (char*)pkg_malloc(RAND_SECRET_LEN);
 	sec_rand2 = (char*)pkg_malloc(RAND_SECRET_LEN);
 	if (!sec_rand1 || !sec_rand2) {
-		LOG(L_ERR, "auth:generate_random_secret: No memory left\n");
+		LM_ERR("No memory left\n");
 		if (sec_rand1){
 			pkg_free(sec_rand1);
 			sec_rand1=0;
@@ -286,7 +286,7 @@ static int mod_init(void)
 	if (sec_param == 0) {
 		/* Generate secret using random generator */
 		if (generate_random_secret() < 0) {
-			LOG(L_ERR, "auth:mod_init: Error while generating random secret\n");
+			LM_ERR("Error while generating random secret\n");
 			return -3;
 		}
 	} else {
@@ -301,7 +301,7 @@ static int mod_init(void)
 			secret1.len -= secret2.len;
 			secret2.s = secret1.s + secret1.len;
 			if (secret2.len < 16) {
-				WARN("auth: consider a longer secret when extra auth checks are"
+				LM_WARN("consider a longer secret when extra auth checks are"
 						" enabled (the config secret is divided in 2!)\n");
 			}
 		}
@@ -309,7 +309,7 @@ static int mod_init(void)
 
 	if ((!challenge_attr.s || challenge_attr.len == 0) ||
 			challenge_attr.s[0] != '$') {
-		ERR("auth: Invalid value of challenge_attr module parameter\n");
+		LM_ERR("Invalid value of challenge_attr module parameter\n");
 		return -1;
 	}
 
@@ -317,7 +317,7 @@ static int mod_init(void)
 	attr.len = challenge_attr.len - 1;
 
 	if (parse_avp_ident(&attr, &challenge_avpid) < 0) {
-		ERR("auth: Error while parsing value of challenge_attr module"
+		LM_ERR("Error while parsing value of challenge_attr module"
 				" parameter\n");
 		return -1;
 	}
@@ -325,13 +325,13 @@ static int mod_init(void)
 	parse_qop(&auth_qop);
 	switch(auth_qop.qop_parsed){
 		case QOP_OTHER:
-			ERR("auth: Unsupported qop parameter value\n");
+			LM_ERR("Unsupported qop parameter value\n");
 			return -1;
 		case QOP_AUTH:
 		case QOP_AUTHINT:
 			if (nc_enabled){
 #ifndef USE_NC
-				WARN("auth: nounce count support enabled from config, but"
+				LM_WARN("nounce count support enabled from config, but"
 						" disabled at compile time (recompile with -DUSE_NC)\n");
 				nc_enabled=0;
 #else
@@ -343,14 +343,14 @@ static int mod_init(void)
 			}
 #ifdef USE_NC
 			else{
-				INFO("auth: qop set, but nonce-count (nc_enabled) support"
+				LM_INFO("qop set, but nonce-count (nc_enabled) support"
 						" disabled\n");
 			}
 #endif
 			break;
 		default:
 			if (nc_enabled){
-				WARN("auth: nonce-count support enabled, but qop not set\n");
+				LM_WARN("nonce-count support enabled, but qop not set\n");
 				nc_enabled=0;
 			}
 			break;
@@ -361,7 +361,7 @@ static int mod_init(void)
 		if (init_ot_nonce()!=0)
 			return -1;
 #else
-		WARN("auth: one-time-nonce support enabled from config, but "
+		LM_WARN("one-time-nonce support enabled from config, but "
 				"disabled at compile time (recompile with -DUSE_OT_NONCE)\n");
 		otn_enabled=0;
 #endif /* USE_OT_NONCE */
@@ -378,7 +378,8 @@ static int mod_init(void)
 		calc_response = calc_response_sha256;
 	}
 	else {
-		ERR("auth: Invalid algorithm provided. Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
+		LM_ERR("Invalid algorithm provided."
+				" Possible values are \"\", \"MD5\" or \"SHA-256\"\n");
 		return -1;
 	}
 
@@ -417,8 +418,7 @@ int consume_credentials(struct sip_msg* msg)
 	if (!h) {
 		get_authorized_cred(msg->proxy_auth, &h);
 		if (!h) {
-			LOG(L_ERR, "auth:consume_credentials: No authorized "
-					"credentials found (error in scripts)\n");
+			LM_ERR("No authorized credentials found (error in scripts)\n");
 			return -1;
 		}
 	}
@@ -426,7 +426,7 @@ int consume_credentials(struct sip_msg* msg)
 	len = h->len;
 
 	if (del_lump(msg, h->name.s - msg->buf, len, 0) == 0) {
-		LOG(L_ERR, "auth:consume_credentials: Can't remove credentials\n");
+		LM_ERR("Can't remove credentials\n");
 		return -1;
 	}
 
@@ -567,7 +567,7 @@ end:
 		}
 		if (get_challenge_hf(msg, (cred ? cred->stale : 0),
 					realm, NULL, (auth_algorithm.len ? &auth_algorithm : NULL), qop, hftype, &hf) < 0) {
-			ERR("Error while creating challenge\n");
+			LM_ERR("Error while creating challenge\n");
 			ret = AUTH_ERROR;
 		} else {
 			val.s = hf;
@@ -933,7 +933,7 @@ int auth_challenge_helper(struct sip_msg *msg, str *realm, int flags, int hftype
 	}
 	if (get_challenge_hf(msg, stale, realm, NULL, (auth_algorithm.len ? &auth_algorithm : NULL), qop, hftype, &hf)
 			< 0) {
-		ERR("Error while creating challenge\n");
+		LM_ERR("Error while creating challenge\n");
 		ret = -2;
 		goto error;
 	}

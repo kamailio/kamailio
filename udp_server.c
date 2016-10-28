@@ -55,6 +55,9 @@
 #ifdef USE_RAW_SOCKS
 #include "raw_sock.h"
 #endif /* USE_RAW_SOCKS */
+#ifdef USE_MCAST
+#include <net/if.h>
+#endif /* USE_MCAST */
 
 
 #ifdef DBG_MSG_QA
@@ -210,15 +213,20 @@ int probe_max_receive_buffer( int udp_sock )
 /*
  * Setup multicast receiver
  */
-static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
+static int setup_mcast_rcvr(int sock, union sockaddr_union* addr, char* interface)
 {
-	struct ip_mreq mreq;
+	struct ip_mreqn mreq;
 	struct ipv6_mreq mreq6;
-	
+
 	if (addr->s.sa_family==AF_INET){
 		memcpy(&mreq.imr_multiaddr, &addr->sin.sin_addr, 
 		       sizeof(struct in_addr));
-		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+		if (interface!=0) {
+			mreq.imr_ifindex = if_nametoindex(interface);
+		} else {
+			mreq.imr_ifindex = 0;
+		}
+		mreq.imr_address.s_addr = htonl(INADDR_ANY);
 		
 		if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,&mreq,
 			       sizeof(mreq))==-1){
@@ -229,7 +237,11 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 	} else if (addr->s.sa_family==AF_INET6){
 		memcpy(&mreq6.ipv6mr_multiaddr, &addr->sin6.sin6_addr, 
 		       sizeof(struct in6_addr));
-		mreq6.ipv6mr_interface = 0;
+		if (interface!=0) {
+			mreq6.ipv6mr_interface = if_nametoindex(interface);
+		} else {
+			mreq6.ipv6mr_interface = 0;
+		}
 #ifdef __OS_linux
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq6,
 #else
@@ -321,7 +333,7 @@ int udp_init(struct socket_info* sock_info)
 
 #ifdef USE_MCAST
 	if ((sock_info->flags & SI_IS_MCAST) 
-	    && (setup_mcast_rcvr(sock_info->socket, addr)<0)){
+	    && (setup_mcast_rcvr(sock_info->socket, addr, sock_info->mcast.s)<0)){
 			goto error;
 	}
 	/* set the multicast options */

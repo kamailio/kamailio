@@ -296,10 +296,20 @@ void Ro_free_CCR(Ro_CCR_t *x) {
 }
 
 void Ro_free_CCA(Ro_CCA_t *x) {
-    if (!x) return;
+    str *p_str;
+	if (!x) return;
 
     if (x->mscc->final_unit_action) {
-        mem_free(x->mscc->final_unit_action, pkg);
+        if (x->mscc->final_unit_action->redirect_server) {
+			if (x->mscc->final_unit_action->redirect_server->server_address) {
+				p_str = x->mscc->final_unit_action->redirect_server->server_address;
+				if (p_str->len > 0 && p_str->s)
+					mem_free(p_str->s, pkg);
+				mem_free(p_str, pkg);
+			}
+		}
+		mem_free(x->mscc->final_unit_action, pkg);
+		
     }
     mem_free(x->mscc->granted_service_unit, pkg);
     mem_free(x->mscc, pkg);

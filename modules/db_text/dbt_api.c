@@ -15,11 +15,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * 
+ *
  */
 
 #include <string.h>
@@ -42,12 +42,12 @@ int dbt_use_table(db1_con_t* _h, const str* _t)
 static int dbt_get_columns(db1_res_t* _r, dbt_result_p _dres)
 {
 	int col;
-	
+
 	if (!_r || !_dres) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
-	
+
 	RES_COL_N(_r) = _dres->nrcols;
 	if (!RES_COL_N(_r)) {
 		LM_ERR("no columns\n");
@@ -59,7 +59,7 @@ static int dbt_get_columns(db1_res_t* _r, dbt_result_p _dres)
 	}
 
 	for(col = 0; col < RES_COL_N(_r); col++) {
-		/* 
+		/*
 		 * Its would be not necessary to allocate here new memory, because of
 		 * the internal structure of the db_text module. But we do this anyway
 		 * to stay confirm to the other database modules.
@@ -118,7 +118,7 @@ static int dbt_convert_row(db1_res_t* _res, db_row_t* _r, dbt_row_p _r1)
 		switch(RES_TYPES(_res)[i])
 		{
 			case DB1_INT:
-				VAL_INT(&(ROW_VALUES(_r)[i])) = 
+				VAL_INT(&(ROW_VALUES(_r)[i])) =
 						_r1->fields[i].val.int_val;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_INT;
 			break;
@@ -128,13 +128,13 @@ static int dbt_convert_row(db1_res_t* _res, db_row_t* _r, dbt_row_p _r1)
 				return -1;
 
 			case DB1_DOUBLE:
-				VAL_DOUBLE(&(ROW_VALUES(_r)[i])) = 
+				VAL_DOUBLE(&(ROW_VALUES(_r)[i])) =
 						_r1->fields[i].val.double_val;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_DOUBLE;
 			break;
 
 			case DB1_STRING:
-				VAL_STR(&(ROW_VALUES(_r)[i])).s = 
+				VAL_STR(&(ROW_VALUES(_r)[i])).s =
 						_r1->fields[i].val.str_val.s;
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						_r1->fields[i].val.str_val.len;
@@ -143,7 +143,7 @@ static int dbt_convert_row(db1_res_t* _res, db_row_t* _r, dbt_row_p _r1)
 			break;
 
 			case DB1_STR:
-				VAL_STR(&(ROW_VALUES(_r)[i])).s = 
+				VAL_STR(&(ROW_VALUES(_r)[i])).s =
 						_r1->fields[i].val.str_val.s;
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						_r1->fields[i].val.str_val.len;
@@ -152,7 +152,7 @@ static int dbt_convert_row(db1_res_t* _res, db_row_t* _r, dbt_row_p _r1)
 			break;
 
 			case DB1_DATETIME:
-				VAL_INT(&(ROW_VALUES(_r)[i])) = 
+				VAL_INT(&(ROW_VALUES(_r)[i])) =
 						_r1->fields[i].val.int_val;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB1_DATETIME;
 			break;
@@ -256,7 +256,7 @@ int dbt_get_result(db1_res_t** _r, dbt_result_p _dres)
 	}
 
 	*_r = db_new_result();
-	if (*_r == 0) 
+	if (*_r == 0)
 	{
 		LM_ERR("no private memory left\n");
 		return -2;
@@ -268,7 +268,7 @@ int dbt_get_result(db1_res_t** _r, dbt_result_p _dres)
 		pkg_free(*_r);
 		return -4;
 	}
-	
+
 	(*_r)->ptr = _dres;
 	return 0;
 }

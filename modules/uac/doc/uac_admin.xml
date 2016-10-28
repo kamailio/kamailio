@@ -1084,9 +1084,8 @@ event_route[uac:reply] {
 			</title>
 		<para>
 			Load one record by l_uuid from database for remote registrations.
-			If the record exists in memory, its authentication password, flags
-			and proxy are updated, otherwise a new record is added. 
-			The command has a parameter, which is the value of l_uuid field.
+			If the record exists in memory, it will be replaced with the new
+			values loaded from database.
 		</para>
 		<example>
 		<title><function>uac.reg_refresh</function> usage</title>

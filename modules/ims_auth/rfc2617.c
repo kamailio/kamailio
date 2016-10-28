@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
  * 
@@ -53,7 +51,7 @@
 #include "../../dprint.h"
 
 
-inline void cvt_hex(HASH _b, HASHHEX _h)
+void cvt_hex(HASH _b, HASHHEX _h)
 {
 	unsigned short i;
 	unsigned char j;

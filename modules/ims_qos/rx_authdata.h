@@ -52,7 +52,7 @@
 
 extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
-extern struct dlg_binds dlgb;
+extern ims_dlg_api_t dlgb;
 
 enum dialog_direction {
     DLG_MOBILE_ORIGINATING = 1,

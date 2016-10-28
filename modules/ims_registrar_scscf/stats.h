@@ -51,6 +51,7 @@ stat_var* sar_replies_response_time;
 
 int register_stats();
 unsigned long get_avg_sar_response_time();
+unsigned long get_notification_list_size();
 
 
 #endif /* STATISTICS_H_ */

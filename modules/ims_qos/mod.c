@@ -88,7 +88,7 @@ int authorize_video_flow = 1; //by default we authorize resources for video flow
 
 struct tm_binds tmb;
 struct cdp_binds cdpb;
-struct dlg_binds dlgb;
+ims_dlg_api_t dlgb;
 bind_usrloc_t bind_usrloc;
 cdp_avp_bind_t *cdp_avp;
 usrloc_api_t ul;
@@ -100,8 +100,8 @@ int cdp_event_latency_loglevel = 0; /*log-level to use to report slow processing
 int audio_default_bandwidth = 64;
 int video_default_bandwidth = 128;
 
-//If set then any IP in SDP that does not match this regex is replaced with any in flow description AVP
-//V useful for UEs that change ports mid way through call therefore breaking flow description filters
+//If set then any IP in SDP that does not match this regex then filter is added with any in flow description AVP
+//Very useful for UEs that change ports mid way through call therefore breaking flow description filters
 str regex_sdp_ip_prefix_to_maintain_in_fd = {0, 0};
 
 int cdp_event_list_size_threshold = 0; /**Threshold for size of cdp event list after which a warning is logged */
@@ -137,6 +137,9 @@ str confirmed_qosrelease_headers = {NULL, 0};
 str rx_dest_realm = str_init("ims.smilecoms.com");
 /* Only used if we want to force the Rx peer usually this is configured at a stack level and the first request uses realm routing */
 str rx_forced_peer = str_init("");
+
+/* P-CSCF IP address to generate the flows for the UE<->PCSCF signaling path */
+str af_signaling_ip = str_init("127.0.0.1");
 
 
 /* commands wrappers and fixups */
@@ -188,6 +191,7 @@ static param_export_t params[] = {
 		{ "rx_dest_realm", PARAM_STR, &rx_dest_realm},
 		{ "rx_forced_peer", PARAM_STR, &rx_forced_peer},
 		{ "rx_auth_expiry", INT_PARAM, &rx_auth_expiry},
+		{ "af_signaling_ip", PARAM_STR, &af_signaling_ip}, /* IP of this P-CSCF, to be used in the flow for the AF-signaling */
 		{ "cdp_event_latency", INT_PARAM, &cdp_event_latency}, /*flag: report slow processing of CDP callback events or not */
 		{ "cdp_event_threshold", INT_PARAM, &cdp_event_threshold}, /*time in ms above which we should report slow processing of CDP callback event*/
 		{ "cdp_event_latency_log", INT_PARAM, &cdp_event_latency_loglevel}, /*log-level to use to report slow processing of CDP callback event*/
@@ -240,7 +244,7 @@ static int mod_init(void)
 		}
 
 		/* load the dialog API */
-		if (load_dlg_api(&dlgb) != 0) {
+		if (load_ims_dlg_api(&dlgb) != 0) {
 				LM_ERR("can't load Dialog API\n");
 				goto error;
 		}
@@ -1275,6 +1279,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 				if (h->type == HDR_CONTACT_T && h->parsed) {
 						for (c = ((contact_body_t*) h->parsed)->contacts; c; c = c->next) {
 								ul.lock_udomain(domain_t, &vb->host, vb->port, vb->proto);
+								memset(&contact_info, 0, sizeof(struct pcontact_info));
 								contact_info.aor = c->uri;
 								contact_info.via_host = vb->host;
 								contact_info.via_port = vb->port;

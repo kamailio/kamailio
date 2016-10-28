@@ -774,7 +774,8 @@ mod_init(void)
 	if (nortpproxy_str.s==NULL || nortpproxy_str.len<=0) {
 		nortpproxy_str.len = 0;
 	} else {
-		while (nortpproxy_str.len > 0 && (nortpproxy_str.s[nortpproxy_str.len - 1] == '\r' ||
+		while (nortpproxy_str.len > 0
+				&& (nortpproxy_str.s[nortpproxy_str.len - 1] == '\r' ||
 					nortpproxy_str.s[nortpproxy_str.len - 1] == '\n'))
 			nortpproxy_str.len--;
 	}
@@ -806,11 +807,14 @@ mod_init(void)
 	if (ice_candidate_priority_avp_param) {
 		s.s = ice_candidate_priority_avp_param; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec) == 0 || avp_spec.type != PVT_AVP) {
-			LM_ERR("malformed or non AVP definition <%s>\n", ice_candidate_priority_avp_param);
+			LM_ERR("malformed or non AVP definition <%s>\n",
+					ice_candidate_priority_avp_param);
 			return -1;
 		}
-		if (pv_get_avp_name(0, &(avp_spec.pvp), &ice_candidate_priority_avp, &avp_flags) != 0) {
-			LM_ERR("invalid AVP definition <%s>\n", ice_candidate_priority_avp_param);
+		if (pv_get_avp_name(0, &(avp_spec.pvp), &ice_candidate_priority_avp,
+					&avp_flags) != 0) {
+			LM_ERR("invalid AVP definition <%s>\n",
+					ice_candidate_priority_avp_param);
 			return -1;
 		}
 		ice_candidate_priority_avp_type = avp_flags;
@@ -820,9 +824,10 @@ mod_init(void)
 		rtp_inst_pvar = pv_cache_get(&rtp_inst_pv_param);
 		if ((rtp_inst_pvar == NULL) ||
 				((rtp_inst_pvar->type != PVT_AVP) &&
-				(rtp_inst_pvar->type != PVT_XAVP) &&
-				(rtp_inst_pvar->type != PVT_SCRIPTVAR))) {
-			LM_ERR("Invalid pvar name <%.*s>\n", rtp_inst_pv_param.len, rtp_inst_pv_param.s);
+					(rtp_inst_pvar->type != PVT_XAVP) &&
+					(rtp_inst_pvar->type != PVT_SCRIPTVAR))) {
+			LM_ERR("Invalid pvar name <%.*s>\n", rtp_inst_pv_param.len,
+					rtp_inst_pv_param.s);
 			return -1;
 		}
 	}
@@ -1071,7 +1076,8 @@ extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 		return -1;
 
 	mediaip->s = cp1 + 2;
-	mediaip->len = eat_line(mediaip->s, body->s + body->len - mediaip->s) - mediaip->s;
+	mediaip->len = eat_line(mediaip->s, body->s + body->len - mediaip->s)
+						- mediaip->s;
 	trim_len(mediaip->len, mediaip->s, *mediaip);
 
 	nextisip = 0;
@@ -1717,7 +1723,8 @@ unforce_rtp_proxy(struct sip_msg* msg, char* flags)
 	str extra_id;
 	int ret;
 	struct rtpp_node *node;
-	struct iovec v[1 + 4 + 3 + 2] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+	struct iovec v[1 + 4 + 3 + 2] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0},
+			{NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 	/* 1 */   /* 2 */   /* 3 */    /* 4 */    /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */
 
 
@@ -1881,7 +1888,8 @@ rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 	method = get_cseq(msg)->method_id;
 
 	if(!(method==METHOD_INVITE || method==METHOD_ACK || method==METHOD_CANCEL
-				|| method==METHOD_BYE || method==METHOD_UPDATE || method==METHOD_PRACK))
+				|| method==METHOD_BYE || method==METHOD_UPDATE
+				|| method==METHOD_PRACK))
 		return -1;
 
 	if(method==METHOD_CANCEL || method==METHOD_BYE)
@@ -2094,7 +2102,8 @@ struct new_mediaip {
 };
 
 	static int
-force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forcedIP)
+force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer,
+		int forcedIP)
 {
 	str body, body1, oldport, oldip, newport;
 	struct new_mediaip newip;
@@ -2428,7 +2437,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 		for(;;) {
 			sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
 			if (!sdp_stream ||
-					(ice_candidate_priority_val.n && sdp_stream->remote_candidates.len)) break;
+					(ice_candidate_priority_val.n
+						&& sdp_stream->remote_candidates.len)) break;
 
 			if (sdp_stream->ip_addr.s && sdp_stream->ip_addr.len>0) {
 				oldip = sdp_stream->ip_addr;
@@ -2452,7 +2462,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 			/* XXX must compare address families in all addresses */
 			if (pf == AF_INET6) {
 				if (autobridge_ipv4v6 != 0) {
-					if ((append_opts(&opts, 'E') == -1) || (append_opts(&opts, 'I') == -1))  {
+					if ((append_opts(&opts, 'E') == -1)
+							|| (append_opts(&opts, 'I') == -1))  {
 						LM_ERR("out of pkg memory\n");
 						FORCE_RTP_PROXY_RET (-1);
 					}
@@ -2468,7 +2479,8 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				v[1].iov_len = opts.oidx;
 			} else {
 				if (autobridge_ipv4v6 != 0) {
-					if ((append_opts(&opts, 'I') == -1) || (append_opts(&opts, 'E') == -1))  {
+					if ((append_opts(&opts, 'I') == -1)
+							|| (append_opts(&opts, 'E') == -1))  {
 						LM_ERR("out of pkg memory\n");
 						FORCE_RTP_PROXY_RET (-1);
 					}
@@ -2519,9 +2531,11 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 					}
 				}
 #ifdef EXTRA_DEBUG
-				LM_DBG("payload_types='%.*s'\n", payload_types.len, payload_types.s);
+				LM_DBG("payload_types='%.*s'\n", payload_types.len,
+						payload_types.s);
 #endif
-				if (sdp_stream->is_rtp && payload_types.len > 0 && node->rn_ptl_supported != 0) {
+				if (sdp_stream->is_rtp && payload_types.len > 0
+						&& node->rn_ptl_supported != 0) {
 					pt_opts.oidx = 0;
 					if (append_opts(&pt_opts, 'c') == -1) {
 						LM_ERR("out of pkg memory\n");
@@ -2779,7 +2793,8 @@ static int start_recording_f(struct sip_msg* msg, char *foo, char *bar)
 	str from_tag = {0, 0};
 	str to_tag = {0, 0};
 	struct rtpp_node *node;
-	struct iovec v[1 + 4 + 3] = {{NULL, 0}, {"R", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+	struct iovec v[1 + 4 + 3] = {{NULL, 0}, {"R", 1}, {" ", 1}, {NULL, 0},
+		{" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 	/* 1 */   /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 1 */
 
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {

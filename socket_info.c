@@ -712,6 +712,14 @@ static struct socket_info* new_sock2list(char* name, struct name_lst* addr_l,
 		si->workers = socket_workers;
 		socket_workers = 0;
 	}
+#ifdef USE_MCAST
+	if (mcast!=0) {
+		si->mcast.len=strlen(mcast);
+		si->mcast.s=(char*)pkg_malloc(si->mcast.len+1);
+		strcpy(si->mcast.s, mcast);
+		mcast = 0;
+	}
+#endif /* USE_MCAST */
 	sock_listadd(list, si);
 	return si;
 error:

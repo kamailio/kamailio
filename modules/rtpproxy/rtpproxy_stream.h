@@ -1,4 +1,4 @@
-/* $Id: rtpproxy_stream.h,v 1.1 2008/11/04 21:10:07 sobomax Exp $
+/*
  *
  * Copyright (C) 2008 Sippy Software, Inc., http://www.sippysoft.com
  *

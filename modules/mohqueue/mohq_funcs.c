@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-15 Robert Boisvert
+ * Copyright (C) 2013-16 Robert Boisvert
  *
  * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
@@ -32,7 +32,7 @@
 #define ALLOWHDR "Allow: INVITE, ACK, BYE, CANCEL, NOTIFY, PRACK"
 #define CLENHDR "Content-Length"
 #define SIPEOL  "\r\n"
-#define USRAGNT "Kamailio MOH Queue v1.2"
+#define USRAGNT "Kamailio MOH Queue v1.3"
 
 /**********
 * local constants
@@ -401,6 +401,26 @@ else
     { LM_ERR ("%sUnable to create reply!\n", pfncname); }
   }
 return;
+}
+
+/**********
+* Check if RTP Still Active
+*
+* INPUT:
+*   Arg (1) = SIP message pointer
+* OUTPUT: =0 if inactive
+**********/
+
+int chk_rtpstat (sip_msg_t *pmsg)
+
+{
+pv_value_t pval [1];
+memset (pval, 0, sizeof (pv_value_t));
+if (pv_get_spec_value (pmsg, prtp_pv, pval))
+  { return 0; }
+if (pval->flags & PV_VAL_NULL)
+  { return 0; }
+return 1;
 }
 
 /**********
@@ -1664,10 +1684,23 @@ return nret;
 
 static void refer_cb
   (struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
-
 {
 char *pfncname = "refer_cb: ";
 call_lst *pcall = (call_lst *)*pcbp->param;
+if (pcall->call_state != CLSTA_REFER)
+  {
+  if (!pcall->call_state)
+    {
+    LM_ERR
+      ("%sREFER response ignored because call not in queue!\n", pfncname);
+    }
+  else
+    {
+    LM_ERR ("%sCall (%s) ignored because not in REFER state!\n", pfncname,
+      pcall->call_from);
+    }
+  return;
+  }
 if ((ntype == TMCB_ON_FAILURE) || (pcbp->req == FAKED_REPLY))
   {
   LM_ERR ("%sCall (%s) did not respond to REFER!\n", pfncname,
@@ -1676,6 +1709,11 @@ if ((ntype == TMCB_ON_FAILURE) || (pcbp->req == FAKED_REPLY))
   delete_call (pcall);
   return;
   }
+
+/**********
+* check reply
+**********/
+
 int nreply = pcbp->code;
 if ((nreply / 100) == 2)
   {
@@ -1692,8 +1730,17 @@ else
     { delete_call (pcall); }
   else
     {
-    pcall->call_state = CLSTA_INQUEUE;
-    update_call_rec (pcall);
+    if (!chk_rtpstat (pcbp->req))
+      {
+      LM_ERR ("%sRTP for call (%s) no longer active!\n",
+        pfncname, pcall->call_from);
+      delete_call (pcall);
+      }
+    else
+      {
+      pcall->call_state = CLSTA_INQUEUE;
+      update_call_rec (pcall);
+      }
     }
   }
 return;

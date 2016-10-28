@@ -267,8 +267,10 @@ int db_delete_impurecord(udomain_t* _d, struct impurecord* _r) {
 }
 
 static int MAX_PARAMS_SIZE = 1000;
-static str param_name_and_nody = {"%.*s=%.*s;", 1};
+static str param_name_and_body = {"%.*s=%.*s;", 1};
+static str param_name_and_body_last = {"%.*s=%.*s", 1};
 static str param_name_no_body = {"%.*s;", 1};
+static str param_name_no_body_last = {"%.*s", 1};
 
 int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 
@@ -279,6 +281,7 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 	param_buf.len = 0;
 	param_pad.s = param_padc;
 	param_pad.len = 0;
+	char* format_name_and_body, *format_name_no_body;
 
 	db_key_t key[7];
 	db_val_t val[7];
@@ -287,14 +290,21 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 
 	tmp = _c->params;
 	while (tmp) {
-	    if(tmp->body.len > 0) {
-		sprintf(param_pad.s, param_name_and_nody.s, tmp->name.len, tmp->name.s, tmp->body.len, tmp->body.s);
-	    } else {
-		sprintf(param_pad.s, param_name_no_body.s, tmp->name.len, tmp->name.s);
-	    }
-	    param_pad.len = strlen(param_pad.s);
-	    STR_APPEND(param_buf, param_pad);
-	    tmp = tmp->next;
+		if (tmp->next == 0) {
+			format_name_and_body = param_name_and_body_last.s;
+			format_name_no_body = param_name_no_body_last.s;
+		} else {
+			format_name_and_body = param_name_and_body.s;
+			format_name_no_body = param_name_no_body.s;
+		}
+		if (tmp->body.len > 0) {
+			sprintf(param_pad.s, format_name_and_body, tmp->name.len, tmp->name.s, tmp->body.len, tmp->body.s);
+		} else {
+			sprintf(param_pad.s, format_name_no_body, tmp->name.len, tmp->name.s);
+		}
+		param_pad.len = strlen(param_pad.s);
+		STR_APPEND(param_buf, param_pad);
+		tmp = tmp->next;
 	}
 	LM_DBG("Converted params to string to insert into db: [%.*s]\n", param_buf.len, param_buf.s);
 

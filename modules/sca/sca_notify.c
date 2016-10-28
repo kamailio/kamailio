@@ -181,15 +181,23 @@ static int sca_notify_append_contact_header(sca_subscription *sub, char *hdrbuf,
 		int maxlen)
 {
 	int len = strlen("Contact: ");
+	str *orig = NULL;
 
-	if (len + sub->target_aor.len + strlen(CRLF) >= maxlen) {
+	if (sca->cfg->server_address != NULL) {
+		orig = sca->cfg->server_address;
+	}
+	else {
+		orig = &sub->target_aor;
+	}
+
+	if (len + orig->len + strlen(CRLF) >= maxlen) {
 		LM_ERR("Cannot append Contact header: buffer too small\n");
 		return (-1);
 	}
 
 	memcpy(hdrbuf, "Contact: ", len);
-	memcpy(hdrbuf + len, sub->target_aor.s, sub->target_aor.len);
-	len += sub->target_aor.len;
+	memcpy(hdrbuf + len, orig->s, orig->len);
+	len += orig->len;
 	memcpy(hdrbuf + len, CRLF, strlen(CRLF));
 	len += strlen(CRLF);
 

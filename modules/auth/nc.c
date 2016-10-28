@@ -70,36 +70,36 @@ int init_nonce_count()
 	}
 	size=1UL<<nc_array_k; /* ROUNDDOWN to 2^nc_array_k */
 	if (size < MIN_NC_ARRAY_SIZE){
-		WARN("auth: nonce-count in.flight nonces is very low (%d),"
+		LM_WARN("nonce-count in.flight nonces is very low (%d),"
 				" consider increasing nc_array_size to at least %d\n",
 				orig_array_size, MIN_NC_ARRAY_SIZE);
 	}
 	if (size > MAX_NC_ARRAY_SIZE){
-		WARN("auth: nonce-count in flight nonces is too high (%d),"
+		LM_WARN("nonce-count in flight nonces is too high (%d),"
 				" consider decreasing nc_array_size to at least %d\n",
 				orig_array_size, MAX_NC_ARRAY_SIZE);
 	}
 	if (size!=nc_array_size){
 		if (orig_array_size!=0)
-			INFO("auth: nc_array_size rounded down to %ld\n", size);
+			LM_INFO("nc_array_size rounded down to %ld\n", size);
 		else
-			INFO("auth: nc_array_size set to %ld\n", size);
+			LM_INFO("nc_array_size set to %ld\n", size);
 	}
 	max_mem=shm_available();
 	if (size*sizeof(nc_t) >= max_mem){
-		ERR("auth: nc_array_size (%ld) is too big for the configured "
+		LM_ERR("nc_array_size (%ld) is too big for the configured "
 				"amount of shared memory (%ld bytes <= %ld bytes)\n",
 				size, max_mem, size*sizeof(nc_t));
 		return -1;
 	}else if (size*sizeof(nc_t) >= max_mem/2){
-		WARN("auth: the currently configured nc_array_size (%ld)  "
+		LM_WARN("the currently configured nc_array_size (%ld)  "
 				"would use more then 50%% of the available shared"
 				" memory(%ld bytes)\n", size, max_mem);
 	}
 	nc_array_size=size;
 
 	if (nid_pool_no>=nc_array_size){
-		ERR("auth: nid_pool_no (%d) too high for the configured "
+		LM_ERR("nid_pool_no (%d) too high for the configured "
 				"nc_array_size (%d)\n", nid_pool_no, nc_array_size);
 		return -1;
 	}
@@ -110,12 +110,12 @@ int init_nonce_count()
 	assert(1<<(nc_partition_k+nid_pool_k) == nc_array_size);
 
 	if ((nid_t)nc_partition_size >= ((nid_t)(-1)/NID_INC)){
-		ERR("auth: nc_array_size too big, try decreasing it or increasing"
+		LM_ERR("nc_array_size too big, try decreasing it or increasing"
 				"the number of pools/partitions\n");
 		return -1;
 	}
 	if (nc_partition_size  < MIN_NC_ARRAY_PARTITION){
-		WARN("auth: nonce-count in-flight nonces very low,"
+		LM_WARN("nonce-count in-flight nonces very low,"
 				" consider either decreasing nc_pool_no (%d) or "
 				" increasing nc_array_size (%d) such that "
 				"nc_array_size/nid_pool_no >= %d\n",
@@ -126,7 +126,7 @@ int init_nonce_count()
 	 *  access it as an uint array */
 	nc_array=shm_malloc(sizeof(nc_t)*ROUND_INT(nc_array_size));
 	if (nc_array==0){
-		ERR("auth: init_nonce_count: memory allocation failure, consider"
+		LM_ERR("init_nonce_count: memory allocation failure, consider"
 				" either decreasing nc_array_size of increasing the"
 				" the shared memory amount\n");
 		goto error;

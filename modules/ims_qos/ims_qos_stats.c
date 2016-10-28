@@ -69,6 +69,7 @@ counter_def_t ims_qos_cnt_defs[] = {
     {&ims_qos_cnts_h.registration_aar_replies_received,	    "registration_aar_replies_received",	0, 0, 0,            "total number of registration AAR replies received"},
 
     {&ims_qos_cnts_h.active_media_rx_sessions,		    "active_media_rx_sessions",		0, 0, 0,		    "number of currently active media Rx sessions"},
+	{&ims_qos_cnts_h.media_rx_sessions,		    "media_rx_sessions",		0, 0, 0,		    "Total number of media Rx sessions"},
     {&ims_qos_cnts_h.media_aar_avg_response_time,	    "media_aar_avg_response_time",	0, ims_qos_internal_stats, (void*) (long) IMS_QOS_MEDIA_AAR_AVG_RSP,	"avg response time for media AARs"},
     {&ims_qos_cnts_h.media_aar_timeouts,		    "media_aar_timeouts",		0, 0, 0,		    "total number of media AAR timeouts"},
     {&ims_qos_cnts_h.failed_media_aars,			    "failed_media_aars",		0, 0, 0,		    "total number of failed media AARs"},

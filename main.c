@@ -188,8 +188,9 @@ Options:\n\
 "    -S           disable sctp\n\
     -Q            Number of sctp child processes (default: equal to `-n')\n"
 #endif /* USE_SCTP */
-"    -V           Version number\n\
+"    -v (-V)      Version number\n\
     -h           This help message\n\
+    -I           Print more internal compile flags and options\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                   auto-probing procedure even if  OS allows\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
@@ -200,6 +201,7 @@ Options:\n\
     -g gid       Change gid \n\
     -P file      Create a pid file\n\
     -G file      Create a pgid file\n\
+    -Y dir       Runtime dir\n\
     -O nr        Script optimization level (debugging option)\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
                   disable with no or off\n\
@@ -411,6 +413,7 @@ int reply_to_via=0;
 #ifdef USE_MCAST
 int mcast_loopback = 0;
 int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
+char* mcast = 0;
 #endif /* USE_MCAST */
 
 int tos = IPTOS_LOWDELAY;
@@ -1857,7 +1860,7 @@ int main(int argc, char** argv)
 	dprint_init_colors();
 
 	/* command line options */
-	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:"
+	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:"
 #ifdef STATS
 		"s:"
 #endif
@@ -2050,6 +2053,7 @@ int main(int argc, char** argv)
 			case 'Q':
 			case 'a':
 			case 's':
+			case 'Y':
 					break;
 			case '?':
 					if (isprint(optopt)) {
@@ -2268,6 +2272,9 @@ try_again:
 					break;
 			case 'w':
 					working_dir=optarg;
+					break;
+			case 'Y':
+					runtime_dir=optarg;
 					break;
 			case 't':
 					chroot_dir=optarg;

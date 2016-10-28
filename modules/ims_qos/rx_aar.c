@@ -167,6 +167,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
             }
             p_session_data->session_has_been_opened = 1;
             counter_inc(ims_qos_cnts_h.active_media_rx_sessions);
+			counter_inc(ims_qos_cnts_h.media_rx_sessions);
 
             if (auth) cdpb.AAASessionsUnlock(auth->hash);
 
@@ -308,7 +309,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
         LM_DBG("Registering for Usrloc callbacks on DELETE\n");
 
         ul.lock_udomain(domain_t, &local_data->via_host, local_data->via_port, local_data->via_proto);
-
+		memset(&contact_info, 0, sizeof(struct pcontact_info));
         contact_info.received_host = local_data->recv_host;
         contact_info.received_port = local_data->recv_port;
         contact_info.received_proto = local_data->recv_proto;
@@ -416,7 +417,7 @@ int add_media_components_using_current_flow_description(AAAMessage* aar, rx_auth
                     &flow_description->req_sdp_port, &flow_description->rpl_sdp_ip_addr,
                     &flow_description->rpl_sdp_port, &flow_description->rpl_sdp_transport,
                     &flow_description->req_sdp_raw_stream,
-                    &flow_description->rpl_sdp_raw_stream, flow_description->direction);
+                    &flow_description->rpl_sdp_raw_stream, flow_description->direction, AVP_EPC_Flow_Usage_No_Information);
         }
 
         flow_description = flow_description->next;
@@ -530,7 +531,7 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
                                 &req_sdp_stream->port, &ipB,
                                 &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
                                 &req_sdp_stream->raw_stream,
-                                &rpl_sdp_stream->raw_stream, direction);
+                                &rpl_sdp_stream->raw_stream, direction, AVP_EPC_Flow_Usage_No_Information);
                     }
                     add_flow = 1;
                 }
@@ -965,13 +966,14 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     protocol.s = "IP";
     protocol.len = strlen("IP");
 
+    //rx_add_media_component_description_avp_register(aar);
     /* Add media component description avp for register*/
     rx_add_media_component_description_avp(aar, 1,
                &media, &saved_t_data->via_host,
                &port_from, &af_signaling_ip,
                &port_to, &protocol,
                &raw_stream,
-               &raw_stream, DLG_MOBILE_REGISTER);
+               &raw_stream, DLG_MOBILE_REGISTER, AVP_EPC_Flow_Usage_AF_Signaling);
 
     /* Add specific action AVP's */
     rx_add_specific_action_avp(aar, 1); // CHARGING_CORRELATION_EXCHANGE

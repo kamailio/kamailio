@@ -55,7 +55,7 @@
 
 cdp_cb_event_list_t *cdp_event_list = 0;
 extern usrloc_api_t ul;
-extern struct dlg_binds dlgb;
+extern ims_dlg_api_t dlgb;
 extern int cdp_event_latency;
 extern int cdp_event_threshold;
 extern int cdp_event_latency_loglevel;

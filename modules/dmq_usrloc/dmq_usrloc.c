@@ -38,6 +38,7 @@ int dmq_usrloc_enable = 0;
 int _dmq_usrloc_sync = 1;
 int _dmq_usrloc_batch_size = 0;
 int _dmq_usrloc_batch_usleep = 0;
+str _dmq_usrloc_domain = str_init("location");
 
 usrloc_api_t dmq_ul;
 
@@ -48,6 +49,7 @@ static param_export_t params[] = {
 	{"sync",   INT_PARAM, &_dmq_usrloc_sync},
 	{"batch_size",   INT_PARAM, &_dmq_usrloc_batch_size},
 	{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
+	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
 	{0, 0, 0}
 };
 

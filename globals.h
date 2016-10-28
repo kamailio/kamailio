@@ -136,6 +136,7 @@ extern str version_table;
 #ifdef USE_MCAST
 extern int mcast_loopback;
 extern int mcast_ttl;
+extern char* mcast;
 #endif /* USE_MCAST */
 
 extern int auto_bind_ipv6;

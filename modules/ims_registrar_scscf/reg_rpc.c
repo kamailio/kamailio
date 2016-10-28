@@ -37,6 +37,7 @@ static void reg_rpc_dereg_impu(rpc_t* rpc, void* ctx)
 		int res;
 		udomain_t* domain;
 		struct impurecord* impu_rec;
+		impu_contact_t *impucontact;
 
 		if (rpc->scan(ctx, "S", &impu) < 1) {
 				rpc->fault(ctx, 400, "required IMPU argument");
@@ -59,16 +60,18 @@ static void reg_rpc_dereg_impu(rpc_t* rpc, void* ctx)
 				return;
 		}
 
-		for (i = 0; i < impu_rec->num_contacts; i++) {
-				LM_DBG("Deleting contact with AOR [%.*s]\n", impu_rec->newcontacts[i]->aor.len, impu_rec->newcontacts[i]->aor.s);
-				ul.lock_contact_slot_i(impu_rec->newcontacts[i]->sl);
-				impu_rec->newcontacts[i]->state = CONTACT_DELETE_PENDING;
+		impucontact = impu_rec->linked_contacts.head;
+		while (impucontact) {
+				LM_DBG("Deleting contact with AOR [%.*s]\n", impucontact->contact->aor.len, impucontact->contact->aor.s);
+				ul.lock_contact_slot_i(impucontact->contact->sl);
+				impucontact->contact->state = CONTACT_DELETE_PENDING;
 				if (impu_rec->shead) {
 						//send NOTIFY to all subscribers of this IMPU.
 						notify_subscribers(impu_rec, 0, 0);
 				}
-				impu_rec->newcontacts[i]->state = CONTACT_DELETED;
-				ul.unlock_contact_slot_i(impu_rec->newcontacts[i]->sl);
+				impucontact->contact->state = CONTACT_DELETED;
+				ul.unlock_contact_slot_i(impucontact->contact->sl);
+				impucontact = impucontact->next;
 		}
 
 		ul.unlock_udomain(domain, &impu);

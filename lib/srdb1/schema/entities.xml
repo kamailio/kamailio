@@ -1,5 +1,7 @@
 <!ENTITY user_len "64">
 <!ENTITY domain_len "64">
+<!ENTITY password_len "64">
+<!ENTITY ha1_len "128">
 <!ENTITY realm_len "64">
 <!ENTITY uri_len "128">
 <!ENTITY xcap_uri_len "255">

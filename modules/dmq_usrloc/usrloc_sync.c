@@ -47,51 +47,69 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 extern int _dmq_usrloc_sync;
 extern int _dmq_usrloc_batch_size;
 extern int _dmq_usrloc_batch_usleep;
+extern str _dmq_usrloc_domain;
 
 static int add_contact(str aor, ucontact_info_t* ci)
 {
-	urecord_t* r;
+	urecord_t* r = NULL;
 	udomain_t* _d;
-	ucontact_t* c;
+	ucontact_t* c = NULL;
 	str contact;
 	int res;
 
-	if (dmq_ul.get_udomain("location", &_d) < 0) {
+	if (dmq_ul.get_udomain(_dmq_usrloc_domain.s, &_d) < 0) {
 		LM_ERR("Failed to get domain\n");
 		return -1;
 	}
 
 	dmq_ul.lock_udomain(_d, &aor);
 
-	res = dmq_ul.get_urecord(_d, &aor, &r);
-	if (res < 0) {
-		LM_ERR("failed to retrieve record from usrloc\n");
-		goto error;
-	} else if ( res == 0) {
-		LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
-		res = dmq_ul.get_ucontact(r, ci->c, ci->callid, ci->path, ci->cseq, &c);
-		LM_DBG("get_ucontact = %d\n", res);
-		if (res==-1) {
-			LM_ERR("Invalid cseq\n");
+	LM_DBG("aor: %.*s\n", aor.len, aor.s);
+	LM_DBG("ci->ruid: %.*s\n", ci->ruid.len, ci->ruid.s);
+	LM_DBG("aorhash: %i\n", dmq_ul.get_aorhash(&aor));
+
+	if (ci->ruid.len > 0) {
+		// Search by ruid, if possible
+		res = dmq_ul.get_urecord_by_ruid(_d, dmq_ul.get_aorhash(&aor), &ci->ruid, &r, &c);
+		if (res == 0) {
+			LM_DBG("Found contact\n");
+			dmq_ul.update_ucontact(r, c, ci);
+			LM_DBG("Release record\n");
+			dmq_ul.release_urecord(r);
+			LM_DBG("Unlock udomain\n");
+			dmq_ul.unlock_udomain(_d, &aor);
+			return 0;
+		}
+	}
+		res = dmq_ul.get_urecord(_d, &aor, &r);
+		if (res < 0) {
+			LM_ERR("failed to retrieve record from usrloc\n");
 			goto error;
-		} else if (res > 0 ) {
-			LM_DBG("Not found contact\n");
+		} else if ( res == 0) {
+			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
+			res = dmq_ul.get_ucontact(r, ci->c, ci->callid, ci->path, ci->cseq, &c);
+			LM_DBG("get_ucontact = %d\n", res);
+			if (res==-1) {
+				LM_ERR("Invalid cseq\n");
+				goto error;
+			} else if (res > 0 ) {
+				LM_DBG("Not found contact\n");
+				contact.s = ci->c->s;
+				contact.len = ci->c->len;
+				dmq_ul.insert_ucontact(r, &contact, ci, &c);
+			} else if (res == 0) {
+				LM_DBG("Found contact\n");
+				dmq_ul.update_ucontact(r, c, ci);
+			}
+		} else {
+			LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+			dmq_ul.insert_urecord(_d, &aor, &r);
+			LM_DBG("Insert record\n");
 			contact.s = ci->c->s;
 			contact.len = ci->c->len;
 			dmq_ul.insert_ucontact(r, &contact, ci, &c);
-		} else if (res == 0) {
-			LM_DBG("Found contact\n");
-			dmq_ul.update_ucontact(r, c, ci);
+			LM_DBG("Insert ucontact\n");
 		}
-	} else {
-		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		dmq_ul.insert_urecord(_d, &aor, &r);
-		LM_DBG("Insert record\n");
-		contact.s = ci->c->s;
-		contact.len = ci->c->len;
-		dmq_ul.insert_ucontact(r, &contact, ci, &c);
-		LM_DBG("Insert ucontact\n");
-	}
 
 		LM_DBG("Release record\n");
 		dmq_ul.release_urecord(r);
@@ -109,7 +127,7 @@ static int delete_contact(str aor, ucontact_info_t* ci)
 	urecord_t* r;
 	ucontact_t* c;
 
-        if (dmq_ul.get_udomain("location", &_d) < 0) {
+        if (dmq_ul.get_udomain(_dmq_usrloc_domain.s, &_d) < 0) {
                 LM_ERR("Failed to get domain\n");
                 return -1;
         }
@@ -159,7 +177,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 		goto done;
 	}
 
-	if (dmq_ul.get_udomain("location", &_d) < 0) {
+	if (dmq_ul.get_udomain(_dmq_usrloc_domain.s, &_d) < 0) {
 		LM_ERR("Failed to get domain\n");
 		goto done;
 	}

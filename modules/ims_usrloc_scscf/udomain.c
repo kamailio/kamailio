@@ -320,7 +320,7 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
 								if (ref_count_db < 0) {
 									LM_ERR("Unable to check if contact is unlinked\n");
 								} else if (ref_count_db == 0) {
-									LM_DBG("Contact has ref count [%d] but there's no link on the DB. Deleting contact");
+									LM_DBG("Contact has ref count [%d] but there's no link on the DB. Deleting contact", contact_ptr->ref_count);
 									contact_ptr->ref_count = 0;
 									expired_contacts[num_expired_contacts] = contact_ptr;
 									num_expired_contacts++;

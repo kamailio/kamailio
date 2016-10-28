@@ -150,6 +150,28 @@ modparam("db_unixodbc", "replace_query", 0)
 </programlisting>
                 </example>
         </section>
+
+	<section id="db_unixodbc.p.quote_char">
+		<title><varname>quote_char</varname> (str)</title>
+		<para>
+			The character to be used for quoting the table and column names in
+			database queries.
+		</para>
+		<para>
+		<emphasis>
+			Default value: <quote>not set</quote> (no quoting).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>quote_char</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_unixodbc", "quote_char", "`")
+...
+</programlisting>
+		</example>
+	</section>
+
     </section>
 
 	<section>

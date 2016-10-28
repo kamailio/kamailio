@@ -450,7 +450,7 @@ int isc_match_filter_reg(struct sip_msg *msg, char *str1, udomain_t* d) {
             m = isc_checker_find(s, old_mark.direction, old_mark.skip, msg, k, d);
             while (m) {
                 LM_DBG("REGISTER match found in filter criteria\n");
-                ret = isc_third_party_reg(msg, m, &old_mark);
+                ret = isc_third_party_reg(msg, m, &old_mark, d);
                 old_mark.skip = m->index + 1;
                 isc_free_match(m);
                 m = isc_checker_find(s, old_mark.direction, old_mark.skip, msg, k, d);

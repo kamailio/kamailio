@@ -22,9 +22,9 @@
 
 #include "../../lib/srdb1/db.h"
 
-#define SCA_DB_SUBSCRIPTIONS_TABLE_VERSION	1
+#define SCA_DB_SUBSCRIPTIONS_TABLE_VERSION	2
 
-#define SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS	12
+#define SCA_DB_SUBSCRIPTIONS_NUM_COLUMNS	13
 
 #define SCA_DB_DEFAULT_FETCH_ROW_COUNT		1000
 
@@ -41,6 +41,7 @@ enum {
 	SCA_DB_SUBS_RECORD_ROUTE_COL,
 	SCA_DB_SUBS_NOTIFY_CSEQ_COL,
 	SCA_DB_SUBS_SUBSCRIBE_CSEQ_COL,
+	SCA_DB_SUBS_SERVER_ID_COL,
 
 	SCA_DB_SUBS_BOUNDARY,
 };
@@ -78,6 +79,7 @@ extern const str SCA_DB_TO_TAG_COL_NAME;
 extern const str SCA_DB_RECORD_ROUTE_COL_NAME;
 extern const str SCA_DB_NOTIFY_CSEQ_COL_NAME;
 extern const str SCA_DB_SUBSCRIBE_CSEQ_COL_NAME;
+extern const str SCA_DB_SERVER_ID_COL_NAME;
 
 str **sca_db_subscriptions_columns(void);
 void sca_db_subscriptions_get_value_for_column(int, db_val_t *, void *);

@@ -24,9 +24,9 @@
 
 /*!
  * \defgroup counters Counters/statistics
- * 
+ *
  */
- 
+
 #include "../../modparam.h"
 #include "../../dprint.h"
 #include "../../compiler_opt.h"
@@ -239,7 +239,7 @@ static int cnt_int_fixup(void** param, int param_no)
 static int cnt_inc_f(struct sip_msg* msg, char* handle, char* bar)
 {
 	counter_handle_t h;
-	
+
 	h.id = (long)(void*)handle;
 	counter_inc(h);
 	return 1;
@@ -251,7 +251,7 @@ static int cnt_add_f(struct sip_msg* msg, char* handle, char* val)
 {
 	counter_handle_t h;
 	int v;
-	
+
 	h.id = (long)(void*)handle;
 	if (unlikely(get_int_fparam(&v, msg, (fparam_t*)val) < 0)) {
 		ERR("non integer parameter\n");
@@ -266,7 +266,7 @@ static int cnt_add_f(struct sip_msg* msg, char* handle, char* val)
 static int cnt_reset_f(struct sip_msg* msg, char* handle, char* bar)
 {
 	counter_handle_t h;
-	
+
 	h.id = (long)(void*)handle;
 	counter_reset(h);
 	return 1;
@@ -284,12 +284,13 @@ static void cnt_get_rpc(rpc_t* rpc, void* c)
 	char* name;
 	counter_val_t v;
 	counter_handle_t h;
-	
+
 	if (rpc->scan(c, "s", &group) < 1)
 		return;
-	if (rpc->scan(c, "*s", &name) < 1)
+	if (rpc->scan(c, "*s", &name) < 1) {
 		cnt_grp_get_all(rpc, c, group);
 		return;
+	}
 	/* group & name read */
 	if (counter_lookup(&h, group, name) < 0) {
 		rpc->fault(c, 400, "non-existent counter %s.%s\n", group, name);
@@ -308,7 +309,7 @@ static void cnt_get_raw_rpc(rpc_t* rpc, void* c)
 	char* name;
 	counter_val_t v;
 	counter_handle_t h;
-	
+
 	if (rpc->scan(c, "ss", &group, &name) < 2) {
 		/* rpc->fault(c, 400, "group and counter name required"); */
 		return;
@@ -329,7 +330,7 @@ static void cnt_reset_rpc(rpc_t* rpc, void* c)
 	char* group;
 	char* name;
 	counter_handle_t h;
-	
+
 	if (rpc->scan(c, "ss", &group, &name) < 2) {
 		/* rpc->fault(c, 400, "group and counter name required"); */
 		return;
@@ -383,7 +384,7 @@ static  void rpc_print_name_val(void* param, str* g, str* n,
 static void cnt_grps_list_rpc(rpc_t* rpc, void* c)
 {
 	struct rpc_list_params packed_params;
-	
+
 	packed_params.rpc = rpc;
 	packed_params.ctx = c;
 	counter_iterate_grp_names(rpc_print_name, &packed_params);
@@ -395,7 +396,7 @@ static void cnt_var_list_rpc(rpc_t* rpc, void* c)
 {
 	char* group;
 	struct rpc_list_params packed_params;
-	
+
 	if (rpc->scan(c, "s", &group) < 1) {
 		/* rpc->fault(c, 400, "group name required"); */
 		return;
@@ -411,7 +412,7 @@ static void cnt_grp_get_all(rpc_t* rpc, void* c, char* group)
 {
 	void* s;
 	struct rpc_list_params packed_params;
-	
+
 	if (rpc->add(c, "{", &s) < 0) return;
 	packed_params.rpc = rpc;
 	packed_params.ctx = s;
@@ -423,7 +424,7 @@ static void cnt_grp_get_all(rpc_t* rpc, void* c, char* group)
 static void cnt_grp_get_all_rpc(rpc_t* rpc, void* c)
 {
 	char* group;
-	
+
 	if (rpc->scan(c, "s", &group) < 1) {
 		/* rpc->fault(c, 400, "group name required"); */
 		return;
@@ -439,7 +440,7 @@ static void cnt_help_rpc(rpc_t* rpc, void* ctx)
 	char* name;
 	char* desc;
 	counter_handle_t h;
-	
+
 	if (rpc->scan(ctx, "ss", &group, &name) < 2) {
 		/* rpc->fault(c, 400, "group and counter name required"); */
 		return;

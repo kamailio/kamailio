@@ -1,4 +1,4 @@
-/* 
+/*
  * Kamailio TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
@@ -63,6 +63,7 @@ static int tls_bio_mbuf_puts(BIO* b, const char* s);
 static long tls_bio_mbuf_ctrl(BIO* b, int cmd, long arg1, void* arg2);
 
 
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 static BIO_METHOD tls_mbuf_method = {
 	BIO_TYPE_TLS_MBUF,	/* type */
 	"sr_tls_mbuf",		/* name */
@@ -75,12 +76,35 @@ static BIO_METHOD tls_mbuf_method = {
 	tls_bio_mbuf_free,	/* destroy(free) function */
 	0					/* ctrl callback */
 };
+#else
+static BIO_METHOD *tls_mbuf_method = NULL;
+#endif
 
 
 /** returns a custom tls_mbuf BIO. */
 BIO_METHOD* tls_BIO_mbuf(void)
 {
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 	return &tls_mbuf_method;
+#else
+	if(tls_mbuf_method != NULL) {
+		return tls_mbuf_method;
+	}
+	tls_mbuf_method = BIO_meth_new(BIO_TYPE_TLS_MBUF, "sr_tls_mbuf");
+	if(tls_mbuf_method==NULL) {
+		LM_ERR("cannot get a new bio method structure\n");
+		return NULL;
+	}
+	BIO_meth_set_write(tls_mbuf_method, tls_bio_mbuf_write);
+	BIO_meth_set_read(tls_mbuf_method, tls_bio_mbuf_read);
+	BIO_meth_set_puts(tls_mbuf_method, tls_bio_mbuf_puts);
+	BIO_meth_set_gets(tls_mbuf_method, NULL);
+	BIO_meth_set_ctrl(tls_mbuf_method, tls_bio_mbuf_ctrl);
+	BIO_meth_set_create(tls_mbuf_method, tls_bio_mbuf_new);
+	BIO_meth_set_destroy(tls_mbuf_method, tls_bio_mbuf_free);
+	BIO_meth_set_callback_ctrl(tls_mbuf_method, NULL);
+	return tls_mbuf_method;
+#endif
 }
 
 
@@ -91,7 +115,7 @@ BIO_METHOD* tls_BIO_mbuf(void)
 BIO* tls_BIO_new_mbuf(struct tls_mbuf* rd, struct tls_mbuf* wr)
 {
 	BIO* ret;
-	
+
 	TLS_BIO_DBG("tls_BIO_new_mbuf called (%p, %p)\n", rd, wr);
 	ret = BIO_new(tls_BIO_mbuf());
 	if (unlikely(ret == 0))
@@ -111,16 +135,24 @@ BIO* tls_BIO_new_mbuf(struct tls_mbuf* rd, struct tls_mbuf* wr)
 int tls_BIO_mbuf_set(BIO* b, struct tls_mbuf* rd, struct tls_mbuf* wr)
 {
 	struct tls_bio_mbuf_data* d;
-	
+
 	TLS_BIO_DBG("tls_BIO_mbuf_set called (%p => %p, %p)\n", b, rd, wr);
-	if (unlikely(b->ptr == 0)){
-		BUG("null BIO ptr\n");
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
+	d = b->ptr;
+#else
+	d = BIO_get_data(b);
+#endif
+	if (unlikely(d == 0)){
+		BUG("null BIO ptr data\n");
 		return 0;
 	}
-	d = b->ptr;
 	d->rd = rd;
 	d->wr = wr;
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 	b->init = 1;
+#else
+	BIO_set_init(b, 1);
+#endif
 	return 1;
 }
 
@@ -133,8 +165,9 @@ int tls_BIO_mbuf_set(BIO* b, struct tls_mbuf* rd, struct tls_mbuf* wr)
 static int tls_bio_mbuf_new(BIO* b)
 {
 	struct tls_bio_mbuf_data* d;
-	
+
 	TLS_BIO_DBG("tls_bio_mbuf_new called (%p)\n", b);
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 	b->init = 0; /* not initialized yet */
 	b->num = 0;
 	b->ptr = 0;
@@ -145,6 +178,14 @@ static int tls_bio_mbuf_new(BIO* b)
 	d->rd = 0;
 	d->wr = 0;
 	b->ptr = d;
+#else
+	BIO_set_init(b, 0);
+	BIO_set_data(b, NULL);
+	d = OPENSSL_zalloc(sizeof(*d));
+	if (unlikely(d == 0))
+		return 0;
+	BIO_set_data(b, d);
+#endif
 	return 1;
 }
 
@@ -159,11 +200,23 @@ static int tls_bio_mbuf_free(BIO* b)
 	TLS_BIO_DBG("tls_bio_mbuf_free called (%p)\n", b);
 	if (unlikely( b == 0))
 			return 0;
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 	if (likely(b->ptr)){
 		OPENSSL_free(b->ptr);
 		b->ptr = 0;
 		b->init = 0;
 	}
+#else
+	do {
+		struct tls_bio_mbuf_data* d;
+		d = BIO_get_data(b);
+		if (likely(d)) {
+			OPENSSL_free(d);
+			BIO_set_data(b, NULL);
+			BIO_set_init(b, 0);
+		}
+	} while(0);
+#endif
 	return 1;
 }
 
@@ -179,10 +232,14 @@ static int tls_bio_mbuf_read(BIO* b, char* dst, int dst_len)
 	struct tls_bio_mbuf_data* d;
 	struct tls_mbuf* rd;
 	int ret;
-	
+
 	ret = 0;
 	if (likely(dst)) {
-		d= b->ptr;
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
+		d = b->ptr;
+#else
+		d = BIO_get_data(b);
+#endif
 		BIO_clear_retry_flags(b);
 		if (unlikely(d == 0 || d->rd->buf == 0)) {
 			if (d == 0)
@@ -232,9 +289,13 @@ static int tls_bio_mbuf_write(BIO* b, const char* src, int src_len)
 	struct tls_bio_mbuf_data* d;
 	struct tls_mbuf* wr;
 	int ret;
-	
+
 	ret = 0;
-	d= b->ptr;
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
+	d = b->ptr;
+#else
+	d = BIO_get_data(b);
+#endif
 	BIO_clear_retry_flags(b);
 	if (unlikely(d == 0 || d->wr->buf == 0)) {
 		if (d == 0)
@@ -306,12 +367,10 @@ static long tls_bio_mbuf_ctrl(BIO* b, int cmd, long arg1, void* arg2)
 static int tls_bio_mbuf_puts(BIO* b, const char* s)
 {
 	int len;
-	
+
 	TLS_BIO_DBG("puts called (%p, %s)\n", b, s);
 	len=strlen(s);
 	return tls_bio_mbuf_write(b, s, len);
 }
-
-
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

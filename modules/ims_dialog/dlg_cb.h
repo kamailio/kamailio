@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 Voice Sistem SRLs
  *
  * This file is part of Kamailio, a free SIP server.
@@ -38,36 +36,35 @@ struct dlg_cell;
 
 struct dlg_cb_params {
 	struct sip_msg* req;       /* sip request msg related to the callback event */
-        struct sip_msg* rpl;       /* sip reply msg related to the callback event */
+	struct sip_msg* rpl;       /* sip reply msg related to the callback event */
 	unsigned int direction;    /* direction of the sip msg */
 	void *dlg_data;            /* generic paramter, specific to callback */
 	void **param;              /* parameter passed at callback registration*/
 };
 
 /* callback function prototype */
-typedef void (dialog_cb) (struct dlg_cell* dlg, int type, 
+typedef void (dialog_cb) (struct dlg_cell* dlg, int type,
 		struct dlg_cb_params * params);
 /* function to free the callback param */
 typedef void (param_free_cb) (void *param);
 /* register callback function prototype */
-typedef int (*register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
+typedef int (*ims_register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
 		dialog_cb f, void *param, param_free_cb ff);
 
-typedef int (*register_dlgcb_nodlg_f)(str *callid, str *ftag, str *ttag, int cb_types,
-		dialog_cb f, void *param, param_free_cb ff);
+typedef int (*ims_register_dlgcb_nodlg_f)(str *callid, str *ftag, str *ttag,
+		int cb_types, dialog_cb f, void *param, param_free_cb ff);
 
 /* method to set a variable within a dialog */
 //typedef int (*set_dlg_variable_f)( struct dlg_cell* dlg,
 //                                   str* key,
 //                                   str* val);
-typedef int (*set_dlg_variable_f)( str* callid, str* ftag, str* ttag,
-                                   str* key,
-                                   str* val);
+typedef int (*ims_set_dlg_variable_f)( str* callid, str* ftag, str* ttag,
+		str* key, str* val);
 /* method to get a variable from a dialog */
 //typedef str* (*get_dlg_variable_f)( struct dlg_cell* dlg,
 //                                    str* key);
 
-typedef str* (*get_dlg_variable_f)( str *callid, str *ftag, str *ttag,
+typedef str* (*ims_get_dlg_variable_f)( str *callid, str *ftag, str *ttag,
                                     str* key);
 
 #define DLGCB_LOADED          (1<<0)

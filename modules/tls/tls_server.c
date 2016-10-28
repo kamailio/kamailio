@@ -258,12 +258,14 @@ static int tls_complete_init(struct tcp_connection* c)
 	}
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 #ifdef TLS_KSSL_WORKARROUND
 	 /* if needed apply workaround for openssl bug #1467 */
 	if (data->ssl->kssl_ctx && openssl_kssl_malloc_bug){
 		kssl_ctx_free(data->ssl->kssl_ctx);
 		data->ssl->kssl_ctx=0;
 	}
+#endif
 #endif
 	SSL_set_bio(data->ssl, data->rwbio, data->rwbio);
 	c->extra_data = data;

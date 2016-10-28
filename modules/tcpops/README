@@ -31,6 +31,13 @@ Olle E. Johansson
               3.5. tcp_set_connection_lifetime([conid], lifetime)
               3.6. tcp_enable_closed_event([conid])
 
+        4. Event routes
+
+              4.1. tcp:closed
+              4.2. tcp:timeout
+              4.3. tcp:reset
+              4.4. Example
+
    List of Examples
 
    1.1. Set closed_event parameter
@@ -58,6 +65,13 @@ Chapter 1. Admin Guide
         3.4. tcp_keepalive_disable([conid])
         3.5. tcp_set_connection_lifetime([conid], lifetime)
         3.6. tcp_enable_closed_event([conid])
+
+   4. Event routes
+
+        4.1. tcp:closed
+        4.2. tcp:timeout
+        4.3. tcp:reset
+        4.4. Example
 
 1. Overview
 
@@ -277,3 +291,47 @@ request_route {
 event_route[tcp:closed] {
         xlog("connection $conid was closed");
 }
+
+4. Event routes
+
+   4.1. tcp:closed
+   4.2. tcp:timeout
+   4.3. tcp:reset
+   4.4. Example
+
+   The 3 following routes are called when a socket is closed.
+
+   The corresponding $conid , $Ri , $Rp , $si , $sp and $proto variable
+   will be available in the event routes.
+
+   Whether these routes are always called, never, or on a per socket basis
+   is controlled by the closed_event parameter.
+
+4.1.  tcp:closed
+
+   Called for each "normal" TCP socket closure by the other side
+   (FIN,ACK).
+
+4.2.  tcp:timeout
+
+   Called for connection timeouts (unanswered keepalives).
+
+4.3.  tcp:reset
+
+   Called if the connection is reset by peer (RST).
+
+4.4.  Example
+
+...
+event_route[tcp:closed] {
+        xlog("L_INFO", "$proto connection closed ($conid)\n");
+}
+
+event_route[tcp:timeout] {
+        xlog("L_INFO", "$proto connection timed out ($conid)\n");
+}
+
+event_route[tcp:reset] {
+        xlog("L_INFO", "$proto connection reset by peer ($conid)\n");
+}
+...

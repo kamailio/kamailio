@@ -65,6 +65,9 @@ struct _sipcapture_object {
 	long timestamp;
 	str node;
 	str msg;
+	str custom1;
+	str custom2;
+	str custom3;
 #ifdef STATISTICS
 	stat_var *stat;
 #endif

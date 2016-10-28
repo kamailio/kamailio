@@ -48,6 +48,7 @@ struct _sca_subscription {
 	str rr; // Record-Route header values
 
 	int db_cmd_flag; // track whether to INSERT or UPDATE
+	int server_id; // server
 };
 typedef struct _sca_subscription sca_subscription;
 

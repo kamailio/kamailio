@@ -46,6 +46,8 @@ int sca_get_msg_from_header(sip_msg_t *, struct to_body **);
 // convenient To header parsing and extraction
 int sca_get_msg_to_header(sip_msg_t *, struct to_body **);
 
+int sca_build_to_body_from_uri(sip_msg_t *, struct to_body **, str *);
+
 // count number of characters requiring escape as defined by escape_common
 int sca_uri_display_escapes_count(str *);
 

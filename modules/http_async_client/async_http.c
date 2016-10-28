@@ -60,6 +60,8 @@ async_http_worker_t *workers;
 int num_workers = 1;
 
 struct query_params ah_params;
+unsigned int q_idx;
+char q_id[MAX_ID_LEN+1];
 
 int async_http_init_worker(int prank, async_http_worker_t* worker)
 {
@@ -163,7 +165,10 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	}
 
 	aq = param;
+	strncpy(q_id, aq->id, strlen(aq->id));
+	
 	act = (cfg_action_t*)aq->param;
+
 	if (aq->query_params.suspend_transaction) {
 		tindex = aq->tindex;
 		tlabel = aq->tlabel;
@@ -214,7 +219,6 @@ void notification_socket_cb(int fd, short event, void *arg)
 	http_m_params_t query_params;
 
 	str query;
-	str post;
 
 	if ((received = recvfrom(worker->notication_socket[0],
 			&aq, sizeof(async_query_t*),
@@ -229,7 +233,6 @@ void notification_socket_cb(int fd, short event, void *arg)
 	}
 
 	query = ((str)aq->query);
-	post = ((str)aq->post);
 
 	query_params.timeout = aq->query_params.timeout;
 	query_params.tls_verify_peer = aq->query_params.tls_verify_peer;
@@ -267,9 +270,18 @@ void notification_socket_cb(int fd, short event, void *arg)
 		}
 	}
 
+	query_params.body.s = NULL;
+	query_params.body.len = 0;
+	if (aq->query_params.body.s && aq->query_params.body.len > 0) {
+		if (shm_str_dup(&query_params.body, &(aq->query_params.body)) < 0) {
+			LM_ERR("Error allocating query_params.body\n");
+			return;
+		}
+	}
+
 	LM_DBG("query received: [%.*s] (%p)\n", query.len, query.s, aq);
 
-	if (new_request(&query, &post, &query_params, async_http_cb, aq) < 0) {
+	if (new_request(&query, &query_params, async_http_cb, aq) < 0) {
 		LM_ERR("Cannot create request for %.*s\n", query.len, query.s);
 		free_async_query(aq);
 	}
@@ -289,6 +301,11 @@ void notification_socket_cb(int fd, short event, void *arg)
 		query_params.tls_ca_path.s = NULL;
 		query_params.tls_ca_path.len = 0;
 	}
+	if (query_params.body.s && query_params.body.len > 0) {
+		shm_free(query_params.body.s);
+		query_params.body.s = NULL;
+		query_params.body.len = 0;
+	}
 
 	return;
 }
@@ -300,7 +317,7 @@ int init_socket(async_http_worker_t *worker)
 	return (0);
 }
 
-int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act)
+int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act)
 {
 	async_query_t *aq;
 	unsigned int tindex = 0;
@@ -348,13 +365,6 @@ int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act)
 		goto error;
 	}
 
-	if (post != NULL) {
-
-		if(shm_str_dup(&aq->post, post)<0) {
-			goto error;
-		}
-	}
-
 	aq->param = act;
 	aq->tindex = tindex;
 	aq->tlabel = tlabel;
@@ -365,6 +375,10 @@ int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act)
 	aq->query_params.timeout = ah_params.timeout;
 	aq->query_params.headers = ah_params.headers;
 	aq->query_params.method = ah_params.method;
+
+	q_idx++;
+	snprintf(q_id, MAX_ID_LEN+1, "%u-%u", (unsigned int)getpid(), q_idx);
+	strncpy(aq->id, q_id, strlen(q_id));
 
 	aq->query_params.tls_client_cert.s = NULL;
 	aq->query_params.tls_client_cert.len = 0;
@@ -389,6 +403,15 @@ int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act)
 	if (ah_params.tls_ca_path.s && ah_params.tls_ca_path.len > 0) {
 		if (shm_str_dup(&aq->query_params.tls_ca_path, &(ah_params.tls_ca_path)) < 0) {
 			LM_ERR("Error allocating aq->query_params.tls_ca_path\n");
+			goto error;
+		}
+	}
+
+	aq->query_params.body.s = NULL;
+	aq->query_params.body.len = 0;
+	if (ah_params.body.s && ah_params.body.len > 0) {
+		if (shm_str_dup(&aq->query_params.body, &(ah_params.body)) < 0) {
+			LM_ERR("Error allocating aq->query_params.body\n");
 			goto error;
 		}
 	}
@@ -485,6 +508,12 @@ void set_query_params(struct query_params *p) {
 			LM_ERR("Error allocating tls_ca_path\n");
 			return;
 		}
+	}
+
+	if (p->body.s && p->body.len > 0) {
+		shm_free(p->body.s);
+		p->body.s = NULL;
+		p->body.len = 0;
 	}
 }
 

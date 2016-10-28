@@ -73,6 +73,7 @@ typedef struct hm_params {
 	str tls_client_cert;
 	str tls_client_key;
 	str tls_ca_path;
+	str body;
 } http_m_params_t;
 
 typedef struct http_m_cell
@@ -93,7 +94,6 @@ typedef struct http_m_cell
 	int evset;
 
 	char *url;
-	char *post_data;
 	char error[CURL_ERROR_SIZE];
 
 	http_multi_cbe_t cb;

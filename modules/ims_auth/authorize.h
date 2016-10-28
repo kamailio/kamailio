@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
  * 
@@ -154,8 +152,8 @@ auth_vector* get_auth_vector(str private_identity,str public_identity,int status
  * Storage of authentication vectors
  */
 
-inline void auth_data_lock(unsigned int hash);
-inline void auth_data_unlock(unsigned int hash);
+void auth_data_lock(unsigned int hash);
+void auth_data_unlock(unsigned int hash);
  
 int auth_data_init(int size);
 
@@ -168,7 +166,7 @@ void free_auth_vector(auth_vector *av);
 auth_userdata *new_auth_userdata(str private_identity,str public_identity);
 void free_auth_userdata(auth_userdata *aud);					
 
-inline unsigned int get_hash_auth(str private_identity,str public_identity);
+unsigned int get_hash_auth(str private_identity,str public_identity);
 
 int add_auth_vector(str private_identity,str public_identity,auth_vector *av);
 auth_vector* get_auth_vector(str private_identity,str public_identity,int status,str *nonce,unsigned int *hash);
@@ -184,7 +182,7 @@ int multimedia_auth_request(struct sip_msg *msg, str public_identity, str privat
 int pack_challenge(struct sip_msg *msg,str realm,auth_vector *av, int is_proxy_auth);
 int add_authinfo_resp_hdr(struct sip_msg *msg, str nextnonce, str qop, HASHHEX rspauth, str cnonce, str nc);
 
-inline void start_reg_await_timer(auth_vector *av);
+void start_reg_await_timer(auth_vector *av);
 void reg_await_timer(unsigned int ticks, void* param);
 
 unsigned char get_algorithm_type(str algorithm);

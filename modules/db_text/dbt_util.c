@@ -15,10 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <string.h>
@@ -34,7 +34,7 @@ int dbt_is_database(str *_s)
 {
 	DIR *dirp = NULL;
 	char buf[512];
-	
+
 	if(!_s || !_s->s || _s->len <= 0 || _s->len > 510)
 		return 0;
 	strncpy(buf, _s->s, _s->len);

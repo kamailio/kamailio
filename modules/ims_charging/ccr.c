@@ -277,6 +277,7 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca) {
     mscc->final_unit_action = fui;
 
     mscc->final_unit_action->action = -1;
+	mscc->final_unit_action->redirect_server = 0;
 
     AAA_AVP_LIST* avp_list = &cca->avpList;
     AAA_AVP_LIST mscc_avp_list;
@@ -321,6 +322,9 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca) {
                         case AVP_Validity_Time:
                             mscc->validity_time = get_4bytes(mscc_avp->data.s);
                             break;
+						case AVP_Result_Code:
+							mscc->resultcode = get_4bytes(mscc_avp->data.s);
+							break;
                         case AVP_Final_Unit_Indication:
                             y = cdp_avp->cdp->AAAUngroupAVPS(mscc_avp->data);
                             z = y.head;
@@ -329,6 +333,33 @@ Ro_CCA_t *Ro_parse_CCA_avps(AAAMessage *cca) {
                                     case AVP_Final_Unit_Action:
                                         mscc->final_unit_action->action = get_4bytes(z->data.s);
                                         break;
+									case AVP_Redirect_Server:
+										LM_DBG("Received redirect server\n");
+										redirect_server_t* redirect_server_info = 0;
+										mem_new(redirect_server_info, sizeof (redirect_server_t), pkg);
+										mscc->final_unit_action->redirect_server = redirect_server_info;
+										
+										AAA_AVP_LIST yy;
+										AAA_AVP *zz;
+										yy = cdp_avp->cdp->AAAUngroupAVPS(z->data);
+										zz = yy.head;
+										while (zz) {
+											switch (zz->code) {
+												case AVP_Redirect_Address_Type:
+													LM_DBG("Received redirect address type\n");
+													mscc->final_unit_action->redirect_server->address_type = get_4bytes(zz->data.s);
+													break;
+												case AVP_Redirect_Server_Address:
+													LM_DBG("Received redirect server address of [%.*s]\n", zz->data.len, zz->data.s);
+													str_dup_ptr(redirect_server_info->server_address, zz->data, pkg);
+													break;	
+												default:
+													LM_ERR("Unsupported Redirect Server AVP with code:[%d]\n", zz->code);
+											}
+											zz = zz->next;
+											cdp_avp->cdp->AAAFreeAVPList(&yy);
+										}
+										break;		
                                     default:
                                         LM_ERR("Unsupported Final Unit Indication AVP.\n");
                                 }

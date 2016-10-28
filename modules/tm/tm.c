@@ -175,9 +175,11 @@ inline static int w_t_forward_nonack_tls(struct sip_msg*, char* str,char*);
 inline static int w_t_forward_nonack_sctp(struct sip_msg*, char* str,char*);
 #endif
 inline static int w_t_forward_nonack_to(struct sip_msg* msg, char* str,char*);
-inline static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo, char *_bar);
+inline static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo,
+		char *_bar);
 inline static int w_t_on_failure(struct sip_msg* msg, char *go_to, char *foo);
-inline static int w_t_on_branch_failure(struct sip_msg* msg, char *go_to, char *foo);
+inline static int w_t_on_branch_failure(struct sip_msg* msg, char *go_to,
+		char *foo);
 inline static int w_t_on_branch(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *match, char *foo);
@@ -195,7 +197,8 @@ static int t_set_disable_failover(struct sip_msg* msg, char* on_off, char* f);
 static int t_set_no_e2e_cancel_reason(struct sip_msg* msg, char* on_off,
 		char* f);
 #endif /* CANCEL_REASON_SUPPORT */
-static int t_set_disable_internal_reply(struct sip_msg* msg, char* on_off, char* f);
+static int t_set_disable_internal_reply(struct sip_msg* msg, char* on_off,
+		char* f);
 static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
@@ -366,7 +369,8 @@ static cmd_export_t cmds[]={
 		fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 #endif /* CANCEL_REASON_SUPPORT */
-	{"t_set_disable_internal_reply", t_set_disable_internal_reply, 1, fixup_var_int_1,
+	{"t_set_disable_internal_reply", t_set_disable_internal_reply, 1,
+		fixup_var_int_1,
 		REQUEST_ROUTE|TM_ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_branch_timeout",  t_branch_timeout,         0, 0,
 		FAILURE_ROUTE|EVENT_ROUTE},
@@ -448,7 +452,8 @@ static param_export_t params[]={
 	{"blst_methods_add",    PARAM_INT, &default_tm_cfg.tm_blst_methods_add   },
 	{"blst_methods_lookup", PARAM_INT, &default_tm_cfg.tm_blst_methods_lookup},
 	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
-	{"reparse_on_dns_failover", PARAM_INT, &default_tm_cfg.reparse_on_dns_failover},
+	{"reparse_on_dns_failover", PARAM_INT,
+		&default_tm_cfg.reparse_on_dns_failover},
 	{"on_sl_reply",         PARAM_STRING|PARAM_USE_FUNC, fixup_on_sl_reply   },
 	{"contacts_avp",        PARAM_STR, &contacts_avp                },
 	{"contact_flows_avp",   PARAM_STR, &contact_flows_avp           },
@@ -495,11 +500,11 @@ static int fixup_routes(char* r_type, struct route_list* rt, void** param)
 
 	i=route_get(rt, (char*)*param);
 	if (i==-1){
-		LOG(L_ERR, "ERROR: tm: fixup_routes: route_get failed\n");
+		LM_ERR("route_get failed\n");
 		return E_UNSPEC;
 	}
 	if (r_type && rt->rlist[i]==0){
-		LOG(L_WARN, "WARNING: %s(\"%s\"): empty/non existing route\n",
+		LM_WARN("%s(\"%s\"): empty/non existing route\n",
 				r_type, (char*)*param);
 	}
 	*param=(void*)(long)i;
@@ -587,7 +592,7 @@ static int fixup_on_branch(void** param, int param_no)
 static int fixup_on_sl_reply(modparam_t type, void* val)
 {
 	if ((type & PARAM_STRING) == 0) {
-		LOG(L_ERR, "ERROR: tm: fixup_on_sl_reply: not a string parameter\n");
+		LM_ERR("not a string parameter\n");
 		return -1;
 	}
 
@@ -618,7 +623,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		host= a->u.string;
 		port=str2s(*param, strlen(*param), &err);
 		if (err!=0) {
-			LOG(L_ERR, "TM module:fixup_hostport2proxy: bad port number <%s>\n",
+			LM_ERR("bad port number <%s>\n",
 					(char*)(*param));
 			return E_UNSPEC;
 		}
@@ -626,7 +631,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		s.len = strlen(host);
 		proxy=mk_proxy(&s, port, 0); /* FIXME: udp or tcp? */
 		if (proxy==0) {
-			LOG(L_ERR, "ERROR: fixup_hostport2proxy: bad host name in URI <%s>\n",
+			LM_ERR("bad host name in URI <%s>\n",
 					host );
 			return E_BAD_ADDRESS;
 		}
@@ -635,7 +640,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		a->u.data=proxy;
 		return 0;
 	} else {
-		LOG(L_ERR,"ERROR: fixup_hostport2proxy called with parameter #<>{1,2}\n");
+		LM_ERR("called with parameter number different than {1,2}\n");
 		return E_BUG;
 	}
 }
@@ -646,10 +651,6 @@ static int fixup_proto_hostport2proxy(void** param, int param_no) {
 
 	ret = fix_param(FPARAM_AVP, param);
 	if (ret <= 0) return ret;
-	/*	if (param_no = 1) {		FIXME: param_str currently does not offer INT/STR overloading
-		ret = fix_param(FPARAM_INT, param);
-		if (ret <= 0) return ret;
-		} */
 	if (fix_param(FPARAM_STRING, param) != 0) return -1;
 	return 0;
 }
@@ -708,19 +709,19 @@ static int mod_init(void)
 	/* checking if we have sufficient bitmap capacity for given
 	 * maximum number of  branches */
 	if (sr_dst_max_branches+1>31) {
-		LOG(L_CRIT, "Too many max UACs for UAC branch_bm_t bitmap: %d\n",
+		LM_CRIT("Too many max UACs for UAC branch_bm_t bitmap: %d\n",
 				sr_dst_max_branches );
 		return -1;
 	}
 
 	if (init_callid() < 0) {
-		LOG(L_CRIT, "Error while initializing Call-ID generator\n");
+		LM_CRIT("Error while initializing Call-ID generator\n");
 		return -1;
 	}
 
 	/* building the hash table*/
 	if (!init_hash_table()) {
-		LOG(L_ERR, "ERROR: mod_init: initializing hash_table failed\n");
+		LM_ERR("initializing hash_table failed\n");
 		return -1;
 	}
 
@@ -728,14 +729,14 @@ static int mod_init(void)
 	init_t();
 
 	if (tm_init_selects()==-1) {
-		LOG(L_ERR, "ERROR: mod_init: select init failed\n");
+		LM_ERR("select init failed\n");
 		return -1;
 	}
 
 	/* the default timer values must be fixed-up before
 	 * declaring the configuration (Miklos) */
 	if (tm_init_timers()==-1) {
-		LOG(L_ERR, "ERROR: mod_init: timer init failed\n");
+		LM_ERR("timer init failed\n");
 		return -1;
 	}
 
@@ -743,70 +744,67 @@ static int mod_init(void)
 	 * configuration */
 	if (cancel_b_flags_get(&default_tm_cfg.cancel_b_flags,
 				default_tm_cfg.cancel_b_flags)<0){
-		LOG(L_ERR, "ERROR: mod_init: bad cancel branch method\n");
+		LM_ERR("bad cancel branch method\n");
 		return -1;
 	}
 
 #ifdef USE_DNS_FAILOVER
 	if (default_tm_cfg.reparse_on_dns_failover && mhomed) {
-		LOG(L_WARN, "WARNING: mod_init: "
-				"reparse_on_dns_failover is enabled on a "
-				"multihomed host -- check the readme of tm module!\n");
+		LM_WARN("reparse_on_dns_failover is enabled on a"
+				" multihomed host -- check the readme of tm module!\n");
 	}
 #endif
 
 	/* declare the configuration */
 	if (cfg_declare("tm", tm_cfg_def, &default_tm_cfg, cfg_sizeof(tm),
 				&tm_cfg)) {
-		LOG(L_ERR, "ERROR: mod_init: failed to declare the configuration\n");
+		LM_ERR("failed to declare the configuration\n");
 		return -1;
 	}
 
 	/* First tm_stat initialization function only allocates the top level stat
 	 * structure in shared memory, the initialization will complete in child
-	 * init with init_tm_stats_child when the final value of estimated_process_count is
-	 * known
+	 * init with init_tm_stats_child when the final value of
+	 * estimated_process_count is known
 	 */
 	if (init_tm_stats() < 0) {
-		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
+		LM_CRIT("failed to init stats\n");
 		return -1;
 	}
 
 	if (uac_init()==-1) {
-		LOG(L_ERR, "ERROR: mod_init: uac_init failed\n");
+		LM_ERR("uac_init failed\n");
 		return -1;
 	}
 
 	if (init_tmcb_lists()!=1) {
-		LOG(L_CRIT, "ERROR:tm:mod_init: failed to init tmcb lists\n");
+		LM_CRIT("failed to init tmcb lists\n");
 		return -1;
 	}
 
 	tm_init_tags();
 	init_twrite_lines();
 	if (init_twrite_sock() < 0) {
-		LOG(L_ERR, "ERROR:tm:mod_init: Unable to create socket\n");
+		LM_ERR("Unable to create socket\n");
 		return -1;
 	}
 
 	/* register post-script clean-up function */
 	if (register_script_cb( w_t_unref, POST_SCRIPT_CB|REQUEST_CB, 0)<0 ) {
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to register POST request "
-				"callback\n");
+		LM_ERR("failed to register POST request callback\n");
 		return -1;
 	}
 	if (register_script_cb( script_init, PRE_SCRIPT_CB|REQUEST_CB , 0)<0 ) {
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to register PRE request "
-				"callback\n");
+		LM_ERR("failed to register PRE request callback\n");
 		return -1;
 	}
 
 	if (init_avp_params(fr_timer_param, fr_inv_timer_param) < 0) {
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to process AVP params\n");
+		LM_ERR("failed to process AVP params\n");
 		return -1;
 	}
 	if ((contacts_avp.len > 0) && (contact_flows_avp.len == 0)) {
-		LOG(L_ERR,"ERROR:tm:mod_init: contact_flows_avp param has not been defined\n");
+		LM_ERR("contact_flows_avp param has not been defined\n");
 		return -1;
 	}
 
@@ -818,7 +816,7 @@ static int mod_init(void)
 		set_child_rpc_sip_mode();
 #endif /* WITH_EVENT_LOCAL_REQUEST */
 	if (goto_on_sl_reply && onreply_rt.rlist[goto_on_sl_reply]==0)
-		WARN("empty/non existing on_sl_reply route\n");
+		LM_WARN("empty/non existing on_sl_reply route\n");
 
 #ifdef WITH_TM_CTX
 	tm_ctx_init();
@@ -835,13 +833,12 @@ static int child_init(int rank)
 		 * before any other process is starting (or else some new process
 		 * might try to use the stats before the stats array is allocated) */
 		if (init_tm_stats_child() < 0) {
-			ERR("Error while initializing tm statistics structures\n");
+			LM_ERR("Error while initializing tm statistics structures\n");
 			return -1;
 		}
 	}else if (child_init_callid(rank) < 0) {
 		/* don't init callid for PROC_INIT*/
-		LOG(L_ERR, "ERROR: child_init: Error while initializing Call-ID"
-				" generator\n");
+		LM_ERR("Error while initializing Call-ID generator\n");
 		return -2;
 	}
 	return 0;
@@ -882,19 +879,19 @@ static int t_check_status(struct sip_msg* msg, char *p1, char *foo)
 			if (get_str_fparam(&tmp, msg, fp) < 0) goto error;
 			s = pkg_malloc(tmp.len + 1);
 			if (s == NULL) {
-				ERR("Out of memory\n");
+				LM_ERR("Out of memory\n");
 				goto error;
 			}
 			memcpy(s, tmp.s, tmp.len);
 			s[tmp.len] = '\0';
 
 			if ((re = pkg_malloc(sizeof(regex_t))) == 0) {
-				ERR("No memory left\n");
+				LM_ERR("No memory left\n");
 				goto error;
 			}
 
 			if (regcomp(re, s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
-				ERR("Bad regular expression '%s'\n", s);
+				LM_ERR("Bad regular expression '%s'\n", s);
 				pkg_free(re);
 				re = NULL;
 				goto error;
@@ -990,7 +987,7 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 	int i=0;
 	if (msg->REQ_METHOD==METHOD_CANCEL) {
 		ret = t_lookupOriginalT( msg );
-		DBG("lookup_original: t_lookupOriginalT returned: %p\n", ret);
+		LM_DBG("lookup_original: t_lookupOriginalT returned: %p\n", ret);
 		if (ret != T_NULL_CELL) {
 			/* If the parameter is set to 1, overwrite the message flags of
 			 * the CANCEL with the flags of the INVITE */
@@ -1011,7 +1008,8 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 inline static int str2proto(char *s, int len) {
 	if (len == 3 && !strncasecmp(s, "udp", 3))
 		return PROTO_UDP;
-	else if (len == 3 && !strncasecmp(s, "tcp", 3))  /* tcp&tls checks will be passed in getproto() */
+	else if (len == 3 && !strncasecmp(s, "tcp", 3))  /* tcp&tls checks will be
+														passed in getproto() */
 		return PROTO_TCP;
 	else if (len == 3 && !strncasecmp(s, "tls", 3))
 		return PROTO_TLS;
@@ -1036,7 +1034,8 @@ inline static struct proxy_l* t_protoaddr2proxy(char *proto_par, char *addr_par)
 
 	switch(((fparam_t *)proto_par)->type) {
 		case FPARAM_AVP:
-			if (!(avp = search_first_avp(((fparam_t *)proto_par)->v.avp.flags, ((fparam_t *)proto_par)->v.avp.name, &val, 0))) {
+			if (!(avp = search_first_avp(((fparam_t *)proto_par)->v.avp.flags,
+							((fparam_t *)proto_par)->v.avp.name, &val, 0))) {
 				proto = PROTO_NONE;
 			} else {
 				if (avp->flags & AVP_VAL_STR) {
@@ -1052,22 +1051,25 @@ inline static struct proxy_l* t_protoaddr2proxy(char *proto_par, char *addr_par)
 			proto = ((fparam_t *)proto_par)->v.i;
 			break;
 		case FPARAM_STRING:
-			proto = str2proto( ((fparam_t *)proto_par)->v.asciiz, strlen(((fparam_t *)proto_par)->v.asciiz));
+			proto = str2proto( ((fparam_t *)proto_par)->v.asciiz,
+					strlen(((fparam_t *)proto_par)->v.asciiz));
 			break;
 		default:
-			ERR("BUG: Invalid proto parameter value in t_protoaddr2proxy\n");
+			LM_ERR("Invalid proto parameter value in t_protoaddr2proxy\n");
 			return 0;
 	}
 
 
 	switch(((fparam_t *)addr_par)->type) {
 		case FPARAM_AVP:
-			if (!(avp = search_first_avp(((fparam_t *)addr_par)->v.avp.flags, ((fparam_t *)addr_par)->v.avp.name, &val, 0))) {
+			if (!(avp = search_first_avp(((fparam_t *)addr_par)->v.avp.flags,
+							((fparam_t *)addr_par)->v.avp.name, &val, 0))) {
 				s.len = 0;
 			} else {
 				if ((avp->flags & AVP_VAL_STR) == 0) {
-					LOG(L_ERR, "tm:t_protoaddr2proxy: avp <%.*s> value is not string\n",
-							((fparam_t *)addr_par)->v.avp.name.s.len, ((fparam_t *)addr_par)->v.avp.name.s.s);
+					LM_ERR("avp <%.*s> value is not string\n",
+							((fparam_t *)addr_par)->v.avp.name.s.len,
+							((fparam_t *)addr_par)->v.avp.name.s.s);
 					return 0;
 				}
 				s = val.s;
@@ -1080,7 +1082,7 @@ inline static struct proxy_l* t_protoaddr2proxy(char *proto_par, char *addr_par)
 			break;
 
 		default:
-			ERR("BUG: Invalid addr parameter value in t_protoaddr2proxy\n");
+			LM_ERR("Invalid addr parameter value in t_protoaddr2proxy\n");
 			return 0;
 	}
 
@@ -1090,21 +1092,19 @@ inline static struct proxy_l* t_protoaddr2proxy(char *proto_par, char *addr_par)
 		if (c) {
 			port = str2s(c+1, s.len-(c-s.s+1), &err);
 			if (err!=0) {
-				LOG(L_ERR, "tm:t_protoaddr2proxy: bad port number <%.*s>\n",
-						s.len, s.s);
+				LM_ERR("bad port number <%.*s>\n", s.len, s.s);
 				return 0;
 			}
 			s.len = c-s.s;
 		}
 	}
 	if (!s.len) {
-		LOG(L_ERR, "tm: protoaddr2proxy: host name is empty\n");
+		LM_ERR("host name is empty\n");
 		return 0;
 	}
 	proxy=mk_proxy(&s, port, proto);
 	if (proxy==0) {
-		LOG(L_ERR, "tm: protoaddr2proxy: bad host name in URI <%.*s>\n",
-				s.len, s.s );
+		LM_ERR("bad host name in URI <%.*s>\n", s.len, s.s );
 		return 0;
 	}
 	return proxy;
@@ -1115,19 +1115,18 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, struct proxy_l* proxy
 {
 	struct cell *t;
 	if (t_check( msg , 0 )==-1) {
-		LOG(L_ERR, "ERROR: forward_nonack: "
-				"can't forward when no transaction was set up\n");
+		LM_ERR("can't forward when no transaction was set up\n");
 		return -1;
 	}
 	t=get_t();
 	if ( t && t!=T_UNDEFINED ) {
 		if (msg->REQ_METHOD==METHOD_ACK) {
-			LOG(L_WARN,"WARNING: you don't really want to fwd hbh ACK\n");
+			LM_WARN("you don't really want to fwd hop-by-hop ACK\n");
 			return -1;
 		}
 		return t_forward_nonack(t, msg, proxy, proto );
 	} else {
-		DBG("DEBUG: forward_nonack: no transaction found\n");
+		LM_DBG("no transaction found\n");
 		return -1;
 	}
 }
@@ -1205,14 +1204,14 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 	char* r;
 
 	if (msg->REQ_METHOD==METHOD_ACK) {
-		LOG(L_WARN, "WARNING: t_reply: ACKs are not replied\n");
+		LM_DBG("ACKs are not replied\n");
 		return -1;
 	}
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if (!t) {
-		LOG(L_ERR, "ERROR: t_reply: cannot send a t_reply to a message "
-				"for which no T-state has been established\n");
+		LM_ERR("cannot send a t_reply to a message"
+				" for which no T-state has been established\n");
 		return -1;
 	}
 
@@ -1234,7 +1233,7 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 
 	t->flags |= T_ADMIN_REPLY;
 	if (is_route_type(FAILURE_ROUTE)) {
-		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
+		LM_DBG("t_reply_unsafe called from w_t_reply\n");
 		ret = t_reply_unsafe(t, msg, code, r);
 	} else if (is_route_type(REQUEST_ROUTE)) {
 		ret = t_reply( t, msg, code, r);
@@ -1256,7 +1255,7 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 			set_t(T_UNDEFINED, T_BR_UNDEFINED);
 		}
 	} else {
-		LOG(L_CRIT, "BUG: w_t_reply entered in unsupported mode\n");
+		LM_CRIT("w_t_reply entered in unsupported mode\n");
 		ret = -1;
 	}
 
@@ -1301,7 +1300,7 @@ inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* 
 	t=get_t();
 	if (t) {
 		if (p_msg->REQ_METHOD==METHOD_ACK) {
-			LOG(L_WARN, "WARNING: : ACKs transmit_replies not replied\n");
+			LM_WARN("ACKs transmit_replies not replied\n");
 			return -1;
 		}
 		return t_retransmit_reply( t );
@@ -1317,8 +1316,7 @@ inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar )
 	int ret;
 	ret = t_newtran( p_msg );
 	if (ret==E_SCRIPT) {
-		LOG(L_ERR, "ERROR: t_newtran: "
-				"transaction already in process %p\n", get_t() );
+		LM_NOTICE("transaction already in process %p\n", get_t() );
 	}
 	return ret;
 }
@@ -1419,13 +1417,13 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 	if (is_route_type(FAILURE_ROUTE|BRANCH_FAILURE_ROUTE)) {
 		t=get_t();
 		if (!t || t==T_UNDEFINED) {
-			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
+			LM_CRIT("undefined T\n");
 			return -1;
 		}
 		res = t_forward_nonack(t, p_msg, proxy, force_proto);
 		if (res <= 0) {
 			if (res != E_CFG) {
-				LOG(L_ERR, "ERROR: w_t_relay_to: t_relay_to failed\n");
+				LM_ERR("t_forward_noack failed\n");
 				/* let us save the error code, we might need it later
 				 * when the failure_route has finished (Miklos) */
 			}
@@ -1437,8 +1435,7 @@ inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
 	if (is_route_type(REQUEST_ROUTE))
 		return t_relay_to( p_msg, proxy, force_proto,
 				0 /* no replication */ );
-	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported route type: %d\n",
-			get_route_type());
+	LM_CRIT("unsupported route type: %d\n", get_route_type());
 	return 0;
 }
 
@@ -1658,8 +1655,8 @@ inline static int w_t_relay_cancel( struct sip_msg  *p_msg ,
 
 	/* it makes no sense to use this function without reparse_invite=1 */
 	if (!cfg_get(tm, tm_cfg, reparse_invite))
-		LOG(L_WARN, "WARNING: t_relay_cancel is probably used with "
-				"wrong configuration, check the readme for details\n");
+		LM_WARN("probably used with wrong configuration,"
+				" check the readme for details\n");
 
 	return t_relay_cancel(p_msg);
 }
@@ -1704,7 +1701,7 @@ static int w_t_set_retr(struct sip_msg* msg, char* p1, char* p2)
 #ifdef TM_DIFF_RT_TIMEOUT
 	return t_set_retr(msg, t1, t2);
 #else
-	ERR("w_t_set_retr: support for changing retransmission intervals on "
+	LM_ERR("support for changing retransmission intervals on "
 			"the fly not compiled in (re-compile tm with"
 			" -DTM_DIFF_RT_TIMEOUT)\n");
 	return -1;
@@ -1717,7 +1714,7 @@ int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar)
 #ifdef TM_DIFF_RT_TIMEOUT
 	return t_reset_retr();
 #else
-	ERR("w_t_reset_retr: support for changing retransmission intervals on "
+	LM_ERR("support for changing retransmission intervals on "
 			"the fly not compiled in (re-compile tm with"
 			" -DTM_DIFF_RT_TIMEOUT)\n");
 	return -1;
@@ -1823,8 +1820,7 @@ int t_branch_timeout(struct sip_msg* msg, char* foo, char* bar)
 		case BRANCH_FAILURE_ROUTE:
 			return (msg->msg_flags & FL_TIMEOUT)?1:-1;
 		default:
-			LOG(L_ERR, "ERROR:t_check_status: unsupported route type %d\n",
-					get_route_type());
+			LM_ERR("unsupported route type %d\n", get_route_type());
 	}
 	return -1;
 }
@@ -1840,8 +1836,7 @@ int t_branch_replied(struct sip_msg* msg, char* foo, char* bar)
 		case BRANCH_FAILURE_ROUTE:
 			return (msg->msg_flags & FL_REPLIED)?1:-1;
 		default:
-			LOG(L_ERR, "ERROR:t_check_status: unsupported route type %d\n",
-					get_route_type());
+			LM_ERR("unsupported route type %d\n", get_route_type());
 	}
 	return -1;
 }
@@ -1884,7 +1879,7 @@ int t_is_retr_async_reply(struct sip_msg* msg)
 				" for which no T-state has been established\n");
 		ret=-1;
 	}else{
-		LOG(L_DBG, "TRANSACTION FLAGS IS %d\n", t->flags);
+		LM_DBG("TRANSACTION FLAGS IS %d\n", t->flags);
 		ret=(t->flags & T_ASYNC_SUSPENDED)?1:-1;
 	}
 	return ret;
@@ -1904,8 +1899,8 @@ int t_is_expired(struct sip_msg* msg, char* foo, char* bar)
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if ((t==0) || (t==T_UNDEFINED)){
-		LOG(L_ERR, "ERROR: t_is_expired: cannot check a message "
-				"for which no T-state has been established\n");
+		LM_ERR("cannot check a message"
+				" for which no T-state has been established\n");
 		ret=-1;
 	}else{
 		ret=(TICKS_GT(t->end_of_life, get_ticks_raw()))?-1:1;
@@ -1922,8 +1917,8 @@ int t_any_timeout(struct sip_msg* msg, char* foo, char* bar)
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if ((t==0) || (t==T_UNDEFINED)){
-		LOG(L_ERR, "ERROR: t_any_timeout: cannot check a message "
-				"for which no T-state has been established\n");
+		LM_ERR("cannot check a message"
+				" for which no T-state has been established\n");
 		return -1;
 	}else{
 		for (r=0; r<t->nr_of_outgoings; r++){
@@ -1946,8 +1941,8 @@ int t_any_replied(struct sip_msg* msg, char* foo, char* bar)
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if ((t==0) || (t==T_UNDEFINED)){
-		LOG(L_ERR, "ERROR: t_any_replied: cannot check a message "
-				"for which no T-state has been established\n");
+		LM_ERR("cannot check a message"
+				" for which no T-state has been established\n");
 		return -1;
 	}else{
 		for (r=0; r<t->nr_of_outgoings; r++){
@@ -1972,8 +1967,8 @@ int t_grep_status(struct sip_msg* msg, char* status, char* bar)
 	if (t_check( msg , 0 )==-1) return -1;
 	t=get_t();
 	if ((t==0) || (t==T_UNDEFINED)){
-		LOG(L_ERR, "ERROR: t_any_replied: cannot check a message "
-				"for which no T-state has been established\n");
+		LM_ERR("cannot check a message"
+				" for which no T-state has been established\n");
 		return -1;
 	}else{
 		for (r=0; r<t->nr_of_outgoings; r++){
@@ -2008,13 +2003,12 @@ static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
 	if (is_route_type(REQUEST_ROUTE)) {
 		t=get_t();
 		if (!t || t==T_UNDEFINED) {
-			LOG(L_ERR, "ERROR: w_t_save_lumps: transaction has not been created yet\n");
+			LM_ERR("transaction has not been created yet\n");
 			return -1;
 		}
 
 		if (save_msg_lumps(t->uas.request, msg)) {
-			LOG(L_ERR, "ERROR: w_t_save_lumps: "
-					"failed to save the message lumps\n");
+			LM_ERR("failed to save the message lumps\n");
 			return -1;
 		}
 	} /* else nothing to do, the lumps have already been saved */
@@ -2162,7 +2156,8 @@ static int fixup_t_relay_to(void** param, int param_no)
 
 			proxy = mk_proxy(&host, port, proto);
 			if (proxy==0) {
-				LM_ERR("failed to build proxy structure for <%.*s>\n", host.len, host.s );
+				LM_ERR("failed to build proxy structure for <%.*s>\n",
+						host.len, host.s );
 				return E_UNSPEC;
 			}
 			*(param)=proxy;
@@ -2189,14 +2184,16 @@ static int fixup_t_relay_to(void** param, int param_no)
 					return 0;
 				} else {
 					/* try proxy */
-					if (parse_phostport(s.s, &host.s, &host.len, &port, &proto)!=0){
+					if (parse_phostport(s.s, &host.s, &host.len,
+								&port, &proto)!=0){
 						LM_CRIT("invalid proxy addr parameter <%s>\n",s.s);
 						return E_UNSPEC;
 					}
 
 					proxy = mk_proxy(&host, port, proto);
 					if (proxy==0) {
-						LM_ERR("failed to build proxy structure for <%.*s>\n", host.len, host.s );
+						LM_ERR("failed to build proxy structure for <%.*s>\n",
+								host.len, host.s );
 						return E_UNSPEC;
 					}
 					*(param)=proxy;

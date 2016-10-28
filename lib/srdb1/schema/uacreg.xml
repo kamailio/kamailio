@@ -9,7 +9,7 @@
 
 <table id="uacreg" xmlns:db="http://docbook.org/ns/docbook">
     <name>uacreg</name>
-    <version>2</version>
+    <version>3</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by theuac module to load user details for remote server registration: &KAMAILIO_MOD_DOC;uac.html
@@ -29,7 +29,7 @@
     <column id="l_uuid">
         <name>l_uuid</name>
         <type>string</type>
-        <size>64</size>
+        <size>&user_len;</size>
         <default/>
         <description>Local unique id used to build and match contact addresses.</description>
     </column>
@@ -37,7 +37,7 @@
     <column id="l_username">
         <name>l_username</name>
         <type>string</type>
-        <size>64</size>
+        <size>&user_len;</size>
         <default/>
         <description>Local username</description>
     </column>
@@ -45,7 +45,7 @@
     <column id="l_domain">
         <name>l_domain</name>
         <type>string</type>
-        <size>128</size>
+        <size>&domain_len;</size>
         <default/>
         <description>Local domain</description>
     </column>
@@ -53,7 +53,7 @@
     <column id="r_username">
         <name>r_username</name>
         <type>string</type>
-        <size>64</size>
+        <size>&user_len;</size>
         <default/>
         <description>Remote username</description>
     </column>
@@ -61,7 +61,7 @@
     <column id="r_domain">
         <name>r_domain</name>
         <type>string</type>
-        <size>128</size>
+        <size>&domain_len;</size>
         <default/>
         <description>Remote domain</description>
     </column>
@@ -69,7 +69,7 @@
     <column id="realm">
         <name>realm</name>
         <type>string</type>
-        <size>64</size>
+        <size>&realm_len;</size>
         <default/>
         <description>Remote username</description>
     </column>
@@ -77,7 +77,7 @@
     <column id="auth_username">
         <name>auth_username</name>
         <type>string</type>
-        <size>64</size>
+        <size>&user_len;</size>
         <default/>
         <description>Authentication username</description>
     </column>
@@ -85,15 +85,23 @@
     <column id="auth_password">
         <name>auth_password</name>
         <type>string</type>
-        <size>64</size>
+        <size>&password_len;</size>
         <default/>
         <description>Authentication password</description>
+    </column>
+
+    <column id="auth_ha1">
+        <name>auth_ha1</name>
+        <type>string</type>
+        <size>&ha1_len;</size>
+        <default/>
+        <description>Hashed (HA1) authentication password</description>
     </column>
 
     <column id="auth_proxy">
         <name>auth_proxy</name>
         <type>string</type>
-        <size>64</size>
+        <size>&uri_len;</size>
         <default/>
         <description>Outbound proxy SIP address</description>
     </column>

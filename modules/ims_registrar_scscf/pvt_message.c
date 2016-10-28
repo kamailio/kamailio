@@ -84,9 +84,7 @@ struct sip_msg* get_request_from_tx(struct cell *t) {
         (which we cannot assume) then we would pollute the shm_msg t->uas.request if we did any parsing on it. Instead, we need to 
         make a private copy of the message and free it when we are done 
          */
-        if ((_pv_treq.T != t || t->uas.request != _pv_treq.tmsgp)
-                && t->uas.request->id != _pv_treq.id) {
-
+	if (_pv_treq.label != t->label || _pv_treq.index != t->hash_index) {		
             /* make a copy */
             if (_pv_treq.buf == NULL || _pv_treq.buf_size < t->uas.request->len + 1) {
                 if (_pv_treq.buf != NULL)
@@ -94,8 +92,8 @@ struct sip_msg* get_request_from_tx(struct cell *t) {
                 if (_pv_treq.tmsgp)
                     free_sip_msg(&_pv_treq.msg);
                 _pv_treq.tmsgp = NULL;
-                _pv_treq.id = 0;
-                _pv_treq.T = NULL;
+                _pv_treq.index = 0;
+                _pv_treq.label = 0;
                 _pv_treq.buf_size = t->uas.request->len + 1;
                 _pv_treq.buf = (char*) pkg_malloc(_pv_treq.buf_size * sizeof (char));
                 if (_pv_treq.buf == NULL) {
@@ -112,8 +110,8 @@ struct sip_msg* get_request_from_tx(struct cell *t) {
             _pv_treq.msg.len = t->uas.request->len;
             _pv_treq.msg.buf = _pv_treq.buf;
             _pv_treq.tmsgp = t->uas.request;
-            _pv_treq.id = t->uas.request->id;
-            _pv_treq.T = t;
+            _pv_treq.index = t->hash_index;
+            _pv_treq.label = t->label;
 
 
             if (pv_t_copy_msg(t->uas.request, &_pv_treq.msg) != 0) {
@@ -121,7 +119,8 @@ struct sip_msg* get_request_from_tx(struct cell *t) {
                 _pv_treq.buf_size = 0;
                 _pv_treq.buf = NULL;
                 _pv_treq.tmsgp = NULL;
-                _pv_treq.T = NULL;
+                _pv_treq.index = 0;
+                _pv_treq.label = 0;
                 return 0;
             }
         }

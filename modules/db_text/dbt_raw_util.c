@@ -15,10 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <stdlib.h>
@@ -44,100 +44,100 @@ void log_regerror(int errcode, regex_t *compiled)
 
 char** dbt_str_split(char* a_str, const char a_delim, int* c)
 {
-    char** result    = 0;
-    size_t count     = 0;
-    char* tmp        = a_str;
-    char* last_comma = 0;
-    char delim[2];
-    delim[0] = a_delim;
-    delim[1] = 0;
-    int len = 0;
+	char** result    = 0;
+	size_t count     = 0;
+	char* tmp        = a_str;
+	char* last_comma = 0;
+	char delim[2];
+	delim[0] = a_delim;
+	delim[1] = 0;
+	int len = 0;
 
-    /* Count how many elements will be extracted. */
-    while (*tmp)
-    {
-        if (a_delim == *tmp)
-        {
-            count++;
-            last_comma = tmp;
-        }
-        tmp++;
-    }
+	/* Count how many elements will be extracted. */
+	while (*tmp)
+	{
+		if (a_delim == *tmp)
+		{
+			count++;
+			last_comma = tmp;
+		}
+		tmp++;
+	}
 
-    /* Add space for trailing token. */
-    count += last_comma < (a_str + strlen(a_str) - 1);
+	/* Add space for trailing token. */
+	count += last_comma < (a_str + strlen(a_str) - 1);
 
-    *c = count;
+	*c = count;
 
-    /* Add space for terminating null string so caller
-       knows where the list of returned strings ends. */
-    count++;
+	/* Add space for terminating null string so caller
+	   knows where the list of returned strings ends. */
+	count++;
 
-    result = pkg_malloc(sizeof(char*) * count);
+	result = pkg_malloc(sizeof(char*) * count);
 
-    if (result)
-    {
-        size_t idx  = 0;
-        char* token = strtok(a_str, delim);
+	if (result)
+	{
+		size_t idx  = 0;
+		char* token = strtok(a_str, delim);
 
-        while (token)
-        {
-            assert(idx < count);
-            len = strlen(token);
-            char* ptr = pkg_malloc( (len+1) * sizeof(char));
-        	memcpy(ptr, token, len);
-        	ptr[len] = '\0';
-            *(result + idx) = dbt_trim(ptr);
-            token = strtok(0, delim);
-            idx++;
-        }
-        assert(idx == count - 1);
-        *(result + idx) = 0;
-    }
+		while (token)
+		{
+			assert(idx < count);
+			len = strlen(token);
+			char* ptr = pkg_malloc( (len+1) * sizeof(char));
+			memcpy(ptr, token, len);
+			ptr[len] = '\0';
+			*(result + idx) = dbt_trim(ptr);
+			token = strtok(0, delim);
+			idx++;
+		}
+		assert(idx == count - 1);
+		*(result + idx) = 0;
+	}
 
-    return result;
+	return result;
 }
 
 
 char* dbt_trim(char *str)
 {
-    size_t len = 0;
-    char *frontp = str;
-    char *endp = NULL;
+	size_t len = 0;
+	char *frontp = str;
+	char *endp = NULL;
 
-    if( str == NULL ) { return NULL; }
-    if( str[0] == '\0' ) { return str; }
+	if( str == NULL ) { return NULL; }
+	if( str[0] == '\0' ) { return str; }
 
-    len = strlen(str);
-    endp = str + len;
+	len = strlen(str);
+	endp = str + len;
 
-    /* Move the front and back pointers to address the first non-whitespace
-     * characters from each end.
-     */
-    while( isspace(*frontp) ) { ++frontp; }
-    if( endp != frontp )
-    {
-        while( isspace(*(--endp)) && endp != frontp ) {}
-    }
+	/* Move the front and back pointers to address the first non-whitespace
+	 * characters from each end.
+	 */
+	while( isspace(*frontp) ) { ++frontp; }
+	if( endp != frontp )
+	{
+		while( isspace(*(--endp)) && endp != frontp ) {}
+	}
 
-    if( str + len - 1 != endp )
-            *(endp + 1) = '\0';
-    else if( frontp != str &&  endp == frontp )
-            *str = '\0';
+	if( str + len - 1 != endp )
+		*(endp + 1) = '\0';
+	else if( frontp != str &&  endp == frontp )
+		*str = '\0';
 
-    /* Shift the string so that it starts at str so that if it's dynamically
-     * allocated, we can still free it on the returned pointer.  Note the reuse
-     * of endp to mean the front of the string buffer now.
-     */
-    endp = str;
-    if( frontp != str )
-    {
-            while( *frontp ) { *endp++ = *frontp++; }
-            *endp = '\0';
-    }
+	/* Shift the string so that it starts at str so that if it's dynamically
+	 * allocated, we can still free it on the returned pointer.  Note the reuse
+	 * of endp to mean the front of the string buffer now.
+	 */
+	endp = str;
+	if( frontp != str )
+	{
+		while( *frontp ) { *endp++ = *frontp++; }
+		*endp = '\0';
+	}
 
 
-    return str;
+	return str;
 }
 
 
@@ -165,7 +165,7 @@ void dbt_clean_where(int n, db_key_t* _k, db_op_t* _op, db_val_t* _v)
 	if(_v) {
 		for(i=0; i < n; i++) {
 			if(_v[i].type == DB1_STR)
-			pkg_free(_v[i].val.str_val.s);
+				pkg_free(_v[i].val.str_val.s);
 		}
 		pkg_free(_v);
 	}

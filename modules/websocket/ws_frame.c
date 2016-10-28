@@ -136,6 +136,8 @@ static str str_status_error_closing = str_init("Error closing connection");
 static str str_status_error_sending = str_init("Error sending frame");
 static str str_status_string_error = str_init("Error converting string to int");
 
+static int ws_send_crlf(ws_connection_t *wsc, int opcode);
+
 static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 {
 	int pos = 0, extended_length;
@@ -680,10 +682,19 @@ int ws_frame_receive(void *data)
 	case OPCODE_BINARY_FRAME:
 		if (likely(frame.wsc->sub_protocol == SUB_PROTOCOL_SIP))
 		{
-			LM_DBG("Rx SIP message:\n%.*s\n", frame.payload_len,
+			LM_DBG("Rx SIP (or text) message:\n%.*s\n", frame.payload_len,
 				frame.payload_data);
 			update_stat(ws_sip_received_frames, 1);
 
+			if((frame.payload_len==CRLF_LEN
+					&& strncmp(frame.payload_data, CRLF, CRLF_LEN)==0)
+					|| (frame.payload_len==CRLFCRLF_LEN
+					&& strncmp(frame.payload_data, CRLFCRLF, CRLFCRLF_LEN)==0))
+			{
+				ws_send_crlf(frame.wsc, opcode);
+				wsconn_put(frame.wsc);
+				return 0;
+			}
 			if (frame.fin)
 			{
 
@@ -788,7 +799,7 @@ int ws_frame_transmit(void *data)
 			frame.payload_data);
 
 	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
-	{	
+	{
 		LM_ERR("sending message\n");
 
 		wsconn_put(frame.wsc);
@@ -813,13 +824,32 @@ static int ping_pong(ws_connection_t *wsc, int opcode)
 	frame.wsc = wsc;
 
 	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0)
-	{	
+	{
 		LM_ERR("sending keepalive\n");
 		return -1;
 	}
 
 	if (opcode == OPCODE_PING)
 		wsc->awaiting_pong = 1;
+
+	return 0;
+}
+
+static int ws_send_crlf(ws_connection_t *wsc, int opcode)
+{
+	ws_frame_t frame;
+
+	memset(&frame, 0, sizeof(frame));
+	frame.fin = 1;
+	frame.opcode = opcode;
+	frame.payload_len = CRLF_LEN;
+	frame.payload_data = CRLF;
+	frame.wsc = wsc;
+
+	if (encode_and_send_ws_frame(&frame, CONN_CLOSE_DONT) < 0) {
+		LM_ERR("failed sending CRLF\n");
+		return -1;
+	}
 
 	return 0;
 }

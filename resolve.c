@@ -1335,7 +1335,7 @@ end:
 
 
 
-#ifdef USE_NAPTR 
+#ifdef USE_NAPTR
 
 
 /** iterates over a naptr rr list, returning each time a "good" naptr record
@@ -1343,7 +1343,7 @@ end:
  * params:
  *         naptr_head - naptr rr list head
  *         tried      - bitmap used to keep track of the already tried records
- *                      (no more then sizeof(tried)*8 valid records are 
+ *                      (no more then sizeof(tried)*8 valid records are
  *                      ever walked
  *         srv_name   - if succesfull, it will be set to the selected record
  *                      srv name (naptr repl.)
@@ -1351,10 +1351,10 @@ end:
  *                      protocol
  * returns  0 if no more records found or a pointer to the selected record
  *  and sets  protocol and srv_name
- * WARNING: when calling first time make sure you run first 
+ * WARNING: when calling first time make sure you run first
  *           naptr_iterate_init(&tried)
  */
-struct rdata* naptr_sip_iterate(struct rdata* naptr_head, 
+struct rdata* naptr_sip_iterate(struct rdata* naptr_head,
 										naptr_bmp_t* tried,
 										str* srv_name, char* proto)
 {
@@ -1373,7 +1373,7 @@ struct rdata* naptr_sip_iterate(struct rdata* naptr_head,
 	saved_proto=0;
 	i=0;
 	for(l=naptr_head; l && (i<MAX_NAPTR_RRS); l=l->next){
-		if (l->type!=T_NAPTR) continue; 
+		if (l->type!=T_NAPTR) continue;
 		naptr=(struct naptr_rdata*) l->rdata;
 		if (naptr==0){
 			LM_CRIT("null rdata\n");
@@ -1391,17 +1391,18 @@ struct rdata* naptr_sip_iterate(struct rdata* naptr_head,
 #endif
 		if ((naptr_proto_supported(naptr_proto))){
 			if (naptr_choose(&naptr_saved, &saved_proto,
-								naptr, naptr_proto))
+								naptr, naptr_proto)) {
 				idx=i;
 				l_saved=l;
 			}
+		}
 		i++;
 	}
 	if (naptr_saved){
 		/* found something */
 #ifdef NAPTR_DBG
 		LM_DBG("choosed NAPTR rr %.*s, proto %d tried: 0x%x\n",
-					naptr_saved->repl_len, 
+					naptr_saved->repl_len,
 					naptr_saved->repl, (int)saved_proto, *tried);
 #endif
 		*tried|=1<<idx;
