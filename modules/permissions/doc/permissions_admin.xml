@@ -551,7 +551,7 @@ modparam("permissions", "mask_col", "subnet_length")
 		<title>Set <varname>port_col</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("permissions", "port_col", "prt")
+modparam("permissions", "port_col", "port")
 ...
 </programlisting>
 		</example>
