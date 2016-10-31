@@ -298,10 +298,12 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 	srjson_t *it = NULL;
 	static ucontact_info_t ci;
 
-	int action, expires, cseq, flags, cflags, q, last_modified, methods, reg_id;
+	unsigned int action, expires, cseq, flags, cflags, q, last_modified,
+				 methods, reg_id;
 	str aor, ruid, c, received, path, callid, user_agent, instance;
 
-	action = expires = cseq = flags = cflags = q = last_modified = methods = reg_id = 0;
+	action = expires = cseq = flags = cflags = q = last_modified
+		= methods = reg_id = 0;
 
 	parse_from_header(msg);
 	body = ((struct to_body*)msg->from->parsed)->uri;
@@ -342,7 +344,7 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 		if (it->string == NULL) continue;
 
 		if (strcmp(it->string, "action")==0) {
-			action = it->valueint;
+			action = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "aor")==0) {
 			aor.s = it->valuestring;
 			aor.len = strlen(aor.s);
@@ -368,21 +370,21 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 			instance.s = it->valuestring;
 			instance.len = strlen(instance.s);
 		} else if (strcmp(it->string, "expires")==0) { //
-			expires = it->valueint;
+			expires = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "cseq")==0) {
-			cseq = it->valueint;
+			cseq = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "flags")==0) {
-			flags = it->valueint;
+			flags = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "cflags")==0) {
-			cflags = it->valueint;
+			cflags = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "q")==0) {
-			q = it->valueint;
+			q = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "last_modified")==0) {
-			last_modified = it->valueint;
+			last_modified = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "methods")==0) {
-			methods = it->valueint;
+			methods = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "reg_id")==0) {
-			reg_id = it->valueint;
+			reg_id = SRJSON_GET_UINT(it);
 		} else {
 			LM_ERR("unrecognized field in json object\n");
 		}
