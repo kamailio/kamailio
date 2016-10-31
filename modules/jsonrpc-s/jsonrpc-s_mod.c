@@ -327,7 +327,7 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 					nj->valuestring, strlen(nj->valuestring));
 		} else {
 			srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
-					nj->valueint);
+					nj->valuedouble);
 		}
 	}
 
@@ -519,14 +519,20 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 			auto_convert = 1;
 			continue;
 		case 'b': /* Bool */
+			uint_ptr = va_arg(ap, unsigned int*);
+			*uint_ptr = SRJSON_GET_UINT(ctx->req_node);
+			break;
 		case 't': /* Date and time */
+			uint_ptr = va_arg(ap, unsigned int*);
+			*uint_ptr = SRJSON_GET_UINT(ctx->req_node);
+			break;
 		case 'd': /* Integer */
 			int_ptr = va_arg(ap, int*);
-			*int_ptr = ctx->req_node->valueint;
+			*int_ptr = SRJSON_GET_INT(ctx->req_node);
 			break;
-		case 'u': /* Integer */
+		case 'u': /* Unsigned Integer */
 			uint_ptr = va_arg(ap, unsigned int*);
-			*uint_ptr = (unsigned int)ctx->req_node->valueint;
+			*uint_ptr = SRJSON_GET_UINT(ctx->req_node);
 			break;
 		case 'f': /* double */
 			double_ptr = va_arg(ap, double*);
@@ -538,7 +544,8 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 				*char_ptr = ctx->req_node->valuestring;
 			} else if(auto_convert == 1) {
 				if(ctx->req_node->type==srjson_Number) {
-					*char_ptr = int2str(ctx->req_node->valueint, &stmp.len);
+					*char_ptr = int2str(SRJSON_GET_ULONG(ctx->req_node),
+							&stmp.len);
 				} else {
 					*char_ptr = NULL;
 					goto error;
@@ -555,7 +562,7 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 				str_ptr->len = strlen(ctx->req_node->valuestring);
 			} else if(auto_convert == 1) {
 				if(ctx->req_node->type==srjson_Number) {
-					str_ptr->s = int2str(ctx->req_node->valueint,
+					str_ptr->s = int2str(SRJSON_GET_ULONG(ctx->req_node),
 							&str_ptr->len);
 				} else {
 					str_ptr->s = NULL;
