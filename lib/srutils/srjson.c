@@ -193,7 +193,6 @@ static const char *parse_number(srjson_doc_t *doc, srjson_t *item, const char *n
 									 * 10^+/- exponent */
 
 	item->valuedouble = n;
-	item->valueint = (int) n;
 	item->type = srjson_Number;
 	return num;
 }
@@ -203,12 +202,13 @@ static char *print_number(srjson_doc_t *doc, srjson_t *item)
 {
 	char    *str;
 	double  d = item->valuedouble;
-	if (fabs(((double) item->valueint) - d) <= DBL_EPSILON && d <= INT_MAX && d >= INT_MIN) {
+	int     i = (int)d;
+	if (fabs(((double) i) - d) <= DBL_EPSILON && d <= INT_MAX && d >= INT_MIN) {
 		str = (char *) doc->malloc_fn(21);	/* 2^64+1 can be
 							 * represented in 21
 							 * chars. */
 		if (str)
-			sprintf(str, "%d", item->valueint);
+			sprintf(str, "%d", i);
 	} else {
 		str = (char *) doc->malloc_fn(64);	/* This is a nice
 							 * tradeoff. */
@@ -452,7 +452,6 @@ static const char *parse_value(srjson_doc_t *doc, srjson_t *item, const char *va
 	}
 	if (!strncmp(value, "true", 4)) {
 		item->type = srjson_True;
-		item->valueint = 1;
 		return value + 4;
 	}
 	if (*value == '\"') {
@@ -956,7 +955,6 @@ srjson_t *srjson_CreateNumber(srjson_doc_t *doc, double num) {
 	if (item) {
 		item->type = srjson_Number;
 		item->valuedouble = num;
-		item->valueint = (int) num;
 	} return item;
 }
 
