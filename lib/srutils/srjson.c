@@ -444,14 +444,17 @@ static const char *parse_value(srjson_doc_t *doc, srjson_t *item, const char *va
 		return 0;	/* Fail on null. */
 	if (!strncmp(value, "null", 4)) {
 		item->type = srjson_NULL;
+		item->valuedouble = 0;
 		return value + 4;
 	}
 	if (!strncmp(value, "false", 5)) {
 		item->type = srjson_False;
+		item->valuedouble = 0;
 		return value + 5;
 	}
 	if (!strncmp(value, "true", 4)) {
 		item->type = srjson_True;
+		item->valuedouble = 1;
 		return value + 4;
 	}
 	if (*value == '\"') {
