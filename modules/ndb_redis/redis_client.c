@@ -364,7 +364,6 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 	va_start(ap, cmd);
 	va_copy(ap2, ap);
 
-	rsrv = redisc_get_server(srv);
 	if(srv==NULL || cmd==NULL || res==NULL)
 	{
 		LM_ERR("invalid parameters");
@@ -375,6 +374,7 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		LM_ERR("invalid parameters");
 		goto error_exec;
 	}
+	rsrv = redisc_get_server(srv);
 	if(rsrv==NULL)
 	{
 		LM_ERR("no redis server found: %.*s\n", srv->len, srv->s);
