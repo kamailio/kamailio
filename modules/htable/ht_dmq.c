@@ -142,7 +142,7 @@ int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq
 	{
 		LM_DBG("found field: %s\n", it->string);
 		if (strcmp(it->string, "action")==0) {
-			action = it->valueint;
+			action = SRJSON_GET_INT(it);
 		} else if (strcmp(it->string, "htname")==0) {
 			htname.s = it->valuestring;
 			htname.len = strlen(htname.s);
@@ -150,14 +150,14 @@ int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq
 			cname.s = it->valuestring;
 			cname.len = strlen(cname.s);
 		} else if (strcmp(it->string, "type")==0) {
-			type = it->valueint;
+			type = SRJSON_GET_INT(it);
 		} else if (strcmp(it->string, "strval")==0) {
 			val.s.s = it->valuestring;
 			val.s.len = strlen(val.s.s);
 		} else if (strcmp(it->string, "intval")==0) {
-			val.n = it->valueint;
+			val.n = SRJSON_GET_INT(it);
 		} else if (strcmp(it->string, "mode")==0) {
-			mode = it->valueint;
+			mode = SRJSON_GET_INT(it);
 		} else {
 			LM_ERR("unrecognized field in json object\n");
 			goto invalid;
