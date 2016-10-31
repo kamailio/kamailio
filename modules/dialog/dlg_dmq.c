@@ -15,8 +15,8 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU General Public License for more details.
 *
-* You should have received a copy of the GNU General Public License 
-* along with this program; if not, write to the Free Software 
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 *
 */
@@ -80,10 +80,12 @@ int dlg_dmq_send(str* body, dmq_node_t* node) {
 	}
 	if (node) {
 		LM_DBG("sending dmq message ...\n");
-		dlg_dmqb.send_message(dlg_dmq_peer, body, node, &dlg_dmq_resp_callback, 1, &dlg_dmq_content_type);
+		dlg_dmqb.send_message(dlg_dmq_peer, body, node, &dlg_dmq_resp_callback,
+				1, &dlg_dmq_content_type);
 	} else {
 		LM_DBG("sending dmq broadcast...\n");
-		dlg_dmqb.bcast_message(dlg_dmq_peer, body, 0, &dlg_dmq_resp_callback, 1, &dlg_dmq_content_type);
+		dlg_dmqb.bcast_message(dlg_dmq_peer, body, 0, &dlg_dmq_resp_callback,
+				1, &dlg_dmq_content_type);
 	}
 	return 0;
 }
@@ -92,7 +94,7 @@ int dlg_dmq_send(str* body, dmq_node_t* node) {
 /**
 * @brief ht dmq callback
 */
-int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
+int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* node)
 {
 	int content_length;
 	str body;
@@ -104,14 +106,16 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 
 	dlg_dmq_action_t action = DLG_DMQ_NONE;
 	dlg_iuid_t iuid;
-	str profiles = {0, 0}, callid = {0, 0}, tag1 = {0,0}, tag2 = {0,0}, contact1 = {0,0}, contact2 = {0,0}, k={0,0}, v={0,0};
-	str cseq1 = {0,0}, cseq2 = {0,0}, route_set1 = {0,0}, route_set2 = {0,0}, from_uri = {0,0}, to_uri = {0,0}, req_uri = {0,0};
+	str profiles = {0, 0}, callid = {0, 0}, tag1 = {0,0}, tag2 = {0,0},
+		contact1 = {0,0}, contact2 = {0,0}, k={0,0}, v={0,0};
+	str cseq1 = {0,0}, cseq2 = {0,0}, route_set1 = {0,0}, route_set2 = {0,0},
+		from_uri = {0,0}, to_uri = {0,0}, req_uri = {0,0};
 	unsigned int init_ts = 0, start_ts = 0, lifetime = 0;
 	unsigned int state = 1;
 
 	/* received dmq message */
 	LM_DBG("dmq message received\n");
-	
+
 	if(!msg->content_length) {
 		LM_ERR("no content length header found\n");
 		goto invalid2;
@@ -131,7 +135,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 	}
 
 	/* parse body */
-	LM_DBG("body: %.*s\n", body.len, body.s);	
+	LM_DBG("body: %.*s\n", body.len, body.s);
 
 	srjson_InitDoc(&jdoc, NULL);
 	jdoc.buf = body;
@@ -148,23 +152,23 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 	for(it=jdoc.root->child; it; it = it->next)
 	{
 		if ((it->string == NULL) || (strcmp(it->string, "vars")==0)) continue;
-		
+
 		LM_DBG("found field: %s\n", it->string);
-		
+
 		if (strcmp(it->string, "action")==0) {
-			action = it->valueint;
+			action = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "h_entry")==0) {
-			iuid.h_entry = it->valueint;
+			iuid.h_entry = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "h_id")==0) {
-			iuid.h_id = it->valueint;
+			iuid.h_id = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "init_ts")==0) {
-			init_ts = it->valueint;
+			init_ts = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "start_ts")==0) {
-			start_ts = it->valueint;
+			start_ts = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "state")==0) {
-			state = it->valueint;
+			state = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "lifetime")==0) {
-			lifetime = it->valueint;
+			lifetime = SRJSON_GET_UINT(it);
 		} else if (strcmp(it->string, "callid")==0) {
 			callid.s = it->valuestring;
 			callid.len = strlen(callid.s);
@@ -216,7 +220,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 	}
 
 	switch(action) {
-		case DLG_DMQ_UPDATE: 
+		case DLG_DMQ_UPDATE:
 			LM_DBG("Updating dlg [%u:%u] with callid [%.*s]\n", iuid.h_entry, iuid.h_id,
 					callid.len, callid.s);
 			if (!dlg) {
@@ -235,7 +239,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 
 				/* link the dialog */
 				link_dlg(dlg, 0, 0);
-				dlg_set_leg_info(dlg, &tag1, &route_set1, &contact1, &cseq1, 0);	
+				dlg_set_leg_info(dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
 				/* override generated h_id */
 				dlg->h_id = iuid.h_id;
 				/* prevent DB sync */
@@ -259,7 +263,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 				k.s = it->string;        k.len = strlen(k.s);
 				v.s = it->valuestring;   v.len = strlen(v.s);
 				set_dlg_variable(dlg, &k, &v);
-			}				
+			}
 			/* add profiles */
 			if(profiles.s!=NULL) {
 				srjson_InitDoc(&prof_jdoc, NULL);
@@ -278,27 +282,26 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 				goto error;
 			}
 			if (state < dlg->state) {
-				LM_NOTICE("Ignoring backwards state change on dlg [%u:%u] with callid [%.*s] from state [%u] to state [%u]\n",
+				LM_NOTICE("Ignoring backwards state change on dlg [%u:%u]"
+						" with callid [%.*s] from state [%u] to state [%u]\n",
 					iuid.h_entry, iuid.h_id,
 					dlg->callid.len, dlg->callid.s, dlg->state, state);
 				break;
 			}
-			LM_DBG("State update dlg [%u:%u] with callid [%.*s] from state [%u] to state [%u]\n", iuid.h_entry, iuid.h_id,
+			LM_DBG("State update dlg [%u:%u] with callid [%.*s] from state [%u]"
+					" to state [%u]\n", iuid.h_entry, iuid.h_id,
 					dlg->callid.len, dlg->callid.s, dlg->state, state);
 			switch (state) {
 				case DLG_STATE_EARLY:
 					dlg->start_ts = start_ts;
 					dlg->lifetime = lifetime;
-					
 					dlg_set_leg_info(dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
 					break;
 				case DLG_STATE_CONFIRMED:
 					dlg->start_ts = start_ts;
 					dlg->lifetime = lifetime;
-					
 					dlg_set_leg_info(dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
 					dlg_set_leg_info(dlg, &tag2, &route_set2, &contact2, &cseq2, 1);
-					
 					if (insert_dlg_timer( &dlg->tl, dlg->lifetime ) != 0) {
 						LM_CRIT("Unable to insert dlg timer %p [%u:%u]\n",
 							dlg, dlg->h_entry, dlg->h_id);
@@ -320,7 +323,8 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 					}
 					/* prevent DB sync */
 					dlg->dflags |= DLG_FLAG_NEW;
-					/* keep dialog around for a bit, to prevent out-of-order syncs to reestablish the dlg */
+					/* keep dialog around for a bit, to prevent out-of-order
+					 * syncs to reestablish the dlg */
 					dlg->init_ts = time(NULL);
 					break;
 				default:
@@ -336,9 +340,11 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp)
 				LM_DBG("dialog [%u:%u] not found\n", iuid.h_entry, iuid.h_id);
 				goto error;
 			}
-			LM_DBG("Removed dlg [%u:%u] with callid [%.*s] int state [%u]\n", iuid.h_entry, iuid.h_id,
+			LM_DBG("Removed dlg [%u:%u] with callid [%.*s] int state [%u]\n",
+					iuid.h_entry, iuid.h_id,
 					dlg->callid.len, dlg->callid.s, dlg->state);
-			if (dlg->state == (DLG_STATE_CONFIRMED || DLG_STATE_EARLY )) {
+			if (dlg->state==DLG_STATE_CONFIRMED
+					|| dlg->state==DLG_STATE_EARLY) {
 				ret = remove_dialog_timer(&dlg->tl);
 				if (ret == 0) {
 					/* one extra unref due to removal from timer list */
@@ -423,15 +429,18 @@ error:
 }
 
 
-int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needlock, dmq_node_t *node ) {
+int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
+		int needlock, dmq_node_t *node ) {
 
 	srjson_doc_t jdoc, prof_jdoc;
 	dlg_var_t *var;
 
-	LM_DBG("replicating action [%d] on [%u:%u] to dmq peers\n", action, dlg->h_entry, dlg->h_id);
+	LM_DBG("replicating action [%d] on [%u:%u] to dmq peers\n", action,
+			dlg->h_entry, dlg->h_id);
 
 	if (action == DLG_DMQ_UPDATE) {
-		if (!node && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) && ((dlg->dflags & DLG_FLAG_CHANGED_PROF) == 0)) {
+		if (!node && (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
+				&& ((dlg->dflags & DLG_FLAG_CHANGED_PROF) == 0)) {
 			LM_DBG("dlg not changed, no sync\n");
 			return 1;
 		}
@@ -439,7 +448,9 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needl
 		LM_DBG("dlg not synced, no sync\n");
 		return 1;
 	}
-	if (action == DLG_DMQ_STATE && (dlg->state != DLG_STATE_CONFIRMED && dlg->state != DLG_STATE_DELETED && dlg->state != DLG_STATE_EARLY)){
+	if (action == DLG_DMQ_STATE && (dlg->state != DLG_STATE_CONFIRMED
+				&& dlg->state != DLG_STATE_DELETED
+				&& dlg->state != DLG_STATE_EARLY)) {
 		LM_DBG("not syncing state %u\n", dlg->state);
 		return 1;
 	}
@@ -458,27 +469,37 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needl
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", action);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "h_entry", dlg->h_entry);
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "h_id", dlg->h_id);
-	
+
 	switch(action) {
 		case DLG_DMQ_UPDATE:
 			dlg->iflags |= DLG_IFLAG_DMQ_SYNC;
 			dlg->dflags &= ~DLG_FLAG_CHANGED_PROF;
-			srjson_AddNumberToObject(&jdoc, jdoc.root, "init_ts", dlg->init_ts);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "callid", dlg->callid.s, dlg->callid.len);
-			
-			srjson_AddStrToObject(&jdoc, jdoc.root, "from_uri", dlg->from_uri.s, dlg->from_uri.len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "to_uri", dlg->to_uri.s, dlg->to_uri.len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "req_uri", dlg->req_uri.s, dlg->req_uri.len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "tag1", dlg->tag[0].s, dlg->tag[0].len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1", dlg->cseq[0].s, dlg->cseq[0].len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1", dlg->route_set[0].s, dlg->route_set[0].len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "contact1", dlg->contact[0].s, dlg->contact[0].len);
-					
+			srjson_AddNumberToObject(&jdoc, jdoc.root, "init_ts",
+					dlg->init_ts);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "callid",
+					dlg->callid.s, dlg->callid.len);
+
+			srjson_AddStrToObject(&jdoc, jdoc.root, "from_uri",
+					dlg->from_uri.s, dlg->from_uri.len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "to_uri",
+					dlg->to_uri.s, dlg->to_uri.len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "req_uri",
+					dlg->req_uri.s, dlg->req_uri.len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
+					dlg->tag[0].s, dlg->tag[0].len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1",
+					dlg->cseq[0].s, dlg->cseq[0].len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1",
+					dlg->route_set[0].s, dlg->route_set[0].len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "contact1",
+					dlg->contact[0].s, dlg->contact[0].len);
+
 			if (dlg->vars != NULL) {
-				srjson_t *pj = NULL;		
-				pj = srjson_CreateObject(&jdoc);		
+				srjson_t *pj = NULL;
+				pj = srjson_CreateObject(&jdoc);
                 for(var=dlg->vars ; var ; var=var->next) {
-					srjson_AddStrToObject(&jdoc, pj, var->key.s, var->value.s, var->value.len);
+					srjson_AddStrToObject(&jdoc, pj, var->key.s,
+							var->value.s, var->value.len);
                 }
                 srjson_AddItemToObject(&jdoc, jdoc.root, "vars", pj);
 			}
@@ -487,7 +508,8 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needl
 				srjson_InitDoc(&prof_jdoc, NULL);
 				dlg_profiles_to_json(dlg, &prof_jdoc);
 				if(prof_jdoc.buf.s!=NULL) {
-					LM_DBG("adding profiles: [%.*s]\n", prof_jdoc.buf.len, prof_jdoc.buf.s);
+					LM_DBG("adding profiles: [%.*s]\n",
+							prof_jdoc.buf.len, prof_jdoc.buf.s);
 					srjson_AddStrToObject(&jdoc, jdoc.root, "profiles",
 							prof_jdoc.buf.s, prof_jdoc.buf.len);
 					prof_jdoc.free_fn(prof_jdoc.buf.s);
@@ -501,26 +523,42 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg, int needl
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "state", dlg->state);
 			switch (dlg->state) {
 				case DLG_STATE_EARLY:
-					srjson_AddNumberToObject(&jdoc, jdoc.root, "start_ts", dlg->start_ts);
-					srjson_AddNumberToObject(&jdoc, jdoc.root, "lifetime", dlg->lifetime);
-					
-					srjson_AddStrToObject(&jdoc, jdoc.root, "tag1", dlg->tag[0].s, dlg->tag[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1", dlg->cseq[0].s, dlg->cseq[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1", dlg->route_set[0].s, dlg->route_set[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "contact1", dlg->contact[0].s, dlg->contact[0].len);
+					srjson_AddNumberToObject(&jdoc, jdoc.root, "start_ts",
+							dlg->start_ts);
+					srjson_AddNumberToObject(&jdoc, jdoc.root, "lifetime",
+							dlg->lifetime);
+
+					srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
+							dlg->tag[0].s, dlg->tag[0].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1",
+							dlg->cseq[0].s, dlg->cseq[0].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1",
+							dlg->route_set[0].s, dlg->route_set[0].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "contact1",
+							dlg->contact[0].s, dlg->contact[0].len);
 					break;
 				case DLG_STATE_CONFIRMED:
-					srjson_AddNumberToObject(&jdoc, jdoc.root, "start_ts", dlg->start_ts);
-					srjson_AddNumberToObject(&jdoc, jdoc.root, "lifetime", dlg->lifetime);
+					srjson_AddNumberToObject(&jdoc, jdoc.root, "start_ts",
+							dlg->start_ts);
+					srjson_AddNumberToObject(&jdoc, jdoc.root, "lifetime",
+							dlg->lifetime);
 
-					srjson_AddStrToObject(&jdoc, jdoc.root, "tag1", dlg->tag[0].s, dlg->tag[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "tag2", dlg->tag[1].s, dlg->tag[1].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1", dlg->cseq[0].s, dlg->cseq[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq2", dlg->cseq[1].s, dlg->cseq[1].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1", dlg->route_set[0].s, dlg->route_set[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set2", dlg->route_set[1].s, dlg->route_set[1].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "contact1", dlg->contact[0].s, dlg->contact[0].len);
-					srjson_AddStrToObject(&jdoc, jdoc.root, "contact2", dlg->contact[1].s, dlg->contact[1].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
+							dlg->tag[0].s, dlg->tag[0].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "tag2",
+							dlg->tag[1].s, dlg->tag[1].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1",
+							dlg->cseq[0].s, dlg->cseq[0].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "cseq2",
+							dlg->cseq[1].s, dlg->cseq[1].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1",
+							dlg->route_set[0].s, dlg->route_set[0].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "route_set2",
+							dlg->route_set[1].s, dlg->route_set[1].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "contact1",
+							dlg->contact[0].s, dlg->contact[0].len);
+					srjson_AddStrToObject(&jdoc, jdoc.root, "contact2",
+							dlg->contact[1].s, dlg->contact[1].len);
 
 					break;
 				case DLG_STATE_DELETED:
