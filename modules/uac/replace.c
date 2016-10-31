@@ -521,8 +521,8 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp,
 	str param_val;
 	str add_to_rr = {0, 0};
 	struct to_body* old_body;
-	str old_uri;
-	str new_uri;
+	str old_uri = {0, 0};
+	str new_uri = {0, 0};
 	char *p;
 	int i;
 	int_str avp_value;
@@ -564,16 +564,16 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp,
 	pkg_free(add_to_rr.s);
 	add_to_rr.s = NULL;
 
-	/* dencrypt parameter ;) */
-	if (uac_passwd.len)
+	/* decrypt parameter */
+	if (uac_passwd.len) {
 		for( i=0 ; i<new_uri.len ; i++)
 			new_uri.s[i] ^= uac_passwd.s[i%uac_passwd.len];
+	}
 
 	/* check the request direction */
-	if (
-		(check_from && uac_rrb.is_direction( msg, RR_FLOW_UPSTREAM)==0) ||
-		(!check_from && uac_rrb.is_direction( msg,RR_FLOW_DOWNSTREAM)==0)
-		) {
+	if ( (check_from && uac_rrb.is_direction(msg, RR_FLOW_UPSTREAM)==0)
+			|| (!check_from && uac_rrb.is_direction(msg, RR_FLOW_DOWNSTREAM)==0)
+				) {
 		/* replace the TO URI */
 		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
 			LM_ERR("failed to parse TO hdr\n");
@@ -631,6 +631,16 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp,
 		goto failed;
 	}
 
+	/* check if new uri has valid characters */
+	for(i=0; i<new_uri.len; i++) {
+		if(!isprint(new_uri.s[i])) {
+			LM_WARN("invalid char found in the new uri at pos %d (%c) [%.*s]\n",
+					i, new_uri.s[i], new_uri.len, new_uri.s);
+			LM_WARN("this can happen when URI values are altered by end points"
+					" - skipping the update\n");
+			goto failed;
+		}
+	}
 	LM_DBG("decoded uris are: new=[%.*s] old=[%.*s]\n",
 		new_uri.len, new_uri.s, old_uri.len, old_uri.s);
 
