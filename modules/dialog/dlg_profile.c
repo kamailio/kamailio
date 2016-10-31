@@ -1278,9 +1278,9 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 					puid.s = jt->valuestring;
 					puid.len = strlen(puid.s);
 				} else if(strcmp(jt->string, "expires")==0) {
-					expires = (time_t)jt->valueint;
+					expires = (time_t)SRJSON_GET_ULONG(jt);
 				} else if(strcmp(jt->string, "flags")==0) {
-					flags = jt->valueint;
+					flags = SRJSON_GET_UINT(jt);
 				}
 			}
 			if(name.s==NULL)
