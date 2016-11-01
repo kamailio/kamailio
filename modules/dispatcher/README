@@ -697,7 +697,7 @@ Note
    code=408 or class=400 will never set a backend down even if it is,
    because internally the Kamailio transaction layer generates a 408 in
    the case of no response from the remote server, and this internal code
-   408 is accepted as vaild value.
+   408 is accepted as valid value.
 
    Default value is “” (only 200 OK is accepted).
 
