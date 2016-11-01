@@ -2496,7 +2496,7 @@ static int report_capture(struct sip_msg *msg, str *_table, str* _corr,  str *_d
 	struct timezone tz;
 	char tmp_node[100];
 	time_t epoch_time_as_time_t;
-	str corrtmp, tmp;
+	str corrtmp = STR_NULL, tmp;
 
 
 	_capture_mode_data_t *c = NULL;
