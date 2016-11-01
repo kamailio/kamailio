@@ -184,14 +184,14 @@ char *make_message(const char *fmt, ...)
 	va_list ap;
 
 	size = 100;     /* Guess we need no more than 100 bytes. */
-	p = (char *)pkg_realloc(NULL, size * sizeof(char *));
+	p = (char *)pkg_realloc(NULL, size * sizeof(char));
 	if (!p)
 	{
 		LM_ERR("Can't allocate memory (%lu bytes), pkg_malloc() has failed:"
-				" Not enough memory.\n", (unsigned long)(size * sizeof(char *)));
+				" Not enough memory.\n", (unsigned long)(size * sizeof(char)));
 		return NULL;
 	}
-	memset(p, 0, size * sizeof(char *));
+	memset(p, 0, size * sizeof(char));
 
 	while (1)
 	{
@@ -207,11 +207,11 @@ char *make_message(const char *fmt, ...)
 		else           /* glibc 2.0 */
 			size *= 2;
 
-		np = (char *)pkg_realloc(p, size * sizeof(char *));
+		np = (char *)pkg_realloc(p, size * sizeof(char));
 		if (!np)
 		{
 			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed:"
-					" Not enough memory.\n", (unsigned long)size * sizeof(char *));
+					" Not enough memory.\n", (unsigned long)size * sizeof(char));
 			if (p)
 				pkg_free(p);
 			return NULL;
