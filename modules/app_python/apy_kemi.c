@@ -542,8 +542,6 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					fname.len, fname.s);
 			return sr_kemi_apy_return_false();
 	}
-
-	return sr_kemi_apy_return_false();
 }
 
 /**

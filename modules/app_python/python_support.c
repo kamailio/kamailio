@@ -114,7 +114,7 @@ void python_handle_exception(const char *fmt, ...)
 		msglen = strlen(msg);
 		buflen += ++msglen;
 
-		buf = (char *)pkg_realloc(buf, buflen * sizeof(char *));
+		buf = (char *)pkg_realloc(buf, buflen * sizeof(char));
 		if (!buf)
 		{
 			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed."
