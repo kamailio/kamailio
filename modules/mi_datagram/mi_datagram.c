@@ -200,7 +200,7 @@ static int mi_mod_init(void)
 			LM_ERR("invalid port number; must be in [1024,%d]\n",MAX_NB_PORT);
 			return -1;
 		}
-		
+
 		if(! (host = resolvehost(host_s)) ) {
 			LM_ERR("failed to resolve %s\n", host_s);
 			return -1;
@@ -212,10 +212,10 @@ static int mi_mod_init(void)
 		}
 		mi_socket_domain = host->h_addrtype;
 		goto done;
-	} 
+	}
 	/* in case of a Unix socket*/
 	LM_DBG("we have an UNIX socket\n");
-		
+
 	n=stat(mi_socket, &filestat);
 	if( n==0) {
 		LM_INFO("the socket %s already exists, trying to delete it...\n", mi_socket);
@@ -235,14 +235,14 @@ static int mi_mod_init(void)
 		LM_WARN("cannot specify mi_unix_socket_mode = 0, forcing it to rw-------\n");
 		mi_unix_socket_mode = S_IRUSR| S_IWUSR;
 	}
-	
+
 	if (mi_unix_socket_uid_s) {
 		if (user2uid(&mi_unix_socket_uid, &mi_unix_socket_gid, mi_unix_socket_uid_s)<0) {
 			LM_ERR("bad user name %s\n", mi_unix_socket_uid_s);
 			return -1;
 		}
 	}
-	
+
 	if (mi_unix_socket_gid_s) {
 		if (group2gid(&mi_unix_socket_gid, mi_unix_socket_gid_s)<0) {
 			LM_ERR("bad group name %s\n", mi_unix_socket_gid_s);
@@ -252,7 +252,11 @@ static int mi_mod_init(void)
 
 	/*create the unix socket address*/
 	mi_dtgram_addr.unix_addr.sun_family = AF_LOCAL;
-	memcpy( mi_dtgram_addr.unix_addr.sun_path, mi_socket, strlen(mi_socket));
+	if(strlen(mi_socket)>=sizeof(mi_dtgram_addr.unix_addr.sun_path)-1) {
+		LM_ERR("mi socket path is too long\n");
+		return -1;
+	}
+	memcpy(mi_dtgram_addr.unix_addr.sun_path, mi_socket, strlen(mi_socket));
 
 done:
 	/* add space for extra processes */
@@ -369,7 +373,7 @@ static int mi_destroy(void)
 		if (n==0) {
 			if(config_check==0) {
 				if (unlink(mi_socket)<0){
-					LM_ERR("cannot delete the socket (%s): %s\n", 
+					LM_ERR("cannot delete the socket (%s): %s\n",
 						mi_socket, strerror(errno));
 					goto error;
 				}
