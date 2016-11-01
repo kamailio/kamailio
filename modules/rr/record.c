@@ -675,7 +675,6 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 	}
 
 	memcpy(p, _data->s, _data->len);
-	p += _data->len;
 	
 	p = suffix;
 	if (tag && tag->len) {
