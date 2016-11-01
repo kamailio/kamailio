@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -91,18 +91,18 @@ gen_lock_t *reload_lock;
  */
 static cmd_export_t cmds[] = {
 	{"is_from_local", (cmd_function)is_from_local, 0, 0, 0,
-	 REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
+		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"is_uri_host_local", (cmd_function)is_uri_host_local, 0, 0, 0,
-	 REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
+		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"is_domain_local", (cmd_function)w_is_domain_local, 1, fixup_pvar_null,
-	 fixup_free_pvar_null,
-	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		fixup_free_pvar_null,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"lookup_domain", (cmd_function)w_lookup_domain_no_prefix, 1,
-	 fixup_pvar_null, fixup_free_pvar_null,
-	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		fixup_pvar_null, fixup_free_pvar_null,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"lookup_domain", (cmd_function)w_lookup_domain, 2, fixup_pvar_str,
-	 fixup_free_pvar_str,
-	 REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+		fixup_free_pvar_str,
+		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"bind_domain", (cmd_function)bind_domain, 1, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -129,9 +129,9 @@ static param_export_t params[] = {
  * Exported MI functions
  */
 static mi_export_t mi_cmds[] = {
-    { MI_DOMAIN_RELOAD, mi_domain_reload, MI_NO_INPUT_FLAG, 0, 0 },
-    { MI_DOMAIN_DUMP,   mi_domain_dump,   MI_NO_INPUT_FLAG, 0, 0 },
-    { 0, 0, 0, 0, 0}
+	{ MI_DOMAIN_RELOAD, mi_domain_reload, MI_NO_INPUT_FLAG, 0, 0 },
+	{ MI_DOMAIN_DUMP,   mi_domain_dump,   MI_NO_INPUT_FLAG, 0, 0 },
+	{ 0, 0, 0, 0, 0}
 };
 
 
@@ -156,125 +156,126 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-    LM_DBG("initializing\n");
-	
-    if (register_mi_mod(exports.name, mi_cmds) != 0) {
-	LM_ERR("failed to register MI commands\n");
-	return -1;
-    }
-    if (domain_init_rpc() != 0) {
-	LM_ERR("failed to register RPC commands\n");
-	return -1;
-    }
+	LM_DBG("initializing\n");
 
-    if (domain_reg_myself !=0 ) {
-	if (register_check_self_func(domain_check_self) <0 ) {
-	    LM_ERR("failed to register check self function\n");
-	    return -1;
+	if (register_mi_mod(exports.name, mi_cmds) != 0) {
+		LM_ERR("failed to register MI commands\n");
+		return -1;
 	}
-    }
+	if (domain_init_rpc() != 0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 
-    /* Bind database */
-    if (domain_db_bind(&d_db_url)) {
-	LM_DBG("Usign db_url [%.*s]\n", d_db_url.len, d_db_url.s);
-	LM_ERR("no database module found. Have you configure thed \"db_url\" modparam properly?\n");
-	return -1;
-    }
+	if (domain_reg_myself !=0 ) {
+		if (register_check_self_func(domain_check_self) <0 ) {
+			LM_ERR("failed to register check self function\n");
+			return -1;
+		}
+	}
 
-    /* Check table versions */
-    if (domain_db_init(&d_db_url) < 0) {
-	LM_ERR("unable to open database connection\n");
-	return -1;
-    }
-    if (domain_db_ver(&domain_table, DOMAIN_TABLE_VERSION) < 0) {
-	LM_ERR("error during check of domain table version\n");
+	/* Bind database */
+	if (domain_db_bind(&d_db_url)) {
+		LM_DBG("Usign db_url [%.*s]\n", d_db_url.len, d_db_url.s);
+		LM_ERR("no database module found. Have you configure"
+				" the \"db_url\" modparam properly?\n");
+		return -1;
+	}
+
+	/* Check table versions */
+	if (domain_db_init(&d_db_url) < 0) {
+		LM_ERR("unable to open database connection\n");
+		return -1;
+	}
+	if (domain_db_ver(&domain_table, DOMAIN_TABLE_VERSION) < 0) {
+		LM_ERR("error during check of domain table version\n");
+		domain_db_close();
+		goto error;
+	}
+	if (domain_db_ver(&domain_attrs_table, DOMAIN_ATTRS_TABLE_VERSION) < 0) {
+		LM_ERR("error during check of domain_attrs table version\n");
+		domain_db_close();
+		goto error;
+	}
 	domain_db_close();
-	goto error;
-    }
-    if (domain_db_ver(&domain_attrs_table, DOMAIN_ATTRS_TABLE_VERSION) < 0) {
-	LM_ERR("error during check of domain_attrs table version\n");
-	domain_db_close();
-	goto error;
-    }
-    domain_db_close();
 
-    /* Initializing hash tables and hash table variable */
-    hash_table = (struct domain_list ***)shm_malloc
-	(sizeof(struct domain_list *));
-    hash_table_1 = (struct domain_list **)shm_malloc
-	(sizeof(struct domain_list *) * (DOM_HASH_SIZE + 1));
-    hash_table_2 = (struct domain_list **)shm_malloc
-	(sizeof(struct domain_list *) * (DOM_HASH_SIZE + 1));
-    if ((hash_table == 0) || (hash_table_1 == 0) || (hash_table_2 == 0)) {
-	LM_ERR("no memory for hash table\n");
-	goto error;
-    }
-    memset(hash_table_1, 0, sizeof(struct domain_list *) *
-	   (DOM_HASH_SIZE + 1));
-    memset(hash_table_2, 0, sizeof(struct domain_list *) *
-	   (DOM_HASH_SIZE + 1));
-    *hash_table = hash_table_1;
+	/* Initializing hash tables and hash table variable */
+	hash_table = (struct domain_list ***)shm_malloc
+		(sizeof(struct domain_list **));
+	hash_table_1 = (struct domain_list **)shm_malloc
+		(sizeof(struct domain_list *) * (DOM_HASH_SIZE + 1));
+	hash_table_2 = (struct domain_list **)shm_malloc
+		(sizeof(struct domain_list *) * (DOM_HASH_SIZE + 1));
+	if ((hash_table == 0) || (hash_table_1 == 0) || (hash_table_2 == 0)) {
+		LM_ERR("no memory for hash table\n");
+		goto error;
+	}
+	memset(hash_table_1, 0, sizeof(struct domain_list *) *
+			(DOM_HASH_SIZE + 1));
+	memset(hash_table_2, 0, sizeof(struct domain_list *) *
+			(DOM_HASH_SIZE + 1));
+	*hash_table = hash_table_1;
 
-    /* Allocate and initialize locks */
-    reload_lock = lock_alloc();
-    if (reload_lock == NULL) {
-	LM_ERR("cannot allocate reload_lock\n");
-	goto error;
-    }
-    if (lock_init(reload_lock) == NULL) {
-	LM_ERR("cannot init reload_lock\n");
-	goto error;
-    }
+	/* Allocate and initialize locks */
+	reload_lock = lock_alloc();
+	if (reload_lock == NULL) {
+		LM_ERR("cannot allocate reload_lock\n");
+		goto error;
+	}
+	if (lock_init(reload_lock) == NULL) {
+		LM_ERR("cannot init reload_lock\n");
+		goto error;
+	}
 
-    /* First reload */
-    lock_get(reload_lock);
-    if (reload_tables() == -1) {
+	/* First reload */
+	lock_get(reload_lock);
+	if (reload_tables() == -1) {
+		lock_release(reload_lock);
+		LM_CRIT("domain reload failed\n");
+		goto error;
+	}
 	lock_release(reload_lock);
-	LM_CRIT("domain reload failed\n");
-	goto error;
-    }
-    lock_release(reload_lock);
 
-    return 0;
+	return 0;
 
 error:
-    destroy();
-    return -1;
+	destroy();
+	return -1;
 }
 
 
 static int child_init(int rank)
 {
-    return 0;
+	return 0;
 }
 
 
 static void destroy(void)
 {
-    /* Destroy is called from the main process only,
-     * there is no need to close database here because
-     * it is closed in mod_init already
-     */
-    if (hash_table) {
-	shm_free(hash_table);
-	hash_table = 0;
-    }
-    if (hash_table_1) {
-	hash_table_free(hash_table_1);
-	shm_free(hash_table_1);
-	hash_table_1 = 0;
-    }
-    if (hash_table_2) {
-	hash_table_free(hash_table_2);
-	shm_free(hash_table_2);
-	hash_table_2 = 0;
-    }
+	/* Destroy is called from the main process only,
+	 * there is no need to close database here because
+	 * it is closed in mod_init already
+	 */
+	if (hash_table) {
+		shm_free(hash_table);
+		hash_table = 0;
+	}
+	if (hash_table_1) {
+		hash_table_free(hash_table_1);
+		shm_free(hash_table_1);
+		hash_table_1 = 0;
+	}
+	if (hash_table_2) {
+		hash_table_free(hash_table_2);
+		shm_free(hash_table_2);
+		hash_table_2 = 0;
+	}
 }
 
 
 static const char* domain_rpc_reload_doc[2] = {
-    "Reload domain tables from database",
-    0
+	"Reload domain tables from database",
+	0
 };
 
 
@@ -283,17 +284,17 @@ static const char* domain_rpc_reload_doc[2] = {
  */
 static void domain_rpc_reload(rpc_t* rpc, void* ctx)
 {
-    lock_get(reload_lock);
-    if (reload_tables() < 0) {
-	rpc->fault(ctx, 400, "Reload of domain tables failed");
-    }
-    lock_release(reload_lock);
+	lock_get(reload_lock);
+	if (reload_tables() < 0) {
+		rpc->fault(ctx, 400, "Reload of domain tables failed");
+	}
+	lock_release(reload_lock);
 }
 
 
 static const char* domain_rpc_dump_doc[2] = {
-    "Return the contents of domain and domain_attrs tables",
-    0
+	"Return the contents of domain and domain_attrs tables",
+	0
 };
 
 
@@ -302,56 +303,56 @@ static const char* domain_rpc_dump_doc[2] = {
  */
 static void domain_rpc_dump(rpc_t* rpc, void* ctx)
 {
-    int i;
-    struct domain_list *np;
-    struct attr_list *ap;
-    struct domain_list **ht;
-    void* st;
+	int i;
+	struct domain_list *np;
+	struct attr_list *ap;
+	struct domain_list **ht;
+	void* st;
 
-    if(hash_table==0 || *hash_table==0) {
-	rpc->fault(ctx, 404, "Server Domain Cache Empty");
-	return;
-    }
-    ht = *hash_table;
-    for (i = 0; i < DOM_HASH_SIZE; i++) {
-	np = ht[i];
+	if(hash_table==0 || *hash_table==0) {
+		rpc->fault(ctx, 404, "Server Domain Cache Empty");
+		return;
+	}
+	ht = *hash_table;
+	for (i = 0; i < DOM_HASH_SIZE; i++) {
+		np = ht[i];
+		while (np) {
+			if (rpc->add(ctx, "{", &st) < 0) return;
+			rpc->struct_add(st, "SS",
+					"domain", &np->domain,
+					"did", &np->did);
+			np = np->next;
+		}
+	}
+	np = ht[DOM_HASH_SIZE];
 	while (np) {
-	    if (rpc->add(ctx, "{", &st) < 0) return;
-	    rpc->struct_add(st, "SS",
-			    "domain", &np->domain,
-			    "did", &np->did);
-	    np = np->next;
+		if (rpc->add(ctx, "{", &st) < 0) return;
+		rpc->struct_add(st, "S",
+				"did", &np->did);
+		ap = np->attrs;
+		while (ap) {
+			rpc->struct_add(st, "S",
+					"attr", &ap->name);
+			ap = ap->next;
+		}
+		np = np->next;
 	}
-    }
-    np = ht[DOM_HASH_SIZE];
-    while (np) {
-	if (rpc->add(ctx, "{", &st) < 0) return;
-	rpc->struct_add(st, "S",
-			"did", &np->did);
-	ap = np->attrs;
-	while (ap) {
-	    rpc->struct_add(st, "S",
-			    "attr", &ap->name);
-	    ap = ap->next;
-	}
-	np = np->next;
-    }
 
-    return;
+	return;
 }
 
 
 rpc_export_t domain_rpc_list[] = {
-    {"domain.reload", domain_rpc_reload, domain_rpc_reload_doc, 0},
-    {"domain.dump",   domain_rpc_dump,   domain_rpc_dump_doc,   0},
-    {0, 0, 0, 0}
+	{"domain.reload", domain_rpc_reload, domain_rpc_reload_doc, 0},
+	{"domain.dump",   domain_rpc_dump,   domain_rpc_dump_doc,   0},
+	{0, 0, 0, 0}
 };
 
 static int domain_init_rpc(void)
 {
-    if (rpc_register_array(domain_rpc_list) != 0) {
-	LM_ERR("failed to register RPC commands\n");
-	return -1;
-    }
-    return 0;
+	if (rpc_register_array(domain_rpc_list) != 0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }
