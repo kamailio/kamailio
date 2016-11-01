@@ -141,12 +141,14 @@ int netstring_read_fd(int fd, netstring_t **netstring)
 	int bytes, offset;
 	size_t read_len;
 	char *temp_buffer;
+	int total;
+	int i, len;
+	char peek[10]={0};
 	temp_buffer = NULL;
 	offset = 0;
 
 	if (*netstring == NULL) {
 		/* No buffer yet. Peek at first 10 bytes, to get length and colon. */
-		char peek[10]={0};
 		bytes = recv(fd,peek,10,MSG_PEEK);
 
 		if (bytes < 3) return NETSTRING_INCOMPLETE;
@@ -158,7 +160,6 @@ int netstring_read_fd(int fd, netstring_t **netstring)
 		/* The netstring must start with a number */
 		if (!isdigit(peek[0])) return NETSTRING_ERROR_NO_LENGTH;
 
-		int i, len;
 		len = i = 0;
 
 		/* Read the number of bytes */
@@ -194,7 +195,8 @@ int netstring_read_fd(int fd, netstring_t **netstring)
 
 	/* Read from the socket */
 	bytes = recv(fd, temp_buffer, read_len, 0);
-	int total = (*netstring)->read += bytes;
+	(*netstring)->read += bytes;
+	total = (*netstring)->read;
 
 	/* See if we have the whole netstring yet */
 	if (read_len > bytes) {
