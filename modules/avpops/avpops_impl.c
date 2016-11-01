@@ -239,7 +239,7 @@ inline static str* get_source_uri(struct sip_msg* msg,int source)
 			return &(msg->new_uri);
 		return &(msg->first_line.u.request.uri);
 	} else {
-		LM_ERR("unknow source <%d>\n", source);
+		LM_ERR("unknown source <%d>\n", source);
 		goto error;
 	}
 error:

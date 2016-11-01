@@ -167,7 +167,7 @@ modparam("matrix", "matrix_res_col", "res")
 		<para>
 			Looks up the desired result ID in the matrix for the given column
 			and value and saves the result in dstavp. Returns false if the cell
-      			is not defined or when an error occured.
+      			is not defined or when an error occurred.
 			
 			Pseudo-variables or AVPs can be used for first and second.
 	  </para>

@@ -91,7 +91,7 @@ int db_mongodb_bson_filter_add(bson_t *doc, const db_key_t* _k, const db_op_t* _
 		ocmp.s = "$ne";
 		ocmp.len = 3;
 	} else {
-		LM_ERR("unsuported match operator: %s\n", _op[idx]);
+		LM_ERR("unsupported match operator: %s\n", _op[idx]);
 		goto error;
 	}
 
@@ -1204,7 +1204,7 @@ int db_mongodb_update(const db1_con_t* _h, const db_key_t* _k,
 		if(db_mongodb_bson_add(sdoc, _uk[i], _uv+i, i)<0)
 			goto error;
 	}
-	if(bson_append_document(udoc, "$set", 4, sdoc)<0) {
+	if(!bson_append_document(udoc, "$set", 4, sdoc)) {
                 LM_ERR("failed to append document to bson document\n");
                 goto error;
         }

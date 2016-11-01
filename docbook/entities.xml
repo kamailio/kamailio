@@ -16,7 +16,7 @@
 <!ENTITY kamcmd "kamcmd">
 
 <!ENTITY kamailiohome "http://www.kamailio.org/">
-<!ENTITY kamailiobugs "http://sip-router.org/tracker">
+<!ENTITY kamailiobugs "https://github.com/kamailio/kamailio/issues">
 <!ENTITY kamailiohelp "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users">
 <!ENTITY kamailiousers "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-users">
 <!ENTITY kamailiodev "http://lists.sip-router.org/cgi-bin/mailman/listinfo/sr-dev">
@@ -99,3 +99,8 @@
 <!ENTITY rfc3261 "<ulink url='http://www.ietf.org/rfc/rfc3261.txt'>RFC3261</ulink>">
 <!ENTITY rfc822 "<ulink url='http://www.ietf.org/rfc/rfc822.txt'>RFC822</ulink>">
 <!ENTITY rfc2543 "<ulink url='http://www.ietf.org/rfc/rfc2543.txt'>RFC2543</ulink>">
+<!ENTITY rfc5626 "<ulink url='http://www.ietf.org/rfc/rfc5626.txt'>RFC5626</ulink>">
+
+<!-- Often used 3rd party libraries  -->
+<!ENTITY openssl "<ulink url='https://www.openssl.org'>OpenSSL</ulink>">
+<!ENTITY libcurl "<ulink url='https://curl.haxx.se'>libcurl</ulink>">

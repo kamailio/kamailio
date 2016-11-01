@@ -10,6 +10,7 @@
 
 #include "ro_timer.h"
 #include "../../mem/shm_mem.h"
+#include "../../rand/kam_rand.h"
 #include "ims_charging_stats.h"
 #include <stdlib.h>
 
@@ -65,6 +66,7 @@ struct ro_session {
     unsigned int h_id;
     time_t start_time;
     time_t last_event_timestamp;
+    time_t last_event_timestamp_backup;
     enum ro_session_event_type event_type;
     int auth_appid;
     int auth_session_type;
@@ -204,7 +206,8 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
  * \param ro_session Ro Session
  * \param cnt increment for the reference counter
  */
-void ref_ro_session(struct ro_session *ro_session, unsigned int cnt);
+void ref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt, unsigned int mustlock, char *fname, int fline);
+#define ref_ro_session(ro_session, cnt, mustlock) ref_ro_session_helper(ro_session, cnt, mustlock, __FILE__, __LINE__)
 
 /*!
  * \brief Unreference a ro_session with locking
@@ -212,7 +215,8 @@ void ref_ro_session(struct ro_session *ro_session, unsigned int cnt);
  * \param ro_session Ro Session
  * \param cnt decrement for the reference counter
  */
-void unref_ro_session(struct ro_session *ro_session, unsigned int cnt);
+void unref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt, unsigned int mustlock, char *fname, int fline);
+#define unref_ro_session(ro_session, cnt, mustlock) unref_ro_session_helper(ro_session, cnt, mustlock, __FILE__, __LINE__)
 
 struct ro_session* lookup_ro_session(unsigned int h_entry, str *callid, int direction, unsigned int *del);
 

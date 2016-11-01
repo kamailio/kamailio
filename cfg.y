@@ -382,6 +382,7 @@ extern char *default_routename;
 %token MEMSUM
 %token MEMSAFETY
 %token MEMJOIN
+%token MEMSTATUSMODE
 %token CORELOG
 %token SIP_WARNING
 %token SERVER_SIGNATURE
@@ -464,6 +465,7 @@ extern char *default_routename;
 %token RT_TIMER2_POLICY
 %token MCAST_LOOPBACK
 %token MCAST_TTL
+%token MCAST
 %token TOS
 %token PMTU_DISCOVERY
 %token KILL_TIMEOUT
@@ -907,6 +909,8 @@ assign_stm:
 	| MEMSAFETY EQUAL error { yyerror("int value expected"); }
 	| MEMJOIN EQUAL intno { default_core_cfg.mem_join=$3; }
 	| MEMJOIN EQUAL error { yyerror("int value expected"); }
+	| MEMSTATUSMODE EQUAL intno { default_core_cfg.mem_status_mode=$3; }
+	| MEMSTATUSMODE EQUAL error { yyerror("int value expected"); }
 	| CORELOG EQUAL intno { default_core_cfg.corelog=$3; }
 	| CORELOG EQUAL error { yyerror("int value expected"); }
 	| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }
@@ -1476,6 +1480,21 @@ assign_stm:
 		#endif
 	}
 	| MCAST_TTL EQUAL error { yyerror("number expected"); }
+	| MCAST EQUAL ID {
+		#ifdef USE_MCAST
+			mcast=$3;
+		#else
+			warn("no multicast support compiled in");
+		#endif
+	}
+	| MCAST EQUAL STRING {
+		#ifdef USE_MCAST
+			mcast=$3;
+		#else
+			warn("no multicast support compiled in");
+		#endif
+	}
+	| MCAST EQUAL error { yyerror("string expected"); }
 	| TOS EQUAL NUMBER { tos=$3; }
 	| TOS EQUAL ID { if (strcasecmp($3,"IPTOS_LOWDELAY")) {
 			tos=IPTOS_LOWDELAY;
@@ -1520,9 +1539,9 @@ assign_stm:
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
     | MAX_RECURSIVE_LEVEL EQUAL NUMBER { set_max_recursive_level($3); }
     | MAX_BRANCHES_PARAM EQUAL NUMBER { sr_dst_max_branches = $3; }
-    | LATENCY_LOG EQUAL NUMBER { default_core_cfg.latency_log=$3; }
+    | LATENCY_LOG EQUAL intno { default_core_cfg.latency_log=$3; }
 	| LATENCY_LOG EQUAL error  { yyerror("number  expected"); }
-    | LATENCY_CFG_LOG EQUAL NUMBER { default_core_cfg.latency_cfg_log=$3; }
+    | LATENCY_CFG_LOG EQUAL intno { default_core_cfg.latency_cfg_log=$3; }
 	| LATENCY_CFG_LOG EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_DB EQUAL NUMBER { default_core_cfg.latency_limit_db=$3; }
 	| LATENCY_LIMIT_DB EQUAL error  { yyerror("number  expected"); }
@@ -2620,7 +2639,7 @@ avp_pvar:	AVP_OR_PVAR {
 					lval_tmp->type=LV_PVAR;
 				}
 				$$ = lval_tmp;
-				DBG("parsed ambigous avp/pvar \"%.*s\" to %d\n",
+				DBG("parsed ambiguous avp/pvar \"%.*s\" to %d\n",
 							s_tmp.len, s_tmp.s, lval_tmp->type);
 			}
 	;

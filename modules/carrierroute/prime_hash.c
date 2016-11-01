@@ -30,10 +30,10 @@
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
 #include "../../crc.h"
+#include "../../rand/kam_rand.h"
 
 #include <ctype.h>
 #include <stdio.h> /* for snprintf */
-#include <stdlib.h> /* for rand */
 
 #include "prime_hash.h"
 
@@ -153,7 +153,7 @@ static int determine_fromto_user (struct to_body *fromto, str *source_string) {
 
 static int determine_fromrand(str* source_string){
 
-	snprintf(&cr_randbuf[0], CR_RANDBUF_S , "%d", rand());
+	snprintf(&cr_randbuf[0], CR_RANDBUF_S , "%d", kam_rand());
 
 	LM_NOTICE("randbuf is %s\n", cr_randbuf);
 	source_string->s = cr_randbuf;

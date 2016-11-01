@@ -37,7 +37,7 @@
 extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
 extern client_ro_cfg cfg;
-extern struct dlg_binds dlgb;
+extern ims_dlg_api_t dlgb;
 extern cdp_avp_bind_t *cdp_avp;
 extern str ro_forced_peer;
 extern int ro_db_mode;
@@ -64,6 +64,7 @@ extern int video_rating_group;
 
 static int create_cca_return_code(int result);
 static int create_cca_result_code(int result);
+static int create_cca_fui_avps(int action, str* redirecturi);
 static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
@@ -80,23 +81,6 @@ void credit_control_session_callback(int event, void* session) {
 }
 
 /**
- * Retrieves the SIP request that generated a diameter transaction
- * @param hash - the tm hash value for this request
- * @param label - the tm label value for this request
- * @returns the SIP request
- */
-struct sip_msg * trans_get_request_from_current_reply() {
-    struct cell *t;
-    t = tmb.t_gett();
-    if (!t || t == (void*) - 1) {
-        LM_ERR("trans_get_request_from_current_reply: Reply without transaction\n");
-        return 0;
-    }
-    if (t) return t->uas.request;
-    else return 0;
-}
-
-/**
  * Create and add an AVP to a list of AVPs.
  * @param list - the AVP list to add to
  * @param d - the payload data
@@ -108,7 +92,7 @@ struct sip_msg * trans_get_request_from_current_reply() {
  * @param func - the name of the calling function, for debugging purposes
  * @returns 1 on success or 0 on failure
  */
-static inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
+inline int Ro_add_avp_list(AAA_AVP_LIST *list, char *d, int len, int avp_code,
         int flags, int vendorid, int data_do, const char *func) {
     AAA_AVP *avp;
     if (vendorid != 0) flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
@@ -643,7 +627,9 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     }
 
     LM_DBG("Sending CCR Diameter message.\n");
-
+    ro_session->last_event_timestamp_backup = ro_session->last_event_timestamp;
+    ro_session->last_event_timestamp = get_current_time_micro(); /*this is to make sure that if we get a term request now that we don't double bill for this time we are about to bill for in the interim */
+    
     cdpb.AAASessionsUnlock(auth->hash);
 
     if (ro_forced_peer.len > 0) {
@@ -653,6 +639,7 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
     }
 
     if (ret != 1) {
+        ccr = 0;	// If an error is returned from cdp AAASendMessage, the message has been freed there
         goto error;
     }
     //    cdpb.AAASessionsUnlock(auth->hash);
@@ -680,10 +667,7 @@ error:
     // since callback function will be never called because of the error, we need to release the lock on the session
     // to it can be reused later.
     //
-    struct ro_session_entry *ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
-    ro_session_lock(ro_session_table, ro_session_entry);
-    unref_ro_session_unsafe(ro_session, 1, ro_session_entry); //unref from the initial timer that fired this event.
-    ro_session_unlock(ro_session_table, ro_session_entry);
+	unref_ro_session(ro_session, 1, 1);
 
     return;
 }
@@ -691,10 +675,12 @@ error:
 static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs) {
     struct interim_ccr *i_req = (struct interim_ccr *) param;
     Ro_CCA_t * ro_cca_data = NULL;
+    int error_or_timeout = 0;
 
     if (is_timeout) {
         counter_inc(ims_charging_cnts_h.ccr_timeouts);
         LM_ERR("Transaction timeout - did not get CCA\n");
+        error_or_timeout = 1;
         goto error;
     }
 
@@ -703,11 +689,13 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
 
     if (!i_req) {
         LM_ERR("This is so wrong: ro session is NULL\n");
+        error_or_timeout = 1;
         goto error;
     }
 
     if (cca == NULL) {
         LM_ERR("Error reserving credit for CCA.\n");
+        error_or_timeout = 1;
         goto error;
     }
 
@@ -715,11 +703,13 @@ static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, 
 
     if (ro_cca_data == NULL) {
         LM_ERR("Could not parse CCA message response.\n");
+        error_or_timeout = 1;
         goto error;
     }
 
     if (ro_cca_data->resultcode != 2001) {
         LM_ERR("Got bad CCA result code [%d] - reservation failed", ro_cca_data->resultcode);
+        error_or_timeout = 1;
         goto error;
     } else {
         LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i].\n", ro_cca_data->mscc->granted_service_unit->cc_time, ro_cca_data->mscc->validity_time);
@@ -753,7 +743,7 @@ error:
     }
 
 success:
-    resume_ro_session_ontimeout(i_req);
+    resume_ro_session_ontimeout(i_req, error_or_timeout);
 }
 
 long get_current_time_micro() {
@@ -1254,6 +1244,8 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     struct cell *t = NULL;
     struct session_setup_data *ssd = (struct session_setup_data *) param;
     int error_code = RO_RETURN_ERROR;
+	str *redirecturi = 0;
+	int fui_action = 0;
 
     if (is_timeout) {
         counter_inc(ims_charging_cnts_h.ccr_timeouts);
@@ -1297,7 +1289,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     if (!ro_cca_data) {
         LM_ERR("Could not parse CCA message response.\n");
         error_code = RO_RETURN_ERROR;
-	create_cca_result_code(0);
+		create_cca_result_code(0);
         goto error0;
     }
     
@@ -1309,6 +1301,40 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
         error_code = RO_RETURN_FALSE;
         goto error1;
     }
+
+	if (ro_cca_data->mscc->final_unit_action) {
+		fui_action = ro_cca_data->mscc->final_unit_action->action;
+
+		if (fui_action == AVP_Final_Unit_Action_Redirect) {
+			if (ro_cca_data->mscc->final_unit_action->redirect_server) {
+				LM_DBG("FUI with action: [%d]", ro_cca_data->mscc->final_unit_action->action);
+
+				if (ro_cca_data->mscc->final_unit_action->action == AVP_Final_Unit_Action_Redirect) {
+					LM_DBG("Have REDIRECT action with address type of [%d]\n", ro_cca_data->mscc->final_unit_action->redirect_server->address_type);
+					if (ro_cca_data->mscc->final_unit_action->redirect_server->address_type == AVP_Redirect_Address_Type_SIP_URI) {
+						LM_DBG("SIP URI for redirect is [%.*s] with len of %d\n",
+							ro_cca_data->mscc->final_unit_action->redirect_server->server_address->len, ro_cca_data->mscc->final_unit_action->redirect_server->server_address->s,
+							ro_cca_data->mscc->final_unit_action->redirect_server->server_address->len);
+						redirecturi = ro_cca_data->mscc->final_unit_action->redirect_server->server_address;
+					} else {
+						LM_DBG("we don't cater for any redirect action which is not a SIP URI... ignoring [%d]\n", ro_cca_data->mscc->final_unit_action->redirect_server->address_type);
+					}
+				} else {
+					LM_DBG("ignoring final unit action which is not REDIRECT - [%d]\n", fui_action);
+				}
+			}
+		}
+	}
+	
+	/* create the AVPs cca_redirect_uri and cca_fui_action  for export to cfg file */
+	create_cca_fui_avps(fui_action, redirecturi);
+	
+	/* check result code at mscc level */
+	if (ro_cca_data->mscc->resultcode != 2001) {
+		LM_DBG("CCA failure at MSCC level with resultcode [%d]\n", ro_cca_data->mscc->resultcode);
+		error_code = RO_RETURN_FALSE;
+        goto error1;
+	}
 
     LM_DBG("Valid CCA response with time chunk of [%i] and validity [%i]\n",
             ro_cca_data->mscc->granted_service_unit->cc_time,
@@ -1343,7 +1369,7 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
         };
     }
 
-    unref_ro_session(ssd->ro_session, 1); /* release our reference */
+    unref_ro_session(ssd->ro_session, 1, 1); /* release our reference */
 
     create_cca_return_code(RO_RETURN_TRUE);
 
@@ -1459,8 +1485,40 @@ static int create_cca_result_code(int result) {
     return 1;
 }
 
+static int create_cca_fui_avps(int action, str* redirecturi) {
+	int_str action_avp_val, action_avp_name, redirecturi_avp_val, redirecturi_avp_name;
+    action_avp_name.s.s = RO_AVP_CCA_FUI_ACTION;
+    action_avp_name.s.len = RO_AVP_CCA_FUI_ACTION_LENGTH;
+	redirecturi_avp_name.s.s = RO_AVP_CCA_FUI_REDIRECT_URI;
+    redirecturi_avp_name.s.len = RO_AVP_CCA_FUI_REDIRECT_URI_LENGTH;
+    char buf[10];
+	int rc;
+	
+    action_avp_val.n = action;
+    action_avp_val.s.len = snprintf(buf, 10, "%i", action);
+    action_avp_val.s.s = buf;
 
+    rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, action_avp_name, action_avp_val);
 
+    if (rc < 0)
+        LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_ACTION"] AVP\n");
+    else
+        LM_DBG("Created AVP ["RO_AVP_CCA_FUI_ACTION"] successfully: value=[%d]\n", action);
+	
+	if (redirecturi && redirecturi->len >0 && redirecturi->s) {
+		redirecturi_avp_val.s.len = redirecturi->len;
+		redirecturi_avp_val.s.s = redirecturi->s;
+
+		rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, redirecturi_avp_name, redirecturi_avp_val);
+
+		if (rc < 0)
+			LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_REDIRECT_URI"] AVP\n");
+		else
+			LM_DBG("Created AVP ["RO_AVP_CCA_FUI_REDIRECT_URI"] successfully: value=[%.*s]\n", redirecturi->len, redirecturi->s);
+	}
+	
+    return 1;
+}
 
 static int get_mac_avp_value(struct sip_msg *msg, str *value) {
     str mac_avp_name_str = str_init(RO_MAC_AVP_NAME);

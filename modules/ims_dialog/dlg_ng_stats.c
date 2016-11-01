@@ -15,7 +15,7 @@ counter_def_t dialog_ng_cnt_defs[] =  {
 	{0, 0, 0, 0, 0, 0 }
 };
 
-/** intialize dialog_ng statistics.
+/** initialize dialog_ng statistics.
  * @return < 0 on errror, 0 on success.
  */
 int dialog_ng_stats_init()

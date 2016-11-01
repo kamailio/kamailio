@@ -131,6 +131,47 @@ modparam("db_unixodbc", "use_escape_common", 1)
 </programlisting>
 		</example>
 	</section>
+       <section>
+                <title><varname>replace_query</varname> (int)</title>
+                <para>
+                Tells if the ODBC replace query is supported by the DB odbc driver.
+                </para>
+                <para>
+                <emphasis>
+                        Default value is <quote>1</quote> seconds.
+                </emphasis>
+                </para>
+                <example>
+                <title>Set the <quote>replace_query</quote> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("db_unixodbc", "replace_query", 0)
+...
+</programlisting>
+                </example>
+        </section>
+
+	<section id="db_unixodbc.p.quote_char">
+		<title><varname>quote_char</varname> (str)</title>
+		<para>
+			The character to be used for quoting the table and column names in
+			database queries.
+		</para>
+		<para>
+		<emphasis>
+			Default value: <quote>not set</quote> (no quoting).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>quote_char</quote> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_unixodbc", "quote_char", "`")
+...
+</programlisting>
+		</example>
+	</section>
+
     </section>
 
 	<section>
@@ -199,6 +240,17 @@ shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
 	The connector search the socket in /var/lib/mysql/mysql.sock and not 
 	in /tmp/mysql.sock
 	</para>
+
+	<para>
+	REMARK: Oracle ODBC driver doesn't support ODBC query. To disable its usage
+	and replace the replace query by an update or insert query, use the parameter:
+	</para>
+        <programlisting format="linespecific">
+....
+modparam("db_unixodbc", "replace_query", 0)
+....
+</programlisting>
+
 	</section>
 
 	</section>

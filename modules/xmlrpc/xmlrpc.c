@@ -24,6 +24,7 @@
 #endif
 #define _XOPEN_SOURCE_EXTENDED 1  /* solaris */
 #define _SVID_SOURCE 1            /* timegm */
+#define _DEFAULT_SOURCE 1         /* _SVID_SOURCE is deprecated */
 
 #include <strings.h>
 #include <time.h>
@@ -144,13 +145,6 @@
  */
 
 MODULE_VERSION
-
-#if defined (__OS_darwin) || defined (__OS_freebsd)
-/* redeclaration of functions from stdio.h throws errors */
-#else
-int snprintf(char *str, size_t size, const char *format, ...);
-int vsnprintf(char *str, size_t size, const char *format, va_list ap);
-#endif
 
 static int process_xmlrpc(sip_msg_t* msg);
 static int dispatch_rpc(sip_msg_t* msg, char* s1, char* s2);
@@ -465,7 +459,7 @@ static void clean_context(rpc_ctx_t* ctx);
  * @param reply Pointer to the structure representing the XML-RPC reply
  *              being constructed.
  * @param text The text to be appended to the XML-RPC reply.
- * @return -1 on error, 0 if the text was added successfuly.
+ * @return -1 on error, 0 if the text was added successfully.
  * @sa add_xmlrpc_reply()
  */
 static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
@@ -531,7 +525,7 @@ static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
  * @param reply Pointer to the structure representing the XML-RPC reply
  *              being constructed.
  * @param text The text to be appended to the XML-RPC reply.
- * @return -1 on error, 0 if the text was added successfuly.
+ * @return -1 on error, 0 if the text was added successfully.
  * @sa add_xmlrpc_reply_esc()
  */
 static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
@@ -570,7 +564,7 @@ static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
  * @param offset The position of the first character where the text should be
  *               inserted. 
  * @param text The text to be inserted.
- * @return 0 of the text was inserted successfuly, a negative number on error.
+ * @return 0 of the text was inserted successfully, a negative number on error.
  */
 static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply, unsigned int offset, str* text)
 {
@@ -1407,6 +1401,7 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 		return -1;
 	}
 	type=xml_get_type(dbl);
+	LM_DBG("xmrpc parameter type: %d\n", type);
 	switch(type){
 		case XML_T_STR:
 		case XML_T_TXT:
@@ -1423,7 +1418,7 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 			return -1;
 	}
 	if (type == XML_T_TXT)
-		val_str = (char*)dbl->content;
+		val_str = (char*)xmlNodeGetContent(dbl);
 	else
 		val_str = (char*)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
 

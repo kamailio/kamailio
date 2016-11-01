@@ -19,22 +19,22 @@
 		The Permissions module provides functions for handling
 		IP based access control lists (ACL) in a number of ways.
 		<itemizedlist>
-                <listitem><para>
-                          Call Routing
-                </para></listitem>
-                <listitem><para>
-                          Registration permissions
-                </para></listitem>
-                <listitem><para>
-                          URI permissions
-                </para></listitem>
-                <listitem><para>
-                          Address permissions
-                </para></listitem>
-                <listitem><para>
-                          Trusted Requests
-                </para></listitem>
-                </itemizedlist>
+		<listitem><para>
+			Call Routing
+		</para></listitem>
+		<listitem><para>
+			Registration permissions
+		</para></listitem>
+		<listitem><para>
+			URI permissions
+		</para></listitem>
+		<listitem><para>
+			Address permissions
+		</para></listitem>
+		<listitem><para>
+			Trusted Requests
+		</para></listitem>
+		</itemizedlist>
 		The Address permissions and Trusted request handling supports
 		using a database to load ACLs into RAM for fast processing.
 	</para>
@@ -269,7 +269,7 @@
 		<para>
 		Rules are stored in a database table specified by the module
 		parameters.  There is a module parameter called
-	        <varname>db_mode</varname> that
+		<varname>db_mode</varname> that
 		determines if the rules are cached into memory for faster
 		matching or if the database is consulted for each invocation
 		of the allow_trusted() function call.
@@ -458,8 +458,8 @@ modparam("permissions", "db_url", "&exampledb;")
 		<para>
 		The name of the database table containing IP subnets and DNS domain names used by
 		<function moreinfo="none">allow_address</function> and
-                <function moreinfo="none">allow_source_address</function>
-                functions.
+		<function moreinfo="none">allow_source_address</function>
+		functions.
 		</para>
 		<para>
 		<emphasis>
@@ -551,7 +551,7 @@ modparam("permissions", "mask_col", "subnet_length")
 		<title>Set <varname>port_col</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("permissions", "port_col", "prt")
+modparam("permissions", "port_col", "port")
 ...
 </programlisting>
 		</example>
@@ -690,7 +690,7 @@ modparam("permissions", "ruri_col", "regexp")
 		Name of the column in the <quote>address</quote> or
 		<quote>trusted</quote> table containing a string
 		that is added as value to peer_tag AVP if peer_tag AVP
-        	has been defined and if the address or peer matches.
+		has been defined and if the address or peer matches.
 		</para>
 		<para>
 		<emphasis>
@@ -711,8 +711,8 @@ modparam("permissions", "tag_col", "peer_tag")
 		<para>
 		The column name used to store the priority of the corresponding rule from the database
 		row. Priority values should be integer. When db_mode is set to 1 (caching), priorities
-                are ordered from highest to lowest. In non-caching mode, priority order (ASC vs DESC)
-                is determined by database.
+		are ordered from highest to lowest. In non-caching mode, priority order (ASC vs DESC)
+		is determined by database.
 		</para>
 		<para>
 		<emphasis>
@@ -732,7 +732,7 @@ modparam("permissions", "priority_col", "column_name")
 		<title><varname>peer_tag_avp</varname> (AVP string)</title>
 		<para>
 		If defined, the AVP will be
-                set as a side effect of <function moreinfo="none">allow_trusted</function>
+		set as a side effect of <function moreinfo="none">allow_trusted</function>
 		call to not NULL tag column value of the matching peer.
 		</para>
 		<para>
@@ -1172,7 +1172,7 @@ if ($var(group) != -1) {
 		as described in <xref linkend="sec-trusted-requests"/>
 		and <quote>-1</quote> otherwise.  If a match is found
 		and <varname>peer_tag_avp</varname> has been defined, adds a
-                non-NULL tag column value of the
+		non-NULL tag column value of the
 		matching peer to AVP peer_tag_avp.
 		</para>
 		<para>
@@ -1212,10 +1212,9 @@ if (allow_trusted("$si", "$proto")) {
 			address database table into cache memory.
 			The in-cache memory entries are
 			for performance reasons stored in two
-                        different tables:  address table and
+			different tables:  address table and
 			subnet table depending on the value of
 			the mask field (32 or smaller).
-
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1226,8 +1225,7 @@ if (allow_trusted("$si", "$proto")) {
 		</title>
 		<para>
 		Causes permissions module to dump
-                   contents of cache memory address table.
-
+		contents of cache memory address table.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1238,9 +1236,19 @@ if (allow_trusted("$si", "$proto")) {
 		</title>
 		<para>
 		Causes permissions module to dump
-                   contents of cache memory subnet table.
+		contents of cache memory subnet table.
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+	</section>
 
-				</para>
+	<section id ="permissions.m.perm_domain_dump">
+		<title>
+		<function moreinfo="none">perm_domain_dump</function>
+		</title>
+		<para>
+		Causes permissions module to dump
+		contents of cache memory domain table.
+		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 
@@ -1249,8 +1257,8 @@ if (allow_trusted("$si", "$proto")) {
 		<function moreinfo="none">trusted_reload</function>
 		</title>
 		<para>
-			Causes the permissions module to re-read the contents of
-			trusted table into cache memory.
+		Causes the permissions module to re-read the contents of
+		trusted table into cache memory.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1260,8 +1268,8 @@ if (allow_trusted("$si", "$proto")) {
 		<function moreinfo="none">trusted_dump</function>
 		</title>
 		<para>
-			Causes the permissions module to dump the
-			contents of trusted table from cache memory.
+		Causes the permissions module to dump the
+		contents of trusted table from cache memory.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
@@ -1273,22 +1281,22 @@ if (allow_trusted("$si", "$proto")) {
 		<para>
 		Tests if (URI, Contact) pair is allowed according to
 		the allow/deny files.  The files must already have been
-		 loaded by &kamailio;.
+		loaded by &kamailio;.
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>
 			<listitem><para>
 				<emphasis>basename</emphasis> -
-			Basename from which allow and deny filenames will be created by
-		appending contents of <varname>allow_suffix</varname> and <varname>deny_suffix</varname>
-		parameters.
+				Basename from which allow and deny filenames will be created by
+				appending contents of <varname>allow_suffix</varname>
+				and <varname>deny_suffix</varname>
+				parameters.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>URI</emphasis> - URI to be tested
 			</para></listitem>
 			<listitem><para>
-				<emphasis>Contact</emphasis> - Contact
-						to be tested
+				<emphasis>Contact</emphasis> - Contact to be tested
 			</para></listitem>
 		</itemizedlist>
 
@@ -1306,7 +1314,7 @@ if (allow_trusted("$si", "$proto")) {
 			address database table into cache
 			memory.  In cache memory the entries are
 			for performance reasons stored in two
-                        different tables:  address table and
+			different tables:  address table and
 			subnet table depending on the value of
 			the mask field (32 or smaller).
 
@@ -1320,7 +1328,7 @@ if (allow_trusted("$si", "$proto")) {
 		</title>
 		<para>
 			Causes the permissions module to dump
-                   	the contents of cache memory address table.
+			the contents of cache memory address table.
 			(Not the subnet table).
 
 		</para>
@@ -1333,10 +1341,22 @@ if (allow_trusted("$si", "$proto")) {
 		</title>
 		<para>
 			Causes permissions module to dump
-                	contents of cache memory subnet table.
+			contents of cache memory subnet table.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
+
+	<section id ="permissions.r.domainDump">
+		<title>
+		<function moreinfo="none">domainDump</function>
+		</title>
+		<para>
+			Causes permissions module to dump
+			contents of cache memory domain table.
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+	</section>
+
 	<section id ="permissions.r.testUri">
 		<title>
 		<function moreinfo="none">testUri basename uri contact</function>

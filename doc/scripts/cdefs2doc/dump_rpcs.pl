@@ -28,7 +28,7 @@
 #    with the rpc definitions (name, doc, flags a.s.o.). Only
 #    one rpc_export_t array per file is supported.
 #  - all the documentation arrays referenced in the rpc export array are
-#    defined and intialized in the same file.
+#    defined and initialized in the same file.
 #
 # Output notes:
 #  - doc strings are not printed if they cannot be found
@@ -112,7 +112,7 @@ Options:
          -g | --grp  name
          --group     name      - rpc group name used if one cannot be
                                  autodetected (e.g. no default value 
-                                 intializer present in the file).
+                                 initializer present in the file).
          -G | --force-grp name
          --force-group    name - force using a rpc group name, even if one
                                  is autodetected (see also -g).
@@ -263,7 +263,7 @@ print(STDERR "Parsing file $file...\n") if $dbg;
 # @7705 (var name)  	identifier_node strg: tcp_cfg_def lngt 11
 # @7706 (var type)  	array_type: size:@7709 algn: 32 elts: @2265 domn: @7718
 # @7707 (? next ?  )	function_decl: ....
-# @7708 (intializer)	constructor: lngt: 25
+# @7708 (initializer)	constructor: lngt: 25
 #                                    idx : @20      val : @7723    [...]
 # @7709             	interget_cst: type: @11 low: 5600
 #

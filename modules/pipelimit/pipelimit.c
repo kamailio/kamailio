@@ -52,6 +52,7 @@
 #include "../../modules/sl/sl.h"
 #include "../../lib/kmi/mi.h"
 #include "../../rpc_lookup.h"
+#include "../../rand/kam_rand.h"
 
 #include "pl_ht.h"
 #include "pl_db.h"
@@ -499,7 +500,7 @@ static int pl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 				hdr.len = snprintf(hdr.s, 63, "Retry-After: %d\r\n", low);
 			} else {
 				hdr.len = snprintf(hdr.s, 63, "Retry-After: %d\r\n", 
-					low + rand() % (high - low + 1));
+					low + kam_rand() % (high - low + 1));
 			}
 
 			if (add_lump_rpl(msg, hdr.s, hdr.len, LUMP_RPL_HDR)==0) {

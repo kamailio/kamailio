@@ -96,7 +96,7 @@ contact_body_t *cscf_parse_contacts(struct sip_msg *msg)
 		ptr = msg->contact;
 		while(ptr) {
 			if (ptr->type == HDR_CONTACT_T) {
-				if (msg->contact->parsed==0){					
+				if (ptr->parsed==0){					
 					if (parse_contact(ptr)<0){
 						LM_DBG("error parsing contacts [%.*s]\n",
 								ptr->body.len,ptr->body.s);
@@ -132,9 +132,9 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm) {
 	}
 		
 	if (realm.len && realm.s) {
-		ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
+		ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
 		if (ret < 0) {
-			ret = find_credentials(msg, &realm, HDR_PROXYAUTH_F, &h);
+			ret = find_credentials(msg, &realm, HDR_PROXYAUTH_T, &h);
 			if (ret < 0) {
 				goto fallback;
 			} else {
@@ -202,7 +202,7 @@ str cscf_get_private_identity_from(struct sip_msg *msg, str realm)
 	}
         
         if (realm.len && realm.s) {
-            ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_F, &h);
+            ret = find_credentials(msg, &realm, HDR_AUTHORIZATION_T, &h);
             if (ret < 0) {
                     goto fallback;
             } else 

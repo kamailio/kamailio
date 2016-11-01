@@ -15,10 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 
@@ -49,7 +49,7 @@ typedef struct _dbt_con
 dbt_result_p dbt_result_new(dbt_table_p, int*, int);
 int dbt_result_free(dbt_result_p);
 int dbt_row_match(dbt_table_p _dtp, dbt_row_p _drp, int* _lkey,
-				 db_op_t* _op, db_val_t* _v, int _n);
+				db_op_t* _op, db_val_t* _v, int _n);
 int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 				int* lres, dbt_result_p _dres);
 int dbt_result_print(dbt_result_p _dres);

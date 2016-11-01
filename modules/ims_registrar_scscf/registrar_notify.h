@@ -56,8 +56,6 @@
 #define MSG_REG_UNSUBSCRIBE_OK "Subscription to REG dropped"
 #define MSG_REG_PUBLISH_OK "Publish to REG saved"
 
-
-
 typedef struct _reg_notification {
     
     str subscription_state; /**< Subscription-state header value*/
@@ -118,6 +116,8 @@ enum {
     IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT, /**< User unregistered implicitly, ie not via explicit deregister	*/
 } IMS_Registrar_events;
 
+
+reg_notification_list *notification_list; //< List of pending notifications
 
 int can_subscribe_to_reg(struct sip_msg *msg, char *str1, char *str2);
 

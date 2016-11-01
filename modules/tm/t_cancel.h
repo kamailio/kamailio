@@ -103,9 +103,14 @@ inline short static prepare_cancel_branch( struct cell *t, int b, int noreply )
 	int last_received;
 	unsigned long old;
 
+	/* blind uac branch (e.g., suspend) without outgoing request */
+	if((t->uac[b].flags & TM_UAC_FLAG_BLIND)
+			&& t->uac[b].request.buffer==NULL)
+		return 0;
+
 	last_received=t->uac[b].last_received;
-	/* if noreply=1 cancel even if no reply received (in this case 
-	 * cancel_branch()  won't actually send the cancel but it will do the 
+	/* if noreply=1 cancel even if no reply received (in this case
+	 * cancel_branch()  won't actually send the cancel but it will do the
 	 * cleanup) */
 	if (last_received<200 && (noreply || last_received>=100)){
 		old=atomic_cmpxchg_long((void*)&t->uac[b].local_cancel.buffer, 0,

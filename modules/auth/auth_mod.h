@@ -29,6 +29,7 @@
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
 #include "../../parser/digest/digest.h"
 #include "nonce.h" /* auth_extra_checks & AUTH_CHECK flags */
+#include "rfc2617.h"
 
 /*
  * Module parameters variables
@@ -42,5 +43,11 @@ extern avp_ident_t challenge_avpid;
 extern str proxy_challenge_header;
 extern str www_challenge_header;
 extern struct qp auth_qop;
+extern str auth_algorithm;
+extern int add_authinfo_hdr; /* should an Authentication-Info header be added on 200 OK responses? */
+
+extern int hash_hex_len;
+extern calc_HA1_t calc_HA1;
+extern calc_response_t calc_response;
 
 #endif /* AUTH_MOD_H */

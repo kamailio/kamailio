@@ -20,7 +20,10 @@
 #include <sys/types.h>
 #include <string.h>
 
+#include "endianness.h"
 #include "md5.h"
+
+#ifndef __OS_solaris
 
 #define PUT_64BIT_LE(cp, value) do {					\
 	(cp)[7] = (value) >> 56;					\
@@ -157,7 +160,7 @@ MD5Transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH])
 {
 	u_int32_t a, b, c, d, in[MD5_BLOCK_LENGTH / 4];
 
-#ifndef WORDS_BIGENDIAN
+#ifndef __IS_BIG_ENDIAN
 	memcpy(in, block, sizeof(in));
 #else
 	for (a = 0; a < MD5_BLOCK_LENGTH / 4; a++) {
@@ -247,3 +250,5 @@ MD5Transform(u_int32_t state[4], const u_int8_t block[MD5_BLOCK_LENGTH])
 	state[2] += c;
 	state[3] += d;
 }
+
+#endif /* __OS_solaris */

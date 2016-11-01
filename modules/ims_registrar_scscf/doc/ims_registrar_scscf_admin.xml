@@ -913,9 +913,8 @@ if (can_publish_reg("location")){
     <para>exported RPC commands.</para>
 
     <section>
-      <title>ulpcscf.status</title>
-
-      <para>Status of pcscf_usrloc, AORs, max slots, etc.</para>
+      <title>regscscf.dereg_impu</title>
+      <para>Initiate network de-register of IMPU</para>
     </section>
   </section>
 

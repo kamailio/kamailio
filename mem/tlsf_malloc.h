@@ -79,7 +79,7 @@ int tlsf_check_pool(pool_t pool);
 void tlsf_meminfo(tlsf_t pool, struct mem_info *info);
 void tlsf_status(tlsf_t pool);
 void tlsf_sums(tlsf_t pool);
-size_t tlsf_available(tlsf_t pool);
+unsigned long tlsf_available(tlsf_t pool);
 void tlsf_mod_get_stats(tlsf_t pool, void **root);
 void tlsf_mod_free_stats(void *root);
 

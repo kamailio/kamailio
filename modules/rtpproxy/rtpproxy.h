@@ -1,4 +1,4 @@
-/* $Id: nathelper.c 1808 2007-03-10 17:36:19Z bogdan_iancu $
+/*
  *
  * Copyright (C) 2003 Porta Software Ltd
  *
@@ -18,10 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ---------
- * 2007-04-13   splitted from nathelper.c (ancuta)
-*/
+ */
 
 
 #ifndef _RTPPROXY_H
@@ -42,8 +39,8 @@ struct rtpp_node {
 	int					rn_disabled;	/* found unaccessible? */
 	unsigned			rn_weight;		/* for load balancing */
 	unsigned int		rn_recheck_ticks;
-        int                     rn_rep_supported;
-        int                     rn_ptl_supported;
+	int                 rn_rep_supported;
+	int                 rn_ptl_supported;
 	struct rtpp_node	*rn_next;
 };
 
@@ -70,7 +67,8 @@ struct rtpp_node *select_rtpp_node(str, int);
 char *send_rtpp_command(struct rtpp_node *, struct iovec *, int);
 
 struct rtpp_set *get_rtpp_set(str *set_name);
-int insert_rtpp_node(struct rtpp_set *const rtpp_list, const str *const url, const int weight, const int disabled);
+int insert_rtpp_node(struct rtpp_set *const rtpp_list, const str *const url,
+		const int weight, const int disabled);
 
 int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
 

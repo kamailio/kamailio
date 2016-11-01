@@ -375,6 +375,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	 * - shorcut useful for multi-part bodies and sdp operations
 	 */
 	_sdp->text = *sdp_body;
+	pf = AF_INET;
 
 	/*
 	 * Parsing of SDP body.

@@ -114,7 +114,7 @@
 		Alice, then it can pick-up the call by sending an INVITE to Bob (actually I am not
 		sure if it should use the URI in the identity element or the URI in the target 
 		parameter) which contains a Replaces header which contains the call-id and the tags.
-		This was tested sucessfully with Linksys SPA962 phones and with SNOM 320 Firmware 7.3.7
+		This was tested successfully with Linksys SPA962 phones and with SNOM 320 Firmware 7.3.7
 		(you have to set the function key to "Extension").
 
 	</para>

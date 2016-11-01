@@ -166,7 +166,7 @@ modparam("dmq", "multi_notify", 1)
                 <title>Set <varname>num_workers</varname> parameter</title>
                 <programlisting format="linespecific">
 ...
-modparam("dmq", "num_threads", 4)
+modparam("dmq", "num_workers", 4)
 ...
 </programlisting>
                 </example>

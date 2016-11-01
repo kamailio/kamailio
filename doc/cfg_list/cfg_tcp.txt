@@ -130,7 +130,7 @@ Configuration Variables for tcp
         Type: integer.
 
 24. tcp.accept_no_cl
-        accept TCP messges without Content-Length .
+        accept TCP messages without Content-Length .
         Range: 0 - 1.
         Type: integer.
 

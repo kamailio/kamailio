@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
-   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general Kamailio documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+%docentities;
+
+]>
 
 <section id="print.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
@@ -23,7 +29,7 @@
 				</para>
 			</listitem>
 		</itemizedlist>
-		<para>Retuns values:</para>
+		<para>Return values:</para>
 		<para>1: Connection is OK</para>
 		<para>-1: Connection has errors, does not exist or is about to be closed)</para>
 		<example>
@@ -53,14 +59,14 @@
 				</para>
 			</listitem>
 		</itemizedlist>
-		<para>Retuns values:</para>
+		<para>Return values:</para>
 		<para>1: Connection is OK</para>
 		<para>2: Socket is accepting incoming connections</para>
 		<para>3: Socket is setting up outgoing connection</para>
 		<para>-1: Connection does not exist (or was closed)</para>
 		<para>-2: Socket has reached EOF</para>
-		<para>-3: Socket error has occured. Connection will likely close. </para>
-		<para>-4: Socket is in unknow bad state. Connection will likely close. </para>
+		<para>-3: Socket error has occurred. Connection will likely close. </para>
+		<para>-4: Socket is in unknown bad state. Connection will likely close. </para>
 		<example>
 			<title><function>tcp_conid_state</function> usage</title>
 			<programlisting><![CDATA[
@@ -78,12 +84,12 @@
 			<function>tcp_keepalive_enable([conid], idle, count, interval)</function>
 		</title>
 		<para>
-				Enables keepalive on a TCP connection.
+			Enables keepalive on a TCP connection.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem>
-				<para><emphasis>conid</emphasis> (optional): the kamailio internal
+				<para><emphasis>conid</emphasis> (optional): the &kamailio; internal
 				connection id on which TCP keepalive will be enabled. If no parameter
 				is given, the keepalive mechanism will be enabled on the current message
 				source connection.
@@ -96,7 +102,7 @@
 			</listitem>
 			<listitem>
 				<para><emphasis>count</emphasis>: number of non-acked keepalive before
-				reseting the connection. 
+				resetting the connection. 
 				</para>
 			</listitem>
 			<listitem>
@@ -105,7 +111,7 @@
 				</para>
 			</listitem>
 		</itemizedlist>
-		<para>Retuns 1 on success, -1 on failure.</para>
+		<para>Returns 1 on success, -1 on failure.</para>
 		<example>
 			<title><function>tcp_keepalive_enable</function> usage</title>
 			<programlisting><![CDATA[
@@ -135,19 +141,19 @@ onreply_route[foo] {
 			<function>tcp_keepalive_disable([conid])</function>
 		</title>
 		<para>
-				Disables keepalive on a TCP connection.
+			Disables keepalive on a TCP connection.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 			<listitem>
-				<para><emphasis>conid</emphasis> (optional): the kamailio internal
+				<para><emphasis>conid</emphasis> (optional): the &kamailio; internal
 				connection id on which TCP keepalive will be disabled. If no parameter
 				is given, the keepalive mechanism will be disabled on the current message
 				source connection.
 				</para>
 			</listitem>
 		</itemizedlist>
-		<para>Retuns 1 on success, -1 on failure.</para>
+		<para>Returns 1 on success, -1 on failure.</para>
 		<example>
 			<title><function>tcp_keepalive_disable</function> usage</title>
 			<programlisting><![CDATA[
@@ -176,12 +182,12 @@ onreply_route[foo] {
                         <function>tcp_set_connection_lifetime([conid], lifetime)</function>
                 </title>
                 <para>
-                                Sets the connection lifetime of a connection (TCP).
+			Sets the connection lifetime of a connection (TCP).
                 </para>
                 <para>Meaning of the parameters is as follows:</para>
                 <itemizedlist>
                         <listitem>
-                                <para><emphasis>conid</emphasis> (optional): the kamailio internal
+                                <para><emphasis>conid</emphasis> (optional): the &kamailio; internal
                                 connection id on which to set the new lifetime. If no parameter
                                 is given, it will be set on the current message source connection.
                                 </para>
@@ -191,7 +197,7 @@ onreply_route[foo] {
                                 </para>
                         </listitem>
                 </itemizedlist>
-                <para>Retuns 1 on success, -1 on failure.</para>
+                <para>Returns 1 on success, -1 on failure.</para>
                 <example>
                         <title><function>tcp_set_connection_lifetime</function> usage</title>
                         <programlisting><![CDATA[
@@ -217,19 +223,18 @@ request_route {
                         <function>tcp_enable_closed_event([conid])</function>
                 </title>
                 <para>
-                                Explicitly enables the "tcp:closed" event route
-                                on a TCP connection.
+			Explicitly enables the "tcp:closed" event route on a TCP connection.
                 </para>
                 <para>Meaning of the parameters is as follows:</para>
                 <itemizedlist>
                         <listitem>
-                                <para><emphasis>conid</emphasis> (optionnal): the kamailio internal
+                                <para><emphasis>conid</emphasis> (optionnal): the &kamailio; internal
                                 connection id. If no parameter
                                 is given, it will be enabled on the current message source connection.
                                 </para>
                         </listitem>
                 </itemizedlist>
-                <para>Retuns 1 on success, -1 on failure.</para>
+                <para>Returns 1 on success, -1 on failure.</para>
                 <example>
                         <title><function>tcp_set_closed_event</function> usage</title>
                         <programlisting><![CDATA[

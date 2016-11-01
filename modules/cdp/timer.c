@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,13 +35,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
-#include <time.h> 
+#include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -81,42 +79,42 @@ void timer_loop()
 	callback_f cb=0;
 	void *ptr=0;
 	int interval=0;
-	
+
 	while(1){
 		if (shutdownx && *shutdownx) break;
 		now = time(0);
 		cfg_update();
-	
+
 		do {
 			cb = 0;
 			lock_get(timers_lock);
-				i = timers->head;
-				while(i && i->expires>now) i = i->next;
-				if (i){
-					cb = i->cb;
-					ptr = *(i->ptr);
-					if (i->one_time){
-						if (i->prev) i->prev->next = i->next;
-						else timers->head = i->next;
-						if (i->next) i->next->prev = i->prev;
-						else timers->tail = i->next;
-						shm_free(i);
-						i=0;
-					}
+			i = timers->head;
+			while(i && i->expires>now) i = i->next;
+			if (i){
+				cb = i->cb;
+				ptr = *(i->ptr);
+				if (i->one_time){
+					if (i->prev) i->prev->next = i->next;
+					else timers->head = i->next;
+					if (i->next) i->next->prev = i->prev;
+					else timers->tail = i->next;
+					shm_free(i);
+					i=0;
 				}
+			}
 			lock_release(timers_lock);
-	
-			if (cb) { 
+
+			if (cb) {
 				interval = cb(now,ptr);
 				if (i){
 					lock_get(timers_lock);
-						i->expires = now + interval;
+					i->expires = now + interval;
 					lock_release(timers_lock);
 				}
 			}
-	
+
 		} while(cb);
-				
+
 		sleep(TIMER_RESOLUTION);
 	}
 }
@@ -154,11 +152,11 @@ int add_timer(int expires_in,int one_time,callback_f cb,void *ptr)
 	*(n->ptr) = ptr;
 
 	lock_get(timers_lock);
-		n->prev = timers->tail;
-		n->next = 0;
-		if (!timers->head) timers->head = n;
-		if (timers->tail) timers->tail->next = n;
-		timers->tail = n;
+	n->prev = timers->tail;
+	n->next = 0;
+	if (!timers->head) timers->head = n;
+	if (timers->tail) timers->tail->next = n;
+	timers->tail = n;
 	lock_release(timers_lock);
 	return 1;
 }
@@ -172,7 +170,7 @@ void timer_cdp_init()
 	timers->head=0;
 	timers->tail=0;
 	timers_lock = lock_alloc();
-	timers_lock = lock_init(timers_lock);	
+	timers_lock = lock_init(timers_lock);
 }
 
 /**
@@ -181,7 +179,7 @@ void timer_cdp_init()
 void timer_cdp_destroy()
 {
 	timer_cb_t *n,*i;
-/*	lock_get(timers_lock);*/
+	/*	lock_get(timers_lock);*/
 	i = timers->head;
 	while(i){
 		n = i->next;
@@ -203,25 +201,25 @@ void timer_cdp_destroy()
 void timer_process(int returns)
 {
 	LM_INFO("Timer process starting up...\n");
-		
+
 	timer_loop();
-	
+
 	LM_INFO("... Timer process finished\n");
 	if (!returns) {
 #ifdef CDP_FOR_SER
 #else
 #ifdef PKG_MALLOC
-	#ifdef PKG_MALLOC
+#ifdef PKG_MALLOC
 		LM_DBG("Timer Memory status (pkg):\n");
 		//pkg_status();
-		#ifdef pkg_sums
-			pkg_sums();
-		#endif 
-	#endif
+#ifdef pkg_sums
+		pkg_sums();
 #endif
-		dp_del_pid(getpid());		
-#endif		
-		
+#endif
+#endif
+		dp_del_pid(getpid());
+#endif
+
 		exit(0);
 	}
 }

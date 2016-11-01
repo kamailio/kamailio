@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "transaction.h"
@@ -100,7 +98,8 @@ int cdp_trans_destroy()
  * @param auto_drop - whether to auto drop the transaction on event, or let the application do it later
  * @returns the created cdp_trans_t* or NULL on error
  */
-inline cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb, void *ptr,int timeout,int auto_drop)
+cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb,
+		void *ptr,int timeout,int auto_drop)
 {
 	cdp_trans_t *x;
 	x = shm_malloc(sizeof(cdp_trans_t));
@@ -137,7 +136,7 @@ inline cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb, 
  * Remove from the list and deallocate a transaction.
  * @param msg - the message that relates to that particular transaction
  */
-inline void del_trans(AAAMessage *msg)
+void del_trans(AAAMessage *msg)
 {
 	cdp_trans_t *x;
 	lock_get(trans_list->lock);
@@ -158,7 +157,7 @@ inline void del_trans(AAAMessage *msg)
  * @param msg - the message that this transaction relates to
  * @returns the cdp_trans_t* if found or NULL if not
  */
-inline cdp_trans_t* cdp_take_trans(AAAMessage *msg)
+cdp_trans_t* cdp_take_trans(AAAMessage *msg)
 {
 	cdp_trans_t *x;
 	lock_get(trans_list->lock);
@@ -178,7 +177,7 @@ inline cdp_trans_t* cdp_take_trans(AAAMessage *msg)
  * Deallocate the memory taken by a transaction.
  * @param x - the transaction to deallocate
  */
-inline void cdp_free_trans(cdp_trans_t *x)
+void cdp_free_trans(cdp_trans_t *x)
 {
 	if (x->ptr) shm_free(x->ptr);
 	shm_free(x);
@@ -192,14 +191,13 @@ inline void cdp_free_trans(cdp_trans_t *x)
 int cdp_trans_timer(time_t now, void* ptr)
 {
 	cdp_trans_t *x,*n;
-	LM_DBG("trans_timer(): taking care of diameter transactions...\n");
 	lock_get(trans_list->lock);
 	x = trans_list->head;
 	while(x)
 	{
 		if (now>x->expires){
-            counter_inc(cdp_cnts_h.timeout);		//Transaction has timed out waiting for response
-	    
+			counter_inc(cdp_cnts_h.timeout);		//Transaction has timed out waiting for response
+
 			x->ans = 0;
 			if (x->cb){
 				(x->cb)(1,*(x->ptr),0, (now - x->expires));
@@ -225,11 +223,11 @@ int cdp_trans_timer(time_t now, void* ptr)
 /* TRANSACTIONS */
 
 /**
-* Create a AAATransaction for the given request.
-* @param app_id - id of the request's application
-* @param cmd_code - request's code
-* @returns the AAATransaction*
-*/
+ * Create a AAATransaction for the given request.
+ * @param app_id - id of the request's application
+ * @param cmd_code - request's code
+ * @returns the AAATransaction*
+ */
 AAATransaction *AAACreateTransaction(AAAApplicationId app_id,AAACommandCode cmd_code)
 {
 	AAATransaction *t;
@@ -242,10 +240,10 @@ AAATransaction *AAACreateTransaction(AAAApplicationId app_id,AAACommandCode cmd_
 }
 
 /**
-* Free the memory allocated for the AAATransaction.
-* @param trans - the AAATransaction to be deallocated
-* @returns 1 on success, 0 on failure
-*/
+ * Free the memory allocated for the AAATransaction.
+ * @param trans - the AAATransaction to be deallocated
+ * @returns 1 on success, 0 on failure
+ */
 int AAADropTransaction(AAATransaction *trans)
 {
 	if (!trans) return 0;

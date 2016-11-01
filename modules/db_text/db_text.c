@@ -16,10 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <stdio.h>
@@ -69,7 +69,7 @@ static param_export_t params[] = {
 
 static rpc_export_t rpc_methods[];
 
-struct module_exports exports = {	
+struct module_exports exports = {
 	"db_text",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,     /* Exported functions */
@@ -101,7 +101,7 @@ static int mod_init(void)
 	if(dbt_init_cache())
 		return -1;
 	/* return make_demo(); */
-	
+
 	return 0;
 }
 
@@ -127,12 +127,13 @@ int dbt_bind_api(db_func_t *dbb)
 	dbb->query       = (db_query_f)dbt_query;
 	dbb->free_result = dbt_free_result;
 	dbb->insert      = (db_insert_f)dbt_insert;
-	dbb->delete      = (db_delete_f)dbt_delete; 
+	dbb->delete      = (db_delete_f)dbt_delete;
 	dbb->update      = (db_update_f)dbt_update;
 	dbb->replace     = (db_replace_f)dbt_replace;
 	dbb->affected_rows = (db_affected_rows_f) dbt_affected_rows;
 	dbb->raw_query   = (db_raw_query_f) dbt_raw_query;
-	dbb->cap         = DB_CAP_ALL | DB_CAP_AFFECTED_ROWS | DB_CAP_RAW_QUERY | DB_CAP_REPLACE;
+	dbb->cap         = DB_CAP_ALL | DB_CAP_AFFECTED_ROWS | DB_CAP_RAW_QUERY
+							| DB_CAP_REPLACE;
 
 	return 0;
 }

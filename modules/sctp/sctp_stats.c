@@ -99,7 +99,7 @@ static counter_val_t sctp_info(counter_handle_t h, void* what)
 	return 0;
 }
 
-/** intialize sctp statistics.
+/** initialize sctp statistics.
  *  Must be called before forking.
  * @return < 0 on errror, 0 on success.
  */

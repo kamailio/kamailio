@@ -67,7 +67,8 @@ static int rtpp_load_db(void)
 	db1_res_t *res = NULL;
 	db_val_t *values = NULL;
 	db_row_t *rows = NULL;
-	db_key_t query_cols[] = {&rtpp_setid_col, &rtpp_url_col, &rtpp_weight_col, &rtpp_flags_col};
+	db_key_t query_cols[] = {&rtpp_setid_col, &rtpp_url_col, &rtpp_weight_col,
+		&rtpp_flags_col};
 
 	str set, url;
 	int weight, flags;
@@ -81,7 +82,8 @@ static int rtpp_load_db(void)
 	}
 	if (rtpp_dbf.use_table(rtpp_db_handle, &rtpp_table_name) < 0)
 	{
-		LM_ERR("unable to use table '%.*s'\n", rtpp_table_name.len, rtpp_table_name.s);
+		LM_ERR("unable to use table '%.*s'\n", rtpp_table_name.len,
+				rtpp_table_name.s);
 		return -1;
 	}
 	if (rtpp_dbf.query(rtpp_db_handle, 0, 0, 0, query_cols, 0, n_cols, 0, &res) < 0)
@@ -115,7 +117,8 @@ static int rtpp_load_db(void)
 		}
 		if (insert_rtpp_node(rtpp_list, &url, weight, flags) < 0)
 		{
-			LM_ERR("error inserting '%.*s' into set '%.*s'\n", url.len, url.s, set.len, set.s);
+			LM_ERR("error inserting '%.*s' into set '%.*s'\n", url.len, url.s,
+					set.len, set.s);
 		}
 	}
 
@@ -133,7 +136,8 @@ int init_rtpproxy_db(void)
 
 	if (db_bind_mod(&rtpp_db_url, &rtpp_dbf) < 0)
 	{
-		LM_ERR("Unable to bind to db driver - %.*s\n", rtpp_db_url.len, rtpp_db_url.s);
+		LM_ERR("Unable to bind to db driver - %.*s\n",
+				rtpp_db_url.len, rtpp_db_url.s);
 		return -1;
 	}
 	if (rtpp_connect_db() != 0)
@@ -154,7 +158,7 @@ int init_rtpproxy_db(void)
 			break;
 		default:
 			LM_ERR("invalid table version (found %d, require %d)\n",
-			  rtpp_table_version, RTPP_TABLE_VERSION);
+					rtpp_table_version, RTPP_TABLE_VERSION);
 			ret = -1;
 			goto done;
 	}

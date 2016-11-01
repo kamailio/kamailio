@@ -106,8 +106,8 @@ The timer handler can be periodic, one shot or it can change from call to call. 
 -------------
 
 The timer becomes active after you add it with timer_add. timer_add takes as parameters a pointer to the corresponding timer_ln structure and an expire interval (in ticks, use the macros from timer_ticks.h to convert from s/ms).
-The timer must be intialized (with timer_init()) before adding it the first time.
-timer_add returns 0 on success and -1 on error (timer already active or timer not intialized).
+The timer must be initialized (with timer_init()) before adding it the first time.
+timer_add returns 0 on success and -1 on error (timer already active or timer not initialized).
 If you want to re-add a deleted timer (timer_del was called on it) or an expired one shot timer (the timer handlers returned 0 on the last run), you have to re-init it first, either by calling timer_reinit(t) or by calling again timer_init(...). If you don't re-initialize the timer, timer_add will refuse to add it and it will return -1. So if timer_add returns error (-1) it means that either you're trying to re-add a running timer or a deleted/expired timer that was not re-initialized.
 WARNING: do not initialize/re-initialize a running timer!
 

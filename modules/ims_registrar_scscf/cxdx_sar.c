@@ -64,8 +64,10 @@
 #include "../../parser/hf.h"
 #include "../../lib/ims/ims_getters.h"
 #include "registrar_notify.h"
+#include "pvt_message.h"
 
 extern struct cdp_binds cdpb;
+extern unsigned int send_vs_callid_avp;
 
 int create_return_code(int result) {
     int rc;
@@ -103,6 +105,7 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
     int rc = -1, experimental_rc = -1;
     int result = CSCF_RETURN_TRUE;
     saved_transaction_t* data = 0;
+    struct sip_msg* req;
 
     str xml_data = {0, 0}, ccf1 = {0, 0}, ccf2 = {0, 0}, ecf1 = {0, 0}, ecf2 = {0, 0};
     ims_subscription* s = 0;
@@ -156,6 +159,12 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
 
         get_act_time();
 
+        req = get_request_from_tx(t);
+        if (!req) {
+            LM_ERR("Failed to get SIP Request from Transaction\n");
+            goto error_no_send;
+        }
+        
         if (is_timeout) {
         	update_stat(stat_sar_timeouts, 1);
             LM_ERR("Transaction timeout - did not get SAA\n");
@@ -171,12 +180,16 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
         update_stat(sar_replies_received, 1);
         update_stat(sar_replies_response_time, elapsed_msecs);
 
+        
         /* check and see that all the required headers are available and can be parsed */
-        if (parse_message_for_register(t->uas.request) < 0) {
+        if (parse_message_for_register(req) < 0) {
             LM_ERR("Unable to parse register message correctly\n");
             rerrno = R_SAR_FAILED;
             goto error;
         }
+		
+		LM_DBG("callid for found transaction is [%.*s]\n", req->callid->body.len, req->callid->body.s);
+
 
         cxdx_get_result_code(saa, &rc);
         cxdx_get_experimental_result_code(saa, &experimental_rc);
@@ -238,18 +251,23 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
         }
 
         if (data->sar_assignment_type == AVP_IMS_SAR_REGISTRATION || data->sar_assignment_type == AVP_IMS_SAR_RE_REGISTRATION) {
-            if (build_p_associated_uri(s) != 0) {
-                LM_ERR("Unable to build p_associated_uri\n");
+            if (s) {
+                if (build_p_associated_uri(s) != 0) {
+                    LM_ERR("Unable to build p_associated_uri\n");
+                    rerrno = R_SAR_FAILED;
+                    goto error;
+                }
+            }
+
+        }
+
+        if (s) {
+            //here we update the contacts and also build the new contact header for the 200 OK reply
+            if (update_contacts(req, data->domain, &data->public_identity, data->sar_assignment_type, &s, &ccf1, &ccf2, &ecf1, &ecf2, &data->contact_header) <= 0) {
+                LM_ERR("Error processing REGISTER\n");
                 rerrno = R_SAR_FAILED;
                 goto error;
             }
-        }
-
-        //here we update the contacts and also build the new contact header for the 200 OK reply
-        if (update_contacts(t->uas.request, data->domain, &data->public_identity, data->sar_assignment_type, &s, &ccf1, &ccf2, &ecf1, &ecf2, &data->contact_header) <= 0) {
-            LM_ERR("Error processing REGISTER\n");
-            rerrno = R_SAR_FAILED;
-            goto error;
         }
         
         if (data->contact_header) {
@@ -265,7 +283,7 @@ success:
 
 done:
     if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
-        reg_send_reply_transactional(t->uas.request, data->contact_header, t);
+        reg_send_reply_transactional(req, data->contact_header, t);
     LM_DBG("DBG:SAR Async CDP callback: ... Done resuming transaction\n");
 
     create_return_code(result);
@@ -277,11 +295,11 @@ done:
     //free memory
     if (saa) cdpb.AAAFreeMessage(&saa);
     if (t) {
-        del_nonshm_lump_rpl(&t->uas.request->reply_lump);
+//        del_nonshm_lump_rpl(&req->reply_lump);
         tmb.unref_cell(t);
     }
     //free path vector pkg memory
-    reset_path_vector(t->uas.request);
+//    reset_path_vector(req);
 
     tmb.t_continue(data->tindex, data->tlabel, data->act);
     free_saved_transaction_data(data);
@@ -290,14 +308,14 @@ done:
 error:
     create_return_code(-2);
     if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
-        reg_send_reply_transactional(t->uas.request, data->contact_header, t);
+        reg_send_reply_transactional(req, data->contact_header, t);
 		
 error_no_send: //if we don't have the transaction then we can't send a transaction response
     update_stat(rejected_registrations, 1);
     //free memory
     if (saa) cdpb.AAAFreeMessage(&saa);
     if (t) {
-        del_nonshm_lump_rpl(&t->uas.request->reply_lump);
+//        del_nonshm_lump_rpl(&req->reply_lump);
         tmb.unref_cell(t);
     }
     tmb.t_continue(data->tindex, data->tlabel, data->act);
@@ -321,6 +339,7 @@ int cxdx_send_sar(struct sip_msg *msg, str public_identity, str private_identity
     AAASession *session = 0;
     unsigned int hash = 0, label = 0;
     struct hdr_field *hdr;
+	str call_id;
 
     session = cdpb.AAACreateSession(0);
 
@@ -331,7 +350,14 @@ int cxdx_send_sar(struct sip_msg *msg, str public_identity, str private_identity
     }
     if (!sar) goto error1;
 
-    if (!cxdx_add_call_id(sar, cscf_get_call_id(msg, &hdr))) goto error1;
+    if (msg && send_vs_callid_avp) {
+		call_id = cscf_get_call_id(msg, &hdr);
+		if (call_id.len>0 && call_id.s) {
+			if (!cxdx_add_call_id(sar, call_id)) 
+				LM_WARN("Failed to add call-id to SAR.... continuing... assuming non-critical\n");
+		}
+	}
+	
     if (!cxdx_add_destination_realm(sar, cxdx_dest_realm)) goto error1;
 
     if (!cxdx_add_vendor_specific_appid(sar, IMS_vendor_id_3GPP, IMS_Cx, 0 /*IMS_Cx*/)) goto error1;

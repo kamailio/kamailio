@@ -954,7 +954,7 @@ struct mi_root* print_fifo_err(void) {
 	
 	switch (fifo_err) {
 		case E_MISC: 
-			rpl_tree = init_mi_tree( 400, "An error occured", 17);
+			rpl_tree = init_mi_tree( 400, "An error occurred", 18);
 			if(rpl_tree == NULL)
 				return 0;
 			break;
@@ -1037,7 +1037,7 @@ struct mi_root* print_fifo_err(void) {
 			return print_replace_help();
 			break;
 		default:
-			rpl_tree = init_mi_tree( 500, "An error occured", 17);
+			rpl_tree = init_mi_tree( 500, "An error occurred", 17);
 			if(rpl_tree == NULL)
 				return 0;
 			break;

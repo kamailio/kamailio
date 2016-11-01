@@ -15,7 +15,7 @@
     <qandaset defaultlabel="number">
 	<qandaentry>
 	    <question>
-		<para>What happend with <quote>rtpproxy_disable</quote> parameter?</para>
+		<para>What happened with <quote>rtpproxy_disable</quote> parameter?</para>
 	    </question>
 	    <answer>
 		<para>

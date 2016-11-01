@@ -29,6 +29,7 @@
 #include "../../trim.h"
 #include "../../sr_module.h"
 #include "../../timer_proc.h"
+#include "../../cfg/cfg_struct.h"
 #include "../tm/tm_load.h"
 #include "../jansson/jansson_utils.h"
 
@@ -158,7 +159,7 @@ static int child_init(int rank)
 {
 	int pid;
 
-	if (rank>PROC_MAIN)
+	if (rank!=PROC_INIT)
 		cmd_pipe = pipe_fds[1];
 
 	if (rank!=PROC_MAIN)
@@ -194,6 +195,7 @@ static int child_init(int rank)
 		return -1; /* error */
 	if(pid==0){
 		/* child */
+		if (cfg_child_init()) return -1;
 		close(pipe_fds[1]);
 		return jsonrpc_io_child_process(pipe_fds[0]);
 	}

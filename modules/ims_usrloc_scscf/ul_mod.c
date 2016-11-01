@@ -96,8 +96,11 @@ int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 int usrloc_debug 	= 0;
 int scscf_support_wildcardPSI = 0;
 int unreg_validity = 1800;				/*!< default validity time in secs for unreg assignment to SCSCF */
+int maxcontact_3gpp = 0;                                               /*!< max number of 3GPP contacts allowed per IMPU */
 int maxcontact = 0;						/*!< max number of contacts allowed per IMPU */
 int maxcontact_behaviour = 0;			/*!< max contact behaviour - 0-disabled(default),1-reject,2-overwrite*/
+
+int max_subscribes = 0;					/*!< max number of subscribes allowed per WATCHER_URI IMPU EVENT combination */
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
@@ -117,7 +120,7 @@ str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 unsigned int nat_bflag = (unsigned int)-1;
 unsigned int init_flag = 0;
 
-struct dlg_binds dlgb;
+ims_dlg_api_t dlgb;
 
 int sub_dialog_hash_size = 9;
 shtable_t sub_dialog_table;
@@ -163,6 +166,8 @@ static param_export_t params[] = {
     {"unreg_validity",		INT_PARAM, &unreg_validity},
     {"maxcontact_behaviour",INT_PARAM, &maxcontact_behaviour},
     {"maxcontact",			INT_PARAM, &maxcontact},
+	{"maxcontact_3gpp",     INT_PARAM, &maxcontact_3gpp},
+	{"max_subscribes",		INT_PARAM, &max_subscribes},
     {"sub_dialog_hash_size",INT_PARAM, &sub_dialog_hash_size},
     {"db_mode",				INT_PARAM, &db_mode},
     {"db_url", 				PARAM_STR, &db_url},
@@ -199,7 +204,6 @@ struct module_exports exports = {
  */
 static int mod_init(void) {
 	int i;
-	load_dlg_f load_dlg;
 	if (usrloc_debug){
 		LM_INFO("Logging usrloc records to %.*s\n", usrloc_debug_file.len, usrloc_debug_file.s);
 		debug_file = fopen(usrloc_debug_file.s, "a");
@@ -346,13 +350,7 @@ static int mod_init(void) {
 		}
 	}
 
-	if (!(load_dlg = (load_dlg_f) find_export("load_dlg", 0, 0))) { /* bind to dialog module */
-		LM_ERR("can not import load_dlg. This module requires Kamailio dialog module.\n");
-	}
-	if (load_dlg(&dlgb) == -1) {
-		return -1;
-	}
-	if (load_dlg_api(&dlgb) != 0) { /* load the dialog API */
+	if (load_ims_dlg_api(&dlgb) != 0) { /* load the dialog API */
 		LM_ERR("can't load Dialog API\n");
 		return -1;
 	}

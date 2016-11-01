@@ -272,7 +272,7 @@ clean_doxygen:
 .PHONY: TAGS
 .PHONY: tags
 TAGS tags:
-	$(MKTAGS) --exclude="obsolete/*" -R .
+	$(MKTAGS) --exclude="obsolete/*" --exclude="test/*" -R .
 
 .PHONY: TAGS-ALL
 .PHONY: tags-all

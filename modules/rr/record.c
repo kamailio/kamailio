@@ -492,7 +492,7 @@ error:
 int record_route_preset(struct sip_msg* _m, str* _data)
 {
 	str user = {NULL, 0};
-	struct to_body* from;
+	struct to_body* from = NULL;
 	struct lump* l;
 	char* hdr, *p;
 	int hdr_len;
@@ -510,10 +510,6 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		rr_prefix = RR_PREFIX_SIPS;
 		rr_prefix_len = RR_PREFIX_SIPS_LEN;
 	}
-
-	from = 0;
-	user.len = 0;
-	user.s = 0;
 
 	if (add_username) {
 		if (get_username(_m, &user) < 0) {
@@ -690,7 +686,6 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 	}
 
 	memcpy(p, _data->s, _data->len);
-	p += _data->len;
 	
 	p = suffix;
 	if (tag && tag->len) {

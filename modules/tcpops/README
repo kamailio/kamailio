@@ -31,6 +31,13 @@ Olle E. Johansson
               3.5. tcp_set_connection_lifetime([conid], lifetime)
               3.6. tcp_enable_closed_event([conid])
 
+        4. Event routes
+
+              4.1. tcp:closed
+              4.2. tcp:timeout
+              4.3. tcp:reset
+              4.4. Example
+
    List of Examples
 
    1.1. Set closed_event parameter
@@ -59,6 +66,13 @@ Chapter 1. Admin Guide
         3.5. tcp_set_connection_lifetime([conid], lifetime)
         3.6. tcp_enable_closed_event([conid])
 
+   4. Event routes
+
+        4.1. tcp:closed
+        4.2. tcp:timeout
+        4.3. tcp:reset
+        4.4. Example
+
 1. Overview
 
    This modules allows Kamailio to control the TCP connection options
@@ -67,7 +81,7 @@ Chapter 1. Admin Guide
 
    Note: the keepalive functions only work on systems with the
    HAVE_TCP_KEEPIDLE, HAVE_TCP_KEEPCNT and HAVE_TCP_KEEPINTVL macros
-   defined (currently only Linux).
+   defined (Linux, FreeBSD, DragonFly BSD, NetBSD).
 
 2. Parameters
 
@@ -75,7 +89,7 @@ Chapter 1. Admin Guide
 
 2.1. closed_event (int)
 
-   If set to 0 (gloabbly disabled), the "tcp:closed" event route will
+   If set to 0 (globally disabled), the "tcp:closed" event route will
    never be called on TCP disconnections.
 
    If set to 1 (globally enabled), the "tcp:closed" event route will
@@ -106,10 +120,10 @@ modparam("tcpops", "closed_event", 0)
    Check the state of a TCP or WS connection ID
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the Kamailio internal connection id (as in the
+     * conid (optional): the Kamailio internal connection id (as in the
        $conid pseudovariable).
 
-   Retuns values:
+   Return values:
 
    1: Connection is OK
 
@@ -128,10 +142,10 @@ modparam("tcpops", "closed_event", 0)
    Check the state of a TCP or WS connection ID
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the Kamailio internal connection id (as in the
+     * conid (optional): the Kamailio internal connection id (as in the
        $conid pseudovariable).
 
-   Retuns values:
+   Return values:
 
    1: Connection is OK
 
@@ -143,9 +157,9 @@ modparam("tcpops", "closed_event", 0)
 
    -2: Socket has reached EOF
 
-   -3: Socket error has occured. Connection will likely close.
+   -3: Socket error has occurred. Connection will likely close.
 
-   -4: Socket is in unknow bad state. Connection will likely close.
+   -4: Socket is in unknown bad state. Connection will likely close.
 
    Example 1.3. tcp_conid_state usage
 ...
@@ -159,16 +173,16 @@ modparam("tcpops", "closed_event", 0)
    Enables keepalive on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which TCP
+     * conid (optional): the Kamailio internal connection id on which TCP
        keepalive will be enabled. If no parameter is given, the keepalive
        mechanism will be enabled on the current message source connection.
      * idle (seconds): the time before the first keepalive packet is sent
        out.
-     * count: number of non-acked keepalive before reseting the
+     * count: number of non-acked keepalive before resetting the
        connection.
      * interval (seconds): time between two keepalive probes.
 
-   Retuns 1 on success, -1 on failure.
+   Returns 1 on success, -1 on failure.
 
    Example 1.4. tcp_keepalive_enable usage
 request_route {
@@ -194,12 +208,12 @@ onreply_route[foo] {
    Disables keepalive on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which TCP
+     * conid (optional): the Kamailio internal connection id on which TCP
        keepalive will be disabled. If no parameter is given, the keepalive
        mechanism will be disabled on the current message source
        connection.
 
-   Retuns 1 on success, -1 on failure.
+   Returns 1 on success, -1 on failure.
 
    Example 1.5. tcp_keepalive_disable usage
 request_route {
@@ -225,12 +239,12 @@ onreply_route[foo] {
    Sets the connection lifetime of a connection (TCP).
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id on which to
+     * conid (optional): the Kamailio internal connection id on which to
        set the new lifetime. If no parameter is given, it will be set on
        the current message source connection.
      * lifetime (seconds): the new connection lifetime.
 
-   Retuns 1 on success, -1 on failure.
+   Returns 1 on success, -1 on failure.
 
    Example 1.6. tcp_set_connection_lifetime usage
 ...
@@ -252,11 +266,11 @@ request_route {
    Explicitly enables the "tcp:closed" event route on a TCP connection.
 
    Meaning of the parameters is as follows:
-     * conid (optionnal): the kamailio internal connection id. If no
+     * conid (optionnal): the Kamailio internal connection id. If no
        parameter is given, it will be enabled on the current message
        source connection.
 
-   Retuns 1 on success, -1 on failure.
+   Returns 1 on success, -1 on failure.
 
    Example 1.7. tcp_set_closed_event usage
 ...
@@ -277,3 +291,47 @@ request_route {
 event_route[tcp:closed] {
         xlog("connection $conid was closed");
 }
+
+4. Event routes
+
+   4.1. tcp:closed
+   4.2. tcp:timeout
+   4.3. tcp:reset
+   4.4. Example
+
+   The 3 following routes are called when a socket is closed.
+
+   The corresponding $conid , $Ri , $Rp , $si , $sp and $proto variable
+   will be available in the event routes.
+
+   Whether these routes are always called, never, or on a per socket basis
+   is controlled by the closed_event parameter.
+
+4.1.  tcp:closed
+
+   Called for each "normal" TCP socket closure by the other side
+   (FIN,ACK).
+
+4.2.  tcp:timeout
+
+   Called for connection timeouts (unanswered keepalives).
+
+4.3.  tcp:reset
+
+   Called if the connection is reset by peer (RST).
+
+4.4.  Example
+
+...
+event_route[tcp:closed] {
+        xlog("L_INFO", "$proto connection closed ($conid)\n");
+}
+
+event_route[tcp:timeout] {
+        xlog("L_INFO", "$proto connection timed out ($conid)\n");
+}
+
+event_route[tcp:reset] {
+        xlog("L_INFO", "$proto connection reset by peer ($conid)\n");
+}
+...

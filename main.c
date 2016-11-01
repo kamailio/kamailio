@@ -19,7 +19,7 @@
  *
  */
 
-/** Kamailio core :: main file (init, daemonize, startup) 
+/** Kamailio core :: main file (init, daemonize, startup)
  * @file main.c
  * @ingroup core
  * Module: core
@@ -118,6 +118,7 @@
 #include "dst_blacklist.h"
 #endif
 #include "rand/fastrand.h" /* seed */
+#include "rand/kam_rand.h"
 
 #include "stats.h"
 #include "counters.h"
@@ -133,6 +134,7 @@
 #include "async_task.h"
 #include "dset.h"
 #include "timer_proc.h"
+#include "srapi.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -186,8 +188,9 @@ Options:\n\
 "    -S           disable sctp\n\
     -Q            Number of sctp child processes (default: equal to `-n')\n"
 #endif /* USE_SCTP */
-"    -V           Version number\n\
+"    -v (-V)      Version number\n\
     -h           This help message\n\
+    -I           Print more internal compile flags and options\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                   auto-probing procedure even if  OS allows\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
@@ -198,6 +201,7 @@ Options:\n\
     -g gid       Change gid \n\
     -P file      Create a pid file\n\
     -G file      Create a pgid file\n\
+    -Y dir       Runtime dir\n\
     -O nr        Script optimization level (debugging option)\n\
     -a mode      Auto aliases mode: enable with yes or on,\n\
                   disable with no or off\n\
@@ -409,6 +413,7 @@ int reply_to_via=0;
 #ifdef USE_MCAST
 int mcast_loopback = 0;
 int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
+char* mcast = 0;
 #endif /* USE_MCAST */
 
 int tos = IPTOS_LOWDELAY;
@@ -503,7 +508,7 @@ char* pgid_file = 0;
 
 
 /* memory manager */
-#define SR_MEMMNG_DEFAULT	"fm"
+#define SR_MEMMNG_DEFAULT	"qm"
 
 char *sr_memmng_pkg = NULL;
 char *sr_memmng_shm = NULL;
@@ -831,7 +836,20 @@ void sig_usr(int signo)
 					_exit(0);
 					break;
 			case SIGUSR1:
-				/* statistics, do nothing, printed only from the main proc */
+#ifdef PKG_MALLOC
+					cfg_update_no_cbs();
+					memlog=cfg_get(core, core_cfg, memlog);
+					if (memlog <= cfg_get(core, core_cfg, debug)){
+						if (cfg_get(core, core_cfg, mem_summary) & 1) {
+							LOG(memlog, "Memory status (pkg):\n");
+							pkg_status();
+						}
+						if (cfg_get(core, core_cfg, mem_summary) & 2) {
+							LOG(memlog, "Memory still-in-use summary (pkg):\n");
+							pkg_sums();
+						}
+					}
+#endif
 					break;
 				/* ignored*/
 			case SIGUSR2:
@@ -1836,12 +1854,13 @@ int main(int argc, char** argv)
 	debug_flag=0;
 	dont_fork_cnt=0;
 
+	sr_cfgenv_init();
 	daemon_status_init();
 
 	dprint_init_colors();
 
 	/* command line options */
-	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:"
+	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:"
 #ifdef STATS
 		"s:"
 #endif
@@ -2034,6 +2053,7 @@ int main(int argc, char** argv)
 			case 'Q':
 			case 'a':
 			case 's':
+			case 'Y':
 					break;
 			case '?':
 					if (isprint(optopt)) {
@@ -2101,10 +2121,10 @@ try_again:
 	}
 	seed+=getpid()+time(0);
 	LM_DBG("seeding PRNG with %u\n", seed);
-	srand(seed);
-	fastrand_seed(rand());
-	srandom(rand()+time(0));
-	LM_DBG("test random numbers %u %lu %u\n", rand(), random(), fastrand());
+	kam_srand(seed);
+	fastrand_seed(kam_rand());
+	srandom(kam_rand()+time(0));
+	LM_DBG("test random numbers %u %lu %u\n", kam_rand(), random(), fastrand());
 
 	/*register builtin  modules*/
 	register_builtin_modules();
@@ -2252,6 +2272,9 @@ try_again:
 					break;
 			case 'w':
 					working_dir=optarg;
+					break;
+			case 'Y':
+					runtime_dir=optarg;
 					break;
 			case 't':
 					chroot_dir=optarg;

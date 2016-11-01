@@ -712,6 +712,14 @@ static struct socket_info* new_sock2list(char* name, struct name_lst* addr_l,
 		si->workers = socket_workers;
 		socket_workers = 0;
 	}
+#ifdef USE_MCAST
+	if (mcast!=0) {
+		si->mcast.len=strlen(mcast);
+		si->mcast.s=(char*)pkg_malloc(si->mcast.len+1);
+		strcpy(si->mcast.s, mcast);
+		mcast = 0;
+	}
+#endif /* USE_MCAST */
 	sock_listadd(list, si);
 	return si;
 error:
@@ -1406,8 +1414,8 @@ static int fix_socket_list(struct socket_info **list, int* type_flags)
 	for (si=*list;si;){
 		next=si->next;
 		ai_lst=0;
-		if (add_interfaces(si->name.s, 0, si->port_no,
-							si->proto, &ai_lst)!=-1){
+		if (add_interfaces(si->name.s, auto_bind_ipv6 ? 0 : AF_INET,
+							si->port_no, si->proto, &ai_lst)!=-1){
 			if (si->flags & SI_IS_MHOMED){
 				if((new_si=new_sock2list_after(ai_lst->name.s, 0, si->port_no,
 											si->proto, si->useinfo.name.s,

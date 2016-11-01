@@ -25,15 +25,44 @@
 #include "dlist.h"
 #include "ucontact.h"
 #include "udomain.h"
+#include "dlist.h"
 
 static const char* ul_rpc_dump_doc[2] = 	{"Dump SCSCF user location tables", 0 };
 static const char* ul_rpc_showimpu_doc[2] = {"Dump SCSCF IMPU information", 0 };
+static const char* ul_rpc_snapshot_doc[2] = {"Dump snapshot of SCSCF usrloc to file", 0 };
 
 static unsigned int contact_buflen = 0;
 static str contact_buf = {0,0};
 
+static void ul_rpc_snapshot(rpc_t* rpc, void *ctx) {
+	str filename;
+	time_t current_time;
+	struct tm *t;
+	char str_time[100];
+	
+	if (rpc->scan(ctx, "S", &filename) < 1) {
+		rpc->fault(ctx, 400, "required filename to dump usrloc snapshot to");
+		return;
+    }
+	
+	
+	LM_DBG("Dumping S-CSCF usrloc snapshot to file: [%.s]\n", filename.len, filename.s);
+
+	current_time = time(NULL);
+	t = localtime(&current_time);
+	strftime(str_time, 100, "%Y-%m-%d %H:%M:%S", t);
+	FILE *f = fopen(filename.s, "a");
+	fprintf(f, "########################################################\n");
+	fprintf(f, "Dumping USRLOC for S-CSCF: %s\n", str_time);
+	fprintf(f, "########################################################\n\n");
+	print_all_udomains(f);
+	fflush(f);
+	fclose(f);
+}
+
 static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
     int i, j;
+	impu_contact_t *impucontact;
     str impu;
     int res;
     udomain_t* domain;
@@ -137,8 +166,10 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
 
     i = 0;
 
-    if (impu_rec->num_contacts > 0 && impu_rec->newcontacts[0]) {
-	while (i < MAX_CONTACTS_PER_IMPU && (contact = impu_rec->newcontacts[i++])) {
+	
+	impucontact = impu_rec->linked_contacts.head;
+	while (impucontact) {
+		contact = impucontact->contact;
 	    //contact is not null terminated so we need to create a null terminated version
 	    if (!contact_buf.s || (contact_buf.len <= contact->c.len)) {
 		if (contact_buf.s && contact_buf.len <= contact->c.len) {
@@ -170,9 +201,8 @@ static void ul_rpc_show_impu(rpc_t* rpc, void* ctx) {
 		unlock_udomain(domain, &impu);
 		return;
 	    }
-	    contact = contact->next;
+	    impucontact = impucontact->next;
 	}
-    }
 
     unlock_udomain(domain, &impu);
 
@@ -222,8 +252,9 @@ static void ul_rpc_dump(rpc_t* rpc, void* ctx)
 }
 
 rpc_export_t ul_rpc[] = {
-	{"ulscscf.status",   	ul_rpc_dump,   ul_rpc_dump_doc,   0},
-	{"ulscscf.showimpu",   	ul_rpc_show_impu,   ul_rpc_showimpu_doc,   0},
+	{"ulscscf.status",   	ul_rpc_dump,		ul_rpc_dump_doc,		0},
+	{"ulscscf.showimpu",   	ul_rpc_show_impu,   ul_rpc_showimpu_doc,	0},
+	{"ulscscf.snapshot",   	ul_rpc_snapshot,	ul_rpc_snapshot_doc,	0},
 	{0, 0, 0, 0}
 };
 

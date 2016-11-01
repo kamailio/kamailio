@@ -47,7 +47,7 @@ static const str_t *get_xcap_doc_dir(xcap_document_type_t doc_type)
 		case xcap_doc_resource_lists: return &resource_lists;
 		/* when new doc_type added, there will be a warning -> add it there */
 	}
-	WARN_LOG("unknow XCAP document type\n");
+	WARN_LOG("unknown XCAP document type\n");
 	return NULL;
 }
 
@@ -65,7 +65,7 @@ static const str_t *get_default_user_doc(xcap_document_type_t doc_type)
 		case xcap_doc_resource_lists: return &resource_lists;
 		/* when new doc_type added, there will be a warning -> add it there */
 	}
-	WARN_LOG("unknow XCAP document type\n");
+	WARN_LOG("unknown XCAP document type\n");
 	return NULL;
 }
 

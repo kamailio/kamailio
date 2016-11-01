@@ -50,6 +50,7 @@
 #include "../../sr_module.h"
 #include "../../timer.h"
 #include "../../dprint.h"
+#include "../../rpc_lookup.h"
 #include "../../error.h"
 #include "../../socket_info.h"
 #include "../../pvar.h"
@@ -73,6 +74,8 @@
 #include "cxdx_callbacks.h"
 #include "registrar_notify.h"
 #include "../cdp_avp/mod_export.h"
+#include "pvt_message.h"
+#include "reg_rpc.h"
 
 MODULE_VERSION
 
@@ -93,6 +96,7 @@ char *scscf_user_data_dtd = 0; /* Path to "CxDataType.dtd" */
 char *scscf_user_data_xsd = 0; /* Path to "CxDataType_Rel6.xsd" or "CxDataType_Rel7.xsd" */
 int scscf_support_wildcardPSI = 0;
 int store_data_on_dereg = 0; /**< should we store SAR data on de-registration  */
+unsigned int send_vs_callid_avp = 1;	/* flag to enable/disable proprietary use of a callid AVP. TODO: add call-id as per TS129.229 */
 
 int ue_unsubscribe_on_dereg = 0;  /*many UEs do not unsubscribe on de reg - therefore we should remove their subscription and not send a notify
 				   Some UEs do unsubscribe then everything is fine*/
@@ -110,6 +114,8 @@ str scscf_name_str = str_init("sip:scscf2.ims.smilecoms.com:6060"); /* default s
 str scscf_serviceroute_uri_str; /* Service Route URI */
 
 char *domain = "location";  ///TODO should be configurable mod param
+
+struct _pv_req_data _pv_treq;
 
 /*! \brief Module init & destroy function */
 static int mod_init(void);
@@ -166,6 +172,7 @@ int subscription_expires_range = 0;
 int contact_expires_buffer_percentage = 10;     /**< percentage we expiry for contact we will substrace from reg response to UE */
 
 int notification_list_size_threshold = 0; /**Threshold for size of notification list after which a warning is logged */
+int max_notification_list_size = 0;
 
 int notification_processes = 4; /*Number of processes that processes the notification queue*/
 
@@ -258,7 +265,6 @@ static param_export_t params[] = {
     {"store_profile_dereg", INT_PARAM, &store_data_on_dereg},
     {"cxdx_forced_peer", PARAM_STR, &cxdx_forced_peer},
     {"cxdx_dest_realm", PARAM_STR, &cxdx_dest_realm},
-
     {"subscription_default_expires", INT_PARAM, &subscription_default_expires},
     {"subscription_min_expires", INT_PARAM, &subscription_min_expires},
     {"subscription_max_expires", INT_PARAM, &subscription_max_expires},
@@ -267,8 +273,9 @@ static param_export_t params[] = {
     {"subscription_expires_range", INT_PARAM, &subscription_expires_range},
     {"user_data_always", INT_PARAM, &user_data_always},
     {"notification_list_size_threshold", INT_PARAM, &notification_list_size_threshold},
-    {"notification_processes", INT_PARAM, &notification_processes},
-
+	{"max_notification_list_size", INT_PARAM, &max_notification_list_size},
+	{"notification_processes", INT_PARAM, &notification_processes},
+	{"send_vs_callid_avp", INT_PARAM, &send_vs_callid_avp},
     {0, 0, 0}
 };
 
@@ -281,6 +288,7 @@ stat_export_t mod_stats[] = {
     {"accepted_regs", 0, &accepted_registrations},
     {"rejected_regs", 0, &rejected_registrations},
     {"sar_avg_response_time", STAT_IS_FUNC, (stat_var**) get_avg_sar_response_time},
+	{"notifies_in_q", STAT_IS_FUNC, (stat_var**) get_notification_list_size},
     {"sar_timeouts", 0, (stat_var**) & stat_sar_timeouts},
     {0, 0, 0}
 };
@@ -314,6 +322,11 @@ static int mod_init(void) {
     str s;
     bind_usrloc_t bind_usrloc;
     qvalue_t dq;
+
+	if (rpc_register_array(reg_rpc) != 0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
     
     callback_singleton = shm_malloc(sizeof (int));
     *callback_singleton = 0;
@@ -344,6 +357,8 @@ static int mod_init(void) {
                 scscf_name_str.s, scscf_name_str.len);
         scscf_serviceroute_uri_str.len += scscf_name_str.len;
     }
+    
+    pv_tmx_data_init();
 
     /* </build required strings> */
 
@@ -483,12 +498,12 @@ static int mod_init(void) {
 
     if (sock_hdr_name.s) {
         if (sock_hdr_name.len == 0 || sock_flag == -1) {
-            LM_WARN("empty sock_hdr_name or sock_flag no set -> reseting\n");
+            LM_WARN("empty sock_hdr_name or sock_flag no set -> resetting\n");
             sock_hdr_name.len = 0;
             sock_flag = -1;
         }
     } else if (sock_flag != -1) {
-        LM_WARN("sock_flag defined but no sock_hdr_name -> reseting flag\n");
+        LM_WARN("sock_flag defined but no sock_hdr_name -> resetting flag\n");
         sock_flag = -1;
     }
 

@@ -144,6 +144,25 @@ modparam("cdp", "workerq_length_threshold_percentage", 25)
 	</programlisting>
       </example>
     </section>
+ <section>
+      <title>debug_heavy (int)</title>
+
+      <para>Flag to enable a more verbose log, which tells you
+		more details about peers. This is disabled by default
+		because it brings to a log too much verbose in DBG mode
+		Can be enabled upon needs</para>
+
+      <para><emphasis> Default value is <quote>0</quote>. </emphasis></para>
+
+      <example>
+        <title>Set <varname>debug_heavy</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("cdp", "debug_heavy", 1)
+...
+	</programlisting>
+      </example>
+ </section>
   </section>
 
   <section>

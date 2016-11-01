@@ -29,6 +29,7 @@
 
 #include "../../str.h"
 #include "../../mem/mem.h"
+#include "../../endianness.h"
 
 #define ad_malloc	pkg_malloc
 #define ad_free		pkg_free
@@ -59,7 +60,7 @@
 
 /* message codes
  */
-#ifndef WORDS_BIGENDIAN
+#ifndef __IS_BIG_ENDIAN
 	#define AS_MSG_CODE      0x12010000
 	#define AC_MSG_CODE      0x0f010000
 	#define CE_MSG_CODE      0x01010000
@@ -69,7 +70,6 @@
 	#define ST_MSG_CODE      0x13010000
 	#define MASK_MSG_CODE    0xffffff00
 #else
-	#error BIG endian detected!!
 	#define AS_MSG_CODE      0x00000112
 	#define AC_MSG_CODE      0x0000010f
 	#define CE_MSG_CODE      0x00000101

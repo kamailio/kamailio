@@ -27,7 +27,7 @@ endif # verbose
 else
 
 ifeq (,$(main_makefile))
-# hack to automatically use config.mak in all the modules, without 
+# hack to automatically use config.mak in all the modules, without
 # changing the current module makefiles (which all include Makefile.defs):
 # if not called from the main makefile (module, lib or ut):
 # include config.mak, but if not present or incomplete (makefile_defs!=1)
@@ -89,6 +89,11 @@ endif
 WITHAS ?= 1
 # enable core hooks for SCTP
 SCTP ?= 1
+# enable raw sockets
+RAW_SOCKS ?= yes
+ifeq ($(RAW_SOCKS),1)
+	RAW_SOCKS = yes
+endif
 
 # what to install
 INSTALL_FLAVOUR=$(FLAVOUR)
@@ -97,7 +102,7 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 VERSION = 5
 PATCHLEVEL = 0
 SUBLEVEL =  0
-EXTRAVERSION = -dev3
+EXTRAVERSION = -dev7
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -150,7 +155,7 @@ OSREL_N:= $(shell echo $(OSREL) | sed -e 's/^[^0-9]*//' \
 
 
 # TLS support
-CORE_TLS ?= 
+CORE_TLS ?=
 # by default compile with tls hooks support (so that no ser recompile is
 #  needed before the tls module can be used)
 TLS_HOOKS=1
@@ -177,7 +182,7 @@ INSTALL ?= install
 TAR ?= tar
 endif
 
-INSTALL_TOUCH = touch          # used to create the file first (good to 
+INSTALL_TOUCH = touch          # used to create the file first (good to
                                #  make solaris install work)
 INSTALL_CFG = $(INSTALL) -m 644
 INSTALL_BIN = $(INSTALL) -m 755
@@ -221,8 +226,8 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 #	CC_VER:=$(word 1,$(CC)) $(shell $(CC) - --version|head -n 1|cut -d" " -f 3\
 #				|sed -e 's/^.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/'\
 #				 	 -e 's/^[^0-9].*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
-	# sed with POSIX.1 regex doesn't support |, + or ? 
-        # (darwin, solaris ...) => this complicated expression
+	# sed with POSIX.1 regex doesn't support |, + or ?
+	# (darwin, solaris ...) => this complicated expression
 	MKDEP=$(CC) -MM -MG
 	#transform gcc version into 2.9x or 3.0
 	CC_SHORTVER:=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
@@ -239,8 +244,10 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 					-e 's/4\.[5-9]\..*/4.5+/' \
 					-e 's/4\.[5-9]$$/4.5+/' \
 					-e 's/5\.[0-9]\..*/5.0+/' \
-					-e 's/5\.[0-9]$$/5.0+/')
-ifeq (,$(strip $(filter-out 3.0 3.4 4.x 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+					-e 's/5\.[0-9]$$/5.0+/' \
+					-e 's/6\.[0-9]\..*/6.0+/' \
+					-e 's/6\.[0-9]$$/6.0+/')
+ifeq (,$(strip $(filter-out 3.0 3.4 4.x 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 	# dependencies can be generated on-the-fly while compiling *.c
 	CC_MKDEP_OPTS=-MMD -MP
 endif # 3.0 <= $(CC_SHORTVER) <= 4.x
@@ -251,7 +258,8 @@ ifneq (, $(findstring Sun, $(CC_LONGVER)))
 	CC_SHORTVER:=$(shell echo "$(CC_LONGVER)"|head -n 1| \
 					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
 	CC_VER=$(CC) $(CC_SHORTVER)
-	MKDEP=$(CC) -xM1 
+	MKDEP=$(CC) -xM1
+	CC_MKDEP_OPTS=-xMMD
 endif
 
 ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
@@ -261,7 +269,7 @@ ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
 					sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g' )
 	CC_SHORTVER:=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
-	MKDEP=$(CC) -MM 
+	MKDEP=$(CC) -MM
 endif
 
 ifneq (, $(findstring clang, $(CC_LONGVER)))
@@ -271,7 +279,7 @@ ifneq (, $(findstring clang, $(CC_LONGVER)))
 	CC_SHORTVER:=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
 	CC_OPT=-O3
-	MKDEP=$(CC) -MM 
+	MKDEP=$(CC) -MM
 endif
 
 ifeq (,$(CC_NAME))
@@ -279,7 +287,7 @@ ifeq (,$(CC_NAME))
 	CC_NAME=$(CC)
 	CC_SHORTVER=unknown
 	CC_VER=unknown
-	MKDEP=gcc -MM 
+	MKDEP=gcc -MM
 $(warning	Unknown compiler $(CC)\; supported compilers: \
 			gcc, sun cc, intel icc )
 endif
@@ -518,8 +526,8 @@ data_target = $(prefix)/$(data_dir)
 #       an implemetation of the "two levels segregated fit" malloc algorithm
 # -DDL_MALLOC
 #		a malloc implementation based on Doug Lea's dl_malloc
-# -DSF_MALLOC 
-#		an experimental multi-CPU, pool based, multi-process safe version of 
+# -DSF_MALLOC
+#		an experimental multi-CPU, pool based, multi-process safe version of
 #		F_MALLOC. Should give better performance on machines with lots of CPUs
 #		after some tunning.
 # -DLL_MALLOC
@@ -535,7 +543,7 @@ data_target = $(prefix)/$(data_dir)
 # -DUSE_SYSV_SEM
 #		uses sys v sems for locking (slower & limited number)
 # -DUSE_PTHREAD_MUTEX
-#		uses pthread mutexes, faster than sys v or posix sems, but do not 
+#		uses pthread mutexes, faster than sys v or posix sems, but do not
 #		work on all systems inter-processes (e.g. linux)
 # -DUSE_POSIX_SEM
 #		uses posix semaphores for locking (faster than sys v)
@@ -547,7 +555,7 @@ data_target = $(prefix)/$(data_dir)
 #		try busy waiting for a while and if the lock is still held go to
 #		force reschedule (FAST_LOCK)
 # -DADAPTIVE_WAIT_LOOPS=number
-#		number of loops we busy wait, after "number" loops have elapsed we 
+#		number of loops we busy wait, after "number" loops have elapsed we
 #		force a reschedule (FAST_LOCK)
 # -DNOSMP
 #		don't use smp compliant locking (faster but won't work on SMP machines)
@@ -561,26 +569,26 @@ data_target = $(prefix)/$(data_dir)
 # -DDISABLE_NAGLE
 #		disable the tcp Nagle algorithm (lower delay)
 # -DUSE_TLS
-#		compiles in tls support, requires -DUSE_TCP. Note: this is only 
+#		compiles in tls support, requires -DUSE_TCP. Note: this is only
 #		generic support (parsing a.s.o.), it does not include the actual
 #		"tls engine". If you really want tls you need also either
 #		-DCORE_TLS and a tls/ subdir with the tls code or -DTLS_HOOKS and
 #		the tls module loaded.
 # -DCORE_TLS
-#		compiles tls in-core support. Requires -DUSE_TLS, conflicts 
+#		compiles tls in-core support. Requires -DUSE_TLS, conflicts
 #		-DTLS_HOOKS. Please use make CORE_TLS=1 instead  (it will set all the
 #		needed defines automatically and extra libraries needed for linking).
 # -DTLS_HOOKS
 #		compile tls module support (support for having the "tls engine" in a
 #		module). Requires -DUSE_TLS, conflicts -DCORE_TLS.
 #		Please use make TLS_HOOKS=1 (or TLS_HOOKS=0 to for disabling) instead
-#		of setting -DTLS_HOOKS (it will set all the needed defines 
+#		of setting -DTLS_HOOKS (it will set all the needed defines
 #		automatically)
 # -DHAVE_RESOLV_RES
 #		support for changing some of the resolver parameters present
 #		 (_res structure in <resolv.h>)
 # -DUSE_COMP
-#		compiles in comp=[sergz|sigcomp] support (parsing uri & via, 
+#		compiles in comp=[sergz|sigcomp] support (parsing uri & via,
 #		adding it to via, lumps a.s.o). WARNING: right now this option
 #		is useless since the compression code doesn't exist yet.
 # -DHONOR_MADDR
@@ -603,7 +611,7 @@ data_target = $(prefix)/$(data_dir)
 #		if enabled profiling will be enabled for child processes
 #		Don't forget to set PROFILE (see below)
 # -DNO_SIG_DEBUG
-#        turns off debugging messages in signal handlers (which might be 
+#        turns off debugging messages in signal handlers (which might be
 #         unsafe)
 # -DUSE_NAPTR
 #		 turns on naptr support (but must be also enabled from the config)
@@ -667,7 +675,7 @@ C_DEFS= $(extra_defs) \
 				# you may also want to set -DPROFILING
 
 # WARNING: do not add mode=debug or mode=release anymore in the Makefile,
-# use make mode=debug all instead. Anyway no by default ser is  compiled w/ 
+# use make mode=debug all instead. Anyway no by default ser is  compiled w/
 # debugging symbols in all cases (-g). --andrei
 
 # memory managers and related debug mode
@@ -737,7 +745,7 @@ ifeq ($(CC_NAME), gcc)
 						else echo "as" ; \
 						fi\
 						fi)
-							
+
 		LDTYPE:=$(shell if $(LDPATH) -V 1>/dev/null  2>/dev/null; then \
 							if $(LDPATH) -V 2>&1|grep GNU >/dev/null; \
 							then echo gnu; \
@@ -826,7 +834,7 @@ ifeq ($(ARCH), alpha)
 endif
 
 ifeq ($(use_fast_lock), yes)
-	C_DEFS+= -DFAST_LOCK -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 
+	C_DEFS+= -DFAST_LOCK -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024
 	found_lock_method=yes
 endif
 
@@ -837,13 +845,13 @@ C_INCLUDES=
 ifeq ($(mode), release)
 	#if i386
 ifeq	($(ARCH), i386)
-		# if gcc 
-ifeq		($(CC_NAME), gcc) 
+		# if gcc
+ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g $(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
-			#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,athlon64)
 					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
@@ -858,7 +866,7 @@ $(call				set_if_empty,CPUTYPE,athlon64)
 					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
-							-mtune=$(CPUTYPE) 
+							-mtune=$(CPUTYPE)
 					LDFLAGS+=-m32
 else
 			#if gcc 3.4+
@@ -866,7 +874,7 @@ ifeq			($(CC_SHORTVER), 3.4)
 $(call				set_if_empty,CPUTYPE,athlon)
 					CFLAGS+=-m32 -minline-all-stringops \
 							-falign-loops \
-							-mtune=$(CPUTYPE) 
+							-mtune=$(CPUTYPE)
 					LDFLAGS+=-m32
 else
 			#if gcc 3.0+
@@ -880,7 +888,7 @@ else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
 					for better results)
-					
+
 					CFLAGS+=-m486 \
 							-malign-loops=4
 else
@@ -892,7 +900,7 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), clang)
@@ -904,7 +912,7 @@ else			# CC_NAME, clang
 ifeq		($(CC_NAME), icc)
 			C_DEFS+=-DCC_GCC_LIKE_ASM
 			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
-					 -tpp6 -xK  #-openmp  #optimize for PIII 
+					 -tpp6 -xK  #-openmp  #optimize for PIII
 				# -prefetch doesn't seem to work
 				#( ty to inline acroos files, unroll loops,prefetch,
 				# optimize for PIII, use PIII instructions & vect.,
@@ -919,14 +927,14 @@ endif	#ARCH, i386
 
 #x86_64
 ifeq	($(ARCH), x86_64)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-g $(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.5+
 			# don't add '-mtune=$(CPUTYPE)' - gcc failure
-ifeq			($(CC_SHORTVER),$(filter $(CC_SHORTVER),4.5+ 5.0+))
+ifeq			($(CC_SHORTVER),$(filter $(CC_SHORTVER),4.5+ 5.0+ 6.0+))
 $(call				set_if_empty,CPUTYPE,opteron)
 					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops \
@@ -950,21 +958,21 @@ $(call				set_if_empty,CPUTYPE,opteron)
 					CFLAGS+=-m64 -minline-all-stringops \
 							-falign-loops \
 							-ftree-vectorize \
-							-mtune=$(CPUTYPE) 
+							-mtune=$(CPUTYPE)
 					LDFLAGS+=-m64
 else
 			#if gcc 3.4
 ifeq			($(CC_SHORTVER), 3.4)
 $(call				set_if_empty,CPUTYPE,athlon64)
 					CFLAGS+=-m64 -minline-all-stringops \
-							-falign-loops 
+							-falign-loops
 					LDFLAGS+=-m64
 else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 $(call				set_if_empty,CPUTYPE,athlon64)
 					CFLAGS+=-minline-all-stringops \
-							-falign-loops 
+							-falign-loops
 							#-mcpu=$(CPUTYPE) \ # not working on all x86_64 gccs
 							#-mcpu=athlon
 					#-m64 on x86_64/x86 works starting with gcc 3.2
@@ -972,7 +980,7 @@ else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
 					for better results)
-					
+
 					CFLAGS+=-m486 \
 							-malign-loops=4
 else
@@ -985,20 +993,20 @@ endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
 endif			# CC_SHORTVER, 4.2+
-endif			# CC_SHORTVER, 5.0+, 4.5+
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+
 
 else		# CC_NAME, gcc
 ifeq            ($(CC_NAME), clang)
 $(call                          set_if_empty,CPUTYPE,opteron)
 					C_DEFS+=-DCC_GCC_LIKE_ASM
                                         CFLAGS+=-g -m64 \
-                                                $(CC_OPT)        
+                                                $(CC_OPT)
                                         LDFLAGS+=-m64
 else      	# CC_NAME, clang
 ifeq		($(CC_NAME), icc)
 			C_DEFS+=-DCC_GCC_LIKE_ASM
 			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
-					 -tpp6 -xK  #-openmp  #optimize for PIII 
+					 -tpp6 -xK  #-openmp  #optimize for PIII
 				# -prefetch doesn't seem to work
 				#( ty to inline acroos files, unroll loops,prefetch,
 				# optimize for PIII, use PIII instructions & vect.,
@@ -1019,9 +1027,9 @@ ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-g $(CC_OPT) -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
-					#-Wmissing-prototypes 
-				#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+					#-Wmissing-prototypes
+				#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,ultrasparc)
 					#use 32bit for now
 					CFLAGS+=-m64 -mcpu=ultrasparc  \
@@ -1067,33 +1075,36 @@ $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
 ifneq				($(OS), netbsd)
 						# on netbsd/sparc64,  gcc 2.95.3 does not compile
 						# ser with -mv8
-						CFLAGS+= -mv9 
+						CFLAGS+= -mv9
 						# -m64/-m32 on sparc works starting with gcc 3.0
 endif
 ifeq					($(ASTYPE), solaris)
 							CFLAGS+= -Wa,-xarch=v8plus
-endif					
+endif
 else			#CC_SHORTVER, 2.9x
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-					
-					CFLAGS+= -mv9 
+
+					CFLAGS+= -mv9
 ifeq					($(ASTYPE), solaris)
 							CFLAGS+= -Wa,-xarch=v8plus
-endif					
-	
+endif
+
 endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 endif			#CC_SHORTVER, 3.4
 endif			#CC_SHORTVER, 4.x
-endif			#CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			#CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
+			C_DEFS+=-DCC_GCC_LIKE_ASM
 			C_DEFS+=-DSPARC64_MODE
-			CFLAGS+= -m64 -g -xO5 -fast -native -xarch=v9 -xCC \
+			CFLAGS+= -m64 -g -xO3 -xtarget=native -xmemalign=8i \
+					-fma=fused -fns=yes \
 					-xc99 # C99 support
+			LDFLAGS+=-m64
 			# -Dinline="" # add this if cc < 5.3 (define inline as null)
 else
 				#other compilers
@@ -1110,9 +1121,9 @@ ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-g $(CC_OPT) -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
-					#-Wmissing-prototypes 
+					#-Wmissing-prototypes
 				#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,v8)
 					#use 32bit for now
 					CFLAGS+= -mtune=$(CPUTYPE) \
@@ -1148,16 +1159,18 @@ else			#CC_SHORTVER, 2.9x
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-					
+
 endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
 endif			#CC_SHORTVER, 3.4
 endif			#CC_SHORTVER, 4.x
-endif			#CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			#CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
-			CFLAGS+= -g -xO5 -fast -native -xCC \
+			C_DEFS+=-DCC_GCC_LIKE_ASM
+			CFLAGS+= -g -xO3 -xtarget=native -xmemalign=4i \
+					-fma=fused -fns=yes \
 					-xc99 # C99 support
 			# -Dinline="" # add this if cc < 5.3 (define inline as null)
 else
@@ -1169,20 +1182,20 @@ endif	#ARCH, sparc
 
 	#if ipaq/netwinder
 ifeq	($(ARCH), arm)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-marm -march=armv5t $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 					CFLAGS+= -ftree-vectorize -fno-strict-overflow
-					# not supported on arm: -minline-all-stringops 
+					# not supported on arm: -minline-all-stringops
 else
 			#if gcc 4.x+
 ifeq			($(CC_SHORTVER), 4.x)
 					CFLAGS+= -ftree-vectorize
-					# not supported on arm: -minline-all-stringops 
+					# not supported on arm: -minline-all-stringops
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
@@ -1190,41 +1203,41 @@ ifeq			($(CC_SHORTVER), 3.4)
 else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
-					CFLAGS+= 
+					CFLAGS+=
 							#-mcpu=athlon
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
 					for better results)
-					
+
 					CFLAGS+=
 else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-	
+
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
-endif	#ARCH, arm 
+endif	#ARCH, arm
 
-	#if armv6 cpu 
+	#if armv6 cpu
 ifeq	($(ARCH), arm6)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=-march=armv6 $(CC_OPT) -funroll-loops -fsigned-char \
 						$(PROFILE)
-			#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 					CFLAGS+= -ftree-vectorize -fno-strict-overflow
 else
 			#if gcc 4.x+
@@ -1237,25 +1250,25 @@ ifeq			($(CC_SHORTVER), 3.4)
 else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
-					CFLAGS+= 
+					CFLAGS+=
 							#-mcpu=athlon
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
 					for better results)
-					
+
 					CFLAGS+=
 else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-	
+
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
@@ -1264,13 +1277,13 @@ endif	#ARCH, arm6
 
 	#if  mips (R3000)
 ifeq	($(ARCH), mips)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=$(CC_OPT) -funroll-loops  $(PROFILE)
-			#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+			#if gcc 6.0, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 					CFLAGS+=-mfp32 -march=r3000 \
 							-ftree-vectorize -fno-strict-overflow
 			# not supported on mips: -minline-all-stringops
@@ -1292,19 +1305,19 @@ else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
 					for better results)
-					
+
 					CFLAGS+=-march=r3000
 else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-	
+
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
@@ -1313,13 +1326,13 @@ endif	#ARCH, mips
 
 	#if  >=mips2 (R4000, R5000, R6000 ....)
 ifeq	($(ARCH), mips2)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips2 $(CC_OPT) -funroll-loops $(PROFILE)
-			#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 					CFLAGS+=-ftree-vectorize -fno-strict-overflow
 			# not supported on mips: -minline-all-stringops
 else
@@ -1344,13 +1357,13 @@ else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-	
+
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
@@ -1359,13 +1372,13 @@ endif	#ARCH, mips2
 
 #if  >=mips64
 ifeq	($(ARCH), mips64)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= -mips64 $(CC_OPT) -funroll-loops $(PROFILE)
-			#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 					CFLAGS+=-ftree-vectorize -fno-strict-overflow
 			# not supported on mips: -minline-all-stringops
 
@@ -1391,13 +1404,13 @@ else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-	
+
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
@@ -1406,19 +1419,19 @@ endif	#ARCH, mips64
 
 #if  alpha
 ifeq	($(ARCH), alpha)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 5.0+, 4.5 or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 					CFLAGS+= -fno-strict-overflow
 					# not supported: -minline-all-stringops
 else
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+= 
+					CFLAGS+=
 					# not supported: -minline-all-stringops
 else
 			#if gcc 3.4+
@@ -1437,28 +1450,28 @@ else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-	
+
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
-endif	#ARCH, alpha 
+endif	#ARCH, alpha
 
 #if  ppc
 ifeq	($(ARCH), ppc)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS=
-			#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,powerpc)
 ifeq 				($(NOALTIVEC),)
 						CFLAGS += $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
@@ -1494,28 +1507,28 @@ else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-	
+
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
-endif	#ARCH, ppc 
+endif	#ARCH, ppc
 
 #if  ppc64
 ifeq	($(ARCH), ppc64)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
 				CFLAGS= $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
-			#if gcc 5.0+, 4.5+ or 4.2+
-ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+,$(CC_SHORTVER))))
+			#if gcc 6.0+, 5.0+, 4.5+ or 4.2+
+ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,powerpc64)
 					CFLAGS+=-ftree-vectorize \
 							-fno-strict-overflow \
@@ -1543,18 +1556,18 @@ else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-	
+
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 endif			# CC_SHORTVER, 3.4
 endif			# CC_SHORTVER, 4.x
-endif			# CC_SHORTVER, 5.0+, 4.5+ or 4.2+
-	
+endif			# CC_SHORTVER, 6.0+, 5.0+, 4.5+ or 4.2+
+
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
-endif	#ARCH, ppc 
+endif	#ARCH, ppc
 
 CFLAGS+= $(CC_EXTRA_OPTS)
 
@@ -1568,9 +1581,9 @@ ifeq		($(LDTYPE), solaris)
 		LIB_LDFLAGS:=-G $(LDFLAGS)
 		LIB_SONAME=-Wl,-h,
 		LD_RPATH=-Wl,-R,
-else		
+else
 		#gcc and maybe others, => gnu ld
-		LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+		LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
 		MOD_LDFLAGS:=-shared $(LDFLAGS)
 		LIB_LDFLAGS:=-shared $(LDFLAGS)
 		LIB_SONAME=-Wl,-soname,
@@ -1579,7 +1592,7 @@ endif
 endif
 ifeq	($(CC_NAME), icc)
 	#gcc and maybe others
-	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
 	MOD_LDFLAGS:=-shared $(LDFLAGS)
 	LIB_LDFLAGS:=-shared $(LDFLAGS)
 	LIB_SONAME=-Wl,-soname,
@@ -1587,11 +1600,11 @@ ifeq	($(CC_NAME), icc)
 endif
 ifeq	($(CC_NAME), suncc)
 	# -dy?
-	LDFLAGS+=-xO5 $(PROFILE)
+	LDFLAGS+=-xO3 $(PROFILE)
 	MOD_LDFLAGS:=-G $(LDFLAGS)
 	LIB_LDFLAGS:=-G $(LDFLAGS)
-	LIB_SONAME="-h "
-	LD_RPATH=-"-R "
+	LIB_SONAME=-Wl,-h,
+	LD_RPATH=-Wl,-R,
 endif
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
@@ -1599,10 +1612,10 @@ endif
 
 ifeq ($(CC_NAME), clang)
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
-        MOD_LDFLAGS:=-shared $(LDFLAGS)
-        LIB_LDFLAGS:=-shared $(LDFLAGS)
-        LIB_SONAME=-Wl,-soname,
-        LD_RPATH=-Wl,-rpath,
+	MOD_LDFLAGS:=-shared $(LDFLAGS)
+	LIB_LDFLAGS:=-shared $(LDFLAGS)
+	LIB_SONAME=-Wl,-soname,
+	LD_RPATH=-Wl,-rpath,
 endif
 
 LDFLAGS+= $(LD_EXTRA_OPTS)
@@ -1648,8 +1661,8 @@ ifeq	($(CC_NAME), suncc)
 		LDFLAGS+=-g $(PROFILE)
 		MOD_LDFLAGS:=-G $(LDFLAGS)
 		LIB_LDFLAGS:=-G $(LDFLAGS)
-		LIB_SONAME="-h "
-		LD_RPATH=-"-R "
+		LIB_SONAME=-Wl,-h,
+		LD_RPATH=-Wl,-R,
 endif
 
 endif #mode=release
@@ -1678,9 +1691,8 @@ MOD_CFLAGS=-Kpic $(CFLAGS)
 LIB_CFLAGS=-Kpic $(CFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
-# FIMXE: use -KPIC instead -xcode ?
-MOD_CFLAGS=-xcode=pic32  $(CFLAGS)
-LIB_CFLAGS=-xcode=pic32  $(CFLAGS)
+MOD_CFLAGS=-xcode=pic32 $(CFLAGS)
+LIB_CFLAGS=-xcode=pic32 $(CFLAGS)
 endif
 ifeq    ($(CC_NAME), clang)
 MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
@@ -1710,7 +1722,10 @@ ifeq ($(OS), linux)
 	use_futex= yes
 	C_DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
 			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
-			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER -DUSE_RAW_SOCKS
+			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER
+	ifneq ($(RAW_SOCKS), yes)
+		C_DEFS+= -DUSE_RAW_SOCKS
+	endif
 	ifneq ($(found_lock_method), yes)
 		#C_DEFS+= -DUSE_POSIX_SEM
 		C_DEFS+=-DUSE_PTHREAD_MUTEX
@@ -1725,8 +1740,8 @@ ifeq ($(OS), linux)
 			LIBS+=-lpthread
 		endif
 	endif
-        # check for >= 2.5.44
 
+	# check for >= 2.5.44
 	ifeq ($(shell [ $(OSREL_N) -ge 2005044 ] && echo has_epoll), has_epoll)
 		ifeq ($(NO_EPOLL),)
 			C_DEFS+=-DHAVE_EPOLL
@@ -1757,7 +1772,10 @@ ifeq ($(OS), gnu_kfreebsd)
 	use_futex= yes
 	C_DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
 			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
-			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER -DUSE_RAW_SOCKS
+			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER
+	ifneq ($(RAW_SOCKS), yes)
+		C_DEFS+= -DUSE_RAW_SOCKS
+	endif
 	ifneq ($(found_lock_method), yes)
 		#C_DEFS+= -DUSE_POSIX_SEM
 		C_DEFS+=-DUSE_PTHREAD_MUTEX
@@ -1821,11 +1839,11 @@ ifeq  ($(OS), solaris)
 	YACC=yacc
 
 ifeq ($(CC_NAME), suncc)
-	LIBS= -lfast -ldl -lresolv
+	LIBS= -ldl -lresolv
 endif
 	OLD_SOLARIS= $(shell echo "$(OSREL)" | \
 				sed -e 's/^5\.[0-6][^0-9]*$$/yes/' )
-	LIBS+= -L$(LOCALBASE)/lib -lxnet -lsocket -lnsl 
+	LIBS+= -L$(LOCALBASE)/lib -lxnet -lsocket -lnsl -lmd5
 ifeq	($(OLD_SOLARIS), yes)
 		LIBS+=-lposix4
 else
@@ -1838,7 +1856,10 @@ ifeq ($(OS), freebsd)
 	C_DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
 		-DHAVE_SCHED_YIELD -DHAVE_MSGHDR_MSG_CONTROL \
 		-DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM \
-		-DHAVE_NETINET_IN_SYSTM -DUSE_RAW_SOCKS
+		-DHAVE_NETINET_IN_SYSTM
+	ifneq ($(RAW_SOCKS), yes)
+		C_DEFS+= -DUSE_RAW_SOCKS
+	endif
 	ifneq ($(found_lock_method), yes)
 		C_DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
@@ -1904,7 +1925,7 @@ ifeq ($(OS), openbsd)
 	# unfortunately pthread is needed for sigwait
 	LIBS= -lpthread
 endif   # if opensd
-	
+
 ifeq ($(OS), netbsd)
 	C_DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 \
 		-DHAVE_MSGHDR_MSG_CONTROL -DHAVE_CONNECT_ECONNRESET_BUG -DHAVE_TIMEGM
@@ -1925,7 +1946,7 @@ ifeq ($(OS), netbsd)
 		C_DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
-	LIBS=  
+	LIBS=
 endif
 
 # OS X support, same as freebsd
@@ -1952,7 +1973,7 @@ ifeq ($(OS), darwin)
 		C_DEFS+=-DHAVE_SELECT
 	endif
 	LDFLAGS=        # darwin doesn't like -O2 or -E
-	# the modules uses symbols from ser => either 
+	# the modules uses symbols from ser => either
 	# -flat_namespace -undefined_suppress or -bundle_loader ../../$(MAIN_NAME)
 	MOD_LDFLAGS:= -bundle -flat_namespace -undefined suppress
 	# for libs using symbols from ser (e.g srdb2, kcore a.s.o) we
@@ -2016,7 +2037,7 @@ endif  # ifeq ($(makefile_defs), 1)
 
 # if incomplete or missing config.mak, or already exported vars, don't
 # try to export/re-export
-ifeq ($(makefile_defs),1) 
+ifeq ($(makefile_defs),1)
 ifneq ($(exported_vars),1)
 
 

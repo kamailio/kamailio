@@ -35,14 +35,19 @@
 #include "../../ut.h"
 #include "../../hashes.h"
 #include "../../lib/kmi/mi.h"
+#include "../../lib/kcore/statistics.h"
+#include "../../rand/kam_rand.h"
 #include "dlg_timer.h"
 #include "dlg_var.h"
 #include "dlg_hash.h"
 #include "dlg_profile.h"
 #include "dlg_req_within.h"
 #include "dlg_db_handler.h"
+#include "dlg_dmq.h"
 
 extern int dlg_ka_interval;
+
+extern int dlg_enable_dmq;
 
 /*! global dialog table */
 struct dlg_table *d_table = 0;
@@ -297,7 +302,7 @@ int init_dlg_table(unsigned int size)
 			LM_ERR("failed to init lock for slot: %d\n", i);
 			goto error1;
 		}
-		d_table->entries[i].next_id = rand() % (3*size);
+		d_table->entries[i].next_id = kam_rand() % (3*size);
 	}
 
 	return 0;
@@ -345,6 +350,8 @@ void destroy_dlg(struct dlg_cell *dlg)
 
 	run_dlg_callbacks( DLGCB_DESTROY , dlg, NULL, NULL, DLG_DIR_NONE, 0);
 
+	if (dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) )
+		dlg_dmq_replicate_action(DLG_DMQ_RM, dlg, 0, 0);
 
 	/* delete the dialog from DB*/
 	if (dlg_db_mode)
@@ -408,6 +415,7 @@ void destroy_dlg_table(void)
 		while (dlg) {
 			l_dlg = dlg;
 			dlg = dlg->next;
+			l_dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
 			destroy_dlg(l_dlg);
 		}
 		lock_destroy(&d_table->entries[i].lock);
@@ -894,10 +902,12 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode)
  * \param dlg dialog
  * \param cnt increment for the reference counter
  */
-void dlg_ref(dlg_cell_t *dlg, unsigned int cnt)
+void dlg_ref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
+		int fline)
 {
 	dlg_entry_t *d_entry;
 
+	LM_DBG("ref op on %p with %d from %s:%d\n", dlg, cnt, fname, fline);
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
 	dlg_lock( d_table, d_entry);
@@ -912,10 +922,12 @@ void dlg_ref(dlg_cell_t *dlg, unsigned int cnt)
  * \param dlg dialog
  * \param cnt decrement for the reference counter
  */
-void dlg_unref(dlg_cell_t *dlg, unsigned int cnt)
+void dlg_unref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
+		int fline)
 {
 	dlg_entry_t *d_entry;
 
+	LM_DBG("unref op on %p with %d from %s:%d\n", dlg, cnt, fname, fline);
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
 	dlg_lock( d_table, d_entry);

@@ -11,6 +11,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../lib/kmi/mi.h"
+#include "../../rand/kam_rand.h"
 #include "dlg_timer.h"
 #include "dlg_var.h"
 #include "dlg_hash.h"
@@ -130,7 +131,7 @@ int init_dlg_table(unsigned int size) {
 
     for (i = 0; i < size; i++) {
         memset(&(d_table->entries[i]), 0, sizeof (struct dlg_entry));
-        d_table->entries[i].next_id = rand() % (3*size);
+        d_table->entries[i].next_id = kam_rand() % (3*size);
         d_table->entries[i].lock_idx = i % d_table->locks_no;
     }
 
@@ -187,7 +188,7 @@ static void destroy_entry_out(struct dlg_entry_out *d_entry_out) {
  * \brief Destroy a dialog, run callbacks and free memory
  * \param dlg destroyed dialog
  */
-inline void destroy_dlg(struct dlg_cell *dlg) {
+void destroy_dlg(struct dlg_cell *dlg) {
     int ret = 0;
     struct dlg_var *var;
 
@@ -671,7 +672,7 @@ void dlg_remove_dlg_out(struct dlg_cell_out *dlg_out_do_not_remove, struct dlg_c
             LM_DBG("This is the dlg_out not to be removed!\n");
         } else {
             //check if this the last entry in the entry_table
-            if ((d_entry_out->first == d_entry_out->last)) {
+            if (d_entry_out->first == d_entry_out->last) {
                 //we shouldnt ever get here
                 LM_DBG("This is the last dlg_out_entry in the dlg_entries_out\n");
                 //this is the last then set entry_out-> first and entry_out->last to zero

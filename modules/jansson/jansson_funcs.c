@@ -163,7 +163,7 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 
 	}else if(STR_EQ_STATIC(type_s, "integer")
 				|| STR_EQ_STATIC(type_s, "int")) {
-		int i = strtol(value_s.s, &endptr, 10);
+		long long i = strtoll(value_s.s, &endptr, 10);
 		if(*endptr != '\0') {
 			ERR("parsing int failed for \"%s\"\n", value_s.s);
 			goto fail;

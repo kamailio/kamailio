@@ -116,6 +116,9 @@ struct socket_info{
 	int workers; /* number of worker processes for this socket */
 	int workers_tcpidx; /* index of workers in tcp children array */
 	struct advertise_info useinfo; /* details to be used in SIP msg */
+#ifdef USE_MCAST
+	str mcast; /* name of interface that should join multicast group*/
+#endif /* USE_MCAST */
 };
 
 
@@ -658,7 +661,6 @@ static inline int ip_addr2sbuf(struct ip_addr* ip, char* buff, int len)
 			LM_CRIT("unknown address family %d\n", ip->af);
 			return 0;
 	}
-	return 0;
 }
 
 

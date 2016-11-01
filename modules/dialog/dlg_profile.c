@@ -513,6 +513,7 @@ static void link_dlg_profile(struct dlg_profile_link *linker, struct dlg_cell *d
 		linker->hash_linker.dlg = dlg;
 	}
 
+	atomic_or_int((volatile int*)&dlg->dflags, DLG_FLAG_CHANGED_PROF);
 	link_profile(linker, &dlg->callid);
 }
 
@@ -725,6 +726,7 @@ int unset_dlg_profile(sip_msg_t *msg, str *value,
 			 */
 		}
 	}
+	atomic_or_int((volatile int*)&dlg->dflags, DLG_FLAG_CHANGED_PROF);
 	dlg_unlock( d_table, d_entry);
 	dlg_release(dlg);
 	return -1;
@@ -1278,9 +1280,9 @@ int dlg_json_to_profiles(dlg_cell_t *dlg, srjson_doc_t *jdoc)
 					puid.s = jt->valuestring;
 					puid.len = strlen(puid.s);
 				} else if(strcmp(jt->string, "expires")==0) {
-					expires = (time_t)jt->valueint;
+					expires = (time_t)SRJSON_GET_ULONG(jt);
 				} else if(strcmp(jt->string, "flags")==0) {
-					flags = jt->valueint;
+					flags = SRJSON_GET_UINT(jt);
 				}
 			}
 			if(name.s==NULL)

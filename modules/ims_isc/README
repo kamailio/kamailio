@@ -36,6 +36,7 @@ Richard Good
               3.2. expires_grace (integer)
               3.3. isc_fr_timeout (integer)
               3.4. isc_fr_inv_timeout (integer)
+              3.5. add_p_served_user (integer)
 
         4. Functions
 
@@ -49,9 +50,10 @@ Richard Good
    1.2. expires_grace parameter usage
    1.3. isc_fr_timeout parameter usage
    1.4. isc_fr_inv_timeout parameter usage
-   1.5. isc_match_filter_reg usage
-   1.6. isc_match_filter usage
-   1.7. isc_from_as usage
+   1.5. add_p_served_user parameter usage
+   1.6. isc_match_filter_reg usage
+   1.7. isc_match_filter usage
+   1.8. isc_from_as usage
 
 Chapter 1. Admin Guide
 
@@ -69,6 +71,7 @@ Chapter 1. Admin Guide
         3.2. expires_grace (integer)
         3.3. isc_fr_timeout (integer)
         3.4. isc_fr_inv_timeout (integer)
+        3.5. add_p_served_user (integer)
 
    4. Functions
 
@@ -102,6 +105,7 @@ Chapter 1. Admin Guide
    3.2. expires_grace (integer)
    3.3. isc_fr_timeout (integer)
    3.4. isc_fr_inv_timeout (integer)
+   3.5. add_p_served_user (integer)
 
 3.1. my_uri (string)
 
@@ -154,6 +158,19 @@ modparam("ims_isc", "isc_fr_timeout", 5000)
 modparam("ims_isc", "isc_fr_inv_timeout", 20000)
 ...
 
+3.5. add_p_served_user (integer)
+
+   This boolean indicates if a P-Served-User should be added on the ISC
+   interface, according to RFC 5502.
+
+   Default value is 0 (false)
+
+   Example 1.5. add_p_served_user parameter usage
+...
+modparam("ims_isc", "add_p_served_user", 1)
+# p-served user header will be enabled
+...
+
 4. Functions
 
    4.1. isc_match_filter_reg(reg_state,domain)
@@ -176,7 +193,7 @@ modparam("ims_isc", "isc_fr_inv_timeout", 20000)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.5. isc_match_filter_reg usage
+   Example 1.6. isc_match_filter_reg usage
 ...
 isc_match_filter_reg("1","location");
 ...
@@ -196,7 +213,7 @@ isc_match_filter_reg("1","location");
 
    This function can be used from REQUEST_ROUTE | FAILURE_ROUTE.
 
-   Example 1.6. isc_match_filter usage
+   Example 1.7. isc_match_filter usage
 ...
 isc_match_filter("orig","location");
 ...
@@ -214,7 +231,7 @@ isc_match_filter("orig","location");
 
    This function can be used from REQUEST_ROUTE | FAILURE_ROUTE.
 
-   Example 1.7. isc_from_as usage
+   Example 1.8. isc_from_as usage
 ...
 if (!isc_from_as("orig")) {
     remove_hf("P-Asserted-Identity");

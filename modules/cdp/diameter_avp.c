@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <stdio.h>
@@ -111,7 +109,7 @@ inline void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
 
 
 
-/** 
+/**
  * This function creates an AVP and returns a pointer to it.
  * @param code - the code of the new AVP
  * @param flags - the flags to set
@@ -123,19 +121,19 @@ inline void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
 AAA_AVP*  AAACreateAVP(
-	AAA_AVPCode code,
-	AAA_AVPFlag flags,
-	AAAVendorId vendorId,
-	char   *data,
-	size_t length,
-	AVPDataStatus data_status)
+		AAA_AVPCode code,
+		AAA_AVPFlag flags,
+		AAAVendorId vendorId,
+		char   *data,
+		size_t length,
+		AVPDataStatus data_status)
 {
 	AAA_AVP *avp;
 
 	/* first check the params */
 	if( data==0 || length==0) {
 		LM_ERR("AAACreateAVP: NULL value received for"
-			" param data/length (AVP Code %d, VendorId %d)!!\n",code,vendorId);
+				" param data/length (AVP Code %d, VendorId %d)!!\n",code,vendorId);
 		return 0;
 	}
 
@@ -184,15 +182,15 @@ error:
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
 AAAReturnCode  AAAAddAVPToMessage(
-	AAAMessage *msg,
-	AAA_AVP *avp,
-	AAA_AVP *position)
+		AAAMessage *msg,
+		AAA_AVP *avp,
+		AAA_AVP *position)
 {
 	AAA_AVP *avp_t;
 
 	if ( !msg || !avp ) {
 		LM_ERR("AAAAddAVPToMessage: param msg or avp passed null"
-			" or *avpList=NULL and position!=NULL !!\n");
+				" or *avpList=NULL and position!=NULL !!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -210,7 +208,7 @@ AAAReturnCode  AAAAddAVPToMessage(
 		for(avp_t=msg->avpList.head;avp_t&&avp_t!=position;avp_t=avp_t->next);
 		if (!avp_t) {
 			LM_ERR("AAAAddAVPToMessage: the \"position\" avp is not in"
-				"\"msg\" message!!\n");
+					"\"msg\" message!!\n");
 			return AAA_ERR_PARAMETER;
 		}
 		/* insert after position */
@@ -247,15 +245,15 @@ AAAReturnCode  AAAAddAVPToMessage(
  * @param avpCode - code of the AVP to match
  * @param vendorId - vendor id to match
  * @param searchType - whether to look forward or backward
- * @returns the AAA_AVP* if found, NULL if not 
+ * @returns the AAA_AVP* if found, NULL if not
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
 AAA_AVP  *AAAFindMatchingAVP(
-	AAAMessage *msg,
-	AAA_AVP *startAvp,
-	AAA_AVPCode avpCode,
-	AAAVendorId vendorId,
-	AAASearchType searchType)
+		AAAMessage *msg,
+		AAA_AVP *startAvp,
+		AAA_AVPCode avpCode,
+		AAAVendorId vendorId,
+		AAASearchType searchType)
 {
 	AAA_AVP *avp_t;
 
@@ -270,7 +268,7 @@ AAA_AVP  *AAAFindMatchingAVP(
 		for(avp_t=msg->avpList.head;avp_t&&avp_t!=startAvp;avp_t=avp_t->next);
 		if (!avp_t) {
 			LM_ERR("AAAFindMatchingAVP: the \"position\" avp is not "
-				"in \"avpList\" list!!\n");
+					"in \"avpList\" list!!\n");
 			goto error;
 		}
 		avp_t=startAvp;
@@ -295,21 +293,21 @@ error:
 
 /**
  *  This function removes an AVP from a message.
- * @param msg - the diameter message 
+ * @param msg - the diameter message
  * @param avp - the AVP to remove
  * @returns AAA_ERR_SUCCESS on success or AAA_ERR_PARAMETER if not found
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
 AAAReturnCode  AAARemoveAVPFromMessage(
-	AAAMessage *msg,
-	AAA_AVP *avp)
+		AAAMessage *msg,
+		AAA_AVP *avp)
 {
 	AAA_AVP *avp_t;
 
 	/* param check */
 	if ( !msg || !avp ) {
 		LM_ERR("AAARemoveAVPFromMessage: param AVP_LIST \"avpList\" or AVP "
-			"\"avp\" passed null !!\n");
+				"\"avp\" passed null !!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -317,7 +315,7 @@ AAAReturnCode  AAARemoveAVPFromMessage(
 	for(avp_t=msg->avpList.head;avp_t&&avp_t!=avp;avp_t=avp_t->next);
 	if (!avp_t) {
 		LM_ERR("AAARemoveAVPFromMessage: the \"avp\" avp is not in "
-			"\"avpList\" avp list!!\n");
+				"\"avpList\" avp list!!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -349,7 +347,7 @@ AAAReturnCode  AAARemoveAVPFromMessage(
 
 
 /**
- *  The function frees the memory allocated to an AVP 
+ *  The function frees the memory allocated to an AVP
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
 AAAReturnCode  AAAFreeAVP(AAA_AVP **avp)
@@ -374,7 +372,7 @@ AAAReturnCode  AAAFreeAVP(AAA_AVP **avp)
 
 /**
  *  This function returns the first AVP in the list.
- * @param avpList - the list 
+ * @param avpList - the list
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
 AAA_AVP*  AAAGetFirstAVP(AAA_AVP_LIST *avpList){
@@ -385,7 +383,7 @@ AAA_AVP*  AAAGetFirstAVP(AAA_AVP_LIST *avpList){
 
 /**
  *  This function returns the last AVP in the list.
- * @param avpList - the list  
+ * @param avpList - the list
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
 AAA_AVP*  AAAGetLastAVP(AAA_AVP_LIST *avpList)
@@ -426,9 +424,9 @@ AAA_AVP*  AAAGetPrevAVP(AAA_AVP *avp)
  *  This function converts the data in the AVP to a format suitable for
  * print, log or display.
  * @param avp - the AAA_AVP to print
- * @param dest - preallocated destination buffer. If too short, message will be truncated 
- * @param destLen - length of the destipation buffer 
- * @returns dest on success, NULL on failure 
+ * @param dest - preallocated destination buffer. If too short, message will be truncated
+ * @param destLen - length of the destipation buffer
+ * @returns dest on success, NULL on failure
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
  */
 char*  AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
@@ -438,59 +436,59 @@ char*  AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
 
 	if (!avp || !dest || !destLen) {
 		LM_ERR("AAAConvertAVPToString: param AVP, DEST or DESTLEN "
-			"passed as null!!!\n");
+				"passed as null!!!\n");
 		return 0;
 	}
 	l = snprintf(dest,destLen,"AVP(%p < %p >%p);code=%u,"
-		"flags=%x;\nDataType=%u;VendorID=%u;DataLen=%u;\n",
-		avp->prev,avp,avp->next,avp->code,avp->flags,
-		avp->type,avp->vendorId,avp->data.len);
+			"flags=%x;\nDataType=%u;VendorID=%u;DataLen=%u;\n",
+			avp->prev,avp,avp->next,avp->code,avp->flags,
+			avp->type,avp->vendorId,avp->data.len);
 	switch(avp->type) {
 		case AAA_AVP_STRING_TYPE:
 			l+=snprintf(dest+l,destLen-l,"String: <%.*s>",avp->data.len,
-				avp->data.s);
+					avp->data.s);
 			break;
 		case AAA_AVP_INTEGER32_TYPE:
 			l+=snprintf(dest+l,destLen-l,"Int32: <%u>(%x)",
-				htonl(*((unsigned int*)avp->data.s)),
-				htonl(*((unsigned int*)avp->data.s)));
+					htonl(*((unsigned int*)avp->data.s)),
+					htonl(*((unsigned int*)avp->data.s)));
 			break;
 		case AAA_AVP_ADDRESS_TYPE:
 			i = 1;
 			switch (avp->data.len) {
 				case 4: i=i*0;
 				case 6: i=i*2;
-					l+=snprintf(dest+l,destLen-l,"Address IPv4: <%d.%d.%d.%d>",
-						(unsigned char)avp->data.s[i+0],
-						(unsigned char)avp->data.s[i+1],
-						(unsigned char)avp->data.s[i+2],
-						(unsigned char)avp->data.s[i+3]);
-					break;
+						l+=snprintf(dest+l,destLen-l,"Address IPv4: <%d.%d.%d.%d>",
+								(unsigned char)avp->data.s[i+0],
+								(unsigned char)avp->data.s[i+1],
+								(unsigned char)avp->data.s[i+2],
+								(unsigned char)avp->data.s[i+3]);
+						break;
 				case 16: i=i*0;
 				case 18: i=i*2;
-					l+=snprintf(dest+l,destLen-l,
-						"Address IPv6: <%x.%x.%x.%x.%x.%x.%x.%x>",
-						((avp->data.s[i+0]<<8)+avp->data.s[i+1]),
-						((avp->data.s[i+2]<<8)+avp->data.s[i+3]),
-						((avp->data.s[i+4]<<8)+avp->data.s[i+5]),
-						((avp->data.s[i+6]<<8)+avp->data.s[i+7]),
-						((avp->data.s[i+8]<<8)+avp->data.s[i+9]),
-						((avp->data.s[i+10]<<8)+avp->data.s[i+11]),
-						((avp->data.s[i+12]<<8)+avp->data.s[i+13]),
-						((avp->data.s[i+14]<<8)+avp->data.s[i+15]));
-					break;
-			break;
+						l+=snprintf(dest+l,destLen-l,
+								"Address IPv6: <%x.%x.%x.%x.%x.%x.%x.%x>",
+								((avp->data.s[i+0]<<8)+avp->data.s[i+1]),
+								((avp->data.s[i+2]<<8)+avp->data.s[i+3]),
+								((avp->data.s[i+4]<<8)+avp->data.s[i+5]),
+								((avp->data.s[i+6]<<8)+avp->data.s[i+7]),
+								((avp->data.s[i+8]<<8)+avp->data.s[i+9]),
+								((avp->data.s[i+10]<<8)+avp->data.s[i+11]),
+								((avp->data.s[i+12]<<8)+avp->data.s[i+13]),
+								((avp->data.s[i+14]<<8)+avp->data.s[i+15]));
+						break;
+						break;
 			}
 			break;
-		//case AAA_AVP_INTEGER64_TYPE:
+			//case AAA_AVP_INTEGER64_TYPE:
 		case AAA_AVP_TIME_TYPE:
 		default:
 			LM_WARN("AAAConvertAVPToString: don't know how to print"
-				" this data type [%d] -> tryng hexa\n",avp->type);
+					" this data type [%d] -> tryng hexa\n",avp->type);
 		case AAA_AVP_DATA_TYPE:
 			for (i=0;i<avp->data.len&&l<destLen-1;i++)
-			l+=snprintf(dest+l,destLen-l-1,"%x",
-				((unsigned char*)avp->data.s)[i]);
+				l+=snprintf(dest+l,destLen-l-1,"%x",
+						((unsigned char*)avp->data.s)[i]);
 	}
 	return dest;
 }
@@ -548,13 +546,13 @@ error:
 /**
  * Adds an AVP to a list of AVPs, at the end.
  * @param list - the list to add to
- * @param avp - the avp to add 
- */ 
+ * @param avp - the avp to add
+ */
 void AAAAddAVPToList(AAA_AVP_LIST *list,AAA_AVP *avp)
 {
 	if (list->tail) {
 		avp->prev=list->tail;
-		avp->next=0;	
+		avp->next=0;
 		list->tail->next = avp;
 		list->tail=avp;
 	} else {
@@ -562,16 +560,16 @@ void AAAAddAVPToList(AAA_AVP_LIST *list,AAA_AVP *avp)
 		list->tail = avp;
 		avp->next=0;
 		avp->prev=0;
-	}	
+	}
 }
- 
-/** 
+
+/**
  * Groups a list of avps into a data buffer
- * @param avps 
+ * @param avps
  */
 str AAAGroupAVPS(AAA_AVP_LIST avps)
- {
- 	AAA_AVP *avp;
+{
+	AAA_AVP *avp;
 	unsigned char *p;
 	str buf={0,0};
 
@@ -620,10 +618,10 @@ str AAAGroupAVPS(AAA_AVP_LIST avps)
 	return buf;
 }
 
-/** 
+/**
  * Ungroup from a data buffer a list of avps
  * @param buf - payload to ungroup the list from
- * @returns the AAA_AVP_LIST or an empty one on error 
+ * @returns the AAA_AVP_LIST or an empty one on error
  */
 AAA_AVP_LIST AAAUngroupAVPS(str buf)
 {
@@ -644,7 +642,7 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 	while (ptr < buf.s+buf.len) {
 		if (ptr+AVP_HDR_SIZE(0x80)>buf.s+buf.len){
 			LM_ERR("hss3g_ungroup_avps: source buffer to short!! "
-				"Cannot read the whole AVP header!\n");
+					"Cannot read the whole AVP header!\n");
 			goto error;
 		}
 		/* avp code */
@@ -658,7 +656,7 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 		ptr += AVP_LENGTH_SIZE;
 		if (avp_len<1) {
 			LM_ERR("hss3g_ungroup_avps: invalid AVP len [%d]\n",
-				avp_len);
+					avp_len);
 			goto error;
 		}
 		/* avp vendor-ID */
@@ -666,26 +664,26 @@ AAA_AVP_LIST AAAUngroupAVPS(str buf)
 		if (avp_flags&AAA_AVP_FLAG_VENDOR_SPECIFIC) {
 			avp_vendorID = get_4bytes( ptr );
 			ptr += AVP_VENDOR_ID_SIZE;
-		} 
+		}
 		/* data length */
 		avp_data_len = avp_len - AVP_HDR_SIZE(avp_flags);
 		/*check the data length */
 		if ( buf.s+buf.len<ptr+avp_data_len) {
 			LM_ERR("hss3g_ungroup_avps: source buffer to short!! "
-				"Cannot read a whole data for AVP!\n");
+					"Cannot read a whole data for AVP!\n");
 			goto error;
 		}
 
 		/* create the AVP */
 		avp = AAACreateAVP( avp_code, avp_flags, avp_vendorID, ptr,
-			avp_data_len, AVP_DONT_FREE_DATA);
+				avp_data_len, AVP_DONT_FREE_DATA);
 		if (!avp) {
 			LM_ERR("hss3g_ungroup_avps: can't create avp for member of list\n");
 			goto error;
 		}
 
 		/* link the avp into aaa message to the end */
-  		avp->next = 0;
+		avp->next = 0;
 		avp->prev = lh.tail;
 		if (lh.tail) {
 			lh.tail->next=avp;
@@ -708,7 +706,7 @@ error:
 /**
  * Find an avp into a list of avps.
  * @param avpList - the list to look into
- * @param startAvp - where to start the search. Usefull when you want to find the next one. 
+ * @param startAvp - where to start the search. Usefull when you want to find the next one.
  * Even this one will be checked and can be returned if it fits.
  * @param avpCode - the AVP code to match
  * @param vendorId - the vendor id to match
@@ -716,11 +714,11 @@ error:
  * @returns the AAA_AVP* if found, NULL if not
  */
 AAA_AVP  *AAAFindMatchingAVPList(
-	AAA_AVP_LIST avpList,
-	AAA_AVP *startAvp,
-	AAA_AVPCode avpCode,
-	AAAVendorId vendorId,
-	AAASearchType searchType)
+		AAA_AVP_LIST avpList,
+		AAA_AVP *startAvp,
+		AAA_AVPCode avpCode,
+		AAAVendorId vendorId,
+		AAASearchType searchType)
 {
 	AAA_AVP *avp_t;
 	/* param checking */
@@ -731,7 +729,7 @@ AAA_AVP  *AAAFindMatchingAVPList(
 		for(avp_t=avpList.head;avp_t&&avp_t!=startAvp;avp_t=avp_t->next);
 		if (!avp_t) {
 			LM_ERR("ndMatchingAVP: the \"position\" avp is not "
-				"in \"avpList\" list!!\n");
+					"in \"avpList\" list!!\n");
 			goto error;
 		}
 		avp_t=startAvp;
@@ -751,4 +749,4 @@ AAA_AVP  *AAAFindMatchingAVPList(
 error:
 	return 0;
 }
- 
+

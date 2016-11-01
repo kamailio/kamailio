@@ -251,9 +251,9 @@ int check_memory(struct modem *mdm, int flag)
 				}
 			} /* if(strstr) */
 		} /* if(put_command) */
-		/* if we are here ->  some error happend */
+		/* if we are here ->  some error happened */
 		if (checkmodem(mdm)!=0) {
-			LM_WARN("something happend with the modem -> was reinit -> let's retry\n");
+			LM_WARN("something happened with the modem -> was reinit -> let's retry\n");
 		} else {
 			LM_ERR("modem seems to be ok, but we had an error? I give up!\n");
 			out = 1;

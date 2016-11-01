@@ -44,3 +44,24 @@ sr_generate_callid_f sr_get_callid_func(void)
 {
 	return _sr_generate_callid_func;
 }
+
+/**
+ *
+ */
+static sr_cfgenv_t _sr_cfgenv;
+
+/**
+ *
+ */
+void sr_cfgenv_init(void)
+{
+	memset(&_sr_cfgenv, 0, sizeof(sr_cfgenv_t));
+}
+
+/**
+ *
+ */
+sr_cfgenv_t* sr_cfgenv_get(void)
+{
+	return &_sr_cfgenv;
+}

@@ -63,7 +63,7 @@ client_ro_cfg cfg = { str_init(""),
 
 extern struct ims_charging_counters_h ims_charging_cnts_h;
 struct cdp_binds cdpb;
-struct dlg_binds dlgb;
+ims_dlg_api_t dlgb;
 cdp_avp_bind_t *cdp_avp;
 struct tm_binds tmb;
 
@@ -198,7 +198,7 @@ static int mod_init(void) {
 		goto error;
 	}
 
-	if (load_dlg_api(&dlgb) != 0) { /* load the dialog API */
+	if (load_ims_dlg_api(&dlgb) != 0) { /* load the dialog API */
 		LM_ERR("can't load Dialog API\n");
 		goto error;
 	}
@@ -338,7 +338,7 @@ static int w_ro_set_session_id_avp(struct sip_msg *msg, char *str1, char *str2) 
     //set avp response with session id
     res = create_response_avp_string("ro_session_id", &ro_session->ro_session_id);
     dlgb.release_dlg(dlg);
-    unref_ro_session(ro_session, 1);
+    unref_ro_session(ro_session, 1, 1);
     return res;
 }
 
@@ -425,7 +425,7 @@ static int w_ro_ccr_stop(struct sip_msg *msg, char* c_direction, char* _code, ch
     ro_session->active = -1;
 //    counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
 done:
-    unref_ro_session_unsafe(ro_session, 1, ro_session_entry);
+    unref_ro_session(ro_session, 1, 0);
     ro_session_unlock(ro_session_table, ro_session_entry);
     dlgb.release_dlg(dlg);
     return RO_RETURN_TRUE;
@@ -515,7 +515,7 @@ static int w_ro_ccr(struct sip_msg *msg, char* c_route_name, char* c_direction, 
 	} else if (dir == RO_TERM_DIRECTION){
 		//get callee IMPU from called part id - if not present then skip this
 		if ((identity = cscf_get_public_identity_from_called_party_id(msg, &h)).len == 0) {
-			LM_WARN("No P-Called-Identity hdr found - will not get callbacks if this IMPU is removed to terminate call");
+			LM_DBG("No P-Called-Identity hdr found - will not get callbacks if this IMPU is removed to terminate call");
 			goto send_ccr;
 		}
 		//get callee contact from request URI
@@ -537,7 +537,7 @@ send_ccr:
 	//if it already exists then we go to done
 	if (single_ro_session_per_dialog && (ro_session = lookup_ro_session(dlg->h_entry, &dlg->callid, 0, 0))) {
 	    LM_DBG("single_ro_session_per_dialog = 1 and ro_session already exists for this dialog -so we don't need to send another one\n");
-	    unref_ro_session(ro_session,1);//for the lookup ro session ref
+	    unref_ro_session(ro_session,1,1);//for the lookup ro session ref
 	    goto done;
 	}
 	

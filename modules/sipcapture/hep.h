@@ -24,6 +24,13 @@
 #ifndef _hep_h
 #define _hep_h
 
+#include "../../endianness.h"
+
+#ifdef __IS_BIG_ENDIAN
+#define to_le(x) bswap32(x)
+#else
+#define to_le(x) (x)
+#endif
 
 #ifdef __OS_solaris
 typedef uint8_t u_int8_t;
@@ -39,6 +46,12 @@ extern char *correlation_id;
 
 /* int hep_msg_received(char * buf, unsigned int len, struct receive_info * ri);*/
 int hep_msg_received(void *data);
+
+/* new method for events */
+int hepv3_message_parse(char *buf, unsigned int len, sip_msg_t* msg);
+int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t* msg);
+int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len, int req_chunk, pv_param_t *param, pv_value_t *res);
+
 
 
 struct hep_hdr{

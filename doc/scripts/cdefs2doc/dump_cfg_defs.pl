@@ -27,7 +27,7 @@
 #  - the first array of type cfg_def_t with an initializer is the array
 #    with the config definitions (name, type, description a.s.o.). Only
 #    one cfg_def array per file is supported.
-#  - the first variable of type struct cfg_group_(.*) , with an intializer,
+#  - the first variable of type struct cfg_group_(.*) , with an initializer,
 #    contains the default values. If no group name is specified on the 
 #    command line (--group) the group name is derived from the struct
 #    name ($1). The default values are optional. Only one such variable is
@@ -119,7 +119,7 @@ Options:
          -g | --grp  name
          --group     name      - config group name used if one cannot be
                                  autodetected (e.g. no default value 
-                                 intializer present in the file).
+                                 initializer present in the file).
          -G | --force-grp name
          --force-group    name - force using a config group name, even if one
                                  is autodetected (see also -g).
@@ -270,7 +270,7 @@ print(STDERR "Parsing file $file...\n") if $dbg;
 # @7705 (var name)  	identifier_node strg: tcp_cfg_def lngt 11
 # @7706 (var type)  	array_type: size:@7709 algn: 32 elts: @2265 domn: @7718
 # @7707 (? next ?  )	function_decl: ....
-# @7708 (intializer)	constructor: lngt: 25
+# @7708 (initializer)	constructor: lngt: 25
 #                                    idx : @20      val : @7723    [...]
 # @7709             	interget_cst: type: @11 low: 5600
 #

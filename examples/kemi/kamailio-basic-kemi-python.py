@@ -4,6 +4,13 @@
 ## Router - the old object exporting Kamailio functions
 ##
 
+## Relevant remarks:
+##  * return code -255 is used to propagate the 'exit' behaviour to the
+##  parent route block function. The alternative is to use the native
+##  Python function os.exit() (or exit()) -- it throws an exception that
+##  is caught by Kamailio and previents the stop of the interpreter.
+
+
 import sys
 import Router.Logger as Logger
 import KSR as KSR

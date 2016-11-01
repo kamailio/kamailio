@@ -41,6 +41,7 @@
 #include "../../kemi.h"
 
 #include "app_lua_api.h"
+#include "app_lua_kemi_export.h"
 #include "app_lua_sr.h"
 
 /**
@@ -1439,36 +1440,25 @@ int sr_kemi_lua_return_int(lua_State* L, sr_kemi_t *ket, int rc)
 /**
  *
  */
-int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
+int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 {
 	int i;
-	int pdelta;
 	int argc;
 	int ret;
-	sr_kemi_t *ket = NULL;
+	str *fname;
+	str *mname;
 	sr_kemi_val_t vps[SR_KEMI_PARAMS_MAX];
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
 
-	if(env_L==NULL || env_L->msg==NULL) {
-		LM_ERR("invalid Lua environment attributes\n");
+	if(env_L==NULL || env_L->msg==NULL || ket==NULL) {
+		LM_ERR("invalid Lua environment attributes or parameters\n");
 		return app_lua_return_false(L);
 	}
 
-	ket = sr_kemi_lookup(mname, midx, fname);
-	if(ket==NULL) {
-		LM_ERR("cannot find function (%d): %.*s.%.*s\n", midx,
-				(mname && mname->len>0)?mname->len:0,
-				(mname && mname->len>0)?mname->s:"",
-				fname->len, fname->s);
-		return app_lua_return_false(L);
-	}
-	if(mname->len<=0) {
-		pdelta = 1;
-	} else {
-		pdelta = 3;
-	}
+	fname = &ket->fname;
+	mname = &ket->mname;
 
 	argc = lua_gettop(L);
 	if(argc==pdelta && ket->ptypes[0]==SR_KEMIP_NONE) {
@@ -1476,14 +1466,14 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 		return sr_kemi_lua_return_int(L, ket, ret);
 	}
 	if(argc==pdelta && ket->ptypes[0]!=SR_KEMIP_NONE) {
-		LM_ERR("invalid number of parameters for: %.*s\n",
-				fname->len, fname->s);
+		LM_ERR("invalid number of parameters for: %.*s.%.*s\n",
+				mname->len, mname->s, fname->len, fname->s);
 		return app_lua_return_false(L);
 	}
 
 	if(argc>=SR_KEMI_PARAMS_MAX+pdelta) {
-		LM_ERR("too many parameters for: %.*s\n",
-				fname->len, fname->s);
+		LM_ERR("too many parameters for: %.*s.%.*s\n",
+				mname->len, mname->s, fname->len, fname->s);
 		return app_lua_return_false(L);
 	}
 
@@ -1691,8 +1681,67 @@ int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
 /**
  *
  */
+int sr_kemi_exec_func(lua_State* L, str *mname, int midx, str *fname)
+{
+	int pdelta;
+	sr_kemi_t *ket = NULL;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+
+	if(env_L==NULL || env_L->msg==NULL) {
+		LM_ERR("invalid Lua environment attributes\n");
+		return app_lua_return_false(L);
+	}
+
+	ket = sr_kemi_lookup(mname, midx, fname);
+	if(ket==NULL) {
+		LM_ERR("cannot find function (%d): %.*s.%.*s\n", midx,
+				(mname && mname->len>0)?mname->len:0,
+				(mname && mname->len>0)?mname->s:"",
+				fname->len, fname->s);
+		return app_lua_return_false(L);
+	}
+	if(mname->len<=0) {
+		pdelta = 1;
+	} else {
+		pdelta = 3;
+	}
+	return sr_kemi_lua_exec_func_ex(L, ket, pdelta);
+}
+
+/**
+ *
+ */
+int sr_kemi_lua_exec_func(lua_State* L, int eidx)
+{
+	sr_kemi_t *ket;
+
+	ket = sr_kemi_lua_export_get(eidx);
+	return sr_kemi_lua_exec_func_ex(L, ket, 0);
+}
+
+/**
+ *
+ */
+static int sr_kemi_lua_exit (lua_State *L)
+{
+	str *s;
+
+	LM_DBG("script exit call\n");
+	s = sr_kemi_lua_exit_string_get();
+	lua_getglobal(L, "error");
+	lua_pushstring(L, s->s);
+	lua_call(L, 1, 0);
+	return 0;
+}
+
+/**
+ *
+ */
 static const luaL_Reg _sr_kemi_x_Map [] = {
-	{"modf",         lua_sr_modf},
+	{"modf",      lua_sr_modf},
+	{"exit",      sr_kemi_lua_exit},
 	{NULL, NULL}
 };
 
@@ -1809,4 +1858,98 @@ void lua_sr_kemi_register_modules(lua_State *L)
 	for(i=1; i<n; i++) {
 		lua_sr_kemi_register_module(L, &kmods[i].mname, i);
 	}
+}
+
+
+/**
+ *
+ */
+luaL_Reg *_sr_KSRMethods = NULL;
+
+#define SR_LUA_KSR_MODULES_SIZE	256
+#define SR_LUA_KSR_METHODS_SIZE	(SR_KEMI_LUA_EXPORT_SIZE + SR_LUA_KSR_MODULES_SIZE)
+
+
+/**
+ *
+ */
+void lua_sr_kemi_register_libs(lua_State *L)
+{
+	luaL_Reg *_sr_crt_KSRMethods = NULL;
+	sr_kemi_module_t *emods = NULL;
+	int emods_size = 0;
+	int i;
+	int k;
+	int n;
+	char mname[128];
+
+#if 0
+	/* dynamic lookup on function name */
+	lua_sr_kemi_register_core(L);
+	lua_sr_kemi_register_modules(L);
+#endif
+
+	_sr_KSRMethods = malloc(SR_LUA_KSR_METHODS_SIZE * sizeof(luaL_Reg));
+	if(_sr_KSRMethods==NULL) {
+		LM_ERR("no more pkg memory\n");
+		return;
+	}
+	memset(_sr_KSRMethods, 0, SR_LUA_KSR_METHODS_SIZE * sizeof(luaL_Reg));
+
+	emods_size = sr_kemi_modules_size_get();
+	emods = sr_kemi_modules_get();
+
+	n = 0;
+	_sr_crt_KSRMethods = _sr_KSRMethods;
+	if(emods_size==0 || emods[0].kexp==NULL) {
+		LM_ERR("no kemi exports registered\n");
+		return;
+	}
+
+	for(i=0; emods[0].kexp[i].func!=NULL; i++) {
+		LM_DBG("exporting KSR.%s(...)\n", emods[0].kexp[i].fname.s);
+		_sr_crt_KSRMethods[i].name = emods[0].kexp[i].fname.s;
+		_sr_crt_KSRMethods[i].func =
+			sr_kemi_lua_export_associate(&emods[0].kexp[i]);
+		if(_sr_crt_KSRMethods[i].func == NULL) {
+			LM_ERR("failed to associate kemi function with lua export\n");
+			free(_sr_KSRMethods);
+			_sr_KSRMethods = NULL;
+			return;
+		}
+		n++;
+	}
+
+	luaL_openlib(L, "KSR", _sr_crt_KSRMethods, 0);
+
+	/* special modules - pv.get(...) can return int or str */
+	luaL_openlib(L, "KSR.pv", _sr_pv_Map,     0);
+	luaL_openlib(L, "KSR.x",  _sr_kemi_x_Map, 0);
+
+	/* registered kemi modules */
+	if(emods_size>1) {
+		for(k=1; k<emods_size; k++) {
+			n++;
+			_sr_crt_KSRMethods += n;
+			snprintf(mname, 128, "KSR.%s", emods[k].kexp[0].mname.s);
+			for(i=0; emods[k].kexp[i].func!=NULL; i++) {
+				LM_DBG("exporting %s.%s(...)\n", mname,
+						emods[k].kexp[i].fname.s);
+				_sr_crt_KSRMethods[i].name = emods[k].kexp[i].fname.s;
+				_sr_crt_KSRMethods[i].func =
+					sr_kemi_lua_export_associate(&emods[k].kexp[i]);
+				if(_sr_crt_KSRMethods[i].func == NULL) {
+					LM_ERR("failed to associate kemi function with func export\n");
+					free(_sr_KSRMethods);
+					_sr_KSRMethods = NULL;
+					return;
+				}
+				n++;
+			}
+			luaL_openlib(L, mname, _sr_crt_KSRMethods, 0);
+			LM_DBG("initializing kemi sub-module: %s (%s)\n", mname,
+					emods[k].kexp[0].mname.s);
+		}
+	}
+	LM_DBG("module 'KSR' has been initialized\n");
 }

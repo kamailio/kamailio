@@ -507,7 +507,7 @@ int db_table_version(const db_func_t* dbf, db1_con_t* con, const str* table);
  * \param dbh database connection handle
  * \param table checked table
  * \param version checked version
- * \return 0 means ok, -1 means an error occured
+ * \return 0 means ok, -1 means an error occurred
  */
 int db_check_table_version(db_func_t* dbf, db1_con_t* dbh, const str* table, const unsigned int version);
 

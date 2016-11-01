@@ -182,8 +182,7 @@ void lua_sr_openlibs(lua_State *L)
 {
 	lua_sr_core_openlibs(L);
 	lua_sr_exp_openlibs(L);
-	lua_sr_kemi_register_core(L);
-	lua_sr_kemi_register_modules(L);
+	lua_sr_kemi_register_libs(L);
 }
 
 /**
@@ -627,12 +626,25 @@ int app_lua_runstring(sip_msg_t *msg, char *script)
 /**
  *
  */
+static str _sr_kemi_lua_exit_string = str_init("~~ksr~exit~~");
+
+/**
+ *
+ */
+str* sr_kemi_lua_exit_string_get(void)
+{
+	return &_sr_kemi_lua_exit_string;
+}
+
+/**
+ *
+ */
 int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 		char *p3, int emode)
 {
 	int n;
 	int ret;
-	char *txt;
+	str txt;
 	sip_msg_t *bmsg;
 
 	if(_sr_L_env.LL==NULL)
@@ -660,8 +672,8 @@ int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 			LM_ERR("top stack type [%d - %s]\n",
 				lua_type(_sr_L_env.LL, -1),
 				lua_typename(_sr_L_env.LL,lua_type(_sr_L_env.LL, -1)));
-			txt = (char*)lua_tostring(_sr_L_env.LL, -1);
-			LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
+			txt.s = (char*)lua_tostring(_sr_L_env.LL, -1);
+			LM_ERR("error from Lua: %s\n", (txt.s)?txt.s:"unknown");
 			return -1;
 		} else {
 			return 1;
@@ -689,11 +701,31 @@ int app_lua_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	_sr_L_env.msg = bmsg;
 	if(ret!=0)
 	{
-		LM_ERR("error executing: %s (err: %d)\n", func, ret);
-		txt = (char*)lua_tostring(_sr_L_env.LL, -1);
-		LM_ERR("error from Lua: %s\n", (txt)?txt:"unknown");
+		txt.s = (char*)lua_tostring(_sr_L_env.LL, -1);
+		n = 0;
+		if(txt.s!=NULL) {
+			for(n=0; txt.s[n]!='\0' && _sr_kemi_lua_exit_string.s[n]!='\0';
+					n++) {
+				if(txt.s[n] != _sr_kemi_lua_exit_string.s[n])
+					break;
+			}
+			if(txt.s[n]!='\0' || _sr_kemi_lua_exit_string.s[n]!='\0') {
+				LM_ERR("error from Lua: %s\n", txt.s);
+				n = 0;
+			} else {
+				LM_DBG("ksr error call from Lua: %s\n", txt.s);
+				n = 1;
+			}
+		} else {
+			LM_ERR("error from Lua: unknown\n");
+		}
 		lua_pop(_sr_L_env.LL, 1);
-		return -1;
+		if(n==1) {
+			return 1;
+		} else {
+			LM_ERR("error executing: %s (err: %d)\n", func, ret);
+			return -1;
+		}
 	}
 
 	return 1;

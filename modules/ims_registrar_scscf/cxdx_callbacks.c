@@ -55,6 +55,7 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
     int i = 0;
     int res = 0;
     udomain_t* udomain;
+	impu_contact_t *impucontact;
     
     rta_msg = cdpb.AAACreateResponse(rtr);//session ID?
     if (!rta_msg) return 0;
@@ -86,17 +87,20 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
                 return 0;
             }
 	    
-	    for(i = 0; i < r->num_contacts; i++) {
-                LM_DBG("Deleting contact with AOR [%.*s]\n", r->newcontacts[i]->aor.len, r->newcontacts[i]->aor.s);
-                ul.lock_contact_slot_i(r->newcontacts[i]->sl);
-                r->newcontacts[i]->state = CONTACT_DELETE_PENDING;
-                if (r->shead) {
-                    //send NOTIFY to all subscribers of this IMPU.
-                    notify_subscribers(r, 0, 0);
-                }
-               r->newcontacts[i]->state = CONTACT_DELETED;
-                ul.unlock_contact_slot_i(r->newcontacts[i]->sl);
-	    }
+		impucontact = r->linked_contacts.head;
+		while (impucontact) {
+			LM_DBG("Deleting contact with AOR [%.*s]\n", impucontact->contact->aor.len, impucontact->contact->aor.s);
+			ul.lock_contact_slot_i(impucontact->contact->sl);
+			impucontact->contact->state = CONTACT_DELETE_PENDING;
+			if (r->shead) {
+				//send NOTIFY to all subscribers of this IMPU.
+				notify_subscribers(r, 0, 0);
+			}
+			impucontact->contact->state = CONTACT_DELETED;
+			ul.unlock_contact_slot_i(impucontact->contact->sl);
+			
+			impucontact = impucontact->next;
+		}
 	    
 	    ul.unlock_udomain(udomain, &public_id);
 	    
@@ -112,16 +116,18 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
 			return 0;
 		    }
 
-		    for(i = 0; i < r->num_contacts; i++) {
-			LM_DBG("Deleting contact with AOR [%.*s]\n", r->newcontacts[i]->aor.len, r->newcontacts[i]->aor.s);
-                        ul.lock_contact_slot_i(r->newcontacts[i]->sl);
-                        r->newcontacts[i]->state = CONTACT_DELETE_PENDING;
-                        if (r->shead) {
-                            //send NOTIFY to all subscribers of this IMPU.
-                            notify_subscribers(r, 0, 0);
-                        }
-                        r->newcontacts[i]->state = CONTACT_DELETED;
-                        ul.unlock_contact_slot_i(r->newcontacts[i]->sl);
+		    impucontact = r->linked_contacts.head;
+			while (impucontact) {
+				LM_DBG("Deleting contact with AOR [%.*s]\n", impucontact->contact->aor.len, impucontact->contact->aor.s);
+				ul.lock_contact_slot_i(impucontact->contact->sl);
+				impucontact->contact->state = CONTACT_DELETE_PENDING;
+				if (r->shead) {
+					//send NOTIFY to all subscribers of this IMPU.
+					notify_subscribers(r, 0, 0);
+				}
+				impucontact->contact->state = CONTACT_DELETED;
+				ul.unlock_contact_slot_i(impucontact->contact->sl);
+				impucontact = impucontact->next;
 		    }
 
 		    ul.unlock_udomain(udomain, &public_id);

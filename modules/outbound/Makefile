@@ -1,4 +1,4 @@
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
@@ -6,15 +6,32 @@ auto_gen=
 NAME=outbound.so
 
 ifeq ($(CROSS_COMPILE),)
+	BUILDER = $(shell which pkg-config)
+endif
+
+ifneq ($(BUILDER),)
 SSL_BUILDER=$(shell \
 	if pkg-config --exists libssl; then \
 		echo 'pkg-config libssl'; \
 	fi)
+
+CRYPTO_BUILDER=$(shell \
+	if pkg-config --exists libcrypto; then \
+		echo 'pkg-config libcrypto'; \
+	fi)
 endif
+
+ifneq ($(BUILDER),)
 
 ifneq ($(SSL_BUILDER),)
 	DEFS += $(shell $(SSL_BUILDER) --cflags)
 	LIBS += $(shell $(SSL_BUILDER) --libs)
+endif
+ifneq ($(CRYPTO_BUILDER),)
+	DEFS += $(shell $(CRYPTO_BUILDER) --cflags)
+	LIBS += $(shell $(CRYPTO_BUILDER) --libs)
+endif
+
 else
 	DEFS += -I$(LOCALBASE)/ssl/include
 	LIBS += -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \

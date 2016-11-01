@@ -211,11 +211,12 @@ error:
 	return -1;
 }
 
-
+#define CTL_SOCKET_PATH_SIZE	128
 
 static int mod_init(void)
 {
 	struct id_list* l;
+	char ctl_socket_path[CTL_SOCKET_PATH_SIZE];
 
 	binrpc_callbacks_init();
 
@@ -227,7 +228,21 @@ static int mod_init(void)
 	binrpc_struct_max_body_size *= 1024;
 
 	if (listen_lst==0) {
-		add_binrpc_socket(PARAM_STRING, DEFAULT_CTL_SOCKET);
+		if(strcmp(runtime_dir, RUN_DIR)==0) {
+			add_binrpc_socket(PARAM_STRING, DEFAULT_CTL_SOCKET);
+		} else {
+			if(sizeof(DEFAULT_CTL_SOCKET_PROTO)
+					+ sizeof(DEFAULT_CTL_SOCKET_NAME)
+					+ strlen(runtime_dir) + 4 > CTL_SOCKET_PATH_SIZE) {
+				LM_ERR("ctl socket path is too big\n");
+				return -1;
+			}
+			strcpy(ctl_socket_path, DEFAULT_CTL_SOCKET_PROTO);
+			strcat(ctl_socket_path, runtime_dir);
+			strcat(ctl_socket_path, "/");
+			strcat(ctl_socket_path, DEFAULT_CTL_SOCKET_NAME);
+			add_binrpc_socket(PARAM_STRING, ctl_socket_path);
+		}
 	}
 	DBG("listening on:\n");
 	for (l=listen_lst; l; l=l->next){

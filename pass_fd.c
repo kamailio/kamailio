@@ -53,7 +53,7 @@
  * and if no data is queued on the fd, recv_all will not wait (it will 
  * return error and set errno to EAGAIN/EWOULDBLOCK). However if even 1 byte
  *  is queued, the call will block until the whole data_len was read or an
- *  error or eof occured ("semi-nonblocking" behaviour,  some tcp code
+ *  error or eof occurred ("semi-nonblocking" behaviour,  some tcp code
  *   counts on it).
  * if flags is set to MSG_WAITALL it will block even if no byte is available.
  *  

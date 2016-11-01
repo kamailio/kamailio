@@ -61,6 +61,8 @@
 extern int sub_dialog_hash_size;
 extern shtable_t sub_dialog_table;
 
+extern int max_subscribes;
+
 extern int db_mode;
 
 int get_subscriber(impurecord_t* urec, str *presentity_uri, str *watcher_contact, int event, reg_subscriber** r_subscriber) {
@@ -239,7 +241,9 @@ str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_ta
 int add_subscriber(impurecord_t* urec,
         subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber, int db_load) {
 
-    reg_subscriber *s;
+    reg_subscriber *s, *previous_s;
+	reg_subscriber *first_s = 0;
+	int subscribe_count = 0;
     LM_DBG("Adding reg subscription to IMPU record");
 
     if (!urec) {
@@ -247,6 +251,38 @@ int add_subscriber(impurecord_t* urec,
         return 0;
     }
     
+	if (max_subscribes > 0) {
+		LM_DBG("Maximum subscribers per watcher_uri, presentity_uri, event combination is <%d>", max_subscribes);
+		previous_s = urec->shead;
+		while (previous_s) {
+				LM_DBG("Scrolling through subscription to reg events in IMPU record list");
+				if (previous_s->event == subscriber_data->event &&
+						(previous_s->watcher_uri.len == subscriber_data->watcher_uri->len)
+						&& (strncasecmp(previous_s->watcher_uri.s, subscriber_data->watcher_uri->s, subscriber_data->watcher_uri->len) == 0)
+						&& (strncasecmp(previous_s->presentity_uri.s, subscriber_data->presentity_uri->s, subscriber_data->presentity_uri->len) == 0)) {
+						LM_DBG("Found existing subscription for watcher_uri <%.*s>, presentity_uri <%.*s>, event <%d>",
+								subscriber_data->watcher_uri->len, subscriber_data->watcher_uri->s,
+								subscriber_data->presentity_uri->len, subscriber_data->presentity_uri->s,
+								subscriber_data->event);
+						subscribe_count++;
+						if (first_s == 0) {
+						    LM_DBG("This is the first subscription with the same watcher uri, presentity uri, event combination - we store it in case we need to remove the first, oldest subscription");
+							first_s = previous_s;	
+						}
+
+
+				}
+				previous_s = previous_s->next;
+		}
+		if (subscribe_count >= max_subscribes) {
+				LM_DBG("There are currently more subscribes for this watcher_uri, presentity_uri, event combination  <%d> than the maximum - so we remove the first and oldest one",
+						subscribe_count);
+				//we remove the first, oldest subscription
+				delete_subscriber (urec, first_s);
+		}
+}
+	
+	
     s = new_subscriber(subscriber_data);
     
 
@@ -351,7 +387,8 @@ void external_delete_subscriber(reg_subscriber *s, udomain_t* _t, int lock_domai
 }
 
 void delete_subscriber(impurecord_t* urec, reg_subscriber *s) {
-    LM_DBG("Deleting subscriber [%.*s] from IMPU: [%.*s]", s->watcher_uri.len, s->watcher_uri.s, urec->public_identity.len, urec->public_identity.s);
+    LM_DBG("Deleting subscriber [%.*s], watcher_contact [%.*s] from IMPU: [%.*s]", 
+			s->watcher_uri.len, s->watcher_uri.s, s->watcher_contact.len, s->watcher_contact.s, urec->public_identity.len, urec->public_identity.s);
     
     if (db_mode == WRITE_THROUGH && db_unlink_subscriber_from_impu(urec, s) !=0) {
 	    LM_ERR("Failed to delete DB linking subscriber [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", 

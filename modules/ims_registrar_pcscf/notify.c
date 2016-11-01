@@ -35,6 +35,7 @@
 #include "../../modules/ims_usrloc_pcscf/usrloc.h"
 #include "ul_callback.h"
 #include <libxml/parser.h>
+#include <libxml2/libxml/globals.h>
 
 #include "subscribe.h"
 
@@ -176,7 +177,7 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
         LM_DBG("Setting received port in search to %d\n", ci.received_port);
         ci.received_proto = received_proto;
         LM_DBG("Setting received proto in search to %d\n", ci.received_proto);
-        ci.searchflag = (1 << SEARCH_RECEIVED);
+        ci.searchflag = SEARCH_RECEIVED;
     } else {
         LM_DBG("Contact in NOTIFY does not have an alias....\n");
     }
@@ -309,7 +310,7 @@ int process_body(struct sip_msg* msg, str notify_body, udomain_t * domain) {
     str path = {0, 0};
     str user_agent = {0, 0};
     int reg_state, contact_state, event, expires, result, final_result = RESULT_ERROR;
-    char * expires_char, * cseq_char;
+    char * expires_char=0, * cseq_char=0, *registration_state=0, *contact_state_s=0, *event_s=0;
     int cseq = 0;
     pv_elem_t *presentity_uri_pv;
 
@@ -329,7 +330,8 @@ int process_body(struct sip_msg* msg, str notify_body, udomain_t * domain) {
         /* Only process registration sub-items */
         if (xmlStrcasecmp(registrations->name, BAD_CAST "registration") != 0)
             goto next_registration;
-        reg_state = reginfo_parse_state(xmlGetAttrContentByName(registrations, "state"));
+		registration_state = xmlGetAttrContentByName(registrations, "state");
+        reg_state = reginfo_parse_state(registration_state);
         if (reg_state == STATE_UNKNOWN) {
             LM_ERR("No state for this registration!\n");
             goto next_registration;
@@ -397,7 +399,8 @@ int process_body(struct sip_msg* msg, str notify_body, udomain_t * domain) {
                 user_agent.len = strlen(user_agent.s);
                 LM_DBG("contact has user_agent <%.*s>\n", user_agent.len, user_agent.s);
             }
-            event = reginfo_parse_event(xmlGetAttrContentByName(contacts, "event"));
+			event_s = xmlGetAttrContentByName(contacts, "event");
+            event = reginfo_parse_event(event_s);
             if (event == EVENT_UNKNOWN) {
                 LM_ERR("No event for this contact - going to next contact!\n");
                 goto next_contact;
@@ -413,7 +416,8 @@ int process_body(struct sip_msg* msg, str notify_body, udomain_t * domain) {
                 goto next_contact;
             }
 
-            contact_state = reginfo_parse_state(xmlGetAttrContentByName(contacts, "state"));
+			contact_state_s = xmlGetAttrContentByName(contacts, "state");
+            contact_state = reginfo_parse_state(contact_state_s);
             if (contact_state == STATE_UNKNOWN) {
                 LM_ERR("No state for this contact - going to next contact!\n");
                 goto next_contact;
@@ -449,6 +453,11 @@ int process_body(struct sip_msg* msg, str notify_body, udomain_t * domain) {
 
                 /* Add to Usrloc: */
                 result = process_contact(domain, expires, contact_uri, contact_state);
+				
+				if (contact_uri.s && (strlen(contact_uri.s)>0)) {
+					xmlFree(contact_uri.s);
+					contact_uri.s = NULL;
+				}
 
                 /* Process the result */
                 if (final_result != RESULT_CONTACTS_FOUND) final_result = result;
@@ -456,6 +465,39 @@ next_uri:
                 uris = uris->next;
             }
 next_contact:
+			if (cseq_char && (strlen(cseq_char)>0)) {
+				xmlFree(cseq_char);
+				cseq_char=NULL;
+			}
+			if (expires_char && (strlen(expires_char)>0)) {
+				xmlFree(expires_char);
+				expires_char = NULL;
+			}
+			if (user_agent.s && (strlen(user_agent.s)>0)) { 
+				xmlFree(user_agent.s);
+				user_agent.s = NULL;
+			}
+			if (path.s && (strlen(path.s)>0)) { 
+				xmlFree(path.s);
+				path.s = NULL;
+			}
+			if (received.s && (strlen(received.s)>0)) {
+				xmlFree(received.s);
+				received.s = NULL;
+			}
+			if (callid.s && (strlen(callid.s)>0)) { 
+				xmlFree(callid.s);
+				callid.s = NULL;
+			}
+			if (contact_state_s && (strlen(contact_state_s)>0)) {
+				xmlFree(contact_state_s); 
+				contact_state_s = NULL;
+			}
+			if (event_s && (strlen(event_s)>0)) { 
+				xmlFree(event_s); 
+				event_s = NULL;
+			}
+
             contacts = contacts->next;
         }
 
@@ -464,6 +506,15 @@ next_registration:
         /* Unlock the domain for this AOR: */
         //if (aor_key.len > 0)
         //	ul.unlock_udomain(domain, &aor_key);
+		if (registration_state && (strlen(registration_state)>0)) {
+			xmlFree(registration_state);
+			registration_state = NULL;
+		}
+		if (aor.len > 0 && aor.s) {
+			xmlFree(aor.s);
+			aor.s = NULL;
+			aor.len = 0;
+		}
 
         registrations = registrations->next;
     }

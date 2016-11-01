@@ -88,7 +88,6 @@ int *next_idx   = NULL;
 
 static void ds_run_route(struct sip_msg *msg, str *uri, char *route);
 
-void destroy_list(int);
 void shuffle_uint100array(unsigned int* arr);
 int ds_reinit_rweight_on_state_change(int old_state, int new_state, ds_set_t *dset);
 
@@ -155,32 +154,41 @@ int ds_hash_load_destroy(void)
 }
 
 /**
- *
+ * Recursivly print ds_set
  */
-int ds_print_sets(void)
+void ds_log_set( ds_set_t* node )
 {
-	ds_set_t *si = NULL;
+	if ( !node )
+		return;
+
 	int i;
 
+	for( i=0;i<2;++i)
+		ds_log_set( node->next[i] );
+
+	for(i=0; i<node->nr; i++)
+	{
+		LM_DBG("dst>> %d %.*s %d %d (%.*s,%d,%d,%d)\n", node->id,
+				node->dlist[i].uri.len, node->dlist[i].uri.s,
+				node->dlist[i].flags, node->dlist[i].priority,
+				node->dlist[i].attrs.duid.len, node->dlist[i].attrs.duid.s,
+				node->dlist[i].attrs.maxload,
+				node->dlist[i].attrs.weight,
+				node->dlist[i].attrs.rweight);
+	}
+
+	return;
+}
+
+/**
+ *
+ */
+int ds_log_sets(void)
+{
 	if(_ds_list==NULL)
 		return -1;
 
-	/* get the index of the set */
-	si = _ds_list;
-	while(si)
-	{
-		for(i=0; i<si->nr; i++)
-		{
-			LM_DBG("dst>> %d %.*s %d %d (%.*s,%d,%d,%d)\n", si->id,
-					si->dlist[i].uri.len, si->dlist[i].uri.s,
-					si->dlist[i].flags, si->dlist[i].priority,
-					si->dlist[i].attrs.duid.len, si->dlist[i].attrs.duid.s,
-					si->dlist[i].attrs.maxload,
-					si->dlist[i].attrs.weight,
-					si->dlist[i].attrs.rweight);
-		}
-		si = si->next;
-	}
+	ds_log_set( _ds_list );
 
 	return 0;
 }
@@ -225,6 +233,7 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 	param_hooks_t phooks;
 	param_t *pit=NULL;
 	str param;
+	int tmp_rweight = 0;
 
 	if(attrs==NULL || attrs->len<=0)
 		return 0;
@@ -260,7 +269,7 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 			dest->attrs.socket = pit->body;
 		}else if(pit->name.len==7
 				&& strncasecmp(pit->name.s, "rweight", 7)==0) {
-			int tmp_rweight;
+			tmp_rweight = 0;
 			str2sint(&pit->body, &tmp_rweight);
 			if ( tmp_rweight>=1 && tmp_rweight<=100 ) {
 				dest->attrs.rweight = tmp_rweight;
@@ -278,23 +287,16 @@ int ds_set_attrs(ds_dest_t *dest, str *attrs)
 /**
  *
  */
-int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
-		int list_idx, int * setn)
+ds_dest_t *pack_dest(str uri, int flags, int priority, str *attrs)
 {
 	ds_dest_t *dp = NULL;
-	ds_set_t  *sp = NULL;
-	ds_dest_t *dp0 = NULL;
-	ds_dest_t *dp1 = NULL;
-
 	/* For DNS-Lookups */
 	static char hn[256];
 	struct hostent* he;
 	struct sip_uri puri;
-	int orig_id = 0, orig_nr = 0;
 	str host;
 	int port, proto;
 	char c = 0;
-	ds_set_t *orig_ds_lists = ds_lists[list_idx];
 
 	/* check uri */
 	if(parse_uri(uri.s, uri.len, &puri)!=0 || puri.host.len>254)
@@ -307,36 +309,8 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	if (default_core_cfg.dns_try_ipv6 == 0 &&
 			puri.host.s[0] == '[' && puri.host.s[puri.host.len-1] == ']') {
 		LM_DBG("skipping IPv6 record %.*s\n", puri.host.len, puri.host.s);
-		return 0;
+		return NULL;
 	}
-
-	/* get dest set */
-	sp = ds_lists[list_idx];
-	while(sp)
-	{
-		if(sp->id == id)
-			break;
-		sp = sp->next;
-	}
-
-	if(sp==NULL)
-	{
-		sp = (ds_set_t*)shm_malloc(sizeof(ds_set_t));
-		if(sp==NULL)
-		{
-			LM_ERR("no more memory.\n");
-			goto err;
-		}
-
-		memset(sp, 0, sizeof(ds_set_t));
-		sp->next = ds_lists[list_idx];
-		ds_lists[list_idx] = sp;
-		*setn = *setn+1;
-	}
-	orig_id = sp->id;
-	orig_nr = sp->nr;
-	sp->id = id;
-	sp->nr++;
 
 	/* store uri */
 	dp = (ds_dest_t*)shm_malloc(sizeof(ds_dest_t));
@@ -414,6 +388,41 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 	/* Copy the proto out of the URI */
 	dp->proto = puri.proto;
 
+	return dp;
+err:
+	if(dp!=NULL)
+	{
+		if(dp->uri.s!=NULL)
+			shm_free(dp->uri.s);
+		shm_free(dp);
+	}
+
+	return NULL;
+}
+
+/**
+ *
+ */
+int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
+		int list_idx, int* setn)
+{
+	ds_dest_t *dp = NULL;
+	ds_set_t  *sp = NULL;
+	ds_dest_t *dp0 = NULL;
+	ds_dest_t *dp1 = NULL;
+
+	dp = pack_dest( uri, flags, priority, attrs );
+	if ( !dp )
+		goto err;
+
+	sp = ds_avl_insert( &ds_lists[list_idx], id, setn );
+	if( !sp )
+	{
+		LM_ERR("no more memory.\n");
+		goto err;
+	}
+	sp->nr++;
+
 	if(sp->dlist==NULL)
 	{
 		sp->dlist = dp;
@@ -441,23 +450,11 @@ int add_dest2list(int id, str uri, int flags, int priority, str *attrs,
 
 	return 0;
 err:
-	/* free allocated memory */
 	if(dp!=NULL)
 	{
 		if(dp->uri.s!=NULL)
 			shm_free(dp->uri.s);
 		shm_free(dp);
-	}
-
-	if (sp != NULL)
-	{
-		sp->id = orig_id;
-		sp->nr = orig_nr;
-		if (sp->nr == 0)
-		{
-			shm_free(sp);
-			ds_lists[list_idx] = orig_ds_lists;
-		}
 	}
 
 	return -1;
@@ -471,10 +468,10 @@ void shuffle_uint100array(unsigned int* arr){
 	int k;
 	int j;
 	unsigned int t;
-	srand(time(0));
+	kam_srand(time(0));
 	for (j=0; j<100; j++)
 	{
-		k = j + (rand() % (100-j));
+		k = j + (kam_rand() % (100-j));
 		t = arr[j];
 		arr[j] = arr[k];
 		arr[k] = t;
@@ -589,44 +586,51 @@ randomize:
 }
 
 /*! \brief  compact destinations from sets for fast access */
-int reindex_dests(int list_idx, int setn)
+int reindex_dests( ds_set_t* node )
 {
-	int j;
-	ds_set_t  *sp = NULL;
-	ds_dest_t *dp = NULL, *dp0= NULL;
+	if ( !node )
+		return 0;
 
-	for(sp = ds_lists[list_idx]; sp!= NULL;	sp = sp->next)
+	int i=0;
+	for( ;i<2;++i)
 	{
-		dp0 = (ds_dest_t*)shm_malloc(sp->nr*sizeof(ds_dest_t));
-		if(dp0==NULL)
-		{
-			LM_ERR("no more memory!\n");
-			goto err1;
-		}
-		memset(dp0, 0, sp->nr*sizeof(ds_dest_t));
-
-		/* copy from the old pointer to destination, and then free it */
-		for(j=sp->nr-1; j>=0 && sp->dlist!= NULL; j--)
-		{
-			memcpy(&dp0[j], sp->dlist, sizeof(ds_dest_t));
-			if(j==sp->nr-1)
-				dp0[j].next = NULL;
-			else
-				dp0[j].next = &dp0[j+1];
-
-
-			dp = sp->dlist;
-			sp->dlist = dp->next;
-
-			shm_free(dp);
-			dp=NULL;
-		}
-		sp->dlist = dp0;
-		dp_init_weights(sp);
-		dp_init_relative_weights(sp);
+		int rc = reindex_dests( node->next[i] );
+		if ( rc != 0 )
+			return rc;
 	}
 
-	LM_DBG("found [%d] dest sets\n", setn);
+	int j;
+
+	ds_dest_t *dp = NULL, *dp0= NULL;
+
+	dp0 = (ds_dest_t*)shm_malloc(node->nr*sizeof(ds_dest_t));
+	if(dp0==NULL)
+	{
+		LM_ERR("no more memory!\n");
+		goto err1;
+	}
+	memset(dp0, 0, node->nr*sizeof(ds_dest_t));
+
+	/* copy from the old pointer to destination, and then free it */
+	for(j=node->nr-1; j>=0 && node->dlist!= NULL; j--)
+	{
+		memcpy(&dp0[j], node->dlist, sizeof(ds_dest_t));
+		if(j==node->nr-1)
+			dp0[j].next = NULL;
+		else
+			dp0[j].next = &dp0[j+1];
+
+
+		dp = node->dlist;
+		node->dlist = dp->next;
+
+		shm_free(dp);
+		dp=NULL;
+	}
+	node->dlist = dp0;
+	dp_init_weights(node);
+	dp_init_relative_weights(node);
+
 	return 0;
 
 err1:
@@ -664,7 +668,7 @@ int ds_load_list(char *lfile)
 	id = setn = flags = priority = 0;
 
 	*next_idx = (*crt_idx + 1)%2;
-	destroy_list(*next_idx);
+	ds_avl_destroy( &ds_lists[*next_idx] );
 
 	p = fgets(line, 256, f);
 	while(p)
@@ -743,17 +747,19 @@ int ds_load_list(char *lfile)
 
 add_destination:
 		if(add_dest2list(id, uri, flags, priority, &attrs,
-					*next_idx, &setn) != 0)
+					*next_idx, &setn ) != 0)
 			LM_WARN("unable to add destination %.*s to set %d -- skipping\n",
 					uri.len, uri.s, id);
 next_line:
 		p = fgets(line, 256, f);
 	}
 
-	if(reindex_dests(*next_idx, setn)!=0){
+	if(reindex_dests(ds_lists[*next_idx])!=0){
 		LM_ERR("error on reindex\n");
 		goto error;
 	}
+
+	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
 
 	fclose(f);
 	f = NULL;
@@ -761,13 +767,13 @@ next_line:
 	_ds_list_nr = setn;
 	*crt_idx = *next_idx;
 	ds_ht_clear_slots(_dsht_load);
-	ds_print_sets();
+	ds_log_sets();
 	return 0;
 
 error:
 	if(f!=NULL)
 		fclose(f);
-	destroy_list(*next_idx);
+	ds_avl_destroy( &ds_lists[*next_idx] );
 	*next_idx = *crt_idx;
 	return -1;
 }
@@ -928,7 +934,7 @@ int ds_load_db(void)
 
 	setn = 0;
 	*next_idx = (*crt_idx + 1)%2;
-	destroy_list(*next_idx);
+	ds_avl_destroy( &ds_lists[*next_idx] );
 
 	for(i=0; i<nr_rows; i++)
 	{
@@ -958,11 +964,13 @@ int ds_load_db(void)
 					uri.len, uri.s, id);
 		}
 	}
-	if(reindex_dests(*next_idx, setn)!=0)
+	if(reindex_dests(ds_lists[*next_idx])!=0)
 	{
 		LM_ERR("error on reindex\n");
 		goto err2;
 	}
+
+	LM_DBG("found [%d] dest sets\n", _ds_list_nr);
 
 	ds_dbf.free_result(ds_db_handle, res);
 
@@ -971,14 +979,14 @@ int ds_load_db(void)
 	*crt_idx = *next_idx;
 	ds_ht_clear_slots(_dsht_load);
 
-	ds_print_sets();
+	ds_log_sets();
 
 	if (dest_errs > 0)
 		return -2;
 	return 0;
 
 err2:
-	destroy_list(*next_idx);
+	ds_avl_destroy( &ds_lists[*next_idx] );
 	ds_dbf.free_result(ds_db_handle, res);
 	*next_idx = *crt_idx;
 
@@ -989,8 +997,8 @@ err2:
 int ds_destroy_list(void)
 {
 	if (ds_lists) {
-		destroy_list(0);
-		destroy_list(1);
+		ds_avl_destroy( &ds_lists[0] );
+		ds_avl_destroy( &ds_lists[1] );
 		shm_free(ds_lists);
 	}
 
@@ -998,37 +1006,6 @@ int ds_destroy_list(void)
 		shm_free(crt_idx);
 
 	return 0;
-}
-
-/**
- *
- */
-void destroy_list(int list_id)
-{
-	ds_set_t  *sp = NULL;
-	ds_set_t  *sp1 = NULL;
-	ds_dest_t *dest = NULL;
-
-	sp = ds_lists[list_id];
-
-	while(sp)
-	{
-		sp1 = sp->next;
-		for(dest = sp->dlist; dest!= NULL; dest=dest->next)
-		{
-			if(dest->uri.s!=NULL)
-			{
-				shm_free(dest->uri.s);
-				dest->uri.s = NULL;
-			}
-		}
-		if (sp->dlist != NULL)
-			shm_free(sp->dlist);
-		shm_free(sp);
-		sp = sp1;
-	}
-
-	ds_lists[list_id]  = NULL;
 }
 
 /**
@@ -1378,31 +1355,20 @@ int ds_hash_pvar(struct sip_msg *msg, unsigned int *hash)
 /**
  *
  */
-static inline int ds_get_index(int group, ds_set_t **index)
+static inline int ds_get_index(int group, int ds_list_idx, ds_set_t **index)
 {
 	ds_set_t *si = NULL;
 
-	if(index==NULL || group<0 || _ds_list==NULL)
+	if(index==NULL || group<0 || ds_lists[ds_list_idx]==NULL)
 		return -1;
 
 	/* get the index of the set */
-	si = _ds_list;
-	while(si)
-	{
-		if(si->id == group)
-		{
-			*index = si;
-			break;
-		}
-		si = si->next;
-	}
+	si = ds_avl_find( ds_lists[ds_list_idx], group );
 
 	if(si==NULL)
-	{
-		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
-	}
 
+	*index = si;
 	return 0;
 }
 
@@ -1415,15 +1381,7 @@ int ds_list_exist(int set)
 	LM_DBG("-- Looking for set %d\n", set);
 
 	/* get the index of the set */
-	si = _ds_list;
-	while(si)
-	{
-		if(si->id == set)
-		{
-			break;
-		}
-		si = si->next;
-	}
+	si = ds_avl_find( _ds_list, set );
 
 	if(si==NULL)
 	{
@@ -1448,7 +1406,8 @@ int ds_get_leastloaded(ds_set_t *dset)
 	for(j=0; j<dset->nr; j++)
 	{
 		if(!ds_skip_dst(dset->dlist[j].flags)
-				&& dset->dlist[j].dload<dset->dlist[j].attrs.maxload)
+				&& (dset->dlist[j].attrs.maxload == 0
+					|| dset->dlist[j].dload<dset->dlist[j].attrs.maxload))
 		{
 			if(dset->dlist[j].dload<t)
 			{
@@ -1510,7 +1469,7 @@ int ds_load_replace(struct sip_msg *msg, str *duid)
 	}
 	set = it->dset;
 	/* get the index of the set */
-	if(ds_get_index(set, &idx)!=0)
+	if(ds_get_index(set, *crt_idx, &idx)!=0)
 	{
 		ds_unlock_cell(_dsht_load, &msg->callid->body);
 		LM_ERR("destination set [%d] not found\n", set);
@@ -1585,7 +1544,7 @@ int ds_load_remove(struct sip_msg *msg)
 	}
 	set = it->dset;
 	/* get the index of the set */
-	if(ds_get_index(set, &idx)!=0)
+	if(ds_get_index(set, *crt_idx, &idx)!=0)
 	{
 		ds_unlock_cell(_dsht_load, &msg->callid->body);
 		LM_ERR("destination set [%d] not found\n", set);
@@ -1629,7 +1588,7 @@ int ds_load_remove_byid(int set, str *duid)
 	int i;
 
 	/* get the index of the set */
-	if(ds_get_index(set, &idx)!=0)
+	if(ds_get_index(set, *crt_idx, &idx)!=0)
 	{
 		LM_ERR("destination set [%d] not found\n", set);
 		return -1;
@@ -1835,7 +1794,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 
 
 	/* get the index of the set */
-	if(ds_get_index(set, &idx)!=0)
+	if(ds_get_index(set, *crt_idx, &idx)!=0)
 	{
 		LM_ERR("destination set [%d] not found\n", set);
 		return -1;
@@ -1893,11 +1852,10 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 				default:
 					LM_ERR("can't get authorization hash\n");
 					return -1;
-					break;
 			}
 			break;
 		case 6: /* random selection */
-			hash = rand() % idx->nr;
+			hash = kam_rand() % idx->nr;
 			break;
 		case 7: /* hash on PV value */
 			if (ds_hash_pvar(msg, &hash)!=0)
@@ -2243,7 +2201,7 @@ int ds_next_dst(struct sip_msg *msg, int mode)
 	if(sock_avp_name.n!=0)
 	{
 		prev_avp = search_first_avp(sock_avp_type,
-				attrs_avp_name, &sock_avp_value, &st);
+				sock_avp_name, &sock_avp_value, &st);
 		if(prev_avp!=NULL)
 		{
 			if (sscanf( sock_avp_value.s.s, "%p", (void**)&sock ) != 1)
@@ -2333,7 +2291,7 @@ int ds_get_state(int group, str *address)
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, &idx)!=0)
+	if(ds_get_index(group, *crt_idx, &idx)!=0)
 	{
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
@@ -2370,7 +2328,7 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state)
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, &idx)!=0)
+	if(ds_get_index(group, *crt_idx, &idx)!=0)
 	{
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
@@ -2531,7 +2489,7 @@ int ds_reinit_state(int group, str *address, int state)
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, &idx)!=0)
+	if(ds_get_index(group, *crt_idx, &idx)!=0)
 	{
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
@@ -2559,14 +2517,56 @@ int ds_reinit_state(int group, str *address, int state)
 			address->len, address->s);
 	return -1;
 }
+
 /**
  *
  */
-int ds_print_list(FILE *fout)
+void ds_fprint_set( FILE *fout, ds_set_t* node )
 {
-	int j;
-	ds_set_t *list;
+	if ( !node )
+		return;
 
+	int i, j;
+	for( i=0;i<2;++i)
+		ds_fprint_set( fout, node->next[i] );
+
+	for(j=0; j<node->nr; j++)
+	{
+		fprintf(fout, "\n set #%d\n", node->id);
+
+		if (node->dlist[j].flags&DS_DISABLED_DST)
+			fprintf(fout, "    Disabled         ");
+		else if (node->dlist[j].flags&DS_INACTIVE_DST)
+			fprintf(fout, "    Inactive         ");
+		else if (node->dlist[j].flags&DS_TRYING_DST) {
+			fprintf(fout, "    Trying");
+			/* print the tries for this host. */
+			if (node->dlist[j].message_count > 0) {
+				fprintf(fout, " (Fail %d/%d)",
+						node->dlist[j].message_count,
+						probing_threshold);
+			} else {
+				fprintf(fout, "           ");
+			}
+
+		} else {
+			fprintf(fout, "    Active           ");
+		}
+		if (node->dlist[j].flags&DS_PROBING_DST)
+			fprintf(fout, "(P)");
+		else
+			fprintf(fout, "(*)");
+
+		fprintf(fout, "   %.*s\n",
+				node->dlist[j].uri.len, node->dlist[j].uri.s);
+	}
+}
+
+/**
+ *
+ */
+int ds_fprint_list(FILE *fout)
+{
 	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
 		LM_ERR("no destination sets\n");
@@ -2575,51 +2575,87 @@ int ds_print_list(FILE *fout)
 
 	fprintf(fout, "\nnumber of destination sets: %d\n", _ds_list_nr);
 
-	for(list = _ds_list; list!= NULL; list= list->next)
-	{
-		for(j=0; j<list->nr; j++)
-		{
-			fprintf(fout, "\n set #%d\n", list->id);
+	ds_fprint_set( fout, _ds_list );
 
-			if (list->dlist[j].flags&DS_DISABLED_DST)
-				fprintf(fout, "    Disabled         ");
-			else if (list->dlist[j].flags&DS_INACTIVE_DST)
-				fprintf(fout, "    Inactive         ");
-			else if (list->dlist[j].flags&DS_TRYING_DST) {
-				fprintf(fout, "    Trying");
-				/* print the tries for this host. */
-				if (list->dlist[j].message_count > 0) {
-					fprintf(fout, " (Fail %d/%d)",
-							list->dlist[j].message_count,
-							probing_threshold);
-				} else {
-					fprintf(fout, "           ");
-				}
-
-			} else {
-				fprintf(fout, "    Active           ");
-			}
-			if (list->dlist[j].flags&DS_PROBING_DST)
-				fprintf(fout, "(P)");
-			else
-				fprintf(fout, "(*)");
-
-			fprintf(fout, "   %.*s\n",
-					list->dlist[j].uri.len, list->dlist[j].uri.s);
-		}
-	}
 	return 0;
 }
 
+
+int ds_is_addr_from_set( sip_msg_t *_m, struct ip_addr* pipaddr,
+		unsigned short tport, unsigned short tproto, ds_set_t* node,
+		int mode, int export_set_pv )
+{
+	pv_value_t val;
+	int j;
+	for(j=0; j<node->nr; j++)
+	{
+		if (ip_addr_cmp(pipaddr, &node->dlist[j].ip_address)
+				&& ((mode&DS_MATCH_NOPORT) || node->dlist[j].port==0
+					|| tport == node->dlist[j].port)
+				&& ((mode&DS_MATCH_NOPROTO)
+					|| tproto == node->dlist[j].proto))
+		{
+			if(export_set_pv && ds_setid_pvname.s!=0)
+			{
+				memset(&val, 0, sizeof(pv_value_t));
+				val.flags = PV_VAL_INT|PV_TYPE_INT;
+
+				val.ri = node->id;
+				if(ds_setid_pv.setf(_m, &ds_setid_pv.pvp,
+							(int)EQ_T, &val)<0)
+				{
+					LM_ERR("setting PV failed\n");
+					return -2;
+				}
+			}
+			if(ds_attrs_pvname.s!=0 && node->dlist[j].attrs.body.len>0)
+			{
+				memset(&val, 0, sizeof(pv_value_t));
+				val.flags = PV_VAL_STR;
+				val.rs = node->dlist[j].attrs.body;
+				if(ds_attrs_pv.setf(_m, &ds_attrs_pv.pvp,
+							(int)EQ_T, &val)<0)
+				{
+					LM_ERR("setting attrs pv failed\n");
+					return -3;
+				}
+			}
+			return 1;
+		}
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+int ds_is_addr_from_set_r( sip_msg_t *_m, struct ip_addr* pipaddr,
+		unsigned short tport, unsigned short tproto, ds_set_t* node,
+		int mode, int export_set_pv )
+{
+	if ( !node )
+		return -1;
+
+	int i, rc;
+	for( i=0;i<2;++i)
+	{
+		rc = ds_is_addr_from_set_r(  _m, pipaddr, tport, tproto,
+				node->next[i], mode, export_set_pv );
+		if ( rc != -1 )
+			return rc;
+	}
+
+	return ds_is_addr_from_set( _m, pipaddr, tport, tproto,
+			node, mode, export_set_pv );
+}
 
 /* Checks, if the request (sip_msg *_m) comes from a host in a group
  * (group-id or -1 for all groups)
  */
 int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 {
-	pv_value_t val;
 	ds_set_t *list;
-	int j;
+
 	struct ip_addr* pipaddr;
 	struct ip_addr  aipaddr;
 	unsigned short tport;
@@ -2627,9 +2663,6 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 	sip_uri_t puri;
 	static char hn[256];
 	struct hostent* he;
-
-	memset(&val, 0, sizeof(pv_value_t));
-	val.flags = PV_VAL_INT|PV_TYPE_INT;
 
 	if(uri==NULL || uri->len<=0) {
 		pipaddr = &_m->rcv.src_ip;
@@ -2654,48 +2687,20 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 		tproto = puri.proto;
 	}
 
-	for(list = _ds_list; list!= NULL; list= list->next)
+	int rc = -1;
+
+	if ( group == -1 )
 	{
-		// LM_ERR("list id: %d (n: %d)\n", list->id, list->nr);
-		if ((group == -1) || (group == list->id))
-		{
-			for(j=0; j<list->nr; j++)
-			{
-				// LM_ERR("port no: %d (%d)\n", list->dlist[j].port, j);
-				if (ip_addr_cmp(pipaddr, &list->dlist[j].ip_address)
-						&& ((mode&DS_MATCH_NOPORT) || list->dlist[j].port==0
-							|| tport == list->dlist[j].port)
-						&& ((mode&DS_MATCH_NOPROTO)
-							|| tproto == list->dlist[j].proto))
-				{
-					if(group==-1 && ds_setid_pvname.s!=0)
-					{
-						val.ri = list->id;
-						if(ds_setid_pv.setf(_m, &ds_setid_pv.pvp,
-									(int)EQ_T, &val)<0)
-						{
-							LM_ERR("setting PV failed\n");
-							return -2;
-						}
-					}
-					if(ds_attrs_pvname.s!=0 && list->dlist[j].attrs.body.len>0)
-					{
-						memset(&val, 0, sizeof(pv_value_t));
-						val.flags = PV_VAL_STR;
-						val.rs = list->dlist[j].attrs.body;
-						if(ds_attrs_pv.setf(_m, &ds_attrs_pv.pvp,
-									(int)EQ_T, &val)<0)
-						{
-							LM_ERR("setting attrs pv failed\n");
-							return -3;
-						}
-					}
-					return 1;
-				}
-			}
-		}
+		rc = ds_is_addr_from_set( _m, pipaddr, tport, tproto, _ds_list, mode, 1 );
 	}
-	return -1;
+	else
+	{
+		list = ds_avl_find( _ds_list, group );
+		if ( list )
+			rc = ds_is_addr_from_set( _m, pipaddr, tport, tproto, list, mode, 0 );
+	}
+
+	return rc;
 }
 
 int ds_is_from_list(struct sip_msg *_m, int group)
@@ -2703,16 +2708,80 @@ int ds_is_from_list(struct sip_msg *_m, int group)
 	return ds_is_addr_from_list(_m, group, NULL, DS_MATCH_NOPROTO);
 }
 
-int ds_print_mi_list(struct mi_node* rpl)
+int ds_mi_print_set( struct mi_node* rpl, ds_set_t* list )
 {
+	if ( !list )
+		return 0;
+
+	int i=0;
+	for( ;i<2;++i)
+	{
+		int rc = ds_mi_print_set( rpl, list->next[i] );
+		if ( rc != 0 )
+			return rc;
+	}
+
 	int len, j;
 	char* p;
 	char c[3];
 	str data;
-	ds_set_t *list;
+
 	struct mi_node* node = NULL;
 	struct mi_node* set_node = NULL;
 	struct mi_attr* attr = NULL;
+
+	p = int2str(list->id, &len);
+	set_node= add_mi_node_child(rpl, MI_DUP_VALUE,"SET", 3, p, len);
+	if(set_node == NULL)
+		return -1;
+
+	for(j=0; j<list->nr; j++)
+	{
+		node= add_mi_node_child(set_node, 0, "URI", 3,
+				list->dlist[j].uri.s, list->dlist[j].uri.len);
+		if(node == NULL)
+			return -1;
+
+		memset(&c, 0, sizeof(c));
+		if (list->dlist[j].flags & DS_INACTIVE_DST)
+			c[0] = 'I';
+		else if (list->dlist[j].flags & DS_DISABLED_DST)
+			c[0] = 'D';
+		else if (list->dlist[j].flags & DS_TRYING_DST)
+			c[0] = 'T';
+		else
+			c[0] = 'A';
+
+		if (list->dlist[j].flags & DS_PROBING_DST)
+			c[1] = 'P';
+		else
+			c[1] = 'X';
+
+		attr = add_mi_attr (node, MI_DUP_VALUE, "flags", 5, c, 2);
+		if(attr == 0)
+			return -1;
+
+		data.s = int2str(list->dlist[j].priority, &data.len);
+		attr = add_mi_attr (node, MI_DUP_VALUE, "priority", 8,
+				data.s, data.len);
+		if(attr == 0)
+			return -1;
+		attr = add_mi_attr (node, MI_DUP_VALUE, "attrs", 5,
+				(list->dlist[j].attrs.body.s)?list->dlist[j].attrs.body.s:"",
+				list->dlist[j].attrs.body.len);
+		if(attr == 0)
+			return -1;
+	}
+
+	return 0;
+}
+
+int ds_print_mi_list(struct mi_node* rpl)
+{
+	int len;
+	char* p;
+
+	struct mi_node* node = NULL;
 
 	if(_ds_list==NULL || _ds_list_nr<=0)
 	{
@@ -2725,53 +2794,7 @@ int ds_print_mi_list(struct mi_node* rpl)
 	if(node== NULL)
 		return -1;
 
-	for(list = _ds_list; list!= NULL; list= list->next)
-	{
-		p = int2str(list->id, &len);
-		set_node= add_mi_node_child(rpl, MI_DUP_VALUE,"SET", 3, p, len);
-		if(set_node == NULL)
-			return -1;
-
-		for(j=0; j<list->nr; j++)
-		{
-			node= add_mi_node_child(set_node, 0, "URI", 3,
-					list->dlist[j].uri.s, list->dlist[j].uri.len);
-			if(node == NULL)
-				return -1;
-
-			memset(&c, 0, sizeof(c));
-			if (list->dlist[j].flags & DS_INACTIVE_DST)
-				c[0] = 'I';
-			else if (list->dlist[j].flags & DS_DISABLED_DST)
-				c[0] = 'D';
-			else if (list->dlist[j].flags & DS_TRYING_DST)
-				c[0] = 'T';
-			else
-				c[0] = 'A';
-
-			if (list->dlist[j].flags & DS_PROBING_DST)
-				c[1] = 'P';
-			else
-				c[1] = 'X';
-
-			attr = add_mi_attr (node, MI_DUP_VALUE, "flags", 5, c, 2);
-			if(attr == 0)
-				return -1;
-
-			data.s = int2str(list->dlist[j].priority, &data.len);
-			attr = add_mi_attr (node, MI_DUP_VALUE, "priority", 8,
-					data.s, data.len);
-			if(attr == 0)
-				return -1;
-			attr = add_mi_attr (node, MI_DUP_VALUE, "attrs", 5,
-					(list->dlist[j].attrs.body.s)?list->dlist[j].attrs.body.s:"",
-					list->dlist[j].attrs.body.len);
-			if(attr == 0)
-				return -1;
-		}
-	}
-
-	return 0;
+	return ds_mi_print_set( rpl, _ds_list );
 }
 
 /*! \brief
@@ -2843,6 +2866,56 @@ static void ds_options_callback( struct cell *t, int type,
 	return;
 }
 
+/**
+ *
+ */
+void ds_ping_set( ds_set_t* node )
+{
+	if ( !node )
+		return;
+
+	uac_req_t uac_r;
+	int i, j;
+
+	for( i=0;i<2;++i)
+		ds_ping_set( node->next[i] );
+
+	for(j=0; j<node->nr; j++)
+	{
+		/* skip addresses set in disabled state by admin */
+		if((node->dlist[j].flags&DS_DISABLED_DST) != 0)
+			continue;
+		/* If the Flag of the entry has "Probing set, send a probe:	*/
+		if (ds_probing_mode==DS_PROBE_ALL ||
+				(node->dlist[j].flags&DS_PROBING_DST) != 0)
+		{
+			LM_DBG("probing set #%d, URI %.*s\n", node->id,
+					node->dlist[j].uri.len, node->dlist[j].uri.s);
+
+			/* Send ping using TM-Module.
+			 * int request(str* m, str* ruri, str* to, str* from, str* h,
+			 *		str* b, str *oburi,
+			 *		transaction_cb cb, void* cbp); */
+			set_uac_req(&uac_r, &ds_ping_method, 0, 0, 0,
+					TMCB_LOCAL_COMPLETED, ds_options_callback,
+					(void*)(long)node->id);
+			if (node->dlist[j].attrs.socket.s != NULL && node->dlist[j].attrs.socket.len > 0) {
+				uac_r.ssock = &node->dlist[j].attrs.socket;
+			} else if (ds_default_socket.s != NULL && ds_default_socket.len > 0) {
+				uac_r.ssock = &ds_default_socket;
+			}
+			if (tmb.t_request(&uac_r,
+						&node->dlist[j].uri,
+						&node->dlist[j].uri,
+						&ds_ping_from,
+						&ds_outbound_proxy) < 0) {
+				LM_ERR("unable to ping [%.*s]\n",
+						node->dlist[j].uri.len, node->dlist[j].uri.s);
+			}
+		}
+	}
+}
+
 /*! \brief
  * Timer for checking probing destinations
  *
@@ -2850,9 +2923,7 @@ static void ds_options_callback( struct cell *t, int type,
  */
 void ds_check_timer(unsigned int ticks, void* param)
 {
-	int j;
-	ds_set_t *list;
-	uac_req_t uac_r;
+
 
 	/* Check for the list. */
 	if(_ds_list==NULL || _ds_list_nr<=0)
@@ -2866,44 +2937,8 @@ void ds_check_timer(unsigned int ticks, void* param)
 		LM_DBG("pinging destinations is inactive by admin\n");
 		return;
 	}
-	/* Iterate over the groups and the entries of each group: */
-	for(list = _ds_list; list!= NULL; list= list->next)
-	{
-		for(j=0; j<list->nr; j++)
-		{
-			/* skip addresses set in disabled state by admin */
-			if((list->dlist[j].flags&DS_DISABLED_DST) != 0)
-				continue;
-			/* If the Flag of the entry has "Probing set, send a probe:	*/
-			if (ds_probing_mode==DS_PROBE_ALL ||
-					(list->dlist[j].flags&DS_PROBING_DST) != 0)
-			{
-				LM_DBG("probing set #%d, URI %.*s\n", list->id,
-						list->dlist[j].uri.len, list->dlist[j].uri.s);
 
-				/* Send ping using TM-Module.
-				 * int request(str* m, str* ruri, str* to, str* from, str* h,
-				 *		str* b, str *oburi,
-				 *		transaction_cb cb, void* cbp); */
-				set_uac_req(&uac_r, &ds_ping_method, 0, 0, 0,
-						TMCB_LOCAL_COMPLETED, ds_options_callback,
-						(void*)(long)list->id);
-				if (list->dlist[j].attrs.socket.s != NULL && list->dlist[j].attrs.socket.len > 0) {
-					uac_r.ssock = &list->dlist[j].attrs.socket;
-				} else if (ds_default_socket.s != NULL && ds_default_socket.len > 0) {
-					uac_r.ssock = &ds_default_socket;
-				}
-				if (tmb.t_request(&uac_r,
-							&list->dlist[j].uri,
-							&list->dlist[j].uri,
-							&ds_ping_from,
-							&ds_outbound_proxy) < 0) {
-					LM_ERR("unable to ping [%.*s]\n",
-							list->dlist[j].uri.len, list->dlist[j].uri.s);
-				}
-			}
-		}
-	}
+	ds_ping_set( _ds_list );
 }
 
 /*! \brief
@@ -2978,4 +3013,171 @@ ds_set_t *ds_get_list(void)
 int ds_get_list_nr(void)
 {
 	return _ds_list_nr;
+}
+
+ds_set_t* ds_avl_find( ds_set_t* node, int id )
+{
+  while (node && id != node->id) {
+          int next_step = (id > node->id);
+          node = node->next[next_step];
+  }
+  return node;
+}
+
+/**
+ *
+ */
+void ds_avl_destroy( ds_set_t** node_ptr )
+{
+
+	if ( !node_ptr || !(*node_ptr) )
+		return;
+
+	ds_set_t* node = *node_ptr;
+
+	int i=0;
+	for( ;i<2;++i)
+		ds_avl_destroy( &node->next[i] );
+
+	ds_dest_t *dest = NULL;
+
+	for(dest = node->dlist; dest!= NULL; dest=dest->next)
+	{
+		if(dest->uri.s!=NULL)
+		{
+			shm_free(dest->uri.s);
+			dest->uri.s = NULL;
+		}
+	}
+	if (node->dlist != NULL)
+		shm_free(node->dlist);
+	shm_free(node);
+
+	*node_ptr = NULL;
+
+	return;
+}
+
+static void avl_rebalance( ds_set_t** path_top, int target );
+
+ds_set_t* ds_avl_insert( ds_set_t** root, int id, int* setn )
+{
+	ds_set_t** rotation_top = root;
+  ds_set_t* node = *root;
+  while (node && id != node->id) {
+		int next_step = (id > node->id);
+		if (!AVL_BALANCED(node)) rotation_top = root;
+		root = &node->next[next_step];
+		node = *root;
+  }
+  if (!node)
+  {
+  	node = shm_malloc(sizeof(*node));
+  	node->next[0] = node->next[1] = NULL;
+  	node->id = id;
+  	node->longer = AVL_NEITHER;
+  	*root = node;
+
+  	avl_rebalance( rotation_top, id );
+
+		(*setn)++;
+  }
+  return node;
+}
+
+static void avl_rebalance_path( ds_set_t* path, int id )
+{
+	/* Each node in path is currently balanced.
+	* Until we find target, mark each node as longer
+	* in the direction of target because we know we have
+	* inserted target there
+	*/
+	while (path && id != path->id) {
+		int next_step = (id > path->id);
+		path->longer = next_step;
+		path = path->next[next_step];
+	}
+}
+
+static ds_set_t* avl_rotate_2( ds_set_t** path_top, int dir )
+{
+	ds_set_t *B, *C, *D, *E;
+	B = *path_top;
+	D = B->next[dir];
+	C = D->next[1-dir];
+	E = D->next[dir];
+	*path_top = D;
+	D->next[1-dir] = B;
+	B->next[dir] = C;
+	B->longer = AVL_NEITHER;
+	D->longer = AVL_NEITHER;
+	return E;
+}
+
+static ds_set_t* avl_rotate_3( ds_set_t** path_top, int dir, int third )
+{
+	ds_set_t *B, *F, *D, *C, *E;
+	B = *path_top;
+	F = B->next[dir];
+	D = F->next[1-dir];
+	/* node: C and E can be NULL */
+	C = D->next[1-dir];
+	E = D->next[dir];
+	*path_top = D;
+	D->next[1-dir] = B;
+	D->next[dir] = F;
+	B->next[dir] = C;
+	F->next[1-dir] = E;
+	D->longer = AVL_NEITHER;
+
+	/* assume both trees are balanced */
+	B->longer = F->longer = AVL_NEITHER;
+
+	if ( third == AVL_NEITHER )
+		return NULL;
+
+	if (third == dir) {
+		/* E holds the insertion so B is unbalanced */
+		B->longer = 1-dir;
+		return E;
+	} else {
+		/* C holds the insertion so F is unbalanced */
+		F->longer = dir;
+		return C;
+	}
+}
+
+static void avl_rebalance( ds_set_t** path_top, int id )
+{
+	ds_set_t* path = *path_top;
+	int first, second, third;
+	if (AVL_BALANCED(path)) {
+			 avl_rebalance_path(path, id);
+			 return;
+	}
+	first = (id > path->id);
+	if (path->longer != first) {
+			 /* took the shorter path */
+			 path->longer = AVL_NEITHER;
+			 avl_rebalance_path(path->next[first], id);
+			 return;
+	}
+	/* took the longer path, need to rotate */
+	second = (id > path->next[first]->id);
+	if (first == second) {
+				/* just a two-point rotate */
+				path = avl_rotate_2(path_top, first);
+				avl_rebalance_path(path, id);
+				return;
+	}
+	/* fine details of the 3 point rotate depend on the third step.
+	 * However there may not be a third step, if the third point of the
+	 * rotation is the newly inserted point.  In that case we record
+	 * the third step as NEITHER
+	 */
+	path = path->next[first]->next[second];
+	if (id == path->id) third = AVL_NEITHER;
+	else third = (id > path->id);
+	path = avl_rotate_3(path_top, first, third);
+	avl_rebalance_path(path, id);
 }

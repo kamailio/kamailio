@@ -265,7 +265,7 @@
 <section id="tcp.accept_no_cl">
     <title>tcp.accept_no_cl</title>
     <para>
-        accept TCP messges without Content-Lenght .
+        accept TCP messages without Content-Lenght .
     </para>
     <para>Range: 0 - 1.</para>
     <para>Type: integer.</para>

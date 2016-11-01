@@ -15,10 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <stdio.h>
@@ -76,7 +76,7 @@ int dbt_init_cache(void)
 	}
 	/* init tables' hash table */
 	if (!_dbt_cachetbl) {
-		_dbt_cachetbl 
+		_dbt_cachetbl
 			= (dbt_tbl_cachel_p)shm_malloc(DBT_CACHETBL_SIZE*
 					sizeof(dbt_tbl_cachel_t));
 		if(_dbt_cachetbl==NULL)
@@ -101,7 +101,7 @@ int dbt_init_cache(void)
 		}
 	}
 
-	
+
 	return 0;
 }
 
@@ -123,17 +123,17 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	LM_DBG("looking for db %.*s!\n",_s->len,_s->s);
 
 	lock_get(_dbt_cachesem);
-	
+
 	_dcache = *_dbt_cachedb;
 	while(_dcache)
 	{
-		if(_dcache->name.len==_s->len 
+		if(_dcache->name.len==_s->len
 				&& !strncasecmp(_dcache->name.s, _s->s, _s->len))
 		{
 			LM_DBG("db already cached!\n");
 			goto done;
 		}
-		
+
 		_dcache = _dcache->next;
 	}
 	if(!dbt_is_database(_s))
@@ -142,7 +142,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 		goto done;
 	}
 	LM_DBG("new db!\n");
-	
+
 	_dcache = (dbt_cache_p)shm_malloc(sizeof(dbt_cache_t));
 	if(!_dcache)
 	{
@@ -150,7 +150,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 		goto done;
 	}
 	memset(_dcache, 0, sizeof(dbt_cache_t));
-	
+
 	_dcache->name.s = (char*)shm_malloc((_s->len+1)*sizeof(char));
 	if(!_dcache->name.s)
 	{
@@ -159,11 +159,11 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 		_dcache = NULL;
 		goto done;
 	}
-	
+
 	memcpy(_dcache->name.s, _s->s, _s->len);
 	_dcache->name.s[_s->len] = '\0';
 	_dcache->name.len = _s->len;
-	
+
 	if(*_dbt_cachedb)
 		_dcache->next = *_dbt_cachedb;
 
@@ -183,9 +183,9 @@ int dbt_cache_check_db(str *_s)
 	if(!_dbt_cachesem || !(*_dbt_cachedb)
 			|| !_s || !_s->s || _s->len<=0)
 		return -1;
-	
+
 	lock_get(_dbt_cachesem);
-	
+
 	_dcache = *_dbt_cachedb;
 	while(_dcache)
 	{
@@ -197,7 +197,7 @@ int dbt_cache_check_db(str *_s)
 		}
 		_dcache = _dcache->next;
 	}
-	
+
 	lock_release(_dbt_cachesem);
 	return -1;
 }
@@ -215,7 +215,7 @@ int dbt_db_del_table(dbt_cache_p _dc, const str *_s, int sync)
 
 	hash = core_hash(&_dc->name, _s, DBT_CACHETBL_SIZE);
 	hashidx = hash % DBT_CACHETBL_SIZE;
-	
+
 	if(sync)
 		lock_get(&_dbt_cachetbl[hashidx].sem);
 
@@ -232,7 +232,7 @@ int dbt_db_del_table(dbt_cache_p _dc, const str *_s, int sync)
 				(_tbc->prev)->next = _tbc->next;
 			else
 				_dbt_cachetbl[hashidx].dtp = _tbc->next;
-	
+
 			if(_tbc->next)
 				(_tbc->next)->prev = _tbc->prev;
 			break;
@@ -244,7 +244,7 @@ int dbt_db_del_table(dbt_cache_p _dc, const str *_s, int sync)
 		lock_release(&_dbt_cachetbl[hashidx].sem);
 
 	dbt_table_free(_tbc);
-	
+
 	return 0;
 }
 
@@ -264,7 +264,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 
 	hash = core_hash(&_dc->name, _s, DBT_CACHETBL_SIZE);
 	hashidx = hash % DBT_CACHETBL_SIZE;
-		
+
 	lock_get(&_dbt_cachetbl[hashidx].sem);
 
 	_tbc = _dbt_cachetbl[hashidx].dtp;
@@ -287,7 +287,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 		}
 		_tbc = _tbc->next;
 	}
-	
+
 	/* new table */
 	if(_tbc) /* free old one */
 	{
@@ -307,7 +307,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 	_tbc->next = _dbt_cachetbl[hashidx].dtp;
 	if(_dbt_cachetbl[hashidx].dtp)
 		_dbt_cachetbl[hashidx].dtp->prev = _tbc;
-	
+
 	_dbt_cachetbl[hashidx].dtp = _tbc;
 
 	/* table is locked */
@@ -324,7 +324,7 @@ int dbt_release_table(dbt_cache_p _dc, const str *_s)
 
 	hash = core_hash(&_dc->name, _s, DBT_CACHETBL_SIZE);
 	hashidx = hash % DBT_CACHETBL_SIZE;
-		
+
 	lock_release(&_dbt_cachetbl[hashidx].sem);
 
 	return 0;
@@ -339,10 +339,10 @@ int dbt_cache_destroy(void)
 	dbt_cache_p _dc=NULL, _dc0=NULL;
 	dbt_table_p _tbc = NULL;
 	dbt_table_p _tbc0 = NULL;
-	
+
 	if(!_dbt_cachesem)
 		return -1;
-	
+
 	lock_get(_dbt_cachesem);
 	if(	_dbt_cachedb!=NULL )
 	{
@@ -387,7 +387,7 @@ int dbt_cache_print(int _f)
 
 	if(!_dbt_cachetbl)
 		return -1;
-	
+
 	for(i=0; i< DBT_CACHETBL_SIZE; i++)
 	{
 		lock_get(&_dbt_cachetbl[i].sem);
@@ -416,7 +416,7 @@ int dbt_cache_print(int _f)
 		}
 		lock_release(&_dbt_cachetbl[i].sem);
 	}
-	
+
 	return 0;
 }
 

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /**
@@ -41,8 +41,8 @@
 #ifndef timer_h
 #define timer_h
 
-#define USE_SLOW_TIMER /* use another process to run the timer handlers 
-						  marked "slow" */
+#define USE_SLOW_TIMER /* use another process to run the timer handlers
+						*  marked "slow" */
 /*#define TIMER_DEBUG -- compile with -DTIMER_DEBUG*/
 
 #include "clist.h"
@@ -62,7 +62,7 @@ extern pid_t slow_timer_pid;
 
 /* deprecated, old, kept for compatibility */
 typedef void (timer_function)(unsigned int ticks, void* param);
-/* deprecated, old, kept for compatibility 
+/* deprecated, old, kept for compatibility
 	get_ticks()*TIMER_TICK used to be the time in s
 	for new code, use get_ticks_raw() and one of the macros defined in
 	timer_ticks.h (.e.g TICKS_TO_S(tick) to convert to s or ms )*/
@@ -72,7 +72,7 @@ typedef void (timer_function)(unsigned int ticks, void* param);
 typedef void (utimer_function)(unsigned int uticks, void* param);
 
 struct timer_ln; /* forward decl */
-/* new 
+/* new
  * params:
  *         - handle pointer to the corresponding struct timer_ln
  * return: 0 if the timer is one shot, new expire interval if not, -1
@@ -89,19 +89,19 @@ typedef ticks_t (timer_handler_f)(ticks_t t, struct timer_ln* tl,
 /* timer flags */
 #define F_TIMER_FAST	1
 #define F_TIMER_ON_SLOW_LIST	0x100
-#define F_TIMER_ACTIVE	0x200 /* timer is running or has run and expired
-								 (one shot) */
+#define F_TIMER_ACTIVE	0x200	/* timer is running or has run and expired
+								 * (one shot) */
 #ifdef TIMER_DEBUG
-#define F_TIMER_DELETED	0x400 
+#define F_TIMER_DELETED	0x400
 #endif
 
 struct timer_ln{ /* timer_link already used in tm */
 	struct timer_ln* next;
 	struct timer_ln* prev;
-	ticks_t expire; 
+	ticks_t expire;
 	ticks_t initial_timeout;
 	void* data;
-	timer_handler_f* f; 
+	timer_handler_f* f;
 	volatile unsigned short flags;
 #ifdef USE_SLOW_TIMER
 	volatile slow_idx_t slow_idx;
@@ -145,14 +145,14 @@ void timer_free(struct timer_ln* t);
 #define timer_reinit(tl) \
 	do{ \
 		(tl)->flags&=~((unsigned short)(F_TIMER_ON_SLOW_LIST | \
-											  F_TIMER_ACTIVE));\
+											F_TIMER_ACTIVE));\
 		(tl)->init++; \
 	}while(0)
 #else
 /* use for a deleted/expired timer that you want to add again */
 #define timer_reinit(tl) \
 	(tl)->flags&=~((unsigned short)(F_TIMER_ON_SLOW_LIST | \
-										  F_TIMER_ACTIVE))
+										F_TIMER_ACTIVE))
 #endif
 
 #define timer_init(tl, fun, param, flgs) \
@@ -165,7 +165,7 @@ void timer_free(struct timer_ln* t);
 	}while(0)
 
 #ifdef TIMER_DEBUG
-int timer_add_safe(struct timer_ln *tl, ticks_t delta, 
+int timer_add_safe(struct timer_ln *tl, ticks_t delta,
 					const char*, const char*, unsigned);
 int timer_del_safe(struct timer_ln *tl,
 					const char*, const char*, unsigned);

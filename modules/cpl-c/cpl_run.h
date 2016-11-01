@@ -60,7 +60,7 @@ struct cpl_interpreter {
 	struct location *loc_set;     /* location set */
 	/* pointers to the string-headers needed for switches; can point directly
 	 * into the sip_msg structure (if no proxy took places) or to private
-	 * buffers into shm_memory (after a proxy happend); if a hdr is copy into a
+	 * buffers into shm_memory (after a proxy happened); if a hdr is copy into a
 	 * private buffer, a corresponding flag will be set (xxxx_DUPLICATED) */
 	str *ruri;
 	str *to;

@@ -179,5 +179,25 @@ modparam("dmq_usrloc", "batch_usleep", 1000)
 	</section>
 	</section>
 
+	<section id="usrloc_dmq.p.usrloc_domain">
+		<title><varname>usrloc_domain</varname> (string)</title>
+		<para>
+			The usrloc domain to synchronize.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>location</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>usrloc_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq_usrloc", "usrloc_domain", "my_domain")
+...
+</programlisting>
+		</example>
+	</section>
+
 </chapter>
 

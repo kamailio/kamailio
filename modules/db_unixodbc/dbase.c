@@ -127,7 +127,9 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 	}
 
 	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s->s, _s->len);
-	if (!SQL_SUCCEEDED(ret))
+
+        /* Handle SQL_NO_DATA as a valid return code. DELETE and UPDATE statements may return this return code if nothing was deleted/updated. */
+        if (!SQL_SUCCEEDED(ret) && (ret != SQL_NO_DATA))
 	{
 		SQLCHAR sqlstate[7];
 		LM_ERR("rv=%d. Query= %.*s\n", ret, _s->len, _s->s);
@@ -136,7 +138,8 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 
 		/* Connection broken */
 		if( !strncmp((char*)sqlstate,"08003",5) ||
-		    !strncmp((char*)sqlstate,"08S01",5)
+		    !strncmp((char*)sqlstate,"08S01",5) ||
+		    !strncmp((char*)sqlstate,"HY000",5)   /* ODBC 3 General error */
 		    )
 		{
 			ret = reconnect(_h);
@@ -160,11 +163,13 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
 			SQLFreeHandle(SQL_HANDLE_STMT, CON_RESULT(_h));
 		}
 	}
-
+	/* Store the ODBC query result */
+	CON_QUERY_RESULT(_h) = ret;
 	return ret;
 }
 
 
+extern char *db_unixodbc_tquote;
 
 /*
  * Initialize database module
@@ -172,7 +177,10 @@ static int db_unixodbc_submit_query(const db1_con_t* _h, const str* _s)
  */
 db1_con_t* db_unixodbc_init(const str* _url)
 {
-	return db_do_init(_url, (void*)db_unixodbc_new_connection);
+	db1_con_t *c;
+	c = db_do_init(_url, (void*)db_unixodbc_new_connection);
+	if(c && db_unixodbc_tquote) CON_TQUOTE(c) = db_unixodbc_tquote;
+	return c;
 }
 
 /*
@@ -483,6 +491,53 @@ int db_unixodbc_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t*
 {
 	return db_do_replace(_h, _k, _v, _n, db_unixodbc_val2str,
 			db_unixodbc_submit_query);
+}
+
+
+/*
+ * Just like insert, but update the row if it exists otherwise insert it.
+ * For DB not supporting the replace query.
+ */
+int db_unixodbc_update_or_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+		const int _n, const int _un, const int _m)
+{
+	if(_un > _n)
+	{
+		LM_ERR("number of columns for unique key is too high\n");
+		return -1;
+	}
+
+	if(_un > 0)
+	{
+		/* Query error */
+		if(db_unixodbc_update(_h, _k, 0, _v, _k + _un,
+						_v + _un, _un, _n -_un)< 0)
+		{
+			LM_ERR("update failed\n");
+			return -1;
+		}
+		/* No row updated ? */
+		else if (CON_QUERY_RESULT(_h) == SQL_NO_DATA_FOUND)
+		{
+			/* Do an insert then */
+			if(db_unixodbc_insert(_h, _k, _v, _n)< 0)
+			{
+				LM_ERR("insert failed\n");
+				return -1;
+			}
+			LM_DBG("inserted new record in database table\n");
+		} else {
+			LM_DBG("updated record in database table\n");
+		}
+	} else {
+		if(db_unixodbc_insert(_h, _k, _v, _n)< 0)
+		{
+			LM_ERR("direct insert failed\n");
+			return -1;
+		}
+		LM_DBG("directly inserted new record in database table\n");
+	}
+	return 0;
 }
 
 /*

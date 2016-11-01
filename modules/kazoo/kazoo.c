@@ -393,6 +393,7 @@ static int mod_child_init(int rank)
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0){
+				if (cfg_child_init()) return -1;
 				close(kz_worker_pipes_fds[i*2+1]);
 				return(kz_amqp_consumer_worker_proc(kz_worker_pipes_fds[i*2]));
 			}
@@ -406,6 +407,7 @@ static int mod_child_init(int rank)
 					if (pid<0)
 						return -1; /* error */
 					if(pid==0){
+						if (cfg_child_init()) return -1;
 						return(kz_amqp_consumer_proc(s));
 					}
 				}
@@ -416,6 +418,7 @@ static int mod_child_init(int rank)
 		if (pid<0)
 			return -1; /* error */
 		if(pid==0){
+			if (cfg_child_init()) return -1;
 			close(kz_cmd_pipe_fds[1]);
 			kz_amqp_publisher_proc(kz_cmd_pipe_fds[0]);
 		}

@@ -81,8 +81,9 @@
 		</listitem>
 		<listitem>
 		<para>
-			<emphasis>mode</emphasis> - if set to 1, will create a new timer
-			process.
+			<emphasis>mode</emphasis> - if set to 0, the timer will use the main
+			(shared) timer. Any number > 0 will create the specified amount of
+			new timer processes (which will only be handling this timer).
 		</para>
 		</listitem>
 		<listitem>

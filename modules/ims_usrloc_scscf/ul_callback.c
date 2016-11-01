@@ -129,6 +129,7 @@ int register_ulcb( struct impurecord* r, struct ucontact* c, int types, ul_cb f,
 				|| (types & UL_IMPU_REG_NC_DELETE)
 				|| (types & UL_IMPU_NR_DELETE)
 				|| (types & UL_IMPU_UNREG_EXPIRED)
+				|| (types & UL_IMPU_UNREG_NC)
 				|| (types & UL_IMPU_UPDATE_CONTACT)
                                 || (types & UL_IMPU_DELETE_CONTACT)
                                 || (types & UL_IMPU_EXPIRE_CONTACT)

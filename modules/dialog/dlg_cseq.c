@@ -35,8 +35,11 @@
 
 #include "../../events.h"
 #include "../../ut.h"
+#include "../../trim.h"
+#include "../../data_lump.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_cseq.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "dlg_handlers.h"
@@ -50,12 +53,9 @@ static str _dlg_cseq_diff_var_name = str_init("cseq_diff");
 /**
  *
  */
-int dlg_cseq_prepare_msg(sip_msg_t *msg)
+static int dlg_cseq_prepare_msg(sip_msg_t *msg)
 {
-	if (parse_msg(msg->buf, msg->len, msg)!=0) {
-		LM_DBG("outbuf buffer parsing failed!");
-		return 1;
-	}
+	LM_DBG("prepare msg for cseq update operations\n");
 
 	if(msg->first_line.type==SIP_REQUEST) {
 		if(!IS_SIP(msg))
@@ -106,6 +106,166 @@ int dlg_cseq_prepare_msg(sip_msg_t *msg)
 /**
  *
  */
+static int dlg_cseq_prepare_new_msg(sip_msg_t *msg)
+{
+	LM_DBG("prepare new msg for cseq update operations\n");
+	if (parse_msg(msg->buf, msg->len, msg)!=0) {
+		LM_DBG("outbuf buffer parsing failed!");
+		return 1;
+	}
+	return dlg_cseq_prepare_msg(msg);
+}
+
+/**
+ *
+ */
+int dlg_cseq_update(sip_msg_t *msg)
+{
+	dlg_cell_t *dlg = NULL;
+	unsigned int direction;
+	unsigned int ninc = 0;
+	unsigned int vinc = 0;
+	str nval;
+	str *pval;
+
+	if(dlg_cseq_prepare_msg(msg)!=0) {
+		goto error;
+	}
+	if(msg->first_line.type==SIP_REPLY) {
+		/* nothing to do for outgoing replies */
+		goto done;
+	}
+
+	LM_DBG("initiating cseq updates\n");
+
+	direction = DLG_DIR_NONE;
+	dlg = dlg_lookup_msg_dialog(msg, &direction);
+
+	if(dlg == NULL) {
+		LM_DBG("no dialog for this request\n");
+		goto done;
+	}
+
+	/* supported only for downstrem direction */
+	if(direction != DLG_DIR_DOWNSTREAM) {
+		LM_DBG("request not going downstream (%u)\n", direction);
+		goto done;
+	}
+
+	ninc = 1;
+
+	/* take the increment value from dialog */
+	if((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF) {
+		/* get dialog variable holding cseq diff */
+		pval = get_dlg_variable(dlg, &_dlg_cseq_diff_var_name);
+		if(pval==NULL || pval->s==NULL || pval->len<=0) {
+			LM_DBG("dialog marked with cseq diff but no variable set yet\n");
+			goto done;
+		}
+		if(str2int(pval, &vinc)<0) {
+			LM_ERR("invalid dlg cseq diff var value: %.*s\n",
+					pval->len, pval->s);
+			goto done;
+		}
+	}
+	vinc += ninc;
+	if(vinc==0) {
+		LM_DBG("nothing to increment\n");
+		goto done;
+	}
+	nval.s = int2str(vinc, &nval.len);
+	if(set_dlg_variable(dlg, &_dlg_cseq_diff_var_name, &nval) <0) {
+		LM_ERR("failed to set the dlg cseq diff var\n");
+		goto done;
+	}
+	str2int(&get_cseq(msg)->number, &ninc);
+	vinc += ninc;
+	nval.s = int2str(vinc, &nval.len);
+	trim(&nval);
+
+	LM_DBG("adding auth cseq header value: %.*s\n", nval.len, nval.s);
+	parse_headers(msg, HDR_EOH_F, 0);
+	sr_hdr_add_zs(msg, "P-K-Auth-CSeq", &nval);
+
+done:
+	if(dlg!=NULL) dlg_release(dlg);
+	return 0;
+
+error:
+	if(dlg!=NULL) dlg_release(dlg);
+	return -1;
+}
+
+
+/**
+ *
+ */
+int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
+		unsigned int direction)
+{
+	unsigned int ninc = 0;
+	unsigned int vinc = 0;
+	str nval;
+	str *pval;
+
+	if(dlg_cseq_prepare_msg(msg)!=0) {
+		goto error;
+	}
+	if(msg->first_line.type==SIP_REPLY) {
+		/* nothing to do for outgoing replies */
+		goto done;
+	}
+
+	LM_DBG("initiating cseq refresh\n");
+
+	/* supported only for downstrem direction */
+	if(direction != DLG_DIR_DOWNSTREAM) {
+		LM_DBG("request not going downstream (%u)\n", direction);
+		goto done;
+	}
+
+	/* take the increment value from dialog */
+	if(!((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF)) {
+		LM_DBG("no cseq refresh required\n");
+		goto done;
+	}
+
+	/* get dialog variable holding cseq diff */
+	pval = get_dlg_variable(dlg, &_dlg_cseq_diff_var_name);
+	if(pval==NULL || pval->s==NULL || pval->len<=0) {
+		LM_DBG("dialog marked with cseq diff but no variable set yet\n");
+		goto done;
+	}
+
+	if(str2int(pval, &vinc)<0) {
+		LM_ERR("invalid dlg cseq diff var value: %.*s\n",
+					pval->len, pval->s);
+		goto done;
+	}
+	if(vinc==0) {
+		LM_DBG("nothing to increment\n");
+		goto done;
+	}
+
+	str2int(&get_cseq(msg)->number, &ninc);
+	vinc += ninc;
+	nval.s = int2str(vinc, &nval.len);
+	trim(&nval);
+
+	LM_DBG("adding cseq refresh header value: %.*s\n", nval.len, nval.s);
+	parse_headers(msg, HDR_EOH_F, 0);
+	sr_hdr_add_zs(msg, "P-K-CSeq-Refresh", &nval);
+
+done:
+	return 0;
+
+error:
+	return -1;
+}
+
+/**
+ *
+ */
 int dlg_cseq_msg_received(void *data)
 {
 	sip_msg_t msg;
@@ -118,7 +278,7 @@ int dlg_cseq_msg_received(void *data)
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
 
-	if(dlg_cseq_prepare_msg(&msg)!=0) {
+	if(dlg_cseq_prepare_new_msg(&msg)!=0) {
 		goto done;
 	}
 
@@ -153,9 +313,9 @@ int dlg_cseq_msg_received(void *data)
 	}
 	LM_DBG("via cseq cookie [%.*s] val [%.*s]\n", vcseq.len, vcseq.s,
 			vcseq.len-3, vcseq.s+3);
-	if(vcseq.len-3<get_cseq(&msg)->number.len) {
+	if(vcseq.len-3>get_cseq(&msg)->number.len) {
 		/* higher lenght to update - wrong */
-		LM_DBG("cseq in message (%d) longer than in via (%d)\n",
+		LM_DBG("cseq in message (%d) shorter than in via (%d)\n",
 				get_cseq(&msg)->number.len, vcseq.len-3);
 		goto done;
 	}
@@ -188,22 +348,19 @@ int dlg_cseq_msg_sent(void *data)
 	sip_msg_t msg;
 	str *obuf;
 	unsigned int direction;
-	tm_cell_t *t;
-	unsigned int ninc = 0;
-	unsigned int vinc = 0;
 	dlg_cell_t *dlg = NULL;
-	str nval;
-	str *pval;
+	str nval = STR_NULL;
 	char tbuf[BUF_SIZE];
 	int tbuf_len = 0;
 	struct via_body *via;
+	hdr_field_t *hfk = NULL;
 
 	obuf = (str*)data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
 
-	if(dlg_cseq_prepare_msg(&msg)!=0) {
+	if(dlg_cseq_prepare_new_msg(&msg)!=0) {
 		goto done;
 	}
 
@@ -222,7 +379,7 @@ int dlg_cseq_msg_sent(void *data)
 
 	direction = DLG_DIR_NONE;
 	dlg = dlg_lookup_msg_dialog(&msg, &direction);
-	
+
 	if(dlg == NULL) {
 		LM_DBG("no dialog for this request\n");
 		goto done;
@@ -234,54 +391,38 @@ int dlg_cseq_msg_sent(void *data)
 		goto done;
 	}
 
+	parse_headers(&msg, HDR_EOH_F, 0);
+
 	/* check if transaction is marked for a new increment */
 	if(get_cseq(&msg)->method_id!=METHOD_ACK) {
-		t = d_tmb.t_gett();
-		if(t==NULL || t==T_UNDEFINED) {
-			LM_DBG("no transaction for request\n");
-			goto done;
-		}
-		if(t->uas.request==0) {
-			LM_DBG("no uas request - no cseq update needed\n");
-			goto done;
-		}
-		if((t->uas.request->msg_flags&FL_UAC_AUTH)==FL_UAC_AUTH) {
-			LM_DBG("uac auth request - cseq inc needed\n");
-			ninc = 1;
+		hfk = sr_hdr_get_z(&msg, "P-K-Auth-CSeq");
+		if(hfk!=NULL) {
+			LM_DBG("new cseq inc requested\n");
+			nval = hfk->body;
+			trim(&nval);
+		} else {
+			LM_DBG("new cseq inc not requested\n");
 		}
 	}
 
-	/* take the increment value from dialog */
-	if((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF) {
-		/* get dialog variable holding cseq diff */
-		pval = get_dlg_variable(dlg, &_dlg_cseq_diff_var_name);
-		if(pval==NULL || pval->s==NULL || pval->len<=0) {
-			LM_DBG("dialog marked with cseq diff but no variable set yet\n");
-			goto done;
-		}
-		if(str2int(pval, &vinc)<0) {
-			LM_ERR("invalid dlg cseq diff var value: %.*s\n",
-					pval->len, pval->s);
-			goto done;
+	if(nval.len<=0) {
+		hfk = sr_hdr_get_z(&msg, "P-K-CSeq-Refresh");
+		if(hfk!=NULL) {
+			LM_DBG("cseq refresh requested\n");
+			nval = hfk->body;
+			trim(&nval);
 		}
 	}
-	vinc += ninc;
-	if(vinc==0) {
-		LM_DBG("nothing to increment\n");
+	if(nval.len<=0) {
+		LM_DBG("cseq refresh requested, but no new value found\n");
 		goto done;
 	}
-	nval.s = int2str(vinc, &nval.len);
+
 	if(msg.len + 3 + 2*nval.len>=BUF_SIZE) {
 		LM_ERR("new messages is too big\n");
 		goto done;
 	}
-	if(set_dlg_variable(dlg, &_dlg_cseq_diff_var_name, &nval) <0) {
-		LM_ERR("failed to set the dlg cseq diff var\n");
-		goto done;
-	}
-	str2int(&get_cseq(&msg)->number, &ninc);
-	vinc += ninc;
-	nval.s = int2str(vinc, &nval.len);
+	LM_DBG("updating cseq to: %.*s\n", nval.len, nval.s);
 
 	/* new cseq value */
 	dlg->iflags |= DLG_IFLAG_CSEQ_DIFF;
@@ -306,12 +447,25 @@ int dlg_cseq_msg_sent(void *data)
 		/* add new value */
 		memcpy(tbuf+tbuf_len, nval.s, nval.len);
 		tbuf_len += nval.len;
-		/* copy from after cseq number to the end of sip message */
-		memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
-				msg.buf + msg.len - get_cseq(&msg)->number.s
-				- get_cseq(&msg)->number.len);
-		tbuf_len += msg.buf+msg.len - get_cseq(&msg)->number.s
-				- get_cseq(&msg)->number.len;
+		if(hfk && hfk->name.s > get_cseq(&msg)->number.s) {
+			/* copy from after cseq number to the beginning of hfk */
+			memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
+					hfk->name.s - get_cseq(&msg)->number.s
+					- get_cseq(&msg)->number.len);
+			tbuf_len += hfk->name.s - get_cseq(&msg)->number.s
+					- get_cseq(&msg)->number.len;
+			/* copy from after hfk to the end of sip message */
+			memcpy(tbuf+tbuf_len,  hfk->name.s + hfk->len,
+					msg.buf + msg.len - hfk->name.s - hfk->len);
+			tbuf_len += msg.buf + msg.len - hfk->name.s - hfk->len;
+		} else {
+			/* copy from after cseq number to the end of sip message */
+			memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s+get_cseq(&msg)->number.len,
+					msg.buf + msg.len - get_cseq(&msg)->number.s
+					- get_cseq(&msg)->number.len);
+			tbuf_len += msg.buf+msg.len - get_cseq(&msg)->number.s
+					- get_cseq(&msg)->number.len;
+		}
 	} else {
 		/* CSeq is before Via */
 		/* copy till beginning of cseq number */
@@ -332,12 +486,25 @@ int dlg_cseq_msg_sent(void *data)
 		tbuf[tbuf_len++] = 's';
 		memcpy(tbuf+tbuf_len, get_cseq(&msg)->number.s, get_cseq(&msg)->number.len);
 		tbuf_len += get_cseq(&msg)->number.len;
-		/* copy from after via to the end of sip message */
-		memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
-				msg.buf + msg.len - via->branch->value.s
-				- via->branch->value.len);
-		tbuf_len += msg.buf+msg.len - via->branch->value.s
-				- via->branch->value.len;
+		if(hfk && hfk->name.s > get_cseq(&msg)->number.s) {
+			/* copy from after via to the beginning of hfk */
+			memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
+					hfk->name.s - via->branch->value.s
+					- via->branch->value.len);
+			tbuf_len += hfk->name.s - via->branch->value.s
+					- via->branch->value.len;
+			/* copy from after hfk to the end of sip message */
+			memcpy(tbuf+tbuf_len,  hfk->name.s + hfk->len,
+					msg.buf + msg.len - hfk->name.s - hfk->len);
+			tbuf_len += msg.buf + msg.len - hfk->name.s - hfk->len;
+		} else {
+			/* copy from after via to the end of sip message */
+			memcpy(tbuf+tbuf_len, via->branch->value.s + via->branch->value.len,
+					msg.buf + msg.len - via->branch->value.s
+					- via->branch->value.len);
+			tbuf_len += msg.buf+msg.len - via->branch->value.s
+					- via->branch->value.len;
+		}
 	}
 	/* replace old msg content */
 	obuf->s = pkg_malloc((tbuf_len+1)*sizeof(char));

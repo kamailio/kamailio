@@ -12,7 +12,7 @@
 /**
  * update Granted Service Unit timers based on CCR
  */
-inline void update_gsu_request_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
+void update_gsu_request_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
 	AAA_AVP *avp;
 
 	avp = AAAFindMatchingAVP(msg, 0, AVP_Event_Timestamp, 0, 0);
@@ -24,17 +24,18 @@ inline void update_gsu_request_timers(cdp_cc_acc_session_t* session, AAAMessage*
 /**
  * update Granted Service Unit timers based on CCA, for onw we assume on one MSCC per session and only TIME based supported
  */
-inline void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
+void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
 	AAA_AVP *avp;
 	AAA_AVP_LIST mscc_avp_list;
 	AAA_AVP_LIST y;
 	AAA_AVP *z;
 
+	y.head = y.tail = 0;
 	avp = AAAFindMatchingAVP(msg, 0, AVP_Multiple_Services_Credit_Control, 0, 0);
-        if (!avp) {
-            LM_WARN("Trying to update GSU timers but there is no MSCC AVP in the CCA response\n");
-            return;
-        }
+	if (!avp) {
+		LM_WARN("Trying to update GSU timers but there is no MSCC AVP in the CCA response\n");
+		return;
+	}
 	mscc_avp_list = AAAUngroupAVPS(avp->data);
 	AAA_AVP *mscc_avp = mscc_avp_list.head;
 
@@ -46,11 +47,11 @@ inline void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage
 				z = y.head;
 				while (z) {
 					switch (z->code) {
-					case AVP_CC_Time:
-						session->reserved_units = get_4bytes(z->data.s);
-						break;
-					default:
-						LM_DBG("ignoring AVP in GSU group with code:[%d]\n", z->code);
+						case AVP_CC_Time:
+							session->reserved_units = get_4bytes(z->data.s);
+							break;
+						default:
+							LM_DBG("ignoring AVP in GSU group with code:[%d]\n", z->code);
 					}
 					z = z->next;
 				}
@@ -76,8 +77,11 @@ inline void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage
 		mscc_avp = mscc_avp->next;
 	}
 
-	AAAFreeAVPList(&mscc_avp_list);
-	AAAFreeAVPList(&y);
+	if (mscc_avp_list.head);
+		AAAFreeAVPList(&mscc_avp_list);
+	
+	if (y.head)
+		AAAFreeAVPList(&y);
 }
 
 
@@ -89,7 +93,7 @@ inline void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage
  * @param msg  - AAAMessage
  * @returns 0 if msg should be given to the upper layer 1 if not
  */
-inline int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* msg)
+int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* msg)
 {
 	cdp_cc_acc_session_t* x;
 	int ret = 0;
@@ -197,54 +201,54 @@ inline int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMes
 			switch (event) {
 				case ACC_CC_EV_RECV_ANS_SUCCESS:
 					x->state = ACC_CC_ST_DISCON;
-//					update_gsu_response_timers(x, msg);
+					//					update_gsu_response_timers(x, msg);
 				case ACC_CC_EV_RECV_ANS_UNSUCCESS:
 					x->state = ACC_CC_ST_DISCON;
 				default:
 					LM_DBG("Received event [%d] in state [%d] - cleaning up session regardless\n", event, x->state);
 					//have to leave session alone because our client app still has to be given this msg
 					x->discon_time = time(0);
-//					if (msg) AAAFreeMessage(&msg);
-//					cdp_session_cleanup(s, NULL);
-//					s = 0;
+					//					if (msg) AAAFreeMessage(&msg);
+					//					cdp_session_cleanup(s, NULL);
+					//					s = 0;
 			}
 			break;
 		case ACC_CC_ST_PENDING_U:
-			
-                        /**Richard added Aug 5 - there is a potential race condition where you may send a CCR-U immediately followed by CCR-T
-                         * and then receive a CCA-T while in state ACC_CC_ST_PENDING_U (e.g. if update timer and dialog termination at same time)  
-                         * In this event you would incorrectly ignore the CCR-T
-                         * Solution is to change state to change state to ACC_CC_ST_PENDING_T if CCR-T is sent while in this state  */
-                        if (event == ACC_CC_EV_SEND_REQ && msg && get_accounting_record_type(msg) == 4 /*TERMINATE RECORD*/) {
-                                LM_ERR("Received CCR-T while in state ACC_CC_ST_PENDING_U, just going to change to ACC_CC_ST_PENDING_T\n");
-                                s->u.cc_acc.state = ACC_CC_ST_PENDING_T;
-                                //update our reservation and its timers...
-                                update_gsu_request_timers(x, msg);
-                        } else {
-                            if (event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
-                                    rc = get_result_code(msg);
-                                    if (rc >= 2000 && rc < 3000) {
-                                            event = ACC_CC_EV_RECV_ANS_SUCCESS;
-                                    } else {
-                                            event = ACC_CC_EV_RECV_ANS_UNSUCCESS;
-                                    }
-                            }
-                            switch (event) {
-                                    case ACC_CC_EV_RECV_ANS_SUCCESS:
-                                            x->state = ACC_CC_ST_OPEN;
-                                            LM_DBG("success CCA for UPDATE\n");
-                                            update_gsu_response_timers(x, msg);
-                                            break;
-                                    case ACC_CC_EV_RECV_ANS_UNSUCCESS:
-                                            //TODO: check whether we grant or terminate service to callback clients
-                                            x->state = ACC_CC_ST_DISCON;
-                                            LM_ERR("update failed... going back to IDLE/DISCON\n");
-                                            break;
-                                    default:
-                                            LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
-                                    break;
-                            }
-                        }
+
+			/**Richard added Aug 5 - there is a potential race condition where you may send a CCR-U immediately followed by CCR-T
+			 * and then receive a CCA-T while in state ACC_CC_ST_PENDING_U (e.g. if update timer and dialog termination at same time)
+			 * In this event you would incorrectly ignore the CCR-T
+			 * Solution is to change state to change state to ACC_CC_ST_PENDING_T if CCR-T is sent while in this state  */
+			if (event == ACC_CC_EV_SEND_REQ && msg && get_accounting_record_type(msg) == 4 /*TERMINATE RECORD*/) {
+				LM_ERR("Received CCR-T while in state ACC_CC_ST_PENDING_U, just going to change to ACC_CC_ST_PENDING_T\n");
+				s->u.cc_acc.state = ACC_CC_ST_PENDING_T;
+				//update our reservation and its timers...
+				update_gsu_request_timers(x, msg);
+			} else {
+				if (event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
+					rc = get_result_code(msg);
+					if (rc >= 2000 && rc < 3000) {
+						event = ACC_CC_EV_RECV_ANS_SUCCESS;
+					} else {
+						event = ACC_CC_EV_RECV_ANS_UNSUCCESS;
+					}
+				}
+				switch (event) {
+					case ACC_CC_EV_RECV_ANS_SUCCESS:
+						x->state = ACC_CC_ST_OPEN;
+						LM_DBG("success CCA for UPDATE\n");
+						update_gsu_response_timers(x, msg);
+						break;
+					case ACC_CC_EV_RECV_ANS_UNSUCCESS:
+						//TODO: check whether we grant or terminate service to callback clients
+						x->state = ACC_CC_ST_DISCON;
+						LM_ERR("update failed... going back to IDLE/DISCON\n");
+						break;
+					default:
+						LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
+						break;
+				}
+			}
 			break;
 		case ACC_CC_ST_DISCON:
 			switch (event) {

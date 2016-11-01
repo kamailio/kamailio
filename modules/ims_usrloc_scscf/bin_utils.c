@@ -882,6 +882,7 @@ ims_subscription *bin_decode_ims_subscription(bin_data *x)
 		goto error;
 	}
 	memset(imss,0,sizeof(ims_subscription));
+	imss->sl = -1;	/* we set this to -1 as it's not currently in a slot at creation stage */
 	
 	if (!bin_decode_str(x,&s)||!str_shm_dup(&(imss->private_identity),&s)) goto error;
 	if (!bin_decode_ushort(x,	&(imss->service_profiles_cnt))) goto error;

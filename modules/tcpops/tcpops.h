@@ -28,6 +28,7 @@
 #include "../../events.h"
 
 extern int tcp_closed_event;
+extern int tcp_closed_routes[_TCP_CLOSED_REASON_MAX];
 
 int tcpops_get_current_fd(int conid, int *fd);
 int tcpops_acquire_fd_from_tcpmain(int conid, int *fd);

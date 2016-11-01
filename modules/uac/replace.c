@@ -290,13 +290,16 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 		avp_value.s.len =  p - body->body.s + ((p[i]=='>') ? (i+1) : 0) ;
 		avp_value.s.s=body->body.s;
 
-		LM_DBG("value to store is is '%.*s' and len is '%d'\n",avp_value.s.len, avp_value.s.s,avp_value.s.len);
+		LM_DBG("value to store is is '%.*s' and len is '%d'\n",
+				avp_value.s.len, avp_value.s.s,avp_value.s.len);
 
 		if(check_from) {
-			LM_DBG("Storing in FROM-AVP (for use in reply): '%.*s' with len '%d'\n",avp_value.s.len, avp_value.s.s,avp_value.s.len);
+			LM_DBG("Storing in FROM-AVP (for use in reply): '%.*s' with len '%d'\n",
+					avp_value.s.len, avp_value.s.s,avp_value.s.len);
 			add_avp(restore_from_avp_type, restore_from_avp_name, avp_value);
 		} else {
-			LM_DBG("Storing in TO-AVP (for use in reply): '%.*s' with len '%d'\n",avp_value.s.len, avp_value.s.s,avp_value.s.len);
+			LM_DBG("Storing in TO-AVP (for use in reply): '%.*s' with len '%d'\n",
+					avp_value.s.len, avp_value.s.s,avp_value.s.len);
 			add_avp(restore_to_avp_type, restore_to_avp_name, avp_value);
 		}
 	}
@@ -309,9 +312,10 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 		/* first remove the existing display */
 		if ( body->display.len)
 		{
-			LM_DBG("removing display [%.*s]\n", body->display.len,body->display.s);
+			LM_DBG("removing display [%.*s]\n",
+					body->display.len, body->display.s);
 			/* build del lump */
-			l = del_lump( msg, body->display.s-msg->buf, body->display.len, 0);
+			l = del_lump(msg, body->display.s-msg->buf, body->display.len, 0);
 			if (l==0)
 			{
 				LM_ERR("display del lump failed\n");
@@ -404,10 +408,13 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 				goto error;
 			}
 			LM_DBG("Stored <%.*s> var in dialog with value %.*s\n",
-					dlgvar_names[0].len, dlgvar_names[0].s, body->uri.len, body->uri.s);
+					dlgvar_names[0].len, dlgvar_names[0].s,
+					body->uri.len, body->uri.s);
 
-			if (dlg_api.register_dlgcb(dlg, DLGCB_REQ_WITHIN|DLGCB_CONFIRMED|DLGCB_TERMINATED,
-					(void*)(unsigned long)replace_callback, (void*)(unsigned long)uac_flag, 0) != 0) {
+			if (dlg_api.register_dlgcb(dlg,
+						DLGCB_REQ_WITHIN|DLGCB_CONFIRMED|DLGCB_TERMINATED,
+						(void*)(unsigned long)replace_callback,
+						(void*)(unsigned long)uac_flag, 0) != 0) {
 				LM_ERR("cannot register callback\n");
 				dlg_api.release_dlg(dlg);
 				goto error;
@@ -513,14 +520,15 @@ error:
  * return  0 - restored
  *        -1 - not restored or error
  */
-int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check_from)
+int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp,
+		int check_from)
 {
 	struct lump* l;
 	str param_val;
 	str add_to_rr = {0, 0};
 	struct to_body* old_body;
-	str old_uri;
-	str new_uri;
+	str old_uri = {0, 0};
+	str new_uri = {0, 0};
 	char *p;
 	int i;
 	int_str avp_value;
@@ -552,7 +560,8 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 		LM_ERR("no more pkg mem\n");
 		goto failed;
 	}
-	add_to_rr.len = sprintf(add_to_rr.s, ";%.*s=%.*s", rr_param->len,rr_param->s,param_val.len,param_val.s);
+	add_to_rr.len = sprintf(add_to_rr.s, ";%.*s=%.*s",
+			rr_param->len, rr_param->s, param_val.len, param_val.s);
 
 	if ( uac_rrb.add_rr_param(msg, &add_to_rr)!=0 ) {
 		LM_ERR("add rr param failed\n");
@@ -561,16 +570,16 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 	pkg_free(add_to_rr.s);
 	add_to_rr.s = NULL;
 
-	/* dencrypt parameter ;) */
-	if (uac_passwd.len)
+	/* decrypt parameter */
+	if (uac_passwd.len) {
 		for( i=0 ; i<new_uri.len ; i++)
 			new_uri.s[i] ^= uac_passwd.s[i%uac_passwd.len];
+	}
 
 	/* check the request direction */
-	if (
-		(check_from && uac_rrb.is_direction( msg, RR_FLOW_UPSTREAM)==0) ||
-		(!check_from && uac_rrb.is_direction( msg,RR_FLOW_DOWNSTREAM)==0)
-		) {
+	if ( (check_from && uac_rrb.is_direction(msg, RR_FLOW_UPSTREAM)==0)
+			|| (!check_from && uac_rrb.is_direction(msg, RR_FLOW_DOWNSTREAM)==0)
+				) {
 		/* replace the TO URI */
 		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
 			LM_ERR("failed to parse TO hdr\n");
@@ -598,10 +607,12 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 		avp_value.s.s=old_body->body.s;
 
 		if(flag==FL_USE_UAC_FROM) {
-			LM_DBG("Storing in FROM-AVP (for use in reply): '%.*s' with len '%d'\n",avp_value.s.len, avp_value.s.s,avp_value.s.len);
+			LM_DBG("Storing in FROM-AVP (for use in reply): '%.*s' with len '%d'\n",
+					avp_value.s.len, avp_value.s.s,avp_value.s.len);
 			add_avp(restore_from_avp_type, restore_from_avp_name, avp_value);
 		} else {
-			LM_DBG("Storing in TO-AVP (for use in reply): '%.*s' with len '%d'\n",avp_value.s.len, avp_value.s.s,avp_value.s.len);
+			LM_DBG("Storing in TO-AVP (for use in reply): '%.*s' with len '%d'\n",
+					avp_value.s.len, avp_value.s.s,avp_value.s.len);
 			add_avp(restore_to_avp_type, restore_to_avp_name, avp_value);
 		}
 	}
@@ -626,6 +637,16 @@ int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check
 		goto failed;
 	}
 
+	/* check if new uri has valid characters */
+	for(i=0; i<new_uri.len; i++) {
+		if(!isprint(new_uri.s[i])) {
+			LM_WARN("invalid char found in the new uri at pos %d (%c) [%.*s]\n",
+					i, new_uri.s[i], new_uri.len, new_uri.s);
+			LM_WARN("this can happen when URI values are altered by end points"
+					" - skipping the update\n");
+			goto failed;
+		}
+	}
 	LM_DBG("decoded uris are: new=[%.*s] old=[%.*s]\n",
 		new_uri.len, new_uri.s, old_uri.len, old_uri.s);
 
@@ -770,7 +791,8 @@ void restore_uris_reply(struct cell* t, int type, struct tmcb_params *p)
 
 		avp_value.s.len=0;
 		if(restore_from_avp.s) {
-			search_first_avp(restore_from_avp_type, restore_from_avp_name, &avp_value,0);
+			search_first_avp(restore_from_avp_type, restore_from_avp_name,
+					&avp_value,0);
 		}
 
 		if (restore_uri_reply( rpl, rpl->from, req->from, &avp_value.s)) {
@@ -789,7 +811,8 @@ void restore_uris_reply(struct cell* t, int type, struct tmcb_params *p)
 
 		avp_value.s.len=0;
 		if(restore_to_avp.s) {
-			search_first_avp(restore_to_avp_type, restore_to_avp_name, &avp_value,0);
+			search_first_avp(restore_to_avp_type, restore_to_avp_name,
+					&avp_value, 0);
 		}
 
 		if (restore_uri_reply( rpl, rpl->to, req->to, &avp_value.s)) {
@@ -825,8 +848,9 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 	dlgvar_names = (uac_flag==FL_USE_UAC_FROM)?from_dlgvar:to_dlgvar;
 
 	/* check the request direction */
-	if ( ((uac_flag == FL_USE_UAC_TO) && _params->direction == DLG_DIR_DOWNSTREAM) ||
-		((uac_flag != FL_USE_UAC_TO) && _params->direction == DLG_DIR_UPSTREAM) ) {
+	if ( ((uac_flag == FL_USE_UAC_TO) && _params->direction == DLG_DIR_DOWNSTREAM)
+			|| ((uac_flag != FL_USE_UAC_TO)
+				&& _params->direction == DLG_DIR_UPSTREAM) ) {
 		/* replace the TO URI */
 		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
 			LM_ERR("failed to parse TO hdr\n");
@@ -880,7 +904,8 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 		goto free;
 	}
 
-	/* register tm callback to change replies but only if not registered earlier */
+	/* register tm callback to change replies,
+	 * but only if not registered earlier */
 	if (!(msg->msg_flags & (FL_USE_UAC_FROM|FL_USE_UAC_TO)) &&
 			uac_tmb.register_tmcb( msg, 0, TMCB_RESPONSE_IN,
 			restore_uris_reply, 0, 0) != 1 ) {

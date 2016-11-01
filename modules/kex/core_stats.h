@@ -38,8 +38,37 @@ extern stat_export_t core_stats[];
 /*! \brief received requests */
 extern stat_var* rcv_reqs;
 
+/* \brief extended received requests by method */
+extern stat_var* rcv_reqs_invite;
+extern stat_var* rcv_reqs_cancel;
+extern stat_var* rcv_reqs_ack;
+extern stat_var* rcv_reqs_bye;
+extern stat_var* rcv_reqs_info;
+extern stat_var* rcv_reqs_register;
+extern stat_var* rcv_reqs_notify;
+extern stat_var* rcv_reqs_message;
+extern stat_var* rcv_reqs_options;
+extern stat_var* rcv_reqs_prack;
+extern stat_var* rcv_reqs_update;
+extern stat_var* rcv_reqs_refer;
+extern stat_var* rcv_reqs_publish;
+
 /*! \brief received replies */
 extern stat_var* rcv_rpls;
+
+/*! \brief extended received replies */
+extern stat_var* rcv_rpls_1xx;
+extern stat_var* rcv_rpls_18x;
+extern stat_var* rcv_rpls_2xx;
+extern stat_var* rcv_rpls_3xx;
+extern stat_var* rcv_rpls_4xx;
+extern stat_var* rcv_rpls_401;
+extern stat_var* rcv_rpls_404;
+extern stat_var* rcv_rpls_407;
+extern stat_var* rcv_rpls_480;
+extern stat_var* rcv_rpls_486;
+extern stat_var* rcv_rpls_5xx;
+extern stat_var* rcv_rpls_6xx;
 
 /*! \brief forwarded requests */
 extern stat_var* fwd_reqs;
@@ -67,7 +96,7 @@ extern stat_var* unsupported_methods;
 
 /*! \brief Set in get_hdr_field(). */
 extern stat_var* bad_msg_hdr;
- 
+
 int register_mi_stats(void);
 int register_core_stats(void);
 

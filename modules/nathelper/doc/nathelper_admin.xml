@@ -49,8 +49,8 @@
 	<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>UDP package</emphasis> - 4 bytes (zero filled) UDP 
-			packages are sent to the contact address.
+			<emphasis>UDP packet</emphasis> - 4 bytes (zero filled) UDP 
+			packets are sent to the contact address.
 			</para>
 			<itemizedlist>
 				<listitem>
@@ -265,7 +265,7 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 		<para>
 		Which branch flag should be used by the module to identify NATed 
 		contacts for which it should perform NAT ping via a SIP request 
-		instead if dummy UDP package.
+		instead of dummy UDP packet.
 		</para>
 		<para>
 		<emphasis>

@@ -178,7 +178,7 @@ inline static int calc_bin_nonce_md5(union bin_nonce* b_nonce, int cfg,
  *                  return error immediately. After a succesfull call it will
  *                  contain the size of nonce written into the buffer,
  *                  without the terminating 0.
- * @param cfg This is the value of one of the tree module parameters that
+ * @param cfg This is the value of one of the three module parameters that
  *            control which optional checks are enabled/disabled and which
  *            parts of the message will be included in the nonce string.
  * @param since Time when nonce was created, i.e. nonce is valid since <valid_since> up to <expires>
@@ -415,8 +415,7 @@ if (!memcmp(&b_nonce.n.md5_1[0], &b_nonce2.n.md5_1[0], 16)) {
 			auth->digest.nc.len){
 		if ((auth->digest.nc.len != 8) ||
 				l8hex2int(auth->digest.nc.s, &nc) != 0) {
-			ERR("check_nonce: bad nc value %.*s\n",
-					auth->digest.nc.len, auth->digest.nc.s);
+			LM_ERR("bad nc value %.*s\n", auth->digest.nc.len, auth->digest.nc.s);
 			return 5; /* invalid nc */
 		}
 		switch(nc_check_val(n_id, pf & NF_POOL_NO_MASK, nc)){

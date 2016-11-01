@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,16 +35,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../../sr_module.h"
 #include "session.h"
 #include "diameter.h"
 #include "config.h"
@@ -73,7 +72,8 @@ unsigned int *session_id2;		/**< counter for second part of the session id */
  */
 inline void AAASessionsLock(unsigned int hash)
 {
-	if ( hash >=0 && hash < sessions_hash_size ){
+	if(destroy_modules_phase()) return;
+	if ( hash < sessions_hash_size ){
 		lock_get(sessions[hash].lock);
 	}
 	else {
@@ -86,8 +86,9 @@ inline void AAASessionsLock(unsigned int hash)
  */
 inline void AAASessionsUnlock(unsigned int hash)
 {
+	if(destroy_modules_phase()) return;
 
-	if ( hash >=0 && hash < sessions_hash_size ){
+	if ( hash < sessions_hash_size ){
 		lock_release(sessions[hash].lock);
 	}
 	else {
@@ -108,7 +109,7 @@ void free_session(cdp_session_t *x)
 			case UNKNOWN_SESSION:
 				if (x->u.generic_data){
 					LM_ERR("free_session(): The session->u.generic_data should be freed and reset before dropping the session!"
-						"Possible memory leak!\n");
+							"Possible memory leak!\n");
 				}
 				break;
 			case AUTH_CLIENT_STATEFULL:
@@ -123,9 +124,9 @@ void free_session(cdp_session_t *x)
 
 		if(x->dest_host.s) shm_free(x->dest_host.s);
 		if(x->dest_realm.s) shm_free(x->dest_realm.s);
-                if (x->sticky_peer_fqdn_buflen && x->sticky_peer_fqdn.s) {
-                    shm_free(x->sticky_peer_fqdn.s);
-                }
+		if (x->sticky_peer_fqdn_buflen && x->sticky_peer_fqdn.s) {
+			shm_free(x->sticky_peer_fqdn.s);
+		}
 		shm_free(x);
 	}
 }
@@ -171,8 +172,8 @@ int cdp_sessions_init(int hash_size)
 		LOG_NO_MEM("shm",sizeof(unsigned int));
 		goto error;
 	}
-	srand((unsigned int)time(0));
-	*session_id1 = rand();
+	kam_srand((unsigned int)time(0));
+	*session_id1 = kam_rand();
 	*session_id1 <<= 16;
 	*session_id1 += time(0)&0xFFFF;
 	*session_id2 = 0;
@@ -225,24 +226,24 @@ int cdp_sessions_destroy()
 inline unsigned int get_str_hash(str x,int hash_size)
 {
 #define h_inc h+=v^(v>>3)
-   char* p;
-   register unsigned v;
-   register unsigned h;
+	char* p;
+	register unsigned v;
+	register unsigned h;
 
-   h=0;
-   for (p=x.s; p<=(x.s+x.len-4); p+=4){
-       v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
-       h_inc;
-   }
-   v=0;
-   for (;p<(x.s+x.len); p++) {
-       v<<=8;
-       v+=*p;
-   }
-   h_inc;
+	h=0;
+	for (p=x.s; p<=(x.s+x.len-4); p+=4){
+		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+		h_inc;
+	}
+	v=0;
+	for (;p<(x.s+x.len); p++) {
+		v<<=8;
+		v+=*p;
+	}
+	h_inc;
 
-   h=((h)+(h>>11))+((h>>13)+(h>>23));
-   return (h)%hash_size;
+	h=((h)+(h>>11))+((h>>13)+(h>>23));
+	return (h)%hash_size;
 #undef h_inc
 }
 
@@ -277,10 +278,10 @@ error:
  */
 void cdp_add_session(cdp_session_t *x)
 {
-//	unsigned int hash;
+	//	unsigned int hash;
 	if (!x) return;
-//	hash = get_str_hash(x->id,sessions_hash_size);
-//	x->hash = hash;
+	//	hash = get_str_hash(x->id,sessions_hash_size);
+	//	x->hash = hash;
 	LM_DBG("adding a session with id %.*s\n",x->id.len,x->id.s);
 	AAASessionsLock(x->hash);
 	x->next = 0;
@@ -304,12 +305,12 @@ cdp_session_t* cdp_get_session(str id)
 	hash = get_str_hash(id,sessions_hash_size);
 	LM_DBG("called get session with id %.*s and hash %u\n",id.len,id.s,hash);
 	AAASessionsLock(hash);
-		for(x = sessions[hash].head;x;x=x->next){
-			LM_DBG("looking for |%.*s| in |%.*s|\n",id.len,id.s,x->id.len,x->id.s);
-			if (x->id.len == id.len &&
+	for(x = sessions[hash].head;x;x=x->next){
+		LM_DBG("looking for |%.*s| in |%.*s|\n",id.len,id.s,x->id.len,x->id.s);
+		if (x->id.len == id.len &&
 				strncasecmp(x->id.s,id.s,id.len)==0)
-					return x;
-		}
+			return x;
+	}
 	AAASessionsUnlock(hash);
 	LM_DBG("no session found\n");
 	return 0;
@@ -329,7 +330,7 @@ void del_session(cdp_session_t *x)
 	if (!x) return;
 
 	hash = x->hash;
-	if (hash < 0 || hash >= sessions_hash_size) {
+	if (hash >= sessions_hash_size) {
 		LM_ERR("del_session: x->hash :%d out of range of sessions_hash_size: %d !\n",hash, sessions_hash_size);
 		return;
 	}
@@ -362,7 +363,7 @@ static int generate_session_id(str *id, unsigned int end_pad_len)
 	id->len = config->identity.len +
 		1/*;*/ + 10/*high 32 bits*/ +
 		1/*;*/ + 10/*low 32 bits*/ +
-//		1/*;*/ + 8/*optional value*/ +
+		//		1/*;*/ + 8/*optional value*/ +
 		1 /* terminating \0 */ +
 		end_pad_len;
 
@@ -388,45 +389,47 @@ error:
 
 void cdp_sessions_log()
 {
-	int hash;
-	cdp_session_t *x;
+	if (debug_heavy) {
+		int hash;
+		cdp_session_t *x;
 
-	LM_DBG(ANSI_MAGENTA"------- CDP Sessions ----------------\n"ANSI_GREEN);
-	for(hash=0;hash<sessions_hash_size;hash++){
-		AAASessionsLock(hash);
-		for(x = sessions[hash].head;x;x=x->next) {
-			LM_DBG(ANSI_GRAY" %3u. [%.*s] AppId [%d] Type [%d]\n",
-					hash,
-					x->id.len,x->id.s,
-					x->application_id,
-					x->type);
-			switch (x->type){
-				case AUTH_CLIENT_STATEFULL:
-				case AUTH_SERVER_STATEFULL:
-					LM_DBG(ANSI_GRAY"\tAuth State [%d] Timeout [%d] Lifetime [%d] Grace [%d] Generic [%p] Class [%d]\n",
-							x->u.auth.state,
-							(int)(x->u.auth.timeout-time(0)),
-							x->u.auth.lifetime?(int)(x->u.auth.lifetime-time(0)):-1,
-							(int)(x->u.auth.grace_period),
-							x->u.auth.generic_data, 
-                                                        x->u.auth.class);
-					break;
-				case ACCT_CC_CLIENT:
-					LM_DBG(ANSI_GRAY"\tCCAcct State [%d] Charging Active [%c (%d)s] Reserved Units(valid=%ds) [%d] Generic [%p]\n",
-							x->u.cc_acc.state,
-							(x->u.cc_acc.charging_start_time&&x->u.cc_acc.state!=ACC_CC_ST_DISCON)?'Y':'N',
-							x->u.cc_acc.charging_start_time?(int)((int)time(0) - (int)x->u.cc_acc.charging_start_time):-1,
-							x->u.cc_acc.reserved_units?(int)((int)x->u.cc_acc.last_reservation_request_time + x->u.cc_acc.reserved_units_validity_time) - (int)time(0):-1,
-							x->u.cc_acc.reserved_units,
-							x->u.cc_acc.generic_data);
-					break;
-				default:
-					break;
+		LM_DBG("------- CDP Sessions ----------------\n");
+		for(hash=0;hash<sessions_hash_size;hash++){
+			AAASessionsLock(hash);
+			for(x = sessions[hash].head;x;x=x->next) {
+				LM_DBG(" %3u. [%.*s] AppId [%d] Type [%d]\n",
+						hash,
+						x->id.len,x->id.s,
+						x->application_id,
+						x->type);
+				switch (x->type){
+					case AUTH_CLIENT_STATEFULL:
+					case AUTH_SERVER_STATEFULL:
+						LM_DBG("Auth State [%d] Timeout [%d] Lifetime [%d] Grace [%d] Generic [%p] Class [%d]\n",
+								x->u.auth.state,
+								(int)(x->u.auth.timeout-time(0)),
+								x->u.auth.lifetime?(int)(x->u.auth.lifetime-time(0)):-1,
+								(int)(x->u.auth.grace_period),
+								x->u.auth.generic_data,
+								x->u.auth.class);
+						break;
+					case ACCT_CC_CLIENT:
+						LM_DBG("CCAcct State [%d] Charging Active [%c (%d)s] Reserved Units(valid=%ds) [%d] Generic [%p]\n",
+								x->u.cc_acc.state,
+								(x->u.cc_acc.charging_start_time&&x->u.cc_acc.state!=ACC_CC_ST_DISCON)?'Y':'N',
+								x->u.cc_acc.charging_start_time?(int)((int)time(0) - (int)x->u.cc_acc.charging_start_time):-1,
+								x->u.cc_acc.reserved_units?(int)((int)x->u.cc_acc.last_reservation_request_time + x->u.cc_acc.reserved_units_validity_time) - (int)time(0):-1,
+								x->u.cc_acc.reserved_units,
+								x->u.cc_acc.generic_data);
+						break;
+					default:
+						break;
+				}
 			}
+			AAASessionsUnlock(hash);
 		}
-		AAASessionsUnlock(hash);
+		LM_DBG("-------------------------------------\n");
 	}
-	LM_DBG(ANSI_MAGENTA"-------------------------------------\n"ANSI_GREEN);
 }
 
 int cdp_sessions_timer(time_t now, void* ptr)
@@ -453,16 +456,16 @@ int cdp_sessions_timer(time_t now, void* ptr)
 						int buffer_time = 15; //15 seconds - TODO: add as config parameter
 						//we should check for reservation expiries if the state is open
 						if(x->u.cc_acc.state==ACC_CC_ST_OPEN){
-						    if (last_res_timestamp) {
-							    //we have obv already started reservations
-							    if ((last_res_timestamp + res_valid_for) < (time(0) + last_reservation + buffer_time)) {
-								    LM_DBG("reservation about to expire, sending callback\n");
-								    cc_acc_client_stateful_sm_process(x, ACC_CC_EV_RSVN_WARNING, 0);
-							    }
+							if (last_res_timestamp) {
+								//we have obv already started reservations
+								if ((last_res_timestamp + res_valid_for) < (time(0) + last_reservation + buffer_time)) {
+									LM_DBG("reservation about to expire, sending callback\n");
+									cc_acc_client_stateful_sm_process(x, ACC_CC_EV_RSVN_WARNING, 0);
+								}
 
-						    }
+							}
 						}
-						/* TODO: if reservation has expired we need to tear down the session. Ideally 
+						/* TODO: if reservation has expired we need to tear down the session. Ideally
 						 * the client application (module) should do this but for completeness we should
 						 * put a failsafe here too.
 						 */
@@ -586,8 +589,8 @@ AAASession* cdp_new_auth_session(str id,int is_client,int is_statefull)
 		s->u.auth.timeout=time(0)+config->default_auth_session_timeout;
 		s->u.auth.lifetime=0;
 		s->u.auth.grace_period=0;
-                s->u.auth.class = AUTH_CLASS_UNKNOWN;
-                s->u.auth.last_requested_grace = s->u.auth.last_requested_lifetime = s->u.auth.last_requested_timeout = 0;
+		s->u.auth.class = AUTH_CLASS_UNKNOWN;
+		s->u.auth.last_requested_grace = s->u.auth.last_requested_lifetime = s->u.auth.last_requested_timeout = 0;
 		cdp_add_session(s);
 	}
 	return s;
@@ -614,7 +617,7 @@ AAASession* cdp_new_cc_acc_session(str id, int is_statefull)
 		else
 			s->u.cc_acc.type = ACC_CC_TYPE_EVENT;
 
-//		s->u.cc_acc.timeout=time(0)+config->default_cc_acct_session_timeout;
+		//		s->u.cc_acc.timeout=time(0)+config->default_cc_acct_session_timeout;
 		cdp_add_session(s);
 	}
 	return s;
@@ -762,7 +765,7 @@ AAASession* AAACreateCCAccSession(AAASessionCallback_f *cb, int is_session, void
 
 	s = cdp_new_cc_acc_session(id, is_session);
 	if (s) {
-		if (generic_data) 
+		if (generic_data)
 			s->u.auth.generic_data = generic_data;
 		s->cb = cb;
 		if (s->cb)
@@ -773,7 +776,7 @@ AAASession* AAACreateCCAccSession(AAASessionCallback_f *cb, int is_session, void
 
 /**
  * Starts accounting on time-based CC App session (Credit control - RFC 4006) for the client
-  * @returns 0 on success, anything else on failure
+ * @returns 0 on success, anything else on failure
  */
 int AAAStartChargingCCAccSession(AAASession *s)
 {
@@ -824,32 +827,32 @@ void AAATerminateCCAccSession(AAASession *s)
 }
 
 void cdp_session_cleanup(cdp_session_t* s, AAAMessage* msg) {
-    // Here we should drop the session ! and free everything related to it
-    // but the generic_data thing should be freed by the callback function registered
-    // when the auth session was created
-    AAASessionCallback_f *cb;
+	// Here we should drop the session ! and free everything related to it
+	// but the generic_data thing should be freed by the callback function registered
+	// when the auth session was created
+	AAASessionCallback_f *cb;
 
-    LM_DBG("cleaning up session %.*s\n", s->id.len, s->id.s);
-    switch (s->type) {
-    	case ACCT_CC_CLIENT:
-    		if (s->cb) {
-    			cb = s->cb;
-    			(cb)(ACC_CC_EV_SESSION_TERMINATED, s);
-    		}
-    		AAADropCCAccSession(s);
-    		break;
-    	case AUTH_CLIENT_STATEFULL:
-    	case AUTH_CLIENT_STATELESS:
+	LM_DBG("cleaning up session %.*s\n", s->id.len, s->id.s);
+	switch (s->type) {
+		case ACCT_CC_CLIENT:
+			if (s->cb) {
+				cb = s->cb;
+				(cb)(ACC_CC_EV_SESSION_TERMINATED, s);
+			}
+			AAADropCCAccSession(s);
+			break;
+		case AUTH_CLIENT_STATEFULL:
+		case AUTH_CLIENT_STATELESS:
 			if (s->cb) {
 				cb = s->cb;
 				(cb)(AUTH_EV_SERVICE_TERMINATED, s);
 			}
 			AAADropAuthSession(s);
 			break;
-    	default:
-    		LM_WARN("asked to cleanup unknown/unhandled session type [%d]\n", s->type);
-    		break;
-    }
+		default:
+			LM_WARN("asked to cleanup unknown/unhandled session type [%d]\n", s->type);
+			break;
+	}
 
 }
 

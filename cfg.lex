@@ -353,6 +353,7 @@ MEMDBG		"memdbg"|"mem_dbg"
 MEMSUM		"mem_summary"
 MEMSAFETY	"mem_safety"
 MEMJOIN		"mem_join"
+MEMSTATUSMODE		"mem_status_mode"
 CORELOG		"corelog"|"core_log"
 SIP_WARNING sip_warning
 SERVER_SIGNATURE server_signature
@@ -426,6 +427,7 @@ RT_TIMER2_PRIO		"rt_timer2_prio"|"rt_stimer_prio"
 RT_TIMER2_POLICY	"rt_timer2_policy"|"rt_stimer_policy"
 MCAST_LOOPBACK		"mcast_loopback"
 MCAST_TTL		"mcast_ttl"
+MCAST		"mcast"
 TOS			"tos"
 PMTU_DISCOVERY	"pmtu_discovery"
 KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
@@ -499,7 +501,7 @@ COLON		":"
 STAR		\*
 DOT			\.
 CR			\n
-EVENT_RT_NAME [a-zA-Z][0-9a-zA-Z-]*(":"[a-zA-Z][0-9a-zA-Z-]*)+
+EVENT_RT_NAME [a-zA-Z][0-9a-zA-Z-]*(":"[a-zA-Z][0-9a-zA-Z_-]*)+
 
 
 COM_LINE	"#"|"//"
@@ -770,6 +772,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{MEMSUM}	{ count(); yylval.strval=yytext; return MEMSUM; }
 <INITIAL>{MEMSAFETY}	{ count(); yylval.strval=yytext; return MEMSAFETY; }
 <INITIAL>{MEMJOIN}	{ count(); yylval.strval=yytext; return MEMJOIN; }
+<INITIAL>{MEMSTATUSMODE}	{ count(); yylval.strval=yytext; return MEMSTATUSMODE; }
 <INITIAL>{CORELOG}	{ count(); yylval.strval=yytext; return CORELOG; }
 <INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
 <INITIAL>{USER}		{ count(); yylval.strval=yytext; return USER; }
@@ -892,6 +895,8 @@ IMPORTFILE      "import_file"
 									return MCAST_LOOPBACK; }
 <INITIAL>{MCAST_TTL}		{	count(); yylval.strval=yytext;
 									return MCAST_TTL; }
+<INITIAL>{MCAST}		{	count(); yylval.strval=yytext;
+									return MCAST; }
 <INITIAL>{TOS}			{	count(); yylval.strval=yytext;
 									return TOS; }
 <INITIAL>{PMTU_DISCOVERY}		{	count(); yylval.strval=yytext;
@@ -1190,9 +1195,9 @@ IMPORTFILE      "import_file"
 
 <INITIAL>{COM_LINE}!{SER_CFG}{CR}		{ count();
 											sr_cfg_compat=SR_COMPAT_SER;}
-<INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count(); 
+<INITIAL>{COM_LINE}!{KAMAILIO_CFG}{CR}	{ count();
 											sr_cfg_compat=SR_COMPAT_KAMAILIO;}
-<INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count(); 
+<INITIAL>{COM_LINE}!{MAXCOMPAT_CFG}{CR}	{ count();
 												sr_cfg_compat=SR_COMPAT_MAX;}
 
 <INITIAL>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count(); pp_define_set_type(0);
@@ -1201,6 +1206,12 @@ IMPORTFILE      "import_file"
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <INITIAL>{PREP_START}{REDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(2);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<DEFINE_ID>{ID}{MINUS}          {	count();
+									LOG(L_CRIT,
+										"error at %s line %d: '-' not allowed\n",
+										(finame)?finame:"cfg", line);
+									exit(-1);
+								}
 <DEFINE_ID>{ID}                 {	count();
 									if (pp_define(yyleng, yytext)) return 1;
 									state = DEFINE_EOL_S; BEGIN(DEFINE_EOL); }
@@ -1228,6 +1239,12 @@ IMPORTFILE      "import_file"
 <INITIAL,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(0)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
+<IFDEF_ID>{ID}{MINUS}           { count();
+									LOG(L_CRIT,
+										"error at %s line %d: '-' not allowed\n",
+										(finame)?finame:"cfg", line);
+									exit(-1);
+								}
 <IFDEF_ID>{ID}                { count();
                                 pp_ifdef_var(yyleng, yytext);
                                 state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
@@ -1329,7 +1346,7 @@ IMPORTFILE      "import_file"
 										case PVAR_P_S: 
 											LOG(L_CRIT, "ERROR: unexpected EOF"
 													" while parsing pvar name"
-													" (%d paranthesis open)\n",
+													" (%d parenthesis open)\n",
 													p_nest);
 											break;
 										case AVP_PVAR_S:

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -193,14 +193,14 @@ int pv_table_add(pv_export_t *e)
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
-	
+
 	if(_pv_table_set==0)
 	{
 		LM_DBG("PV table not initialized, doing it now\n");
 		pv_init_table();
 	}
 	in = &(e->name);
-	p = in->s;	
+	p = in->s;
 	while(is_in_str(p,in) && is_pv_valid_char(*p))
 		p++;
 	if(is_in_str(p,in))
@@ -462,7 +462,7 @@ int pv_table_free(void)
 	}
 	memset(_pv_table, 0, sizeof(pv_item_t*)*PV_TABLE_SIZE);
 	_pv_table_set = 0;
-	
+
 	return 0;
 }
 
@@ -601,7 +601,7 @@ int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(res==NULL)
 		return -1;
-	
+
 	res->rs = pv_str_empty;
 	res->ri = 0;
 	res->flags = PV_VAL_NULL;
@@ -757,7 +757,7 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 		if (!silent) LM_ERR("bad parameters\n");
 		return NULL;
 	}
-	
+
 	/* LM_DBG("***** input [%.*s] (%d)\n", in->len, in->s, in->len); */
 	tr = 0;
 	pvstate = 0;
@@ -806,7 +806,7 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 							*p, in->len, in->s, pvstate);
 			goto error;
 		}
-	} else { 
+	} else {
 		if(!is_in_str(p, in)) {
 			p--;
 			goto done_inm;
@@ -824,13 +824,13 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 done_inm:
 	if((pte = pv_lookup_spec_name(&pvname, e))==NULL)
 	{
-		if (!silent) 
+		if (!silent)
 			LM_ERR("error searching pvar \"%.*s\"\n", pvname.len, pvname.s);
 		goto error;
 	}
 	if(pte->parse_name!=NULL && pvstate!=2 && pvstate!=5)
 	{
-		if (!silent) 
+		if (!silent)
 			LM_ERR("pvar \"%.*s\" expects an inner name\n",
 						pvname.len, pvname.s);
 		goto error;
@@ -1054,7 +1054,7 @@ int pv_parse_format(str *in, pv_elem_p *el)
 		return -1;
 
 	/*LM_DBG("parsing [%.*s]\n", in->len, in->s);*/
-	
+
 	if(in->len == 0)
 	{
 		*el = pkg_malloc(sizeof(pv_elem_t));
@@ -1081,12 +1081,12 @@ int pv_parse_format(str *in, pv_elem_p *el)
 			*el = e;
 		if(e0)
 			e0->next = e;
-	
+
 		e->text.s = p;
 		while(is_in_str(p,in) && *p!=PV_MARKER)
 			p++;
 		e->text.len = p - e->text.s;
-		
+
 		if(*p == '\0' || !is_in_str(p,in))
 			break;
 		s.s = p;
@@ -1095,7 +1095,7 @@ int pv_parse_format(str *in, pv_elem_p *el)
 		if(e->spec==NULL)
 			goto error;
 		p0 = p + len;
-		
+
 		if(p0==NULL)
 			goto error;
 		if(*p0 == '\0')
@@ -1189,7 +1189,7 @@ int pv_parse_avp_name(pv_spec_p sp, str *in)
 	}
 	/*LM_DBG("static name [%.*s]\n", in->len, in->s);*/
 	if(km_parse_avp_spec(in, &sp->pvp.pvn.u.isname.type,
-					  &sp->pvp.pvn.u.isname.name)!=0)
+					&sp->pvp.pvn.u.isname.name)!=0)
 	{
 		LM_ERR("bad avp name [%.*s]\n", in->len, in->s);
 		return -1;
@@ -1236,7 +1236,7 @@ int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
 		LM_ERR("null or empty name\n");
 		return -1;
 	}
-		
+
 	if((tv.flags&PV_TYPE_INT) && (tv.flags&PV_VAL_INT))
 	{
 		avp_name->n = tv.ri;
@@ -1301,13 +1301,13 @@ int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
-	
+
 	memset(value, 0, sizeof(pv_value_t));
 
 	ret = (*sp->getf)(msg, &(sp->pvp), value);
 	if(ret!=0)
 		return ret;
-		
+
 	if(sp->trans)
 		return tr_exec(msg, (trans_t*)sp->trans, value);
 	return ret;
@@ -1335,7 +1335,7 @@ int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 	pv_value_t tok;
 	pv_elem_p it;
 	char *cur;
-	
+
 	if(msg==NULL || list==NULL || buf==NULL || len==NULL)
 		return -1;
 
@@ -1344,7 +1344,7 @@ int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 
 	*buf = '\0';
 	cur = buf;
-	
+
 	n = 0;
 	for (it=list; it; it=it->next)
 	{
@@ -1383,7 +1383,7 @@ int pv_printf(struct sip_msg* msg, pv_elem_p list, char *buf, int *len)
 	}
 
 	goto done;
-	
+
 overflow:
 	LM_ERR("buffer overflow -- increase the buffer size...\n");
 	return -1;
@@ -1572,14 +1572,14 @@ char* tr_lookup(str *in, trans_t **tr)
 	char *p;
 	char *p0;
 	str tclass;
-	tr_export_t *te = NULL; 
+	tr_export_t *te = NULL;
 	trans_t *t = NULL;
 	trans_t *t0 = NULL;
 	str s;
 
 	if(in==NULL || in->s==NULL || tr==NULL)
 		return NULL;
-	
+
 	p = in->s;
 	do {
 		while(is_in_str(p, in) && (*p==' ' || *p=='\t' || *p=='\n')) p++;
@@ -1675,7 +1675,7 @@ int tr_exec(struct sip_msg *msg, trans_t *t, pv_value_t *v)
 		LM_DBG("invalid parameters\n");
 		return -1;
 	}
-	
+
 	for(i = t; i!=NULL; i=i->next)
 	{
 		r = (*i->trf)(msg, i->params, i->subtype, v);
@@ -1758,7 +1758,7 @@ int tr_table_add(tr_export_t *e)
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
-	
+
 	if(_tr_table_set==0)
 	{
 		LM_DBG("TR table not initialized, doing it now\n");
@@ -1853,7 +1853,7 @@ int tr_table_free(void)
 	}
 	memset(_tr_table, 0, sizeof(tr_item_t*)*TR_TABLE_SIZE);
 	_tr_table_set = 0;
-	
+
 	return 0;
 }
 

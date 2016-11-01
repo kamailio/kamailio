@@ -53,6 +53,8 @@ typedef struct {
 	char *cacert;
 	char *ciphersuites;
 	char *http_proxy;
+	char *failovercon;
+	char *useragent;
 	unsigned int authmethod;
 	unsigned int http_proxy_port;
 	unsigned int tlsversion;
@@ -66,14 +68,12 @@ typedef struct {
 	curl_con_pkg_t *pconn;
 } curl_query_t;
 
-/* Forward declaration */
-static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const curl_query_t * const query_params);
 
-/* 
+/*
  * curl write function that saves received data as zero terminated
  * to stream. Returns the amount of data taken care of.
  *
- * This function may be called multiple times for larger responses, 
+ * This function may be called multiple times for larger responses,
  * so it reallocs + concatenates the buffer as needed.
  */
 size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
@@ -101,6 +101,7 @@ size_t write_function( void *ptr, size_t size, size_t nmemb, void *stream_ptr)
 
 	return size * nmemb;
  }
+
 
 
 /*! Send query to server, optionally post data.
@@ -228,6 +229,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
 	res |= curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream);
 
+	if(params->useragent)
+		res |= curl_easy_setopt(curl, CURLOPT_USERAGENT, params->useragent);
 
 	if (res != CURLE_OK) {
 		/* PANIC */
@@ -246,6 +249,8 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		}
 
 	}
+
+	/* Cleanup */
 	if (headerlist) {
 		curl_slist_free_all(headerlist);
 	}
@@ -299,6 +304,10 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 			pkg_free(stream.buf);
 		}
 		counter_inc(connfail);
+		if (params->failovercon != NULL) {
+			LM_ERR("FATAL FAILURE: Trying failover to curl con (%s)\n", params->failovercon);
+			return (1000 + res);
+		}
 		return res;
 	}
 
@@ -370,6 +379,12 @@ static int curL_query_url(struct sip_msg* _m, const char* _url, str* _dst, const
 		counter_inc(connok);
 	} else {
 		counter_inc(connfail);
+		if (stat >= 500) {
+			if (params->failovercon != NULL) {
+				LM_ERR("FAILURE: Trying failover to curl con (%s)\n", params->failovercon);
+				return (1000 + stat);
+			}
+		}
 	}
 
 	/* CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ... ); */
@@ -419,8 +434,9 @@ int curl_get_redirect(struct sip_msg* _m, const str *connection, str* result)
 	return 1;
 }
 
+
 /*! Run a query based on a connection definition */
-int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url, str* result, const char *contenttype, const str* post)
+int curl_con_query_url_f(struct sip_msg* _m, const str *connection, const str* url, str* result, const char *contenttype, const str* post, int failover)
 {
 	curl_con_t *conn = NULL;
 	curl_con_pkg_t *pconn = NULL;
@@ -508,6 +524,7 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	query_params.oneline = 0;
 	query_params.maxdatasize = maxdatasize;
 	query_params.http_proxy_port = conn->http_proxy_port;
+	query_params.failovercon = conn->failover.s ? as_asciiz(&conn->failover) : NULL;
 	query_params.pconn = pconn;
 	if (conn->http_proxy) {
 		query_params.http_proxy = conn->http_proxy;
@@ -517,6 +534,16 @@ int curl_con_query_url(struct sip_msg* _m, const str *connection, const str* url
 	}
 
 	res = curL_query_url(_m, urlbuf, result, &query_params);
+
+	if (res > 1000 && conn->failover.s) {
+		int counter = failover + 1;
+		if (counter >= 2) {
+			LM_DBG("**** No more failovers - returning failure\n");
+			return (res - 1000);
+		}
+		/* Time for failover */
+		return curl_con_query_url_f(_m, &conn->failover, url, result, contenttype, post, counter);
+	}
 
 	LM_DBG("***** #### ***** CURL DONE : %s \n", urlbuf);
 error:
@@ -529,6 +556,12 @@ error:
 	return res;
 }
 
+/* Wrapper */
+int curl_con_query_url(struct sip_msg* _m, const str *connection,
+		const str* url, str* result, const char *contenttype, const str* post)
+{
+	return curl_con_query_url_f(_m, connection, url, result, contenttype, post, 0);
+}
 
 /*!
  * Performs http_query and saves possible result (first body line of reply)
@@ -557,10 +590,43 @@ int http_query(struct sip_msg* _m, char* _url, str* _dst, char* _post)
 	query_params.http_follow_redirect = default_http_follow_redirect;
 	query_params.oneline = 1;
 	query_params.maxdatasize = 0;
-	query_params.http_proxy = as_asciiz(&default_http_proxy);
-	query_params.http_proxy_port = default_http_proxy_port;
+	if(default_useragent.s!=NULL && default_useragent.len>0) {
+		query_params.useragent = default_useragent.s;
+	}
+	if(default_http_proxy.s!=NULL && default_http_proxy.len>0) {
+		query_params.http_proxy = default_http_proxy.s;
+		if(default_http_proxy_port>0) {
+			query_params.http_proxy_port = default_http_proxy_port;
+		}
+	}
 
 	res =  curL_query_url(_m, _url, _dst, &query_params);
 
 	return res;
+}
+
+
+char *http_get_content_type(const str *connection)
+{
+	curl_con_t *conn = NULL;
+	curl_con_pkg_t *pconn = NULL;
+
+	/* Find connection if it exists */
+	if (!connection) {
+		LM_ERR("No cURL connection specified\n");
+		return NULL;
+	}
+	LM_DBG("******** CURL Connection %.*s\n", connection->len, connection->s);
+	conn = curl_get_connection((str*)connection);
+	if (conn == NULL) {
+		LM_ERR("No cURL connection found: %.*s\n", connection->len, connection->s);
+		return NULL;
+	}
+	pconn = curl_get_pkg_connection(conn);
+	if (pconn == NULL) {
+		LM_ERR("No cURL connection data found: %.*s\n", connection->len, connection->s);
+		return NULL;
+	}
+
+	return pconn->result_content_type;
 }

@@ -208,7 +208,7 @@ struct ser_cmd_export_ {
 	int param_no;           /**< number of parameters used by the function */
 	fixup_function fixup;   /**< pointer to the function called to "fix" the
 							   parameters */
-	int flags;              /**< Function flags */
+	unsigned int flags;     /**< Function flags */
 };
 
 
@@ -221,7 +221,7 @@ struct kam_cmd_export_ {
 							   parameters */
 	free_fixup_function free_fixup; /**< function called to free the "fixed"
 									   parameters */
-	int flags;              /**< Function flags */
+	unsigned int flags;     /**< Function flags */
 };
 
 /** sip-router version */
@@ -233,8 +233,8 @@ struct sr31_cmd_export_ {
 							   parameters */
 	free_fixup_function free_fixup; /**< function called to free the "fixed"
 									   parameters */
-	int flags;              /**< Function flags */
-	int fixup_flags;
+	unsigned int flags;     /**< Function flags */
+	unsigned int fixup_flags;
 	void* module_exports; /**< pointer to module structure */
 };
 

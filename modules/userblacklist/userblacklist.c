@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -75,7 +75,7 @@ typedef struct _avp_check
 
 
 struct check_blacklist_fs_t {
-  struct dtrie_node_t *dtrie_root;
+	struct dtrie_node_t *dtrie_root;
 };
 
 str userblacklist_db_url = str_init(DEFAULT_RODB_URL);
@@ -89,15 +89,19 @@ static int check_user_blacklist_fixup(void** param, int param_no);
 static int check_globalblacklist_fixup(void** param, int param_no);
 
 /* ---- exported commands: */
-static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
-static int check_user_whitelist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
-static int check_user_blacklist2(struct sip_msg *msg, char* str1, char* str2);
-static int check_user_whitelist2(struct sip_msg *msg, char* str1, char* str2);
-static int check_user_blacklist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
-static int check_user_whitelist3(struct sip_msg *msg, char* str1, char* str2, char* str3);
-static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
-static int check_whitelist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
-static int check_globalblacklist(struct sip_msg *msg);
+static int check_user_blacklist(sip_msg_t *msg, char* puser,
+		char* pdomain, char* pnumber, char* ptable);
+static int check_user_whitelist(sip_msg_t *msg, char* puser,
+		char* pdomain, char* pnumber, char* ptable);
+static int check_user_blacklist2(sip_msg_t *msg, char* puser, char* pdomain);
+static int check_user_whitelist2(sip_msg_t *msg, char* puser, char* pdomain);
+static int check_user_blacklist3(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber);
+static int check_user_whitelist3(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber);
+static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1);
+static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1);
+static int check_globalblacklist(sip_msg_t *msg);
 
 
 /* ---- module init functions: */
@@ -116,15 +120,24 @@ struct mi_root * mi_check_userwhitelist(struct mi_root* cmd, void* param);  /* u
 
 
 static cmd_export_t cmds[]={
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist2, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist2, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist3, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist3, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_blacklist", (cmd_function)check_blacklist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_whitelist", (cmd_function)check_whitelist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{ "check_blacklist", (cmd_function)check_globalblacklist, 0, check_globalblacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist2, 2,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist2, 2,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist3, 3,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist3, 3,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_whitelist", (cmd_function)check_user_whitelist, 4,
+		check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_blacklist", (cmd_function)check_blacklist, 1,
+		check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_whitelist", (cmd_function)check_whitelist, 1,
+		check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_blacklist", (cmd_function)check_globalblacklist, 0,
+		check_globalblacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ 0, 0, 0, 0, 0, 0}
 };
 
@@ -179,7 +192,7 @@ struct source_t {
 
 
 struct source_list_t {
-  struct source_t *head;
+	struct source_t *head;
 };
 
 
@@ -190,41 +203,13 @@ static struct dtrie_node_t *dtrie_root = NULL;
 
 static int check_user_blacklist_fixup(void** param, int param_no)
 {
-	pv_elem_t *model=NULL;
-	str s;
-
-	/* convert to str */
-	s.s = (char*)*param;
-	s.len = strlen(s.s);
-
 	if (param_no > 0 && param_no <= 4) {
-		if(s.len == 0 && param_no != 4) {
+		if(strlen((char*)*param) == 0 && param_no != 4) {
 			LM_ERR("no parameter %d\n", param_no);
 			return E_UNSPEC;
 		}
+		return fixup_spve_null(param, 1);
 
-		if(pv_parse_format(&s, &model) < 0 || !model) {
-			LM_ERR("wrong format [%.*s] for parameter %d\n", s.len, s.s, param_no);
-			return E_UNSPEC;
-		}
-
-		if(model->spec==NULL || model->spec->getf==NULL) {
-			if(param_no == 1) {
-				if(str2int(&s, (unsigned int*)&model->spec->pvp.pvn.u.isname.name.n) != 0) {
-					LM_ERR("wrong value [%.*s] for parameter %d\n", s.len, s.s, param_no);
-					return E_UNSPEC;
-				}
-			} else {
-				if(param_no == 2 || param_no == 3) {
-					LM_ERR("wrong value [%.*s] for parameter %d\n", s.len, s.s, param_no);
-					return E_UNSPEC;
-				} else {
-					// only a string
-					return 0;
-				}
-			}
-		}
-		*param = (void*)model;
 	} else {
 		LM_ERR("wrong number of parameters\n");
 	}
@@ -233,7 +218,8 @@ static int check_user_blacklist_fixup(void** param, int param_no)
 }
 
 
-static int check_user_list(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4, int listtype)
+static int check_user_list(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber, char* ptable, int listtype)
 {
 	str user = { .len = 0, .s = NULL };
 	str domain = { .len = 0, .s = NULL};
@@ -245,32 +231,31 @@ static int check_user_list(struct sip_msg *msg, char* str1, char* str2, char* st
 	char req_number[MAXNUMBERLEN+1];
 
 	/* user */
-	if(((pv_elem_p)str1)->spec!=NULL && ((pv_elem_p)str1)->spec->getf!=NULL) {
-		if(pv_printf_s(msg, (pv_elem_p)str1, &user) != 0) {
-			LM_ERR("cannot print user pseudo-variable\n");
-			return -1;
-		}
+	if(fixup_get_svalue(msg, (gparam_t*)puser, &user)!=0) {
+		LM_ERR("cannot print user pseudo-variable\n");
+		return -1;
 	}
 	/* domain */
-	if(((pv_elem_p)str2)->spec!=NULL && ((pv_elem_p)str2)->spec->getf) {
-		if(pv_printf_s(msg, (pv_elem_p)str2, &domain) != 0) {
-			LM_ERR("cannot print domain pseudo-variable\n");
-			return -1;
-		}
+	if(fixup_get_svalue(msg, (gparam_t*)pdomain, &domain)!=0) {
+		LM_ERR("cannot print domain pseudo-variable\n");
+		return -1;
 	}
 	/* source number */
-	if(str3 != NULL && ((pv_elem_p)str3)->spec!=NULL && ((pv_elem_p)str3)->spec->getf!=NULL) {
-		if(pv_printf_s(msg, (pv_elem_p)str3, &number) != 0) {
+	if(pnumber != NULL) {
+		if(fixup_get_svalue(msg, (gparam_t*)pnumber, &number)!=0) {
 			LM_ERR("cannot print number pseudo-variable\n");
 			return -1;
 		}
 	}
 	/* table name */
-	if(str4 != NULL && strlen(str4) > 0) {
-		/* string */
-		table.s=str4;
-		table.len=strlen(str4);
-	} else {
+	if(ptable != NULL) {
+		if(fixup_get_svalue(msg, (gparam_t*)ptable, &table)!=0) {
+			LM_ERR("cannot print table pseudo-variable\n");
+			return -1;
+		}
+	}
+
+	if(table.len<=0) {
 		/* use default table name */
 		table.len=userblacklist_table.len;
 		table.s=userblacklist_table.s;
@@ -283,7 +268,8 @@ static int check_user_list(struct sip_msg *msg, char* str1, char* str2, char* st
 
 	if(number.s == NULL) {
 		/* use R-URI */
-		if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s) || (msg->parsed_uri.user.len > MAXNUMBERLEN)) {
+		if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s)
+				|| (msg->parsed_uri.user.len > MAXNUMBERLEN)) {
 			LM_ERR("cannot parse msg URI\n");
 			return -1;
 		}
@@ -331,37 +317,41 @@ static int check_user_list(struct sip_msg *msg, char* str1, char* str2, char* st
 }
 
 
-static int check_user_whitelist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4)
+static int check_user_whitelist(sip_msg_t *msg, char* puser,
+		char* pdomain, char* pnumber, char* ptable)
 {
-	return check_user_list(msg, str1, str2, str3, str4, 1);
+	return check_user_list(msg, puser, pdomain, pnumber, ptable, 1);
 }
 
 
-static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4)
+static int check_user_blacklist(sip_msg_t *msg, char* puser,
+		char* pdomain, char* pnumber, char* ptable)
 {
-	return check_user_list(msg, str1, str2, str3, str4, 0);
+	return check_user_list(msg, puser, pdomain, pnumber, ptable, 0);
 }
 
-static int check_user_whitelist2(struct sip_msg *msg, char* str1, char* str2)
+static int check_user_whitelist2(sip_msg_t *msg, char* puser, char* pdomain)
 {
-	return check_user_list(msg, str1, str2, NULL, NULL, 1);
-}
-
-
-static int check_user_blacklist2(struct sip_msg *msg, char* str1, char* str2)
-{
-	return check_user_list(msg, str1, str2, NULL, NULL, 0);
-}
-
-static int check_user_whitelist3(struct sip_msg *msg, char* str1, char* str2, char* str3)
-{
-	return check_user_list(msg, str1, str2, str3, NULL, 1);
+	return check_user_list(msg, puser, pdomain, NULL, NULL, 1);
 }
 
 
-static int check_user_blacklist3(struct sip_msg *msg, char* str1, char* str2, char* str3)
+static int check_user_blacklist2(sip_msg_t *msg, char* puser, char* pdomain)
 {
-	return check_user_list(msg, str1, str2, str3, NULL, 0);
+	return check_user_list(msg, puser, pdomain, NULL, NULL, 0);
+}
+
+static int check_user_whitelist3(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber)
+{
+	return check_user_list(msg, puser, pdomain, pnumber, NULL, 1);
+}
+
+
+static int check_user_blacklist3(sip_msg_t *msg, char* puser, char* pdomain,
+		char* pnumber)
+{
+	return check_user_list(msg, puser, pdomain, pnumber, NULL, 0);
 }
 
 
@@ -453,7 +443,7 @@ static int check_globalblacklist_fixup(void** param, int param_no)
 	return 0;
 }
 
-static int check_globalblacklist(struct sip_msg* msg)
+static int check_globalblacklist(sip_msg_t* msg)
 {
 	static struct check_blacklist_fs_t* arg = NULL;
 	if(!arg){
@@ -473,7 +463,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 	char *table = (char *)(*arg);
 	struct dtrie_node_t *node = NULL;
 	struct check_blacklist_fs_t *new_arg;
-	
+
 	if (arg_no != 1) {
 		LM_ERR("wrong number of parameters\n");
 		return -1;
@@ -487,7 +477,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 	if (add_source(table) != 0) {
 		LM_ERR("could not add table");
 		return -1;
-	}	
+	}
 
 	/* get the node that belongs to the table */
 	node = table2dt(table);
@@ -509,7 +499,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 }
 
 
-static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1)
+static int check_blacklist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 {
 	void **nodeflags;
 	char *ptr;
@@ -544,6 +534,9 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 			/* LM_DBG("whitelisted"); */
 			ret = 1; /* found, but is whitelisted */
 		}
+		else {
+			LM_DBG("entry %s is blacklisted\n", req_number);
+		}
 	}
 	else {
 		/* LM_ERR("not found"); */
@@ -551,11 +544,10 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 	}
 	lock_release(lock);
 
-	LM_DBG("entry %s is blacklisted\n", req_number);
 	return ret;
 }
 
-static int check_whitelist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1)
+static int check_whitelist(sip_msg_t *msg, struct check_blacklist_fs_t *arg1)
 {
 	void **nodeflags;
 	char *ptr;
@@ -590,6 +582,9 @@ static int check_whitelist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 			/* LM_DBG("whitelisted"); */
 			ret = 1; /* found, but is whitelisted */
 		}
+		else {
+			LM_DBG("entry %s is blacklisted\n", req_number);
+		}
 	}
 	else {
 		/* LM_ERR("not found"); */
@@ -597,7 +592,6 @@ static int check_whitelist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 	}
 	lock_release(lock);
 
-	LM_DBG("entry %s is blacklisted\n", req_number);
 	return ret;
 }
 
@@ -705,8 +699,8 @@ static void dump_dtrie_mi(const struct dtrie_node_t *root,
 		return ;
 	}
 
-        /* If data found, add a new node to the reply tree */
-        if (root->data) {
+	/* If data found, add a new node to the reply tree */
+	if (root->data) {
 		/* Create new node and add it to the roots's kids */
 		if(!(crt_node = add_mi_node_child(&reply->node, MI_DUP_NAME, prefix,
 				*length, 0, 0)) ) {
@@ -729,34 +723,34 @@ static void dump_dtrie_mi(const struct dtrie_node_t *root,
 			LM_ERR("cannot add attributes to the node\n");
 			return ;
 		}
-        }
+	}
 
 	/* Perform a DFS search */
-        for (i = 0; i < branches; i++) {
-                /* If child branch found, traverse it */
-                if (root->child[i]) {
-                        if (branches == 10) {
-                                digit = i + '0';
-                        } else {
-                                digit = i;
-                        }
+	for (i = 0; i < branches; i++) {
+		/* If child branch found, traverse it */
+		if (root->child[i]) {
+			if (branches == 10) {
+				digit = i + '0';
+			} else {
+				digit = i;
+			}
 
-                        /* Push digit in prefix stack */
+			/* Push digit in prefix stack */
 			if (*length >= MAXNUMBERLEN + 1) {
 				LM_ERR("prefix length exceeds %d\n", MAXNUMBERLEN + 1);
 				return ;
 			}
-                        prefix[(*length)++] = digit;
+			prefix[(*length)++] = digit;
 
-                        /* Recursive DFS call */
-	                dump_dtrie_mi(root->child[i], branches, prefix, length, reply);
+			/* Recursive DFS call */
+			dump_dtrie_mi(root->child[i], branches, prefix, length, reply);
 
-                        /* Pop digit from prefix stack */
-                        (*length)--;
-                }
-        }
+			/* Pop digit from prefix stack */
+			(*length)--;
+		}
+	}
 
-        return ;
+	return ;
 }
 
 
@@ -840,8 +834,8 @@ static struct mi_root * check_list_mi(struct mi_root* cmd, int list_type)
 
 	switch (list_type) {
 		case MARK_WHITELIST:
-                        attr.s = WHITELISTED_S;
-                        attr.len = WHITELISTED_LEN;
+			attr.s = WHITELISTED_S;
+			attr.len = WHITELISTED_LEN;
 
 			if (ret == MARK_WHITELIST) {
 				val.s = TRUE_S;
@@ -850,8 +844,8 @@ static struct mi_root * check_list_mi(struct mi_root* cmd, int list_type)
 
 			break;
 		case MARK_BLACKLIST:
-                        attr.s = BLACKLISTED_S;
-                        attr.len = BLACKLISTED_LEN;
+			attr.s = BLACKLISTED_S;
+			attr.len = BLACKLISTED_LEN;
 
 			if (ret == MARK_BLACKLIST) {
 				val.s = TRUE_S;
@@ -983,8 +977,8 @@ static struct mi_root * check_userlist_mi(struct mi_root* cmd, int list_type)
 
 	switch (list_type) {
 		case MARK_WHITELIST:
-                        attr.s = WHITELISTED_S;
-                        attr.len = WHITELISTED_LEN;
+			attr.s = WHITELISTED_S;
+			attr.len = WHITELISTED_LEN;
 
 			if (ret == MARK_WHITELIST) {
 				val.s = TRUE_S;
@@ -993,8 +987,8 @@ static struct mi_root * check_userlist_mi(struct mi_root* cmd, int list_type)
 
 			break;
 		case MARK_BLACKLIST:
-                        attr.s = BLACKLISTED_S;
-                        attr.len = BLACKLISTED_LEN;
+			attr.s = BLACKLISTED_S;
+			attr.len = BLACKLISTED_LEN;
 
 			if (ret == MARK_BLACKLIST) {
 				val.s = TRUE_S;

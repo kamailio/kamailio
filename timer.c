@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -37,6 +37,7 @@
 #include <stdlib.h> /* random, debugging only */
 #include "error.h"
 #include "signals.h"
+
 /*
 #include "config.h"
 */
@@ -62,8 +63,8 @@ static ticks_t* ticks=0;
 static ticks_t last_ticks; /* last time we adjusted the time */
 static ticks_t last_adj_check; /* last time we ran adjust_ticks */
 static ticks_t prev_ticks; /* last time we ran the timer, also used as
-							  "current" ticks when running the timer for
-							  "skipped" ticks */
+							*  "current" ticks when running the timer for
+							*  "skipped" ticks */
 
 static struct timeval last_time;
 static struct timeval start_time; /* for debugging */
@@ -100,11 +101,11 @@ static int in_timer=0;
 
 
 static gen_lock_t*  slow_timer_lock; /* slow timer lock */
-static struct timer_head* slow_timer_lists; 
+static struct timer_head* slow_timer_lists;
 static volatile unsigned short* t_idx; /* "main" timer index in slow_lists[] */
 static volatile unsigned short* s_idx; /* "slow" timer index in slow_lists[] */
 static struct timer_ln* volatile* running_timer2=0; /* timer handler running
-													     in the "slow" timer */
+													 * in the "slow" timer */
 static sigset_t slow_timer_sset;
 pid_t slow_timer_pid;
 static int in_slow_timer=0;
@@ -137,10 +138,10 @@ void sig_timer(int signo)
 void destroy_timer()
 {
 	struct itimerval it;
-	
+
 	/* disable timer */
 	memset(&it, 0, sizeof(it));
-	setitimer(ITIMER_REAL, &it, 0); 
+	setitimer(ITIMER_REAL, &it, 0);
 	set_sig_h(SIGALRM, SIG_IGN);
 	if (timer_lock){
 		lock_destroy(timer_lock);
@@ -199,9 +200,9 @@ int init_timer()
 {
 	int r;
 	int ret;
-	
+
 	ret=-1;
-	
+
 	/* init the locks */
 	timer_lock=lock_alloc();
 	if (timer_lock==0){
@@ -253,7 +254,7 @@ int init_timer()
 	}
 	last_time=start_time;
 	LM_DBG("starting with *ticks=%u\n", (unsigned) *ticks);
-	
+
 	/* init timer structures */
 	for (r=0; r<H0_ENTRIES; r++)
 		_timer_init_list(&timer_lst->h0[r]);
@@ -262,9 +263,9 @@ int init_timer()
 	for (r=0; r<H2_ENTRIES; r++)
 		_timer_init_list(&timer_lst->h2[r]);
 	_timer_init_list(&timer_lst->expired);
-	
+
 #ifdef USE_SLOW_TIMER
-	
+
 	/* init the locks */
 	slow_timer_lock=lock_alloc();
 	if (slow_timer_lock==0){
@@ -290,9 +291,9 @@ int init_timer()
 	*running_timer2=0;
 	for (r=0; r<SLOW_LISTS_NO; r++)
 		_timer_init_list(&slow_timer_lists[r]);
-	
+
 #endif
-	
+
 	LM_DBG("timer_list between %p and %p\n",
 			&timer_lst->h0[0], &timer_lst->h2[H2_ENTRIES]);
 	return 0;
@@ -304,7 +305,7 @@ error:
 
 
 #ifdef USE_SLOW_TIMER
-/* arm the "slow" timer ( start it) 
+/* arm the "slow" timer ( start it)
  * returns -1 on error
  * WARNING: use it in the same process as the timer
  *  (the one using pause(); timer_handler()) or
@@ -321,7 +322,7 @@ again:
 	}
 #ifdef __OS_darwin
 	/* workaround for darwin sigwait bug, see slow_timer_main() for more
-	   info (or grep __OS_darwin) */
+	 * info (or grep __OS_darwin) */
 	/* keep in sync wih main.c: sig_usr() - signals we are interested in */
 	sigaddset(&slow_timer_sset, SIGINT);
 	sigaddset(&slow_timer_sset, SIGTERM);
@@ -342,7 +343,7 @@ error:
 
 
 
-/* arm the timer ( start it) 
+/* arm the timer ( start it)
  * returns -1 on error
  * WARNING: use it in the same process as the timer
  *  (the one using pause(); timer_handler()) or
@@ -398,7 +399,7 @@ inline static void adjust_ticks(void)
 	ticks_t diff_time_ticks;
 	ticks_t diff_ticks_raw;
 	s_ticks_t delta;
-	
+
 	/* fix ticks if necessary */
 	if ((*ticks-last_adj_check)>=(ticks_t)TIMER_RESYNC_TICKS){
 #ifdef DBG_ser_time
@@ -423,7 +424,7 @@ inline static void adjust_ticks(void)
 			if (delta<-1){
 				LM_WARN("our timer runs faster then real-time"
 						" (%lu ms / %u ticks our time .->"
-						 " %lu ms / %u ticks real time)\n", 
+						" %lu ms / %u ticks real time)\n",
 						(unsigned long)(diff_ticks_raw*1000L/TIMER_TICKS_HZ),
 						diff_ticks_raw,
 						(unsigned long)(diff_time/1000), diff_time_ticks);
@@ -463,7 +464,7 @@ time_t ser_time(time_t *t)
 
 
 
-/* gettimeofday(2) equivalent, using ser internal timers (faster 
+/* gettimeofday(2) equivalent, using ser internal timers (faster
  * but more imprecise)
  * WARNING: ignores tz (it's obsolete anyway)*/
 int ser_gettimeofday(struct timeval* tv, struct timezone* tz)
@@ -485,22 +486,22 @@ void check_ser_drift()
 	time_t t1, t2;
 	struct timeval tv1, tv2;
 	int r;
-	
+
 	t1=time(0);
 	t2=ser_time(0);
 	if (t1!=t2)
 		BUG("time(0)!=ser_time(0) : %d != %d \n", (unsigned)t1, (unsigned)t2);
-	
+
 	r=gettimeofday(&tv1, 0);
 	ser_gettimeofday(&tv2, 0);
 	if (tv1.tv_sec!=tv2.tv_sec)
 		BUG("gettimeofday seconds!=ser_gettimeofday seconds : %d != %d \n",
 				(unsigned)tv1.tv_sec, (unsigned)tv2.tv_sec);
-	else if ((tv1.tv_usec > tv2.tv_usec) && 
+	else if ((tv1.tv_usec > tv2.tv_usec) &&
 				(unsigned)(tv1.tv_usec-tv2.tv_usec)>100000)
 		BUG("gettimeofday usecs > ser_gettimeofday with > 0.1s : %d ms\n",
 			(unsigned)(tv1.tv_usec-tv2.tv_usec)/1000);
-	else if ((tv1.tv_usec < tv2.tv_usec) && 
+	else if ((tv1.tv_usec < tv2.tv_usec) &&
 				(unsigned)(tv2.tv_usec-tv1.tv_usec)>100000)
 		BUG("gettimeofday usecs < ser_gettimeofday with > 0.1s : %d ms\n",
 			(unsigned)(tv2.tv_usec-tv1.tv_usec)/1000);
@@ -555,7 +556,7 @@ int timer_add_safe(struct timer_ln* tl, ticks_t delta)
 #endif
 {
 	int ret;
-	
+
 	LOCK_TIMER_LIST();
 	if (tl->flags & F_TIMER_ACTIVE){
 #ifdef TIMER_DEBUG
@@ -600,7 +601,7 @@ error:
 
 /* safe timer delete
  * deletes tl and inits the list pointer to 0
- * returns  <0 on error (-1 if timer not active/already deleted and -2 if 
+ * returns  <0 on error (-1 if timer not active/already deleted and -2 if
  *           delete attempted from the timer handler) and 0 on success
  */
 #ifdef TIMER_DEBUG
@@ -611,7 +612,7 @@ int timer_del_safe(struct timer_ln* tl)
 #endif
 {
 	int ret;
-	
+
 	ret=-1;
 again:
 	/* quick exit if timer inactive */
@@ -656,7 +657,7 @@ again:
 						", last from: %s(%s):%d, deleted %d times"
 						", last from: %s(%s):%d, init %d times, expired %d \n",
 						tl->add_calls, tl->add_func, tl->add_file,
-						tl->add_line, tl->del_calls, tl->del_func, 
+						tl->add_line, tl->del_calls, tl->del_func,
 						tl->del_file, tl->del_line, tl->init, tl->expires_no);
 #endif
 					return -2; /* do nothing */
@@ -680,7 +681,7 @@ again:
 							"already detached\n",
 							tl, tl->next, tl->prev, tl->flags);
 				LOG(timerlog, "WARN: -timer_del-: @%d tl=%p "
-					"{ %p, %p, %d, %d, %p, %p, %04x, -}\n", get_ticks_raw(), 
+					"{ %p, %p, %d, %d, %p, %p, %04x, -}\n", get_ticks_raw(),
 					tl,  tl->next, tl->prev, tl->expire, tl->initial_timeout,
 					tl->data, tl->f, tl->flags);
 				LOG(timerlog, "WARN: -timer_del-; called from %s(%s):%d\n",
@@ -726,7 +727,7 @@ again:
 						", last from: %s(%s):%d, deleted %d times"
 						", last from: %s(%s):%d, init %d times, expired %d \n",
 						tl->add_calls, tl->add_func, tl->add_file,
-						tl->add_line, tl->del_calls, tl->del_func, 
+						tl->add_line, tl->del_calls, tl->del_func,
 						tl->del_file, tl->del_line, tl->init, tl->expires_no);
 #endif
 					return -2; /* do nothing */
@@ -750,7 +751,7 @@ again:
 							"already detached\n",
 							tl, tl->next, tl->prev, tl->flags);
 				LOG(timerlog, "WARN: -timer_del-: @%d tl=%p "
-					"{ %p, %p, %d, %d, %p, %p, %04x, -}\n", get_ticks_raw(), 
+					"{ %p, %p, %d, %d, %p, %p, %04x, -}\n", get_ticks_raw(),
 					tl,  tl->next, tl->prev, tl->expire, tl->initial_timeout,
 					tl->data, tl->f, tl->flags);
 				LOG(timerlog, "WARN: -timer_del-; called from %s(%s):%d\n",
@@ -782,10 +783,10 @@ return ret;
 
 
 /* marks a timer as "to be deleted when the handler ends", usefull when
- * the timer handler knows it won't prolong the timer anymore (it will 
+ * the timer handler knows it won't prolong the timer anymore (it will
  * return 0) and will do some time consuming work. Calling this function
- * will cause simultaneous timer_dels to return immediately (they won't 
- * wait anymore for the timer handle to finish). It will also allow 
+ * will cause simultaneous timer_dels to return immediately (they won't
+ * wait anymore for the timer handle to finish). It will also allow
  * self-deleting from the timer handle without bug reports.
  * WARNING: - if you rely on timer_del to know when the timer handle execution
  *            finishes (e.g. to free resources used in the timer handle), don't
@@ -802,7 +803,7 @@ void timer_allow_del(void)
 #ifdef USE_SLOW_TIMER
 	if (IS_IN_TIMER_SLOW()){
 			UNSET_RUNNING_SLOW();
-	}else 
+	}else
 #endif
 		LM_CRIT("timer_allow_del called outside a timer handle\n");
 }
@@ -824,10 +825,10 @@ inline static void timer_list_expire(ticks_t t, struct timer_head* h
 #ifdef TIMER_DEBUG
 	struct timer_ln* first;
 	int i=0;
-	
+
 	first=h->next;
 #endif
-	
+
 	/*LM_DBG("@ ticks = %lu, list =%p\n",
 			(unsigned long) *ticks, h);
 	*/
@@ -841,9 +842,9 @@ inline static void timer_list_expire(ticks_t t, struct timer_head* h
 		}else if((tl->next==0) || (tl->prev==0)){
 			LM_CRIT("timer_list_expire: @%d tl=%p "
 					"{ %p, %p, %d, %d, %p, %p, %04x, -},"
-					" h=%p {%p, %p}\n", t, 
+					" h=%p {%p, %p}\n", t,
 					tl,  tl->next, tl->prev, tl->expire, tl->initial_timeout,
-					tl->data, tl->f, tl->flags, 
+					tl->data, tl->f, tl->flags,
 					h, h->next, h->prev);
 			LM_CRIT("-timer_list_expire-: cycle %d, first %p,"
 						"running %p\n", i, first, *running_timer);
@@ -869,7 +870,7 @@ inline static void timer_list_expire(ticks_t t, struct timer_head* h
 #ifdef TIMER_DEBUG
 			tl->expires_no++;
 #endif
-			UNLOCK_TIMER_LIST(); /* acts also as write barrier */ 
+			UNLOCK_TIMER_LIST(); /* acts also as write barrier */
 				ret=tl->f(t, tl, tl->data);
 				/* reset the configuration group handles */
 				cfg_reset_all();
@@ -891,7 +892,7 @@ inline static void timer_list_expire(ticks_t t, struct timer_head* h
 			tl->slow_idx=slow_mark; /* current index */
 			/* overflow check in timer_handler*/
 			_timer_add_list(slow_l, tl);
-			
+
 		}
 #endif
 	}
@@ -909,11 +910,11 @@ static void timer_handler(void)
 #ifdef USE_SLOW_TIMER
 	int run_slow_timer;
 	int i;
-	
+
 	run_slow_timer=0;
 	i=(slow_idx_t)(*t_idx%SLOW_LISTS_NO);
 #endif
-	
+
 	/*LM_DBG("called, ticks=%lu, prev_ticks=%lu\n",
 			(unsigned long)*ticks, (unsigned long)prev_ticks);
 	*/
@@ -930,7 +931,7 @@ static void timer_handler(void)
 		}
 		/* go through all the "missed" ticks, taking a possible overflow
 		 * into account */
-		for (prev_ticks=prev_ticks+1; prev_ticks!=saved_ticks; prev_ticks++) 
+		for (prev_ticks=prev_ticks+1; prev_ticks!=saved_ticks; prev_ticks++)
 			timer_run(prev_ticks);
 		timer_run(prev_ticks); /* do it for saved_ticks too */
 	}while(saved_ticks!=*ticks); /* in case *ticks changed */
@@ -987,7 +988,7 @@ static ticks_t compat_old_handler(ticks_t ti, struct timer_ln* tl,
 									void * data)
 {
 	struct sr_timer* t;
-	
+
 #ifdef TIMER_DEBUG
 	LM_DBG("calling, ticks=%u/%u, tl=%p, t=%p\n",
 			prev_ticks, (unsigned)*ticks, tl, data);
@@ -1002,7 +1003,7 @@ static ticks_t compat_old_handler(ticks_t ti, struct timer_ln* tl,
 /* register a periodic timer;
  * compatibility mode.w/ the old timer interface...
  * ret: <0 on error
- * Hint: if you need it in a module, register it from mod_init or it 
+ * Hint: if you need it in a module, register it from mod_init or it
  * won't work otherwise*/
 int register_timer(timer_function f, void* param, unsigned int interval)
 {
@@ -1016,13 +1017,13 @@ int register_timer(timer_function f, void* param, unsigned int interval)
 	t->id=timer_id++;
 	t->timer_f=f;
 	t->t_param=param;
-	
+
 	timer_init(&t->tl, compat_old_handler, t, 0); /* is slow */
 	if (timer_add(&t->tl, S_TO_TICKS(interval))!=0){
 		LM_ERR("timer_add failed\n");
 		return -1;
 	}
-	
+
 	return t->id;
 
 error:
@@ -1083,7 +1084,7 @@ void slow_timer_main()
 #ifdef USE_SIGWAIT
 	int sig;
 #endif
-	
+
 	in_slow_timer=1; /* mark this process as the slow timer */
 	while(1){
 #ifdef USE_SIGWAIT
@@ -1101,11 +1102,11 @@ void slow_timer_main()
 	if (sig!=SLOW_TIMER_SIG){
 #ifdef __OS_darwin
 		/* on darwin sigwait is buggy: it will cause extreme slow down
-		   on signal delivery for the signals it doesn't wait on
-		   (on darwin 8.8.0, g4 1.5Ghz I've measured a 36s delay!).
-		  To work arround this bug, we sigwait() on all the signals we
-		  are interested in ser and manually call the master signal handler 
-		  if the signal!= slow timer signal -- andrei */
+		 *  on signal delivery for the signals it doesn't wait on
+		 *  (on darwin 8.8.0, g4 1.5Ghz I've measured a 36s delay!).
+		 * To work arround this bug, we sigwait() on all the signals we
+		 * are interested in ser and manually call the master signal handler
+		 * if the signal!= slow timer signal -- andrei */
 		sig_usr(sig);
 #endif
 		continue;
@@ -1113,7 +1114,7 @@ void slow_timer_main()
 #endif
 		/* update the local cfg if needed */
 		cfg_update();
-		
+
 		LOCK_SLOW_TIMER_LIST();
 		while(*s_idx!=*t_idx){
 			i= *s_idx%SLOW_LISTS_NO;
@@ -1150,7 +1151,7 @@ void slow_timer_main()
 		}
 		UNLOCK_SLOW_TIMER_LIST();
 	}
-	
+
 }
 
 #endif

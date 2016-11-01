@@ -115,6 +115,7 @@ struct cfg_group_core default_core_cfg = {
 		4 pkg_sums, 8 shm_sums, 16 short_status */
 	0, /*!< mem_safety - 0 disabled */
 	0, /*!< mem_join - 0 disabled */
+	0, /*!< mem_status_mode - 0 only free fragments, 1 all fragements */
 	L_ERR, /*!< corelog */
 	L_DBG, /*!< latency cfg log */
 	L_ERR, /*!< latency log */
@@ -140,7 +141,7 @@ static int check_raw_sock_support(void* cfg_h, str* gname, str* name,
 #else /* USE_RAW_SOCKS */
 	if (raw_udp4_send_sock < 0) {
 		if (val > 0) {
-			ERR("could not intialize raw socket on startup, please "
+			ERR("could not initialize raw socket on startup, please "
 					"restart as root or with CAP_NET_RAW\n");
 			return -1;
 		} else if (val < 0) {
@@ -313,6 +314,8 @@ cfg_def_t core_cfg_def[] = {
 		"safety level for memory operations"},
 	{"mem_join",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"join free memory fragments"},
+	{"mem_status_mode",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"print status for free or all memory fragments"},
 	{"corelog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for non-critical core error messages"},
 	{"latency_cfg_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,

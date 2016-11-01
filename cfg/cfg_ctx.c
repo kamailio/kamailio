@@ -1425,7 +1425,7 @@ int cfg_diff_init(cfg_ctx_t *ctx,
  * return value:
  *	1: valid value is found
  *	0: no more changed value found
- *	-1: error occured 
+ *	-1: error occurred 
  */
 int cfg_diff_next(void **h,
 			str *gname, unsigned int **gid, str *vname,

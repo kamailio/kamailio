@@ -195,7 +195,7 @@ int db_handle_error(ul_db_handle_t * handle, int no) {
 	}
 	refresh_handle(handle, &dbh_tmp, 0);
 	LM_ERR("error on id %i, db %i, "
-		    "errors occured: %i, threshold: %i\n",
+		    "errors occurred: %i, threshold: %i\n",
 		handle->id, db->no, db->errors, db_error_threshold);
 	if(db->errors >= db_error_threshold) {
 		LM_DBG("db_handle_error: now doing failover");

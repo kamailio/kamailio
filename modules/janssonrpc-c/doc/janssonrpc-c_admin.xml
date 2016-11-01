@@ -297,7 +297,8 @@ route[RESPONSE] {
 				</programlisting>
 			</example>
 		</section>
-		<section>
+	</section>
+	<section>
 			<title>
 				Error Handling
 			</title>
@@ -402,7 +403,6 @@ route[INTERNAL] {
 ...
 				</programlisting>
 			</example>
-		</section>
 	</section>
 </chapter>
 

@@ -8,7 +8,7 @@ Edited by
 
 Ron Winacott
 
-   Copyright � 2006 SOMA Networks, Inc.
+   Copyright © 2006 SOMA Networks, Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -99,7 +99,7 @@ Chapter 1. Admin Guide
 
 2. How it works
 
-   The sst module uses the "dialog module" to be notified of any new or
+   The sst module uses the “dialog module” to be notified of any new or
    updated dialogs. It will then look for and extract the session-expire:
    header value (if there is one) and override the dialog expire timer
    value for the current context dialog by setting the avp value.
@@ -111,10 +111,10 @@ Chapter 1. Admin Guide
    All of this happens with a properly configured dialog and sst module
    and setting the dialog flag and the sst flag at the time any INVITE sip
    message is seen. There is no kamailio.cfg script function call required
-   to set the dialog expire timeout value. See the "dialog module" users
+   to set the dialog expire timeout value. See the “dialog module” users
    guide for more information.
 
-   The "sstCheckMin()" script function can be used to verify that the
+   The “sstCheckMin()” script function can be used to verify that the
    Session-expires / MIN-SE header field values are not too small for your
    server. If the SST min_se parameter value is smaller than the messages
    Session-Expires / MIN-SE values, the test will return true. You can
@@ -193,7 +193,7 @@ Chapter 1. Admin Guide
    variables, the module provide information about the dialog processing.
    Set it to zero to disable or to non-zero to enable it.
 
-   Default value is "1" (enabled).
+   Default value is “1” (enabled).
 
    Example 1.2. Set enable_stats parameter
 ...
@@ -204,13 +204,13 @@ modparam("sst", "enable_stats", 0)
 
    The value is used to set the proxies MIN-SE value and is used in the
    422 error reply as the proxys MIN-SE: header value if the
-   "sstCheckMin()" flag is set to true and the check fails.
+   “sstCheckMin()” flag is set to true and the check fails.
 
-   If not set and "sstCheckMin()" is called with the send-reply flag set
+   If not set and “sstCheckMin()” is called with the send-reply flag set
    to true, the default 1800 seconds will be used as the compare and the
    MIN-SE: header value if the 422 reply is sent.
 
-   Default value is "1800" seconds.
+   Default value is “1800” seconds.
 
    Example 1.3. Set min_se parameter
 ...
@@ -226,7 +226,7 @@ modparam("sst", "min_se", 2400)
    This is how the sst module knows which avp in the dialog module it has
    to change with the new expire value.
 
-   Default value is "NULL!" it is not set by default.
+   Default value is “NULL!” it is not set by default.
 
    Example 1.4. Set timeout_avp parameter
 ...
@@ -240,14 +240,14 @@ modparam("sst", "timeout_avp", "$avp(i:10)")
    In the initial INVITE if the UAC has requested a Session-Expire: and
    it's value is smaller than our local policies Min-SE (see min_se
    above), then the proxy has the right to reject the call by replying to
-   the message with a "422 Session Timer Too Small" and state our local
+   the message with a “422 Session Timer Too Small” and state our local
    Min-SE: value. The INVITE is NOT forwarded on through the proxy.
 
    If this flag is true, the SST module to reject the INVITE with a 422
    response. If false, the INVITE is forwarded through the PROXY without
    any modifications.
 
-   Default value is "1" (true/on).
+   Default value is “1” (true/on).
 
    Example 1.5. Set reject_to_small parameter
 ...
@@ -268,7 +268,7 @@ modparam("sst", "reject_to_small", 0)
 
    This parameter must be set or the module will not load.
 
-   Default value is "Not set!".
+   Default value is “Not set!”.
 
    Example 1.6. Set sst_flag parameter
 ...
@@ -288,7 +288,7 @@ route {
 
    5.1. sstCheckMin(send_reply_flag)
 
-5.1. sstCheckMin(send_reply_flag)
+5.1.  sstCheckMin(send_reply_flag)
 
    Check the current Session-Expires / MIN-SE values against the
    sst_min_se parameter value. If the Session-Expires or MIN_SE header

@@ -51,6 +51,7 @@
 #include "../../resolve.h"
 #include "../../qvalue.h"
 #include "../../usr_avp.h"
+#include "../../rand/kam_rand.h"
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -1929,13 +1930,13 @@ int xl_child_init(int rank)
 {
 	int i, x, rb, cb;
 
-	for (i=RAND_MAX, rb=0; i; rb++, i>>=1);
+	for (i=KAM_RAND_MAX, rb=0; i; rb++, i>>=1);
 
 	cb=x=0; /* x asiignment to make gcc happy */
 	for (i=0; i<UNIQUE_ID_LEN; i++) {
 		if (!cb) {
 			cb=rb;
-			x=rand();
+			x=kam_rand();
 		}
 		UNIQUE_ID[i]=fourbits2char[x&0x0F];
 		x>>=rb;

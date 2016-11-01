@@ -106,6 +106,8 @@ int reg_outbound_mode = 0;
 int reg_regid_mode = 0;
 int reg_flow_timer = 0;
 
+int contact_max_size = 255; /* max size of contact URIs */
+
 str match_callid_name = str_init("match_callid");
 str match_received_name = str_init("match_received");
 str match_contact_name = str_init("match_contact");
@@ -225,6 +227,7 @@ static param_export_t params[] = {
 	{"outbound_mode",      INT_PARAM, &reg_outbound_mode					},
 	{"regid_mode",         INT_PARAM, &reg_regid_mode					},
 	{"flow_timer",         INT_PARAM, &reg_flow_timer					},
+	{"contact_max_size",   INT_PARAM, &contact_max_size					},
 	{0, 0, 0}
 };
 
@@ -272,26 +275,26 @@ static int mod_init(void)
 	bind_usrloc_t bind_usrloc;
 	qvalue_t dq;
 
-
-	if(sruid_init(&_reg_sruid, '-', "uloc", SRUID_INC)<0)
+	if(sruid_init(&_reg_sruid, '-', "uloc", SRUID_INC) < 0) {
 		return -1;
+	}
 
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
-		LM_ERR("failed to register core statistics\n");
+		LM_ERR("Failed to register core statistics\n");
 		return -1;
 	}
 #endif
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
-		LM_ERR("cannot bind to SL API\n");
+		LM_ERR("Cannot bind to SL API. Please load the SL module before loading this module.\n");
 		return -1;
 	}
 
 	if(cfg_declare("registrar", registrar_cfg_def, &default_registrar_cfg, cfg_sizeof(registrar), &registrar_cfg)){
-		LM_ERR("Fail to declare the configuration\n");
+		LM_ERR("Failed to declare the configuration parameters.\n");
 		return -1;
 	}
 
@@ -315,7 +318,7 @@ static int mod_init(void)
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {
-		LM_ERR("can't bind usrloc\n");
+		LM_ERR("Can't bind to the usrloc module. Please load it before this module.\n");
 		return -1;
 	}
 
@@ -345,7 +348,7 @@ static int mod_init(void)
 			set_child_rpc_sip_mode();
 			if(ul.register_ulcb(UL_CONTACT_EXPIRE, reg_ul_expired_contact, 0)< 0)
 			{
-				LM_ERR("can not register callback for expired contacts\n");
+				LM_ERR("Can not register callback for expired contacts (usrloc module)\n");
 				return -1;
 			}
 		}
@@ -357,13 +360,13 @@ static int mod_init(void)
 
 	if (sock_hdr_name.s) {
 		if (sock_hdr_name.len==0 || sock_flag==-1) {
-			LM_WARN("empty sock_hdr_name or sock_flag no set -> reseting\n");
+			LM_WARN("empty sock_hdr_name or sock_flag not set -> resetting\n");
 			sock_hdr_name.len = 0;
 			sock_flag = -1;
 		}
 	} else if (reg_xavp_cfg.s) {
 		if (reg_xavp_cfg.len == 0 || sock_flag == -1) {
-			LM_WARN("empty reg_xavp_cfg or sock_flag no set -> resetting\n");
+			LM_WARN("empty reg_xavp_cfg or sock_flag not set -> resetting\n");
 			sock_flag = -1;
 		}
 	} else if (sock_flag!=-1) {
@@ -464,6 +467,7 @@ static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _uri)
 
 	return lookup_to_dset(_m, (udomain_t*)_d, (uri.len>0)?&uri:NULL);
 }
+
 /*! \brief
  * Wrapper to lookup_branches(location)
  */

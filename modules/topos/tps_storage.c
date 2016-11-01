@@ -298,8 +298,8 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 
 	/* extract the contact address */
 	if(parse_headers(msg, HDR_CONTACT_F, 0)<0 || msg->contact==NULL) {
-		if(td->s_method_id == METHOD_MESSAGE) {
-			/* no contact required for MESSAGE - done */
+		if(td->s_method_id != METHOD_INVITE) {
+			/* no mandatory contact unless is INVITE - done */
 			return 0;
 		}
 		LM_ERR("bad sip message or missing Contact hdr\n");
@@ -871,7 +871,7 @@ int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		return -1;
 
 	if(md->a_uuid.len<=0 && md->b_uuid.len<=0) {
-		LM_ERR("no dlg uuid provided\n");
+		LM_DBG("no dlg uuid provided\n");
 		return -1;
 	}
 
@@ -1015,6 +1015,7 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		return 0;
 	}
 
+
 	ret = tps_storage_link_msg(msg, md, md->direction);
 	if(ret<0) return -1;
 
@@ -1044,15 +1045,18 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_contact);
 	nr_ucols++;
 
-	db_ucols[nr_ucols] = &td_col_b_rr;
-	db_uvals[nr_ucols].type = DB1_STR;
-	db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_rr);
-	nr_ucols++;
-
 	if(msg->first_line.type==SIP_REPLY) {
 		if(sd->b_tag.len<=0
 				&& msg->first_line.u.reply.statuscode>=200
 				&& msg->first_line.u.reply.statuscode<300) {
+
+			if((sd->iflags&TPS_IFLAG_DLGON) == 0) {
+				db_ucols[nr_ucols] = &td_col_b_rr;
+				db_uvals[nr_ucols].type = DB1_STR;
+				db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_rr);
+				nr_ucols++;
+			}
+
 			db_ucols[nr_ucols] = &td_col_b_tag;
 			db_uvals[nr_ucols].type = DB1_STR;
 			db_uvals[nr_ucols].val.str_val = TPS_STRZ(md->b_tag);
@@ -1060,7 +1064,7 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 
 			db_ucols[nr_ucols] = &td_col_iflags;
 			db_uvals[nr_ucols].type = DB1_INT;
-			db_uvals[nr_ucols].val.int_val = 1;
+			db_uvals[nr_ucols].val.int_val = sd->iflags|TPS_IFLAG_DLGON;
 			nr_ucols++;
 		}
 	}

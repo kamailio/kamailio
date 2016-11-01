@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
  * 
@@ -96,7 +94,7 @@ int base16_to_bin(char *from,int len, char *to)
  * @param x - characted to convert
  * @returns the int value or -1 if terminal character ('=')
  */ 
-static inline int base64_val(char x)\
+static int base64_val(char x)\
 {
 	switch(x){
 		case '=': return -1;

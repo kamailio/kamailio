@@ -47,6 +47,13 @@ extern          "C"
 
 #define srjson_IsReference 256
 
+/* helper macros */
+
+#define SRJSON_GET_INT(sj)	((int)((sj)->valuedouble))
+#define SRJSON_GET_UINT(sj)	((unsigned int)((sj)->valuedouble))
+#define SRJSON_GET_LONG(sj)	((long)((sj)->valuedouble))
+#define SRJSON_GET_ULONG(sj)	((unsigned long)((sj)->valuedouble))
+
 /* The srjson node structure: */
 typedef struct srjson {
 	struct srjson *parent;
@@ -64,8 +71,6 @@ typedef struct srjson {
 	int             type;	/* The type of the item, as above. */
 	char           *valuestring;	/* The item's string, if
 						 * type==srjson_String */
-	int             valueint;	/* The item's number, if
-						 * type==srjson_Number */
 	double          valuedouble;	/* The item's number, if
 						 * type==srjson_Number */
 	char           *string;	/* The item's name string, if this

@@ -371,8 +371,8 @@ int rtjson_init_serial(sip_msg_t *msg, srjson_doc_t *jdoc, sr_xavp_t *iavp)
 	}
 
 	rj = srjson_GetObjectItem(jdoc, nj, "branch_flags");
-	if(rj!=NULL && rj->type==srjson_Number && rj->valueint!=0) {
-		bflags = rj->valueint;
+	if(rj!=NULL && rj->type==srjson_Number && SRJSON_GET_UINT(rj)!=0) {
+		bflags = SRJSON_GET_UINT(rj);
 
 		old_bflags = 0;
 		getbflagsval(0, &old_bflags);
@@ -406,12 +406,12 @@ int rtjson_prepare_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 
 	if(tmb.set_fr!=NULL) {
 		rj = srjson_GetObjectItem(jdoc, nj, "fr_timer");
-		if(rj!=NULL && rj->type==srjson_Number && rj->valueint!=0) {
-			fr = rj->valueint;
+		if(rj!=NULL && rj->type==srjson_Number && SRJSON_GET_UINT(rj)!=0) {
+			fr = SRJSON_GET_UINT(rj);
 		}
 		rj = srjson_GetObjectItem(jdoc, nj, "fr_inv_timer");
-		if(rj!=NULL && rj->type==srjson_Number && rj->valueint!=0) {
-			fr_inv = rj->valueint;
+		if(rj!=NULL && rj->type==srjson_Number && SRJSON_GET_UINT(rj)!=0) {
+			fr_inv = SRJSON_GET_UINT(rj);
 		}
 		if(fr || fr_inv) tmb.set_fr(msg, fr_inv, fr);
 	}

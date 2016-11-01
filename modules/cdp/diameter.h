@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef DIAMETER_H_
@@ -49,13 +47,14 @@
 
 #include "utils.h"
 #include <ctype.h>
+#include "../../endianness.h"
 
 #include "diameter_code_result.h"
 #include "diameter_code_avp.h"
 
 #define get_2bytes(_b) \
 	((((unsigned char)(_b)[0])<<8)|\
-	 (((unsigned char)(_b)[1])))
+		(((unsigned char)(_b)[1])))
 
 #define get_3bytes(_b) \
 	((((unsigned char)(_b)[0])<<16)|(((unsigned char)(_b)[1])<<8)|\
@@ -79,8 +78,8 @@
 
 #define to_32x_len( _len_ ) \
 	( (_len_)+(((_len_)&3)?4-((_len_)&3):0) )
-	
-	
+
+
 /* AAA TYPES */
 
 #define AAA_NO_VENDOR_ID           0
@@ -106,7 +105,7 @@
 	AVP_VENDOR_ID_SIZE*(((_flags_)&AAA_AVP_FLAG_VENDOR_SPECIFIC)!=0) )
 
 /* mesage codes */
-#ifndef WORDS_BIGENDIAN
+#ifndef __IS_BIG_ENDIAN
 	#define AS_MSG_CODE      0x12010000
 	#define AC_MSG_CODE      0x0f010000
 	#define CE_MSG_CODE      0x01010000
@@ -145,7 +144,7 @@ typedef unsigned char   AAAMsgFlag;			/**< Message flag					*/
 #define Code_CE 	257
 #define Code_DW 	280
 #define Code_DP 	282
-	
+
 
 /** Status codes returned by functions in the AAA API */
 typedef enum {

@@ -72,8 +72,8 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mono/' ${DIST}/rules
 sed -i -e 's/db-util/db4.8-util/' ${DIST}/control
 
 # use old radius-client-ng
-sed -i 's/libfreeradius-client-dev/libradiusclient-ng-dev/' ${DIST}/control
-sed -i -e '/FREERADIUS/d' ${DIST}/rules
+sed -i 's/libradcli-dev/libradiusclient-ng-dev/' ${DIST}/control
+sed -i -e '/RADCLI/d' ${DIST}/rules
 
 # use old json
 sed -i 's/libjson-c-dev/libjson0-dev/' ${DIST}/control
@@ -95,6 +95,17 @@ sed -i -e 's/ jansson[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ jansson/' ${DIST}/rules
 sed -i -e 's/ jansson[ ,$]*//' ${DIST}/control
 sed -i -e 's/janssonrpc-c//'  ${DIST}/control
+
+# no systemd module
+sed -i -e '/libsystemd-dev/d' -e '/^Package: kamailio-systemd-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e 's/ systemd[ ,$]*//' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ systemd/' ${DIST}/rules
+
+# no http_async module
+sed -i -e 's/ http_async[ ,$]*//' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ http_async/' ${DIST}/rules
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0

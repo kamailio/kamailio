@@ -17,7 +17,6 @@ Build-Depends: bison,
                libev-dev,
                libevent-dev,
                libexpat1-dev,
-               libradiusclient-ng-dev,
                libgeoip-dev (>= 1.4.5),
                libhiredis-dev (>= 0.10.0),
                libjansson-dev,
@@ -31,6 +30,7 @@ Build-Depends: bison,
                libpcre3-dev,
                libperl-dev,
                libpq-dev,
+               libradiusclient-ng-dev,
                libreadline-dev,
                libsasl2-dev,
                libsctp-dev,
@@ -478,6 +478,8 @@ Description: Provides a set utility functions for Kamailio
  .
  Provides a set of utility functions for Kamailio, which are not related
  to the server configuration.
+ .
+ Includes http client (http_client) module too
 
 Package: kamailio-sctp-modules
 Architecture: linux-any
@@ -589,7 +591,7 @@ Description: extra modules for Kamailio
  proxy server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides: gzcompress uuid ev jansson janssonrpc-c
+ This package provides: gzcompress uuid ev jansson janssonrpc-c http_async
 
 Package: kamailio-nth
 Architecture: any

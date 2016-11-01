@@ -12,7 +12,7 @@ Edited by
 
 Juha Heinanen
 
-   Copyright (c) 2006 Voice Sistem SRL
+   Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -93,7 +93,7 @@ Chapter 1. Admin Guide
 
    If 1, pua_publish MI command has outbound proxy parameter.
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.1. Set publish_with_ob_proxy parameter
 ...

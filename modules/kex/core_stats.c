@@ -54,12 +54,65 @@ stat_var* err_rpls;				/*!< error replies            */
 stat_var* bad_URIs;				/*!< number of bad URIs       */
 stat_var* unsupported_methods;			/*!< unsupported methods      */
 stat_var* bad_msg_hdr;				/*!< messages with bad header */
-
+/*! received requests by method  */
+stat_var* rcv_reqs_invite;
+stat_var* rcv_reqs_cancel;
+stat_var* rcv_reqs_ack;
+stat_var* rcv_reqs_bye;
+stat_var* rcv_reqs_info;
+stat_var* rcv_reqs_register;
+stat_var* rcv_reqs_subscribe;
+stat_var* rcv_reqs_notify;
+stat_var* rcv_reqs_message;
+stat_var* rcv_reqs_options;
+stat_var* rcv_reqs_prack;
+stat_var* rcv_reqs_update;
+stat_var* rcv_reqs_refer;
+stat_var* rcv_reqs_publish;
+/*! extended received replies */
+stat_var* rcv_rpls_1xx;
+stat_var* rcv_rpls_18x;
+stat_var* rcv_rpls_2xx;
+stat_var* rcv_rpls_3xx;
+stat_var* rcv_rpls_4xx;
+stat_var* rcv_rpls_401;
+stat_var* rcv_rpls_404;
+stat_var* rcv_rpls_407;
+stat_var* rcv_rpls_480;
+stat_var* rcv_rpls_486;
+stat_var* rcv_rpls_5xx;
+stat_var* rcv_rpls_6xx;
 
 /*! exported core statistics */
 stat_export_t core_stats[] = {
 	{"rcv_requests" ,         0,  &rcv_reqs              },
+	{"rcv_requests_invite" ,      0,  &rcv_reqs_invite       },
+	{"rcv_requests_cancel" ,      0,  &rcv_reqs_cancel       },
+	{"rcv_requests_ack" ,         0,  &rcv_reqs_ack          },
+	{"rcv_requests_bye" ,         0,  &rcv_reqs_bye          },
+	{"rcv_requests_info" ,        0,  &rcv_reqs_info         },
+	{"rcv_requests_register" ,    0,  &rcv_reqs_register     },
+	{"rcv_requests_subscribe" ,   0,  &rcv_reqs_subscribe    },
+	{"rcv_requests_notify" ,      0,  &rcv_reqs_notify       },
+	{"rcv_requests_message" ,     0,  &rcv_reqs_message      },
+	{"rcv_requests_options" ,     0,  &rcv_reqs_options      },
+	{"rcv_requests_prack" ,       0,  &rcv_reqs_prack        },
+	{"rcv_requests_update" ,      0,  &rcv_reqs_update       },
+	{"rcv_requests_refer" ,       0,  &rcv_reqs_refer        },
+	{"rcv_requests_publish" ,     0,  &rcv_reqs_publish      },
 	{"rcv_replies" ,          0,  &rcv_rpls              },
+	{"rcv_replies_1xx" ,      0,  &rcv_rpls_1xx          },
+	{"rcv_replies_18x" ,      0,  &rcv_rpls_18x          },
+	{"rcv_replies_2xx" ,      0,  &rcv_rpls_2xx          },
+	{"rcv_replies_3xx" ,      0,  &rcv_rpls_3xx          },
+	{"rcv_replies_4xx" ,      0,  &rcv_rpls_4xx          },
+	{"rcv_replies_401" ,      0,  &rcv_rpls_401          },
+	{"rcv_replies_404" ,      0,  &rcv_rpls_404          },
+	{"rcv_replies_407" ,      0,  &rcv_rpls_407          },
+	{"rcv_replies_480" ,      0,  &rcv_rpls_480          },
+	{"rcv_replies_486" ,      0,  &rcv_rpls_486          },
+	{"rcv_replies_5xx" ,      0,  &rcv_rpls_5xx          },
+	{"rcv_replies_6xx" ,      0,  &rcv_rpls_6xx          },
 	{"fwd_requests" ,         0,  &fwd_reqs              },
 	{"fwd_replies" ,          0,  &fwd_rpls              },
 	{"drop_requests" ,        0,  &drp_reqs              },
@@ -119,8 +172,53 @@ static int km_cb_req_stats(struct sip_msg *msg,
 	update_stat(rcv_reqs, 1);
 	if(!IS_SIP(msg))
 		return 1;
-	if(msg->first_line.u.request.method_value==METHOD_OTHER)
-		update_stat(unsupported_methods, 1);
+	switch(msg->first_line.u.request.method_value) {
+		case METHOD_INVITE:
+			update_stat(rcv_reqs_invite, 1);
+		break;
+		case METHOD_CANCEL:
+			update_stat(rcv_reqs_cancel, 1);
+		break;
+		case METHOD_ACK:
+			update_stat(rcv_reqs_ack, 1);
+		break;
+		case METHOD_BYE:
+			update_stat(rcv_reqs_bye, 1);
+		break;
+		case METHOD_INFO:
+			update_stat(rcv_reqs_info, 1);
+		break;
+		case METHOD_REGISTER:
+			update_stat(rcv_reqs_register, 1);
+		break;
+		case METHOD_SUBSCRIBE:
+			update_stat(rcv_reqs_subscribe, 1);
+		break;
+		case METHOD_NOTIFY:
+			update_stat(rcv_reqs_notify, 1);
+		break;
+		case METHOD_MESSAGE:
+			update_stat(rcv_reqs_message, 1);
+		break;
+		case METHOD_OPTIONS:
+			update_stat(rcv_reqs_options, 1);
+		break;
+		case METHOD_PRACK:
+			update_stat(rcv_reqs_prack, 1);
+		break;
+		case METHOD_UPDATE:
+			update_stat(rcv_reqs_update, 1);
+		break;
+		case METHOD_REFER:
+			update_stat(rcv_reqs_refer, 1);
+		break;
+		case METHOD_PUBLISH:
+			update_stat(rcv_reqs_publish, 1);
+		break;
+		case METHOD_OTHER:
+			update_stat(unsupported_methods, 1);
+		break;
+	}
 	return 1;
 }
 
@@ -128,6 +226,57 @@ static int km_cb_rpl_stats(struct sip_msg *msg,
 		unsigned int flags, void *param)
 {
 	update_stat(rcv_rpls, 1);
+	if(msg->first_line.u.reply.statuscode > 99 &&
+		msg->first_line.u.reply.statuscode <200)
+	{
+		update_stat(rcv_rpls_1xx, 1);
+		if(msg->first_line.u.reply.statuscode > 179 &&
+			msg->first_line.u.reply.statuscode <190) {
+				update_stat(rcv_rpls_18x, 1);
+		}
+	}
+	else if(msg->first_line.u.reply.statuscode > 199 &&
+		msg->first_line.u.reply.statuscode <300)
+	{
+		update_stat(rcv_rpls_2xx, 1);
+	}
+	else if(msg->first_line.u.reply.statuscode > 299 &&
+		msg->first_line.u.reply.statuscode <400)
+	{
+		update_stat(rcv_rpls_3xx, 1);
+	}
+	else if(msg->first_line.u.reply.statuscode > 399 &&
+		msg->first_line.u.reply.statuscode <500)
+	{
+		update_stat(rcv_rpls_4xx, 1);
+		switch(msg->first_line.u.reply.statuscode) {
+			case 401:
+				update_stat(rcv_rpls_401, 1);
+			break;
+			case 404:
+				update_stat(rcv_rpls_404, 1);
+			break;
+			case 407:
+				update_stat(rcv_rpls_407, 1);
+			break;
+			case 480:
+				update_stat(rcv_rpls_480, 1);
+			break;
+			case 486:
+				update_stat(rcv_rpls_486, 1);
+			break;
+		}
+	}
+	else if(msg->first_line.u.reply.statuscode > 499 &&
+		msg->first_line.u.reply.statuscode <600)
+	{
+		update_stat(rcv_rpls_5xx, 1);
+	}
+	else if(msg->first_line.u.reply.statuscode > 599 &&
+		msg->first_line.u.reply.statuscode <700)
+	{
+		update_stat(rcv_rpls_6xx, 1);
+	}
 	return 1;
 }
 
@@ -503,7 +652,7 @@ inline static int mi_add_stat(struct mi_node *rpl, stat_var *stat)
 static void mi_add_grp_vars_cbk(void* r, str* g, str* n, counter_handle_t h)
 {
 	struct mi_node *rpl;
-	
+
 	rpl = r;
 	addf_mi_node_child(rpl, 0, 0, 0, "%.*s:%.*s = %lu",
 							g->len, g->s, n->len, n->s, counter_get_val(h));

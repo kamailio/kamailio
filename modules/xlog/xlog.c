@@ -45,6 +45,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../kemi.h"
 #include "../../cfg/cfg.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_param.h"
@@ -831,4 +832,160 @@ error:
 		free_params(params_list);
 	return -1;
 
+}
+
+/**
+ * write message after evaluation of lmsg for pseudo-variables
+ */
+int ki_xlog_ex(sip_msg_t *msg, int llevel, str *lmsg)
+{
+	pv_elem_t *xmodel=NULL;
+	str txt = {0, 0};
+
+	if(!is_printable(llevel))
+		return 1;
+
+	if(pv_parse_format(lmsg, &xmodel)<0) {
+		LM_ERR("error in parsing evaluated second parameter\n");
+		return -1;
+	}
+
+	if(pv_printf_s(msg, xmodel, &txt)!=0) {
+		LM_ERR("cannot eval reparsed value of second parameter\n");
+		pv_elem_free_all(xmodel);
+		return -1;
+	}
+	LOG_(xlog_facility, llevel, _xlog_prefix,
+			"%.*s", txt.len, txt.s);;
+	pv_elem_free_all(xmodel);
+	return 1;
+}
+
+int ki_xlog(sip_msg_t *msg, str *slevel, str *lmsg)
+{
+	int llevel;
+
+	if (slevel->len==7
+			&& strncasecmp(slevel->s, "l_alert", 7)==0) {
+		llevel = L_ALERT;
+	} else if (slevel->len==5
+			&& strncasecmp(slevel->s, "l_bug", 5)==0) {
+		llevel = L_BUG;
+	} else if (slevel->len==7
+			&& strncasecmp(slevel->s, "l_crit2", 7)==0) {
+		llevel = L_CRIT2;
+	} else if (slevel->len==6
+			&& strncasecmp(slevel->s, "l_crit", 6)==0) {
+		llevel = L_CRIT;
+	} else if (slevel->len==5
+			&& strncasecmp(slevel->s, "l_err", 5)==0) {
+		llevel = L_ERR;
+	} else if (slevel->len==6
+			&& strncasecmp(slevel->s, "l_warn", 6)==0) {
+		llevel = L_WARN;
+	} else if (slevel->len==8
+			&& strncasecmp(slevel->s, "l_notice", 8)==0) {
+		llevel = L_NOTICE;
+	} else if (slevel->len==6
+			&& strncasecmp(slevel->s, "l_info", 6)==0) {
+		llevel = L_INFO;
+	} else if (slevel->len==5
+			&& strncasecmp(slevel->s, "l_dbg", 5)==0) {
+		llevel = L_DBG;
+	} else {
+		llevel = L_ERR;
+	}
+	return ki_xlog_ex(msg, llevel, lmsg);
+}
+
+int ki_xdbg(sip_msg_t *msg, str *lmsg)
+{
+	return ki_xlog_ex(msg, L_DBG, lmsg);
+}
+
+int ki_xerr(sip_msg_t *msg, str *lmsg)
+{
+	return ki_xlog_ex(msg, L_ERR, lmsg);
+}
+
+int ki_xinfo(sip_msg_t *msg, str *lmsg)
+{
+	return ki_xlog_ex(msg, L_INFO, lmsg);
+}
+
+int ki_xnotice(sip_msg_t *msg, str *lmsg)
+{
+	return ki_xlog_ex(msg, L_NOTICE, lmsg);
+}
+
+int ki_xwarn(sip_msg_t *msg, str *lmsg)
+{
+	return ki_xlog_ex(msg, L_WARN, lmsg);
+}
+
+int ki_xalert(sip_msg_t *msg, str *lmsg)
+{
+	return ki_xlog_ex(msg, L_ALERT, lmsg);
+}
+
+int ki_xcrit(sip_msg_t *msg, str *lmsg)
+{
+	return ki_xlog_ex(msg, L_CRIT, lmsg);
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_xlog_exports[] = {
+	{ str_init("xlog"), str_init("xdbg"),
+		SR_KEMIP_INT, ki_xdbg,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xlog"), str_init("xinfo"),
+		SR_KEMIP_INT, ki_xinfo,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xlog"), str_init("xnotice"),
+		SR_KEMIP_INT, ki_xnotice,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xlog"), str_init("xwarn"),
+		SR_KEMIP_INT, ki_xwarn,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xlog"), str_init("xerr"),
+		SR_KEMIP_INT, ki_xerr,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xlog"), str_init("xalert"),
+		SR_KEMIP_INT, ki_xalert,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xlog"), str_init("xcrit"),
+		SR_KEMIP_INT, ki_xcrit,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xlog"), str_init("xlog"),
+		SR_KEMIP_INT, ki_xlog,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_xlog_exports);
+	return 0;
 }

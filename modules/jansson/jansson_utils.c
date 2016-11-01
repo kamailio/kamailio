@@ -23,6 +23,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <jansson.h>
+#include <limits.h>
 
 #include "../../lvalue.h"
 
@@ -57,9 +58,21 @@ int jansson_to_val(pv_value_t* val, char** freeme, json_t* v) {
 		val->rs.len = strlen(value);
 		val->flags = PV_VAL_STR;
 	}else if(json_is_integer(v)) {
-		int value = json_integer_value(v);
-		val->ri = value;
-		val->flags = PV_TYPE_INT|PV_VAL_INT;
+		long long value = json_integer_value(v);
+		if ((value > INT_MAX) || (value < INT_MIN))  {
+			char* svalue = NULL;
+			if (asprintf(&svalue, "%"JSON_INTEGER_FORMAT, value) < 0) {
+				ERR("asprintf failed\n");
+				return -1;
+			}
+			*freeme = svalue;
+			val->rs.s = svalue;
+			val->rs.len = strlen(svalue);
+			val->flags = PV_VAL_STR;
+		} else {
+			val->ri = (int)value;
+			val->flags = PV_TYPE_INT|PV_VAL_INT;
+		}
 	}else if(json_is_null(v)) {
 		val->flags = PV_VAL_NULL;
 	}else {

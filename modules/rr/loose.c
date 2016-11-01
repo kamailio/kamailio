@@ -43,7 +43,7 @@
 #include "rr_mod.h"
 
 
-#define RR_ERROR -1		/*!< An error occured while processing route set */
+#define RR_ERROR -1		/*!< An error occurred while processing route set */
 #define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
 #define RR_OB_DRIVEN 2		/*!< The next hop is determined from the route set based on flow-token */
 #define NOT_RR_DRIVEN -1	/*!< The next hop is not determined from the route set */
@@ -56,7 +56,8 @@
 #define ROUTE_SUFFIX_LEN (sizeof(ROUTE_SUFFIX)-1)
 
 /*! variables used to hook the param part of the local route */
-static unsigned int routed_msg_id;
+static unsigned int routed_msg_id = 0;
+static int routed_msg_pid = 0;
 static str routed_params = {0,0};
 
 
@@ -124,7 +125,7 @@ static inline int find_first_route(struct sip_msg* _m)
 static inline int is_myself(sip_uri_t *_puri)
 {
 	int ret;
-	
+
 	ret = check_self(&_puri->host,
 			_puri->port_no?_puri->port_no:SIP_PORT, 0);/* match all protos*/
 	if (ret < 0) return 0;
@@ -137,7 +138,7 @@ static inline int is_myself(sip_uri_t *_puri)
 		return 0;
 	}
 #endif
-	
+
 	if(ret==1) {
 		/* match on host:port, but if gruu, then fail */
 		if(_puri->gr.s!=NULL)
@@ -583,6 +584,7 @@ static inline int after_strict(struct sip_msg* _m)
 
 	/* reset rr handling static vars for safety in error case */
 	routed_msg_id = 0;
+	routed_msg_pid = 0;
 	routed_params.s = NULL;
 	routed_params.len = 0;
 
@@ -634,6 +636,7 @@ static inline int after_strict(struct sip_msg* _m)
 	 * important note: RURI is already parsed by the above function, so 
 	 * we just used it without any checking */
 	routed_msg_id = _m->id;
+	routed_msg_pid = _m->pid;
 	routed_params = _m->parsed_uri.params;
 
 	if (is_strict(&puri.params)) {
@@ -759,6 +762,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 	struct socket_info *si;
 	int uri_is_myself;
 	int use_ob = 0;
+	str rparams;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
@@ -766,6 +770,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 
 	/* reset rr handling static vars for safety in error case */
 	routed_msg_id = 0;
+	routed_msg_pid = 0;
 
 	if (parse_uri(uri.s, uri.len, &puri) < 0) {
 		LM_ERR("failed to parse the first route URI (%.*s)\n",
@@ -783,6 +788,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			uri.len, ZSW(uri.s));
 		/* set the hooks for the params */
 		routed_msg_id = _m->id;
+		routed_msg_pid = _m->pid;
 
 		if ((use_ob = process_outbound(_m, puri.user)) < 0) {
 			LM_INFO("failed to process outbound flow-token\n");
@@ -821,12 +827,19 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 			}
 
 			if (!use_ob) {
-				si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
-				if (si) {
+				if ((si = grep_sock_info( &puri.host, puri.port_no?puri.port_no:proto_default_port(puri.proto), puri.proto)) != 0) {
+					set_force_socket(_m, si);
+				} else if ((si = grep_sock_info( &puri.host, puri.port_no, puri.proto)) != 0) {
 					set_force_socket(_m, si);
 				} else {
-					if (enable_socket_mismatch_warning)
-						LM_WARN("no socket found for match second RR\n");
+					if (enable_socket_mismatch_warning) {
+						LM_WARN("no socket found to match second RR (%.*s)\n",
+								rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
+						if(!is_myself(&puri)) {
+							LM_WARN("second RR uri is not myself (%.*s)\n",
+								rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
+						}
+					}
 				}
 			}
 
@@ -850,7 +863,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				rt = (rr_t*)hdr->parsed;
 			} else rt = rt->next;
 		}
-		
+
 		uri = rt->nameaddr.uri;
 		if (parse_uri(uri.s, uri.len, &puri) < 0) {
 			LM_ERR("failed to parse the next route URI (%.*s)\n",
@@ -884,7 +897,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 				LM_ERR("checking maddr failed\n");
 				return RR_ERROR;
 			}
-		
+
 			if (set_dst_uri(_m, &uri) < 0) {
 				LM_ERR("failed to set dst_uri\n");
 				return RR_ERROR;
@@ -897,7 +910,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		/* There is a previous route uri which was 2nd uri of mine
 		 * and must be removed here */
 		if (rt != hdr->parsed) {
-			if (!del_lump(_m, hdr->body.s - _m->buf, 
+			if (!del_lump(_m, hdr->body.s - _m->buf,
 			rt->nameaddr.name.s - hdr->body.s, 0)) {
 				LM_ERR("failed to remove Route HF\n");
 				return RR_ERROR;
@@ -910,8 +923,10 @@ done:
 		status = RR_OB_DRIVEN;
 
 	/* run RR callbacks only if we have Route URI parameters */
-	if(routed_params.len > 0)
-		run_rr_callbacks( _m, &routed_params );
+	if(routed_params.len > 0) {
+		rparams = routed_params;
+		run_rr_callbacks( _m, &rparams );
+	}
 	return status;
 }
 
@@ -929,7 +944,7 @@ int loose_route(struct sip_msg* _m)
 		LM_DBG("There is no Route HF\n");
 		return -1;
 	}
-		
+
 	if (parse_sip_msg_uri(_m)<0) {
 		LM_ERR("failed to parse Request URI\n");
 		return -1;
@@ -949,6 +964,70 @@ int loose_route(struct sip_msg* _m)
 	}
 }
 
+/**
+ *
+ */
+int redo_route_params(sip_msg_t *msg)
+{
+	hdr_field_t *hdr;
+	sip_uri_t puri;
+	rr_t* rt;
+	str uri;
+	int uri_is_myself;
+
+	int redo = 0;
+
+	if(msg->first_line.type != SIP_REQUEST) {
+		return -1;
+	}
+
+	if(msg->route==NULL || msg->route->parsed==NULL) {
+		return -1;
+	}
+
+	/* check if the hooked params belong to the same message */
+	if (routed_msg_id != msg->id || routed_msg_pid != msg->pid) {
+		redo = 1;
+	}
+	if((redo==0) && (routed_params.s==NULL || routed_params.len<=0)) {
+		redo = 1;
+	}
+	if((redo==0) && (routed_params.s<msg->buf
+				|| routed_params.s>msg->buf+msg->len)) {
+		redo = 1;
+	}
+	if(redo==1) {
+		hdr = msg->route;
+		rt = (rr_t*)hdr->parsed;
+		uri = rt->nameaddr.uri;
+
+		/* reset rr handling static vars for safety in error case */
+		routed_msg_id = 0;
+		routed_msg_pid = 0;
+
+		if (parse_uri(uri.s, uri.len, &puri) < 0) {
+			LM_ERR("failed to parse the first route URI (%.*s)\n",
+					uri.len, ZSW(uri.s));
+			return -1;
+		}
+
+		uri_is_myself = is_myself(&puri);
+
+		/* if the URI was added by me, remove it */
+		if (uri_is_myself>0) {
+			LM_DBG("Topmost route URI: '%.*s' is me\n",
+				uri.len, ZSW(uri.s));
+			/* set the hooks for the params */
+			routed_msg_id = msg->id;
+			routed_msg_pid = msg->pid;
+			routed_params = puri.params;
+			return 0;
+		} else {
+			return -1;
+		}
+	}
+	return 0;
+}
 
 /*!
  * \brief Check if the route hdr has the required parameter
@@ -962,22 +1041,31 @@ int loose_route(struct sip_msg* _m)
  * \param re compiled regular expression to be checked against the Route header parameters
  * \return -1 on failure, 1 on success
  */
-int check_route_param(struct sip_msg * msg, regex_t* re)
+int check_route_param(sip_msg_t * msg, regex_t* re)
 {
 	regmatch_t pmatch;
 	char bk;
 	str params;
+	str rruri;
 
 	/* check if the hooked params belong to the same message */
-	if (routed_msg_id != msg->id)
+	if(redo_route_params(msg)<0) {
 		return -1;
+	}
 
 	/* check if params are present */
-	if ( !routed_params.s || !routed_params.len )
+	if ( !routed_params.s || routed_params.len<=0 ) {
 		return -1;
+	}
+	rruri = ((rr_t*)(msg->route->parsed))->nameaddr.uri;
 
 	/* include also the first ';' */
-	for( params=routed_params ; params.s[0]!=';' ; params.s--,params.len++ );
+	for( params=routed_params ;
+			params.s>rruri.s && params.s[0]!=';' ;
+			params.s--,params.len++ );
+
+	LM_DBG("route params checking against [%.*s] (orig: [%.*s])\n",
+			params.len, params.s, routed_params.len, routed_params.s);
 
 	/* do the well-known trick to convert to null terminted */
 	bk = params.s[params.len];
@@ -1006,7 +1094,7 @@ int check_route_param(struct sip_msg * msg, regex_t* re)
  * It might be an empty string if the parameter had no value.
  * \return 0 if parameter was found (even if it has no value), -1 otherwise
  */
-int get_route_param( struct sip_msg *msg, str *name, str *val)
+int get_route_param(sip_msg_t *msg, str *name, str *val)
 {
 	char *p;
 	char *end;
@@ -1014,11 +1102,12 @@ int get_route_param( struct sip_msg *msg, str *name, str *val)
 	int quoted;
 
 	/* check if the hooked params belong to the same message */
-	if (routed_msg_id != msg->id)
+	if(redo_route_params(msg)<0) {
 		goto notfound;
+	}
 
 	/* check if params are present */
-	if ( !routed_params.s || !routed_params.len )
+	if ( !routed_params.s || routed_params.len<=0 )
 		goto notfound;
 
 	end = routed_params.s + routed_params.len;

@@ -76,6 +76,13 @@ int set_dlg_variable_unsafe(dlg_cell_t *dlg, str *key, str *val);
 
 extern dlg_ctx_t _dlg_ctx;
 
+/* statistic variables */
+extern stat_var *active_dlgs;		/*!< number of active dialogs */
+extern stat_var *early_dlgs; 		/*!< number of early dialogs */
+extern stat_var *processed_dlgs;	/*!< number of processed dialogs */
+extern stat_var *expired_dlgs;		/*!< number of expired dialogs */
+extern stat_var *failed_dlgs;		/*!< number of failed dialogs */
+
 int pv_get_dlg_ctx(sip_msg_t *msg,  pv_param_t *param,
 		pv_value_t *res);
 int pv_set_dlg_ctx(sip_msg_t *msg, pv_param_t *param,

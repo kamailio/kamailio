@@ -182,13 +182,11 @@ typedef struct ua_server
 
 /* User Agent Client content */
 
-#define TM_UAC_FLAGS
-#ifdef TM_UAC_FLAGS
 /* UAC internal flags */
-#define TM_UAC_FLAG_RR	1	/* Record-Route applied */
-#define TM_UAC_FLAG_R2	2	/* 2nd Record-Route applied */
-#define TM_UAC_FLAG_FB	4	/* Mark first entry in new branch set */
-#endif
+#define TM_UAC_FLAG_RR	(1)		/* Record-Route applied */
+#define TM_UAC_FLAG_R2	(1<<1)	/* 2nd Record-Route applied */
+#define TM_UAC_FLAG_FB	(1<<2)	/* Mark first entry in new branch set */
+#define TM_UAC_FLAG_BLIND	(1<<3)	/* A blind uac */
 
 typedef struct ua_client
 {
@@ -197,7 +195,7 @@ typedef struct ua_client
 	char *end_reply;	/* pointer to end of sip_msg so we know the shm blocked used in clone...(used in async replies) */
 	struct retr_buf  request;
 	/* we maintain a separate copy of cancel rather than
-	   reuse the structure for original request; the 
+	   reuse the structure for original request; the
 	   original request is no longer needed but its delayed
 	   timer may fire and interfere with whoever tries to
 	   rewrite it
@@ -216,10 +214,8 @@ typedef struct ua_client
 	/* if we don't store, we at least want to know the status */
 	int             last_received;
 
-#ifdef TM_UAC_FLAGS
 	/* internal flags per tm uac */
 	unsigned int flags;
-#endif
 	/* per branch flags */
 	flag_t branch_flags;
 	/* internal processing code - (mapping over sip warning codes)

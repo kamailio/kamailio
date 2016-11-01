@@ -91,7 +91,7 @@ static counter_val_t tcp_info(counter_handle_t h, void* what)
 	return 0;
 }
 
-/** intialize tcp statistics.
+/** initialize tcp statistics.
  *  Must be called before forking.
  * @return < 0 on errror, 0 on success.
  */

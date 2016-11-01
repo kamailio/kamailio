@@ -72,19 +72,18 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
     session->event_type = answered;
     session->active = 1;
 
-
     /* check to make sure that the validity of the credit is enough for the bundle */
     int ret = 0;
-    LM_DBG("we were granted %d seconds (valud for %d seconds) and it's been %d seconds since we requested\n", (int)session->reserved_secs, (int)session->valid_for, (int)time_since_last_event);
+    LM_DBG("we were granted %d seconds (valid for %d seconds) and it's been %d seconds since we requested\n", (int)session->reserved_secs, (int)session->valid_for, (int)time_since_last_event);
     if (session->reserved_secs < (session->valid_for - time_since_last_event)) {
         if (session->reserved_secs > ro_timer_buffer/*TIMEOUTBUFFER*/) {
-            ret = insert_ro_timer(&session->ro_tl, session->reserved_secs - ro_timer_buffer); //subtract 5 seconds so as to get more credit before we run out
+            ret = insert_ro_timer(&session->ro_tl, session->reserved_secs - (session->is_final_allocation?0:ro_timer_buffer)); //subtract 5 seconds so as to get more credit before we run out
         } else {
             ret = insert_ro_timer(&session->ro_tl, session->reserved_secs);
         }
     } else {
         if (session->valid_for > ro_timer_buffer) {
-            ret = insert_ro_timer(&session->ro_tl, session->valid_for - ro_timer_buffer); //subtract 5 seconds so as to get more credit before we run out
+            ret = insert_ro_timer(&session->ro_tl, session->valid_for - (session->is_final_allocation?0:ro_timer_buffer)); //subtract 5 seconds so as to get more credit before we run out
         } else {
             ret = insert_ro_timer(&session->ro_tl, session->valid_for);
         }
@@ -94,7 +93,7 @@ void dlg_answered(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
     if (ret != 0) {
         LM_CRIT("unable to insert timer for Ro Session [%.*s]\n", session->ro_session_id.len, session->ro_session_id.s);
     } else {
-        ref_ro_session_unsafe(session, 1); // lock already acquired
+        ref_ro_session(session, 1, 0); // lock already acquired
     }
 
     if (ro_db_mode == DB_MODE_REALTIME) {
@@ -185,7 +184,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode, char*
                                 
                                 LM_DBG("processing dlg_terminated in Ro and session [%.*s] has active = %d", ro_session->ro_session_id.len, ro_session->ro_session_id.s, ro_session->active);
 				if ((!ro_session->active && (ro_session->start_time != 0)) || (ro_session->ccr_sent == 1)) {
-					unref_ro_session_unsafe(ro_session,1,ro_session_entry);
+					unref_ro_session(ro_session,1,0);
 					LM_DBG("CCR already sent or Ro Session is not active, but may have been answered [%d]\n", (int)ro_session->start_time);
 					ro_session_unlock(ro_session_table, ro_session_entry);
 					return;
@@ -218,7 +217,7 @@ void dlg_terminated(struct dlg_cell *dlg, int type, unsigned int termcode, char*
 				}
 				
 				//ro_session->start_time;
-				unref_ro_session_unsafe(ro_session, 1+unref, ro_session_entry); //lock already acquired
+				unref_ro_session(ro_session, 1+unref, 0); //lock already acquired
 				//unref_ro_session_unsafe(ro_session, 2+unref, ro_session_entry); //lock already acquired
 				ro_session_unlock(ro_session_table, ro_session_entry);
 			//}

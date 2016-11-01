@@ -59,7 +59,7 @@
 	<section>
 	<title>Parameters</title>
 	<section>
-		<title><varname>workers</varname> (int)</title>
+		<title><varname>workers</varname> (integer)</title>
 		<para>
             Number of worker processes to be started to send HTTP requests
             and asynchronously handle responses.
@@ -79,9 +79,9 @@ modparam("http_async_client", "workers", 2)
 		</example>
 	</section>
 	<section>
-		<title><varname>connection_timeout</varname> (str)</title>
+		<title><varname>connection_timeout</varname> (integer)</title>
         <para>
-            Defines in milliseconds how long &kamailio; waits for response
+            Defines in milliseconds how long &kamailio; waits for a response
             from HTTP server.
 		</para>
 		<para>
@@ -99,7 +99,7 @@ modparam("http_async_client", "connection_timeout", 1000)
 		</example>
 	</section>
 	<section>
-		<title><varname>hash_size</varname> (str)</title>
+		<title><varname>hash_size</varname> (integer)</title>
         <para>
 		    The size of the hash table internally used to keep the requests. A
 		    larger table is much faster but consumes more memory. The hash size
@@ -121,7 +121,7 @@ modparam("http_async_client", "hash_size", 1024)
 		</example>
 	</section>
 	<section>
-		<title><varname>tls_version</varname> (int)</title>
+		<title><varname>tls_version</varname> (integer)</title>
         <para>
 		    For HTTPS connections, what's the preferred SSL version.
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLVERSION.html
@@ -141,7 +141,7 @@ modparam("http_async_client", "tls_version", 6)
 		</example>
 	</section>
 	<section>
-		<title><varname>tls_verify_host</varname> (int)</title>
+		<title><varname>tls_verify_host</varname> (integer)</title>
         <para>
 		    For HTTPS connections, whether the client should verify the server host.
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
@@ -161,7 +161,7 @@ modparam("http_async_client", "tls_verify_host", 0)
 		</example>
 	</section>
 	<section>
-		<title><varname>tls_verify_peer</varname> (int)</title>
+		<title><varname>tls_verify_peer</varname> (integer)</title>
         <para>
 		    For HTTPS connections, whether the client should verify the server identity.
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
@@ -181,9 +181,9 @@ modparam("http_async_client", "tls_verify_peer", 0)
 		</example>
 	</section>
 	<section>
-		<title><varname>curl_verbose</varname> (int)</title>
+		<title><varname>curl_verbose</varname> (integer)</title>
         <para>
-		    If defined to a non-zero value, extra informations from cURL (request and response headers)
+		    If defined to a non-zero value, extra information from cURL (request and response headers)
 		    will be included in the kamailio logs, with LM_INFO priority.
 		</para>
 		<para>
@@ -209,7 +209,7 @@ modparam("http_async_client", "curl_verbose", 1)
 					<emphasis>shm</emphasis>: curl will use kamailio's SHM pool and memory manager
 				</para></listitem>
 				<listitem><para>
-					<emphasis>sys</emphasis>: curl will use the system memory amd memory manager (malloc, free, ...)
+					<emphasis>sys</emphasis>: curl will use the system memory and memory manager (malloc, free, ...)
 				</para></listitem>
 			</itemizedlist>
 			<para>
@@ -235,9 +235,9 @@ modparam("http_async_client", "memory_manager", "sys")
               </example>
       </section>
 	<section>
-		<title><varname>tls_client_cert</varname> (int)</title>
+		<title><varname>tls_client_cert</varname> (string)</title>
         <para>
-		    For HTTPS connections, the file path of the TLS client certificate to be used
+		    For HTTPS connections, the file path of the TLS client certificate to be used.
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html
 		</para>
 		<para>
@@ -255,9 +255,9 @@ modparam("http_async_client", "tls_client_cert", "/etc/kamailio/ssl/clientcert.p
 		</example>
 	</section>
 	<section>
-		<title><varname>tls_client_key</varname> (int)</title>
+		<title><varname>tls_client_key</varname> (string)</title>
         <para>
-		    For HTTPS connections, the file path of the TLS client certificate key
+		    For HTTPS connections, the file path of the TLS client certificate key.
 		    http://curl.haxx.se/libcurl/c/CURLOPT_SSLKEY.html
 		</para>
 		<para>
@@ -275,7 +275,7 @@ modparam("http_async_client", "tls_client_key", "/etc/kamailio/ssl/clientcert.ke
 		</example>
 	</section>
 	<section>
-		<title><varname>tls_ca_path</varname> (int)</title>
+		<title><varname>tls_ca_path</varname> (string)</title>
         <para>
 		    The path of the directory holding the CA certificates.
                     http://curl.haxx.se/libcurl/c/CURLOPT_CAPATH.html
@@ -300,16 +300,10 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 	<title>Functions</title>
 	<section id="http_async_client.f.http_async_query">
 	    <title>
-		<function moreinfo="none">http_async_query(url, [post_data], route_name)</function>
+		<function moreinfo="none">http_async_query(url, route_name)</function>
 	    </title>
         <para>
             Sends HTTP(S) request asyncronously to the URL given in <quote>url</quote> parameter, which is a string that may contain pseudo variables.
-        </para>
-        <para>
-            Unless a specific HTTP method was specified using <emphasis>http_async_set_method()</emphasis>, it defaults to a GET request, or to a POST request if <quote>post_data</quote> is issued as second argument.
-        </para>
-        <para>
-            Parameter <quote>post_data</quote>, optional, which is sent as the body of the request, may also contain pseudo variables.
         </para>
         <para>
 			Parameter <quote>route_name</quote> defines the route to be executed upon reception of HTTP reply, on error or on timeout. 
@@ -545,7 +539,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 		<function moreinfo="none">http_set_tls_ca_path(path)</function>
 	    </title>
         <para>
-		    For the next HTTP connection, what CA certificate files to use.
+		    For the next HTTP connection, what CA certificate path to use.
         </para>
         <para>
             Default: the global value set as <emphasis>tls_ca_path</emphasis> module parameter.
@@ -566,18 +560,36 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 
 <section>
 	<title>Pseudo Variables</title>
+	<para>The <literal>$http_req_id</literal> read-only variable can be used in REQUEST_ROUTE to retrive the unique identifier for a query after sending it or in the HTTP callback route to retrive the id of the query the reply belongs to. Useful mainly in non-transactional context.</para>
+	<example>
+		<title><literal>$http_req_id</literal> variable usage</title>
+		<programlisting format="linespecific">
+...
+$http_req(suspend) = 0;  
+
+http_async_query("https://example.com/test.php", "HTTP_REPLY");
+
+xlog("L_INFO", "Query id: $http_query_id");
+...
+route[HTTP_REPLY] {
+xlog("L_INFO", "received reply for query $http_query_id\n");
+}
+...
+		</programlisting>
+	</example>
 	<para>The <literal>$http_req(key)</literal> write-only variable can be used to set custom parameters before sending a HTTP query</para>
 	<para>setting this variable has the same effect than using the <literal>http_set_*()</literal>functions</para>
 	<para><literal>key</literal> can be one of:</para>
 	<itemizedlist>
 		<listitem><para><emphasis>all</emphasis>: if set to <literal>$null</literal>, resets all the parameters to their default value (the ones defined in modparam)</para></listitem>
-		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/remove a HTTP header (see <emphasis>http_append_header()</emphasis>). N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
+		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/removes a HTTP header (see <emphasis>http_append_header()</emphasis>). N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
+		<listitem><para><emphasis>body</emphasis>: sets/modifies/removes the request body</para></listitem>
 		<listitem><para><emphasis>method</emphasis>: sets the HTTP method (see <emphasis>http_set_method()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout (see <emphasis>http_set_timeout()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use (see <emphasis>http_set_tls_client_cert()</emphasis>)</para></listitem>
 		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use (see <emphasis>http_set_tls_client_key()</emphasis>)</para></listitem>
-		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate files to use (see <emphasis>http_set_tls_ca_path()</emphasis>)</para></listitem>
-		<listitem><para><emphasis>suspend</emphasis>: if set to 0 doesn't suspend the current transaction before performing the query (see <emphasis>http_async_suspend()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate path to use (see <emphasis>http_set_tls_ca_path()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>suspend</emphasis>: if set to 0 it doesn't suspend the current transaction before performing the query (see <emphasis>http_async_suspend()</emphasis>)</para></listitem>
 	</itemizedlist>
 	<example>
 		<title><literal>$http_req(key)</literal> variable usage</title>
@@ -600,7 +612,7 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 			<emphasis>$http_ok</emphasis>: 1 if cURL executed the request successfully, 0 otherwise (check $http_err for details)
 		</para></listitem>
 		<listitem><para>
-			<emphasis>$http_err</emphasis>: cURL error string if an error occured, $null otherwise
+			<emphasis>$http_err</emphasis>: cURL error string if an error occurred, $null otherwise
 		</para></listitem>
 		<listitem><para>
 			<emphasis>$http_rs</emphasis>: http status

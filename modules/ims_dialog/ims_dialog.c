@@ -87,6 +87,8 @@ static int w_dlg_setflag(struct sip_msg *msg, char *flag, char *s2);
 static int w_dlg_terminate(struct sip_msg*, char*, char*);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
+static int pv_get_dlg_count( struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
 
 static cmd_export_t cmds[] = {
     {"set_dlg_profile", (cmd_function) w_set_dlg_profile, 1, fixup_profile,
@@ -118,7 +120,7 @@ static cmd_export_t cmds[] = {
    {"dlg_get", (cmd_function)w_dlg_get, 3, fixup_dlg_bridge, 0, ANY_ROUTE },
     {"is_known_dlg", (cmd_function) w_is_known_dlg, 0, NULL,
         0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE},
-    {"load_dlg", (cmd_function) load_dlg, 0, 0, 0, 0},
+    {"load_ims_dlg", (cmd_function)load_ims_dlg, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0}
 };
 
@@ -155,6 +157,22 @@ static mi_export_t mi_cmds[] = {
 
 static rpc_export_t rpc_methods[];
 
+static pv_export_t mod_items[] = {
+	{ {"DLG_count",  sizeof("DLG_count")-1}, PVT_OTHER,  pv_get_dlg_count,    0,
+		0, 0, 0, 0 },
+	{ {"DLG_lifetime",sizeof("DLG_lifetime")-1}, PVT_OTHER, pv_get_dlg_lifetime, 0,
+		0, 0, 0, 0 },
+	{ {"DLG_status",  sizeof("DLG_status")-1}, PVT_OTHER, pv_get_dlg_status, 0,
+		0, 0, 0, 0 },
+	{ {"dlg_ctx",  sizeof("dlg_ctx")-1}, PVT_OTHER, pv_get_dlg_ctx,
+		pv_set_dlg_ctx, pv_parse_dlg_ctx_name, 0, 0, 0 },
+	{ {"dlg",  sizeof("dlg")-1}, PVT_OTHER, pv_get_dlg,
+		0, pv_parse_dlg_name, 0, 0, 0 },
+	{ {"dlg_var", sizeof("dlg_var")-1}, PVT_OTHER, pv_get_dlg_variable,
+		pv_set_dlg_variable,    pv_parse_dialog_var_name, 0, 0, 0},
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 struct module_exports exports = {
     "ims_dialog", /* module's name */
     DEFAULT_DLFLAGS, /* dlopen flags */
@@ -162,7 +180,7 @@ struct module_exports exports = {
     mod_params, /* param exports */
     0, /* exported statistics */
     mi_cmds, /* exported MI functions */
-    0, /* exported pseudo-variables */
+    mod_items, /* exported pseudo-variables */
     0, /* extra processes */
     mod_init, /* module initialization function */
     0, /* reply processing function */
@@ -331,7 +349,7 @@ static int w_dlg_get(struct sip_msg *msg, char *ci, char *ft, char *tt)
 	return 1;
 }
 
-int load_dlg(struct dlg_binds *dlgb) {
+int load_ims_dlg(ims_dlg_api_t *dlgb) {
 
     dlgb->register_dlgcb = register_dlgcb;
     dlgb->register_dlgcb_nodlg = register_dlgcb_nodlg;
@@ -345,6 +363,30 @@ int load_dlg(struct dlg_binds *dlgb) {
 
     return 1;
 }
+
+static int pv_get_dlg_count(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	int n;
+	int l;
+	char *ch;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	n = counter_get_val(dialog_ng_cnts_h.active);
+	l = 0;
+	ch = int2str( n, &l);
+
+	res->rs.s = ch;
+	res->rs.len = l;
+
+	res->ri = n;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
+
+	return 0;
+}
+
 
 static int mod_init(void) {
     unsigned int n;

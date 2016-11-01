@@ -226,7 +226,7 @@ int wait_timelimit(ora_con_t* con, sword status)
 
 
 /*
- * close current timelimited operation and disconnect if timeout occured
+ * close current timelimited operation and disconnect if timeout occurred
  * return true only if work in asynch mode and timeout detect
  */
 int done_timelimit(ora_con_t* con, sword status)

@@ -99,8 +99,8 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
  * marking authorized credentials and so on.
  */
 typedef auth_result_t (*post_auth_t)(struct sip_msg* msg,
-		struct hdr_field* hdr);
-auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr);
+		struct hdr_field* hdr, char* ha1);
+auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1);
 
 typedef int (*check_response_t)(dig_cred_t* cred, str* method, char* ha1);
 int auth_check_response(dig_cred_t* cred, str* method, char* ha1);

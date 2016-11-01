@@ -35,6 +35,7 @@
 #include "../../qvalue.h"
 #include "../../ip_addr.h"
 #include "../../dset.h"
+#include "../../rand/kam_rand.h"
 #include "ul_mi.h"
 #include "dlist.h"
 #include "udomain.h"
@@ -67,7 +68,7 @@ static void set_mi_ul_cid(void)
 	if(mi_ul_cid.s!=NULL) return;
 
 	for(i=0; i<19; i++) {
-        mi_ul_cid_buf[i] = charset[rand()%(sizeof(charset) - 1)];
+        mi_ul_cid_buf[i] = charset[kam_rand()%(sizeof(charset) - 1)];
     }
     memcpy(mi_ul_cid_buf+i, "@kamailio.mi", sizeof("@kamailio.mi"));
     mi_ul_cid.s = mi_ul_cid_buf;

@@ -14,7 +14,12 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides operations on json strings.
+		This is a simple module allowing to retrieve values from
+		a JSON string.
+	</para>
+	<para>
+		For more complex operations with JSON documents,
+		see the JANSSON module.
 	</para>
 	</section>
 
@@ -51,7 +56,7 @@
 
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="json.f.json_get_field">
 	    <title>
 		<function moreinfo="none">json_get_field(json_string, field_name, destination)</function>
 	    </title>

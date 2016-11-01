@@ -50,14 +50,19 @@ void link_ro_session(struct ro_session *ro_session, int n) {
  * \param ro_session Ro Session
  * \param cnt increment for the reference counter
  */
-void ref_ro_session(struct ro_session *ro_session, unsigned int cnt) {
+void ref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt, unsigned int mustlock, char *fname, int fline) {
     struct ro_session_entry *ro_session_entry;
 
+	LM_DBG("ref op on %p with %d from %s:%d\n", ro_session, cnt, fname, fline);
     ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
 
-    ro_session_lock(ro_session_table, ro_session_entry);
-    ref_ro_session_unsafe(ro_session, cnt);
-    ro_session_unlock(ro_session_table, ro_session_entry);
+    if (mustlock)
+		ro_session_lock(ro_session_table, ro_session_entry);
+    
+	ref_ro_session_unsafe(ro_session, cnt);
+    
+	if (mustlock)
+		ro_session_unlock(ro_session_table, ro_session_entry);
 }
 
 /*!
@@ -66,14 +71,17 @@ void ref_ro_session(struct ro_session *ro_session, unsigned int cnt) {
  * \param ro_session Ro Session
  * \param cnt decrement for the reference counter
  */
-void unref_ro_session(struct ro_session *ro_session, unsigned int cnt) {
+void unref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt, unsigned int mustlock, char *fname, int fline) {
     struct ro_session_entry *ro_session_entry;
 
-    ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
+	LM_DBG("unref op on %p with %d from %s:%d\n", ro_session, cnt, fname, fline);
 
-    ro_session_lock(ro_session_table, ro_session_entry);
+	ro_session_entry = &(ro_session_table->entries[ro_session->h_entry]);
+	if (mustlock)
+		ro_session_lock(ro_session_table, ro_session_entry);
     unref_ro_session_unsafe(ro_session, cnt, ro_session_entry);
-    ro_session_unlock(ro_session_table, ro_session_entry);
+	if (mustlock)
+		ro_session_unlock(ro_session_table, ro_session_entry);
 }
 
 /*!
@@ -117,7 +125,7 @@ int init_ro_session_table(unsigned int size) {
 
     for (i = 0; i < size; i++) {
         memset(&(ro_session_table->entries[i]), 0, sizeof (struct ro_session_entry));
-        ro_session_table->entries[i].next_id = rand() % (3*size);
+        ro_session_table->entries[i].next_id = kam_rand() % (3*size);
         ro_session_table->entries[i].lock_idx = i % ro_session_table->locks_no;
     }
 
@@ -220,7 +228,7 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
     new_ro_session->reserved_secs = requested_secs;
     new_ro_session->valid_for = validity_timeout;
 
-    new_ro_session->hop_by_hop = 1;
+    new_ro_session->hop_by_hop = 0;
     new_ro_session->next = 0;
     new_ro_session->dlg_h_entry = dlg_h_entry;
     new_ro_session->dlg_h_id = dlg_h_id;
@@ -299,7 +307,7 @@ struct ro_session* lookup_ro_session(unsigned int h_entry, str* callid, int dire
 
     for (ro_session = ro_session_entry->first; ro_session; ro_session = ro_session->next) {
         if ((direction==0 || direction==ro_session->direction) && (strncmp(ro_session->callid.s, callid->s, callid->len)==0)) {
-		ref_ro_session_unsafe(ro_session,1);
+		ref_ro_session(ro_session, 1, 0);
             LM_DBG("ref ro_session %p with 1 -> %d\n", ro_session, ro_session->ref);
             ro_session_unlock(ro_session_table, ro_session_entry);
             LM_DBG("ro_session id=%u found on entry %u\n", ro_session->h_id, h_entry);

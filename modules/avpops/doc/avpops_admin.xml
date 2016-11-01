@@ -542,7 +542,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 			<para>The function delivers the following return-codes:</para>
 			<itemizedlist>
 			<listitem><para>
-			<emphasis>-1</emphasis> - An error occured while querying the database
+			<emphasis>-1</emphasis> - An error occurred while querying the database
 			(e.g. wrong SQL or database error)
 			</para></listitem>
 			<listitem><para>
@@ -826,8 +826,12 @@ avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
 			</listitem>
 			</itemizedlist>
 			<para>
-			This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-			BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
+				NOTE: if a list of AVPs is copied/moved (flag g|G), then the order
+				of the values is reversed. Copy/move twice in order to get the same
+				order as in original list.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
 			</para>
 			<example>
 				<title><function>avp_copy</function> usage</title>

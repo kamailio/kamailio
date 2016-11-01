@@ -21,8 +21,8 @@
 
 
 /*!
- * \file 
- * \brief MI :: Core 
+ * \file
+ * \brief MI :: Core
  * \ingroup mi
  */
 
@@ -133,26 +133,24 @@ static struct mi_root *mi_version(struct mi_root *cmd, void *param)
 
 	node = add_mi_node_child( rpl, 0, MI_SSTR("Server"), SERVER_HDR+8,
 		SERVER_HDR_LEN-8);
-	if (node==0) 
+	if (node==0)
 		goto error;
 
 	node = add_mi_node_child( rpl, 0, MI_SSTR("Build"), BUILD_STR,
 			BUILD_STR_LEN);
-	if (node==0) 
+	if (node==0)
 		goto error;
 
 	node = add_mi_node_child( rpl, 0, MI_SSTR("Flags"), (char*)ver_flags,
 				strlen(ver_flags));
-	if (node==0) 
-		goto error;	
-	
-	node = add_mi_node_child( rpl, 0, MI_SSTR("GIT"), (char*)repo_hash,
-			strlen(repo_hash));
-	if (node==0) 
+	if (node==0)
 		goto error;
 
-		
-	
+	node = add_mi_node_child( rpl, 0, MI_SSTR("GIT"), (char*)repo_hash,
+			strlen(repo_hash));
+	if (node==0)
+		goto error;
+
 	return rpl_tree;
 error:
 	LM_ERR("failed to add node\n");

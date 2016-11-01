@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef _CDP_BIND_H
@@ -58,10 +56,10 @@
 
 struct cdp_binds {
 	AAACreateRequest_f			AAACreateRequest;
-	AAACreateResponse_f			AAACreateResponse;	
+	AAACreateResponse_f			AAACreateResponse;
 	AAAFreeMessage_f			AAAFreeMessage;
-	
-	
+
+
 	AAACreateAVP_f				AAACreateAVP;
 	AAAAddAVPToMessage_f		AAAAddAVPToMessage;
 	AAAAddAVPToList_f			AAAAddAVPToList;
@@ -77,16 +75,16 @@ struct cdp_binds {
 	AAASendMessageToPeer_f		AAASendMessageToPeer;
 	AAASendRecvMessage_f		AAASendRecvMessage;
 	AAASendRecvMessageToPeer_f	AAASendRecvMessageToPeer;
-	
-	
+
+
 	AAAAddRequestHandler_f		AAAAddRequestHandler;
 	AAAAddResponseHandler_f		AAAAddResponseHandler;
 
 
 	AAACreateTransaction_f		AAACreateTransaction;
 	AAADropTransaction_f		AAADropTransaction;
-	
-	
+
+
 	AAACreateSession_f			AAACreateSession;
 	AAAMakeSession_f			AAAMakeSession;
 	AAAGetSession_f				AAAGetSession;
@@ -120,12 +118,12 @@ static inline int load_cdp_api(struct cdp_binds* cdpb)
 
 	/* import the TM auto-loading function */
 	load_cdp = (load_cdp_f)find_export("load_cdp", NO_SCRIPT, 0);
-	
+
 	if (load_cdp == NULL) {
 		LM_WARN("Cannot import load_cdp function from CDP module\n");
 		return -1;
 	}
-	
+
 	/* let the auto-loading function load all TM stuff */
 	if (load_cdp(cdpb) == -1) {
 		return -1;

@@ -102,7 +102,7 @@
  * Initialises the DB API, check the table version and closes the connection.
  * This should be called from the mod_init function.
  *
- * \return 0 means ok, -1 means an error occured.
+ * \return 0 means ok, -1 means an error occurred.
  */
 </xsl:text>
 <xsl:value-of select="concat('int ', $prefix, '_db_init(void);&#x0A;')"/>
@@ -113,7 +113,7 @@
  * This should be called from child_init. An already existing database
  * connection will be closed, and a new one created.
  *
- * \return 0 means ok, -1 means an error occured.
+ * \return 0 means ok, -1 means an error occurred.
  */
 </xsl:text>
 <xsl:value-of select="concat('int ', $prefix, '_db_open(void);&#x0A;')"/>

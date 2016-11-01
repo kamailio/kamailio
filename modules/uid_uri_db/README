@@ -1,12 +1,11 @@
-
 UID Uri_db Module
 
 Jan Janak
 
    FhG FOKUS
 
-   Copyright © 2003 FhG FOKUS
-     _________________________________________________________________
+   Copyright Â© 2003 FhG FOKUS
+     __________________________________________________________________
 
    Table of Contents
 
@@ -27,9 +26,9 @@ Jan Janak
 
         4. Functions
 
-              4.1. check_to() 
-              4.2. check_from() 
-              4.3. does_uri_exist() 
+              4.1. check_to()
+              4.2. check_from()
+              4.3. does_uri_exist()
 
    List of Examples
 
@@ -64,9 +63,9 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. check_to() 
-        4.2. check_from() 
-        4.3. does_uri_exist() 
+        4.1. check_to()
+        4.2. check_from()
+        4.3. does_uri_exist()
 
 1. Overview
 
@@ -178,9 +177,9 @@ modparam("module", "subscriber_domain_column", "domain")
 
 4. Functions
 
-   4.1. check_to() 
-   4.2. check_from() 
-   4.3. does_uri_exist() 
+   4.1. check_to()
+   4.2. check_from()
+   4.3. does_uri_exist()
 
 4.1.  check_to()
 

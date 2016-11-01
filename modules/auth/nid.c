@@ -58,7 +58,7 @@ int init_nonce_id()
 		nid_pool_no=DEFAULT_NID_POOL_SIZE;
 	}
 	if (nid_pool_no>MAX_NID_POOL_SIZE){
-		WARN("auth: nid_pool_no too big, truncating to %d\n",
+		LM_WARN("nid_pool_no too big, truncating to %d\n",
 				MAX_NID_POOL_SIZE);
 		nid_pool_no=MAX_NID_POOL_SIZE;
 	}
@@ -66,13 +66,13 @@ int init_nonce_id()
 	nid_pool_mask=(1<<nid_pool_k)-1;
 	pool_no=1UL<<nid_pool_k; /* ROUNDDOWN to 2^k */
 	if (pool_no!=nid_pool_no){
-		INFO("auth: nid_pool_no rounded down to %d\n", pool_no);
+		LM_INFO("nid_pool_no rounded down to %d\n", pool_no);
 	}
 	nid_pool_no=pool_no;
 
 	nid_crt=shm_malloc(sizeof(*nid_crt)*nid_pool_no);
 	if (nid_crt==0){
-		ERR("auth: init_nonce_id: memory allocation failure\n");
+		LM_ERR("init_nonce_id: memory allocation failure\n");
 		return -1;
 	}
 	/*  init nc_crt_id with random values */

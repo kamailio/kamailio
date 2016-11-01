@@ -505,6 +505,31 @@ lock("$rU");
 </programlisting>
 		</example>
 	</section>
+	<section id="cfgutils.f.trylock">
+		<title><function moreinfo="none">trylock(key)</function></title>
+		<para>
+		Try to lock the key. If the lock can not be obtained (possibly already locked),
+		the function returns an error and script execution continues. 
+		</para>
+		<para>
+		<quote>key</quote> can be static string or string with PVs.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">trylock()</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (trylock("$rU")) {
+	xlog("L_INFO", "Doing some cool stuff\n");
+	unlock("$rU");
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="cfgutils.f.unlock">
 		<title><function moreinfo="none">unlock(key)</function></title>
 		<para>
@@ -529,7 +554,8 @@ unlock("$rU");
 	<section id="cfgutils.f.check_route_exists">
 		<title><function moreinfo="none">check_route_exists(route)</function></title>
 		<para>
-		Check if a route block exists
+		Check if a route block exists. It returns true (1) on found and false on
+		not found or error.
 		</para>
 		<para>Parameters:</para>
 		<para>
@@ -543,7 +569,7 @@ unlock("$rU");
 		<title><function moreinfo="none">check_route_exists()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if(check_route_exists("FROGJUMP") {
+if(check_route_exists("JUMP") {
 	$var(jumping_frogs) = 1;
 };
 ...
@@ -555,6 +581,10 @@ if(check_route_exists("FROGJUMP") {
 		<para>
 		Execute a routing block only if it is defined. If it's not defined, silently
 		move to the next action in the configuration script.
+		</para>
+		<para>
+		It returns the code of last action in the route block, if that exists, or
+		false if the route doesn't exists or was an error executing it.
 		</para>
 		<para>Parameters:</para>
 		<para>
@@ -568,7 +598,9 @@ if(check_route_exists("FROGJUMP") {
 		<title><function moreinfo="none">route_if_exists()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-route_if_exists("PRESENCE_SANTA_CLAUS");
+if(route_if_exists("JUMP")) {
+    exit;
+}
 ...
 </programlisting>
 		</example>

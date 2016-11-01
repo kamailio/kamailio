@@ -535,7 +535,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	if(xml_array== NULL)
 	{
 	
-		LM_ERR("while alocating memory");
+		LM_ERR("while allocating memory");
 		return NULL;
 	}
 	memset(xml_array, 0, (n+2)*sizeof(xmlDocPtr)) ;
@@ -568,7 +568,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	p_root = xmlDocGetNodeByName( xml_array[j], "presence", NULL);
 	if(p_root ==NULL)
 	{
-		LM_ERR("while geting the xml_tree root\n");
+		LM_ERR("while getting the xml_tree root\n");
 		goto error;
 	}
 
@@ -577,7 +577,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		new_p_root= xmlDocGetNodeByName( xml_array[i], "presence", NULL);
 		if(new_p_root ==NULL)
 		{
-			LM_ERR("while geting the xml_tree root\n");
+			LM_ERR("while getting the xml_tree root\n");
 			goto error;
 		}
 

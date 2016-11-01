@@ -71,14 +71,10 @@
 #define EVENT_REFRESHED 4
 #define EVENT_EXPIRED 5
 
-/**
- * Initializes the reg notifications list.
- */
-reg_notification_list *notification_list = 0; //< List of pending notifications
-
 extern struct tm_binds tmb;
 
 extern int notification_list_size_threshold;
+extern int max_notification_list_size;
 
 extern int subscription_default_expires;
 extern int subscription_min_expires;
@@ -109,7 +105,7 @@ static inline int randomize_expires(int expires, int range) {
 
     int range_min = expires - (float) range / 100 * expires;
 
-    return range_min + (float) (rand() % 100) / 100 * (expires - range_min);
+    return range_min + (float) (kam_rand() % 100) / 100 * (expires - range_min);
 }
 
 int notify_init() {
@@ -163,6 +159,7 @@ int can_publish_reg(struct sip_msg *msg, char *_t, char *str2) {
     int res;
     ims_public_identity *pi = 0;
     int i, j;
+	impu_contact_t *impucontact; 
 
     LM_DBG("Checking if allowed to publish reg event\n");
 
@@ -243,8 +240,9 @@ int can_publish_reg(struct sip_msg *msg, char *_t, char *str2) {
 
     //check if asserted is present in any of the path headers
     j = 0;
-
-    while (j < MAX_CONTACTS_PER_IMPU && (c = r->newcontacts[j])) {
+	impucontact = r->linked_contacts.head;
+    while (impucontact) {
+		c = impucontact->contact;
         if (c->path.len) {
             LM_DBG("Path: <%.*s>.\n",
                     c->path.len, c->path.s);
@@ -259,7 +257,7 @@ int can_publish_reg(struct sip_msg *msg, char *_t, char *str2) {
                 }
             }
         }
-        j++;
+		impucontact = impucontact->next;
     }
     LM_DBG("Did not find p-asserted-identity <%.*s> on Path\n", asserted_id.len, asserted_id.s);
 
@@ -287,6 +285,7 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     ucontact_t* c = 0;
     impurecord_t* r;
     int res;
+	impu_contact_t *impucontact;
 
     ims_public_identity *pi = 0;
     int i, j;
@@ -400,8 +399,10 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
     LM_DBG("Did not find p-asserted-identity <%.*s> in SP\n", asserted_id.len, asserted_id.s);
 
     //check if asserted is present in any of the path headers
-    j = 0;
-    while (j < MAX_CONTACTS_PER_IMPU && (c = r->newcontacts[j])) {
+	impucontact = r->linked_contacts.head;
+	
+    while (impucontact) {
+		c = impucontact->contact;
         if (c->path.len) {
             LM_DBG("Path: <%.*s>.\n",
                     c->path.len, c->path.s);
@@ -416,7 +417,7 @@ int can_subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
                 }
             }
         }
-        j++;
+        impucontact = impucontact->next;
     }
 
     LM_DBG("Did not find p-asserted-identity <%.*s> on Path\n", asserted_id.len, asserted_id.s);
@@ -440,7 +441,7 @@ error:
 int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presentity_uri, str *watcher_contact, str *explit_dereg_contact, int num_explit_dereg_contact) {
     impurecord_t* r;
     int num_impus;
-    str* impu_list;
+    str* impu_list = 0;
     int res = 0;
     udomain_t* udomain;
 
@@ -483,7 +484,10 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
             LM_DBG("About to ceate notification");
 
             create_notifications(_d, r_passed, presentity_uri, watcher_contact, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
-            return 0;
+            if (impu_list) {
+                    pkg_free(impu_list);
+            }
+			return 0;
             break;
 
             //richard: we only use reg unreg expired and refresh
@@ -510,12 +514,17 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, int event_type, str *presen
             //TODO this should be a configurable module param
             if (ul.register_udomain(domain, &udomain) < 0) {
                 LM_ERR("Unable to register usrloc domain....aborting\n");
-                return 0;
+                if (impu_list) {
+                    pkg_free(impu_list);
+                }
+				return 0;
             }
-            LM_DBG("About to ceate notification");
-
+            LM_DBG("About to create notification");
             create_notifications(_d, r_passed, presentity_uri, watcher_contact, impu_list, num_impus, event_type, explit_dereg_contact, num_explit_dereg_contact);
-            return 1;
+            if (impu_list) {
+                    pkg_free(impu_list);
+            }
+			return 1;
 
         default:
             LM_ERR("ERR:event_reg: Unknown event %d\n", event_type);
@@ -1655,7 +1664,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
     impurecord_t *r;
-    int i, j, k, res;
+    int i, k, res;
     ucontact_t* ptr;
 
     buf.s = bufc;
@@ -1665,6 +1674,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
     get_act_time();
     //    int domain_locked = 1;
     int terminate_impu = 1;
+	impu_contact_t *impucontact;
 
     LM_DBG("Getting reginfo_full");
 
@@ -1688,7 +1698,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
 
         res = ul.get_impurecord(_t, (&impu_list[i]), &r);
         if (res != 0) {
-            LM_WARN("impu disappeared, ignoring it\n");
+            LM_DBG("impu disappeared, ignoring it\n");
             //            if (domain_locked) {
             ul.unlock_udomain(_t, &impu_list[i]);
             //            }
@@ -1698,16 +1708,18 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
 
         LM_DBG("Retrieved IMPU record");
 
-        j = 0;
         terminate_impu = 1;
-        while (j < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[j])) {
+		
+		impucontact = r->linked_contacts.head;
+        while (impucontact) {
+			ptr = impucontact->contact;
             if (VALID_CONTACT(ptr, act_time)) {
                 LM_DBG("IMPU <%.*s> has another active contact <%.*s> so will set its state to active\n",
                         r->public_identity.len, r->public_identity.s, ptr->c.len, ptr->c.s);
                 terminate_impu = 0;
                 break;
             }
-            j++;
+			impucontact = impucontact->next;
         }
         if (terminate_impu) {
             LM_DBG("IMPU reg state has no active contacts so putting in status terminated");
@@ -1723,7 +1735,6 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
         pad.len = strlen(pad.s);
         STR_APPEND(buf, pad);
 
-        j = 0;
         LM_DBG("Scrolling through contact for this IMPU");
         //        if (contact && !domain_locked /* we're dealing with the primary impu most likely related to de-reg */) {
         //            LM_DBG("We're dealing with the primary IMPU here AND a contact was passed in - must have been an explicit dereg\n");
@@ -1736,9 +1747,11 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
             process_xml_for_explit_dereg_contact(&buf, &pad, explit_dereg_contact[k]);
         }
 
-        while (j < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[j])) {
+		impucontact = r->linked_contacts.head;
+        while (impucontact) {
+			ptr = impucontact->contact;
             process_xml_for_contact(&buf, &pad, ptr);
-            j++;
+			impucontact = impucontact->next;
         }
 
         STR_APPEND(buf, registration_e);
@@ -1783,6 +1796,7 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
     ucontact_t *c_tmp;
     str state, event;
     param_t *param;
+	impu_contact_t *impurecord;
 
     buf.s = bufc;
     buf.len = 0;
@@ -1810,15 +1824,16 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
             //check if asserted is present in any of the path headers
 
 
-            i = 0;
-            while (i < MAX_CONTACTS_PER_IMPU && (c_tmp = r->newcontacts[i])) {
+            impurecord = r->linked_contacts.head;
+            while (impurecord) {
+				c_tmp = impurecord->contact;
                 if ((strncasecmp(c_tmp->c.s, c->c.s, c_tmp->c.len) != 0) && ((c_tmp->expires - act_time) > 0)) {
                     LM_DBG("IMPU <%.*s> has another active contact <%.*s> so will set its state to active\n",
                             r->public_identity.len, r->public_identity.s, c_tmp->c.len, c_tmp->c.s);
                     terminate_impu = 0;
                     break;
                 }
-                i++;
+                impurecord = impurecord->next;
             }
             if (terminate_impu)
                 sprintf(pad.s, registration_s.s, r->public_identity.len, r->public_identity.s, r, r_terminated.len, r_terminated.s);
@@ -2183,6 +2198,12 @@ void add_notification(reg_notification * n) {
     } else {
         LM_DBG("Notification exists");
     }
+	
+	if (max_notification_list_size > 0 && ((notification_list->size+1) > max_notification_list_size )) {
+		LM_WARN("Dropping notification, list too big [%d]\n", notification_list->size);
+		return;
+	}
+	
     LM_DBG("Adding to notification list");
     lock_get(notification_list->lock);
     n->next = 0;

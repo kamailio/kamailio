@@ -45,6 +45,8 @@
 
 #include "third_party_reg.h"
 
+usrloc_api_t isc_ulb;/*!< Structure containing pointers to usrloc functions*/
+
 /*! \brief
  * Combines all Path HF bodies into one string.
  */
@@ -104,6 +106,94 @@ error:
     return -1;
 }
 
+#define PASSOCIATEDURI "P-Associated-URI: "
+#define PASSOCIATEDURI_LEN (sizeof(PASSOCIATEDURI)-1)
+
+static struct {
+    char* buf;
+    int buf_len;
+    int data_len;
+} p_associated_uri = {0, 0, 0};
+
+static inline unsigned int calc_associateduri_buf_len(ims_subscription* s) {
+    unsigned int len;
+    int i, j;
+    ims_public_identity* id;
+
+    len = 0;
+    for (i = 0; i < s->service_profiles_cnt; i++)
+        for (j = 0; j < s->service_profiles[i].public_identities_cnt; j++) {
+            id = &(s->service_profiles[i].public_identities[j]);
+            if (!id->barring)
+                len += 4 + id->public_identity.len;
+        }
+
+    if (len) len += PASSOCIATEDURI_LEN + 2 + CRLF_LEN;
+
+    return len;
+}
+
+int build_p_associated_uri(ims_subscription* s) {
+    char *p;
+    int i, j, cnt = 0;
+    ims_public_identity* id;
+
+    LM_DBG("Building P-Associated-URI\n");
+
+    if (!s) {
+        LM_ERR("No ims_subscription present\n");
+        return -1;
+    }
+    p_associated_uri.data_len = calc_associateduri_buf_len(s);
+    if (!p_associated_uri.data_len)
+        return -1;
+
+    if (!p_associated_uri.buf || (p_associated_uri.buf_len < p_associated_uri.data_len)) {
+        if (p_associated_uri.buf)
+            pkg_free(p_associated_uri.buf);
+        p_associated_uri.buf = (char*) pkg_malloc(p_associated_uri.data_len);
+        if (!p_associated_uri.buf) {
+            p_associated_uri.data_len = 0;
+            p_associated_uri.buf_len = 0;
+            LM_ERR("no pkg memory left\n");
+            return -1;
+        } else {
+            p_associated_uri.buf_len = p_associated_uri.data_len;
+        }
+    }
+
+    p = p_associated_uri.buf;
+    memcpy(p, PASSOCIATEDURI, PASSOCIATEDURI_LEN);
+    p += PASSOCIATEDURI_LEN;
+
+    for (i = 0; i < s->service_profiles_cnt; i++)
+        for (j = 0; j < s->service_profiles[i].public_identities_cnt; j++) {
+            id = &(s->service_profiles[i].public_identities[j]);
+            if (!id->barring && (strncmp(id->public_identity.s,"tel",3) == 0) ) {
+                if (cnt == 0)
+                    *p++ = '<';
+                else {
+                    memcpy(p, ">, <", 4);
+                    p += 4;
+                }
+                memcpy(p, id->public_identity.s, id->public_identity.len);
+                p += id->public_identity.len;
+                cnt++;
+            }
+        }
+    if (cnt)
+        *p++ = '>';
+
+    memcpy(p, "\r\n", CRLF_LEN);
+    p += CRLF_LEN;
+    p_associated_uri.data_len = p - p_associated_uri.buf;
+    LM_DBG("Created P-Associated-URI HF %.*s\n", p_associated_uri.data_len, p_associated_uri.buf);
+
+    return 0;
+}
+
+
+
 /**
  * Handle third party registration
  * @param msg - the SIP REGISTER message
@@ -111,7 +201,7 @@ error:
  * @param mark  - the isc_mark that should be used to mark the message
  * @returns #ISC_RETURN_TRUE if allowed, #ISC_RETURN_FALSE if not
  */
-int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
+int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark, udomain_t* d) {
     r_third_party_registration r;
     str path, path_received;
     int expires = 0;
@@ -120,6 +210,9 @@ int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
     str pvni = {0, 0};
     str pani = {0, 0};
     str cv = {0, 0};
+	str s = {0, 0};
+	
+	impurecord_t *p;
 
     struct hdr_field *hdr;
 
@@ -131,11 +224,28 @@ int isc_third_party_reg(struct sip_msg *msg, isc_match *m, isc_mark *mark) {
 
     /* Get To header*/
     to = cscf_get_public_identity(msg);
+	
+	if (cscf_get_originating_user(msg, &s)) {
+		
+		isc_ulb.lock_udomain(d, &s);
+		if ( isc_ulb.get_impurecord(d,&s,&p) != 0) {
+			isc_ulb.unlock_udomain(d, &s);
+			LM_ERR("Failed to get IMPU domain from usrloc\n");
+			goto no_pai;
+		}
+		if ( build_p_associated_uri(p->s) != 0) {
+			isc_ulb.unlock_udomain(d, &s);
+			LM_ERR("Failed to build P-Associated URI for 3rd party reg\n");
+			goto no_pai;
+		}
+		isc_ulb.unlock_udomain(d, &s);
+	}
 
     /*TODO - check if the min/max expires is in the acceptable limits
      * this does not work correctly if the user has multiple contacts
      * and register/deregisters them individually!!!
      */
+no_pai:
     expires = cscf_get_max_expires(msg, 0);
 
     /* Get P-Visited-Network-Id header */
@@ -238,6 +348,15 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
 
     if (r->path.len)
 	h.len += path_s.len + path_e.len + r->path.len + 6/*',' and ';lr' and '<' and '>'*/ + r->from.len /*adding our own address to path*/;
+	
+	str pauri = {0,0};
+	
+	if (p_associated_uri.data_len > 0)
+	{
+		pauri.s = p_associated_uri.buf;
+		pauri.len = p_associated_uri.data_len;
+		h.len += pauri.len;
+	}
 
     h.s = pkg_malloc(h.len);
     if (!h.s) {
@@ -283,10 +402,14 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
     }
 
     if (r->cv.len) {
-	STR_APPEND(h, p_charging_vector_s);
-	STR_APPEND(h, r->cv);
-	STR_APPEND(h, p_charging_vector_e);
+		STR_APPEND(h, p_charging_vector_s);
+		STR_APPEND(h, r->cv);
+		STR_APPEND(h, p_charging_vector_e);
     }
+    
+    if (p_associated_uri.data_len > 0) {
+		STR_APPEND(h, pauri);
+	}
     LM_DBG("SRV INFO:<%.*s>\n", r->service_info.len, r->service_info.s);
     if (r->service_info.len) {
 	b.len = body_s.len + r->service_info.len + body_e.len;

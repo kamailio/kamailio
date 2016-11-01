@@ -313,7 +313,7 @@ typedef int (*cmpfunc_t)(const void *v1, const void *v2);
  * @param key pointer to the key we are looking for
  * @param cmpfunc function to be used for comparison
  * @param index  If index is not NULL it is set to:
- *     -1 if an error occured,
+ *     -1 if an error occurred,
  *     the index of the first entry equal to v
  *     or the index of the first entry greater than v in the case v was not found.
  *   Be careful: The index returned can be greater than the length of the array!

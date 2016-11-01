@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -58,7 +58,7 @@ struct timer_head{
 /*@{ */
 
 #define H0_BITS 14
-#define H1_BITS  9 
+#define H1_BITS  9
 #define H2_BITS  (32-H1_BITS-H0_BITS)
 
 
@@ -139,7 +139,7 @@ static inline void timer_redist(ticks_t t, struct timer_head *h)
 {
 	struct timer_ln* tl;
 	struct timer_ln* tmp;
-	
+
 	timer_foreach_safe(tl, tmp, h){
 		_timer_dist_tl(tl, tl->expire-t);
 	}
@@ -156,7 +156,7 @@ static inline void timer_run(ticks_t t)
 		if ((t & H1_H0_MASK)==0){        /*r2*/
 			timer_redist(t, &timer_lst->h2[t>>(H0_BITS+H1_BITS)]);
 		}
-		
+
 		timer_redist(t, &timer_lst->h1[(t & H1_H0_MASK)>>H0_BITS]);/*r2 >> H0*/
 	}
 	/*
@@ -171,7 +171,7 @@ static inline void timer_lst_mv0(ticks_t t, struct timer_head* h)
 {
 	struct timer_ln* tl;
 	struct timer_ln* tmp;
-	
+
 	timer_foreach_safe(tl, tmp, h){
 			_timer_dist_tl(tl, &timer_lst->h0[tl->expire & H0_MASK]);
 	}
@@ -183,12 +183,12 @@ static inline void timer_lst_mv1(ticks_t t, struct timer_head* h)
 {
 	struct timer_ln* tl;
 	struct timer_ln* tmp;
-	
+
 	timer_foreach_safe(tl, tmp, h){
 		if ((tl->expire & H0_MASK)==0) /* directly to h0 */
 			_timer_add_list(tl, &timer_lst->h0[tl->expire & H0_MASK]);
 		else  /* to h1 */
-			_timer_add_list(tl, 
+			_timer_add_list(tl,
 						&timer_lst->h1[(tl->expire & H1_H0_MASK)>>H0_BITS]);
 	}
 	/* clear the current list */
@@ -203,7 +203,7 @@ static inline void timer_run(ticks_t t)
 	if ((t & H0_MASK)==0){              /*r1*/
 		if ((t & H1_H0_MASK)==0)        /*r2*/
 			/* just move the list "down" to hash1 */
-			timer_lst_mv1(&timer_lst->h2[t>>(H0_BITS+H1_BITS)]); 
+			timer_lst_mv1(&timer_lst->h2[t>>(H0_BITS+H1_BITS)]);
 		/* move "down" to hash0 */
 		timer_lst_mv0(&timer_lst->h1[(t & H1_H0_MASK)>>H0_BITS]);
 	}

@@ -66,6 +66,7 @@
 #include "../../parser/parse_to.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../rpc_lookup.h"
+#include "../../srapi.h"
 #include "../rr/api.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"
@@ -78,6 +79,7 @@
 #include "dlg_var.h"
 #include "dlg_transfer.h"
 #include "dlg_cseq.h"
+#include "dlg_dmq.h"
 
 MODULE_VERSION
 
@@ -105,6 +107,8 @@ int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
 static int _dlg_track_cseq_updates = 0;
 int dlg_ka_failed_limit = 1;
+
+int dlg_enable_dmq = 0;
 
 int dlg_event_rt[DLG_EVENTRT_MAX];
 
@@ -295,6 +299,7 @@ static param_export_t mod_params[]={
 	{ "lreq_callee_headers",   PARAM_STR, &dlg_lreq_callee_headers  },
 	{ "db_skip_load",          INT_PARAM, &db_skip_load             },
 	{ "ka_failed_limit",       INT_PARAM, &dlg_ka_failed_limit      },
+	{ "enable_dmq",            INT_PARAM, &dlg_enable_dmq           },
 	{ 0,0,0 }
 };
 
@@ -461,6 +466,7 @@ static int pv_get_dlg_count(struct sip_msg *msg, pv_param_t *param,
 static int mod_init(void)
 {
 	unsigned int n;
+	sr_cfgenv_t *cenv = NULL;
 
 	if(dlg_ka_interval!=0 && dlg_ka_interval<30) {
 		LM_ERR("ka interval too low (%d), has to be at least 30\n",
@@ -512,7 +518,7 @@ static int mod_init(void)
 	}
 
 	if (timeout_spec.s) {
-		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0 
+		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0
 				&& (timeout_avp.type!=PVT_AVP)){
 			LM_ERR("malformed or non AVP timeout "
 				"AVP definition in '%.*s'\n", timeout_spec.len,timeout_spec.s);
@@ -704,8 +710,16 @@ static int mod_init(void)
 	/* timer process to clean old unconfirmed dialogs */
 	register_sync_timers(1);
 
-	if(_dlg_track_cseq_updates!=0)
+	if(_dlg_track_cseq_updates!=0) {
+		cenv = sr_cfgenv_get();
+		cenv->cb_cseq_update = dlg_cseq_update;
 		dlg_register_cseq_callbacks();
+	}
+
+	if (dlg_enable_dmq>0 && dlg_dmq_initialize()!=0) {
+		LM_ERR("failed to initialize dmq integration\n");
+		return -1;
+	}
 
 	return 0;
 }
@@ -745,7 +759,7 @@ static int child_init(int rank)
 	}
 
 	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
-	(rank>0 || rank==PROC_TIMER)) ||
+	(rank>0 || rank==PROC_TIMER || rank==PROC_RPC)) ||
 	(dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) ) {
 		if ( dlg_connect_db(&db_url) ) {
 			LM_ERR("failed to connect to database (rank=%d)\n",rank);

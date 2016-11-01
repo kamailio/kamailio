@@ -1,0 +1,47 @@
+# SIP / UDP
+listen=udp:11.22.33.44:4060
+# SIP / TCP
+#listen=tcp:11.22.33.44:4060
+# SIP / TCP/TLS
+#listen=tls:11.22.33.44:4061
+
+alias=ims.mnc001.mcc001.3gppnetwork.org
+
+#!define NETWORKNAME "ims.mnc001.mcc001.3gppnetwork.org"
+#!define HOSTNAME "icscf.mnc001.mcc001.3gppnetwork.org"
+
+# SIP-Address of capturing node, if not set, capturing is disabled.
+##!define CAPTURE_NODE "sip:127.0.0.1:9060"
+
+# Connection URL for the database:
+#!define DB_URL "con1=>mysql://icscf:heslo@127.0.0.1/icscf"
+##!define DB_URL2 "con2=>mysql://icscf:heslo@127.0.0.1/icscf"
+
+# Allowed IPs for XML-RPC-Queries
+##!define XMLRPC_WHITELIST_1 "127.0.0.1"
+##!define XMLRPC_WHITELIST_2 "127.0.0.1"
+##!define XMLRPC_WHITELIST_3 "127.0.0.1"
+
+# *** To run in debug mode: 
+#     - define WITH_DEBUG
+#
+# *** To enable TLS support execute:
+#     - adjust CFGDIR/tls.cfg as needed
+#     - define WITH_TLS
+#
+# *** To enable XMLRPC support execute:
+#     - define WITH_XMLRPC
+#     - adjust route[XMLRPC] for access policy
+#
+# *** To enable a Homer SIP-Capter-Node:
+#     - define CAPTURE_NODE with a proper address
+#
+# *** To forwarding to PSTN for unknown users:
+#     - define PEERING
+#
+# Enabled Features for this host:
+##!define WITH_DEBUG
+##!define WITH_TLS
+#!define WITH_XMLRPC
+##!define PEERING
+##!define FALLBACK_AUTH

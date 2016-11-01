@@ -252,7 +252,7 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 
 		/* check for overflow */
 		if (n==MAX_ACC_EXTRA) {
-			LM_WARN("array to short -> ommiting extras for accounting\n");
+			LM_WARN("array to short -> omitting extras for accounting\n");
 			goto done;
 		}
 
@@ -311,7 +311,7 @@ int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val
 
        /* check for overflow */
        if (n==MAX_ACC_EXTRA) {
-           LM_WARN("array to short -> ommiting extras for accounting\n");
+           LM_WARN("array to short -> omitting extras for accounting\n");
            goto done;
        }
 

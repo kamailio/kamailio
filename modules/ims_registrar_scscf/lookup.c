@@ -46,8 +46,8 @@
 #include "reg_mod.h"
 #include "lookup.h"
 #include "config.h"
-
 #include "save.h"
+#include "pvt_message.h"
 
 #define allowed_method(_msg, _c) \
 	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
@@ -62,13 +62,14 @@
 int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
     impurecord_t* r;
     str aor;
-    ucontact_t* ptr;
+    ucontact_t* ptr = 0;
     int res;
     int ret;
     str path_dst;
     flag_t old_bflags;
     int i = 0;
     int ue_type;    /*0=any, 1=3gpp, 2=sip */
+	impu_contact_t *impucontact;
 
     if (!_m) {
         LM_ERR("NULL message!!!\n");
@@ -111,15 +112,14 @@ int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
         return -1;
     }
     ret = -1;
-    i = 0;
 
-    while (i < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[i])) {
+	impucontact = r->linked_contacts.head;
+    while (impucontact && (ptr = impucontact->contact)) {
         if (VALID_UE_TYPE(ptr, ue_type) && VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
             LM_DBG("Found a valid contact [%.*s]\n", ptr->c.len, ptr->c.s);
-            i++;
             break;
         }
-        i++;
+		impucontact = impucontact->next;
     }
 
     /* look first for an un-expired and supported contact */
@@ -182,13 +182,14 @@ int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
     if (!cfg_get(registrar, registrar_cfg, append_branches)) goto done;
 
     //the last i was the first valid contact we found - let's go through the rest of valid contacts and append the branches.
-    while (i < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[i])) {
+    if (impucontact) impucontact = impucontact->next;
+	while (impucontact) {
+		ptr = impucontact->contact;
         if (VALID_UE_TYPE(ptr, ue_type) && VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
             path_dst.len = 0;
             if (ptr->path.s && ptr->path.len
                     && get_path_dst_uri(&ptr->path, &path_dst) < 0) {
                 LM_ERR("failed to get dst_uri for Path\n");
-		i++;
                 continue;
             }
 
@@ -198,11 +199,10 @@ int lookup(struct sip_msg* _m, udomain_t* _d, char* ue_type_c) {
                     &ptr->path, ptr->q, ptr->cflags, ptr->sock) == -1) {
                 LM_ERR("failed to append a branch\n");
                 /* Also give a chance to the next branches*/
-		i++;
                 continue;
             }
         }
-        i++;
+        impucontact = impucontact->next;
     }
 
 done:
@@ -297,10 +297,11 @@ int impu_registered(struct sip_msg* _m, char* _t, char* _s) {
 int term_impu_has_contact(struct sip_msg* _m, udomain_t* _d, char* _s) {
     impurecord_t* r;
     str aor, uri;
-    ucontact_t* ptr;
+    ucontact_t* ptr = 0;
     int res;
     int ret;
     int i = 0;
+	impu_contact_t *impucontact;
 
     if (_m->new_uri.s) uri = _m->new_uri;
     else uri = _m->first_line.u.request.uri;
@@ -320,14 +321,15 @@ int term_impu_has_contact(struct sip_msg* _m, udomain_t* _d, char* _s) {
         return -1;
     }
 
-    while (i < MAX_CONTACTS_PER_IMPU && (ptr = r->newcontacts[i])) {
+    impucontact = r->linked_contacts.head;
+	while (impucontact) {
+		ptr = impucontact->contact;
         if (VALID_CONTACT(ptr, act_time) && allowed_method(_m, ptr)) {
             LM_DBG("Found a valid contact [%.*s]\n", ptr->c.len, ptr->c.s);
-            i++;
             ret = 1;
             break;
         }
-        i++;
+		impucontact = impucontact->next;
     }
 
     /* look first for an un-expired and supported contact */
@@ -365,7 +367,7 @@ int term_impu_registered(struct sip_msg* _m, char* _t, char* _s) {
         return -1;
     }
     if (req->first_line.type != SIP_REQUEST) {
-        req = get_request_from_reply(req);
+        req = get_request_from_tx(0);
     }
 
     if (_m->new_uri.s) uri = _m->new_uri;
@@ -383,7 +385,7 @@ int term_impu_registered(struct sip_msg* _m, char* _t, char* _s) {
 
     if (res != 0) {
         ul.unlock_udomain((udomain_t*) _t, &uri);
-        LM_ERR("failed to query for terminating IMPU or not found <%.*s>\n", uri.len, uri.s);
+        LM_DBG("failed to query for terminating IMPU or not found <%.*s>\n", uri.len, uri.s);
         return -1;
     }
 

@@ -260,7 +260,7 @@ int load_user_carrier(str * user, str * domain) {
  * @param rd Pointer to the route data tree where the routing data
  * shall be loaded into
  *
- * @return 0 means ok, -1 means an error occured
+ * @return 0 means ok, -1 means an error occurred
  *
  */
 int load_route_data_db(struct route_data_t * rd) {

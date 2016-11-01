@@ -51,13 +51,15 @@ Luis Azedo
 
                     4.3.1. amqp_consumer_ack_timeout(str)
                     4.3.2. amqp_interprocess_timeout(str)
-                    4.3.3. amqp_waitframe_timout(str)
-                    4.3.4. amqp_query_timout(str)
+                    4.3.3. amqp_waitframe_tiemout(str)
+                    4.3.4. amqp_query_timeout(str)
+                    4.3.5. amqp_query_timeout_avp(str)
 
               4.4. presence related
 
                     4.4.1. db_url(str)
                     4.4.2. presentity_table(str)
+                    4.4.3. pua_mode(int)
 
         5. Functions
 
@@ -102,19 +104,21 @@ Luis Azedo
    1.12. Set single_consumer_on_reconnect parameter
    1.13. Set amqp_consumer_ack_timeout parameter
    1.14. Set amqp_interprocess_timeout parameter
-   1.15. Set amqp_waitframe_timout parameter
-   1.16. Set amqp_query_timout parameter
-   1.17. Set db_url parameter
-   1.18. Set presentity_table parameter
-   1.19. kazoo_publish usage
-   1.20. kazoo_query usage
-   1.21. kazoo_subscribe usage
-   1.22. kazoo_subscribe usage
-   1.23. kazoo_pua_publish usage
-   1.24. kazoo_encode usage
-   1.25. kazoo_json usage
-   1.26. kz.json usage
-   1.27. kz.encode usage
+   1.15. Set amqp_waitframe_timeout parameter
+   1.16. Set amqp_query_timeout parameter
+   1.17. >Set amqp_query_timeout_avp parameter
+   1.18. Set db_url parameter
+   1.19. Set presentity_table parameter
+   1.20. Set pua_mode parameter
+   1.21. kazoo_publish usage
+   1.22. kazoo_query usage
+   1.23. kazoo_subscribe usage
+   1.24. kazoo_subscribe usage
+   1.25. kazoo_pua_publish usage
+   1.26. kazoo_encode usage
+   1.27. kazoo_json usage
+   1.28. kz.json usage
+   1.29. kz.encode usage
 
 Chapter 1. Admin Guide
 
@@ -154,13 +158,15 @@ Chapter 1. Admin Guide
 
               4.3.1. amqp_consumer_ack_timeout(str)
               4.3.2. amqp_interprocess_timeout(str)
-              4.3.3. amqp_waitframe_timout(str)
-              4.3.4. amqp_query_timout(str)
+              4.3.3. amqp_waitframe_tiemout(str)
+              4.3.4. amqp_query_timeout(str)
+              4.3.5. amqp_query_timeout_avp(str)
 
         4.4. presence related
 
               4.4.1. db_url(str)
               4.4.2. presentity_table(str)
+              4.4.3. pua_mode(int)
 
    5. Functions
 
@@ -246,16 +252,16 @@ event_route[kazoo:consumer-event-presence-update]
 {
 # presence is the value extracted from Event-Category field in json payload
 # update is the value extracted from Event-Name field in json payload
-xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json
-,From})");
+xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,
+From})");
 ...
 }
 
 event_route[kazoo:consumer-event-presence]
 {
 # presence is the value extracted from Event-Category field in json payload
-xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json
-,From})");
+xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.json,
+From})");
 ...
 }
 
@@ -324,13 +330,15 @@ event_route[kazoo:consumer-event]
 
         4.3.1. amqp_consumer_ack_timeout(str)
         4.3.2. amqp_interprocess_timeout(str)
-        4.3.3. amqp_waitframe_timout(str)
-        4.3.4. amqp_query_timout(str)
+        4.3.3. amqp_waitframe_tiemout(str)
+        4.3.4. amqp_query_timeout(str)
+        4.3.5. amqp_query_timeout_avp(str)
 
    4.4. presence related
 
         4.4.1. db_url(str)
         4.4.2. presentity_table(str)
+        4.4.3. pua_mode(int)
 
 4.1. amqp related
 
@@ -510,29 +518,48 @@ modparam("kazoo", "amqp_interprocess_timeout_sec", 1)
 modparam("kazoo", "amqp_interprocess_timeout_micro", 200000)
 ...
 
-4.3.3. amqp_waitframe_timout(str)
+4.3.3. amqp_waitframe_tiemout(str)
 
    Timeout when checking for messages from rabbitmq.
 
    Default value is 100000 micro.
 
-   Example 1.15. Set amqp_waitframe_timout parameter
+   Example 1.15. Set amqp_waitframe_timeout parameter
 ...
-modparam("kazoo", "amqp_waitframe_timout_sec", 1)
-modparam("kazoo", "amqp_waitframe_timout_micro", 200000)
+modparam("kazoo", "amqp_waitframe_timeout_sec", 1)
+modparam("kazoo", "amqp_waitframe_timeout_micro", 200000)
 ...
 
-4.3.4. amqp_query_timout(str)
+4.3.4. amqp_query_timeout(str)
 
    Timeout when checking for reply messages from rabbitmq for kazoo_query
    commands.
 
    Default value is 2 sec.
 
-   Example 1.16. Set amqp_query_timout parameter
+   Example 1.16. Set amqp_query_timeout parameter
 ...
-modparam("kazoo", "amqp_query_timout_sec", 1)
-modparam("kazoo", "amqp_query_timout_micro", 200000)
+modparam("kazoo", "amqp_query_timeout_sec", 1)
+modparam("kazoo", "amqp_query_timeout_micro", 200000)
+...
+
+4.3.5. amqp_query_timeout_avp(str)
+
+   avp holding the value in seconds for Timeout when checking for reply
+   messages from rabbitmq for kazoo_query commands.
+
+   Default value is NULL (no value).
+
+   Example 1.17. >Set amqp_query_timeout_avp parameter
+...
+modparam("kazoo", "amqp_query_timeout_avp", "$var(kz_timeout)")
+
+route[SOME_ROUTE]
+{
+    $var(kz_timeout) = 12;
+    kazoo_query(exchange, routingkey, payload);
+}
+
 ...
 
 4.4. presence related
@@ -546,7 +573,7 @@ modparam("kazoo", "amqp_query_timout_micro", 200000)
 
    Default value is “NULL”.
 
-   Example 1.17. Set db_url parameter
+   Example 1.18. Set db_url parameter
 ...
 modparam("kazoo", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 ...
@@ -557,9 +584,21 @@ modparam("kazoo", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 
    Default value is “presentity”.
 
-   Example 1.18. Set presentity_table parameter
+   Example 1.19. Set presentity_table parameter
 ...
 modparam("kazoo", "presentity_table", "my_presentity_table")
+...
+
+4.4.3. pua_mode(int)
+
+   Control if the module has to connect to presence database tables. Set
+   it to 0 to not connect to database.
+
+   Default value is “1”.
+
+   Example 1.20. Set pua_mode parameter
+...
+modparam("kazoo", "pua_mode", 0)
 ...
 
 5. Functions
@@ -593,15 +632,14 @@ modparam("kazoo", "presentity_table", "my_presentity_table")
 
    This function can be used from ANY ROUTE.
 
-   Example 1.19. kazoo_publish usage
+   Example 1.21. kazoo_publish usage
 ...
-$var(amqp_payload_request) = "{'Event-Category' : 'directory', 'Event-Name' : '
-reg_success', 'Contact' : '" + $var(fs_contact) + "', 'Call-ID' : '" + $ci + "'
-, 'Realm' : '" + $fd +"', 'Username' : '" + $fU + "', 'From-User' : '" + $fU +
-"', 'From-Host' : '" + $fd + "', 'To-User' : '" + $tU +"', 'To-Host' : '" + $td
- + "', 'User-Agent' : '" + $ua +"' ," + $var(register_contants)+ " }";
-$var(amqp_routing_key) = "registration.success." + $(fd{kz.encode}) + "." + $fU
-;
+$var(amqp_payload_request) = "{'Event-Category' : 'directory', 'Event-Name' : 'r
+eg_success', 'Contact' : '" + $var(fs_contact) + "', 'Call-ID' : '" + $ci + "',
+'Realm' : '" + $fd +"', 'Username' : '" + $fU + "', 'From-User' : '" + $fU + "',
+ 'From-Host' : '" + $fd + "', 'To-User' : '" + $tU +"', 'To-Host' : '" + $td + "
+', 'User-Agent' : '" + $ua +"' ," + $var(register_contants)+ " }";
+$var(amqp_routing_key) = "registration.success." + $(fd{kz.encode}) + "." + $fU;
 kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 ...
 
@@ -614,15 +652,15 @@ kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 
    This function can be used from ANY ROUTE.
 
-   Example 1.20. kazoo_query usage
+   Example 1.22. kazoo_query usage
 ...
 $var(amqp_payload_request) = "{'Event-Category' : 'call_event' , 'Event-Name' :
- 'query_user_channels_req', 'Realm' : '" + $fd + "', 'Username' : '" + $fU + "'
-, 'Active-Only' : false }";
+'query_user_channels_req', 'Realm' : '" + $fd + "', 'Username' : '" + $fU + "',
+'Active-Only' : false }";
 kazoo_encode("$ci", "$var(callid_encoded)");
 $var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
-if(kazoo_query("callevt", $var(amqp_routing_key), $var(amqp_payload_request), "
-$var(amqp_result)")) {
+if(kazoo_query("callevt", $var(amqp_routing_key), $var(amqp_payload_request), "$
+var(amqp_result)")) {
    kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
    if($du != $null) {
        xlog("L_INFO", "$ci|log|user channels found redirecting call to $du");
@@ -638,12 +676,12 @@ $var(amqp_result)")) {
 
    This function must be called from event_route[kazoo:mod-init].
 
-   Example 1.21. kazoo_subscribe usage
+   Example 1.23. kazoo_subscribe usage
 ...
 event_route[kazoo:mod-init]
 {
-   kazoo_subscribe("dialoginfo", "direct", "BLF-QUEUE-MY_HOSTNAME", "BLF-MY_HOS
-TNAME");
+   kazoo_subscribe("dialoginfo", "direct", "BLF-QUEUE-MY_HOSTNAME", "BLF-MY_HOST
+NAME");
 }
 
 event_route[kazoo:consumer-event]
@@ -670,13 +708,13 @@ event_route[kazoo:consumer-event]
 
    This function must be called from event_route[kazoo:mod-init].
 
-   Example 1.22. kazoo_subscribe usage
+   Example 1.24. kazoo_subscribe usage
 ...
 event_route[kazoo:mod-init]
 {
     $var(payload) = "{ 'exchange' : 'dialoginfo' , 'type' : 'direct', 'queue' :
- 'BLF-QUEUE-MY_HOSTNAME', 'routing' : 'BLF-MY_HOSTNAME', 'auto_delete' : 0, 'du
-rable' : 1, 'no_ack' : 0, 'wait_for_consumer_ack' : 1 }";
+'BLF-QUEUE-MY_HOSTNAME', 'routing' : 'BLF-MY_HOSTNAME', 'auto_delete' : 0, 'dura
+ble' : 1, 'no_ack' : 0, 'wait_for_consumer_ack' : 1 }";
     kazoo_subscribe("$var(payload)");
 }
 
@@ -695,15 +733,15 @@ event_route[kazoo:consumer-event]
 
    This function can be used from ANY ROUTE.
 
-   Example 1.23. kazoo_pua_publish usage
+   Example 1.25. kazoo_pua_publish usage
 ...
 event_route[kazoo:consumer-event-presence-update]
 {
-    xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.
-json,From})");
+    xlog("L_INFO", "received $(kzE{kz.json,Event-Package}) update for $(kzE{kz.j
+son,From})");
     kazoo_pua_publish($kzE);
-    pres_refresh_watchers("$(kzE{kz.json,From})", "$(kzE{kz.json,Event-Package}
-)", 1);
+    pres_refresh_watchers("$(kzE{kz.json,From})", "$(kzE{kz.json,Event-Package})
+", 1);
 }
 ...
 
@@ -716,7 +754,7 @@ json,From})");
 
    This function can be used from ANY ROUTE.
 
-   Example 1.24. kazoo_encode usage
+   Example 1.26. kazoo_encode usage
 ...
 kazoo_encode("$ci", "$var(callid_encoded)");
 $var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
@@ -729,7 +767,7 @@ $var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";
 
    This function can be used from ANY ROUTE.
 
-   Example 1.25. kazoo_json usage
+   Example 1.27. kazoo_json usage
 ...
 kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
 if($du != $null) {
@@ -747,7 +785,7 @@ if($du != $null) {
 
    The prefix for kazoo transformations is kz.
      * json
-       Example 1.26. kz.json usage
+       Example 1.28. kz.json usage
 ...
 #kazoo_json("$var(amqp_result)", "Channels[0].switch_url", "$du");
 $du = $kzR{kz.json,Channels[0].switch_url};
@@ -757,7 +795,7 @@ if($du != $null) {
 }
 ...
      * encode
-       Example 1.27. kz.encode usage
+       Example 1.29. kz.encode usage
 ...
 #kazoo_encode("$ci", "$var(callid_encoded)");
 #$var(amqp_routing_key) = "call.status_req.$var(callid_encoded)";

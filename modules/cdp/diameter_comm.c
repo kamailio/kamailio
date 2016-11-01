@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "diameter_api.h"
@@ -56,7 +54,7 @@
 extern dp_config *config;				/**< Configuration for this diameter peer 	*/
 extern unsigned int* latency_threshold_p;	/**<max delay for Diameter call */
 
-				/* CALLBACKS */
+/* CALLBACKS */
 extern handler_list *handlers; 		/**< list of handlers */
 extern gen_lock_t *handlers_lock;	/**< lock for list of handlers */
 
@@ -71,7 +69,7 @@ int AAAAddRequestHandler(AAARequestHandler_f *f,void *param)
 	handler *h = shm_malloc(sizeof(handler));
 	if (!h) {
 		LM_ERR("AAAAddRequestHandler: error allocating %ld bytes in shm\n",
-			(long int)sizeof(handler));
+				(long int)sizeof(handler));
 		return 0;
 	}
 	h->type = REQUEST_HANDLER;
@@ -98,7 +96,7 @@ int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
 	handler *h = shm_malloc(sizeof(handler));
 	if (!h) {
 		LM_ERR("AAAAddResponseHandler: error allocating %ld bytes in shm\n",
-			(long int)sizeof(handler));
+				(long int)sizeof(handler));
 		return 0;
 	}
 	h->type = RESPONSE_HANDLER;
@@ -115,7 +113,7 @@ int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
 }
 
 
-				/* MESSAGE SENDING */
+/* MESSAGE SENDING */
 
 /**
  * Send a AAAMessage asynchronously.
@@ -132,14 +130,14 @@ AAAReturnCode AAASendMessage(
 		AAATransactionCallback_f *callback_f,
 		void *callback_param)
 {
-        cdp_session_t* cdp_session;
+	cdp_session_t* cdp_session;
 	peer *p;
-        cdp_session = cdp_get_session(message->sessionId->data);
-        
+	cdp_session = cdp_get_session(message->sessionId->data);
+
 	p = get_routing_peer(cdp_session, message);
-        if (cdp_session) {
-            AAASessionsUnlock(cdp_session->hash);
-        }
+	if (cdp_session) {
+		AAASessionsUnlock(cdp_session->hash);
+	}
 	if (!p) {
 		LM_ERR("AAASendMessage(): Can't find a suitable connected peer in the routing table.\n");
 		goto error;
@@ -157,7 +155,7 @@ AAAReturnCode AAASendMessage(
 			LM_ERR("AAASendMessage(): can't add transaction callback for answer.\n");
 	}
 
-//	if (!peer_send_msg(p,message))
+	//	if (!peer_send_msg(p,message))
 	if (!sm_process(p,Send_Message,message,0,0))
 		goto error;
 
@@ -244,16 +242,16 @@ AAAMessage* AAASendRecvMessage(AAAMessage *message)
 	gen_sem_t *sem=0;
 	cdp_trans_t *t;
 	AAAMessage *ans;
-        struct timeval start, stop;
-        long elapsed_usecs=0, elapsed_millis=0;
-        cdp_session_t* cdp_session;
+	struct timeval start, stop;
+	long elapsed_usecs=0, elapsed_millis=0;
+	cdp_session_t* cdp_session;
 
-        gettimeofday(&start, NULL);
-        cdp_session = cdp_get_session(message->sessionId->data);
+	gettimeofday(&start, NULL);
+	cdp_session = cdp_get_session(message->sessionId->data);
 	p = get_routing_peer(cdp_session, message);
-        if (cdp_session) {
-            AAASessionsUnlock(cdp_session->hash);
-        }
+	if (cdp_session) {
+		AAASessionsUnlock(cdp_session->hash);
+	}
 	if (!p) {
 		LM_ERR("AAASendRecvMessage(): Can't find a suitable connected peer in the routing table.\n");
 		goto error;
@@ -280,8 +278,8 @@ AAAMessage* AAASendRecvMessage(AAAMessage *message)
 		}
 		sem_free(sem);
 		gettimeofday(&stop, NULL);
-        elapsed_usecs = (stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_usec - start.tv_usec);
-        elapsed_millis = elapsed_usecs/1000;
+		elapsed_usecs = (stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_usec - start.tv_usec);
+		elapsed_millis = elapsed_usecs/1000;
 		if (elapsed_millis > *latency_threshold_p) {
 			LM_ERR("CDP response to Send_Message took too long (>%dms) - [%ldms]\n", *latency_threshold_p, elapsed_millis);
 		}
@@ -316,9 +314,9 @@ AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 	cdp_trans_t *t;
 	AAAMessage *ans;
 	struct timeval start, stop;
-    long elapsed_usecs=0, elapsed_millis=0;
+	long elapsed_usecs=0, elapsed_millis=0;
 
-    gettimeofday(&start, NULL);
+	gettimeofday(&start, NULL);
 
 	p = get_peer_by_fqdn(peer_id);
 	if (!p) {
@@ -334,7 +332,7 @@ AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 		sem_new(sem,0);
 		t = cdp_add_trans(message,sendrecv_cb,(void*)sem,config->transaction_timeout,0);
 
-//		if (!peer_send_msg(p,message)) {
+		//		if (!peer_send_msg(p,message)) {
 		if (!sm_process(p,Send_Message,message,0,0)){
 			sem_free(sem);
 			goto error;
@@ -347,7 +345,7 @@ AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 
 		gettimeofday(&stop, NULL);
 		elapsed_usecs = (stop.tv_sec - start.tv_sec) * 1000000
-				+ (stop.tv_usec - start.tv_usec);
+			+ (stop.tv_usec - start.tv_usec);
 		elapsed_millis = elapsed_usecs / 1000;
 		if (elapsed_millis > *latency_threshold_p) {
 			LM_ERR("CDP response to Send_Message took too long (>%dms) - [%ldms]\n", *latency_threshold_p, elapsed_millis);
@@ -367,7 +365,7 @@ error:
 out_of_memory:
 	AAAFreeMessage(&message);
 	return 0;
-}
+	}
 
 
 

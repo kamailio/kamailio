@@ -25,8 +25,9 @@
 #include <lua.h>
 
 void lua_sr_core_openlibs(lua_State *L);
-void lua_sr_kemi_register_core(lua_State *L);
-void lua_sr_kemi_register_modules(lua_State *L);
+void lua_sr_kemi_register_libs(lua_State *L);
+
+int sr_kemi_lua_exec_func(lua_State* L, int eidx);
 
 #endif
 

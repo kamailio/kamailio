@@ -37,6 +37,8 @@
 /*
 ** gcc 3.4 and above have builtin support, specialized for architecture.
 ** Some compilers masquerade as gcc; patchlevel test filters them out.
+**
+** Note: clang is compatible with GCC builtins and will also define those macros
 */
 #if defined (__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)) \
 	&& defined (__GNUC_PATCHLEVEL__)
@@ -52,78 +54,13 @@ tlsf_decl int tlsf_fls(unsigned int word)
 	return bit - 1;
 }
 
-#elif defined (_MSC_VER) && (_MSC_VER >= 1400) && (defined (_M_IX86) || defined (_M_X64))
-/* Microsoft Visual C++ support on x86/X64 architectures. */
-
-#include <intrin.h>
-
-#pragma intrinsic(_BitScanReverse)
-#pragma intrinsic(_BitScanForward)
-
-tlsf_decl int tlsf_fls(unsigned int word)
+#if defined (TLSF_64BIT)
+tlsf_decl int tlsf_fls_sizet(size_t size)
 {
-	unsigned long index;
-	return _BitScanReverse(&index, word) ? index : -1;
-}
-
-tlsf_decl int tlsf_ffs(unsigned int word)
-{
-	unsigned long index;
-	return _BitScanForward(&index, word) ? index : -1;
-}
-
-#elif defined (_MSC_VER) && defined (_M_PPC)
-/* Microsoft Visual C++ support on PowerPC architectures. */
-
-#include <ppcintrinsics.h>
-
-tlsf_decl int tlsf_fls(unsigned int word)
-{
-	const int bit = 32 - _CountLeadingZeros(word);
+	const int bit = size ? 64 - __builtin_clzl(size) : 0;
 	return bit - 1;
 }
-
-tlsf_decl int tlsf_ffs(unsigned int word)
-{
-	const unsigned int reverse = word & (~word + 1);
-	const int bit = 32 - _CountLeadingZeros(reverse);
-	return bit - 1;
-}
-
-#elif defined (__ARMCC_VERSION)
-/* RealView Compilation Tools for ARM */
-
-tlsf_decl int tlsf_ffs(unsigned int word)
-{
-	const unsigned int reverse = word & (~word + 1);
-	const int bit = 32 - __clz(reverse);
-	return bit - 1;
-}
-
-tlsf_decl int tlsf_fls(unsigned int word)
-{
-	const int bit = word ? 32 - __clz(word) : 0;
-	return bit - 1;
-}
-
-#elif defined (__ghs__)
-/* Green Hills support for PowerPC */
-
-#include <ppc_ghs.h>
-
-tlsf_decl int tlsf_ffs(unsigned int word)
-{
-	const unsigned int reverse = word & (~word + 1);
-	const int bit = 32 - __CLZ32(reverse);
-	return bit - 1;
-}
-
-tlsf_decl int tlsf_fls(unsigned int word)
-{
-	const int bit = word ? 32 - __CLZ32(word) : 0;
-	return bit - 1;
-}
-
+#endif
 #else
 /* Fall back to generic implementation. */
 
@@ -152,9 +89,6 @@ tlsf_decl int tlsf_fls(unsigned int word)
 	return tlsf_fls_generic(word) - 1;
 }
 
-#endif
-
-/* Possibly 64-bit version of tlsf_fls. */
 #if defined (TLSF_64BIT)
 tlsf_decl int tlsf_fls_sizet(size_t size)
 {
@@ -171,7 +105,12 @@ tlsf_decl int tlsf_fls_sizet(size_t size)
 	}
 	return bits;
 }
-#else
+#endif /* defined (TLSF_64BIT) */
+
+#endif /* GNUC */
+
+
+#if !defined (TLSF_64BIT)
 #define tlsf_fls_sizet tlsf_fls
 #endif
 

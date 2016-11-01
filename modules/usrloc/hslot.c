@@ -29,113 +29,23 @@
 
 #include "hslot.h"
 
-/*! number of locks */
-int ul_locks_no=4;
-/*! global list of locks */
-gen_lock_set_t* ul_locks=0;
-
-
-/*!
- * \brief Initialize locks for the hash table
- * \return 0 on success, -1 on failure
- */
-int ul_init_locks(void)
-{
-	int i;
-	i = ul_locks_no;
-	do {
-		if ((( ul_locks=lock_set_alloc(i))!=0)&&
-				(lock_set_init(ul_locks)!=0))
-		{
-			ul_locks_no = i;
-			LM_INFO("locks array size %d\n", ul_locks_no);
-			return 0;
-
-		}
-		if (ul_locks){
-			lock_set_dealloc(ul_locks);
-			ul_locks=0;
-		}
-		i--;
-		if(i==0)
-		{
-			LM_ERR("failed to allocate locks\n");
-			return -1;
-		}
-	} while (1);
-}
-
-
-/*!
- * \brief Unlock all locks on the list
- */
-void ul_unlock_locks(void)
-{
-	unsigned int i;
-
-	if (ul_locks==0)
-		return;
-
-	for (i=0;i<ul_locks_no;i++) {
-#ifdef GEN_LOCK_T_PREFERED
-		lock_release(&ul_locks->locks[i]);
-#else
-		ul_release_idx(i);
-#endif
-	};
-}
-
-
-/*!
- * \brief Destroy all locks on the list
- */
-void ul_destroy_locks(void)
-{
-	if (ul_locks !=0){
-		lock_set_destroy(ul_locks);
-		lock_set_dealloc(ul_locks);
-	};
-}
-
-#ifndef GEN_LOCK_T_PREFERED
-/*!
- * \brief Lock a lock with a certain index
- * \param idx lock index
- */
-void ul_lock_idx(int idx)
-{
-	lock_set_get(ul_locks, idx);
-}
-
-
-/*!
- * \brief Release a lock with a certain index
- * \param idx lock index
- */
-void ul_release_idx(int idx)
-{
-	lock_set_release(ul_locks, idx);
-}
-#endif
-
 /*!
  * \brief Initialize cache slot structure
  * \param _d domain for the hash slot
  * \param _s hash slot
  * \param n used to get the slot number (modulo number or locks)
  */
-void init_slot(struct udomain* _d, hslot_t* _s, int n)
+int init_slot(struct udomain* _d, hslot_t* _s, int n)
 {
 	_s->n = 0;
 	_s->first = 0;
 	_s->last = 0;
 	_s->d = _d;
-
-#ifdef GEN_LOCK_T_PREFERED
-	_s->lock = &ul_locks->locks[n%ul_locks_no];
-#else
-	_s->lockidx = n%ul_locks_no;
-#endif
+	if(rec_lock_init(&_s->rlock)==NULL) {
+		LM_ERR("failed to initialize the slock (%d)\n", n);
+		return -1;
+	}
+	return 0;
 }
 
 
@@ -146,14 +56,15 @@ void init_slot(struct udomain* _d, hslot_t* _s, int n)
 void deinit_slot(hslot_t* _s)
 {
 	struct urecord* ptr;
-	
-	     /* Remove all elements */
+
+	/* Remove all elements */
 	while(_s->first) {
 		ptr = _s->first;
 		_s->first = _s->first->next;
 		free_urecord(ptr);
 	}
-	
+	rec_lock_destroy(&_s->rlock);
+
 	_s->n = 0;
 	_s->last = 0;
     _s->d = 0;

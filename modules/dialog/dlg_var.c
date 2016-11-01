@@ -29,6 +29,7 @@
 #include "../../route.h"
 #include "../../script_cb.h"
 #include "../../pvapi.h"
+#include "../../lib/kcore/statistics.h"
 
 #include "dlg_var.h"
 #include "dlg_hash.h"
@@ -185,7 +186,7 @@ int set_dlg_variable_unsafe(struct dlg_cell *dlg, str *key, str *val)
 				/* replace the current it with var and free the it */
 				var->next = it->next;
 				/* Take the previous vflags: */
-				var->vflags = it->vflags & DLG_FLAG_CHANGED;
+				var->vflags = it->vflags | DLG_FLAG_CHANGED;
 				if (it_prev) it_prev->next = var;
 				else *var_list = var;				  
 			}

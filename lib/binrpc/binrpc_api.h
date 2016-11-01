@@ -261,7 +261,7 @@ void binrpc_set_mallocs(void* _malloc, void* _realloc, void* _free);
  * Function: binrpc_get_last_errs
  * 
  * Description: 
- *   The function returns last error that occured when function returned FATAL_ERROR
+ *   The function returns last error that occurred when function returned FATAL_ERROR
  * 
  * */
 char *binrpc_get_last_errs();

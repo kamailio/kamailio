@@ -15,10 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <stdio.h>
@@ -91,11 +91,11 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 	dbt_table_p dtp = NULL;
 	dbt_column_p colp, colp0 = NULL;
 	dbt_row_p rowp, rowp0 = NULL;
-		
+
 	enum {DBT_FLINE_ST, DBT_NLINE_ST, DBT_DATA_ST} state;
-	
+
 	LM_DBG("request for table [%.*s]\n", tbn->len, tbn->s);
-	
+
 	if(!tbn || !tbn->s || tbn->len<=0 || tbn->len>=255)
 		return NULL;
 	path[0] = 0;
@@ -115,12 +115,12 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 		strncpy(path, tbn->s, tbn->len);
 		path[tbn->len] = 0;
 	}
-	
+
 	LM_DBG("loading file [%s]\n", path);
 	fin = fopen(path, "rt");
 	if(!fin)
-		return NULL;	
-	
+		return NULL;
+
 	buf = pkg_malloc(_db_text_read_buffer_size);
 	if(!buf) {
 		LM_ERR("error allocating read buffer, %i\n", _db_text_read_buffer_size);
@@ -183,7 +183,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 				c = fgetc(fin);
 				while(c==DBT_DELIM_C)
 					c = fgetc(fin);
-				
+
 				switch(c)
 				{
 					case 's':
@@ -294,9 +294,9 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 				if(!rowp)
 					goto clean;
 				state = DBT_DATA_ST;
-				
+
 			break;
-			
+
 			case DBT_DATA_ST:
 				//LM_DBG("state DATA!\n");
 				//while(c==DBT_DELIM)
@@ -308,7 +308,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 				}
 				if(ccol>= dtp->nrcols)
 					goto clean;
-				
+
 				switch(dtp->colv[ccol]->type)
 				{
 					case DB1_INT:
@@ -317,9 +317,9 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						dtval.val.int_val = 0;
 						dtval.type = dtp->colv[ccol]->type;
 
-						if(c==DBT_DELIM || 
+						if(c==DBT_DELIM ||
 								(ccol==dtp->nrcols-1
-								 && (c==DBT_DELIM_R || c==EOF)))
+									&& (c==DBT_DELIM_R || c==EOF)))
 							dtval.nul = 1;
 						else
 						{
@@ -350,15 +350,15 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 							max_auto = (max_auto<dtval.val.int_val)?
 									dtval.val.int_val:max_auto;
 					break;
-					
+
 					case DB1_DOUBLE:
 						//LM_DBG("DOUBLE value!\n");
 						dtval.val.double_val = 0.0;
 						dtval.type = DB1_DOUBLE;
 
-						if(c==DBT_DELIM || 
+						if(c==DBT_DELIM ||
 								(ccol==dtp->nrcols-1
-								 && (c==DBT_DELIM_R || c==EOF)))
+									&& (c==DBT_DELIM_R || c==EOF)))
 							dtval.nul = 1;
 						else
 						{
@@ -397,20 +397,20 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 						if(dbt_row_set_val(rowp,&dtval,DB1_DOUBLE,ccol))
 							goto clean;
 					break;
-					
+
 					case DB1_STR:
 					case DB1_STRING:
 					case DB1_BLOB:
 						//LM_DBG("STR value!\n");
-						
+
 						dtval.val.str_val.s = NULL;
 						dtval.val.str_val.len = 0;
 						dtval.type = dtp->colv[ccol]->type;
-						
+
 						bp = 0;
-						if(c==DBT_DELIM || 
+						if(c==DBT_DELIM ||
 							(ccol == dtp->nrcols-1
-							 && (c == DBT_DELIM_R || c==EOF))) {
+								&& (c == DBT_DELIM_R || c==EOF))) {
 							/* If empty_string is enabled, we'll just return
 							 * an empty string and avoid NULL
 							 */
@@ -429,7 +429,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 									switch(c)
 									{
 										case 'n':
-											c = '\n';	
+											c = '\n';
 										break;
 										case 'r':
 											c = '\r';
@@ -505,7 +505,7 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 	FILE *fout = NULL;
 	int ccol;
 	char *p, path[512];
-	
+
 	if(!_dtp || !_dtp->name.s || _dtp->name.len <= 0)
 		return -1;
 
@@ -526,9 +526,9 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 		path[_dbn->len+_dtp->name.len+1] = 0;
 		fout = fopen(path, "wt");
 		if(!fout)
-			return -1;	
+			return -1;
 	}
-	
+
 	colp = _dtp->cols;
 	while(colp)
 	{
@@ -557,13 +557,13 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 					fclose(fout);
 				return -1;
 		}
-		
+
 		if(colp->flag & DBT_FLAG_NULL)
 				fprintf(fout,",null");
 		else if(colp->type==DB1_INT && colp->flag & DBT_FLAG_AUTO)
 					fprintf(fout,",auto");
 		fprintf(fout,")");
-		
+
 		colp = colp->next;
 		if(colp)
 			fprintf(fout,"%c", DBT_DELIM_C);
@@ -634,10 +634,10 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 		fprintf(fout, "%c", DBT_DELIM_R);
 		rowp = rowp->next;
 	}
-	
+
 	if(fout!=stdout)
 		fclose(fout);
-	
+
 	return 0;
 }
 

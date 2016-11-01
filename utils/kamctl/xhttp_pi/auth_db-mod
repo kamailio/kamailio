@@ -8,9 +8,9 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
+				<col><field>email_address</field></col>
 				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
@@ -21,9 +21,9 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
+				<col><field>email_address</field></col>
 				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>
@@ -37,9 +37,9 @@
 				<col><field>username</field></col>
 				<col><field>domain</field></col>
 				<col><field>password</field></col>
-				<col><field>email_address</field></col>
 				<col><field>ha1</field></col>
 				<col><field>ha1b</field></col>
+				<col><field>email_address</field></col>
 				<col><field>rpid</field></col>
 			</query_cols>
 		</cmd>

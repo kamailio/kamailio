@@ -86,7 +86,7 @@ int sl_startup()
 		LOG(L_ERR,"ERROR:sl_startup: no more free memory!\n");
 		return -1;
 	}
-	*(sl_timeout)=get_ticks();
+	*(sl_timeout)=get_ticks_raw();
 
 	return 1;
 }
@@ -181,6 +181,8 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	}
 	
 	sl_run_callbacks(SLCB_REPLY_READY, msg, code, reason, &buf, &dst);
+
+	*(sl_timeout) = get_ticks_raw() + SL_RPL_WAIT_TIME;
 
 	/* supress multhoming support when sending a reply back -- that makes sure
 	   that replies will come from where requests came in; good for NATs
@@ -286,8 +288,6 @@ event_route_error:
 	if (ret<0) {
 		goto error;
 	}
-	
-	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 
 	update_sl_stats(code);
 	return 1;
@@ -383,7 +383,7 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 		goto pass_it;
 
 	/*check the timeout value*/
-	if ( *(sl_timeout)<= get_ticks() )
+	if ( *(sl_timeout)<= get_ticks_raw() )
 	{
 		DBG("DEBUG : sl_filter_ACK: to late to be a local ACK!\n");
 		goto pass_it;

@@ -30,6 +30,8 @@
  *                                  detected endianness corresponds to
  *                                  the runtime detected one and -1 on 
  *                                  error (recommended action: bail out)
+ *  -   bswap16() - 16 bit byte swap
+ *  -   bswap32() - 32 bit byte swap
  *
  * Implementation notes:
  * Endian macro names/tests for different OSes:
@@ -130,6 +132,29 @@ extern int endianness_sanity_check(void);
 #error BUG: both little & big endian detected in the same time
 #endif
 
+#if defined __IS_LITTLE_ENDIAN
+#include <arpa/inet.h>
+#define bswap16(x) ntohs(x)
+#define bswap32(x) ntohl(x)
+#else /* !__IS_LITTLE_ENDIAN */
+#include <stdint.h>
+#if defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+/* need at least GCC 4.8 for __builtin_bswap16 on all archs */
+#define bswap16(x)	((uint16_t)__builtin_bswap16(x))
+#else
+#define bswap16(x)	(((uint16_t)(x) >> 8) | \
+			((uint16_t)(x) << 8))
+#endif
+#if defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))
+/* GCC >= 4.3 provides __builtin_bswap32 */
+#define bswap32(x)	((uint32_t)__builtin_bswap32(x))
+#else
+#define bswap32(x)	(((uint32_t)(x) << 24) | \
+			(((uint32_t)(x) << 8) & 0xff0000) | \
+			(((uint32_t)(x) >> 8) & 0xff00) | \
+			((uint32_t)(x)  >> 24))
+#endif
+#endif /* !__IS_LITTLE_ENDIAN */
 
 #endif /* _endianness_h */
 

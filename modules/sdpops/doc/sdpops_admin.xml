@@ -68,7 +68,7 @@
 	<title>Functions</title>
 	<section id="sdpops.f.remove_codecs_by_id">
 	    <title>
-		<function moreinfo="none">sdp_remove_codecs_by_id(list)</function>
+		<function moreinfo="none">sdp_remove_codecs_by_id(list [, mtype])</function>
 	    </title>
 	    <para>
 			Remove the codecs provided in the parameter 'list' from all
@@ -88,13 +88,15 @@
 sdp_remove_codecs_by_id("0");
 # remove PCMU, PCMA and GSM
 sdp_remove_codecs_by_id("0,8,3");
+sdp_remove_codecs_by_id("17", "audio");
+sdp_remove_codecs_by_id("23", "video");
 ...
 </programlisting>
 	    </example>
 	</section>
 	<section id="sdpops.f.remove_codecs_by_name">
 	    <title>
-		<function moreinfo="none">sdp_remove_codecs_by_name(list)</function>
+		<function moreinfo="none">sdp_remove_codecs_by_name(list [, mtype])</function>
 	    </title>
 	    <para>
 			Remove the codecs provided in the parameter 'list' from all
@@ -102,6 +104,10 @@ sdp_remove_codecs_by_id("0,8,3");
 			be one item or a comma separated list of codec names. The
 			parameter can be a static string or a variable holding the
 			list of codec names.
+	    </para>
+		<para>
+			Optional parameter mtype can be provided to apply the operations
+			only to the streams matching m=mtype.
 	    </para>
 		<para>
 			This function can be used from ANY_ROUTE.
@@ -126,6 +132,10 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 			Remove all SDP attribute lines beginning with 'string'
 			in all media streams.
 	</para>
+		<para>
+			Optional parameter mtype can be provided to apply the operations
+			only to the streams matching m=mtype.
+	    </para>
 	<para>
 			This function can be used from ANY_ROUTE.
 	</para>

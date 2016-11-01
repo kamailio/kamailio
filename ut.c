@@ -47,7 +47,7 @@ int user2uid(int* uid, int* gid, char* user)
 {
 	char* tmp;
 	struct passwd *pw_entry;
-	
+
 	if (user){
 		*uid=strtol(user, &tmp, 10);
 		if ((tmp==0) ||(*tmp)){
@@ -73,7 +73,7 @@ int group2gid(int* gid, char* group)
 {
 	char* tmp;
 	struct group  *gr_entry;
-	
+
 	if (group){
 		*gid=strtol(group, &tmp, 10);
 		if ((tmp==0) ||(*tmp)){
@@ -93,7 +93,7 @@ int group2gid(int* gid, char* group)
 
 /*
  * Replacement of timegm (does not exists on all platforms
- * Taken from 
+ * Taken from
  * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
  */
 time_t _timegm(struct tm* t)
@@ -111,7 +111,7 @@ time_t _timegm(struct tm* t)
 		}
 		tl += 3600;
 	}
-	
+
 	tg = gmtime(&tl);
 	tg->tm_isdst = 0;
 	tb = mktime(tg);
@@ -173,7 +173,7 @@ char* as_asciiz(str* s)
 /* return system version (major.minor.minor2) as
  *  (major<<16)|(minor)<<8|(minor2)
  * (if some of them are missing, they are set to 0)
- * if the parameters are not null they are set to the coresp. part 
+ * if the parameters are not null they are set to the coresp. part
  */
 unsigned int get_sys_version(int* major, int* minor, int* minor2)
 {
@@ -182,7 +182,7 @@ unsigned int get_sys_version(int* major, int* minor, int* minor2)
 	int m2;
 	int m3;
 	char* p;
-	
+
 	memset (&un, 0, sizeof(un));
 	m1=m2=m3=0;
 	/* get sys version */
@@ -218,24 +218,24 @@ char* get_abs_pathname(str* base, str* file)
 	str ser_cfg;
 	char* buf, *dir, *res;
 	int len;
-  	
+
 	if (base == NULL) {
 		ser_cfg.s = cfg_file;
 		ser_cfg.len = strlen(cfg_file);
 		base = &ser_cfg;
 	}
-	
+
 	if (!base->s || base->len <= 0 || base->s[0] != '/') {
 		BUG("get_abs_pathname: Base file must be absolute pathname: "
 			"'%.*s'\n", STR_FMT(base));
 		return NULL;
 	}
-	
+
 	if (!file || !file->s || file->len <= 0) {
 		BUG("get_abs_pathname: Invalid 'file' parameter\n");
 		return NULL;
 	}
-	
+
 	if (file->s[0] == '/') {
 		/* This is an absolute pathname, make a zero terminated
 		 * copy and use it as it is */
@@ -257,7 +257,7 @@ char* get_abs_pathname(str* base, str* file)
 		memcpy(buf, base->s, base->len);
 		buf[base->len]=0;
 		dir = dirname(buf);
-		
+
 		len = strlen(dir);
 		if ((res = pkg_malloc(len + 1 + file->len + 1)) == NULL) {
 			ERR("get_abs_pathname: No memory left (pkg_malloc failed)\n");
@@ -321,7 +321,7 @@ void * ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 			if (memcmp(sp, pp, len2) == 0)
 				return sp;
 
-			sp++;
+		sp++;
 	}
 
 	return NULL;
@@ -352,7 +352,7 @@ void * ser_memrmem(const void *b1, const void *b2, size_t len1, size_t len2)
 			if (memcmp(sp, pp, len2) == 0)
 				return sp;
 
-			sp--;
+		sp--;
 	}
 
 	return NULL;

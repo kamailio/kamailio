@@ -74,6 +74,7 @@
 #include "../../resolve.h"
 #include "../../receive.h"
 #include "../../mod_fix.h"
+#include "../../rand/kam_rand.h"
 #include "sipcapture.h"
 #include "hash_mode.h"
 #include "hep.h"
@@ -94,7 +95,7 @@ MODULE_VERSION
 
 #define TABLE_LEN 256
 
-#define NR_KEYS 40
+#define NR_KEYS 44
 #define RTCP_NR_KEYS 12
 
 #define MAX_HEADERS 16
@@ -136,6 +137,9 @@ static int sipcapture_fixup(void** param, int param_no);
 static int reportcapture_fixup(void** param, int param_no);
 static int float2int_fixup(void** param, int param_no);
 
+static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int pv_parse_hep_name (pv_spec_p sp, str *in);
+
 static int sip_capture(struct sip_msg *msg, str *dtable,  _capture_mode_data_t *cm_data);
 static int report_capture(struct sip_msg *msg, str *_table, str* _corr, str *_data);
 static int w_sip_capture(struct sip_msg* _m, char* _table, _capture_mode_data_t * _cm_data, char* s2);
@@ -149,10 +153,11 @@ int init_rawsock_children(void);
 int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
 int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip);
-
-
-
+static int nosip_hep_msg(void *data);
 static struct mi_root* sip_capture_mi(struct mi_root* cmd, void* param );
+
+static int hep_version(struct sip_msg *msg);
+
 
 static str db_url		= str_init(DEFAULT_DB_URL);
 static str table_name		= str_init("sip_capture");
@@ -181,7 +186,7 @@ static str callid_aleg_column 	= str_init("callid_aleg");
 static str via_1_column 	= str_init("via_1");
 static str via_1_branch_column 	= str_init("via_1_branch");
 static str cseq_column		= str_init("cseq");
-static str diversion_column 	= str_init("diversion_user");
+static str diversion_column 	= str_init("diversion");
 static str reason_column 	= str_init("reason");
 static str content_type_column 	= str_init("content_type");
 static str authorization_column = str_init("auth");
@@ -200,9 +205,16 @@ static str family_column 	= str_init("family");
 static str type_column 		= str_init("type");
 static str node_column 		= str_init("node");
 static str msg_column 		= str_init("msg");
+static str custom_field1_column = str_init("custom_field1");
+static str custom_field2_column = str_init("custom_field2");
+static str custom_field3_column = str_init("custom_field3");
 static str capture_node 	= str_init("homer01");
 static str star_contact		= str_init("*");
 static str callid_aleg_header   = str_init("X-CID");
+static str custom_field1_header   = str_init("Mac");
+static str custom_field2_header   = str_init("IP");
+static str custom_field3_header   = str_init("Port");
+
 
 int raw_sock_desc = -1; /* raw socket used for ip packets */
 unsigned int raw_sock_children = 1;
@@ -227,6 +239,10 @@ str callid_aleg_headers[MAX_HEADERS];
 int n_callid_aleg_headers = 0;
 
 struct ifreq ifr; 	/* interface structure */
+
+/* by default nonsip_hook is inactive */
+static int nonsip_hook = 0;
+static int hep_route_no=-1;
 
 static int sc_topoh_unmask = 0;
 static topoh_api_t thb = {0};
@@ -268,11 +284,18 @@ static cmd_export_t cmds[] = {
 	{"sip_capture", (cmd_function)w_sip_capture, 2, sipcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 1, reportcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 2, reportcapture_fixup, 0, ANY_ROUTE },
-	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },
+	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },	
 	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0, ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
+
+static pv_export_t mod_pvs[] = {
+        { {"hep", sizeof("hep")-1}, PVT_OTHER, pv_get_hep, 0,
+        pv_parse_hep_name, 0, 0, 0 },
+        { {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+                                
 
 int capture_mode_param(modparam_t type, void *val);
 
@@ -325,6 +348,9 @@ static param_export_t params[] = {
 	{"type_column",			PARAM_STR, &type_column  },
 	{"node_column",			PARAM_STR, &node_column  },
 	{"msg_column",			PARAM_STR, &msg_column   },
+	{"custom_field1_column",	PARAM_STR, &custom_field1_column   },
+	{"custom_field2_column",	PARAM_STR, &custom_field2_column   },
+	{"custom_field3_column",	PARAM_STR, &custom_field3_column   },
 	{"capture_on",           	INT_PARAM, &capture_on          },
 	{"capture_node",     		PARAM_STR, &capture_node     	},
 	{"raw_sock_children",  		INT_PARAM, &raw_sock_children   },
@@ -337,11 +363,15 @@ static param_export_t params[] = {
 	{"promiscious_on",  		INT_PARAM, &promisc_on   },
 	{"raw_moni_bpf_on",  		INT_PARAM, &bpf_on   },
 	{"callid_aleg_header",          PARAM_STR, &callid_aleg_header},
+	{"custom_field1_header",        PARAM_STR, &custom_field1_header},
+	{"custom_field2_header",        PARAM_STR, &custom_field2_header},
+	{"custom_field3_header",        PARAM_STR, &custom_field3_header},
 	{"capture_mode",		PARAM_STRING|USE_FUNC_PARAM, (void *)capture_mode_param},
 	{"insert_retries",   		INT_PARAM, &insert_retries },
 	{"insert_retry_timeout",	INT_PARAM, &insert_retry_timeout },
 	{"table_time_sufix",		PARAM_STR, &table_time_sufix },
-	{"topoh_unamsk",			PARAM_INT, &sc_topoh_unmask },
+	{"topoh_unamsk",		PARAM_INT, &sc_topoh_unmask },
+	{"nonsip_hook",			PARAM_INT, &nonsip_hook },
 	{0, 0, 0}
 };
 
@@ -382,7 +412,7 @@ struct module_exports exports = {
 	0,          /*!< exported statistics */
 #endif
 	mi_cmds,    /*!< exported MI functions */
-	0,          /*!< exported pseudo-variables */
+	mod_pvs,          /*!< exported pseudo-variables */
 	0,          /*!< extra processes */
 	mod_init,   /*!< module initialization function */
 	0,          /*!< response function */
@@ -626,13 +656,13 @@ void * capture_mode_init(str *name, str * params) {
 	return n;
 
 error:
-	if (n->name.s){
-		pkg_free(n->name.s);
-	}
-	if (n->table_names){
-		pkg_free(n->table_names);
-	}
 	if (n){
+		if (n->name.s){
+			pkg_free(n->name.s);
+		}
+		if (n->table_names){
+			pkg_free(n->table_names);
+		}
 		pkg_free(n);
 	}
 	return 0;
@@ -766,6 +796,7 @@ static int mod_init(void)
 
 #ifdef STATISTICS
 
+	int route_no;
 	c = capture_modes_root;
 	while (c){
 		cnt++;
@@ -807,7 +838,7 @@ static int mod_init(void)
 	}
 #endif
 
-	srand(time(NULL));
+	kam_srand(time(NULL));
 
 
 	if(db_insert_mode) {
@@ -823,10 +854,36 @@ static int mod_init(void)
 
 	*capture_on_flag = capture_on;
 
-	/* register DGRAM event */
-	if(sr_event_register_cb(SREV_NET_DGRAM_IN, hep_msg_received) < 0) {
-		LM_ERR("failed to register SREV_NET_DGRAM_IN event\n");
-		return -1;
+	if(nonsip_hook)
+	{	        
+        	route_no=route_get(&event_rt, "sipcapture:request");
+	        if (route_no==-1)
+        	{
+                	LM_ERR("failed to find event_route[sipcapture:request]\n");
+	                return -1;
+        	}
+        	
+	        if (event_rt.rlist[route_no]==0)
+        	{
+                	LM_ERR("event_route[sipcapture:request] is empty\n");
+	                return -1;
+        	}
+
+	        hep_route_no=route_no;
+	
+		if(sr_event_register_cb(SREV_RCV_NOSIP, nosip_hep_msg) < 0) 
+		{
+			LM_ERR("failed to register SREV_RCV_NOSIP event\n");
+		  	return -1;		  	                         
+		}
+	}
+	else 
+	{
+		/* register DGRAM event */
+		if(sr_event_register_cb(SREV_NET_DGRAM_IN, hep_msg_received) < 0) {
+			LM_ERR("failed to register SREV_NET_DGRAM_IN event\n");
+			return -1;
+		}
 	}
 
 	if(ipip_capture_on && moni_capture_on) {
@@ -1049,7 +1106,6 @@ static int w_report_capture(struct sip_msg* _m, char* _table, char* _corr, char*
 	if(data.len > 0 && !strncmp(data.s, "report_capture", data.len)) data.len = 0;
 
 	return report_capture(_m, (table.len>0)?&table:NULL, (corr.len>0)?&corr:NULL ,(data.len>0)?&data:NULL );
-
 }
 
 
@@ -1451,15 +1507,35 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	db_vals[38].nul = 0;
 	db_vals[38].val.str_val = sco->ruri_domain;
 
-	db_keys[39] = &msg_column;
-	db_vals[39].type = DB1_BLOB;
+	db_keys[39] = &diversion_column;
+	db_vals[39].type = DB1_STR;
 	db_vals[39].nul = 0;
+	db_vals[39].val.str_val = sco->diversion;
+
+	db_keys[40] = &msg_column;
+	db_vals[40].type = DB1_BLOB;
+	db_vals[40].nul = 0;
 
 	/*we don't have empty spaces now */
 	tmp.s = sco->msg.s;
 	tmp.len = sco->msg.len;
 
-	db_vals[39].val.blob_val = tmp;
+	db_vals[40].val.blob_val = tmp;
+	
+	db_keys[41] = &custom_field1_column;
+	db_vals[41].type = DB1_STR;
+	db_vals[41].nul = 0;
+	db_vals[41].val.str_val = sco->custom1;
+	
+	db_keys[42] = &custom_field2_column;
+	db_vals[42].type = DB1_STR;
+	db_vals[42].nul = 0;
+	db_vals[42].val.str_val = sco->custom2;
+	
+	db_keys[43] = &custom_field3_column;
+	db_vals[43].type = DB1_STR;
+	db_vals[43].nul = 0;
+	db_vals[43].val.str_val = sco->custom3;
 
 	if (dtable){
 		table = dtable;
@@ -1476,7 +1552,7 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 		}
 		else if (c->mtmode == mode_random )
 		{
-			ii = rand() % c->no_tables;
+			ii = kam_rand() % c->no_tables;
 			LM_DBG("rand idx is:%d\n", ii);
 		}
 		else if (c->mtmode == mode_round_robin)
@@ -1549,14 +1625,13 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	struct _sipcapture_object sco;
 	struct sip_uri from, to, contact;
 	struct hdr_field *hook1 = NULL;
-	hdr_field_t *tmphdr[4];
+	hdr_field_t *tmphdr[7];
 	contact_body_t*  cb=0;
 	char buf_ip[IP_ADDR_MAX_STR_SIZE+12];
 	char *port_str = NULL, *tmp = NULL;
 	struct timeval tvb;
 	struct timezone tz;
 	char tmp_node[100];
-	unsigned int len = 0;
 
 	LM_DBG("CAPTURE DEBUG...\n");
 
@@ -1793,8 +1868,16 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 		sco.originator_port = 0;
 	}
 
+	/* X-RTP-Stat-Add */
+	if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat-Add", 14)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}
+	/* X-RTP-Stat-T38 */
+	else if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat-T38", 14)) != NULL) {
+		sco.rtp_stat =  tmphdr[3]->body;
+	}
 	/* X-RTP-Stat */
-	if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat", 10)) != NULL) {
+	else if((tmphdr[3] = get_hdr_by_name(msg,"X-RTP-Stat", 10)) != NULL) {
 		sco.rtp_stat =  tmphdr[3]->body;
 	}
 	/* P-RTP-Stat */
@@ -1813,9 +1896,25 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 	else if((tmphdr[3] = get_hdr_by_name(msg,"RTP-RxStat", 10)) != NULL) {
 		sco.rtp_stat =  tmphdr[3]->body;
 	}
-
 	else { EMPTY_STR(sco.rtp_stat); }
-
+	
+	/* Custom - field1 */
+	if(custom_field1_header.len > 0 && (tmphdr[4] = get_hdr_by_name(msg,custom_field1_header.s, custom_field1_header.len)) != NULL) {
+		sco.custom1 =  tmphdr[4]->body;
+	}
+	else { EMPTY_STR(sco.custom1); }
+	
+	/* Custom - field2 */
+	if(custom_field3_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
+		sco.custom2 =  tmphdr[5]->body;
+	}
+	else { EMPTY_STR(sco.custom2); }
+	
+	/* Custom - field3 */
+	if(custom_field3_header.len > 0 && (tmphdr[6] = get_hdr_by_name(msg,custom_field3_header.s, custom_field3_header.len)) != NULL) {
+		sco.custom3 =  tmphdr[6]->body;
+	}
+	else { EMPTY_STR(sco.custom3); }
 
 	/* PROTO TYPE */
 	sco.proto = msg->rcv.proto;
@@ -2295,7 +2394,6 @@ int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_re
 	if(correlation_id) {
 		corrtmp.s = correlation_id;
 		corrtmp.len = strlen(correlation_id);
-		if(!strncmp(log_table, "rtcp_capture",12)) corrtmp.len--;
 	}
 
 	db_keys[0] = &date_column;
@@ -2398,7 +2496,7 @@ static int report_capture(struct sip_msg *msg, str *_table, str* _corr,  str *_d
 	struct timezone tz;
 	char tmp_node[100];
 	time_t epoch_time_as_time_t;
-	str corrtmp, tmp;
+	str corrtmp = STR_NULL, tmp;
 
 
 	_capture_mode_data_t *c = NULL;
@@ -2470,7 +2568,6 @@ static int report_capture(struct sip_msg *msg, str *_table, str* _corr,  str *_d
 	else if(correlation_id) {
 		corrtmp.s = correlation_id;
 		corrtmp.len = strlen(correlation_id);
-		if(!strncmp(_table->s, "rtcp_capture",12)) corrtmp.len--;
 	}
 
 	db_keys[0] = &date_column;
@@ -2609,3 +2706,168 @@ static int sipcapture_parse_aleg_callid_headers() {
 
 	return n_callid_aleg_headers;
 }
+
+
+static int nosip_hep_msg(void *data)
+{
+        sip_msg_t* msg;
+        char *buf;
+        int len = 0;
+        struct run_act_ctx ra_ctx;
+        int ret = 0;
+
+        msg = (sip_msg_t*)data;
+        
+        struct hep_hdr *heph;
+        
+        buf = msg->buf;
+        len = msg->len;
+        
+        /* first send to route */
+        init_run_actions_ctx(&ra_ctx);
+        ret = run_actions(&ra_ctx, event_rt.rlist[hep_route_no], msg);
+
+        if(ret != 1) return ret;
+
+        /* hep_hdr */
+        heph = (struct hep_hdr*) msg->buf;
+        
+	if(heph->hp_v == 1 || heph->hp_v == 2)  {
+
+		LOG(L_ERR, "ERROR: HEP v 1/2: v:[%d] l:[%d]\n",heph->hp_v, heph->hp_l);
+		if((len = hepv2_message_parse(buf, len, msg)) < 0) 
+		{		
+   		     LOG(L_ERR, "ERROR: during hepv2 parsing :[%d]\n", len);
+   		     return 0;
+                }
+                
+                buf = msg->buf+len;
+		len = msg->len - len;
+				
+		msg->buf = buf;
+                msg->len = len;
+        }
+        else if(!memcmp(msg->buf, "\x48\x45\x50\x33",4) || !memcmp(msg->buf, "\x45\x45\x50\x31",4)) {
+
+                if((len = hepv3_message_parse(buf, len, msg)) < 0) 
+		{		
+   		     LOG(L_ERR, "ERROR: during hepv3 parsing :[%d]\n", len);
+   		     return 0;
+                }
+                
+                buf = msg->buf+len;
+                len = msg->len - len;
+                
+                msg->buf = buf;
+                msg->len = len;
+        }
+        else {
+
+                LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: not supported version or bad length: v:[%d] l:[%d]\n",
+                                                heph->hp_v, heph->hp_l);
+                return -1;
+        }
+
+        if (parse_msg(buf, len, msg)!=0) {
+             LOG(L_ERR, "couldn't parse sip message\n");               
+             return -1;
+        }
+        
+        return ret;
+}
+
+
+static int hep_version(struct sip_msg *msg)
+{
+        struct hep_hdr *heph;
+        /* hep_hdr */
+        heph = (struct hep_hdr*) msg->buf;
+        
+	if(heph->hp_v == 1 || heph->hp_v == 2) return heph->hp_v;
+        else if(!memcmp(msg->buf, "\x48\x45\x50\x33",4) || !memcmp(msg->buf, "\x45\x45\x50\x31",4)) return 3;
+                
+        return -1;
+}
+
+static int fix_hex_int(str *s)
+{
+
+	unsigned int retval=0;
+
+	if (!s->len || !s->s)
+		goto error;
+
+	if (s->len > 2)
+		if ((s->s[0] == '0') && ((s->s[1]|0x20) == 'x')) {
+			if (hexstr2int(s->s+2, s->len-2, &retval)!=0)
+				goto error;
+			else
+				return retval;
+		}
+
+	if (str2int(s, (unsigned int*)&retval)<0)
+		goto error;
+
+
+	return retval;
+
+error:
+	LM_ERR("Invalid value for hex: <%*s>!\n", s->len, s->s);
+	return -1;
+
+}
+
+
+static int pv_parse_hep_name (pv_spec_p sp, str *in)
+{
+	int valchunk = 0;
+
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+        LM_ERR("REQUEST, PRE, %.*s\n", in->len, in->s);
+
+	switch(in->len)
+	{
+		case 5:
+		{
+			if((valchunk = fix_hex_int(in)) > 0) sp->pvp.pvn.u.isname.name.n = valchunk;
+			else goto error;
+		}
+		break;
+		case 7:
+		{
+		        if(!strncmp(in->s, "version", 7)) sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		}
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown hep name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+
+static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	if(param==NULL) return -1;
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 0:
+			return pv_get_uintval(msg, param, res, hep_version(msg));						
+		case 1: 
+		        return pv_get_uintval(msg, param, res, hep_version(msg));						
+		default:
+		        return  hepv3_get_chunk(msg, msg->buf, msg->len, param->pvn.u.isname.name.n, param, res);
+	}
+	return 0;
+}
+                        

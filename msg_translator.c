@@ -103,6 +103,7 @@
 #include "parser/parse_param.h"
 #include "forward.h"
 #include "str_list.h"
+#include "rand/kam_rand.h"
 
 #define append_str_trans(_dest,_src,_len,_msg) \
 	append_str( (_dest), (_src), (_len) );
@@ -400,7 +401,7 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 
 
 
-char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff, 
+char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff,
 					int body_only)
 {
 	char* buf;
@@ -414,7 +415,8 @@ char* clen_builder(	struct sip_msg* msg, int *clen_len, int diff,
 	body=get_body(msg);
 	if (body==0){
 		ser_error=E_BAD_REQ;
-		LM_ERR("no message body found (missing crlf?)");
+		LM_ERR("no message body found (missing crlf?) [[%.*s]]\n",
+				msg->len, msg->buf);
 		return 0;
 	}
 	value=msg->len-(int)(body-msg->buf)+diff;
@@ -520,7 +522,7 @@ static inline int lump_check_opt(	struct lump *l,
 				return 1;
 			}
 		case COND_IF_RAND:
-			if(rand()>=RAND_MAX/2) {
+			if(kam_rand()>=KAM_RAND_MAX/2) {
 				LUMP_SET_COND_TRUE(l);
 				return 1;
 			} else return 0;
@@ -1688,7 +1690,8 @@ int get_boundary(struct sip_msg* msg, str* boundary)
 		msg->content_type->body.len);
 	if (params.s == NULL)
 	{
-		LM_ERR("Content-Type hdr has no params\n");
+		LM_INFO("Content-Type hdr has no params <%.*s>\n",
+				msg->content_type->body.len, msg->content_type->body.s);
 		return -1;
 	}
 	params.len = msg->content_type->body.len -
@@ -1749,7 +1752,10 @@ int check_boundaries(struct sip_msg *msg, struct dest_info *send_info)
 		}
 		tmp.s = buf.s;
 		t = tmp.len = buf.len;
-		if(get_boundary(msg, &ob)!=0) return -1;
+		if(get_boundary(msg, &ob)!=0) {
+			if(tmp.s) pkg_free(tmp.s);
+			return -1;
+		}
 		if(str_append(&ob, &bsuffix, &b)!=0) {
 			LM_ERR("Can't append suffix to boundary\n");
 			goto error;

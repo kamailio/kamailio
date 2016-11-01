@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2015 asipto.com
+   Copyright Â© 2015 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -93,7 +93,7 @@ loadmodule "log_custom.so"
 
    4.1. log_udp(text)
 
-4.1. log_udp(text)
+4.1.  log_udp(text)
 
    Send the text to the address specified in core parameter
    log_engine_data. It is provided as sample function mainly for testing,

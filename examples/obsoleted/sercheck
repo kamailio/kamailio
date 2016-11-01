@@ -35,7 +35,7 @@ fi
 if [ $PROCCNT -ne $ALL ] ; then 
 
 	cd $SERDIR
-	echo "Alarm: ser restart occured on `date` at $HOSTNAME" > $TMP
+	echo "Alarm: ser restart occurred on `date` at $HOSTNAME" > $TMP
 	if [ -r $BIN -a -r $CORE ] ; then
 		echo "----------------------------------" >> $TMP
 		DATE=`date "+%Y-%m-%d--%H-%M"`
@@ -51,6 +51,6 @@ if [ $PROCCNT -ne $ALL ] ; then
 	fi
 
 	/etc/init.d/sr restart
-	mail -s "ser restart occured" $NOTIFY < $TMP
+	mail -s "ser restart occurred" $NOTIFY < $TMP
 	rm -f $TMP
 fi

@@ -65,6 +65,7 @@
 #include "../../parser/parse_expires.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../lib/kcore/statistics.h"
+#include "../../rand/kam_rand.h"
 #include "../dialog/dlg_load.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
@@ -1508,6 +1509,8 @@ ClientNatTest(struct sip_msg *msg, unsigned int tests)
 
 
 #define FROM_PREFIX "sip:keepalive@"
+#define MAX_BRANCHID 9999999
+#define MIN_BRANCHID 1000000
 
 static void
 send_keepalive(NAT_Contact *contact)
@@ -1536,7 +1539,7 @@ send_keepalive(NAT_Contact *contact)
 
     len = snprintf(buffer, sizeof(buffer),
                    "%s %s SIP/2.0\r\n"
-                   "Via: SIP/2.0/UDP %.*s:%d;branch=0\r\n"
+                   "Via: SIP/2.0/UDP %.*s:%d;branch=z9hG4bK%ld\r\n"
                    "From: %s;tag=%x\r\n"
                    "To: %s\r\n"
                    "Call-ID: %s-%x-%x@%.*s\r\n"
@@ -1546,6 +1549,7 @@ send_keepalive(NAT_Contact *contact)
                    keepalive_params.method, contact->uri,
                    contact->socket->address_str.len,
                    contact->socket->address_str.s, contact->socket->port_no,
+                   (long)(kam_rand()/(float)KAM_RAND_MAX * (MAX_BRANCHID-MIN_BRANCHID) + MIN_BRANCHID),
                    from_uri, keepalive_params.from_tag++,
                    contact->uri, keepalive_params.callid_prefix,
                    keepalive_params.callid_counter++, get_ticks(),
@@ -1796,9 +1800,9 @@ mod_init(void)
     }
     if (strcasecmp(keepalive_params.method, "NOTIFY")==0)
         keepalive_params.event_header = "Event: keep-alive\r\n";
-    snprintf(keepalive_params.callid_prefix, 20, "%x", rand());
-    keepalive_params.callid_counter = rand();
-    keepalive_params.from_tag = rand();
+    snprintf(keepalive_params.callid_prefix, 20, "%x", kam_rand());
+    keepalive_params.callid_counter = kam_rand();
+    keepalive_params.from_tag = kam_rand();
 
 #ifdef STATISTICS
     // we need the statistics initialized before restoring the keepalive state

@@ -299,7 +299,72 @@ modparam("ims_qos", "confirmed_qosrelease_headers", "X-Reason: QoS failed\r\n")
         </programlisting>
       </example>
     </section>
+    
+    <section>
+      <title><varname>regex_sdp_ip_prefix_to_maintain_in_fd</varname> (String)</title>
 
+      <para>The flow-description AVP is typically populated using IP:port information
+          present in the SDP.  Certain (buggy) UEs can change ports midway during 
+          calls which causes the flow-description to no longer match the 
+          traffic.  This parameter allows the flow-description AVP to use to the 
+          any keyword instead of certain IP:port combinations in the SDP. The 
+          parameter is a regex that if set adds an extra filter for all IPs that do not match 
+          the regex with the any keyword in the flow-description AVP</para>
+
+      <para><emphasis> Default value is "", no extra filters added</emphasis></para>
+
+      <example>
+        <title><varname>regex_sdp_ip_prefix_to_maintain_in_fd</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "regex_sdp_ip_prefix_to_maintain_in_fd", "10.21.0.1")
+...
+        </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><varname>terminate_dialog_on_rx_failure</varname> integer</title>
+
+      <para>If set then active dialogs associated with an Rx session are
+      torn down in the Rx session fails</para>
+
+      <para><emphasis> Default value is 1, dialogs are torn down</emphasis></para>
+
+      <example>
+        <title><varname>terminate_dialog_on_rx_failure</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "terminate_dialog_on_rx_failure", 0)
+...
+        </programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title><varname>delete_contact_on_rx_failure</varname> integer</title>
+
+      <para>If set then contacts associated with signalling Rx sessions are deleted
+if the Rx session fails</para>
+
+      <para><emphasis> Default value is 1, contacts are deleted</emphasis></para>
+
+      <example>
+        <title><varname>delete_contact_on_rx_failure</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "delete_contact_on_rx_failure", 0)
+...
+        </programlisting>
+      </example>
+    </section>
+    
   </section>
 
   <section>

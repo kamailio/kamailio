@@ -186,17 +186,16 @@ int tcp_http11_continue(struct tcp_connection *c)
 }
 #endif /* HTTP11 */
 
-static int tcp_make_closed_event(struct receive_info* rcv_info, struct tcp_connection* con)
+static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_reason reason)
 {
 	int ret;
-	tcp_event_info_t tev;
+	tcp_closed_event_info_t tev;
 
 	ret = 0;
 	LM_DBG("TCP closed event creation triggered\n");
 	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
-		memset(&tev, 0, sizeof(tcp_event_info_t));
-		tev.type = SREV_TCP_CLOSED;
-		tev.rcv = rcv_info;
+		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
+		tev.reason = reason;
 		tev.con = con;
 		ret = sr_event_exec(SREV_TCP_CLOSED, (void*)(&tev));
 	} else {
@@ -287,27 +286,24 @@ again:
 						}
 				}
 				LOG(cfg_get(core, core_cfg, corelog),
-						"error reading: %s (%d) ([%s]:%u -> [%s]:%u)\n",
+						"error reading: %s (%d) ([%s]:%u ->",
 						strerror(errno), errno,
-						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
-
-				if((errno == ECONNRESET || errno == ETIMEDOUT) && likely(c->rcv.proto_reserved1 != 0)){
-					tcp_make_closed_event(&c->rcv, c);
+						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
+				LOG(cfg_get(core, core_cfg, corelog),"-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+				if (errno == ETIMEDOUT) {
+					tcp_emit_closed_event(c, TCP_CLOSED_TIMEOUT);
+				} else if (errno == ECONNRESET) {
+					tcp_emit_closed_event(c, TCP_CLOSED_RESET);
 				}
-
 				return -1;
 			}
 		}else if (unlikely((bytes_read==0) || 
 					(*flags & RD_CONN_FORCE_EOF))){
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
-			if (likely(c->rcv.proto_reserved1 != 0)){
-				tcp_make_closed_event(&c->rcv, c);
-			}
-			LM_DBG("EOF on %p, FD %d ([%s]:%u -> [%s]:%u)\n", c, fd,
-					ip_addr2a(&c->rcv.src_ip), c->rcv.src_port,
-					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+			tcp_emit_closed_event(c, TCP_CLOSED_EOF);
+			LM_DBG("EOF on %p, FD %d ([%s]:%u ->", c, fd, ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
+			LM_DBG("-> [%s]:%u)\n", ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
@@ -1302,7 +1298,7 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 	struct dest_info dst;
 	char c;
 	int ret;
-		
+
 		bytes=-1;
 		total_bytes=0;
 		resp=CONN_RELEASE;
@@ -1316,6 +1312,15 @@ again:
 			else
 #endif
 				bytes=tcp_read_headers(con, read_flags);
+
+			if (unlikely(bytes==-1)){
+				LOG(cfg_get(core, core_cfg, corelog),
+						"ERROR: tcp_read_req: error reading - c: %p r: %p\n",
+						con, req);
+				resp=CONN_ERROR;
+				goto end_req;
+			}
+
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
 			LM_DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
@@ -1325,19 +1330,13 @@ again:
 					*(req->parsed-1), (int)(req->parsed-req->start),
 					req->start);
 #endif
-			if (unlikely(bytes==-1)){
-				LOG(cfg_get(core, core_cfg, corelog),
-						"ERROR: tcp_read_req: error reading \n");
-				resp=CONN_ERROR;
-				goto end_req;
-			}
 			total_bytes+=bytes;
 			/* eof check:
 			 * is EOF if eof on fd and req.  not complete yet,
 			 * if req. is complete we might have a second unparsed
 			 * request after it, so postpone release_with_eof
 			 */
-			if (unlikely((con->state==S_CONN_EOF) && 
+			if (unlikely((con->state==S_CONN_EOF) &&
 						(! TCP_REQ_COMPLETE(req)))) {
 				LM_DBG("EOF\n");
 				resp=CONN_EOF;
@@ -1345,10 +1344,19 @@ again:
 			}
 		}
 		if (unlikely(req->error!=TCP_REQ_OK)){
-			LM_ERR("bad request, state=%d, error=%d buf:\n%.*s\nparsed:\n%.*s\n",
+			if(req->buf!=NULL && req->start!=NULL && req->pos!=NULL
+					&& req->pos>=req->buf && req->parsed>=req->start) {
+				LM_ERR("bad request, state=%d, error=%d buf:\n%.*s\nparsed:\n%.*s\n",
 					req->state, req->error,
 					(int)(req->pos-req->buf), req->buf,
 					(int)(req->parsed-req->start), req->start);
+			} else {
+				LM_ERR("bad request, state=%d, error=%d buf:%d - %p,"
+						" parsed:%d - %p\n",
+					req->state, req->error,
+					(int)(req->pos-req->buf), req->buf,
+					(int)(req->parsed-req->start), req->start);
+			}
 			LM_DBG("received from: port %d\n", con->rcv.src_port);
 			print_ip("received from: ip", &con->rcv.src_ip, "\n");
 			resp=CONN_ERROR;
@@ -1610,7 +1618,7 @@ repeat_1st_read:
 #endif /* USE_TLS */
 			resp=tcp_read_req(con, &n, &read_flags);
 			if (unlikely(resp<0)){
-				/* some error occured, but on the new fd, not on the tcp
+				/* some error occurred, but on the new fd, not on the tcp
 				 * main fd, so keep the ret value */
 				if (unlikely(resp!=CONN_EOF))
 					con->state=S_CONN_BAD;
@@ -1669,7 +1677,7 @@ repeat_read:
 			resp=tcp_read_req(con, &ret, &read_flags);
 			if (unlikely(resp<0)){
 read_error:
-				ret=-1; /* some error occured */
+				ret=-1; /* some error occurred */
 				if (unlikely(io_watch_del(&io_w, con->fd, idx,
 											IO_FD_CLOSING) < 0)){
 					LM_CRIT("io_watch_del failed for %p id %d fd %d,"

@@ -51,23 +51,15 @@
         </para>
     </section>
     </section>
-    <section>
-    <title>Parameters</title>
-    <section>
-        <para>
-            <emphasis>None</emphasis>
-        </para>
-    </section>
-    </section>
 
     <section>
     <title>Functions</title>
-    <section>
+    <section id="jansson.f.jansson_get">
         <title>
             <function moreinfo="none">jansson_get(key/path, src, dst)</function>
         </title>
         <para>
-            Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'. 
+            Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'.
         </para>
         <para>
             The path string supports dot delimited notation (e.g. foo.bar.baz), array notation (e.g. [0]), or a combination of the two (e.g. foo.bar[0][1].baz).
@@ -79,6 +71,9 @@
             The function can put a string, integer, null, or new json string into destination.
  	    If the key/path can't be found in the JSON data structure, the pvar is not changed. If it had a previous
 	    value, that value remains unchanged.
+        </para>
+        <para>
+            <emphasis>Note:</emphasis> For JSON-Integer values exceeding the C-Integer boundaries, a String representing the number is returned.
         </para>
         <example>
         <title><function>jansson_get</function> usage</title>
@@ -92,7 +87,7 @@ xlog("L_INFO", "foo is $var(n)");
         </programlisting>
         </example>
     </section>
-    <section>
+    <section id="jansson.f.jansson_set">
         <title>
             <function moreinfo="none">jansson_set(type, key/path, value, result)</function>
         </title>
@@ -105,6 +100,9 @@ xlog("L_INFO", "foo is $var(n)");
         <para>
             Valid 'type' parameters are 'integer', 'real', 'string', 'object', 'array', 'true', 'false', and 'null'  as well as
             abbriviated names such as 'int', 'str', and 'obj'. 'value' is ignored when type is 'true', 'false', or 'null'.
+        </para>
+        <para>
+            <emphasis>Note:</emphasis> If you want to insert a JSON-Integer value exceeding the C-Integer boundaries (e.g. C-type long), the a the number can be provided as a string.
         </para>
         <example>
         <title><function>jansson_set</function> usage</title>
@@ -131,7 +129,7 @@ jansson_set("str", "myobj.foo", "baz", "$var(myjson)");
         </programlisting>
         </example>
     </section>
-    <section>
+    <section id="jansson.f.jansson_append">
         <title>
             <function moreinfo="none">jansson_append(type, key/path, value, result)</function>
         </title>
@@ -170,7 +168,7 @@ jansson_append('obj', "", '{"a":1, "b":100}', "$var(newobj)");
         </programlisting>
         </example>
     </section>
-    <section>
+    <section id="jansson.f.jansson_array_size">
         <title>
             <function moreinfo="none">jansson_array_size(key/path, src, dst)</function>
         </title>
@@ -212,7 +210,7 @@ while($var(count) &lt; $var(appendme_size)) {
         </programlisting>
         </example>
     </section>
-    <section>
+    <section id="jansson.f.jansson_get_field">
         <title>
             <function moreinfo="none">jansson_get_field(src, field_name, dst)</function>
         </title>

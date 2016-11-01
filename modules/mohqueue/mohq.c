@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-15 Robert Boisvert
+ * Copyright (C) 2013-16 Robert Boisvert
  *
  * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
@@ -42,6 +42,7 @@ static int mod_init (void);
 **********/
 
 mod_data *pmod_data;
+pv_spec_t *prtp_pv;
 
 /**********
 * module exports
@@ -96,6 +97,12 @@ struct module_exports exports = {
   mod_destroy,      /* destructor function */
   mod_child_init,   /* per-child initialization function */
 };
+
+/**********
+* local constants
+**********/
+
+str prtpstat [1] = {STR_STATIC_INIT ("$rtpstat")};
 
 /**********
 * local functions
@@ -349,6 +356,8 @@ return;
 int mod_init (void)
 
 {
+int rtplen;
+
 /**********
 * o allocate shared mem and init
 * o init configuration data
@@ -427,6 +436,23 @@ pmod_data->fn_rtp_destroy = find_export ("rtpproxy_destroy", 0, 0);
 if (!pmod_data->fn_rtp_destroy)
   {
   LM_ERR ("Unable to load rtpproxy_destroy!\n");
+  goto initerr;
+  }
+
+/**********
+* get RTPSTAT pv spec
+**********/
+
+rtplen = pv_locate_name (prtpstat);
+if(rtplen != prtpstat->len)
+  {
+  LM_ERR ("Unable to find RTPSTAT pv!\n");
+  goto initerr;
+  }
+prtp_pv = pv_cache_get (prtpstat);
+if(!prtp_pv)
+  {
+  LM_ERR ("Unable to find pv spec for RTPSTAT!\n");
   goto initerr;
   }
 

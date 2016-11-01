@@ -54,11 +54,15 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/pv/pv_api.h"
 
+
 #include "async_http.h"
 
 MODULE_VERSION
 
 extern int  num_workers;
+
+extern unsigned int q_idx;
+extern char q_id[MAX_ID_LEN+1];
 
 int http_timeout = 500; /* query timeout in ms */
 int hash_size = 2048;
@@ -76,8 +80,7 @@ static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
 
-static int w_http_async_get(sip_msg_t* msg, char* query, char* rt);
-static int w_http_async_post(sip_msg_t* msg, char* query, char* post, char* rt);
+static int w_http_async_query(sip_msg_t* msg, char* query, char* rt);
 static int w_tls_verify_host(sip_msg_t* msg, char* vh, char*);
 static int w_tls_verify_peer(sip_msg_t* msg, char* vp, char*);
 static int w_http_async_suspend_transaction(sip_msg_t* msg, char* vp, char*);
@@ -88,8 +91,7 @@ static int w_http_set_tls_client_cert(sip_msg_t* msg, char* sc, char*);
 static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*);
 static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*);
 static int set_query_param(str* param, str input);
-static int fixup_http_async_get(void** param, int param_no);
-static int fixup_http_async_post(void** param, int param_no);
+static int fixup_http_async_query(void** param, int param_no);
 
 /* pv api binding */
 static int ah_get_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -102,6 +104,7 @@ static int ah_get_msg_buf(struct sip_msg *msg, pv_param_t *param, pv_value_t *re
 static int ah_get_msg_len(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int ah_parse_req_name(pv_spec_p sp, str *in);
 static int ah_set_req(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+static int ah_get_id(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 
 static str pv_str_1 = {"1", 1};
@@ -124,13 +127,12 @@ enum http_req_name_t {
 	E_HRN_ALL = 0,
 	E_HRN_HDR, E_HRN_METHOD, E_HRN_TIMEOUT,
 	E_HRN_TLS_CA_PATH, E_HRN_TLS_CLIENT_KEY,
-	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND
+	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND,
+	E_HRN_BODY
 };
 
 static cmd_export_t cmds[]={
-	{"http_async_query",  (cmd_function)w_http_async_get, 2, fixup_http_async_get,
-		0, ANY_ROUTE},
-	{"http_async_query", (cmd_function)w_http_async_post, 3, fixup_http_async_post,
+	{"http_async_query",  (cmd_function)w_http_async_query, 2, fixup_http_async_query,
 		0, ANY_ROUTE},
 	{"tls_verify_host", (cmd_function)w_tls_verify_host, 1, fixup_igp_all,
 		0, ANY_ROUTE},
@@ -208,6 +210,9 @@ static pv_export_t pvs[] = {
 	{STR_STATIC_INIT("http_req"),
 		PVT_OTHER, pv_get_null, ah_set_req,
 		ah_parse_req_name, 0, 0, 0},
+	{STR_STATIC_INIT("http_req_id"),
+		PVT_OTHER, ah_get_id, 0,
+		0, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -227,6 +232,18 @@ struct module_exports exports = {
 };
 
 
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	pv_register_api_t pvra;
+
+	pvra = (pv_register_api_t)find_export("pv_register_api", NO_SCRIPT, 0);
+	if (!pvra) {
+		LM_ERR("Cannot import pv functions (pv module must be loaded before this module)\n");
+		return -1;
+	}
+	pvra(&pv_api);
+	return 0;
+}
 
 /**
  * init module function
@@ -234,7 +251,6 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	unsigned int n;
-	pv_register_api_t pvra;
 	LM_INFO("Initializing Http Async module\n");
 
 #ifdef STATISTICS
@@ -284,15 +300,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (strncmp("shm", memory_manager, 3) == 0) {
-		curl_memory_manager = 0;
-	} else if (strncmp("sys", memory_manager, 3) == 0) {
-		curl_memory_manager = 1;
-	} else {
-		LM_ERR("invalid memory_manager parameter: '%s'\n", memory_manager);
-		return -1;
-	}
-
 	/* init faked sip msg */
 	if(faked_msg_init()<0) {
 		LM_ERR("failed to init faked sip msg\n");
@@ -303,13 +310,6 @@ static int mod_init(void)
 		LM_INFO("cannot load the TM-functions - async relay disabled\n");
 		memset(&tmb, 0, sizeof(tm_api_t));
 	}
-
-	pvra = (pv_register_api_t)find_export("pv_register_api", NO_SCRIPT, 0);
-	if (!pvra) {
-		LM_ERR("Cannot import pv functions (pv module must be loaded before this module)\n");
-		return -1;
-	}
-	pvra(&pv_api);
 
 	/* allocate workers array */
 	workers = shm_malloc(num_workers * sizeof(*workers));
@@ -339,6 +339,10 @@ static int child_init(int rank)
 
 	if(num_workers<=0)
 		return 0;
+
+	/* initialize query counter and id */
+	q_idx = 0;
+	q_id[0] = '\0';
 
 	if (rank==PROC_INIT) {
 		for(i=0; i<num_workers; i++) {
@@ -401,7 +405,7 @@ static void mod_destroy(void)
 /**
  *
  */
-static int w_http_async_get(sip_msg_t *msg, char *query, char* rt)
+static int w_http_async_query(sip_msg_t *msg, char *query, char* rt)
 {
 	str sdata;
 	cfg_action_t *act;
@@ -439,68 +443,8 @@ static int w_http_async_get(sip_msg_t *msg, char *query, char* rt)
 		return -1;
 	}
 
-	return async_send_query(msg, &sdata, NULL, act);
+	return async_send_query(msg, &sdata, act);
 
-}
-
-/**
- *
- */
-static int w_http_async_post(sip_msg_t *msg, char *query, char* post, char* rt)
-{
-	str sdata;
-	str post_data;
-	cfg_action_t *act;
-	str rn;
-	int ri;
-
-	if(msg==NULL)
-		return -1;
-
-	if(fixup_get_svalue(msg, (gparam_t*)query, &sdata)!=0) {
-		LM_ERR("unable to get data\n");
-		return -1;
-	}
-
-	if(sdata.s==NULL || sdata.len == 0) {
-		LM_ERR("invalid data parameter\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_t*)post, &post_data)!=0) {
-		LM_ERR("unable to get post data\n");
-		return -1;
-	}
-
-	if(post_data.s==NULL || post_data.len == 0) {
-		LM_ERR("invalid post data parameter\n");
-		return -1;
-	}
-
-	if(fixup_get_svalue(msg, (gparam_t*)rt, &rn)!=0)
-	{
-		LM_ERR("no route block name\n");
-		return -1;
-	}
-
-	ri = route_get(&main_rt, rn.s);
-	if(ri<0)
-	{
-		LM_ERR("unable to find route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-	act = main_rt.rlist[ri];
-	if(act==NULL)
-	{
-		LM_ERR("empty action lists in route block [%.*s]\n", rn.len, rn.s);
-		return -1;
-	}
-
-	if(async_send_query(msg, &sdata, &post_data, act)<0)
-		return -1;
-
-	/* force exit in config */
-	return 0;
 }
 
 #define _IVALUE_ERROR(NAME) LM_ERR("invalid parameter '" #NAME "' (must be a number)\n")
@@ -581,7 +525,7 @@ static int w_http_set_tls_client_cert(sip_msg_t* msg, char* sc, char*foo)
 		return -1;
 	}
 
-        return set_query_param(&ah_params.tls_client_cert, _tls_client_cert);
+	return set_query_param(&ah_params.tls_client_cert, _tls_client_cert);
 }
 
 static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*foo)
@@ -593,7 +537,7 @@ static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*foo)
 		return -1;
 	}
 
-        return set_query_param(&ah_params.tls_client_key, _tls_client_key);
+	return set_query_param(&ah_params.tls_client_key, _tls_client_key);
 }
 
 static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*foo)
@@ -605,7 +549,7 @@ static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*foo)
 		return -1;
 	}
 
-        return set_query_param(&ah_params.tls_ca_path, _tls_ca_path);
+	return set_query_param(&ah_params.tls_ca_path, _tls_ca_path);
 }
 
 /*
@@ -632,28 +576,12 @@ static int set_query_param(str* param, str input)
 /**
  *
  */
-static int fixup_http_async_get(void** param, int param_no)
+static int fixup_http_async_query(void** param, int param_no)
 {
 	if (param_no == 1) {
 		return fixup_spve_null(param, 1);
 	}
 	if (param_no == 2) {
-		return fixup_var_str_12(param, param_no);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/**
- *
- */
-static int fixup_http_async_post(void** param, int param_no)
-{
-	if (param_no == 1 || param_no == 2) {
-		return fixup_spve_null(param, 1);
-	}
-	if (param_no == 3) {
 		return fixup_var_str_12(param, param_no);
 	}
 
@@ -688,6 +616,10 @@ AH_WRAP_GET_PV(ah_get_msg_len,     get_msg_len)
 
 static int w_pv_parse_hdr_name(pv_spec_p sp, str *in) {
 	return pv_api.parse_hdr_name(sp, in);
+}
+
+static int ah_get_id(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
+	return pv_get_strlval(msg, param, res, q_id, strlen(q_id));
 }
 
 static int ah_get_ok(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
@@ -727,6 +659,11 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 				sp->pvp.pvn.u.isname.name.n = E_HRN_ALL;
 			else if(strncmp(in->s, "hdr", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_HDR;
+			else goto error;
+			break;
+		case 4:
+			if(strncmp(in->s, "body", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_BODY;
 			else goto error;
 			break;
 		case 6:
@@ -860,6 +797,15 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 			ah_params.suspend_transaction = tval->ri?1:0;
 		} else {
 			ah_params.suspend_transaction = 1;
+		}
+		break;
+	case E_HRN_BODY:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_STR)) {
+				LM_ERR("invalid value type for $http_req(body)\n");
+				return -1;
+			}
+			set_query_param(&ah_params.body, tval->rs);
 		}
 		break;
 	}

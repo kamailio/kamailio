@@ -177,7 +177,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, in
 	{
 		p_root= xmlDocGetRootElement(xml_array[i]);
 		if(unlikely(p_root == NULL)) {
-			LM_ERR("while geting the xml_tree root element\n");
+			LM_ERR("while getting the xml_tree root element\n");
 			goto error;
 		}
 		/* just checking that the root element is "conference-info" as it should RFC4575 */

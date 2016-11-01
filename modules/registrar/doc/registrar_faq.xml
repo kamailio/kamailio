@@ -16,7 +16,7 @@
 
 	<qandaentry>
 		<question>
-		<para>What happend with the old <quote>nat_flag</quote> module parameter?</para>
+		<para>What happened with the old <quote>nat_flag</quote> module parameter?</para>
 		</question>
 		<answer>
 		<para>
@@ -29,7 +29,7 @@
 
 	<qandaentry>
 		<question>
-		<para>What happend with the old <quote>use_domain</quote> module parameter?</para>
+		<para>What happened with the old <quote>use_domain</quote> module parameter?</para>
 		</question>
 		<answer>
 		<para>

@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef __RECEIVER_H
@@ -64,10 +62,10 @@ typedef enum {
 /** list of receiver attached peers */
 typedef struct _serviced_peer_t {
 	peer *p;									/**< the attached peer */
-	
+
 	int tcp_socket;								/**< socket used for the Diameter communication */
-	
-	str send_pipe_name;							/**< name of the pipe to signal messages to be sent out */ 
+
+	str send_pipe_name;							/**< name of the pipe to signal messages to be sent out */
 	int send_pipe_fd;							/**< reader from the pipe to signal messages to be sent out */
 	int send_pipe_fd_out;						/**< keep-alive writer for the pipe to signal messages to be sent out */
 
@@ -77,11 +75,13 @@ typedef struct _serviced_peer_t {
 	int length;									/**< length of the message as written in the header */
 	char *msg;									/**< dynamic buffer for receiving one message */
 	int msg_len;								/**< received bytes in the dynamic buffer */
-		
-	
-	struct _serviced_peer_t *next;	/**< first peer in the list */	
+
+
+	struct _serviced_peer_t *next;	/**< first peer in the list */
 	struct _serviced_peer_t *prev; /**< last peer in the list */
 } serviced_peer_t;
+
+extern unsigned int debug_heavy;
 
 int receiver_init(peer *p);
 void receiver_process(peer *p);

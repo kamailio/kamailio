@@ -37,6 +37,7 @@
 #define RB_AVP_NAME_LENGTH 7
 #define ERROR_AVP_NAME "http_error"
 #define ERROR_AVP_NAME_LENGTH 10
+#define MAX_ID_LEN 32
 
 #include <curl/curl.h>
 #include <event2/event.h>
@@ -90,13 +91,14 @@ struct query_params {
 	str tls_client_cert;
 	str tls_client_key;
 	str tls_ca_path;
+	str body;
 };
 
 extern struct query_params ah_params;
 
 typedef struct async_query {
 	str query;
-	str post;
+	char id[MAX_ID_LEN+1];
 	unsigned int tindex;
 	unsigned int tlabel;
 	struct query_params query_params;
@@ -107,7 +109,7 @@ int async_http_init_sockets(async_http_worker_t *worker);
 int async_http_init_worker(int prank, async_http_worker_t* worker);
 void async_http_run_worker(async_http_worker_t* worker);
 
-int async_send_query(sip_msg_t *msg, str *query, str *post, cfg_action_t *act);
+int async_send_query(sip_msg_t *msg, str *query, cfg_action_t *act);
 int async_push_query(async_query_t *aq);
 
 void notification_socket_cb(int fd, short event, void *arg);
@@ -128,12 +130,6 @@ static inline void free_async_query(async_query_t *aq)
 		shm_free(aq->query.s);
 		aq->query.s=0;
 		aq->query.len=0;
-	}
-
-	if (aq->post.s && aq->post.len) {
-		shm_free(aq->post.s);
-		aq->post.s=0;
-		aq->post.len=0;
 	}
 
 	if(aq->query_params.headers.t) {
@@ -158,6 +154,12 @@ static inline void free_async_query(async_query_t *aq)
 		shm_free(aq->query_params.tls_ca_path.s);
 		aq->query_params.tls_ca_path.s = NULL;
 		aq->query_params.tls_ca_path.len = 0;
+	}
+
+	if (aq->query_params.body.s && aq->query_params.body.len > 0) {
+		shm_free(aq->query_params.body.s);
+		aq->query_params.body.s = NULL;
+		aq->query_params.body.len = 0;
 	}
 
 	shm_free(aq);

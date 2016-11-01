@@ -15,9 +15,9 @@ Bastian Friedrich
 
    <bastian.friedrich@collax.com>
 
-   Copyright � 2007 Collax GmbH
+   Copyright © 2007 Collax GmbH
 
-   Copyright � 2007 Voice System SRL
+   Copyright © 2007 Voice System SRL
      __________________________________________________________________
 
    Table of Contents
@@ -151,7 +151,7 @@ Chapter 1. Admin Guide
        that feature is implemented.
      * 1 - Globally enable benchmarking
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.1. Set enable parameter
 ...
@@ -164,7 +164,7 @@ modparam("benchmark", "enable", 1)
    function, but only every n'th call. n is defined through this variable.
    A sensible granularity seems to be 100.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.2. Set granularity parameter
 ...
@@ -184,7 +184,7 @@ modparam("benchmark", "granularity", 500)
      * 2 - L_INFO
      * 3 - L_DBG
 
-   Default value is "3" (L_INFO).
+   Default value is “3” (L_INFO).
 
    Example 1.3. Set loglevel parameter
 ...
@@ -198,16 +198,16 @@ modparam("benchmark", "loglevel", 4)
    4.1. bm_start_timer(name)
    4.2. bm_log_timer(name)
 
-4.1. bm_start_timer(name)
+4.1.  bm_start_timer(name)
 
-   Start timer "name". A later call to "bm_log_timer()" logs this timer..
+   Start timer “name”. A later call to “bm_log_timer()” logs this timer..
 
    Example 1.4. bm_start_timer usage
 ...
 bm_start_timer("test");
 ...
 
-4.2. bm_log_timer(name)
+4.2.  bm_log_timer(name)
 
    This function logs the timer with the given ID. The following data are
    logged:
@@ -215,7 +215,7 @@ bm_start_timer("test");
        equals the granularity variable.
 
      * Last sum is the accumulated duration in the current logging
-       interval (i.e. for the last "granularity" calls).
+       interval (i.e. for the last “granularity” calls).
 
      * Last min is the minimum duration between start/log_timer calls
        during the last interval.
@@ -318,18 +318,18 @@ Chapter 2. Developer Guide
    1.2. bm_start(id)
    1.3. bm_log(id)
 
-1.1. bm_register(name, mode, id)
+1.1.  bm_register(name, mode, id)
 
    This function register a new timer and/or returns the internal ID
    associated with the timer. mode controls the creation of new timer if
    not found. id is to be used by start and log timer functions.
 
-1.2. bm_start(id)
+1.2.  bm_start(id)
 
    This function equals the user-exported function bm_start_timer. The id
    is passed as an integer, though.
 
-1.3. bm_log(id)
+1.3.  bm_log(id)
 
    This function equals the user-exported function bm_log_timer. The id is
    passed as an integer, though.

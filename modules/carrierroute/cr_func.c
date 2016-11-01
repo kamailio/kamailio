@@ -40,6 +40,7 @@
 #include "../../mem/mem.h"
 #include "../../qvalue.h"
 #include "../../dset.h"
+#include "../../rand/kam_rand.h"
 #include "cr_map.h"
 #include "cr_rule.h"
 #include "cr_domain.h"
@@ -311,7 +312,7 @@ static void build_used_uris_list(avp_value_t* used_dests, int* no_dests){
 		//LM_DBG("	used_dests[%d]=%.*s \n", (*no_dests)-1, used_dests[(*no_dests)-1].s.len, used_dests[(*no_dests)-1].s.s);
 	}
 
-	//LM_DBG("sucessfully built used_uris list!\n");
+	//LM_DBG("successfully built used_uris list!\n");
 }
 
 int cr_uri_already_used(str dest , avp_value_t* used_dests, int no_dests){
@@ -510,7 +511,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 						 * was previously tried */
 
 						do {
-							int rule_no = rand() % rf->rule_num;
+							int rule_no = kam_rand() % rf->rule_num;
 							//LM_DBG("CR: trying rule_no=%d \n", rule_no);
 							for (rr = rf->rule_list; (rule_no > 0) && (rr->next!=NULL) ; rule_no-- , rr = rr->next) {}
 						} while (cr_uri_already_used(rr->host, used_dests, no_dests));

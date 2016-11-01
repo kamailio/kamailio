@@ -64,7 +64,7 @@ void userblacklist_db_close(void) {
  * Initialises the DB API, check the table version and closes the connection.
  * This should be called from the mod_init function.
  *
- * \return 0 means ok, -1 means an error occured.
+ * \return 0 means ok, -1 means an error occurred.
  */
 int userblacklist_db_init(void) {
 	if (!userblacklist_db_url.s || !userblacklist_db_url.len) {
@@ -97,7 +97,7 @@ int userblacklist_db_init(void) {
  * This should be called from child_init. An already existing database
  * connection will be closed, and a new one created.
  *
- * \return 0 means ok, -1 means an error occured.
+ * \return 0 means ok, -1 means an error occurred.
  */
 int userblacklist_db_open(void) {
 	if (userblacklist_dbh) {

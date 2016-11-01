@@ -1799,8 +1799,8 @@ static int trace_send_hep_duplicate(str *body, str *from, str *to, struct dest_i
 
 	if(hep_version == 2) {
 
-		hep_time.tv_sec = tvb.tv_sec;
-		hep_time.tv_usec = tvb.tv_usec;
+		hep_time.tv_sec = to_le(tvb.tv_sec);
+		hep_time.tv_usec = to_le(tvb.tv_usec);
 		hep_time.captid = hep_capture_id;
 
 		memcpy((void*)buffer+buflen, &hep_time, sizeof(struct hep_timehdr));
@@ -1854,7 +1854,7 @@ static int pipport2su (char *pipport, union sockaddr_union *tmp_su, unsigned int
 	if(strncmp(pipport, "udp:",4) == 0) *proto = IPPROTO_UDP;
 	else if(strncmp(pipport, "tcp:",4) == 0) *proto = IPPROTO_TCP;
 	else if(strncmp(pipport, "tls:",4) == 0) *proto = IPPROTO_IDP; /* fake proto type */
-	else if(strncmp(pipport, "ws:",3) == 0) *proto = IPPROTO_IDP; /* fake proto type */
+	else if(strncmp(pipport, "ws:",3) == 0) cutlen = 3, *proto = IPPROTO_IDP; /* fake proto type */
 	else if(strncmp(pipport, "wss:",4) == 0) *proto = IPPROTO_IDP; /* fake proto type */
 #ifdef USE_SCTP
 	else if(strncmp(pipport, "sctp:",5) == 0) cutlen = 5, *proto = IPPROTO_SCTP;

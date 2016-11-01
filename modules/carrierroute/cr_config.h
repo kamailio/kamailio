@@ -38,7 +38,7 @@
  * @param rd Pointer to the route data tree where the routing data
  * shall be loaded into
  *
- * @return 0 means ok, -1 means an error occured
+ * @return 0 means ok, -1 means an error occurred
  *
  */
 int load_config(struct route_data_t * rd);
@@ -49,7 +49,7 @@ int load_config(struct route_data_t * rd);
  *
  * @param rd Pointer to the routing tree which shall be saved to file
  *
- * @return 0 means ok, -1 means an error occured
+ * @return 0 means ok, -1 means an error occurred
  *
  */
 int save_config(struct route_data_t * rd);

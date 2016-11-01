@@ -17,9 +17,7 @@
 		<firstname>Jan</firstname>
 		<surname>Janak</surname>
 		<affiliation><orgname>&fhg;</orgname></affiliation>
-		<address>
-			<email>jan@iptel.org</email>
-		</address>
+		<email>jan@iptel.org</email>
 		</author>
 		<author>
 		<firstname>Daniel-Constantin</firstname>
@@ -31,12 +29,16 @@
 		<surname>Heinanen</surname>
 		<email>jh@tutpro.com</email>
 		</author>
+		<author>
+		<firstname>Olle E.</firstname>
+		<surname>Johansson</surname>
+		<affiliation><orgname>Edvina AB</orgname></affiliation>
+		<email>oej@edvina.net</email>
+		</author>
 		<editor>
 		<firstname>Jan</firstname>
 		<surname>Janak</surname>
-		<address>
-			<email>jan@iptel.org</email>
-		</address>
+		<email>jan@iptel.org</email>
 		</editor>
 		<editor>
 		<firstname>Bogdan-Andre</firstname>

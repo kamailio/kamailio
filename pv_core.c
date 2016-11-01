@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -35,31 +35,60 @@ static pv_export_t core_pvs[] = {
 	{ STR_STATIC_INIT("?"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0 },
 	{ STR_STATIC_INIT("rc"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0 },
 	{ STR_STATIC_INIT("retcode"), PVT_OTHER, pv_get_retcode, 0, 0, 0, 0, 0 },
-	
+
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 
 /** ugly hack to get the return code, needed because the PVs do not know (yet)
-   about the script context */
+ * about the script context */
 extern int _last_returned_code;
 
 static int pv_get_retcode(struct sip_msg* msg, pv_param_t* p, pv_value_t* res)
 {
 	/* FIXME: as soon as PVs support script context, use it instead of the
-	          return in global variable hack */
+	 * return in global variable hack */
 	return pv_get_sintval(msg, p, res, _last_returned_code);
 }
 
 
 
-/** register built-in core pvars.
+/**
+ * register built-in core pvars.
  * should be called before parsing the config script.
- * @return 0 on success 
+ * @return 0 on success
  */
 int pv_register_core_vars(void)
 {
 	return register_pvars_mod("core", core_pvs);
+}
+
+/**
+ *
+ */
+int pv_eval_str(sip_msg_t *msg, str *dst, str *src)
+{
+	pv_elem_t *xmodel=NULL;
+	str sval = STR_NULL;
+
+	if(pv_parse_format(src, &xmodel)<0) {
+		LM_ERR("error in parsing src parameter\n");
+		return -1;
+	}
+
+	if(pv_printf_s(msg, xmodel, &sval)!=0) {
+		LM_ERR("cannot eval parsed parameter\n");
+		pv_elem_free_all(xmodel);
+		goto error;
+	}
+
+	dst->s = sval.s;
+	dst->len = sval.len;
+	pv_elem_free_all(xmodel);
+
+	return 1;
+error:
+	return -1;
 }
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

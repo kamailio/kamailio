@@ -81,7 +81,7 @@ void set_load_comments_params(int load_comments);
  * @param rd Pointer to the route data tree where the routing data
  * shall be loaded into
  *
- * @return 0 means ok, -1 means an error occured
+ * @return 0 means ok, -1 means an error occurred
  *
  */
 int load_route_data_db (struct route_data_t * rd);

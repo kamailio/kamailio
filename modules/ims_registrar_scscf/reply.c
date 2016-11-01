@@ -95,9 +95,12 @@ static inline unsigned int calc_buf_len(impurecord_t* impurec) {
     int i=0;
     ucontact_t* c;
     param_t *tmp;
+	impu_contact_t *impucontact;
 
     len = 0;
-    while (i<MAX_CONTACTS_PER_IMPU && (c=impurec->newcontacts[i])) {
+	impucontact = impurec->linked_contacts.head;
+    while (impucontact) {
+		c = impucontact->contact;
         if (VALID_CONTACT(c, act_time)) {
             if (len) len += CONTACT_SEP_LEN;
             len += 2 /* < > */ + c->c.len;
@@ -115,19 +118,21 @@ static inline unsigned int calc_buf_len(impurecord_t* impurec) {
             }
             tmp = c->params;
             while (tmp) {
-                if ((tmp->name.s[0] == 'R' || tmp->name.s[0]=='r') && tmp->name.len == 8 && !memcmp(tmp->name.s+1, "eceived", 7)) {
-                    tmp = tmp->next;
-                    continue;
-                }
-                if ((tmp->name.s[0] == 'Q' || tmp->name.s[0]=='q') && tmp->name.len == 1) {
-                    tmp = tmp->next;
-                    continue;
-                }
-                if ((tmp->name.s[0] == 'E' || tmp->name.s[0] == 'e') && tmp->name.len == 7 && !memcmp(tmp->name.s + 1, "xpires", 6)) {
-                    tmp = tmp->next;
-                    continue;
-                }
-                len += tmp->name.len;
+				if (tmp->name.len > 0 && tmp->name.s) {
+					if ((tmp->name.s[0] == 'R' || tmp->name.s[0]=='r') && tmp->name.len == 8 && !memcmp(tmp->name.s+1, "eceived", 7)) {
+						tmp = tmp->next;
+						continue;
+					}
+					if ((tmp->name.s[0] == 'Q' || tmp->name.s[0]=='q') && tmp->name.len == 1) {
+						tmp = tmp->next;
+						continue;
+					}
+					if ((tmp->name.s[0] == 'E' || tmp->name.s[0] == 'e') && tmp->name.len == 7 && !memcmp(tmp->name.s + 1, "xpires", 6)) {
+						tmp = tmp->next;
+						continue;
+					}
+					len += tmp->name.len + 1 /*separator ; */;
+				}
                 if (tmp->body.len > 0) {
                     len = len + 1/*=*/ + 2/*2 x "*/;
                     len += tmp->body.len;
@@ -135,7 +140,7 @@ static inline unsigned int calc_buf_len(impurecord_t* impurec) {
                 tmp=tmp->next;
             }
         }
-	i++;
+		impucontact = impucontact->next;
     }
 
     if (len) len += CONTACT_BEGIN_LEN + CRLF_LEN;
@@ -427,6 +432,7 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
     param_t* tmp;
     *contact_header = 0;
     int i=0;
+	impu_contact_t *impucontact;
 
     contact_for_header_t* tmp_contact_header = shm_malloc(sizeof (contact_for_header_t));
     if (!tmp_contact_header) {
@@ -437,6 +443,7 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
 
     tmp_contact_header->data_len = calc_buf_len(impurec);
     tmp_contact_header->buf = (char*)shm_malloc(tmp_contact_header->data_len);
+	memset(tmp_contact_header->buf, 0, tmp_contact_header->data_len);
 
     if (tmp_contact_header->data_len) {
         p = tmp_contact_header->buf;
@@ -446,7 +453,9 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
 
         fl = 0;
 	    
-        while (i<MAX_CONTACTS_PER_IMPU && (c=impurec->newcontacts[i])) {
+		impucontact = impurec->linked_contacts.head;
+        while (impucontact) {
+			c = impucontact->contact;
             if (VALID_CONTACT(c, act_time)) {
                 if (fl) {
                     memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
@@ -496,21 +505,24 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
                 /* put in the rest of the params except Q and received */
                 tmp = c->params;
                 while (tmp) {
-                    if ((tmp->name.s[0] == 'R' || tmp->name.s[0]=='r') && tmp->name.len == 8 && !memcmp(tmp->name.s+1, "eceived", 7)) {
-                        tmp = tmp->next;
-                        continue;
-                    }
-                    if ((tmp->name.s[0] == 'Q' || tmp->name.s[0]=='q') && tmp->name.len == 1) {
-                        tmp = tmp->next;
-                        continue;
-                    }
-                    if ((tmp->name.s[0] == 'E' || tmp->name.s[0]=='e') && tmp->name.len == 7 && !memcmp(tmp->name.s+1, "xpires", 6)) {
-                        tmp = tmp->next;
-                        continue;
-                    }
-                    *p++ = ';';
-                    memcpy(p, tmp->name.s, tmp->name.len);
-                    p += tmp->name.len;
+					if (tmp->name.len>0 && tmp->name.s) {
+						if ((tmp->name.s[0] == 'R' || tmp->name.s[0]=='r') && tmp->name.len == 8 && !memcmp(tmp->name.s+1, "eceived", 7)) {
+							tmp = tmp->next;
+							continue;
+						}
+						if ((tmp->name.s[0] == 'Q' || tmp->name.s[0]=='q') && tmp->name.len == 1) {
+							tmp = tmp->next;
+							continue;
+						}
+						if ((tmp->name.s[0] == 'E' || tmp->name.s[0]=='e') && tmp->name.len == 7 && !memcmp(tmp->name.s+1, "xpires", 6)) {
+							tmp = tmp->next;
+							continue;
+						}
+						*p++ = ';';
+						memcpy(p, tmp->name.s, tmp->name.len);
+						p += tmp->name.len;
+					}
+                    
                     if (tmp->body.len > 0) {
                         *p++ = '=';
                         *p++ = '\"';
@@ -521,9 +533,8 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
                     tmp = tmp->next;
                 }
             }
-	    i++;
+			impucontact = impucontact->next;
         }
-
         memcpy(p, CRLF, CRLF_LEN);
         p += CRLF_LEN;
 

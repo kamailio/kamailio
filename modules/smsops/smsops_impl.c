@@ -301,7 +301,7 @@ static void EncodeTime(char * buffer) {
 // Decode SMS-Body into the given structure:
 int decode_3gpp_sms(struct sip_msg *msg) {
 	str body;
-	int len, j, p = 0;
+	int len, blen, j, p = 0;
 	// Parse only the body again, if the mesage differs from the last call:
 	if (msg->id != current_msg_id) {
 		// Extract Message-body and length: taken from RTPEngine's code
@@ -385,25 +385,30 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 					rp_data->pdu.destination.s = pkg_malloc(rp_data->pdu.destination.len);
 					DecodePhoneNumber(&body.s[p], rp_data->pdu.destination.len, rp_data->pdu.destination);
 					if (rp_data->pdu.destination.len % 2 == 0) {
-						p += rp_data->pdu.destination.len/2;	
+						p += rp_data->pdu.destination.len/2;
 					} else {
-						p += (rp_data->pdu.destination.len/2)+1;	
+						p += (rp_data->pdu.destination.len/2)+1;
 					}
-					
+
 				}
 				rp_data->pdu.pid = (unsigned char)body.s[p++];
 				rp_data->pdu.coding = (unsigned char)body.s[p++];
 				rp_data->pdu.validity = (unsigned char)body.s[p++];
 				len = body.s[p++];
 				if (len > 0) {
+					blen = 2 + len*4;
+					rp_data->pdu.payload.s = pkg_malloc(blen);
+					if(rp_data->pdu.payload.s==NULL) {
+						LM_ERR("no more pkg\n");
+						return -1;
+					}
+					memset(rp_data->pdu.payload.s, 0, blen);
 					// Coding: 7 Bit
 					if (rp_data->pdu.coding == 0x00) {
 						// We don't care about the extra used bytes here.
-						rp_data->pdu.payload.s = pkg_malloc(len);
-						rp_data->pdu.payload.len = gsm_to_ascii(&body.s[p], len, rp_data->pdu.payload);
+						rp_data->pdu.payload.len = gsm_to_ascii(&body.s[p], blen, rp_data->pdu.payload);
 					} else {
 						// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
-						rp_data->pdu.payload.s = pkg_malloc(len*4);
 						rp_data->pdu.payload.len = 0;
 						while (len > 0) {
 							j = (body.s[p] << 8) + body.s[p + 1];
@@ -413,11 +418,11 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 						}
 					}
 				}
-			}				
+			}
 		}
 	}
 
-	return 1;	
+	return 1;
 }
 
 int dumpRPData(sms_rp_data_t * rpdata, int level) {
@@ -598,7 +603,7 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) {
 	if (param==NULL)
 		return -1;
-	
+
 	if (!rp_send_data) {
 		rp_send_data = (sms_rp_data_t*)pkg_malloc(sizeof(struct _sms_rp_data));
 		if (!rp_send_data) {
@@ -650,6 +655,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->originator.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->originator.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->originator.len = val->rs.len;
 			memcpy(rp_send_data->originator.s, val->rs.s, val->rs.len);
 			break;
@@ -666,6 +675,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->destination.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->destination.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->destination.len = val->rs.len;
 			memcpy(rp_send_data->destination.s, val->rs.s, val->rs.len);
 			break;
@@ -749,6 +762,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->pdu.payload.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->pdu.payload.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->pdu.payload.len = val->rs.len;
 			memcpy(rp_send_data->pdu.payload.s, val->rs.s, val->rs.len);
 			break;
@@ -765,6 +782,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->pdu.destination.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->pdu.destination.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->pdu.destination.len = val->rs.len;
 			memcpy(rp_send_data->pdu.destination.s, val->rs.s, val->rs.len);
 			break;
@@ -781,6 +802,10 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				return -1;
 			}
 			rp_send_data->pdu.originating_address.s = pkg_malloc(val->rs.len);
+			if(rp_send_data->pdu.originating_address.s==NULL) {
+				LM_ERR("no more pkg\n");
+				return -1;
+			}
 			rp_send_data->pdu.originating_address.len = val->rs.len;
 			memcpy(rp_send_data->pdu.originating_address.s, val->rs.s, val->rs.len);
 			break;

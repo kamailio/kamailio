@@ -30,6 +30,7 @@
 #include "../../ut.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../mod_fix.h"
 #include "uri_db.h"
 #include "checks.h"
 
@@ -42,7 +43,7 @@ MODULE_VERSION
  * table version needs to be the same as auth_db use.
  */
 #define URI_TABLE_VERSION 1
-#define SUBSCRIBER_TABLE_VERSION 6	/* From auth_db */
+#define SUBSCRIBER_TABLE_VERSION 7	/* From auth_db */
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
@@ -78,6 +79,8 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"check_from",     (cmd_function)check_from,     0, 0, 0,
 		REQUEST_ROUTE},
+	{"check_uri",      (cmd_function)check_uri,      1, fixup_spve_null, 0,
+        REQUEST_ROUTE},
 	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist,
 		REQUEST_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}

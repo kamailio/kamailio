@@ -28,7 +28,13 @@ DEFS+= -DUSE_FREERADIUS
 RADIUSCLIENT_LIB=freeradius-client
 
 else
+ifeq ($(RADCLI),1)
 
+# - radcli library
+DEFS+= -DUSE_RADCLI
+RADIUSCLIENT_LIB=radcli
+
+else
 # - radiusclient-ng v5 or v4 library
 ifneq ($(radiusclient_ng), 4)
 
@@ -41,6 +47,7 @@ else
 DEFS+=-DRADIUSCLIENT_NG_4
 RADIUSCLIENT_LIB=radiusclient
 
+endif
 endif
 
 endif

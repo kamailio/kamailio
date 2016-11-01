@@ -72,13 +72,13 @@ char *dslistfile = CFG_DIR"dispatcher.list";
 int  ds_force_dst   = 1;
 int  ds_flags       = 0;
 int  ds_use_default = 0;
-static str dst_avp_param = {NULL, 0};
-static str grp_avp_param = {NULL, 0};
-static str cnt_avp_param = {NULL, 0};
-static str dstid_avp_param = {NULL, 0};
-static str attrs_avp_param = {NULL, 0};
-static str sock_avp_param = {NULL, 0};
-str hash_pvar_param = {NULL, 0};
+static str dst_avp_param = STR_NULL;
+static str grp_avp_param = STR_NULL;
+static str cnt_avp_param = STR_NULL;
+static str dstid_avp_param = STR_NULL;
+static str attrs_avp_param = STR_NULL;
+static str sock_avp_param = STR_NULL;
+str hash_pvar_param = STR_NULL;
 
 int_str dst_avp_name;
 unsigned short dst_avp_type;
@@ -104,11 +104,11 @@ str ds_ping_from   = str_init("sip:dispatcher@localhost");
 static int ds_ping_interval = 0;
 int ds_probing_mode  = DS_PROBE_NONE;
 
-static str ds_ping_reply_codes_str= {NULL, 0};
+static str ds_ping_reply_codes_str= STR_NULL;
 static int** ds_ping_reply_codes = NULL;
 static int* ds_ping_reply_codes_cnt;
 
-str ds_default_socket       = {NULL, 0};
+str ds_default_socket       = STR_NULL;
 struct socket_info * ds_default_sockinfo = NULL;
 
 int ds_hash_size = 0;
@@ -117,13 +117,13 @@ int ds_hash_initexpire = 7200;
 int ds_hash_check_interval = 30;
 int ds_timer_mode = 0;
 
-str ds_outbound_proxy = {0, 0};
+str ds_outbound_proxy = STR_NULL;
 
 /* tm */
 struct tm_binds tmb;
 
 /*db */
-str ds_db_url            = {NULL, 0};
+str ds_db_url            = STR_NULL;
 str ds_set_id_col        = str_init(DS_SET_ID_COL);
 str ds_dest_uri_col      = str_init(DS_DEST_URI_COL);
 str ds_dest_flags_col    = str_init(DS_DEST_FLAGS_COL);
@@ -131,9 +131,9 @@ str ds_dest_priority_col = str_init(DS_DEST_PRIORITY_COL);
 str ds_dest_attrs_col    = str_init(DS_DEST_ATTRS_COL);
 str ds_table_name        = str_init(DS_TABLE_NAME);
 
-str ds_setid_pvname   = {NULL, 0};
+str ds_setid_pvname   = STR_NULL;
 pv_spec_t ds_setid_pv;
-str ds_attrs_pvname   = {NULL, 0};
+str ds_attrs_pvname   = STR_NULL;
 pv_spec_t ds_attrs_pv;
 
 /** module functions */
@@ -161,6 +161,7 @@ static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list2(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list3(struct sip_msg*, char*, char*, char*);
 static int w_ds_list_exist(struct sip_msg*, char*);
+static int w_ds_reload(struct sip_msg* msg);
 
 static int fixup_ds_is_from_list(void** param, int param_no);
 static int fixup_ds_list_exist(void** param,int param_no);
@@ -211,6 +212,8 @@ static cmd_export_t cmds[]={
 		0, 0, ANY_ROUTE},
 	{"bind_dispatcher",   (cmd_function)bind_dispatcher,  0,
 		0, 0, 0},
+	{"ds_reload", (cmd_function)w_ds_reload, 0,
+		0, 0, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -568,7 +571,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	srand((11+rank)*getpid()*7);
+	kam_srand((11+rank)*getpid()*7);
 
 	return 0;
 }
@@ -593,7 +596,8 @@ static void destroy(void)
 	ds_hash_load_destroy();
 	if(ds_ping_reply_codes)
 		shm_free(ds_ping_reply_codes);
-
+	if(ds_ping_reply_codes_cnt)
+		shm_free(ds_ping_reply_codes_cnt);
 }
 
 #define GET_VALUE(param_name,param,i_value,s_value,value_flags) do{ \
@@ -822,6 +826,21 @@ static int ds_warn_fixup(void** param, int param_no)
 	return 0;
 }
 
+static int w_ds_reload(struct sip_msg* msg)
+{
+	if(!ds_db_url.s) {
+		if (ds_load_list(dslistfile)!=0)
+			LM_ERR("Error reloading from list\n");
+			return -1;
+	} else {
+		if(ds_reload_db()<0)
+			LM_ERR("Error reloading from db\n");
+			return -1;
+	}
+	LM_DBG("reloaded dispatcher\n");
+	return 1;
+}
+
 /************************** MI STUFF ************************/
 
 static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
@@ -845,7 +864,7 @@ static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 	state = ds_parse_flags(sp.s, sp.len);
 	if( state < 0 )
 	{
-		LM_ERR("unknow state value\n");
+		LM_ERR("unknown state value\n");
 		return init_mi_tree(500, "unknown state value", 19);
 	}
 	node = node->next;
@@ -1170,6 +1189,105 @@ static const char* dispatcher_rpc_list_doc[2] = {
 	0
 };
 
+/**
+ *
+ */
+int ds_rpc_print_set( ds_set_t* node, rpc_t* rpc, void* ctx, void* rpc_handle )
+{
+	if ( !node )
+		return 0;
+
+	int i=0, rc=0;
+	for( ;i<2;++i)
+	{
+		rc = ds_rpc_print_set( node->next[i], rpc, ctx, rpc_handle );
+		if ( rc != 0 )
+			return rc;
+	}
+
+	void* rh;
+	void* sh;
+	void* vh;
+	void* wh;
+	int j;
+	char c[3];
+	str data = STR_NULL;
+
+	if (rpc->struct_add(rpc_handle, "{", "SET", &sh) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error set structure");
+		return -1;
+	}
+	if(rpc->struct_add(sh, "d[",
+				"ID", node->id,
+				"TARGETS", &rh)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error creating set id");
+		return -1;
+	}
+
+	for(j=0; j<node->nr; j++)
+	{
+		if(rpc->struct_add(rh, "{",
+					"DEST", &vh)<0)
+		{
+			rpc->fault(ctx, 500, "Internal error creating dest");
+			return -1;
+		}
+
+		memset(&c, 0, sizeof(c));
+		if (node->dlist[j].flags & DS_INACTIVE_DST)
+			c[0] = 'I';
+		else if (node->dlist[j].flags & DS_DISABLED_DST)
+			c[0] = 'D';
+		else if (node->dlist[j].flags & DS_TRYING_DST)
+			c[0] = 'T';
+		else
+			c[0] = 'A';
+
+		if (node->dlist[j].flags & DS_PROBING_DST)
+			c[1] = 'P';
+		else
+			c[1] = 'X';
+
+		if (node->dlist[j].attrs.body.s)
+		{
+			if(rpc->struct_add(vh, "Ssd{",
+						"URI", &node->dlist[j].uri,
+						"FLAGS", c,
+						"PRIORITY", node->dlist[j].priority,
+						"ATTRS", &wh)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating dest struct");
+				return -1;
+			}
+			if(rpc->struct_add(wh, "SSdddS",
+						"BODY", &(node->dlist[j].attrs.body),
+						"DUID", (node->dlist[j].attrs.duid.s)?
+						&(node->dlist[j].attrs.duid):&data,
+						"MAXLOAD", node->dlist[j].attrs.maxload,
+						"WEIGHT", node->dlist[j].attrs.weight,
+						"RWEIGHT", node->dlist[j].attrs.rweight,
+						"SOCKET", (node->dlist[j].attrs.socket.s)?
+						&(node->dlist[j].attrs.socket):&data)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating attrs struct");
+				return -1;
+			}
+		} else {
+			if(rpc->struct_add(vh, "Ssd",
+						"URI", &node->dlist[j].uri,
+						"FLAGS", c,
+						"PRIORITY", node->dlist[j].priority)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error creating dest struct");
+				return -1;
+			}
+		}
+	}
+
+	return 0;
+}
 
 /*
  * RPC command to print dispatcher destination sets
@@ -1178,19 +1296,9 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 {
 	void* th;
 	void* ih;
-	void* rh;
-	void* sh;
-	void* vh;
-	void* wh;
-	int j;
-	char c[3];
-	str data = {"", 0};
-	ds_set_t *ds_list;
-	int ds_list_nr;
-	ds_set_t *list;
 
-	ds_list = ds_get_list();
-	ds_list_nr = ds_get_list_nr();
+	ds_set_t *ds_list = ds_get_list();
+	int ds_list_nr = ds_get_list_nr();
 
 	if(ds_list==NULL || ds_list_nr<=0)
 	{
@@ -1213,81 +1321,7 @@ static void dispatcher_rpc_list(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	for(list = ds_list; list!= NULL; list= list->next)
-	{
-		if (rpc->struct_add(ih, "{", "SET", &sh) < 0)
-		{
-			rpc->fault(ctx, 500, "Internal error set structure");
-			return;
-		}
-		if(rpc->struct_add(sh, "d[",
-					"ID", list->id,
-					"TARGETS", &rh)<0)
-		{
-			rpc->fault(ctx, 500, "Internal error creating set id");
-			return;
-		}
-
-		for(j=0; j<list->nr; j++)
-		{
-			if(rpc->struct_add(rh, "{",
-						"DEST", &vh)<0)
-			{
-				rpc->fault(ctx, 500, "Internal error creating dest");
-				return;
-			}
-
-			memset(&c, 0, sizeof(c));
-			if (list->dlist[j].flags & DS_INACTIVE_DST)
-				c[0] = 'I';
-			else if (list->dlist[j].flags & DS_DISABLED_DST)
-				c[0] = 'D';
-			else if (list->dlist[j].flags & DS_TRYING_DST)
-				c[0] = 'T';
-			else
-				c[0] = 'A';
-
-			if (list->dlist[j].flags & DS_PROBING_DST)
-				c[1] = 'P';
-			else
-				c[1] = 'X';
-
-			if (list->dlist[j].attrs.body.s)
-			{
-				if(rpc->struct_add(vh, "Ssd{",
-							"URI", &list->dlist[j].uri,
-							"FLAGS", c,
-							"PRIORITY", list->dlist[j].priority,
-							"ATTRS", &wh)<0)
-				{
-					rpc->fault(ctx, 500, "Internal error creating dest struct");
-					return;
-				}
-				if(rpc->struct_add(wh, "SSdddS",
-							"BODY", &(list->dlist[j].attrs.body),
-							"DUID", (list->dlist[j].attrs.duid.s)?
-							&(list->dlist[j].attrs.duid):&data,
-							"MAXLOAD", list->dlist[j].attrs.maxload,
-							"WEIGHT", list->dlist[j].attrs.weight,
-							"RWEIGHT", list->dlist[j].attrs.rweight,
-							"SOCKET", (list->dlist[j].attrs.socket.s)?
-							&(list->dlist[j].attrs.socket):&data)<0)
-				{
-					rpc->fault(ctx, 500, "Internal error creating attrs struct");
-					return;
-				}
-			} else {
-				if(rpc->struct_add(vh, "Ssd",
-							"URI", &list->dlist[j].uri,
-							"FLAGS", c,
-							"PRIORITY", list->dlist[j].priority)<0)
-				{
-					rpc->fault(ctx, 500, "Internal error creating dest struct");
-					return;
-				}
-			}
-		}
-	}
+	ds_rpc_print_set( ds_list, rpc, ctx, ih );
 
 	return;
 }
@@ -1340,7 +1374,7 @@ static void dispatcher_rpc_set_state(rpc_t* rpc, void* ctx)
 		if((state.len>1) && (state.s[1]=='P' || state.s[1]=='p'))
 			stval |= DS_PROBING_DST;
 	} else {
-		LM_ERR("unknow state value\n");
+		LM_ERR("unknown state value\n");
 		rpc->fault(ctx, 500, "Unknown State Value");
 		return;
 	}

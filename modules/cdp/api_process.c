@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include "api_process.h"
@@ -77,25 +75,25 @@ int api_callback(peer *p,AAAMessage *msg,void* ptr)
 	else type=RESPONSE_HANDLER;
 
 	lock_get(handlers_lock);
-		for(h=handlers->head;h;h=h->next){
-			if (h->type==type){
-				x.handler = h->handler;
-				if (h->type == REQUEST_HANDLER) {
-					lock_release(handlers_lock);
-					rsp = (x.handler.requestHandler)(msg,h->param);
-					if (rsp) {
-						//peer_send_msg(p,rsp);
-						sm_process(p,Send_Message,rsp,0,0);
-					}
-					lock_get(handlers_lock);
+	for(h=handlers->head;h;h=h->next){
+		if (h->type==type){
+			x.handler = h->handler;
+			if (h->type == REQUEST_HANDLER) {
+				lock_release(handlers_lock);
+				rsp = (x.handler.requestHandler)(msg,h->param);
+				if (rsp) {
+					//peer_send_msg(p,rsp);
+					sm_process(p,Send_Message,rsp,0,0);
 				}
-				else {
-					lock_release(handlers_lock);
-					(x.handler.responseHandler)(msg,h->param);
-					lock_get(handlers_lock);
-				}
+				lock_get(handlers_lock);
+			}
+			else {
+				lock_release(handlers_lock);
+				(x.handler.responseHandler)(msg,h->param);
+				lock_get(handlers_lock);
 			}
 		}
+	}
 	lock_release(handlers_lock);
 
 	if (!is_req(msg)){
@@ -103,18 +101,20 @@ int api_callback(peer *p,AAAMessage *msg,void* ptr)
 		t = cdp_take_trans(msg);
 		if (t){
 			t->ans = msg;
-            struct timeval stop;
-            gettimeofday(&stop, NULL);
-            long elapsed_usecs =  (stop.tv_sec - t->started.tv_sec)*1000000 + (stop.tv_usec - t->started.tv_usec);
-            long elapsed_msecs = elapsed_usecs/1000;
-            if (elapsed_msecs > *latency_threshold_p) {
-                if (msg->sessionId && msg->sessionId->data.len)
-                    LM_ERR("Received diameter response outside of threshold (%d) - %ld (session-id: [%.*s])\n", *latency_threshold_p, elapsed_msecs, msg->sessionId->data.len, msg->sessionId->data.s);
-                else 
-                    LM_ERR("Received diameter response outside of threshold (%d) - %ld (no session-id)\n", *latency_threshold_p, elapsed_msecs);
-            }
-	    counter_inc(cdp_cnts_h.replies_received);
-	    counter_add(cdp_cnts_h.replies_response_time, elapsed_msecs);
+			struct timeval stop;
+			gettimeofday(&stop, NULL);
+			long elapsed_usecs =  (stop.tv_sec - t->started.tv_sec)*1000000 + (stop.tv_usec - t->started.tv_usec);
+			long elapsed_msecs = elapsed_usecs/1000;
+			if (elapsed_msecs > *latency_threshold_p) {
+				if (msg->sessionId && msg->sessionId->data.len)
+					LM_ERR("Received diameter response outside of threshold (%d) - %ld (session-id: [%.*s])\n",
+							*latency_threshold_p, elapsed_msecs, msg->sessionId->data.len, msg->sessionId->data.s);
+				else
+					LM_ERR("Received diameter response outside of threshold (%d) - %ld (no session-id)\n",
+							*latency_threshold_p, elapsed_msecs);
+			}
+			counter_inc(cdp_cnts_h.replies_received);
+			counter_add(cdp_cnts_h.replies_response_time, elapsed_msecs);
 			auto_drop = t->auto_drop;
 			if (t->cb){
 				(t->cb)(0,*(t->ptr),msg, elapsed_msecs);

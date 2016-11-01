@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #ifndef __SEM_H
@@ -50,19 +48,19 @@
 
 //	#include "../../mem/mem.h"
 //	#include "../../mem/shm_mem.h"
-	
-	#include "utils.h"
-	
-	#include <semaphore.h>
 
-	typedef sem_t gen_sem_t;
+#include "utils.h"
 
-	/**
-	 * Create a new unnamed semaphore and initialize it
-	 * @param value - 0 if it should be pre-locked, 1 if not, or how many locks until block
-	 * @return
-	 */
-    #define sem_new(sem_ptr,value)\
+#include <semaphore.h>
+
+typedef sem_t gen_sem_t;
+
+/**
+ * Create a new unnamed semaphore and initialize it
+ * @param value - 0 if it should be pre-locked, 1 if not, or how many locks until block
+ * @return
+ */
+#define sem_new(sem_ptr,value)\
 	do {\
 		sem_ptr=shm_malloc(sizeof(gen_sem_t));\
 		if (!sem_ptr){\
@@ -74,8 +72,8 @@
 			goto out_of_memory;\
 		}\
 	} while(0)
-	
-    #define sem_free(sem)\
+
+#define sem_free(sem)\
 	do {\
 		if (sem) {\
 			sem_destroy(sem);\
@@ -83,16 +81,16 @@
 			sem=0;\
 		}\
 	} while(0)
-	
-	
-	#define sem_get(sem) sem_wait(sem)
-	#define sem_tryget(sem) sem_trywait(sem)
-	#define sem_timedget(sem,abs_timeout) sem_trywait(sem,abs_timeout)
-	
-	#define sem_release(sem) sem_post(sem)
+
+
+#define sem_get(sem) sem_wait(sem)
+#define sem_tryget(sem) sem_trywait(sem)
+#define sem_timedget(sem,abs_timeout) sem_trywait(sem,abs_timeout)
+
+#define sem_release(sem) sem_post(sem)
 
 #else
-	//#error "locking requires shared memory support"
+//#error "locking requires shared memory support"
 #endif
 
 #endif

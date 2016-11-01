@@ -301,6 +301,52 @@ static int sr_kemi_core_isbflagset(sip_msg_t *msg, int flag)
 /**
  *
  */
+static int sr_kemi_core_setsflag(sip_msg_t *msg, int flag)
+{
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	setsflag(flag);
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_resetsflag(sip_msg_t *msg, int flag)
+{
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	resetsflag(flag);
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_issflagset(sip_msg_t *msg, int flag)
+{
+	int ret;
+
+	if (!flag_in_range(flag)) {
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return SR_KEMI_FALSE;
+	}
+
+	ret = issflagset(flag);
+	if(ret>0)
+		return SR_KEMI_TRUE;
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static int sr_kemi_core_seturi(sip_msg_t *msg, str *uri)
 {
 	if(uri==NULL || uri->s==NULL) {
@@ -523,6 +569,21 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("isbiflagset"),
 		SR_KEMIP_BOOL, sr_kemi_core_isbiflagset,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("setsflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_setsflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("resetsflag"),
+		SR_KEMIP_BOOL, sr_kemi_core_resetsflag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("issflagset"),
+		SR_KEMIP_BOOL, sr_kemi_core_issflagset,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -1013,4 +1074,65 @@ str* sr_kemi_cbname_lookup_idx(int idx)
 		return NULL;
 	}
 	return &_sr_kemi_cbname_list[idx-1].name;
+}
+
+/**
+ *
+ */
+typedef struct sr_kemi_param_map {
+	int ptype;
+	str pname;
+} sr_kemi_param_map_t;
+
+/**
+ *
+ */
+static sr_kemi_param_map_t _sr_kemi_param_map[] = {
+	{ SR_KEMIP_NONE,   str_init("none") },
+	{ SR_KEMIP_INT,    str_init("int") },
+	{ SR_KEMIP_STR,    str_init("str") },
+	{ SR_KEMIP_BOOL,   str_init("bool") },
+	{ SR_KEMIP_INTSTR, str_init("int-str") },
+	{ 0, STR_NULL }
+};
+
+/**
+ *
+ */
+str *sr_kemi_param_map_get_name(int ptype)
+{
+	int i;
+
+	for(i=0; _sr_kemi_param_map[i].pname.s!=NULL; i++) {
+		if(_sr_kemi_param_map[i].ptype==ptype)
+			return &_sr_kemi_param_map[i].pname;
+	}
+	return NULL;
+}
+
+/**
+ *
+ */
+str *sr_kemi_param_map_get_params(int *ptypes)
+{
+	int i;
+	static char pbuf[64];
+	static str sret = STR_NULL;
+	str *pn;
+
+	pbuf[0] = '\0';
+	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
+		if(ptypes[i]==SR_KEMIP_NONE) break;
+		if(i>0) strcat(pbuf, ", ");
+		pn = sr_kemi_param_map_get_name(ptypes[i]);
+		if(pn==NULL) return NULL;
+		strcat(pbuf, pn->s);
+	}
+	if(pbuf[0]=='\0') {
+		pn = sr_kemi_param_map_get_name(SR_KEMIP_NONE);
+		strcat(pbuf, pn->s);
+	}
+	sret.s = pbuf;
+	sret.len = strlen(sret.s);
+	return &sret;
 }

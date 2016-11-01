@@ -39,7 +39,7 @@
 
 /* if DB support is used, this values must not exceed the
  * storage capacity of the DB columns! See db/schema/entities.xml */
-#define CONTACT_MAX_SIZE       255
+extern int contact_max_size; /* configurable using module parameter "contact_max_size" instead of compile time constant */
 #define RECEIVED_MAX_SIZE      255
 #define USERNAME_MAX_SIZE      64
 #define DOMAIN_MAX_SIZE        128
@@ -49,10 +49,11 @@
 #define PATH_MODE_LAZY		1
 #define PATH_MODE_OFF		0
 
-#define REG_SAVE_MEM_FL     (1<<0)
-#define REG_SAVE_NORPL_FL   (1<<1)
-#define REG_SAVE_REPL_FL    (1<<2)
-#define REG_SAVE_ALL_FL     ((1<<3)-1)
+#define REG_SAVE_MEM_FL     	(1<<0)
+#define REG_SAVE_NORPL_FL   	(1<<1)
+#define REG_SAVE_REPL_FL    	(1<<2)
+#define REG_SAVE_NOVARIATION_FL (1<<3)
+#define REG_SAVE_ALL_FL     ((1<<4)-1)
 
 #define REG_OUTBOUND_NONE	0
 #define REG_OUTBOUND_SUPPORTED	1

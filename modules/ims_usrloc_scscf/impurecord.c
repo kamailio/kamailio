@@ -73,6 +73,7 @@ int cseq_delay = 20;
 extern int unreg_validity;
 extern int maxcontact_behaviour;
 extern int maxcontact;
+extern int maxcontact_3gpp;
 extern int db_mode;
 
 extern int sub_dialog_hash_size;
@@ -81,7 +82,7 @@ extern shtable_t sub_dialog_table;
 extern struct contact_list* contact_list;
 extern struct ims_subscription_list* ims_subscription_list;
 
-extern struct dlg_binds dlgb;
+extern ims_dlg_api_t dlgb;
 
 static ucontact_t* contacts_to_expire [MAX_CONTACTS_PER_IMPU]; //this is done to prevent fragmentation of memory...
 static int num_contacts_to_expire;
@@ -111,7 +112,8 @@ int new_impurecord(str* _dom, str* public_identity, str* private_identity, int r
     }
     (*_r)->cbs->first = 0;
     (*_r)->cbs->reg_types = 0;
-
+	(*_r)->linked_contacts.head = (*_r)->linked_contacts.tail = 0;
+	(*_r)->linked_contacts.numcontacts = 0;
     (*_r)->public_identity.s = (char*) shm_malloc(public_identity->len);
     if ((*_r)->public_identity.s == 0) {
         LM_ERR("no more shared memory\n");
@@ -218,42 +220,39 @@ void free_impurecord(impurecord_t* _r) {
  * \param _r printed record
  */
 void print_impurecord(FILE* _f, impurecord_t* _r) {
-    ucontact_t* ptr;
-    int i = 0;
-
-    fprintf(_f, "...Record(%p)...\n", _r);
-    fprintf(_f, "domain : '%.*s'\n", _r->domain->len, ZSW(_r->domain->s));
-    fprintf(_f, "public_identity    : '%.*s'\n", _r->public_identity.len, ZSW(_r->public_identity.s));
-    fprintf(_f, "aorhash: '%u'\n", (unsigned) _r->aorhash);
-    fprintf(_f, "slot:    '%d'\n", _r->aorhash & (_r->slot->d->size - 1));
-    fprintf(_f, "pi_ref:  '%d'\n", _r->reg_state);
-    fprintf(_f, "barring: '%d'\n", _r->barring);
-    fprintf(_f, "ccf1:    '%.*s'\n", _r->ccf1.len, _r->ccf1.s);
-    fprintf(_f, "ccf2:    '%.*s'\n", _r->ccf2.len, _r->ccf2.s);
-    fprintf(_f, "ecf1:    '%.*s'\n", _r->ecf1.len, _r->ecf1.s);
-    fprintf(_f, "ecf2:    '%.*s'\n", _r->ecf2.len, _r->ecf2.s);
+    fprintf(_f, "...IMPU Record(%p)...\n", _r);
+    fprintf(_f, "\tdomain : '%.*s'\n", _r->domain->len, ZSW(_r->domain->s));
+    fprintf(_f, "\tpublic_identity    : '%.*s'\n", _r->public_identity.len, ZSW(_r->public_identity.s));
+    fprintf(_f, "\taorhash: '%u'\n", (unsigned) _r->aorhash);
+    fprintf(_f, "\tslot:    '%d'\n", _r->aorhash & (_r->slot->d->size - 1));
+    fprintf(_f, "\tstate:  '%s (%d)'\n", get_impu_regstate_as_string(_r->reg_state), _r->reg_state);
+    fprintf(_f, "\tbarring: '%d'\n", _r->barring);
+    fprintf(_f, "\tccf1:    '%.*s'\n", _r->ccf1.len, _r->ccf1.s);
+    fprintf(_f, "\tccf2:    '%.*s'\n", _r->ccf2.len, _r->ccf2.s);
+    fprintf(_f, "\tecf1:    '%.*s'\n", _r->ecf1.len, _r->ecf1.s);
+    fprintf(_f, "\tecf2:    '%.*s'\n", _r->ecf2.len, _r->ecf2.s);
     if (_r->s) {
-        fprintf(_f, "IMS subs (#%d):   '%p'\n", _r->s->service_profiles_cnt, _r->s);
-        fprintf(_f, "#profiles: '%d\n", _r->s->service_profiles_cnt);
+        fprintf(_f, "\tIMS service profiles count (%d):   '%p' (refcount: %d)\n", _r->s->service_profiles_cnt, _r->s, _r->s->ref_count);
+		fprintf(_f, "\tIMPI for subscription: [%.*s]\n", _r->s->private_identity.len, _r->s->private_identity.s);
     }
 
     int header = 0;
     reg_subscriber* subscriber = _r->shead;
     while (subscriber) {
         if (!header) {
-            fprintf(_f, "...Subscriptions...\n");
+            fprintf(_f, "\t...Subscriptions...\n");
             header = 1;
         }
-        fprintf(_f, "watcher uri: <%.*s> and presentity uri: <%.*s>\n", subscriber->watcher_uri.len, subscriber->watcher_uri.s, subscriber->presentity_uri.len, subscriber->presentity_uri.s);
-        fprintf(_f, "Expires: %ld\n", subscriber->expires);
+        fprintf(_f, "\t\twatcher uri: <%.*s> and presentity uri: <%.*s>\n", subscriber->watcher_uri.len, subscriber->watcher_uri.s, subscriber->presentity_uri.len, subscriber->presentity_uri.s);
+        fprintf(_f, "\t\tExpires: %ld\n", subscriber->expires);
         subscriber = subscriber->next;
     }
 
-    if (_r->newcontacts[0]) {
-        while ((ptr = _r->newcontacts[i++])) {
-            print_ucontact(_f, ptr);
-        }
-    }
+	impu_contact_t *impucontact = _r->linked_contacts.head;
+	while (impucontact) {
+		print_ucontact(_f, impucontact->contact);
+		impucontact = impucontact->next;
+	}
 
     fprintf(_f, ".../Record...\n\n\n\n");
 }
@@ -332,6 +331,10 @@ static str rollback = str_init("ROLLBACK");
 static str autocommit_on = str_init("SET AUTOCOMMIT=1");
 
 static inline void start_dbtransaction() {
+    
+    if (db_mode == NO_DB) 
+        return;
+    
     if (ul_dbf.raw_query(ul_dbh, &autocommit_off, NULL) < 0) {
         LM_ERR("could not "
                 "set autocommit off!\n");
@@ -358,15 +361,17 @@ static inline void process_impurecord(impurecord_t* _r) {
     ucontact_t* ptr;
     int hascontacts;
     udomain_t* _d;
-    reg_subscriber *s;
+    reg_subscriber *s, *next;
     subs_t* sub_dialog;
     int dbwork = 0;
+	impu_contact_t *impu_contact;
 
     get_act_time();
 
     s = _r->shead;
     LM_DBG("Checking validity of IMPU: <%.*s> registration subscriptions\n", _r->public_identity.len, _r->public_identity.s);
     while (s) {
+		next = s->next;
         if (!valid_subscriber(s, act_time)) {
             LM_DBG("DBG:registrar_timer: Subscriber with watcher_contact <%.*s> and presentity uri <%.*s> expired and removed.\n",
                     s->watcher_contact.len, s->watcher_contact.s, s->presentity_uri.len, s->presentity_uri.s);
@@ -393,51 +398,53 @@ static inline void process_impurecord(impurecord_t* _r) {
             lock_release(&sub_dialog_table[sl].lock);
             mustdeleteimpu = 0;
         }
-        s = s->next;
+        s = next;
     }
 
-    LM_DBG("\tPublic Identity %.*s, Barred: [%d], State: [%s]\n",
+    LM_DBG("\tPublic Identity %.*s, Barred: [%d], State: [%s], contacts [%d], 3gppcontacts [%d]\n",
             _r->public_identity.len, _r->public_identity.s,
             _r->barring,
-            get_impu_regstate_as_string(_r->reg_state));
+            get_impu_regstate_as_string(_r->reg_state),
+			_r->linked_contacts.numcontacts,
+			_r->linked_contacts.num3gppcontacts);
     flag = 0;
     hascontacts = 0;
     num_contacts_to_expire = 0;
-    for (k = 0; (k < _r->num_contacts) && (k < MAX_CONTACTS_PER_IMPU); k++) {
-        if ((ptr = _r->newcontacts[k])) {
-            flag = 1;
-            if (!VALID_CONTACT(ptr, act_time)) {
-                if (ptr->state == CONTACT_DELETED) {
-                    LM_DBG("Contact: <%.*s> has been deleted - unlinking from IMPU\n", ptr->c.len, ptr->c.s);
-                    contacts_to_expire[num_contacts_to_expire] = ptr;
-                    num_contacts_to_expire++;
-                } else if (ptr->state == CONTACT_EXPIRE_PENDING_NOTIFY) {
-                    LM_DBG("Contact: <%.*s> is in state CONTACT_EXPIRE_PENDING_NOTIFY....running callback\n", ptr->c.len, ptr->c.s);
-                    if (exists_ulcb_type(_r->cbs, UL_IMPU_DELETE_CONTACT)) {
-                        LM_DBG("Running callback UL_IMPU_DELETE_CONTACT for contact [%.*s] and impu [%.*s]\n", ptr->c.len, ptr->c.s, _r->public_identity.len, _r->public_identity.s);
-                        run_ul_callbacks(_r->cbs, UL_IMPU_DELETE_CONTACT, _r, ptr);
-                    }
-                    hascontacts = 1;    // we do this because the impu must only be deleted if in state deleted....
-                    mustdeleteimpu = 0;
-                } else if (ptr->state == CONTACT_VALID) {
-                    LM_DBG("Contact: <%.*s> is in state valid but it has expired.... ignoring as the contact check will set the appropriate action/state\n", ptr->c.len, ptr->c.s);
-                    mustdeleteimpu = 0;
-                    hascontacts = 1;
-                } else {
-                    LM_WARN("Bogus state for contact [%.*s] - state: %d... ignoring", ptr->c.len, ptr->c.s, ptr->state);
-                    mustdeleteimpu = 0;
-                    hascontacts = 1;
-                }
-            } else {
-                LM_DBG("\t\tContact #%i - %.*s, Ref [%d] (expires in %ld seconds) (State: %d)\n", 
-                        k, ptr->c.len, ptr->c.s, ptr->ref_count, ptr->expires - act_time, ptr->state);
-                mustdeleteimpu = 0;
-                hascontacts = 1;
-            }
-        } else {
-            LM_WARN("num_contacts and actual data not consistent... .aborting\n");
-            break;
-        }
+	impu_contact = _r->linked_contacts.head;
+	k=0;
+	while (impu_contact) {
+		ptr = impu_contact->contact;
+		flag = 1;
+		if (!VALID_CONTACT(ptr, act_time)) {
+			if (ptr->state == CONTACT_DELETED) {
+				LM_DBG("Contact: <%.*s> has been deleted - unlinking from IMPU\n", ptr->c.len, ptr->c.s);
+				contacts_to_expire[num_contacts_to_expire] = ptr;
+				num_contacts_to_expire++;
+			} else if (ptr->state == CONTACT_EXPIRE_PENDING_NOTIFY) {
+				LM_DBG("Contact: <%.*s> is in state CONTACT_EXPIRE_PENDING_NOTIFY....running callback\n", ptr->c.len, ptr->c.s);
+				if (exists_ulcb_type(_r->cbs, UL_IMPU_DELETE_CONTACT)) {
+					LM_DBG("Running callback UL_IMPU_DELETE_CONTACT for contact [%.*s] and impu [%.*s]\n", ptr->c.len, ptr->c.s, _r->public_identity.len, _r->public_identity.s);
+					run_ul_callbacks(_r->cbs, UL_IMPU_DELETE_CONTACT, _r, ptr);
+				}
+				hascontacts = 1;    // we do this because the impu must only be deleted if in state deleted....
+				mustdeleteimpu = 0;
+			} else if (ptr->state == CONTACT_VALID) {
+				LM_DBG("Contact: <%.*s> is in state valid but it has expired.... ignoring as the contact check will set the appropriate action/state\n", ptr->c.len, ptr->c.s);
+				mustdeleteimpu = 0;
+				hascontacts = 1;
+			} else {
+				LM_WARN("Bogus state for contact [%.*s] - state: %d... ignoring", ptr->c.len, ptr->c.s, ptr->state);
+				mustdeleteimpu = 0;
+				hascontacts = 1;
+			}
+		} else {
+			LM_DBG("\t\tContact #%i - %.*s, Ref [%d] (expires in %ld seconds) (State: %d)\n", 
+					k, ptr->c.len, ptr->c.s, ptr->ref_count, ptr->expires - act_time, ptr->state);
+			mustdeleteimpu = 0;
+			hascontacts = 1;
+		}
+		impu_contact = impu_contact->next;
+		k++;
     }
 
     if (num_contacts_to_expire > 0) {
@@ -469,11 +476,15 @@ static inline void process_impurecord(impurecord_t* _r) {
     } else {
         if (!hascontacts) {
             LM_DBG("This impu is not to be deleted but has no contacts - changing state to IMPU_UNREGISTERED\n");
-            _r->reg_state = IMPU_UNREGISTERED;
+			//run callback  here UL_IMPU_UNREG_NC for UL_IMPU_UNREG_NC
+			if (_r->reg_state != IMPU_UNREGISTERED && exists_ulcb_type(_r->cbs, UL_IMPU_UNREG_NC)) {
+				run_ul_callbacks(_r->cbs, UL_IMPU_UNREG_NC, _r, 0);
+			}
+			_r->reg_state = IMPU_UNREGISTERED;
         }
     }
     
-    if (dbwork) {
+    if (dbwork && db_mode != NO_DB) {
         if (ul_dbf.raw_query(ul_dbh, &commit, NULL) < 0) {
             LM_ERR("transaction commit "
                     "failed.\n");
@@ -494,14 +505,11 @@ void timer_impurecord(impurecord_t* _r) {
 }
 
 int get_contacts_count(impurecord_t* _r) {
-    ucontact_t* ptr;
-    int i = 0;
+	return _r->linked_contacts.numcontacts;
+}
 
-    while (i < MAX_CONTACTS_PER_IMPU && (ptr = _r->newcontacts[i])) {
-        i++;
-    }
-
-    return i;
+int get_contacts_3gpp_count(impurecord_t* _r) {
+	return _r->linked_contacts.num3gppcontacts;
 }
 
 /*!
@@ -531,8 +539,26 @@ int insert_scontact(impurecord_t* _r, str* _contact, ucontact_info_t* _ci, ucont
             }
         }
     }
-
-    //at this stage we are safe to insert the new contact
+	
+	if (maxcontact_3gpp > 0 && maxcontact_behaviour > 0) {
+        int num_3gpp_contacts = get_contacts_3gpp_count(_r);
+        if (num_3gpp_contacts >= maxcontact_3gpp) {
+            switch (maxcontact_behaviour) {
+                case 1://reject
+                    LM_ERR("too many 3GPP contacts already registered for IMPU <%.*s>\n", _r->public_identity.len, _r->public_identity.s);
+                    return -1;
+                case 2://overwrite oldest
+                    LM_DBG("Too many 3GPP contacts already registered, overwriting oldest for IMPU <%.*s>\n", _r->public_identity.len, _r->public_identity.s);
+                    //we can just remove the first 3GPP one seeing the contacts are ordered on insertion with newest last and oldest first
+                    break;
+                default://unknown
+                    LM_ERR("unknown maxcontact behaviour..... ignoring\n");
+                    break;
+            }
+        }
+    }
+	
+	//at this stage we are safe to insert the new contact
     LM_DBG("INSERTing ucontact in usrloc module\n");
     if (((*_c) = mem_insert_scontact(_r, _contact, _ci)) == 0) {
         LM_ERR("failed to insert contact\n");
@@ -847,7 +873,6 @@ void free_ims_subscription_data(ims_subscription *s) {
 
 }
 
-/* Still needs to be implemented */
 int compare_subscription(ims_subscription* new, ims_subscription* orig) {
     int i, j, k, l;
     LM_DBG("Comparing subscription for IMPI [%.*s]\n", orig->private_identity.len, orig->private_identity.s);
@@ -1049,95 +1074,133 @@ out_of_memory:
     return -1;
 }
 
+int add_impucontact_to_list(impurecord_t* impu, impu_contact_t *impucontact) {
+	if (impu->linked_contacts.head == 0) {
+		impucontact->prev = 0;
+		impucontact->next = 0;
+		impu->linked_contacts.head = impu->linked_contacts.tail = impucontact;
+	} else {
+		impucontact->prev = impu->linked_contacts.tail;
+		impu->linked_contacts.tail->next = impucontact;
+		impucontact->next = 0;
+		impu->linked_contacts.tail = impucontact;
+	}
+	
+	impu->linked_contacts.numcontacts++;
+	if (impucontact->contact->is_3gpp)
+		impu->linked_contacts.num3gppcontacts++;
+	
+	return 0;
+}
+
+int remove_impucontact_from_list(impurecord_t* impu, impu_contact_t *impucontact) {
+	ucontact_t* contact = impucontact->contact;
+
+	if (contact == impu->linked_contacts.head->contact) {
+		LM_DBG("deleting head\n");
+		impu->linked_contacts.head = impu->linked_contacts.head->next;
+	} else if (contact == impu->linked_contacts.tail->contact) {
+		LM_DBG("deleting tail\n");
+		impu->linked_contacts.tail = impu->linked_contacts.tail->prev;
+	} else {
+		LM_DBG("deleting mid list\n");
+		impucontact->prev->next = impucontact->next;
+		impucontact->prev = impucontact->next->prev;
+	}
+	
+	impu->linked_contacts.numcontacts--;
+	if (impucontact->contact->is_3gpp)
+		impu->linked_contacts.num3gppcontacts--;
+	
+	shm_free(impucontact);
+	
+	return 0;
+}
+
+
 /* link contact to impu 
     must be called with lock on domain (IMPU) as well as lock on contact_slot 
  */
 int link_contact_to_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db) {
-    ucontact_t* ptr;
-    int i;
-    i = 0;
-    int overwrite = 0;
-    ptr = impu->newcontacts[i];
+	impu_contact_t *impu_contact_ptr;
+    int locked;
+	int space_made = 0;
 
-    while (i < MAX_CONTACTS_PER_IMPU && ptr) {
-        if (ptr == contact) {
-            LM_DBG("contact [%p] => [%.*s] already linked to impu [%.*s] at position [%i]\n", contact, contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
+	impu_contact_ptr = impu->linked_contacts.head;
+	while (impu_contact_ptr) {
+		if (impu_contact_ptr->contact == contact) {
+			LM_DBG("contact [%p] => [%.*s] already linked to impu [%.*s]\n", contact, contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
             return 0;
-        }
-        i++;
-        ptr = impu->newcontacts[i];
-    }
-
-    if ((maxcontact_behaviour > 0) && (maxcontact > 0) && (maxcontact < (i + 1))) {
-        LM_DBG("Need to overwrite oldest contact at position %d\n", i);
-        i = maxcontact - 1;
-        overwrite = 1;
-    }
-
-    if (i < MAX_CONTACTS_PER_IMPU) {
-        LM_DBG("contact [%.*s] needs to be linked to impu [%.*s] at position %d\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
-        if (overwrite) {
-			LM_DBG("In overwrite mode: going to unlink [%p] => [%.*s]\n", impu->newcontacts[i], impu->newcontacts[i]->c.len, impu->newcontacts[i]->c.s);
-			unlink_contact_from_impu(impu, impu->newcontacts[i], write_to_db, 0 /*implicit dereg of contact */); //unlink the contact we are overwriting
 		}
-        impu->num_contacts = i + 1; //we always bump this - as unlink (in overwrite would have decremented)
-        impu->newcontacts[i] = contact;
-        ref_contact_unsafe(contact);
-        LM_DBG("number of contacts for IMPU [%.*s] is %d\n", impu->public_identity.len, impu->public_identity.s, impu->num_contacts);
-        if (write_to_db && db_mode == WRITE_THROUGH && db_link_contact_to_impu(impu, contact) != 0) {
-            LM_ERR("Failed to update DB linking contact [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
-        };
-    } else {
-        LM_DBG("unable to link contact to impu as too many links already > %d\n", MAX_CONTACTS_PER_IMPU);
-        return -1;
-    }
+		impu_contact_ptr = impu_contact_ptr->next;
+	}
+	
+    if (contact->is_3gpp && (maxcontact_behaviour > 0) && (maxcontact_3gpp > 0) && (maxcontact_3gpp < (impu->linked_contacts.num3gppcontacts + 1))) {
+		LM_DBG("Need to overwrite oldest (first) 3GPP contact\n");
+		
+		impu_contact_ptr = impu->linked_contacts.head;
+		while (impu_contact_ptr) {
+				if (impu_contact_ptr->contact->is_3gpp) {
+						LM_DBG("Found first 3GPP contact");
+						break;
+				}
+				impu_contact_ptr = impu_contact_ptr->next;
+		}
+		
+		if (impu_contact_ptr) {
+			if (impu_contact_ptr == impu->linked_contacts.head) {
+					impu->linked_contacts.head = impu->linked_contacts.tail = impu->linked_contacts.head->next;
+			} else if (impu_contact_ptr == impu->linked_contacts.tail) {
+					impu_contact_ptr->prev->next = impu_contact_ptr->next;
+			} else {
+					impu_contact_ptr->prev->next = impu_contact_ptr->next;
+					impu_contact_ptr->next->prev = impu_contact_ptr->prev;
+			}
 
-    return 0;
-}
+			if (write_to_db && db_mode == WRITE_THROUGH && db_unlink_contact_from_impu(impu, impu_contact_ptr->contact) != 0) {
+				LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", impu_contact_ptr->contact->c.len, impu_contact_ptr->contact->c.s, impu->public_identity.len, impu->public_identity.s);
+			}
 
-int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db, int is_explicit) {
-    ucontact_t* ptr, *found_contact;
-    int i;
-    i = 0;
-    int found = 0;
-    ptr = impu->newcontacts[i];
-	int locked = 0;
+			locked = lock_try(impu_contact_ptr->contact->lock);
+			if (locked == 0) {
+	//                found_contact->state = CONTACT_DELAYED_DELETE;
+					unref_contact_unsafe(impu_contact_ptr->contact); //we don't unref because we don't have the lock on this particular contacts contact slot and we can't take it coz of deadlock. - so let
+					//a housekeeper thread do it
+					locked = 1;
+			} else {
+							LM_ERR("Could not get lock to remove link from of contact from impu....");
+							//TODO: we either need to wait and retry or we need to get another process to do this for us.... right now we will leak a contact.
+			}
+			if (locked == 1) {
+					lock_release(impu_contact_ptr->contact->lock);
+			}
+			impu->linked_contacts.numcontacts--;
+			impu->linked_contacts.num3gppcontacts--;
+			shm_free(impu_contact_ptr);
+			space_made = 1;
+		} else {
+			LM_WARN("strange can't find 3gpp contact to remove\n");
+		}
+	}
+	
+	if (!space_made && (maxcontact_behaviour > 0) && (maxcontact > 0) && (maxcontact < (impu->linked_contacts.numcontacts + 1))) {
+        LM_DBG("Need to overwrite oldest contact\n");
+		impu_contact_ptr = impu->linked_contacts.head;
 
-    LM_DBG("asked to unlink contact [%p] => [%.*s] from impu [%.*s]\n", contact, contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
-
-    while (i < MAX_CONTACTS_PER_IMPU && ptr) {
-        if (found) {
-            //shift all later pointers forward by 1
-            impu->newcontacts[i - 1] = impu->newcontacts[i];
-        } else {
-            if (ptr == contact) {
-                LM_DBG("unlinking contact [%p] => [%.*s] from impu [%.*s] at position [%i]\n", 
-				contact,
-				contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s, i);
-                found = 1;
-                found_contact = ptr;
-                impu->newcontacts[i] = 0;
-                impu->num_contacts--;
-            }
-        }
-        i++;
-        ptr = impu->newcontacts[i];
-    }
-
-    if (found) {
-        if (i < MAX_CONTACTS_PER_IMPU) {
-            LM_DBG("zero'ing last pointer to contact in the list at position [%i]\n", i-1);
-            impu->newcontacts[i - 1] = 0;
-        }
-
-        if (write_to_db && db_mode == WRITE_THROUGH && db_unlink_contact_from_impu(impu, found_contact) != 0) {
-            LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", found_contact->c.len, found_contact->c.s, impu->public_identity.len, impu->public_identity.s);
+		//we will remove the contact at the head of the list
+		if (impu->linked_contacts.head == impu->linked_contacts.tail)
+			impu->linked_contacts.head = impu->linked_contacts.tail = impu->linked_contacts.head->next;
+		else 
+			impu->linked_contacts.head = impu->linked_contacts.head->next;
+			
+		if (write_to_db && db_mode == WRITE_THROUGH && db_unlink_contact_from_impu(impu, impu_contact_ptr->contact) != 0) {
+            LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", impu_contact_ptr->contact->c.len, impu_contact_ptr->contact->c.s, impu->public_identity.len, impu->public_identity.s);
         }
 		
-        locked = lock_try(found_contact->lock);
+        locked = lock_try(impu_contact_ptr->contact->lock);
         if (locked == 0) {
 //                found_contact->state = CONTACT_DELAYED_DELETE;
-				unref_contact_unsafe(found_contact); //we don't unref because we don't have the lock on this particular contacts contact slot and we can't take it coz of deadlock. - so let
+				unref_contact_unsafe(impu_contact_ptr->contact); //we don't unref because we don't have the lock on this particular contacts contact slot and we can't take it coz of deadlock. - so let
                 //a housekeeper thread do it
                 locked = 1;
         } else {
@@ -1145,12 +1208,63 @@ int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_
                         //TODO: we either need to wait and retry or we need to get another process to do this for us.... right now we will leak a contact.
         }
         if (locked == 1) {
-                lock_release(found_contact->lock);
+                lock_release(impu_contact_ptr->contact->lock);
         }
-		
-    } else {
-        LM_DBG("contact [%.*s] did not exist in IMPU list [%.*s] while trying to unlink\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
-    }
+		impu->linked_contacts.numcontacts--;
+		if (impu_contact_ptr->contact->is_3gpp)
+				impu->linked_contacts.num3gppcontacts--;
+		shm_free(impu_contact_ptr);
+    } 
+	
+	//at this point we know we have space to add the contact;
+	impu_contact_ptr = (impu_contact_t*)shm_malloc(sizeof(struct impu_contact));
+	impu_contact_ptr->contact = contact;
+	add_impucontact_to_list(impu, impu_contact_ptr);
+	
+	ref_contact_unsafe(contact);
+	LM_DBG("number of contacts for IMPU [%.*s] is %d\n", impu->public_identity.len, impu->public_identity.s, impu->linked_contacts.numcontacts);
+	if (write_to_db && db_mode == WRITE_THROUGH && db_link_contact_to_impu(impu, contact) != 0) {
+		LM_ERR("Failed to update DB linking contact [%.*s] to IMPU [%.*s]...continuing but db will be out of sync!\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
+	};
+	
+    return 0;
+}
+
+int unlink_contact_from_impu(impurecord_t* impu, ucontact_t* contact, int write_to_db, int is_explicit) {
+    impu_contact_t *impucontact;
+	int locked = 0;
+
+    LM_DBG("asked to unlink contact [%p] => [%.*s] from impu [%.*s]\n", contact, contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
+
+	impucontact = impu->linked_contacts.head;
+	
+	while (impucontact) {
+		if ((contact = impucontact->contact)) {
+			remove_impucontact_from_list(impu, impucontact);
+			if (write_to_db && db_mode == WRITE_THROUGH && (db_unlink_contact_from_impu(impu, contact) != 0)) {
+				LM_ERR("Failed to un-link DB contact [%.*s] from IMPU [%.*s]...continuing but db will be out of sync!\n", contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
+			}
+
+			locked = lock_try(contact->lock);
+			if (locked == 0) {
+				//                found_contact->state = CONTACT_DELAYED_DELETE;
+				unref_contact_unsafe(contact); //we don't unref because we don't have the lock on this particular contacts contact slot and we can't take it coz of deadlock. - so let
+				//a housekeeper thread do it
+				locked = 1;
+			} else {
+				LM_ERR("Could not get lock to remove link from of contact from impu....");
+				//TODO: we either need to wait and retry or we need to get another process to do this for us.... right now we will leak a contact.
+			}
+			if (locked == 1) {
+				lock_release(contact->lock);
+			}
+			LM_DBG("unlinking contact [%p] => [%.*s] from impu [%.*s]\n", 
+				contact,
+				contact->c.len, contact->c.s, impu->public_identity.len, impu->public_identity.s);
+			break;
+		}
+		impucontact = impucontact->next;
+	}
 
     return 0;
 }

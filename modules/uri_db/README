@@ -12,9 +12,9 @@ Edited by
 
 Bogdan-Andrei Iancu
 
-   Copyright � 2003 FhG FOKUS
+   Copyright © 2003 FhG FOKUS
 
-   Copyright � 2005 Voice Sistem SRL
+   Copyright © 2005 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -41,7 +41,8 @@ Bogdan-Andrei Iancu
 
               4.1. check_to()
               4.2. check_from()
-              4.3. does_uri_exist()
+              4.3. check_uri(uri)
+              4.4. does_uri_exist()
 
    List of Examples
 
@@ -54,7 +55,8 @@ Bogdan-Andrei Iancu
    1.7. Set use_domain parameter
    1.8. check_to usage
    1.9. check_from usage
-   1.10. does_uri_exist usage
+   1.10. check_uri usage
+   1.11. does_uri_exist usage
 
 Chapter 1. Admin Guide
 
@@ -80,7 +82,8 @@ Chapter 1. Admin Guide
 
         4.1. check_to()
         4.2. check_from()
-        4.3. does_uri_exist()
+        4.3. check_uri(uri)
+        4.4. does_uri_exist()
 
 1. Overview
 
@@ -118,7 +121,7 @@ Chapter 1. Admin Guide
 
    If the db_url string is empty, the default database URL will be used.
 
-   Default value is "mysql://kamailioro:kamailioro@localhost/kamailio".
+   Default value is “mysql://kamailioro:kamailioro@localhost/kamailio”.
 
    Example 1.1. Set db_url parameter
 ...
@@ -127,11 +130,11 @@ modparam("uri_db", "db_url", "mysql://username:password@localhost/openser")
 
 3.2. db_table (string)
 
-   The DB table that should be used. Its possible to use the "subscriber"
-   and "uri" table. If the "uri" table should be used, an additional
-   parameter "use-uri-table") must be set.
+   The DB table that should be used. Its possible to use the “subscriber”
+   and “uri” table. If the “uri” table should be used, an additional
+   parameter “use-uri-table”) must be set.
 
-   Default value is "subscriber".
+   Default value is “subscriber”.
 
    Example 1.2. Set uri_table parameter
 ...
@@ -142,7 +145,7 @@ modparam("uri_db", "db_table", "uri")
 
    Column holding usernames in the table.
 
-   Default value is "username".
+   Default value is “username”.
 
    Example 1.3. Set user_column parameter
 ...
@@ -153,7 +156,7 @@ modparam("uri_db", "user_column", "username")
 
    Column holding domain in the table.
 
-   Default value is "domain".
+   Default value is “domain”.
 
    Example 1.4. Set domain_column parameter
 ...
@@ -164,7 +167,7 @@ modparam("uri_db", "domain_column", "domain")
 
    Column holding URI username in the table.
 
-   Default value is "uri_user".
+   Default value is “uri_user”.
 
    Example 1.5. Set uriuser_column parameter
 ...
@@ -173,10 +176,10 @@ modparam("uri_db", "uriuser_column", "uri_user")
 
 3.6. use_uri_table (integer)
 
-   Specify if the "uri" table should be used for checkings instead of
-   "subscriber" table. A non-zero value means true.
+   Specify if the “uri” table should be used for checkings instead of
+   “subscriber” table. A non-zero value means true.
 
-   Default value is "0 (false)".
+   Default value is “0 (false)”.
 
    Example 1.6. Set use_uri_table parameter
 ...
@@ -189,11 +192,11 @@ modparam("uri_db", "use_uri_table", 1)
    users (along with username). This is useful in multi domain setups, a
    non-zero value means true.
 
-   This parameter is only evaluated for calls to "does_uri_exist", all
+   This parameter is only evaluated for calls to “does_uri_exist”, all
    other functions checks the digest username and realm against the given
-   username, if the "uri" table is used.
+   username, if the “uri” table is used.
 
-   Default value is "0 (false)".
+   Default value is “0 (false)”.
 
    Example 1.7. Set use_domain parameter
 ...
@@ -204,11 +207,12 @@ modparam("uri_db", "use_domain", 1)
 
    4.1. check_to()
    4.2. check_from()
-   4.3. does_uri_exist()
+   4.3. check_uri(uri)
+   4.4. does_uri_exist()
 
-4.1. check_to()
+4.1.  check_to()
 
-   Check "To" username against URI table (if use_uri_table is set) or
+   Check “To” username against URI table (if use_uri_table is set) or
    digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
@@ -220,9 +224,9 @@ if (check_to()) {
 };
 ...
 
-4.2. check_from()
+4.2.  check_from()
 
-   Check "From" username against URI table (if use_uri_table is set) or
+   Check “From” username against URI table (if use_uri_table is set) or
    digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
@@ -234,7 +238,25 @@ if (check_from()) {
 };
 ...
 
-4.3. does_uri_exist()
+4.3.  check_uri(uri)
+
+   Check the username from the given uri against URI table (if
+   use_uri_table is set) or digest credentials (no DB backend required).
+
+   Description of parameters:
+     * uri Has to be a valid SIP URI, used to extract the username from.
+       The parameter can be a static or dynamic (with variables) string.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.10. check_uri usage
+...
+if (check_uri("$var(uri)")) {
+        ...
+};
+...
+
+4.4.  does_uri_exist()
 
    Check if username in the request URI belongs to an existing user.
 
@@ -243,7 +265,7 @@ if (check_from()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.10. does_uri_exist usage
+   Example 1.11. does_uri_exist usage
 ...
 if (does_uri_exist()) {
         ...

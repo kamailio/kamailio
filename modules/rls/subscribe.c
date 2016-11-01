@@ -831,7 +831,7 @@ bad_event:
 	}
 
 error:
-	LM_ERR("occured in rls_handle_subscribe\n");
+	LM_ERR("occurred in rls_handle_subscribe\n");
 
 	if(contact!=NULL)
 	{	

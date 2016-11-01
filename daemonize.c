@@ -114,7 +114,7 @@ retry:
 /** wait for an exit status to be send by daemon_status_send().
  * @param status - filled with the sent status (a char).
  * @return  0 on success, -1 on error (e.g. process died before sending
- *          status, not intialized a.s.o.).
+ *          status, not initialized a.s.o.).
  * Side-effects: it will close the write side of the pipe
  *  (must not be used from the same process as the daemon_status_send()).
  * Note: if init is not complete (only init, but no pre-daemonize)
@@ -196,7 +196,7 @@ void daemon_status_no_wait()
 
 /**
  * enable dumpable flag for core dumping after setuid() & friends
- * @return 0 when no critical error occured, -1 on such error
+ * @return 0 when no critical error occurred, -1 on such error
  */
 int enable_dumpable(void)
 {

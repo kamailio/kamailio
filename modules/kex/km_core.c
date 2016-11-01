@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -38,7 +38,7 @@ int w_setdsturi(struct sip_msg *msg, char *uri, str *s2)
 	/* todo: fixup */
 	s.s = uri;
 	s.len = strlen(uri);
-	
+
 	if(set_dst_uri(msg, &s)!=0)
 		return -1;
 	/* dst_uri changes, so it makes sense to re-use the current uri for
@@ -69,7 +69,7 @@ int pv_printf_fixup(void** param, int param_no)
 	pv_spec_t *spec=NULL;
 	pv_elem_t *pvmodel=NULL;
 	str tstr;
-	
+
 	if(param_no==1)
 	{
 		spec = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));

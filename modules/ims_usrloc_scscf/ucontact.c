@@ -123,8 +123,18 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	curr->len = param->len;
 	curr->type = param->type;
 	curr->next = 0;
-	if (shm_str_dup(&curr->body, &param->body) < 0) goto error;
-	if (shm_str_dup(&curr->name, &param->name) < 0) goto error;
+	if (param->body.len > 0 && param->body.s) {
+		if (shm_str_dup(&curr->body, &param->body) < 0) goto error;
+	} else {
+		curr->body.s = 0;
+		curr->body.len = 0;
+	}
+	if (param->name.len > 0 && param->name.s) {
+		if (shm_str_dup(&curr->name, &param->name) < 0) goto error;
+	} else {
+		curr->name.s = 0;
+		curr->name.len = 0;
+	}
 	
 	if(first) {
 	    c->params = curr;
@@ -138,15 +148,24 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
     }
     
     if (shm_str_dup(&c->c, _contact) < 0) goto error;
-    if (shm_str_dup(&c->callid, _ci->callid) < 0) goto error;
-    if (shm_str_dup(&c->user_agent, _ci->user_agent) < 0) goto error;
-    if (shm_str_dup(&c->aor, _aor) < 0) goto error;
-    if (shm_str_dup(&c->domain, _dom) < 0) goto error;
+	
+	if (_ci->callid && _ci->callid->len > 0) {
+		if (shm_str_dup(&c->callid, _ci->callid) < 0) goto error;
+	}
+	if (_ci->user_agent && _ci->user_agent->len > 0) {
+		if (shm_str_dup(&c->user_agent, _ci->user_agent) < 0) goto error;
+	}
+	if (_aor && _aor->len > 0) {
+		if (shm_str_dup(&c->aor, _aor) < 0) goto error;
+	}
+	if (_dom && _dom->len > 0) {
+		if (shm_str_dup(&c->domain, _dom) < 0) goto error;
+	}
     
-    if (_ci->received.s && _ci->received.len) {
+    if (_ci->received.len > 0) {
         if (shm_str_dup(&c->received, &_ci->received) < 0) goto error;
     }
-    if (_ci->path && _ci->path->len) {
+    if (_ci->path && _ci->path->len > 0) {
         if (shm_str_dup(&c->path, _ci->path) < 0) goto error;
     }
     
@@ -236,50 +255,50 @@ void print_ucontact(FILE* _f, ucontact_t* _c) {
     char* st = "";
     param_t * tmp;
     
-    fprintf(_f, "~~~Contact(%p)~~~\n", _c);
-    fprintf(_f, "domain    : '%.*s'\n", _c->domain.len, ZSW(_c->domain.s));
-    fprintf(_f, "aor       : '%.*s'\n", _c->aor.len, ZSW(_c->aor.s));
-    fprintf(_f, "Contact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
+    fprintf(_f, "\t~~~Contact(%p) (refcount: %d)~~~\n", _c, _c->ref_count);
+    fprintf(_f, "\t\tdomain    : '%.*s'\n", _c->domain.len, ZSW(_c->domain.s));
+    fprintf(_f, "\t\taor       : '%.*s'\n", _c->aor.len, ZSW(_c->aor.s));
+    fprintf(_f, "\t\tContact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
     
-    fprintf(_f, "Params   :\n");
+    fprintf(_f, "\t\tParams   :\n");
     tmp = _c->params;
     while (tmp) {
-	fprintf(_f, "Param Name: '%.*s' Param Body '%.*s'\n", tmp->name.len, ZSW(tmp->name.s), tmp->body.len, ZSW(tmp->body.s));
+	fprintf(_f, "\t\t\tParam Name: '%.*s' Param Body '%.*s'\n", tmp->name.len, ZSW(tmp->name.s), tmp->body.len, ZSW(tmp->body.s));
 	tmp = tmp->next;
     }
     
     
-    fprintf(_f, "Expires   : ");
+    fprintf(_f, "\t\tExpires   : ");
     if (_c->expires == 0) {
-        fprintf(_f, "Permanent\n");
+        fprintf(_f, "\t\tPermanent\n");
     } else if (_c->expires == UL_EXPIRED_TIME) {
-        fprintf(_f, "Deleted\n");
+        fprintf(_f, "\t\tDeleted\n");
     } else if (t > _c->expires) {
-        fprintf(_f, "Expired\n");
+        fprintf(_f, "\t\tExpired\n");
     } else {
-        fprintf(_f, "%u\n", (unsigned int) (_c->expires - t));
+        fprintf(_f, "\t\t%u\n", (unsigned int) (_c->expires - t));
     }
-    fprintf(_f, "q         : %s\n", q2str(_c->q, 0));
-    fprintf(_f, "Call-ID   : '%.*s'\n", _c->callid.len, ZSW(_c->callid.s));
-    fprintf(_f, "CSeq      : %d\n", _c->cseq);
-    fprintf(_f, "User-Agent: '%.*s'\n",
+    fprintf(_f, "\t\tq         : %s\n", q2str(_c->q, 0));
+    fprintf(_f, "\t\tCall-ID   : '%.*s'\n", _c->callid.len, ZSW(_c->callid.s));
+    fprintf(_f, "\t\tCSeq      : %d\n", _c->cseq);
+    fprintf(_f, "\t\tUser-Agent: '%.*s'\n",
             _c->user_agent.len, ZSW(_c->user_agent.s));
-    fprintf(_f, "received  : '%.*s'\n",
+    fprintf(_f, "\t\treceived  : '%.*s'\n",
             _c->received.len, ZSW(_c->received.s));
-    fprintf(_f, "Path      : '%.*s'\n",
+    fprintf(_f, "\t\tPath      : '%.*s'\n",
             _c->path.len, ZSW(_c->path.s));
-    fprintf(_f, "State     : %s\n", st);
-    fprintf(_f, "Flags     : %u\n", _c->flags);
+    fprintf(_f, "\t\tState     : %s\n", get_contact_state_as_string(_c->state));
+    fprintf(_f, "\t\tFlags     : %u\n", _c->flags);
     if (_c->sock) {
-        fprintf(_f, "Sock      : %.*s (%p)\n",
+        fprintf(_f, "\t\tSock      : %.*s (%p)\n",
                 _c->sock->sock_str.len, _c->sock->sock_str.s, _c->sock);
     } else {
-        fprintf(_f, "Sock      : none (null)\n");
+        fprintf(_f, "\t\tSock      : none (null)\n");
     }
-    fprintf(_f, "Methods   : %u\n", _c->methods);
-    fprintf(_f, "next      : %p\n", _c->next);
-    fprintf(_f, "prev      : %p\n", _c->prev);
-    fprintf(_f, "~~~/Contact~~~~\n");
+    fprintf(_f, "\t\tMethods   : %u\n", _c->methods);
+    fprintf(_f, "\t\tnext      : %p\n", _c->next);
+    fprintf(_f, "\t\tprev      : %p\n", _c->prev);
+    fprintf(_f, "\t~~~/Contact~~~~\n");
 }
 
 /*!
@@ -352,46 +371,6 @@ int mem_expire_ucontact(ucontact_t* _c) {
     _c->expires = act_time;
 
     return 0;
-}
-
-
-
-/*!
- * \brief Insert a new contact into the list at the correct position
- * \param _r record that holds the sorted contacts
- * \param _c new contact
- */
-static inline void update_contact_pos(struct impurecord* _r, ucontact_t* _c) {
-    ucontact_t *pos, *ppos;
-
-    if (_c->next == 0) //if its last its newest already
-        return;
-
-    if (_c->prev == 0) //must be only element in the list
-        return;
-
-    if (_c->next->expires < _c->expires) {//changed place required
-        ppos = _c->next;
-        pos = _c->next->next;
-        //unlink _c
-        _c->prev->next = _c->next;
-        _c->next->prev = _c->prev;
-        _c->prev = _c->next = 0;
-
-        while (pos) {
-            if (_c->expires < pos->expires)
-                break;
-            ppos = pos;
-            pos = pos->next;
-        }
-
-        ppos->next = _c;
-        _c->prev = ppos;
-        if (pos) {
-            _c->next = pos;
-            pos->prev = _c;
-        }
-    }
 }
 
 /*!

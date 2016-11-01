@@ -103,6 +103,7 @@ struct cfg_group_core {
 	int mem_summary; /*!< display memory status/summary info on exit */
 	int mem_safety; /*!< memory safety control option */
 	int mem_join; /*!< memory free fragments join option */
+	int mem_status_mode; /*!< memory status printed for free/all fragments */
 	int corelog; /*!< log level for non-critcal core error messages */
 	int latency_cfg_log; /*!< log level for printing latency of routing blocks */
 	int latency_log; /*!< log level for latency limits messages */

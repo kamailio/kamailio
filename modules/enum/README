@@ -8,7 +8,7 @@ Otmar Lendl
 
    <lendl@nic.at>
 
-   Copyright � 2002, 2003 Juha Heinanen
+   Copyright © 2002, 2003 Juha Heinanen
      __________________________________________________________________
 
    Table of Contents
@@ -74,9 +74,9 @@ Chapter 1. Admin Guide
    phone number of the form +decimal-digits, where the number of digits is
    at least 2 and at most 20. Out of this number enum_query forms a domain
    name, where the digits are in reverse order and separated by dots
-   followed by domain suffix that by default is "e164.arpa.". For example,
+   followed by domain suffix that by default is “e164.arpa.”. For example,
    if the user part is +35831234567, the domain name will be
-   "7.6.5.4.3.2.1.3.8.5.3.e164.arpa.". i_enum_query operates in a similar
+   “7.6.5.4.3.2.1.3.8.5.3.e164.arpa.”. i_enum_query operates in a similar
    fashion. The only difference is that it adds a label (default "i") to
    branch off from the default, user-ENUM tree to an infrastructure ENUM
    tree.
@@ -143,7 +143,7 @@ Chapter 1. Admin Guide
    digits of an E164 number. Can be overridden by a parameter to
    enum_query.
 
-   Default value is "e164.arpa."
+   Default value is “e164.arpa.”
 
    Example 1.1. Setting domain_suffix module parameter
 modparam("enum", "domain_suffix", "e1234.arpa.")
@@ -158,7 +158,7 @@ Note
    Currently SIP Router does not support tel URIs. This means that at
    present tel_uri_params is appended as URI parameters to every URI.
 
-   Default value is ""
+   Default value is “”
 
    Example 1.2. Setting tel_uri_params module parameter
 modparam("enum", "tel_uri_params", ";npdi")
@@ -168,7 +168,7 @@ modparam("enum", "tel_uri_params", ";npdi")
    The domain suffix to be used for i_enum_query() lookups. Can be
    overridden by a parameter to i_enum_query.
 
-   Default value is "e164.arpa."
+   Default value is “e164.arpa.”
 
    Example 1.3. Setting i_enum_suffix module parameter
 modparam("enum", "i_enum_suffix", "e1234.arpa.")
@@ -178,7 +178,7 @@ modparam("enum", "i_enum_suffix", "e1234.arpa.")
    This parameter determines which label i_enum_query() will use to branch
    off to the infrastructure ENUM tree.
 
-   Default value is ""i""
+   Default value is “"i"”
 
    Example 1.4. Setting brachlabel module parameter
 modparam("enum", "branchlabel", "i")
@@ -217,7 +217,7 @@ i.1.e164.arpa.     TYPE65300  \# 14 (
 ;                               )
 9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "NAPTR content for  +1 234 5678 999"
 
-   Default value is "cc"
+   Default value is “cc”
 
    Example 1.7. Setting the bl_algorithm module parameter
 modparam("enum", "bl_algorithm", "txt")
@@ -229,10 +229,10 @@ modparam("enum", "bl_algorithm", "txt")
    4.3. i_enum_query(["suffix"[,"service"]])
    4.4. is_from_user_enum()
 
-4.1. enum_query(["suffix"[,"service"]])
+4.1.  enum_query(["suffix"[,"service"]])
 
    The function performs an enum query and rewrites the Request-URI with
-   the result of the query. See Section 1, "Overview" for more
+   the result of the query. See Section 1, “Overview” for more
    information.
 
    Meaning of the parameters is as follows:
@@ -265,11 +265,11 @@ enum_query("e164.arpa.","voice");
 enum_query("e164.arpa.","+sip+voice:sip");
 ...
 
-4.2. enum_pv_query("pvar"[,"suffix"[,"service"]])
+4.2.  enum_pv_query("pvar"[,"suffix"[,"service"]])
 
    The function performs an enum query on E.164 number stored in its
    pseudo variable argument and rewrites the Request-URI with the result
-   of the query. See Section 1, "Overview" for more information.
+   of the query. See Section 1, “Overview” for more information.
 
    Meaning of the parameters is as follows:
      * pvar - Pseudo variable that holds an E.164 number on which enum
@@ -301,7 +301,7 @@ enum_pv_query("$avp(i:100)","e164.arpa.","voice");
 enum_pv_query("$avp(i:100)","e164.arpa.","+sip+voice:sip");
 ...
 
-4.3. i_enum_query(["suffix"[,"service"]])
+4.3.  i_enum_query(["suffix"[,"service"]])
 
    The function performs an enum query and rewrites the Request-URI with
    the result of the query. This the Infrastructure-ENUM version of

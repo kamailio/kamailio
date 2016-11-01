@@ -755,6 +755,11 @@ modparam("registrar", "xavp_cfg", "reg")
 		</listitem>
 		<listitem>
 			<para>
+				<emphasis>expires</emphasis> - the record's expires value.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
 				<emphasis>received</emphasis> - the record's received value.
 			</para>
 		</listitem>
@@ -924,6 +929,36 @@ modparam("registrar", "flow_timer", 25)
 		</example>
 	</section>
 
+	<section id="registrar.p.contact_max_size">
+		<title><varname>contact_max_size</varname> (integer)</title>
+		<para>
+		Max size of URIs in <quote>Contact:</quote> header.
+		</para>
+		<para>
+		The size of URIs in <quote>Contact:</quote> headers are checked to be
+		lower or equal to this value.
+		A warning is logged and a 400 Bad Request is sent in response to REGISTER
+		requests with contact URIs that are longer than this value.
+		</para>
+		<para>
+		If a database is used then you must make sure that your database model supports
+		strings of the configured size in the column <quote>contact</quote> of the table
+		specified in <quote>save()</quote> function.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 255.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contact_max_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "contact_max_size", 500)
+...
+		</programlisting>
+		</example>
+	</section>
 
 	</section>
 
@@ -972,6 +1007,13 @@ modparam("registrar", "flow_timer", 25)
 					contact per AoR. If there are other contact addresses for
 					AoR not matching current registration, remove them.
 					This mode ensures one contact per AoR (user).</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>0x08</emphasis> - Do not apply
+					<emphasis>expires_range</emphasis> or 
+					<emphasis>default_expires_range</emphasis> to this
+					registration.
+					</para>
 				</listitem>
 			</itemizedlist>
 			<para>The flags may be given in decimal or hexa format.</para>
@@ -1167,7 +1209,7 @@ lookup_branches("location");
 				<listitem>
 					<para>4 - match_contact</para>
 				</listitem>
-			</itemizedlist>			
+			</itemizedlist>
 		</listitem>
 		<listitem>
 			<para>
@@ -1176,9 +1218,13 @@ lookup_branches("location");
             <para>flag values is as follows:</para>
 			<itemizedlist>
 				<listitem>
-					<para>1 - set xavp_rcd with value from matched contact</para>
+					<para>1 - restore the xavps associated with the matched contact</para>
 				</listitem>
-			</itemizedlist>						
+				<listitem>
+					<para>2 - skip adding the matched location record attributes to xavp_rcd
+					(e.g., the ruid, contact, received, ...)</para>
+				</listitem>
+			</itemizedlist>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -1274,6 +1320,31 @@ add_sock_hdr("Sock-Info");
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
+		<para>
+		Return values:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>0</emphasis> - Successfully deleted contact(s)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>-1</emphasis> - Failed to extract or parse address of record from argument
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>-2</emphasis> - Error in unregistering user
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>-3</emphasis> - Contacts for AOR not found
+			</para>
+		</listitem>
+		</itemizedlist>
 		<example>
 		<title><function>unregister</function> usage</title>
 		<programlisting format="linespecific">

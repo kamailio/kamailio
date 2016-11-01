@@ -62,7 +62,7 @@ int get_msg_rules(const str_t *username, const str_t *filename,
 	/* parse input data */
 	res = parse_msg_rules(data, dsize, dst);
 	if (res != RES_OK) {
-		ERROR_LOG("Error occured during document parsing!\n");
+		ERROR_LOG("Error occurred during document parsing!\n");
 	}
 
 	if (data) cds_free(data);

@@ -1,4 +1,4 @@
-/* 
+/*
  * time related functions
  *
  * Copyright (C) 2006 iptelorg GmbH

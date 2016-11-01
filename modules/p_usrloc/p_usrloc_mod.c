@@ -112,7 +112,7 @@ int ul_db_update_as_insert = 0;
  * database's status changed or a spare has been activated.
  * @param spare_flag_column name of the column containing the information if an entry
  * works as spare for broken dbs (0=no spare, 1=spare)
- * @param error_column name of the column containing the errors which occured on 
+ * @param error_column name of the column containing the errors which occurred on 
  * the database.
  * @param risk_group_column name of the column containing the databases risk group
  * Only used when spare databases are used.

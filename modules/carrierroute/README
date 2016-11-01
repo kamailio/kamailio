@@ -35,7 +35,9 @@ Lucian Balaceanu
               3.8. use_domain (int)
               3.9. fallback_default (int)
               3.10. fetch_rows (integer)
-              3.11. match_mode (integer)
+              3.11. db_load_description (integer)
+              3.12. match_mode (integer)
+              3.13. avoid_failed_destinations (integer)
 
         4. Functions
 
@@ -112,21 +114,23 @@ Lucian Balaceanu
    1.8. Set use_domain parameter
    1.9. Set fallback_default parameter
    1.10. Set fetch_rows parameter
-   1.11. Set match_mode parameter
-   1.12. cr_replace_host usage
-   1.13. cr_deactivate_host usage
-   1.14. cr_activate_host usage
-   1.15. cr_add_host usage
-   1.16. cr_delete_host usage
-   1.17. Configuration example - Routing to default tree
-   1.18. Configuration example - Routing to user tree
-   1.19. Configuration example - module configuration
-   1.20. Example database content - carrierroute table
-   1.21. Example database content - simple carrierfailureroute table
-   1.22. Example database content - more complex carrierfailureroute table
-   1.23. Example database content - carrier_name table
-   1.24. Example database content - domain_name table
-   1.25. Necessary extensions for the user table
+   1.11. Unset db_load_description parameter
+   1.12. Set match_mode parameter
+   1.13. Set avoid_failed_destinations parameter
+   1.14. cr_replace_host usage
+   1.15. cr_deactivate_host usage
+   1.16. cr_activate_host usage
+   1.17. cr_add_host usage
+   1.18. cr_delete_host usage
+   1.19. Configuration example - Routing to default tree
+   1.20. Configuration example - Routing to user tree
+   1.21. Configuration example - module configuration
+   1.22. Example database content - carrierroute table
+   1.23. Example database content - simple carrierfailureroute table
+   1.24. Example database content - more complex carrierfailureroute table
+   1.25. Example database content - carrier_name table
+   1.26. Example database content - domain_name table
+   1.27. Necessary extensions for the user table
    2.1. Set db_url parameter
    2.2. Set carrierroute_table parameter
    2.3. Set carrierroute_id_col parameter
@@ -180,7 +184,9 @@ Chapter 1. Admin Guide
         3.8. use_domain (int)
         3.9. fallback_default (int)
         3.10. fetch_rows (integer)
-        3.11. match_mode (integer)
+        3.11. db_load_description (integer)
+        3.12. match_mode (integer)
+        3.13. avoid_failed_destinations (integer)
 
    4. Functions
 
@@ -299,7 +305,9 @@ Chapter 1. Admin Guide
    3.8. use_domain (int)
    3.9. fallback_default (int)
    3.10. fetch_rows (integer)
-   3.11. match_mode (integer)
+   3.11. db_load_description (integer)
+   3.12. match_mode (integer)
+   3.13. avoid_failed_destinations (integer)
 
 3.1. subscriber_table (string)
 
@@ -425,7 +433,20 @@ modparam("carrierroute", "fallback_default", 1)
 modparam("carrierroute", "fetch_rows", 3000)
 ...
 
-3.11. match_mode (integer)
+3.11. db_load_description (integer)
+
+   Toggle on/off loading in memory the description column in the
+   carrierroute/carrierfailureroute database tables. This reduces the
+   shared memory used by the module.
+
+   Default value is “1”.
+
+   Example 1.11. Unset db_load_description parameter
+...
+modparam("carrierroute", "db_load_description", 0)
+...
+
+3.12. match_mode (integer)
 
    The number of individual characters that are used for matching. Valid
    values are 10 or 128. When you specifiy 10, only digits will be used
@@ -436,9 +457,22 @@ modparam("carrierroute", "fetch_rows", 3000)
 
    Default value is “10”.
 
-   Example 1.11. Set match_mode parameter
+   Example 1.12. Set match_mode parameter
 ...
 modparam("carrierroute", "match_mode", 10)
+...
+
+3.13. avoid_failed_destinations (integer)
+
+   Integer parameter to toggle on/off the possibility that in the
+   failurerouting cases destinations that previously failed are avoided.
+   Possible values are 0 (off), 1 (on). Also see cr_route section.
+
+   Default value is “1”.
+
+   Example 1.13. Set avoid_failed_destinations parameter
+...
+modparam("carrierroute", "avoid_failed_destinations", 0)
 ...
 
 4. Functions
@@ -495,15 +529,17 @@ descavp)
    prefix_matching at the given domain in the given carrier tree. The
    Request URI is rewritten using rewrite_user and the given hash source
    and algorithm. Returns -1 if there is no data found or an empty rewrite
-   host on the longest match is found. On sucess also the description is
+   host on the longest match is found. On success also the description is
    stored in the given AVP (if obmitted, nothing is stored in an AVP).
    This is useful if you need some additional informations that belongs to
    each gw, like the destination or the number of channels.
 
-   The function pays special attention to the failurerouting cases, so
-   that any destination that has failed to provide a successful response
-   will not be reused in a subsequent call of cr_route. This situation can
-   appear when different route domains contain a set of common gateways.
+   Depending on the value of the avoid_failed_destinations module
+   parameter, the function pays special attention to the failurerouting
+   cases, so that any destination that has failed to provide a successful
+   response will not be reused in a subsequent call of cr_route. This
+   situation can appear when different route domains contain a set of
+   common gateways.
 
    This function is only usable with rewrite_user and prefix_matching
    containing a valid string. This string needs to be numerical if the
@@ -648,7 +684,7 @@ dstavp)
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.12. cr_replace_host usage
+   Example 1.14. cr_replace_host usage
 ...
 kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
@@ -669,7 +705,7 @@ kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.13. cr_deactivate_host usage
+   Example 1.15. cr_deactivate_host usage
 ...
 kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -684,7 +720,7 @@ kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.14. cr_activate_host usage
+   Example 1.16. cr_activate_host usage
 ...
 kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -704,7 +740,7 @@ kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.15. cr_add_host usage
+   Example 1.17. cr_add_host usage
 ...
 kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
@@ -725,14 +761,14 @@ kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.16. cr_delete_host usage
+   Example 1.18. cr_delete_host usage
 ...
 kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
 6. Configuration examples
 
-   Example 1.17. Configuration example - Routing to default tree
+   Example 1.19. Configuration example - Routing to default tree
 ...
 route {
         # route calls based on hash over callid
@@ -766,7 +802,7 @@ failure_route[2] {
         # further processing
 }
 
-   Example 1.18. Configuration example - Routing to user tree
+   Example 1.20. Configuration example - Routing to user tree
 ...
 route[1] {
         cr_user_carrier("$fU", "$fd", "$avp(s:carrier)");
@@ -808,7 +844,7 @@ failure_route[1] {
 }
 ...
 
-   Example 1.19. Configuration example - module configuration
+   Example 1.21. Configuration example - module configuration
 
    The following config file specifies within the default carrier two
    domains, each with an prefix that contains two hosts. It is not
@@ -891,7 +927,7 @@ domain register {
 
 7.2. Database examples
 
-   Example 1.20. Example database content - carrierroute table
+   Example 1.22. Example database content - carrierroute table
 ...
 +----+---------+--------+-------------+-------+------+---------------+
 | id | carrier | domain | scan_prefix | flags | prob | rewrite_host  |
@@ -928,7 +964,7 @@ domain register {
    flags are not set, the other two rules are used. The “strip”, “mask”
    and “comment” colums are omitted for brevity.
 
-   Example 1.21. Example database content - simple carrierfailureroute
+   Example 1.23. Example database content - simple carrierfailureroute
    table
 ...
 +----+---------+--------+---------------+------------+-------------+
@@ -950,7 +986,7 @@ domain register {
    entry in the carrierroute table, otherwise the module will not load the
    routing data.
 
-   Example 1.22. Example database content - more complex
+   Example 1.24. Example database content - more complex
    carrierfailureroute table
 ...
 +----+---------+-----------+------------+--------+-----+-------------+
@@ -968,7 +1004,7 @@ domain register {
    for example that indicates that ringing has happened. If this flag is
    set, there will be no further forwarding, because next_domain is empty.
    In the second and third routes are certain gateway errors matched, if
-   this errors have occured, then the next domain will be choosen. Note
+   this errors have occurred, then the next domain will be choosen. Note
    that the reply_code must be 3 characters wide, and only the "."
    character is accepted as wildcard.The last route does forwarding
    according some flags, e.g. the customer came from a certain carrier,
@@ -977,7 +1013,7 @@ domain register {
    that holds domain entries for this routing rules. Not all table colums
    are show here for brevity.
 
-   Example 1.23. Example database content - carrier_name table
+   Example 1.25. Example database content - carrier_name table
 ...
 +----+----------+
 | id | carrier  |
@@ -990,7 +1026,7 @@ domain register {
 
    This table contains the mapping of the carrier id to actual names.
 
-   Example 1.24. Example database content - domain_name table
+   Example 1.26. Example database content - domain_name table
 ...
 +----+----------+
 | id | domain   |
@@ -1010,7 +1046,7 @@ domain register {
    specified as modul parameter) to choose the actual carrier for the
    users.
 
-   Example 1.25. Necessary extensions for the user table
+   Example 1.27. Necessary extensions for the user table
 
    Suggested changes:
 ...

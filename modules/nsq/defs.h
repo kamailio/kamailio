@@ -1,6 +1,33 @@
 /*
- * defs.h
+ * $Id$
  *
+ * Kazoo module interface
+ *
+ * Copyright (C) 2010-2014 2600Hz
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Contributor(s):
+ * Emmanuel Schmidbauer <emmanuel@getweave.com>
+ *
+ * History:
+ * --------
+ * 2014-08  first version (2600hz)
+ * 2016-03  port to NSQ Module (Weave Communications)
  */
 
 #ifndef _NSQ_DEFS_H_
@@ -38,6 +65,7 @@
 #define BLF_JSON_CONTACT   	"Contact"
 #define BLF_JSON_EVENT_PKG      "Event-Package"
 #define MWI_JSON_WAITING        "Messages-Waiting"
+#define MWI_JSON_VOICE_MESSAGE  "MWI-Voice-Message"
 #define MWI_JSON_NEW            "Messages-New"
 #define MWI_JSON_SAVED          "Messages-Saved"
 #define MWI_JSON_URGENT         "Messages-Urgent"
@@ -50,6 +78,8 @@
 #define MWI_BODY_BUFFER_SIZE 2048
 #define PRESENCE_BODY_BUFFER_SIZE 4096
 
+#define MWI_BODY_VOICE_MESSAGE "Messages-Waiting: %.*s\r\nMessage-Account: %.*s\r\nVoice-Message: %.*s\r\n"
+#define MWI_BODY_NO_VOICE_MESSAGE "Messages-Waiting: %.*s\r\nMessage-Account: %.*s\r\n"
 #define MWI_BODY             "Messages-Waiting: %.*s\r\nMessage-Account: %.*s\r\nVoice-Message: %.*s/%.*s (%.*s/%.*s)\r\n"
 #define PRESENCE_BODY        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
 <presence xmlns=\"urn:ietf:params:xml:ns:pidf\" xmlns:dm=\"urn:ietf:params:xml:ns:pidf:data-model\" xmlns:rpid=\"urn:ietf:params:xml:ns:pidf:rpid\" xmlns:c=\"urn:ietf:params:xml:ns:pidf:cipid\" entity=\"%s\"> \

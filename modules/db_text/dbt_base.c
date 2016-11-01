@@ -15,10 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <string.h>
@@ -26,7 +26,7 @@
 #include "../../str.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
- 
+
 #include "db_text.h"
 #include "dbt_res.h"
 #include "dbt_api.h"
@@ -46,7 +46,7 @@ db1_con_t* dbt_init(const str* _sqlurl)
 	db1_con_t* _res;
 	str _s;
 	char dbt_path[DBT_PATH_LEN];
-	
+
 	if (!_sqlurl || !_sqlurl->s)
 	{
 		LM_ERR("invalid parameter value\n");
@@ -79,7 +79,7 @@ db1_con_t* dbt_init(const str* _sqlurl)
 		_s.len += sizeof(CFG_DIR);
 		_s.s = dbt_path;
 	}
-	
+
 	_res = pkg_malloc(sizeof(db1_con_t)+sizeof(dbt_con_t));
 	if (!_res)
 	{
@@ -97,7 +97,7 @@ db1_con_t* dbt_init(const str* _sqlurl)
 		return NULL;
 	}
 
-    return _res;
+	return _res;
 }
 
 
@@ -106,14 +106,14 @@ db1_con_t* dbt_init(const str* _sqlurl)
  */
 void dbt_close(db1_con_t* _h)
 {
-	if (!_h) 
+	if (!_h)
 	{
 		LM_ERR("invalid parameter value\n");
 		return;
 	}
-	
+
 	pkg_free(_h);
-    return;
+	return;
 }
 
 
@@ -136,7 +136,7 @@ int dbt_free_result(db1_con_t* _h, db1_res_t* _r)
 		LM_ERR("unable to free internal structure\n");
 	}
 
-	if(db_free_result(_r) < 0) 
+	if(db_free_result(_r) < 0)
 	{
 		LM_ERR("unable to free result structure\n");
 		return -1;
@@ -158,16 +158,16 @@ int dbt_free_result(db1_con_t* _h, db1_res_t* _r)
  * _o: order by the specified column
  */
 
-int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
+int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			db_key_t* _c, int _n, int _nc, db_key_t _o, db1_res_t** _r)
 {
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
 	dbt_result_p _dres = NULL;
 	int result = 0;
-	
+
 	int *lkey=NULL, *lres=NULL;
-	
+
 	db_key_t *_o_k=NULL;    /* columns in order-by */
 	char *_o_op=NULL;       /* operators for oder-by */
 	int _o_n;               /* no of elements in order-by */
@@ -180,7 +180,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		return -1;
 	}
 	*_r = NULL;
-	
+
 
 	if (_o)
 	{
@@ -226,10 +226,10 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 	LM_DBG("new res with %d cols\n", _nc);
 	_dres = dbt_result_new(_tbc, lres, _nc);
-	
+
 	if(!_dres)
 		goto error;
-	
+
 	_drp = _tbc->rows;
 	while(_drp)
 	{
@@ -245,7 +245,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	}
 
 	dbt_table_update_flags(_tbc, DBT_TBFL_ZERO, DBT_FL_IGN, 1);
-	
+
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
@@ -264,17 +264,17 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 
 	/* dbt_result_print(_dres); */
-	
+
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
 	if(_o_k)
- 		pkg_free(_o_k);
- 	if(_o_op)
- 		pkg_free(_o_op);
- 	if(_o_l)
- 		pkg_free(_o_l);
+		pkg_free(_o_k);
+	if(_o_op)
+		pkg_free(_o_op);
+	if(_o_l)
+		pkg_free(_o_l);
 
 	result = dbt_get_result(_r, _dres);
 	if(result != 0)
@@ -342,9 +342,9 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 {
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
-	
+
 	int *lkey=NULL, i, j;
-	
+
 	if (!_h || !CON_TABLE(_h))
 	{
 		LM_ERR("invalid parameter\n");
@@ -352,13 +352,13 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	}
 
 	((dbt_con_p)_h->tail)->affected = 0;
-    
+
 	if(!_k || !_v || _n<=0)
 	{
 		LM_ERR("no key-value to insert\n");
 		return -1;
 	}
-	
+
 	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
@@ -372,7 +372,7 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		LM_ERR("more values than columns!!\n");
 		goto error;
 	}
-	
+
 	if(_k)
 	{
 		lkey = dbt_get_refs(_tbc, _k, _n);
@@ -385,7 +385,7 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		LM_ERR("no shm memory for a new row!!\n");
 		goto error;
 	}
-	
+
 	for(i=0; i<_n; i++)
 	{
 		j = (lkey)?lkey[i]:i;
@@ -401,7 +401,7 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 			LM_ERR("cannot set v[%d] in c[%d]!\n", i, j);
 			goto clean;
 		}
-		
+
 	}
 
 	if(dbt_table_add_row(_tbc, _drp))
@@ -411,35 +411,35 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	}
 
 	((dbt_con_p)_h->tail)->affected = 1;
-    
+
 	/* dbt_print_table(_tbc, NULL); */
-	
+
 	/* unlock databse */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(lkey)
 		pkg_free(lkey);
 
-    return 0;
-	
+	return 0;
+
 error:
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(lkey)
 		pkg_free(lkey);
 	LM_ERR("failed to insert row in table!\n");
-    return -1;
-	
+	return -1;
+
 clean:
 	if(lkey)
 		pkg_free(lkey);
-	
+
 	if(_drp) // free row
 		dbt_row_free(_tbc, _drp);
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-	
-    return -1;
+
+	return -1;
 }
 
 /*
@@ -481,7 +481,7 @@ int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	lkey = dbt_get_refs(_tbc, _k, _n);
 	if(!lkey)
 		goto error;
-	
+
 	_drp = _tbc->rows;
 	while(_drp)
 	{
@@ -507,17 +507,17 @@ int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 
 	if( ((dbt_con_p)_h->tail)->affected )
 		dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
-	
+
 	/* dbt_print_table(_tbc, NULL); */
-	
+
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(lkey)
 		pkg_free(lkey);
-	
+
 	return 0;
-	
+
 error:
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
@@ -530,7 +530,7 @@ error:
  * Update a row in table
  */
 int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
+		db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
@@ -544,7 +544,7 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	}
 
 	((dbt_con_p)_h->tail)->affected = 0;
-    
+
 	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
@@ -574,7 +574,7 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 					LM_ERR("incompatible types!\n");
 					goto error;
 				}
-				
+
 				if(dbt_row_update_val(_drp, &(_uv[i]),
 							_tbc->colv[lres[i]]->type, lres[i]))
 				{
@@ -592,9 +592,9 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 
 	if( ((dbt_con_p)_h->tail)->affected )
 		dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
-	
+
 	/* dbt_print_table(_tbc, NULL); */
-	
+
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
@@ -603,7 +603,7 @@ int dbt_update(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	if(lres)
 		pkg_free(lres);
 
-    return 0;
+	return 0;
 
 error:
 	/* unlock database */
@@ -613,14 +613,14 @@ error:
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
-	
+
 	LM_ERR("failed to update the table!\n");
 
 	return -1;
 }
 
 int dbt_replace(db1_con_t* _h, db_key_t* _k, db_val_t* _v,
-	      int _n, int _nk, int _m)
+		int _n, int _nk, int _m)
 {
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
@@ -729,7 +729,7 @@ int dbt_replace(db1_con_t* _h, db_key_t* _k, db_val_t* _v,
 	if(lres)
 		pkg_free(lres);
 
-    return 0;
+	return 0;
 
 error:
 

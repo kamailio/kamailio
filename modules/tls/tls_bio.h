@@ -46,8 +46,8 @@ int tls_BIO_mbuf_set(BIO* b, struct tls_mbuf* rd, struct tls_mbuf* wr);
 
 
 
-/** intialize an mbuf structure.
- * @param mb - struct tls_mbuf pointer that will be intialized.
+/** initialize an mbuf structure.
+ * @param mb - struct tls_mbuf pointer that will be initialized.
  * @param b  - buffer (unsigned char*).
  * @param sz - suze of the buffer (int).
  * WARNING: the buffer will not be copied, but referenced.

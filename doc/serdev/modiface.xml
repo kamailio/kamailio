@@ -190,7 +190,7 @@ typedef int (*cmd_function)(struct sip_msg*, char*, char*);
 		</simpara>
 		<simpara>
 		    Fixup function can be used to convert the string back to
-		    integer. Such a conversion should happend only once because
+		    integer. Such a conversion should happened only once because
 		    the string parameter doesn't change when the server is
 		    running. Fixup is therefore ideal place for the conversion,
 		    it will be converted upon the server startup before the

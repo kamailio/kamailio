@@ -8,7 +8,7 @@
 
 ]>
 
-<book xmlns:xi="http://www.w3.org/2001/XInclude">
+<book>
     <bookinfo>
 	<title>ASYNC Module</title>
 	<productname class="trade">sip-router.org</productname>
@@ -25,13 +25,12 @@
 	    </editor>
 	</authorgroup>
 	<copyright>
-	    <year>2011</year>
+	    <year>2011-2016</year>
 	    <holder>asipto.com</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
-    <xi:include href="async_admin.xml"/>
-    
-    
+
+    <xi:include  xmlns:xi="http://www.w3.org/2001/XInclude" href="async_admin.xml"/>
+
 </book>

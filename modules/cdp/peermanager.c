@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <stdlib.h>
@@ -86,10 +84,10 @@ int peer_manager_init(dp_config *config)
 	msg_id_lock = lock_alloc();
 	msg_id_lock = lock_init(msg_id_lock);
 
-	srand((unsigned int)time(0));
-	*hopbyhop_id = rand();
+	kam_srand((unsigned int)time(0));
+	*hopbyhop_id = kam_rand();
 	*endtoend_id = (time(0)&0xFFF)<<20;
-	*endtoend_id |= rand() & 0xFFFFF;
+	*endtoend_id |= kam_rand() & 0xFFFFF;
 
 	for(i=0;i<config->peers_cnt;i++){
 		p = new_peer(config->peers[i].fqdn,config->peers[i].realm,config->peers[i].port,config->peers[i].src_addr);
@@ -119,7 +117,7 @@ void peer_manager_destroy()
 		foo = bar;
 	}
 
-/*	lock_get(msg_id_lock);	*/
+	/*	lock_get(msg_id_lock);	*/
 	shm_free(hopbyhop_id);
 	shm_free(endtoend_id);
 	lock_destroy(msg_id_lock);
@@ -137,17 +135,19 @@ void peer_manager_destroy()
  */
 void log_peer_list()
 {
-	/* must have lock on peer_list_lock when calling this!!! */
-	peer *p;
-	int i;
+	if (debug_heavy) {
+		/* must have lock on peer_list_lock when calling this!!! */
+		peer *p;
+		int i;
 
-    LM_DBG("--- Peer List: ---\n");
-	for(p = peer_list->head;p;p = p->next){
-		LM_DBG(ANSI_GREEN" S["ANSI_YELLOW"%s"ANSI_GREEN"] "ANSI_BLUE"%.*s:%d"ANSI_GREEN" D["ANSI_RED"%c"ANSI_GREEN"]\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
-		for(i=0;i<p->applications_cnt;i++)
-			LM_DBG(ANSI_YELLOW"\t [%d,%d]"ANSI_GREEN"\n",p->applications[i].id,p->applications[i].vendor);
+		LM_DBG("--- Peer List: ---\n");
+		for(p = peer_list->head;p;p = p->next){
+			LM_DBG("State of peer: %s FQDN: %.*s Port: %d Is dynamic %c\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
+			for(i=0;i<p->applications_cnt;i++)
+				LM_DBG("Application ID: %d, Application Vendor: %d \n",p->applications[i].id,p->applications[i].vendor);
+		}
+		LM_DBG("------------------\n");
 	}
-	LM_DBG("------------------\n");
 }
 
 /**
@@ -209,7 +209,7 @@ peer *get_peer_from_sock(int sock)
 peer *get_peer_from_fqdn(str fqdn,str realm)
 {
 	peer *i;
-	str dumb;
+	str dumb = {0,0};
 
 	lock_get(peer_list_lock);
 	i = peer_list->head;
@@ -277,7 +277,7 @@ int peer_timer(time_t now,void *ptr)
 		}
 
 		if (p->activity+config->tc<=now){
-			LM_INFO("peer_timer(): Peer %.*s \tState %d \n",p->fqdn.len,p->fqdn.s,p->state);
+			LM_DBG("peer_timer(): Peer %.*s State %d \n",p->fqdn.len,p->fqdn.s,p->state);
 			switch (p->state){
 				/* initiating connection */
 				case Closed:
@@ -291,7 +291,7 @@ int peer_timer(time_t now,void *ptr)
 						sm_process(p,Start,0,1,0);
 					}
 					break;
-				/* timeouts */
+					/* timeouts */
 				case Wait_Conn_Ack:
 				case Wait_I_CEA:
 				case Closing:
@@ -300,7 +300,7 @@ int peer_timer(time_t now,void *ptr)
 					touch_peer(p);
 					sm_process(p,Timeout,0,1,0);
 					break;
-				/* inactivity detected */
+					/* inactivity detected */
 				case I_Open:
 				case R_Open:
 					if (p->waitingDWA){
@@ -312,14 +312,17 @@ int peer_timer(time_t now,void *ptr)
 						p->waitingDWA = 1;
 						Snd_DWR(p);
 						touch_peer(p);
-						LM_DBG("Inactivity on peer [%.*s], sending DWR... - if we don't get a reply, the peer will be closed\n", p->fqdn.len, p->fqdn.s);
+						if (debug_heavy)
+						{
+							LM_DBG("Inactivity on peer [%.*s], sending DWR... - if we don't get a reply, the peer will be closed\n", p->fqdn.len, p->fqdn.s);
+						}
 					}
 					break;
-				/* ignored states */
-				/* unknown states */
+					/* ignored states */
+					/* unknown states */
 				default:
 					LM_ERR("peer_timer(): Peer %.*s inactive  in state %d\n",
-						p->fqdn.len,p->fqdn.s,p->state);
+							p->fqdn.len,p->fqdn.s,p->state);
 			}
 		}
 		lock_release(p->lock);

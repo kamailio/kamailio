@@ -149,21 +149,21 @@ void async_cdp_uar_callback(int is_timeout, void *param, AAAMessage *uaa, long e
                     } else {
                         cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_USER_UNKNOWN);
                     }
-                    LM_ERR("RC_IMS_DIAMETER_ERROR_USER_UNKNOWN\n");
+                    LM_DBG("RC_IMS_DIAMETER_ERROR_USER_UNKNOWN\n");
                     result = CSCF_RETURN_FALSE;
                     goto done;
                 case RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH:
-                    LM_ERR("RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH returning 403\n");
+                    LM_DBG("RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH returning 403\n");
                     cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_IDENTITIES_DONT_MATCH);
                     result = CSCF_RETURN_FALSE;
                     goto done;
                 case RC_IMS_DIAMETER_ERROR_ROAMING_NOT_ALLOWED:
-                    LM_ERR("RC_IMS_DIAMETER_ERROR_ROAMING_NOT_ALLOWED returning 403\n");
+                    LM_DBG("RC_IMS_DIAMETER_ERROR_ROAMING_NOT_ALLOWED returning 403\n");
                     cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_ROAMING_NOT_ALLOWED);
                     result = CSCF_RETURN_FALSE;
                     goto done;
                 case RC_IMS_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED:
-                    LM_ERR("RC_IMS_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED returning 403\n");
+                    LM_DBG("RC_IMS_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED returning 403\n");
                     cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_IDENTITY_NOT_REGISTERED);
                     result = CSCF_RETURN_FALSE;
                     goto done;
@@ -183,12 +183,12 @@ void async_cdp_uar_callback(int is_timeout, void *param, AAAMessage *uaa, long e
             break;
 
         case AAA_AUTHORIZATION_REJECTED:
-            LM_ERR("AAA_AUTHORIZATION_REJECTED returning 403\n");
+            LM_DBG("AAA_AUTHORIZATION_REJECTED returning 403\n");
             cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_AUTHORIZATION_REJECTED);
             result = CSCF_RETURN_FALSE;
             goto done;
         case AAA_UNABLE_TO_COMPLY:
-            LM_ERR("AAA_UNABLE_TO_COMPLY returning 403\n");
+            LM_DBG("AAA_UNABLE_TO_COMPLY returning 403\n");
             cscf_reply_transactional_async(t, t->uas.request, 500, MSG_500_UNABLE_TO_COMPLY);
             result = CSCF_RETURN_FALSE;
             goto done;
@@ -197,7 +197,7 @@ void async_cdp_uar_callback(int is_timeout, void *param, AAAMessage *uaa, long e
             goto success;
 
         default:
-            LM_ERR("MSG_403_UNKOWN_RC returning 403\n");
+            LM_DBG("MSG_403_UNKOWN_RC returning 403\n");
             cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_UNKOWN_RC);
             result = CSCF_RETURN_FALSE;
             goto done;

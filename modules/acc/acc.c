@@ -232,6 +232,7 @@ int acc_log_request( struct sip_msg *rq)
 	int o;
 	int i;
 	struct tm *t;
+	double dtime;
 
 	/* get default values */
 	m = core2strar( rq, val_arr, int_arr, type_arr);
@@ -290,12 +291,11 @@ int acc_log_request( struct sip_msg *rq)
 			acc_time_exten.s, (unsigned int)acc_env.tv.tv_usec,
 			log_msg);
 	} else if(acc_time_mode==2) {
+		dtime = (double)acc_env.tv.tv_usec;
+		dtime = (dtime / 1000000) + (double)acc_env.tv.tv_sec;
 		LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu;%s=%.3f%s",
 			acc_env.text.len, acc_env.text.s,(unsigned long)acc_env.ts,
-			acc_time_attr.s,
-			(((double)(acc_env.tv.tv_sec * 1000)
-							+ (acc_env.tv.tv_usec / 1000)) / 1000),
-			log_msg);
+			acc_time_attr.s, dtime, log_msg);
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {
 			t = localtime(&acc_env.ts);
@@ -443,6 +443,7 @@ int acc_db_request( struct sip_msg *rq)
 	int i;
 	int o;
 	struct tm *t;
+	double dtime;
 
 	/* formated database columns */
 	m = core2strar( rq, val_arr, int_arr, type_arr );
@@ -458,8 +459,9 @@ int acc_db_request( struct sip_msg *rq)
 		VAL_INT(db_vals+(m++)) = (int)acc_env.tv.tv_usec;
 		i++;
 	} else if(acc_time_mode==2) {
-		VAL_DOUBLE(db_vals+(m++)) = ((double)(acc_env.tv.tv_sec * 1000)
-							+ (acc_env.tv.tv_usec / 1000)) / 1000;
+		dtime = (double)acc_env.tv.tv_usec;
+		dtime = (dtime / 1000000) + (double)acc_env.tv.tv_sec;
+		VAL_DOUBLE(db_vals+(m++)) = dtime;
 		i++;
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {

@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2009 http://www.asipto.com
+   Copyright Â© 2009 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -87,7 +87,9 @@ Chapter 1. Admin Guide
    The parameter can be set multiple times to get more timers in same
    configuration file.
      * name - name of the timer.
-     * mode - if set to 1, will create a new timer process.
+     * mode - if set to 0, the timer will use the main (shared) timer. Any
+       number > 0 will create the specified amount of new timer processes
+       (which will only be handling this timer).
      * interval - timer interval in seconds or micro-seconds (the value
        must be ended in 'u'). For micro-seconds intervals, mode is set
        always to 1.

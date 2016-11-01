@@ -73,6 +73,66 @@ void strip_realm(str* _realm)
 	return;
 }
 
+/**
+ * Calculate a new nonce.
+ * @param nonce  Pointer to a buffer of *nonce_len. It must have enough
+ *               space to hold the nonce. MAX_NONCE_LEN should be always
+ *               safe.
+ * @param nonce_len A value/result parameter. Initially it contains the
+ *                  nonce buffer length. If the length is too small, it
+ *                  will be set to the needed length and the function will
+ *                  return error immediately. After a succesfull call it will
+ *                  contain the size of nonce written into the buffer,
+ *                  without the terminating 0.
+ * @param cfg This is the value of one of the three module parameters that
+ *            control which optional checks are enabled/disabled and which
+ *            parts of the message will be included in the nonce string.
+ * @param msg     The message for which the nonce is computed. If
+ *                auth_extra_checks is set, the MD5 of some fields of the
+ *                message will be included in the  generated nonce.
+ * @return 0 on success and -1 on error
+ */
+int calc_new_nonce(char* nonce, int *nonce_len, int cfg, struct sip_msg* msg)
+{
+	int t;
+#if defined USE_NC || defined USE_OT_NONCE
+	unsigned int n_id;
+	unsigned char pool;
+	unsigned char pool_flags;
+#endif
+
+	t=time(0);
+#if defined USE_NC || defined USE_OT_NONCE
+	if (nc_enabled || otn_enabled){
+		pool=nid_get_pool();
+		n_id=nid_inc(pool);
+		pool_flags=0;
+#ifdef USE_NC
+		if (nc_enabled){
+			nc_new(n_id, pool);
+			pool_flags|=  NF_VALID_NC_ID;
+		}
+#endif
+#ifdef USE_OT_NONCE
+		if (otn_enabled){
+			otn_new(n_id, pool);
+			pool_flags|= NF_VALID_OT_ID;
+		}
+#endif
+	}else{
+		pool=0;
+		pool_flags=0;
+		n_id=0;
+	}
+	return calc_nonce(nonce, nonce_len, cfg, t, t + nonce_expire, n_id,
+				pool | pool_flags,
+				&secret1, &secret2, msg);
+#else  /* USE_NC || USE_OT_NONCE*/
+	return calc_nonce(nonce, nonce_len, cfg, t, t + nonce_expire,
+				&secret1, &secret2, msg);
+#endif /* USE_NC || USE_OT_NONCE */
+}
+
 
 /**
  * Create and return {WWW,Proxy}-Authenticate header field
@@ -93,12 +153,6 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 	char *p;
 	str* hfn, hf;
 	int nonce_len, l, cfg;
-	int t;
-#if defined USE_NC || defined USE_OT_NONCE
-	unsigned int n_id;
-	unsigned char pool;
-	unsigned char pool_flags;
-#endif
 
 	if(!ahf)
 	{
@@ -108,18 +162,16 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 
 	strip_realm(realm);
 	if (realm) {
-		DEBUG("build_challenge_hf: realm='%.*s'\n", realm->len, realm->s);
+		LM_DBG("realm='%.*s'\n", realm->len, realm->s);
 	}
 	if (nonce) {
-		DEBUG("build_challenge_hf: nonce='%.*s'\n", nonce->len, nonce->s);
+		LM_DBG("nonce='%.*s'\n", nonce->len, nonce->s);
 	}
 	if (algorithm) {
-		DEBUG("build_challenge_hf: algorithm='%.*s'\n", algorithm->len,
-				algorithm->s);
+		LM_DBG("algorithm='%.*s'\n", algorithm->len, algorithm->s);
 	}
 	if (qop && qop->qop_parsed != QOP_UNSPEC) {
-		DEBUG("build_challenge_hf: qop='%.*s'\n", qop->qop_str.len,
-				qop->qop_str.s);
+		LM_DBG("qop='%.*s'\n", qop->qop_str.len, qop->qop_str.s);
 	}
 
 	if (hftype == HDR_PROXYAUTH_T) {
@@ -166,7 +218,7 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 	hf.len += CRLF_LEN;
 	p = hf.s = pkg_malloc(hf.len);
 	if (!hf.s) {
-		ERR("auth: No memory left (%d bytes)\n", hf.len);
+		LM_ERR("No memory left (%d bytes)\n", hf.len);
 		return -1;
 	}
 
@@ -183,42 +235,12 @@ int get_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 	}
 	else {
 		l=nonce_len;
-		t=time(0);
-#if defined USE_NC || defined USE_OT_NONCE
-		if (nc_enabled || otn_enabled){
-			pool=nid_get_pool();
-			n_id=nid_inc(pool);
-			pool_flags=0;
-#ifdef USE_NC
-			if (nc_enabled){
-				nc_new(n_id, pool);
-				pool_flags|=  NF_VALID_NC_ID;
-			}
-#endif
-#ifdef USE_OT_NONCE
-			if (otn_enabled){
-				otn_new(n_id, pool);
-				pool_flags|= NF_VALID_OT_ID;
-			}
-#endif
-		}else{
-			pool=0;
-			pool_flags=0;
-			n_id=0;
+		if (calc_new_nonce(p, &l, cfg, msg) != 0)
+		{
+			LM_ERR("calc_nonce failed (len %d, needed %d)\n", nonce_len, l);
+			pkg_free(hf.s);
+			return -1;
 		}
-		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, n_id,
-					pool | pool_flags,
-					&secret1, &secret2, msg) != 0)
-#else  /* USE_NC || USE_OT_NONCE*/
-			if (calc_nonce(p, &l, cfg, t, t + nonce_expire,
-						&secret1, &secret2, msg) != 0)
-#endif /* USE_NC || USE_OT_NONCE */
-			{
-				ERR("auth: calc_nonce failed (len %d, needed %d)\n",
-						nonce_len, l);
-				pkg_free(hf.s);
-				return -1;
-			}
 		p += l;
 	}
 	*p = '"'; p++;
@@ -283,7 +305,7 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm,
 	val.s = hf;
 	if(add_avp(challenge_avpid.flags | AVP_VAL_STR, challenge_avpid.name, val)
 			< 0) {
-		ERR("auth: Error while creating attribute with challenge\n");
+		LM_ERR("Error while creating attribute with challenge\n");
 		pkg_free(hf.s);
 		return -1;
 	}

@@ -80,7 +80,7 @@ static int mod_init(void)
         LM_ERR("Statsd connection failed (ERROR_CODE: %i) \n",rc);
         return -1;
     }else{
-        LM_INFO("Statsd: sucess connection to statsd server\n");
+        LM_INFO("Statsd: success connection to statsd server\n");
     }
     return 0;
 }

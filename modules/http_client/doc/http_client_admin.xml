@@ -62,7 +62,7 @@
 			<listitem>
 			<para>
 			TLS - if you use TLS connections (https) the tls module should be
-			loaded first in order to initialize OpenSSL properly.
+			loaded first in order to initialize &openssl; properly.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -77,7 +77,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libcurl</emphasis>.
+				<emphasis>&libcurl;</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -505,6 +505,11 @@ modparam("http_client", "keep_connections", 1)
 				<emphasis>httpredirect</emphasis> Set to 1 for following HTTP 302
 				redirect. 0 to disable. Overrides the default httpredirect modparam.
 				</para></listitem>
+				<listitem><para>
+				<emphasis>failover</emphasis> The name of another <emphasis>httpcon</emphasis>
+				connection to use with the same arguments in case a connection with this http_con fails.
+				Failure is either a connection failure or a response code of 500 or above.
+				</para></listitem>
 			</itemizedlist>
 			</para>
 			<example>
@@ -514,7 +519,7 @@ modparam("http_client", "keep_connections", 1)
 modparam("http_client", "httpcon", "apione=>http://atlanta.example.com")
 modparam("http_client", "httpcon", "apitwo=>http://atlanta.example.com/api/12")
 modparam("http_client", "httpcon", "apithree=>http://annabella:mysecret@atlanta.example.com/api/12")
-modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12")
+modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/getstuff;timeout=12;failover=apione")
 ...
 				</programlisting>
 			</example>
@@ -566,6 +571,7 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 				<listitem><para>http_follow_redirect</para></listitem>
 				<listitem><para>httpproxy</para></listitem>
 				<listitem><para>httpproxyport</para></listitem>
+				<listitem><para>failover</para></listitem>
 			</itemizedlist>
 			See the "httpcon" module parameter for explanation of these settings.
 			<para>
@@ -740,8 +746,8 @@ http_get_redirect("apiserver", "$var(targeturl)");
 				<programlisting format="linespecific">
 ...
 # GET-Request
-http_client_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-	   "$var(result)")
+http_client_query("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "$var(result)");
 switch ($retcode) {
        ...
 }
@@ -750,8 +756,8 @@ switch ($retcode) {
 				<programlisting format="linespecific">
 ...
 # POST-Request
-http_client_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
-	   "$var(result)")
+http_client_query("http://api.com/index.php", "r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "$var(result)");
 switch ($retcode) {
        ...
 }
@@ -785,7 +791,6 @@ switch ($retcode) {
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>No parameters</para></listitem>
-			
 		</itemizedlist>
 		</section>
 	</section>

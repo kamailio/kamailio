@@ -101,6 +101,7 @@ void destroy_shtable(shtable_t htable, int hash_size)
 		lock_destroy(&htable[i].lock);
 		free_subs_list(htable[i].entries->next, SHM_MEM_TYPE, 1);
 		shm_free(htable[i].entries);
+		htable[i].entries = NULL;
 	}
 	shm_free(htable);
 	htable= NULL;
@@ -111,7 +112,7 @@ subs_t* search_shtable(shtable_t htable,str callid,str to_tag,
 {
 	subs_t* s;
 
-	s= htable[hash_code].entries->next;
+	s= htable[hash_code].entries?htable[hash_code].entries->next:NULL;
 
 	while(s)
 	{
@@ -291,7 +292,7 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,subs_t* subs)
 	lock_get(&htable[hash_code].lock);
 	
 	ps= htable[hash_code].entries;
-	s= ps->next;
+	s= ps?ps->next:NULL;
 		
 	while(s)
 	{
@@ -318,9 +319,14 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,subs_t* subs)
 		{
 			found= s->local_cseq +1;
 			ps->next= s->next;
-			if(s->contact.s!=NULL)
+			if(s->contact.s!=NULL) {
 				shm_free(s->contact.s);
-			shm_free(s);
+				s->contact.s = NULL;
+			}
+			if (s) {
+				shm_free(s);
+				s = NULL;
+			}
 			break;
 		}
 		ps= s;
@@ -340,15 +346,21 @@ void free_subs_list(subs_t* s_array, int mem_type, int ic)
 		s_array= s_array->next;
 		if(mem_type & PKG_MEM_TYPE)
 		{
-			if(ic)
+			if(ic) {
 				pkg_free(s->contact.s);
+				s->contact.s = NULL;
+			}
 			pkg_free(s);
+			s = NULL;
 		}
 		else
 		{
-			if(ic)
+			if(ic) {
 				shm_free(s->contact.s);
+				s->contact.s = NULL;
+			}
 			shm_free(s);
+			s = NULL;
 		}
 	}
 	

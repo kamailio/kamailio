@@ -96,7 +96,7 @@ static inline int randomize_expires(int expires, int range) {
 
     int range_min = expires - (float) range / 100 * expires;
 
-    return range_min + (float) (rand() % 100) / 100 * (expires - range_min);
+    return range_min + (float) (kam_rand() % 100) / 100 * (expires - range_min);
 }
 
 /*! \brief
@@ -108,40 +108,36 @@ static inline int randomize_expires(int expires, int range) {
  * 3) If the message contained no expires header field, use
  *    the default value
  */
-static inline int calc_contact_expires(contact_t *c, unsigned int expires_hdr, int sos_reg) {
-    unsigned int r;
-
-    if (expires_hdr >= 0)
-        r = expires_hdr;
-    else {
-        r = (sos_reg > 0) ? default_registrar_cfg.em_default_expires : default_registrar_cfg.default_expires;
-        goto end;
-    }
-    if (c && c->expires)
-        str2int(&(c->expires->body), (unsigned int*) &r);
-    if (r > 0) {
-        if (!sos_reg && r < default_registrar_cfg.min_expires) {
-            r = default_registrar_cfg.min_expires;
-            goto end;
-        }
-        if (sos_reg && r < default_registrar_cfg.em_min_expires) {
-            r = default_registrar_cfg.em_min_expires;
-            goto end;
-        }
-    }
-    if (!sos_reg && r > default_registrar_cfg.max_expires) {
-        r = default_registrar_cfg.max_expires;
-        goto end;
-    }
-    if (sos_reg && r > default_registrar_cfg.em_max_expires)
-        r = default_registrar_cfg.em_min_expires;
-
+static inline int calc_contact_expires(contact_t *c, int expires_hdr, int sos_reg) {
+	int r;
+	if(c && c->expires)
+		str2int(&(c->expires->body), (unsigned int*) &r);
+	else if (expires_hdr >= 0)
+		r = expires_hdr;
+	else {
+		r = (sos_reg > 0) ? default_registrar_cfg.em_default_expires : default_registrar_cfg.default_expires;
+		goto end;
+	}
+	if (!sos_reg && r < default_registrar_cfg.min_expires) {
+		r = default_registrar_cfg.min_expires;
+		goto end;
+	}
+	if (sos_reg && r < default_registrar_cfg.em_min_expires) {
+		r = default_registrar_cfg.em_min_expires;
+		goto end;
+	}
+	if (!sos_reg && r > default_registrar_cfg.max_expires) {
+		r = default_registrar_cfg.max_expires;
+		goto end;
+	}
+	if (sos_reg && r > default_registrar_cfg.em_max_expires) {
+		r = default_registrar_cfg.em_min_expires;
+		goto end;
+	}
 end:
-
-    r = randomize_expires(r, default_registrar_cfg.default_expires_range);
-
-    LM_DBG("Calculated expires for contact is %d\n", r);
-    return time(NULL) + r;
+	r = randomize_expires(r, default_registrar_cfg.default_expires_range);
+	LM_DBG("Calculated expires for contact is %d\n", r);
+	return time(NULL) + r;
 }
 
 /*! \brief
@@ -500,7 +496,7 @@ static inline int is_impu_registered(udomain_t* _d, str* public_identity) {
         }
 
         //check valid contacts
-        if ((impu->num_contacts <= 0) || (impu->newcontacts[0] == 0)) {
+        if ((impu->linked_contacts.numcontacts <= 0) || (impu->linked_contacts.head == 0)) {
             LM_DBG("IMPU <%.*s> has no valid contacts\n", public_identity->len, public_identity->s);
             ret = 0;
         }
@@ -509,24 +505,11 @@ static inline int is_impu_registered(udomain_t* _d, str* public_identity) {
     return ret;
 }
 
-struct sip_msg* get_request_from_reply(struct sip_msg *reply) {
-    struct cell *t;
-    t = tmb.t_gett();
-    if (!t || t == (void*) - 1) {
-        LM_ERR("get_request_from_reply: Reply without transaction\n");
-        return 0;
-    }
-    if (t)
-        return t->uas.request;
-    else
-        return 0;
-}
-
 /**
  * update the contacts for a public identity. Make sure you have the lock on the domain before calling this
  * returns 0 on success, -1 on failure
  */
-static inline int update_contacts_helper(struct sip_msg* msg, impurecord_t* impu_rec, int assignment_type, unsigned int expires_hdr) {
+static inline int update_contacts_helper(struct sip_msg* msg, impurecord_t* impu_rec, int assignment_type, int expires_hdr) {
     struct hdr_field* h;
     contact_t* chi; //contact header information
     ucontact_info_t* ci; //ucontact info
@@ -634,7 +617,7 @@ static inline int unregister_contact(contact_t* chi, contact_state_t state) {
     //    }
 
     if (ul.get_ucontact(&chi->uri, &callid, &path, 0/*cseq*/, &ucontact) != 0) {
-        LM_ERR("Can't unregister contact that does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
+        LM_DBG("Can't unregister contact that does not exist <%.*s>\n", chi->uri.len, chi->uri.s);
         //        ul.unlock_udomain(_d, public_identity);
         goto error;
     }
@@ -692,15 +675,19 @@ error:
 int get_number_of_valid_contacts(impurecord_t* impu) {
     int i;
     int ret = 0;
+	impu_contact_t *impucontact;
     get_act_time();
-    for (i = 0; i < impu->num_contacts; i++) {
-        if (impu->newcontacts[i]) {
-            if VALID_CONTACT(impu->newcontacts[i], act_time)
+	
+	impucontact = impu->linked_contacts.head;
+    while (impucontact) {
+        if (impucontact->contact) {
+            if VALID_CONTACT(impucontact->contact, act_time)
                 ret++;
         } else {
             //if we hit a null ref then we are at the end of the list.
             return ret;
         }
+		impucontact = impucontact->next;
     }
 
     return ret;
@@ -947,7 +934,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         }
                         calc_contact_expires(chi, expires_hdr, sos);
                         if (unregister_contact(chi, CONTACT_DELETE_PENDING) != 0) {
-                            LM_ERR("Unable to remove contact <%.*s\n", chi->uri.len, chi->uri.s);
+                            LM_DBG("Unable to remove contact <%.*s\n", chi->uri.len, chi->uri.s);
 
                         }
                         //add this contact to the successful unregistered in the 200OK so the PCSCF can also see what is de-registered
@@ -968,7 +955,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             //now, we get the subscription
             ul.lock_udomain(_d, public_identity);
             if (ul.get_impurecord(_d, public_identity, &impu_rec) != 0) {
-                LM_ERR("Error retrieving impu record on explicit de-reg nothing we can do from here on... aborting..\n");
+                LM_DBG("Error retrieving impu record on explicit de-reg nothing we can do from here on... aborting..\n");
                 ul.unlock_udomain(_d, public_identity);
                 goto error;
             }
@@ -1364,7 +1351,7 @@ int save(struct sip_msg* msg, char* str1, char *route) {
             //lets update the contacts - we need to know if all were deleted or not for the public identity
             int res = update_contacts(msg, _d, &public_identity, sar_assignment_type, 0, 0, 0, 0, 0, &contact_header);
             if (res <= 0) {
-                LM_ERR("Error processing REGISTER for de-registration\n");
+                LM_DBG("Error processing REGISTER for de-registration\n");
                 free_contact_buf(contact_header);
                 rerrno = R_SAR_FAILED;
                 goto error;
@@ -1441,7 +1428,7 @@ int save(struct sip_msg* msg, char* str1, char *route) {
 
     create_return_code(CSCF_RETURN_ERROR);
 
-    LM_DBG("Suspending SIP TM transaction\n");
+    LM_DBG("Suspending SIP TM transaction with index [%d] and label [%d]\n", saved_t->tindex, saved_t->tlabel);
     if (tmb.t_suspend(msg, &saved_t->tindex, &saved_t->tlabel) != 0) {
         LM_ERR("failed to suspend the TM processing\n");
         free_saved_transaction_data(saved_t);

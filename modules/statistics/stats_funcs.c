@@ -69,7 +69,7 @@ int reg_statistic( char* name)
 		if (strcasecmp( flag_str, NORESET_FLAG_STR)==0) {
 			flags |= STAT_NO_RESET;
 		} else {
-			LM_ERR("unsuported flag <%s>\n",flag_str);
+			LM_ERR("unsupported flag <%s>\n",flag_str);
 			goto error;
 		}
 	}

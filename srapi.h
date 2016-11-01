@@ -20,11 +20,20 @@
 #define __SRAPI_H__
 
 #include "str.h"
+#include "parser/msg_parser.h"
 
 typedef void (*sr_generate_callid_f)(str*);
 
 int sr_register_callid_func(sr_generate_callid_f f);
 
 sr_generate_callid_f sr_get_callid_func(void);
+
+typedef int (*sr_cseq_update_f)(sip_msg_t*);
+typedef struct sr_cfgenv {
+	sr_cseq_update_f cb_cseq_update;
+} sr_cfgenv_t;
+
+void sr_cfgenv_init(void);
+sr_cfgenv_t* sr_cfgenv_get(void);
 
 #endif
