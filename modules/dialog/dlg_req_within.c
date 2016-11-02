@@ -292,7 +292,7 @@ static inline int build_extra_hdr(struct dlg_cell * cell, str *extra_hdrs,
 	if(extra_hdrs && extra_hdrs->len>0)
 		str_hdr->len += extra_hdrs->len;
 
-	blen = str_hdr->len + 1 /* '\0' */;
+	blen = str_hdr->len + 3 /* '\r\n\0' */;
 
 	/* reserve space for callee headers in local requests */
 	if(dlg_lreq_callee_headers.len>0)
