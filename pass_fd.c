@@ -20,7 +20,7 @@
 
 /*!
  * \file
- * \brief Kamailio core :: 
+ * \brief Kamailio core ::
  * \ingroup core
  * Module: \ref core
  */
@@ -46,17 +46,17 @@
 /** receive all the data or returns error (handles EINTR etc.)
  * params: socket
  *         data     - buffer for the results
- *         data_len - 
+ *         data_len -
  *         flags    - recv flags for the first recv (see recv(2)), only
  *                    0, MSG_WAITALL and MSG_DONTWAIT make sense
  * if flags is set to MSG_DONWAIT (or to 0 and the socket fd is non-blocking),
- * and if no data is queued on the fd, recv_all will not wait (it will 
+ * and if no data is queued on the fd, recv_all will not wait (it will
  * return error and set errno to EAGAIN/EWOULDBLOCK). However if even 1 byte
  *  is queued, the call will block until the whole data_len was read or an
  *  error or eof occured ("semi-nonblocking" behaviour,  some tcp code
  *   counts on it).
  * if flags is set to MSG_WAITALL it will block even if no byte is available.
- *  
+ *
  * returns: bytes read or error (<0)
  * can return < data_len if EOF */
 int recv_all(int socket, void* data, int data_len, int flags)
@@ -66,7 +66,7 @@ int recv_all(int socket, void* data, int data_len, int flags)
 #ifdef NO_MSG_WAITALL
 	struct pollfd pfd;
 #endif /* NO_MSG_WAITALL */
-	
+
 	b_read=0;
 again:
 #ifdef NO_MSG_WAITALL
@@ -104,7 +104,7 @@ poll_recv:
 				pfd.events=POLLIN;
 poll_retry:
 				n=poll(&pfd, 1, -1);
-				if (n<0){ 
+				if (n<0){
 					if (errno==EINTR) goto poll_retry;
 					LM_CRIT("poll on %d failed: %s\n",
 						socket, strerror(errno));
@@ -128,7 +128,7 @@ poll_retry:
 int send_all(int socket, void* data, int data_len)
 {
 	int n;
-	
+
 again:
 	n=send(socket, data, data_len, 0);
 	if (n<0){
@@ -156,12 +156,13 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 		struct cmsghdr cm;
 		char control[CMSG_SPACE(sizeof(fd))];
 	}control_un;
-	
+
+	memset(&msg, 0, sizeof(struct msghdr));
 	msg.msg_control=control_un.control;
 	/* openbsd doesn't like "more space", msg_controllen must not
 	 * include the end padding */
 	msg.msg_controllen=CMSG_LEN(sizeof(fd));
-	
+
 	cmsg=CMSG_FIRSTHDR(&msg);
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
@@ -173,15 +174,15 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 	msg.msg_accrights=(caddr_t) &fd;
 	msg.msg_accrightslen=sizeof(fd);
 #endif
-	
+
 	msg.msg_name=0;
 	msg.msg_namelen=0;
-	
+
 	iov[0].iov_base=data;
 	iov[0].iov_len=data_len;
 	msg.msg_iov=iov;
 	msg.msg_iovlen=1;
-	
+
 again:
 	ret=sendmsg(unix_socket, &msg, 0);
 	if (ret<0){
@@ -190,14 +191,14 @@ again:
 			LM_CRIT("sendmsg failed sending %d on %d: %s (%d)\n",
 				fd, unix_socket, strerror(errno), errno);
 	}
-	
+
 	return ret;
 }
 
 
 
 /** receives a fd and data_len data
- * params: unix_socket 
+ * params: unix_socket
  *         data
  *         data_len
  *         fd         - will be set to the passed fd value or -1 if no fd
@@ -222,22 +223,23 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd, int flags)
 		struct cmsghdr cm;
 		char control[CMSG_SPACE(sizeof(new_fd))];
 	}control_un;
-	
+
+	memset(&msg, 0, sizeof(struct msghdr));
 	msg.msg_control=control_un.control;
 	msg.msg_controllen=sizeof(control_un.control);
 #else
 	msg.msg_accrights=(caddr_t) &new_fd;
 	msg.msg_accrightslen=sizeof(int);
 #endif
-	
+
 	msg.msg_name=0;
 	msg.msg_namelen=0;
-	
+
 	iov[0].iov_base=data;
 	iov[0].iov_len=data_len;
 	msg.msg_iov=iov;
 	msg.msg_iovlen=1;
-	
+
 #ifdef NO_MSG_WAITALL
 	f=flags & ~MSG_WAITALL;
 #endif /* NO_MSG_WAITALL */
@@ -286,7 +288,7 @@ poll_again:
 			goto error;
 		}
 	}
-	
+
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	cmsg=CMSG_FIRSTHDR(&msg);
 	if ((cmsg!=0) && (cmsg->cmsg_len==CMSG_LEN(sizeof(new_fd)))){
@@ -317,7 +319,7 @@ poll_again:
 		*fd=-1;
 	}
 #endif
-	
+
 error:
 	return ret;
 }
