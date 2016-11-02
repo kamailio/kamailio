@@ -84,18 +84,20 @@ Emmanuel Schmidbauer
               5.1. address_reload
               5.2. address_dump
               5.3. subnet_dump
-              5.4. trusted_reload
-              5.5. trusted_dump
-              5.6. allow_uri
+              5.4. perm_domain_dump
+              5.5. trusted_reload
+              5.6. trusted_dump
+              5.7. allow_uri
 
         6. RPC Commands
 
               6.1. addressReload
               6.2. addressDump
               6.3. subnetDump
-              6.4. testUri basename uri contact
-              6.5. trustedReload
-              6.6. trustedDump
+              6.4. domainDump
+              6.5. testUri basename uri contact
+              6.6. trustedReload
+              6.7. trustedDump
 
    List of Examples
 
@@ -194,18 +196,20 @@ Chapter 1. Admin Guide
         5.1. address_reload
         5.2. address_dump
         5.3. subnet_dump
-        5.4. trusted_reload
-        5.5. trusted_dump
-        5.6. allow_uri
+        5.4. perm_domain_dump
+        5.5. trusted_reload
+        5.6. trusted_dump
+        5.7. allow_uri
 
    6. RPC Commands
 
         6.1. addressReload
         6.2. addressDump
         6.3. subnetDump
-        6.4. testUri basename uri contact
-        6.5. trustedReload
-        6.6. trustedDump
+        6.4. domainDump
+        6.5. testUri basename uri contact
+        6.6. trustedReload
+        6.7. trustedDump
 
 1. Overview
 
@@ -555,7 +559,7 @@ modparam("permissions", "mask_col", "subnet_length")
 
    Example 1.11. Set port_col parameter
 ...
-modparam("permissions", "port_col", "prt")
+modparam("permissions", "port_col", "port")
 ...
 
 3.12. db_mode (integer)
@@ -975,9 +979,10 @@ if (allow_trusted("$si", "$proto")) {
    5.1. address_reload
    5.2. address_dump
    5.3. subnet_dump
-   5.4. trusted_reload
-   5.5. trusted_dump
-   5.6. allow_uri
+   5.4. perm_domain_dump
+   5.5. trusted_reload
+   5.6. trusted_dump
+   5.7. allow_uri
 
 5.1.  address_reload
 
@@ -1002,21 +1007,28 @@ if (allow_trusted("$si", "$proto")) {
 
    Parameters: none
 
-5.4.  trusted_reload
+5.4.  perm_domain_dump
+
+   Causes permissions module to dump contents of cache memory domain
+   table.
+
+   Parameters: none
+
+5.5.  trusted_reload
 
    Causes the permissions module to re-read the contents of trusted table
    into cache memory.
 
    Parameters: none
 
-5.5.  trusted_dump
+5.6.  trusted_dump
 
    Causes the permissions module to dump the contents of trusted table
    from cache memory.
 
    Parameters: none
 
-5.6.  allow_uri
+5.7.  allow_uri
 
    Tests if (URI, Contact) pair is allowed according to the allow/deny
    files. The files must already have been loaded by Kamailio.
@@ -1033,9 +1045,10 @@ if (allow_trusted("$si", "$proto")) {
    6.1. addressReload
    6.2. addressDump
    6.3. subnetDump
-   6.4. testUri basename uri contact
-   6.5. trustedReload
-   6.6. trustedDump
+   6.4. domainDump
+   6.5. testUri basename uri contact
+   6.6. trustedReload
+   6.7. trustedDump
 
 6.1.  addressReload
 
@@ -1060,7 +1073,14 @@ if (allow_trusted("$si", "$proto")) {
 
    Parameters: none
 
-6.4.  testUri basename uri contact
+6.4.  domainDump
+
+   Causes permissions module to dump contents of cache memory domain
+   table.
+
+   Parameters: none
+
+6.5.  testUri basename uri contact
 
    Tests if the (URI, Contact) pair is allowed according to allow/deny
    files. The files must already have been loaded by Kamailio.
@@ -1072,14 +1092,14 @@ if (allow_trusted("$si", "$proto")) {
      * URI - URI to be tested
      * Contact - Contact to be tested
 
-6.5.  trustedReload
+6.6.  trustedReload
 
    Causes the permissions module to re-read the contents of the trusted
    database table into cache memory.
 
    Parameters: none
 
-6.6.  trustedDump
+6.7.  trustedDump
 
    Causes the permissions module to dump contents of the trusted database
    table from cache memory.

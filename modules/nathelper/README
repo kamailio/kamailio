@@ -193,7 +193,7 @@ Chapter 1. Admin Guide
 2. NAT pinging types
 
    Currently, the nathelper module supports two types of NAT pings:
-     * UDP package - 4 bytes (zero filled) UDP packages are sent to the
+     * UDP packet - 4 bytes (zero filled) UDP packets are sent to the
        contact address.
           + Advantages: low bandwitdh traffic, easy to generate by
             Kamailio;
@@ -334,7 +334,7 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 
    Which branch flag should be used by the module to identify NATed
    contacts for which it should perform NAT ping via a SIP request instead
-   if dummy UDP package.
+   of dummy UDP packet.
 
    Default value is -1 (disabled).
 
