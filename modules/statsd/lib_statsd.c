@@ -19,7 +19,7 @@ static StatsConnection statsd_connection = {
 
 bool statsd_connect(void){
 
-    struct addrinfo *serverAddr;
+    struct addrinfo *serverAddr = NULL;
     int rc;
 
     if (statsd_connection.sock > 0){
@@ -34,12 +34,14 @@ bool statsd_connect(void){
         LM_ERR(
             "Statsd: could not initiate server information (%s)\n",
             gai_strerror(rc));
+		if(serverAddr) freeaddrinfo(serverAddr);
         return false;
     }
 
     statsd_connection.sock = socket(serverAddr->ai_family, SOCK_DGRAM, IPPROTO_UDP);
     if (statsd_connection.sock < 0 ){
         LM_ERR("Statsd: could not create a socket for statsd connection\n");
+		if(serverAddr) freeaddrinfo(serverAddr);
         return false;
     }
 
