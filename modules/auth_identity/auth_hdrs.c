@@ -551,7 +551,7 @@ int append_date(str *sdate, int idatesize, time_t *tout, struct sip_msg *msg)
 	}
 
 	ilen=strftime(date_str, sizeof(date_str), AUTH_TIME_FORMAT, bd_time);
-	if (ilen > sizeof(date_hf) - strlen("Date: \r\n") || ilen==0) {
+	if (ilen >= sizeof(date_hf) - strlen("Date: \r\n.") || ilen==0) {
 		LOG(L_ERR, "AUTH_IDENTITY:append_date: unexpected time length\n");
 		return -3;
 	}
