@@ -503,7 +503,7 @@ static int rpc_fault_prepare(struct binrpc_ctx* ctx, int code, char* fmt, ...)
 	}
 	va_start(ap, fmt);
 	len=vsnprintf(buf, MAX_FAULT_LEN, fmt, ap); /* ignore trunc. errors */
-	if ((len<0) || (len > MAX_FAULT_LEN))
+	if ((len<0) || (len >= MAX_FAULT_LEN))
 		len=MAX_FAULT_LEN-1;
 	va_end(ap);
 
