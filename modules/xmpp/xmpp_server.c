@@ -451,7 +451,7 @@ int xmpp_server_child_process(int data_pipe)
 	int listen_fd;
 	fd_set fdset;
 	struct xmpp_connection *conn;
-	
+
 	snprintf(local_secret, sizeof(local_secret), "%s", random_secret());
 
 	while ((listen_fd = net_listen(xmpp_domain, xmpp_port)) < 0) {
@@ -463,13 +463,17 @@ int xmpp_server_child_process(int data_pipe)
 		FD_ZERO(&fdset);
 		FD_SET(data_pipe, &fdset);
 		FD_SET(listen_fd, &fdset);
-		
+
 		/* check for dead connections */
 		for (conn = conn_list; conn; ) {
 			struct xmpp_connection *next = conn->next;
 
-			if (conn->type == CONN_DEAD)
+			if (conn->type == CONN_DEAD) {
+				if(conn == conn_list) {
+					conn_list = next;
+				}
 				conn_free(conn);
+			}
 			conn = next;
 		}
 
@@ -488,7 +492,7 @@ int xmpp_server_child_process(int data_pipe)
 				} else {
 					conn->type = CONN_DEAD;
 				}
-			}		
+			}
 
 			if (conn->fd != -1)
 				FD_SET(conn->fd, &fdset);
