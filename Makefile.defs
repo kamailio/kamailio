@@ -203,7 +203,11 @@ YACC := $(shell echo "$${YACC}")
 
 # find compiler name & version
 ifeq ($(CC),)
-	CC=gcc
+ifeq	($(OS), freebsd)
+			CC=clang
+else
+			CC=gcc
+endif
 endif
 LD= $(CC)
 CC_LONGVER:=$(shell if  $(CC) -v 2>/dev/null; then \
@@ -375,7 +379,11 @@ LIBDIR ?=
 ifeq ($(LIBDIR),)
 ARCHBSZ= $(shell echo $(ARCH) | sed -e 's/.*64.*/64b/')
 ifeq ($(ARCHBSZ),64b)
-	LIBDIR = lib64
+ifeq	($(OS), freebsd)
+			LIBDIR = lib
+else
+			LIBDIR = lib64
+endif
 else
 	LIBDIR = lib
 endif
@@ -2080,4 +2088,3 @@ export $(saved_chg_vars)
 
 endif # ifneq ($(exported_vars),1)
 endif # ifeq ($(makefile_defs),1)
-
