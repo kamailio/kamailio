@@ -108,15 +108,18 @@ FILE *mi_init_fifo_server(char *fifo_name, int mi_fifo_mode,
 	mi_fifo_write=open( fifo_name, O_WRONLY|O_NONBLOCK, 0);
 	if (mi_fifo_write<0) {
 		LM_ERR("fifo_write did not open: %s\n", strerror(errno));
+		fclose(fifo_stream);
 		return 0;
 	}
 	/* set read fifo blocking mode */
 	if ((opt=fcntl(mi_fifo_read, F_GETFL))==-1){
 		LM_ERR("fcntl(F_GETFL) failed: %s [%d]\n", strerror(errno), errno);
+		fclose(fifo_stream);
 		return 0;
 	}
 	if (fcntl(mi_fifo_read, F_SETFL, opt & (~O_NONBLOCK))==-1){
 		LM_ERR("cntl(F_SETFL) failed: %s [%d]\n", strerror(errno), errno);
+		fclose(fifo_stream);
 		return 0;
 	}
 
@@ -125,6 +128,7 @@ FILE *mi_init_fifo_server(char *fifo_name, int mi_fifo_mode,
 	reply_fifo_s = pkg_malloc(MAX_MI_FILENAME);
 	if ( mi_buf==NULL|| reply_fifo_s==NULL) {
 		LM_ERR("no more private memory\n");
+		fclose(fifo_stream);
 		return 0;
 	}
 
@@ -146,7 +150,7 @@ static int mi_fifo_check(int fd, char* fname)
 {
 	struct stat fst;
 	struct stat lst;
-	
+
 	if (fstat(fd, &fst)<0){
 		LM_ERR("security: fstat on %s failed: %s\n", fname, strerror(errno));
 		return -1;
@@ -200,7 +204,7 @@ static FILE *mi_open_reply_pipe( char *pipe_name )
 	}
 
 tryagain:
-	/* open non-blocking to make sure that a broken client will not 
+	/* open non-blocking to make sure that a broken client will not
 	 * block the FIFO server forever */
 	fifofd=open( pipe_name, O_WRONLY | O_NONBLOCK );
 	if (fifofd==-1) {
@@ -225,7 +229,7 @@ tryagain:
 		return 0;
 	}
 
-	/* security checks: is this really a fifo?, is 
+	/* security checks: is this really a fifo?, is
 	 * it hardlinked? is it a soft link? */
 	if (mi_fifo_check(fifofd, pipe_name)<0)
 		goto error;
@@ -280,7 +284,7 @@ retry:
 		kill(0, SIGTERM);
 	}
 	/* if we did not read whole line, our buffer is too small
-	   and we cannot process the request; consume the remainder of 
+	   and we cannot process the request; consume the remainder of
 	   request
 	*/
 
