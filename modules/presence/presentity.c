@@ -430,11 +430,13 @@ int delete_presentity_if_dialog_id_exists(presentity_t* presentity, char* dialog
 				pa_dbf.free_result(pa_db, result);
 				result = NULL;
 				free(db_dialog_id);
+				db_dialog_id = NULL;
 
 				return 1;
 			}
 
 			free(db_dialog_id);
+			db_dialog_id = NULL;
 		}
 	}
 
@@ -693,10 +695,13 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			check_if_dialog(*body, &is_dialog, &dialog_id);
 			if ( dialog_id ) {
 				if (delete_presentity_if_dialog_id_exists(presentity, dialog_id) < 0) {
+					free(dialog_id);
+					dialog_id = NULL;
 					goto error;
 				}
 
 				free(dialog_id);
+				dialog_id = NULL;
 			}
 			LM_DBG("inserting %d cols into table\n",n_query_cols);
 
@@ -795,6 +800,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			if(check_if_dialog(*body, &is_dialog, &dialog_id)< 0)
 			{
 				LM_ERR("failed to check if dialog stored\n");
+				if(dialog_id) {
+					free(dialog_id);
+					dialog_id = NULL;
+				}
 				goto error;
 			}
 
@@ -808,13 +817,26 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			if(check_if_dialog(old_body, &is_dialog, &old_dialog_id)< 0)
 			{
 				LM_ERR("failed to check if dialog stored\n");
+				if(old_dialog_id) {
+					free(old_dialog_id);
+					old_dialog_id = NULL;
+				}
 				goto error;
 			}
 
-			if(is_dialog==0 ) /* if the old body has no dialog - overwrite */
+			/* if the old body has no dialog - overwrite */
+			if(is_dialog==0 ) {
+				if(old_dialog_id) {
+					free(old_dialog_id);
+					old_dialog_id = NULL;
+				}
 				goto after_dialog_check;
+			}
 
-			free(old_dialog_id);
+			if(old_dialog_id) {
+				free(old_dialog_id);
+				old_dialog_id = NULL;
+			}
 
 			sender.s = (char*)row_vals[rez_sender_col].val.string_val;
 			sender.len= strlen(sender.s);
