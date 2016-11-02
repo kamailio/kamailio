@@ -465,6 +465,7 @@ static int get_ip_type(char *str_addr)
 		LM_DBG("%s is an ipv6 addinfos\n", str_addr);
 	} else {
 		LM_DBG("%s is an unknown addinfos format AF=%d\n",str_addr, info->ai_family);
+		freeaddrinfo(info);
 		return -1;
 	}
 
