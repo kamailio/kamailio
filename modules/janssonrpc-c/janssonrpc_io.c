@@ -430,6 +430,7 @@ int jsonrpc_send(str conn, jsonrpc_request_t* req, bool notify_only)
 
 	if (sent) {
 		if (notify_only == true) { // free the request if using janssonrpc_notification function
+			free_req_cmd(req->cmd);
 			free_request(req);
 		} else {
 			const struct timeval tv = ms_to_tv(req->timeout);
@@ -534,8 +535,6 @@ void cmd_pipe_cb(int fd, short event, void *arg)
 		WARN("%s could not be sent to connection group: %.*s\n",
 				type, STR(req_cmd->conn));
 		fail_request(JRPC_ERR_SEND, req, "Failed to send request");
-	} else if (req_cmd->notify_only == true) { // free notification requests if they are sent
-		free_req_cmd(req_cmd);
 	}
 
 end:
