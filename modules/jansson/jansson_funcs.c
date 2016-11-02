@@ -135,7 +135,7 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 	json_t* result_json = NULL;
 	json_t* value = NULL;
 	char* freeme = NULL;
-	json_error_t parsing_error;
+	json_error_t parsing_error = {0};
 	char* endptr;
 
 	/* check the type */
