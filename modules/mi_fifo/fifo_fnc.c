@@ -407,13 +407,17 @@ void mi_fifo_server(FILE *fifo_stream)
 	int line_len;
 	char *file_sep, *command, *file;
 	struct mi_cmd *f;
-	FILE *reply_stream;
+	FILE *reply_stream = NULL;
 
 	while(1) {
 		/* update the local config framework structures */
 		cfg_update();
 
-		reply_stream = NULL;
+
+		if(reply_stream) {
+			fclose(reply_stream);
+			reply_stream = NULL;
+		}
 
 		/* commands must look this way ':<command>:[filename]' */
 		if (mi_read_line(mi_buf,MAX_MI_FIFO_BUFFER,fifo_stream, &line_len)) {
@@ -428,7 +432,7 @@ void mi_fifo_server(FILE *fifo_stream)
 				line_len--;
 				mi_buf[line_len]=0;
 			} else break;
-		} 
+		}
 
 		if (line_len==0) {
 			LM_DBG("fifo command empty\n");
@@ -525,6 +529,7 @@ void mi_fifo_server(FILE *fifo_stream)
 		free_async_handler(hdl);
 		/* close reply fifo */
 		fclose(reply_stream);
+		reply_stream = NULL;
 		/* destroy request tree */
 		if (mi_cmd)
 			free_mi_tree( mi_cmd );
@@ -542,9 +547,11 @@ failure:
 
 consume3:
 		free_async_handler(hdl);
-		if (reply_stream)
 consume2:
-		fclose(reply_stream);
+		if (reply_stream) {
+			fclose(reply_stream);
+			reply_stream = NULL;
+		}
 consume1:
 		mi_do_consume();
 	}
