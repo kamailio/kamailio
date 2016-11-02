@@ -125,7 +125,7 @@ static int func_time_start(struct sip_msg *msg, char *key)
 
 static int func_time_end(struct sip_msg *msg, char *key)
 {
-    char unix_time[20];
+    char unix_time[24];
     char *endptr;
     long int start_time;
     int result;
