@@ -93,7 +93,7 @@ int _dbg_xavp_dump_lookup(pv_param_t *param)
 
 	xname = (pv_xavp_name_t*)param->pvn.u.dname;
 
-	while(_dbg_xavp_dump[i]!=NULL&&i<DBG_XAVP_DUMP_SIZE)
+	while(i<DBG_XAVP_DUMP_SIZE && _dbg_xavp_dump[i]!=NULL)
 	{
 		if(_dbg_xavp_dump[i]->len==xname->name.len)
 		{
