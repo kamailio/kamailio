@@ -104,8 +104,20 @@ static int mod_init(void)
 	}
 
 	dname = strdup(dirname(dname_src));
-	if (strlen(dname) == 0)
-		dname = ".";
+	if(dname==NULL) {
+		LM_ERR("no more system memory\n");
+		return -1;
+	}
+	if (strlen(dname) == 0) {
+		free(dname);
+		dname = malloc(2);
+		if(dname==NULL) {
+			LM_ERR("no more system memory\n");
+			return -1;
+		}
+		dname[0] = '.';
+		dname[1] = '\0';
+	}
 	bname = strdup(basename(bname_src));
 	i = strlen(bname);
 	if (bname[i - 1] == 'c' || bname[i - 1] == 'o')
