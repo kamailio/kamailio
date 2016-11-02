@@ -107,7 +107,7 @@ static int func_set(struct sip_msg* msg, char* key, char* val)
 static int func_time_start(struct sip_msg *msg, char *key)
 {
     int_str avp_key, avp_val;
-    char unix_time[20];
+    char unix_time[24];
     get_milliseconds(unix_time);
     avp_key.s.s = key;
     avp_key.s.len = strlen(avp_key.s.s);
