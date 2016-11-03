@@ -349,7 +349,7 @@ ds_dest_t *pack_dest(str uri, int flags, int priority, str *attrs)
 			dp->attrs.socket.s[dp->attrs.socket.len] = '\0';
 		}
 		if (parse_phostport(dp->attrs.socket.s, &host.s, &host.len,
-				&port, &proto)!=0) {
+					&port, &proto)!=0) {
 			LM_ERR("bad socket <%.*s>\n", dp->attrs.socket.len, dp->attrs.socket.s);
 			if(c!=0) {
 				dp->attrs.socket.s[dp->attrs.socket.len] = c;
@@ -1697,7 +1697,7 @@ int ds_load_unset(struct sip_msg *msg)
  *
  */
 static inline int ds_update_dst(struct sip_msg *msg, str *uri,
-								struct socket_info *sock, int mode)
+		struct socket_info *sock, int mode)
 {
 	struct action act;
 	struct run_act_ctx ra_ctx;
@@ -2063,7 +2063,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, unsigned int limit, in
 			/* max load exceeded per destination */
 			if(alg==DS_ALG_LOAD
 					&& idx->dlist[i].dload>=idx->dlist[i].attrs.maxload)
-			LM_DBG("using entry [%d/%d]\n", set, i);
+				LM_DBG("using entry [%d/%d]\n", set, i);
 			avp_val.s = idx->dlist[i].uri;
 			if(add_avp(AVP_VAL_STR|dst_avp_type, dst_avp_name, avp_val)!=0)
 				return -1;
@@ -2465,7 +2465,7 @@ int ds_reinit_rweight_on_state_change(int old_state, int new_state, ds_set_t *ds
 		return -1;
 	}
 	if ( (!ds_skip_dst(old_state) && ds_skip_dst(new_state)) ||
-		(ds_skip_dst(old_state) && !ds_skip_dst(new_state)) )
+			(ds_skip_dst(old_state) && !ds_skip_dst(new_state)) )
 	{
 		dp_init_relative_weights(dset);
 	}
@@ -2840,7 +2840,7 @@ static void ds_options_callback( struct cell *t, int type,
 		state = 0;
 		if (ds_probing_mode==DS_PROBE_ALL ||
 				((ds_probing_mode==DS_PROBE_ONLYFLAGGED)
-						&& (ds_get_state(group, &uri) & DS_PROBING_DST)))
+				 && (ds_get_state(group, &uri) & DS_PROBING_DST)))
 			state |= DS_PROBING_DST;
 
 		/* Check if in the meantime someone disabled the target through RPC or MI */
@@ -3017,11 +3017,11 @@ int ds_get_list_nr(void)
 
 ds_set_t* ds_avl_find( ds_set_t* node, int id )
 {
-  while (node && id != node->id) {
-          int next_step = (id > node->id);
-          node = node->next[next_step];
-  }
-  return node;
+	while (node && id != node->id) {
+		int next_step = (id > node->id);
+		node = node->next[next_step];
+	}
+	return node;
 }
 
 /**
@@ -3063,35 +3063,35 @@ static void avl_rebalance( ds_set_t** path_top, int target );
 ds_set_t* ds_avl_insert( ds_set_t** root, int id, int* setn )
 {
 	ds_set_t** rotation_top = root;
-  ds_set_t* node = *root;
-  while (node && id != node->id) {
+	ds_set_t* node = *root;
+	while (node && id != node->id) {
 		int next_step = (id > node->id);
 		if (!AVL_BALANCED(node)) rotation_top = root;
 		root = &node->next[next_step];
 		node = *root;
-  }
-  if (!node)
-  {
-  	node = shm_malloc(sizeof(*node));
-  	node->next[0] = node->next[1] = NULL;
-  	node->id = id;
-  	node->longer = AVL_NEITHER;
-  	*root = node;
+	}
+	if (!node)
+	{
+		node = shm_malloc(sizeof(*node));
+		node->next[0] = node->next[1] = NULL;
+		node->id = id;
+		node->longer = AVL_NEITHER;
+		*root = node;
 
-  	avl_rebalance( rotation_top, id );
+		avl_rebalance( rotation_top, id );
 
 		(*setn)++;
-  }
-  return node;
+	}
+	return node;
 }
 
 static void avl_rebalance_path( ds_set_t* path, int id )
 {
 	/* Each node in path is currently balanced.
-	* Until we find target, mark each node as longer
-	* in the direction of target because we know we have
-	* inserted target there
-	*/
+	 * Until we find target, mark each node as longer
+	 * in the direction of target because we know we have
+	 * inserted target there
+	 */
 	while (path && id != path->id) {
 		int next_step = (id > path->id);
 		path->longer = next_step;
@@ -3152,23 +3152,23 @@ static void avl_rebalance( ds_set_t** path_top, int id )
 	ds_set_t* path = *path_top;
 	int first, second, third;
 	if (AVL_BALANCED(path)) {
-			 avl_rebalance_path(path, id);
-			 return;
+		avl_rebalance_path(path, id);
+		return;
 	}
 	first = (id > path->id);
 	if (path->longer != first) {
-			 /* took the shorter path */
-			 path->longer = AVL_NEITHER;
-			 avl_rebalance_path(path->next[first], id);
-			 return;
+		/* took the shorter path */
+		path->longer = AVL_NEITHER;
+		avl_rebalance_path(path->next[first], id);
+		return;
 	}
 	/* took the longer path, need to rotate */
 	second = (id > path->next[first]->id);
 	if (first == second) {
-				/* just a two-point rotate */
-				path = avl_rotate_2(path_top, first);
-				avl_rebalance_path(path, id);
-				return;
+		/* just a two-point rotate */
+		path = avl_rotate_2(path_top, first);
+		avl_rebalance_path(path, id);
+		return;
 	}
 	/* fine details of the 3 point rotate depend on the third step.
 	 * However there may not be a third step, if the third point of the
