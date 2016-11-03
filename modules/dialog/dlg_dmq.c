@@ -112,6 +112,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 		from_uri = {0,0}, to_uri = {0,0}, req_uri = {0,0};
 	unsigned int init_ts = 0, start_ts = 0, lifetime = 0;
 	unsigned int state = 1;
+	srjson_t *vj;
 
 	/* received dmq message */
 	LM_DBG("dmq message received\n");
@@ -256,13 +257,14 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 			dlg->init_ts = init_ts;
 			dlg->start_ts = start_ts;
 
-			srjson_t *vj;
 			vj = srjson_GetObjectItem(&jdoc, jdoc.root, "vars");
-			for(it=vj->child; it; it = it->next)
-			{
-				k.s = it->string;        k.len = strlen(k.s);
-				v.s = it->valuestring;   v.len = strlen(v.s);
-				set_dlg_variable(dlg, &k, &v);
+			if(vj!=NULL) {
+				for(it=vj->child; it; it = it->next)
+				{
+					k.s = it->string;        k.len = strlen(k.s);
+					v.s = it->valuestring;   v.len = strlen(v.s);
+					set_dlg_variable(dlg, &k, &v);
+				}
 			}
 			/* add profiles */
 			if(profiles.s!=NULL) {
