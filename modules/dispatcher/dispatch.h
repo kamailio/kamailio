@@ -180,7 +180,7 @@ typedef struct _ds_set
 	unsigned int wlist[100];
 	unsigned int rwlist[100];
 	struct _ds_set *next[2];
-	int longer:2;
+	int longer;
 } ds_set_t;
 #define AVL_LEFT 0
 #define AVL_RIGHT 1

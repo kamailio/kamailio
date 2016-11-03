@@ -206,7 +206,7 @@ int init_data(void)
 		LM_ERR("Out of memory\n");
 		return -1;
 	}
-	ds_lists[0] = ds_lists[1] = 0;
+	memset(ds_lists, 0, 2*sizeof(ds_set_t*));
 
 
 	p = (int*)shm_malloc(3*sizeof(int));
@@ -215,6 +215,7 @@ int init_data(void)
 		LM_ERR("Out of memory\n");
 		return -1;
 	}
+	memset(p, 0, 3*sizeof(int));
 
 	crt_idx = p;
 	next_idx = p+1;
@@ -588,18 +589,18 @@ randomize:
 /*! \brief  compact destinations from sets for fast access */
 int reindex_dests( ds_set_t* node )
 {
+	int i=0;
+	int j=0;
+
 	if ( !node )
 		return 0;
 
-	int i=0;
 	for( ;i<2;++i)
 	{
 		int rc = reindex_dests( node->next[i] );
 		if ( rc != 0 )
 			return rc;
 	}
-
-	int j;
 
 	ds_dest_t *dp = NULL, *dp0= NULL;
 
@@ -3029,17 +3030,17 @@ ds_set_t* ds_avl_find( ds_set_t* node, int id )
  */
 void ds_avl_destroy( ds_set_t** node_ptr )
 {
+	ds_set_t *node=NULL;
+	ds_dest_t *dest=NULL;
+	int i=0;
 
 	if ( !node_ptr || !(*node_ptr) )
 		return;
 
-	ds_set_t* node = *node_ptr;
+	node = *node_ptr;
 
-	int i=0;
 	for( ;i<2;++i)
 		ds_avl_destroy( &node->next[i] );
-
-	ds_dest_t *dest = NULL;
 
 	for(dest = node->dlist; dest!= NULL; dest=dest->next)
 	{
@@ -3062,8 +3063,12 @@ static void avl_rebalance( ds_set_t** path_top, int target );
 
 ds_set_t* ds_avl_insert( ds_set_t** root, int id, int* setn )
 {
-	ds_set_t** rotation_top = root;
-	ds_set_t* node = *root;
+	ds_set_t** rotation_top;
+	ds_set_t* node;
+
+	rotation_top = root;
+	node = *root;
+
 	while (node && id != node->id) {
 		int next_step = (id > node->id);
 		if (!AVL_BALANCED(node)) rotation_top = root;
@@ -3072,8 +3077,8 @@ ds_set_t* ds_avl_insert( ds_set_t** root, int id, int* setn )
 	}
 	if (!node)
 	{
-		node = shm_malloc(sizeof(*node));
-		node->next[0] = node->next[1] = NULL;
+		node = shm_malloc(sizeof(ds_set_t));
+		memset(node, 0, sizeof(ds_set_t));
 		node->id = id;
 		node->longer = AVL_NEITHER;
 		*root = node;
@@ -3102,6 +3107,7 @@ static void avl_rebalance_path( ds_set_t* path, int id )
 static ds_set_t* avl_rotate_2( ds_set_t** path_top, int dir )
 {
 	ds_set_t *B, *C, *D, *E;
+
 	B = *path_top;
 	D = B->next[dir];
 	C = D->next[1-dir];
@@ -3111,12 +3117,14 @@ static ds_set_t* avl_rotate_2( ds_set_t** path_top, int dir )
 	B->next[dir] = C;
 	B->longer = AVL_NEITHER;
 	D->longer = AVL_NEITHER;
+
 	return E;
 }
 
 static ds_set_t* avl_rotate_3( ds_set_t** path_top, int dir, int third )
 {
 	ds_set_t *B, *F, *D, *C, *E;
+
 	B = *path_top;
 	F = B->next[dir];
 	D = F->next[1-dir];
@@ -3149,8 +3157,11 @@ static ds_set_t* avl_rotate_3( ds_set_t** path_top, int dir, int third )
 
 static void avl_rebalance( ds_set_t** path_top, int id )
 {
-	ds_set_t* path = *path_top;
+	ds_set_t* path;
 	int first, second, third;
+
+	path = *path_top;
+
 	if (AVL_BALANCED(path)) {
 		avl_rebalance_path(path, id);
 		return;
