@@ -593,8 +593,7 @@ static inline int str_eq(const str *p, const char *q) {
 }
 
 static inline str str_prefix(const str *p, const char *q) {
-	str ret;
-	ret.s = NULL;
+	str ret = STR_NULL;
 	int l = strlen(q);
 	if (p->len < l)
 		return ret;
