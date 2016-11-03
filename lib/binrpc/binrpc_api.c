@@ -13,11 +13,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
+
 /**
  * send commands using binrpc
  *
@@ -67,7 +67,7 @@ static void (*internal_free)(void* ptr) = free;
 static char binrpc_last_errs[1024] = "";
 static int verbose = 0;
 
-char *binrpc_get_last_errs() 
+char *binrpc_get_last_errs()
 {
     return binrpc_last_errs;
 }
@@ -213,28 +213,29 @@ static int connect_tcpudp_socket(char* address, int port, int type)
 	struct sockaddr_in addr;
 	struct hostent* he;
 	int sock;
-	
+
 	sock=-1;
 	/* resolve destination */
 	he=gethostbyname(address);
 	if (he==0){
-		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 				"connect_tcpudp_socket: could not resolve %s", address);
 		goto error;
 	}
 	/* open socket*/
+	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family=he->h_addrtype;
 	addr.sin_port=htons(port);
 	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], he->h_length);
-	
+
 	sock = socket(he->h_addrtype, type, 0);
 	if (sock==-1){
-		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 			"connect_tcpudp_socket: socket: %s", strerror(errno));
 		goto error;
 	}
 	if (connect(sock, (struct sockaddr*) &addr, sizeof(struct sockaddr))!=0){
-		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1, 
+		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
 				"connect_tcpudp_socket: connect: %s", strerror(errno));
 		goto error;
 	}
@@ -246,7 +247,7 @@ error:
 
 /* on exit cleanup */
 static void cleanup(struct sockaddr_un* mysun)
-{	
+{
 	if (mysun->sun_path[0] != '\0') {
 		if (unlink(mysun->sun_path) < 0) {
 			fprintf(stderr, "ERROR: failed to delete %s: %s\n",
@@ -259,7 +260,7 @@ int binrpc_open_connection(struct binrpc_handle* handle, char* name, int port, i
 		    char* reply_socket, char* sock_dir)
 {
 	struct sockaddr_un mysun;
-		
+
 	binrpc_last_errs[0] = '\0';
 	binrpc_last_errs[sizeof(binrpc_last_errs)-1] = '\0';  /* snprintf safe terminator */
 
