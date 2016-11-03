@@ -334,15 +334,15 @@ int autheph_www2(struct sip_msg *_m, char *_realm, char *_method)
 		return AUTH_ERROR;
 	}
 
-	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
-	{
-		return AUTH_OK;
-	}
-
 	if(_m == NULL || _realm == NULL)
 	{
 		LM_ERR("invalid parameters\n");
 		return AUTH_ERROR;
+	}
+
+	if (_m->REQ_METHOD == METHOD_ACK || _m->REQ_METHOD == METHOD_CANCEL)
+	{
+		return AUTH_OK;
 	}
 
 	if (get_str_fparam(&srealm, _m, (fparam_t*)_realm) < 0)
