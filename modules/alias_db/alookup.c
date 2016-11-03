@@ -246,7 +246,7 @@ int alias_db_lookup(struct sip_msg* _msg, str table)
 	return alias_db_lookup_ex(_msg, table, flags);
 }
 
-inline int set_alias_to_pvar(struct sip_msg* _msg, str *alias, int no, void *p)
+int set_alias_to_pvar(struct sip_msg* _msg, str *alias, int no, void *p)
 {
 	pv_value_t val;
 	pv_spec_t *pvs=(pv_spec_t*)p;
