@@ -1,24 +1,24 @@
 /*
-* Copyright (C) 2014 Andrey Rybkin <rybkin.a@bks.tv>
-*
-* This file is part of Kamailio, a free SIP server.
-*
-* This file is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version
-*
-*
-* This file is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-*
-*/
+ * Copyright (C) 2014 Andrey Rybkin <rybkin.a@bks.tv>
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * This file is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ *
+ * This file is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
 
 #include "usrloc_sync.h"
 #include "../usrloc/usrloc.h"
@@ -81,44 +81,44 @@ static int add_contact(str aor, ucontact_info_t* ci)
 			return 0;
 		}
 	}
-		res = dmq_ul.get_urecord(_d, &aor, &r);
-		if (res < 0) {
-			LM_ERR("failed to retrieve record from usrloc\n");
+	res = dmq_ul.get_urecord(_d, &aor, &r);
+	if (res < 0) {
+		LM_ERR("failed to retrieve record from usrloc\n");
+		goto error;
+	} else if ( res == 0) {
+		LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
+		res = dmq_ul.get_ucontact(r, ci->c, ci->callid, ci->path, ci->cseq, &c);
+		LM_DBG("get_ucontact = %d\n", res);
+		if (res==-1) {
+			LM_ERR("Invalid cseq\n");
 			goto error;
-		} else if ( res == 0) {
-			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
-			res = dmq_ul.get_ucontact(r, ci->c, ci->callid, ci->path, ci->cseq, &c);
-			LM_DBG("get_ucontact = %d\n", res);
-			if (res==-1) {
-				LM_ERR("Invalid cseq\n");
-				goto error;
-			} else if (res > 0 ) {
-				LM_DBG("Not found contact\n");
-				contact.s = ci->c->s;
-				contact.len = ci->c->len;
-				dmq_ul.insert_ucontact(r, &contact, ci, &c);
-			} else if (res == 0) {
-				LM_DBG("Found contact\n");
-				dmq_ul.update_ucontact(r, c, ci);
-			}
-		} else {
-			LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-			dmq_ul.insert_urecord(_d, &aor, &r);
-			LM_DBG("Insert record\n");
+		} else if (res > 0 ) {
+			LM_DBG("Not found contact\n");
 			contact.s = ci->c->s;
 			contact.len = ci->c->len;
 			dmq_ul.insert_ucontact(r, &contact, ci, &c);
-			LM_DBG("Insert ucontact\n");
+		} else if (res == 0) {
+			LM_DBG("Found contact\n");
+			dmq_ul.update_ucontact(r, c, ci);
 		}
+	} else {
+		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+		dmq_ul.insert_urecord(_d, &aor, &r);
+		LM_DBG("Insert record\n");
+		contact.s = ci->c->s;
+		contact.len = ci->c->len;
+		dmq_ul.insert_ucontact(r, &contact, ci, &c);
+		LM_DBG("Insert ucontact\n");
+	}
 
-		LM_DBG("Release record\n");
-		dmq_ul.release_urecord(r);
-		LM_DBG("Unlock udomain\n");
-		dmq_ul.unlock_udomain(_d, &aor);
-		return 0;
-	error:
-		dmq_ul.unlock_udomain(_d, &aor);
-		return -1;
+	LM_DBG("Release record\n");
+	dmq_ul.release_urecord(r);
+	LM_DBG("Unlock udomain\n");
+	dmq_ul.unlock_udomain(_d, &aor);
+	return 0;
+error:
+	dmq_ul.unlock_udomain(_d, &aor);
+	return -1;
 }
 
 static int delete_contact(str aor, ucontact_info_t* ci)
@@ -127,11 +127,12 @@ static int delete_contact(str aor, ucontact_info_t* ci)
 	urecord_t* r;
 	ucontact_t* c;
 
-        if (dmq_ul.get_udomain(_dmq_usrloc_domain.s, &_d) < 0) {
-                LM_ERR("Failed to get domain\n");
-                return -1;
-        }
+	if (dmq_ul.get_udomain(_dmq_usrloc_domain.s, &_d) < 0) {
+		LM_ERR("Failed to get domain\n");
+		return -1;
+	}
 
+	/* it locks the udomain on success */
 	if (dmq_ul.get_urecord_by_ruid(_d, dmq_ul.get_aorhash(&aor),
 				&ci->ruid, &r, &c) != 0) {
 		LM_WARN("AOR/Contact not found\n");
@@ -296,18 +297,20 @@ int usrloc_dmq_send(str* body, dmq_node_t* node) {
 	}
 	if (node) {
 		LM_DBG("sending dmq message ...\n");
-		usrloc_dmqb.send_message(usrloc_dmq_peer, body, node, &usrloc_dmq_resp_callback, 1, &usrloc_dmq_content_type);
+		usrloc_dmqb.send_message(usrloc_dmq_peer, body, node,
+				&usrloc_dmq_resp_callback, 1, &usrloc_dmq_content_type);
 	} else {
 		LM_DBG("sending dmq broadcast...\n");
-		usrloc_dmqb.bcast_message(usrloc_dmq_peer, body, 0, &usrloc_dmq_resp_callback, 1, &usrloc_dmq_content_type);
+		usrloc_dmqb.bcast_message(usrloc_dmq_peer, body, 0,
+				&usrloc_dmq_resp_callback, 1, &usrloc_dmq_content_type);
 	}
 	return 0;
 }
 
 
 /**
-* @brief ht dmq callback
-*/
+ * @brief ht dmq callback
+ */
 int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* node)
 {
 	int content_length;
@@ -567,7 +570,7 @@ error:
 }
 
 int usrloc_dmq_resp_callback_f(struct sip_msg* msg, int code,
-                            dmq_node_t* node, void* param)
+		dmq_node_t* node, void* param)
 {
 	LM_DBG("dmq response callback triggered [%p %d %p]\n", msg, code, param);
 	return 0;

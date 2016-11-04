@@ -31,7 +31,7 @@
 
 #include "usrloc_sync.h"
 
-static int mod_init(void); 
+static int mod_init(void);
 static int child_init(int);
 
 int dmq_usrloc_enable = 0;
