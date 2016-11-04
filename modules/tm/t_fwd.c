@@ -999,7 +999,7 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 							"branches exceeded\n");
 				if (lock_replies)
 					UNLOCK_REPLIES(t);
-					ret=ser_error=E_TOO_MANY_BRANCHES;
+				ret=ser_error=E_TOO_MANY_BRANCHES;
 				return ret;
 			}
 			/* copy the dns handle into the new uac */

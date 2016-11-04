@@ -548,7 +548,9 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 	}
 
 	/* Rewrite Request-URI */
-	rewrite_uri(msg, &uri);
+	if(rewrite_uri(msg, &uri)<0) {
+		LM_WARN("failed to rewrite r-uri\n");
+	}
 
 	if (dst_uri.len) {
 		set_dst_uri(msg, &dst_uri);
@@ -557,7 +559,9 @@ int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 	}
 
 	if (path.len) {
-		set_path_vector(msg, &path);
+		if(set_path_vector(msg, &path)<0) {
+			LM_WARN("failed to set path vector\n");
+		}
 	} else {
 		reset_path_vector(msg);
 	}
