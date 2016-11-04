@@ -729,10 +729,14 @@ static int w_t_reuse_branch(struct sip_msg* msg, char *p1, char *p2)
 						" in MODE_ONFAILURE\n", branch);
 				return -1;
 			}
-			rewrite_uri(msg, &(t->uac[branch].uri));
+			if(rewrite_uri(msg, &(t->uac[branch].uri))<0) {
+				LM_WARN("failed to rewrite the r-uri\n");
+			}
 			set_ruid(msg, &(t->uac[branch].ruid));
 			if (t->uac[branch].path.len) {
-				set_path_vector(msg, &(t->uac[branch].path));
+				if(set_path_vector(msg, &(t->uac[branch].path))<0) {
+					LM_WARN("failed to set the path vector\n");
+				}
 			} else {
 				reset_path_vector(msg);
 			}
