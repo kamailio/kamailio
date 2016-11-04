@@ -183,7 +183,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
 				&i_req->add_to_branch_len ))
 	{
-		LOG(L_ERR, "ERROR: print_uac_request: branch computation failed\n");
+		LM_ERR("branch computation failed\n");
 		ret=E_UNSPEC;
 		goto error00;
 	}
@@ -355,7 +355,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 				} else {
 					if (run_top_route(branch_rt.rlist[branch_route],
 								i_req, &ctx) < 0) {
-						LOG(L_DBG, "negative return code in run_top_route\n");
+						LM_DBG("negative return code in run_top_route\n");
 					}
 				}
 				/* update dst send_flags  and send socket*/
@@ -464,7 +464,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 
 	/* check if send_sock is ok */
 	if (t->uac[branch].request.dst.send_sock==0) {
-		LOG(L_ERR, "ERROR: can't fwd to af %d, proto %d "
+		LM_ERR("can't fwd to af %d, proto %d "
 				" (no corresponding listening socket)\n",
 				dst->to.s.sa_family, dst->proto );
 		ret=E_NO_SOCKET;
@@ -479,7 +479,7 @@ static int prepare_new_uac( struct cell *t, struct sip_msg *i_req,
 	}
 #ifdef DBG_MSG_QA
 	if (shbuf[len-1]==0) {
-		LOG(L_ERR, "ERROR: print_uac_request: sanity check failed\n");
+		LM_ERR("sanity check failed\n");
 		abort();
 	}
 #endif
@@ -630,7 +630,7 @@ static char *print_uac_request_from_buf( struct cell *t, struct sip_msg *i_req,
 	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
 				&i_req->add_to_branch_len ))
 	{
-		LOG(L_ERR, "ERROR: print_uac_request_from_buf: branch computation failed\n");
+		LM_ERR("branch computation failed\n");
 		goto error00;
 	}
 	branch_str.s = i_req->add_to_branch_s;
@@ -639,20 +639,20 @@ static char *print_uac_request_from_buf( struct cell *t, struct sip_msg *i_req,
 	/* find the beginning of the first via header in the buffer */
 	old_via_begin = lw_find_via(buf, buf+buf_len);
 	if (!old_via_begin) {
-		LOG(L_ERR, "ERROR: print_uac_request_from_buf: beginning of via header not found\n");
+		LM_ERR("beginning of via header not found\n");
 		goto error00;
 	}
 	/* find the end of the first via header in the buffer */
 	old_via_end = lw_next_line(old_via_begin, buf+buf_len);
 	if (!old_via_end) {
-		LOG(L_ERR, "ERROR: print_uac_request_from_buf: end of via header not found\n");
+		LM_ERR("end of via header not found\n");
 		goto error00;
 	}
 
 	/* create the new VIA HF */
 	via = create_via_hf(&via_len, i_req, dst, &branch_str);
 	if (!via) {
-		LOG(L_ERR, "ERROR: print_uac_request_from_buf: via building failed\n");
+		LM_ERR("via building failed\n");
 		goto error00;
 	}
 
@@ -661,7 +661,7 @@ static char *print_uac_request_from_buf( struct cell *t, struct sip_msg *i_req,
 	shbuf=(char *)shm_malloc(*len);
 	if (!shbuf) {
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: print_uac_request_from_buf: no shmem\n");
+		LM_ERR("no shmem\n");
 		goto error01;
 	}
 
@@ -672,7 +672,7 @@ static char *print_uac_request_from_buf( struct cell *t, struct sip_msg *i_req,
 
 #ifdef DBG_MSG_QA
 	if (shbuf[*len-1]==0) {
-		LOG(L_ERR, "ERROR: print_uac_request_from_buf: sanity check failed\n");
+		LM_ERR("sanity check failed\n");
 		abort();
 	}
 #endif
@@ -698,14 +698,13 @@ int add_blind_uac( /*struct cell *t*/ )
 
 	t=get_t();
 	if (t==T_UNDEFINED || !t ) {
-		LOG(L_ERR, "ERROR: add_blind_uac: no transaction context\n");
+		LM_ERR("no transaction context\n");
 		return -1;
 	}
 
 	branch=t->nr_of_outgoings;
 	if (branch==sr_dst_max_branches) {
-		LOG(L_ERR, "ERROR: add_blind_uac: "
-				"maximum number of branches exceeded\n");
+		LM_ERR("maximum number of branches exceeded\n");
 		return -1;
 	}
 	/* make sure it will be replied */
@@ -725,8 +724,7 @@ int add_blind_uac( /*struct cell *t*/ )
 	 * which means retransmission timer will not be started
 	 */
 	if (start_retr(&t->uac[branch].request)!=0)
-		LOG(L_CRIT, "BUG: add_blind_uac: start retr failed for %p\n",
-				&t->uac[branch].request);
+		LM_CRIT("start retr failed for %p\n", &t->uac[branch].request);
 	/* we are on a timer -- don't need to put on wait on script clean-up */
 	set_kr(REQ_FWDED);
 
@@ -767,14 +765,14 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 
 	branch=t->nr_of_outgoings;
 	if (branch==sr_dst_max_branches) {
-		LOG(L_ERR, "ERROR: add_uac: maximum number of branches exceeded\n");
+		LM_ERR("maximum number of branches exceeded\n");
 		ret=ser_error=E_TOO_MANY_BRANCHES;
 		goto error;
 	}
 
 	/* check existing buffer -- rewriting should never occur */
 	if (t->uac[branch].request.buffer) {
-		LOG(L_CRIT, "ERROR: add_uac: buffer rewrite attempt\n");
+		LM_CRIT("buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
 	}
@@ -847,15 +845,14 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 
 	branch=t->nr_of_outgoings;
 	if (branch==sr_dst_max_branches) {
-		LOG(L_ERR, "ERROR: add_uac_from_buf: maximum number of branches"
-				" exceeded\n");
+		LM_ERR("maximum number of branches exceeded\n");
 		ret=ser_error=E_TOO_MANY_BRANCHES;
 		goto error;
 	}
 
 	/* check existing buffer -- rewriting should never occur */
 	if (t->uac[branch].request.buffer) {
-		LOG(L_CRIT, "ERROR: add_uac_from_buf: buffer rewrite attempt\n");
+		LM_CRIT("buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
 	}
@@ -869,7 +866,7 @@ static int add_uac_from_buf( struct cell *t, struct sip_msg *request,
 
 	/* check if send_sock is ok */
 	if (t->uac[branch].request.dst.send_sock==0) {
-		LOG(L_ERR, "ERROR: add_uac_from_buf: can't fwd to af %d, proto %d "
+		LM_ERR("can't fwd to af %d, proto %d"
 				" (no corresponding listening socket)\n",
 				t->uac[branch].request.dst.to.s.sa_family,
 				t->uac[branch].request.dst.proto );
@@ -1003,14 +1000,12 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 			/* check again that we can fork */
 			if ((t->flags & T_DONT_FORK) || uac_dont_fork(old_uac)){
 				UNLOCK_REPLIES(t);
-				DBG("add_uac_dns_fallback: no forking on => no new"
-						" branches\n");
+				LM_DBG("no forking on => no new branches\n");
 				return ret;
 			}
 		}
 		if (t->nr_of_outgoings >= sr_dst_max_branches){
-			LOG(L_ERR, "ERROR: add_uac_dns_fallback: maximum number of "
-					"branches exceeded\n");
+			LM_ERR("maximum number of branches exceeded\n");
 			if (lock_replies)
 				UNLOCK_REPLIES(t);
 			ret=ser_error=E_TOO_MANY_BRANCHES;
@@ -1077,7 +1072,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 
 	ret=-1;
 	if (t_cancel->uac[branch].request.buffer) {
-		LOG(L_CRIT, "ERROR: e2e_cancel_branch: buffer rewrite attempt\n");
+		LM_CRIT("buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
 	}
@@ -1100,8 +1095,8 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 		 * the up-to-date values */
 		membar_depends();
 		if (cancel_msg->add_rm || cancel_msg->body_lumps) {
-			LOG(L_WARN, "WARNING: e2e_cancel_branch: CANCEL is built locally, "
-					"thus lumps are not applied to the message!\n");
+			LM_WARN("CANCEL is built locally,"
+					" thus lumps are not applied to the message!\n");
 		}
 		shbuf=build_local_reparse( t_invite, branch, &len, CANCEL,
 				CANCEL_LEN, &t_invite->to
@@ -1192,7 +1187,7 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 			txt = (str*) data;
 			reason_len = txt?txt->len:0;
 		} else if (unlikely(cause < CANCEL_REAS_MIN)) {
-			BUG("unhandled reason cause %d\n", cause);
+			LM_CRIT("unhandled reason cause %d\n", cause);
 			goto error;
 		}
 
@@ -1220,7 +1215,7 @@ static struct cancel_reason* cancel_reason_pack(short cause, void* data,
 			if (unlikely(code_len==0)) {
 				shm_free(cr);
 				cr = 0;
-				BUG("not enough space to write reason code");
+				LM_CRIT("not enough space to write reason code");
 				goto error;
 			}
 			d+=code_len;
@@ -1277,7 +1272,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	if (t_invite->nr_of_outgoings==0){
 		/* no branches yet => force a reply to the invite */
 		t_reply( t_invite, t_invite->uas.request, 487, CANCELED );
-		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
+		LM_DBG("e2e cancel -- no more pending branches\n");
 		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
 		return;
 	}
@@ -1289,7 +1284,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	if (cancel_bm==0){
 		/* no outgoing branches yet => force a reply to the invite */
 		t_reply( t_invite, t_invite->uas.request, 487, CANCELED );
-		DBG("DEBUG: e2e_cancel: e2e cancel -- no active branches\n");
+		LM_DBG("e2e cancel -- no active branches\n");
 		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
 		return;
 	}
@@ -1373,7 +1368,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				 * the invite check we do it always --andrei */
 				stop_rb_retr(&t_invite->uac[i].request);
 				if (SEND_BUFFER(&t_cancel->uac[i].request) == -1) {
-					LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
+					LM_ERR("e2e cancel - send failed\n");
 				}
 				else{
 					if (unlikely(has_tran_tmcbs(t_cancel, TMCB_REQUEST_SENT)))
@@ -1382,7 +1377,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 								cancel_msg, 0, TMCB_LOCAL_F);
 				}
 				if (start_retr( &t_cancel->uac[i].request )!=0)
-					LOG(L_CRIT, "BUG: e2e_cancel: failed to start retr."
+					LM_CRIT("BUG: failed to start retr."
 							" for %p\n", &t_cancel->uac[i].request);
 			} else {
 				/* No provisional response received, stop
@@ -1410,7 +1405,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	 * will also move the transaction on wait state
 	 */
 	if (lowest_error<0) {
-		LOG(L_ERR, "ERROR: cancel error\n");
+		LM_ERR("cancel error\n");
 		/* if called from failure_route, make sure that the unsafe version
 		 * is called (we are already holding the reply mutex for the cancel
 		 * transaction).
@@ -1423,7 +1418,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		/* if there are pending branches, let upstream know we
 		 * are working on it
 		 */
-		DBG("DEBUG: e2e_cancel: e2e cancel proceeding\n");
+		LM_DBG("e2e cancel proceeding\n");
 		/* if called from failure_route, make sure that the unsafe version
 		 * is called (we are already hold the reply mutex for the cancel
 		 * transaction).
@@ -1436,7 +1431,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		/* if the transaction exists, but there are no more pending
 		 * branches, tell upstream we're done
 		 */
-		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
+		LM_DBG("e2e cancel -- no more pending branches\n");
 		/* if called from failure_route, make sure that the unsafe version
 		 * is called (we are already hold the reply mutex for the cancel
 		 * transaction).
@@ -1477,7 +1472,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		 * (code=final reply && reply==0 => t_pick_branch won't ever pick it)*/
 		uac->last_received=408;
 		su2ip_addr(&ip, &uac->request.dst.to);
-		DBG("t_send_branch: onsend_route dropped msg. to %s:%d (%d)\n",
+		LM_DBG("onsend_route dropped msg. to %s:%d (%d)\n",
 				ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 				uac->request.dst.proto);
 #ifdef USE_DNS_FAILOVER
@@ -1487,7 +1482,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 			ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
 			if (ret>=0){
 				su2ip_addr(&ip, &uac->request.dst.to);
-				DBG("t_send_branch: send on branch %d failed "
+				LM_DBG("send on branch %d failed "
 						"(onsend_route), trying another ip %s:%d (%d)\n",
 						branch, ip_addr2a(&ip),
 						su_getport(&uac->request.dst.to),
@@ -1507,7 +1502,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		){
 		if (dst_is_blacklisted(&uac->request.dst, p_msg)){
 			su2ip_addr(&ip, &uac->request.dst.to);
-			DBG("t_send_branch: blacklisted destination: %s:%d (%d)\n",
+			LM_DBG("blacklisted destination: %s:%d (%d)\n",
 					ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 					uac->request.dst.proto);
 			/* disable the current branch: set a "fake" timeout
@@ -1523,7 +1518,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 				ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
 				if (ret>=0){
 					su2ip_addr(&ip, &uac->request.dst.to);
-					DBG("t_send_branch: send on branch %d failed (blacklist),"
+					LM_DBG("send on branch %d failed (blacklist),"
 							" trying another ip %s:%d (%d)\n", branch,
 							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 							uac->request.dst.proto);
@@ -1544,7 +1539,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		 * (code=final reply && reply==0 => t_pick_branch won't ever pick it)*/
 		uac->last_received=408;
 		su2ip_addr(&ip, &uac->request.dst.to);
-		DBG("t_send_branch: send to %s:%d (%d) failed\n",
+		LM_DBG("send to %s:%d (%d) failed\n",
 				ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 				uac->request.dst.proto);
 #ifdef USE_DST_BLACKLIST
@@ -1557,15 +1552,14 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 			ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
 			if (ret>=0){
 				/* success, return new branch */
-				DBG("t_send_branch: send on branch %d failed, adding another"
+				LM_DBG("send on branch %d failed, adding another"
 						" branch with another ip\n", branch);
 				return ret;
 			}
 		}
 #endif
 		uac->icode = 908; /* internal code set to delivery failure */
-		LOG(L_WARN, "ERROR: t_send_branch: sending request on branch %d "
-				"failed\n", branch);
+		LM_WARN("sending request on branch %d failed\n", branch);
 		if (proxy) { proxy->errors++; proxy->ok=0; }
 		if(tm_failure_exec_mode==1) {
 			LM_DBG("putting branch %d on hold \n", branch);
@@ -1576,7 +1570,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 			uac->last_received=0;
 			/* add to retransmission timer */
 			if (start_retr( &uac->request )!=0){
-				LM_CRIT("retransmission already started for %p\n",
+				LM_CRIT("BUG: retransmission already started for %p\n",
 						&uac->request);
 				return -2;
 			}
@@ -1589,7 +1583,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 					p_msg, 0,0);
 		/* start retr. only if the send succeeded */
 		if (start_retr( &uac->request )!=0){
-			LOG(L_CRIT, "BUG: t_send_branch: retr. already started for %p\n",
+			LM_CRIT("BUG: retransmission already started for: %p\n",
 					&uac->request);
 			return -2;
 		}
@@ -1667,8 +1661,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 		/* update the shmem-ized msg with the lumps */
 		if ((is_route_type(REQUEST_ROUTE)) &&
 				save_msg_lumps(t->uas.request, p_msg)) {
-			LOG(L_ERR, "ERROR: t_forward_nonack: "
-					"failed to save the message lumps\n");
+			LM_ERR("failed to save the message lumps\n");
 			return -1;
 		}
 	}
@@ -1727,15 +1720,14 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {
 		if (try_new==0) {
-			LOG(L_ERR, "ERROR: t_forward_nonack: no branches for"
-					" forwarding\n");
+			LM_ERR("no branches for forwarding\n");
 			/* either failed to add branches, or there were no more branches
 			*/
 			ser_error=MIN_int(lowest_ret, E_CFG);
 			return -1;
 		}
 		if(lowest_ret!=E_CFG)
-			LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");
+			LM_ERR("failure to add branches\n");
 		ser_error=lowest_ret;
 		return lowest_ret;
 	}
@@ -1779,7 +1771,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg,
 	return 1;
 
 canceled:
-	DBG("t_forward_non_ack: no forwarding on a canceled transaction\n");
+	LM_DBG("no forwarding on a canceled transaction\n");
 	/* reset processed branches */
 	clear_branches();
 	/* restore backup flags from initial env */
@@ -1854,12 +1846,12 @@ int t_forward_cancel(struct sip_msg* p_msg , struct proxy_l * proxy, int proto,
 		goto end;
 	}else /* no coresponding INVITE transaction */
 		if (cfg_get(tm, tm_cfg, unmatched_cancel)==UM_CANCEL_DROP){
-			DBG("t_forward_nonack: non matching cancel dropped\n");
+			LM_DBG("non matching cancel dropped\n");
 			ret=1; /* do nothing -> drop */
 			goto end;
 		}else{
 			/* UM_CANCEL_STATELESS -> stateless forward */
-			DBG( "SER: forwarding CANCEL statelessly \n");
+			LM_DBG("forwarding CANCEL statelessly \n");
 			if (proxy==0) {
 				init_dest_info(&dst);
 				dst.proto=proto;
@@ -1959,9 +1951,8 @@ int reparse_on_dns_failover_fixup(void *handle, str *gname, str *name, void **va
 {
 #ifdef USE_DNS_FAILOVER
 	if ((int)(long)(*val) && mhomed) {
-		LOG(L_WARN, "WARNING: reparse_on_dns_failover_fixup:"
-				"reparse_on_dns_failover is enabled on a "
-				"multihomed host -- check the readme of tm module!\n");
+		LM_WARN("reparse_on_dns_failover is enabled on"
+				" a multihomed host -- check the readme of tm module!\n");
 	}
 #endif
 	return 0;
