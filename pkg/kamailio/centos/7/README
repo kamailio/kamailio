@@ -1,0 +1,16 @@
+The following modules are not included in CentOS 7 builds because they have
+dependencies that cannot be met by the base or EPEL CentOS YUM repos or are
+obsolete.
+
+Obsolete modules
+----------------
+* dialog_ng		use the ims_dialog module instead
+
+Modules with unmet dependencies
+-------------------------------
+Note: If you need any of these modules you will need to find (and possibly
+      build) and install the dependencies and then do a manual build of
+      Kamailio.
+
+Ordered by module name:
+* app_java requires libgcj 

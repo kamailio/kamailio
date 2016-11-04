@@ -1,0 +1,134 @@
+#!/bin/bash
+#
+# Startup script for Kamailio
+#
+# chkconfig: 345 85 15
+# description: Kamailio (OpenSER) - the Open Source SIP Server
+#
+# processname: kamailio
+# pidfile: /var/run/kamailio.pid
+# config: /etc/kamailio/kamailio.cfg
+#
+### BEGIN INIT INFO
+# Provides: kamailio
+# Required-Start: $local_fs $network
+# Short-Description: Kamailio (OpenSER) - the Open Source SIP Server
+# Description: Kamailio (former OpenSER) is an Open Source SIP Server released
+# 	under GPL, able to handle thousands of call setups per second.
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+KAM=/usr/sbin/kamailio
+KAMCFG=/etc/kamailio/kamailio.cfg
+PROG=kamailio
+PID_FILE=/var/run/kamailio.pid
+LOCK_FILE=/var/lock/subsys/kamailio
+RETVAL=0
+DEFAULTS=/etc/sysconfig/kamailio
+RUN_KAMAILIO=no
+
+
+# Do not start kamailio if fork=no is set in the config file
+# otherwise the boot process will just stop
+check_fork ()
+{
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" $KAMCFG; then
+        echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio debug instead"
+        exit 1
+    fi
+}
+
+check_kamailio_config ()
+{
+        # Check if kamailio configuration is valid before starting the server
+        out=$($KAM -c 2>&1 > /dev/null)
+        retcode=$?
+        if [ "$retcode" != '0' ]; then
+            echo "Not starting $DESC: invalid configuration file!"
+            echo -e "\n$out\n"
+            exit 1
+        fi
+}
+
+
+start() {
+	check_kamailio_config
+        if [ "$1" != "debug" ]; then
+            check_fork
+        fi
+	echo -n $"Starting $PROG: "
+	daemon $KAM $OPTIONS >/dev/null 2>/dev/null
+	RETVAL=$?
+	[ $RETVAL = 0 ] && touch $LOCK_FILE && success
+	echo
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $PROG: "
+	killproc $KAM
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && rm -f $LOCK_FILE $PID_FILE
+}
+
+# Load startup options if available
+if [ -f $DEFAULTS ]; then
+   . $DEFAULTS || true
+fi
+
+if [ "$RUN_KAMAILIO" != "yes" ]; then
+    echo "Kamailio not yet configured. Edit /etc/default/kamailio first."
+    exit 0
+fi
+
+
+SHM_MEMORY=$((`echo $SHM_MEMORY | sed -e 's/[^0-9]//g'`))
+PKG_MEMORY=$((`echo $PKG_MEMORY | sed -e 's/[^0-9]//g'`))
+[ -z "$USER" ]  && USER=kamailio
+[ -z "$GROUP" ] && GROUP=kamailio
+[ $SHM_MEMORY -le 0 ] && SHM_MEMORY=32
+[ $PKG_MEMORY -le 0 ] && PKG_MEMORY=4
+
+if test "$DUMP_CORE" = "yes" ; then
+    # set proper ulimit
+    ulimit -c unlimited
+
+    # directory for the core dump files
+    COREDIR=/tmp
+    echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
+fi
+
+OPTIONS="-P $PID_FILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP $EXTRA_OPTIONS"
+
+
+# See how we were called.
+case "$1" in
+	start|debug)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status $KAM
+		RETVAL=$?
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f $PID_FILE ] ; then
+			stop
+			start
+		fi
+		;;
+	*)
+		echo $"Usage: $PROG {start|stop|restart|condrestart|status|debug|help}"
+		exit 1
+esac
+
+exit $RETVAL

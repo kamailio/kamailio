@@ -1,0 +1,30 @@
+#
+# Kamailio startup options
+#
+
+# Set to yes to enable kamailio, once configured properly.
+RUN_KAMAILIO=yes
+
+# User to run as
+USER=kamailio
+
+# Group to run as
+GROUP=kamailio
+
+# Amount of shared memory to allocate for the running Kamailio server (in Mb)
+SHM_MEMORY=64
+
+# Amount of per-process (package) memory to allocate for Kamailio (in Mb)
+PKG_MEMORY=4
+
+# Enable the server to leave a core file when it crashes.
+# Set this to 'yes' to enable kamailio to leave a core file when it crashes
+# or 'no' to disable this feature. This option is case sensitive and only
+# accepts 'yes' and 'no' and only in lowercase letters.
+# On some systems (e.g. Ubuntu 6.10, Debian 4.0) it is necessary to specify
+# a directory for the core files to get a dump. Look into the kamailio
+# init file for an example configuration.
+DUMP_CORE=no
+
+# Add extra command line parameters in the EXTRA_OPTIONS variable
+# EXTRA_OPTIONS="-a no"
