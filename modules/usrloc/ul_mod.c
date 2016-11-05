@@ -358,7 +358,10 @@ static int mod_init(void)
 	}
 	if(db_mode==WRITE_THROUGH || db_mode==WRITE_BACK) {
 		if(ul_db_timer_clean!=0) {
-			sr_wtimer_add(ul_db_clean_timer, 0, timer_interval);
+			if(sr_wtimer_add(ul_db_clean_timer, 0, timer_interval)<0) {
+				LM_ERR("failed to add db clean timer routine\n");
+				return -1;
+			}
 		}
 	}
 
