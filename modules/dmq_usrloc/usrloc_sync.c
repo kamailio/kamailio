@@ -321,16 +321,25 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 
 	unsigned int action, expires, cseq, flags, cflags, q, last_modified,
 				 methods, reg_id;
-	str aor, ruid, c, received, path, callid, user_agent, instance;
+	str aor=STR_NULL, ruid=STR_NULL, c=STR_NULL, received=STR_NULL,
+		path=STR_NULL, callid=STR_NULL, user_agent=STR_NULL, instance=STR_NULL;
 
 	action = expires = cseq = flags = cflags = q = last_modified
 		= methods = reg_id = 0;
 
-	parse_from_header(msg);
+	srjson_InitDoc(&jdoc, NULL);
+	if(parse_from_header(msg)<0) {
+		LM_ERR("failed to parse from header\n");
+		goto invalid;
+	}
 	body = ((struct to_body*)msg->from->parsed)->uri;
 
 	LM_DBG("dmq message received from %.*s\n", body.len, body.s);
 
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("failed to parse the headers\n");
+		goto invalid;
+	}
 	if(!msg->content_length) {
 		LM_ERR("no content length header found\n");
 		goto invalid;
@@ -349,7 +358,6 @@ int usrloc_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t*
 		goto error;
 	}
 
-	srjson_InitDoc(&jdoc, NULL);
 	jdoc.buf = body;
 	if(jdoc.root == NULL) {
 		jdoc.root = srjson_Parse(&jdoc, jdoc.buf.s);
