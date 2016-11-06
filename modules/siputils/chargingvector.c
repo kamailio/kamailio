@@ -172,6 +172,7 @@ static int sip_parse_charging_vector(const char * pcv_value, unsigned int len)
 	}
 	else
 	{
+		LM_WARN("mandatory icid-value not found\n");
 		pcv_id.s = NULL;
 		pcv_id.len = 0;
 	}
@@ -186,16 +187,15 @@ static int sip_parse_charging_vector(const char * pcv_value, unsigned int len)
 	}
 	else
 	{
+		LM_DBG("icid-generated-at not found\n");
 		pcv_host.s = NULL;
 		pcv_host.len = 0;
 	}
 
-	// Buggy charging vector where only icid-value is sent ...
-	if ( pcv_host.s == NULL && pcv_id.s == NULL && len > 0)
+	// only icid-value is mandatory, log anyway when missing icid-generated-at
+	if ( pcv_host.s == NULL && pcv_id.s != NULL && len > 0)
 	{
-		pcv_id.s = (char *) pcv_value,
-			pcv_id.len = sip_param_end(pcv_id.s, len);
-		LM_WARN("parsed BUGGY P-Charging-Vector %.*s\n", pcv_id.len, pcv_id.s );
+		LM_WARN("icid-generated-at is missing %.*s\n", len, pcv_value);
 	}
 
 	return (pcv_id.s != NULL);
