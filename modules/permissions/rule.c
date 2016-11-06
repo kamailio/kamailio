@@ -116,11 +116,16 @@ int search_rule(rule *r, char *left, char *right)
  * allocate memory for a new expression
  * str is saved in vale, and compiled to POSIX regexp (reg_value)
  */
-expression *new_expression(char *str)
+expression *new_expression(char *sv)
 {
 	expression	*e;
 
-	if (!str) return 0;
+	if (!sv) return 0;
+
+	if(strlen(sv)>=EXPRESSION_LENGTH) {
+		LM_ERR("expression string is too large (%s)\n", sv);
+		return 0;
+	}
 
 	e = (expression *)pkg_malloc(sizeof(expression));
 	if (!e) {
@@ -128,7 +133,7 @@ expression *new_expression(char *str)
 		return 0;
 	}
 
-	strcpy(e->value, str);
+	strcpy(e->value, sv);
 
 	e->reg_value = (regex_t*)pkg_malloc(sizeof(regex_t));
 	if (!e->reg_value) {
@@ -137,8 +142,8 @@ expression *new_expression(char *str)
 		return 0;
 	}
 
-	if (regcomp(e->reg_value, str, REG_EXTENDED|REG_NOSUB|REG_ICASE) ) {
-		LM_ERR("bad regular expression: %s\n", str);
+	if (regcomp(e->reg_value, sv, REG_EXTENDED|REG_NOSUB|REG_ICASE) ) {
+		LM_ERR("bad regular expression: %s\n", sv);
 		pkg_free(e->reg_value);
 		pkg_free(e);
 		return NULL;

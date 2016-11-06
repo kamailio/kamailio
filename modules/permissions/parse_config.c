@@ -102,18 +102,23 @@ error:
  * return 0 on success, -1 on error
  * parsed expressions are returned in **e, and exceptions are returned in **e_exceptions
  */
-static int parse_expression(char *str, expression **e, expression **e_exceptions)
+static int parse_expression(char *sv, expression **e, expression **e_exceptions)
 {
 	char *except, str2[LINE_LENGTH+1];
 	int  i,j;
 
-	if (!str || !e || !e_exceptions) return -1;
+	if (!sv || !e || !e_exceptions) return -1;
 
-	except = strstr(str, " EXCEPT ");
+	if(strlen(sv)>=LINE_LENGTH) {
+		LM_ERR("expression string is too long (%s)\n", sv);
+		return -1;
+	}
+
+	except = strstr(sv, " EXCEPT ");
 	if (except) {
 		/* exception found */
-		strncpy(str2, str, except-str);
-		str2[except-str] = '\0';
+		strncpy(str2, sv, except-sv);
+		str2[except-sv] = '\0';
 		/* except+8 points to the exception */
 		if (parse_expression_list(except+8, e_exceptions)) {
 			/* error */
@@ -122,7 +127,7 @@ static int parse_expression(char *str, expression **e, expression **e_exceptions
 		}
 	} else {
 		/* no exception */
-		strcpy(str2, str);
+		strcpy(str2, sv);
 		*e_exceptions = NULL;
 	}
 
