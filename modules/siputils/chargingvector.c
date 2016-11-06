@@ -36,8 +36,10 @@
 #define PCV_BUF_SIZE 256
 static char pcv_buf[PCV_BUF_SIZE];
 static str pcv = { pcv_buf, 0 };
-static str pcv_host = { NULL, 0 };
 static str pcv_id = { NULL, 0 };
+static str pcv_host = { NULL, 0 };
+static str pcv_orig = { NULL, 0 };
+static str pcv_term = { NULL, 0 };
 static uint64_t counter = 0;
 
 
@@ -190,6 +192,34 @@ static int sip_parse_charging_vector(const char * pcv_value, unsigned int len)
 		LM_DBG("icid-generated-at not found\n");
 		pcv_host.s = NULL;
 		pcv_host.len = 0;
+	}
+
+	s = strstr(pcv_value, "orig-ioi=");
+	if (s != NULL)
+	{
+		pcv_orig.s = s + strlen("orig-ioi=");
+		pcv_orig.len = sip_param_end(pcv_orig.s, len);
+		LM_INFO("parsed P-Charging-Vector orig-ioi=%.*s\n",
+				pcv_orig.len, pcv_orig.s );
+	}
+	else
+	{
+		pcv_orig.s = NULL;
+		pcv_orig.len = 0;
+	}
+
+	s = strstr(pcv_value, "term-ioi=");
+	if (s != NULL)
+	{
+		pcv_term.s = s + strlen("term-ioi=");
+		pcv_term.len = sip_param_end(pcv_term.s, len);
+		LM_INFO("parsed P-Charging-Vector term-ioi=%.*s\n",
+				pcv_term.len, pcv_term.s );
+	}
+	else
+	{
+		pcv_term.s = NULL;
+		pcv_term.len = 0;
 	}
 
 	// only icid-value is mandatory, log anyway when missing icid-generated-at
@@ -436,6 +466,12 @@ int pv_get_charging_vector(struct sip_msg *msg, pv_param_t *param, pv_value_t *r
 			LM_DBG("pcv_status==PCV_PARSED\n");
 			switch( param->pvn.u.isname.name.n )
 			{
+				case 5:
+					pcv_pv = pcv_term;
+					break;
+				case 4:
+					pcv_pv = pcv_orig;
+					break;
 				case 2:
 					pcv_pv = pcv_host;
 					break;
@@ -475,6 +511,13 @@ int pv_parse_charging_vector_name(pv_spec_p sp, str *in)
 		case 3:
 			if(strncmp(in->s, "all", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "orig", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "term", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
 			else goto error;
 		break;
 		case 5:
