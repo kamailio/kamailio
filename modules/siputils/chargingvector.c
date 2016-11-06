@@ -391,7 +391,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 		/* if generated, reparse it */
 		sip_parse_charging_vector( pcv_body, pcv.len-19 );
 		/* if it was generated, we need to send it out as a header */
-		LM_INFO("Generated PCV header %.*s\n", pcv.len, pcv_buf );
+		LM_INFO("Generated PCV header %.*s\n", pcv.len-2, pcv_buf );
 		i = sip_add_charging_vector(msg);
 		if (i <= 0)
 		{
