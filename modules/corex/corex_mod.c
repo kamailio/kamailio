@@ -341,6 +341,10 @@ static int w_file_read(sip_msg_t *msg, char *fn, char *vn)
 	}
 	fseek(f, 0, SEEK_END);
 	fsize = ftell(f);
+	if(fsize<0) {
+		LM_ERR("ftell failed on file: %.*s\n", fname.len, fname.s);
+		return -1;
+	}
 	fseek(f, 0, SEEK_SET);
 
 	content = pkg_malloc(fsize + 1);
