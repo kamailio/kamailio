@@ -33,8 +33,8 @@
 #define P_CHARGING_VECTOR "P-Charging-Vector"
 #define LOOPBACK_IP 16777343
 
-#define PVC_BUF_SIZE 256
-static char pcv_buf[PVC_BUF_SIZE];
+#define PCV_BUF_SIZE 256
+static char pcv_buf[PCV_BUF_SIZE];
 static str pcv = { pcv_buf, 0 };
 static str pcv_host = { NULL, 0 };
 static str pcv_id = { NULL, 0 };
@@ -128,7 +128,7 @@ static void sip_generate_charging_vector(char * pcv)
 		}
 		idx++;
 	}
-	LM_DBG("CV generate");
+	LM_DBG("PCV generate\n");
 	int i = 0;
 	pcv[0] = '\0';
 	for ( i = 0 ; i < SIZE_CONF_ID ; i ++ )
@@ -155,14 +155,14 @@ static unsigned int sip_param_end(const char * s, unsigned int len)
 	return len;
 }
 
-static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
+static int sip_parse_charging_vector(const char * pcv_value, unsigned int len)
 {
 	/* now point to each PCV component */
-	LM_DBG("parsing PCV header [%s]\n", pvc_value);
+	LM_DBG("parsing PCV header [%s]\n", pcv_value);
 
 	char *s = NULL;
 
-	s = strstr(pvc_value, "icid-value=");
+	s = strstr(pcv_value, "icid-value=");
 	if (s != NULL)
 	{
 		pcv_id.s = s + strlen("icid-value=");
@@ -176,7 +176,7 @@ static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
 		pcv_id.len = 0;
 	}
 
-	s = strstr(pvc_value, "icid-generated-at=");
+	s = strstr(pcv_value, "icid-generated-at=");
 	if (s != NULL)
 	{
 		pcv_host.s = s + strlen("icid-generated-at=");
@@ -193,7 +193,7 @@ static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
 	// Buggy charging vector where only icid-value is sent ...
 	if ( pcv_host.s == NULL && pcv_id.s == NULL && len > 0)
 	{
-		pcv_id.s = (char *) pvc_value,
+		pcv_id.s = (char *) pcv_value,
 			pcv_id.len = sip_param_end(pcv_id.s, len);
 		LM_WARN("parsed BUGGY P-Charging-Vector %.*s\n", pcv_id.len, pcv_id.s );
 	}
@@ -259,7 +259,7 @@ static int sip_get_charging_vector(struct sip_msg *msg, struct hdr_field ** hf_p
 	return 1;
 }
 
-// Remove PVC if it is in the inbound request (if it was found by sip_get_charging_vector)
+// Remove PCV if it is in the inbound request (if it was found by sip_get_charging_vector)
 static int  sip_remove_charging_vector(struct sip_msg *msg, struct hdr_field *hf)
 {
 	struct lump* l;
@@ -381,7 +381,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 
 		sip_generate_charging_vector(pcv_value);
 
-		pcv.len = snprintf( pcv_body, PVC_BUF_SIZE - 19, "icid-value=%.*s; icid-generated-at=%.*s\r\n", 32, pcv_value,
+		pcv.len = snprintf( pcv_body, PCV_BUF_SIZE - 19, "icid-value=%.*s; icid-generated-at=%.*s\r\n", 32, pcv_value,
 				msg->rcv.bind_address->address_str.len,
 				msg->rcv.bind_address->address_str.s );
 		pcv.len += 19;
@@ -391,7 +391,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 		/* if generated, reparse it */
 		sip_parse_charging_vector( pcv_body, pcv.len-19 );
 		/* if it was generated, we need to send it out as a header */
-		LM_INFO("Generated PCV header %.*s.\n", pcv.len, pcv_buf );
+		LM_INFO("Generated PCV header %.*s\n", pcv.len, pcv_buf );
 		i = sip_add_charging_vector(msg);
 		if (i <= 0)
 		{
