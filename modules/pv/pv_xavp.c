@@ -634,7 +634,7 @@ int pv_var_to_xavp(str *varname, str *xname)
 	if(varname->len==1 && varname->s[0] == '*') {
 		for(it=get_var_all(); it; it=it->next) {
 			memset(&xval, 0, sizeof(sr_xval_t));
-			if(it->v.flags&VAR_VAL_INT)
+			if(it->v.flags==VAR_VAL_INT)
 			{
 				xval.type = SR_XTYPE_INT;
 				xval.v.i = it->v.value.n;
@@ -658,7 +658,7 @@ int pv_var_to_xavp(str *varname, str *xname)
 			return -1;
 		}
 		memset(&xval, 0, sizeof(sr_xval_t));
-		if(it->v.flags&VAR_VAL_INT)
+		if(it->v.flags==VAR_VAL_INT)
 		{
 			xval.type = SR_XTYPE_INT;
 			xval.v.i = it->v.value.n;
