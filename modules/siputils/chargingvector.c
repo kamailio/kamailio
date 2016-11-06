@@ -158,7 +158,7 @@ static unsigned int sip_param_end(const char * s, unsigned int len)
 static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
 {
 	/* now point to each PCV component */
-	LM_DBG("acc: parsing PCV header [%s].\n", pvc_value);
+	LM_DBG("parsing PCV header [%s]\n", pvc_value);
 
 	char *s = NULL;
 
@@ -167,7 +167,7 @@ static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
 	{
 		pcv_id.s = s + strlen("icid-value=");
 		pcv_id.len = sip_param_end(pcv_id.s, len);
-		LM_INFO("acc: parsed P-Charging-Vector icid-value=%.*s",
+		LM_DBG("parsed P-Charging-Vector icid-value=%.*s\n",
 				pcv_id.len, pcv_id.s );
 	}
 	else
@@ -181,7 +181,7 @@ static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
 	{
 		pcv_host.s = s + strlen("icid-generated-at=");
 		pcv_host.len = sip_param_end(pcv_id.s, len);
-		LM_DBG("acc: parsed P-Charging-Vector icid-generated-at=%.*s",
+		LM_DBG("parsed P-Charging-Vector icid-generated-at=%.*s\n",
 				pcv_host.len, pcv_host.s );
 	}
 	else
@@ -195,7 +195,7 @@ static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
 	{
 		pcv_id.s = (char *) pvc_value,
 			pcv_id.len = sip_param_end(pcv_id.s, len);
-		LM_WARN("acc: parsed BUGGY P-Charging-Vector %.*s", pcv_id.len, pcv_id.s );
+		LM_WARN("parsed BUGGY P-Charging-Vector %.*s\n", pcv_id.len, pcv_id.s );
 	}
 
 	return (pcv_id.s != NULL);
@@ -218,13 +218,13 @@ static int sip_get_charging_vector(struct sip_msg *msg, struct hdr_field ** hf_p
 	{
 		if ( hf->name.s[0] == 'P' )
 		{
-			LM_INFO("acc: checking heander=%.*s\n", hf->name.len, hf->name.s );
+			LM_DBG("checking header=%.*s\n", hf->name.len, hf->name.s );
 		}
 
 		if ( cmp_hdrname_str(&hf->name, &hdrname) == 0)
 		{
 			/*
-			 * append p charging vector valus after the header name "P-Charging-Vector" and
+			 * append p charging vector values after the header name "P-Charging-Vector" and
 			 * the ": " (+2)
 			 */
 			char * pcv_body = pcv_buf + strlen(P_CHARGING_VECTOR) + 2;
@@ -246,7 +246,7 @@ static int sip_get_charging_vector(struct sip_msg *msg, struct hdr_field ** hf_p
 			}
 			else
 			{
-				pcv_id.s =0;
+				pcv_id.s = 0;
 				pcv_id.len = 0;
 				pcv_host.s = 0;
 				pcv_host.len = 0;
@@ -255,7 +255,7 @@ static int sip_get_charging_vector(struct sip_msg *msg, struct hdr_field ** hf_p
 			*hf_pcv = hf;
 		}
 	}
-	LM_INFO("No valid P-Charging-Vector header found.\n");
+	LM_DBG("No valid P-Charging-Vector header found.\n");
 	return 1;
 }
 
@@ -351,7 +351,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 	sip_get_charging_vector(msg, &hf_pcv);
 
 	/*
-	 * We need to remove the original PCV if it was present and ether
+	 * We need to remove the original PCV if it was present and either
 	 * we were asked to remove it or we were asked to replace it
 	 */
 	if ( pcv_status == PCV_PARSED && (replace_pcv || remove_pcv)  )
@@ -416,7 +416,7 @@ int pv_get_charging_vector(struct sip_msg *msg, pv_param_t *param, pv_value_t *r
 		{
 			current_msg_id = msg->id;
 		}
-		LM_DBG("Parsed charging vector for pseudo-var \n");
+		LM_DBG("Parsed charging vector for pseudo-var\n");
 	}
 	else
 	{
@@ -426,7 +426,9 @@ int pv_get_charging_vector(struct sip_msg *msg, pv_param_t *param, pv_value_t *r
 	switch(pcv_status)
 	{
 		case PCV_GENERATED:
+			LM_DBG("pcv_status==PCV_GENERATED\n");
 		case PCV_PARSED:
+			LM_DBG("pcv_status==PCV_PARSED\n");
 			switch( param->pvn.u.isname.name.n )
 			{
 				case 2:
