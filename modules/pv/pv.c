@@ -577,7 +577,7 @@ static int mod_init(void)
 	{
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
-    }
+	}
 	pv_init_sbranch();
 
 	return 0;
@@ -620,7 +620,10 @@ static int pv_unset(struct sip_msg* msg, char* pvid, char *foo)
 	pv_spec_t *sp;
 
 	sp = (pv_spec_t*)pvid;
-	pv_set_spec_value(msg, sp, 0, NULL);
+	if(pv_set_spec_value(msg, sp, 0, NULL)<0) {
+		LM_ERR("faile to unset variable\n");
+		return -1;
+	}
 
 	return 1;
 }
