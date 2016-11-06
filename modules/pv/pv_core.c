@@ -3153,14 +3153,17 @@ int pv_parse_msg_attrs_name(pv_spec_p sp, str *in)
 			else if(strncmp(in->s, "hdrs", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
+		break;
 		case 5:
 			if(strncmp(in->s, "fline", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else goto error;
+		break;
 		case 8:
 			if(strncmp(in->s, "body_len", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else goto error;
+		break;
 		default:
 			goto error;
 	}
