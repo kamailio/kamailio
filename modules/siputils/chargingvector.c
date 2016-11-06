@@ -180,7 +180,7 @@ static int sip_parse_charging_vector(const char * pcv_value, unsigned int len)
 	if (s != NULL)
 	{
 		pcv_host.s = s + strlen("icid-generated-at=");
-		pcv_host.len = sip_param_end(pcv_id.s, len);
+		pcv_host.len = sip_param_end(pcv_host.s, len);
 		LM_DBG("parsed P-Charging-Vector icid-generated-at=%.*s\n",
 				pcv_host.len, pcv_host.s );
 	}
