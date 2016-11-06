@@ -30,15 +30,15 @@
 #include "chargingvector.h"
 
 #define SIZE_CONF_ID 16
-#define P_CHARGING_VECTOR    "P-Charging-Vector"
-#define LOOPBACK_IP  16777343
+#define P_CHARGING_VECTOR "P-Charging-Vector"
+#define LOOPBACK_IP 16777343
 
-#define PVC_BUF_SIZE	256
+#define PVC_BUF_SIZE 256
 static char pcv_buf[PVC_BUF_SIZE];
 static str pcv = { pcv_buf, 0 };
 static str pcv_host = { NULL, 0 };
 static str pcv_id = { NULL, 0 };
-static uint64_t     	counter = 0 ;
+static uint64_t counter = 0;
 
 
 enum PCV_Status {
@@ -54,15 +54,15 @@ static void sip_generate_charging_vector(char * pcv)
 {
 	char             s[PATH_MAX]        = {0};
 	struct hostent*  host               = NULL;
-	int              cdx                = 0 ;
-	int              tdx                = 0 ;
-	int              idx                = 0 ;
-	int              ipx                = 0 ;
+	int              cdx                = 0;
+	int              tdx                = 0;
+	int              idx                = 0;
+	int              ipx                = 0;
 	int pid;
-	uint64_t         ct                 = 0 ;
+	uint64_t         ct                 = 0;
 	struct in_addr*  in                 = NULL;
 	static struct in_addr ip            = {0};
-	unsigned char             		newConferenceIdentifier[SIZE_CONF_ID]={0};
+	unsigned char newConferenceIdentifier[SIZE_CONF_ID]={0};
 
 	memset(pcv,0,SIZE_CONF_ID);
 	pid = getpid();
@@ -79,7 +79,7 @@ static void sip_generate_charging_vector(char * pcv)
 					in = (struct in_addr*)host->h_addr_list[idx];
 					if (in->s_addr == LOOPBACK_IP )
 					{
-						if ( ip.s_addr  == 0 )
+						if ( ip.s_addr == 0 )
 						{
 							ip=*in;
 						}
@@ -129,11 +129,11 @@ static void sip_generate_charging_vector(char * pcv)
 		idx++;
 	}
 	LM_DBG("CV generate");
-	int i =0;
+	int i = 0;
 	pcv[0] = '\0';
 	for ( i = 0 ; i < SIZE_CONF_ID ; i ++ )
 	{
-		char hex[4] = {0 };
+		char hex[4] = {0};
 
 		snprintf(hex,4,"%02X",newConferenceIdentifier[i]);
 		strcat(pcv,hex);
@@ -160,7 +160,9 @@ static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
 	/* now point to each PCV component */
 	LM_DBG("acc: parsing PCV header [%s].\n", pvc_value);
 
-	char *s = strstr(pvc_value, "icid-value=");
+	char *s = NULL;
+
+	s = strstr(pvc_value, "icid-value=");
 	if (s != NULL)
 	{
 		pcv_id.s = s + strlen("icid-value=");
@@ -189,7 +191,7 @@ static int sip_parse_charging_vector(const char * pvc_value, unsigned int len)
 	}
 
 	// Buggy charging vector where only icid-value is sent ...
-	if ( pcv_host.s == NULL &&  pcv_id.s == NULL && len > 0)
+	if ( pcv_host.s == NULL && pcv_id.s == NULL && len > 0)
 	{
 		pcv_id.s = (char *) pvc_value,
 			pcv_id.len = sip_param_end(pcv_id.s, len);
@@ -290,7 +292,7 @@ static int sip_add_charging_vector(struct sip_msg *msg)
 		return -1;
 	}
 
-	s  = (char*)pkg_malloc(pcv.len);
+	s = (char*)pkg_malloc(pcv.len);
 	if (!s) {
 		LM_ERR("no pkg memory left\n");
 		return -1;
