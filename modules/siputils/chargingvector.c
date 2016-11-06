@@ -216,9 +216,9 @@ static int sip_get_charging_vector(struct sip_msg *msg, struct hdr_field ** hf_p
 
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
-		if ( hf->name.s[0] == 'P' )
+		if ( hf->name.s[0] != 'P' )
 		{
-			LM_DBG("checking header=%.*s\n", hf->name.len, hf->name.s );
+			continue;
 		}
 
 		if ( cmp_hdrname_str(&hf->name, &hdrname) == 0)
