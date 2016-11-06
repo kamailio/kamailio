@@ -237,10 +237,15 @@ static int sip_get_charging_vector(struct sip_msg *msg, struct hdr_field ** hf_p
 				if ( sip_parse_charging_vector( pcv_body, hf->body.len ) == 0)
 				{
 					LM_ERR("P-Charging-Vector header found but failed to parse value [%s].\n", pcv_body);
+					pcv_status = PCV_NONE;
+					pcv.s = NULL;
+					pcv.len = 0;
 				}
 				else
 				{
 					pcv_status = PCV_PARSED;
+					pcv.s = hf->body.s;
+					pcv.len = hf->body.len;
 				}
 				return 2;
 			}
