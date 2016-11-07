@@ -137,11 +137,8 @@ void async_cdp_lir_callback(int is_timeout, void *param, AAAMessage *lia, long e
                 case RC_IMS_DIAMETER_ERROR_USER_UNKNOWN:
                     /* Check, if route is set: */
                     if (route_lir_user_unknown_no >= 0) {
-                        /* exec routing script */
-                        init_run_actions_ctx(&ra_ctx);
-                        if (run_actions(&ra_ctx, main_rt.rlist[route_uar_user_unknown_no], t->uas.request) < 0) {
-                            DBG("ims_icscf: error while trying script\n");
-                        }
+						LM_DBG("we have an unknown user route block so we will re-target there\n");
+						data->act = main_rt.rlist[route_lir_user_unknown_no];
                     } else {
                         cscf_reply_transactional_async(t, t->uas.request, 604, MSG_604_USER_UNKNOWN);
                     }
