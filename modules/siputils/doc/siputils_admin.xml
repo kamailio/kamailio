@@ -1086,31 +1086,35 @@ sip_p_charging_vector("g");
 	<section>
 			<title>Exported pseudo-variables</title>
 			<section id="siputils.v.pcv_all">
-					<title><varname>$pcv(all)</title>
+					<title><varname>$pcv(all)</varname></title>
 					<para>
 						full P-Charging-Vector header
 					</para>
+			</section>
 			<section id="siputils.v.pcv_value">
-					<title><varname>$pcv(value)</title>
+					<title><varname>$pcv(value)</varname></title>
 					<para>
 						icid-value field (see RFC7315 section 5.6)
 					</para>
+			</section>
 			<section id="siputils.v.pcv_genaddr">
-					<title><varname>$pcv(genaddr)</title>
+					<title><varname>$pcv(genaddr)</varname></title>
 					<para>
 						icid-generated-at field (see RFC7315 section 5.6)
 					</para>
+			</section>
 			<section id="siputils.v.pcv_orig">
-					<title><varname>$pcv(orig)</title>
+					<title><varname>$pcv(orig)</varname></title>
 					<para>
 						orig-ioi field (see RFC7315 section 5.6)
 					</para>
+			</section>
 			<section id="siputils.v.pcv_term">
-					<title><varname>$pcv(term)</title>
+					<title><varname>$pcv(term)</varname></title>
 					<para>
 						term-ioi field (see RFC7315 section 5.6)
 					</para>
 			</section>
-	<section>
+	</section>
 
 </chapter>
