@@ -2079,9 +2079,12 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		}
 		init_dest_info(&dst);
 		hostent2su(&dst.to, he, 0, curi.port_no);
+
+		if (force_socket) {
+			send_sock = force_socket;
+		}
 		if (send_sock==0) {
-			send_sock=force_socket ? force_socket :
-				get_send_socket(0, &dst.to, PROTO_UDP);
+			send_sock = get_send_socket(0, &dst.to, PROTO_UDP);
 		}
 		if (send_sock == NULL) {
 			LM_ERR("can't get sending socket\n");
