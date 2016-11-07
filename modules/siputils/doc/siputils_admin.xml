@@ -1066,7 +1066,7 @@ if(is_first_hop()) { ... }
 			<function moreinfo="none">sip_p_charging_vector(flags)</function>
 		</title>
 		<para>
-			Manage the P-Charging-Vector header (RFC3455). The flags can be:
+			Manage the P-Charging-Vector header (RFC7315). The flags can be:
 			'r' - remove; 'g' - generate; 'f' - force (remove + generate).
 		</para>
 		<para>
@@ -1082,5 +1082,35 @@ sip_p_charging_vector("g");
 		</example>
 	</section>
 	</section>
+
+	<section>
+			<title>Exported pseudo-variables</title>
+			<section id="siputils.v.pcv_all">
+					<title><varname>$pcv(all)</title>
+					<para>
+						full P-Charging-Vector header
+					</para>
+			<section id="siputils.v.pcv_value">
+					<title><varname>$pcv(value)</title>
+					<para>
+						icid-value field (see RFC7315 section 5.6)
+					</para>
+			<section id="siputils.v.pcv_genaddr">
+					<title><varname>$pcv(genaddr)</title>
+					<para>
+						icid-generated-at field (see RFC7315 section 5.6)
+					</para>
+			<section id="siputils.v.pcv_orig">
+					<title><varname>$pcv(orig)</title>
+					<para>
+						orig-ioi field (see RFC7315 section 5.6)
+					</para>
+			<section id="siputils.v.pcv_term">
+					<title><varname>$pcv(term)</title>
+					<para>
+						term-ioi field (see RFC7315 section 5.6)
+					</para>
+			</section>
+	<section>
 
 </chapter>

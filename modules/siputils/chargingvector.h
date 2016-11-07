@@ -19,19 +19,22 @@
  */
 
 /*
- * Support for rfc3455 P-Charging-Vector
+ * Support for RFC3455 / RFC7315 P-Charging-Vector
  * - parse charging vector from SIP message
  * - generate new unique charging vector
  * - can remove charging vector
  *
- * pseudo variables are exported and enable R ondly access to charging vector fields
+ * pseudo variables are exported and enable read only access to charging vector fields
  * $pcv(all) = whole field
  * $pcv(value) = icid-value field (see RFC3455 section 5.6)
  * $pcv(genaddr) = icid-generated-at field (see RFC3455 section 5.6)
+ * $pcv(orig) = orig-ioi field (see RFC3455 section 5.6)
+ * $pcv(term) = term-ioi field (see RFC3455 section 5.6)
  *
- * to be supported
- * $pcv(orig)
- * $pcv(term)
+ * missing:
+ * $pcv(transit-ioi) RFC7315 5.6
+ * $pcv(related-icid) RFC7315 5.6
+ * $pcv(related-icid-gen-addr) RFC7315 5.6
  */
 
 #ifndef _CHARGINGVECTOR_H_

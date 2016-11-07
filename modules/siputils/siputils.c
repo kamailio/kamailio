@@ -199,7 +199,7 @@ static param_export_t params[] = {
 
 
 static pv_export_t mod_pvs[] =  {
-	{ {"pcv", (sizeof("pvc")-1)}, PVT_OTHER, pv_get_charging_vector,
+	{ {"pcv", (sizeof("pcv")-1)}, PVT_OTHER, pv_get_charging_vector,
 		0, pv_parse_charging_vector_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
