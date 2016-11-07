@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
@@ -1012,10 +1012,13 @@ int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	cnt=0;
 
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error while parsing message headers\n");
+		return -1;
+	}
 	for (hf=msg->headers; hf; hf=hf->next) {
-		/* for well known header names str_hf->s will be set to NULL 
-		   during parsing of kamailio.cfg and str_hf->len contains 
+		/* for well known header names str_hf->s will be set to NULL
+		   during parsing of kamailio.cfg and str_hf->len contains
 		   the header type */
 		if(gp->type==GPARAM_TYPE_INT)
 		{
@@ -1050,7 +1053,10 @@ static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo)
 	cnt=0;
 
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error while parsing message headers\n");
+		return -1;
+	}
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
 		c = hf->name.s[hf->name.len];
@@ -1081,7 +1087,10 @@ static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	gp = (gparam_p)str_hf;
 
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error while parsing message headers\n");
+		return -1;
+	}
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if(gp->type==GPARAM_TYPE_INT)
 		{
@@ -1108,7 +1117,10 @@ static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo)
 	re = (regex_t*)key;
 
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error while parsing message headers\n");
+		return -1;
+	}
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
 		c = hf->name.s[hf->name.len];
@@ -2214,7 +2226,7 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 		LM_ERR("error while parsing message\n");
 		return -1;
 	}
-	
+
 	hf = 0;
 	if(hfanc!=NULL) {
 		for (hf=msg->headers; hf; hf=hf->next) {
@@ -2265,7 +2277,7 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 			s0.s   = 0;
 		}
 	}
-		
+
 	len=s0.len;
 	if (str2) len+= str2->len + REQ_LINE(msg).uri.len;
 
@@ -2899,7 +2911,10 @@ static int search_hf_f(struct sip_msg* msg, char* str_hf, char* re, char *flags)
 	gp = (gparam_t*)str_hf;
 
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error while parsing message headers\n");
+		return -1;
+	}
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if(gp->type==GPARAM_TYPE_INT)
 		{
@@ -2980,7 +2995,10 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 	se=(struct subst_expr*)subst;
 
 	/* we need to be sure we have seen all HFs */
-	parse_headers(msg, HDR_EOH_F, 0);
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error while parsing message headers\n");
+		return -1;
+	}
 	for (hf=msg->headers; hf; hf=hf->next) {
 		if(gp->type==GPARAM_TYPE_INT)
 		{
@@ -3020,7 +3038,7 @@ static int subst_hf_f(struct sip_msg *msg, char *str_hf, char *subst, char *flag
 					ret=-1;
 					goto error;
 				}
-				/* hack to avoid re-copying rpl, possible because both 
+				/* hack to avoid re-copying rpl, possible because both
 				 * replace_lst & lumps use pkg_malloc */
 				if (insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0)==0)
 				{
