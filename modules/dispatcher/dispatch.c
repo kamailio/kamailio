@@ -2629,7 +2629,7 @@ int ds_is_addr_from_set_r( sip_msg_t *_m, struct ip_addr* pipaddr,
 		return -1;
 
 	for(i=0;i<2;++i) {
-		rc = ds_is_addr_from_set_r(  _m, pipaddr, tport, tproto,
+		rc = ds_is_addr_from_set_r( _m, pipaddr, tport, tproto,
 				node->next[i], mode, export_set_pv );
 		if ( rc != -1 )
 			return rc;
@@ -2680,7 +2680,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 
 
 	if ( group == -1 ) {
-		rc = ds_is_addr_from_set( _m, pipaddr, tport, tproto, _ds_list, mode, 1 );
+		rc = ds_is_addr_from_set_r( _m, pipaddr, tport, tproto, _ds_list, mode, 1 );
 	} else {
 		list = ds_avl_find( _ds_list, group );
 		if ( list ) {
