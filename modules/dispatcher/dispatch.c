@@ -2459,15 +2459,15 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 /**
  * recalculate relative states if some destination state was changed
  */
-int ds_reinit_rweight_on_state_change(int old_state, int new_state, ds_set_t *dset)
+int ds_reinit_rweight_on_state_change(int old_state, int new_state,
+		ds_set_t *dset)
 {
-	if (dset == NULL){
+	if (dset == NULL) {
 		LM_ERR("destination set is null\n");
 		return -1;
 	}
 	if ( (!ds_skip_dst(old_state) && ds_skip_dst(new_state)) ||
-			(ds_skip_dst(old_state) && !ds_skip_dst(new_state)) )
-	{
+			(ds_skip_dst(old_state) && !ds_skip_dst(new_state)) ) {
 		dp_init_relative_weights(dset);
 	}
 
@@ -2483,25 +2483,21 @@ int ds_reinit_state(int group, str *address, int state)
 	int i=0;
 	ds_set_t *idx = NULL;
 
-	if(_ds_list==NULL || _ds_list_nr<=0)
-	{
+	if(_ds_list==NULL || _ds_list_nr<=0) {
 		LM_ERR("the list is null\n");
 		return -1;
 	}
 
 	/* get the index of the set */
-	if(ds_get_index(group, *crt_idx, &idx)!=0)
-	{
+	if(ds_get_index(group, *crt_idx, &idx)!=0) {
 		LM_ERR("destination set [%d] not found\n", group);
 		return -1;
 	}
 
-	for(i=0; i<idx->nr; i++)
-	{
+	for(i=0; i<idx->nr; i++) {
 		if(idx->dlist[i].uri.len==address->len
 				&& strncasecmp(idx->dlist[i].uri.s, address->s,
-					address->len)==0)
-		{
+					address->len)==0) {
 			int old_state = idx->dlist[i].flags;
 			/* reset the bits used for states */
 			idx->dlist[i].flags &= ~(DS_STATES_ALL);
@@ -2524,15 +2520,15 @@ int ds_reinit_state(int group, str *address, int state)
  */
 void ds_fprint_set( FILE *fout, ds_set_t* node )
 {
+	int i, j;
+
 	if ( !node )
 		return;
 
-	int i, j;
-	for( i=0;i<2;++i)
+	for(i=0;i<2;++i)
 		ds_fprint_set( fout, node->next[i] );
 
-	for(j=0; j<node->nr; j++)
-	{
+	for(j=0; j<node->nr; j++) {
 		fprintf(fout, "\n set #%d\n", node->id);
 
 		if (node->dlist[j].flags&DS_DISABLED_DST)
@@ -2568,8 +2564,7 @@ void ds_fprint_set( FILE *fout, ds_set_t* node )
  */
 int ds_fprint_list(FILE *fout)
 {
-	if(_ds_list==NULL || _ds_list_nr<=0)
-	{
+	if(_ds_list==NULL || _ds_list_nr<=0) {
 		LM_ERR("no destination sets\n");
 		return -1;
 	}
@@ -2588,35 +2583,29 @@ int ds_is_addr_from_set( sip_msg_t *_m, struct ip_addr* pipaddr,
 {
 	pv_value_t val;
 	int j;
-	for(j=0; j<node->nr; j++)
-	{
+	for(j=0; j<node->nr; j++) {
 		if (ip_addr_cmp(pipaddr, &node->dlist[j].ip_address)
 				&& ((mode&DS_MATCH_NOPORT) || node->dlist[j].port==0
 					|| tport == node->dlist[j].port)
 				&& ((mode&DS_MATCH_NOPROTO)
-					|| tproto == node->dlist[j].proto))
-		{
-			if(export_set_pv && ds_setid_pvname.s!=0)
-			{
+					|| tproto == node->dlist[j].proto)) {
+			if(export_set_pv && ds_setid_pvname.s!=0) {
 				memset(&val, 0, sizeof(pv_value_t));
 				val.flags = PV_VAL_INT|PV_TYPE_INT;
 
 				val.ri = node->id;
 				if(ds_setid_pv.setf(_m, &ds_setid_pv.pvp,
-							(int)EQ_T, &val)<0)
-				{
+							(int)EQ_T, &val)<0) {
 					LM_ERR("setting PV failed\n");
 					return -2;
 				}
 			}
-			if(ds_attrs_pvname.s!=0 && node->dlist[j].attrs.body.len>0)
-			{
+			if(ds_attrs_pvname.s!=0 && node->dlist[j].attrs.body.len>0) {
 				memset(&val, 0, sizeof(pv_value_t));
 				val.flags = PV_VAL_STR;
 				val.rs = node->dlist[j].attrs.body;
 				if(ds_attrs_pv.setf(_m, &ds_attrs_pv.pvp,
-							(int)EQ_T, &val)<0)
-				{
+							(int)EQ_T, &val)<0) {
 					LM_ERR("setting attrs pv failed\n");
 					return -3;
 				}
@@ -2634,12 +2623,12 @@ int ds_is_addr_from_set_r( sip_msg_t *_m, struct ip_addr* pipaddr,
 		unsigned short tport, unsigned short tproto, ds_set_t* node,
 		int mode, int export_set_pv )
 {
+	int i, rc;
+
 	if ( !node )
 		return -1;
 
-	int i, rc;
-	for( i=0;i<2;++i)
-	{
+	for(i=0;i<2;++i) {
 		rc = ds_is_addr_from_set_r(  _m, pipaddr, tport, tproto,
 				node->next[i], mode, export_set_pv );
 		if ( rc != -1 )
@@ -2664,6 +2653,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 	sip_uri_t puri;
 	static char hn[256];
 	struct hostent* he;
+	int rc = -1;
 
 	if(uri==NULL || uri->len<=0) {
 		pipaddr = &_m->rcv.src_ip;
@@ -2688,17 +2678,14 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 		tproto = puri.proto;
 	}
 
-	int rc = -1;
 
-	if ( group == -1 )
-	{
+	if ( group == -1 ) {
 		rc = ds_is_addr_from_set( _m, pipaddr, tport, tproto, _ds_list, mode, 1 );
-	}
-	else
-	{
+	} else {
 		list = ds_avl_find( _ds_list, group );
-		if ( list )
+		if ( list ) {
 			rc = ds_is_addr_from_set( _m, pipaddr, tport, tproto, list, mode, 0 );
+		}
 	}
 
 	return rc;
@@ -2736,8 +2723,7 @@ int ds_mi_print_set( struct mi_node* rpl, ds_set_t* list )
 	if(set_node == NULL)
 		return -1;
 
-	for(j=0; j<list->nr; j++)
-	{
+	for(j=0; j<list->nr; j++) {
 		node= add_mi_node_child(set_node, 0, "URI", 3,
 				list->dlist[j].uri.s, list->dlist[j].uri.len);
 		if(node == NULL)
@@ -2784,8 +2770,7 @@ int ds_print_mi_list(struct mi_node* rpl)
 
 	struct mi_node* node = NULL;
 
-	if(_ds_list==NULL || _ds_list_nr<=0)
-	{
+	if(_ds_list==NULL || _ds_list_nr<=0) {
 		LM_ERR("no destination sets\n");
 		return  0;
 	}
@@ -2813,8 +2798,7 @@ static void ds_options_callback( struct cell *t, int type,
 
 	/* The param contains the group, in which the failed host
 	 * can be found.*/
-	if (ps->param==NULL)
-	{
+	if (ps->param==NULL) {
 		LM_DBG("No parameter provided, OPTIONS-Request was finished"
 				" with code %d\n", ps->code);
 		return;
@@ -2835,8 +2819,7 @@ static void ds_options_callback( struct cell *t, int type,
 	/* ps->code contains the result-code of the request.
 	 *
 	 * We accept both a "200 OK" or the configured reply as a valid response */
-	if((ps->code>=200 && ps->code<=299) || ds_ping_check_rplcode(ps->code))
-	{
+	if((ps->code>=200 && ps->code<=299) || ds_ping_check_rplcode(ps->code)) {
 		/* Set the according entry back to "Active" */
 		state = 0;
 		if (ds_probing_mode==DS_PROBE_ALL ||
@@ -2846,8 +2829,7 @@ static void ds_options_callback( struct cell *t, int type,
 
 		/* Check if in the meantime someone disabled the target through RPC or MI */
 		if (!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state) != 0)
-		{
+				&& ds_update_state(fmsg, group, &uri, state) != 0) {
 			LM_ERR("Setting the state failed (%.*s, group %d)\n", uri.len,
 					uri.s, group);
 		}
@@ -2857,8 +2839,7 @@ static void ds_options_callback( struct cell *t, int type,
 			state |= DS_PROBING_DST;
 		/* Check if in the meantime someone disabled the target through RPC or MI */
 		if (!(ds_get_state(group, &uri) & DS_DISABLED_DST)
-				&& ds_update_state(fmsg, group, &uri, state) != 0)
-		{
+				&& ds_update_state(fmsg, group, &uri, state) != 0) {
 			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
 					uri.len, uri.s, group);
 		}
@@ -2872,24 +2853,22 @@ static void ds_options_callback( struct cell *t, int type,
  */
 void ds_ping_set( ds_set_t* node )
 {
-	if ( !node )
-		return;
-
 	uac_req_t uac_r;
 	int i, j;
 
-	for( i=0;i<2;++i)
+	if ( !node )
+		return;
+
+	for(i=0;i<2;++i)
 		ds_ping_set( node->next[i] );
 
-	for(j=0; j<node->nr; j++)
-	{
+	for(j=0; j<node->nr; j++) {
 		/* skip addresses set in disabled state by admin */
 		if((node->dlist[j].flags&DS_DISABLED_DST) != 0)
 			continue;
 		/* If the Flag of the entry has "Probing set, send a probe:	*/
 		if (ds_probing_mode==DS_PROBE_ALL ||
-				(node->dlist[j].flags&DS_PROBING_DST) != 0)
-		{
+				(node->dlist[j].flags&DS_PROBING_DST) != 0) {
 			LM_DBG("probing set #%d, URI %.*s\n", node->id,
 					node->dlist[j].uri.len, node->dlist[j].uri.s);
 
@@ -2927,14 +2906,12 @@ void ds_check_timer(unsigned int ticks, void* param)
 
 
 	/* Check for the list. */
-	if(_ds_list==NULL || _ds_list_nr<=0)
-	{
+	if(_ds_list==NULL || _ds_list_nr<=0) {
 		LM_DBG("no destination sets\n");
 		return;
 	}
 
-	if(_ds_ping_active!=NULL && *_ds_ping_active==0)
-	{
+	if(_ds_ping_active!=NULL && *_ds_ping_active==0) {
 		LM_DBG("pinging destinations is inactive by admin\n");
 		return;
 	}
@@ -2959,18 +2936,15 @@ void ds_ht_timer(unsigned int ticks, void *param)
 
 	now = time(NULL);
 
-	for(i=0; i<_dsht_load->htsize; i++)
-	{
+	for(i=0; i<_dsht_load->htsize; i++) {
 		/* free entries */
 		lock_get(&_dsht_load->entries[i].lock);
 		it = _dsht_load->entries[i].first;
-		while(it)
-		{
+		while(it) {
 			it0 = it->next;
 			if((it->expire!=0 && it->expire<now)
 					|| (it->state==DS_LOAD_INIT
-						&& it->initexpire!=0 && it->initexpire<now))
-			{
+						&& it->initexpire!=0 && it->initexpire<now)) {
 				/* expired */
 				if(it->prev==NULL)
 					_dsht_load->entries[i].first = it->next;
@@ -3018,8 +2992,10 @@ int ds_get_list_nr(void)
 
 ds_set_t* ds_avl_find( ds_set_t* node, int id )
 {
+	int next_step;
+
 	while (node && id != node->id) {
-		int next_step = (id > node->id);
+		next_step = (id > node->id);
 		node = node->next[next_step];
 	}
 	return node;
@@ -3039,13 +3015,11 @@ void ds_avl_destroy( ds_set_t** node_ptr )
 
 	node = *node_ptr;
 
-	for( ;i<2;++i)
+	for(i=0;i<2;++i)
 		ds_avl_destroy( &node->next[i] );
 
-	for(dest = node->dlist; dest!= NULL; dest=dest->next)
-	{
-		if(dest->uri.s!=NULL)
-		{
+	for(dest = node->dlist; dest!= NULL; dest=dest->next) {
+		if(dest->uri.s!=NULL) {
 			shm_free(dest->uri.s);
 			dest->uri.s = NULL;
 		}
@@ -3065,12 +3039,13 @@ ds_set_t* ds_avl_insert( ds_set_t** root, int id, int* setn )
 {
 	ds_set_t** rotation_top;
 	ds_set_t* node;
+	int next_step;
 
 	rotation_top = root;
 	node = *root;
 
 	while (node && id != node->id) {
-		int next_step = (id > node->id);
+		next_step = (id > node->id);
 		if (!AVL_BALANCED(node)) rotation_top = root;
 		root = &node->next[next_step];
 		node = *root;
@@ -3092,13 +3067,14 @@ ds_set_t* ds_avl_insert( ds_set_t** root, int id, int* setn )
 
 static void avl_rebalance_path( ds_set_t* path, int id )
 {
+	int next_step;
 	/* Each node in path is currently balanced.
 	 * Until we find target, mark each node as longer
 	 * in the direction of target because we know we have
 	 * inserted target there
 	 */
 	while (path && id != path->id) {
-		int next_step = (id > path->id);
+		next_step = (id > path->id);
 		path->longer = next_step;
 		path = path->next[next_step];
 	}
