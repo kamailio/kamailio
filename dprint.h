@@ -400,11 +400,11 @@ void log_prefix_init(void);
 #		define DBG(fmt, args...)
 #	else
 #		define DBG(fmt, args...)    LOG(L_DBG, fmt , ## args)
-#	endif		
+#	endif
 
 /* obsolete, do not use */
 #	define DEBUG(fmt, args...) DBG(fmt , ## args)
-		
+
 #endif /* __SUNPRO_C */
 
 
@@ -415,6 +415,7 @@ void log_prefix_init(void);
 #define LM_NPRL NPRL
 #define LM_ALERT ALERT
 #define LM_CRIT  CRIT
+#define LM_BUG  BUG
 #define LM_ERR ERR
 #define LM_WARN WARN
 #define LM_NOTICE NOTICE
