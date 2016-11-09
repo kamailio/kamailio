@@ -653,12 +653,14 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	query_ops[n_query_cols] = OP_EQ;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = &str_expires_col;
-	query_vals[n_query_cols].type = DB1_INT;
-	query_vals[n_query_cols].nul = 0;
-	query_vals[n_query_cols].val.int_val= (int)time(NULL);
-	query_ops[n_query_cols] = OP_GT;
-	n_query_cols++;
+	if (pres_fix_startup) {
+		query_cols[n_query_cols] = &str_expires_col;
+		query_vals[n_query_cols].type = DB1_INT;
+		query_vals[n_query_cols].nul = 0;
+		query_vals[n_query_cols].val.int_val= (int)time(NULL);
+		query_ops[n_query_cols] = OP_GT;
+		n_query_cols++;
+	}
 
 	result_cols[body_col=n_result_cols++] = &str_body_col;
 	result_cols[etag_col=n_result_cols++] = &str_etag_col;
@@ -675,13 +677,24 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	} else {
 		query_str = str_received_time_col;
 	}
-	if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-		 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0)
-	{
-		LM_ERR("failed to query %.*s table\n", presentity_table.len, presentity_table.s);
-		if(result)
-			pa_dbf.free_result(pa_db, result);
-		return NULL;
+	if (pres_fix_startup) {
+		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
+			 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0)
+		{
+			LM_ERR("failed to query %.*s table\n", presentity_table.len, presentity_table.s);
+			if(result)
+				pa_dbf.free_result(pa_db, result);
+			return NULL;
+		}
+	} else {
+		if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
+			 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0)
+		{
+			LM_ERR("failed to query %.*s table\n", presentity_table.len, presentity_table.s);
+			if(result)
+				pa_dbf.free_result(pa_db, result);
+			return NULL;
+		}
 	}
 
 	if(result== NULL)

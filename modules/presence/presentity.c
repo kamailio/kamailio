@@ -1253,6 +1253,9 @@ int pres_htable_restore(void)
 			row = &result->rows[i];
 			row_vals = ROW_VALUES(row);
 
+			if (!pres_fix_startup && (row_vals[expires_col].val.int_val< (int)time(NULL)))
+				continue;
+
 			sphere= NULL;
 			user.s= (char*)row_vals[user_col].val.string_val;
 			user.len= strlen(user.s);
