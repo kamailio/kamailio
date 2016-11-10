@@ -522,7 +522,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
             the message for on-wire communication, e.g. to do custom encryption or
             decryption, compression/decompression etc. of the message sent to or 
 			received from remote host. Therefore, except text operations,
-			no module fucntions or pseudo variables are available in this event route.
+			no module functions or pseudo variables are available in this event route.
         </para>
     </section>
     </section>
