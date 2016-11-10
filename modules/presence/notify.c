@@ -653,7 +653,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	query_ops[n_query_cols] = OP_EQ;
 	n_query_cols++;
 
-	if (pres_fix_startup) {
+	if (pres_startup_mode==1) {
 		query_cols[n_query_cols] = &str_expires_col;
 		query_vals[n_query_cols].type = DB1_INT;
 		query_vals[n_query_cols].nul = 0;
@@ -677,7 +677,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
 	} else {
 		query_str = str_received_time_col;
 	}
-	if (pres_fix_startup) {
+	if (pres_startup_mode==1) {
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0)
 		{
