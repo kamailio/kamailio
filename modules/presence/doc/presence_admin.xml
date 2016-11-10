@@ -300,6 +300,28 @@ modparam("presence", "force_delete", 1)
 		</example>
 	</section>
 
+	<section id="presence.p.startup_mode">
+		<title><varname>startup_mode</varname> (int)</title>
+		<para>
+		Setting this parameter to 0 will provide startup related backward compatibility for some modules. Setting to 0 fixes presentity requests with low expires (e.g. time() + 1)
+		</para>
+		<para>
+		Set this parameter to <quote>0</quote> to enable backward compatibility.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>startup_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "startup_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="presence.p.to_tag_pref">
 		<title><varname>to_tag_pref</varname> (str)</title>
 		<para>
