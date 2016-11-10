@@ -106,7 +106,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	register_dummy_timers(async_workers);
+	register_basic_timers(async_workers);
 
 	return 0;
 }
@@ -125,7 +125,7 @@ static int child_init(int rank)
 		return 0;
 
 	for(i=0; i<async_workers; i++) {
-		if(fork_dummy_timer(PROC_TIMER, "ASYNC MOD TIMER", 1 /*socks flag*/,
+		if(fork_basic_timer(PROC_TIMER, "ASYNC MOD TIMER", 1 /*socks flag*/,
 				async_timer_exec, NULL, 1 /*sec*/)<0) {
 			LM_ERR("failed to register timer routine as process (%d)\n", i);
 			return -1; /* error */
