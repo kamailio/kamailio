@@ -81,6 +81,8 @@ Hugh Waite
               7.2. httpclient.connok
               7.3. httpclient.connfail
 
+        8. Remarks
+
    2. Developer Guide
 
         1. Available Functions
@@ -165,6 +167,8 @@ Chapter 1. Admin Guide
         7.1. httpclient.connections
         7.2. httpclient.connok
         7.3. httpclient.connfail
+
+   8. Remarks
 
 1. Overview
 
@@ -742,6 +746,15 @@ switch ($retcode) {
 7.3.  httpclient.connfail
 
    The number of failed connections since Kamailio start
+
+8. Remarks
+
+   Note: libcurl leak in CentOS 6 - this module uses libcurl library and
+   in case if you are using CentOS 6, be aware that standard
+   libcurl-7.19.7-52 has a memory leak. To fix this memory, install
+   libcurl from city-fan repository. More details at:
+   https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
+   -centos6
 
 Chapter 2. Developer Guide
 
