@@ -10,7 +10,7 @@
 <!-- Module User's Guide -->
 
 <chapter xmlns:xi="http://www.w3.org/2001/XInclude">
-	
+
 	<title>&adminguide;</title>
 
 	<section>
@@ -29,7 +29,7 @@
 	</para>
 	<para>
 		It is very lightweight, therefore suitable for handling heavy SIP
-		traffic. As the module has a small footprint and the ability to load 
+		traffic. As the module has a small footprint and the ability to load
 		balancing rules from a plain text file, it is suitable for embedded systems.
 	</para>
 	</section>
@@ -537,11 +537,11 @@ modparam("dispatcher", "force_dst", 1)
  ...
  </programlisting>
  		</example>
-	</section> 	
+	</section>
  	<section id="dispatcher.p.ds_ping_from">
  		<title><varname>ds_ping_from</varname> (string)</title>
  		<para>
- 		With this Method you can define the "From:"-Line for the request, sent to the failed gateways. 		
+ 		With this Method you can define the "From:"-Line for the request, sent to the failed gateways.
  		This method is only available, if compiled with the probing of failed gateways enabled.
  		</para>
  		<para>
@@ -557,7 +557,7 @@ modparam("dispatcher", "force_dst", 1)
  ...
  </programlisting>
  		</example>
-	</section> 	
+	</section>
 
  	<section id="dispatcher.p.ds_ping_interval">
  		<title><varname>ds_ping_interval</varname> (int)</title>
@@ -580,8 +580,8 @@ modparam("dispatcher", "force_dst", 1)
  ...
  </programlisting>
  		</example>
-	</section> 	
-	
+	</section>
+
  	<section id="dispatcher.p.ds_probing_threshold">
  		<title><varname>ds_probing_threshold</varname> (int)</title>
  		<para>
@@ -640,7 +640,7 @@ modparam("dispatcher", "force_dst", 1)
 			PING-Method are not only the ones generated from the remote servers, but also those
 			that are generated locally. E.g.: setting code=408 or class=400 will never set
 			a backend down even if it is, because internally the Kamailio transaction layer
-			generates a 408 in the case of no response from the remote server, and this 
+			generates a 408 in the case of no response from the remote server, and this
 			internal code 408 is accepted as valid value.
  		</para>
  		<para>
@@ -656,11 +656,11 @@ modparam("dispatcher", "force_dst", 1)
  ...
  </programlisting>
  		</example>
-	</section> 	
+	</section>
  	<section id="dispatcher.p.ds_probing_mode">
  		<title><varname>ds_probing_mode</varname> (int)</title>
  		<para>
-		Controls what gateways are tested to see if they are reachable. 
+		Controls what gateways are tested to see if they are reachable.
 		</para>
 
 		<itemizedlist>
@@ -827,7 +827,7 @@ modparam("dispatcher", "force_dst", 1)
  		<title><varname>ds_timer_mode</varname> (int)</title>
  		<para>
 			Specify the timer process to be used by the module for
-			keepalives and active dialogs tracking. 
+			keepalives and active dialogs tracking.
 		</para>
 		<para>
 			It can be set to:
@@ -984,17 +984,17 @@ modparam("dispatcher", "force_dst", 1)
 				<para>
 				<quote>11</quote> - use relative weight based load distribution.
 				You have to set the attribute 'rweight' per each address in
-				destination set. Active host usage probability is 
-				rweight/(SUM of all active host rweights in destination group). 
+				destination set. Active host usage probability is
+				rweight/(SUM of all active host rweights in destination group).
 				</para>
 				<para>
 				The major difference from the weight distribution is the
-				probability recalculation according to rweight value in case of 
+				probability recalculation according to rweight value in case of
 				host enabling/disabling
 				</para>
 				<para>
-				For example, 100 calls in 3-hosts group with rweight params 1/2/1  
-				will be distributed as 25/50/25. After third host failing 
+				For example, 100 calls in 3-hosts group with rweight params 1/2/1
+				will be distributed as 25/50/25. After third host failing
 				distribution will be changed to 33/67/0.
 				</para>
 			</listitem>
@@ -1374,7 +1374,7 @@ onreply_route {
 		<function moreinfo="none">ds_set_state</function>
 		</title>
 		<para>
-        Sets the status for a destination address (can be use to mark the destination 
+        Sets the status for a destination address (can be use to mark the destination
 		as active or inactive).
 		</para>
 		<para>
@@ -1385,17 +1385,17 @@ onreply_route {
 			<listitem><para>_state_ : state of the destination address</para>
 			      <itemizedlist>
 	                 <listitem><para> <quote>a</quote>: active</para></listitem> 
-			         <listitem><para> <quote>i</quote>: inactive</para></listitem>	
-			         <listitem><para> <quote>t</quote>: trying</para></listitem>	
-			         <listitem><para> <quote>d</quote>: disabled</para></listitem>	
+			         <listitem><para> <quote>i</quote>: inactive</para></listitem>
+			         <listitem><para> <quote>t</quote>: trying</para></listitem>
+			         <listitem><para> <quote>d</quote>: disabled</para></listitem>
 				  </itemizedlist>
 				  <para>The states <quote>a</quote>, <quote>i</quote> or
 					  <quote>t</quote> can be followed by <quote>p</quote>
 					  to set probing mode (e.g. 'ap', 'ip' or 'tp').</para>
-			</listitem>	  
+			</listitem>
 
 			<listitem><para>_group_: destination group id</para></listitem>
-			
+
 			<listitem><para>_address_: address of the destination in the _group_</para></listitem>
 		</itemizedlist>
 		<para>
@@ -1628,10 +1628,10 @@ onreply_route {
 					sent to that gateways.
 				</listitem>
 				<listitem>
-					'rweight' - used for relative weight based load 
-					distribution. It must be set to a positive integer value 
-					between 1 and 100 (otherwise host will be excluded from 
-					relative weight distribution type). 
+					'rweight' - used for relative weight based load
+					distribution. It must be set to a positive integer value
+					between 1 and 100 (otherwise host will be excluded from
+					relative weight distribution type).
 				</listitem>
 				<listitem>
 					'socket' - used to set the sending socket for the gateway.
@@ -1675,11 +1675,11 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
 		</example>
 		</section>
 		</section>
-	
+
 		<section id="dispatcher.ex.config">
 		<title>&kamailio; config file</title>
 		<para>
-		Next picture shows a sample usage of the dispatcher module.
+		Next listing shows a sample config for using the dispatcher module.
 		</para>
 		<example>
 		<title>&kamailio; config script - sample dispatcher usage</title>
