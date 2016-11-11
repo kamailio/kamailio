@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -85,7 +85,7 @@
 	<section id="jsonrpc-s.p.pretty_format">
 		<title><varname>pretty_format</varname> (int)</title>
 		<para>
-			Pretty format for JSON-RPC response document. 
+			Pretty format for JSON-RPC response document.
 		</para>
 		<para>
 		<emphasis>
@@ -137,7 +137,7 @@ modparam("jsonrpc-s", "transport", 1)
 	<section id="jsonrpc-s.p.fifo_name">
 		<title><varname>fifo_name</varname> (str)</title>
 		<para>
-		The name of the FIFO file to be created for listening and 
+		The name of the FIFO file to be created for listening and
 		reading external commands. If the given path is not absolute,
 		the fifo file is created relative to run_dir (global parameter).
 		</para>
@@ -159,7 +159,7 @@ modparam("jsonrpc-s", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
 	<section id="jsonrpc-s.p.fifo_mode">
 		<title><varname>fifo_mode</varname> (int)</title>
 		<para>
-		Permission to be used for creating the listening FIFO file. It 
+		Permission to be used for creating the listening FIFO file. It
 		follows the UNIX conventions.
 		</para>
 		<para>
@@ -322,12 +322,60 @@ jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
 	</section>
 
 	<section>
+	<title>JSONRPC Commands</title>
+	<para>
+	Here are some examples of RPC commands with the equivalent of running them
+	with &kamcmd; and the corresponding JSON document for them. It is important
+	to be aware that the name of the parameters doesn't matter, only the order
+	of the values must be the one expected by &kamailio; RPC command.
+	</para>
+	<example>
+	<title>JSONRPC Commands - Examples</title>
+	<programlisting format="linespecific">
+...
+# kamcmd core.psx
+
+{
+ "jsonrpc": "2.0",
+  "method": "core.psx",
+  "id": 1
+}
+...
+## - prototype: kamcmd dispatcher.set_state _state_ _group_ _address_
+# kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+
+{
+  "jsonrpc": "2.0",
+  "method": "dispatcher.set_state",
+  "params": ["ip", 2, "sip:127.0.0.1:5080"],
+  "id": 1
+}
+
+## - or:
+
+{
+  "jsonrpc": "2.0",
+  "method": "dispatcher.set_state",
+  "params": {
+    "state": "ip",
+    "grpup": 2,
+    "address": "sip:127.0.0.1:5080"
+  },
+  "id": 1
+}
+...
+</programlisting>
+	    </example>
+
+	</section>
+
+	<section>
 	<title>JSONRPC Transports</title>
 	<para>
 	JSONRPC specifications do not enforce a specific transport to carry the
 	JSON documents. Very common is JSONRPC over HTTP or HTTPS, and they are
 	supported by &kamailio;. In addition, &kamailio; supports receiving JSON
-	documents via a local FIFO file. 
+	documents via a local FIFO file.
 	</para>
  	<section>
 	    <title>JSONRPC Over HTTP</title>
