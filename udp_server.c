@@ -215,18 +215,26 @@ int probe_max_receive_buffer( int udp_sock )
  */
 static int setup_mcast_rcvr(int sock, union sockaddr_union* addr, char* interface)
 {
+#ifdef HAVE_IP_MREQN
 	struct ip_mreqn mreq;
+#else
+	struct ip_mreq mreq;
+#endif
 	struct ipv6_mreq mreq6;
 
 	if (addr->s.sa_family==AF_INET){
 		memcpy(&mreq.imr_multiaddr, &addr->sin.sin_addr, 
 		       sizeof(struct in_addr));
+#ifdef HAVE_IP_MREQN
 		if (interface!=0) {
 			mreq.imr_ifindex = if_nametoindex(interface);
 		} else {
 			mreq.imr_ifindex = 0;
 		}
 		mreq.imr_address.s_addr = htonl(INADDR_ANY);
+#else
+		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+#endif
 		
 		if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,&mreq,
 			       sizeof(mreq))==-1){
