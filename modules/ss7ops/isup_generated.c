@@ -432,7 +432,7 @@ const struct isup_msg isup_msgs[256] = {
 		.name = "UPT",
 		.has_optional = 1,
 	},
-	[52] = {
+	[53] = {
 		.name = "UPA",
 		.has_optional = 1,
 	},
