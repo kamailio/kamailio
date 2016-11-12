@@ -73,7 +73,8 @@ static cmd_export_t cmds[] = {
 };
 
 static pv_export_t mod_pvs[] = {
-        { {"isup", sizeof("isup")-1}, PVT_OTHER, pv_get_isup, 0, pv_parse_isup_name, 0, 0, 0 },
+        { {"isup", sizeof("isup")-1}, PVT_OTHER, pv_get_isup,
+        	0, pv_parse_isup_name, 0, 0, 0 },
         { {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -142,7 +143,7 @@ static const uint8_t *extract_from_m2ua(const uint8_t *data, size_t *len)
 	memcpy(&data_len, &data[4], sizeof(data_len));
 	data_len = ntohl(data_len);
 	if (*len < data_len) {
-		LM_ERR("M2UA data can't fit %zu vs. %zu\n", *len, data_len);
+		LM_ERR("M2UA data can't fit %zu vs. %zu\n", *len, (size_t)data_len);
 		return NULL;
 	}
 
@@ -157,7 +158,7 @@ static const uint8_t *extract_from_m2ua(const uint8_t *data, size_t *len)
 		ie_len = ntohs(ie_len);
 
 		if (ie_len > data_len) {
-			LM_ERR("M2UA premature end %u vs. %zu\n", ie_len, data_len);
+			LM_ERR("M2UA premature end %u vs. %zu\n", ie_len, (size_t)data_len);
 			return NULL;
 		}
 
@@ -174,7 +175,8 @@ next:
 		/* and now padding... */
                 padding = (4 - (ie_len % 4)) & 0x3;
 		if (data_len < padding) {
-			LM_ERR("M2UA no place for padding %u vs. %u\n", padding, data_len);
+			LM_ERR("M2UA no place for padding %u vs. %zu\n", padding,
+					(size_t)data_len);
 			return NULL;
 		}
 		data += padding;
@@ -185,7 +187,8 @@ next:
 	return NULL;
 }
 
-static const uint8_t *extract_from_mtp(const uint8_t *data, size_t *len, int *opc, int *dpc, int *type)
+static const uint8_t *extract_from_mtp(const uint8_t *data, size_t *len,
+		int *opc, int *dpc, int *type)
 {
 	struct mtp_level_3_hdr *hdr;
 
@@ -195,7 +198,8 @@ static const uint8_t *extract_from_mtp(const uint8_t *data, size_t *len, int *op
 	if (!data)
 		return NULL;
 	if (*len < sizeof(*hdr)) {
-		LM_ERR("MTP not enough space for mtp hdr %zu vs. %zu", *len, sizeof(*hdr));
+		LM_ERR("MTP not enough space for mtp hdr %zu vs. %zu", *len,
+				sizeof(*hdr));
 		return NULL;
 	}
 
@@ -208,11 +212,13 @@ static const uint8_t *extract_from_mtp(const uint8_t *data, size_t *len, int *op
 }
 
 
-static const uint8_t *ss7_extract_payload(const uint8_t *data, size_t *len, int proto, int *opc, int *dpc, int *mtp_type)
+static const uint8_t *ss7_extract_payload(const uint8_t *data, size_t *len,
+		int proto, int *opc, int *dpc, int *mtp_type)
 {
 	switch (proto) {
 	case HEP_M2UA:
-		return extract_from_mtp(extract_from_m2ua(data, len), len, opc, dpc, mtp_type);
+		return extract_from_mtp(extract_from_m2ua(data, len), len, opc,
+				dpc, mtp_type);
 		break;
 	default:
 		LM_ERR("Unknown HEP type %d/0x%c\n", proto, proto);
