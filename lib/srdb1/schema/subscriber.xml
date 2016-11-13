@@ -72,7 +72,8 @@
         <name>email_address</name>
         <type>string</type>
         <size>&uri_len;</size>
-        <default/>
+        <null/>
+        <default><null/></default>
         <description>Email address</description>
     </column>
 
