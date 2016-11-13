@@ -45,6 +45,7 @@ Carsten Bock
               5.4. forward_proxy
 
         6. Configuration syntax
+        7. Remarks
 
    List of Examples
 
@@ -93,6 +94,7 @@ Chapter 1. Admin Guide
         5.4. forward_proxy
 
    6. Configuration syntax
+   7. Remarks
 
 1. Overview
 
@@ -377,3 +379,12 @@ kamctl fifo forward_proxy 0=host-c.domain-c:5060
      * port ::= number
      * number ::= digit {digit}
      * digit ::= ? 0-9 ?
+
+7. Remarks
+
+   Note: libcurl leak in CentOS 6 - this module uses libcurl library and
+   in case if you are using CentOS 6, be aware that standard
+   libcurl-7.19.7-52 has a memory leak. To fix this memory, install
+   libcurl from city-fan repository. More details at:
+   https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
+   -centos6

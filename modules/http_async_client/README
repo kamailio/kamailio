@@ -67,6 +67,8 @@ Federico Cabiddu
               6.3. errors
               6.4. timeouts
 
+        7. Remarks
+
    List of Examples
 
    1.1. Set workers parameter
@@ -137,6 +139,8 @@ Chapter 1. Admin Guide
         6.2. replies
         6.3. errors
         6.4. timeouts
+
+   7. Remarks
 
 1. Overview
 
@@ -624,3 +628,12 @@ http_async_query("https://example.com/test.php", "HTTP_REPLY");
 6.4. timeouts
 
    The number of timed out requests.
+
+7. Remarks
+
+   Note: libcurl leak in CentOS 6 - this module uses libcurl library and
+   in case if you are using CentOS 6, be aware that standard
+   libcurl-7.19.7-52 has a memory leak. To fix this memory, install
+   libcurl from city-fan repository. More details at:
+   https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
+   -centos6
