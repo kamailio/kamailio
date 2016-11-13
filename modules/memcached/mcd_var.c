@@ -258,13 +258,13 @@ errout:
 	if (pv_mcd_key_check(msg, param, &key, &expiry) < 0)
 		return -1;
 
-	if (val == NULL) {
+	if (val == NULL || val->flags&PV_VAL_NULL) {
 		if (memcached_delete(memcached_h, key.s, key.len, 0) != MEMCACHED_SUCCESS) {
 			LM_ERR("could not delete key %.*s\n", param->pvn.u.isname.name.s.len,
 				param->pvn.u.isname.name.s.s);
 			return -1;
 		}
-		LM_WARN("delete key %.*s\n", key.len, key.s);
+		LM_DBG("delete key %.*s\n", key.len, key.s);
 		return 0;
 	}
 
