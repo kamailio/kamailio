@@ -362,7 +362,7 @@ int ht_init_tables(void)
 		{
 			strcpy(route_name, "htable:expired:");
 			strncat(route_name, ht->name.s, ht->name.len);
-			ht->evrt_expired = route_get(&event_rt, route_name);
+			ht->evrt_expired = route_lookup(&event_rt, route_name);
 
 			if (ht->evrt_expired < 0
 					|| event_rt.rlist[ht->evrt_expired] == NULL)
@@ -1079,24 +1079,22 @@ void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell)
 
 	LM_DBG("running event_route[htable:expired:%.*s]\n",
 			ht->name.len, ht->name.s);
-	ht_expired_run_event_route(ht->evrt_expired);
+	ht_expired_run_event_route(ht);
 
 	ht_expired_cell = NULL;
 }
 
-void ht_expired_run_event_route(int routeid)
+void ht_expired_run_event_route(ht_t *ht)
 {
 	int backup_rt;
 	sip_msg_t *fmsg;
 
-	if (routeid < 0 || event_rt.rlist[routeid] == NULL)
-	{
+	if (ht->evrt_expired < 0 || event_rt.rlist[ht->evrt_expired] == NULL) {
 		LM_DBG("route does not exist\n");
 		return;
 	}
 
-	if (faked_msg_init() < 0)
-	{
+	if (faked_msg_init() < 0) {
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
@@ -1106,7 +1104,7 @@ void ht_expired_run_event_route(int routeid)
 	backup_rt = get_route_type();
 
 	set_route_type(EVENT_ROUTE);
-	run_top_route(event_rt.rlist[routeid], fmsg, 0);
+	run_top_route(event_rt.rlist[ht->evrt_expired], fmsg, 0);
 
 	set_route_type(backup_rt);
 }

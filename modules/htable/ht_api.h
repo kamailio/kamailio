@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-		       
+
 #ifndef _HT_API_H_
 #define _HT_API_H_
 
@@ -103,7 +103,7 @@ int ht_db_sync_tables(void);
 int ht_has_autoexpire(void);
 void ht_timer(unsigned int ticks, void *param);
 void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell);
-void ht_expired_run_event_route(int routeid);
+void ht_expired_run_event_route(ht_t *ht);
 int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val);
 int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val);
 
