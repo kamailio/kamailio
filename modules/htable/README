@@ -52,6 +52,7 @@ Ovidiu Sas
               3.11. db_expires (integer)
               3.12. enable_dmq (integer)
               3.13. timer_procs (integer)
+              3.14. event_callback (str)
 
         4. Functions
 
@@ -106,15 +107,16 @@ Ovidiu Sas
    1.14. Set db_expires parameter
    1.15. Set enable_dmq parameter
    1.16. Set timer_procs parameter
-   1.17. sht_print usage
-   1.18. sht_rm_name_re usage
-   1.19. sht_rm_value_re usage
-   1.20. sht_reset usage
-   1.21. sht_lock usage
-   1.22. sht_unlock usage
-   1.23. sht_iterator_start usage
-   1.24. sht_iterator_end usage
-   1.25. sht_iterator_next usage
+   1.17. Set event_callback parameter
+   1.18. sht_print usage
+   1.19. sht_rm_name_re usage
+   1.20. sht_rm_value_re usage
+   1.21. sht_reset usage
+   1.22. sht_lock usage
+   1.23. sht_unlock usage
+   1.24. sht_iterator_start usage
+   1.25. sht_iterator_end usage
+   1.26. sht_iterator_next usage
 
 Chapter 1. Admin Guide
 
@@ -142,6 +144,7 @@ Chapter 1. Admin Guide
         3.11. db_expires (integer)
         3.12. enable_dmq (integer)
         3.13. timer_procs (integer)
+        3.14. event_callback (str)
 
    4. Functions
 
@@ -414,6 +417,7 @@ $ kamcmd htable.dump htable
    3.11. db_expires (integer)
    3.12. enable_dmq (integer)
    3.13. timer_procs (integer)
+   3.14. event_callback (str)
 
 3.1. htable (str)
 
@@ -623,6 +627,26 @@ modparam("htable", "enable_dmq", 1)
 modparam("htable", "timer_procs", 4)
 ...
 
+3.14. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks. The function receives a string parameter with
+   the name of the event.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.17. Set event_callback parameter
+...
+modparam("htable", "event_callback", "ksr_htable_event")
+...
+-- event callback function implemented in Lua
+function ksr_htable_event(evname)
+        KSR.info("===== htable module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
 4. Functions
 
    4.1. sht_print()
@@ -643,7 +667,7 @@ modparam("htable", "timer_procs", 4)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.17. sht_print usage
+   Example 1.18. sht_print usage
 ...
 sht_print();
 ...
@@ -656,7 +680,7 @@ sht_print();
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.18. sht_rm_name_re usage
+   Example 1.19. sht_rm_name_re usage
 ...
 sht_rm_name_re("ha=>.*");
 ...
@@ -669,7 +693,7 @@ sht_rm_name_re("ha=>.*");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1.19. sht_rm_value_re usage
+   Example 1.20. sht_rm_value_re usage
 ...
 sht_rm_value_re("ha=>.*");
 ...
@@ -681,7 +705,7 @@ sht_rm_value_re("ha=>.*");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.20. sht_reset usage
+   Example 1.21. sht_reset usage
 ...
 sht_reset("ha$var(x)");
 ...
@@ -694,7 +718,7 @@ sht_reset("ha$var(x)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.21. sht_lock usage
+   Example 1.22. sht_lock usage
 ...
 sht_lock("ha=>test");
 ...
@@ -707,7 +731,7 @@ sht_lock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. sht_unlock usage
+   Example 1.23. sht_unlock usage
 ...
 sht_lock("ha=>test");
 $sht(ha=>test) = $sht(ha=>test) + 10;
@@ -729,7 +753,7 @@ sht_unlock("ha=>test");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.23. sht_iterator_start usage
+   Example 1.24. sht_iterator_start usage
 ...
 sht_iterator_start("i1", "h1");
 ...
@@ -744,7 +768,7 @@ sht_iterator_start("i1", "h1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.24. sht_iterator_end usage
+   Example 1.25. sht_iterator_end usage
 ...
 sht_iterator_end("i1");
 ...
@@ -766,7 +790,7 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.25. sht_iterator_next usage
+   Example 1.26. sht_iterator_next usage
 ...
     sht_iterator_start("i1", "h1");
     while(sht_iterator_next("i1")) {
