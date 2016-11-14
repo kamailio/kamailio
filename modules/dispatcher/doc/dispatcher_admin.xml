@@ -1122,7 +1122,7 @@ ds_select_dst("1", "4", "3");
 				addition to one of the previous flags - the last destination
 				will be set to probing. This mean the destination will be pinged
 				with SIP OPTIONS requests from time to time to detect if it is
-				up running or down.</para>
+				up or down.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
