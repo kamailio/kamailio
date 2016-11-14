@@ -33,10 +33,13 @@
 #include "../../lib/kcore/faked_msg.h"
 #include "../../action.h"
 #include "../../route.h"
+#include "../../kemi.h"
 
 #include "ht_api.h"
 #include "ht_db.h"
 
+
+extern str ht_event_callback;
 
 ht_t *_ht_root = NULL;
 ht_cell_t *ht_expired_cell;
@@ -350,7 +353,6 @@ int ht_init_tables(void)
 {
 	ht_t *ht;
 	int i;
-	char route_name[64];
 
 	ht = _ht_root;
 
@@ -358,16 +360,19 @@ int ht_init_tables(void)
 	{
 		LM_DBG("initializing htable [%.*s] with nr. of slots: %d\n",
 				ht->name.len, ht->name.s, ht->htsize);
-		if(ht->name.len + sizeof("htable:expired:") < 64)
+		if(ht->name.len + sizeof("htable:expired:") <  HT_EVEX_NAME_SIZE)
 		{
-			strcpy(route_name, "htable:expired:");
-			strncat(route_name, ht->name.s, ht->name.len);
-			ht->evrt_expired = route_lookup(&event_rt, route_name);
+			strcpy(ht->evex_name_buf, "htable:expired:");
+			strncat(ht->evex_name_buf, ht->name.s, ht->name.len);
+			ht->evex_name.s = ht->evex_name_buf;
+			ht->evex_name.len = strlen(ht->evex_name_buf);
 
-			if (ht->evrt_expired < 0
-					|| event_rt.rlist[ht->evrt_expired] == NULL)
+			ht->evex_index = route_lookup(&event_rt, ht->evex_name_buf);
+
+			if (ht->evex_index < 0
+					|| event_rt.rlist[ht->evex_index] == NULL)
 			{
-				ht->evrt_expired = -1;
+				ht->evex_index = -1;
 				LM_DBG("event route for expired items in [%.*s] does not exist\n",
 						ht->name.len, ht->name.s);
 			} else {
@@ -1073,40 +1078,54 @@ void ht_timer(unsigned int ticks, void *param)
 
 void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell)
 {
-	if(ht->evrt_expired<0)
-		return;
-	ht_expired_cell = cell;
+	int backup_rt;
+	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+
+	if(ht_event_callback.s==NULL || ht_event_callback.len<=0) {
+		if (ht->evex_index < 0 || event_rt.rlist[ht->evex_index] == NULL) {
+			LM_DBG("route does not exist\n");
+			return;
+		}
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_DBG("event callback (%s) set, but no cfg engine\n",
+					ht_event_callback.s);
+			return;
+		}
+	}
 
 	LM_DBG("running event_route[htable:expired:%.*s]\n",
 			ht->name.len, ht->name.s);
-	ht_expired_run_event_route(ht);
-
-	ht_expired_cell = NULL;
-}
-
-void ht_expired_run_event_route(ht_t *ht)
-{
-	int backup_rt;
-	sip_msg_t *fmsg;
-
-	if (ht->evrt_expired < 0 || event_rt.rlist[ht->evrt_expired] == NULL) {
-		LM_DBG("route does not exist\n");
-		return;
-	}
 
 	if (faked_msg_init() < 0) {
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
+
+	ht_expired_cell = cell;
+
 	fmsg = faked_msg_next();
 	fmsg->parsed_orig_ruri_ok = 0;
 
 	backup_rt = get_route_type();
 
 	set_route_type(EVENT_ROUTE);
-	run_top_route(event_rt.rlist[ht->evrt_expired], fmsg, 0);
+	if(ht->evex_index >= 0) {
+		run_top_route(event_rt.rlist[ht->evex_index], fmsg, 0);
+	} else {
+		if(keng!=NULL) {
+			if(keng->froute(fmsg, EVENT_ROUTE,
+						&ht_event_callback, &ht->evex_name)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
+	}
 
 	set_route_type(backup_rt);
+
+	ht_expired_cell = NULL;
 }
 
 int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
