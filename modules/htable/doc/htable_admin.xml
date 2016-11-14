@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -31,7 +31,7 @@
 		be adjusted per item via assignment operation at runtime.
 	</para>
 	<para>
-		Replication between multiple servers is performed automatically (if 
+		Replication between multiple servers is performed automatically (if
 		enabled) via the DMQ module.
 	</para>
 	<para>
@@ -621,9 +621,9 @@ modparam("htable", "db_expires", 1)
 	<section id="htable.p.enable_dmq">
 		<title><varname>enable_dmq</varname> (integer)</title>
 		<para>
-			If set to 1, will enable DMQ replication of actions performed upon 
-			entries in all tables having "dmqreplicate" parameter set. Any update 
-			action performed via pseudo-variables, MI and RPC commands will be 
+			If set to 1, will enable DMQ replication of actions performed upon
+			entries in all tables having "dmqreplicate" parameter set. Any update
+			action performed via pseudo-variables, MI and RPC commands will be
 			repeated on all other nodes. Therefore, it is important to ensure the
 			table definition (size, autoexpire etc.) is identical across all instances.
 		</para>
@@ -633,7 +633,7 @@ modparam("htable", "db_expires", 1)
 		</emphasis>
 		</para>
 		<para>
-			Currently, values are not replicated on load from DB as it is expected 
+			Currently, values are not replicated on load from DB as it is expected
 			that in these cases, all servers will load their values from the same DB.
 		</para>
 		<para>
@@ -668,6 +668,34 @@ modparam("htable", "enable_dmq", 1)
 		<programlisting format="linespecific">
 ...
 modparam("htable", "timer_procs", 4)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks. The function receives a string parameter
+			with the name of the event.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "event_callback", "ksr_htable_event")
+...
+-- event callback function implemented in Lua
+function ksr_htable_event(evname)
+	KSR.info("===== htable module triggered event: " .. evname .. "\n");
+	return 1;
+end
 ...
 </programlisting>
 		</example>
