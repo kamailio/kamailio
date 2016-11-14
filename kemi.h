@@ -100,7 +100,7 @@ int sr_kemi_modules_add(sr_kemi_t *klist);
 int sr_kemi_modules_size_get(void);
 sr_kemi_module_t* sr_kemi_modules_get(void);
 
-typedef int (*sr_kemi_eng_route_f)(sip_msg_t*, int, str *);
+typedef int (*sr_kemi_eng_route_f)(sip_msg_t*, int, str*, str*);
 
 #define SR_KEMI_BNAME_SIZE	256
 typedef struct sr_kemi_eng {
