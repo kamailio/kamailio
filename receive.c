@@ -257,7 +257,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 				LM_ERR("no config routing engine registered\n");
 				goto error_req;
 			}
-			if(keng->froute(msg, REQUEST_ROUTE, NULL)<0) {
+			if(keng->froute(msg, REQUEST_ROUTE, NULL, NULL)<0) {
 				LM_NOTICE("negative return code from engine function\n");
 			}
 		} else {
@@ -321,7 +321,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 				bctx = sr_kemi_act_ctx_get();
 				init_run_actions_ctx(&ctx);
 				sr_kemi_act_ctx_set(&ctx);
-				ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL);
+				ret = keng->froute(msg, CORE_ONREPLY_ROUTE, NULL, NULL);
 				sr_kemi_act_ctx_set(bctx);
 			} else {
 				ret=run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
