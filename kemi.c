@@ -1040,6 +1040,7 @@ int sr_kemi_cbname_lookup_name(str *name)
 		if(_sr_kemi_cbname_list[i].name.len==name->len
 				&& strncmp(_sr_kemi_cbname_list[i].name.s,
 						name->s, name->len)==0) {
+			lock_release(_sr_kemi_cbname_lock);
 			return i+1;
 		}
 	}
