@@ -55,6 +55,8 @@ int  ht_db_expires_flag = 0;
 int  ht_enable_dmq = 0;
 int  ht_timer_procs = 0;
 
+str ht_event_callback = STR_NULL;
+
 static int htable_init_rpc(void);
 
 /** module functions */
@@ -148,6 +150,7 @@ static param_export_t params[]={
 	{"db_expires",         INT_PARAM, &ht_db_expires_flag},
 	{"enable_dmq",         INT_PARAM, &ht_enable_dmq},
 	{"timer_procs",        PARAM_INT, &ht_timer_procs},
+	{"event_callback",     PARAM_STR, &ht_event_callback},
 	{0,0,0}
 };
 
@@ -234,6 +237,8 @@ static int child_init(int rank)
 	struct run_act_ctx ctx;
 	int rtb, rt;
 	int i;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("htable:mod-init");
 
 	LM_DBG("rank is (%d)\n", rank);
 
@@ -252,24 +257,49 @@ static int child_init(int rank)
 	if (rank!=PROC_INIT)
 		return 0;
 
+
+	rt = -1;
+	if(ht_event_callback.s==NULL || ht_event_callback.len<=0) {
+		rt = route_lookup(&event_rt, evname.s);
+		if(rt<0 || event_rt.rlist[rt]==NULL) {
+			rt = -1;
+		}
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_DBG("event callback (%s) set, but no cfg engine\n",
+					ht_event_callback.s);
+			goto done;
+		}
+	}
 	rt = route_get(&event_rt, "htable:mod-init");
-	if(rt>=0 && event_rt.rlist[rt]!=NULL) {
-		LM_DBG("executing event_route[htable:mod-init] (%d)\n", rt);
+	if(rt>=0 || ht_event_callback.len>0) {
+		LM_DBG("executing event_route[%s] (%d)\n", evname.s, rt);
 		if(faked_msg_init()<0)
 			return -1;
 		fmsg = faked_msg_next();
 		rtb = get_route_type();
 		set_route_type(REQUEST_ROUTE);
 		init_run_actions_ctx(&ctx);
-		run_top_route(event_rt.rlist[rt], fmsg, &ctx);
-		if(ctx.run_flags&DROP_R_F)
-		{
+		if(rt>0) {
+			run_top_route(event_rt.rlist[rt], fmsg, &ctx);
+		} else {
+			if(keng!=NULL) {
+				if(keng->froute(fmsg, EVENT_ROUTE,
+							&ht_event_callback, &evname)<0) {
+					LM_ERR("error running event route kemi callback\n");
+					return -1;
+				}
+			}
+		}
+		if(ctx.run_flags&DROP_R_F) {
 			LM_ERR("exit due to 'drop' in event route\n");
 			return -1;
 		}
 		set_route_type(rtb);
 	}
 
+done:
 	return 0;
 }
 
