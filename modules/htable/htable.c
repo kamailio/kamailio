@@ -272,7 +272,6 @@ static int child_init(int rank)
 			goto done;
 		}
 	}
-	rt = route_get(&event_rt, "htable:mod-init");
 	if(rt>=0 || ht_event_callback.len>0) {
 		LM_DBG("executing event_route[%s] (%d)\n", evname.s, rt);
 		if(faked_msg_init()<0)
