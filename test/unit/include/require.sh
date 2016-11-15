@@ -63,3 +63,7 @@ check_sipsak() {
 	fi;
 	return 0
 }
+
+kill_kamailio() {
+	kill $(cat ${PIDFILE})
+}
