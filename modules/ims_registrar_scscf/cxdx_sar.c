@@ -250,24 +250,11 @@ void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elaps
             }
         }
 
-        if (data->sar_assignment_type == AVP_IMS_SAR_REGISTRATION || data->sar_assignment_type == AVP_IMS_SAR_RE_REGISTRATION) {
-            if (s) {
-                if (build_p_associated_uri(s) != 0) {
-                    LM_ERR("Unable to build p_associated_uri\n");
-                    rerrno = R_SAR_FAILED;
-                    goto error;
-                }
-            }
-
-        }
-
-        if (s) {
-            //here we update the contacts and also build the new contact header for the 200 OK reply
-            if (update_contacts(req, data->domain, &data->public_identity, data->sar_assignment_type, &s, &ccf1, &ccf2, &ecf1, &ecf2, &data->contact_header) <= 0) {
-                LM_ERR("Error processing REGISTER\n");
-                rerrno = R_SAR_FAILED;
-                goto error;
-            }
+        //here we update the contacts and also build the new contact header for the 200 OK reply
+        if (update_contacts(req, data->domain, &data->public_identity, data->sar_assignment_type, &s, &ccf1, &ccf2, &ecf1, &ecf2, &data->contact_header) <= 0) {
+            LM_ERR("Error processing REGISTER\n");
+            rerrno = R_SAR_FAILED;
+            goto error;
         }
         
         if (data->contact_header) {

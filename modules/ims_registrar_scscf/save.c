@@ -832,6 +832,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             }
             //now build the contact buffer to be include in the reply message and unlock
             build_contact(impu_rec, contact_header);
+            build_p_associated_uri(*s);
             notify_subscribers(impu_rec, 0, 0);
             ul.unlock_udomain(_d, public_identity);
             break;
@@ -855,6 +856,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             }
             //build the contact buffer for all registered contacts on explicit IMPU
             build_contact(impu_rec, contact_header);
+            build_p_associated_uri(impu_rec->s);
 
             subscription = impu_rec->s;
             if (!subscription) {
@@ -878,7 +880,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             //now update the implicit set
             for (i = 0; i < subscription->service_profiles_cnt; i++) {
                 for (j = 0; j < subscription->service_profiles[i].public_identities_cnt; j++) {
-                    pi = &((*s)->service_profiles[i].public_identities[j]);
+                    pi = &(subscription->service_profiles[i].public_identities[j]);
 
                     if (memcmp(public_identity->s, pi->public_identity.s, public_identity->len) == 0) { //we don't need to update the explicit IMPU
                         LM_DBG("Ignoring explicit identity <%.*s>, updating later.....\n", public_identity->len, public_identity->s);
