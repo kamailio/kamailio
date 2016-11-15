@@ -59,6 +59,7 @@ Gergely Kovacs
 
         7. Authorizer service examples
         8. Verifier service examples
+        9. Remarks
 
    List of Examples
 
@@ -124,6 +125,7 @@ Chapter 1. Admin Guide
 
    7. Authorizer service examples
    8. Verifier service examples
+   9. Remarks
 
 1. Overview
 
@@ -535,3 +537,12 @@ route[VERIFY]
         }
 }
 ...
+
+9. Remarks
+
+   Note: libcurl leak in CentOS 6 - this module uses libcurl library and
+   in case if you are using CentOS 6, be aware that standard
+   libcurl-7.19.7-52 has a memory leak. To fix this memory, install
+   libcurl from city-fan repository. More details at:
+   https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
+   -centos6
