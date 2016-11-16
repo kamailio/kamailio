@@ -180,14 +180,12 @@ static inline void decode_bcd(char *dest, const uint8_t *data, size_t len, int o
 		uint8_t lo = data[i] & 0x0F;
 		uint8_t hi = (data[i] & 0xF0) >> 4;
 
-		if (lo != 0x0F)
-			*dest++ = from_bcd(lo);
+		*dest++ = from_bcd(lo);
 
 		/* ignore the last digit */
 		if (i + 1 == len && odd)
 			break;
-		if (hi != 0x0F)
-			*dest++ = from_bcd(hi);
+		*dest++ = from_bcd(hi);
 	}
 	*dest = '\0';
 }
