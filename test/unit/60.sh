@@ -85,6 +85,27 @@ else
 	exit ${ret}
 fi
 
+# Filter only video stream attributes
+FILE="60-message-sdp9.sip"
+TOTALBEFORE=$(awk '/^v=0/,/^$/ {total++; if ($0 ~ /^a=rtcp/ ) { prefix++;} else { other++} } END {if (prefix) {print other " + " prefix} else { print other " + 0"} }' ${FILE})
+OTHERBEFORE=$(echo ${TOTALBEFORE}|cut -d+ -f1)
+PREFIXBEFORE=$(echo ${TOTALBEFORE}|cut -d+ -f2)
+sipsak ${SIPSAKOPTS} -f ${FILE} > ${TMPFILE}
+ret=$?
+if [ "${ret}" -eq 0 ] ; then
+	TOTALAFTER=$(awk '/^v=0/,/^$/ {total++; if ($0 ~ /^a=rtcp:/ ) { prefix++;} else { other++} } END {if (prefix) {print other " + " prefix} else { print other " + 0"} }' ${TMPFILE})
+	OTHERAFTER=$(echo ${TOTALBEFORE}|cut -d+ -f1)
+	PREFIXAFTER=$(echo ${TOTALAFTER}|cut -d+ -f2)
+	if [ ${PREFIXAFTER} -eq 1 ] && [ ${OTHERBEFORE} -eq ${OTHERAFTER} ]; then
+		ret=0
+	else
+		ret=1
+		echo "found ${PREFIXAFTER} lines with prefix \"a=rtcp\", was expecting 1 (in m=audio)(${FILE})"
+	fi
+	else
+		echo "invalid sipsak return: ${ret}"
+fi
+
 kill_kamailio
 rm ${TMPFILE}
 exit ${ret}
