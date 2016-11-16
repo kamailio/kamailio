@@ -65,6 +65,10 @@ static inline int run_onsend(struct sip_msg* orig_msg, struct dest_info* dst,
 	snd_flags_t rpl_snd_flags_bak;
 	sr_kemi_eng_t *keng = NULL;
 
+	if(orig_msg==NULL || dst==NULL || buf==NULL) {
+		LM_DBG("required parameters are not available - ignoring\n");
+		return 1;
+	}
 	ret=1;
 	if (onsend_rt.rlist[DEFAULT_RT]){
 		onsnd_info.to=&dst->to;
