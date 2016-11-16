@@ -42,7 +42,7 @@
 
 MODULE_VERSION
 
-static int w_sdp_remove_line_by_prefix(sip_msg_t* msg, char* prefix, char* bar);
+static int w_sdp_remove_line_by_prefix(sip_msg_t* msg, char* prefix, char* media);
 static int w_sdp_remove_codecs_by_id(sip_msg_t* msg, char* codecs, char *media);
 static int w_sdp_remove_codecs_by_name(sip_msg_t* msg, char* codecs, char *media);
 static int w_sdp_keep_codecs_by_id(sip_msg_t* msg, char* codecs, char *media);
@@ -73,6 +73,8 @@ static int mod_init(void);
 static cmd_export_t cmds[] = {
 	{"sdp_remove_line_by_prefix",  (cmd_function)w_sdp_remove_line_by_prefix,
 		1, fixup_spve_null,  0, ANY_ROUTE},
+	{"sdp_remove_line_by_prefix",  (cmd_function)w_sdp_remove_line_by_prefix,
+		2, fixup_spve_spve,  0, ANY_ROUTE},
 	{"sdp_remove_codecs_by_id",    (cmd_function)w_sdp_remove_codecs_by_id,
 		1, fixup_spve_null,  0, ANY_ROUTE},
 	{"sdp_remove_codecs_by_id",    (cmd_function)w_sdp_remove_codecs_by_id,
@@ -390,31 +392,7 @@ int sdp_remove_codecs_by_id(sip_msg_t* msg, str* codecs, str* media)
 	return 0;
 }
 
-/**
- * @brief remove all SDP lines that begin with prefix
- * @return -1 - error; 0 - no lines found ; 1..N - N lines deleted
- */
-int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
-{
-	str body = {NULL, 0};
-
-	if(parse_sdp(msg) != 0) {
-		LM_ERR("Unable to parse SDP\n");
-		return -1;
-	}
-
-	body.s = ((sdp_info_t*)msg->body)->raw_sdp.s;
-	body.len = ((sdp_info_t*)msg->body)->raw_sdp.len;
-
-	if (body.s==NULL) {
-		LM_ERR("failed to get the message body\n");
-		return -1;
-	}
-
-	if (body.len==0) {
-		LM_DBG("message body has zero length\n");
-		return -1;
-	}
+int sdp_remove_line_lump_by_prefix(sip_msg_t* msg, str* body, str* prefix) {
 
 	char *ptr = NULL;
 	str line = {NULL, 0};
@@ -422,7 +400,7 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 	int found = 0;
 	struct lump *anchor = NULL;
 
-	ptr = find_sdp_line(body.s, body.s + body.len, prefix->s[0]);
+	ptr = find_sdp_line(body->s, body->s + body->len, prefix->s[0]);
 	while (ptr)
 	{
 		if (sdp_locate_line(msg, ptr, &line) != 0)
@@ -431,9 +409,9 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 			return -1;
 		}
 
-		if (body.s + body.len < line.s + prefix->len) // check if strncmp would run too far
+		if (body->s + body->len < line.s + prefix->len) // check if strncmp would run too far
 		{
-			//LM_DBG("done searching, prefix string >%.*s< (%d) does not fit into remaining buffer space (%ld) \n", prefix->len, prefix->s, prefix->len, body.s + body.len - line.s);
+			//LM_DBG("done searching, prefix string >%.*s< (%d) does not fit into remaining buffer space (%ld) \n", prefix->len, prefix->s, prefix->len, body->s + body->len - line.s);
 			break;
 		}
 
@@ -465,7 +443,7 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 			//LM_DBG("updated remove >%.*s< (%d)\n", remove.len, remove.s, remove.len);
 
 		}
-		ptr = find_next_sdp_line(ptr, body.s + body.len, prefix->s[0], NULL);
+		ptr = find_next_sdp_line(ptr, body->s + body->len, prefix->s[0], NULL);
 	}
 
 	if (found) {
@@ -484,12 +462,101 @@ int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix)
 }
 
 /**
+ * @brief remove all SDP lines that begin with prefix
+ * @return -1 - error; 0 - no lines found ; 1..N - N lines deleted
+ */
+int sdp_remove_line_by_prefix(sip_msg_t* msg, str* prefix, str* media)
+{
+	str body = {NULL, 0};
+	int sdp_session_num = 0;
+	int sdp_stream_num = 0;
+	int found = 0;
+
+	if(parse_sdp(msg) != 0) {
+		LM_ERR("Unable to parse SDP\n");
+		return -1;
+	}
+
+	body.s = ((sdp_info_t*)msg->body)->raw_sdp.s;
+	body.len = ((sdp_info_t*)msg->body)->raw_sdp.len;
+
+	if (body.s==NULL) {
+		LM_ERR("failed to get the message body\n");
+		return -1;
+	}
+
+	if (body.len==0) {
+		LM_DBG("message body has zero length\n");
+		return -1;
+	}
+
+	if (media->s==NULL || media->len==0 ) {
+		LM_DBG("media type filter not set\n");
+		found = sdp_remove_line_lump_by_prefix(msg, &body, prefix);
+	} else {
+		LM_DBG("using media type filter: %.*s\n",media->len, media->s);
+
+		sdp_session_cell_t* sdp_session;
+		sdp_stream_cell_t* sdp_stream;
+
+		sdp_session_num = 0;
+		for (;;) {
+			sdp_session = get_sdp_session(msg, sdp_session_num);
+			if(!sdp_session) break;
+			sdp_stream_num = 0;
+			for (;;) {
+				sdp_stream = get_sdp_stream(msg, sdp_session_num, sdp_stream_num);
+				if(!sdp_stream) break;
+				if( sdp_stream->media.len == media->len &&
+					strncasecmp(sdp_stream->media.s, media->s, media->len) == 0) {
+
+					LM_DBG("range for media type %.*s: %ld - %ld\n",
+							sdp_stream->media.len, sdp_stream->media.s,
+							sdp_stream->raw_stream.s - body.s,
+							sdp_stream->raw_stream.s + sdp_stream->raw_stream.len - body.s
+					);
+
+					found += sdp_remove_line_lump_by_prefix(msg,&(sdp_stream->raw_stream),prefix);
+
+				}
+				sdp_stream_num++;
+			}
+			sdp_session_num++;
+		}
+	}
+	return found;
+}
+
+
+/*
+
+int sdp_remove_str_codec_id_attrs(sip_msg_t* msg, sdp_stream_cell_t* sdp_stream, str *rm_codec)
+
+	str aline = {0, 0};
+	sdp_payload_attr_t *payload;
+	struct lump *anchor;
+
+	payload = sdp_stream->payload_attr;
+	while (payload) {
+		LM_DBG("a= ... for codec %.*s/%.*s\n",
+				payload->rtp_payload.len, payload->rtp_payload.s,
+				payload->rtp_enc.len, payload->rtp_enc.s);
+		if(rm_codec->len==payload->rtp_payload.len
+				&& strncmp(payload->rtp_payload.s, rm_codec->s,
+					rm_codec->len)==0) {
+			if(payload->rtp_enc.s!=NULL) {
+				if(sdp_locate_line(msg, payload->rtp_enc.s, &aline)==0)
+*/
+
+
+/**
  * removes all SDP lines that begin with script provided prefix
  * @return -1 - error; 1 - found
  */
-static int w_sdp_remove_line_by_prefix(sip_msg_t* msg, char* prefix, char* bar)
+static int w_sdp_remove_line_by_prefix(sip_msg_t* msg, char* prefix, char* media)
 {
-	str prfx = {NULL, 0};
+	str lprefix = {NULL, 0};
+	str lmedia = {NULL, 0};
 
 	if(prefix==0)
 	{
@@ -497,14 +564,23 @@ static int w_sdp_remove_line_by_prefix(sip_msg_t* msg, char* prefix, char* bar)
 		return -1;
 	}
 
-	if (get_str_fparam(&prfx, msg, (fparam_t*)prefix))
+	if (get_str_fparam(&lprefix, msg, (fparam_t*)prefix))
 	{
 		LM_ERR("unable to determine prefix\n");
 		return -1;
 	}
-	LM_DBG("Removing SDP lines with prefix: %.*s\n", prfx.len, prfx.s);
 
-	if ( sdp_remove_line_by_prefix(msg, &prfx) < 0)
+	if (media != NULL) {
+		if (get_str_fparam(&lmedia, msg, (fparam_t*)media))
+		{
+			LM_ERR("unable to get the media type\n");
+			return -1;
+		}
+	}
+
+	LM_DBG("Removing SDP lines with prefix: %.*s\n", lprefix.len, lprefix.s);
+
+	if ( sdp_remove_line_by_prefix(msg, &lprefix, &lmedia) < 0)
 		return -1;
 	return 1;
 }
