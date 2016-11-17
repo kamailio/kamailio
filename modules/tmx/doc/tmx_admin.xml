@@ -380,6 +380,11 @@ if(t_suspend())
 			</para></listitem>
 		</itemizedlist>
 		<para>
+			Important note: the route[rtname] is executed in the context of
+			a failure (same behaviour for functions as they were used in a
+			failure_route block).
+		</para>
+		<para>
 		This function can be used in ANY_ROUTE.
 		</para>
 		<example>
@@ -387,6 +392,11 @@ if(t_suspend())
 		<programlisting format="linespecific">
 ...
 t_continue('123', '456', 'MYROUTE');
+...
+route[MYROUTE] {
+  xlog("executed by t continue\n");
+  ...
+}
 ...
 </programlisting>
 		</example>
