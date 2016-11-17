@@ -381,11 +381,20 @@ if(t_suspend())
      * rtname - the name of the route block to execute. Can be a static
        string value or a dynamic string with pseudo-variables.
 
+   Important note: the route[rtname] is executed in the context of a
+   failure (same behaviour for functions as they were used in a
+   failure_route block).
+
    This function can be used in ANY_ROUTE.
 
    Example 1.11. t_continue usage
 ...
 t_continue('123', '456', 'MYROUTE');
+...
+route[MYROUTE] {
+  xlog("executed by t continue\n");
+  ...
+}
 ...
 
 4.11.  t_reuse_branch()
