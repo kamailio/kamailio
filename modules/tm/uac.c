@@ -19,8 +19,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -69,10 +69,11 @@ int goto_on_local_req=-1; /* default disabled */
 
 static char from_tag[FROM_TAG_LEN + 1];
 
+extern str tm_event_callback;
 /*
  * Initialize UAC
  */
-int uac_init(void) 
+int uac_init(void)
 {
 	str src[3];
 	struct socket_info *si;
@@ -232,6 +233,8 @@ static inline int t_run_local_req(
 	int backup_branch;
 	unsigned int backup_msgid;
 	int refresh_shortcuts = 0;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("tm:local-request");
 
 	DBG("executing event_route[tm:local-request]\n");
 	if (unlikely(t_build_msg_from_buf(&lreq, *buf, *buf_len, uac_r, &request->dst))) {
@@ -261,7 +264,20 @@ static inline int t_run_local_req(
 	/* fake transaction and message id */
 	global_msg_id=lreq.id;
 	set_t(new_cell, T_BR_UNDEFINED);
-	run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
+	if(goto_on_local_req>=0) {
+		run_top_route(event_rt.rlist[goto_on_local_req], &lreq, 0);
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_WARN("event callback (%s) set, but no cfg engine\n",
+					tm_event_callback.s);
+		} else {
+			if(keng->froute(&lreq, EVENT_ROUTE,
+						&tm_event_callback, &evname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
+	}
 	/* restore original environment */
 	set_t(backup_t, backup_branch);
 	global_msg_id=backup_msgid;
@@ -479,7 +495,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	}
 
 #ifdef WITH_EVENT_LOCAL_REQUEST
-	if (unlikely(goto_on_local_req>=0)) {
+	if (unlikely(goto_on_local_req>=0 || tm_event_callback.len>0)) {
 		refresh_shortcuts = t_run_local_req(&buf, &buf_len, uac_r, new_cell, request);
 	}
 #endif

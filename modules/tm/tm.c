@@ -231,6 +231,8 @@ int tm_dns_reuse_rcv_socket = 0;
 
 static rpc_export_t tm_rpc[];
 
+str tm_event_callback = STR_NULL;
+
 static int fixup_t_check_status(void** param, int param_no);
 
 static cmd_export_t cmds[]={
@@ -469,6 +471,7 @@ static param_export_t params[]={
 	{"e2e_cancel_reason",   PARAM_INT, &default_tm_cfg.e2e_cancel_reason     },
 #endif /* CANCEL_REASON_SUPPORT */
 	{"xavp_contact",        PARAM_STR, &ulattrs_xavp_name                    },
+	{"event_callback",      PARAM_STR, &tm_event_callback                    },
 	{0,0,0}
 };
 
@@ -812,7 +815,7 @@ static int mod_init(void)
 	goto_on_local_req=route_lookup(&event_rt, "tm:local-request");
 	if (goto_on_local_req>=0 && event_rt.rlist[goto_on_local_req]==0)
 		goto_on_local_req=-1; /* disable */
-	if (goto_on_local_req>=0)
+	if (goto_on_local_req>=0 || tm_event_callback.len>0)
 		set_child_rpc_sip_mode();
 #endif /* WITH_EVENT_LOCAL_REQUEST */
 	if (goto_on_sl_reply && onreply_rt.rlist[goto_on_sl_reply]==0)
