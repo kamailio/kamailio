@@ -26,6 +26,11 @@
 		<surname>Heinanen</surname>
 	        <email>jh@tutpro.com</email>
 		</author>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+	        <email>miconda@gmail.com</email>
+		</author>
 	</authorgroup>
 	<copyright>
 	    <year>2003</year>
@@ -34,6 +39,10 @@
 	<copyright>
 		<year>2008</year>
 		<holder>Juha Heinanen</holder>
+	</copyright>
+	<copyright>
+		<year>2016</year>
+		<holder>Daniel-Constantin Mierla</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
@@ -44,7 +53,7 @@
 	<title>Overview</title>
 	<para>
 	    The <acronym>TM</acronym> module enables stateful processing of SIP
-	    transactions.  Stateful logic is costly in terms of memory and 
+	    transactions.  Stateful logic is costly in terms of memory and
 	    <acronym>CPU</acronym>. The main use is services that
 	    inherently need state. For example, transaction-based accounting
 	    (module acc) needs to process transaction state as opposed to
@@ -119,7 +128,7 @@
 		registered contact then becomes one branch in the destination set.
 	  </para>
 	  <para>
-		The default behavior of the <acronym>TM</acronym> module, 
+		The default behavior of the <acronym>TM</acronym> module,
 		if it encounters a SIP message with multiple branches in the destination
 		set, is to forward the SIP message to all the branches in parallel.
 		That means it sends the message to all the branch destinations before it
@@ -151,8 +160,8 @@
 	  </para>
 	  <para>
 		Every branch in the destination set is assigned a priority number,
-		also known as the <quote>q value</quote>. The q value is a floating 
-		point number in a range 0 to 1.0. The higher the q value number, 
+		also known as the <quote>q value</quote>. The q value is a floating
+		point number in a range 0 to 1.0. The higher the q value number,
 		the more priority is given to the particular branch in the destination set.
 		Branches with q value 1.0 have maximum priority, such branches should be always
 		be tried first in serial forking. Branches with q value 0 have the lowest
@@ -166,7 +175,7 @@
 		using <function>t_relay()</function>:
 	  </para>
 	  <programlisting format="linespecific">
-route {
+request_route {
   seturi("sip:a@example.com");
   append_branch("sip:b@example.com");
   append_branch("sip:c@example.com");
@@ -184,7 +193,7 @@ route {
 		to <function>append_branch()</function>:
 	  </para>
 	  <programlisting format="linespecific">
-route {
+request_route {
   seturi("sip:a@example.com");
   append_branch("sip:b@example.com", "0.5");
   append_branch("sip:c@example.com", "0.5");
@@ -192,7 +201,7 @@ route {
 
   t_relay();
   break;
-}	 
+}
 </programlisting>
 	  <para>
 		Here we assigned q value 0.5 to branches B and C and q value 1.0 to
@@ -214,7 +223,7 @@ route {
 modparam("tm", "contacts_avp", "tm_contacts");
 modparam("tm", "contact_flows_avp", "tm_contact_flows");
 
-route {
+request_route {
   seturi("sip:a@example.com");
   append_branch("sip:b@example.com", "0.5");
   append_branch("sip:c@example.com", "0.5");
@@ -225,7 +234,7 @@ route {
   t_next_contacts();
   t_relay();
   break;
-}	 
+}
 </programlisting>
 	  <para>
 		First of all, the tm module parameters are mandatory if the two new
@@ -254,7 +263,7 @@ route {
 	  <programlisting format="linespecific">
 modparam("tm", "contacts_avp", "tm_contacts");
 
-route {
+request_route {
   seturi("sip:a@example.com");
   append_branch("sip:b@example.com", "0.5");
   append_branch("sip:c@example.com", "0.5");
@@ -305,14 +314,19 @@ failure_route["serial"]
 		And that's the whole example, we achieved combined serial/parallel
 		forking based on the q value of individual branches. In real-world
 		configuration files the script writer would need to check the return
-		value of all functions and <varname>restart_fr_on_each_reply</varname>. 
+		value of all functions and <varname>restart_fr_on_each_reply</varname>.
 		The destination set would not be configured directly in the configuration file, but
 		can be retrieved from the user location database. In that
 		case registered contacts will be stored in the destination set as
 		branches and their q values (provided by UAs) will be used.
 	  </para>
 	</section>
-    
+
+    <xi:include href="params.xml"/>
+    <xi:include href="functions.xml"/>
+    <xi:include href="api.xml"/>
+    <xi:include href="event_routes.xml"/>
+
     <section id="tm.known_issues">
 	<title>Known Issues</title>
 	<itemizedlist>
@@ -346,10 +360,6 @@ failure_route["serial"]
 
 	</itemizedlist>
     </section>
-    
-    <xi:include href="params.xml"/>
-    <xi:include href="functions.xml"/>
-    <xi:include href="api.xml"/>
-    <xi:include href="event_routes.xml"/>
+
     </chapter>
 </book>
