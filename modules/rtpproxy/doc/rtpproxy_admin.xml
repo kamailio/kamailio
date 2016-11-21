@@ -680,7 +680,12 @@ rtpproxy_destroy();
 		</listitem>
 		<listitem>
 			<para>
-			If BYE or CANCEL, or called within a FAILURE_ROUTE[], then do <function>unforce_rtpproxy()</function>
+			If BYE or CANCEL, or called within a FAILURE_ROUTE[], then call
+			<function>unforce_rtpproxy()</function>. Be careful with calling
+			this function after resuming a suspended transaction (e.g., after
+			t_continue()), because the context of executed route is FAILURE
+			ROUTE (in other words, rtpproxy_manage() in the route block of
+			t_continue() does the same as in failure_route).
 			</para>
 		</listitem>
 		<listitem>
