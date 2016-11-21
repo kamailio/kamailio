@@ -729,6 +729,10 @@ rtpengine_offer();
           + asymmetric - flags that UA from which message is received
             doesn't support symmetric RTP. Disables learning of endpoint
             addresses in the Sipwise rtpengine proxy.
+          + no-redis-update - this flag can be used by Kamailio in order
+            to tell rtpengine not to persist the call into Redis upon
+            receiving offer/answer() control commands. If flag is not set,
+            default action is rtpengine persists call to redis.
           + force-answer - force “answer”, that is, only rewrite SDP when
             corresponding session already exists in the RTP proxy. By
             default is on when the session is to be completed.
