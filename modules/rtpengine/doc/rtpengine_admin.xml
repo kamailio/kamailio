@@ -745,6 +745,12 @@ rtpengine_offer();
 				in the Sipwise rtpengine proxy.
 				</para></listitem>
 				<listitem><para>
+				<emphasis>no-redis-update</emphasis> - this flag can be used by Kamailio in order
+				to tell rtpengine not to persist the call into Redis upon receiving offer/answer()
+				control commands. If flag is not set, default action is rtpengine persists call 
+				to redis.
+				</para></listitem>
+				<listitem><para>
 				<emphasis>force-answer</emphasis> - force <quote>answer</quote>, that is,
 				only rewrite &sdp; when corresponding session already exists
 				in the &rtp; proxy. By default is on when the session is to be
