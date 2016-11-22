@@ -1,0 +1,36 @@
+# IP-Adress for incoming SIP-Traffic, in the following format:
+
+# SIP / UDP
+listen=udp:11.22.33.44:5080
+# SIP / TCP
+#listen=tcp:11.22.33.44:5060
+# SIP / TCP/TLS
+#listen=tls:11.22.33.44:5061
+
+# Connection URL for the database:
+#!define DB_URL "con1=>mysql://ocs:heslo@127.0.0.1/hss_db"
+##!define DB_URL2 "con2=>mysql://ocs:heslo@127.0.0.1/hss_db"
+
+# Allowed IPs for XML-RPC-Queries
+##!define XMLRPC_WHITELIST_1 "127.0.0.1"
+##!define XMLRPC_WHITELIST_2 "127.0.0.1"
+##!define XMLRPC_WHITELIST_3 "127.0.0.1"
+
+##!define DMQ_SERVER_ADDRESS "sip:11.22.33.44:5080"
+##!define DMQ_NOTIFICATION_ADDRESS "sip:11.22.33.44:5080"
+
+#
+# Several features can be enabled using '#!define WITH_FEATURE' directives:
+#
+# *** To run in debug mode: 
+#     - define WITH_DEBUG
+#
+# *** To enable XMLRPC support execute:
+#     - define WITH_XMLRPC
+#     - adjust route[XMLRPC] for access policy
+#
+# Enabled Features for this host:
+##!define WITH_XMLRPC
+##!define WITH_DMQ
+##!define WITH_DEBUG
+

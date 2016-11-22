@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DiameterPeer 
+	FQDN="ocs.mnc001.mcc001.3gppnetwork.org"
+	Realm="ims.mnc001.mcc001.3gppnetwork.org"
+	Vendor_Id="10415"
+	Product_Name="CDiameterPeer"
+	AcceptUnknownPeers="1"
+	DropUnknownOnDisconnect="1"
+	Tc="30"
+	Workers="4"
+	QueueLength="8"
+	TransactionTimeout="5"
+	SessionsHashSize="128"
+	DefaultAuthSessionTimeout="3600"
+	MaxAuthSessionTimeout="3600"
+>
+	<Peer FQDN="scscf.mnc001.mcc001.3gppnetwork.org" Realm="ims.mnc001.mcc001.3gppnetwork.org" port="3870"/>
+		
+	<Acceptor port="3871" bind="11.22.33.44"/>
+
+        <Auth id="4" vendor="10415"/> <!--3GPP Ro -->              
+</DiameterPeer>
