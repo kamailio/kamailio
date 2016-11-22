@@ -49,7 +49,7 @@ USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_fifo"
 fifo_cmd()
 {
 	mdbg "entering fifo_cmd $*"
-	
+
 	if [ "$#" -lt 1 ]; then
 		merr "fifo_cmd must take at least command name as parameter"
 		exit 1
@@ -106,6 +106,24 @@ fifo_cmd()
 
 CTLCMD=fifo_cmd
 
+fifo_cmd_print()
+{
+	# construct the command now
+	CMD=":$1:$name\n";
+	shift
+	while [ -n "$1" ] ; do
+		CMD="${CMD}${1}\n"
+		shift
+	done
+	CMD="${CMD}\n"
+
+	minfo "The command is:\n"
+
+	mecho "$CMD"
+}
+
+CTLCMDPRINT=fifo_cmd_print
+
 fifo_kamailio_monitor() {
 	name=kamailio_receiver_$$
 	path=$CHROOT_DIR/tmp/$name
@@ -139,7 +157,7 @@ fifo_kamailio_monitor() {
 		attempt=`$EXPR $attempt + 1`
 		#clear
 		tput clear
-		
+
 		# print_stats $name $path $attempt
 		mecho "[cycle #: $attempt; if constant make sure server lives]"
 
@@ -190,7 +208,7 @@ usrloc:
 
 EOF
 		wait
-		
+
 		if [ $loops -ne $attempt ] ; then
 			sleep $WATCH_PERIOD
 		fi

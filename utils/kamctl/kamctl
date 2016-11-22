@@ -2812,6 +2812,12 @@ case $1 in
 		$CTLCMD "$@"
 		;;
 
+	fifoprint|miprint)
+		require_ctlengine
+		shift
+		$CTLCMDPRINT "$@"
+		;;
+
 	ser|sercmd|kamcmd)
 		require_kamcmd
 		shift
