@@ -62,13 +62,31 @@ unixsock_cmd()
 		shift
 	done
 	CMD="${CMD}\n"
-	
+
 	printf "$CMD" | $OSERUNIX $OSER_UNIXSOCK | filter_fl
 
 	mdbg "UNIXSOCK command was:\n$CMD"
 }
 
 CTLCMD=unixsock_cmd
+
+unixsock_cmd_print()
+{
+	# construct the command now
+	CMD=":$1:\n";
+	shift
+	while [ -n "$1" ] ; do
+		CMD="${CMD}${1}\n"
+		shift
+	done
+	CMD="${CMD}\n"
+
+	minfo "The command is:\n"
+
+	mecho "$CMD"
+}
+
+CTLCMDPRINT=unixsock_cmd_print
 
 unixsock_kamailio_monitor() {
 		attempt=0
