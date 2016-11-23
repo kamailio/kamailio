@@ -88,7 +88,6 @@ int db_mode         = 0;						/*!< Database sync scheme: 0-no db, 1-write throug
 int ul_fetch_rows 	= 2000;
 int hashing_type 	= 0;						/*!< has type for storing P-CSCF contacts - 0 - use full contact AOR, 1 - use IP:PORT only */
 
-int lookup_check_received = 1;						/*!< Should we check received on lookup? */
 int match_contact_host_port = 1;					/*!< Should we match contact just based on rui host and port*/
 
 db1_con_t* ul_dbh = 0;
@@ -115,7 +114,7 @@ static param_export_t params[] = {
 	{"timer_interval",      INT_PARAM, &timer_interval  },
 	{"db_mode",             INT_PARAM, &db_mode         },
 	{"hashing_type",		INT_PARAM, &hashing_type	},
-	{"lookup_check_received",		INT_PARAM, &lookup_check_received	},
+
 	{"match_contact_host_port",		INT_PARAM, &match_contact_host_port	},
         {"expires_grace",		INT_PARAM, &expires_grace	},
 

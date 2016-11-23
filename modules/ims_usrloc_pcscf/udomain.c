@@ -65,7 +65,6 @@
 extern int db_mode;
 extern int db_mode_ext;
 extern unsigned int hashing_type;
-extern int lookup_check_received;
 extern int match_contact_host_port;
 
 #ifdef STATISTICS
