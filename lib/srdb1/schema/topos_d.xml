@@ -128,21 +128,21 @@
    <column id="a_rr">
         <name>a_rr</name>
         <type>largetext</type>
-        <default/>
+        <null/>
         <description>Record route - A side</description>
 	</column>
 
     <column id="b_rr">
         <name>b_rr</name>
         <type>largetext</type>
-        <default/>
+        <null/>
         <description>Record route - B side</description>
     </column>
 
     <column id="s_rr">
         <name>s_rr</name>
         <type>largetext</type>
-        <default/>
+        <null/>
         <description>Record route - S side</description>
     </column>
 
