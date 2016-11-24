@@ -46,10 +46,77 @@
 #include "../pua/pua.h"
 #include "pua_usrloc.h"
 
+#ifdef REG_BY_PUBLISH
+
 #define BUF_LEN   256
+
+static char* device_buffer = NULL;
+static char* state_buffer = NULL;
+static char* content_buffer = NULL;
+ 
+static void replace_string(char** dst, const char* source, int len)
+{
+	if (*dst)
+	{
+		free(*dst);
+		*dst = NULL;
+	}
+	
+	if (source)
+	{	
+		*dst = malloc(len+1);
+		strncpy(*dst, source, len);
+		(*dst)[len] = 0;
+	}
+}
+
+#endif
+
 int pua_set_publish(struct sip_msg* msg , char* s1, char* s2)
 {
 	LM_DBG("set send publish\n");
+#ifdef REG_BY_PUBLISH
+	const char* first_delimiter = NULL;
+	const char* second_delimiter = NULL;
+	// PresenceInReg header should be defined in the following structure:
+	// PresenceInReg: <<device>>;<<state>>;<<content>> wherex
+	// 		<<device>> 	is a const string like a device ID,
+	//		<<state>> 	is "open" or "closed"
+	//		<<content>> is the note node string of PIDF content  
+	replace_string(&device_buffer, NULL, 0);
+	replace_string(&state_buffer, NULL, 0);
+	replace_string(&content_buffer, NULL, 0);
+	
+	if (s1)
+	{
+		first_delimiter = strchr(s1, ';');
+		if (first_delimiter)
+			second_delimiter = strchr(first_delimiter+1, ';');
+		
+		if (first_delimiter)
+		{
+			replace_string(&device_buffer, s1, first_delimiter - s1);
+			
+			if (second_delimiter)
+			{
+				replace_string(&state_buffer, first_delimiter+1, second_delimiter - first_delimiter - 1);
+				replace_string(&content_buffer, second_delimiter+1, strlen(s1) - (second_delimiter - s1 + 1));
+			}
+		}
+	}
+	if (strlen(s1) && (!device_buffer || !state_buffer || !content_buffer))
+	{
+		LM_WARN("Failed to parse PresenceInReg header\n");
+		return 1;
+	}
+	
+	if (device_buffer)
+		LM_DBG("Device: %s\n", device_buffer);
+	if (state_buffer)
+		LM_DBG("State: %s\n", state_buffer);
+	if (content_buffer)
+		LM_DBG("Content: %s\n", content_buffer);
+#endif
 	pua_ul_publish= 1;
 	if(pua_ul_bmask!=0)
 		setbflag(0, pua_ul_bflag);
@@ -59,11 +126,11 @@ int pua_set_publish(struct sip_msg* msg , char* s1, char* s2)
 int pua_unset_publish(struct sip_msg* msg, unsigned int flags, void* param)
 {
 	pua_ul_publish= 0;
+	
 	if(pua_ul_bmask!=0)
 		resetbflag(0, pua_ul_bflag);
 	return 1;
 }
-
 	
 /* for debug purpose only */
 void print_publ(publ_info_t* p)
@@ -74,13 +141,20 @@ void print_publ(publ_info_t* p)
 	LM_DBG("expires= %d\n", p->expires);
 }	
 
-str* build_pidf(ucontact_t* c)
+str* build_pidf(ucontact_t* c
+#ifdef REG_BY_PUBLISH
+	, int open, const char* tuple_id, const char* content
+#endif
+)
 {
 	xmlDocPtr  doc = NULL; 
 	xmlNodePtr root_node = NULL;
 	xmlNodePtr tuple_node = NULL;
 	xmlNodePtr status_node = NULL;
 	xmlNodePtr basic_node = NULL;
+#ifdef REG_BY_PUBLISH
+	xmlNodePtr note_node = NULL;
+#endif
 	str *body= NULL;
 	str pres_uri= {NULL, 0};
 	char buf[BUF_LEN];
@@ -88,8 +162,12 @@ str* build_pidf(ucontact_t* c)
 
 	if(c->expires< (int)time(NULL))
 	{
-		LM_DBG("found expired \n\n");
+		LM_DBG("PUBLISH: found expired \n\n");
+#ifdef REG_BY_PUBLISH
+		open = 0;
+#else
 		return NULL;
+#endif
 	}
 
 	pres_uri.s = buf;
@@ -127,12 +205,16 @@ str* build_pidf(ucontact_t* c)
 	/* create the Publish body  */
 	doc = xmlNewDoc(BAD_CAST "1.0");
 	if(doc==0)
+	{
+		LM_ERR("Failed to create new xml\n");
 		return NULL;
-
+	}
     	root_node = xmlNewNode(NULL, BAD_CAST "presence");
 	if(root_node==0)
+	{
+		LM_ERR("Cannot obtain root node\n");
 		goto error;
-    
+	}
 	xmlDocSetRootElement(doc, root_node);
 
     	xmlNewProp(root_node, BAD_CAST "xmlns",
@@ -146,6 +228,12 @@ str* build_pidf(ucontact_t* c)
 	xmlNewProp(root_node, BAD_CAST "entity", BAD_CAST pres_uri.s);
 
 	tuple_node =xmlNewChild(root_node, NULL, BAD_CAST "tuple", NULL) ;
+	
+#ifdef REG_BY_PUBLISH
+	// Override default tuple id
+	xmlNewProp(tuple_node, BAD_CAST "id", BAD_CAST tuple_id);
+#endif
+
 	if( tuple_node ==NULL)
 	{
 		LM_ERR("while adding child\n");
@@ -159,15 +247,30 @@ str* build_pidf(ucontact_t* c)
 		goto error;
 	}
 	
+#ifdef REG_BY_PUBLISH
 	basic_node = xmlNewChild(status_node, NULL, BAD_CAST "basic",
-		BAD_CAST "open") ;
-	
+		open ? (BAD_CAST "open") : (BAD_CAST "close")) ;
+#else
+	basic_node = xmlNewChild(status_node, NULL, BAD_CAST "basic",
+		BAD_CAST "open");
+#endif
+
 	if( basic_node ==NULL)
 	{
 		LM_ERR("while adding child\n");
 		goto error;
 	}
 	
+#ifdef REG_BY_PUBLISH
+
+	note_node = xmlNewChild(tuple_node, NULL, BAD_CAST "note", BAD_CAST content);
+	if ( note_node == NULL)
+	{
+		LM_ERR("while adding child\n");
+		goto error;
+	}
+#endif
+
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
@@ -179,8 +282,7 @@ str* build_pidf(ucontact_t* c)
 	xmlDocDumpFormatMemory(doc,(unsigned char**)(void*)&body->s,&body->len,1);
 
 	LM_DBG("new_body:\n%.*s\n",body->len, body->s);
-
-    	/*free the document */
+    /*free the document */
 	xmlFreeDoc(doc);
     	xmlCleanupParser();
 
@@ -211,11 +313,13 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	content_type.s= "application/pidf+xml";
 	content_type.len= 20;
 
+#ifndef REG_BY_PUBLISH
 	if(pua_ul_publish==0 && pua_ul_bmask==0)
 	{
 		LM_INFO("should not send ul publish\n");
 		return;
 	}
+#endif
 	if(pua_ul_bmask!=0 && (c->cflags & pua_ul_bmask)==0)
 	{
 		LM_INFO("not marked for publish\n");
@@ -237,7 +341,15 @@ void ul_publish(ucontact_t* c, int type, void* param)
 			}
 		}
 	}
-
+#ifdef REG_BY_PUBLISH
+	int online = type & UL_CONTACT_INSERT || type & UL_CONTACT_UPDATE;
+	if (online && state_buffer)
+		online = strcmp(state_buffer, "closed") != 0;
+	
+	body= build_pidf(c, online, device_buffer ? device_buffer : "device", content_buffer ? content_buffer : "");
+	if(online && (body == NULL || body->s == NULL))
+		goto error;
+#else
 	if(type & UL_CONTACT_INSERT)
 	{
 		body= build_pidf(c);
@@ -246,7 +358,8 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	}
 	else
 		body = NULL;
-	
+#endif
+
 	uri.s = (char*)pkg_malloc(sizeof(char)*(c->aor->len+default_domain.len+6));
 	if(uri.s == NULL)
 		goto error;
@@ -307,11 +420,16 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	publ->content_type.len= content_type.len;
 	size+= content_type.len;
 
+
 	if(type & UL_CONTACT_EXPIRE || type & UL_CONTACT_DELETE)
 		publ->expires= 0;
-	else
-		publ->expires= c->expires - (int)time(NULL);
-	
+	else 
+#ifndef REG_BY_PUBLISH
+		publ->expires= c->expires - (int)time(NULL); 
+#else
+		publ->expires = 900;
+#endif
+
 	if(type & UL_CONTACT_INSERT)
 		publ->flag|= INSERT_TYPE;
 	else
@@ -323,8 +441,12 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	print_publ(publ);
 	if((error=_pu_pua.send_publish(publ))< 0)
 	{
+#ifdef REG_BY_PUBLISH
+		LM_ERR("while sending publish\n");
+#else
 		LM_ERR("while sending publish for ul event %d\n", type);
-		if((type & UL_CONTACT_UPDATE) && error == ERR_PUBLISH_NO_BODY) {
+#endif
+		if(type & UL_CONTACT_UPDATE && error == ERR_PUBLISH_NO_BODY) {
 			/* This error can occur if Kamailio was restarted/stopped and for any reason couldn't store a pua
 			 * entry in 'pua' DB table. It can also occur if 'pua' table is cleaned externally while Kamailio
 			 * is stopped so cannot retrieve these entries from DB when restarting.
