@@ -182,6 +182,12 @@ modparam("rtpengine", "rtpengine_sock",
 			Default value is <quote>60</quote>.
 		</emphasis>
 		</para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int rtpengine rtpengine_disable_tout 20
+			</programlisting>
+		</para>
 		<example>
 		<title>Set <varname>rtpengine_disable_tout</varname> parameter</title>
 		<programlisting format="linespecific">
@@ -200,6 +206,12 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
 		<emphasis>
 			Default value is <quote>1000</quote>.
 		</emphasis>
+		</para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int rtpengine rtpengine_tout_ms 1000
+			</programlisting>
 		</para>
 		<example>
 		<title>Set <varname>rtpengine_tout_ms</varname> parameter</title>
@@ -244,12 +256,18 @@ modparam("rtpengine", "rtpengine_allow_op", 1)
 		<para>
 		The total number of nodes inside a set (sets are configurable via rtpengine_sock function) to be queried 
 		before giving up establishing a session. This brings more flexibility in case checking all rtpengines
-		would take too long. Max limit is 50.
+		would take too long. Max limit is 30.
 		</para>
 		<para>
 		<emphasis>
 			By default all nodes in a set are tried before giving up communicating with the rtpengines.
 		</emphasis>
+		</para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int rtpengine queried_nodes_limit 5
+			</programlisting>
 		</para>
 		<example>
 		<title>Set <varname>queried_nodes_limit</varname> parameter</title>
@@ -270,6 +288,12 @@ modparam("rtpengine", "queried_nodes_limit", 5)
 		<emphasis>
 			Default value is <quote>5</quote>.
 		</emphasis>
+		</para>
+		<para>
+			Can be set at runtime, e.g.:
+			<programlisting>
+			$ &sercmd; cfg.set_now_int rtpengine rtpengine_retr 5
+			</programlisting>
 		</para>
 		<example>
 		<title>Set <varname>rtpengine_retr</varname> parameter</title>

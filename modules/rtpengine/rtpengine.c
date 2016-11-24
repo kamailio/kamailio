@@ -80,6 +80,7 @@
 #include "rtpengine_funcs.h"
 #include "rtpengine_hash.h"
 #include "bencode.h"
+#include "config.h"
 
 MODULE_VERSION
 
@@ -101,9 +102,8 @@ MODULE_VERSION
 #define HOSTNAME_SIZE				100
 
 #define DEFAULT_RTPP_SET_ID			0
-#define MAX_RTPP_TRIED_NODES			50
-#define MI_SET_NATPING_STATE			"nh_enable_ping"
-#define MI_DEFAULT_NATPING_STATE		1
+#define MI_SET_NATPING_STATE		"nh_enable_ping"
+#define MI_DEFAULT_NATPING_STATE	1
 
 #define MI_ENABLE_RTP_PROXY			"nh_enable_rtpp"
 #define MI_SHOW_RTP_PROXIES			"nh_show_rtpp"
@@ -224,12 +224,8 @@ static struct mi_root* mi_show_hash_total(struct mi_root* cmd_tree, void* param)
 static struct mi_root* mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param);
 
 
-static int rtpengine_disable_tout = 60;
 static int rtpengine_allow_op = 0;
-static int rtpengine_retr = 5;
-static int rtpengine_tout_ms = 1000;
 static struct rtpp_node **queried_nodes_ptr = NULL;
-static int queried_nodes_limit = MAX_RTPP_TRIED_NODES;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 static str extra_id_pv_param = {NULL, 0};
@@ -334,11 +330,11 @@ static pv_export_t mod_pvs[] = {
 static param_export_t params[] = {
 	{"rtpengine_sock",        PARAM_STRING|USE_FUNC_PARAM,
 	                         (void*)rtpengine_set_store          },
-	{"rtpengine_disable_tout",INT_PARAM, &rtpengine_disable_tout },
-	{"rtpengine_retr",        INT_PARAM, &rtpengine_retr         },
-	{"rtpengine_tout_ms",     INT_PARAM, &rtpengine_tout_ms      },
+	{"rtpengine_disable_tout",INT_PARAM, &default_rtpengine_cfg.rtpengine_disable_tout },
+	{"rtpengine_retr",        INT_PARAM, &default_rtpengine_cfg.rtpengine_retr         },
+	{"queried_nodes_limit",   INT_PARAM, &default_rtpengine_cfg.queried_nodes_limit    },
+	{"rtpengine_tout_ms",     INT_PARAM, &default_rtpengine_cfg.rtpengine_tout_ms      },
 	{"rtpengine_allow_op",    INT_PARAM, &rtpengine_allow_op     },
-	{"queried_nodes_limit",   INT_PARAM, &queried_nodes_limit    },
 	{"db_url",                PARAM_STR, &rtpp_db_url            },
 	{"table_name",            PARAM_STR, &rtpp_table_name        },
 	{"setid_col",             PARAM_STR, &rtpp_setid_col         },
@@ -1140,7 +1136,7 @@ static struct mi_root* mi_enable_rtp_proxy(struct mi_root *cmd_tree, void *param
 
 					/* if ping fail, disable the rtpps but _not_ permanently*/
 					} else {
-						crt_rtpp->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
+						crt_rtpp->rn_recheck_ticks = get_ticks() + cfg_get(rtpengine,rtpengine_cfg,rtpengine_disable_tout);
 						crt_rtpp->rn_disabled = 1;
 						found_rtpp_disabled = 1;
 					}
@@ -1460,7 +1456,7 @@ static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree, void* param)
 
 				/* if ping fail */
 				if (rtpp_test_ping(crt_rtpp) < 0) {
-					crt_rtpp->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
+					crt_rtpp->rn_recheck_ticks = get_ticks() + cfg_get(rtpengine,rtpengine_cfg,rtpengine_disable_tout);
 					found_rtpp_disabled = 1;
 					crt_rtpp->rn_disabled = 1;
 				}
@@ -1614,7 +1610,6 @@ mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param)
 	return root;
 }
 
-
 static int
 mod_init(void)
 {
@@ -1756,11 +1751,6 @@ mod_init(void)
 	if (rtpp_strings)
 		pkg_free(rtpp_strings);
 
-	if ((queried_nodes_limit < 1) || (queried_nodes_limit > MAX_RTPP_TRIED_NODES)) {
-		LM_ERR("queried_nodes_limit must be a number in the range 1..50 \n");
-		return -1;
-	}
-
 	if (load_tm_api( &tmb ) < 0)
 	{
 		LM_DBG("could not load the TM-functions - answer-offer model"
@@ -1791,6 +1781,12 @@ mod_init(void)
 	} else {
 		LM_DBG("Default rtpp set %d found\n", setid_default);
 	}
+
+    if(cfg_declare("rtpengine", rtpengine_cfg_def, &default_rtpengine_cfg, cfg_sizeof(rtpengine), &rtpengine_cfg)){
+        LM_ERR("Failed to declare the configuration\n");
+        return -1;
+    }
+
 
 	return 0;
 }
@@ -1931,12 +1927,12 @@ child_init(int rank)
 	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
 
 	// vector of pointers to queried nodes
-	queried_nodes_ptr = (struct rtpp_node**)pkg_malloc(queried_nodes_limit * sizeof(struct rtpp_node*));
+	queried_nodes_ptr = (struct rtpp_node**)pkg_malloc(MAX_RTPP_TRIED_NODES * sizeof(struct rtpp_node*));
 	if (!queried_nodes_ptr) {
 		LM_ERR("no more pkg memory for queried_nodes_ptr\n");
 		return -1;
 	}
-	memset(queried_nodes_ptr, 0, queried_nodes_limit * sizeof(struct rtpp_node*));
+	memset(queried_nodes_ptr, 0, MAX_RTPP_TRIED_NODES * sizeof(struct rtpp_node*));
 
 	/* Iterate known RTP proxies - create sockets */
 	if (rtpp_socks_size) {
@@ -2362,7 +2358,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 
 select_node:
 	do {
-		if (queried_nodes >= queried_nodes_limit) {
+		if (queried_nodes >= cfg_get(rtpengine,rtpengine_cfg,queried_nodes_limit)) {
 			LM_ERR("queried nodes limit reached\n");
 			goto error;
 		}
@@ -2376,7 +2372,7 @@ select_node:
 		cp = send_rtpp_command(node, ng_flags.dict, &ret);
 		if (cp == NULL) {
 			node->rn_disabled = 1;
-			node->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
+			node->rn_recheck_ticks = get_ticks() + cfg_get(rtpengine,rtpengine_cfg,rtpengine_disable_tout);
 		}
 
 		queried_nodes_ptr[queried_nodes++] = node;
@@ -2536,7 +2532,7 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 	cp = send_rtpp_command(node, dict, &ret);
 	if (!cp) {
 		node->rn_disabled = 1;
-		node->rn_recheck_ticks = get_ticks() + rtpengine_disable_tout;
+		node->rn_recheck_ticks = get_ticks() + cfg_get(rtpengine,rtpengine_cfg,rtpengine_disable_tout);
 		LM_ERR("proxy did not respond to ping\n");
 		goto error;
 	}
@@ -2565,6 +2561,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 {
 	struct sockaddr_un addr;
 	int fd, len, i, vcnt;
+	int rtpengine_retr, rtpengine_tout_ms = 1000;
 	char *cp;
 	static char buf[0x10000];
 	struct pollfd fds[1];
@@ -2627,6 +2624,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 		}
 		v[0].iov_base = gencookie();
 		v[0].iov_len = strlen(v[0].iov_base);
+        rtpengine_retr = cfg_get(rtpengine,rtpengine_cfg,rtpengine_retr);
 		for (i = 0; i < rtpengine_retr; i++) {
 			do {
 				len = writev(rtpp_socks[node->idx], v, vcnt + 1);
@@ -2636,6 +2634,7 @@ send_rtpp_command(struct rtpp_node *node, bencode_item_t *dict, int *outlen)
 				LM_ERR("can't send command \"%.*s\" to RTP proxy <%s>\n", out.len, out.s, node->rn_url.s);
 				goto badproxy;
 			}
+            rtpengine_tout_ms = cfg_get(rtpengine,rtpengine_cfg,rtpengine_tout_ms);
 			while ((poll(fds, 1, rtpengine_tout_ms) == 1) &&
 				(fds[0].revents & POLLIN) != 0) {
 				do {
