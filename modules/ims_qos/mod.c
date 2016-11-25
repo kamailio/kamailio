@@ -104,6 +104,9 @@ int video_default_bandwidth = 128;
 //Very useful for UEs that change ports mid way through call therefore breaking flow description filters
 str regex_sdp_ip_prefix_to_maintain_in_fd = {0, 0};
 
+//If set this will include an additional filter for all existing filters using the next odd port up - as this is the RTCP port
+int include_rtcp_fd = 0;
+
 int cdp_event_list_size_threshold = 0; /**Threshold for size of cdp event list after which a warning is logged */
 
 stat_var *aars;
@@ -204,6 +207,7 @@ static param_export_t params[] = {
 		{ "terminate_dialog_on_rx_failure", INT_PARAM, &terminate_dialog_on_rx_failure},
 		{ "delete_contact_on_rx_failure", INT_PARAM, &delete_contact_on_rx_failure},
 		{ "regex_sdp_ip_prefix_to_maintain_in_fd", PARAM_STR, &regex_sdp_ip_prefix_to_maintain_in_fd},
+		{ "include_rtcp_fd", INT_PARAM, &include_rtcp_fd},
 		{ 0, 0, 0}
 };
 

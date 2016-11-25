@@ -365,6 +365,26 @@ modparam("ims_qos", "delete_contact_on_rx_failure", 0)
       </example>
     </section>
     
+    <section>
+      <title><varname>include_rtcp_fd</varname> integer</title>
+
+      <para>If set then a flow description is added for media flows - next available odd port 
+          is used as the default for RTCP traffic</para>
+
+      <para><emphasis> Default value is 0, RTCP flow description not added</emphasis></para>
+
+      <example>
+        <title><varname>include_rtcp_fd</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "include_rtcp_fd", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+    
   </section>
 
   <section>
