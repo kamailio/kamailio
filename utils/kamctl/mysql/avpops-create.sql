@@ -6,7 +6,7 @@ CREATE TABLE `usr_preferences` (
     `attribute` VARCHAR(32) DEFAULT '' NOT NULL,
     `type` INT(11) DEFAULT 0 NOT NULL,
     `value` VARCHAR(128) DEFAULT '' NOT NULL,
-    `last_modified` DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL
+    `last_modified` DATETIME DEFAULT '2000-01-01 00:00:01' NOT NULL
 );
 
 CREATE INDEX ua_idx ON usr_preferences (`uuid`, `attribute`);

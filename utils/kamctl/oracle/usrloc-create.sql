@@ -10,7 +10,7 @@ CREATE TABLE location (
     q NUMBER(10,2) DEFAULT 1.0 NOT NULL,
     callid VARCHAR2(255) DEFAULT 'Default-Call-ID',
     cseq NUMBER(10) DEFAULT 1 NOT NULL,
-    last_modified DATE DEFAULT to_date('1900-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss'),
+    last_modified DATE DEFAULT to_date('2000-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss'),
     flags NUMBER(10) DEFAULT 0 NOT NULL,
     cflags NUMBER(10) DEFAULT 0 NOT NULL,
     user_agent VARCHAR2(255) DEFAULT '',
@@ -47,7 +47,7 @@ CREATE TABLE location_attrs (
     aname VARCHAR2(64) DEFAULT '',
     atype NUMBER(10) DEFAULT 0 NOT NULL,
     avalue VARCHAR2(255) DEFAULT '',
-    last_modified DATE DEFAULT to_date('1900-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss')
+    last_modified DATE DEFAULT to_date('2000-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss')
 );
 
 CREATE OR REPLACE TRIGGER location_attrs_tr

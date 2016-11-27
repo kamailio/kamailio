@@ -6,7 +6,7 @@ CREATE TABLE usr_preferences (
     attribute VARCHAR(32) DEFAULT '' NOT NULL,
     type INTEGER DEFAULT 0 NOT NULL,
     value VARCHAR(128) DEFAULT '' NOT NULL,
-    last_modified TIMESTAMP WITHOUT TIME ZONE DEFAULT '1900-01-01 00:00:01' NOT NULL
+    last_modified TIMESTAMP WITHOUT TIME ZONE DEFAULT '2000-01-01 00:00:01' NOT NULL
 );
 
 CREATE INDEX usr_preferences_ua_idx ON usr_preferences (uuid, attribute);
