@@ -254,10 +254,15 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	str tag = {0,0};
 	str uri = {0,0};
 	str target = {0,0};
+	struct dlginfo_cell *dlginfo = NULL;
 
+	dlginfo = (struct dlginfo_cell*)*_params->param;
 
-	struct dlginfo_cell *dlginfo = (struct dlginfo_cell*)*_params->param;
-
+	if(dlg==NULL || dlginfo==NULL) {
+		LM_WARN("execution with null parameters - type %d, dlg %p, info %p\n",
+				type, dlg, dlginfo);
+		return;
+	}
 	if(include_req_uri) {
 		uri = dlginfo->req_uri;
 	} else {
