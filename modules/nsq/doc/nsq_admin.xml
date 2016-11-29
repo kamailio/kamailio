@@ -441,6 +441,25 @@ modparam("nsq", "presentity_table", "my_presentity_table")
 			</example>
 		</section>
 
+		<section>
+			<title><varname>db_table_lock_type</varname>(int)</title>
+			<para>
+			Enable (=1) or disable (=0) the locks for table during a
+			transaction.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>1</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>db_table_lock_type</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("nsq", "db_table_lock_type", 0)
+...
+</programlisting>
+			</example>
+		</section>
+
 	</section>
 	<section>
 		<title>Functions</title>

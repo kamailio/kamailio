@@ -87,6 +87,8 @@ db1_con_t *nsq_pa_db = NULL;
 db_func_t nsq_pa_dbf;
 str nsq_presentity_table = str_init(PRESENTITY_TABLE);
 str nsq_db_url = {NULL, 0};
+int db_table_lock_type = 1;
+db_locking_t db_table_lock = DB_LOCKING_WRITE;
 
 static int mod_init(void);
 static int mod_child_init(int);
