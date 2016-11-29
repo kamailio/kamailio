@@ -33,9 +33,6 @@
 #include "../globals.h"
 #include "memdbg.h"
 #include "../cfg/cfg.h" /* memlog */
-#ifdef MALLOC_STATS
-#include "../events.h"
-#endif
 
 #include "pkg.h"
 
@@ -412,11 +409,6 @@ void* qm_malloc(void* qmp, size_t size)
 				qm, (unsigned long)size, (char*)f+sizeof(struct qm_frag), f,
 				f->size, list_cntr);
 #endif
-#ifdef MALLOC_STATS
-		if(qm->type==MEM_TYPE_PKG) {
-			sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
-		}
-#endif
 		return (char*)f+sizeof(struct qm_frag);
 	}
 
@@ -547,11 +539,6 @@ void qm_free(void* qmp, void* p)
 	f->line=line;
 #endif
 	qm_insert_free(qm, f);
-#ifdef MALLOC_STATS
-	if(qm->type==MEM_TYPE_PKG) {
-		sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
-	}
-#endif
 }
 
 
@@ -696,11 +683,6 @@ void* qm_realloc(void* qmp, void* p, size_t size)
 	}
 #ifdef DBG_QM_MALLOC
 	MDBG("qm_realloc: returning %p\n", p);
-#endif
-#ifdef MALLOC_STATS
-	if(qm->type==MEM_TYPE_PKG) {
-		sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
-	}
 #endif
 	return p;
 }

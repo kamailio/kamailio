@@ -531,9 +531,6 @@ finish:
 	if (qm->max_real_used<qm->real_used)
 		qm->max_real_used=qm->real_used;
 	FRAG_MARK_USED(frag); /* mark it as used */
-	if(qm->type==MEM_TYPE_PKG) {
-		sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
-	}
 	return (char*)frag+sizeof(struct fm_frag);
 }
 
@@ -610,9 +607,6 @@ void fm_free(void* qmp, void* p)
 		LM_INFO("freeing a free fragment (%p/%p) - ignore\n",
 				f, p);
 		return;
-	}
-	if(qm->type==MEM_TYPE_PKG) {
-		sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
 	}
 #ifdef DBG_F_MALLOC
 	f->file=file;
@@ -756,9 +750,6 @@ void* fm_realloc(void* qmp, void* p, size_t size)
 #ifdef DBG_F_MALLOC
 	MDBG("fm_realloc: returning %p\n", p);
 #endif
-	if(qm->type==MEM_TYPE_PKG) {
-		sr_event_exec(SREV_PKG_UPDATE_STATS, 0);
-	}
 	return p;
 }
 

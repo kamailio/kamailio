@@ -145,7 +145,6 @@ static int pkg_proc_update_stats(void *data)
  */
 int register_pkg_proc_stats(void)
 {
-	sr_event_register_cb(SREV_PKG_UPDATE_STATS, pkg_proc_update_stats);
 	return 0;
 }
 
@@ -224,6 +223,8 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 			limit = i + 1;
 		}
 	}
+
+	pkg_proc_update_stats(NULL);
 
 	for(; i<limit; i++)
 	{
