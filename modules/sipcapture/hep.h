@@ -61,6 +61,12 @@ struct hep_timehdr{
    u_int16_t captid;          /* Capture ID node */
 };
 
+struct hep_timeinfo{
+   u_int32_t tv_sec;         /* seconds */
+   u_int32_t tv_usec;        /* useconds */
+   u_int32_t captid;          /* Capture ID node */
+};
+
 struct hep_ip6hdr {
         struct in6_addr hp6_src;        /* source address */
         struct in6_addr hp6_dst;        /* destination address */

@@ -38,12 +38,13 @@
 
 static int count = 0;
 
-struct hep_timehdr* heptime;
+struct hep_timeinfo* heptime;
 
 /* HEPv2 HEPv3 */
 int hepv2_received(char *buf, unsigned int len, struct receive_info *ri);
 int hepv3_received(char *buf, unsigned int len, struct receive_info *ri);
 int parsing_hepv3_message(char *buf, unsigned int len);
+
 /**
  * HEP message
  */
@@ -100,7 +101,7 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
         struct hep_iphdr *hepiph = NULL;
 
 	struct hep_timehdr* heptime_tmp = NULL;
-        memset(heptime, 0, sizeof(struct hep_timehdr));
+        memset(heptime, 0, sizeof(struct hep_timeinfo));
 
         struct hep_ip6hdr *hepip6h = NULL;
             	        
@@ -139,7 +140,7 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri){
         else if(heph->hp_p == IPPROTO_SCTP) ri->proto=PROTO_SCTP;
 #endif
         else {
-        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: unknow protocol [%d]\n",heph->hp_p);
+        	LOG(L_ERR, "ERROR: sipcapture:hep_msg_received: unknown protocol [%d]\n",heph->hp_p);
                 ri->proto = PROTO_NONE;
 	}
 
@@ -262,7 +263,7 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
 	memset(hg, 0, sizeof(struct hep_generic_recv));
 
 	
-        memset(heptime, 0, sizeof(struct hep_timehdr));	
+        memset(heptime, 0, sizeof(struct hep_timeinfo));	
 	        
 
 	/* HEADER */
@@ -394,7 +395,7 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
                                 case 12:
                                         hg->capt_id  = (hep_chunk_uint32_t *) (tmp);
                                         i+=chunk_length;
-                                        heptime->captid = ntohs(hg->capt_id->data);
+                                        heptime->captid = ntohl(hg->capt_id->data);
                                         totelem++;
                                         break;
 
@@ -486,7 +487,7 @@ int parsing_hepv3_message(char *buf, unsigned int len) {
 	/*TIME*/ 
         heptime->tv_sec = hg->time_sec->data;
         heptime->tv_usec = hg->time_usec->data;
-        heptime->captid = ntohs(hg->capt_id->data);
+        heptime->captid = ntohl(hg->capt_id->data);
           
 
         if(payload != NULL ) {
@@ -512,8 +513,5 @@ error:
         return -1;           
         
 }
-
-
-
 
 
