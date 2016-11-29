@@ -363,6 +363,27 @@ modparam("presence", "expires_offset", 10)
 		</example>
 
 </section>
+
+	<section id="presence.p.add_expires_offset">
+		<title><varname>add_expires_offset</varname> (int)</title>
+		<para>
+		Add expires_offset value to expires before inserting into db/htable
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>add_expires_offset</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "add_expires_offset", 1)
+...
+</programlisting>
+		</example>
+
+</section>
+
        <section id="presence.p.max_expires">
                <title><varname>max_expires</varname> (int)</title>
                <para>

@@ -617,6 +617,11 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 			}
 			return 1;
 		}
+
+		if (add_expires_offset > 0) {
+			subs->expires = subs->expires + expires_offset;
+		}
+
 		/* if subscriptions are stored in memory, update them */
 		if(subs_dbmode != DB_ONLY)
 		{

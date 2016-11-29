@@ -71,6 +71,7 @@ extern int pid;
 extern int startup_time;
 extern char *to_tag_pref;
 extern int expires_offset;
+extern uint32_t add_expires_offset;
 extern str server_address;
 extern uint32_t min_expires;
 extern int min_expires_action;
