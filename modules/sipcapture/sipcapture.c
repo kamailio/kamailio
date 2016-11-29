@@ -2285,11 +2285,11 @@ int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_re
 	/*source ip*/
 	sco.source_ip.s = ipstr_src;
 	sco.source_ip.len = strlen(ipstr_src);
-	sco.source_port = hg->src_port->data;
+	sco.source_port = ntohs(hg->src_port->data);
 
 	sco.destination_ip.s = ipstr_dst;
 	sco.destination_ip.len = strlen(ipstr_dst);
-	sco.destination_port = hg->dst_port->data;
+	sco.destination_port = ntohs(hg->dst_port->data);
 
 	if(heptime && heptime->tv_sec != 0) {
 		sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
