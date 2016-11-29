@@ -679,7 +679,6 @@
 		<column><field>url</field><type>DB1_STR</type></column>
 		<column><field>weight</field><type>DB1_INT</type></column>
 		<column><field>disabled</field><type>DB1_INT</type></column>
-		<column><field>stamp</field><type>DB1_DATETIME</type></column>
 	</db_table>
 	<!-- Declaration of rtpproxy table-->
 	<db_table id="rtpproxy">
@@ -3620,7 +3619,6 @@
 				<col><field>url</field></col>
 				<col><field>weight</field></col>
 				<col><field>disabled</field></col>
-				<col><field>stamp</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -3631,7 +3629,6 @@
 				<col><field>url</field></col>
 				<col><field>weight</field></col>
 				<col><field>disabled</field></col>
-				<col><field>stamp</field></col>
 			</query_cols>
 		</cmd>
 	</mod>
