@@ -37,6 +37,7 @@
 
 extern db1_con_t *nsq_pa_db;
 extern db_func_t nsq_pa_dbf;
+extern db_locking_t db_table_lock;
 extern str nsq_presentity_table;
 extern str nsq_db_url;
 
@@ -152,7 +153,7 @@ int nsq_pua_update_presentity(str* event, str* realm, str* user, str* etag, str*
 	}
 
 	if (nsq_pa_dbf.start_transaction) {
-		if (nsq_pa_dbf.start_transaction(nsq_pa_db, DB_LOCKING_WRITE) < 0) {
+		if (nsq_pa_dbf.start_transaction(nsq_pa_db, db_table_lock) < 0) {
 			LM_ERR("in start_transaction\n");
 			goto error;
 		}

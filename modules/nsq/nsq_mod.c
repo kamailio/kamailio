@@ -65,6 +65,7 @@ static param_export_t params[]=
 	{"db_url", PARAM_STR, &nsq_db_url},
 	{"pua_mode", INT_PARAM, &dbn_pua_mode},
 	{"json_escape_char", PARAM_STR, &nsq_json_escape_str},
+	{"db_table_lock_type", INT_PARAM, &db_table_lock_type},
 	{ 0, 0, 0 }
 };
 
@@ -189,6 +190,10 @@ static int mod_init(void)
 			if (!nsq_pa_db) {
 				LM_ERR("Connection to database failed\n");
 				return -1;
+			}
+
+			if (db_table_lock_type != 1) {
+				db_table_lock = DB_LOCKING_NONE;
 			}
 
 			nsq_pa_dbf.close(nsq_pa_db);
