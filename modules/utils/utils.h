@@ -39,6 +39,7 @@
 extern int http_query_timeout;
 extern db1_con_t *pres_dbh;
 extern db_func_t pres_dbf;
+extern str user_agent;
 
 typedef struct {
 	char		*buf;

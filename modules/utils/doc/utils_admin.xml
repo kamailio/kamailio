@@ -192,6 +192,25 @@ modparam("utils", "xcap_table", "pres_xcap")
 				</programlisting>
 			</example>
 		</section>
+                <section id="utils.p.user_agent">
+                        <title><varname>user_agent</varname> (string)</title>
+                        <para>
+                        Defines User-Agent for HTTP requests.
+                        </para>
+                        <para>
+                        <emphasis>
+                                There is no default value, if none is defined then no User-Agent header is added.
+                        </emphasis>
+                        </para>
+                        <example>
+                        <title>Set <varname>user_agent</varname> parameter</title>
+                                <programlisting format="linespecific">
+...
+modparam("utils", "user_agent", "kamailio")
+...
+                                </programlisting>
+                        </example>
+                </section>
 	</section>
 
 	<section>
