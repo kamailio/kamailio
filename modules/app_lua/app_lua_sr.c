@@ -523,6 +523,91 @@ static int lua_sr_isbflagset (lua_State *L)
 /**
  *
  */
+static int lua_sr_setsflag (lua_State *L)
+{
+	int flag;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	flag = lua_tointeger(L, -1);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	setsflag(flag);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_resetsflag (lua_State *L)
+{
+	int flag;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	flag = lua_tointeger(L, -1);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	resetsflag(flag);
+	return app_lua_return_true(L);
+}
+
+/**
+ *
+ */
+static int lua_sr_issflagset (lua_State *L)
+{
+	int flag;
+	int ret;
+	sr_lua_env_t *env_L;
+
+	env_L = sr_lua_env_get();
+	flag = lua_tointeger(L, -1);
+
+	if(env_L->msg==NULL)
+	{
+		LM_WARN("invalid parameters from Lua env\n");
+		return app_lua_return_false(L);
+	}
+
+	if (!flag_in_range(flag))
+	{
+		LM_ERR("invalid flag parameter %d\n", flag);
+		return app_lua_return_false(L);
+	}
+
+	ret = issflagset(flag);
+	if(ret>0)
+		return app_lua_return_true(L);
+	return app_lua_return_false(L);
+}
+
+
+/**
+ *
+ */
 static int lua_sr_seturi (lua_State *L)
 {
 	struct action  act;
@@ -700,6 +785,9 @@ static const luaL_Reg _sr_core_Map [] = {
 	{"setbflag",     lua_sr_setbflag},
 	{"resetbflag",   lua_sr_resetbflag},
 	{"isbflagset",   lua_sr_isbflagset},
+	{"setsflag",     lua_sr_setsflag},
+	{"resetsflag",   lua_sr_resetsflag},
+	{"issflagset",   lua_sr_issflagset},
 	{"seturi",       lua_sr_seturi},
 	{"setuser",      lua_sr_setuser},
 	{"sethost",      lua_sr_sethost},
