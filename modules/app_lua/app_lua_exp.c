@@ -2157,7 +2157,8 @@ static int lua_sr_sdpops_remove_transport(lua_State *L)
 static int lua_sr_sdpops_remove_line_by_prefix(lua_State *L)
 {
 	int ret;
-	str media;
+	str prefix = STR_NULL;
+	str media = STR_NULL;
 	sr_lua_env_t *env_L;
 
 	env_L = sr_lua_env_get();
@@ -2174,16 +2175,22 @@ static int lua_sr_sdpops_remove_line_by_prefix(lua_State *L)
 		return app_lua_return_error(L);
 	}
 
-	if(lua_gettop(L)!=1)
+	if(lua_gettop(L)==1)
 	{
+		prefix.s = (char *) lua_tostring(L, -1);
+		prefix.len = strlen(prefix.s);
+	} else if(lua_gettop(L)==2)
+	{
+		prefix.s = (char *) lua_tostring(L, -2);
+		prefix.len = strlen(prefix.s);
+		media.s = (char *) lua_tostring(L, -1);
+		media.len = strlen(media.s);
+	} else {
 		LM_ERR("incorrect number of arguments\n");
 		return app_lua_return_error(L);
 	}
 
-	media.s = (char*)lua_tostring(L, -1);
-	media.len = strlen(media.s);
-
-	ret = _lua_sdpopsb.sdp_remove_line_by_prefix(env_L->msg, &media);
+	ret = _lua_sdpopsb.sdp_remove_line_by_prefix(env_L->msg, &prefix, &media);
 
 	return app_lua_return_int(L, ret);
 }

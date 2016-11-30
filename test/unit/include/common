@@ -1,6 +1,7 @@
 # all database modules
 DB_ALL_MOD="acc|alias_db|auth_db|avpops|dialog|dialplan|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist"
 # root directory relative to tests
+RUN_DIR="."
 SRC_DIR="../.."
 CTL_DIR="$SRC_DIR/utils/kamctl"
 CTLRC="$CTL_DIR/kamctlrc"
@@ -19,5 +20,6 @@ else
     fi
 fi
 KILL="killall -15 $BNAME"
+PIDFILE="${RUN_DIR}/kamailio.pid"
 # test directory relative to root
 TEST_DIR="test/unit"

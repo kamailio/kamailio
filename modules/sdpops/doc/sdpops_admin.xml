@@ -126,7 +126,7 @@ sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 	</section>
 	<section id="sdpops.f.remove_line_by_prefix">
 	<title>
-		<function moreinfo="none">sdp_remove_line_by_prefix(string)</function>
+		<function moreinfo="none">sdp_remove_line_by_prefix(string [, mtype])</function>
 	</title>
 	<para>
 			Remove all SDP attribute lines beginning with 'string'

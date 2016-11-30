@@ -20,26 +20,27 @@
 . include/common
 . include/require.sh
 
-CFG=60.cfg
+CFGFILE=60.cfg
 TMPFILE=$(mktemp -t kamailio-test.XXXXXXXXXX)
+SIPSAKOPTS="-H localhost -s sip:127.0.0.1 -v"
 
 if ! (check_sipsak && check_kamailio && check_module "sdpops"); then
 	exit 0
 fi
 
-${BIN} -w . -f ${CFG} > /dev/null
+${BIN} -w ${RUN_DIR} -Y ${RUN_DIR} -P ${PIDFILE} -f ${CFGFILE} > /dev/null
 ret=$?
 
 sleep 1
 if [ "${ret}" -ne 0 ] ; then
 	echo "start fail"
-	${KILL}
+	kill_kamailio
 	exit ${ret}
 fi
 
 # Borken SDP should give 500 response
 FILE="60-message-sdp0.sip"
-sipsak -f ${FILE} -L -s sip:127.0.0.1 -v > ${TMPFILE}
+sipsak ${SIPSAKOPTS} -f ${FILE} > ${TMPFILE}
 ret=$?
 if [ "${ret}" -eq 1 ] ; then
 	ret=0
@@ -55,7 +56,7 @@ for i in 1 2 3 4 5 6 7; do
 	TOTALBEFORE=$(awk '/^v=0/,/^$/ {total++; if ($0 ~ /^a=X-cap/ ) { prefix++;} else { other++} } END {if (prefix) {print other " + " prefix} else { print other " + 0"} }' ${FILE})
 	OTHERBEFORE=$(echo ${TOTALBEFORE}|cut -d+ -f1)
 
-	sipsak -f ${FILE} -L -s sip:127.0.0.1 -v > ${TMPFILE}
+	sipsak ${SIPSAKOPTS} -f ${FILE} > ${TMPFILE}
 	ret=$?
 	if [ "${ret}" -eq 0 ] ; then
 		TOTALAFTER=$(awk '/^v=0/,/^$/ {total++; if ($0 ~ /^a=X-cap/ ) { prefix++;} else { other++} } END {if (prefix) {print other " + " prefix} else { print other " + 0"} }' ${TMPFILE})
@@ -74,7 +75,7 @@ done
 
 # Empty body should get 500 response
 FILE="60-message-sdp8.sip"
-sipsak -f ${FILE} -L -s sip:127.0.0.1 -v > ${TMPFILE}
+sipsak ${SIPSAKOPTS} -f ${FILE} > ${TMPFILE}
 ret=$?
 if [ "${ret}" -eq 1 ] ; then
 	ret=0
@@ -84,7 +85,28 @@ else
 	exit ${ret}
 fi
 
-${KILL}
+# Filter only video stream attributes
+FILE="60-message-sdp9.sip"
+TOTALBEFORE=$(awk '/^v=0/,/^$/ {total++; if ($0 ~ /^a=rtcp/ ) { prefix++;} else { other++} } END {if (prefix) {print other " + " prefix} else { print other " + 0"} }' ${FILE})
+OTHERBEFORE=$(echo ${TOTALBEFORE}|cut -d+ -f1)
+PREFIXBEFORE=$(echo ${TOTALBEFORE}|cut -d+ -f2)
+sipsak ${SIPSAKOPTS} -f ${FILE} > ${TMPFILE}
+ret=$?
+if [ "${ret}" -eq 0 ] ; then
+	TOTALAFTER=$(awk '/^v=0/,/^$/ {total++; if ($0 ~ /^a=rtcp:/ ) { prefix++;} else { other++} } END {if (prefix) {print other " + " prefix} else { print other " + 0"} }' ${TMPFILE})
+	OTHERAFTER=$(echo ${TOTALBEFORE}|cut -d+ -f1)
+	PREFIXAFTER=$(echo ${TOTALAFTER}|cut -d+ -f2)
+	if [ ${PREFIXAFTER} -eq 1 ] && [ ${OTHERBEFORE} -eq ${OTHERAFTER} ]; then
+		ret=0
+	else
+		ret=1
+		echo "found ${PREFIXAFTER} lines with prefix \"a=rtcp\", was expecting 1 (in m=audio)(${FILE})"
+	fi
+	else
+		echo "invalid sipsak return: ${ret}"
+fi
 
+kill_kamailio
+rm ${TMPFILE}
 exit ${ret}
 

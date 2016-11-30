@@ -41,7 +41,7 @@ typedef struct sdpops_binds {
 	sdp_keep_media_t     sdp_keep_codecs_by_name;
 	sdp_remove_media_t   sdp_remove_media;
 	sdp_remove_media_t   sdp_remove_transport;
-	sdp_remove_media_t   sdp_remove_line_by_prefix;
+	sdp_remove_media_type_t   sdp_remove_line_by_prefix;
 	sdp_remove_media_type_t   sdp_remove_codecs_by_id;
 	sdp_remove_media_type_t   sdp_remove_codecs_by_name;
 } sdpops_api_t;
