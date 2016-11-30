@@ -345,219 +345,7 @@ route[HTTP_REPLY] {
         </programlisting>
 	    </example>
 	</section>
-
-	<section id="http_async_client.f.http_async_suspend">
-	    <title>
-		<function moreinfo="none">http_async_suspend(suspend)</function>
-	    </title>
-        <para>
-		    In a transaction context if the transaction must be suspended and script execution stopped.
-        </para>
-        <para>
-            Parameter <quote>suspend</quote> set to "1" to suspend the transaction, "0" to not suspend and continue with script execution. Default: 1 (transaction suspended).
-        </para>
-		<example>
-		<title><function>http_async_suspend()</function> usage</title>
-		<programlisting format="linespecific">
-...
-t_newtran();
-http_async_suspend(0);
-# the transaction won't be suspended for the next query
-http_async_query("http://example.com/test.php", "HTTP_REPLY");
-xlog("L_INFO", "query sent\n");
-t_reply("200", "Ok");
-
-...
-        </programlisting>
-	    </example>
-	</section>
-	<section id="http_async_client.f.tls_verify_host">
-	    <title>
-		<function moreinfo="none">tls_verify_host(verify)</function>
-	    </title>
-        <para>
-		    For the next HTTPS connection, whether the client should verify the server host.
-        </para>
-        <para>
-            Parameter <quote>verify</quote> set to "1" to enable the host verification, "0" to disable. Default: the global value set as <emphasis>verify_host</emphasis> module parameter.
-        </para>
-		<example>
-		<title><function>tls_verify_host()</function> usage</title>
-		<programlisting format="linespecific">
-...
-tls_verify_host("0");
-# host verification is disabled for the next query
-http_async_query("https://example.com/test.php", "HTTP_REPLY");
-...
-        </programlisting>
-	    </example>
-	</section>
-
-	<section id="http_async_client.f.tls_verify_peer">
-	    <title>
-		<function moreinfo="none">tls_verify_peer(verify)</function>
-	    </title>
-        <para>
-		    For the next HTTPS connection, whether the client should verify the server identity.
-        </para>
-        <para>
-            Parameter <quote>verify</quote> set to "1" to enable the identity verification, "0" to disable. Default: the global value set as <emphasis>verify_peer</emphasis> module parameter.
-        </para>
-		<example>
-		<title><function>tls_verify_peer()</function> usage</title>
-		<programlisting format="linespecific">
-...
-tls_verify_peer("0");
-# server identity verification is disabled for the next query
-http_async_query("https://example.com/test.php", "HTTP_REPLY");
-...
-        </programlisting>
-	    </example>
-	</section>
-
-	<section id="http_async_client.f.http_set_timeout">
-	    <title>
-		<function moreinfo="none">http_set_timeout(timeout)</function>
-	    </title>
-        <para>
-		    For the next HTTP query, set the response timeout.
-        </para>
-        <para>
-            Parameter <quote>timeout</quote> string representing the timeout in milliseconds. Default: the global value set as <emphasis>http_timeout</emphasis> module parameter.
-        </para>
-		<example>
-		<title><function>http_set_timeout()</function> usage</title>
-		<programlisting format="linespecific">
-...
-http_set_timeout("200");
-# the server must respond in maximum 200ms, otherwise the query will fail
-http_async_query("https://example.com/test.php", "HTTP_REPLY");
-...
-        </programlisting>
-	    </example>
-	</section>
-
-	<section id="http_async_client.f.http_append_header">
-	    <title>
-		<function moreinfo="none">http_append_header(header)</function>
-	    </title>
-        <para>
-		    Set/remove/replace a header in the next HTTP query.
-        </para>
-        <para>From libcurl's documentation:</para>
-        <para>
-			<quote>If you add a header that is otherwise generated and used by libcurl internally, your added one will be used instead. If you add a header with no content as in 'Accept:' (no data on the right side of the colon), the internally used header will get disabled. With this option you can add new headers, replace internal headers and remove internal headers. To add a header with no content (nothing to the right side of the colon), use the form 'MyHeader;' (note the ending semicolon).</quote>
-        </para>
-        <para>
-			<quote>The headers included in the linked list <emphasis>must not</emphasis> be CRLF-terminated, because libcurl adds CRLF after each header item.</quote>
-		</para>
-        <para>
-            Parameter <quote>header</quote> string representing the header to pass to libcurl for the next query.
-        </para>
-		<example>
-		<title><function>http_append_header()</function> usage</title>
-		<programlisting format="linespecific">
-...
-http_append_header("X-Sip-Call-Id: $ci");
-# a new 'X-Sip-Call-Id' header will be added to the next query
-http_append_header("Content-Type": application/json");
-# the curl default 'application/x-www-form-urlencoded' Content-Type will be replaced
-http_async_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
-...
-        </programlisting>
-	    </example>
-	</section>
-
-	<section id="http_async_client.f.http_set_method">
-	    <title>
-		<function moreinfo="none">http_set_method(method)</function>
-	    </title>
-        <para>
-		    For the next HTTP query, set the method.
-        </para>
-        <para>
-            Parameter <quote>method</quote> string representing the method (verb): either "GET", "POST", "PUT" or "DELETE" (these are the only supported methods). (Note: if http_set_method() is not called before a query, curl will use GET, or POST if a body is specified)
-        </para>
-		<example>
-		<title><function>http_set_method()</function> usage</title>
-		<programlisting format="linespecific">
-...
-http_set_method("PUT");
-# the next query will be a HTTP PUT request
-http_async_query("https://example.com/test.php", "{'foo': 'bar'}", "HTTP_REPLY");
-...
-        </programlisting>
-	    </example>
-	</section>
-
-	<section id="http_async_client.f.http_set_tls_client_cert">
-	    <title>
-		<function moreinfo="none">http_set_tls_client_cert(path)</function>
-	    </title>
-        <para>
-		    For the next HTTPS connection, what client certificate to use.
-        </para>
-        <para>
-            Default: the global value set as <emphasis>tls_client_cert</emphasis> module parameter.
-        </para>
-		<example>
-		<title><function>http_set_tls_client_cert()</function> usage</title>
-		<programlisting format="linespecific">
-...
-http_set_tls_client_cert("/etc/kamailio/ssl/cert.pem");
-# Next query will use the client cert above
-http_async_query("https://example.com/test.php", "HTTP_REPLY");
-...
-        </programlisting>
-	    </example>
-	</section>
-
-	<section id="http_async_client.f.http_set_tls_client_key">
-	    <title>
-		<function moreinfo="none">http_set_tls_client_key(path)</function>
-	    </title>
-        <para>
-		    For the next HTTPS connection, what client certificate key to use.
-        </para>
-        <para>
-            Default: the global value set as <emphasis>tls_client_key</emphasis> module parameter.
-        </para>
-		<example>
-		<title><function>http_set_tls_client_key()</function> usage</title>
-		<programlisting format="linespecific">
-...
-http_set_tls_client_key("/etc/kamailio/ssl/cert.key");
-# Next query will use the client cert key above
-http_async_query("https://example.com/test.php", "HTTP_REPLY");
-...
-        </programlisting>
-	    </example>
-	</section>
-
-	<section id="http_async_client.f.http_set_tls_ca_path">
-	    <title>
-		<function moreinfo="none">http_set_tls_ca_path(path)</function>
-	    </title>
-        <para>
-		    For the next HTTP connection, what CA certificate path to use.
-        </para>
-        <para>
-            Default: the global value set as <emphasis>tls_ca_path</emphasis> module parameter.
-        </para>
-		<example>
-		<title><function>http_set_tls_ca_path()</function> usage</title>
-		<programlisting format="linespecific">
-...
-http_set_tls_client_key("/etc/kamailio/ssl/ca/");
-# Next query will use the CA certs above
-http_async_query("https://example.com/test.php", "HTTP_REPLY");
-...
-        </programlisting>
-	    </example>
-	</section>
-
 </section>
-
 <section>
 	<title>Pseudo Variables</title>
 	<para>The <literal>$http_req_id</literal> read-only variable can be used in REQUEST_ROUTE to retrive the unique identifier for a query after sending it or in the HTTP callback route to retrive the id of the query the reply belongs to. Useful mainly in non-transactional context.</para>
@@ -578,17 +366,16 @@ xlog("L_INFO", "received reply for query $http_query_id\n");
 		</programlisting>
 	</example>
 	<para>The <literal>$http_req(key)</literal> write-only variable can be used to set custom parameters before sending a HTTP query</para>
-	<para>setting this variable has the same effect than using the <literal>http_set_*()</literal>functions</para>
 	<para><literal>key</literal> can be one of:</para>
 	<itemizedlist>
 		<listitem><para><emphasis>all</emphasis>: if set to <literal>$null</literal>, resets all the parameters to their default value (the ones defined in modparam)</para></listitem>
 		<listitem><para><emphasis>hdr</emphasis>: sets/modifies/removes a HTTP header (see <emphasis>http_append_header()</emphasis>). N.B.: setting this variable multiple times will add several headers to the query.</para></listitem>
 		<listitem><para><emphasis>body</emphasis>: sets/modifies/removes the request body</para></listitem>
-		<listitem><para><emphasis>method</emphasis>: sets the HTTP method (see <emphasis>http_set_method()</emphasis>)</para></listitem>
-		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout (see <emphasis>http_set_timeout()</emphasis>)</para></listitem>
-		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use (see <emphasis>http_set_tls_client_cert()</emphasis>)</para></listitem>
-		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use (see <emphasis>http_set_tls_client_key()</emphasis>)</para></listitem>
-		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate path to use (see <emphasis>http_set_tls_ca_path()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>method</emphasis>: sets the HTTP method: either "GET", "POST", "PUT" or "DELETE" (these are the supported methods). (Note: if the method is not set, curl will use GET, or POST if a body is specified)</para></listitem>
+		<listitem><para><emphasis>timeout</emphasis>: sets the HTTP timeout</para></listitem>
+		<listitem><para><emphasis>tls_client_cert</emphasis>: sets the client certificate to use</para></listitem>
+		<listitem><para><emphasis>tls_client_key</emphasis>: sets the client certificate key to use</para></listitem>
+		<listitem><para><emphasis>tls_ca_path</emphasis>: sets the CA certificate path to use</para></listitem>
 		<listitem><para><emphasis>authmethod</emphasis>: 
 			Sets the preferred authentication mode for HTTP/HTTPS requests. The value is a bitmap
                         and multiple methods can be used. Note that in this case, the CURL library will make an
@@ -608,7 +395,7 @@ xlog("L_INFO", "received reply for query $http_query_id\n");
 		</para></listitem>
 		<listitem><para><emphasis>username</emphasis>: sets the username to use for authenticated requests</para></listitem>
 		<listitem><para><emphasis>password</emphasis>: sets the password to use for authenticated requests</para></listitem>
-		<listitem><para><emphasis>suspend</emphasis>: if set to 0 it doesn't suspend the current transaction before performing the query (see <emphasis>http_async_suspend()</emphasis>)</para></listitem>
+		<listitem><para><emphasis>suspend</emphasis>: if set to 0 it doesn't suspend the current transaction before performing the query</para></listitem>
 	</itemizedlist>
 	<example>
 		<title><literal>$http_req(key)</literal> variable usage</title>

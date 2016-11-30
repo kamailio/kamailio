@@ -82,15 +82,6 @@ static int  child_init(int);
 static void mod_destroy(void);
 
 static int w_http_async_query(sip_msg_t* msg, char* query, char* rt);
-static int w_tls_verify_host(sip_msg_t* msg, char* vh, char*);
-static int w_tls_verify_peer(sip_msg_t* msg, char* vp, char*);
-static int w_http_async_suspend_transaction(sip_msg_t* msg, char* vp, char*);
-static int w_http_set_timeout(sip_msg_t* msg, char* tout, char*);
-static int w_http_append_header(sip_msg_t* msg, char* hdr, char*);
-static int w_http_set_method(sip_msg_t* msg, char* method, char*);
-static int w_http_set_tls_client_cert(sip_msg_t* msg, char* sc, char*);
-static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*);
-static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*);
 static int set_query_param(str* param, str input);
 static int fixup_http_async_query(void** param, int param_no);
 
@@ -135,24 +126,6 @@ enum http_req_name_t {
 
 static cmd_export_t cmds[]={
 	{"http_async_query",  (cmd_function)w_http_async_query, 2, fixup_http_async_query,
-		0, ANY_ROUTE},
-	{"tls_verify_host", (cmd_function)w_tls_verify_host, 1, fixup_igp_all,
-		0, ANY_ROUTE},
-	{"tls_verify_peer", (cmd_function)w_tls_verify_peer, 1, fixup_igp_all,
-		0, ANY_ROUTE},
-	{"http_async_suspend", (cmd_function)w_http_async_suspend_transaction, 1, fixup_igp_all,
-		0, ANY_ROUTE},
-	{"http_set_timeout", (cmd_function)w_http_set_timeout, 1, fixup_igp_all,
-		0, ANY_ROUTE},
-	{"http_append_header", (cmd_function)w_http_append_header, 1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"http_set_method", (cmd_function)w_http_set_method, 1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"http_set_tls_client_cert", (cmd_function)w_http_set_tls_client_cert, 1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"http_set_tls_client_key", (cmd_function)w_http_set_tls_client_key, 1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"http_set_tls_ca_path", (cmd_function)w_http_set_tls_ca_path, 1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -458,103 +431,6 @@ if(fixup_get_ivalue(msg, (gparam_t*)NAME, &( i_##NAME))!=0)\
 	_IVALUE_ERROR(NAME);\
 	return -1;\
 }
-
-static int w_tls_verify_host(sip_msg_t* msg, char* vh, char*foo)
-{
-	_IVALUE (vh);
-	ah_params.tls_verify_host = i_vh?1:0;
-	return 1;
-}
-
-static int w_tls_verify_peer(sip_msg_t* msg, char* vp, char*foo)
-{
-	_IVALUE (vp);
-	ah_params.tls_verify_peer = i_vp?1:0;
-	return 1;
-}
-
-static int w_http_async_suspend_transaction(sip_msg_t* msg, char* vp, char*foo)
-{
-	_IVALUE (vp);
-	ah_params.suspend_transaction = i_vp?1:0;
-	return 1;
-}
-
-static int w_http_set_timeout(sip_msg_t* msg, char* tout, char*foo)
-{
-	_IVALUE (tout);
-	if (i_tout < 0) {
-		LM_ERR("timeout must be >= 0 (got %d)\n", i_tout);
-		return -1;
-	}
-	ah_params.timeout = i_tout;
-	return 1;
-}
-
-static int w_http_append_header(sip_msg_t* msg, char* hdr, char*foo)
-{
-	str shdr;
-
-	if(fixup_get_svalue(msg, (gparam_t*)hdr, &shdr)!=0) {
-		LM_ERR("unable to get header value\n");
-		return -1;
-	}
-
-	header_list_add(&ah_params.headers, &shdr);
-
-	return 1;
-}
-
-static int w_http_set_method(sip_msg_t* msg, char* meth, char*foo)
-{
-	str smeth;
-
-	if(fixup_get_svalue(msg, (gparam_t*)meth, &smeth)!=0) {
-		LM_ERR("unable to get method value\n");
-		return -1;
-	}
-
-	query_params_set_method(&ah_params, &smeth);
-
-	return 1;
-}
-
-static int w_http_set_tls_client_cert(sip_msg_t* msg, char* sc, char*foo)
-{
-	str _tls_client_cert;
-
-	if(fixup_get_svalue(msg, (gparam_t*)sc, &_tls_client_cert)!=0) {
-		LM_ERR("unable to get method value\n");
-		return -1;
-	}
-
-	return set_query_param(&ah_params.tls_client_cert, _tls_client_cert);
-}
-
-static int w_http_set_tls_client_key(sip_msg_t* msg, char* sk, char*foo)
-{
-	str _tls_client_key;
-
-	if(fixup_get_svalue(msg, (gparam_t*)sk, &_tls_client_key)!=0) {
-		LM_ERR("unable to get method value\n");
-		return -1;
-	}
-
-	return set_query_param(&ah_params.tls_client_key, _tls_client_key);
-}
-
-static int w_http_set_tls_ca_path(sip_msg_t* msg, char* cp, char*foo)
-{
-	str _tls_ca_path;
-
-	if(fixup_get_svalue(msg, (gparam_t*)cp, &_tls_ca_path)!=0) {
-		LM_ERR("unable to get method value\n");
-		return -1;
-	}
-
-	return set_query_param(&ah_params.tls_ca_path, _tls_ca_path);
-}
-
 /*
  * Helper to copy input string parameter into a query parameter
  */
