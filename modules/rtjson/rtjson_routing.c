@@ -481,7 +481,7 @@ int rtjson_prepare_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 				xuri.len = strlen(xuri.s);
 			}
 			if(xdsp.len>0 || xuri.len>0) {
-				uacb.replace_from(msg, &xdsp, &xuri);
+				uacb.replace_to(msg, &xdsp, &xuri);
 			}
 		}
 	}
