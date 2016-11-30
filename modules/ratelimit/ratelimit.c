@@ -361,7 +361,6 @@ static int get_cpuload(double * load)
 
 		/* divide by numbers of cpu */
 		ncpu = get_num_cpus();
-		vload = vload/ncpu;
 		vload = 1.0 - vload;
 		if(vload<0.0) vload = 0.0;
 		else if (vload>1.0) vload = 1.0;
