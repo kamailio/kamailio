@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -48,7 +48,7 @@ static str            sl_tag = {sl_tag_buf,TOTAG_VALUE_LEN};
 /* from here, the variable prefix begins */
 static char           *tag_suffix;
 /* if we for this time did not send any stateless reply,
-   we do not filter */
+ * we do not filter */
 static unsigned int  *sl_timeout;
 
 static int _sl_filtered_ack_route = -1; /* default disabled */
@@ -64,7 +64,7 @@ void sl_lookup_event_routes(void)
 	if (_sl_filtered_ack_route>=0 && event_rt.rlist[_sl_filtered_ack_route]==0)
 		_sl_filtered_ack_route=-1; /* disable */
 
-	 _sl_evrt_local_response = route_lookup(&event_rt, "sl:local-response");
+	_sl_evrt_local_response = route_lookup(&event_rt, "sl:local-response");
 	if (_sl_evrt_local_response>=0
 			&& event_rt.rlist[_sl_evrt_local_response]==NULL)
 		_sl_evrt_local_response = -1;
@@ -76,14 +76,14 @@ void sl_lookup_event_routes(void)
 int sl_startup()
 {
 	init_tags( sl_tag.s, &tag_suffix,
-			"SER-stateless",
+			"KAMAILIO-stateless",
 			SL_TOTAG_SEPARATOR );
 
 	/*timeout*/
 	sl_timeout = (unsigned int*)shm_malloc(sizeof(unsigned int));
 	if (!sl_timeout)
 	{
-		LOG(L_ERR,"ERROR:sl_startup: no more free memory!\n");
+		LM_ERR("no more free memory!\n");
 		return -1;
 	}
 	*(sl_timeout)=get_ticks_raw();
@@ -137,8 +137,8 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	if (reply_to_via) {
 		if (update_sock_struct_from_via(&dst.to, msg, msg->via1 )==-1)
 		{
-			LOG(L_ERR, "ERROR: sl_reply_helper: cannot lookup reply dst: %s\n",
-				msg->via1->host.s);
+			LM_ERR("cannot lookup reply dst: %.*s\n",
+					msg->via1->host.len, msg->via1->host.s);
 			goto error;
 		}
 	} else update_sock_struct_from_ip(&dst.to, msg);
@@ -155,12 +155,9 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	text.len = strlen(reason);
 
 	/* add a to-tag if there is a To header field without it */
-	if ( 	/* since RFC3261, we append to-tags anywhere we can, except
-		 * 100 replies */
-       		/* msg->first_line.u.request.method_value==METHOD_INVITE && */
-		code>=180 &&
+	if ( code>=180 &&
 		(msg->to || (parse_headers(msg,HDR_TO_F, 0)!=-1 && msg->to))
-		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
+		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) )
 	{
 		if(tag!=NULL && tag->s!=NULL) {
 			buf.s = build_res_buf_from_sip_req(code, &text, tag,
@@ -174,21 +171,20 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 		buf.s = build_res_buf_from_sip_req(code, &text, 0, msg,
 				(unsigned int*)&buf.len, &dummy_bm);
 	}
-	if (!buf.s)
-	{
-		DBG("DEBUG: sl_reply_helper: response building failed\n");
+	if (!buf.s) {
+		LM_DBG("response building failed\n");
 		goto error;
 	}
-	
+
 	sl_run_callbacks(SLCB_REPLY_READY, msg, code, reason, &buf, &dst);
 
 	*(sl_timeout) = get_ticks_raw() + SL_RPL_WAIT_TIME;
 
 	/* supress multhoming support when sending a reply back -- that makes sure
-	   that replies will come from where requests came in; good for NATs
-	   (there is no known use for mhomed for locally generated replies;
-	    note: forwarded cross-interface replies do benefit of mhomed!
-	*/
+	 * that replies will come from where requests came in; good for NATs
+	 * (there is no known use for mhomed for locally generated replies;
+	 * note: forwarded cross-interface replies do benefit of mhomed!
+	 */
 	backup_mhomed=mhomed;
 	mhomed=0;
 	/* use for sending the received interface -bogdan*/
@@ -218,14 +214,15 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 
 			if (unlikely(!IS_SIP(msg)))
 			{
-				/* This is an HTTP reply...  So fudge in a CSeq into the parsed message
- 				   message structure so that $rm will work in the route */
-				struct hdr_field *hf;
+				/* This is an HTTP reply...  So fudge in a CSeq into
+				 * the parsed message message structure so that $rm will
+				 * work in the route */
+				hdr_field_t *hf;
 				struct cseq_body *cseqb;
 				char *tmp2;
 				int len;
 
-				if ((hf = (struct hdr_field *) pkg_malloc(sizeof(struct hdr_field))) == NULL)
+				if ((hf = (hdr_field_t*) pkg_malloc(sizeof(struct hdr_field))) == NULL)
 				{
 					LM_ERR("out of package memory\n");
 					goto event_route_error;
@@ -238,7 +235,8 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 					goto event_route_error;
 				}
 
-				if ((tmp = (char *) pkg_malloc(sizeof(char) * (msg->first_line.u.request.method.len + 5))) == NULL)
+				if ((tmp = (char *) pkg_malloc(sizeof(char)
+						* (msg->first_line.u.request.method.len + 5))) == NULL)
 				{
 					LM_ERR("out of package memory\n");
 					pkg_free(cseqb);
@@ -249,7 +247,9 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 				memset(hf, 0, sizeof(struct hdr_field));
 				memset(cseqb, 0, sizeof(struct cseq_body));
 
-				len = sprintf(tmp, "0 %.*s\r\n", msg->first_line.u.request.method.len, msg->first_line.u.request.method.s);
+				len = sprintf(tmp, "0 %.*s\r\n",
+						msg->first_line.u.request.method.len,
+						msg->first_line.u.request.method.s);
 				tmp2 = parse_cseq(tmp, &tmp[len], cseqb);
 
 				hf->type = HDR_CSEQ_T;
@@ -322,7 +322,7 @@ int sl_send_reply_str(struct sip_msg *msg, int code, str *reason)
 
 	ret = sl_reply_helper(msg, code, r, 0);
 
-    if (r!=reason->s) pkg_free(r);
+	if (r!=reason->s) pkg_free(r);
 	return ret;
 }
 
@@ -345,7 +345,7 @@ int sl_send_reply_dlg(struct sip_msg *msg, int code, str *reason, str *tag)
 
 	ret = sl_reply_helper(msg, code, r, tag);
 
-    if (r!=reason->s) pkg_free(r);
+	if (r!=reason->s) pkg_free(r);
 	return ret;
 }
 
@@ -355,15 +355,14 @@ int sl_reply_error(struct sip_msg *msg )
 	int sip_error;
 	int ret;
 
-	ret=err2reason_phrase( prev_ser_error, &sip_error, 
+	ret=err2reason_phrase( prev_ser_error, &sip_error,
 		err_buf, sizeof(err_buf), "SL");
 	if (ret>0) {
-	        sl_send_reply( msg, sip_error, err_buf );
-		LOG(L_ERR, "ERROR: sl_reply_error used: %s\n", 
-			err_buf );
+		sl_send_reply( msg, sip_error, err_buf );
+		LM_ERR("stateless error reply used: %s\n", err_buf );
 		return 1;
 	} else {
-		LOG(L_ERR, "ERROR: sl_reply_error: err2reason failed\n");
+		LM_ERR("err2reason failed\n");
 		return -1;
 	}
 }
@@ -371,9 +370,9 @@ int sl_reply_error(struct sip_msg *msg )
 
 
 /* Returns:
-    0  : ACK to a local reply
-    -1 : error
-    1  : is not an ACK  or a non-local ACK
+ *  0  : ACK to a local reply
+ * -1 : error
+ *  1  : is not an ACK  or a non-local ACK
 */
 int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 {
@@ -385,14 +384,14 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 	/*check the timeout value*/
 	if ( *(sl_timeout)<= get_ticks_raw() )
 	{
-		DBG("DEBUG : sl_filter_ACK: to late to be a local ACK!\n");
+		LM_DBG("to late to be a local ACK!\n");
 		goto pass_it;
 	}
 
 	/*force to parse to header -> we need it for tag param*/
 	if (parse_headers( msg, HDR_TO_F, 0 )==-1)
 	{
-		LOG(L_ERR,"ERROR : SL_FILTER_ACK: unable to parse To header\n");
+		LM_ERR("unable to parse To header\n");
 		return -1;
 	}
 
@@ -400,7 +399,7 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 		tag_str = &(get_to(msg)->tag_value);
 		if ( tag_str->len==TOTAG_VALUE_LEN )
 		{
-			/* calculate the variable part of to-tag */	
+			/* calculate the variable part of to-tag */
 			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
 			if (memcmp(tag_str->s,sl_tag.s,sl_tag.len)==0) {
