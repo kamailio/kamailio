@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -55,7 +55,7 @@
 
 
 /* Build a local request based on a previous request; main
-   customers of this function are local ACK and local CANCEL
+ * customers of this function are local ACK and local CANCEL
  */
 char *build_local(struct cell *Trans,unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to
@@ -86,7 +86,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	*len+=Trans->uac[branch].uri.len;
 
 	/*via*/
-	if (!t_calc_branch(Trans,  branch, 
+	if (!t_calc_branch(Trans,  branch,
 		branch_buf, &branch_len ))
 		goto error;
 	branch_str.s=branch_buf;
@@ -100,37 +100,35 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		)){
 		if ((via_id.s=id_builder(Trans->uas.request,
 									(unsigned int*)&via_id.len))==0){
-			LOG(L_ERR, "ERROR: build_local: id builder failed\n");
+			LM_ERR("id builder failed\n");
 			/* try to continue without id */
 		}
 	}
 #endif /* USE_TCP */
 	via=via_builder(&via_len, &Trans->uac[branch].request.dst,
 		&branch_str, via_id.s?&via_id:0 , &hp );
-	
+
 	/* via_id.s not needed anylonger => free it */
-	if (via_id.s){
+	if (via_id.s) {
 		pkg_free(via_id.s);
 		via_id.s=0;
 		via_id.len=0;
 	}
-	
-	if (!via)
-	{
-		LOG(L_ERR, "ERROR: build_local: "
-			"no via header got from builder\n");
+
+	if (!via) {
+		LM_ERR("no via header got from builder\n");
 		goto error;
 	}
 	*len+= via_len;
 	/*headers*/
 	*len+=Trans->from.len+Trans->callid.len+to->len+
-		+Trans->cseq_n.len+1+method_len+CRLF_LEN+MAXFWD_HEADER_LEN; 
+		+Trans->cseq_n.len+1+method_len+CRLF_LEN+MAXFWD_HEADER_LEN;
 
 
 	/* copy'n'paste Route headers */
 	if (!is_local(Trans)) {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
-			 if (hdr->type==HDR_ROUTE_T)
+			if (hdr->type==HDR_ROUTE_T)
 				*len+=hdr->len;
 	}
 
@@ -168,16 +166,15 @@ char *build_local(struct cell *Trans,unsigned int branch,
 				reas_last=hdr;
 			}
 		} else if (unlikely(reason->cause < CANCEL_REAS_MIN))
-			BUG("unhandled reason cause %d\n", reason->cause);
+			LM_BUG("unhandled reason cause %d\n", reason->cause);
 	}
 	*len+= reason_len;
 #endif /* CANCEL_REASON_SUPPORT */
 	*len+= CRLF_LEN; /* end of msg. */
 
 	cancel_buf=shm_malloc( *len+1 );
-	if (!cancel_buf)
-	{
-		LOG(L_ERR, "ERROR: build_local: cannot allocate memory\n");
+	if (!cancel_buf) {
+		LM_ERR("cannot allocate memory\n");
 		goto error01;
 	}
 	p = cancel_buf;
@@ -223,7 +220,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 			code_len=ushort2sbuf(reason->cause, p,
 									*len-(int)(p-cancel_buf));
 			if (unlikely(code_len==0))
-				BUG("not enough space to write reason code");
+				LM_BUG("not enough space to write reason code");
 			p+=code_len;
 			if (reason->u.text.s){
 				append_str(p, REASON_TEXT, REASON_TEXT_LEN);
@@ -284,15 +281,15 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	invite_len = Trans->uac[branch].request.buffer_len;
 
 	if (!invite_buf || !invite_len) {
-		LOG(L_ERR, "ERROR: build_local_reparse: INVITE is missing\n");
+		LM_ERR("INVITE is missing\n");
 		goto error;
 	}
 	if ((*invite_buf != 'I') && (*invite_buf != 'i')) {
-		LOG(L_ERR, "ERROR: trying to call build_local_reparse()"
+		LM_ERR("trying to build with local reparse"
 					" for a non-INVITE request?\n");
 		goto error;
 	}
-	
+
 #ifdef CANCEL_REASON_SUPPORT
 	reason_len = 0;
 	reas1 = 0;
@@ -321,7 +318,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				reas_last=hdr;
 			}
 		} else if (unlikely(reason->cause < CANCEL_REAS_MIN))
-			BUG("unhandled reason cause %d\n", reason->cause);
+			LM_BUG("unhandled reason cause %d\n", reason->cause);
 	}
 #endif /* CANCEL_REASON_SUPPORT */
 
@@ -341,7 +338,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	cancel_buf = shm_malloc(sizeof(char)*cancel_buf_len);
 	if (!cancel_buf)
 	{
-		LOG(L_ERR, "ERROR: cannot allocate shared memory\n");
+		LM_ERR("cannot allocate shared memory\n");
 		goto error;
 	}
 	d = cancel_buf;
@@ -395,7 +392,7 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 			case HDR_TO_T:
 				if (to_len == 0) {
 					/* there is no To tag required, just copy paste
-					   the header */
+					 * the header */
 					s = lw_next_line(s, invite_buf_end);
 					append_str(d, s1, s - s1);
 				} else {
@@ -435,13 +432,13 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 				/* add reason if needed */
 				if (reason_len) {
 					/* if reason_len !=0, no need for any reason enabled
-					   checks */
+					 * checks */
 					if (likely(reason->cause > 0)) {
 						append_str(d, REASON_PREFIX, REASON_PREFIX_LEN);
 						code_len=ushort2sbuf(reason->cause, d,
 										cancel_buf_len-(int)(d-cancel_buf));
 						if (unlikely(code_len==0))
-							BUG("not enough space to write reason code");
+							LM_BUG("not enough space to write reason code");
 						d+=code_len;
 						if (reason->u.text.s){
 							append_str(d, REASON_TEXT, REASON_TEXT_LEN);
@@ -487,11 +484,11 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	}
 
 	/* HDR_EOH_T was not found in the buffer, the message is corrupt */
-	LOG(L_ERR, "ERROR: build_local_reparse: HDR_EOH_T was not found\n");
+	LM_ERR("HDR_EOH_T was not found\n");
 
 	shm_free(cancel_buf);
 error:
-	LOG(L_ERR, "ERROR: build_local_reparse: cannot build %.*s request\n", method_len, method);
+	LM_ERR("cannot build %.*s request\n", method_len, method);
 	return NULL;
 
 }
@@ -505,11 +502,11 @@ typedef struct rte {
 	struct rte* next;
 } rte_t;
 
-  	 
+
 static inline void free_rte_list(struct rte* list)
 {
 	struct rte* ptr;
-	
+
 	while(list) {
 		ptr = list;
 		list = list->next;
@@ -524,13 +521,13 @@ static inline int calc_routeset_len(struct rte* list, str* contact)
 {
 	struct rte* ptr;
 	int ret;
-	
+
 	if (list || contact) {
 		ret = ROUTE_PREFIX_LEN + CRLF_LEN;
 	} else {
 		return 0;
 	}
-	
+
 	ptr = list;
 	while(ptr) {
 		if (ptr != list) {
@@ -539,74 +536,74 @@ static inline int calc_routeset_len(struct rte* list, str* contact)
 		ret += ptr->ptr->len;
 		ptr = ptr->next;
 	}
-	
+
 	if (contact) {
 		if (list) ret += ROUTE_SEPARATOR_LEN;
 		ret += 2 + contact->len;
 	}
-	
+
 	return ret;
 }
 
 
-     /*
-      * Print the route set
-      */
+/*
+ * Print the route set
+ */
 static inline char* print_rs(char* p, struct rte* list, str* contact)
 {
 	struct rte* ptr;
-	
+
 	if (list || contact) {
 		memapp(p, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
 	} else {
 		return p;
 	}
-	
+
 	ptr = list;
 	while(ptr) {
 		if (ptr != list) {
 			memapp(p, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
 		}
-		
+
 		memapp(p, ptr->ptr->nameaddr.name.s, ptr->ptr->len);
 		ptr = ptr->next;
 	}
-	
+
 	if (contact) {
 		if (list) memapp(p, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
 		*p++ = '<';
 		append_str(p, contact->s, contact->len);
 		*p++ = '>';
 	}
-	
+
 	memapp(p, CRLF, CRLF_LEN);
 	return p;
 }
 
 
-     /*
-      * Parse Contact header field body and extract URI
-      * Does not parse headers !
-      */
+/*
+ * Parse Contact header field body and extract URI
+ * Does not parse headers !
+ */
 static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 {
 	contact_t* c;
-	
+
 	uri->len = 0;
 	if (!msg->contact) return 1;
-	
+
 	if (parse_contact(msg->contact) < 0) {
-		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
+		LM_ERR("error while parsing Contact body\n");
 		return -1;
 	}
-	
+
 	c = ((contact_body_t*)msg->contact->parsed)->contacts;
-	
+
 	if (!c) {
-		LOG(L_ERR, "get_contact_uri: Empty body or * contact\n");
+		LM_ERR("empty body or * contact\n");
 		return -2;
 	}
-	
+
 	*uri = c->uri;
 	return 0;
 }
@@ -638,14 +635,14 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 				continue;
 		}
 		if (parse_rr(ptr) < 0) {
-			ERR("failed to parse Record-/Route HF (%d).\n", ptr->type);
+			LM_ERR("failed to parse Record-/Route HF (%d).\n", ptr->type);
 			goto err;
 		}
-			
+
 		p = (rr_t*)ptr->parsed;
 		while(p) {
 			if (! (t = pkg_malloc(sizeof(struct rte)))) {
-				ERR("out of pkg mem (asked for: %d).\n",
+				LM_ERR("out of pkg mem (asked for: %d).\n",
 						(int)sizeof(struct rte));
 				goto err;
 			}
@@ -654,7 +651,7 @@ static inline int get_uac_rs(sip_msg_t *msg, int is_req, struct rte **rtset)
 				 * rte list is evaluated => must do a copy of it */
 				if (duplicate_rr(&new_p, p) < 0) {
 					pkg_free(t);
-					ERR("failed to duplicate RR");
+					LM_ERR("failed to duplicate RR");
 					goto err;
 				}
 				t->ptr = new_p;
@@ -709,7 +706,7 @@ static inline unsigned short uri2port(const struct sip_uri *puri)
 		case TELS_URI_T:
 			return SIPS_PORT;
 		default:
-			BUG("unexpected URI type %d.\n", puri->type);
+			LM_BUG("unexpected URI type %d.\n", puri->type);
 	}
 	return 0;
 }
@@ -744,7 +741,7 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 		/* parse_uri() 0z the puri */ \
 		if (parse_uri((_str_)->s, \
 				(_str_)->len, _uri_) < 0) { \
-			ERR("failed to parse route body '%.*s'.\n", STR_FMT(_str_)); \
+			LM_ERR("failed to parse route body '%.*s'.\n", STR_FMT(_str_)); \
 			return 0; \
 		} \
 	} while (0)
@@ -764,13 +761,13 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 	/* examine the easy/fast & positive cases foremost */
 
 	/* [1] check if 1st route lacks ;lr */
-	DEBUG("checking lack of ';lr' in 1st route.\n");
+	LM_DBG("checking lack of ';lr' in 1st route.\n");
 	if (! HAS_LR(rtset))
 		return F_RB_NH_STRICT;
 	topr_uri = puri; /* save 1st route's URI */
 
 	/* [2] check if last route shows ;lr */
-	DEBUG("checking presence of ';lr' in last route.\n");
+	LM_DBG("checking presence of ';lr' in last route.\n");
 	for (last_r = rtset; last_r->next; last_r = last_r->next)
 		/* scroll down to last route */
 		;
@@ -779,7 +776,7 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 
 	/* [3] 1st route has ;lr -> check if the destination of original INV
 	 * equals the address provided by this route; if does -> loose */
-	DEBUG("checking INVITE's destination against its first route.\n");
+	LM_DBG("checking INVITE's destination against its first route.\n");
 	URI_PORT(&topr_uri, uri_port);
 	if (! (dst_port = su_getport(&dst_inv->to)))
 		return 0; /* not really expected */
@@ -800,8 +797,8 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 			return F_RB_NH_STRICT;
 	} else {
 		/*if 1st route contains a name, rev resolve the .dst and compare*/
-		INFO("Failed to decode string '%.*s' in route set element as IP "
-				"address. Trying name resolution.\n",STR_FMT(&topr_uri.host));
+		LM_INFO("Failed to decode string '%.*s' in route set element as IP"
+				" address. Trying name resolution.\n",STR_FMT(&topr_uri.host));
 
 	/* TODO: alternatively, rev name and compare against dest. IP.  */
 #ifdef TM_LOC_ACK_DO_REV_DNS
@@ -811,28 +808,28 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 			return 0; /* not really expected */
 		if ((he = rev_resolvehost(&ia))) {
 			if ((strlen(he->h_name) == topr_uri.host.len) &&
-					(memcmp(he->h_name, topr_uri.host.s, 
+					(memcmp(he->h_name, topr_uri.host.s,
 							topr_uri.host.len) == 0))
 				return F_RB_NH_LOOSE;
 			for (alias = he->h_aliases; *alias; alias ++)
 				if ((strlen(*alias) == topr_uri.host.len) &&
-						(memcmp(*alias, topr_uri.host.s, 
+						(memcmp(*alias, topr_uri.host.s,
 								topr_uri.host.len) == 0))
 					return F_RB_NH_LOOSE;
 			return F_RB_NH_STRICT;
 		} else {
-			INFO("failed to resolve address '%s' to a name.\n", 
+			LM_INFO("failed to resolve address '%s' to a name.\n",
 					ip_addr2a(&ia));
 		}
 #endif
 	}
 
-	WARN("failed to establish with certainty the type of next hop; trying an"
-			" educated guess.\n");
+	LM_WARN("failed to establish with certainty the type of next hop;"
+			" trying an educated guess.\n");
 
 	/* [4] compare (possibly updated) remote target to original RURI; if
 	 * equal, a strict router's address wasn't filled in as RURI -> loose */
-	DEBUG("checking remote target against INVITE's RURI.\n");
+	LM_DBG("checking remote target against INVITE's RURI.\n");
 	PARSE_URI(contact, &cont_uri);
 	PARSE_URI(GET_RURI(orig_inv), &inv_ruri);
 	URI_PORT(&cont_uri, cont_port);
@@ -841,19 +838,20 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
 			(memcmp(cont_uri.host.s, inv_ruri.host.s, cont_uri.host.len) == 0))
 		return F_RB_NH_LOOSE;
 
-	/* [5] compare (possibly updated) remote target to last route; if equal, 
+	/* [5] compare (possibly updated) remote target to last route; if equal,
 	 * strict router's address might have been filled as RURI and remote
 	 * target appended to route set -> strict */
-	DEBUG("checking remote target against INVITE's last route.\n");
+	LM_DBG("checking remote target against INVITE's last route.\n");
 	PARSE_URI(&last_r->ptr->nameaddr.uri, &lastr_uri);
 	URI_PORT(&lastr_uri, lastr_port);
-	if ((cont_port == lastr_port) && 
+	if ((cont_port == lastr_port) &&
 			(cont_uri.host.len == lastr_uri.host.len) &&
-			(memcmp(cont_uri.host.s, lastr_uri.host.s, 
+			(memcmp(cont_uri.host.s, lastr_uri.host.s,
 					lastr_uri.host.len) == 0))
 		return F_RB_NH_STRICT;
 
-	WARN("failed to establish the type of next hop; assuming loose router.\n");
+	LM_WARN("failed to establish the type of next hop;"
+			" assuming loose router.\n");
 	return F_RB_NH_LOOSE;
 
 #undef PARSE_URI
@@ -866,7 +864,7 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
  * locally originated request.
  * If original INVITE was in-dialog (had to-tag), it uses the
  * routes present there (b/c the 2xx for it does not have a RR set, normally).
- * Otherwise, use the reply (b/c the INVITE does not have yet the complete 
+ * Otherwise, use the reply (b/c the INVITE does not have yet the complete
  * route set).
  *
  * @return: negative for failure; out params:
@@ -877,7 +875,7 @@ static unsigned long nhop_type(sip_msg_t *orig_inv, rte_t *rtset,
  *  NOTE: assumes rpl's parsed to EOF!
  *
  */
-static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb, 
+static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 		str* contact, struct rte **list, str *ruri, str *next_hop)
 {
 	sip_msg_t orig_inv, *sipmsg; /* reparse original INVITE */
@@ -886,15 +884,15 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	struct sip_uri puri;
 	static size_t chklen;
 	int ret = -1;
-	
+
 	/* parse the retr. buffer */
 	memset(&orig_inv, 0, sizeof(struct sip_msg));
 	orig_inv.buf = inv_rb->buffer;
 	orig_inv.len = inv_rb->buffer_len;
-	DEBUG("reparsing retransmission buffer of original INVITE:\n%.*s\n",
+	LM_DBG("reparsing retransmission buffer of original INVITE:\n%.*s\n",
 			(int)orig_inv.len, orig_inv.buf);
 	if (parse_msg(orig_inv.buf, orig_inv.len, &orig_inv) != 0) {
-		ERR("failed to parse retr buffer (weird!): \n%.*s\n",
+		LM_ERR("failed to parse retr buffer (weird!): \n%.*s\n",
 				(int)orig_inv.len, orig_inv.buf);
 		return -1;
 	}
@@ -902,28 +900,28 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	/* check if we need to look at request or reply */
 	if ((parse_headers(&orig_inv, HDR_TO_F, 0) < 0) || (! orig_inv.to)) {
 		/* the bug is at message assembly */
-		BUG("failed to parse INVITE retr. buffer and/or extract 'To' HF:"
+		LM_BUG("failed to parse INVITE retr. buffer and/or extract 'To' HF:"
 				"\n%.*s\n", (int)orig_inv.len, orig_inv.buf);
 		goto end;
 	}
 	if (((struct to_body *)orig_inv.to->parsed)->tag_value.len) {
-		DEBUG("building ACK for in-dialog INVITE (using RS in orig. INV.)\n");
+		LM_DBG("building ACK for in-dialog INVITE (using RS in orig. INV.)\n");
 		if (parse_headers(&orig_inv, HDR_EOH_F, 0) < 0) {
-			BUG("failed to parse INVITE retr. buffer to EOH:"
+			LM_BUG("failed to parse INVITE retr. buffer to EOH:"
 					"\n%.*s\n", (int)orig_inv.len, orig_inv.buf);
 			goto end;
 		}
 		sipmsg = &orig_inv;
 		is_req = 1;
 	} else {
-		DEBUG("building ACK for out-of-dialog INVITE (using RS in RR set).\n");
+		LM_DBG("building ACK for out-of-dialog INVITE (using RS in RR set).\n");
 		sipmsg = rpl;
 		is_req = 0;
 	}
 
 	/* extract the route set */
 	if (get_uac_rs(sipmsg, is_req, &rtset) < 0) {
-		ERR("failed to extract route set.\n");
+		LM_ERR("failed to extract route set.\n");
 		goto end;
 	}
 
@@ -933,10 +931,10 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 	} else if (! is_req) { /* out of dialog req. */
 		if (parse_uri(rtset->ptr->nameaddr.uri.s, rtset->ptr->nameaddr.uri.len,
 				&puri) < 0) {
-			ERR("failed to parse first route in set.\n");
+			LM_ERR("failed to parse first route in set.\n");
 			goto end;
 		}
-		
+
 		if (puri.lr.s) { /* Next hop is loose router */
 			*ruri = *contact;
 			*next_hop = rtset->ptr->nameaddr.uri;
@@ -950,21 +948,21 @@ static int eval_uac_routing(sip_msg_t *rpl, const struct retr_buf *inv_rb,
 		}
 	} else {
 		unsigned long route_flags = inv_rb->flags;
-		DEBUG("UAC rb flags: 0x%x.\n", (unsigned int)route_flags);
+		LM_DBG("UAC rb flags: 0x%x.\n", (unsigned int)route_flags);
 eval_flags:
 		switch (route_flags & (F_RB_NH_LOOSE|F_RB_NH_STRICT)) {
 		case 0:
-			WARN("calculate_hooks() not called when built the local UAC of "
+			LM_WARN("calculate_hooks() not called when built the local UAC of "
 					"in-dialog request, or called with empty route set.\n");
 			/* try to figure out what kind of hop is the next one
 			 * (strict/loose) by reading the original invite */
-			if ((route_flags = nhop_type(&orig_inv, rtset, &inv_rb->dst, 
+			if ((route_flags = nhop_type(&orig_inv, rtset, &inv_rb->dst,
 					contact))) {
-				DEBUG("original request's next hop type evaluated to: 0x%x.\n",
+				LM_DBG("original request's next hop type evaluated to: 0x%x.\n",
 						(unsigned int)route_flags);
 				goto eval_flags;
 			} else {
-				ERR("failed to establish what kind of router the next "
+				LM_ERR("failed to establish what kind of router the next "
 						"hop is.\n");
 				goto end;
 			}
@@ -974,13 +972,13 @@ eval_flags:
 			*next_hop = rtset->ptr->nameaddr.uri;
 			break;
 		case F_RB_NH_STRICT:
-			/* find ptr to last route body that contains the (possibly) old 
-			 * remote target 
+			/* find ptr to last route body that contains the (possibly) old
+			 * remote target
 			 */
 			for (t = rtset, prev_t = t; t->next; prev_t = t, t = t->next)
 				;
-			if ((t->ptr->len == contact->len) && 
-					(memcmp(t->ptr->nameaddr.name.s, contact->s, 
+			if ((t->ptr->len == contact->len) &&
+					(memcmp(t->ptr->nameaddr.name.s, contact->s,
 							contact->len) == 0)){
 				/* the remote target didn't update -> keep the whole route set,
 				 * including the last entry */
@@ -997,12 +995,12 @@ eval_flags:
 					goto end;
 				}
 				/* this way, .free_rr is also set to 0 (!!!) */
-				memset(t, 0, chklen); 
+				memset(t, 0, chklen);
 				((rr_t *)&t[1])->nameaddr.name = *contact;
 				((rr_t *)&t[1])->len = contact->len;
 				/* chain the new route elem in set */
 				if (prev_t == rtset)
-				 	/*there is only one elem in route set: the remote target*/
+					/* there is only one elem in route set: the remote target */
 					rtset = t;
 				else
 					prev_t->next = t;
@@ -1013,9 +1011,9 @@ eval_flags:
 			break;
 		default:
 			/* probably a mem corruption */
-			BUG("next hop of original request marked as both loose and strict"
-					" router (buffer: %.*s).\n", inv_rb->buffer_len, 
-					inv_rb->buffer);
+			LM_BUG("next hop of original request marked as both loose"
+					" and strict router (buffer: %.*s).\n",
+					inv_rb->buffer_len, inv_rb->buffer);
 #ifdef EXTRA_DEBUG
 			abort();
 #else
@@ -1034,13 +1032,13 @@ end:
 	return ret;
 }
 
-     /*
-      * The function creates an ACK to 200 OK. Route set will be created
-      * and parsed and the dst parameter will contain the destination to which 
-	  * the request should be send. The function is used by tm when it 
-	  * generates local ACK to 200 OK (on behalf of applications using uac)
-      */
-char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, 
+/*
+ * The function creates an ACK to 200 OK. Route set will be created
+ * and parsed and the dst parameter will contain the destination to which
+ * the request should be send. The function is used by tm when it
+ * generates local ACK to 200 OK (on behalf of applications using uac)
+ */
+char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 					unsigned int branch, str *hdrs, str *body,
 					unsigned int *len, struct dest_info* dst)
 {
@@ -1065,58 +1063,58 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	 * must be resent).
 	 * Allocation of the string raw buffer that holds the ACK is piggy-backed
 	 * with allocation of the retransmission buffer (since both have the same
-	 * life-cycle): both the string buffer and retransm. buffer are placed 
-	 * into the same allocated chunk of memory (retr. buffer first, string 
-	 * buffer follows).In this case, the 'len' param is used as in-out 
+	 * life-cycle): both the string buffer and retransm. buffer are placed
+	 * into the same allocated chunk of memory (retr. buffer first, string
+	 * buffer follows).In this case, the 'len' param is used as in-out
 	 * parameter: 'in' to give the extra space needed by the retr. buffer,
 	 * 'out' to return the lenght of the allocated string buffer.
 	 */
 	unsigned offset = *len;
 #endif
-	
+
 	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
-		ERR("Error while parsing headers.\n");
+		LM_ERR("Error while parsing headers.\n");
 		return 0;
 	} else {
 		_to.s = rpl->to->name.s;
 		_to.len = rpl->to->len;
 	}
-	
+
 	if (get_contact_uri(rpl, &contact) < 0) {
 		return 0;
 	}
-	
-	if (eval_uac_routing(rpl, &Trans->uac[branch].request, &contact, 
+
+	if (eval_uac_routing(rpl, &Trans->uac[branch].request, &contact,
 			&list, &ruri, &next_hop) < 0) {
-		ERR("failed to evaluate routing elements.\n");
+		LM_ERR("failed to evaluate routing elements.\n");
 		return 0;
 	}
-	DEBUG("ACK RURI: `%.*s', NH: `%.*s'.\n", STR_FMT(&ruri), 
+	LM_DBG("ACK RURI: `%.*s', NH: `%.*s'.\n", STR_FMT(&ruri),
 			STR_FMT(&next_hop));
 
 	if ((contact.s != ruri.s) || (contact.len != ruri.len)) {
-		     /* contact != ruri means that the next
-		      * hop is a strict router, cont will be non-zero
-		      * and print_routeset will append it at the end
-		      * of the route set
-		      */
+		/* contact != ruri means that the next
+		 * hop is a strict router, cont will be non-zero
+		 * and print_routeset will append it at the end
+		 * of the route set
+		 */
 		cont = &contact;
 	} else {
-		     /* Next hop is a loose router, nothing to append */
+		/* Next hop is a loose router, nothing to append */
 		cont = 0;
 	}
-	
-	     /* method, separators, version: "ACK sip:p2@iptel.org SIP/2.0" */
+
+	/* method, separators, version: "ACK sip:p2@iptel.org SIP/2.0" */
 	*len = SIP_VERSION_LEN + ACK_LEN + 2 /* spaces */ + CRLF_LEN;
 	*len += ruri.len;
-	
+
 	/* dst */
 	switch(cfg_get(tm, tm_cfg, local_ack_mode)){
 		case 1:
 			/* send the local 200 ack to the same dst as the corresp. invite*/
 			*dst=Trans->uac[branch].request.dst;
 			break;
-		case 2: 
+		case 2:
 			/* send the local 200 ack to the same dst as the 200 reply source*/
 			init_dst_from_rcv(dst, &rpl->rcv);
 			dst->send_flags=rpl->fwd_send_flags;
@@ -1124,59 +1122,59 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 		case 0:
 		default:
 			/* rfc conformant behaviour: use the next_hop determined from the
-			   contact and the route set */
+			 * contact and the route set */
 #ifdef USE_DNS_FAILOVER
 		if (cfg_get(core, core_cfg, use_dns_failover)){
 			dns_srv_handle_init(&dns_h);
 			if ((uri2dst(&dns_h , dst, rpl, &next_hop, PROTO_NONE)==0) ||
 					(dst->send_sock==0)){
 				dns_srv_handle_put(&dns_h);
-				LOG(L_ERR, "build_dlg_ack: no socket found\n");
+				LM_ERR("no socket found\n");
 				goto error;
 			}
 			dns_srv_handle_put(&dns_h); /* not needed any more */
 		}else{
 			if ((uri2dst(0 , dst, rpl, &next_hop, PROTO_NONE)==0) ||
 					(dst->send_sock==0)){
-				LOG(L_ERR, "build_dlg_ack: no socket found\n");
+				LM_ERR("no socket found\n");
 				goto error;
 			}
 		}
 #else /* USE_DNS_FAILOVER */
 		if ( (uri2dst( dst, rpl, &next_hop, PROTO_NONE)==0) ||
 				(dst->send_sock==0)){
-				LOG(L_ERR, "build_dlg_ack: no socket found\n");
+			LM_ERR("no socket found\n");
 			goto error;
 		}
 #endif /* USE_DNS_FAILOVER */
 		break;
 	}
-	
-	 /* via */
+
+	/* via */
 	if (!t_calc_branch(Trans,  branch, branch_buf, &branch_len)) goto error;
 	branch_str.s = branch_buf;
 	branch_str.len = branch_len;
 	set_hostport(&hp, 0);
 	via = via_builder(&via_len, dst, &branch_str, 0, &hp);
 	if (!via) {
-		LOG(L_ERR, "build_dlg_ack: No via header got from builder\n");
+		LM_ERR("No via header got from builder\n");
 		goto error;
 	}
 	*len+= via_len;
-	
-	     /*headers*/
+
+	/* headers */
 	*len += Trans->from.len + Trans->callid.len + to->len + Trans->cseq_n.len + 1 + ACK_LEN + CRLF_LEN;
-	
-	     /* copy'n'paste Route headers */
-	
+
+	/* copy'n'paste Route headers */
+
 	*len += calc_routeset_len(list, cont);
-	
-	     /* User Agent */
+
+	/* User Agent */
 	if (server_signature) *len += user_agent_hdr.len + CRLF_LEN;
-		/* extra headers */
+	/* extra headers */
 	if (hdrs)
 		*len += hdrs->len;
-		/* body */
+	/* body */
 	if (body) {
 		body_len.s = int2str(body->len, &body_len.len);
 		*len += body->len;
@@ -1185,7 +1183,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 		body_len.s = NULL; /*4gcc*/
 		*len += 1; /* for the (Cont-Len:) `0' */
 	}
-	     /* Content Length, EoM */
+	/* Content Length, EoM */
 	*len += CONTENT_LENGTH_LEN + body_len.len + CRLF_LEN + CRLF_LEN;
 
 #if WITH_AS_SUPPORT
@@ -1195,64 +1193,64 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	req_buf = shm_malloc(*len + 1);
 #endif
 	if (!req_buf) {
-		ERR("Cannot allocate memory (%u+1)\n", *len);
+		LM_ERR("Cannot allocate memory (%u+1)\n", *len);
 		goto error01;
 	}
 	p = req_buf;
-	
+
 	append_str( p, ACK, ACK_LEN );
 	append_str( p, " ", 1 );
 	append_str(p, ruri.s, ruri.len);
 	append_str( p, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
-  	 
-	     /* insert our via */
+
+	/* insert our via */
 	append_str(p, via, via_len);
-	
-	     /*other headers*/
+
+	/*other headers*/
 	append_str(p, Trans->from.s, Trans->from.len);
 	append_str(p, Trans->callid.s, Trans->callid.len);
 	append_str(p, to->s, to->len);
-	
+
 	append_str(p, Trans->cseq_n.s, Trans->cseq_n.len);
 	append_str( p, " ", 1 );
 	append_str( p, ACK, ACK_LEN);
 	append_str(p, CRLF, CRLF_LEN);
-	
-	     /* Routeset */
+
+	/* Routeset */
 	p = print_rs(p, list, cont);
-	
-	     /* User Agent header */
+
+	/* User Agent header */
 	if (server_signature) {
 		append_str(p, user_agent_hdr.s, user_agent_hdr.len);
 		append_str(p, CRLF, CRLF_LEN);
 	}
-	
+
 	/* extra headers */
 	if (hdrs)
 		append_str(p, hdrs->s, hdrs->len);
-	
-	     /* Content Length, EoH, (body) */
+
+	/* Content Length, EoH, (body) */
 	if (body) {
 		append_str(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
 		append_str(p, body_len.s, body_len.len);
-		append_str(p, /*end crr. header*/CRLF /*EoH*/CRLF, CRLF_LEN + 
+		append_str(p, /*end crr. header*/CRLF /*EoH*/CRLF, CRLF_LEN +
 				CRLF_LEN);
 		append_str(p, body->s, body->len);
 	} else {
-		append_str(p, CONTENT_LENGTH "0" CRLF CRLF, 
+		append_str(p, CONTENT_LENGTH "0" CRLF CRLF,
 				CONTENT_LENGTH_LEN + 1 + CRLF_LEN + CRLF_LEN);
 	}
 
 	/* EoM */
 	*p = 0;
-	
+
 	pkg_free(via);
 	free_rte_list(list);
 	return req_buf;
-	
- error01:
+
+error01:
 	pkg_free(via);
- error:
+error:
 	free_rte_list(list);
 	return 0;
 }
@@ -1268,16 +1266,16 @@ static inline int print_content_length(str* dest, str* body)
 	int b_len;
 	char* tmp;
 
-	     /* Print Content-Length */
+	/* Print Content-Length */
 	b_len=body?body->len:0;
 	tmp = int2str(b_len, &len);
 	if (len >= sizeof(content_length)) {
-		LOG(L_ERR, "ERROR: print_content_length: content_len too big\n");
+		LM_ERR("content_len too big\n");
 		dest->s = 0;
 		dest->len = 0;
 		return -1;
 	}
-	memcpy(content_length, tmp, len); 
+	memcpy(content_length, tmp, len);
 	dest->s = content_length;
 	dest->len = len;
 	return 0;
@@ -1295,10 +1293,10 @@ static inline int print_cseq_num(str* _s, dlg_t* _d)
 
 	tmp = int2str(_d->loc_seq.value, &len);
 	if (len > sizeof(cseq)) {
-		LOG(L_ERR, "print_cseq_num: cseq too big\n");
+		LM_ERR("cseq too big\n");
 		return -1;
 	}
-	
+
 	memcpy(cseq, tmp, len);
 	_s->s = cseq;
 	_s->len = len;
@@ -1309,7 +1307,7 @@ static inline int print_cseq_num(str* _s, dlg_t* _d)
 /*
  * Create Via header
  */
-static inline int assemble_via(str* dest, struct cell* t, 
+static inline int assemble_via(str* dest, struct cell* t,
 								struct dest_info* dst, int branch)
 {
 	static char branch_buf[MAX_BRANCH_PARAM_LEN];
@@ -1320,10 +1318,10 @@ static inline int assemble_via(str* dest, struct cell* t,
 	struct hostport hp;
 
 	if (!t_calc_branch(t, branch, branch_buf, &len)) {
-		LOG(L_ERR, "ERROR: assemble_via: branch calculation failed\n");
+		LM_ERR("branch calculation failed\n");
 		return -1;
 	}
-	
+
 	branch_str.s = branch_buf;
 	branch_str.len = len;
 
@@ -1334,10 +1332,10 @@ static inline int assemble_via(str* dest, struct cell* t,
 	set_hostport(&hp, 0);
 	via = via_builder(&via_len, dst, &branch_str, 0, &hp);
 	if (!via) {
-		LOG(L_ERR, "assemble_via: via building failed\n");
+		LM_ERR("via building failed\n");
 		return -2;
 	}
-	
+
 	dest->s = via;
 	dest->len = via_len;
 	return 0;
@@ -1347,15 +1345,16 @@ static inline int assemble_via(str* dest, struct cell* t,
 /*
  * Print Request-URI
  */
-static inline char* print_request_uri(char* w, str* method, dlg_t* dialog, struct cell* t, int branch)
+static inline char* print_request_uri(char* w, str* method, dlg_t* dialog,
+		struct cell* t, int branch)
 {
-	memapp(w, method->s, method->len); 
-	memapp(w, " ", 1); 
+	memapp(w, method->s, method->len);
+	memapp(w, " ", 1);
 
-	t->uac[branch].uri.s = w; 
+	t->uac[branch].uri.s = w;
 	t->uac[branch].uri.len = dialog->hooks.request_uri->len;
 
-	memapp(w, dialog->hooks.request_uri->s, dialog->hooks.request_uri->len); 
+	memapp(w, dialog->hooks.request_uri->s, dialog->hooks.request_uri->len);
 	memapp(w, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
 
 	return w;
@@ -1425,18 +1424,18 @@ char* print_cseq_mini(char* target, str* cseq, str* method) {
 
 static inline char* print_cseq(char* w, str* cseq, str* method, struct cell* t)
 {
-	t->cseq_n.s = w; 
+	t->cseq_n.s = w;
 	/* don't include method name and CRLF -- subsequent
 	 * local requests ACK/CANCEL will add their own */
-	t->cseq_n.len = CSEQ_LEN + cseq->len; 
+	t->cseq_n.len = CSEQ_LEN + cseq->len;
 	w = print_cseq_mini(w, cseq, method);
 	return w;
 }
 
 /*
  * Print Call-ID header field
- * created an extra function for pure header field creation, that is used by t_cancel for 
- * t_uac_cancel FIFO function.
+ * created an extra function for pure header field creation,
+ * that is used by t_cancel for t_uac_cancel FIFO function.
  */
 char* print_callid_mini(char* target, str callid) {
 	memapp(target, CALLID, CALLID_LEN);
@@ -1451,7 +1450,7 @@ static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 	memapp(w, CRLF, CRLF_LEN);
 	t->callid.s = w;
 	t->callid.len = CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
-	
+
 	w = print_callid_mini(w, dialog->id.call_id);
 	return w;
 }
@@ -1460,8 +1459,8 @@ static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 /*
  * Create a request
  */
-char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int branch, 
-			struct cell *t, int* len, struct dest_info* dst)
+char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
+		int branch, struct cell *t, int* len, struct dest_info* dst)
 {
 	char* buf, *w, *p;
 	str content_length, cseq, via;
@@ -1469,15 +1468,15 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	int tbracket, fbracket;
 
 	if (!method || !dialog) {
-		LOG(L_ERR, "build_uac_req(): Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 	if (print_content_length(&content_length, body) < 0) {
-		LOG(L_ERR, "build_uac_req(): Error while printing content-length\n");
+		LM_ERR("error while printing content-length\n");
 		return 0;
 	}
 	if (print_cseq_num(&cseq, dialog) < 0) {
-		LOG(L_ERR, "build_uac_req(): Error while printing CSeq number\n");
+		LM_ERR("error while printing CSeq number\n");
 		return 0;
 	}
 
@@ -1488,10 +1487,11 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 		maxfwd_len = 0;
 	}
 
-	*len = method->len + 1 + dialog->hooks.request_uri->len + 1 + SIP_VERSION_LEN + CRLF_LEN;
+	*len = method->len + 1 + dialog->hooks.request_uri->len + 1
+		+ SIP_VERSION_LEN + CRLF_LEN;
 
 	if (assemble_via(&via, t, dst, branch) < 0) {
-		LOG(L_ERR, "build_uac_req(): Error while assembling Via\n");
+		LM_ERR("error while assembling Via\n");
 		return 0;
 	}
 	*len += via.len;
@@ -1518,18 +1518,21 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	}
 
 	*len += TO_LEN + dialog->rem_uri.len
-		+ (dialog->id.rem_tag.len ? (TOTAG_LEN + dialog->id.rem_tag.len) : 0) + CRLF_LEN;    /* To */
+		+ (dialog->id.rem_tag.len ? (TOTAG_LEN + dialog->id.rem_tag.len) : 0)
+		+ CRLF_LEN;    /* To */
 	if(tbracket) *len += 2; /* To-URI < > */
 	*len += FROM_LEN + dialog->loc_uri.len
-		+ (dialog->id.loc_tag.len ? (FROMTAG_LEN + dialog->id.loc_tag.len) : 0) + CRLF_LEN;  /* From */
+		+ (dialog->id.loc_tag.len ? (FROMTAG_LEN + dialog->id.loc_tag.len) : 0)
+		+ CRLF_LEN;  /* From */
 	if(fbracket) *len += 2; /* From-URI < > */
-	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;                                      /* Call-ID */
-	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;                                    /* CSeq */
-	*len += calculate_routeset_length(dialog);                                                   /* Route set */
-	*len += maxfwd_len;                                                                          /* Max-forwards */	
-	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN; /* Content-Length */
+	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;   /* Call-ID */
+	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN; /* CSeq */
+	*len += calculate_routeset_length(dialog);                /* Route set */
+	*len += maxfwd_len;                                       /* Max-forwards */
+	*len += CONTENT_LENGTH_LEN + content_length.len
+											+ CRLF_LEN; /* Content-Length */
 	*len += ((server_signature && user_agent_hdr.len>0)
-							? (user_agent_hdr.len + CRLF_LEN) : 0);	                         /* Signature */
+						? (user_agent_hdr.len + CRLF_LEN) : 0);	/* Signature */
 	if(headers && headers->len>2) {
 		/* Additional headers */
 		*len += headers->len;
@@ -1537,15 +1540,15 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 		if(headers->s[headers->len - 1] != '\n')
 			*len += CRLF_LEN;
 	}
-	*len += (body ? body->len : 0);                                                              /* Message body */
-	*len += CRLF_LEN;                                                                            /* End of Header */
+	*len += (body ? body->len : 0);                         /* Message body */
+	*len += CRLF_LEN;                                       /* End of Header */
 
 	buf = shm_malloc(*len + 1);
 	if (!buf) {
-		LOG(L_ERR, "build_uac_req(): no shmem (%d)\n", *len);
+		LM_ERR("no more shared memory (%d)\n", *len);
 		goto error;
 	}
-	
+
 	w = buf;
 
 	w = print_request_uri(w, method, dialog, t, branch);  /* Request-URI */
@@ -1559,12 +1562,12 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	if(maxfwd_len>0)
 		memapp(w, MAXFWD_HEADER, MAXFWD_HEADER_LEN);      /* Max-forwards */
 
-     /* Content-Length */
+	/* Content-Length */
 	memapp(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
 	memapp(w, content_length.s, content_length.len);
 	memapp(w, CRLF, CRLF_LEN);
-	
-	     /* Server signature */
+
+	/* Server signature */
 	if (server_signature && user_agent_hdr.len>0) {
 		memapp(w, user_agent_hdr.s, user_agent_hdr.len);
 		memapp(w, CRLF, CRLF_LEN);
@@ -1584,13 +1587,13 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	pkg_free(via.s);
 	return buf;
 
- error:
+error:
 	pkg_free(via.s);
 	return 0;
 }
 
 
-int t_calc_branch(struct cell *t, 
+int t_calc_branch(struct cell *t,
 	int b, char *branch, int *branch_len)
 {
 	return branch_builder( t->hash_index,
@@ -1622,7 +1625,7 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	set_hostport(&hp,0);
 
 	if (assemble_via(&via, cancelledT, dst, branch) < 0) {
-		LOG(L_ERR, "build_uac_req(): Error while assembling Via\n");
+		LM_ERR("Error while assembling Via\n");
 		return 0;
 	}
 
