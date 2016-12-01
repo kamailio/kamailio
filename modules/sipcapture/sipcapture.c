@@ -1680,7 +1680,7 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 
 	if(heptime && heptime->tv_sec != 0) {
 		sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
-		snprintf(tmp_node, 100, "%.*s:%i", capture_node.len, capture_node.s, heptime->captid);
+		snprintf(tmp_node, 100, "%.*s:%lu", capture_node.len, capture_node.s, (unsigned long)heptime->captid);
 		sco.node.s = tmp_node;
 		sco.node.len = strlen(tmp_node);
 	}
@@ -2372,15 +2372,15 @@ int receive_logging_json_msg(char * buf, unsigned int len, struct hep_generic_re
 	/*source ip*/
 	sco.source_ip.s = ipstr_src;
 	sco.source_ip.len = strlen(ipstr_src);
-	sco.source_port = hg->src_port->data;
+	sco.source_port = ntohs(hg->src_port->data);
 
 	sco.destination_ip.s = ipstr_dst;
 	sco.destination_ip.len = strlen(ipstr_dst);
-	sco.destination_port = hg->dst_port->data;
+	sco.destination_port = ntohs(hg->dst_port->data);
 
 	if(heptime && heptime->tv_sec != 0) {
 		sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
-		snprintf(tmp_node, 100, "%.*s:%i", capture_node.len, capture_node.s, heptime->captid);
+		snprintf(tmp_node, 100, "%.*s:%lu", capture_node.len, capture_node.s, (unsigned long)heptime->captid);
 		sco.node.s = tmp_node;
 		sco.node.len = strlen(tmp_node);
 		epoch_time_as_time_t = heptime->tv_sec;;
@@ -2550,7 +2550,7 @@ static int report_capture(struct sip_msg *msg, str *_table, str* _corr,  str *_d
 
 	if(heptime && heptime->tv_sec != 0) {
 		sco.tmstamp = (unsigned long long)heptime->tv_sec*1000000+heptime->tv_usec; /* micro ts */
-		snprintf(tmp_node, 100, "%.*s:%i", capture_node.len, capture_node.s, heptime->captid);
+		snprintf(tmp_node, 100, "%.*s:%lu", capture_node.len, capture_node.s, (unsigned long)heptime->captid);
 		sco.node.s = tmp_node;
 		sco.node.len = strlen(tmp_node);
 		epoch_time_as_time_t = heptime->tv_sec;;
