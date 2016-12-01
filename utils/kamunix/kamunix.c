@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2004 FhG FOKUS
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -70,7 +68,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Error while opening socket: %s\n", strerror(errno));
 		return -1;
 	}
-	
+
 	memset(&from, 0, sizeof(from));
 	from.sun_family = PF_LOCAL;
 
@@ -78,10 +76,13 @@ int main(int argc, char** argv)
 	if (chroot_dir == NULL)
 		chroot_dir = "";
 	sprintf(name, "%s/tmp/Kamailio.%d.XXXXXX", chroot_dir, getpid());
-	umask(0); /* set mode to 0666 for when Kamailio is running as non-root user and kamctl is running as root */
+	umask(0);
+	/* set mode to 0666 for when Kamailio is running as non-root user
+	 * and kamctl is running as root */
 
 	if (mkstemp(name) == -1) {
-		fprintf(stderr, "Error in mkstemp with name=%s: %s\n", name, strerror(errno));
+		fprintf(stderr, "Error in mkstemp with name=%s: %s\n",
+				name, strerror(errno));
 		return -2;
 	}
 	if (unlink(name) == -1) {
@@ -98,16 +99,18 @@ int main(int argc, char** argv)
 	memset(&to, 0, sizeof(to));
 	to.sun_family = PF_LOCAL;
 	strncpy(to.sun_path, argv[1], sizeof(to.sun_path) - 1);
-	
+
 	len = fread(buffer, 1, BUF_SIZE, stdin);
 
 	if (len) {
-		if (sendto(sock, buffer, len, 0, (struct sockaddr*)&to, SUN_LEN(&to)) == -1) {
+		if (sendto(sock, buffer, len, 0, (struct sockaddr*)&to,
+					SUN_LEN(&to)) == -1) {
 			fprintf(stderr, "Error in sendto: %s\n", strerror(errno));
 		        goto err;
 		}
 		from_len = sizeof(from);
-		len = recvfrom(sock, buffer, BUF_SIZE, 0, (struct sockaddr*)&from, &from_len);
+		len = recvfrom(sock, buffer, BUF_SIZE, 0,
+				(struct sockaddr*)&from, &from_len);
 		if (len == -1) {
 			fprintf(stderr, "Error in recvfrom: %s\n", strerror(errno));
 			goto err;
