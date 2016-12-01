@@ -61,7 +61,7 @@ struct mtp_level_3_hdr {
  * ss7 module - helper module to convert M2UA/ISUP to JSON
  *
  */
-static const char *isup_last;
+static const char *isup_last = NULL;
 
 static int w_isup_to_json(struct sip_msg* _m, char* param1, char* param2);
 static int pv_get_isup(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -259,7 +259,7 @@ static int w_isup_to_json(struct sip_msg *_m, char *param1, char *param2)
 	int opc, dpc, mtp_type, int_len, rc;
 	size_t len;
 
-	free((char *) isup_last);
+	if(isup_last) free((char *) isup_last);
 	isup_last = NULL;
 
 	data = fetch_payload(_m, "$var(payload)", &int_len);
