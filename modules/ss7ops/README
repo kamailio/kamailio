@@ -21,11 +21,15 @@ Holger Freyther
         2. External Libraries or Applications
         3. Functions
 
-              3.1. isup (integer)
+              3.1. isup_to_json
 
-        4. Parameters
+        4. Variables
 
-              4.1. isup_to_json (integer)
+              4.1. isup(id)
+
+   List of Examples
+
+   1.1. isup_to_json usage
 
 Chapter 1. Admin Guide
 
@@ -35,11 +39,11 @@ Chapter 1. Admin Guide
    2. External Libraries or Applications
    3. Functions
 
-        3.1. isup (integer)
+        3.1. isup_to_json
 
-   4. Parameters
+   4. Variables
 
-        4.1. isup_to_json (integer)
+        4.1. isup(id)
 
 1. Overview
 
@@ -55,19 +59,26 @@ Chapter 1. Admin Guide
 
 3. Functions
 
-   3.1. isup (integer)
+   3.1. isup_to_json
 
-3.1. isup (integer)
+3.1. isup_to_json
 
-   If set to 1, return the JSON representation as string for the last
-   message that was parsed.
+   isup_to_json(proto)
 
-4. Parameters
+   Pass the HEP protocol type as parameter (e.g. 8 for M2UA) and the
+   contained ISUP payload will be converted to a JSON string. The result
+   can be accessed using the $isup(1) variable.
 
-   4.1. isup_to_json (integer)
+   Example 1.1. isup_to_json usage
+...
+isup_to_json(8);
+...
 
-4.1. isup_to_json (integer)
+4. Variables
 
-   Pass the HEP type as parameter (e.g. 8 for M2UA) and the contained ISUP
-   payload will be converted to a JSON string. It can be consumed using
-   the $isup(1) parameter.
+   4.1. isup(id)
+
+4.1. isup(id)
+
+   If id is set to 1, return the JSON representation as string for the
+   last message that was parsed.

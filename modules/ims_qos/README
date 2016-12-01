@@ -56,6 +56,7 @@ Carsten Bock
               3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
               3.14. terminate_dialog_on_rx_failure integer
               3.15. delete_contact_on_rx_failure integer
+              3.16. include_rtcp_fd integer
 
         4. Functions
 
@@ -85,8 +86,9 @@ Carsten Bock
    1.13. regex_sdp_ip_prefix_to_maintain_in_fd parameter usage
    1.14. terminate_dialog_on_rx_failure parameter usage
    1.15. delete_contact_on_rx_failure parameter usage
-   1.16. Rx_AAR_Register
-   1.17. Rx_AAR
+   1.16. include_rtcp_fd parameter usage
+   1.17. Rx_AAR_Register
+   1.18. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -115,6 +117,7 @@ Chapter 1. Admin Guide
         3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
         3.14. terminate_dialog_on_rx_failure integer
         3.15. delete_contact_on_rx_failure integer
+        3.16. include_rtcp_fd integer
 
    4. Functions
 
@@ -170,6 +173,7 @@ Chapter 1. Admin Guide
    3.13. regex_sdp_ip_prefix_to_maintain_in_fd (String)
    3.14. terminate_dialog_on_rx_failure integer
    3.15. delete_contact_on_rx_failure integer
+   3.16. include_rtcp_fd integer
 
 3.1. rx_dest_realm (string)
 
@@ -367,6 +371,18 @@ modparam("ims_qos", "terminate_dialog_on_rx_failure", 0)
 modparam("ims_qos", "delete_contact_on_rx_failure", 0)
 ...
 
+3.16. include_rtcp_fd integer
+
+   If set then a flow description is added for media flows - next
+   available odd port is used as the default for RTCP traffic
+
+   Default value is 0, RTCP flow description not added
+
+   Example 1.16. include_rtcp_fd parameter usage
+...
+modparam("ims_qos", "include_rtcp_fd", 1)
+...
+
 4. Functions
 
    4.1. Rx_AAR_Register(route_block, domain)
@@ -397,7 +413,7 @@ modparam("ims_qos", "delete_contact_on_rx_failure", 0)
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.16. Rx_AAR_Register
+   Example 1.17. Rx_AAR_Register
 ...
 if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
     exit;
@@ -439,7 +455,7 @@ route[REG_AAR_REPLY]
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.17. Rx_AAR
+   Example 1.18. Rx_AAR
 ...
 if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
     exit;

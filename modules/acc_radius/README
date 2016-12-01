@@ -211,7 +211,10 @@ modparam("acc_radius", "rad_time_mode", 1)
    “radius_config”.
 
    Meaning of the parameters is as follows:
-     * comment - Comment to be appended.
+     * comment - Comment to be appended. The first token can be a SIP
+       response code that it is wanted to be interpreted as event type
+       (e.g., using 200 means the transaction is considered successfully
+       responded).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -219,5 +222,6 @@ modparam("acc_radius", "rad_time_mode", 1)
 ...
 acc_rad_request("Some comment");
 ...
+# write record as when the transaction was responded with a 200 code
 acc_rad_request("200 From Config");
 ...

@@ -42,6 +42,7 @@ Emmanuel Schmidbauer
               4.10. topic_channel(str)
               4.11. db_url(str)
               4.12. presentity_table(str)
+              4.13. db_table_lock_type(int)
 
         5. Functions
 
@@ -65,8 +66,9 @@ Emmanuel Schmidbauer
    1.11. Set topic_channel parameter
    1.12. Set db_url parameter
    1.13. Set presentity_table parameter
-   1.14. nsq_pua_publish usage
-   1.15. nsq.json usage
+   1.14. Set db_table_lock_type parameter
+   1.15. nsq_pua_publish usage
+   1.16. nsq.json usage
 
 Chapter 1. Admin Guide
 
@@ -97,6 +99,7 @@ Chapter 1. Admin Guide
         4.10. topic_channel(str)
         4.11. db_url(str)
         4.12. presentity_table(str)
+        4.13. db_table_lock_type(int)
 
    5. Functions
 
@@ -232,6 +235,7 @@ event_route[nsq:consumer-event]
    4.10. topic_channel(str)
    4.11. db_url(str)
    4.12. presentity_table(str)
+   4.13. db_table_lock_type(int)
 
 4.1. lookupd_address(str)
 
@@ -397,6 +401,17 @@ modparam("nsq", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 modparam("nsq", "presentity_table", "my_presentity_table")
 ...
 
+4.13. db_table_lock_type(int)
+
+   Enable (=1) or disable (=0) the locks for table during a transaction.
+
+   Default value is “1”.
+
+   Example 1.14. Set db_table_lock_type parameter
+...
+modparam("nsq", "db_table_lock_type", 0)
+...
+
 5. Functions
 
    5.1. nsq_pua_publish(json_payload)
@@ -410,7 +425,7 @@ modparam("nsq", "presentity_table", "my_presentity_table")
 
    This function can be used from ANY ROUTE.
 
-   Example 1.14. nsq_pua_publish usage
+   Example 1.15. nsq_pua_publish usage
 ...
 event_route[nsq:consumer-event-presence-update]
 {
@@ -430,7 +445,7 @@ ackage})", 1);
 
    The prefix for nsq transformations is nsq.
      * json
-       Example 1.15. nsq.json usage
+       Example 1.16. nsq.json usage
 ...
 $var(Custom-Data) = $(nsqE{nsq.json,Custom-Data});
 if($var(Custom-Data) != $null) {

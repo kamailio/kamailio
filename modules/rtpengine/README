@@ -337,6 +337,10 @@ modparam("rtpengine", "rtpengine_sock",
 
    Default value is “60”.
 
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int rtpengine rtpengine_disable_tou
+t 20
+
    Example 1.2. Set rtpengine_disable_tout parameter
 ...
 modparam("rtpengine", "rtpengine_disable_tout", 20)
@@ -348,6 +352,10 @@ modparam("rtpengine", "rtpengine_disable_tout", 20)
    proxy.
 
    Default value is “1000”.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int rtpengine rtpengine_tout_ms 100
+0
 
    Example 1.3. Set rtpengine_tout_ms parameter
 ...
@@ -382,10 +390,13 @@ modparam("rtpengine", "rtpengine_allow_op", 1)
    The total number of nodes inside a set (sets are configurable via
    rtpengine_sock function) to be queried before giving up establishing a
    session. This brings more flexibility in case checking all rtpengines
-   would take too long. Max limit is 50.
+   would take too long. Max limit is 30.
 
    By default all nodes in a set are tried before giving up communicating
    with the rtpengines.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int rtpengine queried_nodes_limit 5
 
    Example 1.5. Set queried_nodes_limit parameter
 ...
@@ -398,6 +409,9 @@ modparam("rtpengine", "queried_nodes_limit", 5)
    timeout was generated.
 
    Default value is “5”.
+
+   Can be set at runtime, e.g.:
+                        $ kamcmd cfg.set_now_int rtpengine rtpengine_retr 5
 
    Example 1.6. Set rtpengine_retr parameter
 ...

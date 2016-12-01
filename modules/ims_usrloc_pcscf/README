@@ -30,8 +30,7 @@ Richard Good
               3.3. db_url (int)
               3.4. db_mode (int)
               3.5. hashing_type (int)
-              3.6. lookup_check_received (int)
-              3.7. match_contact_host_port (int)
+              3.6. match_contact_host_port (int)
 
         4. RPC Commands
 
@@ -52,8 +51,7 @@ Richard Good
    1.3. Set db_url parameter
    1.4. Set db_mode parameter
    1.5. Set hashing_type parameter
-   1.6. Set lookup_check_received parameter
-   1.7. Set match_contact_host_port parameter
+   1.6. Set match_contact_host_port parameter
 
 Chapter 1. Admin Guide
 
@@ -72,8 +70,7 @@ Chapter 1. Admin Guide
         3.3. db_url (int)
         3.4. db_mode (int)
         3.5. hashing_type (int)
-        3.6. lookup_check_received (int)
-        3.7. match_contact_host_port (int)
+        3.6. match_contact_host_port (int)
 
    4. RPC Commands
 
@@ -124,8 +121,7 @@ Chapter 1. Admin Guide
    3.3. db_url (int)
    3.4. db_mode (int)
    3.5. hashing_type (int)
-   3.6. lookup_check_received (int)
-   3.7. match_contact_host_port (int)
+   3.6. match_contact_host_port (int)
 
 3.1. hash_size (int)
 
@@ -221,21 +217,7 @@ modparam("ims_usrloc_pcscf", "db_mode", 1)
 modparam("ims_usrloc_pcscf", "hashing_type", 1)
 ...
 
-3.6. lookup_check_received (int)
-
-   If set to 1 (default), the Host in the contact will be checked against
-   the Host, from which the request was received.
-     * 0 - Upon lookup, do not check the host against received.
-     * 1 - Compare the host in the contact against the received info.
-
-   Default value is 1.
-
-   Example 1.6. Set lookup_check_received parameter
-...
-modparam("ims_usrloc_pcscf", "lookup_check_received", 0)
-...
-
-3.7. match_contact_host_port (int)
+3.6. match_contact_host_port (int)
 
    If set to 1 (default), the contact is matched using only host and port
    in the contact URI.
@@ -245,7 +227,7 @@ modparam("ims_usrloc_pcscf", "lookup_check_received", 0)
 
    Default value is 1.
 
-   Example 1.7. Set match_contact_host_port parameter
+   Example 1.6. Set match_contact_host_port parameter
 ...
 modparam("ims_usrloc_pcscf", "match_contact_host_port", 0)
 ...

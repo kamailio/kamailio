@@ -28,7 +28,7 @@ Daniel-Constantin Mierla
 
               4.1. sdp_remove_codecs_by_id(list [, mtype])
               4.2. sdp_remove_codecs_by_name(list [, mtype])
-              4.3. sdp_remove_line_by_prefix(string)
+              4.3. sdp_remove_line_by_prefix(string [, mtype])
               4.4. sdp_keep_codecs_by_id(list [, mtype])
               4.5. sdp_keep_codecs_by_name(list [, mtype])
               4.6. sdp_with_media(type)
@@ -83,7 +83,7 @@ Chapter 1. Admin Guide
 
         4.1. sdp_remove_codecs_by_id(list [, mtype])
         4.2. sdp_remove_codecs_by_name(list [, mtype])
-        4.3. sdp_remove_line_by_prefix(string)
+        4.3. sdp_remove_line_by_prefix(string [, mtype])
         4.4. sdp_keep_codecs_by_id(list [, mtype])
         4.5. sdp_keep_codecs_by_name(list [, mtype])
         4.6. sdp_with_media(type)
@@ -135,7 +135,7 @@ Chapter 1. Admin Guide
 
    4.1. sdp_remove_codecs_by_id(list [, mtype])
    4.2. sdp_remove_codecs_by_name(list [, mtype])
-   4.3. sdp_remove_line_by_prefix(string)
+   4.3. sdp_remove_line_by_prefix(string [, mtype])
    4.4. sdp_keep_codecs_by_id(list [, mtype])
    4.5. sdp_keep_codecs_by_name(list [, mtype])
    4.6. sdp_with_media(type)
@@ -192,7 +192,7 @@ sdp_remove_codecs_by_name("PCMU");
 sdp_remove_codecs_by_name("PCMU,PCMA,GSM");
 ...
 
-4.3.  sdp_remove_line_by_prefix(string)
+4.3.  sdp_remove_line_by_prefix(string [, mtype])
 
    Remove all SDP attribute lines beginning with 'string' in all media
    streams.
