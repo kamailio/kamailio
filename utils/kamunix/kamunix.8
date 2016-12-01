@@ -1,7 +1,6 @@
-.\" $Id$
-.TH kamunix 8 21.06.2006 kamailio "Kamailio" 
+.TH kamunix 8 21.06.2006 kamailio "Kamailio"
 .\" Process with
-.\" groff -man -Tascii kamunix.8 
+.\" groff -man -Tascii kamunix.8
 .\"
 .SH NAME
 kamunix \- Kamailio UNIX socket wrapper
@@ -20,7 +19,7 @@ This is a binary alternative to the textual FIFO interface.
 .B kamunix
 reads from standard input one
 .B Kamailio
-command along with its paramters (if any) and prints the response 
+command along with its paramters (if any) and prints the response
 to standard output.
 
 .SH PARAMETERS
@@ -32,7 +31,7 @@ external commands
 .SH EXAMPLES
 .PP
 An Kamailio commands consists in one ore more lines: first contains the
-command name enclosed between ":", the following lines containing the 
+command name enclosed between ":", the following lines containing the
 command parameters, one per line.
 .PP
 echo ":uptime:" | kamunix /tmp/kamailio.sock
@@ -40,7 +39,7 @@ echo ":uptime:" | kamunix /tmp/kamailio.sock
 
 .SH AUTHORS
 
-see 
+see
 .B /usr/share/doc/kamailio/AUTHORS
 
 .SH SEE ALSO
@@ -50,8 +49,8 @@ Full documentation on Kamailio is available at
 .I http://www.kamailio.org/.
 .PP
 Mailing lists:
-.nf 
+.nf
 users@lists.kamailio.org - Kamailio user community
-.nf 
+.nf
 devel@lists.kamailio.org - Kamailio development, new features and unstable version
 
