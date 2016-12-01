@@ -198,8 +198,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	append_str( p, Trans->cseq_n.s, Trans->cseq_n.len );
 	append_str( p, " ", 1 );
 	append_str( p, method, method_len );
-	append_str( p, MAXFWD_HEADER, MAXFWD_HEADER_LEN );
 	append_str( p, CRLF, CRLF_LEN );
+	append_str( p, MAXFWD_HEADER, MAXFWD_HEADER_LEN );
 
 	if (!is_local(Trans))  {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
