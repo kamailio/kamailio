@@ -52,6 +52,15 @@ typedef struct jsonrpc_ctx {
 	str http_text;         /**< http reply reason text */
 } jsonrpc_ctx_t;
 
+typedef struct jsonrpc_plain_reply {
+	int rcode;         /**< reply code */
+	str rtext;         /**< reply reason text */
+	str rbody;         /**< reply body */
+} jsonrpc_plain_reply_t;
+
+jsonrpc_plain_reply_t* jsonrpc_plain_reply_get(void);
+
+int jsonrpc_exec_ex(str *cmd, str *rpath);
 
 #endif
 
