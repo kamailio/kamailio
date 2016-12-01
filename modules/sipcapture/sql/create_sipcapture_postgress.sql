@@ -1,5 +1,5 @@
 /*
- * 
+ *
  *   Postgress SQL Schema for Sipcapture
  *   Author: Ovind Kolbu
  *
@@ -11,6 +11,7 @@ CREATE TABLE sip_capture (
         date TIMESTAMP WITHOUT TIME ZONE DEFAULT '1900-01-01 00:00:01' NOT NULL,
         micro_ts BIGINT NOT NULL DEFAULT '0',
         method VARCHAR(50) NOT NULL DEFAULT '',
+        status varchar(5) DEFAULT NULL,
         reply_reason VARCHAR(100) NOT NULL,
         ruri VARCHAR(200) NOT NULL DEFAULT '',
         ruri_user VARCHAR(100) NOT NULL DEFAULT '',
