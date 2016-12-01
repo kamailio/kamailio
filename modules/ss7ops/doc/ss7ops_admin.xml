@@ -35,26 +35,37 @@
 			</itemizedlist>
 		</para>
 	</section>
-	</section>
-	<section>
-	<title>Parameters</title>
-	<section id="ss7ops.p.isup_to_json">
-		<title><varname>isup_to_json</varname> (integer)</title>
-		<para>
-		Pass the HEP type as parameter (e.g. 8 for M2UA) and the contained
-		ISUP payload will be converted to a JSON string. It can be consumed
-		using the $isup(1) parameter.
-		</para>
-	</section>
-	</section>
 	<section>
 	<title>Functions</title>
-	<section id="ss7ops.f.isup">
-		<title><varname>isup</varname> (integer)</title>
+	<section id="ss7ops.f.isup_to_json">
+		<function moreinfo="none">isup_to_json(proto)</function>
+		<title><varname>isup_to_json</varname></title>
 		<para>
-		If set to 1, return the JSON representation as string for the last
+		Pass the HEP protocol type as parameter (e.g. 8 for M2UA) and the
+		contained ISUP payload will be converted to a JSON string. The result
+		can be accessed using the $isup(1) variable.
+		</para>
+		<para>
+		<example>
+		<title><function>isup_to_json</function> usage</title>
+		<programlisting format="linespecific">
+...
+isup_to_json(8);
+...
+</programlisting>
+	    </example>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Variables</title>
+	<section id="ss7ops.f.isup">
+		<title><varname>isup(id)</varname></title>
+		<para>
+		If id is set to 1, return the JSON representation as string for the last
 		message that was parsed.
 		</para>
+	</section>
 	</section>
 
 </chapter>
