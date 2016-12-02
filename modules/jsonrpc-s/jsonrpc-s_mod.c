@@ -155,9 +155,9 @@ static param_export_t params[] = {
 	{"dgram_timeout",    PARAM_INT,    &jsonrpc_dgram_timeout},
 	{"dgram_mode",       PARAM_INT,    &jsonrpc_dgram_unix_socket_mode},
 	{"dgram_group",      PARAM_STRING, &jsonrpc_dgram_unix_socket_gid_s},
-	{"dgram_group_id",   PARAM_INT,    &jsonrpc_dgram_unix_socket_gid},
+	{"dgram_group",      PARAM_INT,    &jsonrpc_dgram_unix_socket_gid},
 	{"dgram_user",       PARAM_STRING, &jsonrpc_dgram_unix_socket_uid_s},
-	{"dgram_user_id",    PARAM_INT,    &jsonrpc_dgram_unix_socket_uid},
+	{"dgram_user",       PARAM_INT,    &jsonrpc_dgram_unix_socket_uid},
 
 	{0, 0, 0}
 };
