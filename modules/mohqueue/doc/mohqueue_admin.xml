@@ -88,7 +88,7 @@ The URL to connect to the database for the mohqueue tables.
         <title>Set <varname>db_url</varname>:</title>
         <programlisting format="linespecific">
 ...
-modparam ("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
+modparam("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 ...
         </programlisting>
       </example>
@@ -109,8 +109,8 @@ maintains the call status.
         <title>Set table names:</title>
         <programlisting format="linespecific">
 ...
-modparam ("mohqueue", "db_qtable", "mqueues")
-modparam ("mohqueue", "db_ctable", "mcalls")
+modparam("mohqueue", "db_qtable", "mqueues")
+modparam("mohqueue", "db_ctable", "mcalls")
 ...
         </programlisting>
       </example>
@@ -131,7 +131,7 @@ queues table.</emphasis>
         <title>Set default directory for audio files:</title>
         <programlisting format="linespecific">
 ...
-modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
+modparam("mohqueue", "mohdir", "/var/kamailio/MOH")
 ...
         </programlisting>
       </example>
@@ -154,7 +154,7 @@ queues table.</emphasis>
         <title>Set default directory for audio files:</title>
         <programlisting format="linespecific">
 ...
-modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
+modparam("mohqueue", "mohdir", "/var/kamailio/MOH")
 ...
         </programlisting>
       </example>
@@ -167,7 +167,7 @@ modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
 
     <section id="proc.func">
       <title>
-        <function moreinfo="none">mohq_process ()</function>
+        <function moreinfo="none">mohq_process()</function>
       </title>
       <para>
 Checks to see if the current SIP message involves a queue. If it
@@ -207,8 +207,8 @@ request_route {
   # main route with limited processing
 ...
   # MOH queue?
-  if (mohq_process ()) {
-    xlog ("L_DBG", "Handled by mohqueue");
+  if (mohq_process()) {
+    xlog("L_DBG", "Handled by mohqueue");
     exit;
   }
   # An error or not a MOH queue message; continue processing
@@ -221,12 +221,12 @@ request_route {
 
     <section id="send.func">
       <title>
-        <function moreinfo="none">mohq_send (queue_name)</function>
+        <function moreinfo="none">mohq_send(queue_name)</function>
       </title>
       <para>
 Normally calls enter the queue with an initial INVITE message that
 1) has a RURI that matches a queue URI and 2) is passed through
-<function>mohq_proc ()</function>, which is the preferred method.
+<function>mohq_process()</function>, which is the preferred method.
       </para>
       <para>
 This function is used when you wish to send a call into a queue that
@@ -254,8 +254,8 @@ can be passed as a literal or pseudo-variable.
 ...
   # call is initial INVITE and ready for queue?
   if (some test) {
-    if (mohq_send ("main")) {
-      xlog ("L_DBG", "Sent call to main mohqueue");
+    if (mohq_send("main")) {
+      xlog("L_DBG", "Sent call to main mohqueue");
       exit;
     }
     # failed to enter queue!
@@ -268,7 +268,7 @@ can be passed as a literal or pseudo-variable.
 
     <section id="retrieve.func">
       <title>
-        <function moreinfo="none">mohq_retrieve (queue_name, URI)</function>
+        <function moreinfo="none">mohq_retrieve(queue_name, URI)</function>
       </title>
       <para>
 Retrieves the oldest call in a queue and redirects it to a URI.
@@ -299,12 +299,11 @@ be called from any route.
 #!define CGROUP   "sip:operators@10.211.64.5"
 ...
   # redirect oldest call to operator call group
-  if (mohq_retrieve (MOHQNAME, CGROUP)) {
-      xlog ("L_DBG", "Retrieved call from mohqueue");
+  if (mohq_retrieve(MOHQNAME, CGROUP)) {
+      xlog("L_DBG", "Retrieved call from mohqueue");
       exit;
-    }
-  # queue is empty or something went wrong
   }
+  # queue is empty or something went wrong
 ...
         </programlisting>
       </example>
@@ -312,7 +311,7 @@ be called from any route.
 
     <section id="count.func">
       <title>
-        <function moreinfo="none">mohq_count (queue_name, pvar)</function>
+        <function moreinfo="none">mohq_count(queue_name, pvar)</function>
       </title>
       <para>
 Finds the number of calls that are in a queue. It will not count
@@ -342,9 +341,9 @@ any route.
 $var(mohq) = "operators";
 ...
   # more than 10 calls?
-  mohq_count ("$var(mohq)", "$var(mohqcnt)");
+  mohq_count("$var(mohq)", "$var(mohqcnt)");
   if ($var(mohqcnt) > 10) {
-    xlog ("L_WARN", "$var(mohq) queue has $var(mohqcnt) calls!");
+    xlog("L_WARN", "$var(mohq) queue has $var(mohqcnt) calls!");
   }
 ...
         </programlisting>
