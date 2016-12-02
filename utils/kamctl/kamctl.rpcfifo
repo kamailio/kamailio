@@ -204,15 +204,23 @@ rpc_kamailio_monitor() {
 
 		cat < $path | filter_fl &
 		cat > $RPCFIFOPATH <<EOF
-:version:$name
-
+{
+  "jsonrpc": "2.0",
+  "method": "core.version",
+  "reply_name": "${name}",
+  "id": $$
+}
 EOF
 		wait
 
 		cat < $path | filter_fl &
 		cat > $RPCFIFOPATH << EOF
-:uptime:$name
-
+{
+  "jsonrpc": "2.0",
+  "method": "core.uptime",
+  "reply_name": "${name}",
+  "id": $$
+}
 EOF
 		wait
 		echo
@@ -220,11 +228,13 @@ EOF
 		mecho "Transaction Statistics: "
 		cat < $path | filter_fl &
 		cat > $RPCFIFOPATH <<EOF
-:get_statistics:$name
-UAS_transactions
-UAC_transactions
-inuse_transactions
-
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "UAS_transactions", "UAC_transactions", "inuse_transactions"],
+  "reply_name": "${name}",
+  "id": $$
+}
 EOF
 		wait
 		echo
@@ -232,11 +242,13 @@ EOF
 		mecho "Stateless Server Statistics: "
 		cat < $path | filter_fl &
 		cat > $RPCFIFOPATH <<EOF
-:get_statistics:$name
-sent_replies
-sent_err_replies
-received_ACKs
-
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "sent_replies", "sent_err_replies", "received_ACKs"],
+  "reply_name": "${name}",
+  "id": $$
+}
 EOF
 		wait
 		echo
@@ -244,9 +256,13 @@ EOF
 		mecho "UsrLoc Stats: "
 		cat < $path | filter_fl &
 		cat > $RPCFIFOPATH <<EOF
-:get_statistics:$name
-usrloc:
-
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "usrloc:"],
+  "reply_name": "${name}",
+  "id": $$
+}
 EOF
 		wait
 
