@@ -110,7 +110,8 @@ modparam("jsonrpc-s", "pretty_format", 1)
 			<listitem><para>
 				<emphasis>0</emphasis> - all transports that can be enabled.
 				For http, the xhttp module must be loaded. For FIFO, the
-				fifo_name parameter must be set.
+				fifo_name parameter must be set. For DATAGRAM, the dgram_socket
+				parameter must be set.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>1</emphasis> - only HTTP transport
@@ -118,8 +119,17 @@ modparam("jsonrpc-s", "pretty_format", 1)
 			<listitem><para>
 				<emphasis>2</emphasis> - only FIFO transport
 			</para></listitem>
+			<listitem><para>
+				<emphasis>4</emphasis> - only DATAGRAM transport
+			</para></listitem>
+
 		</itemizedlist>
 
+		<para>
+			The value can be also a combination of specific transports. Make
+			the sum of the desired transports to enable them. For example,
+			enabling FIFO and DATAGRAM can be done setting transport=6.
+		</para>
 		<para>
 		<emphasis>
 			Default value is '0'.
@@ -234,6 +244,139 @@ modparam("jsonrpc-s", "fifo_user", "root")
 		<programlisting format="linespecific">
 ...
 modparam("jsonrpc-s", "fifo_reply_dir", "/home/kamailio/tmp/")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpc-s.p.dgram_socket">
+		<title><varname>dgram_socket</varname> (str)</title>
+		<para>
+		The name of a UNIX SOCKET or an IP address.
+		The UNIX datagram or UDP socket will be created using this parameter
+		in order to read the external commands.
+		Both IPv4 and IPv6 are supported.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NONE.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpc-s", "dgram_socket", "/tmp/kamailio_rpc.sock")
+...
+modparam("jsonrpc-s", "dgram_socket", "udp:1.2.3.4:8090")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpc-s.p.dgram_workers">
+		<title><varname>dgram_workers</varname> (str)</title>
+		<para>
+		The number of worker processes to be created. Each worker process
+		will be a datagram server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_workers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpc-s", "dgram_workers", 4)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpc-s.p.dgram_mode">
+		<title><varname>dgram_mode</varname> (int)</title>
+		<para>
+		Permission to be used for creating the listening UNIX datagram socket.
+		Not necessary for a UDP socket.
+		It follows the UNIX conventions.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0660 (rw-rw----).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpc-s", "dgram_mode", 0600)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpc-s.p.dgram_group">
+		<title><varname>dgram_group</varname> (int)
+		<varname>dgram_group</varname> (str)</title>
+		<para>
+		Group to be used for creating the listening UNIX socket.
+		</para>
+		<para>
+		<emphasis>
+			Default value is the inherited one.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_group</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpc-s", "dgram_group", 0)
+modparam("jsonrpc-s", "dgram_group", "root")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpc-s.p.dgram_user">
+		<title><varname>dgram_user</varname> (int)
+		<varname>dgram_group</varname> (str)</title>
+		<para>
+		User to be used for creating the listening UNIX socket.
+		</para>
+		<para>
+		<emphasis>
+			Default value is the inherited one.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_user</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpc-s", "dgram_user", 0)
+modparam("jsonrpc-s", "dgram_user", "root")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpc-s.p.dgram_timeout">
+		<title><varname>dgram_timeout</varname> (int)</title>
+		<para>
+		The reply will expire after trying to sent it for socket_timeout
+		miliseconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2000.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dgram_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpc-s", "dgram_timeout", 2000)
 ...
 </programlisting>
 		</example>
@@ -438,6 +581,22 @@ rm /tmp/kamailio_jsonrpc_reply_fifo
 	    </example>
 
 	</section>
+ 	<section>
+	    <title>JSONRPC Over DATAGRAM</title>
+		<para>
+			This module can retrive JSONRPC requests via a UNIX socket file
+			or UDP IPv4/IPv6 socket. To enable this feature, 'dgram_socket'
+			parameter must be set and 'transport' parameter has to be 0 or 4.
+		</para>
+		<para>
+			The 'transport' parameter has to be 0 or 4.
+		</para>
+		<para>
+			The format of the JSON document must follow the JSONRPC
+			specifications.
+		</para>
+	</section>
+
 	</section>
 
 </chapter>
