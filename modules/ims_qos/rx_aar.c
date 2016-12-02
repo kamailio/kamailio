@@ -436,8 +436,15 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
     sdp_session_cell_t* req_sdp_session, *rpl_sdp_session;
     sdp_stream_cell_t* req_sdp_stream, *rpl_sdp_stream;
     int add_flow = 1;
-
-    if (!req || !rpl) {
+	str ttag = {0, 0};
+	str ftag = {0, 0};
+	int request_originated_from_callee = 0;  
+	str ipA, ipB;
+	
+	rx_authsessiondata_t* p_session_data = 0;
+    p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
+	
+	if (!req || !rpl) {
 			goto error;
     }
 
@@ -497,23 +504,57 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 
 			if(add_flow) {
 
-						str ipA = req_sdp_session->ip_addr;
-						str ipB = rpl_sdp_session->ip_addr;
+					
+						if (cscf_get_to_tag(rpl, &ttag) && cscf_get_from_tag(rpl, &ftag)) {
+								LM_DBG("Original ftag [%.*s] ttag [%.*s].  Current ftag [%.*s] ttag [%.*s]\n", 
+										p_session_data->ftag.len, p_session_data->ftag.s, p_session_data->ttag.len, p_session_data->ttag.s,
+										ftag.len, ftag.s, ttag.len, ttag.s);
+							if (!(strncmp(p_session_data->ttag.s, ttag.s, p_session_data->ttag.len) == 0 && strncmp(p_session_data->ftag.s, ftag.s, p_session_data->ftag.len) == 0)) {
+								LM_DBG("ftag and ttag of this response do not match initial response so this request came from callee\n");
+								request_originated_from_callee = 1;
+							}
+						} else {
+							LM_ERR("Couldn't retrieve ftag so assume this request originated from caller\n");
+						}
+					
+						if (request_originated_from_callee) {
+							LM_DBG("Request originated from callee so IPs are reversed\n");	
+							ipA = rpl_sdp_session->ip_addr;
+							ipB = req_sdp_session->ip_addr;
+						} else {
+							ipA = req_sdp_session->ip_addr;
+							ipB = rpl_sdp_session->ip_addr;
+						}
+						
 
 						if (ipA.len <= 0) {
-								LM_DBG("Request SDP connection IP could not be retrieved, so we use SDP 1st stream IP");
-								ipA = req_sdp_stream->ip_addr;
+								LM_DBG("Request SDP connection IP could not be retrieved, so we use SDP 1st stream IP\n");
+								if (request_originated_from_callee) {
+									LM_DBG("Request originated from callee so IPs are reversed\n");	
+									ipA = rpl_sdp_stream->ip_addr;
+								} else {
+									ipA = req_sdp_stream->ip_addr;
+								}
+								
+								
 								if (ipA.len <= 0) {
-										LM_ERR("Requested SDP IP information could not be retrieved");
+										LM_ERR("Requested SDP IP information could not be retrieved\n");
 										goto error;
 								}
 						}
 
 						if (ipB.len <= 0) {
-								LM_DBG("Reply SDP connection IP could not be retrieved, so we use SDP 1st stream IP");
-								ipB = rpl_sdp_stream->ip_addr;
+								LM_DBG("Reply SDP connection IP could not be retrieved, so we use SDP 1st stream IP\n");
+								if (request_originated_from_callee) {
+									LM_DBG("Request originated from callee so IPs are reversed\n");	
+									ipB = req_sdp_stream->ip_addr;
+								} else {
+									ipB = rpl_sdp_stream->ip_addr;
+								}
+								
+								
 								if (ipB.len <= 0) {
-										LM_ERR("Request SDP IP information could not be retrieved");
+										LM_ERR("Request SDP IP information could not be retrieved\n");
 										goto error;
 								}
 						}
