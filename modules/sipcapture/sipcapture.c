@@ -2841,6 +2841,12 @@ static int pv_parse_hep_name (pv_spec_p sp, str *in)
 			else goto error;
 		}
 		break;
+		case 6:
+		{
+			if(!strncmp(in->s, "src_ip", 6)) sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		}
+		break;
 		default:
 			goto error;
 	}
@@ -2859,12 +2865,21 @@ static int pv_get_hep(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	if(param==NULL) return -1;
 
+	char buf_ip[IP_ADDR_MAX_STR_SIZE+12];
+	str src_ip;
+
 	switch(param->pvn.u.isname.name.n)
 	{
 		case 0:
 			return pv_get_uintval(msg, param, res, hep_version(msg));						
 		case 1: 
 		        return pv_get_uintval(msg, param, res, hep_version(msg));						
+		case 2:
+			strcpy(buf_ip, ip_addr2a(&msg->rcv.src_ip));
+			buf_ip[strlen(buf_ip)] = '\0';
+			src_ip.s = buf_ip;
+			src_ip.len = strlen(buf_ip);
+            return pv_get_strval(msg, param, res, &src_ip);
 		default:
 		        return  hepv3_get_chunk(msg, msg->buf, msg->len, param->pvn.u.isname.name.n, param, res);
 	}
