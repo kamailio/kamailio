@@ -49,7 +49,7 @@
 
 
 # SQL definitions
-# If you change this definitions here, then you must change them 
+# If you change this definitions here, then you must change them
 # in db/schema/entities.xml too.
 # FIXME
 
@@ -57,7 +57,7 @@
 # DEFAULT_Q="1.0"
 
 
-# Program to calculate a message-digest fingerprint 
+# Program to calculate a message-digest fingerprint
 # MD5="md5sum"
 
 # awk tool
@@ -117,12 +117,15 @@
 ## - default: none
 # ALIASES_TYPE="DB"
 
-## control engine: FIFO or UNIXSOCK
+## control engine: FIFO, RPCFIFO or UNIXSOCK
 ## - default FIFO
 # CTLENGINE="FIFO"
 
 ## path to FIFO file
 # FIFOPATH="/var/run/kamailio/kamailio_fifo"
+
+## path to RPCFIFO file
+# RPCFIFOPATH="/var/run/kamailio/kamailio_rpc_fifo"
 
 ## check ACL names; default on (1); off (0)
 # VERIFY_ACL=1

@@ -180,6 +180,12 @@ case $CTLENGINE in
 			CTLENGINELOADED=1
 		fi
 		;;
+	RPCFIFO|rpcfifo)
+		if [ -f "$MYLIBDIR/kamctl.rpcfifo" ]; then
+			. "$MYLIBDIR/kamctl.rpcfifo"
+			CTLENGINELOADED=1
+		fi
+		;;
 	UNIXSOCK|unixsock)
 		if [ -f "$MYLIBDIR/kamctl.unixsock" ]; then
 			. "$MYLIBDIR/kamctl.unixsock"
@@ -2806,13 +2812,13 @@ case $1 in
 		permissions_address "$@"
 		;;
 
-	fifo|mi|unixsock|ser_mi|sercmd_mi|sercmdmi|kamcmd_mi|kamcmdmi)
+	fifo|mi|rpc|unixsock|ser_mi|sercmd_mi|sercmdmi|kamcmd_mi|kamcmdmi)
 		require_ctlengine
 		shift
 		$CTLCMD "$@"
 		;;
 
-	fifoprint|miprint)
+	fifoprint|miprint|rpcprint)
 		require_ctlengine
 		shift
 		$CTLCMDPRINT "$@"
