@@ -30,7 +30,7 @@
 #include "../../hashes.h"
 #include "../../ut.h"
 #include "../../re.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 #include "../../action.h"
 #include "../../route.h"
 #include "../../kemi.h"

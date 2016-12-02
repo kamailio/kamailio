@@ -38,7 +38,7 @@
 #include "../../rpc_lookup.h"
 #include "../../kemi.h"
 #include "../../lib/kmi/mi.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 
 #include "../../pvar.h"
 #include "ht_api.h"

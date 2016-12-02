@@ -27,7 +27,7 @@
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../tcp_conn.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../lib/kmi/tree.h"
 #include "../../mem/mem.h"

@@ -52,7 +52,7 @@
 #include "../../lib/srdb1/db_res.h"
 #include "../../str.h"
 #include "../../script_cb.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 
 #include "ds_ht.h"
 #include "api.h"

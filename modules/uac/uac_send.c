@@ -35,7 +35,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/contact/parse_contact.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 
 #include "auth.h"
 #include "auth_hdr.h"

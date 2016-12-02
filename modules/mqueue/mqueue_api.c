@@ -33,7 +33,7 @@
 #include "../../parser/parse_param.h"
 #include "../../ut.h"
 #include "../../shm_init.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 
 #include "mqueue_api.h"
 

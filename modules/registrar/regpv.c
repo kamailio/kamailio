@@ -33,7 +33,7 @@
 #include "../../mod_fix.h"
 #include "../../route.h"
 #include "../../action.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 #include "../usrloc/usrloc.h"
 #include "registrar.h"
 #include "common.h"

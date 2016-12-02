@@ -42,7 +42,7 @@
 #include "../../timer_proc.h"
 #include "../../script_cb.h"
 #include "../../parser/parse_param.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 
 
 MODULE_VERSION

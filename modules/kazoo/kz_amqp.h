@@ -39,7 +39,7 @@
 
 #include "const.h"
 #include "defs.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 
 typedef enum {
 	KZ_AMQP_CONNECTION_CLOSED     = 0,
