@@ -315,6 +315,7 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 {
 	char *socket_name;
 	int flags;
+	int optval;
 
 	/* create sockets for rx and tx ... */
 	jsonrpc_dgram_socket_domain = socket_domain;
@@ -375,6 +376,15 @@ int jsonrpc_dgram_init_server(jsonrpc_dgram_sockaddr_t *addr,
 
 	}
 	jsonrpc_dgram_create_reply_socket(socks->tx_sock, socket_domain, err_both);
+
+	optval = 64 * 1024;
+	if (setsockopt(socks->tx_sock, SOL_SOCKET, SO_SNDBUF,
+					(void*)&optval, sizeof(optval)) ==-1){
+		LM_ERR("failed to increse send buffer size via setsockopt "
+				" SO_SNDBUF (%d) - %d: %s\n", optval,
+				errno, strerror(errno));
+		/* continue, non-critical */
+	}
 
 	return 0;
 err_both:
@@ -517,22 +527,19 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 				const struct sockaddr* to, int tolen, int timeout)
 {
 	int n;
-	size_t total_len;
-	total_len = strlen(buf);
+	unsigned int optlen = sizeof(int);
+	int optval;
 
-	if(total_len == 0 || tolen ==0)
+	if(len == 0 || tolen ==0)
 		return -1;
 
-	if (total_len>JSONRPC_DGRAM_BUF_SIZE) {
-		LM_DBG("datagram too big, trunking, datagram_size is %i\n",
-				JSONRPC_DGRAM_BUF_SIZE);
-		len = JSONRPC_DGRAM_BUF_SIZE;
-	}
 	/*LM_DBG("destination address length is %i\n", tolen);*/
 	n=sendto(fd, buf, len, 0, to, tolen);
 	if(n!=len) {
-		LM_ERR("failed to send the response (%d - %d - %s)\n",
-				n, errno, strerror(errno));
+		getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (int*)&optval, &optlen);
+		LM_ERR("failed to send the response - ret: %d, len: %d (%d),"
+				" err: %d - %s)\n",
+				n, len, optval, errno, strerror(errno));
 		return n;
 	}
 	LM_DBG("rpc response sent out\n");
