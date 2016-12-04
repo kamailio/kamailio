@@ -43,9 +43,10 @@ int check_from(struct sip_msg* _msg, char* _str1, char* _str2);
 
 
 /*
- *
+ * Checks username part of the supplied sip URI.
+ * The credentials can be supplied or the digest credentials are used.
  */
-int check_uri(struct sip_msg* msg, char* uri, char* _s2);
+int check_uri(struct sip_msg* msg, char* _uri, char* _username, char* _realm);
 
 
 /*
