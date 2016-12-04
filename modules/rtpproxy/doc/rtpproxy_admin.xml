@@ -456,7 +456,7 @@ rtpproxy_offer();
 				So, for example if a SIP requests is processed with 'ie' flags, the corresponding
 				response must be processed with 'ie' flags.
 				</para><para>
-				Note: As rtpproxy in bridge mode s per default asymmetric, you have to specify
+				Note: As rtpproxy in bridge mode is asymmetric per default, you have to specify
 				the 'w' flag for clients behind NAT! See also above notes!
 				</para></listitem>
 				<listitem><para>
@@ -769,7 +769,7 @@ rtpproxy_manage();
 ...
     if (is_method("INVITE")) {
         rtpproxy_offer();
-        if (detect_hold()) {
+        if (is_audio_on_hold()) {
             rtpproxy_stream2uas("/var/rtpproxy/prompts/music_on_hold", "-1");
         } else {
             rtpproxy_stop_stream2uas();

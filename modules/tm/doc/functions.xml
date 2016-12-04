@@ -787,8 +787,7 @@ route {
 	<para>
 		Returns true if the failure route is executed for a branch that did
 		timeout. It can be used from 
-		<emphasis>failure_route</emphasis> and
-		<emphasis>branch-failure</emphasis> event route.
+		FAILURE_ROUTE and BRANCH_FAILURE_ROUTE event route.
 	</para>
 	<example>
 	    <title><function>t_branch_timeout</function> usage</title>
@@ -1289,7 +1288,7 @@ if (!t_next_contacts()) {
 		was empty and thus there was
 		nothing to do, and returns -1 in case of an error (see
 		syslog).
-		This function can be used from a BRANCH_FAILURE event route.
+		This function can be used from a BRANCH_FAILURE_ROUTE event route.
 		</para>
 		<example>
 		<title><function>t_next_contact_flow</function> usage</title>

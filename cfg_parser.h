@@ -69,7 +69,7 @@ typedef enum cfg_flags {
 	CFG_PREFIX = (1 << 3),
 
 	/*! \brief The result of cfg_parse_str_val will be in a buffer allocated by
-	 * pkg_malloc, if the destination varaiable contains a pointer to a buffer
+	 * pkg_malloc, if the destination variable contains a pointer to a buffer
 	 * already then it will be freed with pkg_free first.
 	 */
 	CFG_STR_PKGMEM = (1 << 4),

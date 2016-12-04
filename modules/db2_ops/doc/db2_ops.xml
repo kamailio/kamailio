@@ -277,7 +277,7 @@
 			</title>
 			<para>
 				Hack which enables using db_ops queries in failure route.
-				Call it at the beginning of <emphasis>failure_route</emphasis> block.
+				Call it at the beginning of FAILURE_ROUTE block.
 			</para>
 			<example>
 				<title><function>db_proper</function> usage</title>

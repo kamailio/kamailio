@@ -985,7 +985,7 @@ modparam("drouting", "sort_order", 2)
 		<title><varname>ruri_avp</varname> (str)</title>
 		<para>
 		The name of the avp for storing Request URIs to be later used 
-		(alternative destiantions for the current one).
+		(alternative destinations for the current one).
 		</para>
 		<para>
 		<emphasis>Default value is <quote>NULL</quote>.
