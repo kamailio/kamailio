@@ -51,6 +51,12 @@
 	<para>
 	The module is limited to using HTTP and HTTPS protocols.
 	</para>
+        <para>
+        This module uses libcurl library and in case if you are using CentOS 6,
+        you should be aware that standard libcurl library(libcurl-7.19.7-52 at this point) has memory leak.
+        To fix this memory leak you should install libcurl from city-fan repo.
+        More details: https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in-centos6
+        </para>
 	</section>
 	<section>
 	<title>Dependencies</title>
