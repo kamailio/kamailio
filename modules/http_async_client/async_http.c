@@ -45,7 +45,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../cfg/cfg_struct.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_http.h"

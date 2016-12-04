@@ -55,7 +55,7 @@
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
 #include "../../mi/mi_types.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
 

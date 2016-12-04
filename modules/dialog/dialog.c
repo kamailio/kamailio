@@ -56,7 +56,7 @@
 #include "../../pvar.h"
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 #include "../../hashes.h"
 #include "../../lib/kcore/kstats_wrapper.h"
 #include "../../mem/mem.h"

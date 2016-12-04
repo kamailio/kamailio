@@ -49,7 +49,7 @@
 #include "../../mod_fix.h"
 #include "../../pvar.h"
 #include "../../cfg/cfg_struct.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/pv/pv_api.h"

@@ -37,7 +37,7 @@
 #include "../../dprint.h"
 #include "../../sr_module.h"
 #include "../../cfg/cfg_struct.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 
 int handle_msg_req_tuple(cnode_handler_t *phandler, erlang_msg * msg);
 int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg * msg);
