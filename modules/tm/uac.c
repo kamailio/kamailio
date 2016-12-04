@@ -631,7 +631,7 @@ static inline int send_prepared_request_impl(struct retr_buf *request, int retra
 	DBG("send_prepared_request_impl: uac: %p  branch: %d  to %s:%d\n",
 			uac, branch, ip_addr2a(&ip), su_getport(&uac->request.dst.to));
 
-	if (run_onsend(p_msg, &uac->request.dst, uac->request.buffer,
+	if (p_msg!=NULL && run_onsend(p_msg, &uac->request.dst, uac->request.buffer,
 			uac->request.buffer_len)==0){
 		uac->last_received=408;
 		su2ip_addr(&ip, &uac->request.dst.to);
