@@ -215,7 +215,7 @@ static int tls_complete_init(struct tcp_connection* c)
 		sname = tls_get_connect_server_name();
 		srvid = tls_get_connect_server_id();
 		dom = tls_lookup_cfg(cfg, TLS_DOMAIN_CLI,
-						&c->rcv.dst_ip, c->rcv.dst_port, sname, srvid);
+						&c->rcv.src_ip, c->rcv.src_port, sname, srvid);
 	}
 	if (unlikely(c->state<0)) {
 		BUG("Invalid connection (state %d)\n", c->state);
