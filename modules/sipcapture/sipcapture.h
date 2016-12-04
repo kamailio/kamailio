@@ -26,6 +26,7 @@
 
 struct _sipcapture_object {
 	str method;
+    str status;
 	str reply_reason;
 	str ruri;
 	str ruri_user;
