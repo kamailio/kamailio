@@ -286,7 +286,7 @@ tra_ops ]
 5.7.  db_proper()
 
    Hack which enables using db_ops queries in failure route. Call it at
-   the beginning of failure_route block.
+   the beginning of FAILURE_ROUTE block.
 
    Example 1.10. db_proper usage
         failure_route["my_failure"] {

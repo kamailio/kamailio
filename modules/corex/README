@@ -456,7 +456,7 @@ if(file_write("/tmp/data.txt", "Data is: $var(data)")) { ... }
    Please note this event route is meant to prepare the message for
    on-wire communication, e.g. to do custom encryption or decryption,
    compression/decompression etc. of the message sent to or received from
-   remote host. Therefore, except text operations, no module fucntions or
+   remote host. Therefore, except text operations, no module functions or
    pseudo variables are available in this event route.
 
 7. Examples of Usage

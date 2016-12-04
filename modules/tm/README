@@ -2131,8 +2131,8 @@ route {
 4.27.  t_branch_timeout()
 
    Returns true if the failure route is executed for a branch that did
-   timeout. It can be used from failure_route and branch-failure event
-   route.
+   timeout. It can be used from FAILURE_ROUTE and BRANCH_FAILURE_ROUTE
+   event route.
 
    Example 1.67. t_branch_timeout usage
 ...
@@ -2469,7 +2469,8 @@ if (!t_next_contacts()) {
    Function returns 1 if contact_flows_avp was not empty and a destination
    set was successfully added, returns -2 if contacts_avp was empty and
    thus there was nothing to do, and returns -1 in case of an error (see
-   syslog). This function can be used from a BRANCH_FAILURE event route.
+   syslog). This function can be used from a BRANCH_FAILURE_ROUTE event
+   route.
 
    Example 1.80. t_next_contact_flow usage
 ...

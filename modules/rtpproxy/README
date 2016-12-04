@@ -488,9 +488,9 @@ rtpproxy_offer();
             'ii' and 'ee'. So, for example if a SIP requests is processed
             with 'ie' flags, the corresponding response must be processed
             with 'ie' flags.
-            Note: As rtpproxy in bridge mode s per default asymmetric, you
-            have to specify the 'w' flag for clients behind NAT! See also
-            above notes!
+            Note: As rtpproxy in bridge mode is asymmetric per default,
+            you have to specify the 'w' flag for clients behind NAT! See
+            also above notes!
           + x - this flag a shortcut for using the "ie" or "ei"-flags of
             RTP-Proxy, in order to do automatic bridging between IPv4 on
             the "internal network" and IPv6 on the "external network". The
@@ -693,7 +693,7 @@ rtpproxy_manage();
 ...
     if (is_method("INVITE")) {
         rtpproxy_offer();
-        if (detect_hold()) {
+        if (is_audio_on_hold()) {
             rtpproxy_stream2uas("/var/rtpproxy/prompts/music_on_hold", "-1");
         } else {
             rtpproxy_stop_stream2uas();
