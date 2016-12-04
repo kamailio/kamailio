@@ -530,6 +530,12 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 	}
 	/*LM_DBG("destination address length is %i\n", tolen);*/
 	n=sendto(fd, buf, len, 0, to, tolen);
+	if(n!=len) {
+		LM_ERR("failed to sent the response (%d - %d:%s)\n",
+				n, errno, strerror(errno));
+		return n;
+	}
+	LM_DBG("rpc response sent out\n");
 	return n;
 }
 
