@@ -86,9 +86,6 @@ mod_list_utils=utils http_client
 # - modules depending on curl and libevent2 library
 mod_list_http_async=http_async_client
 
-# - modules depending on purple library
-mod_list_purple=purple
-
 # - modules depending on memcache library
 mod_list_memcached=memcached
 
@@ -163,9 +160,6 @@ mod_list_osp=osp
 # - modules depending on java library
 mod_list_java=app_java
 
-# - modules depending on iptables library
-mod_list_iptrtpproxy=iptrtpproxy
-
 # - modules depending on gzip library
 mod_list_gzcompress=gzcompress
 
@@ -206,7 +200,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_perldeps) $(mod_list_cpl) \
 			   $(mod_list_xmpp) $(mod_list_carrierroute) \
 			   $(mod_list_berkeley) $(mod_list_utils) \
-			   $(mod_list_purple) $(mod_list_memcached) \
+			   $(mod_list_memcached) \
 			   $(mod_list_tlsdeps) $(mod_list_websocket) \
 			   $(mod_list_snmpstats) $(mod_list_presence) \
 			   $(mod_list_lua) $(mod_list_python) \
@@ -214,7 +208,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_json) $(mod_list_redis) \
 			   $(mod_list_mono) $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
-			   $(mod_list_iptrtpproxy) $(mod_list_mi_xmlrpc) \
+			   $(mod_list_mi_xmlrpc) \
 			   $(mod_list_outbound) $(mod_list_osp) \
 			   $(mod_list_java) $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
@@ -330,9 +324,6 @@ module_group_kutils=$(mod_list_utils)
 
 # pkg https_async module
 module_group_khttp_async=$(mod_list_http_async)
-
-# pkg purple module
-module_group_kpurple=$(mod_list_purple)
 
 # pkg memcached module
 module_group_kmemcached=$(mod_list_memcached)
