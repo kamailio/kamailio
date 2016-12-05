@@ -27,7 +27,7 @@
 #include "../../dprint.h"
 #include "../../trim.h"
 #include "../../ut.h"
-#include "../../lib/kcore/strcommon.h"
+#include "../../strutils.h"
 
 #include "sql_trans.h"
 

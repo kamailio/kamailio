@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 Voice System SRL
  * Copyright (C) 2011 Carsten Bock, carsten@ng-voice.com
  *
@@ -16,14 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
  * --------
  * 2007-05-10  initial version (ancuta)
- * 2007-07-06 additional information saved in the database: cseq, contact, 
+ * 2007-07-06 additional information saved in the database: cseq, contact,
  *  		   route set and socket_info for both caller and callee (ancuta)
  */
 
@@ -38,7 +36,7 @@
 #include "../../str.h"
 #include "../../socket_info.h"
 #include "../../lib/srutils/srjson.h"
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 
 #include "dlg_hash.h"
 #include "dlg_var.h"

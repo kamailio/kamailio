@@ -26,7 +26,7 @@ License: GPL-2+
 
 Files: atomic/* atomic_ops.* basex.* bit_*.c char_msg_val.h compiler_opt.h
  core_stats.h counters.* endianness.* futexlock.h hashes.h io_wait.*
- kstats_types.h lib/kcore/kstats_wrapper.* lock_ops.c lock_ops_init.h
+ kstats_types.h lock_ops.c lock_ops_init.h
  lvalue.* mem/ll_malloc.* mem/memdbg.h mem/sf_malloc.* mi/*.h mod_fix.*
  modules/tm/rpc_uac.* modules/counters/counters.c modules/tls/sbufq.h
  modules/tls/tls_bio.* modules/tls/tls_cfg.* modules/tls/tls_cfg.h

@@ -28,7 +28,7 @@
 #include "../../mod_fix.h"
 #include "../../route.h"
 #include "../../data_lump.h"
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 #include "../../dset.h"
 #include "../../script_cb.h"
 #include "../../parser/msg_parser.h"

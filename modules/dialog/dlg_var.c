@@ -25,11 +25,11 @@
  * \ingroup dialog
  * Module: \ref dialog
  */
-		       
+
 #include "../../route.h"
 #include "../../script_cb.h"
 #include "../../pvapi.h"
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 
 #include "dlg_var.h"
 #include "dlg_hash.h"

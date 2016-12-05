@@ -33,7 +33,6 @@
 #include "../../rpc_lookup.h"
 
 #include "../../parser/parse_param.h"
-#include "../../lib/kcore/statistics.h"
 
 MODULE_VERSION
 

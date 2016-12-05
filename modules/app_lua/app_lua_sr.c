@@ -36,7 +36,7 @@
 #include "../../flags.h"
 #include "../../dset.h"
 #include "../../parser/parse_uri.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../xavp.h"
 #include "../../kemi.h"
 

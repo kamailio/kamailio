@@ -39,7 +39,7 @@
 #include "str.h"
 
 /* kamailio compat */
-#include "kstats_types.h"
+#include "counters.h"
 #include "mi/mi_types.h"
 #include "pvar.h"
 

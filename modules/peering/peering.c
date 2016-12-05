@@ -1,4 +1,4 @@
-/* 
+/*
  * Radius based peering module
  *
  * Copyright (C) 2008 Juha Heinanen
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -40,7 +40,7 @@
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
 #include "../../config.h"
-#include "../../lib/kcore/radius.h"
+#include "../misc_radius/radius.h"
 #include "verify.h"
 
 MODULE_VERSION

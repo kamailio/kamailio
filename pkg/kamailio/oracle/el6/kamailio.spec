@@ -495,9 +495,6 @@ fi
 %{_libdir}/kamailio/libbinrpc.so
 %{_libdir}/kamailio/libbinrpc.so.0
 %{_libdir}/kamailio/libbinrpc.so.0.1
-%{_libdir}/kamailio/libkcore.so
-%{_libdir}/kamailio/libkcore.so.1
-%{_libdir}/kamailio/libkcore.so.1.0
 %{_libdir}/kamailio/libkmi.so
 %{_libdir}/kamailio/libkmi.so.1
 %{_libdir}/kamailio/libkmi.so.1.0

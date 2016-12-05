@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -33,14 +33,14 @@
 #include "snmpObjects.h"
 
 #include "../../dprint.h"
-#include "../../lib/kcore/statistics.h"
+#include "snmp_statistics.h"
 #include "../../config.h"
 
 #include "snmpstats_globals.h"
 #include "utilities.h"
 #include "alarm_checks.h"
 
-/* 
+/*
  * Initializes the kamailioObjects module.  This involves:
  *
  *  - Registering all OID's
@@ -50,7 +50,7 @@
  */
 void init_kamailioObjects(void)
 {
-	static oid kamailioMsgQueueDepth_oid[]            =  
+	static oid kamailioMsgQueueDepth_oid[]            =
 		{ KAMAILIO_OID,3,1,3,1,2,3,1 };
 
 	static oid kamailioMsgQueueMinorThreshold_oid[]   = 

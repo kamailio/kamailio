@@ -30,7 +30,7 @@
 #include "../../data_lump.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_uri.h"
-#include "../../lib/kcore/strcommon.h"
+#include "../../strutils.h"
 #include "path.h"
 #include "registrar.h"
 

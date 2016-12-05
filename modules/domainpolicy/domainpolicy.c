@@ -1,6 +1,4 @@
-/* 
- * $Id$
- *
+/*
  * Copyright (C) 2006 Otmar Lendl & Klaus Darilion
  *
  * Based on the ENUM and domain module.
@@ -17,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -46,7 +44,7 @@
 #include "../../socket_info.h"
 
 #include "../../resolve.h"
-#include "../../lib/kcore/regexp.h"
+#include "../../strutils.h"
 
 #define IS_D2PNAPTR(naptr) ((naptr->services_len >= 7) && (!strncasecmp("D2P+SIP", naptr->services, 7)))
 

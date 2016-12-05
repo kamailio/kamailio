@@ -29,7 +29,7 @@
 #include "../../action.h"
 #include "../../socket_info.h"
 #include "../../data_lump.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../tcp_conn.h"
 #include "../../pvapi.h"
 #include "../../trim.h"

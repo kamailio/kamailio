@@ -44,7 +44,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 #include "hm_hash.h"
 
 

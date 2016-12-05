@@ -32,12 +32,11 @@
 
 
 #include "../../str.h"
-#include "../../lib/kcore/radius.h"
 #include "../../usr_avp.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include "../../lib/kcore/radius.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../misc_radius/radius.h"
+#include "../../strutils.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "peering.h"

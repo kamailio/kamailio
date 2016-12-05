@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -36,7 +36,7 @@
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 #include <net-snmp/library/snmp_assert.h>
 
-#include "../../lib/kcore/statistics.h"
+#include "snmp_statistics.h"
 #include "../../mem/mem.h"
 
 #include "snmpstats_globals.h"
@@ -53,8 +53,8 @@ size_t kamailioSIPPortTable_oid_len = OID_LENGTH(kamailioSIPPortTable_oid);
  *
  * 	ipType.NUM_IP_OCTETS.ipAddress[0].ipAddress[1]...ipAddress[NUM_IP_OCTETS].portNumber
  *
- * sizeOfOID will be assigned the length of the oid.  
- * 
+ * sizeOfOID will be assigned the length of the oid.
+ *
  * Note: This function returns a newly allocated block of memory.  Make sure to
  * deallocate the memory when you no longer need it. 
  */

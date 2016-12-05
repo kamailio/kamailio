@@ -1976,7 +1976,7 @@ ifeq ($(OS), darwin)
 	# the modules uses symbols from ser => either
 	# -flat_namespace -undefined_suppress or -bundle_loader ../../$(MAIN_NAME)
 	MOD_LDFLAGS:= -bundle -flat_namespace -undefined suppress
-	# for libs using symbols from ser (e.g srdb2, kcore a.s.o) we
+	# for libs using symbols from ser (e.g srdb2, a.s.o) we
 	# need -flat_namespace -undefined suppress
 	LIB_LDFLAGS:= -dynamiclib -flat_namespace -undefined suppress
 	LIB_SUFFIX:=.dylib

@@ -8,7 +8,4 @@ NAME=pdb.so
 LIBS=
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kmi/kmi $(SERLIBPATH)/kcore/kcore
-
 include ../../Makefile.modules

@@ -1,7 +1,7 @@
 #
 # IMS_ICSCF make file
 #
-# 
+#
 
 include ../../Makefile.defs
 auto_gen=
@@ -23,6 +23,6 @@ endif
 DEFS += -DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/kcore/kcore
+SER_LIBS+=$(SERLIBPATH)/srdb1/srdb1
 SER_LIBS+=$(SERLIBPATH)/ims/kamailio_ims
 include ../../Makefile.modules

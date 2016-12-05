@@ -14,7 +14,7 @@
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
 #include "../../fmsg.h"
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../lvalue.h"

@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 Voice System SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -38,7 +36,7 @@
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/kmi/tree.h"
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 #include "../../locking.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"

@@ -35,7 +35,7 @@
 #include "../../parser/parse_param.h"
 #include "../../parser/msg_parser.h"
 #include "../../lib/srutils/shautils.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"
 

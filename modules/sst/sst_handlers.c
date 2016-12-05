@@ -52,7 +52,6 @@
 #include <stdlib.h> /* For atoi() */
 
 #include "../../pvar.h"
-#include "../../lib/kcore/parse_sst.h"
 #include "../../parser/parse_supported.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
@@ -64,6 +63,7 @@
 #include "../../sr_module.h" /* Needed for find_export() */
 #include "../../modules/sl/sl.h"
 
+#include "parse_sst.h"
 #include "sst_handlers.h"
 #include "sst_mi.h"
 

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
 */
@@ -40,7 +40,7 @@
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/kmi/tree.h"
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_handlers.h"

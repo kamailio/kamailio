@@ -29,7 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../dprint.h"
 #include "../../pvar.h"
 #include "../../data_lump.h"

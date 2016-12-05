@@ -11,7 +11,7 @@
 #include "../../trim.h"
 #include "../../pvar.h"
 #include "../../timer.h"
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 #include "../../action.h"
 #include "../../script_cb.h"
 #include "../../fmsg.h"

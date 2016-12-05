@@ -1,4 +1,4 @@
-/* 
+/*
  * Digest Authentication - Radius support
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -25,7 +25,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../usr_avp.h"
-#include "../../lib/kcore/radius.h"
+#include "../misc_radius/radius.h"
 #include "../../ut.h"
 #include "../../modules/auth/api.h"
 #include "sterman.h"

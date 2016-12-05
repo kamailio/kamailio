@@ -31,7 +31,7 @@
  * @brief Kamailio nat_traversal module
 
    The nat_traversal module provides support for handling far-end NAT
-   traversal for SIP signaling. 
+   traversal for SIP signaling.
  */
 
 #include <stdbool.h>
@@ -64,7 +64,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_expires.h"
 #include "../../parser/contact/parse_contact.h"
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 #include "../../rand/kam_rand.h"
 #include "../dialog/dlg_load.h"
 #include "../../modules/tm/tm_load.h"

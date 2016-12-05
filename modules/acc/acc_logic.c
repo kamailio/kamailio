@@ -1,6 +1,4 @@
 /*
- * $Id$
- * 
  * Accounting module logic
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -42,7 +40,7 @@
 #include "../../sr_module.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 #include "../../flags.h"

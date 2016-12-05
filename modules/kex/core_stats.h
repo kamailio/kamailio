@@ -29,7 +29,7 @@
 #ifndef _CORE_STATS_H_
 #define _CORE_STATS_H_
 
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 
 #ifdef STATISTICS
 /*! exported core statistics */

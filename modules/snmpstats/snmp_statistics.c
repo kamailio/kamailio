@@ -25,7 +25,6 @@
  * \brief Statistics support
  * \author bogdan, andrei
  * \author Jeffrey Magder - SOMA Networks
- * \ingroup libkcore
  */
 
 
@@ -36,7 +35,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../socket_info.h"
-#include "statistics.h"
+#include "snmp_statistics.h"
 
 #ifdef STATISTICS
 
@@ -45,17 +44,17 @@
  * Returns the statistic associated with 'numerical_code' and 'out_codes'.
  * Specifically:
  *
- *  - if out_codes is nonzero, then the stat_var for the number of messages 
+ *  - if out_codes is nonzero, then the stat_var for the number of messages
  *    _sent out_ with the 'numerical_code' will be returned if it exists.
- *  - otherwise, the stat_var for the number of messages _received_ with the 
- *    'numerical_code' will be returned, if the stat exists. 
+ *  - otherwise, the stat_var for the number of messages _received_ with the
+ *    'numerical_code' will be returned, if the stat exists.
  */
 stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int out_codes)
 {
 	static char msg_code[INT2STR_MAX_LEN+4];
 	str stat_name;
 
-	stat_name.s = int2bstr( (unsigned long)numerical_code, msg_code, 
+	stat_name.s = int2bstr( (unsigned long)numerical_code, msg_code,
 		&stat_name.len);
 	stat_name.s[stat_name.len++] = '_';
 
@@ -79,7 +78,7 @@ stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int out_codes)
 /*!
  * This function will retrieve a list of all ip addresses and ports that Kamailio
  * is listening on, with respect to the transport protocol specified with
- * 'protocol'. 
+ * 'protocol'.
  *
  * The first parameter, ipList, is a pointer to a pointer. It will be assigned a
  * new block of memory holding the IP Addresses and ports being listened to with
@@ -93,9 +92,9 @@ stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int out_codes)
  *  - ipList[0] will be the first octet of the first ip address
  *  - ipList[3] will be the last octet of the first ip address.
  *  - iplist[4] will be the port of the first ip address
- *  - 
- *  - iplist[5] will be the first octet of the first ip address, 
- *  - and so on.  
+ *  -
+ *  - iplist[5] will be the first octet of the first ip address,
+ *  - and so on.
  *
  * The function will return the number of sockets which were found.  This can be
  * used to index into ipList.
@@ -129,9 +128,9 @@ int get_socket_list_from_proto(int **ipList, int protocol) {
  *  - ipList[0] will be the first octet of the first ip address
  *  - ipList[3] will be the last octet of the first ip address.
  *  - iplist[4] will be the port of the first ip address
- *  - 
- *  - iplist[5] will be the first octet of the first ip address, 
- *  - and so on.  
+ *  -
+ *  - iplist[5] will be the first octet of the first ip address,
+ *  - and so on.
  */
 int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family) {
 
@@ -142,10 +141,10 @@ int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family
 	int numberOfSockets = 0;
 	int currentRow      = 0;
 
-	/* I hate to use #ifdefs, but this is necessary because of the way 
+	/* I hate to use #ifdefs, but this is necessary because of the way
 	 * get_sock_info_list() is defined.  */
 #ifndef USE_TCP
-	if (protocol == PROTO_TCP) 
+	if (protocol == PROTO_TCP)
 	{
 		return 0;
 	}
@@ -207,12 +206,12 @@ int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family
 		}
 
 		for (i = 0; i < num_ip_octets; i++) {
-			(*ipList)[currentRow*(num_ip_octets + 1) + i ] = 
+			(*ipList)[currentRow*(num_ip_octets + 1) + i ] =
 				si->address.u.addr[i];
 		}
-		(*ipList)[currentRow*(num_ip_octets + 1) + i] = 
+		(*ipList)[currentRow*(num_ip_octets + 1) + i] =
 			si->port_no;
-		
+
 		currentRow++;
 	}
 
@@ -226,10 +225,10 @@ int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family
  * Returns 1 on success, and 0 on a failed parse.
  *
  * Note: The format of ipAddress is as defined in the comments of
- * get_socket_list_from_proto() in this file. 
+ * get_socket_list_from_proto() in this file.
  *
  */
-static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue) 
+static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 {
 	int i;
 
@@ -243,7 +242,7 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 
 	/* Example line from /proc/net/tcp or /proc/net/udp:
 	 *
-	 *	sl  local_address rem_address   st tx_queue rx_queue  
+	 *	sl  local_address rem_address   st tx_queue rx_queue
 	 *	21: 5A0A0B0A:CAC7 1C016E0A:0016 01 00000000:00000000
 	 *
 	 * Algorithm:
@@ -258,16 +257,16 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 
 	for (i = 0; i < 4; i++) {
 
-		currColonLocation = strchr(currentLocationInLine, ':'); 
+		currColonLocation = strchr(currentLocationInLine, ':');
 
 		/* We didn't find all the needed ':', so fail. */
 		if (currColonLocation == NULL) {
 			return 0;
 		}
 
-		/* Parse out the integer, keeping the location of the next 
+		/* Parse out the integer, keeping the location of the next
 		 * non-numerical character.  */
-		parsedInteger[i] = 
+		parsedInteger[i] =
 			(int) strtol(++currColonLocation, &nextNonNumericalChar,
 					16);
 
@@ -277,8 +276,8 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 		if (nextNonNumericalChar == currColonLocation) {
 			return 0;
 		}
-		
-		/* Reset the currentLocationInLine to the last non-numerical 
+
+		/* Reset the currentLocationInLine to the last non-numerical
 		 * character, so that next iteration of this loop, we can find
 		 * the next colon location. */
 		currentLocationInLine = nextNonNumericalChar;
@@ -288,9 +287,9 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 	/* Extract out the segments of the IP Address.  They are stored in
 	 * reverse network byte order. */
 	for (i = 0; i < NUM_IP_OCTETS; i++) {
-		
-		ipAddress[i] = 
-			parsedInteger[0] & (ipOctetExtractionMask << i*8); 
+
+		ipAddress[i] =
+			parsedInteger[0] & (ipOctetExtractionMask << i*8);
 
 		ipAddress[i] >>= i*8;
 
@@ -299,20 +298,19 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 	ipAddress[NUM_IP_OCTETS] = parsedInteger[1];
 
 	*rx_queue = parsedInteger[3];
-	
+
 	return 1;
- 
 }
 
 
 /*!
- * Returns 1 if ipOne was found in ipArray, and 0 otherwise. 
+ * Returns 1 if ipOne was found in ipArray, and 0 otherwise.
  *
- * The format of ipOne and ipArray are described in the comments of 
+ * The format of ipOne and ipArray are described in the comments of
  * get_socket_list_from_proto() in this file.
  *
  * */
-static int match_ip_and_port(int *ipOne, int *ipArray, int sizeOf_ipArray) 
+static int match_ip_and_port(int *ipOne, int *ipArray, int sizeOf_ipArray)
 {
 	int curIPAddrIdx;
 	int curOctetIdx;
@@ -324,10 +322,10 @@ static int match_ip_and_port(int *ipOne, int *ipArray, int sizeOf_ipArray)
 		/* Check for octets that don't match.  If one is found, skip the
 		 * rest.  */
 		for (curOctetIdx = 0; curOctetIdx < NUM_IP_OCTETS + 1; curOctetIdx++) {
-			
+
 			/* We've encoded a 2D array as a 1D array.  So find out
 			 * our position in the 1D array. */
-			ipArrayIndex = 
+			ipArrayIndex =
 				curIPAddrIdx * (NUM_IP_OCTETS + 1) + curOctetIdx;
 
 			if (ipOne[curOctetIdx] != ipArray[ipArrayIndex]) {
@@ -357,18 +355,18 @@ static int match_ip_and_port(int *ipOne, int *ipArray, int sizeOf_ipArray)
  * - if forTCP is zero, the check involves only the UDP transport.
  *
  * Note: This only works on linux systems supporting the /proc/net/[tcp|udp]
- *       interface.  On other systems, zero will always be returned. 
+ *       interface.  On other systems, zero will always be returned.
  */
 static int get_used_waiting_queue(
-		int forTCP, int *interfaceList, int listSize) 
+		int forTCP, int *interfaceList, int listSize)
 {
 	FILE *fp;
 	char *fileToOpen;
-	
+
 	char lineBuffer[MAX_PROC_BUFFER];
 	int  ipAddress[NUM_IP_OCTETS+1];
 	int  rx_queue;
-	
+
 	int  waitingQueueSize = 0;
 
 #ifndef __OS_linux
@@ -383,7 +381,7 @@ static int get_used_waiting_queue(
 	} else {
 		fileToOpen = "/proc/net/udp";
 	}
-	
+
 	fp = fopen(fileToOpen, "r");
 
 	if (fp == NULL) {
@@ -400,7 +398,7 @@ static int get_used_waiting_queue(
 		/* Parse out the ip address, port, and rx_queue. */
 		if(parse_proc_net_line(lineBuffer, ipAddress, &rx_queue)) {
 
-			/* Only add rx_queue if the line just parsed corresponds 
+			/* Only add rx_queue if the line just parsed corresponds
 			 * to an interface we are listening on.  We do this
 			 * check because it is possible that this system has
 			 * other network interfaces that Kamailio has been told
@@ -418,13 +416,13 @@ static int get_used_waiting_queue(
 
 /*!
  * Returns the sum of the number of bytes waiting to be consumed on all network
- * interfaces and transports that Kamailio is listening on. 
+ * interfaces and transports that Kamailio is listening on.
  *
  * Note: This currently only works on systems supporting the /proc/net/[tcp|udp]
  *       interface.  On other systems, zero will always be returned.  To change
- *       this in the future, add an equivalent for get_used_waiting_queue(). 
+ *       this in the future, add an equivalent for get_used_waiting_queue().
  */
-int get_total_bytes_waiting(void) 
+int get_total_bytes_waiting(void)
 {
 	int bytesWaiting = 0;
 
@@ -436,10 +434,10 @@ int get_total_bytes_waiting(void)
 	int *TLS6List  = NULL;
 
 	int numUDPSockets  = 0;
-	int numTCPSockets  = 0; 
+	int numTCPSockets  = 0;
 	int numTLSSockets  = 0;
 	int numUDP6Sockets  = 0;
-	int numTCP6Sockets  = 0; 
+	int numTCP6Sockets  = 0;
 	int numTLS6Sockets  = 0;
 
 	/* Extract out the IP address address for UDP, TCP, and TLS, keeping
@@ -476,11 +474,11 @@ int get_total_bytes_waiting(void)
 		pkg_free(UDP6List);
 	}
 
-	if (numTCPSockets > 0) 
+	if (numTCPSockets > 0)
 	{
 		pkg_free(TCPList);
 	}
-	if (numTCP6Sockets > 0) 
+	if (numTCP6Sockets > 0)
 	{
 		pkg_free(TCP6List);
 	}
@@ -496,5 +494,3 @@ int get_total_bytes_waiting(void)
 
 	return bytesWaiting;
 }
-
-

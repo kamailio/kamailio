@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -33,7 +33,7 @@
 
 #include <signal.h>
 
-#include "../../lib/kcore/statistics.h"
+#include "snmp_statistics.h"
 
 #include "alarm_checks.h"
 #include "sub_agent.h"

@@ -45,7 +45,7 @@
 #include "sst_handlers.h" /* also includes sr_module.h needed by
                              handlers */
 #ifdef STATISTICS
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 #endif
 
 MODULE_VERSION
@@ -57,7 +57,7 @@ static int mod_init(void);
 sl_api_t slb;
 
 /*
- * statistic variables 
+ * statistic variables
  */
 int sst_enable_stats = 1;
 stat_var *expired_sst = 0;

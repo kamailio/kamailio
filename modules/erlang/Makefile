@@ -1,4 +1,4 @@
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
@@ -14,9 +14,6 @@ else
 $(error Not found Erlang)
 endif
 LIBS=-L$(ERLANG_LIBDIR) -lei -lpthread
-
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 
 DEFS+=-I$(ERLANG_INCDIR)
 DEFS+=-DKAMAILIO_MOD_INTERFACE -D_REENTRANT

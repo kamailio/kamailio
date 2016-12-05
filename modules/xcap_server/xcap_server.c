@@ -44,7 +44,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../modules/xcap_client/xcap_callbacks.h"
 #include "../../modules/sl/sl.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../ip_addr.h"
 
 #include "xcap_misc.h"

@@ -40,7 +40,7 @@
 
 #include "snmpstats_globals.h"
 #include "utilities.h"
-#include "../../lib/kcore/statistics.h"
+#include "snmp_statistics.h"
 #include "../../globals.h"
 #include "../../tcp_options.h"
 

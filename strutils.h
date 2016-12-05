@@ -13,22 +13,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*!
- * \file
- * \brief comparison functions
- * \ingroup libkcore
- */
-
-#ifndef _CMPAPI_H_
-#define _CMPAPI_H_
+#ifndef _STRUTILS_H_
+#define _STRUTILS_H_
 
 #include <string.h>
-#include "../../str.h"
+
+#include "str.h"
 
 /**
  * Comparison functions
@@ -52,5 +47,18 @@ int cmp_hdrname_strzn(str *s1, char *s2, size_t n);
 int cmp_uri_str(str *s1, str *s2);
 int cmp_aor_str(str *s1, str *s2);
 
-#endif
+/* str regexp replace */
+int reg_replace(char *pattern, char *replacement, char *string, str *result);
 
+/* add backslashes to special characters */
+int escape_common(char *dst, char *src, int src_len);
+
+/* remove backslashes to special characters */
+int unescape_common(char *dst, char *src, int src_len);
+int escape_user(str *sin, str *sout);
+int unescape_user(str *sin, str *sout);
+int escape_param(str *sin, str *sout);
+int unescape_param(str *sin, str *sout);
+int escape_csv(str *sin, str *sout);
+
+#endif

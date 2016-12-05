@@ -1,6 +1,4 @@
 /*
- * $Id: parse_privacy.c 4720 2008-08-23 10:56:15Z henningw $
- *
  * Copyright (c) 2006 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,13 +13,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- * 2006-12-18 Introduced parsing of Privacy header (RFC 3323)
  */
 
 /*!
@@ -33,10 +28,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "../../dprint.h"
-#include "../../trim.h"
+#include "../dprint.h"
+#include "../trim.h"
 #include "parse_privacy.h"
-#include "../../parser/msg_parser.h"
+#include "msg_parser.h"
 
 
 /*!

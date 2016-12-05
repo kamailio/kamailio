@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  * Copyright (C) 2013 Edvina AB, Sollentuna, Sweden
@@ -28,7 +28,7 @@
  * 1) The SNMPStats module will fork off a new process in mod_child_init when
  *    the rank is equal to PROC_MAIN_PROCESS.  The sub-process will be
  *    responsible for registering with a master agent (the source of snmp
- *    requests), and handling all received requests. 
+ *    requests), and handling all received requests.
  *
  * 2) The Module will register a periodic alarm checking function with a sip
  *    timer using register_timer().  This function checks for alarm conditions,
@@ -40,7 +40,7 @@
  *    spawning a short-lived process.  For this reason, the module temporarily
  *    installs a new SIGCHLD handler to deal specifically with this process.  It
  *    does not change the normal SIGCHLD behaviour for any process except for
- *    this short lived sysUpTime process. 
+ *    this short lived sysUpTime process.
  *
  * 4) mod_init() will initialize some interprocess communication buffers, as
  *    well as callback mechanisms for the usrloc module.  To understand what the
@@ -84,7 +84,7 @@
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
-#include "../../lib/kcore/statistics.h"
+#include "snmp_statistics.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"

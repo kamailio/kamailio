@@ -36,7 +36,7 @@
 #include "../../ip_addr.h"
 #include "../../resolve.h"
 #include "../../forward.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 
 #include "sipops.h"
 

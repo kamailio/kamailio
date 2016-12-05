@@ -32,7 +32,7 @@
 #include "../../tcp_conn.h"
 #include "../../timer_proc.h"
 #include "../../cfg/cfg.h"
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 #include "../../lib/kmi/mi.h"
 #include "../../mem/mem.h"
 #include "../../mod_fix.h"

@@ -5,8 +5,6 @@ auto_gen=
 NAME=cdp.so
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 
 ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)

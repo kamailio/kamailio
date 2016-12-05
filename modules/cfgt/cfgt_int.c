@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 
 #include "../../events.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../pvar.h"
 #include "../../rpc.h"
 #include "../../rpc_lookup.h"

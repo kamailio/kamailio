@@ -1,6 +1,4 @@
 /*
- * $Id$
- * 
  * Accounting module
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -25,7 +23,7 @@
  * History:
  * -------
  * 2003-03-06: aligned to change in callback names (jiri)
- * 2003-03-06: fixed improper sql connection, now from 
+ * 2003-03-06: fixed improper sql connection, now from
  * 	           child_init (jiri)
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
@@ -52,12 +50,12 @@
  */
 
 /*! \defgroup acc ACC :: The Kamailio accounting Module
- *            
+ *
  * The ACC module is used to account transactions information to
  *  different backends like syslog, SQL, RADIUS and DIAMETER (beta
  *  version).
- *            
- */ 
+ *
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -76,7 +74,7 @@
 #include "acc_cdr.h"
 
 #ifdef RAD_ACC
-#include "../../lib/kcore/radius.h"
+#include "../misc_radius/radius.h"
 #endif
 
 #ifdef DIAM_ACC

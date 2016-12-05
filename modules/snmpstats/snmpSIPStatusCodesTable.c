@@ -1,5 +1,5 @@
 /*
- * SNMPStats Module 
+ * SNMPStats Module
  * Copyright (C) 2006 SOMA Networks, INC.
  * Written by: Jeffrey Magder (jmagder@somanetworks.com)
  *
@@ -22,7 +22,7 @@
  *
  * The file implements the kamailioSIPStatusCodesTable.  For a full description
  * of the table, please see the KAMAILIO-SIP-COMMON-MIB.
- * 
+ *
  * This file is much larger and more complicated than the files for other
  * tables.  This is because the table is settable, bringing a lot of SNMP
  * overhead.  Most of the file consists of the original auto-generated
@@ -35,17 +35,17 @@
  *
  *    - The row structure has been modified from its default to store the
  *      number of messages that have been received and sent with a certain
- *      status code, at the time this row was created.  This function 
- *      populates that data. 
+ *      status code, at the time this row was created.  This function
+ *      populates that data.
  *
- * 2) kamailioSIPStatusCodesTable_extract_index() 
+ * 2) kamailioSIPStatusCodesTable_extract_index()
  *
  *    - Modified to fail if the index is invalid.  The index is invalid if it
  *      does not match up with the global userLookupCounter.
  *
  * 3) kamailioSIPStatusCodesTable_can_[activate|deactivate|delete]()
- *   
- *    - Simplified to always allow activation/deactivation/deletion. 
+ *
+ *    - Simplified to always allow activation/deactivation/deletion.
  *
  * 4) kamailioSIPStatusCodesTable_set_reserve1()
  *
@@ -58,12 +58,12 @@
  * 5) kamailioSIPStatusCodesTable_get_value()
  *
  *    - Instead of returning a variable binding to either
- *      kamailioSIPStatusCodeIns or kamailioSIPStatusCodeOuts, the function 
- *      returns a variable binding equal to the current value as per the 
+ *      kamailioSIPStatusCodeIns or kamailioSIPStatusCodeOuts, the function
+ *      returns a variable binding equal to the current value as per the
  *      statistics framework, minus either kamailioSIPStatusCodeIns or
  *      kamailioSIPStatusCodeOuts
  *
- * You can safely ignore the other functions.  
+ * You can safely ignore the other functions.
  *
  */
 
@@ -75,15 +75,15 @@
 
 #include "snmpSIPStatusCodesTable.h"
 #include "snmpstats_globals.h"
-#include "../../lib/kcore/statistics.h"
+#include "snmp_statistics.h"
 
 static netsnmp_handler_registration *my_handler = NULL;
 static netsnmp_table_array_callbacks cb;
 
-oid kamailioSIPStatusCodesTable_oid[] = { 
+oid kamailioSIPStatusCodesTable_oid[] = {
 	kamailioSIPStatusCodesTable_TABLE_OID };
 
-size_t kamailioSIPStatusCodesTable_oid_len = 
+size_t kamailioSIPStatusCodesTable_oid_len =
 OID_LENGTH(kamailioSIPStatusCodesTable_oid);
 
 

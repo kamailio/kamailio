@@ -20,8 +20,6 @@
 /*!
 * \file
 * \brief Faked message handling
-* \ingroup libkcore
-* Module: \ref libkcore
 */
 
 #include "dprint.h"

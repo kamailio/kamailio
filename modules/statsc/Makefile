@@ -8,7 +8,4 @@ LIBS=
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kcore/kcore
-
 include ../../Makefile.modules

@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -25,7 +25,7 @@
  * 2005-07-08: Radius AVP may contain any kind of Kamailio AVP - ID/name or
  *             int/str value (bogdan)
  * 2008-09-03  New implementation where avp_load_radius() function is replaced
- *             by radius_load_caller_avps() and radius_load_callee_avps(callee) 
+ *             by radius_load_caller_avps() and radius_load_callee_avps(callee)
  *             functions that take caller and callee as string parameter that
  *             may contain pseudo variables.  Support for adding function
  *             specific extra attributes defined by module parameters.
@@ -40,7 +40,7 @@
 #include "../../usr_avp.h"
 #include "../../ut.h"
 #include "../../config.h"
-#include "../../lib/kcore/radius.h"
+#include "radius.h"
 #include "../../mod_fix.h"
 #include "misc_radius.h"
 #include "functions.h"

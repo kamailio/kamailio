@@ -17,7 +17,7 @@ ifeq ($(BUILDER),)
 else
 	BUILDAGENTLIBS = $(shell net-snmp-config --netsnmp-agent-libs)
 	INSTALLMIBDIR = $(basedir)$(shell net-snmp-config --prefix)/share/snmp/mibs
-endif 
+endif
 
 ifeq ($(EMBEDDED_PERL),1)
 #
@@ -37,8 +37,6 @@ LIBS=$(BUILDAGENTLIBS)
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 include ../../Makefile.modules
 
 install-cfg:

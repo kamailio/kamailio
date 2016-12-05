@@ -22,7 +22,6 @@
 /*!
  * \file
  * \brief Kamailio statistics handling
- * \ingroup libkcore
  * \author bogdan
  * \author Jeffrey Magder - SOMA Networks
  */
@@ -31,7 +30,7 @@
 #ifndef _KSTATISTICS_H_
 #define _KSTATISTICS_H_
 
-#include "kstats_wrapper.h"
+#include "../../counters.h"
 
 
 #define NUM_IP_OCTETS 4
@@ -43,10 +42,10 @@
  * Returns the statistic associated with 'numerical_code' and 'is_a_reply'.
  * Specifically:
  *
- *  - if in_codes is nonzero, then the stat_var for the number of messages 
+ *  - if in_codes is nonzero, then the stat_var for the number of messages
  *    _received_ with the 'numerical_code' will be returned if it exists.
- *  - otherwise, the stat_var for the number of messages _sent_ with the 
- *    'numerical_code' will be returned, if the stat exists. 
+ *  - otherwise, the stat_var for the number of messages _sent_ with the
+ *    'numerical_code' will be returned, if the stat exists.
  */
 stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int in_codes);
 
@@ -73,9 +72,9 @@ stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int in_codes);
  *  - ipList[0] will be the first octet of the first ip address
  *  - ipList[3] will be the last octet of the first ip address.
  *  - iplist[4] will be the port of the first ip address
- *  - 
- *  - iplist[5] will be the first octet of the first ip address, 
- *  - and so on.  
+ *  -
+ *  - iplist[5] will be the first octet of the first ip address,
+ *  - and so on.
  *
  * The function will return the number of sockets which were found.  This can be
  * used to index into ipList.
@@ -99,13 +98,12 @@ int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family
 
 /*!
  * Returns the sum of the number of bytes waiting to be consumed on all network
- * interfaces and transports that Kamailio is listening on. 
+ * interfaces and transports that Kamailio is listening on.
  *
  * Note: This currently only works on systems supporting the /proc/net/[tcp|udp]
  *       interface.  On other systems, zero will always be returned.  Details of
  *       why this is so can be found in network_stats.c
  */
 int get_total_bytes_waiting(void);
-
 
 #endif

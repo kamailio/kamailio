@@ -80,7 +80,7 @@
 #include "hep.h"
 
 #ifdef STATISTICS
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 #endif
 
 

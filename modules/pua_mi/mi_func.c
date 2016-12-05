@@ -17,11 +17,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -30,14 +30,14 @@
 #include  "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../ut.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 
 #include "../pua/pua_bind.h"
 #include "pua_mi.h"
 
 /*
  * mi cmd: pua_publish
- *		<presentity_uri> 
+ *		<presentity_uri>
  *		<expires>
  *		<event package>
  *		<content_type>     - body type if body of a type different from default

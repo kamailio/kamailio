@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -32,7 +32,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_from.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../pua/hash.h"
 #include"pua_bla.h"
 
@@ -52,15 +52,15 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
 
 	memset(&publ, 0, sizeof(publ_info_t));
 	memset(&dialog, 0, sizeof(ua_pres_t));
- 
+
   	LM_DBG("start\n");
-  
+
   	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
   	{
   		LM_ERR("parsing headers\n");
   		return -1;
   	}
-  
+
   	if( msg->to==NULL || msg->to->body.s==NULL)
   	{
   		LM_ERR("cannot parse TO header\n");

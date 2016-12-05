@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -40,7 +40,7 @@
  * from scripts.
  * The module, via an internal API, also provide the foundation to build
  * on top of it more complex dialog-based functionalities via other
- * Kamailio modules.                       
+ * Kamailio modules.
  */
 
 #include <stdio.h>
@@ -58,7 +58,7 @@
 #include "../../script_cb.h"
 #include "../../fmsg.h"
 #include "../../hashes.h"
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 #include "../../mem/mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../timer_proc.h"

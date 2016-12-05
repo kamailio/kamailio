@@ -1,7 +1,7 @@
 #
 # nat_traversal module makefile
 #
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
@@ -10,9 +10,6 @@ NAME=nat_traversal.so
 LIBS=
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
-
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 
 include ../../Makefile.modules
 

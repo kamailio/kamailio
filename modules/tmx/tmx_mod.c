@@ -34,7 +34,7 @@
 #include "../../route.h"
 #include "../../script_cb.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 #include "../../dset.h"
 #include "../../kemi.h"
 

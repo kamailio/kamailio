@@ -29,10 +29,10 @@
  */
 
 /*! \defgroup acc_radius ACC_RADIUS :: The Kamailio RADIUS accounting Module
- *            
+ *
  * The ACC_RADIUS module is used to account transactions information to
- *  RADIUS            
- */ 
+ *  RADIUS
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -41,7 +41,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_to.h"
-#include "../../lib/kcore/radius.h"
+#include "../misc_radius/radius.h"
 #include "../../modules/acc/acc_api.h"
 #include "acc_radius_mod.h"
 #include "../../modules/acc/acc_extra.h"

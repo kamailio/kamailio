@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -51,7 +51,7 @@
 #include "msfuncs.h"
 #include "api.h"
 
-#define MAX_DEL_KEYS	1	
+#define MAX_DEL_KEYS	1
 #define NR_KEYS			11
 
 static str sc_mid         = str_init("id");         /*  0 */
@@ -214,7 +214,7 @@ static param_export_t params[]={
 };
 
 #ifdef STATISTICS
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 
 stat_var* ms_stored_msgs;
 stat_var* ms_dumped_msgs;

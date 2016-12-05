@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -32,7 +30,7 @@
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 
 #include "app_mono_api.h"
 

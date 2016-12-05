@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -27,8 +27,8 @@
 #ifndef PARSE_PRIVACY_H
 #define PARSE_PRIVACY_H
 
-#include "../../mem/mem.h"
-#include "../../parser/msg_parser.h"
+#include "../mem/mem.h"
+#include "msg_parser.h"
 
 
 /*! bitmap of Privacy header privacy values

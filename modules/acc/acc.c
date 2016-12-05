@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2006 Voice Sistem SRL
  * Copyright (C) 2008 Juha Heinanen
@@ -39,7 +37,7 @@
 /*! \file
  * \ingroup acc
  * \brief Acc:: Core accounting
- * 
+ *
  * Module: \ref acc
  */
 
@@ -63,7 +61,7 @@
 #include "acc_api.h"
 
 #ifdef RAD_ACC
-#include "../../lib/kcore/radius.h"
+#include "../misc_radius/radius.h"
 #endif
 
 #ifdef DIAM_ACC

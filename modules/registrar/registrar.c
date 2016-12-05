@@ -43,7 +43,7 @@
 #include "../../pvar.h"
 #include "../../dset.h"
 #include "../../modules/usrloc/usrloc.h"
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 #include "../../lib/srutils/sruid.h"
 #include "../../modules/sl/sl.h"
 #include "../../mod_fix.h"

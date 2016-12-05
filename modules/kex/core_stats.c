@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 #include "../../lib/kmi/mi.h"
 #include "../../events.h"
 #include "../../dprint.h"

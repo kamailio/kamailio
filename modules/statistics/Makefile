@@ -4,10 +4,8 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=statistics.so
-LIBS= 
+LIBS=
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kcore/kcore
 include ../../Makefile.modules

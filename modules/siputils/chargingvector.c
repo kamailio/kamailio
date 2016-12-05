@@ -26,7 +26,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../mem/mem.h"
 #include "../../str.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "chargingvector.h"
 
 #define SIZE_CONF_ID 16

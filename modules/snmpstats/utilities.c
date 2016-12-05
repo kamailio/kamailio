@@ -44,7 +44,7 @@
 #include "../../cfg/cfg.h"
 #include "../../cfg/cfg_ctx.h"
 
-#include "../../lib/kcore/kstats_wrapper.h"
+#include "../../counters.h"
 
 static cfg_ctx_t  *ctx = NULL;
 

@@ -44,10 +44,10 @@
 #include "../../xavp.h"
 #include "../../mod_fix.h"
 #include "../../lib/srutils/sruid.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../parser/parse_require.h"
 #include "../../parser/parse_supported.h"
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 #ifdef USE_TCP
 #include "../../tcp_server.h"
 #endif

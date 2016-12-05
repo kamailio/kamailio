@@ -34,7 +34,6 @@
 #include "../../ut.h"
 #include "../../hashes.h"
 #include "../../lib/kmi/mi.h"
-#include "../../lib/kcore/statistics.h"
 #include "../../rand/kam_rand.h"
 #include "ts_hash.h"
 #include "ts_handlers.h"

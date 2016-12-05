@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -34,7 +34,7 @@
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/msg_parser.h"
-#include "../../lib/kcore/cmpapi.h"
+#include "../../strutils.h"
 #include "../../hashes.h"
 #include "../../modules/tm/tm_load.h"
 #include "pua.h"
@@ -50,7 +50,7 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 		str* extra_headers, int is_body)
 {
 	static char buf[3000];
-	str* str_hdr = NULL;	
+	str* str_hdr = NULL;
 	char* expires_s = NULL;
 	int len = 0;
 	int t= 0;

@@ -69,7 +69,7 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 int extra2int( struct acc_extra *extra, int *attrs );
 
 #ifdef RAD_ACC
-#include "../../lib/kcore/radius.h"
+#include "../misc_radius/radius.h"
 int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset);
 #endif
 

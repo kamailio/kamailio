@@ -32,7 +32,6 @@
 #include "../../modules/registrar/api.h"
 #include "../../dset.h"
 #include "../../rpc_lookup.h"
-#include "../../lib/kcore/statistics.h"
 
 #include "ts_hash.h"
 #include "ts_handlers.h"

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -83,7 +83,7 @@ free_session_expires( struct session_expires * );
 
 /*!
  * \brief Parses the (should be only one instance) single instance of the
- * "Session-Expires" or "x" header in the msg. 
+ * "Session-Expires" or "x" header in the msg.
  * \note The header is not automatically parsed in parse_headers()[1]
  * so you'll have to call this function to get the information.
  *
@@ -109,7 +109,7 @@ parse_session_expires( struct sip_msg *msg, struct session_expires *se );
 
 /*!
  * \brief Parses the (should be only one instance) single instance of the
- * "Min-SE" header in the msg. 
+ * "Min-SE" header in the msg.
  * \note The header is not automatically parsed in parse_headers() so you'll have
  * to call this function to get the information.
  *

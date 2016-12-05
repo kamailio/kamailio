@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
  *
@@ -54,7 +52,7 @@
 
 
 #include <stdio.h>
-#include "../../lib/kcore/statistics.h"
+#include "../../counters.h"
 #include "../../locking.h"
 #include "../../str.h"
 #include "../../lib/srdb1/db.h"
