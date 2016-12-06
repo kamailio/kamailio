@@ -1,256 +1,34 @@
-This file is here for old time's sake.
-Current set of issues is to be found at our
-Github Project page:
-https://github.com/kamailio/kamailio/issues
---------------------------------------------------------------
+Reporting Issues
+================
 
+Current set of issues is to be found at our Github Project page:
 
-This is a collection of issues which have shown up
-since the version 0.8.8 was released. The issues are
-ordered by numbers of ser versions to which they relate,
-beginning with the newest release. Issues related to
-operating systems are summarized in the bottom.
---------------------------------------------------------------
-Desc: tls triggered crash on system with kerberos enabled openssl libs
-Ser version:  0.10.x, 0.9.x
-Reason:  there is a bug in the openssl kerberos code (kssl.c): 
-         libc malloc/free/calloc are used instead of the OPENSSL
-         versions. In ser ssl connections move between processes and
-         if normal mallocs are used (instead of ser shm versions) a
-         crash will occur eventually.
-         Quick openssl kerberos support check: 
-             grep OPENSSL_NO_KRB5 openssl/opensslconf.h
-         If the above command returns no result => openssl is compiled with
-         kerberos support.
-Workaround: use openssl versions not compiled with kerberos support or
-            try a late ser 0.10.x version compiled on the target machine
-            (its very important to compile against the same openssl library
-             as the one on the target machine)
-CVS status: fixed / workarround enabled
---------------------------------------------------------------
-Desc: ser crashes on startup if a group is specified (-g or group=)
-Ser version:  <=0.8.12
-Reason:  bad copy & paste :-)
-Patch: http://www.mobile-ip.de/~andrei/ser/main_group.patch
-Workaround: update from cvs or  apply the corresponding patch
-CVS status: fixed
---------------------------------------------------------------
-Desc: textops search REs like "^From" fail to match on RH8
-Ser version: all
-Reason: there is a bug in RH8 libc, this kind of REs will never match
-        in case insensitive mode
-Test:  compile test/re_test.c (gcc re_test.c -o re_test) and try
-        echo -e "From:\nTo:" |./re_test -v '^From'
-       if your system is ok you should see 1 match, if not (and 
-       your libc has this bug), 0 matches.
-Workaround: ?upgrade?
---------------------------------------------------------------
-Desc: textops REs match newline in constructs such [^@]
-Ser version: all 
-Reason: there is a bug in newer linux libc versions (at least in
-         Debian libc6 2.3.x, Gentoo 1.4 lib 2.3.2, RH8, RH9, Fedora)
-Test:  compile test/re_test.c (gcc re_test.c -o re_test) and try
-        echo -e "From:\nTo:" |./re_test -v '[^.]+'
-       if your system is ok you should see 2 matches, if not (and 
-       your libc has this bug), only 1 match.
-Workaround: - use an older or fixed libc6 or avoid [^something]
-             - rewrite [^something] as [^something[:cntrl:]]
----------------------------------------------------------------
-Desc: memory leaks occurs if SIP requests are processed in which
-      a Via header field occurs in end of header and includes
-      a parameter
-Ser version: 0.8.10
-Reason: parameter fragment is not linked to a list when EoH is
-        encountered
-Patch: http://www.iptel.org/ser/issues/via_ml_0810.patch
-CVS Status: fixed
----------------------------------------------------------------
-Desc: ser segfaults on receipt of some messages (occurs
-      rather rarely with a very high number of messages, 
-      typically during stress tests)
-Ser version: 0.8.10 and before
-Reason: valid TM label value 0 is considered mistakenly 
-        a special value
-Workaround: turn syn_branch config option off
-Patch: http://www.iptel.org/ser/issues/hash_fix.patch
-CVS Status: fixed
----------------------------------------------------------------
-Desc: serctl returns "read: Illegal option -s" for "add user"
-Ser version: 0.8.10 and before
-Reason: serctl's use of some shell script commands not portable
-Workaround: download serctl 1.45 and set SUBSCRIBER_COLUMN back
-            to user_id
-Download: http://cvs.berlios.de/cgi-bin/viewcvs.cgi/*checkout*/ser/sip_router/scripts/sc?rev=1.45
-CVS Status: fixed
----------------------------------------------------------------
-Desc: 3261 ACKs for 200s are consumed by stateful processing
-Ser version: 0.8.10
-Reason: 200/ACKs which happen to have the same transaction ID
-        as original INVITE were not distinguished from hbh
-        ACKs and consequently absorbed
-Patch: http://www.iptel.org/ser/issues/tid3261ack.patch
-Workaround: apply the patch to 0.8.10 sources
-CVS status: fixed
----------------------------------------------------------------
-Desc: on sparc machines, usage of mysql library causes a bus error
-Ser version: 0.8.10
-Reason: ser is compiled with DBG_QM_MALLOC, which mistakenly uses
-        only alignment of four (ROUNDTO) -- insufficient for sparc
-        boxes, mysql library uses long long
-Workaround: recompile with DBG_QM_MALLOC turned off or ROUNDTO redefined
-            to 8
-CVS status: fixed
----------------------------------------------------------------
-Desc: nonce validation doesn't work correctly on big endian machines.
-BugId: 498
-Ser version: 0.8.10
-Patch: http://iptel.org/~janakj/nonce.c.patch
-Workaround: Apply the patch to 0.8.10 sources
-CVS status: fixed
----------------------------------------------------------------
-Desc: ser 0.8.10 memory leak when an INVITE containing Route
-      header fields is received.
-      Symptoms: ser reports No memory left or crashes with BUG: qm_*: fragm.
-BugId:n/a
-Ser version: 0.8.10
-Patch: http://iptel.org/~janakj/invroute.patch
-Workaround: Apply the patch to 0.8.10 sources
-CVS status: fixed
----------------------------------------------------------------
-Desc: ser 0.8.10 fails to remove consumed verified credentials properly
-      and leaves characters in forwarded messages when consume_credentials
-      is used
-BugId:n/a
-Ser version: 0.8.10
-Module:     http://www.iptel.org/~jiri/ser/auth.tar.gz
-Workaround: compile the auth module newly from sources above or
-            don't remove credentials (they only harm in terms of
-            packet size)
-CVS status: fixed
----------------------------------------------------------------
-Desc: ser 0.8.10 and earlier versions crash if contact list
-      excessively long
-BugId: n/a
-Ser version: 0.8.8, 0.8.9, 0.8.10
-Patch: http://www.iptel.org/ser/security/secalert-002-0_8_10.patch
-Workaround: apply the patch to 0.8.10 sources
-CVS status: fixed 
----------------------------------------------------------------
-Desc:  ser 0.8.10 won't compile with bison 1.75
-BugId:  n/a
-Ser version: 0.8.8, 0.8.9, 0.8.10 
-Patch: 
- 0.8.10 http://www.mobile-ip.de/~andrei/ser/0.8.10/ser-0.8.10-bison-1.75.patch
- 0.8.9  http://www.mobile-ip.de/~andrei/ser/0.8.9/ser-0.8.9-bison-1.75.patch
-Workaround: update from cvs,  apply the corresponding patch or downgrade bison
-CVS status: fixed
----------------------------------------------------------------
+  * https://github.com/kamailio/kamailio/issues
 
-=================================================================================
-* ser 0.8.10 released, all the issues below this are fixed in ser 0.8.10, all the
-* issues above are not :-)
-=================================================================================
+Issue Report Details
+--------------------
 
-Desc:  ser 0.8.9 won't log to stderr or syslog unless dontfork is set
-        (introduced when trying to fix bug 376)
-BugId:  n/a
-Ser version: =0.8.9 (0.8.8 is ok)
-Patch: http://www.mobile-ip.de/~andrei/ser/0.8.9/ser-0.8.9_log.patch
-Workaround: update from cvs or apply the patch.
-CVS status: fixed
----------------------------------------------------------------
-Desc: local domain mismatch resulting in infinite loops
-      (With default configuration and domain names in a request
-      URI's, ser may not match "owned domain" in the
-      script's uri==myself condition, consider the request to
-	  be for outside domain, and forward it to itself, resulting
-	  in an infinite loop and "482" returned back to UAC.)
-BugId: n/a
-Reason: aliases do not support reverse DNS lookups yet
-Workaround: Start ser with "alias=hostname" in config file
-CVS status: fixed
----------------------------------------------------------------
-Desc: sendto problems on FreeBSD
-      (when using tm sendto fails because of bad sockaddr len passed
-        to it)
-BugId: n/a
-Workaround:  update from cvs or  apply the following patch: 
-   http://www.mobile-ip.de/~andrei/ser/0.8.9/update_sock_struct_from_ip.patch
-CVS status:  fixed
----------------------------------------------------------------
-Desc: full ipv6 addresses (w/o ::) are converted to 0:0:0:0:0:0:0
-      (ser will listen on :: instead of the specified address)
-BugId: n/a
-Workaround: use ipv6 addresses w/ :: or compile ser without -DDNS_IP_HACK 
-            (Makefile.defs).
-CVS status: fixed
+When reporting an issue, gather as much details as possible and include them
+on the bug report. Useful details are:
 
-================================================================================
-* ser 0.8.9 released, all the issues below this are fixed in ser 0.8.9, all the
-* issues above are not :-)
-================================================================================
+  * kamailio version (output of kamailio -v)
+  * operating system where server is running
+  * CPU architecture of the system
+  * error log messages from syslog
+  * if there is a coredump file, use gdb to extract the following:
+    - full backtrace (gdb: bt full)
+    - local variables (gdb: info locals)
+    - list of the source code around the issue (gdb: list)
+  * information about when it happens:
+    - at startup
+    - at shutdown
+    - at runtime:
+      ~ randomly (no way to reproduce it has been discovered)
+      ~ periodically (an way to reproduce it has been discovered)
 
-Desc: in default configuration, SER prints '127.0.0.1' in
-      Warning header field of all replies
-BugId: 372
-Workaround: use listen=<ip_address> in your configuration file;
-      that will make SER listen only on one interface (and not
-      on '127.0.0.1' in parallel) and advertise correct IP
-      address
-Bug reason: multiple listening address ignored in message
-      translator
-CVS status: fixed
----------------------------------------------------------------
-Desc: serctl add ... returns "user exists"
-BugId: 374
-Workaround: either use serweb for adding new users or update
-      the serctl utility from CVS; the fixed version is at
-      http://www.iptel.org/ser/issues/374/
-Bug reason: phplib_id ignored in sc
-CVS Status: fixed
----------------------------------------------------------------
-Desc: SMS, MSILO & JABBER modules fail to load because of unresolved
-dependency on im.so
-BugId: 375
-Workaround: change the makefiles & recompile  
-Bug reason: removal of RTLD_GLOBAL from dlopen.
-CVS status: fixed 
----------------------------------------------------------------
-Desc: when forking & std_error=yes no open FD is closed
-BugId: 376
-CVS status: fixed
----------------------------------------------------------------
-Desc: exec module missing in binary RPM distro
-BugId: -
-CVS status: fixed
-Workaround: compile from source distribution
----------------------------------------------------------------
-Desc: when debug=3 & iptel.cfg is used mysql module fails in submit_query.
-Workaround: use debug=9 or use log_stderr
-Reason: unknown
-BugId: 377
-Cvs status: not fixed
+Contact
+-------
 
+If you have further questions about reporting an issue, email to:
 
-================================================================================
-* OS-related issues
-================================================================================
-
-----------------------------------------------------------------
-Desc:  ser won't run on linux kernels <2.4  (fails with EINVAL when
-      initializing the shared memory)
-BugId:  n/a
-Ser version: 0.8.8, 0.8.9, 0.8.10 
-Workaround: Upgrade to a 2.4.* kernel (older kernels don't support shared 
-            mmaping of /dev/zero ) or recompile ser with SYSV shm instead of
-            mmap (remove -DSHM_MMAP from Makefile.defs)
-CVS status: n/a
----------------------------------------------------------------
-Desc: Solaris resolver memory leak
-	  (getipnodebyname on Solaris has a memory leak. unpatched
-	  solaris 8 installations will fail after processing 
-	  ~ 360000 requests)
-BugId: n/a
-CVS status: n/a
-Workaround: patch your Solaris OS
----------------------------------------------------------------
+  * sr-dev@lists.sip-router.org
