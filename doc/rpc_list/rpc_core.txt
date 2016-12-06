@@ -37,26 +37,26 @@ RPC Exports for core
         compiler,repository hash a.s.o.
 
 10. core.uptime
-        Returns uptime of SER server.
+        Returns uptime of SIP server.
 
 11. core.ps
-        Returns the description of running SER processes.
+        Returns the description of running processes.
         Returns an array.
 
 12. core.psx
-        Returns the detailed description of running SER processes.
+        Returns the detailed description of running processes.
         Returns an array.
 
 13. core.pwd
-        Returns the working directory of SER server.
+        Returns the working directory of server.
         Returns an array.
 
 14. core.arg
-        Returns the list of command line arguments used on SER startup.
+        Returns the list of command line arguments used on startup.
         Returns an array.
 
 15. core.kill
-        Sends the given signal to SER.
+        Sends the given signal to server.
 
 16. core.shmmem
         Returns shared memory info. It has an optional parameter that

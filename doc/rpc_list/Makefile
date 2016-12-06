@@ -329,10 +329,10 @@ proper:
 	@rm -f $(txt_output_dir)/rpc_*.txt
 	@rm -f $(docbook_output_dir)/rpc_*.xml
 
-repo_ver="sip-router"\
+repo_ver="Kamailio "\
 	"git-$(shell  git rev-parse --verify --short=6 HEAD 2>/dev/null)"
 ifeq ($(repo_ver),git-)
-repo_ver="sip-router unknown"
+repo_ver="Kamailio unknown"
 endif
 
 $(docbook_output_dir)/rpc_list.xml: Makefile \
