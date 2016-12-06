@@ -858,7 +858,7 @@ install-sr-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 				-e "s#/usr/lib/$(CFG_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
 			-e "s#/usr/share/doc/$(CFG_NAME)/#$(doc_target)#g" \
 			-e "s#$(SRC_NAME)#$(MAIN_NAME)#g" \
-			< $(SRC_NAME).8 >  \
+			< doc/man/$(MAIN_NAME).8 >  \
 							$(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
 		@chmod 644  $(man_prefix)/$(man_dir)/man8/$(MAIN_NAME).8
 		@sed -e "s#/etc/$(CFG_NAME)/$(CFG_NAME)\.cfg#$(cfg_target)$(MAIN_NAME).cfg#g" \
@@ -867,7 +867,7 @@ install-sr-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 				-e "s#/usr/lib/$(CFG_NAME)/$(m)\([^_]\)#$($(m)_target)\1#g") \
 			-e "s#/usr/share/doc/$(CFG_NAME)/#$(doc_target)#g" \
 			-e "s#$(SRC_NAME)#$(MAIN_NAME)#g" \
-			< $(SRC_NAME).cfg.5 >  \
+			< doc/man/$(MAIN_NAME).cfg.5 >  \
 			$(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
 		@chmod 644  $(man_prefix)/$(man_dir)/man5/$(MAIN_NAME).cfg.5
 
