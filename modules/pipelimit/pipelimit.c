@@ -54,6 +54,7 @@
 #include "../../rpc_lookup.h"
 #include "../../rand/kam_rand.h"
 
+#include "pl_statistics.h"
 #include "pl_ht.h"
 #include "pl_db.h"
 
