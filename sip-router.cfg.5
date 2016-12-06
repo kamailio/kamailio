@@ -1,16 +1,16 @@
-.\" $Id$
-.TH sip-router.cfg 5 15.07.2002 sip-router "SIP Router" 
+.\"
+.TH kamailio.cfg 5 06.12.2016 kamailio "Kamailio SIP Server"
 .\" Process with
-.\" groff -man -Tascii sip-router.cfg.5 
+.\" groff -man -Tascii kamailio.cfg.5
 .\"
 .SH NAME
-sip-router.cfg \- sip-router configuration file
+kamailio.cfg \- kamailio configuration file
 .SH SYNOPSIS
-.I /etc/sip-router/sip-router.cfg
+.I /etc/kamailio/kamailio.cfg
 .SH DESCRIPTION
-.B sip-router
+.B kamailio
 reads the configuration data from
-.I /etc/sip-router/sip-router.cfg
+.I /etc/kamailio/kamailio.cfg
 (or the file specified with
 .B \-f
 on the command line).
@@ -21,29 +21,29 @@ or enclosed in
 are interpreted as comments.
 .PP
 This manual page is incomplete. For further information please see documentation on page
-.I  http://sip-router.org/wiki.
+.I  http://kamailio.org/wiki.
 
 .SH FILES
-.I /etc/sip-router/sip-router.cfg
+.I /etc/kamailio/kamailio.cfg
 
 .SH AUTHORS
 
-see 
-.B /usr/share/doc/sip-router/AUTHORS
+see
+.B /usr/share/doc/kamailio/AUTHORS
 
 .SH SEE ALSO
-.BR sip-router(8)
+.BR kamailio(8)
 .PP
-Full documentation on sip-router, including configuration guidelines, FAQs and
+Full documentation on kamailio, including configuration guidelines, FAQs and
 licensing conditions, is available at
-.I http://sip-router.org.
+.I http://kamailio.org.
 .PP
 For reporting  bugs see
 .I
-http://sip-router.org/tracker/
+https://github.com/kamailio/kamailio/issues
 .PP
 Mailing lists:
-.nf 
-sr-users@lists.sip-router.org - SIP Router user community
-.nf 
-sr-dev@lists.sip-router.org - SIP Router development, new features and unstable version
+.nf
+sr-users@lists.sip-router.org - Kamailio user community
+.nf
+sr-dev@lists.sip-router.org - Kamailio development, new features and unstable version

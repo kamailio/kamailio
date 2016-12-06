@@ -1,12 +1,12 @@
-.\" $Id$
-.TH sip-router 8 15.07.2002 sip-router "SIP Router" 
+.\"
+.TH kamailio 8 06.12.2016 kamailio "Kamailio SIP Server"
 .\" Process with
-.\" groff -man -Tascii sip-router.8
+.\" groff -man -Tascii kamailio.8
 .\"
 .SH NAME
-sip-router \- very fast and configurable sip proxy
+kamailio \- very fast and configurable SIP server
 .SH SYNOPSIS
-.B sip-router
+.B kamailio
 [
 .B \-hcrRvdDEVTI
 ] [
@@ -44,11 +44,8 @@ sip-router \- very fast and configurable sip proxy
 ]
 
 .SH DESCRIPTION
-.B sip-router 
-or
-.BR SIP
-.BR Router 
-is a very fast and configurable SIP proxy. 
+.B kamailio
+is a very fast and configurable SIP (RFC3261) server.
 
 .SH OPTIONS
 .TP 12
@@ -62,7 +59,7 @@ Checks the config file and displays the aliases and listen interface list.
 Uses dns to check if it is necessary to add a "received=" field to a via.
 .TP
 .BI \-R
-Same as 
+Same as
 .B \-r
 but uses reverse dns.
 .TP
@@ -99,18 +96,18 @@ Displays the version number.
 Displays details of internal constants and attributes.
 .TP
 .BI \-f " config\-file"
-Reads the configuration from 
-.B " config\-file" 
+Reads the configuration from
+.B " config\-file"
 (default
-.I  /etc/sip-router/sip-router.cfg
+.I  /etc/kamailio/kamailio.cfg
 ).
 .TP
 .BI \-l " address"
-Listens on the specified address/interface. Multiple 
+Listens on the specified address/interface. Multiple
 .B \-l
-mean listening on multiple addresses. The address format is 
+mean listening on multiple addresses. The address format is
 [proto:]address[:port], where proto = udp|tcp and
-address = host|ip_address|interface_name. Example: -l localhost, 
+address = host|ip_address|interface_name. Example: -l localhost,
 -l udp:127.0.0.1:5080, -l eth0:5062.
 The default behaviour is to listen on all the ipv4 interfaces.
 .TP
@@ -131,40 +128,40 @@ Size of the shared memory which will be allocated (in Megabytes).
 .BI \-M " private_mem_size"
 Size of the private memory which will be allocated per process (in Megabytes).
 .TP
-.BI \-w " working\-dir" 
-Specifies the working directory. In the very improbable event that 
-.B sip-router 
+.BI \-w " working\-dir"
+Specifies the working directory. In the very improbable event that
+.B kamailio
 will crash, the core file will be generated here.
 .TP
 .BI \-t " chroot\-dir"
-Forces 
-.B sip-router 
+Forces
+.B kamailio
 to chroot after reading the config file.
 .TP
 .BI \-u " uid"
-Changes the user id under which 
-.B sip-router
+Changes the user id under which
+.B kamailio
 runs.
 .TP
 .BI \-g " gid"
-Changes the group id under which 
-.B sip-router
+Changes the group id under which
+.B kamailio
 runs.
 .TP
 .BI \-P " pid\-file"
 Creates a file containing the pid of the main
-.B sip-router
+.B kamailio
 process.
 .TP
 .BI \-G " pgid\-file"
 Creates a file containing the pgid of the main
-.B sip-router
+.B kamailio
 process.
 .TP
 .BI \-L " modules\-dir"
 Specifies the directory where to look for
-.B sip-router
-modules (default: /usr/lib/sip-router/modules)
+.B kamailio
+modules (default: /usr/lib/kamailio/modules or /usr/lib64/kamailio/modules)
 .TP
 .BI \-a " auto\-aliases\-mode"
 Enable auto-aliases with 'yes' or 'on', disable with 'no' or 'off
@@ -174,30 +171,30 @@ Add config pre-processor define (e.g., -A WITH_AUTH, -A N=1, -A X='"Y"')
 
 .SH FILES
 .PD 0
-.B /usr/sbin/sip-router
+.B /usr/sbin/kamailio
 .br
-.B /etc/sip-router/sip-router.cfg
+.B /etc/kamailio/kamailio.cfg
 .br
-.B /usr/lib/sip-router/modules/*
+.B /usr/lib/kamailio/modules/*
 .PD
 .SH AUTHORS
 
-see 
-.B /usr/share/doc/sip-router/AUTHORS
+see
+.B /usr/share/doc/kamailio/AUTHORS
 
 .SH SEE ALSO
-.BR sip-router.cfg(5)
+.BR kamailio.cfg(5)
 .PP
-Full documentation on sip-router, including configuration guidelines, FAQs and
+Full documentation on kamailio, including configuration guidelines, FAQs and
 licensing conditions, is available at
-.I http://sip-router.org.
-.PP 
+.I http://kamailio.org.
+.PP
 For reporting  bugs see
 .I
-http://sip-router.org/tracker/.
+https://github.com/kamailio/kamailio/issues.
 .PP
 Mailing lists:
-.nf 
-sr-users@lists.sip-router.org - sip-router user community
-.nf 
-sr-dev@lists.sip-router.org - sip-router development, new features and unstable version
+.nf
+sr-users@lists.sip-router.org - kamailio user community
+.nf
+sr-dev@lists.sip-router.org - kamailio development, new features and unstable version
