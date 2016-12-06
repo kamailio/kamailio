@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -116,7 +116,7 @@ static cmd_export_t cmds[]=
 	{"bind_libxml_api",          (cmd_function)bind_libxml_api, 1, 0, 0, 0},
 	{"bind_pua",                 (cmd_function)bind_pua, 1, 0, 0, 0},
 	{"pua_update_contact",       (cmd_function)update_contact, 0, 0, 0, REQUEST_ROUTE},
-	{0,                          0,	0, 0, 0, 0} 
+	{0,                          0,	0, 0, 0, 0}
 };
 
 static param_export_t params[]={
@@ -210,7 +210,7 @@ static int mod_init(void)
 	}
 
 	if (dbmode != PUA_DB_ONLY)
-	{ 
+	{
 		if(HASH_SIZE<=1)
 			HASH_SIZE= 512;
 		else
@@ -227,7 +227,7 @@ static int mod_init(void)
 			LM_ERR("while restoring hash_table\n");
 			return -1;
 		}
-	} 
+	}
 
 	if (dbmode != PUA_DB_DEFAULT && dbmode != PUA_DB_ONLY)
 	{
@@ -273,19 +273,19 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (dbmode != PUA_DB_ONLY) 
-	{        
-		if (update_period > 0) 
+	if (dbmode != PUA_DB_ONLY)
+	{
+		if (update_period > 0)
 			register_timer(db_update, 0, update_period);
 	}
 
 	if (db_table_lock_write != 1)
 		db_table_lock = DB_LOCKING_NONE;
-	
+
 	if(pua_db)
 		pua_dbf.close(pua_db);
 	pua_db = NULL;
-	
+
 	return 0;
 }
 
@@ -355,8 +355,8 @@ static void destroy(void)
 	if (puacb_list)
 		destroy_puacb_list();
 
-	/* if dbmode is PUA_DB_ONLY, then HashT will be NULL 
-	   so db_update and destroy_htable won't get called */ 
+	/* if dbmode is PUA_DB_ONLY, then HashT will be NULL
+	 * so db_update and destroy_htable won't get called */
 	if(pua_db && HashT)
 		db_update(0,0);
 
@@ -374,9 +374,9 @@ static void destroy(void)
 static int db_restore(void)
 {
 	ua_pres_t* p= NULL;
-	db_key_t result_cols[19]; 
+	db_key_t result_cols[19];
 	db1_res_t *res= NULL;
-	db_row_t *row = NULL;	
+	db_row_t *row = NULL;
 	db_val_t *row_vals= NULL;
 	str pres_uri, pres_id;
 	str etag, tuple_id;
@@ -489,7 +489,7 @@ static int db_restore(void)
 			}
 
 			if(row_vals[watcher_col].val.string_val)
-			{	
+			{
 				watcher_uri.s= (char*)row_vals[watcher_col].val.string_val;
 				watcher_uri.len = strlen(watcher_uri.s);
 
@@ -506,7 +506,7 @@ static int db_restore(void)
 				{
 					record_route.s= (char*)row_vals[record_route_col].val.string_val;
 					record_route.len= strlen(record_route.s);
-				}	
+				}
 
 				contact.s= (char*)row_vals[contact_col].val.string_val;
 				contact.len = strlen(contact.s);
@@ -546,7 +546,7 @@ static int db_restore(void)
 			size+= pres_uri.len;
 
 			if(pres_id.s)
-			{	
+			{
 				p->id.s= (char*)p + size;
 				memcpy(p->id.s, pres_id.s, pres_id.len);
 				p->id.len= pres_id.len;
@@ -558,10 +558,10 @@ static int db_restore(void)
 				memcpy(p->tuple_id.s, tuple_id.s, tuple_id.len);
 				p->tuple_id.len= tuple_id.len;
 				size+= tuple_id.len;
-			}	
+			}
 
 			if(watcher_uri.s && watcher_uri.len)
-			{	
+			{
 				p->watcher_uri= (str*)((char*)p+ size);
 				size+= sizeof(str);
 
@@ -636,7 +636,7 @@ static int db_restore(void)
 				{
 					LM_ERR("no more share memory\n");
 					goto error;
-				}	
+				}
 				memcpy(p->etag.s, etag.s, etag.len);
 				p->etag.len= etag.len;
 			}
@@ -678,7 +678,7 @@ static void hashT_clean(unsigned int ticks,void *param)
 	time_t now;
 	ua_pres_t* p= NULL, *q= NULL;
 
-	if (dbmode==PUA_DB_ONLY) 
+	if (dbmode==PUA_DB_ONLY)
 	{
 		clean_puadb(update_period, min_expires );
 		return;
@@ -690,11 +690,11 @@ static void hashT_clean(unsigned int ticks,void *param)
 		lock_get(&HashT->p_records[i].lock);
 		p= HashT->p_records[i].entity->next;
 		while(p)
-		{	
+		{
 			print_ua_pres(p);
 			if(p->expires- update_period < now )
 			{
-				if((p->desired_expires> p->expires + min_expires) || 
+				if((p->desired_expires> p->expires + min_expires) ||
 						(p->desired_expires== 0 ))
 				{
 					if(update_pua(p)< 0)
@@ -705,7 +705,7 @@ static void hashT_clean(unsigned int ticks,void *param)
 					}
 					p= p->next;
 					continue;
-				}	
+				}
 				if(p->expires < now - 10)
 				{
 					q= p->next;
@@ -716,7 +716,7 @@ static void hashT_clean(unsigned int ticks,void *param)
 				}
 				else
 					p= p->next;
-			}	
+			}
 			else
 				p= p->next;
 		}
@@ -761,7 +761,7 @@ int update_pua(ua_pres_t* p)
 			LM_ERR("while constructing publ callback param\n");
 			ret_code = -1;
 			goto done;
-		}	
+		}
 
 		set_uac_req(&uac_r, &met, str_hdr, 0, 0, TMCB_LOCAL_COMPLETED,
 				publ_cback_func, (void*)cb_param);
@@ -773,7 +773,7 @@ int update_pua(ua_pres_t* p)
 				);
 		if(result< 0)
 		{
-			LM_ERR("in t_request function\n"); 
+			LM_ERR("in t_request function\n");
 			shm_free(cb_param);
 			ret_code = -1;
 			goto done;
@@ -787,7 +787,7 @@ int update_pua(ua_pres_t* p)
 		td= pua_build_dlg_t(p);
 		if(td== NULL)
 		{
-			LM_ERR("while building tm dlg_t structure");		
+			LM_ERR("while building tm dlg_t structure");
 			ret_code = -1;
 			goto done;
 		};
@@ -806,7 +806,7 @@ int update_pua(ua_pres_t* p)
 			LM_ERR("while constructing subs callback param\n");
 			ret_code = -1;
 			goto done;
-		}	
+		}
 
 		set_uac_req(&uac_r, &met, str_hdr, 0, td, TMCB_LOCAL_COMPLETED,
 				subs_cback_func, (void*)cb_param);
@@ -814,7 +814,7 @@ int update_pua(ua_pres_t* p)
 		result= tmb.t_request_within(&uac_r);
 		if(result< 0)
 		{
-			LM_ERR("in t_request function\n"); 
+			LM_ERR("in t_request function\n");
 			shm_free(cb_param);
 			ret_code = -1;
 			goto done;
@@ -862,7 +862,7 @@ static void db_update(unsigned int ticks,void *param)
 	q_vals[puri_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[pid_col= n_query_cols] = &str_pres_id_col;	
+	q_cols[pid_col= n_query_cols] = &str_pres_id_col;
 	q_vals[pid_col].type = DB1_STR;
 	q_vals[pid_col].nul = 0;
 	n_query_cols++;
@@ -900,7 +900,7 @@ static void db_update(unsigned int ticks,void *param)
 	q_cols[etag_col= n_query_cols] = &str_etag_col;
 	q_vals[etag_col].type = DB1_STR;
 	q_vals[etag_col].nul = 0;
-	n_query_cols++;	
+	n_query_cols++;
 
 	q_cols[tuple_col= n_query_cols] = &str_tuple_id_col;
 	q_vals[tuple_col].type = DB1_STR;
@@ -983,15 +983,15 @@ static void db_update(unsigned int ticks,void *param)
 		return ;
 	}
 
-	for(i=0; i<HASH_SIZE; i++) 
+	for(i=0; i<HASH_SIZE; i++)
 	{
 		if(!no_lock)
-			lock_get(&HashT->p_records[i].lock);	
+			lock_get(&HashT->p_records[i].lock);
 
 		p = HashT->p_records[i].entity->next;
 		while(p)
 		{
-			if((int)p->expires - (int)time(NULL)< 0)	
+			if((int)p->expires - (int)time(NULL)< 0)
 			{
 				p= p->next;
 				continue;
@@ -1002,7 +1002,7 @@ static void db_update(unsigned int ticks,void *param)
 				case NO_UPDATEDB_FLAG:
 					{
 						LM_DBG("NO_UPDATEDB_FLAG\n");
-						break;			  
+						break;
 					}
 
 				case UPDATEDB_FLAG:
@@ -1063,38 +1063,38 @@ static void db_update(unsigned int ticks,void *param)
 							if(!no_lock)
 								lock_release(&HashT->p_records[i].lock);
 							if(res)
-								pua_dbf.free_result(pua_db, res);	
+								pua_dbf.free_result(pua_db, res);
 							return ;
 						}
 						if(res && res->n> 0)
-						{																				
-							if(pua_dbf.update(pua_db, q_cols, 0, q_vals, db_cols, 
+						{
+							if(pua_dbf.update(pua_db, q_cols, 0, q_vals, db_cols,
 										db_vals, n_query_update, n_update_cols)<0)
 							{
 								LM_ERR("while updating in database\n");
 								if(!no_lock)
-									lock_release(&HashT->p_records[i].lock);	
+									lock_release(&HashT->p_records[i].lock);
 								pua_dbf.free_result(pua_db, res);
 								res= NULL;
 								return ;
 							}
 							pua_dbf.free_result(pua_db, res);
-							res= NULL;		
+							res= NULL;
 						}
 						else
 						{
 							if(res)
-							{	
+							{
 								pua_dbf.free_result(pua_db, res);
 								res= NULL;
 							}
 							LM_DBG("UPDATEDB_FLAG and no record found\n");
 							//	p->db_flag= INSERTDB_FLAG;
-						}	
-						break;	
+						}
+						break;
 					}
 				case INSERTDB_FLAG:
-					{	
+					{
 						LM_DBG("INSERTDB_FLAG\n");
 						q_vals[puri_col].val.str_val = *(p->pres_uri);
 						q_vals[pid_col].val.str_val = p->id;
@@ -1198,11 +1198,11 @@ static void db_update(unsigned int ticks,void *param)
 					}
 
 			}
-			p->db_flag= NO_UPDATEDB_FLAG;	
+			p->db_flag= NO_UPDATEDB_FLAG;
 			p= p->next;
 		}
 		if(!no_lock)
-			lock_release(&HashT->p_records[i].lock);	
+			lock_release(&HashT->p_records[i].lock);
 	}
 
 	db_vals[0].val.int_val= (int)time(NULL)- 10;
@@ -1213,7 +1213,7 @@ static void db_update(unsigned int ticks,void *param)
 	}
 
 	return ;
-}	
+}
 
 static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
 {
@@ -1225,8 +1225,8 @@ static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
 	publ.content_type= p->content_type;
 	publ.id= p->id;
 	publ.expires= (p->desired_expires== 0) ?-1:p->desired_expires- (int)time(NULL);
-	publ.flag= UPDATE_TYPE; 
-	publ.source_flag= p->flag; 
+	publ.flag= UPDATE_TYPE;
+	publ.source_flag= p->flag;
 	publ.event= p->event;
 	publ.etag= &p->etag;
 	publ.extra_headers= p->extra_headers;
