@@ -10,8 +10,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.set"><title>cfg.set</title>
 <para>
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 </para>
 <para>
 </para>
@@ -19,8 +18,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.set_now_int"><title>cfg.set_now_int</title>
 <para>
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 </para>
 <para>
 </para>
@@ -28,8 +26,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.seti"><title>cfg.seti</title>
 <para>
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 </para>
 <para>
 </para>
@@ -37,8 +34,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.set_now_string"><title>cfg.set_now_string</title>
 <para>
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 </para>
 <para>
 </para>
@@ -46,8 +42,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.sets"><title>cfg.sets</title>
 <para>
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 </para>
 <para>
 </para>
@@ -55,8 +50,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.del"><title>cfg.del</title>
 <para>
-        Delete the value of a configuration variable from a group
-        instance and commit the change immediately
+        Documentation missing (rpc_del_now_doc).
 </para>
 <para>
 </para>
@@ -64,8 +58,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.set_delayed"><title>cfg.set_delayed</title>
 <para>
-        Prepare the change of a configuration variable, but does not
-        commit the new value yet
+        Documentation missing (rpc_set_delayed_doc).
 </para>
 <para>
 </para>
@@ -73,8 +66,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.set_delayed_int"><title>cfg.set_delayed_int</title>
 <para>
-        Prepare the change of a configuration variable, but does not
-        commit the new value yet
+        Documentation missing (rpc_set_delayed_doc).
 </para>
 <para>
 </para>
@@ -82,8 +74,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.set_delayed_string"><title>cfg.set_delayed_string</title>
 <para>
-        Prepare the change of a configuration variable, but does not
-        commit the new value yet
+        Documentation missing (rpc_set_delayed_doc).
 </para>
 <para>
 </para>
@@ -91,8 +82,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.del_delayed"><title>cfg.del_delayed</title>
 <para>
-        Prepare the deletion of the value of a configuration variable
-        from a group instance, but does not commit the change yet
+        Documentation missing (rpc_del_delayed_doc).
 </para>
 <para>
 </para>
@@ -100,7 +90,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.commit"><title>cfg.commit</title>
 <para>
-        Commit the previously prepared configuration changes
+        Documentation missing (rpc_commit_doc).
 </para>
 <para>
 </para>
@@ -108,7 +98,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.rollback"><title>cfg.rollback</title>
 <para>
-        Drop the prepared configuration changes
+        Documentation missing (rpc_rollback_doc).
 </para>
 <para>
 </para>
@@ -116,7 +106,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.get"><title>cfg.get</title>
 <para>
-        Get the value of a configuration variable
+        Documentation missing (rpc_get_doc).
 </para>
 <para>
 </para>
@@ -124,7 +114,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.help"><title>cfg.help</title>
 <para>
-        Print the description of a configuration variable
+        Documentation missing (rpc_help_doc).
 </para>
 <para>
 </para>
@@ -132,7 +122,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.list"><title>cfg.list</title>
 <para>
-        List the configuration variables
+        Documentation missing (rpc_list_doc).
 </para>
 <para>
 </para>
@@ -140,8 +130,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.diff"><title>cfg.diff</title>
 <para>
-        List the pending configuration changes that have not been
-        committed yet
+        Documentation missing (rpc_diff_doc).
 </para>
 <para>
 </para>
@@ -149,7 +138,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.add_group_inst"><title>cfg.add_group_inst</title>
 <para>
-        Add a new instance to an existing configuration group
+        Documentation missing (rpc_add_group_inst_doc).
 </para>
 <para>
 </para>
@@ -157,7 +146,7 @@ RPC Exports for cfg_rpc
 
 <section id="cfg.del_group_inst"><title>cfg.del_group_inst</title>
 <para>
-        Delte an instance of a configuration group
+        Documentation missing (rpc_del_group_inst_doc).
 </para>
 <para>
 </para>

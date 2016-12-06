@@ -5,11 +5,11 @@ RPC Exports for mtree
 
 
  1. mtree.summary
-        Print summary of loaded mtree tables
+        Documentation missing (rpc_mtree_summary_doc).
         Returns an array.
 
  2. mtree.reload
-        Reload mtrees from database to memory
+        Documentation missing (rpc_mtree_reload_doc).
 
  3. mtree.match
         Match prefix value against mtree

@@ -10,3 +10,6 @@ RPC Exports for ims_usrloc_scscf
  2. ulscscf.showimpu
         Dump SCSCF IMPU information
 
+ 3. ulscscf.snapshot
+        Dump snapshot of SCSCF usrloc to file
+

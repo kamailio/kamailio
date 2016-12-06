@@ -77,4 +77,12 @@ RPC Exports for dialog
 </para>
 </section>
 
+<section id="dlg.terminate_dlg"><title>dlg.terminate_dlg</title>
+<para>
+        End a given dialog based on callid
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

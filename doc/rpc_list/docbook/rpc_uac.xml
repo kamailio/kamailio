@@ -10,15 +10,16 @@ RPC Exports for uac
 
 <section id="uac.reg_dump"><title>uac.reg_dump</title>
 <para>
-        Dump the contents of user registrations table.
+        Documentation missing (rpc_uac_reg_dump_doc).
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
 <section id="uac.reg_info"><title>uac.reg_info</title>
 <para>
-        Return the details of registration for a particular record.
+        Documentation missing (rpc_uac_reg_info_doc).
 </para>
 <para>
 </para>
@@ -26,7 +27,7 @@ RPC Exports for uac
 
 <section id="uac.reg_enable"><title>uac.reg_enable</title>
 <para>
-        Enable registration for a particular record.
+        Documentation missing (rpc_uac_reg_enable_doc).
 </para>
 <para>
 </para>
@@ -34,7 +35,7 @@ RPC Exports for uac
 
 <section id="uac.reg_disable"><title>uac.reg_disable</title>
 <para>
-        Disable registration for a particular record.
+        Documentation missing (rpc_uac_reg_disable_doc).
 </para>
 <para>
 </para>
@@ -42,7 +43,7 @@ RPC Exports for uac
 
 <section id="uac.reg_reload"><title>uac.reg_reload</title>
 <para>
-        Reload records from database.
+        Documentation missing (rpc_uac_reg_reload_doc).
 </para>
 <para>
 </para>
@@ -50,7 +51,23 @@ RPC Exports for uac
 
 <section id="uac.reg_refresh"><title>uac.reg_refresh</title>
 <para>
-        Refresh a record from database.
+        Documentation missing (rpc_uac_reg_refresh_doc).
+</para>
+<para>
+</para>
+</section>
+
+<section id="uac.reg_remove"><title>uac.reg_remove</title>
+<para>
+        Documentation missing (rpc_uac_reg_remove_doc).
+</para>
+<para>
+</para>
+</section>
+
+<section id="uac.reg_add"><title>uac.reg_add</title>
+<para>
+        Add a record to memory.
 </para>
 <para>
 </para>

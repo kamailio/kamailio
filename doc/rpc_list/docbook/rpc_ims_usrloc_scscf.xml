@@ -24,4 +24,12 @@ RPC Exports for ims_usrloc_scscf
 </para>
 </section>
 
+<section id="ulscscf.snapshot"><title>ulscscf.snapshot</title>
+<para>
+        Dump snapshot of SCSCF usrloc to file
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

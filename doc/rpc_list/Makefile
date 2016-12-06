@@ -36,7 +36,7 @@ files_list= \
 			$(COREPATH)/modules/db_text/dbtext.c:db_text \
 			$(COREPATH)/modules/debugger/debugger_api.c:debugger \
 			$(COREPATH)/modules/dialog/dialog.c:dialog \
-			$(COREPATH)/modules/dialog_ng/dialog.c:dialog_ng \
+			$(COREPATH)/modules/ims_dialog/ims_dialog.c:ims_dialog \
 			$(COREPATH)/modules/dialplan/dialplan.c:dialplan \
 			$(COREPATH)/modules/dispatcher/dispatcher.c:dispatcher \
 			$(COREPATH)/modules/dmq/dmq.c:dmq \
@@ -105,7 +105,7 @@ gcc=gcc
 # defines used by gcc
 # -D__CPU_i386 -DARCH="i386"
 c_defsX= -D__CPU_x86_64 -D__OS_linux -DSER_VER=3003000 -DPKG_MALLOC -DSHM_MEM  \
-		-DVERSION='\"4.3.0\"' -DARCH='\"x86_64\"' -DOS=linux_ -DOS_QUOTED='\"linux\"' \
+		-DVERSION='\"5.0.0\"' -DARCH='\"x86_64\"' -DOS=linux_ -DOS_QUOTED='\"linux\"' \
 		-DSHM_MMAP -DDNS_IP_HACK -DUSE_MCAST -DUSE_TCP \
 		-DUSE_DNS_CACHE -DUSE_DNS_FAILOVER -DUSE_DST_BLACKLIST -DUSE_NAPTR \
 		-DUSE_TLS -DTLS_HOOKS -DFAST_LOCK   -DCC_GCC_LIKE_ASM \

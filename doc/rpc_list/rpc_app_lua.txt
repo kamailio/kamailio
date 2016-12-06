@@ -5,8 +5,11 @@ RPC Exports for app_lua
 
 
  1. app_lua.reload
-        Reload lua script
+        Documentation missing (app_lua_rpc_reload_doc).
 
  2. app_lua.list
         list lua scripts
+
+ 3. app_lua.api_list
+        list kemi exports to lua
 

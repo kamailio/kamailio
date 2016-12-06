@@ -32,4 +32,12 @@ RPC Exports for dispatcher
 </para>
 </section>
 
+<section id="dispatcher.ping_active"><title>dispatcher.ping_active</title>
+<para>
+        Manage setting on/off the pinging (keepalive) of destinations
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

@@ -5,13 +5,8 @@ RPC Exports for sctp
 
 
  1. sctp.options
-        Returns active sctp options. With one parameter it returns the
-        sctp options set in the kernel for a specific
-        socket(debugging), with 0 filled in for non-kernel related
-        options. The parameter can be: "default" | "first" |
-        address[:port] . With no parameters it returns ser's idea of
-        the current sctp options (intended non-debugging use).
+        Documentation missing (core_sctp_options_doc).
 
  2. sctp.info
-        Returns sctp related info.
+        Documentation missing (core_sctpinfo_doc).
 

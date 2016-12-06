@@ -10,3 +10,6 @@ RPC Exports for dialplan
  2. dialplan.translate
         Perform dialplan translation
 
+ 3. dialplan.dump
+        Dump dialplan content
+

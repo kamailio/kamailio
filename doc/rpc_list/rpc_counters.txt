@@ -5,26 +5,25 @@ RPC Exports for counters
 
 
  1. cnt.get
-        get counter value (takes group and counter name as parameters)
+        Documentation missing (cnt_get_doc).
 
  2. cnt.reset
-        reset counter (takes group and counter name as parameters)
+        Documentation missing (cnt_reset_doc).
 
  3. cnt.get_raw
-        get raw counter value (debugging version)
+        Documentation missing (cnt_get_raw_doc).
 
  4. cnt.grps_list
-        list all the counter group names
+        Documentation missing (cnt_grps_list_doc).
         Returns an array.
 
  5. cnt.var_list
-        list all the counters names in a specified group
+        Documentation missing (cnt_var_list_doc).
         Returns an array.
 
  6. cnt.grp_get_all
-        list all counter names and values in a specified group
+        Documentation missing (cnt_grp_get_all_doc).
 
  7. cnt.help
-        print the description of a counter (group and counter name
-        required).
+        Documentation missing (cnt_help_doc).
 

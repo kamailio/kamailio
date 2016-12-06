@@ -5,18 +5,18 @@ RPC Exports for mi_rpc
 
 
  1. mi
-        Execute MI command
+        Documentation missing (rpc_mi_exec_doc).
         Returns an array.
 
  2. mi_fifo
-        Execute MI command
+        Documentation missing (rpc_mi_exec_doc).
         Returns an array.
 
  3. mi_dg
-        Execute MI command
+        Documentation missing (rpc_mi_exec_doc).
         Returns an array.
 
  4. mi_xmlrpc
-        Execute MI command
+        Documentation missing (rpc_mi_exec_doc).
         Returns an array.
 

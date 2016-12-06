@@ -10,7 +10,7 @@ RPC Exports for kex
 
 <section id="pkg.stats"><title>pkg.stats</title>
 <para>
-        Private memory (pkg) statistics per process
+        Documentation missing (rpc_pkg_stats_doc).
 </para>
 <para>
         Returns an array.

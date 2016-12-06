@@ -33,3 +33,6 @@ RPC Exports for dialog
         Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE
         mechanism: to, from, [outbound SIP proxy]
 
+ 9. dlg.terminate_dlg
+        End a given dialog based on callid
+

@@ -10,7 +10,7 @@ RPC Exports for cdp
 
 <section id="cdp.disable_peer"><title>cdp.disable_peer</title>
 <para>
-        disable diameter peer
+        Documentation missing (cdp_rpc_disable_peer_doc).
 </para>
 <para>
 </para>
@@ -18,7 +18,7 @@ RPC Exports for cdp
 
 <section id="cdp.enable_peer"><title>cdp.enable_peer</title>
 <para>
-        enable diameter peer
+        Documentation missing (cdp_rpc_enable_peer_doc).
 </para>
 <para>
 </para>
@@ -26,7 +26,7 @@ RPC Exports for cdp
 
 <section id="cdp.list_peers"><title>cdp.list_peers</title>
 <para>
-        list diameter peers and their state
+        Documentation missing (cdp_rpc_list_peers_doc).
 </para>
 <para>
 </para>

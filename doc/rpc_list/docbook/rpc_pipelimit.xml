@@ -14,6 +14,7 @@ RPC Exports for pipelimit
         &lt;counter&gt;
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
@@ -23,6 +24,7 @@ RPC Exports for pipelimit
         &lt;counter&gt;
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 

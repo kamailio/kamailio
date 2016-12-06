@@ -10,7 +10,7 @@ RPC Exports for mi_rpc
 
 <section id="mi"><title>mi</title>
 <para>
-        Execute MI command
+        Documentation missing (rpc_mi_exec_doc).
 </para>
 <para>
         Returns an array.
@@ -19,7 +19,7 @@ RPC Exports for mi_rpc
 
 <section id="mi_fifo"><title>mi_fifo</title>
 <para>
-        Execute MI command
+        Documentation missing (rpc_mi_exec_doc).
 </para>
 <para>
         Returns an array.
@@ -28,7 +28,7 @@ RPC Exports for mi_rpc
 
 <section id="mi_dg"><title>mi_dg</title>
 <para>
-        Execute MI command
+        Documentation missing (rpc_mi_exec_doc).
 </para>
 <para>
         Returns an array.
@@ -37,7 +37,7 @@ RPC Exports for mi_rpc
 
 <section id="mi_xmlrpc"><title>mi_xmlrpc</title>
 <para>
-        Execute MI command
+        Documentation missing (rpc_mi_exec_doc).
 </para>
 <para>
         Returns an array.

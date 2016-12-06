@@ -5,5 +5,5 @@ RPC Exports for sl
 
 
  1. sl.stats
-        Print reply statistics.
+        Documentation missing (rpc_stats_doc).
 

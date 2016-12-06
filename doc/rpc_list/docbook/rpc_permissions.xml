@@ -10,7 +10,7 @@ RPC Exports for permissions
 
 <section id="permissions.trustedReload"><title>permissions.trustedReload</title>
 <para>
-        Reload permissions trusted table
+        Documentation missing (rpc_trusted_reload_doc).
 </para>
 <para>
 </para>
@@ -18,7 +18,7 @@ RPC Exports for permissions
 
 <section id="permissions.addressReload"><title>permissions.addressReload</title>
 <para>
-        Reload permissions address table
+        Documentation missing (rpc_address_reload_doc).
 </para>
 <para>
 </para>
@@ -26,7 +26,7 @@ RPC Exports for permissions
 
 <section id="permissions.trustedDump"><title>permissions.trustedDump</title>
 <para>
-        Dump permissions trusted table
+        Documentation missing (rpc_trusted_dump_doc).
 </para>
 <para>
 </para>
@@ -34,23 +34,25 @@ RPC Exports for permissions
 
 <section id="permissions.addressDump"><title>permissions.addressDump</title>
 <para>
-        Dump permissions address table
+        Documentation missing (rpc_address_dump_doc).
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
 <section id="permissions.subnetDump"><title>permissions.subnetDump</title>
 <para>
-        Dump permissions subnet table
+        Documentation missing (rpc_subnet_dump_doc).
 </para>
 <para>
+        Returns an array.
 </para>
 </section>
 
 <section id="permissions.domainDump"><title>permissions.domainDump</title>
 <para>
-        Dump permissions domain name table
+        Documentation missing (rpc_domain_name_dump_doc).
 </para>
 <para>
 </para>
@@ -58,8 +60,7 @@ RPC Exports for permissions
 
 <section id="permissions.testUri"><title>permissions.testUri</title>
 <para>
-        Tests if (URI, Contact) pair is allowed according to allow/deny
-        files
+        Documentation missing (rpc_test_uri_doc).
 </para>
 <para>
 </para>

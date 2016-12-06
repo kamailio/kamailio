@@ -24,4 +24,12 @@ RPC Exports for dialplan
 </para>
 </section>
 
+<section id="dialplan.dump"><title>dialplan.dump</title>
+<para>
+        Dump dialplan content
+</para>
+<para>
+</para>
+</section>
+
 </chapter>

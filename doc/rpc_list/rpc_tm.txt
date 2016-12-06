@@ -5,26 +5,21 @@ RPC Exports for tm
 
 
  1. tm.cancel
-        Cancel a pending transaction
+        Documentation missing (rpc_cancel_doc).
 
  2. tm.reply
-        Reply transaction
+        Documentation missing (rpc_reply_doc).
 
  3. tm.stats
-        Print transaction statistics.
+        Documentation missing (tm_rpc_stats_doc).
 
  4. tm.hash_stats
-        Prints hash table statistics (can be used only if tm is
-        compiled with -DTM_HASH_STATS).
+        Documentation missing (tm_rpc_hash_stats_doc).
 
  5. tm.t_uac_start
-        starts a tm uac using  a list of string parameters: method,
-        ruri, dst_uri, send_sock, headers (CRLF separated) and body
-        (optional)
+        Documentation missing (rpc_t_uac_start_doc).
 
  6. tm.t_uac_wait
-        starts a tm uac and waits for the final reply, using a list of
-        string parameters: method, ruri, dst_uri send_sock, headers
-        (CRLF separated) and body (optional)
+        Documentation missing (rpc_t_uac_wait_doc).
         Returns an array.
 

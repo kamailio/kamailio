@@ -10,7 +10,7 @@ RPC Exports for mtree
 
 <section id="mtree.summary"><title>mtree.summary</title>
 <para>
-        Print summary of loaded mtree tables
+        Documentation missing (rpc_mtree_summary_doc).
 </para>
 <para>
         Returns an array.
@@ -19,7 +19,7 @@ RPC Exports for mtree
 
 <section id="mtree.reload"><title>mtree.reload</title>
 <para>
-        Reload mtrees from database to memory
+        Documentation missing (rpc_mtree_reload_doc).
 </para>
 <para>
 </para>

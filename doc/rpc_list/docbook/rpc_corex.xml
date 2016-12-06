@@ -10,7 +10,7 @@ RPC Exports for corex
 
 <section id="corex.list_sockets"><title>corex.list_sockets</title>
 <para>
-        List listening sockets
+        Documentation missing (corex_rpc_list_sockets_doc).
 </para>
 <para>
         Returns an array.
@@ -19,7 +19,7 @@ RPC Exports for corex
 
 <section id="corex.list_aliases"><title>corex.list_aliases</title>
 <para>
-        List socket aliases
+        Documentation missing (corex_rpc_list_aliases_doc).
 </para>
 <para>
         Returns an array.
@@ -35,6 +35,14 @@ RPC Exports for corex
 </section>
 
 <section id="corex.shm_summary"><title>corex.shm_summary</title>
+<para>
+        Trigger shm summary dump to syslog
+</para>
+<para>
+</para>
+</section>
+
+<section id="corex.pkg_summary"><title>corex.pkg_summary</title>
 <para>
         Trigger shm summary dump to syslog
 </para>

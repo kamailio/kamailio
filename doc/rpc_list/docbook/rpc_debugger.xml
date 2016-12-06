@@ -10,7 +10,7 @@ RPC Exports for debugger
 
 <section id="dbg.bp"><title>dbg.bp</title>
 <para>
-        Breakpoint command
+        Documentation missing (dbg_rpc_bp_doc).
 </para>
 <para>
 </para>
@@ -32,9 +32,33 @@ RPC Exports for debugger
 </para>
 </section>
 
-<section id="dbg.mod_level"><title>dbg.mod_level</title>
+<section id="dbg.set_mod_level"><title>dbg.set_mod_level</title>
 <para>
-        Specify module log level
+        Set module log level
+</para>
+<para>
+</para>
+</section>
+
+<section id="dbg.set_mod_facility"><title>dbg.set_mod_facility</title>
+<para>
+        Set module log facility
+</para>
+<para>
+</para>
+</section>
+
+<section id="dbg.get_mod_level"><title>dbg.get_mod_level</title>
+<para>
+        Get module log level
+</para>
+<para>
+</para>
+</section>
+
+<section id="dbg.get_mod_facility"><title>dbg.get_mod_facility</title>
+<para>
+        Get module log facility
 </para>
 <para>
 </para>

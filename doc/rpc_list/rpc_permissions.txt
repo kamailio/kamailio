@@ -5,24 +5,25 @@ RPC Exports for permissions
 
 
  1. permissions.trustedReload
-        Reload permissions trusted table
+        Documentation missing (rpc_trusted_reload_doc).
 
  2. permissions.addressReload
-        Reload permissions address table
+        Documentation missing (rpc_address_reload_doc).
 
  3. permissions.trustedDump
-        Dump permissions trusted table
+        Documentation missing (rpc_trusted_dump_doc).
 
  4. permissions.addressDump
-        Dump permissions address table
+        Documentation missing (rpc_address_dump_doc).
+        Returns an array.
 
  5. permissions.subnetDump
-        Dump permissions subnet table
+        Documentation missing (rpc_subnet_dump_doc).
+        Returns an array.
 
  6. permissions.domainDump
-        Dump permissions domain name table
+        Documentation missing (rpc_domain_name_dump_doc).
 
  7. permissions.testUri
-        Tests if (URI, Contact) pair is allowed according to allow/deny
-        files
+        Documentation missing (rpc_test_uri_doc).
 

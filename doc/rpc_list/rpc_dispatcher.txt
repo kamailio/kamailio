@@ -13,3 +13,6 @@ RPC Exports for dispatcher
  3. dispatcher.set_state
         Set the state of a destination address
 
+ 4. dispatcher.ping_active
+        Manage setting on/off the pinging (keepalive) of destinations
+

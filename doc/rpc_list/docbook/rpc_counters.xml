@@ -10,7 +10,7 @@ RPC Exports for counters
 
 <section id="cnt.get"><title>cnt.get</title>
 <para>
-        get counter value (takes group and counter name as parameters)
+        Documentation missing (cnt_get_doc).
 </para>
 <para>
 </para>
@@ -18,7 +18,7 @@ RPC Exports for counters
 
 <section id="cnt.reset"><title>cnt.reset</title>
 <para>
-        reset counter (takes group and counter name as parameters)
+        Documentation missing (cnt_reset_doc).
 </para>
 <para>
 </para>
@@ -26,7 +26,7 @@ RPC Exports for counters
 
 <section id="cnt.get_raw"><title>cnt.get_raw</title>
 <para>
-        get raw counter value (debugging version)
+        Documentation missing (cnt_get_raw_doc).
 </para>
 <para>
 </para>
@@ -34,7 +34,7 @@ RPC Exports for counters
 
 <section id="cnt.grps_list"><title>cnt.grps_list</title>
 <para>
-        list all the counter group names
+        Documentation missing (cnt_grps_list_doc).
 </para>
 <para>
         Returns an array.
@@ -43,7 +43,7 @@ RPC Exports for counters
 
 <section id="cnt.var_list"><title>cnt.var_list</title>
 <para>
-        list all the counters names in a specified group
+        Documentation missing (cnt_var_list_doc).
 </para>
 <para>
         Returns an array.
@@ -52,7 +52,7 @@ RPC Exports for counters
 
 <section id="cnt.grp_get_all"><title>cnt.grp_get_all</title>
 <para>
-        list all counter names and values in a specified group
+        Documentation missing (cnt_grp_get_all_doc).
 </para>
 <para>
 </para>
@@ -60,8 +60,7 @@ RPC Exports for counters
 
 <section id="cnt.help"><title>cnt.help</title>
 <para>
-        print the description of a counter (group and counter name
-        required).
+        Documentation missing (cnt_help_doc).
 </para>
 <para>
 </para>

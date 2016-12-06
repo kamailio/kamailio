@@ -5,8 +5,8 @@ RPC Exports for uid_domain
 
 
  1. domain.reload
-        Reload domain table from database
+        Documentation missing (domain_reload_doc).
 
  2. domain.dump
-        Return the contents of domain table
+        Documentation missing (domain_dump_doc).
 

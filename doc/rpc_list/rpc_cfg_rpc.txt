@@ -5,67 +5,56 @@ RPC Exports for cfg_rpc
 
 
  1. cfg.set
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 
  2. cfg.set_now_int
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 
  3. cfg.seti
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 
  4. cfg.set_now_string
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 
  5. cfg.sets
-        Set the value of a configuration variable and commit the change
-        immediately
+        Documentation missing (rpc_set_now_doc).
 
  6. cfg.del
-        Delete the value of a configuration variable from a group
-        instance and commit the change immediately
+        Documentation missing (rpc_del_now_doc).
 
  7. cfg.set_delayed
-        Prepare the change of a configuration variable, but does not
-        commit the new value yet
+        Documentation missing (rpc_set_delayed_doc).
 
  8. cfg.set_delayed_int
-        Prepare the change of a configuration variable, but does not
-        commit the new value yet
+        Documentation missing (rpc_set_delayed_doc).
 
  9. cfg.set_delayed_string
-        Prepare the change of a configuration variable, but does not
-        commit the new value yet
+        Documentation missing (rpc_set_delayed_doc).
 
 10. cfg.del_delayed
-        Prepare the deletion of the value of a configuration variable
-        from a group instance, but does not commit the change yet
+        Documentation missing (rpc_del_delayed_doc).
 
 11. cfg.commit
-        Commit the previously prepared configuration changes
+        Documentation missing (rpc_commit_doc).
 
 12. cfg.rollback
-        Drop the prepared configuration changes
+        Documentation missing (rpc_rollback_doc).
 
 13. cfg.get
-        Get the value of a configuration variable
+        Documentation missing (rpc_get_doc).
 
 14. cfg.help
-        Print the description of a configuration variable
+        Documentation missing (rpc_help_doc).
 
 15. cfg.list
-        List the configuration variables
+        Documentation missing (rpc_list_doc).
 
 16. cfg.diff
-        List the pending configuration changes that have not been
-        committed yet
+        Documentation missing (rpc_diff_doc).
 
 17. cfg.add_group_inst
-        Add a new instance to an existing configuration group
+        Documentation missing (rpc_add_group_inst_doc).
 
 18. cfg.del_group_inst
-        Delte an instance of a configuration group
+        Documentation missing (rpc_del_group_inst_doc).
 

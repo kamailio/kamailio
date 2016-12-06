@@ -5,11 +5,11 @@ RPC Exports for cdp
 
 
  1. cdp.disable_peer
-        disable diameter peer
+        Documentation missing (cdp_rpc_disable_peer_doc).
 
  2. cdp.enable_peer
-        enable diameter peer
+        Documentation missing (cdp_rpc_enable_peer_doc).
 
  3. cdp.list_peers
-        list diameter peers and their state
+        Documentation missing (cdp_rpc_list_peers_doc).
 

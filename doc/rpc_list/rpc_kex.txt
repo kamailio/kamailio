@@ -5,6 +5,6 @@ RPC Exports for kex
 
 
  1. pkg.stats
-        Private memory (pkg) statistics per process
+        Documentation missing (rpc_pkg_stats_doc).
         Returns an array.
 

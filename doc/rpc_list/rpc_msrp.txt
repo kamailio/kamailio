@@ -5,5 +5,5 @@ RPC Exports for msrp
 
 
  1. msrp.cmaplist
-        Return the content of dispatcher sets
+        Documentation missing (msrp_cmap_rpc_list_doc).
 

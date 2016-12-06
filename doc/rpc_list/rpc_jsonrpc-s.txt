@@ -5,6 +5,6 @@ RPC Exports for jsonrpc-s
 
 
  1. jsonrpc.echo
-        Sample echo command
+        Documentation missing (jsonrpc_rpc_echo_doc).
         Returns an array.
 

@@ -10,7 +10,7 @@ RPC Exports for jsonrpc-s
 
 <section id="jsonrpc.echo"><title>jsonrpc.echo</title>
 <para>
-        Sample echo command
+        Documentation missing (jsonrpc_rpc_echo_doc).
 </para>
 <para>
         Returns an array.
