@@ -24,29 +24,35 @@ files_list= \
 			$(COREPATH)/core_cmd.c:core \
 			$(COREPATH)/modules/app_lua/app_lua_mod.c:app_lua \
 			$(COREPATH)/modules/app_perl/app_perl_mod.c:app_perl \
+			$(COREPATH)/modules/auth_xkeys/auth_xkeys.c:auth_xkeys \
 			$(COREPATH)/modules/carrierroute/carrierroute.c:carrierroute \
 			$(COREPATH)/modules/cdp/cdp_rpc.c:cdp \
 			$(COREPATH)/modules/cfg_rpc/cfg_rpc.c:cfg_rpc \
+			$(COREPATH)/modules/cfgt/cfgt_int.c:cfgt \
+			$(COREPATH)/modules/cfgutils/cfgutils.c:cfgutils \
 			$(COREPATH)/modules/cnxcc/cnxcc_mod.c:cnxcc \
 			$(COREPATH)/modules/corex/corex_rpc.c:corex \
 			$(COREPATH)/modules/counters/counters.c:counters \
 			$(COREPATH)/modules/ctl/ctl.c:ctl \
 			$(COREPATH)/modules/db_flatstore/flat_rpc.c:db_flatstore \
 			$(COREPATH)/modules/db_flatstore/km_flatstore_mod.c:db_flatstore \
-			$(COREPATH)/modules/db_text/dbtext.c:db_text \
+			$(COREPATH)/modules/db_text/db_text.c:db_text \
 			$(COREPATH)/modules/debugger/debugger_api.c:debugger \
 			$(COREPATH)/modules/dialog/dialog.c:dialog \
-			$(COREPATH)/modules/ims_dialog/ims_dialog.c:ims_dialog \
 			$(COREPATH)/modules/dialplan/dialplan.c:dialplan \
 			$(COREPATH)/modules/dispatcher/dispatcher.c:dispatcher \
 			$(COREPATH)/modules/dmq/dmq.c:dmq \
 			$(COREPATH)/modules/domain/domain_mod.c:domain \
 			$(COREPATH)/modules/drouting/drouting.c:drouting \
 			$(COREPATH)/modules/htable/htable.c:htable \
+			$(COREPATH)/modules/http_client/curlrpc.c:http_client \
+			$(COREPATH)/modules/ims_dialog/ims_dialog.c:ims_dialog \
+			$(COREPATH)/modules/ims_registrar_scscf/reg_rpc.c:ims_registrar_scscf \
 			$(COREPATH)/modules/ims_usrloc_pcscf/ul_rpc.c:ims_usrloc_pcscf \
 			$(COREPATH)/modules/ims_usrloc_scscf/ul_rpc.c:ims_usrloc_scscf \
 			$(COREPATH)/modules/jsonrpc-s/jsonrpc-s_mod.c:jsonrpc-s \
 			$(COREPATH)/modules/kex/core_stats.c:kex \
+			$(COREPATH)/modules/kex/mod_stats.c:kex \
 			$(COREPATH)/modules/kex/pkg_stats.c:kex \
 			$(COREPATH)/modules/lcr/lcr_rpc.c:lcr \
 			$(COREPATH)/modules/malloc_test/malloc_test.c:malloc_test \
@@ -66,13 +72,16 @@ files_list= \
 			$(COREPATH)/modules/sipcapture/sipcapture.c:sipcapture \
 			$(COREPATH)/modules/siptrace/siptrace.c:siptrace \
 			$(COREPATH)/modules/sl/sl_stats.c:sl \
+			$(COREPATH)/modules/statsc/statsc_mod.c:statsc \
 			$(COREPATH)/modules/tls/tls_rpc.c:tls \
 			$(COREPATH)/modules/tm/tm.c:tm \
+			$(COREPATH)/modules/tsilo/ts_rpc.c:tsilo \
 			$(COREPATH)/modules/uac/uac_reg.c:uac \
 			$(COREPATH)/modules/uid_domain/domain_rpc.c:uid_domain \
 			$(COREPATH)/modules/uid_gflags/uid_gflags.c:uid_gflags \
 			$(COREPATH)/modules/usrloc/ul_rpc.c:usrloc \
 			$(COREPATH)/modules/xhttp_pi/xhttp_pi.c:xhttp_pi
+
 
 # list of excluded groups
 grp_exclude=pa
