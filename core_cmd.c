@@ -238,7 +238,7 @@ static const char* system_listMethods_doc[] = {
 static void system_listMethods(rpc_t* rpc, void* c)
 {
 	int i;
-	
+
 	for(i=0; i<rpc_sarray_crt_size; i++){
 		if (rpc->add(c, "s", rpc_sarray[i]->name) < 0) return;
 	}
@@ -359,7 +359,7 @@ static const char* core_info_doc[] = {
 static void core_info(rpc_t* rpc, void* c)
 {
 	void* s;
-	
+
 	if (rpc->add(c, "{", &s) < 0) return;
 	rpc->struct_printf(s, "version", "%s %s", ver_name, ver_version);
 	rpc->struct_add(s, "s", "id", ver_id);
@@ -371,7 +371,7 @@ static void core_info(rpc_t* rpc, void* c)
 
 
 static const char* core_uptime_doc[] = {
-	"Returns uptime of SER server.",  /* Documentation string */
+	"Returns uptime of SIP server.",  /* Documentation string */
 	0                                 /* Method signature(s) */
 };
 
@@ -380,11 +380,17 @@ static void core_uptime(rpc_t* rpc, void* c)
 {
 	void* s;
 	time_t now;
+	str snow;
 
 	time(&now);
 
 	if (rpc->add(c, "{", &s) < 0) return;
-	rpc->struct_add(s, "s", "now", ctime(&now));
+	snow.s = ctime(&now);
+	if(snow.s) {
+		snow.len = strlen(snow.s);
+		if(snow.len>2 && snow.s[snow.len-1]=='\n') snow.len--;
+		rpc->struct_add(s, "S", "now", &snow);
+	}
 	rpc->struct_add(s, "s", "up_since", up_since_ctime);
 	/* no need for a float here (unless you're concerned that your uptime)
 	rpc->struct_add(s, "f", "uptime",  difftime(now, up_since));
@@ -395,7 +401,7 @@ static void core_uptime(rpc_t* rpc, void* c)
 
 
 static const char* core_ps_doc[] = {
-	"Returns the description of running SER processes.",  /* Documentation string */
+	"Returns the description of running processes.",  /* Documentation string */
 	0                                                     /* Method signature(s) */
 };
 
@@ -411,7 +417,7 @@ static void core_ps(rpc_t* rpc, void* c)
 }
 
 static const char* core_psx_doc[] = {
-	"Returns the detailed description of running SER processes.",
+	"Returns the detailed description of running processes.",
 		/* Documentation string */
 	0	/* Method signature(s) */
 };
@@ -433,8 +439,8 @@ static void core_psx(rpc_t* rpc, void* c)
 
 
 static const char* core_pwd_doc[] = {
-	"Returns the working directory of SER server.",    /* Documentation string */
-	0                                                  /* Method signature(s) */
+	"Returns the working directory of server.",    /* Documentation string */
+	0                                              /* Method signature(s) */
 };
 
 
@@ -461,8 +467,8 @@ static void core_pwd(rpc_t* rpc, void* c)
 
 
 static const char* core_arg_doc[] = {
-	"Returns the list of command line arguments used on SER startup.",  /* Documentation string */
-	0                                                                   /* Method signature(s) */
+	"Returns the list of command line arguments used on startup.",  /* Documentation string */
+	0                                                               /* Method signature(s) */
 };
 
 
@@ -477,8 +483,8 @@ static void core_arg(rpc_t* rpc, void* c)
 
 
 static const char* core_kill_doc[] = {
-	"Sends the given signal to SER.",  /* Documentation string */
-	0                                  /* Method signature(s) */
+	"Sends the given signal to server.",  /* Documentation string */
+	0                                     /* Method signature(s) */
 };
 
 
@@ -896,7 +902,7 @@ static void core_aliases_list(rpc_t* rpc, void* c)
  */
 static const char* core_sockets_list_doc[] = {
 	"List local SIP server listen sockets",    /* Documentation string */
-	0                                     /* Method signature(s) */
+	0                                          /* Method signature(s) */
 };
 
 /**
@@ -1055,7 +1061,7 @@ static rpc_export_t core_rpc_methods[] = {
 int register_core_rpcs(void)
 {
 	int i;
-	
+
 	i=rpc_register_array(core_rpc_methods);
 	if (i<0){
 		BUG("failed to register core RPCs\n");
@@ -1080,6 +1086,15 @@ int rpc_init_time(void)
 		ERR("Too long data %d\n", (int)strlen(t));
 		return -1;
 	}
-	memcpy(up_since_ctime,t,strlen(t)+1);
+	strcpy(up_since_ctime, t);
+	t = up_since_ctime + strlen(up_since_ctime);
+	while(t>up_since_ctime) {
+		if(*t=='\0' || *t=='\r' || *t=='\n') {
+			*t = '\0';
+		} else {
+			break;
+		}
+		t--;
+	}
 	return 0;
 }
