@@ -266,7 +266,7 @@ $(share_prefix)/$(share_dir):
 ifneq (,$(wildcard doc/Makefile))
 #doc/Makefile present => we can generate README
 
-README: doc/*.xml ../../docbook/entities.xml
+README: doc/*.xml ../../../docbook/entities.xml
 	$(MAKE) -C doc $(MOD_NAME).txt
 	mv doc/$(MOD_NAME).txt $@
 
@@ -280,7 +280,7 @@ endif
 ifneq (,$(wildcard $(MOD_NAME).xml))
 
 $(MOD_NAME).7: $(MOD_NAME).xml
-	$(DOCBOOK) -s ../../doc/stylesheets/serdoc2man.xsl $<
+	$(DOCBOOK) -s ../../../doc/stylesheets/serdoc2man.xsl $<
 
 man: $(MOD_NAME).7
 
