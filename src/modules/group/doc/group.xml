@@ -7,7 +7,7 @@
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
 %docentities;
 
 ]>

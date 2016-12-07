@@ -4,7 +4,7 @@
 	[ <!ENTITY % local.common.attrib
 	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
 	 <!-- Include general documentation entities -->
-	 <!ENTITY % docentities SYSTEM "../../../docbook/entities.xml">
+	 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
 	 %docentities;
 	]
 >

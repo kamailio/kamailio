@@ -243,7 +243,7 @@ docbook-xml:
 	echo "        \"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd\" [" \
 		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
 	#Include general documentation entities
-	echo "    <!ENTITY % docentities SYSTEM \"../../../docbook/entities.xml\">" \
+	echo "    <!ENTITY % docentities SYSTEM \"../../../../doc/docbook/entities.xml\">" \
 		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
 	echo "    %docentities;" \
 		>> "$(ROOT)/doc/databases/kamailio/tables.xml"
@@ -266,7 +266,7 @@ docbook-xml:
 		> "$(ROOT)/doc/databases/kamailio/Makefile"
 	echo \
 		>> "$(ROOT)/doc/databases/kamailio/Makefile"
-	echo "docbook_dir = ../../../docbook" \
+	echo "docbook_dir = ../../../../doc/docbook" \
 		>> "$(ROOT)/doc/databases/kamailio/Makefile"
 	echo "include \$$(docbook_dir)/Makefile" \
 		>> "$(ROOT)/doc/databases/kamailio/Makefile"
@@ -289,7 +289,7 @@ docbook:
 		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \""$$FILE"\">" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
 	done ; \
 	#Include general documentation entities
-	echo "  <!ENTITY % docentities SYSTEM \"../../../docbook/entities.xml\"> %docentities;" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
+	echo "  <!ENTITY % docentities SYSTEM \"../../../../doc/docbook/entities.xml\"> %docentities;" >> "$(ROOT)/doc/databases/kamailio/tables.sgml" ; \
 	echo "]>" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"
 	# add bookinfo
 	cat "$(ROOT)/doc/stylesheets/dbschema_k/bookinfo.xml" >> "$(ROOT)/doc/databases/kamailio/tables.sgml"

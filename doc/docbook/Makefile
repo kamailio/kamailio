@@ -42,8 +42,8 @@ output_dir ?= .
 # auxiliary files that are needed to convert docbook documentation to other
 # formats. You should not need to use this variable under normal
 # circumstances.
-docbook_dir ?= ../../../docbook
-COREPATH ?= $(docbook_dir)/..
+docbook_dir ?= ../../../doc/docbook
+COREPATH ?= $(docbook_dir)/../../src
 
 # This is the stylesheet used to generate a list of dependencies for a docbook
 # source file. The stylesheet walks through the document and prints all files

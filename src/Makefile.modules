@@ -266,7 +266,7 @@ $(share_prefix)/$(share_dir):
 ifneq (,$(wildcard doc/Makefile))
 #doc/Makefile present => we can generate README
 
-README: doc/*.xml ../../../docbook/entities.xml
+README: doc/*.xml ../../../doc/docbook/entities.xml
 	$(MAKE) -C doc $(MOD_NAME).txt
 	mv doc/$(MOD_NAME).txt $@
 
