@@ -22,7 +22,7 @@ ifeq ($(INSTALL_FLAVOUR),kamailio)
 # extra install for kamailio
 
 install-dbtext-scripts: $(bin_prefix)/$(bin_dir)
-		DBTEXTON=yes $(MAKE) -C ../../utils/kamctl/ install-modules
+		DBTEXTON=yes $(MAKE) -C ../../../utils/kamctl/ install-modules
 
 install-scripts: install-dbtext-scripts
 
