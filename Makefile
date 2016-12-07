@@ -16,3 +16,7 @@ KSR_DIR ?= src/
 # forward the default target
 default:
 	$(MAKE) -C $(KSR_DIR)
+
+.PHONY: install
+install:
+	$(MAKE) -C $(KSR_DIR) "$@"
