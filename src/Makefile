@@ -610,7 +610,7 @@ deb:
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	else \
-		ln -s pkg/$(MAIN_NAME)/deb/debian debian; \
+		ln -s ../pkg/$(MAIN_NAME)/deb/debian debian; \
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	fi
@@ -621,7 +621,7 @@ deb-stable:
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	else \
-		ln -s pkg/$(MAIN_NAME)/deb/wheezy debian; \
+		ln -s ../pkg/$(MAIN_NAME)/deb/jessie debian; \
 		dpkg-buildpackage -rfakeroot -tc; \
 		rm debian; \
 	fi
