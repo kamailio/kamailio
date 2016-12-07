@@ -5,7 +5,7 @@
 # Kamailio database descriptions for modules
 TABLES := $(patsubst kamailio-%.xml,%,$(wildcard kamailio-*.xml))
 
-ROOT=../../../
+ROOT=../../../../
 STYLESHEETS=$(ROOT)/doc/stylesheets/dbschema_k/xsl
 SCHEME=$(ROOT)/utils/kamctl/
 
