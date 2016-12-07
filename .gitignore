@@ -12,6 +12,7 @@ modules.lst
 # ignore binary files and objects
 /ser
 /kamailio
+/src/kamailio
 *.so
 *.so.*
 *.o
