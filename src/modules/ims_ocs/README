@@ -4,7 +4,7 @@ Carsten Bock
 
    ng-voice GmbH
 
-   Copyright � 2016 ng-voice GmbH
+   Copyright © 2016 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -122,18 +122,18 @@ Chapter 1. Admin Guide
 
    4.1. ccr_result(resultcode, grantedunits, finalunit)
 
-4.1. ccr_result(resultcode, grantedunits, finalunit)
+4.1.  ccr_result(resultcode, grantedunits, finalunit)
 
    This method sets the response code of the Diameter Request.
 
    Meaning of the parameters is as follows:
      * resultcode - the Diameter Response code for the request. Typical
        response codes are:
-          + "2001" - Ok
-          + "5030" - User unknown
-          + "5031" - Rating failed
-          + "4010" - End-User Service denied (e.g. Service blocked)
-          + "5006" - Ressources exceeded (e.g. too many concurrent calls)
+          + “2001” - Ok
+          + “5030” - User unknown
+          + “5031” - Rating failed
+          + “4010” - End-User Service denied (e.g. Service blocked)
+          + “5006” - Ressources exceeded (e.g. too many concurrent calls)
      * grantedunits - the number of granted units for this particular user
      * finalunit - indication, that all following requests will be denied
        (this is the final unit for the session)
@@ -157,7 +157,7 @@ ccr_result("2001", "$hdr(P-Requested-Units)", "0");
    5.1. ocs:ccr-orig
    5.2. ocs:ccr-term
 
-5.1. ocs:ccr-orig
+5.1.  ocs:ccr-orig
 
    This route is called for Charging Requests with the session-case
    "originating" - a call from a user to another destination.
@@ -185,7 +185,7 @@ event_route[ocs:ccr-orig] {
 }
 ...
 
-5.2. ocs:ccr-term
+5.2.  ocs:ccr-term
 
    This route is called for Charging Requests with the session-case
    "terminating" - a call to a user from another destination.
