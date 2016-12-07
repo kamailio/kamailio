@@ -1709,7 +1709,7 @@ endif
 ifeq ($(YACC),)
 	YACC=bison
 endif
-YACC_FLAGS=-d -b cfg
+YACC_FLAGS=-d -b core/cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
 LIBS= -ldl -lresolv
 LIB_PREFIX:=lib
