@@ -35,18 +35,18 @@
 # undef _SEM_SEMUN_UNDEFINED
 #endif
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_uri.h"
-#include "../../usr_avp.h"
-#include "../../action.h"
-#include "../../flags.h"
-#include "../../pvar.h"
-#include "../../dset.h"
-#include "../../mem/mem.h"
-#include "../../route_struct.h"
-#include "../../qvalue.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/usr_avp.h"
+#include "../../core/action.h"
+#include "../../core/flags.h"
+#include "../../core/pvar.h"
+#include "../../core/dset.h"
+#include "../../core/mem/mem.h"
+#include "../../core/route_struct.h"
+#include "../../core/qvalue.h"
+#include "../../core/dprint.h"
 
 extern int unsafemodfnc;
 
