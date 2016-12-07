@@ -52,7 +52,7 @@ ifneq (,$(filter sip-router ser, $(INSTALL_FLAVOUR)))
 
 install-mysql-script: $(bin_prefix)/$(bin_dir)
 	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
-	< ../../scripts/mysql/$(SCR_NAME)_mysql.sh > \
+	< ../../../misc/scripts/mysql/$(SCR_NAME)_mysql.sh > \
 	$(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
 	chmod 755 $(bin_prefix)/$(bin_dir)/$(MAIN_NAME)_mysql.sh
 
@@ -62,7 +62,7 @@ else ifeq ($(INSTALL_FLAVOUR),kamailio)
 # extra install for kamailio
 
 install-mysql-scripts: $(bin_prefix)/$(bin_dir)
-		MYSQLON=yes $(MAKE) -C ../../utils/kamctl/ install-modules
+		MYSQLON=yes $(MAKE) -C ../../../utils/kamctl/ install-modules
 
 install-scripts: install-mysql-scripts
 
