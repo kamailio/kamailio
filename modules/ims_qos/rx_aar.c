@@ -439,7 +439,7 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 	str ttag = {0, 0};
 	str ftag = {0, 0};
 	int request_originated_from_callee = 0;  
-	str ipA, ipB;
+	str ipA, ipB, portA, portB;
 	
 	rx_authsessiondata_t* p_session_data = 0;
     p_session_data = (rx_authsessiondata_t*) auth->u.auth.generic_data;
@@ -520,10 +520,17 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 						if (request_originated_from_callee) {
 							LM_DBG("Request originated from callee so IPs are reversed\n");	
 							ipA = rpl_sdp_session->ip_addr;
+							portA = rpl_sdp_stream->port;
+							
 							ipB = req_sdp_session->ip_addr;
+							portB = req_sdp_stream->port;
 						} else {
 							ipA = req_sdp_session->ip_addr;
+							portA = req_sdp_stream->port;
+							
+							
 							ipB = rpl_sdp_session->ip_addr;
+							portB = rpl_sdp_stream->port;
 						}
 						
 
@@ -532,8 +539,10 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 								if (request_originated_from_callee) {
 									LM_DBG("Request originated from callee so IPs are reversed\n");	
 									ipA = rpl_sdp_stream->ip_addr;
+									portA = rpl_sdp_stream->port;
 								} else {
 									ipA = req_sdp_stream->ip_addr;
+									portA = req_sdp_stream->port;
 								}
 								
 								
@@ -548,8 +557,10 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 								if (request_originated_from_callee) {
 									LM_DBG("Request originated from callee so IPs are reversed\n");	
 									ipB = req_sdp_stream->ip_addr;
+									portB = req_sdp_stream->port;
 								} else {
 									ipB = rpl_sdp_stream->ip_addr;
+									portB = rpl_sdp_stream->port;
 								}
 								
 								
@@ -562,15 +573,15 @@ int add_media_components(AAAMessage* aar, struct sip_msg *req,
 						//add this to auth session data
                         add_flow_description((rx_authsessiondata_t*) auth->u.auth.generic_data, sdp_stream_num + 1,
                                 &req_sdp_stream->media, &ipA,
-                                &req_sdp_stream->port, &ipB,
-                                &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
+                                &portA, &ipB,
+                                &portB, &rpl_sdp_stream->transport,
                                 &req_sdp_stream->raw_stream,
                                 &rpl_sdp_stream->raw_stream, direction, 0 /*This is a new mcd, we are not setting it as active*/);
 
                         rx_add_media_component_description_avp(aar, sdp_stream_num + 1,
                                 &req_sdp_stream->media, &ipA,
-                                &req_sdp_stream->port, &ipB,
-                                &rpl_sdp_stream->port, &rpl_sdp_stream->transport,
+                                &portA, &ipB,
+                                &portB, &rpl_sdp_stream->transport,
                                 &req_sdp_stream->raw_stream,
                                 &rpl_sdp_stream->raw_stream, direction, AVP_EPC_Flow_Usage_No_Information);
                     }
