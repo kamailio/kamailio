@@ -28,19 +28,19 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../mem/shm_mem.h"
-#include "../../timer.h"
-#include "../../locking.h"
-#include "../../kemi.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/timer.h"
+#include "../../core/locking.h"
+#include "../../core/kemi.h"
 #include "ip_tree.h"
 #include "timer.h"
 #include "pike_mi.h"
 #include "pike_funcs.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc_lookup.h"
 #include "pike_rpc.h"
 
 MODULE_VERSION

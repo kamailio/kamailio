@@ -23,7 +23,7 @@
 #ifndef PUA_CBACK
 #define PUA_CBACK
 
-#include "../../parser/parse_fline.h"
+#include "../../core/parser/parse_fline.h"
 #include "../pua/hash.h"
 
 #define PUACB_MAX    		(1<<9)

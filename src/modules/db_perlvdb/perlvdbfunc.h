@@ -31,7 +31,7 @@
 #include "../../lib/srdb1/db_op.h"
 #include "../../lib/srdb1/db_con.h"
 #include "../../lib/srdb1/db_res.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 /*

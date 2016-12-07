@@ -27,15 +27,15 @@
  */
 
 
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../sr_module.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
 #include "../../lib/kmi/mi.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../locking.h"
-#include "../../ut.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/locking.h"
+#include "../../core/ut.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "xr_writer.h"
 #include "xr_parser.h"
 #include "mi_xmlrpc.h"

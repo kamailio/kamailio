@@ -29,7 +29,7 @@
 #ifndef _TS_HASH_H_
 #define _TS_HASH_H_
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "../../lib/kmi/mi.h"
 #include "../../modules/tm/tm_load.h"
 

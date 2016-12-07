@@ -27,7 +27,7 @@
  */
 
 #include "db_gen.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 #ifdef __cplusplus

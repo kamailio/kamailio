@@ -28,12 +28,12 @@
  */
 
 
-#include "../../mem/shm_mem.h"
-#include "../../hashes.h"
-#include "../../trim.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../route.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/hashes.h"
+#include "../../core/trim.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/route.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../lib/srutils/sruid.h"
 #include "dlg_hash.h"

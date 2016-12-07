@@ -27,9 +27,9 @@
 #ifndef RECORD_H
 #define RECORD_H
 
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
-#include "../../pvar.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/pvar.h"
 
 /*!
  * \brief Insert a new Record-Route header field with lr parameter

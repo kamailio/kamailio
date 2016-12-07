@@ -26,23 +26,23 @@
 #ifdef EXTRA_DEBUG
 #include <assert.h>
 #endif
-#include "../../comp_defs.h"
-#include "../../hash_func.h"
-#include "../../globals.h"
+#include "../../core/comp_defs.h"
+#include "../../core/hash_func.h"
+#include "../../core/globals.h"
 #include "t_funcs.h"
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../parser/parser_f.h"
-#include "../../parser/parse_to.h"
-#include "../../ut.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/contact/parse_contact.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/ut.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/contact/parse_contact.h"
 #include "lw_parser.h"
 #include "t_msgbuilder.h"
 #include "uac.h"
 #ifdef USE_DNS_FAILOVER
-#include "../../dns_cache.h"
-#include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
+#include "../../core/dns_cache.h"
+#include "../../core/cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 
 

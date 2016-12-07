@@ -20,9 +20,9 @@
  *
  */
 
-#include "../../events.h"
-#include "../../script_cb.h"
-#include "../../sr_module.h"
+#include "../../core/events.h"
+#include "../../core/script_cb.h"
+#include "../../core/sr_module.h"
 
 #include "cfgt_mod.h"
 #include "cfgt_int.h"

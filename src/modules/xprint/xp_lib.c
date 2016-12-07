@@ -42,26 +42,26 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../dset.h"
-#include "../../resolve.h"
-#include "../../qvalue.h"
-#include "../../usr_avp.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/dset.h"
+#include "../../core/resolve.h"
+#include "../../core/qvalue.h"
+#include "../../core/usr_avp.h"
+#include "../../core/rand/kam_rand.h"
 
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_hname2.h"
-#include "../../parser/parse_refer_to.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_hname2.h"
+#include "../../core/parser/parse_refer_to.h"
 
 #include "xp_lib.h"
 #include <arpa/inet.h>  // inet_ntop
 
-#include "../../select.h"
+#include "../../core/select.h"
 
 static str str_null  = STR_STATIC_INIT("<null>");
 static str str_empty = STR_STATIC_INIT("");

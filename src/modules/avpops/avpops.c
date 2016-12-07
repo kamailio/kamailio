@@ -26,14 +26,14 @@
 #include <sys/types.h> /* for regex */
 #include <regex.h>
 
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_hname2.h"
-#include "../../sr_module.h"
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_hname2.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
 #include "avpops_parse.h"
 #include "avpops_impl.h"
 #include "avpops_db.h"

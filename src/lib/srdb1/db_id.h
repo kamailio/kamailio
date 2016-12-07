@@ -28,7 +28,7 @@
 #ifndef _DB1_ID_H
 #define _DB1_ID_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "db_pooling.h"
 
 /** Structure representing a database ID */

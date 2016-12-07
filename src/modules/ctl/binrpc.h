@@ -94,7 +94,7 @@
 #define _binrpc_h
 
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include <string.h>
 
 #define BINRPC_MAGIC 0xA

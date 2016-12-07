@@ -29,13 +29,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../mod_fix.h"
-#include "../../lvalue.h"
+#include "../../core/mod_fix.h"
+#include "../../core/lvalue.h"
 
 #include "kz_json.h"
 #include "const.h"
-#include "../../pvar.h"
-#include "../../usr_avp.h"
+#include "../../core/pvar.h"
+#include "../../core/usr_avp.h"
 
 # define json_foreach_key(obj,key) \
 	char *key;\

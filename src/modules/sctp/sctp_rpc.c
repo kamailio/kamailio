@@ -16,10 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "../../rpc_lookup.h"
-#include "../../socket_info.h"
-#include "../../globals.h"
-#include "../../config.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/socket_info.h"
+#include "../../core/globals.h"
+#include "../../core/config.h"
 
 #ifdef USE_SCTP
 #include "sctp_options.h"

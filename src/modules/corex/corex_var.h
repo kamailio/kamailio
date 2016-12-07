@@ -20,7 +20,7 @@
 #ifndef _COREX_VAR_H_
 #define _COREX_VAR_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_parse_cfg_name(pv_spec_p sp, str *in);
 int pv_get_cfg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);

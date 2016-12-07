@@ -27,7 +27,7 @@
 #define ctl_realloc realloc
 #define ctl_free free
 #else
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #define ctl_malloc pkg_malloc
 #define ctl_realloc pkg_realloc
 #define ctl_free pkg_free

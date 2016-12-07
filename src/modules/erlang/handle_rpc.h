@@ -21,7 +21,7 @@
  *
  */
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 #include "erl_helpers.h"
 #include "cnode.h"
 

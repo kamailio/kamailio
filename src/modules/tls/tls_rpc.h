@@ -26,7 +26,7 @@
 #ifndef _TLS_RPC_H
 #define _TLS_RPC_H
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 extern rpc_export_t tls_rpc[];
 

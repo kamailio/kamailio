@@ -30,7 +30,7 @@
  * reasons with modules that check ONSEND, continue to set it
  * unconditionally*/
 #define TMCB_ONSEND
-#include "../../ip_addr.h" /* dest_info */
+#include "../../core/ip_addr.h" /* dest_info */
 
 struct sip_msg;
 struct cell;

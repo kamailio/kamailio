@@ -31,9 +31,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 #include "cr_config.h"
 #include "carrierroute.h"
 #include "cr_rule.h"

@@ -28,10 +28,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../mem/shm_mem.h"
-#include "../../hashes.h"
-#include "../../dprint.h"
-#include "../../str.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/hashes.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
 #include "../pua/hash.h"
 #include "presence.h"
 #include "hash.h"

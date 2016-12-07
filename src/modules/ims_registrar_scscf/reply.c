@@ -35,11 +35,11 @@
  * \ingroup registrar   
  */
 
-#include "../../ut.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/contact/contact.h"
-#include "../../parser/parse_supported.h"
-#include "../../data_lump_rpl.h"
+#include "../../core/ut.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/contact/contact.h"
+#include "../../core/parser/parse_supported.h"
+#include "../../core/data_lump_rpl.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "rerrno.h"
 #include "reg_mod.h"

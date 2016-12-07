@@ -46,7 +46,7 @@
 #ifndef _UL_RPC_H_
 #define _UL_RPC_H_
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 extern rpc_export_t ul_rpc[];
 

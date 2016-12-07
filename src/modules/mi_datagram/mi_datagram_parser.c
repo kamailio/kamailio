@@ -36,11 +36,11 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "../../str.h"
-#include "../../dprint.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
 #include "../../lib/kmi/mi.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "datagram_fnc.h"
 #include "mi_datagram.h"
 #include "mi_datagram_parser.h"

@@ -28,13 +28,13 @@
 
 #include "udomain.h"
 #include <string.h>
-#include "../../parser/parse_methods.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
+#include "../../core/parser/parse_methods.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db.h"
-#include "../../socket_info.h"
-#include "../../ut.h"
-#include "../../hashes.h"
+#include "../../core/socket_info.h"
+#include "../../core/ut.h"
+#include "../../core/hashes.h"
 #include "p_usrloc_mod.h"            /* usrloc module parameters */
 #include "utime.h"
 #include "ul_db_layer.h"

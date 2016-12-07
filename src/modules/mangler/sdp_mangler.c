@@ -30,14 +30,14 @@
 #include "ip_helper.h"
 #include "utils.h"
 #include "common.h"
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
-#include "../../parser/hf.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../ut.h"
-#include "../../parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/ut.h"
+#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
 
 regex_t *portExpression;
 regex_t *ipExpression;

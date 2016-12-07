@@ -39,7 +39,7 @@
 #include "../../lib/srdb2/db_drv.h"
 #include "../../lib/srdb2/db_cmd.h"
 #include "../../lib/srdb2/db_res.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 #include <stdarg.h>
 #include <libpq-fe.h>

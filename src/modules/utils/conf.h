@@ -30,8 +30,8 @@
 #define CONF_H
 
 #include "../../lib/kmi/mi.h"
-#include "../../parser/msg_parser.h"
-#include "../../proxy.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/proxy.h"
 
 int conf_str2id(char *id_str);
 

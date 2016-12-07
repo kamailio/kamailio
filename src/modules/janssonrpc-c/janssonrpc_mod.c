@@ -24,12 +24,12 @@
 #include <sys/types.h>
 #include <errno.h>
 
-#include "../../pvar.h"
-#include "../../mod_fix.h"
-#include "../../trim.h"
-#include "../../sr_module.h"
-#include "../../timer_proc.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
+#include "../../core/trim.h"
+#include "../../core/sr_module.h"
+#include "../../core/timer_proc.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../tm/tm_load.h"
 #include "../jansson/jansson_utils.h"
 

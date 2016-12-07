@@ -21,22 +21,22 @@
 #include "defs.h"
 
 
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../parser/parser_f.h"
-#include "../../ut.h"
-#include "../../timer.h"
-#include "../../hash_func.h"
-#include "../../globals.h"
-#include "../../cfg_core.h"
-#include "../../mem/mem.h"
-#include "../../dset.h"
-#include "../../action.h"
-#include "../../data_lump.h"
-#include "../../onsend.h"
-#include "../../compiler_opt.h"
-#include "../../route.h"
-#include "../../script_cb.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/ut.h"
+#include "../../core/timer.h"
+#include "../../core/hash_func.h"
+#include "../../core/globals.h"
+#include "../../core/cfg_core.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dset.h"
+#include "../../core/action.h"
+#include "../../core/data_lump.h"
+#include "../../core/onsend.h"
+#include "../../core/compiler_opt.h"
+#include "../../core/route.h"
+#include "../../core/script_cb.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
 #include "t_msgbuilder.h"
@@ -46,19 +46,19 @@
 #include "t_fwd.h"
 #include "t_reply.h"
 #include "h_table.h"
-#include "../../fix_lumps.h"
+#include "../../core/fix_lumps.h"
 #include "config.h"
 #ifdef USE_DNS_FAILOVER
-#include "../../dns_cache.h"
-#include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
-#include "../../msg_translator.h"
+#include "../../core/dns_cache.h"
+#include "../../core/cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
+#include "../../core/msg_translator.h"
 #include "lw_parser.h"
 #endif
 #ifdef USE_DST_BLACKLIST
-#include "../../dst_blacklist.h"
+#include "../../core/dst_blacklist.h"
 #endif
-#include "../../atomic_ops.h" /* membar_depends() */
-#include "../../kemi.h"
+#include "../../core/atomic_ops.h" /* membar_depends() */
+#include "../../core/kemi.h"
 
 
 extern int tm_failure_exec_mode;

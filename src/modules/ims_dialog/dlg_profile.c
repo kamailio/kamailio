@@ -34,12 +34,12 @@
  */
 
 
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../route.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/route.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../trim.h"
+#include "../../core/trim.h"
 #include "dlg_hash.h"
 #include "dlg_handlers.h"
 #include "dlg_profile.h"

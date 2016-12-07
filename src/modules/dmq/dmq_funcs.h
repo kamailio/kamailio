@@ -24,10 +24,10 @@
 #ifndef _DMQ_FUNCS_H_
 #define _DMQ_FUNCS_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../config.h"
+#include "../../core/config.h"
 #include "peer.h"
 #include "worker.h"
 #include "dmqnode.h"

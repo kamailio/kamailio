@@ -29,7 +29,7 @@
 
 #include <Python.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #include "apy_kemi.h"
 #include "apy_kemi_export.h"

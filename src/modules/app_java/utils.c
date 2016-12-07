@@ -24,7 +24,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 #include <jni.h>
 

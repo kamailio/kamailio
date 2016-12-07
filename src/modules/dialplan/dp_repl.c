@@ -31,9 +31,9 @@
 
 #include <fnmatch.h>
 
-#include "../../re.h"
-#include "../../str_list.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/re.h"
+#include "../../core/str_list.h"
+#include "../../core/mem/shm_mem.h"
 #include "dialplan.h"
 
 typedef struct dpl_dyn_pcre

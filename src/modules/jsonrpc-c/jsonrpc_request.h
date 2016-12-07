@@ -22,7 +22,7 @@
 
 #ifndef _JSONRPC_REQUEST_H_
 #define _JSONRPC_REQUEST_H_
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int jsonrpc_request(struct sip_msg* msg, char* method, char* params, char* cb_route, char* err_route, char* cb_pv);
 int jsonrpc_notification(struct sip_msg* msg, char* method, char* params);

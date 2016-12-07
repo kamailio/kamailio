@@ -21,11 +21,11 @@
 #include <stddef.h>
 #include <regex.h>
 
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../hashes.h"
-#include "../../ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/ut.h"
 
 #include "ds_ht.h"
 

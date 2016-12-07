@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "../../lib/srdb1/db.h"
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 
 #include "dbt_res.h"
 #include "dbt_api.h"

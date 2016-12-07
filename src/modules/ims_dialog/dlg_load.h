@@ -30,7 +30,7 @@
 #define _DIALOG_DLG_LOAD_H_
 
 #include "dlg_cb.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 /* terminate_dlg function prototype */
 typedef int (*ims_terminate_dlg_f)(str *callid, str *ftag, str *ttag, str *hdrs,

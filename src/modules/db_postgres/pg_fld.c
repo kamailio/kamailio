@@ -33,8 +33,8 @@
 #include "pg_mod.h"
 
 #include "../../lib/srdb2/db_drv.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

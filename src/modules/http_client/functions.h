@@ -33,7 +33,7 @@
 #ifndef CURL_FUNCTIONS_H
 #define CURL_FUNCTIONS_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 /*! Use predefined connection to run HTTP get or post
  */

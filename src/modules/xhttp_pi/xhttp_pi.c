@@ -34,11 +34,11 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "../../trim.h"
-#include "../../sr_module.h"
-#include "../../nonsip_hooks.h"
+#include "../../core/trim.h"
+#include "../../core/sr_module.h"
+#include "../../core/nonsip_hooks.h"
 #include "../../modules/xhttp/api.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc_lookup.h"
 #include "xhttp_pi.h"
 #include "xhttp_pi_fnc.h"
 #include "http_db_handler.h"

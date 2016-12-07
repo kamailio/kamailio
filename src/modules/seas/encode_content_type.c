@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <netinet/in.h>
 #include <string.h>
-#include "../../parser/parse_content.h"
+#include "../../core/parser/parse_content.h"
 #include "encode_content_type.h"
 
 int encode_content_type(char *hdrstart,int hdrlen,unsigned int bodi,char *where)

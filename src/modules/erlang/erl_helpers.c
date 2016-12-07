@@ -24,9 +24,9 @@
 #include "erl_helpers.h"
 #include "mod_erlang.h"
 
-#include "../../resolve.h"
-#include "../../ip_addr.h"
-#include "../../str.h"
+#include "../../core/resolve.h"
+#include "../../core/ip_addr.h"
+#include "../../core/str.h"
 
 #include <netinet/ip.h> /*IPTOS_LOWDELAY*/
 

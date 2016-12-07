@@ -26,9 +26,9 @@
  */
 
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
 
 #include "sql_api.h"
 #include "sql_var.h"

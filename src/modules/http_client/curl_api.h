@@ -28,7 +28,7 @@
 #ifndef _CURL_API_H_
 #define _CURL_API_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "functions.h"
 #include "curlcon.h"
 

@@ -49,9 +49,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mod_fix.h"
 #include "../outbound/api.h"
 #include "../rr/api.h"
 

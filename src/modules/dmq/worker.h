@@ -24,9 +24,9 @@
 #define _DMQ_WORKER_H_
 
 #include "peer.h"
-#include "../../locking.h"
-#include "../../atomic_ops.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/locking.h"
+#include "../../core/atomic_ops.h"
+#include "../../core/parser/msg_parser.h"
 
 
 typedef struct dmq_job {

@@ -37,7 +37,7 @@ extern "C" {
 #include <net-snmp/library/container.h>
 #include <net-snmp/agent/table_array.h>
 
-#include "../../config.h"
+#include "../../core/config.h"
 
 /* 
  * This strucutre represents a single row in the SNMP table, and is mostly

@@ -37,7 +37,7 @@ extern "C" {
 #include <net-snmp/library/container.h>
 #include <net-snmp/agent/table_array.h>
 
-#include "../../config.h"
+#include "../../core/config.h"
 
 #define SIP_PORT_TABLE_STR_INDEX_SIZE 22
 

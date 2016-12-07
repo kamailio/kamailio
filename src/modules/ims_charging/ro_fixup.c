@@ -6,7 +6,7 @@
  */
 
 #include "ro_fixup.h"
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 int ro_send_ccr_fixup(void** param, int param_no) {
     if (strlen((char*) *param) <= 0) {

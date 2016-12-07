@@ -30,12 +30,12 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_content.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 #include "../pua/pua.h"
 #include "pua_xmpp.h"
 

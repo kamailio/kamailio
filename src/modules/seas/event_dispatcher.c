@@ -32,13 +32,13 @@
 #include <sys/types.h>/*waitpid*/
 #include <sys/wait.h>/*waitpid*/
 
-#include "../../ip_addr.h" /*sockaddr_union, ip_addr*/
-#include "../../hashes.h" /*T_TABLE_POWER*/
-#include "../../mem/mem.h" /*pkg_malloc*/
-#include "../../mem/shm_mem.h" /*shm_malloc*/
-#include "../../dprint.h" /*LM_**/
-#include "../../locking.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/ip_addr.h" /*sockaddr_union, ip_addr*/
+#include "../../core/hashes.h" /*T_TABLE_POWER*/
+#include "../../core/mem/mem.h" /*pkg_malloc*/
+#include "../../core/mem/shm_mem.h" /*shm_malloc*/
+#include "../../core/dprint.h" /*LM_**/
+#include "../../core/locking.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "seas.h"
 #include "ha.h"

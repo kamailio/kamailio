@@ -26,13 +26,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../events.h"
-#include "../../ut.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/events.h"
+#include "../../core/ut.h"
 
-#include "../../tcp_options.h"
-#include "../../msg_translator.h"
+#include "../../core/tcp_options.h"
+#include "../../core/msg_translator.h"
 
 int nio_route_no;
 int nio_min_msg_len;

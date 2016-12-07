@@ -6,7 +6,7 @@
 #include "math.h"
 #include "subscribe.h"
 #include "../../lib/ims/useful_defs.h"
-#include "../../parser/parse_param.h"
+#include "../../core/parser/parse_param.h"
 
 str id_col = str_init(ID_COL); /*!< Name of column containing ID (gen. auto_increment field */
 str impu_id_col = str_init(IMPU_ID_COL); /*!< Name of column containing impu ID in mapping table */

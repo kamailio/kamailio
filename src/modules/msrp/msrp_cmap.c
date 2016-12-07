@@ -20,16 +20,16 @@
  *
  */
 
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../hashes.h"
-#include "../../ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/ut.h"
 
 #include "../../lib/srutils/sruid.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
-#include "../../sr_module.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/sr_module.h"
 
 #include "msrp_netio.h"
 #include "msrp_env.h"

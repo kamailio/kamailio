@@ -24,10 +24,10 @@
 #include "mod_sanity.h"
 #include "sanity.h"
 #include "api.h"
-#include "../../sr_module.h"
-#include "../../ut.h"
-#include "../../error.h"
-#include "../../kemi.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
+#include "../../core/error.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 

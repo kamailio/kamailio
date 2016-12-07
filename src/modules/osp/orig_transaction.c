@@ -30,9 +30,9 @@
 
 #include <string.h>
 #include <osp/osp.h>
-#include "../../dset.h"
-#include "../../usr_avp.h"
-#include "../../mem/mem.h"
+#include "../../core/dset.h"
+#include "../../core/usr_avp.h"
+#include "../../core/mem/mem.h"
 #include "../../modules/siputils/siputils.h"
 #include "orig_transaction.h"
 #include "destination.h"

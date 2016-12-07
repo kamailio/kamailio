@@ -24,10 +24,10 @@
 #define _PERM_HASH_H_
 
 #include <stdio.h>
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
-#include "../../rpc.h"
-#include "../../usr_avp.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/rpc.h"
+#include "../../core/usr_avp.h"
 #include "../../lib/kmi/mi.h"
 
 #define PERM_HASH_SIZE 128

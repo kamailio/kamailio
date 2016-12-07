@@ -28,13 +28,13 @@
 
 
 #include <string.h>
-#include "../../dprint.h"               /* Logging */
+#include "../../core/dprint.h"               /* Logging */
 #include "../../lib/srdb1/db.h"                /* Generic database API */
-#include "../../ut.h"
-#include "../../parser/digest/digest.h" /* get_authorized_cred */
-#include "../../parser/hf.h"            /* Header Field types */
-#include "../../parser/parse_from.h"    /* From parser */
-#include "../../parser/parse_uri.h"
+#include "../../core/ut.h"
+#include "../../core/parser/digest/digest.h" /* get_authorized_cred */
+#include "../../core/parser/hf.h"            /* Header Field types */
+#include "../../core/parser/parse_from.h"    /* From parser */
+#include "../../core/parser/parse_uri.h"
 #include "group.h"
 #include "group_mod.h"                   /* Module parameters */
 

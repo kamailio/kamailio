@@ -28,11 +28,11 @@
  * \ingroup registrar   
  */
 
-#include "../../parser/hf.h"
-#include "../../dprint.h"
-#include "../../parser/parse_expires.h"  
-#include "../../ut.h"
-#include "../../qvalue.h"
+#include "../../core/parser/hf.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_expires.h"  
+#include "../../core/ut.h"
+#include "../../core/qvalue.h"
 #include "reg_mod.h"                     /* Module parameters */
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"

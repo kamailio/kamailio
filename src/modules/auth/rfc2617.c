@@ -28,8 +28,8 @@
 #include <string.h>
 
 #include "rfc2617.h"
-#include "../../md5.h"
-#include "../../dprint.h"
+#include "../../core/md5.h"
+#include "../../core/dprint.h"
 
 
 inline void cvt_hex(HASH _b, HASHHEX _h)

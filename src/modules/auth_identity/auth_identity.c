@@ -47,16 +47,16 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_cseq.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../timer.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_cseq.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/timer.h"
 
 #include "auth_identity.h"
 

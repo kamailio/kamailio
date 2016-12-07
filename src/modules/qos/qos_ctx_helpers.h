@@ -24,7 +24,7 @@
 #ifndef _QOS_CTX_HELPERS_H_
 #define _QOS_CTX_HELPERS_H_
 
-#include "../../parser/sdp/sdp.h"
+#include "../../core/parser/sdp/sdp.h"
 #include "qos_cb.h"
 
 #define QOS_CALLER  0

@@ -23,10 +23,10 @@
 #include <string.h>
 #include "uid_domain_mod.h"
 #include "hash.h"
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb2/db.h"
-#include "../../ut.h"
+#include "../../core/ut.h"
 
 
 /*

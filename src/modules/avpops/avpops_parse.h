@@ -23,8 +23,8 @@
 #ifndef _AVPOPS_PARSE_H_
 #define _AVPOPS_PARSE_H_
 
-#include "../../str.h"
-#include "../../usr_avp.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
 #include "avpops_impl.h"
 #include "avpops_db.h"
 

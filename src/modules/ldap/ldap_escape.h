@@ -29,7 +29,7 @@
 #define _LDAP_ESCAPE_H_
 
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 int ldap_rfc4515_escape(str *sin, str *sout, int url_encode);
 

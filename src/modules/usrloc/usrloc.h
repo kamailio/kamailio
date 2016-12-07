@@ -28,10 +28,10 @@
 
 #include <time.h>
 #include "ul_callback.h"
-#include "../../qvalue.h"
-#include "../../str.h"
+#include "../../core/qvalue.h"
+#include "../../core/str.h"
 #ifdef WITH_XAVP
-#include "../../xavp.h"
+#include "../../core/xavp.h"
 #endif
 
 #define NO_DB         0

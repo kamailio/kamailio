@@ -25,9 +25,9 @@
 #ifndef _XCAP_MISC_H_
 #define _XCAP_MISC_H_
 
-#include "../../str.h"
-#include "../../sr_module.h"
-#include "../../pvar.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
+#include "../../core/pvar.h"
 
 #define XCAP_MAX_URI_SIZE	255
 /* Node Selector Separator */

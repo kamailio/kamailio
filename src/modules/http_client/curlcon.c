@@ -28,11 +28,11 @@
 
 #include <curl/curl.h>
 
-#include "../../hashes.h"
-#include "../../dprint.h"
-#include "../../parser/parse_param.h"
-#include "../../usr_avp.h"
-#include "../../cfg_parser.h"
+#include "../../core/hashes.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/usr_avp.h"
+#include "../../core/cfg_parser.h"
 #include "http_client.h"
 #include "curlcon.h"
 

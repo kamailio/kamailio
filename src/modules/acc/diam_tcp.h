@@ -31,8 +31,8 @@
 #ifndef ACC_TCP
 #define ACC_TCP
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
 
 /* information needed for reading messages from tcp connection */
 typedef struct rd_buf

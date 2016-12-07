@@ -24,7 +24,7 @@
 
 
 #include <stdio.h>
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "timer.h"
 
 

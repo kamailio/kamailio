@@ -25,7 +25,7 @@
 #ifndef _CNXCC_H
 #define _CNXCC_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 #define DATETIME_SIZE		sizeof("0001-01-01 00:00:00")
 #define DATETIME_LENGTH		DATETIME_SIZE - 1

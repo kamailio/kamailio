@@ -36,7 +36,7 @@
  *
  */
 #include "../../modules/tm/tm_load.h"
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../dialog/dlg_load.h"
 
 #include "acc_api.h"

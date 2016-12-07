@@ -47,7 +47,7 @@
 #define UL_MOD_H
 
 #include "../../lib/srdb1/db.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 /*
  * Module parameters

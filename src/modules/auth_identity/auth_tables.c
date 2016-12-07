@@ -34,8 +34,8 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 
-#include "../../mem/shm_mem.h"
-#include "../../hashes.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/hashes.h"
 #include "auth_identity.h"
 
 #define lock_element(_cell)            lock_get(&((_cell)->lock))

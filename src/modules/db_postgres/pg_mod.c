@@ -38,7 +38,7 @@
 #include "pg_fld.h"
 #include "db_postgres.h"
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 #ifdef PG_TEST
 #include <limits.h>

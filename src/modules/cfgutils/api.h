@@ -24,7 +24,7 @@
 #ifndef _CFGUTILS_API_H_
 #define _CFGUTILS_API_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef int (*cfgutils_lock_f)(str *lkey);
 typedef int (*cfgutils_unlock_f)(str *lkey);

@@ -27,8 +27,8 @@
 #ifndef _WEBSOCKET_H
 #define _WEBSOCKET_H
 
-#include "../../locking.h"
-#include "../../counters.h"
+#include "../../core/locking.h"
+#include "../../core/counters.h"
 #include "../sl/sl.h"
 
 enum

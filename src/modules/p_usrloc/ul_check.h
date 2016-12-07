@@ -24,7 +24,7 @@
 
 #include <time.h>
 
-#include "../../lock_ops.h"
+#include "../../core/lock_ops.h"
 
 struct check_data {
 	int refresh_flag;

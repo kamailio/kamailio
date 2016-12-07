@@ -27,8 +27,8 @@
 #include "perlvdb_conv.h"
 #include "perlvdb_oohelpers.h"
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 
 /* Converts a set of pairs to perl SVs.
  * For insert, and update (second half)

@@ -42,8 +42,8 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../../parser/parse_allow.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/parse_allow.h"
+#include "../../core/parser/msg_parser.h"
 #include "encode_allow.h"
 
 char *mismetodos[]={"UNDEF","INVITE","CANCEL","ACK","BYE","INFO","OPTIONS","UPDATE","REGISTER","MESSAGE","SUBSCRIBE","NOTIFY","PRACK","REFER","OTHER"};

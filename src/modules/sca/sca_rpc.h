@@ -20,8 +20,8 @@
 #ifndef SCA_RPC_H
 #define SCA_RPC_H
 
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 extern const char *sca_rpc_show_all_subscriptions_doc[];
 extern const char *sca_rpc_subscription_count_doc[];

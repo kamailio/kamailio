@@ -21,12 +21,12 @@
 #include <string.h>
 #include <netdb.h>
 
-#include "../../mod_fix.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../mem/mem.h"
-#include "../../str.h"
-#include "../../strutils.h"
+#include "../../core/mod_fix.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/strutils.h"
 #include "chargingvector.h"
 
 #define SIZE_CONF_ID 16

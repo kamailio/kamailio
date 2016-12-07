@@ -34,10 +34,10 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/mem/mem.h"
 
 #include "xp_lib.h"
 

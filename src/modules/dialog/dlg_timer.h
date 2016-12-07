@@ -30,7 +30,7 @@
 #define _DIALOG_DLG_TIMER_H_
 
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 
 /*! dialog timeout list */

@@ -24,8 +24,8 @@
 #define _RTPENGINE_H
 
 #include "bencode.h"
-#include "../../str.h"
-#include "../../locking.h"
+#include "../../core/str.h"
+#include "../../core/locking.h"
 
 #define MI_MIN_RECHECK_TICKS		0
 #define MI_MAX_RECHECK_TICKS		((unsigned int)-1)

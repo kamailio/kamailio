@@ -27,7 +27,7 @@
 #ifndef _TH_MASK_H_
 #define _TH_MASK_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 void th_mask_init(void);
 char* th_mask_encode(char *in, int ilen, str *prefix, int *olen);

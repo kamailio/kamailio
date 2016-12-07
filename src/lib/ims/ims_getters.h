@@ -45,9 +45,9 @@
 #ifndef __IMS_GETTERS_H
 #define __IMS_GETTERS_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
-#include "../../parser/contact/parse_contact.h"
+#include "../../core/parser/contact/parse_contact.h"
 
 /** Return and break the execution of routng script */
 #define CSCF_RETURN_BREAK	0 

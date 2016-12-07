@@ -1,7 +1,7 @@
 #ifndef DIALOG_NG_STATS_H
 #define	DIALOG_NG_STATS_H
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 struct dialog_ng_counters_h {
     counter_handle_t active;

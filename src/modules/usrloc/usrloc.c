@@ -31,7 +31,7 @@
 #include "urecord.h"
 #include "ucontact.h"
 #include "udomain.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "ul_mod.h"
 
 

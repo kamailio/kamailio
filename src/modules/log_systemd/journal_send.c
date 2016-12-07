@@ -24,9 +24,9 @@
 #include <stdio.h>
 #include <systemd/sd-journal.h>
 
-#include "../../xavp.h"
-#include "../../dprint.h"
-#include "../../mem/pkg.h"
+#include "../../core/xavp.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/pkg.h"
 
 #include "journal_send.h"
 

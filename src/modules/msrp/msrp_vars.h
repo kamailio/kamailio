@@ -23,7 +23,7 @@
 #ifndef _MSRP_VARS_H_
 #define _MSRP_VARS_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 #include "msrp_parser.h"
 
 int pv_parse_msrp_name(pv_spec_t *sp, str *in);

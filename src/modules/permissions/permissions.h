@@ -25,9 +25,9 @@
 #ifndef PERMISSIONS_H
 #define PERMISSIONS_H 1
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 #include "rule.h"
 
 #define DEFAULT_ALLOW_FILE "permissions.allow"

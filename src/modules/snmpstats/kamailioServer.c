@@ -45,9 +45,9 @@
 #include "snmpstats_globals.h"
 #include "utilities.h"
 #include "snmp_statistics.h"
-#include "../../ver.h"
-#include "../../mem/meminfo.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/ver.h"
+#include "../../core/mem/meminfo.h"
+#include "../../core/mem/shm_mem.h"
 
 /** Initializes the kamailioServer module */
 void

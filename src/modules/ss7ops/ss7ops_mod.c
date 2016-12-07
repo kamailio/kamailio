@@ -22,8 +22,8 @@
  */
 
 #include "isup_parsed.h"
-#include "../../sr_module.h"
-#include "../../endianness.h"
+#include "../../core/sr_module.h"
+#include "../../core/endianness.h"
 
 MODULE_VERSION
 

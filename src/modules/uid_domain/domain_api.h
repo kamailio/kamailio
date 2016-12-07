@@ -23,8 +23,8 @@
 #ifndef _DOMAIN_API_H
 #define _DOMAIN_API_H
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
 #include "domain.h"
 
 typedef struct domain_api {

@@ -29,7 +29,7 @@
 #ifndef REG_PATH_H
 #define REG_PATH_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 /*! \brief
  * Extracts all Path header bodies into one string and

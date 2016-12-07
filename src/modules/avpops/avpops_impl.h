@@ -24,11 +24,11 @@
 #ifndef _AVP_OPS_IMPL_H_
 #define _AVP_OPS_IMPL_H_
 
-#include "../../str.h"
-#include "../../usr_avp.h"
-#include "../../pvar.h"
-#include "../../re.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
+#include "../../core/pvar.h"
+#include "../../core/re.h"
+#include "../../core/parser/msg_parser.h"
 
 #include "avpops_db.h"
 

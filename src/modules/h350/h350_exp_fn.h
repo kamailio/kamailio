@@ -26,9 +26,9 @@
 #ifndef H350_EXP_FN_H
 #define H350_EXP_FN_H
 
-#include "../../parser/msg_parser.h"
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
 
 #define E_H350_SUCCESS 1
 #define E_H350_INTERNAL -1

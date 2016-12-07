@@ -30,7 +30,7 @@
 #define _CPL_UTILS_H
 
 #include <ctype.h>
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 /* looks for s2 into s1 */

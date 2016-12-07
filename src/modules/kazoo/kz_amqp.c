@@ -35,12 +35,12 @@
 #include <amqp_ssl_socket.h>
 #include <json.h>
 #include <uuid/uuid.h>
-#include "../../mem/mem.h"
-#include "../../timer_proc.h"
-#include "../../sr_module.h"
-#include "../../pvar.h"
-#include "../../mod_fix.h"
-#include "../../lvalue.h"
+#include "../../core/mem/mem.h"
+#include "../../core/timer_proc.h"
+#include "../../core/sr_module.h"
+#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
+#include "../../core/lvalue.h"
 #include "../tm/tm_load.h"
 
 

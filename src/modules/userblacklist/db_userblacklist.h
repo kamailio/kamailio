@@ -22,8 +22,8 @@
 
 /* necessary includes */
 #include "../../lib/srdb1/db.h"
-#include "../../str.h"
-#include "../../ut.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
 
 #include <string.h>
 

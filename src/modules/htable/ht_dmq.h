@@ -24,8 +24,8 @@
 
 #include "../dmq/bind_dmq.h"
 #include "../../lib/srutils/srjson.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_content.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_content.h"
 
 extern dmq_api_t ht_dmqb;
 extern dmq_peer_t* ht_dmq_peer;

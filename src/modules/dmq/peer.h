@@ -27,11 +27,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include "dmqnode.h"
-#include "../../lock_ops.h"
-#include "../../str.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/lock_ops.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef struct peer_response {
 	int resp_code;

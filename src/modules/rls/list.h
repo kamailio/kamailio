@@ -2,8 +2,8 @@
 #define _LIST_H
 
 #include <string.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 
 typedef struct list_entry
 {

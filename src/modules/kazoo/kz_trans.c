@@ -33,21 +33,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../pvapi.h"
-#include "../../dset.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/pvapi.h"
+#include "../../core/dset.h"
 
-#include "../../parser/parse_param.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_nameaddr.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_nameaddr.h"
 
-#include "../../strutils.h"
+#include "../../core/strutils.h"
 
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 #include "kz_trans.h"
 #include "kz_json.h"

@@ -27,8 +27,8 @@
 #define _SIPUTILS_CONFIG_H
 
 
-#include "../../cfg/cfg.h"
-#include "../../str.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/str.h"
 
 struct cfg_group_siputils {
 	unsigned int	ring_timeout;

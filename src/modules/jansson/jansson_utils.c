@@ -25,7 +25,7 @@
 #include <jansson.h>
 #include <limits.h>
 
-#include "../../lvalue.h"
+#include "../../core/lvalue.h"
 
 #include "jansson_utils.h"
 

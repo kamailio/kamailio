@@ -21,8 +21,8 @@
 #ifndef XHTTP_TRANS_H_
 #define XHTTP_TRANS_H_
 
-#include "../../pvar.h"
-#include "../../str.h"
+#include "../../core/pvar.h"
+#include "../../core/str.h"
 
 char *xhttp_tr_parse_url(str *in, trans_t *t);
 

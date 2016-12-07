@@ -29,8 +29,8 @@
 #define CR_DATA_H
 
 #include <sys/types.h>
-#include "../../locking.h"
-#include "../../flags.h"
+#include "../../core/locking.h"
+#include "../../core/flags.h"
 #include "cr_map.h"
 
 

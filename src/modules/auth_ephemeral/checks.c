@@ -25,14 +25,14 @@
  * OpenSSL project license.
  *
  */
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../str.h"
-#include "../../ut.h"
-#include "../../parser/digest/digest.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_uri.h"
-#include "../../mod_fix.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/mod_fix.h"
 
 #include "autheph_mod.h"
 #include "authorize.h"

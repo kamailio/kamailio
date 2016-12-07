@@ -28,9 +28,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../rpc.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/rpc.h"
 #include "tree.h"
 #include "pr.h"
 

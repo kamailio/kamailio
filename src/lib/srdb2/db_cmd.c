@@ -25,9 +25,9 @@
 
 #include "db_cmd.h"
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 
 #include <string.h>
 #include <stdarg.h>

@@ -25,19 +25,19 @@
 #include <sys/wait.h>/*wait*/
 #include <signal.h>/*SIGINT,etc*/
 
-#include "../../sr_module.h"
-#include "../../ip_addr.h" /*ip_addr,hostent2ip_addr*/
-#include "../../tags.h" /*init_tags*/
-#include "../../socket_info.h" /*get_first_socket()*/
-#include "../../resolve.h" /*resolvehost*/
-#include "../../mem/mem.h" /*pkg_malloc*/
-#include "../../mem/shm_mem.h" /*shm_malloc*/
-#include "../../dprint.h" /*LM_**/
-#include "../../error.h" /*ser_error*/
+#include "../../core/sr_module.h"
+#include "../../core/ip_addr.h" /*ip_addr,hostent2ip_addr*/
+#include "../../core/tags.h" /*init_tags*/
+#include "../../core/socket_info.h" /*get_first_socket()*/
+#include "../../core/resolve.h" /*resolvehost*/
+#include "../../core/mem/mem.h" /*pkg_malloc*/
+#include "../../core/mem/shm_mem.h" /*shm_malloc*/
+#include "../../core/dprint.h" /*LM_**/
+#include "../../core/error.h" /*ser_error*/
 #include "../../modules/tm/tm_load.h" /*load_tm_api*/
 #include "../../modules/tm/h_table.h" /*cell*/
 #include "../../modules/tm/t_lookup.h" /*T_UNDEFINED*/
-#include "../../cfg/cfg_struct.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "encode_msg.h" /*encode_msg*/
 

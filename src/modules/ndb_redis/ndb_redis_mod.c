@@ -29,11 +29,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../trim.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/trim.h"
 
 #include "redis_client.h"
 

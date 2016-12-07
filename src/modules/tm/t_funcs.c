@@ -26,12 +26,12 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "../../dprint.h"
-#include "../../hash_func.h"
-#include "../../dset.h"
-#include "../../mem/mem.h"
-#include "../../sr_compat.h"
-#include "../../pvar.h"
+#include "../../core/dprint.h"
+#include "../../core/hash_func.h"
+#include "../../core/dset.h"
+#include "../../core/mem/mem.h"
+#include "../../core/sr_compat.h"
+#include "../../core/pvar.h"
 #include "defs.h"
 #include "t_funcs.h"
 #include "t_fwd.h"

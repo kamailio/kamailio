@@ -33,7 +33,7 @@
 #ifndef UTILS_FUNCTIONS_H
 #define UTILS_FUNCTIONS_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /* 

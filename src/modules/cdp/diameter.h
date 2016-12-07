@@ -47,7 +47,7 @@
 
 #include "utils.h"
 #include <ctype.h>
-#include "../../endianness.h"
+#include "../../core/endianness.h"
 
 #include "diameter_code_result.h"
 #include "diameter_code_avp.h"

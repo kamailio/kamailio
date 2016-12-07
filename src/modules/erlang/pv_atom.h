@@ -24,7 +24,7 @@
 #ifndef PV_ATOM_H_
 #define PV_ATOM_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 int pv_atom_parse_name(pv_spec_t *sp, str *in);
 
 int pv_atom_set(struct sip_msg*, pv_param_t*, int, pv_value_t*);

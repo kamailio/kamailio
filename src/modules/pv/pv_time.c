@@ -27,9 +27,9 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "../../dprint.h"
-#include "../../globals.h"
-#include "../../pvar.h"
+#include "../../core/dprint.h"
+#include "../../core/globals.h"
+#include "../../core/pvar.h"
 
 #include "pv_time.h"
 

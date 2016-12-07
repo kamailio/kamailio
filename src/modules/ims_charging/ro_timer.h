@@ -8,8 +8,8 @@
 #ifndef RO_TIMER_H
 #define	RO_TIMER_H
 
-#include "../../locking.h"
-#include "../../timer.h"
+#include "../../core/locking.h"
+#include "../../core/timer.h"
 
 extern struct interim_ccr *i_req;
 

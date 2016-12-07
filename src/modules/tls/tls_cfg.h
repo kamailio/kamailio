@@ -27,8 +27,8 @@
 #ifndef __tls_cfg_h
 #define __tls_cfg_h
 
-#include "../../str.h"
-#include "../../cfg/cfg.h"
+#include "../../core/str.h"
+#include "../../core/cfg/cfg.h"
 
 
 /* maximum accepted lifetime (maximum possible is  ~ MAXINT/2)

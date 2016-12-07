@@ -36,7 +36,7 @@
  */
 
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "loose.h"
 #include "record.h"
 #include "api.h"

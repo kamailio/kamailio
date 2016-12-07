@@ -42,9 +42,9 @@
 #include <assert.h>
 #include <string.h>
 #include <netinet/in.h>
-#include "../../mem/mem.h"
-#include "../../parser/msg_parser.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/dprint.h"
 #include "encode_uri.h"
 #include "encode_parameters.h"
 #include "encode_header.h"

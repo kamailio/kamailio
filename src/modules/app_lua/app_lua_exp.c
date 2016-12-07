@@ -24,10 +24,10 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../route.h"
-#include "../../ut.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/route.h"
+#include "../../core/ut.h"
 
 #include "../../modules/sl/sl.h"
 #include "../../modules/tm/tm_load.h"

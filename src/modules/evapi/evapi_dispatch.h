@@ -23,7 +23,7 @@
 #ifndef _EVAPI_DISPATCH_
 #define _EVAPI_DISPATCH_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int evapi_init_notify_sockets(void);
 

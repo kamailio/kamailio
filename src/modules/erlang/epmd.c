@@ -24,8 +24,8 @@
 #include <ei.h>
 #include <netinet/ip.h> /*IPTOS_LOWDELAY*/
 
-#include "../../dprint.h"
-#include "../../ip_addr.h"
+#include "../../core/dprint.h"
+#include "../../core/ip_addr.h"
 
 #include "mod_erlang.h"
 #include "erl_helpers.h"

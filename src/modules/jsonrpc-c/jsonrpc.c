@@ -26,8 +26,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
 
 #include "jsonrpc.h"
 

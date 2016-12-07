@@ -32,9 +32,9 @@
 
 #include "utils.h"
 
-#include "../../parser/msg_parser.h"	/* struct sip_msg */
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
+#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
 
 #include <stdio.h>
 

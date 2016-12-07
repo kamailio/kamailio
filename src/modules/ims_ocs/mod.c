@@ -19,11 +19,11 @@
  * 
  */
 
-#include "../../sr_module.h"
-#include "../../route.h"
+#include "../../core/sr_module.h"
+#include "../../core/route.h"
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/mod_export.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "mod.h"
 #include "msg_faker.h"
 #include "ocs_avp_helper.h"

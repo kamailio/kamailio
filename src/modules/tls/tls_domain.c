@@ -30,11 +30,11 @@
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 # include <openssl/ui.h>
 #endif
-#include "../../ut.h"
-#include "../../mem/shm_mem.h"
-#include "../../pt.h"
-#include "../../cfg/cfg.h"
-#include "../../dprint.h"
+#include "../../core/ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/pt.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/dprint.h"
 #include "tls_config.h"
 #include "tls_server.h"
 #include "tls_util.h"

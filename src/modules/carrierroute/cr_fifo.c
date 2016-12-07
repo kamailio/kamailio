@@ -28,10 +28,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../str.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
 
 #include "cr_fifo.h"
 #include "carrierroute.h"

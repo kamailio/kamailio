@@ -25,7 +25,7 @@
 #ifndef _PDTREE_H_
 #define _PDTREE_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef struct _pdt_node
 {

@@ -28,8 +28,8 @@
 #include <oci.h>
 #include "../../lib/srdb1/db_res.h"
 #include "../../lib/srdb1/db_row.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "ora_con.h"
 #include "dbase.h"
 #include "asynch.h"

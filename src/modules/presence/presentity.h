@@ -29,8 +29,8 @@
 #ifndef PRESENTITY_H
 #define PRESENTITY_H
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h" 
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h" 
 #include "event_list.h"
 //#include "presence.h"
 

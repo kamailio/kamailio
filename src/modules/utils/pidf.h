@@ -30,7 +30,7 @@
 #ifndef UTILS_PIDF_H
 #define UTILS_PIDF_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include <libxml/parser.h>
 
 xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,

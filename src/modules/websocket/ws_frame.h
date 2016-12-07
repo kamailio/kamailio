@@ -27,9 +27,9 @@
 #ifndef _WS_FRAME_H
 #define _WS_FRAME_H
 
-#include "../../config.h"
-#include "../../sr_module.h"
-#include "../../str.h"
+#include "../../core/config.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
 #include "../../lib/kmi/tree.h"
 #include "ws_conn.h"
 

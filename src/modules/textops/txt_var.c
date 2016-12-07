@@ -31,11 +31,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../trim.h"
-#include "../../re.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
+#include "../../core/re.h"
+#include "../../core/ut.h"
 
 #include "txt_var.h"
 

@@ -21,8 +21,8 @@
  */
 
 
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
 #include "qos_ctx_helpers.h"
 #include "qos_cb.h"
 

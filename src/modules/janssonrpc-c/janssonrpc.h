@@ -29,7 +29,7 @@
 
 #else
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../jansson/jansson_utils.h"
 jansson_to_val_f jsontoval;
 pv_spec_t jsonrpc_result_pv;

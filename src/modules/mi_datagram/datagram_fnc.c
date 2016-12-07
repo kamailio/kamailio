@@ -47,8 +47,8 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "../../resolve.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/resolve.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "mi_datagram.h"
 #include "datagram_fnc.h"
 #include "mi_datagram_parser.h"

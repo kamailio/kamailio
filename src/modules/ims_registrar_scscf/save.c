@@ -41,24 +41,24 @@
  *
  */
 
-#include "../../str.h"
-#include "../../socket_info.h"
-#include "../../parser/parse_allow.h"
-#include "../../parser/parse_methods.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h"
-#include "../../dprint.h"
-#include "../../trim.h"
-#include "../../ut.h"
-#include "../../qvalue.h"
-#include "../../dset.h"
-#include "../../mod_fix.h"
-#include "../../strutils.h"
-#include "../../counters.h"
+#include "../../core/str.h"
+#include "../../core/socket_info.h"
+#include "../../core/parser/parse_allow.h"
+#include "../../core/parser/parse_methods.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
+#include "../../core/ut.h"
+#include "../../core/qvalue.h"
+#include "../../core/dset.h"
+#include "../../core/mod_fix.h"
+#include "../../core/strutils.h"
+#include "../../core/counters.h"
 
 #ifdef USE_TCP
-#include "../../tcp_server.h"
+#include "../../core/tcp_server.h"
 #endif
 
 #include "../ims_usrloc_scscf/usrloc.h"

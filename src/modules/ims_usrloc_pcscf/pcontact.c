@@ -45,10 +45,10 @@
 
 #include "pcontact.h"
 #include <string.h>
-#include "../../hashes.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/hashes.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "ul_mod.h"
 #include "usrloc.h"
 #include "utime.h"
@@ -56,7 +56,7 @@
 #include "usrloc.h"
 #include "../../lib/ims/useful_defs.h"
 #include "usrloc_db.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_uri.h"
 
 extern int db_mode;
 extern int hashing_type;

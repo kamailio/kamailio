@@ -1,7 +1,7 @@
 #ifndef CDP_STATS_H
 #define	CDP_STATS_H
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 struct cdp_counters_h {
 	counter_handle_t timeout;

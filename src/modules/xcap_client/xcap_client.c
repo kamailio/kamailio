@@ -31,14 +31,14 @@
 #include <time.h>
 #include <curl/curl.h>
 
-#include "../../pt.h"
+#include "../../core/pt.h"
 #include "../../lib/srdb1/db.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../presence/utils_func.h"
 #include "xcap_functions.h"

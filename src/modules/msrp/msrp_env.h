@@ -23,7 +23,7 @@
 #ifndef _MSRP_ENV_H_
 #define _MSRP_ENV_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "msrp_parser.h"
 
 #define MSRP_ENV_SRCINFO	(1<<0)

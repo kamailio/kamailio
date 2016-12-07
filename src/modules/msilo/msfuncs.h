@@ -22,7 +22,7 @@
 #define _MSFUNCS_H_
 
 #include <time.h>
-#include "../../str.h"
+#include "../../core/str.h"
 
 #define CT_TYPE		1
 #define CT_CHARSET	2

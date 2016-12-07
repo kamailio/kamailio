@@ -22,12 +22,12 @@
  *
  */
 
-#include "../../mod_fix.h"
-#include "../../ut.h"
-#include "../../dprint.h"
-#include "../../usr_avp.h"
+#include "../../core/mod_fix.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
+#include "../../core/usr_avp.h"
 #include "radius.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_uri.h"
 #include "misc_radius.h"
 #include "extra.h"
 

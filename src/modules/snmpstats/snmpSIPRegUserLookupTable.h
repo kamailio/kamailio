@@ -53,7 +53,7 @@ extern "C" {
 #include <net-snmp/library/container.h>
 #include <net-snmp/agent/table_array.h>
 
-#include "../../config.h"
+#include "../../core/config.h"
 
 
 /* This structure represnts a row in the table */

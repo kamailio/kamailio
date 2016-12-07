@@ -20,12 +20,12 @@
  */
 
 #include "ip_tree.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc_lookup.h"
 /*??? #include "rpc.h" */
 /*??? #include "top.h" */
-#include "../../timer.h"	/* ticks_t */
+#include "../../core/timer.h"	/* ticks_t */
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "pike_top.h"
 
 #include <stdlib.h>

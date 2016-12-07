@@ -29,12 +29,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "../../mem/mem.h"
-#include "../../timer_proc.h"
-#include "../../sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/timer_proc.h"
+#include "../../core/sr_module.h"
 #include "../../lib/kmi/mi.h"
 #include "../presence/bind_presence.h"
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 #include "defs.h"
 #include "const.h"

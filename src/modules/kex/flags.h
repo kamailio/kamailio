@@ -21,7 +21,7 @@
 #ifndef _KEX_FLAGS_H_
 #define _KEX_FLAGS_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 int w_issflagset(struct sip_msg *msg, char *flag, str *s2);
 int w_resetsflag(struct sip_msg *msg, char *flag, str *s2);

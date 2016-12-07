@@ -31,7 +31,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #include "app_lua_sr.h"
 #include "app_lua_kemi_export.h"

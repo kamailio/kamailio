@@ -24,7 +24,7 @@
 #ifndef _UAC_AUTH_H_
 #define _UAC_AUTH_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 struct uac_credential {
 	str realm;

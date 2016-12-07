@@ -23,7 +23,7 @@
  * History:
  * ---------
  *  2006-09-08  first version (bogdan)
- *  2010-08-18  use mi types from ../../mi/mi_types.h (andrei)
+ *  2010-08-18  use mi types from ../../core/mi/mi_types.h (andrei)
  */
 
 /*!
@@ -39,8 +39,8 @@
 #define _MI_TREE_H
 
 #include <stdarg.h>
-#include "../../str.h"
-#include "../../mi/mi_types.h"
+#include "../../core/str.h"
+#include "../../core/mi/mi_types.h"
 
 struct mi_node;
 struct mi_handler;

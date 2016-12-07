@@ -24,7 +24,7 @@
 #ifndef _JOURNAL_SEND_H_
 #define _JOURNAL_SEND_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 int k_sd_journal_send_xavp(str *rname);
 

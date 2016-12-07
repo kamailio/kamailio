@@ -28,14 +28,14 @@
 #include <libxml/parser.h>
 #include <time.h>
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../parser/parse_expires.h"
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/msg_parser.h"
-#include "../../strutils.h"
-#include "../../hashes.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/strutils.h"
+#include "../../core/hashes.h"
 #include "../../modules/tm/tm_load.h"
 #include "pua.h"
 #include "hash.h"

@@ -24,8 +24,8 @@
 #ifndef _AUTH_DB_API_H_
 #define _AUTH_DB_API_H_
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef int (*digest_authenticate_f)(struct sip_msg* msg, str *realm,
 				str *table, hdr_types_t hftype, str *method);

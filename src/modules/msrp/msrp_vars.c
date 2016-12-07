@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../trim.h"
-#include "../../ut.h"
-#include "../../pvapi.h"
-#include "../../sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
+#include "../../core/ut.h"
+#include "../../core/pvapi.h"
+#include "../../core/sr_module.h"
 
 #include "msrp_parser.h"
 #include "msrp_vars.h"

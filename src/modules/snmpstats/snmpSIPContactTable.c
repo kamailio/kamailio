@@ -73,10 +73,10 @@
 #include "snmpSIPContactTable.h"
 #include "snmpstats_globals.h"
 
-#include "../../mem/mem.h"
-#include "../../str.h"
-#include "../../sr_module.h"
-#include "../../locking.h"
+#include "../../core/mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
+#include "../../core/locking.h"
 #include "../usrloc/usrloc.h"
 #include "../usrloc/ucontact.h"
 

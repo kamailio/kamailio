@@ -28,8 +28,8 @@
 #ifndef CARRIERROUTE_H
 #define CARRIERROUTE_H
 
-#include "../../str.h"
-#include "../../usr_avp.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
 
 #define DICE_MAX 1000
 

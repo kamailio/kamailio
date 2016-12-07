@@ -24,8 +24,8 @@
 #include <string.h>
 #include <jansson.h>
 
-#include "../../mod_fix.h"
-#include "../../lvalue.h"
+#include "../../core/mod_fix.h"
+#include "../../core/lvalue.h"
 
 #include "jansson_path.h"
 #include "jansson_funcs.h"

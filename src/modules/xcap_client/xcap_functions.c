@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <curl/curl.h>
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "../../lib/srdb1/db.h"
 #include "xcap_functions.h"
 #include "xcap_client.h"

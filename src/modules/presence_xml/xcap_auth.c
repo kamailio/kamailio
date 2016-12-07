@@ -38,9 +38,9 @@
 #include <time.h>
 #include <libxml/parser.h>
 
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_uri.h"
 #include "../presence/utils_func.h"
 #include "../presence/hash.h"
 #include "presence_xml.h"

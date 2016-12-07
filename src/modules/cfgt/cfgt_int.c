@@ -22,11 +22,11 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "../../events.h"
-#include "../../strutils.h"
-#include "../../pvar.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/events.h"
+#include "../../core/strutils.h"
+#include "../../core/pvar.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 #include "cfgt_int.h"
 #include "cfgt_json.h"

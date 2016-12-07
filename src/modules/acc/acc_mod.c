@@ -60,11 +60,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../rr/api.h"
 #include "acc.h"
 #include "acc_api.h"

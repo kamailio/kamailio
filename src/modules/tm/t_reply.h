@@ -24,8 +24,8 @@
 #define _T_REPLY_H
 
 #include "defs.h"
-#include "../../rpc.h"
-#include "../../tags.h"
+#include "../../core/rpc.h"
+#include "../../core/tags.h"
 
 #include "h_table.h"
 

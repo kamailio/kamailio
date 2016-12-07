@@ -27,8 +27,8 @@
 #ifndef _IPOPS_API_H_
 #define _IPOPS_API_H_
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef int (*compare_ips_f)(const str *const, const str *const);
 int ipopsapi_compare_ips(const str *const ip1, const str *const ip2);

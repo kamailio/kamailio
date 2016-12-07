@@ -33,8 +33,8 @@
 
 #include <string.h>
 
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 
 #include "bdb_uri.h"
 

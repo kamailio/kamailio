@@ -21,8 +21,8 @@
 
 #include <sys/time.h>
 #include <time.h>
-#include "../../hashes.h"/* for TABLE_ENTRIES define*/
-#include "../../locking.h"/* for TABLE_ENTRIES define*/
+#include "../../core/hashes.h"/* for TABLE_ENTRIES define*/
+#include "../../core/locking.h"/* for TABLE_ENTRIES define*/
 #include "../../modules/tm/h_table.h"/* for struct cell*/
 #define STATS_CELLS 50
 #define UAS_T 0

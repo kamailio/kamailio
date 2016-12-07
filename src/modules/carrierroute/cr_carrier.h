@@ -29,7 +29,7 @@
 #define CR_CARRIER_H
 
 #include <sys/types.h>
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 /**

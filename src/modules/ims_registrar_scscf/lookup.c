@@ -33,12 +33,12 @@
 
 
 #include <string.h>
-#include "../../ut.h"
-#include "../../dset.h"
-#include "../../str.h"
-#include "../../config.h"
-#include "../../action.h"
-#include "../../parser/parse_rr.h"
+#include "../../core/ut.h"
+#include "../../core/dset.h"
+#include "../../core/str.h"
+#include "../../core/config.h"
+#include "../../core/action.h"
+#include "../../core/parser/parse_rr.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "../../lib/ims/ims_getters.h"
 #include "common.h"

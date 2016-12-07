@@ -24,9 +24,9 @@
 #ifndef ERL_API_H_
 #define ERL_API_H_
 
-#include "../../sr_module.h"
-#include "../../str.h"
-#include "../../xavp.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
+#include "../../core/xavp.h"
 #include <ei.h>
 
 typedef int (*erl_rpc_f)(ei_x_buff* reply, const str *module,const str *function, const ei_x_buff *args);

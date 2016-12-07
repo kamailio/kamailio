@@ -19,10 +19,10 @@
  *
  */
 
-#include "../../action.h"
-#include "../../script_cb.h"
-#include "../../dset.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/action.h"
+#include "../../core/script_cb.h"
+#include "../../core/dset.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -36,8 +36,8 @@
 
 #include "t_suspend.h"
 
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
 
 
 #ifdef ENABLE_ASYNC_MUTEX

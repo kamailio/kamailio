@@ -44,7 +44,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 #include "hm_hash.h"
 
 

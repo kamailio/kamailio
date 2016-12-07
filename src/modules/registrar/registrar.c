@@ -35,19 +35,19 @@
  */
 
 #include <stdio.h>
-#include "../../sr_module.h"
-#include "../../timer.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../socket_info.h"
-#include "../../pvar.h"
-#include "../../dset.h"
+#include "../../core/sr_module.h"
+#include "../../core/timer.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/socket_info.h"
+#include "../../core/pvar.h"
+#include "../../core/dset.h"
 #include "../../modules/usrloc/usrloc.h"
-#include "../../counters.h"
+#include "../../core/counters.h"
 #include "../../lib/srutils/sruid.h"
 #include "../../modules/sl/sl.h"
-#include "../../mod_fix.h"
-#include "../../kemi.h"
+#include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 
 #include "save.h"
 #include "api.h"
@@ -676,9 +676,9 @@ static void mod_destroy(void)
 }
 
 
-#include "../../data_lump.h"
-#include "../../ip_addr.h"
-#include "../../ut.h"
+#include "../../core/data_lump.h"
+#include "../../core/ip_addr.h"
+#include "../../core/ut.h"
 
 static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 {

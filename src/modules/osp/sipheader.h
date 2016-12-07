@@ -32,7 +32,7 @@
 #define _OSP_MOD_SIPHEADER_H_
 
 #include <osp/osp.h>
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #define OSP_TOKEN_HEADER    "P-OSP-Auth-Token: "
 #define OSP_HEADER_SIZE     strlen(OSP_TOKEN_HEADER)

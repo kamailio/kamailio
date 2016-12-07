@@ -34,15 +34,15 @@
 #include <sys/select.h>
 #include <sys/un.h>
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../pvar.h"
-#include "../../ut.h"
-#include "../../script_cb.h"
-#include "../../parser/digest/digest.h"
-#include "../../parser/parse_from.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
+#include "../../core/pvar.h"
+#include "../../core/ut.h"
+#include "../../core/script_cb.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/parser/parse_from.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
 

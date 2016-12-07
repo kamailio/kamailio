@@ -31,13 +31,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../str.h"
-#include "../../hashes.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/str.h"
+#include "../../core/hashes.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc_lookup.h"
 
 #include "pl_ht.h"
 

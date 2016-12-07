@@ -21,8 +21,8 @@
  * 
  */
 
-#include "../../data_lump.h"
-#include "../../parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/data_lump.h"
+#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
 
 #ifndef _SIPT_SDP_MANGLE_
 #define _SIPT_SDP_MANGLE_

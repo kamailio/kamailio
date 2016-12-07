@@ -28,7 +28,7 @@
 #ifndef H350_MOD_H
 #define H350_MOD_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../ldap/api.h"
 
 /*

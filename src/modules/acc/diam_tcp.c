@@ -37,11 +37,11 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../../dprint.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_from.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/mem/mem.h"
 
 #include "diam_message.h"
 #include "diam_tcp.h"

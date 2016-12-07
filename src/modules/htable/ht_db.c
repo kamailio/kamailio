@@ -21,9 +21,9 @@
 
 #include <stdio.h>
 
-#include "../../dprint.h"
-#include "../../usr_avp.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/usr_avp.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb1/db.h"
 
 #include "ht_db.h"

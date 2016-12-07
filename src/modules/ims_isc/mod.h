@@ -46,9 +46,9 @@
 #ifndef ISC_MOD_H
 #define ISC_MOD_H
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../qvalue.h"
+#include "../../core/qvalue.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 
 #define STR_APPEND(dst,src)\

@@ -30,8 +30,8 @@
  * 2016-03  port to NSQ Module (Weave Communications)
  */
 
-#include "../../trim.h"
-#include "../../mod_fix.h"
+#include "../../core/trim.h"
+#include "../../core/mod_fix.h"
 
 #include "nsq_trans.h"
 #include "nsq_json.h"

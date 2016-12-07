@@ -27,9 +27,9 @@
 
 #include "db_gen.h"
 
-#include "../../mem/mem.h"
-#include "../../sr_module.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
 
 #include <string.h>
 #include <stdlib.h>

@@ -28,12 +28,12 @@
  */
 
 #include <stdio.h>
-#include "../../ut.h"
-#include "../../xavp.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_require.h"
-#include "../../parser/parse_supported.h"
-#include "../../data_lump_rpl.h"
+#include "../../core/ut.h"
+#include "../../core/xavp.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_require.h"
+#include "../../core/parser/parse_supported.h"
+#include "../../core/data_lump_rpl.h"
 #include "../usrloc/usrloc.h"
 #include "rerrno.h"
 #include "registrar.h"

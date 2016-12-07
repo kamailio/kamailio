@@ -24,8 +24,8 @@
 #ifndef _JSONRPC_IO_H_
 #define _JSONRPC_IO_H_
 
-#include "../../route_struct.h"
-#include "../../pvar.h"
+#include "../../core/route_struct.h"
+#include "../../core/pvar.h"
 
 #define JSONRPC_SERVER_CONNECTED    1
 #define JSONRPC_SERVER_DISCONNECTED 2

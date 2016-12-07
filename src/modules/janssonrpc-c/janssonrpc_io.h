@@ -26,8 +26,8 @@
 #include <jansson.h>
 #include <event2/bufferevent.h>
 #include <stdbool.h>
-#include "../../route_struct.h"
-#include "../../pvar.h"
+#include "../../core/route_struct.h"
+#include "../../core/pvar.h"
 #include "janssonrpc_server.h"
 #include "janssonrpc_request.h"
 #include "janssonrpc.h"

@@ -30,8 +30,8 @@
 
 #include <ldap.h>
 
-#include "../../str.h"
-#include "../../sr_module.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
 
 #define LDAP_MAX_FILTER_LEN 1024
 

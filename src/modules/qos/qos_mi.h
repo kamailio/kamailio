@@ -24,8 +24,8 @@
 #ifndef _QOS_MI_H_
 #define _QOS_MI_H_
 
-#include "../../sr_module.h" /* Needed for find_export() */
-#include "../../parser/msg_parser.h"
+#include "../../core/sr_module.h" /* Needed for find_export() */
+#include "../../core/parser/msg_parser.h"
 #include "../dialog/dlg_load.h"
 
 /**

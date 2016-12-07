@@ -23,7 +23,7 @@
 #ifndef _AUTH_XKEYS_H_
 #define _AUTH_XKEYS_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 int authx_xkey_add_params(str *sparam);
 int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,

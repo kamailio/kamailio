@@ -27,13 +27,13 @@
 #include <fcntl.h>
 #include <event.h>
 
-#include "../../sr_module.h"
-#include "../../route.h"
-#include "../../route_struct.h"
-#include "../../resolve.h"
-#include "../../parser/parse_param.h"
-#include "../../mem/mem.h"
-#include "../../lvalue.h"
+#include "../../core/sr_module.h"
+#include "../../core/route.h"
+#include "../../core/route_struct.h"
+#include "../../core/resolve.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/mem/mem.h"
+#include "../../core/lvalue.h"
 
 #include "netstring.h"
 #include "janssonrpc.h"

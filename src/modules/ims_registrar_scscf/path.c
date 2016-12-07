@@ -29,9 +29,9 @@
  */  
 
 
-#include "../../data_lump.h"
-#include "../../parser/parse_rr.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/data_lump.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/parser/parse_uri.h"
 #include "path.h"
 #include "reg_mod.h"
 

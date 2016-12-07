@@ -29,7 +29,7 @@
 #define _TLS_SERVER_H
 
 #include <stdio.h>
-#include "../../tcp_conn.h"
+#include "../../core/tcp_conn.h"
 #include "tls_domain.h"
 #include "tls_ct_wrq.h"
 

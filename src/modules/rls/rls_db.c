@@ -25,13 +25,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_from.h"
-#include "../../hashes.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/hashes.h"
 
 #include "rls.h"
 

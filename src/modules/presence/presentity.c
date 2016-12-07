@@ -32,12 +32,12 @@
 #include <time.h>
 
 #include "../../lib/srdb1/db.h"
-#include "../../hashes.h"
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../xavp.h"
-#include "../../str.h"
-#include "../../data_lump_rpl.h"
+#include "../../core/hashes.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/xavp.h"
+#include "../../core/str.h"
+#include "../../core/data_lump_rpl.h"
 #include "presentity.h"
 #include "presence.h"
 #include "notify.h"

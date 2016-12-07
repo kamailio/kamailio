@@ -28,17 +28,17 @@
 
 #include <string.h>
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 #include "../../lib/kmi/mi.h"
-#include "../../events.h"
-#include "../../dprint.h"
-#include "../../timer.h"
-#include "../../parser/msg_parser.h"
-#include "../../script_cb.h"
-#include "../../mem/meminfo.h"
-#include "../../mem/shm_mem.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/events.h"
+#include "../../core/dprint.h"
+#include "../../core/timer.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/script_cb.h"
+#include "../../core/mem/meminfo.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 
 #ifdef STATISTICS

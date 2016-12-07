@@ -22,8 +22,8 @@
  *
  */
 
-#include "../../parser/msg_parser.h"
-#include "../../globals.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/globals.h"
 
 #include <sys/socket.h>
 

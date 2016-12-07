@@ -26,13 +26,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../forward.h"
-#include "../../flags.h"
-#include "../../dset.h"
-#include "../../mod_fix.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/forward.h"
+#include "../../core/flags.h"
+#include "../../core/dset.h"
+#include "../../core/mod_fix.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../lib/srutils/sruid.h"
 
 #include "flags.h"

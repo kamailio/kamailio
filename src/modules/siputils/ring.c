@@ -39,15 +39,15 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../../parser/msg_parser.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../timer.h"
-#include "../../locking.h"
-#include "../../md5.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/timer.h"
+#include "../../core/locking.h"
+#include "../../core/md5.h"
 
 #include "config.h"
 #include "ring.h"

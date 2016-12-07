@@ -24,13 +24,13 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../strutils.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/strutils.h"
 
 #include "app_mono_api.h"
 

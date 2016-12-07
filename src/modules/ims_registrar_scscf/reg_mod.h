@@ -48,10 +48,10 @@
 #define REG_MOD_H
 
 #include "stats.h"
-#include "../../parser/msg_parser.h"
-#include "../../qvalue.h"
-#include "../../usr_avp.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/qvalue.h"
+#include "../../core/usr_avp.h"
+#include "../../core/rand/kam_rand.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "../../modules/sl/sl.h"
 #include "../../modules/tm/tm_load.h"

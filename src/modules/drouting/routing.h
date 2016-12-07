@@ -29,8 +29,8 @@
 #ifndef routing_h
 #define routing_h
 
-#include "../../str.h"
-#include "../../usr_avp.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
 #include "prefix_tree.h"
 #include "dr_time.h"
 

@@ -30,13 +30,13 @@
 
 #include <osp/osp.h>
 #include <osp/ospb64.h>
-#include "../../forward.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_rpid.h"
-#include "../../parser/parse_rr.h"
-#include "../../parser/parse_uri.h"
-#include "../../data_lump.h"
-#include "../../mem/mem.h"
+#include "../../core/forward.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_rpid.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/data_lump.h"
+#include "../../core/mem/mem.h"
 #include "osp_mod.h"
 #include "sipheader.h"
 

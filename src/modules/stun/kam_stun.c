@@ -32,7 +32,7 @@
 
 #include <arpa/inet.h>
 #include "kam_stun.h"
-#include "../../forward.h"
+#include "../../core/forward.h"
 
 /*
  * ****************************************************************************

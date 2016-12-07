@@ -22,13 +22,13 @@
 #ifndef __GLOBAL_H__
 #define	__GLOBAL_H__
 
-#include "../../str.h"
-#include "../../sr_module.h"
-#include "../../action.h"
-#include "../../mem/mem.h"
-#include "../../sr_module.h"
-#include "../../dset.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
+#include "../../core/action.h"
+#include "../../core/mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dset.h"
+#include "../../core/parser/msg_parser.h"
 
 #include <jni.h>
 

@@ -30,7 +30,7 @@
 #ifndef _RL_HT_H_
 #define _RL_HT_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef struct _pl_pipe
 {

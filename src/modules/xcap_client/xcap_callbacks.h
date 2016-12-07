@@ -24,7 +24,7 @@
 #ifndef XCAP_CBACK
 #define XCAP_CBACK
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 #define PRES_RULES         1<<1
 #define RESOURCE_LIST      1<<2

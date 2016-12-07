@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "km_bdb_res.h"
 
 

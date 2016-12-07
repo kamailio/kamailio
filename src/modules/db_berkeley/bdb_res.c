@@ -32,8 +32,8 @@
 #include "bdb_cmd.h"
 #include "bdb_crs_compat.h"
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb2/db_gen.h"
 
 

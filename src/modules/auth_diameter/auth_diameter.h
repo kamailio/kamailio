@@ -30,7 +30,7 @@
 #ifndef AUTHDIAM_MOD_H
 #define AUTHDIAM_MOD_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../modules/sl/sl.h"
 #include "defs.h"
 #define M_NAME "auth_diameter"

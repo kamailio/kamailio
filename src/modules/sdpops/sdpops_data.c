@@ -24,8 +24,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../../dprint.h"
-#include "../../trim.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
 #include "sdpops_data.h"
 
 /*

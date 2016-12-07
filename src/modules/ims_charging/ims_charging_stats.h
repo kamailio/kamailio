@@ -8,7 +8,7 @@
 #ifndef IMS_CHARGING_STATS_H
 #define	IMS_CHARGING_STATS_H
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 struct ims_charging_counters_h {
     counter_handle_t billed_secs;

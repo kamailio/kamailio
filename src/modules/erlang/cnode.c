@@ -21,16 +21,16 @@
  *
  */
 
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #define HANDLE_IO_INLINE
-#include "../../io_wait.h"
-#include "../../pt.h"  /* process_count */
+#include "../../core/io_wait.h"
+#include "../../core/pt.h"  /* process_count */
 
 #ifndef USE_TCP
 #error	"USE_TCP must be enabled for this module"
 #endif
 
-#include "../../pass_fd.h"
+#include "../../core/pass_fd.h"
 
 #include "mod_erlang.h"
 #include "erl_helpers.h"

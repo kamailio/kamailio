@@ -30,8 +30,8 @@
 #ifndef SUBSCRIBE_H
 #define SUBSCRIBE_H
 
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
 
 
 

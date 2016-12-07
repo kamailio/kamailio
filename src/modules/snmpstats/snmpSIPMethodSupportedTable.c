@@ -30,8 +30,8 @@
  *
  */
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>

@@ -22,7 +22,7 @@
 #ifndef _XHTTP_API_H_
 #define _XHTTP_API_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 typedef int (*xhttp_reply_f)(sip_msg_t *msg, int code, str *reason,
 		str *ctype, str *body);

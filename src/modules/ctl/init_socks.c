@@ -19,9 +19,9 @@
  */
 
 #include "init_socks.h"
-#include "../../dprint.h"
-#include "../../ip_addr.h"
-#include "../../resolve.h"
+#include "../../core/dprint.h"
+#include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
 
 #include <errno.h>
 #include <string.h>

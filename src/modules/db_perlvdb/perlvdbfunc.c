@@ -30,7 +30,7 @@
 
 #include "db_perlvdb.h"
 #include "perlvdbfunc.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 /*
  * Simple conversion IV -> int

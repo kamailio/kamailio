@@ -34,7 +34,7 @@ extern          "C"
 {
 #endif
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 /* srjson Types: */
 #define srjson_False   0

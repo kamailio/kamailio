@@ -22,8 +22,8 @@
  *
  */
 
-#include "../../select.h"
-#include "../../select_buf.h"
+#include "../../core/select.h"
+#include "../../core/select_buf.h"
 
 #include "cnxcc_mod.h"
 

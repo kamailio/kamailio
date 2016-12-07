@@ -34,8 +34,8 @@ unsigned int nid_pool_no; /* number of index pools, 2^k */
 #if defined USE_NC || defined USE_OT_NONCE
 
 #include "nid.h"
-#include "../../dprint.h"
-#include "../../bit_scan.h"
+#include "../../core/dprint.h"
+#include "../../core/bit_scan.h"
 
 struct pool_index* nid_crt=0;
 

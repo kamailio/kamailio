@@ -21,7 +21,7 @@
 #ifndef _UAC_REG_H_
 #define _UAC_REG_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 extern int reg_timer_interval;
 extern int reg_retry_interval;

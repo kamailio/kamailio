@@ -39,7 +39,7 @@
 #include <sys/stat.h>
 #include <db.h>
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb2/db.h"
 #include "../../lib/srdb2/db_fld.h"
 

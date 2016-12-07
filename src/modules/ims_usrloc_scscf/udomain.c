@@ -52,14 +52,14 @@
 
 #include "udomain.h"
 #include <string.h>
-#include "../../hashes.h"
-#include "../../parser/parse_methods.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/parser/parse_methods.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db.h"
-#include "../../socket_info.h"
-#include "../../ut.h"
-#include "../../counters.h"
+#include "../../core/socket_info.h"
+#include "../../core/ut.h"
+#include "../../core/counters.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"

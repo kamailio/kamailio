@@ -10,7 +10,7 @@
 #include <time.h>
 #include <math.h>
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../ims_dialog/dlg_load.h"
 #include "ro_timer.h"
 #include "ro_session_hash.h"
@@ -18,7 +18,7 @@
 #include "ro_db_handler.h"
 #include "mod.h"
 #include "ims_charging_stats.h"
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 extern int interim_request_credits;
 extern int ro_timer_buffer;

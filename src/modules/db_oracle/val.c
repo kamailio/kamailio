@@ -25,7 +25,7 @@
 #include <string.h>
 #include <time.h>
 #include <oci.h>
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "ora_con.h"
 #include "dbase.h"
 #include "val.h"

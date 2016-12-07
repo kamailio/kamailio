@@ -23,8 +23,8 @@
 
 #include <stdlib.h>
 
-#include "../../str.h"
-#include "../../hashes.h"
+#include "../../core/str.h"
+#include "../../core/hashes.h"
 
 #include "pv_xbuff.h"
 

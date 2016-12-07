@@ -25,7 +25,7 @@
 #ifndef _DEBUGGER_API_H_
 #define _DEBUGGER_API_H_
 
-#include "../../route_struct.h"
+#include "../../core/route_struct.h"
 
 int dbg_add_breakpoint(struct action *a, int bpon);
 int dbg_init_bp_list(void);

@@ -37,9 +37,9 @@
 
 #include "domainpolicy_mod.h"
 #include <stdio.h>
-#include "../../mem/shm_mem.h"
-#include "../../sr_module.h"
-#include "../../ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
 #include "domainpolicy.h"
 
 /*

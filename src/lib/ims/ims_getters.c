@@ -43,20 +43,20 @@
  * 
  */
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/digest/digest.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_expires.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_rr.h"
-#include "../../parser/parse_nameaddr.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_content.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/parser/parse_nameaddr.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_content.h"
 #include "ims_getters.h"
-#include "../../parser/parse_ppi_pai.h"
+#include "../../core/parser/parse_ppi_pai.h"
 
 
 /**

@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "ul_check.h"
 #include "time.h"
 

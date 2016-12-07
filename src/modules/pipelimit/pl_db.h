@@ -28,7 +28,7 @@
 #ifndef _RL_DB_H_
 #define _RL_DB_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 extern str pl_db_url;
 extern str rlp_pipeid_col;

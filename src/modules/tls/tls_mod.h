@@ -26,8 +26,8 @@
 #ifndef _TLS_MOD_H
 #define _TLS_MOD_H
 
-#include "../../str.h"
-#include "../../locking.h"
+#include "../../core/str.h"
+#include "../../core/locking.h"
 #include "tls_domain.h"
 
 

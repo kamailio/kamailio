@@ -35,11 +35,11 @@
  * for failback routes or different routing rules for VoIP and PSTN targets.
  */
 
-#include "../../sr_module.h"
-#include "../../str.h"
-#include "../../mem/mem.h"
-#include "../../ut.h" /* for user2uid() */
-#include "../../rpc_lookup.h" /* for sercmd */
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h" /* for user2uid() */
+#include "../../core/rpc_lookup.h" /* for sercmd */
 #include "carrierroute.h"
 #include "cr_fixup.h"
 #include "cr_map.h"

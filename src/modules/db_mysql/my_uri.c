@@ -23,9 +23,9 @@
 
 #include "my_uri.h"
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb2/db_gen.h"
 
 #include <stdlib.h>

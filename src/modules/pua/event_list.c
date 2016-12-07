@@ -24,9 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "send_publish.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "event_list.h"
 
 pua_event_t* init_pua_evlist(void)

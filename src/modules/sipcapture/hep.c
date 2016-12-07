@@ -21,15 +21,15 @@
  *
  */
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../events.h"
-#include "../../ut.h"
-#include "../../ip_addr.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/events.h"
+#include "../../core/ut.h"
+#include "../../core/ip_addr.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
-#include "../../receive.h"
+#include "../../core/receive.h"
 
 #include "hep.h"
 #include "sipcapture.h"

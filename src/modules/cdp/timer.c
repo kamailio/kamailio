@@ -51,7 +51,7 @@
 
 #include "timer.h"
 
-#include "../../cfg/cfg_struct.h"
+#include "../../core/cfg/cfg_struct.h"
 
 
 /* defined in ../diameter_peer.c */

@@ -22,9 +22,9 @@
 #include <Python.h>
 #include <libgen.h>
 
-#include "../../str.h"
-#include "../../sr_module.h"
-#include "../../kemi.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
+#include "../../core/kemi.h"
 
 #include "python_exec.h"
 #include "python_iface.h"

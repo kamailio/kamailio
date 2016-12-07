@@ -31,7 +31,7 @@
 #ifndef _OSP_MOD_ORIG_TRANSACTION_H_
 #define _OSP_MOD_ORIG_TRANSACTION_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int ospRequestRouting(struct sip_msg*, char*, char*);
 int ospCheckRoute(struct sip_msg*, char*, char*);

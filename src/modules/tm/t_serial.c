@@ -25,14 +25,14 @@
  *
  */
 
-#include "../../qvalue.h"
-#include "../../mem/mem.h"
-#include "../../socket_info.h"
-#include "../../usr_avp.h"
-#include "../../dset.h"
-#include "../../parser/msg_parser.h"
-#include "../../ut.h"
-#include "../../xavp.h"
+#include "../../core/qvalue.h"
+#include "../../core/mem/mem.h"
+#include "../../core/socket_info.h"
+#include "../../core/usr_avp.h"
+#include "../../core/dset.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/ut.h"
+#include "../../core/xavp.h"
 #include "config.h"
 #include "t_funcs.h"
 #include "t_reply.h"

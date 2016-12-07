@@ -36,17 +36,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../../sr_module.h"
-#include "../../events.h"
-#include "../../dprint.h"
-#include "../../tcp_options.h"
-#include "../../ut.h"
-#include "../../forward.h"
-#include "../../config.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_from.h"
+#include "../../core/sr_module.h"
+#include "../../core/events.h"
+#include "../../core/dprint.h"
+#include "../../core/tcp_options.h"
+#include "../../core/ut.h"
+#include "../../core/forward.h"
+#include "../../core/config.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
 
 #include "../../modules/sanity/api.h"
 

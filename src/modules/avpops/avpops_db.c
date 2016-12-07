@@ -23,10 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "avpops_parse.h"
 #include "avpops_db.h"
 

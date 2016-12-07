@@ -45,9 +45,9 @@
 
 #include "sctp_options.h"
 
-#include "../../dprint.h"
-#include "../../cfg/cfg.h"
-#include "../../socket_info.h"
+#include "../../core/dprint.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/socket_info.h"
 
 #include "sctp_server.h"
 

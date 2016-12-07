@@ -26,13 +26,13 @@
 #include <string.h>
 #include <time.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../timer_proc.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/timer_proc.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
-#include "../../parser/parse_param.h"
+#include "../../core/parser/parse_param.h"
 
 MODULE_VERSION
 

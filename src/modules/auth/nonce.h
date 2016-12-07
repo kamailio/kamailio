@@ -25,10 +25,10 @@
 #ifndef NONCE_H
 #define NONCE_H
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/digest/digest.h"
-#include "../../str.h"
-#include "../../basex.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/str.h"
+#include "../../core/basex.h"
 #include <time.h>
 
 

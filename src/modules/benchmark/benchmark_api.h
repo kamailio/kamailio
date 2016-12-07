@@ -36,7 +36,7 @@
 #ifndef BENCHMARK_API_H
 #define BENCHMARK_API_H
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 typedef int (*bm_register_timer_f)(char *tname, int mode, unsigned int *id);
 typedef int (*bm_start_timer_f)(unsigned int id);

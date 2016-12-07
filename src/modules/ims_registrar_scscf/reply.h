@@ -32,9 +32,9 @@
 #ifndef REPLY_H
 #define REPLY_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../ims_usrloc_scscf/ucontact.h"
-#include "../../parser/contact/contact.h"
+#include "../../core/parser/contact/contact.h"
 
 #include "../../modules/tm/tm_load.h"
 

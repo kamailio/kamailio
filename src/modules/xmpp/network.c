@@ -38,7 +38,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 int net_listen(char *server, int port)
 {

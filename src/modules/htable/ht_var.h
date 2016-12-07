@@ -22,7 +22,7 @@
 #ifndef _HT_VAR_H_
 #define _HT_VAR_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_get_ht_cell(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);

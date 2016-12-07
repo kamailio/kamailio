@@ -30,15 +30,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../pt.h"
-#include "../../sr_module.h"
-#include "../../events.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/pt.h"
+#include "../../core/sr_module.h"
+#include "../../core/events.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 
 /**

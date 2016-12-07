@@ -46,7 +46,7 @@
 #ifndef ICXDX_UAR_H
 #define ICXDX_UAR_H
 
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 extern struct cdp_binds cdpb; /**< Structure with pointers to cdp funcs 		*/
 extern str cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */

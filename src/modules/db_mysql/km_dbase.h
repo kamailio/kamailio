@@ -39,7 +39,7 @@
 #include "../../lib/srdb1/db_op.h"
 #include "../../lib/srdb1/db_val.h"
 #include "../../lib/srdb1/db_locking.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 /*! \brief
  * Initialize database connection

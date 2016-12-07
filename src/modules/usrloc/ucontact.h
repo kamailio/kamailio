@@ -30,7 +30,7 @@
 
 
 #include <stdio.h>
-#include "../../xavp.h"
+#include "../../core/xavp.h"
 #include "usrloc.h"
 
 

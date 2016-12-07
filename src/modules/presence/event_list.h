@@ -29,10 +29,10 @@
 #ifndef _PRES_EV_LST_H
 #define  _PRES_EV_LST_H
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_event.h"
-#include "../../parser/parse_param.h"
-#include "../../str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_event.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/str.h"
 #include "subscribe.h"
 
 #define WINFO_TYPE			1<< 0

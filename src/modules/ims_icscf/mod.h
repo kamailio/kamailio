@@ -67,7 +67,7 @@
 #include "stats.h"
 #include "registration.h"
 #include "location.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "../cdp_avp/mod_export.h"

@@ -31,8 +31,8 @@
 #include "db_row.h"
 
 #include <string.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 
 /*
  * Release memory used by row

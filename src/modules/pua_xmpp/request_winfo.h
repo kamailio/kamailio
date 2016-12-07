@@ -23,7 +23,7 @@
 #ifndef XMPP_SWINFO_H
 #define XMPP_SWINFO_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int request_winfo(struct sip_msg* msg, char* uri, char* expires);
 

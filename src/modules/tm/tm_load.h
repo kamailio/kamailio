@@ -27,7 +27,7 @@
 #include "defs.h"
 
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "t_hooks.h"
 #include "uac.h"
 #include "t_fwd.h"

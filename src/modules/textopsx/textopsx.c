@@ -29,15 +29,15 @@
 #include <string.h>
 #include <fnmatch.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../data_lump.h"
-#include "../../msg_translator.h"
-#include "../../tcp_options.h"
-#include "../../mod_fix.h"
-#include "../../parser/parse_hname2.h"
-#include "../../select.h"
-#include "../../select_buf.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/data_lump.h"
+#include "../../core/msg_translator.h"
+#include "../../core/tcp_options.h"
+#include "../../core/mod_fix.h"
+#include "../../core/parser/parse_hname2.h"
+#include "../../core/select.h"
+#include "../../core/select_buf.h"
 
 
 #include "api.h"

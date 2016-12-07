@@ -24,10 +24,10 @@
 #ifndef AUTHDB_MOD_H
 #define AUTHDB_MOD_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 #include "../../modules/auth/api.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /*

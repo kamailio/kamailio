@@ -20,8 +20,8 @@
  *
  */
 
-#include "../../str.h"
-#include "../../sr_module.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
 
 #include <string.h>
 #include <jni.h>

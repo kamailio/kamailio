@@ -29,9 +29,9 @@
 
 
 #include <stdio.h>
-#include "../../locking.h"
-#include "../../str.h"
-#include "../../counters.h"
+#include "../../core/locking.h"
+#include "../../core/str.h"
+#include "../../core/counters.h"
 #include "../../lib/srdb1/db.h"
 #include "urecord.h"
 #include "hslot.h"

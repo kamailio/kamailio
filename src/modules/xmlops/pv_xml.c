@@ -28,10 +28,10 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-#include "../../mem/mem.h"
-#include "../../parser/parse_param.h"
-#include "../../hashes.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/hashes.h"
+#include "../../core/dprint.h"
 
 #include "pv_xml.h"
 

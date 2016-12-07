@@ -26,12 +26,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "../../mem/shm_mem.h"
-#include "../../locking.h"
-#include "../../timer.h"
-#include "../../ip_addr.h"
-#include "../../resolve.h"
-#include "../../counters.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/locking.h"
+#include "../../core/timer.h"
+#include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
+#include "../../core/counters.h"
 #include "ip_tree.h"
 #include "pike_funcs.h"
 #include "timer.h"

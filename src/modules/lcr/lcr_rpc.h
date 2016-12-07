@@ -35,7 +35,7 @@
 
 #ifdef RPC_SUPPORT
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 extern rpc_export_t lcr_rpc[];
 

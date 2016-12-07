@@ -21,17 +21,17 @@
  */
 
 
-#include "../../modparam.h"
-#include "../../dprint.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/hf.h"
-#include "../../dst_blacklist.h"
-#include "../../timer_ticks.h"
-#include "../../ip_addr.h"
-#include "../../compiler_opt.h"
-#include "../../ut.h"
-#include "../../globals.h"
-#include "../../cfg_core.h"
+#include "../../core/modparam.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/hf.h"
+#include "../../core/dst_blacklist.h"
+#include "../../core/timer_ticks.h"
+#include "../../core/ip_addr.h"
+#include "../../core/compiler_opt.h"
+#include "../../core/ut.h"
+#include "../../core/globals.h"
+#include "../../core/cfg_core.h"
 
 
 MODULE_VERSION

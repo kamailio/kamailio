@@ -32,30 +32,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../ip_addr.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/ip_addr.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_cseq.h"
-#include "../../pvar.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_cseq.h"
+#include "../../core/pvar.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
-#include "../../str.h"
-#include "../../onsend.h"
-#include "../../events.h"
+#include "../../core/str.h"
+#include "../../core/onsend.h"
+#include "../../core/events.h"
 
 #include "../../modules/sipcapture/hep.h"
 
 #ifdef STATISTICS
-#include "../../counters.h"
+#include "../../core/counters.h"
 #endif
 
 MODULE_VERSION

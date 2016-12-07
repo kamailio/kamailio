@@ -33,15 +33,15 @@
 #include <dlfcn.h>
 #include <sys/time.h>
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
 #include "../../modules/rr/api.h"
 #include "../../modules/sl/sl.h"
 
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 /* lock_ops.h defines union semun, perl does not need to redefine it */
 #ifdef USE_SYSV_SEM

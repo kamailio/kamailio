@@ -22,7 +22,7 @@
 #ifndef DOMAIN_API_H_
 #define DOMAIN_API_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "domain.h"
 
 typedef int (*is_domain_local_t)(str* _domain);

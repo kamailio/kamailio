@@ -29,7 +29,7 @@
 #ifndef _TOPOS_STORAGE_H_
 #define _TOPOS_STORAGE_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #define TPS_DIR_DOWNSTREAM	0
 #define TPS_DIR_UPSTREAM	1

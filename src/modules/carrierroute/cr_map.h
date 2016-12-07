@@ -28,7 +28,7 @@
 #ifndef CR_MAP_H
 #define CR_MAP_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 /**

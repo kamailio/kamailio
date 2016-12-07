@@ -27,8 +27,8 @@
 #ifndef _CPL_C_ENV_H
 #define _CPL_C_ENV_H
 
-#include "../../str.h"
-#include "../../usr_avp.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
 #include "../usrloc/usrloc.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"

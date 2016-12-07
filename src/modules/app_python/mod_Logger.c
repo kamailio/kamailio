@@ -28,8 +28,8 @@
 #include <libgen.h>
 
 // router includes
-#include "../../str.h"
-#include "../../sr_module.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
 
 // local includes
 #include "python_exec.h"

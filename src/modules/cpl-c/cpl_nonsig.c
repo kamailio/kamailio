@@ -34,9 +34,9 @@
 #include <sys/uio.h>
 #include <signal.h>
 
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "cpl_nonsig.h"
 #include "CPL_tree.h"
 

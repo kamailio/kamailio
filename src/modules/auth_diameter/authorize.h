@@ -31,10 +31,10 @@
 #define DIAMETER_AUTHORIZE_H
 
 #include "diameter_msg.h"
-#include "../../parser/digest/digest_parser.h"
-#include "../../parser/hf.h"
-#include "../../pvar.h"
-#include "../../str.h"
+#include "../../core/parser/digest/digest_parser.h"
+#include "../../core/parser/hf.h"
+#include "../../core/pvar.h"
+#include "../../core/str.h"
 #include "defs.h"
 
 typedef enum auth_diam_result {

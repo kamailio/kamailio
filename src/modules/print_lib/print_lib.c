@@ -34,7 +34,7 @@
 
 
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/print/print.h"
 
 MODULE_VERSION

@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../cfg_core.h"
-#include "../../tcp_server.h"
-#include "../../forward.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/cfg_core.h"
+#include "../../core/tcp_server.h"
+#include "../../core/forward.h"
 
 #include "msrp_env.h"
 #include "msrp_netio.h"

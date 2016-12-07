@@ -44,10 +44,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../usr_avp.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/usr_avp.h"
+#include "../../core/mem/mem.h"
 #include "acc_api.h"
 #include "acc_extra.h"
 

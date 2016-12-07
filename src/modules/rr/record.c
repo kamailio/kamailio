@@ -31,13 +31,13 @@
  */
 
 #include <string.h>
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_rr.h"
-#include "../../str.h"
-#include "../../data_lump.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/str.h"
+#include "../../core/data_lump.h"
 #include "record.h"
 #include "rr_mod.h"
 #include "loose.h"

@@ -46,7 +46,7 @@
 #ifndef CONTACT_HSLOT_H
 #define	CONTACT_HSLOT_H
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "ucontact.h"
 struct ucontact;
 

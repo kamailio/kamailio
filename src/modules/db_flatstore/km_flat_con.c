@@ -22,9 +22,9 @@
 
 #include <string.h>
 #include <errno.h>
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "km_flatstore_mod.h"
 #include "km_flat_con.h"
 

@@ -51,16 +51,16 @@
 #include <string.h> /* for memset() */
 #include <stdlib.h> /* For atoi() */
 
-#include "../../pvar.h"
-#include "../../parser/parse_supported.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../ut.h"
-#include "../../lvalue.h"
-#include "../../dprint.h"
-#include "../../sr_module.h" /* Needed for find_export() */
+#include "../../core/pvar.h"
+#include "../../core/parser/parse_supported.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/ut.h"
+#include "../../core/lvalue.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h" /* Needed for find_export() */
 #include "../../modules/sl/sl.h"
 
 #include "parse_sst.h"

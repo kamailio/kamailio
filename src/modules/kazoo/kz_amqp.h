@@ -34,12 +34,12 @@
 #include <sys/timerfd.h>
 #include <amqp.h>
 
-#include "../../sr_module.h"
-#include "../../str.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
 
 #include "const.h"
 #include "defs.h"
-#include "../../fmsg.h"
+#include "../../core/fmsg.h"
 
 typedef enum {
 	KZ_AMQP_CONNECTION_CLOSED     = 0,

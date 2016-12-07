@@ -35,11 +35,11 @@
 
 #include "statistics.h"
 #include "seas.h" /*SLOG*/
-#include "../../mem/shm_mem.h"
-#include "../../resolve.h"
-#include "../../ut.h"
-#include "../../dprint.h"
-#include "../../locking.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/resolve.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
+#include "../../core/locking.h"
 #define STATS_PAY 101
 
 struct statstable*  seas_stats_table;

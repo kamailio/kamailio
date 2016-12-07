@@ -28,12 +28,12 @@
 
 
 
-#include "../../parser/hf.h"
-#include "../../dprint.h"
-#include "../../parser/parse_expires.h"
-#include "../../ut.h"
-#include "../../qvalue.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/parser/hf.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/ut.h"
+#include "../../core/qvalue.h"
+#include "../../core/rand/kam_rand.h"
 #include "registrar.h"                     /* Module parameters */
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"

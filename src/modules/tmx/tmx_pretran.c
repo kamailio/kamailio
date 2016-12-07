@@ -28,16 +28,16 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../locking.h"
-#include "../../hashes.h"
-#include "../../config.h"
-#include "../../parser/parse_via.h"
-#include "../../parser/parse_from.h"
-#include "../../route.h"
-#include "../../trim.h"
-#include "../../pt.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/locking.h"
+#include "../../core/hashes.h"
+#include "../../core/config.h"
+#include "../../core/parser/parse_via.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/route.h"
+#include "../../core/trim.h"
+#include "../../core/pt.h"
 
 #include "tmx_pretran.h"
 

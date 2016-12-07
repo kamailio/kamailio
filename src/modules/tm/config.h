@@ -36,10 +36,10 @@
    and needs to calculate branch/hash, for which table size
    is needed 
 */
-#include "../../hash_func.h"
+#include "../../core/hash_func.h"
 
-#include "../../cfg/cfg.h"
-#include "../../str.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/str.h"
 
 /* maximum length of localy generated acknowledgment */
 #define MAX_ACK_LEN   1024

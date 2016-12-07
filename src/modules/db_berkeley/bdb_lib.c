@@ -35,9 +35,9 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 
 #include "bdb_fld.h"
 #include "bdb_lib.h"

@@ -25,9 +25,9 @@
 #ifndef _DBT_LIB_H_
 #define _DBT_LIB_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db_val.h"
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 #define DBT_FLAG_UNSET  0
 #define DBT_FLAG_NULL   1

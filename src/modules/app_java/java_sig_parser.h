@@ -23,8 +23,8 @@
 #ifndef __JAVA_SIG_PARSER_H__
 #define	__JAVA_SIG_PARSER_H__
 
-#include "../../str.h"
-#include "../../sr_module.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
 
 #include <jni.h>
 

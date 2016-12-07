@@ -25,9 +25,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc_lookup.h"
 #include "db_text.h"
 #include "dbt_lib.h"
 #include "dbt_api.h"

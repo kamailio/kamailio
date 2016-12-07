@@ -44,8 +44,8 @@
 #ifndef _IMS_AUTH_API_H_
 #define _IMS_AUTH_API_H_
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/msg_parser.h"
 
 /**
  * return codes to config by auth functions

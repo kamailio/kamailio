@@ -21,7 +21,7 @@
 #ifndef _PV_BRANCH_H_
 #define _PV_BRANCH_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);

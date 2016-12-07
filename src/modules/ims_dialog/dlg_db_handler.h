@@ -29,7 +29,7 @@
 #ifndef _DLG_DB_HANDLER_H_
 #define _DLG_DB_HANDLER_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 
 #define ID_COL					"id"

@@ -34,13 +34,13 @@
  */ 
 
 #include "http.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../parser/parse_via.h"
-#include "../../data_lump.h"
-#include "../../ip_addr.h"
-#include "../../msg_translator.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_via.h"
+#include "../../core/data_lump.h"
+#include "../../core/ip_addr.h"
+#include "../../core/msg_translator.h"
+#include "../../core/ut.h"
 #include <string.h>
 
 

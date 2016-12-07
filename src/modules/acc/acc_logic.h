@@ -37,7 +37,7 @@
 #ifndef _ACC_ACC_LOGIC_H
 #define _ACC_ACC_LOGIC_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../modules/tm/t_hooks.h"
 #include "acc_api.h"
 

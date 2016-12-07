@@ -23,9 +23,9 @@
 #include "service_routes.h"
 #include "reg_mod.h"
 #include "save.h"
-#include "../../parser/parse_via.h"
-#include "../../parser/msg_parser.h"
-#include "../../data_lump.h"
+#include "../../core/parser/parse_via.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/data_lump.h"
 #include "../../lib/ims/ims_getters.h"
 
 #define STR_APPEND(dst,src)\

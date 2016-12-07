@@ -38,13 +38,13 @@
 
 #include "utilities.h"
 
-#include "../../str.h"
-#include "../../locking.h"
-#include "../../mem/mem.h"
-#include "../../cfg/cfg.h"
-#include "../../cfg/cfg_ctx.h"
+#include "../../core/str.h"
+#include "../../core/locking.h"
+#include "../../core/mem/mem.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 static cfg_ctx_t  *ctx = NULL;
 

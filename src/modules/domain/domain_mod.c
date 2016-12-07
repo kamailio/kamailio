@@ -24,19 +24,19 @@
 
 #include "domain_mod.h"
 #include <stdio.h>
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../sr_module.h"
-#include "../../pvar.h"
-#include "../../forward.h"
-#include "../../mod_fix.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/pvar.h"
+#include "../../core/forward.h"
+#include "../../core/mod_fix.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "domain.h"
 #include "mi.h"
 #include "hash.h"
 #include "api.h"
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 /*
  * Module management function prototypes

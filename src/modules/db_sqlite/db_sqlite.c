@@ -25,7 +25,7 @@
 #include <sys/time.h>
 #include <sqlite3.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db.h"
 #include "dbase.h"

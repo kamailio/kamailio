@@ -28,15 +28,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../route.h"
-#include "../../script_cb.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/route.h"
+#include "../../core/script_cb.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../counters.h"
-#include "../../dset.h"
-#include "../../kemi.h"
+#include "../../core/counters.h"
+#include "../../core/dset.h"
+#include "../../core/kemi.h"
 
 #include "t_var.h"
 #include "t_mi.h"

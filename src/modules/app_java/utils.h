@@ -23,7 +23,7 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 #include <jni.h>
 

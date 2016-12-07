@@ -33,9 +33,9 @@
 #ifndef __NSQ_JSON_H_
 #define __NSQ_JSON_H_
 
-#include "../../mod_fix.h"
-#include "../../lvalue.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/mod_fix.h"
+#include "../../core/lvalue.h"
+#include "../../core/parser/msg_parser.h"
 #include <json.h>
 
 #define json_extract_field(json_name, field)  do {                      \

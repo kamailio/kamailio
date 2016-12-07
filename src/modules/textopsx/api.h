@@ -19,8 +19,8 @@
 
 #ifndef TEXTOPSX_API_H_
 #define TEXTOPSX_API_H_
-#include "../../str.h"
-#include "../../sr_module.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
 
 
 /*

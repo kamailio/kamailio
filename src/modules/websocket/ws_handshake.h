@@ -27,8 +27,8 @@
 #ifndef _WS_HANDSHAKE_H
 #define _WS_HANDSHAKE_H
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/msg_parser.h"
 #include "websocket.h"
 
 #define DEFAULT_SUB_PROTOCOLS	(SUB_PROTOCOL_SIP | SUB_PROTOCOL_MSRP)

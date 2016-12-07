@@ -29,7 +29,7 @@
 
 #include "rfc2617_sha256.h"
 #include "../../lib/srutils/sha256.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 
 inline void cvt_hex_sha256(HASH_SHA256 _b, HASHHEX_SHA256 _h)

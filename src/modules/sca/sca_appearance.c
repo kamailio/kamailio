@@ -19,7 +19,7 @@
  */
 #include "sca_common.h"
 
-#include "../../strutils.h"
+#include "../../core/strutils.h"
 
 #include "sca.h"
 #include "sca_appearance.h"

@@ -28,8 +28,8 @@
 #ifndef _REGISTRAR_API_H_
 #define _REGISTRAR_API_H_
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef int (*regapi_save_f)(struct sip_msg *msg, char *table);
 int regapi_save(struct sip_msg *msg, char *table);

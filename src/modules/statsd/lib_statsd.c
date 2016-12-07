@@ -8,7 +8,7 @@
 #include <math.h>
 #include <errno.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "lib_statsd.h"
 
 static StatsConnection statsd_connection = {

@@ -29,13 +29,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/msg_parser.h"
 
 #include "../../modules/tm/tm_load.h"
 

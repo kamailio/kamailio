@@ -47,9 +47,9 @@
 #include "dlist.h"
 #include "pcontact.h"
 #include "udomain.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "ul_mod.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_uri.h"
 
 extern unsigned int init_flag;
 extern int hashing_type;

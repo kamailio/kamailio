@@ -37,7 +37,7 @@
 
 #include <sys/socket.h>
 #include <sys/un.h>
-#include "../../ip_addr.h"
+#include "../../core/ip_addr.h"
 
 #define DEFAULT_MI_REPLY_IDENT "\t"
 #define MI_CMD_SEPARATOR       ':'

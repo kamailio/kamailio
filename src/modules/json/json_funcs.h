@@ -25,7 +25,7 @@
 #ifndef _JSON_FUNCS_H_
 #define _JSON_FUNCS_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst);
 

@@ -22,7 +22,7 @@
 #ifndef _PYTHON_EXEC_H
 #define  _PYTHON_EXEC_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef struct sr_apy_env {
 	sip_msg_t *msg;

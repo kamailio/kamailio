@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../error.h"
+#include "../../core/error.h"
 
 
 /** Kamailio ERRORS ARE NEGATIVE, SEAS ERROR CODES ARE POSITIVE */

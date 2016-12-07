@@ -23,8 +23,8 @@
  * \brief Implementation for Stats Pseudo-variables
  */
 
-#include "../../counters.h"
-#include "../../ver.h"
+#include "../../core/counters.h"
+#include "../../core/ver.h"
 #include "pv_stats.h"
 
 /**

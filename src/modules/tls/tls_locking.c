@@ -26,8 +26,8 @@
 
 #include <stdlib.h> /* abort() */
 #include <openssl/crypto.h>
-#include "../../dprint.h"
-#include "../../locking.h"
+#include "../../core/dprint.h"
+#include "../../core/locking.h"
 
 static int n_static_locks=0;
 static gen_lock_set_t* static_locks=0;

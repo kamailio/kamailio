@@ -34,11 +34,11 @@
 #include <sys/stat.h>
 
 
-#include "../../str.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb2/db_res.h"
 #include "../../lib/srdb2/db.h"
 

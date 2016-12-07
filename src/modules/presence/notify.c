@@ -32,21 +32,21 @@
 #include <string.h>
 #include <libxml/parser.h>
 
-#include "../../trim.h"
-#include "../../ut.h"
-#include "../../globals.h"
-#include "../../str.h"
+#include "../../core/trim.h"
+#include "../../core/ut.h"
+#include "../../core/globals.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_val.h"
-#include "../../hashes.h"
-#include "../../socket_info.h"
+#include "../../core/hashes.h"
+#include "../../core/socket_info.h"
 #include "../../modules/tm/tm_load.h"
 #include "../pua/hash.h"
 #include "presentity.h"
 #include "presence.h"
 #include "notify.h"
 #include "utils_func.h"
-#include "../../receive.h"
+#include "../../core/receive.h"
 
 #define ALLOC_SIZE 3000
 #define MAX_FORWARD 70

@@ -94,28 +94,28 @@
 #include "config.h"
 #include "h_table.h"
 #include "timer.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "lock.h"
 #include "t_stats.h"
 
-#include "../../hash_func.h"
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../parser/parser_f.h"
-#include "../../ut.h"
-#include "../../timer_ticks.h"
-#include "../../compiler_opt.h" 
-#include "../../sr_compat.h" 
+#include "../../core/hash_func.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/ut.h"
+#include "../../core/timer_ticks.h"
+#include "../../core/compiler_opt.h" 
+#include "../../core/sr_compat.h" 
 #include "t_funcs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_hooks.h"
 #ifdef USE_DNS_FAILOVER
 #include "t_fwd.h" /* t_send_branch */
-#include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
+#include "../../core/cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 #ifdef USE_DST_BLACKLIST
-#include "../../dst_blacklist.h"
+#include "../../core/dst_blacklist.h"
 #endif
 
 

@@ -29,8 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpl_log.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 
 
 static str  cpl_logs[MAX_LOG_NR];

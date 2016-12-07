@@ -24,10 +24,10 @@
  * \ingroup stun
  */
 
-#include "../../dprint.h"
-#include "../../events.h"
-#include "../../ip_addr.h"
-#include "../../sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/events.h"
+#include "../../core/ip_addr.h"
+#include "../../core/sr_module.h"
 #include "kam_stun.h"
 #include "config.h"
 

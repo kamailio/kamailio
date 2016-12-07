@@ -29,9 +29,9 @@
 #include "string.h"
 #include "ctype.h"
 
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
 
 #include "auth_hdr.h"
 #include "auth.h"

@@ -24,7 +24,7 @@
 #define _CFGT_JSON_H
 
 #include "../../lib/srutils/srjson.h"
-#include "../../route_struct.h"
+#include "../../core/route_struct.h"
 
 #define CFGT_DP_NULL       1
 #define CFGT_DP_AVP        2

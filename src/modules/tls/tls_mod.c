@@ -27,19 +27,19 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include "../../locking.h"
-#include "../../sr_module.h"
-#include "../../ip_addr.h"
-#include "../../trim.h"
-#include "../../globals.h"
-#include "../../timer_ticks.h"
-#include "../../timer.h" /* ticks_t */
-#include "../../tls_hooks.h"
-#include "../../ut.h"
-#include "../../shm_init.h"
-#include "../../rpc_lookup.h"
-#include "../../cfg/cfg.h"
-#include "../../dprint.h"
+#include "../../core/locking.h"
+#include "../../core/sr_module.h"
+#include "../../core/ip_addr.h"
+#include "../../core/trim.h"
+#include "../../core/globals.h"
+#include "../../core/timer_ticks.h"
+#include "../../core/timer.h" /* ticks_t */
+#include "../../core/tls_hooks.h"
+#include "../../core/ut.h"
+#include "../../core/shm_init.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/dprint.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"

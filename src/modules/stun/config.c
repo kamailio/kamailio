@@ -25,7 +25,7 @@
  * \ingroup stun
  */
 
-#include "../../cfg/cfg.h"
+#include "../../core/cfg/cfg.h"
 #include "config.h"
 
 struct cfg_group_stun default_stun_cfg = {

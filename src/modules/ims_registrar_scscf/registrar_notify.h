@@ -48,7 +48,7 @@
 
 
 #include "../ims_usrloc_scscf/usrloc.h"
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "sem.h"
 
 

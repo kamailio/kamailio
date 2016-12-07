@@ -26,12 +26,12 @@
 #include "ld_mod.h"
 #include "ld_uri.h"
 
-#include "../../cfg_parser.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../trim.h"
-#include "../../ut.h"
-#include "../../resolve.h"
+#include "../../core/cfg_parser.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
+#include "../../core/ut.h"
+#include "../../core/resolve.h"
 
 #include <ldap.h>
 #include <stdlib.h>

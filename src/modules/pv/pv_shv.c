@@ -25,12 +25,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../shm_init.h"
-#include "../../ut.h"
-#include "../../pvar.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/shm_init.h"
+#include "../../core/ut.h"
+#include "../../core/pvar.h"
 
 #include "pv_shv.h"
 

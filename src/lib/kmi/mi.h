@@ -23,7 +23,7 @@
  * History:
  * ---------
  *  2006-09-08  first version (bogdan)
- *  2010-08-18  use mi types from ../../mi/mi_types.h (andrei)
+ *  2010-08-18  use mi types from ../../core/mi/mi_types.h (andrei)
  */
 
 /*!
@@ -36,8 +36,8 @@
 #ifndef _MI_MI_H_
 #define _MI_MI_H_
 
-#include "../../str.h"
-#include "../../mi/mi_types.h"
+#include "../../core/str.h"
+#include "../../core/mi/mi_types.h"
 #include "tree.h"
 
 #define MI_ASYNC_RPL_FLAG   (1<<0)

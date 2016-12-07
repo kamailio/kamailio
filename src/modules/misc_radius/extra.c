@@ -24,8 +24,8 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 #include "extra.h"
 
 

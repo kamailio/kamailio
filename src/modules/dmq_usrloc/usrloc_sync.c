@@ -24,10 +24,10 @@
 #include "../usrloc/usrloc.h"
 #include "../usrloc/ul_callback.h"
 #include "../usrloc/dlist.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_addr_spec.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_addr_spec.h"
 
 static str usrloc_dmq_content_type = str_init("application/json");
 static str dmq_200_rpl  = str_init("OK");

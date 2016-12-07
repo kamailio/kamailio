@@ -27,7 +27,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "qos_load.h"
 #include "qos_handlers.h" /* also includes sr_module.h needed by
                              handlers */

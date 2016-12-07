@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "../presence/utils_func.h"
 #include "../presence/hash.h"
 #include "../presence/event_list.h"

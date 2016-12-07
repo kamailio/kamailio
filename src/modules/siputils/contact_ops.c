@@ -33,12 +33,12 @@
 
 #include "contact_ops.h"
 #include "utils.h"
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
-#include "../../parser/hf.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/ut.h"
 
 #include <stdio.h>
 #include <string.h>

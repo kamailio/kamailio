@@ -44,9 +44,9 @@
 #ifndef AUTHIMS_MOD_H
 #define AUTHIMS_MOD_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #define MOD_NAME "ims_auth"
 

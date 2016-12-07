@@ -21,9 +21,9 @@
  */
 #include <stdio.h>
 
-#include "../../pvar.h"
-#include "../../mem/shm_mem.h"
-#include "../../xavp.h"
+#include "../../core/pvar.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/xavp.h"
 #include "../pv/pv_xavp.h"
 
 #include "debugger_api.h"

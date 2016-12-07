@@ -24,11 +24,11 @@
 #ifndef _DMQ_H_
 #define _DMQ_H_
 
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/sr_module.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../modules/sl/sl.h"
 #include "peer.h"
 #include "worker.h"

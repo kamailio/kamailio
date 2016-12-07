@@ -23,17 +23,17 @@
  */
 
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../locking.h"
-#include "../../atomic_ops.h"
-#include "../../cfg/cfg.h"
-#include "../../rpc.h"
-#include "../../rand/fastrand.h"
-#include "../../timer.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/locking.h"
+#include "../../core/atomic_ops.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/rpc.h"
+#include "../../core/rand/fastrand.h"
+#include "../../core/timer.h"
+#include "../../core/mod_fix.h"
 
 MODULE_VERSION
 

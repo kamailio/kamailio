@@ -32,9 +32,9 @@
 #include "my_fld.h"
 #include "my_res.h"
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb2/db.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 int my_ping_interval = 5 * 60; /* Default is 5 minutes */
 unsigned int my_connect_to = 2; /* 2 s by default */

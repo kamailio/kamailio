@@ -25,7 +25,7 @@
  *  Module: \ref db_mysql
  */
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "km_val.h"
 #include "km_my_con.h"

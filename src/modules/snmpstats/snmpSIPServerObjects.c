@@ -28,8 +28,8 @@
 #include <string.h>
 
 #include "snmp_statistics.h"
-#include "../../sr_module.h"
-#include "../../config.h"
+#include "../../core/sr_module.h"
+#include "../../core/config.h"
 #include "../usrloc/usrloc.h"
 
 #include <net-snmp/net-snmp-config.h>

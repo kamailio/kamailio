@@ -19,10 +19,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-#include "../../str.h"
-#include "../../sr_module.h"
-#include "../../ip_addr.h"
-#include "../../flags.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
+#include "../../core/ip_addr.h"
+#include "../../core/flags.h"
 
 #include <jni.h>
 

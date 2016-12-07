@@ -24,7 +24,7 @@
 #define _DEBUGGER_JSON_H
 
 #include "../../lib/srutils/srjson.h"
-#include "../../route_struct.h"
+#include "../../core/route_struct.h"
 
 int dbg_get_json(struct sip_msg* msg, unsigned int mask, srjson_doc_t *jdoc,
 	srjson_t *head);

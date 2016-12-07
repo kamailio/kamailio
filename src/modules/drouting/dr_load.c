@@ -33,10 +33,10 @@
 #include <limits.h>
 
 
-#include "../../dprint.h"
-#include "../../route.h"
-//#include "../../db/db.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/route.h"
+//#include "../../core/db/db.h"
+#include "../../core/mem/shm_mem.h"
 
 #include "dr_load.h"
 #include "routing.h"

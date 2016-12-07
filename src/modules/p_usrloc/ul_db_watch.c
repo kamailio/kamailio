@@ -19,9 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../timer.h"
-#include "../../timer_proc.h"
-#include "../../sr_module.h"
+#include "../../core/timer.h"
+#include "../../core/timer_proc.h"
+#include "../../core/sr_module.h"
 #include "ul_db_watch.h"
 #include "ul_db.h"
 #include "p_usrloc_mod.h"

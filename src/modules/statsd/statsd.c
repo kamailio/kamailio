@@ -2,10 +2,10 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../usr_avp.c"
-#include "../../pvar.h"
-#include "../../lvalue.h"
+#include "../../core/sr_module.h"
+#include "../../core/usr_avp.c"
+#include "../../core/pvar.h"
+#include "../../core/lvalue.h"
 #include "lib_statsd.h"
 
 

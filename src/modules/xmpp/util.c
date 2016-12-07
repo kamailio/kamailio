@@ -30,9 +30,9 @@
 #include <string.h>
 
 #include "xmpp.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_param.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/rand/kam_rand.h"
 
 extern param_t *_xmpp_gwmap_list;
 

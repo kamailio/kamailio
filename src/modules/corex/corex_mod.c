@@ -22,11 +22,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../lvalue.h"
-#include "../../pvar.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/lvalue.h"
+#include "../../core/pvar.h"
 
 #include "corex_lib.h"
 #include "corex_rpc.h"

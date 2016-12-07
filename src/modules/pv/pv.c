@@ -22,13 +22,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../pvar.h"
-#include "../../lvalue.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/pvar.h"
+#include "../../core/lvalue.h"
+#include "../../core/mod_fix.h"
 #include "../../lib/kmi/mi.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 
 #include "pv_branch.h"

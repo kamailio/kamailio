@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "../../cfg/cfg_struct.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../../lib/srdb1/db.h"
 #include "nsq_reader.h"
 #include "nsq_trans.h"

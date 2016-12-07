@@ -1,13 +1,13 @@
 #include "extra_attrs.h"
 #include "uid_avp_db.h"
-#include "../../usr_avp.h"
-#include "../../sr_module.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../lock_ops.h"
-#include "../../script_cb.h"
-#include "../../hashes.h"
+#include "../../core/usr_avp.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/lock_ops.h"
+#include "../../core/script_cb.h"
+#include "../../core/hashes.h"
 
 #define set_str_val(f,s)	(f).v.lstr=(s); \
 	(f).flags = 0;

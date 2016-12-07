@@ -35,10 +35,10 @@
 
 #include <libxml/parser.h>
 #include <time.h>
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/msg_parser.h"
 #include "presentity.h"
 #include "../alias_db/alias_db.h"
 

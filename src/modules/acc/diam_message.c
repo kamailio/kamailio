@@ -38,8 +38,8 @@
 #include <string.h>
 #include <netinet/in.h>
 
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
 #include "diam_message.h"
 
 #define get_3bytes(_b) \

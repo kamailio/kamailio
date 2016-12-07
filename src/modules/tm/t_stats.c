@@ -25,10 +25,10 @@
 
 #include <stdio.h>
 #include "t_stats.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../pt.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/pt.h"
 #ifdef TM_HASH_STATS
 #include "h_table.h"
 #endif

@@ -25,9 +25,9 @@
 #include <sys/types.h>
 #include <errno.h>
 
-#include "../../mod_fix.h"
-#include "../../trim.h"
-#include "../../sr_module.h"
+#include "../../core/mod_fix.h"
+#include "../../core/trim.h"
+#include "../../core/sr_module.h"
 #include "../tm/tm_load.h"
 
 #include "jsonrpc_request.h"

@@ -1,6 +1,6 @@
 #ifndef PXML_API_H
 #define PXML_API_H
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef int (*pres_check_basic_t)(struct sip_msg*, str presentity_uri, str status);
 typedef int (*pres_check_activities_t)(struct sip_msg*, str presentity_uri, str activity);

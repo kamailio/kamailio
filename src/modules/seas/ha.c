@@ -25,8 +25,8 @@
 #include <poll.h>/*poll*/
 #include "ha.h"
 #include "seas.h"
-#include "../../mem/mem.h" /*pkg_malloc*/
-#include "../../mem/shm_mem.h" /*shm_malloc*/
+#include "../../core/mem/mem.h" /*pkg_malloc*/
+#include "../../core/mem/shm_mem.h" /*shm_malloc*/
 
 /** if any of these global ping vars is set to 0, then
  * this kind of ping is DISABLED

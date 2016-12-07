@@ -19,10 +19,10 @@
  */
 
 
-#include "../../parser/parse_uri.h"
-#include "../../dset.h"
-#include "../../onsend.h"
-#include "../../socket_info.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/dset.h"
+#include "../../core/onsend.h"
+#include "../../core/socket_info.h"
 
 #include "pv_core.h"
 #include "pv_branch.h"

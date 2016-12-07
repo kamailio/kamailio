@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../globals.h"
-#include "../../ut.h"
-#include "../../dset.h"
+#include "../../core/dprint.h"
+#include "../../core/globals.h"
+#include "../../core/ut.h"
+#include "../../core/dset.h"
 
 #include "msrp_parser.h"
 #include "msrp_netio.h"

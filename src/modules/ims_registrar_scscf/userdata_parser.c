@@ -40,9 +40,9 @@
  * 
  */
 
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_uri.h"
 #include "userdata_parser.h"
-#include "../../parser/parse_hname2.h"
+#include "../../core/parser/parse_hname2.h"
 
 int ctxtInit=0;							/**< the XML context		*/
 static xmlDtdPtr dtd;

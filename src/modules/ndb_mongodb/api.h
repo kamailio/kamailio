@@ -24,7 +24,7 @@
 #ifndef _NDB_MONGODB_API_H_
 #define _NDB_MONGODB_API_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 typedef int (*mongodbc_exec_simple_f)(str *srv, str *dname, str *cname, str *cmd, str *res);
 typedef int (*mongodbc_exec_f)(str *srv, str *dname, str *cname, str *cmd, str *res);

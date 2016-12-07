@@ -45,7 +45,7 @@
 #ifndef CXDX_MAR_H
 #define CXDX_MAR_H
 
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 struct sip_msg;
 struct parsed_maa;

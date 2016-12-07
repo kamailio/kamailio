@@ -29,7 +29,7 @@
 #ifndef _DLG_VAR_H_
 #define _DLG_VAR_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 #include "dlg_hash.h"
 
 #define DLG_TOROUTE_SIZE	32

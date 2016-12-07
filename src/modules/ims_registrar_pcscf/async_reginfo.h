@@ -46,7 +46,7 @@
 #ifndef ASYNC_REGINFO_H_
 #define ASYNC_REGINFO_H_
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "sem.h"
 
 #define REG_EVENT_UNKNOWN -1

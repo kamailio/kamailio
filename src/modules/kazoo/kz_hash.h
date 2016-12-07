@@ -29,7 +29,7 @@
 #ifndef KZ_HASH_H
 #define KZ_HASH_H
 
-#include "../../lock_ops.h"
+#include "../../core/lock_ops.h"
 #include "kz_amqp.h"
 
 int kz_hash_init();

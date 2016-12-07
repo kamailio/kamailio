@@ -41,12 +41,12 @@
 
 #include <stdio.h>
 #include "p_usrloc_mod.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../rpc_lookup.h"
-#include "../../timer_proc.h"
-#include "../../globals.h"   /* is_main */
-#include "../../ut.h"        /* str_init */
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/timer_proc.h"
+#include "../../core/globals.h"   /* is_main */
+#include "../../core/ut.h"        /* str_init */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */

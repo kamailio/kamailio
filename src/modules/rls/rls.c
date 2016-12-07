@@ -30,17 +30,17 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "../../pt.h"
+#include "../../core/pt.h"
 #include "../../lib/srdb1/db.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../ut.h"
-#include "../../timer_proc.h"
-#include "../../hashes.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
+#include "../../core/timer_proc.h"
+#include "../../core/hashes.h"
 #include "../../lib/kmi/mi.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
 #include "../presence/bind_presence.h"
@@ -53,7 +53,7 @@
 #include "resource_notify.h"
 #include "api.h"
 #include "subscribe.h"
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 MODULE_VERSION
 

@@ -18,9 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../pvar.h"
-#include "../../str.h"
-#include "../../trim.h"
+#include "../../core/pvar.h"
+#include "../../core/str.h"
+#include "../../core/trim.h"
 #include "xhttp_trans.h"
 
 enum _tr_xhttp_type { TR_XHTTP_NONE = 0, TR_XHTTPURL, TR_XHTTPURLQUERYSTRING };

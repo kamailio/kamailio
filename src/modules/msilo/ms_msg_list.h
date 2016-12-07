@@ -25,7 +25,7 @@
 #define _MS_MSG_LIST_H_
 
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 #define MS_MSG_NULL	0
 #define MS_MSG_SENT	1

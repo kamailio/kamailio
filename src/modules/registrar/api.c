@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #include "registrar.h"
 #include "lookup.h"

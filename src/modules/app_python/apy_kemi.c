@@ -24,12 +24,12 @@
 
 #include <Python.h>
 
-#include "../../dprint.h"
-#include "../../route.h"
-#include "../../fmsg.h"
-#include "../../kemi.h"
-#include "../../pvar.h"
-#include "../../mem/pkg.h"
+#include "../../core/dprint.h"
+#include "../../core/route.h"
+#include "../../core/fmsg.h"
+#include "../../core/kemi.h"
+#include "../../core/pvar.h"
+#include "../../core/mem/pkg.h"
 
 #include "msgobj_struct.h"
 #include "python_exec.h"

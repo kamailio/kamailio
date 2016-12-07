@@ -29,8 +29,8 @@
 #ifndef _XHTTP_PI_H
 #define _XHTTP_PI_H
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
 
 
 #define ERROR_REASON_BUF_LEN 1024

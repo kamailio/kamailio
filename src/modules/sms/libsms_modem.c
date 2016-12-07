@@ -27,7 +27,7 @@ mailto:s.frings@mail.isis.de
 #include <sys/filio.h>
 #endif
 #include "libsms_modem.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #define  MAX_BUF        2048
 #define  CDS_HDR        "\r\n+CDS:"

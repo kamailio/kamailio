@@ -29,10 +29,10 @@
 #ifndef _kam_stun_h
 #define _kam_stun_h
 
-#include "../../str.h"
-#include "../../tcp_conn.h"
-#include "../../ip_addr.h"
-#include "../../stun.h"
+#include "../../core/str.h"
+#include "../../core/tcp_conn.h"
+#include "../../core/ip_addr.h"
+#include "../../core/stun.h"
 
 /* STUN message types supported by Kamailio */
 #define BINDING_REQUEST		0x0001

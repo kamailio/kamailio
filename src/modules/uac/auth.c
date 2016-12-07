@@ -29,15 +29,15 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "../../strutils.h"
-#include "../../dprint.h"
-#include "../../pvar.h"
-#include "../../data_lump.h"
-#include "../../mem/mem.h"
-#include "../../hashes.h"
-#include "../../dset.h"
-#include "../../srapi.h"
-#include "../../parser/parse_cseq.h"
+#include "../../core/strutils.h"
+#include "../../core/dprint.h"
+#include "../../core/pvar.h"
+#include "../../core/data_lump.h"
+#include "../../core/mem/mem.h"
+#include "../../core/hashes.h"
+#include "../../core/dset.h"
+#include "../../core/srapi.h"
+#include "../../core/parser/parse_cseq.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "auth.h"

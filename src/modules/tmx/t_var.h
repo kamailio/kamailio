@@ -27,7 +27,7 @@
 #ifndef _T_VAR_H_
 #define _T_VAR_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 void pv_tmx_data_init(void);
 

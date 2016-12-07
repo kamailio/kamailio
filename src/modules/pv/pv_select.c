@@ -23,7 +23,7 @@
  * \brief Implementation for Select Pseudo-variables
  */
 
-#include "../../select.h"
+#include "../../core/select.h"
 #include "pv_select.h"
 
 int pv_parse_select_name(pv_spec_p sp, str *in)

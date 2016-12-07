@@ -43,16 +43,16 @@
 
 #include "mod.h"
 
-#include "../../sr_module.h"
-#include "../../globals.h"
+#include "../../core/sr_module.h"
+#include "../../core/globals.h"
 
 #include "diameter_peer.h"
 #include "config.h"
 #include "cdp_load.h"
 #include "cdp_rpc.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "cdp_stats.h"
 
 MODULE_VERSION

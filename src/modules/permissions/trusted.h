@@ -23,7 +23,7 @@
 #ifndef TRUSTED_H
 #define TRUSTED_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 extern struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */

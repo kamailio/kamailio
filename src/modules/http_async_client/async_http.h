@@ -42,7 +42,7 @@
 #include <curl/curl.h>
 #include <event2/event.h>
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 #include "http_multi.h"
 

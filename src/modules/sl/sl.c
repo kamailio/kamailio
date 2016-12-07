@@ -42,15 +42,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../ut.h"
-#include "../../data_lump.h"
-#include "../../mod_fix.h"
-#include "../../script_cb.h"
-#include "../../mem/mem.h"
-#include "../../kemi.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
+#include "../../core/data_lump.h"
+#include "../../core/mod_fix.h"
+#include "../../core/script_cb.h"
+#include "../../core/mem/mem.h"
+#include "../../core/kemi.h"
 
 #include "../../modules/tm/tm_load.h"
 

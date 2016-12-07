@@ -28,9 +28,9 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 
 #include "dbt_util.h"
 #include "dbt_lib.h"

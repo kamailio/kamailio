@@ -25,10 +25,10 @@
   *  2004-06-06  updated to the new DB api (andrei)
   */
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
-#include "../../dprint.h"
-#include "../../str.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
 #include "cpl_db.h"
 
 #define TABLE_VERSION 1

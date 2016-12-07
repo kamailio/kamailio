@@ -27,8 +27,8 @@
 #ifndef _IMC_CMD_H_
 #define _IMC_CMD_H_
 
-#include "../../parser/parse_uri.h"
-#include "../../str.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/str.h"
 #include "imc_mng.h"
 
 #define IMC_CMD_START		'#'

@@ -35,8 +35,8 @@
 #include <errno.h>
 #include "parser_carrierroute.h"
 
-#include "../../ut.h"
-#include "../../trim.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
 
 #define assert_not_null(s) do { \
 	if ( NULL == (s) ){ \

@@ -28,7 +28,7 @@
 
 #include <sys/time.h>
 #include <oci.h>
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_query.h"
 #include "dbase.h"

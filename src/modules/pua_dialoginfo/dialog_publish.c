@@ -28,12 +28,12 @@
 #include <libxml/parser.h>
 #include <time.h>
 
-#include "../../parser/parse_expires.h"
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
-#include "../../str_list.h"
-#include "../../name_alias.h"
-#include "../../socket_info.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/str_list.h"
+#include "../../core/name_alias.h"
+#include "../../core/socket_info.h"
 #include "../usrloc/usrloc.h"
 #include "../usrloc/ul_callback.h"
 #include "../../modules/tm/tm_load.h"

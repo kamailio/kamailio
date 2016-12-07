@@ -43,7 +43,7 @@
 
 #include "cdp_load.h"
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 
 #define LOAD_ERROR "ERROR: cdp_bind: S-CSCF module function "

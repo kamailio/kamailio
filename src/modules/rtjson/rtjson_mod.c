@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../kemi.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 
 #include "rtjson_routing.h"
 

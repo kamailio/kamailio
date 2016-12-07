@@ -26,11 +26,11 @@
 #include "memcached.h"
 #include "mcd_var.h"
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../str.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/str.h"
 
 
 MODULE_VERSION

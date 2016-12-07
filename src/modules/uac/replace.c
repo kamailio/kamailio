@@ -28,10 +28,10 @@
 
 #include <ctype.h>
 
-#include "../../parser/parse_from.h"
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
-#include "../../route.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/route.h"
 #include "../../modules/tm/h_table.h"
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"

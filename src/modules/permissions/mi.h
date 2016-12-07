@@ -26,7 +26,7 @@
 
 
 #include "../../lib/kmi/mi.h"
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 
 #define MI_TRUSTED_RELOAD "trusted_reload"

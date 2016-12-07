@@ -46,7 +46,7 @@
 #ifndef HSLOTSP_H
 #define HSLOTSP_H
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 #include "usrloc.h"
 

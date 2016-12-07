@@ -32,9 +32,9 @@
 
 #include "snmpObjects.h"
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "snmp_statistics.h"
-#include "../../config.h"
+#include "../../core/config.h"
 
 #include "snmpstats_globals.h"
 #include "utilities.h"

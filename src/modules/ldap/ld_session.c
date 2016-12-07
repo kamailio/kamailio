@@ -27,8 +27,8 @@
 
 #include <string.h>
 #include "ld_session.h"
-#include "../../mem/mem.h"
-#include "../../sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/sr_module.h"
 
 
 static struct ld_session* ld_sessions = NULL;

@@ -32,7 +32,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "../../parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
 
 /*  replace a part of a sip message identified by (start address,length) with a new part
 	@param msg a pointer to a sip message

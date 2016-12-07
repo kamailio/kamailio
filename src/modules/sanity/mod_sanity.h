@@ -24,9 +24,9 @@
 #ifndef MOD_SANITY_CHK_H
 #define MOD_SANITY_CHK_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../modules/sl/sl.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #define SANITY_RURI_SIP_VERSION        (1<<0)
 #define SANITY_RURI_SCHEME             (1<<1)

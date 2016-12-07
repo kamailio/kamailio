@@ -27,10 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "../../str.h"
-#include "../../lock_ops.h"
-#include "../../dprint.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/lock_ops.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/msg_parser.h"
 #include "../rls/list.h"
 
 #define PRESENCE_EVENT      1<<0

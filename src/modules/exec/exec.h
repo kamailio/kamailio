@@ -27,7 +27,7 @@
 #ifndef _EXEC_H
 #define _EXEC_H
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len);
 int exec_msg(struct sip_msg *msg, char *cmd );

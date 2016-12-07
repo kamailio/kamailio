@@ -32,8 +32,8 @@
 
 
 #include "../../lib/srdb1/db.h"
-#include "../../str.h"
-#include "../../usr_avp.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
 
 
 /*

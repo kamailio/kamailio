@@ -23,7 +23,7 @@
 #ifndef _CPL_PARSER_H
 #define _CPL_PARSER_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 int init_CPL_parser( char* DTD_filename );
 int encodeCPL(str *xml, str *bin, str *log);

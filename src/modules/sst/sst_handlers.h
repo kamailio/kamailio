@@ -31,8 +31,8 @@
 #ifndef _SST_HANDLERS_H_
 #define _SST_HANDLERS_H_
 
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
 #include "../dialog/dlg_load.h"
 
 

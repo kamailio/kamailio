@@ -31,7 +31,7 @@
 #define IPv6RANGES_SIZE 29
 
 #include <stdint.h>
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef struct ip4_node {
     uint32_t value;

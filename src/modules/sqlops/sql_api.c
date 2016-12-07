@@ -26,13 +26,13 @@
  */
 
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../hashes.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb1/db_ut.h"
 #ifdef WITH_XAVP
-#include "../../xavp.h"
+#include "../../core/xavp.h"
 #endif
 
 #include "sql_api.h"

@@ -22,7 +22,7 @@
 #ifndef SP_UL_DB_WATCH_H
 #define SP_UL_DB_WATCH_H
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "ul_db_handle.h"
 
 int ul_db_watch_init(void);

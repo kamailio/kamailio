@@ -20,7 +20,7 @@
  */
 #include "pike_top.h"
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #include <stdio.h>
 #include <stdlib.h>

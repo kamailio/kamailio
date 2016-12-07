@@ -24,8 +24,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 
 #include "handle_rpc.h"
 #include "mod_erlang.h"

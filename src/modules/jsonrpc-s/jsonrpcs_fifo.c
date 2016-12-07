@@ -29,11 +29,11 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include "../../ver.h"
-#include "../../trim.h"
-#include "../../pt.h"
-#include "../../sr_module.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/ver.h"
+#include "../../core/trim.h"
+#include "../../core/pt.h"
+#include "../../core/sr_module.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "jsonrpc-s_mod.h"
 

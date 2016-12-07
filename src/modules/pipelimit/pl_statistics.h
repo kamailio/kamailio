@@ -30,7 +30,7 @@
 #ifndef _KSTATISTICS_H_
 #define _KSTATISTICS_H_
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 
 #define NUM_IP_OCTETS 4

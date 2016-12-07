@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 #include <osp/osp.h>
-#include "../../usr_avp.h"
+#include "../../core/usr_avp.h"
 #include "osp_mod.h"
 
 unsigned int _osp_sp_number;

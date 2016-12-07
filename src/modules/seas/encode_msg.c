@@ -47,12 +47,12 @@
 #include <string.h>
 #include <stddef.h>
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_via.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_via.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "encode_header.h"
 #include "encode_uri.h"
 #include "encode_msg.h"

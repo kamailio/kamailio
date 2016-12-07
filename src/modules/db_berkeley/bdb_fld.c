@@ -38,9 +38,9 @@
 #include <time.h>   /* strptime, XOPEN issue must be >= 4 */
 
 #include "../../lib/srdb2/db_drv.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 
 #include "bdb_fld.h"
 

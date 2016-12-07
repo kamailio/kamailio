@@ -24,8 +24,8 @@
 
 #include <stdio.h>
 
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 #include "cnxcc_mod.h"
 

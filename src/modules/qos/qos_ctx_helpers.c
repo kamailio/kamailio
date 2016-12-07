@@ -20,9 +20,9 @@
  *
  */
 
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/sdp/sdp_cloner.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/sdp/sdp_cloner.h"
 #include "../dialog/dlg_hash.h"
 #include "qos_ctx_helpers.h"
 

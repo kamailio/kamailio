@@ -24,8 +24,8 @@
 #ifndef _TM_T_FIFO_H_
 #define _TM_T_FIFO_H_
 
-#include "../../parser/msg_parser.h"
-#include "../../sr_module.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/sr_module.h"
 
 int fixup_t_write( void** param, int param_no);
 

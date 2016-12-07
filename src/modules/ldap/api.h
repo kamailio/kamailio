@@ -31,8 +31,8 @@
 
 #include <ldap.h>
 
-#include "../../str.h"
-#include "../../sr_module.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
 
 /*
 * LDAP API function types

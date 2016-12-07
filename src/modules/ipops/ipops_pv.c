@@ -31,11 +31,11 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include "../../dprint.h"
-#include "../../rand/fastrand.h"
-#include "../../hashes.h"
-#include "../../resolve.h"
-#include "../../pvar.h"
+#include "../../core/dprint.h"
+#include "../../core/rand/fastrand.h"
+#include "../../core/hashes.h"
+#include "../../core/resolve.h"
+#include "../../core/pvar.h"
 
 
 #define PV_DNS_ADDR 64

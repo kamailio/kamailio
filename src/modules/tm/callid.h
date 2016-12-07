@@ -32,7 +32,7 @@
 #ifndef CALLID_H
 #define CALLID_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 /**

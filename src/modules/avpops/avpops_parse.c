@@ -24,10 +24,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "../../ut.h"
-#include "../../dprint.h"
-#include "../../usr_avp.h"
-#include "../../mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
+#include "../../core/usr_avp.h"
+#include "../../core/mem/mem.h"
 #include "avpops_parse.h"
 
 

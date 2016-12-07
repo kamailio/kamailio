@@ -37,9 +37,9 @@
  */
 
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../config.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/config.h"
 #include "../misc_radius/radius.h"
 #include "verify.h"
 

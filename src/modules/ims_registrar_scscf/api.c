@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #include "reg_mod.h"
 #include "lookup.h"

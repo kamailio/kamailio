@@ -38,12 +38,12 @@
  */
 
 #include "rabbitmq.h"
-#include "../../sr_module.h"
-#include "../../route_struct.h"
-#include "../../str.h"
-#include "../../mod_fix.h"
-#include "../../pvar.h"
-#include "../../lvalue.h"
+#include "../../core/sr_module.h"
+#include "../../core/route_struct.h"
+#include "../../core/str.h"
+#include "../../core/mod_fix.h"
+#include "../../core/pvar.h"
+#include "../../core/lvalue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>

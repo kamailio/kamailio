@@ -23,15 +23,15 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../mod_fix.h"
-#include "../../trim.h"
-#include "../../kemi.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/mod_fix.h"
+#include "../../core/trim.h"
+#include "../../core/kemi.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../modules/auth/api.h"
 #include "authorize.h"
 

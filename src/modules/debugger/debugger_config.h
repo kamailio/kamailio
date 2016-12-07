@@ -29,8 +29,8 @@
 #ifndef _DEBUGGER_CONFIG_H
 #define _DEBUGGER_CONFIG_H
 
-#include "../../cfg/cfg.h"
-#include "../../str.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/str.h"
 
 struct cfg_group_dbg {
 	unsigned int mod_level_mode;

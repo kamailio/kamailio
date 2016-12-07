@@ -26,10 +26,10 @@
  * Module: \ref dialog
  */
 
-#include "../../route.h"
-#include "../../script_cb.h"
-#include "../../pvapi.h"
-#include "../../counters.h"
+#include "../../core/route.h"
+#include "../../core/script_cb.h"
+#include "../../core/pvapi.h"
+#include "../../core/counters.h"
 
 #include "dlg_var.h"
 #include "dlg_hash.h"

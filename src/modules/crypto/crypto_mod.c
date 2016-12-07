@@ -25,12 +25,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../pvapi.h"
-#include "../../lvalue.h"
-#include "../../basex.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/pvapi.h"
+#include "../../core/lvalue.h"
+#include "../../core/basex.h"
 
 #include "crypto_uuid.h"
 

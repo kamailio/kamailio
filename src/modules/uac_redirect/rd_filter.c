@@ -25,7 +25,7 @@
 #include <sys/types.h> /* for regex */
 #include <regex.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "rd_filter.h"
 
 #define MAX_FILTERS 6

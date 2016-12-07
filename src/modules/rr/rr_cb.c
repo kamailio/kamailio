@@ -24,7 +24,7 @@
  * \ingroup rr
  */
 
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "rr_cb.h"
 
 

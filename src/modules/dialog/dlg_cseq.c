@@ -33,13 +33,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../events.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../data_lump.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_cseq.h"
+#include "../../core/events.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/data_lump.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_cseq.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "dlg_handlers.h"

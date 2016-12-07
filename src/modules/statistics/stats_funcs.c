@@ -30,9 +30,9 @@
 
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../counters.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/counters.h"
+#include "../../core/mem/mem.h"
 #include "stats_funcs.h"
 
 

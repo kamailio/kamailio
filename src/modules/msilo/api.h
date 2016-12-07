@@ -6,7 +6,7 @@
 #ifndef _MSILO_API_H_
 #define _MSILO_API_H_
 
-//#include "../../sr_module.h"
+//#include "../../core/sr_module.h"
 
 typedef int (*msilo_f)(struct sip_msg*, str*);
 typedef struct msilo_api {

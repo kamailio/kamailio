@@ -24,13 +24,13 @@
  *
  */
 
-#include "../../locking.h"
-#include "../../str.h"
-#include "../../tcp_conn.h"
-#include "../../fmsg.h"
-#include "../../counters.h"
+#include "../../core/locking.h"
+#include "../../core/str.h"
+#include "../../core/tcp_conn.h"
+#include "../../core/fmsg.h"
+#include "../../core/counters.h"
 #include "../../lib/kmi/tree.h"
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "ws_conn.h"
 #include "websocket.h"
 

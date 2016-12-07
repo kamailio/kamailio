@@ -22,7 +22,7 @@
 #ifndef _MSGOBJ_STRUCT_H
 #define  _MSGOBJ_STRUCT_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #include <Python.h>
 

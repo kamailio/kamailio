@@ -21,7 +21,7 @@
 #ifndef _H_SMS_REPORT_DEF
 #define _H_SMS_REPORT_DEF
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "sms_funcs.h"
 
 #define NR_CELLS  256

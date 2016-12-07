@@ -33,7 +33,7 @@
 #ifndef _NSQ_TRANS_H_
 #define _NSQ_TRANS_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 
 enum _nsq_tr_type { TR_NONE=0, TR_NSQ };

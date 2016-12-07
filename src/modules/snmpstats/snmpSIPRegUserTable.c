@@ -79,8 +79,8 @@
 #include "snmpSIPRegUserTable.h"
 #include "snmpstats_globals.h"
 
-#include "../../sr_module.h"
-#include "../../locking.h"
+#include "../../core/sr_module.h"
+#include "../../core/locking.h"
 #include "../usrloc/usrloc.h"
 
 static netsnmp_handler_registration *my_handler = NULL;

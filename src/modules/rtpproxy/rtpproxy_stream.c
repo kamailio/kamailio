@@ -27,10 +27,10 @@
 #include <stdio.h>
 #include <sys/uio.h>
 
-#include "../../ip_addr.h"
-#include "../../parser/msg_parser.h"
-#include "../../sr_module.h"
-#include "../../ut.h"
+#include "../../core/ip_addr.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
 #include "rtpproxy.h"
 #include "rtpproxy_funcs.h"
 

@@ -29,7 +29,7 @@
 #ifndef _TXT_VAR_H_
 #define _TXT_VAR_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 enum _tr__txt_type { TR_TXT_NONE=0, TR_TXT_RE };
 enum _tr_s_subtype { 

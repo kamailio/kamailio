@@ -31,10 +31,10 @@
 
 
 #include <stdio.h>
-#include "../../str.h"
-#include "../../ip_addr.h"
-#include "../../parser/parse_rr.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/ip_addr.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/parser/msg_parser.h"
 
 /*
 #define DIALOG_CALLBACKS

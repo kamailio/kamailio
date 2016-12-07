@@ -35,7 +35,7 @@
 
 
 #include "../../lib/srdb1/db.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 #define DBCL_PRIO_SIZE	10
 #define DBCL_CLIST_SIZE	5

@@ -25,7 +25,7 @@
 
 #include <maxminddb.h>
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_parse_geoip2_name(pv_spec_p sp, str *in);
 int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,

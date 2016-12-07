@@ -75,7 +75,7 @@ extern "C" {
 #include <net-snmp/library/container.h>
 #include <net-snmp/agent/table_array.h>
 
-#include "../../config.h"
+#include "../../core/config.h"
 
 /* Defines what each SNMP Row is made of. */
 typedef struct kamailioSIPRegUserTable_context_s 

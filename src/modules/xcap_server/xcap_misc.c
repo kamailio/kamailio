@@ -29,9 +29,9 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_param.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_param.h"
 #include "../../modules/xcap_client/xcap_callbacks.h"
 
 #include "xcap_misc.h"

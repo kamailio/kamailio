@@ -24,7 +24,7 @@
 #ifndef _PUA_EVLIST_H_
 #define _PUA_EVLIST_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 //#include "send_publish.h"
 
 struct publ_info;

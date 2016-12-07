@@ -23,7 +23,7 @@
 #define _UAC_H
 
 #include <stdio.h>
-#include "../../str.h"
+#include "../../core/str.h"
 #include "dlg.h"
 #include "t_hooks.h"
 #include "h_table.h"

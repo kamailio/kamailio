@@ -33,7 +33,7 @@
 #include "event_list.h"
 #include "hash.h"
 #include "presentity.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 typedef int (*update_watchers_t)(str pres_uri, pres_ev_t* ev, str* rules_doc);
 typedef str* (*pres_get_presentity_t)(str pres_uri, pres_ev_t *ev, str *etag, str *contact);

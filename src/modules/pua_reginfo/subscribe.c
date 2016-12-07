@@ -22,8 +22,8 @@
  */
 
 #include "subscribe.h"
-#include "../../pvar.h"
-#include "../../mod_fix.h"
+#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 #include "../pua/send_subscribe.h"
 #include "../pua/pua.h"
 #include "pua_reginfo.h"

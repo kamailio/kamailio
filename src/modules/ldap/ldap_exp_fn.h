@@ -29,10 +29,10 @@
 #define LDAP_EXP_FN_H
 
 
-#include "../../str.h"
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
-#include "../../re.h"
+#include "../../core/str.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/re.h"
 
 struct ldap_result_params
 {

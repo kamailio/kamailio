@@ -29,11 +29,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "../../lib/kmi/mi.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "kz_amqp.h"
 #include "kz_json.h"

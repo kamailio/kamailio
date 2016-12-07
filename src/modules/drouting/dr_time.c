@@ -28,7 +28,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "dr_time.h"
 
 

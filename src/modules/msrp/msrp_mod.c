@@ -25,16 +25,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../dset.h"
-#include "../../action.h"
-#include "../../mod_fix.h"
-#include "../../events.h"
-#include "../../tcp_conn.h"
-#include "../../pvar.h"
-#include "../../timer_proc.h" /* register_sync_timer */
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/dset.h"
+#include "../../core/action.h"
+#include "../../core/mod_fix.h"
+#include "../../core/events.h"
+#include "../../core/tcp_conn.h"
+#include "../../core/pvar.h"
+#include "../../core/timer_proc.h" /* register_sync_timer */
 
 #include "msrp_parser.h"
 #include "msrp_netio.h"

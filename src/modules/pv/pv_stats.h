@@ -26,7 +26,7 @@
 #ifndef _PV_STATS_H_
 #define _PV_STATS_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_parse_stat_name(pv_spec_p sp, str *in);
 int pv_get_stat(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);

@@ -33,13 +33,13 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <pcre.h>
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../pt.h"
-#include "../../mem/shm_mem.h"
-#include "../../str.h"
-#include "../../locking.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/pt.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/str.h"
+#include "../../core/locking.h"
+#include "../../core/mod_fix.h"
 #include "../../lib/kmi/mi.h"
 
 MODULE_VERSION

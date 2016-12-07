@@ -36,9 +36,9 @@
 #include <float.h>
 #include <math.h>
 #include <errno.h>
-#include "../../str.h"
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
 
 #define CR_MAX_LINE_SIZE 256
 #define MAX_FIELD_NAME 60

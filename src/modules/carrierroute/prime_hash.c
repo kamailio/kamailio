@@ -25,12 +25,12 @@
  * header field, based on CRC32 or a prime number algorithm.
  */
 
-#include "../../sr_module.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_from.h"
-#include "../../crc.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/crc.h"
+#include "../../core/rand/kam_rand.h"
 
 #include <ctype.h>
 #include <stdio.h> /* for snprintf */

@@ -25,12 +25,12 @@
  */
 
 
-#include "../../rpc.h"
-#include "../../tcp_conn.h"
-#include "../../tcp_info.h"
-#include "../../timer.h"
-#include "../../cfg/cfg.h"
-#include "../../dprint.h"
+#include "../../core/rpc.h"
+#include "../../core/tcp_conn.h"
+#include "../../core/tcp_info.h"
+#include "../../core/timer.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/dprint.h"
 #include "tls_init.h"
 #include "tls_mod.h"
 #include "tls_domain.h"

@@ -24,9 +24,9 @@
 #ifndef _MISC_RADIUS_EXTRA_H_
 #define _MISC_RADIUS_EXTRA_H_
 
-#include "../../str.h"
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
 #include "radius.h"
 
 struct extra_attr {

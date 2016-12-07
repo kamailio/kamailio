@@ -18,8 +18,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "../../ip_addr.h"
-#include "../../dprint.h"
+#include "../../core/ip_addr.h"
+#include "../../core/dprint.h"
 
 #include "ul_rpc.h"
 #include "dlist.h"

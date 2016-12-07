@@ -26,8 +26,8 @@
  */
 
 #include <stdlib.h>
-#include "../../mem/shm_mem.h"
-#include "../../ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/ut.h"
 #include "cr_domain.h"
 #include "cr_rule.h"
 #include "carrierroute.h"

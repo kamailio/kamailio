@@ -46,9 +46,9 @@
 #ifndef _ISC_ISC_H
 #define _ISC_ISC_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../lib/ims/ims_getters.h"
-#include "../../dset.h"
+#include "../../core/dset.h"
 #include "mod.h"
 #include "checker.h"
 #include "mark.h"

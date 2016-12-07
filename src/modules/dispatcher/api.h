@@ -29,7 +29,7 @@
 #ifndef _DISPATCHER_API_H_
 #define _DISPATCHER_API_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 typedef int (*ds_select_dst_f)(struct sip_msg *msg, int set,
 			int alg, int mode);

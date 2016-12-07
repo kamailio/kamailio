@@ -1,7 +1,7 @@
 #ifndef CLIENT_RF_IMS_RO_H
 #define CLIENT_RF_IMS_RO_H
 
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 #include "../cdp/diameter_api.h"
 #include "../ims_dialog/dlg_hash.h"
 #include "ro_session_hash.h"

@@ -35,12 +35,12 @@
 
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
-#include "../../globals.h"
-#include "../../tcp_server.h"
-#include "../../tcp_conn.h"
-#include "../../ut.h"
-#include "../../cfg/cfg.h"
-#include "../../dprint.h"
+#include "../../core/globals.h"
+#include "../../core/tcp_server.h"
+#include "../../core/tcp_conn.h"
+#include "../../core/ut.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/dprint.h"
 #include "tls_server.h"
 #include "tls_select.h"
 #include "tls_mod.h"

@@ -25,7 +25,7 @@
 #define _RLS_NOTIFY_H
 
 #include <libxml/parser.h>
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../presence/subscribe.h"
 
 #define BOUNDARY_STRING_LEN    24

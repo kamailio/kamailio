@@ -29,8 +29,8 @@
 
 #ifndef TEXTOPS_API_H_
 #define TEXTOPS_API_H_
-#include "../../str.h"
-#include "../../sr_module.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
 
 
 typedef int (*append_hf_t)(struct sip_msg*, str*);

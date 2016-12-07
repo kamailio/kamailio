@@ -33,7 +33,7 @@
 #ifndef _SNMP_STATS_GLOBALS_
 #define _SNMP_STATS_GLOBALS_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 #define KAMAILIO_OID            1,3,6,1,4,1,34352
 

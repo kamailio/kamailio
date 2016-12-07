@@ -20,11 +20,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
 
 #include "../../lib/kmi/mi.h"
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 #include "../../lib/binrpc/binrpc_api.h"
 
 MODULE_VERSION

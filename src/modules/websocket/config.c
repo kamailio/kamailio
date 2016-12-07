@@ -30,7 +30,7 @@
  * \ingroup WebSocket
  */
 
-#include "../../cfg/cfg.h"
+#include "../../core/cfg/cfg.h"
 #include "ws_frame.h"
 #include "config.h"
 

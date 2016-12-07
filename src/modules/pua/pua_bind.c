@@ -22,7 +22,7 @@
 
 
 #include "pua_bind.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "hash.h"
 
 int bind_pua(pua_api_t* api)

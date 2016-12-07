@@ -33,8 +33,8 @@
 
 #include <curl/curl.h>
 
-#include "../../str.h"
-#include "../../counters.h"
+#include "../../core/str.h"
+#include "../../core/counters.h"
 #include "../../lib/srdb1/db.h"
 
 extern unsigned int	default_connection_timeout;

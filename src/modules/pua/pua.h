@@ -23,7 +23,7 @@
 #ifndef PUBLISH_H
 #define PUBLISH_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 #include "hash.h"
 

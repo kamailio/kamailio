@@ -28,9 +28,9 @@
 #ifndef _TLS_DOMAIN_H
 #define _TLS_DOMAIN_H
 
-#include "../../str.h"
-#include "../../ip_addr.h"
-#include "../../atomic_ops.h"
+#include "../../core/str.h"
+#include "../../core/ip_addr.h"
+#include "../../core/atomic_ops.h"
 #include <openssl/ssl.h>
 
 

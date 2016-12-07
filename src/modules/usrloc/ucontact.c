@@ -28,11 +28,11 @@
 
 #include "ucontact.h"
 #include <string.h>             /* memcpy */
-#include "../../mem/shm_mem.h"
-#include "../../ut.h"
-#include "../../ip_addr.h"
-#include "../../socket_info.h"
-#include "../../dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/ut.h"
+#include "../../core/ip_addr.h"
+#include "../../core/socket_info.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db.h"
 #include "ul_mod.h"
 #include "ul_callback.h"

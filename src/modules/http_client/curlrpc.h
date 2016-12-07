@@ -20,7 +20,7 @@
  */
 #include "http_client.h"
 #include "curlcon.h"
-#include "../../dprint.h"
-#include "../../rpc.h"
+#include "../../core/dprint.h"
+#include "../../core/rpc.h"
 
 int curl_init_rpc(void);

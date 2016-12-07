@@ -94,10 +94,10 @@
 
 #include "defs.h"
 
-#include "../../compiler_opt.h"
+#include "../../core/compiler_opt.h"
 #include "lock.h"
 
-#include "../../timer.h"
+#include "../../core/timer.h"
 #include "h_table.h"
 #include "config.h"
 

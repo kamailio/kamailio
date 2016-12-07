@@ -21,7 +21,7 @@
 #ifndef _KEX_CORE_H_
 #define _KEX_CORE_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 int w_setdsturi(struct sip_msg *msg, char *uri, str *s2);
 int w_resetdsturi(struct sip_msg *msg, char *uri, str *s2);

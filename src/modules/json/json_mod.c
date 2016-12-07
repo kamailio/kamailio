@@ -25,8 +25,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../mod_fix.h"
-#include "../../sr_module.h"
+#include "../../core/mod_fix.h"
+#include "../../core/sr_module.h"
 
 #include "json_funcs.h"
 

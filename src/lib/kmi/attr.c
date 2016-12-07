@@ -36,7 +36,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "mi_mem.h"
 #include "attr.h"
 #include "fmt.h"

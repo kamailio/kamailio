@@ -37,14 +37,14 @@
 
 #include <curl/curl.h>
 
-#include "../../mod_fix.h"
-#include "../../sr_module.h"
-#include "../../ut.h"
-#include "../../forward.h"
-#include "../../resolve.h"
-#include "../../locking.h"
-#include "../../script_cb.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
+#include "../../core/forward.h"
+#include "../../core/resolve.h"
+#include "../../core/locking.h"
+#include "../../core/script_cb.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
 
 #include "functions.h"

@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../../dprint.h"
-#include "../../sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
 
 #include "debugger_act.h"
 

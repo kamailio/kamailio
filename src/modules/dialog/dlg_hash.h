@@ -30,10 +30,10 @@
 #ifndef _DIALOG_DLG_HASH_H_
 #define _DIALOG_DLG_HASH_H_
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "../../lib/kmi/mi.h"
-#include "../../timer.h"
-#include "../../atomic_ops.h"
+#include "../../core/timer.h"
+#include "../../core/atomic_ops.h"
 #include "dlg_timer.h"
 #include "dlg_cb.h"
 

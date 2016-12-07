@@ -24,9 +24,9 @@
 
 #include "pres_check.h"
 #include "pidf.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_uri.h"
-#include "../../str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/str.h"
 #include "../presence/event_list.h"
 
 int presxml_check_basic(struct sip_msg *msg, str presentity_uri, str status)

@@ -19,11 +19,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../sr_module.h"
-#include "../../ut.h"
-#include "../../dprint.h"
-#include "../../pt.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
+#include "../../core/pt.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "ctrl_socks.h"
 #include "io_listener.h"
 

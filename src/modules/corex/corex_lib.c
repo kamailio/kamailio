@@ -24,11 +24,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../dset.h"
-#include "../../forward.h"
-#include "../../parser/parse_uri.h"
-#include "../../resolve.h"
+#include "../../core/dprint.h"
+#include "../../core/dset.h"
+#include "../../core/forward.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/resolve.h"
 
 #include "corex_lib.h"
 

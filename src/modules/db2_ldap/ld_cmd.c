@@ -38,9 +38,9 @@
 #include "ld_cfg.h"
 #include "ld_res.h"
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 
 #include <string.h>
 

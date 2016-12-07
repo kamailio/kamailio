@@ -36,9 +36,9 @@
 #ifndef _TLS_SELECT_H
 #define _TLS_SELECT_H
 
-#include "../../select.h"
-#include "../../pvar.h"
-#include "../../tcp_conn.h"
+#include "../../core/select.h"
+#include "../../core/pvar.h"
+#include "../../core/tcp_conn.h"
 
 extern select_row_t tls_sel[];
 

@@ -27,18 +27,18 @@
 
 
 #include <string.h>
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_uri.h"
-#include "../../trim.h"
-#include "../../ut.h"
-#include "../../config.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/trim.h"
+#include "../../core/ut.h"
+#include "../../core/config.h"
 #include "dlg.h"
 #include "t_reply.h"
-#include "../../parser/parser_f.h"
+#include "../../core/parser/parser_f.h"
 
 /* next added to allow automatical tag generation */
 #include "callid.h"

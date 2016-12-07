@@ -24,7 +24,7 @@
 #ifndef _SANITY_API_H_
 #define _SANITY_API_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef int (*sanity_check_f)(struct sip_msg* msg, int msg_checks,
 		int uri_checks);

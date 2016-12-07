@@ -21,7 +21,7 @@
 #ifndef _SQL_TRANS_H_
 #define _SQL_TRANS_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 enum _tr_sql_type { TR_SQL_NONE=0, TR_SQL };
 enum _tr_sql_subtype { 

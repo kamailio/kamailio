@@ -24,8 +24,8 @@
 #ifndef PV_TUPLE_H_
 #define PV_TUPLE_H_
 
-#include "../../pvar.h"
-#include "../../xavp.h"
+#include "../../core/pvar.h"
+#include "../../core/xavp.h"
 
 int pv_tuple_set(struct sip_msg*, pv_param_t*, int, pv_value_t*);
 int pv_tuple_get(struct sip_msg*, pv_param_t*, pv_value_t*);

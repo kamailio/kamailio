@@ -21,7 +21,7 @@
 
 #include <malloc.h>	/* hook prototypes */
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "shm_regex.h"
 
 typedef void *(malloc_hook_t) (size_t, const void *);

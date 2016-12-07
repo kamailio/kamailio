@@ -23,12 +23,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/mod_fix.h"
 
 
 MODULE_VERSION

@@ -25,8 +25,8 @@
 
 #include <time.h>
 
-#include "../../str.h"
-#include "../../locking.h"
+#include "../../core/str.h"
+#include "../../core/locking.h"
 
 #include "msrp_parser.h"
 

@@ -25,8 +25,8 @@
  */
 
 #include "cpl_time.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_uri.h"
 
 
 

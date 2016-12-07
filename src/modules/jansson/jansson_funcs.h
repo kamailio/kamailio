@@ -23,7 +23,7 @@
 #ifndef _JANSSON_FUNCS_H_
 #define _JANSSON_FUNCS_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int janssonmod_get(struct sip_msg* msg, char* path_in, char* json_in,
 		char* result);

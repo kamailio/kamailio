@@ -22,7 +22,7 @@
 #ifndef _XMLRPC_HTTP_H_
 #define _XMLRPC_HTTP_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #ifdef XMLRPC_SYSTEM_MALLOC
 #include <stdlib.h>
@@ -30,7 +30,7 @@
 #define mxr_realloc realloc
 #define mxr_free free
 #else
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #define mxr_malloc pkg_malloc
 #define mxr_realloc pkg_realloc
 #define mxr_free pkg_free

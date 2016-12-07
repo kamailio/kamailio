@@ -44,7 +44,7 @@ extern unsigned otn_in_flight_no   ; /* 2^k == 1<<otn_in_flight_no */
 #ifdef USE_OT_NONCE
 
 #include "nid.h" /* nid_t */
-#include "../../atomic_ops.h"
+#include "../../core/atomic_ops.h"
 
 
 /* default number of maximum in-flight nonces */

@@ -31,7 +31,7 @@
 #ifdef TEST
 #include "unit_tests/test.h"
 #else
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #endif
 
 

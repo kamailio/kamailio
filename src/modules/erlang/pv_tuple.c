@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 #include "pv_tuple.h"
 #include "pv_xbuff.h"

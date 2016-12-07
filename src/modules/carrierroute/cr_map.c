@@ -27,8 +27,8 @@
 
 #include <stdlib.h>
 #include "cr_map.h"
-#include "../../mem/shm_mem.h"
-#include "../../ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/ut.h"
 
 
 

@@ -45,14 +45,14 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/kmi/mi.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 
 #include "benchmark.h"
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 
 
 MODULE_VERSION

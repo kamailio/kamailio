@@ -30,8 +30,8 @@
 
 
 #include <regex.h>
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
 
 #define RR_FLOW_DOWNSTREAM  (1<<0)
 #define RR_FLOW_UPSTREAM    (1<<1)

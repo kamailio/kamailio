@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #include "lock.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 
 

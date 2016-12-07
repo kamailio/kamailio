@@ -21,8 +21,8 @@
  */
 
 
-#include "../../action.h"
-#include "../../dset.h"
+#include "../../core/action.h"
+#include "../../core/dset.h"
 #include "../../modules/tm/tm_load.h"
 #include "loc_set.h"
 #include "cpl_sig.h"

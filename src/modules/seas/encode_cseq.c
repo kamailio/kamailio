@@ -40,10 +40,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <netinet/in.h>
-#include "../../mem/mem.h"
-#include "../../parser/parse_cseq.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_cseq.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "xaddress.h"/*for SLOG*/
 
 /* Encoder for CSeq header

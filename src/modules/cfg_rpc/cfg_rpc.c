@@ -29,10 +29,10 @@
  *  2007-12-03	Initial version (Miklos)
  */
 
-#include "../../sr_module.h"
-#include "../../cfg/cfg.h"
-#include "../../cfg/cfg_ctx.h"
-#include "../../rpc.h"
+#include "../../core/sr_module.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
+#include "../../core/rpc.h"
 
 static cfg_ctx_t	*ctx = NULL;
 

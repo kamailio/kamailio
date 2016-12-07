@@ -25,11 +25,11 @@
  * OpenSSL project license.
  *
  */
-#include "../../dprint.h"
-#include "../../locking.h"
-#include "../../mod_fix.h"
-#include "../../sr_module.h"
-#include "../../str.h"
+#include "../../core/dprint.h"
+#include "../../core/locking.h"
+#include "../../core/mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
 #include "../../lib/kmi/mi.h"
 #include "../../modules/auth/api.h"
 

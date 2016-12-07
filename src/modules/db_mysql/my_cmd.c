@@ -37,11 +37,11 @@
 #include "db_mysql.h"
 #include "my_fld.h"
 
-#include "../../mem/mem.h"
-#include "../../str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/str.h"
 #include "../../lib/srdb2/db_cmd.h"
-#include "../../ut.h"
-#include "../../dprint.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
 
 #include <strings.h>
 #include <stdio.h>

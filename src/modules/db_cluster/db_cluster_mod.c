@@ -22,8 +22,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db.h"
 #include "dbcl_data.h"
 #include "dbcl_api.h"

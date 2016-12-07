@@ -32,7 +32,7 @@
 #ifndef _KM_BDB_UTIL_H_
 #define _KM_BDB_UTIL_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 int km_bdb_is_database(str *);
 

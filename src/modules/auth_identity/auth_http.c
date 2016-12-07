@@ -37,8 +37,8 @@
 #include <openssl/bio.h>
 
 
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
 
 #include "auth_identity.h"
 

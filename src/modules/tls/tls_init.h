@@ -28,7 +28,7 @@
 #define _TLS_INIT_H
 
 #include <openssl/ssl.h>
-#include "../../ip_addr.h"
+#include "../../core/ip_addr.h"
 #include "tls_domain.h"
 
 /* openssl < 1. 0 */

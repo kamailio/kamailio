@@ -23,7 +23,7 @@
 #ifndef _UAC_AUTH_ALG_H_
 #define _UAC_AUTH_ALG_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 #include "auth.h"
 

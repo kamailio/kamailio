@@ -30,9 +30,9 @@
 #ifndef _DIALOG_DLG_PROFILE_H_
 #define _DIALOG_DLG_PROFILE_H_
 
-#include "../../parser/msg_parser.h"
-#include "../../locking.h"
-#include "../../str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/locking.h"
+#include "../../core/str.h"
 #include "../../modules/tm/h_table.h"
 #include "../../lib/srutils/srjson.h"
 #include "../../lib/srutils/sruid.h"

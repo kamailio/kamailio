@@ -23,9 +23,9 @@
  */
 
 #include "tls_bio.h"
-#include "../../compiler_opt.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/compiler_opt.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "tls_cfg.h"
 
 /* 0xf2 should be unused (as of openssl 1.0.0 max.

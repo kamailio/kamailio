@@ -25,7 +25,7 @@
 #ifndef _DBT_RAW_UTIL_H_
 #define _DBT_RAW_UTIL_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db_key.h"
 #include "../../lib/srdb1/db_op.h"
 #include "../../lib/srdb1/db_val.h"

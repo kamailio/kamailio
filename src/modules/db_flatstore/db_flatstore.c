@@ -34,9 +34,9 @@
 #include "flat_rpc.h"
 #include "flat_uri.h"
 
-#include "../../sr_module.h"
-#include "../../mem/shm_mem.h"
-#include "../../ut.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/ut.h"
 
 #include <stdlib.h>
 #include <string.h>

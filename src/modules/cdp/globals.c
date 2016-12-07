@@ -43,7 +43,7 @@
 
 #include "globals.h"
 #include "utils.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 
 //str aaa_fqdn={"unset_fqdn",10};
 //str aaa_realm={"unset_realm",11};

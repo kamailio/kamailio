@@ -22,12 +22,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../dprint.h"
-#include "../../dset.h"
-#include "../../flags.h"
-#include "../../pvar.h"
-#include "../../lvalue.h"
-#include "../../mod_fix.h"
+#include "../../core/dprint.h"
+#include "../../core/dset.h"
+#include "../../core/flags.h"
+#include "../../core/pvar.h"
+#include "../../core/lvalue.h"
+#include "../../core/mod_fix.h"
 #include "km_core.h"
 
 

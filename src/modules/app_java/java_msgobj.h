@@ -23,7 +23,7 @@
 #ifndef __JAVA_MSGOBJ_H__
 #define	__JAVA_MSGOBJ_H__
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #include <jni.h>
 

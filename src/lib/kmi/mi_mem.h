@@ -31,7 +31,7 @@
 #ifndef _MI_MEM_H_
 #define _MI_MEM_H_
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 
 #ifdef MI_SYSTEM_MALLOC
 #include <stdlib.h>
@@ -39,7 +39,7 @@
 #define mi_realloc realloc
 #define mi_free free
 #else
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #define mi_malloc pkg_malloc
 #define mi_realloc pkg_realloc
 #define mi_free pkg_free

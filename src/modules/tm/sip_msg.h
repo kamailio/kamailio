@@ -46,11 +46,11 @@
 #include "defs.h"
 
 
-#include "../../parser/msg_parser.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/mem/shm_mem.h"
 
 
-#include "../../atomic_ops.h" /* membar_depends() */
+#include "../../core/atomic_ops.h" /* membar_depends() */
 
 /**
  * @brief Helper function to free a SIP message

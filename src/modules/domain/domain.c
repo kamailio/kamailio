@@ -24,13 +24,13 @@
 #include "domain_mod.h"
 #include "hash.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
-#include "../../ut.h"
-#include "../../dset.h"
-#include "../../route.h"
-#include "../../pvar.h"
-#include "../../str.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/ut.h"
+#include "../../core/dset.h"
+#include "../../core/route.h"
+#include "../../core/pvar.h"
+#include "../../core/str.h"
 
 static db1_con_t* db_handle=0;
 static db_func_t domain_dbf;

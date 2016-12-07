@@ -20,8 +20,8 @@
  */
 
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "../../lib/srdb1/db_query.h"
 #include "mongodb_connection.h"

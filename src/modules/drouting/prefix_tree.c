@@ -29,8 +29,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../../str.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/str.h"
+#include "../../core/mem/shm_mem.h"
 
 #include "prefix_tree.h"
 #include "routing.h"

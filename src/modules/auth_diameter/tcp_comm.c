@@ -38,11 +38,11 @@
 #include <errno.h>
 
 /* memory management */
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 
 /* printing messages, dealing with strings and other utils */
-#include "../../dprint.h"
-#include "../../str.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
 
 /* headers defined by this module */
 #include "auth_diameter.h"

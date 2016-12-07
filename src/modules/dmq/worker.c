@@ -24,11 +24,11 @@
 #include "dmq.h"
 #include "peer.h"
 #include "worker.h"
-#include "../../data_lump_rpl.h"
-#include "../../mod_fix.h"
-#include "../../sip_msg_clone.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/mod_fix.h"
+#include "../../core/sip_msg_clone.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 
 /**
  * @brief set the body of a response

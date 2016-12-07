@@ -19,12 +19,12 @@
  *
  */
 
-#include "../../sr_module.h"
-#include "../../cfg/cfg.h"
-#include "../../cfg/cfg_ctx.h"
+#include "../../core/sr_module.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 #include "../../lib/srdb2/db.h"
-#include "../../error.h"
-#include "../../ut.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
 #include <unistd.h>
 
 MODULE_VERSION

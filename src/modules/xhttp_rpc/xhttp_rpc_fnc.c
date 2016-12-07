@@ -24,9 +24,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "../../trim.h"
-#include "../../ver.h"
-#include "../../rpc_lookup.h"
+#include "../../core/trim.h"
+#include "../../core/ver.h"
+#include "../../core/rpc_lookup.h"
 #include "xhttp_rpc.h"
 
 extern str xhttp_rpc_root;

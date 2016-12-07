@@ -29,7 +29,7 @@
 
 #include <unistd.h>
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "cpl_env.h"
 
 struct cpl_cmd {

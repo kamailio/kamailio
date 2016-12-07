@@ -23,10 +23,10 @@
 #define _MF_FUNCS_H
 
 
-#include "../../parser/msg_parser.h"
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/str.h"
 
 
 int decrement_maxfwd( struct sip_msg* msg, int nr_val, str *str_val );

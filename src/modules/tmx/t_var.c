@@ -25,8 +25,8 @@
  * - Module: \ref tm
  */
 
-#include "../../mem/mem.h"
-#include "../../dset.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dset.h"
 
 #include "tmx_mod.h"
 #include "t_var.h"

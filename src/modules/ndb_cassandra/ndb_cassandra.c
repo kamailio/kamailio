@@ -36,10 +36,10 @@
  *
  */
 
-#include "../../sr_module.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/mod_fix.h"
 #include "../../lib/kmi/mi.h" //register_my_mod function
-#include "../../lvalue.h"
+#include "../../core/lvalue.h"
 
 #include <string.h>
 #include <stdlib.h>

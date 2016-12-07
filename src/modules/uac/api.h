@@ -18,7 +18,7 @@
  */
 #ifndef UAC_API_H_
 #define UAC_API_H_
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 
 typedef int (*uac_replace_from_t)(sip_msg_t *, str *, str *);

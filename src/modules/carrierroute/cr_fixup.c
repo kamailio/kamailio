@@ -25,8 +25,8 @@
  * - Module; \ref carrierroute
  */
 
-#include "../../mod_fix.h"
-#include "../../mem/mem.h"
+#include "../../core/mod_fix.h"
+#include "../../core/mem/mem.h"
 #include "cr_fixup.h"
 #include "carrierroute.h"
 #include "cr_map.h"

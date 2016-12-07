@@ -49,11 +49,11 @@
  * - \ref ../modules/db_unixodbc
  */
 
-#include "../../dprint.h"
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
-#include "../../globals.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/globals.h"
 #include "db_cap.h"
 #include "db_id.h"
 #include "db_pool.h"

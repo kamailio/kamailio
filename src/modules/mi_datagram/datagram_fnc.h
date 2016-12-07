@@ -31,13 +31,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
-#include "../../ip_addr.h"
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/ip_addr.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "../../lib/kmi/mi.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 
 #include "mi_datagram.h"
 

@@ -25,14 +25,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../ut.h"
-#include "../../forward.h"
-#include "../../resolve.h"
-#include "../../globals.h"
-#include "../../udp_server.h"
-#include "../../pt.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/ut.h"
+#include "../../core/forward.h"
+#include "../../core/resolve.h"
+#include "../../core/globals.h"
+#include "../../core/udp_server.h"
+#include "../../core/pt.h"
 
 #define CONTACT_PREFIX "Contact: <"
 #define CONTACT_SUFFIX  ">;msilo=yes"CRLF

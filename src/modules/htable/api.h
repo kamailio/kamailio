@@ -22,8 +22,8 @@
 #ifndef _HT_MOD_API_H_
 #define _HT_MOD_API_H_
 
-#include "../../sr_module.h"
-#include "../../usr_avp.h"
+#include "../../core/sr_module.h"
+#include "../../core/usr_avp.h"
 
 typedef int (*ht_api_set_cell_f)(str *hname, str *name, int type,
 		int_str *val, int mode);

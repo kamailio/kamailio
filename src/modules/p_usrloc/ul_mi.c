@@ -28,10 +28,10 @@
 
 #include <string.h>
 #include <stdio.h>
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../qvalue.h"
-#include "../../ip_addr.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/qvalue.h"
+#include "../../core/ip_addr.h"
 #include "ul_mi.h"
 #include "dlist.h"
 #include "udomain.h"

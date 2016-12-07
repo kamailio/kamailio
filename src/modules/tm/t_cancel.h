@@ -24,8 +24,8 @@
 #define _CANCEL_H
 
 #include <stdio.h> /* just for FILE* for fifo_uac_cancel */
-#include "../../rpc.h"
-#include "../../atomic_ops.h"
+#include "../../core/rpc.h"
+#include "../../core/atomic_ops.h"
 #include "defs.h"
 #include "h_table.h"
 #include "t_reply.h"

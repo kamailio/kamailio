@@ -23,13 +23,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../mod_fix.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
-#include "../../kemi.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/mod_fix.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 #include "app_lua_api.h"
 #include "app_lua_kemi_export.h"

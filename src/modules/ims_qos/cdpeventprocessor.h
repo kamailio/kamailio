@@ -46,10 +46,10 @@
 #ifndef CDPEVENTPROCESSOR
 #define	CDPEVENTPROCESSOR
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "sem.h"
 #include "rx_authdata.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef struct _cdp_cb_event{
 	int event;							/* event id */

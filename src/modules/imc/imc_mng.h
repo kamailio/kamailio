@@ -28,9 +28,9 @@
 
 
 
-#include "../../locking.h"
-#include "../../str.h"
-#include "../../parser/parse_from.h"
+#include "../../core/locking.h"
+#include "../../core/str.h"
+#include "../../core/parser/parse_from.h"
 
 #define IMC_MEMBER_OWNER	(1<<0)
 #define IMC_MEMBER_ADMIN	(1<<1)

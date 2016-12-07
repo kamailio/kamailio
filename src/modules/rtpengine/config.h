@@ -22,7 +22,7 @@
 #define _RTPENGINE_CONFIG_H
 
 
-#include "../../cfg/cfg.h"
+#include "../../core/cfg/cfg.h"
 
 #define MAX_RTPP_TRIED_NODES            30
 

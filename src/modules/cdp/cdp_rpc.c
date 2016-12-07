@@ -8,8 +8,8 @@
 #include "peermanager.h"
 #include "peerstatemachine.h"
 #include "receiver.h"
-#include "../../str.h"
-#include "../../dprint.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
 
 extern dp_config *config;
 extern peer_list_t *peer_list;

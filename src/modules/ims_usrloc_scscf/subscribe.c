@@ -52,7 +52,7 @@
 #include "../presence/utils_func.h"
 #include "../presence/hash.h"
 
-#include "../../hashes.h"
+#include "../../core/hashes.h"
 
 #include "ul_mod.h"
 #include "usrloc_db.h"

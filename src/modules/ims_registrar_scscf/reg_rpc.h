@@ -21,7 +21,7 @@
 #ifndef _REG_RPC_H_
 #define _REG_RPC_H_
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 extern rpc_export_t reg_rpc[];
 

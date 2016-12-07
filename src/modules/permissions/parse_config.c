@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "rule.h"
 #include "parse_config.h"
 

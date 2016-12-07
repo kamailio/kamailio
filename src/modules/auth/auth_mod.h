@@ -24,10 +24,10 @@
 #ifndef AUTH_MOD_H
 #define AUTH_MOD_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../modules/sl/sl.h"
-#include "../../parser/msg_parser.h"    /* struct sip_msg */
-#include "../../parser/digest/digest.h"
+#include "../../core/parser/msg_parser.h"    /* struct sip_msg */
+#include "../../core/parser/digest/digest.h"
 #include "nonce.h" /* auth_extra_checks & AUTH_CHECK flags */
 #include "rfc2617.h"
 

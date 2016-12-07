@@ -28,7 +28,7 @@
 #ifndef DB1_CON_H
 #define DB1_CON_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 /*! \brief

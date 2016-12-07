@@ -27,7 +27,7 @@
 #ifndef _TMX_PRETRANS_H_
 #define _TMX_PRETRANS_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int tmx_init_pretran_table(void);
 int tmx_check_pretran(sip_msg_t *msg);

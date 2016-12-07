@@ -26,7 +26,7 @@
  */
 
 #include <stdlib.h>
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "cr_data.h"
 #include "carrierroute.h"
 #include "cr_config.h"

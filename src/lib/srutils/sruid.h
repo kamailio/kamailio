@@ -29,7 +29,7 @@
 #ifndef _SRUID_H_
 #define _SRUID_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 #define SRUID_SIZE	40
 

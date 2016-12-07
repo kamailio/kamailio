@@ -29,7 +29,7 @@
 #ifndef DBK_CONST_H_
 #define DBK_CONST_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 extern str str_event_message_summary;
 extern str str_event_dialog;

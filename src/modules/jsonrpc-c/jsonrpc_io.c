@@ -29,10 +29,10 @@
 #include <event.h>
 #include <sys/timerfd.h>
 
-#include "../../sr_module.h"
-#include "../../route.h"
-#include "../../route_struct.h"
-#include "../../lvalue.h"
+#include "../../core/sr_module.h"
+#include "../../core/route.h"
+#include "../../core/route_struct.h"
+#include "../../core/lvalue.h"
 #include "../tm/tm_load.h"
 
 #include "jsonrpc_io.h"

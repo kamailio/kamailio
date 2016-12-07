@@ -36,8 +36,8 @@ extern unsigned nid_pool_no; /* number of index pools */
 
 #if defined USE_NC || defined USE_OT_NONCE
 
-#include "../../atomic_ops.h"
-#include "../../pt.h" /* process_no */
+#include "../../core/atomic_ops.h"
+#include "../../core/pt.h" /* process_no */
 
 /* id incremenet, to avoid cacheline ping-pong and cover all the
  * array locations it should be a number prime with the array size and

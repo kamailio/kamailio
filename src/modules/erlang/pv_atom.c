@@ -23,9 +23,9 @@
 
 #include <stdlib.h>
 
-#include "../../str.h"
-#include "../../xavp.h"
-#include "../../pvapi.h"
+#include "../../core/str.h"
+#include "../../core/xavp.h"
+#include "../../core/pvapi.h"
 
 #include "pv_atom.h"
 #include "pv_xbuff.h"

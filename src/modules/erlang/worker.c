@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include "worker.h"
 #include "cnode.h"
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 
 #include "erl_api.h"
 

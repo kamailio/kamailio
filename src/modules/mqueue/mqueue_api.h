@@ -25,8 +25,8 @@
 #ifndef _MQUEUE_API_H_
 #define _MQUEUE_API_H_
 
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
 
 int pv_parse_mq_name(pv_spec_p sp, str *in);
 int pv_get_mqk(struct sip_msg *msg, pv_param_t *param,

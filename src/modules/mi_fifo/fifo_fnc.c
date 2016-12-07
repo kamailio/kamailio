@@ -42,12 +42,12 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "../../lib/kmi/mi.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "mi_fifo.h"
 #include "fifo_fnc.h"
 #include "mi_parser.h"

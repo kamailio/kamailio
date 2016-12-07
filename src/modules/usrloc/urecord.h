@@ -31,8 +31,8 @@
 #include <stdio.h>
 #include <time.h>
 #include "hslot.h"
-#include "../../str.h"
-#include "../../qvalue.h"
+#include "../../core/str.h"
+#include "../../core/qvalue.h"
 #include "ucontact.h"
 #include "usrloc.h"
 

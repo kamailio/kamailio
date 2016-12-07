@@ -24,12 +24,12 @@
 #ifndef __sbufq_h
 #define __sbufq_h
 
-#include "../../compiler_opt.h"
-#include "../../ut.h"
-#include "../../mem/shm_mem.h"
-#include "../../timer_ticks.h"
-#include "../../timer.h"
-#include "../../dprint.h"
+#include "../../core/compiler_opt.h"
+#include "../../core/ut.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/timer_ticks.h"
+#include "../../core/timer.h"
+#include "../../core/dprint.h"
 #include <string.h>
 
 

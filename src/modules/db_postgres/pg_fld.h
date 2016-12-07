@@ -35,7 +35,7 @@
 
 #include "pg_oid.h"
 #include "pg_cmd.h"
-#include "../../ut.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb2/db_gen.h"
 #include "../../lib/srdb2/db_fld.h"
 #include <libpq-fe.h>

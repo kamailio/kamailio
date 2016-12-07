@@ -61,7 +61,7 @@
 #include "tcp_accept.h"
 #include "receiver.h"
 
-#include "../../cfg/cfg_struct.h"
+#include "../../core/cfg/cfg_struct.h"
 
 /* defined in ../diameter_peer.c */
 int dp_add_pid(pid_t pid);

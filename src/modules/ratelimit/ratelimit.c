@@ -29,19 +29,19 @@
 #include <math.h>
 
 
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../timer.h"
-#include "../../timer_ticks.h"
-#include "../../ut.h"
-#include "../../locking.h"
-#include "../../mod_fix.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../counters.h"
-#include "../../rpc_lookup.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/timer.h"
+#include "../../core/timer_ticks.h"
+#include "../../core/ut.h"
+#include "../../core/locking.h"
+#include "../../core/mod_fix.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/counters.h"
+#include "../../core/rpc_lookup.h"
 #include "rl_statistics.h"
 
 

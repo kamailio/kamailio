@@ -18,10 +18,10 @@
 
 #include <stdio.h>
 
-#include "../../dprint.h"
-#include "../../xavp.h"
-#include "../../pvapi.h"
-#include "../../parser/parse_param.h"
+#include "../../core/dprint.h"
+#include "../../core/xavp.h"
+#include "../../core/pvapi.h"
+#include "../../core/parser/parse_param.h"
 
 #include "pv_xavp.h"
 

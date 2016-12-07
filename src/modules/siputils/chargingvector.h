@@ -40,7 +40,7 @@
 #ifndef _CHARGINGVECTOR_H_
 #define _CHARGINGVECTOR_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int sip_handle_pcv(sip_msg_t *msg, char *flags, char *str2);
 

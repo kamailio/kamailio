@@ -23,7 +23,7 @@
 #ifndef _MSRP_NETIO_H_
 #define _MSRP_NETIO_H_
 
-#include "../../dns_cache.h"
+#include "../../core/dns_cache.h"
 
 #include "msrp_parser.h"
 

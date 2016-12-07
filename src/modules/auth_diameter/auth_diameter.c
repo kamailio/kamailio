@@ -36,11 +36,11 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../dprint.h"
-#include "../../pvar.h"
-#include "../../mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/dprint.h"
+#include "../../core/pvar.h"
+#include "../../core/mem/mem.h"
 
 #include "diameter_msg.h"
 #include "auth_diameter.h"

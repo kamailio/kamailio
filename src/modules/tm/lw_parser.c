@@ -21,9 +21,9 @@
  *              function. Basically copy-pasted from the core parser (Miklos)
  */
 
-#include "../../parser/keys.h"
-#include "../../parser/hf.h"
-#include "../../parser/parser_f.h"
+#include "../../core/parser/keys.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/parser_f.h"
 #include "lw_parser.h"
 
 /* macros from the core parser */

@@ -36,7 +36,7 @@
 #define _AUTH_XML_H_
 
 #include <libxml/parser.h>
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../presence/subscribe.h"
 #include "../xcap_client/xcap_callbacks.h"
 

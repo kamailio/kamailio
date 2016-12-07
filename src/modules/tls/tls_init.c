@@ -44,13 +44,13 @@
 #include <string.h>
 #include <openssl/ssl.h>
 
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../tcp_init.h"
-#include "../../socket_info.h"
-#include "../../pt.h"
-#include "../../cfg/cfg.h"
-#include "../../cfg/cfg_ctx.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/tcp_init.h"
+#include "../../core/socket_info.h"
+#include "../../core/pt.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 #include "tls_verify.h"
 #include "tls_domain.h"
 #include "tls_util.h"

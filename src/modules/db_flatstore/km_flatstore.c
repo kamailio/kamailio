@@ -23,8 +23,8 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "km_flat_pool.h"
 #include "km_flat_con.h"
 #include "km_flatstore_mod.h"

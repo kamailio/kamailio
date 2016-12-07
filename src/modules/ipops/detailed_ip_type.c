@@ -31,9 +31,9 @@
 #endif
 #include <string.h>
 #include <unistd.h>
-#include "../../dprint.h"
-#include "../../trim.h"
-#include "../../str.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
+#include "../../core/str.h"
 #include "detailed_ip_type.h"
 
 static ip4_node IPv4ranges[IPv4RANGES_SIZE] = {

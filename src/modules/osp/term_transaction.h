@@ -31,7 +31,7 @@
 #ifndef _OSP_MOD_TERM_TRANSACTION_H_
 #define _OSP_MOD_TERM_TRANSACTION_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int ospCheckHeader(struct sip_msg*, char*, char*);
 int ospValidateHeader(struct sip_msg*, char*, char*);

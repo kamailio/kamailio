@@ -54,8 +54,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <libxml/parser.h>
-#include "../../dprint.h"
-#include "../../sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
 #include "pidf.h"
 
 xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)

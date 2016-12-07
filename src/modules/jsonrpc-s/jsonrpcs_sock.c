@@ -33,12 +33,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "../../trim.h"
-#include "../../pt.h"
-#include "../../sr_module.h"
-#include "../../cfg/cfg_struct.h"
-#include "../../resolve.h"
-#include "../../ip_addr.h"
+#include "../../core/trim.h"
+#include "../../core/pt.h"
+#include "../../core/sr_module.h"
+#include "../../core/cfg/cfg_struct.h"
+#include "../../core/resolve.h"
+#include "../../core/ip_addr.h"
 
 #include "jsonrpc-s_mod.h"
 

@@ -26,7 +26,7 @@
  */
 
 
-#include "../../cfg/cfg.h"
+#include "../../core/cfg/cfg.h"
 
 #include "debugger_config.h"
 

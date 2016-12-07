@@ -36,15 +36,15 @@
 
 
 #include <stdio.h>
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../ut.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb2/db.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../usr_avp.h"
-#include "../../rpc.h"
-#include "../../config.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/usr_avp.h"
+#include "../../core/rpc.h"
+#include "../../core/config.h"
 
 
 MODULE_VERSION

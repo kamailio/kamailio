@@ -51,8 +51,8 @@
 #ifndef RX_AAR_H
 #define RX_AAR_H
 
-#include "../../mod_fix.h"
-#include "../../locking.h"
+#include "../../core/mod_fix.h"
+#include "../../core/locking.h"
 
 struct cdp_binds cdpb;
 cdp_avp_bind_t *cdp_avp;

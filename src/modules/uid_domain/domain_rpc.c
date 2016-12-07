@@ -20,10 +20,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb2/db.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
 #include "hash.h"
 #include "uid_domain_mod.h"
 #include "domain_rpc.h"

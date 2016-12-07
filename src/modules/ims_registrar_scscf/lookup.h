@@ -32,7 +32,7 @@
 #ifndef LOOKUP_H
 #define LOOKUP_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 
 

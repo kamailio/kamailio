@@ -50,8 +50,8 @@
 #ifndef _SNMPSTATS_USER_UTILITIES_
 #define _SNMPSTATS_USER_UTILITIES_
 
-#include "../../str.h"
-#include "../../locking.h"
+#include "../../core/str.h"
+#include "../../core/locking.h"
 
 #include "snmpstats_globals.h"
 #include "hashTable.h"

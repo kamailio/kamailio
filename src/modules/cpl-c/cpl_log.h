@@ -31,7 +31,7 @@
 #define _CPL_LOG_H_
 
 #include <stdarg.h>
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 #define MAX_LOG_NR    64

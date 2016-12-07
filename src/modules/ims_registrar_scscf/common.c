@@ -35,8 +35,8 @@
  */
 
 #include <string.h> 
-#include "../../dprint.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_uri.h"
 #include "rerrno.h"
 #include "reg_mod.h"
 #include "common.h"

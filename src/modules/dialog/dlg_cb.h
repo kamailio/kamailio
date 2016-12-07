@@ -29,7 +29,7 @@
 #ifndef _DIALOG_DLG_CB_H_
 #define _DIALOG_DLG_CB_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 struct dlg_cell;
 

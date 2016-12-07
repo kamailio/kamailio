@@ -40,10 +40,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <netinet/in.h>
-#include "../../mem/mem.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_uri.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/dprint.h"
 #include "encode_to_body.h"
 #include "encode_uri.h"
 #include "encode_header.h"

@@ -20,7 +20,7 @@
  */
 
 #include "ul_check.h"
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 
 #ifndef SP_P_USRLOC_UL_DB_HANDLE_H

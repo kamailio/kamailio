@@ -29,7 +29,7 @@
 #ifndef _SQL_VAR_H_
 #define _SQL_VAR_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_get_dbr(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);

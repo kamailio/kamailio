@@ -22,14 +22,14 @@
  */
 
 #include <string.h>
-#include "../../str.h"
-#include "../../dprint.h"               /* Debugging */
-#include "../../parser/digest/digest.h" /* get_authorized_cred */
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_uri.h"
-#include "../../ut.h"                   /* Handy utilities */
+#include "../../core/str.h"
+#include "../../core/dprint.h"               /* Debugging */
+#include "../../core/parser/digest/digest.h" /* get_authorized_cred */
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/ut.h"                   /* Handy utilities */
 #include "../../lib/srdb1/db.h"                /* Database API */
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 #include "uri_db.h"
 #include "checks.h"
 

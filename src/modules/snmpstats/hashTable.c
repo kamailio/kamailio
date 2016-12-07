@@ -40,8 +40,8 @@
 #include <string.h>
 
 #include "hashTable.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>

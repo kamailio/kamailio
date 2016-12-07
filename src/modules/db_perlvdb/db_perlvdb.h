@@ -29,10 +29,10 @@
 
 
 #include "../../lib/srdb1/db.h"
-#include "../../sr_module.h"
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 
 /* lock_ops.h defines union semun, perl does not need to redefine it */
 #ifdef USE_SYSV_SEM

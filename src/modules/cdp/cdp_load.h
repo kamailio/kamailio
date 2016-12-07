@@ -44,7 +44,7 @@
 #ifndef _CDP_BIND_H
 #define _CDP_BIND_H
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "utils.h"
 #include "diameter.h"
 #include "diameter_api.h"

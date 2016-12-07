@@ -27,7 +27,7 @@
 #ifndef PERL_FUNC_H
 #define PERL_FUNC_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 /*
  * Run a perl function without a sip message parameter.

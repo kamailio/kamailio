@@ -25,10 +25,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/mod_fix.h"
 
 #include "app_mono_api.h"
 

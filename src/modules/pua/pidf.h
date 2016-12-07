@@ -24,7 +24,7 @@
 #ifndef PUA_PIDF_H
 #define PUA_PIDF_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include <libxml/parser.h>
 
 typedef xmlNodePtr (*xmlDocGetNodeByName_t)(xmlDocPtr doc, const char *name, const char *ns);

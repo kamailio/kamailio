@@ -22,9 +22,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../pvar.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 
 #include "smsops_impl.h"
 

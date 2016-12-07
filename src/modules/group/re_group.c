@@ -29,10 +29,10 @@
 #include <sys/types.h>
 #include <regex.h>
 
-#include "../../str.h"
-#include "../../mem/mem.h"
-#include "../../route_struct.h"
-#include "../../lvalue.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/route_struct.h"
+#include "../../core/lvalue.h"
 #include "group_mod.h"
 #include "re_group.h"
 #include "group.h"

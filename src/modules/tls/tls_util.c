@@ -29,9 +29,9 @@
 
 #include <string.h>
 #include <libgen.h>
-#include "../../mem/shm_mem.h"
-#include "../../globals.h"
-#include "../../dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/globals.h"
+#include "../../core/dprint.h"
 #include "tls_mod.h"
 #include "tls_util.h"
 

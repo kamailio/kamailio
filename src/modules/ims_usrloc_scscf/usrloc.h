@@ -48,8 +48,8 @@
 
 #include <time.h>
 #include "ul_callback.h"
-#include "../../qvalue.h"
-#include "../../str.h"
+#include "../../core/qvalue.h"
+#include "../../core/str.h"
 #include "../../modules/tm/dlg.h"
 #include "../cdp/diameter_ims_code_avp.h"
 

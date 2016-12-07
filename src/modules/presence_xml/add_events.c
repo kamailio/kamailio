@@ -33,9 +33,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libxml/parser.h>
-#include "../../parser/parse_content.h"
-#include "../../data_lump_rpl.h"
-#include "../../ut.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/ut.h"
 #include "xcap_auth.h"
 #include "notify_body.h"
 #include "add_events.h"

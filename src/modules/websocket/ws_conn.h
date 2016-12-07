@@ -27,9 +27,9 @@
 #ifndef _WS_CONN_H
 #define _WS_CONN_H
 
-#include "../../atomic_ops.h"
+#include "../../core/atomic_ops.h"
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 #include "../../lib/kmi/tree.h"
 
 typedef enum

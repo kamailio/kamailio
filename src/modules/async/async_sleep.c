@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../locking.h"
-#include "../../timer.h"
-#include "../../async_task.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/locking.h"
+#include "../../core/timer.h"
+#include "../../core/async_task.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_sleep.h"

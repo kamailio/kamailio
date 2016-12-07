@@ -23,8 +23,8 @@
 #ifndef _MSRP_PARSER_H_
 #define _MSRP_PARSER_H_
 
-#include "../../str.h"
-#include "../../tcp_conn.h"
+#include "../../core/str.h"
+#include "../../core/tcp_conn.h"
 
 #define MSRP_REQUEST	1
 #define MSRP_REPLY		2

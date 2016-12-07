@@ -30,10 +30,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb1/db.h"
-#include "../../re.h"
+#include "../../core/re.h"
 #include "dp_db.h"
 #include "dialplan.h"
 

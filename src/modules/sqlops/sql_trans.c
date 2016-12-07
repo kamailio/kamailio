@@ -23,11 +23,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../trim.h"
-#include "../../ut.h"
-#include "../../strutils.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
+#include "../../core/ut.h"
+#include "../../core/strutils.h"
 
 #include "sql_trans.h"
 

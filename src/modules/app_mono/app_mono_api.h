@@ -28,7 +28,7 @@
 #include <mono/metadata/environment.h>
 #include <stdlib.h>
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef struct _sr_mono_env
 {

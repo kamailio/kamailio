@@ -30,7 +30,7 @@
 
 #include "defs.h"
 
-#include "../../proxy.h"
+#include "../../core/proxy.h"
 #include "h_table.h"
 
 int t_append_branches(void);

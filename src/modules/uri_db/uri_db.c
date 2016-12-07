@@ -25,12 +25,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../error.h"
-#include "../../mem/mem.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/error.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mod_fix.h"
 #include "uri_db.h"
 #include "checks.h"
 

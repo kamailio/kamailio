@@ -24,7 +24,7 @@
 #ifndef _hep_h
 #define _hep_h
 
-#include "../../endianness.h"
+#include "../../core/endianness.h"
 
 #ifdef __IS_BIG_ENDIAN
 #define to_le(x) bswap32(x)

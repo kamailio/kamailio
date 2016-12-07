@@ -44,9 +44,9 @@
 #define _ACC_EXTRA_H_
 
 #include "acc_api.h"
-#include "../../str.h"
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
 #include "../dialog/dlg_load.h"
 
 void init_acc_extra(void);

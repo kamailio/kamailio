@@ -42,20 +42,20 @@
  */
 
 #include <string.h>
-#include "../../ut.h"
-#include "../../str.h"
-#include "../../basex.h"
-#include "../../hashes.h"
+#include "../../core/ut.h"
+#include "../../core/str.h"
+#include "../../core/basex.h"
+#include "../../core/hashes.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_ut.h"
-#include "../../dprint.h"
-#include "../../parser/digest/digest.h"
-#include "../../parser/hf.h"
-#include "../../parser/parser_f.h"
-#include "../../usr_avp.h"
-#include "../../mod_fix.h"
-#include "../../mem/mem.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/usr_avp.h"
+#include "../../core/mod_fix.h"
+#include "../../core/mem/mem.h"
+#include "../../core/rand/kam_rand.h"
 #include "../cdp/diameter.h"
 #include "../cdp/diameter_ims_code_result.h"
 
@@ -69,7 +69,7 @@
 #include "authims_mod.h"
 #include "authorize.h"
 #include "utils.h"
-#include "../../action.h" /* run_actions */
+#include "../../core/action.h" /* run_actions */
 
 extern unsigned char registration_default_algorithm_type; /**< fixed default algorithm for registration (if none present)	*/
 extern struct tm_binds tmb;

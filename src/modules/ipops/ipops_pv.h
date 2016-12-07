@@ -25,7 +25,7 @@
 #ifndef _IPOPS_PV_H_
 #define _IPOPS_PV_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_parse_dns_name(pv_spec_t *sp, str *in);
 int pv_get_dns(sip_msg_t *msg, pv_param_t *param,

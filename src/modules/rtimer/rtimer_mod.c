@@ -28,21 +28,21 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "../../sr_module.h"
-#include "../../timer.h"
-#include "../../dprint.h"
-#include "../../route.h"
-#include "../../receive.h"
-#include "../../action.h"
-#include "../../socket_info.h"
-#include "../../dset.h"
-#include "../../pt.h"
-#include "../../usr_avp.h"
-#include "../../xavp.h"
-#include "../../timer_proc.h"
-#include "../../script_cb.h"
-#include "../../parser/parse_param.h"
-#include "../../fmsg.h"
+#include "../../core/sr_module.h"
+#include "../../core/timer.h"
+#include "../../core/dprint.h"
+#include "../../core/route.h"
+#include "../../core/receive.h"
+#include "../../core/action.h"
+#include "../../core/socket_info.h"
+#include "../../core/dset.h"
+#include "../../core/pt.h"
+#include "../../core/usr_avp.h"
+#include "../../core/xavp.h"
+#include "../../core/timer_proc.h"
+#include "../../core/script_cb.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/fmsg.h"
 
 
 MODULE_VERSION

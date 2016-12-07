@@ -46,7 +46,7 @@
 #ifndef SAVE_H
 #define SAVE_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../modules/ims_usrloc_pcscf/usrloc.h"
 #include "../../lib/ims/ims_getters.h"
 

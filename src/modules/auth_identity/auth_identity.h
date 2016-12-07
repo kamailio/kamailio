@@ -32,13 +32,13 @@
 #include <openssl/x509.h>
 #include <curl/curl.h>
 
-#include "../../locking.h"
-#include "../../mem/mem.h"
-#include "../../parser/msg_parser.h"	/* struct sip_msg */
-#include "../../str.h"					/* struct str */
-#include "../../parser/parse_identity.h"
-#include "../../parser/parse_identityinfo.h"
-#include "../../parser/parse_date.h"
+#include "../../core/locking.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/str.h"					/* struct str */
+#include "../../core/parser/parse_identity.h"
+#include "../../core/parser/parse_identityinfo.h"
+#include "../../core/parser/parse_date.h"
 
 #define NEW_RSA_PROC
 

@@ -21,11 +21,11 @@
  *
  */
 
-#include "../../data_lump.h"
-#include "../../mem/mem.h"
-#include "../../parser/digest/digest.h"
-#include "../../usr_avp.h"
-#include "../../ut.h"
+#include "../../core/data_lump.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/usr_avp.h"
+#include "../../core/ut.h"
 #include "auth_mod.h"
 #include "challenge.h"
 #include "nonce.h"

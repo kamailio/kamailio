@@ -46,7 +46,7 @@
 #define PVT_MESSAGE_H
 
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../tm/tm_load.h"
 
 struct _pv_req_data {

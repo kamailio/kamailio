@@ -22,8 +22,8 @@
 #ifndef _PIKE_FUNCS_H
 #define _PIKE_FUNCS_H
 
-#include "../../parser/msg_parser.h"
-#include "../../locking.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/locking.h"
 
 
 void pike_counter_init(void);

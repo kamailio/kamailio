@@ -21,13 +21,13 @@
  */
 
 #include <stdio.h>
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
 #include "../../modules/usrloc/usrloc.h"
 #include "../usrloc/ul_callback.h"
 #include "../../modules/sl/sl.h"
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 #include "usrloc_sync.h"
 

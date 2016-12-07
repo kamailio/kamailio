@@ -27,7 +27,7 @@
 #ifndef _TH_MSG_H_
 #define _TH_MSG_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int th_mask_via(sip_msg_t *msg);
 int th_mask_callid(sip_msg_t *msg);

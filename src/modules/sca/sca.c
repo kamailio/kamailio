@@ -38,9 +38,9 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-#include "../../timer.h"
-#include "../../timer_proc.h"
-#include "../../mod_fix.h"
+#include "../../core/timer.h"
+#include "../../core/timer_proc.h"
+#include "../../core/mod_fix.h"
 
 #include "sca.h"
 #include "sca_appearance.h"

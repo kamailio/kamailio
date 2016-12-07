@@ -49,7 +49,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
-#include "../../endianness.h"
+#include "../../core/endianness.h"
 
 #ifndef MACOS
 #  include <sys/stat.h>

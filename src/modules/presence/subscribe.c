@@ -27,20 +27,20 @@
  */
 
 
-#include "../../ut.h"
-#include "../../usr_avp.h"
-#include "../../data_lump_rpl.h"
-#include "../../parser/parse_expires.h"
-#include "../../parser/parse_event.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../hashes.h"
+#include "../../core/ut.h"
+#include "../../core/usr_avp.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/parser/parse_event.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/hashes.h"
 #include "presence.h"
 #include "subscribe.h"
 #include "utils_func.h"
 #include "notify.h"
 #include "../pua/hash.h"
-#include "../../mod_fix.h"
-#include "../../dset.h"
+#include "../../core/mod_fix.h"
+#include "../../core/dset.h"
 
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
 		str* reply_str);

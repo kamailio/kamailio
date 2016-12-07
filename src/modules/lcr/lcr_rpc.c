@@ -30,7 +30,7 @@
 #include "lcr_rpc.h"
 
 #include "lcr_mod.h"
-#include "../../ip_addr.h"
+#include "../../core/ip_addr.h"
 
 
 static const char* reload_doc[2] = {

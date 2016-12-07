@@ -26,7 +26,7 @@
 #define SDP_MANGLER_H
 
 
-#include "../../parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
 #include "common.h"
 #include <regex.h>
 

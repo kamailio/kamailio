@@ -26,13 +26,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../ut.h"
-#include "../../kemi.h"
-#include "../../mem/mem.h"
-#include "../../cfg/cfg.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
+#include "../../core/kemi.h"
+#include "../../core/mem/mem.h"
+#include "../../core/cfg/cfg.h"
 #include "mf_funcs.h"
 #include "api.h"
 

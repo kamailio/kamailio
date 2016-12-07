@@ -25,8 +25,8 @@
 
 #include "db_fld.h"
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 
 #include <string.h>
 

@@ -33,12 +33,12 @@
  */
 
 
-#include "../../mod_fix.h"
-#include "../../pvar.h"
-#include "../../route_struct.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/mod_fix.h"
+#include "../../core/pvar.h"
+#include "../../core/route_struct.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/msg_parser.h"
 
 #include "http_client.h"
 #include "curlcon.h"

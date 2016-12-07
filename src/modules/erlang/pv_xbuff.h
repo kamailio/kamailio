@@ -24,8 +24,8 @@
 #ifndef PV_XBUFF_H_
 #define PV_XBUFF_H_
 
-#include "../../pvar.h"
-#include "../../xavp.h"
+#include "../../core/pvar.h"
+#include "../../core/xavp.h"
 
 #include <regex.h>
 #include <ei.h>

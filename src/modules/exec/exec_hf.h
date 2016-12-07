@@ -28,7 +28,7 @@
 #ifndef _EXEC_HF_H
 #define _EXEC_HF_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 /* prefix prepended to header field name in env var name */
 #define SIP "SIP_"

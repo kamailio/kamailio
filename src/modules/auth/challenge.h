@@ -25,7 +25,7 @@
 #ifndef CHALLENGE_H
 #define CHALLENGE_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 /**
  * Create {WWW,Proxy}-Authenticate header field

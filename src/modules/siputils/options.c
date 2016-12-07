@@ -32,10 +32,10 @@
 #include <stdlib.h>   /* required by abort() */
 #endif
 #include "options.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../data_lump_rpl.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/parser/parse_uri.h"
 
 static str opt_200_rpl = str_init("OK");
 static str opt_500_rpl = str_init("Server internal error");

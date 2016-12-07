@@ -45,12 +45,12 @@
 
 #include <stdio.h>
 #include "ul_mod.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../rpc_lookup.h"
-#include "../../timer.h"     /* register_timer */
-#include "../../globals.h"   /* is_main */
-#include "../../ut.h"        /* str_init */
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/timer.h"     /* register_timer */
+#include "../../core/globals.h"   /* is_main */
+#include "../../core/ut.h"        /* str_init */
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "pcontact.h"         /* {insert,delete,get}_ucontact */

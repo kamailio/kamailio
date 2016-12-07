@@ -46,7 +46,7 @@
 #ifndef REGINFO_H_
 #define REGINFO_H_
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 /** reg Subscription Structure */
 typedef struct _reginfo_subscription {

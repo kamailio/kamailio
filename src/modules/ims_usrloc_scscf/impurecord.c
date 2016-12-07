@@ -45,10 +45,10 @@
 
 #include "impurecord.h"
 #include <string.h>
-#include "../../hashes.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/hashes.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "ul_mod.h"
 #include "usrloc.h"
 #include "utime.h"

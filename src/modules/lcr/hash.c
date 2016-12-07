@@ -27,8 +27,8 @@
  * Module: \ref lcr
  */
 
-#include "../../mem/shm_mem.h"
-#include "../../hashes.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/hashes.h"
 #include "lcr_mod.h"
 
 #define rule_hash(_s) core_hash(_s, 0, lcr_rule_hash_size_param)

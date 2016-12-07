@@ -29,9 +29,9 @@
 #ifndef CR_FUNC_H
 #define CR_FUNC_H
 
-#include "../../parser/msg_parser.h"
-#include "../../pvar.h"
-#include "../../mod_fix.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 #include "prime_hash.h"
 
 

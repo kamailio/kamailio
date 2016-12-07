@@ -27,20 +27,20 @@
 #define _TM_UT_H
 
 
-#include "../../proxy.h"
-#include "../../str.h"
-#include "../../parser/parse_uri.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../ip_addr.h"
-#include "../../error.h"
-#include "../../forward.h"
-#include "../../mem/mem.h"
-#include "../../parser/msg_parser.h"
-#include "../../resolve.h"
+#include "../../core/proxy.h"
+#include "../../core/str.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/ip_addr.h"
+#include "../../core/error.h"
+#include "../../core/forward.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/resolve.h"
 #ifdef USE_DNS_FAILOVER
-#include "../../dns_cache.h"
-#include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
+#include "../../core/dns_cache.h"
+#include "../../core/cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 
 

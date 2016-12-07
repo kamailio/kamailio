@@ -3,7 +3,7 @@
 #include "ro_session_hash.h"
 #include "ro_db_handler.h"
 #include "ims_charging_stats.h"
-#include "../../parser/hf.h"
+#include "../../core/parser/hf.h"
 
 struct cdp_binds cdpb;
 

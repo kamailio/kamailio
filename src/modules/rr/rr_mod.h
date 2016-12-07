@@ -30,7 +30,7 @@
 #include "../outbound/api.h"
 
 #ifdef ENABLE_USER_CHECK
-#include "../../str.h"
+#include "../../core/str.h"
 extern str i_user;
 #endif
 

@@ -29,7 +29,7 @@
 #ifndef _DP_DB_H_
 #define _DP_DB_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 
 #define DP_TABLE_NAME			"dialplan"

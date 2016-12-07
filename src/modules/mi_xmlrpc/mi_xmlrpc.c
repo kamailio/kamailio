@@ -60,12 +60,12 @@
 #endif
 
 
-#include "../../sr_module.h"
-#include "../../str.h"
-#include "../../pt.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
+#include "../../core/pt.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/cfg/cfg_struct.h"
 
 xmlrpc_env env;
 xmlrpc_value * xr_response;

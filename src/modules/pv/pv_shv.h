@@ -22,8 +22,8 @@
 #ifndef _SHVAR_H_
 #define _SHVAR_H_
 
-#include "../../sr_module.h"
-#include "../../locking.h"
+#include "../../core/sr_module.h"
+#include "../../core/locking.h"
 #include "../../lib/kmi/mi.h"
 #include "pv_svar.h"
 

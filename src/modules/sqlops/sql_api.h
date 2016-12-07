@@ -29,9 +29,9 @@
 #ifndef _SQL_API_H_
 #define _SQL_API_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 typedef struct _sql_col
 {

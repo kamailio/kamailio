@@ -8,7 +8,7 @@
 #ifndef IMS_QOS_STATS_H
 #define	IMS_QOS_STATS_H
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 struct ims_qos_counters_h {
     counter_handle_t registration_aar_avg_response_time;

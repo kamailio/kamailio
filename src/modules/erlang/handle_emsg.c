@@ -34,10 +34,10 @@
 #include "pv_xbuff.h"
 #include "mod_erlang.h"
 
-#include "../../dprint.h"
-#include "../../sr_module.h"
-#include "../../cfg/cfg_struct.h"
-#include "../../fmsg.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/cfg/cfg_struct.h"
+#include "../../core/fmsg.h"
 
 int handle_msg_req_tuple(cnode_handler_t *phandler, erlang_msg * msg);
 int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg * msg);

@@ -28,14 +28,14 @@
 #include <libxml/parser.h>
 #include <time.h>
 
-#include "../../sr_module.h"
-#include "../../parser/parse_expires.h"
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
-#include "../../mem/mem.h"
-#include "../../pt.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/pt.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/kmi/mi.h"
 #include "../../modules/tm/tm_load.h"

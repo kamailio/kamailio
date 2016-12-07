@@ -22,11 +22,11 @@
  */
 
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../usr_avp.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/usr_avp.h"
 #include "../misc_radius/radius.h"
-#include "../../ut.h"
+#include "../../core/ut.h"
 #include "../../modules/auth/api.h"
 #include "sterman.h"
 #include "auth_radius.h"

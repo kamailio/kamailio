@@ -32,7 +32,7 @@
 #ifndef XCAP_AUTH_FUNCTIONS_H
 #define XCAP_AUTH_FUNCTIONS_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /* 

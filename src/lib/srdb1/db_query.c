@@ -32,11 +32,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "db_ut.h"
 #include "db_query.h"
-#include "../../globals.h"
-#include "../../timer.h"
+#include "../../core/globals.h"
+#include "../../core/timer.h"
 
 static str  sql_str;
 static char *sql_buf = NULL;

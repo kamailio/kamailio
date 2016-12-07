@@ -26,7 +26,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "sub_list.h"
 
 struct node*   append_to_list(struct node *head, char *offset, char *name)

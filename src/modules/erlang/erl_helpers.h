@@ -36,8 +36,8 @@
 
 #include <ei.h>
 
-#include "../../str.h"
-#include "../../dprint.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
 
 #define CONNECT_TIMEOUT	500 /* ms */
 #define sockaddr_port(addr)	((addr)->sa_family == AF_INET ? ntohs(((struct sockaddr_in *)(addr))->sin_port) : ntohs(((struct sockaddr_in6 *)(addr))->sin6_port))

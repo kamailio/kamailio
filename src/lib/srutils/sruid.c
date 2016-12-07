@@ -33,9 +33,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "../../dprint.h"
-#include "../../globals.h"
-#include "../../pt.h"
+#include "../../core/dprint.h"
+#include "../../core/globals.h"
+#include "../../core/pt.h"
 
 #include "sruid.h"
 

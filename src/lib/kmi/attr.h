@@ -35,7 +35,7 @@
 #define _MI_ATTR_H
 
 #include <stdarg.h>
-#include "../../str.h"
+#include "../../core/str.h"
 #include "tree.h"
 
 struct mi_attr{

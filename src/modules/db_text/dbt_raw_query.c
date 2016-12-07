@@ -23,9 +23,9 @@
 #define _GNU_SOURCE
 #include <string.h>
 
-#include "../../str.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 
 #include "db_text.h"
 #include "dbt_res.h"

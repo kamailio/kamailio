@@ -24,9 +24,9 @@
 #ifndef _JSONRPC_S_H_
 #define _JSONRPC_S_H_
 
-#include "../../str.h"
-#include "../../rpc_lookup.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../lib/srutils/srjson.h"
 
 

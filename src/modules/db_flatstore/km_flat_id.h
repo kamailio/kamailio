@@ -23,7 +23,7 @@
 #ifndef _KM_FLAT_ID_H
 #define _KM_FLAT_ID_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 struct flat_id {

@@ -35,8 +35,8 @@
 #include <libxml/parser.h>
 #include <time.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
 #include "pv_xml.h"
 
 MODULE_VERSION

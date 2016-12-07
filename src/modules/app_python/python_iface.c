@@ -23,11 +23,11 @@
 #include <Python.h>
 
 // router includes
-#include "../../action.h"
-#include "../../dprint.h"
-#include "../../route_struct.h"
-#include "../../str.h"
-#include "../../sr_module.h"
+#include "../../core/action.h"
+#include "../../core/dprint.h"
+#include "../../core/route_struct.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
 
 // local includes
 #include "mod_Router.h"

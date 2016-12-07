@@ -35,8 +35,8 @@
 #include <stdlib.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
-#include "../../dprint.h"
-#include "../../srapi.h"
+#include "../../core/dprint.h"
+#include "../../core/srapi.h"
 #include "crypto_uuid.h"
 
 #define SEED_LEN 16

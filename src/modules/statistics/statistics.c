@@ -35,12 +35,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../mod_fix.h"
-#include "../../counters.h"
-#include "../../mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/mod_fix.h"
+#include "../../core/counters.h"
+#include "../../core/mem/mem.h"
 #include "stats_funcs.h"
 
 MODULE_VERSION

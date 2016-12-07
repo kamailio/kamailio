@@ -38,8 +38,8 @@
 #include <openssl/crypto.h>
 #include <openssl/x509_vfy.h>
 
-#include "../../mem/mem.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "auth_identity.h"
 

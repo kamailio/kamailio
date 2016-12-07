@@ -33,7 +33,7 @@
 #define _DIALOG_DLG_LOAD_H_
 
 #include "dlg_cb.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 /* terminate_dlg function prototype */
 typedef int (*terminate_dlg_f)(struct dlg_cell* dlg, str *hdrs);

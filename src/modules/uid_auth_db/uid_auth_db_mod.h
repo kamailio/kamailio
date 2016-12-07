@@ -31,10 +31,10 @@
 #ifndef UID_AUTH_DB_MOD_H
 #define UID_AUTH_DB_MOD_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb2/db.h"
 #include "../../modules/auth/api.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /*

@@ -22,10 +22,10 @@
 #include <sys/types.h> /* for regex */
 #include <regex.h>
 
-#include "../../sr_module.h"
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 #include "../../lib/srutils/sruid.h"
 #include "../../modules/tm/tm_load.h"
 #include "rd_funcs.h"

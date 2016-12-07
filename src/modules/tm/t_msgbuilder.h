@@ -23,7 +23,7 @@
 #ifndef _MSGBUILDER_H
 #define _MSGBUILDER_H
 
-#include "../../ip_addr.h"
+#include "../../core/ip_addr.h"
 #include "defs.h"
 #include "dlg.h"
 #include "h_table.h"

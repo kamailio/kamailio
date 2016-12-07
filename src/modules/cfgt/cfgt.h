@@ -23,7 +23,7 @@
 #ifndef _CFGT_BIND_H
 #define _CFGT_BIND_H
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1

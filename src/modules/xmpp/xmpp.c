@@ -109,15 +109,15 @@
 #include <errno.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../data_lump_rpl.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_param.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_param.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "xode.h"
 #include "xmpp.h"

@@ -27,10 +27,10 @@
 
 #include "km_pg_con.h"
 #include "pg_mod.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../tls_hooks_init.h" 
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/tls_hooks_init.h" 
 #include <string.h>
 #include <time.h>
 #include <netinet/in.h>

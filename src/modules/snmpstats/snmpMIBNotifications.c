@@ -33,8 +33,8 @@
 
 #include "snmpstats_globals.h"
 #include "snmpMIBNotifications.h"
-#include "../../dprint.h"
-#include "../../config.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
 
 static oid snmptrap_oid[] = {1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0};
 

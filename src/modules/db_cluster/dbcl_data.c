@@ -28,13 +28,13 @@
  *  Module: \ref db_cluster
  */
 
-#include "../../parser/parse_param.h"
-#include "../../dprint.h"
-#include "../../hashes.h"
-#include "../../trim.h"
-#include "../../timer.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/trim.h"
+#include "../../core/timer.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 
 #include "dbcl_data.h"
 

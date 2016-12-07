@@ -40,14 +40,14 @@
 #include <errno.h>
 #include <signal.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../pt.h"
-#include "../../globals.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/pt.h"
+#include "../../core/globals.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../../lib/kmi/mi.h"
 #include "mi_fifo.h"
 #include "mi_parser.h"

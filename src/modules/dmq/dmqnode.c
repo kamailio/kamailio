@@ -21,8 +21,8 @@
  *
  */
 
-#include "../../ut.h"
-#include "../../resolve.h"
+#include "../../core/ut.h"
+#include "../../core/resolve.h"
 #include "dmqnode.h"
 #include "dmq.h"
 

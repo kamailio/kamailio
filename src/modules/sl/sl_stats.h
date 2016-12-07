@@ -22,7 +22,7 @@
 #ifndef _SL_STATS_H
 #define _SL_STATS_H
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 enum reply_type { RT_1xx = 0,  RT_200, RT_202, RT_2xx,
 		  RT_300, RT_301, RT_302, RT_3xx,

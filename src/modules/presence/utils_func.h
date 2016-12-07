@@ -34,11 +34,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_event.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_event.h"
 
 #define LCONTACT_BUF_SIZE 1024
 #define BAD_EVENT_CODE 489

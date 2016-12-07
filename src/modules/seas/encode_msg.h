@@ -20,8 +20,8 @@
  */
 
 
-#include "../../parser/hf.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/msg_parser.h"
 
 #define MAX_ERROR 32
 #define MAX_HEADERS 32

@@ -24,7 +24,7 @@
 #define _PUA_ADD_EV_H_
 
 #include "send_publish.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 /*
  *  should return:   0  if not changed ( fin_body points to publ->body)

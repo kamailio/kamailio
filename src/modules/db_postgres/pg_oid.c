@@ -32,8 +32,8 @@
 
 
 #include "pg_oid.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include <strings.h>
 #include <stdlib.h>
 #include <string.h>

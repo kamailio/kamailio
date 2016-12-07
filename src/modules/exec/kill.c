@@ -46,10 +46,10 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#include "../../mem/shm_mem.h" 
-#include "../../dprint.h"
-#include "../../timer.h"
-#include "../../locking.h"
+#include "../../core/mem/shm_mem.h" 
+#include "../../core/dprint.h"
+#include "../../core/timer.h"
+#include "../../core/locking.h"
 
 #include "kill.h"
 

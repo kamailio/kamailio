@@ -49,14 +49,14 @@
 #include <sys/resource.h>
 */
 #include <sys/wait.h>
-#include "../../mem/mem.h"
-#include "../../error.h"
-#include "../../config.h"
-#include "../../parser/msg_parser.h"
-#include "../../dprint.h"
-#include "../../dset.h"
-#include "../../action.h"
-#include "../../usr_avp.h"
+#include "../../core/mem/mem.h"
+#include "../../core/error.h"
+#include "../../core/config.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/dprint.h"
+#include "../../core/dset.h"
+#include "../../core/action.h"
+#include "../../core/usr_avp.h"
 
 #include "exec.h"
 

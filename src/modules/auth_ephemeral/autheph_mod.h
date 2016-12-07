@@ -28,8 +28,8 @@
 #ifndef AUTHEPH_MOD_H
 #define AUTHEPH_MOD_H
 
-#include "../../locking.h"
-#include "../../str.h"
+#include "../../core/locking.h"
+#include "../../core/str.h"
 #include "../../modules/auth/api.h"
 
 struct secret

@@ -22,8 +22,8 @@
 #ifndef _MAXFWD_API_H_
 #define _MAXFWD_API_H_
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef int (*process_maxfwd_f)(struct sip_msg *msg, int limit);
 

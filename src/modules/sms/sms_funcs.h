@@ -22,8 +22,8 @@
 #ifndef _SMS_FUNCS_H
 #define  _SMS_FUNCS_H
 
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
 #include <termios.h>
 #include "../../modules/tm/tm_load.h"
 

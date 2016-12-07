@@ -21,8 +21,8 @@
  */
 
 #include <string.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 #include "km_flat_id.h"
 
 

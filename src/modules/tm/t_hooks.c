@@ -22,11 +22,11 @@
 
 
 #include "stdlib.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../mem/mem.h"
-#include "../../usr_avp.h"
-#include "../../atomic_ops.h" /* membar_write() */
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/mem/mem.h"
+#include "../../core/usr_avp.h"
+#include "../../core/atomic_ops.h" /* membar_write() */
 #include "t_hooks.h"
 #include "t_lookup.h"
 #include "t_funcs.h"

@@ -23,9 +23,9 @@
 #ifndef _ASYNC_SLEEP_H_
 #define _ASYNC_SLEEP_H_
 
-#include "../../parser/msg_parser.h"
-#include "../../route_struct.h"
-#include "../../mod_fix.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/route_struct.h"
+#include "../../core/mod_fix.h"
 
 typedef struct async_param {
 	int type;

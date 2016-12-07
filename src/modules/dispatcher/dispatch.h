@@ -29,9 +29,9 @@
 #define _DISPATCH_H_
 
 #include <stdio.h>
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/rand/kam_rand.h"
 #include "../../modules/tm/tm_load.h"
 
 

@@ -39,9 +39,9 @@
 
 #define _GNU_SOURCE
 #include <stdio.h>
-#include "../../parser/contact/parse_contact.h"
-#include "../../parser/contact/contact.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/contact/contact.h"
+#include "../../core/parser/parse_uri.h"
 #include "encode_contact.h"
 #include "encode_uri.h"
 #include "xaddress.h"

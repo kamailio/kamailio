@@ -20,9 +20,9 @@
 
 #include "ctrl_socks.h"
 #include "init_socks.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 
 #ifdef USE_FIFO
 #include "fifo_server.h"

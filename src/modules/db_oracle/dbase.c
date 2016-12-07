@@ -27,8 +27,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <oci.h>
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db_pool.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "../../lib/srdb1/db_res.h"

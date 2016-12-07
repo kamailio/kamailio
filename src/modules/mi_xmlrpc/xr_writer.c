@@ -26,9 +26,9 @@
 
 
 #include <string.h>
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 #include "xr_writer.h"
 #include "mi_xmlrpc.h"
 

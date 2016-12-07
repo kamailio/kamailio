@@ -29,14 +29,14 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../timer.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/timer.h"
 #include "../../lib/srdb1/db.h"
-#include "../../str.h"
-#include "../../socket_info.h"
+#include "../../core/str.h"
+#include "../../core/socket_info.h"
 #include "../../lib/srutils/srjson.h"
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 #include "dlg_hash.h"
 #include "dlg_var.h"

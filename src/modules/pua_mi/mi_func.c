@@ -25,12 +25,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../parser/parse_expires.h"
-#include "../../parser/parse_uri.h"
-#include  "../../mem/mem.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/parser/parse_uri.h"
+#include  "../../core/mem/mem.h"
 #include "../../lib/kmi/mi.h"
-#include "../../ut.h"
-#include "../../strutils.h"
+#include "../../core/ut.h"
+#include "../../core/strutils.h"
 
 #include "../pua/pua_bind.h"
 #include "pua_mi.h"

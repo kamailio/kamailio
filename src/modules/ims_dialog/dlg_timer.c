@@ -33,8 +33,8 @@
  * Module: \ref dialog
  */
 
-#include "../../mem/shm_mem.h"
-#include "../../timer.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/timer.h"
 #include "dlg_timer.h"
 
 /*! global dialog timer */

@@ -26,7 +26,7 @@
 #ifndef _TLS_CONFIG_H
 #define _TLS_CONFIG_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "tls_domain.h"
 
 #include <openssl/ssl.h>

@@ -35,7 +35,7 @@
 #include <validator/validator.h>
 #include <validator/resolver.h>
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "dnssec_func.h"
 
 static struct libval_context  *libval_ctx = NULL;

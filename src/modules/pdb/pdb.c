@@ -24,9 +24,9 @@
  */
 
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
 #include <sys/time.h>
 #include <poll.h>

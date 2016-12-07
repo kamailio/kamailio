@@ -34,13 +34,13 @@
 #include <time.h>
 #include <stdlib.h>
 
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../str.h"
-#include "../../ut.h"
-#include "../../dprint.h"
-#include "../../parser/msg_parser.h"
-#include "../../data_lump_rpl.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/data_lump_rpl.h"
 #include "../../modules/tm/tm_load.h"
 #include "../usrloc/usrloc.h"
 #include "CPL_tree.h"

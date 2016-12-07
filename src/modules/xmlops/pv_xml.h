@@ -22,8 +22,8 @@
 #ifndef _PV_XML_H_
 #define _PV_XML_H_
 
-#include "../../sr_module.h"
-#include "../../pvar.h"
+#include "../../core/sr_module.h"
+#include "../../core/pvar.h"
 
 int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);

@@ -28,12 +28,12 @@
 
 
 #include <string.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../mod_fix.h"
-#include "../../route.h"
-#include "../../action.h"
-#include "../../fmsg.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mod_fix.h"
+#include "../../core/route.h"
+#include "../../core/action.h"
+#include "../../core/fmsg.h"
 #include "../usrloc/usrloc.h"
 #include "registrar.h"
 #include "common.h"

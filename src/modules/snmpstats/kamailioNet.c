@@ -41,8 +41,8 @@
 #include "snmpstats_globals.h"
 #include "utilities.h"
 #include "snmp_statistics.h"
-#include "../../globals.h"
-#include "../../tcp_options.h"
+#include "../../core/globals.h"
+#include "../../core/tcp_options.h"
 
 /** Initializes the kamailioNet module */
 void

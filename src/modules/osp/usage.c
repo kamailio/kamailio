@@ -34,7 +34,7 @@
 
 #include <osp/osp.h>
 #include "../rr/api.h"
-#include "../../usr_avp.h"
+#include "../../core/usr_avp.h"
 #include "usage.h"
 #include "destination.h"
 #include "osptoolkit.h"

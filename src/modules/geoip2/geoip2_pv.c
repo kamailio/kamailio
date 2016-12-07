@@ -27,9 +27,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../../dprint.h"
-#include "../../hashes.h"
-#include "../../pvar.h"
+#include "../../core/dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/pvar.h"
 
 #include "geoip2_pv.h"
 

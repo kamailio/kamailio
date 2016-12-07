@@ -22,15 +22,15 @@
  */
 
 
-#include "../../sr_module.h"
-#include "../../parser/parse_param.h"
-#include "../../data_lump.h"
-#include "../../mem/mem.h"
-#include "../../mod_fix.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_body.h"
-#include "../../parser/parser_f.h"
-#include "../../trim.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/data_lump.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mod_fix.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_body.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/trim.h"
 #include "ss7.h"
 #include <stdlib.h>
 #include <stdio.h>

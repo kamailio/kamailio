@@ -23,7 +23,7 @@
 #ifndef ADDRESS_H
 #define ADDRESS_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /* Pointer to current address hash table pointer */

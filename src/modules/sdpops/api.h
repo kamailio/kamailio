@@ -21,7 +21,7 @@
 
 #ifndef SDPOPS_API_H
 #define SDPOPS_API_H
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef int (*sdp_with_media_t)(struct sip_msg*, str*);
 typedef int (*sdp_with_transport_t)(struct sip_msg*, str*, int);

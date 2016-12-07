@@ -28,13 +28,13 @@
 #include <string.h>
 #include <time.h>
 
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/parse_param.h"
-#include "../../ut.h"
-#include "../../pvar.h"
-#include "../../lvalue.h"
-#include "../../shm_init.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/ut.h"
+#include "../../core/pvar.h"
+#include "../../core/lvalue.h"
+#include "../../core/shm_init.h"
 
 #include "mtree.h"
 

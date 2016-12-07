@@ -30,8 +30,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "../../str.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/str.h"
+#include "../../core/parser/parse_uri.h"
 
 #define REG_GRUU_SEP	'-'
 

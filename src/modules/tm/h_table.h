@@ -44,18 +44,18 @@
 #endif
 
 
-#include "../../clist.h"
-#include "../../parser/msg_parser.h"
-#include "../../types.h"
-#include "../../md5utils.h"
-#include "../../usr_avp.h"
+#include "../../core/clist.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/types.h"
+#include "../../core/md5utils.h"
+#include "../../core/usr_avp.h"
 #ifdef WITH_XAVP
-#include "../../xavp.h"
+#include "../../core/xavp.h"
 #endif
-#include "../../timer.h"
-#include "../../flags.h"
-#include "../../atomic_ops.h"
-#include "../../hash_func.h"
+#include "../../core/timer.h"
+#include "../../core/flags.h"
+#include "../../core/atomic_ops.h"
+#include "../../core/hash_func.h"
 #include "config.h"
 
 /* if TM_DIFF_RT_TIMEOUT is defined, different retransmissions timeouts
@@ -72,12 +72,12 @@ struct retr_buf;
 struct ua_client;
 struct async_state;
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "lock.h"
 #include "sip_msg.h"
 #include "t_hooks.h"
 #ifdef USE_DNS_FAILOVER
-#include "../../dns_cache.h"
+#include "../../core/dns_cache.h"
 #endif
 
 

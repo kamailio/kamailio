@@ -44,13 +44,13 @@
 #ifndef UTILS_H
 #define	UTILS_H
 
-#include "../../parser/hf.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/digest/digest.h"
-#include "../../parser/digest/digest_parser.h"
-#include "../../parser/parse_content.h"
-#include "../../data_lump_rpl.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/parser/digest/digest_parser.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/data_lump_rpl.h"
 
 int get_nonce_response(struct sip_msg *msg, str *username, str realm,str *nonce,str *response,
                 enum qop_type *qop,str *qop_str,str *nc,str *cnonce,str *uri, int is_proxy_auth);

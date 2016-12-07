@@ -29,9 +29,9 @@
 #include "h350_mod.h"
 #include "h350_exp_fn.h"
 
-#include "../../pvar.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
+#include "../../core/pvar.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
 
 #define H350_SIPURI_LOOKUP_LDAP_FILTER "(&(objectClass=SIPIdentity)(SIPIdentitySIPURI=%s))"
 #define H350_AUTH_FILTER_PATTERN "(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))"

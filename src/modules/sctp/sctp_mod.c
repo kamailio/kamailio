@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../shm_init.h"
-#include "../../sctp_core.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/shm_init.h"
+#include "../../core/sctp_core.h"
 
 #include "sctp_options.h"
 #include "sctp_server.h"

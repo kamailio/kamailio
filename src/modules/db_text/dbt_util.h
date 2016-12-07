@@ -25,7 +25,7 @@
 #ifndef _DBT_UTIL_H_
 #define _DBT_UTIL_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 int dbt_is_database(str *);
 

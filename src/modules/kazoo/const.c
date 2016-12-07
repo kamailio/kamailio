@@ -26,7 +26,7 @@
  * 2014-08  first version (2600hz)
  */
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 str str_event_message_summary = str_init("message-summary");
 str str_event_dialog = str_init("dialog");

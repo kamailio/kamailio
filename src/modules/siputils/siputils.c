@@ -55,16 +55,16 @@
 
 #include <assert.h>
 
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../script_cb.h"
-#include "../../locking.h"
-#include "../../ut.h"
-#include "../../mod_fix.h"
-#include "../../error.h"
-#include "../../kemi.h"
-#include "../../parser/parse_option_tags.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/script_cb.h"
+#include "../../core/locking.h"
+#include "../../core/ut.h"
+#include "../../core/mod_fix.h"
+#include "../../core/error.h"
+#include "../../core/kemi.h"
+#include "../../core/parser/parse_option_tags.h"
 
 #include "ring.h"
 #include "options.h"

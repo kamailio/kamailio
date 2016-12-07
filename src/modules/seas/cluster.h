@@ -22,7 +22,7 @@
 
 #ifndef cluster_h
 #define cluster_h
-#include "../../str.h"
+#include "../../core/str.h"
 #include "seas.h"
 
 #define MAX_CLUSTERS 10

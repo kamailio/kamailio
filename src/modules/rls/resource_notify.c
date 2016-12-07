@@ -24,11 +24,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <libxml/parser.h>
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_from.h"
-#include "../../strutils.h"
-#include "../../hashes.h"
-#include "../../trim.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/strutils.h"
+#include "../../core/hashes.h"
+#include "../../core/trim.h"
 #include "../pua/hash.h"
 #include "rls.h"
 #include "notify.h"

@@ -36,9 +36,9 @@
 #include <mysql.h>
 #include <errmsg.h>
 #include <mysql_version.h>
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../async_task.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/async_task.h"
 #include "../../lib/srdb1/db_query.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "db_mysql.h"

@@ -24,9 +24,9 @@
 #include <string.h>
 #include <stdio.h>
 #include "uid_domain_mod.h"
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/ut.h"
 #include "hash.h"
 
 

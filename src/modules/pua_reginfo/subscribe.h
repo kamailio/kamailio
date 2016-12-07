@@ -24,7 +24,7 @@
 #ifndef SUBSCRIBE_H
 #define SUBSCRIBE_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int reginfo_subscribe(struct sip_msg*, char*, char*);
 int reginfo_subscribe2(struct sip_msg*, char*, char*);

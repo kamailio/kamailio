@@ -30,16 +30,16 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../pvapi.h"
-#include "../../dset.h"
-#include "../../basex.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/pvapi.h"
+#include "../../core/dset.h"
+#include "../../core/basex.h"
 
-#include "../../strutils.h"
-#include "../../parser/parse_content.h"
+#include "../../core/strutils.h"
+#include "../../core/parser/parse_content.h"
 
 
 #include "smsops_impl.h"

@@ -28,12 +28,12 @@
  *  Module: \ref db_cluster
  */
 
-#include "../../dprint.h"
-#include "../../hashes.h"
-#include "../../trim.h"
-#include "../../globals.h"
+#include "../../core/dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/trim.h"
+#include "../../core/globals.h"
 #include "../../lib/srdb1/db.h"
-#include "../../timer.h"
+#include "../../core/timer.h"
 
 #include "dbcl_data.h"
 #include "dbcl_api.h"

@@ -29,11 +29,11 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "../../ut.h"
-#include "../../parser/hf.h"
-#include "../../sr_module.h"
-#include "../../pvar.h"
-#include "../../mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/parser/hf.h"
+#include "../../core/sr_module.h"
+#include "../../core/pvar.h"
+#include "../../core/mem/mem.h"
 
 #include "ld_session.h"
 #include "ldap_exp_fn.h"

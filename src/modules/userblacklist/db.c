@@ -29,8 +29,8 @@
 #include "db_userblacklist.h"
 
 #include "../../lib/srdb1/db.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 #include "../../lib/trie/dtrie.h"
 
 

@@ -24,9 +24,9 @@
 #define _UID_DOMAIN_MOD_H
 
 #include "../../lib/srdb2/db.h"
-#include "../../str.h"
-#include "../../usr_avp.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
+#include "../../core/parser/msg_parser.h"
 #include "domain.h"
 
 

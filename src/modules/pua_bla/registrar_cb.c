@@ -28,7 +28,7 @@
 
 #include<stdio.h>
 #include<stdlib.h>
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "../pua/pua.h"
 #include "registrar_cb.h"
 #include "pua_bla.h"

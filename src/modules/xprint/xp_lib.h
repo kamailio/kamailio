@@ -28,7 +28,7 @@
 #ifndef _XP_LIB_H_
 #define _XP_LIB_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 typedef int (*item_func_t) (struct sip_msg*, str*, str*, int, int);
 typedef void (*item_free_t) (str*);

@@ -26,17 +26,17 @@
  */
 
 #include <string.h>
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
-#include "../../globals.h"
-#include "../../md5.h"
-#include "../../crc.h"
-#include "../../ip_addr.h"
-#include "../../dset.h"
-#include "../../socket_info.h"
-#include "../../compiler_opt.h"
-#include "../../parser/parse_cseq.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/globals.h"
+#include "../../core/md5.h"
+#include "../../core/crc.h"
+#include "../../core/ip_addr.h"
+#include "../../core/dset.h"
+#include "../../core/socket_info.h"
+#include "../../core/compiler_opt.h"
+#include "../../core/parser/parse_cseq.h"
+#include "../../core/rand/kam_rand.h"
 #include "config.h"
 #include "ut.h"
 #include "h_table.h"
@@ -47,15 +47,15 @@
 #include "uac.h"
 #include "t_stats.h"
 #ifdef USE_DNS_FAILOVER
-#include "../../dns_cache.h"
-#include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
+#include "../../core/dns_cache.h"
+#include "../../core/cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 #ifdef WITH_EVENT_LOCAL_REQUEST
-#include "../../data_lump.h"
-#include "../../receive.h"
-#include "../../route.h"
-#include "../../action.h"
-#include "../../onsend.h"
+#include "../../core/data_lump.h"
+#include "../../core/receive.h"
+#include "../../core/route.h"
+#include "../../core/action.h"
+#include "../../core/onsend.h"
 #include "t_lookup.h"
 #include "t_fwd.h"
 #endif

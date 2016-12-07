@@ -30,8 +30,8 @@
 * Module: \ref srutils
 */
 
-#include "../../md5.h"
-#include "../../ut.h"
+#include "../../core/md5.h"
+#include "../../core/ut.h"
 #include "shautils.h"
 
 /*! \brief Compute MD5 checksum */

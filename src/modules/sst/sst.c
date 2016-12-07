@@ -45,7 +45,7 @@
 #include "sst_handlers.h" /* also includes sr_module.h needed by
                              handlers */
 #ifdef STATISTICS
-#include "../../counters.h"
+#include "../../core/counters.h"
 #endif
 
 MODULE_VERSION

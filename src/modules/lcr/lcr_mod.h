@@ -35,9 +35,9 @@
 #include <stdio.h>
 #include <pcre.h>
 #include "../../lib/kmi/mi.h"
-#include "../../locking.h"
-#include "../../parser/parse_uri.h"
-#include "../../ip_addr.h"
+#include "../../core/locking.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/ip_addr.h"
 
 #define MAX_PREFIX_LEN 16
 #define MAX_URI_LEN 256

@@ -38,10 +38,10 @@
 #include <sys/stat.h>
 #include <db.h>
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_val.h"
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 /*max number of columns in a table*/
 #define MAX_NUM_COLS 32

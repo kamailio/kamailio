@@ -23,8 +23,8 @@
 #ifndef _UAC_REPLACE_H_
 #define _UAC_REPLACE_H_
 
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
 #include "../../modules/tm/t_hooks.h"
 
 #define UAC_NO_RESTORE      (0)

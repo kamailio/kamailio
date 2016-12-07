@@ -25,10 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/mem/mem.h"
 
 #include "msrp_parser.h"
 

@@ -33,8 +33,8 @@
 
 #include "ldap_connect.h"
 #include "ld_session.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 
 int ldap_connect_ex(char* _ld_name, int llevel)
 {

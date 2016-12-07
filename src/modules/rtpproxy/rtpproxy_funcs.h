@@ -22,9 +22,9 @@
 #ifndef _RTPPROXY_FUNCS_H
 #define _RTPPROXY_FUNCS_H
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/contact/contact.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/contact/contact.h"
 
 int extract_body(struct sip_msg * , str *);
 int check_content_type(struct sip_msg * );

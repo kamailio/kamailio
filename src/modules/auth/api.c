@@ -23,11 +23,11 @@
 
 #include <string.h>
 #include "api.h"
-#include "../../dprint.h"
-#include "../../parser/digest/digest.h"
-#include "../../sr_module.h"
-#include "../../ut.h"
-#include "../../data_lump_rpl.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
+#include "../../core/data_lump_rpl.h"
 #include "auth_mod.h"
 #include "nonce.h"
 #include "ot_nonce.h"

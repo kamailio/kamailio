@@ -25,14 +25,14 @@
 #include <netinet/tcp.h>
 #include <errno.h>
 
-#include "../../dprint.h"
-#include "../../tcp_options.h"
-#include "../../tcp_conn.h"
-#include "../../globals.h"
-#include "../../pass_fd.h"
-#include "../../timer.h"
-#include "../../fmsg.h"
-#include "../../sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/tcp_options.h"
+#include "../../core/tcp_conn.h"
+#include "../../core/globals.h"
+#include "../../core/pass_fd.h"
+#include "../../core/timer.h"
+#include "../../core/fmsg.h"
+#include "../../core/sr_module.h"
 
 
 /* globally enabled by default */

@@ -30,11 +30,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../hashes.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/hashes.h"
 #include "../../lib/kmi/mi.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/rand/kam_rand.h"
 #include "ts_hash.h"
 #include "ts_handlers.h"
 

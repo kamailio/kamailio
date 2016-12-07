@@ -26,10 +26,10 @@
 #include <string.h> /* for memset() */
 #include <stdlib.h> /* For atoi() */
 
-#include "../../parser/parser_f.h"
-#include "../../parser/sdp/sdp.h"
-#include "../../ut.h"
-#include "../../dprint.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/parser/sdp/sdp.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
 #include "../dialog/dlg_hash.h"
 
 #include "qos_mi.h"

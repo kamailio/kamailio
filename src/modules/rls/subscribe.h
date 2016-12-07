@@ -25,7 +25,7 @@
 #define RLS_SUBSCRIBE_H
 
 #include <libxml/parser.h>
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int rls_handle_subscribe0(struct sip_msg* msg);
 int w_rls_handle_subscribe(struct sip_msg* msg, char* watcher_uri);

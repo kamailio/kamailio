@@ -29,9 +29,9 @@
 
 #include "notify.h"
 #include "reg_mod.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../modules/ims_usrloc_pcscf/usrloc.h"
 #include "ul_callback.h"
 #include <libxml/parser.h>

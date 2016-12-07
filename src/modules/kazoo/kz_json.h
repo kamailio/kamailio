@@ -29,7 +29,7 @@
 #ifndef KZ_JSON_H_
 #define KZ_JSON_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include <json.h>
 
 

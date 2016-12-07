@@ -26,13 +26,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../pvar.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/pvar.h"
 #include "../misc_radius/radius.h"
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "auth_radius.h"
 #include "authorize.h"
 #include "extra.h"

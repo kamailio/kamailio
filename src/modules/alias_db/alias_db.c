@@ -27,13 +27,13 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
-#include "../../mod_fix.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/mod_fix.h"
 
 #include "alookup.h"
 #include "api.h"

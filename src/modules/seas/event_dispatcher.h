@@ -20,7 +20,7 @@
  */
 
 
-#include "../../ip_addr.h"
+#include "../../core/ip_addr.h"
 
 struct unc_as{
    char valid;

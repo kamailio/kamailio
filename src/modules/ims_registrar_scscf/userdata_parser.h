@@ -47,7 +47,7 @@
 #include <libxml/xmlschemas.h>
 #include <libxml/xmlschemastypes.h>
 #include <libxml/parser.h>
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 extern char *scscf_user_data_xsd;
 extern char *scscf_user_data_dtd;

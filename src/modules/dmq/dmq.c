@@ -30,15 +30,15 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../usr_avp.h"
-#include "../../pt.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/usr_avp.h"
+#include "../../core/pt.h"
 #include "../../lib/kmi/mi.h"
-#include "../../hashes.h"
-#include "../../mod_fix.h"
-#include "../../rpc_lookup.h"
+#include "../../core/hashes.h"
+#include "../../core/mod_fix.h"
+#include "../../core/rpc_lookup.h"
 
 #include "dmq.h"
 #include "dmq_funcs.h"

@@ -27,8 +27,8 @@
  */
 
 #include "db_drv.h"
-#include "../../str.h"
-#include "../../list.h"
+#include "../../core/str.h"
+#include "../../core/list.h"
 
 
 #ifdef __cplusplus

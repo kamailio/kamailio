@@ -1,8 +1,8 @@
 #ifndef _RTPENGINE_HASH_H
 #define _RTPENGINE_HASH_H
 
-#include "../../str.h"
-#include "../../locking.h"
+#include "../../core/str.h"
+#include "../../core/locking.h"
 
 
 /* table entry */

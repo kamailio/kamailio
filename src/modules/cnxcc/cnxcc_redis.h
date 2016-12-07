@@ -29,7 +29,7 @@
 #include <hiredis/async.h>
 #include <hiredis/adapters/libevent.h>
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "cnxcc_mod.h"
 
 struct redis {

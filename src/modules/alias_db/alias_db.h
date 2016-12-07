@@ -31,7 +31,7 @@
 #define _ALIAS_DB_H_
 
 #include "../../lib/srdb1/db.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /* Module parameters variables */

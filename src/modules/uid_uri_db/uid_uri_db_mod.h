@@ -36,7 +36,7 @@
 #define URIDB_MOD_H
 
 #include "../../lib/srdb2/db.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 /*
  * Module parameters variables

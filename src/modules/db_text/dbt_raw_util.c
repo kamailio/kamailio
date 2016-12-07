@@ -27,7 +27,7 @@
 #include <regex.h>
 #include <ctype.h>
 
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 
 #include "dbt_raw_util.h"
 

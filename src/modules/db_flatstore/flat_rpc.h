@@ -31,7 +31,7 @@
  * Flatstore management interface
  */
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 extern rpc_export_t flat_rpc[];
 

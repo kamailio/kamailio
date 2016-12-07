@@ -22,7 +22,7 @@
 
 #include "dmq_funcs.h"
 #include "notification_peer.h"
-#include "../../dset.h"
+#include "../../core/dset.h"
 
 /**
  * @brief register a DMQ peer

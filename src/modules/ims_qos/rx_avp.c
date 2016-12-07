@@ -55,7 +55,7 @@
 #include "rx_authdata.h"
 #include "rx_avp.h"
 #include "mod.h"
-#include "../../parser/sdp/sdp_helpr_funcs.h"
+#include "../../core/parser/sdp/sdp_helpr_funcs.h"
 #include <regex.h>
 
 #include "../../lib/ims/ims_getters.h"

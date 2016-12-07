@@ -32,9 +32,9 @@
 #include "enum_mod.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/mod_fix.h"
 #include "enum.h"
 
 MODULE_VERSION

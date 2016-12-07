@@ -29,7 +29,7 @@
 #ifndef _DR_LOAD_
 #define _DR_LOAD_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 #include "routing.h"
 

@@ -33,11 +33,11 @@
 
 #include <time.h>
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../lib/srutils/srjson.h"
 #include "../../lib/srutils/sruid.h"
-#include "../../locking.h"
-#include "../../str.h"
+#include "../../core/locking.h"
+#include "../../core/str.h"
 #include "../../modules/tm/h_table.h"
 
 

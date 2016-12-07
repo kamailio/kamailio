@@ -37,9 +37,9 @@
 
 
 
-#include "../../sr_module.h"
-#include "../../route_struct.h"
-#include "../../str.h"
+#include "../../core/sr_module.h"
+#include "../../core/route_struct.h"
+#include "../../core/str.h"
 #include <stdio.h>
 
 MODULE_VERSION

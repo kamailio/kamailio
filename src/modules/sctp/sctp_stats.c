@@ -31,7 +31,7 @@
 
 #ifdef USE_SCTP_STATS
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 #include "sctp_server.h"
 

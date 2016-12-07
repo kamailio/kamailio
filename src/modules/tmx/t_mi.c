@@ -30,10 +30,10 @@
  */
 
 #include <stdlib.h>
-#include "../../parser/parse_from.h"
+#include "../../core/parser/parse_from.h"
 #include "../../modules/tm/ut.h"
 #include "../../lib/kmi/mi.h"
-#include "../../str_list.h"
+#include "../../core/str_list.h"
 #include "tmx_mod.h"
 
 

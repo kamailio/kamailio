@@ -30,7 +30,7 @@
  * \ingroup outbound
  */
 
-#include "../../cfg/cfg.h"
+#include "../../core/cfg/cfg.h"
 #include "config.h"
 
 struct cfg_group_outbound default_outbound_cfg = {

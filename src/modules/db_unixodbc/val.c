@@ -27,8 +27,8 @@
  */
 
 
-#include "../../dprint.h"
-#include "../../strutils.h"
+#include "../../core/dprint.h"
+#include "../../core/strutils.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "db_unixodbc.h"
 #include "val.h"

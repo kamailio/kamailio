@@ -59,8 +59,8 @@
 #include "transaction.h"
 #include "session.h"
 
-#include "../../pt.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/pt.h"
+#include "../../core/cfg/cfg_struct.h"
 
 dp_config *config=0;		/**< Configuration for this diameter peer 	*/
 

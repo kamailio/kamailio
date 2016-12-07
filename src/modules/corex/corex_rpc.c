@@ -24,16 +24,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../pt.h"
-#include "../../cfg/cfg.h"
-#include "../../cfg/cfg_ctx.h"
-#include "../../socket_info.h"
-#include "../../name_alias.h"
-#include "../../mem/shm_mem.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/pt.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
+#include "../../core/socket_info.h"
+#include "../../core/name_alias.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 
 static const char* corex_rpc_list_sockets_doc[2] = {

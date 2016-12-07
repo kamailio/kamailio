@@ -29,7 +29,7 @@
 #define DLIST_H
 
 #include <stdio.h>
-#include "../../str.h"
+#include "../../core/str.h"
 #include "usrloc.h"
 #include "udomain.h"
 

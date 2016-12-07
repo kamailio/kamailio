@@ -20,8 +20,8 @@
  * 
  */
 
-#include "../../parser/msg_parser.h"
-#include "../../globals.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/globals.h"
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/mod_export.h"
 #include "ocs_avp_helper.h"

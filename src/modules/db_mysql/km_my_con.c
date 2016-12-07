@@ -29,9 +29,9 @@
 #include "km_my_con.h"
 #include "km_db_mysql.h"
 #include <mysql_version.h>
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "db_mysql.h"
 
 /*! \brief

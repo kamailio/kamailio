@@ -23,9 +23,9 @@
 #include <string.h>
 
 #include "mf_funcs.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
-#include "../../data_lump.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/data_lump.h"
 
 
 #define MF_HDR "Max-Forwards: "

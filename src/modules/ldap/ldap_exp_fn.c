@@ -30,11 +30,11 @@
 
 #include <ldap.h>
 
-#include "../../ut.h"
-#include "../../str.h"
-#include "../../pvar.h"
-#include "../../usr_avp.h"
-#include "../../mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/str.h"
+#include "../../core/pvar.h"
+#include "../../core/usr_avp.h"
+#include "../../core/mem/mem.h"
 #include "ldap_exp_fn.h"
 #include "ldap_connect.h"
 #include "ldap_api_fn.h"

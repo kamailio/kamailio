@@ -37,10 +37,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_to.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_to.h"
 #include "../misc_radius/radius.h"
 #include "../../modules/acc/acc_api.h"
 #include "acc_radius_mod.h"

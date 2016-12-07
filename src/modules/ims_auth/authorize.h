@@ -46,7 +46,7 @@
 #define AUTHORIZE_H
 
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "api.h"
 #include "conversion.h"
 #include "rfc2617.h"

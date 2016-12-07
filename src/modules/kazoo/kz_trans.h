@@ -29,7 +29,7 @@
 #ifndef _KZ_TRANS_H_
 #define _KZ_TRANS_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 
 

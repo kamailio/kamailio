@@ -22,7 +22,7 @@
 #ifndef _SMSOPS_TRANS_H_
 #define _SMSOPS_TRANS_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 
 int smsdump(struct sip_msg *, char *, char *);

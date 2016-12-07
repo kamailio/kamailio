@@ -26,7 +26,7 @@
 #ifndef RFC2617_H
 #define RFC2617_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 #define HASHLEN 16

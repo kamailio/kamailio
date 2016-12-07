@@ -25,9 +25,9 @@
  * \ingroup http_client
  */
 
-#include "../../dprint.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/dprint.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "http_client.h"
 #include "curlcon.h"
 

@@ -38,11 +38,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb2/db.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/mem/mem.h"
 #include "../../modules/auth/api.h"
 #include "authorize.h"
 #include "aaa_avps.h"

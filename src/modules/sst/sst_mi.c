@@ -29,7 +29,7 @@
  */
 
 
-#include "../../ut.h"
+#include "../../core/ut.h"
 #include "../../lib/kmi/mi.h"
 #include "../dialog/dlg_load.h"
 #include "sst_handlers.h"

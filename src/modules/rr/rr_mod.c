@@ -31,16 +31,16 @@
 #include <sys/types.h>
 #include <regex.h>
 
-#include "../../sr_module.h"
-#include "../../ut.h"
-#include "../../error.h"
-#include "../../pvar.h"
-#include "../../mem/mem.h"
-#include "../../mod_fix.h"
-#include "../../kemi.h"
-#include "../../parser/parse_rr.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
+#include "../../core/sr_module.h"
+#include "../../core/ut.h"
+#include "../../core/error.h"
+#include "../../core/pvar.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 #include "../outbound/api.h"
 #include "loose.h"
 #include "record.h"
@@ -49,7 +49,7 @@
 
 #ifdef ENABLE_USER_CHECK
 #include <string.h>
-#include "../../str.h"
+#include "../../core/str.h"
 str i_user = {0,0};
 #endif
 

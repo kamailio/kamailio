@@ -29,7 +29,7 @@
  */
 
 #include <osp/osptrans.h>
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "osptoolkit.h"
 
 static OSPTTHREADRETURN ospReportUsageWork(void* usagearg);

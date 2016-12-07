@@ -27,22 +27,22 @@
 
 #include <time.h>
 
-#include "../../dprint.h"
-#include "../../timer.h"
+#include "../../core/dprint.h"
+#include "../../core/timer.h"
 
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../hashes.h"
-#include "../../locking.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_expires.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/hashes.h"
+#include "../../core/locking.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 #include "../../modules/tm/tm_load.h"
 

@@ -27,7 +27,7 @@
 #ifndef _UL_CALLBACKS_H
 #define _UL_CALLBACKS_H
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 /* forward declaration for ucontact_t */
 struct ucontact;

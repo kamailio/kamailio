@@ -34,9 +34,9 @@
 #include <time.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 
 #include "km_bdb_util.h"
 #include "km_bdb_lib.h"

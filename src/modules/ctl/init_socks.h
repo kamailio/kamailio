@@ -22,7 +22,7 @@
 #define _init_socks_h
 #include <sys/types.h>
 #include <sys/un.h>
-#include "../../ip_addr.h"
+#include "../../core/ip_addr.h"
 
 enum socket_protos	{	UNKNOWN_SOCK=0, UDP_SOCK, TCP_SOCK, 
 						UNIXS_SOCK, UNIXD_SOCK

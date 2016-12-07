@@ -35,7 +35,7 @@
 #ifndef MOD_PATH_H
 #define MOD_PATH_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 /*
  * Prepend own uri to Path header

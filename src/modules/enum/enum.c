@@ -49,17 +49,17 @@
 #include <stdlib.h>
 
 #include "enum.h"
-#include "../../sr_module.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
-#include "../../ut.h"
-#include "../../resolve.h"
-#include "../../mem/mem.h"
-#include "../../dset.h"
-#include "../../qvalue.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/ut.h"
+#include "../../core/resolve.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dset.h"
+#include "../../core/qvalue.h"
 #include "enum_mod.h"
-#include "../../strutils.h"
-#include "../../pvar.h"
+#include "../../core/strutils.h"
+#include "../../core/pvar.h"
 
 /*
  * Input: E.164 number w/o leading +

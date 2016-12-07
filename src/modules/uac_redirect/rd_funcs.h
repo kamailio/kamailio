@@ -23,9 +23,9 @@
 #ifndef _TM_T_REDIRECT_H
 #define _TM_T_REDIRECT_H
 
-#include "../../parser/msg_parser.h"
-#include "../../sr_module.h"
-#include "../../str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
 #include "../../modules/tm/tm_load.h"
 #include "../acc/acc_logic.h"
 

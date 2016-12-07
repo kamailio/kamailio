@@ -20,7 +20,7 @@
 
 
 #include <stdio.h>
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../presence/bind_presence.h"
 #include "../presence/event_list.h"
 

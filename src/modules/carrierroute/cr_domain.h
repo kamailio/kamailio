@@ -28,8 +28,8 @@
 #ifndef CR_DOMAIN_H
 #define CR_DOMAIN_H
 
-#include "../../str.h"
-#include "../../flags.h"
+#include "../../core/str.h"
+#include "../../core/flags.h"
 #include "../../lib/trie/dtrie.h"
 
 

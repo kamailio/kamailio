@@ -49,7 +49,7 @@
 #include "ucontact.h"
 #include "udomain.h"
 #include "subscribe.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "ul_mod.h"
 
 /*! nat branch flag */

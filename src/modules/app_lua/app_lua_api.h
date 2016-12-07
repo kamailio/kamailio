@@ -26,7 +26,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 /**
  * version variable stores a version counter for each script loaded.

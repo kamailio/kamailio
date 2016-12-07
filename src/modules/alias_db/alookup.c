@@ -28,15 +28,15 @@
 
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../action.h"
-#include "../../config.h"
-#include "../../ut.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/dprint.h"
+#include "../../core/action.h"
+#include "../../core/config.h"
+#include "../../core/ut.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../lib/srdb1/db.h"
-#include "../../mod_fix.h"
-#include "../../dset.h"
-#include "../../lvalue.h"
+#include "../../core/mod_fix.h"
+#include "../../core/dset.h"
+#include "../../core/lvalue.h"
 
 #include "alias_db.h"
 #include "alookup.h"

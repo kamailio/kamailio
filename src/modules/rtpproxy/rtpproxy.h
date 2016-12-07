@@ -25,7 +25,7 @@
 #define _RTPPROXY_H
 
 #include <sys/uio.h>
-#include "../../str.h"
+#include "../../core/str.h"
 
 /* Handy macros */
 #define STR2IOVEC(sx, ix)       do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)

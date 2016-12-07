@@ -31,7 +31,7 @@
 #ifndef _DLG_CSEQ_H_
 #define _DLG_CSEQ_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "dlg_hash.h"
 
 int dlg_register_cseq_callbacks(void);

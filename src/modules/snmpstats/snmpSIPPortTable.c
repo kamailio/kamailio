@@ -37,7 +37,7 @@
 #include <net-snmp/library/snmp_assert.h>
 
 #include "snmp_statistics.h"
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 
 #include "snmpstats_globals.h"
 #include "snmpSIPPortTable.h"

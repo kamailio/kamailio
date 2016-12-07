@@ -57,7 +57,7 @@
 #ifndef I_CSCF_NDS_H
 #define I_CSCF_NDS_H
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
  
 #define MSG_403 "Forbidden" 
 #define MSG_500 "I-CSCF Error while stripping untrusted headers"

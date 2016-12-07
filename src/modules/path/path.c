@@ -31,11 +31,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
-#include "../../parser/parse_param.h"
-#include "../../strutils.h"
-#include "../../dset.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/strutils.h"
+#include "../../core/dset.h"
 
 #include "path.h"
 #include "path_mod.h"

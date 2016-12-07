@@ -27,10 +27,10 @@
  *
  */
 
-#include "../../modparam.h"
-#include "../../dprint.h"
-#include "../../compiler_opt.h"
-#include "../../counters.h"
+#include "../../core/modparam.h"
+#include "../../core/dprint.h"
+#include "../../core/compiler_opt.h"
+#include "../../core/counters.h"
 
 MODULE_VERSION
 

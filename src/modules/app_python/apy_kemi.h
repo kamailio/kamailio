@@ -23,7 +23,7 @@
 #define __APY_KEMI_H__
 
 #include <Python.h>
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int sr_apy_init_ksr(void);
 void sr_apy_destroy_ksr(void);

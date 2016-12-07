@@ -23,7 +23,7 @@
 #ifndef _XMPP_SIMPLE_PRES
 #define _XMPP_SIMPLE_PRES
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 void pres_Xmpp2Sip(char* xmpp_msg, int type, void *param);
 

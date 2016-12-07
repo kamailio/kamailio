@@ -24,8 +24,8 @@
 #ifndef TCP_KEEPALIVE_H_
 #define TCP_KEEPALIVE_H_
 
-#include "../../tcp_conn.h"
-#include "../../events.h"
+#include "../../core/tcp_conn.h"
+#include "../../core/events.h"
 
 extern int tcp_closed_event;
 extern int tcp_closed_routes[_TCP_CLOSED_REASON_MAX];

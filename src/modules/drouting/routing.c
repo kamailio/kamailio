@@ -30,10 +30,10 @@
 #include <errno.h>
 #include <limits.h>
 
-#include "../../str.h"
-#include "../../resolve.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/str.h"
+#include "../../core/resolve.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "routing.h"
 #include "prefix_tree.h"

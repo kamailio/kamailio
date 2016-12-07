@@ -23,7 +23,7 @@
 #ifndef __JAVA_IFACE_H__
 #define	__JAVA_IFACE_H__
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int j_nst_exec_0(struct sip_msg *, char *, char *);
 int j_nst_exec_1(struct sip_msg *, char *, char *, char *);

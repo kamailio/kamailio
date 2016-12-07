@@ -35,7 +35,7 @@
  */
 
 #include "../../lib/srdb2/db_cmd.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 /** Builds an UPDATE SQL statement.

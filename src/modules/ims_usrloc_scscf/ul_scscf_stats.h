@@ -8,7 +8,7 @@
 #ifndef UL_SCSCF_STATS_H
 #define	UL_SCSCF_STATS_H
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 extern struct ul_scscf_counters_h ul_scscf_cnts_h;
 

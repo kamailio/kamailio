@@ -62,7 +62,7 @@
 #include "imsapp.h"
 #include "epcapp.h"
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 
 

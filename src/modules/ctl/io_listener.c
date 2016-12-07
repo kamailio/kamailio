@@ -18,15 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../globals.h"
-#include "../../pt.h"  /* process_count */
-#include "../../timer.h"
-#include "../../timer_ticks.h"
-#include "../../tsend.h"
-#include "../../mem/mem.h"
-#include "../../rpc.h" /* who & ls rpcs */
-#include "../../ut.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/globals.h"
+#include "../../core/pt.h"  /* process_count */
+#include "../../core/timer.h"
+#include "../../core/timer_ticks.h"
+#include "../../core/tsend.h"
+#include "../../core/mem/mem.h"
+#include "../../core/rpc.h" /* who & ls rpcs */
+#include "../../core/ut.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "ctrl_socks.h"
 #include "binrpc_run.h"
@@ -38,7 +38,7 @@
 #include "ctl.h"
 
 #define HANDLE_IO_INLINE
-#include "../../io_wait.h"
+#include "../../core/io_wait.h"
 #include <fcntl.h> /* required by io_wait.h if SIGIO_RT is used */
 #include <sys/uio.h> /* iovec */
 

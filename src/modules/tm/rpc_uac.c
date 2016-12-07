@@ -18,11 +18,11 @@
  */
 
 #include "rpc_uac.h"
-#include "../../rpc.h"
-#include "../../socket_info.h"
-#include "../../ut.h"
-#include "../../parser/parse_from.h"
-#include "../../str_list.h"
+#include "../../core/rpc.h"
+#include "../../core/socket_info.h"
+#include "../../core/ut.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/str_list.h"
 #include "ut.h"
 #include "dlg.h"
 #include "uac.h"

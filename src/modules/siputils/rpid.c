@@ -28,15 +28,15 @@
 
 #include <string.h>
 #include <strings.h>
-#include "../../str.h"
-#include "../../data_lump.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_nameaddr.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parser_f.h"
-#include "../../ut.h"
-#include "../../pvar.h"
+#include "../../core/str.h"
+#include "../../core/data_lump.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_nameaddr.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/ut.h"
+#include "../../core/pvar.h"
 #include "rpid.h"
 
 

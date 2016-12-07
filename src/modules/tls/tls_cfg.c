@@ -25,12 +25,12 @@
  */
 
 #include "tls_cfg.h"
-#include "../../config.h"
-#include "../../str.h"
-#include "../../ut.h"
-#include "../../pt.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
+#include "../../core/config.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
+#include "../../core/pt.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
 
 struct cfg_group_tls default_tls_cfg = {
 	0, /* tls_force_run */

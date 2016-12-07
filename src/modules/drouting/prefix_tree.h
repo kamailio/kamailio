@@ -30,8 +30,8 @@
 #ifndef prefix_tree_h
 #define prefix_tree_h
 
-#include "../../str.h"
-#include "../../ip_addr.h"
+#include "../../core/str.h"
+#include "../../core/ip_addr.h"
 #include "dr_time.h"
 
 #define PTREE_CHILDREN 13  //decimal digits, '*', '#',  '+'

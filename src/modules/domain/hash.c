@@ -21,10 +21,10 @@
  */
 
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../hashes.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/hashes.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/kmi/mi.h"
 #include "domain_mod.h"
 #include <stdlib.h>

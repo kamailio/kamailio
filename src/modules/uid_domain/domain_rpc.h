@@ -23,7 +23,7 @@
 #ifndef _DOMAIN_RPC_H
 #define _DOMAIN_RPC_H
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 extern rpc_export_t domain_rpc[];
 

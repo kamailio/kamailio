@@ -44,7 +44,7 @@
 #ifndef _CDP__H
 #define _CDP__H
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 #define M_NAME "cdp"
 

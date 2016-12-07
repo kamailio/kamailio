@@ -21,14 +21,14 @@
 
 #include <Python.h>
 
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
-#include "../../parser/parse_param.h"
-#include "../../parser/msg_parser.h"
-#include "../../dprint.h"
-#include "../../action.h"
-#include "../../config.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/dprint.h"
+#include "../../core/action.h"
+#include "../../core/config.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "python_exec.h"
 #include "app_python_mod.h"

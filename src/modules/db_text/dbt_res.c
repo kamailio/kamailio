@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 
 #include "dbt_res.h"
 

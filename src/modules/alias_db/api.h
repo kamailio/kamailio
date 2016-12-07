@@ -1,6 +1,6 @@
 #ifndef ALIASDB_API_H
 #define ALIASDB_API_H
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef int (*alias_db_lookup_t)(sip_msg_t*, str table);
 typedef int (*alias_db_lookup_ex_t)(sip_msg_t*, str table, unsigned long flags);

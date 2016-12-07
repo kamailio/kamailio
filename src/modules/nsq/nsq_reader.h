@@ -34,8 +34,8 @@
 
 #include <json.h>
 
-#include "../../sr_module.h"
-#include "../../fmsg.h"
+#include "../../core/sr_module.h"
+#include "../../core/fmsg.h"
 #include "nsq.h"
 #include "nsq_json.h"
 

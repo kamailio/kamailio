@@ -28,8 +28,8 @@
 #include "config.h"
 
 #include "t_funcs.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_msgbuilder.h"

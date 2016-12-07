@@ -63,8 +63,8 @@
 #include "kamailioNet.h"
 #include "kamailioNetConfig.h"
 
-#include "../../dprint.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/dprint.h"
+#include "../../core/cfg/cfg_struct.h"
 
 static int keep_running;
 

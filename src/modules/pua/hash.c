@@ -25,12 +25,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
-#include "../../hashes.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_from.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_from.h"
 #include "hash.h" 
 #include "pua.h"
 #include "pua_db.h"

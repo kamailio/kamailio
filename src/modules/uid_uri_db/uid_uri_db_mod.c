@@ -40,17 +40,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../error.h"
-#include "../../mem/mem.h"
-#include "../../id.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/error.h"
+#include "../../core/mem/mem.h"
+#include "../../core/id.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../lib/srdb2/db.h"
 #include "uid_uri_db_mod.h"
-#include "../../usr_avp.h"
+#include "../../core/usr_avp.h"
 #include "../uid_domain/domain.h"
 
 MODULE_VERSION

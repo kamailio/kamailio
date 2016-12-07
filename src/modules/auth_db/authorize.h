@@ -25,7 +25,7 @@
 #define AUTHORIZE_H
 
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "api.h"
 
 int auth_db_init(const str* db_url);

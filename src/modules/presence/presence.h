@@ -29,11 +29,11 @@
 #ifndef PA_MOD_H
 #define PA_MOD_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/parse_from.h"
+#include "../../core/parser/parse_from.h"
 #include "event_list.h"
 #include "hash.h"
 

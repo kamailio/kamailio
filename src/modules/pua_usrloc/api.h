@@ -1,6 +1,6 @@
 #ifndef PUAUSRLOC_API_H
 #define PUAUSRLOC_API_H
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef int (*pua_set_publish_t)(struct sip_msg*, char *, char *);
 

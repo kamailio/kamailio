@@ -27,10 +27,10 @@
 
 #include "db.h"
 #include "db_id.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../pt.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/pt.h"
+#include "../../core/ut.h"
 #include <stdlib.h>
 #include <string.h>
 

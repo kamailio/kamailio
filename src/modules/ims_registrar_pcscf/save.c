@@ -43,7 +43,7 @@
  * 
  */
 
-#include "../../parser/contact/contact.h"
+#include "../../core/parser/contact/contact.h"
 #include "save.h"
 #include "reg_mod.h"
 #include "ul_callback.h"

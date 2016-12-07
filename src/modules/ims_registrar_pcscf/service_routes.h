@@ -23,7 +23,7 @@
 #ifndef SERVICE_ROUTES_H
 #define SERVICE_ROUTES_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 
 #define MAXROUTES 10

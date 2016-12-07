@@ -26,12 +26,12 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "../../lock_ops.h"
-#include "../../str.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_param.h"
+#include "../../core/lock_ops.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_param.h"
 
 #define NBODY_LEN		1024
 #define DMQ_NODE_ACTIVE		1 << 1

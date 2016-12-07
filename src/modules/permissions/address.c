@@ -28,17 +28,17 @@
 
 #include "permissions.h"
 #include "hash.h"
-#include "../../config.h"
+#include "../../core/config.h"
 #include "../../lib/srdb1/db.h"
-#include "../../ip_addr.h"
-#include "../../resolve.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_from.h"
-#include "../../usr_avp.h"
-#include "../../mod_fix.h"
-#include "../../ut.h"
-#include "../../resolve.h"
+#include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/usr_avp.h"
+#include "../../core/mod_fix.h"
+#include "../../core/ut.h"
+#include "../../core/resolve.h"
 
 #define TABLE_VERSION 6
 

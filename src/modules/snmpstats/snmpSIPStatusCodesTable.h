@@ -59,7 +59,7 @@ extern "C" {
 #include <net-snmp/library/container.h>
 #include <net-snmp/agent/table_array.h>
 
-#include "../../config.h"
+#include "../../core/config.h"
 
 /* 
  * The structure has been mostly auto-generated, but its semantics have been

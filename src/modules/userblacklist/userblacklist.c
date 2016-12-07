@@ -38,16 +38,16 @@
 
 #include <string.h>
 
-#include "../../parser/parse_uri.h"
-#include "../../mem/shm_mem.h"
-#include "../../sr_module.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/sr_module.h"
 #include "../../lib/kmi/mi.h"
-#include "../../mem/mem.h"
-#include "../../usr_avp.h"
-#include "../../locking.h"
-#include "../../error.h"
-#include "../../ut.h"
-#include "../../mod_fix.h"
+#include "../../core/mem/mem.h"
+#include "../../core/usr_avp.h"
+#include "../../core/locking.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
+#include "../../core/mod_fix.h"
 
 #include "../../lib/trie/dtrie.h"
 #include "db.h"

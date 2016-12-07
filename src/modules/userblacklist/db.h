@@ -28,7 +28,7 @@
 #ifndef _DB_H_
 #define _DB_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/trie/dtrie.h"
 
 #define MARK_WHITELIST 1

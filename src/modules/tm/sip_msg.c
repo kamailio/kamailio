@@ -45,13 +45,13 @@
 
 
 #include "sip_msg.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../ut.h"
-#include "../../sip_msg_clone.h"
-#include "../../fix_lumps.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/ut.h"
+#include "../../core/sip_msg_clone.h"
+#include "../../core/fix_lumps.h"
 
 
 /**

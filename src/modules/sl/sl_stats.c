@@ -18,13 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../sr_module.h"
-#include "../../mem/shm_mem.h"
-#include "../../globals.h"
-#include "../../config.h"
-#include "../../pt.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/globals.h"
+#include "../../core/config.h"
+#include "../../core/pt.h"
 #include "sl_stats.h"
-#include "../../counters.h"
+#include "../../core/counters.h"
 #include <strings.h>
 #include <stdio.h>
 

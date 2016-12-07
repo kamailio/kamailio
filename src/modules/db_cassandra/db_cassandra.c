@@ -29,9 +29,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 #include "dbcassa_base.h"
 #include "dbcassa_table.h"

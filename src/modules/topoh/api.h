@@ -27,7 +27,7 @@
 #ifndef _TH_API_H_
 #define _TH_API_H_
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 typedef int (*topoh_unmask_callid_f)(str *icallid, str *ocallid);
 

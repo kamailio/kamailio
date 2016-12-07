@@ -46,9 +46,9 @@
 
 
 #include <stdio.h>
-#include "../../counters.h"
-#include "../../locking.h"
-#include "../../str.h"
+#include "../../core/counters.h"
+#include "../../core/locking.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 #include "pcontact.h"
 #include "hslot.h"

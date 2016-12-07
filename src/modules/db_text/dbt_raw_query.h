@@ -25,7 +25,7 @@
 #ifndef _DBT_RAW_QUERY_H_
 #define _DBT_RAW_QUERY_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 

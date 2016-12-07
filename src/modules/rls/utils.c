@@ -21,7 +21,7 @@
  *
  */
 
-#include "../../ut.h"
+#include "../../core/ut.h"
 
 #define SIP_PREFIX        "sip:"
 #define SIP_PREFIX_LEN    sizeof(SIP_PREFIX)-1

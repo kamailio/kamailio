@@ -28,8 +28,8 @@
 #define _CARRIERROUTE_CONFIG_H
 
 
-#include "../../cfg/cfg.h"
-#include "../../str.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/str.h"
 
 struct cfg_group_carrierroute {
 	unsigned int	use_domain;

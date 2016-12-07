@@ -31,9 +31,9 @@
 #ifndef REG_MOD_H
 #define REG_MOD_H
 
-#include "../../parser/msg_parser.h"
-#include "../../qvalue.h"
-#include "../../usr_avp.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/qvalue.h"
+#include "../../core/usr_avp.h"
 #include "../usrloc/usrloc.h"
 #include "../../modules/sl/sl.h"
 

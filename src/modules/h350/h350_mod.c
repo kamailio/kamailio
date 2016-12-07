@@ -24,8 +24,8 @@
  *
  */
 
-#include "../../ut.h"
-#include "../../sr_module.h"
+#include "../../core/ut.h"
+#include "../../core/sr_module.h"
 #include "h350_mod.h"
 #include "h350_exp_fn.h"
 

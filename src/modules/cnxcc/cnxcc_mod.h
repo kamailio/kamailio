@@ -24,10 +24,10 @@
 #ifndef _CNXCC_MOD_H
 #define _CNXCC_MOD_H
 
-#include "../../locking.h"
-#include "../../atomic_ops.h"
-#include "../../str_hash.h"
-#include "../../parser/parse_rr.h"
+#include "../../core/locking.h"
+#include "../../core/atomic_ops.h"
+#include "../../core/str_hash.h"
+#include "../../core/parser/parse_rr.h"
 
 #define str_shm_free_if_not_null(_var_) if (_var_.s != NULL)  { shm_free(_var_.s); _var_.s = NULL; _var_.len = 0; }
 

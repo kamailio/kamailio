@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 #include "snmp_statistics.h"
-#include "../../config.h"
+#include "../../core/config.h"
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>

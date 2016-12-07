@@ -48,8 +48,8 @@
  *  2011-02-02  initial version (jason.penton)
  */
 
-#include "../../mem/shm_mem.h"
-#include "../../parser/sdp/sdp.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/sdp/sdp.h"
 #include "../cdp_avp/mod_export.h"
 
 #include "../../modules/ims_dialog/dlg_load.h"

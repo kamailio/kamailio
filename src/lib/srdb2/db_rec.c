@@ -25,8 +25,8 @@
 
 #include "db_rec.h"
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 
 #include <stdlib.h>
 #include <string.h>

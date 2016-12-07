@@ -24,7 +24,7 @@
 #ifndef _RLS_H_
 #define _RLS_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../xcap_client/xcap_functions.h"
 #include "../pua/send_subscribe.h"
 #include "../pua/send_publish.h"

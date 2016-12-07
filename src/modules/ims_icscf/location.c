@@ -44,8 +44,8 @@
  */
 
 #include "location.h"
-#include "../../action.h" /* run_actions */
-#include "../../mod_fix.h"
+#include "../../core/action.h" /* run_actions */
+#include "../../core/mod_fix.h"
 #include "cxdx_lir.h"
 
 extern int route_lir_user_unknown_no; 

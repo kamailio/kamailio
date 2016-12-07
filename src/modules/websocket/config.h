@@ -33,7 +33,7 @@
 #ifndef _WS_CONFIG_H
 #define _WS_CONFIG_H
 
-#include "../../cfg/cfg.h"
+#include "../../core/cfg/cfg.h"
 
 struct cfg_group_websocket
 {

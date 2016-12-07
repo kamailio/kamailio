@@ -23,7 +23,7 @@
 #define UL_DB_API_H
 
 #include "ul_db.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 typedef int (* ul_db_insert_t) (str * table, str * first, str * second,
 				 db_key_t* _k, db_val_t* _v, int _n);

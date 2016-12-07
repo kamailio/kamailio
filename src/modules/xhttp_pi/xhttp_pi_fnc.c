@@ -28,16 +28,16 @@
 
 #include <libxml/parser.h>
 
-#include "../../str.h"
-#include "../../ut.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb1/db_ut.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../config.h"
-#include "../../globals.h"
-#include "../../socket_info.h"
-#include "../../resolve.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/config.h"
+#include "../../core/globals.h"
+#include "../../core/socket_info.h"
+#include "../../core/resolve.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "xhttp_pi.h"
 #include "xhttp_pi_fnc.h"

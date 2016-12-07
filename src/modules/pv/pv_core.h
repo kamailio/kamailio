@@ -22,8 +22,8 @@
 #ifndef _PV_CORE_H_
 #define _PV_CORE_H_
 
-#include "../../pvar.h"
-#include "../../parser/parse_to.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/parse_to.h"
 
 int pv_get_msgid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);

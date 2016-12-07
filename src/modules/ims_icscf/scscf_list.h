@@ -46,15 +46,15 @@
 #ifndef I_CSCF_SCSCF_LIST_H
 #define I_CSCF_SCSCF_LIST_H
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../modules/tm/tm_load.h"
 #include "mod.h"
 #include <limits.h>
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 
-#include "../../dset.h"
+#include "../../core/dset.h"
 
-#include "../../timer.h"
+#include "../../core/timer.h"
 
 /** S-CSCF list element */ 
 typedef struct _scscf_entry {

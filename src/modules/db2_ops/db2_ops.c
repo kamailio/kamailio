@@ -22,20 +22,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../str.h"
-#include "../../error.h"
-#include "../../config.h"
-#include "../../trim.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/error.h"
+#include "../../core/config.h"
+#include "../../core/trim.h"
 #include "../../lib/srdb2/db.h"
-#include "../../select.h"
-#include "../../script_cb.h"
+#include "../../core/select.h"
+#include "../../core/script_cb.h"
 #include "../../modules/xprint/xp_lib.h"
-#include "../../route.h"
-#include "../../action.h"
-#include "../../ut.h"
-#include "../../str_hash.h"
+#include "../../core/route.h"
+#include "../../core/action.h"
+#include "../../core/ut.h"
+#include "../../core/str_hash.h"
 
 
 MODULE_VERSION

@@ -29,8 +29,8 @@
 #ifndef RE_GROUP_H
 #define RE_GROUP_H
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /*!

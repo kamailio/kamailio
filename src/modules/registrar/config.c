@@ -24,8 +24,8 @@
  */
 
 
-#include "../../cfg/cfg.h"
-#include "../../parser/msg_parser.h" /* method types */
+#include "../../core/cfg/cfg.h"
+#include "../../core/parser/msg_parser.h" /* method types */
 
 #include "config.h"
 

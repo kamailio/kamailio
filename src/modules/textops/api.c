@@ -29,8 +29,8 @@
 
 #include "api.h"
 #include "textops.h"
-#include "../../mod_fix.h"
-#include "../../mem/mem.h"
+#include "../../core/mod_fix.h"
+#include "../../core/mem/mem.h"
 
 
 /*

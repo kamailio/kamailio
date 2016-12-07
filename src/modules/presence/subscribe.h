@@ -31,7 +31,7 @@
 #define SUBSCRIBE_H
 
 //#include "presence.h"
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 
 struct pres_ev;

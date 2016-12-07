@@ -25,10 +25,10 @@
 
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../md5.h"
-#include "../../crc.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/md5.h"
+#include "../../core/crc.h"
+#include "../../core/mem/mem.h"
 #include "th_mask.h"
 
 #define TH_EB64I \

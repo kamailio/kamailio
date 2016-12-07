@@ -29,34 +29,34 @@
 #ifdef EXTRA_DEBUG
 #include <assert.h>
 #endif
-#include "../../comp_defs.h"
-#include "../../hash_func.h"
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../parser/parser_f.h"
-#include "../../parser/parse_to.h"
-#include "../../ut.h"
-#include "../../timer.h"
-#include "../../error.h"
-#include "../../action.h"
-#include "../../script_cb.h"
-#include "../../dset.h"
-#include "../../tags.h"
-#include "../../route.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../usr_avp.h"
+#include "../../core/comp_defs.h"
+#include "../../core/hash_func.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/ut.h"
+#include "../../core/timer.h"
+#include "../../core/error.h"
+#include "../../core/action.h"
+#include "../../core/script_cb.h"
+#include "../../core/dset.h"
+#include "../../core/tags.h"
+#include "../../core/route.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/usr_avp.h"
 #ifdef WITH_XAVP
-#include "../../usr_avp.h"
+#include "../../core/usr_avp.h"
 #endif
-#include "../../atomic_ops.h" /* membar_write() */
-#include "../../compiler_opt.h"
+#include "../../core/atomic_ops.h" /* membar_write() */
+#include "../../core/compiler_opt.h"
 #ifdef USE_DST_BLACKLIST
-#include "../../dst_blacklist.h"
+#include "../../core/dst_blacklist.h"
 #endif
 #ifdef USE_DNS_FAILOVER
-#include "../../dns_cache.h"
-#include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
+#include "../../core/dns_cache.h"
+#include "../../core/cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 
 #include "defs.h"
@@ -69,11 +69,11 @@
 #include "t_msgbuilder.h"
 #include "t_lookup.h"
 #include "t_fwd.h"
-#include "../../fix_lumps.h"
-#include "../../sr_compat.h"
-#include "../../receive.h"
-#include "../../onsend.h"
-#include "../../kemi.h"
+#include "../../core/fix_lumps.h"
+#include "../../core/sr_compat.h"
+#include "../../core/receive.h"
+#include "../../core/onsend.h"
+#include "../../core/kemi.h"
 #include "t_stats.h"
 #include "uac.h"
 

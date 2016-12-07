@@ -24,7 +24,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/uio.h> /* iovec */
-#include "../../ip_addr.h"
+#include "../../core/ip_addr.h"
 #include "init_socks.h"
 
 

@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../parser/parse_content.h"
+#include "../../core/parser/parse_content.h"
 #include "../presence/event_list.h"
 #include "presence_mwi.h"
 

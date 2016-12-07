@@ -32,7 +32,7 @@
  * Flatstore module interface.
  */
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include <time.h>
 
 extern str     flat_pid;

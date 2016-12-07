@@ -53,10 +53,10 @@
  */
 #include "nds.h"
 
-#include "../../parser/hf.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_via.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_via.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../modules/sl/sl.h"
 
 #include "mod.h"

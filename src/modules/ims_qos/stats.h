@@ -49,7 +49,7 @@
 #ifndef STATISTICS_H_
 #define STATISTICS_H_
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 stat_var* stat_aar_timeouts;
 stat_var* aar_replies_received;

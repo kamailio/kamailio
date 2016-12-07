@@ -32,11 +32,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../dprint.h"
-#include "../../pt.h"
-#include "../../socket_info.h"
-#include "../../srapi.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/dprint.h"
+#include "../../core/pt.h"
+#include "../../core/socket_info.h"
+#include "../../core/srapi.h"
+#include "../../core/rand/kam_rand.h"
 #include "callid.h"
 
 /**

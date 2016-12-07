@@ -40,7 +40,7 @@
 
 #include <time.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 MODULE_VERSION
 
 #include "mod_export.h"

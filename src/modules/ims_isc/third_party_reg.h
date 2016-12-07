@@ -51,12 +51,12 @@
 #include "checker.h"
 #include "mark.h"
 
-#include "../../sr_module.h"
-#include "../../locking.h"
+#include "../../core/sr_module.h"
+#include "../../core/locking.h"
 #include "../../modules/tm/tm_load.h"
 
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 
 extern str isc_my_uri_sip; 			/**< Uri of myself to loop the message in str with leading "sip:" */
 extern int isc_expires_grace; 		/**< expires value to add to the expires in the 3rd party register

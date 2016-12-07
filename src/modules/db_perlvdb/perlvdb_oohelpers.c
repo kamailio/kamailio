@@ -26,7 +26,7 @@
 
 #include "perlvdb_oohelpers.h"
 
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 
 SV *perlvdb_perlmethod(SV *class,
 		       const char* method,

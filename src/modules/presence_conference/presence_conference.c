@@ -31,11 +31,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
-#include "../../mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/mem/mem.h"
 #include "../presence/bind_presence.h"
 #include "add_events.h"
 #include "presence_conference.h"

@@ -46,8 +46,8 @@
 
 #ifdef SHM_MEM
 
-//	#include "../../mem/mem.h"
-//	#include "../../mem/shm_mem.h"
+//	#include "../../core/mem/mem.h"
+//	#include "../../core/mem/shm_mem.h"
 
 #include "utils.h"
 

@@ -39,9 +39,9 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 
-#include "../../parser/digest/digest_parser.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/digest/digest.h"
+#include "../../core/parser/digest/digest_parser.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/digest/digest.h"
 #include "encode_digest.h"
 #include "xaddress.h"
 #include "encode_header.h"

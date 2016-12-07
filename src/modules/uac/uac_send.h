@@ -21,7 +21,7 @@
 #ifndef _UAC_SEND_H_
 #define _UAC_SEND_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);

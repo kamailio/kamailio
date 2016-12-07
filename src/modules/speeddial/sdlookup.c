@@ -23,13 +23,13 @@
 
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../action.h"
-#include "../../config.h"
-#include "../../ut.h"
-#include "../../mod_fix.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
+#include "../../core/dprint.h"
+#include "../../core/action.h"
+#include "../../core/config.h"
+#include "../../core/ut.h"
+#include "../../core/mod_fix.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
 #include "../../lib/srdb1/db.h"
 
 #include "speeddial.h"

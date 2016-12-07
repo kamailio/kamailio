@@ -43,7 +43,7 @@
  * 
  */
 
-#include "../../timer.h"
+#include "../../core/timer.h"
 #include "../../modules/sl/sl.h"
 
 #include "mod.h"

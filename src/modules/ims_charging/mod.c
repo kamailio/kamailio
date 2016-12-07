@@ -6,12 +6,12 @@
  */
 
 #include "mod.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "../../modules/ims_dialog/dlg_hash.h"
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/mod_export.h"
-#include "../../parser/parse_to.h"
+#include "../../core/parser/parse_to.h"
 #include "ro_timer.h"
 #include "ro_session_hash.h"
 #include "ims_ro.h"

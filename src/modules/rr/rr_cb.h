@@ -27,8 +27,8 @@
 #ifndef RR_CB_H_
 #define RR_CB_H_
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /*! \brief callback function prototype */

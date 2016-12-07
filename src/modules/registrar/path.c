@@ -27,10 +27,10 @@
  */
 
 
-#include "../../data_lump.h"
-#include "../../parser/parse_rr.h"
-#include "../../parser/parse_uri.h"
-#include "../../strutils.h"
+#include "../../core/data_lump.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/strutils.h"
 #include "path.h"
 #include "registrar.h"
 

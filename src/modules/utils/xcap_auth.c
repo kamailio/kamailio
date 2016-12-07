@@ -36,10 +36,10 @@
 #include <time.h>
 #include <libxml/parser.h>
 
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../pvar.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../modules/presence/subscribe.h"
 #include "../../modules/presence/utils_func.h"
 #include "../../modules/presence/hash.h"

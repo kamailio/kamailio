@@ -26,10 +26,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../parser/parse_rr.h"
-#include "../../str.h"
-#include "../../ut.h"
-#include "../../ip_addr.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
+#include "../../core/ip_addr.h"
 
 /* size of buffer used for building SIP PING req */
 #define MAX_SIPPING_SIZE 65536

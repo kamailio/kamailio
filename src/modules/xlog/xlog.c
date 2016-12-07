@@ -42,17 +42,17 @@
 #include <time.h>
 #include <ctype.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../kemi.h"
-#include "../../cfg/cfg.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_param.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/kemi.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_param.h"
 
 #include "xl_lib.h"
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 #define NOFACILITY -1
 

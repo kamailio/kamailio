@@ -33,8 +33,8 @@
 #include "ld_uri.h"
 #include "ld_cfg.h"
 
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 
 #include <string.h>
 

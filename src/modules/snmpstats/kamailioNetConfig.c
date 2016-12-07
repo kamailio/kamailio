@@ -42,8 +42,8 @@
 #include "snmpstats_globals.h"
 #include "utilities.h"
 #include "snmp_statistics.h"
-#include "../../globals.h"
-#include "../../cfg_core.h"
+#include "../../core/globals.h"
+#include "../../core/cfg_core.h"
 
 /* Net-snmp version 5.6 defines oid's as const */
 #define CONST

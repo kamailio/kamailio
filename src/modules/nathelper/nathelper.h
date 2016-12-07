@@ -26,7 +26,7 @@
 #ifndef _NATHELPER_NATHELPER_H
 #define _NATHELPER_NATHELPER_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 /* Handy macros */
 #define STR2IOVEC(sx, ix)       do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)

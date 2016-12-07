@@ -23,9 +23,9 @@
 #ifndef _XHTTP_RPC_H
 #define _XHTTP_RPC_H
 
-#include "../../str.h"
-#include "../../rpc_lookup.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/parser/msg_parser.h"
 
 
 #define ERROR_REASON_BUF_LEN 1024

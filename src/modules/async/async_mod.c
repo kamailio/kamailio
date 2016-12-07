@@ -25,14 +25,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../pvar.h"
-#include "../../timer_proc.h"
-#include "../../route_struct.h"
-#include "../../async_task.h"
-#include "../../kemi.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/pvar.h"
+#include "../../core/timer_proc.h"
+#include "../../core/route_struct.h"
+#include "../../core/async_task.h"
+#include "../../core/kemi.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_sleep.h"

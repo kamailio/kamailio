@@ -23,11 +23,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../error.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/error.h"
 
 
 #include "mangler.h"

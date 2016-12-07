@@ -29,11 +29,11 @@
 #include <stdlib.h>
 #include<stdio.h>
 #include <string.h>
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../parser/parse_event.h"
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_event.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
 #include "event_list.h"
 #include "hash.h"
 

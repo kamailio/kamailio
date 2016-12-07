@@ -24,8 +24,8 @@
 
 #include <time.h>
 
-#include "../../str.h"
-#include "../../locking.h"
+#include "../../core/str.h"
+#include "../../core/locking.h"
 
 #define DS_LOAD_INIT		0
 #define DS_LOAD_CONFIRMED	1

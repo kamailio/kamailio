@@ -26,10 +26,10 @@
  */
 
 #include "conf.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../sr_module.h"
-#include "../../proxy.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/proxy.h"
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>

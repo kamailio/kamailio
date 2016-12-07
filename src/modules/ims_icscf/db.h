@@ -56,7 +56,7 @@
 #ifndef I_CSCF_DB_H
 #define I_CSCF_DB_H
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "registration.h"
 
 int ims_icscf_db_bind(char* db_url);

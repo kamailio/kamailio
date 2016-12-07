@@ -22,9 +22,9 @@
  */
 
 #include "notify.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_uri.h"
 #include "../../modules/usrloc/usrloc.h"
 #include "../../lib/srutils/sruid.h"
 #include <libxml/parser.h>

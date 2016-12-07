@@ -61,85 +61,85 @@
 #include <sys/sockio.h>
 #endif
 
-#include "config.h"
-#include "dprint.h"
-#include "daemonize.h"
-#include "route.h"
-#include "udp_server.h"
-#include "globals.h"
-#include "mem/mem.h"
+#include "core/config.h"
+#include "core/dprint.h"
+#include "core/daemonize.h"
+#include "core/route.h"
+#include "core/udp_server.h"
+#include "core/globals.h"
+#include "core/mem/mem.h"
 #ifdef SHM_MEM
-#include "mem/shm_mem.h"
-#include "shm_init.h"
+#include "core/mem/shm_mem.h"
+#include "core/shm_init.h"
 #endif /* SHM_MEM */
-#include "sr_module.h"
-#include "timer.h"
-#include "parser/msg_parser.h"
-#include "ip_addr.h"
-#include "resolve.h"
-#include "parser/parse_hname2.h"
-#include "parser/digest/digest_parser.h"
-#include "name_alias.h"
-#include "hash_func.h"
-#include "pt.h"
-#include "script_cb.h"
-#include "nonsip_hooks.h"
-#include "ut.h"
-#include "events.h"
-#include "signals.h"
+#include "core/sr_module.h"
+#include "core/timer.h"
+#include "core/parser/msg_parser.h"
+#include "core/ip_addr.h"
+#include "core/resolve.h"
+#include "core/parser/parse_hname2.h"
+#include "core/parser/digest/digest_parser.h"
+#include "core/name_alias.h"
+#include "core/hash_func.h"
+#include "core/pt.h"
+#include "core/script_cb.h"
+#include "core/nonsip_hooks.h"
+#include "core/ut.h"
+#include "core/events.h"
+#include "core/signals.h"
 #ifdef USE_RAW_SOCKS
-#include "raw_sock.h"
+#include "core/raw_sock.h"
 #endif /* USE_RAW_SOCKS */
 #ifdef USE_TCP
-#include "poll_types.h"
-#include "tcp_init.h"
-#include "tcp_options.h"
+#include "core/poll_types.h"
+#include "core/tcp_init.h"
+#include "core/tcp_options.h"
 #ifdef CORE_TLS
-#include "tls/tls_init.h"
+#include "core/tls/tls_init.h"
 #define tls_has_init_si() 1
 #define tls_loaded() 1
 #else
-#include "tls_hooks_init.h"
+#include "core/tls_hooks_init.h"
 #endif /* CORE_TLS */
 #endif /* USE_TCP */
 #ifdef USE_SCTP
-#include "sctp_core.h"
+#include "core/sctp_core.h"
 #endif
-#include "usr_avp.h"
-#include "rpc_lookup.h"
-#include "core_cmd.h"
-#include "flags.h"
-#include "lock_ops_init.h"
-#include "atomic_ops_init.h"
+#include "core/usr_avp.h"
+#include "core/rpc_lookup.h"
+#include "core/core_cmd.h"
+#include "core/flags.h"
+#include "core/lock_ops_init.h"
+#include "core/atomic_ops_init.h"
 #ifdef USE_DNS_CACHE
-#include "dns_cache.h"
+#include "core/dns_cache.h"
 #endif
 #ifdef USE_DST_BLACKLIST
-#include "dst_blacklist.h"
+#include "core/dst_blacklist.h"
 #endif
-#include "rand/fastrand.h" /* seed */
-#include "rand/kam_rand.h"
+#include "core/rand/fastrand.h" /* seed */
+#include "core/rand/kam_rand.h"
 
-#include "stats.h"
-#include "counters.h"
-#include "cfg/cfg.h"
-#include "cfg/cfg_struct.h"
-#include "cfg_core.h"
-#include "endianness.h" /* init */
-#include "basex.h" /* init */
-#include "pvapi.h" /* init PV api */
-#include "pv_core.h" /* register core pvars */
-#include "ppcfg.h"
-#include "sock_ut.h"
-#include "async_task.h"
-#include "dset.h"
-#include "timer_proc.h"
-#include "srapi.h"
+#include "core/stats.h"
+#include "core/counters.h"
+#include "core/cfg/cfg.h"
+#include "core/cfg/cfg_struct.h"
+#include "core/cfg_core.h"
+#include "core/endianness.h" /* init */
+#include "core/basex.h" /* init */
+#include "core/pvapi.h" /* init PV api */
+#include "core/pv_core.h" /* register core pvars */
+#include "core/ppcfg.h"
+#include "core/sock_ut.h"
+#include "core/async_task.h"
+#include "core/dset.h"
+#include "core/timer_proc.h"
+#include "core/srapi.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
-#include "ver.h"
+#include "core/ver.h"
 
 /* define SIG_DEBUG by default */
 #ifdef NO_SIG_DEBUG

@@ -29,9 +29,9 @@
 #ifndef GROUP_H
 #define GROUP_H
 
-#include "../../parser/msg_parser.h"
-#include "../../pvar.h"
-#include "../../usr_avp.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/pvar.h"
+#include "../../core/usr_avp.h"
 
 
 typedef struct _group_check

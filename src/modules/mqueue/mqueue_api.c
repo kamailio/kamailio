@@ -27,13 +27,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/parse_param.h"
-#include "../../ut.h"
-#include "../../shm_init.h"
-#include "../../fmsg.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/ut.h"
+#include "../../core/shm_init.h"
+#include "../../core/fmsg.h"
 
 #include "mqueue_api.h"
 

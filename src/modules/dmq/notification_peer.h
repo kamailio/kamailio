@@ -23,9 +23,9 @@
 #ifndef _NOTIFICATION_PEER_H_
 #define _NOTIFICATION_PEER_H_
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_content.h"
-#include "../../ut.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/ut.h"
 #include "dmq.h"
 #include "dmqnode.h"
 #include "peer.h"

@@ -23,8 +23,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
 #include "../presence/hash.h"
 #include "xcap_callbacks.h"
 #include "xcap_client.h"

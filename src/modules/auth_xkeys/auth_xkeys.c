@@ -25,19 +25,19 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../pvapi.h"
-#include "../../data_lump.h"
-#include "../../mem/shm_mem.h"
-#include "../../parser/hf.h"
-#include "../../parser/parse_param.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/pvapi.h"
+#include "../../core/data_lump.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../lib/srutils/shautils.h"
-#include "../../strutils.h"
-#include "../../rpc.h"
-#include "../../rpc_lookup.h"
+#include "../../core/strutils.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 #include "auth_xkeys.h"
 

@@ -24,7 +24,7 @@
 #ifndef RLS_RES_NOT_H
 #define RLS_RES_NOT_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2);
 void timer_send_notify(unsigned int ticks,void *param);

@@ -39,17 +39,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../globals.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../pt.h"
-#include "../../pvar.h"
-#include "../../mem/shm_mem.h"
-#include "../../mod_fix.h"
-#include "../../pvar.h"
-#include "../../cfg/cfg_struct.h"
-#include "../../fmsg.h"
+#include "../../core/globals.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/pt.h"
+#include "../../core/pvar.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mod_fix.h"
+#include "../../core/pvar.h"
+#include "../../core/cfg/cfg_struct.h"
+#include "../../core/fmsg.h"
 
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/pv/pv_api.h"

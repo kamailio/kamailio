@@ -34,7 +34,7 @@
 #include "tls_dump_vf.h"
 
 #include <openssl/ssl.h>
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "tls_mod.h"
 #include "tls_cfg.h"
 

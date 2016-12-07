@@ -24,7 +24,7 @@
 #define _JANSSONRPC_FUNCS_H_
 
 #include <stdbool.h>
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int jsonrpc_request(struct sip_msg* _m,
 		char* _conn,

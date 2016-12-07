@@ -29,7 +29,7 @@
 
 
 
-#include "../../parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
 #include "common.h"
 
 #define ENCODE_ALL_CONTACTS 1

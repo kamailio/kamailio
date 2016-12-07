@@ -24,7 +24,7 @@
 #ifndef RLS_UTILS_H
 #define RLS_UTILS_H
 
-#include "../../ut.h"
+#include "../../core/ut.h"
 
 extern str* normalize_sip_uri(const str *uri);
 

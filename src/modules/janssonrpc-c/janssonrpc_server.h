@@ -27,7 +27,7 @@
 #include <event.h>
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
-#include "../../locking.h"
+#include "../../core/locking.h"
 #include "netstring.h"
 
 /* interval (in seconds) at which failed servers are retried */

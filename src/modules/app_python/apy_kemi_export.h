@@ -27,7 +27,7 @@
 #define __APY_KEMI_FLIB_H__
 
 #include <Python.h>
-#include "../../kemi.h"
+#include "../../core/kemi.h"
 
 #define SR_APY_KEMI_EXPORT_SIZE	1024
 

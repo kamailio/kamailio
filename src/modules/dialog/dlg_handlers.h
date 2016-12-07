@@ -30,9 +30,9 @@
 #ifndef _DIALOG_DLG_HANDLERS_H_
 #define _DIALOG_DLG_HANDLERS_H_
 
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
-#include "../../pvar.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/pvar.h"
 #include "../../modules/tm/t_hooks.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"

@@ -31,12 +31,12 @@
 #include <stdlib.h>	       /* abort */
 #include <string.h>            /* strlen, memcmp */
 #include <stdio.h>             /* printf */
-#include "../../ut.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb1/db_ut.h"
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
-#include "../../ip_addr.h"
-#include "../../socket_info.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ip_addr.h"
+#include "../../core/socket_info.h"
 #include "udomain.h"           /* new_udomain, free_udomain */
 #include "usrloc.h"
 #include "utime.h"

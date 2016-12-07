@@ -29,9 +29,9 @@
 #include <time.h>
 #include <stdlib.h>
 
-#include "../../mem/shm_mem.h"
-#include "../../str.h"
-#include "../../dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
 
 
 #define CPL_LOC_DUPL    (1<<0)

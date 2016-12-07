@@ -9,8 +9,8 @@
 #define	RO_SESSION_HASH_H
 
 #include "ro_timer.h"
-#include "../../mem/shm_mem.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/rand/kam_rand.h"
 #include "ims_charging_stats.h"
 #include <stdlib.h>
 

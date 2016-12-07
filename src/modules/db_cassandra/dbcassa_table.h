@@ -29,7 +29,7 @@
 #ifndef _DBCASSA_LIB_H_
 #define _DBCASSA_LIB_H_
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db_val.h"
 
 #define DBCASSA_DELIM     ':'

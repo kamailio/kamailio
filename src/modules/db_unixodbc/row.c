@@ -29,8 +29,8 @@
  *  2006-05-05  passing proper lengths of column data (sgupta)
  */
 
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 #include "../../lib/srdb1/db_row.h"
 #include "../../lib/srdb1/db_val.h"
 #include "val.h"

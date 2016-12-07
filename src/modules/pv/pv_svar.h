@@ -27,7 +27,7 @@
 #ifndef _PV_SVAR_H_
 #define _PV_SVAR_H_
 
-#include "../../usr_avp.h"
+#include "../../core/usr_avp.h"
 
 #define VAR_VAL_INT		(0)		/* value is INT (other flags not set) */
 #define VAR_VAL_STR		(1<<0)  /* value is STR */

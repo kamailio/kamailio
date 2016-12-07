@@ -30,7 +30,7 @@
 #ifndef _REGPV_H_
 #define _REGPV_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 #include "../../modules/usrloc/usrloc.h"
 
 int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,

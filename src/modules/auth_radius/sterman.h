@@ -24,8 +24,8 @@
 #ifndef STERMAN_H
 #define STERMAN_H
 
-#include "../../str.h"
-#include "../../parser/digest/digest_parser.h"
+#include "../../core/str.h"
+#include "../../core/parser/digest/digest_parser.h"
 
 
 /*

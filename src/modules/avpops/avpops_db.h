@@ -25,10 +25,10 @@
 #define _AVP_OPS_DB_H_
 
 #include "../../lib/srdb1/db.h"
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
-#include "../../sr_module.h"
-#include "../../pvar.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
+#include "../../core/pvar.h"
 
 
 /* definition of a DB scheme*/

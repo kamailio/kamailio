@@ -33,11 +33,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../dns_func.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/dns_func.h"
 
 #include "dnssec_func.h"
 

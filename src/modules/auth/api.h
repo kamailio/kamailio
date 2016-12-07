@@ -25,12 +25,12 @@
 #define API_H
 
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/digest/digest.h"
-#include "../../sr_module.h"
-#include "../../usr_avp.h"
-#include "../../parser/hf.h"
-#include "../../str.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/sr_module.h"
+#include "../../core/usr_avp.h"
+#include "../../core/parser/hf.h"
+#include "../../core/str.h"
 #include "challenge.h"
 #include "rfc2617.h"
 

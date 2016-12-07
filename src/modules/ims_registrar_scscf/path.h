@@ -31,7 +31,7 @@
 #ifndef REG_PATH_H
 #define REG_PATH_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #define MAX_PATH_BUFFER 2048
 

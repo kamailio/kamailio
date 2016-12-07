@@ -33,14 +33,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../../dprint.h"
-#include "../../hashes.h"
-#include "../../locking.h"
-#include "../../trim.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
+#include "../../core/dprint.h"
+#include "../../core/hashes.h"
+#include "../../core/locking.h"
+#include "../../core/trim.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srutils/sruid.h"

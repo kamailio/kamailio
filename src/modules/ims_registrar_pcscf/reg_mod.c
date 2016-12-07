@@ -43,20 +43,20 @@
 
 
 #include <stdio.h>
-#include "../../data_lump.h"
-#include "../../ip_addr.h"
-#include "../../ut.h"
-#include "../../sr_module.h"
-#include "../../timer.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../socket_info.h"
-#include "../../pvar.h"
+#include "../../core/data_lump.h"
+#include "../../core/ip_addr.h"
+#include "../../core/ut.h"
+#include "../../core/sr_module.h"
+#include "../../core/timer.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/socket_info.h"
+#include "../../core/pvar.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
-#include "../../counters.h"
+#include "../../core/counters.h"
 #include "../../modules/sl/sl.h"
-#include "../../mod_fix.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/mod_fix.h"
+#include "../../core/cfg/cfg_struct.h"
 
 /* Bindings to PUA */
 #include "../pua/pua_bind.h"

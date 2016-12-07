@@ -21,13 +21,13 @@
  */
 
 
-#include "../../usr_avp.h"
-#include "../../dset.h"
-#include "../../dprint.h"
-#include "../../qvalue.h"
-#include "../../parser/contact/parse_contact.h"
+#include "../../core/usr_avp.h"
+#include "../../core/dset.h"
+#include "../../core/dprint.h"
+#include "../../core/qvalue.h"
+#include "../../core/parser/contact/parse_contact.h"
 #include "../../lib/srutils/sruid.h"
-#include "../../qvalue.h"
+#include "../../core/qvalue.h"
 #include "rd_filter.h"
 #include "rd_funcs.h"
 

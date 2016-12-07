@@ -35,9 +35,9 @@
 #include "pg_sql.h"
 #include "pg_mod.h"
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 
 #include <stdlib.h>
 #include <string.h>

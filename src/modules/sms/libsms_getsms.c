@@ -21,7 +21,7 @@ mailto:s.frings@mail.isis.de
 #include <string.h>
 #include <unistd.h>
 #include <syslog.h>
-#include "../../ut.h"
+#include "../../core/ut.h"
 #include "libsms_charset.h"
 #include "libsms_modem.h"
 #include "libsms_sms.h"

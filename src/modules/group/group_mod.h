@@ -31,9 +31,9 @@
 #define GROUP_MOD_H
 
 #include "../../lib/srdb1/db.h"
-#include "../../str.h"
-#include "../../parser/digest/digest.h" /* auth_body_t */
-#include "../../parser/msg_parser.h"    /* struct sip_msg */
+#include "../../core/str.h"
+#include "../../core/parser/digest/digest.h" /* auth_body_t */
+#include "../../core/parser/msg_parser.h"    /* struct sip_msg */
 
 
 /*

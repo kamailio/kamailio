@@ -25,17 +25,17 @@
  * Module: \ref uac
  */
 
-#include "../../dprint.h"
-#include "../../trim.h"
-#include "../../route.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
+#include "../../core/route.h"
 
 #include "../../modules/tm/tm_load.h"
 
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../fmsg.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/fmsg.h"
 
 #include "auth.h"
 #include "auth_hdr.h"

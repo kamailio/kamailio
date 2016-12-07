@@ -27,7 +27,7 @@
 
 #include "ld_fld.h"
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include <sys/time.h>
 
 /* RFC 2251:  maxInt INTEGER ::= 2147483647 -- (2^^31 - 1) -- */

@@ -23,15 +23,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../route.h"
-#include "../../script_cb.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/route.h"
+#include "../../core/script_cb.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/registrar/api.h"
-#include "../../dset.h"
-#include "../../rpc_lookup.h"
+#include "../../core/dset.h"
+#include "../../core/rpc_lookup.h"
 
 #include "ts_hash.h"
 #include "ts_handlers.h"

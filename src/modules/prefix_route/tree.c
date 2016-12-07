@@ -29,11 +29,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include "../../atomic_ops.h"
-#include "../../mem/shm_mem.h"
-#include "../../str.h"
-#include "../../lock_alloc.h"
-#include "../../lock_ops.h"
+#include "../../core/atomic_ops.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/str.h"
+#include "../../core/lock_alloc.h"
+#include "../../core/lock_ops.h"
 #include "tree.h"
 
 

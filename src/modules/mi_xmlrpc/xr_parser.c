@@ -28,8 +28,8 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 #include "xr_parser.h"
 #include "xr_parser_lib.h"
 #include "mi_xmlrpc.h"

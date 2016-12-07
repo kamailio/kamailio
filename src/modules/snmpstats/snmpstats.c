@@ -76,22 +76,22 @@
 #include <sys/wait.h>
 #include "snmpstats.h"
 #include "snmpstats_globals.h"
-#include "../../timer.h"
-#include "../../cfg/cfg_select.h"
-#include "../../cfg/cfg_ctx.h"
+#include "../../core/timer.h"
+#include "../../core/cfg/cfg_select.h"
+#include "../../core/cfg/cfg_ctx.h"
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
 #include <net-snmp/agent/net-snmp-agent-includes.h>
 
 #include "snmp_statistics.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../ut.h"
-#include "../../script_cb.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
+#include "../../core/script_cb.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 
 #include "snmpSIPRegUserTable.h"
 #include "snmpSIPContactTable.h"

@@ -30,7 +30,7 @@
 #ifndef _ALOOKUP_H_
 #define _ALOOKUP_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 #define ALIAS_REVERSE_FLAG	(1<<0)
 #define ALIAS_DOMAIN_FLAG	(1<<1)

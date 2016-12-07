@@ -26,11 +26,11 @@
 #include "mcd_var.h"
 
 #include "memcached.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
-#include "../../pvapi.h"
+#include "../../core/ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/pvapi.h"
 #include "../pv/pv_svar.h"
-#include "../../md5utils.h"
+#include "../../core/md5utils.h"
 
 
 /*!

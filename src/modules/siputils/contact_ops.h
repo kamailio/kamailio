@@ -40,7 +40,7 @@
 
 
 
-#include "../../parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
 
 #define ENCODE_ALL_CONTACTS 1
 #define DECODE_ALL_CONTACTS 1

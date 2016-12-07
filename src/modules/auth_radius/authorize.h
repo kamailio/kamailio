@@ -24,7 +24,7 @@
 #ifndef AUTHORIZE_H
 #define AUTHORIZE_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /*

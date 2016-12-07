@@ -29,9 +29,9 @@
 
 #include "parse_sst.h"
 
-#include "../../error.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/error.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 
 
 static inline int/*bool*/  is_space( char c ) { return (c == ' ' || c == '\t'); }

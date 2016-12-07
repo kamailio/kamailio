@@ -32,7 +32,7 @@
 #ifndef _SIPOPS_H_
 #define _SIPOPS_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int w_cmp_uri(struct sip_msg *msg, char *uri1, char *uri2);
 int w_cmp_aor(struct sip_msg *msg, char *uri1, char *uri2);

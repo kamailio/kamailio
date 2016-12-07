@@ -31,12 +31,12 @@
 
 #include <stdio.h>
 
-#include "../../parser/msg_parser.h"
-#include "../../str.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "exec.h"
 #include "kill.h"

@@ -20,11 +20,11 @@
 
 
 #include "binrpc.h"
-#include "../../dprint.h"
-#include "../../rpc.h"
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../clist.h"
+#include "../../core/dprint.h"
+#include "../../core/rpc.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/clist.h"
 #include "io_listener.h"
 #include "ctl.h"
 

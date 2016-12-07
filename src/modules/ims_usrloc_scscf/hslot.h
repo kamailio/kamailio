@@ -46,8 +46,8 @@
 #ifndef HSLOT_H
 #define HSLOT_H
 
-#include "../../locking.h"
-#include "../../atomic/atomic_common.h"
+#include "../../core/locking.h"
+#include "../../core/atomic/atomic_common.h"
 
 #include "udomain.h"
 #include "impurecord.h"

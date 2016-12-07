@@ -36,14 +36,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../sr_module.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_content.h"
-#include "../../strutils.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/strutils.h"
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
-#include "../../flags.h"
+#include "../../core/flags.h"
 #include "acc.h"
 #include "acc_api.h"
 #include "acc_mod.h"

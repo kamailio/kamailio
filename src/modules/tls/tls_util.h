@@ -27,8 +27,8 @@
 #define _TLS_UTIL_H
 
 #include <openssl/err.h>
-#include "../../dprint.h"
-#include "../../str.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
 #include "tls_domain.h"
 
 static inline int tls_err_ret(char *s, tls_domains_cfg_t **tls_domains_cfg) {

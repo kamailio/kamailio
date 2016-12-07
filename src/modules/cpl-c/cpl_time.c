@@ -30,7 +30,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "cpl_time.h"
 
 

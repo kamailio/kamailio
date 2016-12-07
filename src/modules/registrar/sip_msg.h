@@ -29,9 +29,9 @@
 #ifndef SIP_MSG_H
 #define SIP_MSG_H
 
-#include "../../qvalue.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/contact/parse_contact.h"
+#include "../../core/qvalue.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/contact/parse_contact.h"
 
 
 /*! \brief

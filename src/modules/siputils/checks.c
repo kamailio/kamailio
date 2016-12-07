@@ -32,20 +32,20 @@
 
 
 #include <string.h>
-#include "../../str.h"
-#include "../../dprint.h"               /* Debugging */
-#include "../../mem/mem.h"
-#include "../../parser/digest/digest.h" /* get_authorized_cred */
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_param.h"
-#include "../../ut.h"                   /* Handy utilities */
+#include "../../core/str.h"
+#include "../../core/dprint.h"               /* Debugging */
+#include "../../core/mem/mem.h"
+#include "../../core/parser/digest/digest.h" /* get_authorized_cred */
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/ut.h"                   /* Handy utilities */
 #include "../../lib/srdb1/db.h"                /* Database API */
-#include "../../dset.h"
-#include "../../pvar.h"
-#include "../../lvalue.h"
-#include "../../sr_module.h"
-#include "../../mod_fix.h"
+#include "../../core/dset.h"
+#include "../../core/pvar.h"
+#include "../../core/lvalue.h"
+#include "../../core/sr_module.h"
+#include "../../core/mod_fix.h"
 #include "checks.h"
 
 /**

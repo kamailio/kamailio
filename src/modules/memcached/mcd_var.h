@@ -26,7 +26,7 @@
 #ifndef _MCD_VAR_H_
 #define _MCD_VAR_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 
 /*!

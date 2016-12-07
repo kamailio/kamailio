@@ -29,7 +29,7 @@
 #define __tls_ct_q_h
 
 #include "sbufq.h"
-#include "../../compiler_opt.h"
+#include "../../core/compiler_opt.h"
 
 typedef struct sbuffer_queue tls_ct_q;
 

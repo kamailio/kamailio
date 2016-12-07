@@ -29,7 +29,7 @@
 
 #ifndef TEXTOPS_H_
 #define TEXTOPS_H_
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 int search_f(struct sip_msg*, char*, char*);
 int search_append_f(struct sip_msg*, char*, char*);

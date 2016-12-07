@@ -32,7 +32,7 @@
 #define AUTHORIZE_H
 
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int auth_db_init(char* db_url);
 int auth_db_bind(char* db_url);

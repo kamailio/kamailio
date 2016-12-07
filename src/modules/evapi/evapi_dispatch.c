@@ -33,11 +33,11 @@
 
 #include <ev.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../cfg/cfg_struct.h"
-#include "../../fmsg.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/cfg/cfg_struct.h"
+#include "../../core/fmsg.h"
 
 #include "evapi_dispatch.h"
 

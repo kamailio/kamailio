@@ -38,10 +38,10 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
 
 /* param trasnporter */
 typedef struct acc_param {

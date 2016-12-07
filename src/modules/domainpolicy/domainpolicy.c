@@ -35,16 +35,16 @@
 #include "domainpolicy_mod.h"
 #include "domainpolicy.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
-#include "../../ut.h"
-#include "../../dset.h"
-#include "../../route.h"
-#include "../../ip_addr.h"
-#include "../../socket_info.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/ut.h"
+#include "../../core/dset.h"
+#include "../../core/route.h"
+#include "../../core/ip_addr.h"
+#include "../../core/socket_info.h"
 
-#include "../../resolve.h"
-#include "../../strutils.h"
+#include "../../core/resolve.h"
+#include "../../core/strutils.h"
 
 #define IS_D2PNAPTR(naptr) ((naptr->services_len >= 7) && (!strncasecmp("D2P+SIP", naptr->services, 7)))
 

@@ -30,8 +30,8 @@
  *  2006-05-05  removed static allocation of 1k per column data (sgupta)
  */
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "row.h"
 #include "../../lib/srdb1/db_res.h"
 #include "connection.h"

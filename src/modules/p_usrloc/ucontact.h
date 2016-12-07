@@ -31,8 +31,8 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "../../qvalue.h"
-#include "../../str.h"
+#include "../../core/qvalue.h"
+#include "../../core/str.h"
 #include "../usrloc/usrloc.h"
 
 /*! \brief ancient time used for marking the contacts forced to expired */

@@ -28,22 +28,22 @@
 #include <stdlib.h>
 
 
-#include "../../mem/shm_mem.h"
-#include "../../hash_func.h"
-#include "../../dprint.h"
-#include "../../md5utils.h"
-#include "../../ut.h"
-#include "../../globals.h"
-#include "../../error.h"
-#include "../../char_msg_val.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/hash_func.h"
+#include "../../core/dprint.h"
+#include "../../core/md5utils.h"
+#include "../../core/ut.h"
+#include "../../core/globals.h"
+#include "../../core/error.h"
+#include "../../core/char_msg_val.h"
+#include "../../core/rand/kam_rand.h"
 #include "defs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_stats.h"
 #include "t_funcs.h"
 #include "h_table.h"
-#include "../../fix_lumps.h" /* free_via_clen_lump */
+#include "../../core/fix_lumps.h" /* free_via_clen_lump */
 #include "timer.h"
 #include "uac.h" /* free_local_ack */
 

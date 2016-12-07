@@ -24,12 +24,12 @@
 #include "select.h"
 #include "h_table.h"
 #include "t_lookup.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
-#include "../../select.h"
-#include "../../select_buf.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/select.h"
+#include "../../core/select_buf.h"
+#include "../../core/parser/msg_parser.h"
 
 #define RETURN0_res(x) {*res=(x);return 0;}
 

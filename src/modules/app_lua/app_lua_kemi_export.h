@@ -29,7 +29,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include "../../kemi.h"
+#include "../../core/kemi.h"
 
 #define SR_KEMI_LUA_EXPORT_SIZE	1024
 

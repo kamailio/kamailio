@@ -8,7 +8,7 @@
 #ifndef RO_DB_HANDLER_H
 #define	RO_DB_HANDLER_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 #include "ro_session_hash.h"
 

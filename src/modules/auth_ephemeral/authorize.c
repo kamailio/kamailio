@@ -28,14 +28,14 @@
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
 
-#include "../../basex.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../str.h"
-#include "../../ut.h"
-#include "../../parser/digest/digest.h"
-#include "../../parser/hf.h"
-#include "../../mod_fix.h"
+#include "../../core/basex.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/parser/hf.h"
+#include "../../core/mod_fix.h"
 
 #include "autheph_mod.h"
 #include "authorize.h"

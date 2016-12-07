@@ -40,14 +40,14 @@
 
 #include <stdlib.h>
 
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_via.h"
-#include "../../parser/parse_uri.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../md5utils.h"
-#include "../../char_msg_val.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_via.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/md5utils.h"
+#include "../../core/char_msg_val.h"
 #include "exec_hf.h"
 
 extern int exec_bash_safety;

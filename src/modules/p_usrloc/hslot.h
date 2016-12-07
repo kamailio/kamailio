@@ -28,7 +28,7 @@
 #ifndef HSLOT_H
 #define HSLOT_H
 
-#include "../../locking.h"
+#include "../../core/locking.h"
 
 #include "udomain.h"
 #include "urecord.h"

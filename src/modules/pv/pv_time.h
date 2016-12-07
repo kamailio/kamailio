@@ -22,7 +22,7 @@
 #ifndef _PV_TIME_H_
 #define _PV_TIME_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_parse_time_name(pv_spec_p sp, str *in);
 int pv_get_local_time(struct sip_msg *msg, pv_param_t *param,

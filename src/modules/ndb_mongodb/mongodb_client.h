@@ -25,9 +25,9 @@
 #include <mongoc.h>
 #include <bson.h>
 
-#include "../../str.h"
-#include "../../parser/parse_param.h"
-#include "../../mod_fix.h"
+#include "../../core/str.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/mod_fix.h"
 
 int mongodbc_init(void);
 int mongodbc_destroy(void);

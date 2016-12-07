@@ -30,9 +30,9 @@
 
 
 #include <string.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../mod_fix.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mod_fix.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "reg_mod.h"
 #include "common.h"

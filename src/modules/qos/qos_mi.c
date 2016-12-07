@@ -22,8 +22,8 @@
  */
 
 
-#include "../../ut.h"
-#include "../../dprint.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
 #include "../../lib/kmi/mi.h"
 #include "qos_handlers.h"
 #include "qos_ctx_helpers.h"

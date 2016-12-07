@@ -35,15 +35,15 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#include "../../dprint.h"
-#include "../../globals.h"
-#include "../../ut.h"
-#include "../../pt.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/globals.h"
+#include "../../core/ut.h"
+#include "../../core/pt.h"
+#include "../../core/mem/mem.h"
 #include "../../lib/kmi/mi.h"
-#include "../../ver.h"
-#include "../../cfg/cfg.h"
-#include "../../cfg/cfg_ctx.h"
+#include "../../core/ver.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 
 #ifdef VERSION_NODATE
 #define BUILD_STR __FILE__ " compiled with " COMPILER "\n"

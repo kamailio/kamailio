@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../xavp.h"
-#include "../../dset.h"
-#include "../../mem/shm_mem.h"
-#include "../../data_lump.h"
+#include "../../core/dprint.h"
+#include "../../core/xavp.h"
+#include "../../core/dset.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/data_lump.h"
 #include "../../lib/srutils/srjson.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/uac/api.h"

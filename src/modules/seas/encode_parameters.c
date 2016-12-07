@@ -38,11 +38,11 @@
  */
 #define _GNU_SOURCE
 #include <stdio.h>
-#include "../../str.h"
-#include "../../parser/parse_param.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_via.h"
-#include "../../parser/parse_disposition.h"
+#include "../../core/str.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_via.h"
+#include "../../core/parser/parse_disposition.h"
 #include "encode_parameters.h"
 
 #define REL_PTR(a,b) (unsigned char)((b)-(a))

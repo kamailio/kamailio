@@ -48,7 +48,7 @@
 #define UL_CALLBACK_H_
 
 #include "../ims_usrloc_pcscf/usrloc.h"
-//#include "../../modules_k/pua/pua_bind.h"
+//#include "../../core/modules_k/pua/pua_bind.h"
 
 //extern pua_api_t pua;
 

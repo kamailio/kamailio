@@ -29,8 +29,8 @@
 #include <netinet/in.h>
 
 
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/dprint.h"
 #include "diameter_msg.h"
 
 #define get_3bytes(_b) \

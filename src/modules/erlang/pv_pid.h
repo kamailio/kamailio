@@ -24,7 +24,7 @@
 #ifndef PV_PID_H_
 #define PV_PID_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int pv_pid_parse_name(pv_spec_t *sp, str *in);
 int pv_pid_set(struct sip_msg* msg,  pv_param_t* param, int op, pv_value_t* val);

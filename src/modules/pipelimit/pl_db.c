@@ -29,11 +29,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_res.h"
-#include "../../str.h"
+#include "../../core/str.h"
 
 #include "pl_ht.h"
 

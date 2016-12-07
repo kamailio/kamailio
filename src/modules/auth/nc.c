@@ -30,11 +30,11 @@ unsigned nc_array_size; /* 2^k == 1<<nc_array_bits (in nc_t and not
 
 #include "nc.h"
 #include "nid.h"
-#include "../../dprint.h"
-#include "../../bit_scan.h"
-#include "../../atomic_ops.h"
-#include "../../ut.h" /* ROUNDUP...*/
-#include "../../mem/shm_mem.h" /* shm_available() */
+#include "../../core/dprint.h"
+#include "../../core/bit_scan.h"
+#include "../../core/atomic_ops.h"
+#include "../../core/ut.h" /* ROUNDUP...*/
+#include "../../core/mem/shm_mem.h" /* shm_available() */
 #include <stdlib.h> /* random() */
 #include <string.h> /* memset() */
 #include <assert.h>

@@ -20,8 +20,8 @@
 
 #include <time.h>
 #include <unistd.h>
-#include "../../mem/shm_mem.h"
-#include "../../timer.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/timer.h"
 #include "sms_report.h"
 #include "sms_funcs.h"
 

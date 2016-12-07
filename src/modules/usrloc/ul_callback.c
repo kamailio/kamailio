@@ -29,9 +29,9 @@
 
 #include <stdlib.h>
 
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/mem/shm_mem.h"
 #include "ul_callback.h"
 #include "ucontact.h"
 

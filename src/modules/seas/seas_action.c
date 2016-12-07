@@ -33,26 +33,26 @@
 #include <poll.h>
 #include <assert.h>/*assert*/
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../pt.h"/*process_count*/
-#include "../../ip_addr.h"
-#include "../../tags.h"
-#include "../../error.h"
-#include "../../ut.h"
-#include "../../parser/hf.h"
-#include "../../parser/parse_fline.h"
-#include "../../parser/parser_f.h"/*find_not_quoted*/
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_cseq.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_rr.h"/*parse_rr*/
-#include "../../parser/parse_via.h"/*parse_via*/
-#include "../../parser/parse_param.h"/*parse_params*/
-#include "../../parser/parse_uri.h" /*parse_uri*/
-#include "../../parser/msg_parser.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
+#include "../../core/pt.h"/*process_count*/
+#include "../../core/ip_addr.h"
+#include "../../core/tags.h"
+#include "../../core/error.h"
+#include "../../core/ut.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/parse_fline.h"
+#include "../../core/parser/parser_f.h"/*find_not_quoted*/
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_cseq.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_rr.h"/*parse_rr*/
+#include "../../core/parser/parse_via.h"/*parse_via*/
+#include "../../core/parser/parse_param.h"/*parse_params*/
+#include "../../core/parser/parse_uri.h" /*parse_uri*/
+#include "../../core/parser/msg_parser.h"
 #include "encode_msg.h"
 #include "../../modules/tm/t_lookup.h"
 #include "../../modules/tm/h_table.h"

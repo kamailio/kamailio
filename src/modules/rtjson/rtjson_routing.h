@@ -23,7 +23,7 @@
 #ifndef _RTJSON_ROUTING_H_
 #define _RTJSON_ROUTING_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int rtjson_init_routes(sip_msg_t *msg, str *rdoc);
 int rtjson_push_routes(sip_msg_t *msg);

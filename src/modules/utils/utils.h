@@ -33,7 +33,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "../../lib/srdb1/db.h"
 
 extern int http_query_timeout;

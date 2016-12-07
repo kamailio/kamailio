@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "../../ver.h"
-#include "../../trim.h"
-#include "../../sr_module.h"
-#include "../../nonsip_hooks.h"
+#include "../../core/ver.h"
+#include "../../core/trim.h"
+#include "../../core/sr_module.h"
+#include "../../core/nonsip_hooks.h"
 #include "../../modules/xhttp/api.h"
 #include "xhttp_rpc.h"
 #include "xhttp_rpc_fnc.h"
@@ -56,7 +56,7 @@ str XHTTP_RPC_CONTENT_TYPE_TEXT_HTML = str_init("text/html");
 xhttp_rpc_mod_cmds_t *xhttp_rpc_mod_cmds = NULL;
 int xhttp_rpc_mod_cmds_size = 0;
 
-/* FIXME: this should be initialized in ../../ver.c */
+/* FIXME: this should be initialized in ../../core/ver.c */
 int full_version_len;
 int ver_name_len;
 

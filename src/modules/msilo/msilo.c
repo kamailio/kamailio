@@ -30,20 +30,20 @@
 #include <fcntl.h>
 #include <time.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../timer.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/timer.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../parser/parse_allow.h"
-#include "../../parser/parse_methods.h"
-#include "../../resolve.h"
-#include "../../usr_avp.h"
-#include "../../mod_fix.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_allow.h"
+#include "../../core/parser/parse_methods.h"
+#include "../../core/resolve.h"
+#include "../../core/usr_avp.h"
+#include "../../core/mod_fix.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -214,7 +214,7 @@ static param_export_t params[]={
 };
 
 #ifdef STATISTICS
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 stat_var* ms_stored_msgs;
 stat_var* ms_dumped_msgs;

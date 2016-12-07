@@ -29,7 +29,7 @@
 #ifndef _TS_RPC_H_
 #define _TS_RPC_H_
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 extern rpc_export_t rpc_methods[];
 #endif

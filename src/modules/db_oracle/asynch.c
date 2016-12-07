@@ -30,8 +30,8 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <oci.h>
-#include "../../dprint.h"
-#include "../../sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
 #include "ora_con.h"
 #include "asynch.h"
 

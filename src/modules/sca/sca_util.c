@@ -22,8 +22,8 @@
 #include <assert.h>
 
 #include "sca_util.h"
-#include "../../dset.h"
-#include "../../parser/sdp/sdp.h"
+#include "../../core/dset.h"
+#include "../../core/parser/sdp/sdp.h"
 
 int sca_get_msg_method(sip_msg_t *msg)
 {

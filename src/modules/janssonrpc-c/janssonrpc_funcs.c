@@ -20,9 +20,9 @@
  *
  */
 
-#include "../../mod_fix.h"
-#include "../../pvar.h"
-#include "../../lvalue.h"
+#include "../../core/mod_fix.h"
+#include "../../core/pvar.h"
+#include "../../core/lvalue.h"
 #include "../tm/tm_load.h"
 
 #include "janssonrpc.h"

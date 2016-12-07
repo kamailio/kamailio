@@ -27,9 +27,9 @@
 #ifndef _AAA_DIAMETER_MSG_H
 #define _AAA_DIAMETER_MSG_H
 
-#include "../../str.h"
-#include "../../mem/mem.h"
-#include "../../endianness.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/endianness.h"
 
 #define ad_malloc	pkg_malloc
 #define ad_free		pkg_free

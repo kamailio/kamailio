@@ -44,15 +44,15 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../mem/mem.h"
-#include "../../usr_avp.h"
+#include "../../core/dprint.h"
+#include "../../core/error.h"
+#include "../../core/mem/mem.h"
+#include "../../core/usr_avp.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/hf.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/digest/digest.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/digest/digest.h"
 #include "../../modules/tm/t_funcs.h"
 #include "acc_mod.h"
 #include "acc.h"

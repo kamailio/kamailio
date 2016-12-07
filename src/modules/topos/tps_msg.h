@@ -29,7 +29,7 @@
 #ifndef _TOPOS_MSG_H_
 #define _TOPOS_MSG_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int tps_update_hdr_replaces(sip_msg_t *msg);
 char* tps_msg_update(sip_msg_t *msg, unsigned int *olen);

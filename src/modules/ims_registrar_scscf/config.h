@@ -21,10 +21,10 @@
 #ifndef _REGISTRAR_CONFIG_H
 #define _REGISTRAR_CONFIG_H
 
-#include "../../qvalue.h"
+#include "../../core/qvalue.h"
 
-#include "../../cfg/cfg.h"
-#include "../../str.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/str.h"
 
 struct cfg_group_registrar {
 	unsigned int	default_expires;

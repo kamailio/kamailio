@@ -23,7 +23,7 @@
 #ifndef _QOS_QOS_CB_H_
 #define _QOS_QOS_CB_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 struct qos_ctx_st;
 

@@ -24,8 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../action.h"
+#include "../../core/dprint.h"
+#include "../../core/action.h"
 
 #include "corex_var.h"
 

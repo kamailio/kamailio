@@ -29,14 +29,14 @@
  */
 
 
-#include "../../mod_fix.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_supported.h"
-#include "../../parser/parse_rr.h"
-#include "../../ip_addr.h"
-#include "../../resolve.h"
-#include "../../forward.h"
-#include "../../strutils.h"
+#include "../../core/mod_fix.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_supported.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/ip_addr.h"
+#include "../../core/resolve.h"
+#include "../../core/forward.h"
+#include "../../core/strutils.h"
 
 #include "sipops.h"
 

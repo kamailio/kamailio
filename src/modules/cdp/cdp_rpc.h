@@ -8,7 +8,7 @@
 #ifndef RPC_H_
 #define RPC_H_
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 #include "config.h"
 
 extern rpc_export_t cdp_rpc[];

@@ -37,19 +37,19 @@
 #include <string.h>
 
 /* memory management */
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 
 /* printing messages, dealing with strings and other utils */
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
 
 /* digest parser headers */
-#include "../../parser/digest/digest.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
+#include "../../core/parser/digest/digest.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 
 
 /* headers defined by this module */

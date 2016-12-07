@@ -26,8 +26,8 @@
 #include "dlg_hash.h"
 #include "../dmq/bind_dmq.h"
 #include "../../lib/srutils/srjson.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_content.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_content.h"
 
 extern dmq_api_t dlg_dmqb;
 extern dmq_peer_t* dlg_dmq_peer;

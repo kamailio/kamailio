@@ -33,14 +33,14 @@
 #include <sys/socket.h>
 #include <signal.h>
 
-#include "../../sr_module.h"
-#include "../../route.h"
-#include "../../mem/mem.h"
-#include "../../action.h"
-#include "../../route_struct.h"
-#include "../../lvalue.h"
-#include "../../cfg/cfg_struct.h"
-#include "../../rand/fastrand.h"
+#include "../../core/sr_module.h"
+#include "../../core/route.h"
+#include "../../core/mem/mem.h"
+#include "../../core/action.h"
+#include "../../core/route_struct.h"
+#include "../../core/lvalue.h"
+#include "../../core/cfg/cfg_struct.h"
+#include "../../core/rand/fastrand.h"
 #include "../tm/tm_load.h"
 #include "../jansson/jansson_utils.h"
 

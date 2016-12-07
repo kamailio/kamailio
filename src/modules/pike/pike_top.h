@@ -22,7 +22,7 @@
 #define __PIKE_TOP_H
 
 #include "ip_tree.h"
-#include "../../ip_addr.h"
+#include "../../core/ip_addr.h"
 
 #define PIKE_BUFF_SIZE  128
 

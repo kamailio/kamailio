@@ -44,7 +44,7 @@
 #ifndef STATISTICS_H_
 #define STATISTICS_H_
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 #include "authims_mod.h"
 
 stat_var* stat_mar_timeouts;

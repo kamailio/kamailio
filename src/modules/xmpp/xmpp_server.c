@@ -87,8 +87,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../cfg/cfg_struct.h"
+#include "../../core/sr_module.h"
+#include "../../core/cfg/cfg_struct.h"
 
 #include "xmpp.h"
 #include "xmpp_api.h"

@@ -24,8 +24,8 @@
 #include "isup_parsed.h"
 #include "isup_generated.h"
 
-#include "../../dprint.h"
-#include "../../endianness.h"
+#include "../../core/dprint.h"
+#include "../../core/endianness.h"
 
 #include <arpa/inet.h>
 

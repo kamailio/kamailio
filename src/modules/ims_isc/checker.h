@@ -48,13 +48,13 @@
 
 #include <sys/types.h> /* for regex */
 #include <regex.h>
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "../../lib/ims/ims_getters.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../parser/parse_content.h"
-#include "../../str.h"
-#include "../../mem/mem.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
 #include "mod.h"
 
 extern usrloc_api_t isc_ulb;/*!< Structure containing pointers to usrloc functions*/

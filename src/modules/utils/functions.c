@@ -32,14 +32,14 @@
 
 #include <curl/curl.h>
 
-#include "../../mod_fix.h"
-#include "../../pvar.h"
-#include "../../route_struct.h"
-#include "../../ut.h"
-#include "../../trim.h"
-#include "../../mem/mem.h"
-#include "../../parser/msg_parser.h"
-#include "../../lvalue.h"
+#include "../../core/mod_fix.h"
+#include "../../core/pvar.h"
+#include "../../core/route_struct.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/lvalue.h"
 
 #include "utils.h"
 

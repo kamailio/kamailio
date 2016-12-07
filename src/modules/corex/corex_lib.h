@@ -22,7 +22,7 @@
 #ifndef _COREX_LIB_H_
 #define _COREX_LIB_H_
 
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 int corex_append_branch(sip_msg_t *msg, gparam_t *pu, gparam_t *pq);
 int corex_send(sip_msg_t *msg, gparam_t *pu, enum sip_protos proto);

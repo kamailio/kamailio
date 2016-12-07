@@ -30,7 +30,7 @@
 
 #include <osp/osp.h>
 #include <osp/osputils.h>
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "provider.h"
 
 extern unsigned int _osp_sp_number;

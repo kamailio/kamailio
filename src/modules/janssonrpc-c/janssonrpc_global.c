@@ -21,7 +21,7 @@
  */
 
 #ifndef TEST
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #else
 #include "unit_tests/test.h"
 #endif

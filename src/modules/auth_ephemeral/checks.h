@@ -28,7 +28,7 @@
 #ifndef CHECKS_H
 #define CHECKS_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int autheph_check_from0(struct sip_msg *_m);
 int autheph_check_from1(struct sip_msg *_m, char *_username);

@@ -27,7 +27,7 @@
 #include <time.h>
 
 #include "../../modules/tm/tm_load.h"
-#include "../../str.h"
+#include "../../core/str.h"
 #include "hash.h"
 
 typedef struct subs_info

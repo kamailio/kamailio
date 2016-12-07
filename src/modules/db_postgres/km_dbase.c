@@ -33,13 +33,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "../../lib/srdb1/db_query.h"
-#include "../../locking.h"
-#include "../../hashes.h"
+#include "../../core/locking.h"
+#include "../../core/hashes.h"
 #include "km_dbase.h"
 #include "km_pg_con.h"
 #include "km_val.h"

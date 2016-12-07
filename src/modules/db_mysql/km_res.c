@@ -32,8 +32,8 @@
 #include <string.h>
 #include <mysql.h>
 #include "../../lib/srdb1/db_res.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "km_row.h"
 #include "km_my_con.h"
 #include "km_res.h"

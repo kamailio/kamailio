@@ -32,9 +32,9 @@
 
 #include <string.h>
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 
 #include "bdb_cmd.h"
 #include "bdb_fld.h"

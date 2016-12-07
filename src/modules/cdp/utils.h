@@ -44,13 +44,13 @@
 #ifndef __CDP_UTILS_H_
 #define __CDP_UTILS_H_
 
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
-#include "../../locking.h"
-#include "../../pt.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/locking.h"
+#include "../../core/pt.h"
+#include "../../core/rand/kam_rand.h"
 #include "sem.h"
 
 #ifndef LOG_NO_MEM

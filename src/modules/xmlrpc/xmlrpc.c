@@ -36,28 +36,28 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <libxml/xmlreader.h>
-#include "../../str.h"
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../usr_avp.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/msg_parser.h"
-#include "../../ut.h"
-#include "../../dset.h"
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../msg_translator.h"
-#include "../../select.h"
-#include "../../receive.h" /* needed by process_rpc / receive_msg() */
+#include "../../core/str.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/usr_avp.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/ut.h"
+#include "../../core/dset.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/msg_translator.h"
+#include "../../core/select.h"
+#include "../../core/receive.h" /* needed by process_rpc / receive_msg() */
 #include "../../modules/sl/sl.h"
-#include "../../nonsip_hooks.h"
-#include "../../action.h" /* run_actions */
-#include "../../script_cb.h" /* exec_*_script_cb */
-#include "../../route.h" /* route_get */
-#include "../../sip_msg_clone.h" /* sip_msg_shm_clone */
+#include "../../core/nonsip_hooks.h"
+#include "../../core/action.h" /* run_actions */
+#include "../../core/script_cb.h" /* exec_*_script_cb */
+#include "../../core/route.h" /* route_get */
+#include "../../core/sip_msg_clone.h" /* sip_msg_shm_clone */
 #include "http.h"
 
 /** @addtogroup xmlrpc

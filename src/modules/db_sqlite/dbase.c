@@ -22,8 +22,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../../mem/mem.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db_pool.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "../../lib/srdb1/db_res.h"

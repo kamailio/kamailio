@@ -38,7 +38,7 @@
 #include "ld_fld.h"
 #include "ld_res.h"
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 #ifdef LD_TEST
 #include "../../lib/srdb2/db_cmd.h"

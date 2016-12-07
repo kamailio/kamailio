@@ -21,7 +21,7 @@
 
 #include <string.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 #include "ts_hash.h"
 #include "ts_handlers.h"

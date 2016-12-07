@@ -1,10 +1,10 @@
 #include "rtpengine.h"
 #include "rtpengine_hash.h"
 
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../timer.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/timer.h"
 
 static void rtpengine_hash_table_free_row_lock(gen_lock_t *row_lock);
 

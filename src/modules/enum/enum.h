@@ -31,7 +31,7 @@
 #define ENUM_H
 
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 #define MAX_DOMAIN_SIZE 256

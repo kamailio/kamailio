@@ -33,8 +33,8 @@
  *
  */
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
 #include "km_dbase.h"
 #include "km_db_mysql.h"
 

@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <regex.h>
-#include "../../mem/mem.h"
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
 #include "rule.h"
 
 

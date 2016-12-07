@@ -22,11 +22,11 @@
  */
 
 
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_from.h"
-#include "../../ut.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/ut.h"
 #include "dmq.h"
 #include "worker.h"
 #include "peer.h"

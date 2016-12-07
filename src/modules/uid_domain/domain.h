@@ -24,8 +24,8 @@
 
 #include <time.h>
 #include <stdio.h>
-#include "../../str.h"
-#include "../../usr_avp.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
 
 
 /*

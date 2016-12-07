@@ -25,10 +25,10 @@
 #ifndef _MTREE_H_
 #define _MTREE_H_
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../lib/kmi/mi.h"
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 #define MT_TREE_SVAL	0
 #define MT_TREE_DW	1

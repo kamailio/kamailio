@@ -1,6 +1,6 @@
 #ifndef RLS_API_H
 #define RLS_API_H
-#include "../../str.h"
+#include "../../core/str.h"
 
 typedef int (*rls_handle_subscribe_t)(struct sip_msg*, str, str);
 typedef int (*rls_handle_subscribe0_t)(struct sip_msg*);

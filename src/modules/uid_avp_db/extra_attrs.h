@@ -2,9 +2,9 @@
 #define __EXTRA_ATTRS_H
 
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../lib/srdb2/db.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 int declare_attr_group(modparam_t type, char* param);
 

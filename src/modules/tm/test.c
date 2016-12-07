@@ -23,15 +23,15 @@
 #include "defs.h"
 
 
-#include "../../hash_func.h"
+#include "../../core/hash_func.h"
 #include "t_funcs.h"
-#include "../../dprint.h"
-#include "../../config.h"
-#include "../../parser/parser_f.h"
-#include "../../data_lump.h"
-#include "../../ut.h"
-#include "../../timer.h"
-#include "../../data_lump.h"
+#include "../../core/dprint.h"
+#include "../../core/config.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/data_lump.h"
+#include "../../core/ut.h"
+#include "../../core/timer.h"
+#include "../../core/data_lump.h"
 
 #include "t_hooks.h"
 

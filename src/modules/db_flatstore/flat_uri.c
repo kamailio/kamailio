@@ -29,8 +29,8 @@
 
 #include "flat_uri.h"
 
-#include "../../mem/mem.h"
-#include "../../ut.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
 
 #include <stdlib.h>
 #include <string.h>

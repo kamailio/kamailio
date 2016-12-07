@@ -28,7 +28,7 @@
  */
 
 #include <string.h>
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "rerrno.h"
 #include "registrar.h"
 #include "common.h"

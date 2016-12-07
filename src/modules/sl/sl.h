@@ -27,8 +27,8 @@
 #ifndef _SL_H_
 #define _SL_H_
 
-#include "../../sr_module.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/sr_module.h"
+#include "../../core/parser/msg_parser.h"
 
 /* callback for SL events */
 #define SLCB_REPLY_READY       (1<<0)  /* stateless reply ready to be sent */

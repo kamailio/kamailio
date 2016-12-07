@@ -32,10 +32,10 @@
 #define _HM_HASH_
 
 #include <curl/curl.h>
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
-#include "../../hashes.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/hashes.h"
 
 extern struct http_m_table *hm_table;
 

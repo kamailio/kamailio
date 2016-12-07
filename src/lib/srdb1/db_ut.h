@@ -31,7 +31,7 @@
 #ifndef DB1_UT_H
 #define DB1_UT_H
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 #include "db_key.h"
 #include "db.h"

@@ -30,7 +30,7 @@
 #ifndef PRIME_HASH_H
 #define PRIME_HASH_H 1
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 
 /*!

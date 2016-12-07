@@ -20,7 +20,7 @@
  */
 
 #include "ul_db_api.h"
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 
 int bind_ul_db(ul_db_api_t* api)
 {

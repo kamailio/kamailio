@@ -23,19 +23,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "../../sr_module.h"
-#include "../../error.h"
-#include "../../mem/mem.h"
-#include "../../ut.h"
-#include "../../dset.h"
-#include "../../dprint.h"
-#include "../../receive.h"
-#include "../../events.h"
-#include "../../action.h"
-#include "../../script_cb.h"
-#include "../../route.h"
-#include "../../mod_fix.h"
-#include "../../pvar.h"
+#include "../../core/sr_module.h"
+#include "../../core/error.h"
+#include "../../core/mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/dset.h"
+#include "../../core/dprint.h"
+#include "../../core/receive.h"
+#include "../../core/events.h"
+#include "../../core/action.h"
+#include "../../core/script_cb.h"
+#include "../../core/route.h"
+#include "../../core/mod_fix.h"
+#include "../../core/pvar.h"
 
 MODULE_VERSION
 

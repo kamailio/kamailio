@@ -29,15 +29,15 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 
-#include "../../ut.h"
-#include "../../strutils.h"
-#include "../../dprint.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_expires.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_fline.h"
-#include "../../mem/mem.h"
+#include "../../core/ut.h"
+#include "../../core/strutils.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_fline.h"
+#include "../../core/mem/mem.h"
 #include "pua_xmpp.h"
 #include "simple2xmpp.h"
 

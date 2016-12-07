@@ -32,8 +32,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../../dprint.h"
-#include "../../sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
 #include "presence.h"
 #include "bind_presence.h"
 #include "notify.h"

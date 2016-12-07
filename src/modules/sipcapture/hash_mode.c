@@ -1,5 +1,5 @@
-#include "../../sr_module.h"
-#include "../../crc.h"
+#include "../../core/sr_module.h"
+#include "../../core/crc.h"
 
 #include <ctype.h>
 

@@ -31,18 +31,18 @@
 #include <time.h>
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_res.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../timer.h"
-#include "../../str.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/timer.h"
+#include "../../core/str.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../resolve.h"
-#include "../../hashes.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/resolve.h"
+#include "../../core/hashes.h"
 #include "../../lib/kmi/mi.h"
 
 #include "../../modules/tm/tm_load.h"
@@ -115,7 +115,7 @@ static param_export_t params[]={
 };
 
 #ifdef STATISTICS
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 stat_var* imc_active_rooms;
 

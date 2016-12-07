@@ -31,9 +31,9 @@
 #ifndef _SER_AAA_AVPS_H_
 #define _SER_AAA_AVPS_H_
 
-#include "../../mem/mem.h"
-#include "../../parser/parser_f.h"
-#include "../../dprint.h"
+#include "../../core/mem/mem.h"
+#include "../../core/parser/parser_f.h"
+#include "../../core/dprint.h"
 
 #include <string.h>
 

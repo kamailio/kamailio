@@ -23,7 +23,7 @@
 #ifndef _MYSQL_MOD_H
 #define _MYSQL_MOD_H
 
-#include "../../counters.h"
+#include "../../core/counters.h"
 
 /* counter struct
 */

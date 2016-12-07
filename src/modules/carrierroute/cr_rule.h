@@ -28,8 +28,8 @@
 #ifndef CR_RULE_H
 #define CR_RULE_H
 
-#include "../../str.h"
-#include "../../flags.h"
+#include "../../core/str.h"
+#include "../../core/flags.h"
 
 
 /*! list of rules */

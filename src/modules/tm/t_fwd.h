@@ -23,7 +23,7 @@
 
 #include "defs.h"
 
-#include "../../proxy.h"
+#include "../../core/proxy.h"
 #include "h_table.h"
 
 /* cancel hop by hop */

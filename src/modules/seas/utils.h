@@ -20,7 +20,7 @@
  */
 
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 int buffered_printer(FILE* infd);
 int print_msg_info(FILE* fd,struct sip_msg* msg);
 int coded_buffered_printer(FILE* infd);

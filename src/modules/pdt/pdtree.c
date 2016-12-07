@@ -27,9 +27,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/ut.h"
 
 #include "pdtree.h"
 

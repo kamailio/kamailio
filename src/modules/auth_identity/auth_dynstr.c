@@ -28,14 +28,14 @@
 
 #include <errno.h>
 
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_cseq.h"
-#include "../../parser/parse_content.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/contact/parse_contact.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_cseq.h"
+#include "../../core/parser/parse_content.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/contact/parse_contact.h"
 
-#include "../../data_lump.h"
-#include "../../msg_translator.h"
+#include "../../core/data_lump.h"
+#include "../../core/msg_translator.h"
 #include "auth_identity.h"
 
 /*

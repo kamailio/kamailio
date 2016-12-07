@@ -17,7 +17,7 @@
 #ifndef __rpc_uac_h
 #define __rpc_uac_h
 
-#include "../../rpc.h"
+#include "../../core/rpc.h"
 
 
 void rpc_t_uac_start(rpc_t* rpc, void* c);

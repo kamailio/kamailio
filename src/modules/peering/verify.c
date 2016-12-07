@@ -31,14 +31,14 @@
 
 
 
-#include "../../str.h"
-#include "../../usr_avp.h"
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/str.h"
+#include "../../core/usr_avp.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "../misc_radius/radius.h"
-#include "../../strutils.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parse_from.h"
+#include "../../core/strutils.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_from.h"
 #include "peering.h"
 
 

@@ -33,9 +33,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../../str.h"
-#include "../../dprint.h"
-#include "../../usr_avp.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
+#include "../../core/usr_avp.h"
 #include "destination.h"
 #include "usage.h"
 

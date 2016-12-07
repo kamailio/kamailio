@@ -21,8 +21,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 		       
-#include "../../route.h"
-#include "../../pvapi.h"
+#include "../../core/route.h"
+#include "../../core/pvapi.h"
 
 #include "dlg_var.h"
 #include "dlg_hash.h"

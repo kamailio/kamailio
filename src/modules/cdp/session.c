@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../sr_module.h"
+#include "../../core/sr_module.h"
 #include "session.h"
 #include "diameter.h"
 #include "config.h"

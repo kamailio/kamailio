@@ -32,7 +32,7 @@
 #define _OSP_MOD_USAGE_H_
 
 #include <osp/osp.h>
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 /* This module reports originating and terminating call set up and duration usage
  * for OSP transactions.

@@ -28,11 +28,11 @@
 
 #include<stdio.h>
 #include<stdlib.h>
-#include "../../sr_module.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
 #include "../usrloc/usrloc.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_from.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_from.h"
 #include "pua_bla.h"
 #include "registrar_cb.h"
 

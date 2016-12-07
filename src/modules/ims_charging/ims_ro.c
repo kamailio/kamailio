@@ -1,12 +1,12 @@
 #include "mod.h"
 
 #include <math.h>
-#include "../../parser/msg_parser.h"
-#include "../../parser/parse_uri.h"
-#include "../../sr_module.h"
-#include "../../socket_info.h"
-#include "../../timer.h"
-#include "../../locking.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/sr_module.h"
+#include "../../core/socket_info.h"
+#include "../../core/timer.h"
+#include "../../core/locking.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "../../modules/ims_dialog/dlg_hash.h"
@@ -14,13 +14,13 @@
 
 
 #include "../cdp/cdp_load.h"
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_to.h"
 
 #include "../../lib/ims/ims_getters.h"
-#include "../../parser/sdp/sdp.h"
+#include "../../core/parser/sdp/sdp.h"
 
 #include "diameter_ro.h"
 #include "ims_ro.h"

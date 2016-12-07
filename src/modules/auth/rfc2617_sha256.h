@@ -26,7 +26,7 @@
 #ifndef RFC2617_SHA256_H
 #define RFC2617_SHA256_H
 
-#include "../../str.h"
+#include "../../core/str.h"
 #include "rfc2617.h"
 
 

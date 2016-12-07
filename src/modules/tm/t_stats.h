@@ -27,8 +27,8 @@
 
 #include "defs.h"
 
-#include "../../rpc.h"
-#include "../../pt.h"
+#include "../../core/rpc.h"
+#include "../../core/pt.h"
 
 
 typedef unsigned long stat_counter;

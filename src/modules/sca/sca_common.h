@@ -25,24 +25,24 @@
 #include <assert.h>
 
 // general headers for module API, debugging, parsing, str handling
-#include "../../sr_module.h"
-#include "../../data_lump.h"
-#include "../../data_lump_rpl.h"
-#include "../../dprint.h"
-#include "../../dset.h"
-#include "../../flags.h"
-#include "../../hashes.h"
-#include "../../locking.h"
-#include "../../parser/hf.h"
-#include "../../parser/msg_parser.h"
-#include "../../parser/contact/parse_contact.h"
-#include "../../parser/parse_expires.h"
-#include "../../parser/parse_from.h"
-#include "../../str.h"
+#include "../../core/sr_module.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
+#include "../../core/dprint.h"
+#include "../../core/dset.h"
+#include "../../core/flags.h"
+#include "../../core/hashes.h"
+#include "../../core/locking.h"
+#include "../../core/parser/hf.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_expires.h"
+#include "../../core/parser/parse_from.h"
+#include "../../core/str.h"
 
 // memory management
-#include "../../mem/mem.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/mem/shm_mem.h"
 
 // bound API headers
 #include "../../modules/sl/sl.h"

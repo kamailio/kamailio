@@ -56,7 +56,7 @@
 #include "db.h"
 
 #include "../../lib/srdb1/db.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/mem/shm_mem.h"
 
 #include "mod.h"
 

@@ -32,9 +32,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../../ut.h"
-#include "../../dprint.h"
-#include "../../socket_info.h"
+#include "../../core/ut.h"
+#include "../../core/dprint.h"
+#include "../../core/socket_info.h"
 #include "pl_statistics.h"
 
 #ifdef STATISTICS

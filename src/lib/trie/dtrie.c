@@ -39,9 +39,9 @@
 
 #include "dtrie.h"
 
-#include "../../dprint.h"
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
 
 
 struct dtrie_node_t *dtrie_init(const unsigned int branches)

@@ -21,10 +21,10 @@
  *
  */
 
-#include "../../sr_module.h"
-#include "../../mem/shm_mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
-#include "../../rpc_lookup.h"
+#include "../../core/rpc_lookup.h"
 #include "km_flatstore.h"
 #include "km_flatstore_mod.h"
 #include "db_flatstore.h"

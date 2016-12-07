@@ -36,10 +36,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "../../str.h"
-#include "../../dprint.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
 #include "../../lib/kmi/mi.h"
-#include "../../mem/mem.h"
+#include "../../core/mem/mem.h"
 #include "fifo_fnc.h"
 #include "mi_fifo.h"
 #include "mi_parser.h"

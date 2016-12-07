@@ -15,7 +15,7 @@
 
 #include <jansson.h>
 
-#include "../../mod_fix.h"
+#include "../../core/mod_fix.h"
 
 /* jansson private helper functions */
 void *jsonp_malloc(size_t size);

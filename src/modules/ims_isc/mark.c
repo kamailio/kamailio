@@ -44,8 +44,8 @@
  */
 
 #include "mark.h"
-#include "../../str.h"
-#include "../../data_lump.h"
+#include "../../core/str.h"
+#include "../../core/data_lump.h"
 
 const str psu_hdr_s = str_init("P-Served-User: <%.*s>;sescase=%.*s;regstate=%.*s\r\n");
 const str sescase_orig = str_init("orig");

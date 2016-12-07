@@ -30,7 +30,7 @@
 #ifndef NOTIFY_H
 #define NOTIFY_H
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int reginfo_handle_notify(struct sip_msg*, char*, char*);
 

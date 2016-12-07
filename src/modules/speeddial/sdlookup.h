@@ -24,7 +24,7 @@
 #ifndef _SDLOOKUP_H_
 #define _SDLOOKUP_H_
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 
 int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2);
 

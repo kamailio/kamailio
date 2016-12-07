@@ -27,18 +27,18 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../../ver.h"
-#include "../../sr_module.h"
-#include "../../pt.h"
-#include "../../cfg/cfg_struct.h"
-#include "../../mod_fix.h"
-#include "../../script_cb.h"
+#include "../../core/ver.h"
+#include "../../core/sr_module.h"
+#include "../../core/pt.h"
+#include "../../core/cfg/cfg_struct.h"
+#include "../../core/mod_fix.h"
+#include "../../core/script_cb.h"
 
 #ifndef USE_TCP
 #error	"USE_TCP must be enabled for this module"
 #endif
 
-#include "../../pass_fd.h"
+#include "../../core/pass_fd.h"
 
 #include "mod_erlang.h"
 #include "erl_helpers.h"

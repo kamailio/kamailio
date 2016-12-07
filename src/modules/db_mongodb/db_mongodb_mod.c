@@ -23,8 +23,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_query.h"
 

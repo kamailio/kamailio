@@ -40,7 +40,7 @@
 #ifndef librabbitmq_examples_utils_h
 #define librabbitmq_examples_utils_h
 
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 
 extern int log_on_error(int x, char const *context);
 extern int log_on_amqp_error(amqp_rpc_reply_t x, char const *context);

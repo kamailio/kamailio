@@ -27,7 +27,7 @@
 #ifndef _XL_LIB_H_
 #define _XL_LIB_H_
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 
 int xl_print_log(struct sip_msg* msg, pv_elem_p log, char *buf, int *len);
 

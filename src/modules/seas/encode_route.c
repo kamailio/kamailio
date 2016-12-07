@@ -40,8 +40,8 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 
-#include "../../parser/parse_rr.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/parser/parse_rr.h"
+#include "../../core/parser/parse_uri.h"
 #include "encode_route.h"
 #include "encode_uri.h"
 #include "encode_header.h"

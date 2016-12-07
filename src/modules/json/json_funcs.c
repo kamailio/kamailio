@@ -26,8 +26,8 @@
 #include <string.h>
 #include <json.h>
 
-#include "../../mod_fix.h"
-#include "../../lvalue.h"
+#include "../../core/mod_fix.h"
+#include "../../core/lvalue.h"
 
 #include "json_funcs.h"
 

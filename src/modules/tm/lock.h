@@ -24,8 +24,8 @@
 #ifndef __lock_h
 #define __lock_h
 
-#include "../../dprint.h"
-#include "../../locking.h"
+#include "../../core/dprint.h"
+#include "../../core/locking.h"
 
 
 

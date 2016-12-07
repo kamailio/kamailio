@@ -31,7 +31,7 @@
 #ifndef PS_HASH_H
 #define PS_HASH_H
 
-#include "../../lock_ops.h"
+#include "../../core/lock_ops.h"
 //#include "presentity.h"
 
 struct presentity;

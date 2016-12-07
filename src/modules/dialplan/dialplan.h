@@ -31,8 +31,8 @@
 #define _DP_DIALPLAN_H
 
 #include <pcre.h>
-#include "../../pvar.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/pvar.h"
+#include "../../core/parser/msg_parser.h"
 
 #define DP_EQUAL_OP		0
 #define DP_REGEX_OP		1

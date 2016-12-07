@@ -28,15 +28,15 @@
 #include "tls_mod.h"
 #include "tls_util.h"
 
-#include "../../cfg_parser.h"
+#include "../../core/cfg_parser.h"
 
-#include "../../resolve.h"
-#include "../../mem/mem.h"
-#include "../../dprint.h"
-#include "../../trim.h"
-#include "../../ut.h"
-#include "../../cfg/cfg.h"
-#include "../../stats.h"
+#include "../../core/resolve.h"
+#include "../../core/mem/mem.h"
+#include "../../core/dprint.h"
+#include "../../core/trim.h"
+#include "../../core/ut.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/stats.h"
 
 #include <dirent.h>
 #include <sys/stat.h>

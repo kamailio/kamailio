@@ -27,14 +27,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../ut.h"
-#include "../../pvar.h"
-#include "../../mod_fix.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
+#include "../../core/pvar.h"
+#include "../../core/mod_fix.h"
 #include "../../lib/kmi/mi.h"
-#include "../../parser/parse_param.h"
-#include "../../shm_init.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/shm_init.h"
 
 #include "mqueue_api.h"
 #include "api.h"

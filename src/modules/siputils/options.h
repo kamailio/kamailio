@@ -32,8 +32,8 @@
 #ifndef OPT_RPL_H
 #define OPT_RPL_H
 
-#include "../../str.h"
-#include "../../parser/msg_parser.h"
+#include "../../core/str.h"
+#include "../../core/parser/msg_parser.h"
 #include "../../modules/sl/sl.h"
 
 #define ACPT_STR "Accept: "

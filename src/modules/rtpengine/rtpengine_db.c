@@ -22,7 +22,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_res.h"
 
-#include "../../parser/msg_parser.h"
+#include "../../core/parser/msg_parser.h"
 #include "rtpengine.h"
 
 #define RTPP_TABLE_VERSION 1

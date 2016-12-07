@@ -26,12 +26,12 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../mod_fix.h"
-#include "../../forward.h"
-#include "../../resolve.h"
-#include "../../udp_server.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
+#include "../../core/forward.h"
+#include "../../core/resolve.h"
+#include "../../core/udp_server.h"
 
 MODULE_VERSION
 

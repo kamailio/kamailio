@@ -26,8 +26,8 @@
  * 2014-08  first version (2600hz)
  */
 
-#include "../../mod_fix.h"
-#include "../../lvalue.h"
+#include "../../core/mod_fix.h"
+#include "../../core/lvalue.h"
 
 #include "kz_fixup.h"
 

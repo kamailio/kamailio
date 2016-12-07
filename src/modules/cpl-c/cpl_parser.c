@@ -31,11 +31,11 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
-#include "../../parser/parse_uri.h"
-#include "../../trim.h"
-#include "../../dprint.h"
-#include "../../str.h"
-#include "../../ut.h"
+#include "../../core/parser/parse_uri.h"
+#include "../../core/trim.h"
+#include "../../core/dprint.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
 #include "CPL_tree.h"
 #include "sub_list.h"
 #include "cpl_log.h"

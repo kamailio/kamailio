@@ -19,7 +19,7 @@
 
 #ifdef WITH_XAVP
 
-#include "../../pvar.h"
+#include "../../core/pvar.h"
 #include "pv_svar.h"
 
 int pv_get_xavp(struct sip_msg *msg, pv_param_t *param,

@@ -24,10 +24,10 @@
 
 #include <time.h>
 
-#include "../../usr_avp.h"
-#include "../../locking.h"
-#include "../../pvar.h"
-#include "../../atomic_ops.h"
+#include "../../core/usr_avp.h"
+#include "../../core/locking.h"
+#include "../../core/pvar.h"
+#include "../../core/atomic_ops.h"
 
 #define ht_compute_hash(_s)        core_case_hash(_s,0,0)
 #define ht_get_entry(_h,_size)    (_h)&((_size)-1)

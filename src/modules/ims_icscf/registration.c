@@ -45,8 +45,8 @@
 
 
 #include "registration.h"
-#include "../../action.h" /* run_actions */
-#include "../../mod_fix.h"
+#include "../../core/action.h" /* run_actions */
+#include "../../core/mod_fix.h"
 #include "cxdx_uar.h"
 
 extern int route_uar_user_unknown_no;

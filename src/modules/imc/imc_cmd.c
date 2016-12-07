@@ -26,11 +26,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../sr_module.h"
-#include "../../dprint.h"
-#include "../../parser/parse_uri.h"
+#include "../../core/mem/shm_mem.h"
+#include "../../core/mem/mem.h"
+#include "../../core/sr_module.h"
+#include "../../core/dprint.h"
+#include "../../core/parser/parse_uri.h"
 
 #include "imc.h"
 #include "imc_cmd.h"

@@ -24,9 +24,9 @@
 #ifndef MOD_ERLANG_H_
 #define MOD_ERLANG_H_
 
-#include "../../str.h"
-#include "../../pvar.h"
-#include "../../xavp.h"
+#include "../../core/str.h"
+#include "../../core/pvar.h"
+#include "../../core/xavp.h"
 #include "erl_api.h"
 
 extern str cookie; /* Erlang cookie */

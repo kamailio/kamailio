@@ -28,8 +28,8 @@
 #ifndef LDAP_CONNECT_H
 #define LDAP_CONNECT_H
 
-#include "../../str.h"
-#include "../../dprint.h"
+#include "../../core/str.h"
+#include "../../core/dprint.h"
 
 extern int ldap_connect(char* _ld_name);
 extern int ldap_disconnect(char* _ld_name);

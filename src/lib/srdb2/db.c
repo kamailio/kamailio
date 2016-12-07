@@ -27,12 +27,12 @@
 
 #include "db_drv.h"
 
-#include "../../dprint.h"
-#include "../../sr_module.h"
-#include "../../mem/mem.h"
-#include "../../str.h"
-#include "../../ut.h"
-#include "../../list.h"
+#include "../../core/dprint.h"
+#include "../../core/sr_module.h"
+#include "../../core/mem/mem.h"
+#include "../../core/str.h"
+#include "../../core/ut.h"
+#include "../../core/list.h"
 
 struct _db_root db_root = DBLIST_INITIALIZER(db_root);
 

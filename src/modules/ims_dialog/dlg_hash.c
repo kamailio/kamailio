@@ -8,10 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../dprint.h"
-#include "../../ut.h"
+#include "../../core/dprint.h"
+#include "../../core/ut.h"
 #include "../../lib/kmi/mi.h"
-#include "../../rand/kam_rand.h"
+#include "../../core/rand/kam_rand.h"
 #include "dlg_timer.h"
 #include "dlg_var.h"
 #include "dlg_hash.h"

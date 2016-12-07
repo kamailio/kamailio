@@ -30,7 +30,7 @@
 #ifndef __CRYPTO_UUID_H__
 #define __CRYPTO_UUID_H__
 
-#include "../../str.h"
+#include "../../core/str.h"
 
 
 /**

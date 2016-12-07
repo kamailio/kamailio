@@ -33,7 +33,7 @@
 
 
 #include <string.h>
-#include "../../dprint.h"
+#include "../../core/dprint.h"
 #include "mi_mem.h"
 
 char *mi_fmt_buf = 0;

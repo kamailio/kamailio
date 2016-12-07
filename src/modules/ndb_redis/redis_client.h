@@ -26,9 +26,9 @@
 
 #include <hiredis/hiredis.h>
 
-#include "../../str.h"
-#include "../../parser/parse_param.h"
-#include "../../mod_fix.h"
+#include "../../core/str.h"
+#include "../../core/parser/parse_param.h"
+#include "../../core/mod_fix.h"
 
 int redisc_init(void);
 int redisc_destroy(void);

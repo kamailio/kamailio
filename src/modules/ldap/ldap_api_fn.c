@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#include "../../ut.h"
+#include "../../core/ut.h"
 
 #include <ldap.h>
 
