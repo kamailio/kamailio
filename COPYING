@@ -6,7 +6,7 @@ IMPORTANT NOTES
 
 2) The Kamailio software allows programmers to plug-in external modules to the
    core part. Note that GPL mandates all plug-ins developed for the
-   Kamailio software are to be released under GPL license to be GPL-ed or 
+   Kamailio software are to be released under GPL license to be GPL-ed or
    use a GPL compatible free software license.
 
    (see http://www.gnu.org/copyleft/gpl-faq.html#GPLAndPlugins
@@ -18,7 +18,7 @@ IMPORTANT NOTES
 
 -------------------------------------------------------------------------
 
-GNU Licence FAQ 
+GNU Licence FAQ
 
 This FAQ provides answers to most frequently asked questions. To fully
 understand implications of the GNU license, read it.
