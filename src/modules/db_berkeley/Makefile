@@ -24,7 +24,7 @@ ifeq ($(INSTALL_FLAVOUR),kamailio)
 # extra install for kamailio
 
 install-berkeley-scripts: $(bin_prefix)/$(bin_dir)
-		BERKELEYDBON=yes make -C ../../utils/kamctl/ install-modules
+		BERKELEYDBON=yes make -C ../../../utils/kamctl/ install-modules
 
 install-scripts: install-berkeley-scripts
 
