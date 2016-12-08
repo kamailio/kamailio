@@ -25,7 +25,7 @@
 UTIL_NAME=$(NAME)
 
 # default path to the core makefiles
-COREPATH ?=../..
+COREPATH ?=../../src
 
 ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
  $(COREPATH)/Makefile.utils $(COREPATH)/Makefile.dirs $(COREPATH)/config.mak
