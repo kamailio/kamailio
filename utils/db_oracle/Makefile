@@ -1,14 +1,13 @@
-# $Id$
 #
 #  db_orasel Makefile
-# 
+#
 
-include ../../Makefile.defs
+include ../../src/Makefile.defs
 
 auto_gen=
 NAME=kamailio_orasel
 
-include ../../Makefile.sources
+include ../../src/Makefile.sources
 
 ORAPATH=
 
@@ -61,6 +60,6 @@ ifneq ($(ORAPATH),)
     LIBS +=-Wl,-rpath $(ORAPATH)
 endif
 
-include ../../Makefile.rules
+include ../../src/Makefile.rules
 
 modules:
