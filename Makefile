@@ -11,7 +11,7 @@ KSR_DIR ?= src/
 
 # forward all named targets
 %:
-	$(MAKE) -C $(KSR_DIR) "$@"
+	$(MAKE) -C $(KSR_DIR) $@
 
 # forward the default target
 default:
@@ -19,4 +19,4 @@ default:
 
 .PHONY: install
 install:
-	$(MAKE) -C $(KSR_DIR) "$@"
+	$(MAKE) -C $(KSR_DIR) $@
