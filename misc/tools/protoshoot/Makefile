@@ -1,6 +1,6 @@
 #
 
-COREPATH=../..
+COREPATH=../../src
 include $(COREPATH)/Makefile.defs
 include $(COREPATH)/Makefile.targets
 
