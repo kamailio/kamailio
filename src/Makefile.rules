@@ -85,6 +85,9 @@ module_make=	if [ -n "$(1)" -a -r "$(1)/Makefile" ]; then \
 			else \
 				exit 1; \
 			fi ; \
+		else \
+			echo module not found: $(1) ; \
+			exit 1; \
 		fi ;
 
 quote:= "
