@@ -32,7 +32,7 @@ ifeq (,$(main_makefile))
 # if not called from the main makefile (module, lib or ut):
 # include config.mak, but if not present or incomplete (makefile_defs!=1)
 # don't export the vars)
-COREPATH?= ../..
+COREPATH?= ../../src/
 include $(COREPATH)/config.mak
 ifeq ($(quiet),verbose)
 $(info config.mak included)
