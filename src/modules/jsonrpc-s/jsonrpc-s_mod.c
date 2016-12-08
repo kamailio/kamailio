@@ -82,9 +82,6 @@ static void mod_destroy(void);
 static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2);
 static int jsonrpc_exec(sip_msg_t* msg, char* cmd, char* s2);
 
-static int jsonrpc_init_fifo_file(void);
-static void jsonrpc_fifo_process(int rank);
-
 /* FIFO server parameters */
 extern char *jsonrpc_fifo;				/*!< FIFO file name */
 extern char *jsonrpc_fifo_reply_dir; 	/*!< dir where reply fifos are allowed */
@@ -94,6 +91,7 @@ extern int  jsonrpc_fifo_gid;				/*!< Fifo default Group ID */
 extern char *jsonrpc_fifo_gid_s;			/*!< Fifo default Group ID name */
 extern int  jsonrpc_fifo_mode; /* Default file mode rw-rw---- */
 /* fifo function prototypes */
+extern int jsonrpc_init_fifo_file(void);
 extern int jsonrpc_fifo_mod_init(void);
 extern int jsonrpc_fifo_child_init(int rank);
 extern int jsonrpc_fifo_destroy(void);

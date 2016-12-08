@@ -50,7 +50,7 @@ int  jsonrpc_fifo_mode = S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* Default file mod
 /* FIFO TRANSPORT */
 
 /*! \brief Initialize fifo transport */
-static int jsonrpc_init_fifo_file(void)
+int jsonrpc_init_fifo_file(void)
 {
 	int n;
 	struct stat filestat;

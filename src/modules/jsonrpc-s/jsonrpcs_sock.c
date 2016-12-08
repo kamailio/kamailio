@@ -549,7 +549,6 @@ static int jsonrpc_dgram_send_data(int fd, char* buf, unsigned int len,
 void jsonrpc_dgram_server(int rx_sock, int tx_sock)
 {
 	int ret;
-	int len;
 	str scmd;
 	jsonrpc_plain_reply_t* jr = NULL;
 
