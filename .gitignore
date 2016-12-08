@@ -32,7 +32,7 @@ utils/gen_ha1/gen_ha1
 utils/kamcmd/kamcmd
 utils/sercmd/sercmd
 utils/sercmd/kamcmd
-utils/protoshoot/protoshoot
+misc/tools/protoshoot/protoshoot
 # Emacs backup files
 *~
 # Emacs file locks
