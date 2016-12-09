@@ -112,7 +112,7 @@ mod_list_presence=presence presence_conference presence_dialoginfo \
 					   presence_mwi presence_profile presence_reginfo \
 					   presence_xml \
 					   pua pua_bla pua_dialoginfo pua_mi pua_reginfo \
-					   pua_usrloc pua_xmpp \
+					   pua_rpc pua_usrloc pua_xmpp \
 					   rls xcap_client xcap_server
 
 
