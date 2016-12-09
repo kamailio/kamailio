@@ -30,7 +30,7 @@ include ../../Makefile.modules
 install-cfg:
 	# provisionning xml framework samples
 	@mkdir -p $(data_prefix)/$(data_dir)/xhttp_pi
-	@for FILE in $(wildcard ../../utils/kamctl/xhttp_pi/*) ; do \
+	@for FILE in $(wildcard ../../../utils/kamctl/xhttp_pi/*) ; do \
 		if [ -f $$FILE ] ; then \
 			$(INSTALL_TOUCH) $$FILE \
 				$(data_prefix)/$(data_dir)/xhttp_pi/`basename "$$FILE"` ; \
@@ -42,7 +42,7 @@ install-cfg:
 	@$(call try_err, mkdir -p $(cfg_prefix)/$(cfg_dir))
 	@$(call try_err, $(INSTALL_TOUCH) \
 		$(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample)
-	@$(call try_err, $(INSTALL_CFG) ../../examples/pi_framework.xml \
+	@$(call try_err, $(INSTALL_CFG) ../../../misc/examples/pi_framework.xml \
 		$(cfg_prefix)/$(cfg_dir)/pi_framework.xml.sample)
 	@if [ -z "${skip_cfg_install}" -a \
 		! -f $(cfg_prefix)/$(cfg_dir)/pi_framework.xml ]; then \
