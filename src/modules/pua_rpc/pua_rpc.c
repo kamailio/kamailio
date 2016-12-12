@@ -63,6 +63,7 @@ static int publish_callback(ua_pres_t* hentity, struct sip_msg* reply)
 {
 	rpc_delayed_ctx_t* dctx;
 	void* c;
+	void* st;
 	rpc_t* rpc;
 	struct hdr_field* hdr= NULL;
 	int statuscode;
@@ -95,7 +96,13 @@ static int publish_callback(ua_pres_t* hentity, struct sip_msg* reply)
 		statuscode = reply->first_line.u.reply.statuscode;
 		reason = reply->first_line.u.reply.reason;
 	}
-	rpc->add(c, "dS", statuscode, &reason);
+	if (rpc->add(c, "{", &st) < 0) {
+	    LM_ERR("rpc->add failed on '{'\n");
+	    rpc->delayed_ctx_close(dctx);
+	    return -1;
+	}
+	rpc->struct_add(st, "d", "statusCode", statuscode);
+	rpc->struct_add(st, "S", "reasonPhrase", &reason);
 
 	if (statuscode == 200) {
 		expires = ((exp_body_t*)reply->expires->parsed)->val;
@@ -116,7 +123,8 @@ static int publish_callback(ua_pres_t* hentity, struct sip_msg* reply)
 		}
 		etag = hdr->body;
 		LM_DBG("SIP-Etag = %.*s\n", etag.len, etag.s);
-		rpc->add(c, "Sd", &etag, expires);
+		rpc->struct_add(st, "S", "SIP-Etag", &etag);
+		rpc->struct_add(st, "d", "Expires", expires);
 	}	
 
 	rpc->delayed_ctx_close(dctx);
@@ -279,7 +287,7 @@ static void publish(rpc_t* rpc, void* c)
 
 
 rpc_export_t pua_rpc[] = {
-	{"pua.publish",  publish, publish_doc, 0},
+	{"pua.publish", publish, publish_doc, 0},
 	{0, 0, 0, 0}
 };
 
