@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -48,7 +48,7 @@ MODULE_VERSION
 
 static int mod_init(void);
 
-send_publish_t pua_send_publish;
+static pua_api_t pua_rpc_api;
 
 static const char* publish_doc[2] = {
 	"sends publish request and waits for the final reply, using a list "
@@ -59,7 +59,7 @@ static const char* publish_doc[2] = {
 };
 
 
-static int publish_callback(ua_pres_t* hentity, struct sip_msg* reply)
+static int pua_rpc_publish_callback(ua_pres_t* hentity, sip_msg_t* reply)
 {
 	rpc_delayed_ctx_t* dctx;
 	void* c;
@@ -125,7 +125,7 @@ static int publish_callback(ua_pres_t* hentity, struct sip_msg* reply)
 		LM_DBG("SIP-Etag = %.*s\n", etag.len, etag.s);
 		rpc->struct_add(st, "S", "SIP-Etag", &etag);
 		rpc->struct_add(st, "d", "Expires", expires);
-	}	
+	}
 
 	rpc->delayed_ctx_close(dctx);
 
@@ -133,7 +133,7 @@ static int publish_callback(ua_pres_t* hentity, struct sip_msg* reply)
 }
 
 
-static void publish(rpc_t* rpc, void* c)
+static void pua_rpc_publish(rpc_t* rpc, void* c)
 {
 	str pres_uri, expires, event, content_type, id, etag,
 		outbound_proxy, extra_headers, body;
@@ -208,7 +208,7 @@ static void publish(rpc_t* rpc, void* c)
 	}
 
 	memset(&publ, 0, sizeof(publ_info_t));
-	
+
 	publ.pres_uri= &pres_uri;
 
 	publ.expires= exp;
@@ -222,7 +222,7 @@ static void publish(rpc_t* rpc, void* c)
 
 	if (content_type.len != 1) {
 		publ.content_type= content_type;
-	}	
+	}
 
 	if (!((id.len == 1) && (id.s[0]== '.'))) {
 		publ.id= id;
@@ -230,7 +230,7 @@ static void publish(rpc_t* rpc, void* c)
 
 	if (!((etag.len== 1) && (etag.s[0]== '.'))) {
 		publ.etag= &etag;
-	}	
+	}
 
 	if (!((outbound_proxy.len == 1) && (outbound_proxy.s[0] == '.'))) {
 		publ.outbound_proxy = &outbound_proxy;
@@ -253,8 +253,8 @@ static void publish(rpc_t* rpc, void* c)
 	publ.cb_param = dctx;
 	publ.source_flag = MI_ASYN_PUBLISH;
 
-	ret = pua_send_publish(&publ);
-	LM_DBG("pua_send_publish returned %d\n", ret);
+	ret = pua_rpc_api.send_publish(&publ);
+	LM_DBG("pua send_publish returned %d\n", ret);
 
 	if (dctx->reply_ctx != 0) {
 		/* callback was not executed or its execution failed */
@@ -265,7 +265,7 @@ static void publish(rpc_t* rpc, void* c)
 	}
 
 	if (ret < 0) {
-		LM_ERR("pua_send_publish failed\n");
+		LM_ERR("pua send_publish failed\n");
 		err_ret = err2reason_phrase(ret, &sip_error, err_buf,
 					    sizeof(err_buf), "RPC/PUBLISH") ;
 		if (err_ret > 0 ) {
@@ -287,7 +287,7 @@ static void publish(rpc_t* rpc, void* c)
 
 
 rpc_export_t pua_rpc[] = {
-	{"pua.publish", publish, publish_doc, 0},
+	{"pua.publish", pua_rpc_publish, publish_doc, 0},
 	{0, 0, 0, 0}
 };
 
@@ -304,36 +304,35 @@ struct module_exports exports= {
 	0,
 	0
 };
-	
+
 /**
  * init module function
  */
 static int mod_init(void)
 {
 	bind_pua_t bind_pua;
-	pua_api_t pua;
 
 	LM_DBG("initializing\n");
-	
+
+	memset (&pua_rpc_api, 0, sizeof(pua_api_t));
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 
 	if (!bind_pua) {
 		LM_ERR("can't find pua\n");
 		return -1;
 	}
-	
-	if (bind_pua(&pua) < 0) {
+
+	if (bind_pua(&pua_rpc_api) < 0) {
 		LM_ERR("can't bind pua\n");
 		return -1;
 	}
 
-	if (pua.send_publish == NULL) {
+	if (pua_rpc_api.send_publish == NULL) {
 		LM_ERR("could not import send_publish\n");
 		return -1;
 	}
-	pua_send_publish = pua.send_publish;
 
-	if (pua.register_puacb(MI_ASYN_PUBLISH, publish_callback, NULL) < 0) {
+	if (pua_rpc_api.register_puacb(MI_ASYN_PUBLISH, pua_rpc_publish_callback, NULL) < 0) {
 		LM_ERR("could not register callback\n");
 		return -1;
 	}
