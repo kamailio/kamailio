@@ -907,6 +907,7 @@ static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
 	static char buf[REASON_BUF_LEN];
 	va_list ap;
 
+	fix_delayed_reply_ctx(ctx);
 	ctx->reply.code = code;
 	va_start(ap, fmt);
 	vsnprintf(buf, REASON_BUF_LEN, fmt, ap);
