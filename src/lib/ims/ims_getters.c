@@ -159,8 +159,13 @@ str cscf_get_private_identity(struct sip_msg *msg, str realm) {
 		return pi;
 	}
 
-	if (h) pi = ((auth_body_t*) h->parsed)->digest.username.whole;
-
+	if (h) {
+		pi = ((auth_body_t*) h->parsed)->digest.username.whole;
+		if (memchr(pi.s, '@', pi.len) == 0) {
+			LM_DBG("no domain in username - required for IMPI - falling back to IMPU\n");
+			goto fallback;
+		}
+	}
 	goto done;
 
 fallback:
