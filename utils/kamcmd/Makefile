@@ -1,4 +1,6 @@
-# $Id$
+#
+#
+
 COREPATH=../../src/
 include $(COREPATH)/Makefile.defs
 include $(COREPATH)/Makefile.targets
@@ -7,9 +9,9 @@ auto_gen=
 RELEASE=0.2
 UTIL_SRC_NAME=kamcmd
 ifeq ($(FLAVOUR),ser)
-	NAME=sercmd
+	NAME?=sercmd
 else
-	NAME=kamcmd
+	NAME?=kamcmd
 endif
 
 readline_locations= /usr/include/readline/readline.h \
