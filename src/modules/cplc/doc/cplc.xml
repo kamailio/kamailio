@@ -10,7 +10,7 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
-	<title>cpl-c Module</title>
+	<title>cplc Module</title>
 	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 		<author>
@@ -36,6 +36,6 @@
 	</bookinfo>
 	<toc></toc>
 
-	<xi:include href="cpl-c_admin.xml"/>
+	<xi:include href="cplc_admin.xml"/>
 
 </book>

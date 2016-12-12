@@ -178,7 +178,7 @@ static mi_export_t mi_cmds[] = {
 
 
 struct module_exports exports = {
-	"cpl-c",
+	"cplc",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
