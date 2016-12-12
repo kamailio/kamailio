@@ -44,7 +44,7 @@
 #include "../../core/ip_addr.h"
 #include "../../modules/xhttp/api.h"
 
-#include "jsonrpc-s_mod.h"
+#include "jsonrpcs_mod.h"
 
 /** @addtogroup jsonrpc-s
  * @ingroup modules
@@ -171,7 +171,7 @@ static pv_export_t mod_pvs[] = {
 
 /** module exports */
 struct module_exports exports= {
-	"jsonrpc-s",
+	"jsonrpcs",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,

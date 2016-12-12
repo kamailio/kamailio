@@ -20,7 +20,7 @@ mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 # - extra used modules, with no extra dependency
 mod_list_extra=avp auth_diameter call_control dmq domainpolicy msrp pdb \
 			     qos sca seas sms sst timer tmrec uac_redirect xhttp \
-				 xhttp_rpc xprint jsonrpc-s nosip dmq_usrloc statsd rtjson \
+				 xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
 				 log_custom ss7ops
 
 # - common modules depending on database
@@ -60,7 +60,7 @@ mod_list_unixodbc=db_unixodbc
 mod_list_cassandra=db_cassandra ndb_cassandra
 
 # - modules depending on xml2 library
-mod_list_cpl=cpl-c
+mod_list_cpl=cplc
 
 # - modules depending on xml2 library
 mod_list_xmldeps=xhttp_pi xmlrpc xmlops
@@ -138,10 +138,10 @@ mod_list_sqlite=db_sqlite
 mod_list_oracle=db_oracle
 
 # - modules depending on json (+libevent) library
-mod_list_json=json jsonrpc-c
+mod_list_json=json jsonrpcc
 
 # - modules depending on jansson (+libevent) library
-mod_list_jansson=jansson janssonrpc-c
+mod_list_jansson=jansson janssonrpcc
 
 # - modules depending on redis library
 mod_list_redis=ndb_redis

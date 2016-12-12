@@ -1,12 +1,12 @@
 #
-# jsonrpc module makefile
+# jsonrpcc module makefile
 #
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
 auto_gen=
-NAME=jsonrpc-c.so
+NAME=jsonrpcc.so
 LIBS=-lm
 JLIB=json
 
@@ -31,8 +31,7 @@ else
 	DEFS+= $(shell pkg-config --cflags libevent)
 	LIBS+= $(shell pkg-config --libs libevent)
 endif
- 
+
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
-SERLIBPATH=../../lib
 include ../../Makefile.modules

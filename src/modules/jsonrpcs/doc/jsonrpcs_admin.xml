@@ -82,7 +82,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section id="jsonrpc-s.p.pretty_format">
+	<section id="jsonrpcs.p.pretty_format">
 		<title><varname>pretty_format</varname> (int)</title>
 		<para>
 			Pretty format for JSON-RPC response document.
@@ -96,12 +96,12 @@
 		<title>Set <varname>pretty_format</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "pretty_format", 1)
+modparam("jsonrpcs", "pretty_format", 1)
 ...
 </programlisting>
 		</example>
 	</section>
-	<section id="jsonrpc-s.p.transport">
+	<section id="jsonrpcs.p.transport">
 		<title><varname>transport</varname> (int)</title>
 		<para>
 			Control what transports are enabled. The value can be:
@@ -139,12 +139,12 @@ modparam("jsonrpc-s", "pretty_format", 1)
 		<title>Set <varname>transport</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "transport", 1)
+modparam("jsonrpcs", "transport", 1)
 ...
 </programlisting>
 		</example>
 	</section>
-	<section id="jsonrpc-s.p.fifo_name">
+	<section id="jsonrpcs.p.fifo_name">
 		<title><varname>fifo_name</varname> (str)</title>
 		<para>
 		The name of the FIFO file to be created for listening and
@@ -160,13 +160,13 @@ modparam("jsonrpc-s", "transport", 1)
 		<title>Set <varname>fifo_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
+modparam("jsonrpcs", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.fifo_mode">
+	<section id="jsonrpcs.p.fifo_mode">
 		<title><varname>fifo_mode</varname> (int)</title>
 		<para>
 		Permission to be used for creating the listening FIFO file. It
@@ -181,13 +181,13 @@ modparam("jsonrpc-s", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
 		<title>Set <varname>fifo_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "fifo_mode", 0600)
+modparam("jsonrpcs", "fifo_mode", 0600)
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.fifo_group">
+	<section id="jsonrpcs.p.fifo_group">
 		<title><varname>fifo_group</varname> (int or str)</title>
 		<para>
 		System Group to be used for creating the listening FIFO file.
@@ -201,14 +201,14 @@ modparam("jsonrpc-s", "fifo_mode", 0600)
 		<title>Set <varname>fifo_group</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "fifo_group", 0)
-modparam("jsonrpc-s", "fifo_group", "root")
+modparam("jsonrpcs", "fifo_group", 0)
+modparam("jsonrpcs", "fifo_group", "root")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.fifo_user">
+	<section id="jsonrpcs.p.fifo_user">
 		<title><varname>fifo_user</varname> (int or str)</title>
 		<para>
 		System User to be used for creating the listening FIFO file.
@@ -222,14 +222,14 @@ modparam("jsonrpc-s", "fifo_group", "root")
 		<title>Set <varname>fifo_user</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "fifo_user", 0)
-modparam("jsonrpc-s", "fifo_user", "root")
+modparam("jsonrpcs", "fifo_user", 0)
+modparam("jsonrpcs", "fifo_user", "root")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.fifo_reply_dir">
+	<section id="jsonrpcs.p.fifo_reply_dir">
 		<title><varname>fifo_reply_dir</varname> (str)</title>
 		<para>
 		Directory to be used for creating the reply FIFO files.
@@ -243,13 +243,13 @@ modparam("jsonrpc-s", "fifo_user", "root")
 		<title>Set <varname>fifo_reply_dir</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "fifo_reply_dir", "/home/kamailio/tmp/")
+modparam("jsonrpcs", "fifo_reply_dir", "/home/kamailio/tmp/")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.dgram_socket">
+	<section id="jsonrpcs.p.dgram_socket">
 		<title><varname>dgram_socket</varname> (str)</title>
 		<para>
 		The name of a UNIX SOCKET or an IP address.
@@ -266,15 +266,15 @@ modparam("jsonrpc-s", "fifo_reply_dir", "/home/kamailio/tmp/")
 		<title>Set <varname>dgram_socket</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "dgram_socket", "/tmp/kamailio_rpc.sock")
+modparam("jsonrpcs", "dgram_socket", "/tmp/kamailio_rpc.sock")
 ...
-modparam("jsonrpc-s", "dgram_socket", "udp:1.2.3.4:8090")
+modparam("jsonrpcs", "dgram_socket", "udp:1.2.3.4:8090")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.dgram_workers">
+	<section id="jsonrpcs.p.dgram_workers">
 		<title><varname>dgram_workers</varname> (str)</title>
 		<para>
 		The number of worker processes to be created. Each worker process
@@ -289,13 +289,13 @@ modparam("jsonrpc-s", "dgram_socket", "udp:1.2.3.4:8090")
 		<title>Set <varname>dgram_workers</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "dgram_workers", 4)
+modparam("jsonrpcs", "dgram_workers", 4)
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.dgram_mode">
+	<section id="jsonrpcs.p.dgram_mode">
 		<title><varname>dgram_mode</varname> (int)</title>
 		<para>
 		Permission to be used for creating the listening UNIX datagram socket.
@@ -311,13 +311,13 @@ modparam("jsonrpc-s", "dgram_workers", 4)
 		<title>Set <varname>dgram_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "dgram_mode", 0600)
+modparam("jsonrpcs", "dgram_mode", 0600)
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.dgram_group">
+	<section id="jsonrpcs.p.dgram_group">
 		<title><varname>dgram_group</varname> (int)
 		<varname>dgram_group</varname> (str)</title>
 		<para>
@@ -332,14 +332,14 @@ modparam("jsonrpc-s", "dgram_mode", 0600)
 		<title>Set <varname>dgram_group</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "dgram_group", 0)
-modparam("jsonrpc-s", "dgram_group", "root")
+modparam("jsonrpcs", "dgram_group", 0)
+modparam("jsonrpcs", "dgram_group", "root")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.dgram_user">
+	<section id="jsonrpcs.p.dgram_user">
 		<title><varname>dgram_user</varname> (int)
 		<varname>dgram_group</varname> (str)</title>
 		<para>
@@ -354,14 +354,14 @@ modparam("jsonrpc-s", "dgram_group", "root")
 		<title>Set <varname>dgram_user</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "dgram_user", 0)
-modparam("jsonrpc-s", "dgram_user", "root")
+modparam("jsonrpcs", "dgram_user", 0)
+modparam("jsonrpcs", "dgram_user", "root")
 ...
 </programlisting>
 		</example>
 	</section>
 
-	<section id="jsonrpc-s.p.dgram_timeout">
+	<section id="jsonrpcs.p.dgram_timeout">
 		<title><varname>dgram_timeout</varname> (int)</title>
 		<para>
 		The reply will expire after trying to sent it for socket_timeout
@@ -376,7 +376,7 @@ modparam("jsonrpc-s", "dgram_user", "root")
 		<title>Set <varname>dgram_timeout</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpc-s", "dgram_timeout", 2000)
+modparam("jsonrpcs", "dgram_timeout", 2000)
 ...
 </programlisting>
 		</example>
@@ -386,7 +386,7 @@ modparam("jsonrpc-s", "dgram_timeout", 2000)
 
 	<section>
 	<title>Functions</title>
- 	<section id="jsonrpc-s.f.jsonrpc_dispatch">
+ 	<section id="jsonrpcs.f.jsonrpc_dispatch">
 	    <title>
 		<function moreinfo="none">jsonrpc_dispatch()</function>
 	    </title>
@@ -415,7 +415,7 @@ mpath="modules/"
 loadmodule "sl.so"
 loadmodule "pv.so"
 loadmodule "xhttp.so"
-loadmodule "jsonrpc-s.so"
+loadmodule "jsonrpcs.so"
 
 request_route {
 	send_reply("404", "not found");
@@ -440,7 +440,7 @@ event_route[xhttp:request] {
 </programlisting>
 	    </example>
 	</section>
- 	<section id="jsonrpc-s.f.jsonrpc_exec">
+ 	<section id="jsonrpcs.f.jsonrpc_exec">
 	    <title>
 		<function moreinfo="none">jsonrpc_exec(cmd)</function>
 	    </title>

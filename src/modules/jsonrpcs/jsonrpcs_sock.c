@@ -40,7 +40,7 @@
 #include "../../core/resolve.h"
 #include "../../core/ip_addr.h"
 
-#include "jsonrpc-s_mod.h"
+#include "jsonrpcs_mod.h"
 
 /* DATAGRAM TRANSPORT */
 

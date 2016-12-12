@@ -86,7 +86,7 @@
 				<title>Set <varname>servers</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:9999,1")
+modparam("jsonrpcc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:9999,1")
 ...
 				</programlisting>
 			</example>
@@ -101,7 +101,7 @@ modparam("jsonrpc", "servers", "localhost:9999,2 10.10.0.1:9999,2 backup.server:
 				<title>Set <varname>max_conn_attempts</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("jsonrpc", "max_conn_attempts", 10)
+modparam("jsonrpcc", "max_conn_attempts", 10)
 ...
 				</programlisting>
 			</example>

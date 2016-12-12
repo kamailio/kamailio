@@ -9,28 +9,28 @@
 ]>
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
-	<bookinfo>
-	<title>janssonrpc-c Module</title>
+    <bookinfo>
+	<title>JSONRPCC (jsonrpc client) Module</title>
 	<productname class="trade">sip-router.org</productname>
 	<authorgroup>
-		<author>
-			<firstname>Joe</firstname>
-			<surname>Hillenbrand</surname>
-			<email>joe@flowroute.com</email>
-		</author>
-		<editor>
-			<firstname>Matthew</firstname>
-			<surname>Williams</surname>
-			<email>matthew@flowroute.com</email>
-		</editor>
+	    <author>
+		<firstname>Matthew</firstname>
+		<surname>Williams</surname>
+		<email>matthew@flowroute.com</email>
+	    </author>
+	    <editor>
+			<firstname>Jordan</firstname>
+			<surname>Levy</surname>
+			<email>jordan@flowroute.com</email>
+	    </editor>
 	</authorgroup>
 	<copyright>
-		<year>2013</year>
-		<holder>Flowroute LLC (flowroute.com)</holder>
+	    <year>2011</year>
+	    <holder>Flowroute LLC (flowroute.com)</holder>
 	</copyright>
-	</bookinfo>
-	<toc></toc>
+    </bookinfo>
+    <toc></toc>
 
-	<xi:include href="janssonrpc-c_admin.xml"/>
+    <xi:include href="jsonrpcc_admin.xml"/>
 
 </book>

@@ -10,28 +10,27 @@
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
-	<title>jsonrpc-c (client) Module</title>
-	<productname class="trade">sip-router.org</productname>
+	<title>JSONRPC-S (jsonrpc server) Module</title>
+	<productname class="trade">kamailio.org</productname>
 	<authorgroup>
 	    <author>
-		<firstname>Matthew</firstname>
-		<surname>Williams</surname>
-		<email>matthew@flowroute.com</email>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
 	    </author>
 	    <editor>
-			<firstname>Jordan</firstname>
-			<surname>Levy</surname>
-			<email>jordan@flowroute.com</email>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
 	    </editor>
 	</authorgroup>
 	<copyright>
-	    <year>2011</year>
-	    <holder>Flowroute LLC (flowroute.com)</holder>
+	    <year>2014</year>
+	    <holder>asipto.com</holder>
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
-    <xi:include href="jsonrpc-c_admin.xml"/>
-    
-    
+
+    <xi:include href="jsonrpcs_admin.xml"/>
+
 </book>

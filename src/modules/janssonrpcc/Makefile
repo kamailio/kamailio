@@ -1,12 +1,12 @@
 #
 # janssonrpc-c module makefile
 #
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
 auto_gen=
-NAME=janssonrpc-c.so
+NAME=janssonrpcc.so
 LIBS=-lm
 
 BUILDER = $(shell which pkg-config)
@@ -19,7 +19,7 @@ else
 	DEFS+= $(shell pkg-config --cflags libevent)
 	LIBS+= $(shell pkg-config --libs libevent)
 endif
- 
+
 DEFS+=-DOPENSER_MOD_INTERFACE
 
 SERLIBPATH=../../lib

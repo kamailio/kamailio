@@ -98,7 +98,7 @@ static param_export_t mod_params[]={
  * Exports
  */
 struct module_exports exports = {
-		"janssonrpc-c",       /* module name */
+		"janssonrpcc",       /* module name */
 		DEFAULT_DLFLAGS, /* dlopen flags */
 		cmds,            /* Exported functions */
 		mod_params,      /* Exported parameters */

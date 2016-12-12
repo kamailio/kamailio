@@ -76,7 +76,7 @@ static param_export_t mod_params[]={
  * Exports
  */
 struct module_exports exports = {
-		"jsonrpc",           /* module name */
+		"jsonrpcc",           /* module name */
 		DEFAULT_DLFLAGS,     /* dlopen flags */
 		cmds,                /* Exported functions */
 		mod_params,          /* Exported parameters */

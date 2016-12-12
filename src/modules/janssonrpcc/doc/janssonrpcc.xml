@@ -9,29 +9,28 @@
 ]>
 
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
-    <bookinfo>
-	<title>JSONRPC-S Module</title>
+	<bookinfo>
+	<title>JANSSONRPCC (jsonrpc client) Module</title>
 	<productname class="trade">kamailio.org</productname>
 	<authorgroup>
-	    <author>
-		<firstname>Daniel-Constantin</firstname>
-		<surname>Mierla</surname>
-		<email>miconda@gmail.com</email>
-	    </author>
-	    <editor>
-		<firstname>Daniel-Constantin</firstname>
-		<surname>Mierla</surname>
-		<email>miconda@gmail.com</email>
-	    </editor>
+		<author>
+			<firstname>Joe</firstname>
+			<surname>Hillenbrand</surname>
+			<email>joe@flowroute.com</email>
+		</author>
+		<editor>
+			<firstname>Matthew</firstname>
+			<surname>Williams</surname>
+			<email>matthew@flowroute.com</email>
+		</editor>
 	</authorgroup>
 	<copyright>
-	    <year>2014</year>
-	    <holder>asipto.com</holder>
+		<year>2013</year>
+		<holder>Flowroute LLC (flowroute.com)</holder>
 	</copyright>
-    </bookinfo>
-    <toc></toc>
-    
-    <xi:include href="jsonrpc-s_admin.xml"/>
-    
-    
+	</bookinfo>
+	<toc></toc>
+
+	<xi:include href="janssonrpcc_admin.xml"/>
+
 </book>

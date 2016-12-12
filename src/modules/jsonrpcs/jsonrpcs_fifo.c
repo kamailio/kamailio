@@ -35,7 +35,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/cfg/cfg_struct.h"
 
-#include "jsonrpc-s_mod.h"
+#include "jsonrpcs_mod.h"
 
 /* FIFO server parameters */
 char *jsonrpc_fifo = NULL;				/*!< FIFO file name */

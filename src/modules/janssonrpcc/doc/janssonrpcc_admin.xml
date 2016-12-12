@@ -82,7 +82,7 @@
 			<title>Set <varname>min_srv_ttl</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("janssonrpc-c", "min_srv_ttl", 30)
+modparam("janssonrpcc", "min_srv_ttl", 30)
 ...
 			</programlisting>
 			<para>
@@ -104,7 +104,7 @@ modparam("janssonrpc-c", "min_srv_ttl", 30)
 			<title>Set <varname>result_pv</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("janssonrpc-c", "result_pv", "$var(result)")
+modparam("janssonrpcc", "result_pv", "$var(result)")
 ...
 			</programlisting>
 		</example>
@@ -140,10 +140,10 @@ modparam("janssonrpc-c", "result_pv", "$var(result)")
 				<title>Set <varname>server</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("janssonrpc-c", "server", "conn=tests;srv=_test1._tcp.example.net");
-modparam("janssonrpc-c", "server", "conn=tests;srv=_test2._tcp.example.net");
-modparam("janssonrpc-c", "server", "conn=local;addr=localhost;port=8080;priority=10;weight=10");
-modparam("janssonrpc-c", "server", "conn=user_db;addr=rpc.prod.exmaple.net;port=5060;priority=10;weight=10");
+modparam("janssonrpcc", "server", "conn=tests;srv=_test1._tcp.example.net");
+modparam("janssonrpcc", "server", "conn=tests;srv=_test2._tcp.example.net");
+modparam("janssonrpcc", "server", "conn=local;addr=localhost;port=8080;priority=10;weight=10");
+modparam("janssonrpcc", "server", "conn=user_db;addr=rpc.prod.exmaple.net;port=5060;priority=10;weight=10");
 ...
 				</programlisting>
 			</example>
