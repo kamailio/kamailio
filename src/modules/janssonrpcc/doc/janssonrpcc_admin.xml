@@ -21,7 +21,7 @@
 			JSON document management.
 		</para>
 		<para>
-			It uses t_suspend() and t_continue() from the TM module.
+			It uses t_suspend() and t_continue() from the TM module for asynchronous processing.
 		</para>
 		<para>
 			Note that after invoking an asyncronous operation, the processing
