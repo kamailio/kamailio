@@ -50,12 +50,6 @@ sed -i -e '/libsctp-dev/d' -e '/^Package: kamailio-sctp-modules/,/^$/d' \
 sed -i -e 's/ sctp[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ sctp/' ${DIST}/rules
 
-# No purple module:
-sed -i -e '/libpurple-dev/d' -e '/^Package: kamailio-purple-modules/,/^$/d' \
-	${DIST}/control
-sed -i -e 's/ purple[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ purple/' ${DIST}/rules
-
 # No libhiredis:
 sed -i -e '/libhiredis-dev/d' -e '/^Package: kamailio-redis-modules/,/^$/d' \
 	${DIST}/control
