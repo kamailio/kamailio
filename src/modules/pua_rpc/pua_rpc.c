@@ -41,7 +41,6 @@
 #include "../../core/pt.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/strutils.h"
-/* #include "../tm/tm_load.h" */
 #include "../pua/pua_bind.h"
 
 MODULE_VERSION
@@ -96,15 +95,13 @@ static int pua_rpc_publish_callback(ua_pres_t* hentity, sip_msg_t* reply)
 		statuscode = reply->first_line.u.reply.statuscode;
 		reason = reply->first_line.u.reply.reason;
 	}
-	if (rpc->add(c, "{", &st) < 0) {
-	    LM_ERR("rpc->add failed on '{'\n");
-	    rpc->delayed_ctx_close(dctx);
-	    return -1;
-	}
-	rpc->struct_add(st, "d", "statusCode", statuscode);
-	rpc->struct_add(st, "S", "reasonPhrase", &reason);
 
 	if (statuscode == 200) {
+		if (rpc->add(c, "{", &st) < 0) {
+			LM_ERR("rpc->add failed on '{'\n");
+			rpc->delayed_ctx_close(dctx);
+			return -1;
+		}
 		expires = ((exp_body_t*)reply->expires->parsed)->val;
 		LM_DBG("expires = %d\n", expires);
 		hdr = reply->headers;
@@ -123,7 +120,7 @@ static int pua_rpc_publish_callback(ua_pres_t* hentity, sip_msg_t* reply)
 		}
 		etag = hdr->body;
 		LM_DBG("SIP-Etag = %.*s\n", etag.len, etag.s);
-		rpc->struct_add(st, "S", "SIP-Etag", &etag);
+		rpc->struct_add(st, "S", "SIP-ETag", &etag);
 		rpc->struct_add(st, "d", "Expires", expires);
 	}
 
@@ -160,7 +157,8 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 			&content_type, &id, &etag, &outbound_proxy,
 			&extra_headers, &body);
 	if (ret < 8) {
-		rpc->fault(c, 400, "too few parameters (%d)", ret);
+		rpc->fault(c, 400, "Too few or wrong type of parameters (%d)",
+			   ret);
 		return;
 	}
 
@@ -180,7 +178,7 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 	}
 	if (str2int(&expires, (unsigned int*)&exp) < 0) {
 		LM_ERR("invalid expires parameter\n" );
-		rpc->fault(c, 400, "Invalid expires '%s'", expires.s);
+		rpc->fault(c, 400, "Invalid expires value '%s'", expires.s);
 		return;
 	}
 	exp = exp * sign;
@@ -237,7 +235,7 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 	}
 
 	if (!((extra_headers.len == 1) && (extra_headers.s[0] == '.'))) {
-	    publ.extra_headers = &extra_headers;
+		publ.extra_headers = &extra_headers;
 	}
 
 	if (body.s != 0) {
@@ -247,7 +245,7 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 	dctx = rpc->delayed_ctx_new(c);
 	if (dctx == 0) {
 		LM_ERR("internal error: failed to create context\n");
-		rpc->fault(c, 500, "internal error: failed to create context");
+		rpc->fault(c, 500, "Internal error: failed to create context");
 		return;
 	}
 	publ.cb_param = dctx;
