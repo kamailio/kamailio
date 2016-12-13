@@ -30,7 +30,6 @@ Build-Depends: bison,
                libpcre3-dev,
                libperl-dev,
                libpq-dev,
-               libpurple-dev,
                libradiusclient-ng-dev,
                libreadline-dev,
                libsasl2-dev,
@@ -352,21 +351,6 @@ Description: SNMP AgentX subagent module for Kamailio
  .
  This package provides the snmpstats module for Kamailio. This module acts
  as an AgentX subagent which connects to a master agent.
-
-Package: kamailio-purple-modules
-Architecture: linux-any
-Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
-Depends: kamailio (= ${binary:Version}),
-         ${misc:Depends},
-         ${shlibs:Depends}
-Description: Provides the purple module, a multi-protocol IM gateway
- Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
- .
- This package provides the purple module, a multi-protocol instant
- messaging gateway module.
 
 Package: kamailio-xmpp-modules
 Architecture: linux-any
