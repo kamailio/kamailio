@@ -20,6 +20,8 @@ SMODPARAM=modules=$(smodules)
 endif
 endif
 
+MKTAGS?=ctags
+
 # forward all named targets
 %:
 	$(MAKE) -C $(KSR_DIR) $@ $(SMODPARAM)
@@ -32,3 +34,16 @@ default:
 .PHONY: install
 install:
 	$(MAKE) -C $(KSR_DIR) $@ $(SMODPARAM)
+
+.PHONY: TAGS
+.PHONY: tags
+TAGS tags:
+	$(MKTAGS) --exclude="misc/*" --exclude="test/*" -R .
+
+# clean everything generated - shortcut on maintainer-clean
+.PHONY: pure
+clean pure distclean:
+	@rm -f .*.swp tags TAGS
+	$(MAKE) -C $(KSR_DIR) $@
+
+#
