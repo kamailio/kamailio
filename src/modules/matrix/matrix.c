@@ -1,6 +1,4 @@
 /*
- * $Id: matrix.c 4978 2008-09-23 14:25:02Z henningw $
- *
  * Copyright (C) 2007 1&1 Internet AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,6 +29,8 @@
 #include "../../core/error.h"
 #include "../../core/ut.h"
 #include "../../core/mod_fix.h"
+#include "../../core/rpc_lookup.h"
+
 
 #include "db_matrix.h"
 
@@ -73,6 +73,7 @@ struct multiparam_t {
 
 
 
+int matrix_rpc_init(void);
 
 /* ---- fixup functions: */
 static int matrix_fixup(void** param, int param_no);
@@ -102,9 +103,9 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[] = {
 	matrix_DB_URL
-	matrix_DB_TABLE
-	matrix_DB_COLS
-	{ 0, 0, 0}
+		matrix_DB_TABLE
+		matrix_DB_COLS
+		{ 0, 0, 0}
 };
 
 
@@ -138,7 +139,7 @@ struct module_exports exports= {
 
 
 struct first_t {
-  struct first_t *next;
+	struct first_t *next;
 	int id;
 	short int second_list[MAXCOLS+1];
 };
@@ -147,7 +148,7 @@ struct first_t {
 
 
 struct matrix_t {
-  struct first_t *head;
+	struct first_t *head;
 };
 
 
@@ -178,7 +179,7 @@ static int mp_fixup(void ** param) {
 		return -1;
 	}
 	memset(mp, 0, sizeof(struct multiparam_t));
-	
+
 	s.s = (char *)(*param);
 	s.len = strlen(s.s);
 
@@ -238,14 +239,14 @@ static int avp_name_fixup(void ** param) {
 		LM_ERR("Malformed or non AVP definition <%s>\n", (char *)(*param));
 		return -1;
 	}
-	
+
 	mp = (struct multiparam_t *)pkg_malloc(sizeof(struct multiparam_t));
 	if (mp == NULL) {
 		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
 	memset(mp, 0, sizeof(struct multiparam_t));
-	
+
 	mp->type=MP_AVP;
 	if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))!=0) {
 		LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
@@ -254,7 +255,7 @@ static int avp_name_fixup(void ** param) {
 	}
 
 	*param = (void*)mp;
-	
+
 	return 0;
 }
 
@@ -351,7 +352,7 @@ static int matrix_insert(int first, short int second, int res)
 
 
 /* Returns the res id if the matrix contains an entry for the given indices, -1 otherwise.
- */
+*/
 static int internal_lookup(int first, short int second)
 {
 	struct first_t *item;
@@ -385,47 +386,47 @@ static int lookup_matrix(struct sip_msg *msg, struct multiparam_t *_srctree, str
 	int_str avp_val;
 
 	switch (_srctree->type) {
-	case MP_INT:
-		first = _srctree->u.n;
-		break;
-	case MP_AVP:
-		avp = search_first_avp(_srctree->u.a.flags, _srctree->u.a.name, &avp_val, 0);
-		if (!avp) {
-			LM_ERR("cannot find srctree AVP\n");
+		case MP_INT:
+			first = _srctree->u.n;
+			break;
+		case MP_AVP:
+			avp = search_first_avp(_srctree->u.a.flags, _srctree->u.a.name, &avp_val, 0);
+			if (!avp) {
+				LM_ERR("cannot find srctree AVP\n");
+				return -1;
+			}
+			if ((avp->flags&AVP_VAL_STR)) {
+				LM_ERR("cannot process string value in srctree AVP\n");
+				return -1;
+			}
+			else first = avp_val.n;
+			break;
+		default:
+			LM_ERR("invalid srctree type\n");
 			return -1;
-		}
-		if ((avp->flags&AVP_VAL_STR)) {
-			LM_ERR("cannot process string value in srctree AVP\n");
-			return -1;
-		}
-		else first = avp_val.n;
-		break;
-	default:
-		LM_ERR("invalid srctree type\n");
-		return -1;
 	}
 
 	switch (_second->type) {
-	case MP_INT:
-		second = _second->u.n;
-		break;
-	case MP_AVP:
-		avp = search_first_avp(_second->u.a.flags, _second->u.a.name, &avp_val, 0);
-		if (!avp) {
-			LM_ERR("cannot find second_value AVP\n");
+		case MP_INT:
+			second = _second->u.n;
+			break;
+		case MP_AVP:
+			avp = search_first_avp(_second->u.a.flags, _second->u.a.name, &avp_val, 0);
+			if (!avp) {
+				LM_ERR("cannot find second_value AVP\n");
+				return -1;
+			}
+			if ((avp->flags&AVP_VAL_STR)) {
+				LM_ERR("cannot process string value in second_value AVP\n");
+				return -1;
+			}
+			else second = avp_val.n;
+			break;
+		default:
+			LM_ERR("invalid second_value type\n");
 			return -1;
-		}
-		if ((avp->flags&AVP_VAL_STR)) {
-			LM_ERR("cannot process string value in second_value AVP\n");
-			return -1;
-		}
-		else second = avp_val.n;
-		break;
-	default:
-		LM_ERR("invalid second_value type\n");
-		return -1;
 	}
-	
+
 
 	/* critical section start: avoids dirty reads when updating d-tree */
 	lock_get(lock);
@@ -462,7 +463,7 @@ static int db_reload_matrix(void)
 	db1_res_t *res;
 	int i;
 	int n = 0;
-	
+
 	if (matrix_dbf.use_table(matrix_dbh, &matrix_table) < 0) {
 		LM_ERR("cannot use table '%.*s'.\n", matrix_table.len, matrix_table.s);
 		return -1;
@@ -547,8 +548,34 @@ struct mi_root * mi_reload_matrix(struct mi_root* cmd, void* param)
 	return tmp;
 }
 
+static void matrix_rpc_reload(rpc_t* rpc, void* c)
+{
+	if(db_reload_matrix() < 0) {
+		rpc->fault(c, 500, "Reload failed");
+	}
+}
+
+static const char *matrix_rpc_reload_doc[2] = {
+	"reload matrix records from database",
+	0
+};
 
 
+rpc_export_t matrix_rpc_cmds[] = {
+	{"matrix.reload", matrix_rpc_reload, matrix_rpc_reload_doc, 0},
+	{0, 0, 0, 0}
+};
+
+int matrix_rpc_init(void)
+{
+	if (rpc_register_array(matrix_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+
+}
 
 static int init_matrix(void)
 {
@@ -582,9 +609,12 @@ static void destroy_matrix(void)
 
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
+	if(register_mi_mod(exports.name, mi_cmds)!=0) {
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+	if(matrix_rpc_init()<0) {
+		LM_ERR("failed to init RPC commands");
 		return -1;
 	}
 
