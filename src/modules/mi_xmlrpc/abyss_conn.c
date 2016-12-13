@@ -15,6 +15,7 @@
 #include "abyss_thread.h"
 
 #include "abyss_conn.h"
+#include "xr_abyss_defs.h"
 
 /*********************************************************************
 ** Conn

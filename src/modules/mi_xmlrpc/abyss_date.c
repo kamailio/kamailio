@@ -39,6 +39,7 @@
 
 #include <inttypes.h>
 #include "abyss_date.h"
+#include "xr_abyss_defs.h"
 
 /*********************************************************************
 ** Date

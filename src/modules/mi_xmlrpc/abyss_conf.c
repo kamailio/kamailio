@@ -50,6 +50,7 @@
 #include "abyss_trace.h"
 #include "abyss_server.h"
 #include "abyss_http.h"
+#include "xr_abyss_defs.h"
 
 /*********************************************************************
 ** Configuration Files Parsing Functions

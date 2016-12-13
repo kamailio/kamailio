@@ -35,6 +35,7 @@
 #include <xmlrpc-c/abyss.h>
 
 #include "abyss_token.h"
+#include "xr_abyss_defs.h"
 
 void
 NextToken(const char ** const pP) {

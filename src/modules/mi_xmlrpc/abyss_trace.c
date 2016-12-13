@@ -37,6 +37,7 @@
 #include <stdarg.h>
 
 #include "abyss_trace.h"
+#include "xr_abyss_defs.h"
 
 /*********************************************************************
 ** Tracing functions

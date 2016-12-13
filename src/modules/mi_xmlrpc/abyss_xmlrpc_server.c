@@ -24,6 +24,7 @@
 #include <xmlrpc-c/server.h>
 #include "abyss_xmlrpc_int.h"
 #include <xmlrpc-c/server_abyss.h>
+#include "xr_abyss_defs.h"
 
 
 /*=========================================================================

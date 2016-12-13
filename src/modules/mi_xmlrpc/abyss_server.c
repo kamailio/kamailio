@@ -32,6 +32,7 @@
 #include "abyss_info.h"
 
 #include "abyss_server.h"
+#include "xr_abyss_defs.h"
 
 
 void

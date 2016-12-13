@@ -27,6 +27,7 @@
 #include "abyss_data.h"
 #include "abyss_info.h"
 #include "abyss_http.h"
+#include "xr_abyss_defs.h"
 
 
 

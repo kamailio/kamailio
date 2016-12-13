@@ -45,6 +45,7 @@
 
 #include <xmlrpc-c/abyss.h>
 #include "abyss_file.h"
+#include "xr_abyss_defs.h"
 
 /*********************************************************************
 ** File

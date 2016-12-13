@@ -46,6 +46,7 @@
 
 #include "abyss_mallocvar.h"
 #include "abyss_thread.h"
+#include "xr_abyss_defs.h"
 
 
 static void

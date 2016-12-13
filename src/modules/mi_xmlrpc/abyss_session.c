@@ -43,6 +43,7 @@
 #include "abyss_conn.h"
 
 #include "abyss_session.h"
+#include "xr_abyss_defs.h"
 
 
 

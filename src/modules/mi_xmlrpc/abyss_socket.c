@@ -64,6 +64,7 @@
 #endif
 
 #include "abyss_socket.h"
+#include "xr_abyss_defs.h"
 
 
 static void

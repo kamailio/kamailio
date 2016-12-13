@@ -69,6 +69,7 @@
 #include <xmlrpc-c/abyss.h>
 
 #include "abyss_socket_unix.h"
+#include "xr_abyss_defs.h"
 
 
 
