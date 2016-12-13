@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>PUA RPC</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>TutPro Inc.</orgname></affiliation>
+		<address>
+		  <email>jh@tutpro.com</email>
+		</address>
+	    </author>
+	    <author>
+		<firstname>Anca-Maria</firstname>
+		<surname>Vamanu</surname>
+		<affiliation><orgname>Voice Sistem SRL</orgname></affiliation>
+		<address>
+		<email>anca@voice-system.ro</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2016</year>
+	    <holder>TutPro Inc.</holder>
+	</copyright>
+	<copyright>
+	    <year>2006</year>
+	    <holder>Voice Sistem SRL</holder>
+	</copyright>
+  </bookinfo>
+  <toc></toc>
+  <xi:include href="pua_rpc_admin.xml"/>
+</book>
