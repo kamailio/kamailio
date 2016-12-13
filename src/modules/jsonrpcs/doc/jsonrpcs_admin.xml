@@ -59,7 +59,8 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>xhttp</emphasis> - xHTTP.
+				<emphasis>xhttp</emphasis> - xHTTP (optional, required when
+				http transport is wanted).
 			</para>
 			</listitem>
 			</itemizedlist>
