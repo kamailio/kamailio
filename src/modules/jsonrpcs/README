@@ -1,4 +1,4 @@
-JSONRPC-S Module
+JSONRPC-S (jsonrpc server) Module
 
 Daniel-Constantin Mierla
 
@@ -141,7 +141,7 @@ Chapter 1. Admin Guide
 3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * xhttp - xHTTP.
+     * xhttp - xHTTP (optional, required when http transport is wanted).
 
 3.2. External Libraries or Applications
 
@@ -173,7 +173,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set pretty_format parameter
 ...
-modparam("jsonrpc-s", "pretty_format", 1)
+modparam("jsonrpcs", "pretty_format", 1)
 ...
 
 4.2. transport (int)
@@ -194,7 +194,7 @@ modparam("jsonrpc-s", "pretty_format", 1)
 
    Example 1.2. Set transport parameter
 ...
-modparam("jsonrpc-s", "transport", 1)
+modparam("jsonrpcs", "transport", 1)
 ...
 
 4.3. fifo_name (str)
@@ -207,7 +207,7 @@ modparam("jsonrpc-s", "transport", 1)
 
    Example 1.3. Set fifo_name parameter
 ...
-modparam("jsonrpc-s", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
+modparam("jsonrpcs", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
 ...
 
 4.4. fifo_mode (int)
@@ -219,7 +219,7 @@ modparam("jsonrpc-s", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
 
    Example 1.4. Set fifo_mode parameter
 ...
-modparam("jsonrpc-s", "fifo_mode", 0600)
+modparam("jsonrpcs", "fifo_mode", 0600)
 ...
 
 4.5. fifo_group (int or str)
@@ -230,8 +230,8 @@ modparam("jsonrpc-s", "fifo_mode", 0600)
 
    Example 1.5. Set fifo_group parameter
 ...
-modparam("jsonrpc-s", "fifo_group", 0)
-modparam("jsonrpc-s", "fifo_group", "root")
+modparam("jsonrpcs", "fifo_group", 0)
+modparam("jsonrpcs", "fifo_group", "root")
 ...
 
 4.6. fifo_user (int or str)
@@ -242,8 +242,8 @@ modparam("jsonrpc-s", "fifo_group", "root")
 
    Example 1.6. Set fifo_user parameter
 ...
-modparam("jsonrpc-s", "fifo_user", 0)
-modparam("jsonrpc-s", "fifo_user", "root")
+modparam("jsonrpcs", "fifo_user", 0)
+modparam("jsonrpcs", "fifo_user", "root")
 ...
 
 4.7. fifo_reply_dir (str)
@@ -254,7 +254,7 @@ modparam("jsonrpc-s", "fifo_user", "root")
 
    Example 1.7. Set fifo_reply_dir parameter
 ...
-modparam("jsonrpc-s", "fifo_reply_dir", "/home/kamailio/tmp/")
+modparam("jsonrpcs", "fifo_reply_dir", "/home/kamailio/tmp/")
 ...
 
 4.8. dgram_socket (str)
@@ -267,9 +267,9 @@ modparam("jsonrpc-s", "fifo_reply_dir", "/home/kamailio/tmp/")
 
    Example 1.8. Set dgram_socket parameter
 ...
-modparam("jsonrpc-s", "dgram_socket", "/tmp/kamailio_rpc.sock")
+modparam("jsonrpcs", "dgram_socket", "/tmp/kamailio_rpc.sock")
 ...
-modparam("jsonrpc-s", "dgram_socket", "udp:1.2.3.4:8090")
+modparam("jsonrpcs", "dgram_socket", "udp:1.2.3.4:8090")
 ...
 
 4.9. dgram_workers (str)
@@ -281,7 +281,7 @@ modparam("jsonrpc-s", "dgram_socket", "udp:1.2.3.4:8090")
 
    Example 1.9. Set dgram_workers parameter
 ...
-modparam("jsonrpc-s", "dgram_workers", 4)
+modparam("jsonrpcs", "dgram_workers", 4)
 ...
 
 4.10. dgram_mode (int)
@@ -293,7 +293,7 @@ modparam("jsonrpc-s", "dgram_workers", 4)
 
    Example 1.10. Set dgram_mode parameter
 ...
-modparam("jsonrpc-s", "dgram_mode", 0600)
+modparam("jsonrpcs", "dgram_mode", 0600)
 ...
 
 4.11. dgram_group (int) dgram_group (str)
@@ -304,8 +304,8 @@ modparam("jsonrpc-s", "dgram_mode", 0600)
 
    Example 1.11. Set dgram_group parameter
 ...
-modparam("jsonrpc-s", "dgram_group", 0)
-modparam("jsonrpc-s", "dgram_group", "root")
+modparam("jsonrpcs", "dgram_group", 0)
+modparam("jsonrpcs", "dgram_group", "root")
 ...
 
 4.12. dgram_user (int) dgram_group (str)
@@ -316,8 +316,8 @@ modparam("jsonrpc-s", "dgram_group", "root")
 
    Example 1.12. Set dgram_user parameter
 ...
-modparam("jsonrpc-s", "dgram_user", 0)
-modparam("jsonrpc-s", "dgram_user", "root")
+modparam("jsonrpcs", "dgram_user", 0)
+modparam("jsonrpcs", "dgram_user", "root")
 ...
 
 4.13. dgram_timeout (int)
@@ -329,7 +329,7 @@ modparam("jsonrpc-s", "dgram_user", "root")
 
    Example 1.13. Set dgram_timeout parameter
 ...
-modparam("jsonrpc-s", "dgram_timeout", 2000)
+modparam("jsonrpcs", "dgram_timeout", 2000)
 ...
 
 5. Functions
@@ -361,7 +361,7 @@ mpath="modules/"
 loadmodule "sl.so"
 loadmodule "pv.so"
 loadmodule "xhttp.so"
-loadmodule "jsonrpc-s.so"
+loadmodule "jsonrpcs.so"
 
 request_route {
         send_reply("404", "not found");
