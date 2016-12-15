@@ -1864,7 +1864,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 10.3. dlg.dlg_list
 
    Lists the description of one dialog. The dialog identifiers are to be
-   passed as parameter (callid and fromtag).
+   passed as parameter (callid and optionally fromtag).
 
    Name: dlg.dlg_list
 
@@ -1875,6 +1875,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    RPC Command Format:
                 kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+                serctl dlg.list abcdrssfrs122444@192.168.1.1
 
 10.4. dlg.dlg_list_ctx
 
@@ -1888,6 +1889,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    RPC Command Format:
                 kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+                serctl dlg.list_ctx abcdrssfrs122444@192.168.1.1
 
 10.5. dlg.terminate_dlg
 
