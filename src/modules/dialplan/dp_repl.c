@@ -67,9 +67,10 @@ int dpl_dyn_printf_s(sip_msg_t *msg, const pv_elem_p elem,
 	pv_elem_p e = NULL;
 	pv_elem_p t = NULL;
 	str s = STR_NULL;
+	str v = STR_NULL;
 	int ret = -1;
 
-	if(elem==NULL||avp_elem==NULL||elem_prev==NULL) return -1;
+	if(elem==NULL||avp_elem==NULL||elem_prev==NULL||vexpr==NULL) return -1;
 	if(str_append(&(avp_elem->text), val, &s)<0) return -1;
 
 	if(pv_parse_format(&s, &e)<0) {
@@ -86,10 +87,18 @@ int dpl_dyn_printf_s(sip_msg_t *msg, const pv_elem_p elem,
 	}
 	if(*elem_prev) (*elem_prev)->next = e;
 	e->next = avp_elem->next;
-	if(pv_printf_s(msg, e, vexpr)<0){
+	if(pv_printf_s(msg, e, &v)<0){
 		LM_ERR("cannot get avp pcre dynamic expression value\n");
 		goto clean;
 	}
+	/* pv_printf_s uses pv_get_buffer() we do need to copy */
+	vexpr->len = v.len;
+	vexpr->s = pkg_malloc(sizeof(char)*(v.len+1));
+	if(vexpr->s==NULL) {
+		PKG_MEM_ERROR;
+		goto clean;
+	}
+	strcpy(vexpr->s, v.s);
 	ret = 0;
 clean:
 	if(s.s) pkg_free(s.s);
@@ -282,7 +291,12 @@ error:
 	}
 clean:
 	if(elem) pv_elem_free_all(elem);
-	while(l) { t = l->next; pkg_free(l); l = t;}
+	while(l) {
+		t = l->next;
+		if(l->s.s) pkg_free(l->s.s);
+		pkg_free(l);
+		l = t;
+	}
 	return re_list;
 }
 
