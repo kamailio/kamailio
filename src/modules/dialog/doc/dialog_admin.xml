@@ -2394,7 +2394,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		<title><varname>dlg.dlg_list</varname></title>
 		<para>
 		Lists the description of one dialog.  The dialog identifiers are to be passed
-		as parameter (callid and fromtag).
+		as parameter (callid and optionally fromtag).
 		</para>
 		<para>Name: <emphasis>dlg.dlg_list</emphasis></para>
 		<para>Parameters:</para>
@@ -2411,6 +2411,9 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		<programlisting  format="linespecific">
 		kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
 		</programlisting>
+		<programlisting  format="linespecific">
+		serctl dlg.list abcdrssfrs122444@192.168.1.1
+		</programlisting>
 		</section>
 		<section>
 		<title><varname>dlg.dlg_list_ctx</varname></title>
@@ -2425,6 +2428,9 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 		kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+		</programlisting>
+		<programlisting  format="linespecific">
+		serctl dlg.list_ctx abcdrssfrs122444@192.168.1.1
 		</programlisting>
 		</section>
 		<section>

@@ -1604,18 +1604,24 @@ static void internal_rpc_print_dlgs(rpc_t *rpc, void *c, int with_context)
  * \param with_context if 1 then the dialog context will be also printed
  */
 static void internal_rpc_print_single_dlg(rpc_t *rpc, void *c, int with_context) {
-	str callid, from_tag;
+	str callid, ft;
+	str *from_tag = NULL;
 	dlg_entry_t *d_entry;
 	dlg_cell_t *dlg;
 	unsigned int h_entry;
 
-	if (rpc->scan(c, ".S.S", &callid, &from_tag) < 2) return;
+	if (rpc->scan(c, ".S", &callid) < 1) return;
 
 	h_entry = core_hash( &callid, 0, d_table->size);
 	d_entry = &(d_table->entries[h_entry]);
+
+	if (rpc->scan(c, "*.S", &ft) == 1) {
+		from_tag = &ft;
+	}
+
 	dlg_lock( d_table, d_entry);
 	for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
-		if (match_downstream_dialog( dlg, &callid, &from_tag)==1) {
+		if (match_downstream_dialog( dlg, &callid, from_tag)==1) {
 			internal_rpc_print_dlg(rpc, c, dlg, with_context);
 		}
 	}
@@ -1706,10 +1712,10 @@ static const char *rpc_print_dlgs_ctx_doc[2] = {
 	"Print all dialogs with associated context", 0
 };
 static const char *rpc_print_dlg_doc[2] = {
-	"Print dialog based on callid and fromtag", 0
+	"Print dialog based on callid and optionally fromtag", 0
 };
 static const char *rpc_print_dlg_ctx_doc[2] = {
-	"Print dialog with associated context based on callid and fromtag", 0
+	"Print dialog with associated context based on callid and optionally fromtag", 0
 };
 static const char *rpc_end_dlg_entry_id_doc[2] = {
 	"End a given dialog based on [h_entry] [h_id]", 0
