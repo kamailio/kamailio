@@ -36,7 +36,7 @@ install-bin: $(bin_prefix)/$(bin_dir)
 		rm -fr $(kamctltmpdir)/kamctl
 		sed -e "s#/usr/local/sbin#$(bin_target)#g" \
 			< kamctl.base > $(kamctltmpdir)/kamctl.base
-		mkdir -p $(modules_prefix)/$(lib_dir)/kamctl 
+		mkdir -p $(modules_prefix)/$(lib_dir)/kamctl
 		$(INSTALL_TOUCH) \
 			$(modules_prefix)/$(lib_dir)/kamctl
 		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.base \
@@ -52,6 +52,11 @@ install-bin: $(bin_prefix)/$(bin_dir)
 		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.fifo \
 			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.fifo
 		rm -fr $(kamctltmpdir)/kamctl.fifo
+		sed -e "s#/usr/local#$(bin_target)#g" \
+			< kamctl.rpcfifo > $(kamctltmpdir)/kamctl.rpcfifo
+		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.rpcfifo \
+			$(modules_prefix)/$(lib_dir)/kamctl/kamctl.rpcfifo
+		rm -fr $(kamctltmpdir)/kamctl.rpcfifo
 		sed -e "s#/usr/local#$(bin_target)#g" \
 			< kamctl.ser > $(kamctltmpdir)/kamctl.ser
 		$(INSTALL_CFG) $(kamctltmpdir)/kamctl.ser \

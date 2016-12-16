@@ -82,7 +82,7 @@ rpc_cmd()
 	fi
 	if [ ! -w $RPCFIFOPATH ]; then
 		merr "Error opening Kamailio's FIFO $RPCFIFOPATH"
-		merr "Make sure you have loaded the jsonrpc-s module and set FIFO transport parameters"
+		merr "Make sure you have loaded the jsonrpcs module and set FIFO transport parameters"
 		if [ ! -z $CHROOT_DIR ]; then
 			merr "[chrooted environment] Check that $RPCFIFOPATH is symlinked to ${CHROOT_DIR}${RPCFIFOPATH}"
 		fi
@@ -175,7 +175,7 @@ rpc_kamailio_monitor() {
 	fi
 	if [ ! -w $RPCFIFOPATH ]; then
 		merr "Error opening Kamailio's FIFO $RPCFIFOPATH"
-		merr "Make sure you have loaded the jsonrpc-s module and set FIFO transport parameters"
+		merr "Make sure you have loaded the jsonrpcs module and set FIFO transport parameters"
 		exit 1
 	fi
 	if ! test -p $path; then
@@ -189,9 +189,9 @@ rpc_kamailio_monitor() {
 	trap "rm $path;  clear; echo monitor ^C-ed; exit 1" 2
 	attempt=0
 	if [ "$2" = "" ]; then
-	    loops=-1;
+		loops=-1;
 	else
-	    loops=$2;
+		loops=$2;
 	fi
 	clear
 	while [ $loops -ne $attempt ] ; do
