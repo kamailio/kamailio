@@ -41,21 +41,21 @@ MODULE_VERSION
 
 static int async_workers = 1;
 
-static int  mod_init(void);
-static int  child_init(int);
+static int mod_init(void);
+static int child_init(int);
 static void mod_destroy(void);
 
-static int w_async_sleep(sip_msg_t* msg, char* sec, char* str2);
-static int fixup_async_sleep(void** param, int param_no);
-static int w_async_route(sip_msg_t* msg, char* rt, char* sec);
-static int fixup_async_route(void** param, int param_no);
-static int w_async_task_route(sip_msg_t* msg, char* rt, char* p2);
-static int fixup_async_task_route(void** param, int param_no);
+static int w_async_sleep(sip_msg_t *msg, char *sec, char *str2);
+static int fixup_async_sleep(void **param, int param_no);
+static int w_async_route(sip_msg_t *msg, char *rt, char *sec);
+static int fixup_async_route(void **param, int param_no);
+static int w_async_task_route(sip_msg_t *msg, char *rt, char *p2);
+static int fixup_async_task_route(void **param, int param_no);
 
 /* tm */
 struct tm_binds tmb;
 
-
+/* clang-format off */
 static cmd_export_t cmds[]={
 	{"async_route", (cmd_function)w_async_route, 2, fixup_async_route,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
@@ -85,7 +85,7 @@ struct module_exports exports = {
 	mod_destroy,    /* destroy function */
 	child_init      /* per child init function */
 };
-
+/* clang-format on */
 
 
 /**
@@ -93,15 +93,15 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if (load_tm_api( &tmb ) == -1) {
+	if(load_tm_api(&tmb) == -1) {
 		LM_ERR("cannot load the TM-functions. Missing TM module?\n");
 		return -1;
 	}
 
-	if(async_workers<=0)
+	if(async_workers <= 0)
 		return 0;
 
-	if(async_init_timer_list()<0) {
+	if(async_init_timer_list() < 0) {
 		LM_ERR("cannot initialize internal structure\n");
 		return -1;
 	}
@@ -118,15 +118,16 @@ static int child_init(int rank)
 {
 	int i;
 
-	if (rank!=PROC_MAIN)
+	if(rank != PROC_MAIN)
 		return 0;
 
-	if(async_workers<=0)
+	if(async_workers <= 0)
 		return 0;
 
-	for(i=0; i<async_workers; i++) {
+	for(i = 0; i < async_workers; i++) {
 		if(fork_basic_timer(PROC_TIMER, "ASYNC MOD TIMER", 1 /*socks flag*/,
-				async_timer_exec, NULL, 1 /*sec*/)<0) {
+				   async_timer_exec, NULL, 1 /*sec*/)
+				< 0) {
 			LM_ERR("failed to register timer routine as process (%d)\n", i);
 			return -1; /* error */
 		}
@@ -146,34 +147,30 @@ static void mod_destroy(void)
 /**
  *
  */
-static int w_async_sleep(sip_msg_t* msg, char* sec, char* str2)
+static int w_async_sleep(sip_msg_t *msg, char *sec, char *str2)
 {
 	int s;
 	async_param_t *ap;
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(async_workers<=0)
-	{
+	if(async_workers <= 0) {
 		LM_ERR("no async mod timer workers (modparam missing?)\n");
 		return -1;
 	}
 
-	ap = (async_param_t*)sec;
-	if(fixup_get_ivalue(msg, ap->pinterval, &s)!=0)
-	{
+	ap = (async_param_t *)sec;
+	if(fixup_get_ivalue(msg, ap->pinterval, &s) != 0) {
 		LM_ERR("no async sleep time value\n");
 		return -1;
 	}
-	if(ap->type==0)
-	{
-		if(ap->u.paction==NULL || ap->u.paction->next==NULL)
-		{
+	if(ap->type == 0) {
+		if(ap->u.paction == NULL || ap->u.paction->next == NULL) {
 			LM_ERR("cannot be executed as last action in a route block\n");
 			return -1;
 		}
-		if(async_sleep(msg, s, ap->u.paction->next)<0)
+		if(async_sleep(msg, s, ap->u.paction->next) < 0)
 			return -1;
 		/* force exit in config */
 		return 0;
@@ -185,23 +182,22 @@ static int w_async_sleep(sip_msg_t* msg, char* sec, char* str2)
 /**
  *
  */
-static int fixup_async_sleep(void** param, int param_no)
+static int fixup_async_sleep(void **param, int param_no)
 {
 	async_param_t *ap;
-	if(param_no!=1)
+	if(param_no != 1)
 		return 0;
-	ap = (async_param_t*)pkg_malloc(sizeof(async_param_t));
-	if(ap==NULL)
-	{
+	ap = (async_param_t *)pkg_malloc(sizeof(async_param_t));
+	if(ap == NULL) {
 		LM_ERR("no more pkg memory available\n");
 		return -1;
 	}
 	memset(ap, 0, sizeof(async_param_t));
 	ap->u.paction = get_action_from_param(param, param_no);
-	if(fixup_igp_null(param, param_no)<0)
+	if(fixup_igp_null(param, param_no) < 0)
 		return -1;
-	ap->pinterval = (gparam_t*)(*param);
-	*param = (void*)ap;
+	ap->pinterval = (gparam_t *)(*param);
+	*param = (void *)ap;
 	return 0;
 }
 
@@ -214,19 +210,17 @@ int ki_async_route(sip_msg_t *msg, str *rn, int s)
 	int ri;
 
 	ri = route_get(&main_rt, rn->s);
-	if(ri<0)
-	{
+	if(ri < 0) {
 		LM_ERR("unable to find route block [%.*s]\n", rn->len, rn->s);
 		return -1;
 	}
 	act = main_rt.rlist[ri];
-	if(act==NULL)
-	{
+	if(act == NULL) {
 		LM_ERR("empty action lists in route block [%.*s]\n", rn->len, rn->s);
 		return -1;
 	}
 
-	if(async_sleep(msg, s, act)<0)
+	if(async_sleep(msg, s, act) < 0)
 		return -1;
 	/* force exit in config */
 	return 0;
@@ -235,28 +229,25 @@ int ki_async_route(sip_msg_t *msg, str *rn, int s)
 /**
  *
  */
-static int w_async_route(sip_msg_t* msg, char* rt, char* sec)
+static int w_async_route(sip_msg_t *msg, char *rt, char *sec)
 {
 	int s;
 	str rn;
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(async_workers<=0)
-	{
+	if(async_workers <= 0) {
 		LM_ERR("no async mod timer workers\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)rt, &rn)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)rt, &rn) != 0) {
 		LM_ERR("no async route block name\n");
 		return -1;
 	}
 
-	if(fixup_get_ivalue(msg, (gparam_t*)sec, &s)!=0)
-	{
+	if(fixup_get_ivalue(msg, (gparam_t *)sec, &s) != 0) {
 		LM_ERR("no async interval value\n");
 		return -1;
 	}
@@ -266,15 +257,14 @@ static int w_async_route(sip_msg_t* msg, char* rt, char* sec)
 /**
  *
  */
-static int fixup_async_route(void** param, int param_no)
+static int fixup_async_route(void **param, int param_no)
 {
-	if(param_no==1)
-	{
-		if(fixup_spve_null(param, 1)<0)
+	if(param_no == 1) {
+		if(fixup_spve_null(param, 1) < 0)
 			return -1;
 		return 0;
-	} else if(param_no==2) {
-		if(fixup_igp_null(param, 1)<0)
+	} else if(param_no == 2) {
+		if(fixup_igp_null(param, 1) < 0)
 			return -1;
 	}
 	return 0;
@@ -283,25 +273,23 @@ static int fixup_async_route(void** param, int param_no)
 /**
  *
  */
-int ki_async_task_route(sip_msg_t* msg, str* rn)
+int ki_async_task_route(sip_msg_t *msg, str *rn)
 {
 	cfg_action_t *act;
 	int ri;
 
 	ri = route_get(&main_rt, rn->s);
-	if(ri<0)
-	{
+	if(ri < 0) {
 		LM_ERR("unable to find route block [%.*s]\n", rn->len, rn->s);
 		return -1;
 	}
 	act = main_rt.rlist[ri];
-	if(act==NULL)
-	{
+	if(act == NULL) {
 		LM_ERR("empty action lists in route block [%.*s]\n", rn->len, rn->s);
 		return -1;
 	}
 
-	if(async_send_task(msg, act)<0)
+	if(async_send_task(msg, act) < 0)
 		return -1;
 	/* force exit in config */
 	return 0;
@@ -310,15 +298,14 @@ int ki_async_task_route(sip_msg_t* msg, str* rn)
 /**
  *
  */
-static int w_async_task_route(sip_msg_t* msg, char* rt, char* sec)
+static int w_async_task_route(sip_msg_t *msg, char *rt, char *sec)
 {
 	str rn;
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(fixup_get_svalue(msg, (gparam_t*)rt, &rn)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)rt, &rn) != 0) {
 		LM_ERR("no async route block name\n");
 		return -1;
 	}
@@ -328,17 +315,16 @@ static int w_async_task_route(sip_msg_t* msg, char* rt, char* sec)
 /**
  *
  */
-static int fixup_async_task_route(void** param, int param_no)
+static int fixup_async_task_route(void **param, int param_no)
 {
 	if(!async_task_initialized()) {
 		LM_ERR("async task framework was not initialized"
-				" - set async_workers parameter in core\n");
+			   " - set async_workers parameter in core\n");
 		return -1;
 	}
 
-	if(param_no==1)
-	{
-		if(fixup_spve_null(param, 1)<0)
+	if(param_no == 1) {
+		if(fixup_spve_null(param, 1) < 0)
 			return -1;
 		return 0;
 	}
@@ -348,6 +334,7 @@ static int fixup_async_task_route(void** param, int param_no)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_async_exports[] = {
 	{ str_init("async"), str_init("route"),
 		SR_KEMIP_INT, ki_async_route,
@@ -362,6 +349,7 @@ static sr_kemi_t sr_kemi_async_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+/* clang-format on */
 
 /**
  *

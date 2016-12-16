@@ -27,6 +27,7 @@
 #include "../../core/route_struct.h"
 #include "../../core/mod_fix.h"
 
+/* clang-format off */
 typedef struct async_param {
 	int type;
 	gparam_t *pinterval;
@@ -35,15 +36,16 @@ typedef struct async_param {
 		gparam_t *proute;
 	} u;
 } async_param_t;
+/* clang-format on */
 
 int async_init_timer_list(void);
 
 int async_destroy_timer_list(void);
 
-int async_sleep(sip_msg_t* msg, int seconds, cfg_action_t *act);
+int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act);
 
 void async_timer_exec(unsigned int ticks, void *param);
 
-int async_send_task(sip_msg_t* msg, cfg_action_t *act);
+int async_send_task(sip_msg_t *msg, cfg_action_t *act);
 
 #endif
