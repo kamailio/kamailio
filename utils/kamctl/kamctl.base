@@ -143,8 +143,8 @@ SRDB_CANON=$((1 << 2))          # Canonical entry (domain or uri)
 SRDB_IS_TO=$((1 << 3))          # The URI can be used in To
 SRDB_IS_FROM=$((1 << 4))        # The URI can be used in From
 SRDB_FOR_SERWEB=$((1 << 5))     # Credentials instance can be used by serweb
-SRDB_PENDING=$((1 << 6)) 
-SRDB_DELETED=$((1 << 7)) 
+SRDB_PENDING=$((1 << 6))
+SRDB_DELETED=$((1 << 7))
 SRDB_CALLER_DELETED=$((1 << 8)) # Accounting table
 SRDB_CALLEE_DELETED=$((1 << 9)) # Accounting table
 SRDB_MULTIVALUE=$((1 << 10))    # Attr_types table
@@ -311,7 +311,7 @@ if [ -z "$ADDRESS_TABLE" ] ; then
 	ADDRESS_TABLE=address
 fi
 
-# dispatcher tables  
+# dispatcher tables
 if [ -z "$DISPATCHER_TABLE" ] ; then
 	DISPATCHER_TABLE=dispatcher
 fi
@@ -609,7 +609,7 @@ in SIP_DOMAIN"
 # check the parameter if it is a valid address of record (user@domain)
 check_aor() {
 	echo "$1" | $EGREP "^$USERNAME_RE@.*\..*" >/dev/null
-	if [ $? -ne 0 ] ; then 
+	if [ $? -ne 0 ] ; then
 		echo "error: invalid AoR: $1" > /dev/stderr
 		exit 1
 	fi
@@ -618,7 +618,7 @@ check_aor() {
 # check the parameter if it is a valid address of record (user@domain)
 is_aor() {
 	echo "$1" | $EGREP "^$USERNAME_RE@.*\..*" >/dev/null
-	if [ $? -ne 0 ] ; then 
+	if [ $? -ne 0 ] ; then
 		false
 	else
 		true
@@ -628,7 +628,7 @@ is_aor() {
 # check the parameter if it is a valid SIP address of record (sip:user@domain)
 check_sipaor() {
 	echo "$1" | $EGREP "^sip(s)?:$USERNAME_RE@.*\..*" >/dev/null
-	if [ $? -ne 0 ] ; then 
+	if [ $? -ne 0 ] ; then
 		echo "error: invalid SIP AoR: $1" > /dev/stderr
 		exit 1
 	fi
@@ -639,7 +639,7 @@ check_sipaor() {
 # errors
 check_uri() {
 	echo "$1" | $EGREP "^sip(s)?:($USERNAME_RE@)?.*\..*"  > /dev/null
-	if [ $? -ne 0 ] ; then 
+	if [ $? -ne 0 ] ; then
 		echo "error: invalid SIP URI: $1" > /dev/stderr
 		exit 1
 	fi
@@ -647,7 +647,7 @@ check_uri() {
 
 print_status() {
 	echo $1 | $EGREP "^[1-6][0-9][0-9]" > /dev/null
-	if [ "$?" -eq 0 ] ; then 
+	if [ "$?" -eq 0 ] ; then
 		echo $1
 	else
 		echo "200 OK"
@@ -655,17 +655,56 @@ print_status() {
 }
 
 # process output from FIFO/Unixsock server; if everything is ok
-# skip the first "ok" line and proceed to returned 
+# skip the first "ok" line and proceed to returned
 # parameters
 filter_fl()
 {
 #	tail +2
-	
+
 	$AWK 'BEGIN {line=0;IGNORECASE=1;}
 		{line++}
 		NR == 1 && /^200 OK/ { next }
 		/^$/ { next }
 		{ print }'
+}
+
+# process jsonrpc output
+filter_json()
+{
+	$AWK 'function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+		BEGIN { line=0; IGNORECASE=1; }
+		{ line++; }
+		NR == 1 && /^200 OK/ { next; }
+		/^[ \t]*"jsonrpc":[ \t]*"2.0"/ { print; next; }
+		/^[ \t]*"result":[ \t]*\[.+/ {
+				n=split($0, a, ",");
+				for (i=1; i<=n; i++) {
+					if (i==1) {
+						m=split(a[i], b, "\[");
+						print b[1] "[";
+						if (substr(b[2], length(b[2]), 1)=="[" || substr(b[2], length(b[2]), 1)=="{") {
+							print "\t\t" ltrim(b[2]);
+						} else {
+							print "\t\t" ltrim(b[2]) ",";
+						}
+					} else {
+						if (match(a[i], ".+]$")) {
+							print "\t\t" ltrim(substr(a[i], 1, length(a[i])-1));
+							print "\t],";
+						} else {
+							if(length(a[i])>0) print "\t\t" ltrim(a[i]) ",";
+						}
+					}
+				}
+				next;
+			}
+		/[ \t]*}],/ {
+				print substr($0, 1, length($0)-2);
+				print "\t],";
+				next;
+			}
+		/^$/ { next; }
+		{ print; }'
 }
 
 # params: user, realm, password
