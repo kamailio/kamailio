@@ -977,11 +977,11 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len, int req_ch
                                 case 7:
                                         hg->src_port  = (hep_chunk_uint16_t *) (tmp);
                                         ret = pv_get_uintval(msg, param, res, ntohs(hg->src_port->data));
-                                        break;
+                                        goto done;
                                 case 8:
                                         hg->dst_port  = (hep_chunk_uint16_t *) (tmp);
                                         ret = pv_get_uintval(msg, param, res, ntohs(hg->dst_port->data));
-                                        break;
+                                        goto done;
                                 case 9:
                                         hg->time_sec  = (hep_chunk_uint32_t *) (tmp);
                                         hg->time_sec->data = ntohl(hg->time_sec->data);
