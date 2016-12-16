@@ -89,6 +89,14 @@ if [ -z "$EXPR" ] ; then
 	fi
 	EXPR="$TOOLPATH"
 fi
+if [ -z "$EXPAND" ] ; then
+	locate_tool expand
+	if [ -z "$TOOLPATH" ] ; then
+		EXPAND="cat"
+	else
+		EXPAND="$TOOLPATH -t 2"
+	fi
+fi
 
 ##### ------------------------------------------------ #####
 ### configuration for starting/stopping kamailio
@@ -680,7 +688,7 @@ filter_json()
 				n=split($0, a, ",");
 				for (i=1; i<=n; i++) {
 					if (i==1) {
-						m=split(a[i], b, "\[");
+						m=split(a[i], b, "[");
 						print b[1] "[";
 						if (substr(b[2], length(b[2]), 1)=="[" || substr(b[2], length(b[2]), 1)=="{") {
 							print "\t\t" ltrim(b[2]);

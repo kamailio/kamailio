@@ -121,7 +121,7 @@ rpc_cmd()
 
 	# start reader now so that it is ready for replies
 	# immediately after a request was sent out
-	cat < $path | filter_json &
+	cat < $path | filter_json | $EXPAND &
 
 	# issue FIFO request (printf taken to deal with \n)
 	printf "$CMD" > $RPCFIFOPATH
@@ -202,7 +202,7 @@ rpc_kamailio_monitor() {
 		# print_stats $name $path $attempt
 		mecho "[cycle #: $attempt; if constant make sure server lives]"
 
-		cat < $path | filter_json &
+		cat < $path | filter_json | $EXPAND &
 		cat > $RPCFIFOPATH <<EOF
 {
   "jsonrpc": "2.0",
@@ -213,7 +213,7 @@ rpc_kamailio_monitor() {
 EOF
 		wait
 
-		cat < $path | filter_json &
+		cat < $path | filter_json | $EXPAND &
 		cat > $RPCFIFOPATH << EOF
 {
   "jsonrpc": "2.0",
@@ -226,7 +226,7 @@ EOF
 		echo
 
 		mecho "Transaction Statistics: "
-		cat < $path | filter_json &
+		cat < $path | filter_json | $EXPAND &
 		cat > $RPCFIFOPATH <<EOF
 {
   "jsonrpc": "2.0",
@@ -240,7 +240,7 @@ EOF
 		echo
 
 		mecho "Stateless Server Statistics: "
-		cat < $path | filter_json &
+		cat < $path | filter_json | $EXPAND &
 		cat > $RPCFIFOPATH <<EOF
 {
   "jsonrpc": "2.0",
@@ -254,7 +254,7 @@ EOF
 		echo
 
 		mecho "UsrLoc Stats: "
-		cat < $path | filter_json &
+		cat < $path | filter_json | $EXPAND &
 		cat > $RPCFIFOPATH <<EOF
 {
   "jsonrpc": "2.0",
