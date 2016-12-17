@@ -201,8 +201,9 @@ rpc_kamailio_monitor() {
 
 		# print_stats $name $path $attempt
 		mecho "[cycle #: $attempt; if constant make sure server lives]"
+		mecho "Kamailio Runtime Details: "
 
-		cat < $path | filter_json | $EXPAND &
+		cat < $path | filter_json | $EXPAND | grep "result" | awk -F'"' '{ print $4 }' &
 		cat > $RPCFIFOPATH <<EOF
 {
   "jsonrpc": "2.0",
@@ -213,7 +214,7 @@ rpc_kamailio_monitor() {
 EOF
 		wait
 
-		cat < $path | filter_json | $EXPAND &
+		cat < $path | filter_json | $EXPAND | egrep "now|up_since|uptime" | sed 's/[",]//g' &
 		cat > $RPCFIFOPATH << EOF
 {
   "jsonrpc": "2.0",
@@ -226,12 +227,12 @@ EOF
 		echo
 
 		mecho "Transaction Statistics: "
-		cat < $path | filter_json | $EXPAND &
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
 		cat > $RPCFIFOPATH <<EOF
 {
   "jsonrpc": "2.0",
   "method": "stats.get_statistics",
-  "params": [ "UAS_transactions", "UAC_transactions", "inuse_transactions"],
+  "params": [ "UAS_transactions", "UAC_transactions", "active_transactions", "inuse_transactions"],
   "reply_name": "${name}",
   "id": $$
 }
@@ -240,12 +241,12 @@ EOF
 		echo
 
 		mecho "Stateless Server Statistics: "
-		cat < $path | filter_json | $EXPAND &
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
 		cat > $RPCFIFOPATH <<EOF
 {
   "jsonrpc": "2.0",
   "method": "stats.get_statistics",
-  "params": [ "sent_replies", "sent_err_replies", "received_ACKs"],
+  "params": [ "sent_replies", "sent_err_replies"],
   "reply_name": "${name}",
   "id": $$
 }
@@ -253,13 +254,41 @@ EOF
 		wait
 		echo
 
-		mecho "UsrLoc Stats: "
-		cat < $path | filter_json | $EXPAND &
+		mecho "UsrLoc Statistics: "
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
 		cat > $RPCFIFOPATH <<EOF
 {
   "jsonrpc": "2.0",
   "method": "stats.get_statistics",
   "params": [ "usrloc:"],
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+		echo
+
+		mecho "Core Statistics: "
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
+		cat > $RPCFIFOPATH <<EOF
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "rcv_requests", "fwd_requests", "rcv_replies", "fwd_replies"],
+  "reply_name": "${name}",
+  "id": $$
+}
+EOF
+		wait
+		echo
+
+		mecho "Shared Memory Statistics: "
+		cat < $path | filter_json | $EXPAND | grep "=" | sed 's/[",]//g' | column &
+		cat > $RPCFIFOPATH <<EOF
+{
+  "jsonrpc": "2.0",
+  "method": "stats.get_statistics",
+  "params": [ "shmem:"],
   "reply_name": "${name}",
   "id": $$
 }
