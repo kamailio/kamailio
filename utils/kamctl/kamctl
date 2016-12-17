@@ -440,7 +440,7 @@ $CLAUSE;"
 #
 check_ul_alias() {
 	require_ctlengine
-	RES=`$CTLCMD ul_show_contact "$ALS_TABLE" "$1@$2"`
+	RES=`ctl_cmd_run ul_show_contact ul.lookup "$ALS_TABLE" "$1@$2"`
 	RET="$?"
 	ALIAS_UL_EXISTS=0
 	if [ $RET -ne 0 ] ; then
@@ -966,9 +966,14 @@ $AVP_USER_COLUMN='$OSERUSER' AND $AVP_DOMAIN_COLUMN='$OSERDOMAIN'"
 cisco_restart() {
 	require_ctlengine
 	myhost=`get_my_host`
-	CMD="t_uac_dlg NOTIFY $1 . . \"From:sip:daemon@$myhost\r\nTo:<$1>\r\nEvent:check-sync\r\nContact:sip:daemon@$myhost\r\n\""
-	RET=`$CTLCMD $CMD | head -1`
-	print_status $RET
+	CMDPARAMS="t_uac_dlg tm.t_uac_start NOTIFY $1 . . \"From:sip:daemon@$myhost\r\nTo:<$1>\r\nEvent:check-sync\r\nContact:sip:daemon@$myhost\r\n\""
+
+	if [ $CTLENGINETYPE -eq 1 ] ; then
+		ctl_cmd_run $CMDPARAMS
+	else
+		RET=`ctl_cmd_run $CMDPARAMS | head -1`
+		print_status $RET
+	fi
 }
 
 #
@@ -1209,11 +1214,11 @@ permissions_trusted() {
 	case $1 in
 		reload)
 			require_ctlengine
-			$CTLCMD trusted_reload
+			ctl_cmd_run trusted_reload permissions.trustedReload
 			;;
 		dump)
 			require_ctlengine
-			$CTLCMD trusted_dump
+			ctl_cmd_run trusted_dump permissions.trustedDump
 			;;
 		show)
 			require_dbengine
@@ -1284,12 +1289,12 @@ permissions_address() {
 	case $1 in
 		reload)
 			require_ctlengine
-			$CTLCMD address_reload
+			ctl_cmd_run address_reload permissions.addressReload
 			;;
 		dump)
 			require_ctlengine
-			$CTLCMD address_dump
-			$CTLCMD subnet_dump
+			ctl_cmd_run address_dump permissions.addressDump
+			ctl_cmd_run subnet_dump permissions.subnetDump
 			;;
 		show)
 			require_dbengine
@@ -1373,17 +1378,17 @@ lcr() {
 		reload)
 			merr "command disabled"
 			exit 1
-			$CTLCMD lcr.reload
+			ctl_cmd_run lcr.reload lcr.reload
 			;;
 		dump_gws)
 			merr "command disabled"
 			exit 1
-			$CTLCMD lcr.dump_gws
+			ctl_cmd_run lcr.dump_gws lcr.dump_gws
 			;;
 		dump_routes)
 			merr "command disabled"
 			exit 1
-			$CTLCMD lcr.dump_lcrs
+			ctl_cmd_run lcr.dump_lcrs lcr.dump_lcrs
 			;;
 		eval_weights)
 			shift
@@ -1443,11 +1448,11 @@ cr() {
 			$DBROCMD "$QUERY"
 			;;
 		reload)
-			$CTLCMD cr_reload_routes
+			ctl_cmd_run cr_reload_routes cr.reload_routes
 			;;
 
 		dump)
-			$CTLCMD cr_dump_routes
+			ctl_cmd_run cr_dump_routes cr.dump_routes
 			;;
 
 		addcn)
@@ -1926,9 +1931,13 @@ kamailio_stop() {
 options_ping() {
 	myhost=`get_my_host`
 	require_ctlengine
-	CMD="t_uac_dlg OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:sip:daemon@$myhost"$'\r\n'"\""
-	RET=`$CTLCMD $CMD | head -1`
-	print_status $RET
+	CMDPARAMS="t_uac_dlg tm.t_uac_start OPTIONS \"$1\" \".\" \".\" \"From:sip:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:sip:daemon@$myhost"$'\r\n'"\""
+	if [ $CTLENGINETYPE -eq 1 ] ; then
+		ctl_cmd_run $CMDPARAMS
+	else
+		RET=`ctl_cmd_run $CMDPARAMS | head -1`
+		print_status $RET
+	fi
 }
 
 #
@@ -2879,7 +2888,8 @@ case $1 in
 
 	online)
 		require_ctlengine
-		$CTLCMD ul_dump | $EGREP -i aor | awk '{print $2}' | sort | sort -mu
+		ctl_cmd_run ul_dump ul.dump brief | $EGREP -i aor | $EGREP -v AoRs \
+			| awk '{print $2}' | sed 's/"//g' | sort | sort -mu
 		exit $?
 		;;
 
