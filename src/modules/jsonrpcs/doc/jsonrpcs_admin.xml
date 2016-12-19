@@ -133,7 +133,7 @@ modparam("jsonrpcs", "pretty_format", 1)
 		</para>
 		<para>
 		<emphasis>
-			Default value is '0'.
+			Default value is '6' (fifo and datagram transport).
 		</emphasis>
 		</para>
 		<example>
@@ -154,14 +154,14 @@ modparam("jsonrpcs", "transport", 1)
 		</para>
 		<para>
 		<emphasis>
-			Default value is NONE.
+			Default value is "&kamailiobinary;_rpc.fifo".
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>fifo_name</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jsonrpcs", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
+modparam("jsonrpcs", "fifo_name", "/tmp/kamailio_jsonrpc.fifo")
 ...
 </programlisting>
 		</example>
@@ -253,14 +253,15 @@ modparam("jsonrpcs", "fifo_reply_dir", "/home/kamailio/tmp/")
 	<section id="jsonrpcs.p.dgram_socket">
 		<title><varname>dgram_socket</varname> (str)</title>
 		<para>
-		The name of a UNIX SOCKET or an IP address.
-		The UNIX datagram or UDP socket will be created using this parameter
-		in order to read the external commands.
-		Both IPv4 and IPv6 are supported.
+		The name of a Unix socket file or an IP address.
+		The Unix datagram or UDP socket will be created using this parameter
+		in order to read the external commands. Both IPv4 and IPv6 are
+		supported. If the given path for Unix socket is not absolute,
+		then it is created relative to run_dir (global parameter).
 		</para>
 		<para>
 		<emphasis>
-			Default value is NONE.
+			Default value is "&kamailiobinary;_rpc.sock".
 		</emphasis>
 		</para>
 		<example>
