@@ -937,11 +937,10 @@ int check_parse_uris(struct sip_msg* _msg, int checks) {
 	return SANITY_CHECK_PASSED;
 }
 
-
 /* Make sure that username attribute in all digest credentials
  * instances has a meaningful value
  */
-int check_digest(struct sip_msg* msg, int checks)
+static int check_digest_only(struct sip_msg* msg, int checks)
 {
 	struct hdr_field* ptr;
 	dig_cred_t* cred;
@@ -970,9 +969,14 @@ int check_digest(struct sip_msg* msg, int checks)
 	}
 	while(ptr) {
 		if ((ret = parse_credentials(ptr)) != 0) {
-			DBG("sanity_check(): check_digest: Cannot parse credentials: %d\n",
+			if (ret == 1) {
+				DBG("sanity_check(): check_digest: Not a \"digest\" authorization\n");
+				return SANITY_CHECK_NOT_APPLICABLE;
+			} else {
+				DBG("sanity_check(): check_digest: Cannot parse credentials: %d\n",
 					ret);
-			return SANITY_CHECK_FAILED;
+				return SANITY_CHECK_FAILED;
+			}
 		}
 
 		cred = &((auth_body_t*)ptr->parsed)->digest;
@@ -1018,6 +1022,24 @@ int check_digest(struct sip_msg* msg, int checks)
 	return SANITY_CHECK_PASSED;
 }
 
+int check_authorization(struct sip_msg* msg, int checks) {
+	int ret;
+
+	ret = check_digest_only(msg, checks);
+	if (ret == SANITY_CHECK_PASSED || ret == SANITY_CHECK_NOT_APPLICABLE) {
+		return SANITY_CHECK_PASSED;
+	} else {
+		return SANITY_CHECK_FAILED;
+	}
+}
+
+int check_digest(struct sip_msg* msg, int checks) {
+	if (check_digest_only(msg, checks) == SANITY_CHECK_PASSED) {
+		return SANITY_CHECK_PASSED;
+	} else {
+		return SANITY_CHECK_FAILED;
+	}
+}
 
 /* check for the presence of duplicate tag prameters in To/From headers */
 int check_duptags(sip_msg_t* _msg)

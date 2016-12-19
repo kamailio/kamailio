@@ -209,6 +209,10 @@ int sanity_check(struct sip_msg* _msg, int msg_checks, int uri_checks)
 			(ret = check_digest(_msg, uri_checks)) != SANITY_CHECK_PASSED) {
 		goto done;
 	}
+	if (SANITY_CHECK_AUTHORIZATION & msg_checks &&
+			(ret = check_authorization(_msg, uri_checks)) != SANITY_CHECK_PASSED) {
+		goto done;
+	}
 	if (SANITY_CHECK_DUPTAGS & msg_checks &&
 			(ret = check_duptags(_msg)) != SANITY_CHECK_PASSED) {
 		goto done;

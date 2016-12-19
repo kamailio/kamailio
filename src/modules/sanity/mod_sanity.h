@@ -41,7 +41,8 @@
 #define SANITY_PARSE_URIS              (1<<10)
 #define SANITY_CHECK_DIGEST            (1<<11)
 #define SANITY_CHECK_DUPTAGS           (1<<12)
-#define SANITY_MAX_CHECKS              (1<<13)  /* Make sure this is the highest value */
+#define SANITY_CHECK_AUTHORIZATION     (1<<13)
+#define SANITY_MAX_CHECKS              (1<<14)  /* Make sure this is the highest value */
 
 /* VIA_SIP_VERSION and VIA_PROTOCOL do not work yet
  * and PARSE_URIS is very expensive */
@@ -69,6 +70,7 @@
 #define SANITY_CHECK_PASSED 1
 #define SANITY_CHECK_FAILED 0
 #define SANITY_CHECK_ERROR -1
+#define SANITY_CHECK_NOT_APPLICABLE -2
 
 struct _strlist {
 	str string;            /* the string */

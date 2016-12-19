@@ -101,6 +101,15 @@
 			digest credentials (2048) - Check all instances of digest credentials in a
 			message. The test checks whether there are all required
 			digest parameters and that they have meaningful values.
+			<emphasis>NOTE:</emphasis> the message will be considered invalid
+			if the authorization scheme differs from "digest",
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			authorization header (8192) - checks if the Authorization is valid
+			if the scheme is "digest" (see "digest credentials" above), always
+			returns success for other schemes.
 			</para>
 		</listitem>
 		</itemizedlist>
