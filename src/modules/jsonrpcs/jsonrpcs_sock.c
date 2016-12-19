@@ -74,7 +74,7 @@ static jsonrpc_dgram_sockaddr_t jsonrpc_dgram_addr;
 static jsonrpc_dgram_rx_tx_t jsonrpc_dgram_sockets;
 
 /* dgram unixsock specific parameters */
-char *jsonrpc_dgram_socket = 0;
+char *jsonrpc_dgram_socket = NAME "_rpc.sock";
 int jsonrpc_dgram_workers = 1;
 int jsonrpc_dgram_timeout = 2000;
 int  jsonrpc_dgram_unix_socket_uid = -1;

@@ -38,7 +38,7 @@
 #include "jsonrpcs_mod.h"
 
 /* FIFO server parameters */
-char *jsonrpc_fifo = NULL;				/*!< FIFO file name */
+char *jsonrpc_fifo = NAME "_rpc.fifo";		/*!< FIFO file name */
 char *jsonrpc_fifo_reply_dir = "/tmp/"; 	/*!< dir where reply fifos are allowed */
 int  jsonrpc_fifo_uid = -1;				/*!< Fifo default UID */
 char *jsonrpc_fifo_uid_s = 0;			/*!< Fifo default User ID name */
