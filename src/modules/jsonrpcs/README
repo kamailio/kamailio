@@ -190,7 +190,7 @@ modparam("jsonrpcs", "pretty_format", 1)
    sum of the desired transports to enable them. For example, enabling
    FIFO and DATAGRAM can be done setting transport=6.
 
-   Default value is '0'.
+   Default value is '6' (fifo and datagram transport).
 
    Example 1.2. Set transport parameter
 ...
@@ -203,11 +203,11 @@ modparam("jsonrpcs", "transport", 1)
    external commands. If the given path is not absolute, the fifo file is
    created relative to run_dir (global parameter).
 
-   Default value is NONE.
+   Default value is "kamailio_rpc.fifo".
 
    Example 1.3. Set fifo_name parameter
 ...
-modparam("jsonrpcs", "fifo_name", "/tmp/kamailio_jsonrpc_fifo")
+modparam("jsonrpcs", "fifo_name", "/tmp/kamailio_jsonrpc.fifo")
 ...
 
 4.4. fifo_mode (int)
@@ -259,11 +259,13 @@ modparam("jsonrpcs", "fifo_reply_dir", "/home/kamailio/tmp/")
 
 4.8. dgram_socket (str)
 
-   The name of a UNIX SOCKET or an IP address. The UNIX datagram or UDP
-   socket will be created using this parameter in order to read the
-   external commands. Both IPv4 and IPv6 are supported.
+   The name of a Unix socket file or an IP address. The Unix datagram or
+   UDP socket will be created using this parameter in order to read the
+   external commands. Both IPv4 and IPv6 are supported. If the given path
+   for Unix socket is not absolute, then it is created relative to run_dir
+   (global parameter).
 
-   Default value is NONE.
+   Default value is "kamailio_rpc.sock".
 
    Example 1.8. Set dgram_socket parameter
 ...
