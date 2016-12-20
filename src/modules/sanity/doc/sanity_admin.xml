@@ -107,6 +107,11 @@
 		</listitem>
 		<listitem>
 			<para>
+			duplicated To/From tags (4096) - checks for the presence of duplicated
+			tags in To/From headers.
+			</para>
+		<listitem>
+			<para>
 			authorization header (8192) - checks if the Authorization is valid
 			if the scheme is "digest" (see "digest credentials" above), always
 			returns success for other schemes.
