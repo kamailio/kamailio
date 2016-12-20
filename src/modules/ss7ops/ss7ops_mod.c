@@ -62,6 +62,7 @@ struct mtp_level_3_hdr {
  *
  */
 static const char *isup_last = NULL;
+static srjson_doc_t *isup_json = NULL;
 
 static int w_isup_to_json(struct sip_msg* _m, char* param1, char* param2);
 static int pv_get_isup(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -259,8 +260,10 @@ static int w_isup_to_json(struct sip_msg *_m, char *param1, char *param2)
 	int opc, dpc, mtp_type, int_len, rc;
 	size_t len;
 
-	if(isup_last) free((char *) isup_last);
+	free((char *) isup_last);
+	srjson_DeleteDoc(isup_json);
 	isup_last = NULL;
+	isup_json = NULL;
 
 	data = fetch_payload(_m, "$var(payload)", &int_len);
 	if (!data)
@@ -302,35 +305,332 @@ static int w_isup_to_json(struct sip_msg *_m, char *param1, char *param2)
 	srjson_AddNumberToObject(isup_state.json, isup_state.json->root, "opc", opc);
 	srjson_AddNumberToObject(isup_state.json, isup_state.json->root, "dpc", dpc);
 	isup_last = srjson_PrintUnformatted(isup_state.json, isup_state.json->root);
-	srjson_DeleteDoc(isup_state.json);
+	isup_json = isup_state.json;
 	return 1;
 }
 
+#define UINT_OR_NULL(msg, param, res, node) \
+		node ? pv_get_uintval(msg, param, res, node->valuedouble) : pv_get_null(msg, param, res)
+
+#define STR_OR_NULL(msg, param, res, tmpstr, node, out_res)	\
+	if (node && node->type == srjson_String) {		\
+		tmpstr.s = node->valuestring;			\
+		tmpstr.len = strlen(tmpstr.s);			\
+		out_res = pv_get_strval(msg, param, res, &tmpstr);	\
+	} else {						\
+		out_res = pv_get_null(msg, param, res);		\
+	}
+
 static int pv_get_isup(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
+	srjson_t *node;
+	str tmpstr = { 0, };
+	int out_res;
+
 	if (!param)
+		return -1;
+	if (!isup_last)
+		return -1;
+	if (!isup_json)
 		return -1;
 
 	switch (param->pvn.u.isname.name.n) {
-	case 1:
-		if (isup_last) {
-			str tmpstr;
-			tmpstr.s = (char *) isup_last;
-			tmpstr.len = strlen(isup_last);
-			return pv_get_strval(msg, param, res, &tmpstr);
-		}
-		break;
+	case ISUP_JSON_STRING:
+		tmpstr.s = (char *) isup_last;
+		tmpstr.len = strlen(isup_last);
+		return pv_get_strval(msg, param, res, &tmpstr);
+	case ISUP_FIELD_METHOD:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "msg_name");
+		STR_OR_NULL(msg, param, res, tmpstr, node, out_res);
+		return out_res;
+	case ISUP_FIELD_OPC:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "opc");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_DPC:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "dpc");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CIC:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "cic");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLED_INN:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "called_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "inn");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLED_TON:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "called_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "ton");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLED_NPI:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "called_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "npi");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLED_NUM:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "called_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "num");
+		STR_OR_NULL(msg, param, res, tmpstr, node, out_res);
+		return out_res;
+	case ISUP_FIELD_CALLING_NI:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "calling_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "ni");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLING_RESTRICT:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "calling_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "restrict");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLING_SCREENED:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "calling_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "screened");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLING_TON:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "calling_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "ton");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLING_NPI:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "calling_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "npi");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CALLING_NUM:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "calling_number");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "num");
+		STR_OR_NULL(msg, param, res, tmpstr, node, out_res);
+		return out_res;
+	case ISUP_FIELD_CALLING_CAT:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "calling_party");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "num");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CAUSE_STD:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "cause");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "standard_num");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CAUSE_LOC:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "cause");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "location_num");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CAUSE_ITU_CLASS:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "cause");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "itu_class_num");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_CAUSE_ITU_NUM:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "cause");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "itu_cause_num");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_EVENT_NUM:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "event");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "event_num");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_HOP_COUNTER:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "hop_counter");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_NOC_SAT:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "nature_of_connnection");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "satellite");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_NOC_CHECK:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "nature_of_connnection");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "continuity_check");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_NOC_ECHO:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "nature_of_connnection");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "echo_device");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_FWD_INTE:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "forward_call");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "national_international_call");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_FWD_INTW:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "forward_call");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "interworking");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_FWD_EE_METH:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "forward_call");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "end_to_end_method");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_FWD_EE_INF:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "forward_call");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "end_to_end_information");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_FWD_ISUP_NUM:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "forward_call");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "isup");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_FWD_ISUP_PREF:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "forward_call");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "isup_preference");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_FWD_ISDN:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "forward_call");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "isdn_access");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_FWD_SCCP_METHOD:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "forward_call");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "sccp_method");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_MEDIUM:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "transmission_medium");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "num");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FILED_UI_CODING:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "user_information");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "coding_standard");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_UI_TRANS_CAP:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "user_information");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "transfer_capability");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_UI_TRANS_MODE:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "user_information");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "transfer_mode");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_UI_TRANS_RATE:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "user_information");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "transfer_rate");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_UI_LAYER1_IDENT:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "user_information");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "layer1_ident");
+		return UINT_OR_NULL(msg, param, res, node);
+	case ISUP_FIELD_UI_LAYER1_PROTOCOL:
+		node = srjson_GetObjectItem(isup_json, isup_json->root, "user_information");
+		if (!node)
+			return pv_get_null(msg, param, res);
+		node = srjson_GetObjectItem(isup_json, node, "layer1_protocol");
+		return UINT_OR_NULL(msg, param, res, node);
 	}
 
 	return -1;
 }
 
+static const struct {
+	const char *name;
+	int index;
+} pv_isup_names[] = {
+	{ "method",				ISUP_FIELD_METHOD },
+	{ "opc",				ISUP_FIELD_OPC },
+	{ "dpc",				ISUP_FIELD_DPC },
+	{ "cic",				ISUP_FIELD_CIC },
+	{ "called_inn",				ISUP_FIELD_CALLED_INN },
+	{ "called_ton",				ISUP_FIELD_CALLED_TON },
+	{ "called_npi",				ISUP_FIELD_CALLED_NPI },
+	{ "called_num",				ISUP_FIELD_CALLED_NUM },
+	{ "calling_ni",				ISUP_FIELD_CALLING_NI },
+	{ "calling_restrict",			ISUP_FIELD_CALLING_RESTRICT },
+	{ "calling_screened",			ISUP_FIELD_CALLING_SCREENED },
+	{ "calling_ton",			ISUP_FIELD_CALLING_TON },
+	{ "calling_npi",			ISUP_FIELD_CALLING_NPI },
+	{ "calling_num",			ISUP_FIELD_CALLING_NUM },
+	{ "calling_category",			ISUP_FIELD_CALLING_CAT },
+	{ "cause_standard",			ISUP_FIELD_CAUSE_STD },
+	{ "cause_location",			ISUP_FIELD_CAUSE_LOC },
+	{ "cause_itu_class",			ISUP_FIELD_CAUSE_ITU_CLASS },
+	{ "cause_itu_num",			ISUP_FIELD_CAUSE_ITU_NUM },
+	{ "event_num",				ISUP_FIELD_EVENT_NUM },
+	{ "hop_counter",			ISUP_FIELD_HOP_COUNTER },
+	{ "nature_of_conn_sat",			ISUP_FIELD_NOC_SAT },
+	{ "nature_of_conn_con_check",		ISUP_FIELD_NOC_CHECK },
+	{ "nature_of_conn_echo_device",		ISUP_FIELD_NOC_ECHO },
+	{ "fwd_call_international",		ISUP_FIELD_FWD_INTE },
+	{ "fwd_call_interworking",		ISUP_FIELD_FWD_INTW },
+	{ "fwd_call_end_to_end_method",		ISUP_FIELD_FWD_EE_METH },
+	{ "fwd_call_end_to_end_information",	ISUP_FIELD_FWD_EE_INF },
+	{ "fwd_call_isup",			ISUP_FIELD_FWD_ISUP_NUM },
+	{ "fwd_call_isup_preference",		ISUP_FIELD_FWD_ISUP_PREF },
+	{ "fwd_call_sccp_method",		ISUP_FIELD_FWD_SCCP_METHOD },
+	{ "fwd_call_isdn",			ISUP_FIELD_FWD_ISDN },
+	{ "transmission_medium",		ISUP_FIELD_MEDIUM },
+	{ "user_info_coding_standard",		ISUP_FILED_UI_CODING },
+	{ "user_info_transfer_cap",		ISUP_FIELD_UI_TRANS_CAP },
+	{ "user_info_transfer_mode",		ISUP_FIELD_UI_TRANS_MODE },
+	{ "user_info_transfer_rate",		ISUP_FIELD_UI_TRANS_RATE },
+	{ "user_info_layer1_ident",		ISUP_FIELD_UI_LAYER1_IDENT },
+	{ "user_info_layer1_protocol",		ISUP_FIELD_UI_LAYER1_PROTOCOL },
+};
+
 static int pv_parse_isup_name(pv_spec_p sp, str *in)
 {
-	unsigned int input;
+	size_t i;
+	unsigned int input, name_n;
 
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
+
+	/* check strings */
+	for (i = 0; i < (sizeof(pv_isup_names)/sizeof(pv_isup_names[0])); ++i) {
+		if (strlen(pv_isup_names[i].name) != in->len)
+			continue;
+		if (strncmp(in->s, pv_isup_names[i].name, in->len) != 0)
+			continue;
+
+		sp->pvp.pvn.type = PV_NAME_INTSTR;
+		sp->pvp.pvn.u.isname.type = 0;
+		sp->pvp.pvn.u.isname.name.n = pv_isup_names[i].index;
+		return 0;
+	}
 
 	if (str2int(in, &input) < 0)
 		goto error;
@@ -338,6 +638,7 @@ static int pv_parse_isup_name(pv_spec_p sp, str *in)
 	switch (input) {
 	case 1:
 		/* all valid input */
+		name_n = ISUP_JSON_STRING;
 		break;
 	default:
 		goto error;
@@ -345,7 +646,7 @@ static int pv_parse_isup_name(pv_spec_p sp, str *in)
 
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
 	sp->pvp.pvn.u.isname.type = 0;
-	sp->pvp.pvn.u.isname.name.n = input;
+	sp->pvp.pvn.u.isname.name.n = name_n;
 
 	return 0;
 error:
