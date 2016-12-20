@@ -583,7 +583,7 @@ int translate(sip_msg_t *msg, str input, str *output, dpl_id_p idp,
 	dpl_dyn_pcre_p rt = NULL;
 
 	if(!input.s || !input.len) {
-		LM_ERR("invalid input string\n");
+		LM_WARN("invalid or empty input string to be matched\n");
 		return -1;
 	}
 
@@ -635,7 +635,8 @@ search_rule:
 
 			case DP_EQUAL_OP:
 				LM_DBG("equal operator testing\n");
-				if(rulep->match_exp.len != input.len) {
+				if(rulep->match_exp.s==NULL
+						|| rulep->match_exp.len != input.len) {
 					rez = -1;
 				} else {
 					rez = strncmp(rulep->match_exp.s,input.s,input.len);
@@ -645,11 +646,15 @@ search_rule:
 
 			case DP_FNMATCH_OP:
 				LM_DBG("fnmatch operator testing\n");
-				b = input.s[input.len];
-				input.s[input.len] = '\0';
-				rez = fnmatch(rulep->match_exp.s, input.s, 0);
-				input.s[input.len] = b;
-				rez = (rez==0)?0:-1;
+				if(rulep->match_exp.s!=NULL) {
+					b = input.s[input.len];
+					input.s[input.len] = '\0';
+					rez = fnmatch(rulep->match_exp.s, input.s, 0);
+					input.s[input.len] = b;
+					rez = (rez==0)?0:-1;
+				} else {
+					rez = -1;
+				}
 				break;
 
 			default:
