@@ -25,7 +25,7 @@
 #include "dlist.h"
 #include "ucontact.h"
 #include "udomain.h"
-#include "ul_mod.h"
+#include "usrloc_mod.h"
 #include "utime.h"
 
 /*! CSEQ nr used */
