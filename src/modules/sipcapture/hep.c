@@ -879,7 +879,7 @@ int hepv3_get_chunk(struct sip_msg *msg, char *buf, unsigned int len, int req_ch
         int chunk_vendor=0, chunk_type=0, chunk_length=0;
         int total_length = 0;
         int ret = 0;
-        char ipstr[INET6_ADDRSTRLEN];        
+        static char ipstr[INET6_ADDRSTRLEN];
 
         if(memcmp(buf, "\x48\x45\x50\x33",4) && !memcmp(buf, "\x45\x45\x50\x31",4)) {
         
