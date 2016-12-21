@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * pua_usrloc module - usrloc pua module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -17,13 +15,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2006-11-29  initial version (anca)
  */
 
 /*!
@@ -49,7 +44,7 @@
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
 #include "../../core/pt.h"
-#include "../usrloc/ul_mod.h"
+#include "../usrloc/usrloc_mod.h"
 #include "../usrloc/usrloc.h"
 #include "../usrloc/ul_callback.h"
 #include "../pua/pua_bind.h"
