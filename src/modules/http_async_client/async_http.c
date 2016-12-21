@@ -281,6 +281,7 @@ void notification_socket_cb(int fd, short event, void *arg)
 		}
 	}
   
+	query_params.username = NULL;
 	if (aq->query_params.username) {
 		len = strlen(aq->query_params.username);
 		query_params.username = shm_malloc(len+1);
@@ -294,6 +295,7 @@ void notification_socket_cb(int fd, short event, void *arg)
 		query_params.username[len] = '\0';
 	}
 	
+	query_params.password = NULL;
 	if (aq->query_params.password) {
 		len = strlen(aq->query_params.password);
 		query_params.password = shm_malloc(len+1);
