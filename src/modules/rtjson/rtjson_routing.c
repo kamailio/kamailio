@@ -318,6 +318,7 @@ int rtjson_init_serial(sip_msg_t *msg, srjson_doc_t *jdoc, sr_xavp_t *iavp)
 	str val;
 	unsigned int bflags = 0;
 	unsigned int old_bflags = 0;
+	struct socket_info* fsocket = NULL;
 
 	tj = srjson_GetObjectItem(jdoc, jdoc->root, "routes");
 	if(tj==NULL || tj->type!=srjson_Array || tj->child==NULL) {
@@ -367,6 +368,17 @@ int rtjson_init_serial(sip_msg_t *msg, srjson_doc_t *jdoc, sr_xavp_t *iavp)
 		if (set_path_vector(msg, &val) < 0) {
 			LM_ERR("unable to set path\n");
 			goto error;
+		}
+	}
+
+	rj = srjson_GetObjectItem(jdoc, nj, "socket");
+	if(rj!=NULL && rj->type==srjson_String && rj->valuestring!=NULL) {
+		val.s = rj->valuestring;
+		val.len = strlen(val.s);
+		LM_DBG("trying to set send socket to: [%.*s]\n", val.len, val.s);
+		fsocket = lookup_local_socket(&val);
+		if(fsocket) {
+			set_force_socket(msg, fsocket);
 		}
 	}
 
@@ -498,6 +510,7 @@ int rtjson_append_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 	str uri = {0};
 	str duri = {0};
 	str path = {0};
+	str socket = {0};
 	struct socket_info* fsocket = NULL;
 	unsigned int bflags = 0;
 
@@ -519,7 +532,12 @@ int rtjson_append_branch(sip_msg_t *msg, srjson_doc_t *jdoc, srjson_t *nj)
 		path.s = rj->valuestring;
 		path.len = strlen(path.s);
 	}
-	
+	rj = srjson_GetObjectItem(jdoc, nj, "socket");
+	if(rj!=NULL && rj->type==srjson_String && rj->valuestring!=NULL) {
+		socket.s = rj->valuestring;
+		socket.len = strlen(socket.s);
+		fsocket = lookup_local_socket(&socket);
+	}
 	if (append_branch(msg, &uri, &duri, &path, 0, bflags,
 					  fsocket, 0 /*instance*/, 0,
 					  0, 0) <0) {
