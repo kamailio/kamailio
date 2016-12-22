@@ -31,6 +31,7 @@
 
 #include "../../core/counters.h"
 #include "../../lib/kmi/tree.h"
+#include "../../core/rpc.h"
 
 typedef enum
 {
@@ -98,5 +99,5 @@ int wsconn_put(ws_connection_t *wsc);
 ws_connection_t **wsconn_get_list(void);
 int wsconn_put_list(ws_connection_t **list);
 struct mi_root *ws_mi_dump(struct mi_root *cmd, void *param);
-
+void ws_rpc_close(rpc_t* rpc, void* ctx);
 #endif /* _WS_CONN_H */

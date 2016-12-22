@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Exception: permission to copy, modify, propagate, and distribute a work
@@ -37,6 +37,8 @@
 #include "../../core/mem/mem.h"
 #include "../../core/mod_fix.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "ws_conn.h"
 #include "ws_handshake.h"
 #include "ws_frame.h"
@@ -54,6 +56,8 @@ static void destroy(void);
 static int ws_close_fixup(void** param, int param_no);
 static int pv_get_ws_conid_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
+static int ws_init_rpc(void);
+
 sl_api_t ws_slb;
 
 #define DEFAULT_KEEPALIVE_INTERVAL	1
@@ -64,8 +68,7 @@ static int ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
 #define DEFAULT_KEEPALIVE_PROCESSES	1
 static int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
 
-static cmd_export_t cmds[]= 
-{
+static cmd_export_t cmds[] = {
 	/* ws_frame.c */
 	{ "ws_close", (cmd_function) ws_close,
 	  0, 0, 0,
@@ -85,8 +88,7 @@ static cmd_export_t cmds[]=
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
-static param_export_t params[]=
-{
+static param_export_t params[] = {
 	/* ws_frame.c */
 	{ "keepalive_mechanism",	INT_PARAM, &ws_keepalive_mechanism },
 	{ "keepalive_timeout",		INT_PARAM, &ws_keepalive_timeout },
@@ -103,8 +105,7 @@ static param_export_t params[]=
 	{ 0, 0, 0 }
 };
 
-static stat_export_t stats[] =
-{
+static stat_export_t stats[] = {
 	/* ws_conn.c */
 	{ "ws_current_connections",            0, &ws_current_connections },
 	{ "ws_max_concurrent_connections",     0, &ws_max_concurrent_connections },
@@ -143,8 +144,7 @@ static stat_export_t stats[] =
 	{ 0, 0, 0 }
 };
 
-static mi_export_t mi_cmds[] =
-{
+static mi_export_t mi_cmds[] = {
 	/* ws_conn.c */
 	{ "ws.dump",	ws_mi_dump,    0, 0, 0 },
 
@@ -166,8 +166,7 @@ static pv_export_t mod_pvs[] = {
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
-struct module_exports exports= 
-{
+struct module_exports exports = {
 	"websocket",
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,			/* Exported functions */
@@ -212,6 +211,12 @@ static int mod_init(void)
 	{
 		LM_ERR("registering MI commands\n");
 		goto error;
+	}
+
+	if(ws_init_rpc()<0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
 	}
 
 	if (wsconn_init() < 0)
@@ -355,4 +360,28 @@ static int pv_get_ws_conid_f(struct sip_msg *msg, pv_param_t *param,
     if (msg == NULL) return -1;
 
     return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
+}
+
+static const char* ws_rpc_close_doc[2] = {
+	"Close a websocket connection by id",
+	0
+};
+
+rpc_export_t ws_rpc_cmds[] = {
+	{"ws.close", ws_rpc_close,
+		ws_rpc_close_doc, 0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * register RPC commands
+ */
+static int ws_init_rpc(void)
+{
+	if (rpc_register_array(ws_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

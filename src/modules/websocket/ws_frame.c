@@ -1089,3 +1089,38 @@ int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con)
 
 	return ret;
 }
+
+/*
+ * RPC command to set the state of a destination address
+ */
+void ws_rpc_close(rpc_t* rpc, void* ctx)
+{
+	unsigned int id;
+	int ret;
+	ws_connection_t *wsc;
+
+	if(rpc->scan(ctx, "d", (int*)(&id))<1)
+	{
+		LM_WARN("no connection ID parameter\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	if ((wsc = wsconn_get(id)) == NULL)
+	{
+		LM_WARN("bad connection ID parameter\n");
+		rpc->fault(ctx, 500, "Unknown connection ID");
+		return;
+	}
+
+	ret = close_connection(&wsc, LOCAL_CLOSE, 1000, str_status_normal_closure);
+
+	wsconn_put(wsc);
+
+	if (ret < 0)
+	{
+		LM_WARN("closing connection\n");
+		rpc->fault(ctx, 500, str_status_error_closing.s);
+		return;
+	}
+}
