@@ -30,6 +30,7 @@
 #include "../../core/config.h"
 #include "../../core/sr_module.h"
 #include "../../core/str.h"
+#include "../../core/rpc.h"
 #include "../../lib/kmi/tree.h"
 #include "ws_conn.h"
 
@@ -79,5 +80,9 @@ void ws_keepalive(unsigned int ticks, void *param);
 int ws_close(sip_msg_t *msg);
 int ws_close2(sip_msg_t *msg, char *_status, char *_reason);
 int ws_close3(sip_msg_t *msg, char *_status, char *_reason, char *_con);
+
+void ws_rpc_close(rpc_t* rpc, void* ctx);
+void ws_rpc_ping(rpc_t* rpc, void* ctx);
+void ws_rpc_pong(rpc_t* rpc, void* ctx);
 
 #endif /* _WS_FRAME_H */

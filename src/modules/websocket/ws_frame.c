@@ -1124,3 +1124,45 @@ void ws_rpc_close(rpc_t* rpc, void* ctx)
 		return;
 	}
 }
+
+void ws_rpc_ping_pong(rpc_t* rpc, void* ctx, int opcode)
+{
+	unsigned int id;
+	ws_connection_t *wsc;
+	int ret = 0;
+
+	if(rpc->scan(ctx, "d", (int*)(&id))<1)
+	{
+		LM_WARN("no connection ID parameter\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+
+	if ((wsc = wsconn_get(id)) == NULL)
+	{
+		LM_WARN("bad connection ID parameter\n");
+		rpc->fault(ctx, 500, "Unknown connection ID");
+		return;
+	}
+
+	ret = ping_pong(wsc, opcode);
+
+	wsconn_put(wsc);
+
+	if (ret < 0)
+	{
+		LM_WARN("sending %s\n", OPCODE_PING ? "Ping" : "Pong");
+		rpc->fault(ctx, 500, str_status_error_sending.s);
+		return;
+	}
+}
+
+void ws_rpc_ping(rpc_t* rpc, void* ctx)
+{
+	ws_rpc_ping_pong(rpc, ctx, OPCODE_PING);
+}
+
+void ws_rpc_pong(rpc_t* rpc, void* ctx)
+{
+	ws_rpc_ping_pong(rpc, ctx, OPCODE_PONG);
+}
