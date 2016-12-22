@@ -362,6 +362,11 @@ static int pv_get_ws_conid_f(struct sip_msg *msg, pv_param_t *param,
     return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
 }
 
+static const char* ws_rpc_dump_doc[2] = {
+	"List websocket connections",
+	0
+};
+
 static const char* ws_rpc_close_doc[2] = {
 	"Close a websocket connection by id",
 	0
@@ -378,6 +383,7 @@ static const char* ws_rpc_pong_doc[2] = {
 };
 
 rpc_export_t ws_rpc_cmds[] = {
+	{"ws.dump", ws_rpc_dump, ws_rpc_dump_doc, 0},
 	{"ws.close", ws_rpc_close, ws_rpc_close_doc, 0},
 	{"ws.ping", ws_rpc_ping, ws_rpc_ping_doc, 0},
 	{"ws.pong", ws_rpc_pong, ws_rpc_pong_doc, 0},
