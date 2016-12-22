@@ -460,3 +460,17 @@ struct mi_root *ws_mi_enable(struct mi_root *cmd, void *param)
 	LM_WARN("enabling websockets\n");
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
+
+void ws_rpc_disable(rpc_t* rpc, void* ctx)
+{
+	cfg_get(websocket, ws_cfg, enabled) = 0;
+	LM_WARN("disabling websockets - new connections will be dropped\n");
+	return;
+}
+
+void ws_rpc_enable(rpc_t* rpc, void* ctx)
+{
+	cfg_get(websocket, ws_cfg, enabled) = 1;
+	LM_WARN("enabling websockets\n");
+	return;
+}

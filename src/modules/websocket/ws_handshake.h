@@ -28,6 +28,7 @@
 #define _WS_HANDSHAKE_H
 
 #include "../../core/sr_module.h"
+#include "../../core/rpc.h"
 #include "../../core/parser/msg_parser.h"
 #include "websocket.h"
 
@@ -48,5 +49,8 @@ extern stat_var *ws_msrp_successful_handshakes;
 int ws_handle_handshake(struct sip_msg *msg);
 struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param);
 struct mi_root *ws_mi_enable(struct mi_root *cmd, void *param);
+
+void ws_rpc_disable(rpc_t* rpc, void* ctx);
+void ws_rpc_enable(rpc_t* rpc, void* ctx);
 
 #endif /* _WS_HANDSHAKE_H */

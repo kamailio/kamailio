@@ -382,11 +382,23 @@ static const char* ws_rpc_pong_doc[2] = {
 	0
 };
 
+static const char* ws_rpc_enable_doc[2] = {
+	"Enable websocket connection handling",
+	0
+};
+
+static const char* ws_rpc_disable_doc[2] = {
+	"Disable websocket connection handling",
+	0
+};
+
 rpc_export_t ws_rpc_cmds[] = {
 	{"ws.dump", ws_rpc_dump, ws_rpc_dump_doc, 0},
 	{"ws.close", ws_rpc_close, ws_rpc_close_doc, 0},
 	{"ws.ping", ws_rpc_ping, ws_rpc_ping_doc, 0},
 	{"ws.pong", ws_rpc_pong, ws_rpc_pong_doc, 0},
+	{"ws.enable", ws_rpc_enable, ws_rpc_enable_doc, 0},
+	{"ws.disable", ws_rpc_disable, ws_rpc_disable_doc, 0},
 	{0, 0, 0, 0}
 };
 
