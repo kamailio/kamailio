@@ -29,11 +29,16 @@ MODULE_VERSION
 
 /* hep defines */
 #define HEP_M2UA		0x08
+#define HEP_M2PA		0x0d
 
 /* M2UA messages */
 #define M2UA_MSG	6
 #define M2UA_DATA	1
 #define M2UA_IE_DATA	0x0300
+
+/* M2PA messages */
+#define M2PA_CLASS	11
+#define M2PA_DATA	1
 
 /* MTPl3 */
 #define MTP_ISUP	0x05
@@ -188,6 +193,65 @@ next:
 	return NULL;
 }
 
+static const uint8_t *extract_from_m2pa(const uint8_t *data, size_t *len)
+{
+	uint32_t data_len;
+
+	if (*len < 8) {
+		LM_ERR("M2PA hdr too short %zu\n", *len);
+		return NULL;
+	}
+
+	/* check the header */
+	if (data[0] != 0x01) {
+		LM_ERR("M2PA unknown version number %d\n", data[0]);
+		return NULL;
+	}
+	if (data[1] != 0x00) {
+		LM_ERR("M2PA unknown reserved fields %d\n", data[1]);
+		return NULL;
+	}
+	if (data[2] != M2PA_CLASS) {
+		LM_ERR("M2PA unhandled message class %d\n", data[2]);
+		return NULL;
+	}
+	if (data[3] != M2PA_DATA) {
+		LM_ERR("M2PA not data msg but %d\n", data[3]);
+		return NULL;
+	}
+
+	/* check the length */
+	memcpy(&data_len, &data[4], sizeof(data_len));
+	data_len = ntohl(data_len);
+	if (*len < data_len) {
+		LM_ERR("M2PA data can't fit %zu vs. %u\n", *len, data_len);
+		return NULL;
+	}
+
+	/* skip the header */
+	data += 8;
+	data_len -= 8;
+
+	/* BSN, FSN and then priority */
+	if (data_len < 8) {
+		LM_ERR("M2PA no space for BSN/FSN %u\n", data_len);
+		return NULL;
+	}
+	data += 8;
+	data_len -= 8;
+	if (data_len == 0)
+		return NULL;
+	else if (data_len < 1) {
+		LM_ERR("M2PA no space for prio %u\n", data_len);
+		return NULL;
+	}
+	data += 1;
+	data_len -= 1;
+
+	*len = data_len;
+	return data;
+}
+
 static const uint8_t *extract_from_mtp(const uint8_t *data, size_t *len,
 		int *opc, int *dpc, int *type)
 {
@@ -221,6 +285,9 @@ static const uint8_t *ss7_extract_payload(const uint8_t *data, size_t *len,
 		return extract_from_mtp(extract_from_m2ua(data, len), len, opc,
 				dpc, mtp_type);
 		break;
+	case HEP_M2PA:
+		return extract_from_mtp(extract_from_m2pa(data, len), len, opc,
+				dpc, mtp_type);
 	default:
 		LM_ERR("Unknown HEP type %d/0x%c\n", proto, proto);
 		return NULL;
