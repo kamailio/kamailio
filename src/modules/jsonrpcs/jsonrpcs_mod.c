@@ -741,7 +741,10 @@ static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 			nj = jsonrpc_print_value(ctx, *fmt, &ap);
 		}
 
-		if(nj==NULL) goto err;
+		if(nj==NULL) {
+			LM_ERR("failed to print the value (%c)\n", *fmt);
+			goto err;
+		}
 		if(isobject) {
 			/* add as member to object */
 			srjson_AddItemToObject(ctx->jrpl, jnode, mname.s, nj);
@@ -749,6 +752,7 @@ static int jsonrpc_struct_add(srjson_t *jnode, char* fmt, ...)
 			/* wrap member in a new object and add to array */
 			wj = srjson_CreateObject(ctx->jrpl);
 			if(wj==NULL) {
+				LM_ERR("failed to create object (%c)\n", *fmt);
 				srjson_Delete(ctx->jrpl, nj);
 				goto err;
 			}
