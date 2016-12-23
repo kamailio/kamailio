@@ -103,32 +103,26 @@ Luis Martin
               4.10. ds_load_unset()
               4.11. ds_reload()
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. ds_set_state
-              5.2. ds_list
-              5.3. ds_reload
+              5.1. dispatcher.set_state
+              5.2. dispatcher.list
+              5.3. dispatcher.reload
+              5.4. dispatcher.ping_active
 
-        6. RPC Commands
+        6. Installation and Running
 
-              6.1. dispatcher.set_state
-              6.2. dispatcher.list
-              6.3. dispatcher.reload
-              6.4. dispatcher.ping_active
+              6.1. Destination List File
 
-        7. Installation and Running
+                    6.1.1. Special Attributes
+                    6.1.2. File Format
 
-              7.1. Destination List File
+              6.2. Kamailio config file
 
-                    7.1.1. Special Attributes
-                    7.1.2. File Format
+        7. Event routes
 
-              7.2. Kamailio config file
-
-        8. Event routes
-
-              8.1. dispatcher:dst-down
-              8.2. dispatcher:dst-up
+              7.1. dispatcher:dst-down
+              7.2. dispatcher:dst-up
 
    2. Frequently Asked Questions
 
@@ -238,32 +232,26 @@ Chapter 1. Admin Guide
         4.10. ds_load_unset()
         4.11. ds_reload()
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. ds_set_state
-        5.2. ds_list
-        5.3. ds_reload
+        5.1. dispatcher.set_state
+        5.2. dispatcher.list
+        5.3. dispatcher.reload
+        5.4. dispatcher.ping_active
 
-   6. RPC Commands
+   6. Installation and Running
 
-        6.1. dispatcher.set_state
-        6.2. dispatcher.list
-        6.3. dispatcher.reload
-        6.4. dispatcher.ping_active
+        6.1. Destination List File
 
-   7. Installation and Running
+              6.1.1. Special Attributes
+              6.1.2. File Format
 
-        7.1. Destination List File
+        6.2. Kamailio config file
 
-              7.1.1. Special Attributes
-              7.1.2. File Format
+   7. Event routes
 
-        7.2. Kamailio config file
-
-   8. Event routes
-
-        8.1. dispatcher:dst-down
-        8.2. dispatcher:dst-up
+        7.1. dispatcher:dst-down
+        7.2. dispatcher:dst-up
 
 1. Overview
 
@@ -1137,71 +1125,14 @@ onreply_route {
 
    This function can be used from ANY_ROUTE.
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. ds_set_state
-   5.2. ds_list
-   5.3. ds_reload
+   5.1. dispatcher.set_state
+   5.2. dispatcher.list
+   5.3. dispatcher.reload
+   5.4. dispatcher.ping_active
 
-5.1.  ds_set_state
-
-   Sets the status for a destination address (can be use to mark the
-   destination as active or inactive).
-
-   Name: ds_set_state
-
-   Parameters:
-     * _state_ : state of the destination address
-          + “a”: active
-          + “i”: inactive
-          + “t”: trying
-          + “d”: disabled
-       The states “a”, “i” or “t” can be followed by “p” to set probing
-       mode (e.g. 'ap', 'ip' or 'tp').
-     * _group_: destination group id
-     * _address_: address of the destination in the _group_
-
-   MI FIFO Command Format:
-                :ds_set_state:_reply_fifo_file_
-                _state_
-                _group_
-                _address_
-                _empty_line_
-
-5.2.  ds_list
-
-   It lists the groups and included destinations.
-
-   Name: ds_list
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :ds_list:_reply_fifo_file_
-                _empty_line_
-
-5.3.  ds_reload
-
-   It reloads the groups and included destinations. For algorithm 10 (call
-   load distribution), old internal list of active calls is destroyed
-   (because it is bould to the previous list of gateways), meaning that
-   the module is starting to count active calls again from 0.
-
-   Name: ds_reload
-
-   Parameters: none
-
-   MI DATAGRAM Command Format:
-                ":ds_reload:\n."
-
-6. RPC Commands
-
-   6.1. dispatcher.set_state
-   6.2. dispatcher.list
-   6.3. dispatcher.reload
-   6.4. dispatcher.ping_active
-
-6.1.  dispatcher.set_state
+5.1.  dispatcher.set_state
 
    Sets the state for a destination address (can be use to mark the
    destination as active or inactive).
@@ -1225,7 +1156,7 @@ onreply_route {
 kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 ...
 
-6.2.  dispatcher.list
+5.2.  dispatcher.list
 
    Lists the groups and included destinations.
 
@@ -1236,7 +1167,7 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
    Example:
                 kamcmd dispatcher.list
 
-6.3.  dispatcher.reload
+5.3.  dispatcher.reload
 
    Reloads the groups and included destinations. The command is disabled
    for call load based dispatching (algorithm 10) since removal of
@@ -1249,7 +1180,7 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
    Example
                 kamcmd dispatcher.reload
 
-6.4.  dispatcher.ping_active
+5.4.  dispatcher.ping_active
 
    Sets the global state for sending keepalive requests to destinations.
 
@@ -1270,16 +1201,16 @@ kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
 kamcmd dispatcher.ping_active 0
 ...
 
-7. Installation and Running
+6. Installation and Running
 
-   7.1. Destination List File
+   6.1. Destination List File
 
-        7.1.1. Special Attributes
-        7.1.2. File Format
+        6.1.1. Special Attributes
+        6.1.2. File Format
 
-   7.2. Kamailio config file
+   6.2. Kamailio config file
 
-7.1. Destination List File
+6.1. Destination List File
 
    Each destination point must be on one line. First token is the set id
    (an integer value), followed by destination address (s string value in
@@ -1296,7 +1227,7 @@ kamcmd dispatcher.ping_active 0
        done the initial ordering inside the set)
      * attributes: extra fields in form of name1=value1;...;nameN=valueN.
 
-7.1.1. Special Attributes
+6.1.1. Special Attributes
 
    There are some predefined names:
      * 'duid' - used for call load dispatching. It must be an unique value
@@ -1317,7 +1248,7 @@ kamcmd dispatcher.ping_active 0
      * 'socket' - used to set the sending socket for the gateway. It is
        used for sending the SIP traffic as well as OPTIONS keepalives.
 
-7.1.2. File Format
+6.1.2. File Format
 
    Line format is:
 ...
@@ -1353,7 +1284,7 @@ r,opt)
 
 ...
 
-7.2. Kamailio config file
+6.2. Kamailio config file
 
    Next listing shows a sample config for using the dispatcher module.
 
@@ -1645,12 +1576,12 @@ failure_route[RTF_DISPATCH] {
 
 ...
 
-8. Event routes
+7. Event routes
 
-   8.1. dispatcher:dst-down
-   8.2. dispatcher:dst-up
+   7.1. dispatcher:dst-down
+   7.2. dispatcher:dst-up
 
-8.1.  dispatcher:dst-down
+7.1.  dispatcher:dst-down
 
    When defined, the module calls event_route[dispatcher:ds-down] when a
    destination goes down (becomes probing). A typical use case is to
@@ -1661,7 +1592,7 @@ event_route[dispatcher:dst-down] {
 }
 ...
 
-8.2.  dispatcher:dst-up
+7.2.  dispatcher:dst-up
 
    When defined, the module calls event_route[dispatcher:ds-up] when a
    destination that was previously down (probing) comes up. A typical use
