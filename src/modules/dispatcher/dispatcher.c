@@ -41,7 +41,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../../lib/kmi/mi.h"
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/error.h"
@@ -170,11 +169,6 @@ static void destroy(void);
 
 static int ds_warn_fixup(void** param, int param_no);
 
-static struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
-static struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
-static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param);
-static int mi_child_init(void);
-
 static cmd_export_t cmds[]={
 	{"ds_select",    (cmd_function)w_ds_select,            2,
 		fixup_igp_igp, 0, ANY_ROUTE},
@@ -257,14 +251,6 @@ static param_export_t params[]={
 };
 
 
-static mi_export_t mi_cmds[] = {
-	{ "ds_set_state",   ds_mi_set,     0,                 0,  0            },
-	{ "ds_list",        ds_mi_list,    MI_NO_INPUT_FLAG,  0,  0            },
-	{ "ds_reload",      ds_mi_reload,  0,                 0,  mi_child_init},
-	{ 0, 0, 0, 0, 0}
-};
-
-
 /** module exports */
 struct module_exports exports= {
 	"dispatcher",
@@ -272,7 +258,7 @@ struct module_exports exports= {
 	cmds,
 	params,
 	0,          /* exported statistics */
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	0,          /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
@@ -290,11 +276,6 @@ static int mod_init(void)
 	str host;
 	int port, proto;
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(ds_ping_active_init()<0) {
 		return -1;
 	}
@@ -576,15 +557,6 @@ static int child_init(int rank)
 	return 0;
 }
 
-static int mi_child_init(void)
-{
-
-	if(ds_db_url.s)
-		return ds_connect_db();
-	return 0;
-
-}
-
 /*! \brief
  * destroy function
  */
@@ -839,107 +811,6 @@ static int w_ds_reload(struct sip_msg* msg)
 	}
 	LM_DBG("reloaded dispatcher\n");
 	return 1;
-}
-
-/************************** MI STUFF ************************/
-
-static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
-{
-	str sp;
-	int ret;
-	unsigned int group;
-	int state;
-	struct mi_node* node;
-
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	sp = node->value;
-	if(sp.len<=0 || !sp.s)
-	{
-		LM_ERR("bad state value\n");
-		return init_mi_tree(500, "bad state value", 15);
-	}
-
-	state = ds_parse_flags(sp.s, sp.len);
-	if( state < 0 )
-	{
-		LM_ERR("unknown state value\n");
-		return init_mi_tree(500, "unknown state value", 19);
-	}
-	node = node->next;
-	if(node == NULL)
-		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	sp = node->value;
-	if(sp.s == NULL)
-	{
-		return init_mi_tree(500, "group not found", 15);
-	}
-
-	if(str2int(&sp, &group))
-	{
-		LM_ERR("bad group value\n");
-		return init_mi_tree( 500, "bad group value", 16);
-	}
-
-	node= node->next;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	sp = node->value;
-	if(sp.s == NULL)
-	{
-		return init_mi_tree(500,"address not found", 18 );
-	}
-
-	ret = ds_reinit_state(group, &sp, state);
-
-	if(ret!=0)
-	{
-		return init_mi_tree(404, "destination not found", 21);
-	}
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-}
-
-
-
-
-static struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_root* rpl_tree;
-
-	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==NULL)
-		return 0;
-
-	if( ds_print_mi_list(&rpl_tree->node)< 0 )
-	{
-		LM_ERR("failed to add node\n");
-		free_mi_tree(rpl_tree);
-		return 0;
-	}
-
-	return rpl_tree;
-}
-
-#define MI_ERR_RELOAD 			"ERROR Reloading data"
-#define MI_ERR_RELOAD_LEN 		(sizeof(MI_ERR_RELOAD)-1)
-#define MI_NOT_SUPPORTED		"DB mode not configured"
-#define MI_NOT_SUPPORTED_LEN 	(sizeof(MI_NOT_SUPPORTED)-1)
-#define MI_ERR_DSLOAD			"No reload support for call load dispatching"
-#define MI_ERR_DSLOAD_LEN		(sizeof(MI_ERR_DSLOAD)-1)
-
-static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
-{
-	if(!ds_db_url.s) {
-		if (ds_load_list(dslistfile)!=0)
-			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-	} else {
-		if(ds_reload_db()<0)
-			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-	}
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 
