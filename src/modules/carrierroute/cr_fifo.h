@@ -138,5 +138,5 @@ struct mi_root* add_host (struct mi_root* cmd_tree, void *param);
 
 struct mi_root* delete_host (struct mi_root* cmd_tree, void * param);
 
-void cr_rpc_dump(rpc_t* rpc, void* ctx);
+void cr_rpc_dump_routes(rpc_t* rpc, void* ctx);
 #endif

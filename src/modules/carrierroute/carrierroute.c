@@ -319,12 +319,12 @@ static void rpc_cr_reload_routes(rpc_t *rpc, void *c) {
 	}
 }
 
-static const char *cr_rpc_dump_doc[2] = {
+static const char *cr_rpc_dump_routes_doc[2] = {
 	"Dump routes", 0
 };
 
 static rpc_export_t rpc_methods[] = {
 	{ "cr.reload_routes",  rpc_cr_reload_routes, rpc_cr_reload_routes_doc, 0},
-	{ "cr.dump",  cr_rpc_dump, cr_rpc_dump_doc, 0},
+	{ "cr.dump_routes",  cr_rpc_dump_routes, cr_rpc_dump_routes_doc, 0},
 	{0, 0, 0, 0}
 };

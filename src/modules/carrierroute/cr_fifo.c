@@ -1143,7 +1143,7 @@ static int cr_rpc_dump_tree_recursor (rpc_t* rpc, void* ctx, void *gh,
  * @param rpc - RPC API structure
  * @param ctx - RPC context
  */
-void cr_rpc_dump(rpc_t* rpc, void* ctx)
+void cr_rpc_dump_routes(rpc_t* rpc, void* ctx)
 {
 	struct route_data_t * rd;
 	str *tmp_str;
