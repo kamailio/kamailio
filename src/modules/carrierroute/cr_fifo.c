@@ -47,11 +47,13 @@
  * The first field defines the required options, the second field defines the
  * optional options and the third field defines the invalid options.
  */
-static unsigned int opt_settings[5][3] = {{O_PREFIX|O_DOMAIN|O_HOST|O_PROB, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX, O_NEW_TARGET},
+static unsigned int opt_settings[5][3] = {
+		{O_PREFIX|O_DOMAIN|O_HOST|O_PROB, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX, O_NEW_TARGET},
         {O_HOST|O_DOMAIN|O_PREFIX, O_PROB, O_R_PREFIX|O_R_SUFFIX|O_NEW_TARGET|O_H_INDEX},
         {O_HOST|O_NEW_TARGET, O_PREFIX|O_DOMAIN|O_PROB, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX},
         {O_HOST|O_DOMAIN|O_PREFIX, O_PROB|O_NEW_TARGET, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX},
-        {O_HOST|O_DOMAIN|O_PREFIX, O_PROB, O_R_PREFIX|O_R_SUFFIX|O_NEW_TARGET|O_H_INDEX}};
+        {O_HOST|O_DOMAIN|O_PREFIX, O_PROB, O_R_PREFIX|O_R_SUFFIX|O_NEW_TARGET|O_H_INDEX}
+};
 
 int fifo_err;
 
@@ -73,12 +75,12 @@ static struct mi_root* print_fifo_err(void);
 static int str_toklen(str * str, const char * delims)
 {
 	int len;
-	
+
 	if ((str==NULL) || (str->s==NULL)) {
 		/* No more tokens */
 		return -1;
 	}
-	
+
 	len=0;
 	while (len<str->len) {
 		if (strchr(delims,str->s[len])!=NULL) {
@@ -86,7 +88,7 @@ static int str_toklen(str * str, const char * delims)
 		}
 		len++;
 	}
-	
+
 	return len;
 }
 
@@ -1043,4 +1045,176 @@ struct mi_root* print_fifo_err(void) {
 			break;
 	}
 	return rpl_tree;
+}
+
+/**
+ * Traverses the routing tree and prints route rules if present.
+ *
+ * @param rpc - RPC API structure
+ * @param ctx - RPC context
+ * @param gh - RPC structure pointer
+ * @param node pointer to the routing tree node
+ * @param prefix carries the current scan prefix
+ *
+ * @return 0 for success, negative result for error
+ */
+static int cr_rpc_dump_tree_recursor (rpc_t* rpc, void* ctx, void *gh,
+			struct dtrie_node_t *node, char *prefix)
+{
+	char s[256];
+	char rbuf[1024];
+	char *p;
+	int i;
+	struct route_flags *rf;
+	struct route_rule *rr;
+	struct route_rule_p_list * rl;
+	double prob;
+
+	strcpy (s, prefix);
+	p = s + strlen (s);
+	p[1] = '\0';
+	for (i = 0; i < cr_match_mode; ++i) {
+		if (node->child[i] != NULL) {
+			*p = i + '0';
+			/* if there is a problem in processing the child nodes .. return an error */
+			if(cr_rpc_dump_tree_recursor(rpc, ctx, gh, node->child[i], s) < 0)
+				return -1;
+		}
+	}
+	*p = '\0';
+	for (rf = (struct route_flags *)(node->data); rf != NULL; rf = rf->next) {
+		for (rr = rf->rule_list; rr != NULL; rr = rr->next) {
+			if(rf->dice_max){
+				prob = (double)(rr->prob * DICE_MAX)/(double)rf->dice_max;
+			} else {
+				prob = rr->prob;
+			}
+			snprintf(rbuf, 1024,
+					"%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'",
+					strlen(prefix) > 0 ? prefix : "NULL", prob * 100,
+					rr->host.len, rr->host.s,
+					(rr->status ? "ON" : "OFF"), rr->strip,
+					rr->local_prefix.len, rr->local_prefix.s,
+					rr->local_suffix.len, rr->local_suffix.s,
+					rr->comment.len, rr->comment.s);
+			if (rpc->array_add(gh, "s", rbuf)<0)
+			{
+				rpc->fault(ctx, 500, "Failed to add data to response");
+				return -1;
+			}
+
+			if(!rr->status && rr->backup && rr->backup->rr){
+				snprintf(rbuf, 1024,
+						"            Rule is backed up by: %.*s",
+						rr->backup->rr->host.len, rr->backup->rr->host.s);
+				if (rpc->array_add(gh, "s", rbuf)<0)
+				{
+					rpc->fault(ctx, 500, "Failed to add backup by info to response");
+					return -1;
+				}
+			}
+			if(rr->backed_up){
+				rl = rr->backed_up;
+				i=0;
+				while(rl){
+					if(rl->rr){
+						snprintf(rbuf, 1024,
+								"            Rule is backup for: %.*s",
+								rl->rr->host.len, rl->rr->host.s);
+						if (rpc->array_add(gh, "s", rbuf)<0)
+						{
+							rpc->fault(ctx, 500, "Failed to add backup for data to response");
+							return -1;
+						}
+					}
+					rl = rl->next;
+					i++;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+
+/**
+ * prints the routing data
+ *
+ * @param rpc - RPC API structure
+ * @param ctx - RPC context
+ */
+void cr_rpc_dump(rpc_t* rpc, void* ctx)
+{
+	struct route_data_t * rd;
+	str *tmp_str;
+	str empty_str = str_init("<empty>");
+	void* th;
+	void* ih;
+	void* dh;
+	void* eh;
+	void* fh;
+	void* gh;
+	int i, j;
+
+	if((rd = get_data ()) == NULL) {
+		LM_ERR("error during retrieve data\n");
+		rpc->fault(ctx, 500, "Internal error - cr data");
+		return;
+	}
+
+	/* add root node */
+	if (rpc->add(ctx, "{", &th) < 0)
+	{
+		rpc->fault(ctx, 500, "Internal error root reply");
+		goto error;
+	}
+	if(rpc->struct_add(th, "[", "routes",  &ih)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error - routes structure");
+		goto error;
+	}
+
+	LM_DBG("start processing of data\n");
+	for (i = 0; i < rd->carrier_num; i++) {
+		if (rd->carriers[i]) {
+			if (rpc->array_add(ih, "{", &dh)<0) {
+				rpc->fault(ctx, 500, "Response failure - carrier data");
+				goto error;
+			}
+			tmp_str = (rd->carriers[i] ? rd->carriers[i]->name : &empty_str);
+			if(rpc->struct_add(dh, "Sd[", "carrier", &tmp_str,
+						"id", (rd->carriers[i] ? rd->carriers[i]->id : 0),
+						"domains",  &eh)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error - carrier structure");
+				goto error;
+			}
+
+			for (j=0; j<rd->carriers[i]->domain_num; j++) {
+				if (rd->carriers[i]->domains[j] && rd->carriers[i]->domains[j]->tree) {
+					if (rpc->array_add(eh, "{", &fh)<0) {
+						rpc->fault(ctx, 500, "Response failure - domain data");
+						goto error;
+					}
+					tmp_str = (rd->carriers[i]->domains[j] ? rd->carriers[i]->domains[j]->name : &empty_str);
+					if(rpc->struct_add(fh, "Sd[", "domain", &tmp_str,
+							"id", rd->carriers[i]->domains[j]->id,
+							"data",  &gh)<0)
+					{
+						rpc->fault(ctx, 500, "Internal error - domain structure");
+						goto error;
+					}
+					if (cr_rpc_dump_tree_recursor (rpc, ctx, gh,
+								rd->carriers[i]->domains[j]->tree, "") < 0)
+						goto error;
+				}
+			}
+		}
+	}
+	release_data (rd);
+	return;
+
+error:
+	release_data (rd);
+	return;
 }
