@@ -55,18 +55,12 @@ Juha Heinanen
 
               4.1. mt_match(mtree, pv, mode)
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. mt_list
-              5.2. mt_reload
-              5.3. mt_summary
-              5.4. mt_match
-
-        6. RPC Commands
-
-              6.1. mtree.summary
-              6.2. mtree.reload
-              6.3. mtree.match
+              5.1. mtree.list
+              5.2. mtree.summary
+              5.3. mtree.reload
+              5.4. mtree.match
 
    List of Examples
 
@@ -84,6 +78,7 @@ Juha Heinanen
    1.12. Set mt_ignore_duplicates parameter
    1.13. Set mt_allow_duplicates parameter
    1.14. mt_match usage
+   1.15. mtree.list rpc usage
 
 Chapter 1. Admin Guide
 
@@ -115,18 +110,12 @@ Chapter 1. Admin Guide
 
         4.1. mt_match(mtree, pv, mode)
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. mt_list
-        5.2. mt_reload
-        5.3. mt_summary
-        5.4. mt_match
-
-   6. RPC Commands
-
-        6.1. mtree.summary
-        6.2. mtree.reload
-        6.3. mtree.match
+        5.1. mtree.list
+        5.2. mtree.summary
+        5.3. mtree.reload
+        5.4. mtree.match
 
 1. Overview
 
@@ -368,79 +357,29 @@ modparam("mtree", "mt_allow_duplicates", 1)
 mt_match("mytree", "$rU", "0");
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. mt_list
-   5.2. mt_reload
-   5.3. mt_summary
-   5.4. mt_match
+   5.1. mtree.list
+   5.2. mtree.summary
+   5.3. mtree.reload
+   5.4. mtree.match
 
-5.1.  mt_list
+5.1.  mtree.list
 
-   List content of a tree.
+   List content of one or all trees.
 
-   Name: mt_list
-
-   Parameters:
-     * _mtree_ : name of tree to list.
-
-   MI FIFO Command Format:
-                :mt_list:_reply_fifo_file_
-                _mtname_
-                _empty_line_
-
-5.2.  mt_reload
-
-   Reload mtree from database.
-
-   Name: mt_mtree
+   Name: mtree.list
 
    Parameters:
-     * _mtname_
-       - name of mem tree
+     * _mtree_ : name of tree to list (optional).
 
-   MI FIFO Command Format:
-                :mt_reload:_reply_fifo_file_
-                _mtname_
-                _empty_line_
+   Example 1.15. mtree.list rpc usage
+...
+kamcmd mtree.list
+kamcmd mtree.list mytree
+...
 
-5.3.  mt_summary
-
-   List usage summary for all trees.
-
-   Name: mt_summary
-
-   Parameters: none.
-
-   MI FIFO Command Format:
-                :mt_summary:_reply_fifo_file_
-                _empty_line_
-
-5.4.  mt_match
-
-   Match prefix value against mtree.
-
-   Name: mt_match
-
-   Parameters: 3
-     * Name of mtree
-     * Prefix to match
-     * Mode of matching
-
-   MI FIFO Command Format:
-                :mt_match:_reply_fifo_file_
-                _mtree_
-                _prefix_
-                _mode_
-                _empty_line_
-
-6. RPC Commands
-
-   6.1. mtree.summary
-   6.2. mtree.reload
-   6.3. mtree.match
-
-6.1.  mtree.summary
+5.2.  mtree.summary
 
    List usage summary for all trees or for the tree whose name is given as
    parameter.
@@ -448,7 +387,7 @@ mt_match("mytree", "$rU", "0");
    Parameters:
      * _mtree_ - (optional) the name of the tree.
 
-6.2.  mtree.reload
+5.3.  mtree.reload
 
    Reload mtree from database to memory.
 
@@ -456,7 +395,7 @@ mt_match("mytree", "$rU", "0");
      * _mtree_
        - name of mtree or empty string meaning all mtrees
 
-6.3.  mtree.match
+5.4.  mtree.match
 
    Match prefix value against mtree
 
