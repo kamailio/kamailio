@@ -955,91 +955,13 @@ sht_iterator_end("i1");
 		</para>
 	</section>
 	<section>
-	<title>MI Commands</title>
-	<section>
-		<title>
-		<function moreinfo="none">sht_reload</function>
-		</title>
-		<para>
-		Reload a hash table from database.
-		</para>
-		<para>
-		Name: <emphasis>sht_reload</emphasis>
-		</para>
-		<para>Parameters: <emphasis>_hash_table_name_</emphasis> - the name
-		of hash table to reload.</para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:sht_reload:_reply_fifo_file_
-		_hash_table_name_
-		_empty_line_
-		</programlisting>
-    </section>
-    <section>
-		<title>
-		<function moreinfo="none">sht_dump</function>
-		</title>
-		<para>
-		Dump content of a hash table via MI.
-		</para>
-		<para>
-		Name: <emphasis>sht_dump</emphasis>
-		</para>
-		<para>Parameters: <emphasis>_hash_table_name_</emphasis> - the name
-		of hash table to dump.</para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:sht_dump:_reply_fifo_file_
-		_hash_table_name_
-		_empty_line_
-		</programlisting>
-    </section>
-    <section>
-		<title>
-		<function moreinfo="none">sht_delete</function>
-		</title>
-		<para>
-		Delete a key from a hash table via MI.
-		</para>
-		<para>
-		Name: <emphasis>sht_delete</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para><emphasis>_hash_table_name: </emphasis>The table name to delete the key from</para></listitem>
-			<listitem><para><emphasis>_key_name: </emphasis>The key to delete from the htable</para></listitem>
-		</itemizedlist>
-
- 		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:sht_delete:_reply_fifo_file_
-		_hash_table_name_
-		_key_name_
-		_empty_line_
-		</programlisting>
-
- 		<para>
-		Example (note the quoting when executing it via FIFO):
-		</para>
-		<programlisting  format="linespecific">
-		kamctl fifo sht_delete auth '"user@example.org::last_auth"'
-		</programlisting>
-    </section>
-    </section>
-	<section>
         <title>Exported RPC Commands</title>
-        <section>
+        <section id="htable.rpc.get">
                 <title>
                 <function moreinfo="none">htable.get htable key</function>
                 </title>
                 <para>
-		Lists one value in a hash table
+					Lists one value in a hash table
                 </para>
                 <para>
                 Name: <emphasis>htable.get</emphasis>
@@ -1057,20 +979,20 @@ sht_iterator_end("i1");
                 </para>
 <programlisting  format="linespecific">
 ...
-# Dump $sht(students=>daniel)
-kamcmd htable.get students daniel
+# Dump $sht(students=>alice)
+kamcmd htable.get students alice
 
 # Dump first entry in array key course $sht(students=>course[0])
 kamcmd htable.get students course[0]
 ...
 </programlisting>
 	</section>
-        <section>
+        <section id="htable.rpc.delete">
                 <title>
                 <function moreinfo="none">htable.delete htable key</function>
                 </title>
                 <para>
-		Delete one value in a hash table
+					Delete one value in a hash table
                 </para>
                 <para>
                 Name: <emphasis>htable.delete</emphasis>
@@ -1088,15 +1010,15 @@ kamcmd htable.get students course[0]
                 </para>
 <programlisting  format="linespecific">
 ...
-# Delete $sht(students=>anna)
-kamcmd htable.delete students anna
+# Delete $sht(students=>alice)
+kamcmd htable.delete students alice
 
 # Delete first entry in array key course $sht(students=>course[0])
 kamcmd htable.delete students course[0]
 ...
 </programlisting>
 	</section>
-       <section>
+       <section id="htable.rpc.sets">
                 <title>
                 <function moreinfo="none">htable.sets htable key value</function>
                 </title>
@@ -1129,7 +1051,7 @@ kamcmd htable.sets test x[0] abc
 ...
 </programlisting>
 	</section>
-       <section>
+       <section id="htable.rpc.seti">
                 <title>
                 <function moreinfo="none">htable.seti htable key value</function>
                 </title>
@@ -1162,7 +1084,7 @@ kamcmd htable.sets test x[0] 123
 ...
 </programlisting>
 	</section>
-        <section>
+        <section id="htable.rpc.dump">
                 <title>
                 <function moreinfo="none">htable.dump htable</function>
                 </title>
@@ -1187,7 +1109,7 @@ kamcmd htable.dump ipban
 ...
 </programlisting>
 	</section>
-        <section>
+        <section id="htable.rpc.reload">
                 <title>
                 <function moreinfo="none">htable.reload htable</function>
                 </title>
@@ -1212,7 +1134,7 @@ kamcmd htable.reload ipban
 ...
 </programlisting>
 	</section>
-        <section>
+        <section id="htable.rpc.listTables">
                 <title>
                 <function moreinfo="none">htable.listTables</function>
                 </title>
@@ -1237,7 +1159,7 @@ kamcmd htable.listTables
 ...
 </programlisting>
 	</section>
-    <section>
+    <section id="htable.rpc.stats">
           <title>
                 <function moreinfo="none">htable.stats</function>
           </title>

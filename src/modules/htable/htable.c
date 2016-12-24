@@ -37,7 +37,6 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/fmsg.h"
 
 #include "../../core/pvar.h"
@@ -77,10 +76,6 @@ static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo);
 
 int ht_param(modparam_t type, void* val);
 
-static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param);
-static struct mi_root* ht_mi_dump(struct mi_root* cmd_tree, void* param);
-static struct mi_root* ht_mi_delete(struct mi_root* cmd_tree, void* param);
-
 static pv_export_t mod_pvs[] = {
 	{ {"sht", sizeof("sht")-1}, PVT_OTHER, pv_get_ht_cell, pv_set_ht_cell,
 		pv_parse_ht_name, 0, 0, 0 },
@@ -102,13 +97,6 @@ static pv_export_t mod_pvs[] = {
 	{ {"shtitval", sizeof("shtitval")-1}, PVT_OTHER, pv_get_iterator_val, 0,
 		pv_parse_iterator_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
-
-static mi_export_t mi_cmds[] = {
-	{ "sht_reload",     ht_mi_reload,  0,  0,  0},
-	{ "sht_dump",       ht_mi_dump,    0,  0,  0},
-	{ "sht_delete",     ht_mi_delete,  0,  0,  0},
-	{ 0, 0, 0, 0, 0}
 };
 
 
@@ -162,7 +150,7 @@ struct module_exports exports= {
 	cmds,
 	params,
 	0,          /* exported statistics */
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
@@ -176,11 +164,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(htable_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -630,209 +613,6 @@ error:
 
 }
 
-#define MI_ERR_RELOAD 			"ERROR Reloading data"
-#define MI_ERR_RELOAD_LEN 		(sizeof(MI_ERR_RELOAD)-1)
-static struct mi_root* ht_mi_reload(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_node* node;
-	str htname;
-	ht_t *ht;
-	ht_t nht;
-	ht_cell_t *first;
-	ht_cell_t *it;
-	int i;
-
-	if(ht_db_url.len<=0)
-		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-
-	if(ht_db_init_con()!=0)
-		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-	if(ht_db_open_con()!=0)
-		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-	{
-		ht_db_close_con();
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	}
-	htname = node->value;
-	if(htname.len<=0 || htname.s==NULL)
-	{
-		LM_ERR("bad hash table name\n");
-		ht_db_close_con();
-		return init_mi_tree( 500, "bad hash table name", 19);
-	}
-	ht = ht_get_table(&htname);
-	if(ht==NULL || ht->dbtable.len<=0)
-	{
-		LM_ERR("bad hash table name\n");
-		ht_db_close_con();
-		return init_mi_tree( 500, "no such hash table", 18);
-	}
-	memcpy(&nht, ht, sizeof(ht_t));
-	/* it's temporary operation - use system malloc */
-	nht.entries = (ht_entry_t*)malloc(nht.htsize*sizeof(ht_entry_t));
-	if(nht.entries == NULL)
-	{
-		ht_db_close_con();
-		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-	}
-	memset(nht.entries, 0, nht.htsize*sizeof(ht_entry_t));
-
-	if(ht_db_load_table(&nht, &ht->dbtable, 0)<0)
-	{
-		/* free any entry set if it was a partial load */
-		for(i=0; i<nht.htsize; i++)
-		{
-			first = nht.entries[i].first;
-			while(first)
-			{
-				it = first;
-				first = first->next;
-				ht_cell_free(it);
-			}
-		}
-		free(nht.entries);
-		ht_db_close_con();
-		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-	}
-
-	/* replace old entries */
-	for(i=0; i<nht.htsize; i++)
-	{
-		ht_slot_lock(ht, i);
-		first = ht->entries[i].first;
-		ht->entries[i].first = nht.entries[i].first;
-		ht->entries[i].esize = nht.entries[i].esize;
-		ht_slot_unlock(ht, i);
-		nht.entries[i].first = first;
-	}
-	/* free old entries */
-	for(i=0; i<nht.htsize; i++)
-	{
-		first = nht.entries[i].first;
-		while(first)
-		{
-			it = first;
-			first = first->next;
-			ht_cell_free(it);
-		}
-	}
-	free(nht.entries);
-	ht_db_close_con();
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-}
-
-static struct mi_root* ht_mi_delete(struct mi_root* cmd_tree, void* param) {
-	struct mi_node *node;
-	str *htname, *key;
-	ht_t *ht;
-
-	node = cmd_tree->node.kids;
-	if (!node)
-		goto param_err;
-
-	htname = &node->value;
-	if (!htname->len)
-		goto param_err;
-
-	node = node->next;
-	if (!node)
-		goto param_err;
-
-	key = &node->value;
-	if (!key->len)
-		goto param_err;
-
-	ht = ht_get_table(htname);
-	if (!ht)
-		return init_mi_tree(404, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-
-	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &ht->name, key, 0, NULL, 0)!=0) {
-		LM_ERR("dmq relication failed\n");
-	}
-
-	LM_DBG("deleting key [%.*s] from [%.*s]\n",
-		key->len, key->s, htname->len, htname->s);
-
-	ht_del_cell(ht, key);
-
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-
-param_err:
-	return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-}
-
-static struct mi_root* ht_mi_dump(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_node* node;
-	struct mi_node* node2;
-	struct mi_root *rpl_tree;
-	struct mi_node *rpl;
-	str htname;
-	ht_t *ht;
-	ht_cell_t *it;
-	int i;
-	int len;
-	char *p;
-
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	htname = node->value;
-	if(htname.len<=0 || htname.s==NULL)
-	{
-		LM_ERR("bad hash table name\n");
-		return init_mi_tree( 500, "bad hash table name", 19);
-	}
-	ht = ht_get_table(&htname);
-	if(ht==NULL)
-	{
-		LM_ERR("bad hash table name\n");
-		return init_mi_tree( 500, "no such hash table", 18);
-	}
-
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==NULL)
-		return 0;
-	rpl = &rpl_tree->node;
-
-	for(i=0; i<ht->htsize; i++)
-	{
-		ht_slot_lock(ht, i);
-		it = ht->entries[i].first;
-		if(it)
-		{
-			/* add entry node */
-			p = int2str((unsigned long)i, &len);
-			node = add_mi_node_child(rpl, MI_DUP_VALUE, "Entry", 5, p, len);
-			if (node==0)
-				goto error;
-			while(it)
-			{
-				if(it->flags&AVP_VAL_STR) {
-					node2 = add_mi_node_child(node, MI_DUP_VALUE, it->name.s, it->name.len,
-							it->value.s.s, it->value.s.len);
-				} else {
-					p = sint2str((long)it->value.n, &len);
-					node2 = add_mi_node_child(node, MI_DUP_VALUE, it->name.s, it->name.len,
-							p, len);
-				}
-				if (node2==0)
-					goto error;
-				it = it->next;
-			}
-		}
-		ht_slot_unlock(ht, i);
-	}
-
-	return rpl_tree;
-error:
-	free_mi_tree(rpl_tree);
-	return 0;
-}
-
 #define RPC_DATE_BUF_LEN 21
 
 static const char* htable_dump_doc[2] = {
@@ -982,7 +762,8 @@ static void htable_rpc_sets(rpc_t* rpc, void* c) {
 		return;
 	}
 
-	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0) {
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL,
+				&ht->name, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0) {
 		LM_ERR("dmq relication failed\n");
 	}
 
@@ -1016,7 +797,8 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 		return;
 	}
 
-	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL, &ht->name, &keyname, 0, &keyvalue, 1)!=0) {
+	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL,
+				&ht->name, &keyname, 0, &keyvalue, 1)!=0) {
 		LM_ERR("dmq relication failed\n");
 	}
 
