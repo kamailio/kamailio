@@ -9,7 +9,7 @@
 ]>
 <chapter>
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -36,7 +36,7 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words 
+			The module depends on the following modules (in the other words
 			the listed modules must be loaded before this module):
 			</para>
 			<itemizedlist>
@@ -48,7 +48,7 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-			The following libraries or applications must be installed 
+			The following libraries or applications must be installed
 			before running &kamailio; with this module loaded:
 			</para>
 			<itemizedlist>
@@ -168,7 +168,7 @@ modparam("matrix", "matrix_res_col", "res")
 			Looks up the desired result ID in the matrix for the given column
 			and value and saves the result in dstavp. Returns false if the cell
       			is not defined or when an error occurred.
-			
+
 			Pseudo-variables or AVPs can be used for first and second.
 	  </para>
 		<example>
@@ -185,20 +185,20 @@ cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
 	</section>
 </section>
 <section>
-	<title><acronym>MI</acronym> Commands</title>
-	<section>
+	<title>RPC Commands</title>
+	<section id="matrix.rpc.reload">
 	    <title>
-				<function moreinfo="none">reload_matrix</function>
+			<function moreinfo="none">matrix.reload</function>
 	    </title>
 	    <para>
-				Reloads the internal matrix representation from the database.
-				This is necessary after entries in the database have been changed.
+			Reloads the internal matrix representation from the database.
+			This is necessary after entries in the database have been changed.
 	    </para>
 			<example>
-				<title><function>reload_matrix</function> usage</title>
+				<title><function>matrix.reload</function> usage</title>
 				<programlisting format="linespecific">
 ...
-kamctl fifo reload_matrix
+&kamcmd; matrix.reload
 ...
 				</programlisting>
 	    </example>
@@ -209,12 +209,12 @@ kamctl fifo reload_matrix
 		<section>
 			<title>Database setup</title>
 			<para>
-				Before running &kamailio; with matrix, you have to setup the database 
-				table where the module will read the matrix data. For that, if 
+				Before running &kamailio; with matrix, you have to setup the database
+				table where the module will read the matrix data. For that, if
 				the table was not created by the installation script or you choose
 				to install everything by yourself you can use the matrix-create.sql
 				<acronym>SQL</acronym> script in the database directories in the 
-				kamailio/scripts folder as template. 
+				kamailio/scripts folder as template.
 				Database, table, and column names can be set with module parameters so they
 				can be changed.
 				You can also find the complete database documentation on the
