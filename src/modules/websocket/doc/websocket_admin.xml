@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>This module implements a WebSocket (RFC 6455) server and provides
@@ -122,7 +122,7 @@ event_route[xhttp:request] {
 	it may not be possible to guarantee all SIP WebSocket clients will
 	support Outbound and Path.</para>
 	<para>The <emphasis>nathelper</emphasis> module functions
-	(<emphasis>nat_uac_test()</emphasis>, 
+	(<emphasis>nat_uac_test()</emphasis>,
 	<emphasis>fix_nated_register()</emphasis>,
 	<emphasis>add_contact_alias()</emphasis>, and
 	<emphasis>handle_ruri_alias()</emphasis>) and the Kamailio core
@@ -406,7 +406,7 @@ modparam("websocket", "sub_protocols", 2)
 		<listitem><para>
 		<emphasis>0</emphasis> - Do not add an
 		&quot;Access-Control-Allow-Origin:&quot; header to the response
-		accepting the WebSocket handshake. 
+		accepting the WebSocket handshake.
 		</para></listitem>
 		<listitem><para>
 		<emphasis>1</emphasis> - Add a
@@ -497,8 +497,8 @@ ws_close(4000, "Because I say so");
 	</section>
 
 	<section>
-	<title>MI Commands</title>
-	<section id="websocket.m.ws.dump">
+	<title>RPC Commands</title>
+	<section id="websocket.rpc.ws.dump">
 		<title><function moreinfo="none">ws.dump</function></title>
 		<para>Provides the details of the first 50 WebSocket
 		connections.</para>
@@ -514,15 +514,15 @@ ws_close(4000, "Because I say so");
 		</itemizedlist>
 		<note><para>If no parameter is provided id_hash order is
 		used.</para></note>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
-			:ws.dump:fifo_reply
-			used_asc
-			_empty_line_
+...
+&kamcmd; ws.dump used_asc
+...
 </programlisting>
 	</section>
 
-	<section id="websocket.m.ws.close">
+	<section id="websocket.rpc.ws.close">
 		<title><function moreinfo="none">ws.close</function></title>
 		<para>Starts the close handshake for the specified
 		WebSocket connection.</para>
@@ -533,15 +533,15 @@ ws_close(4000, "Because I say so");
 				<para>id - WebSocket connection ID.</para>
 			</listitem>
 		</itemizedlist>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
-			:ws.close:fifo_reply
-			1
-			_empty_line_
+...
+&kamcmd; ws.close: 1
+...
 </programlisting>
 	</section>
 
-	<section id="websocket.m.ping">
+	<section id="websocket.rpc.ws.ping">
 		<title><function moreinfo="none">ws.ping</function></title>
 		<para>Sends a Ping frame on the specified WebSocket
 		connection.</para>
@@ -552,15 +552,15 @@ ws_close(4000, "Because I say so");
 				<para>id - WebSocket connection ID.</para>
 			</listitem>
 		</itemizedlist>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
-			:ws.ping:fifo_reply
-			1
-			_empty_line_
+...
+&kamcmd; ws.ping 1
+...
 </programlisting>
 	</section>
 
-	<section id="websocket.m.ws.pong">
+	<section id="websocket.rpc.ws.pong">
 		<title><function moreinfo="none">ws.pong</function></title>
 		<para>Sends a Pong frame on the specified WebSocket
 		connection.</para>
@@ -571,38 +571,40 @@ ws_close(4000, "Because I say so");
 				<para>id - WebSocket connection ID.</para>
 			</listitem>
 		</itemizedlist>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
-			:ws.pong:fifo_reply
-			1
-			_empty_line_
+...
+&kamcmd; ws.pong 1
+...
 </programlisting>
 	</section>
 
-	<section id="websocket.m.ws.disable">
+	<section id="websocket.rpc.ws.disable">
 		<title><function moreinfo="none">ws.disable</function></title>
 		<para>Disables WebSockets preventing new connections from
 		being established.</para>
 		<para>Name: <emphasis>ws.disable</emphasis></para>
 		<para>Parameters: <emphasis>none</emphasis></para>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Usage:</para>
 		<programlisting  format="linespecific">
-			:ws.disable:fifo_reply
-			_empty_line_
+...
+&kamcmd; ws.disable
+...
 </programlisting>
 	</section>
 
-	<section id="websocket.m.ws.enable">
+	<section id="websocket.rpc.ws.enable">
 		<title><function moreinfo="none">ws.enable</function></title>
 		<para>Enables WebSockets allowing new connections to be
 		established.</para>
 		<note><para>WebSockets are enabled at start-up.</para></note>
 		<para>Name: <emphasis>ws.enable</emphasis></para>
 		<para>Parameters: <emphasis>none</emphasis></para>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-			:ws.enable:fifo_reply
-			_empty_line_
+...
+&kamcmd; ws.enable
+...
 </programlisting>
 	</section>
 
@@ -633,7 +635,7 @@ event_route[websocket:closed] {
 	</section>
 
 	</section>
-    
+ 
 	<section>
 		<title>Exported Pseudo Variables</title>
 		<section>
