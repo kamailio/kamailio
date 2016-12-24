@@ -38,7 +38,7 @@ Peter Dunkley
               5.1. ws_handle_handshake()
               5.2. ws_close([status, reason[, connection_id]])
 
-        6. MI Commands
+        6. RPC Commands
 
               6.1. ws.dump
               6.2. ws.close
@@ -102,7 +102,7 @@ Chapter 1. Admin Guide
         5.1. ws_handle_handshake()
         5.2. ws_close([status, reason[, connection_id]])
 
-   6. MI Commands
+   6. RPC Commands
 
         6.1. ws.dump
         6.2. ws.close
@@ -490,7 +490,7 @@ Note
 ws_close(4000, "Because I say so");
 ...
 
-6. MI Commands
+6. RPC Commands
 
    6.1. ws.dump
    6.2. ws.close
@@ -512,10 +512,10 @@ Note
 
    If no parameter is provided id_hash order is used.
 
-   MI FIFO Command Format:
-                        :ws.dump:fifo_reply
-                        used_asc
-                        _empty_line_
+   RPC Command Usage:
+...
+kamcmd ws.dump used_asc
+...
 
 6.2. ws.close
 
@@ -526,10 +526,10 @@ Note
    Parameters:
      * id - WebSocket connection ID.
 
-   MI FIFO Command Format:
-                        :ws.close:fifo_reply
-                        1
-                        _empty_line_
+   RPC Command Usage:
+...
+kamcmd ws.close: 1
+...
 
 6.3. ws.ping
 
@@ -540,10 +540,10 @@ Note
    Parameters:
      * id - WebSocket connection ID.
 
-   MI FIFO Command Format:
-                        :ws.ping:fifo_reply
-                        1
-                        _empty_line_
+   RPC Command Usage:
+...
+kamcmd ws.ping 1
+...
 
 6.4. ws.pong
 
@@ -554,10 +554,10 @@ Note
    Parameters:
      * id - WebSocket connection ID.
 
-   MI FIFO Command Format:
-                        :ws.pong:fifo_reply
-                        1
-                        _empty_line_
+   RPC Command Usage:
+...
+kamcmd ws.pong 1
+...
 
 6.5. ws.disable
 
@@ -567,9 +567,10 @@ Note
 
    Parameters: none
 
-   MI FIFO Command Format:
-                        :ws.disable:fifo_reply
-                        _empty_line_
+   RPC Command Usage:
+...
+kamcmd ws.disable
+...
 
 6.6. ws.enable
 
@@ -583,9 +584,10 @@ Note
 
    Parameters: none
 
-   MI FIFO Command Format:
-                        :ws.enable:fifo_reply
-                        _empty_line_
+   RPC Command Format:
+...
+kamcmd ws.enable
+...
 
 7. Event routes
 

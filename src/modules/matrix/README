@@ -36,9 +36,9 @@ Henning Westerholt
 
               4.1. matrix (string first, string second, string dstavp)
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. reload_matrix
+              5.1. matrix.reload
 
         6. Installation and Running
 
@@ -60,7 +60,7 @@ Henning Westerholt
    1.4. Set matrix_second_col parameter
    1.5. Set matrix_res_col parameter
    1.6. matrix usage
-   1.7. reload_matrix usage
+   1.7. matrix.reload usage
    1.8. Example database content - matrix table
    2.1. Set db_url parameter
    2.2. Set matrix_table parameter
@@ -90,9 +90,9 @@ Chapter 1. Admin Guide
 
         4.1. matrix (string first, string second, string dstavp)
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. reload_matrix
+        5.1. matrix.reload
 
    6. Installation and Running
 
@@ -209,18 +209,18 @@ if (!matrix("$avp(first)", "$avp(second)", "$avp(route_tree)"))
 cr_route("$avp(route_tree)", "$rd", "$rU", "$rU", "call_id");
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. reload_matrix
+   5.1. matrix.reload
 
-5.1.  reload_matrix
+5.1.  matrix.reload
 
    Reloads the internal matrix representation from the database. This is
    necessary after entries in the database have been changed.
 
-   Example 1.7. reload_matrix usage
+   Example 1.7. matrix.reload usage
 ...
-kamctl fifo reload_matrix
+kamcmd matrix.reload
 ...
 
 6. Installation and Running

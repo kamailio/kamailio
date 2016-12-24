@@ -129,27 +129,36 @@ Daniel-Constantin Mierla
               4.50. t_use_uac_headers()
               4.51. t_is_retr_async_reply()
 
-        5. TM Module API
+        5. RPC Commands
 
-              5.1. Defines
-              5.2. Functions
-
-                    5.2.1. register_tmcb(cb_type, cb_func)
-                    5.2.2. load_tm(*import_structure)
-                    5.2.3. int t_suspend(struct sip_msg *msg, unsigned int
-                            *hash_index, unsigned int *label)
-
-                    5.2.4. int t_continue(unsigned int hash_index,
-                            unsigned int label, struct action *route)
-
-                    5.2.5. int t_cancel_suspend(unsigned int hash_index,
-                            unsigned int label)
+              5.1. tm.t_uac_start
+              5.2. tm.t_uac_wait
+              5.3. tm.cancel
+              5.4. tm.hash_stats
+              5.5. tm.reply
+              5.6. tm.reply_callid
 
         6. Event Routes
 
               6.1. event_route[tm:branch-failure]
 
-        7. Known Issues
+        7. TM Module API
+
+              7.1. Defines
+              7.2. Functions
+
+                    7.2.1. register_tmcb(cb_type, cb_func)
+                    7.2.2. load_tm(*import_structure)
+                    7.2.3. int t_suspend(struct sip_msg *msg, unsigned int
+                            *hash_index, unsigned int *label)
+
+                    7.2.4. int t_continue(unsigned int hash_index,
+                            unsigned int label, struct action *route)
+
+                    7.2.5. int t_cancel_suspend(unsigned int hash_index,
+                            unsigned int label)
+
+        8. Known Issues
 
    List of Examples
 
@@ -356,27 +365,36 @@ Chapter 1. Admin Guide
         4.50. t_use_uac_headers()
         4.51. t_is_retr_async_reply()
 
-   5. TM Module API
+   5. RPC Commands
 
-        5.1. Defines
-        5.2. Functions
-
-              5.2.1. register_tmcb(cb_type, cb_func)
-              5.2.2. load_tm(*import_structure)
-              5.2.3. int t_suspend(struct sip_msg *msg, unsigned int
-                      *hash_index, unsigned int *label)
-
-              5.2.4. int t_continue(unsigned int hash_index, unsigned int
-                      label, struct action *route)
-
-              5.2.5. int t_cancel_suspend(unsigned int hash_index,
-                      unsigned int label)
+        5.1. tm.t_uac_start
+        5.2. tm.t_uac_wait
+        5.3. tm.cancel
+        5.4. tm.hash_stats
+        5.5. tm.reply
+        5.6. tm.reply_callid
 
    6. Event Routes
 
         6.1. event_route[tm:branch-failure]
 
-   7. Known Issues
+   7. TM Module API
+
+        7.1. Defines
+        7.2. Functions
+
+              7.2.1. register_tmcb(cb_type, cb_func)
+              7.2.2. load_tm(*import_structure)
+              7.2.3. int t_suspend(struct sip_msg *msg, unsigned int
+                      *hash_index, unsigned int *label)
+
+              7.2.4. int t_continue(unsigned int hash_index, unsigned int
+                      label, struct action *route)
+
+              7.2.5. int t_cancel_suspend(unsigned int hash_index,
+                      unsigned int label)
+
+   8. Known Issues
 
 1. Overview
 
@@ -2750,20 +2768,120 @@ pended\n");
 }
 ...
 
-5. TM Module API
+5. RPC Commands
 
-   5.1. Defines
-   5.2. Functions
+   5.1. tm.t_uac_start
+   5.2. tm.t_uac_wait
+   5.3. tm.cancel
+   5.4. tm.hash_stats
+   5.5. tm.reply
+   5.6. tm.reply_callid
 
-        5.2.1. register_tmcb(cb_type, cb_func)
-        5.2.2. load_tm(*import_structure)
-        5.2.3. int t_suspend(struct sip_msg *msg, unsigned int
+5.1.  tm.t_uac_start
+
+   Generates and sends a local SIP request.
+
+   Parameters:
+     * method - request method
+     * RURI - request SIP URI
+     * NEXT HOP - next hop SIP URI (OBP); use “.” if no value.
+     * socket - local socket to be used for sending the request; use “.”
+       if no value.
+     * headers - set of additional headers to be added to the request; at
+       least “From” and “To” headers must be provided)
+     * body - (optional, may not be present) request body (if present,
+       requires the “Content-Type” and “Content-length” headers)
+
+5.2.  tm.t_uac_wait
+
+   Similar to rm.t_uac_start, but waits for the SIP reponse and tries to
+   provide its details via RPC response.
+
+5.3.  tm.cancel
+
+   Generates and sends a CANCEL for an existing local SIP request.
+
+   Parameters:
+     * callid - callid of the INVITE request to be cancelled.
+     * cseq - cseq of the INVITE request to be cancelled.
+
+5.4.  tm.hash_stats
+
+   Gets information about the load of TM internal hash table.
+
+   Parameters:
+     * none
+
+5.5.  tm.reply
+
+   Generates and sends a reply for an existing inbound SIP transaction.
+
+   Parameters:
+     * code - reply code
+     * reason - reason phrase.
+     * trans_id - transaction identifier (has the hash_entry:label format)
+     * to_tag - To tag to be added to TO header
+     * new_headers - extra headers to be appended to the reply; use a dot
+       (“.”) char only if there are no headers;
+     * body - (optional, may not be present) reply body (if present,
+       requires the “Content-Type” and “Content-length” headers)
+
+5.6.  tm.reply_callid
+
+   Generates and sends a reply for an existing inbound SIP transaction.
+
+   Parameters:
+     * code - reply code
+     * reason - reason phrase.
+     * callid - SIP Call-ID header
+     * cseq - SIP CSeq header
+     * to_tag - To tag to be added to TO header
+     * new_headers - extra headers to be appended to the reply; use a dot
+       (“.”) char only if there are no headers;
+     * body - (optional, may not be present) reply body (if present,
+       requires the “Content-Type” and “Content-length” headers)
+
+6. Event Routes
+
+   6.1. event_route[tm:branch-failure]
+
+6.1.  event_route[tm:branch-failure]
+
+   Named branch failure routes can be defined to run when when a failure
+   response is received. This allows handling failures on individual
+   branches, for example, retrying an alternative outbound flow.
+
+   The format of the event_route name is "tm:branch-failure:<name>" and is
+   enabled with the t_on_branch_failure function. This event_route uses
+   the BRANCH_FAILURE_ROUTE route type.
+
+   Example 1.92. event_route[tm:branch-failure] usage
+...
+request_route {
+    ...
+    t_on_branch_failure("myroute");
+    t_relay();
+}
+
+event_route[tm:branch-failure:myroute] {
+    xlog("L_INFO", "Received $T_reply_code to $rm message\n");
+}
+...
+
+7. TM Module API
+
+   7.1. Defines
+   7.2. Functions
+
+        7.2.1. register_tmcb(cb_type, cb_func)
+        7.2.2. load_tm(*import_structure)
+        7.2.3. int t_suspend(struct sip_msg *msg, unsigned int
                 *hash_index, unsigned int *label)
 
-        5.2.4. int t_continue(unsigned int hash_index, unsigned int label,
+        7.2.4. int t_continue(unsigned int hash_index, unsigned int label,
                 struct action *route)
 
-        5.2.5. int t_cancel_suspend(unsigned int hash_index, unsigned int
+        7.2.5. int t_cancel_suspend(unsigned int hash_index, unsigned int
                 label)
 
    There are applications which would like to generate SIP transactions
@@ -2809,7 +2927,7 @@ end of body
 
    or cat test/transaction.fifo > /tmp/ser_fifo
 
-5.1. Defines
+7.1. Defines
 
      * ACK_TAG enables stricter matching of acknowledgments including
        to-tags. Without it, to-tags are ignored. It is disabled by default
@@ -2828,9 +2946,9 @@ end of body
        ACK_TAG, all this complex transactions matching goes with RFC3261's
        magic cookie away anyway.
 
-5.2. Functions
+7.2. Functions
 
-5.2.1.  register_tmcb(cb_type, cb_func)
+7.2.1.  register_tmcb(cb_type, cb_func)
 
    For programmatic use only--register a function to be called back on an
    event. See t_hooks.h for more details.
@@ -2839,7 +2957,7 @@ end of body
      * cb_type - Callback type.
      * cb_func - Callback function.
 
-5.2.2.  load_tm(*import_structure)
+7.2.2.  load_tm(*import_structure)
 
    For programmatic use only--import exported TM functions. See the acc
    module for an example of use.
@@ -2847,7 +2965,7 @@ end of body
    Meaning of the parameters is as follows:
      * import_structure - Pointer to the import structure.
 
-5.2.3.  int t_suspend(struct sip_msg *msg, unsigned int *hash_index, unsigned
+7.2.3.  int t_suspend(struct sip_msg *msg, unsigned int *hash_index, unsigned
 int *label)
 
    For programmatic use only. This function together with t_continue() can
@@ -2885,7 +3003,7 @@ int *label)
    t_suspend() should return 0 to make sure that the script processing
    does not continue.
 
-5.2.4.  int t_continue(unsigned int hash_index, unsigned int label, struct
+7.2.4.  int t_continue(unsigned int hash_index, unsigned int label, struct
 action *route)
 
    For programmatic use only. This function is the pair of t_suspend(),
@@ -2901,7 +3019,7 @@ action *route)
 
    Return value: 0 - success, <0 - error.
 
-5.2.5.  int t_cancel_suspend(unsigned int hash_index, unsigned int label)
+7.2.5.  int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 
    For programmatic use only. This function is for revoking t_suspend()
    from the same process as it was executed before. t_cancel_suspend() can
@@ -2917,33 +3035,7 @@ action *route)
 
    Return value: 0 - success, <0 - error.
 
-6. Event Routes
-
-   6.1. event_route[tm:branch-failure]
-
-6.1.  event_route[tm:branch-failure]
-
-   Named branch failure routes can be defined to run when when a failure
-   response is received. This allows handling failures on individual
-   branches, for example, retrying an alternative outbound flow.
-
-   The format of the event_route name is "tm:branch-failure:<name>" and is
-   enabled with the t_on_branch_failure function. This event_route uses
-   the BRANCH_FAILURE_ROUTE route type.
-
-   Example 1.92. event_route[tm:branch-failure] usage
-...
-route {
-    t_on_branch_failure("myroute");
-    t_relay();
-}
-
-event_route[tm:branch-failure:myroute] {
-    xlog("L_INFO", "Received $T_reply_code to $rm message\n");
-}
-...
-
-7. Known Issues
+8. Known Issues
 
      * Possibly, performance could be improved by not parsing non-INVITEs,
        as they do not be replied with 100, and do not result in
