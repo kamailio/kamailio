@@ -25,7 +25,6 @@
 #include <time.h>
 
 #include "../../lib/srdb1/db_op.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
 #include "../../core/mem/shm_mem.h"
@@ -110,16 +109,10 @@ static int w_mt_match(struct sip_msg* msg, char* str1, char* str2,
 static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
-static int  mi_child_init(void);
 static int mtree_init_rpc(void);
 
 static int mt_match(sip_msg_t *msg, str *tname, str *tomatch,
 		int mval);
-
-static struct mi_root* mt_mi_reload(struct mi_root*, void* param);
-static struct mi_root* mt_mi_list(struct mi_root*, void* param);
-static struct mi_root* mt_mi_summary(struct mi_root*, void* param);
-static struct mi_root* mt_mi_match(struct mi_root*, void* param);
 
 static int mt_load_db(m_tree_t *pt);
 static int mt_load_db_trees();
@@ -150,22 +143,13 @@ static param_export_t params[]={
 	{0, 0, 0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "mt_reload",  mt_mi_reload,  0,  0,  mi_child_init },
-	{ "mt_list",    mt_mi_list,    0,  0,  0 },
-	{ "mt_summary", mt_mi_summary, 0,  0,  0 },
-	{ "mt_match", mt_mi_match, 0,  0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
-
-
 struct module_exports exports = {
 	"mtree",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,
-	mi_cmds,        /* exported MI functions */
+	0,              /* exported MI functions */
 	0,              /* exported pseudo-variables */
 	0,              /* extra processes */
 	mod_init,       /* module initialization function */
@@ -175,7 +159,6 @@ struct module_exports exports = {
 };
 
 
-
 /**
  * init module function
  */
@@ -183,11 +166,6 @@ static int mod_init(void)
 {
 	m_tree_t *pt = NULL;
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(mtree_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -334,10 +312,7 @@ error1:
 	return -1;
 }
 
-/**
- * mi and worker process initialization
- */
-static int mi_child_init(void)
+static int mt_child_init(void)
 {
 	db_con = mt_dbf.init(&db_url);
 	if(db_con==NULL)
@@ -357,7 +332,7 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
 
-	if ( mi_child_init()!=0 )
+	if ( mt_child_init()!=0 )
 		return -1;
 
 	LM_DBG("#%d: database connection opened successfully\n", rank);
@@ -846,260 +821,8 @@ error:
 	return -1;
 }
 
-/**************************** MI ***************************/
 
-/**
- * "mt_reload" syntax :
- * \n
- */
-static struct mi_root* mt_mi_reload(struct mi_root *cmd_tree, void *param)
-{
-	str tname = {0, 0};
-	m_tree_t *pt;
-	struct mi_node* node = NULL;
-
-	if(db_table.len>0)
-	{
-		/* re-loading all information from database */
-		if(mt_load_db_trees()!=0)
-		{
-			LM_ERR("cannot re-load info from database\n");
-			goto error;
-		}
-	} else {
-		if(!mt_defined_trees())
-		{
-			LM_ERR("empty tree list\n");
-			return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
-		}
-
-		/* read tree name */
-		node = cmd_tree->node.kids;
-		if(node != NULL)
-		{
-			tname = node->value;
-			if(tname.s == NULL || tname.len== 0)
-				return init_mi_tree( 404, "domain not found", 16);
-
-			if(*tname.s=='.') {
-				tname.s = 0;
-				tname.len = 0;
-			}
-		}
-
-		pt = mt_get_first_tree();
-
-		while(pt!=NULL)
-		{
-			if(tname.s==NULL
-					|| (tname.s!=NULL && pt->tname.len>=tname.len
-						&& strncmp(pt->tname.s, tname.s, tname.len)==0))
-			{
-				/* re-loading table from database */
-				if(mt_load_db(pt)!=0)
-				{
-					LM_ERR("cannot re-load info from database\n");
-					goto error;
-				}
-			}
-			pt = pt->next;
-		}
-	}
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-
-error:
-	return init_mi_tree( 500, "Failed to reload",16);
-}
-
-
-int mt_print_mi_node(m_tree_t *tree, mt_node_t *pt, struct mi_node* rpl,
-		char *code, int len)
-{
-	int i;
-	struct mi_node* node = NULL;
-	struct mi_attr* attr= NULL;
-	mt_is_t *tvalues;
-	str val;
-
-	if(pt==NULL || len>=MT_MAX_DEPTH)
-		return 0;
-
-	for(i=0; i<MT_NODE_SIZE; i++)
-	{
-		code[len]=mt_char_list.s[i];
-		tvalues = pt[i].tvalues;
-		if (tvalues != NULL)
-		{
-			node = add_mi_node_child(rpl, 0, "MT", 2, 0, 0);
-			if(node == NULL)
-				goto error;
-			attr = add_mi_attr(node, MI_DUP_VALUE, "TNAME", 5,
-					tree->tname.s, tree->tname.len);
-			if(attr == NULL)
-				goto error;
-			attr = add_mi_attr(node, MI_DUP_VALUE, "TPREFIX", 7,
-					code, len+1);
-			if(attr == NULL)
-				goto error;
-
-			while (tvalues != NULL) {
-				if (tree->type == MT_TREE_IVAL) {
-					val.s = int2str(tvalues->tvalue.n, &val.len);
-					attr = add_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
-							val.s, val.len);
-				} else {
-					attr = add_mi_attr(node, MI_DUP_VALUE, "TVALUE", 6,
-							tvalues->tvalue.s.s,
-							tvalues->tvalue.s.len);
-				}
-				if(attr == NULL)
-					goto error;
-				tvalues = tvalues->next;
-			}
-		}
-		if(mt_print_mi_node(tree, pt[i].child, rpl, code, len+1)<0)
-			goto error;
-	}
-	return 0;
-error:
-	return -1;
-}
-
-/**
- * "mt_list" syntax :
- *    tname
- *
- * 	- '.' (dot) means NULL value and will match anything
- */
-
-#define strpos(s,c) (strchr(s,c)-s)
-struct mi_root* mt_mi_list(struct mi_root* cmd_tree, void* param)
-{
-	str tname = {0, 0};
-	m_tree_t *pt;
-	struct mi_node* node = NULL;
-	struct mi_root* rpl_tree = NULL;
-	struct mi_node* rpl = NULL;
-	static char code_buf[MT_MAX_DEPTH+1];
-	int len;
-
-	if(!mt_defined_trees())
-	{
-		LM_ERR("empty tree list\n");
-		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
-	}
-
-	/* read tree name */
-	node = cmd_tree->node.kids;
-	if(node != NULL)
-	{
-		tname = node->value;
-		if(tname.s == NULL || tname.len== 0)
-			return init_mi_tree( 404, "domain not found", 16);
-
-		if(*tname.s=='.') {
-			tname.s = 0;
-			tname.len = 0;
-		}
-	}
-
-	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if(rpl_tree == NULL)
-		return 0;
-	rpl = &rpl_tree->node;
-
-	pt = mt_get_first_tree();
-
-	while(pt!=NULL)
-	{
-		if(tname.s==NULL ||
-				(tname.s!=NULL && pt->tname.len>=tname.len &&
-					strncmp(pt->tname.s, tname.s, tname.len)==0))
-		{
-			len = 0;
-			if(mt_print_mi_node(pt, pt->head, rpl, code_buf, len)<0)
-				goto error;
-		}
-		pt = pt->next;
-	}
-
-	return rpl_tree;
-
-error:
-	free_mi_tree(rpl_tree);
-	return 0;
-}
-
-struct mi_root* mt_mi_summary(struct mi_root* cmd_tree, void* param)
-{
-	m_tree_t *pt;
-	struct mi_root* rpl_tree = NULL;
-	struct mi_node* node = NULL;
-	struct mi_attr* attr= NULL;
-	str val;
-
-	if(!mt_defined_trees())
-	{
-		LM_ERR("empty tree list\n");
-		return init_mi_tree( 500, "No trees", 8);
-	}
-
-	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if(rpl_tree == NULL)
-		return 0;
-
-	pt = mt_get_first_tree();
-
-	while(pt!=NULL)
-	{
-		node = add_mi_node_child(&rpl_tree->node, 0, "MT", 2, 0, 0);
-		if(node == NULL)
-			goto error;
-		attr = add_mi_attr(node, MI_DUP_VALUE, "TNAME", 5,
-				pt->tname.s, pt->tname.len);
-		if(attr == NULL)
-			goto error;
-		val.s = int2str(pt->type, &val.len);
-		attr = add_mi_attr(node, MI_DUP_VALUE, "TTYPE", 5,
-				val.s, val.len);
-		if(attr == NULL)
-			goto error;
-		val.s = int2str(pt->memsize, &val.len);
-		attr = add_mi_attr(node, MI_DUP_VALUE, "MEMSIZE", 7,
-				val.s, val.len);
-		if(attr == NULL)
-			goto error;
-		val.s = int2str(pt->nrnodes, &val.len);
-		attr = add_mi_attr(node, MI_DUP_VALUE, "NRNODES", 7,
-				val.s, val.len);
-		if(attr == NULL)
-			goto error;
-		val.s = int2str(pt->nritems, &val.len);
-		attr = add_mi_attr(node, MI_DUP_VALUE, "NRITEMS", 7,
-				val.s, val.len);
-		if(attr == NULL)
-			goto error;
-		val.s = int2str((int)pt->reload_count, &val.len);
-		attr = add_mi_attr(node, MI_DUP_VALUE, "RELOADCOUNT", 11,
-				val.s, val.len);
-		if(attr == NULL)
-			goto error;
-		val.s = int2str((int)pt->reload_time, &val.len);
-		attr = add_mi_attr(node, MI_DUP_VALUE, "RELOADTIME", 10,
-				val.s, val.len);
-		if(attr == NULL)
-			goto error;
-
-		pt = pt->next;
-	}
-
-	return rpl_tree;
-error:
-	free_mi_tree(rpl_tree);
-	return 0;
-}
-
+/* RPC commands */
 void rpc_mtree_summary(rpc_t* rpc, void* c)
 {
 	str tname = {0, 0};
@@ -1315,10 +1038,132 @@ static const char* rpc_mtree_match_doc[6] = {
 };
 
 
+int rpc_mtree_print_node(rpc_t* rpc, void* ctx, m_tree_t *tree, mt_node_t *pt,
+		char *code, int len)
+{
+	int i;
+	struct mi_node* node = NULL;
+	struct mi_attr* attr= NULL;
+	mt_is_t *tvalues;
+	str val;
+	void* th = NULL;
+	void* ih = NULL;
+
+	if(pt==NULL || len>=MT_MAX_DEPTH)
+		return 0;
+
+	for(i=0; i<MT_NODE_SIZE; i++)
+	{
+		code[len]=mt_char_list.s[i];
+		tvalues = pt[i].tvalues;
+		if (tvalues != NULL)
+		{
+			/* add structure node */
+			if (rpc->add(ctx, "{", &th) < 0)
+			{
+				rpc->fault(ctx, 500, "Internal error - node structure");
+				return -1;
+			}
+
+			val.s = code;
+			val.len = len+1;
+			if(rpc->struct_add(th, "SS[",
+				"tname",	&tree->tname,
+				"tprefix", 	&val,
+				"tvalue",	&ih)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error - attribute fields");
+				return -1;
+			}
+
+			while (tvalues != NULL) {
+				if (tree->type == MT_TREE_IVAL) {
+					if(rpc->array_add(ih, "u",
+								(unsigned long)tvalues->tvalue.n)<0) {
+						rpc->fault(ctx, 500, "Internal error - int val");
+						return -1;
+					}
+				} else {
+					if(rpc->array_add(ih, "S", &tvalues->tvalue.s)<0) {
+						rpc->fault(ctx, 500, "Internal error - str val");
+						return -1;
+					}
+				}
+				tvalues = tvalues->next;
+			}
+		}
+		if(rpc_mtree_print_node(rpc, ctx, tree, pt[i].child, code, len+1)<0)
+			goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+/**
+ * "mtree.list" syntax :
+ *    tname
+ *
+ * 	- '.' (dot) means NULL value and will match anything
+ */
+void rpc_mtree_list(rpc_t* rpc, void* ctx)
+{
+	str tname = {0, 0};
+	m_tree_t *pt;
+	struct mi_node* node = NULL;
+	struct mi_root* rpl_tree = NULL;
+	struct mi_node* rpl = NULL;
+	static char code_buf[MT_MAX_DEPTH+1];
+	int len;
+
+	if(!mt_defined_trees())
+	{
+		rpc->fault(ctx, 500, "Empty tree list.");
+		return;
+	}
+
+	if(rpc->scan(ctx, "*.S", &tname)!=1) {
+		tname.s = NULL;
+		tname.len = 0;
+	}
+
+	pt = mt_get_first_tree();
+
+	while(pt!=NULL)
+	{
+		if(tname.s==NULL ||
+				(tname.s!=NULL && pt->tname.len>=tname.len &&
+					strncmp(pt->tname.s, tname.s, tname.len)==0))
+		{
+			len = 0;
+			code_buf[0] = '\0';
+			if(rpc_mtree_print_node(rpc, ctx, pt, pt->head, code_buf, len)<0) {
+				goto error;
+			}
+		}
+		pt = pt->next;
+	}
+
+	return;
+
+error:
+	LM_ERR("failed to build rpc response\n");
+	return;
+}
+
+static const char* rpc_mtree_list_doc[6] = {
+	"List the content of one or all trees",
+	"Parameters:",
+	"tname - tree name (optional)",
+	0
+};
+
+
 rpc_export_t mtree_rpc[] = {
 	{"mtree.summary", rpc_mtree_summary, rpc_mtree_summary_doc, RET_ARRAY},
 	{"mtree.reload", rpc_mtree_reload, rpc_mtree_reload_doc, 0},
 	{"mtree.match", rpc_mtree_match, rpc_mtree_match_doc, 0},
+	{"mtree.list", rpc_mtree_list, rpc_mtree_list_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
@@ -1332,105 +1177,6 @@ static int mtree_init_rpc(void)
 	return 0;
 }
 
-struct mi_root* mt_mi_match(struct mi_root* cmd_tree, void* param)
-{
-	m_tree_t *tr;
-	struct mi_root* rpl_tree = NULL;
-	struct mi_node* node = NULL;
-
-	str tname, prefix, mode_param;
-	str bad_tname_param = STR_STATIC_INIT("Bad tname parameter");
-	str bad_prefix_param = STR_STATIC_INIT("Bad prefix parameter");
-	str bad_mode_param = STR_STATIC_INIT("Bad mode parameter");
-	int mode;
-
-	if(!mt_defined_trees())
-	{
-		LM_ERR("empty tree list\n");
-		return init_mi_tree( 500, "No trees", 8);
-	}
-
-	/* read tree name */
-	node = cmd_tree->node.kids;
-	if(node != NULL)
-	{
-		tname = node->value;
-		if(tname.s == NULL || tname.len== 0)
-			return init_mi_tree( 400, bad_tname_param.s, bad_tname_param.len);
-	}
-	else
-	{
-		return init_mi_tree( 400, bad_tname_param.s, bad_tname_param.len);
-	}
-
-	/* read given prefix */
-	node = node->next;
-	if(node != NULL)
-	{
-		prefix = node->value;
-		if(prefix.s == NULL || prefix.len== 0)
-			return init_mi_tree( 400, bad_prefix_param.s, bad_prefix_param.len);
-	}
-	else
-	{
-		return init_mi_tree( 400, bad_prefix_param.s, bad_prefix_param.len);
-	}
-
-	/* read mode parameter (required) */
-	node = node->next;
-	if (node != NULL)
-	{
-		mode_param = node->value;
-		if (mode_param.s == NULL || mode_param.len == 0 ||
-				str2int(&mode_param, (unsigned int*)&mode))
-			mode = -1;
-
-		if (mode != 0 && mode != 2)
-			return init_mi_tree( 400, bad_mode_param.s, bad_mode_param.len);
-	}
-	else
-	{
-		return init_mi_tree( 400, bad_mode_param.s, bad_mode_param.len);
-	}
-
-again:
-	lock_get( mt_lock );
-	if (mt_reload_flag) {
-		lock_release( mt_lock );
-		sleep_us(5);
-		goto again;
-	}
-	mt_tree_refcnt++;
-	lock_release( mt_lock );
-
-	tr = mt_get_tree(&tname);
-	if(tr==NULL)
-	{
-		/* no tree with such name*/
-		rpl_tree = init_mi_tree( 404, "Not found tree", 14);
-		goto error;
-	}
-
-	rpl_tree = init_mi_tree( 200, "OK", 2);
-	if (rpl_tree == NULL)
-		goto error;
-
-	if(mt_mi_match_prefix(&rpl_tree->node, tr, &prefix, mode)<0)
-	{
-		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
-				tname.len, tname.s,
-				prefix.len, prefix.s);
-		free_mi_tree(rpl_tree);
-		rpl_tree = init_mi_tree( 404, "Not found tvalue", 16);
-	}
-
-error:
-	lock_get( mt_lock );
-	mt_tree_refcnt--;
-	lock_release( mt_lock );
-
-	return rpl_tree;
-}
 
 /**
  *

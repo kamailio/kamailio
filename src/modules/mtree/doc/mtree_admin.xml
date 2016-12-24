@@ -11,9 +11,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
@@ -21,12 +21,12 @@
 		them in a named memory tree. Name of the tree is specified for each
 		record or as module parameter.
 	</para>
-	<para>	
+	<para>
 		It exports to configuration file functions to match against in-memory
 		trees and return the values (raw or precompiled) associated with
 		matched prefixes.
 	</para>
-	<para>	
+	<para>
 		The maximum size of the prefix is limited internally to 63, database
 		table definition may enforce lower maximum size.
 	</para>
@@ -379,7 +379,7 @@ modparam("mtree", "mt_allow_duplicates", 1)
 	</section>
 
 	</section>
-	
+
     <section>
 	<title>Functions</title>
  	<section>
@@ -407,117 +407,36 @@ mt_match("mytree", "$rU", "0");
 </programlisting>
 	    </example>
 	</section>
-	
-    </section>
-	
-	<section>
-		<title>MI Commands</title>
 
-	<section>
-		<title>
-		<function moreinfo="none">mt_list</function>
-		</title>
-		<para>
-		List content of a tree.
-		</para>
-		<para>
-		Name: <emphasis>mt_list</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>_mtree_ : name of tree to list. </para></listitem>	  
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:mt_list:_reply_fifo_file_
-		_mtname_
-		_empty_line_
-		</programlisting>
     </section>
 
-	<section>
-		<title>
-		<function moreinfo="none">mt_reload</function>
-		</title>
-		<para>
-		Reload mtree from database.
-		</para>
-		<para>
-		Name: <emphasis>mt_mtree</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>_mtname_</para> - name of mem tree</listitem>	  
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:mt_reload:_reply_fifo_file_
-		_mtname_
-		_empty_line_
-		</programlisting>
-    </section>
-
-	<section>
-		<title>
-		<function moreinfo="none">mt_summary</function>
-		</title>
-		<para>
-		List usage summary for all trees.
-		</para>
-		<para>
-		Name: <emphasis>mt_summary</emphasis>
-		</para>
-		<para>Parameters: none.</para>
-		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:mt_summary:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-    </section>
-
-    <section>
-		<title>
-		<function moreinfo="none">mt_match</function>
-		</title>
-		<para>
-		Match prefix value against mtree.
-		</para>
-		<para>
-		Name: <emphasis>mt_match</emphasis>
-		</para>
-		<para>Parameters: <emphasis>3</emphasis></para>
-		<itemizedlist>
-            <listitem>
-            <para><emphasis>Name of mtree</emphasis></para>
-            </listitem>
-            <listitem>
-            <para><emphasis>Prefix to match</emphasis></para>
-            </listitem>
-            <listitem>
-            <para><emphasis>Mode of matching</emphasis></para>
-            </listitem>
-        </itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:mt_match:_reply_fifo_file_
-		_mtree_
-		_prefix_
-		_mode_
-		_empty_line_
-		</programlisting>
-    </section>
-    </section><!-- MI commands -->
 	<section>
 	<title>RPC Commands</title>
-	<section>
+	<section id="mtree.rpc.list">
+		<title>
+		<function moreinfo="none">mtree.list</function>
+		</title>
+		<para>
+		List content of one or all trees.
+		</para>
+		<para>
+		Name: <emphasis>mtree.list</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_mtree_ : name of tree to list (optional). </para></listitem>
+		</itemizedlist>
+		<example>
+		<title><function>mtree.list</function> rpc usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; mtree.list
+&kamcmd; mtree.list mytree
+...
+</programlisting>
+	    </example>
+    </section>
+	<section id="mtree.rpc.summary">
 		<title>
 		<function moreinfo="none">mtree.summary</function>
 		</title>
@@ -529,8 +448,8 @@ mt_match("mytree", "$rU", "0");
 		<itemizedlist>
 			<listitem><para>_mtree_ - (optional) the name of the tree.</para></listitem>
 		</itemizedlist>
-        </section>
-	<section>
+    </section>
+	<section id="mtree.rpc.reload">
 		<title>
 		<function moreinfo="none">mtree.reload</function>
 		</title>
@@ -541,8 +460,8 @@ mt_match("mytree", "$rU", "0");
 		<itemizedlist>
 			<listitem><para>_mtree_</para> - name of mtree or empty string meaning all mtrees</listitem>
 		</itemizedlist>
-        </section>
-    <section>
+    </section>
+    <section id="mtree.rpc.match">
 		<title>
 		<function moreinfo="none">mtree.match</function>
 		</title>
@@ -555,8 +474,8 @@ mt_match("mytree", "$rU", "0");
 			<listitem><para>_prefix_</para> - match prefix</listitem>
 			<listitem><para>_mode_</para> - matching mode</listitem>
 		</itemizedlist>
-        </section>
-    	</section><!-- RPC commands -->
+    </section>
+    </section><!-- RPC commands -->
 
 </chapter>
 

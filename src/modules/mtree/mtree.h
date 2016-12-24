@@ -27,7 +27,6 @@
 
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/rpc.h"
 
 #define MT_TREE_SVAL	0
@@ -112,8 +111,6 @@ int mt_init_list_head(void);
 m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable,
 			str *cols, int type, int multi);
 
-int mt_mi_match_prefix(struct mi_node *rpl, m_tree_t *pt,
-			str *tomatch, int mode);
 int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *pt,
 			str *tomatch, int mode);
 #endif
