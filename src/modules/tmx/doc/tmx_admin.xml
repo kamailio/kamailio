@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -24,7 +24,7 @@
 	http://www.kamailio.org/docs/modules/stable/tm.html</ulink>
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Dependencies</title>
 	<section>
@@ -210,7 +210,7 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 		<function moreinfo="none">t_flush_flags()</function>
 		</title>
 		<para>
-		Flush the flags from current SIP message into the already created 
+		Flush the flags from current SIP message into the already created
 		transaction. It make sense only in routing block if the transaction was
 		created via t_newtran() and the flags have been altered since.
 		</para>
@@ -531,13 +531,13 @@ event_route [tm:branch-failure:contact] {
 			</para></listitem>
 			<listitem><para>
 				<emphasis>headers</emphasis> - set of additional headers to
-				be added to the request; at least 
+				be added to the request; at least
 				<quote>From</quote> and <quote>To</quote> headers must be
 				specify)
 			</para></listitem>
 			<listitem><para>
 				<emphasis>body</emphasis> - (optional, may not be present)
-				request body (if present, requires the 
+				request body (if present, requires the
 				<quote>Content-Type</quote> and <quote>Content-length</quote>
 				headers)
 			</para></listitem>
@@ -603,12 +603,12 @@ event_route [tm:branch-failure:contact] {
 			</para></listitem>
 			<listitem><para>
 				<emphasis>new_headers</emphasis> - extra headers to be
-				appended to the reply; use a dot (<quote>.</quote>) char 
+				appended to the reply; use a dot (<quote>.</quote>) char
 				only if there are no headers;
 			</para></listitem>
 			<listitem><para>
 				<emphasis>body</emphasis> - (optional, may not be present)
-				reply body (if present, requires the 
+				reply body (if present, requires the
 				<quote>Content-Type</quote> and <quote>Content-length</quote>
 				headers)
 			</para></listitem>
@@ -640,12 +640,12 @@ event_route [tm:branch-failure:contact] {
 			</para></listitem>
 			<listitem><para>
 				<emphasis>new_headers</emphasis> - extra headers to be
-				appended to the reply; use a dot (<quote>.</quote>) char 
+				appended to the reply; use a dot (<quote>.</quote>) char
 				only if there are no headers;
 			</para></listitem>
 			<listitem><para>
 				<emphasis>body</emphasis> - (optional, may not be present)
-				reply body (if present, requires the 
+				reply body (if present, requires the
 				<quote>Content-Type</quote> and <quote>Content-length</quote>
 				headers)
 			</para></listitem>
