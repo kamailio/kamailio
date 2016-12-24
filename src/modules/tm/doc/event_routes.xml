@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <section id="tm.event_routes" xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -13,18 +13,21 @@
 	    <function moreinfo="none">event_route[tm:branch-failure]</function>
 	</title>
 	<para>
-	    Named branch failure routes can be defined to run when when a failure response is received.
-            This allows handling failures on individual branches, for example, retrying an alternative outbound flow.
+		Named branch failure routes can be defined to run when when a failure
+		response is received. This allows handling failures on individual
+		branches, for example, retrying an alternative outbound flow.
 	</para>
         <para>
-	    The format of the event_route name is "tm:branch-failure:&lt;name&gt;" and is enabled with the t_on_branch_failure function.
+			The format of the event_route name is "tm:branch-failure:&lt;name&gt;"
+			and is enabled with the t_on_branch_failure function.
             This event_route uses the BRANCH_FAILURE_ROUTE route type.
         </para>
 	<example>
 	    <title><function>event_route[tm:branch-failure]</function> usage</title>
 	    <programlisting>
 ...
-route {
+request_route {
+    ...
     t_on_branch_failure("myroute");
     t_relay();
 }
