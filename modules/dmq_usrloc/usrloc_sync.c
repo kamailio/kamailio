@@ -61,8 +61,6 @@ static int add_contact(str aor, ucontact_info_t* ci)
 		return -1;
 	}
 
-	dmq_ul.lock_udomain(_d, &aor);
-
 	LM_DBG("aor: %.*s\n", aor.len, aor.s);
 	LM_DBG("ci->ruid: %.*s\n", ci->ruid.len, ci->ruid.s);
 	LM_DBG("aorhash: %i\n", dmq_ul.get_aorhash(&aor));
@@ -80,6 +78,7 @@ static int add_contact(str aor, ucontact_info_t* ci)
 			return 0;
 		}
 	}
+		dmq_ul.lock_udomain(_d, &aor);
 		res = dmq_ul.get_urecord(_d, &aor, &r);
 		if (res < 0) {
 			LM_ERR("failed to retrieve record from usrloc\n");
