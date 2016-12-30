@@ -1,6 +1,4 @@
 /*
- * $Id: benchmark.c 941 2007-04-11 12:37:21Z bastian $
- *
  * Benchmarking module for Kamailio
  *
  * Copyright (C) 2007 Collax GmbH
@@ -35,9 +33,9 @@
 /*! \defgroup benchmark Benchmark :: Developer benchmarking module
  *
  * This module is for Kamailio developers, as well as admins. It gives
- * a possibility to clock certain critical paths in module code or 
+ * a possibility to clock certain critical paths in module code or
  * configuration sections.
- * 
+ *
  */
 
 #define _GNU_SOURCE
@@ -46,9 +44,11 @@
 #include <stdlib.h>
 
 #include "../../core/sr_module.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
+
 
 #include "benchmark.h"
 
@@ -56,6 +56,8 @@
 
 
 MODULE_VERSION
+
+static int bm_init_rpc(void);
 
 /* Exported functions */
 int bm_start_timer(struct sip_msg* _msg, char* timer, char *foobar);
@@ -130,23 +132,7 @@ static param_export_t params[] = {
 };
 
 
-/*
- * Exported MI functions
- */
-struct mi_root* mi_bm_enable_global(struct mi_root *cmd, void *param);
-struct mi_root* mi_bm_enable_timer(struct mi_root *cmd, void *param);
-struct mi_root* mi_bm_granularity(struct mi_root *cmd, void *param);
-struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param);
-
-static mi_export_t mi_cmds[] = {
-	{ "bm_enable_global", mi_bm_enable_global,  0,  0,  0  },
-	{ "bm_enable_timer",  mi_bm_enable_timer,   0,  0,  0  },
-	{ "bm_granularity",   mi_bm_granularity,    0,  0,  0  },
-	{ "bm_loglevel",      mi_bm_loglevel,       0,  0,  0  },
-	{ 0, 0, 0, 0, 0}
-};
-
-static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param, 
+static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 static pv_export_t mod_items[] = {
@@ -159,12 +145,12 @@ static pv_export_t mod_items[] = {
  * Module interface
  */
 struct module_exports exports = {
-	"benchmark", 
+	"benchmark",
 	DEFAULT_DLFLAGS,
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
 	0,          /* exported statistics */
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	mod_items,  /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
@@ -182,9 +168,9 @@ struct module_exports exports = {
  * Called by Kamailio at init time
  */
 static int mod_init(void) {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
+
+	if(bm_init_rpc()<0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -207,7 +193,7 @@ static void destroy(void)
 	benchmark_timer_t *bmt = 0;
 	benchmark_timer_t *bmp = 0;
 
-	if(bm_mycfg!=NULL) 
+	if(bm_mycfg!=NULL)
 	{
 		/* free timers list */
 		bmt = bm_mycfg->timers;
@@ -305,7 +291,7 @@ int _bm_log_timer(unsigned int id)
 		LM_ERR("error getting current time\n");
 		return -1;
 	}
-	
+
 	tdiff = bm_diff_time(bm_mycfg->tindex[id]->start, &now);
 	_bm_last_time_diff = (int)tdiff;
 
@@ -317,7 +303,7 @@ int _bm_log_timer(unsigned int id)
 	bm_mycfg->tindex[id]->sum += tdiff;
 	bm_mycfg->tindex[id]->last_sum += tdiff;
 	bm_mycfg->tindex[id]->calls++;
-	
+
 	if (tdiff < bm_mycfg->tindex[id]->last_min)
 		bm_mycfg->tindex[id]->last_min = tdiff;
 
@@ -356,7 +342,7 @@ int _bm_log_timer(unsigned int id)
 	}
 
 	return 1;
-}	
+}
 
 int bm_log_timer(struct sip_msg* _msg, char* timer, char* mystr)
 {
@@ -395,14 +381,14 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 	memset(bmt, 0, sizeof(benchmark_timer_t));
 
 	/* private memory, otherwise we have races */
-	bmt->start = (bm_timeval_t*)pkg_malloc(sizeof(bm_timeval_t)); 
+	bmt->start = (bm_timeval_t*)pkg_malloc(sizeof(bm_timeval_t));
 	if(bmt->start == NULL)
 	{
 		shm_free(bmt);
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
-	memset(bmt->start, 0, sizeof(bm_timeval_t)); 
+	memset(bmt->start, 0, sizeof(bm_timeval_t));
 
 	strcpy(bmt->name, tname);
 	if(bm_mycfg->timers==0)
@@ -459,168 +445,6 @@ int load_bm( struct bm_binds *bmb)
 }
 
 
-static inline char * pkg_strndup( char* _p, int _len)
-{
-	char *s;
-
-	s = (char*)pkg_malloc(_len+1);
-	if (s==NULL)
-		return NULL;
-	memcpy(s,_p,_len);
-	s[_len] = 0;
-	return s;
-}
-
-
-/*! \name TimerMIfunctions MI functions */
-/*@{ */
-
-/*! \brief
- * Expects 1 node: 0 for disable, 1 for enable
- */
-struct mi_root* mi_bm_enable_global(struct mi_root *cmd, void *param)
-{
-	struct mi_node *node;
-
-	char *p1, *e1;
-	long int v1;
-
-	node = cmd->node.kids;
-
-	if ((node == NULL) || (node->next != NULL))
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	p1 = pkg_strndup(node->value.s, node->value.len);
-
-	v1 = strtol(p1, &e1, 0);
-
-	if ((*e1 != '\0') || (*p1 == '\0')) {
-		pkg_free(p1);
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-	}
-
-	if ((v1 < -1) || (v1 > 1)) {
-		pkg_free(p1);
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-	}
-
-	bm_mycfg->enable_global = v1;
-
-	pkg_free(p1);
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-}
-
-struct mi_root* mi_bm_enable_timer(struct mi_root *cmd, void *param)
-{
-	struct mi_node *node;
-
-	char *p1, *p2, *e2;
-	long int v2;
-	unsigned int id;
-
-	node = cmd->node.kids;
-
-	if ((node == NULL) || (node->next == NULL) || (node->next->next != NULL))
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	p1 = pkg_strndup(node->value.s, node->value.len);
-	p2 = pkg_strndup(node->next->value.s, node->next->value.len);
-	if(!p1 || !p2)
-		goto error;
-
-	if(_bm_register_timer(p1, 0, &id)!=0)
-	{
-		pkg_free(p1);
-		pkg_free(p2);
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-	}
-	v2 = strtol(p2, &e2, 0);
-	
-	pkg_free(p1);
-
-	if (*e2 != '\0' || *p2 == '\0') {
-		pkg_free(p2);
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-	}
-
-	pkg_free(p2);
-	if ((v2 < 0) || (v2 > 1))
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-
-	bm_mycfg->timers[id].enabled = v2;
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-error:
-	if(p1) pkg_free(p1);
-	if(p2) pkg_free(p2);
-	return init_mi_tree(500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
-}
-
-struct mi_root* mi_bm_granularity(struct mi_root *cmd, void *param)
-{
-	struct mi_node *node;
-
-	char *p1, *e1;
-	long int v1;
-
-	node = cmd->node.kids;
-
-	if ((node == NULL) || (node->next != NULL))
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	p1 = pkg_strndup(node->value.s, node->value.len);
-
-	v1 = strtol(p1, &e1, 0);
-
-	if ((*e1 != '\0') || (*p1 == '\0'))
-	{
-		pkg_free(p1);
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-	}
-
-	pkg_free(p1);
-
-	if (v1 < 1)
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-
-	bm_mycfg->granularity = v1;
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-}
-
-struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param)
-{
-	struct mi_node *node;
-
-	char *p1, *e1;
-	long int v1;
-
-	node = cmd->node.kids;
-
-	if ((node == NULL) || (node->next != NULL))
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	p1 = pkg_strndup(node->value.s, node->value.len);
-
-	v1 = strtol(p1, &e1, 0);
-	
-	if ((*e1 != '\0') || (*p1 == '\0'))
-	{
-		pkg_free(p1);
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-	}
-
-	pkg_free(p1);
-
-	if ((v1 < -3) || (v1 > 4)) /* Maximum log levels */
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-
-	bm_mycfg->enable_global = v1;
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-}
-/*@} */
-
 /*! \brief PV get function for time diff */
 static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
@@ -646,5 +470,128 @@ static inline int fixup_bm_timer(void** param, int param_no)
 	}
 	return 0;
 }
+
+/*! \name benchmark rpc functions */
+/*@{ */
+
+/*! \brief
+ * Expects 1 node: 0 for disable, 1 for enable
+ */
+void bm_rpc_enable_global(rpc_t* rpc, void* ctx)
+{
+	long int v1;
+	if(rpc->scan(ctx, "d", (int*)(&v1))<1) {
+		LM_WARN("no parameters\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if ((v1 < -1) || (v1 > 1)) {
+		rpc->fault(ctx, 500, "Invalid Parameter Value");
+		return;
+	}
+	bm_mycfg->enable_global = v1;
+}
+
+
+void bm_rpc_enable_timer(rpc_t* rpc, void* ctx)
+{
+	char *p1 = NULL;
+	long int v2 = 0;
+	unsigned int id = 0;
+
+	if(rpc->scan(ctx, "sd", &p1, (int*)(&v2))<2) {
+		LM_WARN("invalid parameters\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if ((v2 < 0) || (v2 > 1)) {
+		rpc->fault(ctx, 500, "Invalid Parameter Value");
+		return;
+	}
+	if(_bm_register_timer(p1, 0, &id)!=0) {
+		rpc->fault(ctx, 500, "Register timer failure");
+		return;
+	}
+	bm_mycfg->timers[id].enabled = v2;
+}
+
+
+void bm_rpc_granularity(rpc_t* rpc, void* ctx)
+{
+	long int v1;
+	if(rpc->scan(ctx, "d", (int*)(&v1))<1) {
+		LM_WARN("no parameters\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if (v1 < 1) {
+		rpc->fault(ctx, 500, "Invalid Parameter Value");
+		return;
+	}
+	bm_mycfg->granularity = v1;
+}
+
+void bm_rpc_loglevel(rpc_t* rpc, void* ctx)
+{
+	long int v1;
+	if(rpc->scan(ctx, "d", (int*)(&v1))<1) {
+		LM_WARN("no parameters\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if ((v1 < -1) || (v1 > 1)) {
+		rpc->fault(ctx, 500, "Invalid Parameter Value");
+		return;
+	}
+	bm_mycfg->loglevel = v1;
+}
+
+static const char* bm_rpc_enable_global_doc[2] = {
+	"Enable/disable benchmarking",
+	0
+};
+
+static const char* bm_rpc_enable_timer_doc[2] = {
+	"Enable/disable a benchmark timer",
+	0
+};
+
+static const char* bm_rpc_granularity_doc[2] = {
+	"Set benchmarking granularity",
+	0
+};
+
+static const char* bm_rpc_loglevel_doc[2] = {
+	"Set benchmarking log level",
+	0
+};
+
+rpc_export_t bm_rpc_cmds[] = {
+	{"benchmark.enable_global", bm_rpc_enable_global,
+		bm_rpc_enable_global_doc, 0},
+	{"benchmark.enable_timer", bm_rpc_enable_timer,
+		bm_rpc_enable_timer_doc, 0},
+	{"benchmark.granularity", bm_rpc_granularity,
+		bm_rpc_granularity_doc, 0},
+	{"benchmark.loglevel", bm_rpc_loglevel,
+		bm_rpc_loglevel_doc, 0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * register RPC commands
+ */
+static int bm_init_rpc(void)
+{
+	if (rpc_register_array(bm_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
+
+/*@} */
+
 
 /* End of file */

@@ -11,9 +11,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -159,7 +159,7 @@ modparam("benchmark", "loglevel", 4)
 	</section>
 	<section>
 	<title>Functions</title>
-	<section>
+	<section id="benchmark.f.bm_start_timer">
 		<title>
 		<function moreinfo="none">bm_start_timer(name)</function>
 		</title>
@@ -177,7 +177,7 @@ bm_start_timer("test");
 		</example>
 	</section>
 
-	<section>
+	<section id="benchmark.f.bm_log_timer">
 		<title>
 		<function moreinfo="none">bm_log_timer(name)</function>
 		</title>
@@ -258,7 +258,7 @@ bm_log_timer("test");
 	</section>
 
 	<section>
-		<title>Exported pseudo-variables</title>
+		<title>Exported Variables</title>
 		<para>
 		Exported pseudo-variables are listed in the next sections.
 		</para>
@@ -274,16 +274,16 @@ bm_log_timer("test");
 	</section>
 
 	<section>
-		<title>MI Commands</title>
-		<section>
-			<title><function moreinfo="none">bm_enable_global</function></title>
+		<title>RPC Commands</title>
+		<section id="benchmark.rpc.enable_global">
+			<title><function moreinfo="none">benchmark.enable_global</function></title>
 			<para>
 				Enables/disables the module. Parameter may be -1, 0 or 1. See
 				discription of "enable" parameter.
 			</para>
 		</section>
-		<section>
-			<title><function moreinfo="none">bm_enable_timer</function></title>
+		<section id="benchmark.rpc.enable_timer">
+			<title><function moreinfo="none">benchmark.enable_timer</function></title>
 			<para>
 				Enable or disable a single timer. The following example enables
 				timer "test" (the second parameter must be 0 to disable):
@@ -292,19 +292,19 @@ bm_log_timer("test");
 				<title>Enabling a timer</title>
 				<programlisting format="linespecific">
 ...
-&ctltool; fifo bm_enable_timer test 1
+&kamcmd; benchmark.enable_timer test 1
 ...
 </programlisting>
 			</example>
 		</section>
-		<section>
-			<title><function moreinfo="none">bm_granularity</function></title>
+		<section id="benachmark.rpc.granularity">
+			<title><function moreinfo="none">benachmark.granularity</function></title>
 			<para>
 				Modifies the benchmarking granularity. See "granularity" variable.
 			</para>
 		</section>
-		<section>
-			<title><function moreinfo="none">bm_loglevel</function></title>
+		<section id="benchmark.rpc.loglevel">
+			<title><function moreinfo="none">benchmark.loglevel</function></title>
 			<para>
 				Modifies the module log level. See "loglevel" variable.
 			</para>
