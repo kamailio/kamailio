@@ -43,28 +43,12 @@
  */
 
 
-/* FIFO action protocol names */
-#define FIFO_SET_PROB   "rand_set_prob"
-#define FIFO_RESET_PROB "rand_reset_prob"
-#define FIFO_GET_PROB   "rand_get_prob"
-#define FIFO_GET_HASH   "get_config_hash"
-#define FIFO_CHECK_HASH "check_config_hash"
-
-/* flag buffer size for FIFO protocool */
-#define MAX_FLAG_LEN 12
-/* FIFO action protocol names for gflag functionality */
-#define FIFO_SET_GFLAG "set_gflag"
-#define FIFO_IS_GFLAG "is_gflag"
-#define FIFO_RESET_GFLAG "reset_gflag"
-#define FIFO_GET_GFLAGS "get_gflags"
-
 #include "../../core/sr_module.h"
 #include "../../core/error.h"
 #include "../../core/pvar.h"
 #include "../../core/ut.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/mod_fix.h"
 #include "../../core/md5.h"
 #include "../../core/md5utils.h"
@@ -72,9 +56,10 @@
 #include "../../core/hashes.h"
 #include "../../core/locking.h"
 #include "../../core/route.h"
-#include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 #include "../../core/rand/kam_rand.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -106,17 +91,6 @@ static int is_gflag(struct sip_msg*, char *, char *);
 static int w_cfg_lock(struct sip_msg*, char *, char *);
 static int w_cfg_unlock(struct sip_msg*, char *, char *);
 static int w_cfg_trylock(struct sip_msg*, char *, char *);
-
-static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param );
-static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param );
-static struct mi_root* mi_get_prob(struct mi_root* cmd, void* param );
-static struct mi_root* mi_get_hash(struct mi_root* cmd, void* param );
-static struct mi_root* mi_check_hash(struct mi_root* cmd, void* param );
-
-static struct mi_root* mi_set_gflag(struct mi_root* cmd, void* param );
-static struct mi_root* mi_reset_gflag(struct mi_root* cmd, void* param );
-static struct mi_root* mi_is_gflag(struct mi_root* cmd, void* param );
-static struct mi_root* mi_get_gflags(struct mi_root* cmd, void* param );
 
 
 static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
@@ -198,7 +172,7 @@ static cmd_export_t cmds[]={
 };
 
 
-static param_export_t params[]={ 
+static param_export_t params[]={
 	{"initial_probability", INT_PARAM, &initial_prob   },
 	{"initial_gflags",      INT_PARAM, &initial_gflags },
 	{"hash_file",           PARAM_STRING, &hash_file      },
@@ -206,119 +180,6 @@ static param_export_t params[]={
 	{0,0,0}
 };
 
-
-static mi_export_t mi_cmds[] = {
-	{ FIFO_SET_PROB,   mi_set_prob,   0,                 0,  0 },
-	{ FIFO_RESET_PROB, mi_reset_prob, MI_NO_INPUT_FLAG,  0,  0 },
-	{ FIFO_GET_PROB,   mi_get_prob,   MI_NO_INPUT_FLAG,  0,  0 },
-	{ FIFO_GET_HASH,   mi_get_hash,   MI_NO_INPUT_FLAG,  0,  0 },
-	{ FIFO_CHECK_HASH, mi_check_hash, MI_NO_INPUT_FLAG,  0,  0 },
-	{ FIFO_SET_GFLAG,   mi_set_gflag,   0,                 0,  0 },
-	{ FIFO_RESET_GFLAG, mi_reset_gflag, 0,                 0,  0 },
-	{ FIFO_IS_GFLAG,    mi_is_gflag,    0,                 0,  0 },
-	{ FIFO_GET_GFLAGS,  mi_get_gflags,  MI_NO_INPUT_FLAG,  0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
-
-
-static void rpc_is_gflag(rpc_t* rpc, void* c)
-{
-	str flag_str;
-	unsigned int flag;
-	
-	if (rpc->scan(c, "S", &flag_str) != 1) {
-		rpc->fault(c, 400, "flag parameter error");
-		return;
-	}
-
-	flag = 0;
-	if ((strno2int(&flag_str, &flag) < 0) || !flag) {
-		rpc->fault(c, 400, "incorrect flag parameter value");
-		return;
-	}
-
-	if (((*gflags) & flag) == flag)
-		rpc->add(c, "s", "TRUE");
-	else
-		rpc->add(c, "s", "FALSE");
-
-	return;
-}
-
-
-static void rpc_set_gflag(rpc_t* rpc, void* c)
-{
-	str flag_str;
-	unsigned int flag;
-	
-	if (rpc->scan(c, "S", &flag_str) != 1) {
-		rpc->fault(c, 400, "flag parameter error");
-		return;
-	}
-
-	flag = 0;
-	if ((strno2int(&flag_str, &flag) < 0) || !flag) {
-		rpc->fault(c, 400, "incorrect flag parameter value '%.*s'",
-			   flag_str.len, flag_str.s);
-		return;
-	}
-
-	lock_get(gflags_lock);
-	(*gflags) |= flag;
-	lock_release(gflags_lock);
-	
-	return;
-}
-
-
-static void rpc_reset_gflag(rpc_t* rpc, void* c)
-{
-	str flag_str;
-	unsigned int flag;
-	
-	if (rpc->scan(c, "S", &flag_str) != 1) {
-		rpc->fault(c, 400, "flag parameter error");
-		return;
-	}
-
-	flag = 0;
-	if ((strno2int(&flag_str, &flag) < 0) || !flag) {
-		rpc->fault(c, 400, "incorrect flag parameter value");
-		return;
-	}
-
-	lock_get(gflags_lock);
-	(*gflags) &= ~ flag;
-	lock_release(gflags_lock);
-	
-	return;
-}
-
-
-static const char* is_gflag_doc[2] = {
-	"Checks if the bits specified by the argument are all set.",
-	0
-};
-
-
-static const char* set_gflag_doc[2] = {
-	"Sets the bits specified by the argument.",
-	0
-};
-
-
-static const char* reset_gflag_doc[2] = {
-	"Resets the bits specified by the argument.",
-	0
-};
-
-
-static rpc_export_t rpc_cmds[] = {
-	{"cfgutils.is_gflag", rpc_is_gflag, is_gflag_doc, 0},
-	{"cfgutils.set_gflag", rpc_set_gflag, set_gflag_doc, 0},
-	{"cfgutils.reset_gflag", rpc_reset_gflag, reset_gflag_doc, 0},
-	{0, 0, 0, 0}
-};
 
 
 static pv_export_t mod_items[] = {
@@ -334,7 +195,7 @@ struct module_exports exports = {
 	cmds,        /* exported functions */
 	params,      /* exported parameters */
 	0,           /* exported statistics */
-	mi_cmds,     /* exported MI functions */
+	0,           /* exported MI functions */
 	mod_items,   /* exported pseudo-variables */
 	0,           /* extra processes */
 	mod_init,    /* module initialization function */
@@ -404,7 +265,7 @@ static int fixup_gflags( void** param, int param_no)
 
 /************************** module functions **********************************/
 
-static int set_gflag(struct sip_msg *bar, char *flag, char *foo) 
+static int set_gflag(struct sip_msg *bar, char *flag, char *foo)
 {
 	lock_get(gflags_lock);
 	(*gflags) |= (unsigned int)(long)flag;
@@ -428,195 +289,97 @@ static int is_gflag(struct sip_msg *bar, char *flag, char *foo)
 }
 
 
-static struct mi_root* mi_set_gflag(struct mi_root* cmd_tree, void* param )
+void cfgutils_rpc_set_gflag(rpc_t* rpc, void* ctx)
 {
-	unsigned int flag;
-	struct mi_node* node;
-
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	flag = 0;
-	if( strno2int( &node->value, &flag) <0)
-		goto error;
-	if (!flag) {
-		LM_ERR("incorrect flag\n");
-		goto error;
+	long int flag;
+	if(rpc->scan(ctx, "d", (int*)(&flag))<1) {
+		LM_WARN("no parameters\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
 	}
-
 	lock_get(gflags_lock);
 	(*gflags) |= flag;
 	lock_release(gflags_lock);
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-error:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
 
-
-static struct mi_root*  mi_reset_gflag(struct mi_root* cmd_tree, void* param )
+void cfgutils_rpc_reset_gflag(rpc_t* rpc, void* ctx)
 {
-	unsigned int flag;
-	struct mi_node* node = NULL;
-
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	flag = 0;
-	if( strno2int( &node->value, &flag) <0)
-		goto error;
-	if (!flag) {
-		LM_ERR("incorrect flag\n");
-		goto error;
+	long int flag;
+	if(rpc->scan(ctx, "d", (int*)(&flag))<1) {
+		LM_WARN("no parameters\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
 	}
-
 	lock_get(gflags_lock);
 	(*gflags) &= ~ flag;
 	lock_release(gflags_lock);
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-error:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
 
-
-static struct mi_root* mi_is_gflag(struct mi_root* cmd_tree, void* param )
+void cfgutils_rpc_is_gflag(rpc_t* rpc, void* ctx)
 {
-	unsigned int flag;
-	struct mi_root* rpl_tree = NULL;
-	struct mi_node* node = NULL;
-
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	flag = 0;
-	if( strno2int( &node->value, &flag) <0)
-		goto error_param;
-	if (!flag) {
-		LM_ERR("incorrect flag\n");
-		goto error_param;
+	long int flag;
+	if(rpc->scan(ctx, "d", (int*)(&flag))<1) {
+		LM_WARN("no parameters\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
 	}
-
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if(rpl_tree ==0)
-		return 0;
-
-	if( ((*gflags) & flag)== flag )
-		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "TRUE", 4);
+	if (((*gflags) & flag) == flag)
+		rpc->add(ctx, "s", "TRUE");
 	else
-		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "FALSE", 5);
-
-	if(node == NULL)
-	{
-		LM_ERR("failed to add node\n");
-		free_mi_tree(rpl_tree);
-		return 0;
-	}
-
-	return rpl_tree;
-error_param:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+		rpc->add(ctx, "s", "FALSE");
 }
 
-
-static struct mi_root*  mi_get_gflags(struct mi_root* cmd_tree, void* param )
+void cfgutils_rpc_get_gflags(rpc_t* rpc, void* ctx)
 {
-	struct mi_root* rpl_tree= NULL;
-	struct mi_node* node= NULL;
 	static unsigned int flags;
-
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
-	if(rpl_tree == NULL)
-		return 0;
 
 	flags = *gflags;
 
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "0x%X",(flags));
-	if(node == NULL)
-		goto error;
-
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%u",(flags));
-	if(node == NULL)
-		goto error;
-
-	return rpl_tree;
-error:
-	free_mi_tree(rpl_tree);
-	return 0;
+	if (rpc->rpl_printf(ctx, "0x%X (%u)", flags, flags) < 0) {
+		rpc->fault(ctx, 500, "Faiure building the response");
+		return;
+	}
 }
 
-
-static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param )
+void cfgutils_rpc_set_prob(rpc_t* rpc, void* ctx)
 {
 	unsigned int percent;
-	struct mi_node* node;
 
-	node = cmd->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	if( str2int( &node->value, &percent) <0)
-		goto error;
+	if(rpc->scan(ctx, "d", (int*)(&percent))<1) {
+		LM_WARN("no parameters\n");
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
 	if (percent > 100) {
 		LM_ERR("incorrect probability <%u>\n", percent);
-		goto error;
+		rpc->fault(ctx, 500, "Invalid Percent");
+		return;
 	}
 	*probability = percent;
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-
-error:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
 
-static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param )
-{
 
+void cfgutils_rpc_reset_prob(rpc_t* rpc, void* ctx)
+{
 	*probability = initial_prob;
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
 }
 
-static struct mi_root* mi_get_prob(struct mi_root* cmd, void* param )
+void cfgutils_rpc_get_prob(rpc_t* rpc, void* ctx)
 {
-	struct mi_root* rpl_tree= NULL;
-	struct mi_node* node= NULL;
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
-	if(rpl_tree == NULL)
-		return 0;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "actual probability: %u percent\n",(*probability));
-	if(node == NULL)
-		goto error;
-	
-	return rpl_tree;
-
-error:
-	free_mi_tree(rpl_tree);
-	return 0;
-}
-
-static struct mi_root* mi_get_hash(struct mi_root* cmd, void* param )
-{
-	struct mi_root* rpl_tree= NULL;
-	struct mi_node* node= NULL;
-
-	if (!hash_file) {
-		LM_INFO("no hash_file given, disable hash functionality\n");
-		rpl_tree = init_mi_tree(404, "Functionality disabled\n", 23);
-	} else {
-		rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
-		if(rpl_tree == NULL)
-			return 0;
-		node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%.*s\n", MD5_LEN, config_hash);
-		if(node == NULL)
-			goto error;
+	if (rpc->rpl_printf(ctx, "actual probability: %u percent",
+				(*probability)) < 0) {
+		rpc->fault(ctx, 500, "Faiure building the response");
+		return;
 	}
-	return rpl_tree;
+}
 
-error:
-	free_mi_tree(rpl_tree);
-	return 0;
+void cfgutils_rpc_get_hash(rpc_t* rpc, void* ctx)
+{
+	if (rpc->rpl_printf(ctx, "%.*s",
+				MD5_LEN, config_hash) < 0) {
+		rpc->fault(ctx, 500, "Faiure building the response");
+		return;
+	}
 }
 
 
@@ -634,9 +397,9 @@ static int MD5File(char *dest, const char *file_name)
 	unsigned char buffer[32768];
 	unsigned char hash[16];
 	unsigned int counter, size;
-	
+
 	struct stat stats;
-	
+
 	if (!dest || !file_name) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
@@ -673,51 +436,111 @@ static int MD5File(char *dest, const char *file_name)
 }
 
 
-static struct mi_root* mi_check_hash(struct mi_root* cmd, void* param )
+void cfgutils_rpc_check_hash(rpc_t* rpc, void* ctx)
 {
-	struct mi_root* rpl_tree= NULL;
-	struct mi_node* node= NULL;
 	char tmp[MD5_LEN];
 	memset(tmp, 0, MD5_LEN);
 
 	if (!hash_file) {
-		LM_INFO("no hash_file given, disable hash functionality\n");
-		rpl_tree = init_mi_tree(404, "Functionality disabled\n", 23);
-	} else {
-		if (MD5File(tmp, hash_file) != 0) {
-			LM_ERR("could not hash the config file");
-			rpl_tree = init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN );
-			return rpl_tree;
-		}
-		
-		if (strncmp(config_hash, tmp, MD5_LEN) == 0) {
-			rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
-			if(rpl_tree == NULL)
-				return 0;
-			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "The actual config file hash is identical to the stored one.\n");
-		} else {
-			rpl_tree = init_mi_tree( 400, "Error", 5 );
-			if(rpl_tree == NULL)
-				return 0;
-			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "The actual config file hash is not identical to the stored one.\n");
-		}
-		if(node == NULL)
-			goto error;
+		rpc->fault(ctx, 500, "No hash file");
+		return;
 	}
-	
-	return rpl_tree;
 
-error:
-	free_mi_tree(rpl_tree);
-	return 0;
+	if (MD5File(tmp, hash_file) != 0) {
+		LM_ERR("could not hash the config file");
+		rpc->fault(ctx, 500, "Failed to hash the file");
+		return;
+	}
+
+	if (strncmp(config_hash, tmp, MD5_LEN) == 0) {
+		if (rpc->rpl_printf(ctx, "Identical hash") < 0) {
+			rpc->fault(ctx, 500, "Faiure building the response");
+			return;
+		}
+	} else {
+		if (rpc->rpl_printf(ctx, "Different hash") < 0) {
+			rpc->fault(ctx, 500, "Faiure building the response");
+			return;
+		}
+	}
 }
 
-static int set_prob(struct sip_msg *bar, char *percent_par, char *foo) 
+static const char* cfgutils_rpc_is_gflag_doc[2] = {
+	"Checks if the bits specified by the argument are all set.",
+	0
+};
+
+
+static const char* cfgutils_rpc_set_gflag_doc[2] = {
+	"Sets the bits specified by the argument.",
+	0
+};
+
+
+static const char* cfgutils_rpc_get_gflags_doc[2] = {
+	"Return the value for global flags.",
+	0
+};
+
+
+static const char* cfgutils_rpc_reset_gflag_doc[2] = {
+	"Resets the bits specified by the argument.",
+	0
+};
+
+static const char* cfgutils_rpc_set_prob_doc[2] = {
+	"Set the random probability.",
+	0
+};
+static const char* cfgutils_rpc_reset_prob_doc[2] = {
+	"Reset the random probability.",
+	0
+};
+
+static const char* cfgutils_rpc_get_prob_doc[2] = {
+	"Get the random probability.",
+	0
+};
+
+static const char* cfgutils_rpc_get_hash_doc[2] = {
+	"Get config hash value.",
+	0
+};
+
+static const char* cfgutils_rpc_check_hash_doc[2] = {
+	"Check config hash value.",
+	0
+};
+
+static rpc_export_t rpc_cmds[] = {
+	{"cfgutils.is_gflag", cfgutils_rpc_is_gflag,
+		cfgutils_rpc_is_gflag_doc, 0},
+	{"cfgutils.set_gflag", cfgutils_rpc_set_gflag,
+		cfgutils_rpc_set_gflag_doc, 0},
+	{"cfgutils.get_gflags", cfgutils_rpc_get_gflags,
+		cfgutils_rpc_get_gflags_doc, 0},
+	{"cfgutils.reset_gflag", cfgutils_rpc_reset_gflag,
+		cfgutils_rpc_reset_gflag_doc, 0},
+	{"cfgutils.rand_set_prob", cfgutils_rpc_set_prob,
+		cfgutils_rpc_set_prob_doc, 0},
+	{"cfgutils.rand_reset_prob", cfgutils_rpc_reset_prob,
+		cfgutils_rpc_reset_prob_doc, 0},
+	{"cfgutils.rand_get_prob", cfgutils_rpc_get_prob,
+		cfgutils_rpc_get_prob_doc, 0},
+	{"cfgutils.get_config_hash", cfgutils_rpc_get_hash,
+		cfgutils_rpc_get_hash_doc, 0},
+	{"cfgutils.check_config_hash", cfgutils_rpc_check_hash,
+		cfgutils_rpc_check_hash_doc, 0},
+
+	{0, 0, 0, 0}
+};
+
+static int set_prob(struct sip_msg *bar, char *percent_par, char *foo)
 {
 	*probability=(int)(long)percent_par;
 	return 1;
 }
-	
+
 static int reset_prob(struct sip_msg *bar, char *percent_par, char *foo)
 {
 	*probability=initial_prob;
@@ -937,12 +760,6 @@ static int mod_init(void)
 	/* Register RPC commands */
 	if (rpc_register_array(rpc_cmds)!=0) {
 		LM_ERR("failed to register RPC commands\n");
-		return -1;
-	}
-
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
 

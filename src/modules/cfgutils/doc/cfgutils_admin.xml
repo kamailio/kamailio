@@ -11,7 +11,7 @@
 <!-- cfgutils Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
 
     <section>
@@ -97,15 +97,15 @@
 		The initial value of the probability.
 		</para>
 		<para>
-		Default value is 
+		Default value is
 			<quote>10</quote>.
 		</para>
 		<example>
 		<title><varname>initial_probability</varname> parameter usage</title>
 		<programlisting format="linespecific">
-   
+...
 modparam("cfgutils", "initial_probability", 15)
-   
+...
 </programlisting>
 	    </example>
 	</section>
@@ -122,9 +122,9 @@ modparam("cfgutils", "initial_probability", 15)
 		<example>
 		<title><varname>hash_file</varname> parameter usage</title>
 		<programlisting format="linespecific">
-   
+...
 modparam("cfgutils", "hash_file", "/etc/kamailio/&kamailioconfig;")
-   
+...
 </programlisting>
 	    </example>
 	</section>
@@ -140,7 +140,9 @@ modparam("cfgutils", "hash_file", "/etc/kamailio/&kamailioconfig;")
 		<example>
 		<title><varname>initial</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("cfgutils", "initial_gflags", 15)
+...
 		</programlisting>
 		</example>
 	</section>
@@ -156,7 +158,9 @@ modparam("cfgutils", "initial_gflags", 15)
 		<example>
 		<title><varname>lock_set_size</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("cfgutils", "lock_set_size", 4)
+...
 		</programlisting>
 		</example>
 	</section>
@@ -184,7 +188,7 @@ if (rand_event()) {
 </programlisting>
 		</example>
 	</section>
-	
+
 	<section id="cfgutils.f.rand_set_prob">
 	    <title><function moreinfo="none">rand_set_prob(probabiltiy)</function></title>
 	    <para>
@@ -228,7 +232,7 @@ rand_reset_prob();
 		<programlisting format="linespecific">
 ...
 rand_get_prob();
-   
+...
 </programlisting>
 	    </example>
 	</section>
@@ -260,7 +264,7 @@ sleep("1");
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="cfgutils.f.usleep">
 		<title>
 			<function moreinfo="none">usleep(time)</function>
@@ -290,7 +294,7 @@ usleep("5000");
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="cfgutils.f.abort">
 		<title>
 			<function moreinfo="none">abort()</function>
@@ -300,7 +304,7 @@ usleep("5000");
 			configuration of the server a core dump will be created.
 		</para>
 		<para>
-			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 			FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -312,7 +316,7 @@ abort();
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="cfgutils.f.pkg_status">
 		<title>
 			<function moreinfo="none">pkg_status()</function>
@@ -324,7 +328,7 @@ abort();
 			the server with activated memory debugging to get detailed informations.
 		</para>
 		<para>
-			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 			FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -336,7 +340,7 @@ pkg_status();
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="cfgutils.f.pkg_summary">
 		<title>
 			<function moreinfo="none">pkg_summary()</function>
@@ -360,7 +364,7 @@ pkg_summary();
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="cfgutils.f.shm_status">
 		<title>
 			<function moreinfo="none">shm_status()</function>
@@ -372,7 +376,7 @@ pkg_summary();
 			the server with activated memory debugging to get detailed informations.
 		</para>
 		<para>
-			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 			FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
@@ -408,7 +412,7 @@ shm_summary();
 			</programlisting>
 		</example>
 	</section>
-	
+
 	<section id="cfgutils.f.set_gflag">
 		<title><function moreinfo="none">set_gflag(flag)</function></title>
 		<para>
@@ -509,7 +513,7 @@ lock("$rU");
 		<title><function moreinfo="none">trylock(key)</function></title>
 		<para>
 		Try to lock the key. If the lock can not be obtained (possibly already locked),
-		the function returns an error and script execution continues. 
+		the function returns an error and script execution continues.
 		</para>
 		<para>
 		<quote>key</quote> can be static string or string with PVs.
@@ -644,15 +648,15 @@ core_hash("$ci", "", 4);
 	</section>
 </section>
 	<section>
-		<title><acronym>MI</acronym> Commands</title>
+		<title>RPC Commands</title>
 			<para>Functions that check or change some global flags accepts one
 			parameter which is the flag bitmap/mask specifing the corresponding
 			flags. It is not possible to specify directly the flag position that
 			should be changed as in the functions available in the routing
 			script.
 		</para>
-		<section id="cfgutils.m.rand_set_prob">
-			<title><function moreinfo="none">rand_set_prop</function></title>
+		<section id="cfgutils.rpc.rand_set_prob">
+			<title><function moreinfo="none">cfgutils.rand_set_prop</function></title>
 			<para>
 				Set the probability value to the given parameter.
 				The parameter should be a percent value.
@@ -661,17 +665,17 @@ core_hash("$ci", "", 4);
 				The parameter value must be a number from 0 to 100.
 			</para>
 			<example>
-				<title><function moreinfo="none">rand_set_prob</function> usage</title>
+				<title><function moreinfo="none">cfgutils.rand_set_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &ctltool; fifo rand_set_prob 10
+$ &kamcmd; cfgutils.rand_set_prob 10
 ...
 </programlisting>
 			</example>
-			
+
 		</section>
-		<section id="cfgutils.m.rand_reset_prob">
-			<title><function moreinfo="none">rand_reset_prob</function></title>
+		<section id="cfgutils.rpc.rand_reset_prob">
+			<title><function moreinfo="none">cfgutils.rand_reset_prob</function></title>
 			<para>
 				Reset the probability value to the inital start value.
 			</para>
@@ -680,16 +684,16 @@ $ &ctltool; fifo rand_set_prob 10
 			</para>
 			<example>
 				<title>
-					<function moreinfo="none">rand_reset_prob</function> usage</title>
+					<function moreinfo="none">cfgutils.rand_reset_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &ctltool; fifo rand_reset_prob
+$ &kamcmd; cfgutils.rand_reset_prob
 ...
 </programlisting>
 			</example>
 		</section>
-		<section  id="cfgutils.m.rand_get_prob">
-			<title><function moreinfo="none">rand_get_prob</function></title>
+		<section  id="cfgutils.rpc.rand_get_prob">
+			<title><function moreinfo="none">cfgutils.rand_get_prob</function></title>
 			<para>
 				Return the actual probability setting.
 			</para>
@@ -697,17 +701,16 @@ $ &ctltool; fifo rand_reset_prob
 				The function return the actual probability value.
 			</para>
 			<example>
-				<title><function moreinfo="none">rand_get_prob</function> usage</title>
+				<title><function moreinfo="none">cfgutils.rand_get_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &ctltool; fifo get_prob
-The actual probability is 50 percent.
+$ &kamcmd; cfgutils.rand_get_prob
 ...
 </programlisting>
 			</example>
 		</section>
-		<section id="cfgutils.m.check_config_hash">
-			<title><function moreinfo="none">check_config_hash</function></title>
+		<section id="cfgutils.rpc.check_config_hash">
+			<title><function moreinfo="none">cfgutils.check_config_hash</function></title>
 			<para>
 				Check if the actual config file hash is identical to the stored one.
 			</para>
@@ -717,17 +720,16 @@ The actual probability is 50 percent.
 				and 500 on errors. Additional a short text message is printed.
 			</para>
 			<example>
-				<title><function moreinfo="none">check_config_hash</function> usage</title>
+				<title><function moreinfo="none">cfgutils.check_config_hash</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &ctltool; fifo check_config_hash
-The actual config file hash is identical to the stored one.
+$ &kamcmd; cfgutils.check_config_hash
 ...
 </programlisting>
 			</example>
 		</section>
-		<section id="cfgutils.m.get_config_hash">
-			<title><function moreinfo="none">get_config_hash</function></title>
+		<section id="cfgutils.rpc.get_config_hash">
+			<title><function moreinfo="none">cfgutils.get_config_hash</function></title>
 			<para>
 				Return the stored config file hash.
 			</para>
@@ -736,17 +738,16 @@ The actual config file hash is identical to the stored one.
 				file for hashing has been configured.
 			</para>
 			<example>
-				<title><function moreinfo="none">get_config_hash</function> usage</title>
+				<title><function moreinfo="none">cfgutils.get_config_hash</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ &ctltool; fifo get_config_hash
-1580a37104eb4de69ab9f31ce8d6e3e0
+$ &kamcmd; cfgutils.get_config_hash
 ...
 </programlisting>
 			</example>
 		</section>
-		<section  id="cfgutils.m.set_gflag">
-			<title><function moreinfo="none">set_gflag</function></title>
+		<section  id="cfgutils.rpc.set_gflag">
+			<title><function moreinfo="none">cfgutils.set_gflag</function></title>
 			<para>
 			Set the value of some flags (specified by bitmask) to 1.
 			</para>
@@ -755,18 +756,17 @@ $ &ctltool; fifo get_config_hash
 			The bitmask has a 32 bit size.
 			</para>
 			<example>
-			<title><function moreinfo="none">set_gflag</function> usage</title>
+			<title><function moreinfo="none">cfgutils.set_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo set_gflag 1
-$ &ctltool; fifo set_gflag 0x3
+$ &kamcmd; cfgutils.set_gflag 1
 ...
 </programlisting>
 			</example>
 
 		</section>
-		<section  id="cfgutils.m.reset_gflag">
-			<title><function moreinfo="none">reset_gflag</function></title>
+		<section  id="cfgutils.rpc.reset_gflag">
+			<title><function moreinfo="none">cfgutils.reset_gflag</function></title>
 			<para>
 			Reset the value of some flags to 0.
 			</para>
@@ -776,17 +776,16 @@ $ &ctltool; fifo set_gflag 0x3
 			</para>
 			<example>
 			<title>
-				<function moreinfo="none">reset_gflag</function> usage</title>
+				<function moreinfo="none">cfgutils.reset_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo reset_gflag 1
-$ &ctltool; fifo reset_gflag 0x3
+$ &kamcmd; cfgutils.reset_gflag 1
 ...
 </programlisting>
 			</example>
 		</section>
-		<section  id="cfgutils.m.is_gflag">
-			<title><function moreinfo="none">is_gflag</function></title>
+		<section  id="cfgutils.rpc.is_gflag">
+			<title><function moreinfo="none">cfgutils.is_gflag</function></title>
 			<para>
 			Returns true if the all the flags from the bitmask are set.
 			</para>
@@ -799,122 +798,37 @@ $ &ctltool; fifo reset_gflag 0x3
 			and FALSE if at least one is not set.
 			</para>
 			<example>
-			<title><function moreinfo="none">is_gflag</function> usage</title>
+			<title><function moreinfo="none">cfgutils.is_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo set_gflag 1024
-$ &ctltool; fifo is_gflag 1024
-TRUE
-$ &ctltool; fifo is_gflag 1025
-TRUE
-$ &ctltool; fifo is_gflag 1023
-FALSE
-$ &ctltool; fifo set_gflag 0x10
-$ &ctltool; fifo is_gflag 1023
-TRUE
-$ &ctltool; fifo is_gflag 1007
-FALSE
-$ &ctltool; fifo is_gflag 16
+$ &kamcmd; cfgutils.set_gflag 1024
+$ &kamcmd; cfgutils.is_gflag 1024
 TRUE
 ...
 </programlisting>
 			</example>
 		</section>
-		<section id="cfgutils.m.get_gflags">
-			<title><function moreinfo="none">get_gflags</function></title>
+		<section id="cfgutils.rpc.get_gflags">
+			<title><function moreinfo="none">cfgutils.get_gflags</function></title>
 			<para>
-			Return the bitmap with all flags. The function gets no 
+			Return the bitmap with all flags. The function gets no
 			parameters and returns the bitmap in hexadecimal and decimal format.
 			</para>
 			<example>
 			<title>
-				<function moreinfo="none">get_gflags</function> usage</title>
+				<function moreinfo="none">cfgutils.get_gflags</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo get_gflags
-0x3039
-12345
+$ &kamcmd; cfgutils.get_gflags
 ...
 </programlisting>
 			</example>
 		</section>
 </section>
-	<section>
-		<title><acronym>RPC</acronym> Commands</title>
-		<section  id="cfgutils.rpc.set_gflag">
-			<title><function moreinfo="none">cfgutils.set_gflag</function></title>
-			<para>
-			Set the value of some flags (specified by bitmask) to 1.
-			</para>
-			<para>
-			The parameter value must be a bitmask in decimal or
-			hexadecimal format.  The bitmask has a 32 bit size.
-			</para>
-			<example>
-			<title><function moreinfo="none">cfgutils.set_gflag</function> usage</title>
-			<programlisting format="linespecific">
-...
-$ &ctltool; cfgutils.set_gflag s:1
-...
-</programlisting>
-			</example>
 
-		</section>
-		<section  id="cfgutils.rpc.reset_gflag">
-			<title><function moreinfo="none">cfgutils.reset_gflag</function></title>
-			<para>
-			Reset the value of some flags to 0.
-			</para>
-			<para>
-			Reset the value of some flags (specified by bitmask)
-			to 1.
-			</para>
-			<para>
-			The parameter value must be a bitmask in decimal or
-			hexadecimal format.  The bitmask has a 32 bit size.
-			</para>
-			<example>
-			<title>
-				<function moreinfo="none">cfgutils.reset_gflag</function> usage</title>
-			<programlisting format="linespecific">
-...
-$ &ctltool; cfgutils.reset_gflag s:0x1
-...
-</programlisting>
-			</example>
-		</section>
-		<section  id="cfgutils.rpc.is_gflag">
-			<title><function moreinfo="none">cfgutils.is_gflag</function></title>
-			<para>
-			Returns string "TRUE" if all the
-			flags from the given set are set
-			and "FALSE" if at least one is not set.
-			</para>
-			<para>
-			The parameter value must be a bitmask in decimal or
-			hexadecimal format.  The bitmask has a 32 bit size.
-			</para>
-			<example>
-			<title><function moreinfo="none">cfgutils.is_gflag</function> usage</title>
-			<programlisting format="linespecific">
-...
-$ &ctltool; cfgutils.set_gflag s:1024
-$ &ctltool; cfgutils.is_gflag s:1024
-TRUE
-$ &ctltool; cfgutils.is_gflag s:1023
-FALSE
-$ &ctltool; cfgutils.set_gflag s:0x7FFF
-$ &ctltool; cfgutils.is_gflag s:1023
-TRUE
-...
-</programlisting>
-			</example>
-		</section>
-</section>
-	
 <section>
 	<title>Exported pseudo-variables</title>
-		
+
 		<section>
 			<title><varname>$RANDOM</varname></title>
 			<para>
@@ -934,7 +848,7 @@ if (rand_event()) {
   exit;
 };
 # normal message processing follows
-   
+
 				 </programlisting>
 			</example>
 	</section>
