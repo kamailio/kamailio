@@ -29,9 +29,9 @@ Anca-Maria Vamanu
               3.4. query_period(int)
 
         4. Functions
-        5. Exported Management Functions
+        5. RPC Commands
 
-              5.1. refreshXcapDoc
+              5.1. xcap_client.refreshXcapDoc
 
         6. Remarks
 
@@ -67,9 +67,9 @@ Chapter 1. Admin Guide
         3.4. query_period(int)
 
    4. Functions
-   5. Exported Management Functions
+   5. RPC Commands
 
-        5.1. refreshXcapDoc
+        5.1. xcap_client.refreshXcapDoc
 
    6. Remarks
 
@@ -175,27 +175,26 @@ modparam("xcap_client", "query_period", 50)
 
    None to be used in configuration file.
 
-5. Exported Management Functions
+5. RPC Commands
 
-   5.1. refreshXcapDoc
+   5.1. xcap_client.refreshXcapDoc
 
-5.1.  refreshXcapDoc
+5.1.  xcap_client.refreshXcapDoc
 
    Management command that should be sent by an XCAP server when a stored
    document changes.
 
-   Name: refreshXcapDoc
+   Name: xcap_client.refreshXcapDoc
 
    Parameters:
      * document uri: the uri of the document
      * xcap server port: the port of the xcap server
 
-   Management FIFO Command Format:
+   RPC Command Example:
 ...
-:refreshXcapDoc:fifo_reply
-/xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml
-8000
-_empty_line_
+# execute in a single line command
+kamcmd xcap_client.refreshXcapDoc
+     /xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml 8000
 ...
 
 6. Remarks
