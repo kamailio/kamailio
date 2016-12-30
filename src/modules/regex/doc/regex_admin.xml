@@ -359,11 +359,11 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 	</section>
 
 	<section>
-		<title>MI Commands</title>
+		<title>RPC Commands</title>
 
-		<section id="regex.m.regex_reload">
+		<section id="regex.r.regex_reload">
 			<title>
-				<function moreinfo="none">regex_reload</function>
+				<function moreinfo="none">regex.reload</function>
 			</title>
 
 			<para>
@@ -373,18 +373,19 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 			</para>
 
 			<para>
-				Name: <emphasis>regex_reload</emphasis>
+				Name: <emphasis>regex.reload</emphasis>
 			</para>
 
 			<para>Parameters: <emphasis>none</emphasis></para>
 
 			<para>
-				MI FIFO Command Format:
+				RPC Command Example:
 			</para>
 
 <programlisting  format="linespecific">
-:regex_reload:_reply_fifo_file_
-_empty_line_
+...
+&kamcmd; regex.reload
+...
 </programlisting>
 
 		</section>
