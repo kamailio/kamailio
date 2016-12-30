@@ -41,16 +41,16 @@ Bastian Friedrich
               4.1. bm_start_timer(name)
               4.2. bm_log_timer(name)
 
-        5. Exported pseudo-variables
+        5. Exported Variables
 
               5.1. $BM_time_diff
 
-        6. MI Commands
+        6. RPC Commands
 
-              6.1. bm_enable_global
-              6.2. bm_enable_timer
-              6.3. bm_granularity
-              6.4. bm_loglevel
+              6.1. benchmark.enable_global
+              6.2. benchmark.enable_timer
+              6.3. benachmark.granularity
+              6.4. benchmark.loglevel
 
         7. Example of usage
 
@@ -96,16 +96,16 @@ Chapter 1. Admin Guide
         4.1. bm_start_timer(name)
         4.2. bm_log_timer(name)
 
-   5. Exported pseudo-variables
+   5. Exported Variables
 
         5.1. $BM_time_diff
 
-   6. MI Commands
+   6. RPC Commands
 
-        6.1. bm_enable_global
-        6.2. bm_enable_timer
-        6.3. bm_granularity
-        6.4. bm_loglevel
+        6.1. benchmark.enable_global
+        6.2. benchmark.enable_timer
+        6.3. benachmark.granularity
+        6.4. benchmark.loglevel
 
    7. Example of usage
 
@@ -240,7 +240,7 @@ bm_start_timer("test");
 bm_log_timer("test");
 ...
 
-5. Exported pseudo-variables
+5. Exported Variables
 
    5.1. $BM_time_diff
 
@@ -252,33 +252,33 @@ bm_log_timer("test");
    bm_start_timer(name) and bm_log_timer(name). The value is 0 if no
    bm_log_timer() was called.
 
-6. MI Commands
+6. RPC Commands
 
-   6.1. bm_enable_global
-   6.2. bm_enable_timer
-   6.3. bm_granularity
-   6.4. bm_loglevel
+   6.1. benchmark.enable_global
+   6.2. benchmark.enable_timer
+   6.3. benachmark.granularity
+   6.4. benchmark.loglevel
 
-6.1. bm_enable_global
+6.1. benchmark.enable_global
 
    Enables/disables the module. Parameter may be -1, 0 or 1. See
    discription of "enable" parameter.
 
-6.2. bm_enable_timer
+6.2. benchmark.enable_timer
 
    Enable or disable a single timer. The following example enables timer
    "test" (the second parameter must be 0 to disable):
 
    Example 1.6. Enabling a timer
 ...
-kamctl fifo bm_enable_timer test 1
+kamcmd benchmark.enable_timer test 1
 ...
 
-6.3. bm_granularity
+6.3. benachmark.granularity
 
    Modifies the benchmarking granularity. See "granularity" variable.
 
-6.4. bm_loglevel
+6.4. benchmark.loglevel
 
    Modifies the module log level. See "loglevel" variable.
 

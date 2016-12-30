@@ -39,7 +39,7 @@ Peter Dunkley
               4.6. autheph_check_to([username])
               4.7. autheph_check_timestamp(username)
 
-        5. MI Commands
+        5. RPC Commands
 
               5.1. autheph.add_secret
               5.2. autheph.dump_secrets
@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
         4.6. autheph_check_to([username])
         4.7. autheph_check_timestamp(username)
 
-   5. MI Commands
+   5. RPC Commands
 
         5.1. autheph.add_secret
         5.2. autheph.dump_secrets
@@ -434,7 +434,7 @@ if (!autheph_check_timestamp("$var(username)")) {
 }
 ...
 
-5. MI Commands
+5. RPC Commands
 
    5.1. autheph.add_secret
    5.2. autheph.dump_secrets
@@ -443,9 +443,9 @@ if (!autheph_check_timestamp("$var(username)")) {
 5.1. autheph.add_secret
 
    Add a secret to the head of the shared secret list. The secret will be
-   the first one tried during future authentication attempts. This MI
-   command allows you to update the shared secret list without having to
-   restart Kamailio.
+   the first one tried during future authentication attempts. This command
+   allows you to update the shared secret list without having to restart
+   Kamailio.
 
 Note
 
@@ -457,10 +457,9 @@ Note
    Parameters:
      * secret
 
-   MI FIFO Command Format:
-                        :autheph.add_secret:fifo_reply
-                        kamailio_rules
-                        _empty_line_
+   RPC Command Example:
+...
+kamcmd autheph.add_secret mysecret
 
 5.2. autheph.dump_secrets
 
@@ -471,13 +470,14 @@ Note
    Parameters:
      * none
 
-   MI FIFO Command Format:
-                        :autheph.dump_secrets:fifo_reply
-                        _empty_line_
+   RPC Command Example:
+...
+kamcmd autheph.dump_secrets
+...
 
 5.3. autheph.rm_secret
 
-   Remove the secret with the specified integer ID. This MI command allows
+   Remove the secret with the specified integer ID. This command allows
    you to update the shared secret list without having to restart
    Kamailio.
 
@@ -491,7 +491,7 @@ Note
    Parameters:
      * ID - the ID of the secret to remove
 
-   MI FIFO Command Format:
-                        :autheph.rm_secret:fifo_reply
-                        0
-                        _empty_line_
+   RPC Command Example:
+...
+kamcmd autheph.rm_secret 0
+...
