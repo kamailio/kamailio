@@ -1,6 +1,4 @@
-/* 
- * $Id$
- *
+/*
  * Copyright (C) 2013 Crocodile RCS Ltd
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Exception: permission to copy, modify, propagate, and distribute a work
@@ -30,7 +28,8 @@
 #include "../../core/mod_fix.h"
 #include "../../core/sr_module.h"
 #include "../../core/str.h"
-#include "../../lib/kmi/mi.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../modules/auth/api.h"
 
 #include "autheph_mod.h"
@@ -39,14 +38,13 @@
 
 MODULE_VERSION
 
+static int autheph_init_rpc(void);
+
 static int mod_init(void);
 static void destroy(void);
 
 static int secret_param(modparam_t _type, void *_val);
 struct secret *secret_list = NULL;
-static struct mi_root *mi_dump_secrets(struct mi_root *cmd, void *param);
-static struct mi_root *mi_add_secret(struct mi_root *cmd, void *param);
-static struct mi_root *mi_rm_secret(struct mi_root *cmd, void *param);
 gen_lock_t *autheph_secret_lock = NULL;
 
 autheph_username_format_t autheph_username_format = AUTHEPH_USERNAME_IETF;
@@ -97,23 +95,14 @@ static param_export_t params[]=
 	{0, 0, 0}
 };
 
-static mi_export_t mi_cmds[] =
-{
-	{ "autheph.add_secret",		mi_add_secret,	0, 0, 0 },
-	{ "autheph.dump_secrets",	mi_dump_secrets,0, 0, 0 },
-	{ "autheph.rm_secret",		mi_rm_secret,	0, 0, 0 },
-
-	{ 0, 0, 0, 0, 0 }
-};
-
 struct module_exports exports=
 {
-	"auth_ephemeral", 
+	"auth_ephemeral",
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,			/* Exported functions */
 	params,			/* Exported parameters */
 	0,			/* exported statistics */
-	mi_cmds,		/* exported MI functions */
+	0,			/* exported MI functions */
 	0,			/* exported pseudo-variables */
 	0,			/* extra processes */
 	mod_init,		/* module initialization function */
@@ -126,9 +115,9 @@ static int mod_init(void)
 {
 	bind_auth_s_t bind_auth;
 
-	if (register_mi_mod(exports.name, mi_cmds) != 0)
+	if (autheph_init_rpc()<0)
 	{
-		LM_ERR("registering MI commands\n");
+		LM_ERR("registering RPC commands\n");
 		return -1;
 	}
 
@@ -313,142 +302,105 @@ static int secret_param(modparam_t _type, void *_val)
 	return add_secret(sval);
 }
 
-static str str_status_too_many_params = str_init("Too many parameters");
-static str str_status_empty_param = str_init("Not enough parameters");
-static str str_status_no_memory = str_init("Unable to allocate shared memory");
-static str str_status_string_error = str_init("Error converting string to int");
-static str str_status_adding_secret = str_init("Error adding secret");
-static str str_status_removing_secret = str_init("Error removing secret");
-
-static struct mi_root *mi_dump_secrets(struct mi_root *cmd, void *param)
+void autheph_rpc_dump_secrets(rpc_t* rpc, void* ctx)
 {
 	int pos = 0;
 	struct secret *secret_struct = secret_list;
-	struct mi_root *rpl_tree;
-
-	if (cmd->node.kids != NULL)
-	{
-		LM_WARN("too many parameters\n");
-		return init_mi_tree(400, str_status_too_many_params.s,
-					str_status_too_many_params.len);
-	}
-
-	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree == NULL)
-		return 0;
 
 	SECRET_LOCK;
 	while (secret_struct != NULL)
 	{
-		if (addf_mi_node_child(&rpl_tree->node, 0, 0, 0,
+		if (rpc->rpl_printf(ctx,
 					"ID %d: %.*s", pos++,
 					secret_struct->secret_key.len,
-					secret_struct->secret_key.s) == 0)
+					secret_struct->secret_key.s) < 0)
 		{
-			free_mi_tree(rpl_tree);
+			rpc->fault(ctx, 500, "Faiure building the response");
 			SECRET_UNLOCK;
-			return 0;
+			return;
 		}
 		secret_struct = secret_struct->next;
 	}
 	SECRET_UNLOCK;
-
-	return rpl_tree;
 }
 
-static struct mi_root *mi_add_secret(struct mi_root *cmd, void *param)
+void autheph_rpc_add_secret(rpc_t* rpc, void* ctx)
 {
+	str tval;
 	str sval;
-	struct mi_node *node = NULL;
 
-	node = cmd->node.kids;
-	if (node == NULL)
-	{
-		LM_WARN("no secret parameter\n");
-		return init_mi_tree(400, str_status_empty_param.s,
-						str_status_empty_param.len);
+	if(rpc->scan(ctx, "S", &tval)<1) {
+		LM_WARN("not enough parameters\n");
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
 	}
-
-	if (node->value.s == NULL || node->value.len == 0)
-	{
-		LM_WARN("empty secret parameter\n");
-		return init_mi_tree(400, str_status_empty_param.s,
-					str_status_empty_param.len);
-	}
-
-	if (node->next != NULL)
-	{
-		LM_WARN("too many parameters\n");
-		return init_mi_tree(400, str_status_too_many_params.s,
-					str_status_too_many_params.len);
-	}
-
-	sval.len = node->value.len;
+	sval.len = tval.len;
 	sval.s = shm_malloc(sizeof(char) * sval.len);
 	if (sval.s == NULL)
 	{
 		LM_ERR("Unable to allocate shared memory\n");
-		return init_mi_tree(400, str_status_no_memory.s,
-					str_status_no_memory.len);
+		rpc->fault(ctx, 500, "Not enough memory");
+		return;
 	}
-	memcpy(sval.s, node->value.s, sval.len);
+	memcpy(sval.s, tval.s, sval.len);
 
-	if (add_secret(sval) == 0)
-	{
-		return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	}
-	else
-	{
-		LM_ERR("Adding secret\n");
-		return init_mi_tree(400, str_status_adding_secret.s,
-					str_status_adding_secret.len);
+	if (add_secret(sval) != 0) {
+		LM_ERR("failed adding secret\n");
+		rpc->fault(ctx, 500, "Failed adding secret");
+		return;
 	}
 }
 
-static struct mi_root *mi_rm_secret(struct mi_root *cmd, void *param)
+void autheph_rpc_rm_secret(rpc_t* rpc, void* ctx)
 {
 	unsigned int id;
-	struct mi_node *node = NULL;
-
-	node = cmd->node.kids;
-	if (node == NULL)
-	{
+	if(rpc->scan(ctx, "d", (int*)(&id))<1) {
 		LM_WARN("no id parameter\n");
-		return init_mi_tree(400, str_status_empty_param.s,
-						str_status_empty_param.len);
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
 	}
-
-	if (node->value.s == NULL || node->value.len == 0)
-	{
-		LM_WARN("empty id parameter\n");
-		return init_mi_tree(400, str_status_empty_param.s,
-					str_status_empty_param.len);
+	if (rm_secret(id) != 0) {
+		LM_ERR("failed removing secret\n");
+		rpc->fault(ctx, 500, "Failed removing secret");
+		return;
 	}
-
-	if (str2int(&node->value, &id) < 0)
-	{
-		LM_ERR("converting string to int\n");
-		return init_mi_tree(400, str_status_string_error.s,
-					str_status_string_error.len);
-	}
-
-	if (node->next != NULL)
-	{
-		LM_WARN("too many parameters\n");
-		return init_mi_tree(400, str_status_too_many_params.s,
-					str_status_too_many_params.len);
-	}
-
-	if (rm_secret(id) == 0)
-	{
-		return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-	}
-	else
-	{
-		LM_ERR("Removing secret\n");
-		return init_mi_tree(400, str_status_removing_secret.s,
-					str_status_removing_secret.len);
-	}
-
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
+
+static const char* autheph_rpc_dump_secrets_doc[2] = {
+	"List secret tokens",
+	0
+};
+
+static const char* autheph_rpc_add_secret_doc[2] = {
+	"Add a secret",
+	0
+};
+
+static const char* autheph_rpc_rm_secret_doc[2] = {
+	"Remove a secret",
+	0
+};
+
+rpc_export_t autheph_rpc_cmds[] = {
+	{"autheph.dump_secrets", autheph_rpc_dump_secrets,
+		autheph_rpc_dump_secrets_doc, 0},
+	{"autheph.add_secret", autheph_rpc_add_secret,
+		autheph_rpc_add_secret_doc, 0},
+	{"autheph.add_secret", autheph_rpc_rm_secret,
+		autheph_rpc_rm_secret_doc, 0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * register RPC commands
+ */
+static int autheph_init_rpc(void)
+{
+	if (rpc_register_array(autheph_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
+

@@ -11,9 +11,9 @@
 <!-- Auth_ephemeral Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -504,12 +504,12 @@ if (!autheph_check_timestamp("$var(username)")) {
 	</section>
 
 	<section>
-	<title>MI Commands</title>
-	<section id="auth_eph.m.autheph.add_secret">
+	<title>RPC Commands</title>
+	<section id="auth_eph.rpc.autheph.add_secret">
 		<title><function moreinfo="none">autheph.add_secret</function></title>
 		<para>Add a secret to the head of the shared secret list. The
 		secret will be the first one tried during future authentication
-		attempts. This MI command allows you to update the shared secret
+		attempts. This command allows you to update the shared secret
 		list without having to restart Kamailio.</para>
 		<note><para>If you want your new shared secret list to persist
 		across restarts you must add it to your Kamailio configuration
@@ -521,15 +521,14 @@ if (!autheph_check_timestamp("$var(username)")) {
 				<para>secret</para>
 			</listitem>
 		</itemizedlist>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Example:</para>
 		<programlisting  format="linespecific">
-			:autheph.add_secret:fifo_reply
-			kamailio_rules
-			_empty_line_
+...
+&kamcmd; autheph.add_secret mysecret
 </programlisting>
 	</section>
 
-	<section id="auth_eph.m.autheph.dump_secrets">
+	<section id="auth_eph.rpc.autheph.dump_secrets">
 		<title><function moreinfo="none">autheph.dump_secrets</function></title>
 		<para>Dump the set of shared secrets.</para>
 		<para>Name: <emphasis>autheph.dump_secrets</emphasis></para>
@@ -539,16 +538,17 @@ if (!autheph_check_timestamp("$var(username)")) {
 				<para><emphasis>none</emphasis></para>
 			</listitem>
 		</itemizedlist>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Example:</para>
 		<programlisting  format="linespecific">
-			:autheph.dump_secrets:fifo_reply
-			_empty_line_
+...
+&kamcmd; autheph.dump_secrets
+...
 </programlisting>
 	</section>
 
-	<section id="auth_eph.m.autheph.rm_secret">
+	<section id="auth_eph.rpc.autheph.rm_secret">
 		<title><function moreinfo="none">autheph.rm_secret</function></title>
-		<para>Remove the secret with the specified integer ID.  This MI
+		<para>Remove the secret with the specified integer ID. This
 		command allows you to update the shared secret list without
 		having to restart Kamailio.</para>
 		<note><para>If you want your new shared secret list to persist
@@ -561,11 +561,11 @@ if (!autheph_check_timestamp("$var(username)")) {
 				<para>ID - the ID of the secret to remove</para>
 			</listitem>
 		</itemizedlist>
-		<para>MI FIFO Command Format:</para>
+		<para>RPC Command Example:</para>
 		<programlisting  format="linespecific">
-			:autheph.rm_secret:fifo_reply
-			0
-			_empty_line_
+...
+&kamcmd; autheph.rm_secret 0
+...
 </programlisting>
 	</section>
 
