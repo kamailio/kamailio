@@ -383,7 +383,7 @@ static const char* autheph_rpc_rm_secret_doc[2] = {
 
 rpc_export_t autheph_rpc_cmds[] = {
 	{"autheph.dump_secrets", autheph_rpc_dump_secrets,
-		autheph_rpc_dump_secrets_doc, 0},
+		autheph_rpc_dump_secrets_doc, RET_ARRAY},
 	{"autheph.add_secret", autheph_rpc_add_secret,
 		autheph_rpc_add_secret_doc, 0},
 	{"autheph.add_secret", autheph_rpc_rm_secret,
