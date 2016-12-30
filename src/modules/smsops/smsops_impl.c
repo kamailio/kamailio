@@ -52,7 +52,7 @@ typedef enum _rp_message_type {
 	RP_ACK_NETWORK_TO_MS  = 0x03,
 } rp_message_type_t;
 
-enum SMS_DATA { 
+enum SMS_DATA {
 	SMS_ALL,
 	SMS_RPDATA_TYPE,
 	SMS_RPDATA_REFERENCE,
@@ -103,7 +103,7 @@ typedef struct _sms_rp_data {
 	str originator;
 	str destination;
 	int pdu_len;
-	sms_pdu_t pdu;	
+	sms_pdu_t pdu;
 } sms_rp_data_t;
 
 // Pointer to current parsed rp_data/tpdu
