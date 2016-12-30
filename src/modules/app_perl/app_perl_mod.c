@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Perl module for Kamailio
  *
  * Copyright (C) 2006 Collax GmbH
@@ -36,7 +34,6 @@
 #include "../../core/sr_module.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/kmi/mi.h"
 #include "../../modules/rr/api.h"
 #include "../../modules/sl/sl.h"
 
@@ -98,13 +95,6 @@ static int mod_init(void);
 
 
 /*
- * Reload perl interpreter - reload perl script. Forward declaration.
- */
-struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param);
-
-
-
-/*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
@@ -114,7 +104,7 @@ static cmd_export_t cmds[] = {
 	{ "perl_exec_simple", (cmd_function)perl_exec_simple2, 2,  NULL, 0,
 							     REQUEST_ROUTE | FAILURE_ROUTE
 							   | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{ "perl_exec", (cmd_function)perl_exec1, 1,  NULL, 0, 
+	{ "perl_exec", (cmd_function)perl_exec1, 1,  NULL, 0,
 							     REQUEST_ROUTE | FAILURE_ROUTE
 							   | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{ "perl_exec", (cmd_function)perl_exec2, 2, NULL, 0,
@@ -138,19 +128,6 @@ static param_export_t params[] = {
 
 
 /*
- * Exported MI functions
- */
-static mi_export_t mi_cmds[] = {
-	/* FIXME This does not yet work... 
-	{ "perl_reload",  perl_mi_reload, MI_NO_INPUT_FLAG,  0,  0  },*/
-	{ 0, 0, 0, 0, 0}
-
-};
-
-
-
-
-/*
  * Module info
  */
 
@@ -168,12 +145,12 @@ static mi_export_t mi_cmds[] = {
  * Module interface
  */
 struct module_exports _app_perl_exports = {
-	"app_perl", 
+	"app_perl",
 	RTLD_NOW | RTLD_GLOBAL,
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
 	0,          /* exported statistics */
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	0,          /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
@@ -325,21 +302,6 @@ int perl_reload(void)
 
 
 /*
- * Reinit through fifo.
- * Currently does not seem to work :((
- */
-struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param)
-{
-	if (perl_reload()<0) {
-		return init_mi_tree( 500, "Perl reload failed", 18);
-	} else {
-		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	}
-
-}
-
-
-/*
  * mod_init
  * Called by kamailio at init time
  */
@@ -351,14 +313,7 @@ static int mod_init(void) {
 	struct timeval t1;
 	struct timeval t2;
 
-	if(register_mi_mod(_app_perl_exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-
-	if(ap_init_rpc()<0)
-	{
+	if(ap_init_rpc()<0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}

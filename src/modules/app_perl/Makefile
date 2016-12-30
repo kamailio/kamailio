@@ -1,6 +1,6 @@
 # perl module makefile
 #
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
@@ -23,7 +23,6 @@ DEFS+=$(PERLCCOPTS)
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 
 PODFILES=kamailioxs.xs `find lib/perl -name *.pm`
 
