@@ -33,7 +33,6 @@
 #include "../../core/timer_proc.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/counters.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mod_fix.h"
 #include "../../core/parser/msg_parser.h"
@@ -144,22 +143,6 @@ static stat_export_t stats[] = {
 	{ 0, 0, 0 }
 };
 
-static mi_export_t mi_cmds[] = {
-	/* ws_conn.c */
-	{ "ws.dump",	ws_mi_dump,    0, 0, 0 },
-
-	/* ws_frame.c */
-	{ "ws.close",   ws_mi_close,   0, 0, 0 },
-	{ "ws.ping",    ws_mi_ping,    0, 0, 0 },
-	{ "ws.pong",	ws_mi_pong,    0, 0, 0 },
-
-	/* ws_handshake.c */
-	{ "ws.disable", ws_mi_disable, 0, 0, 0 },
-	{ "ws.enable",	ws_mi_enable,  0, 0, 0 },
-
-	{ 0, 0, 0, 0, 0 }
-};
-
 static pv_export_t mod_pvs[] = {
     {{"ws_conid", (sizeof("ws_conid")-1)}, PVT_CONTEXT,
      pv_get_ws_conid_f, 0, 0, 0, 0, 0},
@@ -172,8 +155,8 @@ struct module_exports exports = {
 	cmds,			/* Exported functions */
 	params,			/* Exported parameters */
 	stats,			/* exported statistics */
-	mi_cmds,		/* exported MI functions */
-	mod_pvs,                /* exported pseudo-variables */
+	0,				/* exported MI functions */
+	mod_pvs,		/* exported pseudo-variables */
 	0,			/* extra processes */
 	mod_init,		/* module initialization function */
 	0,			/* response function */
@@ -204,12 +187,6 @@ static int mod_init(void)
 	if (register_module_stats(exports.name, stats) != 0)
 	{
 		LM_ERR("registering core statistics\n");
-		goto error;
-	}
-
-	if (register_mi_mod(exports.name, mi_cmds) != 0)
-	{
-		LM_ERR("registering MI commands\n");
 		goto error;
 	}
 

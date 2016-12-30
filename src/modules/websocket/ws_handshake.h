@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * Exception: permission to copy, modify, propagate, and distribute a work
@@ -47,8 +47,6 @@ extern stat_var *ws_sip_successful_handshakes;
 extern stat_var *ws_msrp_successful_handshakes;
 
 int ws_handle_handshake(struct sip_msg *msg);
-struct mi_root *ws_mi_disable(struct mi_root *cmd, void *param);
-struct mi_root *ws_mi_enable(struct mi_root *cmd, void *param);
 
 void ws_rpc_disable(rpc_t* rpc, void* ctx);
 void ws_rpc_enable(rpc_t* rpc, void* ctx);

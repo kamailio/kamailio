@@ -40,7 +40,6 @@
 #include "../../core/tcp_read.h"
 #include "../../core/tcp_server.h"
 #include "../../core/counters.h"
-#include "../../lib/kmi/tree.h"
 #include "../../core/mem/mem.h"
 #include "ws_conn.h"
 #include "ws_frame.h"
@@ -852,123 +851,6 @@ static int ws_send_crlf(ws_connection_t *wsc, int opcode)
 	}
 
 	return 0;
-}
-
-struct mi_root *ws_mi_close(struct mi_root *cmd, void *param)
-{
-	unsigned int id;
-	struct mi_node *node = NULL;
-	ws_connection_t *wsc;
-
-	node = cmd->node.kids;
-	if (node == NULL)
-	{
-		LM_WARN("no connection ID parameter\n");
-		return init_mi_tree(400, str_status_empty_param.s,
-					str_status_empty_param.len);
-	}
-	if (node->value.s == NULL || node->value.len == 0)
-	{
-		LM_WARN("empty connection ID parameter\n");
-		return init_mi_tree(400, str_status_empty_param.s,
-					str_status_empty_param.len);
-	}
-	if (str2int(&node->value, &id) < 0)
-	{
-		LM_ERR("converting string to int\n");
-		return init_mi_tree(400, str_status_string_error.s,
-					str_status_string_error.len);
-	}
-	if (node->next != NULL)
-	{
-		LM_WARN("too many parameters\n");
-		return init_mi_tree(400, str_status_too_many_params.s,
-					str_status_too_many_params.len);
-	}
-
-	if ((wsc = wsconn_get(id)) == NULL)
-	{
-		LM_WARN("bad connection ID parameter\n");
-		return init_mi_tree(400, str_status_bad_param.s,
-					str_status_bad_param.len);
-	}
-
-	int ret = close_connection(&wsc, LOCAL_CLOSE, 1000, str_status_normal_closure);
-
-	wsconn_put(wsc);
-
-	if (ret < 0)
-	{
-		LM_WARN("closing connection\n");
-		return init_mi_tree(500, str_status_error_closing.s,
-					str_status_error_closing.len);
-	}
-
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-}
-
-static struct mi_root *mi_ping_pong(struct mi_root *cmd, void *param,
-					int opcode)
-{
-	unsigned int id;
-	struct mi_node *node = NULL;
-	ws_connection_t *wsc;
-
-	node = cmd->node.kids;
-	if (node == NULL)
-	{
-		LM_WARN("no connection ID parameter\n");
-		return init_mi_tree(400, str_status_empty_param.s,
-					str_status_empty_param.len);
-	}
-	if (node->value.s == NULL || node->value.len == 0)
-	{
-		LM_WARN("empty connection ID parameter\n");
-		return init_mi_tree(400, str_status_empty_param.s,
-					str_status_empty_param.len);
-	}
-	if (str2int(&node->value, &id) < 0)
-	{
-		LM_ERR("converting string to int\n");
-		return init_mi_tree(400, str_status_string_error.s,
-					str_status_string_error.len);
-	}
-	if (node->next != NULL)
-	{
-		LM_WARN("too many parameters\n");
-		return init_mi_tree(400, str_status_too_many_params.s,
-					str_status_too_many_params.len);
-	}
-
-	if ((wsc = wsconn_get(id)) == NULL)
-	{
-		LM_WARN("bad connection ID parameter\n");
-		return init_mi_tree(400, str_status_bad_param.s,
-					str_status_bad_param.len);
-	}
-
-	int ret = ping_pong(wsc, opcode);
-
-	wsconn_put(wsc);
-
-	if (ret < 0)
-	{
-		LM_WARN("sending %s\n", OPCODE_PING ? "Ping" : "Pong");
-		return init_mi_tree(500, str_status_error_sending.s,
-					str_status_error_sending.len);
-	}
-
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-}
-
-struct mi_root *ws_mi_ping(struct mi_root *cmd, void *param)
-{
-	return mi_ping_pong(cmd, param, OPCODE_PING);
-}
-
-struct mi_root *ws_mi_pong(struct mi_root *cmd, void *param)
-{
-	return mi_ping_pong(cmd, param, OPCODE_PONG);
 }
 
 void ws_keepalive(unsigned int ticks, void *param)
