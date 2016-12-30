@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -39,7 +39,8 @@
 #include "../../core/ut.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/kmi/mi.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../presence/utils_func.h"
 #include "xcap_functions.h"
 #include "xcap_client.h"
@@ -48,10 +49,11 @@ MODULE_VERSION
 
 #define XCAP_TABLE_VERSION   4
 
+static int xcap_client_init_rpc(void);
+
 static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
-struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param);
 int get_auid_flag(str auid);
 str xcap_db_table = str_init("xcap");
 str xcap_db_url = str_init(DEFAULT_DB_URL);
@@ -86,14 +88,9 @@ static param_export_t params[]={
 
 
 static cmd_export_t  cmds[]=
-{	
+{
 	{"bind_xcap",  (cmd_function)bind_xcap,  1,    0, 0,            0},
 	{    0,                     0,           0,    0, 0,           0}
-};
-
-static mi_export_t mi_cmds[] = {
-	{ "refreshXcapDoc", refreshXcapDoc,      0,  0,  0},
-	{ 0,                 0,                  0,  0,  0}
 };
 
 /** module exports */
@@ -103,7 +100,7 @@ struct module_exports exports= {
 	cmds,  						/* exported functions */
 	params,						/* exported parameters */
 	0,      					/* exported statistics */
-	mi_cmds,   					/* exported MI functions */
+	0,		   					/* exported MI functions */
 	0,							/* exported pseudo-variables */
 	0,							/* extra processes */
 	mod_init,					/* module initialization function */
@@ -117,19 +114,19 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	if(xcap_client_init_rpc()<0)
 	{
-		LM_ERR("failed to register MI commands\n");
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
-	
+
 	/* binding to mysql module  */
 	if (db_bind_mod(&xcap_db_url, &xcap_dbf))
 	{
 		LM_ERR("Database module not found\n");
 		return -1;
 	}
-	
+
 	if (!DB_CAPABILITY(xcap_dbf, DB_CAP_ALL)) {
 		LM_ERR("Database module does not implement all functions"
 				" needed by the module\n");
@@ -187,9 +184,9 @@ void query_xcap_update(unsigned int ticks, void* param)
 	db_key_t result_cols[7];
 	int n_result_cols = 0, n_query_cols= 0, n_update_cols= 0;
 	db1_res_t* result= NULL;
-	int user_col, domain_col, doc_type_col, etag_col, doc_uri_col, port_col; 
-	db_row_t *row ;	
-	db_val_t *row_vals ;
+	int user_col, domain_col, doc_type_col, etag_col, doc_uri_col, port_col;
+	db_row_t *row;
+	db_val_t *row_vals;
 	unsigned int port;
 	char* etag, *path, *new_etag= NULL, *doc= NULL;
 	int u_doc_col, u_etag_col;
@@ -223,8 +220,8 @@ void query_xcap_update(unsigned int ticks, void* param)
 	result_cols[etag_col=n_result_cols++]      = &str_etag_col;
 	result_cols[doc_uri_col= n_result_cols++]  = &str_doc_uri_col;
 	result_cols[port_col= n_result_cols++]     = &str_port_col;
-	
-	if (xcap_dbf.use_table(xcap_db, &xcap_db_table) < 0) 
+
+	if (xcap_dbf.use_table(xcap_db, &xcap_db_table) < 0)
 	{
 		LM_ERR("in use_table-[table]= %.*s\n", xcap_db_table.len, xcap_db_table.s);
 		goto error;
@@ -247,16 +244,16 @@ void query_xcap_update(unsigned int ticks, void* param)
 		return;
 	}
 	n_query_cols++;
-	
+
 	/* ask if updated */
 	for(i= 0; i< result->n; i++)
 	{
 		row = &result->rows[i];
 		row_vals = ROW_VALUES(row);
-	
+
 		path= (char*)row_vals[doc_uri_col].val.string_val;
 		port= row_vals[port_col].val.int_val;
-		etag= (char*)row_vals[etag_col].val.string_val;	
+		etag= (char*)row_vals[etag_col].val.string_val;
 
 		user.s= (char*)row_vals[user_col].val.string_val;
 		user.len= strlen(user.s);
@@ -280,7 +277,7 @@ void query_xcap_update(unsigned int ticks, void* param)
 		/* update in xcap db table */
 		update_vals[u_doc_col].val.string_val= doc;
 		update_vals[u_etag_col].val.string_val= etag;
-		
+
 		if(xcap_dbf.update(xcap_db, query_cols, 0, query_vals, update_cols,
 					update_vals, n_query_cols, n_update_cols)< 0)
 		{
@@ -310,17 +307,17 @@ error:
 
 int parse_doc_url(str doc_url, char** serv_addr, xcap_doc_sel_t* doc_sel)
 {
-	char* sl, *str_type;	
-	
+	char* sl, *str_type;
+
 	sl= strchr(doc_url.s, '/');
 	*sl= '\0';
 	*serv_addr= doc_url.s;
-	
+
 	sl++;
 	doc_sel->auid.s= sl;
 	sl= strchr(sl, '/');
 	doc_sel->auid.len= sl- doc_sel->auid.s;
-	
+
 	sl++;
 	str_type= sl;
 	sl= strchr(sl, '/');
@@ -338,14 +335,12 @@ int parse_doc_url(str doc_url, char** serv_addr, xcap_doc_sel_t* doc_sel)
 
 }
 /*
- * mi cmd: refreshXcapDoc
- *			<document uri> 
+ * rpc cmd: refreshXcapDoc
+ *			<document uri>
  *			<xcap_port>
  * */
-
-struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param)
+void xcap_client_rpc_refreshXcapDoc(rpc_t* rpc, void* ctx)
 {
-	struct mi_node* node= NULL;
 	str doc_url;
 	xcap_doc_sel_t doc_sel;
 	char* serv_addr;
@@ -354,63 +349,61 @@ struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param)
 	unsigned int xcap_port;
 	char* etag= NULL;
 
-	node = cmd->node.kids;
-	if(node == NULL)
-		return 0;
-
-	doc_url = node->value;
-	if(doc_url.s == NULL || doc_url.len== 0)
-	{
-		LM_ERR("empty uri\n");
-		return init_mi_tree(404, "Empty document URL", 20);
+	if(rpc->scan(ctx, "S", &doc_url, (int*)(&xcap_port))<1) {
+		LM_WARN("not enough parameters\n");
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
 	}
-	node= node->next;
-	if(node== NULL)
-		return 0;
-	if(node->value.s== NULL || node->value.len== 0)
-	{
-		LM_ERR("port number\n");
-		return init_mi_tree(404, "Empty document URL", 20);
-	}
-	if(str2int(&node->value, &xcap_port)< 0)
-	{
-		LM_ERR("while converting string to int\n");
-		goto error;
-	}
-
-	if(node->next!= NULL)
-		return 0;
-
 	/* send GET HTTP request to the server */
 	stream=	send_http_get(doc_url.s, xcap_port, NULL, 0, &etag);
-	if(stream== NULL)
-	{
+	if(stream== NULL) {
 		LM_ERR("in http get\n");
-		return 0;
+		rpc->fault(ctx, 500, "Failed http get");
+		return;
 	}
-	
+
 	/* call registered functions with document argument */
-	if(parse_doc_url(doc_url, &serv_addr, &doc_sel)< 0)
-	{
+	if(parse_doc_url(doc_url, &serv_addr, &doc_sel)< 0) {
 		LM_ERR("parsing document url\n");
-		return 0;
+		if(stream) pkg_free(stream);
+		rpc->fault(ctx, 500, "Failed parsing url");
+		return;
 	}
 
 	type= get_auid_flag(doc_sel.auid);
-	if(type< 0)
-	{
-		LM_ERR("incorect auid: %.*s\n",
+	if(type<0) {
+		LM_ERR("incorrect auid: %.*s\n",
 				doc_sel.auid.len, doc_sel.auid.s);
-		goto error;
+		if(stream) pkg_free(stream);
+		rpc->fault(ctx, 500, "Invalid auid");
+		return;
 	}
 
 	run_xcap_update_cb(type, doc_sel.xid, stream);
+	if(stream) pkg_free(stream);
+}
 
-	return init_mi_tree(200, "OK", 2);
+static const char* xcap_client_refreshXcapDoc_doc[2] = {
+	"Refresh XCAP document",
+	0
+};
 
-error:
-	if(stream)
-		pkg_free(stream);
+rpc_export_t xcap_client_rpc_cmds[] = {
+	{"xcap_client.refreshXcapDoc", xcap_client_rpc_refreshXcapDoc,
+		xcap_client_refreshXcapDoc_doc, 0},
+	{0, 0, 0, 0}
+};
+
+/**
+ * register RPC commands
+ */
+static int xcap_client_init_rpc(void)
+{
+	if (rpc_register_array(xcap_client_rpc_cmds)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }
 

@@ -10,16 +10,16 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
-	<para> 
+	<para>
 	The modules is a XCAP client for &kamailio; that can be used by other modules.
-	It fetches XCAP elements, either documents or part of them, by sending 
-	HTTP GET requests to an XCAP server. It also offers support for 
-	conditional queries.  It uses the <emphasis>libcurl</emphasis> library as a 
+	It fetches XCAP elements, either documents or part of them, by sending
+	HTTP GET requests to an XCAP server. It also offers support for
+	conditional queries.  It uses the <emphasis>libcurl</emphasis> library as a
 	client-side HTTP transfer library.
 	</para>
 	<para>
@@ -27,7 +27,7 @@
 	allow requesting for a specific element from a XCAP server.
 	In addition to that it also offers the service of storing and updating
 	the documents it receives. In this case only an initial
-	request to the module is required - xcapGetNewDoc - which is like a 
+	request to the module is required - xcapGetNewDoc - which is like a
 	request to the module to handle from that point on the referenced
 	document so as to promise that the newest version will always be
 	present in database.
@@ -38,7 +38,7 @@
 	that should be sent by the server upon an update.
 	</para>
 	<para>
-	The module is currently used by the <quote>presence_xml</quote> module, if the 
+	The module is currently used by the <quote>presence_xml</quote> module, if the
 	'integrated_xcap_server' parameter is not set.
 	</para>
 	</section>
@@ -81,7 +81,7 @@
 		The database url.
 		</para>
 		<para>
-		<emphasis>Default value is <quote>&defaultdb;</quote>.	
+		<emphasis>Default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -139,8 +139,8 @@ modparam("xcap_client", "periodical_query", 0)
 	<section>
 		<title><varname>query_period</varname>(int)</title>
 		<para>
-		Should be set if periodical query is not disabled. 
-		Represents the time interval the XCAP servers should be 
+		Should be set if periodical query is not disabled.
+		Represents the time interval the XCAP servers should be
 		queried for an update.
 		</para>
 		<para>
@@ -169,17 +169,17 @@ modparam("xcap_client", "query_period", 50)
 </section>
 
 <section>
-	<title>Exported Management Functions</title>
-	<section>
+	<title>RPC Commands</title>
+	<section id="xcap_client.rpc.refreshXcapDoc">
 		<title>
-		<function moreinfo="none">refreshXcapDoc</function>
+		<function moreinfo="none">xcap_client.refreshXcapDoc</function>
 		</title>
 		<para>
 		Management command that should be sent by an XCAP server when a
 		stored document changes.
 		</para>
 		<para>
-		Name: <emphasis>refreshXcapDoc</emphasis>
+		Name: <emphasis>xcap_client.refreshXcapDoc</emphasis>
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
@@ -192,14 +192,13 @@ modparam("xcap_client", "query_period", 50)
 		 </itemizedlist>
 
         <para>
-		Management FIFO Command Format:
+		RPC Command Example:
 		</para>
         <programlisting  format="linespecific">
 ...
-:refreshXcapDoc:fifo_reply
-/xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml
-8000
-_empty_line_
+# execute in a single line command
+&kamcmd; xcap_client.refreshXcapDoc
+     /xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml 8000
 ...
 		</programlisting>
 	</section>
