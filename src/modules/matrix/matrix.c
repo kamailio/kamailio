@@ -22,7 +22,6 @@
 
 #include "../../core/mem/shm_mem.h"
 #include "../../core/sr_module.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/mem/mem.h"
 #include "../../core/usr_avp.h"
 #include "../../core/locking.h"
@@ -84,13 +83,7 @@ static int lookup_matrix(struct sip_msg *msg, struct multiparam_t *_first, struc
 /* ---- module init functions: */
 static int mod_init(void);
 static int child_init(int rank);
-static int mi_child_init(void);
 static void mod_destroy(void);
-
-/* --- fifo functions */
-struct mi_root * mi_reload_matrix(struct mi_root* cmd, void* param);  /* usage: kamctl fifo reload_matrix */
-
-
 
 
 static cmd_export_t cmds[]={
@@ -111,22 +104,13 @@ static param_export_t params[] = {
 
 
 
-/* Exported MI functions */
-static mi_export_t mi_cmds[] = {
-	{ "reload_matrix", mi_reload_matrix, MI_NO_INPUT_FLAG, 0, mi_child_init },
-	{ 0, 0, 0, 0, 0}
-};
-
-
-
-
 struct module_exports exports= {
 	"matrix",
 	DEFAULT_DLFLAGS,
 	cmds,
 	params,
 	0,
-	mi_cmds,
+	0,
 	0,
 	0,
 	mod_init,
@@ -535,24 +519,16 @@ static void destroy_shmlock(void)
 
 
 
-
-struct mi_root * mi_reload_matrix(struct mi_root* cmd, void* param)
-{
-	struct mi_root * tmp = NULL;
-	if(db_reload_matrix() >= 0) {
-		tmp = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	} else {
-		tmp = init_mi_tree( 500, "cannot reload matrix", 24);
-	}
-
-	return tmp;
-}
-
 static void matrix_rpc_reload(rpc_t* rpc, void* c)
 {
+	if (matrix_db_open() != 0) {
+		rpc->fault(c, 500, "Failed to connect to db");
+		return;
+	}
 	if(db_reload_matrix() < 0) {
 		rpc->fault(c, 500, "Reload failed");
 	}
+	matrix_db_close();
 }
 
 static const char *matrix_rpc_reload_doc[2] = {
@@ -609,10 +585,6 @@ static void destroy_matrix(void)
 
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0) {
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(matrix_rpc_init()<0) {
 		LM_ERR("failed to init RPC commands");
 		return -1;
@@ -628,7 +600,6 @@ static int mod_init(void)
 
 
 
-
 static int child_init(int rank)
 {
 	if(rank==PROC_INIT || rank==PROC_TCP_MAIN)
@@ -636,16 +607,6 @@ static int child_init(int rank)
 	if (matrix_db_open() != 0) return -1;
 	return 0;
 }
-
-
-
-
-static int mi_child_init(void)
-{
-	if (matrix_db_open() != 0) return -1;
-	return 0;
-}
-
 
 
 
