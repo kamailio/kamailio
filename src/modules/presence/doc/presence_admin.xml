@@ -1110,17 +1110,35 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 </section>
 
 <section>
-	<title>MI Commands</title>
-	<section>
-		<title>
-		<function moreinfo="none">refreshWatchers</function>
-		</title>
+	<title>RPC Commands</title>
+	<section id="presence.r.cleanup">
+	  <title>presence.cleanup</title>
+	  <para>
+		Manually triggers the cleanup functions for the active_watchers, presentity,
+		and watchers tables. Useful if you have set <varname>clean_period</varname>
+		and/or <varname>db_update_period</varname> to zero or less.
+	  </para>
+	  <para>
+		Name: <emphasis>presence.cleanup</emphasis>
+	  </para>
+	  <para>Parameters: <emphasis>none</emphasis></para>
+	  <para>
+		RPC Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+...
+&kamcmd; presence.cleanup
+...
+	  </programlisting>
+    </section>
+	<section id="presence.r.refreshWatchers">
+		<title>presence.refreshWatchers</title>
 		<para>
 		Triggers sending Notify messages to watchers if a change in watchers
 		authorization or in published state occurred.
 		</para>
 		<para>
-		Name: <emphasis>refreshWatchers</emphasis>
+		Name: <emphasis>presence.refreshWatchers</emphasis>
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
@@ -1161,62 +1179,18 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 			</listitem>
         	</itemizedlist>
         <para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:refreshWatchers:fifo_reply
-		sip:test@kamailio.org
-		presence
-		1
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; refreshWatchers sip:test@kamailio.org presence 1
+...
 		</programlisting>
 	</section>
-
-	<section>
-	  <title>
-		<function moreinfo="none">cleanup</function>
-	  </title>
-	  <para>
-		Manually triggers the cleanup functions for the active_watchers, presentity,
-		and watchers tables. Useful if you have set <varname>clean_period</varname>
-		and/or <varname>db_update_period</varname> to zero or less.
-	  </para>
-	  <para>
-		Name: <emphasis>cleanup</emphasis>
-	  </para>
-	  <para>Parameters: <emphasis>none</emphasis></para>
-
-	  <para>
-		MI FIFO Command Format:
-	  </para>
-	  <programlisting  format="linespecific">
-		:cleanup:fifo_reply
-		_empty_line_
-	  </programlisting>
-	</section>
 </section>
 
 <section>
-	<title>RPC Commands</title>
-	<section>
-	  <title>
-		<function moreinfo="none">presence.cleanup</function>
-	  </title>
-	  <para>
-		Manually triggers the cleanup functions for the active_watchers, presentity,
-		and watchers tables. Useful if you have set <varname>clean_period</varname>
-		and/or <varname>db_update_period</varname> to zero or less.
-	  </para>
-	  <para>
-		Name: <emphasis>presence.cleanup</emphasis>
-	  </para>
-	  <para>Parameters: <emphasis>none</emphasis></para>
-
-	</section>
-</section>
-
-<section>
-	<title>Pseudo Variables</title>
+	<title>Exported Variables</title>
 
 		<section>
 			<title><varname>$subs(attr)</varname></title>

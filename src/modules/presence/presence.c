@@ -60,7 +60,6 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
 #include "../../core/pt.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/hashes.h"
 #include "../pua/hash.h"
 #include "presence.h"
@@ -123,12 +122,9 @@ static void destroy(void);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
 static int fixup_subscribe(void** param, int param_no);
-static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
-static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 static int update_pw_dialogs(subs_t* subs, unsigned int hash_code,
 		subs_t** subs_array);
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
-static int mi_child_init(void);
 static int w_pres_auth_status(struct sip_msg* _msg, char* _sp1, char* _sp2);
 static int w_pres_refresh_watchers(struct sip_msg *msg, char *puri,
 		char *pevent, char *ptype);
@@ -233,12 +229,6 @@ static param_export_t params[]={
 	{0,0,0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "refreshWatchers", mi_refreshWatchers,    0,  0,  mi_child_init},
-	{ "cleanup",         mi_cleanup,            0,  0,  mi_child_init},
-	{  0,                0,                     0,  0,  0}
-};
-
 static pv_export_t pres_mod_pvs[] = {
 	{{"subs", (sizeof("subs")-1)}, PVT_OTHER, pv_get_subscription, 0, pv_parse_subscription_name, 0, 0, 0},
 	{{"notify_reply", (sizeof("notify_reply")-1)}, PVT_OTHER, pv_get_notify_reply, 0, pv_parse_notify_reply_var_name, 0, 0, 0},
@@ -252,7 +242,7 @@ struct module_exports exports= {
 	cmds,				/* exported functions */
 	params,				/* exported parameters */
 	0,					/* exported statistics */
-	mi_cmds,   			/* exported MI functions */
+	0,					/* exported MI functions */
 	pres_mod_pvs,		/* exported pseudo-variables */
 	0,					/* extra processes */
 	mod_init,			/* module initialization function */
@@ -272,11 +262,6 @@ static int mod_init(void)
 		presence_sip_uri_match = sip_uri_case_sensitive_match;
 	}
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(presence_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -550,50 +535,6 @@ static int child_init(int rank)
 	return 0;
 }
 
-static int mi_child_init(void)
-{
-	if(library_mode)
-		return 0;
-
-	if (pa_dbf.init==0)
-	{
-		LM_CRIT("database not bound\n");
-		return -1;
-	}
-	/* Do not pool the connections where possible when running notifier
-	 * processes. */
-	if (pres_notifier_processes > 0 && pa_dbf.init2)
-		pa_db = pa_dbf.init2(&db_url, DB_POOLING_NONE);
-	else
-		pa_db = pa_dbf.init(&db_url);
-	if (!pa_db)
-	{
-		LM_ERR("connecting database\n");
-		return -1;
-	}
-
-	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
-	{
-		LM_ERR( "unsuccessful use_table presentity_table\n");
-		return -1;
-	}
-
-	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
-	{
-		LM_ERR( "unsuccessful use_table active_watchers_table\n");
-		return -1;
-	}
-
-	if (pa_dbf.use_table(pa_db, &watchers_table) < 0)
-	{
-		LM_ERR( "unsuccessful use_table watchers_table\n");
-		return -1;
-	}
-
-	LM_DBG("Database connection opened successfully\n");
-	return 0;
-}
-
 
 /*
  * destroy function
@@ -745,113 +686,6 @@ error:
 	return -1;
 }
 
-/*! \brief
- *  mi cmd: refreshWatchers
- *			\<presentity_uri>
- *			\<event>
- *          \<refresh_type> // can be:  = 0 -> watchers autentification type or
- *									  != 0 -> publish type //
- *		* */
-
-static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
-{
-	struct mi_node* node= NULL;
-	str pres_uri, event, file_uri = {0, 0}, filename = {0, 0};
-	unsigned int refresh_type;
-
-	LM_DBG("start\n");
-
-	node = cmd->node.kids;
-	if(node == NULL)
-		return 0;
-
-	/* Get presentity URI */
-	pres_uri = node->value;
-	if(pres_uri.s == NULL || pres_uri.len== 0)
-	{
-		LM_ERR( "empty uri\n");
-		return init_mi_tree(404, "Empty presentity URI", 20);
-	}
-
-	node = node->next;
-	if(node == NULL)
-		return 0;
-	event= node->value;
-	if(event.s== NULL || event.len== 0)
-	{
-		LM_ERR( "empty event parameter\n");
-		return init_mi_tree(400, "Empty event parameter", 21);
-	}
-	LM_DBG("event '%.*s'\n",  event.len, event.s);
-
-	node = node->next;
-	if(node == NULL)
-		return 0;
-	if(node->value.s== NULL || node->value.len== 0)
-	{
-		LM_ERR( "empty refresh type parameter\n");
-		return init_mi_tree(400, "Empty refresh type parameter", 28);
-	}
-	if(str2int(&node->value, &refresh_type)< 0)
-	{
-		LM_ERR("converting string to int\n");
-		goto error;
-	}
-
-	if (refresh_type == 2)
-	{
-		node = node->next;
-		if(node == NULL)
-			return 0;
-		file_uri = node->value;
-		if(file_uri.s== NULL || file_uri.len== 0)
-		{
-			LM_ERR( "empty file uri parameter\n");
-			return init_mi_tree(400, "Empty file uri parameter", 24);
-		}
-
-		node = node->next;
-		if(node == NULL)
-			return 0;
-		filename = node->value;
-		if(filename.s== NULL || filename.len== 0)
-		{
-			LM_ERR( "empty file name parameter\n");
-			return init_mi_tree(400, "Empty file name parameter", 25);
-		}
-	}
-
-	if(node->next!= NULL)
-	{
-		LM_ERR( "Too many parameters\n");
-		return init_mi_tree(400, "Too many parameters", 19);
-	}
-
-	if(pres_refresh_watchers(&pres_uri, &event, refresh_type,
-				file_uri.len ? &file_uri: NULL,
-				filename.len ? &filename : NULL)<0)
-		return 0;
-
-	return init_mi_tree(200, "OK", 2);
-
-error:
-	return 0;
-}
-
-/*
- *  mi cmd: cleanup
- *		* */
-
-static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param)
-{
-	LM_DBG("mi_cleanup:start\n");
-
-	(void)msg_watchers_clean(0,0);
-	(void)msg_presentity_clean(0,0);
-	(void)timer_db_update(0,0);
-
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-}
 
 int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
 		db_val_t* query_vals, int n_query_cols, subs_t** subs_array)
@@ -1864,6 +1698,78 @@ static int fixup_update_watchers(void** param, int param_no)
 
 }
 
+/*! \brief
+ *  rpc cmd: presence.refreshWatchers
+ *			\<presentity_uri>
+ *			\<event>
+ *          \<refresh_type> // can be:  = 0 -> watchers autentification type or
+ *									  != 0 -> publish type //
+ *		* */
+void rpc_presence_refresh_watchers(rpc_t* rpc, void* ctx)
+{
+	str pres_uri = {0,0};
+	str event = {0,0 };
+	str file_uri = {0, 0};
+	str filename = {0, 0};
+	unsigned int refresh_type;
+	int pn;
+
+	LM_DBG("initiation refresh of watchers\n");
+
+	pn = rpc->scan(ctx, "SSu*SS", &pres_uri, &event, &refresh_type,
+				&file_uri, &filename);
+	if(pn < 3) {
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
+	}
+
+	if(pres_uri.s == NULL || pres_uri.len== 0) {
+		LM_ERR("empty uri\n");
+		rpc->fault(ctx, 500, "Empty presentity URI");
+		return;
+	}
+
+	if(event.s== NULL || event.len== 0) {
+		LM_ERR( "empty event parameter\n");
+		rpc->fault(ctx, 500, "Empty event parameter");
+		return;
+	}
+	LM_DBG("event '%.*s'\n",  event.len, event.s);
+
+	if(refresh_type == 2) {
+		if(pn<5) {
+			LM_ERR( "empty file uri or name parameters\n");
+			rpc->fault(ctx, 500, "No file uri or name parameters");
+			return;
+
+		}
+		if(file_uri.s== NULL || file_uri.len== 0) {
+			LM_ERR( "empty file uri parameter\n");
+			rpc->fault(ctx, 500, "Empty file uri parameter");
+			return;
+		}
+
+		if(filename.s== NULL || filename.len== 0) {
+			LM_ERR( "empty file name parameter\n");
+			rpc->fault(ctx, 500, "Empty file name parameter");
+			return;
+		}
+	}
+
+	if(pres_refresh_watchers(&pres_uri, &event, refresh_type,
+				file_uri.len ? &file_uri: NULL,
+				filename.len ? &filename : NULL)<0) {
+		rpc->fault(ctx, 500, "Execution failed");
+		return;
+
+	}
+}
+
+static const char* rpc_presence_refresh_watchers_doc[2] = {
+	"Trigger refresh of watchers",
+	0
+};
+
 void rpc_presence_cleanup(rpc_t* rpc, void* c)
 {
 	LM_DBG("rpc_presence_cleanup:start\n");
@@ -1883,6 +1789,8 @@ static const char* rpc_presence_cleanup_doc[2] = {
 
 rpc_export_t presence_rpc[] = {
 	{"presence.cleanup", rpc_presence_cleanup, rpc_presence_cleanup_doc, 0},
+	{"presence.refreshWatchers", rpc_presence_refresh_watchers,
+		rpc_presence_refresh_watchers_doc, 0},
 	{0, 0, 0, 0}
 };
 
