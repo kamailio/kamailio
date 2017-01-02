@@ -162,9 +162,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"core_hash",    (cmd_function)w_core_hash, 3,   fixup_core_hash, 0,
 		ANY_ROUTE},
-	{"check_route_exists",    (cmd_function)w_check_route_exists, 1,   0, 0,
+	{"check_route_exists",    (cmd_function)w_check_route_exists, 1,   fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
-	{"route_if_exists",    (cmd_function)w_route_exists, 1,   0, 0,
+	{"route_if_exists",    (cmd_function)w_route_exists, 1,   fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
 	{"bind_cfgutils", (cmd_function)bind_cfgutils,  0,
 		0, 0, 0},
@@ -784,7 +784,14 @@ static int w_cfg_trylock(struct sip_msg *msg, char *key, char *s2)
  */
 static int w_check_route_exists(struct sip_msg *msg, char *route)
 {
-	if (route_lookup(&main_rt, route)<0) {
+	str s;
+
+	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0)
+	{
+			LM_ERR("invalid route parameter\n");
+			return -1;
+	}
+	if (route_lookup(&main_rt, s.s)<0) {
 		/* not found */
 		return -1;
 	}
@@ -797,8 +804,15 @@ static int w_route_exists(struct sip_msg *msg, char *route)
 {
 	struct run_act_ctx ctx;
 	int newroute, backup_rt, ret;
+	str s;
 
-	newroute = route_lookup(&main_rt, route);
+	if (fixup_get_svalue(msg, (gparam_p) route, &s) != 0)
+	{
+			LM_ERR("invalid route parameter\n");
+			return -1;
+	}
+
+	newroute = route_lookup(&main_rt, s.s);
 	if (newroute<0) {
 		return -1;
 	}
