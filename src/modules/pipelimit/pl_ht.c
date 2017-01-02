@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -36,7 +36,6 @@
 #include "../../core/str.h"
 #include "../../core/hashes.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/rpc_lookup.h"
 
 #include "pl_ht.h"
@@ -374,210 +373,6 @@ static int check_feedback_setpoints(int modparam)
 	return pl_pipe_check_feedback_setpoints(&_pl_cfg_setpoint);
 }
 
-
-/*
- * MI functions
- *
- * mi_stats() dumps the current config/statistics
- * mi_{invite|register|subscribe}() set the limits
- */
-
-/* mi function implementations */
-struct mi_root* mi_stats(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_root *rpl_tree;
-	struct mi_node *node=NULL, *rpl=NULL;
-	struct mi_attr* attr;
-	char* p;
-	int i, len;
-	pl_pipe_t *it;
-
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==0)
-		return 0;
-	rpl = &rpl_tree->node;
-
-	for(i=0; i<_pl_pipes_ht->htsize; i++)
-	{
-		lock_get(&_pl_pipes_ht->slots[i].lock);
-		it = _pl_pipes_ht->slots[i].first;
-		while(it)
-		{
-			if (it->algo != PIPE_ALGO_NOP) {
-				node = add_mi_node_child(rpl, 0, "PIPE", 4, 0, 0);
-				if(node == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-
-				attr = add_mi_attr(node, MI_DUP_VALUE, "id", 2, it->name.s,
-						it->name.len);
-				if(attr == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-
-				p = int2str((unsigned long)(it->load), &len);
-				attr = add_mi_attr(node, MI_DUP_VALUE, "load", 4, p, len);
-				if(attr == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-
-				p = int2str((unsigned long)(it->last_counter), &len);
-				attr = add_mi_attr(node, MI_DUP_VALUE, "counter", 7, p, len);
-				if(attr == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-			}
-			it = it->next;
-		}
-		lock_release(&_pl_pipes_ht->slots[i].lock);
-	}
-
-#if 0
-	p = int2str((unsigned long)(*drop_rate), &len);
-	node = add_mi_node_child(rpl, MI_DUP_VALUE, "DROP_RATE", 9, p, len);
-#endif
-
-	return rpl_tree;
-error:
-	LM_ERR("Unable to create reply\n");
-	free_mi_tree(rpl_tree); 
-	return 0;
-}
-
-struct mi_root* mi_get_pipes(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_root *rpl_tree;
-	struct mi_node *node=NULL, *rpl=NULL;
-	struct mi_attr* attr;
-	str algo;
-	char* p;
-	int i, len;
-	pl_pipe_t *it;
-
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==0)
-		return 0;
-	rpl = &rpl_tree->node;
-
-	for(i=0; i<_pl_pipes_ht->htsize; i++)
-	{
-		lock_get(&_pl_pipes_ht->slots[i].lock);
-		it = _pl_pipes_ht->slots[i].first;
-		while(it)
-		{
-			if (it->algo != PIPE_ALGO_NOP) {
-				node = add_mi_node_child(rpl, 0, "PIPE", 4, 0, 0);
-				if(node == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-
-				attr = add_mi_attr(node, MI_DUP_VALUE, "id" , 2, it->name.s,
-						it->name.len);
-				if(attr == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-
-				if (str_map_int(algo_names, it->algo, &algo))
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-				attr = add_mi_attr(node, 0, "algorithm", 9, algo.s, algo.len);
-				if(attr == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-
-				p = int2str((unsigned long)(it->limit), &len);
-				attr = add_mi_attr(node, MI_DUP_VALUE, "limit", 5, p, len);
-				if(attr == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-
-				p = int2str((unsigned long)(it->counter), &len);
-				attr = add_mi_attr(node, MI_DUP_VALUE, "counter", 7, p, len);
-				if(attr == NULL)
-				{
-					lock_release(&_pl_pipes_ht->slots[i].lock);
-					goto error;
-				}
-			}
-			it = it->next;
-		}
-		lock_release(&_pl_pipes_ht->slots[i].lock);
-	}
-	return rpl_tree;
-error:
-	LM_ERR("Unable to create reply\n");
-	free_mi_tree(rpl_tree); 
-	return 0;
-}
-
-struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_node *node;
-	unsigned int algo_id, limit = 0;
-	pl_pipe_t *it;
-	str pipeid;
-
-	node = cmd_tree->node.kids;
-	if (node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	if ( !node->value.s || !node->value.len)
-		goto error;
-	pipeid = node->value;
-	
-	node = node->next;
-	if ( !node || !node->value.s || !node->value.len)
-		goto error;
-	if (str_map_str(algo_names, &(node->value), (int*)&algo_id)) {
-		LM_ERR("unknown algorithm: '%.*s'\n", node->value.len, node->value.s);
-		goto error;
-	}
-	
-	node = node->next;
-	if ( !node || !node->value.s || !node->value.len || strno2int(&node->value,&limit)<0)
-		goto error;
-
-	LM_DBG("set_pipe: %.*s:%d:%d\n", pipeid.len, pipeid.s, algo_id, limit);
-
-	it = pl_pipe_get(&pipeid, 1);
-	if (it==NULL) {
-		LM_ERR("no pipe: %.*s\n", pipeid.len, pipeid.s);
-		goto error;
-	}
-
-	it->algo = algo_id;
-	it->limit = limit;
-
-	pl_pipe_release(&pipeid);
-
-	if (check_feedback_setpoints(0)) {
-		LM_ERR("feedback limits don't match\n");
-		goto error;
-	} else {
-		*_pl_pid_setpoint = 0.01 * (double)_pl_cfg_setpoint;
-	}
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-error:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-}
 
 void rpl_pipe_lock(int slot)
 {

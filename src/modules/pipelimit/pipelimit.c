@@ -50,7 +50,7 @@
 #include "../../core/data_lump_rpl.h"
 #include "../../core/counters.h"
 #include "../../modules/sl/sl.h"
-#include "../../lib/kmi/mi.h"
+#include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/rand/kam_rand.h"
 
@@ -149,23 +149,6 @@ static param_export_t params[]={
 	{0,0,0}
 };
 
-struct mi_root* mi_stats(struct mi_root* cmd_tree, void* param);
-struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param);
-struct mi_root* mi_get_pipes(struct mi_root* cmd_tree, void* param);
-struct mi_root* mi_set_pid(struct mi_root* cmd_tree, void* param);
-struct mi_root* mi_get_pid(struct mi_root* cmd_tree, void* param);
-struct mi_root* mi_push_load(struct mi_root* cmd_tree, void* param);
-
-static mi_export_t mi_cmds [] = {
-	{"pl_stats",      mi_stats,      MI_NO_INPUT_FLAG, 0, 0},
-	{"pl_set_pipe",   mi_set_pipe,   0,                0, 0},
-	{"pl_get_pipes",  mi_get_pipes,  MI_NO_INPUT_FLAG, 0, 0},
-	{"pl_set_pid",    mi_set_pid,    0,                0, 0},
-	{"pl_get_pid",    mi_get_pid,    MI_NO_INPUT_FLAG, 0, 0},
-	{"pl_push_load",  mi_push_load,  0,                0, 0},
-	{0,0,0,0,0}
-};
-
 static rpc_export_t rpc_methods[];
 
 /** module exports */
@@ -175,7 +158,7 @@ struct module_exports exports= {
 	cmds,
 	params,
 	0,				/* exported statistics */
-	mi_cmds,			/* exported MI functions */
+	0,				/* exported MI functions */
 	0,				/* exported pseudo-variables */
 	0,				/* extra processes */
 	mod_init,			/* module initialization function */
@@ -329,7 +312,7 @@ static void do_update_load(void)
 
 static void update_cpu_load(void)
 {
-	if (get_cpuload(load_value)) 
+	if (get_cpuload(load_value))
 		return;
 
 	do_update_load();
@@ -341,11 +324,6 @@ static int mod_init(void)
 	if(rpc_register_array(rpc_methods)!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
-		return -1;
-	}
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
 		return -1;
 	}
 	if(pl_hash_size<=0)
@@ -745,103 +723,6 @@ static ticks_t pl_timer_handle(ticks_t ticks, struct timer_ln* tl, void* data)
 	return (ticks_t)(-1); /* periodical */
 }
 
-
-struct mi_root* mi_get_pid(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_root *rpl_tree;
-	struct mi_node *node=NULL, *rpl=NULL;
-	struct mi_attr* attr;
-
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==0)
-		return 0;
-	rpl = &rpl_tree->node;
-	node = add_mi_node_child(rpl, 0, "PID", 3, 0, 0);
-	if(node == NULL)
-		goto error;
-	rpl_pipe_lock(0);
-	attr= addf_mi_attr(node, 0, "ki", 2, "%0.3f", *pid_ki);
-	if(attr == NULL)
-		goto error;
-	attr= addf_mi_attr(node, 0, "kp", 2, "%0.3f", *pid_kp);
-	if(attr == NULL)
-		goto error;
-	attr= addf_mi_attr(node, 0, "kd", 2, "%0.3f", *pid_kd);
-	rpl_pipe_release(0);
-	if(attr == NULL)
-		goto error;
-
-	return rpl_tree;
-
-error:
-	rpl_pipe_release(0);
-	LM_ERR("Unable to create reply\n");
-	free_mi_tree(rpl_tree);
-	return 0;
-}
-
-struct mi_root* mi_set_pid(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_node *node;
-	char i[5], p[5], d[5];
-
-	node = cmd_tree->node.kids;
-	if (node == NULL) return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	if ( !node->value.s || !node->value.len || node->value.len >= 5)
-		goto bad_syntax;
-	memcpy(i, node->value.s, node->value.len);
-	i[node->value.len] = '\0';
-
-	node = node->next;
-	if ( !node->value.s || !node->value.len || node->value.len >= 5)
-		goto bad_syntax;
-	memcpy(p, node->value.s, node->value.len);
-	p[node->value.len] = '\0';
-
-	node = node->next;
-	if ( !node->value.s || !node->value.len || node->value.len >= 5)
-		goto bad_syntax;
-	memcpy(d, node->value.s, node->value.len);
-	d[node->value.len] = '\0';
-
-	rpl_pipe_lock(0);
-	*pid_ki = strtod(i, NULL);
-	*pid_kp = strtod(p, NULL);
-	*pid_kd = strtod(d, NULL);
-	rpl_pipe_release(0);
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-bad_syntax:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-}
-
-struct mi_root* mi_push_load(struct mi_root* cmd_tree, void* param)
-{
-	struct mi_node *node;
-	double value;
-	char c[5];
-
-	node = cmd_tree->node.kids;
-	if (node == NULL) return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	if ( !node->value.s || !node->value.len || node->value.len >= 5)
-		goto bad_syntax;
-	memcpy(c, node->value.s, node->value.len);
-	c[node->value.len] = '\0';
-	value = strtod(c, NULL);
-	if (value < 0.0 || value > 1.0) {
-		LM_ERR("value out of range: %0.3f in not in [0.0,1.0]\n", value);
-		goto bad_syntax;
-	}
-	rpl_pipe_lock(0);
-	*load_value = value;
-	rpl_pipe_release(0);
-
-	do_update_load();
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-bad_syntax:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-}
 
 /* rpc function documentation */
 const char *rpc_pl_stats_doc[2] = {

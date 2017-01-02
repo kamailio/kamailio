@@ -17,11 +17,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
+
 /*! \file
  * \ingroup pipelimit
  * \brief pipelimit :: pl_ht
@@ -54,7 +54,7 @@ typedef struct _rlp_slot
 {
 	unsigned int ssize;
 	pl_pipe_t *first;
-	gen_lock_t lock;	
+	gen_lock_t lock;
 } rlp_slot_t;
 
 typedef struct _rlp_htable
@@ -75,7 +75,7 @@ void pl_pipe_timer_update(int interval, int netload);
 void rpl_pipe_lock(int slot);
 void rpl_pipe_release(int slot);
 
-/* PIPE_ALGO_FEEDBACK holds cpu usage to a fixed value using 
+/* PIPE_ALGO_FEEDBACK holds cpu usage to a fixed value using
  * negative feedback according to the PID controller model
  *
  * <http://en.wikipedia.org/wiki/PID_controller>
@@ -111,7 +111,7 @@ static inline int str_i_cmp(const str * a, const str * b)
  */
 static inline int str_map_str(const str_map_t * map, const str * key, int * ret)
 {
-	for (; map->str.s; map++) 
+	for (; map->str.s; map++)
 		if (! str_cmp(&map->str, key)) {
 			*ret = map->id;
 			return 0;
@@ -126,7 +126,7 @@ static inline int str_map_str(const str_map_t * map, const str * key, int * ret)
  */
 static inline int str_map_int(const str_map_t * map, int key, str * ret)
 {
-	for (; map->str.s; map++) 
+	for (; map->str.s; map++)
 		if (map->id == key) {
 			*ret = map->str;
 			return 0;
@@ -150,6 +150,5 @@ static inline int str_cpy(str * dest, str * src)
 	memcpy(dest->s, src->s, src->len);
 	return 0;
 }
-
 
 #endif

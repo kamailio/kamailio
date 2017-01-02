@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -480,162 +480,6 @@ with unexpected retcode=$var(check_result)\n");
 	</section>
 
 	<section>
-	<title>MI Commands</title>
-	<section id="pipelimit.m.pl_stats">
-		<title>
-		<function moreinfo="none">pl_stats</function>
-		</title>
-		<para>
-		Lists the parameters and variables in the pipelimit module.
-		</para>
-		<para>
-		Name: <emphasis>pl_stats</emphasis>
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:pl_stats:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-	</section>
-	<section id="pipelimit.m.pl_set_pipe">
-		<title>
-		<function moreinfo="none">pl_set_pipe</function>
-		</title>
-		<para>
-		Sets the pipe parameters for the given pipe id.
-		</para>
-		<para>
-		Name: <emphasis>pl_set_pipe</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-			<emphasis>pipe_id</emphasis> - pipe id.
-			</para></listitem>
-			<listitem><para>
-			<emphasis>pipe_algorithm</emphasis> - the
-			algorithm assigned to the given pipe id.
-			</para></listitem>
-			<listitem><para>
-			<emphasis>pipe_limit</emphasis> - the limit
-			assigned to the given pipe id.
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:pl_set_pipe:_reply_fifo_file_
-		2
-		RED
-		10
-		_empty_line_
-		</programlisting>
-	</section>
-	<section id="pipelimit.m.pl_get_pipes">
-		<title>
-		<function moreinfo="none">pl_get_pipes</function>
-		</title>
-		<para>
-		Gets the list of in use pipes.
-		</para>
-		<para>
-		Name: <emphasis>pl_get_pipes</emphasis>
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:pl_get_pipes:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-	</section>
-	<section id="pipelimit.m.pl_set_pid">
-		<title>
-		<function moreinfo="none">pl_set_pid</function>
-		</title>
-		<para>
-		Sets the PID Controller parameters for the Feedback Algorithm.
-		</para>
-		<para>
-		Name: <emphasis>pl_set_pid</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-			<emphasis>ki</emphasis> - the integral parameter.
-			</para></listitem>
-			<listitem><para>
-			<emphasis>kp</emphasis> - the proportional parameter.
-			</para></listitem>
-			<listitem><para>
-			<emphasis>kd</emphasis> - the derivative parameter.
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:pl_set_pid:_reply_fifo_file_
-		0.5
-		0.5
-		0.5
-		_empty_line_
-		</programlisting>
-	</section>
-	<section id="pipelimit.m.pl_get_pid">
-		<title>
-		<function moreinfo="none">pl_get_pid</function>
-		</title>
-		<para>
-		Gets the list of in use PID Controller parameters.
-		</para>
-		<para>
-		Name: <emphasis>pl_get_pid</emphasis>
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:pl_get_pid:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-	</section>
-	<section id="pipelimit.m.pl_push_load">
-		<title>
-		<function moreinfo="none">pl_push_load</function>
-		</title>
-		<para>
-		Force the value of the load parameter. This command is useful
-		for testing the Feedback algorithm.
-		</para>
-		<para>
-		Name: <emphasis>pl_push_load</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-			<emphasis>load</emphasis> - the forced value of load
-			(it must be greater then 0.0 and smaller then 1.0).
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:pl_push_load:_reply_fifo_file_
-		0.85
-		_empty_line_
-		</programlisting>
-	</section>
-	</section>
-	
-	<section>
 	<title>RPC Commands</title>
 	<section id="pipelimit.r.pl.stats">
 		<title>
@@ -778,5 +622,5 @@ with unexpected retcode=$var(check_result)\n");
 		</programlisting>
 	</section>
 	</section>
-	
+
 </chapter>
