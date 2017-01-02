@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -115,7 +114,7 @@ static int geoip2_match(struct sip_msg *msg, gparam_t *target, gparam_t *pvname)
 {
 	str tomatch;
 	str pvclass;
-	
+
 	if(msg==NULL)
 	{
 		LM_ERR("received null msg\n");

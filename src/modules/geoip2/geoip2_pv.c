@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -178,14 +177,14 @@ int pv_parse_geoip2_name(pv_spec_p sp, str *in)
 
 	switch(pvs.len)
 	{
-		case 2: 
+		case 2:
 			if(strncmp(pvs.s, "cc", 2)==0)
 				gpv->type = 0;
 			else if(strncmp(pvs.s, "tz", 2)==0)
 				gpv->type = 1;
 			else goto error;
 		break;
-		case 3: 
+		case 3:
 			if(strncmp(pvs.s, "zip", 3)==0)
 				gpv->type = 2;
 			else if(strncmp(pvs.s, "lat", 3)==0)
@@ -194,7 +193,7 @@ int pv_parse_geoip2_name(pv_spec_p sp, str *in)
 				gpv->type = 4;
 			else goto error;
 		break;
-		case 4: 
+		case 4:
 			if(strncmp(pvs.s, "city", 4)==0)
 				gpv->type = 8;
 			else if(strncmp(pvs.s, "regc", 4)==0)
@@ -203,7 +202,7 @@ int pv_parse_geoip2_name(pv_spec_p sp, str *in)
 				gpv->type = 11;
 			else goto error;
 		break;
-		case 5: 
+		case 5:
 			if(strncmp(pvs.s, "metro", 5)==0)
 				gpv->type = 12;
 			else if(strncmp(pvs.s, "nmask", 5)==0)
@@ -433,7 +432,7 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 int geoip2_init_pv(char *path)
 {
 	int status = MMDB_open(path, MMDB_MODE_MMAP, &_handle_GeoIP);
-	
+
 	if(MMDB_SUCCESS != status)
 	{
 		LM_ERR("cannot open GeoIP database file at: %s\n", path);
@@ -454,7 +453,7 @@ void geoip2_destroy_pv(void)
 void geoip2_pv_reset(str *name)
 {
 	sr_geoip2_record_t *gr = NULL;
-	
+
 	gr = sr_geoip2_get_record(name);
 
 	if(gr==NULL)
@@ -466,13 +465,13 @@ int geoip2_update_pv(str *tomatch, str *name)
 {
 	sr_geoip2_record_t *gr = NULL;
 	int gai_error, mmdb_error;
-	
+
 	if(tomatch->len>255)
 	{
 		LM_DBG("target too long (max 255): %s\n", tomatch->s);
 		return -3;
 	}
-	
+
 	gr = sr_geoip2_get_record(name);
 	if(gr==NULL)
 	{
