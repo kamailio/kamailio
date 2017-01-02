@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2010 Elena-Ramona Modroiu (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -32,7 +30,8 @@
 #include "../../core/ut.h"
 #include "../../core/pvar.h"
 #include "../../core/mod_fix.h"
-#include "../../lib/kmi/mi.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/shm_init.h"
 
@@ -52,7 +51,7 @@ int mq_param(modparam_t type, void *val);
 static int fixup_mq_add(void** param, int param_no);
 static int bind_mq(mq_api_t* api);
 
-static struct mi_root *mq_mi_get_size(struct mi_root *, void *);
+static int mqueue_rpc_init(void);
 
 static pv_export_t mod_pvs[] = {
 	{ {"mqk", sizeof("mqk")-1}, PVT_OTHER, pv_get_mqk, 0,
@@ -64,10 +63,6 @@ static pv_export_t mod_pvs[] = {
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "mq_get_size",	mq_mi_get_size,	0, 0, 0},
-	{ 0, 0, 0, 0, 0}
-};
 
 static cmd_export_t cmds[]={
 	{"mq_fetch", (cmd_function)w_mq_fetch, 1, fixup_spve_null,
@@ -94,7 +89,7 @@ struct module_exports exports = {
 	cmds,
 	params,
 	0,
-	mi_cmds,        /* exported MI functions */
+	0,              /* exported MI functions */
 	mod_pvs,        /* exported pseudo-variables */
 	0,              /* extra processes */
 	mod_init,       /* module initialization function */
@@ -113,8 +108,8 @@ static int mod_init(void)
 	if(!mq_head_defined())
 		LM_WARN("no mqueue defined\n");
 
-	if(register_mi_mod(exports.name, mi_cmds) != 0) {
-		LM_ERR("failed to register MI commands\n");
+	if(mqueue_rpc_init() < 0) {
+		LM_ERR("failed to register RPC commands\n");
 		return 1;
 	}
 
@@ -145,7 +140,7 @@ static int w_mq_fetch(struct sip_msg* msg, char* mq, char* str2)
 	return 1;
 }
 
-static int w_mq_size(struct sip_msg *msg, char *mq, char *str2) 
+static int w_mq_size(struct sip_msg *msg, char *mq, char *str2)
 {
 	int ret;
 	str q;
@@ -276,68 +271,59 @@ static int bind_mq(mq_api_t* api)
 }
 
 /* Return the size of the specified mqueue */
-
-static struct mi_root *mq_mi_get_size(struct mi_root *cmd_tree, 
-				      void *param)
+static void  mqueue_rpc_get_size(rpc_t* rpc, void* ctx)
 {
-	static struct mi_node	*node = NULL, *rpl = NULL;
-	static struct mi_root	*rpl_tree = NULL;
-	static struct mi_attr	*attr = NULL;
+	void* vh;
 	str			mqueue_name;
 	int			mqueue_sz = 0;
-	char			*p = NULL;
-	int			len = 0;
 
-	if((node = cmd_tree->node.kids) == NULL) {
-		return init_mi_tree(400, MI_MISSING_PARM_S, 
-					 MI_MISSING_PARM_LEN);
+	str status = {0, 0};
+
+	if (rpc->scan(ctx, "S", &mqueue_name) < 1) {
+		rpc->fault(ctx, 500, "No queue name");
+		return;
 	}
-
-	mqueue_name = node->value;
 
 	if(mqueue_name.len <= 0 || mqueue_name.s == NULL) {
 		LM_ERR("bad mqueue name\n");
-		return init_mi_tree(500, MI_SSTR("bad mqueue name"));
+		rpc->fault(ctx, 500, "Invalid queue name");
+		return;
 	}
 
 	mqueue_sz = _mq_get_csize(&mqueue_name);
 
 	if(mqueue_sz < 0) {
 		LM_ERR("no such mqueue\n");
-		return init_mi_tree(404, MI_SSTR("no such mqueue"));
+		rpc->fault(ctx, 500, "No such queue");
+		return;
 	}
 
-	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-
-	if(rpl_tree == NULL) 
-		return 0;
-
-	rpl = &rpl_tree->node;
-
-	node = add_mi_node_child(rpl, MI_DUP_VALUE, "mqueue", strlen("mqueue"),
-				 NULL, 0);
-
-	if(node == NULL) {
-		free_mi_tree(rpl_tree);
-		return NULL;
+	if (rpc->add(ctx, "{", &vh) < 0) {
+		rpc->fault(ctx, 500, "Server error");
+		return;
 	}
+	rpc->struct_add(vh, "Sd",
+			"name", &mqueue_name,
+			"size", mqueue_sz);
 
-	attr = add_mi_attr(node, MI_DUP_VALUE, "name", strlen("name"),
-			   mqueue_name.s, mqueue_name.len);
-
-	if(attr == NULL) goto error;
-
-	p = int2str((unsigned long) mqueue_sz, &len);	
-
-	attr = add_mi_attr(node, MI_DUP_VALUE, "size", strlen("size"), 
-			   p, len);
-
-	if(attr == NULL) goto error;
-
-	return rpl_tree;
-
-error:
-	free_mi_tree(rpl_tree);
-	return NULL;
 }
 
+static const char* mqueue_rpc_get_size_doc[2] = {
+	"Get status or turn on/off siptrace. Parameters: on, off or check.",
+	0
+};
+
+rpc_export_t mqueue_rpc[] = {
+	{"mqueue.get_size", mqueue_rpc_get_size, mqueue_rpc_get_size_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int mqueue_rpc_init(void)
+{
+	if (rpc_register_array(mqueue_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}

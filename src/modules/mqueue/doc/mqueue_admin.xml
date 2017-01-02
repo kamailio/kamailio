@@ -11,16 +11,16 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
 		The mqueue module offers a generic message queue system in shared memory for
 		inter-process communication using the config file. One example of usage is
 		to send time consuming operations to one or several timer processes that consumes
-		items in the queue, without affecting SIP message handling in the socket-listening 
+		items in the queue, without affecting SIP message handling in the socket-listening
 		process.
 	</para>
 	<para>
@@ -93,7 +93,7 @@ modparam("mqueue", "mqueue", "name=qaz")
 	</section>
 
 	</section>
-	
+
     <section>
 	<title>Functions</title>
  	<section id="mqueue.f.mq_add">
@@ -113,7 +113,7 @@ mq_add("myq", "$rU", "call from $fU");
 </programlisting>
 	    </example>
 	</section>
-	
+
  	<section id="mqueue.f.mq_fetch">
 	    <title>
 		<function moreinfo="none">mq_fetch(queue)</function>
@@ -138,7 +138,7 @@ while(mq_fetch("myq"))
 </programlisting>
 	    </example>
 	</section>
-	
+
  	<section id="mqueue.f.mq_pv_free">
 	    <title>
 		<function moreinfo="none">mq_pv_free(queue)</function>
@@ -178,11 +178,11 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 </programlisting>
 	    </example>
 	</section>
-	
+
     </section>
 
     <section>
-	<title>Exported Pseudo-variables</title>
+	<title>Exported Variables</title>
 		<itemizedlist>
 			<listitem>
 				<emphasis>$mqv(mqueue)</emphasis> - the most recent item key fetched from the specified mqueue
@@ -197,6 +197,32 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 		<para>
 		Exported pseudo-variables are documented at &kamwikilink;.
 		</para>
+	</section>
+
+    <section>
+	<title>RPC Commands</title>
+	<section id="mqueue.r.get_size">
+		<title>mqueue.get_size</title>
+		<para>
+			Get the size of a memory queue.
+		</para>
+		<para>
+			Parameters:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<emphasis>name</emphasis> - the name of memory queue
+			</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>mqueue.get_size</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; mqueue.get_size xyz
+...
+</programlisting>
+	    </example>
+
     </section>
 
 </chapter>
