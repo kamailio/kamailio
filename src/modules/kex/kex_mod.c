@@ -37,7 +37,6 @@
 
 #include "flags.h"
 #include "km_core.h"
-#include "mi_core.h"
 #include "core_stats.h"
 #include "pkg_stats.h"
 #include "mod_stats.h"
@@ -136,12 +135,8 @@ static int mod_init(void)
 {
 	if(sruid_init(&_kex_sruid, '-', NULL, 0)<0)
 		return -1;
-	if(init_mi_core()<0)
-		return -1;
 #ifdef STATISTICS
 	if(register_core_stats()<0)
-		return -1;
-	if(register_mi_stats()<0)
 		return -1;
 #endif
 	register_pkg_proc_stats();

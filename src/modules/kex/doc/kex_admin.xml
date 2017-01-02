@@ -435,84 +435,88 @@ resetdebug();
 	</section>
 
 	<section>
-	<title>MI Commands</title>
-	<section id="kex.m.arg">
+	<title>RPC Commands</title>
+	<section id="kex.r.arg">
 		<title>
-		<function moreinfo="none">arg</function>
+		<function moreinfo="none">core.arg</function>
 		</title>
 		<para>
 		Print command line arguments.
 		</para>
 		<para>
-		Name: <emphasis>arg</emphasis>
+		Name: <emphasis>core.arg</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis>.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:arg:_reply_fifo_file_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; core.arg
+...
 		</programlisting>
     	</section>
-	<section id="kex.m.kill">
+	<section id="kex.r.kill">
 		<title>
-		<function moreinfo="none">kill</function>
+		<function moreinfo="none">core.kill</function>
 		</title>
 		<para>
 		Kill the application.
 		</para>
 		<para>
-		Name: <emphasis>kill</emphasis>
+		Name: <emphasis>core.kill</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis>.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:kill:_reply_fifo_file_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; core.kill
+...
 		</programlisting>
     	</section>
-	<section id="kex.m.pwd">
+	<section id="kex.r.pwd">
 		<title>
-		<function moreinfo="none">pwd</function>
+		<function moreinfo="none">core.pwd</function>
 		</title>
 		<para>
 		Print working directory.
 		</para>
 		<para>
-		Name: <emphasis>pwd</emphasis>
+		Name: <emphasis>core.pwd</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis>.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:pwd:_reply_fifo_file_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; core.pwd
+...
 		</programlisting>
     	</section>
-	<section id="kex.m.uptime">
+	<section id="kex.r.uptime">
 		<title>
-		<function moreinfo="none">uptime</function>
+		<function moreinfo="none">core.uptime</function>
 		</title>
 		<para>
 		Print uptime.
 		</para>
 		<para>
-		Name: <emphasis>uptime</emphasis>
+		Name: <emphasis>core.uptime</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis>.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:uptime:_reply_fifo_file_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; core.uptime
+...
 		</programlisting>
     </section>
-	<section id="kex.m.version">
+	<section id="kex.r.version">
 		<title>
 		<function moreinfo="none">version</function>
 		</title>
@@ -520,37 +524,39 @@ resetdebug();
 		Print version information.
 		</para>
 		<para>
-		Name: <emphasis>version</emphasis>
+		Name: <emphasis>core.version</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis>.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:version:_reply_fifo_file_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; core.version
+...
 		</programlisting>
     </section>
-	<section id="kex.m.which">
+	<section id="kex.r.system.listMethods">
 		<title>
-		<function moreinfo="none">which</function>
+		<function moreinfo="none">system.listMethods</function>
 		</title>
 		<para>
-		Print list of available MI commands.
+		Print list of available RPC commands.
 		</para>
 		<para>
 		Name: <emphasis>which</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis>.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:which:_reply_fifo_file_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; system.listMethods
+...
 		</programlisting>
     </section>
-	<section id="kex.m.get_statistics">
+	<section id="kex.r.stats.get_statistics">
 		<title>
 		<function moreinfo="none">get_statistics</function>
 		</title>
@@ -558,7 +564,7 @@ resetdebug();
 		Print the list of available internal statistics.
 		</para>
 		<para>
-		Name: <emphasis>get_statistics</emphasis>
+		Name: <emphasis>stats.get_statistics</emphasis>
 		</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
 			be printed. If set to 'all' then all statistics are printed; if
@@ -566,36 +572,36 @@ resetdebug();
 			if set to 'statsname' then the statistics identified by the name
 			is printed.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:get_statistics:_reply_fifo_file_
-		_statsid_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; stats.get_statistics
+...
 		</programlisting>
     </section>
-	<section id="kex.m.reset_statistics">
+	<section id="kex.r.stats.reset_statistics">
 		<title>
-		<function moreinfo="none">reset_statistics</function>
+		<function moreinfo="none">stats.reset_statistics</function>
 		</title>
 		<para>
 		Reset internal statistics.
 		</para>
 		<para>
-		Name: <emphasis>reset_statistics</emphasis>
+		Name: <emphasis>statsreset_statistics</emphasis>
 		</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
 			be reset, give as name.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:reset_statistics:_reply_fifo_file_
-		_statsid_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; reset_statistics _statsid_
+...
 		</programlisting>
     </section>
-	<section id="kex.m.clear_statistics">
+	<section id="kex.r.stats.clear_statistics">
 		<title>
 		<function moreinfo="none">clear_statistics</function>
 		</title>
@@ -603,24 +609,20 @@ resetdebug();
 			Return statistics and reset their value in one command.
 		</para>
 		<para>
-		Name: <emphasis>get_statistics</emphasis>
+		Name: <emphasis>stats.get_statistics</emphasis>
 		</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - same as for
 			get_statistics.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:clear_statistics:_reply_fifo_file_
-		_statsid_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; clear_statistics _statsid_
+...
 		</programlisting>
     </section>
 
-	</section>
-
-	<section>
-	<title>RPC Commands</title>
 	<section id="kex.r.pkg.stats">
 		<title>
 		<function moreinfo="none">pkg.stats</function>
@@ -778,7 +780,7 @@ Module: kex
 {
     // this is the pkg zone of the module
     // function_name(line_where_pkg_malloc_was_called): size_alloc'ed_by_pkg_malloc
-    init_mi_uptime(74): 56
+    init_rpc_uptime(74): 56
     Total: 56
 }
 {
