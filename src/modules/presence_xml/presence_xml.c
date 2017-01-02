@@ -13,13 +13,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- *  2007-04-12  initial version (anca)
  */
 
 /*!
@@ -51,7 +48,6 @@
 #include "../presence/notify.h"
 #include "../xcap_client/xcap_functions.h"
 #include "../../modules/sl/sl.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/mod_fix.h"
 #include "pidf.h"
 #include "add_events.h"
@@ -71,8 +67,6 @@ static int pxml_add_xcap_server( modparam_t type, void* val);
 static int shm_copy_xcap_list(void);
 static void free_xs_list(xcap_serv_t* xs_list, int mem_type);
 static int xcap_doc_updated(int doc_type, str xid, char* doc);
-static int mi_child_init(void);
-static struct mi_root* dum(struct mi_root* cmd, void* param);
 
 static int fixup_presxml_check(void **param, int param_no);
 static int w_presxml_check_basic(struct sip_msg *msg, char *presentity_uri, char *status);
@@ -135,11 +129,6 @@ static param_export_t params[]={
 	{ 0, 0, 0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "dum",             dum,          0,  0,  mi_child_init},
-	{  0,                0,            0,  0,        0      }
-};
-
 
 /** module exports */
 struct module_exports exports= {
@@ -148,7 +137,7 @@ struct module_exports exports= {
 	 cmds,  		/* exported functions */
 	 params,		/* exported parameters */
 	 0,				/* exported statistics */
-	 mi_cmds,		/* exported MI functions */
+	 0,				/* exported MI functions */
 	 0,				/* exported pseudo-variables */
 	 0,				/* extra processes */
 	 mod_init,		/* module initialization function */
@@ -156,7 +145,7 @@ struct module_exports exports= {
  	 destroy,		/* destroy function */
 	 child_init		/* per-child init function */
 };
-	
+
 /**
  * init module function
  */
@@ -167,12 +156,6 @@ static int mod_init(void)
 
 	if(passive_mode==1)
 		return 0;
-	
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 
 	LM_DBG("db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len, db_url.s);
 
@@ -193,7 +176,7 @@ static int mod_init(void)
 		LM_ERR("Can't bind to presence module\n");
 		return -1;
 	}
-	
+
 	pres_get_sphere= pres.get_sphere;
 	pres_add_event= pres.add_event;
 	pres_update_watchers= pres.update_watchers_status;
@@ -208,9 +191,9 @@ static int mod_init(void)
 	if(xml_add_events()< 0)
 	{
 		LM_ERR("adding xml events\n");
-		return -1;		
+		return -1;
 	}
-	
+
 	if(force_active== 0)
 	{
 		/* binding to mysql module  */
@@ -219,7 +202,7 @@ static int mod_init(void)
 			LM_ERR("Database module not found\n");
 			return -1;
 		}
-		
+
 		if (!DB_CAPABILITY(pxml_dbf, DB_CAP_ALL)) {
 			LM_ERR("Database module does not implement all functions"
 					" needed by the module\n");
@@ -249,7 +232,7 @@ static int mod_init(void)
 				LM_ERR("Can't bind xcap_client\n");
 				return -1;
 			}
-		
+
 			if (bind_xcap(&xcap_api) < 0)
 			{
 				LM_ERR("Can't bind xcap_api\n");
@@ -261,7 +244,7 @@ static int mod_init(void)
 				LM_ERR("can't import get_elem from xcap_client module\n");
 				return -1;
 			}
-		
+
 			if(xcap_api.register_xcb(PRES_RULES, xcap_doc_updated)< 0)
 			{
 				LM_ERR("registering xcap callback function\n");
@@ -283,37 +266,10 @@ static int mod_init(void)
 	return 0;
 }
 
-static int mi_child_init(void)
-{
-	if(passive_mode==1)
-		return 0;
-
-	if(force_active== 0)
-	{
-		if(pxml_db)
-			return 0;
-		pxml_db = pxml_dbf.init(&db_url);
-		if (pxml_db== NULL)
-		{
-			LM_ERR("while connecting database\n");
-			return -1;
-		}
-		if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0)
-		{
-			LM_ERR("in use_table SQL operation\n");
-			return -1;
-		}
-	}
-
-	LM_DBG("Database connection opened successfully\n");
-
-	return 0;
-}
-
 static int child_init(int rank)
 {
 	LM_DBG("[%d]  pid [%d]\n", rank, getpid());
-	
+
 	if(passive_mode==1)
 		return 0;
 
@@ -361,20 +317,20 @@ static int pxml_add_xcap_server( modparam_t type, void* val)
 	char* sep= NULL;
 	unsigned int port= 80;
 	str serv_addr_str;
-		
+
 	serv_addr_str.s= serv_addr;
 	serv_addr_str.len= strlen(serv_addr);
 
 	sep= strchr(serv_addr, ':');
 	if(sep)
-	{	
+	{
 		char* sep2= NULL;
 		str port_str;
-		
+
 		sep2= strchr(sep+ 1, ':');
 		if(sep2)
 			sep= sep2;
-		
+
 
 		port_str.s= sep+ 1;
 		port_str.len= serv_addr_str.len- (port_str.s- serv_addr);
@@ -433,7 +389,7 @@ static int shm_copy_xcap_list(void)
 	}
 	xs_list= NULL;
 	size= sizeof(xcap_serv_t);
-	
+
 	while(xs)
 	{
 		size+= (strlen(xs->addr)+ 1)* sizeof(char);
@@ -448,7 +404,7 @@ static int shm_copy_xcap_list(void)
 		shm_xs->addr= (char*)shm_xs+ size;
 		strcpy(shm_xs->addr, xs->addr);
 		shm_xs->port= xs->port;
-		shm_xs->next= xs_list; 
+		shm_xs->next= xs_list;
 		xs_list= shm_xs;
 
 		prev_xs= xs;
@@ -496,15 +452,10 @@ static int xcap_doc_updated(int doc_type, str xid, char* doc)
 	if(pres_update_watchers(xid, &ev, &rules_doc)< 0)
 	{
 		LM_ERR("updating watchers in presence\n");
-		return -1;	
+		return -1;
 	}
 	return 0;
 
-}
-
-static struct mi_root* dum(struct mi_root* cmd, void* param)
-{
-	return 0;
 }
 
 int bind_presence_xml(struct presence_xml_binds *pxb)

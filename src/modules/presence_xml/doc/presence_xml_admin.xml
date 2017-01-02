@@ -10,12 +10,12 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
-	<para> 
+	<para>
 		The module does specific handling for notify-subscribe events using xml
 		bodies. It is used with the general event handling module, presence.
 		It constructs and adds 3 events to it:
@@ -71,7 +71,7 @@
 				<emphasis>xcap_client</emphasis>.
 			</para>
 			<para>
-			Only compulsory if not using an integrated xcap server 
+			Only compulsory if not using an integrated xcap server
 			(if 'integrated_xcap_server' parameter is not set).
 			</para>
 			</listitem>
@@ -95,7 +95,7 @@
 		</para>
 	</section>
 	</section>
-	
+
 	<section>
 	<title>Parameters</title>
 	<section>
@@ -104,7 +104,7 @@
 		The database URL.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>&defaultdb;</quote>.	
+		<emphasis>	Default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -195,8 +195,8 @@ modparam("presence_xml", "disable_bla", 1)
 		<para>
 		This parameter is used for permissions when handling Subscribe messages.
 		If set to 1, subscription state is considered active and the presentity
-		is not queried for permissions (should be set to 1 if not using an XCAP 
-		server). 
+		is not queried for permissions (should be set to 1 if not using an XCAP
+		server).
 		Otherwise, the XCAP server is queried and the subscription states is
 		according to user defined permission rules. If no rules are defined for
 		a certain watcher, the subscriptions remains in pending state and the
@@ -229,12 +229,12 @@ modparam("presence_xml", "force_active", 1)
 		set to a positive value. Apart from updating in xcap table,
 		if the integrated server is not running on the same &kamailio; instance,
 		it must send an MI command refershWatchers
-		[pres_uri] [event] when a user modifies a rules document, to 
+		[pres_uri] [event] when a user modifies a rules document, to
 		instruct the presence_xml module to update states from the database
 		and, if needed, send NOTIFY updates.
 		</para>
 		<para>
-		Otherwise, it uses xcap_client module to fetch documents 
+		Otherwise, it uses xcap_client module to fetch documents
 		from the XCAP servers with HTTP requests.</para>
 		<para>
 		<emphasis>Default value is <quote>0</quote>.
@@ -300,7 +300,7 @@ modparam("presence_xml", "passive_mode", 1)
 		for the admin to decide which one he wishes to use.
 		</para>
 		<para>
-			<emphasis>Default value: <quote>probation</quote> </emphasis> . Since 
+			<emphasis>Default value: <quote>probation</quote> </emphasis> . Since
 			probation also accepts a retry-after parameter to specify after at
 			least how may seconds the client should reattempt to resubscribe,
 			you can include this in the parameter also.
@@ -338,7 +338,7 @@ modparam("presence_xml", "force_dummy_presence", 1)
 
 <section>
 	<title>Functions</title>
-	<section>
+	<section id="presence_xml.f.pres_check_basic">
 		<title>
 		<function moreinfo="none">pres_check_basic(presentity_uri, status)</function>
 		</title>
@@ -380,7 +380,7 @@ modparam("presence_xml", "force_dummy_presence", 1)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="presence_xml.f.pres_check_activities">
 		<title>
 		<function moreinfo="none">pres_check_activities(presentity_uri, activity)</function>
 		</title>
@@ -409,7 +409,7 @@ modparam("presence_xml", "force_dummy_presence", 1)
 				<emphasis> -2 - if /presence/person or /presence/person/activity do not exist</emphasis>.
 			</para>
 			</listitem>
-	
+
 		</itemizedlist>
 		</para>
 		<example>
@@ -435,23 +435,11 @@ modparam("presence_xml", "force_dummy_presence", 1)
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires one table in &kamailio; database: <quote>xcap</quote>. The SQL 
-	syntax to create it can be found in presence-create.sql     
+	The module requires one table in &kamailio; database: <quote>xcap</quote>. The SQL
+	syntax to create it can be found in presence-create.sql
 	script in the database directories in the kamailio/scripts folder.
 	You can also find the complete database documentation on the
 	project webpage, &kamailiodbdocs;.
-	</para>
-</section>
-
-<section>
-	<title>Exported pseudo-variables</title>
-	<itemizedlist>
-		<listitem><para>
-			<emphasis>$xml(name=>spec)</emphasis>
-		</para></listitem>
-	</itemizedlist>
-	<para>
-	Exported pseudo-variables are documented at &kamwikilink;.
 	</para>
 </section>
 
