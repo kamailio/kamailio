@@ -39,7 +39,6 @@
 #include "../../core/kemi.h"
 
 #include "t_var.h"
-#include "t_mi.h"
 #include "tmx_pretran.h"
 #include "api.h"
 
@@ -166,16 +165,6 @@ static pv_export_t mod_pvs[] = {
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-static mi_export_t mi_cmds [] = {
-	{MI_TM_UAC,     mi_tm_uac_dlg,   MI_ASYNC_RPL_FLAG,  0,  0 },
-	{MI_TM_CANCEL,  mi_tm_cancel,    0,                  0,  0 },
-	{MI_TM_HASH,    mi_tm_hash,      MI_NO_INPUT_FLAG,   0,  0 },
-	{MI_TM_REPLY,   mi_tm_reply,     0,                  0,  0 },
-	{MI_TM_REPLY_CALLID, mi_tm_reply_callid, 0,          0,  0 },
-	{0,0,0,0,0}
-};
-
-
 static cmd_export_t cmds[]={
 	{"t_cancel_branches", (cmd_function)t_cancel_branches,  1,
 		fixup_cancel_branches, 0, ONREPLY_ROUTE },
@@ -225,7 +214,7 @@ struct module_exports exports= {
 #else
 	0,
 #endif
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
@@ -245,11 +234,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 #ifdef STATISTICS
 	/* register statistics */
 	if (register_module_stats( exports.name, mod_stats)!=0 ) {
