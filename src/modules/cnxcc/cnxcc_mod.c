@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Carlos Ruiz Díaz (caruizdiaz.com),
  *                    ConexionGroup (www.conexiongroup.com)
  *
@@ -125,9 +123,9 @@ static credit_data_t *__alloc_new_credit_data(str *client_id, credit_type_t type
 static credit_data_t *__get_or_create_credit_data_entry(str *client_id, credit_type_t type);
 
 /*
- * MI interface
+ * control interface
  */
-static struct mi_root *__mi_credit_control_stats(struct mi_root *tree, void *param);
+void rpc_credit_control_stats(rpc_t* rpc, void* ctx);
 
 /*
  * Dialog management callback functions
@@ -179,10 +177,17 @@ static const char* rpc_kill_call_doc[2] = {
 	NULL
 };
 
-rpc_export_t ul_rpc[] = {
+static const char* rpc_credit_control_stats_doc[2] = {
+	"List credit control stats",
+	NULL
+};
+
+
+rpc_export_t cnxcc_rpc[] = {
     { "cnxcc.active_clients", rpc_active_clients, rpc_active_clients_doc,	0},
     { "cnxcc.check_client", rpc_check_client_stats, rpc_check_client_stats_doc,	0},
     { "cnxcc.kill_call", rpc_kill_call, rpc_kill_call_doc, 0},
+	{ "cnxcc.stats", rpc_credit_control_stats, rpc_credit_control_stats_doc, 0},
     { NULL, NULL, NULL, 0}
 };
 
@@ -308,15 +313,13 @@ static int __mod_init(void) {
 	cnxcc_lock_init(_data.money.lock);
 	cnxcc_lock_init(_data.channel.lock);
 
-	register_mi_cmd(__mi_credit_control_stats, "cnxcc_stats", NULL, NULL, 0);
-
 	/*
 	 * One for time based monitoring
 	 * One for money based monitoring
 	 */
 	register_dummy_timers(NUMBER_OF_TIMERS);
 
-	if (rpc_register_array(ul_rpc) != 0) {
+	if (rpc_register_array(cnxcc_rpc) != 0) {
 		LM_ERR("Failed registering RPC commands\n");
 		return -1;
 	}
@@ -1977,46 +1980,19 @@ static int __pv_get_calls(struct sip_msg *msg, pv_param_t *param, pv_value_t *re
 	return -1;
 }
 
-static struct mi_root *__mi_credit_control_stats(struct mi_root *tree, void *param) {
-	char *p;
-	int len;
-	struct mi_root *rpl_tree;
-	struct mi_node *node, *node1;
+void rpc_credit_control_stats(rpc_t* rpc, void* ctx)
+{
+	void *rh;
 
-	rpl_tree = init_mi_tree(200, "OK", 2);
-	node	 = &rpl_tree->node;
-
-	node1 = add_mi_node_child(node, 0, MI_SSTR("CNX Credit Control"), 0, 0);
-	if (node1 == NULL) {
-		LM_ERR("Error creating child node\n");
-		goto error;
+	if(rpc->add(ctx, "{", &rh)<0) {
+		rpc->fault(ctx, 500, "Server failure");
+		return;
 	}
 
-	p = int2str((unsigned long) _data.stats->active, &len);
-	if (p == NULL) {
-		LM_ERR("Error converting INT to STR\n");
-		goto error;
-	}
-	add_mi_node_child(node1, MI_DUP_VALUE, MI_SSTR("active"), p, len);
+	rpc->struct_add(rh, "sddd",
+				"info", "CNX Credit Control",
+				"active", _data.stats->active,
+				"dropped", _data.stats->dropped,
+				"total", _data.stats->total);
 
-	p = int2str((unsigned long) _data.stats->dropped, &len);
-	if (p == NULL) {
-		LM_ERR("Error converting INT to STR\n");
-		goto error;
-	}
-
-	add_mi_node_child(node1, MI_DUP_VALUE, MI_SSTR("dropped"), p, len);
-
-	p = int2str((unsigned long) _data.stats->total, &len);
-	if (p == NULL) {
-		LM_ERR("Error converting INT to STR\n");
-		goto error;
-	}
-
-	add_mi_node_child(node1, MI_DUP_VALUE, MI_SSTR("total"), p, len);
-
-	return rpl_tree;
-
-error:
-	return init_mi_tree(500, MI_INTERNAL_ERR, MI_INTERNAL_ERR_LEN);
 }

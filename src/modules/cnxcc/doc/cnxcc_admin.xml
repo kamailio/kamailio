@@ -352,7 +352,7 @@ if (!cnxcc_terminate_all("$var(customer)")) {
     </section>
    
     <section>
-	<title>Exported RPC Commands</title>
+	<title>RPC Commands</title>
 
 	<section>
 	    <title><varname>cnxcc.active_clients</varname></title>
@@ -401,6 +401,22 @@ if (!cnxcc_terminate_all("$var(customer)")) {
             &sercmd; cnxcc.kill_call qumojlaahitafih@carlosrdcnx-laptop.site
             </programlisting>
         </section>
+	<section>
+	    <title><varname>cnxcc.stats</varname></title>
+	    <para>
+		List credit control stats.
+	    </para>
+	    <para>
+		Parameters: <emphasis>none</emphasis>
+	    </para>
+	    <para>
+		Example:
+	    </para>
+	    <programlisting format="linespecific">
+	    &sercmd; cnxcc.stats
+	    </programlisting>
+	</section>
+
     </section>
 
     <section>
