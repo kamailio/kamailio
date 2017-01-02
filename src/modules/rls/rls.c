@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -38,9 +38,10 @@
 #include "../../core/ut.h"
 #include "../../core/timer_proc.h"
 #include "../../core/hashes.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
 #include "../presence/bind_presence.h"
@@ -115,10 +116,12 @@ extern int rls_insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* s
 extern subs_t* rls_search_shtable(shtable_t htable,str callid,str to_tag,
 		str from_tag,unsigned int hash_code);
 extern int rls_delete_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs);
-extern int rls_update_shtable(shtable_t htable,unsigned int hash_code, 
+extern int rls_update_shtable(shtable_t htable,unsigned int hash_code,
 		subs_t* subs, int type);
 extern void rls_update_db_subs_timer(db1_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
+
+static int rls_rpc_init(void);
 
 new_shtable_t pres_new_shtable;
 insert_shtable_t pres_insert_shtable;
@@ -196,14 +199,12 @@ int rls_max_backend_subs = 0;
 
 static int mod_init(void);
 static int child_init(int);
-static int mi_child_init(void);
 static void destroy(void);
 int rlsubs_table_restore();
 void rlsubs_table_update(unsigned int ticks,void *param);
 int add_rls_event(modparam_t type, void* val);
 int rls_update_subs(struct sip_msg *msg, char *puri, char *pevent);
 int fixup_update_subs(void** param, int param_no);
-static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 
 static cmd_export_t cmds[]=
 {
@@ -250,11 +251,6 @@ static param_export_t params[]={
 	{0,                         0,           0                               }
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "rls_cleanup",	mi_cleanup,		0,  0,  mi_child_init},
-	{ 0,			0,			0,  0,  0}
-};
-
 /** module exports */
 struct module_exports exports= {
 	"rls",  			/* module name */
@@ -262,7 +258,7 @@ struct module_exports exports= {
 	cmds,				/* exported functions */
 	params,				/* exported parameters */
 	0,				/* exported statistics */
-	mi_cmds,      			/* exported MI functions */
+	0,     			/* exported MI functions */
 	0,				/* exported pseudo-variables */
 	0,				/* extra processes */
 	mod_init,			/* module initialization function */
@@ -288,9 +284,9 @@ static int mod_init(void)
 
 	LM_DBG("start\n");
 
-	if (register_mi_mod(exports.name, mi_cmds)!=0)
+	if (rls_rpc_init()<0)
 	{
-		LM_ERR("failed to register MI commands\n");
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -304,8 +300,8 @@ static int mod_init(void)
 	{
 		LM_ERR("server_address parameter not set in configuration file\n");
 		return -1;
-	}	
-	
+	}
+
 	if(!rls_integrated_xcap_server && xcap_root== NULL)
 	{
 		LM_ERR("xcap_root parameter not set\n");
@@ -717,7 +713,7 @@ static int child_init(int rank)
 	}
 	else
 	{
-		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0)  
+		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0)
 		{
 			LM_ERR("child %d: Error in use_table rlsubs_table\n", rank);
 			return -1;
@@ -744,7 +740,7 @@ static int child_init(int rank)
 	}
 	else
 	{
-		if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)  
+		if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)
 		{
 			LM_ERR("child %d: Error in use_table rlpres_table\n", rank);
 			return -1;
@@ -766,7 +762,7 @@ static int child_init(int rank)
 	}
 	else
 	{
-		if (rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)  
+		if (rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)
 		{
 			LM_ERR("child %d: Error in use_table rls_xcap_table\n", rank);
 			return -1;
@@ -778,93 +774,13 @@ static int child_init(int rank)
 	return 0;
 }
 
-static int mi_child_init(void)
-{
-	if (rls_dbf.init==0)
-	{
-		LM_CRIT("database not bound\n");
-		return -1;
-	}
-	/* In DB only mode do not pool the connections where possible. */
-	if (dbmode == RLS_DB_ONLY && rls_dbf.init2)
-		rls_db = rls_dbf.init2(&db_url, DB_POOLING_NONE);
-	else
-		rls_db = rls_dbf.init(&db_url);
-	if (!rls_db)
-	{
-		LM_ERR("Error while connecting database\n");
-		return -1;
-	}
-	else
-	{
-		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0)  
-		{
-			LM_ERR("Error in use_table rlsubs_table\n");
-			return -1;
-		}
-
-		LM_DBG("Database connection opened successfully\n");
-	}
-
-	if (rlpres_dbf.init==0)
-	{
-		LM_CRIT("database not bound\n");
-		return -1;
-	}
-	/* In DB only mode do not pool the connections where possible. */
-	if (dbmode == RLS_DB_ONLY && rlpres_dbf.init2)
-		rlpres_db = rlpres_dbf.init2(&db_url, DB_POOLING_NONE);
-	else
-		rlpres_db = rlpres_dbf.init(&db_url);
-	if (!rlpres_db)
-	{
-		LM_ERR("Error while connecting database\n");
-		return -1;
-	}
-	else
-	{
-		if (rlpres_dbf.use_table(rlpres_db, &rlpres_table) < 0)  
-		{
-			LM_ERR("Error in use_table rlpres_table\n");
-			return -1;
-		}
-
-		LM_DBG("Database connection opened successfully\n");
-	}
-
-	if (rls_xcap_dbf.init==0)
-	{
-		LM_CRIT("database not bound\n");
-		return -1;
-	}
-	rls_xcap_db = rls_xcap_dbf.init(&xcap_db_url);
-	if (!rls_xcap_db)
-	{
-		LM_ERR("Error while connecting database\n");
-		return -1;
-	}
-	else
-	{
-		if (rls_xcap_dbf.use_table(rls_xcap_db, &rls_xcap_table) < 0)  
-		{
-			LM_ERR("Error in use_table rls_xcap_table\n");
-			return -1;
-		}
-
-		LM_DBG("Database connection opened successfully\n");
-	}
-
-	return 0;
-
-}
-
 /*
  * destroy function
  */
 static void destroy(void)
 {
 	LM_DBG("start\n");
-	
+
 	if(rls_table)
 	{
 		if(rls_db)
@@ -1149,12 +1065,30 @@ int bind_rls(struct rls_binds *pxb)
 		return 0;
 }
 
-static struct mi_root* mi_cleanup(struct mi_root* cmd, void *param)
+static void rls_rpc_cleanup(rpc_t* rpc, void* ctx)
 {
-	LM_DBG("mi_cleanup:start\n");
+	LM_DBG("executing the clean up\n");
 
 	(void)rlsubs_table_update(0,0);
 	(void)rls_presentity_clean(0,0);
+}
 
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+static const char* rls_rpc_cleanup_doc[2] = {
+	"Trigger rls cleanup.",
+	0
+};
+
+rpc_export_t rls_rpc[] = {
+	{"rls.cleanup", rls_rpc_cleanup, rls_rpc_cleanup_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int rls_rpc_init(void)
+{
+	if (rpc_register_array(rls_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

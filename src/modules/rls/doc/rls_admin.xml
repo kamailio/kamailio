@@ -10,13 +10,13 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>The modules is a Resource List Server implementation following the
-	specification in RFC 4662 and RFC 4826. 
+	specification in RFC 4662 and RFC 4826.
 	</para>
 	<para>
 	The server is independent from local presence servers, retrieving presence
@@ -756,27 +756,26 @@ Within event_route[xhttp:request]:
 </section>
 
 <section>
-	<title>MI Commands</title>
-	<section>
-	  <title>
-		<function moreinfo="none">rls_cleanup</function>
-	  </title>
+	<title>RPC Commands</title>
+	<section id="rls.rpc.cleanup">
+	  <title>rls.cleanup</title>
 	  <para>
 		Manually triggers the cleanup functions forthe rls_watchers and
 		rls_presentity tables. Useful if you have set
 		<varname>clean_period</varname> to zero or less.
 	  </para>
 	  <para>
-		Name: <emphasis>rls_cleanup</emphasis>
+		Name: <emphasis>rls.cleanup</emphasis>
 	  </para>
 	  <para>Parameters: <emphasis>none</emphasis></para>
 
 	  <para>
-		MI FIFO Command Format:
+		RPC Command Format:
 	  </para>
 	  <programlisting  format="linespecific">
-		:rls_cleanup:fifo_reply
-		_empty_line_
+...
+&kamcmd; rls.cleanup
+...
 	  </programlisting>
 	</section>
 </section>
