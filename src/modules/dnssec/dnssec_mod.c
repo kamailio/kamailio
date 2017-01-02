@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -56,28 +56,19 @@ gen_lock_t*             timer_lock=0;
 struct list_link*       timer = 0;
 
 
-static cmd_export_t cmds[]={
-	{0,0,0,0,0,0}
-};
-
 static param_export_t params[]={
 	{"general_query_flags", INT_PARAM, &flags},
 	{0,0,0}
 };
 
 
-static mi_export_t mi_cmds [] = {
-	{0,0,0,0,0}
-};
-
-
 struct module_exports exports= {
 	"dnssec",
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
+	0,
 	params,
 	0,           /* exported statistics */
-	mi_cmds,     /* exported MI functions */
+	0,           /* exported MI functions */
 	0,           /* exported pseudo-variables */
 	0,           /* extra processes */
 	dnssec_init,   /* module initialization function */

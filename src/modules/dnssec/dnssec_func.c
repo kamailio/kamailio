@@ -15,14 +15,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 /*!
  * \brief DNSsec support
- * \ingroup DNSsec 
+ * \ingroup DNSsec
  * \author mariuszbi@gmail.com
  */
 /*!
@@ -55,7 +55,7 @@ set_context_flags(unsigned int flags) {
 	CHECK_AND_SET(QUERY_DONT_VALIDATE);
 	CHECK_AND_SET(QUERY_IGNORE_SKEW);
 	CHECK_AND_SET(QUERY_AC_DETAIL);
-	CHECK_AND_SET(QUERY_NO_DLV);  
+	CHECK_AND_SET(QUERY_NO_DLV);
 	CHECK_AND_SET(QUERY_NO_EDNS0_FALLBACK);
 	CHECK_AND_SET(QUERY_RECURSE);
  	CHECK_AND_SET(QUERY_SKIP_RESOLVER);
@@ -71,7 +71,7 @@ dnssec_init_context(void) {
 	  		return -1;
 		if (context_flags != 0) {
 	  		val_context_setqflags(libval_ctx, VAL_CTX_FLAG_SET, context_flags);
-		}	
+		}
   	}
   	return 0;
 }
@@ -85,13 +85,13 @@ dnssec_gethostbyname(const char *name) {
     	return NULL;
 
   	LOG(L_INFO, " gethostbyname(%s) called: wrapper\n", name);
-  
+
   	res = val_gethostbyname(libval_ctx, name, &val_status);
 
   	if (val_istrusted(val_status) && !val_does_not_exist(val_status)) {
    		return res;
-  	} 
-  	return NULL; 
+  	}
+  	return NULL;
 }
 
 
@@ -104,13 +104,13 @@ dnssec_gethostbyname2(const char *name, int family) {
     	return NULL;
 
   	LOG(L_INFO, " gethostbyname2(%s) called: wrapper\n", name);
-  
+
   	res = val_gethostbyname2(libval_ctx, name, family,  &val_status);
 
   	if (val_istrusted(val_status) && !val_does_not_exist(val_status)) {
       	return res;
   	}
-  	return NULL; 
+  	return NULL;
 }
 
 int
@@ -130,7 +130,7 @@ dnssec_res_destroy(void) {
 
 
 int
-dnssec_res_search(const char *dname, int class_h, int type_h, 
+dnssec_res_search(const char *dname, int class_h, int type_h,
 	  unsigned char *answer, int anslen) {
   	val_status_t          val_status;
   	int ret;

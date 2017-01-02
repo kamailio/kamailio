@@ -1,7 +1,7 @@
 #
-# example module makefile
+# dnssec module makefile
 #
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 include ../../Makefile.defs
@@ -15,7 +15,4 @@ LIBS+= -lval-threads -lcrypto -lsres -lpthread -lssl
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
-
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 include ../../Makefile.modules
