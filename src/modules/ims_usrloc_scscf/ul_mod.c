@@ -1,25 +1,23 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012 Smile Communications, jason.penton@smilecoms.com
  * Copyright (C) 2012 Smile Communications, richard.good@smilecoms.com
- * 
+ *
  * The initial version of this code was written by Dragos Vingarzan
  * (dragos(dot)vingarzan(at)fokus(dot)fraunhofer(dot)de and the
  * Fruanhofer Institute. It was and still is maintained in a separate
  * branch of the original SER. We are therefore migrating it to
  * Kamailio/SR and look forward to maintaining it from here on out.
  * 2011/2012 Smile Communications, Pty. Ltd.
- * ported/maintained/improved by 
+ * ported/maintained/improved by
  * Jason Penton (jason(dot)penton(at)smilecoms.com and
- * Richard Good (richard(dot)good(at)smilecoms.com) as part of an 
+ * Richard Good (richard(dot)good(at)smilecoms.com) as part of an
  * effort to add full IMS support to Kamailio/SR using a new and
  * improved architecture
- * 
+ *
  * NB: Alot of this code was originally part of OpenIMSCore,
- * FhG Fokus. 
+ * FhG Fokus.
  * Copyright (C) 2004-2006 FhG Fokus
- * Thanks for great work! This is an effort to 
+ * Thanks for great work! This is an effort to
  * break apart the various CSCF functions into logically separate
  * components. We hope this will drive wider use. We also feel
  * that in this way the architecture is more complete and thereby easier
@@ -37,10 +35,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 #include <stdio.h>
@@ -145,7 +143,7 @@ static cmd_export_t cmds[] = {
 
 
 /*! \brief
- * Exported parameters 
+ * Exported parameters
  */
 static param_export_t params[] = {
 	{"timer_interval",    	INT_PARAM, &timer_interval  },
@@ -179,17 +177,13 @@ stat_export_t mod_stats[] = {
 	{0,0,0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ 0, 0, 0, 0, 0}
-};
-
 struct module_exports exports = {
 	"ims_usrloc_scscf",
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
 	cmds,       /*!< Exported functions */
 	params,     /*!< Export parameters */
 	mod_stats,  /*!< exported statistics */
-	mi_cmds,    /*!< exported MI functions */
+	0,          /*!< exported MI functions */
 	0,          /*!< exported pseudo-variables */
 	0,          /*!< extra processes */
 	mod_init,   /*!< Module initialization function */
