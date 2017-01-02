@@ -19,7 +19,8 @@
 	This module implements protocol functions that use the libcurl library
 	to fetch data from external HTTP servers or post data to HTTP servers.
 	The module is using a concept of "connections" to define properties
-	of HTTP sessions in a simple way.
+	of HTTP sessions in a simple way. A connection has one or multiple
+	servers and a set of settings that apply to the specific connection.
 	</para>
 	<para>
 	The http_client module has multiple settings, some of them applies to
@@ -38,10 +39,11 @@
 	Cookbook (as used in the http_client_query example below).
 	</para>
 	<para>
-	Function http_client_query allows &kamailio; to issue an HTTP GET
+	The function http_client_query allows &kamailio; to issue an HTTP GET
 	request and get access to parts of the reply. This function has
 	been ported from the utils module and now use the same libcurl
-	functions.
+	functions. We recommend using the new functionality provided by
+	this module.
 	</para>
 	<para>
 	The http_client module use the CURL library setting up connections.
