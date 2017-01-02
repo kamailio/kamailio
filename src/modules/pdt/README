@@ -47,10 +47,10 @@ Elena-Ramona Modroiu
               4.3. prefix2domain()
               4.4. pd_translate(sdomain, rewrite_mode)
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. pdt_list
-              5.2. pdt_reload
+              5.1. pdt.list
+              5.2. pdt.reload
 
         6. Installation and Running
 
@@ -98,10 +98,10 @@ Chapter 1. Admin Guide
         4.3. prefix2domain()
         4.4. pd_translate(sdomain, rewrite_mode)
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. pdt_list
-        5.2. pdt_reload
+        5.1. pdt.list
+        5.2. pdt.reload
 
    6. Installation and Running
 
@@ -378,22 +378,22 @@ pd_translate("$fd", "2");
 pd_translate("*", "$var(a)");
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. pdt_list
-   5.2. pdt_reload
+   5.1. pdt.list
+   5.2. pdt.reload
 
    The database is loaded by Kamailio at start up time. The module uses
    only the cache to look up domains. If you want to add or delete a new
-   prefix-domain pair at runtime you have to use MI FIFO commands. All
-   changes made via these commands are applied to database and the cache
-   is updated correspondingly.
+   prefix-domain pair at runtime you have to use RPC commands. All changes
+   made via these commands are applied to database and the cache is
+   updated correspondingly.
 
-5.1.  pdt_list
+5.1.  pdt.list
 
    Produces a listing of the entries prefixes/domains/sdomains.
 
-   Name: pdt_list
+   Name: pdt.list
 
    Parameters:
      * _sdomain_ : a source domain value.
@@ -405,33 +405,33 @@ pd_translate("*", "$var(a)");
    The comparison operation is 'START WITH' -- if domain is 'a' then all
    domains starting with 'a' are listed.
 
-   MI FIFO Command Format:
-                :pdt_list:_reply_fifo_file_
-                _sdomain_
-                _prefix_
-                _domain_
-                _empty_line_
+   RPC Command Example:
+...
+# kamcmd _sdomain_ _prefix_ _domain_
+kamcmd kamailio.org 123
+...
 
    Examples:
-     * “pdt_list siph 2 .” : Lists the entries where sdomain is starting
+     * “pdt.list siph 2 .” : Lists the entries where sdomain is starting
        with 'siph', prefix is starting with '2' and domain is anything
-     * “pdt_list siph 2” : Lists the entries where sdomain is starting
+     * “pdt.list siph 2” : Lists the entries where sdomain is starting
        with 'siph', prefix is starting with '2' and domain is anything
-     * “pdt_list . 2 open” : Lists the entries where sdomain is anything,
+     * “pdt.list . 2 open” : Lists the entries where sdomain is anything,
        prefix starts with '2' and domain starts with 'open'.
 
-5.2.  pdt_reload
+5.2.  pdt.reload
 
    Reload all sdomain-prefix-domain records from database.
 
-   Name: pdt_reload
+   Name: pdt.reload
 
    Parameters:
      * none
 
-   MI FIFO Command Format:
-                :pdt_reload:_reply_fifo_file_
-                _empty_line_
+   RPC Command Example:
+...
+kamcmd pdt.reload
+...
 
 6. Installation and Running
 

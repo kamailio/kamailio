@@ -32,9 +32,9 @@ Bogdan-Andrei Iancu
 
               4.1. pike_check_req()
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. pike_list
+              5.1. pike.top
 
    2. RPC calls
 
@@ -72,9 +72,9 @@ Chapter 1. Admin Guide
 
         4.1. pike_check_req()
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. pike_list
+        5.1. pike.top
 
 1. Overview
 
@@ -196,21 +196,23 @@ Warning
 if (!pike_check_req()) { exit; };
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. pike_list
+   5.1. pike.top
 
-5.1.  pike_list
+5.1.  pike.top
 
-   Lists the nodes in the pike tree.
+   Lists nodes in the pike tree.
 
-   Name: pike_list
+   Name: pike.top
 
-   Parameters: none
+   Parameters: filter (optional) - it can be "ALL", "HOT" or "WARM". If
+   missing, the "HOT" nodes are listed.
 
-   MI FIFO Command Format:
-                :pike_list:_reply_fifo_file_
-                _empty_line_
+   RPC Command Example:
+...
+kamcmd pike.top
+...
 
 Chapter 2. RPC calls
 

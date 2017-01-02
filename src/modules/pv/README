@@ -50,15 +50,10 @@ Daniel-Constantin Mierla
               4.12. pv_xavp_to_var(xname)
               4.13. pv_evalx(dst, fmt)
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. shv_set
-              5.2. shv_get
-
-        6. RPC Commands
-
-              6.1. pv.shvSet
-              6.2. pv.shvGet
+              5.1. pv.shvSet
+              5.2. pv.shvGet
 
    List of Examples
 
@@ -78,8 +73,8 @@ Daniel-Constantin Mierla
    1.14. pv_var_to_xavp() usage
    1.15. pv_xavp_to_var() usage
    1.16. pv_xavp_to_var() usage
-   1.17. shv_set usage
-   1.18. shv_get usage
+   1.17. pv.shvSet usage
+   1.18. pv.shvSet usage
 
 Chapter 1. Admin Guide
 
@@ -113,15 +108,10 @@ Chapter 1. Admin Guide
         4.12. pv_xavp_to_var(xname)
         4.13. pv_evalx(dst, fmt)
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. shv_set
-        5.2. shv_get
-
-   6. RPC Commands
-
-        6.1. pv.shvSet
-        6.2. pv.shvGet
+        5.1. pv.shvSet
+        5.2. pv.shvGet
 
 1. Overview
 
@@ -437,59 +427,12 @@ pv_evalx("$var(z)", "$var(y) one");
 # - the value of $var(z) is "test one"
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. shv_set
-   5.2. shv_get
+   5.1. pv.shvSet
+   5.2. pv.shvGet
 
-5.1. shv_set
-
-   Set the value of a shared variable ($shv(name)).
-
-   Parameters:
-     * _name_: shared variable name
-     * _type_: type of the value
-          + “int”: integer value
-          + “str”: string value
-     * _value_: value to be set
-
-   MI FIFO Command Format:
-                :shv_set:_reply_fifo_file_
-                _name_
-                _type_
-                _value_
-                _empty_line_
-
-   Example 1.17. shv_set usage
-...
-$ kamctl fifo shv_set debug int 0
-...
-
-5.2. shv_get
-
-   Get the value of a shared variable ($shv(name)).
-
-   Parameters:
-     * _name_: shared variable name. If this parameter is missing, all
-       shared variables are returned.
-
-   MI FIFO Command Format:
-                :shv_get:_reply_fifo_file_
-                _name_
-                _empty_line_
-
-   Example 1.18. shv_get usage
-...
-$ kamctl fifo shv_get debug
-$ kamctl fifo shv_get
-...
-
-6. RPC Commands
-
-   6.1. pv.shvSet
-   6.2. pv.shvGet
-
-6.1. pv.shvSet
+5.1. pv.shvSet
 
    Set the value of a shared variable ($shv(name)).
 
@@ -500,11 +443,21 @@ $ kamctl fifo shv_get
           + “str”: string value
      * _value_: value to be set
 
-6.2. pv.shvGet
+   Example 1.17. pv.shvSet usage
+...
+$ kamcmd pv.shvSet debug int 3
+...
+
+5.2. pv.shvGet
 
    Get the value of a shared variable ($shv(name)).
 
    Parameters:
      * _name_: shared variable name
 
-   If no name is given, all shared variables are listed
+   If no name is given, all shared variables are listed.
+
+   Example 1.18. pv.shvSet usage
+...
+$ kamcmd pv.shvGet debug
+...
