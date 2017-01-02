@@ -28,9 +28,9 @@ Will Quan
               3.3. journal_roll_interval (integer seconds)
 
         4. Functions
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. bdb_reload
+              5.1. db_berkely.reload
 
         6. Installation and Running
         7. Database Schema and Metadata
@@ -72,9 +72,9 @@ Chapter 1. Admin Guide
         3.3. journal_roll_interval (integer seconds)
 
    4. Functions
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. bdb_reload
+        5.1. db_berkely.reload
 
    6. Installation and Running
    7. Database Schema and Metadata
@@ -162,11 +162,11 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 
    No function exported to be used from configuration file.
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. bdb_reload
+   5.1. db_berkely.reload
 
-5.1. bdb_reload
+5.1. db_berkely.reload
 
    Causes db_berkeley module to re-read the contents of specified table
    (or dbenv). The db_berkeley DB actually loads each table on demand, as
@@ -174,7 +174,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    implemented as a close followed by a reopen. Note- bdb_reload will fail
    if a table has not been accessed before (because the close will fail).
 
-   Name: bdb_reload
+   Name: db_berkely.reload
 
    Parameters: tablename (or db_path); to reload a particular table
    provide the tablename as the arguement (eg subscriber); to reload all
