@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -19,16 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- * 2003-04-07: a structure for both hashes introduced (ramona) 
- * 2003-04-06: db connection closed in mod_init (janakj)
- * 2004-06-07: updated to the new DB api (andrei)
- * 2005-01-26: removed terminating code (ramona)
- *             prefix hash replaced with tree (ramona)
- *             FIFO commands to add/list/delete prefix domains (ramona)
- *             pdt cache per process for fast translation (ramona)
- * 2006-01-30: multi domain support added
  */
 
 /*
@@ -66,7 +55,7 @@ MODULE_VERSION
 int pdt_fetch_rows = 1000;
 
 /** structures containing prefix-domain pairs */
-pdt_tree_t **_ptree = NULL; 
+pdt_tree_t **_ptree = NULL;
 
 /** database connection */
 static db1_con_t *db_con = NULL;
@@ -153,15 +142,6 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-
-#ifndef PDT_NO_MI
-	if(pdt_init_mi(exports.name)<0)
-	{
-		LM_ERR("cannot register MI commands\n");
-		return -1;
-	}
-#endif
-
 	if(pdt_init_rpc()<0)
 	{
 		LM_ERR("failed to register RPC commands\n");

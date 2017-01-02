@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    
+
     <title>&adminguide;</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
@@ -464,88 +464,88 @@ pd_translate("*", "$var(a)");
 	</section>
 
     </section>
-	
+
 	<section>
-		<title>MI Commands</title>
+		<title>RPC Commands</title>
 		<para>
 		The database is loaded by &kamailio; at start up time.
 		The module uses only the cache to look up domains. If you want to
 		add or delete a new prefix-domain pair at runtime you have to use
-		MI FIFO commands. All changes made via these commands are applied to
-		database and the cache is updated correspondingly. 
+		RPC commands. All changes made via these commands are applied to
+		database and the cache is updated correspondingly.
 		</para>
 
 	<section>
 		<title>
-		<function moreinfo="none">pdt_list</function>
+		<function moreinfo="none">pdt.list</function>
 		</title>
 		<para>
 		Produces a listing of the entries prefixes/domains/sdomains.
 		</para>
 		<para>
-		Name: <emphasis>pdt_list</emphasis>
+		Name: <emphasis>pdt.list</emphasis>
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>_sdomain_ : a source domain value. </para></listitem>	  
-			<listitem><para>_prefix_ : a prefix value</para></listitem>	 
+			<listitem><para>_sdomain_ : a source domain value. </para></listitem>
+			<listitem><para>_prefix_ : a prefix value</para></listitem>
             <listitem><para>_domain_: a domain value </para></listitem>
 		</itemizedlist>
 		<para>
 		"." (dot) means NULL value
-		</para> 
+		</para>
 		<para>
-		The comparison operation is 'START WITH' -- if domain is 'a' then all domains 
+		The comparison operation is 'START WITH' -- if domain is 'a' then all domains
 		starting with 'a' are listed.
 		</para>
 		<para>
-		MI FIFO Command Format:
+		RPC Command Example:
 		</para>
-        <programlisting  format="linespecific">
-		:pdt_list:_reply_fifo_file_
-		_sdomain_
-		_prefix_
-		_domain_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+# &kamcmd; _sdomain_ _prefix_ _domain_
+&kamcmd; kamailio.org 123
+...
 		</programlisting>
 		<para>
 		 Examples:
 		 <itemizedlist>
-			<listitem><para><quote>pdt_list siph 2 .</quote>  : Lists the entries where sdomain is 
+			<listitem><para><quote>pdt.list siph 2 .</quote>  : Lists the entries where sdomain is
 			starting with 'siph', prefix is starting with '2' and domain is anything
-			</para></listitem>	
+			</para></listitem>
 
-			<listitem><para><quote>pdt_list siph 2</quote>  : Lists the entries where sdomain is 
+			<listitem><para><quote>pdt.list siph 2</quote>  : Lists the entries where sdomain is
 			starting with 'siph', prefix is starting with '2' and domain is anything
-			</para></listitem>	
-	 
-			 <listitem><para><quote>pdt_list . 2 open</quote>  : Lists the entries where sdomain 
+			</para></listitem>
+
+			 <listitem><para><quote>pdt.list . 2 open</quote>  : Lists the entries where sdomain
 			 is anything, prefix starts with '2' and domain starts with 'open'.
-			</para></listitem>	
+			</para></listitem>
 		</itemizedlist>
 		</para>
     </section>
 
 	<section>
 		<title>
-		<function moreinfo="none">pdt_reload</function>
+		<function moreinfo="none">pdt.reload</function>
 		</title>
 		<para>
 		Reload all sdomain-prefix-domain records from database.
 		</para>
 		<para>
-		Name: <emphasis>pdt_reload</emphasis>
+		Name: <emphasis>pdt.reload</emphasis>
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
-			<listitem><para>none</para></listitem>	  
+			<listitem><para>none</para></listitem>
 		</itemizedlist>
 		<para>
-		MI FIFO Command Format:
+		RPC Command Example:
 		</para>
-        <programlisting  format="linespecific">
-		:pdt_reload:_reply_fifo_file_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; pdt.reload
+...
 		</programlisting>
     </section>
     </section>
@@ -554,7 +554,7 @@ pd_translate("*", "$var(a)");
 	<title>Installation and Running</title>
     <para>
 	Example shell scripts for MI FIFO commands are placed in './doc/'
-	(pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh). 
+	(pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh).
 	</para>
     </section>
 </chapter>

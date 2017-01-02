@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * Copyright (C) 2011 Elena-Ramona Modroiu
  *
@@ -21,7 +20,7 @@
  *
  */
 
-		       
+
 #ifndef _PDTREE_H_
 #define _PDTREE_H_
 
@@ -69,10 +68,6 @@ int pdt_load_db(void);
 str *pdt_get_char_list(void);
 
 pdt_tree_t **pdt_get_ptree(void);
-
-#ifndef PDT_NO_MI
-int pdt_init_mi(char *mod);
-#endif
 
 #endif
 
