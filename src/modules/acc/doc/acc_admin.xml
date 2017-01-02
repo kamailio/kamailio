@@ -289,15 +289,12 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				<para><emphasis>Radius</emphasis> -- all sets will be added
 				to the same Radius accounting message as RADIUS AVPs - for each
 				call-leg a set of RADIUS AVPs will be added (corresponding
-				to the per-leg AVP set)
+				to the per-leg AVP set). Note that Radius support is in a 
+				separate module - acc_radius.
 				</para>
 				<note><para>You will need to add in your dictionary the
 				RADIUS AVPs used in call-leg AVP set definition.
 				</para></note>
-				</listitem>
-				<listitem>
-				<para><emphasis>Diameter</emphasis> same as for RADIUS.
-				</para>
 				</listitem>
 			</itemizedlist>
 		</section>
@@ -658,9 +655,6 @@ modparam("acc", "multi_leg_info",
 # for mysql-based accounting, use the names of the columns
 modparam("acc", "multi_leg_info",
     "leg_src=$avp(src);leg_dst=$avp(dst)")
-# for RADIUS-based accounting, use the names of the RADIUS AVPs
-modparam("acc", "multi_leg_info",
-    "RAD_LEG_SRC=$avp(src);RAD_LEG_SRC=$avp(dst)")
 # for DIAMETER-based accounting, use the DIAMETER AVP ID (as integer)
 modparam("acc", "multi_leg_info",
     "2345=$avp(src);2346=$avp(dst)")
@@ -753,104 +747,6 @@ modparam("acc", "log_facility", "LOG_DAEMON")
 		<programlisting format="linespecific">
 ...
 modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
-...
-</programlisting>
-		</example>
-	</section>
-	<!-- RADIUS specific ACC parameters -->
-	<section id="acc.p.radius_config">
-		<title><varname>radius_config</varname> (string)</title>
-		<para>
-		<emphasis>This parameter is radius specific.</emphasis> Path to 
-		radius client configuration file, set the referred config file 
-		correctly and specify there address of server, shared secret 
-		(should equal that in /usr/local/etc/raddb/clients for
-		freeRadius servers) and dictionary, see etc for an example of 
-		config file and dictionary.
-		</para>
-		<para>
-		If the parameter is set to empty string, the RADIUS accounting support
-		will be disabled (even if compiled).
-		</para>
-		<para>
-		Default value is <quote>NULL</quote>.
-		</para>
-		<example>
-		<title>radius_config example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
-...
-</programlisting>
-		</example>
-	</section>
-	<section  id="acc.p.radius_flag">
-		<title><varname>radius_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account a 
-		transaction -- RADIUS specific.
-		</para>
-		<para>
-		Default value is not-set (no flag).
-		</para>
-		<example>
-		<title>radius_flag example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "radius_flag", 2)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.p.radius_missed_flag">
-		<title><varname>radius_missed_flag</varname> (integer)</title>
-		<para>
-		Request flag which needs to be set to account missed 
-		calls -- RADIUS specific.
-		</para>
-		<para>
-		Default value is not-set (no flag).
-		</para>
-		<example>
-		<title>radius_missed_flag example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "radius_missed_flag", 3)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.p.service_type">
-		<title><varname>service_type</varname> (integer)</title>
-		<para>
-		Radius service type used for accounting.
-		</para>
-		<para>
-		Default value is 15 (SIP).
-		</para>
-		<example>
-		<title>service_type example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "service_type", 16)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.p.radius_extra">
-		<title><varname>radius_extra</varname> (string)</title>
-		<para>
-		Extra values to be logged via RADIUS - RADIUS specific.
-		See section <xref linkend="acc.i.extra-accounting"/> for more details.
-		</para>
-		<para>
-		Default value is NULL.
-		</para>
-		<example>
-		<title>radius_extra example</title>
-		<programlisting format="linespecific">
-...
-modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 ...
 </programlisting>
 		</example>
@@ -1631,38 +1527,6 @@ acc_log_request("$var(code) Error: $avp(reason)");
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.f.acc_rad_request">
-		<title>
-			<function moreinfo="none">acc_rad_request(comment)</function>
-		</title>
-		<para>
-		Like <function moreinfo="none">acc_log_request</function>, 
-		<function moreinfo="none">acc_rad_request</function> reports on 
-		a request. It reports to radius server as configured in 
-		<quote>radius_config</quote>.
-		</para>
-		<para>
-		Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>comment</emphasis> - Comment to be appended.
-			The string can contain any number of pseudo-variables.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from ANY_ROUTE.
-		</para>
-		<example>
-		<title>acc_rad_request usage</title>
-		<programlisting format="linespecific">
-...
-acc_rad_request("Some comment");
-acc_rad_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>
