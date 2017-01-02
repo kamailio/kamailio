@@ -26,7 +26,6 @@
 #include "../../core/pvar.h"
 #include "../../core/lvalue.h"
 #include "../../core/mod_fix.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 
@@ -485,12 +484,6 @@ static param_export_t params[]={
 	{0,0,0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "shv_get",       mi_shvar_get,  0,                 0,  0 },
-	{ "shv_set" ,      mi_shvar_set,  0,                 0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
-
 static int mod_init(void);
 static void mod_destroy(void);
 static int pv_isset(struct sip_msg* msg, char* pvid, char *foo);
@@ -557,7 +550,7 @@ struct module_exports exports= {
 	cmds,
 	params,
 	0,          /* exported statistics */
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
@@ -568,11 +561,6 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(pv_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");

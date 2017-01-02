@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -480,74 +480,6 @@ pv_evalx("$var(z)", "$var(y) one");
 	</section>
 
 	<section>
-		<title><acronym>MI</acronym> Commands</title>
-		<section>
-			<title><function moreinfo="none">shv_set</function></title>
-			<para>
-				Set the value of a shared variable ($shv(name)).
-			</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>_name_: shared variable name</para></listitem>
-			
-			<listitem><para>_type_: type of the value</para>
-			      <itemizedlist>
-	    <listitem><para> <quote>int</quote>: integer value </para></listitem> 
-		<listitem><para> <quote>str</quote>: string value </para></listitem>	
-				  </itemizedlist>
-			</listitem>	  
-
-			<listitem><para>_value_: value to be set</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:shv_set:_reply_fifo_file_
-		_name_
-		_type_
-		_value_
-		_empty_line_
-		</programlisting>
-			<example>
-			<title><function moreinfo="none">shv_set</function> usage</title>
-			<programlisting format="linespecific">
-...
-$ &ctltool; fifo shv_set debug int 0
-...
-</programlisting>
-			</example>
-		</section>
-		<section>
-			<title><function moreinfo="none">shv_get</function></title>
-			<para>
-				Get the value of a shared variable ($shv(name)).
-			</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>_name_: shared variable name. If this parameter
-			is missing, all shared variables are returned.</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:shv_get:_reply_fifo_file_
-		_name_
-		_empty_line_
-		</programlisting>
-			<example>
-			<title><function moreinfo="none">shv_get</function> usage</title>
-			<programlisting format="linespecific">
-...
-$ &ctltool; fifo shv_get debug
-$ &ctltool; fifo shv_get
-...
-</programlisting>
-			</example>
-		</section>
-	</section>
-	<section>
         <title>RPC Commands</title>
 		<section>
 			<title><function moreinfo="none">pv.shvSet</function></title>
@@ -557,16 +489,24 @@ $ &ctltool; fifo shv_get
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>_name_: shared variable name</para></listitem>
-			
+
 			<listitem><para>_type_: type of the value</para>
 			      <itemizedlist>
-	    <listitem><para> <quote>int</quote>: integer value </para></listitem> 
-		<listitem><para> <quote>str</quote>: string value </para></listitem>	
+	    <listitem><para> <quote>int</quote>: integer value </para></listitem>
+		<listitem><para> <quote>str</quote>: string value </para></listitem>
 				  </itemizedlist>
-			</listitem>	  
+			</listitem>
 
 			<listitem><para>_value_: value to be set</para></listitem>
 		</itemizedlist>
+			<example>
+			<title><function moreinfo="none">pv.shvSet</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &kamcmd; pv.shvSet debug int 3
+...
+</programlisting>
+			</example>
 		</section>
 		<section>
 			<title><function moreinfo="none">pv.shvGet</function></title>
@@ -577,9 +517,18 @@ $ &ctltool; fifo shv_get
 		<itemizedlist>
 			<listitem><para>_name_: shared variable name</para></listitem>
 		</itemizedlist>
-		<para>If no name is given, all shared variables are listed</para>
+		<para>If no name is given, all shared variables are listed.</para>
+			<example>
+			<title><function moreinfo="none">pv.shvSet</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &kamcmd; pv.shvGet debug
+...
+</programlisting>
+			</example>
+
 		</section>
 	</section>
-	
+
 </chapter>
 
