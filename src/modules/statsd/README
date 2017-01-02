@@ -79,7 +79,9 @@ Chapter 1. Admin Guide
 
 2.1. ip(string)
 
-   Statsd server IP address
+   Statsd server IP address.
+
+   Defaults to 127.0.0.1
 
    Example 1.1. Set ip parameter
 ...
@@ -89,6 +91,8 @@ modparam("statsd", "ip", "127.0.0.1")
 2.2. port(string)
 
    Statsd server port number
+
+   Defaults to 8125
 
    Example 1.2. Set port parameter
 ...
