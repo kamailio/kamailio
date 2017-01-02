@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Kazoo module interface
  *
  * Copyright (C) 2010-2014 2600Hz
@@ -17,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -32,7 +30,6 @@
 #include "../../core/sr_module.h"
 #include "../../lib/srdb1/db.h"
 #include "../../core/dprint.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/cfg/cfg_struct.h"
 
 #include "kz_amqp.h"
@@ -64,9 +61,6 @@ int dbk_use_federated_exchange = 0;
 str dbk_federated_exchange = str_init("federation");
 str dbk_primary_zone_name = str_init("local");
 
-//int dbk_dialog_expires = 30;
-//int dbk_presence_expires = 3600;
-//int dbk_mwi_expires = 3600;
 int dbk_create_empty_dialog = 1;
 
 int dbk_channels = 50;
@@ -144,18 +138,7 @@ static cmd_export_t cmds[] = {
     {"kazoo_query", (cmd_function) kz_amqp_query, 4, fixup_kz_amqp, fixup_kz_amqp_free, ANY_ROUTE},
     {"kazoo_query", (cmd_function) kz_amqp_query_ex, 3, fixup_kz_amqp, fixup_kz_amqp_free, ANY_ROUTE},
     {"kazoo_pua_publish", (cmd_function) kz_pua_publish, 1, 0, 0, ANY_ROUTE},
-    /*
-    {"kazoo_pua_flush", (cmd_function) w_mi_dbk_presentity_flush0, 0, 0, 0, ANY_ROUTE},
-    {"kazoo_pua_flush", (cmd_function) w_mi_dbk_presentity_flush1, 1, 0, 0, ANY_ROUTE},
-    {"kazoo_pua_flush", (cmd_function) w_mi_dbk_presentity_flush2, 2, 0, 0, ANY_ROUTE},
-    {"kazoo_pua_flush", (cmd_function) w_mi_dbk_presentity_flush3, 3, 0, 0, ANY_ROUTE},
-    */
 
-/*
-    {"kazoo_subscribe", (cmd_function) kz_amqp_subscribe_1, 1, fixup_kz_amqp4, fixup_kz_amqp4_free, ANY_ROUTE},
-    {"kazoo_subscribe", (cmd_function) kz_amqp_subscribe_2, 2, fixup_kz_amqp4, fixup_kz_amqp4_free, ANY_ROUTE},
-    {"kazoo_subscribe", (cmd_function) kz_amqp_subscribe_3, 3, fixup_kz_amqp4, fixup_kz_amqp4_free, ANY_ROUTE},
-*/
     {"kazoo_subscribe", (cmd_function) kz_amqp_subscribe, 1, fixup_kz_amqp4, fixup_kz_amqp4_free, ANY_ROUTE},
     {"kazoo_subscribe", (cmd_function) kz_amqp_subscribe_simple, 4, fixup_kz_amqp4, fixup_kz_amqp4_free, ANY_ROUTE},
 
@@ -171,9 +154,6 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
     {"node_hostname", STR_PARAM, &dbk_node_hostname.s},
-  //  {"dialog_expires", INT_PARAM, &dbk_dialog_expires},
-  //  {"presence_expires", INT_PARAM, &dbk_presence_expires},
-  //  {"mwi_expires", INT_PARAM, &dbk_mwi_expires},
     {"amqp_connection", STR_PARAM|USE_FUNC_PARAM,(void*)kz_amqp_add_connection},
     {"amqp_max_channels", INT_PARAM, &dbk_channels},
     {"amqp_timmer_process_interval", INT_PARAM, &kz_timer_ms},
