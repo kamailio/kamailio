@@ -49,26 +49,19 @@ Daniel-Constantin Mierla
               4.2. dbg_pv_dump([mask] [, level])
               4.3. dbg_sip_msg([log_level], [facility])
 
-        5. Exported MI Functions
+        5. RPC Commands
 
-              5.1. set_dbg_mod_level mod_name level
-              5.2. set_dbg_mod_facility mod_name facility
-              5.3. get_dbg_mod_level mod_name
-              5.4. get_dbg_mod_facility mod_name
+              5.1. dbg.ls
+              5.2. dbg.trace
+              5.3. dbg.bp
+              5.4. dbg.mod_level
+              5.5. dbg.reset_msgid
+              5.6. dbg.set_mod_level
+              5.7. dbg.set_mod_facility
+              5.8. dbg.get_mod_level
+              5.9. dbg.get_mod_facility
 
-        6. Exported RPC Functions
-
-              6.1. dbg.ls
-              6.2. dbg.trace
-              6.3. dbg.bp
-              6.4. dbg.mod_level
-              6.5. dbg.reset_msgid
-              6.6. dbg.set_mod_level
-              6.7. dbg.set_mod_facility
-              6.8. dbg.get_mod_level
-              6.9. dbg.get_mod_facility
-
-        7. Usage
+        6. Usage
 
    List of Examples
 
@@ -92,10 +85,6 @@ Daniel-Constantin Mierla
    1.18. dbg_breakpoint usage
    1.19. dbg_pv_dump usage
    1.20. dbg_sip_msg usage
-   1.21. set_dbg_mod_level usage
-   1.22. set_dbg_mod_facility usage
-   1.23. get_dbg_mod_level usage
-   1.24. get_dbg_mod_facility usage
 
 Chapter 1. Admin Guide
 
@@ -133,26 +122,19 @@ Chapter 1. Admin Guide
         4.2. dbg_pv_dump([mask] [, level])
         4.3. dbg_sip_msg([log_level], [facility])
 
-   5. Exported MI Functions
+   5. RPC Commands
 
-        5.1. set_dbg_mod_level mod_name level
-        5.2. set_dbg_mod_facility mod_name facility
-        5.3. get_dbg_mod_level mod_name
-        5.4. get_dbg_mod_facility mod_name
+        5.1. dbg.ls
+        5.2. dbg.trace
+        5.3. dbg.bp
+        5.4. dbg.mod_level
+        5.5. dbg.reset_msgid
+        5.6. dbg.set_mod_level
+        5.7. dbg.set_mod_facility
+        5.8. dbg.get_mod_level
+        5.9. dbg.get_mod_facility
 
-   6. Exported RPC Functions
-
-        6.1. dbg.ls
-        6.2. dbg.trace
-        6.3. dbg.bp
-        6.4. dbg.mod_level
-        6.5. dbg.reset_msgid
-        6.6. dbg.set_mod_level
-        6.7. dbg.set_mod_facility
-        6.8. dbg.get_mod_level
-        6.9. dbg.get_mod_facility
-
-   7. Usage
+   6. Usage
 
 1. Overview
 
@@ -552,71 +534,19 @@ P-Hint: My hint
 ------------------------------- SIP body diffs --------------------------------
 -------------------------- END OF SIP message debug ---------------------------
 
-5. Exported MI Functions
+5. RPC Commands
 
-   5.1. set_dbg_mod_level mod_name level
-   5.2. set_dbg_mod_facility mod_name facility
-   5.3. get_dbg_mod_level mod_name
-   5.4. get_dbg_mod_facility mod_name
+   5.1. dbg.ls
+   5.2. dbg.trace
+   5.3. dbg.bp
+   5.4. dbg.mod_level
+   5.5. dbg.reset_msgid
+   5.6. dbg.set_mod_level
+   5.7. dbg.set_mod_facility
+   5.8. dbg.get_mod_level
+   5.9. dbg.get_mod_facility
 
-5.1. set_dbg_mod_level mod_name level
-
-   Set the module log level. If module does not exist in kamailio, the
-   entry in the level hashtable is still added for the bogus module.
-
-   Example 1.21. set_dbg_mod_level usage
-...
-$ kamctl fifo set_dbg_mod_level core 2
-$ kamctl fifo set_dbg_mod_level debugger 3
-...
-
-5.2. set_dbg_mod_facility mod_name facility
-
-   Set the mod_name log facility. If mod_name does not exist in kamailio,
-   the entry in the facility hashtable is still added for the bogus
-   mod_name.
-
-   Example 1.22. set_dbg_mod_facility usage
-...
-$ kamctl fifo set_dbg_mod_facility core LOG_LOCAL1
-$ kamctl fifo set_dbg_mod_facility debugger LOG_LOCAL0
-...
-
-5.3. get_dbg_mod_level mod_name
-
-   Get the mod_name log level. If mod_name does not exist in the level
-   hashtable, returns the config file value.
-
-   Example 1.23. get_dbg_mod_level usage
-...
-$ kamctl fifo get_dbg_mod_level core
-$ kamctl fifo get_dbg_mod_level debugger
-...
-
-5.4. get_dbg_mod_facility mod_name
-
-   Get the mod_name log facility. If mod_name does not exist in the
-   facility hashtable, returns the config file value.
-
-   Example 1.24. get_dbg_mod_facility usage
-...
-$ kamctl fifo get_dbg_mod_facility core
-$ kamctl fifo get_dbg_mod_facility debugger
-...
-
-6. Exported RPC Functions
-
-   6.1. dbg.ls
-   6.2. dbg.trace
-   6.3. dbg.bp
-   6.4. dbg.mod_level
-   6.5. dbg.reset_msgid
-   6.6. dbg.set_mod_level
-   6.7. dbg.set_mod_facility
-   6.8. dbg.get_mod_level
-   6.9. dbg.get_mod_facility
-
-6.1.  dbg.ls
+5.1.  dbg.ls
 
    List Kamailio processes with info related to interactive debugging.
 
@@ -630,7 +560,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
                 dbg.ls
                 dbg.ls 1234
 
-6.2.  dbg.trace
+5.2.  dbg.trace
 
    Control config script running trace.
 
@@ -647,7 +577,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
                 dbg.trace off
                 dbg.trace on 1234
 
-6.3.  dbg.bp
+5.3.  dbg.bp
 
    Control breakpoints and config execution.
 
@@ -685,7 +615,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
                 dbg.bp eval 1234 $fu
                 dbg.bp move 1234
 
-6.4.  dbg.mod_level
+5.4.  dbg.mod_level
 
    Specify module log level.
 
@@ -699,7 +629,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
                 dbg.mod_level core 3
                 dbg.mod_level tm 3
 
-6.5.  dbg.reset_msgid
+5.5.  dbg.reset_msgid
 
    Resets the message sequence ($mi). Internally there is no real change.
    This can be useful for unit test cases in order to be able to replicate
@@ -711,7 +641,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                 dbg.reset_msgid
 
-6.6.  dbg.set_mod_level
+5.6.  dbg.set_mod_level
 
    Set the module log level. If module does not exist in kamailio, the
    entry in the level hashtable is still added for the bogus module.
@@ -721,7 +651,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                         dbg.set_mod_level core 1
 
-6.7.  dbg.set_mod_facility
+5.7.  dbg.set_mod_facility
 
    Set the module log facility. If module does not exist in kamailio, the
    entry in the facility hashtable is still added for the bogus module.
@@ -731,7 +661,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                         dbg.set_mod_facility core LOG_LOCAL1
 
-6.8.  dbg.get_mod_level
+5.8.  dbg.get_mod_level
 
    Get the module log level. If mod_name does not exist in the level
    hashtable, returns the config file value.
@@ -741,7 +671,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                         dbg.get_mod_level core
 
-6.9.  dbg.get_mod_facility
+5.9.  dbg.get_mod_facility
 
    Get the module log facility. If mod_name does not exist in the facility
    hashtable, returns the config file value.
@@ -751,7 +681,7 @@ $ kamctl fifo get_dbg_mod_facility debugger
    Examples of use with kamcmd:
                         dbg.get_mod_facility core
 
-7. Usage
+6. Usage
 
    A common usage is to investigate the execution path for a specific SIP
    message. Just enable cfg running trace, send the message and watch the

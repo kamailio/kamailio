@@ -38,9 +38,9 @@ Iñaki Baz Castillo
               4.1. pcre_match (string, pcre_regex)
               4.2. pcre_match_group (string [, group])
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. regex_reload
+              5.1. regex.reload
 
         6. Installation and Running
 
@@ -88,9 +88,9 @@ Chapter 1. Admin Guide
         4.1. pcre_match (string, pcre_regex)
         4.2. pcre_match_group (string [, group])
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. regex_reload
+        5.1. regex.reload
 
    6. Installation and Running
 
@@ -306,23 +306,24 @@ if (pcre_match_group("$ua", "$avp(i:10)")) {
 }
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. regex_reload
+   5.1. regex.reload
 
-5.1.  regex_reload
+5.1.  regex.reload
 
    Causes regex module to re-read the content of the text file and
    re-compile the regular expressions. The number of groups in the file
    can be modified safely.
 
-   Name: regex_reload
+   Name: regex.reload
 
    Parameters: none
 
-   MI FIFO Command Format:
-:regex_reload:_reply_fifo_file_
-_empty_line_
+   RPC Command Example:
+...
+kamcmd regex.reload
+...
 
 6. Installation and Running
 
