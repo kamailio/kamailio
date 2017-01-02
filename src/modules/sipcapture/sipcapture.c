@@ -58,7 +58,6 @@
 #include "../../core/ip_addr.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
@@ -154,7 +153,6 @@ int extract_host_port(void);
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto);
 int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip);
 static int nosip_hep_msg(void *data);
-static struct mi_root* sip_capture_mi(struct mi_root* cmd, void* param );
 
 static int hep_version(struct sip_msg *msg);
 
@@ -295,7 +293,6 @@ static pv_export_t mod_pvs[] = {
         pv_parse_hep_name, 0, 0, 0 },
         { {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
-                                
 
 int capture_mode_param(modparam_t type, void *val);
 
@@ -376,16 +373,6 @@ static param_export_t params[] = {
 };
 
 
-
-/*! \brief
- * MI commands
- */
-static mi_export_t mi_cmds[] = {
-	{ "sip_capture", sip_capture_mi,   0,  0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
-
-
 #ifdef STATISTICS
 /*stat_var* sipcapture_req;
   stat_var* sipcapture_rpl;
@@ -411,7 +398,7 @@ struct module_exports exports = {
 #else
 	0,          /*!< exported statistics */
 #endif
-	mi_cmds,    /*!< exported MI functions */
+	0,    /*!< exported MI functions */
 	mod_pvs,          /*!< exported pseudo-variables */
 	0,          /*!< extra processes */
 	mod_init,   /*!< module initialization function */
@@ -744,11 +731,6 @@ static int mod_init(void)
 	int def;
 #endif
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(sipcapture_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -1963,53 +1945,6 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 #define capture_is_off(_msg) \
 	(capture_on_flag==NULL || *capture_on_flag==0)
 
-
-/*! \brief
- * MI Sip_capture command
- *
- * MI command format:
- * name: sip_capture
- * attribute: name=none, value=[on|off]
- */
-static struct mi_root* sip_capture_mi(struct mi_root* cmd_tree, void* param )
-{
-	struct mi_node* node;
-
-	struct mi_node *rpl;
-	struct mi_root *rpl_tree ;
-
-	node = cmd_tree->node.kids;
-	if(node == NULL) {
-		rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
-		if (rpl_tree == 0)
-			return 0;
-		rpl = &rpl_tree->node;
-
-		if (*capture_on_flag == 0 ) {
-			node = add_mi_node_child(rpl,0,0,0,MI_SSTR("off"));
-		} else if (*capture_on_flag == 1) {
-			node = add_mi_node_child(rpl,0,0,0,MI_SSTR("on"));
-		}
-		return rpl_tree ;
-	}
-	if(capture_on_flag==NULL)
-		return init_mi_tree( 500, MI_SSTR(MI_INTERNAL_ERR));
-
-	if ( node->value.len==2 && (node->value.s[0]=='o'
-				|| node->value.s[0]=='O') &&
-			(node->value.s[1]=='n'|| node->value.s[1]=='N')) {
-		*capture_on_flag = 1;
-		return init_mi_tree( 200, MI_SSTR(MI_OK));
-	} else if ( node->value.len==3 && (node->value.s[0]=='o'
-				|| node->value.s[0]=='O')
-			&& (node->value.s[1]=='f'|| node->value.s[1]=='F')
-			&& (node->value.s[2]=='f'|| node->value.s[2]=='F')) {
-		*capture_on_flag = 0;
-		return init_mi_tree( 200, MI_SSTR(MI_OK));
-	} else {
-		return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
-	}
-}
 
 /* Local raw socket */
 int raw_capture_socket(struct ip_addr* ip, str* iface, int port_start, int port_end, int proto)
