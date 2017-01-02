@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
@@ -174,14 +173,14 @@ int pv_parse_geoip_name(pv_spec_p sp, str *in)
 
 	switch(pvs.len)
 	{
-		case 2: 
+		case 2:
 			if(strncmp(pvs.s, "cc", 2)==0)
 				gpv->type = 0;
 			else if(strncmp(pvs.s, "tz", 2)==0)
 				gpv->type = 1;
 			else goto error;
 		break;
-		case 3: 
+		case 3:
 			if(strncmp(pvs.s, "zip", 3)==0)
 				gpv->type = 2;
 			else if(strncmp(pvs.s, "lat", 3)==0)
@@ -196,7 +195,7 @@ int pv_parse_geoip_name(pv_spec_p sp, str *in)
 				gpv->type = 7;
 			else goto error;
 		break;
-		case 4: 
+		case 4:
 			if(strncmp(pvs.s, "city", 4)==0)
 				gpv->type = 8;
 			else if(strncmp(pvs.s, "area", 4)==0)
@@ -207,7 +206,7 @@ int pv_parse_geoip_name(pv_spec_p sp, str *in)
 				gpv->type = 11;
 			else goto error;
 		break;
-		case 5: 
+		case 5:
 			if(strncmp(pvs.s, "metro", 5)==0)
 				gpv->type = 12;
 			else if(strncmp(pvs.s, "contc", 5)==0)
@@ -367,7 +366,7 @@ int pv_get_geoip(struct sip_msg *msg, pv_param_t *param,
 int geoip_init_pv(char *path)
 {
 	_handle_GeoIP = GeoIP_open(path, GEOIP_MMAP_CACHE);
-	
+
 	if(_handle_GeoIP==NULL)
 	{
 		LM_ERR("cannot open GeoIP database file at: %s\n", path);
@@ -392,7 +391,7 @@ void geoip_destroy_pv(void)
 void geoip_pv_reset(str *name)
 {
 	sr_geoip_record_t *gr = NULL;
-	
+
 	gr = sr_geoip_get_record(name);
 
 	if(gr==NULL)
@@ -407,13 +406,13 @@ void geoip_pv_reset(str *name)
 int geoip_update_pv(str *tomatch, str *name)
 {
 	sr_geoip_record_t *gr = NULL;
-	
+
 	if(tomatch->len>255)
 	{
 		LM_DBG("target too long (max 255): %s\n", tomatch->s);
 		return -3;
 	}
-	
+
 	gr = sr_geoip_get_record(name);
 	if(gr==NULL)
 	{

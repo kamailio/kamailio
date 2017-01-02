@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * Copyright (C) 2010 Daniel-Constantin Mierla (asipto.com)
  *
@@ -117,7 +116,7 @@ static int geoip_match(struct sip_msg *msg, gparam_t *target, gparam_t *pvname)
 {
 	str tomatch;
 	str pvclass;
-	
+
 	if(msg==NULL)
 	{
 		LM_ERR("received null msg\n");
