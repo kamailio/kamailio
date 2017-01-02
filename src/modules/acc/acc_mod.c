@@ -20,26 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- * 2003-03-06: aligned to change in callback names (jiri)
- * 2003-03-06: fixed improper sql connection, now from
- * 	           child_init (jiri)
- * 2003-03-11: New module interface (janakj)
- * 2003-03-16: flags export parameter added (janakj)
- * 2003-04-04  grand acc cleanup (jiri)
- * 2003-04-06: Opens database connection in child_init only (janakj)
- * 2003-04-24  parameter validation (0 t->uas.request) added (jiri)
- * 2003-11-04  multidomain support for mysql introduced (jiri)
- * 2003-12-04  global TM callbacks switched to per transaction callbacks
- *             (bogdan)
- * 2004-06-06  db cleanup: static db_url, calls to acc_db_{bind,init,close)
- *             (andrei)
- * 2005-05-30  acc_extra patch commited (ramona)
- * 2005-06-28  multi leg call support added (bogdan)
- * 2006-01-13  detect_direction (for sequential requests) added (bogdan)
- * 2006-09-08  flexible multi leg accounting support added (bogdan)
- * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
 /*! \file

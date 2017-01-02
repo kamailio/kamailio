@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2006 Voice Sistem SRL
  *
@@ -20,14 +18,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2003-04-04  grand acc cleanup (jiri)
- * 2003-11-04  multidomain support for mysql introduced (jiri)
- * 2004-06-06  cleanup: acc_db_{bind,init,close} added (andrei)
- * 2006-09-08  flexible multi leg accounting support added,
- *             code cleanup for low level functions (bogdan)
- * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
 /*! \file

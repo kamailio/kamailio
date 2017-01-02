@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2004 Voice Sistem SRL
  * Copyright (C) 2008 Juha Heinanen
  *
@@ -20,16 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- *
- * History:
- * ---------
- *  2004-10-28  first version (ramona)
- *  2005-05-30  acc_extra patch commited (ramona)
- *  2005-07-13  acc_extra specification moved to use pseudo-variables (bogdan)
- *  2006-09-08  flexible multi leg accounting support added,
- *              code cleanup for low level functions (bogdan)
- *  2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
- *  2008-09-03  added support for integer type Radius attributes (jh)
  */
 
 /*! \file

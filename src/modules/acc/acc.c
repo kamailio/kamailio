@@ -19,19 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2003-04-04  grand acc cleanup (jiri)
- * 2003-11-04  multidomain support for mysql introduced (jiri)
- * 2004-06-06  updated to the new DB api, cleanup: acc_db_{bind, init,close)
- *              added (andrei)
- * 2005-05-30  acc_extra patch commited (ramona)
- * 2005-06-28  multi leg call support added (bogdan)
- * 2006-01-13  detect_direction (for sequential requests) added (bogdan)
- * 2006-09-08  flexible multi leg accounting support added,
- *             code cleanup for low level functions (bogdan)
- * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
- * 2008-09-03  added support for integer type Radius attributes (jh)
  */
 
 /*! \file
