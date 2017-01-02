@@ -16,19 +16,17 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	  The pua_rpc offers the possibility to publish presence
-	  information via RPC transport.  Subscribing to presence
-      information has not been implemented yet.
+	  The pua_rpc module offers the possibility to publish presence
+	  information via the RPC transport.  Subscribing to presence
+      	  information has not been implemented yet.
 	</para>
 	<para>
 	  Using this module you can create independent applications/scripts to
 	  publish SIP and not SIP related information (e.g., MWI message
-      summary information, system resources like CPU-usage, memory,
-      number of active subscribers, ...).  Future version of this module
-      may allow non-SIP speaking applications to subscribe
-      to presence information kept in a SIP presence server.
-	</para>
-	<para>
+      	  summary information, system resources like CPU-usage, memory,
+          number of active subscribers, ...).  Future version of this module
+          may allow non-SIP speaking applications to subscribe
+          to presence information kept in a SIP presence server.
 	</para>
 	</section>
 
@@ -73,7 +71,7 @@
 	
 	<section>
 	  <title>RPC Commands</title>
-	  <section>
+	  <section id="pua_rpc.r.pua.publish">
 		<title>
 		  <function moreinfo="none">pua.publish</function>
 		</title>
@@ -90,22 +88,22 @@
 		  <listitem>
 			<para>
 			  <emphasis>expires</emphasis>
-			  - Relative expires time in  seconds (e.g. 3600).
+			  - Relative expires time in seconds (e.g. 3600).
 			</para>	
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>event package</emphasis>
 			  - Event package that is target of published information
-              (e.g. message-summary).
+              			(e.g. message-summary).
 			</para> 
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>content type</emphasis>
 			  - Content type of published information
-              (e.g. application/simple-message-summary) or . if no
-              information is enclosed.
+              			(e.g. application/simple-message-summary) or . if no
+              			information is enclosed.
 			</para> 
 		  </listitem>
 		  <listitem>
@@ -130,14 +128,13 @@
 			<para>
 			  <emphasis>outbound proxy</emphasis>
 			  - SIP URI of outbound proxy to be used when
-              sending PUBLISH request or . if no outbound proxy is given.
+              		sending PUBLISH request or . if no outbound proxy is given.
 		    </para> 
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>extra_headers</emphasis>
-			  - Extra headers added to PUBLISH request or . if no extra
-              headers.
+			  - Extra headers added to PUBLISH request or . if no extra headers.
 		    </para> 
 		  </listitem>
 		  <listitem>
