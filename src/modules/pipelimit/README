@@ -49,23 +49,14 @@ Daniel-Constantin Mierla
               4.1. pl_check(name [, algorithm, limit])
               4.2. pl_drop([ [min ], max ])
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. pl_stats
-              5.2. pl_set_pipe
-              5.3. pl_get_pipes
-              5.4. pl_set_pid
-              5.5. pl_get_pid
-              5.6. pl_push_load
-
-        6. RPC Commands
-
-              6.1. pl.stats
-              6.2. pl.set_pipe
-              6.3. pl.get_pipes
-              6.4. pl.set_pid
-              6.5. pl.get_pid
-              6.6. pl.push_load
+              5.1. pl.stats
+              5.2. pl.set_pipe
+              5.3. pl.get_pipes
+              5.4. pl.set_pid
+              5.5. pl.get_pid
+              5.6. pl.push_load
 
    List of Examples
 
@@ -113,23 +104,14 @@ Chapter 1. Admin Guide
         4.1. pl_check(name [, algorithm, limit])
         4.2. pl_drop([ [min ], max ])
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. pl_stats
-        5.2. pl_set_pipe
-        5.3. pl_get_pipes
-        5.4. pl_set_pid
-        5.5. pl_get_pid
-        5.6. pl_push_load
-
-   6. RPC Commands
-
-        6.1. pl.stats
-        6.2. pl.set_pipe
-        6.3. pl.get_pipes
-        6.4. pl.set_pid
-        6.5. pl.get_pid
-        6.6. pl.push_load
+        5.1. pl.stats
+        5.2. pl.set_pipe
+        5.3. pl.get_pipes
+        5.4. pl.set_pid
+        5.5. pl.get_pid
+        5.6. pl.push_load
 
 1. Overview
 
@@ -449,113 +431,16 @@ with unexpected retcode=$var(check_result)\n");
         }
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. pl_stats
-   5.2. pl_set_pipe
-   5.3. pl_get_pipes
-   5.4. pl_set_pid
-   5.5. pl_get_pid
-   5.6. pl_push_load
+   5.1. pl.stats
+   5.2. pl.set_pipe
+   5.3. pl.get_pipes
+   5.4. pl.set_pid
+   5.5. pl.get_pid
+   5.6. pl.push_load
 
-5.1.  pl_stats
-
-   Lists the parameters and variables in the pipelimit module.
-
-   Name: pl_stats
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :pl_stats:_reply_fifo_file_
-                _empty_line_
-
-5.2.  pl_set_pipe
-
-   Sets the pipe parameters for the given pipe id.
-
-   Name: pl_set_pipe
-
-   Parameters:
-     * pipe_id - pipe id.
-     * pipe_algorithm - the algorithm assigned to the given pipe id.
-     * pipe_limit - the limit assigned to the given pipe id.
-
-   MI FIFO Command Format:
-                :pl_set_pipe:_reply_fifo_file_
-                2
-                RED
-                10
-                _empty_line_
-
-5.3.  pl_get_pipes
-
-   Gets the list of in use pipes.
-
-   Name: pl_get_pipes
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :pl_get_pipes:_reply_fifo_file_
-                _empty_line_
-
-5.4.  pl_set_pid
-
-   Sets the PID Controller parameters for the Feedback Algorithm.
-
-   Name: pl_set_pid
-
-   Parameters:
-     * ki - the integral parameter.
-     * kp - the proportional parameter.
-     * kd - the derivative parameter.
-
-   MI FIFO Command Format:
-                :pl_set_pid:_reply_fifo_file_
-                0.5
-                0.5
-                0.5
-                _empty_line_
-
-5.5.  pl_get_pid
-
-   Gets the list of in use PID Controller parameters.
-
-   Name: pl_get_pid
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :pl_get_pid:_reply_fifo_file_
-                _empty_line_
-
-5.6.  pl_push_load
-
-   Force the value of the load parameter. This command is useful for
-   testing the Feedback algorithm.
-
-   Name: pl_push_load
-
-   Parameters:
-     * load - the forced value of load (it must be greater then 0.0 and
-       smaller then 1.0).
-
-   MI FIFO Command Format:
-                :pl_push_load:_reply_fifo_file_
-                0.85
-                _empty_line_
-
-6. RPC Commands
-
-   6.1. pl.stats
-   6.2. pl.set_pipe
-   6.3. pl.get_pipes
-   6.4. pl.set_pid
-   6.5. pl.get_pid
-   6.6. pl.push_load
-
-6.1.  pl.stats
+5.1.  pl.stats
 
    Lists the parameters and variabiles in the pipelimit module: pipe id,
    pipe load and pipe couter.
@@ -567,7 +452,7 @@ with unexpected retcode=$var(check_result)\n");
    RPC Command Format:
         kamcmd pl.stats
 
-6.2.  pl.set_pipe
+5.2.  pl.set_pipe
 
    Sets the pipe parameters for the given pipe id.
 
@@ -581,7 +466,7 @@ with unexpected retcode=$var(check_result)\n");
    RPC Command Format:
         kamcmd pl.set_pipe 2 RED 10
 
-6.3.  pl.get_pipes
+5.3.  pl.get_pipes
 
    Gets the list of in use pipes.
 
@@ -592,7 +477,7 @@ with unexpected retcode=$var(check_result)\n");
    RPC Command Format:
         kamcmd pl.get_pipes
 
-6.4.  pl.set_pid
+5.4.  pl.set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
@@ -606,7 +491,7 @@ with unexpected retcode=$var(check_result)\n");
    RPC Command Format:
         kamcmd pl.set_pid 0.5 0.5 0.5
 
-6.5.  pl.get_pid
+5.5.  pl.get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -617,7 +502,7 @@ with unexpected retcode=$var(check_result)\n");
    RPC Command Format:
         kamcmd pl.get_pid
 
-6.6.  pl.push_load
+5.6.  pl.push_load
 
    Force the value of the load parameter. This command is useful for
    testing the Feedback algorithm.

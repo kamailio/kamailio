@@ -32,11 +32,12 @@ Carlos Ruiz Díaz
               4.4. cnxcc_set_max_channel()
               4.5. cnxcc_terminate_all()
 
-        5. Exported RPC Commands
+        5. RPC Commands
 
               5.1. cnxcc.active_clients
               5.2. cnxcc.check_client
               5.3. cnxcc.kill_call
+              5.4. cnxcc.stats
 
         6. Events
         7. Web Interface
@@ -76,11 +77,12 @@ Chapter 1. Admin Guide
         4.4. cnxcc_set_max_channel()
         4.5. cnxcc_terminate_all()
 
-   5. Exported RPC Commands
+   5. RPC Commands
 
         5.1. cnxcc.active_clients
         5.2. cnxcc.check_client
         5.3. cnxcc.kill_call
+        5.4. cnxcc.stats
 
    6. Events
    7. Web Interface
@@ -283,11 +285,12 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 }
 ...
 
-5. Exported RPC Commands
+5. RPC Commands
 
    5.1. cnxcc.active_clients
    5.2. cnxcc.check_client
    5.3. cnxcc.kill_call
+   5.4. cnxcc.stats
 
 5.1. cnxcc.active_clients
 
@@ -315,6 +318,15 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 
    Example:
             kamcmd cnxcc.kill_call qumojlaahitafih@carlosrdcnx-laptop.site
+
+5.4. cnxcc.stats
+
+   List credit control stats.
+
+   Parameters: none
+
+   Example:
+            kamcmd cnxcc.stats
 
 6. Events
 

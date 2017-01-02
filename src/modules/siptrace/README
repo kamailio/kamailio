@@ -56,16 +56,12 @@ Daniel-Constantin Mierla
 
               4.1. sip_trace([address])
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. sip_trace
+              5.1. siptrace.status param
 
-        6. RPC Commands
-
-              6.1. siptrace.status param
-
-        7. Database setup
-        8. Known issues
+        6. Database setup
+        7. Known issues
 
    List of Examples
 
@@ -124,16 +120,12 @@ Chapter 1. Admin Guide
 
         4.1. sip_trace([address])
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. sip_trace
+        5.1. siptrace.status param
 
-   6. RPC Commands
-
-        6.1. siptrace.status param
-
-   7. Database setup
-   8. Known issues
+   6. Database setup
+   7. Known issues
 
 1. Overview
 
@@ -465,32 +457,11 @@ sip_trace();
 sip_trace("sip:10.1.1.2:5085");
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. sip_trace
+   5.1. siptrace.status param
 
-5.1.  sip_trace
-
-   Name: sip_trace
-
-   Parameters:
-     * trace_mode : turns on/off SIP message tracing. Possible values are:
-          + on
-          + off
-       The parameter is optional - if missing, the command will return the
-       status of the SIP message tracing (as string “on” or “off” )
-       without changing anything.
-
-   MI FIFO Command Format:
-                :sip_trace:_reply_fifo_file_
-                trace_mode
-                _empty_line_
-
-6. RPC Commands
-
-   6.1. siptrace.status param
-
-6.1.  siptrace.status param
+5.1.  siptrace.status param
 
    Name: siptrace.status
 
@@ -501,7 +472,14 @@ sip_trace("sip:10.1.1.2:5085");
      * “check” does not change siptrace status, just reports the current
        status.
 
-7. Database setup
+   RPC Command Format:
+...
+kamcmd siptrace.status on
+kamcmd siptrace.status off
+kamcmd siptrace.status check
+...
+
+6. Database setup
 
    Before running Kamailio with siptrace, you have to setup the database
    tables where the module will store the data. For that, if the table
@@ -511,7 +489,7 @@ sip_trace("sip:10.1.1.2:5085");
    You can also find the complete database documentation on the project
    webpage, http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-8. Known issues
+7. Known issues
 
    Stateless forwarded messages (forward()) are not logged if you set the
    flag, use sip_trace().

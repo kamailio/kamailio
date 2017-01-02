@@ -26,9 +26,6 @@ Peter Dunkley
               3.1. force_outbound_flag (integer)
               3.2. force_no_outbound_flag (integer)
 
-        4. Functions
-        5. MI Commands
-
    List of Examples
 
    1.1. Edge Proxy Configuration
@@ -54,9 +51,6 @@ Chapter 1. Admin Guide
 
         3.1. force_outbound_flag (integer)
         3.2. force_no_outbound_flag (integer)
-
-   4. Functions
-   5. MI Commands
 
 1. Overview
 
@@ -522,11 +516,3 @@ modparam("outbound", "force_outbound_flag", 1)
 ...
 modparam("outbound", "force_no_outbound_flag", 2)
 ...
-
-4. Functions
-
-   None
-
-5. MI Commands
-
-   None

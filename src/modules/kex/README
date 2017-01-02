@@ -53,25 +53,22 @@ Ovidiu Sas
               3.13. resetdebug()
               3.14. km_append_branch([uri])
 
-        4. MI Commands
+        4. RPC Commands
 
-              4.1. arg
-              4.2. kill
-              4.3. pwd
-              4.4. uptime
+              4.1. core.arg
+              4.2. core.kill
+              4.3. core.pwd
+              4.4. core.uptime
               4.5. version
-              4.6. which
+              4.6. system.listMethods
               4.7. get_statistics
-              4.8. reset_statistics
+              4.8. stats.reset_statistics
               4.9. clear_statistics
-
-        5. RPC Commands
-
-              5.1. pkg.stats
-              5.2. stats.get_statistics
-              5.3. stats.reset_statistics
-              5.4. stats.clear_statistics
-              5.5. mod.stats module_name/all pkg/shm/all
+              4.10. pkg.stats
+              4.11. stats.get_statistics
+              4.12. stats.reset_statistics
+              4.13. stats.clear_statistics
+              4.14. mod.stats module_name/all pkg/shm/all
 
    List of Examples
 
@@ -116,25 +113,22 @@ Chapter 1. Admin Guide
         3.13. resetdebug()
         3.14. km_append_branch([uri])
 
-   4. MI Commands
+   4. RPC Commands
 
-        4.1. arg
-        4.2. kill
-        4.3. pwd
-        4.4. uptime
+        4.1. core.arg
+        4.2. core.kill
+        4.3. core.pwd
+        4.4. core.uptime
         4.5. version
-        4.6. which
+        4.6. system.listMethods
         4.7. get_statistics
-        4.8. reset_statistics
+        4.8. stats.reset_statistics
         4.9. clear_statistics
-
-   5. RPC Commands
-
-        5.1. pkg.stats
-        5.2. stats.get_statistics
-        5.3. stats.reset_statistics
-        5.4. stats.clear_statistics
-        5.5. mod.stats module_name/all pkg/shm/all
+        4.10. pkg.stats
+        4.11. stats.get_statistics
+        4.12. stats.reset_statistics
+        4.13. stats.clear_statistics
+        4.14. mod.stats module_name/all pkg/shm/all
 
 1. Overview
 
@@ -401,141 +395,144 @@ resetdebug();
    This function was replaced by append_branch() from corex module,
    starting with version 4.0.0.
 
-4. MI Commands
+4. RPC Commands
 
-   4.1. arg
-   4.2. kill
-   4.3. pwd
-   4.4. uptime
+   4.1. core.arg
+   4.2. core.kill
+   4.3. core.pwd
+   4.4. core.uptime
    4.5. version
-   4.6. which
+   4.6. system.listMethods
    4.7. get_statistics
-   4.8. reset_statistics
+   4.8. stats.reset_statistics
    4.9. clear_statistics
+   4.10. pkg.stats
+   4.11. stats.get_statistics
+   4.12. stats.reset_statistics
+   4.13. stats.clear_statistics
+   4.14. mod.stats module_name/all pkg/shm/all
 
-4.1.  arg
+4.1.  core.arg
 
    Print command line arguments.
 
-   Name: arg
+   Name: core.arg
 
    Parameters: none.
 
-   MI FIFO Command Format:
-                :arg:_reply_fifo_file_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd core.arg
+...
 
-4.2.  kill
+4.2.  core.kill
 
    Kill the application.
 
-   Name: kill
+   Name: core.kill
 
    Parameters: none.
 
-   MI FIFO Command Format:
-                :kill:_reply_fifo_file_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd core.kill
+...
 
-4.3.  pwd
+4.3.  core.pwd
 
    Print working directory.
 
-   Name: pwd
+   Name: core.pwd
 
    Parameters: none.
 
-   MI FIFO Command Format:
-                :pwd:_reply_fifo_file_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd core.pwd
+...
 
-4.4.  uptime
+4.4.  core.uptime
 
    Print uptime.
 
-   Name: uptime
+   Name: core.uptime
 
    Parameters: none.
 
-   MI FIFO Command Format:
-                :uptime:_reply_fifo_file_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd core.uptime
+...
 
 4.5.  version
 
    Print version information.
 
-   Name: version
+   Name: core.version
 
    Parameters: none.
 
-   MI FIFO Command Format:
-                :version:_reply_fifo_file_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd core.version
+...
 
-4.6.  which
+4.6.  system.listMethods
 
-   Print list of available MI commands.
+   Print list of available RPC commands.
 
    Name: which
 
    Parameters: none.
 
-   MI FIFO Command Format:
-                :which:_reply_fifo_file_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd system.listMethods
+...
 
 4.7.  get_statistics
 
    Print the list of available internal statistics.
 
-   Name: get_statistics
+   Name: stats.get_statistics
 
    Parameters: statsid - which statistics to be printed. If set to 'all'
    then all statistics are printed; if set to 'statsgroup:' then all
    statistics in the group are printed; if set to 'statsname' then the
    statistics identified by the name is printed.
 
-   MI FIFO Command Format:
-                :get_statistics:_reply_fifo_file_
-                _statsid_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd stats.get_statistics
+...
 
-4.8.  reset_statistics
+4.8.  stats.reset_statistics
 
    Reset internal statistics.
 
-   Name: reset_statistics
+   Name: statsreset_statistics
 
    Parameters: statsid - which statistics to be reset, give as name.
 
-   MI FIFO Command Format:
-                :reset_statistics:_reply_fifo_file_
-                _statsid_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd reset_statistics _statsid_
+...
 
 4.9.  clear_statistics
 
    Return statistics and reset their value in one command.
 
-   Name: get_statistics
+   Name: stats.get_statistics
 
    Parameters: statsid - same as for get_statistics.
 
-   MI FIFO Command Format:
-                :clear_statistics:_reply_fifo_file_
-                _statsid_
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd clear_statistics _statsid_
+...
 
-5. RPC Commands
-
-   5.1. pkg.stats
-   5.2. stats.get_statistics
-   5.3. stats.reset_statistics
-   5.4. stats.clear_statistics
-   5.5. mod.stats module_name/all pkg/shm/all
-
-5.1.  pkg.stats
+4.10.  pkg.stats
 
    Print private memory (pkg) usage statistics per process. It can take
    optinally a filter to print statistics only for a specific process or
@@ -553,7 +550,7 @@ resetdebug();
                 kamcmd pkg.stats rank 1
                 kamcmd pkg.stats index 10
 
-5.2.  stats.get_statistics
+4.11.  stats.get_statistics
 
    Print the list of available internal statistics.
 
@@ -568,7 +565,7 @@ resetdebug();
                 kamcmd stats.get_statistics unsupported_methods
                 kamcmd stats.get_statistics shmem: fwd_requests fwd_replies
 
-5.3.  stats.reset_statistics
+4.12.  stats.reset_statistics
 
    Reset internal statistics.
 
@@ -580,7 +577,7 @@ resetdebug();
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-5.4.  stats.clear_statistics
+4.13.  stats.clear_statistics
 
    Return statistics and reset their value in one command.
 
@@ -592,7 +589,7 @@ resetdebug();
                 kamcmd stats.reset_statistics unsupported_methods
                 kamcmd stats.reset_statistics shmem: fwd_requests fwd_replies
 
-5.5.  mod.stats module_name/all pkg/shm/all
+4.14.  mod.stats module_name/all pkg/shm/all
 
    Print private(pkg) or shared(shm) memory currently allocated a given
    module or by all modules.
@@ -626,7 +623,7 @@ Module: kex
     // this is the pkg zone of the module
     // function_name(line_where_pkg_malloc_was_called): size_alloc'ed_by_pkg_mal
 loc
-    init_mi_uptime(74): 56
+    init_rpc_uptime(74): 56
     Total: 56
 }
 {
