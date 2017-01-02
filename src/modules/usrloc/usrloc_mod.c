@@ -53,7 +53,6 @@
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */
-#include "ul_mi.h"
 #include "ul_rpc.h"
 #include "ul_callback.h"
 #include "usrloc.h"
@@ -97,7 +96,6 @@ static void ul_core_timer(unsigned int ticks, void* param);  /*!< Core timer han
 static void ul_local_timer(unsigned int ticks, void* param); /*!< Local timer handler */
 static void ul_db_clean_timer(unsigned int ticks, void* param); /*!< DB clean timer handler */
 static int child_init(int rank);                    /*!< Per-child init function */
-static int mi_child_init(void);
 
 #define UL_PRELOAD_SIZE	8
 static char* ul_preload_list[UL_PRELOAD_SIZE];
@@ -188,7 +186,7 @@ static cmd_export_t cmds[] = {
 
 
 /*! \brief
- * Exported parameters 
+ * Exported parameters
  */
 static param_export_t params[] = {
 	{"ruid_column",         PARAM_STR, &ruid_col      },
@@ -245,30 +243,13 @@ stat_export_t mod_stats[] = {
 };
 
 
-static mi_export_t mi_cmds[] = {
-	{ MI_USRLOC_RM,           mi_usrloc_rm_aor,       0,                 0,
-				mi_child_init },
-	{ MI_USRLOC_RM_CONTACT,   mi_usrloc_rm_contact,   0,                 0,
-				mi_child_init },
-	{ MI_USRLOC_DUMP,         mi_usrloc_dump,         0,                 0,
-				0             },
-	{ MI_USRLOC_FLUSH,        mi_usrloc_flush,        MI_NO_INPUT_FLAG,  0,
-				mi_child_init },
-	{ MI_USRLOC_ADD,          mi_usrloc_add,          0,                 0,
-				mi_child_init },
-	{ MI_USRLOC_SHOW_CONTACT, mi_usrloc_show_contact, 0,                 0,
-				mi_child_init },
-	{ 0, 0, 0, 0, 0}
-};
-
-
 struct module_exports exports = {
 	"usrloc",
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
 	cmds,       /*!< Exported functions */
 	params,     /*!< Export parameters */
 	mod_stats,  /*!< exported statistics */
-	mi_cmds,    /*!< exported MI functions */
+	0,          /*!< exported MI functions */
 	0,          /*!< exported pseudo-variables */
 	0,          /*!< extra processes */
 	mod_init,   /*!< Module initialization function */
@@ -296,12 +277,6 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
-	
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 
 	if (rpc_register_array(ul_rpc)!=0)
 	{
@@ -452,30 +427,6 @@ static int child_init(int _rank)
 			uldb_preload_attrs(ptr->d);
 		}
 	}
-
-	return 0;
-}
-
-
-/* */
-static int mi_child_init(void)
-{
-	static int done = 0;
-
-	if (done)
-		return 0;
-
-	if (db_mode != NO_DB) {
-		ul_dbh = ul_dbf.init(&db_url);
-		if (!ul_dbh) {
-			LM_ERR("failed to connect to database\n");
-			return -1;
-		}
-	}
-
-	if(sruid_init(&_ul_sruid, '-', "ulcx", SRUID_INC)<0)
-		return -1;
-	done = 1;
 
 	return 0;
 }
