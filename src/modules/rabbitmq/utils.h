@@ -37,8 +37,8 @@
  * SOFTWARE.
  */
 
-#ifndef librabbitmq_examples_utils_h
-#define librabbitmq_examples_utils_h
+#ifndef _rabbitmq_utils_h
+#define _rabbitmq_utils_h
 
 #include "../../core/dprint.h"
 

@@ -37,8 +37,8 @@
  * SOFTWARE.
  */
 
-#ifndef _RTPENGINE_H
-#define _RTPENGINE_H
+#ifndef _RABBITMQ_H_
+#define _RTPENGINE_H_H
 
 typedef enum {
 	RABBITMQ_OK=1,
