@@ -12,12 +12,12 @@
 
 <chapter>
     <title>&adminguide;</title>
-	
+
 	<section id="dialplan.overview">
 	<title>Overview</title>
 	<para>
 	This module implements generic string translations based on matching and
-	replacement rules. It can be used to manipulate the request URI or a PV and to 
+	replacement rules. It can be used to manipulate the request URI or a PV and to
 	translate it to a new format/value. Dialplan can also be used to match
 	a given URI and retrieve a set of attributes based on the match. It is a very
 	flexible module that can be used to handle call routing, prefix rewrites
@@ -28,10 +28,10 @@
 	<section id="dialplan.introduction">
 	<title>How it works</title>
 	<para>
-	At startup the module will load a set of matching and transformation rules from a 
+	At startup the module will load a set of matching and transformation rules from a
 	database. Rules are grouped into dialplans. Every database row will be
-	stored in memory as a dialplan rule. Each rule will describe how the 
-	matching will be made, how the input value will be modified and which 
+	stored in memory as a dialplan rule. Each rule will describe how the
+	matching will be made, how the input value will be modified and which
 	attributes that will be set for the matching transformation.
 	</para>
 	<para>
@@ -40,12 +40,12 @@
 	or fnmatch (see 'man fnmatch') matching. Overlapping matching expressions
 	can be controlled via priorities. One priority can have multiple
 	dialplan entries. Priorities need not be numbered with consecutive
-	numbers. The next higher priority will be used after trying to match all 
+	numbers. The next higher priority will be used after trying to match all
 	entries in one priority.
 	</para>
 	<para>
-	Once a rule is matched, the defined transformation (if any) is applied and 
-	the result is returned as output value. Also, if any string attribute is 
+	Once a rule is matched, the defined transformation (if any) is applied and
+	the result is returned as output value. Also, if any string attribute is
 	associated to the rule, this will be returned to the script along with
 	the output value. This can be used to identify the used rule.
 	</para>
@@ -62,12 +62,12 @@
 	to convert generic numbers to specific numbers (like for emergency numbers).
 	</para>
 	<para>
-	The module can also be used for detecting a range or sets of numbers mapped 
-	on a service/case - the attribute string can be used to store extra 
+	The module can also be used for detecting a range or sets of numbers mapped
+	on a service/case - the attribute string can be used to store extra
 	information about the service/case.
 	</para>
 	<para>
-	Non-SIP string translation can be implemented - like converting country 
+	Non-SIP string translation can be implemented - like converting country
 	names from all possible formats to a canonical format:
 	<emphasis>(UK, England, United Kingdom) -> GB.
 	</emphasis></para>
@@ -97,7 +97,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -120,7 +120,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is 
+			Default value is
 				<quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
@@ -238,7 +238,7 @@ modparam("dialplan", "match_exp_col", "column_name")
 	<section id="dialplan.p.match_len_col">
 		<title><varname>match_len_col</varname> (string)</title>
 		<para>
-		The column name to store the length of a string matching the 
+		The column name to store the length of a string matching the
 		match expression.
 		</para>
 		<para>
@@ -299,7 +299,7 @@ modparam("dialplan", "repl_exp_col", "column_name")
 	<section id="dialplan.p.attrs_col">
 		<title><varname>attrs_col</varname> (string)</title>
 		<para>
-		The column name to store the rule's attributes to be set after match (see 
+		The column name to store the rule's attributes to be set after match (see
 		<varname>attrs_pvar</varname> )
 		</para>
 		<para>
@@ -320,7 +320,7 @@ modparam("dialplan", "attrs_col", "column_name")
 	<section id="dialplan.p.attrs_pvar">
 		<title><varname>attrs_pvar</varname> (string)</title>
 		<para>
-		The pseudovariable used to store the rule's attributes, 
+		The pseudovariable used to store the rule's attributes,
 		after translation (when <function>dp_translate</function>() succeeds).
 		This parameter can be an <quote>AVP</quote> or a script variable (<quote>$var()</quote>)..
 		</para>
@@ -393,13 +393,13 @@ modparam("dialplan", "match_dynamic", 1)
 
 	<section>
 	<title>Functions</title>
-	
+
 	<section id="dialplan.p.dp_translate">
 	<title>
 		<function moreinfo="none">dp_translate(id, [src[/dest]])</function>
 	</title>
 	<para>
-	Will try to translate <quote>src</quote> into <quote>dest</quote> according to 
+	Will try to translate <quote>src</quote> into <quote>dest</quote> according to
 	the translation rules in the dialplan identified by <quote>id</quote> .
 	If src/dest is missing the default parameter <quote>ruri.user/ruri.user</quote> will
 	be used, thus translating the request URI user part. If only <quote>dest</quote> is
@@ -419,18 +419,18 @@ modparam("dialplan", "match_dynamic", 1)
 		</para>
 		<itemizedlist>
 			<listitem>
-			<para><emphasis>integer</emphasis>- the dialplan id is statically 
+			<para><emphasis>integer</emphasis>- the dialplan id is statically
 			assigned </para>
 			</listitem>
-			
+
 			<listitem>
-			<para><emphasis>avp var</emphasis> 
+			<para><emphasis>avp var</emphasis>
 			- the dialplan id is the value of an existing avp variable
 			</para>
 			</listitem>
 
 			<listitem>
-			<para><emphasis>script var</emphasis> 
+			<para><emphasis>script var</emphasis>
 			- the dialplan id is the value of an existing script variable.</para>
 			</listitem>
 		</itemizedlist>
@@ -450,12 +450,12 @@ modparam("dialplan", "match_dynamic", 1)
 			- the string is the r-uri or r-uri user part
 			</para>
 			</listitem>
-			
+
 			<listitem>
 			<para><emphasis>avp var</emphasis> </para>
 			<para>
-			- At input the function will get the input string from an existing 
-			avp variable. At output the function will add an avp with the 
+			- At input the function will get the input string from an existing
+			avp variable. At output the function will add an avp with the
 			value of the output string.
 			</para>
 			</listitem>
@@ -463,7 +463,7 @@ modparam("dialplan", "match_dynamic", 1)
 			<listitem>
 			<para><emphasis>script var</emphasis> </para>
 			<para>
-			- At input the function will get the input string from an existing 
+			- At input the function will get the input string from an existing
 			script variable. At output the function will set an script variable
 			with the value of the output string.
 			</para>
@@ -516,58 +516,7 @@ xlog("translated to var $var(y) \n");
 
 
 	<section>
-	<title>MI Commands</title>
-
-		<section id="dialplan.m.dp_reload">
-			<title><varname>dp_reload</varname></title>
-			<para>
-			Forces an update of the translation rules from the database.
-			</para>
-			<para>
-			Name: <emphasis>dp_reload</emphasis>
-			</para>
-			<para>Parameters: <emphasis>none</emphasis></para>
- 			<para>
-			MI DATAGRAM Command Format:
-			</para>
-        <programlisting  format="linespecific">
-		:dp_reload:
-		_empty_line_
-		</programlisting>
-		</section>
-    
-		<section id="dialplan.m.dp_translate">
-			<title><varname>dp_translate</varname></title>
-			<para>
-                	Will apply a translation rule identified by a dialplan
-                	id and an input string.
-			</para>
-			<para>
-			Name: <emphasis>dp_translate</emphasis>
-			</para>
-        		<para>Parameters: <emphasis>2</emphasis></para>
-        		<itemizedlist>
-                	<listitem>
-                		<para><emphasis>Dial plan ID</emphasis></para>
-                	</listitem>
-                	<listitem>
-                		<para><emphasis>Input String</emphasis></para>
-                	</listitem>
-            		</itemizedlist>
- 			<para>
-			MI DATAGRAM Command Format:
-			</para>
-        <programlisting  format="linespecific">
-            :dp_translate:
-            dpid
-            input
-		_empty_line_
-		</programlisting>
-			</section>
-	</section>
-
-	<section>
-	<title>Exported RPC Commands</title>
+	<title>RPC Commands</title>
 
 		<section id="dialplan.r.dp.dump">
 			<title><varname>dialplan.dump</varname></title>
@@ -601,7 +550,7 @@ xlog("translated to var $var(y) \n");
 		&sercmd; dialplan.reload
 		</programlisting>
 		</section>
-    
+
     		<section>
 			<title><varname>dialplan.translate</varname></title>
 			<para>
@@ -634,7 +583,7 @@ xlog("translated to var $var(y) \n");
 	    <title>Installation</title>
 	    <para>
 		The modules requires one table in &kamailio; database: dialplan.
-		The SQL syntax to create them can be found in dialplan-create.sql     
+		The SQL syntax to create them can be found in dialplan-create.sql
        		 script in the database directories in the kamailio/scripts folder.
         	You can also find the complete database documentation on the
         	project webpage, &kamailiodbdocslink;.
@@ -679,7 +628,7 @@ attrs: xyz
 		The match_op field specify matching operator, valid values:
         	<itemizedlist>
                	<listitem>
-		0 - string comparison; 
+		0 - string comparison;
                	</listitem>
                	<listitem>
 		1 - regular expression matching (pcre);

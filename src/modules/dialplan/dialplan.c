@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -50,7 +50,6 @@
 #include "../../core/pvar.h"
 #include "../../core/dset.h"
 #include "../../core/mem/mem.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
@@ -65,12 +64,9 @@ MODULE_VERSION
 static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy();
-static int mi_child_init();
 
 static int dialplan_init_rpc(void);
 
-static struct mi_root * mi_reload_rules(struct mi_root *cmd_tree,void *param);
-static struct mi_root * mi_translate(struct mi_root *cmd_tree, void *param);
 static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2);
 static int dp_trans_fixup(void ** param, int param_no);
 static int dp_reload_f(struct sip_msg* msg);
@@ -101,12 +97,6 @@ static param_export_t mod_params[]={
 	{0,0,0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "dp_reload",  mi_reload_rules,   MI_NO_INPUT_FLAG,  0,  mi_child_init},
-	{ "dp_translate",  mi_translate,   0,  0,  0},
-	{ 0, 0, 0, 0, 0}
-};
-
 static cmd_export_t cmds[]={
 	{"dp_translate",(cmd_function)dp_translate_f,	2,	dp_trans_fixup,  0,
 		ANY_ROUTE},
@@ -123,7 +113,7 @@ struct module_exports exports= {
 	cmds,      	    /* exported functions */
 	mod_params,     /* param exports */
 	0,				/* exported statistics */
-	mi_cmds,		/* exported MI functions */
+	0,				/* exported MI functions */
 	0,				/* exported pseudo-variables */
 	0,				/* additional processes */
 	mod_init,		/* module initialization function */
@@ -135,11 +125,6 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(dialplan_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -207,12 +192,6 @@ static void mod_destroy(void)
 		default_par2 = NULL;
 	}
 	destroy_data();
-}
-
-
-static int mi_child_init(void)
-{
-	return 0;
 }
 
 
@@ -478,113 +457,6 @@ static int dp_reload_f(struct sip_msg* msg)
 }
 
 
-static struct mi_root * mi_reload_rules(struct mi_root *cmd_tree, void *param)
-{
-	struct mi_root* rpl_tree= NULL;
-
-	if (dp_connect_db() < 0) {
-		LM_ERR("failed to reload rules fron database (db connect)\n");
-		return 0;
-	}
-
-	if(dp_load_db() != 0){
-		LM_ERR("failed to reload rules fron database (db load)\n");
-		dp_disconnect_db();
-		return 0;
-	}
-
-	dp_disconnect_db();
-
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==0)
-		return 0;
-
-	return rpl_tree;
-}
-
-/* 
- *  mi cmd:  dp_translate
- *			<dialplan id> 
- *			<input>
- *		* */
-
-static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
-{
-
-	struct mi_root* rpl= NULL;
-	struct mi_node* root, *node;
-	dpl_id_p idp;
-	str dpid_str;
-	str input;
-	int dpid;
-	str attrs;
-	str output= {0, 0};
-
-	node = cmd->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	/* Get the id parameter */
-	dpid_str = node->value;
-	if(dpid_str.s == NULL || dpid_str.len== 0)	{
-		LM_ERR( "empty idp parameter\n");
-		return init_mi_tree(404, "Empty id parameter", 18);
-	}
-	if(str2sint(&dpid_str, &dpid) != 0)	{
-		LM_ERR("Wrong id parameter - should be an integer\n");
-		return init_mi_tree(404, "Wrong id parameter", 18);
-	}
-
-	if ((idp = select_dpid(dpid)) ==0 ){
-		LM_ERR("no information available for dpid %i\n", dpid);
-		return init_mi_tree(404, "No information available for dpid", 33);
-	}
-
-	node = node->next;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	if(node->next!= NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	input=  node->value;
-	if(input.s == NULL || input.len== 0)	{
-		LM_ERR( "empty input parameter\n");
-		return init_mi_tree(404, "Empty input parameter", 21);
-	}
-
-	LM_DBG("trying to translate %.*s with dpid %i\n",
-			input.len, input.s, idp->dp_id);
-	if (translate(NULL, input, &output, idp, &attrs)!=0){
-		LM_DBG("could not translate %.*s with dpid %i\n", 
-				input.len, input.s, idp->dp_id);
-		return init_mi_tree(404, "No translation", 14);
-	}
-	LM_DBG("input %.*s with dpid %i => output %.*s\n",
-			input.len, input.s, idp->dp_id, output.len, output.s);
-
-	rpl = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl==0)
-		goto error;
-
-	root= &rpl->node;
-
-	node = add_mi_node_child(root, 0, "Output", 6, output.s, output.len );
-	if( node == NULL)
-		goto error;
-
-	node = add_mi_node_child(root, 0, "ATTRIBUTES", 10, attrs.s, attrs.len);
-	if( node == NULL)
-		goto error;
-
-	return rpl;
-
-error:
-	if(rpl)
-		free_mi_tree(rpl);
-	return 0;
-}
-
 static const char* dialplan_rpc_reload_doc[2] = {
 	"Reload dialplan table from database",
 	0
@@ -679,7 +551,7 @@ static void dialplan_rpc_translate(rpc_t* rpc, void* ctx)
 }
 
 /*
- * RPC command to dump dialplan 
+ * RPC command to dump dialplan
  */
 static void dialplan_rpc_dump(rpc_t* rpc, void* ctx)
 {
@@ -730,7 +602,7 @@ static void dialplan_rpc_dump(rpc_t* rpc, void* ctx)
 				return;
 			}
 
-			if (rpc->struct_add(sh, "dd", "PRIO", rulep->pr, 
+			if (rpc->struct_add(sh, "dd", "PRIO", rulep->pr,
 				"MATCHOP", rulep->matchop)<0)
 			{
 				rpc->fault(ctx, 500, "Internal error adding prio");
