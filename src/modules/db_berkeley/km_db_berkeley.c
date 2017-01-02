@@ -64,7 +64,7 @@
 /*MODULE_VERSION*/
 
 int bdb_bind_api(db_func_t *dbb);
-static void db_berkeley_init_rpc(void);
+static int db_berkeley_init_rpc(void);
 
 /*
  * Exported functions
@@ -1292,7 +1292,7 @@ rpc_export_t db_berkeley_rpc[] = {
 	{0, 0, 0, 0}
 };
 
-static void db_berkeley_init_rpc(void)
+static int db_berkeley_init_rpc(void)
 {
 	if (rpc_register_array(db_berkeley_rpc)!=0) {
 		LM_ERR("failed to register RPC commands\n");
