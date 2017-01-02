@@ -41,7 +41,6 @@ Anca-Maria Vamanu
               4.2. pres_check_activities(presentity_uri, activity)
 
         5. Installation
-        6. Exported pseudo-variables
 
    2. Developer Guide
 
@@ -91,7 +90,6 @@ Chapter 1. Admin Guide
         4.2. pres_check_activities(presentity_uri, activity)
 
    5. Installation
-   6. Exported pseudo-variables
 
 1. Overview
 
@@ -360,13 +358,6 @@ modparam("presence_xml", "force_dummy_presence", 1)
    database directories in the kamailio/scripts folder. You can also find
    the complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
-
-6. Exported pseudo-variables
-
-     * $xml(name=>spec)
-
-   Exported pseudo-variables are documented at
-   http://www.kamailio.org/wiki/.
 
 Chapter 2. Developer Guide
 
