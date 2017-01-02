@@ -32,7 +32,10 @@
         <section id="statsd.p.ip">
             <title><varname>ip</varname>(string)</title>
             <para>
-            Statsd server IP address
+            Statsd server IP address.
+            </para>
+            <para>
+            Defaults to 127.0.0.1
             </para>
             <example>
                 <title>Set ip parameter</title>
@@ -48,6 +51,9 @@ modparam("statsd", "ip", "127.0.0.1")
             <title><varname>port</varname>(string)</title>
             <para>
             Statsd server port number
+            </para>
+            <para>
+            Defaults to 8125
             </para>
             <example>
                 <title>Set port parameter</title>
