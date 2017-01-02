@@ -783,7 +783,7 @@ switch ($retcode) {
 	</section>
 	<section>
 	<title>RPC Commands</title>
-		<section>
+		<section id="httpclient.r.httpclient.listcon">
 			<title><function moreinfo="none">httpclient.listcon</function></title>
 			<para>
 				Lists all defined httpcon connections
