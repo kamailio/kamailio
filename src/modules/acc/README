@@ -319,7 +319,10 @@ Chapter 1. Admin Guide
    1.1. General Example
 
    ACC module is used to account transactions information to different
-   backends like syslog, SQL, RADIUS and DIAMETER (beta version).
+   backends like syslog and SQL. With the separate module, radius support
+   is enabled. There is some very early support of the Diameter protocol
+   in the code which is no longer included by default. This support is not
+   up to date with the current Diameter protocols and is disabled.
 
    To account a transaction and to choose which set of backends to be
    used, the script writer just has to set some flags (see the module
@@ -364,25 +367,9 @@ Chapter 1. Admin Guide
        see cdr_expired_dlg_enable parameter - Section 6.40,
        “cdr_expired_dlg_enable (integer)”.
 
-   The SQL backend support is compiled in the module. For RADIUS and
-   DIAMETER you need to enable it by recompiling the module with properly
-   set defines: uncomment the RAD_ACC or DDIAM_ACC lines in
-   modules/acc/Makefile. To compile RADIUS support, you need to have
-   radiusclient-ng (only versions higher or equal to 0.5.0) installed on
-   your system which is available from
-   http://developer.berlios.de/projects/radiusclient-ng/. The radius
-   client needs to be configured properly. To do so, use the template at
-   etc/radiusclient.conf and make sure that module's radius_config
-   parameter points to its location. In particular, accounting secret must
-   match that one configured in server and proper dictionary is used (one
-   is available at etc/sip_dictionary). Also note that Debian
-   radiusclient-ng uses /var/run/radius.seq as seqfile but Kamailio Debian
-   init script expects /var/run/kamailio/kamailio_radius.seq, so is needed
-   to change it in radiusclient-ng configuration or in Kamailio Debian
-   init script (if not, Kamailio can't create the seq file when not
-   running as root). Uses along with FreeRadius (
-   http://www.freeradius.org/) and Radiator (
-   http://www.open.com.au/radiator/) servers have been reported to us.
+   The SQL backend support is compiled in the module. For DIAMETER you
+   need to enable it by recompiling the module with properly set defines:
+   uncomment the DDIAM_ACC lines in modules/acc/Makefile.
 
    NOTE: diameter support was developed for DISC (DIameter Server Client
    project at http://developer.berlios.de/projects/disc/). This project
@@ -669,8 +656,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * radiusclient-ng 0.5.0 or higher -- if compiled with RADIUS support.
-       See http://developer.berlios.de/projects/radiusclient-ng/.
+     * None
 
 6. Parameters
 

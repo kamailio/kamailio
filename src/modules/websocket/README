@@ -124,10 +124,10 @@ Chapter 1. Admin Guide
    This module implements a WebSocket (RFC 6455) server and provides
    connection establishment (handshaking), management (including
    connection keep-alive), and framing for the SIP and MSRP WebSocket
-   sub-protocols (draft-ietf-sipcore-sip-websocket and
-   draft-pd-msrp-websocket).
+   sub-protocols (RFC 7118 and RFC 7977).
 
    The module supports WebSockets (ws) and secure WebSockets (wss)
+   transports
 
 2. How it works
 
@@ -218,11 +218,11 @@ event_route[xhttp:request] {
    WebSocket connection is made. This means that the routing headers
    cannot be used for request or response routing in the normal manner.
 
-   draft-ietf-sipcore-sip-websocket states that SIP WebSocket Clients and
-   the SIP registrar should implement Outbound (RFC 5626) and Path (RFC
-   3327) to enable requests and responses to be correctly routed. However,
-   Kamailio does not currently support Outbound and it may not be possible
-   to guarantee all SIP WebSocket clients will support Outbound and Path.
+   RFC 7118 - The WebSocket Protocol as a Transport for the Session
+   Initiation Protocol - states that SIP WebSocket Clients and the SIP
+   registrar should implement SIP Outbound (RFC 5626) and Path header
+   support (RFC 3327) to enable requests and responses to be correctly
+   routed. Kamailio has a module called "Outbound" for this functionality.
 
    The nathelper module functions (nat_uac_test(), fix_nated_register(),
    add_contact_alias(), and handle_ruri_alias()) and the Kamailio core
@@ -386,7 +386,7 @@ modparam("websocket", "keepalive_processes", 2)
 
 4.4. keepalive_interval (integer)
 
-   The number of seconds between each keep-alice process run
+   The number of seconds between each keep-alive process run
 
    Default value is 1.
 
@@ -410,9 +410,8 @@ modparam("websocket", "ping_application_data", "WebSockets rock")
 
    A bitmap that allows you to control the sub-protocols supported by the
    WebSocket server.
-     * 1 - sip (draft-ietf-sipcore-sip-websocket)
-     * 2 - msrp (draft-pd-msrp-websocket) - msrp.so must be loaded before
-       websocket.so
+     * 1 - sip (RFC 7118)
+     * 2 - msrp (RFC 7977) - msrp.so must be loaded before websocket.so
 
    Default value is 1 when msrp.so is not loaded 3 when msrp.so is loaded.
 
