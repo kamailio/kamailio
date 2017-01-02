@@ -2740,6 +2740,78 @@ void rpc_reply(rpc_t* rpc, void* c)
 	}
 }
 
+/*
+ * Syntax of "t_reply_callid" :
+ * code
+ * reason
+ * callid
+ * cseq
+ * to_tag
+ * new headers
+ * [Body]
+*/
+void rpc_reply_callid(rpc_t* rpc, void* c)
+{
+	int code;
+	tm_cell_t *trans;
+	str reason = {0, 0};
+	str totag = {0, 0};
+	str hdrs = {0, 0};
+	str body = {0, 0};
+	str callid = {0, 0};
+	str cseq = {0, 0};
+	int n;
+
+	if (rpc->scan(c, "d", &code) < 1) {
+		rpc->fault(c, 400, "Reply code expected");
+		return;
+	}
+
+	if (rpc->scan(c, "S", &reason) < 1) {
+		rpc->fault(c, 400, "Reason phrase expected");
+		return;
+	}
+
+	if (rpc->scan(c, "S", &callid) < 1) {
+		rpc->fault(c, 400, "Call-ID expected");
+		return;
+	}
+
+	if (rpc->scan(c, "S", &cseq) < 1) {
+		rpc->fault(c, 400, "CSeq expected");
+		return;
+	}
+
+	if (rpc->scan(c, "S", &totag) < 1) {
+		rpc->fault(c, 400, "To tag expected");
+		return;
+	}
+
+	if (rpc->scan(c, "S", &hdrs) < 0) {
+		rpc->fault(c, 500, "Read error");
+		return;
+	}
+	if (rpc->scan(c, "S", &body) < 0) {
+		rpc->fault(c, 500, "Read error");
+		return;
+	}
+
+	if(t_lookup_callid( &trans, callid, cseq) < 0 ) {
+		rpc->fault(c, 404, "Transaction not found");
+		return;
+	}
+
+	/* it's refcounted now, t_reply_with body unrefs for me -- I can
+	 * continue but may not use T anymore  */
+	n = t_reply_with_body(trans, code, &reason, &body,
+			&hdrs, &totag);
+
+	if (n<0) {
+		rpc->fault(c, 500, "Reply failed");
+		return;
+	}
+}
+
 /**
  * re-entrant locking of reply mutex
  */

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -33,7 +33,7 @@
 /* reply processing status */
 enum rps {
 	/* something bad happened */
-	RPS_ERROR=0,	
+	RPS_ERROR=0,
 	/* transaction completed but we still accept the reply */
 	RPS_PUSHED_AFTER_COMPLETION,
 	/* reply discarded */
@@ -161,7 +161,7 @@ typedef int (*run_branch_failure_handlers_f)(struct cell*, struct sip_msg*, int,
 /* Retransmits the last sent inbound reply.
  * Returns  -1 - error
  *           1 - OK
- 
+
  *int t_retransmit_reply(struct sip_msg *);
 */
 
@@ -201,7 +201,7 @@ void on_failure_reply( struct cell* t, struct sip_msg* msg,
 	int code, void *param  );
 
 /* set which 'reply' structure to take if only negative
-   replies arrive 
+   replies arrive
 */
 void t_on_failure( unsigned int go_to );
 unsigned int get_on_failure(void);
@@ -225,6 +225,7 @@ int t_pick_branch_blind(struct cell *t, int *res_code);
 void t_drop_replies(int v);
 
 void rpc_reply(rpc_t* rpc, void* c);
+void rpc_reply_callid(rpc_t* rpc, void* c);
 
 void faked_env( struct cell *t,struct sip_msg *msg, int is_async_env);
 int fake_req(struct sip_msg *faked_req,

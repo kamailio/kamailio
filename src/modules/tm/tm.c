@@ -2292,6 +2292,11 @@ static const char* rpc_reply_doc[2] = {
 	0
 };
 
+static const char* rpc_reply_callid_doc[2] = {
+	"Reply transaction by call-id",
+	0
+};
+
 static const char* tm_rpc_stats_doc[2] = {
 	"Print transaction statistics.",
 	0
@@ -2321,6 +2326,7 @@ static const char* rpc_t_uac_wait_doc[2] = {
 static rpc_export_t tm_rpc[] = {
 	{"tm.cancel", rpc_cancel,   rpc_cancel_doc,   0},
 	{"tm.reply",  rpc_reply,    rpc_reply_doc,    0},
+	{"tm.reply_callid", rpc_reply_callid,   rpc_reply_callid_doc,   0},
 	{"tm.stats",  tm_rpc_stats, tm_rpc_stats_doc, 0},
 	{"tm.hash_stats",  tm_rpc_hash_stats, tm_rpc_hash_stats_doc, 0},
 	{"tm.t_uac_start", rpc_t_uac_start, rpc_t_uac_start_doc, 0 },
