@@ -26,7 +26,7 @@
 #include "address.h"
 #include "trusted.h"
 #include "hash.h"
-#include "mi.h"
+#include "rpc.h"
 #include "permissions.h"
 
 

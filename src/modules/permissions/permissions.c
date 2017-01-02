@@ -29,7 +29,7 @@
 #include "trusted.h"
 #include "address.h"
 #include "hash.h"
-#include "mi.h"
+#include "rpc.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_uri.h"
@@ -119,8 +119,6 @@ static int allow_uri(struct sip_msg* msg, char* basename, char* uri);
 static int mod_init(void);
 static void mod_exit(void);
 static int child_init(int rank);
-static int mi_trusted_child_init();
-static int mi_addr_child_init();
 static int permissions_init_rpc(void);
 
 
@@ -632,18 +630,6 @@ static int child_init(int rank)
 	if (init_child_trusted(rank) == -1)
 		return -1;
 	return 0;
-}
-
-
-static int mi_trusted_child_init(void)
-{
-	return mi_init_trusted();
-}
-
-
-static int mi_addr_child_init(void)
-{
-	return mi_init_addresses();
 }
 
 

@@ -44,12 +44,6 @@ int init_addresses(void);
 
 
 /*
- * Open database connection if necessary
- */
-int mi_init_addresses(void);
-
-
-/*
  * Reload address table to new hash table and when done, make new hash table
  * current one.
  */

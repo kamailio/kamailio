@@ -44,12 +44,6 @@ int init_child_trusted(int rank);
 
 
 /*
- * Open database connections if necessary
- */
-int mi_init_trusted(void);
-
-
-/*
  * Reload trusted table to new hash table and when done, make new hash table
  * current one.
  */

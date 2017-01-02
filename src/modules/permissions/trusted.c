@@ -282,21 +282,6 @@ int init_child_trusted(int rank)
 
 
 /*
- * Open database connection if necessary
- */
-int mi_init_trusted(void)
-{
-	if (!db_url.s) return 0;
-	db_handle = perm_dbf.init(&db_url);
-	if (!db_handle) {
-		LM_ERR("unable to connect database\n");
-		return -1;
-	}
-	return 0;
-}
-
-
-/*
  * Close connections and release memory
  */
 void clean_trusted(void)
