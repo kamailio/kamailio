@@ -65,8 +65,6 @@
 #include "../../core/ut.h"
 #include "../../core/pt.h"
 #include "../../core/timer_proc.h"
-#include "../../lib/kmi/attr.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/pvar.h"
 #include "../../core/lvalue.h"
 #include "../../core/msg_translator.h"
@@ -76,6 +74,8 @@
 #include "../../core/dset.h"
 #include "../../core/select.h"
 #include "../../core/kemi.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../registrar/sip_msg.h"
 #include "../usrloc/usrloc.h"
 #include "nathelper.h"
@@ -107,7 +107,6 @@ MODULE_VERSION
 #define MI_SET_NATPING_STATE		"nh_enable_ping"
 #define MI_DEFAULT_NATPING_STATE	1
 
-#define MI_ENABLE_RTP_PROXY			"nh_enable_rtpp"
 #define MI_MIN_RECHECK_TICKS		0
 #define MI_MAX_RECHECK_TICKS		(unsigned int)-1
 
@@ -163,10 +162,7 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
-/*mi commands*/
-static struct mi_root* mi_enable_natping(struct mi_root* cmd_tree,
-		void* param );
-
+static int nathelper_rpc_init(void);
 
 static usrloc_api_t ul;
 
@@ -287,19 +283,13 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{MI_SET_NATPING_STATE,    mi_enable_natping,    0,                0, 0},
-	{ 0, 0, 0, 0, 0}
-};
-
-
 struct module_exports exports = {
 	"nathelper",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,           /* exported statistics */
-	mi_cmds,     /* exported MI functions */
+	0,           /* exported MI functions */
 	mod_pvs,     /* exported pseudo-variables */
 	0,           /* extra processes */
 	mod_init,
@@ -373,31 +363,41 @@ static int fixup_add_contact_alias(void** param, int param_no)
 	return -1;
 }
 
-static struct mi_root* mi_enable_natping(struct mi_root* cmd_tree,
-		void* param )
+static void nathelper_rpc_enable_ping(rpc_t* rpc, void* ctx)
 {
-	unsigned int value;
-	struct mi_node* node;
+	int value = 0;
+	if (natping_state==NULL) {
+		rpc->fault(ctx, 500, "NATping disabled");
+		return;
+	}
 
-	if (natping_state==NULL)
-		return init_mi_tree( 400, MI_PING_DISABLED, MI_PING_DISABLED_LEN);
-
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	value = 0;
-	if( strno2int( &node->value, &value) <0)
-		goto error;
-
+	if (rpc->scan(ctx, "d", &value) < 1) {
+		rpc->fault(ctx, 500, "No parameter");
+		return;
+	}
 	(*natping_state) = value?1:0;
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-error:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 }
 
+static const char* nathelper_rpc_enable_ping_doc[2] = {
+	"Set (enable/disable) nat ping",
+	0
+};
 
+rpc_export_t nathelper_rpc[] = {
+	{"nathelper.enable_ping", nathelper_rpc_enable_ping,
+		nathelper_rpc_enable_ping_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int nathelper_rpc_init(void)
+{
+	if (rpc_register_array(nathelper_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
 
 static int init_raw_socket(void)
 {
@@ -463,9 +463,9 @@ mod_init(void)
 	pv_spec_t avp_spec;
 	str s;
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	if(nathelper_rpc_init()<0)
 	{
-		LM_ERR("failed to register MI commands\n");
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 

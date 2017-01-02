@@ -11,21 +11,21 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
 		This is a module to help with &nat; traversal and reuse
-		of <acronym>TCP</acronym> connections. In particular, 
-		it helps symmetric &ua;s that don't advertise they are symmetric 
-		and are not able to determine their public address. 
+		of <acronym>TCP</acronym> connections. In particular,
+		it helps symmetric &ua;s that don't advertise they are symmetric
+		and are not able to determine their public address.
 	</para>
 	<para>
 		The function <function>fix_nated_contact()</function> rewrites the <quote>Contact</quote>
 		header field with request's source address:port pair. The function
-		<function>fix_nated_sdp()</function> adds the active direction indication 
+		<function>fix_nated_sdp()</function> adds the active direction indication
 		to &sdp; (flag 0x01) and updates the source &ip; address too (flag 0x02). The function
 		<function>fix_nated_register()</function> exports exports the request's source
 		address:port into an AVP to be used during <function>save()</function> and should
@@ -831,21 +831,21 @@ if(is_rfc1918("$rd")) {
 	</section>
 
 	<section>
-		<title><acronym>MI</acronym> Commands</title>
-		<section id="nathelper.m.nh_enable_ping">
-			<title><function moreinfo="none">nh_enable_ping</function></title>
+		<title>RPC Commands</title>
+		<section id="nathelper.r.enable_ping">
+			<title><function moreinfo="none">nathelper.enable_ping</function></title>
 			<para>
-			Enables natping if parameter value greater than 0.
+			Enables natping if parameter value different than 0.
 			Disables natping if parameter value is 0.
 			</para>
 			<para>
 			The function takes only one parameter - a number in decimal format.
 			</para>
 			<example>
-			<title><function moreinfo="none">nh_enable_ping</function> usage</title>
+			<title><function moreinfo="none">nathelper.enable_ping</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_enable_ping 1
+$ &kamcmd; nathelper.enable_ping 1
 ...
 			</programlisting>
 			</example>
