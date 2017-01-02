@@ -33,7 +33,6 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "domain.h"
-#include "mi.h"
 #include "hash.h"
 #include "api.h"
 #include "../../core/locking.h"
@@ -126,16 +125,6 @@ static param_export_t params[] = {
 
 
 /*
- * Exported MI functions
- */
-static mi_export_t mi_cmds[] = {
-	{ MI_DOMAIN_RELOAD, mi_domain_reload, MI_NO_INPUT_FLAG, 0, 0 },
-	{ MI_DOMAIN_DUMP,   mi_domain_dump,   MI_NO_INPUT_FLAG, 0, 0 },
-	{ 0, 0, 0, 0, 0}
-};
-
-
-/*
  * Module interface
  */
 struct module_exports exports = {
@@ -144,7 +133,7 @@ struct module_exports exports = {
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
 	0,         /* exported statistics */
-	mi_cmds,   /* exported MI functions */
+	0,         /* exported MI functions */
 	0,         /* exported pseudo-variables */
 	0,         /* extra processes */
 	mod_init,  /* module initialization function */
@@ -158,10 +147,6 @@ static int mod_init(void)
 {
 	LM_DBG("initializing\n");
 
-	if (register_mi_mod(exports.name, mi_cmds) != 0) {
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if (domain_init_rpc() != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;

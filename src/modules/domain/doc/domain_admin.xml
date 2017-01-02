@@ -10,9 +10,9 @@
 <!-- Domain Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -57,7 +57,7 @@
 		This is <acronym>URL</acronym> of the database to be used.
 		</para>
 		<para>
-		Default value is 
+		Default value is
 			<quote>&defaultrodb;</quote>
 		</para>
 		<example>
@@ -70,7 +70,7 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 	<section>
 		<title><varname>domain_table</varname> (string)</title>
 		<para>
-		Name of table containing names of local domains that the proxy is 
+		Name of table containing names of local domains that the proxy is
 		responsible for.
 		</para>
 		<para>
@@ -195,7 +195,7 @@ modparam("domain", "register_myself", 1)
 		</example>
 	</section>
 
-	
+
 	</section>
 	<section>
 	<title>Functions</title>
@@ -322,48 +322,8 @@ if (lookup_domain("$fd", "from_")) {
 	</section>
 	</section>
 	<section>
-	<title>MI Commands</title>
-	<section>
-		<title><function moreinfo="none">domain_reload</function></title>
-		<para>
-		Causes domain module to re-read the contents of domain table
-		into cache memory.
-		</para>
-		<para>
-		Name: <emphasis>domain_reload</emphasis>
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:domain_reload:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-		
-	</section>
-	<section>
-		<title><function moreinfo="none">domain_dump</function></title>
-		<para>
-		Causes domain module to dump hash indexes and domain names in
-		its cache memory.
-		</para>
-		<para>
-		Name: <emphasis>domain_dump</emphasis>
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:domain_dump:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-	</section>
-	</section>
-	<section>
-	<title>Exported RPC Commands</title>
-	<section>
+	<title>RPC Commands</title>
+	<section id="domain.rpc.reload">
 		<title><function moreinfo="none">domain.reload</function></title>
 		<para>
 		Causes domain module to re-read the contents of domain table
@@ -380,7 +340,7 @@ if (lookup_domain("$fd", "from_")) {
 		&sercmd; domain.reload
 		</programlisting>
 	</section>
-	<section>
+	<section id="domain.rpc.dump">
 		<title><function moreinfo="none">domain.dump</function></title>
 		<para>
 		Causes domain module to dump domain names in
@@ -401,10 +361,9 @@ if (lookup_domain("$fd", "from_")) {
 	<section>
 	<title>Known Limitations</title>
 	<para>
-		There is an unlikely race condition on domain reload.  If a 
-		process uses a table, which is reloaded at the same time twice 
-		through <acronym>FIFO</acronym> or <acronym>RPC</acronym>,
-		the second reload will delete the  
+		There is an unlikely race condition on domain reload.  If a
+		process uses a table, which is reloaded at the same time twice
+		through <acronym>RPC</acronym>, the second reload will delete the
 		original table still in use by the process.
 	</para>
 	</section>

@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -167,42 +167,6 @@ int hash_table_install (struct domain_list **hash_table, str* did, str *domain)
 	return 1;
 }
 
-int hash_table_mi_print(struct domain_list **hash_table, struct mi_node* rpl)
-{
-	int i;
-	struct domain_list *np;
-	struct attr_list *ap;
-	struct mi_node *dnode, *node;
-
-	if(hash_table==0) return -1;
-	for (i = 0; i < DOM_HASH_SIZE; i++) {
-		np = hash_table[i];
-		while (np) {
-			dnode = add_mi_node_child(rpl, 0, "domain", 6, 
-						  np->domain.s, np->domain.len);
-			if (dnode == 0) return -1;
-			node = add_mi_node_child(dnode, 0, "did", 3, 
-						 np->did.s, np->did.len);
-			if (node == 0) return -1;
-			np = np->next;
-		}
-	}
-	np = hash_table[DOM_HASH_SIZE];
-	while (np) {
-	    dnode = add_mi_node_child(rpl, 0, "did", 3, 
-				      np->did.s, np->did.len);
-	    if (dnode == 0) return -1;
-	    ap = np->attrs;
-	    while (ap) {
-		node = add_mi_node_child(dnode, 0, "attr", 4, 
-					 ap->name.s, ap->name.len);
-		if (node == 0) return -1;
-		ap = ap->next;
-	    }
-	    np = np->next;
-	}
-	return 0;
-}
 
 /* Free contents of hash table */
 void hash_table_free (struct domain_list **hash_table)

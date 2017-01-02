@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -26,13 +26,11 @@
 
 #include <stdio.h>
 #include "domain_mod.h"
-#include "../../lib/kmi/mi.h"
 
 int hash_table_install (struct domain_list **hash_table, str *did, str *domain);
 int hash_table_attr_install (struct domain_list **hash_table, str* did,
 			     str *name, short type, int_str *val);
 int hash_table_lookup (str *domain, str *did, struct attr_list **attrs);
-int hash_table_mi_print(struct domain_list **hash_table, struct mi_node* rpl);
 void hash_table_free (struct domain_list **hash_table);
 
 #endif
