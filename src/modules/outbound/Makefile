@@ -49,7 +49,4 @@ LIBS+= $(TLS_EXTRA_LIBS)
 #LIBS+= /usr/lib/libcurl.a /usr/lib/libssl.a /usr/lib/libcrypto.a -lkrb5 -lidn -lz -lgssapi_krb5 -lrt
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
-SERLIBPATH=../../lib
-SER_LIBS+=$(SERLIBPATH)/kmi/kmi
-
 include ../../Makefile.modules

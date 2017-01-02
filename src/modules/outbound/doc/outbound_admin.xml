@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>This module provides C-API functions to enable &kamailio; to be
@@ -509,16 +509,6 @@ modparam("outbound", "force_no_outbound_flag", 2)
 		</example>
 	</section>
 
-	</section>
-
-	<section>
-	<title>Functions</title>
-	<para><emphasis>None</emphasis></para>
-	</section>
-
-	<section>
-	<title>MI Commands</title>
-	<para><emphasis>None</emphasis></para>
 	</section>
 
 </chapter>

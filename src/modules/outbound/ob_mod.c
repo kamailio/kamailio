@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2012-2013 Crocodile RCS Ltd
  *
  * This file is part of Kamailio, a free SIP server.
@@ -36,7 +34,6 @@
 #include "../../core/mod_fix.h"
 #include "../../core/sr_module.h"
 #include "../../core/counters.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_rr.h"
 #include "../../core/parser/parse_uri.h"
@@ -56,7 +53,7 @@ static unsigned int ob_force_flag = (unsigned int) -1;
 static unsigned int ob_force_no_flag = (unsigned int) -1;
 static str ob_key = {0, 0};
 
-static cmd_export_t cmds[]= 
+static cmd_export_t cmds[]=
 {
 	{ "bind_ob", (cmd_function) bind_ob,
 	  1, 0, 0,
@@ -71,7 +68,7 @@ static param_export_t params[]=
 	{ 0, 0, 0 }
 };
 
-struct module_exports exports= 
+struct module_exports exports=
 {
 	"outbound",
 	DEFAULT_DLFLAGS,	/* dlopen flags */
@@ -145,7 +142,7 @@ static void destroy(void)
    <protocol> specifies whether the addresses are IPv4 or IPv6 and the
    transport.
 		Bits 0-6:	transport (see sip_protos enum from ip_addr.h)
-		Bit 7:		IPv6 if set, IPv4 if unset	
+		Bit 7:		IPv6 if set, IPv4 if unset
 
    IP addresses will be 4 (for IPv6) or 16 (for IPv6) bytes.
 
@@ -172,7 +169,7 @@ int encode_flow_token(str *flow_token, struct receive_info rcv)
 	}
 
 	/* Encode protocol information */
-	unenc_flow_token[pos++] = 
+	unenc_flow_token[pos++] =
 		(rcv.dst_ip.af == AF_INET6 ? 0x80 : 0x00) | rcv.proto;
 
 	/* Encode destination address */
@@ -299,7 +296,7 @@ end:
 static int use_outbound_register(struct sip_msg *msg)
 {
 	contact_t *contact;
-	
+
 	/* Check there is a single Via: */
 	if (!(parse_headers(msg, HDR_VIA2_F, 0) == -1 || msg->via2 == 0
 		|| msg->via2->error != PARSE_OK))
@@ -323,7 +320,7 @@ static int use_outbound_register(struct sip_msg *msg)
 			LM_ERR("empty Contact:\n");
 			return 0;
 		}
-		
+
 		if (contact->reg_id)
 		{
 			LM_DBG("found REGISTER with ;reg-id parameter on"
@@ -439,7 +436,7 @@ static int use_outbound_non_reg(struct sip_msg *msg)
 			LM_ERR("empty Contact:\n");
 			return 0;
 		}
-	
+
 		if (parse_uri(contact->uri.s, contact->uri.len, &puri)
 			< 0)
 		{
