@@ -78,9 +78,9 @@ Ovidiu Sas
               6.1. $rr_count
               6.2. $rr_top_count
 
-        7. MI Commands
+        7. RPC Commands
 
-              7.1. nh_enable_ping
+              7.1. nathelper.enable_ping
 
         8. Selects
 
@@ -115,7 +115,7 @@ Ovidiu Sas
    1.23. set_contact_alias usage
    1.24. $rr_count usage
    1.25. $rr_top_count usage
-   1.26. nh_enable_ping usage
+   1.26. nathelper.enable_ping usage
    1.27. @nathelper.rewrite_contact usage
 
 Chapter 1. Admin Guide
@@ -163,9 +163,9 @@ Chapter 1. Admin Guide
         6.1. $rr_count
         6.2. $rr_top_count
 
-   7. MI Commands
+   7. RPC Commands
 
-        7.1. nh_enable_ping
+        7.1. nathelper.enable_ping
 
    8. Selects
 
@@ -696,20 +696,20 @@ if(is_rfc1918("$rd")) {
     };
 ...
 
-7. MI Commands
+7. RPC Commands
 
-   7.1. nh_enable_ping
+   7.1. nathelper.enable_ping
 
-7.1. nh_enable_ping
+7.1. nathelper.enable_ping
 
-   Enables natping if parameter value greater than 0. Disables natping if
-   parameter value is 0.
+   Enables natping if parameter value different than 0. Disables natping
+   if parameter value is 0.
 
    The function takes only one parameter - a number in decimal format.
 
-   Example 1.26. nh_enable_ping usage
+   Example 1.26. nathelper.enable_ping usage
 ...
-$ kamctl fifo nh_enable_ping 1
+$ kamcmd nathelper.enable_ping 1
 ...
 
 8. Selects
