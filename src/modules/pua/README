@@ -41,9 +41,9 @@ Anca-Maria Vamanu
 
               4.1. pua_update_contact()
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. pua_cleanup
+              5.1. pua.cleanup
 
         6. Installation
 
@@ -107,9 +107,9 @@ Chapter 1. Admin Guide
 
         4.1. pua_update_contact()
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. pua_cleanup
+        5.1. pua.cleanup
 
    6. Installation
 
@@ -373,22 +373,23 @@ if(method=="NOTIFY")
     pua_update_contact();
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. pua_cleanup
+   5.1. pua.cleanup
 
-5.1.  pua_cleanup
+5.1.  pua.cleanup
 
    Manually triggers the cleanup functions for the pua table. Useful if
    you have set update_period to zero or less.
 
-   Name: pua_cleanup
+   Name: pua.cleanup
 
    Parameters: none
 
-   MI FIFO Command Format:
-                :pua_cleanup:fifo_reply
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd pua.cleanup
+...
 
 6. Installation
 

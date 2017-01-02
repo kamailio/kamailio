@@ -8,9 +8,9 @@ Anca-Maria Vamanu
 
    Voice Sistem SRL
 
-   Copyright © 2016 TutPro Inc.
+   Copyright Â© 2016 TutPro Inc.
 
-   Copyright © 2006 Voice Sistem SRL
+   Copyright Â© 2006 Voice Sistem SRL
      __________________________________________________________________
 
    Table of Contents
@@ -49,9 +49,9 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The pua_rpc offers the possibility to publish presence information via
-   RPC transport. Subscribing to presence information has not been
-   implemented yet.
+   The pua_rpc module offers the possibility to publish presence
+   information via the RPC transport. Subscribing to presence information
+   has not been implemented yet.
 
    Using this module you can create independent applications/scripts to
    publish SIP and not SIP related information (e.g., MWI message summary
@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
 
    4.1. pua.publish
 
-4.1. pua.publish
+4.1.  pua.publish
 
    Command parameters:
      * presentity_uri - e.g. sip:jh@tutpro.com
