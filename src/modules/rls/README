@@ -55,9 +55,9 @@ Anca-Maria Vamanu
               4.2. rls_handle_notify()
               4.3. rls_update_subs(uri, event)
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. rls_cleanup
+              5.1. rls.cleanup
 
         6. Installation
 
@@ -138,9 +138,9 @@ Chapter 1. Admin Guide
         4.2. rls_handle_notify()
         4.3. rls_update_subs(uri, event)
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. rls_cleanup
+        5.1. rls.cleanup
 
    6. Installation
 
@@ -639,23 +639,24 @@ Within event_route[xhttp:request]:
                 break;
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. rls_cleanup
+   5.1. rls.cleanup
 
-5.1.  rls_cleanup
+5.1. rls.cleanup
 
    Manually triggers the cleanup functions forthe rls_watchers and
    rls_presentity tables. Useful if you have set clean_period to zero or
    less.
 
-   Name: rls_cleanup
+   Name: rls.cleanup
 
    Parameters: none
 
-   MI FIFO Command Format:
-                :rls_cleanup:fifo_reply
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd rls.cleanup
+...
 
 6. Installation
 

@@ -54,31 +54,23 @@ Juha Heinanen
               4.11. t_reuse_branch()
               4.12. t_precheck_trans()
 
-        5. Exported pseudo-variables
-        6. MI Commands
+        5. Exported Variables
+        6. Statistics
 
-              6.1. t_uac_dlg
-              6.2. t_uac_cancel
-              6.3. t_hash
-              6.4. t_reply
-              6.5. t_reply_callid
-
-        7. Statistics
-
-              7.1. UAS_transactions
-              7.2. UAC_transactions
-              7.3. 2xx_transactions
-              7.4. 3xx_transactions
-              7.5. 4xx_transactions
-              7.6. 5xx_transactions
-              7.7. 6xx_transactions
-              7.8. inuse_transactions
-              7.9. active_transactions
-              7.10. rpl_received
-              7.11. rpl_absorbed
-              7.12. rpl_relayed
-              7.13. rpl_generated
-              7.14. rpl_sent
+              6.1. UAS_transactions
+              6.2. UAC_transactions
+              6.3. 2xx_transactions
+              6.4. 3xx_transactions
+              6.5. 4xx_transactions
+              6.6. 5xx_transactions
+              6.7. 6xx_transactions
+              6.8. inuse_transactions
+              6.9. active_transactions
+              6.10. rpl_received
+              6.11. rpl_absorbed
+              6.12. rpl_relayed
+              6.13. rpl_generated
+              6.14. rpl_sent
 
    List of Examples
 
@@ -125,31 +117,23 @@ Chapter 1. Admin Guide
         4.11. t_reuse_branch()
         4.12. t_precheck_trans()
 
-   5. Exported pseudo-variables
-   6. MI Commands
+   5. Exported Variables
+   6. Statistics
 
-        6.1. t_uac_dlg
-        6.2. t_uac_cancel
-        6.3. t_hash
-        6.4. t_reply
-        6.5. t_reply_callid
-
-   7. Statistics
-
-        7.1. UAS_transactions
-        7.2. UAC_transactions
-        7.3. 2xx_transactions
-        7.4. 3xx_transactions
-        7.5. 4xx_transactions
-        7.6. 5xx_transactions
-        7.7. 6xx_transactions
-        7.8. inuse_transactions
-        7.9. active_transactions
-        7.10. rpl_received
-        7.11. rpl_absorbed
-        7.12. rpl_relayed
-        7.13. rpl_generated
-        7.14. rpl_sent
+        6.1. UAS_transactions
+        6.2. UAC_transactions
+        6.3. 2xx_transactions
+        6.4. 3xx_transactions
+        6.5. 4xx_transactions
+        6.6. 5xx_transactions
+        6.7. 6xx_transactions
+        6.8. inuse_transactions
+        6.9. active_transactions
+        6.10. rpl_received
+        6.11. rpl_absorbed
+        6.12. rpl_relayed
+        6.13. rpl_generated
+        6.14. rpl_sent
 
 1. Overview
 
@@ -438,7 +422,7 @@ event_route [tm:branch-failure:contact] {
     t_check_trans();
 ...
 
-5. Exported pseudo-variables
+5. Exported Variables
 
      * $T_branch_idx
      * $T_reply_code
@@ -454,145 +438,78 @@ event_route [tm:branch-failure:contact] {
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
 
-6. MI Commands
+6. Statistics
 
-   6.1. t_uac_dlg
-   6.2. t_uac_cancel
-   6.3. t_hash
-   6.4. t_reply
-   6.5. t_reply_callid
-
-6.1.  t_uac_dlg
-
-   Generates and sends a local SIP request.
-
-   Parameters:
-     * method - request method
-     * RURI - request SIP URI
-     * NEXT HOP - next hop SIP URI (OBP); use “.” if no value.
-     * socket - local socket to be used for sending the request; use “.”
-       if no value.
-     * headers - set of additional headers to be added to the request; at
-       least “From” and “To” headers must be specify)
-     * body - (optional, may not be present) request body (if present,
-       requires the “Content-Type” and “Content-length” headers)
-
-6.2.  t_uac_cancel
-
-   Generates and sends a CANCEL for an existing local SIP request.
-
-   Parameters:
-     * callid - callid of the INVITE request to be cancelled.
-     * cseq - cseq of the INVITE request to be cancelled.
-
-6.3.  t_hash
-
-   Gets information about the load of TM internal hash table.
-
-   Parameters:
-     * none
-
-6.4.  t_reply
-
-   Generates and sends a reply for an existing inbound SIP transaction.
-
-   Parameters:
-     * code - reply code
-     * reason - reason phrase.
-     * trans_id - transaction identifier (has the hash_entry:label format)
-     * to_tag - To tag to be added to TO header
-     * new_headers - extra headers to be appended to the reply; use a dot
-       (“.”) char only if there are no headers;
-     * body - (optional, may not be present) reply body (if present,
-       requires the “Content-Type” and “Content-length” headers)
-
-6.5.  t_reply_callid
-
-   Generates and sends a reply for an existing inbound SIP transaction.
-
-   Parameters:
-     * code - reply code
-     * reason - reason phrase.
-     * callid - SIP Call-ID header
-     * cseq - SIP CSeq header
-     * to_tag - To tag to be added to TO header
-     * new_headers - extra headers to be appended to the reply; use a dot
-       (“.”) char only if there are no headers;
-     * body - (optional, may not be present) reply body (if present,
-       requires the “Content-Type” and “Content-length” headers)
-
-7. Statistics
-
-   7.1. UAS_transactions
-   7.2. UAC_transactions
-   7.3. 2xx_transactions
-   7.4. 3xx_transactions
-   7.5. 4xx_transactions
-   7.6. 5xx_transactions
-   7.7. 6xx_transactions
-   7.8. inuse_transactions
-   7.9. active_transactions
-   7.10. rpl_received
-   7.11. rpl_absorbed
-   7.12. rpl_relayed
-   7.13. rpl_generated
-   7.14. rpl_sent
+   6.1. UAS_transactions
+   6.2. UAC_transactions
+   6.3. 2xx_transactions
+   6.4. 3xx_transactions
+   6.5. 4xx_transactions
+   6.6. 5xx_transactions
+   6.7. 6xx_transactions
+   6.8. inuse_transactions
+   6.9. active_transactions
+   6.10. rpl_received
+   6.11. rpl_absorbed
+   6.12. rpl_relayed
+   6.13. rpl_generated
+   6.14. rpl_sent
 
    Exported statistics are listed in the next sections. All statistics
    except “inuse_transactions” can be reset.
 
-7.1. UAS_transactions
+6.1. UAS_transactions
 
    Total number of transactions created by received requests.
 
-7.2. UAC_transactions
+6.2. UAC_transactions
 
    Total number of transactions created by local generated requests.
 
-7.3. 2xx_transactions
+6.3. 2xx_transactions
 
    Total number of transactions completed with 2xx replies.
 
-7.4. 3xx_transactions
+6.4. 3xx_transactions
 
    Total number of transactions completed with 3xx replies.
 
-7.5. 4xx_transactions
+6.5. 4xx_transactions
 
    Total number of transactions completed with 4xx replies.
 
-7.6. 5xx_transactions
+6.6. 5xx_transactions
 
    Total number of transactions completed with 5xx replies.
 
-7.7. 6xx_transactions
+6.7. 6xx_transactions
 
    Total number of transactions completed with 6xx replies.
 
-7.8. inuse_transactions
+6.8. inuse_transactions
 
    Number of transactions existing in memory at current time.
 
-7.9. active_transactions
+6.9. active_transactions
 
    Number of ongoing transactions at current time.
 
-7.10. rpl_received
+6.10. rpl_received
 
    Total number of replies received by TM module.
 
-7.11. rpl_absorbed
+6.11. rpl_absorbed
 
    Total number of replies received and not relayed by TM module.
 
-7.12. rpl_relayed
+6.12. rpl_relayed
 
    Total number of replies received and relayed by TM module.
 
-7.13. rpl_generated
+6.13. rpl_generated
 
    Total number of replies locally generated and relayed by TM module.
 
-7.14. rpl_sent
+6.14. rpl_sent
 
    Total number of replies relayed by TM module.
