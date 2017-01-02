@@ -36,8 +36,9 @@
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
 #include "../../core/pt.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
-#include "../../lib/kmi/mi.h"
 #include "../../modules/tm/tm_load.h"
 #include "pua.h"
 #include "send_publish.h"
@@ -101,15 +102,15 @@ static str str_version_col = str_init("version");
 
 static int mod_init(void);
 static int child_init(int);
-static int mi_child_init(void);
 static void destroy(void);
-static struct mi_root* mi_cleanup(struct mi_root* cmd, void* param);
 
 static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
 
 static int db_restore(void);
 static void db_update(unsigned int ticks,void *param);
 static void hashT_clean(unsigned int ticks,void *param);
+
+static int pua_rpc_init(void);
 
 static cmd_export_t cmds[]=
 {
@@ -136,11 +137,6 @@ static param_export_t params[]={
 	{0,                          0,         0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ "pua_cleanup",	mi_cleanup,		0,  0,  mi_child_init},
-	{ 0,			0,			0,  0,  0}
-};
-
 /** module exports */
 struct module_exports exports= {
 	"pua",				/* module name */
@@ -148,7 +144,7 @@ struct module_exports exports= {
 	cmds,				/* exported functions */
 	params,				/* exported parameters */
 	0,				/* exported statistics */
-	mi_cmds,			/* exported MI functions */
+	0,				/* exported MI functions */
 	0,				/* exported pseudo-variables */
 	0,				/* extra processes */
 	mod_init,			/* module initialization function */
@@ -164,18 +160,16 @@ static int mod_init(void)
 {
 	LM_DBG("...\n");
 
-	if (register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-
 	if(min_expires< 0)
 		min_expires= 0;
 
 	if(default_expires< 600)
 		default_expires= 3600;
 
+	if(pua_rpc_init()<0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	/* load TM API */
 	if(load_tm_api(&tmb)==-1)
 	{
@@ -317,35 +311,6 @@ static int child_init(int rank)
 	}
 
 	LM_DBG("child %d: Database connection opened successfully\n", rank);
-
-	return 0;
-}
-
-static int mi_child_init(void)
-{
-	if (pua_dbf.init==0)
-	{
-		LM_CRIT("database not bound\n");
-		return -1;
-	}
-	/* In DB only mode do not pool the connections where possible. */
-	if (dbmode == PUA_DB_ONLY && pua_dbf.init2)
-		pua_db = pua_dbf.init2(&db_url, DB_POOLING_NONE);
-	else
-		pua_db = pua_dbf.init(&db_url);
-	if (!pua_db)
-	{
-		LM_ERR("connecting to database failed\n");
-		return -1;
-	}
-
-	if (pua_dbf.use_table(pua_db, &db_table) < 0)
-	{
-		LM_ERR("Error in use_table pua\n");
-		return -1;
-	}
-
-	LM_DBG("Database connection opened successfully\n");
 
 	return 0;
 }
@@ -1240,11 +1205,29 @@ static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
 	return cb_param;
 }
 
-static struct mi_root* mi_cleanup(struct mi_root* cmd, void *param)
+static void  pua_rpc_cleanup(rpc_t* rpc, void* ctx)
 {
-	LM_DBG("mi_cleanup:start\n");
+	LM_DBG("cleaning up\n");
 
 	(void)hashT_clean(0,0);
+}
 
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+static const char* pua_rpc_cleanup_doc[2] = {
+	"Execute pua cleanup.",
+	0
+};
+
+rpc_export_t pua_rpc[] = {
+	{"pua.cleanup", pua_rpc_cleanup, pua_rpc_cleanup_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int pua_rpc_init(void)
+{
+	if (rpc_register_array(pua_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

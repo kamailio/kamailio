@@ -10,14 +10,14 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
 		This module offer the functionality of a presence user agent client,
-		sending SUBSCRIBE and PUBLISH SIP  messages. It's a core part of &kamailio;'s 
+		sending SUBSCRIBE and PUBLISH SIP  messages. It's a core part of &kamailio;'s
 		SIP presence package, implementing SIMPLE and various shared line appearance
 		implementations.
 	</para>
@@ -30,8 +30,8 @@
 		 elementary presence information, such as basic status "open" or "closed",
 		 for clients that do not implement client-to-server presence.
 		 Through <emphasis>pua_bla</emphasis> , BRIDGED LINE APPEARANCE features are added to &kamailio;
-		 The <emphasis>pua_xmpp</emphasis> module represents a gateway between SIP and XMPP, so that 
-		 jabber and SIP clients can exchange presence information. 
+		 The <emphasis>pua_xmpp</emphasis> module represents a gateway between SIP and XMPP, so that
+		 jabber and SIP clients can exchange presence information.
 		 The <emphasis>pua_reginfo</emphasis> modules presents registration information from the usrloc module
 		 using the reginfo event package.
 	</para>
@@ -401,26 +401,27 @@ if(method=="NOTIFY")
 </section>
 
 <section>
-	<title>MI Commands</title>
-	<section>
+	<title>RPC Commands</title>
+	<section id="pua.r.cleanup">
 	  <title>
-		<function moreinfo="none">pua_cleanup</function>
+		<function moreinfo="none">pua.cleanup</function>
 	  </title>
 	  <para>
 		Manually triggers the cleanup functions for the pua table.
 		Useful if you have set <varname>update_period</varname> to zero or less.
 	  </para>
 	  <para>
-		Name: <emphasis>pua_cleanup</emphasis>
+		Name: <emphasis>pua.cleanup</emphasis>
 	  </para>
 	  <para>Parameters: <emphasis>none</emphasis></para>
 
 	  <para>
-		MI FIFO Command Format:
+		RPC Command Format:
 	  </para>
 	  <programlisting  format="linespecific">
-		:pua_cleanup:fifo_reply
-		_empty_line_
+...
+&kamcmd; pua.cleanup
+...
 	  </programlisting>
 	</section>
 </section>
