@@ -10,14 +10,14 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
 		The pike module keeps trace of all (or selected ones) incoming request's IP
-		source and blocks the ones that exceed the limit. 
+		source and blocks the ones that exceed the limit.
 		It works simultaneously for IPv4 and IPv6 addresses.
 	</para>
 	<para>
@@ -44,7 +44,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -63,12 +63,12 @@
 		<para>
 		Time period in seconds used for sampling (or the sampling accuracy).
 		The smaller the better, but slower. If you want to detect peeks, use
-		a small one. To limit the access (like total number of requests on a 
-		long period of time) to a proxy resource (a gateway for example), use 
+		a small one. To limit the access (like total number of requests on a
+		long period of time) to a proxy resource (a gateway for example), use
 		a bigger value of this parameter.
 		</para>
 		<para>
-		IMPORTANT: a too small value may lead to performance penalties due 
+		IMPORTANT: a too small value may lead to performance penalties due
 		to timer process overloading.
 		</para>
 		<para>
@@ -89,8 +89,8 @@ modparam("pike", "sampling_time_unit", 10)
 		<title><varname>reqs_density_per_unit</varname> (integer)</title>
 		<para>
 		How many requests should be allowed per <varname>sampling_time_unit</varname>
-		before blocking all the incoming request from that IP. Practically, the 
-		blocking limit is between ( let's have x=reqs_density_per_unit) x 
+		before blocking all the incoming request from that IP. Practically, the
+		blocking limit is between ( let's have x=reqs_density_per_unit) x
 		and 3*x for IPv4 addresses and between x and 8*x for IPv6 addresses.
 		</para>
 		<para>
@@ -110,7 +110,7 @@ modparam("pike", "reqs_density_per_unit", 30)
 	<section id="pike.p.remove_latency">
 		<title><varname>remove_latency</varname> (integer)</title>
 		<para>
-		Speciies for how long the IP address will be kept in memory after the last 
+		Speciies for how long the IP address will be kept in memory after the last
 		request from that IP address. It's a sort of timeout value, in seconds.
 		Note that it is not the duration to keep the IP in state 'blocked'. An
 		IP is unblocked next occurence of 'sampling_time_unit' that does not
@@ -162,7 +162,7 @@ modparam("pike", "pike_log_level", -1)
 		<function moreinfo="none">pike_check_req()</function>
 		</title>
 		<para>
-		Process the source IP of the current request and return false if 
+		Process the source IP of the current request and return false if
 		the IP was exceeding the blocking limit.
 		</para>
 		<para>
@@ -170,7 +170,7 @@ modparam("pike", "pike_log_level", -1)
 		<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>1 (true)</emphasis> - IP is not to be blocked or 
+				<emphasis>1 (true)</emphasis> - IP is not to be blocked or
 				internal error occurred.
 			</para>
 			<warning>
@@ -186,7 +186,7 @@ modparam("pike", "pike_log_level", -1)
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>-2 (false)</emphasis> - IP is detected as a new 
+				<emphasis>-2 (false)</emphasis> - IP is detected as a new
 				source of flooding - first time detection
 			</para>
 			</listitem>
@@ -207,24 +207,26 @@ if (!pike_check_req()) { exit; };
 	</section>
 
 	<section>
-	<title>MI Commands</title>
-	<section id="pike.m.pike_list">
+	<title>RPC Commands</title>
+	<section id="pike.rpc.top">
 		<title>
-		<function moreinfo="none">pike_list</function>
+		<function moreinfo="none">pike.top</function>
 		</title>
 		<para>
-		Lists the nodes in the pike tree.
+		Lists nodes in the pike tree.
 		</para>
 		<para>
-		Name: <emphasis>pike_list</emphasis>
+		Name: <emphasis>pike.top</emphasis>
 		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>Parameters: <emphasis>filter</emphasis> (optional) - it can be
+		"ALL", "HOT" or "WARM". If missing, the "HOT" nodes are listed.</para>
  		<para>
-		MI FIFO Command Format:
+		RPC Command Example:
 		</para>
 		<programlisting  format="linespecific">
-		:pike_list:_reply_fifo_file_
-		_empty_line_
+...
+&kamcmd; pike.top
+...
 		</programlisting>
 	</section>
 	</section>

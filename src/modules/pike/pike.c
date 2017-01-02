@@ -38,7 +38,6 @@
 #include "../../core/kemi.h"
 #include "ip_tree.h"
 #include "timer.h"
-#include "pike_mi.h"
 #include "pike_funcs.h"
 #include "../../core/rpc_lookup.h"
 #include "pike_rpc.h"
@@ -77,19 +76,13 @@ static param_export_t params[]={
 };
 
 
-static mi_export_t mi_cmds [] = {
-	{MI_PIKE_LIST, mi_pike_list,   MI_NO_INPUT_FLAG,  0,  0 },
-	{0,0,0,0,0}
-};
-
-
 struct module_exports exports= {
 	"pike",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
 	0,           /* exported statistics */
-	mi_cmds,     /* exported MI functions */
+	0,           /* exported MI functions */
 	0,           /* exported pseudo-variables */
 	0,           /* extra processes */
 	pike_init,   /* module initialization function */
@@ -105,11 +98,6 @@ static int pike_init(void)
 {
 	LOG(L_INFO, "PIKE - initializing\n");
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if (rpc_register_array(pike_rpc_methods)!=0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;

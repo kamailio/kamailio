@@ -191,5 +191,6 @@ static const char* pike_top_doc[] = {
 
 rpc_export_t pike_rpc_methods[] = {
 	{"pike.top",   pike_top,     pike_top_doc, 0},
+	{"pike.list",  pike_top,     pike_top_doc, 0},
 	{0, 0, 0, 0}
 };
