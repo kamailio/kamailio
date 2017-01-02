@@ -38,7 +38,6 @@
 #include "../../core/ip_addr.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../lib/srdb1/db.h"
@@ -111,8 +110,6 @@ int siptrace_net_data_recv(void *data);
 int siptrace_net_data_send(void *data);
 static int _siptrace_mode = 0;
 
-
-static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
 static str db_url             = str_init(DEFAULT_DB_URL);
 static str siptrace_table     = str_init("sip_trace");
@@ -211,23 +208,14 @@ static param_export_t params[] = {
 	{"trace_sl_acks",      INT_PARAM, &trace_sl_acks        },
 	{"xheaders_write",     INT_PARAM, &xheaders_write       },
 	{"xheaders_read",      INT_PARAM, &xheaders_read        },
-	{"hep_mode_on",        INT_PARAM, &hep_mode_on          },	 
+	{"hep_mode_on",        INT_PARAM, &hep_mode_on          },
 	{"force_send_sock",    PARAM_STR, &force_send_sock_str	},
 	{"hep_version",        INT_PARAM, &hep_version          },
-	{"hep_capture_id",     INT_PARAM, &hep_capture_id       },	        
+	{"hep_capture_id",     INT_PARAM, &hep_capture_id       },
 	{"trace_delayed",      INT_PARAM, &trace_delayed        },
 	{"trace_mode",         PARAM_INT, &_siptrace_mode       },
 	{0, 0, 0}
 };
-
-/*! \brief
- * MI commands
- */
-static mi_export_t mi_cmds[] = {
-	{ "sip_trace", sip_trace_mi,   0,  0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
-
 
 #ifdef STATISTICS
 stat_var* siptrace_req;
@@ -242,7 +230,7 @@ stat_export_t siptrace_stats[] = {
 
 /*! \brief module exports */
 struct module_exports exports = {
-	"siptrace", 
+	"siptrace",
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
 	cmds,       /*!< Exported functions */
 	params,     /*!< Exported parameters */
@@ -251,7 +239,7 @@ struct module_exports exports = {
 #else
 	0,          /*!< exported statistics */
 #endif
-	mi_cmds,    /*!< exported MI functions */
+	0,    /*!< exported MI functions */
 	0,          /*!< exported pseudo-variables */
 	0,          /*!< extra processes */
 	mod_init,   /*!< module initialization function */
@@ -276,12 +264,7 @@ static int mod_init(void)
 	}
 #endif
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-	if(siptrace_init_rpc() != 0) 
+	if(siptrace_init_rpc() != 0)
 	{
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
@@ -1535,53 +1518,6 @@ static void trace_sl_onreply_out(sl_cbp_t *slcbp)
 }
 
 
-/*! \brief
- * MI Sip_trace command
- *
- * MI command format:
- * name: sip_trace
- * attribute: name=none, value=[on|off]
- */
-static struct mi_root* sip_trace_mi(struct mi_root* cmd_tree, void* param )
-{
-	struct mi_node* node;
-
-	struct mi_node *rpl; 
-	struct mi_root *rpl_tree ; 
-
-	node = cmd_tree->node.kids;
-	if(node == NULL) {
-		rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
-		if (rpl_tree == 0)
-			return 0;
-		rpl = &rpl_tree->node;
-
-		if (*trace_on_flag == 0 ) {
-			node = add_mi_node_child(rpl,0,0,0,MI_SSTR("off"));
-		} else if (*trace_on_flag == 1) {
-			node = add_mi_node_child(rpl,0,0,0,MI_SSTR("on"));
-		}
-		return rpl_tree ;
-	}
-	if(trace_on_flag==NULL)
-		return init_mi_tree( 500, MI_SSTR(MI_INTERNAL_ERR));
-
-	if ( node->value.len==2 && (node->value.s[0]=='o'
-				|| node->value.s[0]=='O') &&
-			(node->value.s[1]=='n'|| node->value.s[1]=='N')) {
-		*trace_on_flag = 1;
-		return init_mi_tree( 200, MI_SSTR(MI_OK));
-	} else if ( node->value.len==3 && (node->value.s[0]=='o'
-				|| node->value.s[0]=='O')
-			&& (node->value.s[1]=='f'|| node->value.s[1]=='F')
-			&& (node->value.s[2]=='f'|| node->value.s[2]=='F')) {
-		*trace_on_flag = 0;
-		return init_mi_tree( 200, MI_SSTR(MI_OK));
-	} else {
-		return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
-	}
-}
-
 static int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 {
 	struct dest_info dst;
@@ -2043,7 +1979,7 @@ static void siptrace_rpc_status (rpc_t* rpc, void* c) {
 	if (strncasecmp(status.s, "check", strlen("check")) == 0) {
 		rpc->rpl_printf(c, *trace_on_flag ? "Enabled" : "Disabled");
 		return;
-	} 
+	}
 	rpc->fault(c, 500, "Bad parameter (on, off or check)");
 	return;
 }

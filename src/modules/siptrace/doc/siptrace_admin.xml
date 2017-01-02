@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -536,43 +536,6 @@ sip_trace("sip:10.1.1.2:5085");
 	</section>
 
     <section>
-	<title>MI Commands</title>
-	<section id="siptrace.m.sip_trace">
-		<title>
-		<function moreinfo="none">sip_trace</function>
-		</title>
-		<para>
-
-		</para>
-		<para>
-		Name: <emphasis>sip_trace</emphasis>
-		</para>
-		<para>Parameters: </para>
-		<itemizedlist>
-			<listitem><para>trace_mode : turns on/off SIP message tracing.
-			Possible values are:</para>
-			<itemizedlist>
-				<listitem><para> on </para></listitem> 
-				<listitem><para> off </para></listitem>
-			</itemizedlist>
-			<para>The parameter is optional - if missing, the command will
-			return the status of the SIP message tracing (as string 
-			<quote>on</quote> or <quote>off</quote> ) without changing
-			anything.</para>
-			</listitem>
-		</itemizedlist>
-
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:sip_trace:_reply_fifo_file_
-		trace_mode
-		_empty_line_
-		</programlisting>
-	</section>
-	</section><!-- MI Commands -->
-    	<section>
 	<title>RPC Commands</title>
 	<section id="siptrace.r.siptrace.status">
 		<title>
@@ -589,18 +552,27 @@ sip_trace("sip:10.1.1.2:5085");
 			<listitem><para>on or off: turns on/off SIP message tracing..
 			Possible values are:</para>
 			<itemizedlist>
-				<listitem><para>on</para></listitem> 
+				<listitem><para>on</para></listitem>
 				<listitem><para>off</para></listitem>
 			</itemizedlist>
 			</listitem>
-			<listitem><para><quote>check</quote> does not change 
+			<listitem><para><quote>check</quote> does not change
 			siptrace status, just reports the current status.</para>
 			</listitem>
 		</itemizedlist>
-
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+&kamcmd; siptrace.status on
+&kamcmd; siptrace.status off
+&kamcmd; siptrace.status check
+...
+		</programlisting>
 	</section>
 	</section><!-- RPC commands -->
-	
+
 	<section>
 		<title>Database setup</title>
 		<para>
