@@ -1201,113 +1201,12 @@ if (allow_trusted("$si", "$proto")) {
 	</section>
 	</section>
 
-	<section>
-	<title>MI Commands</title>
-	<section id ="permissions.m.address_reload">
-		<title>
-		<function moreinfo="none">address_reload</function>
-		</title>
-		<para>
-			Causes the permissions module to re-read the contents of
-			address database table into cache memory.
-			The in-cache memory entries are
-			for performance reasons stored in two
-			different tables:  address table and
-			subnet table depending on the value of
-			the mask field (32 or smaller).
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-	</section>
-
-	<section id ="permissions.m.address_dump">
-		<title>
-		<function moreinfo="none">address_dump</function>
-		</title>
-		<para>
-		Causes permissions module to dump
-		contents of cache memory address table.
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-	</section>
-
-	<section id ="permissions.m.subnet_dump">
-		<title>
-		<function moreinfo="none">subnet_dump</function>
-		</title>
-		<para>
-		Causes permissions module to dump
-		contents of cache memory subnet table.
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-	</section>
-
-	<section id ="permissions.m.perm_domain_dump">
-		<title>
-		<function moreinfo="none">perm_domain_dump</function>
-		</title>
-		<para>
-		Causes permissions module to dump
-		contents of cache memory domain table.
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-	</section>
-
-	<section id ="permissions.m.trusted_reload">
-		<title>
-		<function moreinfo="none">trusted_reload</function>
-		</title>
-		<para>
-		Causes the permissions module to re-read the contents of
-		trusted table into cache memory.
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-	</section>
-
-	<section id ="permissions.m.trusted_dump">
-		<title>
-		<function moreinfo="none">trusted_dump</function>
-		</title>
-		<para>
-		Causes the permissions module to dump the
-		contents of trusted table from cache memory.
-		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
-	</section>
-
-	<section id ="permissions.m.allow_uri">
-		<title>
-		<function moreinfo="none">allow_uri</function>
-		</title>
-		<para>
-		Tests if (URI, Contact) pair is allowed according to
-		the allow/deny files.  The files must already have been
-		loaded by &kamailio;.
-		</para>
-		<para>Parameters: </para>
-		<itemizedlist>
-			<listitem><para>
-				<emphasis>basename</emphasis> -
-				Basename from which allow and deny filenames will be created by
-				appending contents of <varname>allow_suffix</varname>
-				and <varname>deny_suffix</varname>
-				parameters.
-			</para></listitem>
-			<listitem><para>
-				<emphasis>URI</emphasis> - URI to be tested
-			</para></listitem>
-			<listitem><para>
-				<emphasis>Contact</emphasis> - Contact to be tested
-			</para></listitem>
-		</itemizedlist>
-
-	</section>
-
 	</section>
 	<section>
 	<title>RPC Commands</title>
 	<section id ="permissions.r.addressReload">
 		<title>
-		<function moreinfo="none">addressReload</function>
+		<function moreinfo="none">permissions.addressReload</function>
 		</title>
 		<para>
 			Causes the permissions module to re-read the contents of
@@ -1316,15 +1215,14 @@ if (allow_trusted("$si", "$proto")) {
 			for performance reasons stored in two
 			different tables:  address table and
 			subnet table depending on the value of
-			the mask field (32 or smaller).
-
+			the mask field (IPv6: 64 or smaller, IPv4: 32 or smaller).
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
 	</section>
 
 	<section id ="permissions.r.addressDump">
 		<title>
-		<function moreinfo="none">addressDump</function>
+		<function moreinfo="none">permissions.addressDump</function>
 		</title>
 		<para>
 			Causes the permissions module to dump
@@ -1337,7 +1235,7 @@ if (allow_trusted("$si", "$proto")) {
 
 	<section id ="permissions.r.subnetDump">
 		<title>
-		<function moreinfo="none">subnetDump</function>
+		<function moreinfo="none">permissions.subnetDump</function>
 		</title>
 		<para>
 			Causes permissions module to dump
@@ -1348,7 +1246,7 @@ if (allow_trusted("$si", "$proto")) {
 
 	<section id ="permissions.r.domainDump">
 		<title>
-		<function moreinfo="none">domainDump</function>
+		<function moreinfo="none">permissions.domainDump</function>
 		</title>
 		<para>
 			Causes permissions module to dump
@@ -1359,7 +1257,7 @@ if (allow_trusted("$si", "$proto")) {
 
 	<section id ="permissions.r.testUri">
 		<title>
-		<function moreinfo="none">testUri basename uri contact</function>
+		<function moreinfo="none">permissions.testUri</function>
 		</title>
 		<para>
 			Tests if the (URI, Contact) pair is allowed according to
@@ -1384,9 +1282,17 @@ if (allow_trusted("$si", "$proto")) {
 
 	</section>
 
+	<section id ="permissions.r.allowUri">
+		<title>
+		<function moreinfo="none">permissions.allowUri</function>
+		</title>
+		<para>
+		</para>
+	</section>
+
 	<section id ="permissions.r.trustedReload">
 		<title>
-		<function moreinfo="none">trustedReload</function>
+		<function moreinfo="none">permissions.trustedReload</function>
 		</title>
 		<para>
 			Causes the permissions module to re-read the contents of
@@ -1396,7 +1302,7 @@ if (allow_trusted("$si", "$proto")) {
 	</section>
 	<section id ="permissions.r.trustedDump">
 		<title>
-		<function moreinfo="none">trustedDump</function>
+		<function moreinfo="none">permissions.trustedDump</function>
 		</title>
 		<para>
 			Causes the permissions module to dump contents of the trusted

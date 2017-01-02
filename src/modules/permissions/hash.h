@@ -28,7 +28,6 @@
 #include "../../core/str.h"
 #include "../../core/rpc.h"
 #include "../../core/usr_avp.h"
-#include "../../lib/kmi/mi.h"
 
 #define PERM_HASH_SIZE 128
 
@@ -96,7 +95,6 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
  * Print entries stored in hash table
  */
 void hash_table_print(struct trusted_list** hash_table, FILE* reply_file);
-int hash_table_mi_print(struct trusted_list **hash_table, struct mi_node* rpl);
 int hash_table_rpc_print(struct trusted_list **hash_table, rpc_t* rpc, void* c);
 
 /*
@@ -163,8 +161,6 @@ int find_group_in_addr_hash_table(struct addr_list** table,
  * Print addresses stored in hash table
  */
 void addr_hash_table_print(struct addr_list** hash_table, FILE* reply_file);
-int addr_hash_table_mi_print(struct addr_list** hash_table,
-		struct mi_node* rpl);
 int addr_hash_table_rpc_print(struct addr_list** table, rpc_t* rpc, void* c);
 
 
@@ -233,7 +229,6 @@ int subnet_table_insert(struct subnet* table, unsigned int grp,
  * Print subnets stored in subnet table
  */
 void subnet_table_print(struct subnet* table, FILE* reply_file);
-int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl);
 int subnet_table_rpc_print(struct subnet* table, rpc_t* rpc, void* c);
 
 
@@ -289,6 +284,5 @@ int find_group_in_domain_name_table(struct domain_name_list** table,
  */
 void domain_name_table_print(struct subnet* table, FILE* reply_file);
 int domain_name_table_rpc_print(struct domain_name_list** table, rpc_t* rpc, void* c);
-int domain_name_table_mi_print(struct domain_name_list** table, struct mi_node* rpl);
 
 #endif /* _PERM_HASH_H_ */

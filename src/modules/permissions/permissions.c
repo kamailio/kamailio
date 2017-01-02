@@ -183,21 +183,6 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-/*
- * Exported MI functions
- */
-static mi_export_t mi_cmds[] = {
-	{ MI_TRUSTED_RELOAD,  mi_trusted_reload,  MI_NO_INPUT_FLAG,  0,
-		mi_trusted_child_init },
-	{ MI_TRUSTED_DUMP,    mi_trusted_dump,    MI_NO_INPUT_FLAG,  0,  0 },
-	{ MI_ADDRESS_RELOAD,  mi_address_reload,  MI_NO_INPUT_FLAG,  0,
-		mi_addr_child_init },
-	{ MI_ADDRESS_DUMP,    mi_address_dump,    MI_NO_INPUT_FLAG,  0,  0 },
-	{ MI_SUBNET_DUMP,     mi_subnet_dump,     MI_NO_INPUT_FLAG,  0,  0 },
-	{ MI_DOMAIN_DUMP,     mi_domain_name_dump,MI_NO_INPUT_FLAG,  0,  0 },
-	{ MI_ALLOW_URI,       mi_allow_uri,       0,  0,  0 },
-	{ 0, 0, 0, 0, 0 }
-};
 
 /* Module interface */
 struct module_exports exports = {
@@ -206,7 +191,7 @@ struct module_exports exports = {
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
 	0,         /* exported statistics */
-	mi_cmds,   /* exported MI functions */
+	0,         /* exported MI functions */
 	0,         /* exported pseudo-variables */
 	0,         /* extra processes */
 	mod_init,  /* module initialization function */
@@ -593,12 +578,6 @@ static int double_fixup(void** param, int param_no)
  */
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-
 	if(permissions_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
@@ -1020,6 +999,7 @@ rpc_export_t permissions_rpc[] = {
 	{"permissions.subnetDump", rpc_subnet_dump, rpc_subnet_dump_doc, RET_ARRAY},
 	{"permissions.domainDump", rpc_domain_name_dump, rpc_domain_name_dump_doc, 0},
 	{"permissions.testUri", rpc_test_uri, rpc_test_uri_doc, 0},
+	{"permissions.allowUri", rpc_test_uri, rpc_test_uri_doc, 0},
 	{0, 0, 0, 0}
 };
 

@@ -24,8 +24,6 @@
 #ifndef _PERMISSIONS_MI_H_
 #define _PERMISSIONS_MI_H_
 
-
-#include "../../lib/kmi/mi.h"
 #include "../../core/rpc.h"
 
 

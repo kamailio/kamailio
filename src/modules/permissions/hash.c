@@ -335,34 +335,6 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
 
 
 /*! \brief
- * MI Interface :: Print trusted entries stored in hash table
- */
-int hash_table_mi_print(struct trusted_list** table, struct mi_node* rpl)
-{
-	int i;
-	struct trusted_list *np;
-
-	for (i = 0; i < PERM_HASH_SIZE; i++) {
-		np = table[i];
-		while (np) {
-			if (addf_mi_node_child(rpl, 0, 0, 0,
-						"%4d <%.*s, %d, %s, %s, %s, %d>",
-						i,
-						np->src_ip.len, ZSW(np->src_ip.s),
-						np->proto,
-						np->pattern?np->pattern:"NULL",
-						np->ruri_pattern?np->ruri_pattern:"NULL",
-						np->tag.len?np->tag.s:"NULL",
-						np->priority) == 0) {
-				return -1;
-			}
-			np = np->next;
-		}
-	}
-	return 0;
-}
-
-/*! \brief
  * RPC interface :: Print trusted entries stored in hash table
  */
 int hash_table_rpc_print(struct trusted_list** hash_table, rpc_t* rpc, void* c)
@@ -579,27 +551,6 @@ int find_group_in_addr_hash_table(struct addr_list** table,
 	return -1;
 }
 
-/*! \brief
- * MI: Print addresses stored in hash table
- */
-int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
-{
-	int i;
-	struct addr_list *np;
-
-	for (i = 0; i < PERM_HASH_SIZE; i++) {
-		np = table[i];
-		while (np) {
-			if (addf_mi_node_child(rpl, 0, 0, 0,
-						"%4d <%u, %s, %u> [%s]",
-						i, np->grp, ip_addr2a(&np->addr),
-						np->port, (np->tag.s==NULL)?"":np->tag.s) == 0)
-				return -1;
-			np = np->next;
-		}
-	}
-	return 0;
-}
 
 /*! \brief
  * RPC: Print addresses stored in hash table
@@ -813,27 +764,6 @@ int find_group_in_subnet_table(struct subnet* table,
 	return -1;
 }
 
-
-/*
- * Print subnets stored in subnet table
- */
-int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl)
-{
-	unsigned int count, i;
-
-	count = table[PERM_MAX_SUBNETS].grp;
-
-	for (i = 0; i < count; i++) {
-		if (addf_mi_node_child(rpl, 0, 0, 0,
-					"%4d <%u, %s, %u, %u> [%s]",
-					i, table[i].grp, ip_addr2a(&table[i].subnet),
-					table[i].mask, table[i].port,
-					(table[i].tag.s==NULL)?"":table[i].tag.s) == 0) {
-			return -1;
-		}
-	}
-	return 0;
-}
 
 /*! \brief
  * RPC interface :: Print subnet entries stored in hash table
@@ -1112,27 +1042,3 @@ int domain_name_table_rpc_print(struct domain_name_list** table, rpc_t* rpc, voi
 	}
 	return 0;
 }
-
-/*! \brief
- * MI: Print domain name stored in hash table
- */
-int domain_name_table_mi_print(struct domain_name_list** table, struct mi_node* rpl)
-{
-	int i;
-	struct domain_name_list *np;
-
-	for (i = 0; i < PERM_HASH_SIZE; i++) {
-		np = table[i];
-		while (np) {
-			if (addf_mi_node_child(rpl, 0, 0, 0,
-						"%4d <%u, %.*s, %u> [%s]",
-						i, np->grp, np->domain.len, np->domain.s,
-						np->port, (np->tag.s==NULL)?"":np->tag.s) == 0)
-				return -1;
-			np = np->next;
-		}
-	}
-	return 0;
-}
-
-

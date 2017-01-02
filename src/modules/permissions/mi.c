@@ -1,5 +1,5 @@
 /*
- * Permissions MI and RPC functions
+ * Permissions RPC functions
  *
  * Copyright (C) 2006 Juha Heinanen
  *
@@ -30,22 +30,6 @@
 #include "permissions.h"
 
 
-/*
- * MI function to reload trusted table
- */
-struct mi_root* mi_trusted_reload(struct mi_root *cmd_tree, void *param)
-{
-	if (hash_table==NULL) {
-		return init_mi_tree( 200, MI_SSTR(MI_OK));
-	}
-
-	if (reload_trusted_table () == 1) {
-		return init_mi_tree( 200, MI_SSTR(MI_OK));
-	} else {
-		return init_mi_tree( 400, MI_SSTR("Trusted table reload failed"));
-	}
-}
-
 /*! \brief
  * RPC function to reload trusted table
  */
@@ -59,28 +43,6 @@ void rpc_trusted_reload(rpc_t* rpc, void* c) {
 	return;
 }
 
-
-/*! \brief
- * MI function to print trusted entries from current hash table
- */
-struct mi_root* mi_trusted_dump(struct mi_root *cmd_tree, void *param)
-{
-	struct mi_root* rpl_tree;
-
-	if (hash_table==NULL)
-		return init_mi_tree( 500, MI_SSTR("Trusted-module not in use"));
-
-	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
-	if (rpl_tree==NULL) return 0;
-
-	if(hash_table_mi_print(*hash_table, &rpl_tree->node)< 0) {
-		LM_ERR("failed to add a node\n");
-		free_mi_tree(rpl_tree);
-		return 0;
-	}
-
-	return rpl_tree;
-}
 
 /*! \brief
  * RPC function to dump trusted table
@@ -102,18 +64,6 @@ void rpc_trusted_dump(rpc_t* rpc, void* c) {
 
 
 /*! \brief
- * MI function to reload address table
- */
-struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
-{
-	if (reload_address_table_cmd () == 1) {
-		return init_mi_tree( 200, MI_SSTR(MI_OK));
-	} else {
-		return init_mi_tree( 400, MI_SSTR("Address table reload failed"));
-	}
-}
-
-/*! \brief
  * RPC function to reload address table
  */
 void rpc_address_reload(rpc_t* rpc, void* c) {
@@ -126,24 +76,6 @@ void rpc_address_reload(rpc_t* rpc, void* c) {
 	return;
 }
 
-/*
- * MI function to print address entries from current hash table
- */
-struct mi_root* mi_address_dump(struct mi_root *cmd_tree, void *param)
-{
-	struct mi_root* rpl_tree;
-
-	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
-	if (rpl_tree==NULL) return 0;
-
-	if(addr_hash_table_mi_print(*addr_hash_table, &rpl_tree->node) <  0) {
-		LM_ERR("failed to add a node\n");
-		free_mi_tree(rpl_tree);
-		return 0;
-	}
-
-	return rpl_tree;
-}
 
 /*! \brief
  * RPC function to dump address table
@@ -161,26 +93,6 @@ void rpc_address_dump(rpc_t* rpc, void* c) {
 }
 
 
-
-/*
- * MI function to print subnets from current subnet table
- */
-struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
-{
-	struct mi_root* rpl_tree;
-
-	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
-	if (rpl_tree==NULL) return 0;
-
-	if(subnet_table && subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
-		LM_ERR("failed to add a node\n");
-		free_mi_tree(rpl_tree);
-		return 0;
-	}
-
-	return rpl_tree;
-}
-
 /*! \brief
  * RPC function to dump subnet table
  */
@@ -194,25 +106,6 @@ void rpc_subnet_dump(rpc_t* rpc, void* c) {
 	}
 
 	return;
-}
-
-/*
- * MI function to print domain name table
- */
-struct mi_root* mi_domain_name_dump(struct mi_root *cmd_tree, void *param)
-{
-	struct mi_root* rpl_tree;
-
-	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
-	if (rpl_tree==NULL) return 0;
-
-	if(domain_list_table && domain_name_table_mi_print(*domain_list_table, &rpl_tree->node) <  0) {
-		LM_ERR("failed to add a node\n");
-		free_mi_tree(rpl_tree);
-		return 0;
-	}
-
-	return rpl_tree;
 }
 
 
@@ -233,58 +126,6 @@ void rpc_domain_name_dump(rpc_t* rpc, void* c) {
 
 
 #define MAX_FILE_LEN 128
-
-/*! \brief
- * MI function to make allow_uri query.
- */
-struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
-{
-	struct mi_node *node;
-	str *basenamep, *urip, *contactp;
-	char basename[MAX_FILE_LEN + 1];
-	char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1];
-	unsigned int allow_suffix_len;
-
-	node = cmd->node.kids;
-	if (node == NULL || node->next == NULL || node->next->next == NULL ||
-			node->next->next->next != NULL)
-		return init_mi_tree(400, MI_SSTR(MI_MISSING_PARM));
-
-	/* look for base name */
-	basenamep = &node->value;
-	if (basenamep == NULL)
-		return init_mi_tree(404, MI_SSTR("Basename is NULL"));
-	allow_suffix_len = strlen(allow_suffix);
-	if (basenamep->len + allow_suffix_len + 1 > MAX_FILE_LEN)
-		return init_mi_tree(404, MI_SSTR("Basename is too long"));
-	memcpy(basename, basenamep->s, basenamep->len);
-	memcpy(basename + basenamep->len, allow_suffix, allow_suffix_len);
-	basename[basenamep->len + allow_suffix_len] = 0;
-
-	/* look for uri */
-	urip = &node->next->value;
-	if (urip == NULL)
-		return init_mi_tree(404, MI_SSTR("URI is NULL"));
-	if (urip->len > MAX_URI_SIZE)
-		return init_mi_tree(404, MI_SSTR("URI is too long"));
-	memcpy(uri, urip->s, urip->len);
-	uri[urip->len] = 0;
-
-	/* look for contact */
-	contactp = &node->next->next->value;
-	if (contactp == NULL)
-		return init_mi_tree(404, MI_SSTR("Contact is NULL"));
-	if (contactp->len > MAX_URI_SIZE)
-		return init_mi_tree(404, MI_SSTR("Contact is too long"));
-	memcpy(contact, contactp->s, contactp->len);
-	contact[contactp->len] = 0;
-
-	if (allow_test(basename, uri, contact) == 1) {
-		return init_mi_tree(200, MI_SSTR(MI_OK));
-	} else {
-		return init_mi_tree(403, MI_SSTR("Forbidden"));
-	}
-}
 
 /*! \brief
  * RPC function to make allow_uri query.
