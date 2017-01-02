@@ -16,14 +16,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  */
 
 /*! \file
- * Berkeley DB : 
+ * Berkeley DB :
  *
  * \ingroup database
  */
@@ -39,13 +39,14 @@
 #include "../../core/mem/mem.h"
 
 #include "../../core/sr_module.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../lib/srdb1/db_res.h"
 #include "../../lib/srdb1/db.h"
 #include "../../lib/srdb1/db_query.h"
 #include "km_db_berkeley.h"
 #include "km_bdb_lib.h"
 #include "km_bdb_res.h"
-#include "km_bdb_mi.h"
 #include "bdb_mod.h"
 #include "bdb_crs_compat.h"
 
@@ -63,6 +64,7 @@
 /*MODULE_VERSION*/
 
 int bdb_bind_api(db_func_t *dbb);
+static void db_berkeley_init_rpc(void);
 
 /*
  * Exported functions
@@ -83,21 +85,13 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-/*
- * Exported MI functions
- */
-static mi_export_t mi_cmds[] = {
-	{ MI_BDB_RELOAD, mi_bdb_reload, 0, 0, 0 },
-	{ 0, 0, 0, 0, 0}
-};
-
-struct kam_module_exports kam_exports = {	
+struct kam_module_exports kam_exports = {
 	"db_berkeley",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
 	0,        /* exported statistics */
-	mi_cmds,  /* exported MI functions */
+	0,        /* exported MI functions */
 	0,        /* exported pseudo-variables */
 	0,        /* extra processes */
 	km_mod_init, /* module initialization function */
@@ -109,10 +103,9 @@ struct kam_module_exports kam_exports = {
 int km_mod_init(void)
 {
 	db_parms_t p;
-	
-	if(register_mi_mod(kam_exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
+
+	if(db_berkeley_init_rpc()<0) {
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -120,7 +113,7 @@ int km_mod_init(void)
 	p.log_enable = log_enable;
 	p.cache_size  = (4 * 1024 * 1024); //4Mb
 	p.journal_roll_interval = journal_roll_interval;
-	
+
 	if(km_bdblib_init(&p))
 		return -1;
 
@@ -1263,4 +1256,47 @@ db_error:
 		pkg_free(lkey);
 	
 	return ret;
+}
+
+/*
+ * RPC function to reload db table or env
+ * expects 1 node: the tablename or dbenv name to reload
+ */
+static void rpc_bdb_reload(rpc_t* rpc, void* ctx)
+{
+	str db_path = {0, 0};
+
+	if (rpc->scan(ctx, "S", &db_path) < 1) {
+		rpc->fault(ctx, 500, "No db or env parameter");
+		return;
+	}
+
+	if (db_path.s==NULL || db_path.len <= 0) {
+		rpc->fault(ctx, 500, "Empty parameter");
+		return;
+	}
+
+	if (bdb_reload(db_path.s) != 0) {
+		rpc->fault(ctx, 500, "Reload failed");
+		return;
+	}
+}
+
+static const char* rpc_bdb_reload_doc[2] = {
+	"Reload a berkeley db or env",
+	0
+};
+
+rpc_export_t db_berkeley_rpc[] = {
+	{"db_berkeley.reload", rpc_bdb_reload, rpc_bdb_reload_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static void db_berkeley_init_rpc(void)
+{
+	if (rpc_register_array(db_berkeley_rpc)!=0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

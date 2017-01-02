@@ -1,9 +1,9 @@
 #
 # db_berkeley module makefile
 #
-# 
+#
 # WARNING: do not run this directly, it should be run by the master Makefile
-include ../../Makefile.defs 
+include ../../Makefile.defs
 auto_gen=
 NAME=db_berkeley.so
 
@@ -16,7 +16,8 @@ DEFS +=-DSER_MOD_INTERFACE -I$(LOCALBASE)/include -I$(LOCALBASE)/BerkeleyDB.4.6/
 LIBS=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -L$(LOCALBASE)/BerkeleyDB.4.6/lib -ldb
 
 SERLIBPATH=../../lib
-SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1 $(SERLIBPATH)/kmi/kmi
+SER_LIBS=$(SERLIBPATH)/srdb2/srdb1
+SER_LIBS+=$(SERLIBPATH)/srdb1/srdb2
 
 include ../../Makefile.modules
 

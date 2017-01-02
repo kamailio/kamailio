@@ -9,9 +9,9 @@
 ]>
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -35,7 +35,7 @@
 			</itemizedlist>
 		</para>
 	</section>
-	
+
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
@@ -74,7 +74,7 @@ modparam("db_berkeley", "auto_reload", 1)
 		</programlisting>
 		</example>
 	</section>
-	
+
 	<section>
 		<title><varname>log_enable</varname> (integer)</title>
 		<para>
@@ -103,7 +103,7 @@ modparam("db_berkeley", "log_enable", 1)
 		</programlisting>
 		</example>
 	</section>
-	
+
 	<section>
 		<title><varname>journal_roll_interval</varname> (integer seconds)</title>
 		<para>
@@ -133,31 +133,30 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		No function exported to be used from configuration file.
 		</para>
 	</section>
-	
+
 	<section>
-	<title>MI Commands</title>
-	<section>
-		<title><function moreinfo="none">bdb_reload</function></title>
-		
+	<title>RPC Commands</title>
+	<section id="db_berkely.rpc.reload">
+		<title>db_berkely.reload</title>
 		<para>
 		Causes db_berkeley module to re-read the contents of specified table (or dbenv).
 		The db_berkeley DB actually loads each table on demand, as opposed to loading all
 		at mod_init time. The bdb_reload operation is implemented as a close followed by a reopen.
-		Note- bdb_reload will fail if a table has not been accessed before (because the close 
+		Note- bdb_reload will fail if a table has not been accessed before (because the close
 		will fail).
 		</para>
-		
+
 		<para>
-		Name: <emphasis>bdb_reload</emphasis>
+		Name: <emphasis>db_berkely.reload</emphasis>
 		</para>
-		
-		<para>Parameters: <emphasis>tablename (or db_path); to reload a particular table 
+
+		<para>Parameters: <emphasis>tablename</emphasis> (or db_path); to reload a particular table
 		provide the tablename as the arguement (eg subscriber); to reload all tables provide the db_path to
-		the db files. The path can be found in &ctltool;rc DB_PATH variable. 
-		</emphasis></para>
+		the db files. The path can be found in &ctltool;rc DB_PATH variable.
+		</para>
 	</section>
 	</section>
-	
+
 	<section>
 	<title>Installation and Running</title>
 		<para>
