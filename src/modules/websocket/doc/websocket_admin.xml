@@ -18,9 +18,8 @@
 	<para>This module implements a WebSocket (RFC 6455) server and provides
 	connection establishment (handshaking), management (including
 	connection keep-alive), and framing for the SIP and MSRP WebSocket
-	sub-protocols (draft-ietf-sipcore-sip-websocket and
-	draft-pd-msrp-websocket).</para>
-	<para>The module supports WebSockets (ws) and secure WebSockets (wss)
+	sub-protocols (RFC 7118 and RFC 7977).</para>
+	<para>The module supports WebSockets (ws) and secure WebSockets (wss) transports
 	</para>
 	</section>
 
@@ -34,7 +33,7 @@
 	</para>
 	<para><emphasis>event_route[xhttp:request]</emphasis> should perform
 	some validation of the HTTP headers before calling
-	<xref linkend="websocket.f.ws_handle_handshake"/>.  The event_route can also be
+	<xref linkend="websocket.f.ws_handle_handshake"/>. The event_route can also be
 	used to make sure the HTTP GET has the correct URI, perform HTTP
 	authentication on the WebSocket connection, and check the
 	<emphasis>Origin</emphasis> header (RFC 6454) to ensure a
@@ -112,15 +111,14 @@ event_route[xhttp:request] {
 	<para>SIP over WebSockets uses invalid URIs in routing headers
 	(Contact:, Record-Route:, and Via:) because a JavaScript stack running
 	in a browser has no way to determine the local address from which the
-	WebSocket connection is made.  This means that the routing headers
+	WebSocket connection is made. This means that the routing headers
 	cannot be used for request or response routing in the normal manner.
 	</para>
-	<para>draft-ietf-sipcore-sip-websocket states that SIP WebSocket
-	Clients and the SIP registrar should implement Outbound (RFC 5626) and
-	Path (RFC 3327) to enable requests and responses to be correctly
-	routed.  However, &kamailio; does not currently support Outbound and
-	it may not be possible to guarantee all SIP WebSocket clients will
-	support Outbound and Path.</para>
+	<para>RFC 7118 - The WebSocket Protocol as a Transport for the
+        Session Initiation Protocol - states that SIP WebSocket
+	Clients and the SIP registrar should implement SIP Outbound (RFC 5626) and
+	Path header support (RFC 3327) to enable requests and responses to be correctly
+	routed. Kamailio has a module called "Outbound" for this functionality.</para>
 	<para>The <emphasis>nathelper</emphasis> module functions
 	(<emphasis>nat_uac_test()</emphasis>,
 	<emphasis>fix_nated_register()</emphasis>,
@@ -200,7 +198,7 @@ onreply_route[WS_REPLY] {
 	<para>MSRP over WebSocket clients create invalid local URIs for use in
 	Path headers (From-Path: and To-Path:) because a JavaScript stack
 	running in a browser has no way to determine the local address from
-	which the WebSocket connection is made.  This is OK because MSRP over
+	which the WebSocket connection is made. This is OK because MSRP over
 	WebSocket clients MUST use an MSRP relay and it is the MSRP relay's
 	responsibility to select the correct connection to the client based on
 	the MSRP URIs that it has created (and maintains a mapping for).</para>
@@ -282,17 +280,15 @@ onreply_route[WS_REPLY] {
 		</para>
 		<note><para>If <emphasis>nathelper</emphasis> is only being used
 		for WebSocket connections then <emphasis>nathelper NAT
-		pinging</emphasis> is not required.  If
+		pinging</emphasis> is not required. If
 		<emphasis>nathelper</emphasis> is used for WebSocket connections
 		and TCP/TLS aliasing/NAT-traversal then WebSocket keep-alives
 		are not required.</para></note>
 		<para>
 		<itemizedlist>
 		<listitem><para> 0 - no WebSocket keep-alives</para></listitem>
-		<listitem><para> 1 - Ping WebSocket
-		keep-alives</para></listitem>
-		<listitem><para> 2 - Pong WebSocket
-		keep-alives</para></listitem>
+		<listitem><para> 1 - Ping WebSocket keep-alives</para></listitem>
+		<listitem><para> 2 - Pong WebSocket keep-alives</para></listitem>
 		</itemizedlist>
 		</para>
 		<para><emphasis>Default value is 1.</emphasis></para>
@@ -341,7 +337,7 @@ modparam("websocket", "keepalive_processes", 2)
 
 	<section id="websocket.p.keepalive_interval">
 		<title><varname>keepalive_interval</varname> (integer)</title>
-		<para>The number of seconds between each keep-alice process run
+		<para>The number of seconds between each keep-alive process run
 		</para>
 		<para><emphasis>Default value is 1.</emphasis></para>
 		<example>
@@ -378,10 +374,10 @@ modparam("websocket", "ping_application_data", "WebSockets rock")
 		supported by the WebSocket server.</para>
 		<itemizedlist>
 		<listitem><para>
-		<emphasis>1</emphasis> - sip (draft-ietf-sipcore-sip-websocket)
+		<emphasis>1</emphasis> - sip (RFC 7118)
 		</para></listitem>
 		<listitem><para>
-		<emphasis>2</emphasis> - msrp (draft-pd-msrp-websocket) -
+		<emphasis>2</emphasis> - msrp (RFC 7977) -
 		msrp.so must be loaded before websocket.so
 		</para></listitem>
 		</itemizedlist>
