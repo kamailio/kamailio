@@ -45,10 +45,6 @@ int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo);
 int w_acc_db_request(struct sip_msg *rq, char *comment, char *table);
 #endif
 
-#ifdef RAD_ACC
-int w_acc_rad_request(struct sip_msg *rq, char *comment, char *foo);
-#endif
-
 #ifdef DIAM_ACC
 int w_acc_diam_request(struct sip_msg *rq, char *comment, char *foo);
 #endif

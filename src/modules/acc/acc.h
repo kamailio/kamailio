@@ -85,11 +85,6 @@ int  acc_db_request( struct sip_msg *req);
 int acc_get_db_handlers(void **vf, void **vh);
 #endif
 
-#ifdef RAD_ACC
-int  init_acc_rad(char *rad_cfg, int srv_type);
-int  acc_rad_request( struct sip_msg *req );
-#endif
-
 #ifdef DIAM_ACC
 int  acc_diam_init(void);
 int  acc_diam_request( struct sip_msg *req );

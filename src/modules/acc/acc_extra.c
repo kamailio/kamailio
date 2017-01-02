@@ -189,22 +189,6 @@ void destroy_extras( struct acc_extra *extra)
 }
 
 
-#ifdef RAD_ACC
-/*! \brief extra name is moved as string part of an attribute; str.len will contain an
- * index to the corresponding attribute
- */
-int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset)
-{
-	int i;
-
-	for(i=0 ; extra ; i++, extra=extra->next) {
-		attrs[offset+i].n = extra->name.s;
-	}
-	return i;
-}
-#endif
-
-
 /*! \brief converts the name of the extra from str to integer 
  * and stores it over str.len ; str.s is freed and made zero
  */

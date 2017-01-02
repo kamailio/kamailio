@@ -53,10 +53,6 @@
 #include "acc_logic.h"
 #include "acc_cdr.h"
 
-#ifdef RAD_ACC
-#include "../misc_radius/radius.h"
-#endif
-
 #ifdef DIAM_ACC
 #include "diam_dict.h"
 #include "diam_tcp.h"
@@ -136,23 +132,6 @@ str acc_cdrs_table = str_init("");
 
 /*@}*/
 
-/* ----- RADIUS acc variables ----------- */
-/*! \name AccRadiusVariables  Radius Variables */     
-/*@{*/
-
-#ifdef RAD_ACC
-static char *radius_config = 0;
-int radius_flag = -1;
-int radius_missed_flag = -1;
-static int service_type = -1;
-void *rh;
-/* rad extra variables */
-static char *rad_extra_str = 0;
-struct acc_extra *rad_extra = 0;
-#endif
-/*@}*/
-
-
 /* ----- DIAMETER acc variables ----------- */
 
 /*! \name AccDiamaterVariables  Radius Variables */     
@@ -216,11 +195,6 @@ static cmd_export_t cmds[] = {
 		acc_fixup, free_acc_fixup,
 		ANY_ROUTE},
 #endif
-#ifdef RAD_ACC
-	{"acc_rad_request", (cmd_function)w_acc_rad_request, 1,
-		acc_fixup, free_acc_fixup,
-		ANY_ROUTE},
-#endif
 #ifdef DIAM_ACC
 	{"acc_diam_request",(cmd_function)w_acc_diam_request,1,
 		acc_fixup, free_acc_fixup,
@@ -259,13 +233,6 @@ static param_export_t params[] = {
 	{"cdr_end_id",		 PARAM_STR, &cdr_end_str		},
 	{"cdr_duration_id",	 PARAM_STR, &cdr_duration_str	},
 	{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable   },
-#ifdef RAD_ACC
-	{"radius_config",        PARAM_STRING, &radius_config     },
-	{"radius_flag",          INT_PARAM, &radius_flag          },
-	{"radius_missed_flag",   INT_PARAM, &radius_missed_flag   },
-	{"service_type",         INT_PARAM, &service_type         },
-	{"radius_extra",         PARAM_STRING, &rad_extra_str     },
-#endif
 	/* DIAMETER specific */
 #ifdef DIAM_ACC
 	{"diameter_flag",        INT_PARAM, &diameter_flag        },
@@ -618,37 +585,6 @@ static int mod_init( void )
 	}
 #endif
 
-	/* ------------ RADIUS INIT SECTION ----------- */
-
-#ifdef RAD_ACC
-	if (radius_config && radius_config[0]) {
-		/* parse the extra string, if any */
-		if (rad_extra_str && (rad_extra=parse_acc_extra(rad_extra_str))==0 ) {
-			LM_ERR("failed to parse rad_extra param\n");
-			return -1;
-		}
-
-		/* fix the flags */
-		if ((radius_flag != -1) && !flag_in_range(radius_flag)) {
-			LM_ERR("radius_flag set to invalid value\n");
-			return -1;
-		}
-
-		if ((radius_missed_flag != -1) && !flag_in_range(radius_missed_flag)) {
-			LM_ERR("radius_missed_flag set to invalid value\n");
-			return -1;
-		}
-
-		if (init_acc_rad( radius_config, service_type)!=0 ) {
-			LM_ERR("failed to init radius\n");
-			return -1;
-		}
-	} else {
-		radius_config = 0;
-		radius_flag = -1;
-		radius_missed_flag = -1;
-	}
-#endif
 
 	/* ------------ DIAMETER INIT SECTION ----------- */
 
@@ -731,10 +667,6 @@ static void destroy(void)
 	acc_db_close();
 	if (db_extra)
 		destroy_extras( db_extra);
-#endif
-#ifdef RAD_ACC
-	if (rad_extra)
-		destroy_extras( rad_extra);
 #endif
 #ifdef DIAM_ACC
 	close_tcp_connection(sockfd);

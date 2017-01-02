@@ -47,10 +47,6 @@
 #include "acc_logic.h"
 #include "acc_api.h"
 
-#ifdef RAD_ACC
-#include "../misc_radius/radius.h"
-#endif
-
 #ifdef DIAM_ACC
 #include "diam_dict.h"
 #include "diam_message.h"
@@ -61,10 +57,6 @@ extern struct acc_extra *log_extra;
 extern struct acc_extra *leg_info;
 extern struct acc_enviroment acc_env;
 extern char *acc_time_format;
-
-#ifdef RAD_ACC
-extern struct acc_extra *rad_extra;
-#endif
 
 #ifdef DIAM_ACC
 extern char *diameter_client_host;
@@ -530,7 +522,7 @@ error:
 
 
 /************ RADIUS & DIAMETER helper functions **************/
-#if defined(RAD_ACC) || defined (DIAM_ACC)
+#if defined (DIAM_ACC)
 #ifndef UINT4
 #define UINT4 uint32_t
 #endif
@@ -550,176 +542,6 @@ inline static UINT4 phrase2code(str *phrase)
 }
 #endif
 
-
-/********************************************
- *        RADIUS  ACCOUNTING
- ********************************************/
-#ifdef RAD_ACC
-enum { RA_ACCT_STATUS_TYPE=0, RA_SERVICE_TYPE, RA_SIP_RESPONSE_CODE,
-	RA_SIP_METHOD, RA_TIME_STAMP, RA_STATIC_MAX};
-enum {RV_STATUS_START=0, RV_STATUS_STOP, RV_STATUS_ALIVE, RV_STATUS_FAILED,
-	RV_SIP_SESSION, RV_STATIC_MAX};
-static struct attr
-	rd_attrs[RA_STATIC_MAX+ACC_CORE_LEN-2+MAX_ACC_EXTRA+MAX_ACC_LEG];
-static struct val rd_vals[RV_STATIC_MAX];
-
-int init_acc_rad(char *rad_cfg, int srv_type)
-{
-	int n;
-
-	memset(rd_attrs, 0, sizeof(rd_attrs));
-	memset(rd_vals, 0, sizeof(rd_vals));
-	rd_attrs[RA_ACCT_STATUS_TYPE].n  = "Acct-Status-Type";
-	rd_attrs[RA_SERVICE_TYPE].n      = "Service-Type";
-	rd_attrs[RA_SIP_RESPONSE_CODE].n = "Sip-Response-Code";
-	rd_attrs[RA_SIP_METHOD].n        = "Sip-Method";
-	rd_attrs[RA_TIME_STAMP].n        = "Event-Timestamp";
-	n = RA_STATIC_MAX;
-	/* caution: keep these aligned to core acc output */
-	rd_attrs[n++].n                  = "Sip-From-Tag";
-	rd_attrs[n++].n                  = "Sip-To-Tag";
-	rd_attrs[n++].n                  = "Acct-Session-Id";
-
-	rd_vals[RV_STATUS_START].n        = "Start";
-	rd_vals[RV_STATUS_STOP].n         = "Stop";
-	rd_vals[RV_STATUS_ALIVE].n        = "Alive";
-	rd_vals[RV_STATUS_FAILED].n       = "Failed";
-	rd_vals[RV_SIP_SESSION].n         = "Sip-Session";
-
-	/* add and count the extras as attributes */
-	n += extra2attrs( rad_extra, rd_attrs, n);
-	/* add and count the legs as attributes */
-	n += extra2attrs( leg_info, rd_attrs, n);
-
-	/* read config */
-	if ((rh = rc_read_config(rad_cfg)) == NULL) {
-		LM_ERR("failed to open radius config file: %s\n", rad_cfg );
-		return -1;
-	}
-	/* read dictionary */
-	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary"))!=0) {
-		LM_ERR("failed to read radius dictionary\n");
-		return -1;
-	}
-
-	INIT_AV(rh, rd_attrs, n, rd_vals, RV_STATIC_MAX, "acc", -1, -1);
-
-	if (srv_type != -1)
-		rd_vals[RV_SIP_SESSION].v = srv_type;
-
-	return 0;
-}
-
-
-static inline UINT4 rad_status( struct sip_msg *req, int code )
-{
-        str tag;
-        unsigned int in_dialog_req = 0;
-
-        tag = get_to(req)->tag_value;
-        if(tag.s!=0 && tag.len!=0)
-		in_dialog_req = 1;
-
-	if (req->REQ_METHOD==METHOD_INVITE && in_dialog_req == 0
-	            && code>=200 && code<300)
- 		return rd_vals[RV_STATUS_START].v;
- 	if ((req->REQ_METHOD==METHOD_BYE || req->REQ_METHOD==METHOD_CANCEL))
- 		return rd_vals[RV_STATUS_STOP].v;
-	if (in_dialog_req != 0)
-		return rd_vals[RV_STATUS_ALIVE].v;
- 	return rd_vals[RV_STATUS_FAILED].v;
- }
-
-#define ADD_RAD_AVPAIR(_attr,_val,_len)		\
-    do {								\
-	if (!rc_avpair_add(rh, &send, rd_attrs[_attr].v, _val, _len, 0)) { \
-	    LM_ERR("failed to add %s, %d\n", rd_attrs[_attr].n, _attr);	\
-	    goto error;							\
-	} \
-    }while(0)
-
-int acc_rad_request( struct sip_msg *req )
-{
-	int attr_cnt;
-	VALUE_PAIR *send;
-	UINT4 av_type;
-	int offset;
-	int i;
-	int m;
-	int o;
-
-	send=NULL;
-
-	attr_cnt = core2strar( req, val_arr, int_arr, type_arr );
-	/* not interested in the last 2 values */
-	attr_cnt -= 2;
-
-	av_type = rad_status( req, acc_env.code); /* RADIUS status */
-	ADD_RAD_AVPAIR( RA_ACCT_STATUS_TYPE, &av_type, -1);
-
-	av_type = rd_vals[RV_SIP_SESSION].v; /* session*/
-	ADD_RAD_AVPAIR( RA_SERVICE_TYPE, &av_type, -1);
-
-	av_type = (UINT4)acc_env.code; /* status=integer */
-	ADD_RAD_AVPAIR( RA_SIP_RESPONSE_CODE, &av_type, -1);
-
-	av_type = req->REQ_METHOD; /* method */
-	ADD_RAD_AVPAIR( RA_SIP_METHOD, &av_type, -1);
-
-	/* unix time */
-	av_type = (UINT4)acc_env.ts;
-	ADD_RAD_AVPAIR( RA_TIME_STAMP, &av_type, -1);
-
-	/* add extra also */
-	o = extra2strar(rad_extra, req, val_arr+attr_cnt,
-				int_arr+attr_cnt, type_arr+attr_cnt);
-	attr_cnt += o;
-	m = attr_cnt;
-
-	/* add the values for the vector - start from 1 instead of
-	 * 0 to skip the first value which is the METHOD as string */
-	offset = RA_STATIC_MAX-1;
-	for( i=1; i<attr_cnt; i++) {
-	    switch (type_arr[i]) {
-	    case TYPE_STR:
-		ADD_RAD_AVPAIR(offset+i, val_arr[i].s, val_arr[i].len);
-		break;
-	    case TYPE_INT:
-		ADD_RAD_AVPAIR(offset+i, &(int_arr[i]), -1);
-		break;
-	    default:
-		break;
-	    }
-	}
-
-	/* call-legs attributes also get inserted */
-	if ( leg_info ) {
-		offset += attr_cnt;
-		attr_cnt = legs2strar(leg_info,req,val_arr,int_arr,type_arr,1);
-		do {
-			for (i=0; i<attr_cnt; i++)
-				ADD_RAD_AVPAIR( offset+i, val_arr[i].s, val_arr[i].len );
-		}while ( (attr_cnt=legs2strar(leg_info,req,val_arr,int_arr,
-					      type_arr, 0))!=0 );
-	}
-
-	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
-		LM_ERR("radius-ing failed\n");
-		goto error;
-	}
-	rc_avpair_free(send);
-	/* free memory allocated by extra2strar */
-	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
-	return 1;
-
-error:
-	rc_avpair_free(send);
-	/* free memory allocated by extra2strar */
-	free_strar_mem( &(type_arr[m-o]), &(val_arr[m-o]), o, m);
-	return -1;
-}
-
-#endif
 
 
 /********************************************

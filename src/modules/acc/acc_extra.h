@@ -56,11 +56,6 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 
 int extra2int( struct acc_extra *extra, int *attrs );
 
-#ifdef RAD_ACC
-#include "../misc_radius/radius.h"
-int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset);
-#endif
-
 static inline void free_strar_mem( char* type_arr, str* alloc_arr, int dim_arr, int dim_ext){
 	int i = 0;
 	for ( i = 0; i < dim_arr; i ++ ) {

@@ -53,12 +53,6 @@ extern int cdr_start_on_confirmed;
 extern int cdr_log_facility;
 extern int cdr_expired_dlg_enable;
 
-#ifdef RAD_ACC
-extern int radius_flag;
-extern int radius_missed_flag;
-extern void *rh;
-#endif
-
 #ifdef DIAM_ACC
 #include "diam_tcp.h"
 extern rd_buf_t *rb;
