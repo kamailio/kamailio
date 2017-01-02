@@ -1,5 +1,4 @@
 /**
- * $Id$
  *
  * Copyright (C) 2011 Flowroute LLC (flowroute.com)
  *
@@ -75,7 +74,7 @@ static int fixup_get_field(void** param, int param_no)
 		}
 		return 0;
 	}
-	
+
 	LM_ERR("invalid parameter number <%d>\n", param_no);
 	return -1;
 }
