@@ -87,34 +87,24 @@ Carsten Bock
               3.41. skip_remote_socket (int)
               3.42. db_timer_clean (int)
 
-        4. Functions
-        5. MI Commands
+        4. RPC Commands
 
-              5.1. ul_rm
-              5.2. ul_rm_contact
-              5.3. ul_dump
-              5.4. ul_flush
-              5.5. ul_add
-              5.6. ul_show_contact
+              4.1. ul.dump
+              4.2. ul.lookup table AOR
+              4.3. ul.rm table AOR
+              4.4. ul.rm_contact table AOR contact
+              4.5. ul.flush
+              4.6. ul.add
+              4.7. ul.db_users
+              4.8. ul.db_contacts
+              4.9. ul.db_expired_contacts
 
-        6. RPC Commands
+        5. Statistics
 
-              6.1. ul.dump
-              6.2. ul.lookup table AOR
-              6.3. ul.rm table AOR
-              6.4. ul.rm_contact table AOR contact
-              6.5. ul.flush
-              6.6. ul.add
-              6.7. ul.db_users
-              6.8. ul.db_contacts
-              6.9. ul.db_expired_contacts
-
-        7. Statistics
-
-              7.1. users
-              7.2. contacts
-              7.3. expires
-              7.4. registered_users
+              5.1. users
+              5.2. contacts
+              5.3. expires
+              5.4. registered_users
 
    2. Developer Guide
 
@@ -244,34 +234,24 @@ Chapter 1. Admin Guide
         3.41. skip_remote_socket (int)
         3.42. db_timer_clean (int)
 
-   4. Functions
-   5. MI Commands
+   4. RPC Commands
 
-        5.1. ul_rm
-        5.2. ul_rm_contact
-        5.3. ul_dump
-        5.4. ul_flush
-        5.5. ul_add
-        5.6. ul_show_contact
+        4.1. ul.dump
+        4.2. ul.lookup table AOR
+        4.3. ul.rm table AOR
+        4.4. ul.rm_contact table AOR contact
+        4.5. ul.flush
+        4.6. ul.add
+        4.7. ul.db_users
+        4.8. ul.db_contacts
+        4.9. ul.db_expired_contacts
 
-   6. RPC Commands
+   5. Statistics
 
-        6.1. ul.dump
-        6.2. ul.lookup table AOR
-        6.3. ul.rm table AOR
-        6.4. ul.rm_contact table AOR contact
-        6.5. ul.flush
-        6.6. ul.add
-        6.7. ul.db_users
-        6.8. ul.db_contacts
-        6.9. ul.db_expired_contacts
-
-   7. Statistics
-
-        7.1. users
-        7.2. contacts
-        7.3. expires
-        7.4. registered_users
+        5.1. users
+        5.2. contacts
+        5.3. expires
+        5.4. registered_users
 
 1. Overview
 
@@ -945,96 +925,26 @@ modparam("usrloc", "skip_remote_socket", 1)
 modparam("usrloc", "db_timer_clean", 1)
 ...
 
-4. Functions
+4. RPC Commands
 
-   There are no exported functions that could be used in scripts.
+   4.1. ul.dump
+   4.2. ul.lookup table AOR
+   4.3. ul.rm table AOR
+   4.4. ul.rm_contact table AOR contact
+   4.5. ul.flush
+   4.6. ul.add
+   4.7. ul.db_users
+   4.8. ul.db_contacts
+   4.9. ul.db_expired_contacts
 
-5. MI Commands
-
-   5.1. ul_rm
-   5.2. ul_rm_contact
-   5.3. ul_dump
-   5.4. ul_flush
-   5.5. ul_add
-   5.6. ul_show_contact
-
-5.1.  ul_rm
-
-   Deletes an entire AOR record (including its contacts).
-
-   Parameters:
-     * table name - table where the AOR is removed from (Ex: location).
-     * AOR - user AOR in username[@domain] format (domain must be supplied
-       only if use_domain option is on).
-
-5.2.  ul_rm_contact
-
-   Deletes a contact from an AOR record.
-
-   Parameters:
-     * table name - table where the AOR is removed from (Ex: location).
-     * AOR - user AOR in username[@domain] format (domain must be supplied
-       only if use_domain option is on).
-     * contact - exact contact to be removed
-
-5.3.  ul_dump
-
-   Dumps the entire content of the USRLOC in memory cache
-
-   Parameters:
-     * brief - (optional, may not be present); if equals to string
-       “brief”, a brief dump will be done (only AOR and contacts, with no
-       other details)
-
-5.4.  ul_flush
-
-   Triggers the flush of USRLOC memory cache into DB.
-
-5.5.  ul_add
-
-   Adds a new contact for an user AOR.
-
-   Parameters:
-     * table name - table where the contact will be added (Ex: location).
-     * AOR - user AOR in username[@domain] format (domain must be supplied
-       only if use_domain option is on).
-     * contact - contact string to be added
-     * expires - expires value of the contact
-     * Q - Q value of the contact
-     * path value of the contact
-     * flags - internal USRLOC flags of the contact
-     * cflags - per branch flags of the contact
-     * methods - mask with supported requests of the contact
-
-5.6.  ul_show_contact
-
-   Dumps the contacts of an user AOR.
-
-   Parameters:
-     * table name - table where the AOR resides (Ex: location).
-     * AOR - user AOR in username[@domain] format (domain must be supplied
-       only if use_domain option is on).
-
-6. RPC Commands
-
-   6.1. ul.dump
-   6.2. ul.lookup table AOR
-   6.3. ul.rm table AOR
-   6.4. ul.rm_contact table AOR contact
-   6.5. ul.flush
-   6.6. ul.add
-   6.7. ul.db_users
-   6.8. ul.db_contacts
-   6.9. ul.db_expired_contacts
-
-6.1.  ul.dump
+4.1.  ul.dump
 
    Dumps the content of the location table
 
    Parameters:
      * None.
 
-6.2.  ul.lookup table AOR
+4.2.  ul.lookup table AOR
 
    Looks up the contents of an AOR entry in the location table
 
@@ -1043,7 +953,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-6.3.  ul.rm table AOR
+4.3.  ul.rm table AOR
 
    Deletes an entire AOR record (including its contacts).
 
@@ -1052,7 +962,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * AOR - user AOR in username[@domain] format (domain must be supplied
        only if use_domain option is on).
 
-6.4.  ul.rm_contact table AOR contact
+4.4.  ul.rm_contact table AOR contact
 
    Deletes a contact from an AOR record.
 
@@ -1062,11 +972,11 @@ modparam("usrloc", "db_timer_clean", 1)
        only if use_domain option is on).
      * contact - exact contact to be removed
 
-6.5.  ul.flush
+4.5.  ul.flush
 
    Triggers the flush of USRLOC memory cache into DB.
 
-6.6.  ul.add
+4.6.  ul.add
 
    Adds a new contact for an user AOR.
 
@@ -1082,7 +992,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
 
-6.7.  ul.db_users
+4.7.  ul.db_users
 
    Tell number of different users (AoRs) in a location table that have
    unexpired contacts.
@@ -1091,7 +1001,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * table name - location table where the users are looked for, for
        example, location.
 
-6.8.  ul.db_contacts
+4.8.  ul.db_contacts
 
    Tell number of unexpired contacts in a location table.
 
@@ -1099,7 +1009,7 @@ modparam("usrloc", "db_timer_clean", 1)
      * table name - location table where the contacts are looked for, for
        example, location.
 
-6.9.  ul.db_expired_contacts
+4.9.  ul.db_expired_contacts
 
    Tell number of expired contacts in a location table.
 
@@ -1107,33 +1017,33 @@ modparam("usrloc", "db_timer_clean", 1)
      * table name - location table where the contacts are looked for, for
        example, location.
 
-7. Statistics
+5. Statistics
 
-   7.1. users
-   7.2. contacts
-   7.3. expires
-   7.4. registered_users
+   5.1. users
+   5.2. contacts
+   5.3. expires
+   5.4. registered_users
 
    Exported statistics are listed in the next sections.
 
-7.1. users
+5.1. users
 
    Number of AOR existing in the USRLOC memory cache for that domain - can
    not be resetted; this statistic will be register for each used domain
    (Ex: location).
 
-7.2. contacts
+5.2. contacts
 
    Number of contacts existing in the USRLOC memory cache for that domain
    - can not be resetted; this statistic will be register for each used
    domain (Ex: location).
 
-7.3. expires
+5.3. expires
 
    Total number of expired contacts for that domain - can be resetted;
    this statistic will be register for each used domain (Ex: location).
 
-7.4. registered_users
+5.4. registered_users
 
    Total number of AOR existing in the USRLOC memory cache for all domains
    - can not be resetted.
