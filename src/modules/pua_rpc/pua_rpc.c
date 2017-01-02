@@ -284,7 +284,7 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 }
 
 
-rpc_export_t pua_rpc[] = {
+rpc_export_t pua_rpc_ex[] = {
 	{"pua.publish", pua_rpc_publish, publish_doc, 0},
 	{0, 0, 0, 0}
 };
@@ -294,7 +294,7 @@ rpc_export_t pua_rpc[] = {
 struct module_exports exports= {
 	"pua_rpc",
 	0,
-	pua_rpc,
+	pua_rpc_ex,
 	0,
 	mod_init,
 	0,
