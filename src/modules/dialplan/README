@@ -60,18 +60,13 @@ Luis Martin
               6.1. dp_translate(id, [src[/dest]])
               6.2. dp_reload()
 
-        7. MI Commands
+        7. RPC Commands
 
-              7.1. dp_reload
-              7.2. dp_translate
+              7.1. dialplan.dump
+              7.2. dialplan.reload
+              7.3. dialplan.translate
 
-        8. Exported RPC Commands
-
-              8.1. dialplan.dump
-              8.2. dialplan.reload
-              8.3. dialplan.translate
-
-        9. Installation
+        8. Installation
 
    2. Developer's Guide
 
@@ -127,18 +122,13 @@ Chapter 1. Admin Guide
         6.1. dp_translate(id, [src[/dest]])
         6.2. dp_reload()
 
-   7. MI Commands
+   7. RPC Commands
 
-        7.1. dp_reload
-        7.2. dp_translate
+        7.1. dialplan.dump
+        7.2. dialplan.reload
+        7.3. dialplan.translate
 
-   8. Exported RPC Commands
-
-        8.1. dialplan.dump
-        8.2. dialplan.reload
-        8.3. dialplan.translate
-
-   9. Installation
+   8. Installation
 
 1. Overview
 
@@ -442,47 +432,13 @@ xlog("translated to var $var(y) \n");
 
    This function can be used from ANY_ROUTE.
 
-7. MI Commands
+7. RPC Commands
 
-   7.1. dp_reload
-   7.2. dp_translate
+   7.1. dialplan.dump
+   7.2. dialplan.reload
+   7.3. dialplan.translate
 
-7.1. dp_reload
-
-   Forces an update of the translation rules from the database.
-
-   Name: dp_reload
-
-   Parameters: none
-
-   MI DATAGRAM Command Format:
-                :dp_reload:
-                _empty_line_
-
-7.2. dp_translate
-
-   Will apply a translation rule identified by a dialplan id and an input
-   string.
-
-   Name: dp_translate
-
-   Parameters: 2
-     * Dial plan ID
-     * Input String
-
-   MI DATAGRAM Command Format:
-            :dp_translate:
-            dpid
-            input
-                _empty_line_
-
-8. Exported RPC Commands
-
-   8.1. dialplan.dump
-   8.2. dialplan.reload
-   8.3. dialplan.translate
-
-8.1. dialplan.dump
+7.1. dialplan.dump
 
    Dumps the content of one dialplan ID
 
@@ -493,7 +449,7 @@ xlog("translated to var $var(y) \n");
    Example:
                 kamcmd dialplan.dump 100
 
-8.2. dialplan.reload
+7.2. dialplan.reload
 
    Forces an update of the translation rules from the database.
 
@@ -504,7 +460,7 @@ xlog("translated to var $var(y) \n");
    Example:
                 kamcmd dialplan.reload
 
-8.3. dialplan.translate
+7.3. dialplan.translate
 
    Will apply a translation rule identified by a dialplan id and an input
    string.
@@ -519,7 +475,7 @@ xlog("translated to var $var(y) \n");
         # kamcmd dp_translate dpid "input"
         kamcmd dp_translate 1 "abcdxyz"
 
-9. Installation
+8. Installation
 
    The modules requires one table in Kamailio database: dialplan. The SQL
    syntax to create them can be found in dialplan-create.sql script in the

@@ -38,17 +38,12 @@ Juha Heinanen
               4.3. is_domain_local(pseudo_variable)
               4.4. lookup_domain(domain[, prefix])
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. domain_reload
-              5.2. domain_dump
+              5.1. domain.reload
+              5.2. domain.dump
 
-        6. Exported RPC Commands
-
-              6.1. domain.reload
-              6.2. domain.dump
-
-        7. Known Limitations
+        6. Known Limitations
 
    2. Developer Guide
 
@@ -97,17 +92,12 @@ Chapter 1. Admin Guide
         4.3. is_domain_local(pseudo_variable)
         4.4. lookup_domain(domain[, prefix])
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. domain_reload
-        5.2. domain_dump
+        5.1. domain.reload
+        5.2. domain.dump
 
-   6. Exported RPC Commands
-
-        6.1. domain.reload
-        6.2. domain.dump
-
-   7. Known Limitations
+   6. Known Limitations
 
 1. Overview
 
@@ -321,43 +311,12 @@ if (lookup_domain("$fd", "from_")) {
 }
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. domain_reload
-   5.2. domain_dump
+   5.1. domain.reload
+   5.2. domain.dump
 
-5.1. domain_reload
-
-   Causes domain module to re-read the contents of domain table into cache
-   memory.
-
-   Name: domain_reload
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :domain_reload:_reply_fifo_file_
-                _empty_line_
-
-5.2. domain_dump
-
-   Causes domain module to dump hash indexes and domain names in its cache
-   memory.
-
-   Name: domain_dump
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :domain_dump:_reply_fifo_file_
-                _empty_line_
-
-6. Exported RPC Commands
-
-   6.1. domain.reload
-   6.2. domain.dump
-
-6.1. domain.reload
+5.1. domain.reload
 
    Causes domain module to re-read the contents of domain table into cache
    memory.
@@ -369,7 +328,7 @@ if (lookup_domain("$fd", "from_")) {
    Example:
                 kamcmd domain.reload
 
-6.2. domain.dump
+5.2. domain.dump
 
    Causes domain module to dump domain names in its cache memory.
 
@@ -380,11 +339,11 @@ if (lookup_domain("$fd", "from_")) {
    Example:
                 kamcmd domain.dump
 
-7. Known Limitations
+6. Known Limitations
 
    There is an unlikely race condition on domain reload. If a process uses
-   a table, which is reloaded at the same time twice through FIFO or RPC,
-   the second reload will delete the original table still in use by the
+   a table, which is reloaded at the same time twice through RPC, the
+   second reload will delete the original table still in use by the
    process.
 
 Chapter 2. Developer Guide

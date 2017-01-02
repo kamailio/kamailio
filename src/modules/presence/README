@@ -77,25 +77,21 @@ Juha Heinanen
 
               4.5. pres_update_watchers(uri, event)
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. refreshWatchers
-              5.2. cleanup
+              5.1. presence.cleanup
+              5.2. presence.refreshWatchers
 
-        6. RPC Commands
+        6. Exported Variables
 
-              6.1. presence.cleanup
+              6.1. $subs(attr)
+              6.2. $notify_reply(attr)
 
-        7. Pseudo Variables
+        7. Events
 
-              7.1. $subs(attr)
-              7.2. $notify_reply(attr)
+              7.1. present:notify-reply
 
-        8. Events
-
-              8.1. present:notify-reply
-
-        9. Installation
+        8. Installation
 
    2. Developer Guide
 
@@ -217,25 +213,21 @@ Chapter 1. Admin Guide
 
         4.5. pres_update_watchers(uri, event)
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. refreshWatchers
-        5.2. cleanup
+        5.1. presence.cleanup
+        5.2. presence.refreshWatchers
 
-   6. RPC Commands
+   6. Exported Variables
 
-        6.1. presence.cleanup
+        6.1. $subs(attr)
+        6.2. $notify_reply(attr)
 
-   7. Pseudo Variables
+   7. Events
 
-        7.1. $subs(attr)
-        7.2. $notify_reply(attr)
+        7.1. present:notify-reply
 
-   8. Events
-
-        8.1. present:notify-reply
-
-   9. Installation
+   8. Installation
 
 1. Overview
 
@@ -948,17 +940,32 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. refreshWatchers
-   5.2. cleanup
+   5.1. presence.cleanup
+   5.2. presence.refreshWatchers
 
-5.1.  refreshWatchers
+5.1. presence.cleanup
+
+   Manually triggers the cleanup functions for the active_watchers,
+   presentity, and watchers tables. Useful if you have set clean_period
+   and/or db_update_period to zero or less.
+
+   Name: presence.cleanup
+
+   Parameters: none
+
+   RPC Command Format:
+...
+kamcmd presence.cleanup
+...
+
+5.2. presence.refreshWatchers
 
    Triggers sending Notify messages to watchers if a change in watchers
    authorization or in published state occurred.
 
-   Name: refreshWatchers
+   Name: presence.refreshWatchers
 
    Parameters:
      * uri - the uri of the user who made the change and whose watchers
@@ -976,47 +983,17 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
      * filename - the name of the pidf-manipulation file on the XCAP
        server (only used for type 2).
 
-   MI FIFO Command Format:
-                :refreshWatchers:fifo_reply
-                sip:test@kamailio.org
-                presence
-                1
-                _empty_line_
+   RPC Command Format:
+...
+kamcmd refreshWatchers sip:test@kamailio.org presence 1
+...
 
-5.2.  cleanup
+6. Exported Variables
 
-   Manually triggers the cleanup functions for the active_watchers,
-   presentity, and watchers tables. Useful if you have set clean_period
-   and/or db_update_period to zero or less.
+   6.1. $subs(attr)
+   6.2. $notify_reply(attr)
 
-   Name: cleanup
-
-   Parameters: none
-
-   MI FIFO Command Format:
-                :cleanup:fifo_reply
-                _empty_line_
-
-6. RPC Commands
-
-   6.1. presence.cleanup
-
-6.1.  presence.cleanup
-
-   Manually triggers the cleanup functions for the active_watchers,
-   presentity, and watchers tables. Useful if you have set clean_period
-   and/or db_update_period to zero or less.
-
-   Name: presence.cleanup
-
-   Parameters: none
-
-7. Pseudo Variables
-
-   7.1. $subs(attr)
-   7.2. $notify_reply(attr)
-
-7.1. $subs(attr)
+6.1. $subs(attr)
 
    Access the attributes of handled subscription. It must be used after a
    successful call of “handle_subscription()” or in the following events.
@@ -1057,7 +1034,7 @@ if(handle_subscription())
 }
 ...
 
-7.2. $notify_reply(attr)
+6.2. $notify_reply(attr)
 
    Access the reply message received when notifying subscriber. It must be
    used in the following events.
@@ -1073,11 +1050,11 @@ event_route[presence:notify-reply]
 }
 ...
 
-8. Events
+7. Events
 
-   8.1. present:notify-reply
+   7.1. present:notify-reply
 
-8.1. present:notify-reply
+7.1. present:notify-reply
 
    Fired after notify reply is received or timeout.
 
@@ -1089,7 +1066,7 @@ event_route[presence:notify-reply]
 }
 ...
 
-9. Installation
+8. Installation
 
    The module requires 3 tables in the Kamailio database: "presentity",
    "active_watchers" and "watchers". The SQL syntax to create them can be
