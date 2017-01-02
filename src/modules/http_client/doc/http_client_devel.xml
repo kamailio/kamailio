@@ -13,10 +13,14 @@
 	
 	<title>&develguide;</title>
 	<section>
+	This module provides a set of API functions that other modules can use in order to
+	integrate with HTTP services.
+	</section>
+	<section>
 	<title>Available Functions</title>
 		<section>
 			<title>
-			<function moreinfo="none">http_connect(msg, connection, url, result, content_type, post)</function>
+			<function moreinfo="none">int http_connect(msg, connection, url, result, content_type, post)</function>
 			</title>
 			<para>
 			Sends HTTP GET or POST request to a given connection. If content_type and post
@@ -86,10 +90,10 @@
 		</section>
 		<section>
 			<title>
-			<function moreinfo="none">http_query(msg, url, dest, post)</function>
+			<function moreinfo="none">int http_query(msg, url, dest, post)</function>
 			</title>
 			<para>
-			Sends HTTP GET or POST request to a given connection. If post data 
+			Sends a HTTP GET or POST request to a given connection. If post data 
 			is defined, POST will be used, otherwise GET. The default settings
 			defined as module params of the http_client module will be used for
 			the connection.
@@ -99,7 +103,7 @@
 			<listitem>
 				<para><emphasis>struct sip_msg *msg</emphasis></para>
 				<para>
-				The current sip message structure.
+				The current SIP message structure.
 				</para>
 			</listitem>
 			<listitem>
