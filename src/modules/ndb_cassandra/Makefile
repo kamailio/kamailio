@@ -15,13 +15,8 @@ LIB_DIR = /usr/local/lib
 DEFS += -I${THRIFT_DIR} -DKAMAILIO_MOD_INTERFACE
 LIBS += -L${LIB_DIR} thrift_wrapper.o cassandra_constants.o cassandra_types.o Cassandra.o -lthrift
 
-SERLIBPATH=../../lib
-
 CXXFLAGS=$(CFLAGS:-Wno-deprecated option=)
 CXXFLAGS+=-Wno-write-strings -Wno-deprecated -Wno-unused-function -Wno-sign-compare -Wno-strict-aliasing
-
-SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1
-SER_LIBS+=$(SERLIBPATH)/kmi/kmi
 
 include ../../Makefile.modules
 

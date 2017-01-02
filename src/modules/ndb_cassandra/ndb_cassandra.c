@@ -19,13 +19,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- * 2013-11: Initial version luismartingil
  */
 /*! \file
  * \brief SIP-router indigital :: Module core
@@ -38,7 +35,6 @@
 
 #include "../../core/sr_module.h"
 #include "../../core/mod_fix.h"
-#include "../../lib/kmi/mi.h" //register_my_mod function
 #include "../../core/lvalue.h"
 
 #include <string.h>
@@ -87,10 +83,6 @@ static param_export_t params[] = {
   {0, 0, 0}
 };
 
-static mi_export_t mi_cmds[] = {
-  { 0, 0, 0, 0, 0}
-};
-
 /* Module interface */
 struct module_exports exports = {
     "ndb_cassandra",
@@ -98,7 +90,7 @@ struct module_exports exports = {
     cmds,      /* Exported functions */
     params,    /* Exported parameters */
     0,         /* exported statistics */
-    mi_cmds,   /* exported MI functions */
+    0,         /* exported MI functions */
     0,         /* exported pseudo-variables */
     0,         /* extra processes */
     mod_init,  /* module initialization function */
@@ -109,16 +101,11 @@ struct module_exports exports = {
 
 /* Module initialization function */
 static int mod_init(void) {
-  if(register_mi_mod(exports.name, mi_cmds)!=0)
-    {
-      LM_ERR("failed to register MI commands\n");
-      return -1;
-    }    
   return 0;
 }
 
 /* Child initialization function */
-static int child_init(int rank) {	
+static int child_init(int rank) {
   int rtn = 0;
   return(rtn);
 }
