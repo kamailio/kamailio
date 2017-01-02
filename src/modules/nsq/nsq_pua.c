@@ -1,7 +1,5 @@
 /*
- * $Id$
- *
- * Kazoo module interface
+ * NSQ module interface
  *
  * Copyright (C) 2010-2014 2600Hz
  *
@@ -24,10 +22,6 @@
  * Contributor(s):
  * Emmanuel Schmidbauer <emmanuel@getweave.com>
  *
- * History:
- * --------
- * 2014-08  first version (2600hz)
- * 2016-03  port to NSQ Module (Weave Communications)
  */
 
 #include "../presence/bind_presence.h"

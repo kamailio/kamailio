@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * NSQ module interface
  *
  * Copyright (C) 2016 Weave Communications
@@ -24,9 +22,6 @@
  * This module was based on the Kazoo module created by 2600hz.
  * Thank you to 2600hz and their brilliant VoIP developers.
  *
- * History:
- * --------
- * 2016-03  first version (Weave Communications)
  */
 
 #ifndef __NSQ_MOD_H_
