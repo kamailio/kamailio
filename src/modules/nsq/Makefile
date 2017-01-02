@@ -1,5 +1,5 @@
 #
-# NSQ
+# NSQ module
 #
 #
 # WARNING: do not run this directly, it should be run by the master Makefile
@@ -15,7 +15,6 @@ DEFS+=-I$(LOCALBASE)/include -I/usr/local/include $(shell pkg-config --cflags js
 DEFS+=-DKAMAILIO_MOD_INTERFACE
 
 SERLIBPATH=../../lib
-SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1
-SER_LIBS+=$(SERLIBPATH)/kmi/kmi
+SER_LIBS=$(SERLIBPATH)/srdb1/srdb1
 
 include ../../Makefile.modules
