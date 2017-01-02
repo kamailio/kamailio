@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -35,7 +35,6 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/usr_avp.h"
 #include "../../core/pt.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/hashes.h"
 #include "../../core/mod_fix.h"
 #include "../../core/rpc_lookup.h"
@@ -90,7 +89,7 @@ static int send_dmq_fixup(void** param, int param_no);
 static int bcast_dmq_fixup(void** param, int param_no);
 
 static cmd_export_t cmds[] = {
-	{"dmq_handle_message",  (cmd_function)dmq_handle_message, 0, handle_dmq_fixup, 0, 
+	{"dmq_handle_message",  (cmd_function)dmq_handle_message, 0, handle_dmq_fixup, 0,
 		REQUEST_ROUTE},
 	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4, send_dmq_fixup, 0,
 		ANY_ROUTE},
@@ -115,10 +114,6 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{0, 0, 0, 0, 0}
-};
-
 static rpc_export_t rpc_methods[];
 
 /** module exports */
@@ -128,7 +123,7 @@ struct module_exports exports = {
 	cmds,				/* exported functions */
 	params,				/* exported parameters */
 	0,				/* exported statistics */
-	mi_cmds,   			/* exported MI functions */
+	0,   			/* exported MI functions */
 	0,				/* exported pseudo-variables */
 	0,				/* extra processes */
 	mod_init,			/* module initialization function */
@@ -172,12 +167,6 @@ static int make_socket_str_from_uri(struct sip_uri *uri, str *socket) {
  */
 static int mod_init(void)
 {
-	
-	if(register_mi_mod(exports.name, mi_cmds)!=0) {
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
 		LM_ERR("cannot bind to SL API\n");
@@ -211,7 +200,7 @@ static int mod_init(void)
 
 	/* register worker processes - add one because of the ping process */
 	register_procs(num_workers);
-	
+
 	/* check server_address and notification_address are not empty and correct */
 	if(parse_uri(dmq_server_address.s, dmq_server_address.len, &dmq_server_uri) < 0) {
 		LM_ERR("server address invalid\n");
@@ -375,6 +364,7 @@ static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 	return;
 error:
 	LM_ERR("Failed to add item to RPC response\n");
+	rpc->fault(c, 500, "Server failure");
 	return;
 
 }

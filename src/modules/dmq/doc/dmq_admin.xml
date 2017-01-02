@@ -11,23 +11,23 @@
 
 <chapter>
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-	The DMQ module implements a distributed message queue on top of Kamailio in order to enable the 
-	passing/replication of data between multiple instances. The DMQ "nodes" within the system are grouped 
-	in a logical entity called the DMQ "bus" and are able to communicate with each other by 
-	sending/receiving messages (either by broadcast or directly to a specific node). The system 
+	The DMQ module implements a distributed message queue on top of Kamailio in order to enable the
+	passing/replication of data between multiple instances. The DMQ "nodes" within the system are grouped
+	in a logical entity called the DMQ "bus" and are able to communicate with each other by
+	sending/receiving messages (either by broadcast or directly to a specific node). The system
 	transparently deals with node discovery, consistency, retransmissions, etc.
 	</para>
 	<para>
-	Other entities ("peers") are then able to utlize the DMQ bus to pass messages between themselves. 
-	Peers are grouped by name in order to ensure the correct messages are passed to the relevant peers. 
+	Other entities ("peers") are then able to utlize the DMQ bus to pass messages between themselves.
+	Peers are grouped by name in order to ensure the correct messages are passed to the relevant peers.
 	This grouping of peers can be compared to a topic in a typical pub/sub system.
 	</para>
 	<para>
-	DMQ sends SIP requests using the <emphasis>KDMQ</emphasis> request method, that is private 
+	DMQ sends SIP requests using the <emphasis>KDMQ</emphasis> request method, that is private
 	to Kamailio.
 	</para>
 <example>
@@ -56,7 +56,7 @@ sip:192.168.40.17:5060;status=active
 
 </programlisting>
                 </example>
-	
+
 	</section>
 
 	<section>
@@ -94,7 +94,7 @@ sip:192.168.40.17:5060;status=active
 		</itemizedlist>
 	</section>
 	</section>
-	
+
 	<section>
 	<title>Parameters</title>
 	<section id="dmq.p.server_address">
@@ -134,12 +134,12 @@ modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
 	<section id="dmq.p.multi_notify">
 		<title><varname>multi_notify</varname>(int)</title>
 		<para>
-		Enables the ability to resolve multiple IPv4/IPv6 addresses for 
+		Enables the ability to resolve multiple IPv4/IPv6 addresses for
 		a single notification address.
 		</para>
 		<para>
-		A value of zero resolves to the first IP address found. 
-		A non-zero value resolves to all IP addresses associated with the host. 
+		A value of zero resolves to the first IP address found.
+		A non-zero value resolves to all IP addresses associated with the host.
 		This includes addresses from DNS SRV records, A and AAAA records.
 		</para>
 		<para>
@@ -197,7 +197,7 @@ modparam("dmq", "ping_interval", 90)
                 <function moreinfo="none">dmq_handle_message()</function>
                 </title>
                 <para>
-                Handles a DMQ message by passing it to the appropriate local peer (module). 
+                Handles a DMQ message by passing it to the appropriate local peer (module).
 		The peer is identified by the user part of the To header.
                 </para>
                 <para>
@@ -302,7 +302,7 @@ modparam("dmq", "ping_interval", 90)
                 <function moreinfo="none">dmq_t_replicate([skip_loop_test])</function>
                 </title>
                 <para>
-		Replicates the current SIP message to all active nodes (except self). Useful for replicating 
+		Replicates the current SIP message to all active nodes (except self). Useful for replicating
 		REGISTER, PUBLISH etc. in a clustered environment.
                 </para>
                 <para>Meaning of parameters:</para>
@@ -360,5 +360,22 @@ modparam("dmq", "ping_interval", 90)
 
 	</section>
 
+	<section>
+        <title>RPC Commands</title>
+        <section id="dmq.r.list_nodes">
+            <title>dmq.list_nodes</title>
+			<para>
+				List the DMQ nodes. It has no parameters.
+			</para>
+               <example>
+                <title>dmq.list_nodes usage</title>
+                <programlisting format="linespecific">
+...
+&kamcmd; dmq.list_nodes
+...
+                </programlisting>
+                </example>
+        </section>
+	</section>
 </chapter>
 
