@@ -43,7 +43,8 @@
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/resolve.h"
 #include "../../core/hashes.h"
-#include "../../lib/kmi/mi.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 
 #include "../../modules/tm/tm_load.h"
 
@@ -86,8 +87,7 @@ static int child_init(int);
 
 static int imc_manager(struct sip_msg*, char *, char *);
 
-static struct mi_root* imc_mi_list_rooms(struct mi_root* cmd, void* param);
-static struct mi_root* imc_mi_list_members(struct mi_root* cmd, void* param);
+static int imc_rpc_init(void);
 
 static void destroy(void);
 
@@ -126,13 +126,6 @@ stat_export_t imc_stats[] = {
 
 #endif
 
-static mi_export_t mi_cmds[] = {
-	{ "imc_list_rooms",    imc_mi_list_rooms,    MI_NO_INPUT_FLAG,  0,  0 },
-	{ "imc_list_members",  imc_mi_list_members,  0,                 0,  0 },
-	{ 0, 0, 0, 0, 0}
-};
-
-
 
 /** module exports */
 struct module_exports exports= {
@@ -145,7 +138,7 @@ struct module_exports exports= {
 #else
 	0,          /* exported statistics */
 #endif
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	0,          /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* mod init */
@@ -166,12 +159,12 @@ int add_from_db(void)
 	db_val_t mquery_vals[2];
 	db1_res_t *r_res= NULL;
 	db1_res_t *m_res= NULL;
-	db_row_t *m_row = NULL, *r_row = NULL;	
+	db_row_t *m_row = NULL, *r_row = NULL;
 	db_val_t *m_row_vals, *r_row_vals = NULL;
 	str name, domain;
 	imc_room_p room = NULL;
 	int er_ret = -1;
-	
+
 	rq_result_cols[0] = &imc_col_name;
 	rq_result_cols[1] = &imc_col_domain;
 	rq_result_cols[2] = &imc_col_flag;
@@ -183,7 +176,7 @@ int add_from_db(void)
 	mquery_cols[0] = &imc_col_room;
 	mquery_vals[0].type = DB1_STR;
 	mquery_vals[0].nul = 0;
-	
+
 	if(imc_dbf.use_table(imc_db, &rooms_table)< 0)
 	{
 		LM_ERR("use_table failed\n");
@@ -210,22 +203,22 @@ int add_from_db(void)
 		/*add rooms*/
 		r_row = &r_res->rows[i];
 		r_row_vals = ROW_VALUES(r_row);
-	
+
 		name.s = 	r_row_vals[0].val.str_val.s;
 		name.len = strlen(name.s);
-		
+
 		domain.s = 	r_row_vals[1].val.str_val.s;
 		domain.len = strlen(domain.s);
-		
+
 		flag = 	r_row_vals[2].val.int_val;
-		
+
 		room = imc_add_room(&name, &domain, flag);
 		if(room == NULL)
 		{
 			LM_ERR("failed to add room\n ");
 			goto error;
-		}	
-	
+		}
+
 		/* add members */
 		if(imc_dbf.use_table(imc_db, &members_table)< 0)
 		{
@@ -234,8 +227,8 @@ int add_from_db(void)
 		}
 
 		mquery_vals[0].val.str_val= room->uri;
-		
-		if(imc_dbf.query(imc_db, mquery_cols, 0, mquery_vals, mq_result_cols, 
+
+		if(imc_dbf.query(imc_db, mquery_cols, 0, mquery_vals, mq_result_cols,
 					1, 3, 0, &m_res)< 0)
 		{
 			LM_ERR("failed to querry table\n");
@@ -252,15 +245,15 @@ int add_from_db(void)
 		{
 			m_row = &m_res->rows[j];
 			m_row_vals = ROW_VALUES(m_row);
-			
+
 			name.s = m_row_vals[0].val.str_val.s;
 			name.len = strlen(name.s);
-			
+
 			domain.s = m_row_vals[1].val.str_val.s;
 			domain.len = strlen(domain.s);
-			
+
 			flag = m_row_vals[2].val.int_val;
-			
+
 			LM_DBG("adding memeber: [name]=%.*s [domain]=%.*s"
 					" in [room]= %.*s\n",name.len, name.s, domain.len,domain.s,
 					room->uri.len, room->uri.s);
@@ -271,7 +264,7 @@ int add_from_db(void)
 				LM_ERR("failed to adding member\n ");
 				goto error;
 			}
-			imc_release_room(room);	
+			imc_release_room(room);
 		}
 
 		if(m_res)
@@ -292,7 +285,7 @@ int add_from_db(void)
 		LM_ERR("failed to delete information from db\n");
 		goto error;
 	}
-	
+
 	if(imc_dbf.use_table(imc_db, &rooms_table)< 0)
 	{
 		LM_ERR("use table failed\n ");
@@ -306,12 +299,12 @@ int add_from_db(void)
 	}
 
 	if(r_res)
-	{	
+	{
 		imc_dbf.free_result(imc_db, r_res);
 		r_res = NULL;
 	}
 	if(m_res)
-	{	
+	{
 		imc_dbf.free_result(imc_db, m_res);
 		m_res = NULL;
 	}
@@ -333,7 +326,7 @@ error:
 		imc_release_room(room);
 	return er_ret;
 
-}	
+}
 
 
 static int mod_init(void)
@@ -345,10 +338,10 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
-	
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
+
+	if(imc_rpc_init()<0)
 	{
-		LM_ERR("failed to register MI commands\n");
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -367,22 +360,22 @@ static int mod_init(void)
 	}
 
 	if (extra_hdrs.s) {
-    if (extra_hdrs.len + imc_hdr_ctype.len > 1024) {
-      LM_ERR("extra_hdrs too long\n");
-      return -1;
-    }
-    all_hdrs.s = &(hdr_buf[0]);
-    memcpy(all_hdrs.s, imc_hdr_ctype.s, imc_hdr_ctype.len);
-    memcpy(all_hdrs.s + imc_hdr_ctype.len, extra_hdrs.s,
-        extra_hdrs.len);
-    all_hdrs.len = extra_hdrs.len + imc_hdr_ctype.len;
+		if (extra_hdrs.len + imc_hdr_ctype.len > 1024) {
+			LM_ERR("extra_hdrs too long\n");
+			return -1;
+		}
+		all_hdrs.s = &(hdr_buf[0]);
+		memcpy(all_hdrs.s, imc_hdr_ctype.s, imc_hdr_ctype.len);
+		memcpy(all_hdrs.s + imc_hdr_ctype.len, extra_hdrs.s,
+				extra_hdrs.len);
+		all_hdrs.len = extra_hdrs.len + imc_hdr_ctype.len;
 	} else {
-	    all_hdrs = imc_hdr_ctype;
+		all_hdrs = imc_hdr_ctype;
 	}
 
 	/*  binding to mysql module */
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
-	
+
 	if (db_bind_mod(&db_url, &imc_dbf))
 	{
 		LM_DBG("database module not found\n");
@@ -401,7 +394,7 @@ static int mod_init(void)
 		LM_ERR("failed to get information from db\n");
 		return -1;
 	}
-	
+
 	/* load TM API */
 	if (load_tm_api(&tmb)!=0) {
 		LM_ERR("unable to load tm api\n");
@@ -409,11 +402,11 @@ static int mod_init(void)
 	}
 
 	imc_cmd_start_char = imc_cmd_start_str.s[0];
-	
+
 	if(imc_db)
 		imc_dbf.close(imc_db);
 	imc_db = NULL;
-	
+
 	return 0;
 }
 
@@ -421,7 +414,7 @@ static int mod_init(void)
  * child init
  */
 static int child_init(int rank)
-{	
+{
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
@@ -465,14 +458,14 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 	int ret = -1;
 
 	body.s = get_body( msg );
-	if (body.s==0) 
+	if (body.s==0)
 	{
 		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
-	
+
 	/* lungimea corpului mesajului */
-	if (!msg->content_length) 
+	if (!msg->content_length)
 	{
 		LM_ERR("no Content-Length\n");
 		goto error;
@@ -490,15 +483,15 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 		LM_ERR("failed to parse r-uri\n");
 		goto error;
 	}
-	
+
 	pto_uri=&msg->parsed_uri;
-	
+
 	if(parse_from_header(msg)<0)
 	{
 		LM_ERR("failed to parse  From header\n");
 		goto error;
 	}
-	pfrom = (struct to_body*)msg->from->parsed;	
+	pfrom = (struct to_body*)msg->from->parsed;
 	if(parse_uri(pfrom->uri.s, pfrom->uri.len, &from_uri)<0){
 		LM_ERR("failed to parse From URI\n");
 		goto error;
@@ -607,7 +600,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 				goto error;
 			}
 		}
-									
+
 		goto done;
 	}
 
@@ -637,18 +630,18 @@ static void destroy(void)
 	db_val_t mq_vals[4];
 	db_key_t rq_cols[4];
 	db_val_t rq_vals[4];
-	
+
 	if(imc_db==NULL)
 		goto done;
 
 	mq_cols[0] = &imc_col_username;
 	mq_vals[0].type = DB1_STR;
 	mq_vals[0].nul = 0;
-			
+
 	mq_cols[1] = &imc_col_domain;
 	mq_vals[1].type = DB1_STR;
 	mq_vals[1].nul = 0;
-	
+
 	mq_cols[2] = &imc_col_flag;
 	mq_vals[2].type = DB1_INT;
 	mq_vals[2].nul = 0;
@@ -661,7 +654,7 @@ static void destroy(void)
 	rq_cols[0] = &imc_col_name;
 	rq_vals[0].type = DB1_STR;
 	rq_vals[0].nul = 0;
-		
+
 	rq_cols[1] = &imc_col_domain;
 	rq_vals[1].type = DB1_STR;
 	rq_vals[1].nul = 0;
@@ -670,10 +663,10 @@ static void destroy(void)
 	rq_vals[2].type = DB1_INT;
 	rq_vals[2].nul = 0;
 
-	for(i=0; i<imc_hash_size; i++) 
+	for(i=0; i<imc_hash_size; i++)
 	{
 		irp = _imc_htable[i].rooms;
-		
+
 		while(irp)
 		{
 			rq_vals[0].val.str_val = irp->name;
@@ -722,140 +715,109 @@ done:
 }
 
 
-/************************* MI ***********************/
-static struct mi_root* imc_mi_list_rooms(struct mi_root* cmd_tree, void* param)
+/************************* RPC ***********************/
+static void  imc_rpc_list_rooms(rpc_t* rpc, void* ctx)
 {
-	int i, len;
-	struct mi_root* rpl_tree= NULL;
-	struct mi_node* rpl= NULL;
-	struct mi_node* node= NULL;
-	struct mi_attr* attr= NULL;
+	int i;
 	imc_room_p irp = NULL;
-	char* p = NULL;
+	void *vh;
 
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if(rpl_tree == NULL)
-		return 0;
-	rpl = &rpl_tree->node;
-
-	for(i=0; i<imc_hash_size; i++) 
+	for(i=0; i<imc_hash_size; i++)
 	{
 		lock_get(&_imc_htable[i].lock);
 		irp = _imc_htable[i].rooms;
-			while(irp){
-				node = add_mi_node_child(rpl, 0, "ROOM", 4, 0, 0);
-				if( node == NULL)
-					goto error;
-
-				attr= add_mi_attr(node, MI_DUP_VALUE, "URI", 3, irp->uri.s,
-					irp->uri.len);
-				if(attr == NULL)
-					goto error;
-
-				p = int2str(irp->nr_of_members, &len);
-				attr= add_mi_attr(node, 0, "MEMBERS", 7,p, len );
-				if(attr == NULL)
-					goto error;
-
-				attr= add_mi_attr(node, MI_DUP_VALUE, "OWNER", 5, 
-						irp->members->uri.s, irp->members->uri.len);
-				if(attr == NULL)
-					goto error;
-					
-				irp = irp->next;
+		while(irp){
+			if (rpc->add(ctx, "{", &vh) < 0) {
+				lock_release(&_imc_htable[i].lock);
+				rpc->fault(ctx, 500, "Server error");
+				return;
 			}
+			rpc->struct_add(vh, "SdS",
+					"room", &irp->uri,
+					"members", irp->nr_of_members,
+					"owner", &irp->members->uri);
+
+			irp = irp->next;
+		}
 		lock_release(&_imc_htable[i].lock);
 	}
 
-	return rpl_tree;
-
-error:
-	lock_release(&_imc_htable[i].lock);
-	free_mi_tree(rpl_tree);
-	return 0;
-
 }
 
-
-static struct mi_root* imc_mi_list_members(struct mi_root* cmd_tree,
-																void* param)
+static void  imc_rpc_list_members(rpc_t* rpc, void* ctx)
 {
-	int i, len;
-	struct mi_root* rpl_tree = NULL;
-	struct mi_node* node= NULL;
-	struct mi_node* node_r= NULL;
-	struct mi_attr* attr= NULL;
-	char rnbuf[256];
-	str room_name;
-	imc_room_p room;
+	int i;
+	imc_room_p room = NULL;
+	void *vh;
+	void *ih;
 	struct sip_uri inv_uri, *pinv_uri;
 	imc_member_p imp=NULL;
-	char* p = NULL;
+	str room_name;
 
-	node= cmd_tree->node.kids;
-	if(node == NULL|| node->next!=NULL)
-		return 0;
-	
-	/* room name */
-	room_name.s = rnbuf;
-	room_name.len= node->value.len;
-	memcpy(room_name.s, node->value.s, node->value.len);
-	if(room_name.s == NULL || room_name.len == 0)
-	{
-		LM_ERR(" no room name!\n");
-		return init_mi_tree( 404, "room name not found", 19);
+	if (rpc->scan(ctx, "S", &room_name) < 1) {
+		rpc->fault(ctx, 500, "No room name");
+		return;
 	}
-	rnbuf[room_name.len] = '\0';
-	if(*room_name.s=='\0' || *room_name.s=='.')
-	{
-		LM_INFO("empty room name\n");
-		return init_mi_tree( 400, "empty param", 11);
+	if(room_name.s == NULL || room_name.len == 0
+			|| *room_name.s=='\0' || *room_name.s=='.') {
+		LM_ERR("empty room name!\n");
+		rpc->fault(ctx, 500, "Empty room name");
+		return;
 	}
-
 	/* find room */
-	parse_uri(room_name.s,room_name.len, &inv_uri);
+	if(parse_uri(room_name.s,room_name.len, &inv_uri)<0) {
+		LM_ERR("invalid room name!\n");
+		rpc->fault(ctx, 500, "Invalid room name");
+		return;
+	}
 	pinv_uri=&inv_uri;
 	room=imc_get_room(&pinv_uri->user, &pinv_uri->host);
 
-	if(room==NULL)
-	{
+	if(room==NULL) {
 		LM_ERR("no such room!\n");
-		return init_mi_tree( 404, "no such room", 14);
+		rpc->fault(ctx, 500, "Room not found");
+		return;
 	}
-
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if(rpl_tree == NULL)
-		return 0;
-
-	node_r = add_mi_node_child( &rpl_tree->node, MI_DUP_VALUE, "ROOM", 4,
-		room_name.s, room_name.len);
-	if(node_r == NULL)
-		goto error;
-	
+	if (rpc->add(ctx, "{", &vh) < 0) {
+		imc_release_room(room);
+		rpc->fault(ctx, 500, "Server error");
+		return;
+	}
+	rpc->struct_add(vh, "S[d",
+			"room", &room->uri,
+			"members", &ih,
+			"count", room->nr_of_members);
 
 	imp = room->members;
-	i=0;
-	while(imp)
-	{
-		i++;
-		node = add_mi_node_child(node_r, MI_DUP_VALUE, "MEMBER",6, imp->uri.s,
-			imp->uri.len);
-		if(node == NULL)
-			goto error;
+	while(imp) {
+		rpc->array_add(ih, "S", &imp->uri);
 		imp = imp->next;
 	}
-	
-	p = int2str(i, &len);
-	attr= add_mi_attr(node_r, MI_DUP_VALUE, "NR_OF_MEMBERS", 13, p, len);
-	if(attr == 0)
-		goto error;
-
 	imc_release_room(room);
+}
 
-	return rpl_tree;
+static const char* imc_rpc_list_rooms_doc[2] = {
+	"List imc rooms.",
+	0
+};
 
-error:
-	imc_release_room(room);
-	free_mi_tree(rpl_tree);
+static const char* imc_rpc_list_members_doc[2] = {
+	"List members in an imc room.",
+	0
+};
+
+rpc_export_t imc_rpc[] = {
+	{"imc.list_rooms", imc_rpc_list_rooms, imc_rpc_list_rooms_doc, 0},
+	{"imc.list_members", imc_rpc_list_members, imc_rpc_list_members_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int imc_rpc_init(void)
+{
+	if (rpc_register_array(imc_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	return 0;
 }

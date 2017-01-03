@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -78,7 +78,7 @@
 		The database url.
 		</para>
 		<para>
-		<emphasis>	
+		<emphasis>
 		The default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
@@ -152,7 +152,7 @@ modparam("imc", "hash_size", 8)
 	<section>
 		<title><varname>imc_cmd_start_char</varname> (str)</title>
 		<para>
-		The character which indicates that the body of the message is 
+		The character which indicates that the body of the message is
 		a command.
 		</para>
 		<para>
@@ -172,11 +172,11 @@ modparam("imc", "imc_cmd_start_char", "#")
 	<section>
 		<title><varname>outbound_proxy</varname> (str)</title>
 		<para>
-	   		The SIP address used as next hop when sending the message. Very
-   			useful when using &kamailio; with a domain name not in DNS, or
-   			when using a separate &kamailio; instance for imc processing. If
-   			not set, the message will be sent to the address in destination
-   			URI.
+			The SIP address used as next hop when sending the message. Very
+			useful when using &kamailio; with a domain name not in DNS, or
+			when using a separate &kamailio; instance for imc processing. If
+			not set, the message will be sent to the address in destination
+			URI.
 		</para>
 		<para>
 		<emphasis>
@@ -225,7 +225,7 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 		THis function handles incoming MESSAGE requests.
 		If detects if the body of the message is a
 		conference command it executes it, otherwise it sends the
-		message to all the members in the room. 
+		message to all the members in the room.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE. See command description
@@ -253,50 +253,47 @@ if(is_method("MESSAGE)
 	</section>
 
 	<section>
-	<title>MI Commands</title>
-	<section>
-		<title>
-		<function moreinfo="none">imc_list_rooms</function>
-		</title>
+	<title>RPC Commands</title>
+	<section id="imc.r.list_rooms">
+		<title>imc.list_rooms</title>
 		<para>
 		Lists of the IM Conferencing rooms.
 		</para>
 		<para>
-		Name: <emphasis>imc_list_rooms</emphasis>
+		Name: <emphasis>imc.list_rooms</emphasis>
 		</para>
 		<para>Parameters: none</para>
 
-        	<para>
-		MI FIFO Command Format:
+		<para>
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-		:imc_list_rooms:_reply_fifo_file_
-		_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; imc_list_rooms
+...
 		</programlisting>
 	</section>
 
-    	<section>
-		<title>
-		<function moreinfo="none">imc_list_members</function>
-		</title>
+	<section id="imc.r.list_members">
+		<title>imc.list_members</title>
 		<para>
 		Listing of the members in IM Conferencing rooms.
 		</para>
 		<para>
-		Name: <emphasis>imc_list_members</emphasis>
+		Name: <emphasis>imc.list_members</emphasis>
 		</para>
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem><para>_room_ : the room for which you want to list the members</para></listitem>
-       		 </itemizedlist>
+		</itemizedlist>
 
-        	<para>
-		MI FIFO Command Format:
+		<para>
+		RPC Command Format:
 		</para>
-        <programlisting  format="linespecific">
-	:imc_list_members:_reply_fifo_file_
-	_room_
-	_empty_line_
+		<programlisting  format="linespecific">
+...
+&kamcmd; imc_list_members _room_
+...
 	</programlisting>
 	</section>
 </section>
@@ -314,7 +311,7 @@ if(is_method("MESSAGE)
 	</section>
 </section>
 
-	
+
 <section>
 	<title>IMC Commands</title>
 		<para>
@@ -411,12 +408,12 @@ if(is_method("MESSAGE)
 	<section>
 	<title>Installation</title>
 		<para>
-		Before running &kamailio; with IMC, you have to setup the database 
-		tables where the module will store the data. For that, if the 
+		Before running &kamailio; with IMC, you have to setup the database
+		tables where the module will store the data. For that, if the
 		tables were not created by the installation script or you choose
 		to install everything by yourself you can use the imc-create.sql
-		<acronym>SQL</acronym> script in the database directories in the 
-		kamailio/scripts folder as template. 
+		<acronym>SQL</acronym> script in the database directories in the
+		kamailio/scripts folder as template.
 		You can also find the complete database documentation on the
 		project webpage, &kamailiodbdocslink;.
 		</para>
