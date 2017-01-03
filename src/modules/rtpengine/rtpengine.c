@@ -75,6 +75,8 @@
 #include "../../core/mod_fix.h"
 #include "../../core/dset.h"
 #include "../../core/route.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../modules/tm/tm_load.h"
 #include "rtpengine.h"
 #include "rtpengine_funcs.h"
@@ -1610,6 +1612,51 @@ mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param)
 	return root;
 }
 
+static void  rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	unsigned int current_rtpp_no;
+
+	if (rtpp_db_url.s == NULL) {
+		// no database
+		rpc->fault(ctx, 500, "No Database URL");
+		return;
+	}
+
+	if (init_rtpproxy_db() < 0) {
+		// fail reloading from database
+		rpc->fault(ctx, 500, "Failed reloading db");
+		return;
+	}
+
+	lock_get(rtpp_no_lock);
+	current_rtpp_no = *rtpp_no;
+	lock_release(rtpp_no_lock);
+
+	if (rtpp_socks_size != current_rtpp_no) {
+		build_rtpp_socks(current_rtpp_no);
+	}
+}
+
+static const char* rtpengine_rpc_reload_doc[2] = {
+	"Reload rtpengine proxies.",
+	0
+};
+
+rpc_export_t rtpengine_rpc[] = {
+	{"rtpengine.reload", rtpengine_rpc_reload, rtpengine_rpc_reload_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int rtpengine_rpc_init(void)
+{
+	if (rpc_register_array(rtpengine_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
+
 static int
 mod_init(void)
 {
@@ -1621,6 +1668,11 @@ mod_init(void)
 	if(register_mi_mod(exports.name, mi_cmds)!=0)
 	{
 		LM_ERR("failed to register MI commands\n");
+		return -1;
+	}
+	if(rtpengine_rpc_init()<0)
+	{
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 

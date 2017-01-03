@@ -1204,6 +1204,33 @@ start_recording();
 	</section>
 
 	<section>
+		<title>RPC Commands</title>
+
+	    <section id="rtpengine.r.reload">
+			<title>rtpengine.reload</title>
+			<para>
+				Reloads the database node table content <emphasis>if configured</emphasis>.
+				Returns specific message related to success, failure and no db_url configured.
+			</para>
+			<para>
+				NOTE: The current behaviour updates the nodes state or creates new ones or
+				hides old ones, based on the database content. If allow_op modparam is enabled,
+				the sessions are still allowed to finish for the hidden old nodes.
+			</para>
+			<example>
+			<title>
+				<function moreinfo="none">rtpengine.reload</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ &kamcmd; rtpengine.reload
+...
+			</programlisting>
+			</example>
+		</section>
+
+	</section>
+
+	<section>
 		<title><acronym>MI</acronym> Commands</title>
 		<section id="rtpengine.m.nh_enable_rtpp">
 			<title><function moreinfo="none">nh_enable_rtpp proxy_url/all 0/1</function></title>
