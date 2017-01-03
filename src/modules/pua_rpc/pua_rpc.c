@@ -49,8 +49,8 @@ static int mod_init(void);
 
 static pua_api_t pua_rpc_api;
 
-static const char* publish_doc[2] = {
-	"sends publish request and waits for the final reply, using a list "
+static const char* pua_rpc_publish_doc[2] = {
+	"Send publish request and wait for the final reply, using a list "
 	"of string parameters: presentity uri, expires, event package, "
 	"content type, id, etag, outbound proxy, extra headers, "
 	" and body (optional)",
@@ -284,8 +284,71 @@ static void pua_rpc_publish(rpc_t* rpc, void* c)
 }
 
 
+/**
+ * rpc pua.subscribe
+ *		<presentity_uri>
+ *		<watcher_uri>
+ *		<event_package>
+ *		<expires>
+ * */
+static void pua_rpc_subscribe(rpc_t* rpc, void* ctx)
+{
+	int vexp= 0;
+	str pres_uri;
+	str watcher_uri;
+	str event;
+	struct sip_uri uri;
+	subs_info_t subs;
+
+	if (rpc->scan(ctx, "SSSd", &pres_uri, &watcher_uri, &event, &vexp) < 4) {
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
+	}
+	if(parse_uri(pres_uri.s, pres_uri.len, &uri)<0) {
+		LM_ERR("bad pres uri\n");
+		rpc->fault(ctx, 400, "Invalid pres URI");
+		return;
+	}
+	if(parse_uri(watcher_uri.s, watcher_uri.len, &uri)<0) {
+		LM_ERR("bad watcher uri\n");
+		rpc->fault(ctx, 400, "Invalid watcher URI");
+		return;
+	}
+	LM_DBG("event '%.*s'\n", event.len, event.s);
+	LM_DBG("expires '%d'\n", vexp);
+
+	memset(&subs, 0, sizeof(subs_info_t));
+
+	subs.pres_uri= &pres_uri;
+
+	subs.watcher_uri= &watcher_uri;
+
+	subs.contact= &watcher_uri;
+
+	subs.expires= vexp;
+	subs.source_flag |= MI_SUBSCRIBE;
+	subs.event= get_event_flag(&event);
+	if(subs.event< 0) {
+		LM_ERR("unknown event\n");
+		rpc->fault(ctx, 404, "Unknown event");
+		return;
+	}
+
+	if(pua_rpc_api.send_subscribe(&subs)< 0) {
+		rpc->fault(ctx, 500, "Execution failure");
+		return;
+	}
+}
+
+static const char* pua_rpc_subscribe_doc[2] = {
+	"Send subscribe request",
+	0
+};
+
+
 rpc_export_t pua_rpc_ex[] = {
-	{"pua.publish", pua_rpc_publish, publish_doc, 0},
+	{"pua.publish", pua_rpc_publish, pua_rpc_publish_doc, 0},
+	{"pua.subscribe", pua_rpc_subscribe, pua_rpc_subscribe_doc, 0},
 	{0, 0, 0, 0}
 };
 

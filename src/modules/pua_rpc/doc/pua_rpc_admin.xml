@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -68,35 +68,33 @@
 	  <emphasis>none</emphasis>
 	</para>
 	</section>
-	
+
 	<section>
 	  <title>RPC Commands</title>
 	  <section id="pua_rpc.r.pua.publish">
-		<title>
-		  <function moreinfo="none">pua.publish</function>
-		</title>
+		<title>pua.publish</title>
 		<para>
-		  Command parameters:
+		  Send a SIP PUBLISH request. Command parameters:
 		</para>
 		<itemizedlist>
 		  <listitem>
 			<para>
 			  <emphasis>presentity_uri</emphasis>
 			  - e.g. sip:jh@tutpro.com
-			</para>	
+			</para>
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>expires</emphasis>
 			  - Relative expires time in seconds (e.g. 3600).
-			</para>	
+			</para>
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>event package</emphasis>
 			  - Event package that is target of published information
               			(e.g. message-summary).
-			</para> 
+			</para>
 		  </listitem>
 		  <listitem>
 			<para>
@@ -104,38 +102,38 @@
 			  - Content type of published information
               			(e.g. application/simple-message-summary) or . if no
               			information is enclosed.
-			</para> 
+			</para>
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>id</emphasis>
-			  - id for a series of related PUBLISHes to the same 
+			  - id for a series of related PUBLISHes to the same
 		      presentity-uri or . to always use the same series.
 		      For example dialog-info must reuse the same id for the
 		      same call otherwise status will be lost when multiple
 		      parallel calls to/from the same user take place. The
 		      dialog-id from the dialog-info body qualifies as a suitable
 		      id here.
-		    </para> 
+		    </para>
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>ETag</emphasis>
 			  - ETag that publish should match or . if no ETag is given.
-		    </para> 
+		    </para>
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>outbound proxy</emphasis>
 			  - SIP URI of outbound proxy to be used when
               		sending PUBLISH request or . if no outbound proxy is given.
-		    </para> 
+		    </para>
 		  </listitem>
 		  <listitem>
 			<para>
 			  <emphasis>extra_headers</emphasis>
 			  - Extra headers added to PUBLISH request or . if no extra headers.
-		    </para> 
+		    </para>
 		  </listitem>
 		  <listitem>
 			<para>
@@ -211,12 +209,45 @@ Voice-Message: 2/0 (0/0)
   </param>
  </params>
 </methodCall>
-                     
+
                      ]]>
           </programlisting>
         </example>
       </section>
+	<section id="pua_rpc.r.subscribe">
+		<title>pua.subscribe</title>
+		<para>
+			Send a SIP SUBSCRIBE request. Command parameters:
+		</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>presentity_uri</emphasis>
+					- e.g. sip:presentity@kamailio.org
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>watcher_uri</emphasis>
+					- e.g. sip:watcher@kamailio.org
+				</para>
+			</listitem>
+
+			<listitem>
+				<para>
+					<emphasis>event_package</emphasis>
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+					<emphasis>expires</emphasis>
+					- Relative time in seconds for the desired validity
+					of the subscription.
+				    </para>
+			</listitem>
+			</itemizedlist>
+	</section>
     </section>
-    
+
 </chapter>
 
