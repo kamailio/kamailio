@@ -98,7 +98,7 @@ static int rpc_uac_check_msg(rpc_t *rpc, void* c,
 			if (ch >= '0' && ch <= '9' ) {
 				*cseq = (*cseq) * 10 + ch - '0';
 			} else {
-				DBG("check_msg: Found non-numerical in CSeq: <%i>='%c'\n",
+				LM_DBG("Found non-numerical in CSeq: <%i>='%c'\n",
 						(unsigned int)ch, ch);
 				rpc->fault(c, 400,  "Non-numerical CSeq");
 				goto err;
@@ -126,9 +126,6 @@ static int rpc_uac_check_msg(rpc_t *rpc, void* c,
 err:
 	return -1;
 }
-
-
-
 
 
 /** construct a "header block" from a header list.
@@ -184,8 +181,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 									uri2dst(&di, 0, uri, proto)
 #endif /* USE_DNS_FAILOVER */
 									== 0 ){
-								LOG(L_ERR, "ERROR: get_hfblock: send_sock"
-										" failed\n");
+								LM_ERR("send_sock failed\n");
 								goto error;
 							}
 							si_get_signaling_data(di.send_sock, &sock_name, &portname);
@@ -208,7 +204,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 				}
 			} /* possible substitute */
 		} /* substitution loop */
-		DBG("get_hfblock: one more hf processed\n");
+		LM_DBG("one more hf processed\n");
 	} /* header loop */
 
 	if(total_len==0) {
@@ -219,7 +215,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int proto,
 	/* construct a single header block now */
 	ret = pkg_malloc(total_len);
 	if (!ret) {
-		LOG(L_ERR, "get_hfblock: no pkg mem for hf block\n");
+		LM_ERR("no pkg mem for hf block\n");
 		goto error;
 	}
 	i = sl.next;
@@ -329,7 +325,7 @@ static void  rpc_print_uris(rpc_t* rpc, void* c, struct sip_msg* reply)
 	}
 	memset(dlg, 0, sizeof(dlg_t));
 	if (dlg_response_uac(dlg, reply, TARGET_REFRESH_UNKNOWN) < 0) {
-		ERR("failure while filling dialog structure\n");
+		LM_ERR("failure while filling dialog structure\n");
 		free_dlg(dlg);
 		return;
 	}
@@ -577,7 +573,6 @@ error:
 }
 
 
-
 /** t_uac with no reply waiting.
  * @see rpc_t_uac.
  */
@@ -592,6 +587,202 @@ void rpc_t_uac_start(rpc_t* rpc, void* c)
 void rpc_t_uac_wait(rpc_t* rpc, void* c)
 {
 	rpc_t_uac(rpc, c, 1);
+}
+
+
+static int t_uac_check_msg(struct sip_msg* msg,
+		str* method, str* body,
+		int* fromtag, int *cseq_is, int* cseq,
+		str* callid)
+{
+	struct to_body* parsed_from;
+	struct cseq_body *parsed_cseq;
+	int i;
+	char ch;
+
+	if (body->len && !msg->content_type) {
+		LM_ERR("Content-Type missing");
+		goto err;
+	}
+
+	if (body->len && msg->content_length) {
+		LM_ERR("Content-Length disallowed");
+		goto err;
+	}
+
+	if (!msg->to) {
+		LM_ERR("To missing");
+		goto err;
+	}
+
+	if (!msg->from) {
+		LM_ERR("From missing");
+		goto err;
+	}
+
+	/* we also need to know if there is from-tag and add it otherwise */
+	if (parse_from_header(msg) < 0) {
+		LM_ERR("Error in From");
+		goto err;
+	}
+
+	parsed_from = (struct to_body*)msg->from->parsed;
+	*fromtag = parsed_from->tag_value.s && parsed_from->tag_value.len;
+
+	*cseq = 0;
+	if (msg->cseq && (parsed_cseq = get_cseq(msg))) {
+		*cseq_is = 1;
+		for (i = 0; i < parsed_cseq->number.len; i++) {
+			ch = parsed_cseq->number.s[i];
+			if (ch >= '0' && ch <= '9' ) {
+				*cseq = (*cseq) * 10 + ch - '0';
+			} else {
+				DBG("check_msg: Found non-numerical in CSeq: <%i>='%c'\n",
+						(unsigned int)ch, ch);
+				LM_ERR("Non-numerical CSeq");
+				goto err;
+			}
+		}
+
+		if (parsed_cseq->method.len != method->len ||
+				memcmp(parsed_cseq->method.s, method->s, method->len) !=0 ) {
+			LM_ERR("CSeq method mismatch");
+			goto err;
+		}
+	} else {
+		*cseq_is = 0;
+	}
+
+	if (msg->callid) {
+		callid->s = msg->callid->body.s;
+		callid->len = msg->callid->body.len;
+	} else {
+		callid->s = 0;
+		callid->len = 0;
+	}
+	return 0;
+
+err:
+	return -1;
+}
+
+int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
+		str *headers, str *body)
+{
+	str hfb, callid;
+	struct sip_uri p_uri, pnexthop;
+	struct sip_msg faked_msg;
+	struct socket_info* ssock;
+	str saddr;
+	int sport, sproto;
+	int ret, sip_error, err_ret, fromtag, cseq_is, cseq;
+	char err_buf[MAX_REASON_LEN];
+	dlg_t dlg;
+	uac_req_t uac_req;
+
+	ret = -1;
+
+	/* check and parse parameters */
+	if (method->len<=0){
+		LM_ERR("Empty method");
+		return -1;
+	}
+	if (parse_uri(ruri->s, ruri->len, &p_uri)<0){
+		LM_ERR("Invalid request uri \"%s\"", ruri->s);
+		return -1;
+	}
+	if (nexthop->len==1 && nexthop->s[0]=='.'){
+		/* empty nextop */
+		nexthop->len=0;
+		nexthop->s=0;
+	}else if (nexthop->len==0){
+		nexthop->s=0;
+	}else if (parse_uri(nexthop->s, nexthop->len, &pnexthop)<0){
+		LM_ERR("Invalid next-hop uri \"%s\"", nexthop->s);
+		return -1;
+	}
+	ssock=0;
+	saddr.s=0;
+	saddr.len=0;
+	if (send_socket->len==1 && send_socket->s[0]=='.'){
+		/* empty send socket */
+		send_socket->len=0;
+	}else if (send_socket->len &&
+			(parse_phostport(send_socket->s, &saddr.s, &saddr.len,
+							 &sport, &sproto)!=0 ||
+			 /* check also if it's not a MH addr. */
+			 saddr.len==0 || saddr.s[0]=='(')
+			){
+		LM_ERR("Invalid send socket \"%s\"", send_socket->s);
+		return -1;
+	}else if (saddr.len && (ssock=grep_sock_info(&saddr, sport, sproto))==0){
+		LM_ERR("No local socket for \"%s\"", send_socket->s);
+		return -1;
+	}
+	/* check headers using the SIP parser to look in the header list */
+	memset(&faked_msg, 0, sizeof(struct sip_msg));
+	faked_msg.len=headers->len;
+	faked_msg.buf=faked_msg.unparsed=headers->s;
+	if (parse_headers(&faked_msg, HDR_EOH_F, 0)==-1){
+		LM_ERR("Invalid headers");
+		return -1;
+	}
+	/* at this moment all the parameters are parsed => more sanity checks */
+	if (t_uac_check_msg(&faked_msg, method, body, &fromtag,
+				&cseq_is, &cseq, &callid)<0) {
+		LM_ERR("checking values failed\n");
+		goto error;
+	}
+	hfb.s=get_hfblock(nexthop->len? nexthop: ruri, faked_msg.headers,
+			PROTO_NONE, ssock, &hfb.len);
+	if (hfb.s==0){
+		LM_ERR("out of memory");
+		goto error;
+	}
+	/* proceed to transaction creation */
+	memset(&dlg, 0, sizeof(dlg_t));
+	/* fill call-id if call-id present or else generate a callid */
+	if (callid.s && callid.len) dlg.id.call_id=callid;
+	else generate_callid(&dlg.id.call_id);
+
+	/* We will not fill in dlg->id.rem_tag because
+	 * if present it will be printed within To HF
+	 */
+
+	/* Generate fromtag if not present */
+	if (!fromtag) {
+		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id);
+	}
+
+	/* Fill in CSeq */
+	if (cseq_is) dlg.loc_seq.value = cseq;
+	else dlg.loc_seq.value = DEFAULT_CSEQ;
+	dlg.loc_seq.is_set = 1;
+
+	dlg.loc_uri = faked_msg.from->body;
+	dlg.rem_uri = faked_msg.to->body;
+	dlg.rem_target = *ruri;
+	dlg.dst_uri = *nexthop;
+	dlg.send_sock=ssock;
+
+	memset(&uac_req, 0, sizeof(uac_req));
+	uac_req.method=method;
+	uac_req.headers=&hfb;
+	uac_req.body=body->len?body:0;
+	uac_req.dialog=&dlg;
+
+	ret = t_uac(&uac_req);
+
+	if (ret <= 0) {
+		LM_ERR("UAC error");
+		goto error01;
+	}
+error01:
+	if (hfb.s) pkg_free(hfb.s);
+error:
+	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
+
+	return ret;
 }
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

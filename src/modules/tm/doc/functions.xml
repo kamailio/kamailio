@@ -1767,4 +1767,52 @@ if (t_is_retr_async_reply()) {
 	    </programlisting>
 	</example>
     </section>
+	<section id="tm.f.t_uac_send">
+	<title>
+	    <function>t_uac_send(method, ruri, nexthop, socket, headers, body)</function>
+	</title>
+	<para>
+	Send a UAC request.
+	</para>
+	<para>It returns true (1) if successful, false (-1) on failure.</para>
+	<para>The parameters:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>method</emphasis> - SIP method.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>ruri</emphasis> - request URI.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>nexthop</emphasis> - destination URI (can be empty).
+		</para>
+		</listitem>
+	    <listitem>
+		<para><emphasis>socket</emphasis> - local send socket (can be empty).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>headers</emphasis> - SIP headers. At least From and To
+		have to be provided. It can include From/To tags, Call-ID, CSeq. If
+		body is provided, then Content-Type header must exist.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para><emphasis>body</emphasis> - SIP message body (can be empty).
+		</para>
+	    </listitem>
+	</itemizedlist>
+
+	<example>
+	    <title><function>t_uac_send</function> usage</title>
+	    <programlisting>
+...
+t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
+    "From: bob@kamailio.org;tag=2w3e\r\nTo: bob@kamailio.org", "");
+...
+	    </programlisting>
+	</example>
+    </section>
     </section>

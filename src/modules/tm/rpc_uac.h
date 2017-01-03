@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,11 +17,15 @@
 #ifndef __rpc_uac_h
 #define __rpc_uac_h
 
+#include "../../core/str.h"
 #include "../../core/rpc.h"
 
 
 void rpc_t_uac_start(rpc_t* rpc, void* c);
 void rpc_t_uac_wait(rpc_t* rpc, void* c);
+
+int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
+		str *headers, str *body);
 
 #endif /*__rpc_uac_h*/
 
