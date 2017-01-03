@@ -309,7 +309,7 @@ static void  mqueue_rpc_get_size(rpc_t* rpc, void* ctx)
 }
 
 static const char* mqueue_rpc_get_size_doc[2] = {
-	"Get status or turn on/off siptrace. Parameters: on, off or check.",
+	"Get size of mqueue.",
 	0
 };
 
