@@ -857,9 +857,9 @@ start_recording();
 	</section>
 
 	<section>
-		<title><acronym>MI</acronym> Commands</title>
-		<section>
-			<title><function moreinfo="none">nh_enable_rtpp</function></title>
+		<title>RPC Commands</title>
+		<section id="rtpproxy.r.enable">
+			<title>rtpproxy.enable</title>
 			<para>
 			Enables a rtp proxy if parameter value is greater than 0.
 			Disables it if a zero value is given.
@@ -877,17 +877,17 @@ start_recording();
 			</para>
 			<example>
 			<title>
-			<function moreinfo="none">nh_enable_rtpp</function> usage</title>
+			<function moreinfo="none">rtpproxy.enable</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
+$ &kamcmd; rtpproxy.enable udp:192.168.2.133:8081 0
 ...
 			</programlisting>
 			</example>
 		</section>
 
-			<section>
-			<title><function moreinfo="none">nh_show_rtpp</function></title>
+			<section id="rtpproxy.r.list">
+			<title><function moreinfo="none">rtpproxy.list</function></title>
 			<para>
 			Displays all the rtp proxies and their information: set and
 			status (disabled or not, weight and recheck_ticks).
@@ -897,10 +897,10 @@ $ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 			</para>
 			<example>
 			<title>
-				<function moreinfo="none">nh_show_rtpp</function> usage</title>
+				<function moreinfo="none">rtpproxy.list</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_show_rtpp
+$ &kamcmd; rtpproxy.list
 ...
 			</programlisting>
 			</example>
@@ -908,4 +908,3 @@ $ &ctltool; fifo nh_show_rtpp
 	</section>
 
 </chapter>
-
