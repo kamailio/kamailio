@@ -128,6 +128,8 @@ Daniel-Constantin Mierla
               4.49. t_is_set(target)
               4.50. t_use_uac_headers()
               4.51. t_is_retr_async_reply()
+              4.52. t_uac_send(method, ruri, nexthop, socket, headers,
+                      body)
 
         5. RPC Commands
 
@@ -253,7 +255,8 @@ Daniel-Constantin Mierla
    1.89. t_replicate usage
    1.90. t_use_uac_headers usage
    1.91. t_is_retr_async_reply usage
-   1.92. event_route[tm:branch-failure] usage
+   1.92. t_uac_send usage
+   1.93. event_route[tm:branch-failure] usage
 
 Chapter 1. Admin Guide
 
@@ -364,6 +367,7 @@ Chapter 1. Admin Guide
         4.49. t_is_set(target)
         4.50. t_use_uac_headers()
         4.51. t_is_retr_async_reply()
+        4.52. t_uac_send(method, ruri, nexthop, socket, headers, body)
 
    5. RPC Commands
 
@@ -1667,6 +1671,7 @@ end
    4.49. t_is_set(target)
    4.50. t_use_uac_headers()
    4.51. t_is_retr_async_reply()
+   4.52. t_uac_send(method, ruri, nexthop, socket, headers, body)
 
 4.1.  t_relay([host, port])
 
@@ -2768,6 +2773,28 @@ pended\n");
 }
 ...
 
+4.52.  t_uac_send(method, ruri, nexthop, socket, headers, body)
+
+   Send a UAC request.
+
+   It returns true (1) if successful, false (-1) on failure.
+
+   The parameters:
+     * method - SIP method.
+     * ruri - request URI.
+     * nexthop - destination URI (can be empty).
+     * socket - local send socket (can be empty).
+     * headers - SIP headers. At least From and To have to be provided. It
+       can include From/To tags, Call-ID, CSeq. If body is provided, then
+       Content-Type header must exist.
+     * body - SIP message body (can be empty).
+
+   Example 1.92. t_uac_send usage
+...
+t_uac_send("OPTIONS", "sip:alice@kamailio.org", "", "",
+    "From: bob@kamailio.org;tag=2w3e\r\nTo: bob@kamailio.org", "");
+...
+
 5. RPC Commands
 
    5.1. tm.t_uac_start
@@ -2855,7 +2882,7 @@ pended\n");
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.92. event_route[tm:branch-failure] usage
+   Example 1.93. event_route[tm:branch-failure] usage
 ...
 request_route {
     ...
