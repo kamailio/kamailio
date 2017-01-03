@@ -24,6 +24,7 @@
 		<para>
 		CPL is an IETF specification detailed in RFC3880
 		(https://tools.ietf.org/html/rfc3880).
+		</para>
 	</section>
 	<section>
 		<title>Dependencies</title>
