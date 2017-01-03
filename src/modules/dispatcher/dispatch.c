@@ -43,7 +43,6 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/usr_avp.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/resolve.h"
 #include "../../core/lvalue.h"
@@ -2694,93 +2693,6 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 int ds_is_from_list(struct sip_msg *_m, int group)
 {
 	return ds_is_addr_from_list(_m, group, NULL, DS_MATCH_NOPROTO);
-}
-
-int ds_mi_print_set( struct mi_node* rpl, ds_set_t* list )
-{
-	if ( !list )
-		return 0;
-
-	int i=0;
-	for( ;i<2;++i)
-	{
-		int rc = ds_mi_print_set( rpl, list->next[i] );
-		if ( rc != 0 )
-			return rc;
-	}
-
-	int len, j;
-	char* p;
-	char c[3];
-	str data;
-
-	struct mi_node* node = NULL;
-	struct mi_node* set_node = NULL;
-	struct mi_attr* attr = NULL;
-
-	p = int2str(list->id, &len);
-	set_node= add_mi_node_child(rpl, MI_DUP_VALUE,"SET", 3, p, len);
-	if(set_node == NULL)
-		return -1;
-
-	for(j=0; j<list->nr; j++) {
-		node= add_mi_node_child(set_node, 0, "URI", 3,
-				list->dlist[j].uri.s, list->dlist[j].uri.len);
-		if(node == NULL)
-			return -1;
-
-		memset(&c, 0, sizeof(c));
-		if (list->dlist[j].flags & DS_INACTIVE_DST)
-			c[0] = 'I';
-		else if (list->dlist[j].flags & DS_DISABLED_DST)
-			c[0] = 'D';
-		else if (list->dlist[j].flags & DS_TRYING_DST)
-			c[0] = 'T';
-		else
-			c[0] = 'A';
-
-		if (list->dlist[j].flags & DS_PROBING_DST)
-			c[1] = 'P';
-		else
-			c[1] = 'X';
-
-		attr = add_mi_attr (node, MI_DUP_VALUE, "flags", 5, c, 2);
-		if(attr == 0)
-			return -1;
-
-		data.s = int2str(list->dlist[j].priority, &data.len);
-		attr = add_mi_attr (node, MI_DUP_VALUE, "priority", 8,
-				data.s, data.len);
-		if(attr == 0)
-			return -1;
-		attr = add_mi_attr (node, MI_DUP_VALUE, "attrs", 5,
-				(list->dlist[j].attrs.body.s)?list->dlist[j].attrs.body.s:"",
-				list->dlist[j].attrs.body.len);
-		if(attr == 0)
-			return -1;
-	}
-
-	return 0;
-}
-
-int ds_print_mi_list(struct mi_node* rpl)
-{
-	int len;
-	char* p;
-
-	struct mi_node* node = NULL;
-
-	if(_ds_list==NULL || _ds_list_nr<=0) {
-		LM_ERR("no destination sets\n");
-		return  0;
-	}
-
-	p= int2str(_ds_list_nr, &len);
-	node = add_mi_node_child(rpl, MI_DUP_VALUE, "SET_NO",6, p, len);
-	if(node== NULL)
-		return -1;
-
-	return ds_mi_print_set( rpl, _ds_list );
 }
 
 /*! \brief
