@@ -28,9 +28,8 @@ Ovidiu Sas
 
         5. Functions
         6. Statistics
-        7. MI Commands
-        8. Exported pseudo-variables
-        9. Installation and Running
+        7. Exported pseudo-variables
+        8. Installation and Running
 
    2. Developer Guide
 
@@ -59,9 +58,8 @@ Chapter 1. Admin Guide
 
    5. Functions
    6. Statistics
-   7. MI Commands
-   8. Exported pseudo-variables
-   9. Installation and Running
+   7. Exported pseudo-variables
+   8. Installation and Running
 
 1. Overview
 
@@ -151,16 +149,11 @@ route {
 
    There are no exported statistics for the qos module.
 
-7. MI Commands
-
-   There are no exported MI functions for the qos module. Check the dialog
-   MI functions for a way to inspect the internals of a dialog.
-
-8. Exported pseudo-variables
+7. Exported pseudo-variables
 
    There are no exported pseudo-variables for the qos module.
 
-9. Installation and Running
+8. Installation and Running
 
    Just load the module and remember to set the flag.
 

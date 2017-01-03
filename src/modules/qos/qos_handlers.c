@@ -32,7 +32,6 @@
 #include "../../core/dprint.h"
 #include "../dialog/dlg_hash.h"
 
-#include "qos_mi.h"
 #include "qos_handlers.h"
 #include "qos_ctx_helpers.h"
 
@@ -82,9 +81,6 @@ static void setup_dialog_callbacks(struct dlg_cell *did, qos_ctx_t *ctx)
 
 	dlg_binds->register_dlgcb(did, DLGCB_DESTROY,
 			qos_dialog_destroy_CB, (void *)ctx, NULL);
-
-	dlg_binds->register_dlgcb(did, DLGCB_MI_CONTEXT,
-			qos_dialog_mi_context_CB, (void *)ctx, NULL);
 
 	dlg_binds->register_dlgcb(did, DLGCB_RPC_CONTEXT,
 			qos_dialog_rpc_context_CB, (void *)ctx, NULL);

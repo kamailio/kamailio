@@ -171,14 +171,6 @@ route {
 	</section>
 
 	<section>
-	<title>MI Commands</title>
-	<para>There are no exported MI functions for the qos module.
-	Check the dialog MI functions for a way to inspect the internals
-	of a dialog.
-	</para>
-	</section>
-
-	<section>
 	<title>Exported pseudo-variables</title>
 	<para>There are no exported pseudo-variables for the qos module.
 	</para>
