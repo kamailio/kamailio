@@ -612,17 +612,15 @@ if (method=="REGISTER") {
 	</section>
 
 	<section>
-		<title>MI Commands</title>
-		<section>
-			<title>
-				<function moreinfo="none">LOAD_CPL</function>
-			</title>
+		<title>RPC Commands</title>
+		<section id="cpl.r.load">
+			<title>cpl.load</title>
 			<para>
 			For the given user, loads the XML cpl file, compiles it into
 			binary format and stores both format into database.
 			</para>
 			<para>
-			Name: <emphasis>LOAD_CPL</emphasis>
+			Name: <emphasis>cpl.load</emphasis>
 			</para>
 			<para>Parameters:</para>
 			<itemizedlist>
@@ -630,63 +628,58 @@ if (method=="REGISTER") {
 			<listitem><para>cpl_filename: file name </para></listitem>
 			</itemizedlist>
 			<para>
-			MI FIFO Command format:
+			RPC Command format:
 			</para>
 			<programlisting format="linespecific">
-                 :LOAD_CPL:_reply_fifo_file_
-                 username
-                 cpl_filename
-                 _empty_line_
+...
+&kamcmd; cpl.load username cpl_filename
+...
 </programlisting>
 		</section>
 
-		<section>
-			<title>
-				<function moreinfo="none">REMOVE_CPL</function>
-			</title>
+		<section id="cpl.r.remove">
+			<title>cpl.remove</title>
 			<para>
 			For the given user, removes the entire database record
 			(XML cpl and binary cpl); user with empty cpl scripts are not
 			accepted.
 			</para>
 			<para>
-			Name: <emphasis>REMOVE_CPL</emphasis>
+			Name: <emphasis>cpl.remove</emphasis>
 			</para>
 			<para>Parameters:</para>
 			<itemizedlist>
 			<listitem><para>username : name of the user</para></listitem>
 			</itemizedlist>
 			<para>
-			MI FIFO Command format:
+			RPC Command format:
 			</para>
 			<programlisting format="linespecific">
-                 :REMOVE_CPL:_reply_fifo_file_
-                 username
-                 _empty_line_
+...
+&kamcmd; cpl.remove username
+...
 </programlisting>
 		</section>
 
-		<section>
-			<title>
-				<function moreinfo="none">GET_CPL</function>
-			</title>
+		<section id="cpl.r.get">
+			<title>cpl.get</title>
 			<para>
 			For the given user, returns the CPL script in XML format.
 			</para>
 			<para>
-			Name: <emphasis>GET_CPL</emphasis>
+			Name: <emphasis>cpl.get</emphasis>
 			</para>
 			<para>Parameters:</para>
 			<itemizedlist>
 			<listitem><para>username : name of the user</para></listitem>
 			</itemizedlist>
 			<para>
-			MI FIFO Command format:
+			RPC Command format:
 			</para>
 			<programlisting format="linespecific">
-                 :GET_CPL:_reply_fifo_file_
-                 username
-                 _empty_line_
+...
+&kamcmd; cpl.get username
+...
 </programlisting>
 		</section>
 	</section>
