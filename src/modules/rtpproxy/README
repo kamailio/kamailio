@@ -82,10 +82,10 @@ Carsten Bock
 
               6.1. $rtpstat
 
-        7. MI Commands
+        7. RPC Commands
 
-              7.1. nh_enable_rtpp
-              7.2. nh_show_rtpp
+              7.1. rtpproxy.enable
+              7.2. rtpproxy.list
 
    2. Frequently Asked Questions
 
@@ -111,8 +111,8 @@ Carsten Bock
    1.18. rtpproxy_stream2xxx usage
    1.19. start_recording usage
    1.20. $rtpstat-Usage
-   1.21. nh_enable_rtpp usage
-   1.22. nh_show_rtpp usage
+   1.21. rtpproxy.enable usage
+   1.22. rtpproxy.list usage
 
 Chapter 1. Admin Guide
 
@@ -157,10 +157,10 @@ Chapter 1. Admin Guide
 
         6.1. $rtpstat
 
-   7. MI Commands
+   7. RPC Commands
 
-        7.1. nh_enable_rtpp
-        7.2. nh_show_rtpp
+        7.1. rtpproxy.enable
+        7.2. rtpproxy.list
 
 1. Overview
 
@@ -747,12 +747,12 @@ start_recording();
     append_hf("X-RTP-Statistics: $rtpstat\r\n");
 ...
 
-7. MI Commands
+7. RPC Commands
 
-   7.1. nh_enable_rtpp
-   7.2. nh_show_rtpp
+   7.1. rtpproxy.enable
+   7.2. rtpproxy.list
 
-7.1. nh_enable_rtpp
+7.1. rtpproxy.enable
 
    Enables a rtp proxy if parameter value is greater than 0. Disables it
    if a zero value is given.
@@ -765,21 +765,21 @@ start_recording();
    NOTE: if a rtpproxy is defined multiple times (in the same or different
    sets), all of its instances will be enabled/disabled.
 
-   Example 1.21.  nh_enable_rtpp usage
+   Example 1.21.  rtpproxy.enable usage
 ...
-$ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
+$ kamcmd rtpproxy.enable udp:192.168.2.133:8081 0
 ...
 
-7.2. nh_show_rtpp
+7.2. rtpproxy.list
 
    Displays all the rtp proxies and their information: set and status
    (disabled or not, weight and recheck_ticks).
 
    No parameter.
 
-   Example 1.22.  nh_show_rtpp usage
+   Example 1.22.  rtpproxy.list usage
 ...
-$ kamctl fifo nh_show_rtpp
+$ kamcmd rtpproxy.list
 ...
 
 Chapter 2. Frequently Asked Questions
