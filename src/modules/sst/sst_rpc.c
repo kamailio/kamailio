@@ -21,8 +21,8 @@
  *
  */
 
-/*! 
- *\file  sst/sst_mi.c
+/*!
+ *\file  sst/sst_rpc.c
  *\brief Manager functions for the SST module
  * \ingroup sst
  * Module: \ref sst
@@ -30,48 +30,23 @@
 
 
 #include "../../core/ut.h"
-#include "../../lib/kmi/mi.h"
+#include "../../core/rpc.h"
 #include "../dialog/dlg_load.h"
 #include "sst_handlers.h"
+#include "sst_rpc.h"
 
 /*! \brief
- * The dialog mi helper function.
+ * The dialog rpc helper function.
  */
-void sst_dialog_mi_context_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params)
+void sst_dialog_rpc_context_CB(struct dlg_cell* did, int type,
+		struct dlg_cb_params * params)
 {
-	struct mi_node* parent_node = (struct mi_node*)(params->dlg_data);
-	struct mi_node* node;
-	struct mi_attr* attr;
+	rpc_cb_ctx_t *rpc_cb = (rpc_cb_ctx_t*)(params->dlg_data);
+	rpc_t *rpc = rpc_cb->rpc;
+	void *c = rpc_cb->c;
 	sst_info_t* sst_info = (sst_info_t*)*(params->param);
-	char* p;
-	int len;
 
-	node = add_mi_node_child(parent_node, 0, "sst", 3, NULL, 0);
-	if (node==NULL) {
-		LM_ERR("oom\n");
-		return;
-	}
-
-	p = int2str((unsigned long)(sst_info->requester), &len);
-	attr = add_mi_attr(node, MI_DUP_VALUE, "requester_flags", 15, p, len);
-	if(attr == NULL) {
-		LM_ERR("oom requester_flags\n");
-		return;
-	}
-
-	p = int2str((unsigned long)(sst_info->supported), &len);
-	attr = add_mi_attr(node, MI_DUP_VALUE, "supported_flags", 15, p, len);
-	if(attr == NULL) {
-		LM_ERR("oom supported_flags\n");
-		return;
-	}
-
-	p = int2str((unsigned long)(sst_info->interval), &len);
-	attr = add_mi_attr(node, MI_DUP_VALUE, "interval", 8, p, len);
-	if(attr == NULL) {
-		LM_ERR("oom interval\n");
-		return;
-	}
-
-	return;
+	rpc->rpl_printf(c, "sst_requester_flags: %d", sst_info->requester);
+	rpc->rpl_printf(c, "sst_supported_flags: %d", sst_info->supported);
+	rpc->rpl_printf(c, "sst_interval: %d", sst_info->interval);
 }

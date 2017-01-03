@@ -30,14 +30,15 @@
  */
 
 
-#ifndef _SST_MI_H_
-#define _SST_MI_H_
+#ifndef _SST_RPC_H_
+#define _SST_RPC_H_
 
 #include "../dialog/dlg_load.h"
 
 /**
  * The dialog mi helper function.
  */
-void sst_dialog_mi_context_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params);
+void sst_dialog_rpc_context_CB(struct dlg_cell* did, int type,
+		struct dlg_cb_params * params);
 
-#endif /* _SST_MI_H_ */
+#endif /* _SST_RPC_H_ */

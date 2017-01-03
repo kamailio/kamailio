@@ -65,7 +65,7 @@
 
 #include "parse_sst.h"
 #include "sst_handlers.h"
-#include "sst_mi.h"
+#include "sst_rpc.h"
 
 /*
  * My own LM_*() macros to add the correct message prefix and
@@ -916,7 +916,7 @@ static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo)
  *
  * @return 0 on success, -1 on error.
  */
-static int send_reject(struct sip_msg *msg, unsigned int min_se) 
+static int send_reject(struct sip_msg *msg, unsigned int min_se)
 {
 	str msehdr;
 
@@ -959,7 +959,7 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
 	/* This is for the reINVITE/UPDATE requests */
 	dlg_binds->register_dlgcb(did, DLGCB_REQ_WITHIN,
 			sst_dialog_request_within_CB, info, NULL);
-	/* 
+	/*
 	 * This is for the final configuration of who will do SST for
 	 * us. In the DLGCB_CONFIRMED callback the message is
 	 * immutable! we must do all the real work in the DLGCB_FRD
@@ -968,8 +968,9 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
 	LM_DBG("Adding callback DLGCB_RESPONSE_FWDED\n");
 	dlg_binds->register_dlgcb(did, DLGCB_RESPONSE_FWDED,
 			sst_dialog_response_fwded_CB, info, NULL);
-	
-	LM_DBG("Adding mi handler\n");
-	dlg_binds->register_dlgcb(did, DLGCB_MI_CONTEXT,
-			sst_dialog_mi_context_CB, info, NULL);
+
+	LM_DBG("Adding rpc handler\n");
+	dlg_binds->register_dlgcb(did, DLGCB_RPC_CONTEXT,
+			sst_dialog_rpc_context_CB, (void *)info, NULL);
+
 }

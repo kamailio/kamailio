@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 		<title>Overview</title>
 		<para>SIP session timers are used to make sure that
@@ -35,10 +35,10 @@
 		small for your &kamailio; configuration.</para>
 
 	</section>
-	
+
 	<section>
 	<title>How it works</title>
-	
+
 	<para>The sst module uses the <quote>dialog module</quote> to be notified of
 	any new or updated dialogs. It will then look for and extract
 	the session-expire: header value (if there is one) and
@@ -117,7 +117,7 @@
 	<title>Dependencies</title>
 	<section>
 		<title>&kamailio; Modules</title>
-		
+
 		<para>The following modules must be loaded
 		before this module:
 		<itemizedlist>
@@ -262,7 +262,7 @@ modparam("sst", "reject_to_small", 0)
 	</section>
 	<section id="sst.p.sst_flag">
 		<title><varname>sst_flag</varname> (integer)</title>
-		
+
 		<para>Keeping with &kamailio;, the module will not do
 		anything to any message unless instructed to do so via
 		the &kamailioconfig; script. You must set the sst_flag
