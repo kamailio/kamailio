@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2006 Voice-Sistem SRL
  *
@@ -20,11 +18,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * -------
- * 2003-08-21: cpl_remove() added (bogdan)
- * 2003-06-24: file created (bogdan)
  */
 
 
@@ -44,7 +37,8 @@
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/parser/parse_uri.h"
-#include "../../lib/kmi/mi.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "cpl_db.h"
 #include "cpl_env.h"
 #include "cpl_parser.h"
@@ -192,24 +186,9 @@ again:
 }
 
 
-/**************************** MI ****************************/
-#define FILE_LOAD_ERR_S   "Cannot read CPL file"
-#define FILE_LOAD_ERR_LEN (sizeof(FILE_LOAD_ERR_S)-1)
-#define DB_SAVE_ERR_S     "Cannot save CPL to database"
-#define DB_SAVE_ERR_LEN   (sizeof(DB_SAVE_ERR_S)-1)
-#define CPLFILE_ERR_S     "Bad CPL file"
-#define CPLFILE_ERR_LEN   (sizeof(CPLFILE_ERR_S)-1)
-#define USRHOST_ERR_S     "Bad user@host"
-#define USRHOST_ERR_LEN   (sizeof(USRHOST_ERR_S)-1)
-#define DB_RMV_ERR_S      "Database remove failed"
-#define DB_RMV_ERR_LEN    (sizeof(DB_RMV_ERR_S)-1)
-#define DB_GET_ERR_S      "Database query failed"
-#define DB_GET_ERR_LEN    (sizeof(DB_GET_ERR_S)-1)
-
-struct mi_root* mi_cpl_load(struct mi_root *cmd_tree, void *param)
+/**************************** RPC ****************************/
+static void cpl_rpc_load(rpc_t* rpc, void* ctx)
 {
-	struct mi_root *rpl_tree;
-	struct mi_node *cmd;
 	struct sip_uri uri;
 	str xml = {0,0};
 	str bin = {0,0};
@@ -217,138 +196,162 @@ struct mi_root* mi_cpl_load(struct mi_root *cmd_tree, void *param)
 	str val;
 	char *file;
 
-	LM_DBG("\"LOAD_CPL\" MI command received!\n");
-	cmd = &cmd_tree->node;
-
-	/* check user+host */
-	if((cmd->kids==NULL) ||(cmd->kids->next==NULL) || (cmd->kids->next->next))
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	val = cmd->kids->value;
-	if (parse_uri( val.s, val.len, &uri)!=0){
+	LM_DBG("rpc command received!\n");
+	if (rpc->scan(ctx, "S", &val) < 1) {
+		rpc->fault(ctx, 500, "No URI");
+		return;
+	}
+	if (parse_uri( val.s, val.len, &uri)!=0) {
 		LM_ERR("invalid sip URI [%.*s]\n",
 			val.len, val.s);
-		return init_mi_tree( 400, USRHOST_ERR_S, USRHOST_ERR_LEN );
+		rpc->fault(ctx, 500, "Invalid URI");
+		return;
 	}
 	LM_DBG("user@host=%.*s@%.*s\n",
 		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
-
-	/* second argument is the cpl file */
-	val = cmd->kids->next->value;
+	if (rpc->scan(ctx, "S", &val) < 1) {
+		rpc->fault(ctx, 500, "No CPL file");
+		return;
+	}
 	file = pkg_malloc(val.len+1);
 	if (file==NULL) {
 		LM_ERR("no more pkg mem\n");
-		return 0;
+		rpc->fault(ctx, 500, "No memory");
+		return;
 	}
-	memcpy( file, val.s, val.len);
+	memcpy(file, val.s, val.len);
 	file[val.len]= '\0';
 
 	/* load the xml file - this function will allocated a buff for the loading
 	 * the cpl file and attach it to xml.s -> don't forget to free it! */
-	if (load_file( file, &xml)!=1) {
+	if (load_file(file, &xml)!=1) {
 		pkg_free(file);
-		return init_mi_tree( 500, FILE_LOAD_ERR_S, FILE_LOAD_ERR_LEN );
+		rpc->fault(ctx, 500, "Failed loading CPL file");
+		return;
 	}
 	LM_DBG("cpl file=%s loaded\n",file);
 	pkg_free(file);
 
 	/* get the binary coding for the XML file */
-	if (encodeCPL( &xml, &bin, &enc_log)!=1) {
-		rpl_tree = init_mi_tree( 500, CPLFILE_ERR_S, CPLFILE_ERR_LEN );
-		goto error;
+	if (encodeCPL(&xml, &bin, &enc_log)!=1) {
+		rpc->fault(ctx, 500, "Failed encoding CPL");
+		goto done;
 	}
 
 	/* write both the XML and binary formats into database */
-	if (write_to_db( &uri.user,cpl_env.use_domain?&uri.host:0, &xml, &bin)!=1){
-		rpl_tree = init_mi_tree( 500, DB_SAVE_ERR_S, DB_SAVE_ERR_LEN );
-		goto error;
+	if (write_to_db(&uri.user,cpl_env.use_domain?&uri.host:0, &xml, &bin)!=1) {
+		rpc->fault(ctx, 500, "Failed saving CPL");
+		goto done;
 	}
 
-	/* everything was OK */
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-
-error:
-	if (rpl_tree && enc_log.len)
-		add_mi_node_child(&rpl_tree->node,MI_DUP_VALUE,"Log",3,enc_log.s,enc_log.len);
+done:
 	if (enc_log.s)
-		pkg_free ( enc_log.s );
+		pkg_free(enc_log.s);
 	if (xml.s)
-		pkg_free ( xml.s );
-	return rpl_tree;
+		pkg_free(xml.s);
 }
 
 
-
-struct mi_root * mi_cpl_remove(struct mi_root *cmd_tree, void *param)
+static void cpl_rpc_remove(rpc_t* rpc, void* ctx)
 {
 	struct mi_node *cmd;
 	struct sip_uri uri;
 	str user;
 
-	LM_DBG("\"REMOVE_CPL\" MI command received!\n");
-	cmd = &cmd_tree->node;
-
-	/* check if there is only one parameter*/
-	if(!(cmd->kids && cmd->kids->next== NULL))
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	user = cmd->kids->value;
+	LM_DBG("rpc command received!\n");
+	if (rpc->scan(ctx, "S", &user) < 1) {
+		rpc->fault(ctx, 500, "No URI");
+		return;
+	}
 
 	/* check user+host */
 	if (parse_uri( user.s, user.len, &uri)!=0){
 		LM_ERR("invalid SIP uri [%.*s]\n",
 			user.len,user.s);
-		return init_mi_tree( 400, USRHOST_ERR_S, USRHOST_ERR_LEN );
+		rpc->fault(ctx, 500, "Invalid URI");
+		return;
 	}
 	LM_DBG("user@host=%.*s@%.*s\n",
 		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
-	if (rmv_from_db( &uri.user, cpl_env.use_domain?&uri.host:0)!=1)
-		return init_mi_tree( 500, DB_RMV_ERR_S, DB_RMV_ERR_LEN );
-
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rmv_from_db( &uri.user, cpl_env.use_domain?&uri.host:0)!=1) {
+		rpc->fault(ctx, 500, "Remove failed");
+		return;
+	}
 }
 
 
-
-struct mi_root * mi_cpl_get(struct mi_root *cmd_tree, void *param)
+static void cpl_rpc_get(rpc_t* rpc, void* ctx)
 {
-	struct mi_node *cmd;
 	struct sip_uri uri;
-	struct mi_root* rpl_tree;
 	str script = {0,0};
 	str user;
 
-	cmd = &cmd_tree->node;
-
-	/* check if there is only one parameter*/
-	if(!(cmd->kids && cmd->kids->next== NULL))
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	LM_DBG("rpc command received!\n");
+	if (rpc->scan(ctx, "S", &user) < 1) {
+		rpc->fault(ctx, 500, "No URI");
+		return;
+	}
 
 	/* check user+host */
-	user = cmd->kids->value;
-	if (parse_uri( user.s, user.len, &uri)!=0) {
-		LM_ERR("invalid user@host [%.*s]\n",
+	if (parse_uri( user.s, user.len, &uri)!=0){
+		LM_ERR("invalid SIP uri [%.*s]\n",
 			user.len,user.s);
-		return init_mi_tree( 400, USRHOST_ERR_S, USRHOST_ERR_LEN );
+		rpc->fault(ctx, 500, "Invalid URI");
+		return;
 	}
 	LM_DBG("user@host=%.*s@%.*s\n",
 		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
 	/* get the script for this user */
 	str query_str = str_init("cpl_xml");
-	if (get_user_script( &uri.user, cpl_env.use_domain?&uri.host:0,
-	&script, &query_str)==-1)
-		return init_mi_tree( 500, DB_GET_ERR_S, DB_GET_ERR_LEN );
+	if (get_user_script(&uri.user, cpl_env.use_domain?&uri.host:0,
+				&script, &query_str)==-1) {
+		rpc->fault(ctx, 500, "No CPL script");
+		return;
+	}
 
-	/* write the response into response file - even if script is null */
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree!=NULL)
-		add_mi_node_child( &rpl_tree->node, MI_DUP_VALUE, 0, 0,
-			script.s, script.len);
-
+	/* write the cpl script into response */
+	if(script.s) {
+		if (rpc->add(ctx, "S", &script) < 0) {
+			rpc->fault(ctx, 500, "Server error");
+			goto done;
+		}
+	}
+done:
 	if (script.s)
 		shm_free( script.s );
 
-	return rpl_tree;
+}
+
+static const char* cpl_rpc_load_doc[2] = {
+	"Load cpl for a user.",
+	0
+};
+
+static const char* cpl_rpc_remove_doc[2] = {
+	"Remove cpl for a user.",
+	0
+};
+
+static const char* cpl_rpc_get_doc[2] = {
+	"Get cpl for a user.",
+	0
+};
+
+rpc_export_t cpl_rpc[] = {
+	{"cpl.load", cpl_rpc_load, cpl_rpc_load_doc, 0},
+	{"cpl.remove", cpl_rpc_remove, cpl_rpc_remove_doc, 0},
+	{"cpl.get", cpl_rpc_get, cpl_rpc_get_doc, 0},
+	{0, 0, 0, 0}
+};
+
+int cpl_rpc_init(void)
+{
+	if (rpc_register_array(cpl_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
 }

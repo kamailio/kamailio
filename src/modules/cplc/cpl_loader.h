@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,19 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- *
- * History:
- * -------
- * 2003-06-24: file created (bogdan)
  */
 
 #ifndef _CPL_LOADER_H
 #define _CPL_LOADER_H
-#include "../../lib/kmi/mi.h"
 
-struct mi_root *mi_cpl_load(struct mi_root *cmd, void *param);
-struct mi_root *mi_cpl_remove(struct mi_root *cmd, void *param);
-struct mi_root *mi_cpl_get(struct mi_root *cmd, void *param);
+int cpl_rpc_init(void);
 
 #endif
 

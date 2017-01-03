@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,22 +13,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * -------
- * 2003-03-11: New module interface (janakj)
- * 2003-03-16: flags export parameter added (janakj)
- * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
- * 2004-06-06  updated to the new DB api (andrei)
- * 2004-06-14: all global variables merged into cpl_env and cpl_fct;
- *             case_sensitive and realm_prefix added for building AORs - see
- *             build_userhost (bogdan)
- * 2004-10-09: added process_register_norpl to allow register processing 
- *             without sending the reply(bogdan) - based on a patch sent by
- *             Christopher Crawford
  */
 
 
@@ -56,7 +42,6 @@
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_disposition.h"
 #include "../../lib/srdb1/db.h"
-#include "../../lib/kmi/mi.h"
 #include "../../modules/sl/sl.h"
 #include "cpl_run.h"
 #include "cpl_env.h"
@@ -109,7 +94,6 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl);
 static int fixup_cpl_run_script(void** param, int param_no);
 static int fixup_cpl_run_script3(void** param, int param_no);
 static int cpl_init(void);
-static int mi_child_init(void);
 static int cpl_child_init(int rank);
 static int cpl_exit(void);
 static void cpl_process(int rank);
@@ -164,26 +148,13 @@ static param_export_t params[] = {
 };
 
 
-/*
- * Exported MI functions
- */
-static mi_export_t mi_cmds[] = {
-	{ "LOAD_CPL",   mi_cpl_load,     0,  0,  mi_child_init },
-	{ "REMOVE_CPL", mi_cpl_remove,   0,  0,  0             },
-	{ "GET_CPL",    mi_cpl_get,      0,  0,  0             },
-	{ 0, 0, 0, 0, 0}
-};
-
-
-
-
 struct module_exports exports = {
 	"cplc",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
 	0,        /* exported statistics */
-	mi_cmds,  /* exported MI functions */
+	0,        /* exported MI functions */
 	0,        /* exported pseudo-variables */
 	cpl_procs,/* extra processes */
 	cpl_init, /* Module initialization function */
@@ -248,9 +219,9 @@ static int cpl_init(void)
 	pv_spec_t avp_spec;
 	unsigned short avp_type;
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
+	if(cpl_rpc_init()<0)
 	{
-		LM_ERR("failed to register MI commands\n");
+		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
@@ -414,11 +385,6 @@ static int cpl_child_init(int rank)
 	return cpl_db_init(&db_url, &db_table);
 }
 
-
-static int mi_child_init(void)
-{
-	return cpl_db_init(&db_url, &db_table);
-}
 
 
 static void cpl_process(int rank)
