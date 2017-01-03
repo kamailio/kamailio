@@ -807,7 +807,7 @@ static const char* imc_rpc_list_members_doc[2] = {
 };
 
 rpc_export_t imc_rpc[] = {
-	{"imc.list_rooms", imc_rpc_list_rooms, imc_rpc_list_rooms_doc, 0},
+	{"imc.list_rooms", imc_rpc_list_rooms, imc_rpc_list_rooms_doc, RET_ARRAY},
 	{"imc.list_members", imc_rpc_list_members, imc_rpc_list_members_doc, 0},
 	{0, 0, 0, 0}
 };
