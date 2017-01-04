@@ -27,8 +27,6 @@
 **********/
 
 rtpmap **find_MOH (char *, char *);
-struct mi_root *mi_debug (struct mi_root *, void *);
-struct mi_root *mi_drop_call (struct mi_root *, void *);
 int mohq_count (sip_msg_t *, char *, pv_spec_t *);
 void mohq_debug (mohq_lst *, char *, ...);
 int mohq_process (sip_msg_t *);

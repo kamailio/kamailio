@@ -2370,6 +2370,7 @@ pmohfiles [nfound] = 0;
 return pmohfiles;
 }
 
+#ifdef MI_REMOVED
 /**********
 * MI Debug
 *
@@ -2488,6 +2489,7 @@ for (nidx = 0; nidx < pmod_data->call_cnt; nidx++)
 mohq_lock_release (pmod_data->pcall_lock);
 return init_mi_tree (200, MI_OK_S, MI_OK_LEN);
 }
+#endif
 
 /**********
 * Count Messages

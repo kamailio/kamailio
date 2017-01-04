@@ -40,7 +40,6 @@
 #include "../../core/str.h"
 
 #include "../../core/strutils.h"
-#include "../../lib/kmi/mi.h"
 #include "../../lib/srdb1/db.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"

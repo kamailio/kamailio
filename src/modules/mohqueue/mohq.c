@@ -75,12 +75,14 @@ static param_export_t mod_parms [] = {
   { NULL, 0, NULL },
 };
 
+#ifdef MI_REMOVED
 /* MI COMMANDS */
 static mi_export_t mi_cmds [] = {
   { "debug", mi_debug, 0, 0, 0 },
   { "drop_call", mi_drop_call, 0, 0, 0 },
   { 0, 0, 0, 0, 0 }
 };
+#endif
 
 /* MODULE EXPORTS */
 struct module_exports exports = {
@@ -89,7 +91,7 @@ struct module_exports exports = {
   mod_cmds,         /* exported functions */
   mod_parms,        /* exported parameters */
   0,                /* statistics */
-  mi_cmds,          /* MI functions */
+  0,                 /* MI functions */
   0,                /* exported pseudo-variables */
   0,                /* extra processes */
   mod_init,         /* module initialization function */
