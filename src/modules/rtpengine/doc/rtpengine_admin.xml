@@ -1163,7 +1163,6 @@ rtpengine_manage();
 		<para>
 		This function will send a signal to the &rtp; proxy to record
 		the &rtp; stream on the &rtp; proxy.
-		<emphasis>This function is not supported by Sipwise rtpengine at the moment!</emphasis>
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
@@ -1228,12 +1227,8 @@ $ &kamcmd; rtpengine.reload
 			</example>
 		</section>
 
-	</section>
-
-	<section>
-		<title><acronym>MI</acronym> Commands</title>
-		<section id="rtpengine.m.nh_enable_rtpp">
-			<title><function moreinfo="none">nh_enable_rtpp proxy_url/all 0/1</function></title>
+		<section id="rtpengine.r.enable">
+			<title><function moreinfo="none">rtpengine.enable proxy_url/all 0/1</function></title>
 			<para>
 			Enables a &rtp; proxy if the second parameter value is greater than 0. Disables it if a zero value is given.
 			The first parameter is either a specific &rtp; proxy url (exactly as defined in
@@ -1260,19 +1255,19 @@ $ &kamcmd; rtpengine.reload
 			</para>
 			<example>
 			<title>
-			<function moreinfo="none">nh_enable_rtpp</function> usage</title>
+			<function moreinfo="none">rtpengine.enable</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_enable_rtpp udp:192.168.2.133:8081 0
-$ &ctltool; fifo nh_enable_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
-$ &ctltool; fifo nh_enable_rtpp all 1
+$ &kamcmd; rtpengine.enable udp:192.168.2.133:8081 0
+$ &kamcmd; rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
+$ &kamcmd; rtpengine.enable all 1
 ...
 			</programlisting>
 			</example>
 		</section>
 
-	    <section id="rtpengine.m.nh_show_rtpp">
-			<title><function moreinfo="none">nh_show_rtpp proxy_url/all</function></title>
+	    <section id="rtpengine.r.show">
+			<title><function moreinfo="none">rtpengine.show proxy_url/all</function></title>
 			<para>
 			Displays all the &rtp; proxies and their information: set and
 			status (disabled or not, weight and recheck_ticks). If a &rtp; proxy has been disabled by
@@ -1291,19 +1286,19 @@ $ &ctltool; fifo nh_enable_rtpp all 1
 			</para>
 			<example>
 			<title>
-				<function moreinfo="none">nh_show_rtpp</function> usage</title>
+				<function moreinfo="none">rtpengine.show</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_show_rtpp udp:192.168.2.133:8081
-$ &ctltool; fifo nh_show_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
-$ &ctltool; fifo nh_show_rtpp all
+$ &kamcmd; rtpengine.show udp:192.168.2.133:8081
+$ &kamcmd; rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ &kamcmd; rtpengine.show all
 ...
 			</programlisting>
 			</example>
 		</section>
 
-	    <section id="rtpengine.m.nh_ping_rtpp">
-			<title><function moreinfo="none">nh_ping_rtpp proxy_url/all</function></title>
+	    <section id="rtpengine.m.ping">
+			<title><function moreinfo="none">rtpengine.ping proxy_url/all</function></title>
 			<para>
             Sends an application ping command to the &rtp; proxy. If the proxy does not respond,
             it will be disabled, but not permanent. If the proxy responds, no action is taken.
@@ -1320,52 +1315,28 @@ $ &ctltool; fifo nh_show_rtpp all
 			</para>
 			<example>
 			<title>
-				<function moreinfo="none">nh_ping_rtpp</function> usage</title>
+				<function moreinfo="none">rtpengine.ping</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_ping_rtpp udp:192.168.2.133:8081
-$ &ctltool; fifo nh_ping_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
-$ &ctltool; fifo nh_ping_rtpp all
+$ &kamcmd; rtpengine.ping udp:192.168.2.133:8081
+$ &kamcmd; rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ &kamcmd; rtpengine.ping all
 ...
 			</programlisting>
 			</example>
 		</section>
 
-
-	    <section id="rtpengine.m.nh_reload_rtpp">
-			<title><function moreinfo="none">nh_reload_rtpp</function></title>
-			<para>
-				Reloads the database node table content <emphasis>if configured</emphasis>.
-				Returns specific message related to success, failure and no db_url configured.
-			</para>
-			<para>
-				NOTE: The current behaviour updates the nodes state or creates new ones or
-				hides old ones, based on the database content. If allow_op modparam is enabled,
-				the sessions are still allowed to finish for the hidden old nodes.
-			</para>
-			<example>
-			<title>
-				<function moreinfo="none">nh_reload_rtpp</function> usage</title>
-			<programlisting format="linespecific">
-...
-$ &ctltool; fifo nh_reload_rtpp
-...
-			</programlisting>
-			</example>
-		</section>
-
-
-	    <section id="rtpengine.m.nh_show_hash_total">
-			<title><function moreinfo="none">nh_show_hash_total</function></title>
+	    <section id="rtpengine.m.show_hash_total">
+			<title><function moreinfo="none">rtpengine.get_hash_total</function></title>
 			<para>
 				Print the total number of hash entries in the hash table at a given moment.
 			</para>
 			<example>
 			<title>
-				<function moreinfo="none">nh_show_hash_total</function> usage</title>
+				<function moreinfo="none">rtpengine.get_hash_total</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ &ctltool; fifo nh_show_hash_total
+$ &kamcmd; rtpengine.get_hash_total
 ...
 			</programlisting>
 			</example>
