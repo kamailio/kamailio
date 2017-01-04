@@ -30,10 +30,10 @@ CFG=17.cfg
 
 tmp_name=""$RANDOM"_kamailiodb_tmp"
 
-echo "loadmodule \"db_berkeley/db_berkeley.so\"" > $CFG
+printf "loadmodule \"db_berkeley/db_berkeley.so\"" > $CFG
 cat 2.cfg >> $CFG
-echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"berkeley://`pwd`/$CTL_DIR/$tmp_name\")" >> $CFG
-echo -e "\nrequest_route {\n ;\n}" >> $CFG
+printf "modparam(\"$DB_ALL_MOD\", \"db_url\", \"berkeley://`pwd`/$CTL_DIR/$tmp_name\")" >> $CFG
+printf "\nrequest_route {\n ;\n}" >> $CFG
 
 # setup config file
 cp $CTLRC $CTLRC.bak

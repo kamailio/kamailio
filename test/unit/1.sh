@@ -24,7 +24,7 @@ source include/common
 CFG=1.cfg
 
 # setup config
-echo -e "debug=2\nrequest_route {\n ; \n}" > $CFG
+printf "debug=2\nrequest_route {\n ; \n}" > $CFG
 
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?

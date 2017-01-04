@@ -29,10 +29,10 @@ if ! (check_kamailio); then
 fi ;
 
 # setup config
-echo -e "loadmodule \"mi_fifo/mi_fifo.so\"" > $CFG
-echo -e "loadmodule \"kex/kex.so\"" >> $CFG
-echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
-echo -e "\nrequest_route {\n ;\n}" >> $CFG
+printf "loadmodule \"mi_fifo/mi_fifo.so\"" > $CFG
+printf "loadmodule \"kex/kex.so\"" >> $CFG
+printf "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
+printf "\nrequest_route {\n ;\n}" >> $CFG
 
         
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null

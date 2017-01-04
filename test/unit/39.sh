@@ -36,16 +36,16 @@ NR=25
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"db_unixodbc/db_unixodbc.so\"" >> $CFG
-echo "modparam(\"usrloc\", \"db_url\", \"unixodbc://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
-echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
+printf "loadmodule \"db_unixodbc/db_unixodbc.so\"" >> $CFG
+printf "modparam(\"usrloc\", \"db_url\", \"unixodbc://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
+printf "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
 # isql unfortunally only allow one statement per line
 COUNTER=0
 CNT=0
 while [  $COUNTER -lt $NR ]; do
 	COUNTER=$(($COUNTER+1))
-	echo -e "insert into location (id, username, domain, contact, user_agent) values ('$CNT', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+1))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+2))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+3))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+4))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+5))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+6))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+7))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+8))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+9))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___');" | $ISQL
+	printf "insert into location (id, username, domain, contact, user_agent) values ('$CNT', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+1))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+2))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+3))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+4))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+5))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+6))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+7))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+8))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); \n insert into location (id, username, domain, contact, user_agent) values ('$(($CNT+9))', 'foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___');" | $ISQL
 	CNT=$(($CNT+10))
 done
 
@@ -55,7 +55,7 @@ ret=$?
 sleep 2
 $KILL
 
-echo "delete from location where user_agent = '___test___'" | $ISQL > /dev/null
+printf "delete from location where user_agent = '___test___'" | $ISQL > /dev/null
 
 mv $CFG.bak $CFG
 
