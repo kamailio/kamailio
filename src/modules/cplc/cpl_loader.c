@@ -254,7 +254,6 @@ done:
 
 static void cpl_rpc_remove(rpc_t* rpc, void* ctx)
 {
-	struct mi_node *cmd;
 	struct sip_uri uri;
 	str user;
 
