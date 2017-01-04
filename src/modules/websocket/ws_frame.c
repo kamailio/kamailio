@@ -127,13 +127,9 @@ static str str_status_protocol_error = str_init("Protocol error");
 static str str_status_unsupported_opcode = str_init("Unsupported opcode");
 static str str_status_message_too_big = str_init("Message too big");
 
-/* MI command status text */
-static str str_status_empty_param = str_init("Empty connection ID parameter");
-static str str_status_too_many_params = str_init("Too many parameters");
-static str str_status_bad_param = str_init("Bad connection ID parameter");
+/* RPC command status text */
 static str str_status_error_closing = str_init("Error closing connection");
 static str str_status_error_sending = str_init("Error sending frame");
-static str str_status_string_error = str_init("Error converting string to int");
 
 static int ws_send_crlf(ws_connection_t *wsc, int opcode);
 

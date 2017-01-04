@@ -33,7 +33,7 @@
 #include "ws_conn.h"
 #include "websocket.h"
 
-/* Maximum number of connections to display when using the ws.dump MI command */
+/* Maximum number of connections to display when using the ws.dump command */
 #define MAX_WS_CONNS_DUMP	50
 
 ws_connection_t **wsconn_id_hash = NULL;
@@ -66,10 +66,8 @@ char *wsconn_state_str[] =
 	"CLOSED"	/* WS_S_CLOSED */
 };
 
-/* MI command status text */
-static str str_status_empty_param = str_init("Empty display order parameter");
+/* RPC command status text */
 static str str_status_bad_param = str_init("Bad display order parameter");
-static str str_status_too_many_params = str_init("Too many parameters");
 
 int wsconn_init(void)
 {

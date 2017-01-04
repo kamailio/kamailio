@@ -46,7 +46,7 @@
 
 MODULE_VERSION
 
-/* Maximum number of connections to display when using the ws.dump MI command */
+/* Maximum number of connections to display when using the ws.dump command */
 #define MAX_WS_CONNS_DUMP		50
 
 static int mod_init(void);
