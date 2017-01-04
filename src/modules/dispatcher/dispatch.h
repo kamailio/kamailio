@@ -1,6 +1,6 @@
 /**
  * dispatcher module
- * 
+ *
  * Copyright (C) 2004-2006 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -63,7 +63,7 @@ extern str ds_dest_flags_col;
 extern str ds_dest_priority_col;
 extern str ds_dest_attrs_col;
 
-extern int ds_flags; 
+extern int ds_flags;
 extern int ds_use_default;
 
 extern int_str dst_avp_name;
@@ -92,7 +92,7 @@ extern str ds_ping_method;
 extern str ds_ping_from;
 extern int probing_threshold; /*!< number of failed requests,
 								before a destination is taken into probing */
-extern int inactive_threshold; /*!< number of successful requests, 
+extern int inactive_threshold; /*!< number of successful requests,
 								before a destination is taken into active */
 extern int ds_probing_mode;
 extern str ds_outbound_proxy;
@@ -114,7 +114,6 @@ int ds_update_state(sip_msg_t *msg, int group, str *address, int state);
 int ds_reinit_state(int group, str *address, int state);
 int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
-int ds_print_mi_list(struct mi_node* rpl);
 int ds_log_sets(void);
 int ds_list_exist(int set);
 
