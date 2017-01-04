@@ -111,7 +111,7 @@ static int rtpp_load_db(void)
 		weight = VAL_INT(values+2);
 		disabled = VAL_INT(values+3);
 		if (disabled) {
-			ticks = MI_MAX_RECHECK_TICKS;
+			ticks = RTPENGINE_MAX_RECHECK_TICKS;
 		} else {
 			ticks = 0;
 		}

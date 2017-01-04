@@ -27,8 +27,8 @@
 #include "../../core/str.h"
 #include "../../core/locking.h"
 
-#define MI_MIN_RECHECK_TICKS		0
-#define MI_MAX_RECHECK_TICKS		((unsigned int)-1)
+#define RTPENGINE_MIN_RECHECK_TICKS		0
+#define RTPENGINE_MAX_RECHECK_TICKS		((unsigned int)-1)
 
 enum rtpe_operation {
         OP_OFFER = 1,
