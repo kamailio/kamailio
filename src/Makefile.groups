@@ -125,6 +125,9 @@ mod_list_perldeps=app_perl db_perlvdb
 # - modules depending on python library
 mod_list_python=app_python
 
+# - modules depending on libm (math library - standard system library)
+mod_list_jsdt=app_jsdt
+
 # - modules depending on geoip library
 mod_list_geoip=geoip
 
@@ -218,7 +221,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_jansson) $(mod_list_geoip2) \
 			   $(mod_list_erlang) $(mod_list_systemd) \
 			   $(mod_list_http_async) $(mod_list_nsq) \
-			   $(mod_list_rabbitmq))
+			   $(mod_list_rabbitmq) $(mod_list_jsdt))
 
 
 
@@ -278,7 +281,7 @@ module_group_ignore= $(sort $(filter-out $(module_group_default), $(mod_list_all
 # Standard modules in main pkg
 module_group_kstandard=$(mod_list_basic) $(mod_list_extra) \
 					  $(mod_list_db) $(mod_list_dbuid) \
-					  $(mod_list_pcre)
+					  $(mod_list_pcre) $(mod_list_jsdt)
 
 # pkg mysql module
 module_group_kmysql=$(mod_list_mysql)
