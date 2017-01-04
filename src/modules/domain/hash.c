@@ -25,7 +25,6 @@
 #include "../../core/ut.h"
 #include "../../core/hashes.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/kmi/mi.h"
 #include "domain_mod.h"
 #include <stdlib.h>
 #include <string.h>
