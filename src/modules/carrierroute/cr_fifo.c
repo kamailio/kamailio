@@ -59,18 +59,19 @@ int fifo_err;
 
 static int updated;
 
-static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, char *prefix);
-
-static struct mi_root* print_replace_help(void);
-
 static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]);
 
 static int update_route_data(fifo_opt_t * opts);
 
 static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domain, fifo_opt_t * opts);
 
-static struct mi_root* print_fifo_err(void);
+#ifdef MI_REMOVED
+static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, char *prefix);
 
+static struct mi_root* print_replace_help(void);
+
+static struct mi_root* print_fifo_err(void);
+#endif
 
 static int str_toklen(str * str, const char * delims)
 {
@@ -92,7 +93,7 @@ static int str_toklen(str * str, const char * delims)
 	return len;
 }
 
-
+#ifdef MI_REMOVED
 /**
  * reloads the routing data
  *
@@ -453,7 +454,7 @@ static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, c
 	}
 	return 0;
 }
-
+#endif
 
 /**
  * parses the command line argument for options
@@ -896,7 +897,7 @@ static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domai
 	return 0;
 }
 
-
+#ifdef MI_REMOVED
 /**
  * prints a short help text for fifo command usage
  */
@@ -1046,6 +1047,7 @@ struct mi_root* print_fifo_err(void) {
 	}
 	return rpl_tree;
 }
+#endif
 
 /**
  * Traverses the routing tree and prints route rules if present.

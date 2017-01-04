@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -83,7 +83,6 @@ int cr_avoid_failed_dests = 1;
 /************* Declaration of Interface Functions **************************/
 static int mod_init(void);
 static int child_init(int);
-static int mi_child_init(void);
 static void mod_destroy(void);
 
 
@@ -130,6 +129,7 @@ static param_export_t params[]= {
 	{0,0,0}
 };
 
+#ifdef MI_REMOVED
 static mi_export_t mi_cmds[] = {
 	{ "cr_reload_routes",   reload_fifo,     MI_NO_INPUT_FLAG, 0,  mi_child_init },
 	{ "cr_dump_routes",     dump_fifo,       MI_NO_INPUT_FLAG, 0,  0 },
@@ -140,6 +140,7 @@ static mi_export_t mi_cmds[] = {
 	{ "cr_delete_host",     delete_host,     0,                0,  0 },
 	{ 0, 0, 0, 0, 0}
 };
+#endif
 
 static rpc_export_t rpc_methods[];
 
@@ -149,7 +150,7 @@ struct module_exports exports = {
 	cmds,       /* Exported functions */
 	params,     /* Export parameters */
 	0,          /* exported statistics */
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	0,          /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* Module initialization function */
@@ -171,12 +172,6 @@ static int mod_init(void) {
 	struct stat fs;
 	extern char* user; /*from main.c*/
 	int uid, gid;
-
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 
 	if(rpc_register_array(rpc_methods)!=0) {
 		LM_ERR("failed to register RPC commands\n");
@@ -282,13 +277,6 @@ static int child_init(int rank) {
 	return 0;
 }
 
-
-static int mi_child_init(void) {
-	if(mode == CARRIERROUTE_MODE_DB){
-		return carrierroute_db_open();
-	}
-	return 0;
-}
 
 static void mod_destroy(void) {
 	if(mode == CARRIERROUTE_MODE_DB){

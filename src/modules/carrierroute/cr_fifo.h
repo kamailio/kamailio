@@ -28,7 +28,6 @@
 #ifndef CR_FIFO_H
 #define CR_FIFO_H
 
-#include "../../lib/kmi/mi.h"
 #include "../../core/rpc.h"
 
 extern int fifo_err;
@@ -123,20 +122,6 @@ fifo_opt_t;
 #define OPT_HELP_CHR '?'
 
 #define OPT_STAR "*"
-
-struct mi_root* reload_fifo (struct mi_root* cmd_tree, void *param);
-
-struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param);
-
-struct mi_root* replace_host (struct mi_root* cmd_tree, void *param);
-
-struct mi_root* deactivate_host (struct mi_root* cmd_tree, void *param);
-
-struct mi_root* activate_host (struct mi_root* cmd_tree, void *param);
-
-struct mi_root* add_host (struct mi_root* cmd_tree, void *param);
-
-struct mi_root* delete_host (struct mi_root* cmd_tree, void * param);
 
 void cr_rpc_dump_routes(rpc_t* rpc, void* ctx);
 #endif
