@@ -52,7 +52,6 @@
 #include "../../core/mod_fix.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
-#include "../../core/mi/mi_types.h"
 #include "../../core/fmsg.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
@@ -1029,6 +1028,8 @@ int terminate_call(call_t *call) {
 	sip_msg_t *dmsg = NULL;
 	sip_data_t *data = NULL;
 
+	dlg_cell_t *cell;
+
 	LM_DBG("Got kill signal for call [%.*s] client [%.*s] h_id [%u] h_entry [%u]. Dropping it now\n",
 		call->sip_data.callid.len,
 		call->sip_data.callid.s,
@@ -1036,64 +1037,30 @@ int terminate_call(call_t *call) {
 		call->client_id.s,
 		call->dlg_h_id,
 		call->dlg_h_entry);
-
-	struct mi_root *root, *result	= NULL;
-	struct mi_node *node, *node1	= NULL;
-	struct mi_cmd *end_dlg_cmd		= NULL;
-
-	if (_data.cs_route_number >= 0) {
+	
 		data = &call->sip_data;
-		if (faked_msg_init_with_dlg_info(&data->callid, &data->from_uri, &data->from_tag,
-					&data->to_uri, &data->to_tag, &dmsg) != 0) {
-			LM_ERR("[%.*s]: error generating faked sip message\n", data->callid.len, data->callid.s);
-			dmsg = NULL;
-		}
-	}
-	root	= init_mi_tree(0, 0, 0);
-	if (root == NULL) {
-		LM_ERR("Error initializing tree to terminate call\n");
+	if (faked_msg_init_with_dlg_info(&data->callid, &data->from_uri, &data->from_tag,
+				&data->to_uri, &data->to_tag, &dmsg) != 0) {
+		LM_ERR("[%.*s]: error generating faked sip message\n", data->callid.len, data->callid.s);
 		goto error;
 	}
 
-	node	= &root->node;
-	node1	= addf_mi_node_child(node, MI_DUP_VALUE, MI_SSTR("h_entry"), "%u", call->dlg_h_entry);
-	if (node1 == NULL) {
-		LM_ERR("Error initializing h_entry node to terminate call\n");
-		goto error;
+	cell = _dlgbinds.get_dlg(dmsg);
+	if (!cell) {
+			LM_ERR("[%.*s]: cannot get dialog\n", data->callid.len, data->callid.s);
+			goto error;
 	}
 
-	node1	= addf_mi_node_child(node, MI_DUP_VALUE, MI_SSTR("h_id"), "%u", call->dlg_h_id);
-	if (node1 == NULL) {
-		LM_ERR("Error initializing dlg_h_id node to terminate call\n");
-		goto error;
-	}
-
-	end_dlg_cmd = lookup_mi_cmd(MI_SSTR("dlg_end_dlg"));
-	if (node == NULL) {
-		LM_ERR("Error initializing dlg_end_dlg command\n");
-		goto error;
-	}
-
-	result	= run_mi_cmd(end_dlg_cmd, root);
-	if (result == NULL) {
-		LM_ERR("Error executing dlg_end_dlg command\n");
-		goto error;
-	}
-
-	if (result->code == 200) {
+	if (!_dlgbinds.terminate_dlg(cell, NULL)) {
 		LM_DBG("dlg_end_dlg sent to call [%.*s]\n", call->sip_data.callid.len, call->sip_data.callid.s);
-		free_mi_tree(root);
-		free_mi_tree(result);
 
-		if(dmsg) __notify_call_termination(dmsg);
+		if (_data.cs_route_number >= 0) 
+			__notify_call_termination(dmsg);
 		return 0;
 	}
 
-	LM_ERR("Error executing dlg_end_dlg command. Return code was [%d]\n", result->code);
+	LM_ERR("Error executing terminate_dlg command");
 error:
-	if (root)
-		free_mi_tree(root);
-
 	return -1;
 }
 
