@@ -40,7 +40,6 @@
 
 /* kamailio compat */
 #include "counters.h"
-#include "mi/mi_types.h"
 #include "pvar.h"
 
 
@@ -341,6 +340,7 @@ struct proc_export_ {
 
 typedef struct proc_export_ proc_export_t;
 
+typedef void nn_export_t;
 
 /** kamailio/openser module exports version */
 struct kam_module_exports {
@@ -352,8 +352,8 @@ struct kam_module_exports {
 									   module parameters */
 	stat_export_t* stats;			/**< null terminated array of the exported
 									  module statistics */
-	mi_export_t* mi_cmds;			/**< null terminated array of the exported
-									  MI functions */
+	nn_export_t* nn_cmds;			/**< null terminated array of the exported
+									  NN functions */
 	pv_export_t* items;				/*!< null terminated array of the exported
 									   module items (pseudo-variables) */
 	proc_export_t* procs;			/**< null terminated array of the
@@ -404,8 +404,8 @@ struct sr31_module_exports {
 	   (to be obsoleted and replaced by register_...) */
 	stat_export_t* stats;			/**< null terminated array of the exported
 									  module statistics */
-	mi_export_t* mi_cmds;			/**< null terminated array of the exported
-									  MI functions */
+	nn_export_t* nn_cmds;			/**< null terminated array of the exported
+									  NN functions */
 	pv_export_t* items;			/**< null terminated array of the exported
 									   module items (pseudo-variables) */
 	proc_export_t* procs;			/**< null terminated array of the

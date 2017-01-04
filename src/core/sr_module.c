@@ -331,7 +331,7 @@ static int register_module(unsigned ver, union module_exports_u* e,
 		mod->exports.dlflags = e->v1.dlflags;
 		mod->exports.rpc_methods = 0; /* not used in k <= 3.0 */
 		mod->exports.stats = e->v1.stats;
-		mod->exports.mi_cmds = e->v1.mi_cmds;
+		mod->exports.nn_cmds = e->v1.nn_cmds;
 		mod->exports.items = e->v1.items;
 		mod->exports.procs = e->v1.procs;
 	} else {
