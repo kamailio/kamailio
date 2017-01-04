@@ -131,42 +131,32 @@ Olle E. Johansson
               8.4. expired_dialogs
               8.5. failed_dialogs
 
-        9. MI Commands
+        9. RPC Commands
 
-              9.1. dlg_list
-              9.2. dlg_list_ctx
-              9.3. dlg_end_dlg
-              9.4. dlg_terminate_dlg
-              9.5. profile_get_size
-              9.6. profile_list_dlgs
-              9.7. dlg_bridge
+              9.1. dlg.list
+              9.2. dlg.list_ctx
+              9.3. dlg.dlg_list
+              9.4. dlg.dlg_list_ctx
+              9.5. dlg.terminate_dlg
+              9.6. dlg.end_dlg
+              9.7. dlg.profile_get_size
+              9.8. dlg.profile_list
+              9.9. dlg.bridge_dlg
 
-        10. Exported RPC Functions
+        10. Exported Variables
 
-              10.1. dlg.list
-              10.2. dlg.list_ctx
-              10.3. dlg.dlg_list
-              10.4. dlg.dlg_list_ctx
-              10.5. dlg.terminate_dlg
-              10.6. dlg.end_dlg
-              10.7. dlg.profile_get_size
-              10.8. dlg.profile_list
-              10.9. dlg.bridge_dlg
+              10.1. $DLG_count
+              10.2. $DLG_status
+              10.3. $DLG_lifetime
+              10.4. $dlg(...)
+              10.5. $dlg_ctx(...)
+              10.6. $dlg_var(key)
 
-        11. Exported pseudo-variables
+        11. Event Routes
 
-              11.1. $DLG_count
-              11.2. $DLG_status
-              11.3. $DLG_lifetime
-              11.4. $dlg(...)
-              11.5. $dlg_ctx(...)
-              11.6. $dlg_var(key)
-
-        12. Event Routes
-
-              12.1. event_route[dialog:start]
-              12.2. event_route[dialog:end]
-              12.3. event_route[dialog:failed]
+              11.1. event_route[dialog:start]
+              11.2. event_route[dialog:end]
+              11.3. event_route[dialog:failed]
 
    2. Developer Guide
 
@@ -350,42 +340,32 @@ Chapter 1. Admin Guide
         8.4. expired_dialogs
         8.5. failed_dialogs
 
-   9. MI Commands
+   9. RPC Commands
 
-        9.1. dlg_list
-        9.2. dlg_list_ctx
-        9.3. dlg_end_dlg
-        9.4. dlg_terminate_dlg
-        9.5. profile_get_size
-        9.6. profile_list_dlgs
-        9.7. dlg_bridge
+        9.1. dlg.list
+        9.2. dlg.list_ctx
+        9.3. dlg.dlg_list
+        9.4. dlg.dlg_list_ctx
+        9.5. dlg.terminate_dlg
+        9.6. dlg.end_dlg
+        9.7. dlg.profile_get_size
+        9.8. dlg.profile_list
+        9.9. dlg.bridge_dlg
 
-   10. Exported RPC Functions
+   10. Exported Variables
 
-        10.1. dlg.list
-        10.2. dlg.list_ctx
-        10.3. dlg.dlg_list
-        10.4. dlg.dlg_list_ctx
-        10.5. dlg.terminate_dlg
-        10.6. dlg.end_dlg
-        10.7. dlg.profile_get_size
-        10.8. dlg.profile_list
-        10.9. dlg.bridge_dlg
+        10.1. $DLG_count
+        10.2. $DLG_status
+        10.3. $DLG_lifetime
+        10.4. $dlg(...)
+        10.5. $dlg_ctx(...)
+        10.6. $dlg_var(key)
 
-   11. Exported pseudo-variables
+   11. Event Routes
 
-        11.1. $DLG_count
-        11.2. $DLG_status
-        11.3. $DLG_lifetime
-        11.4. $dlg(...)
-        11.5. $dlg_ctx(...)
-        11.6. $dlg_var(key)
-
-   12. Event Routes
-
-        12.1. event_route[dialog:start]
-        12.2. event_route[dialog:end]
-        12.3. event_route[dialog:failed]
+        11.1. event_route[dialog:start]
+        11.2. event_route[dialog:end]
+        11.3. event_route[dialog:failed]
 
 1. Overview
 
@@ -1679,179 +1659,30 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    Returns the number of failed dialogs.
 
-9. MI Commands
+9. RPC Commands
 
-   9.1. dlg_list
-   9.2. dlg_list_ctx
-   9.3. dlg_end_dlg
-   9.4. dlg_terminate_dlg
-   9.5. profile_get_size
-   9.6. profile_list_dlgs
-   9.7. dlg_bridge
+   9.1. dlg.list
+   9.2. dlg.list_ctx
+   9.3. dlg.dlg_list
+   9.4. dlg.dlg_list_ctx
+   9.5. dlg.terminate_dlg
+   9.6. dlg.end_dlg
+   9.7. dlg.profile_get_size
+   9.8. dlg.profile_list
+   9.9. dlg.bridge_dlg
 
-9.1. dlg_list
+9.1. dlg.list
 
-   Lists the description of a dialog or of all dialogs (calls). If only
-   one dialogs is to be listed, the dialog identifiers are to be passed as
-   parameter (callid and fromtag).
-
-   Name: dlg_list
-
-   Parameters:
-     * callid (optional) - callid if a single dialog to be listed.
-     * from_tag (optional, but cannot be present without the callid
-       parameter) - from tag (as per initial request) of the dialog to be
-       listed. Note that if the from_tag is not specified, only dialogs
-       created by a request without a from tag are matched, which will
-       only occur with broken clients and is thus a very rare situation.
-
-   MI FIFO Command Format:
-                :dlg_list:_reply_fifo_file_
-                _empty_line_
-                :dlg_list:_reply_fifo_file_
-                abcdrssfrs122444@192.168.1.1
-                AAdfeEFF33
-
-9.2. dlg_list_ctx
-
-   The same as the “dlg_list” but including in the dialog description the
-   associated context from modules sitting on top of the dialog module.
-
-   Name: dlg_list_ctx
-
-   Parameters: see “dlg_list”
-
-   MI FIFO Command Format:
-                :dlg_list_ctx:_reply_fifo_file_
-                _empty_line_
-
-9.3. dlg_end_dlg
-
-   Terminates a confirmed dialog by sending BYE requests in both
-   directions.
-
-   Name: dlg_end_dlg
-
-   Parameters:
-     * h_entry - hash entry of the dialog in the internal dialog table
-     * h_id - hash id of the dialog on the hash entry
-     * extra_hdrs - (optional) string containg extra headers (full format)
-       to be added to the BYE requests.
-
-   The values for the h_entry and h_id can be get via the dlg_list MI
-   command.
-
-   Note: Works only for confirmed dialogs.
-
-   MI FIFO Command Format:
-                :dlg_end_dlg:_reply_fifo_file_
-                342
-                56
-                _empty_line_
-
-9.4. dlg_terminate_dlg
-
-   Terminates a singe dialog, identified by a Call-ID.
-
-   Name: dlg_terminate_dlg
-
-   Parameters:
-     * callid - callid of the dialog to be terminated.
-     * from_tag (optional, but cannot be present without the callid
-       parameter) - from tag (as per initial request) of the dialog to be
-       terminated. Note that if the from_tag is not specified, only
-       dialogs created by a request without a from tag are matched, which
-       will only occur with broken clients and is thus a very rare
-       situation.
-
-   Note: Works only for confirmed dialogs.
-
-   MI FIFO Command Format:
-                :dlg_terminate_dlg:_reply_fifo_file_
-                abcdrssfrs122444@192.168.1.1
-                AAdfeEFF33
-
-9.5. profile_get_size
-
-   Returns the number of dialogs belonging to a profile. If the profile
-   supports values, the check can be reinforced to take into account a
-   specific value - how many dialogs were inserted into the profile with a
-   specific value. If no value is passed, only the simply belonging of the
-   dialog to the profile is checked. Note that if the profile does not
-   supports values, this will be silently discarded.
-
-   Name: profile_get_size
-
-   Parameters:
-     * profile - name of the profile to get the value for.
-     * value (optional)- string value to further restrict the check;
-
-   MI FIFO Command Format:
-                :profile_get_size:_reply_fifo_file_
-                inbound_calls
-                _empty_line_
-
-9.6. profile_list_dlgs
-
-   Lists all the dialogs belonging to a profile. If the profile supports
-   values, the check can be reinforced to take into account a specific
-   value - list only the dialogs that were inserted into the profile with
-   that specific value. If no value is passed, all dialogs belonging to
-   the profile will be listed. Note that if the profile does not supports
-   values, this will be silently discarded.
-
-   Name: profile_list_dlgs
-
-   Parameters:
-     * profile - name of the profile to list the dialog for.
-     * value (optional)- string value to further restrict the check;
-
-   MI FIFO Command Format:
-                :profile_list_dlgs:_reply_fifo_file_
-                inbound_calls
-                _empty_line_
-
-9.7. dlg_bridge
-
-   Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE
-   mechanism.
-
-   Name: dlg_bridge
-
-   Parameters:
-     * from - SIP address to initiate the call
-     * to - SIP address to refer 'from' to
-     * op (optional) - outbound proxy SIP address
-
-   MI FIFO Command Format:
-                :dlg_bridge:_reply_fifo_file_
-                from
-                to
-                op
-                _empty_line_
-
-10. Exported RPC Functions
-
-   10.1. dlg.list
-   10.2. dlg.list_ctx
-   10.3. dlg.dlg_list
-   10.4. dlg.dlg_list_ctx
-   10.5. dlg.terminate_dlg
-   10.6. dlg.end_dlg
-   10.7. dlg.profile_get_size
-   10.8. dlg.profile_list
-   10.9. dlg.bridge_dlg
-
-10.1. dlg.list
-
-   Lists the description of all dialogs (calls).
+   Lists the description of all dialogs (active calls).
 
    Name: dlg.list
 
    RPC Command Format:
-                kamcmd dlg_list
+...
+kamcmd dlg_list
+...
 
-10.2. dlg.list_ctx
+9.2. dlg.list_ctx
 
    The same as the “dlg_list” but including in the dialog description the
    associated context from modules sitting on top of the dialog module.
@@ -1859,9 +1690,11 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    Name: dlg.list_ctx
 
    RPC Command Format:
-                kamcmd dlg.list_ctx
+...
+kamcmd dlg.list_ctx
+...
 
-10.3. dlg.dlg_list
+9.3. dlg.dlg_list
 
    Lists the description of one dialog. The dialog identifiers are to be
    passed as parameter (callid and optionally fromtag).
@@ -1874,10 +1707,13 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
        listed.
 
    RPC Command Format:
-                kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
-                serctl dlg.list abcdrssfrs122444@192.168.1.1
+...
+kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+...
+kamcmd dlg.list abcdrssfrs122444@192.168.1.1
+...
 
-10.4. dlg.dlg_list_ctx
+9.4. dlg.dlg_list_ctx
 
    The same as the “dlg.list_ctx” but including in the dialog description
    the associated context from modules sitting on top of the dialog
@@ -1888,10 +1724,13 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    Parameters: see “dlg_list”
 
    RPC Command Format:
-                kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
-                serctl dlg.list_ctx abcdrssfrs122444@192.168.1.1
+...
+kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+...
+kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
+...
 
-10.5. dlg.terminate_dlg
+9.5. dlg.terminate_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions,
    matching the dialog on call-id, from tag and to tag.
@@ -1908,7 +1747,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    RPC Command Format:
                 kamcmd dlg.dlg_terminate_dlg callid12345 fromtag123 totag123
 
-10.6. dlg.end_dlg
+9.6. dlg.end_dlg
 
    Terminates an ongoing dialog by sending BYE in both directions.
 
@@ -1924,9 +1763,11 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
    command.
 
    RPC Command Format:
-                kamcmd dlg.end_dlg 342 56
+...
+kamcmd dlg.end_dlg 342 56
+...
 
-10.7. dlg.profile_get_size
+9.7. dlg.profile_get_size
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -1942,9 +1783,11 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
      * value (optional)- string value to further restrict the check;
 
    RPC Command Format:
-                kamcmd dlg.dlg.profile_get_size inbound_calls
+...
+kamcmd dlg.dlg.profile_get_size inbound_calls
+...
 
-10.8. dlg.profile_list
+9.8. dlg.profile_list
 
    Lists all the dialogs belonging to a profile. If the profile supports
    values, the check can be reinforced to take into account a specific
@@ -1960,9 +1803,11 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
      * value (optional)- string value to further restrict the check;
 
    RPC Command Format:
-                kamcmd dlg.profile_list inbound_calls
+...
+kamcmd dlg.profile_list inbound_calls
+...
 
-10.9. dlg.bridge_dlg
+9.9. dlg.bridge_dlg
 
    Bridge two SIP addresses into a call using INVITE(hold)-REFER-BYE
    mechanism.
@@ -1975,22 +1820,24 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
      * op (optional) - outbound proxy SIP address
 
    RPC Command Format:
-                kamcmd dlg.list from to op
+...
+kamcmd dlg.list _from_ _to_ _op_
+...
 
-11. Exported pseudo-variables
+10. Exported Variables
 
-   11.1. $DLG_count
-   11.2. $DLG_status
-   11.3. $DLG_lifetime
-   11.4. $dlg(...)
-   11.5. $dlg_ctx(...)
-   11.6. $dlg_var(key)
+   10.1. $DLG_count
+   10.2. $DLG_status
+   10.3. $DLG_lifetime
+   10.4. $dlg(...)
+   10.5. $dlg_ctx(...)
+   10.6. $dlg_var(key)
 
-11.1. $DLG_count
+10.1. $DLG_count
 
    Returns the number of current active dialogs (may be confirmed or not).
 
-11.2. $DLG_status
+10.2. $DLG_status
 
    Returns the status of the dialog corresponding to the processed
    sequential request. This PV will be available only for sequential
@@ -2002,7 +1849,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
      * 4 - Confirmed by a final reply and ACK received.
      * 5 - Dialog ended.
 
-11.3. $DLG_lifetime
+10.3. $DLG_lifetime
 
    Returns the duration (in seconds) of the dialog corresponding to the
    processed sequential request. The duration is calculated from the
@@ -2011,15 +1858,15 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    NULL will be returned if there is no dialog for the request.
 
-11.4. $dlg(...)
+10.4. $dlg(...)
 
    Access to dialog attributes.
 
-11.5. $dlg_ctx(...)
+10.5. $dlg_ctx(...)
 
    Access to dialog context attributes.
 
-11.6. $dlg_var(key)
+10.6. $dlg_var(key)
 
    This is a read/write variable that can be used to store custom values
    assigned with a dialog (e.g. the URI of a billing-server, an assigned
@@ -2028,21 +1875,21 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    Note: You will receive "NULL", if there is no dialog for this request.
 
-12. Event Routes
+11. Event Routes
 
-   12.1. event_route[dialog:start]
-   12.2. event_route[dialog:end]
-   12.3. event_route[dialog:failed]
+   11.1. event_route[dialog:start]
+   11.2. event_route[dialog:end]
+   11.3. event_route[dialog:failed]
 
-12.1. event_route[dialog:start]
+11.1. event_route[dialog:start]
 
    Executed when 200OK for INVITE is processed.
 
-12.2. event_route[dialog:end]
+11.2. event_route[dialog:end]
 
    Executed when BYE is processed or dialog timed out.
 
-12.3. event_route[dialog:failed]
+11.3. event_route[dialog:failed]
 
    Executed when dialog is not completed (+300 reply to INVITE).
 
@@ -2097,8 +1944,8 @@ Chapter 2. Developer Guide
             to the initial INVITE request - it's a per dialog type.
           + DLGCB_RESPONSE_WITHIN - called when the dialog matches a reply
             to a subsequent in dialog request - it's a per dialog type.
-          + DLGCB_MI_CONTEXT - called when the mi dlg_list_ctx command is
-            invoked - it's a per dialog type.
+          + DLGCB_RPC_CONTEXT - called when the rpc dlg_list_ctx command
+            is invoked - it's a per dialog type.
           + DLGCB_SPIRALED - called when the dialog matches a spiraling
             request - it's a per dialog type.
           + DLGCB_DESTROY
