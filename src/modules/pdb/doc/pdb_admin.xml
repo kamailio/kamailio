@@ -9,7 +9,7 @@
 
 <chapter>
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -37,7 +37,7 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words 
+			The module depends on the following modules (in the other words
 			the listed modules must be loaded before this module):
 			</para>
 			<itemizedlist>
@@ -49,7 +49,7 @@
 		<section>
 			<title>External Libraries or Applications</title>
 			<para>
-			The following libraries or applications must be installed 
+			The following libraries or applications must be installed
 			before running &kamailio; with this module loaded:
 			</para>
 			<itemizedlist>
@@ -108,9 +108,9 @@ modparam("pdb", "server", "localhost:10001,host.name:10001,192.168.1.7:10002")
 	    <para>
 				Sends the query string to all configured servers and stores the answer in
 				dstavp. If it takes more than the configured timeout, false is returned.
-				
+
 				Pseudo-variables or AVPs can be used for the query string.
-				
+
 				The answer must consist of the null terminated query string followed by
 				a two byte integer value in network byte order. The integer value will
 				be stored in the given AVP.
@@ -130,43 +130,39 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 		</section>
 	</section>
 	<section>
-		<title><acronym>MI</acronym> Commands</title>
-		<section>
-	    <title>
-				<function moreinfo="none">pdb_status</function>
-	    </title>
+		<title>RPC Commands</title>
+		<section id="pdb.r.status">
+	    <title>pdb.status</title>
 	    <para>
 				Prints the status of the module.
 				This can either be "active" or "deactivated".
 	    </para>
 			<example>
-				<title><function>pdb_status</function> usage</title>
+				<title><function>pdb.status</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&ctltool; fifo pdb_status
+&kamcmd; pdb.status
 ...
 				</programlisting>
 	    </example>
 		</section>
-		<section>
-	    <title>
-				<function moreinfo="none">pdb_activate</function>
-	    </title>
+		<section id="pdb.r.activate">
+	    <title>pdb.activate</title>
 	    <para>
 				Activates the module. This is the default after loading the module.
 	    </para>
 			<example>
-				<title><function>pdb_activate</function> usage</title>
+				<title><function>pdb.activate</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&ctltool; fifo pdb_activate
+&kamcmd; pdb.activate
 ...
 				</programlisting>
 	    </example>
 		</section>
-		<section>
+		<section id="pdb.r.deactivate">
 	    <title>
-				<function moreinfo="none">pdb_deactivate</function>
+				<function moreinfo="none">pdb.deactivate</function>
 	    </title>
 	    <para>
 				Deactivates the module. No more queries are performed until it is
@@ -174,10 +170,10 @@ cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 				pdb_query function will return -1.
 	    </para>
 			<example>
-				<title><function>pdb_deactivate</function> usage</title>
+				<title><function>pdb.deactivate</function> usage</title>
 				<programlisting format="linespecific">
 ...
-&ctltool; fifo pdb_deactivate
+&kamcmd; pdb.deactivate
 ...
 				</programlisting>
 	    </example>

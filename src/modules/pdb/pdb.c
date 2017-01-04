@@ -27,6 +27,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
+#include "../../core/rpc_lookup.h"
 #include <sys/time.h>
 #include <poll.h>
 #include <stdlib.h>
@@ -72,7 +73,8 @@ struct multiparam_t {
 
 
 /* ---- exported commands: */
-static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct multiparam_t *_dstavp);
+static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number,
+		struct multiparam_t *_dstavp);
 
 /* ---- fixup functions: */
 static int pdb_query_fixup(void **arg, int arg_no);
@@ -104,16 +106,6 @@ static param_export_t params[] = {
 	{0, 0, 0 }
 };
 
-
-#ifdef MI_REMOVED
-/* Exported MI functions */
-static mi_export_t mi_cmds[] = {
-	{ "pdb_status", mi_pdb_status, MI_NO_INPUT_FLAG, 0, mi_child_init },
-	{ "pdb_activate", mi_pdb_activate, MI_NO_INPUT_FLAG, 0, mi_child_init },
-	{ "pdb_deactivate", mi_pdb_deactivate, MI_NO_INPUT_FLAG, 0, mi_child_init },
-	{ 0, 0, 0, 0, 0}
-};
-#endif
 
 struct module_exports exports = {
 	"pdb",
@@ -716,48 +708,78 @@ static void destroy_server_socket(void)
 }
 
 
-#ifdef MI_REMOVED
-struct mi_root * mi_pdb_status(struct mi_root* cmd, void* param)
+static void pdb_rpc_status(rpc_t* rpc, void* ctx)
 {
-	struct mi_root * root = NULL;
-	struct mi_node * node = NULL;
-
-	if (active == NULL) return init_mi_tree(500, "NULL pointer", 12);
-
-	root = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (root == NULL) return NULL;
-
-	if (*active) node = addf_mi_node_child(&root->node, 0, 0, 0, "pdb is active");
-	else node = addf_mi_node_child(&root->node, 0, 0, 0, "pdb is deactivated");
-	if (node == NULL) {
-		free_mi_tree(root);
-		return NULL;
+	void *vh;
+	if (active == NULL) {
+		rpc->fault(ctx, 500, "Active field not initialized");
+		return;
 	}
-
-	return root;
+	if (rpc->add(ctx, "{", &vh) < 0) {
+		rpc->fault(ctx, 500, "Server error");
+		return;
+	}
+	rpc->struct_add(vh, "ds",
+			"active", *active,
+			"status", (*active)?"active":"inactive");
 }
 
-
-struct mi_root * mi_pdb_deactivate(struct mi_root* cmd, void* param)
+static void pdb_rpc_activate(rpc_t* rpc, void* ctx)
 {
-	if (active == NULL) return init_mi_tree(500, "NULL pointer", 12);
-
-	*active=0;
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
-}
-
-
-struct mi_root * mi_pdb_activate(struct mi_root* cmd, void* param)
-{
-	if (active == NULL) return init_mi_tree(500, "NULL pointer", 12);
-
+	if (active == NULL) {
+		rpc->fault(ctx, 500, "Active field not initialized");
+		return;
+	}
 	*active=1;
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
-#endif
+
+static void pdb_rpc_deactivate(rpc_t* rpc, void* ctx)
+{
+	if (active == NULL) {
+		rpc->fault(ctx, 500, "Active field not initialized");
+		return;
+	}
+	*active=0;
+}
+
+static const char* pdb_rpc_status_doc[2] = {
+	"Get the pdb status.",
+	0
+};
+
+static const char* pdb_rpc_activate_doc[2] = {
+	"Activate pdb.",
+	0
+};
+
+static const char* pdb_rpc_deactivate_doc[2] = {
+	"Deactivate pdb.",
+	0
+};
+
+rpc_export_t pdb_rpc[] = {
+	{"pdb.status", pdb_rpc_status, pdb_rpc_status_doc, 0},
+	{"pdb.activate", pdb_rpc_activate, pdb_rpc_activate_doc, 0},
+	{"pdb.deactivate", pdb_rpc_deactivate, pdb_rpc_deactivate_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int pdb_rpc_init(void)
+{
+	if (rpc_register_array(pdb_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
 
 static int mod_init(void)
 {
+	if(pdb_rpc_init()<0) {
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
 	active = shm_malloc(sizeof(*active));
 	if (active == NULL) {
 		SHM_MEM_ERROR;
