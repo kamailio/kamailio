@@ -41,7 +41,6 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/sr_module.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/mem/mem.h"
 #include "../../core/usr_avp.h"
 #include "../../core/locking.h"
@@ -107,17 +106,8 @@ static int check_globalblacklist(sip_msg_t *msg);
 /* ---- module init functions: */
 static int mod_init(void);
 static int child_init(int rank);
-static int mi_child_init(void);
+static int rpc_child_init(void);
 static void mod_destroy(void);
-
-/* --- fifo functions */
-struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param);  /* usage: kamctl fifo reload_blacklist */
-struct mi_root * mi_dump_blacklist(struct mi_root* cmd, void* param);  /* usage: kamctl fifo dump_blacklist */
-struct mi_root * mi_check_blacklist(struct mi_root* cmd, void* param);  /* usage: kamctl fifo check_blacklist prefix */
-struct mi_root * mi_check_whitelist(struct mi_root* cmd, void* param);  /* usage: kamctl fifo check_whitelist prefix */
-struct mi_root * mi_check_userblacklist(struct mi_root* cmd, void* param);  /* usage: kamctl fifo check_userblacklist */
-struct mi_root * mi_check_userwhitelist(struct mi_root* cmd, void* param);  /* usage: kamctl fifo check_userwhitelist */
-
 
 static cmd_export_t cmds[]={
 	{ "check_user_blacklist", (cmd_function)check_user_blacklist2, 2,
@@ -154,6 +144,7 @@ static param_export_t params[] = {
 };
 
 
+#ifdef MI_REMOVED
 /* Exported MI functions */
 static mi_export_t mi_cmds[] = {
 	{ "reload_blacklist", mi_reload_blacklist, MI_NO_INPUT_FLAG, 0, mi_child_init },
@@ -164,7 +155,7 @@ static mi_export_t mi_cmds[] = {
 	{ "check_userwhitelist", mi_check_userwhitelist, 0, 0, 0 },
 	{ 0, 0, 0, 0, 0 }
 };
-
+#endif
 
 struct module_exports exports= {
 	"userblacklist",
@@ -172,7 +163,7 @@ struct module_exports exports= {
 	cmds,
 	params,
 	0,
-	mi_cmds,
+	0,
 	0,
 	0,
 	mod_init,
@@ -685,6 +676,7 @@ static void destroy_shmlock(void)
 	}
 }
 
+#ifdef MI_REMOVED
 static void dump_dtrie_mi(const struct dtrie_node_t *root,
 	const unsigned int branches, char *prefix, int *length, struct mi_root *reply)
 {
@@ -1071,16 +1063,10 @@ struct mi_root * mi_check_userwhitelist(struct mi_root* cmd, void* param)
 {
 	return check_userlist_mi(cmd, MARK_WHITELIST);
 }
-
+#endif
 
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-
 	if (userblacklist_db_init() != 0) return -1;
 	if (init_shmlock() != 0) return -1;
 	if (init_source_list() != 0) return -1;
@@ -1093,13 +1079,13 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	return mi_child_init();
+	return rpc_child_init();
 }
 
 static int userblacklist_child_initialized = 0;
 static int blacklist_child_initialized = 0;
 
-static int mi_child_init(void)
+static int rpc_child_init(void)
 {
 	/* global blacklist init */
 	if (check_globalblacklist_fixup(NULL, 0) != 0) {
