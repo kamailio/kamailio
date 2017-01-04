@@ -675,8 +675,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	struct socket_info* ssock;
 	str saddr;
 	int sport, sproto;
-	int ret, sip_error, err_ret, fromtag, cseq_is, cseq;
-	char err_buf[MAX_REASON_LEN];
+	int ret, fromtag, cseq_is, cseq;
 	dlg_t dlg;
 	uac_req_t uac_req;
 
