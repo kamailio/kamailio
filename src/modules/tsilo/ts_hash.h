@@ -30,7 +30,6 @@
 #define _TS_HASH_H_
 
 #include "../../core/locking.h"
-#include "../../lib/kmi/mi.h"
 #include "../../modules/tm/tm_load.h"
 
 #define MAX_TS_LOCKS  2048
