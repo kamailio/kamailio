@@ -14,11 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * 
  */
 
 
@@ -152,10 +151,6 @@ static param_export_t params[]={
 	{0,0,0} 
 };
 
-static mi_export_t mi_cmds[] = {
-	{ 0, 0, 0, 0, 0}
-};
-
 static pv_export_t mod_items[] = {
         { {"sipt_presentation",  sizeof("sipt_presentation")-1}, PVT_OTHER,  sipt_get_presentation,    0,
                 0, 0, 0, 0 },
@@ -180,7 +175,7 @@ struct module_exports exports = {
 	cmds,        /* exported functions */
 	params,      /* exported parameters */
 	0,           /* exported statistics */
-	mi_cmds,     /* exported MI functions */
+	0,           /* exported MI functions */
 	mod_items,   /* exported pseudo-variables */
 	0,           /* extra processes */
 	mod_init,    /* module initialization function */
