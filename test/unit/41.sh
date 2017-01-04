@@ -44,7 +44,7 @@ $MYSQL "INSERT INTO usr_preferences (uuid, attribute, type, value) VALUES (\"foo
 
 # start
 
-$BIN -w . -f $CFG &> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG &> /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ]; then

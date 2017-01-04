@@ -30,7 +30,7 @@ fi ;
 SIPDOMAIN=127.0.0.1
 CFG=22.cfg
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

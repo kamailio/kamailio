@@ -61,7 +61,7 @@ mask, next_domain) values ('3', '2', '1', '49', 'host1.local', '503', '0', '0', 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
 mask, next_domain) values ('4', '2', '2', '49', 'host1.local', '5..', '0', '0', '3');"
 
-$BIN -w . -f $CFG -a no > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 
 ret=$?
 

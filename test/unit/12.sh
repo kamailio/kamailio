@@ -29,7 +29,7 @@ if ! (check_netcat && check_kamailio); then
 	exit 0
 fi ;
 
-$BIN -w . -f $CFG &> $TMPFILE
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG &> $TMPFILE
 ret=$?
 
 sleep 1

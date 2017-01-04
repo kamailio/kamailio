@@ -32,7 +32,7 @@ CFG=13.cfg
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
+echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"db_url\", \"postgres://kamailioro:kamailioro@localhost/kamailio\")" >> $CFG
 
@@ -51,7 +51,7 @@ insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('20','2','','10','1','0','host6');
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('21','3','','10','1','0','premium.host.local');"
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

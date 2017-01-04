@@ -39,7 +39,7 @@ while [  $COUNTER -lt $NR ]; do
 	$MYSQL "insert into location (ruid, username, domain, contact, user_agent) values ('ul-ruid-$COUNTER', 'foobar-$RANDOM', '$DOMAIN', 'sip:foobar-$RANDOM@$DOMAIN', '___test___');"
 done
 
-$BIN -w . -f $CFG -A FETCHROWS=17 -a no >/dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -A FETCHROWS=17 -a no >/dev/null
 ret=$?
 
 sleep 1

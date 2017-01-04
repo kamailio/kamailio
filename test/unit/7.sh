@@ -33,7 +33,7 @@ if ! (check_kamailio); then
 fi ;
 
 # start
-$BIN -a no -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -a no -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

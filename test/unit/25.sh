@@ -77,7 +77,7 @@ $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('1'
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('','0','_test_');"
 
 
-$BIN -w . -f $CFG > /dev/null 2>&1
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null 2>&1
 sleep 1
 
 sipp -sn uas -bg -i 127.0.0.1 -p 5060 #&> /dev/null

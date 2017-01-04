@@ -67,10 +67,10 @@ function test_module_int()
 # add an registrar entry to the db
 cp $CFG ${CFG}.bak
 
-echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >>$CFG
-echo "loadmodule \"../../modules/ctl/ctl.so\"" >> $CFG
-echo "loadmodule \"../../modules/cfg_rpc/cfg_rpc.so\"" >> $CFG
-$BIN -w . -f $CFG &> /dev/null
+echo "loadmodule \"db_mysql/db_mysql.so\"" >>$CFG
+echo "loadmodule \"ctl/ctl.so\"" >> $CFG
+echo "loadmodule \"cfg_rpc/cfg_rpc.so\"" >> $CFG
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG &> /dev/null
 ret=$?
 sleep 1
 

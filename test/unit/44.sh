@@ -30,10 +30,10 @@ fi ;
 CFG=11.cfg
 
 cp $CFG $CFG.tmp
-echo "loadmodule \"$SRC_DIR/modules/db_unixodbc/db_unixodbc.so\"" >> $CFG
+echo "loadmodule \"db_unixodbc/db_unixodbc.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"db_url\", \"unixodbc://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -83,7 +83,7 @@ fi;
 $KILL
 
 # restart to test preload_udomain functionality
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

@@ -29,7 +29,7 @@ if ! (check_kamailio); then
 fi ;
 
 # start
-cat $CFG | cat - route-empty.cfg | $BIN -w . -a no -c -f - > /dev/null 2>&1
+cat $CFG | cat - route-empty.cfg | $BIN -L $MOD_DIR -w . -a no -c -f - > /dev/null 2>&1
 ret=$?
 
 exit $ret

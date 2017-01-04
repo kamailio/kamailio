@@ -31,7 +31,7 @@ fi ;
 
 SIPDOMAIN=127.0.0.1
 
-$BIN -w . -f $CFG -a no > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1
@@ -158,7 +158,7 @@ fi;
 $KILL
 
 # restart to test preload_udomain functionality
-$BIN -w . -f $CFG -a no> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no> /dev/null
 ret=$?
 
 sleep 1

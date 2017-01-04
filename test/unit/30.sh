@@ -35,7 +35,7 @@ cp $CFG $CFG.bak
 echo "modparam(\"carrierroute\", \"config_file\", \"carrierroute-2.cfg\")" >> $CFG
 
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 
 ret=$?
 

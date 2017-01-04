@@ -35,7 +35,7 @@ $MYSQL "INSERT INTO location (ruid, username,contact,socket,user_agent,cseq,q) V
 
 sipp -sn uas -bg -i 127.0.0.1 -m 1 -f 10 -p 5060 &> /dev/null
 
-$BIN -w . -f $CFG > $TMPFILE 2>&1
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > $TMPFILE 2>&1
 
 sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 &> /dev/null
 

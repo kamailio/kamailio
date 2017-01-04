@@ -31,11 +31,11 @@ CPL=cpl_ignore.xml
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 cp $CFG $CFG.tmp
-echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
+echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"cpl-c\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 
 
-$BIN -w . -f $CFG >/dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG >/dev/null
 ret=$?
 sleep 1
 

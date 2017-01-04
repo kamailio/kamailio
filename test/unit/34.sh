@@ -40,10 +40,10 @@ fi ;
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 
 # start
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

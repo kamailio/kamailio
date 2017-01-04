@@ -34,7 +34,7 @@ if ! (check_sipsak && check_kamailio && check_module "sdpops" && check_module "a
 	exit 0
 fi
 
-${BIN} -w ${RUN_DIR} -Y ${RUN_DIR} -P ${PIDFILE} -f ${CFGFILE} > /dev/null
+${BIN} -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f ${CFGFILE} > /dev/null
 ret=$?
 
 sleep 1

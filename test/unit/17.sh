@@ -30,7 +30,7 @@ CFG=17.cfg
 
 tmp_name=""$RANDOM"_kamailiodb_tmp"
 
-echo "loadmodule \"../../modules/db_berkeley/db_berkeley.so\"" > $CFG
+echo "loadmodule \"db_berkeley/db_berkeley.so\"" > $CFG
 cat 2.cfg >> $CFG
 echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"berkeley://`pwd`/$CTL_DIR/$tmp_name\")" >> $CFG
 echo -e "\nrequest_route {\n ;\n}" >> $CFG
@@ -53,7 +53,7 @@ ret=$?
 cd $CRT_DIR
 
 if [ "$ret" -eq 0 ] ; then
-	$BIN -w . -f $CFG -a no > /dev/null
+	$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 	ret=$?
 fi ;
 

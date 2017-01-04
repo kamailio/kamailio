@@ -33,7 +33,7 @@ MYSQL_LOC_A="mysql loc_a --show-warnings --batch --user=ser --password=ser -e"
 MYSQL_LOC_B="mysql loc_b --show-warnings --batch --user=ser --password=ser  -e"
 cp $CFG $CFG.bak
 
-$BIN -w . -f $CFG #> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG #> /dev/null
 ret=$?
 
 sleep 1
