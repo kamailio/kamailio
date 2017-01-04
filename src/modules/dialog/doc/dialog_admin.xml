@@ -10,34 +10,34 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
-	Kamailio can behave as a stateful proxy through the TM module.  However, 
-	"stateful" in this context refers to <emphasis>transaction</emphasis> 
+	Kamailio can behave as a stateful proxy through the TM module.  However,
+	"stateful" in this context refers to <emphasis>transaction</emphasis>
 	state, not dialog state.  Certain applications may benefit from an
 	awareness of "calls" in the proxy, not just SIP transactions.
 	</para>
-	<para>For example, a common need is to limit the number of calls that can 
-	be made concurrently by an endpoint, account, user group, etc.  In order 
-	to count the number of calls in progress, it is necessary for the proxy 
-	to be aware of whole dialogs, not just transactions, and to provide some 
-	means of programmatically classifying these dialogs.  This is just one 
-	common application discussed for illustrative purposes; there are many others.  
+	<para>For example, a common need is to limit the number of calls that can
+	be made concurrently by an endpoint, account, user group, etc.  In order
+	to count the number of calls in progress, it is necessary for the proxy
+	to be aware of whole dialogs, not just transactions, and to provide some
+	means of programmatically classifying these dialogs.  This is just one
+	common application discussed for illustrative purposes; there are many others.
 	</para>
 	<para>
 	The dialog module provides dialog awareness for the &kamailio; proxy. It's
 	functionality is to keep track of the current dialogs, to offer information
-	about them (e.g. how many dialogs are active), and to manage various 
+	about them (e.g. how many dialogs are active), and to manage various
 	characteristics of dialogs. The module exports several functions that can be 
 	used directly from the configuration route script as well as functions for
 	the RPC interface.
 	</para>
 	<para>
-	This module also provides a API foundation on which to build 
+	This module also provides a API foundation on which to build
 	more complex dialog-oriented functionality in other &kamailio; modules.
 	</para>
 	</section>
@@ -2122,262 +2122,21 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
 
 	<section>
-	<title>MI Commands</title>
-
-		<section>
-		<title><varname>dlg_list</varname></title>
-		<para>
-		Lists the description of a dialog or of all dialogs (calls). If only
-		one dialogs is to be listed, the dialog identifiers are to be passed
-		as parameter (callid and fromtag).
-		</para>
-		<para>
-		Name: <emphasis>dlg_list</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-				<emphasis>callid</emphasis> (optional) - callid if a single
-				dialog to be listed.
-			</para></listitem>
-			<listitem><para>
-				<emphasis>from_tag</emphasis> (optional, but cannot be present
-				without the callid parameter) - from tag (as per initial request)
-				of the dialog to be listed.  Note that if the from_tag is not
-				specified, only dialogs created by a request without a from tag
-				are matched, which will only occur with broken clients and is
-				thus a very rare situation.
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:dlg_list:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-		<programlisting  format="linespecific">
-		:dlg_list:_reply_fifo_file_
-		abcdrssfrs122444@192.168.1.1
-		AAdfeEFF33
-		</programlisting>
-		</section>
-
-		<section>
-		<title><varname>dlg_list_ctx</varname></title>
-		<para>
-		The same as the <quote>dlg_list</quote> but including in the dialog
-		description the associated context from modules sitting on top of
-		the dialog module.
-		</para>
-		<para>
-		Name: <emphasis>dlg_list_ctx</emphasis>
-		</para>
-		<para>Parameters: <emphasis>see <quote>dlg_list</quote></emphasis>
-		</para>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:dlg_list_ctx:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-		</section>
-
-		<section>
-			<title><varname>dlg_end_dlg</varname></title>
-			<para>
-			Terminates a confirmed dialog by sending BYE requests in both directions.
-			</para>
-		<para>
-		Name: <emphasis>dlg_end_dlg</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-				<emphasis>h_entry</emphasis> - hash entry of the dialog in the
-				internal dialog table
-			</para></listitem>
-			<listitem><para>
-				<emphasis>h_id</emphasis> - hash id of the dialog on the hash
-				entry
-			</para></listitem>
-			<listitem><para>
-				<emphasis>extra_hdrs</emphasis> - (optional) string containg
-				extra headers (full format) to be added to the BYE requests.
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		The values for the h_entry and h_id can be get via the dlg_list
-		MI command.
-		</para>
-		<para>
-		<emphasis>Note: Works only for confirmed dialogs.</emphasis>
-		</para>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:dlg_end_dlg:_reply_fifo_file_
-		342
-		56
-		_empty_line_
-		</programlisting>
-		</section>
-
-		<section>
-		<title><varname>dlg_terminate_dlg</varname></title>
-		<para>
-		Terminates a singe dialog, identified by a Call-ID.
-		</para>
-		<para>
-		Name: <emphasis>dlg_terminate_dlg</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-				<emphasis>callid</emphasis> - callid of the dialog to be terminated.
-			</para></listitem>
-			<listitem><para>
-				<emphasis>from_tag</emphasis> (optional, but cannot be present
-				without the callid parameter) - from tag (as per initial request)
-				of the dialog to be terminated.  Note that if the from_tag is not
-				specified, only dialogs created by a request without a from tag
-				are matched, which will only occur with broken clients and is
-				thus a very rare situation.
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		<emphasis>Note: Works only for confirmed dialogs.</emphasis>
-		</para>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:dlg_terminate_dlg:_reply_fifo_file_
-		abcdrssfrs122444@192.168.1.1
-		AAdfeEFF33
-		</programlisting>
-		</section>
-
-		<section>
-		<title><varname>profile_get_size</varname></title>
-		<para>
-		Returns the number of dialogs belonging to a profile. If the profile
-		supports values, the check can be reinforced to take into account a
-		specific value - how many dialogs were inserted into the profile with
-		a specific value. If no value is passed, only the simply belonging of
-		the dialog to the profile is checked. Note that if the profile does not
-		supports values, this will be silently discarded.
-		</para>
-		<para>
-		Name: <emphasis>profile_get_size</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-				<emphasis>profile</emphasis> - name of the profile to get the
-				value for.
-			</para></listitem>
-			<listitem><para>
-				<emphasis>value</emphasis> (optional)- string value to
-				further restrict the check;
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:profile_get_size:_reply_fifo_file_
-		inbound_calls
-		_empty_line_
-		</programlisting>
-		</section>
-
-		<section>
-		<title><varname>profile_list_dlgs</varname></title>
-		<para>
-		Lists all the dialogs belonging to a profile. If the profile
-		supports values, the check can be reinforced to take into account a
-		specific value - list only the dialogs that were inserted into the
-		profile with that specific value. If no value is passed, all dialogs
-		belonging to the profile will be listed. Note that if the profile does
-		not supports values, this will be silently discarded.
-		</para>
-		<para>
-		Name: <emphasis>profile_list_dlgs</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-				<emphasis>profile</emphasis> - name of the profile to list the
-				dialog for.
-			</para></listitem>
-			<listitem><para>
-				<emphasis>value</emphasis> (optional)- string value to
-				further restrict the check;
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:profile_list_dlgs:_reply_fifo_file_
-		inbound_calls
-		_empty_line_
-		</programlisting>
-		</section>
-
-		<section>
-		<title><varname>dlg_bridge</varname></title>
-		<para>
-			Bridge two SIP addresses in a call using INVITE(hold)-REFER-BYE
-			mechanism.
-		</para>
-		<para>
-		Name: <emphasis>dlg_bridge</emphasis>
-		</para>
-		<para>Parameters:</para>
-		<itemizedlist>
-			<listitem><para>
-				<emphasis>from</emphasis> - SIP address to initiate the call
-			</para></listitem>
-			<listitem><para>
-				<emphasis>to</emphasis> - SIP address to refer 'from' to
-			</para></listitem>
-			<listitem><para>
-				<emphasis>op</emphasis> (optional) - outbound proxy SIP address
-			</para></listitem>
-		</itemizedlist>
-		<para>
-		MI FIFO Command Format:
-		</para>
-		<programlisting  format="linespecific">
-		:dlg_bridge:_reply_fifo_file_
-		from
-		to
-		op
-		_empty_line_
-		</programlisting>
-		</section>
-
-	</section>
-
-
-	<section>
-	<title>Exported RPC Functions</title>
-		<section>
-		<title><varname>dlg.list</varname></title>
-		<para>Lists the description of all dialogs (calls). </para>
+	<title>RPC Commands</title>
+		<section id="dlg.r.list">
+		<title>dlg.list</title>
+		<para>Lists the description of all dialogs (active calls). </para>
 		<para>Name: <emphasis>dlg.list</emphasis></para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg_list
+...
+&kamcmd; dlg_list
+...
 		</programlisting>
 		</section>
 
-		<section>
-		<title><varname>dlg.list_ctx</varname></title>
+		<section id="dlg.r.list_ctx">
+		<title>dlg.list_ctx</title>
 		<para>
 		The same as the <quote>dlg_list</quote> but including in the dialog
 		description the associated context from modules sitting on top of
@@ -2386,12 +2145,14 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		<para>Name: <emphasis>dlg.list_ctx</emphasis></para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.list_ctx
+...
+&kamcmd; dlg.list_ctx
+...
 		</programlisting>
 		</section>
 
-		<section>
-		<title><varname>dlg.dlg_list</varname></title>
+		<section id="dlg.r.dlg_list">
+		<title>dlg.dlg_list</title>
 		<para>
 		Lists the description of one dialog.  The dialog identifiers are to be passed
 		as parameter (callid and optionally fromtag).
@@ -2409,14 +2170,15 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
-		</programlisting>
-		<programlisting  format="linespecific">
-		serctl dlg.list abcdrssfrs122444@192.168.1.1
+...
+&kamcmd; dlg.list abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+...
+&kamcmd; dlg.list abcdrssfrs122444@192.168.1.1
+...
 		</programlisting>
 		</section>
-		<section>
-		<title><varname>dlg.dlg_list_ctx</varname></title>
+		<section id="dlg.r.dlg_list_ctx">
+		<title>dlg.dlg_list_ctx</title>
 		<para>
 		The same as the <quote>dlg.list_ctx</quote> but including in the dialog
 		description the associated context from modules sitting on top of
@@ -2427,14 +2189,15 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
-		</programlisting>
-		<programlisting  format="linespecific">
-		serctl dlg.list_ctx abcdrssfrs122444@192.168.1.1
+...
+&kamcmd; dlg.list_ctx abcdrssfrs122444@192.168.1.1 AAdfeEFF33
+...
+&kamcmd; dlg.list_ctx abcdrssfrs122444@192.168.1.1
+...
 		</programlisting>
 		</section>
-		<section>
-		<title><varname>dlg.terminate_dlg</varname></title>
+		<section id="dlg.r.terminate_dlg">
+		<title>dlg.terminate_dlg</title>
 		<para>
 		Terminates an ongoing dialog by sending BYE in both directions,
 		matching the dialog on call-id, from tag and to tag.
@@ -2487,11 +2250,13 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</para>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.end_dlg 342 56
+...
+&kamcmd; dlg.end_dlg 342 56
+...
 		</programlisting>
 		</section>
-		<section>
-		<title><varname>dlg.profile_get_size</varname></title>
+		<section id="dlg.r.profile_get_size">
+		<title>dlg.profile_get_size</title>
 		<para>
 		Returns the number of dialogs belonging to a profile. If the profile
 		supports values, the check can be reinforced to take into account a
@@ -2514,12 +2279,14 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.dlg.profile_get_size inbound_calls
+...
+&kamcmd; dlg.dlg.profile_get_size inbound_calls
+...
 		</programlisting>
 		</section>
 
-		<section>
-		<title><varname>dlg.profile_list</varname></title>
+		<section id="dlg.r.profile_list">
+		<title>dlg.profile_list</title>
 		<para>
 		Lists all the dialogs belonging to a profile. If the profile
 		supports values, the check can be reinforced to take into account a
@@ -2542,12 +2309,14 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.profile_list inbound_calls
+...
+&kamcmd; dlg.profile_list inbound_calls
+...
 		</programlisting>
 		</section>
 
-		<section>
-		<title><varname>dlg.bridge_dlg</varname></title>
+		<section id="dlg.r.bridge_dlg">
+		<title>dlg.bridge_dlg</title>
 		<para>
 			Bridge two SIP addresses into a call using INVITE(hold)-REFER-BYE
 			mechanism.
@@ -2567,15 +2336,16 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		</itemizedlist>
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
-		kamcmd dlg.list from to op
+...
+&kamcmd; dlg.list _from_ _to_ _op_
+...
 		</programlisting>
 		</section>
 	</section>
 
 
-
 	<section>
-	<title>Exported pseudo-variables</title>
+	<title>Exported Variables</title>
 
 		<section>
 			<title><varname>$DLG_count</varname></title>
@@ -2637,7 +2407,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		<section>
 			<title><varname>$dlg_var(key)</varname></title>
 			<para>
-			This is a read/write variable that can be used to store 
+			This is a read/write variable that can be used to store
 			custom values assigned with a dialog (e.g. the URI of a
 			billing-server, an assigned emergency-server).
 			This pseudo-variable will be available only for subsequential

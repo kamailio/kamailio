@@ -60,7 +60,6 @@
 #include "../../core/hashes.h"
 #include "../../core/counters.h"
 #include "../../core/mem/mem.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/timer_proc.h"
 #include "../../core/lvalue.h"
 #include "../../core/parser/parse_to.h"
@@ -313,19 +312,6 @@ static stat_export_t mod_stats[] = {
 	{0,0,0}
 };
 
-struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param);
-
-static mi_export_t mi_cmds[] = {
-	{ "dlg_list",           mi_print_dlgs,       0,  0,  0},
-	{ "dlg_list_ctx",       mi_print_dlgs_ctx,   0,  0,  0},
-	{ "dlg_end_dlg",        mi_terminate_dlg,    0,  0,  0},
-	{ "dlg_terminate_dlg",  mi_terminate_dlgs,   0,  0,  0},
-	{ "profile_get_size",   mi_get_profile,      0,  0,  0},
-	{ "profile_list_dlgs",  mi_profile_list,     0,  0,  0},
-	{ "dlg_bridge",         mi_dlg_bridge,       0,  0,  0},
-	{ 0, 0, 0, 0, 0}
-};
-
 static rpc_export_t rpc_methods[];
 
 static pv_export_t mod_items[] = {
@@ -350,7 +336,7 @@ struct module_exports exports= {
 	cmds,            /* exported functions */
 	mod_params,      /* param exports */
 	mod_stats,       /* exported statistics */
-	mi_cmds,         /* exported MI functions */
+	0,               /* exported MI functions */
 	mod_items,       /* exported pseudo-variables */
 	0,               /* extra processes */
 	mod_init,        /* module initialization function */
@@ -485,12 +471,6 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
-
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 
 	if (rpc_register_array(rpc_methods)!=0) {
 		LM_ERR("failed to register RPC commands\n");
@@ -1436,63 +1416,6 @@ static int fixup_dlg_remote_profile(void** param, int param_no)
 	if(param_no==5)
 		return fixup_igp_null(param, 1);
 	return 0;
-}
-
-struct mi_root * mi_dlg_bridge(struct mi_root *cmd_tree, void *param)
-{
-	str from = {0,0};
-	str to = {0,0};
-	str op = {0,0};
-	str bd = {0,0};
-	struct mi_node* node;
-
-	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	from = node->value;
-	if(from.len<=0 || from.s==NULL)
-	{
-		LM_ERR("bad From value\n");
-		return init_mi_tree( 500, "Bad From value", 14);
-	}
-
-	node = node->next;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-	to = node->value;
-	if(to.len<=0 || to.s == NULL)
-	{
-		return init_mi_tree(500, "Bad To value", 12);
-	}
-
-	node= node->next;
-	if(node != NULL)
-	{
-		op = node->value;
-		if(op.len<=0 || op.s==NULL)
-		{
-			return init_mi_tree(500, "Bad OP value", 12);
-		}
-		if(op.len==1 && *op.s=='.')
-		{
-			op.s = NULL;
-			op.len = 0;
-		}
-		node= node->next;
-		if(node != NULL)
-		{
-			bd = node->value;
-			if(bd.len<=0 || bd.s==NULL)
-			{
-				return init_mi_tree(500, "Bad SDP value", 13);
-			}
-		}
-	}
-
-	if(dlg_bridge(&from, &to, &op, &bd)!=0)
-		return init_mi_tree(500, MI_INTERNAL_ERR_S,  MI_INTERNAL_ERR_LEN);
-
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 /**************************** RPC functions ******************************/

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -71,7 +71,7 @@ typedef str* (*get_dlg_variable_f)( struct dlg_cell* dlg,
 #define DLGCB_EARLY           (1<<8)
 #define DLGCB_RESPONSE_FWDED  (1<<9)
 #define DLGCB_RESPONSE_WITHIN (1<<10)
-#define DLGCB_MI_CONTEXT      (1<<11)
+
 #define DLGCB_RPC_CONTEXT     (1<<12)
 #define DLGCB_DESTROY         (1<<13)
 #define DLGCB_SPIRALED        (1<<14)

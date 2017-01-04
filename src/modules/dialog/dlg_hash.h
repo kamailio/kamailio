@@ -31,7 +31,6 @@
 #define _DIALOG_DLG_HASH_H_
 
 #include "../../core/locking.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/timer.h"
 #include "../../core/atomic_ops.h"
 #include "dlg_timer.h"
@@ -432,31 +431,6 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 
 
 /*!
- * \brief Output all dialogs via the MI interface
- * \param cmd_tree MI root node
- * \param param unused
- * \return a mi node with the dialog information, or NULL on failure
- */
-struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
-
-
-/*!
- * \brief Print a dialog context via the MI interface
- * \param cmd_tree MI command tree
- * \param param unused
- * \return mi node with the dialog information, or NULL on failure
- */
-struct mi_root * mi_print_dlgs_ctx(struct mi_root *cmd, void *param );
-
-/*!
- * \brief Terminate selected dialogs via the MI interface
- * \param cmd_tree MI command tree
- * \param param unused
- * \return mi node with the dialog information, or NULL on failure
- */
-struct mi_root * mi_terminate_dlgs(struct mi_root *cmd_tree, void *param );
-
-/*!
  * \brief Check if a dialog structure matches to a SIP message dialog
  * \param dlg dialog structure
  * \param callid SIP message Call-ID
@@ -601,14 +575,5 @@ int dlg_clean_run(ticks_t ti);
  */
 
 int update_dlg_timeout(dlg_cell_t *, int);
-
-/*!
- * \brief Output a dialog via the MI interface
- * \param rpl MI node that should be filled
- * \param dlg printed dialog
- * \param with_context if 1 then the dialog context will be also printed
- * \return 0 on success, -1 on failure
- */
-int mi_print_dlg(struct mi_node *rpl, dlg_cell_t *dlg, int with_context);
 
 #endif

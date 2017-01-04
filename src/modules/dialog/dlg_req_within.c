@@ -39,7 +39,6 @@
 #include "../../core/dset.h"
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../lib/kmi/tree.h"
 #include "../../core/counters.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"
@@ -500,70 +499,6 @@ err:
 	return -1;
 }
 
-
-
-/*parameters from MI: h_entry, h_id of the requested dialog*/
-struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
-
-	struct mi_node* node;
-	unsigned int h_entry, h_id;
-	struct dlg_cell * dlg = NULL;
-	str mi_extra_hdrs = {NULL,0};
-	int status, msg_len;
-	char *msg;
-
-
-	if( d_table ==NULL)
-		goto end;
-
-	node = cmd_tree->node.kids;
-	h_entry = h_id = 0;
-
-	if (node==NULL || node->next==NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	if (!node->value.s|| !node->value.len|| strno2int(&node->value,&h_entry)<0)
-		goto error;
-
-	node = node->next;
-	if ( !node->value.s || !node->value.len || strno2int(&node->value,&h_id)<0)
-		goto error;
-
-	if (node->next) {
-		node = node->next;
-		if (node->value.len && node->value.s)
-			mi_extra_hdrs = node->value;
-	}
-
-	LM_DBG("h_entry %u h_id %u\n", h_entry, h_id);
-
-	dlg = dlg_lookup(h_entry, h_id);
-
-	// lookup_dlg has incremented the reference count
-
-	if(dlg){
-		if(dlg_bye_all(dlg,(mi_extra_hdrs.len>0)?&mi_extra_hdrs:NULL)<0) {
-			status = 500;
-			msg = MI_DLG_OPERATION_ERR;
-			msg_len = MI_DLG_OPERATION_ERR_LEN;
-		} else {
-			status = 200;
-			msg = MI_OK_S;
-			msg_len = MI_OK_LEN;
-		}
-
-		dlg_release(dlg);
-
-		return init_mi_tree(status, msg, msg_len);
-	}
-
-end:
-	return init_mi_tree(404, MI_DIALOG_NOT_FOUND, MI_DIALOG_NOT_FOUND_LEN);
-	
-error:
-	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
-
-}
 
 int dlg_bye(struct dlg_cell *dlg, str *hdrs, int side)
 {

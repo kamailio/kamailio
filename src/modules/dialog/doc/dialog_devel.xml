@@ -10,7 +10,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-	
+
 	<title>&develguide;</title>
 	<section>
 	<title>Available Functions</title>
@@ -81,8 +81,8 @@
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLGCB_EXPIRED</emphasis> - called when the 
-				dialog expires without receiving a BYE - it's a per dialog 
+				<para><emphasis>DLGCB_EXPIRED</emphasis> - called when the
+				dialog expires without receiving a BYE - it's a per dialog
 				type.
 				</para>
 			</listitem>
@@ -105,8 +105,8 @@
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLGCB_MI_CONTEXT</emphasis> - called when the
-				mi dlg_list_ctx command is invoked - it's a per dialog type.
+				<para><emphasis>DLGCB_RPC_CONTEXT</emphasis> - called when the
+				rpc dlg_list_ctx command is invoked - it's a per dialog type.
 				</para>
 			</listitem>
 			<listitem>
@@ -122,8 +122,8 @@
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>dialog_cb cb</emphasis> - callback function to be 
-			called. Prototype is: <quote>void (dialog_cb) 
+			<para><emphasis>dialog_cb cb</emphasis> - callback function to be
+			called. Prototype is: <quote>void (dialog_cb)
 			(struct dlg_cell* dlg, int type, struct dlg_cb_params * params);
 			</quote>
 			</para>
