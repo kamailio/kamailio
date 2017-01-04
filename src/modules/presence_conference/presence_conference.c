@@ -1,5 +1,7 @@
 /*
- * presence_conference module - Presence Handling of "conference" events (handling conference-info+xml doc)
+ * presence_conference module
+ *
+ * Presence Handling of "conference" events (handling conference-info+xml doc)
  *
  * Copyright (C) 2010 Marius Bucur
  *
@@ -15,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -51,9 +53,6 @@ add_event_t pres_add_event;
 /* module parameters */
 int use_partial_states = 0;
 
-/* module mi command functions */
-static struct mi_root* conference_reset(struct mi_root* cmd, void* param);
-
 /* module exported commands */
 static cmd_export_t cmds[] =
 {
@@ -66,12 +65,6 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-/* module mi commands */
-static mi_export_t mi_cmds[] = {
-	{ "conference_reset", conference_reset, 0, 0, 0},
-	{ 0, 0, 0, 0, 0 }
-};
-
 /* presence api bind structure */
 presence_api_t pres;
 
@@ -82,7 +75,7 @@ struct module_exports exports= {
     cmds,				/* exported functions */
     params,				/* exported parameters */
     0,					/* exported statistics */
-    mi_cmds,				/* exported MI functions */
+    0,					/* exported MI functions */
     0,					/* exported pseudo-variables */
     0,					/* extra processes */
     mod_init,				/* module initialization function */
@@ -90,7 +83,7 @@ struct module_exports exports= {
     0,					/* destroy function */
     0					/* per-child init function */
 };
-	
+
 /*
  * init module function
  */
@@ -115,19 +108,8 @@ static int mod_init(void)
 	}
 	if(conference_add_events() < 0) {
 		LM_ERR("failed to add conference-info events\n");
-		return -1;		
-	}	
-    
+		return -1;
+	}
+
     return 0;
-}
-
-
-/* module mi command functions */
-
-//presence_conference reset mi command
-static struct mi_root* conference_reset(struct mi_root* cmd, void* param)
-{
-	LM_ERR("Conference received mi command [reason %*.s] [code %d]...\n", cmd->reason.len, cmd->reason.s, cmd->code);
-	//reset subscriptions to the event package for some presentity (conference)
-	return cmd;
 }
