@@ -36,20 +36,20 @@ Pawel Kuzak
 
               4.1. pdb_query (string query, string dstavp)
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. pdb_status
-              5.2. pdb_activate
-              5.3. pdb_deactivate
+              5.1. pdb.status
+              5.2. pdb.activate
+              5.3. pdb.deactivate
 
    List of Examples
 
    1.1. Set timeout parameter
    1.2. Set server parameter
    1.3. pdb_query usage
-   1.4. pdb_status usage
-   1.5. pdb_activate usage
-   1.6. pdb_deactivate usage
+   1.4. pdb.status usage
+   1.5. pdb.activate usage
+   1.6. pdb.deactivate usage
 
 Chapter 1. Admin Guide
 
@@ -70,11 +70,11 @@ Chapter 1. Admin Guide
 
         4.1. pdb_query (string query, string dstavp)
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. pdb_status
-        5.2. pdb_activate
-        5.3. pdb_deactivate
+        5.1. pdb.status
+        5.2. pdb.activate
+        5.3. pdb.deactivate
 
 1. Overview
 
@@ -160,38 +160,38 @@ if (!pdb_query("$rU", "$avp(i:82)"))
 cr_route("$avp(i:82)", "$rd", "$rU", "$rU", "call_id");
 ...
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. pdb_status
-   5.2. pdb_activate
-   5.3. pdb_deactivate
+   5.1. pdb.status
+   5.2. pdb.activate
+   5.3. pdb.deactivate
 
-5.1.  pdb_status
+5.1. pdb.status
 
    Prints the status of the module. This can either be "active" or
    "deactivated".
 
-   Example 1.4. pdb_status usage
+   Example 1.4. pdb.status usage
 ...
-kamctl fifo pdb_status
+kamcmd pdb.status
 ...
 
-5.2.  pdb_activate
+5.2. pdb.activate
 
    Activates the module. This is the default after loading the module.
 
-   Example 1.5. pdb_activate usage
+   Example 1.5. pdb.activate usage
 ...
-kamctl fifo pdb_activate
+kamcmd pdb.activate
 ...
 
-5.3.  pdb_deactivate
+5.3.  pdb.deactivate
 
    Deactivates the module. No more queries are performed until it is
    activated again. As long as the module is deactivated, the pdb_query
    function will return -1.
 
-   Example 1.6. pdb_deactivate usage
+   Example 1.6. pdb.deactivate usage
 ...
-kamctl fifo pdb_deactivate
+kamcmd pdb.deactivate
 ...
