@@ -1180,6 +1180,7 @@ void cr_rpc_dump_routes(rpc_t* rpc, void* ctx)
 	for (i = 0; i < rd->carrier_num; i++) {
 		if (rd->carriers[i]) {
 			if (rpc->array_add(ih, "{", &dh)<0) {
+				LM_ERR("add carrier data failure at count %d\n", i);
 				rpc->fault(ctx, 500, "Response failure - carrier data");
 				goto error;
 			}
@@ -1188,6 +1189,7 @@ void cr_rpc_dump_routes(rpc_t* rpc, void* ctx)
 						"id", (rd->carriers[i] ? rd->carriers[i]->id : 0),
 						"domains",  &eh)<0)
 			{
+				LM_ERR("add carrier structure failure at count %d\n", i);
 				rpc->fault(ctx, 500, "Internal error - carrier structure");
 				goto error;
 			}
@@ -1195,6 +1197,7 @@ void cr_rpc_dump_routes(rpc_t* rpc, void* ctx)
 			for (j=0; j<rd->carriers[i]->domain_num; j++) {
 				if (rd->carriers[i]->domains[j] && rd->carriers[i]->domains[j]->tree) {
 					if (rpc->array_add(eh, "{", &fh)<0) {
+						LM_ERR("add domain data failure at count %d/%d\n", i, j);
 						rpc->fault(ctx, 500, "Response failure - domain data");
 						goto error;
 					}
@@ -1203,12 +1206,15 @@ void cr_rpc_dump_routes(rpc_t* rpc, void* ctx)
 							"id", rd->carriers[i]->domains[j]->id,
 							"data",  &gh)<0)
 					{
+						LM_ERR("add domain structure failure at count %d/%d\n", i, j);
 						rpc->fault(ctx, 500, "Internal error - domain structure");
 						goto error;
 					}
 					if (cr_rpc_dump_tree_recursor (rpc, ctx, gh,
-								rd->carriers[i]->domains[j]->tree, "") < 0)
+								rd->carriers[i]->domains[j]->tree, "") < 0) {
+						LM_ERR("dump tree recursor failure at count %d/%d\n", i, j);
 						goto error;
+					}
 				}
 			}
 		}
