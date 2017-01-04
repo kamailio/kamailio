@@ -11,7 +11,7 @@
 # - basic used modules, with no extra dependency (widespread usage)
 mod_list_basic=async auth benchmark blst cfg_rpc cfgutils corex counters \
 				   ctl debugger diversion enum exec ipops kex mangler maxfwd \
-				   mediaproxy mi_datagram mi_fifo mi_rpc mqueue \
+				   mediaproxy mqueue \
 				   nat_traversal nathelper path pike pv ratelimit rr rtimer \
 				   rtpproxy sanity sdpops siputils sl statistics textops \
 				   textopsx tm tmx topoh xlog rtpengine stun sipt tcpops \
@@ -65,9 +65,6 @@ mod_list_cpl=cplc
 # - modules depending on xml2 library
 mod_list_xmldeps=xhttp_pi xmlrpc xmlops
 
-# - modules depending on xml c rpc library
-mod_list_mi_xmlrpc=mi_xmlrpc
-
 # - modules depending on net-snmp library
 mod_list_snmpstats=snmpstats
 
@@ -111,7 +108,7 @@ mod_list_autheph=auth_ephemeral
 mod_list_presence=presence presence_conference presence_dialoginfo \
 					   presence_mwi presence_profile presence_reginfo \
 					   presence_xml \
-					   pua pua_bla pua_dialoginfo pua_mi pua_reginfo \
+					   pua pua_bla pua_dialoginfo pua_reginfo \
 					   pua_rpc pua_usrloc pua_xmpp \
 					   rls xcap_client xcap_server
 
@@ -211,7 +208,6 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_json) $(mod_list_redis) \
 			   $(mod_list_mono) $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
-			   $(mod_list_mi_xmlrpc) \
 			   $(mod_list_outbound) $(mod_list_osp) \
 			   $(mod_list_java) $(mod_list_dnssec) \
 			   $(mod_list_sctp) $(mod_list_autheph) \
@@ -294,9 +290,6 @@ module_group_kcpl=$(mod_list_cpl)
 
 # pkg xml modules
 module_group_kxml=$(mod_list_xmldeps)
-
-# pkg mi_xmlrpc modules
-module_group_kmi_xmlrpc=$(mod_list_mi_xmlrpc)
 
 # pkg radius modules
 module_group_kradius=$(mod_list_radius)
