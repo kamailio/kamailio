@@ -1042,8 +1042,6 @@ int rpc_mtree_print_node(rpc_t* rpc, void* ctx, m_tree_t *tree, mt_node_t *pt,
 		char *code, int len)
 {
 	int i;
-	struct mi_node* node = NULL;
-	struct mi_attr* attr= NULL;
 	mt_is_t *tvalues;
 	str val;
 	void* th = NULL;
@@ -1110,9 +1108,6 @@ void rpc_mtree_list(rpc_t* rpc, void* ctx)
 {
 	str tname = {0, 0};
 	m_tree_t *pt;
-	struct mi_node* node = NULL;
-	struct mi_root* rpl_tree = NULL;
-	struct mi_node* rpl = NULL;
 	static char code_buf[MT_MAX_DEPTH+1];
 	int len;
 
