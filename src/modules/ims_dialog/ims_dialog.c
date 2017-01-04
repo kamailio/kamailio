@@ -16,7 +16,6 @@
 #include "../../core/fmsg.h"
 #include "../../core/counters.h"
 #include "../../core/mem/mem.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/lvalue.h"
 #include "../../core/parser/parse_to.h"
 #include "../../modules/tm/tm_load.h"
@@ -148,12 +147,14 @@ static param_export_t mod_params[] = {
     { 0, 0, 0}
 };
 
+#ifdef MI_REMOVED
 static mi_export_t mi_cmds[] = {
     { "dlg_list", mi_print_dlgs, 0, 0, 0},
     { "dlg_terminate_dlg", mi_terminate_dlg, 0, 0, 0},
     { 0, 0, 0, 0, 0}
     /* TODO: restore old dialog functionality later - also expose dialoig_out cmds, possibly*/
 };
+#endif
 
 static rpc_export_t rpc_methods[];
 
@@ -179,7 +180,7 @@ struct module_exports exports = {
     cmds, /* exported functions */
     mod_params, /* param exports */
     0, /* exported statistics */
-    mi_cmds, /* exported MI functions */
+    0, /* exported MI functions */
     mod_items, /* exported pseudo-variables */
     0, /* extra processes */
     mod_init, /* module initialization function */
@@ -391,16 +392,11 @@ static int pv_get_dlg_count(struct sip_msg *msg, pv_param_t *param,
 static int mod_init(void) {
     unsigned int n;
 
-    if (register_mi_mod(exports.name, mi_cmds) != 0) {
-        LM_ERR("failed to register MI commands\n");
-        return -1;
-    }
-
     if (rpc_register_array(rpc_methods) != 0) {
         LM_ERR("failed to register RPC commands\n");
         return -1;
     }
-    
+
     if (dialog_ng_stats_init() != 0) {
 	LM_ERR("Failed to register dialog_ng counters\n");
 	return -1;

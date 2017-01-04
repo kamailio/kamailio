@@ -10,7 +10,6 @@
 
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/rand/kam_rand.h"
 #include "dlg_timer.h"
 #include "dlg_var.h"
@@ -1386,7 +1385,7 @@ error:
 }
 
 
-
+#ifdef MI_REMOVED
 /**************************** MI functions ******************************/
 
 /*!
@@ -1757,6 +1756,7 @@ error:
 
     return NULL;
 }
+#endif
 
 /*!
  * \brief Search dialog that corresponds to CallId, From Tag and To Tag

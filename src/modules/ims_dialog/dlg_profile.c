@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2008 Voice System SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -18,10 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * History:
- * --------
- * 2008-04-20  initial version (bogdan)
  *
  */
 
@@ -702,6 +696,7 @@ int	is_known_dlg(struct sip_msg *msg) {
 	return 1;
 }
 
+#ifdef MI_REMOVED
 /****************************** MI commands *********************************/
 
 /*!
@@ -871,3 +866,4 @@ error:
 	free_mi_tree(rpl_tree);
 	return NULL;
 }
+#endif

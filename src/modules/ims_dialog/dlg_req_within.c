@@ -17,11 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2007-07-10  initial version (ancuta)
- * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
- * 2011-10      added support for early dialog termination (jason)
  */
 
 #include <stdlib.h>
@@ -35,7 +30,6 @@
 #include "../../core/socket_info.h"
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
-#include "../../lib/kmi/tree.h"
 #include "../../core/counters.h"
 #include "../../core/locking.h"
 #include "dlg_timer.h"
@@ -395,6 +389,7 @@ int dlg_terminate(struct dlg_cell *dlg, struct sip_msg *msg, str *reason, int si
     return 1;
 }
 
+#ifdef MI_REMOVED
 /*parameters from MI: callid, from tag, to tag*/
 /* TODO: add reason parameter to mi interface */
 struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param) {
@@ -469,6 +464,7 @@ error:
     return init_mi_tree(400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 
 }
+#endif
 
 int dlg_bye(struct dlg_cell *dlg, str *hdrs, int side) {
     str all_hdrs = {0, 0};

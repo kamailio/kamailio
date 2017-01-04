@@ -14,24 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * --------
- * 2006-04-14  initial version (bogdan)
- * 2006-11-28  Added num_100s and num_200s to dlg_cell, to aid in adding 
- *             statistics tracking of the number of early, and active dialogs.
- *             (Jeffrey Magder - SOMA Networks)
- * 2007-03-06  syncronized state machine added for dialog state. New tranzition
- *             design based on events; removed num_1xx and num_2xx (bogdan)
- * 2007-07-06  added flags, cseq, contact, route_set and bind_addr 
- *             to struct dlg_cell in order to store these information into db
- *             (ancuta)
- * 2008-04-17  added new dialog flag to avoid state tranzitions from DELETED to
- *             CONFIRMED_NA due delayed "200 OK" (bogdan)
- * 2010-09      Add dlg_out structure to cater for forked calls and early dialog termination (richard and jason)
  */
 
 /*!
@@ -45,7 +31,6 @@
 #define _DIALOG_DLG_HASH_H_
 
 #include "../../core/locking.h"
-#include "../../lib/kmi/mi.h"
 #include "dlg_timer.h"
 #include "dlg_cb.h"
 #include "../../modules/tm/tm_load.h"
@@ -62,7 +47,7 @@
 /* events for dialog processing */
 #define DLG_EVENT_TDEL         1 /*!< transaction was destroyed */
 #define DLG_EVENT_RPL1xx       2 /*!< 1xx request */
-#define DLG_EVENT_RPL2xx       3 /*!< 2xx request */ 
+#define DLG_EVENT_RPL2xx       3 /*!< 2xx request */
 #define DLG_EVENT_RPL3xx       4 /*!< 3xx request */
 #define DLG_EVENT_REQPRACK     5 /*!< PRACK request */
 #define DLG_EVENT_REQACK       6 /*!< ACK request */
@@ -410,32 +395,6 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 
 
 /*!
- * \brief Output all dialogs via the MI interface
- * \param cmd_tree MI root node
- * \param param unused
- * \return a mi node with the dialog information, or NULL on failure
- */
-struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param);
-
-
-
-/*!
- * \brief Print a dialog context via the MI interface
- * \param cmd_tree MI command tree
- * \param param unused
- * \return mi node with the dialog information, or NULL on failure
- */
-struct mi_root * mi_print_dlgs_ctx(struct mi_root *cmd, void *param);
-
-/*!
- * \brief Terminate selected dialogs via the MI interface
- * \param cmd_tree MI command tree
- * \param param unused
- * \return mi node with the dialog information, or NULL on failure
- */
-struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param);
-
-/*!
  * \brief Check if a dialog structure matches to a SIP message dialog
  * \param dlg dialog structure
  * \param callid SIP message Call-ID
@@ -591,18 +550,6 @@ static inline int match_downstream_dialog(struct dlg_cell *dlg, str *callid, str
     }
     return 1;
 }
-
-
-/*!
- * \brief Output a dialog via the MI interface
- * \param rpl MI node that should be filled
- * \param dlg printed dialog
- * \param with_context if 1 then the dialog context will be also printed
- * \return 0 on success, -1 on failure
- */
-int mi_print_dlg(struct mi_node *rpl, struct dlg_cell *dlg, int with_context);
-
-
 
 /*!
  * \brief Create a new dialog out structure for a SIP dialog
