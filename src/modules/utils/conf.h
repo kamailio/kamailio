@@ -13,14 +13,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*!
  * \file
- * \brief Kamailio utils :: 
+ * \brief Kamailio utils ::
  * \ingroup utils
  * Module: \ref utils
  */
@@ -29,7 +29,6 @@
 #ifndef CONF_H
 #define CONF_H
 
-#include "../../lib/kmi/mi.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/proxy.h"
 
@@ -42,8 +41,6 @@ int conf_parse_filter(char *settings);
 int conf_parse_proxy(char *settings);
 
 struct proxy_l *conf_needs_forward(struct sip_msg *msg, int id);
-
-int conf_show(struct mi_root* rpl_tree);
 
 int conf_init(int max_id);
 

@@ -17,8 +17,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -71,11 +71,13 @@ str pres_db_url = {0, 0};
 /* lock for configuration access */
 static gen_lock_t *conf_lock = NULL;
 
+#ifdef MI_REMOVED
 /* FIFO interface functions */
 static struct mi_root* forward_fifo_list(struct mi_root* cmd_tree, void *param);
 static struct mi_root* forward_fifo_switch(struct mi_root* cmd_tree, void* param);
 static struct mi_root* forward_fifo_filter(struct mi_root* cmd_tree, void* param);
 static struct mi_root* forward_fifo_proxy(struct mi_root* cmd_tree, void* param);
+#endif
 
 /* Database connection */
 db1_con_t *pres_dbh = NULL;
@@ -130,6 +132,7 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
+#ifdef MI_REMOVED
 static mi_export_t mi_cmds[] = {
 	{ "forward_list",   forward_fifo_list,   MI_NO_INPUT_FLAG, 0,  0 },
 	{ "forward_switch", forward_fifo_switch, 0, 0,  0 },
@@ -137,6 +140,7 @@ static mi_export_t mi_cmds[] = {
 	{ "forward_proxy",  forward_fifo_proxy,  0, 0,  0 },
 	{ 0, 0, 0, 0, 0}
 };
+#endif
 
 /* Module interface */
 struct module_exports exports = {
@@ -145,7 +149,7 @@ struct module_exports exports = {
 	cmds,      /* Exported functions */
 	params,    /* Exported parameters */
 	0,         /* exported statistics */
-	mi_cmds,   /* exported MI functions */
+	0,         /* exported MI functions */
 	0,         /* exported pseudo-variables */
 	0,         /* extra processes */
 	mod_init,  /* module initialization function */
@@ -243,12 +247,6 @@ static int pres_db_open(void) {
 /* Module initialization function */
 static int mod_init(void)
 {
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-
 	/* Initialize curl */
 	if (curl_global_init(CURL_GLOBAL_ALL)) {
 		LM_ERR("curl_global_init failed\n");
@@ -516,6 +514,7 @@ int utils_forward(struct sip_msg *msg, int id, int proto)
 }
 
 
+#ifdef MI_REMOVED
 /* FIFO functions */
 
 /*!
@@ -638,3 +637,4 @@ static struct mi_root* forward_fifo_proxy(struct mi_root* cmd_tree, void* param)
 	}
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
+#endif
