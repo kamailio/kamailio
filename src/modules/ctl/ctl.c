@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -57,7 +57,7 @@ static int usock_gid=-1;
 
 /* if set try to automatically convert values to the requested type in
    rpc->scan (default: not set) */
-extern int autoconvert; 
+extern int autoconvert;
 extern int binrpc_max_body_size;
 extern int binrpc_struct_max_body_size;
 
@@ -96,7 +96,7 @@ static param_export_t params[]={
 	{"autoconversion",	PARAM_INT,					&autoconvert			 },
 	{"binrpc_max_body_size",        PARAM_INT, &binrpc_max_body_size         },
 	{"binrpc_struct_max_body_size", PARAM_INT, &binrpc_struct_max_body_size  },
-	{0,0,0} 
+	{0,0,0}
 }; /* no params */
 
 struct module_exports exports= {
@@ -121,7 +121,7 @@ static int add_binrpc_socket(modparam_t type, void * val)
 {
 	char *s;
 	struct id_list* id;
-	
+
 	if ((type & PARAM_STRING)==0){
 		LOG(L_CRIT, "BUG: ctl: add_binrpc_socket: bad parameter type %d\n",
 					type);
@@ -148,7 +148,7 @@ static int add_fifo_socket(modparam_t type, void * val)
 {
 	char *s;
 	struct id_list* id;
-	
+
 	if ((type & PARAM_STRING)==0){
 		LOG(L_CRIT, "BUG: ctl: add_fifo: bad parameter type %d\n",
 					type);
@@ -174,7 +174,7 @@ error:
 static int fix_user(modparam_t type, void * val)
 {
 	char* s;
-	
+
 	if ((type & PARAM_STRING)==0){
 		LOG(L_CRIT, "BUG: ctl: fix_user: bad parameter type %d\n",
 					type);
@@ -195,7 +195,7 @@ error:
 static int fix_group(modparam_t type, void * val)
 {
 	char* s;
-	
+
 	if ((type & PARAM_STRING)==0){
 		LOG(L_CRIT, "BUG: ctl: fix_group: bad parameter type %d\n",
 					type);
@@ -257,7 +257,7 @@ static int mod_init(void)
 						payload_proto_name(l->data_proto), l->name);
 				break;
 			case UDP_SOCK:
-				DBG("        [%s:udp]         %s:%d\n", 
+				DBG("        [%s:udp]         %s:%d\n",
 						payload_proto_name(l->data_proto), l->name,
 						l->port?l->port:DEFAULT_CTL_PORT);
 				break;
@@ -310,7 +310,7 @@ static int mod_child(int rank)
 	int pid;
 	struct ctrl_socket* cs;
 	static int rpc_handler=0;
-	
+
 	/* do nothing from PROC_INIT, is the same as PROC_MAIN */
 	if (rank==PROC_INIT)
 		return 0;
@@ -325,7 +325,7 @@ static int mod_child(int rank)
 		pid=fork_process(PROC_RPC, "ctl handler", 1);
 		DBG("ctl: mod_child(%d), fork_process=%d, csl=%p\n",
 				rank, pid, ctrl_sock_lst);
-		if (pid<0){			
+		if (pid<0){
 			goto error;
 		}
 		if (pid == 0){ /* child */
@@ -368,7 +368,7 @@ error:
 static void mod_destroy(void)
 {
 	struct ctrl_socket* cs;
-	
+
 	/* close all the opened fds & unlink the files */
 	for (cs=ctrl_sock_lst; cs; cs=cs->next){
 		switch(cs->transport){
@@ -416,7 +416,7 @@ static void mod_destroy(void)
 static void  ctrl_listen_ls_rpc(rpc_t* rpc, void* ctx)
 {
 	struct ctrl_socket* cs;
-	
+
 	for (cs=ctrl_sock_lst; cs; cs=cs->next){
 		rpc->add(ctx, "ssss", payload_proto_name(cs->p_proto),
 						socket_proto_name(cs->transport),

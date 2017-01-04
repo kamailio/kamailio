@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -1052,7 +1052,7 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 	int err;
 	struct binrpc_val avp;
 	struct rpc_struct_l* rs;
-	
+
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
 		memset(&avp, 0, sizeof(struct binrpc_val));
@@ -1081,26 +1081,37 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 			case '[':
 				avp.type=BINRPC_T_STRUCT;
 				err=binrpc_addavp(&s->pkt, &avp);
-				if (err<0) goto error_add;
+				if (err<0){
+					LM_ERR("failed to add attribute-value\n");
+					goto error_add;
+				}
 				rs=new_rpc_struct();
-				if (rs==0) goto error_mem;
+				if (rs==0){
+					LM_ERR("not enough memory\n");
+					goto error_mem;
+				}
 				rs->offset=binrpc_pkt_len(&s->pkt);
 				err=binrpc_end_struct(&s->pkt);
-				if (err<0) goto error_add;
+				if (err<0) {
+					LM_ERR("failed to end struct\n");
+					goto error_add;
+				}
 				clist_append(&s->substructs, rs, next, prev);
 				*(va_arg(ap, void**))=rs;
 				goto end;
-			case 'f': 
+			case 'f':
 				avp.type=BINRPC_T_DOUBLE;
 				avp.u.fval=va_arg(ap, double);
 				break;
-			default: 
-				LOG(L_CRIT, "BUG: binrpc: rpc_struct_add: formatting char"
-							" \'%c\'" " not supported\n", *fmt);
+			default:
+				LM_ERR("formatting char \'%c\'" " not supported\n", *fmt);
 				goto error;
 		}
 		err=binrpc_addavp(&s->pkt, &avp);
-		if (err<0) goto error;
+		if (err<0) {
+			LM_ERR("failed to add attribute-value\n");
+			goto error;
+		}
 	}
 end:
 	va_end(ap);
@@ -1120,7 +1131,7 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 	char* sv;
 	str* st;
 	struct rpc_struct_l* rs;
-	
+
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
 		switch(*fmt){
@@ -1134,7 +1145,7 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 			case 's': /* asciiz */
 				sv=va_arg(ap, char*);
 				if (sv==0) /* fix null strings */
-					sv="<null string>"; 
+					sv="<null string>";
 				err=binrpc_addstr(&s->pkt, sv, strlen(sv));
 				if (err<0) goto error_add;
 				break;
@@ -1155,11 +1166,11 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 				clist_append(&s->substructs, rs, next, prev);
 				*(va_arg(ap, void**))=rs;
 				break;
-			case 'f': 
+			case 'f':
 				err=binrpc_adddouble(&s->pkt, va_arg(ap, double));
 				if (err<0) goto error_add;
 				break;
-			default: 
+			default:
 				LOG(L_CRIT, "BUG: binrpc: rpc_add: formatting char \'%c\'"
 							" not supported\n", *fmt);
 				goto error;
