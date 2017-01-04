@@ -44,7 +44,7 @@ Richard Fuchs
 
    Copyright © 2010 VoIPEmbedded Inc.
 
-   Copyright © 2013-2015 Sipwise GmbH
+   Copyright © 2013-2017 Sipwise GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -98,14 +98,10 @@ Richard Fuchs
         7. RPC Commands
 
               7.1. rtpengine.reload
-
-        8. MI Commands
-
-              8.1. nh_enable_rtpp proxy_url/all 0/1
-              8.2. nh_show_rtpp proxy_url/all
-              8.3. nh_ping_rtpp proxy_url/all
-              8.4. nh_reload_rtpp
-              8.5. nh_show_hash_total
+              7.2. rtpengine.enable proxy_url/all 0/1
+              7.3. rtpengine.show proxy_url/all
+              7.4. rtpengine.ping proxy_url/all
+              7.5. rtpengine.get_hash_total
 
    2. Frequently Asked Questions
 
@@ -141,11 +137,10 @@ Richard Fuchs
    1.28. start_recording usage
    1.29. $rtpstat Usage
    1.30. rtpengine.reload usage
-   1.31. nh_enable_rtpp usage
-   1.32. nh_show_rtpp usage
-   1.33. nh_ping_rtpp usage
-   1.34. nh_reload_rtpp usage
-   1.35. nh_show_hash_total usage
+   1.31. rtpengine.enable usage
+   1.32. rtpengine.show usage
+   1.33. rtpengine.ping usage
+   1.34. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -198,14 +193,10 @@ Chapter 1. Admin Guide
    7. RPC Commands
 
         7.1. rtpengine.reload
-
-   8. MI Commands
-
-        8.1. nh_enable_rtpp proxy_url/all 0/1
-        8.2. nh_show_rtpp proxy_url/all
-        8.3. nh_ping_rtpp proxy_url/all
-        8.4. nh_reload_rtpp
-        8.5. nh_show_hash_total
+        7.2. rtpengine.enable proxy_url/all 0/1
+        7.3. rtpengine.show proxy_url/all
+        7.4. rtpengine.ping proxy_url/all
+        7.5. rtpengine.get_hash_total
 
 1. Overview
 
@@ -1022,8 +1013,7 @@ rtpengine_manage();
 5.6.  start_recording()
 
    This function will send a signal to the RTP proxy to record the RTP
-   stream on the RTP proxy. This function is not supported by Sipwise
-   rtpengine at the moment!
+   stream on the RTP proxy.
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
@@ -1051,6 +1041,10 @@ start_recording();
 7. RPC Commands
 
    7.1. rtpengine.reload
+   7.2. rtpengine.enable proxy_url/all 0/1
+   7.3. rtpengine.show proxy_url/all
+   7.4. rtpengine.ping proxy_url/all
+   7.5. rtpengine.get_hash_total
 
 7.1. rtpengine.reload
 
@@ -1067,15 +1061,7 @@ start_recording();
 $ kamcmd rtpengine.reload
 ...
 
-8. MI Commands
-
-   8.1. nh_enable_rtpp proxy_url/all 0/1
-   8.2. nh_show_rtpp proxy_url/all
-   8.3. nh_ping_rtpp proxy_url/all
-   8.4. nh_reload_rtpp
-   8.5. nh_show_hash_total
-
-8.1. nh_enable_rtpp proxy_url/all 0/1
+7.2. rtpengine.enable proxy_url/all 0/1
 
    Enables a RTP proxy if the second parameter value is greater than 0.
    Disables it if a zero value is given. The first parameter is either a
@@ -1101,14 +1087,14 @@ $ kamcmd rtpengine.reload
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.31.  nh_enable_rtpp usage
+   Example 1.31.  rtpengine.enable usage
 ...
-$ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
-$ kamctl fifo nh_enable_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
-$ kamctl fifo nh_enable_rtpp all 1
+$ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
+$ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
+$ kamcmd rtpengine.enable all 1
 ...
 
-8.2. nh_show_rtpp proxy_url/all
+7.3. rtpengine.show proxy_url/all
 
    Displays all the RTP proxies and their information: set and status
    (disabled or not, weight and recheck_ticks). If a RTP proxy has been
@@ -1124,14 +1110,14 @@ $ kamctl fifo nh_enable_rtpp all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.32.  nh_show_rtpp usage
+   Example 1.32.  rtpengine.show usage
 ...
-$ kamctl fifo nh_show_rtpp udp:192.168.2.133:8081
-$ kamctl fifo nh_show_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
-$ kamctl fifo nh_show_rtpp all
+$ kamcmd rtpengine.show udp:192.168.2.133:8081
+$ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ kamcmd rtpengine.show all
 ...
 
-8.3. nh_ping_rtpp proxy_url/all
+7.4. rtpengine.ping proxy_url/all
 
    Sends an application ping command to the RTP proxy. If the proxy does
    not respond, it will be disabled, but not permanent. If the proxy
@@ -1144,36 +1130,21 @@ $ kamctl fifo nh_show_rtpp all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.33.  nh_ping_rtpp usage
+   Example 1.33.  rtpengine.ping usage
 ...
-$ kamctl fifo nh_ping_rtpp udp:192.168.2.133:8081
-$ kamctl fifo nh_ping_rtpp ::udp6:fe80::9a90:96ff:fea8:fd99:9999
-$ kamctl fifo nh_ping_rtpp all
-...
-
-8.4. nh_reload_rtpp
-
-   Reloads the database node table content if configured. Returns specific
-   message related to success, failure and no db_url configured.
-
-   NOTE: The current behaviour updates the nodes state or creates new ones
-   or hides old ones, based on the database content. If allow_op modparam
-   is enabled, the sessions are still allowed to finish for the hidden old
-   nodes.
-
-   Example 1.34.  nh_reload_rtpp usage
-...
-$ kamctl fifo nh_reload_rtpp
+$ kamcmd rtpengine.ping udp:192.168.2.133:8081
+$ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
+$ kamcmd rtpengine.ping all
 ...
 
-8.5. nh_show_hash_total
+7.5. rtpengine.get_hash_total
 
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.35.  nh_show_hash_total usage
+   Example 1.34.  rtpengine.get_hash_total usage
 ...
-$ kamctl fifo nh_show_hash_total
+$ kamcmd rtpengine.get_hash_total
 ...
 
 Chapter 2. Frequently Asked Questions
