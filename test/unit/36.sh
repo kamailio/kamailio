@@ -72,7 +72,7 @@ if [ $ret -eq 0 ]; then
 fi;
 
 sleep 1
-$KILL
+kill_kamailio
 
 $MYSQL "delete from location where user_agent = '___test___'"
 

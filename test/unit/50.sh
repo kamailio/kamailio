@@ -155,7 +155,7 @@ $MYSQL_LOC_A "delete from location where username like '497211234567%';"
 $MYSQL_LOC_B "delete from location where username like '497211234567%';"
 
 
-$KILL
+kill_kamailio
 
 mv $CFG.bak $CFG
 

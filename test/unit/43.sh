@@ -96,6 +96,6 @@ fi;
 
 rm $CFG
 rm $TMPFILE
-$KILL
+kill_kamailio
 
 exit $ret

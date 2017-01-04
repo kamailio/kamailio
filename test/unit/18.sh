@@ -41,7 +41,7 @@ ret=$?
 sleep 1
 
 # clean up:
-$KILL
+kill_kamailio
 
 rm $CFG
 rm -f ./pid.out

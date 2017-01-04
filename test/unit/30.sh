@@ -62,7 +62,7 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 killall -9 sipp
 
 mv $CFG.bak $CFG

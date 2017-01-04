@@ -76,7 +76,7 @@ if [ $ret -eq 0 ] ; then
 	fi;
 fi ;
 
-$KILL
+kill_kamailio
 
 # cleanup database
 $MYSQL "delete from carrier_name where id = 1;"

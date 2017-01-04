@@ -80,7 +80,7 @@ if [ "$ret" -eq 0 ]; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 
 # restart to test preload_udomain functionality
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
@@ -100,7 +100,7 @@ if [ "$ret" -eq 0 ]; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 
 echo "delete from location where username like '49721123456789%';" | $ISQL
 

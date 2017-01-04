@@ -105,7 +105,7 @@ Printing tree for domain 'domain1' (10)
 	fi ;
 fi ;
 
-$KILL
+kill_kamailio
 
 # cleanup database
 $MYSQL "delete from carrier_name where id = 1;"

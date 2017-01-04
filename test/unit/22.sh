@@ -77,7 +77,7 @@ if [ "$ret" -eq 0 ]; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 
 # restart to test preload_udomain functionality
 $BIN -w . -f $CFG > /dev/null
@@ -97,7 +97,7 @@ if [ "$ret" -eq 0 ]; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 
 $PSQL "delete from location where username like '49721123456789%';"
 

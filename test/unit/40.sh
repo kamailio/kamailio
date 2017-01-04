@@ -66,7 +66,7 @@ if [ "$ret" -eq 1 ]; then
 fi;
 
 sleep 1
-$KILL
+kill_kamailio
 killall -9 sipp > /dev/null 2>&1
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1:$UAS\") and (user_agent = \"ser_test\"));"

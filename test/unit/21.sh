@@ -51,7 +51,7 @@ fi
 sleep 1
 
 #cleanup
-$KILL > /dev/null
+kill_kamailio
 killall -9 sipp > /dev/null 2>&1
 $MYSQL "DELETE FROM subscriber WHERE((username = \"alice\") and (domain = \"localhost\"));"
 

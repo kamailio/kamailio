@@ -65,7 +65,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup:
-$KILL >/dev/null
+kill_kamailio
 killall -9 sipp >/dev/null 2>&1
 rm $TMPFILE
 mv $CFG.tmp $CFG

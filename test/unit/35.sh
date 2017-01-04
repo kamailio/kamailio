@@ -64,7 +64,7 @@ fi;
 
 # cleanup
 killall -9 sipp > /dev/null 2>&1
-$KILL > /dev/null 2>&1
+kill_kamailio
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
 $MYSQL "DELETE FROM trusted WHERE (src_ip=\"127.0.0.1\");"

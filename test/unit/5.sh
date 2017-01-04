@@ -36,6 +36,6 @@ $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -A WITH_SRCPATH -a no > /d
 ret=$?
 
 sleep 1
-$KILL
+kill_kamailio
 
 exit $ret

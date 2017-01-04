@@ -23,9 +23,9 @@
 . include/require.sh
 . include/database.sh
 
-function cleanup() {
+cleanup() {
 	killall -9 sipp > /dev/null 2>&1
-	$KILL > /dev/null 2>&1
+	kill_kamailio	
 
 	$MYSQL "delete from location where (user_agent = \"kamailio_test\");"
 	$MYSQL "delete from userblacklist where username='49721123456786';"

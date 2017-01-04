@@ -46,7 +46,7 @@ sleep 1
 
 # cleanup
 killall -9 sipp &> /dev/null
-$KILL &> /dev/null
+kill_kamailio
 rm $TMPFILE
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1\") and (user_agent = \"kamailio_test\"));"

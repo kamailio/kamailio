@@ -155,7 +155,7 @@ if [ "$ret" -eq 0 ]; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 
 # restart to test preload_udomain functionality
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no> /dev/null
@@ -178,6 +178,6 @@ fi;
 # cleanup
 $MYSQL "delete from location where username like '49721123456789%';"
 
-$KILL
+kill_kamailio
 
 exit $ret

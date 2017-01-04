@@ -84,7 +84,7 @@ if [ "$ret" -eq 0 ] ; then
 	fi ;
 fi ;
 cat $TMPFILE
-$KILL
+kill_kamailio
 rm $TMPFILE
 
 exit $ret

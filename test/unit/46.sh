@@ -32,7 +32,7 @@ SRV=5060
 UAS=5070
 UAC=5080
 
-function test_module_int()
+test_module_int()
 {
 	if [ x$# != x3 ] ; then 
 		echo "wrong number of params : usage test_module module cfg_param value"
@@ -87,7 +87,7 @@ ret=$?
 
 # cleanup
 killall -9 sipp > /dev/null 2>&1
-$KILL > /dev/null 2>&1
+kill_kamailio
 
 mv ${CFG}.bak $CFG
 

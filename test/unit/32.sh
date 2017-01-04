@@ -50,7 +50,7 @@ $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-$KILL
+kill_kamailio
 
 $PSQL "delete from location where user_agent = '___test___'"
 

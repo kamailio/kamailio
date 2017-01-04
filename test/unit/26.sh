@@ -124,7 +124,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 
-$KILL
+kill_kamailio
 killall -9 sipp
 
 # cleanup database

@@ -43,7 +43,7 @@ $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -A FETCHROWS=17 -a no >/de
 ret=$?
 
 sleep 1
-$KILL >/dev/null
+kill_kamailio
 
 $MYSQL "delete from location where user_agent = '___test___'"
 

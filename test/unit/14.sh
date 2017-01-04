@@ -71,7 +71,7 @@ Printing tree for domain 'other' (3)
 	fi ;
 fi ;
 
-$KILL
+kill_kamailio
 
 mv $CFG.bak $CFG
 rm -f $TMPFILE

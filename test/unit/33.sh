@@ -59,7 +59,7 @@ if [ ! $ret -eq 0 ] ; then
 fi
 
 sleep 1
-$KILL >/dev/null 2>&1
+kill_kamailio
 ret=$?
 
 if [ $ret -eq 0 ] ; then

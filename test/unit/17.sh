@@ -58,7 +58,7 @@ if [ "$ret" -eq 0 ] ; then
 fi ;
 
 sleep 1
-$KILL
+kill_kamailio
 
 # cleanup
 cd $CTL_DIR
