@@ -117,15 +117,12 @@
 ## - default: none
 # ALIASES_TYPE="DB"
 
-## control engine: FIFO, RPCFIFO or UNIXSOCK
+## control engine: RPCFIFO
 ## - default RPCFIFO
 # CTLENGINE="RPCFIFO"
 
 ## path to FIFO file for engine RPCFIFO
 # RPCFIFOPATH="/var/run/kamailio/kamailio_rpc_fifo"
-
-## path to FIFO file for engine FIFO
-# FIFOPATH="/var/run/kamailio/kamailio_fifo"
 
 ## check ACL names; default on (1); off (0)
 # VERIFY_ACL=1

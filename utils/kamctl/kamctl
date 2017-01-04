@@ -176,30 +176,11 @@ if [ -z "$CTLENGINE" ] ; then
 	CTLENGINE="RPCFIFO"
 fi
 case $CTLENGINE in
-	FIFO|fifo)
-		if [ -f "$MYLIBDIR/kamctl.fifo" ]; then
-			. "$MYLIBDIR/kamctl.fifo"
-			CTLENGINELOADED=1
-		fi
-		;;
 	RPCFIFO|rpcfifo)
 		if [ -f "$MYLIBDIR/kamctl.rpcfifo" ]; then
 			. "$MYLIBDIR/kamctl.rpcfifo"
 			CTLENGINELOADED=1
 			CTLENGINETYPE=1
-		fi
-		;;
-	UNIXSOCK|unixsock)
-		if [ -f "$MYLIBDIR/kamctl.unixsock" ]; then
-			. "$MYLIBDIR/kamctl.unixsock"
-			CTLENGINELOADED=1
-		fi
-		;;
-	SER_MI|ser_mi|SERCMD_MI|sercmd_mi|SERCMDMI|sercmdmi)
-		require_kamcmd
-		if [ -f "$MYLIBDIR/kamctl.ser_mi" ]; then
-			. "$MYLIBDIR/kamctl.ser_mi"
-			CTLENGINELOADED=1
 		fi
 		;;
 esac
@@ -2838,13 +2819,13 @@ case $1 in
 		permissions_address "$@"
 		;;
 
-	fifo|mi|rpc|unixsock|ser_mi|sercmd_mi|sercmdmi|kamcmd_mi|kamcmdmi)
+	rpc)
 		require_ctlengine
 		shift
 		$CTLCMD "$@"
 		;;
 
-	fifoprint|miprint|rpcprint)
+	rpcprint)
 		require_ctlengine
 		shift
 		$CTLCMDPRINT "$@"
