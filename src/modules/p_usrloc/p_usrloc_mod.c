@@ -262,7 +262,7 @@ stat_export_t mod_stats[] = {
 	{0,0,0}
 };
 
-
+#ifdef MI_REMOVED
 static mi_export_t mi_cmds[] = {
 	{ MI_USRLOC_RM,           mi_usrloc_rm_aor,       0,                 0,
 				mi_child_init },
@@ -280,6 +280,7 @@ static mi_export_t mi_cmds[] = {
 	{ "loc_nr_refresh", mi_loc_nr_refresh, MI_NO_INPUT_FLAG,  0, mi_child_loc_nr_init },
 	{ 0, 0, 0, 0, 0}
 };
+#endif
 
 
 struct module_exports exports = {
@@ -288,7 +289,7 @@ struct module_exports exports = {
 	cmds,       /*!< Exported functions */
 	params,     /*!< Export parameters */
 	mod_stats,  /*!< exported statistics */
-	mi_cmds,    /*!< exported MI functions */
+	0,          /*!< exported MI functions */
 	0,          /*!< exported pseudo-variables */
 	0,          /*!< extra processes */
 	mod_init,   /*!< Module initialization function */
@@ -310,13 +311,7 @@ static int mod_init(void)
 		return -1;
 	}
 #endif
-	
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
-	
+
 	if(ul_hash_size<=1)
 		ul_hash_size = 512;
 	else
@@ -428,14 +423,6 @@ static int child_init(int _rank)
 }
 
 
-/* */
-static int mi_child_init(void)
-{
-
-	return ul_db_child_init();
-}
-
-
 /*! \brief
  * Module destroy function
  */
@@ -456,6 +443,7 @@ static void destroy(void)
 }
 
 
+#ifdef MI_REMOVED
 static int mi_child_loc_nr_init(void)
 {
 	if(ul_db_child_locnr_init() < 0){
@@ -480,3 +468,4 @@ struct mi_root*  mi_loc_nr_refresh(struct mi_root* cmd_tree, void* param) {
 	/* this function does nothing, all work is done per each child in the mi_child_loc_nr_init function */
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
+#endif

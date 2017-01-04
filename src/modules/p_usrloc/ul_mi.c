@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -25,6 +25,15 @@
  *
  * - Module: \ref usrloc
  */
+
+#ifdef MI_REMOVED
+
+#define MI_USRLOC_RM           "ul_rm"
+#define MI_USRLOC_RM_CONTACT   "ul_rm_contact"
+#define MI_USRLOC_DUMP         "ul_dump"
+#define MI_USRLOC_FLUSH        "ul_flush"
+#define MI_USRLOC_ADD          "ul_add"
+#define MI_USRLOC_SHOW_CONTACT "ul_show_contact"
 
 #include <string.h>
 #include <stdio.h>
@@ -587,3 +596,4 @@ error:
 	unlock_udomain( dom, aor);
 	return 0;
 }
+#endif

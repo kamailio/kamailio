@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -32,7 +32,6 @@
 
 #include "../../lib/srdb1/db.h"
 #include "../../core/str.h"
-#include "../../lib/kmi/mi.h"
 #include "../usrloc/usrloc.h"
 
 /*
@@ -103,9 +102,6 @@ extern int expire;
 
 extern int matching_mode;
 extern int ul_db_ops_ruid;
-
-struct mi_root* mi_ul_db_refresh(struct mi_root* cmd, void* param);
-struct mi_root* mi_loc_nr_refresh(struct mi_root* cmd, void* param);
 
 extern str write_db_url;
 extern str read_db_url;
