@@ -66,7 +66,6 @@
 #include "../../core/ut.h"
 #include "../../core/pt.h"
 #include "../../core/timer_proc.h"
-#include "../../lib/kmi/mi.h"
 #include "../../core/pvar.h"
 #include "../../core/lvalue.h"
 #include "../../core/msg_translator.h"
@@ -107,6 +106,7 @@ MODULE_VERSION
 #define MI_SET_NATPING_STATE		"nh_enable_ping"
 #define MI_DEFAULT_NATPING_STATE	1
 
+#ifdef MI_REMOVED
 #define MI_ENABLE_RTP_PROXY			"nh_enable_rtpp"
 #define MI_SHOW_RTP_PROXIES			"nh_show_rtpp"
 #define MI_PING_RTP_PROXY			"nh_ping_rtpp"
@@ -160,7 +160,7 @@ MODULE_VERSION
 #define MI_FOUND_ALL				2
 #define MI_FOUND_ONE				1
 #define MI_FOUND_NONE				0
-
+#endif
 
 #define	CPORT					"22222"
 
@@ -211,20 +211,21 @@ static int get_ip_type(char *str_addr);
 static int get_ip_scope(char *str_addr); // useful for link-local ipv6
 static int bind_force_send_ip(int sock_idx);
 
-static int add_rtpp_node_info(struct mi_node *node, struct rtpp_node *crt_rtpp, struct rtpp_set *rtpp_list);
 static int rtpp_test_ping(struct rtpp_node *node);
 
 /* Pseudo-Variables */
 static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
 
+#ifdef MI_REMOVED
+static int add_rtpp_node_info(struct mi_node *node, struct rtpp_node *crt_rtpp, struct rtpp_set *rtpp_list);
 /*mi commands*/
 static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree, void* param);
 static struct mi_root* mi_show_rtp_proxy(struct mi_root* cmd_tree, void* param);
 static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree, void* param);
 static struct mi_root* mi_show_hash_total(struct mi_root* cmd_tree, void* param);
 static struct mi_root* mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param);
-
+#endif
 
 static int rtpengine_allow_op = 0;
 static struct rtpp_node **queried_nodes_ptr = NULL;
@@ -355,6 +356,7 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
+#ifdef MI_REMOVED
 static mi_export_t mi_cmds[] = {
 	{MI_ENABLE_RTP_PROXY,     mi_enable_rtp_proxy,  0,  0,  0},
 	{MI_SHOW_RTP_PROXIES,     mi_show_rtp_proxy,    0,  0,  0},
@@ -363,7 +365,7 @@ static mi_export_t mi_cmds[] = {
 	{MI_RELOAD_RTP_PROXY,     mi_reload_rtp_proxy,  0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
-
+#endif
 
 struct module_exports exports = {
 	"rtpengine",
@@ -371,7 +373,7 @@ struct module_exports exports = {
 	cmds,
 	params,
 	0,           /* exported statistics */
-	mi_cmds,     /* exported MI functions */
+	0,           /* exported MI functions */
 	mod_pvs,     /* exported pseudo-variables */
 	0,           /* extra processes */
 	mod_init,
@@ -1054,6 +1056,7 @@ error:
 	return -1;
 }
 
+#ifdef MI_REMOVED
 static struct mi_root* mi_enable_rtp_proxy(struct mi_root *cmd_tree, void *param)
 {
 	struct mi_node *node, *crt_node;
@@ -1611,6 +1614,7 @@ mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param)
 
 	return root;
 }
+#endif
 
 static void  rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 {
@@ -1665,11 +1669,6 @@ mod_init(void)
 	unsigned short avp_flags;
 	str s;
 
-	if(register_mi_mod(exports.name, mi_cmds)!=0)
-	{
-		LM_ERR("failed to register MI commands\n");
-		return -1;
-	}
 	if(rtpengine_rpc_init()<0)
 	{
 		LM_ERR("failed to register RPC commands\n");
