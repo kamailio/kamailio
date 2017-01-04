@@ -2,8 +2,10 @@
 DB_ALL_MOD="acc|alias_db|auth_db|avpops|dialog|dialplan|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist"
 # root directory relative to tests
 RUN_DIR="."
-SRC_DIR="../.."
-CTL_DIR="$SRC_DIR/utils/kamctl"
+TOP_DIR="../.."
+SRC_DIR="${TOP_DIR}/src"
+MOD_DIR="${SRC_DIR}/modules"
+CTL_DIR="${TOP_DIR}/utils/kamctl"
 CTLRC="$CTL_DIR/kamctlrc"
 CTL="$CTL_DIR/kamctl"
 DBCTL="$CTL_DIR/kamdbctl"
