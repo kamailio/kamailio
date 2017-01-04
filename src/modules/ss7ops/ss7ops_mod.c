@@ -88,10 +88,6 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
-static mi_export_t mi_cmds[] = {
-	{ 0, 0, 0, 0, 0}
-};
-
 static int mod_init(void)
 {
 	LM_DBG("ss7 module\n");
@@ -109,8 +105,8 @@ struct module_exports exports = {
 	cmds,       /*!< Exported functions */
 	params,     /*!< Exported parameters */
 	0,
-	mi_cmds,    /*!< exported MI functions */
-	mod_pvs,          /*!< exported pseudo-variables */
+	0,          /*!< exported MI functions */
+	mod_pvs,    /*!< exported pseudo-variables */
 	0,          /*!< extra processes */
 	mod_init,   /*!< module initialization function */
 	0,          /*!< response function */
