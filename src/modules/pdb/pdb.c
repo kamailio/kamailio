@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -27,7 +27,6 @@
 #include "../../core/sr_module.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/kmi/mi.h"
 #include <sys/time.h>
 #include <poll.h>
 #include <stdlib.h>
@@ -81,13 +80,8 @@ static int pdb_query_fixup(void **arg, int arg_no);
 /* ---- module init functions: */
 static int mod_init(void);
 static int child_init(int rank);
-static int mi_child_init(void);
+static int rpc_child_init(void);
 static void mod_destroy();
-
-/* --- fifo functions */
-struct mi_root * mi_pdb_status(struct mi_root* cmd, void* param);  /* usage: kamctl fifo pdb_status */
-struct mi_root * mi_pdb_activate(struct mi_root* cmd, void* param);  /* usage: kamctl fifo pdb_activate */
-struct mi_root * mi_pdb_deactivate(struct mi_root* cmd, void* param);  /* usage: kamctl fifo pdb_deactivate */
 
 /* debug function for the new client <-> server protocol */
 static void pdb_msg_dbg(struct pdb_msg msg, char *dbg_msg);
@@ -111,6 +105,7 @@ static param_export_t params[] = {
 };
 
 
+#ifdef MI_REMOVED
 /* Exported MI functions */
 static mi_export_t mi_cmds[] = {
 	{ "pdb_status", mi_pdb_status, MI_NO_INPUT_FLAG, 0, mi_child_init },
@@ -118,7 +113,7 @@ static mi_export_t mi_cmds[] = {
 	{ "pdb_deactivate", mi_pdb_deactivate, MI_NO_INPUT_FLAG, 0, mi_child_init },
 	{ 0, 0, 0, 0, 0}
 };
-
+#endif
 
 struct module_exports exports = {
 	"pdb",
@@ -126,7 +121,7 @@ struct module_exports exports = {
 	cmds,       /* Exported functions */
 	params,     /* Export parameters */
 	0,          /* exported statistics */
-	mi_cmds,    /* exported MI functions */
+	0,          /* exported MI functions */
 	0,          /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* Module initialization function */
@@ -721,6 +716,7 @@ static void destroy_server_socket(void)
 }
 
 
+#ifdef MI_REMOVED
 struct mi_root * mi_pdb_status(struct mi_root* cmd, void* param)
 {
 	struct mi_root * root = NULL;
@@ -758,7 +754,7 @@ struct mi_root * mi_pdb_activate(struct mi_root* cmd, void* param)
 	*active=1;
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
-
+#endif
 
 static int mod_init(void)
 {
@@ -783,13 +779,13 @@ static int child_init (int rank)
 {
 	if(rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0;
-	return mi_child_init();
+	return rpc_child_init();
 }
 
 
 static int pdb_child_initialized = 0;
 
-static int mi_child_init(void)
+static int rpc_child_init(void)
 {
 	if(pdb_child_initialized)
 		return 0;
