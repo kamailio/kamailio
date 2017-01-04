@@ -21,9 +21,9 @@
 
 # Needs a default kamailio database setup for mysql
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 CFG=2.cfg
 

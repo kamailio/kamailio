@@ -25,3 +25,7 @@ KILL="killall -15 $BNAME"
 PIDFILE="${RUN_DIR}/kamailio.pid"
 # test directory relative to root
 TEST_DIR="test/unit"
+
+kill_kamailio() {
+	kill $(cat ${PIDFILE})
+}

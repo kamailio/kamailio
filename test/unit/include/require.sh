@@ -1,5 +1,5 @@
+# Copyright (C) 2017 Mikko Lehto
 # Copyright (C) 2008 1&1 Internet AG
-# Copyright (C) 2016 Mikko Lehto
 #
 # This file is part of kamailio, a free SIP server.
 #
@@ -64,6 +64,3 @@ check_sipsak() {
 	return 0
 }
 
-kill_kamailio() {
-	kill $(cat ${PIDFILE})
-}

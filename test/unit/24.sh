@@ -22,7 +22,7 @@
 # Needs a mysql database, the root user password must be given
 # in the file 'dbrootpw' in the test directory
 
-source include/common
+. include/common
 
 if [ ! -f ~/.pgpass ] ; then
        echo "no .pgpass file, not run"
