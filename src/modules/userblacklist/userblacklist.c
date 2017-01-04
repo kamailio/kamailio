@@ -47,6 +47,7 @@
 #include "../../core/error.h"
 #include "../../core/ut.h"
 #include "../../core/mod_fix.h"
+#include "../../core/rpc_lookup.h"
 
 #include "../../lib/trie/dtrie.h"
 #include "db.h"
@@ -1065,8 +1066,38 @@ struct mi_root * mi_check_userwhitelist(struct mi_root* cmd, void* param)
 }
 #endif
 
+static void ubl_rpc_reload_blacklist(rpc_t* rpc, void* ctx)
+{
+	if(reload_sources() != 0) {
+		rpc->fault(ctx, 500, "Reload failed");
+		return;
+	}
+}
+
+static const char* ubl_rpc_reload_blacklist_doc[2] = {
+	"Reload user blacklist records.",
+	0
+};
+
+rpc_export_t ubl_rpc[] = {
+	{"userblacklist.reload_blacklist", ubl_rpc_reload_blacklist,
+		ubl_rpc_reload_blacklist_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int ubl_rpc_init(void)
+{
+	if (rpc_register_array(ubl_rpc)!=0)
+	{
+		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	return 0;
+}
+
 static int mod_init(void)
 {
+	if (ubl_rpc_init()<0) return -1;
 	if (userblacklist_db_init() != 0) return -1;
 	if (init_shmlock() != 0) return -1;
 	if (init_source_list() != 0) return -1;

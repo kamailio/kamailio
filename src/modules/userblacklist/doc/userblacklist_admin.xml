@@ -383,7 +383,28 @@ if (!check_whitelist("globalblacklist")) {
 </section>
 
 <section>
-	<title><acronym>MI</acronym> Commands</title>
+	<title>RPC Commands</title>
+		<section id="userblacklist.r.reload_blacklist">
+			<title>
+				<function moreinfo="none">userblacklist.reload_blacklist</function>
+			</title>
+			<para>
+				Reload the internal global blacklist cache. This is necessary after
+				the database tables for the global blacklist have been changed.
+			</para>
+			<example>
+				<title><function>userblacklist.reload_blacklist</function> usage</title>
+				<programlisting format="linespecific">
+...
+&kamcmd; userblacklist.reload_blacklist
+...
+				</programlisting>
+			</example>
+		</section>
+</section>
+
+<section>
+	<title>MI Commands</title>
 		<section>
 			<title>
 				<function moreinfo="none">reload_blacklist</function>
