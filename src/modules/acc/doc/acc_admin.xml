@@ -19,10 +19,14 @@
 	<para>
 		ACC module is used to account transactions information to different
 		backends like syslog and <abbrev>SQL</abbrev>. With the separate module,
-		<acronym>radius</acronym> support is enabled. There is some very early support of 
+		<acronym>radius</acronym> support is enabled.
+	</para>
+	<para>
+		There is some very early support of 
 		the <acronym>Diameter</acronym> protocol in the code which is no longer included
-		by default. This support is not up to date with the current Diameter protocols and
-		is disabled.
+		by default and will be deleted in coming releases.
+		This support is not up to date with the current Diameter protocols and
+		is disabled. If you need Diameter support, please use the <acronym>ims_charging</acronym> module.
 	</para>
 	<para>
 		To account a transaction and to choose which set of backends to be 
