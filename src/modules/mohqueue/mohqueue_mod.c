@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-#include "mohq.h"
+#include "mohqueue_mod.h"
 #include "mohq_db.h"
 #include "mohq_funcs.h"
 

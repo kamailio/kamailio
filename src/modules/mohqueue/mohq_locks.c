@@ -19,7 +19,7 @@
  *
  */
 
-#include "mohq.h"
+#include "mohqueue_mod.h"
 #include "mohq_locks.h"
 
 /**********
