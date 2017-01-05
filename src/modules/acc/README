@@ -302,9 +302,13 @@ Chapter 1. Admin Guide
 
    ACC module is used to account transactions information to different
    backends like syslog and SQL. With the separate module, radius support
-   is enabled. There is some very early support of the Diameter protocol
-   in the code which is no longer included by default. This support is not
-   up to date with the current Diameter protocols and is disabled.
+   is enabled.
+
+   There is some very early support of the Diameter protocol in the code
+   which is no longer included by default and will be deleted in coming
+   releases. This support is not up to date with the current Diameter
+   protocols and is disabled. If you need Diameter support, please use the
+   ims_charging module.
 
    To account a transaction and to choose which set of backends to be
    used, the script writer just has to set some flags (see the module
