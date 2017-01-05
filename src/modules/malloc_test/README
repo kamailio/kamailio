@@ -38,7 +38,7 @@ Andrei Pelinescu-Onciul
    List of Examples
 
    1.1. Set check_content in the config file
-   1.2. Set check_content at runtime via sercmd
+   1.2. Set check_content at runtime via kamcmd
    1.3. men_alloc usage
    1.4. mem_free usage
    1.5. mt.mem_alloc usage
@@ -106,7 +106,7 @@ Warning
    Example 1.1.  Set check_content in the config file
 modparam("malloc_test", "check_content", 1)
 
-   Example 1.2.  Set check_content at runtime via sercmd
+   Example 1.2.  Set check_content at runtime via kamcmd
 $ kamcmd cfg.set_now_int malloc_test check_content 1
 
 3. Functions
