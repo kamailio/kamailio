@@ -50,7 +50,7 @@
 
 #include "../../core/mem/shm_mem.h"
 #include "../../core/parser/sdp/sdp.h"
-#include "../cdp_avp/mod_export.h"
+#include "../cdp_avp/cdp_avp_mod.h"
 
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "../../modules/tm/tm_load.h"

@@ -214,7 +214,7 @@
 #elif defined(CDP_AVP_EXPORT)
 
 	/*
-	 * This is the export of the functions in the module, so this needs to generate the mod_export.h lists
+	 * This is the export of the functions in the module, so this needs to generate the cdp_avp_mod.h lists
 	 */
 	
 	

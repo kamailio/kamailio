@@ -37,7 +37,7 @@
 #include "../../core/parser/hf.h"
 #include "../../core/mod_fix.h"
 
-#include "autheph_mod.h"
+#include "auth_ephemeral_mod.h"
 #include "authorize.h"
 
 static inline int get_pass(str *_username, str *_secret, str *_password)

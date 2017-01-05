@@ -10,7 +10,7 @@
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "../../modules/ims_dialog/dlg_hash.h"
 #include "../cdp/cdp_load.h"
-#include "../cdp_avp/mod_export.h"
+#include "../cdp_avp/cdp_avp_mod.h"
 #include "../../core/parser/parse_to.h"
 #include "ro_timer.h"
 #include "ro_session_hash.h"

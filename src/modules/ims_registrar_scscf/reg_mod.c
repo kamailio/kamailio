@@ -71,7 +71,7 @@
 #include "cxdx_sar.h"
 #include "cxdx_callbacks.h"
 #include "registrar_notify.h"
-#include "../cdp_avp/mod_export.h"
+#include "../cdp_avp/cdp_avp_mod.h"
 #include "pvt_message.h"
 #include "reg_rpc.h"
 

@@ -60,7 +60,7 @@
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "../../modules/ims_dialog/dlg_hash.h"
 #include "../cdp/cdp_load.h"
-#include "../cdp_avp/mod_export.h"
+#include "../cdp_avp/cdp_avp_mod.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "cdpeventprocessor.h"
 #include "rx_authdata.h"

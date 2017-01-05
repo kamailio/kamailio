@@ -23,7 +23,7 @@
  */
 
 #include "ld_cfg.h"
-#include "ld_mod.h"
+#include "db2_ldap_mod.h"
 #include "ld_uri.h"
 
 #include "../../core/cfg_parser.h"

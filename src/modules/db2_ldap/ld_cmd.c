@@ -33,7 +33,7 @@
 #include "ld_cmd.h"
 #include "ld_fld.h"
 #include "ld_con.h"
-#include "ld_mod.h"
+#include "db2_ldap_mod.h"
 #include "ld_uri.h"
 #include "ld_cfg.h"
 #include "ld_res.h"

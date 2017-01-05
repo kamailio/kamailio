@@ -30,7 +30,7 @@
  * LDAP module interface.
  */
 
-#include "ld_mod.h"
+#include "db2_ldap_mod.h"
 #include "ld_uri.h"
 #include "ld_cfg.h"
 #include "ld_con.h"

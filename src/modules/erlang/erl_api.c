@@ -21,7 +21,7 @@
  *
  */
 
-#include "mod_erlang.h"
+#include "erlang_mod.h"
 #include "erl_helpers.h"
 #include "erl_api.h"
 #include "pv_xbuff.h"

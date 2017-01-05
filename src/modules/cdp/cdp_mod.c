@@ -41,7 +41,7 @@
  *
  */
 
-#include "mod.h"
+#include "cdp_mod.h"
 
 #include "../../core/sr_module.h"
 #include "../../core/globals.h"

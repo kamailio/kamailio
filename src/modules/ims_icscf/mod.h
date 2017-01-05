@@ -70,7 +70,7 @@
 #include "../../core/sr_module.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/ims_dialog/dlg_load.h"
-#include "../cdp_avp/mod_export.h"
+#include "../cdp_avp/cdp_avp_mod.h"
 
 #define MOD_NAME "ims_icscf"
 
