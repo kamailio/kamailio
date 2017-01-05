@@ -34,7 +34,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/mod_fix.h"
 
-#include "autheph_mod.h"
+#include "auth_ephemeral_mod.h"
 #include "authorize.h"
 #include "checks.h"
 

@@ -32,7 +32,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../modules/auth/api.h"
 
-#include "autheph_mod.h"
+#include "auth_ephemeral_mod.h"
 #include "authorize.h"
 #include "checks.h"
 
