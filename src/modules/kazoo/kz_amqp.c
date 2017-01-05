@@ -1643,8 +1643,9 @@ error:
     if(binding != NULL)
     	shm_free(binding);
 
-    if(json_obj != NULL)
+    if(json_obj != NULL){
        	json_object_put(json_obj);
+    }
 
 	return -1;
 
@@ -2497,8 +2498,9 @@ char* maybe_add_consumer_key(int server_id, amqp_bytes_t body)
 {
 	char* payload = kz_amqp_bytes_dup(body);
     json_obj_ptr json_obj = kz_json_parse(payload );
-    if (json_obj == NULL)
-    	return payload ;
+    if (json_obj == NULL) {
+        return payload ;
+    }
 
 	json_object* server_id_obj = kz_json_get_object(json_obj, BLF_JSON_SERVERID);
     if(server_id_obj == NULL) {
@@ -2522,13 +2524,14 @@ void kz_send_targeted_cmd(int server_id, amqp_bytes_t body)
     kz_amqp_cmd_ptr cmd = NULL;
     json_object* JObj = NULL;
 	char* payload = kz_local_amqp_bytes_dup(body);
+	json_obj_ptr json_obj = NULL;
 
 	if(payload == NULL) {
 		LM_ERR("error allocating message payload\n");
 		goto error;
 	}
 
-	json_obj_ptr json_obj = kz_json_parse(payload );
+	json_obj = kz_json_parse(payload );
     if (json_obj == NULL) {
 		LM_ERR("error parsing json payload\n");
 		goto error;
