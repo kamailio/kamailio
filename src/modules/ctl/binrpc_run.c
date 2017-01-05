@@ -1082,18 +1082,18 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 				avp.type=BINRPC_T_STRUCT;
 				err=binrpc_addavp(&s->pkt, &avp);
 				if (err<0){
-					LM_ERR("failed to add attribute-value\n");
+					LM_ERR("failed to add attribute-value (%c)\n", *fmt);
 					goto error_add;
 				}
 				rs=new_rpc_struct();
 				if (rs==0){
-					LM_ERR("not enough memory\n");
+					LM_ERR("not enough memory (%c)\n", *fmt);
 					goto error_mem;
 				}
 				rs->offset=binrpc_pkt_len(&s->pkt);
 				err=binrpc_end_struct(&s->pkt);
 				if (err<0) {
-					LM_ERR("failed to end struct\n");
+					LM_ERR("failed to end struct (%c)\n", *fmt);
 					goto error_add;
 				}
 				clist_append(&s->substructs, rs, next, prev);
@@ -1109,7 +1109,7 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 		}
 		err=binrpc_addavp(&s->pkt, &avp);
 		if (err<0) {
-			LM_ERR("failed to add attribute-value\n");
+			LM_ERR("failed to add attribute-value (%c)\n", *fmt);
 			goto error;
 		}
 	}
