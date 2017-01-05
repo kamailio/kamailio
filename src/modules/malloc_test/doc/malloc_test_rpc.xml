@@ -27,7 +27,7 @@
 		<example>
 			<title><function>mt.mem_alloc</function> usage</title>
 			<programlisting>
- $ &sercmd; mt.mem_alloc 10 k
+ $ &kamcmd; mt.mem_alloc 10 k
 			</programlisting>
 		</example>
 	</section>
@@ -54,7 +54,7 @@
 		<example>
 			<title><function>mt.mem_free</function> usage</title>
 		<programlisting>
- $ &sercmd; mt.mem_free 1 m
+ $ &kamcmd; mt.mem_free 1 m
 		</programlisting>
 		</example>
 	</section>
@@ -77,7 +77,7 @@
 		<example>
 			<title><function>mt.mem_used</function> usage</title>
 		<programlisting>
- $ &sercmd; mt.mem_used
+ $ &kamcmd; mt.mem_used
 9221460
 		</programlisting>
 		</example>
@@ -96,7 +96,7 @@
 		<example>
 			<title><function>mt.mem_rnd_alloc</function> usage</title>
 			<programlisting>
- $ &sercmd; mt.mem_rnd_alloc 1 64 10240 k
+ $ &kamcmd; mt.mem_rnd_alloc 1 64 10240 k
 			</programlisting>
 		</example>
 	</section>
@@ -130,7 +130,7 @@
 		<example>
 			<title><function>mt.mem_test_start</function> usage</title>
 			<programlisting>
- $ &sercmd; mt.mem_test_start 15 64 25000 128 1500 3600000 k
+ $ &kamcmd; mt.mem_test_start 15 64 25000 128 1500 3600000 k
 1
 			</programlisting>
 		</example>
@@ -144,7 +144,7 @@
 		<example>
 			<title><function>mt.mem_test_stop</function> usage</title>
 		<programlisting>
- $ &sercmd; mt.mem_test_stop 1
+ $ &kamcmd; mt.mem_test_stop 1
 		</programlisting>
 		</example>
 	</section>

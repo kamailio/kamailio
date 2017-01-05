@@ -36,10 +36,10 @@ modparam("malloc_test", "check_content", 1)
 		</example>
 		<example>
 			<title>
-				Set <varname>check_content</varname> at runtime via sercmd
+				Set <varname>check_content</varname> at runtime via kamcmd
 			</title>
 			<programlisting>
-$ &sercmd; cfg.set_now_int malloc_test check_content 1
+$ &kamcmd; cfg.set_now_int malloc_test check_content 1
 			</programlisting>
 		</example>
 	</section>
