@@ -37,7 +37,7 @@ cp $CFG $CFG.bak
 
 ulimit -c unlimited
 
-$BIN -w . -f $CFG -a no > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1
@@ -59,7 +59,7 @@ if [ ! $ret -eq 0 ] ; then
 fi
 
 sleep 1
-$KILL >/dev/null 2>&1
+kill_kamailio
 ret=$?
 
 if [ $ret -eq 0 ] ; then

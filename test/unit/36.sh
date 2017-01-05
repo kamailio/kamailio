@@ -31,10 +31,10 @@ CFG=11.cfg
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 
 # 1768 contacts should fit into 1 MB of PKG memory
-$BIN -V | grep "PKG_MALLOC" > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -V | grep "PKG_MALLOC" > /dev/null
 if [ $? -eq 0 ]; then
 	NR=176
 else
@@ -56,7 +56,7 @@ while [  $COUNTER -lt $NR ]; do
 	insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER-$RANDOM', 'local', 'foobar-$COUNTER-$RANDOM@$DOMAIN', '___test___');"
 done
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 if [ $ret -eq 0 ]; then
@@ -72,7 +72,7 @@ if [ $ret -eq 0 ]; then
 fi;
 
 sleep 1
-$KILL
+kill_kamailio
 
 $MYSQL "delete from location where user_agent = '___test___'"
 

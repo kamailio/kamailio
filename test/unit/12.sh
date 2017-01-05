@@ -19,8 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
+. include/common
+. include/require.sh
 
 CFG=12.cfg
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
@@ -29,7 +29,7 @@ if ! (check_netcat && check_kamailio); then
 	exit 0
 fi ;
 
-$BIN -w . -f $CFG &> $TMPFILE
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG &> $TMPFILE
 ret=$?
 
 sleep 1
@@ -84,7 +84,7 @@ if [ "$ret" -eq 0 ] ; then
 	fi ;
 fi ;
 cat $TMPFILE
-$KILL
+kill_kamailio
 rm $TMPFILE
 
 exit $ret

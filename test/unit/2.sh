@@ -21,9 +21,9 @@
 
 # Needs a default kamailio database setup for mysql
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 CFG=2.cfg
 
@@ -35,16 +35,16 @@ cp $CFG $CFG.bak
 
 touch dispatcher.list
 
-echo "loadmodule \"$SRC_DIR/modules/db_mysql/db_mysql.so\"" >> $CFG
-echo "modparam(\"dispatcher\", \"list_file\", \"$SRC_DIR/$TEST_DIR/dispatcher.list\")" >> $CFG
-echo -e "\nrequest_route {\n ;\n}" >> $CFG
+printf "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
+printf "modparam(\"dispatcher\", \"list_file\", \"dispatcher.list\")" >> $CFG
+printf "\nrequest_route {\n ;\n}" >> $CFG
 
 # start
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-$KILL
+kill_kamailio
 
 mv $CFG.bak $CFG
 rm -f dispatcher.list

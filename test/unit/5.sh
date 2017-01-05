@@ -21,10 +21,10 @@
 
 # Needs a default kamailio database setup for mysql
 
-source include/common
-source include/require
+. include/common
+. include/require.sh
 
-CFG=$SRC_DIR/etc/kamailio.cfg
+CFG=$TOP_DIR/etc/kamailio.cfg
 
 if ! (check_kamailio); then
 	exit 0
@@ -32,10 +32,10 @@ fi ;
         
 
 # start
-$BIN -w . -L $SRC_DIR/modules/ -f $CFG -A WITH_SRCPATH -a no > /dev/null 2>&1
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -A WITH_SRCPATH -a no > /dev/null 2>&1
 ret=$?
 
 sleep 1
-$KILL
+kill_kamailio
 
 exit $ret

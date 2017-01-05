@@ -19,8 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
+. include/common
+. include/require.sh
 
 if ! (check_kamailio && check_module "db_berkeley" ); then
 	exit 0
@@ -30,10 +30,10 @@ CFG=17.cfg
 
 tmp_name=""$RANDOM"_kamailiodb_tmp"
 
-echo "loadmodule \"../../modules/db_berkeley/db_berkeley.so\"" > $CFG
+printf "loadmodule \"db_berkeley/db_berkeley.so\"" > $CFG
 cat 2.cfg >> $CFG
-echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"berkeley://`pwd`/$CTL_DIR/$tmp_name\")" >> $CFG
-echo -e "\nrequest_route {\n ;\n}" >> $CFG
+printf "modparam(\"$DB_ALL_MOD\", \"db_url\", \"berkeley://`pwd`/$CTL_DIR/$tmp_name\")" >> $CFG
+printf "\nrequest_route {\n ;\n}" >> $CFG
 
 # setup config file
 cp $CTLRC $CTLRC.bak
@@ -53,12 +53,12 @@ ret=$?
 cd $CRT_DIR
 
 if [ "$ret" -eq 0 ] ; then
-	$BIN -w . -f $CFG -a no > /dev/null
+	$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 	ret=$?
 fi ;
 
 sleep 1
-$KILL
+kill_kamailio
 
 # cleanup
 cd $CTL_DIR

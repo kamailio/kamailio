@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_sipp && check_kamailio && check_module "db_mysql" \
 	&& check_module "presence" && check_module "presence_xml" \
@@ -31,7 +31,7 @@ fi ;
 
 CFG=presence.cfg
 
-$BIN -w . -f $CFG -a no >/dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no >/dev/null
 ret=$?
 sleep 1
 
@@ -48,7 +48,7 @@ fi
 sleep 1
 
 #cleanup:
-$KILL >/dev/null
+kill_kamailio
 killall -9 sipp >/dev/null 2>&1
 
 exit $ret

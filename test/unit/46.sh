@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql ); then
 	exit 0
@@ -32,7 +32,7 @@ SRV=5060
 UAS=5070
 UAC=5080
 
-function test_module_int()
+test_module_int()
 {
 	if [ x$# != x3 ] ; then 
 		echo "wrong number of params : usage test_module module cfg_param value"
@@ -67,10 +67,10 @@ function test_module_int()
 # add an registrar entry to the db
 cp $CFG ${CFG}.bak
 
-echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >>$CFG
-echo "loadmodule \"../../modules/ctl/ctl.so\"" >> $CFG
-echo "loadmodule \"../../modules/cfg_rpc/cfg_rpc.so\"" >> $CFG
-$BIN -w . -f $CFG &> /dev/null
+echo "loadmodule \"db_mysql/db_mysql.so\"" >>$CFG
+echo "loadmodule \"ctl/ctl.so\"" >> $CFG
+echo "loadmodule \"cfg_rpc/cfg_rpc.so\"" >> $CFG
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG &> /dev/null
 ret=$?
 sleep 1
 
@@ -87,7 +87,7 @@ ret=$?
 
 # cleanup
 killall -9 sipp > /dev/null 2>&1
-$KILL > /dev/null 2>&1
+kill_kamailio
 
 mv ${CFG}.bak $CFG
 

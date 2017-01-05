@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_kamailio && check_module "carrierroute" && check_module "db_postgres" && check_postgres); then
 	exit 0
@@ -32,7 +32,7 @@ CFG=13.cfg
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
+echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"db_url\", \"postgres://kamailioro:kamailioro@localhost/kamailio\")" >> $CFG
 
@@ -51,7 +51,7 @@ insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('20','2','','10','1','0','host6');
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('21','3','','10','1','0','premium.host.local');"
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -87,7 +87,7 @@ Printing tree for domain 'domain1' (10)
 	fi ;
 fi ;
 
-$KILL
+kill_kamailio
 
 # cleanup database
 $PSQL "delete from carrier_name where id = 1;

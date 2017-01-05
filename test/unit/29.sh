@@ -19,8 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
+. include/common
+. include/require.sh
 
 if ! (check_sipp && check_kamailio && check_module "db_postgres" && check_module "cpl-c"); then
 	exit 0
@@ -31,11 +31,11 @@ CPL=cpl_ignore.xml
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 cp $CFG $CFG.tmp
-echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
+echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"cpl-c\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 
 
-$BIN -w . -f $CFG >/dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG >/dev/null
 ret=$?
 sleep 1
 
@@ -65,7 +65,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup:
-$KILL >/dev/null
+kill_kamailio
 killall -9 sipp >/dev/null 2>&1
 rm $TMPFILE
 mv $CFG.tmp $CFG

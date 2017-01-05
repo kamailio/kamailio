@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_sipsak && check_kamailio && check_module "db_postgres" && check_postgres); then
 	exit 0
@@ -30,7 +30,7 @@ fi ;
 SIPDOMAIN=127.0.0.1
 CFG=22.cfg
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -77,7 +77,7 @@ if [ "$ret" -eq 0 ]; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 
 # restart to test preload_udomain functionality
 $BIN -w . -f $CFG > /dev/null
@@ -97,7 +97,7 @@ if [ "$ret" -eq 0 ]; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 
 $PSQL "delete from location where username like '49721123456789%';"
 

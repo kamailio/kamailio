@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_kamailio && check_module "db_mysql" && check_mysql); then
 	exit 0
@@ -39,11 +39,11 @@ while [  $COUNTER -lt $NR ]; do
 	$MYSQL "insert into location (ruid, username, domain, contact, user_agent) values ('ul-ruid-$COUNTER', 'foobar-$RANDOM', '$DOMAIN', 'sip:foobar-$RANDOM@$DOMAIN', '___test___');"
 done
 
-$BIN -w . -f $CFG -A FETCHROWS=17 -a no >/dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -A FETCHROWS=17 -a no >/dev/null
 ret=$?
 
 sleep 1
-$KILL >/dev/null
+kill_kamailio
 
 $MYSQL "delete from location where user_agent = '___test___'"
 

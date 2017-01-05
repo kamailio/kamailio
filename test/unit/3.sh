@@ -25,14 +25,14 @@
 # If MySQL root password is empty, add in the file the line:
 # PWSKIP=yes
 
-source include/common
+. include/common
 
 if [ ! -f dbrootpw ] ; then
 	echo "no root password, not run"
 	exit 0
 fi ;
 
-source dbrootpw
+. dbrootpw
 
 tmp_name=""$RANDOM"_kamailiodb_tmp"
 

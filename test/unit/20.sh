@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql); then
 	exit 0
@@ -35,7 +35,7 @@ $MYSQL "INSERT INTO location (ruid, username,contact,socket,user_agent,cseq,q) V
 
 sipp -sn uas -bg -i 127.0.0.1 -m 1 -f 10 -p 5060 &> /dev/null
 
-$BIN -w . -f $CFG > $TMPFILE 2>&1
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > $TMPFILE 2>&1
 
 sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 &> /dev/null
 
@@ -46,7 +46,7 @@ sleep 1
 
 # cleanup
 killall -9 sipp &> /dev/null
-$KILL &> /dev/null
+kill_kamailio
 rm $TMPFILE
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1\") and (user_agent = \"kamailio_test\"));"

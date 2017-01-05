@@ -19,8 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
+. include/common
+. include/require.sh
 
 if ! (check_sipp && check_kamailio && check_module "carrierroute"); then
 	exit 0
@@ -35,7 +35,7 @@ cp $CFG $CFG.bak
 echo "modparam(\"carrierroute\", \"config_file\", \"carrierroute-2.cfg\")" >> $CFG
 
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 
 ret=$?
 
@@ -62,7 +62,7 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi;
 
-$KILL
+kill_kamailio
 killall -9 sipp
 
 mv $CFG.bak $CFG

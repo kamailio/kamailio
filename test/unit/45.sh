@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql && check_module "memcached"); then
 	exit 0
@@ -36,7 +36,7 @@ UAC=5080
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@127.0.0.1:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
 
-$BIN -w . -f $CFG &> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG &> /dev/null
 
 sipp -sn uas -bg -i 127.0.0.1 -m 10 -f 2 -p $UAS &> /dev/null
 sipp -sn uac -s foo 127.0.0.1:$SRV -i 127.0.0.1 -m 10 -f 2 -p $UAC &> /dev/null
@@ -45,7 +45,7 @@ ret=$?
 
 # cleanup
 killall -9 sipp > /dev/null 2>&1
-$KILL > /dev/null 2>&1
+kill_kamailio
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@127.0.0.1:$UAS\") and (user_agent = \"ser_test\"));"
 exit $ret;

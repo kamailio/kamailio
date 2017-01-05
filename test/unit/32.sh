@@ -35,7 +35,7 @@ NR=25
 
 cp $CFG $CFG.bak
 
-echo "loadmodule \"../../modules/db_postgres/db_postgres.so\"" >> $CFG
+echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
@@ -46,11 +46,11 @@ while [  $COUNTER -lt $NR ]; do
 	$PSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___'); insert into location (username, domain, contact, user_agent) values ('foobar-$RANDOM', '$DOMAIN', 'foobar-$RANDOM@$DOMAIN', '___test___');"
 done
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-$KILL
+kill_kamailio
 
 $PSQL "delete from location where user_agent = '___test___'"
 

@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 CFG=50.cfg
 
@@ -33,7 +33,7 @@ MYSQL_LOC_A="mysql loc_a --show-warnings --batch --user=ser --password=ser -e"
 MYSQL_LOC_B="mysql loc_b --show-warnings --batch --user=ser --password=ser  -e"
 cp $CFG $CFG.bak
 
-$BIN -w . -f $CFG #> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG #> /dev/null
 ret=$?
 
 sleep 1
@@ -155,7 +155,7 @@ $MYSQL_LOC_A "delete from location where username like '497211234567%';"
 $MYSQL_LOC_B "delete from location where username like '497211234567%';"
 
 
-$KILL
+kill_kamailio
 
 mv $CFG.bak $CFG
 

@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql); then
 	exit 0
@@ -33,7 +33,7 @@ CFG=21.cfg
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO subscriber (username, domain, password) VALUES (\"alice\",\"localhost\",\"alice\");"
 
-$BIN -w . -f $CFG -E -e -dd > /dev/null 2>&1
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -E -e -dd > /dev/null 2>&1
 ret=$?
 
 sleep 1
@@ -51,7 +51,7 @@ fi
 sleep 1
 
 #cleanup
-$KILL > /dev/null
+kill_kamailio
 killall -9 sipp > /dev/null 2>&1
 $MYSQL "DELETE FROM subscriber WHERE((username = \"alice\") and (domain = \"localhost\"));"
 

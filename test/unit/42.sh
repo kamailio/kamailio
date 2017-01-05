@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 if ! (check_kamailio && check_module "carrierroute" && check_module "db_mysql" && check_mysql); then
 	exit 0
@@ -32,7 +32,7 @@ CFG=26.cfg
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"match_mode\", 128)" >> $CFG
 
@@ -75,7 +75,7 @@ $MYSQL "insert into subscriber (username, cr_preferred_carrier) values ('ab4-123
 $MYSQL "insert into subscriber (username, cr_preferred_carrier) values ('ab4-123456785', 3);"
 
 
-$BIN -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 
 ret=$?
 
@@ -122,7 +122,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 
-$KILL
+kill_kamailio
 killall -9 sipp
 
 # cleanup database

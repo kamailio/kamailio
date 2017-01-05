@@ -36,7 +36,7 @@ fi ;
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"../../modules/db_mysql/db_mysql.so\"" >> $CFG
+echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 
 # setup database
@@ -62,7 +62,7 @@ while [  $COUNTER -lt $NR ]; do
 
 done
 
-$BIN -m 128 -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -m 128 -w . -f $CFG > /dev/null
 ret=$?
 
 # adjust if you have bigger rule sets
@@ -76,7 +76,7 @@ if [ $ret -eq 0 ] ; then
 	fi;
 fi ;
 
-$KILL
+kill_kamailio
 
 # cleanup database
 $MYSQL "delete from carrier_name where id = 1;"
