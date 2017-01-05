@@ -17,7 +17,7 @@
 	<title>Overview</title>
 	<para>This module provides C-API functions to enable &kamailio; to be
 	used as an outbound Edge Proxy (see &rfc5626; section 5).</para>
-	<para>The <emphasis>path</emphasis> and <emphasis>rr</emphasis> will
+	<para>The <emphasis>path</emphasis> and <emphasis>rr</emphasis> modules will
 	bind to this module if it is loaded before they are.</para>
 	<section>
 		<title>Edge Proxy Keep-Alives (STUN)</title>
@@ -84,16 +84,11 @@ loadmodule "maxfwd.so"
 loadmodule "xlog.so"
 loadmodule "sanity.so"
 loadmodule "ctl.so"
-loadmodule "mi_rpc.so"
-loadmodule "mi_fifo.so"
 loadmodule "textops.so"
 loadmodule "siputils.so"
 loadmodule "stun.so"
 
 # ----------------- setting module-specific parameters ---------------
-
-# ----- mi_fifo params -----
-modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
 # ----- tm params -----
 modparam("tm", "failure_reply_mode", 3)
@@ -255,17 +250,12 @@ loadmodule "maxfwd.so"
 loadmodule "xlog.so"
 loadmodule "sanity.so"
 loadmodule "ctl.so"
-loadmodule "mi_rpc.so"
-loadmodule "mi_fifo.so"
 loadmodule "textops.so"
 loadmodule "siputils.so"
 loadmodule "usrloc.so"
 loadmodule "registrar.so"
 
 # ----------------- setting module-specific parameters ---------------
-
-# ----- mi_fifo params -----
-modparam("mi_fifo", "fifo_name", "/tmp/kamailio_fifo")
 
 
 # ----- tm params -----
