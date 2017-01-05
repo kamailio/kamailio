@@ -32,7 +32,7 @@
 #include "erl_helpers.h"
 #include "cnode.h"
 #include "pv_xbuff.h"
-#include "mod_erlang.h"
+#include "erlang_mod.h"
 
 #include "../../core/dprint.h"
 #include "../../core/sr_module.h"

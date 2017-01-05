@@ -28,7 +28,7 @@
 #include "../../core/dprint.h"
 
 #include "handle_rpc.h"
-#include "mod_erlang.h"
+#include "erlang_mod.h"
 
 /* create empty recycle bin */
 static struct erl_rpc_garbage *recycle_bin = 0;

@@ -27,7 +27,7 @@
 #include "../../core/dprint.h"
 #include "../../core/ip_addr.h"
 
-#include "mod_erlang.h"
+#include "erlang_mod.h"
 #include "erl_helpers.h"
 #include "epmd.h"
 #include "cnode.h"

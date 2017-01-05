@@ -22,7 +22,7 @@
  */
 
 #include "erl_helpers.h"
-#include "mod_erlang.h"
+#include "erlang_mod.h"
 
 #include "../../core/resolve.h"
 #include "../../core/ip_addr.h"

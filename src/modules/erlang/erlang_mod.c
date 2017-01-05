@@ -40,7 +40,7 @@
 
 #include "../../core/pass_fd.h"
 
-#include "mod_erlang.h"
+#include "erlang_mod.h"
 #include "erl_helpers.h"
 #include "cnode.h"
 #include "handle_rpc.h"
