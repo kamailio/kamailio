@@ -230,12 +230,12 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 # no external compile or link dependencies
 module_group_default=$(mod_list_basic) $(mod_list_extra) \
 					  $(mod_list_db) $(mod_list_dbuid) \
-					  $(mod_list_devel)
+					  $(mod_list_devel) $(mod_list_jsdt)
 
 # Modules in this group are the default compiled modules due to
 # no internal/external compile or link dependencies
 module_group_standard=$(mod_list_basic) $(mod_list_extra) \
-					  $(mod_list_devel)
+					  $(mod_list_devel) $(mod_list_jsdt)
 
 # Modules in this group are considered a standard part due to
 # widespread usage, but they have dependencies that must be satisfied for
