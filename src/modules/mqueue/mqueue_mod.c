@@ -277,8 +277,6 @@ static void  mqueue_rpc_get_size(rpc_t* rpc, void* ctx)
 	str			mqueue_name;
 	int			mqueue_sz = 0;
 
-	str status = {0, 0};
-
 	if (rpc->scan(ctx, "S", &mqueue_name) < 1) {
 		rpc->fault(ctx, 500, "No queue name");
 		return;
