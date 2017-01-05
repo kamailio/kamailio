@@ -48,7 +48,7 @@
 #include "bdb_fld.h"
 #include "bdb_res.h"
 #include "bdb_cmd.h"
-#include "km_db_berkeley.h"
+#include "db_berkeley.h"
 
 MODULE_VERSION
 

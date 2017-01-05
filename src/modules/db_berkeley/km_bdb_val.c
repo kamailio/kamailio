@@ -31,7 +31,7 @@
 
 #include "../../lib/srdb1/db_val.h"
 #include "../../lib/srdb1/db_ut.h"
-#include "km_db_berkeley.h"
+#include "db_berkeley.h"
 #include "km_bdb_res.h"
 #include "km_bdb_val.h"
 #include <string.h>
