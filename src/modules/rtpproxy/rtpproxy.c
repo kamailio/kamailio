@@ -622,12 +622,7 @@ static void  rtpproxy_rpc_list(rpc_t* rpc, void* ctx)
 {
 	struct rtpp_set *rtpp_list;
 	struct rtpp_node *crt_rtpp;
-	char *string, *id;
-	int id_len;
-	int len;
 	void *vh;
-
-	string = id = 0;
 
 	if(rtpp_set_list ==NULL)
 		return;
