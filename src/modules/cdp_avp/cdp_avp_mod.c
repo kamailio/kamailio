@@ -43,7 +43,7 @@
 #include "../../core/sr_module.h"
 MODULE_VERSION
 
-#include "mod_export.h"
+#include "cdp_avp_mod.h"
 
 #include "../cdp/cdp_load.h"
 

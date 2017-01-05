@@ -21,7 +21,7 @@
  */
 
 #include "../cdp/cdp_load.h"
-#include "../cdp_avp/mod_export.h"
+#include "../cdp_avp/cdp_avp_mod.h"
 #include "ocs_avp_helper.h"
 #include "mod.h"
 
