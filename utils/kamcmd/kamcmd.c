@@ -47,7 +47,6 @@
 #include <readline/history.h>
 
 #define USE_CFG_VARS /* cfg group and vars completion */
-#define USE_MI  /* mi completion */
 #define USE_COUNTERS /* counters/statistics completion */
 #endif
 
@@ -103,7 +102,7 @@ Options:\n\
     -h          This help message\n\
 address:\n\
     [proto:]name[:port]   where proto is one of tcp, udp, unixs or unixd\n\
-                          e.g.:  tcp:localhost:2048 , unixs:/tmp/ser_ctl\n\
+                          e.g.:  tcp:localhost:2048 , unixs:/tmp/kamailio_ctl\n\
 cmd:\n\
     method  [arg1 [arg2...]]\n\
 arg:\n\
@@ -143,14 +142,6 @@ struct cfg_var_grp{
 struct cfg_var_grp* cfg_grp_lst; /** cfg groups list, allong with var names*/
 struct cfg_var_grp* crt_cfg_grp;
 #endif /* USE_CFG_VARS */
-
-#ifdef USE_MI
-struct binrpc_val* mi_which_array;
-int mi_which_no;
-
-str* mi_cmds;
-int mi_cmds_no;
-#endif /* USE_MI */
 
 #ifdef USE_COUNTERS
 struct binrpc_val* cnt_grps_array; /* response array */
@@ -238,48 +229,49 @@ struct cmd_alias{
 };
 
 
-struct sercmd_builtin{
+struct kamcmd_builtin{
 	char* name;
 	int (*f)(int, struct binrpc_cmd*);
 	char* doc;
 };
 
 
-static int sercmd_help(int s, struct binrpc_cmd* cmd);
-static int sercmd_ver(int s, struct binrpc_cmd* cmd);
-static int sercmd_quit(int s, struct binrpc_cmd* cmd);
-static int sercmd_warranty(int s, struct binrpc_cmd* cmd);
+static int kamcmd_help(int s, struct binrpc_cmd* cmd);
+static int kamcmd_ver(int s, struct binrpc_cmd* cmd);
+static int kamcmd_quit(int s, struct binrpc_cmd* cmd);
+static int kamcmd_warranty(int s, struct binrpc_cmd* cmd);
 
 
 static struct cmd_alias cmd_aliases[]={
 	{	"ps",			"core.ps",				"%v\t%v\n"	},
+	{	"psx",			"core.psx",				0			},
 	{	"list",			"system.listMethods",	0			},
 	{	"ls",			"system.listMethods",	0			},
-	{	"server",		"core.version",			0			},
-	{	"serversion",	"core.version",			0			},
+	{	"ver",			"core.version",			0			},
+	{	"version",		"core.version",			0			},
 	{	"who",			"ctl.who",				"[%v] %v: %v %v -> %v %v\n"},
 	{	"listen",		"ctl.listen",			"[%v] %v: %v %v\n"},
 	{	"dns_mem_info",		"dns.mem_info",			"%v / %v\n"},
-	{	"dns_debug",	"dns.debug",			
+	{	"dns_debug",	"dns.debug",
 					"%v (%v): size=%v ref=%v expire=%vs last=%vs ago f=%v\n"},
-	{	"dns_debug_all",	"dns.debug_all",			
+	{	"dns_debug_all",	"dns.debug_all",
 			"%v (%v) [%v]: size=%v ref=%v expire=%vs last=%vs ago f=%v\n"
 			"\t\t%v:%v expire=%vs f=%v\n"},
 	{	"dst_blacklist_mem_info",	"dst_blacklist.mem_info",	"%v / %v\n"},
-	{	"dst_blacklist_debug",		"dst_blacklist.debug",	
+	{	"dst_blacklist_debug",		"dst_blacklist.debug",
 		"%v:%v:%v expire:%v flags: %v\n"},
 	{0,0,0}
 };
 
 
-static struct sercmd_builtin builtins[]={
-	{	"?",		sercmd_help, "help"},
-	{	"help",		sercmd_help, "displays help for a command"},
-	{	"version",	sercmd_ver,  "displays " NAME "version"},
-	{	"quit",		sercmd_quit, "exits " NAME },
-	{	"exit",		sercmd_quit, "exits " NAME },
-	{	"warranty",		sercmd_warranty, "displays " NAME "'s warranty info"},
-	{	"license",		sercmd_warranty, "displays " NAME "'s license"},
+static struct kamcmd_builtin builtins[]={
+	{	"?",		kamcmd_help, "help"},
+	{	"help",		kamcmd_help, "displays help for a command"},
+	{	"version",	kamcmd_ver,  "displays " NAME "version"},
+	{	"quit",		kamcmd_quit, "exits " NAME },
+	{	"exit",		kamcmd_quit, "exits " NAME },
+	{	"warranty",		kamcmd_warranty, "displays " NAME "'s warranty info"},
+	{	"license",		kamcmd_warranty, "displays " NAME "'s license"},
 	{0,0}
 };
 
@@ -294,9 +286,6 @@ enum complete_states {
 	COMPLETE_CFG_GRP,
 	COMPLETE_CFG_VAR,
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-	COMPLETE_MI,
-#endif /* USE_Mi */
 #ifdef USE_COUNTERS
 	COMPLETE_CNT_GRP,
 	COMPLETE_CNT_VAR,
@@ -331,17 +320,6 @@ char* complete_params_cfg_var[]={
 	0
 };
 #endif /* USE_CFG_VARS */
-
-#ifdef USE_MI
-/* commands for which we complete the first param with an mi command*/
-char* complete_params_mi[]={
-	"mi",
-	"mi_fifo",
-	"mi_dg",
-	"mi_xmlrpc",
-	0
-};
-#endif /* USE_MI */
 
 #ifdef USE_COUNTERS
 /* commands for which we complete the first param with a counter group */
@@ -1208,7 +1186,7 @@ error:
 
 
 
-static int get_sercmd_list(int s)
+static int get_kamcmd_list(int s)
 {
 	struct binrpc_cmd cmd;
 	int cookie;
@@ -1256,7 +1234,7 @@ error:
 
 
 
-#if defined(USE_CFG_VARS) || defined (USE_MI) || defined (USE_COUNTERS)
+#if defined(USE_CFG_VARS) || defined (USE_COUNTERS)
 /** check if cmd is a rpc command.
  * Quick check (using the internal rpc_array) if cmd is a valid rpc command.
  * @param cmd - null terminated ascii string
@@ -1266,7 +1244,7 @@ static int is_rpc_cmd(char* cmd)
 {
 	int r;
 	int cmd_len;
-	
+
 	cmd_len=strlen(cmd);
 	for (r=0; r<rpc_no; r++){
 		if ((rpc_array[r].type==BINRPC_T_STR) &&
@@ -1276,7 +1254,7 @@ static int is_rpc_cmd(char* cmd)
 	}
 	return 0;
 }
-#endif /* USE_CFG_VARS || USE_MI */
+#endif /* USE_CFG_VARS */
 
 
 
@@ -1426,128 +1404,6 @@ void free_cfg_grp_lst()
 	cfg_grp_lst=0;
 }
 #endif /* USE_CFG_VARS */
-
-
-
-#ifdef USE_MI
-/* retrieve the mi list */
-static int get_mi_list(int s)
-{
-	struct binrpc_cmd cmd;
-	int cookie;
-	unsigned char reply_buf[MAX_REPLY_SIZE];
-	unsigned char* msg_body;
-	struct binrpc_parse_ctx in_pkt;
-	char* p;
-	char* end;
-	str mi_name;
-	int mi_which_results;
-	int r;
-	int ret;
-	
-	cmd.method="mi";
-	cmd.argv[0].type=BINRPC_T_STR;
-	cmd.argv[0].u.strval.s="which";
-	cmd.argv[0].u.strval.len=strlen(cmd.argv[0].u.strval.s);
-	cmd.argc=1;
-	if (!is_rpc_cmd(cmd.method)) goto error;
-	
-	cookie=gen_cookie();
-	if ((ret=send_binrpc_cmd(s, &cmd, cookie))<0){
-		if (ret==-1) goto error_send;
-		else goto binrpc_err;
-	}
-	/* read reply */
-	memset(&in_pkt, 0, sizeof(in_pkt));
-	if ((ret=get_reply(s, reply_buf, MAX_REPLY_SIZE, cookie, &in_pkt,
-					&msg_body))<0){
-		goto error;
-	}
-	switch(in_pkt.type){
-		case BINRPC_FAULT:
-			if (print_fault(&in_pkt, msg_body, in_pkt.tlen)<0){
-				goto error;
-			}
-			break;
-		case BINRPC_REPL:
-			mi_which_no=25; /* default rpc list */
-			if ((mi_which_array=parse_reply_body(&mi_which_no, &in_pkt,
-												msg_body, in_pkt.tlen))==0)
-				goto error;
-			break;
-		default:
-			fprintf(stderr, "ERROR: not a reply\n");
-			goto error;
-	}
-	
-	
-	/* get the mi commands number */
-	mi_which_results=0;
-	for (r=0; r<mi_which_no; r++){
-		if (mi_which_array[r].type!=BINRPC_T_STR)
-			continue;
-		/* we are interestend only in lines starting with ':', e.g.:
-		   :: version */
-		if ((mi_which_array[r].u.strval.len) &&
-			(mi_which_array[r].u.strval.s[0]==':'))
-			mi_which_results++;
-	}
-	/* no mi commands */
-	if (mi_which_results==0)
-		goto error;
-	/* alloc the mi_cmds array */
-	mi_cmds=malloc(mi_which_results*sizeof(*mi_cmds));
-	if (mi_cmds==0) goto error_mem;
-	memset(mi_cmds, 0, mi_which_results* sizeof(*mi_cmds));
-	/* get the mi names list */
-	for (r=0; r<mi_which_no; r++){
-		if (mi_which_array[r].type!=BINRPC_T_STR)
-			continue;
-		p=mi_which_array[r].u.strval.s;
-		end=p+mi_which_array[r].u.strval.len;
-		/* we are interestend only in lines starting with ':', e.g.:
-			:: version */
-		if ((p>=end) || (*p!=':'))
-			continue;
-		p++;
-		/* skip over to the next ':' */
-		for(;p<end && *p!=':'; p++);
-		if (p>=end) continue;
-		p++;
-		/* skip over spaces */
-		for(;p<end && (*p==' ' || *p=='\t'); p++);
-		if (p>=end || *p=='\n') continue;
-		if (mi_cmds_no >= mi_which_results){
-			fprintf(stderr, "BUG: wrong mi cmds no (%d >= %d)\n",
-							mi_cmds_no, mi_which_results);
-			goto error;
-		}
-		mi_name.s=p;
-		for(; p<end && *p!=' ' && *p!='\t' && *p!='\n'; p++);
-		mi_name.len=(int)(long)(p-mi_name.s);
-		mi_cmds[mi_cmds_no]=mi_name;
-		mi_cmds_no++;
-	}
-	
-	return 0;
-binrpc_err:
-error_send:
-error:
-error_mem:
-	return -1;
-}
-
-
-
-void free_mi_cmds()
-{
-	if (mi_cmds){
-		free(mi_cmds);
-		mi_cmds=0;
-		mi_cmds_no=0;
-	}
-}
-#endif /* USE_MI */
 
 
 
@@ -1729,7 +1585,7 @@ static void print_formatting(char* prefix, char* format, char* suffix)
 
 
 
-static int sercmd_help(int s, struct binrpc_cmd* cmd)
+static int kamcmd_help(int s, struct binrpc_cmd* cmd)
 {
 	int r;
 	
@@ -1760,7 +1616,7 @@ static int sercmd_help(int s, struct binrpc_cmd* cmd)
 	}
 		
 	if (rpc_no==0){
-		if (get_sercmd_list(s)<0)
+		if (get_kamcmd_list(s)<0)
 			goto error;
 	}
 	for (r=0; r<rpc_no; r++){
@@ -1781,7 +1637,7 @@ error:
 
 
 
-static int sercmd_ver(int s, struct binrpc_cmd* cmd)
+static int kamcmd_ver(int s, struct binrpc_cmd* cmd)
 {
 	printf("%s\n", version);
 	printf("%s compiled on %s \n", __FILE__, compiled);
@@ -1793,7 +1649,7 @@ static int sercmd_ver(int s, struct binrpc_cmd* cmd)
 
 
 
-static int sercmd_quit(int s, struct binrpc_cmd* cmd)
+static int kamcmd_quit(int s, struct binrpc_cmd* cmd)
 {
 	quit=1;
 	return 0;
@@ -1801,7 +1657,7 @@ static int sercmd_quit(int s, struct binrpc_cmd* cmd)
 
 
 
-static int sercmd_warranty(int s, struct binrpc_cmd *cmd)
+static int kamcmd_warranty(int s, struct binrpc_cmd *cmd)
 {
 	printf("%s %s\n", NAME, VERSION);
 	printf("%s\n", COPYRIGHT);
@@ -1813,7 +1669,7 @@ static int sercmd_warranty(int s, struct binrpc_cmd *cmd)
 #ifdef USE_READLINE
 
 /* readline command generator */
-static char* sercmd_generator(const char* text, int state)
+static char* kamcmd_generator(const char* text, int state)
 {
 	static int idx;
 	static int list; /* aliases, builtins, rpc_array */
@@ -1913,29 +1769,6 @@ static char* sercmd_generator(const char* text, int state)
 			}
 			break;
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-		case COMPLETE_MI:
-			if (state==0){
-				/* init */
-				len=strlen(text);
-				idx=0;
-			}
-			while(idx < mi_cmds_no){
-				if (len<=mi_cmds[idx].len &&
-						memcmp(text, mi_cmds[idx].s, len)==0) {
-					/* zero-term copy of the var name */
-					name=malloc(mi_cmds[idx].len+1);
-					if (name){
-						memcpy(name, mi_cmds[idx].s, mi_cmds[idx].len);
-						name[mi_cmds[idx].len]=0;
-					}
-					idx++;
-					return name;
-				}
-				idx++;
-			}
-			break;
-#endif /* USE_MI */
 #ifdef USE_COUNTERS
 		case COMPLETE_CNT_GRP:
 			if (state==0){
@@ -1989,7 +1822,7 @@ static char* sercmd_generator(const char* text, int state)
 
 
 
-char** sercmd_completion(const char* text, int start, int end)
+char** kamcmd_completion(const char* text, int start, int end)
 {
 	int i, j;
 	int cmd_start, cmd_end, cmd_len;
@@ -2058,18 +1891,6 @@ char** sercmd_completion(const char* text, int start, int end)
 				}
 			}
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-			/* try complete_parms_mi */
-			for(i=0; complete_params_mi[i]; i++){
-				if ((cmd_len==strlen(complete_params_mi[i])) &&
-						(strncmp(&rl_line_buffer[cmd_start],
-								 complete_params_mi[i],
-								 cmd_len)==0)){
-						attempted_completion_state=COMPLETE_MI;
-						goto end;
-				}
-			}
-#endif /* USE_MI */
 #ifdef USE_COUNTERS
 			/* try  complete_param*_cfg_grp */
 			for(i=0; complete_param1_counter_grp[i]; i++){
@@ -2145,7 +1966,7 @@ char** sercmd_completion(const char* text, int start, int end)
 		attempted_completion_state=COMPLETE_NOTHING;
 	}
 end:
-	return 0; /* let readline call sercmd_generator */
+	return 0; /* let readline call kamcmd_generator */
 }
 
 #endif /* USE_READLINE */
@@ -2295,13 +2116,10 @@ int main(int argc, char** argv)
 		goto end;
 	}
 	/* interactive mode */
-	if (get_sercmd_list(s)==0){
+	if (get_kamcmd_list(s)==0){
 	#ifdef USE_CFG_VARS
 		get_cfgvars_list(s);
 	#endif /* USE_CFG_VARS */
-	#ifdef USE_MI
-		get_mi_list(s);
-	#endif /* USE_MI */
 	#ifdef USE_COUNTERS
 		get_counters_list(s);
 	#endif /* USE_COUNTERS */
@@ -2315,8 +2133,8 @@ int main(int argc, char** argv)
 	/* initialize readline */
 	/* allow conditional parsing of the ~/.inputrc file*/
 	rl_readline_name=NAME; 
-	rl_completion_entry_function=sercmd_generator;
-	rl_attempted_completion_function=sercmd_completion;
+	rl_completion_entry_function=kamcmd_generator;
+	rl_attempted_completion_function=kamcmd_completion;
 	
 	while(!quit){
 		line=readline(NAME "> ");
@@ -2364,15 +2182,6 @@ end:
 		cfg_vars_no=0;
 	}
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-	if (mi_cmds)
-		free_mi_cmds();
-	if (mi_which_array){
-		free_rpc_array(mi_which_array, mi_which_no);
-		mi_which_array=0;
-		mi_which_no=0;
-	}
-#endif /* USE_MI */
 #ifdef USE_COUNTERS
 	if (cnt_grp_lst)
 		free_cnt_grp_lst();
@@ -2400,15 +2209,6 @@ error:
 		cfg_vars_no=0;
 	}
 #endif /* USE_CFG_VARS */
-#ifdef USE_MI
-	if (mi_cmds)
-		free_mi_cmds();
-	if (mi_which_array){
-		free_rpc_array(mi_which_array, mi_which_no);
-		mi_which_array=0;
-		mi_which_no=0;
-	}
-#endif /* USE_MI */
 #ifdef USE_COUNTERS
 	if (cnt_grp_lst)
 		free_cnt_grp_lst();
