@@ -974,18 +974,12 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 				break;
 			case '{':
 			case '[':
-				if(*fmt == '{')
-					err=binrpc_start_struct(&ctx->out.pkt);
-				else
-					err=binrpc_start_array(&ctx->out.pkt);
+				err=binrpc_start_struct(&ctx->out.pkt);
 				if (err<0) goto error_add;
 				rs=new_rpc_struct();
 				if (rs==0) goto error_mem;
 				rs->offset=binrpc_pkt_len(&ctx->out.pkt);
-				if(*fmt == '{')
-					err=binrpc_end_struct(&ctx->out.pkt);
-				else
-					err=binrpc_end_array(&ctx->out.pkt);
+				err=binrpc_end_struct(&ctx->out.pkt);
 				if (err<0) goto error_add;
 				clist_append(&ctx->out.structs, rs, next, prev);
 				*(va_arg(ap, void**))=rs;
@@ -1086,10 +1080,7 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 				break;
 			case '{':
 			case '[':
-				if(*fmt == '{')
-					avp.type=BINRPC_T_STRUCT;
-				else
-					avp.type=BINRPC_T_ARRAY;
+				avp.type=BINRPC_T_STRUCT;
 				err=binrpc_addavp(&s->pkt, &avp);
 				if (err<0){
 					LM_ERR("failed to add attribute-value (%c)\n", *fmt);
@@ -1101,10 +1092,7 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 					goto error_mem;
 				}
 				rs->offset=binrpc_pkt_len(&s->pkt);
-				if(*fmt == '{')
-					err=binrpc_end_struct(&s->pkt);
-				else
-					err=binrpc_end_array(&s->pkt);
+				err=binrpc_end_struct(&s->pkt);
 				if (err<0) {
 					LM_ERR("failed to end struct (%c)\n", *fmt);
 					goto error_add;
@@ -1168,18 +1156,12 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 				break;
 			case '{':
 			case '[':
-				if(*fmt == '{')
-					err=binrpc_start_struct(&s->pkt);
-				else
-					err=binrpc_start_array(&s->pkt);
+				err=binrpc_start_struct(&s->pkt);
 				if (err<0) goto error_add;
 				rs=new_rpc_struct();
 				if (rs==0) goto error_mem;
 				rs->offset=binrpc_pkt_len(&s->pkt);
-				if(*fmt == '{')
-					err=binrpc_end_struct(&s->pkt);
-				else
-					err=binrpc_end_array(&s->pkt);
+				err=binrpc_end_struct(&s->pkt);
 				if (err<0) goto error_add;
 				clist_append(&s->substructs, rs, next, prev);
 				*(va_arg(ap, void**))=rs;
