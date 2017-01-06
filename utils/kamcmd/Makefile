@@ -6,7 +6,7 @@ include $(COREPATH)/Makefile.defs
 include $(COREPATH)/Makefile.targets
 
 auto_gen=
-RELEASE=0.2
+RELEASE=1.5
 UTIL_SRC_NAME=kamcmd
 ifeq ($(FLAVOUR),ser)
 	NAME?=sercmd
@@ -56,6 +56,9 @@ ifeq ($(OS), netbsd)
 	LIBS:=
 endif
 ifeq ($(OS), darwin)
+readline_locations= /opt/local/include/readline/readline.h \
+					/usr/include/readline/readline.h \
+					$(LOCALBASE)/include/readline/readline.h
 	LIBS:= -lresolv
 endif
 ifneq (,$(findstring cygwin, $(OS)))
@@ -74,8 +77,13 @@ endif
 endif
 
 ifeq ($(use_readline),1)
+ifneq (,$(findstring opt, $(readline_path)))
+	DEFS+=-DUSE_READLINE -I /opt/local/include
+	LIBS+=-L /opt/local/lib -lreadline -lncurses
+else
 	DEFS+=-DUSE_READLINE
 	LIBS+=-lreadline -lncurses
+endif
 endif
 
 
@@ -92,7 +100,7 @@ $(info "to force readline support try 'make use_readline=1'")
 endif
 endif # ifeq (,$(quiet))
 
-$(NAME).o: 
+$(NAME).o:
 
 .PHONY: msg
 msg:

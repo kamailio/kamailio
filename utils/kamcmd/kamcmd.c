@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of kamailio, a free SIP server.
@@ -20,19 +18,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*
  * send commands using binrpc
  *
- * History:
- * --------
- *  2006-02-14  created by andrei
- *  2009-06-29  command line completion for cfg groups and vars (andrei)
- *  2009-06-30  command line completion for mi cmds (andrei)
- *  2010-08-08  command line completion for counters/statistic (andrei)
  */
 
 
@@ -68,10 +60,10 @@
 
 
 #ifndef NAME
-#define NAME    "sercmd"
+#define NAME    "kamcmd"
 #endif
 #ifndef VERSION
-#define VERSION "0.2"
+#define VERSION "1.5"
 #endif
 
 #define IOVEC_CNT 20
@@ -85,7 +77,6 @@
 #define UNIX_PATH_MAX 104
 #endif
 
-static char id[]="$Id$";
 static char version[]= NAME " " VERSION;
 #ifdef VERSION_NODATE
 static char compiled[] = "";
@@ -1793,7 +1784,6 @@ error:
 static int sercmd_ver(int s, struct binrpc_cmd* cmd)
 {
 	printf("%s\n", version);
-	printf("%s\n", id);
 	printf("%s compiled on %s \n", __FILE__, compiled);
 #ifdef USE_READLINE
 	printf("interactive mode command completion support\n");
@@ -2198,7 +2188,6 @@ int main(int argc, char** argv)
 		switch(c){
 			case 'V':
 				printf("version: %s\n", version);
-				printf("%s\n", id);
 				printf("%s compiled on %s \n", __FILE__,
 						compiled);
 				exit(0);
