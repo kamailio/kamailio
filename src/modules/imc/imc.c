@@ -746,7 +746,6 @@ static void  imc_rpc_list_rooms(rpc_t* rpc, void* ctx)
 
 static void  imc_rpc_list_members(rpc_t* rpc, void* ctx)
 {
-	int i;
 	imc_room_p room = NULL;
 	void *vh;
 	void *ih;
