@@ -424,11 +424,13 @@ modparam("dispatcher", "force_dst", 1)
 	<section id="dispatcher.p.sock_avp">
 		<title><varname>sock_avp</varname> (str)</title>
 		<para>
-			The name of the avp which will hold the list with the sockets associated to the addresses stored in dst_avp avp.
+			The name of the avp which will hold the list with the sockets
+			associated to the addresses stored in dst_avp avp.
 		</para>
 		<note>
 		<para>
-			If you want to do load balancing fail over, you have to set this parameter to use the correct socket for each gateway.
+			If you want to do load balancing fail over, you have to set
+			this parameter to use the correct socket for each gateway.
 		</para>
 		</note>
 		<para>
@@ -462,10 +464,10 @@ modparam("dispatcher", "force_dst", 1)
  		</emphasis>
  		</para>
  		<example>
- 		<title>Use $avp(i:273) for hashing:</title>
+ 		<title>Use $avp(hash) for hashing:</title>
  <programlisting format="linespecific">
  ...
- modparam("dispatcher", "hash_pvar", "$avp(i:273)")
+ modparam("dispatcher", "hash_pvar", "$avp(hash)")
  ...
  </programlisting>
  		</example>
@@ -631,9 +633,13 @@ modparam("dispatcher", "force_dst", 1)
  	<section id="dispatcher.p.ds_ping_reply_codes">
  		<title><varname>ds_ping_reply_codes</varname> (string)</title>
  		<para>
-		This parameter defines the valid response codes, which are accepted as a valid reply to the PING-Method.
-		It is a list separated by colons, whery you may define either a single code (e.g. "code=202" would accept 202 as an additional, valid response) or a class of responses, you want to accept (e.g. "class=2" would accept everything from 200 to 299 as valid response).
-		This parameter can be modified via ser config framework.
+			This parameter defines the valid response codes, which are accepted
+			as a valid reply to the PING-Method. It is a list separated by
+			colons, whery you may define either a single code (e.g. "code=202"
+			would accept 202 as an additional, valid response) or a class of
+			responses, you want to accept (e.g. "class=2" would accept
+			everything from 200 to 299 as valid response). This parameter can
+			be modified via config framework.
  		</para>
  		<para>
 			Please note that the response codes the module accepts as valid reply to the
@@ -666,14 +672,16 @@ modparam("dispatcher", "force_dst", 1)
 		<itemizedlist>
 		<listitem>
 			<para>Value 0: If set to 0, only the gateways with state PROBING are tested.
-                              After a gateway is probed, the PROBING state is cleared in this mode.</para>
+            After a gateway is probed, the PROBING state is cleared in this mode.</para>
 		</listitem>
 		<listitem>
-			<para>Value 1: If set to 1, all gateways are tested.  If set to 1 and there is a failure of keepalive
-		    		to an active gateway, then it is set to TRYING state.</para>
+			<para>Value 1: If set to 1, all gateways are tested.  If set to 1 and
+			there is a failure of keepalive to an active gateway, then it is
+			set to TRYING state.</para>
 		</listitem>
 		<listitem>
-			<para>Value 2: if set to 2, only gateways in inactive state with probing mode set are tested.</para>
+			<para>Value 2: if set to 2, only gateways in inactive state with
+			probing mode set are tested.</para>
 		</listitem>
 		<listitem>
 			<para>Value 3: If set to 3, any gateway with state PROBING is continually probed
@@ -1369,7 +1377,7 @@ onreply_route {
 
 	<section>
 	<title>RPC Commands</title>
-	<section id="dispatcher.rpc.set_state">
+	<section id="dispatcher.r.set_state">
 		<title>
 		<function moreinfo="none">dispatcher.set_state</function>
 		</title>
@@ -1408,7 +1416,7 @@ onreply_route {
 ...
 </programlisting>
     </section>
-	<section id="dispatcher.rpc.list">
+	<section id="dispatcher.r.list">
 		<title>
 		<function moreinfo="none">dispatcher.list</function>
 		</title>
@@ -1426,7 +1434,7 @@ onreply_route {
 		&sercmd; dispatcher.list
 		</programlisting>
     </section>
-	<section id="dispatcher.f.reload">
+	<section id="dispatcher.r.reload">
 		<title>
 		<function moreinfo="none">dispatcher.reload</function>
 		</title>
@@ -1448,7 +1456,7 @@ onreply_route {
 		</programlisting>
     </section>
 
-	<section id="dispatcher.rpc.ping_active">
+	<section id="dispatcher.r.ping_active">
 		<title>
 		<function moreinfo="none">dispatcher.ping_active</function>
 		</title>
