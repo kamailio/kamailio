@@ -359,7 +359,7 @@ error_len:
  */
 inline static int binrpc_add_skip(struct binrpc_pkt* pkt, int bytes)
 {
-	
+
 	if ((pkt->crt+bytes)>=pkt->end)
 		return E_BINRPC_OVERFLOW;
 	pkt->crt+=bytes;
@@ -373,7 +373,7 @@ inline static int binrpc_add_skip(struct binrpc_pkt* pkt, int bytes)
  * manually later (and also use binrpc_add_skip(pkt, l) or increase
  *  pkt->crt directly if you want to continue adding to this pkt).
  *  Usefull for optimizing str writing (e.g. writev(iovec))
- *  WARNING: use with care, low level function, binrpc_addstr or 
+ *  WARNING: use with care, low level function, binrpc_addstr or
  *           binrpc_add_str_type are probably what you want.
  *  WARNING1: BINRPC_T_STR and BINRPC_T_AVP must be  0 term, the len passed to
  *            this function, must include the \0 in this case.
@@ -383,7 +383,7 @@ inline static int binrpc_add_str_mark(struct binrpc_pkt* pkt, int type,
 {
 	int size;
 	unsigned char* p;
-	
+
 	if (pkt->crt>=pkt->end) goto error_len;
 	if (l<8){
 		size=l;
@@ -410,7 +410,7 @@ inline static int binrpc_add_str_type(struct binrpc_pkt* pkt, char* s, int len,
 	int l;
 	int zero_term; /* whether or not to add an extra 0 at the end */
 	unsigned char* p;
-	
+
 	zero_term=((type==BINRPC_T_STR)||(type==BINRPC_T_AVP));
 	l=len+zero_term;
 	if (l<8){
@@ -439,7 +439,7 @@ inline static int binrpc_addavp(struct binrpc_pkt* pkt, struct binrpc_val* avp)
 {
 	int ret;
 	unsigned char* bak;
-	
+
 	bak=pkt->crt;
 	ret=binrpc_add_str_type(pkt, avp->name.s, avp->name.len, BINRPC_T_AVP);
 	if (ret<0) return ret;
@@ -449,7 +449,7 @@ inline static int binrpc_addavp(struct binrpc_pkt* pkt, struct binrpc_val* avp)
 			break;
 		case BINRPC_T_STR:
 		case BINRPC_T_BYTES:
-			ret=binrpc_add_str_type(pkt, avp->u.strval.s, 
+			ret=binrpc_add_str_type(pkt, avp->u.strval.s,
 										avp->u.strval.len,
 										avp->type);
 			break;
@@ -457,7 +457,7 @@ inline static int binrpc_addavp(struct binrpc_pkt* pkt, struct binrpc_val* avp)
 		case BINRPC_T_ARRAY:
 			ret=binrpc_add_tag(pkt, avp->type, 0);
 			break;
-		case BINRPC_T_DOUBLE: 
+		case BINRPC_T_DOUBLE:
 			ret=binrpc_add_double_type(pkt, avp->u.fval, avp->type);
 			break;
 		default:

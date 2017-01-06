@@ -1070,8 +1070,9 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 			case 's': /* asciiz */
 				avp.type=BINRPC_T_STR;
 				avp.u.strval.s=va_arg(ap, char*);
-				if (avp.u.strval.s)
-					avp.u.strval.len=strlen(avp.u.strval.s);
+				if (avp.u.strval.s==0) /* fix null strings */
+					avp.u.strval.s="<null string>";
+				avp.u.strval.len=strlen(avp.u.strval.s);
 				break;
 			case 'S': /* str */
 				avp.type=BINRPC_T_STR;
@@ -1098,13 +1099,13 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 				}
 				clist_append(&s->substructs, rs, next, prev);
 				*(va_arg(ap, void**))=rs;
-				goto end;
+				break;
 			case 'f':
 				avp.type=BINRPC_T_DOUBLE;
 				avp.u.fval=va_arg(ap, double);
 				break;
 			default:
-				LM_ERR("formatting char \'%c\'" " not supported\n", *fmt);
+				LM_ERR("formatting char \'%c\' not supported\n", *fmt);
 				goto error;
 		}
 		err=binrpc_addavp(&s->pkt, &avp);
