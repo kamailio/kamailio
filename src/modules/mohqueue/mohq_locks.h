@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-15 Robert Boisvert
+ * Copyright (C) 2013-17 Robert Boisvert
  *
  * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
@@ -21,8 +21,6 @@
 
 #ifndef MOHQ_LOCKS_H
 #define MOHQ_LOCKS_H
-
-#include "../../core/locking.h"
 
 /**********
 * lock record

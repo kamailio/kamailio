@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-15 Robert Boisvert
+ * Copyright (C) 2013-17 Robert Boisvert
  *
  * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
@@ -27,6 +27,32 @@
 
 #include "../rr/api.h"
 
+#if SER_VER < 5000000
+#include "../../data_lump.h"
+#include "../../data_lump_rpl.h"
+#include "../../dprint.h"
+#include "../../dset.h"
+#include "../../flags.h"
+#include "../../hashes.h"
+#include "../../locking.h"
+#include "../../lvalue.h"
+#include "../../mod_fix.h"
+#include "../../rpc.h"
+#include "../../rpc_lookup.h"
+#include "../../sr_module.h"
+#include "../../str.h"
+
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
+
+#include "../../parser/hf.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/contact/parse_contact.h"
+#include "../../parser/parse_expires.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_rr.h"
+#include "../../parser/sdp/sdp.h"
+#else
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/dprint.h"
@@ -35,16 +61,9 @@
 #include "../../core/hashes.h"
 #include "../../core/locking.h"
 #include "../../core/lvalue.h"
-#include "../../core/mod_fix.h"
-#include "../../core/sr_module.h"
-#include "../../core/str.h"
-
-#include "../../core/strutils.h"
-#include "../../lib/srdb1/db.h"
 #include "../../core/mem/mem.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../modules/sl/sl.h"
-#include "../../modules/tm/tm_load.h"
+#include "../../core/mod_fix.h"
 #include "../../core/parser/hf.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/contact/parse_contact.h"
@@ -52,6 +71,15 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_rr.h"
 #include "../../core/parser/sdp/sdp.h"
+#include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
+#include "../../core/sr_module.h"
+#include "../../core/str.h"
+#endif
+
+#include "../../lib/srdb1/db.h"
+#include "../../modules/sl/sl.h"
+#include "../../modules/tm/tm_load.h"
 
 /* convenience macros */
 #define MOHQ_STRUCT_PTR_OFFSET( struct1, cast1, offset1 ) \
