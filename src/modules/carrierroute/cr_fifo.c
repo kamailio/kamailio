@@ -1185,11 +1185,13 @@ void cr_rpc_dump_routes(rpc_t* rpc, void* ctx)
 				goto error;
 			}
 			tmp_str = (rd->carriers[i] ? rd->carriers[i]->name : &empty_str);
-			if(rpc->struct_add(dh, "Sd[", "carrier", &tmp_str,
+			if(rpc->struct_add(dh, "Sd[", "carrier", tmp_str,
 						"id", (rd->carriers[i] ? rd->carriers[i]->id : 0),
 						"domains",  &eh)<0)
 			{
-				LM_ERR("add carrier structure failure at count %d\n", i);
+				LM_ERR("add carrier structure failure at count %d"
+						" (carrier: %d/%.*s)\n",
+						i, tmp_str->len, tmp_str->len, tmp_str->s);
 				rpc->fault(ctx, 500, "Internal error - carrier structure");
 				goto error;
 			}
@@ -1202,7 +1204,7 @@ void cr_rpc_dump_routes(rpc_t* rpc, void* ctx)
 						goto error;
 					}
 					tmp_str = (rd->carriers[i]->domains[j] ? rd->carriers[i]->domains[j]->name : &empty_str);
-					if(rpc->struct_add(fh, "Sd[", "domain", &tmp_str,
+					if(rpc->struct_add(fh, "Sd[", "domain", tmp_str,
 							"id", rd->carriers[i]->domains[j]->id,
 							"data",  &gh)<0)
 					{
