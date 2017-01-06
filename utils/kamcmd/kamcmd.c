@@ -406,7 +406,7 @@ void print_binrpc_val(struct binrpc_val* v, int ident)
 	int r;
 
 	if ((v->type==BINRPC_T_STRUCT) && !v->u.end)
-		ident--; /* fix to have strut beg. idented differently */
+		ident--; /* fix to have struct beg. idented differently */
 	for (r=0; r<ident; r++) putchar('	');
 	if (v->name.s){
 		printf("%.*s: ", v->name.len, v->name.s);
