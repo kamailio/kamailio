@@ -385,7 +385,7 @@ static int jsdt_sr_pv_is_null (duk_context *J)
 const duk_function_list_entry _sr_kemi_pv_J_Map[] = {
 	{ "get", jsdt_sr_pv_get, 1 /* 1 args */ },
 	{ "seti", jsdt_sr_pv_seti, 2 /* 2 args */ },
-	{ "sets", jsdt_sr_pv_seti, 2 /* 2 args */ },
+	{ "sets", jsdt_sr_pv_sets, 2 /* 2 args */ },
 	{ "unset", jsdt_sr_pv_unset, 1 /* 1 args */ },
 	{ "is_null", jsdt_sr_pv_is_null, 1 /* 1 args */ },
 	{ NULL, NULL, 0 }
@@ -432,9 +432,6 @@ int jsdt_sr_init_mod(void)
  */
 int jsdt_sr_init_child(void)
 {
-	int ret;
-	char *txt;
-
 	memset(&_sr_J_env, 0, sizeof(sr_jsdt_env_t));
 	_sr_J_env.J = duk_create_heap_default();
 	if(_sr_J_env.J==NULL) {
@@ -584,7 +581,6 @@ int app_jsdt_run(sip_msg_t *msg, char *func, char *p1, char *p2,
 int app_jsdt_runstring(sip_msg_t *msg, char *script)
 {
 	int ret;
-	char *txt;
 	sip_msg_t *bmsg;
 
 	if(_sr_J_env.JJ==NULL) {
