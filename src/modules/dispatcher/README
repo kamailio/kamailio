@@ -144,7 +144,7 @@ Luis Martin
    1.14. Set the “dstid_avp” parameter
    1.15. Set the “attrs_avp” parameter
    1.16. Set the “sock_avp” parameter
-   1.17. Use $avp(i:273) for hashing:
+   1.17. Use $avp(hash) for hashing:
    1.18. Use combination of PVs for hashing:
    1.19. Set the “setid_pvname” parameter
    1.20. Set the “attrs_pvname” parameter
@@ -564,9 +564,9 @@ Note
 
    Default value is “null” - disabled.
 
-   Example 1.17. Use $avp(i:273) for hashing:
+   Example 1.17. Use $avp(hash) for hashing:
  ...
- modparam("dispatcher", "hash_pvar", "$avp(i:273)")
+ modparam("dispatcher", "hash_pvar", "$avp(hash)")
  ...
 
    Example 1.18. Use combination of PVs for hashing:
@@ -676,8 +676,7 @@ Note
    whery you may define either a single code (e.g. "code=202" would accept
    202 as an additional, valid response) or a class of responses, you want
    to accept (e.g. "class=2" would accept everything from 200 to 299 as
-   valid response). This parameter can be modified via ser config
-   framework.
+   valid response). This parameter can be modified via config framework.
 
    Please note that the response codes the module accepts as valid reply
    to the PING-Method are not only the ones generated from the remote
@@ -1365,7 +1364,7 @@ sip_warning=no
 mpath="/usr/local/lib/kamailio/modules/"
 
 loadmodule "db_mysql.so"
-loadmodule "mi_fifo.so"
+loadmodule "jsonrpcs.so"
 loadmodule "kex.so"
 loadmodule "tm.so"
 loadmodule "tmx.so"
@@ -1378,12 +1377,15 @@ loadmodule "siputils.so"
 loadmodule "xlog.so"
 loadmodule "sanity.so"
 loadmodule "ctl.so"
-loadmodule "mi_rpc.so"
 loadmodule "acc.so"
 loadmodule "dispatcher.so"
 
 
 # ----------------- setting module-specific parameters ---------------
+
+
+# ----- jsonrpcs params -----
+modparam("jsonrpcs", "pretty_format", 1)
 
 
 # ----- rr params -----
