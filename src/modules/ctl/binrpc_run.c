@@ -1114,7 +1114,6 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 			goto error;
 		}
 	}
-end:
 	va_end(ap);
 	return 0;
 error_mem:
