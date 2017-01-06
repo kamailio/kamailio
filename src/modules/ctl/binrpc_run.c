@@ -1099,7 +1099,7 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 				}
 				clist_append(&s->substructs, rs, next, prev);
 				*(va_arg(ap, void**))=rs;
-				break;
+				goto end;
 			case 'f':
 				avp.type=BINRPC_T_DOUBLE;
 				avp.u.fval=va_arg(ap, double);
@@ -1114,6 +1114,7 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 			goto error;
 		}
 	}
+end:
 	va_end(ap);
 	return 0;
 error_mem:
