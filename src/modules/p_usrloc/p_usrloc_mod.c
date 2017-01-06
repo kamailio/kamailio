@@ -83,8 +83,6 @@ MODULE_VERSION
 static int mod_init(void);                          /*!< Module initialization function */
 static void destroy(void);                          /*!< Module destroy function */
 static int child_init(int rank);                    /*!< Per-child init function */
-static int mi_child_init(void);
-static int mi_child_loc_nr_init(void);
 extern int bind_usrloc(usrloc_api_t* api);
 extern int ul_locks_no;
 int ul_db_update_as_insert = 0;
