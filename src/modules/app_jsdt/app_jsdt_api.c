@@ -503,7 +503,7 @@ int app_jsdt_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	if(!duk_is_function(_sr_J_env.JJ, -1))
 	{
 		if(emode) {
-			LM_ERR("no such function [%s] in jd scripts\n", func);
+			LM_ERR("no such function [%s] in js scripts\n", func);
 			LM_ERR("top stack type [%d]\n",
 				duk_get_type(_sr_J_env.JJ, -1));
 			txt.s = (char*)duk_to_string(_sr_J_env.JJ, -1);
@@ -535,23 +535,29 @@ int app_jsdt_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 	_sr_J_env.msg = bmsg;
 	if(ret!=DUK_EXEC_SUCCESS)
 	{
-		txt.s = (char*)duk_safe_to_string(_sr_J_env.JJ, -1);
 		n = 0;
-		if(txt.s!=NULL) {
-			for(n=0; txt.s[n]!='\0' && _sr_kemi_jsdt_exit_string.s[n]!='\0';
-					n++) {
-				if(txt.s[n] != _sr_kemi_jsdt_exit_string.s[n])
-					break;
-			}
-			if(txt.s[n]!='\0' || _sr_kemi_jsdt_exit_string.s[n]!='\0') {
-				LM_ERR("error from js: %s\n", txt.s);
-				n = 0;
-			} else {
-				LM_DBG("ksr error call from js: %s\n", txt.s);
-				n = 1;
-			}
+		if (duk_is_error(_sr_J_env.JJ, -1)) {
+			duk_get_prop_string(_sr_J_env.JJ, -1, "stack");
+			LM_ERR("error stack from js: %s\n", duk_safe_to_string(_sr_J_env.JJ, -1));
+			duk_pop(_sr_J_env.JJ);
 		} else {
-			LM_ERR("error from js: unknown\n");
+			txt.s = (char*)duk_safe_to_string(_sr_J_env.JJ, -1);
+			if(txt.s!=NULL) {
+				for(n=0; txt.s[n]!='\0' && _sr_kemi_jsdt_exit_string.s[n]!='\0';
+						n++) {
+					if(txt.s[n] != _sr_kemi_jsdt_exit_string.s[n])
+						break;
+				}
+				if(txt.s[n]!='\0' || _sr_kemi_jsdt_exit_string.s[n]!='\0') {
+					LM_ERR("error from js: %s\n", txt.s);
+					n = 0;
+				} else {
+					LM_DBG("ksr error call from js: %s\n", txt.s);
+					n = 1;
+				}
+			} else {
+				LM_ERR("error from js: unknown\n");
+			}
 		}
 		duk_pop(_sr_J_env.JJ);
 		if(n==1) {
@@ -654,7 +660,7 @@ int app_jsdt_dofile(sip_msg_t *msg, char *script)
 /**
  *
  */
-int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket, int pdelta)
+int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 {
 	int i;
 	int argc;
@@ -675,17 +681,17 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket, int pdelta)
 	mname = &ket->mname;
 
 	argc = duk_get_top(J);
-	if(argc==pdelta && ket->ptypes[0]==SR_KEMIP_NONE) {
+	if(argc==0 && ket->ptypes[0]==SR_KEMIP_NONE) {
 		ret = ((sr_kemi_fm_f)(ket->func))(env_J->msg);
 		return sr_kemi_jsdt_return_int(J, ket, ret);
 	}
-	if(argc==pdelta && ket->ptypes[0]!=SR_KEMIP_NONE) {
+	if(argc==0 && ket->ptypes[0]!=SR_KEMIP_NONE) {
 		LM_ERR("invalid number of parameters for: %.*s.%.*s\n",
 				mname->len, mname->s, fname->len, fname->s);
 		return app_jsdt_return_false(J);
 	}
 
-	if(argc>=SR_KEMI_PARAMS_MAX+pdelta) {
+	if(argc>SR_KEMI_PARAMS_MAX) {
 		LM_ERR("too many parameters for: %.*s.%.*s\n",
 				mname->len, mname->s, fname->len, fname->s);
 		return app_jsdt_return_false(J);
@@ -696,12 +702,12 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket, int pdelta)
 		if(ket->ptypes[i]==SR_KEMIP_NONE) {
 			break;
 		} else if(ket->ptypes[i]==SR_KEMIP_STR) {
-			vps[i].s.s = (char*)duk_to_string(J, i+pdelta+1);
+			vps[i].s.s = (char*)duk_to_string(J, i);
 			vps[i].s.len = strlen(vps[i].s.s);
 			LM_DBG("param[%d] for: %.*s is str: %.*s\n", i,
 				fname->len, fname->s, vps[i].s.len, vps[i].s.s);
 		} else if(ket->ptypes[i]==SR_KEMIP_INT) {
-			vps[i].n = duk_to_int(J, i+pdelta+1);
+			vps[i].n = duk_to_int(J, i);
 			LM_DBG("param[%d] for: %.*s is int: %d\n", i,
 				fname->len, fname->s, vps[i].n);
 		} else {
@@ -900,7 +906,7 @@ int sr_kemi_jsdt_exec_func(duk_context *J, int eidx)
 	sr_kemi_t *ket;
 
 	ket = sr_kemi_jsdt_export_get(eidx);
-	return sr_kemi_jsdt_exec_func_ex(J, ket, 0);
+	return sr_kemi_jsdt_exec_func_ex(J, ket);
 }
 
 /**
@@ -914,7 +920,7 @@ duk_function_list_entry *_sr_J_KSRMethods = NULL;
 /**
  *
  */
-void jsdt_sr_kemi_register_libs(duk_context *J)
+duk_ret_t dukopen_KSR(duk_context *J)
 {
 	duk_function_list_entry *_sr_crt_J_KSRMethods = NULL;
 	sr_kemi_module_t *emods = NULL;
@@ -923,11 +929,12 @@ void jsdt_sr_kemi_register_libs(duk_context *J)
 	int k;
 	int n;
 	char mname[128];
+	char malias[256];
 
 	_sr_J_KSRMethods = malloc(SR_JSDT_KSR_METHODS_SIZE * sizeof(duk_function_list_entry));
 	if(_sr_J_KSRMethods==NULL) {
 		LM_ERR("no more pkg memory\n");
-		return;
+		return 0;
 	}
 	memset(_sr_J_KSRMethods, 0, SR_JSDT_KSR_METHODS_SIZE * sizeof(duk_function_list_entry));
 
@@ -938,7 +945,7 @@ void jsdt_sr_kemi_register_libs(duk_context *J)
 	_sr_crt_J_KSRMethods = _sr_J_KSRMethods;
 	if(emods_size==0 || emods[0].kexp==NULL) {
 		LM_ERR("no kemi exports registered\n");
-		return;
+		return 0;
 	}
 
 	for(i=0; emods[0].kexp[i].func!=NULL; i++) {
@@ -950,7 +957,7 @@ void jsdt_sr_kemi_register_libs(duk_context *J)
 			LM_ERR("failed to associate kemi function with js export\n");
 			free(_sr_J_KSRMethods);
 			_sr_J_KSRMethods = NULL;
-			return;
+			return 0;
 		}
 		_sr_crt_J_KSRMethods[i].nargs = DUK_VARARGS;
 		n++;
@@ -966,15 +973,16 @@ void jsdt_sr_kemi_register_libs(duk_context *J)
 	duk_push_global_object(J);
 	duk_push_object(J);  /* -> [ ... global obj ] */
 	duk_put_function_list(J, -1, _sr_kemi_pv_J_Map);
-	duk_put_prop_string(J, -2, "KSR.pv");  /* -> [ ... global ] */
+	duk_put_prop_string(J, -2, "KSR_pv");  /* -> [ ... global ] */
 	duk_pop(J);
+	duk_eval_string_noresult(J, "KSR.pv = KSR_pv;");
 
 	/* registered kemi modules */
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
 			n++;
 			_sr_crt_J_KSRMethods += n;
-			snprintf(mname, 128, "KSR.%s", emods[k].kexp[0].mname.s);
+			snprintf(mname, 128, "KSR_%s", emods[k].kexp[0].mname.s);
 			for(i=0; emods[k].kexp[i].func!=NULL; i++) {
 				LM_DBG("exporting %s.%s(...)\n", mname,
 						emods[k].kexp[i].fname.s);
@@ -985,7 +993,7 @@ void jsdt_sr_kemi_register_libs(duk_context *J)
 					LM_ERR("failed to associate kemi function with func export\n");
 					free(_sr_J_KSRMethods);
 					_sr_J_KSRMethods = NULL;
-					return;
+					return 0;
 				}
 				_sr_crt_J_KSRMethods[i].nargs = DUK_VARARGS;
 				n++;
@@ -996,12 +1004,30 @@ void jsdt_sr_kemi_register_libs(duk_context *J)
 			duk_put_function_list(J, -1, _sr_crt_J_KSRMethods);
 			duk_put_prop_string(J, -2, mname);  /* -> [ ... global ] */
 			duk_pop(J);
+			snprintf(malias, 256, "KSR.%s = KSR_%s;", emods[k].kexp[0].mname.s,
+					emods[k].kexp[0].mname.s);
+			duk_eval_string_noresult(J, malias);
 
 			LM_DBG("initializing kemi sub-module: %s (%s)\n", mname,
 					emods[k].kexp[0].mname.s);
 		}
 	}
 	LM_DBG("module 'KSR' has been initialized\n");
+	return 1;
+}
+
+/**
+ *
+ */
+void jsdt_sr_kemi_register_libs(duk_context *J)
+{
+	int ret;
+
+	duk_push_c_function(J, dukopen_KSR, 0 /*nargs*/);
+	ret = duk_pcall(J, 0);
+	if(ret!=DUK_EXEC_SUCCESS) {
+		LM_ERR("failed to initialize KSR module\n");
+	}
 }
 
 static const char* app_jsdt_rpc_reload_doc[2] = {
