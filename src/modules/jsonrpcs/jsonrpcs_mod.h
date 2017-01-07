@@ -40,6 +40,8 @@
  */
 typedef struct jsonrpc_ctx {
 	sip_msg_t* msg;        /**< The SIP/HTTP received message. */
+	int msg_shm_block_size; /**< non-zero for delayed reply contexts with
+							  shm cloned msgs */
 	char* method;          /**< Name of the management function to be called */
 	unsigned int flags;    /**< Various flags, such as return value type */
 	srjson_doc_t *jreq;    /**< JSON request document */
@@ -50,7 +52,18 @@ typedef struct jsonrpc_ctx {
 	int error_code;        /**< Json error code */
 	int http_code;         /**< http reply code */
 	str http_text;         /**< http reply reason text */
+	int transport;         /**< RPC transport */
 } jsonrpc_ctx_t;
+
+/* extra rpc_ctx_t flags */
+/* first 8 bits reserved for rpc flags (e.g. RET_ARRAY) */
+#define JSONRPC_DELAYED_CTX_F	256
+#define JSONRPC_DELAYED_REPLY_F	512
+
+#define JSONRPC_TRANS_NONE	0
+#define JSONRPC_TRANS_HTTP	1
+#define JSONRPC_TRANS_FIFO	2
+#define JSONRPC_TRANS_DGRAM	3
 
 typedef struct jsonrpc_plain_reply {
 	int rcode;         /**< reply code */

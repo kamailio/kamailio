@@ -42,6 +42,9 @@
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/resolve.h"
 #include "../../core/ip_addr.h"
+#include "../../core/sip_msg_clone.h"
+#include "../../core/data_lump.h"
+#include "../../core/data_lump_rpl.h"
 #include "../../modules/xhttp/api.h"
 
 #include "jsonrpcs_mod.h"
@@ -248,6 +251,8 @@ static void jsonrpc_reset_plain_reply(void (*free_fn)(void*))
 static void jsonrpc_fault(jsonrpc_ctx_t* ctx, int code, char* fmt, ...)
 {
 	va_list ap;
+
+	jsonrpc_delayed_reply_ctx_init(ctx);
 
 	ctx->http_code = code;
 	va_start(ap, fmt);
@@ -472,6 +477,8 @@ static int jsonrpc_add(jsonrpc_ctx_t* ctx, char* fmt, ...)
 	void **void_ptr;
 	va_list ap;
 
+	jsonrpc_delayed_reply_ctx_init(ctx);
+
 	va_start(ap, fmt);
 	while(*fmt) {
 		if (*fmt == '{' || *fmt == '[') {
@@ -646,6 +653,8 @@ static int jsonrpc_rpl_printf(jsonrpc_ctx_t* ctx, char* fmt, ...)
 	char tbuf[JSONRPC_PRINT_VALUE_BUF_LEN];
 	va_list ap;
 	srjson_t *nj = NULL;
+
+	jsonrpc_delayed_reply_ctx_init(ctx);
 
 	buf = tbuf;
 	buf_size = JSONRPC_PRINT_VALUE_BUF_LEN;
@@ -889,11 +898,36 @@ static int jsonrpc_struct_printf(srjson_t *jnode, char* mname, char* fmt, ...)
 }
 
 
+static void jsonrpc_clean_context(jsonrpc_ctx_t* ctx)
+{
+	if (!ctx) return;
+	srjson_DeleteDoc(ctx->jreq);
+	if(ctx->rpl_node!=NULL) {
+		srjson_Delete(ctx->jrpl, ctx->rpl_node);
+		ctx->rpl_node = NULL;
+	}
+	srjson_DeleteDoc(ctx->jrpl);
+}
+
+
 /** Returns the RPC capabilities supported by the xmlrpc driver.
  */
 static rpc_capabilities_t jsonrpc_capabilities(jsonrpc_ctx_t* ctx)
 {
-	/* No support for async commands.*/
+	/* support for async commands - delayed response */
+	return RPC_DELAYED_REPLY;
+}
+
+/** if this a delayed reply context,
+ * and it's never been use before, initialize it */
+static int jsonrpc_delayed_reply_ctx_init(jsonrpc_ctx_t* ctx)
+{
+	if  ((ctx->flags & JSONRPC_DELAYED_CTX_F)
+			&& (ctx->jrpl==0)) {
+		if (jsonrpc_init_reply(ctx) < 0)
+			return -1;
+		jsonrpc_reset_plain_reply(ctx->jrpl->free_fn);
+	}
 	return 0;
 }
 
@@ -908,6 +942,51 @@ static rpc_capabilities_t jsonrpc_capabilities(jsonrpc_ctx_t* ctx)
  */
 static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 {
+	struct rpc_delayed_ctx* ret;
+	int size;
+	jsonrpc_ctx_t* r_ctx;
+	sip_msg_t* shm_msg;
+	int len;
+
+	ret=0;
+	shm_msg=0;
+
+	if (ctx->reply_sent) {
+		LM_ERR("response already sent - cannot create a delayed context\n");
+		return 0; /* no delayed reply if already replied */
+	}
+
+	if (ctx->transport!=JSONRPC_TRANS_HTTP) {
+		LM_ERR("delayed response implemented only for HTTP transport\n");
+		return 0;
+	}
+	/* clone the sip msg */
+	if(ctx->msg!=NULL) {
+		shm_msg=sip_msg_shm_clone(ctx->msg, &len, 1);
+		if (shm_msg==0)
+			goto error;
+	}
+
+	/* alloc into one block */
+	size=ROUND_POINTER(sizeof(*ret))+sizeof(jsonrpc_ctx_t);
+	if ((ret=shm_malloc(size))==0)
+		goto error;
+	memset(ret, 0, size);
+	ret->rpc=func_param;
+	ret->reply_ctx=(char*)ret+ROUND_POINTER(sizeof(*ret));
+	r_ctx=ret->reply_ctx;
+	r_ctx->flags=ctx->flags | JSONRPC_DELAYED_CTX_F;
+	r_ctx->transport=ctx->transport;
+	ctx->flags |= JSONRPC_DELAYED_REPLY_F;
+	r_ctx->msg=shm_msg;
+	r_ctx->msg_shm_block_size=len;
+
+	return ret;
+error:
+	if (shm_msg)
+		shm_free(shm_msg);
+	if (ret)
+		shm_free(ret);
 	return NULL;
 }
 
@@ -918,20 +997,50 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
  */
 static void jsonrpc_delayed_ctx_close(struct rpc_delayed_ctx* dctx)
 {
+	jsonrpc_ctx_t* r_ctx;
+	hdr_field_t* hdr;
+
+	r_ctx=dctx->reply_ctx;
+	if (unlikely(!(r_ctx->flags & JSONRPC_DELAYED_CTX_F))){
+		BUG("reply ctx not marked as async/delayed\n");
+		goto error;
+	}
+
+	if (jsonrpc_delayed_reply_ctx_init(r_ctx)<0)
+		goto error;
+
+	if (!r_ctx->reply_sent){
+		jsonrpc_send(r_ctx);
+	}
+error:
+	jsonrpc_clean_context(r_ctx);
+	if(r_ctx->msg) {
+		/* free added lumps (rpc_send adds a body lump) */
+		del_nonshm_lump( &(r_ctx->msg->add_rm) );
+		del_nonshm_lump( &(r_ctx->msg->body_lumps) );
+		del_nonshm_lump_rpl( &(r_ctx->msg->reply_lump) );
+		/* free header's parsed structures
+		 * that were added by failure handlers */
+		for( hdr=r_ctx->msg->headers ; hdr ; hdr=hdr->next ) {
+			if ( hdr->parsed && hdr_allocs_parse(hdr) &&
+					(hdr->parsed<(void*)r_ctx->msg ||
+					hdr->parsed>=(void*)(r_ctx->msg+r_ctx->msg_shm_block_size))) {
+				/* header parsed filed doesn't point inside uas.request memory
+				 * chunck -> it was added by failure funcs.-> free it as pkg */
+				DBG("removing hdr->parsed %d\n", hdr->type);
+				clean_hdr_field(hdr);
+				hdr->parsed = 0;
+			}
+		}
+		shm_free(r_ctx->msg);
+	}
+	r_ctx->msg=0;
+	dctx->reply_ctx=0;
+	shm_free(dctx);
+
 	return;
 }
 
-
-static void jsonrpc_clean_context(jsonrpc_ctx_t* ctx)
-{
-	if (!ctx) return;
-	srjson_DeleteDoc(ctx->jreq);
-	if(ctx->rpl_node!=NULL) {
-		srjson_Delete(ctx->jrpl, ctx->rpl_node);
-		ctx->rpl_node = NULL;
-	}
-	srjson_DeleteDoc(ctx->jrpl);
-}
 
 static int mod_init(void)
 {
@@ -1027,6 +1136,9 @@ static int child_init(int rank)
 	return 0;
 }
 
+/**
+ *
+ */
 static void mod_destroy(void)
 {
 	jsonrpc_fifo_destroy();
@@ -1035,6 +1147,9 @@ static void mod_destroy(void)
 	return;
 }
 
+/**
+ *
+ */
 static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 {
 	rpc_export_t* rpce;
@@ -1067,6 +1182,7 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 		LM_ERR("invalid json doc [[%s]]\n", ctx->jreq->buf.s);
 		return NONSIP_MSG_ERROR;
 	}
+	ctx->transport = JSONRPC_TRANS_HTTP;
 	if (jsonrpc_init_reply(ctx) < 0) goto send_reply;
 
 	/* sanity checks on jsonrpc request */
@@ -1106,7 +1222,7 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	rpce->function(&func_param, ctx);
 
 send_reply:
-	if (!ctx->reply_sent) {
+	if (!ctx->reply_sent && !(ctx->flags&JSONRPC_DELAYED_REPLY_F)) {
 		ret = jsonrpc_send(ctx);
 	}
 	jsonrpc_clean_context(ctx);
