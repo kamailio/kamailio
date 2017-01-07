@@ -236,36 +236,6 @@ static void jsonrpc_reset_plain_reply(void (*free_fn)(void*))
 	memset(&_jsonrpc_plain_reply, 0, sizeof(jsonrpc_plain_reply_t));
 }
 
-/** Implementation of rpc_fault function required by the management API.
- *
- * This function will be called whenever a management function
- * indicates that an error ocurred while it was processing the request. The
- * function takes the reply code and reason phrase as parameters, these will
- * be put in the body of the reply.
- *
- * @param ctx A pointer to the context structure of the request being
- *            processed.
- * @param code Reason code.
- * @param fmt Formatting string used to build the reason phrase.
- */
-static void jsonrpc_fault(jsonrpc_ctx_t* ctx, int code, char* fmt, ...)
-{
-	va_list ap;
-
-	jsonrpc_delayed_reply_ctx_init(ctx);
-
-	ctx->http_code = code;
-	va_start(ap, fmt);
-	vsnprintf(jsonrpc_error_buf, JSONRPC_ERROR_REASON_BUF_LEN, fmt, ap);
-	va_end(ap);
-	ctx->http_text.len = strlen(jsonrpc_error_buf);
-	ctx->http_text.s = jsonrpc_error_buf;
-	if(ctx->error_code == 0) ctx->error_code = -32000;
-
-	return;
-}
-
-
 
 /** Initialize jsonrpc reply data structure.
  *
@@ -295,6 +265,50 @@ static int jsonrpc_init_reply(jsonrpc_ctx_t *ctx)
 
 	return 0;
 }
+
+
+/** if this a delayed reply context,
+ * and it's never been use before, initialize it */
+static int jsonrpc_delayed_reply_ctx_init(jsonrpc_ctx_t* ctx)
+{
+	if  ((ctx->flags & JSONRPC_DELAYED_CTX_F)
+			&& (ctx->jrpl==0)) {
+		if (jsonrpc_init_reply(ctx) < 0)
+			return -1;
+		jsonrpc_reset_plain_reply(ctx->jrpl->free_fn);
+	}
+	return 0;
+}
+
+/** Implementation of rpc_fault function required by the management API.
+ *
+ * This function will be called whenever a management function
+ * indicates that an error ocurred while it was processing the request. The
+ * function takes the reply code and reason phrase as parameters, these will
+ * be put in the body of the reply.
+ *
+ * @param ctx A pointer to the context structure of the request being
+ *            processed.
+ * @param code Reason code.
+ * @param fmt Formatting string used to build the reason phrase.
+ */
+static void jsonrpc_fault(jsonrpc_ctx_t* ctx, int code, char* fmt, ...)
+{
+	va_list ap;
+
+	jsonrpc_delayed_reply_ctx_init(ctx);
+
+	ctx->http_code = code;
+	va_start(ap, fmt);
+	vsnprintf(jsonrpc_error_buf, JSONRPC_ERROR_REASON_BUF_LEN, fmt, ap);
+	va_end(ap);
+	ctx->http_text.len = strlen(jsonrpc_error_buf);
+	ctx->http_text.s = jsonrpc_error_buf;
+	if(ctx->error_code == 0) ctx->error_code = -32000;
+
+	return;
+}
+
 
 /** Implementation of rpc_send function required by the management API.
  *
@@ -916,19 +930,6 @@ static rpc_capabilities_t jsonrpc_capabilities(jsonrpc_ctx_t* ctx)
 {
 	/* support for async commands - delayed response */
 	return RPC_DELAYED_REPLY;
-}
-
-/** if this a delayed reply context,
- * and it's never been use before, initialize it */
-static int jsonrpc_delayed_reply_ctx_init(jsonrpc_ctx_t* ctx)
-{
-	if  ((ctx->flags & JSONRPC_DELAYED_CTX_F)
-			&& (ctx->jrpl==0)) {
-		if (jsonrpc_init_reply(ctx) < 0)
-			return -1;
-		jsonrpc_reset_plain_reply(ctx->jrpl->free_fn);
-	}
-	return 0;
 }
 
 
