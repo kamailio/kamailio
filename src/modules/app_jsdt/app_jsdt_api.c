@@ -27,6 +27,7 @@
 
 #include "../../core/dprint.h"
 #include "../../core/pvar.h"
+#include "../../core/sr_module.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 
@@ -74,7 +75,10 @@ int jsdt_sr_initialized(void)
 /**
  *
  */
-static str _sr_kemi_jsdt_exit_string = str_init("~~ksr~exit~~");
+#define JSDT_SR_EXIT_THROW_STR "~~ksr~exit~~"
+#define JSDT_SR_EXIT_EXEC_STR "throw '" JSDT_SR_EXIT_THROW_STR "';"
+
+static str _sr_kemi_jsdt_exit_string = str_init(JSDT_SR_EXIT_THROW_STR);
 
 /**
  *
@@ -388,6 +392,183 @@ const duk_function_list_entry _sr_kemi_pv_J_Map[] = {
 	{ "sets", jsdt_sr_pv_sets, 2 /* 2 args */ },
 	{ "unset", jsdt_sr_pv_unset, 1 /* 1 args */ },
 	{ "is_null", jsdt_sr_pv_is_null, 1 /* 1 args */ },
+	{ NULL, NULL, 0 }
+};
+
+/**
+ *
+ */
+static int jsdt_sr_exit (duk_context *J)
+{
+	duk_eval_string_noresult(J, JSDT_SR_EXIT_EXEC_STR);
+	return 0;
+}
+
+/**
+ *
+ */
+static int jsdt_sr_modf (duk_context *J)
+{
+	int ret;
+	char *jsdtv[MAX_ACTIONS];
+	char *argv[MAX_ACTIONS];
+	int argc;
+	int i;
+	int mod_type;
+	struct run_act_ctx ra_ctx;
+	unsigned modver;
+	struct action *act;
+	sr31_cmd_export_t* expf;
+	sr_jsdt_env_t *env_J;
+
+	ret = 1;
+	act = NULL;
+	argc = 0;
+	memset(jsdtv, 0, MAX_ACTIONS*sizeof(char*));
+	memset(argv, 0, MAX_ACTIONS*sizeof(char*));
+	env_J = jsdt_sr_env_get();
+	if(env_J->msg==NULL)
+		goto error;
+
+	argc = duk_get_top(J);
+	if(argc==0) {
+		LM_ERR("name of module function not provided\n");
+		goto error;
+	}
+	if(argc>=MAX_ACTIONS) {
+		LM_ERR("too many parameters\n");
+		goto error;
+	}
+	/* first is function name, then parameters */
+	for(i=0; i<argc; i++) {
+		if (!duk_is_string(J, i)) {
+			LM_ERR("invalid parameter type (%d)\n", i);
+			goto error;
+		}
+		jsdtv[i] = (char*)duk_to_string(J, i);
+	}
+	LM_ERR("request to execute cfg function '%s'\n", jsdtv[0]);
+	/* pkg copy only parameters */
+	for(i=1; i<MAX_ACTIONS; i++) {
+		if(jsdtv[i]!=NULL) {
+			argv[i] = (char*)pkg_malloc(strlen(jsdtv[i])+1);
+			if(argv[i]==NULL) {
+				LM_ERR("no more pkg\n");
+				goto error;
+			}
+			strcpy(argv[i], jsdtv[i]);
+		}
+	}
+
+	expf = find_export_record(jsdtv[0], argc-1, 0, &modver);
+	if (expf==NULL) {
+		LM_ERR("function '%s' is not available\n", jsdtv[0]);
+		goto error;
+	}
+	/* check fixups */
+	if (expf->fixup!=NULL && expf->free_fixup==NULL) {
+		LM_ERR("function '%s' has fixup - cannot be used\n", jsdtv[0]);
+		goto error;
+	}
+	switch(expf->param_no) {
+		case 0:
+			mod_type = MODULE0_T;
+			break;
+		case 1:
+			mod_type = MODULE1_T;
+			break;
+		case 2:
+			mod_type = MODULE2_T;
+			break;
+		case 3:
+			mod_type = MODULE3_T;
+			break;
+		case 4:
+			mod_type = MODULE4_T;
+			break;
+		case 5:
+			mod_type = MODULE5_T;
+			break;
+		case 6:
+			mod_type = MODULE6_T;
+			break;
+		case VAR_PARAM_NO:
+			mod_type = MODULEX_T;
+			break;
+		default:
+			LM_ERR("unknown/bad definition for function '%s' (%d params)\n",
+					jsdtv[0], expf->param_no);
+			goto error;
+	}
+
+	act = mk_action(mod_type,  argc+1   /* number of (type, value) pairs */,
+					MODEXP_ST, expf,    /* function */
+					NUMBER_ST, argc-1,  /* parameter number */
+					STRING_ST, argv[1], /* param. 1 */
+					STRING_ST, argv[2], /* param. 2 */
+					STRING_ST, argv[3], /* param. 3 */
+					STRING_ST, argv[4], /* param. 4 */
+					STRING_ST, argv[5], /* param. 5 */
+					STRING_ST, argv[6]  /* param. 6 */
+			);
+
+	if (act==NULL) {
+		LM_ERR("action structure could not be created for '%s'\n", jsdtv[0]);
+		goto error;
+	}
+
+	/* handle fixups */
+	if (expf->fixup) {
+		if(argc==1) {
+			/* no parameters */
+			if(expf->fixup(0, 0)<0) {
+				LM_ERR("Error in fixup (0) for '%s'\n", jsdtv[0]);
+				goto error;
+			}
+		} else {
+			for(i=1; i<argc; i++) {
+				if(expf->fixup(&(act->val[i+1].u.data), i)<0) {
+					LM_ERR("Error in fixup (%d) for '%s'\n", i, jsdtv[0]);
+					goto error;
+				}
+				act->val[i+1].type = MODFIXUP_ST;
+			}
+		}
+	}
+	init_run_actions_ctx(&ra_ctx);
+	ret = do_action(&ra_ctx, act, env_J->msg);
+
+	/* free fixups */
+	if (expf->fixup) {
+		for(i=1; i<argc; i++) {
+			if ((act->val[i+1].type == MODFIXUP_ST) && (act->val[i+1].u.data)) {
+				expf->free_fixup(&(act->val[i+1].u.data), i);
+			}
+		}
+	}
+	pkg_free(act);
+	for(i=0; i<MAX_ACTIONS; i++) {
+		if(argv[i]!=NULL) pkg_free(argv[i]);
+		argv[i] = 0;
+	}
+	duk_push_int(J, ret);
+	return 1;
+
+error:
+	if(act!=NULL)
+		pkg_free(act);
+	for(i=0; i<MAX_ACTIONS; i++) {
+		if(argv[i]!=NULL) pkg_free(argv[i]);
+		argv[i] = 0;
+	}
+	duk_push_int(J, -1);
+	return 1;
+}
+
+
+const duk_function_list_entry _sr_kemi_x_J_Map[] = {
+	{ "exit", jsdt_sr_exit, 0 /* 0 args */ },
+	{ "modf", jsdt_sr_modf, DUK_VARARGS /* var args */ },
 	{ NULL, NULL, 0 }
 };
 
@@ -976,6 +1157,13 @@ duk_ret_t dukopen_KSR(duk_context *J)
 	duk_put_prop_string(J, -2, "KSR_pv");  /* -> [ ... global ] */
 	duk_pop(J);
 	duk_eval_string_noresult(J, "KSR.pv = KSR_pv;");
+
+	duk_push_global_object(J);
+	duk_push_object(J);  /* -> [ ... global obj ] */
+	duk_put_function_list(J, -1, _sr_kemi_x_J_Map);
+	duk_put_prop_string(J, -2, "KSR_x");  /* -> [ ... global ] */
+	duk_pop(J);
+	duk_eval_string_noresult(J, "KSR.x = KSR_x;");
 
 	/* registered kemi modules */
 	if(emods_size>1) {
