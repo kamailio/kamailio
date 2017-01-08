@@ -31,7 +31,7 @@
 
 #include "sql_trans.h"
 
-#define TR_BUFFER_SIZE 2048
+#define TR_BUFFER_SIZE 8192
 
 
 static int _tr_eval_sql_val(pv_value_t *val)
