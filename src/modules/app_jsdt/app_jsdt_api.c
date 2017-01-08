@@ -28,6 +28,7 @@
 #include "../../core/dprint.h"
 #include "../../core/pvar.h"
 #include "../../core/sr_module.h"
+#include "../../core/mem/shm.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 
@@ -52,6 +53,9 @@ typedef struct _sr_jsdt_env
 static sr_jsdt_env_t _sr_J_env = {0};
 
 str _sr_jsdt_load_file = STR_NULL;
+
+static int *_sr_jsdt_reload_version = NULL;
+static int _sr_jsdt_local_version = 0;
 
 /**
  *
@@ -603,11 +607,37 @@ static int jsdt_load_file(duk_context *ctx, const char *filename)
  */
 int jsdt_sr_init_mod(void)
 {
+	if(_sr_jsdt_reload_version == NULL) {
+		_sr_jsdt_reload_version = (int*)shm_malloc(sizeof(int));
+		if(_sr_jsdt_reload_version == NULL) {
+			LM_ERR("failed to allocated reload version\n");
+			return -1;
+		}
+		*_sr_jsdt_reload_version = 0;
+	}
 	memset(&_sr_J_env, 0, sizeof(sr_jsdt_env_t));
 
 	return 0;
 }
 
+/**
+ *
+ */
+int jsdt_kemi_load_script(void)
+{
+	if(jsdt_load_file(_sr_J_env.JJ, _sr_jsdt_load_file.s)<0) {
+		LM_ERR("failed to load js script file: %.*s\n",
+				_sr_jsdt_load_file.len, _sr_jsdt_load_file.s);
+		return -1;
+	}
+	if (duk_peval(_sr_J_env.JJ) != 0) {
+		LM_ERR("failed running: %s\n", duk_safe_to_string(_sr_J_env.JJ, -1));
+		duk_pop(_sr_J_env.JJ);  /* ignore result */
+		return -1;
+	}
+	duk_pop(_sr_J_env.JJ);  /* ignore result */
+	return 0;
+}
 /**
  *
  */
@@ -629,17 +659,9 @@ int jsdt_sr_init_child(void)
 		jsdt_sr_kemi_register_libs(_sr_J_env.JJ);
 		LM_DBG("loading js script file: %.*s\n",
 				_sr_jsdt_load_file.len, _sr_jsdt_load_file.s);
-		if(jsdt_load_file(_sr_J_env.JJ, _sr_jsdt_load_file.s)<0) {
-			LM_ERR("failed to load js script file: %.*s\n",
-					_sr_jsdt_load_file.len, _sr_jsdt_load_file.s);
+		if(jsdt_kemi_load_script()<0) {
 			return -1;
 		}
-		if (duk_peval(_sr_J_env.JJ) != 0) {
-			LM_ERR("failed running: %s\n", duk_safe_to_string(_sr_J_env.JJ, -1));
-			duk_pop(_sr_J_env.JJ);  /* ignore result */
-			return -1;
-		}
-		duk_pop(_sr_J_env.JJ);  /* ignore result */
 	}
 	LM_DBG("JS initialized!\n");
 	return 0;
@@ -664,6 +686,38 @@ void jsdt_sr_destroy(void)
 /**
  *
  */
+int jsdt_kemi_reload_script(void)
+{
+	int v;
+	if(_sr_jsdt_load_file.s == NULL && _sr_jsdt_load_file.len<=0) {
+		LM_WARN("script file path not provided\n");
+		return -1;
+	}
+	if(_sr_jsdt_reload_version == NULL) {
+		LM_WARN("reload not enabled\n");
+		return -1;
+	}
+	if(_sr_J_env.JJ==NULL) {
+		LM_ERR("load JS context not created\n");
+		return -1;
+	}
+
+	v = *_sr_jsdt_reload_version;
+	if(v == _sr_jsdt_local_version) {
+		/* same version */
+		return 0;
+	}
+	LM_DBG("reloading js script file: %.*s (%d => %d)\n",
+				_sr_jsdt_load_file.len, _sr_jsdt_load_file.s,
+				_sr_jsdt_local_version, v);
+	jsdt_kemi_load_script();
+	_sr_jsdt_local_version = v;
+	return 0;
+}
+
+/**
+ *
+ */
 int app_jsdt_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 		char *p3, int emode)
 {
@@ -677,6 +731,7 @@ int app_jsdt_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 		return -1;
 	}
 	/* check the script version loaded */
+	jsdt_kemi_reload_script();
 
 	LM_DBG("executing js function: [[%s]]\n", func);
 	LM_DBG("js top index is: %d\n", duk_get_top(_sr_J_env.JJ));
@@ -774,6 +829,8 @@ int app_jsdt_runstring(sip_msg_t *msg, char *script)
 		LM_ERR("js loading state not initialized (call: %s)\n", script);
 		return -1;
 	}
+
+	jsdt_kemi_reload_script();
 
 	LM_DBG("running js string: [[%s]]\n", script);
 	LM_DBG("js top index is: %d\n", duk_get_top(_sr_J_env.JJ));
@@ -1226,7 +1283,34 @@ static const char* app_jsdt_rpc_reload_doc[2] = {
 
 static void app_jsdt_rpc_reload(rpc_t* rpc, void* ctx)
 {
-	rpc->fault(ctx, 500, "Not implemented");
+	int v;
+	void *vh;
+
+	if(_sr_jsdt_load_file.s == NULL && _sr_jsdt_load_file.len<=0) {
+		LM_WARN("script file path not provided\n");
+		rpc->fault(ctx, 500, "No script file");
+		return;
+	}
+	if(_sr_jsdt_reload_version == NULL) {
+		LM_WARN("reload not enabled\n");
+		rpc->fault(ctx, 500, "Reload not enabled");
+		return;
+	}
+
+	LM_INFO("marking for reload js script file: %.*s (%d => %d)\n",
+				_sr_jsdt_load_file.len, _sr_jsdt_load_file.s,
+				_sr_jsdt_local_version, v);
+
+	v = *_sr_jsdt_reload_version;
+	*_sr_jsdt_reload_version += 1;
+
+	if (rpc->add(ctx, "{", &vh) < 0) {
+		rpc->fault(ctx, 500, "Server error");
+		return;
+	}
+	rpc->struct_add(vh, "dd",
+			"old", v,
+			"new", *_sr_jsdt_reload_version);
 }
 
 static const char* app_jsdt_rpc_api_list_doc[2] = {
