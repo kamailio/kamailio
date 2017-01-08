@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -65,6 +65,7 @@ static int sql_xquery(struct sip_msg *msg, char *dbl, char *query, char *res);
 #endif
 static int sql_pvquery(struct sip_msg *msg, char *dbl, char *query, char *res);
 static int sql_rfree(struct sip_msg*, char*, char*);
+static int mod_init(void);
 static int child_init(int rank);
 static void destroy(void);
 
@@ -78,6 +79,8 @@ static int fixup_sql_rfree(void** param, int param_no);
 static int sql_con_param(modparam_t type, void* val);
 static int sql_res_param(modparam_t type, void* val);
 
+extern int sqlops_tr_buf_size;
+
 static pv_export_t mod_pvs[] = {
 	{ {"dbr", sizeof("dbr")-1}, PVT_OTHER, pv_get_dbr, 0,
 		pv_parse_dbr_name, 0, 0, 0 },
@@ -87,19 +90,19 @@ static pv_export_t mod_pvs[] = {
 };
 
 static cmd_export_t cmds[]={
-	{"sql_query",  (cmd_function)sql_query, 3, fixup_sql_query, 0, 
+	{"sql_query",  (cmd_function)sql_query, 3, fixup_sql_query, 0,
 		ANY_ROUTE},
-	{"sql_query",  (cmd_function)sql_query2, 2, fixup_sql_query, 0, 
+	{"sql_query",  (cmd_function)sql_query2, 2, fixup_sql_query, 0,
 		ANY_ROUTE},
-	{"sql_query_async",  (cmd_function)sql_query_async, 2, fixup_sql_query, 0, 
+	{"sql_query_async",  (cmd_function)sql_query_async, 2, fixup_sql_query, 0,
 		ANY_ROUTE},
 #ifdef WITH_XAVP
-	{"sql_xquery",  (cmd_function)sql_xquery, 3, fixup_sql_xquery, 0, 
+	{"sql_xquery",  (cmd_function)sql_xquery, 3, fixup_sql_xquery, 0,
 		ANY_ROUTE},
 #endif
 	{"sql_pvquery",  (cmd_function)sql_pvquery, 3, fixup_sql_pvquery, 0,
 		ANY_ROUTE},
-	{"sql_result_free",  (cmd_function)sql_rfree,  1, fixup_sql_rfree, 0, 
+	{"sql_result_free",  (cmd_function)sql_rfree,  1, fixup_sql_rfree, 0,
 		ANY_ROUTE},
 	{"bind_sqlops", (cmd_function)bind_sqlops, 0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -108,6 +111,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"sqlcon",  PARAM_STRING|USE_FUNC_PARAM, (void*)sql_con_param},
 	{"sqlres",  PARAM_STRING|USE_FUNC_PARAM, (void*)sql_res_param},
+	{"tr_buf_size",     PARAM_INT,   &sqlops_tr_buf_size},
 	{0,0,0}
 };
 
@@ -127,7 +131,7 @@ struct module_exports exports= {
 	0  ,        /* exported MI functions */
 	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
-	0,          /* module initialization function */
+	mod_init,   /* module initialization function */
 	0,
 	(destroy_function) destroy,
 	child_init  /* per-child init function */
@@ -136,6 +140,14 @@ struct module_exports exports= {
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	return register_trans_mod(path, mod_trans);
+}
+
+static int mod_init(void)
+{
+	if(sqlops_tr_buffer_init()<0) {
+		return -1;
+	}
+	return 0;
 }
 
 static int child_init(int rank)

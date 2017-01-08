@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -105,7 +105,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="sqlops.p.sqlcon">
 		<title><varname>sqlcon</varname> (str)</title>
 		<para>
 		The definition of a DB connection. The value of the parameter must have
@@ -152,7 +152,7 @@ modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="sqlops.p.sqlres">
 		<title><varname>sqlres</varname> (str)</title>
 		<para>
 		The definition of a database result ID. The value of the parameter can be
@@ -171,6 +171,25 @@ modparam("sqlops","sqlcon","ca=&gt;&exampledb;")
 		<programlisting format="linespecific">
 ...
 modparam("sqlops", "sqlres", "ra")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="sqlops.p.tr_buf_size">
+		<title><varname>tr_buf_size</varname> (int)</title>
+		<para>
+		The size of the transformations for SQL operations.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2048.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tr_buf_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sqlops", "tr_buf_size", 4096)
 ...
 </programlisting>
 		</example>

@@ -17,16 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-       
+
 #ifndef _SQL_TRANS_H_
 #define _SQL_TRANS_H_
 
 #include "../../core/pvar.h"
 
 enum _tr_sql_type { TR_SQL_NONE=0, TR_SQL };
-enum _tr_sql_subtype { 
+enum _tr_sql_subtype {
 	TR_SQL_ST_NONE=0, TR_SQL_VAL, TR_SQL_VAL_INT, TR_SQL_VAL_STR };
 
 char* tr_parse_sql(str *in, trans_t *tr);
+
+int sqlops_tr_buffer_init(void);
+void sqlops_tr_buffer_destroy(void);
 
 #endif
