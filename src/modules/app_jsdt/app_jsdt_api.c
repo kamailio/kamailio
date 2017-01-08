@@ -411,6 +411,17 @@ static int jsdt_sr_exit (duk_context *J)
 /**
  *
  */
+static int jsdt_sr_drop (duk_context *J)
+{
+	sr_kemi_core_drop(NULL);
+	duk_eval_string_noresult(J, JSDT_SR_EXIT_EXEC_STR);
+	return 0;
+}
+
+
+/**
+ *
+ */
 static int jsdt_sr_modf (duk_context *J)
 {
 	int ret;
@@ -572,6 +583,7 @@ error:
 
 const duk_function_list_entry _sr_kemi_x_J_Map[] = {
 	{ "exit", jsdt_sr_exit, 0 /* 0 args */ },
+	{ "drop", jsdt_sr_drop, 0 /* 0 args */ },
 	{ "modf", jsdt_sr_modf, DUK_VARARGS /* var args */ },
 	{ NULL, NULL, 0 }
 };
