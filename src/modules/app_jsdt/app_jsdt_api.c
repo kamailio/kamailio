@@ -1236,7 +1236,48 @@ static const char* app_jsdt_rpc_api_list_doc[2] = {
 
 static void app_jsdt_rpc_api_list(rpc_t* rpc, void* ctx)
 {
-	rpc->fault(ctx, 500, "Not implemented");
+	int i;
+	int n;
+	sr_kemi_t *ket;
+	void* th;
+	void* sh;
+	void* ih;
+
+	if (rpc->add(ctx, "{", &th) < 0) {
+		rpc->fault(ctx, 500, "Internal error root reply");
+		return;
+	}
+	n = 0;
+	for(i=0; i<SR_KEMI_JSDT_EXPORT_SIZE; i++) {
+		ket = sr_kemi_jsdt_export_get(i);
+		if(ket==NULL) continue;
+		n++;
+	}
+
+	if(rpc->struct_add(th, "d[",
+				"msize", n,
+				"methods",  &ih)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error array structure");
+		return;
+	}
+	for(i=0; i<SR_KEMI_JSDT_EXPORT_SIZE; i++) {
+		ket = sr_kemi_jsdt_export_get(i);
+		if(ket==NULL) continue;
+		if(rpc->struct_add(ih, "{", "func", &sh)<0) {
+			rpc->fault(ctx, 500, "Internal error internal structure");
+			return;
+		}
+		if(rpc->struct_add(sh, "SSSS",
+				"ret", sr_kemi_param_map_get_name(ket->rtype),
+				"module", &ket->mname,
+				"name", &ket->fname,
+				"params", sr_kemi_param_map_get_params(ket->ptypes))<0) {
+			LM_ERR("failed to add the structure with attributes (%d)\n", i);
+			rpc->fault(ctx, 500, "Internal error creating dest struct");
+			return;
+		}
+	}
 }
 
 rpc_export_t app_jsdt_rpc_cmds[] = {
