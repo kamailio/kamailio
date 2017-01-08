@@ -115,7 +115,7 @@ static int sr_kemi_core_log(sip_msg_t *msg, str *level, str *txt)
 /**
  *
  */
-static int sr_kemi_core_drop(sip_msg_t *msg)
+int sr_kemi_core_drop(sip_msg_t *msg)
 {
 	if(_sr_kemi_act_ctx==NULL)
 		return 0;

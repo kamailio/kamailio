@@ -124,4 +124,6 @@ run_act_ctx_t* sr_kemi_act_ctx_get(void);
 str *sr_kemi_param_map_get_name(int ptype);
 str *sr_kemi_param_map_get_params(int *ptypes);
 
+int sr_kemi_core_drop(sip_msg_t *msg);
+
 #endif
