@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # test publish and subscribe for presence
 
 # Copyright (C) 2007 1&1 Internet AG
