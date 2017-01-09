@@ -35,23 +35,43 @@ pgsql_query() {
 	# if password not yet queried, query it now
 	prompt_pw "PgSQL password for user '$DBRWUSER@$DBHOST'"
 	mecho "pgsql_query: $PGSQL $2 -A -q -t -P fieldsep='	' -h $DBHOST -U $DBRWUSER $DBNAME -c '$1'"
-	PGPASSWORD="$DBRWPW" $PGSQL $2 \
-		-A -q -t \
-		-P fieldsep="	" \
-		-h $DBHOST \
-		-U $DBRWUSER \
-		$DBNAME \
-		-c "$1"
+	if [ -z "$DBPORT" ] ; then
+		PGPASSWORD="$DBRWPW" $PGSQL $2 \
+			-A -q -t \
+			-P fieldsep="	" \
+			-h $DBHOST \
+			-U $DBRWUSER \
+			$DBNAME \
+			-c "$1"
+	else
+		PGPASSWORD="$DBRWPW" $PGSQL $2 \
+			-A -q -t \
+			-P fieldsep="	" \
+			-h $DBHOST \
+			-p $DBPORT \
+			-U $DBRWUSER \
+			$DBNAME \
+			-c "$1"
+	fi
 }
 
 # input: sql query, optional pgsql command-line params
 pgsql_ro_query() {
 	mdbg "pgsql_ro_query: $PGSQL $2 -h $DBHOST -U $DBROUSER $DBNAME -c '$1'"
-	PGPASSWORD="$DBROPW" $PGSQL $2 \
-		-h $DBHOST \
-		-U $DBROUSER \
-		$DBNAME \
-		-c "$1"
+	if [ -z "$DBPORT" ] ; then
+		PGPASSWORD="$DBROPW" $PGSQL $2 \
+			-h $DBHOST \
+			-U $DBROUSER \
+			$DBNAME \
+			-c "$1"
+	else
+		PGPASSWORD="$DBROPW" $PGSQL $2 \
+			-h $DBHOST \
+			-p $DBPORT \
+			-U $DBROUSER \
+			$DBNAME \
+			-c "$1"
+	fi
 }
 
 DBCMD=pgsql_query

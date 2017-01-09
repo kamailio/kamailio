@@ -38,8 +38,14 @@ fi
 #PW=""
 
 
-CMD="mysql -h $DBHOST -u$DBROOTUSER "
-DUMP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c -t "
+if [ -z "$DBPORT" ] ; then
+	CMD="mysql -h $DBHOST -u$DBROOTUSER "
+	DUMP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c -t "
+else
+	CMD="mysql -h $DBHOST -P $DBPORT -u$DBROOTUSER "
+	DUMP_CMD="mysqldump -h $DBHOST -P $DBPORT -u$DBROOTUSER -c -t "
+fi
+
 #################################################################
 
 
