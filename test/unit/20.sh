@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 # test basic accounting functionality
 
 # Copyright (C) 2007 1&1 Internet AG
@@ -33,11 +33,11 @@ TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO location (ruid, username,contact,socket,user_agent,cseq,q) VALUES (\"kamailio-test-uid\",\"foo\",\"sip:foo@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
-sipp -sn uas -bg -i 127.0.0.1 -m 1 -f 10 -p 5060 &> /dev/null
+sipp -sn uas -bg -i 127.0.0.1 -m 1 -f 10 -p 5060 > /dev/null 2>&1
 
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > $TMPFILE 2>&1
 
-sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 &> /dev/null
+sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 > /dev/null 2>&1
 
 egrep 'ACC:[[:space:]]+transaction[[:space:]]+answered:[[:print:]]*code=200;reason=OK$' $TMPFILE > /dev/null
 ret=$?
@@ -45,7 +45,7 @@ ret=$?
 sleep 1
 
 # cleanup
-killall -9 sipp &> /dev/null
+killall -9 sipp > /dev/null 2>&1
 kill_kamailio
 rm $TMPFILE
 
