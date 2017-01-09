@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # test cfgutils and pv module
 
 # Copyright (C) 2008 1&1 Internet AG
@@ -19,19 +19,34 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
+. include/common
+. include/require.sh
 
 if ! (check_netcat && check_kamailio); then
 	exit 0
 fi;
 
-if [ -e core ] ; then
-	echo "core file found, not run"
-	exit 0
+if ( have_netcat_quit_timer_patch ); then
+	NCOPTS='-q 1'
+else
+	NCOPTS='-w 2'
 fi;
 
 CFG=33.cfg
+
+CORE=$(sysctl kern.corefile 2> /dev/null)
+echo $CORE | grep '^kern.corefile: %N\.core' > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	CORE='kamailio.core'
+else
+	CORE='core'
+fi
+
+if [ -e $CORE ] ; then
+	echo "core file found, not run"
+	exit 0
+fi;
 
 cp $CFG $CFG.bak
 
@@ -43,23 +58,24 @@ ret=$?
 sleep 1
 
 if [ $ret -eq 0 ] ; then
-	$CTL mi check_config_hash | grep "The actual config file hash is identical to the stored one." >/dev/null
+	$CTL rpc cfgutils.check_config_hash | grep '"result":"Identical hash"' > /dev/null
 	ret=$?
 fi;
 
 echo " " >> $CFG
+
 if [ $ret -eq 0 ] ; then
-	$CTL mi check_config_hash | grep "The actual config file hash is identical to the stored one." >/dev/null
+	$CTL rpc cfgutils.check_config_hash | grep '"result":"Identical hash"' > /dev/null
 	ret=$?
 fi
 
 if [ ! $ret -eq 0 ] ; then
 	# send a message
-	cat register.sip | nc -q 1 -u 127.0.0.1 5060 > /dev/null
+	cat register.sip | nc $NCOPTS -u 127.0.0.1 5060 > /dev/null
 fi
 
 sleep 1
-kill_kamailio
+kill_kamailio 2> /dev/null
 ret=$?
 
 if [ $ret -eq 0 ] ; then
@@ -68,10 +84,10 @@ else
 	ret=0
 fi
 
-if [ ! -e core ] ; then
+if [ ! -e $CORE ] ; then
 	ret=1
 fi
-rm -f core
+rm -f $CORE
 mv $CFG.bak $CFG
 
 exit $ret
