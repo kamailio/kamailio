@@ -1,15 +1,16 @@
 -- Kamailio - equivalent of routing blocks in Lua
 --
--- KSR - the new dynamic object exporting Kamailio functions
+-- KSR - the new dynamic object exporting Kamailio functions (kemi)
 -- sr - the old static object exporting Kamailio functions
 --
 
 -- Relevant remarks:
---  * return code -255 is used to propagate the 'exit' behaviour to the
---  parent route block. The alternative is to use KSR.sr.exit() instead
---  of return -255. Do not use native Lua exit(), that kills the Lua
---  interpreter and implicitely stops Kamailio as the Lua interpreter is
---  embedded
+--  * do not execute Lua 'exit' - that will kill Lua interpreter which is
+--  embedded in Kamailio, resulting in killing Kamailio
+--  * use KSR.x.exit() to trigger the stop of executing the script
+--  * KSR.drop() is only marking the SIP message for drop, but doesn't stop
+--  the execution of the script. Use KSR.x.exit() after it or KSR.x.drop()
+--
 
 
 -- global variables corresponding to defined values (e.g., flags) in kamailio.cfg
@@ -24,14 +25,12 @@ FLB_NATSIPPING=7
 -- SIP request routing
 -- equivalent of request_route{}
 function ksr_request_route()
-	-- KSR.sl.sl_send_reply(100,"Intelligent trying");
-	-- KSR.info("===== request - from kamailio lua script\n");
 
 	-- per request initial checks
-	if ksr_route_reqinit()==-255 then return 1; end
+	ksr_route_reqinit();
 
 	-- NAT detection
-	if ksr_route_natdetect()==-255 then return 1; end
+	ksr_route_natdetect();
 
 	-- CANCEL processing
 	if KSR.pv.get("$rm") == "CANCEL" then
@@ -42,7 +41,7 @@ function ksr_request_route()
 	end
 
 	-- handle requests within SIP dialogs
-	if ksr_route_withindlg()==-255 then return 1; end
+	ksr_route_withindlg();
 
 	-- -- only initial requests (no To tag)
 
@@ -54,7 +53,7 @@ function ksr_request_route()
 	if KSR.tm.t_check_trans()==0 then return 1 end
 
 	-- authentication
-	if ksr_route_auth()==-255 then return 1 end
+	ksr_route_auth();
 
 	-- record routing for dialog forming requests (in case they are routed)
 	-- - remove preloaded route headers
@@ -69,12 +68,12 @@ function ksr_request_route()
 	end
 
 	-- dispatch requests to foreign domains
-	if ksr_route_sipout()==-255 then return 1; end
+	ksr_route_sipout();
 
 	-- -- requests for my local domains
 
 	-- handle registrations
-	if ksr_route_registrar()==-255 then return 1; end
+	ksr_route_registrar();
 
 	if KSR.pv.is_null("$rU") then
 		-- request with no Username in RURI
@@ -112,7 +111,7 @@ function ksr_route_relay()
 	if KSR.tm.t_relay()<0 then
 		KSR.sl.sl_reply_error();
 	end
-	return -255;
+	KSR.x.exit();
 end
 
 
@@ -124,39 +123,39 @@ function ksr_route_reqinit()
 			KSR.dbg("request from blocked IP - " .. KSR.pv.get("$rm")
 					.. " from " .. KSR.pv.get("$fu") .. " (IP:"
 					.. KSR.pv.get("$si") .. ":" .. KSR.pv.get("$sp") .. ")\n");
-			return -255;
+			KSR.x.exit();
 		end
 		if KSR.pike.pike_check_req()<0 then
 			KSR.err("ALERT: pike blocking " .. KSR.pv.get("$rm")
 					.. " from " .. KSR.pv.get("$fu") .. " (IP:"
 					.. KSR.pv.get("$si") .. ":" .. KSR.pv.get("$sp") .. ")\n");
 			KSR.pv.seti("$sht(ipban=>$si)", 1);
-			return -255;
+			KSR.x.exit();
 		end
 	end
 	if (not KSR.pv.is_null("$ua"))
 			and (string.find(KSR.pv.get("$ua"), "friendly-scanner")
 				or string.find(KSR.pv.get("$ua"), "sipcli")) then
 		KSR.sl.sl_send_reply(200, "OK");
-		return -255;
+		KSR.x.exit();
 	end
 
 	if KSR.maxfwd.process_maxfwd(10) < 0 then
 		KSR.sl.sl_send_reply(483,"Too Many Hops");
-		return -255;
+		KSR.x.exit();
 	end
 
 	if KSR.pv.get("$rm")=="OPTIONS"
 			and KSR.is_myself(KSR.pv.get("$ru"))
 			and KSR.pv.is_null("$rU") then
 		KSR.sl.sl_send_reply(200,"Keepalive");
-		return -255;
+		KSR.x.exit();
 	end
 
 	if KSR.sanity.sanity_check(1511, 7)<0 then
 		KSR.err("Malformed SIP message from "
 				.. KSR.pv.get("$si") .. ":" .. KSR.pv.get("$sp") .."\n");
-		return -255;
+		KSR.x.exit();
 	end
 
 end
@@ -169,19 +168,19 @@ function ksr_route_withindlg()
 	-- sequential request withing a dialog should
 	-- take the path determined by record-routing
 	if KSR.rr.loose_route()>0 then
-		if ksr_route_dlguri()==-255 then return -255; end
+		ksr_route_dlguri();
 		if KSR.pv.get("$rm")=="BYE" then
 			KSR.setflag(FLT_ACC); -- do accounting ...
 			KSR.setflag(FLT_ACCFAILED); -- ... even if the transaction fails
 		elseif KSR.pv.get("$rm")=="ACK" then
 			-- ACK is forwarded statelessy
-			if ksr_route_natmanage()==-255 then return -255; end
+			ksr_route_natmanage();
 		elseif  KSR.pv.get("$rm")=="NOTIFY" then
 			-- Add Record-Route for in-dialog NOTIFY as per RFC 6665.
 			KSR.rr.record_route();
 		end
 		ksr_route_relay();
-		return -255;
+		KSR.x.exit();
 	end
 	if KSR.pv.get("$rm")=="ACK" then
 		if KSR.tm.t_check_trans() >0 then
@@ -189,14 +188,14 @@ function ksr_route_withindlg()
 			-- must be an ACK after a 487
 			-- or e.g. 404 from upstream server
 			ksr_route_relay();
-			return -255;
+			KSR.x.exit();
 		else
 			-- ACK without matching transaction ... ignore and discard
-			return -255;
+			KSR.x.exit();
 		end
 	end
 	KSR.sl.sl_send_reply(404, "Not here");
-	return -255;
+	KSR.x.exit();
 end
 
 -- Handle SIP registrations
@@ -210,7 +209,7 @@ function ksr_route_registrar()
 	if KSR.registrar.save("location", 0)<0 then
 		KSR.sl.sl_reply_error();
 	end
-	return -255;
+	KSR.x.exit();
 end
 
 -- User location service
@@ -220,10 +219,10 @@ function ksr_route_location()
 		KSR.tm.t_newtran();
 		if rc==-1 or rc==-3 then
 			KSR.sl.send_reply("404", "Not Found");
-			return -255;
+			KSR.x.exit();
 		elseif rc==-2 then
 			KSR.sl.send_reply("405", "Method Not Allowed");
-			return -255;
+			KSR.x.exit();
 		end
 	end
 
@@ -233,7 +232,7 @@ function ksr_route_location()
 	end
 
 	ksr_route_relay();
-	return -255;
+	KSR.x.exit();
 end
 
 
@@ -251,7 +250,7 @@ function ksr_route_auth()
 		-- authenticate requests
 		if KSR.auth_db.auth_check(KSR.pv.get("$fd"), "subscriber", 1)<0 then
 			KSR.auth.auth_challenge(KSR.pv.get("$fd"), 0);
-			return -255;
+			KSR.x.exit();
 		end
 		-- user authenticated - remove auth header
 		if not string.find("REGISTER,PUBLISH", KSR.pv.get("$rm")) then
@@ -264,7 +263,7 @@ function ksr_route_auth()
 	if (not KSR.is_myself(KSR.pv.get("$fu"))
 			and (not KSR.is_myself(KSR.pv.get("$ru")))) then
 		KSR.sl.sl_send_reply(403,"Not relaying");
-		return -255;
+		KSR.x.exit();
 	end
 
 	return 1;
@@ -328,7 +327,7 @@ function ksr_route_sipout()
 
 	KSR.hdr.append_hf("P-Hint: outbound\r\n");
 	ksr_route_relay();
-	return -255;
+	KSR.x.exit();
 end
 
 -- Manage outgoing branches
@@ -354,7 +353,7 @@ end
 -- Manage failure routing cases
 -- equivalent of failure_route[...]{}
 function ksr_failure_manage()
-	if ksr_route_natmanage()==-255 then return 1; end
+	ksr_route_natmanage();
 
 	if KSR.tm.t_is_canceled()>0 then
 		return 1;
