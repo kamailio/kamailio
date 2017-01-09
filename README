@@ -1,9 +1,9 @@
 
 
-Kamailio v4.4
+Kamailio v5.0
 =============
 
-http://www.kamailio.org
+https://www.kamailio.org
 
 Table of contents
   I.   About Kamailio
@@ -55,7 +55,7 @@ barrier, presence server, application server,  IMS server or PSTN gateway guard
 II. Feature List
 ================
 
-Please visit http://www.kamailio.org/ for the most up-to-date feature list.
+Please visit https://www.kamailio.org/ for the most up-to-date feature list.
 Note that as features easily are added as modules, changes can occur quickly.
 
 Most of Kamailio's features are implemented as plug-in modules. See
@@ -67,7 +67,7 @@ III. Getting started
 The documentation wiki is an important source of tutorials for installing
 and understanding how Kamailio works:
 
-  * http://www.kamailio.org/wiki/
+  * https://www.kamailio.org/wiki/
 
 The INSTALL document provides more details and guidelines that will help with
 the installation.
@@ -86,7 +86,7 @@ IV. About kamailio.org
 The Kamailio project has roots in a line of projects starting with SIP Express
 Router, then OpenSER and now Kamailio. A merge project was started during the
 fall of 2008 by developers from the OpenSER project, recently renamed to
-Kamailio.org and SIP Express Router (SER) from iptel.org.
+Kamailio.org, and SIP Express Router (SER) from iptel.org.
 
 Kamailio is the result of a merge of the code base and years of experience from
 both developer teams. During the development of the release 4.0, autumn-winter
@@ -106,7 +106,7 @@ To receive feedback to your inquiries, we recommend you to subscribe
 to the sr-users mailing list and post your queries there. This mailing
 list is set up for mutual help by the community of Kamailio users and developers.
 To participate in the mailing list, subscribe at the following web address:
-         http://lists.sip-router.org/mailman/listinfo/sr-users
+         https://lists.sip-router.org/mailman/listinfo/sr-users
 
 The IRC channel #kamailio on freenode.net is a place where to meet and discuss
 with other members of Kamailio community.
@@ -120,18 +120,18 @@ documentation or other resources that could help the project.
 
 For code contributions, follow the suggestions provided at:
 
-  * http://www.kamailio.org/wiki/devel/git-commit-guidelines
+  * https://www.kamailio.org/wiki/devel/git-commit-guidelines
 
 The recommended way to contribute code is via pull requests to Kamailio
 project on Github:
 
-  * https://github.com/kamailio
+  * httpss://github.com/kamailio
 
 VII. More Information
 =====================
 
 Most up-to-date information is always available at our website,
-                 http://www.kamailio.org/
+                 https://www.kamailio.org/
 
 Particularly, it includes:
 - administrator's guide
@@ -140,3 +140,6 @@ Particularly, it includes:
 - installation guidelines (INSTALL)
 - download links
 - etc.
+
+You can also follow us on Twitter as @kamailioproject and like us on Facebook
+to get regular updates.
