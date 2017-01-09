@@ -116,7 +116,7 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event);
 int set_updated(subs_t *sub);
 int set_wipeer_subs_updated(str *pres_uri, pres_ev_t *event, int full);
 
-int notify(subs_t* subs, subs_t* watcher_subs, str* n_body,int force_null_body);
+int notify(subs_t* subs, subs_t* watcher_subs, str* n_body,int force_null_body, aux_body_processing_t* aux_body_processing);
 
 int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 		str* n_body,int force_null_body);
