@@ -1745,9 +1745,26 @@ static int sr_kemi_lua_exit (lua_State *L)
 /**
  *
  */
+static int sr_kemi_lua_drop (lua_State *L)
+{
+	str *s;
+
+	LM_DBG("script drop call\n");
+	sr_kemi_core_drop(NULL);
+	s = sr_kemi_lua_exit_string_get();
+	lua_getglobal(L, "error");
+	lua_pushstring(L, s->s);
+	lua_call(L, 1, 0);
+	return 0;
+}
+
+/**
+ *
+ */
 static const luaL_Reg _sr_kemi_x_Map [] = {
 	{"modf",      lua_sr_modf},
 	{"exit",      sr_kemi_lua_exit},
+	{"drop",      sr_kemi_lua_drop},
 	{NULL, NULL}
 };
 
