@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # load all modules without external dependencies with mysql
 
 # Copyright (C) 2007 1&1 Internet AG
@@ -35,8 +35,8 @@ cp $CFG $CFG.bak
 
 touch dispatcher.list
 
-printf "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
-printf "modparam(\"dispatcher\", \"list_file\", \"dispatcher.list\")" >> $CFG
+printf "loadmodule \"db_mysql/db_mysql.so\"\n" >> $CFG
+printf "modparam(\"dispatcher\", \"list_file\", \"dispatcher.list\")\n" >> $CFG
 printf "\nrequest_route {\n ;\n}" >> $CFG
 
 # start
