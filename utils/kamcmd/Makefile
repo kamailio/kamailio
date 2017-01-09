@@ -14,8 +14,9 @@ else
 	NAME?=kamcmd
 endif
 
+readline_localpath=$(LOCALBASE)/include/readline/readline.h
 readline_locations= /usr/include/readline/readline.h \
-					$(LOCALBASE)/include/readline/readline.h
+					$(readline_localpath)
 
 use_readline ?=
 ifneq (,$(MAKECMDGOALS))
@@ -58,7 +59,7 @@ endif
 ifeq ($(OS), darwin)
 readline_locations= /opt/local/include/readline/readline.h \
 					/usr/include/readline/readline.h \
-					$(LOCALBASE)/include/readline/readline.h
+					$(readline_localpath)
 	LIBS:= -lresolv
 endif
 ifneq (,$(findstring cygwin, $(OS)))
@@ -77,13 +78,21 @@ endif
 endif
 
 ifeq ($(use_readline),1)
+
 ifneq (,$(findstring opt, $(readline_path)))
 	DEFS+=-DUSE_READLINE -I /opt/local/include
-	LIBS+=-L /opt/local/lib -lreadline -lncurses
+	LIBS+=-L/opt/local/lib -lreadline -lncurses
 else
+
+ifeq ($(readline_path),$(readline_localpath))
+	DEFS+=-I$(LOCALBASE)/include
+	LIBS+=-L$(LOCALBASE)/lib
+endif
+
 	DEFS+=-DUSE_READLINE
 	LIBS+=-lreadline -lncurses
 endif
+
 endif
 
 
