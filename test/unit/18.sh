@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # runs ../kamailio with all command line arguments.
 # ommited options are -h -v -I -c -D -V
 
@@ -34,7 +34,7 @@ CFG=18.cfg
 printf "debug=3\nrequest_route {\n ;\n}" > $CFG
 
 # start:
-$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -f ./$CFG -l 127.0.0.1 -n 0 -r -R -E -d -e -K -T -N 0 -b 23 -m 42 -w . -u $(id -u) -g $(id -g) -P ./pid.out -G ./pgid.out -a no -A TESTDEF > /dev/null 2>&1
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -f ./$CFG -l 127.0.0.1 -n 0 -r -R -E -d -e -K -T -N 0 -b 23 -m 42 -w . -u $(id -u) -g $(id -g) -G ./pgid.out -a no -A TESTDEF > /dev/null 2>&1
 
 ret=$?
 
