@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # check user lookup for proxy functionality with usrloc and registrar for mysql
 
 # Copyright (C) 2007 1&1 Internet AG
@@ -36,9 +36,9 @@ UAC=5080
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO location (ruid,username,contact,socket,user_agent,cseq,q) VALUES (\"kamailio-unit-uid\", \"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"kamailio_test\",1,-1);"
 
-$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
-sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
-sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
+sipp -sn uas -bg -i 127.0.0.1 -m 10 -f 2 -p $UAS > /dev/null 2>&1
+sipp -sn uac -s foo 127.0.0.1:$SRV -i 127.0.0.1 -m 10 -f 2 -p $UAC > /dev/null 2>&1
 
 ret=$?
 
