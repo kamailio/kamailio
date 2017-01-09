@@ -23,16 +23,15 @@ Table of Contents
 =================
 
 1. Supported Architectures And Requirements
-2. How-To Build SIP Server From The Source Code Distribution
+2. How-To Build Kamailio From The Source Code Distribution
    2.1 Kamailio Fast Track Installation
    2.2 Details Installing From Source Code
-     A) Set SIP Server Flavour
-     B) Build Commands
+     A) Build Commands
 3. Quick-Start Installation Guide
    A) Getting Help
    B) Disclaimers
-   C) Quick Atart
-   D) SIP Server With Persistent Data Storage
+   C) Quick Start
+   D) Kamailio With Persistent Data Storage
 4. Troubleshooting
 
 
@@ -44,6 +43,9 @@ Supported operating systems:
  - FreeBSD, NetBSD, OpenBSD, Dragonfly BSD
  - Solaris
  - OS/X, Darwin
+
+Note that some modules have dependencies on the Linux operating system.
+This is clearly noted in the README files.
 
 Partially supported
  - Windows+Cygwin (core + static modules only, no IPv6, no
@@ -74,7 +76,7 @@ Requirements:
 - libmysqlclient & libz (zlib) if you want MySQL support (the db_mysql module)
 - libxml2 if you want to compile the cpl-c (CPL support) or pa (presence) 
    modules
-- libradiusclient-ng (> 5.0) if you need RADIUS support (the auth_radius,
+- freeradius or libradiusclient-ng (> 5.0) if you need RADIUS support (the auth_radius,
   group_radius, uri_radius and avp_radius modules)
 - libpq if you need PostgreSQL support (the db_postgres module)
 - libexpat if you want the jabber gateway support (the jabber module) or the
@@ -85,8 +87,6 @@ Requirements:
   with radius support - authentication, accounting, group support, etc
 - unixodbc - libs and devel headers - if you want UNIXODBC support as
   DB underlayer
-- libxmlrpc-c3 - libs and devel headers - if you want to have XML-RPC support
-  for the management interface (MI)
 - libperl - libs and devel headers - if you want the perl connector to support
   perl scripting from your config file (perl module)
 - libsnmp9 - libs and devel headers - if you want SNMP client functionality 
@@ -101,6 +101,8 @@ Requirements:
 - jdk and gcj for Java module
 - the jansson library for the jansson module used for JSON document handling
 
+Some modules have other requirements on third-party libraries. This is documented
+in the README for the specific module.
 
 OS Notes:
 
@@ -158,6 +160,9 @@ OS Notes:
 
   Linux
   -----
+  Kamailio is part of the official Debian distribution. You can download binary modules
+  directly using normal packet management.
+
   Needed packages for compiling all the modules:
   * Debian:
       - libmysqlclient-dev for libmysqlclient
@@ -170,6 +175,7 @@ OS Notes:
     Kamailio have APT deb repositories that allow you to
 	install the binaries easily - see the web site for more details:
 	  - http://kamailio.org
+
 
  Cygwin  (alpha state, partial support)
  --------------------------------------
@@ -215,13 +221,13 @@ tls, run:
   make all
   make install
 
-2.2 Details Installing From Source Code
+2.2 Details - Installing From Source Code
 .......................................
 
 Build Commands
 
   Kamailio is split in four main parts: The core, the modules, the
-  utilties, and scripts/examples.  When you build, you can decide to build
+  utilities, and the various scripts/examples.  When you build, you can decide to build
   only the core, the modules, both, or all.
 
 * Compile Kamailio core only:
@@ -399,23 +405,24 @@ Clean:
 
   Config clean:
 
-  * make clean-cfg (cleans the compile config)
-  * make clean-modules-cfg (cleans the modules list)
+  * make clean-cfg       - cleans the compile config
+  * make clean-modules-cfg  - cleans the modules list
 
-  Reduced" clean:
+  Reduced clean:
 
   * make local-clean  	- cleans only the core, no libs, utils or modules
   * make clean-modules  - like make clean, but cleans only the modules
   * make clean-libs     - like make clean, but cleans only the libs
   * make clean-utils    - like make clean, but cleans only the utils
-  * make proper-modules - like make proper, but only for modules
-  * make proper-libs    - like make proper, but only for libs
-  * make proper-utils   - like make proper, but only for utils
+
 
 Compile:
 --------
   * make proper
      optional: make cfg  <various cfg. options that should be saved>
+  * make proper-modules - like make proper, but only for modules
+  * make proper-libs    - like make proper, but only for libs
+  * make proper-utils   - like make proper, but only for utils
   * make
      or gmake on non-Linux systems
   * make modules 
@@ -503,7 +510,7 @@ A) Getting Help
   mailing list of the Kamailio community. To participate in the mailing list,
   please subscribe at the following web address:
 
-  http://lists.sip-router.org/cgi-bin/mailman/listinfo
+  https://lists.sip-router.org/cgi-bin/mailman/listinfo
 
 B) Disclaimers
  
@@ -522,11 +529,11 @@ C) Quick Start
 
   1) Download an RPM or Debian package from the links on the wiki
 
-    http://www.kamailio.org/wiki/
+    https://www.kamailio.org/wiki/
 
   If you don't use an rpm or debian based distribution, try our tar.gz'ed
   binaries
-    http://www.kamailio.org/pub/kamailio/latest/src/
+    https://www.kamailio.org/pub/kamailio/latest/src/
 
   If you use Solaris 8 you can try our solaris package.
   If you use Gentoo Linux you do not have to download a package.
@@ -537,15 +544,13 @@ C) Quick Start
 	debian:
     		dpkg -i <package_name>
 	gentoo:
-    		emerge ser
-			  or
-			emerge kamailio
-		(or if use only stable packets: ACCEPT_KEYWORDS="~x86" emerge ser
-		or ACCEPT_KEYWORDS="~x86" emerge kamailio)
+		emerge kamailio
+		(or if use only stable packets: 
+		ACCEPT_KEYWORDS="~x86" emerge kamailio )
 	tar.gz:
     		cd /; tar zxvf <package_name>_os_arch.tar.gz
     		(it will install in /usr/local/, and the configuration file in
-     		/usr/local/etc/ser/ser.cfg or /usr/local/etc/kamailio/kamailio.cfg)
+		/usr/local/etc/kamailio/kamailio.cfg)
 	Solaris:
     		gunzip <package_name>.gz ; pkgadd -d <package_name>
 	*BSD:
@@ -562,8 +567,7 @@ C) Quick Start
 	Solaris:
     		the tar.gz does not include an init.d script, you'll have to create one of
     		your own or adapt one from the source distribution (pkg/debian/init.d,
-    		pkg/rpm/ser.init.*, pkg/gentoo/ser.init, pkg/kamailio/rpm/kamailio.init,
-			pkg/kamailio/deb/debian/kamailio.init, a.s.o.)
+    		pkg/kamailio/rpm/kamailio.init, pkg/kamailio/deb/debian/kamailio.init, a.s.o.)
     		You can start Kamailio directly with
 			/usr/local/sbin/kamailio.
     
@@ -574,7 +578,7 @@ C) Quick Start
         export SIP_DOMAIN="myserver.foobar.com"
 	- if you are using other than 'localhost' mysql server for maintaining
 	  subscriber database, change the variable 'SQL_HOST' to the proper
-	  host name in the serctl script
+	  host name in the kamctl script
     - run the kamctl utility
         /usr/sbin/kamctl moni
       or
@@ -608,9 +612,9 @@ D) Kamailio With Persistent Data Storage
 
    set-variable    = max_connections=500
 
-  1) Download the package containin mysql support for Kamailio from the links
+  1) Download the package containing mysql support for Kamailio from the links
      you find on: 
-        http://www.kamailio.org/wiki/
+        https://www.kamailio.org/wiki/
 
     (rpm and deb provided, most of the binary tar.gz distributions and the 
      solaris package include it; if it is not present you'll have to rebuild
@@ -634,7 +638,7 @@ D) Kamailio With Persistent Data Storage
 	- otherwise, if this is your very first installation, use
     	/usr/local/sbin/kamdbctl create
 	  to create Kamailio database structures
-   (you will be prompted for password of MySql "root" user)
+     (you will be prompted for password of MySql "root" user)
 
   4) configure Kamailio to use SQL
     uncomment all lines in configuration file kamailio.cfg which are related to authentication:
@@ -644,33 +648,33 @@ D) Kamailio With Persistent Data Storage
     - modparam("usrloc", "db_mode", 2)
     - modparam("auth", "calculate_ha1", yes)
     - modparam("auth_db", "password_column", "password")
-    - if (!www_authorize("sip-router.org", "subscriber")) {
-        www_challenge("sip-router.org", "0"); 
+    - if (!www_authorize("example.com", "subscriber")) {
+        www_challenge("example.com", "0"); 
         break;
       }
 
   5) be sure to replace realm, the first parameter in www_* actions, 
-   with name of your server; some broken UAC implementations don't 
-   authenticate otherwise; the authentication command in your
-   configuration script should look then like this:
-      if (!www_authorize("myserver.foobar.com", "subscriber")) {
-        www_challenge("myserver.foobar.com", "0"); 
-        break;
-      }
+     with name of your server; some broken UAC implementations don't 
+     authenticate otherwise; the authentication command in your
+     configuration script should look then like this:
+        if (!www_authorize("myserver.foobar.com", "subscriber")) {
+            www_challenge("myserver.foobar.com", "0"); 
+            break;
+        }
 
   6) restart the server
 
-    /etc/init.d/kamailio restart
+      /etc/init.d/kamailio restart
 
-  7) you can now start  managing the server using the kamctl utility; 
-   you need to first set the environment variable SIP_DOMAIN to your 
-   local SIP realm, e.g.,
-       export SIP_DOMAIN="myserver.foobar.com"
+  7) you can now start managing the server using the kamctl utility; 
+     you need to first set the environment variable SIP_DOMAIN to your 
+     local SIP realm, e.g.,
+       export SIP_DOMAIN="myserver.example.com"
 
-   a) watch the server status using 'kamctl moni'
-   b) try to login with your SIP client as user 'admin' with password 'heslo'
-   c) try adding new users using 
-       'kamctl add <username> <password>'
+   	a) watch the server status using 'kamctl moni'
+   	b) try to login with your SIP client as user 'admin' with password 'heslo'
+   	c) try adding new users using 
+       		'kamctl add <username> <password>'
 
 
 4. Troubleshooting
@@ -699,4 +703,4 @@ A: Use bug tracker at: https://github.com/kamailio/kamailio/issues
 
 Q: Any F.A.Q. that could be helpful to check before reporting an issue?
 
-A: See: http://www.kamailio.org/wiki/tutorials/faq/main
+A: See: https://www.kamailio.org/wiki/tutorials/faq/main
