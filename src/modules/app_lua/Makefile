@@ -26,7 +26,7 @@ ifeq ($(BUILDER),)
 				DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/lua5.2
 				LIBS+= -llua5.2
 			else
-				DEFS+= -I$(LOCALBASE)/include/lua
+				DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/lua
 				LIBS+= -llua
 			endif
 		endif
@@ -62,7 +62,7 @@ ifeq ($(BUILDER),)
 					DEFS+= -DLUA_COMPAT_MODULE -I/usr/include/lua5.2
 					LIBS = -llua5.2 -lm
 				else
-					DEFS+= -I/usr/include/lua
+					DEFS+= -DLUA_COMPAT_MODULE -I/usr/include/lua
 					LIBS = -llua -lm
 				endif
 			endif
@@ -76,9 +76,11 @@ ifeq ($(BUILDER),)
 					LIBS = $(shell pkg-config --libs lua-5.1)
 				else
 					ifeq ($(LUAVER),52)
-						DEFS+= -DLUA_COMPAT_MODULE $(shell pkg-config --cflags lua5.2)
+						DEFS+= -DLUA_COMPAT_MODULE
+						DEFS+= $(shell pkg-config --cflags lua5.2)
 						LIBS = $(shell pkg-config --libs lua5.2)
 					else
+						DEFS+= -DLUA_COMPAT_MODULE
 						DEFS+= $(shell pkg-config --cflags lua)
 						LIBS = $(shell pkg-config --libs lua)
 					endif
