@@ -37,6 +37,7 @@
 #include "../../core/ut.h"
 #include "../../core/trim.h"
 #include "../../core/data_lump.h"
+#include "../../core/srapi.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_cseq.h"
@@ -127,6 +128,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 	unsigned int vinc = 0;
 	str nval;
 	str *pval;
+	sr_cfgenv_t *cenv = NULL;
 
 	if(dlg_cseq_prepare_msg(msg)!=0) {
 		goto error;
@@ -152,6 +154,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 		goto done;
 	}
 
+	cenv = sr_cfgenv_get();
 	ninc = 1;
 
 	/* take the increment value from dialog */
@@ -185,7 +188,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 
 	LM_DBG("adding auth cseq header value: %.*s\n", nval.len, nval.s);
 	parse_headers(msg, HDR_EOH_F, 0);
-	sr_hdr_add_zs(msg, "P-K-Auth-CSeq", &nval);
+	sr_hdr_add_zs(msg, cenv->uac_cseq_auth.s, &nval);
 
 done:
 	if(dlg!=NULL) dlg_release(dlg);
@@ -207,6 +210,7 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 	unsigned int vinc = 0;
 	str nval;
 	str *pval;
+	sr_cfgenv_t *cenv = NULL;
 
 	if(dlg_cseq_prepare_msg(msg)!=0) {
 		goto error;
@@ -254,7 +258,8 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 
 	LM_DBG("adding cseq refresh header value: %.*s\n", nval.len, nval.s);
 	parse_headers(msg, HDR_EOH_F, 0);
-	sr_hdr_add_zs(msg, "P-K-CSeq-Refresh", &nval);
+	cenv = sr_cfgenv_get();
+	sr_hdr_add_zs(msg, cenv->uac_cseq_refresh.s, &nval);
 
 done:
 	return 0;
@@ -354,11 +359,13 @@ int dlg_cseq_msg_sent(void *data)
 	int tbuf_len = 0;
 	struct via_body *via;
 	hdr_field_t *hfk = NULL;
+	sr_cfgenv_t *cenv = NULL;
 
 	obuf = (str*)data;
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = obuf->s;
 	msg.len = obuf->len;
+	cenv = sr_cfgenv_get();
 
 	if(dlg_cseq_prepare_new_msg(&msg)!=0) {
 		goto done;
@@ -395,7 +402,7 @@ int dlg_cseq_msg_sent(void *data)
 
 	/* check if transaction is marked for a new increment */
 	if(get_cseq(&msg)->method_id!=METHOD_ACK) {
-		hfk = sr_hdr_get_z(&msg, "P-K-Auth-CSeq");
+		hfk = sr_hdr_get_z(&msg, cenv->uac_cseq_auth.s);
 		if(hfk!=NULL) {
 			LM_DBG("new cseq inc requested\n");
 			nval = hfk->body;
@@ -406,7 +413,7 @@ int dlg_cseq_msg_sent(void *data)
 	}
 
 	if(nval.len<=0) {
-		hfk = sr_hdr_get_z(&msg, "P-K-CSeq-Refresh");
+		hfk = sr_hdr_get_z(&msg, cenv->uac_cseq_refresh.s);
 		if(hfk!=NULL) {
 			LM_DBG("cseq refresh requested\n");
 			nval = hfk->body;
