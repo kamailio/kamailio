@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -31,7 +31,7 @@
 	</para>
 	<para>
 	For the purpose of facilitating least cost routing of requests,
-	each gateway of an LCR instance is associated with one or more 
+	each gateway of an LCR instance is associated with one or more
 	&lt;prefix, from uri pattern, request uri pattern, priority, weight&gt;
 	tuples.  A gateway matches a request if user part of the Request-URI
 	matches a "prefix", the caller's URI matches a "From-URI" pattern and
@@ -1504,7 +1504,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 	</section>
 
 	<section>
-	<title>Exported RPC Commands</title>
+	<title>RPC Commands</title>
 		<section>
 		<title><function>lcr.reload</function></title>
 		<para>
@@ -1522,7 +1522,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		</programlisting>
 		</example>
 		</section>
-		
+
 		<section>
 		<title><function>lcr.dump_gws</function></title>
 		<para>
@@ -1537,7 +1537,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 		</programlisting>
 		</example>
 		</section>
-		
+
 		<section>
 		<title><function>lcr.dump_rules</function></title>
 		<para>

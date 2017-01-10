@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -369,7 +369,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 	if (!rl_check_pipe("1") {
 		append_to_reply("Retry-After: 5\r\n");
 		sl_send_reply("503","Limiting");
-		exit; 
+		exit;
 	};
 ...
 </programlisting>
@@ -378,7 +378,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 	</section>
 
 	<section>
-	<title>Exported RPC Functions</title>
+	<title>RPC Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">rl.stats</function>

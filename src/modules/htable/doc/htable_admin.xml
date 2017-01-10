@@ -955,7 +955,7 @@ sht_iterator_end("i1");
 		</para>
 	</section>
 	<section>
-        <title>Exported RPC Commands</title>
+        <title>RPC Commands</title>
         <section id="htable.rpc.get">
                 <title>
                 <function moreinfo="none">htable.get htable key</function>

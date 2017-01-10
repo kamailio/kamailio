@@ -200,7 +200,7 @@ if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
     </section>
 
     <section>
-        <title>Exported RPC Commands</title>
+        <title>RPC Commands</title>
         <section id="app_jsrt.r.reload">
             <title>
             <function moreinfo="none">app_jsrt.reload</function>

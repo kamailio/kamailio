@@ -1086,7 +1086,7 @@ if(dlg_get("abcdef", "123", "456"))
 
 
     <section>
-        <title>Exported RPC Functions</title>
+        <title>RPC Commands</title>
         <section>
             <title>
                 <varname>dlg.list</varname>

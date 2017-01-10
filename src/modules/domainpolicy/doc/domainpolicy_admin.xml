@@ -10,9 +10,9 @@
 <!-- Domain Policy Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para><emphasis>
@@ -22,7 +22,7 @@
 	</emphasis></para>
 	<para>
 		The Domain Policy module implements draft-lendl-domain-policy-ddds-02 in
-		combination with draft-lendl-speermint-federations-02 and 
+		combination with draft-lendl-speermint-federations-02 and
 		draft-lendl-speermint-technical-policy-00. These IETF drafts
 		define <acronym>DNS</acronym> records with which a domain can
 		announce its federation memberships. A local database can be
@@ -38,7 +38,7 @@
 	<section>
 	<title>Dependencies</title>
 	<para>
-		The module depends on the following modules (in the other words the 
+		The module depends on the following modules (in the other words the
 		listed modules must be loaded before this module):
 		<itemizedlist>
 		<listitem>
@@ -457,7 +457,7 @@ if (dp_apply_policy()) {
 	</section>
 
 	<section>
-	<title><acronym>RPC</acronym> Commands</title>
+	<title>RPC Commands</title>
 	<para>
 	</para>
 	</section>
@@ -465,7 +465,7 @@ if (dp_apply_policy()) {
 	<section>
 	<title>Usage Scenarios</title>
 	<para>
-	This section describes how this module can be use to implement 
+	This section describes how this module can be use to implement
 	selective VoIP peerings.
 	</para>
 

@@ -11,7 +11,7 @@
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
     <bookinfo>
 	<title>xHTTP_PI Module</title>
-	<productname class="trade">sip-router.org</productname>
+	<productname class="trade">kamailio.org</productname>
 	<authorgroup>
 	    <author>
 		<firstname>Ovidiu</firstname>
@@ -30,8 +30,7 @@
 	</copyright>
     </bookinfo>
     <toc></toc>
-    
+
     <xi:include href="xhttp_pi_admin.xml"/>
-    
-    
+
 </book>

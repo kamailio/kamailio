@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -376,7 +376,7 @@ event_route[xhttp:request] {
 	</section>
 
 	<section>
-	<title>Exported RPC Functions</title>
+	<title>RPC Commands</title>
 	<section>
 		<title>
 		<function moreinfo="none">xhttp_pi.reload</function>

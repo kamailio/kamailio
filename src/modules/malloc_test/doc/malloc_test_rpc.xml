@@ -10,7 +10,7 @@
 <section id="malloc_test.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
 	</sectioninfo>
-	<title>malloc_test RPC Functions</title>
+	<title>RPC Commands</title>
 
 	<section id="mt.mem_alloc">
 		<title> <function>mt.mem_alloc size [unit]</function></title>

@@ -237,7 +237,7 @@ if (is_method("REGISTER")) {
 	</section>
 
 	<section>
-	<title>Exported RPC Functions</title>
+	<title>RPC Commands</title>
 		<section>
 			<title><varname>ts.dump</varname></title>
 			<para>Dumps the content of the TSILO table</para>
