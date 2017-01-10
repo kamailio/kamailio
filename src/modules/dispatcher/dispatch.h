@@ -35,6 +35,7 @@
 #include "../../modules/tm/tm_load.h"
 
 
+/* clang-format off */
 #define DS_HASH_USER_ONLY	1  /*!< use only the uri user part for hashing */
 #define DS_FAILOVER_ON		2  /*!< store the other dest in avps */
 
@@ -54,6 +55,7 @@
 #define DS_MATCH_ALL		0
 #define DS_MATCH_NOPORT		1
 #define DS_MATCH_NOPROTO	2
+/* clang-format on */
 
 extern str ds_db_url;
 extern str ds_table_name;
@@ -79,7 +81,7 @@ extern unsigned short attrs_avp_type;
 extern int_str sock_avp_name;
 extern unsigned short sock_avp_type;
 
-extern pv_elem_t * hash_param_model;
+extern pv_elem_t *hash_param_model;
 
 extern str ds_setid_pvname;
 extern pv_spec_t ds_setid_pv;
@@ -90,14 +92,14 @@ extern pv_spec_t ds_attrs_pv;
 extern struct tm_binds tmb;
 extern str ds_ping_method;
 extern str ds_ping_from;
-extern int probing_threshold; /*!< number of failed requests,
+extern int probing_threshold;  /*!< number of failed requests,
 								before a destination is taken into probing */
 extern int inactive_threshold; /*!< number of successful requests,
 								before a destination is taken into active */
 extern int ds_probing_mode;
 extern str ds_outbound_proxy;
 extern str ds_default_socket;
-extern struct socket_info * ds_default_sockinfo;
+extern struct socket_info *ds_default_sockinfo;
 
 int init_data(void);
 int init_ds_db(void);
@@ -107,7 +109,8 @@ void ds_disconnect_db(void);
 int ds_load_db(void);
 int ds_reload_db(void);
 int ds_destroy_list(void);
-int ds_select_dst_limit(struct sip_msg *msg, int set, int alg, unsigned int limit, int mode);
+int ds_select_dst_limit(
+		struct sip_msg *msg, int set, int alg, unsigned int limit, int mode);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_next_dst(struct sip_msg *msg, int mode);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state);
@@ -130,7 +133,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode);
 /*! \brief
  * Timer for checking inactive destinations
  */
-void ds_check_timer(unsigned int ticks, void* param);
+void ds_check_timer(unsigned int ticks, void *param);
 
 
 /*! \brief
@@ -143,8 +146,8 @@ void ds_ht_timer(unsigned int ticks, void *param);
  */
 int ds_ping_check_rplcode(int);
 
-typedef struct _ds_attrs
-{
+/* clang-format off */
+typedef struct _ds_attrs {
 	str body;
 	str duid;
 	str socket;
@@ -153,8 +156,7 @@ typedef struct _ds_attrs
 	int rweight;
 } ds_attrs_t;
 
-typedef struct _ds_dest
-{
+typedef struct _ds_dest {
 	str uri;
 	int flags;
 	int priority;
@@ -168,8 +170,7 @@ typedef struct _ds_dest
 	struct _ds_dest *next;
 } ds_dest_t;
 
-typedef struct _ds_set
-{
+typedef struct _ds_set {
 	int id;				/*!< id of dst set */
 	int nr;				/*!< number of items in dst set */
 	int last;			/*!< last used item in dst set (round robin) */
@@ -181,6 +182,8 @@ typedef struct _ds_set
 	struct _ds_set *next[2];
 	int longer;
 } ds_set_t;
+/* clang-format on */
+
 #define AVL_LEFT 0
 #define AVL_RIGHT 1
 #define AVL_NEITHER -1
@@ -193,9 +196,9 @@ int ds_ping_active_init(void);
 int ds_ping_active_get(void);
 int ds_ping_active_set(int v);
 
-ds_set_t* ds_avl_insert( ds_set_t** root, int id, int* setn ); /// Create if not exist and return ds_set_t by id
-ds_set_t* ds_avl_find( ds_set_t* node, int id );
-void ds_avl_destroy( ds_set_t** node );
+/* Create if not exist and return ds_set_t by id */
+ds_set_t *ds_avl_insert(ds_set_t **root, int id, int *setn);
+ds_set_t *ds_avl_find(ds_set_t *node, int id);
+void ds_avl_destroy(ds_set_t **node);
 
 #endif
-

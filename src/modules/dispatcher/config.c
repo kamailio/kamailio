@@ -18,7 +18,7 @@
  */
 
 /*!
- * \file 
+ * \file
  * \brief Dispatcher :: Configuration
  * \ingroup Dispatcher
  */
@@ -29,11 +29,12 @@
 
 #include "config.h"
 
+/* clang-format off */
 struct cfg_group_dispatcher	default_dispatcher_cfg = {
-		1,	/* Probing threshold */	
-		1,      /* Inactive threshold */
-		{0,0}	/* reply codes */
-	    };
+	1,	/* Probing threshold */
+	1,      /* Inactive threshold */
+	{0,0}	/* reply codes */
+};
 
 void	*dispatcher_cfg = &default_dispatcher_cfg;
 
@@ -49,3 +50,4 @@ cfg_def_t	dispatcher_cfg_def[] = {
 		"Additional, valid reply codes for the OPTIONS Pinger. Default is \"\""},
 	{0, 0, 0, 0, 0, 0}
 };
+/* clang-format on */

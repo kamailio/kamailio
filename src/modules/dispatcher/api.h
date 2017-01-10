@@ -31,22 +31,23 @@
 
 #include "../../core/sr_module.h"
 
-typedef int (*ds_select_dst_f)(struct sip_msg *msg, int set,
-			int alg, int mode);
+typedef int (*ds_select_dst_f)(struct sip_msg *msg, int set, int alg, int mode);
 typedef int (*ds_next_dst_f)(struct sip_msg *msg, int mode);
 typedef int (*ds_mark_dst_f)(struct sip_msg *msg, int mode);
 
 typedef int (*ds_is_from_list_f)(struct sip_msg *_m, int group);
 
+/* clang-format off */
 typedef struct dispatcher_api {
 	ds_select_dst_f   select;
 	ds_next_dst_f     next;
 	ds_mark_dst_f     mark;
 	ds_is_from_list_f is_from;
 } dispatcher_api_t;
+/* clang-format on */
 
-typedef int (*bind_dispatcher_f)(dispatcher_api_t* api);
-int bind_dispatcher(dispatcher_api_t* api);
+typedef int (*bind_dispatcher_f)(dispatcher_api_t *api);
+int bind_dispatcher(dispatcher_api_t *api);
 
 /**
  * @brief Load the dispatcher API
@@ -60,8 +61,7 @@ static inline int dispatcher_load_api(dispatcher_api_t *api)
 		LM_ERR("cannot find bind_dispatcher\n");
 		return -1;
 	}
-	if(binddispatcher(api)<0)
-	{
+	if(binddispatcher(api) < 0) {
 		LM_ERR("cannot bind dispatcher api\n");
 		return -1;
 	}
@@ -70,4 +70,3 @@ static inline int dispatcher_load_api(dispatcher_api_t *api)
 
 
 #endif
-

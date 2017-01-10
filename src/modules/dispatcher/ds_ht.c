@@ -30,20 +30,19 @@
 #include "ds_ht.h"
 
 
-#define ds_compute_hash(_s)        core_case_hash(_s,0,0)
-#define ds_get_entry(_h,_size)    (_h)&((_size)-1)
+#define ds_compute_hash(_s) core_case_hash(_s, 0, 0)
+#define ds_get_entry(_h, _size) (_h) & ((_size)-1)
 
 
-ds_cell_t* ds_cell_new(str *cid, str *duid, int dset, unsigned int cellid)
+ds_cell_t *ds_cell_new(str *cid, str *duid, int dset, unsigned int cellid)
 {
 	ds_cell_t *cell;
 	unsigned int msize;
 
-	msize = sizeof(ds_cell_t) + (cid->len + duid->len + 2)*sizeof(char);
+	msize = sizeof(ds_cell_t) + (cid->len + duid->len + 2) * sizeof(char);
 
-	cell = (ds_cell_t*)shm_malloc(msize);
-	if(cell==NULL)
-	{
+	cell = (ds_cell_t *)shm_malloc(msize);
+	if(cell == NULL) {
 		LM_ERR("no more shm\n");
 		return NULL;
 	}
@@ -52,7 +51,7 @@ ds_cell_t* ds_cell_new(str *cid, str *duid, int dset, unsigned int cellid)
 	cell->cellid = cellid;
 	cell->dset = dset;
 	cell->callid.len = cid->len;
-	cell->callid.s = (char*)cell + sizeof(ds_cell_t);
+	cell->callid.s = (char *)cell + sizeof(ds_cell_t);
 	memcpy(cell->callid.s, cid->s, cid->len);
 	cell->callid.s[cid->len] = '\0';
 
@@ -65,12 +64,11 @@ ds_cell_t* ds_cell_new(str *cid, str *duid, int dset, unsigned int cellid)
 
 int ds_cell_free(ds_cell_t *cell)
 {
-	if(cell==NULL)
+	if(cell == NULL)
 		return -1;
 	shm_free(cell);
 	return 0;
 }
-
 
 
 ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire)
@@ -78,9 +76,8 @@ ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire)
 	int i;
 	ds_ht_t *dsht = NULL;
 
-	dsht = (ds_ht_t*)shm_malloc(sizeof(ds_ht_t));
-	if(dsht==NULL)
-	{
+	dsht = (ds_ht_t *)shm_malloc(sizeof(ds_ht_t));
+	if(dsht == NULL) {
 		LM_ERR("no more shm\n");
 		return NULL;
 	}
@@ -89,24 +86,20 @@ ds_ht_t *ds_ht_init(unsigned int htsize, int expire, int initexpire)
 	dsht->htexpire = expire;
 	dsht->htinitexpire = initexpire;
 
-	dsht->entries = (ds_entry_t*)shm_malloc(dsht->htsize*sizeof(ds_entry_t));
-	if(dsht->entries==NULL)
-	{
+	dsht->entries = (ds_entry_t *)shm_malloc(dsht->htsize * sizeof(ds_entry_t));
+	if(dsht->entries == NULL) {
 		LM_ERR("no more shm.\n");
 		shm_free(dsht);
 		dsht = NULL;
 		return NULL;
 	}
-	memset(dsht->entries, 0, dsht->htsize*sizeof(ds_entry_t));
+	memset(dsht->entries, 0, dsht->htsize * sizeof(ds_entry_t));
 
-	for(i=0; i<dsht->htsize; i++)
-	{
-		if(lock_init(&dsht->entries[i].lock)==0)
-		{
+	for(i = 0; i < dsht->htsize; i++) {
+		if(lock_init(&dsht->entries[i].lock) == 0) {
 			LM_ERR("cannot initialize lock[%d]\n", i);
 			i--;
-			while(i>=0)
-			{
+			while(i >= 0) {
 				lock_destroy(&dsht->entries[i].lock);
 				i--;
 			}
@@ -125,15 +118,13 @@ int ds_ht_destroy(ds_ht_t *dsht)
 	int i;
 	ds_cell_t *it, *it0;
 
-	if(dsht==NULL)
+	if(dsht == NULL)
 		return -1;
 
-	for(i=0; i<dsht->htsize; i++)
-	{
+	for(i = 0; i < dsht->htsize; i++) {
 		/* free entries */
 		it = dsht->entries[i].first;
-		while(it)
-		{
+		while(it) {
 			it0 = it;
 			it = it->next;
 			ds_cell_free(it0);
@@ -152,16 +143,14 @@ int ds_ht_clear_slots(ds_ht_t *dsht)
 	int i;
 	ds_cell_t *it, *it0;
 
-	if(dsht==NULL)
+	if(dsht == NULL)
 		return -1;
 
-	for(i=0; i<dsht->htsize; i++)
-	{
+	for(i = 0; i < dsht->htsize; i++) {
 		lock_get(&dsht->entries[i].lock);
 		/* free entries */
 		it = dsht->entries[i].first;
-		while(it)
-		{
+		while(it) {
 			it0 = it;
 			it = it->next;
 			ds_cell_free(it0);
@@ -181,33 +170,29 @@ int ds_add_cell(ds_ht_t *dsht, str *cid, str *duid, int dset)
 	ds_cell_t *it, *prev, *cell;
 	time_t now;
 
-	if(dsht==NULL || dsht->entries==NULL)
-	{
+	if(dsht == NULL || dsht->entries == NULL) {
 		LM_ERR("invalid parameters.\n");
 		return -1;
 	}
 
 	hid = ds_compute_hash(cid);
-	
+
 	idx = ds_get_entry(hid, dsht->htsize);
 
 	now = time(NULL);
 	prev = NULL;
 	lock_get(&dsht->entries[idx].lock);
 	it = dsht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
-	{
+	while(it != NULL && it->cellid < hid) {
 		prev = it;
 		it = it->next;
 	}
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(cid->len==it->callid.len 
-				&& strncmp(cid->s, it->callid.s, cid->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(cid->len == it->callid.len
+				&& strncmp(cid->s, it->callid.s, cid->len) == 0) {
 			lock_release(&dsht->entries[idx].lock);
-			LM_WARN("call-id already in hash table [%.*s].\n",
-					cid->len, cid->s);
+			LM_WARN("call-id already in hash table [%.*s].\n", cid->len,
+					cid->s);
 			return -2;
 		}
 		prev = it;
@@ -215,18 +200,15 @@ int ds_add_cell(ds_ht_t *dsht, str *cid, str *duid, int dset)
 	}
 	/* add */
 	cell = ds_cell_new(cid, duid, dset, hid);
-	if(cell == NULL)
-	{
+	if(cell == NULL) {
 		LM_ERR("cannot create new cell.\n");
 		lock_release(&dsht->entries[idx].lock);
 		return -1;
 	}
 	cell->expire = now + dsht->htexpire;
 	cell->initexpire = now + dsht->htinitexpire;
-	if(prev==NULL)
-	{
-		if(dsht->entries[idx].first!=NULL)
-		{
+	if(prev == NULL) {
+		if(dsht->entries[idx].first != NULL) {
 			cell->next = dsht->entries[idx].first;
 			dsht->entries[idx].first->prev = cell;
 		}
@@ -248,47 +230,45 @@ int ds_unlock_cell(ds_ht_t *dsht, str *cid)
 	unsigned int idx;
 	unsigned int hid;
 
-	if(dsht==NULL || dsht->entries==NULL)
+	if(dsht == NULL || dsht->entries == NULL)
 		return -1;
 
 	hid = ds_compute_hash(cid);
-	
+
 	idx = ds_get_entry(hid, dsht->htsize);
 
 	/* head test and return */
-	if(dsht->entries[idx].first==NULL)
+	if(dsht->entries[idx].first == NULL)
 		return 0;
-	
+
 	lock_release(&dsht->entries[idx].lock);
 	return 0;
 }
 
-ds_cell_t* ds_get_cell(ds_ht_t *dsht, str *cid)
+ds_cell_t *ds_get_cell(ds_ht_t *dsht, str *cid)
 {
 	unsigned int idx;
 	unsigned int hid;
 	ds_cell_t *it;
 
-	if(dsht==NULL || dsht->entries==NULL)
+	if(dsht == NULL || dsht->entries == NULL)
 		return 0;
 
 	hid = ds_compute_hash(cid);
-	
+
 	idx = ds_get_entry(hid, dsht->htsize);
 
 	/* head test and return */
-	if(dsht->entries[idx].first==NULL)
+	if(dsht->entries[idx].first == NULL)
 		return 0;
-	
+
 	lock_get(&dsht->entries[idx].lock);
 	it = dsht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
+	while(it != NULL && it->cellid < hid)
 		it = it->next;
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(cid->len==it->callid.len 
-				&& strncmp(cid->s, it->callid.s, cid->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(cid->len == it->callid.len
+				&& strncmp(cid->s, it->callid.s, cid->len) == 0) {
 			/* found */
 			return it;
 		}
@@ -305,28 +285,26 @@ int ds_del_cell(ds_ht_t *dsht, str *cid)
 	unsigned int hid;
 	ds_cell_t *it;
 
-	if(dsht==NULL || dsht->entries==NULL)
+	if(dsht == NULL || dsht->entries == NULL)
 		return -1;
 
 	hid = ds_compute_hash(cid);
-	
+
 	idx = ds_get_entry(hid, dsht->htsize);
 
 	/* head test and return */
-	if(dsht->entries[idx].first==NULL)
+	if(dsht->entries[idx].first == NULL)
 		return 0;
-	
+
 	lock_get(&dsht->entries[idx].lock);
 	it = dsht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
+	while(it != NULL && it->cellid < hid)
 		it = it->next;
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(cid->len==it->callid.len 
-				&& strncmp(cid->s, it->callid.s, cid->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(cid->len == it->callid.len
+				&& strncmp(cid->s, it->callid.s, cid->len) == 0) {
 			/* found */
-			if(it->prev==NULL)
+			if(it->prev == NULL)
 				dsht->entries[idx].first = it->next;
 			else
 				it->prev->next = it->next;
@@ -348,13 +326,11 @@ int ds_ht_dbg(ds_ht_t *dsht)
 	int i;
 	ds_cell_t *it;
 
-	for(i=0; i<dsht->htsize; i++)
-	{
+	for(i = 0; i < dsht->htsize; i++) {
 		lock_get(&dsht->entries[i].lock);
 		LM_ERR("htable[%d] -- <%d>\n", i, dsht->entries[i].esize);
 		it = dsht->entries[i].first;
-		while(it)
-		{
+		while(it) {
 			LM_ERR("\tcell: %.*s\n", it->callid.len, it->callid.s);
 			LM_ERR("\tduid: %.*s\n", it->duid.len, it->duid.s);
 			LM_ERR("\thid: %u expire: %u initexpire: %u\n", it->cellid,
@@ -366,5 +342,3 @@ int ds_ht_dbg(ds_ht_t *dsht)
 	}
 	return 0;
 }
-
-

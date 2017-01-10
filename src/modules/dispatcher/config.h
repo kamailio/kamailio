@@ -31,16 +31,17 @@
 #include "../../core/cfg/cfg.h"
 #include "../../core/str.h"
 
-struct cfg_group_dispatcher {
+struct cfg_group_dispatcher
+{
 	int probing_threshold;
 	int inactive_threshold;
 	str ds_ping_reply_codes_str;
 };
 
-extern struct cfg_group_dispatcher	default_dispatcher_cfg;
-extern void	*dispatcher_cfg;
-extern cfg_def_t	dispatcher_cfg_def[];
+extern struct cfg_group_dispatcher default_dispatcher_cfg;
+extern void *dispatcher_cfg;
+extern cfg_def_t dispatcher_cfg_def[];
 
-extern void ds_ping_reply_codes_update(str*, str*);
+extern void ds_ping_reply_codes_update(str *, str *);
 
 #endif
