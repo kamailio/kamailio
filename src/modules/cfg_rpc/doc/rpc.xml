@@ -9,7 +9,7 @@
 
 <section id="cfg_rpc.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
 
-    <title>RPC Interface</title>
+    <title>RPC Commands</title>
 
     <para>
 	The module implements the RPC commands documented in the next sections.
@@ -60,7 +60,7 @@
 		<title>Use <varname>cfg.seti</varname> RPC command</title>
 		<programlisting format="linespecific">
 ...
-# &sercmd; cfg.seti core debug 1
+# &kamcmd; cfg.seti core debug 1
 ...
 </programlisting>
 		</example>
@@ -81,6 +81,14 @@
 		name, string value. The group name can optionally contain the
 		group instance id, for example foo[5].
 	    </para>
+		<example>
+		<title>Use <varname>cfg.sets</varname> RPC command</title>
+		<programlisting format="linespecific">
+...
+# &kamcmd; cfg.sets voicemail srv_ip "1.2.3.4"
+...
+</programlisting>
+		</example>
 	</section>
 	<section id="cfg_rpc.rpc.set_now_string">
     <title>cfg.set_now_string</title>
