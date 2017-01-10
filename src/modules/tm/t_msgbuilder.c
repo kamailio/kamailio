@@ -35,6 +35,7 @@
 #include "../../core/parser/parser_f.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/ut.h"
+#include "../../core/srapi.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "lw_parser.h"
@@ -276,6 +277,8 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	int reason_len, code_len;
 	struct hdr_field *reas1, *reas_last, *hdr;
 #endif /* CANCEL_REASON_SUPPORT */
+	int hadded = 0;
+	sr_cfgenv_t *cenv = NULL;
 
 	invite_buf = Trans->uac[branch].request.buffer;
 	invite_len = Trans->uac[branch].request.buffer_len;
@@ -352,6 +355,8 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 	s1 = s;
 	s = eat_line(s, invite_buf_end - s);
 	append_str(d, s1, s - s1);
+
+	cenv = sr_cfgenv_get();
 
 	/* check every header field name,
 	we must exclude and modify some of the headers */
@@ -470,15 +475,35 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 
 			default:
 				s = lw_next_line(s, invite_buf_end);
+				hadded = 0;
 
-				if (cfg_get(tm, tm_cfg, ac_extra_hdrs).len
-				&& (s1 + cfg_get(tm, tm_cfg, ac_extra_hdrs).len < invite_buf_end)
-				&& (strncasecmp(s1,
-						cfg_get(tm, tm_cfg, ac_extra_hdrs).s,
-						cfg_get(tm, tm_cfg, ac_extra_hdrs).len) == 0)
-				) {
-					append_str(d, s1, s - s1);
-				} /* else skip this line */
+				/* uac auth headers */
+				if(Trans->uas.request &&
+						(Trans->uas.request->msg_flags & FL_UAC_AUTH)) {
+					if(s1 + cenv->uac_cseq_auth.len + 2 < invite_buf_end) {
+						if(s1[cenv->uac_cseq_auth.len]==':'
+								&& strncmp(s1, cenv->uac_cseq_auth.s,
+									cenv->uac_cseq_auth.len)==0) {
+							hadded = 1;
+							append_str(d, s1, s - s1);
+						} else if(s1[cenv->uac_cseq_refresh.len]==':'
+								&& strncmp(s1, cenv->uac_cseq_refresh.s,
+									cenv->uac_cseq_refresh.len)==0) {
+							hadded = 1;
+							append_str(d, s1, s - s1);
+						}
+					}
+				}
+
+				if(likely(hadded==0)) {
+					if (cfg_get(tm, tm_cfg, ac_extra_hdrs).len
+							&& (s1 + cfg_get(tm, tm_cfg, ac_extra_hdrs).len < invite_buf_end)
+							&& (strncasecmp(s1,
+									cfg_get(tm, tm_cfg, ac_extra_hdrs).s,
+									cfg_get(tm, tm_cfg, ac_extra_hdrs).len) == 0)) {
+						append_str(d, s1, s - s1);
+					}
+				}
 				break;
 		}
 	}
