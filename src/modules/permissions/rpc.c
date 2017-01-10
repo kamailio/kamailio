@@ -87,7 +87,7 @@ void rpc_address_dump(rpc_t* rpc, void* c) {
 		return;
 	}
 	if(addr_hash_table_rpc_print(*addr_hash_table, rpc, c) < 0 ) {
-		LM_DBG("failed to print a subnet_table dump\n");
+		LM_DBG("failed to print address table dump\n");
 	}
 	return;
 }
@@ -102,7 +102,7 @@ void rpc_subnet_dump(rpc_t* rpc, void* c) {
 		return;
 	}
 	if(subnet_table_rpc_print(*subnet_table, rpc, c) < 0) {
-		LM_DBG("failed to print a subnet_table dump\n");
+		LM_DBG("failed to pria subnet table dump\n");
 	}
 
 	return;
@@ -119,7 +119,7 @@ void rpc_domain_name_dump(rpc_t* rpc, void* c) {
 		return;
 	}
 	if ( domain_name_table_rpc_print(*domain_list_table, rpc, c) < 0 ) {
-		LM_DBG("failed to print a subnet_table dump\n");
+		LM_DBG("failed to print domain table dump\n");
 	}
 	return;
 }
