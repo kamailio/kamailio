@@ -1020,15 +1020,9 @@ modparam("dispatcher", "force_dst", 1)
 			stored in AVP list for further failovers (the first selected
 			destination and default destination are the first to be put in
 			the list)
-                        </para>
-                </listitem>
+			</para>
+		</listitem>
 		</itemizedlist>
-		<para>
-		If the bit 2 in 'flags' is set, the rest of the addresses from the
-		destination set is stored in AVP list. You can use 'ds_next_dst()' to
-		use next address to achieve serial forking to all possible
-		destinations.
-		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
