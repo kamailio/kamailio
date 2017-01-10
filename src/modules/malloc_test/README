@@ -21,7 +21,7 @@ Andrei Pelinescu-Onciul
               3.1. mt_mem_alloc(size)
               3.2. mt_mem_free()
 
-        4. malloc_test RPC Functions
+        4. RPC Commands
 
               4.1. mt.mem_alloc size [unit]
               4.2. mt.mem_free [size] [unit]
@@ -65,7 +65,7 @@ Chapter 1. Admin Guide
         3.1. mt_mem_alloc(size)
         3.2. mt_mem_free()
 
-   4. malloc_test RPC Functions
+   4. RPC Commands
 
         4.1. mt.mem_alloc size [unit]
         4.2. mt.mem_free [size] [unit]
@@ -142,7 +142,7 @@ Note
 mem_free();
 ...
 
-4. malloc_test RPC Functions
+4. RPC Commands
 
    4.1. mt.mem_alloc size [unit]
    4.2. mt.mem_free [size] [unit]

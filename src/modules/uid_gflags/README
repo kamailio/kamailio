@@ -23,7 +23,14 @@ Jiri Kuthan
               3.3. is_ugflag(flag_num)
 
         4. FIFO Interface
-        5. RPC Interface
+        5. RPC Commands
+
+              5.1. gflags.set
+              5.2. gflags.reset
+              5.3. gflags.is_set
+              5.4. gflags.flush
+              5.5. gflags.dump
+              5.6. global.reload
 
    List of Examples
 
@@ -46,7 +53,14 @@ Chapter 1. Admin Guide
         3.3. is_ugflag(flag_num)
 
    4. FIFO Interface
-   5. RPC Interface
+   5. RPC Commands
+
+        5.1. gflags.set
+        5.2. gflags.reset
+        5.3. gflags.is_set
+        5.4. gflags.flush
+        5.5. gflags.dump
+        5.6. global.reload
 
 1. Overview
 
@@ -125,21 +139,45 @@ reset_ugflag("2");
        return TRUE if the flag is set and FALSE if it is not set. The only
        parameter of this function is the number of the flag.
 
-5. RPC Interface
+5. RPC Commands
+
+   5.1. gflags.set
+   5.2. gflags.reset
+   5.3. gflags.is_set
+   5.4. gflags.flush
+   5.5. gflags.dump
+   5.6. global.reload
 
    The state of the global flags can be read and modified over the RPC
    interface. This module implements the following RPC interface commands:
-     * gflags.set - Set the value of a flag to 1. The function accepts one
-       parameter which is the number of the flag to be set.
-     * gflags.reset - Reset the value of a flag to 0. The function accepts
-       one parameter which is the number of the flag to be reset.
-     * gflags.is_set - Return the status of a flag. The FIFO function
-       would return TRUE if the flag is set and FALSE if it is not set.
-       The only parameter of this function is the number of the flag.
-     * gflags.flush - Flush the state of global flags into database.
-     * gflags.dump - Return the status of all flags. The value is TRUE if
-       the flag is set and FALSE if the flag is not set. The function has
-       no parameters.
-     * global.reload - Reload values from global_attrs DB table. This
-       function does not have any parameters. There is no return value on
-       success.
+
+5.1. gflags.set
+
+   gflags.set - Set the value of a flag to 1. The function accepts one
+   parameter which is the number of the flag to be set.
+
+5.2. gflags.reset
+
+   gflags.reset - Reset the value of a flag to 0. The function accepts one
+   parameter which is the number of the flag to be reset.
+
+5.3. gflags.is_set
+
+   gflags.is_set - Return the status of a flag. The FIFO function would
+   return TRUE if the flag is set and FALSE if it is not set. The only
+   parameter of this function is the number of the flag.
+
+5.4. gflags.flush
+
+   gflags.flush - Flush the state of global flags into database.
+
+5.5. gflags.dump
+
+   gflags.dump - Return the status of all flags. The value is TRUE if the
+   flag is set and FALSE if the flag is not set. The function has no
+   parameters.
+
+5.6. global.reload
+
+   global.reload - Reload values from global_attrs DB table. This function
+   does not have any parameters. There is no return value on success.

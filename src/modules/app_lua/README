@@ -36,7 +36,7 @@ Daniel-Constantin Mierla
               4.3. lua_run(function, params)
               4.4. lua_runstring(script)
 
-        5. Exported RPC Commands
+        5. RPC Commands
 
               5.1. app_lua.list
               5.2. app_lua.reload
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
         4.3. lua_run(function, params)
         4.4. lua_runstring(script)
 
-   5. Exported RPC Commands
+   5. RPC Commands
 
         5.1. app_lua.list
         5.2. app_lua.reload
@@ -254,7 +254,7 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 }
 ...
 
-5. Exported RPC Commands
+5. RPC Commands
 
    5.1. app_lua.list
    5.2. app_lua.reload

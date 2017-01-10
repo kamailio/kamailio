@@ -34,7 +34,7 @@ Federico Cabiddu
               4.2. ts_append(domain, ruri)
               4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
-        5. Exported RPC Functions
+        5. RPC Commands
 
               5.1. ts.dump
               5.2. ts.lookup
@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
         4.2. ts_append(domain, ruri)
         4.3. ts_append_to(tindex, tlabel, domain, [uri])
 
-   5. Exported RPC Functions
+   5. RPC Commands
 
         5.1. ts.dump
         5.2. ts.lookup
@@ -227,7 +227,7 @@ if (is_method("REGISTER")) {
 }
 ...
 
-5. Exported RPC Functions
+5. RPC Commands
 
    5.1. ts.dump
    5.2. ts.lookup

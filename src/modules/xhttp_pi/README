@@ -41,7 +41,7 @@ Ovidiu Sas
 
               7.1. dispatch_xhttp_pi()
 
-        8. Exported RPC Functions
+        8. RPC Commands
 
               8.1. xhttp_pi.reload
 
@@ -80,7 +80,7 @@ Chapter 1. Admin Guide
 
         7.1. dispatch_xhttp_pi()
 
-   8. Exported RPC Functions
+   8. RPC Commands
 
         8.1. xhttp_pi.reload
 
@@ -310,7 +310,7 @@ event_route[xhttp:request] {
 }
 ...
 
-8. Exported RPC Functions
+8. RPC Commands
 
    8.1. xhttp_pi.reload
 

@@ -81,7 +81,7 @@ Juha Heinanen
               4.7. to_gw(lcr_id[, ip_addr, proto])
               4.8. to_any_gw([ip_addr, proto])
 
-        5. Exported RPC Commands
+        5. RPC Commands
 
               5.1. lcr.reload
               5.2. lcr.dump_gws
@@ -218,7 +218,7 @@ Chapter 1. Admin Guide
         4.7. to_gw(lcr_id[, ip_addr, proto])
         4.8. to_any_gw([ip_addr, proto])
 
-   5. Exported RPC Commands
+   5. RPC Commands
 
         5.1. lcr.reload
         5.2. lcr.dump_gws
@@ -1127,7 +1127,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 };
 ...
 
-5. Exported RPC Commands
+5. RPC Commands
 
    5.1. lcr.reload
    5.2. lcr.dump_gws

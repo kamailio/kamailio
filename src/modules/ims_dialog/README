@@ -104,7 +104,7 @@ Richard Good
               8.6. profile_list_dlgs
               8.7. dlg_bridge
 
-        9. Exported RPC Functions
+        9. RPC Commands
 
               9.1. dlg.list
               9.2. dlg.list_ctx
@@ -229,7 +229,7 @@ Chapter 1. Admin Guide
         8.6. profile_list_dlgs
         8.7. dlg_bridge
 
-   9. Exported RPC Functions
+   9. RPC Commands
 
         9.1. dlg.list
         9.2. dlg.list_ctx
@@ -832,7 +832,7 @@ if(dlg_get("abcdef", "123", "456"))
    This function is currently not supported by the ims_dialog module. To
    be incorporated in the future.
 
-9. Exported RPC Functions
+9. RPC Commands
 
    9.1. dlg.list
    9.2. dlg.list_ctx

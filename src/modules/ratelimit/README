@@ -53,7 +53,7 @@ Hendrik Scholz
               6.1. rl_check([pvar])
               6.2. rl_check_pipe([pipe_no])
 
-        7. Exported RPC Functions
+        7. RPC Commands
 
               7.1. rl.stats
               7.2. rl.set_pipe
@@ -105,7 +105,7 @@ Chapter 1. Admin Guide
         6.1. rl_check([pvar])
         6.2. rl_check_pipe([pipe_no])
 
-   7. Exported RPC Functions
+   7. RPC Commands
 
         7.1. rl.stats
         7.2. rl.set_pipe
@@ -407,7 +407,7 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
         };
 ...
 
-7. Exported RPC Functions
+7. RPC Commands
 
    7.1. rl.stats
    7.2. rl.set_pipe

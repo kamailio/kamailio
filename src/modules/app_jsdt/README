@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright � 2017 Daniel-Constantin Mierla (asipto.com)
+   Copyright © 2017 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
    Table of Contents
@@ -34,7 +34,7 @@ Daniel-Constantin Mierla
               4.3. jsdt_run(function, params)
               4.4. jsdt_runstring(script)
 
-        5. Exported RPC Commands
+        5. RPC Commands
 
               5.1. app_jsrt.reload
 
@@ -69,7 +69,7 @@ Chapter 1. Admin Guide
         4.3. jsdt_run(function, params)
         4.4. jsdt_runstring(script)
 
-   5. Exported RPC Commands
+   5. RPC Commands
 
         5.1. app_jsrt.reload
 
@@ -124,7 +124,7 @@ Chapter 1. Admin Guide
    script at runtime. If you use it for KEMI configuration, then it has to
    include the requited functions.
 
-   Default value is "null".
+   Default value is “null”.
 
    Example 1.1. Set load parameter
 ...
@@ -138,7 +138,7 @@ modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
    4.3. jsdt_run(function, params)
    4.4. jsdt_runstring(script)
 
-4.1. jsdt_dofile(path)
+4.1.  jsdt_dofile(path)
 
    Execute the JS script stored in 'path'. The parameter can be a string
    with pseudo-variables evaluated at runtime.
@@ -148,7 +148,7 @@ modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
 jsdt_dofile("/usr/local/etc/kamailio/js/myscript.js");
 ...
 
-4.2. jsdt_dostring(script)
+4.2.  jsdt_dostring(script)
 
    Execute the Lua script stored in parameter. The parameter can be a
    string with pseudo-variables.
@@ -161,7 +161,7 @@ if(!jsdt_dostring('KSR.dbg("test message\n")'))
 }
 ...
 
-4.3. jsdt_run(function, params)
+4.3.  jsdt_run(function, params)
 
    Execute the JS function 'func' giving params as parameters. There can
    be up to 3 string parameters. The function must exist in the script
@@ -178,7 +178,7 @@ if(!jsdt_run("js_append_fu_to_reply"))
 jsdt_run("js_funcx", "$rU", "2");
 ...
 
-4.4. jsdt_runstring(script)
+4.4.  jsdt_runstring(script)
 
    Execute the JS script stored in parameter. The parameter can be a
    string with pseudo-variables. The script is executed in JS context
@@ -192,11 +192,11 @@ if(!jsdt_runstring('KSR.dbg("Hello World from $fU\n")'))
 }
 ...
 
-5. Exported RPC Commands
+5. RPC Commands
 
    5.1. app_jsrt.reload
 
-5.1. app_jsrt.reload
+5.1.  app_jsrt.reload
 
    Marks the need to reload the js script. The actual reload is done by
    every working process when the next call to jsrt_run() function or KEMI

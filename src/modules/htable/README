@@ -67,7 +67,7 @@ Ovidiu Sas
               4.9. sht_iterator_next(iname)
 
         5. Exported pseudo-variables
-        6. Exported RPC Commands
+        6. RPC Commands
 
               6.1. htable.get htable key
               6.2. htable.delete htable key
@@ -153,7 +153,7 @@ Chapter 1. Admin Guide
         4.9. sht_iterator_next(iname)
 
    5. Exported pseudo-variables
-   6. Exported RPC Commands
+   6. RPC Commands
 
         6.1. htable.get htable key
         6.2. htable.delete htable key
@@ -801,7 +801,7 @@ sht_iterator_end("i1");
    Exported pseudo-variables are documented at
    http://www.kamailio.org/wiki/.
 
-6. Exported RPC Commands
+6. RPC Commands
 
    6.1. htable.get htable key
    6.2. htable.delete htable key
