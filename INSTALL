@@ -63,8 +63,10 @@ There are various configuration options defined in the Makefile.
 
 Requirements:
 
-- gcc or icc : gcc >= 2.9x; 3.[12] recommended (it will work with older version
-  but it might require some options tweaking for best performance)
+- gcc or clang: 
+     gcc >= 2.9x; 3.[12] recommended (it will work with older version
+     but it might require some options tweaking for best performance)
+     clang >= version 3.3
 - bison or yacc (Berkley Yacc)
 - flex
 - GNU make (on Linux this is the standard "make", on *BSD and Solaris it is
