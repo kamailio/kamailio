@@ -65,64 +65,6 @@
 			other NSQ worker processs so that it doesn't block itself, nor the SIP worker processes.
 		</para>
 		<section>
-			<title>Event Routes</title>
-			<para>
-				The worker process issues an event-route where we can act on the received payload. The name of the event-route is composed by values extracted from the payload.
-			</para>
-			<para>
-				NSQ module will try to execute the event route from most significant to less significant.
-				define the event route like event_route[nsq:consumer-event[-payload_key_value[-payload_subkey_value]]]
-			</para>
-			<para>
-				we can set the key/subkey pair on a subscription base. check the payload on subscribe.
-			</para>
-			<example>
-				<title>Define the event routes</title>
-<programlisting format="linespecific">
-...
-modparam("nsq", "consumer_event_key", "Event-Category")
-modparam("nsq", "consumer_event_sub_key", "Event-Name")
-...
-
-event_route[nsq:consumer-event-presence-update]
-{
-	# presence is the value extracted from Event-Category field in json payload
-	# update is the value extracted from Event-Name field in json payload
-	xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{kznsqjson,From})");
-	...
-}
-
-event_route[nsq:consumer-event-presence]
-{
-	# presence is the value extracted from Event-Category field in json payload
-	xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.json,From})");
-	...
-}
-
-event_route[nsq:consumer-event-event-category-event-name]
-{
-	# event-category is the name of the consumer_event_key parameter
-	# event-name is the name of the consumer_event_sub_key parameter
-	# this event route is executed if we can't find the previous
-	...
-}
-
-event_route[nsq:consumer-event-event-category]
-{
-	# event-category is the name of the consumer_event_key parameter
-	# this event route is executed if we can't find the previous
-	...
-}
-
-event_route[nsq:consumer-event]
-{
-	# this event route is executed if we can't find the previous
-}
-
-</programlisting>
-			</example>
-		</section>
-		<section>
 			<title>Aknowledge Messages</title>
 			<para>
 				Consumed messages have the option of being acknowledge in two ways:
@@ -161,29 +103,31 @@ event_route[nsq:consumer-event]
 		</section>
 		<section>
 			<title>External Libraries or Applications</title>
-			<itemizedlist>
-				<listitem>
-					<para>
-						<emphasis>libev</emphasis>.
-					</para>
-				</listitem>
-				<listitem>
-					<para>
-						<emphasis>libjson</emphasis>.
-					</para>
-				</listitem>
-				<listitem>
-					<para>
-						<emphasis>libevbuffsock</emphasis>.
-					</para>
-				</listitem>
-				<listitem>
-					<para>
-						<emphasis>libnsq</emphasis>.
-					</para>
-				</listitem>
-			</itemizedlist>
-
+			<para>
+				The following libraries or applications must be installed
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>libev</emphasis>.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>libjson</emphasis>.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>libevbuffsock</emphasis>.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>libnsq</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
 		</section>
 	</section>
 
@@ -503,12 +447,22 @@ event_route[nsq:consumer-event-presence-update]
 					Contains the payload of a consumed message
 				</para>
 			</listitem>
+			<example>
+				<title>Example usage of $nsqE pseudo variable</title>
+<programlisting format="linespecific">
+	xlog("L_INFO", "received payload $nsqE from NSQ");
+	...
+}
+
+</programlisting>
+			</example>
 		</itemizedlist>
 	</section>
 
 	<section>
 		<title>Transformations</title>
 		<para>The prefix for nsq transformations is nsq.</para>
+		<para>You can use the transformation to extract values from the json structured $nsqE pseudo variable</para>
 		<itemizedlist>
 			<listitem><para>
 					<emphasis>json</emphasis>
@@ -517,6 +471,7 @@ event_route[nsq:consumer-event-presence-update]
 					<title><function>nsq.json</function> usage</title>
 <programlisting format="linespecific">
 ...
+# extract value of "Custom-Data" from $nsqE pseudo variable and set it to $var(Custom-Data)
 $var(Custom-Data) = $(nsqE{nsq.json,Custom-Data});
 if($var(Custom-Data) != $null) {
 	xlog("L_INFO", "$ci|log|custom data: $var(Custom-Data)");
@@ -528,6 +483,65 @@ if($var(Custom-Data) != $null) {
 			</listitem>
 
 		</itemizedlist>
+	</section>
+
+	<section>
+		<title>Event Routes</title>
+			<para>
+				The worker process issues an event-route where we can act on the received payload. The name of the event-route is composed by values extracted from the payload.
+			</para>
+			<para>
+				NSQ module will try to execute the event route from most significant to less significant.
+				define the event route like event_route[nsq:consumer-event[-payload_key_value[-payload_subkey_value]]]
+			</para>
+			<para>
+				We can set the key/subkey pair on a subscription base. check the payload on subscribe.
+			</para>
+			<example>
+				<title>Define the event routes</title>
+<programlisting format="linespecific">
+...
+modparam("nsq", "consumer_event_key", "Event-Category")
+modparam("nsq", "consumer_event_sub_key", "Event-Name")
+...
+
+event_route[nsq:consumer-event-presence-update]
+{
+	# presence is the value extracted from Event-Category field in json payload
+	# update is the value extracted from Event-Name field in json payload
+	xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.json,From})");
+	...
+}
+
+event_route[nsq:consumer-event-presence]
+{
+	# presence is the value extracted from Event-Category field in json payload
+	xlog("L_INFO", "received $(nsqE{nsq.json,Event-Package}) update for $(nsqE{nsq.json,From})");
+	...
+}
+
+event_route[nsq:consumer-event-event-category-event-name]
+{
+	# event-category is the name of the consumer_event_key parameter
+	# event-name is the name of the consumer_event_sub_key parameter
+	# this event route is executed if we can't find the previous
+	...
+}
+
+event_route[nsq:consumer-event-event-category]
+{
+	# event-category is the name of the consumer_event_key parameter
+	# this event route is executed if we can't find the previous
+	...
+}
+
+event_route[nsq:consumer-event]
+{
+	# this event route is executed if we can't find the previous
+}
+
+</programlisting>
+			</example>
 	</section>
 
 
