@@ -31,6 +31,8 @@ sr_generate_callid_f sr_get_callid_func(void);
 typedef int (*sr_cseq_update_f)(sip_msg_t*);
 typedef struct sr_cfgenv {
 	sr_cseq_update_f cb_cseq_update;
+	str uac_cseq_auth;
+	str uac_cseq_refresh;
 } sr_cfgenv_t;
 
 void sr_cfgenv_init(void);
