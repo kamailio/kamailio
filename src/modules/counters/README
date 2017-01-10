@@ -23,14 +23,17 @@ Andrei Pelinescu-Onciul
               3.2. cnt_add([group.]name, number)
               3.3. cnt_reset([group.]name)
 
-        4. counters RPC Functions
+        4. RPC Commands
 
-              4.1. cnt.get group counter_name
-              4.2. cnt.reset group counter_name
-              4.3. cnt.grps_list
-              4.4. cnt.var_list group
-              4.5. cnt.grp_get_all
-              4.6. cnt.help group counter_name
+              4.1. cnt.get
+              4.2. cnt.reset
+              4.3. cnt.list_groups
+              4.4. cnt.grps_list
+              4.5. cnt.list_vars
+              4.6. cnt.var_list
+              4.7. cnt.get_vars
+              4.8. cnt.grp_get_all
+              4.9. cnt.help
 
    List of Examples
 
@@ -41,9 +44,9 @@ Andrei Pelinescu-Onciul
    1.5. cnt_reset usage
    1.6. cnt.get grp counter_name usage
    1.7. cnt.reset grp name usage
-   1.8. cnt.grps_list usage
-   1.9. cnt.var_list group usage
-   1.10. cnt.var_list group usage
+   1.8. cnt.list_groups usage
+   1.9. cnt.list_vars group usage
+   1.10. cnt.get_vars group usage
    1.11. cnt.help grp name usage
 
 Chapter 1. Admin Guide
@@ -62,14 +65,17 @@ Chapter 1. Admin Guide
         3.2. cnt_add([group.]name, number)
         3.3. cnt_reset([group.]name)
 
-   4. counters RPC Functions
+   4. RPC Commands
 
-        4.1. cnt.get group counter_name
-        4.2. cnt.reset group counter_name
-        4.3. cnt.grps_list
-        4.4. cnt.var_list group
-        4.5. cnt.grp_get_all
-        4.6. cnt.help group counter_name
+        4.1. cnt.get
+        4.2. cnt.reset
+        4.3. cnt.list_groups
+        4.4. cnt.grps_list
+        4.5. cnt.list_vars
+        4.6. cnt.var_list
+        4.7. cnt.get_vars
+        4.8. cnt.grp_get_all
+        4.9. cnt.help
 
 1. Overview
 
@@ -163,54 +169,81 @@ route {
 ...
 }
 
-4. counters RPC Functions
+4. RPC Commands
 
-   4.1. cnt.get group counter_name
-   4.2. cnt.reset group counter_name
-   4.3. cnt.grps_list
-   4.4. cnt.var_list group
-   4.5. cnt.grp_get_all
-   4.6. cnt.help group counter_name
+   4.1. cnt.get
+   4.2. cnt.reset
+   4.3. cnt.list_groups
+   4.4. cnt.grps_list
+   4.5. cnt.list_vars
+   4.6. cnt.var_list
+   4.7. cnt.get_vars
+   4.8. cnt.grp_get_all
+   4.9. cnt.help
 
-4.1.  cnt.get group counter_name
+4.1.  cnt.get
 
    Get the value of the counter identified by group.counter_name.
+
+   Prototype: cnt.get group counter_name
 
    Example 1.6. cnt.get grp counter_name usage
  $ kamcmd cnt.get script foo
 
-4.2.  cnt.reset group counter_name
+4.2.  cnt.reset
 
    Resets the counter identified by group.counter_name.
+
+   Prototype: cnt.reset group counter_name
 
    Example 1.7. cnt.reset grp name usage
  $ kamcmd cnt.reset script foo
 
-4.3.  cnt.grps_list
+4.3.  cnt.list_groups
 
    Lists all the declared counter groups.
 
-   Example 1.8. cnt.grps_list usage
- $ kamcmd cnt.grps_list
+   Prototype: cnt.list_groups
 
-4.4.  cnt.var_list group
+   Example 1.8. cnt.list_groups usage
+ $ kamcmd cnt.list_groups
+
+4.4.  cnt.grps_list
+
+   Alias to cnt.list_groups.
+
+4.5.  cnt.list_vars
 
    Lists all the names of all the counters belonging to the specified
    group.
 
-   Example 1.9. cnt.var_list group usage
- $ kamcmd cnt.var_list script
+   Prototype: cnt.list_vars group
 
-4.5.  cnt.grp_get_all
+   Example 1.9. cnt.list_vars group usage
+ $ kamcmd cnt.list_vars tmx
+
+4.6.  cnt.var_list
+
+   Alias to cnt.list_vars.
+
+4.7.  cnt.get_vars
 
    Lists all the counter names and their values in the specified group.
 
-   Example 1.10. cnt.var_list group usage
- $ kamcmd cnt.grp_get_all script
+   Prototype: cnt.get_vars group
 
-4.6.  cnt.help group counter_name
+   Example 1.10. cnt.get_vars group usage
+ $ kamcmd cnt.get_vars script
+
+4.8.  cnt.grp_get_all
+
+   Alias to cnt.get_vars.
+
+4.9.  cnt.help
 
    Displays the counter description.
+
+   Prototype: cnt.help group counter_name
 
    Example 1.11. cnt.help grp name usage
  $ kamcmd cnt.help script foo
