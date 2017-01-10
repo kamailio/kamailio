@@ -455,8 +455,8 @@ event_route [tm:branch-failure:contact] {
    6.13. rpl_generated
    6.14. rpl_sent
 
-   Exported statistics are listed in the next sections. All statistics
-   except “inuse_transactions” can be reset.
+   Exported statistics are listed in the next sections. These statistics
+   cannot be reset (see counters module for alternative).
 
 6.1. UAS_transactions
 
