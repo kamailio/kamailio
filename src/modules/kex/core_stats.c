@@ -533,7 +533,7 @@ static void stats_reset_or_clear_statistics(rpc_t* rpc, void* ctx, int clear)
 		return;
 	}
 	if (rpc->scan(ctx, "s", &stat) < 1) {
-		rpc->fault(ctx, 400, "Please provide which stats to retrieve");
+		rpc->fault(ctx, 400, "Please provide stats name");
 		return;
 	}
 	stats_reset_or_clear_all(rpc, ctx, stat, clear);
