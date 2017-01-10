@@ -505,8 +505,8 @@ event_route [tm:branch-failure:contact] {
 	<section>
 		<title>Statistics</title>
 		<para>
-		Exported statistics are listed in the next sections. All statistics
-		except <quote>inuse_transactions</quote> can be reset.
+		Exported statistics are listed in the next sections. These statistics
+		cannot be reset (see counters module for alternative).
 		</para>
 
 		<section>
