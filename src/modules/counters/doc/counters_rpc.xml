@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	[ <!-- Include general documentation entities -->
 		<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
@@ -10,12 +10,15 @@
 <section id="cnts.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
 	</sectioninfo>
-	<title>counters RPC Functions</title>
+	<title>RPC Commands</title>
 
-	<section id="cnt.get">
-		<title> <function>cnt.get group counter_name</function></title>
+	<section id="cnt.r.get">
+		<title> <function>cnt.get</function></title>
 		<para>
 			Get the value of the counter identified by group.counter_name.
+		</para>
+		<para>
+			Prototype: cnt.get group counter_name
 		</para>
 		<example>
 			<title><function>cnt.get grp counter_name</function> usage</title>
@@ -25,10 +28,13 @@
 		</example>
 	</section>
 
-	<section id="cnt.reset">
-		<title> <function>cnt.reset group counter_name</function></title>
+	<section id="cnt.r.reset">
+		<title> <function>cnt.reset</function></title>
 		<para>
 			Resets the counter identified by group.counter_name.
+		</para>
+		<para>
+			Prototype: cnt.reset group counter_name
 		</para>
 		<example>
 			<title><function>cnt.reset grp name</function> usage</title>
@@ -38,51 +44,84 @@
 		</example>
 	</section>
 
-	<section id="cnt.grps_list">
-		<title> <function>cnt.grps_list</function></title>
+	<section id="cnt.r.list_groups">
+		<title> <function>cnt.list_groups</function></title>
 		<para>
 			Lists all the declared counter groups.
 		</para>
+		<para>
+			Prototype: cnt.list_groups
+		</para>
 		<example>
-			<title><function>cnt.grps_list</function> usage</title>
+			<title><function>cnt.list_groups</function> usage</title>
 			<programlisting>
- $ &sercmd; cnt.grps_list
+ $ &sercmd; cnt.list_groups
 			</programlisting>
 		</example>
 	</section>
 
-	<section id="cnt.var_list">
-		<title> <function>cnt.var_list group</function></title>
+	<section id="cnt.r.grps_list">
+		<title> <function>cnt.grps_list</function></title>
+		<para>
+			Alias to cnt.list_groups.
+		</para>
+	</section>
+
+	<section id="cnt.r.list_vars">
+		<title> <function>cnt.list_vars</function></title>
 		<para>
 			Lists all the names of all the counters belonging to the
 			specified group.
 		</para>
+		<para>
+			Prototype: cnt.list_vars group
+		</para>
 		<example>
-			<title><function>cnt.var_list group</function> usage</title>
+			<title><function>cnt.list_vars group</function> usage</title>
 			<programlisting>
- $ &sercmd; cnt.var_list script
+ $ &sercmd; cnt.list_vars tmx
 			</programlisting>
 		</example>
 	</section>
 
-	<section id="cnt.grp_get_all">
-		<title> <function>cnt.grp_get_all</function></title>
+	<section id="cnt.r.var_list">
+		<title> <function>cnt.var_list</function></title>
+		<para>
+			Alias to cnt.list_vars.
+		</para>
+	</section>
+
+	<section id="cnt.r.get_vars">
+		<title> <function>cnt.get_vars</function></title>
 		<para>
 			Lists all the counter names and their values in the
 			specified group.
 		</para>
+		<para>
+			Prototype: cnt.get_vars group
+		</para>
 		<example>
-			<title><function>cnt.var_list group</function> usage</title>
+			<title><function>cnt.get_vars group</function> usage</title>
 			<programlisting>
- $ &sercmd; cnt.grp_get_all script
+ $ &sercmd; cnt.get_vars script
 			</programlisting>
 		</example>
 	</section>
 
-	<section id="cnt.help">
-		<title> <function>cnt.help group counter_name</function></title>
+	<section id="cnt.r.grp_get_all">
+		<title> <function>cnt.grp_get_all</function></title>
+		<para>
+			Alias to cnt.get_vars.
+		</para>
+	</section>
+
+	<section id="cnt.r.help">
+		<title> <function>cnt.help</function></title>
 		<para>
 			Displays the counter description.
+		</para>
+		<para>
+			Prototype: cnt.help group counter_name
 		</para>
 		<example>
 			<title><function>cnt.help grp name</function> usage</title>

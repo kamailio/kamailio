@@ -104,8 +104,11 @@ static rpc_export_t counters_rpc[] = {
 	{"cnt.get", cnt_get_rpc, cnt_get_doc, 0 },
 	{"cnt.reset", cnt_reset_rpc, cnt_reset_doc, 0 },
 	{"cnt.get_raw", cnt_get_raw_rpc, cnt_get_raw_doc, 0 },
+	{"cnt.list_groups", cnt_grps_list_rpc, cnt_grps_list_doc, RET_ARRAY },
 	{"cnt.grps_list", cnt_grps_list_rpc, cnt_grps_list_doc, RET_ARRAY },
+	{"cnt.list_vars", cnt_var_list_rpc, cnt_var_list_doc, RET_ARRAY },
 	{"cnt.var_list", cnt_var_list_rpc, cnt_var_list_doc, RET_ARRAY },
+	{"cnt.get_vars", cnt_grp_get_all_rpc, cnt_grp_get_all_doc, 0 },
 	{"cnt.grp_get_all", cnt_grp_get_all_rpc, cnt_grp_get_all_doc, 0 },
 	{"cnt.help", cnt_help_rpc, cnt_help_doc, 0},
 	{ 0, 0, 0, 0}
