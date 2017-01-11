@@ -102,7 +102,7 @@ void rpc_subnet_dump(rpc_t* rpc, void* c) {
 		return;
 	}
 	if(subnet_table_rpc_print(*subnet_table, rpc, c) < 0) {
-		LM_DBG("failed to pria subnet table dump\n");
+		LM_DBG("failed to print subnet table dump\n");
 	}
 
 	return;
