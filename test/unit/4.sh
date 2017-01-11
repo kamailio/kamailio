@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # test basic fifo functionality
 
 # Copyright (C) 2007 1&1 Internet AG
@@ -29,18 +29,17 @@ if ! (check_kamailio); then
 fi ;
 
 # setup config
-printf "loadmodule \"mi_fifo/mi_fifo.so\"" > $CFG
-printf "loadmodule \"kex/kex.so\"" >> $CFG
-printf "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
+printf "loadmodule \"jsonrpcs.so\"\n" > $CFG
+printf "modparam(\"jsonrpcs\", \"transport\", 2)\n" >> $CFG
+printf "modparam(\"jsonrpcs\", \"fifo_name\", \"$RPCFIFOPATH\")\n" >> $CFG
 printf "\nrequest_route {\n ;\n}" >> $CFG
 
-        
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
 	sleep 1
-	$CTL version > /dev/null
+	$CTL rpc core.version > /dev/null
 	ret=$?
 fi ;
 

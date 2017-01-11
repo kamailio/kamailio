@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # loads a SIP proxy/registrar config with offnet-termination and accounting
 
 # Copyright (C) 2007 1&1 Internet AG

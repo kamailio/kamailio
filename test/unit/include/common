@@ -28,3 +28,10 @@ TEST_DIR="test/unit"
 kill_kamailio() {
 	kill $(cat ${PIDFILE})
 }
+
+export RPCFIFOPATH="${RUN_DIR}/kamailio_rpc.fifo"
+
+have_netcat_quit_timer_patch() {
+	nc -q 2>&1 | grep 'option requires an argument' > /dev/null
+	return $?
+}

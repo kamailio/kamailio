@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # load all presence related modules with mysql
 
 # Copyright (C) 2008 1&1 Internet AG
@@ -21,9 +21,9 @@
 
 # Needs a default kamailio database setup for mysql
 
-source include/common
-source include/require
-source include/database
+. include/common
+. include/require.sh
+. include/database.sh
 
 CFG=34.cfg
 
@@ -31,7 +31,7 @@ if ! (check_kamailio && check_module "db_mysql" && check_module "presence" \
 		&& check_module "presence_xml" && check_module "pua" \
 		&& check_module "xcap_client" && check_module "rls" \
 		&& check_module "presence_mwi" && check_module "pua_bla" \
-		&& check_module "pua_mi" && check_module "pua_usrloc" \
+		&& check_module "pua_usrloc" \
 		&& check_module "pua_xmpp" && check_module "xmpp" \
 		&& check_module "presence_dialoginfo" && check_module "pua_dialoginfo" \
 		&& check_mysql); then
@@ -43,7 +43,7 @@ cp $CFG $CFG.bak
 echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 
 # start
-$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG > /dev/null
+$BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -a no > /dev/null
 ret=$?
 
 sleep 1

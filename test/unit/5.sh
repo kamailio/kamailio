@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # loads the kamailio default config
 
 # Copyright (C) 2007 1&1 Internet AG
