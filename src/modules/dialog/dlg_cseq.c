@@ -401,15 +401,13 @@ int dlg_cseq_msg_sent(void *data)
 	parse_headers(&msg, HDR_EOH_F, 0);
 
 	/* check if transaction is marked for a new increment */
-	if(get_cseq(&msg)->method_id!=METHOD_ACK) {
-		hfk = sr_hdr_get_z(&msg, cenv->uac_cseq_auth.s);
-		if(hfk!=NULL) {
-			LM_DBG("new cseq inc requested\n");
-			nval = hfk->body;
-			trim(&nval);
-		} else {
-			LM_DBG("new cseq inc not requested\n");
-		}
+	hfk = sr_hdr_get_z(&msg, cenv->uac_cseq_auth.s);
+	if(hfk!=NULL) {
+		LM_DBG("new cseq inc requested\n");
+		nval = hfk->body;
+		trim(&nval);
+	} else {
+		LM_DBG("new cseq inc not requested\n");
 	}
 
 	if(nval.len<=0) {
@@ -418,6 +416,8 @@ int dlg_cseq_msg_sent(void *data)
 			LM_DBG("cseq refresh requested\n");
 			nval = hfk->body;
 			trim(&nval);
+		} else {
+			LM_DBG("cseq refresh not requested\n");
 		}
 	}
 	if(nval.len<=0) {
