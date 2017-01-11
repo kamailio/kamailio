@@ -20,8 +20,8 @@
  */
 
 /*!
- * \file 
- * \brief TM :: 
+ * \file
+ * \brief TM ::
  * \ingroup tm
  */
 
@@ -53,9 +53,10 @@
 /*
  * Dialog sequence
  */
-typedef struct dlg_seq {
-	unsigned int value;    /* Sequence value */
-	unsigned char is_set;  /* is_set flag */
+typedef struct dlg_seq
+{
+	unsigned int value;   /* Sequence value */
+	unsigned char is_set; /* is_set flag */
 } dlg_seq_t;
 
 
@@ -64,7 +65,7 @@ typedef struct dlg_seq {
  */
 typedef enum dlg_state {
 	DLG_NEW = 0,   /* New dialog, no reply received yet */
-	DLG_EARLY,     /* Early dialog, provisional response received */
+	DLG_EARLY,	 /* Early dialog, provisional response received */
 	DLG_CONFIRMED, /* Confirmed dialog, 2xx received */
 	DLG_DESTROYED  /* Destroyed dialog */
 } dlg_state_t;
@@ -73,10 +74,11 @@ typedef enum dlg_state {
 /*
  * Structure describing a dialog identifier
  */
-typedef struct dlg_id {
-	str call_id;    /* Call-ID */
-	str rem_tag;    /* Remote tag of the dialog */
-	str loc_tag;    /* Local tag of the dialog */
+typedef struct dlg_id
+{
+	str call_id; /* Call-ID */
+	str rem_tag; /* Remote tag of the dialog */
+	str loc_tag; /* Local tag of the dialog */
 } dlg_id_t;
 
 
@@ -88,37 +90,39 @@ typedef struct dlg_id {
  * so we don't have to calculate each time we want to send a
  * message within dialog
  */
-typedef struct dlg_hooks {
+typedef struct dlg_hooks
+{
 	str ru;
 	str nh;
-	str* request_uri;   /* This should be put into Request-URI */
-	str* next_hop;      /* Where the message should be really sent */
-	rr_t* first_route;  /* First route to be printed into the message */
-	str* last_route;    /* If not zero add this as the last route */
+	str *request_uri;  /* This should be put into Request-URI */
+	str *next_hop;	 /* Where the message should be really sent */
+	rr_t *first_route; /* First route to be printed into the message */
+	str *last_route;   /* If not zero add this as the last route */
 } dlg_hooks_t;
 
 
 /*
  * Structure representing dialog state
  */
-typedef struct dlg {
-	dlg_id_t id;            /* Dialog identifier */
-	dlg_seq_t loc_seq;      /* Local sequence number */
-	dlg_seq_t rem_seq;      /* Remote sequence number */
-	str loc_uri;            /* Local URI */
-	str rem_uri;            /* Remote URI */
-	str rem_target;         /* Remote target URI */
-	str dst_uri;		/* Destination URI */
-	str loc_dname;          /* Local Display Name */
-	str rem_dname;          /* Remote Display Name */
-	unsigned char secure;   /* Secure flag -- currently not used */
-	dlg_state_t state;      /* State of the dialog */
-	rr_t* route_set;        /* Route set */
-	dlg_hooks_t hooks;      /* Various hooks used to store information that
+typedef struct dlg
+{
+	dlg_id_t id;		  /* Dialog identifier */
+	dlg_seq_t loc_seq;	/* Local sequence number */
+	dlg_seq_t rem_seq;	/* Remote sequence number */
+	str loc_uri;		  /* Local URI */
+	str rem_uri;		  /* Remote URI */
+	str rem_target;		  /* Remote target URI */
+	str dst_uri;		  /* Destination URI */
+	str loc_dname;		  /* Local Display Name */
+	str rem_dname;		  /* Remote Display Name */
+	unsigned char secure; /* Secure flag -- currently not used */
+	dlg_state_t state;	/* State of the dialog */
+	rr_t *route_set;	  /* Route set */
+	dlg_hooks_t hooks;	/* Various hooks used to store information that
 				 * can be reused when building a message (to
 				 * prevent repeated analyzing of the dialog data
 				 */
-	struct socket_info* send_sock;
+	struct socket_info *send_sock;
 #ifdef DIALOG_CALLBACKS
 	struct tmcb_head_list dlg_callbacks;
 #endif
@@ -133,80 +137,86 @@ typedef enum {
 /*
  * Create a new dialog
  */
-int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d);
-typedef int (*new_dlg_uac_f)(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d);
+int new_dlg_uac(str *_cid, str *_ltag, unsigned int _lseq, str *_luri,
+		str *_ruri, dlg_t **_d);
+typedef int (*new_dlg_uac_f)(str *_cid, str *_ltag, unsigned int _lseq,
+		str *_luri, str *_ruri, dlg_t **_d);
 
 
 /**
 * Function to add Display Names to an existing dialog
 */
-int dlg_add_extra(dlg_t* _d, str* _ldname, str* _rdname);
-typedef int (*dlg_add_extra_f)(dlg_t* _d, str* _ldname, str* _rdname);
+int dlg_add_extra(dlg_t *_d, str *_ldname, str *_rdname);
+typedef int (*dlg_add_extra_f)(dlg_t *_d, str *_ldname, str *_rdname);
 
 
 /*
  * A response arrived, update dialog
  */
-int dlg_response_uac(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_refresh);
-typedef int (*dlg_response_uac_f)(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_refresh);
+int dlg_response_uac(
+		dlg_t *_d, struct sip_msg *_m, target_refresh_t is_target_refresh);
+typedef int (*dlg_response_uac_f)(
+		dlg_t *_d, struct sip_msg *_m, target_refresh_t is_target_refresh);
 
 /*
  * Establishing a new dialog, UAS side
  */
-int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d);
-typedef int (*new_dlg_uas_f)(struct sip_msg* _req, int _code, dlg_t** _d);
+int new_dlg_uas(struct sip_msg *_req, int _code, /*str* _tag,*/ dlg_t **_d);
+typedef int (*new_dlg_uas_f)(struct sip_msg *_req, int _code, dlg_t **_d);
 
 /*
  * UAS side - update dialog state and to tag
  */
-int update_dlg_uas(dlg_t *_d, int _code, str* _tag);
-typedef int (*update_dlg_uas_f)(dlg_t *_d, int _code, str* _tag);
+int update_dlg_uas(dlg_t *_d, int _code, str *_tag);
+typedef int (*update_dlg_uas_f)(dlg_t *_d, int _code, str *_tag);
 
 /*
  * UAS side - update a dialog from a request
  */
-int dlg_request_uas(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_request);
-typedef int (*dlg_request_uas_f)(dlg_t* _d, struct sip_msg* _m, target_refresh_t is_target_request);
+int dlg_request_uas(
+		dlg_t *_d, struct sip_msg *_m, target_refresh_t is_target_request);
+typedef int (*dlg_request_uas_f)(
+		dlg_t *_d, struct sip_msg *_m, target_refresh_t is_target_request);
 
 
 /*
  * Destroy a dialog state
  */
-void free_dlg(dlg_t* _d);
-typedef void (*free_dlg_f)(dlg_t* _d);
+void free_dlg(dlg_t *_d);
+typedef void (*free_dlg_f)(dlg_t *_d);
 
 
 /*
  * Print a dialog structure, just for debugging
  */
-void print_dlg(FILE* out, dlg_t* _d);
-typedef void (*print_dlg_f)(FILE* out, dlg_t* _d);
+void print_dlg(FILE *out, dlg_t *_d);
+typedef void (*print_dlg_f)(FILE *out, dlg_t *_d);
 
 
 /*
  * Calculate length of the route set
  */
-int calculate_routeset_length(dlg_t* _d);
+int calculate_routeset_length(dlg_t *_d);
 
 
 /*
  *
  * Print the route set
  */
-char* print_routeset(char* buf, dlg_t* _d);
+char *print_routeset(char *buf, dlg_t *_d);
 
 /*
  * wrapper to calculate_hooks
  * added by dcm
  */
-int w_calculate_hooks(dlg_t* _d);
-typedef int (*calculate_hooks_f)(dlg_t* _d);
+int w_calculate_hooks(dlg_t *_d);
+typedef int (*calculate_hooks_f)(dlg_t *_d);
 
 /*
  * set dialog's request uri and destination uri (optional)
  */
-int set_dlg_target(dlg_t* _d, str* _ruri, str* _duri);
-typedef int (*set_dlg_target_f)(dlg_t* _d, str* _ruri, str* _duri);
+int set_dlg_target(dlg_t *_d, str *_ruri, str *_duri);
+typedef int (*set_dlg_target_f)(dlg_t *_d, str *_ruri, str *_duri);
 
 #ifdef DIALOG_CALLBACKS
 
@@ -216,21 +226,21 @@ typedef int (*set_dlg_target_f)(dlg_t* _d, str* _ruri, str* _duri);
  *          msg  - message used for creating the new dialog for the new_dlg_uas
  *                 case, 0 otherwise (new_dlg_uac)
  */
-typedef void (dialog_cb) (int type, dlg_t* dlg, struct sip_msg* msg);
+typedef void(dialog_cb)(int type, dlg_t *dlg, struct sip_msg *msg);
 
 /* callbacks for new dialogs (called each time a new dialog (uas or uac) is
  * created). Can be used for installing in-dialog callbacks
  * returns < 0 on error*/
-int register_new_dlg_cb(int types, dialog_cb f, void* param);
+int register_new_dlg_cb(int types, dialog_cb f, void *param);
 /* callbacks for messages sent dialogs */
-int register_dlg_tmcb(int type, dlg_t* dlg, transaction_cb f, void* param);
-void run_trans_dlg_callbacks(dlg_t* dlg, struct cell* trans,
-								struct retr_buf* rbuf);
+int register_dlg_tmcb(int type, dlg_t *dlg, transaction_cb f, void *param);
+void run_trans_dlg_callbacks(
+		dlg_t *dlg, struct cell *trans, struct retr_buf *rbuf);
 /* cleanup on exit */
 void destroy_new_dlg_cbs(void);
 
-typedef int (*register_new_dlg_cb_f)(int, dialog_cb, void*);
-typedef int (*register_dlg_tmcb_f)(int, dlg_t*, transaction_cb, void*);
+typedef int (*register_new_dlg_cb_f)(int, dialog_cb, void *);
+typedef int (*register_dlg_tmcb_f)(int, dlg_t *, transaction_cb, void *);
 #endif /* DIALOG_CALLBACKS */
 
 

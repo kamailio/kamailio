@@ -13,16 +13,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 /*!
- * \file 
+ * \file
  * \brief TM :: Fast Call-ID generator
- * 
+ *
  * Fast Call-ID generator. The Call-ID has the following form: \<callid_nr>-\<pid\>\@\<ip\>
  * - callid_nr is initialized as a random number and continually increases
  * - \<pid\>\@\<ip\> is kept in callid_suffix
@@ -47,13 +47,12 @@
 /**
  * \brief Length of the Call-ID suffix
  */
-#define CALLID_SUFFIX_LEN ( 1 /* - */                                            + \
-			    5 /* pid */                                          + \
-                           42 /* embedded v4inv6 address can be looong '128.' */ + \
-	                    2 /* parenthesis [] */                               + \
-                            1 /* ZT 0 */                                         + \
-	                   16 /* one never knows ;-) */                            \
-                          )
+#define CALLID_SUFFIX_LEN                                             \
+	(1 /* - */ + 5 /* pid */                                          \
+			+ 42   /* embedded v4inv6 address can be looong '128.' */ \
+			+ 2 /* parenthesis [] */ + 1 /* ZT 0 */                   \
+			+ 16						 /* one never knows ;-) */    \
+			)
 
 
 static unsigned long callid_nr;
@@ -71,36 +70,40 @@ int init_callid(void)
 {
 	int rand_bits, i;
 
-	     /* calculate the initial call-id */
-	     /* how many bits and chars do we need to display the 
+	/* calculate the initial call-id */
+	/* how many bits and chars do we need to display the
 	      * whole ULONG number */
 	callid_prefix.len = sizeof(unsigned long) * 2;
 	callid_prefix.s = callid_buf;
 
-	if (callid_prefix.len > CALLID_NR_LEN) {
-		LOG(L_ERR, "ERROR: Too small callid buffer\n");
+	if(callid_prefix.len > CALLID_NR_LEN) {
+		LM_ERR("too small callid buffer\n");
 		return -1;
 	}
-	
-	for(rand_bits = 1, i = KAM_RAND_MAX; i; i >>= 1, rand_bits++);  /* how long are the rand()s ? */
-	i = callid_prefix.len * 4 / rand_bits; /* how many rands() fit in the ULONG ? */
 
-	     /* now fill in the callid with as many random
-	      * numbers as you can + 1 */
-       	callid_nr = kam_rand(); /* this is the + 1 */
+	for(rand_bits = 1, i = KAM_RAND_MAX; i; i >>= 1, rand_bits++)
+		; /* how long are the rand()s ? */
+	i = callid_prefix.len * 4
+		/ rand_bits; /* how many rands() fit in the ULONG ? */
+
+	/* now fill in the callid with as many random
+	 * numbers as you can + 1 */
+	callid_nr = kam_rand(); /* this is the + 1 */
 
 	while(i--) {
 		callid_nr <<= rand_bits;
 		callid_nr |= kam_rand();
 	}
 
-	i = snprintf(callid_prefix.s, callid_prefix.len + 1, "%0*lx", callid_prefix.len, callid_nr);
-	if ((i == -1) || (i > callid_prefix.len)) {
-		LOG(L_CRIT, "BUG: SORRY, callid calculation failed\n");
+	i = snprintf(callid_prefix.s, callid_prefix.len + 1, "%0*lx",
+			callid_prefix.len, callid_nr);
+	if((i == -1) || (i > callid_prefix.len)) {
+		LM_CRIT("callid calculation failed\n");
 		return -2;
 	}
-	
-	DBG("Call-ID initialization: '%.*s'\n", callid_prefix.len, callid_prefix.s);
+
+	LM_DBG("Call-ID initialization: '%.*s'\n", callid_prefix.len,
+			callid_prefix.s);
 	return 0;
 }
 
@@ -110,29 +113,28 @@ int init_callid(void)
  * \param rank not used
  * \return 0 on success, -1 on error
  */
-int child_init_callid(int rank) 
+int child_init_callid(int rank)
 {
 	struct socket_info *si;
-	
+
 	/* on tcp/tls bind_address is 0 so try to get the first address we listen
 	 * on no matter the protocol */
-	si=bind_address?bind_address:get_first_socket();
-	if (si==0){
-		LOG(L_CRIT, "BUG: child_init_callid: null socket list\n");
+	si = bind_address ? bind_address : get_first_socket();
+	if(si == 0) {
+		LM_CRIT("null socket list\n");
 		return -1;
 	}
 	callid_suffix.s = callid_buf + callid_prefix.len;
 
 	callid_suffix.len = snprintf(callid_suffix.s, CALLID_SUFFIX_LEN,
-				     "%c%d@%.*s", '-', my_pid(), 
-				     si->address_str.len,
-				     si->address_str.s);
-	if ((callid_suffix.len == -1) || (callid_suffix.len > CALLID_SUFFIX_LEN)) {
-		LOG(L_ERR, "ERROR: child_init_callid: buffer too small\n");
+			"%c%d@%.*s", '-', my_pid(), si->address_str.len, si->address_str.s);
+	if((callid_suffix.len == -1) || (callid_suffix.len > CALLID_SUFFIX_LEN)) {
+		LM_ERR("buffer too small\n");
 		return -1;
 	}
 
-	DBG("DEBUG: callid: '%.*s'\n", callid_prefix.len + callid_suffix.len, callid_prefix.s);
+	LM_DBG("callid: '%.*s'\n", callid_prefix.len + callid_suffix.len,
+			callid_prefix.s);
 	return 0;
 }
 
@@ -142,14 +144,14 @@ int child_init_callid(int rank)
  * \param _c input character
  * \return carry flag
  */
-static inline int inc_hexchar(char* _c)
+static inline int inc_hexchar(char *_c)
 {
-	if (*_c == '9') {
+	if(*_c == '9') {
 		*_c = 'a';
 		return 0;
 	}
 
-	if (*_c == 'f') {
+	if(*_c == 'f') {
 		*_c = '0';
 		return 1;
 	}
@@ -163,12 +165,13 @@ static inline int inc_hexchar(char* _c)
  * \brief Get a unique Call-ID
  * \param callid returned Call-ID
  */
-void tm_generate_callid(str* callid)
+void tm_generate_callid(str *callid)
 {
 	int i;
 
 	for(i = callid_prefix.len; i; i--) {
-		if (!inc_hexchar(callid_prefix.s + i - 1)) break;
+		if(!inc_hexchar(callid_prefix.s + i - 1))
+			break;
 	}
 	callid->s = callid_prefix.s;
 	callid->len = callid_prefix.len + callid_suffix.len;
@@ -178,10 +181,10 @@ void tm_generate_callid(str* callid)
  * \brief Wrapper to get a unique Call-ID based on tm or core callback
  * \param callid returned Call-ID
  */
-void generate_callid(str* callid)
+void generate_callid(str *callid)
 {
 	sr_generate_callid_f cf;
-	if((cf=sr_get_callid_func())!=NULL) {
+	if((cf = sr_get_callid_func()) != NULL) {
 		cf(callid);
 	} else {
 		tm_generate_callid(callid);

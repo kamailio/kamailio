@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,10 +31,10 @@
 
 /* this is where table size is defined now -- sort of
    ugly, core should not be bothered by TM table size,
-   but on the other, core's stateless forwarding should 
+   but on the other, core's stateless forwarding should
    have consistent branch generation with stateful mode
    and needs to calculate branch/hash, for which table size
-   is needed 
+   is needed
 */
 #include "../../core/hash_func.h"
 
@@ -59,15 +59,15 @@
 /* DELETE timer ... tells how long should the transaction persist in memory
    after it was removed from the hash table and before it will be deleted */
 #define DEL_TIME_OUT      200 /* ms, obsoleted */
- 
+
 /* retransmission timers */
 #define RETR_T1           500 /* ms */
 #define RETR_T2          4000 /* ms */
 
 /* maximum total lifetime for an INVITE or non-INVITE transaction
  * Note: after this time the transaction will not be deleted
- *  immediately, but forced to go in the wait state or in wait for ack state 
- *  and then wait state, so it will still be alive for either WT_TIME_OUT in 
+ *  immediately, but forced to go in the wait state or in wait for ack state
+ *  and then wait state, so it will still be alive for either WT_TIME_OUT in
  *  the non-inv or "silent" inv. case and for FR_TIME_OUT + WT_TIME_OUT for an
  *  invite transaction (for which  we must wait for the neg. reply ack)*/
 #define MAX_INV_LIFETIME    180000 /* ms, rfc min. C-timer value */

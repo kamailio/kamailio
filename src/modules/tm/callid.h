@@ -13,17 +13,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History:
- * ----------
- * 2003-04-09 Created by janakj
  */
 
 /*!
- * \file 
+ * \file
  * \brief TM :: Fast Call-ID generator
  * \ingroup tm
  */
@@ -53,14 +50,14 @@ int child_init_callid(int rank);
 /**
  * \brief TM API export
  */
-typedef void (*generate_callid_f)(str*);
+typedef void (*generate_callid_f)(str *);
 
 
 /**
  * \brief Get a unique Call-ID
  * \param callid returned Call-ID
  */
-void generate_callid(str* callid);
+void generate_callid(str *callid);
 
 
 #endif /* CALLID_H */
