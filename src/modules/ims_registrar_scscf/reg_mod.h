@@ -85,6 +85,7 @@
 
 
 extern int nat_flag;
+extern int error_reply_code;
 extern int tcp_persistent_flag;
 extern int received_avp;
 

@@ -407,6 +407,30 @@
 	</programlisting>
       </example>
     </section>
+
+    <section>
+      <title>error_reply_code (int)</title>
+
+      <para>In certain error conditions, the S-CSCF may not be able to process
+	the request (e.g. in case of database failures). Per default and
+	according to the Specs, the S-CSCF would return a 500 error in this
+	case. However, according to the SIP-Specs for DNS-SRV, this won't
+	trigger a failover, which may be desired.</para>
+
+      <para>This parameter let's you override the default 500 with another
+	return-code (e.g. 503) in order to get the desired behaviour.</para>
+
+      <para><emphasis> Default value is 500. </emphasis></para>
+
+      <example>
+        <title>Set <varname>error_reply_code</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "error_reply_code", 503)
+...</programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>

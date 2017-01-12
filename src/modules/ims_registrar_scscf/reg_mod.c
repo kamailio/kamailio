@@ -101,6 +101,8 @@ int ue_unsubscribe_on_dereg = 0;  /*many UEs do not unsubscribe on de reg - ther
 
 int user_data_always = 0; /* Always Reports that user data is missing to HSS */
 
+int error_reply_code = 500; /**< Error-Reply-Code */
+
 /* parameters storage */
 str cxdx_dest_realm = str_init("ims.smilecoms.com");
 
@@ -270,6 +272,7 @@ static param_export_t params[] = {
     {"ue_unsubscribe_on_dereg", INT_PARAM, &ue_unsubscribe_on_dereg},
     {"subscription_expires_range", INT_PARAM, &subscription_expires_range},
     {"user_data_always", INT_PARAM, &user_data_always},
+    {"error_reply_code", INT_PARAM, &error_reply_code},
     {"notification_list_size_threshold", INT_PARAM, &notification_list_size_threshold},
 	{"max_notification_list_size", INT_PARAM, &max_notification_list_size},
 	{"notification_processes", INT_PARAM, &notification_processes},

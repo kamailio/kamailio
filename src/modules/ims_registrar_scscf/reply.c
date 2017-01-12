@@ -674,6 +674,7 @@ int reg_send_reply_transactional(struct sip_msg* _m, contact_for_header_t* conta
     }
 
     code = codes[rerrno];
+    if ((code == 500) && (error_reply_code > 0)) code = error_reply_code;
     switch (code) {
         case 200: msg.s = MSG_200;
             msg.len = sizeof (MSG_200) - 1;
@@ -767,6 +768,8 @@ int reg_send_reply(struct sip_msg* _m, contact_for_header_t* contact_header) {
     }
 
     code = codes[rerrno];
+    if ((code == 500) && (error_reply_code > 0)) code = error_reply_code;
+
     switch (code) {
         case 200: msg.s = MSG_200;
             msg.len = sizeof (MSG_200) - 1;
