@@ -13,15 +13,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 /*!
- * \file 
- * \brief TM :: 
+ * \file
+ * \brief TM ::
  * \ingroup tm
  */
 
@@ -50,36 +50,38 @@
 
 static enum kill_reason kr;
 
-/* pointer to the big table where all the transaction data
-   lives */
-struct s_table*  _tm_table;
+/* pointer to the big table where all the transaction data lives */
+struct s_table *_tm_table;
 
-struct s_table* tm_get_table(void) {
+struct s_table *tm_get_table(void)
+{
 	return _tm_table;
 }
 
-void reset_kr(void) {
-	kr=0;
-}
-
-void set_kr( enum kill_reason _kr )
+void reset_kr(void)
 {
-	kr|=_kr;
+	kr = 0;
+}
+
+void set_kr(enum kill_reason _kr)
+{
+	kr |= _kr;
 }
 
 
-enum kill_reason get_kr() {
+enum kill_reason get_kr()
+{
 	return kr;
 }
 
 
-void lock_hash(int i) 
+void lock_hash(int i)
 {
 
 	int mypid;
 
 	mypid = my_pid();
-	if (likely(atomic_get(&_tm_table->entries[i].locker_pid) != mypid)) {
+	if(likely(atomic_get(&_tm_table->entries[i].locker_pid) != mypid)) {
 		lock(&_tm_table->entries[i].mutex);
 		atomic_set(&_tm_table->entries[i].locker_pid, mypid);
 	} else {
@@ -89,35 +91,34 @@ void lock_hash(int i)
 }
 
 
-void unlock_hash(int i) 
+void unlock_hash(int i)
 {
-	if (likely(_tm_table->entries[i].rec_lock_level == 0)) {
+	if(likely(_tm_table->entries[i].rec_lock_level == 0)) {
 		atomic_set(&_tm_table->entries[i].locker_pid, 0);
 		unlock(&_tm_table->entries[i].mutex);
-	} else  {
+	} else {
 		/* recursive locked => decrease rec. lock count */
 		_tm_table->entries[i].rec_lock_level--;
 	}
 }
 
 
-
 #ifdef TM_HASH_STATS
-unsigned int transaction_count( void )
+unsigned int transaction_count(void)
 {
 	unsigned int i;
 	unsigned int count;
 
-	count=0;	
-	for (i=0; i<TABLE_ENTRIES; i++) 
-		count+=_tm_table->entries[i].cur_entries;
+	count = 0;
+	for(i = 0; i < TABLE_ENTRIES; i++)
+		count += _tm_table->entries[i].cur_entries;
 	return count;
 }
 #endif
 
 
-
-void free_cell_helper(tm_cell_t* dead_cell, int silent, const char *fname, unsigned int fline )
+void free_cell_helper(
+		tm_cell_t *dead_cell, int silent, const char *fname, unsigned int fline)
 {
 	char *b;
 	int i;
@@ -127,40 +128,41 @@ void free_cell_helper(tm_cell_t* dead_cell, int silent, const char *fname, unsig
 
 	LM_DBG("freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
 
-	if(dead_cell->prev_c!=NULL && dead_cell->next_c!=NULL) {
-		if(likely(silent==0)) {
+	if(dead_cell->prev_c != NULL && dead_cell->next_c != NULL) {
+		if(likely(silent == 0)) {
 			LM_WARN("removed cell %p is still linked in hash table (%s:%u)\n",
-				dead_cell, fname, fline);
+					dead_cell, fname, fline);
 			if(t_on_wait(dead_cell)) {
 				INIT_REF(dead_cell, 1);
 				LM_WARN("cell %p is still linked in wait timer (%s:%u)"
-						" - skip freeing now\n", dead_cell, fname, fline);
+						" - skip freeing now\n",
+						dead_cell, fname, fline);
 				return;
 			}
 		}
 		unlink_timers(dead_cell);
 		remove_from_hash_table_unsafe(dead_cell);
 	}
-	release_cell_lock( dead_cell );
-	if (unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
+	release_cell_lock(dead_cell);
+	if(unlikely(has_tran_tmcbs(dead_cell, TMCB_DESTROY)))
 		run_trans_callbacks(TMCB_DESTROY, dead_cell, 0, 0, 0);
 
 	shm_lock();
 	/* UA Server */
-	if ( dead_cell->uas.request )
-		sip_msg_free_unsafe( dead_cell->uas.request );
-	if ( dead_cell->uas.response.buffer )
-		shm_free_unsafe( dead_cell->uas.response.buffer );
+	if(dead_cell->uas.request)
+		sip_msg_free_unsafe(dead_cell->uas.request);
+	if(dead_cell->uas.response.buffer)
+		shm_free_unsafe(dead_cell->uas.response.buffer);
 #ifdef CANCEL_REASON_SUPPORT
-	if (unlikely(dead_cell->uas.cancel_reas))
+	if(unlikely(dead_cell->uas.cancel_reas))
 		shm_free_unsafe(dead_cell->uas.cancel_reas);
 #endif /* CANCEL_REASON_SUPPORT */
 
 	/* callbacks */
-	for( cbs=(struct tm_callback*)dead_cell->tmcb_hl.first ; cbs ; ) {
+	for(cbs = (struct tm_callback *)dead_cell->tmcb_hl.first; cbs;) {
 		cbs_tmp = cbs;
 		cbs = cbs->next;
-		if (cbs_tmp->release) {
+		if(cbs_tmp->release) {
 			/* It is safer to release the shm memory lock
 			 * otherwise the release function must to be aware of
 			 * the lock state (Miklos)
@@ -169,113 +171,114 @@ void free_cell_helper(tm_cell_t* dead_cell, int silent, const char *fname, unsig
 			cbs_tmp->release(cbs_tmp->param);
 			shm_lock();
 		}
-		shm_free_unsafe( cbs_tmp );
+		shm_free_unsafe(cbs_tmp);
 	}
 
 	/* UA Clients */
-	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
-	{
+	for(i = 0; i < dead_cell->nr_of_outgoings; i++) {
 		/* retransmission buffer */
-		if ( (b=dead_cell->uac[i].request.buffer) )
-			shm_free_unsafe( b );
-		b=dead_cell->uac[i].local_cancel.buffer;
-		if (b!=0 && b!=BUSY_BUFFER)
-			shm_free_unsafe( b );
-		rpl=dead_cell->uac[i].reply;
-		if (rpl && rpl!=FAKED_REPLY && rpl->msg_flags&FL_SHM_CLONE) {
-			sip_msg_free_unsafe( rpl );
+		if((b = dead_cell->uac[i].request.buffer))
+			shm_free_unsafe(b);
+		b = dead_cell->uac[i].local_cancel.buffer;
+		if(b != 0 && b != BUSY_BUFFER)
+			shm_free_unsafe(b);
+		rpl = dead_cell->uac[i].reply;
+		if(rpl && rpl != FAKED_REPLY && rpl->msg_flags & FL_SHM_CLONE) {
+			sip_msg_free_unsafe(rpl);
 		}
 #ifdef USE_DNS_FAILOVER
-		if (dead_cell->uac[i].dns_h.a){
-			DBG("branch %d -> dns_h.srv (%.*s) ref=%d,"
-							" dns_h.a (%.*s) ref=%d\n", i,
-					dead_cell->uac[i].dns_h.srv?
-								dead_cell->uac[i].dns_h.srv->name_len:0,
-					dead_cell->uac[i].dns_h.srv?
-								dead_cell->uac[i].dns_h.srv->name:"",
-					dead_cell->uac[i].dns_h.srv?
-								dead_cell->uac[i].dns_h.srv->refcnt.val:0,
+		if(dead_cell->uac[i].dns_h.a) {
+			LM_DBG("branch %d -> dns_h.srv (%.*s) ref=%d,"
+				" dns_h.a (%.*s) ref=%d\n",
+					i, dead_cell->uac[i].dns_h.srv
+							? dead_cell->uac[i].dns_h.srv->name_len
+							: 0,
+					dead_cell->uac[i].dns_h.srv
+							? dead_cell->uac[i].dns_h.srv->name
+							: "",
+					dead_cell->uac[i].dns_h.srv
+							? dead_cell->uac[i].dns_h.srv->refcnt.val
+							: 0,
 					dead_cell->uac[i].dns_h.a->name_len,
 					dead_cell->uac[i].dns_h.a->name,
 					dead_cell->uac[i].dns_h.a->refcnt.val);
 		}
 		dns_srv_handle_put_shm_unsafe(&dead_cell->uac[i].dns_h);
 #endif
-		if (unlikely(dead_cell->uac[i].path.s)) {
+		if(unlikely(dead_cell->uac[i].path.s)) {
 			shm_free_unsafe(dead_cell->uac[i].path.s);
 		}
-		if (unlikely(dead_cell->uac[i].instance.s)) {
+		if(unlikely(dead_cell->uac[i].instance.s)) {
 			shm_free_unsafe(dead_cell->uac[i].instance.s);
 		}
-		if (unlikely(dead_cell->uac[i].ruid.s)) {
+		if(unlikely(dead_cell->uac[i].ruid.s)) {
 			shm_free_unsafe(dead_cell->uac[i].ruid.s);
 		}
-		if (unlikely(dead_cell->uac[i].location_ua.s)) {
+		if(unlikely(dead_cell->uac[i].location_ua.s)) {
 			shm_free_unsafe(dead_cell->uac[i].location_ua.s);
 		}
 	}
 
 #ifdef WITH_AS_SUPPORT
-	if (dead_cell->uac[0].local_ack)
+	if(dead_cell->uac[0].local_ack)
 		free_local_ack_unsafe(dead_cell->uac[0].local_ack);
 #endif
 
 	/* collected to tags */
-	tt=dead_cell->fwded_totags;
+	tt = dead_cell->fwded_totags;
 	while(tt) {
-		foo=tt->next;
+		foo = tt->next;
 		shm_free_unsafe(tt->tag.s);
 		shm_free_unsafe(tt);
-		tt=foo;
+		tt = foo;
 	}
 
 	/* free the avp list */
-	if (dead_cell->user_avps_from)
-		destroy_avp_list_unsafe( &dead_cell->user_avps_from );
-	if (dead_cell->user_avps_to)
-		destroy_avp_list_unsafe( &dead_cell->user_avps_to );
-	if (dead_cell->uri_avps_from)
-		destroy_avp_list_unsafe( &dead_cell->uri_avps_from );
-	if (dead_cell->uri_avps_to)
-		destroy_avp_list_unsafe( &dead_cell->uri_avps_to );
+	if(dead_cell->user_avps_from)
+		destroy_avp_list_unsafe(&dead_cell->user_avps_from);
+	if(dead_cell->user_avps_to)
+		destroy_avp_list_unsafe(&dead_cell->user_avps_to);
+	if(dead_cell->uri_avps_from)
+		destroy_avp_list_unsafe(&dead_cell->uri_avps_from);
+	if(dead_cell->uri_avps_to)
+		destroy_avp_list_unsafe(&dead_cell->uri_avps_to);
 #ifdef WITH_XAVP
-	if (dead_cell->xavps_list)
-		xavp_destroy_list_unsafe( &dead_cell->xavps_list );
+	if(dead_cell->xavps_list)
+		xavp_destroy_list_unsafe(&dead_cell->xavps_list);
 #endif
 
 	/* the cell's body */
-	shm_free_unsafe( dead_cell );
+	shm_free_unsafe(dead_cell);
 
 	shm_unlock();
 	t_stats_freed();
 }
 
 
-
-static inline void init_synonym_id( struct sip_msg *p_msg, char *hash )
+static inline void init_synonym_id(struct sip_msg *p_msg, char *hash)
 {
 	int size;
 	char *c;
 	unsigned int myrand;
 
-	if (p_msg) {
+	if(p_msg) {
 		/* char value of a proxied transaction is
-		   calculated out of header-fields forming
-		   transaction key
+		 * calculated out of header-fields forming
+		 * transaction key
 		*/
-		char_msg_val( p_msg, hash );
+		char_msg_val(p_msg, hash);
 	} else {
 		/* char value for a UAC transaction is created
-		   randomly -- UAC is an originating stateful element
-		   which cannot be refreshed, so the value can be
-		   anything
+		 * randomly -- UAC is an originating stateful element
+		 * which cannot be refreshed, so the value can be
+		 * anything
 		*/
 		/* HACK : not long enough */
-		myrand=kam_rand();
+		myrand = kam_rand();
 		c = hash;
-		size=MD5_LEN;
-		memset(c, '0', size );
-		int2reverse_hex( &c, &size, myrand );
+		size = MD5_LEN;
+		memset(c, '0', size);
+		int2reverse_hex(&c, &size, myrand);
 	}
 }
 
@@ -284,13 +287,12 @@ static void inline init_branches(struct cell *t)
 	unsigned int i;
 	struct ua_client *uac;
 
-	for(i=0;i<sr_dst_max_branches;i++)
-	{
-		uac=&t->uac[i];
+	for(i = 0; i < sr_dst_max_branches; i++) {
+		uac = &t->uac[i];
 		uac->request.my_T = t;
 		uac->request.branch = i;
 		init_rb_timers(&uac->request);
-		uac->local_cancel=uac->request;
+		uac->local_cancel = uac->request;
 #ifdef USE_DNS_FAILOVER
 		dns_srv_handle_init(&uac->dns_h);
 #endif
@@ -298,98 +300,97 @@ static void inline init_branches(struct cell *t)
 }
 
 
-struct cell*  build_cell( struct sip_msg* p_msg )
+struct cell *build_cell(struct sip_msg *p_msg)
 {
-	struct cell* new_cell;
-	int          sip_msg_len;
-	avp_list_t* old;
+	struct cell *new_cell;
+	int sip_msg_len;
+	avp_list_t *old;
 	struct tm_callback *cbs, *cbs_tmp;
 #ifdef WITH_XAVP
-	sr_xavp_t** xold;
+	sr_xavp_t **xold;
 #endif
 	unsigned int cell_size;
 
 	/* allocs a new cell, add space for:
 	 * md5 (MD5_LEN - sizeof(struct cell.md5))
 	 * uac (sr_dst_max_banches * sizeof(struct ua_client) ) */
-	cell_size = sizeof( struct cell ) + MD5_LEN - sizeof(((struct cell*)0)->md5)
+	cell_size = sizeof(struct cell) + MD5_LEN - sizeof(((struct cell *)0)->md5)
 				+ (sr_dst_max_branches * sizeof(struct ua_client));
 
-	new_cell = (struct cell*)shm_malloc( cell_size );
-	if  ( !new_cell ) {
-		ser_error=E_OUT_OF_MEM;
+	new_cell = (struct cell *)shm_malloc(cell_size);
+	if(!new_cell) {
+		ser_error = E_OUT_OF_MEM;
 		return NULL;
 	}
 
 	/* filling with 0 */
-	memset( new_cell, 0, cell_size );
+	memset(new_cell, 0, cell_size);
 
 	/* UAS */
-	new_cell->uas.response.my_T=new_cell;
+	new_cell->uas.response.my_T = new_cell;
 	init_rb_timers(&new_cell->uas.response);
 	/* UAC */
-	new_cell->uac = (struct ua_client*)((char*)new_cell + sizeof(struct cell)
-							+ MD5_LEN - sizeof(((struct cell*)0)->md5));
+	new_cell->uac =
+			(struct ua_client *)((char *)new_cell + sizeof(struct cell)
+								+ MD5_LEN - sizeof(((struct cell *)0)->md5));
 	/* timers */
 	init_cell_timers(new_cell);
 
-	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, 
-			&new_cell->uri_avps_from );
+	old = set_avp_list(
+			AVP_TRACK_FROM | AVP_CLASS_URI, &new_cell->uri_avps_from);
 	new_cell->uri_avps_from = *old;
 	*old = 0;
 
-	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, 
-			&new_cell->uri_avps_to );
+	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &new_cell->uri_avps_to);
 	new_cell->uri_avps_to = *old;
 	*old = 0;
 
-	old = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, 
-			&new_cell->user_avps_from );
+	old = set_avp_list(
+			AVP_TRACK_FROM | AVP_CLASS_USER, &new_cell->user_avps_from);
 	new_cell->user_avps_from = *old;
 	*old = 0;
 
-	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, 
-			&new_cell->user_avps_to );
+	old = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &new_cell->user_avps_to);
 	new_cell->user_avps_to = *old;
 	*old = 0;
 
 #ifdef WITH_XAVP
-	xold = xavp_set_list(&new_cell->xavps_list );
+	xold = xavp_set_list(&new_cell->xavps_list);
 	new_cell->xavps_list = *xold;
 	*xold = 0;
 #endif
 
-	     /* We can just store pointer to domain avps in the transaction context,
-	      * because they are read-only
-	      */
-	new_cell->domain_avps_from = get_avp_list(AVP_TRACK_FROM | 
-								AVP_CLASS_DOMAIN);
+	/* We can just store pointer to domain avps in the transaction context,
+	 * because they are read-only */
+	new_cell->domain_avps_from =
+			get_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN);
 	new_cell->domain_avps_to = get_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN);
 
 	/* enter callback, which may potentially want to parse some stuff,
 	 * before the request is shmem-ized */
-	if (p_msg) {
+	if(p_msg) {
 		set_early_tmcb_list(p_msg, new_cell);
 		if(has_reqin_tmcbs())
-			run_reqin_callbacks( new_cell, p_msg, p_msg->REQ_METHOD);
+			run_reqin_callbacks(new_cell, p_msg, p_msg->REQ_METHOD);
 	}
 
-	if (p_msg) {
-		new_cell->uas.request = sip_msg_cloner(p_msg,&sip_msg_len);
-		if (!new_cell->uas.request)
+	if(p_msg) {
+		new_cell->uas.request = sip_msg_cloner(p_msg, &sip_msg_len);
+		if(!new_cell->uas.request)
 			goto error;
-		new_cell->uas.end_request=((char*)new_cell->uas.request)+sip_msg_len;
+		new_cell->uas.end_request =
+				((char *)new_cell->uas.request) + sip_msg_len;
 	}
 
 	/* UAC */
 	init_branches(new_cell);
 
-	new_cell->relayed_reply_branch   = -1;
+	new_cell->relayed_reply_branch = -1;
 	/* new_cell->T_canceled = T_UNDEFINED; */
 
 	init_synonym_id(p_msg, new_cell->md5);
-	init_cell_lock(  new_cell );
-	init_async_lock( new_cell );
+	init_cell_lock(new_cell);
+	init_async_lock(new_cell);
 	t_stats_created();
 	return new_cell;
 
@@ -399,19 +400,19 @@ error:
 	 * additional memory for their parameters,
 	 * hence TMCB_DESTROY needs to be called. (Miklos)
 	 */
-	if (unlikely(has_tran_tmcbs(new_cell, TMCB_DESTROY)))
+	if(unlikely(has_tran_tmcbs(new_cell, TMCB_DESTROY)))
 		run_trans_callbacks(TMCB_DESTROY, new_cell, 0, 0, 0);
 
 	/* free the callback list */
-	for( cbs=(struct tm_callback*)new_cell->tmcb_hl.first ; cbs ; ) {
+	for(cbs = (struct tm_callback *)new_cell->tmcb_hl.first; cbs;) {
 		cbs_tmp = cbs;
 		cbs = cbs->next;
-		if (cbs_tmp->release) {
+		if(cbs_tmp->release) {
 			cbs_tmp->release(cbs_tmp->param);
 		}
-		shm_free( cbs_tmp );
+		shm_free(cbs_tmp);
 	}
-	
+
 	destroy_avp_list(&new_cell->user_avps_from);
 	destroy_avp_list(&new_cell->user_avps_to);
 	destroy_avp_list(&new_cell->uri_avps_from);
@@ -429,24 +430,21 @@ error:
 }
 
 
-
 /* Release all the data contained by the hash table. All the aux. structures
  *  as sems, lists, etc, are also released */
-void free_hash_table(  )
+void free_hash_table()
 {
-	struct cell* p_cell;
-	struct cell* tmp_cell;
-	int    i;
+	struct cell *p_cell;
+	struct cell *tmp_cell;
+	int i;
 
-	if (_tm_table)
-	{
+	if(_tm_table) {
 		/* remove the data contained by each entry */
-		for( i = 0 ; i<TABLE_ENTRIES; i++)
-		{
-			release_entry_lock( (_tm_table->entries)+i );
+		for(i = 0; i < TABLE_ENTRIES; i++) {
+			release_entry_lock((_tm_table->entries) + i);
 			/* delete all synonyms at hash-collision-slot i */
-			clist_foreach_safe(&_tm_table->entries[i], p_cell, tmp_cell,
-									next_c){
+			clist_foreach_safe(&_tm_table->entries[i], p_cell, tmp_cell, next_c)
+			{
 				free_cell_silent(p_cell);
 			}
 		}
@@ -456,40 +454,37 @@ void free_hash_table(  )
 }
 
 
-
-
 /*
  */
-struct s_table* init_hash_table()
+struct s_table *init_hash_table()
 {
-	int              i;
+	int i;
 
 	/*allocs the table*/
-	_tm_table= (struct s_table*)shm_malloc( sizeof( struct s_table ) );
-	if ( !_tm_table) {
+	_tm_table = (struct s_table *)shm_malloc(sizeof(struct s_table));
+	if(!_tm_table) {
 		LOG(L_ERR, "ERROR: init_hash_table: no shmem for TM table\n");
 		goto error0;
 	}
 
-	memset( _tm_table, 0, sizeof (struct s_table ) );
+	memset(_tm_table, 0, sizeof(struct s_table));
 
 	/* try first allocating all the structures needed for syncing */
-	if (lock_initialize()==-1)
+	if(lock_initialize() == -1)
 		goto error1;
 
 	/* inits the entriess */
-	for(  i=0 ; i<TABLE_ENTRIES; i++ )
-	{
-		init_entry_lock( _tm_table, (_tm_table->entries)+i );
+	for(i = 0; i < TABLE_ENTRIES; i++) {
+		init_entry_lock(_tm_table, (_tm_table->entries) + i);
 		_tm_table->entries[i].next_label = kam_rand();
 		/* init cell list */
 		clist_init(&_tm_table->entries[i], next_c, prev_c);
 	}
 
-	return  _tm_table;
+	return _tm_table;
 
 error1:
-	free_hash_table( );
+	free_hash_table();
 error0:
 	return 0;
 }
@@ -505,36 +500,41 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 	static tm_xlinks_t _txdata;
 	tm_xlinks_t *x;
 
-	if(xd==NULL)
+	if(xd == NULL)
 		x = &_txdata;
 	else
 		x = xd;
 
-	if(mode==0) {
-		if(t==NULL)
+	if(mode == 0) {
+		if(t == NULL)
 			return;
-		x->uri_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from );
-		x->uri_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to );
-		x->user_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from );
-		x->user_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to );
-		x->domain_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from );
-		x->domain_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to );
+		x->uri_avps_from =
+				set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+		x->uri_avps_to =
+				set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+		x->user_avps_from = set_avp_list(
+				AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+		x->user_avps_to =
+				set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+		x->domain_avps_from = set_avp_list(
+				AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+		x->domain_avps_to = set_avp_list(
+				AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 #ifdef WITH_XAVP
 		x->xavps_list = xavp_set_list(&t->xavps_list);
 #endif
-	} else if(mode==1) {
+	} else if(mode == 1) {
 		/* restore original avp list */
-		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_URI, x->uri_avps_from );
-		set_avp_list( AVP_TRACK_TO | AVP_CLASS_URI, x->uri_avps_to );
-		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_USER, x->user_avps_from );
-		set_avp_list( AVP_TRACK_TO | AVP_CLASS_USER, x->user_avps_to );
-		set_avp_list( AVP_TRACK_FROM | AVP_CLASS_DOMAIN, x->domain_avps_from );
-		set_avp_list( AVP_TRACK_TO | AVP_CLASS_DOMAIN, x->domain_avps_to );
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, x->uri_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, x->uri_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, x->user_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, x->user_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, x->domain_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, x->domain_avps_to);
 #ifdef WITH_XAVP
 		xavp_set_list(x->xavps_list);
 #endif
 	}
-
 }
 
 /**
@@ -542,12 +542,13 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
  */
 void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 {
-	if(newxd==NULL && bakxd!=NULL) {
+	if(newxd == NULL && bakxd != NULL) {
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, bakxd->uri_avps_from);
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, bakxd->uri_avps_to);
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, bakxd->user_avps_from);
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, bakxd->user_avps_to);
-		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, bakxd->domain_avps_from);
+		set_avp_list(
+				AVP_TRACK_FROM | AVP_CLASS_DOMAIN, bakxd->domain_avps_from);
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, bakxd->domain_avps_to);
 #ifdef WITH_XAVP
 		xavp_set_list(bakxd->xavps_list);
@@ -555,19 +556,19 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 		return;
 	}
 
-	if(newxd!=NULL && bakxd!=NULL) {
-		bakxd->uri_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI,
-				&newxd->uri_avps_from);
-		bakxd->uri_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI,
-				&newxd->uri_avps_to);
-		bakxd->user_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER,
-				&newxd->user_avps_from);
-		bakxd->user_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER,
-				&newxd->user_avps_to);
-		bakxd->domain_avps_from = set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN,
-				&newxd->domain_avps_from);
-		bakxd->domain_avps_to = set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN,
-				&newxd->domain_avps_to);
+	if(newxd != NULL && bakxd != NULL) {
+		bakxd->uri_avps_from = set_avp_list(
+				AVP_TRACK_FROM | AVP_CLASS_URI, &newxd->uri_avps_from);
+		bakxd->uri_avps_to =
+				set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &newxd->uri_avps_to);
+		bakxd->user_avps_from = set_avp_list(
+				AVP_TRACK_FROM | AVP_CLASS_USER, &newxd->user_avps_from);
+		bakxd->user_avps_to = set_avp_list(
+				AVP_TRACK_TO | AVP_CLASS_USER, &newxd->user_avps_to);
+		bakxd->domain_avps_from = set_avp_list(
+				AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &newxd->domain_avps_from);
+		bakxd->domain_avps_to = set_avp_list(
+				AVP_TRACK_TO | AVP_CLASS_DOMAIN, &newxd->domain_avps_to);
 #ifdef WITH_XAVP
 		bakxd->xavps_list = xavp_set_list(&newxd->xavps_list);
 #endif

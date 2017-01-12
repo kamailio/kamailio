@@ -13,12 +13,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * 2007-05-28	lightweight parser implemented for build_local_reparse()
- *              function. Basically copy-pasted from the core parser (Miklos)
  */
 
 #ifndef _LW_PARSER_H
@@ -30,8 +28,7 @@
  * from the INVITE buffer
  * this parser supports only the header fields which are needed by build_local_reparse()
  */
-char *lw_get_hf_name(char *begin, char *end,
-			enum _hdr_types_t *type);
+char *lw_get_hf_name(char *begin, char *end, enum _hdr_types_t *type);
 
 /* returns a pointer to the next line */
 char *lw_next_line(char *buf, char *buf_end);

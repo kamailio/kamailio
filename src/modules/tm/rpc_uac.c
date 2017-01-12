@@ -276,7 +276,7 @@ static void  rpc_print_routes(rpc_t* rpc, void* c,
 
 	buf=pkg_malloc(size+1);
 	if (buf==0){
-		ERR("out of memory\n");
+		LM_ERR("out of memory\n");
 		rpc->add(c, "s", "");
 		return;
 	}
