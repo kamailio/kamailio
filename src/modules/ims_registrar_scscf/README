@@ -43,6 +43,7 @@ Richard Good
               3.16. append_branches (integer)
               3.17. method_filtering (integer)
               3.18. user_data_always (integer)
+              3.19. error_reply_code (int)
 
         4. Functions
 
@@ -94,18 +95,19 @@ Richard Good
    1.16. Set cxdx_forced_peerparameter
    1.17. Set cxdx_forced_peerparameter
    1.18. Set user_data_alwaysparameter
-   1.19. save usage
-   1.20. lookup usage
+   1.19. Set error_reply_code parameter
+   1.20. save usage
    1.21. lookup usage
-   1.22. unregister usage
-   1.23. impu_registered usage
-   1.24. term_impu_registered usage
-   1.25. reg_fetch_contacts usage
-   1.26. reg_free_contacts usage
-   1.27. can_subscribe_to_reg usage
-   1.28. subscribe_to_reg usage
-   1.29. can_publish_reg usage
-   1.30. publish_reg usage
+   1.22. lookup usage
+   1.23. unregister usage
+   1.24. impu_registered usage
+   1.25. term_impu_registered usage
+   1.26. reg_fetch_contacts usage
+   1.27. reg_free_contacts usage
+   1.28. can_subscribe_to_reg usage
+   1.29. subscribe_to_reg usage
+   1.30. can_publish_reg usage
+   1.31. publish_reg usage
 
 Chapter 1. Admin Guide
 
@@ -137,6 +139,7 @@ Chapter 1. Admin Guide
         3.16. append_branches (integer)
         3.17. method_filtering (integer)
         3.18. user_data_always (integer)
+        3.19. error_reply_code (int)
 
    4. Functions
 
@@ -210,6 +213,7 @@ Chapter 1. Admin Guide
    3.16. append_branches (integer)
    3.17. method_filtering (integer)
    3.18. user_data_always (integer)
+   3.19. error_reply_code (int)
 
 3.1. default_expires (int)
 
@@ -463,6 +467,24 @@ om")
         modparam("ims_registrar_scscf", "user_data_always", 1)
 ...
 
+3.19. error_reply_code (int)
+
+   In certain error conditions, the S-CSCF may not be able to process the
+   request (e.g. in case of database failures). Per default and according
+   to the Specs, the S-CSCF would return a 500 error in this case.
+   However, according to the SIP-Specs for DNS-SRV, this won't trigger a
+   failover, which may be desired.
+
+   This parameter let's you override the default 500 with another
+   return-code (e.g. 503) in order to get the desired behaviour.
+
+   Default value is 500.
+
+   Example 1.19. Set error_reply_code parameter
+...
+        modparam("ims_registrar_scscf", "error_reply_code", 503)
+...
+
 4. Functions
 
    4.1. save(async_reply_route, domain)
@@ -498,7 +520,7 @@ om")
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE
 
-   Example 1.19. save usage
+   Example 1.20. save usage
 ...
 if (!impu_registered("location")) {
    save("PRE_REG_SAR_REPLY","location");
@@ -529,7 +551,7 @@ if (!impu_registered("location")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.20. lookup usage
+   Example 1.21. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -558,7 +580,7 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.21. lookup usage
+   Example 1.22. lookup usage
 ...
 lookup_path_to_contact($ruri);
 ...
@@ -573,7 +595,7 @@ lookup_path_to_contact($ruri);
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.22. unregister usage
+   Example 1.23. unregister usage
 ...
 unregister("location");
 ...
@@ -598,7 +620,7 @@ unregister("location");
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.23. impu_registered usage
+   Example 1.24. impu_registered usage
 ...
 impu_registered("location");
 switch ($retcode) {
@@ -624,7 +646,7 @@ switch ($retcode) {
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.24. term_impu_registered usage
+   Example 1.25. term_impu_registered usage
 ...
 term_impu_registered("location");
 switch ($retcode) {
@@ -652,7 +674,7 @@ switch ($retcode) {
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.25. reg_fetch_contacts usage
+   Example 1.26. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
@@ -671,7 +693,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.26. reg_free_contacts usage
+   Example 1.27. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
@@ -689,7 +711,7 @@ reg_free_contacts("callee");
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.27. can_subscribe_to_reg usage
+   Example 1.28. can_subscribe_to_reg usage
 ...
 if (can_subscribe_to_reg("location")){
      $var(ret)= subscribe_to_reg("location");
@@ -706,7 +728,7 @@ if (can_subscribe_to_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.28. subscribe_to_reg usage
+   Example 1.29. subscribe_to_reg usage
 ...
 if (can_subscribe_to_reg("location")){
      $var(ret)= subscribe_to_reg("location");
@@ -726,7 +748,7 @@ if (can_subscribe_to_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.29. can_publish_reg usage
+   Example 1.30. can_publish_reg usage
 ...
 if (can_publish_reg("location")){
     $var(ret)= publish_reg("location");
@@ -743,7 +765,7 @@ if (can_publish_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.30. publish_reg usage
+   Example 1.31. publish_reg usage
 ...
 if (can_publish_reg("location")){
     $var(ret)= publish_reg("location");
