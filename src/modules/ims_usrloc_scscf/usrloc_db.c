@@ -290,20 +290,22 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 
 	tmp = _c->params;
 	while (tmp) {
-		if (tmp->next == 0) {
-			format_name_and_body = param_name_and_body_last.s;
-			format_name_no_body = param_name_no_body_last.s;
-		} else {
-			format_name_and_body = param_name_and_body.s;
-			format_name_no_body = param_name_no_body.s;
+		if (tmp->name.len > 0) {			    
+			if (tmp->next == 0) {
+				format_name_and_body = param_name_and_body_last.s;
+				format_name_no_body = param_name_no_body_last.s;
+			} else {
+				format_name_and_body = param_name_and_body.s;
+				format_name_no_body = param_name_no_body.s;
+			}
+			if (tmp->body.len > 0) {
+				sprintf(param_pad.s, format_name_and_body, tmp->name.len, tmp->name.s, tmp->body.len, tmp->body.s);
+			} else {
+				sprintf(param_pad.s, format_name_no_body, tmp->name.len, tmp->name.s);
+			}
+			param_pad.len = strlen(param_pad.s);
+			STR_APPEND(param_buf, param_pad);
 		}
-		if (tmp->body.len > 0) {
-			sprintf(param_pad.s, format_name_and_body, tmp->name.len, tmp->name.s, tmp->body.len, tmp->body.s);
-		} else {
-			sprintf(param_pad.s, format_name_no_body, tmp->name.len, tmp->name.s);
-		}
-		param_pad.len = strlen(param_pad.s);
-		STR_APPEND(param_buf, param_pad);
 		tmp = tmp->next;
 	}
 	LM_DBG("Converted params to string to insert into db: [%.*s]\n", param_buf.len, param_buf.s);
@@ -322,8 +324,12 @@ int db_insert_ucontact(impurecord_t* _r, ucontact_t* _c) {
 	val[0].val.str_val = _c->c;
 
 	val[1].type = DB1_STR;
-	val[1].nul = 0;
-	val[1].val.str_val = param_buf;
+	if (param_buf.len > 0) {
+		val[1].nul = 0;
+		val[1].val.str_val = param_buf;
+	} else {
+		val[1].nul = 1;
+	}
 
 	val[2].type = DB1_STR;
 	val[2].nul = 0;
@@ -1073,8 +1079,7 @@ int db_link_contact_to_impu(impurecord_t* _r, ucontact_t* _c) {
 
     }
 
-    snprintf(query_buffer.s, query_buffer_len, impu_contact_insert_query, _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
-    query_buffer.len = strlen(query_buffer.s);//len;
+    query_buffer_len = snprintf(query_buffer.s, query_buffer_len, impu_contact_insert_query, _r->public_identity.len, _r->public_identity.s, _c->c.len, _c->c.s);
 
     LM_DBG("QUERY IS [%.*s] and len is %d\n", query_buffer.len, query_buffer.s, query_buffer.len);
     if (ul_dbf.raw_query(ul_dbh, &query_buffer, &rs) != 0) {
