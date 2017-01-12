@@ -567,6 +567,8 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 	}
         
         LM_DBG("contact not found in memory\n");
+       	// Default: Not found.
+	*_c = NULL;
         
 	return 1; /* Nothing found */
 }
