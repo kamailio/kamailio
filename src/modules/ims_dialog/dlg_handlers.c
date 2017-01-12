@@ -1601,6 +1601,10 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
             // get_dlg has incremented the ref count by 1
             dlg_release(dlg);
         }
+    } else {
+        // get_dlg has incremented the ref count by 1
+        if (dlg)
+            dlg_release(dlg);
     }
     spiral_detected = 0;
 
