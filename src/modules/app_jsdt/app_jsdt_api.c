@@ -1309,11 +1309,10 @@ static void app_jsdt_rpc_reload(rpc_t* rpc, void* ctx)
 		return;
 	}
 
+	v = *_sr_jsdt_reload_version;
 	LM_INFO("marking for reload js script file: %.*s (%d => %d)\n",
 				_sr_jsdt_load_file.len, _sr_jsdt_load_file.s,
 				_sr_jsdt_local_version, v);
-
-	v = *_sr_jsdt_reload_version;
 	*_sr_jsdt_reload_version += 1;
 
 	if (rpc->add(ctx, "{", &vh) < 0) {
