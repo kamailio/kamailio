@@ -1919,7 +1919,10 @@ int ph_init_cmds(ph_framework_t **framework_data, const char* filename)
 		if(ph_getMods(_framework_data, framework_node)!=0)
 			goto xml_error;
 
-		if(doc)xmlFree(doc);doc=NULL;
+		if(doc) {
+			xmlFree(doc);
+			doc=NULL;
+		}
 		*framework_data = _framework_data;
 	}else{ /* This is a reload */
 		_ph_db_tables = _framework_data->ph_db_tables;
@@ -1939,7 +1942,10 @@ int ph_init_cmds(ph_framework_t **framework_data, const char* filename)
 		if(ph_getMods(_framework_data, framework_node)!=0)
 			goto xml_reload_error;
 
-		if(doc)xmlFree(doc);doc=NULL;
+		if(doc){
+			xmlFree(doc);
+			doc=NULL;
+		}
 		*framework_data = _framework_data;
 
 	}
@@ -1947,7 +1953,10 @@ int ph_init_cmds(ph_framework_t **framework_data, const char* filename)
 xml_error:
 	/* FIXME: free thw whole structure */
 	if(_framework_data){shm_free(_framework_data);}
-	if(doc)xmlFree(doc);doc=NULL;
+	if(doc){
+		xmlFree(doc);
+		doc=NULL;
+	}
 	return -1;
 xml_reload_error:
 	ph_freeDbTables(&_framework_data->ph_db_tables,
@@ -1958,7 +1967,10 @@ xml_reload_error:
 	_framework_data->ph_db_tables_size = _ph_db_tables_size;
 	_framework_data->ph_modules = _ph_modules;
 	_framework_data->ph_modules_size = _ph_modules_size;
-	if(doc)xmlFree(doc);doc=NULL;
+	if(doc) {
+		xmlFree(doc);
+		doc=NULL;
+	}
 	return -1;
 }
 
