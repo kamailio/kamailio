@@ -1007,7 +1007,9 @@ error:
 	update_stat(rejected_registrations, 1);
 	if (is_route_type(REQUEST_ROUTE) && !is_cflag_set(REG_SAVE_NORPL_FL) )
 		reg_send_reply(_m);
-
+    if (R_TOO_MANY == rerrno)
+	    return -2; 
+	/* for all other */
 	return 0;
 }
 

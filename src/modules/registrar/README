@@ -856,7 +856,8 @@ modparam("registrar", "contact_max_size", 500)
        be a dynamic string with pseudo-variables.
 
    Return codes:
-     * -1 - error.
+     * -2 - error, too many contacts for AOR.
+       -1 - error.
        1 - contacts inserted.
        2 - contacts updated.
        3 - contacts deleted.
