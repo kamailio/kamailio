@@ -1,9 +1,7 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of kamcmd, a free cli tool for Kamailio SIP server.
  *
  * ser is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +18,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-/* History:
- * --------
- *  2006-02-20  created by andrei
  */
 
 
@@ -54,14 +48,14 @@ static int _debug = 0;
 		if(_debug==1) \
 			fprintf(stderr,  __VA_ARGS__); \
 	} while(0)
-#define LOG(lev, ...) fprintf(stderr,  __VA_ARGS__)
+#define ERR(...) fprintf(stderr,  __VA_ARGS__)
 #else
 #define DBG(fmt, args...) \
 	do { \
 		if(_debug==1) \
 			fprintf(stderr, fmt, ## args); \
 	} while(0)
-#define LOG(lev, fmt, args...) fprintf(stderr, fmt, ## args)
+#define ERR(fmt, args...) fprintf(stderr, fmt, ## args)
 #endif
 
 
@@ -100,11 +94,11 @@ static inline unsigned short str2s(const char* s, unsigned int len,
 	return ret;
 
 error_digits:
-	DBG("str2s: ERROR: too many letters in [%.*s]\n", (int)len, init);
+	DBG("ERROR: too many letters in [%.*s]\n", (int)len, init);
 	if (err) *err=1;
 	return 0;
 error_char:
-	DBG("str2s: ERROR: unexpected char %c in %.*s\n", *str, (int)len, init);
+	DBG("ERROR: unexpected char %c in %.*s\n", *str, (int)len, init);
 	if (err) *err=1;
 	return 0;
 }
@@ -119,7 +113,7 @@ error_char:
  *     tcp|udp|unix:host_name
  *     host_name:port
  *     host_name
- * 
+ *
  *
  *     where host_name=string, ipv4 address, [ipv6 address],
  *         unix socket path (starts with '/')
@@ -135,22 +129,22 @@ struct id_list* parse_listen_id(char* l, int len, enum socket_protos def)
 	struct servent* se;
 	char* s;
 	struct id_list* id;
-	
+
 	s=pkg_malloc((len+1)*sizeof(char));
 	if (s==0){
-		LOG(L_ERR, "ERROR:parse_listen_id: out of memory\n");
+		ERR("ERROR:parse_listen_id: out of memory\n");
 		goto error;
 	}
 	memcpy(s, l, len);
 	s[len]=0; /* null terminate */
-	
+
 	/* duplicate */
 	proto=UNKNOWN_SOCK;
 	port=0;
 	name=0;
 	port_str=0;
 	p=s;
-	
+
 	if ((*p)=='[') goto ipv6;
 	/* find proto or name */
 	for (; *p; p++){
@@ -207,11 +201,11 @@ ipv6:
 			goto error;
 		}
 	}
-	
+
 find_port:
 	p++;
 	port_str=(*p)?p:0;
-	
+
 end:
 	/* fix all the stuff */
 	if (name==0) goto error;
@@ -247,13 +241,13 @@ end:
 		port=str2s(port_str, strlen(port_str), &err);
 		if (err){
 			/* try getservbyname */
-			se=getservbyname(port_str, 
+			se=getservbyname(port_str,
 					(proto==TCP_SOCK)?"tcp":(proto==UDP_SOCK)?"udp":0);
 			if (se) port=ntohs(se->s_port);
 			else goto error;
 		}
 	}else{
-		/* no port, check if the hostname is a port 
+		/* no port, check if the hostname is a port
 		 * (e.g. tcp:3012 == tcp:*:3012 */
 		if (proto==TCP_SOCK|| proto==UDP_SOCK){
 			port=str2s(name, strlen(name), &err);
@@ -266,7 +260,7 @@ end:
 	}
 	id=pkg_malloc(sizeof(struct id_list));
 	if (id==0){
-		LOG(L_ERR, "ERROR:parse_listen_id: out of memory\n");
+		ERR("ERROR:parse_listen_id: out of memory\n");
 		goto error;
 	}
 	id->name=name;

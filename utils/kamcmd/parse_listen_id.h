@@ -1,9 +1,7 @@
 /*
- * $Id$
- *
  * Copyright (C) 2006 iptelorg GmbH
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of kamcmd, a free cli tool for Kamailio SIP server.
  *
  * ser is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +18,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-/* History:
- * --------
- *  2006-02-20  created by andrei
  */
 
 
@@ -35,7 +29,7 @@
 
 enum payload_proto	{ P_BINRPC , P_FIFO };
 
-enum socket_protos	{	UNKNOWN_SOCK=0, UDP_SOCK, TCP_SOCK, 
+enum socket_protos	{	UNKNOWN_SOCK=0, UDP_SOCK, TCP_SOCK,
 						UNIXS_SOCK, UNIXD_SOCK
 #ifdef USE_FIFO
 							, FIFO_SOCK
