@@ -157,7 +157,8 @@ void add_auth_session_timers(cdp_auth_session_t *x, AAAMessage *msg) {
 	AAA_AVP *avp;
 	char data[4];
 	uint32_t v;
-	uint32_t lifetime, timeout, grace;
+	uint32_t lifetime = 0;
+	uint32_t timeout, grace;
 
 	avp = AAAFindMatchingAVP(msg, 0, AVP_Authorization_Lifetime, 0, 0);
 	if (!avp) {

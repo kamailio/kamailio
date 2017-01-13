@@ -77,7 +77,7 @@ void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) 
 		mscc_avp = mscc_avp->next;
 	}
 
-	if (mscc_avp_list.head);
+	if (mscc_avp_list.head)
 		AAAFreeAVPList(&mscc_avp_list);
 	
 	if (y.head)
