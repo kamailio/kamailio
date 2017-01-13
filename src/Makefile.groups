@@ -279,6 +279,11 @@ module_group_kstandard=$(mod_list_basic) $(mod_list_extra) \
 					  $(mod_list_db) $(mod_list_dbuid) \
 					  $(mod_list_pcre) $(mod_list_jsdt)
 
+# Standard modules without any dependencies (such as pcre)
+module_group_kmini=$(mod_list_basic) $(mod_list_extra) \
+					  $(mod_list_db) $(mod_list_dbuid) \
+					  $(mod_list_jsdt)
+
 # pkg mysql module
 module_group_kmysql=$(mod_list_mysql)
 
