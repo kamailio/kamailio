@@ -443,7 +443,7 @@ static int erl_rpc(struct sip_msg *msg, char *_m, char *_f, char *_a, char *_r)
 	pv_spec_t sp;
 	pv_spec_t *nsp;
 	pv_param_t  pvp;
-	pv_name_t *pvn;
+	pv_name_t *pvn=NULL;
 	pv_index_t *pvi;
 	int idx;
 	int idxf;
