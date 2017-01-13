@@ -386,7 +386,7 @@ rpc_export_t autheph_rpc_cmds[] = {
 		autheph_rpc_dump_secrets_doc, RET_ARRAY},
 	{"autheph.add_secret", autheph_rpc_add_secret,
 		autheph_rpc_add_secret_doc, 0},
-	{"autheph.add_secret", autheph_rpc_rm_secret,
+	{"autheph.rm_secret", autheph_rpc_rm_secret,
 		autheph_rpc_rm_secret_doc, 0},
 	{0, 0, 0, 0}
 };
