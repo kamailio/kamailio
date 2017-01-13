@@ -94,7 +94,7 @@ struct module_exports exports = {
 static int mod_init(void) {
 	strl* ptr;
 
-	DBG("sanity initializing\n");
+	LM_DBG("sanity initializing\n");
 
 	/* bind the SL API */
 	if (sl_load_api(&slb)!=0) {
@@ -102,13 +102,14 @@ static int mod_init(void) {
 		return -1;
 	}
 
-	DBG("parsing proxy requires string:\n");
+	LM_DBG("parsing proxy requires string:\n");
 	ptr = parse_str_list(&pr_str);
 
 	proxyrequire_list = ptr;
 
 	while (ptr != NULL) {
-		DBG("string: '%.*s', next: %p\n", ptr->string.len, ptr->string.s, ptr->next);
+		LM_DBG("string: '%.*s', next: %p\n", ptr->string.len,
+				ptr->string.s, ptr->next);
 		ptr = ptr->next;
 	}
 
@@ -123,11 +124,12 @@ static int sanity_fixup(void** param, int param_no) {
 		in.s = (char*)*param;
 		in.len = strlen(in.s);
 		if (str2int(&in, (unsigned int*)&checks) < 0) {
-			LOG(L_ERR, "sanity: failed to convert input integer\n");
+			LM_ERR("failed to convert input integer\n");
 			return E_UNSPEC;
 		}
 		if ((checks < 1) || (checks >= (SANITY_MAX_CHECKS))) {
-			LOG(L_ERR, "sanity: input parameter (%i) outside of valid range <1-%i)\n", checks, SANITY_MAX_CHECKS);
+			LM_ERR("input parameter (%i) outside of valid range <1-%i)\n",
+					checks, SANITY_MAX_CHECKS);
 			return E_UNSPEC;
 		}
 		*param = (void*)(long)checks;
@@ -136,11 +138,12 @@ static int sanity_fixup(void** param, int param_no) {
 		in.s = (char*)*param;
 		in.len = strlen(in.s);
 		if (str2int(&in, (unsigned int*)&checks) < 0) {
-			LOG(L_ERR, "sanity: failed to convert second integer argument\n");
+			LM_ERR("failed to convert second integer argument\n");
 			return E_UNSPEC;
 		}
 		if ((checks < 1) || (checks >= (SANITY_URI_MAX_CHECKS))) {
-			LOG(L_ERR, "sanity: second input parameter (%i) outside of valid range <1-%i\n", checks, SANITY_URI_MAX_CHECKS);
+			LM_ERR("second input parameter (%i) outside of valid range <1-%i\n",
+					checks, SANITY_URI_MAX_CHECKS);
 			return E_UNSPEC;
 		}
 		*param = (void*)(long)checks;
@@ -250,7 +253,7 @@ static int w_sanity_check(struct sip_msg* _msg, char* _number, char* _arg) {
 	}
 	ret = sanity_check(_msg, check, arg);
 
-	DBG("sanity checks result: %d\n", ret);
+	LM_DBG("sanity checks result: %d\n", ret);
 	if(_sanity_drop!=0)
 		return ret;
 	return (ret==SANITY_CHECK_FAILED)?-1:ret;
@@ -282,7 +285,7 @@ static int ki_sanity_check_defaults(sip_msg_t *msg)
 static int bind_sanity(sanity_api_t* api)
 {
 	if (!api) {
-		ERR("Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 	api->check          = sanity_check;
