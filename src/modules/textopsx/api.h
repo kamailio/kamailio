@@ -26,19 +26,22 @@
 /*
  * Struct with the textopsx api.
  */
-typedef struct textopsx_binds {
+typedef struct textopsx_binds
+{
 	cmd_function msg_apply_changes;
 } textopsx_api_t;
 
-typedef int (*bind_textopsx_f)(textopsx_api_t*);
+typedef int (*bind_textopsx_f)(textopsx_api_t *);
 
 /*
  * Function to be called direclty from other modules to load
  * the textops API.
  */
-inline static int load_textopsx_api(textopsx_api_t *tob){
+inline static int load_textopsx_api(textopsx_api_t *tob)
+{
 	bind_textopsx_f bind_textopsx_exports;
-	if(!(bind_textopsx_exports=(bind_textopsx_f)find_export("bind_textopsx", 1, 0))){
+	if(!(bind_textopsx_exports =
+					   (bind_textopsx_f)find_export("bind_textopsx", 1, 0))) {
 		LM_ERR("Failed to import bind_textopsx\n");
 		return -1;
 	}
