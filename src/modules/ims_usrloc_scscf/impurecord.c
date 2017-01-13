@@ -327,7 +327,7 @@ static str autocommit_off = str_init("SET AUTOCOMMIT=0");
 static str fail_isolation_level = str_init("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
 static str start_transaction = str_init("START TRANSACTION");
 static str commit = str_init("COMMIT");
-static str rollback = str_init("ROLLBACK");
+/* static str rollback = str_init("ROLLBACK"); */
 static str autocommit_on = str_init("SET AUTOCOMMIT=1");
 
 static inline void start_dbtransaction() {

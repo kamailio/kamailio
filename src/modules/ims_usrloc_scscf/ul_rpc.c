@@ -46,7 +46,7 @@ static void ul_rpc_snapshot(rpc_t* rpc, void *ctx) {
     }
 	
 	
-	LM_DBG("Dumping S-CSCF usrloc snapshot to file: [%.s]\n", filename.len, filename.s);
+	LM_DBG("Dumping S-CSCF usrloc snapshot to file: [%.*s]\n", filename.len, filename.s);
 
 	current_time = time(NULL);
 	t = localtime(&current_time);

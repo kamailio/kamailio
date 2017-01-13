@@ -82,7 +82,8 @@ extern int db_mode;
  */
 ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _ci) {
     ucontact_t *c;
-    param_t *prev, *curr, *param;
+    param_t *prev = NULL;
+    param_t *curr, *param;
     int first = 1;
 
     c = (ucontact_t*) shm_malloc(sizeof (ucontact_t));
@@ -252,7 +253,6 @@ void free_ucontact(ucontact_t* _c) {
  */
 void print_ucontact(FILE* _f, ucontact_t* _c) {
     time_t t = time(0);
-    char* st = "";
     param_t * tmp;
     
     fprintf(_f, "\t~~~Contact(%p) (refcount: %d)~~~\n", _c, _c->ref_count);
