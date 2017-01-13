@@ -1030,6 +1030,9 @@ modparam("registrar", "contact_max_size", 500)
 		<itemizedlist>
 		<listitem>
 			<para>
+			<emphasis>-2</emphasis> - error, too many contacts for AOR.
+			</para>
+			<para>
 			<emphasis>-1</emphasis> - error.
 			</para>
 			<para>
