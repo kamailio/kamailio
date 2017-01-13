@@ -531,7 +531,7 @@ xlog("translated to var $var(y) \n");
 			Example:
 			</para>
         <programlisting  format="linespecific">
-		&sercmd; dialplan.dump 100
+		&kamcmd; dialplan.dump 100
 		</programlisting>
 		</section>
 		<section id="dialplan.r.dp.reload">
@@ -547,11 +547,11 @@ xlog("translated to var $var(y) \n");
 			Example:
 			</para>
         <programlisting  format="linespecific">
-		&sercmd; dialplan.reload
+		&kamcmd; dialplan.reload
 		</programlisting>
 		</section>
 
-    		<section>
+		<section id="dialplan.r.dp.translate">
 			<title><varname>dialplan.translate</varname></title>
 			<para>
                 	Will apply a translation rule identified by a dialplan
@@ -572,9 +572,8 @@ xlog("translated to var $var(y) \n");
 			<para>
 			Example:
 			</para>
-        <programlisting  format="linespecific">
-        # &sercmd; dp_translate dpid "input"
-        &sercmd; dp_translate 1 "abcdxyz"
+		<programlisting  format="linespecific">
+		&kamcmd; dialplan.translate 1 "abcdxyz"
 		</programlisting>
 		</section>
 	</section>

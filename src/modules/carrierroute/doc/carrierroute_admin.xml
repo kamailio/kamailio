@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding='ISO-8859-1'?>
+<?xml version="1.0" encoding='UTF-8'?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
-
+<!ENTITY % local.common.attrib
+	"xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
 %docentities;
 
@@ -37,7 +38,7 @@
 		database driven routing creates.
 	</para>
 	<para>
-		Routing tables can be reloaded and edited (in config file mode) with the MI
+		Routing tables can be reloaded and edited (in config file mode) with the RPC
 		interface, the config file is updated according the changes. This is not
 		implemented for the db interface, because its easier to do the changes
 		directly on the db. But the reload and dump functions works of course here
@@ -648,6 +649,8 @@ cr_tree_rewrite_uri(tree, domain)
 	</section>
     </section>
 
+<xi:include href="rpc.xml"/>
+
     <section>
 	    <title><acronym>MI</acronym> Commands</title>
 		<para>All commands understand the "-?" parameter to print a short help message.
@@ -656,22 +659,9 @@ cr_tree_rewrite_uri(tree, domain)
 		like "-d prox*").</para>
 	<section>
 	    <title><function moreinfo="none">cr_reload_routes</function></title>
-	    <para>
-		This command reloads the routing data from the data source.
-		</para>
-		<para>
-		Important: When new domains have been added, a restart of the server must be
-		done, because the mapping of the ids used in the config script cannot be
-		updated at runtime at the moment. So a reload could result in a wrong routing
-		behaviour, because the ids used in the script could differ from the one used
-		internally from the server. Modifying of already existing domains is no problem.
-	    </para>
 	</section>
 	<section>
 	    <title><function moreinfo="none">cr_dump_routes</function></title>
-	    <para>
-		This command prints the route rules on the command line.
-	    </para>
 	</section>
 	<section>
 	    <title><function moreinfo="none">cr_replace_host</function></title>

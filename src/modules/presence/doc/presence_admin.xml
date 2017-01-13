@@ -1183,7 +1183,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 		</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; refreshWatchers sip:test@kamailio.org presence 1
+&kamcmd; presence.refreshWatchers sip:test@kamailio.org presence 1
 ...
 		</programlisting>
 	</section>

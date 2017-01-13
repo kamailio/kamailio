@@ -2130,7 +2130,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 		<para>RPC Command Format:</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; dlg_list
+&kamcmd; dlg.list
 ...
 		</programlisting>
 		</section>

@@ -375,7 +375,7 @@ str* rules_doc);
 	This function is an external command that can be used to announce a change
 	in authorization rules for a presentity. It updates the stored status and
 	sends a Notify to the watchers whose status has changes. (used by
-	presence_xml module when notified through an MI command of a change in
+	presence_xml module when notified through an RPC command of a change in
 	an xcap document).
 	</para>
 </section>
