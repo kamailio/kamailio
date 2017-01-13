@@ -52,7 +52,6 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
     AAA_AVP* avp;
     str public_id;
     impurecord_t* r;
-    int i = 0;
     int res = 0;
     udomain_t* udomain;
 	impu_contact_t *impucontact;

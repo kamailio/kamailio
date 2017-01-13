@@ -107,7 +107,7 @@ static inline int randomize_expires(int expires, int range) {
  *    the default value
  */
 static inline int calc_contact_expires(contact_t *c, int expires_hdr, int sos_reg) {
-	int r;
+	int r = 0;
 	if(c && c->expires)
 		str2int(&(c->expires->body), (unsigned int*) &r);
 	else if (expires_hdr >= 0)
@@ -671,7 +671,6 @@ error:
  * @return 
  */
 int get_number_of_valid_contacts(impurecord_t* impu) {
-    int i;
     int ret = 0;
 	impu_contact_t *impucontact;
     get_act_time();

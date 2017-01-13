@@ -32,7 +32,6 @@ extern usrloc_api_t ul;
 
 static void reg_rpc_dereg_impu(rpc_t* rpc, void* ctx)
 {
-		int i;
 		str impu;
 		int res;
 		udomain_t* domain;

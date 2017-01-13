@@ -92,7 +92,6 @@ static struct {
 static inline unsigned int calc_buf_len(impurecord_t* impurec) {
     unsigned int len;
     int qlen;
-    int i=0;
     ucontact_t* c;
     param_t *tmp;
 	impu_contact_t *impucontact;
@@ -431,7 +430,6 @@ int build_contact(impurecord_t* impurec, contact_for_header_t** contact_header) 
     ucontact_t* c;
     param_t* tmp;
     *contact_header = 0;
-    int i=0;
 	impu_contact_t *impucontact;
 
     contact_for_header_t* tmp_contact_header = shm_malloc(sizeof (contact_for_header_t));

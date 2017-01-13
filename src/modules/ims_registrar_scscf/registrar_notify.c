@@ -1788,7 +1788,6 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
 
 str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type) {
     str x = {0, 0};
-    int i;
     str buf, pad;
     char bufc[MAX_REGINFO_SIZE], padc[MAX_REGINFO_SIZE];
     int expires = -1;

@@ -652,7 +652,7 @@ int cxdx_get_auth_data_item_answer(AAAMessage *msg, AAA_AVP **auth_data,
 
 	avp = cdpb.AAAFindMatchingAVPList(list,0,AVP_IMS_SIP_Item_Number,
 		IMS_vendor_id_3GPP,0);
-	if (!avp||!avp->data.len==4) *item_number=0;
+	if (!avp||avp->data.len!=4) *item_number=0;
 	else *item_number = get_4bytes(avp->data.s);
 	
 	avp = cdpb.AAAFindMatchingAVPList(list,0,AVP_IMS_SIP_Authentication_Scheme,

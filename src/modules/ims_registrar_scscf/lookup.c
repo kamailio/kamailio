@@ -300,7 +300,7 @@ int term_impu_has_contact(struct sip_msg* _m, udomain_t* _d, char* _s) {
     ucontact_t* ptr = 0;
     int res;
     int ret;
-    int i = 0;
+
 	impu_contact_t *impucontact;
 
     if (_m->new_uri.s) uri = _m->new_uri;
