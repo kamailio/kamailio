@@ -24,7 +24,7 @@
 #ifndef SANITY_CHK_H
 #define SANITY_CHK_H
 
-#include "mod_sanity.h"
+#include "sanity_mod.h"
 
 #define SIP_VERSION_TWO_POINT_ZERO "2.0"
 #define SIP_VERSION_TWO_POINT_ZERO_LENGTH 3

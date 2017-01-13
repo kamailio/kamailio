@@ -21,7 +21,7 @@
  *
  */
 
-#include "mod_sanity.h"
+#include "sanity_mod.h"
 #include "sanity.h"
 #include "../../core/ut.h"
 #include "../../core/trim.h"

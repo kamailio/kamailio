@@ -21,7 +21,7 @@
  *
  */
 
-#include "mod_sanity.h"
+#include "sanity_mod.h"
 #include "sanity.h"
 #include "api.h"
 #include "../../core/sr_module.h"
