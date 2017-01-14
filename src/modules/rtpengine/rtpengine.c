@@ -3007,7 +3007,7 @@ static int ki_rtpengine_manage0(sip_msg_t *msg) {
 /**
  *
  */
-static int ki_rtpengine_manage1(sip_msg_t *msg, str *flags) {
+static int ki_rtpengine_manage(sip_msg_t *msg, str *flags) {
     return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, ((flags && flags->len > 0) ? flags->s : NULL), 1);
 }
 
@@ -3020,8 +3020,8 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
-    { str_init("rtpengine"), str_init("rtpengine_manage1"),
-        SR_KEMIP_INT, ki_rtpengine_manage1,
+    { str_init("rtpengine"), str_init("rtpengine_manage"),
+        SR_KEMIP_INT, ki_rtpengine_manage,
         { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
