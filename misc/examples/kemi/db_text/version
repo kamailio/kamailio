@@ -1,0 +1,7 @@
+table_name(str) table_version(int)
+subscriber:3
+location:6
+aliases:6
+trusted:6
+address:6
+auth_db:6

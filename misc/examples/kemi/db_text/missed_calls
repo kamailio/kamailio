@@ -1,0 +1,1 @@
+time(int) method(str) from_tag(str) to_tag(str) callid(str) sip_code(str) sip_reason(str) src_user(str) src_domain(str) src_ip(str) dst_ouser(str) dst_user(str) dst_domain(str)
