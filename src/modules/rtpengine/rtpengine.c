@@ -76,6 +76,7 @@
 #include "../../core/route.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 #include "../../modules/tm/tm_load.h"
 #include "rtpengine.h"
 #include "rtpengine_funcs.h"
@@ -2994,4 +2995,41 @@ set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri) {
 		return -1;
 	}
 	return 0;
+}
+
+/**
+ *
+ */
+static int ki_rtpengine_manage0(sip_msg_t *msg) {
+    return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, NULL, 1);
+}
+
+/**
+ *
+ */
+static int ki_rtpengine_manage1(sip_msg_t *msg, str *flags) {
+    return rtpengine_rtpp_set_wrap(msg, rtpengine_manage_wrap, ((flags && flags->len > 0) ? flags->s : NULL), 1);
+}
+
+/**
+ *
+ */
+static sr_kemi_t sr_kemi_rtpengine_exports[] = {
+    { str_init("rtpengine"), str_init("rtpengine_manage0"),
+        SR_KEMIP_INT, ki_rtpengine_manage0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_manage1"),
+        SR_KEMIP_INT, ki_rtpengine_manage1,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
+    { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2) {
+    sr_kemi_modules_add(sr_kemi_rtpengine_exports);
+    return 0;
 }
