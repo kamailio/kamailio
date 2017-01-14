@@ -501,10 +501,9 @@ pd_translate("*", "$var(a)");
 		<para>
 		RPC Command Example:
 		</para>
-		<programlisting  format="linespecific">
+		<programlisting format="linespecific">
 ...
-# &kamcmd; _sdomain_ _prefix_ _domain_
-&kamcmd; kamailio.org 123
+&kamcmd; pdt.list kamailio.org 123
 ...
 		</programlisting>
 		<para>

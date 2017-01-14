@@ -623,7 +623,7 @@ modparam("htable", "db_expires", 1)
 		<para>
 			If set to 1, will enable DMQ replication of actions performed upon
 			entries in all tables having "dmqreplicate" parameter set. Any update
-			action performed via pseudo-variables, MI and RPC commands will be
+			action performed via pseudo-variables and RPC commands will be
 			repeated on all other nodes. Therefore, it is important to ensure the
 			table definition (size, autoexpire etc.) is identical across all instances.
 		</para>

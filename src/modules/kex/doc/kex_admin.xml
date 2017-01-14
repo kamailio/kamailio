@@ -516,7 +516,7 @@ resetdebug();
 ...
 		</programlisting>
     </section>
-	<section id="kex.r.version">
+	<section id="kex.r.core.version">
 		<title>
 		<function moreinfo="none">version</function>
 		</title>
@@ -544,7 +544,7 @@ resetdebug();
 		Print list of available RPC commands.
 		</para>
 		<para>
-		Name: <emphasis>which</emphasis>
+		Name: <emphasis>system.listMethods</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis>.</para>
  		<para>
@@ -588,7 +588,7 @@ resetdebug();
 		Reset internal statistics.
 		</para>
 		<para>
-		Name: <emphasis>statsreset_statistics</emphasis>
+		Name: <emphasis>stats.reset_statistics</emphasis>
 		</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
 			be reset, give as name.</para>
@@ -597,19 +597,19 @@ resetdebug();
 		</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; reset_statistics _statsid_
+&kamcmd; stats.reset_statistics _statsid_
 ...
 		</programlisting>
     </section>
 	<section id="kex.r.stats.clear_statistics">
 		<title>
-		<function moreinfo="none">clear_statistics</function>
+		<function moreinfo="none">stats.clear_statistics</function>
 		</title>
 		<para>
 			Return statistics and reset their value in one command.
 		</para>
 		<para>
-		Name: <emphasis>stats.get_statistics</emphasis>
+		Name: <emphasis>stats.clear_statistics</emphasis>
 		</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - same as for
 			get_statistics.</para>
@@ -618,7 +618,7 @@ resetdebug();
 		</para>
 		<programlisting  format="linespecific">
 ...
-&kamcmd; clear_statistics _statsid_
+&kamcmd; stats.clear_statistics _statsid_
 ...
 		</programlisting>
     </section>

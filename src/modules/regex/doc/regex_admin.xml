@@ -26,7 +26,7 @@
 			A text file containing regular expressions categorized in groups is compiled
 			when the module is loaded,  the resulting PCRE objects are stored in an array. A
 			function to match a string or pseudo-variable against any of these groups is
-			provided. The text file can be modified and reloaded at any time via a MI command.
+			provided. The text file can be modified and reloaded at any time via a RPC command.
 			The module also offers a function to perform a PCRE matching operation against a
 			regular expression provided as function parameter.
 		</para>

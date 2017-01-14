@@ -41,7 +41,7 @@
 		&kamailio; with this module loaded:
 		<itemizedlist>
 		<listitem>
-		<para><emphasis>none</emphasis>.</para>
+		<para><emphasis>None</emphasis></para>
 		</listitem>
 		</itemizedlist>
 		</para>
@@ -60,7 +60,7 @@
 	</section>
 
 	<section>
-	<title>MI Commands</title>
+	<title>RPC Commands</title>
 	<para><emphasis>None</emphasis></para>
 	</section>
 

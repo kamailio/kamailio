@@ -74,7 +74,7 @@
 			<listitem>
 			<para>
 				0 - Enable per-timer enabling. Single timers are inactive by default
-				and can be activated through the MI interface as soon as that feature is
+				and can be activated through the RPC interface as soon as that feature is
 				implemented.
 			</para>
 			</listitem>
@@ -297,8 +297,8 @@ bm_log_timer("test");
 </programlisting>
 			</example>
 		</section>
-		<section id="benachmark.rpc.granularity">
-			<title><function moreinfo="none">benachmark.granularity</function></title>
+		<section id="benchmark.rpc.granularity">
+			<title><function moreinfo="none">benchmark.granularity</function></title>
 			<para>
 				Modifies the benchmarking granularity. See "granularity" variable.
 			</para>

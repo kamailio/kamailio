@@ -34,7 +34,7 @@
 		<para>
 			the Presence server has access imediatelly to the latest version
 			of XCAP documents. No more need to trigger refresh of XCAP
-			documents via MI command
+			documents via RPC command.
 		</para>
 		</listitem>
 		<listitem>
