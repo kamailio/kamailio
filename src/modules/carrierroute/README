@@ -51,22 +51,27 @@ Lucian Balaceanu
               4.4. cr_next_domain(carrier, domain, prefix_matching, host,
                       reply_code, dstavp)
 
-        5. MI Commands
+        5. RPC Commands
 
-              5.1. cr_reload_routes
-              5.2. cr_dump_routes
-              5.3. cr_replace_host
-              5.4. cr_deactivate_host
-              5.5. cr_activate_host
-              5.6. cr_add_host
-              5.7. cr_delete_host
+              5.1. cr.reload_routes
+              5.2. cr.dump_routes
 
-        6. Configuration examples
-        7. Installation and Running
+        6. MI Commands
 
-              7.1. Database setup
-              7.2. Database examples
-              7.3. User specific routing
+              6.1. cr_reload_routes
+              6.2. cr_dump_routes
+              6.3. cr_replace_host
+              6.4. cr_deactivate_host
+              6.5. cr_activate_host
+              6.6. cr_add_host
+              6.7. cr_delete_host
+
+        7. Configuration examples
+        8. Installation and Running
+
+              8.1. Database setup
+              8.2. Database examples
+              8.3. User specific routing
 
    2. Module parameter for database access.
 
@@ -200,22 +205,27 @@ Chapter 1. Admin Guide
         4.4. cr_next_domain(carrier, domain, prefix_matching, host,
                 reply_code, dstavp)
 
-   5. MI Commands
+   5. RPC Commands
 
-        5.1. cr_reload_routes
-        5.2. cr_dump_routes
-        5.3. cr_replace_host
-        5.4. cr_deactivate_host
-        5.5. cr_activate_host
-        5.6. cr_add_host
-        5.7. cr_delete_host
+        5.1. cr.reload_routes
+        5.2. cr.dump_routes
 
-   6. Configuration examples
-   7. Installation and Running
+   6. MI Commands
 
-        7.1. Database setup
-        7.2. Database examples
-        7.3. User specific routing
+        6.1. cr_reload_routes
+        6.2. cr_dump_routes
+        6.3. cr_replace_host
+        6.4. cr_deactivate_host
+        6.5. cr_activate_host
+        6.6. cr_add_host
+        6.7. cr_delete_host
+
+   7. Configuration examples
+   8. Installation and Running
+
+        8.1. Database setup
+        8.2. Database examples
+        8.3. User specific routing
 
 1. Overview
 
@@ -246,7 +256,7 @@ Chapter 1. Admin Guide
    database driven routing creates.
 
    Routing tables can be reloaded and edited (in config file mode) with
-   the MI interface, the config file is updated according the changes.
+   the RPC interface, the config file is updated according the changes.
    This is not implemented for the db interface, because its easier to do
    the changes directly on the db. But the reload and dump functions works
    of course here too.
@@ -643,24 +653,19 @@ dstavp)
        as input.
      * dstavp - Name of the AVP where to store the next routing domain.
 
-5. MI Commands
+5. RPC Commands
 
-   5.1. cr_reload_routes
-   5.2. cr_dump_routes
-   5.3. cr_replace_host
-   5.4. cr_deactivate_host
-   5.5. cr_activate_host
-   5.6. cr_add_host
-   5.7. cr_delete_host
+   5.1. cr.reload_routes
+   5.2. cr.dump_routes
 
-   All commands understand the "-?" parameter to print a short help
-   message. The options have to be quoted as one string to be passed to MI
-   interface. Each option except host and new host can be wildcarded by *
-   (but only * and not things like "-d prox*").
-
-5.1. cr_reload_routes
+5.1.  cr.reload_routes
 
    This command reloads the routing data from the data source.
+
+   Name: cr.reload_routes
+
+   Parameters:
+     * none
 
    Important: When new domains have been added, a restart of the server
    must be done, because the mapping of the ids used in the config script
@@ -669,11 +674,35 @@ dstavp)
    differ from the one used internally from the server. Modifying of
    already existing domains is no problem.
 
-5.2. cr_dump_routes
+5.2.  cr.dump_routes
 
    This command prints the route rules on the command line.
 
-5.3. cr_replace_host
+   Name: cr.dump_routes
+
+   Parameters:
+     * none
+
+6. MI Commands
+
+   6.1. cr_reload_routes
+   6.2. cr_dump_routes
+   6.3. cr_replace_host
+   6.4. cr_deactivate_host
+   6.5. cr_activate_host
+   6.6. cr_add_host
+   6.7. cr_delete_host
+
+   All commands understand the "-?" parameter to print a short help
+   message. The options have to be quoted as one string to be passed to MI
+   interface. Each option except host and new host can be wildcarded by *
+   (but only * and not things like "-d prox*").
+
+6.1. cr_reload_routes
+
+6.2. cr_dump_routes
+
+6.3. cr_replace_host
 
    This command can replace the rewrite_host of a route rule, it is only
    usable in file mode. Following options are possible:
@@ -689,7 +718,7 @@ dstavp)
 kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
 
-5.4. cr_deactivate_host
+6.4. cr_deactivate_host
 
    This command deactivates the specified host, i.e. it sets its status to
    0. It is only usable in file mode. Following options are possible:
@@ -710,7 +739,7 @@ kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
 
-5.5. cr_activate_host
+6.5. cr_activate_host
 
    This command activates the specified host, i.e. it sets its status to
    1. It is only usable in file mode. Following options are possible:
@@ -725,7 +754,7 @@ kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
 
-5.6. cr_add_host
+6.6. cr_add_host
 
    This command adds a route rule, it is only usable in file mode.
    Following options are possible:
@@ -745,7 +774,7 @@ kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
-5.7. cr_delete_host
+6.7. cr_delete_host
 
    This command delete the specified hosts or rules, i.e. remove them from
    the route tree. It is only usable in file mode. Following options are
@@ -766,7 +795,7 @@ kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
-6. Configuration examples
+7. Configuration examples
 
    Example 1.19. Configuration example - Routing to default tree
 ...
@@ -900,13 +929,13 @@ domain register {
 }
 ...
 
-7. Installation and Running
+8. Installation and Running
 
-   7.1. Database setup
-   7.2. Database examples
-   7.3. User specific routing
+   8.1. Database setup
+   8.2. Database examples
+   8.3. User specific routing
 
-7.1. Database setup
+8.1. Database setup
 
    Before running Kamailio with carrierroute, you have to setup the
    database table where the module will store the routing data. For that,
@@ -925,7 +954,7 @@ domain register {
    For a minimal configuration either use the config file given above, or
    insert some data into the tables of the module.
 
-7.2. Database examples
+8.2. Database examples
 
    Example 1.22. Example database content - carrierroute table
 ...
@@ -1039,7 +1068,7 @@ domain register {
 
    This table contains the mapping of the domain id to actual names.
 
-7.3. User specific routing
+8.3. User specific routing
 
    For a functional routing the “cr_preferred_carrier” column must be
    added to the subscriber table (or to the table and column that you

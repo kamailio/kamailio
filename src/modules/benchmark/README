@@ -49,7 +49,7 @@ Bastian Friedrich
 
               6.1. benchmark.enable_global
               6.2. benchmark.enable_timer
-              6.3. benachmark.granularity
+              6.3. benchmark.granularity
               6.4. benchmark.loglevel
 
         7. Example of usage
@@ -104,7 +104,7 @@ Chapter 1. Admin Guide
 
         6.1. benchmark.enable_global
         6.2. benchmark.enable_timer
-        6.3. benachmark.granularity
+        6.3. benchmark.granularity
         6.4. benchmark.loglevel
 
    7. Example of usage
@@ -147,7 +147,7 @@ Chapter 1. Admin Guide
    default. This variable may have three different values:
      * -1 - Globally disable benchmarking
      * 0 - Enable per-timer enabling. Single timers are inactive by
-       default and can be activated through the MI interface as soon as
+       default and can be activated through the RPC interface as soon as
        that feature is implemented.
      * 1 - Globally enable benchmarking
 
@@ -256,7 +256,7 @@ bm_log_timer("test");
 
    6.1. benchmark.enable_global
    6.2. benchmark.enable_timer
-   6.3. benachmark.granularity
+   6.3. benchmark.granularity
    6.4. benchmark.loglevel
 
 6.1. benchmark.enable_global
@@ -274,7 +274,7 @@ bm_log_timer("test");
 kamcmd benchmark.enable_timer test 1
 ...
 
-6.3. benachmark.granularity
+6.3. benchmark.granularity
 
    Modifies the benchmarking granularity. See "granularity" variable.
 

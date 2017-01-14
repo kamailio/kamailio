@@ -891,11 +891,6 @@ Note
        further failovers (the first selected destination and default
        destination are the first to be put in the list)
 
-   If the bit 2 in 'flags' is set, the rest of the addresses from the
-   destination set is stored in AVP list. You can use 'ds_next_dst()' to
-   use next address to achieve serial forking to all possible
-   destinations.
-
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.35. ds_select_dst usage

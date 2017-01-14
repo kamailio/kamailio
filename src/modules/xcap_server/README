@@ -98,7 +98,7 @@ Chapter 1. Admin Guide
        requests.
      * the Presence server has access imediatelly to the latest version of
        XCAP documents. No more need to trigger refresh of XCAP documents
-       via MI command
+       via RPC command.
      * can be used stand-alone, with a different Presence server. It is
        not specific for Kamailio or SER. Documents can be fetched via GET
      * no exotic dependencies, it is written in C. It depends on libxml2,

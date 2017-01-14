@@ -123,7 +123,7 @@ Chapter 1. Admin Guide
 
    This module implements rate limiting for SIP requests. In contrast to
    the PIKE module this limits the flow based on a per SIP request type
-   basis and not per source IP. The MI interface can be used to change
+   basis and not per source IP. The RPC interface can be used to change
    tunables while running Kamailio.
 
    The module implements the pipe/queue policy from BSD's ipfw manual,

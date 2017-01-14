@@ -472,8 +472,7 @@ xlog("translated to var $var(y) \n");
      * Input String
 
    Example:
-        # kamcmd dp_translate dpid "input"
-        kamcmd dp_translate 1 "abcdxyz"
+                kamcmd dialplan.translate 1 "abcdxyz"
 
 8. Installation
 

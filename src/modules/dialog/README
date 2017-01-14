@@ -1679,7 +1679,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    RPC Command Format:
 ...
-kamcmd dlg_list
+kamcmd dlg.list
 ...
 
 9.2. dlg.list_ctx

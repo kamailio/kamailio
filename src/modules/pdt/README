@@ -407,8 +407,7 @@ pd_translate("*", "$var(a)");
 
    RPC Command Example:
 ...
-# kamcmd _sdomain_ _prefix_ _domain_
-kamcmd kamailio.org 123
+kamcmd pdt.list kamailio.org 123
 ...
 
    Examples:

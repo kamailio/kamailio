@@ -985,7 +985,7 @@ kamcmd presence.cleanup
 
    RPC Command Format:
 ...
-kamcmd refreshWatchers sip:test@kamailio.org presence 1
+kamcmd presence.refreshWatchers sip:test@kamailio.org presence 1
 ...
 
 6. Exported Variables
@@ -1347,7 +1347,7 @@ str* rules_doc);
    This function is an external command that can be used to announce a
    change in authorization rules for a presentity. It updates the stored
    status and sends a Notify to the watchers whose status has changes.
-   (used by presence_xml module when notified through an MI command of a
+   (used by presence_xml module when notified through an RPC command of a
    change in an xcap document).
 
 15.  get_sphere

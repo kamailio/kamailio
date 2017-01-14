@@ -63,7 +63,7 @@ Ovidiu Sas
               4.6. system.listMethods
               4.7. get_statistics
               4.8. stats.reset_statistics
-              4.9. clear_statistics
+              4.9. stats.clear_statistics
               4.10. pkg.stats
               4.11. stats.get_statistics
               4.12. stats.reset_statistics
@@ -123,7 +123,7 @@ Chapter 1. Admin Guide
         4.6. system.listMethods
         4.7. get_statistics
         4.8. stats.reset_statistics
-        4.9. clear_statistics
+        4.9. stats.clear_statistics
         4.10. pkg.stats
         4.11. stats.get_statistics
         4.12. stats.reset_statistics
@@ -405,7 +405,7 @@ resetdebug();
    4.6. system.listMethods
    4.7. get_statistics
    4.8. stats.reset_statistics
-   4.9. clear_statistics
+   4.9. stats.clear_statistics
    4.10. pkg.stats
    4.11. stats.get_statistics
    4.12. stats.reset_statistics
@@ -481,7 +481,7 @@ kamcmd core.version
 
    Print list of available RPC commands.
 
-   Name: which
+   Name: system.listMethods
 
    Parameters: none.
 
@@ -510,26 +510,26 @@ kamcmd stats.get_statistics
 
    Reset internal statistics.
 
-   Name: statsreset_statistics
+   Name: stats.reset_statistics
 
    Parameters: statsid - which statistics to be reset, give as name.
 
    RPC Command Format:
 ...
-kamcmd reset_statistics _statsid_
+kamcmd stats.reset_statistics _statsid_
 ...
 
-4.9.  clear_statistics
+4.9.  stats.clear_statistics
 
    Return statistics and reset their value in one command.
 
-   Name: stats.get_statistics
+   Name: stats.clear_statistics
 
    Parameters: statsid - same as for get_statistics.
 
    RPC Command Format:
 ...
-kamcmd clear_statistics _statsid_
+kamcmd stats.clear_statistics _statsid_
 ...
 
 4.10.  pkg.stats

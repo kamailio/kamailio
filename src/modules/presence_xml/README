@@ -225,10 +225,10 @@ modparam("presence_xml", "force_active", 1)
    same database tables directly, like the embedded XCAP server
    implemented in xcap_server module, the parameter should be set to a
    positive value. Apart from updating in xcap table, if the integrated
-   server is not running on the same Kamailio instance, it must send an MI
-   command refershWatchers [pres_uri] [event] when a user modifies a rules
-   document, to instruct the presence_xml module to update states from the
-   database and, if needed, send NOTIFY updates.
+   server is not running on the same Kamailio instance, it must send an
+   RPC command presence.refreshWatchers [pres_uri] [event] when a user
+   modifies a rules document, to instruct the presence_xml module to
+   update states from the database and, if needed, send NOTIFY updates.
 
    Otherwise, it uses xcap_client module to fetch documents from the XCAP
    servers with HTTP requests.

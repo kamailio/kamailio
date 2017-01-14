@@ -21,7 +21,7 @@ Peter Dunkley
 
         3. Parameters
         4. Functions
-        5. MI Commands
+        5. RPC Commands
 
 Chapter 1. Admin Guide
 
@@ -35,7 +35,7 @@ Chapter 1. Admin Guide
 
    3. Parameters
    4. Functions
-   5. MI Commands
+   5. RPC Commands
 
 1. Overview
 
@@ -57,7 +57,7 @@ Chapter 1. Admin Guide
 
    The following libraries must be installed before running Kamailio with
    this module loaded:
-     * none.
+     * None
 
 3. Parameters
 
@@ -67,6 +67,6 @@ Chapter 1. Admin Guide
 
    None
 
-5. MI Commands
+5. RPC Commands
 
    None
