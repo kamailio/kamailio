@@ -16,7 +16,7 @@
 	<section id="tls.p.tls_method">
 	<title><varname>tls_method</varname> (string)</title>
 	<para>
-		Sets the SSL/TLS protocol method. Possible values are:
+		Sets the TLS protocol method. Possible values are:
 	</para>
 	<itemizedlist>
 			<listitem>
@@ -52,13 +52,13 @@
 			<listitem>
 				<para>
 				<emphasis>SSLv3</emphasis> - only SSLv3 connections are accepted.
-				Note: you shouldn't use SSLv3 for anything which should be highly secure.
+				Note: you shouldn't use SSLv3 for anything which should be secure.
 				</para>
 			</listitem>
 			<listitem>
 				<para>
 				<emphasis>SSLv2</emphasis> - only SSLv2 connections, for old clients.
-				Note: you shouldn't use SSLv2 for anything which should be highly secure.
+				Note: you shouldn't use SSLv2 for anything which should be secure.
 				Newer versions of libssl don't include support for it anymore.
 				</para>
 			</listitem>
@@ -80,7 +80,7 @@
 				<para>
 				Note: For older libssl version, this option allows SSLv2, with hello
 				messages done over SSLv2. You shouldn't use SSLv2 or SSLv3 for anything
-				which should be highly secure.
+				which should be secure.
 				</para>
 			</listitem>
 	</itemizedlist>
@@ -88,6 +88,9 @@
 		If RFC 3261 conformance is desired, at least TLSv1 must be used. For
 		compatibility with older clients SSLv23 is the option, but again, be aware
 		of security concerns, SSLv2/3 being considered very insecure by 2014.
+		For current information about what's considered secure, please consult,
+		IETF BCP 195, currently RFC 7525  - "Recommendations for Secure Use of 
+		Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)"
 	</para>
 	<example>
 	    <title>Set <varname>tls_method</varname> parameter</title>
@@ -111,11 +114,6 @@ modparam("tls", "tls_method", "TLSv1")
 		with a '/' it will be an absolute path and if it starts with anything
 		else the path will be relative to the main config file directory
 		(e.g.: for kamailio -f /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
-	</para>
-	<para>
-		<emphasis>Warning:</emphasis> try not to use certificate with keys
-		longer then 2048 bytes. Longer keys will severely impact performance,
-		in particular the TLS connection rate.
 	</para>
 	<para>
 		The default value is &kamailioconfdir;/cert.pem
@@ -166,7 +164,8 @@ modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
 	<title><varname>ca_list</varname> (string)</title>
 	<para>
 		Sets the CA list file name. This file contains a list of all the
-		trusted CAs certificates. If a signature in a certificate chain belongs
+		trusted CAs certificates used when connecting to other SIP implementations.
+		If a signature in a certificate chain belongs
 		to one of the listed CAs, the verification of that certificate will succeed.
 	</para>
 	<para>
@@ -181,8 +180,10 @@ modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
 	</para>
 	<para>
 		An easy way to create the CA list is to append each trusted trusted CA
-		certificate in the PEM format to one file, e.g.: for f in
-		trusted_cas/*.pem ; do cat "$f" &gt;&gt; ca_list.pem ; done .
+		certificate in the PEM format to one file, e.g.:
+	    <programlisting>
+for f in trusted_cas/*.pem ; do cat "$f" &gt;&gt; ca_list.pem ; done 
+	    </programlisting>
 	</para>
 	<para>
 		See also
@@ -274,8 +275,11 @@ modparam("tls", "crl", "/usr/local/etc/kamailio/crl.pem")
 <section id="tls.p.verify_certificate">
 	<title><varname>verify_certificate</varname> (boolean)</title>
 	<para>
-		If enabled it will force certificate verification.
-		For more information see the <ulink url="http://www.openssl.org/docs/apps/verify.html">verify(1)</ulink> openssl man page.
+		If enabled it will force certificate verification when connecting to 
+		other SIP servers..
+		For more information see the
+		<ulink url="https://www.openssl.org/docs/manmaster/man1/verify.html">verify(1)</ulink>
+		OpenSSL man page.
 	</para>
 	<para>
 		Note: the certificate verification will always fail if the ca_list is empty.
@@ -320,7 +324,8 @@ modparam("tls", "verify_depth", 9)
 <section id="tls.p.require_certificate">
 	<title><varname>require_certificate</varname> (boolean)</title>
 	<para>
-		When enabled it will require a certificate from a client. If the client does not offer a certificate
+		When enabled &kamailio; will require a certificate from a client
+		connecting to the TLS port. If the client does not offer a certificate
 		and <varname>verify_certificate</varname> is on, certificate verification will fail.
 	</para>
 	<para>
@@ -341,10 +346,11 @@ modparam("tls", "require_certificate", 1)
 	<para>
 		Sets the list of accepted ciphers. The list consists of cipher strings separated by colons.
 		For more information on the cipher list format see the
-		<ulink url="https://www.openssl.org/docs/manmaster/apps/ciphers.html">cipher(1)</ulink> openssl man page.
+		<ulink url="https://www.openssl.org/docs/manmaster/man1/ciphers.html">
+		cipher(1)</ulink> OpenSSL man page.
 	</para>
 	<para>
-		The default value is not set (all the Openssl supported ciphers are enabled).
+		The default value is not set (all the OpenSSL supported ciphers are enabled).
 	</para>
 	<example>
 	    <title>Set <varname>cipher_list</varname> parameter</title>
@@ -362,8 +368,8 @@ modparam("tls", "cipher_list", "HIGH")
 		Sets the Server Name Indication (SNI) value.
 	</para>
 	<para>
-		This is a TLS extension and is not working for old and obsoleted
-		SSL versions.
+		This is a TLS extension enabling one TLS server to serve multiple host
+		names with unique certificates.
 	</para>
 	<para>
 		The default value is empty (not set).
@@ -414,7 +420,8 @@ modparam("tls", "server_name", "kamailio.org")
 	</para>
 	<para>
 		This setting can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is tls.connection_timeout.
+		framework. The config variable name is
+		<emphasis>tls.connection_timeout</emphasis>.
 	</para>
 	<example>
 	    <title>Set <varname>connection_timeout</varname> parameter</title>
@@ -438,10 +445,13 @@ modparam("tls", "connection_timeout", 60)
 		If set compression over TLS will be disabled.
 		Note that compression uses a lot of memory (about 10x more then with
 		the compression disabled), so if you want to minimize
-		memory usage is a good idea to disable it.
+		memory usage is a good idea to disable it. TLS compression also 
+		expose you for the 
+ 		<ulink url="https://en.wikipedia.org/wiki/CRIME_(security_exploit)">
+		CRIME</ulink> security vulnerability.
 	</para>
 	<para>
-		By default compression is disabled.
+		By default TLS compression is disabled.
 	</para>
 	<example>
 	    <title>Set <varname>tls_disable_compression</varname> parameter</title>
@@ -529,7 +539,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
 	<title><varname>ssl_max_send_fragment</varname> (integer)</title>
 	<para>
 		Sets the maximum number of bytes (from the clear text) sent into
-		one TLS or SSL record. Valid values are between 512 and 16384.
+		one TLS record. Valid values are between 512 and 16384.
 		Note however that even valid low values might not be big enough to
 		allow a succesfull handshake (try minimum 1024).
 	</para>
@@ -646,7 +656,7 @@ modparam("tls", "send_close_notify", 1)
 	<para>
 		Sets the maximum allowed per connection clear-text send queue size in
 		bytes. This queue is used when data cannot be encrypted and sent
-		immediately because of an ongoing TLS/SSL level renegotiation.
+		immediately because of an ongoing TLS level renegotiation.
 	</para>
 	<para>
 		The default value is 65536 (64 Kb).
@@ -684,7 +694,7 @@ modparam("tls", "con_ct_wq_max", 1048576)
 	</para>
 	<para>
 		It can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is tls.ct_wq_max.
+		framework. The config variable name is <varname>tls.ct_wq_max</varname>.
 	</para>
 	<example>
 	    <title>Set <varname>ct_wq_max</varname> parameter</title>
@@ -715,7 +725,7 @@ modparam("tls", "ct_wq_max", 4194304)
 	</para>
 	<para>
 		It can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is tls.ct_wq_blk_size.
+		framework. The config variable name is <varname>tls.ct_wq_blk_size</varname>.
 	</para>
 	<example>
 	    <title>Set <varname>ct_wq_blk_size</varname> parameter</title>
@@ -744,7 +754,7 @@ modparam("tls", "ct_wq_blk_size", 2048)
 	</para>
 	<para>
 		It can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is tls.log.
+		framework. The config variable name is <varname>tls.log</varname>.
 	</para>
 	<example>
 		<title>Set <varname>tls_log</varname> parameter</title>
@@ -777,7 +787,7 @@ modparam("tls", "tls_log", 10)
 	</para>
 	<para>
 		It can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is tls.debug.
+		framework. The config variable name is <varname>tls.debug</varname>.
 	</para>
 	<example>
 		<title>Set <varname>tls_debug</varname> parameter</title>
@@ -804,9 +814,9 @@ modparam("tls", "tls_debug", 10)
 		new TLS connections will start to fail. The value is expressed in KB.
 	</para>
 	<para>
-		The default value depends on whether the openssl library used handles well
-		low memory situations (openssl bug #1491).
-		As of this writing this is not true for any openssl version (including 0.9.8e).
+		The default value depends on whether the OpenSSL library used handles 
+		low memory situations in a good way (openssl bug #1491).
+		As of this writing this is not true for any OpenSSL version (including 0.9.8e).
 	</para>
 	<para>
 		If an ill-behaved OpenSSL version is detected, a very conservative value is choosed,
@@ -830,10 +840,10 @@ modparam("tls", "tls_debug", 10)
 	</itemizedlist>
 	<para>
 		It can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is tls.low_mem_threshold1.
+		framework. The config variable name is <varname>tls.low_mem_threshold1</varname>.
 	</para>
 	<para>
-		See also <varname>low_mem_threshold2</varname>.
+		See also <varname>tls.low_mem_threshold2</varname>.
 	</para>
 	<example>
 		<title>Set <varname>low_mem_threshold1</varname> parameter</title>
@@ -858,12 +868,14 @@ modparam("tls", "low_mem_threshold1", -1)
 		TLS connections will start to fail preemptively.  The value is expressed in KB.
 	</para>
 	<para>
-		The default value depends on whether the OpenSSL library used handles well low memory
-		situations (openssl bug #1491). As of this writing this is not true for any OpenSSL version (including 0.9.8e).
+		The default value depends on whether the OpenSSL library used handles low memory
+		situations (openssl bug #1491).
+		As of this writing this is not true for any OpenSSL version (including 0.9.8e).
 	</para>
 	<para>
-		If an ill-behaved openssl version is detected, a very conservative value is choosed,
-		which depends on the maximum possible number of simultaneously created TLS connections (and hence on the process number).
+		If an ill-behaved OpenSSL version is detected, a very conservative value is choosed,
+		which depends on the maximum possible number of simultaneously created
+		TLS connections (and hence on the process number).
 	</para>
 	<para>
 		The following values have a special meaning:
@@ -882,13 +894,13 @@ modparam("tls", "low_mem_threshold1", -1)
 	</itemizedlist>
 	<para>
 		It can be changed also at runtime, via the RPC interface and config
-		framework. The config variable name is tls.low_mem_threshold2.
+		framework. The config variable name is <varname>tls.low_mem_threshold2</varname>.
 	</para>
 	<para>
-		See also <varname>low_mem_threshold1</varname>.
+		See also <varname>tls.low_mem_threshold1</varname>.
 	</para>
 	<example>
-		<title>Set <varname>low_mem_threshold2</varname> parameter</title>
+		<title>Set <varname>tls.low_mem_threshold2</varname> parameter</title>
 		<programlisting>
 ...
 modparam("tls", "low_mem_threshold2", -1)
@@ -909,21 +921,22 @@ modparam("tls", "low_mem_threshold2", -1)
 		If enabled &kamailio; will start even if some of the OpenSSL sanity checks fail (turn it on at your own risk).
 	</para>
 	<para>
-		Currently failing any of the following sanity checks will not allow Kamailio  to start:
+		If any of the following sanity checks fal, Kamailio will not start:
 	</para>
 	<itemizedlist>
-			<listitem>
-				<para>
-					the version of the library the TLS module was compiled with is
-					"too different" from the library used at runtime. The versions should have the same major,
-					minor and fix level (e.g.: 0.9.8a and 0.9.8c are ok, but 0.9.8 and 0.9.9 are not)
-				</para>
-			</listitem>
-			<listitem>
-				<para>
-					the OpenSSL library used at compile time and the one used at runtime have different Kerberos options 
-				</para>
-			</listitem>
+		<listitem>
+			<para>
+				the version of the library the TLS module was compiled with is
+				"too different" from the library used at runtime. The versions should have the same major,
+				minor and fix level (e.g.: 0.9.8a and 0.9.8c are ok, but 0.9.8 and 0.9.9 are not)
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				the OpenSSL library used at compile time and the one used at
+				runtime have different Kerberos options 
+			</para>
+		</listitem>
 	</itemizedlist>
 	<para>
 		By default tls_force_run is disabled.
@@ -941,8 +954,8 @@ modparam("tls", "tls_force_run", 11)
 	<section id="tls.p.session_cache">
 	<title><varname>session_cache</varname> (boolean)</title>
 	<para>
-		If enabled &kamailio; will do caching of the TLS sessions data, generation a session_id and sending
-		it back to client.
+		If enabled &kamailio; will do caching of the TLS sessions data,
+		generation a session_id and sending it back to client.
 	</para>
 	<para>
 		By default TLS session caching is disabled (0).
@@ -1002,9 +1015,9 @@ modparam("tls", "renegotiation", 1)
 	</para>
 	<para>
 		If set the TLS module will load a special configuration file or configuration files
-		from configuration directory, in which different TLS parameters can be specified on a per role (server or
-		client) and domain basis (for now only IPs). The corresponding module
-		parameters will be ignored if a separate configuration file is used.
+		from configuration directory, in which different TLS parameters can be specified on
+		a per role (server or client) and domain basis (for now only IPs). The corresponding
+		module parameters will be ignored if a separate configuration file is used.
 	</para>
 	<para>
 		If the file or directory name starts with a '.' the path will be relative to the
@@ -1014,7 +1027,7 @@ modparam("tls", "renegotiation", 1)
 		(e.g.: for kamailio -f /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
 	</para>
 	<para>
-		By default no config file is specified.
+		By default no TLS configuration file is specified.
 	</para>
 	<para>
 		The following parameters can be set in the config file, for each
@@ -1038,8 +1051,8 @@ modparam("tls", "renegotiation", 1)
 		client config profile, overriding the match on ip:port and
 		server_name. This is the recommended way for selecting a specific
 		TLS client config profile, because the local or remote port is hard
-		to predict for a stream connection - see parameter xavp_cfg to learn
-		how to enable it.
+		to predict for a stream connection - see parameter
+		<varname>xavp_cfg</varname> to learn how to enable it.
 	</para>
 	<para>
 		All the parameters that take filenames as values will be resolved
@@ -1106,9 +1119,9 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 	</example>
 	<para>
 		The file can be changed at runtime. The new config will not be loaded
-		immediately, but after the first tls.reload RPC call.
+		immediately, but after the first <varname>tls.reload</varname> RPC call.
 		<example>
-			<title>Change and reload the tls configuration at runtime</title>
+			<title>Change and reload the TLS configuration at runtime</title>
 			<programlisting>
  $ &sercmd; cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ &sercmd; tls.reload
