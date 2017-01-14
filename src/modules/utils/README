@@ -25,17 +25,13 @@ Carsten Bock
 
         3. Parameters
 
-              3.1. http_query_timeout (int)
-              3.2. http_response_mode (int)
-              3.3. http_response_trim (int)
-              3.4. forward_active (int)
-              3.5. pres_db_url (string)
-              3.6. xcap_table (string)
+              3.1. forward_active (int)
+              3.2. pres_db_url (string)
+              3.3. xcap_table (string)
 
         4. Functions
 
-              4.1. http_query(url, [post-data], [header-data], result)
-              4.2. xcap_auth_status(watcher_uri, presentity_uri)
+              4.1. xcap_auth_status(watcher_uri, presentity_uri)
 
         5. MI Commands
 
@@ -45,22 +41,17 @@ Carsten Bock
               5.4. forward_proxy
 
         6. Configuration syntax
-        7. Remarks
 
    List of Examples
 
-   1.1. Set http_query_timeout parameter
-   1.2. Set http_response_mode parameter
-   1.3. Set http_response_trim parameter
-   1.4. Set forward_active parameter
-   1.5. Set pres_db_url parameter
-   1.6. Set xcap_table parameter
-   1.7. http_query() usage
-   1.8. xcap_auth_status() usage
-   1.9. forward_list usage
-   1.10. forward_switch usage
-   1.11. forward_filter usage
-   1.12. forward_proxy usage
+   1.1. Set forward_active parameter
+   1.2. Set pres_db_url parameter
+   1.3. Set xcap_table parameter
+   1.4. xcap_auth_status() usage
+   1.5. forward_list usage
+   1.6. forward_switch usage
+   1.7. forward_filter usage
+   1.8. forward_proxy usage
 
 Chapter 1. Admin Guide
 
@@ -74,17 +65,13 @@ Chapter 1. Admin Guide
 
    3. Parameters
 
-        3.1. http_query_timeout (int)
-        3.2. http_response_mode (int)
-        3.3. http_response_trim (int)
-        3.4. forward_active (int)
-        3.5. pres_db_url (string)
-        3.6. xcap_table (string)
+        3.1. forward_active (int)
+        3.2. pres_db_url (string)
+        3.3. xcap_table (string)
 
    4. Functions
 
-        4.1. http_query(url, [post-data], [header-data], result)
-        4.2. xcap_auth_status(watcher_uri, presentity_uri)
+        4.1. xcap_auth_status(watcher_uri, presentity_uri)
 
    5. MI Commands
 
@@ -94,15 +81,11 @@ Chapter 1. Admin Guide
         5.4. forward_proxy
 
    6. Configuration syntax
-   7. Remarks
 
 1. Overview
 
    This module implements various utility functions that are not SIP
    related.
-
-   Function http_query allows Kamailio to issue an HTTP GET request and
-   get access to parts of the reply.
 
    The forward functionality allows Kamailio to configure forwarding at
    runtime with FIFO commands. The forwarding is executed in the pre
@@ -129,147 +112,54 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libcurl.
+     * none.
 
 3. Parameters
 
-   3.1. http_query_timeout (int)
-   3.2. http_response_mode (int)
-   3.3. http_response_trim (int)
-   3.4. forward_active (int)
-   3.5. pres_db_url (string)
-   3.6. xcap_table (string)
+   3.1. forward_active (int)
+   3.2. pres_db_url (string)
+   3.3. xcap_table (string)
 
-3.1. http_query_timeout (int)
-
-   Defines in seconds how long Kamailio waits for response from HTTP
-   server.
-
-   Default value is zero, i.e., that the http_query_timeout function is
-   disabled.
-
-   Example 1.1. Set http_query_timeout parameter
-...
-modparam("utils", "http_query_timeout", 2)
-...
-
-3.2. http_response_mode (int)
-
-   Control what part of the HTTP reponse is returned: only first line (for
-   value 0), or all response (for value 1).
-
-   Default value is 0 (return only the first line).
-
-   Example 1.2. Set http_response_mode parameter
-...
-modparam("utils", "http_response_mode", 1)
-...
-
-3.3. http_response_trim (int)
-
-   Control if white space, tab and end of line characters should be
-   trimmed from leading and trailing parts of HTTP response.
-
-   Default value is 0 (don't trim).
-
-   Example 1.3. Set http_response_trim parameter
-...
-modparam("utils", "http_response_trim", 1)
-...
-
-3.4. forward_active (int)
+3.1. forward_active (int)
 
    Defines if the forwarding callback should be installed.
 
    Default value is “0” - disabled.
 
-   Example 1.4. Set forward_active parameter
+   Example 1.1. Set forward_active parameter
                                         ...
                                         modparam("utils", "forward_active", 1)
                                         ...
 
-3.5. pres_db_url (string)
+3.2. pres_db_url (string)
 
    Defines presence server database URL. If not given, the
    xcap_auth_status function is disabled.
 
    There is no default value.
 
-   Example 1.5. Set pres_db_url parameter
+   Example 1.2. Set pres_db_url parameter
 ...
 modparam("utils", "pres_db_url", "mysql://foo:secret@localhost/pres")
 ...
 
-3.6. xcap_table (string)
+3.3. xcap_table (string)
 
    Defines the name of the xcap table in the presence server database. See
    the xcap_server module documentation for more information.
 
    Default value is “xcap”.
 
-   Example 1.6. Set xcap_table parameter
+   Example 1.3. Set xcap_table parameter
 ...
 modparam("utils", "xcap_table", "pres_xcap")
 ...
 
 4. Functions
 
-   4.1. http_query(url, [post-data], [header-data], result)
-   4.2. xcap_auth_status(watcher_uri, presentity_uri)
+   4.1. xcap_auth_status(watcher_uri, presentity_uri)
 
-4.1.  http_query(url, [post-data], [header-data], result)
-
-   Sends HTTP GET or POST request according to URL given in “url”
-   parameter, which is a string that may contain pseudo variables.
-
-   If you want to make a POST-Request, you have to define the “post”-data,
-   that should be submitted in that request as the second parameter. If
-   this parameter is empty, it is not set.
-
-   If you want to add additional headers to the request, you have to
-   define the “header”-data, that should be submitted in that request as
-   the third parameter. If this parameter is empty, it is not set.
-
-   If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line of
-   the reply's body (if any) is stored in “result” parameter, which must
-   be a writable pseudo variable.
-
-   Function returns reply code of HTTP reply or -1 if something went
-   wrong.
-
-   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-   FAILURE_ROUTE, and BRANCH_ROUTE.
-
-   Example 1.7. http_query() usage
-...
-# GET-Request
-http_query("http://tutpro.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{s
-.escape.param})",
-           "$var(result)");
-switch ($retcode) {
-       ...
-}
-...
-...
-# POST-Request
-http_query("http://tutpro.com/index.php", "r_uri=$(ru{s.escape.param})&f_uri=$(f
-u{s.escape.param})",
-           "$var(result)");
-switch ($retcode) {
-       ...
-}
-...
-...
-# GET-Request with additional headers and Post-Data.
-http_query("http://tutpro.com/index.php", "{ "alert": "Alert text goes here" }",
- "Content-Type: application/json"
-           "$var(result)");
-switch ($retcode) {
-       ...
-}
-...
-
-4.2.  xcap_auth_status(watcher_uri, presentity_uri)
+4.1.  xcap_auth_status(watcher_uri, presentity_uri)
 
    Function checks in the presence server database if a watcher is
    authorized to subscribe to event “presence” of presentity. Sphere
@@ -283,7 +173,7 @@ switch ($retcode) {
 
    Function can be used from REQUEST_ROUTE.
 
-   Example 1.8. xcap_auth_status() usage
+   Example 1.4. xcap_auth_status() usage
 ...
 if (method=="MESSAGE") {
     xcap_auth_status("$fu", $ru");
@@ -308,7 +198,7 @@ if (method=="MESSAGE") {
 
    No parameters.
 
-   Example 1.9. forward_list usage
+   Example 1.5. forward_list usage
 ...
 kamctl fifo forward_list
 id switch                         filter proxy
@@ -321,7 +211,7 @@ id switch                         filter proxy
    The syntax of this configuration string is described in 1.6.
    (switch_setting_list).
 
-   Example 1.10. forward_switch usage
+   Example 1.6. forward_switch usage
 ...
 kamctl fifo forward_switch 0=on
 ...
@@ -340,7 +230,7 @@ kamctl fifo forward_switch 0=on
    The syntax of this configuration string is described in 1.6.
    (filter_setting_list).
 
-   Example 1.11. forward_filter usage
+   Example 1.7. forward_filter usage
 ...
 kamctl fifo forward_filter 0=REGISTER:INVITE
 ...
@@ -353,7 +243,7 @@ kamctl fifo forward_filter 0=REGISTER:INVITE
    switch). The syntax of this configuration string is described in 1.6.
    (proxy_setting_list).
 
-   Example 1.12. forward_proxy usage
+   Example 1.8. forward_proxy usage
 ...
 kamctl fifo forward_proxy 0=host-c.domain-c:5060
 ...
@@ -379,12 +269,3 @@ kamctl fifo forward_proxy 0=host-c.domain-c:5060
      * port ::= number
      * number ::= digit {digit}
      * digit ::= ? 0-9 ?
-
-7. Remarks
-
-   Note: libcurl leak in CentOS 6 - this module uses libcurl library and
-   in case if you are using CentOS 6, be aware that standard
-   libcurl-7.19.7-52 has a memory leak. To fix this memory, install
-   libcurl from city-fan repository. More details at:
-   https://www.digitalocean.com/community/questions/how-to-upgrade-curl-in
-   -centos6
