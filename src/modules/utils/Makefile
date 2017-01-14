@@ -10,12 +10,6 @@ NAME=utils.so
 
 ifeq ($(CROSS_COMPILE),)
 XML2CFG=$(shell which xml2-config)
-CURL_BUILDER=$(shell \
-	if pkg-config --exists libcurl; then \
-		echo 'pkg-config libcurl'; \
-	else \
-		which curl-config; \
-	fi)
 endif
 
 ifneq ($(XML2CFG),)
@@ -25,14 +19,6 @@ else
 	DEFS+=-I$(LOCALBASE)/include/libxml2 \
       -I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
-endif
-
-ifneq ($(CURL_BUILDER),)
-	DEFS += $(shell $(CURL_BUILDER) --cflags )
-	LIBS += $(shell $(CURL_BUILDER) --libs)
-else
-	DEFS+=-I$(LOCALBASE)/include
-	LIBS+=-L$(LOCALBASE)/lib -lcurl
 endif
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE

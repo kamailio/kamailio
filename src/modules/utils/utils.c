@@ -47,7 +47,6 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../lib/srdb1/db.h"
 
-#include "functions.h"
 #include "conf.h"
 #include "xcap_auth.h"
 
@@ -57,9 +56,6 @@ MODULE_VERSION
 #define XCAP_TABLE_VERSION 4
 
 /* Module parameter variables */
-int http_query_timeout = 4;
-int http_response_trim = 0;
-int http_response_mode = 0;
 static int forward_active = 0;
 static int   mp_max_id = 0;
 static char* mp_switch = "";
@@ -88,33 +84,11 @@ static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
 
-/* Fixup functions to be defined later */
-static int fixup_http_query_get(void** param, int param_no);
-static int fixup_free_http_query_get(void** param, int param_no);
-static int fixup_http_query_post(void** param, int param_no);
-static int fixup_http_query_post_hdr(void** param, int param_no);
-static int fixup_free_http_query_post(void** param, int param_no);
-static int fixup_free_http_query_post_hdr(void** param, int param_no);
-
-/* Wrappers for http_query to be defined later */
-static int w_http_query(struct sip_msg* _m, char* _url, char* _result);
-static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result);
-static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post, char* _hdr, char* _result);
-
 /* forward function */
 int utils_forward(struct sip_msg *msg, int id, int proto);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"http_query", (cmd_function)w_http_query, 2, fixup_http_query_get,
-		fixup_free_http_query_get,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"http_query", (cmd_function)w_http_query_post, 3, fixup_http_query_post,
-		fixup_free_http_query_post,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"http_query", (cmd_function)w_http_query_post_hdr, 4, fixup_http_query_post_hdr,
-		fixup_free_http_query_post_hdr,
-		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"xcap_auth_status", (cmd_function)xcap_auth_status, 2, fixup_pvar_pvar,
 		fixup_free_pvar_pvar, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
@@ -125,9 +99,6 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"pres_db_url", PARAM_STR, &pres_db_url},
 	{"xcap_table", PARAM_STR, &xcap_table},
-	{"http_query_timeout", INT_PARAM, &http_query_timeout},
-	{"http_response_trim", INT_PARAM, &http_response_trim},
-	{"http_response_mode", INT_PARAM, &http_response_mode},
 	{"forward_active", INT_PARAM, &forward_active},
 	{0, 0, 0}
 };
@@ -247,13 +218,6 @@ static int pres_db_open(void) {
 /* Module initialization function */
 static int mod_init(void)
 {
-	/* Initialize curl */
-	if (curl_global_init(CURL_GLOBAL_ALL)) {
-		LM_ERR("curl_global_init failed\n");
-		return -1;
-	}
-
-
 	if (init_shmlock() != 0) {
 		LM_CRIT("cannot initialize shmlock.\n");
 		return -1;
@@ -315,8 +279,6 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	/* Cleanup curl */
-	curl_global_cleanup();
 	/* Cleanup forward */
 	conf_destroy();
 	destroy_shmlock();
@@ -324,159 +286,6 @@ static void destroy(void)
 	pres_db_close();
 }
 
-
-/* Fixup functions */
-
-/*
- * Fix http_query params: url (string that may contain pvars) and
- * result (writable pvar).
- */
-static int fixup_http_query_get(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return fixup_spve_null(param, 1);
-	}
-
-	if (param_no == 2) {
-		if (fixup_pvar_null(param, 1) != 0) {
-			LM_ERR("failed to fixup result pvar\n");
-			return -1;
-		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
-			return -1;
-		}
-		return 0;
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*
- * Free http_query params.
- */
-static int fixup_free_http_query_get(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return fixup_free_spve_null(param, 1);
-	}
-
-	if (param_no == 2) {
-		return fixup_free_pvar_null(param, 1);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-
-/*
- * Fix http_query params: url (string that may contain pvars) and
- * result (writable pvar).
- */
-static int fixup_http_query_post(void** param, int param_no)
-{
-	if ((param_no == 1) || (param_no == 2)) {
-		return fixup_spve_null(param, 1);
-	}
-
-	if (param_no == 3) {
-		if (fixup_pvar_null(param, 1) != 0) {
-			LM_ERR("failed to fixup result pvar\n");
-			return -1;
-		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
-			return -1;
-		}
-		return 0;
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*
- * Fix http_query params: url (string that may contain pvars) and
- * result (writable pvar).
- */
-static int fixup_http_query_post_hdr(void** param, int param_no)
-{
-	if ((param_no >= 1) && (param_no <= 3)) {
-		return fixup_spve_null(param, 1);
-	}
-
-	if (param_no == 4) {
-		if (fixup_pvar_null(param, 1) != 0) {
-			LM_ERR("failed to fixup result pvar\n");
-			return -1;
-		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
-			LM_ERR("result pvar is not writeble\n");
-			return -1;
-		}
-		return 0;
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*
- * Free http_query params.
- */
-static int fixup_free_http_query_post(void** param, int param_no)
-{
-	if ((param_no == 1) || (param_no == 2)) {
-		return fixup_free_spve_null(param, 1);
-	}
-
-	if (param_no == 3) {
-		return fixup_free_pvar_null(param, 1);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*
- * Free http_query params.
- */
-static int fixup_free_http_query_post_hdr(void** param, int param_no)
-{
-	if ((param_no >= 1) && (param_no <= 3)) {
-		return fixup_free_spve_null(param, 1);
-	}
-
-	if (param_no == 4) {
-		return fixup_free_pvar_null(param, 1);
-	}
-
-	LM_ERR("invalid parameter number <%d>\n", param_no);
-	return -1;
-}
-
-/*
- * Wrapper for HTTP-Query (GET)
- */
-static int w_http_query(struct sip_msg* _m, char* _url, char* _result) {
-	return http_query(_m, _url, _result, NULL, NULL);
-}
-
-/*
- * Wrapper for HTTP-Query (POST-Variant)
- */
-static int w_http_query_post(struct sip_msg* _m, char* _url, char* _post, char* _result) {
-	return http_query(_m, _url, _result, _post, NULL);
-}
-
-/*
- * Wrapper for HTTP-Query (POST-Variant)
- */
-static int w_http_query_post_hdr(struct sip_msg* _m, char* _url, char* _post, char* _hdr, char* _result) {
-	return http_query(_m, _url, _result, _post, _hdr);
-}
 
 /*!
  * \brief checks precondition, switch, filter and forwards msg if necessary
