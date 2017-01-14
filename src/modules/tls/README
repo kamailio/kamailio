@@ -8,6 +8,10 @@ Carsten Bock
 
    ng-voice GmbH
 
+Olle E. Johansson
+
+   Edvina AB
+
    Copyright © 2007 iptelorg GmbH
 
    Copyright © 2014 ng-voice GmbH
@@ -111,7 +115,7 @@ Carsten Bock
    1.31. Set tls.debug at runtime
    1.32. Set low_mem_threshold1 parameter
    1.33. Set tls.low_mem_threshold1 at runtime
-   1.34. Set low_mem_threshold2 parameter
+   1.34. Set tls.low_mem_threshold2 parameter
    1.35. Set tls.low_mem_threshold2 at runtime
    1.36. Set tls_force_run parameter
    1.37. Set session_cache parameter
@@ -119,7 +123,7 @@ Carsten Bock
    1.39. Set renegotiation parameter
    1.40. Short config file
    1.41. Set config parameter
-   1.42. Change and reload the tls configuration at runtime
+   1.42. Change and reload the TLS configuration at runtime
    1.43. Set xavp_cfg parameter
    1.44. is_peer_verified usage
 
@@ -193,9 +197,9 @@ Chapter 1. Admin Guide
    this module must be loaded and enable_tls=yes core setting must be
    added to the Kamailio config file.
 
-   IMPORTANT: tls module must be loaded before any other Kamailio module
-   that uses libssl (OpenSSL library). A safe option is to have tls module
-   loaded first (be in the first "loadmodule" inside Kamailio.cfg).
+   IMPORTANT: the tls module must be loaded before any other Kamailio
+   module that uses libssl (OpenSSL library). A safe option is to have the
+   tls module loaded first (be in the first "loadmodule" in Kamailio.cfg).
 
 2. Quick Start
 
@@ -326,8 +330,8 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
    The private key must not be encrypted (Kamailio cannot ask you for a
    password on startup).
 
-   The TLS certificate verifications ignores the certificate name, subject
-   altname and ip extensions, it just checks if the certificate is signed
+   The TLS certificate verifications ignores the certificate name, Subject
+   Altname and IP extensions, it just checks if the certificate is signed
    by a recognized CA. One can use the select framework to try to overcome
    this limitation (check in the script for the contents of various
    certificate fields), but this is not only slow, but also not exactly
@@ -519,7 +523,7 @@ Revoking a certificate and using a CRL
 
 9.1. tls_method (string)
 
-   Sets the SSL/TLS protocol method. Possible values are:
+   Sets the TLS protocol method. Possible values are:
      * TLSv1.2 - only TLSv1.2 connections are accepted (available starting
        with openssl/libssl v1.0.1e)
      * TLSv1.1+ - TLSv1.1 or newer (TLSv1.2, ...) connections are accepted
@@ -531,10 +535,10 @@ Revoking a certificate and using a CRL
      * TLSv1 - only TLSv1 (TLSv1.0) connections are accepted. This is the
        default value.
      * SSLv3 - only SSLv3 connections are accepted. Note: you shouldn't
-       use SSLv3 for anything which should be highly secure.
+       use SSLv3 for anything which should be secure.
      * SSLv2 - only SSLv2 connections, for old clients. Note: you
-       shouldn't use SSLv2 for anything which should be highly secure.
-       Newer versions of libssl don't include support for it anymore.
+       shouldn't use SSLv2 for anything which should be secure. Newer
+       versions of libssl don't include support for it anymore.
      * SSLv23 - any of the SSLv2, SSLv3 and TLSv1 or newer methods will be
        accepted.
        From the OpenSSL manual: "A TLS/SSL connection established with
@@ -547,12 +551,15 @@ Revoking a certificate and using a CRL
        choice when compatibility is a concern."
        Note: For older libssl version, this option allows SSLv2, with
        hello messages done over SSLv2. You shouldn't use SSLv2 or SSLv3
-       for anything which should be highly secure.
+       for anything which should be secure.
 
    If RFC 3261 conformance is desired, at least TLSv1 must be used. For
    compatibility with older clients SSLv23 is the option, but again, be
    aware of security concerns, SSLv2/3 being considered very insecure by
-   2014.
+   2014. For current information about what's considered secure, please
+   consult, IETF BCP 195, currently RFC 7525 - "Recommendations for Secure
+   Use of Transport Layer Security (TLS) and Datagram Transport Layer
+   Security (DTLS)"
 
    Example 1.3. Set tls_method parameter
 ...
@@ -569,10 +576,6 @@ modparam("tls", "tls_method", "TLSv1")
    absolute path and if it starts with anything else the path will be
    relative to the main config file directory (e.g.: for kamailio -f
    /etc/kamailio/kamailio.cfg it will be relative to /etc/kamailio/).
-
-   Warning: try not to use certificate with keys longer then 2048 bytes.
-   Longer keys will severely impact performance, in particular the TLS
-   connection rate.
 
    The default value is /usr/local/etc/kamailio/cert.pem
 
@@ -607,9 +610,9 @@ modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
 9.4. ca_list (string)
 
    Sets the CA list file name. This file contains a list of all the
-   trusted CAs certificates. If a signature in a certificate chain belongs
-   to one of the listed CAs, the verification of that certificate will
-   succeed.
+   trusted CAs certificates used when connecting to other SIP
+   implementations. If a signature in a certificate chain belongs to one
+   of the listed CAs, the verification of that certificate will succeed.
 
    If the file name starts with a '.' the path will be relative to the
    working directory (at runtime). If it starts with a '/' it will be an
@@ -620,8 +623,8 @@ modparam("tls", "private", "/usr/local/etc/kamailio/my_pkey.pem")
    By default the CA file is not set.
 
    An easy way to create the CA list is to append each trusted trusted CA
-   certificate in the PEM format to one file, e.g.: for f in
-   trusted_cas/*.pem ; do cat "$f" >> ca_list.pem ; done .
+   certificate in the PEM format to one file, e.g.:
+for f in trusted_cas/*.pem ; do cat "$f" >> ca_list.pem ; done
 
    See also verify_certificate, verify_depth, require_certificate and crl.
 
@@ -679,8 +682,9 @@ modparam("tls", "crl", "/usr/local/etc/kamailio/crl.pem")
 
 9.6. verify_certificate (boolean)
 
-   If enabled it will force certificate verification. For more information
-   see the verify(1) openssl man page.
+   If enabled it will force certificate verification when connecting to
+   other SIP servers.. For more information see the verify(1) OpenSSL man
+   page.
 
    Note: the certificate verification will always fail if the ca_list is
    empty.
@@ -710,9 +714,9 @@ modparam("tls", "verify_depth", 9)
 
 9.8. require_certificate (boolean)
 
-   When enabled it will require a certificate from a client. If the client
-   does not offer a certificate and verify_certificate is on, certificate
-   verification will fail.
+   When enabled Kamailio will require a certificate from a client
+   connecting to the TLS port. If the client does not offer a certificate
+   and verify_certificate is on, certificate verification will fail.
 
    The default value is off.
 
@@ -725,9 +729,9 @@ modparam("tls", "require_certificate", 1)
 
    Sets the list of accepted ciphers. The list consists of cipher strings
    separated by colons. For more information on the cipher list format see
-   the cipher(1) openssl man page.
+   the cipher(1) OpenSSL man page.
 
-   The default value is not set (all the Openssl supported ciphers are
+   The default value is not set (all the OpenSSL supported ciphers are
    enabled).
 
    Example 1.11. Set cipher_list parameter
@@ -739,8 +743,8 @@ modparam("tls", "cipher_list", "HIGH")
 
    Sets the Server Name Indication (SNI) value.
 
-   This is a TLS extension and is not working for old and obsoleted SSL
-   versions.
+   This is a TLS extension enabling one TLS server to serve multiple host
+   names with unique certificates.
 
    The default value is empty (not set).
 
@@ -788,9 +792,10 @@ modparam("tls", "connection_timeout", 60)
    If set compression over TLS will be disabled. Note that compression
    uses a lot of memory (about 10x more then with the compression
    disabled), so if you want to minimize memory usage is a good idea to
-   disable it.
+   disable it. TLS compression also expose you for the CRIME security
+   vulnerability.
 
-   By default compression is disabled.
+   By default TLS compression is disabled.
 
    Example 1.15. Set tls_disable_compression parameter
 ...
@@ -845,9 +850,9 @@ modparam("tls", "ssl_freelist_max_len", 0)
 9.17. ssl_max_send_fragment (integer)
 
    Sets the maximum number of bytes (from the clear text) sent into one
-   TLS or SSL record. Valid values are between 512 and 16384. Note however
-   that even valid low values might not be big enough to allow a
-   succesfull handshake (try minimum 1024).
+   TLS record. Valid values are between 512 and 16384. Note however that
+   even valid low values might not be big enough to allow a succesfull
+   handshake (try minimum 1024).
 
    Lower values would lead to less memory usage, but values lower then the
    typical Kamailio write size would incur a slight performance penalty.
@@ -924,7 +929,7 @@ modparam("tls", "send_close_notify", 1)
 
    Sets the maximum allowed per connection clear-text send queue size in
    bytes. This queue is used when data cannot be encrypted and sent
-   immediately because of an ongoing TLS/SSL level renegotiation.
+   immediately because of an ongoing TLS level renegotiation.
 
    The default value is 65536 (64 Kb).
 
@@ -1020,9 +1025,9 @@ modparam("tls", "tls_debug", 10)
    Sets the minimal free memory from which attempts to open or accept new
    TLS connections will start to fail. The value is expressed in KB.
 
-   The default value depends on whether the openssl library used handles
-   well low memory situations (openssl bug #1491). As of this writing this
-   is not true for any openssl version (including 0.9.8e).
+   The default value depends on whether the OpenSSL library used handles
+   low memory situations in a good way (openssl bug #1491). As of this
+   writing this is not true for any OpenSSL version (including 0.9.8e).
 
    If an ill-behaved OpenSSL version is detected, a very conservative
    value is choosed, which depends on the maximum possible number of
@@ -1036,7 +1041,7 @@ modparam("tls", "tls_debug", 10)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.low_mem_threshold1.
 
-   See also low_mem_threshold2.
+   See also tls.low_mem_threshold2.
 
    Example 1.32. Set low_mem_threshold1 parameter
 ...
@@ -1053,10 +1058,10 @@ modparam("tls", "low_mem_threshold1", -1)
    is expressed in KB.
 
    The default value depends on whether the OpenSSL library used handles
-   well low memory situations (openssl bug #1491). As of this writing this
-   is not true for any OpenSSL version (including 0.9.8e).
+   low memory situations (openssl bug #1491). As of this writing this is
+   not true for any OpenSSL version (including 0.9.8e).
 
-   If an ill-behaved openssl version is detected, a very conservative
+   If an ill-behaved OpenSSL version is detected, a very conservative
    value is choosed, which depends on the maximum possible number of
    simultaneously created TLS connections (and hence on the process
    number).
@@ -1068,9 +1073,9 @@ modparam("tls", "low_mem_threshold1", -1)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.low_mem_threshold2.
 
-   See also low_mem_threshold1.
+   See also tls.low_mem_threshold1.
 
-   Example 1.34. Set low_mem_threshold2 parameter
+   Example 1.34. Set tls.low_mem_threshold2 parameter
 ...
 modparam("tls", "low_mem_threshold2", -1)
 ...
@@ -1083,8 +1088,7 @@ modparam("tls", "low_mem_threshold2", -1)
    If enabled Kamailio will start even if some of the OpenSSL sanity
    checks fail (turn it on at your own risk).
 
-   Currently failing any of the following sanity checks will not allow
-   Kamailio to start:
+   If any of the following sanity checks fal, Kamailio will not start:
      * the version of the library the TLS module was compiled with is "too
        different" from the library used at runtime. The versions should
        have the same major, minor and fix level (e.g.: 0.9.8a and 0.9.8c
@@ -1155,7 +1159,7 @@ modparam("tls", "renegotiation", 1)
    kamailio -f /etc/kamailio/kamailio.cfg it will be relative to
    /etc/kamailio/).
 
-   By default no config file is specified.
+   By default no TLS configuration file is specified.
 
    The following parameters can be set in the config file, for each
    domain:
@@ -1234,7 +1238,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
    The file can be changed at runtime. The new config will not be loaded
    immediately, but after the first tls.reload RPC call.
 
-   Example 1.42. Change and reload the tls configuration at runtime
+   Example 1.42. Change and reload the TLS configuration at runtime
  $ kamcmd cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ kamcmd tls.reload
 
@@ -1289,7 +1293,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 11.1. tls.info
 
    List internal information related to the TLS module in a short list -
-   max connections, opened connections and the write queue size.
+   max connections, open connections and the write queue size.
 
    Parameters:
      * None.
@@ -1312,8 +1316,8 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 
    Reload the external TLS configuration file (aka tls.cfg). It does not
    reload modparam() parameters. Note that existing active TLS connections
-   are not terminated and they continue to use the old certificates. New
-   configuration will be used for new connections.
+   are not terminated and they continue to use the old certificates. The
+   new configuration will be used for new connections.
 
    Parameters:
      * None.
