@@ -2350,7 +2350,7 @@ sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg)
 	res->len = 0;
 	n = s->params[2].v.i;
 	if (n <= 0) {
-		LOG(L_ERR, "ERROR: rewrite_contact[%d]: zero or negative index not supported\n", n);
+		LM_ERR("rewrite contact[%d] - zero or negative index not supported\n", n);
 		return -1;
 	}
 	c = 0;
@@ -2361,7 +2361,7 @@ sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg)
 	} while (n > 0);
 
 	if (parse_uri(c->uri.s, c->uri.len, &uri) < 0 || uri.host.len <= 0) {
-		LOG(L_ERR, "rewrite_contact[%d]: Error while parsing Contact URI\n", s->params[2].v.i);
+		LM_ERR("rewrite contact[%d] - error while parsing Contact URI\n", s->params[2].v.i);
 		return -1;
 	}
 	len = c->len - uri.host.len;
@@ -2371,7 +2371,7 @@ sel_rewrite_contact(str* res, select_t* s, struct sip_msg* msg)
 	if (!def_port_fl)
 		len += 1/*:*/+5/*port*/;
 	if (len > sizeof(buf)) {
-		LOG(L_ERR, "ERROR: rewrite_contact[%d]: contact too long\n", s->params[2].v.i);
+		LM_ERR("rewrite contact[%d] - contact too long\n", s->params[2].v.i);
 		return -1;
 	}
 	hostport = uri.host;
