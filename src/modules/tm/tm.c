@@ -1007,7 +1007,7 @@ inline static int w_t_lookup_cancel(struct sip_msg* msg, char* str, char* str2)
 			return 1;
 		}
 	} else {
-		LOG(L_WARN, "WARNING: script error t_lookup_cancel() called for non-CANCEL request\n");
+		LM_WARN("script error - t_lookup_cancel() called for non-CANCEL request\n");
 	}
 	return -1;
 }
