@@ -79,7 +79,6 @@ void free_saved_lir_transaction_data(saved_lir_transaction_t* data) {
 }
 
 void async_cdp_lir_callback(int is_timeout, void *param, AAAMessage *lia, long elapsed_msecs) {
-    struct run_act_ctx ra_ctx;
     str server_name;
     int *m_capab = 0, m_capab_cnt = 0;
     int *o_capab = 0, o_capab_cnt = 0;
