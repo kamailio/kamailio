@@ -73,9 +73,9 @@ typedef struct _isc_mark{
 int isc_mark_get_from_msg(struct sip_msg *msg,isc_mark *mark);
 void isc_mark_get(str x,isc_mark *mark);
 int base16_to_bin(char *from,int len, char *to);
-inline int isc_mark_drop_route(struct sip_msg *msg);
+int isc_mark_drop_route(struct sip_msg *msg);
 int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark);
-inline int isc_mark_write_route(struct sip_msg *msg,str *as,str *iscmark);
+int isc_mark_write_route(struct sip_msg *msg,str *as,str *iscmark);
 int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark);
 int bin_to_base16(char *from,int len, char *to);
 

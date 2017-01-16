@@ -197,7 +197,7 @@ int base16_to_bin(char *from, int len, char *to) {
  *	@param msg - SIP mesage to mark
  *	@returns 1 on success
  */
-inline int isc_mark_drop_route(struct sip_msg *msg) {
+int isc_mark_drop_route(struct sip_msg *msg) {
 	struct lump* lmp, *tmp;
 
 	parse_headers(msg, HDR_EOH_F, 0);
@@ -273,7 +273,7 @@ int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark) {
  *	@param iscmark - the mark to write
  *	@returns 1 on success, else 0
  */
-inline int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark) {
+int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark) {
 	struct hdr_field *first;
 	struct lump* anchor;
 	str route;
