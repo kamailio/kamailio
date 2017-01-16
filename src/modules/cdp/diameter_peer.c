@@ -84,7 +84,7 @@ extern gen_lock_t *peer_list_lock;	/**< lock for the list of peers */
  * @param pid newly forked pid
  * @returns 1 on success or 0 on error
  */
-inline int dp_add_pid(pid_t pid)
+static inline int dp_add_pid(pid_t pid)
 {
 	pid_list_t *n;
 	lock_get(pid_list_lock);
@@ -107,7 +107,7 @@ inline int dp_add_pid(pid_t pid)
 /**
  * Returns the last pid in the local process list.
  */
-inline int dp_last_pid()
+static inline int dp_last_pid()
 {
 	int pid;
 	lock_get(pid_list_lock);
@@ -121,7 +121,7 @@ inline int dp_last_pid()
  * Delete a pid from the process list
  * @param pid - the pid to remove
  */
-inline void dp_del_pid(pid_t pid)
+static inline void dp_del_pid(pid_t pid)
 {
 	pid_list_t *i;
 	lock_get(pid_list_lock);
