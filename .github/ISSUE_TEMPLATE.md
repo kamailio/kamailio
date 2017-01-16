@@ -67,7 +67,7 @@ If you found a solution or workaround for the issue, describe it. Ideally, provi
 * **Operating System**:
 
 <!--
-Details about the operating system, the type: tMacOS, Linux, xBSD, Solaris, ...;
+Details about the operating system, the type: Linux (e.g.,: Debian 8.4, Ubuntu 16.04, CentOS 7.1, ...), MacOS, xBSD, Solaris, ...;
 Kernel details (output of `uname -a`)
 -->
 
