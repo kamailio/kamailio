@@ -136,9 +136,9 @@ int I_get_capabilities();
 int I_get_capab_match(scscf_capabilities *c,int *m,int mcnt,int *o,int ocnt);
 int add_scscf_list(str call_id,scscf_entry *sl);
 scscf_list* new_scscf_list(str call_id,scscf_entry *sl);
-inline unsigned int get_call_id_hash(str callid,int hash_size);
-inline void i_lock(unsigned int hash);
-inline void i_unlock(unsigned int hash);
+unsigned int get_call_id_hash(str callid,int hash_size);
+void i_lock(unsigned int hash);
+void i_unlock(unsigned int hash);
 int I_scscf_select(struct sip_msg* msg, char* str1, char* str2);
 
 /**
