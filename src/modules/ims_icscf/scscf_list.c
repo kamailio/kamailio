@@ -285,7 +285,7 @@ int add_scscf_list(str call_id, scscf_entry *sl) {
 /**
  * Computes the hash for a string.
  */
-inline unsigned int get_call_id_hash(str callid, int hash_size) {
+unsigned int get_call_id_hash(str callid, int hash_size) {
 #define h_inc h+=v^(v>>3)
     char* p;
     register unsigned v;
@@ -334,7 +334,7 @@ error:
 /**
  * Locks the required part of hash with S-CSCF lists
  */
-inline void i_lock(unsigned int hash) {
+void i_lock(unsigned int hash) {
 
     lock_get(i_hash_table[(hash)].lock);
 
@@ -343,7 +343,7 @@ inline void i_lock(unsigned int hash) {
 /**
  * UnLocks the required part of hash with S-CSCF lists
  */
-inline void i_unlock(unsigned int hash) {
+void i_unlock(unsigned int hash) {
     lock_release(i_hash_table[(hash)].lock);
 
 }
