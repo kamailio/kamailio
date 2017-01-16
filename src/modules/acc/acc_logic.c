@@ -37,6 +37,7 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/strutils.h"
+#include "../../core/sip_msg_clone.h"
 #include "../../modules/tm/tm_load.h"
 #include "../rr/api.h"
 #include "../../core/flags.h"
@@ -450,14 +451,16 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 extern int _acc_clone_msg;
 
 /* initiate a report if we previously enabled accounting for this t */
-static inline void acc_onreply( struct cell* t, struct sip_msg *req,
-											struct sip_msg *reply, int code)
+static void acc_onreply(tm_cell_t *t, sip_msg_t *req, sip_msg_t *reply, int code)
 {
 	str new_uri_bk;
 	int br = -1;
 	hdr_field_t *hdr;
-	sip_msg_t tmsg;
-	sip_msg_t *preq;
+	sip_msg_t *cmsg = 0;
+	int cmsg_len = 0;
+	sip_msg_t *preq = 0;
+	void *mstart;
+	void *mend;
 
 	/* acc_onreply is bound to TMCB_REPLY which may be called
 	   from _reply, like when FR hits; we should not miss this
@@ -469,9 +472,20 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 		return;
 
 	if(_acc_clone_msg==1) {
-		memcpy(&tmsg, req, sizeof(sip_msg_t));
-		preq = &tmsg;
+		/* make a clone so eventual new parsed headers in pkg are not visible
+		 * to other processes -- other attributes should be already parsed,
+		 * available in the req structure and propagated by cloning */
+		cmsg = sip_msg_shm_clone(req, &cmsg_len, 1);
+		if(cmsg==NULL) {
+			LM_ERR("failed to clone the request - acc aborted\n");
+			return;
+		}
+		mstart = cmsg;
+		mend = ((char*)cmsg) + cmsg_len;
+		preq = cmsg;
 	} else {
+		mstart = t->uas.request;
+		mend = t->uas.end_request;
 		preq = req;
 	}
 
@@ -521,21 +535,23 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	acc_run_engines(preq, 0, NULL);
 
 	if (new_uri_bk.len>=0) {
-		req->new_uri = new_uri_bk;
-		req->parsed_uri_ok = 0;
+		preq->new_uri = new_uri_bk;
+		preq->parsed_uri_ok = 0;
 	}
 
 	/* free header's parsed structures that were added by resolving acc attributes */
-	for( hdr=req->headers ; hdr ; hdr=hdr->next ) {
-		if ( hdr->parsed && hdr_allocs_parse(hdr) &&
-					(hdr->parsed<(void*)t->uas.request ||
-					hdr->parsed>=(void*)t->uas.end_request)) {
-			/* header parsed filed doesn't point inside uas.request memory
+	for( hdr=preq->headers ; hdr ; hdr=hdr->next ) {
+		if (hdr->parsed && hdr_allocs_parse(hdr) &&
+					(hdr->parsed<mstart || hdr->parsed>=mend)) {
+			/* header parsed filed doesn't point inside cloned request memory
 			 * chunck -> it was added by resolving acc attributes -> free it as pkg */
 			DBG("removing hdr->parsed %d\n", hdr->type);
 			clean_hdr_field(hdr);
 			hdr->parsed = 0;
 		}
+	}
+	if(cmsg!=NULL) {
+		shm_free(cmsg);
 	}
 }
 
