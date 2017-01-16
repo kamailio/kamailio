@@ -193,6 +193,7 @@ int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 	str p_asserted_identity_header;
 	str publ_id;
 	reginfo_event_t *new_event;
+	str *body = NULL;
 	
 	content_type.s = "application/reginfo+xml";
 	content_type.len = 23;
@@ -216,7 +217,7 @@ int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 	LM_DBG("p_asserted_identity_header: [%.*s]", p_asserted_identity_header.len, p_asserted_identity_header.s);
 	
 	LM_DBG("Sending publish\n");
-	str *body = build_reginfo_partial(impu, c, type);
+	body = build_reginfo_partial(impu, c, type);
 
 	if (body == NULL || body->s == NULL) {
 		LM_ERR("Error on creating XML-Body for publish\n");
