@@ -335,20 +335,21 @@ int r_send_third_party_reg(r_third_party_registration *r, int expires) {
 
     h.len += contact_s.len + isc_my_uri_sip.len + contact_e.len;
 
-    if (r->pvni.len)
-	h.len += p_visited_network_id_s.len + p_visited_network_id_e.len
-	    + r->pvni.len;
-
-    if (r->pani.len)
-	h.len += p_access_network_info_s.len + p_access_network_info_e.len
-	    + r->pani.len;
-
-    if (r->cv.len)
-	h.len += p_charging_vector_s.len + p_charging_vector_e.len + r->cv.len;
-
-    if (r->path.len)
-	h.len += path_s.len + path_e.len + r->path.len + 6/*',' and ';lr' and '<' and '>'*/ + r->from.len /*adding our own address to path*/;
-	
+    if (r->pvni.len) {
+        h.len += p_visited_network_id_s.len + p_visited_network_id_e.len
+            + r->pvni.len;
+    }
+    if (r->pani.len) {
+        h.len += p_access_network_info_s.len + p_access_network_info_e.len
+            + r->pani.len;
+    }
+    if (r->cv.len) {
+        h.len += p_charging_vector_s.len + p_charging_vector_e.len + r->cv.len;
+    }
+    if (r->path.len) {
+        h.len += path_s.len + path_e.len + r->path.len + 6/*',' and ';lr' and '<' and '>'*/
+            + r->from.len /*adding our own address to path*/;
+    }
 	str pauri = {0,0};
 	
 	if (p_associated_uri.data_len > 0)
