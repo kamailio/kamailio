@@ -266,6 +266,7 @@ static int send_fd(int pipe_fd,int fd, peer *p)
 	struct msghdr msg;
 	struct iovec iov[1];
 	int ret;
+	int *tmp = NULL;
 
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	struct cmsghdr* cmsg;
@@ -284,7 +285,8 @@ static int send_fd(int pipe_fd,int fd, peer *p)
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
 	cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
-	*(int*)CMSG_DATA(cmsg)=fd;
+	tmp = (int*)CMSG_DATA(cmsg);
+	*tmp = fd;
 	msg.msg_flags=0;
 #else
 	msg.msg_accrights=(caddr_t) &fd;
@@ -328,6 +330,7 @@ static int receive_fd(int pipe_fd, int* fd,peer **p)
 	struct iovec iov[1];
 	int new_fd;
 	int ret;
+	int *tmp = NULL;
 
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	struct cmsghdr* cmsg;
@@ -382,7 +385,8 @@ again:
 			LM_ERR("receive_fd: msg level != SOL_SOCKET\n");
 			goto error;
 		}
-		*fd=*((int*) CMSG_DATA(cmsg));
+		tmp = (int*)CMSG_DATA(cmsg);
+		*fd = *tmp;
 	}else{
 		if(!cmsg)
 			LM_ERR("receive_fd: no descriptor passed, empty control message");
