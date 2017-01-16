@@ -680,7 +680,7 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 		
 		int len, len2;
 		int int_port_rctp_a,int_port_rctp_b;
-		str port_rtcp_a, port_rtcp_b;
+		str port_rtcp_a = STR_NULL, port_rtcp_b = STR_NULL;
 		AAA_AVP *flow_description1 = 0, *flow_description2 = 0, *flow_description3 = 0, *flow_description4 = 0, *flow_number = 0;
 		AAA_AVP *flow_description5 = 0, *flow_description6 = 0, *flow_description7 = 0, *flow_description8 = 0;
 		AAA_AVP *flow_usage = 0;
