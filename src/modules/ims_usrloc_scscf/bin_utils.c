@@ -73,7 +73,7 @@ static inline int str_shm_dup(str *dest,str *src)
 }
 
 
-inline int bin_alloc(bin_data *x, int max_len)
+int bin_alloc(bin_data *x, int max_len)
 {                                
 	x->s = (char*)BIN_ALLOC_METHOD(max_len);     
 	if (!x->s){
@@ -87,7 +87,7 @@ inline int bin_alloc(bin_data *x, int max_len)
 	return 1;
 }
 
-inline int bin_realloc(bin_data *x, int delta)
+int bin_realloc(bin_data *x, int delta)
 {
 #if BIN_DEBUG
 	LOG(L_INFO,"INFO:"M_NAME":bin_realloc: realloc %p from %d to + %d\n",x->s,x->max,delta);
@@ -101,7 +101,7 @@ inline int bin_realloc(bin_data *x, int delta)
 	return 1;
 }
 
-inline int bin_expand(bin_data *x, int delta)
+int bin_expand(bin_data *x, int delta)
 {
 	if (x->max-x->len>=delta) return 1;
 #if BIN_DEBUG	
@@ -116,7 +116,7 @@ inline int bin_expand(bin_data *x, int delta)
 	return 1;
 }
 
-inline void bin_free(bin_data *x)
+void bin_free(bin_data *x)
 {
 	BIN_FREE_METHOD(x->s);
 	x->s=0;x->len=0;x->max=0;
@@ -125,7 +125,7 @@ inline void bin_free(bin_data *x)
 /**
  *	simple print function 
  */
-inline void bin_print(bin_data *x)
+void bin_print(bin_data *x)
 {
 	int i,j,w=16;
 	char c;
@@ -155,7 +155,7 @@ inline void bin_print(bin_data *x)
 /**
  *	Append a char of 1 byte 
  */
-inline int bin_encode_char(bin_data *x,char k) 
+int bin_encode_char(bin_data *x,char k) 
 { 
 	if (!bin_expand(x,1)) return 0;
 	x->s[x->len++]= k; 
@@ -167,7 +167,7 @@ inline int bin_encode_char(bin_data *x,char k)
 /**
  *	Decode of 1 char
  */
-inline int bin_decode_char(bin_data *x,char *c)
+int bin_decode_char(bin_data *x,char *c)
 {
 #if BIN_DECODE_CHECKS
 	if (x->max+1 > x->len) return 0;
@@ -186,7 +186,7 @@ inline int bin_decode_char(bin_data *x,char *c)
 /**
  *	Append an unsigned char of 1 byte 
  */
-inline int bin_encode_uchar(bin_data *x,unsigned char k) 
+int bin_encode_uchar(bin_data *x,unsigned char k) 
 { 
 	if (!bin_expand(x,1)) return 0;
 	x->s[x->len++]= k; 
@@ -198,7 +198,7 @@ inline int bin_encode_uchar(bin_data *x,unsigned char k)
 /**
  *	Decode of 1 unsigned char
  */
-inline int bin_decode_uchar(bin_data *x,unsigned char *c)
+int bin_decode_uchar(bin_data *x,unsigned char *c)
 {
 #if BIN_DECODE_CHECKS
 	if (x->max+1 > x->len) return 0;
@@ -220,7 +220,7 @@ inline int bin_decode_uchar(bin_data *x,unsigned char *c)
 /**
  *	Append the a short  
  */
-inline int bin_encode_short(bin_data *x,short k) 
+int bin_encode_short(bin_data *x,short k) 
 { 
 	if (!bin_expand(x,2)) return 0;
 	x->s[x->len++]=k & 0x00FF;    
@@ -233,7 +233,7 @@ inline int bin_encode_short(bin_data *x,short k)
 /**
  *	Decode of a short
  */
-inline int bin_decode_short(bin_data *x,short *v)
+int bin_decode_short(bin_data *x,short *v)
 {
 #if BIN_DECODE_CHECKS
 	if (x->max+2 > x->len) return 0;
@@ -251,7 +251,7 @@ inline int bin_decode_short(bin_data *x,short *v)
 /**
  *	Append the an unsigned short  
  */
-inline int bin_encode_ushort(bin_data *x,unsigned short k) 
+int bin_encode_ushort(bin_data *x,unsigned short k) 
 { 
 	if (!bin_expand(x,2)) return 0;
 	x->s[x->len++]=k & 0x00FF;    
@@ -264,7 +264,7 @@ inline int bin_encode_ushort(bin_data *x,unsigned short k)
 /**
  *	Decode of a short
  */
-inline int bin_decode_ushort(bin_data *x,unsigned short *v)
+int bin_decode_ushort(bin_data *x,unsigned short *v)
 {
 #if BIN_DECODE_CHECKS
 	if (x->max+2 > x->len) return 0;
@@ -282,7 +282,7 @@ inline int bin_decode_ushort(bin_data *x,unsigned short *v)
 /**
  *	Append an integer
  */
-inline int bin_encode_int(bin_data *x,int k) 
+int bin_encode_int(bin_data *x,int k) 
 { 
 	int len = sizeof(int),i;
 	if (!bin_expand(x,len)) return 0;
@@ -309,7 +309,7 @@ inline int bin_encode_int(bin_data *x,int k)
 /**
  *	Decode an integer
  */
-inline int bin_decode_int(bin_data *x,int *v)
+int bin_decode_int(bin_data *x,int *v)
 {
 	int len = sizeof(int),i;
 #if BIN_DECODE_CHECKS
@@ -329,7 +329,7 @@ inline int bin_decode_int(bin_data *x,int *v)
 /**
  *	Append an unsigned integer
  */
-inline int bin_encode_uint(bin_data *x,unsigned int k) 
+int bin_encode_uint(bin_data *x,unsigned int k) 
 { 
 	int len = sizeof(unsigned int),i;
 	if (!bin_expand(x,len)) return 0;
@@ -356,7 +356,7 @@ inline int bin_encode_uint(bin_data *x,unsigned int k)
 /**
  *	Decode an unsigned integer
  */
-inline int bin_decode_uint(bin_data *x,unsigned int *v)
+int bin_decode_uint(bin_data *x,unsigned int *v)
 {
 	int len = sizeof(unsigned int),i;
 #if BIN_DECODE_CHECKS
@@ -374,7 +374,7 @@ inline int bin_decode_uint(bin_data *x,unsigned int *v)
 /**
  *	Append a time_t structure
  */
-inline int bin_encode_time_t(bin_data *x,time_t k) 
+int bin_encode_time_t(bin_data *x,time_t k) 
 { 
 	int len = sizeof(time_t),i;
 	if (!bin_expand(x,len)) return 0;
@@ -401,7 +401,7 @@ inline int bin_encode_time_t(bin_data *x,time_t k)
 /**
  *	Decode an unsigned integer
  */
-inline int bin_decode_time_t(bin_data *x,time_t *v)
+int bin_decode_time_t(bin_data *x,time_t *v)
 {
 	int len = sizeof(time_t),i;
 #if BIN_DECODE_CHECKS
@@ -438,7 +438,7 @@ inline int bin_encode_str(bin_data *x,str *s)
 /**
  *	Decode of a str string
  */
-inline int bin_decode_str(bin_data *x,str *s)
+int bin_decode_str(bin_data *x,str *s)
 {
 #if BIN_DECODE_CHECKS
 	if (x->max+2 > x->len) return 0;

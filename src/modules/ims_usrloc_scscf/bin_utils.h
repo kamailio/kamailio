@@ -62,35 +62,35 @@ typedef struct _bin_data {
 #define BIN_REALLOC_METHOD  shm_realloc
 #define BIN_FREE_METHOD     shm_free
 
-inline int bin_alloc(bin_data *x, int max_len);
-inline int bin_realloc(bin_data *x, int delta);
-inline int bin_expand(bin_data *x, int delta);
-inline void bin_free(bin_data *x);
-inline void bin_print(bin_data *x);
+int bin_alloc(bin_data *x, int max_len);
+int bin_realloc(bin_data *x, int delta);
+int bin_expand(bin_data *x, int delta);
+void bin_free(bin_data *x);
+void bin_print(bin_data *x);
 
-inline int bin_encode_char(bin_data *x,char k);
-inline int bin_decode_char(bin_data *x,char *c);
+int bin_encode_char(bin_data *x,char k);
+int bin_decode_char(bin_data *x,char *c);
 
-inline int bin_encode_uchar(bin_data *x,unsigned char k); 
-inline int bin_decode_uchar(bin_data *x,unsigned char *c);
+int bin_encode_uchar(bin_data *x,unsigned char k); 
+int bin_decode_uchar(bin_data *x,unsigned char *c);
 
-inline int bin_encode_short(bin_data *x,short k);
-inline int bin_decode_short(bin_data *x,short *c);
+int bin_encode_short(bin_data *x,short k);
+int bin_decode_short(bin_data *x,short *c);
 
-inline int bin_encode_ushort(bin_data *x,unsigned short k); 
-inline int bin_decode_ushort(bin_data *x,unsigned short *c);
+int bin_encode_ushort(bin_data *x,unsigned short k); 
+int bin_decode_ushort(bin_data *x,unsigned short *c);
 
-inline int bin_encode_int(bin_data *x,int k);
-inline int bin_decode_int(bin_data *x,int *c);
+int bin_encode_int(bin_data *x,int k);
+int bin_decode_int(bin_data *x,int *c);
 
-inline int bin_encode_uint(bin_data *x,unsigned int k); 
-inline int bin_decode_uint(bin_data *x,unsigned int *c);
+int bin_encode_uint(bin_data *x,unsigned int k); 
+int bin_decode_uint(bin_data *x,unsigned int *c);
 
-inline int bin_encode_time_t(bin_data *x,time_t k);
-inline int bin_decode_time_t(bin_data *x,time_t *c);
+int bin_encode_time_t(bin_data *x,time_t k);
+int bin_decode_time_t(bin_data *x,time_t *c);
 
-inline int bin_encode_str(bin_data *x,str *s);
-inline int bin_decode_str(bin_data *x,str *s);
+int bin_encode_str(bin_data *x,str *s);
+int bin_decode_str(bin_data *x,str *s);
 
 int bin_encode_ims_subscription(bin_data *x, ims_subscription *s);
 ims_subscription *bin_decode_ims_subscription(bin_data *x);
