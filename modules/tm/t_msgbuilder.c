@@ -1467,10 +1467,19 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	str content_length, cseq, via;
 	unsigned int maxfwd_len;
 	int tbracket, fbracket;
+	str fromtag = STR_NULL;
+	str loc_tag = STR_NULL;
 
 	if (!method || !dialog) {
 		LOG(L_ERR, "build_uac_req(): Invalid parameter value\n");
 		return 0;
+	}
+
+	if (dialog->id.loc_tag.len<=0) {
+		/* From Tag is mandatory in RFC3261 - generate one if not provided */
+		generate_fromtag(&fromtag, &dialog->id.call_id);
+		loc_tag = dialog->id.loc_tag;
+		dialog->id.loc_tag = fromtag;
 	}
 	if (print_content_length(&content_length, body) < 0) {
 		LOG(L_ERR, "build_uac_req(): Error while printing content-length\n");
@@ -1552,6 +1561,9 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	memapp(w, via.s, via.len);                            /* Top-most Via */
 	w = print_to(w, dialog, t, tbracket);                 /* To */
 	w = print_from(w, dialog, t, fbracket);               /* From */
+	if(fromtag.len>0) {
+		dialog->id.loc_tag = loc_tag;
+	}
 	w = print_cseq(w, &cseq, method, t);                  /* CSeq */
 	w = print_callid(w, dialog, t);                       /* Call-ID */
 	w = print_routeset(w, dialog);                        /* Route set */
