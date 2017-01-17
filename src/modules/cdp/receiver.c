@@ -67,6 +67,8 @@
 
 #include "receiver.h"
 
+#include "diameter_peer.h"
+
 #include "../../core/cfg/cfg_struct.h"
 
 extern dp_config *config;		/**< Configuration for this diameter peer 	*/

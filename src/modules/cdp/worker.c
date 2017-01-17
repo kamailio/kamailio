@@ -54,6 +54,7 @@
 
 #include "worker.h"
 #include "diameter_api.h"
+#include "diameter_peer.h"
 
 #include "../../core/cfg/cfg_struct.h"
 #include "cdp_stats.h"

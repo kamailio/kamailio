@@ -65,11 +65,79 @@ typedef struct {
 	pid_list_t *head,*tail;
 } pid_list_head_t;
 
+pid_t *dp_first_pid;		/**< first pid that we started from		*/
+
+pid_list_head_t *pid_list;	/**< list of local processes			*/
+gen_lock_t *pid_list_lock;	/**< lock for list of local processes	*/
+
 int diameter_peer_init_str(str config_str);
 int diameter_peer_init(char *cfg_filename);
 
 int diameter_peer_start(int blocking);
 
 void diameter_peer_destroy();
+
+
+/**
+ * Add a pid to the local process list.
+ * @param pid newly forked pid
+ * @returns 1 on success or 0 on error
+ */
+static inline int dp_add_pid(pid_t pid)
+{
+	pid_list_t *n;
+	lock_get(pid_list_lock);
+	n = shm_malloc(sizeof(pid_list_t));
+	if (!n){
+		LOG_NO_MEM("shm",sizeof(pid_list_t));
+		lock_release(pid_list_lock);
+		return 0;
+	}
+	n->pid = pid;
+	n->next = 0;
+	n->prev = pid_list->tail;
+	if (!pid_list->head) pid_list->head = n;
+	if (pid_list->tail) pid_list->tail->next = n;
+	pid_list->tail = n;
+	lock_release(pid_list_lock);
+	return 1;
+}
+
+/**
+ * Returns the last pid in the local process list.
+ */
+static inline int dp_last_pid()
+{
+	int pid;
+	lock_get(pid_list_lock);
+	if (pid_list->tail)	pid = pid_list->tail->pid;
+	else pid = -1;
+	lock_release(pid_list_lock);
+	return pid;
+}
+
+/**
+ * Delete a pid from the process list
+ * @param pid - the pid to remove
+ */
+static inline void dp_del_pid(pid_t pid)
+{
+	pid_list_t *i;
+	lock_get(pid_list_lock);
+	i = pid_list->head;
+	if (!i) {
+		lock_release(pid_list_lock);
+		return;
+	}
+	while(i && i->pid!=pid) i = i->next;
+	if (i){
+		if (i->prev) i->prev->next = i->next;
+		else pid_list->head = i->next;
+		if (i->next) i->next->prev = i->prev;
+		else pid_list->tail = i->prev;
+		shm_free(i);
+	}
+	lock_release(pid_list_lock);
+}
 
 #endif

@@ -60,6 +60,7 @@
 #include "tcp_accept.h"
 #include "config.h"
 #include "worker.h"
+#include "diameter_peer.h"
 
 
 /* defined in ../diameter_peer.c */
