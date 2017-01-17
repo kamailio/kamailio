@@ -6,7 +6,7 @@ CREATE TABLE usr_preferences (
     attribute VARCHAR2(32) DEFAULT '',
     type NUMBER(10) DEFAULT 0 NOT NULL,
     value VARCHAR2(128) DEFAULT '',
-    last_modified DATE DEFAULT to_date('1900-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss')
+    last_modified DATE DEFAULT to_date('2000-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss')
 );
 
 CREATE OR REPLACE TRIGGER usr_preferences_tr
