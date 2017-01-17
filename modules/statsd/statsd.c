@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "../../sr_module.h"
-#include "../../usr_avp.c"
+#include "../../usr_avp.h"
 #include "../../pvar.h"
 #include "../../lvalue.h"
 #include "lib_statsd.h"
