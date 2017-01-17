@@ -965,8 +965,12 @@ rtpengine_delete();
        with internal flag FL_SDP_BODY to know that the 1xx and 2xx are for
        rtpengine_answer()
      * If ACK with SDP, then do rtpengine_answer()
-     * If BYE or CANCEL, or called within a FAILURE_ROUTE[], then do
-       rtpengine_delete()
+     * If BYE or CANCEL, or called within a FAILURE_ROUTE[], then call
+       rtpengine_delete(). Be careful with calling this function after
+       resuming a suspended transaction (e.g., after t_continue()),
+       because the context of executed route is FAILURE ROUTE (in other
+       words, rtpengine_manage() in the route block of t_continue() does
+       the same as in failure_route).
      * If reply to INVITE with code >= 300 do rtpengine_delete()
      * If reply with SDP to INVITE having code 1xx and 2xx, then do
        rtpengine_answer() if the request had SDP or tm is not loaded,

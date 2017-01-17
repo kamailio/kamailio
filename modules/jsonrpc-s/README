@@ -41,10 +41,11 @@ Daniel-Constantin Mierla
               4.1. jsonrpc_dispatch()
               4.2. jsonrpc_exec(cmd)
 
-        5. JSONRPC Transports
+        5. JSONRPC Commands
+        6. JSONRPC Transports
 
-              5.1. JSONRPC Over HTTP
-              5.2. JSONRPC Over FIFO
+              6.1. JSONRPC Over HTTP
+              6.2. JSONRPC Over FIFO
 
    List of Examples
 
@@ -57,8 +58,9 @@ Daniel-Constantin Mierla
    1.7. Set fifo_reply_dir parameter
    1.8. jsonrpc_dispatch usage
    1.9. jsonrpc_exec usage
-   1.10. JSONRPC Over Fifo Command
-   1.11. JSONRPC Over Fifo Command From Termina
+   1.10. JSONRPC Commands - Examples
+   1.11. JSONRPC Over Fifo Command
+   1.12. JSONRPC Over Fifo Command From Termina
 
 Chapter 1. Admin Guide
 
@@ -88,10 +90,11 @@ Chapter 1. Admin Guide
         4.1. jsonrpc_dispatch()
         4.2. jsonrpc_exec(cmd)
 
-   5. JSONRPC Transports
+   5. JSONRPC Commands
+   6. JSONRPC Transports
 
-        5.1. JSONRPC Over HTTP
-        5.2. JSONRPC Over FIFO
+        6.1. JSONRPC Over HTTP
+        6.2. JSONRPC Over FIFO
 
 1. Overview
 
@@ -293,17 +296,59 @@ event_route[xhttp:request] {
 jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
 ...
 
-5. JSONRPC Transports
+5. JSONRPC Commands
 
-   5.1. JSONRPC Over HTTP
-   5.2. JSONRPC Over FIFO
+   Here are some examples of RPC commands with the equivalent of running
+   them with kamcmd and the corresponding JSON document for them. It is
+   important to be aware that the name of the parameters doesn't matter,
+   only the order of the values must be the one expected by Kamailio RPC
+   command.
+
+   Example 1.10. JSONRPC Commands - Examples
+...
+# kamcmd core.psx
+
+{
+ "jsonrpc": "2.0",
+  "method": "core.psx",
+  "id": 1
+}
+...
+## - prototype: kamcmd dispatcher.set_state _state_ _group_ _address_
+# kamcmd dispatcher.set_state ip 2 sip:127.0.0.1:5080
+
+{
+  "jsonrpc": "2.0",
+  "method": "dispatcher.set_state",
+  "params": ["ip", 2, "sip:127.0.0.1:5080"],
+  "id": 1
+}
+
+## - or:
+
+{
+  "jsonrpc": "2.0",
+  "method": "dispatcher.set_state",
+  "params": {
+    "state": "ip",
+    "grpup": 2,
+    "address": "sip:127.0.0.1:5080"
+  },
+  "id": 1
+}
+...
+
+6. JSONRPC Transports
+
+   6.1. JSONRPC Over HTTP
+   6.2. JSONRPC Over FIFO
 
    JSONRPC specifications do not enforce a specific transport to carry the
    JSON documents. Very common is JSONRPC over HTTP or HTTPS, and they are
    supported by Kamailio. In addition, Kamailio supports receiving JSON
    documents via a local FIFO file.
 
-5.1. JSONRPC Over HTTP
+6.1. JSONRPC Over HTTP
 
    It requires that XHTTP module is loaded. HTTPS can be used if you
    enable TLS for Kamailio. The JSONRPC requests have to be sent to the
@@ -313,7 +358,7 @@ jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
 
    The format of the JSON document must follow the JSONRPC specifications.
 
-5.2. JSONRPC Over FIFO
+6.2. JSONRPC Over FIFO
 
    This module can retrive JSONRPC requests via a local FIFO file. To
    enable this feature, 'fifo_name' parameter must be set and 'transport'
@@ -326,7 +371,7 @@ jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
    'fifo_reply_dir'. Next is an example showing a JSONRPC command to be
    sent via FIFO transport.
 
-   Example 1.10. JSONRPC Over Fifo Command
+   Example 1.11. JSONRPC Over Fifo Command
 ...
 {
  "jsonrpc": "2.0",
@@ -339,7 +384,7 @@ jsonrpc_exec({"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
    Next is an example of how to test it from a terminal, assuming that the
    parameter 'fifo_name' is set to '/tmp/kamailio_jsonrpc_fifo'.
 
-   Example 1.11. JSONRPC Over Fifo Command From Termina
+   Example 1.12. JSONRPC Over Fifo Command From Termina
 ...
 mkfifo /tmp/kamailio_jsonrpc_reply_fifo
 cat /tmp/kamailio_jsonrpc_reply_fifo &
