@@ -284,6 +284,9 @@ module_group_kmini=$(mod_list_basic) $(mod_list_extra) \
 					  $(mod_list_db) $(mod_list_dbuid) \
 					  $(mod_list_jsdt)
 
+# pkg pcre module
+module_group_kpcre=$(mod_list_pcre)
+
 # pkg mysql module
 module_group_kmysql=$(mod_list_mysql)
 
