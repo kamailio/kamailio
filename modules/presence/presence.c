@@ -1171,7 +1171,7 @@ send_notify:
 
 		while(s)
 		{
-			if(notify(s, NULL, NULL, 0)< 0)
+			if(notify(s, NULL, NULL, 0, 0)< 0)
 			{
 				LM_ERR( "sending Notify request\n");
 				goto done;

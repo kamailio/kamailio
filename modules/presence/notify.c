@@ -1264,7 +1264,7 @@ error:
 
 int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str* rules_doc)
 {
-	str *notify_body = NULL, *aux_body = NULL;
+	str *notify_body = NULL;
 	subs_t* subs_array= NULL, *s= NULL;
 	int ret_code= -1;
 
@@ -1291,22 +1291,13 @@ int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str
 	while(s)
 	{
 		s->auth_rules_doc= rules_doc;
-		if (p->event->aux_body_processing) {
-			aux_body = p->event->aux_body_processing(s, notify_body?notify_body:body);
-		}
 
-		if(notify(s, NULL, aux_body?aux_body:(notify_body?notify_body:body), 0)< 0 )
+		if(notify(s, NULL, notify_body?notify_body:body, 0, p->event->aux_body_processing)< 0 )
 		{
 			LM_ERR("Could not send notify for %.*s\n",
 					p->event->name.len, p->event->name.s);
 		}
 
-		if(aux_body!=NULL) {
-			if(aux_body->s)	{
-				p->event->aux_free_body(aux_body->s);
-			}
-			pkg_free(aux_body);
-		}
 		s= s->next;
 	}
 	ret_code= 0;
@@ -1454,7 +1445,7 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 				aux_body = event->aux_body_processing(s, notify_body);
 			}
 	
-			if(notify(s, watcher_subs, aux_body?aux_body:notify_body, 0)< 0 )
+			if(notify(s, watcher_subs, aux_body?aux_body:notify_body, 0, 0)< 0 )
 			{
 				LM_ERR("Could not send notify for [event]=%.*s\n",
 						event->name.len, event->name.s);
@@ -1667,8 +1658,11 @@ error:
 }
 
 
-int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
+int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body, aux_body_processing_t* aux_body_processing)
 {
+
+	str* aux_body = NULL;
+
 	/* update first in hash table and the send Notify */
 	if(subs->expires!= 0 && subs->status != TERMINATED_STATUS)
 	{
@@ -1705,10 +1699,28 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 		force_null_body = 1;
 	}
 
-	if(send_notify_request(subs, watcher_subs, n_body, force_null_body)< 0)
+	if (!force_null_body && aux_body_processing)
+	{
+		aux_body = aux_body_processing(subs, n_body);
+	}
+
+	if(send_notify_request(subs, watcher_subs, aux_body?aux_body:n_body, force_null_body)< 0)
 	{
 		LM_ERR("sending Notify not successful\n");
+		if(aux_body!=NULL) {
+			if(aux_body->s) {
+				subs->event->aux_free_body(aux_body->s);
+			}
+			pkg_free(aux_body);
+		}
 		return -1;
+	}
+
+	if(aux_body!=NULL) {
+		if(aux_body->s) {
+			subs->event->aux_free_body(aux_body->s);
+		}
+		pkg_free(aux_body);
 	}
 	return 0;
 }
@@ -2731,7 +2743,7 @@ static int notifier_notify(subs_t *sub, int *updated, int *end_transaction)
 			goto done;
 	}
 
-	if (notify(sub, NULL, nbody, 0) < 0)
+	if (notify(sub, NULL, nbody, 0, 0) < 0)
 	{
 		LM_ERR("could not send notify\n");
 		goto error;

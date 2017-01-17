@@ -610,7 +610,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 				*sent_reply= 1;
 			}
 
-			if(notify(subs, NULL, NULL, 0)< 0)
+			if(notify(subs, NULL, NULL, 0, 0)< 0)
 			{
 				LM_ERR("Could not send notify\n");
 				goto error;
@@ -697,7 +697,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 			}
 			if(subs->send_on_cback== 0)
 			{
-				if(notify(subs, NULL, NULL, 0)< 0)
+				if(notify(subs, NULL, NULL, 0, 0)< 0)
 				{
 					LM_ERR("Could not send notify\n");
 					goto error;
@@ -706,7 +706,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		}
 		else
 		{
-			if(send_fast_notify && (notify(subs, NULL, NULL, 0)< 0))
+			if(send_fast_notify && (notify(subs, NULL, NULL, 0, 0)< 0))
 			{
 				LM_ERR("Could not send notify\n");
 				goto error;
@@ -724,7 +724,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		}
 		*sent_reply= 1;
 
-		if(send_fast_notify && (notify(subs, NULL, NULL, 0 )< 0))
+		if(send_fast_notify && (notify(subs, NULL, NULL, 0, 0)< 0))
 		{
 			LM_ERR("sending notify request\n");
 			goto error;
