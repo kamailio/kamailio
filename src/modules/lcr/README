@@ -61,7 +61,7 @@ Juha Heinanen
               3.34. defunct_gw_avp (AVP string)
               3.35. lcr_rule_hash_size (integer)
               3.36. lcr_gw_count (integer)
-              3.37. dont_strip_or_tag_flag (integer)
+              3.37. dont_strip_or_prefix_flag (integer)
               3.38. priority_ordering (integer)
               3.39. fetch_rows (integer)
               3.40. ping_interval (integer)
@@ -128,7 +128,7 @@ Juha Heinanen
    1.34. Setting defunct_gw_avp module parameter
    1.35. Setting lcr_rule_hash_size module parameter
    1.36. Setting lcr_gw_count module parameter
-   1.37. Setting dont_strip_or_tag_flag module parameter
+   1.37. Setting dont_strip_or_prefix_flag module parameter
    1.38. Setting priority_ordering module parameter
    1.39. Set fetch_rows parameter
    1.40. Set ping_interval parameter
@@ -198,7 +198,7 @@ Chapter 1. Admin Guide
         3.34. defunct_gw_avp (AVP string)
         3.35. lcr_rule_hash_size (integer)
         3.36. lcr_gw_count (integer)
-        3.37. dont_strip_or_tag_flag (integer)
+        3.37. dont_strip_or_prefix_flag (integer)
         3.38. priority_ordering (integer)
         3.39. fetch_rows (integer)
         3.40. ping_interval (integer)
@@ -280,8 +280,8 @@ Chapter 1. Admin Guide
    be done with command 'kamctl eval_weights'.
 
    The function next_gw() can then be used to select one gateway at a time
-   for forwarding. Upon each call, unless "dont_strip_or_tag_flag" flag is
-   set, user part of the original Request-URI is first stripped by the
+   for forwarding. Upon each call, unless "dont_strip_or_prefix_flag" flag
+   is set, user part of the original Request-URI is first stripped by the
    number of characters as specified by the gateway's strip count and then
    prefixed by the gateway's prefix. Upon each call, if a gateway's
    hostname is NULL, Request-URI will be rewritten based on gateway's URI
@@ -356,7 +356,7 @@ Chapter 1. Admin Guide
    3.34. defunct_gw_avp (AVP string)
    3.35. lcr_rule_hash_size (integer)
    3.36. lcr_gw_count (integer)
-   3.37. dont_strip_or_tag_flag (integer)
+   3.37. dont_strip_or_prefix_flag (integer)
    3.38. priority_ordering (integer)
    3.39. fetch_rows (integer)
    3.40. ping_interval (integer)
@@ -793,16 +793,16 @@ modparam("lcr", "lcr_rule_hash_size", 1024)
 modparam("lcr", "lcr_gw_count", 1024)
 ...
 
-3.37. dont_strip_or_tag_flag (integer)
+3.37. dont_strip_or_prefix_flag (integer)
 
    Defines the flag number used to tell if stripping and tagging is done
    for the selected gateway.
 
    Default value is -1 meaning that the flag is not defined.
 
-   Example 1.37.  Setting dont_strip_or_tag_flag module parameter
+   Example 1.37.  Setting dont_strip_or_prefix_flag module parameter
 ...
-modparam("lcr", "dont_strip_or_tag_flag", 10)
+modparam("lcr", "dont_strip_or_prefix_flag", 10)
 ...
 
 3.38. priority_ordering (integer)
