@@ -99,7 +99,7 @@
 	<para>
         The function <emphasis>next_gw()</emphasis> can then be used to
 	select one gateway at a 
-	time for forwarding.  Upon each call, unless "dont_strip_or_tag_flag"
+	time for forwarding.  Upon each call, unless "dont_strip_or_prefix_flag"
 	flag is set, user part of the original Request-URI is first  
 	stripped by the number of characters as specified by the
 	gateway's strip count and then prefixed by 
@@ -961,7 +961,7 @@ modparam("lcr", "lcr_gw_count", 1024)
 	</section>
 
 	<section>
-		<title><varname>dont_strip_or_tag_flag</varname> (integer)</title>
+		<title><varname>dont_strip_or_prefix_flag</varname> (integer)</title>
 		<para>
 		Defines the flag number used to tell if stripping and
 		tagging is done for the selected gateway.
@@ -974,12 +974,12 @@ modparam("lcr", "lcr_gw_count", 1024)
 		</para>
 		<example>
 		<title>
-		Setting <varname>dont_strip_or_tag_flag</varname> module
+		Setting <varname>dont_strip_or_prefix_flag</varname> module
 		parameter
 		</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr", "dont_strip_or_tag_flag", 10)
+modparam("lcr", "dont_strip_or_prefix_flag", 10)
 ...
 </programlisting>
                 </example>
