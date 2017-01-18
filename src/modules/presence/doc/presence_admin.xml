@@ -780,6 +780,14 @@ modparam("presence", "subs_remove_match", 1)
 			the priority of the presence document is based on timestamp,
 			so newer documents have higher priority.</para>
         </listitem>
+        <listitem>
+			<para><emphasis>delete_subscription</emphasis> - integer value to 
+			give extra control of deleting the subscription after processing of
+			event_route[presence:notify-reply]. If value = 1, it deletes the subscription.
+			If xavp_cfg parameter is set but this attribute is not in the avp,
+			the subscription is not deleted. this does apply for code 404 and 481
+			where subscription is deleted.</para>
+        </listitem>
      </itemizedlist>
     <para>
         Default value is <emphasis>empty</emphasis> (not set).
