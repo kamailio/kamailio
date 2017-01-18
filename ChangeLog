@@ -1,3 +1,420 @@
+===================== 2017-01-18 Version 4.4.5 Released =====================
+
+===================== Changes Since Version 4.4.4 ===========================
+
+commit d0e563e23a1e45111d8236482abd7733fb1f0a28
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 18 15:54:15 2017 +0100
+
+    Makefile.defs: version set to 4.4.5
+
+commit 388b441bbff120d3643b22d6084e87c3843df6c0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 18 15:15:24 2017 +0100
+
+    pkg: version set to 4.4.5 in deb specs
+
+commit 91f2bf0bba902638788ba13c77cfc57d582d73cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 18 14:43:37 2017 +0100
+
+    pkg: set version to 4.4.5 in rpm specs
+
+commit fafbc5c78d8f1456a1da28fed68778377524e5e7
+Merge: 6dbadcb 18c64d2
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Jan 18 13:23:35 2017 +0000
+
+    Merge pull request #940 from kamailio/lazedo/db_text_fetch
+    
+    db_text: implement fetch and memory constraints
+
+commit 6dbadcbc076a78c8ace46af3215a503084eab848
+Merge: aa27479 1114fe0
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Jan 18 13:09:12 2017 +0000
+
+    Merge pull request #938 from kamailio/lazedo/kazoo-patch-44
+    
+    kazoo: fix kz_amqp_get_zones
+
+commit 18c64d2c9ff1527655055f75aa22e7d68c307874
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Jan 18 10:00:22 2017 +0000
+
+    db_text: implement fetch and memory constraints
+    
+    when dealing with large db_text files, pkg_memory is not suitable for
+    operating the database.
+    
+    implementing fetch allows modules like presence & registrar & usrloc
+    to query large tables without constraints on pkg_memory.
+    
+    creates tmp tables in shared memory for query results
+
+commit 1114fe01abdb791379274b4f388317d600d72e38
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Jan 18 09:19:44 2017 +0000
+
+    kazoo: fix kz_amqp_add_zone
+
+commit c84e8c5269f4823a3dce078bee4afcf583d8ef44
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Jan 18 08:45:14 2017 +0000
+
+    kazoo: extra logs in hash lookup
+
+commit d4156e946e4ac99f968b8d065932a9d7570404ac
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Jan 18 08:42:44 2017 +0000
+
+    kazoo: initialize pointers and return default zones
+
+commit aa27479ad204b6826aea03d777af9401ffd26a11
+Author: Charles Chance <charles.chance@sipcentric.com>
+Date:   Tue Jan 17 22:46:57 2017 +0000
+
+    presence: delay aux_body_processing until after subscription has been updated
+    
+    - fixes out-of-sequence version when subs_db_mode <> 3 and fast_notify is enabled
+
+commit df5ef6183350d99f77087dd83950ef35466e84a1
+Author: Robert Boisvert <rdbprog@gmail.com>
+Date:   Tue Oct 18 18:00:42 2016 -0400
+
+    mohqueue: fix pointer for RTP statistics error
+    
+    (cherry picked from commit dc96dfdee3c6a8e56ed9e5929e444bf8ee2f5cdd)
+    
+    Conflicts:
+            modules/mohqueue/mohq.c
+
+commit 124b6d1b1a614eb6a8cf9c7b5281b4eb038751f4
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Jan 17 14:16:11 2017 +0100
+
+    modules: readme files regenerated - dispatcher ...
+
+commit 3e5def30a8eeae76ac7352a5b9ba4e4a2f83fe9c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 12 16:34:35 2017 +0100
+
+    dialog: handle replies to local cancel for cseq updates
+    
+    (cherry picked from commit fab1b5dc4edc74555b965a6c305d7643629e0225)
+
+commit 869b496334373c7a43b6412d05d446d582be5112
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jan 11 15:22:50 2017 +0100
+
+    dialog: increase cseq after uac auth for local acks
+    
+    - related to GH #918, #919
+    
+    (cherry picked from commit b75d4ca219d7185e0a73cc9132760fe05227faa4)
+
+commit 3c53097213f686833a953e69aca0c66c7021b441
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 10 14:26:27 2017 +0100
+
+    dialog: use uac cseq header names from cfg env
+    
+    (cherry picked from commit a1189074af0946b1a4b57dff795d0f642818ad35)
+
+commit 49370420039936554d87950cec85d5fd22bcdaca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 10 14:27:06 2017 +0100
+
+    tm: if transaction had an uac auth, propagate cseq headers for local ACK and CANCEL
+    
+    - related to GH #870, #918, #919
+    
+    (cherry picked from commit 526ec68fa56cb8066db9da3a4b82f9e20aebf8c3)
+
+commit 693e70cdd787beccc6edb7ed1c721a2960536cc1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 10 14:25:13 2017 +0100
+
+    core: keep names for uac cseq helper headers in cfg env
+    
+    - shared by dialog and tm for cseq updates after uac auth
+    
+    (cherry picked from commit 391dce68f712d7b38eb48188f3ae2413da0f70c6)
+
+commit 6dd3f8c7c0c42a25871e15a56e751d36eb305e97
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 17 11:54:57 2017 +0100
+
+    tm: generate from tag if not provided for request_within()
+    
+    - related to GH #931
+    
+    (cherry picked from commit 96ca5c95e9380a56d886fad699a5966b7b00f5b6)
+
+commit 035ed5d420cfd46ab5af0aa37ec52fa1c4836fe0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 17 13:40:26 2017 +0100
+
+    statsd: include usr_avp.h instead of usr_avp.c
+    
+    - backport of commit 344baa0bae643f235e85ad8f670f412acadab0f1
+
+commit 9902d21f5f3f76ee93cd1a9a0a63c981b1c9eb88
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Dec 12 18:32:34 2016 +0100
+
+    xmlrpc: init delayed context for rpc_fault()
+    
+    - may fix the GH #878, reported by Juha Heinanen
+    
+    (cherry picked from commit 6b3ce6376258211d317620d4d96bd3d88788b6a3)
+
+commit 0f7a688d8670f171be0d4f4f36c5c7a005f946a0
+Author: Guilherme C Pilon <gpilon@daitangroup.com>
+Date:   Wed Nov 30 13:41:12 2016 -0200
+
+    ratelimit module not working properly when FEEDBACK algorithm is used - deleting unused lines
+    
+    (cherry picked from commit 22b040c944228cfc7795f4481465dd230bff6f99)
+
+commit 864c29081177204d238006f6308a6b09f982d6f5
+Author: Guilherme C Pilon <gpilon@daitangroup.com>
+Date:   Wed Nov 30 13:33:44 2016 -0200
+
+    ratelimit module not working properly when FEEDBACK algorithm is used
+    
+    (cherry picked from commit bb768faae3367c1209e735de71ab9fdcd5d068d5)
+
+commit 125eab75cc5febcea92eddadca4be2a83f70d7a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jan 17 13:32:05 2017 +0100
+
+    kamctl: regenerated db creation script to update default datetime value
+
+commit 7de5934632c0b00387c3ebc004cd86eb677711ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Nov 27 15:38:56 2016 +0100
+
+    lib/srdb1 - set default datetime value to 2000-01-01
+    
+    - 1900 is before the start of epoch and can result in unexpected
+      behaviour with some time related functions
+    
+    (cherry picked from commit 3efa32c9cdfc7a7bdc913724fba92f7b7a76434c)
+
+commit bc5d67854da18c1535abf2a54c7b8a5e21eea0cc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 21 12:15:54 2016 +0100
+
+    rtpproxy: added note about rtpproxy_manage() afte t_continue()
+    
+    - or after any other function that does suspend/resume of the
+      transaction
+    - it behaves as used in failure_route
+    
+    (cherry picked from commit e128d46e6a675b8cf5f8b584850c08cd16328af4)
+
+commit 7918a50ce645eb09d77e701526392a638f703cda
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 21 12:12:10 2016 +0100
+
+    rtpengine: added note about rtpproxy_manage() afte t_continue()
+    
+    - or after any other function that does suspend/resume of the
+      transaction
+    - it behaves as used in failure_route
+    - related to GH #855
+    
+    (cherry picked from commit 63f3e24ba2c0b9749f5c5d3268c633c629e20f89)
+
+commit 95ed5f71854e747b2336b8bd3b0e7f0c4b1b5a5b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 17 11:00:51 2016 +0100
+
+    tmx: added note to t_continue() docs about failure context of executed route block
+    
+    (cherry picked from commit 29635011f94a142fe5cde32558b8dfd095dd7820)
+
+commit 676b0bedfd045d7e7ffbfa5e5ecb137f8603e643
+Author: Mikko Lehto <mslehto@iki.fi>
+Date:   Mon Nov 14 15:50:54 2016 +0200
+
+    modules/dispatcher: fixed typo in documentation
+    
+    (cherry picked from commit 72f28fdcfd88b4f915156a992a6b1f12db79edc5)
+
+commit b1502145939ca9aec0ae73d93477eb5492e8536b
+Author: Armen Babikyan <armen@firespotter.com>
+Date:   Sat Nov 12 22:57:41 2016 -0800
+
+    memcached: fix deletion bug
+    
+    (cherry picked from commit c5f6cce69d7cae48f0769d89e9098a8526089055)
+
+commit 97d70c15a35195f0345c4143f29962b2bd0632de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 11 14:32:31 2016 +0100
+
+    jsonrpc-s: added section to show examples with rpc commands over jsonrpc
+    
+    (cherry picked from commit cdd703dcae172ad0692877addaa9fea80c06defc)
+
+commit 61a30f8432100118a1b9d3ed731f986900f80352
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 10 09:45:02 2016 +0100
+
+    async: updated to the name of functions for timers instead of macros
+    
+    (cherry picked from commit 60269ead4973b745f529e42c6e2c60287a040c64)
+
+commit 1e2dcd44036577377dce14bd71a9f238d4c7e355
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Jan 17 10:31:12 2017 +0100
+
+    modules: readme files regenerated - lcr ...
+
+commit 078fc57346efaa2944aa234166f21fd0a03c76bc
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jan 17 10:26:05 2017 +0100
+
+    lcr: fix documentation
+    
+    'dont_strip_or_tag_flag' module parameter was renamed to
+    'dont_strip_or_prefix_flag' at 8c0501bfaa27acab9721953e8c1551687c96edf2.
+
+commit 2250b3e562d6dbcab1477c7ed5a71daa7e462bb9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 22 09:15:22 2016 +0100
+
+    rtjson: enforce send socket with the attribute from json
+    
+    - reported by Diego Nadares
+    (backport of 1d23f81353dd7a68b0f537e9a064587a5f733bb7)
+
+commit 39874e415c754263e6c847bb19d89c5ef615e376
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Dec 20 08:36:20 2016 +0100
+
+    dialplan: safe checks for match expression
+    
+    - test if null to avoid invalid use in comparison functions
+    - reported by Julia Boudniatsky
+    (backport of commit 3a48835cf68f583ff2fbd7cec9bd76ddc0a1b6fc)
+
+commit 30f53f1484144d2069f5d3724a65e160bbb6adb5
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Dec 15 09:33:45 2016 +0100
+
+    dialplan: fix avp values when using PV_IDX_ITR
+    
+    manual backport from cc2c3de5e859861b59265cc5a0d41ae968a08149
+
+commit ad00a617dec57073a1e9facc64cf3a64904c6592
+Author: Federico Cabiddu <fcabiddu@libon.com>
+Date:   Tue Nov 29 12:10:36 2016 +0100
+
+    sipcapture: fix captid extraction from hep header for v3
+    
+    (cherry picked from commit 969f4600193139d95b5f876378e0c92d4eab9a7a)
+
+commit 6291792ecaee0bfb1855bf6ba4560e4d6af09f3e
+Author: Federico Cabiddu <fcabiddu@libon.com>
+Date:   Tue Nov 29 11:35:14 2016 +0100
+
+    sipcapture: perform ntohs on src and dst port when payload is not SIP
+    
+    (cherry picked from commit 1fbca28c3a6e90ca478d152e116aca5e64780e9e)
+
+commit 689d12741b86f101d00b1bcd348c3093f47d5158
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Dec 1 12:19:49 2016 +0100
+
+    tm: fix wrong CRLF position when building local request when reusing received buffer
+    
+    - should affect only configs when tm parameters for reparsing request
+      were changed from their default value
+    - reported by Helio Okuyama
+    
+    (cherry picked from commit 6db0e6b5a0b8ef48250abd7bfaedd15fc4860ddd)
+
+commit ae7f6d49ed1caf4a133f72012196a876d258e159
+Merge: b1e3d39 973e8ef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 30 11:14:08 2016 +0100
+
+    Merge pull request #869 from giavac/gv/correlation_id_backport
+    
+    sipcapture: remove workaround of correlation_id
+
+commit 973e8ef6e2f0323168f42ff9f77a86862604b51d
+Author: Giacomo Vacca <giacomo.vacca@gmail.com>
+Date:   Wed Sep 28 14:49:42 2016 +0200
+
+    sipcapture: remove workaround of correlation_id
+    
+    - Compatible with Asterisk >= 10
+    
+    (cherry picked from commit 6cb0bec7d2491ed3365dc237fc1d8608af246c3a)
+
+commit b1e3d396bb8ef8989895d9017bc8a98a85ce307f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Nov 30 07:39:00 2016 +0100
+
+    rtjson: fix for replacing to header based on json document
+    
+    - reported by GH #868
+    
+    (cherry picked from commit 1d5f39a23f1b92575153c5bb2ba87f15f80fa827)
+
+commit 91dcaafcc02af38754e8ceab3f7164595975a6d7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Nov 29 15:14:52 2016 +0100
+
+    kamctl: regenerated database schema
+
+commit 954b298097dcaba9cc0b26f9020ab585f299dceb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 24 17:46:36 2016 +0100
+
+    lib/srdb1: schema - don't set default value for text/blob columns of topos
+    
+    - not allowed by newer versions of mysql
+    
+    (cherry picked from commit 0eea31b4b934de45e8bc5091f7ba5a9d486dd16f)
+
+commit e292e044800611eb3f27a17193af6a3ec66fdd83
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 28 19:09:03 2016 +0100
+
+    pua_dialoginfo: safety check of paramters for __dialog_sendpublish()
+    
+    - reported by Davy Van De Moere, GH #865
+    
+    (cherry picked from commit 1d1d2246c8f89aa6eda52bda479014be0a10b937)
+
+commit c5d3bd8f48bc333dbf63584f463c02e9f546a54b
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Nov 11 12:31:18 2016 +0100
+
+    modules: readme files regenerated - dispatcher ...
+
+commit c959ae301d6cc771e4d9e24a63ce77794ae6faac
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 11 12:21:46 2016 +0100
+
+    dispatcher: docs - removed extra spaces and rephrased sample config text
+    
+    (cherry picked from commit 74581f3a500f0f5eca408991a99dc687ad4bf425)
+
+commit 1d1e7c87c117dae367b3dc476fe1bbe6aa5aeef5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 11 12:15:59 2016 +0100
+
+    dispatcher: updates to sameple config file
+    
+    (cherry picked from commit 0b3d6ad3238d28c1c3aaf8c39052405ffdaa21df)
+
+
 ===================== 2016-11-09 Version 4.4.4 Released =====================
 
 ===================== Changes Since Version 4.4.3 ===========================
