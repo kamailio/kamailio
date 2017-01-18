@@ -1830,6 +1830,23 @@ void run_notify_reply_event(struct cell *t, struct tmcb_params *ps)
 
 }
 
+int pres_get_delete_sub(void)
+{
+       sr_xavp_t *vavp = NULL;
+       str vname = str_init("delete_subscription");
+
+       if(pres_xavp_cfg.s==NULL || pres_xavp_cfg.len<=0) {
+               return 0;
+       }
+
+       vavp = xavp_get_child_with_ival(&pres_xavp_cfg, &vname);
+       if(vavp!=NULL) {
+               return (int)vavp->val.v.i;
+       }
+
+       return 0;
+}
+
 void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 {
 	subs_t* subs;
@@ -1847,7 +1864,10 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 
 	run_notify_reply_event(t, ps);
 
-	if(ps->code == 404 || ps->code == 481 || (ps->code == 408 && timeout_rm_subs)) {
+        if(ps->code == 404
+	   || ps->code == 481
+	   || (ps->code == 408 && timeout_rm_subs)
+	   || pres_get_delete_sub()) {
 		delete_subs(&subs->pres_uri, &subs->event->name,
 				&subs->to_tag, &subs->from_tag, &subs->callid);
 	}
