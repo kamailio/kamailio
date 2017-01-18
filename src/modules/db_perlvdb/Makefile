@@ -4,7 +4,11 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=db_perlvdb.so
-LIBS:=$(shell perl -MExtUtils::Embed -e ldopts)
+ifeq ($(PERLLDOPTS),)
+	LIBS:=$(shell perl -MExtUtils::Embed -e ldopts)
+else
+	LIBS+=$(PERLLDOPTS)
+endif
 PERL_DEFS:=$(shell perl -MExtUtils::Embed -e ccopts)
 DEFS+=$(PERL_DEFS)
 
