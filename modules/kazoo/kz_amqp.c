@@ -449,10 +449,10 @@ kz_amqp_zone_ptr kz_amqp_add_zone(char* zone) {
 	kz_amqp_zone_ptr zone_ptr = (kz_amqp_zone_ptr) shm_malloc(sizeof(kz_amqp_zone));
 	memset(zone_ptr, 0, sizeof(kz_amqp_zone));
 	zone_ptr->zone = shm_malloc(strlen(zone)+1);
-	memset(zone_ptr->servers, 0, sizeof(kz_amqp_servers));
 	strcpy(zone_ptr->zone, zone);
 	zone_ptr->zone[strlen(zone)] = '\0';
 	zone_ptr->servers = (kz_amqp_servers_ptr) shm_malloc(sizeof(kz_amqp_servers));
+	memset(zone_ptr->servers, 0, sizeof(kz_amqp_servers));
 	kz_zones->tail->next = zone_ptr;
 	kz_zones->tail = zone_ptr;
 	return zone_ptr;
