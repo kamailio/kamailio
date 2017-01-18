@@ -424,6 +424,7 @@ kz_amqp_zone_ptr kz_amqp_get_primary_zone() {
 		strcpy(kz_primary_zone->zone, dbk_primary_zone_name.s);
 		kz_primary_zone->zone[dbk_primary_zone_name.len] = '\0';
 		kz_primary_zone->servers = (kz_amqp_servers_ptr) shm_malloc(sizeof(kz_amqp_servers));
+		memset(kz_primary_zone->servers, 0, sizeof(kz_amqp_servers));
 	}
 	return kz_primary_zone;
 }
@@ -451,6 +452,7 @@ kz_amqp_zone_ptr kz_amqp_add_zone(char* zone) {
 	strcpy(zone_ptr->zone, zone);
 	zone_ptr->zone[strlen(zone)] = '\0';
 	zone_ptr->servers = (kz_amqp_servers_ptr) shm_malloc(sizeof(kz_amqp_servers));
+	memset(zone_ptr->servers, 0, sizeof(kz_amqp_servers));
 	kz_zones->tail->next = zone_ptr;
 	kz_zones->tail = zone_ptr;
 	return zone_ptr;
@@ -657,7 +659,7 @@ int kz_amqp_add_connection(modparam_t type, void* val)
 		url = ++ptr;
 
 	} else {
-		zone_ptr = kz_amqp_get_primary_zone();
+		zone_ptr = kz_amqp_get_zones();
 	}
 
 
