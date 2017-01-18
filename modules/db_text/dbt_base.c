@@ -131,7 +131,7 @@ int dbt_free_result(db1_con_t* _h, db1_res_t* _r)
 	if (!_r)
 		return 0;
 
-	if(dbt_result_free((dbt_result_p)_r->ptr) < 0)
+	if(dbt_result_free(_h, (dbt_table_p)_r->ptr) < 0)
 	{
 		LM_ERR("unable to free internal structure\n");
 	}
@@ -145,6 +145,7 @@ int dbt_free_result(db1_con_t* _h, db1_res_t* _r)
 	return 0;
 }
 
+static dbt_table_p last_temp_table = NULL; 
 
 /*
  * Query table for specified rows
@@ -157,30 +158,34 @@ int dbt_free_result(db1_con_t* _h, db1_res_t* _r)
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-
-int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
+int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			db_key_t* _c, int _n, int _nc, db_key_t _o, db1_res_t** _r)
 {
 	dbt_table_p _tbc = NULL;
+	dbt_table_p _tbc_temp = NULL;
 	dbt_row_p _drp = NULL;
-	dbt_result_p _dres = NULL;
+	dbt_row_p *_res = NULL;
+//	dbt_result_p _dres = NULL;
 	int result = 0;
-	
+	int counter = 0;
+	int i=0;
+
 	int *lkey=NULL, *lres=NULL;
-	
+
 	db_key_t *_o_k=NULL;    /* columns in order-by */
 	char *_o_op=NULL;       /* operators for oder-by */
 	int _o_n;               /* no of elements in order-by */
 	int *_o_l=NULL;         /* column selection for order-by */
-	int _o_nc;              /* no of elements in _o_l but not lres */
+//	int _o_nc;              /* no of elements in _o_l but not lres */
 
-	if ((!_h) || (!_r) || !CON_TABLE(_h))
+	if(_r)
+		*_r = NULL;
+
+	if ((!_h) || !CON_TABLE(_h))
 	{
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
-	*_r = NULL;
-	
 
 	if (_o)
 	{
@@ -188,11 +193,19 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			return -1;
 	}
 
+	_tbc_temp = dbt_db_get_temp_table(DBT_CON_CONNECTION(_h));
+	if(!_tbc_temp)
+	{
+		LM_ERR("unable to allocate temp table\n");
+		return -1;
+	}
+
 	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
 		LM_ERR("table %.*s does not exist!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+		dbt_db_del_table(DBT_CON_CONNECTION(_h), &_tbc_temp->name, 0);
 		return -1;
 	}
 
@@ -220,51 +233,88 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		if (!_o_l)
 			goto error;
 		/* enlarge select-columns lres by all order-by columns, _o_nc is how many */
-		if (dbt_mangle_columnselection(&lres, &_nc, &_o_nc, _o_l, _o_n) < 0)
-			goto error;
+//		if (dbt_mangle_columnselection(&lres, &_nc, &_o_nc, _o_l, _o_n) < 0)
+//			goto error;
 	}
 
+/*
 	LM_DBG("new res with %d cols\n", _nc);
 	_dres = dbt_result_new(_tbc, lres, _nc);
-	
+
 	if(!_dres)
 		goto error;
-	
+*/
+
+		dbt_column_p pPrevCol = NULL;
+		_tbc_temp->colv = (dbt_column_p*) shm_malloc(_nc*sizeof(dbt_column_p));
+		for(i=0; i < _nc; i++) {
+			dbt_column_p pCol = dbt_column_new(_tbc->colv[ lres[i] ]->name.s, _tbc->colv[ lres[i] ]->name.len);
+			pCol->type = _tbc->colv[ lres[i] ]->type;
+			pCol->flag = _tbc->colv[ lres[i] ]->flag;
+			if(pPrevCol)
+			{
+				pCol->prev = pPrevCol;
+				pPrevCol->next = pCol;
+			}
+			else
+				_tbc_temp->cols = pCol;
+
+			_tbc_temp->colv[i] = pCol;
+			pPrevCol = pCol;
+			_tbc_temp->nrcols++;
+		}
+
+	_res = (dbt_row_p*) pkg_malloc(_db_text_max_result_rows * sizeof(dbt_row_p));
+	if(!_res) {
+		LM_ERR("no more space to allocate for query rows\n");
+		goto error;
+	}
+
+
 	_drp = _tbc->rows;
-	while(_drp)
+	while(_drp && counter < _db_text_max_result_rows)
 	{
 		if(dbt_row_match(_tbc, _drp, lkey, _op, _v, _n))
 		{
-			if(dbt_result_extract_fields(_tbc, _drp, lres, _dres))
-			{
-				LM_ERR("failed to extract result fields!\n");
-				goto clean;
-			}
+			_res[counter] = _drp;
+//			if(dbt_result_extract_fields(_tbc, _drp, lres, _dres))
+//			{
+//				LM_ERR("failed to extract result fields!\n");
+//				goto clean;
+//			}
+			counter++;
 		}
 		_drp = _drp->next;
 	}
 
-	dbt_table_update_flags(_tbc, DBT_TBFL_ZERO, DBT_FL_IGN, 1);
-	
-	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-
 	if (_o_l)
 	{
-		if (_dres->nrrows > 1)
+		if (counter > 1)
 		{
-			if (dbt_sort_result(_dres, _o_l, _o_op, _o_n, lres, _nc) < 0)
-				goto error_nounlock;
+			if (dbt_sort_result_temp(_res, counter, _o_l, _o_op, _o_n) < 0)
+				goto error;
 		}
 
 		/* last but not least, remove surplus columns */
-		if (_o_nc)
-			dbt_project_result(_dres, _o_nc);
+//		if (_o_nc)
+//			dbt_project_result(_dres, _o_nc);
 	}
 
+	// copy results to temp table
+	_tbc_temp->rows = dbt_result_extract_results(_tbc, _res, counter, lres, _nc);
+	_tbc_temp->nrrows = (_tbc_temp->rows == NULL ? 0 : counter);
 
-	/* dbt_result_print(_dres); */
-	
+	dbt_table_update_flags(_tbc, DBT_TBFL_ZERO, DBT_FL_IGN, 1);
+
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+
+// 	DBT_CON_TEMP_TABLE(_h) = _tbc_temp;
+	last_temp_table = _tbc_temp;
+//	dbt_release_table(DBT_CON_CONNECTION(_h), &_tbc_temp->name);
+
+//	dbt_result_print(_tbc_temp);
+
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
@@ -275,17 +325,25 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
  		pkg_free(_o_op);
  	if(_o_l)
  		pkg_free(_o_l);
+ 	if(_res)
+ 		pkg_free(_res);
 
-	result = dbt_get_result(_r, _dres);
-	if(result != 0)
-		dbt_result_free(_dres);
+ 	if(_r) {
+ 		result = dbt_get_result(_r, _tbc_temp);
+// 		dbt_db_del_table(DBT_CON_CONNECTION(_h), &_tbc_temp->name, 1);
+		if(result != 0)
+ 			dbt_result_free(_h, _tbc_temp);
+ 	}
 
 	return result;
 
 error:
-	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
-error_nounlock:
+    /* unlock database */
+    dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
+    /* delete temp table */
+    dbt_db_del_table(DBT_CON_CONNECTION(_h), &_tbc_temp->name, 1);
+	if(_res)
+		pkg_free(_res);
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
@@ -296,14 +354,12 @@ error_nounlock:
 		pkg_free(_o_op);
 	if(_o_l)
 		pkg_free(_o_l);
-	if(_dres)
-		dbt_result_free(_dres);
 	LM_ERR("failed to query the table!\n");
 
 	return -1;
 
+/*
 clean:
-	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(lkey)
 		pkg_free(lkey);
@@ -315,10 +371,54 @@ clean:
 		pkg_free(_o_op);
 	if(_o_l)
 		pkg_free(_o_l);
-	if(_dres)
-		dbt_result_free(_dres);
 
 	return -1;
+*/
+}
+
+
+int dbt_fetch_result(db1_con_t* _h, db1_res_t** _r, const int nrows)
+{
+	int rows;
+
+	if (!_h || !_r || nrows < 0) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	/* exit if the fetch count is zero */
+	if (nrows == 0) {
+		dbt_free_result(_h, *_r);
+		*_r = 0;
+		return 0;
+	}
+
+	if(*_r==0) {
+		/* Allocate a new result structure */
+		dbt_init_result(_r, last_temp_table);
+	} else {
+		/* free old rows */
+		if(RES_ROWS(*_r)!=0)
+			db_free_rows(*_r);
+		RES_ROWS(*_r) = 0;
+		RES_ROW_N(*_r) = 0;
+	}
+
+	/* determine the number of rows remaining to be processed */
+	rows = RES_NUM_ROWS(*_r) - RES_LAST_ROW(*_r);
+
+	/* If there aren't any more rows left to process, exit */
+	if(rows<=0)
+		return 0;
+
+	/* if the fetch count is less than the remaining rows to process                 */
+	/* set the number of rows to process (during this call) equal to the fetch count */
+	if(nrows < rows)
+		rows = nrows;
+	
+	RES_ROW_N(*_r) = rows;
+
+	return dbt_get_next_result(_r, RES_LAST_ROW(*_r), rows);
 }
 
 /*

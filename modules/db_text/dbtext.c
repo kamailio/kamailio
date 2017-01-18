@@ -38,6 +38,7 @@ static int mod_init(void);
 static void destroy(void);
 
 #define DEFAULT_DB_TEXT_READ_BUFFER_SIZE 16384
+#define DEFAULT_MAX_RESULT_ROWS 100000;
 
 /*
  * Module parameter variables
@@ -45,6 +46,7 @@ static void destroy(void);
 int db_mode = 0;  /* Database usage mode: 0 = cache, 1 = no cache */
 int empty_string = 0;  /* Treat empty string as "" = 0, 1 = NULL */
 int _db_text_read_buffer_size = DEFAULT_DB_TEXT_READ_BUFFER_SIZE;
+int _db_text_max_result_rows = DEFAULT_MAX_RESULT_ROWS;
 
 int dbt_bind_api(db_func_t *dbb);
 
@@ -64,6 +66,7 @@ static param_export_t params[] = {
 	{"db_mode", INT_PARAM, &db_mode},
 	{"emptystring", INT_PARAM, &empty_string},
 	{"file_buffer_size", INT_PARAM, &_db_text_read_buffer_size},
+	{"max_result_rows", INT_PARAM, &_db_text_max_result_rows},
 	{0, 0, 0}
 };
 
@@ -108,7 +111,7 @@ static int mod_init(void)
 static void destroy(void)
 {
 	LM_DBG("destroy ...\n");
-	dbt_cache_print(0);
+	dbt_cache_print2(0, 0);
 	dbt_cache_destroy();
 }
 
@@ -125,6 +128,7 @@ int dbt_bind_api(db_func_t *dbb)
 	dbb->init        = dbt_init;
 	dbb->close       = dbt_close;
 	dbb->query       = (db_query_f)dbt_query;
+	dbb->fetch_result = (db_fetch_result_f) dbt_fetch_result;
 	dbb->free_result = dbt_free_result;
 	dbb->insert      = (db_insert_f)dbt_insert;
 	dbb->delete      = (db_delete_f)dbt_delete; 
@@ -132,7 +136,7 @@ int dbt_bind_api(db_func_t *dbb)
 	dbb->replace     = (db_replace_f)dbt_replace;
 	dbb->affected_rows = (db_affected_rows_f) dbt_affected_rows;
 	dbb->raw_query   = (db_raw_query_f) dbt_raw_query;
-	dbb->cap         = DB_CAP_ALL | DB_CAP_AFFECTED_ROWS | DB_CAP_RAW_QUERY | DB_CAP_REPLACE;
+	dbb->cap         = DB_CAP_ALL | DB_CAP_AFFECTED_ROWS | DB_CAP_RAW_QUERY | DB_CAP_REPLACE | DB_CAP_FETCH;
 
 	return 0;
 }
