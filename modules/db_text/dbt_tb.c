@@ -137,7 +137,7 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 {
 	struct stat s;
 	dbt_table_p dtp = NULL;
-	if(!_tbname || !_dbname || !path)
+	if(!_tbname || !_dbname)
 		return NULL;
 	
 	dtp = (dbt_table_p)shm_malloc(sizeof(dbt_table_t));
@@ -175,7 +175,7 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 	dtp->nrrows = dtp->nrcols = dtp->auto_val = 0;
 	dtp->auto_col = -1;
 	dtp->mt = 0;
-	if(stat(path, &s) == 0)
+	if(path && stat(path, &s) == 0)
 	{
 		dtp->mt = s.st_mtime;
 		LM_DBG("mtime is %d\n", (int)s.st_mtime);

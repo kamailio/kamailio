@@ -56,6 +56,10 @@ int dbt_free_result(db1_con_t* _h, db1_res_t* _r);
 int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
 			db_key_t* _c, int _n, int _nc, db_key_t _o, db1_res_t** _r);
 
+/*
+ * fetch result
+ */
+int dbt_fetch_result(db1_con_t* _h, db1_res_t** _r, const int nrows);
 
 /*
  * Raw SQL query
