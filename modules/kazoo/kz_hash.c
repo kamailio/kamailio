@@ -153,7 +153,7 @@ kz_amqp_cmd_ptr kz_cmd_retrieve(str* message_id)
 	p = kz_search_cmd_table(message_id, hash_code);
 	if(p== NULL)
 	{
-		LM_DBG("command pointer hash entry not found\n");
+		LM_DBG("command pointer hash entry not found - %s\n", message_id->s);
 		lock_release(&kz_cmd_htable[hash_code].lock);
 		return NULL;
 	}
@@ -167,7 +167,7 @@ kz_amqp_cmd_ptr kz_cmd_retrieve(str* message_id)
 	}
 	if(prev_p->next== NULL)
 	{
-		LM_ERR("command pointer not found\n");
+		LM_ERR("command pointer not found - %s\n", message_id->s);
 		lock_release(&kz_cmd_htable[hash_code].lock);
 		return NULL;
 	}
