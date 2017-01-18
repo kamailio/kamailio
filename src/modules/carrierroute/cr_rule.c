@@ -251,6 +251,7 @@ void destroy_route_flags(struct route_flags *rf) {
 
 	if (rf->rules) {
 		shm_free(rf->rules);
+		rf->rules = NULL;
 	}
 	rs = rf->rule_list;
 	while (rs != NULL) {

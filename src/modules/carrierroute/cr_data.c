@@ -589,11 +589,13 @@ static int rule_fixup_recursor(struct dtrie_node_t *node) {
 					if (rr->hash_index > rf->rule_num) {
 						LM_ERR("too large hash index %i, max is %i\n", rr->hash_index, rf->rule_num);
 						shm_free(rf->rules);
+						rf->rules = NULL;
 						return -1;
 					}
 					if (rf->rules[rr->hash_index - 1]) {
 						LM_ERR("duplicate hash index %i\n", rr->hash_index);
 						shm_free(rf->rules);
+						rf->rules = NULL;
 						return -1;
 					}
 					rf->rules[rr->hash_index - 1] = rr;
