@@ -131,7 +131,7 @@ struct cell;
  *
  * Note: All the other callbacks can be safely installed when the
  * transaction already exists, it does not need to be locked.
- * 
+ *
  * TMCB_RESPONSE_IN -- a brand-new reply was received which matches
  * an existing non-local transaction. It may or may not be a retransmission.
  * No lock is held here (yet).
@@ -148,11 +148,11 @@ struct cell;
  *  (NOTE: this might change and in the future it might be called only
  *  for final replies --andrei).
  *  For local replies is called _only_ for the final reply.
- *  There is nothing more you can change from the callback, it is good for 
+ *  There is nothing more you can change from the callback, it is good for
  *  accounting-like uses. No lock is held.
  *  Known oddities: it's called for provisional replies for relayed replies,
  *  but not for local responses (see NOTE above).
- *  Note: if the send fails or via cannot be resolved, this callback is 
+ *  Note: if the send fails or via cannot be resolved, this callback is
  *  _not_ called.
  *  Note: local reply means locally generated reply (via t_reply() & friends)
  *  and not local transaction.
@@ -209,7 +209,7 @@ struct cell;
  *  transaction occurrence will be matched with spirals. If
  *  record-routing is not enabled, you will never receive the
  *  ACK and the callback will be never triggered. In general it's called only
- *   for the first ACK but it can be also called multiple times 
+ *   for the first ACK but it can be also called multiple times
  *   quasi-simultaneously if multiple ACK copies arrive in parallel or if
  *   ACKs with different (never seen before) to-tags are received.
  *
@@ -218,7 +218,7 @@ struct cell;
  *
  *  TMCB_E2ECANCEL_IN -- called when a CANCEL for the INVITE transaction
  *  for which the callback was registered arrives.
- *   The transaction parameter will point to the invite transaction (and 
+ *   The transaction parameter will point to the invite transaction (and
  *   not the cancel) and the request parameter to the CANCEL sip msg.
  *   Note: the callback should be registered for an INVITE transaction.
  *
@@ -226,7 +226,7 @@ struct cell;
  *  called before a message is forwarded, when the corresponding branch
  *   is created (it's called for each branch) and it is your last
  *  chance to change its shape. It can also be called from the failure
- *   router (via t_relay/t_forward_nonack) and in this case the REPLY lock 
+ *   router (via t_relay/t_forward_nonack) and in this case the REPLY lock
  *   will be held.
  *
  *  TMCB_REQUEST_OUT -- request was sent out successfully.
@@ -239,26 +239,26 @@ struct cell;
  *  transaction arrived. Message may be FAKED_REPLY. Can be called multiple
  *  times, no lock is held.
  *
- *  TMCB_LOCAL_RESPONSE_OUT -- provisional reply for localy initiated 
- *  transaction. The message may be a FAKED_REPLY and the callback might be 
+ *  TMCB_LOCAL_RESPONSE_OUT -- provisional reply for localy initiated
+ *  transaction. The message may be a FAKED_REPLY and the callback might be
  *  called multiple time quasi-simultaneously. No lock is held.
  *  Note: depends on tm.pass_provisional_replies.
  *  Note: the name is very unfortunate and it will probably be changed
  *   (e.g. TMCB_LOCAL_PROVISIONAL).
  *
  *  TMCB_NEG_ACK_IN -- an ACK to a negative reply was received, thus ending
- *  the transaction (this happens only when the final reply sent by tm is 
+ *  the transaction (this happens only when the final reply sent by tm is
  *  negative). The callback might be called simultaneously. No lock is held.
  *
  *  TMCB_REQ_RETR_IN -- a retransmitted request was received. This callback
  *   might be called simultaneously. No lock is held.
  *
  * TMCB_LOCAL_RESPONSE_IN -- a brand-new reply was received which matches
- * an existing local transaction (like TMCB_RESPONSE_IN but for local 
+ * an existing local transaction (like TMCB_RESPONSE_IN but for local
  * transactions). It may or may not be a retransmission.
  *
- * TMCB_LOCAL_REQUEST_IN -- like TMCB_REQUEST_IN but for locally generated 
- * request (e.g. via fifo/rpc):  a brand-new local request was 
+ * TMCB_LOCAL_REQUEST_IN -- like TMCB_REQUEST_IN but for locally generated
+ * request (e.g. via fifo/rpc):  a brand-new local request was
  * received/generated and a transaction for it is about to be created.
  * It's called from HASH_LOCK, so be careful. It is guaranteed not to be
  * a retransmission. The transactional context is mostly
@@ -267,17 +267,17 @@ struct cell;
  * with it).
  * It's safe to install other TMCB callbacks from here.
  * Note: this callback MUST be installed before forking
- * (the local_req_in_tmcb_hl callback list does not live in shmem and has no 
+ * (the local_req_in_tmcb_hl callback list does not live in shmem and has no
  * access protection), i.e., at best from mod_init functions.
  *
  *
- *  All of the following callbacks are called immediately after or before 
+ *  All of the following callbacks are called immediately after or before
  *  sending a message. All of them are read-only (no change can be made to
  * the message). These callbacks use the t_rbuf, send_buf, dst, is_retr
  *  and the code members of the tmcb_params structure.
- *  For a request code is <=0. code values can be TYPE_LOCAL_ACK for an ACK 
- *  generated by ser, TYPE_LOCAL_CANCEL for a CANCEL generated by ser 
- *  and TYPE_REQUEST for all the other requests or requests generated via 
+ *  For a request code is <=0. code values can be TYPE_LOCAL_ACK for an ACK
+ *  generated by ser, TYPE_LOCAL_CANCEL for a CANCEL generated by ser
+ *  and TYPE_REQUEST for all the other requests or requests generated via
  *  t_uac.
  *   For a reply the code is the response status (which is always >0, e.g. 200,
  *   408, a.s.o).
@@ -294,7 +294,7 @@ struct cell;
  *  are allowed.
  *  Note: send_buf can be different from t_rbuf->buffer for ACKs (in this
  *   case t_rbuf->buf will contain the last request sent on the branch and
- *   its destination). The same goes for t_rbuf->dst and tmcb->dst for local 
+ *   its destination). The same goes for t_rbuf->dst and tmcb->dst for local
  *   transactions ACKs to 2xxs.
  *
  *  TMCB_RESPONSE_SENT -- called each time a response was sent (even for
@@ -313,8 +313,8 @@ struct cell;
  * TMCB_RESPONSE_READY -- a reply is ready to be sent out. Callback is
  *  is executed just before writing the reply content to network.
  *
- * TMCB_DONT_ACK (requires AS support) -- for localy generated INVITEs, TM 
- * automatically generates an ACK for the received 2xx replies. But, if this 
+ * TMCB_DONT_ACK (requires AS support) -- for localy generated INVITEs, TM
+ * automatically generates an ACK for the received 2xx replies. But, if this
  * flag is passed to TM when creating the initial UAC request, this won't
  * happen anymore: the ACK generation must be triggered from outside, using
  * TM's interface.
@@ -323,8 +323,8 @@ struct cell;
 
 	the callback's param MUST be in shared memory and will
 	NOT be freed by TM; you must do it yourself from the
-	callback function if necessary (for example register it also for 
-	 TMCB_DESTROY and when called with TMCB_DESTROY just free the param
+	callback function if necessary (for example register it also for
+	TMCB_DESTROY and when called with TMCB_DESTROY just free the param
 	).
 */
 
@@ -337,18 +337,18 @@ struct tmcb_params {
 	struct sip_msg* rpl;
 	void **param;
 	int code;
-	unsigned short flags; /* set to a combination of:
-							 TMCB_RETR_F if this is a _ser_ retransmission
-							 (but not if if it's a "forwarded" retr., like a 
-							 retr. 200 Ok for example)
-							 TMCB_LOCAL_F if this is a local generated message
-							  (and not forwarded) */
+	unsigned short flags;  /* set to a combination of:
+							* TMCB_RETR_F if this is a _ser_ retransmission
+							* (but not if if it's a "forwarded" retr., like a
+							* retr. 200 Ok for example)
+							* TMCB_LOCAL_F if this is a local generated message
+							* (and not forwarded) */
 	unsigned short branch;
 	/* could also be: send_buf, dst, branch */
-	struct retr_buf* t_rbuf; /* transaction retr. buf., all the information
-								 regarding destination, data that is/was
-								 actually sent on the net, branch a.s.o is
-								 inside */
+	struct retr_buf* t_rbuf;   /* transaction retr. buf., all the information
+								* regarding destination, data that is/was
+								* actually sent on the net, branch a.s.o is
+								* inside */
 	struct dest_info* dst; /* destination */
 	str send_buf; /* what was/will be sent on the net, used for ACKs
 					(which don't have a retr_buf). */
@@ -376,8 +376,8 @@ typedef void (transaction_cb) (struct cell* t, int type, struct tmcb_params*);
 typedef void (release_tmcb_param) (void* param);
 /* register callback function prototype */
 typedef int (*register_tmcb_f)(struct sip_msg* p_msg, struct cell *t,
-							   int cb_types, transaction_cb f, void *param,
-							   release_tmcb_param func);
+			int cb_types, transaction_cb f, void *param,
+			release_tmcb_param func);
 
 
 struct tm_callback {
@@ -386,7 +386,7 @@ struct tm_callback {
 	transaction_cb* callback;    /* callback function */
 	void *param;                 /* param to be passed to callback function */
 	release_tmcb_param* release; /**< Function to release the callback param
-								  * when the callback is deleted */
+									* when the callback is deleted */
 	struct tm_callback* next;
 };
 
@@ -417,8 +417,7 @@ void destroy_tmcb_lists(void);
 
 /* register a callback for several types of events */
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
-				   transaction_cb f, void *param,
-				   release_tmcb_param rel_func);
+			transaction_cb f, void *param, release_tmcb_param rel_func);
 
 /* inserts a callback into the a callback list */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types,
@@ -430,17 +429,17 @@ void run_trans_callbacks( int type , struct cell *trans,
 						struct sip_msg *req, struct sip_msg *rpl, int code );
 /* helper function */
 void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
-									struct cell *trans, 
+									struct cell *trans,
 									struct tmcb_params *params);
 /* run all REQUEST_IN callbacks */
 void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code );
-void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req, 
+void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req,
 		int code );
 
 /* like run_trans_callbacks but provide outgoing buffer (i.e., the
  * processed message) to callback */
-void run_trans_callbacks_with_buf(int type, struct retr_buf* rbuf, struct sip_msg* req,
-								  struct sip_msg* repl, short flags);
+void run_trans_callbacks_with_buf(int type, struct retr_buf* rbuf,
+		struct sip_msg* req, struct sip_msg* repl, short flags);
 
 /* like run_trans_callbacks but tmcb_params assumed to contain data already */
 void run_trans_callbacks_off_params(int type, struct cell* t, struct tmcb_params* p);
