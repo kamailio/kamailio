@@ -3786,15 +3786,17 @@ int fix_rval_expr(void* p)
 {
 	struct rval_expr* rve;
 	int ret;
-	
+
 	rve=(struct rval_expr*)p;
-	
+
 	switch(rve->op){
 		case RVE_NONE_OP:
 			BUG("empty rval expr\n");
 			break;
 		case RVE_RVAL_OP:
-			return fix_rval(&rve->left.rval);
+			ret = fix_rval(&rve->left.rval);
+			if (ret<0) goto error;
+			return ret;
 		case RVE_UMINUS_OP: /* unary operators */
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
@@ -3806,7 +3808,7 @@ int fix_rval_expr(void* p)
 		case RVE_INT_OP:
 		case RVE_STR_OP:
 			ret=fix_rval_expr((void*)rve->left.rve);
-			if (ret<0) return ret;
+			if (ret<0) goto error;
 			break;
 		case RVE_MUL_OP:
 		case RVE_DIV_OP:
@@ -3833,18 +3835,24 @@ int fix_rval_expr(void* p)
 		case RVE_STRDIFF_OP:
 		case RVE_CONCAT_OP:
 			ret=fix_rval_expr((void*)rve->left.rve);
-			if (ret<0) return ret;
+			if (ret<0) goto error;
 			ret=fix_rval_expr((void*)rve->right.rve);
-			if (ret<0) return ret;
+			if (ret<0) goto error;
 			break;
 		case RVE_MATCH_OP:
 			ret=fix_match_rve(rve);
-			if (ret<0) return ret;
+			if (ret<0) goto error;
 			break;
 		default:
-			BUG("unsupported op type %d\n", rve->op);
+			BUG("unsupported op type %d (cfg line: %d col: %d)\n", rve->op,
+					rve->fpos.s_line, rve->fpos.s_col);
 	}
 	/* try to optimize */
 	rve_optimize(rve);
 	return 0;
+
+error:
+	LM_ERR("failure in cfg at line: %d col: %d\n",
+			rve->fpos.s_line, rve->fpos.s_col);
+	return ret;
 }
