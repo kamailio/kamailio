@@ -77,7 +77,7 @@ static inline int uandd_to_uri(str user,  str domain, str *out)
 	memcpy(out->s + out->len, domain.s, domain.len);
 	out->len += domain.len;
 	out->s[out->len] = '\0';
-	
+
 	return 0;
 }
 
@@ -88,6 +88,7 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 	int port;
 	int len;
 	int plen;
+	char *p;
 
 	contact->s= (char*)pkg_malloc(LCONTACT_BUF_SIZE);
 	if(contact->s== NULL)
@@ -98,22 +99,22 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 
 	memset(contact->s, 0, LCONTACT_BUF_SIZE);
 	contact->len= 0;
-	
+
 	plen = 3;
 	if(msg->rcv.proto== PROTO_NONE || msg->rcv.proto==PROTO_UDP)
 		proto= "udp";
 	else
 	if(msg->rcv.proto== PROTO_TLS )
 			proto= "tls";
-	else	
+	else
 	if(msg->rcv.proto== PROTO_TCP)
 		proto= "tcp";
-	else	
+	else
 	if(msg->rcv.proto== PROTO_SCTP) {
 		proto= "sctp";
 		plen = 4;
 	}
-	else	
+	else
 	if(msg->rcv.proto== PROTO_WS || msg->rcv.proto== PROTO_WSS) {
 		proto= "ws";
 		plen = 2;
@@ -122,8 +123,8 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 	{
 		LM_ERR("unsupported proto\n");
 		goto error;
-	}	
-	
+	}
+
 	if(msg->rcv.bind_address->useinfo.name.len>0) {
 		ip = msg->rcv.bind_address->useinfo.name;
 	} else {
@@ -135,30 +136,41 @@ static inline int ps_fill_local_contact(struct sip_msg* msg, str *contact)
 	} else {
 		port = msg->rcv.bind_address->port_no;
 	}
-	
-	if(strncmp(ip.s, "sip:", 4)!=0)
-	{
-		strncpy(contact->s, "sip:", 4);
-		contact->len+= 4;
-	}	
-	strncpy(contact->s+contact->len, ip.s, ip.len);
+
+	p = contact->s;
+	if(strncmp(ip.s, "sip:", 4)!=0) {
+		strncpy(p, "sip:", 4);
+		contact->len += 4;
+		p += 4;
+	}
+	if(msg->rcv.bind_address->address.af==AF_INET6) {
+		*p = '[';
+		contact->len += 1;
+		p += 1;
+	}
+	strncpy(p, ip.s, ip.len);
 	contact->len += ip.len;
-	if(contact->len> LCONTACT_BUF_SIZE - 21)
-	{
+	p += ip.len;
+	if(msg->rcv.bind_address->address.af==AF_INET6) {
+		*p = ']';
+		contact->len += 1;
+		p += 1;
+	}
+	if(contact->len > LCONTACT_BUF_SIZE - 21) {
 		LM_ERR("buffer overflow\n");
 		goto error;
 
-	}	
-	len= sprintf(contact->s+contact->len, ":%d;transport=" , port);
-	if(len< 0)
-	{
+	}
+	len= sprintf(p, ":%d;transport=" , port);
+	if(len< 0) {
 		LM_ERR("unsuccessful sprintf\n");
 		goto error;
-	}	
-	contact->len+= len;
-	strncpy(contact->s+ contact->len, proto, plen);
+	}
+	contact->len += len;
+	p += len;
+	strncpy(p, proto, plen);
 	contact->len += plen;
-	
+
 	return 0;
 error:
 	if(contact->s!=NULL)
