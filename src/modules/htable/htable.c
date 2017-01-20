@@ -407,9 +407,22 @@ static int ht_rm_value_re(struct sip_msg* msg, char* key, char* foo)
 	return 1;
 }
 
-static int ht_reset(struct sip_msg* msg, char* htname, char* foo)
+static int ht_reset_by_name(str *hname)
 {
 	ht_t *ht;
+	ht = ht_get_table(hname);
+	if(ht==NULL) {
+		LM_ERR("cannot get hash table [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+	if(ht_reset_content(ht)<0)
+		return -1;
+	return 0;
+
+}
+
+static int ht_reset(struct sip_msg* msg, char* htname, char* foo)
+{
 	str sname;
 
 	if(fixup_get_svalue(msg, (gparam_t*)htname, &sname)<0 || sname.len<=0)
@@ -417,14 +430,10 @@ static int ht_reset(struct sip_msg* msg, char* htname, char* foo)
 		LM_ERR("cannot get hash table name\n");
 		return -1;
 	}
-	ht = ht_get_table(&sname);
-	if(ht==NULL)
-	{
-		LM_ERR("cannot get hash table [%.*s]\n", sname.len, sname.s);
+	if(ht_reset_by_name(&sname)<0) {
 		return -1;
 	}
-	if(ht_reset_content(ht)<0)
-		return -1;
+
 	return 1;
 }
 
@@ -1122,6 +1131,11 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	{ str_init("htable"), str_init("sht_unlock"),
 		SR_KEMIP_INT, ki_ht_slot_unlock,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_reset"),
+		SR_KEMIP_INT, ht_reset_by_name,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
