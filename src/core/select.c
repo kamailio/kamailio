@@ -428,18 +428,28 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 	return ret;
 }
 
-void print_select(select_t* s)
+void log_select(select_t* s, int level)
 {
 	int i;
-	DBG("select(");
+	LOG(level, "select(");
 	for(i = 0; i < s->n; i++) {
 		if (s->params[i].type == SEL_PARAM_INT) {
-			DBG("%d,", s->params[i].v.i);
+			LOG(level, "%d,", s->params[i].v.i);
 		} else {
-			DBG("%.*s,", s->params[i].v.s.len, s->params[i].v.s.s);
+			LOG(level, "%.*s,", s->params[i].v.s.len, s->params[i].v.s.s);
 		}
 	}
-	DBG(")\n");
+	LOG(level, ")\n");
+}
+
+void print_select(select_t* s)
+{
+	log_select(s, L_DBG);
+}
+
+void err_select(select_t* s)
+{
+	log_select(s, L_ERR);
 }
 
 int register_select_table(select_row_t* mod_tab)
