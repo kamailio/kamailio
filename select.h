@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -26,7 +26,7 @@
  * Module: \ref core
  */
 
- 
+
 #ifndef _SELECT_H
 #define _SELECT_H
 
@@ -36,7 +36,7 @@
 #define MAX_SELECT_PARAMS 32
 #define MAX_NESTED_CALLS  4
 
-/* Flags for parser table FLAG bitfiels 
+/* Flags for parser table FLAG bitfiels
  */
 #define DIVERSION_MASK   0x00FF
 
@@ -75,12 +75,12 @@
 
 /* left function is noted to be called
  * rigth function continues in resolution
- * NOTE: the parameter is not consumed for PARENT, 
+ * NOTE: the parameter is not consumed for PARENT,
  * so you can leave it as ..,SEL_PARAM_INT, 0,..
  *
  * run_select then calls all functions with PARENT flag
- * in the order of resolution until the final call or 
- * the result is != 0 (<0 error, 1 null str) 
+ * in the order of resolution until the final call or
+ * the result is != 0 (<0 error, 1 null str)
  * the only one parameter passed between nested calls
  * is the result str*
  */
@@ -102,13 +102,13 @@ typedef enum {
 	SEL_PARAM_DIV,  /* Integer value got from parsing table */
 	SEL_PARAM_PTR   /* void* data got from e.g. fixup call */
 } select_param_type_t;
-	
+
 typedef union {
 	int i;  /* Integer value */
 	str s;  /* String value */
 	void* p;/* Any data ptr */
 } select_param_value_t;
-	
+
 typedef struct sel_param {
         select_param_type_t type;
         select_param_value_t v;
@@ -164,9 +164,14 @@ int resolve_select(select_t* s);
 int run_select(str* res, select_t* s, struct sip_msg* msg);
 
 /*
- * Print select for debugging purposes 
+ * Print select for debugging purposes
  */
 void print_select(select_t* s);
+
+/*
+ * Print select for error purposes
+ */
+void err_select(select_t* s);
 
 /*
  * Register modules' own select parser table
@@ -191,7 +196,7 @@ int parse_select (char** p, select_t** s);
 void free_select(select_t *s);
 /*
  * Select parser, result is stored in SHARED memory
- * 
+ *
  * If you call this, you must ensure, that the string which
  * is beeing parsed MUST be at the same place for all child
  * processes, e.g. allocated in the shared memory as well
