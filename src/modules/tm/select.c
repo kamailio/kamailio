@@ -33,10 +33,13 @@
 
 #define RETURN0_res(x) {*res=(x);return 0;}
 
-inline static int select_tm_get_cell(struct sip_msg* msg, int *branch, struct cell **t) {
+inline static int select_tm_get_cell(struct sip_msg* msg, int *branch,
+		struct cell **t)
+{
 
 	/* make sure we know the associated transaction ... */
-	if (t_check( msg  , branch )==-1)  /* it's not necessary whan calling from script because already done */ 
+	if (t_check( msg  , branch )==-1)  /* it's not necessary whan calling
+										* from script because already done */
 		return -1;
 
 	/*... if there is none, tell the core router to fwd statelessly */
@@ -44,9 +47,10 @@ inline static int select_tm_get_cell(struct sip_msg* msg, int *branch, struct ce
 	if ( (*t==0)||(*t==T_UNDEFINED)) return -1;
 
 	return 0;
-}	
+}
 
-static int select_tm(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm(str* res, select_t* s, struct sip_msg* msg)
+{
 	int branch;
 	struct cell *t;
 	if (select_tm_get_cell(msg, &branch, &t) < 0) {
@@ -70,59 +74,64 @@ static int select_tm(str* res, select_t* s, struct sip_msg* msg) {
 #define SELECT_check_branch(_s_, _msg_) \
 	SELECT_check(_msg_); \
 	if (BRANCH_NO(_s_) >=t->nr_of_outgoings) return -1;
- 
 
 /* string resides in shared memory but I think it's not worth copying to
- * static buffer (str_to_static_buffer) as minimal probability that string 
+ * static buffer (str_to_static_buffer) as minimal probability that string
  * is changed by other process (or cell is already locked ?)
  */
- 
-static int select_tm_method(str* res, select_t* s, struct sip_msg* msg) {
+
+static int select_tm_method(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check(msg);
 	RETURN0_res(t->method);
 }
 
 static ABSTRACT_F(select_tm_uas);
 
-static int select_tm_uas_status(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uas_status(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check(msg);
 	return int_to_static_buffer(res, t->uas.status);
 }
 
 /* transaction cell has request in sip_msg structure which brings idea to
- * use selects from select_core.c (e.g. to avoid copy&paste automatically 
+ * use selects from select_core.c (e.g. to avoid copy&paste automatically
  * generate select definitions in tm_init_selects()). But it's not so easy
  * as select may perform any parsing which is stored in sip_msg structure.
  * But transaction cell resides in shared memory while parsing is done in
  * private memory. Therefore we support currently only complete request */
- 
-static int select_tm_uas_request(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uas_request(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check(msg);
 	res->s = t->uas.request->buf;
 	res->len = t->uas.request->len;
-	return 0; 
+	return 0;
 }
 
-static int select_tm_uas_local_to_tag(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uas_local_to_tag(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check(msg);
 	RETURN0_res(t->uas.local_totag);
 }
 
-static int select_tm_uas_response(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uas_response(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check(msg);
-	res->s = t->uas.response.buffer;	
+	res->s = t->uas.response.buffer;
 	res->len = t->uas.response.buffer_len;
-	return 0;	
+	return 0;
 }
 
 /* TODO: implement a general select function that works with any
  * kind of requests not only with negative ACKs
  */
-static int select_tm_uas_request_neg_ack_retransmission(str* res, select_t* s, struct sip_msg* msg) {
-        int rv;
+static int select_tm_uas_request_neg_ack_retransmission(str* res, select_t* s,
+		struct sip_msg* msg)
+{
+	int rv;
 
 	SELECT_check(msg);
-        rv = ((msg->REQ_METHOD == METHOD_ACK)
+	rv = ((msg->REQ_METHOD == METHOD_ACK)
 		&& (t->uas.status >= 300)
 		/* Misuse the timer flag of the 200 retransmission buffer
 		 * to check whether or not this is an ACK retransmission.
@@ -131,18 +140,20 @@ static int select_tm_uas_request_neg_ack_retransmission(str* res, select_t* s, s
 		 * may be considered a retransmission - Miklos */
 		&& (t->uas.response.t_active == 0)) ? 1 : -1;
 
-        return int_to_static_buffer(res, rv);
+	return int_to_static_buffer(res, rv);
 }
 
 
 static ABSTRACT_F(select_tm_uac);
 
-static int select_tm_uac_count(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uac_count(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check(msg);
 	return int_to_static_buffer(res, t->nr_of_outgoings);
 }
 
-static int select_tm_uac_relayed(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uac_relayed(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check(msg);
 	return int_to_static_buffer(res, t->relayed_reply_branch);
 }
@@ -167,37 +178,38 @@ static int get_last_status(struct sip_msg* msg, int *last_status)
 			msg->via1->branch->value.len,
 			msg->via1->branch->value.s);
 */
-	
+
 	/* branch ID consist of MAGIC '.' HASHID '.'  BRANCH_ID */
 	blen = 0;
 	for (bptr = msg->via1->branch->value.s + msg->via1->branch->value.len - 1;
-	     bptr != msg->via1->branch->value.s;
-	     bptr--, blen++)
+			bptr != msg->via1->branch->value.s;
+			bptr--, blen++)
 	{
 		if (*bptr == '.') break;
 	}
 	bptr++;
 	/* we have a pointer to the branch number */
-/*	DBG("branch number: '%.*s'\n", blen, bptr); */
+	/*	DBG("branch number: '%.*s'\n", blen, bptr); */
 	if (reverse_hex2int(bptr, blen, &branch) < 0) {
-		ERR("Wrong branch number in Via1 branch param\n");
-		return -1;
-	}
-	
-	t = get_t();
-	if ( (t == NULL) || (t == T_UNDEFINED) ) {
-		ERR("get_last_status: no transaction\n");
+		LM_ERR("Wrong branch number in Via1 branch param\n");
 		return -1;
 	}
 
-/*	DBG("select_tm_uac_last_status: branch = %d\n", branch); */
+	t = get_t();
+	if ( (t == NULL) || (t == T_UNDEFINED) ) {
+		LM_ERR("no transaction\n");
+		return -1;
+	}
+
+	/*	DBG("select_tm_uac_last_status: branch = %d\n", branch); */
 	*last_status = t->uac[branch].last_received;
 	return 1;
 }
 /**
  * Get last status in current branch.
  */
-static int select_tm_uac_last_status(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uac_last_status(str* res, select_t* s, struct sip_msg* msg)
+{
 	int last_status;
 	if (get_last_status(msg, &last_status) < 0) return -1;
 	return int_to_static_buffer(res, last_status);
@@ -210,27 +222,32 @@ static int select_tm_uac_last_status(str* res, select_t* s, struct sip_msg* msg)
  *          otherwise returns -1 (not retransmited response).
  * @see get_last_status
  */
-static int select_tm_uac_response_retransmission(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uac_response_retransmission(str* res, select_t* s,
+		struct sip_msg* msg)
+{
 	int last_status, rv;
 	if (get_last_status(msg, &last_status) < 0) return -1;
 	rv = msg->first_line.u.reply.statuscode <= last_status ? 1 : -1;
 
-/*	DBG("select_tm_uac_response_retransmission: %d\n", rv); */
+	/*	DBG("select_tm_uac_response_retransmission: %d\n", rv); */
 	return int_to_static_buffer(res, rv);
 }
 
-static int select_tm_uac_status(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uac_status(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check_branch(s, msg);
 	return int_to_static_buffer(res, t->uac[BRANCH_NO(s)].last_received);
 }
 
-static int select_tm_uac_uri(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uac_uri(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check_branch(s, msg);
 	RETURN0_res(t->uac[BRANCH_NO(s)].uri);
 }
 
 /* see select_tm_uas_request comments */
-static int select_tm_uac_response(str* res, select_t* s, struct sip_msg* msg) {  // struct
+static int select_tm_uac_response(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check_branch(s, msg);
 	if (t->uac[BRANCH_NO(s)].reply) {
 		res->s = t->uac[BRANCH_NO(s)].reply->buf;
@@ -241,11 +258,12 @@ static int select_tm_uac_response(str* res, select_t* s, struct sip_msg* msg) { 
 		return -1;
 }
 
-static int select_tm_uac_branch_request(str* res, select_t* s, struct sip_msg* msg) {
+static int select_tm_uac_branch_request(str* res, select_t* s, struct sip_msg* msg)
+{
 	SELECT_check_branch(s, msg);
-	res->s = t->uac[BRANCH_NO(s)].request.buffer;	
+	res->s = t->uac[BRANCH_NO(s)].request.buffer;
 	res->len = t->uac[BRANCH_NO(s)].request.buffer_len;
-	return 0;	
+	return 0;
 }
 
 static select_row_t select_declaration[] = {
@@ -276,7 +294,8 @@ static select_row_t select_declaration[] = {
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
 
-int tm_init_selects() {
+int tm_init_selects()
+{
 	register_select_table(select_declaration);
 	return 0;
 }
