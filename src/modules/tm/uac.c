@@ -79,14 +79,13 @@ int uac_init(void)
 	struct socket_info *si;
 
 	if (KAM_RAND_MAX < TABLE_ENTRIES) {
-		LOG(L_WARN, "Warning: uac does not spread "
-		    "across the whole hash table\n");
+		LM_WARN("uac does not spread across the whole hash table\n");
 	}
 	/* on tcp/tls bind_address is 0 so try to get the first address we listen
 	 * on no matter the protocol */
 	si=bind_address?bind_address:get_first_socket();
 	if (si==0){
-		LOG(L_CRIT, "BUG: uac_init: null socket list\n");
+		LM_CRIT("BUG - null socket list\n");
 		return -1;
 	}
 
@@ -111,7 +110,7 @@ void generate_fromtag(str* tag, str* callid)
 {
 	     /* calculate from tag from callid */
 	crcitt_string_array(&from_tag[MD5_LEN + 1], callid, 1);
-	tag->s = from_tag; 
+	tag->s = from_tag;
 	tag->len = FROM_TAG_LEN;
 }
 
@@ -122,22 +121,22 @@ void generate_fromtag(str* tag, str* callid)
 static inline int check_params(uac_req_t *uac_r, str* to, str* from)
 {
 	if (!uac_r || !uac_r->method || !to || !from) {
-		LOG(L_ERR, "check_params(): Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	if (!uac_r->method->s || !uac_r->method->len) {
-		LOG(L_ERR, "check_params(): Invalid request method\n");
+		LM_ERR("Invalid request method\n");
 		return -2;
 	}
 
 	if (!to->s || !to->len) {
-		LOG(L_ERR, "check_params(): Invalid To URI\n");
+		LM_ERR("Invalid To URI\n");
 		return -4;
 	}
 
 	if (!from->s || !from->len) {
-		LOG(L_ERR, "check_params(): Invalid From URI\n");
+		LM_ERR("Invalid From URI\n");
 		return -5;
 	}
 	return 0;
@@ -150,7 +149,7 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 
 	cseq_nr.s=int2str(dlg->loc_seq.value, &cseq_nr.len);
 	hashid=hash(dlg->id.call_id, cseq_nr);
-	DBG("DEBUG: dlg2hash: %d\n", hashid);
+	LM_DBG("hashid %d\n", hashid);
 	return hashid;
 }
 
@@ -181,7 +180,7 @@ int uac_refresh_hdr_shortcuts(tm_cell_t *tcell, char *buf, int buf_len)
 	tcell->cseq_n.s = lreq.cseq->name.s;
 	tcell->cseq_n.len = (int)(cs->number.s + cs->number.len - lreq.cseq->name.s);
 
-	LM_DBG("=========== cseq: [%.*s]\n", tcell->cseq_n.len, tcell->cseq_n.s);
+	LM_DBG("cseq: [%.*s]\n", tcell->cseq_n.len, tcell->cseq_n.s);
 	lreq.buf=0; /* covers the obsolete DYN_BUF */
 	free_sip_msg(&lreq);
 	return 0;
@@ -236,7 +235,7 @@ static inline int t_run_local_req(
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("tm:local-request");
 
-	DBG("executing event_route[tm:local-request]\n");
+	LM_DBG("executing event_route[tm:local-request]\n");
 	if (unlikely(t_build_msg_from_buf(&lreq, *buf, *buf_len, uac_r, &request->dst))) {
 		return -1;
 	}
@@ -366,10 +365,10 @@ normal_update:
 /* WARNING: - dst_cell contains the created cell, but it is un-referenced
  *            (before using it make sure you REF() it first)
  *          - if  ACK (method==ACK), a cell will be created but it will not
- *            be added in the hash table (should be either deleted by the 
- *            caller) 
+ *            be added in the hash table (should be either deleted by the
+ *            caller)
  */
-static inline int t_uac_prepare(uac_req_t *uac_r, 
+static inline int t_uac_prepare(uac_req_t *uac_r,
 		struct retr_buf **dst_req,
 		struct cell **dst_cell)
 {
@@ -394,9 +393,10 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	ret=-1;
 	hi=0; /* make gcc happy */
 	/*if (dst_req) *dst_req = NULL;*/
-	is_ack = (((uac_r->method->len == 3) && (memcmp("ACK", uac_r->method->s, 3)==0)) ? 1 : 0);
-	
-	/*** added by dcm 
+	is_ack = (((uac_r->method->len == 3) && (memcmp("ACK",
+						uac_r->method->s, 3)==0)) ? 1 : 0);
+
+	/*** added by dcm
 	 * - needed by external ua to send a request within a dlg
 	 */
 	if ((nhtype = w_calculate_hooks(uac_r->dialog)) < 0)
@@ -419,11 +419,11 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 
 	if (!new_cell) {
 		ret=E_OUT_OF_MEM;
-		LOG(L_ERR, "t_uac: short of cell shmem\n");
+		LM_ERR("short of cell shmem\n");
 		goto error3;
 	}
 
-	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",uac_r->dialog->hooks.next_hop->len,
+	LM_DBG("next_hop=<%.*s>\n",uac_r->dialog->hooks.next_hop->len,
 			uac_r->dialog->hooks.next_hop->s);
 	/* new message => take the dialog send_socket if set, or the default
 	  send_socket if not*/
@@ -440,7 +440,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 #endif /* USE_DNS_FAILOVER */
 		ser_error = E_NO_SOCKET;
 		ret=ser_error;
-		LOG(L_ERR, "t_uac: no socket found\n");
+		LM_ERR("no socket found\n");
 		goto error2;
 	}
 
@@ -489,7 +489,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	buf = build_uac_req(uac_r->method, uac_r->headers, uac_r->body, uac_r->dialog, 0, new_cell,
 		&buf_len, &dst);
 	if (!buf) {
-		LOG(L_ERR, "t_uac: Error while building message\n");
+		LM_ERR("Error while building message\n");
 		ret=E_OUT_OF_MEM;
 		goto error1;
 	}
@@ -541,10 +541,10 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	/* Register the callbacks after everything is successful and nothing can fail.
 	Otherwise the callback parameter would be freed twise, once from TMCB_DESTROY,
 	and again because of the negative return code. */
-	if(uac_r->cb && insert_tmcb(&(new_cell->tmcb_hl), uac_r->cb_flags, 
+	if(uac_r->cb && insert_tmcb(&(new_cell->tmcb_hl), uac_r->cb_flags,
 								*(uac_r->cb), uac_r->cbp, NULL)!=1){
-		ret=E_OUT_OF_MEM; 
-		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
+		ret=E_OUT_OF_MEM;
+		LM_ERR("short of tmcb shmem\n");
 		goto error1;
 	}
 	if (has_local_reqin_tmcbs())
@@ -557,7 +557,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	else if(is_ack && dst_req==0){
 		free_cell(new_cell);
 	}
-	
+
 	return 1;
 
  error1:
@@ -585,12 +585,12 @@ int prepare_req_within(uac_req_t *uac_r,
 		struct retr_buf **dst_req)
 {
 	if (!uac_r || !uac_r->method || !uac_r->dialog) {
-		LOG(L_ERR, "req_within: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		goto err;
 	}
 
 	if (uac_r->dialog->state != DLG_CONFIRMED) {
-		LOG(L_ERR, "req_within: Dialog is not confirmed yet\n");
+		LM_ERR("Dialog is not confirmed yet\n");
 		goto err;
 	}
 
@@ -620,7 +620,7 @@ static inline int send_prepared_request_impl(struct retr_buf *request, int retra
 	p_msg = t->uas.request;
 
 	if (SEND_BUFFER(request) == -1) {
-		LOG(L_ERR, "t_uac: Attempt to send to precreated request failed\n");
+		LM_ERR("Attempt to send to precreated request failed\n");
 	}
 	else if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_SENT)))
 		/* we don't know the method here */
@@ -628,14 +628,14 @@ static inline int send_prepared_request_impl(struct retr_buf *request, int retra
 			TMCB_LOCAL_F);
 
 	su2ip_addr(&ip, &uac->request.dst.to);
-	DBG("send_prepared_request_impl: uac: %p  branch: %d  to %s:%d\n",
+	LM_DBG("uac: %p  branch: %d  to %s:%d\n",
 			uac, branch, ip_addr2a(&ip), su_getport(&uac->request.dst.to));
 
 	if (run_onsend(p_msg, &uac->request.dst, uac->request.buffer,
 			uac->request.buffer_len)==0){
 		uac->last_received=408;
 		su2ip_addr(&ip, &uac->request.dst.to);
-		DBG("t_uac: onsend_route dropped msg. to %s:%d (%d)\n",
+		LM_DBG("onsend_route dropped msg. to %s:%d (%d)\n",
 						ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 						uac->request.dst.proto);
 #ifdef USE_DNS_FAILOVER
@@ -644,7 +644,7 @@ static inline int send_prepared_request_impl(struct retr_buf *request, int retra
 		ret = add_uac_dns_fallback(t, p_msg, uac, retransmit);
 		if (ret > 0) {
 			su2ip_addr(&ip, &uac->request.dst.to);
-			DBG("t_uac: send on branch %d failed "
+			LM_DBG("send on branch %d failed "
 					"(onsend_route), trying another ip %s:%d (%d)\n",
 					branch, ip_addr2a(&ip),
 					su_getport(&uac->request.dst.to),
@@ -657,7 +657,7 @@ static inline int send_prepared_request_impl(struct retr_buf *request, int retra
 	}
 
 	if (retransmit && (start_retr(&uac->request)!=0))
-		LOG(L_CRIT, "BUG: t_uac: failed to start retr. for %p\n", &uac->request);
+		LM_CRIT("BUG: failed to start retr. for %p\n", &uac->request);
 	return 0;
 }
 
@@ -729,7 +729,7 @@ struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
 	struct dest_info dst;
 
 	buf_len = (unsigned)sizeof(struct retr_buf);
-	if (! (buffer = build_dlg_ack(rpl_2xx, trans, branch, hdrs, body, 
+	if (! (buffer = build_dlg_ack(rpl_2xx, trans, branch, hdrs, body,
 			&buf_len, &dst))) {
 		return 0;
 	} else {
@@ -761,7 +761,7 @@ void free_local_ack_unsafe(struct retr_buf *lack)
 }
 
 /**
- * @return: 
+ * @return:
  * 	0: success
  * 	-1: internal error
  * 	-2: insane call :)
@@ -776,7 +776,7 @@ int ack_local_uac(struct cell *trans, str *hdrs, str *body)
 
 #ifdef EXTRA_DEBUG
 	if (! trans) {
-		BUG("no transaction to ACK.\n");
+		LM_BUG("no transaction to ACK.\n");
 		abort();
 	}
 #endif
@@ -786,39 +786,39 @@ int ack_local_uac(struct cell *trans, str *hdrs, str *body)
 		goto fin
 
 	if (! is_local(trans)) {
-		ERR("trying to ACK non local transaction (T@%p).\n", trans);
+		LM_ERR("trying to ACK non local transaction (T@%p).\n", trans);
 		RET_INVALID;
 	}
 	if (! is_invite(trans)) {
-		ERR("trying to ACK non INVITE local transaction (T@%p).\n", trans);
+		LM_ERR("trying to ACK non INVITE local transaction (T@%p).\n", trans);
 		RET_INVALID;
 	}
 	if (! trans->uac[0].reply) {
-		ERR("trying to ACK un-completed INVITE transaction (T@%p).\n", trans);
+		LM_ERR("trying to ACK un-completed INVITE transaction (T@%p).\n", trans);
 		RET_INVALID;
 	}
 
 	if (! (trans->flags & T_NO_AUTO_ACK)) {
-		ERR("trying to ACK an auto-ACK transaction (T@%p).\n", trans);
+		LM_ERR("trying to ACK an auto-ACK transaction (T@%p).\n", trans);
 		RET_INVALID;
 	}
 	if (trans->uac[0].local_ack) {
-		ERR("trying to rebuild ACK retransmission buffer (T@%p).\n", trans);
+		LM_ERR("trying to rebuild ACK retransmission buffer (T@%p).\n", trans);
 		RET_INVALID;
 	}
 
 	/* looks sane: build the retransmission buffer */
 
-	if (! (local_ack = local_ack_rb(trans->uac[0].reply, trans, /*branch*/0, 
+	if (! (local_ack = local_ack_rb(trans->uac[0].reply, trans, /*branch*/0,
 			hdrs, body))) {
-		ERR("failed to build ACK retransmission buffer");
+		LM_ERR("failed to build ACK retransmission buffer");
 		RET_INVALID;
 	} else {
 		/* set the new buffer, but only if not already set (conc. invok.) */
 		if ((old_lack = (struct retr_buf *)atomic_cmpxchg_long(
 				(void *)&trans->uac[0].local_ack, 0, (long)local_ack))) {
 			/* buffer already set: deny current attempt */
-			ERR("concurrent ACKing for local INVITE detected (T@%p).\n",trans);
+			LM_ERR("concurrent ACKing for local INVITE detected (T@%p).\n",trans);
 			free_local_ack(local_ack);
 			RET_INVALID;
 		}
@@ -826,7 +826,7 @@ int ack_local_uac(struct cell *trans, str *hdrs, str *body)
 
 	if (msg_send(&local_ack->dst, local_ack->buffer, local_ack->buffer_len)<0){
 		/* hopefully will succeed on next 2xx retransmission */
-		ERR("failed to send local ACK (T@%p).\n", trans);
+		LM_ERR("failed to send local ACK (T@%p).\n", trans);
 		ret = -1;
 		goto fin;
 	}
@@ -868,7 +868,7 @@ int req_within(uac_req_t *uac_r)
 	str duri = {0, 0};
 
 	if (!uac_r || !uac_r->method || !uac_r->dialog) {
-		LOG(L_ERR, "req_within: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		goto err;
 	}
 
@@ -934,12 +934,12 @@ int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	str callid, fromtag;
 
 	if (check_params(uac_r, to, from) < 0) goto err;
-	
+
 	generate_callid(&callid);
 	generate_fromtag(&fromtag, &callid);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &uac_r->dialog) < 0) {
-		LOG(L_ERR, "req_outside(): Error while creating new dialog\n");
+		LM_ERR("Error while creating new dialog\n");
 		goto err;
 	}
 
@@ -986,7 +986,7 @@ int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	generate_fromtag(&fromtag, &callid);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &dialog) < 0) {
-		LOG(L_ERR, "request(): Error while creating temporary dialog\n");
+		LM_ERR("Error while creating temporary dialog\n");
 		goto err;
 	}
 
@@ -1000,7 +1000,7 @@ int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop)
 	w_calculate_hooks(dialog);
 
 	/* WARNING:
-	 * to be clean it should be called 
+	 * to be clean it should be called
 	 *   set_dlg_target(dialog, ruri, next_hop);
 	 * which sets both uris if given [but it duplicates them in shm!]
 	 *
