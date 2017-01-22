@@ -55,6 +55,7 @@ int goto_on_notify_reply=-1;
 
 extern int pres_local_log_level;
 extern int pres_local_log_facility;
+extern subs_t* _pres_subs_last_sub;
 
 c_back_param* shm_dup_cbparam(subs_t*);
 void free_cbparam(c_back_param* cb_param);
@@ -1498,6 +1499,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 	str* final_body= NULL;
 	uac_req_t uac_r;
 	str* aux_body = NULL;
+	subs_t* backup_subs = NULL;
 
 	LM_DBG("dialog info:\n");
 	printf_subs(subs);
@@ -1618,9 +1620,13 @@ jump_over_body:
 	LM_DBG("expires %d status %d\n", subs->expires, subs->status);
 	cb_param = mem_copy_subs(subs, SHM_MEM_TYPE);
 
+	backup_subs = _pres_subs_last_sub;
+	_pres_subs_last_sub = subs;
+
 	set_uac_req(&uac_r, &met, &str_hdr, notify_body, td, TMCB_LOCAL_COMPLETED,
 			p_tm_callback, (void*)cb_param);
 	result = tmb.t_request_within(&uac_r);
+	_pres_subs_last_sub = backup_subs;
 	if(result< 0)
 	{
 		LM_ERR("in function tmb.t_request_within\n");
