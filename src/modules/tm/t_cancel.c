@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -70,7 +70,7 @@ void cancel_reason_text(struct cancel_info* cancel_data)
 /** Prepare to cancel a transaction.
  * Determine which branches should be canceled and prepare them (internally
  * mark them as "cancel in progress", see prepare_cancel_branch()).
- * Can be called without REPLY_LOCK, since prepare_cancel_branch() is atomic 
+ * Can be called without REPLY_LOCK, since prepare_cancel_branch() is atomic
  *  now *  -- andrei
  * WARNING: - has side effects, see prepare_cancel_branch()
  *          - one _must_ call cancel_uacs(cancel_bm) if *cancel_bm!=0 or
@@ -88,11 +88,11 @@ void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm,
 	int i;
 	int branches_no;
 	branch_bm_t mask;
-	
+
 	*cancel_bm=0;
 	branches_no=t->nr_of_outgoings;
 	mask=~skip_branches;
-	membar_depends(); 
+	membar_depends();
 	for( i=0 ; i<branches_no ; i++ ) {
 		*cancel_bm |= ((mask & (1<<i)) &&  prepare_cancel_branch(t, i, 1))<<i;
 	}
@@ -121,7 +121,7 @@ int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags)
 	cancel_reason_text(cancel_data);
 
 	/* cancel pending client transactions, if any */
-	for( i=0 ; i<t->nr_of_outgoings ; i++ ) 
+	for( i=0 ; i<t->nr_of_outgoings ; i++ )
 		if (cancel_data->cancel_bitmap & (1<<i)){
 			r=cancel_branch(
 				t,
@@ -145,16 +145,16 @@ int cancel_all_uacs(struct cell *trans, int how)
 #ifdef EXTRA_DEBUG
 	assert(trans);
 #endif
-	DBG("Canceling T@%p [%u:%u]\n", trans, trans->hash_index, trans->label);
-	
+	LM_DBG("Canceling T@%p [%u:%u]\n", trans, trans->hash_index, trans->label);
+
 	init_cancel_info(&cancel_data);
 	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	 /* tell tm to cancel the call */
 	i=cancel_uacs(trans, &cancel_data, how);
-	
+
 	if (how & F_CANCEL_UNREF)
 #ifndef TM_DEL_UNREF
-	/* in case of 'too many' _buggy_ invocations, the ref count (a uint) might 
+	/* in case of 'too many' _buggy_ invocations, the ref count (a uint) might
 	 * actually wrap around, possibly leaving the T leaking. */
 #warning "use of F_CANCEL_UNREF flag is unsafe without defining TM_DEL_UNREF"
 #endif
@@ -181,24 +181,24 @@ int cancel_all_uacs(struct cell *trans, int how)
  * params:  t - transaction
  *          branch - branch number to be canceled
  *          reason - cancel reason structure
- *          flags - howto cancel: 
- *                   F_CANCEL_B_KILL - will completely stop the 
+ *          flags - howto cancel:
+ *                   F_CANCEL_B_KILL - will completely stop the
  *                     branch (stops the timers), use with care
  *                   F_CANCEL_B_FAKE_REPLY - will send a fake 487
  *                      to all branches that haven't received any response
  *                      (>=100). It assumes the REPLY_LOCK is not held
  *                      (if it is => deadlock)
- *                  F_CANCEL_B_FORCE_C - will send a cancel (and create the 
- *                       corresp. local cancel rb) even if no reply was 
+ *                  F_CANCEL_B_FORCE_C - will send a cancel (and create the
+ *                       corresp. local cancel rb) even if no reply was
  *                       received; F_CANCEL_B_FAKE_REPLY will be ignored.
- *                  F_CANCEL_B_FORCE_RETR - don't stop retransmission if no 
+ *                  F_CANCEL_B_FORCE_RETR - don't stop retransmission if no
  *                       reply was received on the branch; incompatible
  *                       with F_CANCEL_B_FAKE_REPLY, F_CANCEL_B_FORCE_C and
  *                       F_CANCEL_B_KILL (all of them take precedence) a
  *                  default: stop only the retransmissions for the branch
  *                      and leave it to timeout if it doesn't receive any
  *                      response to the CANCEL
- * returns: 0 - branch inactive after running cancel_branch() 
+ * returns: 0 - branch inactive after running cancel_branch()
  *          1 - branch still active  (fr_timer)
  *         -1 - error
  * WARNING:
@@ -208,7 +208,7 @@ int cancel_all_uacs(struct cell *trans, int how)
  *            explicitly "put_on_wait" it might live forever)
  *          - F_CANCEL_B_FAKE_REPLY must be used only if the REPLY_LOCK is not
  *            held
- *          - checking for buffer==0 under REPLY_LOCK is no enough, an 
+ *          - checking for buffer==0 under REPLY_LOCK is no enough, an
  *           atomic_cmpxhcg or atomic_get_and_set _must_ be used.
  */
 int cancel_branch( struct cell *t, int branch,
@@ -232,8 +232,7 @@ int cancel_branch( struct cell *t, int branch,
 
 #	ifdef EXTRA_DEBUG
 	if (crb->buffer!=BUSY_BUFFER) {
-		LOG(L_CRIT, "ERROR: attempt to rewrite cancel buffer: %p\n",
-				crb->buffer);
+		LM_CRIT("attempt to rewrite cancel buffer: %p\n", crb->buffer);
 		abort();
 	}
 #	endif
@@ -243,8 +242,7 @@ int cancel_branch( struct cell *t, int branch,
 		ret=0;
 		if ((t->uac[branch].last_received < 100) &&
 				!(flags & F_CANCEL_B_FORCE_C)) {
-			DBG("DEBUG: cancel_branch: no response ever received: "
-			    "giving up on cancel\n");
+			LM_DBG("no response ever received: giving up on cancel\n");
 			/* remove BUSY_BUFFER -- mark cancel buffer as not used */
 			pcbuf=&crb->buffer; /* workaround for type punning warnings */
 			atomic_set_long(pcbuf, 0);
@@ -255,7 +253,7 @@ int cancel_branch( struct cell *t, int branch,
 					&& !(irb->flags&F_RB_RELAYREPLY)
 					&& !(t->flags&T_ADMIN_REPLY)) {
 				LOCK_REPLIES(t);
-				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1) == 
+				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1) ==
 										RPS_ERROR){
 					return -1;
 				}
@@ -276,7 +274,7 @@ int cancel_branch( struct cell *t, int branch,
 				if (flags & F_CANCEL_B_FAKE_REPLY){
 					stop_rb_timers( irb ); /* stop even the fr timer */
 					LOCK_REPLIES(t);
-					if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1)== 
+					if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_cd, 1)==
 											RPS_ERROR){
 						return -1;
 					}
@@ -307,7 +305,7 @@ int cancel_branch( struct cell *t, int branch,
 								);
 	}
 	if (!cancel) {
-		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
+		LM_ERR("attempt to build a CANCEL failed\n");
 		/* remove BUSY_BUFFER -- mark cancel buffer as not used */
 		pcbuf=&crb->buffer; /* workaround for type punning warnings */
 		atomic_set_long(pcbuf, 0);
@@ -323,18 +321,18 @@ int cancel_branch( struct cell *t, int branch,
 	 *  by an atomic_set((void*)&crb->buffer, cancel) */
 	if (unlikely(atomic_cmpxchg_long((void*)&crb->buffer, (long)BUSY_BUFFER,
 							(long)cancel)!= (long)BUSY_BUFFER)){
-		BUG("tm: cancel_branch: local_cancel buffer=%p != BUSY_BUFFER"
+		LM_BUG("local_cancel buffer=%p != BUSY_BUFFER"
 				" (trying to continue)\n", crb->buffer);
 		shm_free(cancel);
 		return -1;
 	}
-	membar_write_atomic_op(); /* cancel retr. can be called from 
-								 reply_received w/o the reply lock held => 
-								 they check for buffer_len to 
+	membar_write_atomic_op(); /* cancel retr. can be called from
+								 reply_received w/o the reply lock held =>
+								 they check for buffer_len to
 								 see if a valid reply exists */
 	crb->buffer_len = len;
 
-	DBG("DEBUG: cancel_branch: sending cancel...\n");
+	LM_DBG("sending cancel...\n");
 	if (SEND_BUFFER( crb )>=0){
 		if (unlikely (has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
 			run_trans_callbacks_with_buf(TMCB_REQUEST_OUT, crb, t->uas.request, 0, TMCB_LOCAL_F);
@@ -343,8 +341,7 @@ int cancel_branch( struct cell *t, int branch,
 	}
 	/*sets and starts the FINAL RESPONSE timer */
 	if (start_retr( crb )!=0)
-		LOG(L_CRIT, "BUG: cancel_branch: failed to start retransmission"
-					" for %p\n", crb);
+		LM_CRIT("failed to start retransmission for %p\n", crb);
 	return ret;
 }
 
@@ -376,7 +373,7 @@ void rpc_cancel(rpc_t* rpc, void* c)
 	}
 
 	if( t_lookup_callid(&trans, callid_s, cseq_s) < 0 ) {
-		DBG("Lookup failed\n");
+		LM_DBG("Lookup failed\n");
 		rpc->fault(c, 400, "Transaction not found");
 		return;
 	}
@@ -384,9 +381,9 @@ void rpc_cancel(rpc_t* rpc, void* c)
 	prepare_to_cancel(trans, &cancel_data.cancel_bitmap, 0);
 	 /* tell tm to cancel the call */
 	DBG("Now calling cancel_uacs\n");
-	i=cancel_uacs(trans, &cancel_data, 0); /* don't fake 487s, 
+	i=cancel_uacs(trans, &cancel_data, 0); /* don't fake 487s,
 										 just wait for timeout */
-	
+
 	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
 	UNREF(trans);
 	j=0;
@@ -403,7 +400,7 @@ void rpc_cancel(rpc_t* rpc, void* c)
 int cancel_b_flags_get(unsigned int* f, int m)
 {
 	int ret;
-	
+
 	ret=0;
 	switch(m){
 		case 1:
@@ -430,12 +427,11 @@ int cancel_b_flags_fixup(void* handle, str* gname, str* name, void** val)
 {
 	unsigned int m,f;
 	int ret;
-	
+
 	m=(unsigned int)(long)(*val);
 	ret=cancel_b_flags_get(&f, m);
 	if (ret<0)
-		ERR("cancel_b_flags_fixup: invalid value for %.*s; %d\n",
-				name->len, name->s, m);
+		LM_ERR("invalid value for %.*s; %d\n", name->len, name->s, m);
 	*val=(void*)(long)f;
 	return ret;
 }
@@ -548,5 +544,3 @@ error2:
 error3:
 	return ret;
 }
-
-

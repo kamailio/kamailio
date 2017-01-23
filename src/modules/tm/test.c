@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -44,22 +44,21 @@ int _test_insert_to_reply( struct sip_msg *msg, char *str )
     len=strlen( str );
     buf=pkg_malloc( len );
     if (!buf) {
-        LOG(L_ERR, "_test_insert_to_reply: no mem\n");
+        LM_ERR("no mem\n");
         return 0;
     }
     memcpy( buf, str, len );
 
     anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0 , 0);
     if (anchor == NULL) {
-        LOG(L_ERR, "_test_insert_to_reply: anchor_lump failed\n");
+        LM_ERR("anchor_lump failed\n");
         return 0;
     }
     if (insert_new_lump_before(anchor,buf, len, 0)==0) {
-        LOG(L_ERR, "_test_insert_to_reply: insert_new_lump failed\n");
+        LM_ERR("insert_new_lump failed\n");
         return 0;
     }
     return 1;
 }
 
 #endif
-

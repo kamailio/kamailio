@@ -50,7 +50,7 @@ int t_append_branches(void) {
 	struct cell *t = NULL;
 	struct sip_msg *orig_msg = NULL;
 	static struct sip_msg faked_req;
-	
+
 	short outgoings;
 
 	int success_branch;
@@ -110,10 +110,10 @@ int t_append_branches(void) {
 	}
 
 	if (!fake_req(&faked_req, orig_msg, 0, NULL)) {
-		LOG(L_ERR, "ERROR: t_append_branches: fake_req failed\n");
+		LM_ERR("fake_req failed\n");
 		return -1;
 	}
-	
+
 	/* fake also the env. conforming to the fake msg */
 	faked_env( t, &faked_req, 0);
 
@@ -128,7 +128,7 @@ int t_append_branches(void) {
 		for (i=0; i<outgoings; i++) {
 			if (t->uac[i].ruid.len == ruid.len
 					&& !memcmp(t->uac[i].ruid.s, ruid.s, ruid.len)
-					&& t->uac[i].uri.len == current_uri.len 
+					&& t->uac[i].uri.len == current_uri.len
 					&& !memcmp(t->uac[i].uri.s, current_uri.s, current_uri.len)) {
 				LM_DBG("branch already added [%.*s]\n", ruid.len, ruid.s);
 				found = 1;
@@ -144,8 +144,9 @@ int t_append_branches(void) {
 					&path, 0, si, faked_req.fwd_send_flags,
 					PROTO_NONE, (dst_uri.len)?0:UAC_SKIP_BR_DST_F, &instance,
 					&ruid, &location_ua);
-		
-		LM_DBG("added branch [%.*s] with ruid [%.*s]\n", current_uri.len, current_uri.s, ruid.len, ruid.s);
+
+		LM_DBG("added branch [%.*s] with ruid [%.*s]\n",
+				current_uri.len, current_uri.s, ruid.len, ruid.s);
 
 		/* test if cancel was received meanwhile */
 		if (t->flags & T_CANCELED) goto canceled;
@@ -167,7 +168,7 @@ int t_append_branches(void) {
 
 	if (added_branches==0) {
 		if(lowest_ret!=E_CFG)
-			LOG(L_ERR, "ERROR: t_append_branch: failure to add branches (%d)\n", lowest_ret);
+			LM_ERR("failure to add branches (%d)\n", lowest_ret);
 		ser_error=lowest_ret;
 		ret = lowest_ret;
 		goto done;
@@ -211,7 +212,7 @@ int t_append_branches(void) {
 	goto done;
 
 canceled:
-	DBG("t_append_branches: cannot append branches to a canceled transaction\n");
+	LM_DBG("cannot append branches to a canceled transaction\n");
 	/* reset processed branches */
 	clear_branches();
 	/* restore backup flags from initial env */
@@ -228,7 +229,7 @@ done:
 	/* restore original environment and free the fake msg */
 	faked_env( t, 0, 0);
 	free_faked_req(&faked_req,t);
-	
+
 	if (likely(replies_locked)) {
 		replies_locked = 0;
 		UNLOCK_REPLIES(t);

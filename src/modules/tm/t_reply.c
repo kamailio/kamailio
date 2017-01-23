@@ -1583,7 +1583,7 @@ static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 			trans->uac[branch].reply = sip_msg_cloner( rpl, 0 );
 
 		if (! trans->uac[branch].reply ) {
-			LOG(L_ERR, "ERROR: store_reply: can't alloc' clone memory\n");
+			LM_ERR("can't alloc' clone memory\n");
 			return 0;
 		}
 

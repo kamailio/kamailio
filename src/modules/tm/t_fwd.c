@@ -1105,7 +1105,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 #endif /* CANCEL_REASON_SUPPORT */
 				);
 		if (unlikely(!shbuf)) {
-			LOG(L_ERR, "e2e_cancel_branch: printing e2e cancel failed\n");
+			LM_ERR("printing e2e cancel failed\n");
 			ret=ser_error=E_OUT_OF_MEM;
 			goto error;
 		}
