@@ -463,8 +463,8 @@ static int fire_init_event(int rank)
 
 static void mod_destroy(void) {
 	kz_amqp_destroy();
-    shm_free(kz_worker_pipes_fds);
-    shm_free(kz_worker_pipes);
+    if (kz_worker_pipes_fds) { shm_free(kz_worker_pipes_fds); }
+    if (kz_worker_pipes) { shm_free(kz_worker_pipes); }
 }
 
 

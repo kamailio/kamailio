@@ -604,7 +604,7 @@ kz_amqp_server_ptr kz_amqp_destroy_server(kz_amqp_server_ptr server_ptr)
     kz_amqp_server_ptr next = server_ptr->next;
 	kz_amqp_destroy_connection(server_ptr->connection);
 	kz_amqp_destroy_channels(server_ptr);
-	shm_free(server_ptr->producer);
+	if (server_ptr->producer) { shm_free(server_ptr->producer); }
 	shm_free(server_ptr);
 	return next;
 }
