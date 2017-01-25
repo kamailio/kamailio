@@ -204,6 +204,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 		return -1;
 	}
 	if(ht->ncols>0) {
+		db_ord = &ht->scols[0];
 		for(c=0; c<ht->ncols; c++) {
 			db_cols[c] = &ht->scols[c];
 		}
