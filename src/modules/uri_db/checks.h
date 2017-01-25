@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -43,9 +43,10 @@ int check_from(struct sip_msg* _msg, char* _str1, char* _str2);
 
 
 /*
- *
+ * Checks username part of the supplied sip URI.
+ * Optinal with supplied credentials.
  */
-int check_uri(struct sip_msg* msg, char* uri, char* _s2);
+int check_uri(struct sip_msg* msg, char* uri, char* username, char* realm);
 
 
 /*
