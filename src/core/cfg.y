@@ -1436,7 +1436,7 @@ assign_stm:
 		if (shm_initialized())
 			yyerror("shm/shm_mem_size must be before any modparam or the"
 					" route blocks");
-		else if (shm_mem_size == 0)
+		else if (shm_mem_size == 0 || shm_mem_size == SHM_MEM_POOL_SIZE)
 			shm_mem_size=$3 * 1024 * 1024;
 	}
 	| SHM_MEM_SZ EQUAL error { yyerror("number expected"); }
