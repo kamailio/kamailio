@@ -142,14 +142,14 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 	if(STR_EQ_STATIC(type_s, "object") || STR_EQ_STATIC(type_s, "obj")){
 		value = json_loads(value_s.s, JSON_REJECT_DUPLICATES, &parsing_error);
 		if(value && !json_is_object(value)) {
-			ERR("value to add is not an object\n");
+			ERR("value to add is not an object - \"%s\"\n", path_s.s);
 			goto fail;
 		}
 
 	}else if(STR_EQ_STATIC(type_s, "array")) {
 		value = json_loads(value_s.s, JSON_REJECT_DUPLICATES, &parsing_error);
 		if(value && !json_is_array(value)) {
-			ERR("value to add is not an array\n");
+			ERR("value to add is not an array - \"%s\"\n", path_s.s);
 			goto fail;
 		}
 
@@ -157,7 +157,7 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 				|| STR_EQ_STATIC(type_s, "str")) {
 		value = json_string(value_s.s);
 		if(!value || !json_is_string(value)) {
-			ERR("value to add is not a string\n");
+			ERR("value to add is not a string - \"%s\"\n", path_s.s);
 			goto fail;
 		}
 
@@ -165,24 +165,24 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 				|| STR_EQ_STATIC(type_s, "int")) {
 		long long i = strtoll(value_s.s, &endptr, 10);
 		if(*endptr != '\0') {
-			ERR("parsing int failed for \"%s\"\n", value_s.s);
+			ERR("parsing int failed for \"%s\" - \"%s\"\n", path_s.s, value_s.s);
 			goto fail;
 		}
 		value = json_integer(i);
 		if(!value || !json_is_integer(value)) {
-			ERR("value to add is not an integer\n");
+			ERR("value to add is not an integer \"%s\"\n", path_s.s);
 			goto fail;
 		}
 
 	}else if(STR_EQ_STATIC(type_s, "real")) {
 		double d = strtod(value_s.s, &endptr);
 		if(*endptr != '\0') {
-			ERR("parsing real failed for \"%s\"\n", value_s.s);
+			ERR("parsing real failed for \"%s\" - \"%s\"\n", path_s.s, value_s.s);
 			goto fail;
 		}
 		value = json_real(d);
 		if(!value || !json_is_real(value)) {
-			ERR("value to add is not a real\n");
+			ERR("value to add is not a real \"%s\"\n", path_s.s);
 			goto fail;
 		}
 
