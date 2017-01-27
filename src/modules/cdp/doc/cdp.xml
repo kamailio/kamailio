@@ -25,7 +25,7 @@
 		<firstname>Jason</firstname>
 		<surname>Penton</surname>
 		<address>
-			<email>jason.penton@smilecoms.com</email>
+			<email>jason.penton@smilecoms.com</email>q
 		</address>
 		</editor>
 		<editor>
@@ -33,6 +33,14 @@
 		<surname>Good</surname>
 		<address>
 			<email>richard.good@smilecoms.com</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<address>
+			<email>carsten@ng-voice.com</email>
 		</address>
 		</editor>
 	</authorgroup>
@@ -43,6 +51,10 @@
 	<copyright>
 		<year>2012</year>
 		<holder>Smile Communications</holder>
+	</copyright>
+	<copyright>
+		<year>2017</year>
+		<holder>ng-voice GmbH</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>

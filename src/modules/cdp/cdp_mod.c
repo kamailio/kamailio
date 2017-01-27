@@ -54,6 +54,8 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "cdp_stats.h"
+#include "cdp_functions.h"
+#include "../../core/mod_fix.h"
 
 MODULE_VERSION
 
@@ -65,6 +67,13 @@ unsigned int workerq_length_threshold_percentage = 0;	/**< default threshold for
 unsigned int debug_heavy = 0;
 
 extern dp_config *config; 				/**< DiameterPeer configuration structure */
+
+static int w_cdp_check_peer(sip_msg_t *msg, char *peer, char *p2);
+static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
+static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid);
+static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
+
+
 
 #define EXP_FUNC(NAME) \
 {#NAME, (cmd_function)NAME, NO_SCRIPT, 0, 0},
@@ -103,6 +112,12 @@ extern dp_config *config; 				/**< DiameterPeer configuration structure */
  * - AAAAddResponseHandler() - add a #AAAResponseHandler_f callback to responses being received
  */
 static cmd_export_t cdp_cmds[] = {
+	{"cdp_check_peer", (cmd_function)w_cdp_check_peer, 1, fixup_spve_null,
+		0, ANY_ROUTE},
+	{"cdp_has_app", (cmd_function)w_cdp_has_app, 1, fixup_igp_null,
+		0, ANY_ROUTE},
+	{"cdp_has_app", (cmd_function)w_cdp_has_app2, 2, fixup_igp_igp,
+		0, ANY_ROUTE},
 	{"load_cdp",					(cmd_function)load_cdp, 				NO_SCRIPT, 0, 0},
 
 	EXP_FUNC(AAACreateRequest)
@@ -243,4 +258,74 @@ static int cdp_exit( void )
 	diameter_peer_destroy();
 	LM_INFO("... CDiameterPeer child stopped\n");
 	return 0;
+}
+
+int w_cdp_check_peer(sip_msg_t *msg, char *peer, char *p2) {
+	str s;
+	if(fixup_get_svalue(msg, (gparam_p)peer, &s)<0)
+	{
+		LM_ERR("cannot get the peer\n");
+		return -1;
+	}
+	if (s.len > 0) {
+		return check_peer(&s);
+	}
+	return -1;
+}
+
+static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param) {
+	unsigned int app_flags;
+	str app_s = STR_NULL;
+	int a;
+	if(msg == NULL)
+		return -1;
+
+	if (get_is_fparam(&a, &app_s, msg, (fparam_t *)appid, &app_flags) != 0) {
+		LM_ERR("no Vendor-ID\n");
+		return -1;
+	}  
+	if(!(app_flags & PARAM_INT)) {
+		if(app_flags & PARAM_STR)
+			LM_ERR("unable to get app from [%.*s]\n", app_s.len,
+					app_s.s);
+		else
+			LM_ERR("unable to get app\n");
+		return -1;
+	}
+	return check_application(-1, a);
+}
+
+static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid) {
+	unsigned int vendor_flags, app_flags;
+	str vendor_s = STR_NULL;
+	str app_s = STR_NULL;
+	int v, a;
+	if(msg == NULL)
+		return -1;
+
+	if (get_is_fparam(&v, &vendor_s, msg, (fparam_t *)vendor, &vendor_flags) != 0) {
+		LM_ERR("no Vendor-ID\n");
+		return -1;
+	} 
+	if(!(vendor_flags & PARAM_INT)) {
+		if(vendor_flags & PARAM_STR)
+			LM_ERR("unable to get vendor from [%.*s]\n", vendor_s.len,
+					vendor_s.s);
+		else
+			LM_ERR("unable to get vendor\n");
+		return -1;
+	}
+	if (get_is_fparam(&a, &app_s, msg, (fparam_t *)appid, &app_flags) != 0) {
+		LM_ERR("no Vendor-ID\n");
+		return -1;
+	}  
+	if(!(app_flags & PARAM_INT)) {
+		if(app_flags & PARAM_STR)
+			LM_ERR("unable to get app from [%.*s]\n", app_s.len,
+					app_s.s);
+		else
+			LM_ERR("unable to get app\n");
+		return -1;
+	}
+	return check_application(v, a);
 }
