@@ -629,14 +629,12 @@ listen_id:
 		if ($1){
 			tmp=ip_addr2a($1);
 			if (tmp==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: bad ip "
-						"address.\n");
+				LM_CRIT("cfg. parser: bad ip address.\n");
 				$$=0;
 			} else {
 				$$=pkg_malloc(strlen(tmp)+1);
 				if ($$==0) {
-					LOG(L_CRIT, "ERROR: cfg. parser: out of "
-							"memory.\n");
+					LM_CRIT("cfg. parser: out of memory.\n");
 				} else {
 					strncpy($$, tmp, strlen(tmp)+1);
 				}
@@ -646,8 +644,7 @@ listen_id:
 	| STRING {
 		$$=pkg_malloc(strlen($1)+1);
 		if ($$==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: out of "
-						"memory.\n");
+				LM_CRIT("cfg. parser: out of memory.\n");
 		} else {
 				strncpy($$, $1, strlen($1)+1);
 		}
@@ -656,8 +653,7 @@ listen_id:
 		if ($1){
 			$$=pkg_malloc(strlen($1)+1);
 			if ($$==0) {
-					LOG(L_CRIT, "ERROR: cfg. parser: out of "
-							"memory.\n");
+					LM_CRIT("cfg. parser: out of memory.\n");
 			} else {
 					strncpy($$, $1, strlen($1)+1);
 			}
@@ -668,7 +664,7 @@ listen_id:
 
 listen_id_lst:
 	listen_id	{ $$=mk_name_lst($1, SI_IS_MHOMED); }
-	| listen_id COMMA listen_id_lst	{ $$=mk_name_lst($1, SI_IS_MHOMED); 
+	| listen_id COMMA listen_id_lst	{ $$=mk_name_lst($1, SI_IS_MHOMED);
 										if ($$) $$->next=$3;
 									}
 	;
@@ -703,7 +699,7 @@ phostport:
 	| listen_id COLON port	{ $$=mk_listen_id($1, 0, $3); }
 	| proto COLON listen_id	{ $$=mk_listen_id($3, $1, 0); }
 	| proto COLON listen_id COLON port	{ $$=mk_listen_id($3, $1, $5);}
-	| listen_id COLON error { $$=0; yyerror(" port number expected"); }
+	| listen_id COLON error { $$=0; yyerror("port number expected"); }
 	;
 
 listen_phostport:
@@ -711,7 +707,7 @@ listen_phostport:
 	| listen_id2 COLON port	{ $$=mk_listen_id2($1, 0, $3); }
 	| proto COLON listen_id2	{ $$=mk_listen_id2($3, $1, 0); }
 	| proto COLON listen_id2 COLON port	{ $$=mk_listen_id2($3, $1, $5);}
-	| listen_id2 COLON error { $$=0; yyerror(" port number expected"); }
+	| listen_id2 COLON error { $$=0; yyerror("port number expected"); }
 	;
 
 id_lst:
@@ -766,8 +762,8 @@ assign_stm:
 	| FORK_DELAY  EQUAL error  { yyerror("number expected"); }
 	| MODINIT_DELAY  EQUAL NUMBER { set_modinit_delay($3); }
 	| MODINIT_DELAY  EQUAL error  { yyerror("number expected"); }
-	| LOGSTDERROR EQUAL NUMBER { if (!config_check)  /* if set from cmd line, don't overwrite from yyparse()*/ 
-					if(log_stderr == 0) log_stderr=$3; 
+	| LOGSTDERROR EQUAL NUMBER { if (!config_check)  /* if set from cmd line, don't overwrite from yyparse()*/
+					if(log_stderr == 0) log_stderr=$3;
 				   }
 	| LOGSTDERROR EQUAL error { yyerror("boolean value expected"); }
 	| LOGFACILITY EQUAL ID {
@@ -805,7 +801,7 @@ assign_stm:
 	| DNS_TCP_PREF error { yyerror("number expected"); }
 	| DNS_TLS_PREF EQUAL intno { IF_NAPTR(default_core_cfg.dns_tls_pref=$3);}
 	| DNS_TLS_PREF error { yyerror("number expected"); }
-	| DNS_SCTP_PREF EQUAL intno { 
+	| DNS_SCTP_PREF EQUAL intno {
 								IF_NAPTR(default_core_cfg.dns_sctp_pref=$3); }
 	| DNS_SCTP_PREF error { yyerror("number expected"); }
 	| DNS_RETR_TIME EQUAL NUMBER   { default_core_cfg.dns_retr_time=$3; }
@@ -851,7 +847,7 @@ assign_stm:
 	}
 	| USE_DST_BLST error { yyerror("boolean value expected"); }
 	| DST_BLST_MEM EQUAL NUMBER {
-		IF_DST_BLACKLIST(default_core_cfg.blst_max_mem=$3); 
+		IF_DST_BLACKLIST(default_core_cfg.blst_max_mem=$3);
 	}
 	| DST_BLST_MEM error { yyerror("boolean value expected"); }
 	| DST_BLST_TTL EQUAL NUMBER {
@@ -924,7 +920,7 @@ assign_stm:
 			yyerror("user must be before any modparam or the"
 					" route blocks");
 		else if (user==0)
-			user=$3; 
+			user=$3;
 	}
 	| USER EQUAL ID         {
 		if (shm_initialized())
@@ -1373,8 +1369,7 @@ assign_stm:
 									lst_tmp->addr_lst->next,
 									lst_tmp->port, lst_tmp->proto,
 									lst_tmp->flags)!=0) {
-				LOG(L_CRIT,  "ERROR: cfg. parser: failed to add listen"
-								" address\n");
+				LM_CRIT("cfg. parser: failed to add listen address\n");
 				break;
 			}
 		}
@@ -1387,8 +1382,7 @@ assign_stm:
 									lst_tmp->port, lst_tmp->proto,
 									$5, $7,
 									lst_tmp->flags)!=0) {
-				LOG(L_CRIT,  "ERROR: cfg. parser: failed to add listen"
-								" address\n");
+				LM_CRIT("cfg. parser: failed to add listen address\n");
 				break;
 			}
 		}
@@ -1407,7 +1401,7 @@ assign_stm:
 		}
 		free_socket_id_lst($3);
 	}
-	| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
+	| ALIAS  EQUAL error  { yyerror("hostname expected"); }
 	| SR_AUTO_ALIASES EQUAL NUMBER { sr_auto_aliases=$3; }
 	| SR_AUTO_ALIASES EQUAL error  { yyerror("boolean value expected"); }
 	| ADVERTISED_ADDRESS EQUAL listen_id {
@@ -1420,7 +1414,7 @@ assign_stm:
 	| ADVERTISED_PORT EQUAL NUMBER {
 		tmp=int2str($3, &i_tmp);
 		if ((default_global_port.s=pkg_malloc(i_tmp))==0) {
-			LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+			LM_CRIT("cfg. parser: out of memory.\n");
 			default_global_port.len=0;
 		} else {
 			default_global_port.len=i_tmp;
@@ -1573,11 +1567,11 @@ assign_stm:
 	| cfg_var
 	| error EQUAL { yyerror("unknown config variable"); }
 	;
-	
-cfg_var_id: ID 
+
+cfg_var_id: ID
 	| DEFAULT { $$="default" ; } /*needed to allow default as cfg var. name*/
 	;
-	
+
 cfg_var:
 	cfg_var_id DOT cfg_var_id EQUAL NUMBER {
 		if (cfg_declare_int($1, $3, $5, 0, 0, NULL)) {
@@ -1599,8 +1593,8 @@ cfg_var:
 			yyerror("variable cannot be declared");
 		}
 	}
-	| cfg_var_id DOT cfg_var_id EQUAL error { 
-		yyerror("number or string expected"); 
+	| cfg_var_id DOT cfg_var_id EQUAL error {
+		yyerror("number or string expected");
 	}
 	| cfg_var_id LBRACK NUMBER RBRACK DOT cfg_var_id EQUAL NUMBER {
 		if (cfg_ginst_var_int($1, $3, $6, $8)) {
@@ -1616,7 +1610,7 @@ cfg_var:
 
 module_stm:
 	LOADMODULE STRING {
-		DBG("loading module %s\n", $2);
+		LM_DBG("loading module %s\n", $2);
 			if (load_module($2)!=0) {
 				yyerror("failed to load module");
 			}
@@ -1624,22 +1618,22 @@ module_stm:
 	| LOADMODULE error	{ yyerror("string expected"); }
 	| LOADPATH STRING {
 		if(mods_dir_cmd==0) {
-			DBG("loading modules under %s\n", $2);
+			LM_DBG("loading modules under %s\n", $2);
 			printf("loading modules under config path: %s\n", $2);
 			mods_dir = $2;
 		} else {
-			DBG("ignoring mod path given in config: %s\n", $2);
+			LM_DBG("ignoring mod path given in config: %s\n", $2);
 			printf("loading modules under command line path: %s\n", mods_dir);
 		}
 	}
 	| LOADPATH error	{ yyerror("string expected"); }
 	| LOADPATH EQUAL STRING {
 		if(mods_dir_cmd==0) {
-			DBG("loading modules under %s\n", $3);
+			LM_DBG("loading modules under %s\n", $3);
 			printf("loading modules under config path: %s\n", $3);
 			mods_dir = $3;
 		} else {
-			DBG("ignoring mod path given in config: %s\n", $3);
+			LM_DBG("ignoring mod path given in config: %s\n", $3);
 			printf("loading modules under command line path: %s\n", mods_dir);
 		}
 	}
@@ -1691,7 +1685,7 @@ ipv4:
 	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER {
 		$$=pkg_malloc(sizeof(struct ip_addr));
 		if ($$==0) {
-			LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+			LM_CRIT("cfg. parser: out of memory.\n");
 		} else {
 			memset($$, 0, sizeof(struct ip_addr));
 			$$->af=AF_INET;
@@ -1720,7 +1714,7 @@ ipv6addr:
 	IPV6ADDR {
 		$$=pkg_malloc(sizeof(struct ip_addr));
 		if ($$==0) {
-			LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+			LM_CRIT("cfg. parser: out of memory.\n");
 		} else {
 			memset($$, 0, sizeof(struct ip_addr));
 			$$->af=AF_INET6;
@@ -1837,7 +1831,7 @@ onreply_route_stm:
 	}
 	| ROUTE_ONREPLY error { yyerror("invalid onreply_route statement"); }
 	| ROUTE_REPLY error { yyerror("invalid onreply_route statement"); }
-	| ROUTE_ONREPLY LBRACK route_name RBRACK 
+	| ROUTE_ONREPLY LBRACK route_name RBRACK
 		{rt=(*$3=='0' && $3[1]==0)?CORE_ONREPLY_ROUTE:TM_ONREPLY_ROUTE;}
 		LBRACE actions RBRACE {
 	#ifdef SHM_MEM
@@ -2053,7 +2047,7 @@ exp_elem:
 	| METHOD strop ID %prec EQUAL_T
 		{$$ = mk_elem($2, METHOD_O, 0, STRING_ST,$3); }
 	| METHOD strop error { $$=0; yyerror("string expected"); }
-	| METHOD error	
+	| METHOD error
 		{ $$=0; yyerror("invalid operator,== , !=, or =~ expected"); }
 	| uri_type strop rval_expr %prec EQUAL_T
 		{$$ = mk_elem($2, $1, 0, RVE_ST, $3); }
@@ -2109,7 +2103,7 @@ exp_elem:
 					ip_tmp=str2ip6(&s_tmp);
 				pkg_free(s_tmp.s);
 				if (ip_tmp) {
-					$$=mk_elem($2, $1, 0, NET_ST, 
+					$$=mk_elem($2, $1, 0, NET_ST,
 								mk_new_net_bitlen(ip_tmp, ip_tmp->len*8) );
 				} else {
 					$$=mk_elem($2, $1, 0, RVE_ST, $3);
@@ -2126,13 +2120,13 @@ exp_elem:
 		{ $$=0; yyerror( "ip address or hostname expected" ); }
 	| eip_op error
 		{ $$=0; yyerror("invalid operator, ==, != or =~ expected");}
-	
+
 	| MYSELF equalop uri_type %prec EQUAL_T
 		{ $$=mk_elem($2, $3, 0, MYSELF_ST, 0); }
 	| MYSELF equalop eip_op %prec EQUAL_T
 		{ $$=mk_elem($2, $3, 0, MYSELF_ST, 0); }
 	| MYSELF equalop error %prec EQUAL_T
-		{ $$=0; yyerror(" URI, SRCIP or DSTIP expected"); }
+		{ $$=0; yyerror("URI, SRCIP or DSTIP expected"); }
 	| MYSELF error	{ $$=0; yyerror ("invalid operator, == or != expected"); }
 	;
 
@@ -2159,7 +2153,7 @@ host:
 		if ($1){
 			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 			if ($$==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+				LM_CRIT("cfg. parser: memory allocation"
 							" failure while parsing host\n");
 			} else {
 				memcpy($$, $1, strlen($1));
@@ -2175,7 +2169,7 @@ host:
 		if ($1){
 			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 			if ($$==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+				LM_CRIT("cfg. parser: memory allocation"
 							" failure while parsing host\n");
 			} else {
 				memcpy($$, $1, strlen($1));
@@ -2207,7 +2201,7 @@ host_or_if:
 		if ($1){
 			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 			if ($$==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+				LM_CRIT("cfg. parser: memory allocation"
 							" failure while parsing host/interface name\n");
 			} else {
 				memcpy($$, $1, strlen($1));
@@ -2223,7 +2217,7 @@ host_or_if:
 		if ($1){
 			$$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 			if ($$==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+				LM_CRIT("cfg. parser: memory allocation"
 							" failure while parsing host/interface name\n");
 			} else {
 				memcpy($$, $1, strlen($1));
@@ -2313,7 +2307,7 @@ if_cmd:
 		}else
 			YYERROR;
 	}
-	| IF rval_expr stm ELSE stm	{ 
+	| IF rval_expr stm ELSE stm	{
 		if ($2 && rval_expr_int_check($2)>=0){
 			warn_ct_rve($2, "if");
 			$$=mk_action( IF_T, 3, RVE_ST, $2, ACTIONS_ST, $3, ACTIONS_ST, $5);
@@ -2401,7 +2395,7 @@ case_stms:
 	}
 ;
 switch_cmd:
-	  SWITCH rval_expr LBRACE case_stms RBRACE { 
+	  SWITCH rval_expr LBRACE case_stms RBRACE {
 		$$=0;
 		if ($2==0){
 			yyerror("bad expression in switch(...)");
@@ -2443,7 +2437,7 @@ switch_cmd:
 		}
 	}
 	| SWITCH error { $$=0; yyerror ("bad expression in switch(...)"); }
-	| SWITCH rval_expr LBRACE error RBRACE 
+	| SWITCH rval_expr LBRACE error RBRACE
 		{$$=0; yyerror ("bad switch body"); }
 ;
 
@@ -2801,7 +2795,7 @@ rval_expr: rval						{ $$=$1;
 		| DEFINED error					{ $$=0; yyerror("bad expression"); }
 		;
 
-assign_action: lval assign_op  rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1, 
+assign_action: lval assign_op  rval_expr	{ $$=mk_action($2, 2, LVAL_ST, $1,
 														 	  RVE_ST, $3);
 											set_cfg_pos($$);
 										}
@@ -2931,7 +2925,7 @@ cmd:
 		#endif
 	}
 	| FORWARD_TLS error { $$=0; yyerror("missing '(' or ')' ?"); }
-	| FORWARD_TLS LPAREN error RPAREN { $$=0; 
+	| FORWARD_TLS LPAREN error RPAREN { $$=0;
 									yyerror("bad forward_tls argument"); }
 	| FORWARD_SCTP LPAREN host RPAREN {
 		#ifdef USE_SCTP
@@ -2977,7 +2971,7 @@ cmd:
 	}
 	| FORWARD_SCTP LPAREN ip COMMA NUMBER RPAREN {
 		#ifdef USE_SCTP
-			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 
+			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST,
 							(void*)$5); set_cfg_pos($$);
 		#else
 			$$=0;
@@ -3010,7 +3004,7 @@ cmd:
 		#endif
 	}
 	| FORWARD_SCTP error { $$=0; yyerror("missing '(' or ')' ?"); }
-	| FORWARD_SCTP LPAREN error RPAREN { $$=0; 
+	| FORWARD_SCTP LPAREN error RPAREN { $$=0;
 									yyerror("bad forward_sctp argument"); }
 	| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(LOG_T, 2, NUMBER_ST,
 										(void*)(L_DBG+1), STRING_ST, $3);
@@ -3182,7 +3176,7 @@ cmd:
 	| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
 		$$=0;
 		if ((str_tmp=pkg_malloc(sizeof(str)))==0) {
-			LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+			LM_CRIT("cfg. parser: out of memory.\n");
 		} else {
 			str_tmp->s=$3;
 			str_tmp->len=$3?strlen($3):0;
@@ -3196,10 +3190,10 @@ cmd:
 		$$=0;
 		tmp=int2str($3, &i_tmp);
 		if ((str_tmp=pkg_malloc(sizeof(str)))==0) {
-			LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+			LM_CRIT("cfg. parser: out of memory.\n");
 		} else {
 			if ((str_tmp->s=pkg_malloc(i_tmp))==0) {
-				LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+				LM_CRIT("cfg. parser: out of memory.\n");
 			} else {
 				memcpy(str_tmp->s, tmp, i_tmp);
 				str_tmp->len=i_tmp;
@@ -3210,7 +3204,7 @@ cmd:
 	}
 	| SET_ADV_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
 	| SET_ADV_PORT  error {$$=0; yyerror("missing '(' or ')' ?"); }
-	| FORCE_SEND_SOCKET LPAREN phostport RPAREN { 
+	| FORCE_SEND_SOCKET LPAREN phostport RPAREN {
 		$$=mk_action(FORCE_SEND_SOCKET_T, 1, SOCKID_ST, $3);
 		set_cfg_pos($$);
 	}
@@ -3263,10 +3257,10 @@ cmd:
 		if (mod_func_action->val[0].u.data == 0) {
 			if (find_export_record($1, mod_func_action->val[1].u.number, 0,
 									&u_tmp) ) {
-					LOG(L_ERR, "misused command %s\n", $1);
+					LM_ERR("misused command %s\n", $1);
 					yyerror("Command cannot be used in the block\n");
 			} else {
-				LOG(L_ERR, "cfg. parser: failed to find command %s (params %ld)\n",
+				LM_ERR("cfg. parser: failed to find command %s (params %ld)\n",
 						$1, mod_func_action->val[1].u.number);
 				yyerror("unknown command, missing loadmodule?\n");
 			}
@@ -3317,7 +3311,7 @@ ret_cmd:
 						(void*)(DROP_R_F|EXIT_R_F)); set_cfg_pos($$);
 	}
 	| DROP				{
-		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST, 
+		$$=mk_action(DROP_T, 2, NUMBER_ST, 0, NUMBER_ST,
 						(void*)(DROP_R_F|EXIT_R_F)); set_cfg_pos($$);
 	}
 	| EXIT LPAREN RPAREN		{
@@ -3371,19 +3365,19 @@ static void warn_at(struct cfg_pos* p, char* format, ...)
 {
 	va_list ap;
 	char s[256];
-	
+
 	va_start(ap, format);
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
 	if (p->e_line!=p->s_line)
-		LOG(L_WARN, "warning in config file %s, from line %d, column %d to"
+		LM_WARN("warning in config file %s, from line %d, column %d to"
 					" line %d, column %d: %s\n",
 					p->fname, p->s_line, p->s_col, p->e_line, p->e_col, s);
 	else if (p->s_col!=p->e_col)
-		LOG(L_WARN, "warning in config file %s, line %d, column %d-%d: %s\n",
+		LM_WARN("warning in config file %s, line %d, column %d-%d: %s\n",
 					p->fname, p->s_line, p->s_col, p->e_col, s);
 	else
-		LOG(L_WARN, "warning in config file %s, line %d, column %d: %s\n",
+		LM_WARN("warning in config file %s, line %d, column %d: %s\n",
 				p->fname, p->s_line, p->s_col, s);
 	cfg_warnings++;
 }
@@ -3394,19 +3388,19 @@ static void yyerror_at(struct cfg_pos* p, char* format, ...)
 {
 	va_list ap;
 	char s[256];
-	
+
 	va_start(ap, format);
 	vsnprintf(s, sizeof(s), format, ap);
 	va_end(ap);
 	if (p->e_line!=p->s_line)
-		LOG(L_CRIT, "parse error in config file %s, from line %d, column %d"
+		LM_CRIT("parse error in config file %s, from line %d, column %d"
 					" to line %d, column %d: %s\n",
 					p->fname, p->s_line, p->s_col, p->e_line, p->e_col, s);
 	else if (p->s_col!=p->e_col)
-		LOG(L_CRIT,"parse error in config file %s, line %d, column %d-%d: %s\n",
+		LM_CRIT("parse error in config file %s, line %d, column %d-%d: %s\n",
 					p->fname, p->s_line, p->s_col, p->e_col, s);
 	else
-		LOG(L_CRIT, "parse error in config file %s, line %d, column %d: %s\n",
+		LM_CRIT("parse error in config file %s, line %d, column %d: %s\n",
 					p->fname, p->s_line, p->s_col, s);
 	cfg_errors++;
 }
@@ -3418,7 +3412,7 @@ static void warn(char* format, ...)
 	va_list ap;
 	char s[256];
 	struct cfg_pos pos;
-	
+
 	get_cpos(&pos);
 	va_start(ap, format);
 	vsnprintf(s, sizeof(s), format, ap);
@@ -3433,7 +3427,7 @@ static void yyerror(char* format, ...)
 	va_list ap;
 	char s[256];
 	struct cfg_pos pos;
-	
+
 	get_cpos(&pos);
 	va_start(ap, format);
 	vsnprintf(s, sizeof(s), format, ap);
@@ -3472,7 +3466,7 @@ static struct rval_expr* mk_rve1(enum rval_expr_op op, struct rval_expr* rve1)
 	struct rval_expr* ret;
 	struct rval_expr* bad_rve;
 	enum rval_type type, bad_t, exp_t;
-	
+
 	if (rve1==0)
 		return 0;
 	ret=mk_rval_expr1(op, rve1, &rve1->fpos);
@@ -3498,7 +3492,7 @@ static struct rval_expr* mk_rve2(enum rval_expr_op op, struct rval_expr* rve1,
 	struct rval_expr* bad_rve;
 	enum rval_type type, bad_t, exp_t;
 	struct cfg_pos pos;
-	
+
 	if ((rve1==0) || (rve2==0))
 		return 0;
 	bad_rve=0;
@@ -3529,7 +3523,7 @@ static int rval_expr_int_check(struct rval_expr *rve)
 {
 	struct rval_expr* bad_rve;
 	enum rval_type type, bad_t, exp_t;
-	
+
 	if (rve==0){
 		yyerror("invalid expression");
 		return -1;
@@ -3570,7 +3564,7 @@ static struct name_lst* mk_name_lst(char* host, int flags)
 	if (host==0) return 0;
 	l=pkg_malloc(sizeof(struct name_lst));
 	if (l==0) {
-		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+		LM_CRIT("cfg. parser: out of memory.\n");
 	} else {
 		l->name=host;
 		l->flags=flags;
@@ -3586,7 +3580,7 @@ static struct socket_id* mk_listen_id(char* host, int proto, int port)
 	if (host==0) return 0;
 	l=pkg_malloc(sizeof(struct socket_id));
 	if (l==0) {
-		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+		LM_CRIT("cfg. parser: out of memory.\n");
 	} else {
 		l->addr_lst=mk_name_lst(host, 0);
 		if (l->addr_lst==0){
@@ -3605,7 +3599,7 @@ static struct socket_id* mk_listen_id(char* host, int proto, int port)
 static void free_name_lst(struct name_lst* lst)
 {
 	struct name_lst* tmp;
-	
+
 	while(lst){
 		tmp=lst;
 		lst=lst->next;
@@ -3621,7 +3615,7 @@ static struct socket_id* mk_listen_id2(struct name_lst* addr_l, int proto,
 	if (addr_l==0) return 0;
 	l=pkg_malloc(sizeof(struct socket_id));
 	if (l==0) {
-		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+		LM_CRIT("cfg. parser: out of memory.\n");
 	} else {
 		l->flags=addr_l->flags;
 		l->port=port;
@@ -3643,7 +3637,7 @@ static void free_socket_id(struct socket_id* i)
 static void free_socket_id_lst(struct socket_id* lst)
 {
 	struct socket_id* tmp;
-	
+
 	while(lst){
 		tmp=lst;
 		lst=lst->next;
@@ -3665,7 +3659,7 @@ static struct case_stms* mk_case_stm(struct rval_expr* ct, int is_re,
 	struct rval_expr* bad_rve;
 	enum rval_type type, bad_t, exp_t;
 	enum match_str_type t;
-	
+
 	t=MATCH_UNKNOWN;
 	if (ct){
 		/* if ct!=0 => case, else if ct==0 is a default */
@@ -3713,7 +3707,7 @@ static int case_check_type(struct case_stms* stms)
 {
 	struct case_stms* c;
 	struct case_stms* s;
-	
+
 	for(c=stms; c ; c=c->next){
 		if (!c->ct_rve) continue;
 		for (s=c->next; s; s=s->next){
@@ -3737,7 +3731,7 @@ static int case_check_default(struct case_stms* stms)
 {
 	struct case_stms* c;
 	int default_no;
-	
+
 	default_no=0;
 	for(c=stms; c ; c=c->next)
 		if (c->ct_rve==0) default_no++;
@@ -3748,8 +3742,8 @@ static int case_check_default(struct case_stms* stms)
 
 /** fixes the parameters and the type of a module function call.
  * It is done here instead of fix action, to have quicker feedback
- * on error cases (e.g. passing a non constant to a function with a 
- * declared fixup) 
+ * on error cases (e.g. passing a non constant to a function with a
+ * declared fixup)
  * The rest of the fixup is done inside do_action().
  * @param a - filled module function call (MODULE*_T) action structure
  *            complete with parameters, starting at val[2] and parameter
@@ -3766,11 +3760,11 @@ static int mod_f_params_pre_fixup(struct action* a)
 	struct rvalue* rv;
 	int r;
 	str s;
-	
+
 	cmd_exp = a->val[0].u.data;
 	param_no = a->val[1].u.number;
 	params = &a->val[2];
-	
+
 	switch(cmd_exp->param_no) {
 		case 0:
 			a->type = MODULE0_T;
@@ -3801,7 +3795,7 @@ static int mod_f_params_pre_fixup(struct action* a)
 					" (invalid number of parameters)", cmd_exp->name);
 			return -1;
 	}
-	
+
 	if ( cmd_exp->fixup) {
 		if (is_fparam_rve_fixup(cmd_exp->fixup))
 			/* mark known fparam rve safe fixups */
@@ -3853,10 +3847,10 @@ static void free_mod_func_action(struct action* a)
 	action_u_t* params;
 	int param_no;
 	int r;
-	
+
 	param_no = a->val[1].u.number;
 	params = &a->val[2];
-	
+
 	for (r=0; r < param_no; r++)
 		if (params[r].u.data)
 			rve_destroy(params[r].u.data);
