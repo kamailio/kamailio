@@ -123,7 +123,7 @@
 %}
 
 /* start conditions */
-%x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P 
+%x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
 %x PVARID INCLF IMPTF EVRTNAME
 %x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
@@ -1055,7 +1055,7 @@ IMPORTFILE      "import_file"
 										yymore();
 										break;
 									case SR_COMPAT_MAX:
-									default: 
+									default:
 										state=AVP_PVAR_S; BEGIN(AVP_PVAR);
 										yymore();
 										break;
@@ -1121,14 +1121,14 @@ IMPORTFILE      "import_file"
 <INITIAL>{CR}		{ count();/* return CR;*/ }
 
 
-<INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START; 
+<INITIAL,SELECT>{QUOTES} { count(); old_initial = YY_START;
 							old_state = state; state=STRING_S;
 							BEGIN(STRING1); }
 <INITIAL>{TICK} { count(); old_initial = YY_START; old_state = state;
 					state=STRING_S; BEGIN(STRING2); }
 
 
-<STRING1>{QUOTES} { count_more(); 
+<STRING1>{QUOTES} { count_more();
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(&s_buf, yytext, yyleng);
 						state=STR_BETWEEN_S;
@@ -1162,7 +1162,7 @@ IMPORTFILE      "import_file"
 <STR_BETWEEN>{EAT_ABLE}|{CR}	{ count_ignore(); }
 <STR_BETWEEN>{QUOTES}			{ count_more(); state=STRING_S;
 								  BEGIN(STRING1);}
-<STR_BETWEEN>.					{	
+<STR_BETWEEN>.					{
 									yyless(0); /* reparse it */
 									/* ignore the whitespace now that is
 									  counted, return saved string value */
@@ -1197,7 +1197,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{PREP_START}{REDEF}{EAT_ABLE}+	{	count(); pp_define_set_type(2);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}{MINUS}          {	count();
-									LOG(L_CRIT,
+									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
 									exit(-1);
@@ -1230,7 +1230,7 @@ IMPORTFILE      "import_file"
 								if (pp_ifdef_type(0)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
 <IFDEF_ID>{ID}{MINUS}           { count();
-									LOG(L_CRIT,
+									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
 										(finame)?finame:"cfg", line);
 									exit(-1);
@@ -1292,7 +1292,7 @@ IMPORTFILE      "import_file"
 				r = pp_subst_run(&s_buf.s);
 				if(sr_push_yy_state(s_buf.s, 1)<0)
 				{
-					LOG(L_CRIT, "error at %s line %d\n", (finame)?finame:"cfg", line);
+					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
 					exit(-1);
 				}
 				memset(&s_buf, 0, sizeof(s_buf));
@@ -1310,7 +1310,7 @@ IMPORTFILE      "import_file"
 											memset(&s_buf, 0, sizeof(s_buf));
 											return STRING;
 										case STRING_S:
-											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF in"
+											LM_CRIT("cfg. parser: unexpected EOF in"
 														" unclosed string\n");
 											if (s_buf.s){
 												pkg_free(s_buf.s);
@@ -1319,28 +1319,28 @@ IMPORTFILE      "import_file"
 											}
 											break;
 										case COMMENT_S:
-											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF:"
+											LM_CRIT("cfg. parser: unexpected EOF:"
 														" %d comments open\n", comment_nest);
 											break;
 										case COMMENT_LN_S:
-											LOG(L_CRIT, "ERROR: unexpected EOF:"
+											LM_CRIT("unexpected EOF:"
 														"comment line open\n");
 											break;
 										case  ATTR_S:
-											LOG(L_CRIT, "ERROR: unexpected EOF"
+											LM_CRIT("unexpected EOF"
 													" while parsing"
 													" avp name\n");
 											break;
 										case PVARID_S:
 											p_nest=0;
-										case PVAR_P_S: 
-											LOG(L_CRIT, "ERROR: unexpected EOF"
+										case PVAR_P_S:
+											LM_CRIT("unexpected EOF"
 													" while parsing pvar name"
 													" (%d paranthesis open)\n",
 													p_nest);
 											break;
 										case AVP_PVAR_S:
-											LOG(L_CRIT, "ERROR: unexpected EOF"
+											LM_CRIT("unexpected EOF"
 													" while parsing"
 													" avp or pvar name\n");
 									}
@@ -1386,9 +1386,8 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 
 	return dst_b->s;
 error:
-	LOG(L_CRIT, "ERROR:lex:addstr: memory allocation error\n");
-	LOG(L_CRIT, "ERROR:lex:addstr: try to increase pkg size with"
-					" -M parameter\n");
+	LM_CRIT("lex: memory allocation error\n");
+	LM_CRIT("lex: try to increase pkg size with -M parameter\n");
 	exit(-1);
 }
 
@@ -1473,18 +1472,18 @@ static int sr_push_yy_state(char *fin, int mode)
 
 	if ( include_stack_ptr >= MAX_INCLUDE_DEPTH )
 	{
-		LOG(L_CRIT, "too many includes\n");
+		LM_CRIT("too many includes\n");
 		return -1;
 	}
 	l = strlen(fin);
 	if(l>=MAX_INCLUDE_FNAME)
 	{
-		LOG(L_CRIT, "included file name too long: %s\n", fin);
+		LM_CRIT("included file name too long: %s\n", fin);
 		return -1;
 	}
 	if(fin[0]!='"' || fin[l-1]!='"')
 	{
-		LOG(L_CRIT, "included file name must be between quotes: %s\n", fin);
+		LM_CRIT("included file name must be between quotes: %s\n", fin);
 		return -1;
 	}
 	j = 0;
@@ -1494,7 +1493,7 @@ static int sr_push_yy_state(char *fin, int mode)
 			case '\\':
 				if(i+1==l-1)
 				{
-					LOG(L_CRIT, "invalid escape at %d in included file name: %s\n", i, fin);
+					LM_CRIT("invalid escape at %d in included file name: %s\n", i, fin);
 					return -1;
 				}
 				i++;
@@ -1518,7 +1517,7 @@ static int sr_push_yy_state(char *fin, int mode)
 	}
 	if(j==0)
 	{
-		LOG(L_CRIT, "invalid included file name: %s\n", fin);
+		LM_CRIT("invalid included file name: %s\n", fin);
 		return -1;
 	}
 	fbuf[j] = '\0';
@@ -1532,10 +1531,10 @@ static int sr_push_yy_state(char *fin, int mode)
 		{
 			if(mode==0)
 			{
-				LOG(L_CRIT, "cannot open included file: %s\n", fin);
+				LM_CRIT("cannot open included file: %s\n", fin);
 				return -1;
 			} else {
-				LOG(L_DBG, "importing file ignored: %s\n", fin);
+				LM_DBG("importing file ignored: %s\n", fin);
 				return 0;
 			}
 		}
@@ -1545,10 +1544,10 @@ static int sr_push_yy_state(char *fin, int mode)
 			/* nothing else to try */
 			if(mode==0)
 			{
-				LOG(L_CRIT, "cannot open included file: %s\n", fin);
+				LM_CRIT("cannot open included file: %s\n", fin);
 				return -1;
 			} else {
-				LOG(L_DBG, "importing file ignored: %s\n", fin);
+				LM_DBG("importing file ignored: %s\n", fin);
 				return 0;
 			}
 		}
@@ -1556,7 +1555,7 @@ static int sr_push_yy_state(char *fin, int mode)
 		newf = (char*)pkg_malloc(x-tmpfiname+strlen(fbuf)+2);
 		if(newf==0)
 		{
-			LOG(L_CRIT, "no more pkg\n");
+			LM_CRIT("no more pkg\n");
 			return -1;
 		}
 		newf[0] = '\0';
@@ -1570,14 +1569,14 @@ static int sr_push_yy_state(char *fin, int mode)
 			pkg_free(newf);
 			if(mode==0)
 			{
-				LOG(L_CRIT, "cannot open included file: %s (%s)\n", fbuf, newf);
+				LM_CRIT("cannot open included file: %s (%s)\n", fbuf, newf);
 				return -1;
 			} else {
-				LOG(L_DBG, "importing file ignored: %s (%s)\n", fbuf, newf);
+				LM_DBG("importing file ignored: %s (%s)\n", fbuf, newf);
 				return 0;
 			}
 		}
-		LOG(L_DBG, "including file: %s (%s)\n", fbuf, newf);
+		LM_DBG("including file: %s (%s)\n", fbuf, newf);
 	} else {
 		newf = fbuf;
 	}
@@ -1618,7 +1617,7 @@ static int sr_push_yy_state(char *fin, int mode)
 		{
 			if(newf!=fbuf)
 				pkg_free(newf);
-			LOG(L_CRIT, "no more pkg\n");
+			LM_CRIT("no more pkg\n");
 			return -1;
 		}
 		if(newf==fbuf)
@@ -1627,7 +1626,7 @@ static int sr_push_yy_state(char *fin, int mode)
 			if(fn->fname==0)
 			{
 				pkg_free(fn);
-				LOG(L_CRIT, "no more pkg!\n");
+				LM_CRIT("no more pkg!\n");
 				return -1;
 			}
 			strcpy(fn->fname, fbuf);
@@ -1703,7 +1702,7 @@ int pp_define(int len, const char * text)
 	LM_DBG("defining id: %.*s\n", len, text);
 
 	if (pp_num_defines == MAX_DEFINES) {
-		LOG(L_CRIT, "ERROR: too many defines -- adjust MAX_DEFINES\n");
+		LM_CRIT("too many defines -- adjust MAX_DEFINES\n");
 		return -1;
 	}
 
@@ -1711,11 +1710,11 @@ int pp_define(int len, const char * text)
 	ppos = pp_lookup(len, text);
 	if(ppos >= 0) {
 		if(pp_define_type==1) {
-			LOG(L_DBG, "ignoring - already defined: %.*s\n", len, text);
+			LM_DBG("ignoring - already defined: %.*s\n", len, text);
 			pp_define_index = -2;
 			return 0;
 		} else if(pp_define_type==2) {
-			LOG(L_DBG, "redefining: %.*s\n", len, text);
+			LM_DBG("redefining: %.*s\n", len, text);
 			pp_define_index = ppos;
 			if(pp_defines[ppos][1].s != NULL) {
 				pkg_free(pp_defines[ppos][1].s);
@@ -1724,7 +1723,7 @@ int pp_define(int len, const char * text)
 			}
 			return 0;
 		} else {
-			LOG(L_CRIT, "ERROR: already defined: %.*s\n", len, text);
+			LM_CRIT("already defined: %.*s\n", len, text);
 			return -1;
 		}
 	}
@@ -1732,7 +1731,7 @@ int pp_define(int len, const char * text)
 	pp_defines[pp_num_defines][0].len = len;
 	pp_defines[pp_num_defines][0].s = (char*)pkg_malloc(len+1);
 	if(pp_defines[pp_num_defines][0].s==NULL) {
-		LOG(L_CRIT, "no more memory to define: %.*s\n", len, text);
+		LM_CRIT("no more memory to define: %.*s\n", len, text);
 		return -1;
 	}
 	memcpy(pp_defines[pp_num_defines][0].s, text, len);
@@ -1755,30 +1754,30 @@ int pp_define_set(int len, char *text)
 
 	if(pp_define_index < 0) {
 		/* invalid position in define table */
-		LOG(L_BUG, "BUG: the index in define table not set yet\n");
+		LM_BUG("BUG: the index in define table not set yet\n");
 		return -1;
 	}
 	if(len<=0) {
-		LOG(L_DBG, "no define value - ignoring\n");
+		LM_DBG("no define value - ignoring\n");
 		return 0;
 	}
 	if (pp_num_defines == MAX_DEFINES) {
-		LOG(L_CRIT, "ERROR: too many defines -- adjust MAX_DEFINES\n");
+		LM_CRIT("too many defines -- adjust MAX_DEFINES\n");
 		return -1;
 	}
 	if (pp_num_defines == 0) {
-		LOG(L_BUG, "BUG: setting define value, but no define id yet\n");
+		LM_BUG("BUG: setting define value, but no define id yet\n");
 		return -1;
 	}
 
 	ppos = pp_define_index;
 	if (pp_defines[ppos][0].s == NULL) {
-		LOG(L_BUG, "BUG: last define ID is null\n");
+		LM_BUG("BUG: last define ID is null\n");
 		return -1;
 	}
 
 	if (pp_defines[ppos][1].s != NULL) {
-		LOG(L_BUG, "BUG: ID %.*s [%d] overwritten\n",
+		LM_BUG("BUG: ID %.*s [%d] overwritten\n",
 			pp_defines[ppos][0].len,
 			pp_defines[ppos][0].s, ppos);
 		return -1;
@@ -1821,7 +1820,7 @@ static str *pp_define_get(int len, const char * text)
 static int pp_ifdef_type(int type)
 {
 	if (pp_sptr == MAX_IFDEFS) {
-		LOG(L_CRIT, "ERROR: too many nested ifdefs -- adjust MAX_IFDEFS\n");
+		LM_CRIT("too many nested ifdefs -- adjust MAX_IFDEFS\n");
 		return -1;
 	}
 
