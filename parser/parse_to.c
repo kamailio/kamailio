@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -35,50 +35,49 @@
 #include "../mem/mem.h"
 
 
-char* parse_to(char* const buffer, const char* const end, struct to_body* const to_b)
+char *parse_to(char *const buffer, const char *const end,
+		struct to_body *const to_b)
 {
 	return parse_addr_spec(buffer, end, to_b, 0);
 }
 
 
-int parse_to_header(struct sip_msg* const msg)
+int parse_to_header(struct sip_msg *const msg)
 {
-	if ( !msg->to && ( parse_headers(msg,HDR_TO_F,0)==-1 || !msg->to)) {
-		ERR("bad msg or missing TO header\n");
+	if(!msg->to && (parse_headers(msg, HDR_TO_F, 0) == -1 || !msg->to)) {
+		LM_ERR("bad msg or missing TO header\n");
 		return -1;
 	}
 
 	// HDR_TO_T is automatically parsed (get_hdr_field in parser/msg_parser.c)
 	// so check only ptr validity
-	if (msg->to->parsed)
+	if(msg->to->parsed)
 		return 0;
 	else
 		return -1;
 }
 
-sip_uri_t *parse_to_uri(sip_msg_t* const msg)
+sip_uri_t *parse_to_uri(sip_msg_t *const msg)
 {
 	to_body_t *tb = NULL;
-	
-	if(msg==NULL)
+
+	if(msg == NULL)
 		return NULL;
 
-	if(parse_to_header(msg)<0)
-	{
+	if(parse_to_header(msg) < 0) {
 		LM_ERR("cannot parse TO header\n");
 		return NULL;
 	}
 
-	if(msg->to==NULL || get_to(msg)==NULL)
+	if(msg->to == NULL || get_to(msg) == NULL)
 		return NULL;
 
 	tb = get_to(msg);
-	
-	if(tb->parsed_uri.user.s!=NULL || tb->parsed_uri.host.s!=NULL)
+
+	if(tb->parsed_uri.user.s != NULL || tb->parsed_uri.host.s != NULL)
 		return &tb->parsed_uri;
 
-	if (parse_uri(tb->uri.s, tb->uri.len , &tb->parsed_uri)<0)
-	{
+	if(parse_uri(tb->uri.s, tb->uri.len, &tb->parsed_uri) < 0) {
 		LM_ERR("failed to parse To uri\n");
 		memset(&tb->parsed_uri, 0, sizeof(struct sip_uri));
 		return NULL;
