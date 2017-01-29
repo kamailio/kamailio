@@ -143,7 +143,8 @@ int t_suspend(struct sip_msg *msg,
 	*hash_index = t->hash_index;
 	*label = t->label;
 
-
+	/* reset the continue flag to be able to suspend in a failure route */
+	t->flags &= ~T_ASYNC_CONTINUE;
 
 	/* backup some extra info that can be used in continuation logic */
 	t->async_backup.backup_route = get_route_type();
