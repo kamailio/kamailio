@@ -41,6 +41,7 @@ unsigned int my_connect_to = 2; /* 2 s by default */
 unsigned int my_send_to = 0; /*  enabled only for mysql >= 5.25  */
 unsigned int my_recv_to = 0; /* enabled only for mysql >= 5.25 */
 unsigned int my_retries = 1;    /* Number of retries when command fails */
+unsigned int my_server_timezone = 0; /* Use FROM_UNIXTIME() for date conversion */
 
 unsigned long my_client_ver = 0;
 
@@ -91,6 +92,7 @@ static param_export_t params[] = {
 	{"send_timeout",    PARAM_INT, &my_send_to},
 	{"receive_timeout", PARAM_INT, &my_recv_to},
 	{"retries",         PARAM_INT, &my_retries},
+	{"server_timezone", PARAM_INT, &my_server_timezone},
 
 	{"timeout_interval", INT_PARAM, &db_mysql_timeout_interval},
 	{"auto_reconnect",   INT_PARAM, &db_mysql_auto_reconnect},

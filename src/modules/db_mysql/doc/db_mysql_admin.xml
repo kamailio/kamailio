@@ -74,6 +74,27 @@ modparam("db_mysql", "ping_interval", 600)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>server_timezone</varname> (integer)</title>
+		<para>
+		Control if kamailio convers a time to string using the local timezone
+		or if MySQL will convert it using FROM_UNIXTIME. This option is useful
+		if kamailio and the database are configured for different timezones.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (use local conversion)
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server_timezone</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("db_mysql", "server_timezone", 1)
+...
+</programlisting>
+		</example>
+	</section>
 		<section>
 		<title><varname>timeout_interval</varname> (integer)</title>
 		<para>
