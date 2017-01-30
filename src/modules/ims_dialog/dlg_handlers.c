@@ -1153,10 +1153,10 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
     dlg_cell_t *dlg = NULL;
     dlg_iuid_t *iuid = NULL;
     struct dlg_cell_out *dlg_out = 0;
-    char *event_s;
+    char *event_s = 0;
 
     int new_state, old_state, unref, event;
-    str to_tag={0,0}, to_uri, branch={0,0};
+    str to_tag={0,0}, to_uri={0,0}, branch={0,0};
     struct sip_msg *req = param->req;
     struct sip_msg *rpl = param->rpl;
     struct dlg_entry_out* dlg_entry_out = 0;
@@ -1164,13 +1164,16 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param) {
     char* cb_type_s = tm_type_to_string(type);
 
     if (t && t->fwded_totags)
-        LM_DBG("ONREPLY CALL_BACK from TM received and type is [%i] = [%s] and TO is [%.*s]\n", type, cb_type_s, t->fwded_totags->tag.len, t->fwded_totags->tag.s);
+		LM_DBG("ONREPLY CALL_BACK from TM received and type is [%i] = [%s]"
+				" and TO is [%.*s]\n", type, cb_type_s, t->fwded_totags->tag.len,
+				t->fwded_totags->tag.s);
     else
-        LM_DBG("ONREPLY CALL_BACK from TM received and type is [%i] = [%s]\n", type, cb_type_s);
+        LM_DBG("ONREPLY CALL_BACK from TM received and type is [%i] = [%s]\n",
+        		type, cb_type_s);
 
     if (shutdown_done)
         return;
-    
+
     iuid = (dlg_iuid_t*) (*param->param);
     dlg = dlg_get_by_iuid(iuid);
     if (dlg == 0)
