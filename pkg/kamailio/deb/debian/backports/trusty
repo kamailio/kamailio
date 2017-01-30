@@ -23,6 +23,10 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mi_xmlrpc/' ${DIST}/rules
 sed -i 's/libradcli-dev/libfreeradius-client-dev/' ${DIST}/control
 sed -i -e 's/RADCLI/FREERADIUS/' ${DIST}/rules
 
+# old mysql
+sed -i -e 's/default-mysql-client/mysql-client/' \
+  -e 's/default-libmysqlclient-dev/libmysqlclient-dev/' ${DIST}/control
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0

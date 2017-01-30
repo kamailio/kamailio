@@ -95,6 +95,11 @@ sed -i -e 's/ jansson[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ jansson/' ${DIST}/rules
 sed -i -e 's/ jansson[ ,$]*//' ${DIST}/control
 sed -i -e 's/janssonrpc-c//'  ${DIST}/control
+
+# old mysql
+sed -i -e 's/default-mysql-client/mysql-client/' \
+  -e 's/default-libmysqlclient-dev/libmysqlclient-dev/' ${DIST}/control
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
