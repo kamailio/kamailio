@@ -14,6 +14,12 @@ sed -i -e '/libxmlrpc-c3-dev/d' -e '/^Package: kamailio-xmlrpc-modules/,/^$/d' \
 sed -i -e 's/ mi_xmlrpc[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mi_xmlrpc/' ${DIST}/rules
 
+# No dnssec module:
+sed -i -e '/libval-dev/d' -e '/^Package: kamailio-dnssec-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e 's/ dnssec[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ dnssec/' ${DIST}/rules
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
