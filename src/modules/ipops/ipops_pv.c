@@ -829,7 +829,7 @@ void sort_srv (struct srv_rdata **plist, int rcount)
 
 	idx2 = 0;
 	pswap = plist [0];
-	for (idx1 = 1; idx1 <= rcount; idx1++) {
+	for (idx1 = 1; idx1 < rcount; idx1++) {
 		if ((idx1 == rcount) || (pswap->priority != plist [idx1]->priority)) {
 			/**********
 			 * o range has more than one element?
