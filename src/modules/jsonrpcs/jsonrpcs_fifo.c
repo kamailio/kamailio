@@ -181,21 +181,25 @@ FILE *jsonrpc_init_fifo_server(char *fifo_name, int fifo_mode,
 	jsonrpc_fifo_write=open(fifo_name, O_WRONLY|O_NONBLOCK, 0);
 	if (jsonrpc_fifo_write<0) {
 		LM_ERR("fifo_write did not open: %s\n", strerror(errno));
+		fclose(fifo_stream);
 		return 0;
 	}
 	/* set read fifo blocking mode */
 	if ((opt=fcntl(jsonrpc_fifo_read, F_GETFL))==-1){
 		LM_ERR("fcntl(F_GETFL) failed: %s [%d]\n", strerror(errno), errno);
+		fclose(fifo_stream);
 		return 0;
 	}
 	if (fcntl(jsonrpc_fifo_read, F_SETFL, opt & (~O_NONBLOCK))==-1){
 		LM_ERR("cntl(F_SETFL) failed: %s [%d]\n", strerror(errno), errno);
+		fclose(fifo_stream);
 		return 0;
 	}
 
 	jsonrpc_reply_fifo_s = pkg_malloc(JSONRPC_MAX_FILENAME);
 	if (jsonrpc_reply_fifo_s==NULL) {
 		LM_ERR("no more private memory\n");
+		fclose(fifo_stream);
 		return 0;
 	}
 
