@@ -234,19 +234,17 @@ void notification_socket_cb(int fd, short event, void *arg)
 
 	query = ((str)aq->query);
 
+	memset(&query_params, 0, sizeof(http_m_params_t));
 	query_params.timeout = aq->query_params.timeout;
 	query_params.tls_verify_peer = aq->query_params.tls_verify_peer;
 	query_params.tls_verify_host = aq->query_params.tls_verify_host;
 	query_params.authmethod = aq->query_params.authmethod;
 
-	query_params.headers = NULL;
 	for (i = 0 ; i < aq->query_params.headers.len ; i++) {
 		query_params.headers = curl_slist_append(query_params.headers, aq->query_params.headers.t[i]);
 	}
 	query_params.method  = aq->query_params.method;
 
-	query_params.tls_client_cert.s = NULL;
-	query_params.tls_client_cert.len = 0;
 	if (aq->query_params.tls_client_cert.s && aq->query_params.tls_client_cert.len > 0) {
 		if (shm_str_dup(&query_params.tls_client_cert, &(aq->query_params.tls_client_cert)) < 0) {
 			LM_ERR("Error allocating query_params.tls_client_cert\n");
@@ -254,8 +252,6 @@ void notification_socket_cb(int fd, short event, void *arg)
 		}
 	}
 
-	query_params.tls_client_key.s = NULL;
-	query_params.tls_client_key.len = 0;
 	if (aq->query_params.tls_client_key.s && aq->query_params.tls_client_key.len > 0) {
 		if (shm_str_dup(&query_params.tls_client_key, &(aq->query_params.tls_client_key)) < 0) {
 			LM_ERR("Error allocating query_params.tls_client_key\n");
@@ -263,8 +259,6 @@ void notification_socket_cb(int fd, short event, void *arg)
 		}
 	}
 
-	query_params.tls_ca_path.s = NULL;
-	query_params.tls_ca_path.len = 0;
 	if (aq->query_params.tls_ca_path.s && aq->query_params.tls_ca_path.len > 0) {
 		if (shm_str_dup(&query_params.tls_ca_path, &(aq->query_params.tls_ca_path)) < 0) {
 			LM_ERR("Error allocating query_params.tls_ca_path\n");
@@ -272,20 +266,17 @@ void notification_socket_cb(int fd, short event, void *arg)
 		}
 	}
 
-	query_params.body.s = NULL;
-	query_params.body.len = 0;
 	if (aq->query_params.body.s && aq->query_params.body.len > 0) {
 		if (shm_str_dup(&query_params.body, &(aq->query_params.body)) < 0) {
 			LM_ERR("Error allocating query_params.body\n");
 			goto done;
 		}
 	}
-  
-	query_params.username = NULL;
+
 	if (aq->query_params.username) {
 		len = strlen(aq->query_params.username);
 		query_params.username = shm_malloc(len+1);
-	
+
 		if(query_params.username == NULL) {
 			LM_ERR("error in shm_malloc\n");
 			goto done;
@@ -294,12 +285,11 @@ void notification_socket_cb(int fd, short event, void *arg)
 		strncpy(query_params.username, aq->query_params.username, len);
 		query_params.username[len] = '\0';
 	}
-	
-	query_params.password = NULL;
+
 	if (aq->query_params.password) {
 		len = strlen(aq->query_params.password);
 		query_params.password = shm_malloc(len+1);
-	
+
 		if(query_params.password == NULL) {
 			LM_ERR("error in shm_malloc\n");
 			goto done;
@@ -342,7 +332,7 @@ done:
 		shm_free(query_params.username);
 		query_params.username = NULL;
 	}
-	
+
 	if (query_params.password) {
 		shm_free(query_params.password);
 		query_params.password = NULL;
