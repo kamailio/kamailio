@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * 
  */
 
 
@@ -137,14 +136,14 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 		LM_ERR("failed to parsing Request-URI\n");
 		goto err_server;
 	}
-	
+
 	db_keys[nr_keys]=&sd_user_column;
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.user.s;
 	db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.user.len;
 	nr_keys++;
-	
+
 	if(use_domain>=2)
 	{
 		db_keys[nr_keys]=&sd_domain_column;
@@ -152,8 +151,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 		db_vals[nr_keys].nul = 0;
 		db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.host.s;
 		db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.host.len;
-		nr_keys++;
-		
+
 		if (dstrip_s.s!=NULL && dstrip_s.len>0
 			&& dstrip_s.len<_msg->parsed_uri.host.len
 			&& strncasecmp(_msg->parsed_uri.host.s,dstrip_s.s,dstrip_s.len)==0)
@@ -161,8 +159,9 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 			db_vals[nr_keys].val.str_val.s   += dstrip_s.len;
 			db_vals[nr_keys].val.str_val.len -= dstrip_s.len;
 		}
+		nr_keys++;
 	}
-	
+
 	db_funcs.use_table(db_handle, &table_s);
 	if(db_funcs.query(db_handle, db_keys, NULL, db_vals, db_cols,
 		nr_keys /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0)
