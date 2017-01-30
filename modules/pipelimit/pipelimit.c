@@ -237,6 +237,7 @@ static int get_cpuload(double * load)
 	if (fscanf(f, "cpu  %lld%lld%lld%lld%lld%lld%lld%lld",
 			&n_user, &n_nice, &n_sys, &n_idle, &n_iow, &n_irq, &n_sirq, &n_stl) < 0) {
 		  LM_ERR("could not parse load information\n");
+		  fclose(f);
 		  return -1;
 	}
 	fclose(f);
