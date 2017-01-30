@@ -286,34 +286,34 @@ void dlg_iuid_sfree(void *iuid) {
     }
 }
 
-/*!
- * \brief Function that executes BYE reply callbacks
- * \param t transaction, unused
- * \param type type of the callback, should be TMCB_RESPONSE_FWDED
- * \param param saved dialog structure inside the callback
- */
-static void dlg_terminated_confirmed(struct cell* t,
-        int type,
-        struct tmcb_params* params) {
-    if (!params || !params->req || !params->param) {
-        LM_ERR("invalid parameters!\n");
-        return;
-    }
-
-    struct dlg_cell* dlg = (struct dlg_cell*) *params->param;
-
-    if (!dlg) {
-        LM_ERR("failed to get dialog from params!\n");
-        return;
-    }
-    /* dialog termination confirmed (BYE reply) */
-    run_dlg_callbacks(DLGCB_TERMINATED_CONFIRMED,
-            dlg,
-            params->req,
-            params->rpl,
-            DLG_DIR_UPSTREAM,
-            0);
-}
+///*!
+// * \brief Function that executes BYE reply callbacks
+// * \param t transaction, unused
+// * \param type type of the callback, should be TMCB_RESPONSE_FWDED
+// * \param param saved dialog structure inside the callback
+// */
+//static void dlg_terminated_confirmed(struct cell* t,
+//        int type,
+//        struct tmcb_params* params) {
+//    if (!params || !params->req || !params->param) {
+//        LM_ERR("invalid parameters!\n");
+//       return;
+//    }
+//
+//   struct dlg_cell* dlg = (struct dlg_cell*) *params->param;
+//
+//    if (!dlg) {
+//        LM_ERR("failed to get dialog from params!\n");
+//        return;
+//    }
+//    /* dialog termination confirmed (BYE reply) */
+//    run_dlg_callbacks(DLGCB_TERMINATED_CONFIRMED,
+//            dlg,
+//            params->req,
+//            params->rpl,
+//            DLG_DIR_UPSTREAM,
+//            0);
+//}
 
 static void dlg_cancel_confirmed(struct cell* t,
         int type,
