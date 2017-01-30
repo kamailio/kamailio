@@ -92,7 +92,7 @@ int _cfgt_xavp_dump_lookup(pv_param_t *param)
 
 	xname = (pv_xavp_name_t*)param->pvn.u.dname;
 
-	while(_cfgt_xavp_dump[i]!=NULL&&i<CFGT_XAVP_DUMP_SIZE)
+	while(i<CFGT_XAVP_DUMP_SIZE && _cfgt_xavp_dump[i]!=NULL)
 	{
 		if(_cfgt_xavp_dump[i]->len==xname->name.len)
 		{
