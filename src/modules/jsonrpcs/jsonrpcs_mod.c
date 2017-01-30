@@ -951,6 +951,7 @@ static struct rpc_delayed_ctx* jsonrpc_delayed_ctx_new(jsonrpc_ctx_t* ctx)
 
 	ret=0;
 	shm_msg=0;
+	len = 0;
 
 	if (ctx->reply_sent) {
 		LM_ERR("response already sent - cannot create a delayed context\n");
