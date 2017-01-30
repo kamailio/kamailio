@@ -489,6 +489,8 @@ clean:
 	LM_DBG("error at row=%d col=%d c=%c\n", crow+1, ccol+1, c);
 	if(dtp)
 		dbt_table_free(dtp);
+	if(fin)
+		fclose(fin);
 	if(buf)
 		pkg_free(buf);
 	return NULL;
