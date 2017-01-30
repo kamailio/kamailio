@@ -104,6 +104,9 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ http_async/' ${DIST}/rules
 sed -i -e 's/default-mysql-client/mysql-client/' \
   -e 's/default-libmysqlclient-dev/libmysqlclient-dev/' ${DIST}/control
 
+# no libssl-dev
+sed -i -e '/libssl-dev/d' ${DIST}/control
+
 # clean backports scripts
 rm -rf ${DIST}/backports
 exit 0
