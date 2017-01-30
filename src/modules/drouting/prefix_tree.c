@@ -154,7 +154,7 @@ get_prefix(
 			goto err_exit;
 		/* is it a real node or an intermediate one */
 		idx = get_node_index(*tmp);
-		if(NULL != ptree->ptnode[idx].rg) {
+		if(idx!=-1 && NULL != ptree->ptnode[idx].rg) {
 			/* real node; check the constraints on the routing info*/
 			if( NULL != (rt = internal_check_rt( &(ptree->ptnode[idx]), rgid)))
 				break;
@@ -169,7 +169,7 @@ err_exit:
 }
 
 
-pgw_t* 
+pgw_t*
 get_pgw(
 		pgw_t* pgw_l,
 		long id
