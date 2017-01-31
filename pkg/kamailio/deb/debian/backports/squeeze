@@ -72,6 +72,12 @@ sed -i -e '/RADCLI/d' ${DIST}/rules
 # use old json
 sed -i 's/libjson-c-dev/libjson0-dev/' ${DIST}/control
 
+# no kazoo module
+sed -i -e '/librabbitmq-dev/d' -e '/^Package: kamailio-kazoo-modules/,/^$/d' \
+	${DIST}/control
+sed -i -e 's/ kazoo[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ kazoo/' ${DIST}/rules
+
 # no cnxcc module
 sed -i -e '/^Package: kamailio-cnxcc-modules/,/^$/d' ${DIST}/control
 sed -i -e 's/ cnxcc[ ,$]*/ /' ${DIST}/rules
