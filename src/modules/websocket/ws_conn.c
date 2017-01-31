@@ -36,6 +36,8 @@
 /* Maximum number of connections to display when using the ws.dump command */
 #define MAX_WS_CONNS_DUMP	50
 
+extern int ws_verbose_list;
+
 ws_connection_t **wsconn_id_hash = NULL;
 #define wsconn_listadd	tcpconn_listadd
 #define wsconn_listrm	tcpconn_listrm
@@ -454,7 +456,7 @@ ws_connection_t **wsconn_get_list(void)
 	size_t list_len  = 0;
 	size_t i = 0;
 
-	LM_DBG("wsconn_get_list\n");
+	if(ws_verbose_list) LM_DBG("wsconn get list - starting\n");
 
 	WSCONN_LOCK;
 
@@ -462,7 +464,8 @@ ws_connection_t **wsconn_get_list(void)
 	wsc = wsconn_used_list->head;
 	while (wsc)
 	{
-		LM_DBG("counter wsc [%p] prev => [%p] next => [%p]\n", wsc, wsc->used_prev, wsc->used_next);
+		if(ws_verbose_list) LM_DBG("counter wsc [%p] prev => [%p] next => [%p]\n",
+				wsc, wsc->used_prev, wsc->used_next);
 		list_len++;
 		wsc = wsc->used_next;
 	}
@@ -489,7 +492,7 @@ ws_connection_t **wsconn_get_list(void)
 
 		list[i] = wsc;
 		wsconn_ref(wsc);
-		LM_DBG("wsc [%p] id [%d] ref++\n", wsc, wsc->id);
+		if(ws_verbose_list) LM_DBG("wsc [%p] id [%d] ref++\n", wsc, wsc->id);
 
 		wsc = wsc->used_next;
 	}
@@ -498,7 +501,8 @@ ws_connection_t **wsconn_get_list(void)
 end:
 	WSCONN_UNLOCK;
 
-	LM_DBG("wsconn_get_list returns list [%p] with [%d] members\n", list, (int)list_len);
+	if(ws_verbose_list) LM_DBG("wsconn_get_list returns list [%p]"
+			" with [%d] members\n", list, (int)list_len);
 
 	return list;
 }

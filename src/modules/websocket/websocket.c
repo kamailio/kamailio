@@ -67,6 +67,8 @@ static int ws_keepalive_timeout = DEFAULT_KEEPALIVE_TIMEOUT;
 #define DEFAULT_KEEPALIVE_PROCESSES	1
 static int ws_keepalive_processes = DEFAULT_KEEPALIVE_PROCESSES;
 
+int ws_verbose_list = 0;
+
 static cmd_export_t cmds[] = {
 	/* ws_frame.c */
 	{ "ws_close", (cmd_function) ws_close,
@@ -101,6 +103,7 @@ static param_export_t params[] = {
 	{ "keepalive_interval",		INT_PARAM, &ws_keepalive_interval },
 	{ "keepalive_processes",	INT_PARAM, &ws_keepalive_processes },
 
+	{ "verbose_list",		PARAM_INT, &ws_verbose_list },
 	{ 0, 0, 0 }
 };
 
