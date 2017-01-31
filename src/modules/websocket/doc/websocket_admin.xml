@@ -429,6 +429,22 @@ modparam("websocket", "cors_mode", 2)
 </programlisting>
 		</example>
 	</section>
+	<section id="websocket.p.verbose_list">
+		<title><varname>verbose_list</varname> (int)</title>
+		<para>Allows to enable/disable the printing of debug
+			messages when getting the list of websocket connections. If enabled,
+			it prints debug messages every second for ping operations.</para>
+		<para><emphasis>Default value is 0 (disabled).</emphasis></para>
+		<example>
+		<title>Set <varname>verbose_list</varname>
+		parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("websocket", "verbose_list", 1)
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
