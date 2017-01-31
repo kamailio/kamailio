@@ -93,7 +93,7 @@ sed -i -e 's/janssonrpc-c//'  ${DIST}/control
 # no systemd module
 sed -i -e '/libsystemd-dev/d' -e '/^Package: kamailio-systemd-modules/,/^$/d' \
   ${DIST}/control
-sed -i -e 's/ systemd[ ,$]*//' ${DIST}/rules
+sed -i -e 's/ systemd[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ systemd/' ${DIST}/rules
 
 # no http_async module
@@ -106,6 +106,12 @@ sed -i -e 's/default-mysql-client/mysql-client/' \
 
 # no libssl-dev
 sed -i -e '/libssl-dev/d' ${DIST}/control
+
+# no rabbitmq
+sed -i -e '/librabbitmq-dev/d' \
+  -e '/^Package: kamailio-rabbitmq-modules/,/^$/d' ${DIST}/control
+sed -i -e 's/ rabbitmq[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ rabbitmq/' ${DIST}/rules
 
 # clean backports scripts
 rm -rf ${DIST}/backports

@@ -26,7 +26,7 @@ sed -i -e 's/RADCLI/FREERADIUS/' ${DIST}/rules
 # no systemd module
 sed -i -e '/libsystemd-dev/d' -e '/^Package: kamailio-systemd-modules/,/^$/d' \
   ${DIST}/control
-sed -i -e 's/ systemd[ ,$]*//' ${DIST}/rules
+sed -i -e 's/ systemd[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ systemd/' ${DIST}/rules
 
 # old mysql
