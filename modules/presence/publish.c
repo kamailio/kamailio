@@ -156,9 +156,22 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 			if (pres_notifier_processes > 0)
 			{
+				if (pa_dbf.start_transaction)
+				{
+					if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
+					{
+						LM_ERR("in start_transaction\n");
+						goto error;
+					}
+				}
 				if ((num_watchers = publ_notify_notifier(uri, pres.event)) < 0)
 				{
 					LM_ERR("Updating watcher records\n");
+					if (pa_dbf.abort_transaction)
+					{
+						if (pa_dbf.abort_transaction(pa_db) < 0)
+							LM_ERR("in abort_transaction\n");
+					}
 					goto error;
 				}
 
@@ -167,6 +180,11 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 					if (mark_presentity_for_delete(&pres) < 0)
 					{
 						LM_ERR("Marking presentity\n");
+						if (pa_dbf.abort_transaction)
+						{
+							if (pa_dbf.abort_transaction(pa_db) < 0)
+								LM_ERR("in abort_transaction\n");
+						}
 						goto error;
 					}
 				}
@@ -175,6 +193,14 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 					if (delete_presentity(&pres) < 0)
 					{
 						LM_ERR("Deleting presentity\n");
+						goto error;
+					}
+				}
+				if (pa_dbf.end_transaction)
+				{
+					if (pa_dbf.end_transaction(pa_db) < 0)
+					{
+						LM_ERR("in end_transaction\n");
 						goto error;
 					}
 				}

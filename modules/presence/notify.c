@@ -1348,15 +1348,6 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 	result_cols[r_to_tag_col=n_result_cols++] = &str_to_tag_col;
 	result_cols[r_from_tag_col=n_result_cols++] = &str_from_tag_col;
 
-	if (pa_dbf.start_transaction)
-	{
-		if (pa_dbf.start_transaction(pa_db, db_table_lock) < 0)
-		{
-			LM_ERR("in start_transaction\n");
-			goto error;
-		}
-	}
-
 	if(query_fn(pa_db, query_cols, 0, query_vals, result_cols, 
 				n_query_cols, n_result_cols, 0, &result )< 0)
 	{
@@ -1385,25 +1376,10 @@ int publ_notify_notifier(str pres_uri, pres_ev_t *event)
 		set_updated(&subs);
 	}
 
-	if (pa_dbf.end_transaction)
-	{
-		if (pa_dbf.end_transaction(pa_db) < 0)
-		{
-			LM_ERR("in end_transaction\n");
-			goto error;
-		}
-	}
-
 	ret = RES_ROW_N(result);
 
 error:
 	if (result) pa_dbf.free_result(pa_db, result);
-
-	if (pa_dbf.abort_transaction)
-	{
-		if (pa_dbf.abort_transaction(pa_db) < 0)
-			LM_ERR("in abort_transaction\n");
-	}
 
 	return ret;
 }
