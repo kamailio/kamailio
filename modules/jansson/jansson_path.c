@@ -18,9 +18,9 @@
 #include "../../mod_fix.h"
 
 /* jansson private helper functions */
-void *jsonp_malloc(size_t size);
-void jsonp_free(void *ptr);
-char *jsonp_strdup(const char *str);
+static void *jsonp_malloc(size_t size);
+static void jsonp_free(void *ptr);
+static char *jsonp_strdup(const char *str);
 
 static json_malloc_t do_malloc = malloc;
 static json_free_t do_free = free;
@@ -252,21 +252,21 @@ fail:
 }
 
 /* jansson private helper functions */
-void *jsonp_malloc(size_t size) {
+static void *jsonp_malloc(size_t size) {
 	if(!size)
 		return NULL;
 
 	return (*do_malloc)(size);
 }
 
-void jsonp_free(void *ptr) {
+static void jsonp_free(void *ptr) {
 	if(!ptr)
 		return;
 
 	(*do_free)(ptr);
 }
 
-char *jsonp_strdup(const char *str) {
+static char *jsonp_strdup(const char *str) {
 	char *new_str;
 
 	new_str = jsonp_malloc(strlen(str) + 1); 
