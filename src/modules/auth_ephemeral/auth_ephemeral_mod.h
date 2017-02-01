@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2013 Crocodile RCS Ltd
+ * Copyright (C) 2017 ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -45,6 +46,13 @@ typedef enum {
 	AUTHEPH_USERNAME_IETF		= 1,
 } autheph_username_format_t;
 extern autheph_username_format_t autheph_username_format;
+
+typedef enum {
+	AUTHEPH_SHA1	= 0,
+	AUTHEPH_SHA256	= 1,
+	AUTHEPH_SHA512	= 2,
+} autheph_sha_alg_t;
+extern autheph_sha_alg_t autheph_sha_alg;
 
 extern auth_api_s_t eph_auth_api;
 

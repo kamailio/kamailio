@@ -18,10 +18,20 @@
 		<affiliation><orgname>Crocodile RCS Ltd</orgname></affiliation>
 		<email>peter.dunkley@crocodile-rcs.com</email>
 		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<email>carsten@ng-voice.com</email>
+		</author>
 	</authorgroup>
 	<copyright>
 		<year>2013</year>
 		<holder>Crocodile RCS Ltd</holder>
+	</copyright>
+	<copyright>
+		<year>2017</year>
+		<holder>ng-voice GmbH</holder>
 	</copyright>
 	</bookinfo>
 	<toc></toc>

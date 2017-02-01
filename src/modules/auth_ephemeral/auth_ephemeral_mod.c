@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 Crocodile RCS Ltd
+ * Copyright (C) 2017 ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -49,6 +50,8 @@ gen_lock_t *autheph_secret_lock = NULL;
 
 autheph_username_format_t autheph_username_format = AUTHEPH_USERNAME_IETF;
 
+autheph_sha_alg_t autheph_sha_alg = AUTHEPH_SHA1;
+
 auth_api_s_t eph_auth_api;
 
 static cmd_export_t cmds[]=
@@ -92,6 +95,8 @@ static param_export_t params[]=
 	  (void *) secret_param },
 	{ "username_format",	INT_PARAM,
 	  &autheph_username_format },
+	{ "sha_algorithm",	INT_PARAM,
+	  &autheph_sha_alg },
 	{0, 0, 0}
 };
 

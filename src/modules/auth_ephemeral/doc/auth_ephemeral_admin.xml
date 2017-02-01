@@ -195,6 +195,37 @@ modparam("auth_ephemeral", "username_format", 0)
 </programlisting>
 		</example>
 	</section>
+
+
+	<section id="auth_eph.p.sha_algorithm">
+		<title><varname>sha_algorithm</varname> (integer)</title>
+		<para>
+		The SHA algorhithm to be used for the Hash.
+		</para>
+		<para>
+		<itemizedlist>
+		<listitem>
+			<para>0 - SHA1 (default, as per IETF/RFC)</para>
+		</listitem>
+		<listitem>
+			<para>1 - SHA256</para>
+		</listitem>
+		<listitem>
+			<para>2 - SHA512</para>
+		</listitem>
+		</itemizedlist>
+		</para>
+		<example>
+		<title><varname>sha_algorithm</varname> parameter
+		usage</title>
+		<programlisting format="linespecific">
+...
+modparam("auth_ephemeral", "sha_algorithm", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section id="auth_eph.functions">

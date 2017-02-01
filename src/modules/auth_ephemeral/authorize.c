@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2013 Crocodile RCS Ltd
+ * Copyright (C) 2017 ng-voice GmbH
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -45,12 +46,38 @@ static inline int get_pass(str *_username, str *_secret, str *_password)
 	unsigned int hmac_len = SHA_DIGEST_LENGTH;
 	unsigned char hmac_sha1[hmac_len];
 
-	if (HMAC(EVP_sha1(), _secret->s, _secret->len,
-			(unsigned char *) _username->s,
-			_username->len, hmac_sha1, &hmac_len) == NULL)
-	{
-		LM_ERR("HMAC-SHA1 failed\n");
-		return -1;
+	switch(autheph_sha_alg) {
+		case AUTHEPH_SHA1:
+			if (HMAC(EVP_sha1(), _secret->s, _secret->len,
+					(unsigned char *) _username->s,
+					_username->len, hmac_sha1, &hmac_len) == NULL)
+			{
+				LM_ERR("HMAC-SHA1 failed\n");
+				return -1;
+			}
+			break;
+		case AUTHEPH_SHA256:
+			if (HMAC(EVP_sha256(), _secret->s, _secret->len,
+					(unsigned char *) _username->s,
+					_username->len, hmac_sha1, &hmac_len) == NULL)
+			{
+				LM_ERR("HMAC-SHA256 failed\n");
+				return -1;
+			}
+			break;
+		case AUTHEPH_SHA512:
+			if (HMAC(EVP_sha512(), _secret->s, _secret->len,
+					(unsigned char *) _username->s,
+					_username->len, hmac_sha1, &hmac_len) == NULL)
+			{
+				LM_ERR("HMAC-SHA512 failed\n");
+				return -1;
+			}
+			break;
+		default:
+			LM_ERR("Inavlid SHA Algorithm\n");
+			return -1;
+
 	}
 
 	_password->len = base64_enc(hmac_sha1, hmac_len,
