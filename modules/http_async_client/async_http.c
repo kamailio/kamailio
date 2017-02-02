@@ -45,7 +45,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../cfg/cfg_struct.h"
-#include "../../lib/kcore/faked_msg.h"
+#include "../../fmsg.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_http.h"
@@ -122,6 +122,7 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 	unsigned int tlabel;
 	struct cell *t = NULL;
 	char *p;
+	str newbuf = {0, 0};
 	sip_msg_t *fmsg;
 
 	if (reply->result != NULL) {
@@ -140,7 +141,6 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 		ah_error.len = strlen(ah_error.s);
 	} else {
 		/* success */
-		
 		/* check for HTTP Via header
      	 * - HTTP Via format is different that SIP Via
      	 * - workaround: replace with Hia to be ignored by SIP parser
@@ -158,7 +158,28 @@ void async_http_cb(struct http_m_reply *reply, void *param)
 		if (parse_msg(reply->result->s, reply->result->len, ah_reply) != 0) {
 			LM_DBG("failed to parse the http_reply\n");
 		} else {
-			LM_DBG("successfully parsed http reply %p\n", ah_reply);
+			if (ah_reply->first_line.u.reply.statuscode == 100) {
+				newbuf.s = get_body( ah_reply );
+				newbuf.len = reply->result->s + reply->result->len - newbuf.s;
+
+				if (!(newbuf.len < 0)) {	
+					memset(ah_reply, 0, sizeof(struct sip_msg));
+					ah_reply->buf = newbuf.s;
+					ah_reply->len = newbuf.len;
+
+					if (parse_msg(ah_reply->buf, ah_reply->len, ah_reply) != 0) {
+						LM_DBG("failed to parse the http_reply\n");
+					} else {
+						LM_DBG("successfully parsed http reply %p\n", ah_reply);
+					}
+				} else {
+					/* this should not happen! */
+					LM_WARN("something got wrong parsing the 100 Continue: got %d len\n", newbuf.len);
+				}
+				
+			} else {
+				LM_DBG("successfully parsed http reply %p\n", ah_reply);
+			}
 		}
 	}
 
