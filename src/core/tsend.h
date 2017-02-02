@@ -23,7 +23,7 @@
 
 
 int tsend_stream(int fd, const char* buf, unsigned int len, int timeout);
-int tsend_dgram(int fd, const char* buf, unsigned int len, 
+int tsend_dgram(int fd, const char* buf, unsigned int len,
 				const struct sockaddr* to, socklen_t tolen, int timeout);
 int tsend_dgram_ev(int fd, const struct iovec* v, int count, int timeout);
 
