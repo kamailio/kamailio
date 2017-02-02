@@ -1004,14 +1004,14 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     raw_stream.s = 0;
     raw_stream.len = 0;
 
-    char c_port_from[5];
+    char c_port_from[10];
     str port_from;
-    port_from.len = sprintf(c_port_from, "%u", saved_t_data->via_port);
+    port_from.len = snprintf(c_port_from, 10, "%u", saved_t_data->via_port);
     port_from.s = c_port_from;
 
-    char c_port_to[5];
+    char c_port_to[10];
     str port_to;
-    port_to.len = sprintf(c_port_to, "%u", saved_t_data->recv_port);
+    port_to.len = snprintf(c_port_to, 10, "%u", saved_t_data->recv_port);
     port_to.s = c_port_to;
 
     str protocol;
