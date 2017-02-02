@@ -784,11 +784,11 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 				if (int_port_rctp_b % 2 == 0) {
 						int_port_rctp_b ++;
 				}
-				char c_port_rtcp_a[5];
-				port_rtcp_a.len = sprintf(c_port_rtcp_a, "%d", int_port_rctp_a);
+				char c_port_rtcp_a[10];
+				port_rtcp_a.len = snprintf(c_port_rtcp_a, 10, "%d", int_port_rctp_a);
 				port_rtcp_a.s = c_port_rtcp_a;
-				char c_port_rtcp_b[5];
-				port_rtcp_b.len = sprintf(c_port_rtcp_b, "%d", int_port_rctp_b);
+				char c_port_rtcp_b[10];
+				port_rtcp_b.len = snprintf(c_port_rtcp_b, 10, "%d", int_port_rctp_b);
 				port_rtcp_b.s = c_port_rtcp_b;
 				LM_DBG("RTCP A Port [%.*s] RCTP B Port [%.*s]\n", port_rtcp_a.len, port_rtcp_a.s, port_rtcp_b.len, port_rtcp_b.s);
 				
