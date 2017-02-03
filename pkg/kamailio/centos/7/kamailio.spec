@@ -1,6 +1,7 @@
 %define name    kamailio
 %define ver 5.0.0
 %define rel dev0.0%{dist}
+%bcond_with dnssec
 
 
 
@@ -143,6 +144,7 @@ Requires:   kamailio = %ver
 User location (usrloc) records replication between multiple servers via DMQ module.
 
 
+%if %{with dnssec}
 %package    dnssec
 Summary:    DNSSEC support for Kamailio.
 Group:      System Environment/Daemons
@@ -151,6 +153,7 @@ BuildRequires:  dnssec-tools-libs-devel
 
 %description    dnssec
 DNSSEC support for Kamailio.
+%endif
 
 
 %package    geoip
@@ -519,7 +522,10 @@ make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     jabber ndb_cassandra osp" \
     group_include="kstandard kautheph kberkeley kcarrierroute kcnxcc kcpl \
-    kdnssec kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
+%if %{with dnssec}
+    kdnssec \
+%endif
+    kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp"
@@ -535,7 +541,10 @@ make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     iptrtpproxy jabber osp" \
     group_include="kstandard kautheph kberkeley kcarrierroute kcnxcc kcpl \
-    kdnssec kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
+%if %{with dnssec}
+    kdnssec \
+%endif
+    kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp"
@@ -921,10 +930,12 @@ fi
 %{_libdir}/kamailio/modules/dmq_usrloc.so
 
 
+%if %{with dnssec}
 %files      dnssec
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.dnssec
 %{_libdir}/kamailio/modules/dnssec.so
+%endif
 
 
 %files      geoip
