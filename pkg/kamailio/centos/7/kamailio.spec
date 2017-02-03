@@ -33,6 +33,7 @@ Conflicts:  kamailio-tls < %ver, kamailio-unixodbc < %ver
 Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
+Conflicts:  kamailio-uuid < %ver
 BuildRequires:  bison, flex, gcc, make, redhat-rpm-config
 
 %description
@@ -509,6 +510,15 @@ BuildRequires:  expat-devel
 SIP/XMPP IM gateway for Kamailio.
 
 
+%package        uuid
+Summary:        uuid generator for Kamailio
+Group:          System Environment/Daemons
+Requires:       libuuid, kamailio = %version
+BuildRequires:  libuuid-devel
+
+%description    uuid
+UUID module for Kamailio.
+
 
 %prep
 %setup -n %{name}-%{ver}
@@ -528,7 +538,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
-    kwebsocket kxml kxmpp"
+    kwebsocket kxml kxmpp kuuid"
 
 make utils
 
@@ -547,7 +557,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
-    kwebsocket kxml kxmpp"
+    kwebsocket kxml kxmpp kuuid"
 
 %if "%{?_unitdir}" == ""
 # On RedHat 6 like
@@ -1254,6 +1264,11 @@ fi
 %doc %{_docdir}/kamailio/modules/README.xmpp
 %{_libdir}/kamailio/modules/xmpp.so
 
+
+%files          uuid
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.uuid
+%{_libdir}/kamailio/modules/uuid.so
 
 
 %changelog
