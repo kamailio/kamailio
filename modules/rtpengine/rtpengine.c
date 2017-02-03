@@ -194,7 +194,7 @@ static struct rtpp_node *select_rtpp_node_new(str, str, int, struct rtpp_node **
 static struct rtpp_node *select_rtpp_node_old(str, str, int, enum rtpe_operation);
 static struct rtpp_node *select_rtpp_node(str, str, int, struct rtpp_node **, int, enum rtpe_operation);
 static int is_queried_node(struct rtpp_node *, struct rtpp_node **, int);
-static int build_rtpp_socks(unsigned int current_rtpp_no);
+static int build_rtpp_socks();
 static char *send_rtpp_command(struct rtpp_node *, bencode_item_t *, int *);
 static int get_extra_id(struct sip_msg* msg, str *id_str);
 
@@ -1068,6 +1068,9 @@ static struct mi_root* mi_enable_rtp_proxy(struct mi_root *cmd_tree, void *param
 	str rtpp_url;
 	str snode, sattr, svalue;
 
+	if (build_rtpp_socks())
+		return init_mi_tree(400, MI_DB_ERR, MI_DB_ERR_LEN);
+
 	found = MI_FOUND_NONE;
 	found_rtpp_disabled = 0;
 	found_rtpp = NULL;
@@ -1412,6 +1415,9 @@ static struct mi_root* mi_ping_rtp_proxy(struct mi_root* cmd_tree, void* param)
 	str rtpp_url;
 	str snode, sattr, svalue;
 
+	if (build_rtpp_socks())
+		return init_mi_tree(400, MI_DB_ERR, MI_DB_ERR_LEN);
+
 	found = 0;
 	found_rtpp_disabled = 0;
 	found_rtpp = NULL;
@@ -1576,7 +1582,6 @@ static struct mi_root*
 mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_root *root = NULL;
-	unsigned int current_rtpp_no;
 
 	if (rtpp_db_url.s == NULL) {
 		// no database
@@ -1594,13 +1599,7 @@ mi_reload_rtp_proxy(struct mi_root* cmd_tree, void* param)
 				return 0;
 			}
 		} else {
-			lock_get(rtpp_no_lock);
-			current_rtpp_no = *rtpp_no;
-			lock_release(rtpp_no_lock);
-
-			if (rtpp_socks_size != current_rtpp_no) {
-				build_rtpp_socks(current_rtpp_no);
-			}
+			build_rtpp_socks();
 
 			// success reloading from database
 			root = init_mi_tree(200, MI_DB_OK, MI_DB_OK_LEN);
@@ -1795,15 +1794,23 @@ mod_init(void)
 	return 0;
 }
 
-static int build_rtpp_socks(unsigned int current_rtpp_no) {
+static int build_rtpp_socks() {
 	int n, i;
 	char *cp;
 	struct addrinfo hints, *res;
 	struct rtpp_set  *rtpp_list;
 	struct rtpp_node *pnode;
+	unsigned int current_rtpp_no;
 #ifdef IP_MTU_DISCOVER
 	int ip_mtu_discover = IP_PMTUDISC_DONT;
 #endif
+
+	lock_get(rtpp_no_lock);
+	current_rtpp_no = *rtpp_no;
+	lock_release(rtpp_no_lock);
+
+	if (current_rtpp_no == rtpp_socks_size)
+		return 0;
 
 	// close current sockets
 	for (i = 0; i < rtpp_socks_size; i++) {
@@ -1920,16 +1927,6 @@ child_init(int rank)
 
 	mypid = getpid();
 
-	lock_get(rtpp_no_lock);
-	rtpp_socks_size = *rtpp_no;
-	lock_release(rtpp_no_lock);
-
-	rtpp_socks = (int*)pkg_malloc(sizeof(int)*(rtpp_socks_size));
-	if (!rtpp_socks) {
-		return -1;
-	}
-	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
-
 	// vector of pointers to queried nodes
 	queried_nodes_ptr = (struct rtpp_node**)pkg_malloc(queried_nodes_limit * sizeof(struct rtpp_node*));
 	if (!queried_nodes_ptr) {
@@ -1939,9 +1936,8 @@ child_init(int rank)
 	memset(queried_nodes_ptr, 0, queried_nodes_limit * sizeof(struct rtpp_node*));
 
 	/* Iterate known RTP proxies - create sockets */
-	if (rtpp_socks_size) {
-		build_rtpp_socks(rtpp_socks_size);
-	}
+	if (build_rtpp_socks())
+		return -1;
 
 	return 0;
 }
@@ -2844,15 +2840,8 @@ static struct rtpp_node *
 select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **queried_nodes_ptr, int queried_nodes, enum rtpe_operation op)
 {
 	struct rtpp_node *node = NULL;
-	unsigned int current_rtpp_no;
 
-	lock_get(rtpp_no_lock);
-	current_rtpp_no = *rtpp_no;
-	lock_release(rtpp_no_lock);
-
-	if (rtpp_socks_size != current_rtpp_no) {
-		build_rtpp_socks(current_rtpp_no);
-	}
+	build_rtpp_socks();
 
 	if (!active_rtpp_set) {
 		default_rtpp_set = select_rtpp_set(setid_default);
