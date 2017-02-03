@@ -540,9 +540,17 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp"
 
+%if "%{?_unitdir}" == ""
+# On RedHat 6 like
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
         $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/kamailio
+%else
+# systemd
+install -d %{buildroot}%{_unitdir}
+install -Dpm 0644 pkg/kamailio/centos/%{?centos}/kamailio.service %{buildroot}%{_unitdir}/kamailio.service
+install -Dpm 0644 pkg/kamailio/centos/%{?centos}/kamailio.tmpfiles %{buildroot}%{_tmpfilesdir}/kamailio.conf
+%endif
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig
 install -m644 pkg/kamailio/centos/%{?centos}/kamailio.sysconfig \
@@ -695,8 +703,13 @@ fi
 
 %dir %attr(-,kamailio,kamailio) %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
-%config %{_sysconfdir}/rc.d/init.d/*
 %config %{_sysconfdir}/sysconfig/*
+%if "%{?_unitdir}" == ""
+%config %{_sysconfdir}/rc.d/init.d/*
+%else
+%{_unitdir}/kamailio.service
+%{_tmpfilesdir}/kamailio.conf
+%endif
 
 %dir %{_libdir}/kamailio
 %{_libdir}/kamailio/libprint.so
