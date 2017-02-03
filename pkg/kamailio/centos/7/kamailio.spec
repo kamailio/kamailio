@@ -24,7 +24,7 @@ Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
-Conflicts:  kamailio-purple < %ver, kamailio-python < %ver
+Conflicts:  kamailio-python < %ver
 Conflicts:  kamailio-radius < % ver, kamailio-redis < %ver
 Conflicts:  kamailio-regex < %ver, kamailio-sctp < %ver
 Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlite < %ver
@@ -302,17 +302,6 @@ BuildRequires:  libxml2-devel, libcurl-devel
 SIP Presence (and RLS, XCAP, etc) support for Kamailio.
 
 
-%package    purple
-Summary:    Multi-protocol IM and presence gateway module.
-Group:      System Environment/Daemons
-Requires:   glib2, libpurple, libxml2, kamailio = %ver
-Requires:   kamailio-presence = %ver
-BuildRequires:  glib2-devel, libpurple-devel, libxml2-devel
-
-%description    purple
-Multi-protocol IM and presence gateway module.
-
-
 %package    python
 Summary:    Python extensions for Kamailio.
 Group:      System Environment/Daemons
@@ -531,7 +520,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     jabber ndb_cassandra osp" \
     group_include="kstandard kautheph kberkeley kcarrierroute kcnxcc kcpl \
     kdnssec kgeoip kgzcompress kims kjson kldap klua kmemcached \
-    kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpurple kpython \
+    kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp"
 
@@ -547,7 +536,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     iptrtpproxy jabber osp" \
     group_include="kstandard kautheph kberkeley kcarrierroute kcnxcc kcpl \
     kdnssec kgeoip kgzcompress kims kjson kldap klua kmemcached \
-    kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpurple kpython \
+    kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp"
 
@@ -589,11 +578,8 @@ fi
 %files
 %defattr(-,root,root)
 %dir %{_docdir}/kamailio
-%doc %{_docdir}/kamailio/AUTHORS
-%doc %{_docdir}/kamailio/NEWS
 %doc %{_docdir}/kamailio/INSTALL
 %doc %{_docdir}/kamailio/README
-%doc %{_docdir}/kamailio/README-MODULES
 
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.acc
@@ -637,9 +623,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.maxfwd
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
-%doc %{_docdir}/kamailio/modules/README.mi_datagram
-%doc %{_docdir}/kamailio/modules/README.mi_fifo
-%doc %{_docdir}/kamailio/modules/README.mi_rpc
 %doc %{_docdir}/kamailio/modules/README.mohqueue
 %doc %{_docdir}/kamailio/modules/README.mqueue
 %doc %{_docdir}/kamailio/modules/README.msilo
@@ -712,12 +695,6 @@ fi
 %config %{_sysconfdir}/sysconfig/*
 
 %dir %{_libdir}/kamailio
-%{_libdir}/kamailio/libbinrpc.so
-%{_libdir}/kamailio/libbinrpc.so.0
-%{_libdir}/kamailio/libbinrpc.so.0.1
-%{_libdir}/kamailio/libkmi.so
-%{_libdir}/kamailio/libkmi.so.1
-%{_libdir}/kamailio/libkmi.so.1.0
 %{_libdir}/kamailio/libprint.so
 %{_libdir}/kamailio/libprint.so.1
 %{_libdir}/kamailio/libprint.so.1.2
@@ -776,9 +753,6 @@ fi
 %{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/maxfwd.so
 %{_libdir}/kamailio/modules/mediaproxy.so
-%{_libdir}/kamailio/modules/mi_datagram.so
-%{_libdir}/kamailio/modules/mi_fifo.so
-%{_libdir}/kamailio/modules/mi_rpc.so
 %{_libdir}/kamailio/modules/mohqueue.so
 %{_libdir}/kamailio/modules/mqueue.so
 %{_libdir}/kamailio/modules/msilo.so
@@ -856,9 +830,7 @@ fi
 %{_libdir}/kamailio/kamctl/kamctl.dbtext
 %{_libdir}/kamailio/kamctl/kamctl.fifo
 %{_libdir}/kamailio/kamctl/kamctl.ser
-%{_libdir}/kamailio/kamctl/kamctl.ser_mi
 %{_libdir}/kamailio/kamctl/kamctl.sqlbase
-%{_libdir}/kamailio/kamctl/kamctl.unixsock
 %{_libdir}/kamailio/kamctl/kamdbctl.base
 %{_libdir}/kamailio/kamctl/kamdbctl.dbtext
 
@@ -1100,7 +1072,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.pua
 %doc %{_docdir}/kamailio/modules/README.pua_bla
 %doc %{_docdir}/kamailio/modules/README.pua_dialoginfo
-%doc %{_docdir}/kamailio/modules/README.pua_mi
 %doc %{_docdir}/kamailio/modules/README.pua_reginfo
 %doc %{_docdir}/kamailio/modules/README.pua_usrloc
 %doc %{_docdir}/kamailio/modules/README.pua_xmpp
@@ -1117,19 +1088,12 @@ fi
 %{_libdir}/kamailio/modules/pua.so
 %{_libdir}/kamailio/modules/pua_bla.so
 %{_libdir}/kamailio/modules/pua_dialoginfo.so
-%{_libdir}/kamailio/modules/pua_mi.so
 %{_libdir}/kamailio/modules/pua_reginfo.so
 %{_libdir}/kamailio/modules/pua_usrloc.so
 %{_libdir}/kamailio/modules/pua_xmpp.so
 %{_libdir}/kamailio/modules/rls.so
 %{_libdir}/kamailio/modules/xcap_client.so
 %{_libdir}/kamailio/modules/xcap_server.so
-
-
-%files      purple
-%defattr(-,root,root)
-%doc %{_docdir}/kamailio/modules/README.purple
-%{_libdir}/kamailio/modules/purple.so
 
 
 %files      python
@@ -1251,8 +1215,6 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.xmlrpc
 %{_libdir}/kamailio/modules/xmlrpc.so
-%doc %{_docdir}/kamailio/modules/README.mi_xmlrpc
-%{_libdir}/kamailio/modules/mi_xmlrpc.so
 
 
 %files      xmpp
