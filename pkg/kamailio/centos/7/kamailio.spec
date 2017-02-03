@@ -2,6 +2,7 @@
 %define ver 5.0.0
 %define rel dev0.0%{dist}
 %bcond_with dnssec
+%bcond_with kazoo
 
 
 
@@ -22,6 +23,9 @@ Conflicts:  kamailio-dialplan < %ver, kamailio-dnssec < %ver
 Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lua < %ver
+%if %{with kazoo}
+Conflicts:  kamailio-kazoo < %ver
+%endif
 Conflicts:  kamailio-memcached < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
 Conflicts:  kamailio-postgresql < %ver, kamailio-presence < %ver
@@ -204,6 +208,18 @@ BuildRequires:  json-c-devel, libevent-devel
 
 %description    json
 json string handling and RPC modules for Kamailio.
+
+
+%if %{with kazoo}
+%package    kazoo
+Summary:    Kazoo middle layer connector support for Kamailio
+Group:      System Environment/Daemons
+Requires:   libuuid, kamailio = %ver
+BuildRequires:	rabbitmq-c-devel, json-c-devel, libuuid-devel
+
+%description    kazoo
+Kazoo module for Kamailio.
+%endif
 
 
 %package    lcr
@@ -535,7 +551,11 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with dnssec}
     kdnssec \
 %endif
-    kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
+    kgeoip kgzcompress kims kjson kjsonrpcs \
+%if %{with kazoo}
+    kkazoo \
+%endif
+    kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp kuuid"
@@ -554,7 +574,11 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with dnssec}
     kdnssec \
 %endif
-    kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
+    kgeoip kgzcompress kims kjson kjsonrpcs \
+%if %{with kazoo}
+    kkazoo \
+%endif
+    kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp kuuid"
@@ -1012,6 +1036,14 @@ fi
 %doc %{_docdir}/kamailio/modules/README.jsonrpcc
 %{_libdir}/kamailio/modules/json.so
 %{_libdir}/kamailio/modules/jsonrpcc.so
+
+
+%if %{with kazoo}
+%files      kazoo
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.kazoo
+%{_libdir}/kamailio/modules/kazoo.so
+%endif
 
 
 %files      lcr
