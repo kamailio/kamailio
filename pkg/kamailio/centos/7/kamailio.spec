@@ -79,8 +79,8 @@ Berkeley database connectivity for Kamailio.
 %package    carrierroute
 Summary:    The carrierroute module for Kamailio.
 Group:      System Environment/Daemons
-Requires:   epel-release, libconfuse, kamailio = %ver
-BuildRequires:  epel-release, libconfuse-devel
+Requires:   libconfuse, kamailio = %ver
+BuildRequires:  libconfuse-devel
 
 %description    carrierroute
 The carrierroute module for Kamailio.
@@ -118,7 +118,7 @@ CPL (Call Processing Language) interpreter for Kamailio.
 %package    crypto
 Summary:    Module to support cryptographic extensions for use in the Kamailio configuration.
 Group:      System Environment/Daemons
-Requires:   epel-release, libcrypto
+Requires:   libcrypto
 
 %description    crypto
 This module provides various cryptography tools for use in Kamailio configuration file.  It relies on OpenSSL libraries for cryptographic operations (libssl, libcrypto). 
@@ -146,8 +146,8 @@ User location (usrloc) records replication between multiple servers via DMQ modu
 %package    dnssec
 Summary:    DNSSEC support for Kamailio.
 Group:      System Environment/Daemons
-Requires:   epel-release, dnssec-tools-libs, kamailio = %ver
-BuildRequires:  epel-release, dnssec-tools-libs-devel
+Requires:   dnssec-tools-libs, kamailio = %ver
+BuildRequires:  dnssec-tools-libs-devel
 
 %description    dnssec
 DNSSEC support for Kamailio.
@@ -156,8 +156,8 @@ DNSSEC support for Kamailio.
 %package    geoip
 Summary:    MaxMind GeoIP support for Kamailio.
 Group:      System Environment/Daemons
-Requires:   epel-release, GeoIP, kamailio = %ver
-BuildRequires:  epel-release, GeoIP-devel
+Requires:   GeoIP, kamailio = %ver
+BuildRequires:  GeoIP-devel
 
 %description    geoip
 MaxMind GeoIP support for Kamailio.
@@ -176,7 +176,7 @@ Compressed body (SIP and HTTP) handling for kamailio.
 %package    http_client
 Summary:    HTTP client module for Kamailio.
 Group:      System Environment/Daemons
-Requires:   epel-release, libcrypto
+Requires:   libcrypto
 
 %description    http_client
 This module implements protocol functions that use the libcurl to communicate with HTTP servers. 
@@ -195,8 +195,8 @@ IMS modules and extensions module for Kamailio.
 %package    json
 Summary:    json string handling and RPC modules for Kamailio.
 Group:      System Environment/Daemons
-Requires:   epel-release, json-c, libevent, kamailio = %ver
-BuildRequires:  epel-release, json-c-devel, libevent-devel
+Requires:   json-c, libevent, kamailio = %ver
+BuildRequires:  json-c-devel, libevent-devel
 
 %description    json
 json string handling and RPC modules for Kamailio.
@@ -326,8 +326,8 @@ Python extensions for Kamailio.
 %package    radius
 Summary:    RADIUS modules for Kamailio.
 Group:      System Environment/Daemons
-Requires:   epel-release, radiusclient-ng, kamailio = %ver
-BuildRequires:  epel-release, radiusclient-ng-devel
+Requires:   radiusclient-ng, kamailio = %ver
+BuildRequires:  radiusclient-ng-devel
 
 %description    radius
 RADIUS modules for Kamailio.
@@ -336,8 +336,8 @@ RADIUS modules for Kamailio.
 %package    redis
 Summary:    Redis configuration file support for Kamailio.
 Group:      System Environment/Daemons
-Requires:   epel-release, hiredis, kamailio = %ver
-BuildRequires:  epel-release, hiredis-devel
+Requires:   hiredis, kamailio = %ver
+BuildRequires:  hiredis-devel
 
 %description    redis
 Redis configuration file support for Kamailio.
