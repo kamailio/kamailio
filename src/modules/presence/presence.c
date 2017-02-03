@@ -136,6 +136,9 @@ static int fixup_refresh_watchers(void** param, int param_no);
 static int fixup_update_watchers(void** param, int param_no);
 static int presence_init_rpc(void);
 
+static int w_pres_has_subscribers(struct sip_msg* _msg, char* _sp1, char* _sp2);
+static int fixup_has_subscribers(void** param, int param_no);
+
 int counter =0;
 int pid = 0;
 char prefix='a';
@@ -187,7 +190,9 @@ static cmd_export_t cmds[]=
 		fixup_refresh_watchers, 0, ANY_ROUTE},
 	{"pres_update_watchers",  (cmd_function)w_pres_update_watchers,  2,
 		fixup_update_watchers, 0, ANY_ROUTE},
-	{"bind_presence",         (cmd_function)bind_presence,           1,
+        {"pres_has_subscribers",  (cmd_function)w_pres_has_subscribers,  2,
+                fixup_has_subscribers, 0, ANY_ROUTE},
+ 	{"bind_presence",         (cmd_function)bind_presence,           1,
 		0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -1828,4 +1833,41 @@ static int sip_uri_case_insensitive_match(str* s1, str* s2)
 		return -1;
 	}
 	return strncasecmp(s1->s, s2->s, s2->len);
+}
+
+static int fixup_has_subscribers(void** param, int param_no)
+{
+        if(param_no==1) {
+                return fixup_spve_null(param, 1);
+        } else if(param_no==2) {
+                return fixup_spve_null(param, 1);
+        }
+
+        return 0;
+}
+
+static int w_pres_has_subscribers(struct sip_msg* msg, char* _pres_uri, char* _event)
+{
+        str presentity_uri, watched_event;
+        pres_ev_t* ev;
+
+        if(fixup_get_svalue(msg, (gparam_p)_pres_uri, &presentity_uri)!=0)
+        {
+                LM_ERR("invalid presentity_uri parameter");
+                return -1;
+        }
+
+        if(fixup_get_svalue(msg, (gparam_p)_event, &watched_event)!=0)
+        {
+                LM_ERR("invalid watched_event parameter");
+                return -1;
+        }
+
+	ev = contains_event(&watched_event, NULL);
+	if (ev == NULL) {
+		LM_ERR("event is not registered\n");
+		return -1;
+	}
+
+	return get_subscribers_count(msg, presentity_uri, watched_event) > 0 ? 1 : -1;
 }
