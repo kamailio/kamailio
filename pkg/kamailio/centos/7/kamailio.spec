@@ -519,7 +519,7 @@ make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     jabber ndb_cassandra osp" \
     group_include="kstandard kautheph kberkeley kcarrierroute kcnxcc kcpl \
-    kdnssec kgeoip kgzcompress kims kjson kldap klua kmemcached \
+    kdnssec kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp"
@@ -535,7 +535,7 @@ make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     iptrtpproxy jabber osp" \
     group_include="kstandard kautheph kberkeley kcarrierroute kcnxcc kcpl \
-    kdnssec kgeoip kgzcompress kims kjson kldap klua kmemcached \
+    kdnssec kgeoip kgzcompress kims kjson kjsonrpcs kldap klua kmemcached \
     kmi_xmlrpc kmysql koutbound kperl kpostgres kpresence kpython \
     kradius kredis ksctp ksnmpstats ksqlite ktls kunixodbc kutils \
     kwebsocket kxml kxmpp"
@@ -684,7 +684,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
 %doc %{_docdir}/kamailio/modules/README.xlog
 %doc %{_docdir}/kamailio/modules/README.xprint
-%doc %{_docdir}/kamailio/modules/README.jsonrpc-s
+%doc %{_docdir}/kamailio/modules/README.jsonrpcs
 %doc %{_docdir}/kamailio/modules/README.nosip
 %doc %{_docdir}/kamailio/modules/README.tsilo
 
@@ -814,7 +814,7 @@ fi
 %{_libdir}/kamailio/modules/xhttp_rpc.so
 %{_libdir}/kamailio/modules/xlog.so
 %{_libdir}/kamailio/modules/xprint.so
-%{_libdir}/kamailio/modules/jsonrpc-s.so
+%{_libdir}/kamailio/modules/jsonrpcs.so
 %{_libdir}/kamailio/modules/nosip.so
 %{_libdir}/kamailio/modules/tsilo.so
 
@@ -828,7 +828,7 @@ fi
 %{_libdir}/kamailio/kamctl/kamctl.base
 %{_libdir}/kamailio/kamctl/kamctl.ctlbase
 %{_libdir}/kamailio/kamctl/kamctl.dbtext
-%{_libdir}/kamailio/kamctl/kamctl.fifo
+%{_libdir}/kamailio/kamctl/kamctl.rpcfifo
 %{_libdir}/kamailio/kamctl/kamctl.ser
 %{_libdir}/kamailio/kamctl/kamctl.sqlbase
 %{_libdir}/kamailio/kamctl/kamdbctl.base
@@ -884,8 +884,8 @@ fi
 
 %files      cpl
 %defattr(-,root,root)
-%{_docdir}/kamailio/modules/README.cpl-c
-%{_libdir}/kamailio/modules/cpl-c.so
+%{_docdir}/kamailio/modules/README.cplc
+%{_libdir}/kamailio/modules/cplc.so
 
 
 %files      dialplan
@@ -967,9 +967,9 @@ fi
 %files      json
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.json
-%doc %{_docdir}/kamailio/modules/README.jsonrpc-c
+%doc %{_docdir}/kamailio/modules/README.jsonrpcc
 %{_libdir}/kamailio/modules/json.so
-%{_libdir}/kamailio/modules/jsonrpc-c.so
+%{_libdir}/kamailio/modules/jsonrpcc.so
 
 
 %files      lcr
