@@ -584,6 +584,7 @@ fi
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.acc
 %doc %{_docdir}/kamailio/modules/README.alias_db
+%doc %{_docdir}/kamailio/modules/README.app_jsdt
 %doc %{_docdir}/kamailio/modules/README.async
 %doc %{_docdir}/kamailio/modules/README.auth
 %doc %{_docdir}/kamailio/modules/README.auth_db
@@ -616,6 +617,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.group
 %doc %{_docdir}/kamailio/modules/README.htable
 %doc %{_docdir}/kamailio/modules/README.imc
+%doc %{_docdir}/kamailio/modules/README.ims_ocs
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.kex
 %doc %{_docdir}/kamailio/modules/README.malloc_test
@@ -641,6 +643,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.print
 %doc %{_docdir}/kamailio/modules/README.print_lib
 %doc %{_docdir}/kamailio/modules/README.pv
+%doc %{_docdir}/kamailio/modules/README.pua_rpc
 %doc %{_docdir}/kamailio/modules/README.qos
 %doc %{_docdir}/kamailio/modules/README.ratelimit
 %doc %{_docdir}/kamailio/modules/README.registrar
@@ -660,6 +663,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sms
 %doc %{_docdir}/kamailio/modules/README.speeddial
 %doc %{_docdir}/kamailio/modules/README.sqlops
+%doc %{_docdir}/kamailio/modules/README.ss7ops
 %doc %{_docdir}/kamailio/modules/README.sst
 %doc %{_docdir}/kamailio/modules/README.statistics
 %doc %{_docdir}/kamailio/modules/README.stun
@@ -714,6 +718,7 @@ fi
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
 %{_libdir}/kamailio/modules/alias_db.so
+%{_libdir}/kamailio/modules/app_jsdt.so
 %{_libdir}/kamailio/modules/async.so
 %{_libdir}/kamailio/modules/auth.so
 %{_libdir}/kamailio/modules/auth_db.so
@@ -746,6 +751,7 @@ fi
 %{_libdir}/kamailio/modules/group.so
 %{_libdir}/kamailio/modules/htable.so
 %{_libdir}/kamailio/modules/imc.so
+%{_libdir}/kamailio/modules/ims_ocs.so
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/kex.so
 %{_libdir}/kamailio/modules/malloc_test.so
@@ -770,6 +776,7 @@ fi
 %{_libdir}/kamailio/modules/prefix_route.so
 %{_libdir}/kamailio/modules/print.so
 %{_libdir}/kamailio/modules/print_lib.so
+%{_libdir}/kamailio/modules/pua_rpc.so
 %{_libdir}/kamailio/modules/pv.so
 %{_libdir}/kamailio/modules/qos.so
 %{_libdir}/kamailio/modules/ratelimit.so
@@ -790,6 +797,7 @@ fi
 %{_libdir}/kamailio/modules/sms.so
 %{_libdir}/kamailio/modules/speeddial.so
 %{_libdir}/kamailio/modules/sqlops.so
+%{_libdir}/kamailio/modules/ss7ops.so
 %{_libdir}/kamailio/modules/sst.so
 %{_libdir}/kamailio/modules/statistics.so
 %{_libdir}/kamailio/modules/stun.so
