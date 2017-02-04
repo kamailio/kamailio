@@ -180,6 +180,14 @@ BuildRequires:  zlib-devel
 %description    gzcompress
 Compressed body (SIP and HTTP) handling for kamailio.
 
+%package    http_async_client
+Summary:    Async HTTP client module for Kamailio.
+Group:      System Environment/Daemons
+Requires:   libcurl, libevent, kamailio = %ver
+BuildRequires: libcurl-devel, libevent-devel
+
+%description   http_async_client
+This module implements protocol functions that use the libcurl to communicate with HTTP servers in asyncronous way.
 
 %package    http_client
 Summary:    HTTP client module for Kamailio.
@@ -551,7 +559,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with dnssec}
     kdnssec \
 %endif
-    kgeoip kgzcompress kims kjson kjsonrpcs \
+    kgeoip kgzcompress khttp_async kims kjson kjsonrpcs \
 %if %{with kazoo}
     kkazoo \
 %endif
@@ -574,7 +582,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with dnssec}
     kdnssec \
 %endif
-    kgeoip kgzcompress kims kjson kjsonrpcs \
+    kgeoip kgzcompress khttp_async kims kjson kjsonrpcs \
 %if %{with kazoo}
     kkazoo \
 %endif
@@ -983,6 +991,15 @@ fi
 %doc %{_docdir}/kamailio/modules/README.gzcompress
 %{_libdir}/kamailio/modules/gzcompress.so
 
+%files      http_async_client
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.http_async_client
+%{_libdir}/kamailio/modules/http_async_client.so
+
+%files      http_client
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.http_client
+%{_libdir}/kamailio/modules/http_client.so
 
 %files      ims
 %defattr(-,root,root)
@@ -994,7 +1011,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.cdp_avp
 %doc %{_docdir}/kamailio/modules/README.cfgt
 %doc %{_docdir}/kamailio/modules/README.crypto
-%doc %{_docdir}/kamailio/modules/README.http_client
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %doc %{_docdir}/kamailio/modules/README.ims_charging
 %doc %{_docdir}/kamailio/modules/README.ims_dialog
@@ -1013,7 +1029,6 @@ fi
 %{_libdir}/kamailio/modules/cdp_avp.so
 %{_libdir}/kamailio/modules/cfgt.so
 %{_libdir}/kamailio/modules/crypto.so
-%{_libdir}/kamailio/modules/http_client.so
 %{_libdir}/kamailio/modules/ims_auth.so
 %{_libdir}/kamailio/modules/ims_charging.so
 %{_libdir}/kamailio/modules/ims_dialog.so
@@ -1304,6 +1319,9 @@ fi
 
 
 %changelog
+* Sat Feb 04 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
+  - added http_async_client package
+  - fix http_client package
 * Fri Nov 04 2016 Marcel Weinberg <marcel@ng-voice.com>
   - Updated to Kamailio version 5.0 and CentOS / RHEL 7.2
   - added new modules available with Kamailio 5.x 
