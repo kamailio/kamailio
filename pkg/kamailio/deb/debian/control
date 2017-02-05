@@ -82,19 +82,27 @@ Suggests: kamailio-berkeley-modules,
           kamailio-unixodbc-modules,
           kamailio-xml-modules,
           kamailio-xmpp-modules
-Description: very fast and configurable SIP proxy
+Description: Kamailio is a very fast, dynamic and configurable SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
- per second even on low-budget hardware.
+ server. Written entirely in C, kamailio can handle thousands requests
+ per second even on low-budget hardware. It can be configured to act
+ as a SIP proxy, application server, session border controller, 
+ or call load balancer to handle a set of media servers.
  .
- C Shell-like scripting language provides full control over the server's
- behaviour. Its modular architecture allows only required functionality to be
- loaded.
+ A C Shell like scripting language provides full control over the server's 
+ behaviour. It's easy to integrate Kamailio with 3rd party API's and applications
+ using HTTP, AMQP, database drivers, LDAP, Radius and many other solutions.
+ In addition there is support for scripting using Lua, Python, Perl, Java and
+ a set of other languages using Mono.
  .
- Among others, the following modules are available: digest authentication, CPL
- scripts, instant messaging, MySQL support, presence agent, RADIUS
- authentication, record routing, SMS gateway, Jabber/XMPP gateway, transaction
- module, registrar and user location, XML-RPC interface.
+ Kamailio's modular architecture allows only required functionality to be loaded.
+ There are over 100 modules available: WebSockets for WebRTC, authentication,
+ multiple databases - both traditional SQL databases as well as no-SQL,
+ message bus systems like Rabbit MQ, instant messaging, a presence agent,
+ integration with REST-ful APIs using HTTP and JSON or XML,
+ radius authentication, record routing, an SMS gateway, a XMPP/jabber gateway, a
+ transaction and dialog module, OSP module, statistics support,
+ registrar and user location services, SNMP, SIMPLE Presence and much more.
  .
  This package contains the main Kamailio binary along with the principal modules
  and support binaries.
@@ -107,9 +115,9 @@ Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends}
-Description: very fast and configurable SIP proxy [debug symbols]
+Description: Kamailio is a very fast and configurable SIP server [debug symbols]
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package contains the debugging symbols for the Kamailio binaries and
@@ -122,13 +130,13 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: contains the geoip module
+Description: The geoip module for the Kamailio SIP Server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the geoip module, an extension allowing to
- use GeoIP API within configuration file.
+ This package provides the geoip module, an extension enabling
+ usage of the GeoIP API within the Kamailio configuration file.
 
 Package: kamailio-sqlite-modules
 Architecture: linux-any
@@ -138,9 +146,9 @@ Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Recommends: sqlite3
-Description: SQLite database connectivity module for Kamailio
+Description: SQLite database connectivity module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the SQLite database driver for Kamailio.
@@ -152,13 +160,13 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: Json parser and jsonrpc modules for Kamailio
+Description: Json parser and Json-RPC modules for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides json parser for Kamailio's configuration file
- and the JSON-RPC client over netstrings.
+ This package provides a JSON parser for use in the Kamailio
+ configuration file and the JSON-RPC client over netstrings.
 
 Package: kamailio-memcached-modules
 Architecture: linux-any
@@ -168,9 +176,9 @@ Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
 Replaces: kamailio-memcached-module
-Description: Provides the memcached module, an interface to the memcached server
+Description: The memcached module, an interface to the memcached server, for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the memcached module, an interface to the memcached
@@ -183,13 +191,14 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: contains the app_lua module
+Description: The app_lua module for Kamailio Lua support
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the app_lua module, an extension allowing to
- execute embedded Lua applications within configuration file.
+ execute embedded Lua applications within the configuration file as
+ well as writing the entire configuration file in Lua.
 
 Package: kamailio-mono-modules
 Architecture: linux-any
@@ -198,13 +207,13 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: contains the app_mono module
+Description: The app_mono module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the app_mono module, an extension allowing to
- execute embedded Mono applications within configuration file.
+ execute embedded Mono applications within the Kamailio SIP routing script.
 
 Package: kamailio-python-modules
 Architecture: linux-any
@@ -214,13 +223,13 @@ Depends: kamailio (= ${binary:Version}),
          python-dev,
          ${misc:Depends},
          ${shlibs:Depends}
-Description: contains the app_python module
+Description: The app_python module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the app_python module, an extension allowing to
- execute embedded Python applications within configuration file.
+ execute embedded Python applications within the Kamailio SIP routing script.
 
 Package: kamailio-redis-modules
 Architecture: linux-any
@@ -229,9 +238,9 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: Redis database connectivity module for Kamailio
+Description: Redis database connectivity module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the Redis NOSQL database driver for Kamailio.
@@ -246,7 +255,7 @@ Depends: kamailio (= ${binary:Version}),
          ${shlibs:Depends}
 Description: MySQL database connectivity module for Kamailio
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the MySQL database driver for Kamailio.
@@ -259,9 +268,9 @@ Depends: kamailio (= ${binary:Version}),
          postgresql-client,
          ${misc:Depends},
          ${shlibs:Depends}
-Description: PostgreSQL database connectivity module for Kamailio
+Description: PostgreSQL database connectivity module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the PostgreSQL database driver for Kamailio.
@@ -273,9 +282,9 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: CPL module (CPL interpreter engine) for Kamailio
+Description: CPL module (CPL interpreter engine) for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides a CPL (Call Processing Language) interpreter for
@@ -288,9 +297,9 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: RADIUS modules for Kamailio
+Description: RADIUS modules for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides a set of RADIUS modules for Kamailio, for
@@ -304,9 +313,9 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: unixODBC database connectivity module for Kamailio
+Description: unixODBC database connectivity module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the unixODBC database driver for Kamailio.
@@ -318,14 +327,15 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: SIMPLE presence modules for Kamailio
+Description: SIP presence modules for Kamailio
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides several Kamailio modules for implementing presence
- server and presence user agent for RICH presence, registrar-based presence,
- external triggered presence and XCAP support.
+ This package provides several Kamailio modules for implementing a presence
+ server and presence user agent for rich presence, registrar-based presence,
+ external triggered presence with SIMPLE and XCAP support, as well as a
+ set of other SIP event packages..
 
 Package: kamailio-perl-modules
 Architecture: linux-any
@@ -334,9 +344,9 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: Perl extensions and database driver for Kamailio
+Description: Perl extensions and database driver for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides an interface for Kamailio to write Perl extensions and
@@ -350,13 +360,14 @@ Depends: kamailio (= ${binary:Version}),
          snmpd,
          ${misc:Depends},
          ${shlibs:Depends}
-Description: SNMP AgentX subagent module for Kamailio
+Description: SNMP AgentX subagent module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the snmpstats module for Kamailio. This module acts
- as an AgentX subagent which connects to a master agent.
+ as an AgentX subagent which connects to a master agent. The Kamailio MIBS are
+ included.
 
 Package: kamailio-xmpp-modules
 Architecture: linux-any
@@ -365,9 +376,9 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: XMPP gateway module for Kamailio
+Description: XMPP gateway module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the SIP to XMPP IM translator module for Kamailio.
@@ -384,7 +395,7 @@ Replaces: kamailio-xml-module,
 Provides: kamailio-xmlrpc-modules
 Description: XML based extensions for Kamailio's Management Interface
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides:
@@ -399,12 +410,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: carrierroute module for Kamailio
+Description: The carrierroute module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the carrierroute module for Kamailio, an integrated
+ This package provides the "carrierroute" module for Kamailio, an integrated
  solution for routing, balancing and blacklisting.
 
 Package: kamailio-berkeley-modules
@@ -415,13 +426,13 @@ Depends: db5.1-util,
          kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: Berkeley database module for Kamailio
+Description: Berkeley database module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the Berkeley database module for Kamailio, a
- high-performance embedded DB kernel. All database tables are stored
+ high-performance embedded database. All database tables are stored
  in files, no additional server is necessary.
 
 Package: kamailio-berkeley-bin
@@ -432,7 +443,7 @@ Depends: ${misc:Depends},
          ${shlibs:Depends}
 Description: Berkeley database module for Kamailio - helper program
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides helper modules for the Berkeley database module for
@@ -446,13 +457,13 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: LDAP modules for Kamailio
+Description: LDAP modules for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the ldap and h350 modules for Kamailio, enabling LDAP
- queries from the Kamailio config and storage of SIP account data in an LDAP
+ queries from the Kamailio routing scripts and storage of SIP account data in an LDAP
  directory.
 
 Package: kamailio-ims-modules
@@ -462,9 +473,9 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: IMS module for Kamailio
+Description: IMS module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package contains various Diameter interfaces and modules for Kamailio
@@ -477,15 +488,14 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: Provides a set utility functions for Kamailio
+Description: Utility functions for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- Provides a set of utility functions for Kamailio, which are not related
- to the server configuration.
- .
- Includes http client (http_client) module too
+ This package provides a set of utility functions for Kamailio, as well
+ as modules for restful HTTP API access using the CURL library in the
+ http_client module.
 
 Package: kamailio-sctp-modules
 Architecture: linux-any
@@ -494,12 +504,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: sctp module for Kamailio
+Description: SCTP SIP transport module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the sctp module for Kamailio.
+ This package provides the SCTP SIP transport module for Kamailio.
 
 Package: kamailio-java-modules
 Architecture: linux-any
@@ -509,13 +519,13 @@ Depends: gcj-jre,
          kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: contains the app_java module
+Description: The app_java module - JAVA support for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
  This package provides the app_java module, an extension allowing to
- execute embedded Java applications within configuration file.
+ execute embedded Java applications within the Kamailio routing script.
 
 Package: kamailio-tls-modules
 Architecture: linux-any
@@ -524,9 +534,13 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: contains the TLS kamailio transport module
- This has been split out of the main kamailio package, so that kamailio will
- not depend on openssl. This module will enable you to use the TLS transport.
+Description: TLS support for the Kamailio SIP server (authentication, transport)
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides TLS support for encrypted and authenticated 
+ SIP connections as well as generic TLS support for many Kamailio modules.
 
 Package: kamailio-outbound-modules
 Architecture: linux-any
@@ -535,12 +549,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: Outbound module for Kamailio
+Description: SIP Outbound module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package contains the module implementing SIP outbound extension.
+ This package contains the "outbound" module implementing SIP outbound extension.
 
 Package: kamailio-websocket-modules
 Architecture: linux-any
@@ -549,12 +563,13 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: Websocket module for kamailio
+Description: WebSocket module for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package contains the module implementing WebSocket transport layer.
+ This package contains the module implementing WebSocket transport layer
+ for use in SIP over WebSockets, in combination with WebRTC media sessions..
 
 Package: kamailio-dnssec-modules
 Architecture: linux-any
@@ -563,12 +578,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: contains the dnssec module
+Description: DNSsec support for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the dnssec module for Kamailio.
+ This package provides the DNSsec module for Kamailio.
 
 Package: kamailio-autheph-modules
 Architecture: linux-any
@@ -577,12 +592,13 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: authentication using ephemeral credentials module for Kamailio
+Description: authentication using ephemeral credentials for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the ephemeral module for Kamailio.
+ This package provides the ephemeral authentication module for Kamailio,
+ enabling authentication using a Restful HTTP API.
 
 Package: kamailio-kazoo-modules
 Architecture: linux-any
@@ -591,12 +607,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: kazoo modules for Kamailio
+Description: kazoo modules for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the kazoo module for Kamailio.
+ This package provides the Kazoo application server integration module for Kamailio.
 
 Package: kamailio-rabbitmq-modules
 Architecture: linux-any
@@ -605,12 +621,14 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: RabbitMQ modules for Kamailio
+Description: RabbitMQ and AMQP integration modules for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the RabbitMQ module for Kamailio.
+ This package provides the RabbitMQ module for Kamailio, enabling AMQP
+ integration into the SIP routing scripts for third party service
+ support.
 
 Package: kamailio-cnxcc-modules
 Architecture: linux-any
@@ -619,12 +637,12 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: cnxcc modules for Kamailio
+Description: cnxcc modules for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides the cnxcc module for Kamailio.
+ This package provides the cnxcc call charging control module for Kamailio.
 
 Package: kamailio-erlang-modules
 Architecture: linux-any
@@ -633,13 +651,14 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: erlang modules for Kamailio
+Description: Erlang modules for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This module provides interact with Erlang node. The module allows sending,
- receiving Erlang messages and RPC calls between each other.
+ This Kamailio module provides interaction with the Erlang node from the Kamailio
+ SIP routing scripts. The module allows sending, receiving Erlang messages
+ and RPC calls between each other.
 
 Package: kamailio-systemd-modules
 Architecture: linux-any
@@ -648,12 +667,13 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: systemd logging modules for Kamailio
+Description: systemd logging modules for the Kamailio SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This module provides logging to systemd journal.
+ This package provides logging to systemd journal directly from the
+ Kamailio configuration and routing scripts.
 
 Package: kamailio-extra-modules
 Architecture: linux-any
@@ -662,12 +682,14 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: kamailio (= ${binary:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
-Description: extra modules for Kamailio
+Description: Extra modules for the Kamailio SIP Server
  Kamailio is a very fast and flexible SIP (RFC3261)
- proxy server. Written entirely in C, Kamailio can handle thousands calls
+ server. Written entirely in C, Kamailio can handle thousands calls
  per second even on low-budget hardware.
  .
- This package provides: gzcompress uuid ev jansson janssonrpc-c http_async
+ This package provides a set of modules for compression of SIP attachments,
+ UUID usage, JSON data structure support, HTTP restful API asynchronous 
+ access and a few more functions: gzcompress uuid ev jansson janssonrpc-c http_async
 
 Package: kamailio-nth
 Architecture: any
@@ -689,6 +711,6 @@ Depends: binutils,
          tcpdump,
          vim,
          ${misc:Depends}
-Description: Kamailio - package for "nice to have" installation
+Description: Kamailio SIP server - package for "nice to have" utilities
  This is a metapackage for easy installation various useful tools that may be
  handy on server with Kamailio installed.

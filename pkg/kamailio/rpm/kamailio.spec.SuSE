@@ -12,7 +12,7 @@
 %define RADIUS_MODULES		auth_radius misc_radius peering
 %define RADIUS_MOD_PATH		modules/auth_radius modules/misc_radius modules/peering
 
-Summary:      Kamailio, very fast and flexible SIP Proxy
+Summary:      Kamailio, very fast and flexible SIP server
 Name:         %name
 Version:      %ver
 Release:      %rel
@@ -31,18 +31,24 @@ BuildPrereq:  make flex bison
 
 %description
 Kamailio is a very fast and flexible SIP (RFC3261)
-proxy server. Written entirely in C, ser can handle thousands calls
-per second even on low-budget hardware. A C Shell like scripting language
-provides full control over the server's behaviour. It's modular
-architecture allows only required functionality to be loaded.
-Currently the following modules are available: digest authentication,
-CPL scripts, instant messaging, MySQL and UNIXODBC support, a presence agent,
-radius authentication, record routing, an SMS gateway, a jabber gateway, a 
-transaction and dialog module, OSP module, statistics support, 
-registrar and user location.
+server. Written entirely in C, kamailio can handle thousands requests
+per second even on low-budget hardware. It can be configured to act
+as a SIP proxy, application server, session border controller, 
+or call load balancer to handle a set of media servers.
+A C Shell like scripting language provides full control over the server's 
+behaviour. In addition there is support for Lua, Python, Perl, Java and
+a set of other languages using Mono.
+Kamailio's modular architecture allows only required functionality to be loaded.
+There are over 100 modules available: WebSockets for WebRTC, authentication,
+multiple databases - both traditional SQL databases as well as no-SQL,
+message bus systems like Rabbit MQ, instant messaging, a presence agent,
+integration with REST-ful APIs using HTTP and JSON or XML,
+radius authentication, record routing, an SMS gateway, a XMPP/jabber gateway, a
+transaction and dialog module, OSP module, statistics support,
+registrar and user location services, SNMP, SIMPLE Presence and much more.
 
 %package  mysql
-Summary:  MySQL connectivity for the Kamailio.
+Summary:  MySQL connectivity for the Kamailio SIP server.
 Group:    System Environment/Daemons
 Requires: kamailio = %ver
 BuildPrereq: mysql-devel zlib-devel
