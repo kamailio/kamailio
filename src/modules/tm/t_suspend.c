@@ -167,7 +167,8 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		struct action *route)
 {
 	struct cell	*t;
-	struct sip_msg	faked_req;
+	struct sip_msg *faked_req;
+	int faked_req_len = 0;
 	struct cancel_info cancel_data;
 	int	branch;
 	struct ua_client *uac =NULL;
@@ -268,31 +269,34 @@ int t_continue(unsigned int hash_index, unsigned int label,
 		 */
 
 		/* fake the request and the environment, like in failure_route */
-		if (!fake_req(&faked_req, t->uas.request, 0 /* extra flags */, uac)) {
+		faked_req = fake_req(t->uas.request, 0 /* extra flags */, uac,
+			&faked_req_len);
+		if (faked_req==NULL) {
 			LM_ERR("building fake_req failed\n");
 			ret = -1;
 			goto kill_trans;
 		}
-		faked_env( t, &faked_req, 1);
+		faked_env( t, faked_req, 1);
 
 		route_type_bk = get_route_type();
 		set_route_type(FAILURE_ROUTE);
 		/* execute the pre/post -script callbacks based on original route block */
-		if (exec_pre_script_cb(&faked_req, cb_type)>0) {
-			if (run_top_route(route, &faked_req, 0)<0)
+		if (exec_pre_script_cb(faked_req, cb_type)>0) {
+			if (run_top_route(route, faked_req, 0)<0)
 				LM_ERR("failure inside run_top_route\n");
-			exec_post_script_cb(&faked_req, cb_type);
+			exec_post_script_cb(faked_req, cb_type);
 		}
 		set_route_type(route_type_bk);
 
 		/* TODO: save_msg_lumps should clone the lumps to shm mem */
 
-		/* restore original environment and free the fake msg */
+		/* restore original environment */
 		faked_env( t, 0, 1);
-		free_faked_req(&faked_req, t);
-
 		/* update the flags */
-		t->uas.request->flags = faked_req.flags;
+		t->uas.request->flags = faked_req->flags;
+		/* free the fake msg */
+		free_faked_req(faked_req, faked_req_len);
+
 
 		if (t->uas.status < 200) {
 			/* No final reply has been sent yet.
