@@ -179,5 +179,45 @@ modparam("debugger", "cfgtest", 1)
 #!endif
 ...
 </programlisting>
-    </section>
+	</section>
+	<section>
+		<title>Report format</title>
+		<para>
+		<emphasis>cfgt</emphasis> generates a json file per request processed.
+		The files are created at &lt;basedir&gt;/&lt;prefix&gt;/&lt;message_id&gt;.json.
+		The <quote>message_id</quote> is a sequence starting with 1 per scenario
+		defined by <quote>prefix</quote> module parameter.
+		</para>
+		<para>
+		The json report has three top members, <quote>flow</quote>,
+		<quote>sip_in</quote> and <quote>sip_out</quote> describing, the flow of
+		the configuration routes, the SIP message processed and the SIP messages
+		sent during that process execution.
+		</para>
+		<para>
+		The flow of the configuration routes is defined by an array of routes with
+		the content of the variables controled by <quote>mask</quote> module parameter.
+		</para>
+		<para>Each routename has a prefix as <quote>start|</quote>,
+		<quote>return|</quote>,	when the route finish its execution and <quote>exit|</quote> or
+		<quote>drop|</quote> if the route finish its execution with exit or drop.
+		</para>
+<programlisting format="linespecific">
+{
+ "flow": [{
+   "start|DEFAULT_ROUTE": {
+    "$var(userprov_domain)": "spce.test",
+    "$fU": "testuser1002",
+    [...]},
+   "start|ROUTE_NET_INFO": {[...]},
+   "return|ROUTE_NET_INFO": {[...]},
+   [...]
+   "start|ROUTE_AUTH": {[...]},
+   "exit|ROUTE_AUTH": {[...]},
+   },
+ "sip_in": ["INVITE sip:4311001@spce.test SIP/2.0\r\nRecord-Route: [...]\r\n"],
+ "sip_out": ["SIP/2.0 100 Trying\r\nVia: SIP/2.0/UDP 127.0.0.1[...]\r\n", "SIP/2.0 407 Proxy Authentication Required[...]\r\n"]
+}
+</programlisting>
+	</section>
 </chapter>
