@@ -1,4 +1,4 @@
-/* 
+/*
  * Stats reporting code. It reports through SIG_USR1 and if loaded
  * through the SNMP module
  *
@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -49,7 +49,7 @@
 #include "modules/snmp/sipCommonStatsMethod.h"
 #include "modules/snmp/sipCommonStatusCode.h"
 
-struct stats_s *stats;		/* per process stats structure */ 
+struct stats_s *stats;		/* per process stats structure */
 char *stat_file = NULL;		/* set by the parser */
 
 /* private variables */
@@ -84,7 +84,7 @@ static int sipStatusCodes_handler(struct sip_snmp_obj *o, enum handler_op op);
 
 int init_stats(int nr_of_processes)
 {
-	LM_DBG("initializing stats for %d processes\n", 
+	LM_DBG("initializing stats for %d processes\n",
 		nr_of_processes);
 
 
@@ -137,8 +137,8 @@ int dump_statistic(FILE *fp, struct stats_s *istats, int printheader)
 	if(printheader) {
 		localtime_r(&istats->start_time, &res);
 		strftime(t, 255, "%c", &res);
-		
-		fprintf(fp, "stats for process %d (pid %d) started at %s\n", 
+
+		fprintf(fp, "stats for process %d (pid %d) started at %s\n",
 				istats->process_index, istats->pid, t);
 	}
 
@@ -216,7 +216,7 @@ int dump_all_statistic()
 	ts = time(NULL);
 	localtime_r(&ts, &res);
 	strftime(t, 255, "%c", &res);
-	fprintf(stat_fp, "#### stats @ %s #####\n", t); 
+	fprintf(stat_fp, "#### stats @ %s #####\n", t);
 
 	c = global_stats;
 	for(i=0; i<stats_segments; i++) {
@@ -234,7 +234,7 @@ int dump_all_statistic()
 		LM_ERR("Couldn't dump global stats: %s\n", strerror(errno));
 		goto end;
 	}
-	
+
 	if(collect_stats(g) == -1) {
 		LM_ERR("%s: Couldn't dump global stats\n", __func__);
 		goto end;
@@ -394,7 +394,7 @@ static int sipSummaryStatsTable_register(const struct stats_funcs *f)
 		f->free_func(h);
 		return -1;
 	}
-	
+
 	/* sipSummaryOutResponses */
 	h->on_get = collect_OutResp;
 	if(f->reg_func("sipSummaryOutResponses", h) == -1) {
@@ -546,10 +546,10 @@ static int collect_InReqs(struct sip_snmp_obj *o, enum handler_op op)
 		t5 += c->received_requests_other;
 	}
 
-	*o->value.integer = t1 + t2 + t3 + t4 + t5; 
+	*o->value.integer = t1 + t2 + t3 + t4 + t5;
 	o->val_len = sizeof(unsigned long);
 	o->type = SER_COUNTER;
-	
+
 	return 0;
 }
 
@@ -589,10 +589,10 @@ static int collect_OutReqs(struct sip_snmp_obj *o, enum handler_op op)
 		t5 += c->sent_requests_other;
 	}
 
-	*o->value.integer = t1 + t2 + t3 + t4 + t5; 
+	*o->value.integer = t1 + t2 + t3 + t4 + t5;
 	o->val_len = sizeof(unsigned long);
 	o->type = SER_COUNTER;
-	
+
 	return 0;
 }
 
@@ -634,10 +634,10 @@ static int collect_InResp(struct sip_snmp_obj *o, enum handler_op op)
 		t7 += c->received_responses_other;
 	}
 
-	*o->value.integer = t1 + t2 + t3 + t4 + t5 + t6 + t7; 
+	*o->value.integer = t1 + t2 + t3 + t4 + t5 + t6 + t7;
 	o->val_len = sizeof(unsigned long);
 	o->type = SER_COUNTER;
-	
+
 	return 0;
 }
 
@@ -676,15 +676,15 @@ static int collect_OutResp(struct sip_snmp_obj *o, enum handler_op op)
 		t4 += c->sent_responses_4;
 		t5 += c->sent_responses_5;
 		t6 += c->sent_responses_6;
-		/* XXX: Not in stats struct 
+		/* XXX: Not in stats struct
 		t7 += c->sent_responses_other;
 		*/
 	}
 
-	*o->value.integer = t1 + t2 + t3 + t4 + t5 + t6 + t7; 
+	*o->value.integer = t1 + t2 + t3 + t4 + t5 + t6 + t7;
 	o->val_len = sizeof(unsigned long);
 	o->type = SER_COUNTER;
-	
+
 	return 0;
 }
 
@@ -730,28 +730,28 @@ static int sipStatsMethod_handler(struct sip_snmp_obj *o, enum handler_op op)
 	total = 0;
 	switch(o->col) {
 		/* these definitions are taken from sipMethodStatsHandler */
-		case COLUMN_SIPSTATSINVITEINS: 
+		case COLUMN_SIPSTATSINVITEINS:
 			collect_this_stat(received_requests_inv, total, c);
 			break;
-		case COLUMN_SIPSTATSINVITEOUTS: 
+		case COLUMN_SIPSTATSINVITEOUTS:
 			collect_this_stat(sent_requests_inv, total, c);
 			break;
-		case COLUMN_SIPSTATSACKINS: 
+		case COLUMN_SIPSTATSACKINS:
 			collect_this_stat(received_requests_ack, total, c);
 			break;
-		case COLUMN_SIPSTATSACKOUTS: 
+		case COLUMN_SIPSTATSACKOUTS:
 			collect_this_stat(sent_requests_ack, total, c);
 			break;
-		case COLUMN_SIPSTATSBYEINS: 
+		case COLUMN_SIPSTATSBYEINS:
 			collect_this_stat(received_requests_bye, total, c);
 			break;
-		case COLUMN_SIPSTATSBYEOUTS: 
+		case COLUMN_SIPSTATSBYEOUTS:
 			collect_this_stat(sent_requests_bye, total, c);
 			break;
-		case COLUMN_SIPSTATSCANCELINS: 
+		case COLUMN_SIPSTATSCANCELINS:
 			collect_this_stat(received_requests_cnc, total, c);
 			break;
-		case COLUMN_SIPSTATSCANCELOUTS: 
+		case COLUMN_SIPSTATSCANCELOUTS:
 			collect_this_stat(sent_requests_cnc, total, c);
 			break;
 		/* ser doesn't have notion for these. We don't

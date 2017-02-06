@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -77,7 +77,7 @@ static int dbg_msg_qa(char *buf, int len)
 	enum { QA_ANY, QA_SPACE, QA_EOL1 } state;
 
 
-	/* is there a zero character in there ? */	
+	/* is there a zero character in there ? */
 	if (memchr(buf, 0, len)) {
 		LM_CRIT("message with 0 in it\n");
 		return 0;
@@ -97,7 +97,7 @@ static int dbg_msg_qa(char *buf, int len)
 								return 0;
 							}
 						} else space_cnt=0;
-						state=QA_SPACE; 
+						state=QA_SPACE;
 						break;
 
 			case '\r':	/* ignore */
@@ -145,7 +145,7 @@ int probe_max_receive_buffer( int udp_sock )
 		LM_ERR("getsockopt: %s\n", strerror(errno));
 		return -1;
 	}
-	if ( ioptval==0 ) 
+	if ( ioptval==0 )
 	{
 		LM_DBG("SO_RCVBUF initially set to 0; resetting to %d\n",
 			BUFFER_INCREMENT );
@@ -155,7 +155,7 @@ int probe_max_receive_buffer( int udp_sock )
 		/* increase size; double in initial phase, add linearly later */
 		if (phase==0) optval <<= 1; else optval+=BUFFER_INCREMENT;
 		if (optval > maxbuffer){
-			if (phase==1) break; 
+			if (phase==1) break;
 			else { phase=1; optval >>=1; continue; }
 		}
 		LM_DBG("trying SO_RCVBUF: %d\n", optval );
@@ -164,11 +164,11 @@ int probe_max_receive_buffer( int udp_sock )
 			/* Solaris returns -1 if asked size too big; Linux ignores */
 			LM_DBG("SOL_SOCKET failed for %d, phase %d: %s\n", optval, phase, strerror(errno));
 			/* if setting buffer size failed and still in the aggressive
-			   phase, try less aggressively; otherwise give up 
+			   phase, try less aggressively; otherwise give up
 			*/
-			if (phase==0) { phase=1; optval >>=1 ; continue; } 
+			if (phase==0) { phase=1; optval >>=1 ; continue; }
 			else break;
-		} 
+		}
 		/* verify if change has taken effect */
 		/* Linux note -- otherwise I would never know that; funny thing: Linux
 		   doubles size for which we asked in setsockopt
@@ -180,18 +180,18 @@ int probe_max_receive_buffer( int udp_sock )
 			LM_ERR("getsockopt: %s\n", strerror(errno));
 			return -1;
 		} else {
-			LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n", 
+			LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n",
 				optval, voptval);
 			if (voptval<optval) {
 				LM_DBG("setting SO_RCVBUF has no effect\n");
 				/* if setting buffer size failed and still in the aggressive
-				phase, try less aggressively; otherwise give up 
+				phase, try less aggressively; otherwise give up
 				*/
-				if (phase==0) { phase=1; optval >>=1 ; continue; } 
+				if (phase==0) { phase=1; optval >>=1 ; continue; }
 				else break;
-			} 
+			}
 		}
-	
+
 	} /* for ... */
 	foptvallen=sizeof(foptval);
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &foptval,
@@ -223,7 +223,7 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr, char* interfac
 	struct ipv6_mreq mreq6;
 
 	if (addr->s.sa_family==AF_INET){
-		memcpy(&mreq.imr_multiaddr, &addr->sin.sin_addr, 
+		memcpy(&mreq.imr_multiaddr, &addr->sin.sin_addr,
 		       sizeof(struct in_addr));
 #ifdef HAVE_IP_MREQN
 		if (interface!=0) {
@@ -235,15 +235,15 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr, char* interfac
 #else
 		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 #endif
-		
+
 		if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,&mreq,
 			       sizeof(mreq))==-1){
 			LM_ERR("setsockopt: %s\n", strerror(errno));
 			return -1;
 		}
-		
+
 	} else if (addr->s.sa_family==AF_INET6){
-		memcpy(&mreq6.ipv6mr_multiaddr, &addr->sin6.sin6_addr, 
+		memcpy(&mreq6.ipv6mr_multiaddr, &addr->sin6.sin6_addr,
 		       sizeof(struct in6_addr));
 		if (interface!=0) {
 			mreq6.ipv6mr_interface = if_nametoindex(interface);
@@ -259,7 +259,7 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr, char* interfac
 			LM_ERR("setsockopt:%s\n", strerror(errno));
 			return -1;
 		}
-		
+
 	} else {
 		LM_ERR("setup_mcast_rcvr: Unsupported protocol family\n");
 		return -1;
@@ -290,7 +290,7 @@ int udp_init(struct socket_info* sock_info)
 		LM_ERR("could not init sockaddr_union\n");
 		goto error;
 	}
-	
+
 	sock_info->socket = socket(AF2PF(addr->s.sa_family), SOCK_DGRAM, 0);
 	if (sock_info->socket==-1){
 		LM_ERR("socket: %s\n", strerror(errno));
@@ -306,7 +306,7 @@ int udp_init(struct socket_info* sock_info)
 	/* tos */
 	optval = tos;
 	if (addr->s.sa_family==AF_INET){
-		if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval, 
+		if (setsockopt(sock_info->socket, IPPROTO_IP, IP_TOS, (void*)&optval,
 				sizeof(optval)) ==-1){
 			LM_WARN("setsockopt tos: %s\n", strerror(errno));
 			/* continue since this is not critical */
@@ -340,14 +340,14 @@ int udp_init(struct socket_info* sock_info)
 #endif
 
 #ifdef USE_MCAST
-	if ((sock_info->flags & SI_IS_MCAST) 
+	if ((sock_info->flags & SI_IS_MCAST)
 	    && (setup_mcast_rcvr(sock_info->socket, addr, sock_info->mcast.s)<0)){
 			goto error;
 	}
 	/* set the multicast options */
 	if (addr->s.sa_family==AF_INET){
 		m_loop=mcast_loopback;
-		if (setsockopt(sock_info->socket, IPPROTO_IP, IP_MULTICAST_LOOP, 
+		if (setsockopt(sock_info->socket, IPPROTO_IP, IP_MULTICAST_LOOP,
 						&m_loop, sizeof(m_loop))==-1){
 			LM_WARN("setsockopt(IP_MULTICAST_LOOP): %s\n", strerror(errno));
 			/* it's only a warning because we might get this error if the
@@ -361,7 +361,7 @@ int udp_init(struct socket_info* sock_info)
 			}
 		}
 	} else if (addr->s.sa_family==AF_INET6){
-		if (setsockopt(sock_info->socket, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, 
+		if (setsockopt(sock_info->socket, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
 						&mcast_loopback, sizeof(mcast_loopback))==-1){
 			LM_WARN("setsockopt (IPV6_MULTICAST_LOOP): %s\n", strerror(errno));
 		}
@@ -378,10 +378,10 @@ int udp_init(struct socket_info* sock_info)
 #endif /* USE_MCAST */
 
 	if ( probe_max_receive_buffer(sock_info->socket)==-1) goto error;
-	
+
 	if (bind(sock_info->socket,  &addr->s, sockaddru_len(*addr))==-1){
 		LM_ERR("bind(%x, %p, %d) on %s: %s\n",
-				sock_info->socket, &addr->s, 
+				sock_info->socket, &addr->s,
 				(unsigned)sockaddru_len(*addr),
 				sock_info->address_str.s,
 				strerror(errno));
@@ -502,7 +502,7 @@ int udp_rcv_loop()
 			LM_INFO("dropping 0 port packet from %s\n", tmp);
 			continue;
 		}
-		
+
 		/* update the local config */
 		cfg_update();
 		if (unlikely(sr_event_enabled(SREV_STUN_IN)) && (unsigned char)*buf == 0x00) {
@@ -514,15 +514,15 @@ int udp_rcv_loop()
 			/* receive_msg must free buf too!*/
 			receive_msg(buf, len, &ri);
 		}
-		
+
 	/* skip: do other stuff */
-		
+
 	}
 	/*
 	if (from) pkg_free(from);
 	return 0;
 	*/
-	
+
 error:
 	if (from) pkg_free(from);
 	return -1;

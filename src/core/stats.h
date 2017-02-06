@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -86,10 +86,10 @@
 #else
 #	define STATS_RX_REQUEST(method)
 #	define STATS_TX_REQUEST(method)
-#	define STATS_RX_RESPONSE(class) 
-#	define STATS_TX_RESPONSE(class) 
-#	define STATS_RX_DROPS 
-#	define STATS_TX_DROPS 
+#	define STATS_RX_RESPONSE(class)
+#	define STATS_TX_RESPONSE(class)
+#	define STATS_RX_DROPS
+#	define STATS_TX_DROPS
 #endif
 
 #ifdef STATS
@@ -101,7 +101,7 @@ struct stats_s {
 	pid_t		pid;
 	time_t		start_time;
 
-	unsigned long 
+	unsigned long
 
 	/* received packets */
 
@@ -120,8 +120,8 @@ struct stats_s {
 	received_responses_other,
 
 	received_drops,	/* all messages we received and did not process
-					   successfully; reasons include SIP sanity checks 
-					   (missing Vias, neither request nor response, 
+					   successfully; reasons include SIP sanity checks
+					   (missing Vias, neither request nor response,
 					   failed parsing), ser errors (malloc, action
 					   failure)
 					*/
@@ -149,7 +149,7 @@ struct stats_s {
 	acc_req_time,
 	acc_res_time,
 
-	failed_on_send;			
+	failed_on_send;
 };
 
 extern struct stats_s *stats;
@@ -160,7 +160,7 @@ void setstats( int child_index );
 int dump_all_statistic();
 int dump_statistic(FILE *fp, struct stats_s *istats, int printheader);
 /* Registers handlers with SNMP module */
-int stats_register(); 
+int stats_register();
 
 #endif
 #endif
