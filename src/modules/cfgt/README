@@ -30,6 +30,7 @@ Victor Seva
               3.3. callid_prefix (string)
 
         4. Usage
+        5. Report format
 
    List of Examples
 
@@ -54,6 +55,7 @@ Chapter 1. Admin Guide
         3.3. callid_prefix (string)
 
    4. Usage
+   5. Report format
 
 1. Overview
 
@@ -157,3 +159,36 @@ modparam("debugger", "log_level_name", "exec")
 modparam("debugger", "cfgtest", 1)
 #!endif
 ...
+
+5. Report format
+
+   cfgt generates a json file per request processed. The files are created
+   at <basedir>/<prefix>/<message_id>.json. The “message_id” is a sequence
+   starting with 1 per scenario defined by “prefix” module parameter.
+
+   The json report has three top members, “flow”, “sip_in” and “sip_out”
+   describing, the flow of the configuration routes, the SIP message
+   processed and the SIP messages sent during that process execution.
+
+   The flow of the configuration routes is defined by an array of routes
+   with the content of the variables controled by “mask” module parameter.
+
+   Each routename has a prefix as “start|”, “return|”, when the route
+   finish its execution and “exit|” or “drop|” if the route finish its
+   execution with exit or drop.
+{
+ "flow": [{
+   "start|DEFAULT_ROUTE": {
+    "$var(userprov_domain)": "spce.test",
+    "$fU": "testuser1002",
+    [...]},
+   "start|ROUTE_NET_INFO": {[...]},
+   "return|ROUTE_NET_INFO": {[...]},
+   [...]
+   "start|ROUTE_AUTH": {[...]},
+   "exit|ROUTE_AUTH": {[...]},
+   },
+ "sip_in": ["INVITE sip:4311001@spce.test SIP/2.0\r\nRecord-Route: [...]\r\n"],
+ "sip_out": ["SIP/2.0 100 Trying\r\nVia: SIP/2.0/UDP 127.0.0.1[...]\r\n", "SIP/2
+.0 407 Proxy Authentication Required[...]\r\n"]
+}
