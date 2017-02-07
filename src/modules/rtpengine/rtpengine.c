@@ -145,7 +145,7 @@ static struct rtpp_node *select_rtpp_node_new(str, str, int, struct rtpp_node **
 static struct rtpp_node *select_rtpp_node_old(str, str, int, enum rtpe_operation);
 static struct rtpp_node *select_rtpp_node(str, str, int, struct rtpp_node **, int, enum rtpe_operation);
 static int is_queried_node(struct rtpp_node *, struct rtpp_node **, int);
-static int build_rtpp_socks(unsigned int current_rtpp_no);
+static int build_rtpp_socks();
 static char *send_rtpp_command(struct rtpp_node *, bencode_item_t *, int *);
 static int get_extra_id(struct sip_msg* msg, str *id_str);
 
@@ -988,8 +988,6 @@ error:
 
 static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 {
-	unsigned int current_rtpp_no;
-
 	if (rtpp_db_url.s == NULL) {
 		// no database
 		rpc->fault(ctx, 500, "No Database URL");
@@ -1002,12 +1000,9 @@ static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	lock_get(rtpp_no_lock);
-	current_rtpp_no = *rtpp_no;
-	lock_release(rtpp_no_lock);
-
-	if (rtpp_socks_size != current_rtpp_no) {
-		build_rtpp_socks(current_rtpp_no);
+	if (build_rtpp_socks()) {
+		rpc->fault(ctx, 500, "Out of memory");
+		return;
 	}
 }
 
@@ -1018,6 +1013,11 @@ static int rtpengine_rpc_iterate(rpc_t* rpc, void* ctx, const str *rtpp_url,
 	struct rtpp_node *crt_rtpp;
 	int found = RPC_FOUND_NONE, err = 0;
 	int ret;
+
+	if (build_rtpp_socks()) {
+		rpc->fault(ctx, 500, "Out of memory");
+		return -1;
+	}
 
 	if (!rtpp_set_list) {
 		rpc->fault(ctx, 404, "Instance not found (no sets loaded)");
@@ -1456,15 +1456,23 @@ mod_init(void)
 	return 0;
 }
 
-static int build_rtpp_socks(unsigned int current_rtpp_no) {
+static int build_rtpp_socks() {
 	int n, i;
 	char *cp;
 	struct addrinfo hints, *res;
 	struct rtpp_set  *rtpp_list;
 	struct rtpp_node *pnode;
+	unsigned int current_rtpp_no;
 #ifdef IP_MTU_DISCOVER
 	int ip_mtu_discover = IP_PMTUDISC_DONT;
 #endif
+
+	lock_get(rtpp_no_lock);
+	current_rtpp_no = *rtpp_no;
+	lock_release(rtpp_no_lock);
+
+	if (current_rtpp_no == rtpp_socks_size)
+		return 0;
 
 	// close current sockets
 	for (i = 0; i < rtpp_socks_size; i++) {
@@ -1581,16 +1589,6 @@ child_init(int rank)
 
 	mypid = getpid();
 
-	lock_get(rtpp_no_lock);
-	rtpp_socks_size = *rtpp_no;
-	lock_release(rtpp_no_lock);
-
-	rtpp_socks = (int*)pkg_malloc(sizeof(int)*(rtpp_socks_size));
-	if (!rtpp_socks) {
-		return -1;
-	}
-	memset(rtpp_socks, -1, sizeof(int)*(rtpp_socks_size));
-
 	// vector of pointers to queried nodes
 	queried_nodes_ptr = (struct rtpp_node**)pkg_malloc(MAX_RTPP_TRIED_NODES * sizeof(struct rtpp_node*));
 	if (!queried_nodes_ptr) {
@@ -1600,9 +1598,8 @@ child_init(int rank)
 	memset(queried_nodes_ptr, 0, MAX_RTPP_TRIED_NODES * sizeof(struct rtpp_node*));
 
 	/* Iterate known RTP proxies - create sockets */
-	if (rtpp_socks_size) {
-		build_rtpp_socks(rtpp_socks_size);
-	}
+	if (build_rtpp_socks())
+		return -1;
 
 	return 0;
 }
@@ -2508,14 +2505,10 @@ static struct rtpp_node *
 select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **queried_nodes_ptr, int queried_nodes, enum rtpe_operation op)
 {
 	struct rtpp_node *node = NULL;
-	unsigned int current_rtpp_no;
 
-	lock_get(rtpp_no_lock);
-	current_rtpp_no = *rtpp_no;
-	lock_release(rtpp_no_lock);
-
-	if (rtpp_socks_size != current_rtpp_no) {
-		build_rtpp_socks(current_rtpp_no);
+	if (build_rtpp_socks()) {
+		LM_ERR("out of memory\n");
+		return NULL;
 	}
 
 	if (!active_rtpp_set) {
