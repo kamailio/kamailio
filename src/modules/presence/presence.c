@@ -142,6 +142,7 @@ char prefix='a';
 int startup_time=0;
 str db_url = {0, 0};
 int expires_offset = 0;
+int pres_cseq_offset = 0;
 uint32_t min_expires= 0;
 int min_expires_action= 1;
 uint32_t max_expires= 3600;
@@ -226,6 +227,7 @@ static param_export_t params[]={
 	{ "retrieve_order",         PARAM_INT, &pres_retrieve_order},
 	{ "retrieve_order_by",      PARAM_STR, &pres_retrieve_order_by},
 	{ "sip_uri_match",          PARAM_INT, &pres_uri_match},
+    { "cseq_offset",            PARAM_INT, &pres_cseq_offset},
 	{0,0,0}
 };
 

@@ -1666,7 +1666,7 @@ found_rec:
 
 	subs->local_cseq= s->local_cseq +1;
 
-	if(subs->remote_cseq<= s->remote_cseq)
+	if(subs->remote_cseq + pres_cseq_offset <= s->remote_cseq)
 	{
 		LM_ERR("wrong sequence number;received: %d - stored: %d\n",
 				subs->remote_cseq, s->remote_cseq);
@@ -1782,7 +1782,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	row_vals = ROW_VALUES(row);
 	remote_cseq= row_vals[remote_cseq_col].val.int_val;
 
-	if(subs->remote_cseq<= remote_cseq)
+	if(subs->remote_cseq + pres_cseq_offset <= remote_cseq)
 	{
 		LM_ERR("wrong sequence number received: %d - stored: %d\n",
 				subs->remote_cseq, remote_cseq);
