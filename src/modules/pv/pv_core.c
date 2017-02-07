@@ -3238,10 +3238,10 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 int pv_parse_env_name(pv_spec_p sp, str *in)
 {
+	char *csname;
+
 	if(in->s==NULL || in->len<=0)
 		return -1;
-
-	char *csname;
 
 	csname = pkg_malloc(in->len + 1);
 
@@ -3268,11 +3268,8 @@ int pv_get_env(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 		if (val) {
 			return pv_get_strzval(msg, param, res, val);
-		} else {
-			return pv_get_null(msg, param, res);
 		}
-	} else {
-		return pv_get_null(msg, param, res);
 	}
+	return pv_get_null(msg, param, res);
 }
 
