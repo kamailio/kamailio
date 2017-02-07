@@ -358,6 +358,44 @@ modparam("pua_dialoginfo", "send_publish_flag", 8)
 </programlisting>
 		</example>
 		</section>
+
+	<section>
+		<title><varname>disable_caller_publish_flag</varname> (int)</title>
+		<para>
+			This message flag indicates whether to send caller (initiator) PUBLISH requests or not.
+			If set, PUBLISH requests are not sent for the caller (initiator).
+		</para>
+		<para>
+			<emphasis>Default value is <quote>-1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>disable_caller_publish_flag</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "disable_caller_publish_flag", 9)
+...
+</programlisting>
+		</example>
+		</section>
+
+	<section>
+		<title><varname>disable_callee_publish_flag</varname> (int)</title>
+		<para>
+			This message flag indicates whether to send callee (recipient) PUBLISH requests or not.
+			If set, PUBLISH requests are not sent for the callee (recipient).
+		</para>
+		<para>
+			<emphasis>Default value is <quote>-1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>disable_callee_publish_flag</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "disable_callee_publish_flag", 10)
+...
+</programlisting>
+		</example>
+		</section>
 	
 		<section>
 		<title><varname>use_pubruri_avps</varname> (int)</title>
