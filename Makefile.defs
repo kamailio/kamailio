@@ -1842,7 +1842,7 @@ ifeq  ($(OS), solaris)
 		#LDFLAGS=-g $(PROFILE)
 		#MOD_LDFLAGS=-g -G
 	endif
-	YACC=yacc
+	#YACC=yacc
 
 ifeq ($(CC_NAME), suncc)
 	LIBS= -ldl -lresolv
