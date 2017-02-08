@@ -389,7 +389,7 @@ static int mod_child_init(int rank)
 		*/
 
 		for(i=0; i < dbk_consumer_workers; i++) {
-			pid=fork_process(PROC_NOCHLDINIT, "AMQP Consumer Worker", 1);
+			pid=fork_process(i+1, "AMQP Consumer Worker", 1);
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0){
