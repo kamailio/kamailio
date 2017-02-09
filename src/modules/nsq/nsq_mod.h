@@ -72,10 +72,6 @@ char nsq_json_escape_char = '%';
 int nsq_topic_channel_counter = 0;
 int dbn_consumer_workers = DBN_DEFAULT_NO_WORKERS;
 int startup_time = 0;
-int *nsq_worker_pipes_fds = NULL;
-int *nsq_worker_pipes = NULL;
-int nsq_cmd_pipe = 0;
-int nsq_cmd_pipe_fds[2] = {-1,-1};
 
 /* database connection */
 db1_con_t *nsq_pa_db = NULL;
