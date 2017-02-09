@@ -169,14 +169,17 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 							  after mod_init available information (e.g.
 							  total number of processes).
 							  @warning child_init(PROC_MAIN) is again called
-							 in the same process (main), but latter 
-							 (before tcp), so make sure you don't init things 
+							 in the same process (main), but latter
+							 (before tcp), so make sure you don't init things
 							 twice, bot in PROC_MAIN and PROC_INT */
 #define PROC_NOCHLDINIT -128 /**< no child init functions will be called
                                 if this rank is used in fork_process() */
 
-#define PROC_SIPINIT      1  /**< First SIP worker - some modules do special
-							 processing in this child, like loading db data */
+#define PROC_SIPINIT      1  /**< First (special) SIP worker - some modules do
+						special processing in this child, like loading db data */
+#define PROC_SIPROUTER    2  /**< First (pure) SIP worker - can be used to check
+						if just a normal sip router or initialize custom worker
+						processes by starting from this value */
 #define PROC_SIPRPC       127  /**< Used to init RPC worker as SIP commands
 							   handler. Don't do any special processing in the
 							   child init with this rank - just bare child
@@ -198,7 +201,7 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define MODULE_VERSION \
 	char *module_version=SER_FULL_VERSION; \
 	char *module_flags=SER_COMPILE_FLAGS; \
-	unsigned int module_interface_ver=MODULE_INTERFACE_VER; 
+	unsigned int module_interface_ver=MODULE_INTERFACE_VER;
 
 /** ser version */
 struct ser_cmd_export_ {
@@ -242,7 +245,7 @@ struct sr31_cmd_export_ {
    cmd_export */
 struct cmd_export_common_ {
 	char* name;
-	cmd_function function; 
+	cmd_function function;
 	int param_no;
 	fixup_function fixup;
 };
@@ -289,7 +292,7 @@ typedef struct fparam {
 		int i;                    /**< Integer value */
 		regex_t* regex;           /**< Compiled regular expression */
 		avp_ident_t avp;          /**< AVP identifier */
-		select_t* select;         /**< select structure */ 
+		select_t* select;         /**< select structure */
 		struct subst_expr* subst; /**< Regex substitution */
 		pv_spec_t* pvs;    /**< kamailio pseudo-vars */
 		pv_elem_t* pve;    /**< kamailio pseudo-vars in a string */
@@ -298,7 +301,7 @@ typedef struct fparam {
 } fparam_t;
 
 
-typedef struct param_export_ param_export_t;  
+typedef struct param_export_ param_export_t;
 typedef struct ser_cmd_export_ ser_cmd_export_t;
 typedef struct kam_cmd_export_ kam_cmd_export_t;
 typedef struct cmd_export_common_ cmd_export_common_t;
@@ -373,7 +376,7 @@ struct kam_module_exports {
 
 /**
  * @brief sr/ser 3.1+ module exports version
- * 
+ *
  * sr/ser 3.1+ module exports version, Includes ser and kamailio versions,
  * re-arraranged + some extras.
  * @note Some of the members will be obsoleted and are kept only for
@@ -482,7 +485,7 @@ int fix_flag( modparam_t type, void* val,
 
 /**
  * @brief Generic parameter fixup function
- * 
+ *
  * Generic parameter fixup function which creates fparam_t structure.
  * Type parameter contains allowed parameter types.
  * @param type parameter type
@@ -497,8 +500,8 @@ void fparam_free_contents(fparam_t* fp);
 int fix_param_types(int types, void** param);
 
 /**
- * @brief Fixup variable string, 
- * 
+ * @brief Fixup variable string,
+ *
  * Fixup variable string, the parameter can be AVP, SELECT, or ordinary
  * string. AVP and select identifiers will be resolved to their values
  * during runtime. The parameter value will be converted to fparam structure.
@@ -626,7 +629,7 @@ int is_fparam_rve_fixup(fixup_function f);
 
 /**
  * @brief Generic free fixup type function for a fixed fparam
- * 
+ *
  * Generic free fixup type function for a fixed fparam. It will free whatever
  * was allocated during the initial fparam fixup and restore the original param
  * value.
@@ -639,7 +642,7 @@ int fixup_free_fparam_2(void** param, int param_no);
 
 /**
  * @brief returns the corresponding fixup_free* for various known fixup types
- * 
+ *
  * Returns the corresponding fixup_free* for various known fixup types.
  * Used to automatically fill in free_fixup* functions.
  * @param f fixup function pointer
