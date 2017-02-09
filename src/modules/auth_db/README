@@ -318,8 +318,9 @@ modparam("auth_db", "version_table", 0)
    call www_challenge which will challenge the user again.
 
    Negative codes may be interpreted as follows:
-     * -1 (generic error) - some generic error occurred and no reply was
-       sent out;
+     * -1 (generic error) - Bad credentials , couldn't parse credentials ,
+       no memory left , couldn't fetch from table , couldn't get realm or
+       some generic error occurred and no reply was sent out;
      * -2 (invalid password) - wrong password;
      * -3 (invalid user) - authentication user does not exist.
      * -4 (nonce expired) - the nonce has expired
