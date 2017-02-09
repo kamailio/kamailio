@@ -533,7 +533,7 @@ if (rank == PROC_MAIN) {
     
         /* fork notification workers */
 	for(k=0;k<notification_processes;k++){
-		pid = fork_process(1001+k,"notification_worker",1);
+		pid = fork_process(PROC_XWORKER,"notification_worker",1);
 		if (pid==-1){
 			LM_CRIT("init_notification_worker(): Error on fork() for worker!\n");
 			return 0;
