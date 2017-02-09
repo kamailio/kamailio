@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 		<title>Overview</title>
 		<para>
@@ -22,9 +22,9 @@
 		for evaluating this parameter in subsequent requests and to set the destination &uri; according to it.
 		</para>
 		<section>
-			<title>Path insertion for registrations</title>
+			<title>Path Insertion For Registrations</title>
 			<para>
-			For registrations in a scenario like <quote>[UAC] -> [P1] -> [REG]</quote>, 
+			For registrations in a scenario like <quote>[UAC] -> [P1] -> [REG]</quote>,
 			the "path" module can be used at the intermediate proxy P1 to insert a Path
 			header into the message before forwarding it to the registrar REG. Two functions
 			can be used to achieve this:
@@ -46,7 +46,7 @@
 					<para>
 					<emphasis>add_path_received(...)</emphasis> also add a Path header in the
 					same form as above, but also adds a parameter indicating the received-&uri;
-					of the message, like 
+					of the message, like
 					<quote>Path: &lt;sip:1.2.3.4;received=sip:2.3.4.5:1234;lr&gt;</quote>. This
 					is especially useful if the proxy does NAT detection and wants to pass
 					the NAT'ed address to the registrar.
@@ -58,7 +58,17 @@
 			</itemizedlist>
 			</para>
 			<para>
+				Note that some SIP registrars may check if header Supported includes 'path'. It
+				can be added in &kamailio;.cfg using append_hf() from textops module.
 			</para>
+		<example>
+		<title>Add Supported header</title>
+		<programlisting format="linespecific">
+...
+append_hf("Supported: path\r\n");
+...
+</programlisting>
+		</example>
 		</section>
 		<section>
 			<title>Outbound routing to NAT'ed UACs</title>
