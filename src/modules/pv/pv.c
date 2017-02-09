@@ -208,6 +208,8 @@ static pv_export_t mod_pvs[] = {
 	{{"duri", (sizeof("duri")-1)}, /* */
 		PVT_DSTURI, pv_get_dsturi, pv_set_dsturi,
 		0, 0, 0, 0},
+	{{"env", (sizeof("env")-1)}, PVT_OTHER, pv_get_env, 0,
+		pv_parse_env_name, 0, 0, 0},
 	{{"err.class", (sizeof("err.class")-1)}, /* */
 		PVT_OTHER, pv_get_errinfo_attr, 0,
 		0, 0, 0, 0},

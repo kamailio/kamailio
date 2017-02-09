@@ -50,6 +50,8 @@
 #include "pv_core.h"
 #include "pv_svar.h"
 
+#include <string.h>
+#include <stdlib.h>
 
 static str str_udp    = { "UDP", 3 };
 static str str_5060   = { "5060", 4 };
@@ -3233,3 +3235,41 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_null(msg, param, res);
 	}
 }
+
+int pv_parse_env_name(pv_spec_p sp, str *in)
+{
+	char *csname;
+
+	if(in->s==NULL || in->len<=0)
+		return -1;
+
+	csname = pkg_malloc(in->len + 1);
+
+	if (csname == NULL) {
+		LM_ERR("no more pkg memory");
+		return -1;
+	}
+
+	memcpy(csname, in->s, in->len);
+	csname[in->len] = '\0';
+
+	sp->pvp.pvn.u.dname = (void*)csname;
+	sp->pvp.pvn.type = PV_NAME_OTHER;
+	return 0;
+}
+
+int pv_get_env(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	char *val;
+	char *csname = (char *) param->pvn.u.dname;
+
+	if (csname) {
+		val = getenv(csname);
+
+		if (val) {
+			return pv_get_strzval(msg, param, res, val);
+		}
+	}
+	return pv_get_null(msg, param, res);
+}
+
