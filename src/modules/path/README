@@ -21,7 +21,7 @@ Richard Fuchs
 
         1. Overview
 
-              1.1. Path insertion for registrations
+              1.1. Path Insertion For Registrations
               1.2. Outbound routing to NAT'ed UACs
 
         2. Dependencies
@@ -44,13 +44,14 @@ Richard Fuchs
 
    List of Examples
 
-   1.1. Set use_received parameter
-   1.2. add_path usage
-   1.3. add_path(user) usage
-   1.4. add_path(user, parameters) usage
-   1.5. add_path_received() usage
-   1.6. add_path_received(user) usage
-   1.7. add_path_received(user, parameters) usage
+   1.1. Add Supported header
+   1.2. Set use_received parameter
+   1.3. add_path usage
+   1.4. add_path(user) usage
+   1.5. add_path(user, parameters) usage
+   1.6. add_path_received() usage
+   1.7. add_path_received(user) usage
+   1.8. add_path_received(user, parameters) usage
 
 Chapter 1. Admin Guide
 
@@ -58,7 +59,7 @@ Chapter 1. Admin Guide
 
    1. Overview
 
-        1.1. Path insertion for registrations
+        1.1. Path Insertion For Registrations
         1.2. Outbound routing to NAT'ed UACs
 
    2. Dependencies
@@ -81,7 +82,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   1.1. Path insertion for registrations
+   1.1. Path Insertion For Registrations
    1.2. Outbound routing to NAT'ed UACs
 
    This module is designed to be used at intermediate sip proxies like
@@ -91,7 +92,7 @@ Chapter 1. Admin Guide
    mechanism for evaluating this parameter in subsequent requests and to
    set the destination URI according to it.
 
-1.1. Path insertion for registrations
+1.1. Path Insertion For Registrations
 
    For registrations in a scenario like “[UAC] -> [P1] -> [REG]”, the
    "path" module can be used at the intermediate proxy P1 to insert a Path
@@ -109,6 +110,15 @@ Chapter 1. Admin Guide
        to pass the NAT'ed address to the registrar.
        If the function is called with a username, it's included in the
        Path URI too.
+
+   Note that some SIP registrars may check if header Supported includes
+   'path'. It can be added in Kamailio.cfg using append_hf() from textops
+   module.
+
+   Example 1.1. Add Supported header
+...
+append_hf("Supported: path\r\n");
+...
 
 1.2. Outbound routing to NAT'ed UACs
 
@@ -152,7 +162,7 @@ Chapter 1. Admin Guide
 
    Default value is 0.
 
-   Example 1.1. Set use_received parameter
+   Example 1.2. Set use_received parameter
 ...
 modparam("path", "use_received", 1)
 ...
@@ -181,7 +191,7 @@ modparam("path", "use_received", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.2. add_path usage
+   Example 1.3. add_path usage
 ...
 if (!add_path()) {
         sl_send_reply("503", "Internal Path Error");
@@ -199,7 +209,7 @@ if (!add_path()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.3. add_path(user) usage
+   Example 1.4. add_path(user) usage
 ...
 if (!add_path("loadbalancer")) {
         sl_send_reply("503", "Internal Path Error");
@@ -221,7 +231,7 @@ if (!add_path("loadbalancer")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.4. add_path(user, parameters) usage
+   Example 1.5. add_path(user, parameters) usage
 ...
 if (!add_path("loadbalancer", "ob")) {
         sl_send_reply("503", "Internal Path Error");
@@ -238,7 +248,7 @@ if (!add_path("loadbalancer", "ob")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.5. add_path_received() usage
+   Example 1.6. add_path_received() usage
 ...
 if (!add_path_received()) {
         sl_send_reply("503", "Internal Path Error");
@@ -255,7 +265,7 @@ if (!add_path_received()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.6. add_path_received(user) usage
+   Example 1.7. add_path_received(user) usage
 ...
 if (!add_path_received("inbound")) {
         sl_send_reply("503", "Internal Path Error");
@@ -272,7 +282,7 @@ if (!add_path_received("inbound")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.7. add_path_received(user, parameters) usage
+   Example 1.8. add_path_received(user, parameters) usage
 ...
 if (!add_path_received("inbound", "ob")) {
         sl_send_reply("503", "Internal Path Error");
