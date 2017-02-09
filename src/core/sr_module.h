@@ -180,10 +180,14 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define PROC_SIPROUTER    2  /**< First (pure) SIP worker - can be used to check
 						if just a normal sip router or initialize custom worker
 						processes by starting from this value */
-#define PROC_SIPRPC       127  /**< Used to init RPC worker as SIP commands
+#define PROC_RANK127      127  /**< Used to init RPC worker as SIP commands
 							   handler. Don't do any special processing in the
 							   child init with this rank - just bare child
 							   initialization */
+
+#define PROC_SIPRPC PROC_RANK127
+
+#define PROC_XWORKER PROC_RANK127
 
 #define PROC_MIN PROC_NOCHLDINIT /**< Minimum process rank */
 
