@@ -10,8 +10,7 @@ before_install:
 script: docker run -v $TRAVIS_BUILD_DIR:/code:rw kamailio/pkg-kamailio-docker:dev-stretch /bin/bash -c "export CC=$CC; cd /code; ./test/travis/build_travis.sh"
 branches:
   only:
-    - 'master'
-    - '/^4\.[0-9]+$/'
+    - '/^5\.[0-9]+$/'
 notifications:
   irc:
     channels:
