@@ -314,7 +314,7 @@ static int mod_child_init(int rank)
 		if (tc == NULL) {
 			LM_ERR("topic and channel not set, using defaults\n");
 			for(i = 0; i < workers; i++) {
-				pid=fork_process(i+1, "NSQ Consumer Worker", 1);
+				pid=fork_process(PROC_XWORKER, "NSQ Consumer Worker", 1);
 				if (pid<0)
 					return -1; /* error */
 				if (pid==0){
@@ -325,7 +325,7 @@ static int mod_child_init(int rank)
 		} else {
 			while (tc) {
 				for(i = 0; i < workers; i++) {
-					pid=fork_process(i+1, "NSQ Consumer Worker", 1);
+					pid=fork_process(PROC_XWORKER, "NSQ Consumer Worker", 1);
 					if (pid<0)
 						return -1; /* error */
 					if (pid==0){
