@@ -28,6 +28,7 @@
 #include "../../core/dprint.h"
 #include "../../core/action.h"
 #include "../../core/config.h"
+#include "../../core/mod_fix.h"
 #include "../../core/parser/parse_uri.h"
 
 #include "python_exec.h"
@@ -183,7 +184,12 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
  */
 int python_exec1(sip_msg_t *_msg, char *method_name, char *foobar)
 {
-	return apy_exec(_msg, method_name, NULL, 1);
+	str method = STR_NULL;
+	if(fixup_get_svalue(_msg, (gparam_t*)method_name, &method)<0) {
+		LM_ERR("cannot get the python method to be executed\n");
+		return -1;
+	}
+	return apy_exec(_msg, method.s, NULL, 1);
 }
 
 /**
@@ -191,5 +197,15 @@ int python_exec1(sip_msg_t *_msg, char *method_name, char *foobar)
  */
 int python_exec2(sip_msg_t *_msg, char *method_name, char *mystr)
 {
-	return apy_exec(_msg, method_name, mystr, 1);
+	str method = STR_NULL;
+	str param = STR_NULL;
+	if(fixup_get_svalue(_msg, (gparam_t*)method_name, &method)<0) {
+		LM_ERR("cannot get the python method to be executed\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_msg, (gparam_t*)mystr, &param)<0) {
+		LM_ERR("cannot get the parameter of the python method\n");
+		return -1;
+	}
+	return apy_exec(_msg, method.s, param.s, 1);
 }

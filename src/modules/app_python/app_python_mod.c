@@ -24,6 +24,7 @@
 
 #include "../../core/str.h"
 #include "../../core/sr_module.h"
+#include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 
 #include "python_exec.h"
@@ -68,8 +69,10 @@ static param_export_t params[]={
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{ "python_exec", (cmd_function)python_exec1, 1,  NULL, 0,	ANY_ROUTE },
-	{ "python_exec", (cmd_function)python_exec2, 2,  NULL, 0,	ANY_ROUTE },
+	{ "python_exec", (cmd_function)python_exec1, 1,  fixup_spve_null,
+		0,	ANY_ROUTE },
+	{ "python_exec", (cmd_function)python_exec2, 2,  fixup_spve_spve,
+		0,	ANY_ROUTE },
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
