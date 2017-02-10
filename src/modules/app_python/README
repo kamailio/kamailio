@@ -133,8 +133,11 @@ modparam("app_python", "child_init_method", "my_child_init")
    'method'. Optionally can be provided a second string with parameters to
    be passed to the Python function.
 
+   Both parameters can contain pseudo-variables.
+
    Example 1.4. python_exec usage
 ...
 python_exec("my_python_function");
 python_exec("my_python_function", "my_params");
+python_exec("my_python_function", "$rU");
 ...
