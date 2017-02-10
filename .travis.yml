@@ -6,8 +6,8 @@ compiler:
 services:
   - docker
 before_install:
-  - docker pull kamailio/pkg-kamailio-docker:dev-stretch
-script: docker run -v $TRAVIS_BUILD_DIR:/code:rw kamailio/pkg-kamailio-docker:dev-stretch /bin/bash -c "export CC=$CC; cd /code; ./test/travis/build_travis.sh"
+  - docker pull kamailio/pkg-kamailio-docker:5.0-stretch
+script: docker run -v $TRAVIS_BUILD_DIR:/code:rw kamailio/pkg-kamailio-docker:5.0-stretch /bin/bash -c "export CC=$CC; cd /code; ./test/travis/build_travis.sh"
 branches:
   only:
     - '/^5\.[0-9]+$/'
