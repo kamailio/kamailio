@@ -32,12 +32,15 @@
 #include <stdlib.h> /* strtod */
 #include <stdarg.h>
 
+#define DEFAULT_RPC_PRINTF_BUF_SIZE	1024
+
 /* if set try to automatically convert values to the requested type in
    rpc->scan (default: not set) */
 int autoconvert=0;
 
 int binrpc_max_body_size = 32; /* multiplied by 1024 in mod init */
 int binrpc_struct_max_body_size = 8; /* multiplied by 1024 in mod init */
+int binrpc_buffer_size = DEFAULT_RPC_PRINTF_BUF_SIZE;
 
 #define BINRPC_MAX_BODY	binrpc_max_body_size  /* maximum body for send */
 #define STRUCT_MAX_BODY	binrpc_struct_max_body_size
@@ -1012,7 +1015,7 @@ error:
 
 
 
-#define RPC_PRINTF_BUF_SIZE	1024
+#define RPC_PRINTF_BUF_SIZE	binrpc_buffer_size
 /* returns  0 on success, -1 on error */
 static int rpc_rpl_printf(struct binrpc_ctx* ctx, char* fmt, ...)
 {
