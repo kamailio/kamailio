@@ -60,6 +60,7 @@ static int usock_gid=-1;
 extern int autoconvert;
 extern int binrpc_max_body_size;
 extern int binrpc_struct_max_body_size;
+extern int binrpc_buffer_size;
 
 static int add_binrpc_socket(modparam_t type, void * val);
 #ifdef USE_FIFO
@@ -96,7 +97,8 @@ static param_export_t params[]={
 	{"autoconversion",	PARAM_INT,					&autoconvert			 },
 	{"binrpc_max_body_size",        PARAM_INT, &binrpc_max_body_size         },
 	{"binrpc_struct_max_body_size", PARAM_INT, &binrpc_struct_max_body_size  },
-	{0,0,0}
+	{"binrpc_buffer_size", PARAM_INT, &binrpc_buffer_size  },
+	{0,0,0} 
 }; /* no params */
 
 struct module_exports exports= {

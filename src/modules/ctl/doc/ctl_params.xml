@@ -89,6 +89,25 @@ modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
 	</example>
 	</section>
 
+    <section id="binrpc_buffer_size">
+    <title><varname>binrpc_buffer_size</varname> (integer or string)</title>
+    <para>
+        the size of the internal buffer.
+    </para>
+    <para>
+        Default: 1024.
+    </para>
+    <example>
+        <title>Set <varname>binrpc_buffer_size</varname> parameter</title>
+        <programlisting>
+            ...
+            modparam("ctl", "binrpc_buffer_size", 4096)
+            ...
+        </programlisting>
+    </example>
+    </section>
+
+
 	<section id="mode">
 	<title><varname>mode</varname> (integer)</title>
 	<para>
