@@ -140,8 +140,11 @@ mod_list_sqlite=db_sqlite
 # - modules depending on oracle library
 mod_list_oracle=db_oracle
 
+# - modules depending on json library
+mod_list_json=json
+
 # - modules depending on json (+libevent) library
-mod_list_json=json jsonrpcc
+mod_list_json_event=jsonrpcc
 
 # - modules depending on jansson (+libevent) library
 mod_list_jansson=jansson janssonrpcc
@@ -209,7 +212,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_snmpstats) $(mod_list_presence) \
 			   $(mod_list_lua) $(mod_list_python) \
 			   $(mod_list_geoip) $(mod_list_sqlite) \
-			   $(mod_list_json) $(mod_list_redis) \
+			   $(mod_list_json) $(mod_list_json_event) \
+			   $(mod_list_redis) \
 			   $(mod_list_mono) $(mod_list_ims) \
 			   $(mod_list_cassandra) $(mod_list_oracle) \
 			   $(mod_list_outbound) $(mod_list_osp) \
@@ -364,7 +368,10 @@ module_group_kgeoip2=$(mod_list_geoip2)
 module_group_ksqlite=$(mod_list_sqlite)
 
 # K json modules
-module_group_kjson=$(mod_list_json)
+module_group_kjson_basic=$(mod_list_json)
+
+# K json modules with libevent
+module_group_kjson=$(mod_list_json) $(mod_list_json_event)
 
 # K jansson modules
 module_group_kjansson=$(mod_list_jansson)
