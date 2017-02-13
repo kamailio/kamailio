@@ -55,7 +55,7 @@
 #include "../../core/parser/parse_content.h"
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
-#include "mod.h"
+#include "ims_isc_mod.h"
 
 extern usrloc_api_t isc_ulb;/*!< Structure containing pointers to usrloc functions*/
 
