@@ -146,8 +146,11 @@ mod_list_json=json
 # - modules depending on json (+libevent) library
 mod_list_json_event=jsonrpcc
 
+# - modules depending on jansson library
+mod_list_jansson=jansson
+
 # - modules depending on jansson (+libevent) library
-mod_list_jansson=jansson janssonrpcc
+mod_list_jansson_event=janssonrpcc
 
 # - modules depending on redis library
 mod_list_redis=ndb_redis
@@ -222,7 +225,8 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_gzcompress) $(mod_list_uuid) \
 			   $(mod_list_ev) $(mod_list_kazoo) \
 			   $(mod_list_mongodb) $(mod_list_cnxcc) \
-			   $(mod_list_jansson) $(mod_list_geoip2) \
+			   $(mod_list_jansson) $(mod_list_jansson_event) \
+			   $(mod_list_geoip2) \
 			   $(mod_list_erlang) $(mod_list_systemd) \
 			   $(mod_list_http_async) $(mod_list_nsq) \
 			   $(mod_list_rabbitmq) $(mod_list_jsdt))
@@ -374,7 +378,10 @@ module_group_kjson_basic=$(mod_list_json)
 module_group_kjson=$(mod_list_json) $(mod_list_json_event)
 
 # K jansson modules
-module_group_kjansson=$(mod_list_jansson)
+module_group_kjansson_basic=$(mod_list_jansson)
+
+# K jansson modules with libevent
+module_group_kjansson=$(mod_list_jansson) $(mod_list_jansson_event)
 
 # pkg redis module
 module_group_kredis=$(mod_list_redis)
