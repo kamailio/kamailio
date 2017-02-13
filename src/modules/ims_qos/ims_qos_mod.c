@@ -67,7 +67,7 @@
 #include "rx_asr.h"
 #include "rx_str.h"
 #include "rx_aar.h"
-#include "mod.h"
+#include "ims_qos_mod.h"
 #include "../../core/parser/sdp/sdp.h"
 
 #include "../../lib/ims/useful_defs.h"
