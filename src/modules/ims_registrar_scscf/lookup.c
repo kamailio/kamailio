@@ -43,7 +43,7 @@
 #include "../../lib/ims/ims_getters.h"
 #include "common.h"
 #include "regtime.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "lookup.h"
 #include "config.h"
 #include "save.h"

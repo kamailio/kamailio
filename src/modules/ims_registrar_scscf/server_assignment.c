@@ -44,7 +44,7 @@
  */
 
 #include "server_assignment.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "../../lib/ims/ims_getters.h"
 #include "../cdp/diameter_ims_code_avp.h"
 #include "cxdx_sar.h"
