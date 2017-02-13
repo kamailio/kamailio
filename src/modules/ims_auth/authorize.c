@@ -66,7 +66,7 @@
 #include "../../lib/ims/ims_getters.h"
 #include "../tm/tm_load.h"
 #include "api.h"
-#include "authims_mod.h"
+#include "ims_auth_mod.h"
 #include "authorize.h"
 #include "utils.h"
 #include "../../core/action.h" /* run_actions */
