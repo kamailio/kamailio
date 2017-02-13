@@ -23,7 +23,7 @@
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/cdp_avp_mod.h"
 #include "ocs_avp_helper.h"
-#include "mod.h"
+#include "ims_ocs_mod.h"
 
 /**
  * Returns the value of a certain AVP from a Diameter message.
