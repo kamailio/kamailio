@@ -49,7 +49,7 @@
 
 #include "scscf_list.h"
 #include <stdio.h>
-#include "mod.h"
+#include "ims_icscf_mod.h"
 #include "sip_messages.h"
 #include "../../lib/ims/ims_getters.h"
 

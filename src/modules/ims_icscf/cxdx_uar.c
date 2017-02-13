@@ -50,7 +50,7 @@
 #include "cxdx_avp.h"
 #include "cxdx_uar.h"
 #include "registration.h"
-#include "mod.h"
+#include "ims_icscf_mod.h"
 
 
 //we use pseudo variables to communicate back to config file this takes the result and converys to a return code, publishes it a pseudo variable

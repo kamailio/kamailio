@@ -48,7 +48,7 @@
 
 #include "scscf_list.h"
 #include <stdio.h>
-#include "mod.h"
+#include "ims_icscf_mod.h"
 #include "../../lib/ims/ims_getters.h"
 
 extern struct cdp_binds cdpb;
