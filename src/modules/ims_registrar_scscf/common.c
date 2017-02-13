@@ -38,7 +38,7 @@
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_uri.h"
 #include "rerrno.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "common.h"
 #include "config.h"
 

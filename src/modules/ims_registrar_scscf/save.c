@@ -66,7 +66,7 @@
 #include "sip_msg.h"
 #include "rerrno.h"
 #include "reply.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "regtime.h"
 #include "path.h"
 #include "save.h"

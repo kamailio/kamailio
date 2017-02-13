@@ -42,7 +42,7 @@
 #include "../../core/data_lump_rpl.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 #include "rerrno.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "regtime.h"
 #include "reply.h"
 #include "config.h"

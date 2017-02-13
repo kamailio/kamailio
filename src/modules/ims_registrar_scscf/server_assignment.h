@@ -46,7 +46,7 @@
 #ifndef SERVER_ASSIGNMENT_H
 #define	SERVER_ASSIGNMENT_H
 
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "../cdp/diameter.h"
 #include "reply.h"
 #include "cxdx_sar.h"

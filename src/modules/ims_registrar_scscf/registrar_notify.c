@@ -45,7 +45,7 @@
 
 #include "registrar_notify.h"
 
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "../../lib/ims/ims_getters.h"
 #include "regtime.h"
 #include "usrloc_cb.h"
