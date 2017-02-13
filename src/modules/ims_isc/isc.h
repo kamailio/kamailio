@@ -49,7 +49,7 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../lib/ims/ims_getters.h"
 #include "../../core/dset.h"
-#include "mod.h"
+#include "ims_isc_mod.h"
 #include "checker.h"
 #include "mark.h"
 
