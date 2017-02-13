@@ -64,7 +64,7 @@
 
 #include "async_reginfo.h"
 
-#include "reg_mod.h"
+#include "ims_registrar_pcscf_mod.h"
 #include "save.h"
 #include "service_routes.h"
 MODULE_VERSION

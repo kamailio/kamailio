@@ -28,7 +28,7 @@
  */
 
 #include "notify.h"
-#include "reg_mod.h"
+#include "ims_registrar_pcscf_mod.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_uri.h"

@@ -45,7 +45,7 @@
 
 #include "../../core/parser/contact/contact.h"
 #include "save.h"
-#include "reg_mod.h"
+#include "ims_registrar_pcscf_mod.h"
 #include "ul_callback.h"
 #include "subscribe.h"
 
