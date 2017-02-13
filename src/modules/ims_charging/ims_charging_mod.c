@@ -5,7 +5,7 @@
  *      Author: jaybeepee
  */
 
-#include "mod.h"
+#include "ims_charging_mod.h"
 #include "../../core/sr_module.h"
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "../../modules/ims_dialog/dlg_hash.h"

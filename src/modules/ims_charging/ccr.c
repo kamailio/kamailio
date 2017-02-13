@@ -3,7 +3,7 @@
 #include "ccr.h"
 #include "Ro_data.h"
 #include "ro_avp.h"
-#include "mod.h"
+#include "ims_charging_mod.h"
 
 extern cdp_avp_bind_t *cdp_avp;
 extern struct cdp_binds cdpb;
