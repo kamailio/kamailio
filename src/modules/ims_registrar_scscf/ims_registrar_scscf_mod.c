@@ -63,7 +63,7 @@
 #include "lookup.h"
 #include "regpv.h"
 #include "reply.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "config.h"
 #include "server_assignment.h"
 #include "usrloc_cb.h"

@@ -28,7 +28,7 @@
 
 #include "../../core/dprint.h"
 
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "lookup.h"
 #include "save.h"
 #include "api.h"

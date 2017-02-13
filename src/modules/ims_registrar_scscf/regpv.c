@@ -34,7 +34,7 @@
 #include "../../core/mem/mem.h"
 #include "../../core/mod_fix.h"
 #include "../ims_usrloc_scscf/usrloc.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "common.h"
 #include "regpv.h"
 

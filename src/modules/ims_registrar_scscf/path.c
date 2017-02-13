@@ -33,7 +33,7 @@
 #include "../../core/parser/parse_rr.h"
 #include "../../core/parser/parse_uri.h"
 #include "path.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 
 /*! \brief
  * Combines all Path HF bodies into one string.

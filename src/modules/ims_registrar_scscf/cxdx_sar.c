@@ -51,7 +51,7 @@
 
 #include "reply.h"
 #include "rerrno.h"
-#include "reg_mod.h"
+#include "ims_registrar_scscf_mod.h"
 #include "cxdx_sar.h"
 #include "save.h"
 #include "userdata_parser.h"
