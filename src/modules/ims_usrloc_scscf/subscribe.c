@@ -44,7 +44,7 @@
  */
 
 #include "subscribe.h"
-#include "ul_mod.h"
+#include "ims_usrloc_scscf_mod.h"
 #include "utime.h"
 #include "udomain.h"
 
@@ -54,7 +54,7 @@
 
 #include "../../core/hashes.h"
 
-#include "ul_mod.h"
+#include "ims_usrloc_scscf_mod.h"
 #include "usrloc_db.h"
 
 
