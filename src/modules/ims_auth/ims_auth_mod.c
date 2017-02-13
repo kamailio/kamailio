@@ -55,7 +55,7 @@
 #include "../cdp/cdp_load.h"
 #include "../tm/tm_load.h"
 #include "authorize.h"
-#include "authims_mod.h"
+#include "ims_auth_mod.h"
 #include "cxdx_mar.h"
 #include "../../lib/ims/useful_defs.h"
 #include "pvt_message.h"
