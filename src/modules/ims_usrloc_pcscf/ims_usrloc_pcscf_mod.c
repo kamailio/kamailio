@@ -42,7 +42,7 @@
  */
 
 #include <stdio.h>
-#include "ul_mod.h"
+#include "ims_usrloc_pcscf_mod.h"
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/rpc_lookup.h"
