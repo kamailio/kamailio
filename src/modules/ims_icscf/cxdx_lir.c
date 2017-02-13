@@ -48,7 +48,7 @@
 #include "../../modules/ims_dialog/dlg_load.h"
 #include "cxdx_avp.h"
 #include "cxdx_lir.h"
-#include "mod.h"
+#include "ims_icscf_mod.h"
 #include "location.h"
 
 //we use pseudo variables to communicate back to config file this takes the result and converys to a return code, publishes it a pseudo variable

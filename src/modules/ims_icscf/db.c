@@ -58,7 +58,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../core/mem/shm_mem.h"
 
-#include "mod.h"
+#include "ims_icscf_mod.h"
 
 static db_func_t dbf;						/**< db function bindings*/
 extern char * ims_icscf_db_url;					/**< DB URL */

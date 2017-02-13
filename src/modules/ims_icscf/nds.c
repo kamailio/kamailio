@@ -59,7 +59,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../modules/sl/sl.h"
 
-#include "mod.h"
+#include "ims_icscf_mod.h"
 #include "db.h"
 
 extern sl_api_t slb;

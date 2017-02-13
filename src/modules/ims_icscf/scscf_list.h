@@ -48,7 +48,7 @@
 
 #include "../../core/sr_module.h"
 #include "../../modules/tm/tm_load.h"
-#include "mod.h"
+#include "ims_icscf_mod.h"
 #include <limits.h>
 #include "../../core/mem/shm_mem.h"
 

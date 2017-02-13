@@ -46,7 +46,7 @@
 #include "../../core/timer.h"
 #include "../../modules/sl/sl.h"
 
-#include "mod.h"
+#include "ims_icscf_mod.h"
 #include "scscf_list.h"
 #include "cxdx_uar.h"
 #include "cxdx_lir.h"
