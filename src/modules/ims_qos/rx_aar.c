@@ -62,7 +62,7 @@
 
 #include "../../lib/ims/ims_getters.h"
 
-#include "mod.h"
+#include "ims_qos_mod.h"
 
 #include "../../lib/ims/useful_defs.h"
 #include "ims_qos_stats.h"

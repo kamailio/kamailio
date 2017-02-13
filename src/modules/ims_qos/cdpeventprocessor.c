@@ -48,7 +48,7 @@
 #include "../ims_usrloc_pcscf/usrloc.h"
 #include "../ims_dialog/dlg_load.h"
 #include "../cdp/session.h"
-#include "mod.h"
+#include "ims_qos_mod.h"
 #include "cdpeventprocessor.h"
 #include "rx_str.h"
 #include "ims_qos_stats.h"

@@ -54,7 +54,7 @@
 #include "../ims_usrloc_pcscf/usrloc.h"
 #include "rx_authdata.h"
 #include "rx_avp.h"
-#include "mod.h"
+#include "ims_qos_mod.h"
 #include "../../core/parser/sdp/sdp_helpr_funcs.h"
 #include <regex.h>
 
