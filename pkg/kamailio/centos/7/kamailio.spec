@@ -593,6 +593,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 
 %if "%{?_unitdir}" == ""
 # On RedHat 6 like
+install -d %{buildroot}%{_rundir}/kamailio
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
         $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/kamailio
@@ -622,7 +623,12 @@ rm -rf "$RPM_BUILD_ROOT"
 
 
 %post
+%if "%{?_unitdir}" == ""
 /sbin/chkconfig --add kamailio
+%else
+%tmpfiles_create kamailio.conf
+/usr/bin/systemctl -q enable kamailio.service
+%endif
 
 
 
