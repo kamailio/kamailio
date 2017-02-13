@@ -29,6 +29,7 @@
 #include "../../lib/srdb1/db_ut.h"
 #include "km_val.h"
 #include "km_my_con.h"
+#include "db_mysql.h"
 
 
 /*!
@@ -45,6 +46,27 @@ int db_mysql_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _le
 {
 	int l, tmp;
 	char* old_s;
+
+	switch(VAL_TYPE(_v)) {
+	case DB1_DATETIME:
+		if (my_server_timezone) {
+			/* Let MySQL handle timestamp to internal time representation */
+			if (!_s || !_len || !*_len) {
+				LM_ERR("Invalid parameter value\n");
+				return -1;
+			}
+			l = snprintf(_s, *_len, "FROM_UNIXTIME(%d)", VAL_INT(_v));
+			if (l < 0 || l >= *_len) {
+				LM_ERR("Error in snprintf\n");
+				return -1;
+			}
+			*_len  = l;
+			return 0;
+		}
+		break;
+	default:
+		break;
+	};
 
 	tmp = db_val2str(_c, _v, _s, _len);
 	if (tmp < 1)

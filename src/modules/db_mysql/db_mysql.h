@@ -44,6 +44,7 @@ extern unsigned int my_send_to;
 extern unsigned int my_recv_to;
 extern unsigned long my_client_ver;
 extern unsigned int my_retries;
+extern unsigned int my_server_timezone;
 
 /** @} */
 
