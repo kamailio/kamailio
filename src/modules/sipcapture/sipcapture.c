@@ -282,7 +282,7 @@ static cmd_export_t cmds[] = {
 	{"sip_capture", (cmd_function)w_sip_capture, 2, sipcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 1, reportcapture_fixup, 0, ANY_ROUTE },
 	{"report_capture", (cmd_function)w_report_capture, 2, reportcapture_fixup, 0, ANY_ROUTE },
-	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },	
+	{"report_capture", (cmd_function)w_report_capture, 3, reportcapture_fixup, 0, ANY_ROUTE },
 	{"float2int", (cmd_function)w_float2int, 2, float2int_fixup, 0, ANY_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
@@ -837,14 +837,14 @@ static int mod_init(void)
 	*capture_on_flag = capture_on;
 
 	if(nonsip_hook)
-	{	        
+	{
         	route_no=route_get(&event_rt, "sipcapture:request");
 	        if (route_no==-1)
         	{
                 	LM_ERR("failed to find event_route[sipcapture:request]\n");
 	                return -1;
         	}
-        	
+
 	        if (event_rt.rlist[route_no]==0)
         	{
                 	LM_ERR("event_route[sipcapture:request] is empty\n");
@@ -852,14 +852,14 @@ static int mod_init(void)
         	}
 
 	        hep_route_no=route_no;
-	
-		if(sr_event_register_cb(SREV_RCV_NOSIP, nosip_hep_msg) < 0) 
+
+		if(sr_event_register_cb(SREV_RCV_NOSIP, nosip_hep_msg) < 0)
 		{
 			LM_ERR("failed to register SREV_RCV_NOSIP event\n");
-		  	return -1;		  	                         
+		  	return -1;
 		}
 	}
-	else 
+	else
 	{
 		/* register DGRAM event */
 		if(sr_event_register_cb(SREV_NET_DGRAM_IN, hep_msg_received) < 0) {
@@ -1503,17 +1503,17 @@ static int sip_capture_store(struct _sipcapture_object *sco, str *dtable, _captu
 	tmp.len = sco->msg.len;
 
 	db_vals[40].val.blob_val = tmp;
-	
+
 	db_keys[41] = &custom_field1_column;
 	db_vals[41].type = DB1_STR;
 	db_vals[41].nul = 0;
 	db_vals[41].val.str_val = sco->custom1;
-	
+
 	db_keys[42] = &custom_field2_column;
 	db_vals[42].type = DB1_STR;
 	db_vals[42].nul = 0;
 	db_vals[42].val.str_val = sco->custom2;
-	
+
 	db_keys[43] = &custom_field3_column;
 	db_vals[43].type = DB1_STR;
 	db_vals[43].nul = 0;
@@ -1879,19 +1879,19 @@ static int sip_capture(struct sip_msg *msg, str *_table, _capture_mode_data_t * 
 		sco.rtp_stat =  tmphdr[3]->body;
 	}
 	else { EMPTY_STR(sco.rtp_stat); }
-	
+
 	/* Custom - field1 */
 	if(custom_field1_header.len > 0 && (tmphdr[4] = get_hdr_by_name(msg,custom_field1_header.s, custom_field1_header.len)) != NULL) {
 		sco.custom1 =  tmphdr[4]->body;
 	}
 	else { EMPTY_STR(sco.custom1); }
-	
+
 	/* Custom - field2 */
 	if(custom_field3_header.len > 0 && (tmphdr[5] = get_hdr_by_name(msg,custom_field2_header.s, custom_field2_header.len)) != NULL) {
 		sco.custom2 =  tmphdr[5]->body;
 	}
 	else { EMPTY_STR(sco.custom2); }
-	
+
 	/* Custom - field3 */
 	if(custom_field3_header.len > 0 && (tmphdr[6] = get_hdr_by_name(msg,custom_field3_header.s, custom_field3_header.len)) != NULL) {
 		sco.custom3 =  tmphdr[6]->body;
@@ -2652,12 +2652,12 @@ static int nosip_hep_msg(void *data)
         int ret = 0;
 
         msg = (sip_msg_t*)data;
-        
+
         struct hep_hdr *heph;
-        
+
         buf = msg->buf;
         len = msg->len;
-        
+
         /* first send to route */
         init_run_actions_ctx(&ra_ctx);
         ret = run_actions(&ra_ctx, event_rt.rlist[hep_route_no], msg);
@@ -2666,33 +2666,33 @@ static int nosip_hep_msg(void *data)
 
         /* hep_hdr */
         heph = (struct hep_hdr*) msg->buf;
-        
+
 	if(heph->hp_v == 1 || heph->hp_v == 2)  {
 
 		LOG(L_ERR, "ERROR: HEP v 1/2: v:[%d] l:[%d]\n",heph->hp_v, heph->hp_l);
-		if((len = hepv2_message_parse(buf, len, msg)) < 0) 
-		{		
+		if((len = hepv2_message_parse(buf, len, msg)) < 0)
+		{
    		     LOG(L_ERR, "ERROR: during hepv2 parsing :[%d]\n", len);
    		     return 0;
                 }
-                
+
                 buf = msg->buf+len;
 		len = msg->len - len;
-				
+
 		msg->buf = buf;
                 msg->len = len;
         }
         else if(!memcmp(msg->buf, "\x48\x45\x50\x33",4) || !memcmp(msg->buf, "\x45\x45\x50\x31",4)) {
 
-                if((len = hepv3_message_parse(buf, len, msg)) < 0) 
-		{		
+                if((len = hepv3_message_parse(buf, len, msg)) < 0)
+		{
    		     LOG(L_ERR, "ERROR: during hepv3 parsing :[%d]\n", len);
    		     return 0;
                 }
-                
+
                 buf = msg->buf+len;
                 len = msg->len - len;
-                
+
                 msg->buf = buf;
                 msg->len = len;
         }
@@ -2704,10 +2704,10 @@ static int nosip_hep_msg(void *data)
         }
 
         if (parse_msg(buf, len, msg)!=0) {
-             LOG(L_ERR, "couldn't parse sip message\n");               
+             LOG(L_ERR, "couldn't parse sip message\n");
              return -1;
         }
-        
+
         return ret;
 }
 
@@ -2717,10 +2717,10 @@ static int hep_version(struct sip_msg *msg)
         struct hep_hdr *heph;
         /* hep_hdr */
         heph = (struct hep_hdr*) msg->buf;
-        
+
 	if(heph->hp_v == 1 || heph->hp_v == 2) return heph->hp_v;
         else if(!memcmp(msg->buf, "\x48\x45\x50\x33",4) || !memcmp(msg->buf, "\x45\x45\x50\x31",4)) return 3;
-                
+
         return -1;
 }
 
@@ -2775,6 +2775,7 @@ static int pv_parse_hep_name (pv_spec_p sp, str *in)
 			if(!strncmp(in->s, "src_ip", 6)) sp->pvp.pvn.u.isname.name.n = 2;
 			else goto error;
 		}
+        break;
 		case 7:
 		{
 		        if(!strncmp(in->s, "version", 7)) sp->pvp.pvn.u.isname.name.n = 0;
