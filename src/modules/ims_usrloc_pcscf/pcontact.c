@@ -49,7 +49,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
-#include "ul_mod.h"
+#include "ims_usrloc_pcscf_mod.h"
 #include "usrloc.h"
 #include "utime.h"
 #include "ul_callback.h"

@@ -52,7 +52,7 @@
 #include "../../lib/srdb1/db.h"
 #include "../../core/socket_info.h"
 #include "../../core/ut.h"
-#include "ul_mod.h"            /* usrloc module parameters */
+#include "ims_usrloc_pcscf_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
 #include "usrloc.h"
