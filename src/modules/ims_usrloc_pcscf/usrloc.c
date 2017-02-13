@@ -48,7 +48,7 @@
 #include "pcontact.h"
 #include "udomain.h"
 #include "../../core/sr_module.h"
-#include "ul_mod.h"
+#include "ims_usrloc_pcscf_mod.h"
 #include "../../core/parser/parse_uri.h"
 
 extern unsigned int init_flag;
