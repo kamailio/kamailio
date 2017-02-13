@@ -21,7 +21,7 @@
  */
 
 #include "service_routes.h"
-#include "reg_mod.h"
+#include "ims_registrar_pcscf_mod.h"
 #include "save.h"
 #include "../../core/parser/parse_via.h"
 #include "../../core/parser/msg_parser.h"
