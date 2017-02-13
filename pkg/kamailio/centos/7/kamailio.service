@@ -4,14 +4,22 @@ After=network.target
 
 [Service]
 Type=forking
+WorkingDirectory=/run/kamailio
 Environment='CFGFILE=/etc/kamailio/kamailio.cfg'
+Environment='SHM_MEMORY=64'
+Environment='PKG_MEMORY=8'
 EnvironmentFile=/etc/sysconfig/kamailio
 # PIDFile requires a full absolute path
-PIDFile=/var/run/kamailio.pid
+PIDFile=/run/kamailio/kamailio.pid
 # ExecStart requires a full absolute path
-ExecStart=/usr/sbin/kamailio -P /var/run/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP
-ExecStopPost=/usr/bin/rm -f /var/run/kamailio.pid
+ExecStart=/usr/sbin/kamailio -P /run/kamailio/kamailio.pid -f $CFGFILE -m $SHM_MEMORY -M $PKG_MEMORY
+ExecStopPost=/usr/bin/rm -f /run/kamailio/kamailio.pid
 Restart=on-abort
+User=kamailio
+Group=daemon
+; For each TCP or TLS endpoint connection is requred file descriptor
+LimitNOFILE=99999
+
 
 [Install]
 WantedBy=multi-user.target
