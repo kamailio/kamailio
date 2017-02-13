@@ -1003,6 +1003,11 @@ fi
 %{_libdir}/kamailio/modules/gzcompress.so
 
 
+%files      http_client
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.http_client
+%{_libdir}/kamailio/modules/http_client.so
+
 %files      ims
 %defattr(-,root,root)
 %{_libdir}/kamailio/libkamailio_ims.so
@@ -1013,7 +1018,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.cdp_avp
 %doc %{_docdir}/kamailio/modules/README.cfgt
 %doc %{_docdir}/kamailio/modules/README.crypto
-%doc %{_docdir}/kamailio/modules/README.http_client
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %doc %{_docdir}/kamailio/modules/README.ims_charging
 %doc %{_docdir}/kamailio/modules/README.ims_dialog
@@ -1032,7 +1036,6 @@ fi
 %{_libdir}/kamailio/modules/cdp_avp.so
 %{_libdir}/kamailio/modules/cfgt.so
 %{_libdir}/kamailio/modules/crypto.so
-%{_libdir}/kamailio/modules/http_client.so
 %{_libdir}/kamailio/modules/ims_auth.so
 %{_libdir}/kamailio/modules/ims_charging.so
 %{_libdir}/kamailio/modules/ims_dialog.so
