@@ -24,7 +24,7 @@
 #include "../cdp/cdp_load.h"
 #include "../cdp_avp/cdp_avp_mod.h"
 #include "../../core/parser/msg_parser.h"
-#include "mod.h"
+#include "ims_ocs_mod.h"
 #include "msg_faker.h"
 #include "ocs_avp_helper.h"
 
