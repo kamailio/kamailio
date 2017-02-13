@@ -45,7 +45,7 @@
 #define STATISTICS_H_
 
 #include "../../core/counters.h"
-#include "authims_mod.h"
+#include "ims_auth_mod.h"
 
 stat_var* stat_mar_timeouts;
 stat_var* mar_replies_received;
