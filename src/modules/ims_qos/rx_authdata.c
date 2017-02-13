@@ -66,7 +66,7 @@
 #include "rx_authdata.h"
 #include "rx_avp.h"
 #include "../../lib/ims/ims_getters.h"
-#include "mod.h"
+#include "ims_qos_mod.h"
 
 int create_new_regsessiondata(str* domain, str* aor,  str *ip, int ip_version, int recv_port, unsigned short recv_proto, str *via_host, unsigned short via_port, unsigned short via_proto, rx_authsessiondata_t** session_data) {
 
