@@ -46,7 +46,7 @@
 #ifndef _ISC_MARK_H
 #define _ISC_MARK_H
 
-#include "mod.h"
+#include "ims_isc_mod.h"
 
 #include "checker.h"
 //#include "third_party_reg.h"
