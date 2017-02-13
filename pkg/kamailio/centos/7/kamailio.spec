@@ -222,8 +222,8 @@ json string handling and RPC modules for Kamailio.
 %package    kazoo
 Summary:    Kazoo middle layer connector support for Kamailio
 Group:      System Environment/Daemons
-Requires:   libuuid, kamailio = %ver
-BuildRequires:	rabbitmq-c-devel, json-c-devel, libuuid-devel
+Requires:   libuuid, rabbitmq-c, json-c, libevent, kamailio = %ver
+BuildRequires:  libuuid-devel, rabbitmq-c-devel, json-c-devel, libevent-devel
 
 %description    kazoo
 Kazoo module for Kamailio.
