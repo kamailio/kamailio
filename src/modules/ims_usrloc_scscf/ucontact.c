@@ -58,7 +58,7 @@
 #include "../../core/socket_info.h"
 #include "../../core/dprint.h"
 #include "../../lib/srdb1/db.h"
-#include "ul_mod.h"
+#include "ims_usrloc_scscf_mod.h"
 #include "ul_callback.h"
 #include "usrloc.h"
 #include "impurecord.h"

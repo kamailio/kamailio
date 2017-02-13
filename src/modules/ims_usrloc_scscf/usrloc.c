@@ -50,7 +50,7 @@
 #include "udomain.h"
 #include "subscribe.h"
 #include "../../core/sr_module.h"
-#include "ul_mod.h"
+#include "ims_usrloc_scscf_mod.h"
 
 /*! nat branch flag */
 extern unsigned int nat_bflag;

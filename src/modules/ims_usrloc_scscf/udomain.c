@@ -60,7 +60,7 @@
 #include "../../core/socket_info.h"
 #include "../../core/ut.h"
 #include "../../core/counters.h"
-#include "ul_mod.h"            /* usrloc module parameters */
+#include "ims_usrloc_scscf_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
 #include "usrloc.h"

@@ -56,7 +56,7 @@
 #include "udomain.h"           /* new_udomain, free_udomain */
 #include "usrloc.h"
 #include "utime.h"
-#include "ul_mod.h"
+#include "ims_usrloc_scscf_mod.h"
 
 
 /*! \brief Global list of all registered domains */
