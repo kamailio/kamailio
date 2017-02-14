@@ -380,7 +380,9 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
             Example:
             </para>
             <programlisting  format="linespecific">
-                &sercmd; app_lua.lists
+...
+    &kamcmd; app_lua.list
+...
             </programlisting>
         </section>
         <section id="app_lua.r.reload">
@@ -400,8 +402,10 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
             <para>
             Example:
             </para>
-            <programlisting  format="linespecific">
-                &sercmd; app_lua.reload 0
+			<programlisting  format="linespecific">
+...
+    &kamcmd; app_lua.reload 0
+...
             </programlisting>
         </section>
     </section>
