@@ -40,6 +40,7 @@ Daniel-Constantin Mierla
 
               5.1. app_lua.list
               5.2. app_lua.reload
+              5.3. app_lua.api_list
 
         6. Example of usage
 
@@ -80,6 +81,7 @@ Chapter 1. Admin Guide
 
         5.1. app_lua.list
         5.2. app_lua.reload
+        5.3. app_lua.api_list
 
    6. Example of usage
 
@@ -258,6 +260,7 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
 
    5.1. app_lua.list
    5.2. app_lua.reload
+   5.3. app_lua.api_list
 
 5.1.  app_lua.list
 
@@ -268,7 +271,9 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
    Parameters: none
 
    Example:
-                kamcmd app_lua.lists
+...
+    kamcmd app_lua.list
+...
 
 5.2.  app_lua.reload
 
@@ -282,7 +287,22 @@ if(!lua_runstring("sr.log([[err]], [[----------- Hello World from $fU\n]])"))
    Parameters: id
 
    Example:
-                kamcmd app_lua.reload 0
+...
+    kamcmd app_lua.reload 0
+...
+
+5.3.  app_lua.api_list
+
+   Lists the exported KEMI functions that can be used inside Lua scripts.
+
+   Name: app_lua.api_list
+
+   Parameters: none
+
+   Example:
+...
+    kamcmd app_lua.api_list
+...
 
 6. Example of usage
 
