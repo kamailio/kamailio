@@ -48,12 +48,14 @@ Phil Lavin
               5.4. override_lifetime (int)
               5.5. caller_confirmed (int)
               5.6. send_publish_flag (int)
-              5.7. use_pubruri_avps (int)
-              5.8. pubruri_caller_avp (int)
-              5.9. pubruri_callee_avp (int)
-              5.10. pubruri_caller_dlg_var (str)
-              5.11. pubruri_callee_dlg_var (int)
-              5.12. callee_trying (int)
+              5.7. disable_caller_publish_flag (int)
+              5.8. disable_callee_publish_flag (int)
+              5.9. use_pubruri_avps (int)
+              5.10. pubruri_caller_avp (int)
+              5.11. pubruri_callee_avp (int)
+              5.12. pubruri_caller_dlg_var (str)
+              5.13. pubruri_callee_dlg_var (int)
+              5.14. callee_trying (int)
 
         6. Functions
 
@@ -65,12 +67,14 @@ Phil Lavin
    1.4. Set override_lifetime parameter
    1.5. Set caller_confirmed parameter
    1.6. Set send_publish_flag parameter
-   1.7. Set use_pubruri_avps parameter
-   1.8. Set pubruri_caller_avp parameter
-   1.9. Set pubruri_callee_avp parameter
+   1.7. Set disable_caller_publish_flag parameter
+   1.8. Set disable_callee_publish_flag parameter
+   1.9. Set use_pubruri_avps parameter
    1.10. Set pubruri_caller_avp parameter
-   1.11. Set pubruri_callee_dlg_var parameter
-   1.12. Set callee_trying parameter
+   1.11. Set pubruri_callee_avp parameter
+   1.12. Set pubruri_caller_avp parameter
+   1.13. Set pubruri_callee_dlg_var parameter
+   1.14. Set callee_trying parameter
 
 Chapter 1. Admin Guide
 
@@ -92,12 +96,14 @@ Chapter 1. Admin Guide
         5.4. override_lifetime (int)
         5.5. caller_confirmed (int)
         5.6. send_publish_flag (int)
-        5.7. use_pubruri_avps (int)
-        5.8. pubruri_caller_avp (int)
-        5.9. pubruri_callee_avp (int)
-        5.10. pubruri_caller_dlg_var (str)
-        5.11. pubruri_callee_dlg_var (int)
-        5.12. callee_trying (int)
+        5.7. disable_caller_publish_flag (int)
+        5.8. disable_callee_publish_flag (int)
+        5.9. use_pubruri_avps (int)
+        5.10. pubruri_caller_avp (int)
+        5.11. pubruri_callee_avp (int)
+        5.12. pubruri_caller_dlg_var (str)
+        5.13. pubruri_callee_dlg_var (int)
+        5.14. callee_trying (int)
 
    6. Functions
 
@@ -272,12 +278,14 @@ Chapter 1. Admin Guide
    5.4. override_lifetime (int)
    5.5. caller_confirmed (int)
    5.6. send_publish_flag (int)
-   5.7. use_pubruri_avps (int)
-   5.8. pubruri_caller_avp (int)
-   5.9. pubruri_callee_avp (int)
-   5.10. pubruri_caller_dlg_var (str)
-   5.11. pubruri_callee_dlg_var (int)
-   5.12. callee_trying (int)
+   5.7. disable_caller_publish_flag (int)
+   5.8. disable_callee_publish_flag (int)
+   5.9. use_pubruri_avps (int)
+   5.10. pubruri_caller_avp (int)
+   5.11. pubruri_callee_avp (int)
+   5.12. pubruri_caller_dlg_var (str)
+   5.13. pubruri_callee_dlg_var (int)
+   5.14. callee_trying (int)
 
 5.1. include_callid (int)
 
@@ -364,19 +372,45 @@ modparam("pua_dialoginfo", "caller_confirmed", 1)
 modparam("pua_dialoginfo", "send_publish_flag", 8)
 ...
 
-5.7. use_pubruri_avps (int)
+5.7. disable_caller_publish_flag (int)
+
+   This message flag indicates whether to send caller (initiator) PUBLISH
+   requests or not. If set, PUBLISH requests are not sent for the caller
+   (initiator).
+
+   Default value is “-1”.
+
+   Example 1.7. Set disable_caller_publish_flag parameter
+...
+modparam("pua_dialoginfo", "disable_caller_publish_flag", 9)
+...
+
+5.8. disable_callee_publish_flag (int)
+
+   This message flag indicates whether to send callee (recipient) PUBLISH
+   requests or not. If set, PUBLISH requests are not sent for the callee
+   (recipient).
+
+   Default value is “-1”.
+
+   Example 1.8. Set disable_callee_publish_flag parameter
+...
+modparam("pua_dialoginfo", "disable_callee_publish_flag", 10)
+...
+
+5.9. use_pubruri_avps (int)
 
    Get Publish R-Uri from avps (see corresponding avp params), not from
    reqeust to/from uri.
 
    Default value is “0”.
 
-   Example 1.7. Set use_pubruri_avps parameter
+   Example 1.9. Set use_pubruri_avps parameter
 ...
 modparam("pua_dialoginfo", "use_pubruri_avps", 1)
 ...
 
-5.8. pubruri_caller_avp (int)
+5.10. pubruri_caller_avp (int)
 
    If use_pubruri_avps is enabled, PUBLISH-requests reporting
    dialog-information about the caller (entity=caller) are sent using the
@@ -387,12 +421,12 @@ modparam("pua_dialoginfo", "use_pubruri_avps", 1)
 
    Default value is “NULL”.
 
-   Example 1.8. Set pubruri_caller_avp parameter
+   Example 1.10. Set pubruri_caller_avp parameter
 ...
 modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 ...
 
-5.9. pubruri_callee_avp (int)
+5.11. pubruri_callee_avp (int)
 
    If use_pubruri_avps is enabled, PUBLISH-requests reporting
    dialog-information about the callee (entity=callee) are sent using the
@@ -403,12 +437,12 @@ modparam("pua_dialoginfo", "pubruri_caller_avp", "$avp(s:puburis_caller)")
 
    Default value is “NULL”.
 
-   Example 1.9. Set pubruri_callee_avp parameter
+   Example 1.11. Set pubruri_callee_avp parameter
 ...
 modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
 ...
 
-5.10. pubruri_caller_dlg_var (str)
+5.12. pubruri_caller_dlg_var (str)
 
    Must be set to the name of dialog variable where to store the URI for
    caller, used to send the notifications. This is needed to restored the
@@ -417,12 +451,12 @@ modparam("pua_dialoginfo", "pubruri_callee_avp", "$avp(s:puburis_callee)")
 
    Default value is “NULL”.
 
-   Example 1.10. Set pubruri_caller_avp parameter
+   Example 1.12. Set pubruri_caller_avp parameter
 ...
 modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 ...
 
-5.11. pubruri_callee_dlg_var (int)
+5.13. pubruri_callee_dlg_var (int)
 
    Must be set to the name of dialog variable where to store the URI for
    callee, used to send the notifications. This is needed to restored the
@@ -431,19 +465,19 @@ modparam("pua_dialoginfo", "pubruri_caller_dlg_var", "pubruri_caller")
 
    Default value is “NULL”.
 
-   Example 1.11. Set pubruri_callee_dlg_var parameter
+   Example 1.13. Set pubruri_callee_dlg_var parameter
 ...
 modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
 ...
 
-5.12. callee_trying (int)
+5.14. callee_trying (int)
 
    If this parameter is set, a "Trying" state will be sent for both the
    caller and callee, rather than just the caller.
 
    Default value is “0”.
 
-   Example 1.12. Set callee_trying parameter
+   Example 1.14. Set callee_trying parameter
 ...
 modparam("pua_dialoginfo", "callee_trying", 1)
 ...
