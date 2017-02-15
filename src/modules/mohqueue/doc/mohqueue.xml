@@ -11,7 +11,6 @@
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <bookinfo>
     <title>mohqueue Module</title>
-    <productname class="trade">&kamailioname;</productname>
     <authorgroup>
       <author>
         <firstname>Robert</firstname>
@@ -22,7 +21,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2013</year>
+      <year>2013-2017</year>
       <holder>Robert Boisvert, rdbprog@gmail.com</holder>
     </copyright>
   </bookinfo>
