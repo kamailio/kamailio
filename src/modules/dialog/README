@@ -1451,11 +1451,11 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 ...
 modparam("dialog", "default_timeout", 100)
 ...
-route {
+request_route {
 ...
     if(is_method("INVITE") && !has_totag())
     {
-        $dlg_ctx(timeout_route) = 12;
+        $dlg_ctx(timeout_route) = "DLGTIMEOUT";
         $dlg_ctx(timeout_bye) = 1;
     }
     dlg_manage();
