@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006 Andreas Granig <agranig@linguin.org>
- * 
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -65,7 +65,7 @@ int parse_require( struct sip_msg *msg)
 		require |= rb->option_tags;
 	}
 
-	((struct option_tag_body*)msg->require->parsed)->option_tags_all = 
+	((struct option_tag_body*)msg->require->parsed)->option_tags_all =
 		require;
 	return 0;
 }

@@ -154,6 +154,7 @@ void clean_hdr_field(struct hdr_field* const hf)
 			free_subscription_state((subscription_state_t**)h_parsed);
 			break;
 
+		case HDR_REQUIRE_T:
 		case HDR_SUPPORTED_T:
 			hdr_free_parsed(h_parsed);
 			break;
@@ -172,7 +173,6 @@ void clean_hdr_field(struct hdr_field* const hf)
 		case HDR_CONTENTTYPE_T:
 		case HDR_CONTENTLENGTH_T:
 		case HDR_RETRY_AFTER_T:
-		case HDR_REQUIRE_T:
 		case HDR_PROXYREQUIRE_T:
 		case HDR_UNSUPPORTED_T:
 		case HDR_ACCEPTLANGUAGE_T:
