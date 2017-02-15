@@ -455,8 +455,11 @@ int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.to_bye);
 		case 4:
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)_dlg_ctx.to_route);
+			if(_dlg_ctx.to_route>0) {
+				return pv_get_strzval(msg, param, res,
+						_dlg_ctx.to_route_name);
+			}
+			return pv_get_null(msg, param, res);
 		case 5:
 			_dlg_ctx.set = (_dlg_ctx.iuid.h_id==0)?0:1;
 			return pv_get_uintval(msg, param, res,
@@ -464,6 +467,9 @@ int pv_get_dlg_ctx(struct sip_msg *msg,  pv_param_t *param,
 		case 6:
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.dir);
+		case 7:
+			return pv_get_uintval(msg, param, res,
+					(unsigned int)_dlg_ctx.to_route);
 		default:
 			return pv_get_uintval(msg, param, res,
 					(unsigned int)_dlg_ctx.on);
@@ -525,29 +531,29 @@ int pv_parse_dlg_ctx_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
-		case 2: 
+		case 2:
 			if(strncmp(in->s, "on", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else goto error;
 		break;
-		case 3: 
+		case 3:
 			if(strncmp(in->s, "set", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else if(strncmp(in->s, "dir", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 		break;
-		case 5: 
+		case 5:
 			if(strncmp(in->s, "flags", 6)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
-		case 7: 
+		case 7:
 			if(strncmp(in->s, "timeout", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
 			else goto error;
 		break;
-		case 11: 
+		case 11:
 			if(strncmp(in->s, "timeout_bye", 11)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
@@ -555,6 +561,11 @@ int pv_parse_dlg_ctx_name(pv_spec_p sp, str *in)
 		case 13:
 			if(strncmp(in->s, "timeout_route", 13)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		break;
+		case 16:
+			if(strncmp(in->s, "timeout_route_id", 16)==0)
+				sp->pvp.pvn.u.isname.name.n = 7;
 			else goto error;
 		break;
 		default:
