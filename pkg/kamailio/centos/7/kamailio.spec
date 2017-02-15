@@ -585,6 +585,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 
 %if "%{?_unitdir}" == ""
 # On RedHat 6 like
+install -d %{buildroot}%{_rundir}/kamailio
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 pkg/kamailio/centos/%{?centos}/kamailio.init \
         $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/kamailio
@@ -614,7 +615,12 @@ rm -rf "$RPM_BUILD_ROOT"
 
 
 %post
+%if "%{?_unitdir}" == ""
 /sbin/chkconfig --add kamailio
+%else
+%tmpfiles_create kamailio.conf
+/usr/bin/systemctl -q enable kamailio.service
+%endif
 
 
 
@@ -629,13 +635,15 @@ fi
 %files
 %defattr(-,root,root)
 %dir %{_docdir}/kamailio
+%doc %{_docdir}/kamailio/AUTHORS
+%doc %{_docdir}/kamailio/NEWS
 %doc %{_docdir}/kamailio/INSTALL
 %doc %{_docdir}/kamailio/README
+%doc %{_docdir}/kamailio/README-MODULES
 
 %dir %{_docdir}/kamailio/modules
 %doc %{_docdir}/kamailio/modules/README.acc
 %doc %{_docdir}/kamailio/modules/README.alias_db
-%doc %{_docdir}/kamailio/modules/README.app_jsdt
 %doc %{_docdir}/kamailio/modules/README.async
 %doc %{_docdir}/kamailio/modules/README.auth
 %doc %{_docdir}/kamailio/modules/README.auth_db
@@ -668,7 +676,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.group
 %doc %{_docdir}/kamailio/modules/README.htable
 %doc %{_docdir}/kamailio/modules/README.imc
-%doc %{_docdir}/kamailio/modules/README.ims_ocs
 %doc %{_docdir}/kamailio/modules/README.ipops
 %doc %{_docdir}/kamailio/modules/README.kex
 %doc %{_docdir}/kamailio/modules/README.malloc_test
@@ -676,6 +683,9 @@ fi
 %doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.maxfwd
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
+%doc %{_docdir}/kamailio/modules/README.mi_datagram
+%doc %{_docdir}/kamailio/modules/README.mi_fifo
+%doc %{_docdir}/kamailio/modules/README.mi_rpc
 %doc %{_docdir}/kamailio/modules/README.mohqueue
 %doc %{_docdir}/kamailio/modules/README.mqueue
 %doc %{_docdir}/kamailio/modules/README.msilo
@@ -694,7 +704,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.print
 %doc %{_docdir}/kamailio/modules/README.print_lib
 %doc %{_docdir}/kamailio/modules/README.pv
-%doc %{_docdir}/kamailio/modules/README.pua_rpc
 %doc %{_docdir}/kamailio/modules/README.qos
 %doc %{_docdir}/kamailio/modules/README.ratelimit
 %doc %{_docdir}/kamailio/modules/README.registrar
@@ -714,7 +723,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sms
 %doc %{_docdir}/kamailio/modules/README.speeddial
 %doc %{_docdir}/kamailio/modules/README.sqlops
-%doc %{_docdir}/kamailio/modules/README.ss7ops
 %doc %{_docdir}/kamailio/modules/README.sst
 %doc %{_docdir}/kamailio/modules/README.statistics
 %doc %{_docdir}/kamailio/modules/README.stun
@@ -739,7 +747,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.xhttp_rpc
 %doc %{_docdir}/kamailio/modules/README.xlog
 %doc %{_docdir}/kamailio/modules/README.xprint
-%doc %{_docdir}/kamailio/modules/README.jsonrpcs
+%doc %{_docdir}/kamailio/modules/README.jsonrpc-s
 %doc %{_docdir}/kamailio/modules/README.nosip
 %doc %{_docdir}/kamailio/modules/README.tsilo
 
@@ -749,12 +757,22 @@ fi
 %config %{_sysconfdir}/sysconfig/*
 %if "%{?_unitdir}" == ""
 %config %{_sysconfdir}/rc.d/init.d/*
+%dir %{_rundir}/kamailio
 %else
 %{_unitdir}/kamailio.service
 %{_tmpfilesdir}/kamailio.conf
 %endif
 
 %dir %{_libdir}/kamailio
+%{_libdir}/kamailio/libbinrpc.so
+%{_libdir}/kamailio/libbinrpc.so.0
+%{_libdir}/kamailio/libbinrpc.so.0.1
+%{_libdir}/kamailio/libkcore.so
+%{_libdir}/kamailio/libkcore.so.1
+%{_libdir}/kamailio/libkcore.so.1.0
+%{_libdir}/kamailio/libkmi.so
+%{_libdir}/kamailio/libkmi.so.1
+%{_libdir}/kamailio/libkmi.so.1.0
 %{_libdir}/kamailio/libprint.so
 %{_libdir}/kamailio/libprint.so.1
 %{_libdir}/kamailio/libprint.so.1.2
@@ -774,7 +792,6 @@ fi
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
 %{_libdir}/kamailio/modules/alias_db.so
-%{_libdir}/kamailio/modules/app_jsdt.so
 %{_libdir}/kamailio/modules/async.so
 %{_libdir}/kamailio/modules/auth.so
 %{_libdir}/kamailio/modules/auth_db.so
@@ -807,7 +824,6 @@ fi
 %{_libdir}/kamailio/modules/group.so
 %{_libdir}/kamailio/modules/htable.so
 %{_libdir}/kamailio/modules/imc.so
-%{_libdir}/kamailio/modules/ims_ocs.so
 %{_libdir}/kamailio/modules/ipops.so
 %{_libdir}/kamailio/modules/kex.so
 %{_libdir}/kamailio/modules/malloc_test.so
@@ -815,6 +831,9 @@ fi
 %{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/maxfwd.so
 %{_libdir}/kamailio/modules/mediaproxy.so
+%{_libdir}/kamailio/modules/mi_datagram.so
+%{_libdir}/kamailio/modules/mi_fifo.so
+%{_libdir}/kamailio/modules/mi_rpc.so
 %{_libdir}/kamailio/modules/mohqueue.so
 %{_libdir}/kamailio/modules/mqueue.so
 %{_libdir}/kamailio/modules/msilo.so
@@ -832,7 +851,6 @@ fi
 %{_libdir}/kamailio/modules/prefix_route.so
 %{_libdir}/kamailio/modules/print.so
 %{_libdir}/kamailio/modules/print_lib.so
-%{_libdir}/kamailio/modules/pua_rpc.so
 %{_libdir}/kamailio/modules/pv.so
 %{_libdir}/kamailio/modules/qos.so
 %{_libdir}/kamailio/modules/ratelimit.so
@@ -853,7 +871,6 @@ fi
 %{_libdir}/kamailio/modules/sms.so
 %{_libdir}/kamailio/modules/speeddial.so
 %{_libdir}/kamailio/modules/sqlops.so
-%{_libdir}/kamailio/modules/ss7ops.so
 %{_libdir}/kamailio/modules/sst.so
 %{_libdir}/kamailio/modules/statistics.so
 %{_libdir}/kamailio/modules/stun.so
@@ -878,7 +895,7 @@ fi
 %{_libdir}/kamailio/modules/xhttp_rpc.so
 %{_libdir}/kamailio/modules/xlog.so
 %{_libdir}/kamailio/modules/xprint.so
-%{_libdir}/kamailio/modules/jsonrpcs.so
+%{_libdir}/kamailio/modules/jsonrpc-s.so
 %{_libdir}/kamailio/modules/nosip.so
 %{_libdir}/kamailio/modules/tsilo.so
 
@@ -892,9 +909,11 @@ fi
 %{_libdir}/kamailio/kamctl/kamctl.base
 %{_libdir}/kamailio/kamctl/kamctl.ctlbase
 %{_libdir}/kamailio/kamctl/kamctl.dbtext
-%{_libdir}/kamailio/kamctl/kamctl.rpcfifo
+%{_libdir}/kamailio/kamctl/kamctl.fifo
 %{_libdir}/kamailio/kamctl/kamctl.ser
+%{_libdir}/kamailio/kamctl/kamctl.ser_mi
 %{_libdir}/kamailio/kamctl/kamctl.sqlbase
+%{_libdir}/kamailio/kamctl/kamctl.unixsock
 %{_libdir}/kamailio/kamctl/kamdbctl.base
 %{_libdir}/kamailio/kamctl/kamdbctl.dbtext
 
@@ -948,8 +967,8 @@ fi
 
 %files      cpl
 %defattr(-,root,root)
-%{_docdir}/kamailio/modules/README.cplc
-%{_libdir}/kamailio/modules/cplc.so
+%{_docdir}/kamailio/modules/README.cpl-c
+%{_libdir}/kamailio/modules/cpl-c.so
 
 
 %files      dialplan
@@ -984,6 +1003,11 @@ fi
 %{_libdir}/kamailio/modules/gzcompress.so
 
 
+%files      http_client
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.http_client
+%{_libdir}/kamailio/modules/http_client.so
+
 %files      ims
 %defattr(-,root,root)
 %{_libdir}/kamailio/libkamailio_ims.so
@@ -994,7 +1018,6 @@ fi
 %doc %{_docdir}/kamailio/modules/README.cdp_avp
 %doc %{_docdir}/kamailio/modules/README.cfgt
 %doc %{_docdir}/kamailio/modules/README.crypto
-%doc %{_docdir}/kamailio/modules/README.http_client
 %doc %{_docdir}/kamailio/modules/README.ims_auth
 %doc %{_docdir}/kamailio/modules/README.ims_charging
 %doc %{_docdir}/kamailio/modules/README.ims_dialog
@@ -1013,7 +1036,6 @@ fi
 %{_libdir}/kamailio/modules/cdp_avp.so
 %{_libdir}/kamailio/modules/cfgt.so
 %{_libdir}/kamailio/modules/crypto.so
-%{_libdir}/kamailio/modules/http_client.so
 %{_libdir}/kamailio/modules/ims_auth.so
 %{_libdir}/kamailio/modules/ims_charging.so
 %{_libdir}/kamailio/modules/ims_dialog.so
@@ -1033,9 +1055,9 @@ fi
 %files      json
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.json
-%doc %{_docdir}/kamailio/modules/README.jsonrpcc
+%doc %{_docdir}/kamailio/modules/README.jsonrpc-c
 %{_libdir}/kamailio/modules/json.so
-%{_libdir}/kamailio/modules/jsonrpcc.so
+%{_libdir}/kamailio/modules/jsonrpc-c.so
 
 
 %if %{with kazoo}
@@ -1146,6 +1168,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.pua
 %doc %{_docdir}/kamailio/modules/README.pua_bla
 %doc %{_docdir}/kamailio/modules/README.pua_dialoginfo
+%doc %{_docdir}/kamailio/modules/README.pua_mi
 %doc %{_docdir}/kamailio/modules/README.pua_reginfo
 %doc %{_docdir}/kamailio/modules/README.pua_usrloc
 %doc %{_docdir}/kamailio/modules/README.pua_xmpp
@@ -1162,6 +1185,7 @@ fi
 %{_libdir}/kamailio/modules/pua.so
 %{_libdir}/kamailio/modules/pua_bla.so
 %{_libdir}/kamailio/modules/pua_dialoginfo.so
+%{_libdir}/kamailio/modules/pua_mi.so
 %{_libdir}/kamailio/modules/pua_reginfo.so
 %{_libdir}/kamailio/modules/pua_usrloc.so
 %{_libdir}/kamailio/modules/pua_xmpp.so
@@ -1289,6 +1313,8 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.xmlrpc
 %{_libdir}/kamailio/modules/xmlrpc.so
+%doc %{_docdir}/kamailio/modules/README.mi_xmlrpc
+%{_libdir}/kamailio/modules/mi_xmlrpc.so
 
 
 %files      xmpp
