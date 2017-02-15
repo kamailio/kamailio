@@ -2772,10 +2772,11 @@ static int pv_parse_hep_name (pv_spec_p sp, str *in)
 		break;
 		case 6:
 		{
-			if(!strncmp(in->s, "src_ip", 6)) sp->pvp.pvn.u.isname.name.n = 2;
-			else if(!strncmp(in->s, "dst_ip", 6)) sp->pvp.pvn.u.isname.name.n = 3;
+			if(!strncmp(in->s, "src_ip", 6)) sp->pvp.pvn.u.isname.name.n = 2; 
+			else if(!strncmp(in->s, "dst_ip", 6)) sp->pvp.pvn.u.isname.name.n = 3; 
 			else goto error;
 		}
+		break;
 		case 7:
 		{
 		        if(!strncmp(in->s, "version", 7)) sp->pvp.pvn.u.isname.name.n = 0;
