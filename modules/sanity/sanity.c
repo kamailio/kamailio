@@ -724,6 +724,7 @@ int check_proxy_require(struct sip_msg* _msg) {
 			 * freed when the message freed. Lets hope nobody needs to access
 			 * this header again later on */
 			free_str_list(_msg->proxy_require->parsed);
+			_msg->proxy_require->parsed = NULL;
 		}
 	}
 #ifdef EXTRA_DEBUG
