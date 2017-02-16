@@ -458,7 +458,7 @@ next_contact:
 			}
 		}
 next_registration:
-		// if (ul_record) ul.release_urecord(ul_record);		
+		if (ul_record) ul.release_urecord(ul_record);
 		/* Unlock the domain for this AOR: */
 		if (aor_key.len > 0)
 			ul.unlock_udomain(domain, &aor_key);
