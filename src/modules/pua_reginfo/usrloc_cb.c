@@ -223,7 +223,7 @@ void reginfo_usrloc_cb(ucontact_t* c, int type, void* param) {
 	publ_info_t publ;
 	str content_type;
 	udomain_t * domain;
-	urecord_t * record;
+	urecord_t * record = NULL;
 	int res;
 	str uri = {NULL, 0};
 	str user = {NULL, 0};
@@ -332,6 +332,7 @@ error:
 		if(body->s) xmlFree(body->s);
 		pkg_free(body);
 	}
+	if(record) ul.release_urecord(record);
 
 	return;
 }	
