@@ -71,7 +71,7 @@
     <column id="repl_exp">
         <name>repl_exp</name>
         <type>string</type>
-        <size>64</size>
+        <size>256</size>
         <description>Replacement expresion (sed like).</description>
     </column>
 
