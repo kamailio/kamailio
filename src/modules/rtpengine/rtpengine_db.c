@@ -68,8 +68,8 @@ static int rtpp_load_db(void)
 	db_key_t query_cols[] = {&rtpp_setid_col, &rtpp_url_col, &rtpp_weight_col, &rtpp_disabled_col};
 
 	str url;
-	int setid, disabled;
-	unsigned int weight, ticks;
+	int disabled;
+	unsigned int setid, weight, ticks;
 
 	/* int weight, flags; */
 	int n_rows = 0;
