@@ -1672,6 +1672,7 @@ static inline int update_contact_db(ucontact_t* _c)
  */
 int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 {
+	struct urecord _ur;
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
 	if (mem_update_ucontact( _c, _ci) < 0) {
@@ -1680,6 +1681,8 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 	}
 
 	if (db_mode==DB_ONLY) {
+		/* urecord is static generate a copy for later */
+		if (_r) memcpy(&_ur, _r, sizeof(struct urecord));
 		if (update_contact_db(_c) < 0) return -1;
 	}
 
@@ -1690,8 +1693,14 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 		run_ul_callbacks( UL_CONTACT_UPDATE, _c);
 	}
 
-	if (_r && db_mode!=DB_ONLY)
-		update_contact_pos( _r, _c);
+	if (_r) {
+		if (db_mode!=DB_ONLY) {
+			update_contact_pos( _r, _c);
+		} else {
+			/* urecord was static restore copy */
+			memcpy(_r, &_ur, sizeof(struct urecord));
+		}
+	}
 
 	st_update_ucontact(_c);
 
