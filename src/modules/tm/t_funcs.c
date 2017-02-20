@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -70,11 +70,10 @@ int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
 		return msg_send( &rb->dst, buf, len);
 	else {
 #ifdef EXTRA_DEBUG
-		LOG(L_CRIT, "ERROR: send_pr_buffer: sending an empty buffer"
+		LM_CRIT("sending an empty buffer"
 				"from %s: %s (%d)\n", file, function, line );
 #else
-		LOG(L_CRIT, "ERROR: send_pr_buffer: attempt to send an "
-				"empty buffer\n");
+		LM_CRIT("attempt to send an empty buffer\n");
 #endif
 		return -1;
 	}
@@ -83,17 +82,17 @@ int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
 void tm_shutdown()
 {
 
-	DBG("DEBUG: tm_shutdown : start\n");
+	LM_DBG("start\n");
 
 	/* destroy the hash table */
-	DBG("DEBUG: tm_shutdown : emptying hash table\n");
+	LM_DBG("emptying hash table\n");
 	free_hash_table( );
-	DBG("DEBUG: tm_shutdown : removing semaphores\n");
+	LM_DBG("removing semaphores\n");
 	lock_cleanup();
-	DBG("DEBUG: tm_shutdown : destroying tmcb lists\n");
+	LM_DBG("destroying tmcb lists\n");
 	destroy_tmcb_lists();
 	free_tm_stats();
-	DBG("DEBUG: tm_shutdown : done\n");
+	LM_DBG("done\n");
 }
 
 
@@ -105,7 +104,7 @@ int t_release_transaction( struct cell *trans )
 
 	stop_rb_timers(&trans->uas.response);
 	cleanup_uac_timers( trans );
-	
+
 	put_on_wait( trans );
 	return 1;
 }
@@ -115,12 +114,12 @@ int t_release_transaction( struct cell *trans )
 
 
 /*
-  */
+ */
 void put_on_wait(  struct cell  *Trans  )
 {
 
 #ifdef EXTRA_DEBUG
-	DBG("DEBUG: put on WAIT \n");
+	LM_DBG("put on WAIT \n");
 #endif
 
 
@@ -145,7 +144,7 @@ void put_on_wait(  struct cell  *Trans  )
 		/* success */
 		t_stats_wait();
 	}else{
-		DBG("tm: put_on_wait: transaction %p already on wait\n", Trans);
+		LM_DBG("transaction %p already on wait\n", Trans);
 	}
 }
 
@@ -174,18 +173,18 @@ int kill_transaction( struct cell *trans, int error )
 	ret=err2reason_phrase(error, &sip_err,
 		err_buffer, sizeof(err_buffer), "TM" );
 	if (ret>0) {
-		reply_ret=t_reply( trans, trans->uas.request, 
+		reply_ret=t_reply( trans, trans->uas.request,
 			sip_err, err_buffer);
 		/* t_release_transaction( T ); */
 		return reply_ret;
 	} else {
-		LOG(L_ERR, "ERROR: kill_transaction: err2reason failed\n");
+		LM_ERR("err2reason failed\n");
 		return -1;
 	}
 }
 
 /* unsafe version of kill_transaction() that works
- * in failure route 
+ * in failure route
  * WARNING: assumes that the reply lock is held!
  */
 int kill_transaction_unsafe( struct cell *trans, int error )
@@ -203,12 +202,12 @@ int kill_transaction_unsafe( struct cell *trans, int error )
 	ret=err2reason_phrase(error, &sip_err,
 		err_buffer, sizeof(err_buffer), "TM" );
 	if (ret>0) {
-		reply_ret=t_reply_unsafe( trans, trans->uas.request, 
+		reply_ret=t_reply_unsafe( trans, trans->uas.request,
 			sip_err, err_buffer);
 		/* t_release_transaction( T ); */
 		return reply_ret;
 	} else {
-		LOG(L_ERR, "ERROR: kill_transaction_unsafe: err2reason failed\n");
+		LM_ERR("err2reason failed\n");
 		return -1;
 	}
 }
@@ -232,7 +231,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 #endif
 
 	ret=0;
-	
+
 	/* special case for CANCEL */
 	if ( p_msg->REQ_METHOD==METHOD_CANCEL){
 		ret=t_forward_cancel(p_msg, proxy, proto, &t);
@@ -240,7 +239,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 		goto done;
 	}
 	new_tran = t_newtran( p_msg );
-	
+
 	/* parsing error, memory alloc, whatever ... if via is bad
 	   and we are forced to reply there, return with 0 (->break),
 	   pass error status otherwise
@@ -267,10 +266,10 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			   do WARN(), it might hide some real bug (apart from possibly
 			   hiding a bug the most harm done is calling the TMCB_ACK_NEG
 			   callbacks twice) */
-			WARN("negative or local ACK caught, please report\n");
+			LM_WARN("negative or local ACK caught, please report\n");
 			t=get_t();
 			if (unlikely(has_tran_tmcbs(t, TMCB_ACK_NEG_IN)))
-				run_trans_callbacks(TMCB_ACK_NEG_IN, t, p_msg, 0, 
+				run_trans_callbacks(TMCB_ACK_NEG_IN, t, p_msg, 0,
 										p_msg->REQ_METHOD);
 			t_release_transaction(t);
 			ret=1;
@@ -282,7 +281,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	/* at this point if the msg is an ACK it is an e2e ACK and
 	   e2e ACKs do not establish a transaction and are fwd-ed statelessly */
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
-		DBG( "SER: forwarding ACK  statelessly \n");
+		LM_DBG( "forwarding ACK  statelessly \n");
 		if (proxy==0) {
 			init_dest_info(&dst);
 			dst.proto=proto;
@@ -318,17 +317,17 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	if (p_msg->REQ_METHOD==METHOD_INVITE && (t->flags&T_AUTO_INV_100)
 		&& (t->uas.status < 100)
 	) {
-		DBG( "SER: new INVITE\n");
+		LM_DBG("new INVITE\n");
 		if (!t_reply( t, p_msg , 100 ,
 			cfg_get(tm, tm_cfg, tm_auto_inv_100_r)))
-				DBG("SER: ERROR: t_reply (100)\n");
-	} 
+				LM_DBG("failure for t_reply (100)\n");
+	}
 
 	/* now go ahead and forward ... */
 	ret=t_forward_nonack(t, p_msg, proxy, proto);
 handle_ret:
 	if (ret<=0) {
-		DBG( "t_forward_nonack returned error %d (%d)\n", ret, ser_error);
+		LM_DBG("t_forward_nonack returned error %d (%d)\n", ret, ser_error);
 		/* we don't want to pass upstream any reply regarding replicating
 		 * a request; replicated branch must stop at us*/
 		if (likely(!replicate)) {
@@ -336,7 +335,8 @@ handle_ret:
 				/* flag set to don't generate the internal negative reply
 				 * - let the transaction live further, processing should
 				 *   continue in config */
-				DBG("not generating immediate reply for error %d\n", ser_error);
+				LM_DBG("not generating immediate reply for error %d\n",
+						ser_error);
 				tm_error=ser_error;
 				ret = -4;
 				goto done;
@@ -345,18 +345,18 @@ handle_ret:
 			/* current error in tm_error */
 			tm_error=ser_error;
 			set_kr(REQ_ERR_DELAYED);
-			DBG("%d error reply generation delayed \n", ser_error);
+			LM_DBG("%d error reply generation delayed \n", ser_error);
 #else
 
 			reply_ret=kill_transaction( t, ser_error );
 			if (reply_ret>0) {
 				/* we have taken care of all -- do nothing in
 			  	script */
-				DBG("ERROR: generation of a stateful reply "
+				LM_DBG("generation of a stateful reply "
 					"on error succeeded\n");
 				/*ret=0; -- we don't want to stop the script */
 			}  else {
-				DBG("ERROR: generation of a stateful reply "
+				LM_DBG("generation of a stateful reply "
 					"on error failed\n");
 				t_release_transaction(t);
 			}
@@ -365,7 +365,7 @@ handle_ret:
 			t_release_transaction(t); /* kill it  silently */
 		}
 	} else {
-		DBG( "SER: new transaction fwd'ed\n");
+		LM_DBG("new transaction forwarded\n");
 	}
 
 done:
@@ -406,8 +406,7 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 		} else {
 			if (parse_avp_spec( &fr_timer_str, &fr_timer_avp_type,
 			&fr_timer_avp, &fr_timer_index)<0) {
-				LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_timer "
-					"AVP specs \"%s\"\n", fr_timer_param);
+				LM_CRIT("invalid fr_timer AVP specs \"%s\"\n", fr_timer_param);
 				return -1;
 			}
 			/* ser flavour uses the To track of AVPs */
@@ -437,10 +436,10 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 			}
 			fr_inv_timer_avp_type = avp_type;
 		} else {
-			if (parse_avp_spec( &fr_inv_timer_str, &fr_inv_timer_avp_type, 
+			if (parse_avp_spec( &fr_inv_timer_str, &fr_inv_timer_avp_type,
 			&fr_inv_timer_avp, &fr_inv_timer_index)<0) {
-				LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_inv_timer "
-					"AVP specs \"%s\"\n", fr_inv_timer_param);
+				LM_CRIT("invalid fr_inv_timer AVP specs \"%s\"\n",
+						fr_inv_timer_param);
 				return -1;
 			}
 			/* ser flavour uses the To track of AVPs */
@@ -469,11 +468,11 @@ static inline int avp2timer(unsigned int* timer, int type, int_str name)
 		 */
 		return 1;
 	}
-	
+
 	if (avp->flags & AVP_VAL_STR) {
 		*timer = str2s(val_istr.s.s, val_istr.s.len, &err);
 		if (err) {
-			LOG(L_ERR, "avp2timer: Error while converting string to integer\n");
+			LM_ERR("failed converting string to integer\n");
 			return -1;
 		}
 	} else {
