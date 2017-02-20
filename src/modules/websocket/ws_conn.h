@@ -62,6 +62,8 @@ typedef struct ws_connection
 	int      run_event;
 
 	str frag_buf;
+
+	char real_src_ip[IP_ADDR_MAX_STR_SIZE]; /* to track X-Forwarded-For header for websocket */
 } ws_connection_t;
 
 typedef struct

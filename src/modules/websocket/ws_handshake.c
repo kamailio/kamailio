@@ -87,6 +87,8 @@ static str str_status_bad_request = str_init("Bad Request");
 static str str_status_upgrade_required = str_init("Upgrade Required");
 static str str_status_internal_server_error = str_init("Internal Server Error");
 static str str_status_service_unavailable = str_init("Service Unavailable");
+static str str_x_forwarded_for = str_init("X-Forwarded-For");
+static str str_x_real_ip = str_init("X-Real-IP");
 
 #define HDR_BUF_LEN		(512)
 static char headers_buf[HDR_BUF_LEN];
@@ -128,6 +130,8 @@ int ws_handle_handshake(struct sip_msg *msg)
 	struct hdr_field *hdr = msg->headers;
 	struct tcp_connection *con;
 	ws_connection_t *wsc;
+	char x_forwarded_for[IP_ADDR_MAX_STR_SIZE];
+	int x_forwarded_for_flag = 0;
 
 	/* Make sure that the connection is closed after the response _and_
 	   the existing connection (from the request) is reused for the
@@ -302,6 +306,46 @@ int ws_handle_handshake(struct sip_msg *msg)
 			origin = hdr->body;
 			hdr_flags |= ORIGIN;
 		}
+		/* Decode X-Forwarded-For */
+		else if (cmp_hdrname_strzn(&hdr->name,
+				str_x_forwarded_for.s,
+				str_x_forwarded_for.len) == 0)
+		{
+			/* Only set x_forwarded_for if it is not set */
+			if (x_forwarded_for_flag == 0) {
+				if ((hdr->body.len+1) > IP_ADDR_MAX_STR_SIZE) {
+					LM_ERR("X-Forwarded-For header too large %.*s\n", hdr->body.len, hdr->body.s);
+				} else {
+					snprintf(x_forwarded_for, hdr->body.len+1, "%s", hdr->body.s);
+					LM_DBG("found %.*s: %.*s connection %d from real src ip %s\n",
+						hdr->name.len, hdr->name.s,
+						hdr->body.len, hdr->body.s,
+						con->id,
+						x_forwarded_for);
+					x_forwarded_for_flag = 1;
+				}
+			}
+		}
+		/* Decode X-Real-IP */
+		else if (cmp_hdrname_strzn(&hdr->name,
+				str_x_real_ip.s,
+				str_x_real_ip.len) == 0)
+		{
+			/* Only set x_forwarded_for if it is not set */
+			if (x_forwarded_for_flag == 0) {
+				if ((hdr->body.len+1) > IP_ADDR_MAX_STR_SIZE) {
+					LM_ERR("X-Real-IP header too large %.*s\n", hdr->body.len, hdr->body.s);
+				} else {
+					snprintf(x_forwarded_for, hdr->body.len+1, "%s", hdr->body.s);
+					LM_DBG("found %.*s: %.*s connection %d from real src ip %s\n",
+						hdr->name.len, hdr->name.s,
+						hdr->body.len, hdr->body.s,
+						con->id,
+						x_forwarded_for);
+					x_forwarded_for_flag = 1;
+				}
+			}
+		}
 
 		hdr = hdr->next;
 	}
@@ -432,6 +476,13 @@ int ws_handle_handshake(struct sip_msg *msg)
 	}
 	else
 	{
+		if (x_forwarded_for_flag == 1) {
+			if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) != NULL)
+			{
+				snprintf(wsc->real_src_ip, strlen(x_forwarded_for)+1, "%s", x_forwarded_for);
+				wsconn_put(wsc);
+			}
+		}
 		if (sub_protocol & SUB_PROTOCOL_SIP)
 			update_stat(ws_sip_successful_handshakes, 1);
 		else if (sub_protocol & SUB_PROTOCOL_MSRP)

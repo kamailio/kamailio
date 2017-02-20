@@ -54,6 +54,7 @@ static int child_init(int rank);
 static void destroy(void);
 static int ws_close_fixup(void** param, int param_no);
 static int pv_get_ws_conid_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_ws_real_src_ip(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 static int ws_init_rpc(void);
 
@@ -149,6 +150,8 @@ static stat_export_t stats[] = {
 static pv_export_t mod_pvs[] = {
     {{"ws_conid", (sizeof("ws_conid")-1)}, PVT_CONTEXT,
      pv_get_ws_conid_f, 0, 0, 0, 0, 0},
+    {{"ws_real_src_ip", (sizeof("ws_real_src_ip")-1)}, PVT_OTHER,
+     pv_get_ws_real_src_ip, 0, 0, 0, 0, 0},
     {{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -340,6 +343,43 @@ static int pv_get_ws_conid_f(struct sip_msg *msg, pv_param_t *param,
     if (msg == NULL) return -1;
 
     return pv_get_sintval(msg, param, res, msg->rcv.proto_reserved1);
+}
+
+static int pv_get_ws_real_src_ip(struct sip_msg *msg, pv_param_t *param,
+			     pv_value_t *res)
+{
+	ws_connection_t *wsc;
+	str ip_str;
+	int wscid, len;
+	static char buff[IP_ADDR_MAX_STR_SIZE];
+
+	if (msg == NULL) {
+		return -1;
+	}
+
+	if ((wsc = wsconn_get(msg->rcv.proto_reserved1)) == NULL) {
+		LM_ERR("$ws_real_src_ip cannot retrieve websocket connection\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	wscid = wsc->id;
+
+	if (wsc->real_src_ip[0] == 0) {
+		wsconn_put(wsc);
+		LM_DBG("$ws_real_src_ip ws_conid %d real_src_ip is not set\n", wscid);
+		return pv_get_null(msg, param, res);
+	}
+
+	LM_DBG("$ws_real_src_ip ws_conid %d wsc->real_src_ip is %s (%d)\n", wscid, wsc->real_src_ip, (int)strlen(wsc->real_src_ip));
+	len = snprintf(buff, IP_ADDR_MAX_STR_SIZE, "%s", wsc->real_src_ip);
+	buff[len] = 0;
+
+	wsconn_put(wsc);
+
+	ip_str.s = (char *)buff;
+	ip_str.len = strlen(buff);
+	LM_DBG("$ws_real_src_ip ws_conid %d real_src_ip is %s (%d)\n", wscid, ip_str.s, ip_str.len);
+	return pv_get_strval(msg, param, res, &ip_str);
 }
 
 static const char* ws_rpc_dump_doc[2] = {
