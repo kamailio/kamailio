@@ -82,7 +82,7 @@ static int fixup_get_field(void** param, int param_no)
 static int fixup_get_field_free(void** param, int param_no)
 {
 	if (param_no == 1 || param_no == 2) {
-		LM_WARN("free function has not been defined for spve\n");
+		fixup_free_spve_null(param, 1);
 		return 0;
 	}
 
