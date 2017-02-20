@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
@@ -99,7 +97,8 @@ int redisc_init(void)
 
 		if(unix_sock_path != NULL) {
 			LM_DBG("Connecting to unix socket: %s\n", unix_sock_path);
-			rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path, tv_conn);
+			rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path,
+					tv_conn);
 		} else {
 			rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv_conn);
 		}
@@ -123,15 +122,19 @@ int redisc_init(void)
 
 err2:
 	if (unix_sock_path != NULL) {
-		LM_ERR("error communicating with redis server [%.*s] (unix:%s db:%d): %s\n",
-				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db, rsrv->ctxRedis->errstr);
+		LM_ERR("error communicating with redis server [%.*s]"
+				" (unix:%s db:%d): %s\n",
+				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db,
+				rsrv->ctxRedis->errstr);
 	} else {
 		LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): %s\n",
-				rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
+				rsrv->sname->len, rsrv->sname->s, addr, port, db,
+				rsrv->ctxRedis->errstr);
 	}
 	if (init_without_redis==1)
 	{
-		LM_WARN("failed to initialize redis connections, but initializing module anyway.\n");
+		LM_WARN("failed to initialize redis connections, but initializing"
+				" module anyway.\n");
 		return 0;
 	}
 
@@ -146,7 +149,8 @@ err:
 	}
 	if (init_without_redis==1)
 	{
-		LM_WARN("failed to initialize redis connections, but initializing module anyway.\n");
+		LM_WARN("failed to initialize redis connections, but initializing"
+				" module anyway.\n");
 		return 0;
 	}
 
@@ -334,11 +338,14 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 
 err2:
 	if (unix_sock_path != NULL) {
-		LM_ERR("error communicating with redis server [%.*s] (unix:%s db:%d): %s\n",
-				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db, rsrv->ctxRedis->errstr);
+		LM_ERR("error communicating with redis server [%.*s]"
+				" (unix:%s db:%d): %s\n",
+				rsrv->sname->len, rsrv->sname->s, unix_sock_path, db,
+				rsrv->ctxRedis->errstr);
 	} else {
 		LM_ERR("error communicating with redis server [%.*s] (%s:%d/%d): %s\n",
-				rsrv->sname->len, rsrv->sname->s, addr, port, db, rsrv->ctxRedis->errstr);
+				rsrv->sname->len, rsrv->sname->s, addr, port, db,
+				rsrv->ctxRedis->errstr);
 	}
 err:
 	if (unix_sock_path != NULL) {
@@ -411,7 +418,8 @@ int redisc_exec(str *srv, str *res, str *cmd, ...)
 		{
 			rpl->rplRedis = redisvCommand(rsrv->ctxRedis, cmd->s, ap2);
 		} else {
-			LM_ERR("unable to reconnect to redis server: %.*s\n", srv->len, srv->s);
+			LM_ERR("unable to reconnect to redis server: %.*s\n",
+					srv->len, srv->s);
 			cmd->s[cmd->len] = c;
 			goto error_exec;
 		}
@@ -438,7 +446,8 @@ error_exec:
  * @param argvlen vector of command string lenghts or NULL.
  * @return redisReply structure or NULL if there was an error.
  */
-void * redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv, const size_t *argvlen)
+void * redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
+		const size_t *argvlen)
 {
 	redisReply *res=NULL;
 

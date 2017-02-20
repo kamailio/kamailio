@@ -1,6 +1,4 @@
 /**
- * $Id$
- *
  * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
  *
  * Copyright (C) 2012 Vicente Hernando Ara (System One: www.systemonenoc.com)
@@ -137,7 +135,8 @@ static void mod_destroy(void)
 /**
  *
  */
-static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd, char* sres)
+static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
+		char* sres)
 {
 	str s[3];
 
@@ -569,7 +568,7 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 							return pv_get_strval(msg, param, res, &s);
 						case REDIS_REPLY_INTEGER:
 							return pv_get_sintval(msg, param, res,
-										(int)rpv->reply->rplRedis->element[pos]->integer);
+								(int)rpv->reply->rplRedis->element[pos]->integer);
 						default:
 							return pv_get_null(msg, param, res);
 					}
