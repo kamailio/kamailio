@@ -765,9 +765,13 @@ static int w_route_exists(struct sip_msg *msg, char *route)
 	}
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
+
 	init_run_actions_ctx(&ctx);
 	ret = run_top_route(main_rt.rlist[newroute], msg, &ctx);
 	set_route_type(backup_rt);
+	if (ctx.run_flags & EXIT_R_F) {
+		return 0;
+	}
 	return ret;
 }
 
