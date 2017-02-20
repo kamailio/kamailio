@@ -446,7 +446,7 @@ error_exec:
  * @param argvlen vector of command string lenghts or NULL.
  * @return redisReply structure or NULL if there was an error.
  */
-void * redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
+redisReply* redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
 		const size_t *argvlen)
 {
 	redisReply *res=NULL;

@@ -34,6 +34,7 @@
 #include "../../core/trim.h"
 
 #include "redis_client.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -59,6 +60,8 @@ static int w_redis_free_reply(struct sip_msg* msg, char* res);
 static void mod_destroy(void);
 static int  child_init(int rank);
 
+int bind_ndb_redis(ndb_redis_api_t *api);
+
 static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
 static int pv_parse_redisc_name(pv_spec_p sp, str *in);
@@ -81,6 +84,10 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"redis_free", (cmd_function)w_redis_free_reply, 1, fixup_spve_null,
 		0, ANY_ROUTE},
+
+	{"bind_ndb_redis",  (cmd_function)bind_ndb_redis,  0,
+		0, 0, 0},
+
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -608,3 +615,23 @@ static int pv_get_redisc(struct sip_msg *msg,  pv_param_t *param,
 			return pv_get_null(msg, param, res);
 	}
 }
+
+/**
+ * @brief bind functions to NDB_REDIS API structure
+ */
+int bind_ndb_redis(ndb_redis_api_t *api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	memset(api, 0, sizeof(ndb_redis_api_t));
+	api->get_server = redisc_get_server;
+	api->exec = redisc_exec;
+	api->exec_argv = redisc_exec_argv;
+	api->get_reply = redisc_get_reply;
+	api->free_reply = redisc_free_reply;
+
+	return 0;
+}
+
