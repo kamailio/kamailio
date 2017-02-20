@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * pua_usrloc module - usrloc pua module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
@@ -17,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -64,7 +62,7 @@ int pua_unset_publish(struct sip_msg* msg, unsigned int flags, void* param)
 	return 1;
 }
 
-	
+
 /* for debug purpose only */
 void print_publ(publ_info_t* p)
 {
@@ -72,11 +70,11 @@ void print_publ(publ_info_t* p)
 	LM_DBG("uri= %.*s\n", p->pres_uri->len, p->pres_uri->s);
 	LM_DBG("id= %.*s\n", p->id.len, p->id.s);
 	LM_DBG("expires= %d\n", p->expires);
-}	
+}
 
 str* build_pidf(ucontact_t* c)
 {
-	xmlDocPtr  doc = NULL; 
+	xmlDocPtr  doc = NULL;
 	xmlNodePtr root_node = NULL;
 	xmlNodePtr tuple_node = NULL;
 	xmlNodePtr status_node = NULL;
@@ -120,7 +118,7 @@ str* build_pidf(ucontact_t* c)
 
 		pres_uri.s[pres_uri.len++]= '@';
 		memcpy(pres_uri.s+ pres_uri.len, default_domain.s, default_domain.len);
-		pres_uri.len+= default_domain.len;		
+		pres_uri.len+= default_domain.len;
 	}
 	pres_uri.s[pres_uri.len]= '\0';
 
@@ -129,13 +127,13 @@ str* build_pidf(ucontact_t* c)
 	if(doc==0)
 		return NULL;
 
-    	root_node = xmlNewNode(NULL, BAD_CAST "presence");
+	root_node = xmlNewNode(NULL, BAD_CAST "presence");
 	if(root_node==0)
 		goto error;
-    
+
 	xmlDocSetRootElement(doc, root_node);
 
-    	xmlNewProp(root_node, BAD_CAST "xmlns",
+	xmlNewProp(root_node, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:pidf");
 	xmlNewProp(root_node, BAD_CAST "xmlns:dm",
 			BAD_CAST "urn:ietf:params:xml:ns:pidf:data-model");
@@ -151,23 +149,23 @@ str* build_pidf(ucontact_t* c)
 		LM_ERR("while adding child\n");
 		goto error;
 	}
-	
+
 	status_node = xmlNewChild(tuple_node, NULL, BAD_CAST "status", NULL) ;
 	if( status_node ==NULL)
 	{
 		LM_ERR("while adding child\n");
 		goto error;
 	}
-	
+
 	basic_node = xmlNewChild(status_node, NULL, BAD_CAST "basic",
 		BAD_CAST "open") ;
-	
+
 	if( basic_node ==NULL)
 	{
 		LM_ERR("while adding child\n");
 		goto error;
 	}
-	
+
 	body = (str*)pkg_malloc(sizeof(str));
 	if(body == NULL)
 	{
@@ -180,9 +178,9 @@ str* build_pidf(ucontact_t* c)
 
 	LM_DBG("new_body:\n%.*s\n",body->len, body->s);
 
-    	/*free the document */
+	/*free the document */
 	xmlFreeDoc(doc);
-    	xmlCleanupParser();
+	xmlCleanupParser();
 
 	return body;
 
@@ -196,7 +194,7 @@ error:
 	if(doc)
 		xmlFreeDoc(doc);
 	return NULL;
-}	
+}
 
 void ul_publish(ucontact_t* c, int type, void* param)
 {
@@ -246,7 +244,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	}
 	else
 		body = NULL;
-	
+
 	uri.s = (char*)pkg_malloc(sizeof(char)*(c->aor->len+default_domain.len+6));
 	if(uri.s == NULL)
 		goto error;
@@ -260,13 +258,13 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	{
 		uri.s[uri.len++]= '@';
 		memcpy(uri.s+ uri.len, default_domain.s, default_domain.len);
-		uri.len+= default_domain.len;		
+		uri.len+= default_domain.len;
 	}
 	LM_DBG("uri= %.*s\n", uri.len, uri.s);
-	
-	size= sizeof(publ_info_t)+ sizeof(str)+( uri.len 
-			+c->callid.len+ 12 + content_type.len)*sizeof(char); 
-	
+
+	size= sizeof(publ_info_t)+ sizeof(str)+( uri.len
+			+c->callid.len+ 12 + content_type.len)*sizeof(char);
+
 	if(body)
 		size+= sizeof(str)+ body->len* sizeof(char);
 
@@ -311,7 +309,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 		publ->expires= 0;
 	else
 		publ->expires= c->expires - (int)time(NULL);
-	
+
 	if(type & UL_CONTACT_INSERT)
 		publ->flag|= INSERT_TYPE;
 	else
@@ -329,9 +327,9 @@ void ul_publish(ucontact_t* c, int type, void* param)
 			 * entry in 'pua' DB table. It can also occur if 'pua' table is cleaned externally while Kamailio
 			 * is stopped so cannot retrieve these entries from DB when restarting.
 			 * In these cases, when a refresh registration for that user creates an UPDATE action in pua_usrloc,
-			 * pua 'ul_publish()' would fail since the appropiate entry doesn't exist in pua hast table ("New 
+			 * pua 'ul_publish()' would fail since the appropiate entry doesn't exist in pua hast table ("New
 			 * PUBLISH and no body found - invalid request").
-			 * This code solves this problem by invoking an INSERT action if an UPDATE action failed due to the 
+			 * This code solves this problem by invoking an INSERT action if an UPDATE action failed due to the
 			 * above error. It will however generate a new presentity entry in the presence server (until the
 			 * previous one expires), but this is a minor issue. */
 			LM_ERR("UPDATE action generated a PUBLISH without body -> invoking INSERT action\n");
@@ -353,13 +351,10 @@ error:
 			xmlFree(body->s);
 		pkg_free(body);
 	}
-	
+
 	if(uri.s)
 		pkg_free(uri.s);
 	pua_ul_publish= 0;
 
 	return;
-
 }
-
-

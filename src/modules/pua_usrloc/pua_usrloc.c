@@ -75,7 +75,7 @@ static cmd_export_t cmds[]=
 {
 	{"pua_set_publish", (cmd_function)pua_set_publish, 0, 0, 0, REQUEST_ROUTE},
 	{"bind_pua_usrloc", (cmd_function)bind_pua_usrloc, 1, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0} 
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
@@ -99,7 +99,7 @@ struct module_exports exports= {
 	0,							/*!< destroy function */
 	0							/*!< per-child init function */
 };
-	
+
 /*! \brief
  * init module function
  */
@@ -107,13 +107,13 @@ static int mod_init(void)
 {
 	bind_usrloc_t bind_usrloc;
 	bind_pua_t bind_pua;
-	
+
 	if(!default_domain.s || default_domain.len<=0)
-	{	
+	{
 		LM_ERR("default domain parameter not set\n");
 		return -1;
 	}
-	
+
 	if(!pres_prefix.s || pres_prefix.len<=0)
 		LM_DBG("No pres_prefix configured\n");
 
@@ -146,26 +146,26 @@ static int mod_init(void)
 				" expire\n");
 		return -1;
 	}
-	
+
 	if(ul.register_ulcb(UL_CONTACT_UPDATE, ul_publish, 0)< 0)
 	{
 		LM_ERR("can not register callback for update\n");
 		return -1;
 	}
-	
+
 	if(ul.register_ulcb(UL_CONTACT_DELETE, ul_publish, 0)< 0)
 	{
 		LM_ERR("can not register callback for delete\n");
 		return -1;
 	}
-	
+
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
 	{
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
-	
+
 	if (bind_pua(&_pu_pua) < 0)
 	{
 		LM_ERR("Can't bind pua\n");
@@ -182,7 +182,7 @@ static int mod_init(void)
 		LM_ERR("Could not import send_subscribe\n");
 		return -1;
 	}
-	
+
 	/* register post-script pua_unset_publish unset function */
 	if(register_script_cb(pua_unset_publish, POST_SCRIPT_CB|REQUEST_CB, 0)<0)
 	{
