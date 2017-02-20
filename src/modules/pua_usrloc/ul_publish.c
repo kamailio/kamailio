@@ -323,7 +323,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 	print_publ(publ);
 	if((error=_pu_pua.send_publish(publ))< 0)
 	{
-		LM_ERR("while sending publish for ul event %d\n", type);
+		LM_ERR("failed sending publish for ul event %d\n", type);
 		if((type & UL_CONTACT_UPDATE) && error == ERR_PUBLISH_NO_BODY) {
 			/* This error can occur if Kamailio was restarted/stopped and for any reason couldn't store a pua
 			 * entry in 'pua' DB table. It can also occur if 'pua' table is cleaned externally while Kamailio
@@ -336,19 +336,16 @@ void ul_publish(ucontact_t* c, int type, void* param)
 			 * previous one expires), but this is a minor issue. */
 			LM_ERR("UPDATE action generated a PUBLISH without body -> invoking INSERT action\n");
 			ul_publish(c, UL_CONTACT_INSERT, param);
-			return;
+			goto error;
 		}
 	}
 
-	pua_ul_publish= 0;
-
 error:
-
+	pua_ul_publish = 0;
 	if(publ)
 		pkg_free(publ);
 
-	if(body)
-	{
+	if(body) {
 		if(body->s)
 			xmlFree(body->s);
 		pkg_free(body);
@@ -356,7 +353,6 @@ error:
 	
 	if(uri.s)
 		pkg_free(uri.s);
-	pua_ul_publish= 0;
 
 	return;
 
