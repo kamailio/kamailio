@@ -22,10 +22,9 @@
 		implementations.
 	</para>
 	<para>
-		 It can be used with the following modules: pua_mi, pua_usrloc,
+		 It can be used with the following modules: pua_rpc, pua_usrloc,
 		 pua_bla, pua_dialoginfo, pua_reginfo and pua_xmpp.
-		 The <emphasis>pua_mi</emphasis> module offer the possibility to publish any kind of information
-		 or subscribing to a resource through the manager interface.
+		 The <emphasis>pua_rpc</emphasis> module offer the possibility to publish any kind of information via the RPC transport.
 		 The <emphasis>pua_usrloc</emphasis> module calls a function exported by pua modules to publish
 		 elementary presence information, such as basic status "open" or "closed",
 		 for clients that do not implement client-to-server presence.
