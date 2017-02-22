@@ -106,8 +106,8 @@ endef
 
 # CFLAGS + CPPFLAGS -> CC_EXTRA_OPTS
 CC_EXTRA_OPTS := $(shell dpkg-buildflags --get CPPFLAGS)
-CC_EXTRA_OPTS += $(shell dpkg-buildflags --get CFLAGS)
-CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
+CC_EXTRA_OPTS += $(shell DEB_CFLAGS_MAINT_STRIP=-O2 dpkg-buildflags --get CFLAGS)
+CXXFLAGS := $(shell DEB_CXXFLAGS_MAINT_STRIP=-O2 dpkg-buildflags --get CXXFLAGS)
 # LDFLAGS -> LD_EXTRA_OPTS
 LD_EXTRA_OPTS := $(shell dpkg-buildflags --get LDFLAGS)
 
