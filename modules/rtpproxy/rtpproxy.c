@@ -2536,7 +2536,7 @@ force_rtp_proxy(struct sip_msg* msg, char* str1, char* str2, int offer, int forc
 				 &ice_candidate_priority_val, 0)
 		== NULL) {
 		ice_candidate_priority_val.n = 2;
-	    } else if ((ice_candidate_priority_val.n < 1) ||
+	    } else if ((ice_candidate_priority_val.n < 0) ||
 		       (ice_candidate_priority_val.n > 2)) {
 		LM_ERR("invalid ice candidate priority value %d\n",
 		       ice_candidate_priority_val.n);
