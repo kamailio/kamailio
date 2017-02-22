@@ -46,6 +46,7 @@
 #include "../../lib/srutils/sruid.h"
 
 #include "tps_storage.h"
+#include "api.h"
 
 extern sruid_t _tps_sruid;
 
@@ -58,10 +59,28 @@ static gen_lock_set_t *_tps_storage_lock_set = NULL;
 int _tps_branch_expire = 180;
 int _tps_dialog_expire = 10800;
 
-int tps_db_insert_branch(tps_data_t *td);
-int tps_db_clean_branches(void);
 int tps_db_insert_dialog(tps_data_t *td);
 int tps_db_clean_dialogs(void);
+int tps_db_insert_branch(tps_data_t *td);
+int tps_db_clean_branches(void);
+int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+
+/**
+ *
+ */
+static tps_storage_api_t _tps_storage_api = {
+	.insert_dialog = tps_db_insert_dialog,
+	.clean_dialogs = tps_db_clean_dialogs,
+	.insert_branch = tps_db_insert_branch,
+	.clean_branches = tps_db_clean_branches,
+	.load_branch = tps_db_load_branch,
+	.load_dialog = tps_db_load_dialog,
+	.update_dialog = tps_db_update_dialog,
+	.end_dialog = tps_db_end_dialog
+};
 
 /**
  *
@@ -345,10 +364,10 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
 	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) goto error;
 	if(dialog==0) {
-		ret = tps_db_insert_dialog(td);
+		ret = _tps_storage_api.insert_dialog(td);
 		if(ret<0) goto error;
 	}
-	ret = tps_db_insert_branch(td);
+	ret = _tps_storage_api.insert_branch(td);
 	if(ret<0) goto error;
 
 	return 0;
@@ -767,7 +786,7 @@ int tps_db_clean_branches(void)
 /**
  *
  */
-int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
 	db_key_t db_keys[4];
 	db_op_t  db_ops[4];
@@ -856,7 +875,15 @@ error:
 /**
  *
  */
-int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	return _tps_storage_api.load_branch(msg, md, sd);
+}
+
+/**
+ *
+ */
+int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
 	db_key_t db_keys[4];
 	db_op_t  db_ops[4];
@@ -985,6 +1012,14 @@ error:
 /**
  *
  */
+int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	return _tps_storage_api.load_dialog(msg, md, sd);
+}
+
+/**
+ *
+ */
 int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
 	return 0;
@@ -993,7 +1028,7 @@ int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 /**
  *
  */
-int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
 	db_key_t db_keys[4];
 	db_op_t  db_ops[4];
@@ -1085,7 +1120,15 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 /**
  *
  */
-int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	return _tps_storage_api.update_dialog(msg, md, sd);
+}
+
+/**
+ *
+ */
+int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
 	db_key_t db_keys[4];
 	db_op_t  db_ops[4];
@@ -1150,8 +1193,16 @@ int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 /**
  *
  */
+int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+{
+	return _tps_storage_api.end_dialog(msg, md, sd);
+}
+
+/**
+ *
+ */
 void tps_storage_clean(unsigned int ticks, void* param)
 {
-	tps_db_clean_branches();
-	tps_db_clean_dialogs();
+	_tps_storage_api.clean_branches();
+	_tps_storage_api.clean_dialogs();
 }
