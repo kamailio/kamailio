@@ -140,7 +140,7 @@ static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_oper
 static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, int op, int more);
 static int fixup_set_id(void ** param, int param_no);
 static int set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2);
-static struct rtpp_set * select_rtpp_set(int id_set);
+static struct rtpp_set * select_rtpp_set(unsigned int id_set);
 static struct rtpp_node *select_rtpp_node_new(str, str, int, struct rtpp_node **, int);
 static struct rtpp_node *select_rtpp_node_old(str, str, int, enum rtpe_operation);
 static struct rtpp_node *select_rtpp_node(str, str, int, struct rtpp_node **, int, enum rtpe_operation);
@@ -175,7 +175,7 @@ static str extra_id_pv_param = {NULL, 0};
 static char *setid_avp_param = NULL;
 static int hash_table_tout = 3600;
 static int hash_table_size = 256;
-static int setid_default = DEFAULT_RTPP_SET_ID;
+static unsigned int setid_default = DEFAULT_RTPP_SET_ID;
 
 static char ** rtpp_strings=0;
 static int rtpp_sets=0; /*used in rtpengine_set_store()*/
@@ -598,7 +598,7 @@ struct rtpp_node *get_rtpp_node(struct rtpp_set *rtpp_list, str *url)
 	return NULL;
 }
 
-struct rtpp_set *get_rtpp_set(int set_id)
+struct rtpp_set *get_rtpp_set(unsigned int set_id)
 {
 	struct rtpp_set * rtpp_list;
 	unsigned int my_current_id = 0;
@@ -606,7 +606,7 @@ struct rtpp_set *get_rtpp_set(int set_id)
 
 	if (set_id < DEFAULT_RTPP_SET_ID )
 	{
-		LM_ERR(" invalid rtpproxy set value [%d]\n", set_id);
+		LM_ERR(" invalid rtpproxy set value [%u]\n", set_id);
 		return NULL;
 	}
 
@@ -623,7 +623,7 @@ struct rtpp_set *get_rtpp_set(int set_id)
 		if(!rtpp_list)
 		{
 			lock_release(rtpp_set_list->rset_head_lock);
-			LM_ERR("no shm memory left to create new rtpproxy set %d\n", my_current_id);
+			LM_ERR("no shm memory left to create new rtpproxy set %u\n", my_current_id);
 			return NULL;
 		}
 		memset(rtpp_list, 0, sizeof(struct rtpp_set));
@@ -907,7 +907,8 @@ error:
 
 static int fixup_set_id(void ** param, int param_no)
 {
-	int int_val, err;
+	int int_val;
+	unsigned int set_id;
 	struct rtpp_set* rtpp_list;
 	rtpp_set_link_t *rtpl = NULL;
 	str s;
@@ -933,11 +934,11 @@ static int fixup_set_id(void ** param, int param_no)
 			return -1;
 		}
 	} else {
-		int_val = str2s(*param, strlen(*param), &err);
-		if (err == 0) {
+		int_val = str2int(&s, &set_id);
+		if (int_val == 0) {
 			pkg_free(*param);
-			if((rtpp_list = select_rtpp_set(int_val)) ==0){
-				LM_ERR("rtpp_proxy set %i not configured\n", int_val);
+			if((rtpp_list = select_rtpp_set(set_id)) ==0){
+				LM_ERR("rtpp_proxy set %u not configured\n", set_id);
 				return E_CFG;
 			}
 			rtpl->rset = rtpp_list;
@@ -1442,9 +1443,9 @@ mod_init(void)
 	/* select the default set */
 	default_rtpp_set = select_rtpp_set(setid_default);
 	if (!default_rtpp_set) {
-		LM_NOTICE("Default rtpp set %d NOT found\n", setid_default);
+		LM_NOTICE("Default rtpp set %u NOT found\n", setid_default);
 	} else {
-		LM_DBG("Default rtpp set %d found\n", setid_default);
+		LM_DBG("Default rtpp set %u found\n", setid_default);
 	}
 
     if(cfg_declare("rtpengine", rtpengine_cfg_def, &default_rtpengine_cfg, cfg_sizeof(rtpengine), &rtpengine_cfg)){
@@ -2338,7 +2339,7 @@ badproxy:
  * select the set with the id_set id
  */
 
-static struct rtpp_set * select_rtpp_set(int id_set ){
+static struct rtpp_set * select_rtpp_set(unsigned int id_set ){
 
 	struct rtpp_set * rtpp_list;
 	/*is it a valid set_id?*/
@@ -2594,11 +2595,11 @@ set_rtpengine_set_from_avp(struct sip_msg *msg, int direction)
 
 	active_rtpp_set = select_rtpp_set(setid_val.n);
 	if(active_rtpp_set == NULL) {
-		LM_ERR("could not locate rtpproxy set %d\n", setid_val.n);
+		LM_ERR("could not locate rtpproxy set %u\n", setid_val.n);
 		return -1;
 	}
 
-	LM_DBG("using rtpengine set %d\n", setid_val.n);
+	LM_DBG("using rtpengine set %u\n", setid_val.n);
 
 	current_msg_id = msg->id;
 
@@ -2680,7 +2681,7 @@ set_rtpengine_set_n(struct sip_msg *msg, rtpp_set_link_t *rtpl, struct rtpp_set 
 	}
 	*out = select_rtpp_set(val.ri);
 	if(*out==NULL) {
-		LM_ERR("could not locate rtpengine set %d\n", val.ri);
+		LM_ERR("could not locate rtpengine set %u\n", val.ri);
 		return -1;
 	}
 	current_msg_id = msg->id;
