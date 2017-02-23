@@ -557,6 +557,40 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc");
 		</example>
 	</section>
 
+	<section id="siptrace.f.hlog">
+		<title>
+		<function moreinfo="none">hlog([correlation_id,] message)</function>
+		</title>
+		<para>
+		Sends a log event as a HEP3 packet to the homer host configured in
+		<emphasis>duplicate_uri</emphasis>.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+			<para><emphasis>correlation_id</emphasis> (optional) - Homer correlation
+			ID for this event. If this parameter is not set, the current message's
+			call-id will be used. (This parameter may contain PVs)
+			</para>
+			</listitem>
+			<listitem>
+			<para><emphasis>message</emphasis> - The text to send to Homer as log
+			event. (This parameter may contain PVs)
+			</para>
+			</listitem>
+		</itemizedlist>
+		<example>
+		<title><function>hlog()</function> usage</title>
+		<programlisting format="linespecific">
+...
+hlog("[cfg:$cfg(line)] This is a log from kamailio to Homer");
+...
+hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
     <section>
