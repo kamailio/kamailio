@@ -222,6 +222,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
 ...
 </programlisting>
 	    </example>
+    </section>
 
     </section>
 
