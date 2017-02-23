@@ -2,7 +2,7 @@ mohqueue Module
 
 Robert Boisvert
 
-   Copyright © 2013-2017 Robert Boisvert, rdbprog@gmail.com
+   Copyright © 2013 Robert Boisvert, rdbprog@gmail.com
      __________________________________________________________________
 
    Table of Contents
@@ -24,10 +24,10 @@ Robert Boisvert
 
         4. Functions
 
-              4.1. mohq_process()
-              4.2. mohq_send(queue_name)
-              4.3. mohq_retrieve(queue_name, URI)
-              4.4. mohq_count(queue_name, pvar)
+              4.1. mohq_process ()
+              4.2. mohq_send (queue_name)
+              4.3. mohq_retrieve (queue_name, URI)
+              4.4. mohq_count (queue_name, pvar)
 
         5. Database Schema
 
@@ -35,6 +35,10 @@ Robert Boisvert
               5.2. MOHQCALLS Table
 
         6. Audio Files
+        7. RPC Commands
+
+              7.1. mohqueue.debug
+              7.2. mohqueue.drop_call
 
    List of Examples
 
@@ -46,6 +50,8 @@ Robert Boisvert
    1.6. mohq_send usage:
    1.7. mohq_retrieve usage:
    1.8. mohq_count usage:
+   1.9. rpc.debug usage:
+   1.10. rpc.drop_call usage:
 
 Chapter 1. Admin Guide
 
@@ -66,10 +72,10 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. mohq_process()
-        4.2. mohq_send(queue_name)
-        4.3. mohq_retrieve(queue_name, URI)
-        4.4. mohq_count(queue_name, pvar)
+        4.1. mohq_process ()
+        4.2. mohq_send (queue_name)
+        4.3. mohq_retrieve (queue_name, URI)
+        4.4. mohq_count (queue_name, pvar)
 
    5. Database Schema
 
@@ -77,6 +83,10 @@ Chapter 1. Admin Guide
         5.2. MOHQCALLS Table
 
    6. Audio Files
+   7. RPC Commands
+
+        7.1. mohqueue.debug
+        7.2. mohqueue.drop_call
 
 1. Overview
 
@@ -136,7 +146,8 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url:
 ...
-modparam("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
+modparam ("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio"
+)
 ...
 
 3.2. db_qtable and db_ctable (str)
@@ -148,8 +159,8 @@ modparam("mohqueue", "db_url", "mysql://kamailio:kamailiorw@localhost/kamailio")
 
    Example 1.2. Set table names:
 ...
-modparam("mohqueue", "db_qtable", "mqueues")
-modparam("mohqueue", "db_ctable", "mcalls")
+modparam ("mohqueue", "db_qtable", "mqueues")
+modparam ("mohqueue", "db_ctable", "mcalls")
 ...
 
 3.3. mohdir (str)
@@ -162,7 +173,7 @@ modparam("mohqueue", "db_ctable", "mcalls")
 
    Example 1.3. Set default directory for audio files:
 ...
-modparam("mohqueue", "mohdir", "/var/kamailio/MOH")
+modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
 ...
 
 3.4. moh_maxcalls (integer)
@@ -176,17 +187,17 @@ modparam("mohqueue", "mohdir", "/var/kamailio/MOH")
 
    Example 1.4. Set default directory for audio files:
 ...
-modparam("mohqueue", "mohdir", "/var/kamailio/MOH")
+modparam ("mohqueue", "mohdir", "/var/kamailio/MOH")
 ...
 
 4. Functions
 
-   4.1. mohq_process()
-   4.2. mohq_send(queue_name)
-   4.3. mohq_retrieve(queue_name, URI)
-   4.4. mohq_count(queue_name, pvar)
+   4.1. mohq_process ()
+   4.2. mohq_send (queue_name)
+   4.3. mohq_retrieve (queue_name, URI)
+   4.4. mohq_count (queue_name, pvar)
 
-4.1.  mohq_process()
+4.1.  mohq_process ()
 
    Checks to see if the current SIP message involves a queue. If it does
    it will process the message and return a TRUE value.
@@ -214,8 +225,8 @@ request_route {
   # main route with limited processing
 ...
   # MOH queue?
-  if (mohq_process()) {
-    xlog("L_DBG", "Handled by mohqueue");
+  if (mohq_process ()) {
+    xlog ("L_DBG", "Handled by mohqueue");
     exit;
   }
   # An error or not a MOH queue message; continue processing
@@ -223,11 +234,11 @@ request_route {
 }
 ...
 
-4.2.  mohq_send(queue_name)
+4.2.  mohq_send (queue_name)
 
    Normally calls enter the queue with an initial INVITE message that 1)
    has a RURI that matches a queue URI and 2) is passed through
-   mohq_process(), which is the preferred method.
+   mohq_process (), which is the preferred method.
 
    This function is used when you wish to send a call into a queue that
    does not match the queue URI.
@@ -244,8 +255,8 @@ request_route {
 ...
   # call is initial INVITE and ready for queue?
   if (some test) {
-    if (mohq_send("main")) {
-      xlog("L_DBG", "Sent call to main mohqueue");
+    if (mohq_send ("main")) {
+      xlog ("L_DBG", "Sent call to main mohqueue");
       exit;
     }
     # failed to enter queue!
@@ -253,7 +264,7 @@ request_route {
   }
 ...
 
-4.3.  mohq_retrieve(queue_name, URI)
+4.3.  mohq_retrieve (queue_name, URI)
 
    Retrieves the oldest call in a queue and redirects it to a URI.
    Although the function returns, the transfer of the call may not have
@@ -274,14 +285,14 @@ request_route {
 #!define CGROUP   "sip:operators@10.211.64.5"
 ...
   # redirect oldest call to operator call group
-  if (mohq_retrieve(MOHQNAME, CGROUP)) {
-      xlog("L_DBG", "Retrieved call from mohqueue");
+  if (mohq_retrieve (MOHQNAME, CGROUP)) {
+      xlog ("L_DBG", "Retrieved call from mohqueue");
       exit;
   }
   # queue is empty or something went wrong
 ...
 
-4.4.  mohq_count(queue_name, pvar)
+4.4.  mohq_count (queue_name, pvar)
 
    Finds the number of calls that are in a queue. It will not count calls
    that are in the process of entering or exiting the queue.
@@ -299,9 +310,9 @@ request_route {
 $var(mohq) = "operators";
 ...
   # more than 10 calls?
-  mohq_count("$var(mohq)", "$var(mohqcnt)");
+  mohq_count ("$var(mohq)", "$var(mohqcnt)");
   if ($var(mohqcnt) > 10) {
-    xlog("L_WARN", "$var(mohq) queue has $var(mohqcnt) calls!");
+    xlog ("L_WARN", "$var(mohq) queue has $var(mohqcnt) calls!");
   }
 ...
 
@@ -402,3 +413,36 @@ $var(mohq) = "operators";
 
    See RTP Audio Video Profile for more information about RTP payload
    types.
+
+7. RPC Commands
+
+   7.1. mohqueue.debug
+   7.2. mohqueue.drop_call
+
+7.1.  mohqueue.debug
+
+   Turns debugging on or off for a queue. The first paramater is the queue
+   name and the second is a number indicating whether debugging should be
+   turned off or on (0 = off; non-0 = on).
+
+   Example 1.9. rpc.debug usage:
+...
+# enable debugging on the test queue
+rpc.debug test 1
+# disable debugging on the main queue
+rpc.debug main 0
+...
+
+7.2.  mohqueue.drop_call
+
+   Drops a call from a queue. The first paramater is the queue name and
+   the second is the call ID. Using a call ID of "*" (asterisk) drops all
+   calls from the queue.
+
+   Example 1.10. rpc.drop_call usage:
+...
+# drop all calls from the test queue
+rpc.drop_call test *
+# drop a call from the main queue
+rpc.drop_call main 3807f84e-f1a860fd-db1d09d4@192.168.137.82
+...
