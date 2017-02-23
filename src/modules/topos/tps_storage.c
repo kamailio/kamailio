@@ -85,6 +85,18 @@ static tps_storage_api_t _tps_storage_api = {
 /**
  *
  */
+int tps_set_storage_api(tps_storage_api_t *tsa)
+{
+	if(tsa==NULL)
+		return -1;
+	memcpy(&_tps_storage_api, tsa, sizeof(tps_storage_api_t));
+
+	return 0;
+}
+
+/**
+ *
+ */
 int tps_storage_lock_set_init(void)
 {
 	_tps_storage_lock_set = lock_set_alloc(TPS_STORAGE_LOCK_SIZE);

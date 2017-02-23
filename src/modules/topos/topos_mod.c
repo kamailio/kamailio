@@ -58,6 +58,7 @@
 
 #include "tps_storage.h"
 #include "tps_msg.h"
+#include "api.h"
 
 MODULE_VERSION
 
@@ -93,6 +94,15 @@ static int child_init(int rank);
 /* Module destroy function prototype */
 static void destroy(void);
 
+int bind_topos(topos_api_t *api);
+
+static cmd_export_t cmds[]={
+	{"bind_topos",  (cmd_function)bind_topos,  0,
+		0, 0, 0},
+
+	{0, 0, 0, 0, 0, 0}
+};
+
 static param_export_t params[]={
 	{"storage",			PARAM_STR, &_tps_storage},
 	{"db_url",			PARAM_STR, &_tps_db_url},
@@ -109,7 +119,7 @@ static param_export_t params[]={
 struct module_exports exports= {
 	"topos",
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	0,
+	cmds,
 	params,
 	0,          /* exported statistics */
 	0,          /* exported MI functions */
@@ -370,3 +380,17 @@ done:
 	return 0;
 }
 
+/**
+ *
+ */
+int bind_topos(topos_api_t *api)
+{
+	if (!api) {
+		ERR("Invalid parameter value\n");
+		return -1;
+	}
+	memset(api, 0, sizeof(topos_api_t));
+	api->set_storage_api = tps_set_storage_api;
+
+	return 0;
+}

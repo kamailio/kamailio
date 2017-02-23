@@ -29,6 +29,7 @@
 #ifndef _TOPOS_API_H_
 #define _TOPOS_API_H_
 
+#include "../../core/sr_module.h"
 #include "tps_storage.h"
 
 typedef int (*tps_insert_dialog_f)(tps_data_t *td);
@@ -50,5 +51,38 @@ typedef struct tps_storage_api {
 	tps_update_dialog_f update_dialog;
 	tps_end_dialog_f end_dialog;
 } tps_storage_api_t;
+
+
+typedef int (*tps_set_storage_api_f)(tps_storage_api_t *tsa);
+int tps_set_storage_api(tps_storage_api_t *tsa);
+
+
+/**
+ * @brief TOPOS API structure
+ */
+typedef struct topos_api {
+	tps_set_storage_api_f set_storage_api;
+} topos_api_t;
+
+typedef int (*bind_topos_f)(topos_api_t* api);
+
+/**
+ * @brief Load the TOPOS API
+ */
+static inline int topos_load_api(topos_api_t *api)
+{
+	bind_topos_f bindtopos;
+
+	bindtopos = (bind_topos_f)find_export("bind_topos", 0, 0);
+	if(bindtopos == 0) {
+		LM_ERR("cannot find bind_topos\n");
+		return -1;
+	}
+	if (bindtopos(api)==-1) {
+		LM_ERR("cannot bind topos api\n");
+		return -1;
+	}
+	return 0;
+}
 
 #endif
