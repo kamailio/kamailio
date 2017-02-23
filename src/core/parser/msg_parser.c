@@ -241,6 +241,7 @@ char* get_hdr_field(char* const buf, char* const end, struct hdr_field* const hd
 		case HDR_PAI_T:
 		case HDR_PPI_T:
 		case HDR_REASON_T:
+		case HDR_CALLINFO_T:
 		case HDR_OTHER_T:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -534,6 +535,9 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 				break;
 		    case HDR_REASON_T:
 				msg->parsed_flag|=HDR_REASON_F;
+				break;
+			case HDR_CALLINFO_T:
+				msg->parsed_flag|=HDR_CALLINFO_F;
 				break;
 			default:
 				BUG("unknown header type %d\n", hf->type);
