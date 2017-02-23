@@ -31,7 +31,7 @@
 #ifndef CASE_CALL_H
 #define CASE_CALL_H
 
-#include "../comp_defs.h"
+#include "case_c_inf.h"
 
 #define ID_CASE                      \
      switch(LOWER_DWORD(val)) {      \
@@ -44,6 +44,7 @@
 	     hdr->type = HDR_CALLID_T; \
 	     p += 4;                 \
 	     goto dc_end;            \
+     C_INFO_CASE;                  \
      }
 
 

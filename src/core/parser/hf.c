@@ -193,6 +193,7 @@ void clean_hdr_field(struct hdr_field* const hf)
 		case HDR_PATH_T:
 		case HDR_PRIVACY_T:
 		case HDR_REASON_T:
+		case HDR_CALLINFO_T:
 			break;
 
 		default:

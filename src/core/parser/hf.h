@@ -105,6 +105,7 @@ enum _hdr_types_t {
 	HDR_PATH_T                         /*!< Path header field */,
 	HDR_PRIVACY_T				       /*!< Privacy header field */,
 	HDR_REASON_T				       /**< Reason header field */,
+	HDR_CALLINFO_T                     /*!< Call-Info header field*/,
 	HDR_EOH_T					       /*!< End of message header */
 };
 
@@ -178,6 +179,7 @@ typedef unsigned long long hdr_flags_t;
 #define HDR_PATH_F                  HDR_F_DEF(PATH)
 #define HDR_PRIVACY_F               HDR_F_DEF(PRIVACY)
 #define HDR_REASON_F				HDR_F_DEF(REASON)
+#define HDR_CALLINFO_F				HDR_F_DEF(CALLINFO)
 
 #define HDR_OTHER_F					HDR_F_DEF(OTHER)
 

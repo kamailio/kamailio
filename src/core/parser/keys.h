@@ -208,6 +208,9 @@
 /* _iden_ is already defined */
 /* _tity_ is already defined */
 
+/* _call_ is already defined */
+#define __inf_ 0x666e692d /* "-inf" */
+
 /*!} */
 
 #endif /* KEYS_H */
