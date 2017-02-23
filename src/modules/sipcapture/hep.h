@@ -177,5 +177,52 @@ struct hep_generic_recv {
 
 typedef struct hep_generic_recv hep_generic_recv_t;
 
+#define HEP3_PACK_INIT(buf) \
+		union { \
+			hep_chunk_uint8_t chunk8; \
+			hep_chunk_uint16_t chunk16; \
+			hep_chunk_uint32_t chunk32; \
+			hep_chunk_t chunkpl; \
+			uint16_t len; \
+		} _tmpu; \
+		char *_tmp_p = (buf); \
+		memcpy(_tmp_p, "HEP3", 4); \
+		_tmp_p += 4 + 2/* skip length */;
+
+#define HEP3_PACK_FINALIZE(buf, lenp) \
+		do { \
+			_tmpu.len = htons(_tmp_p - (char *)(buf)); \
+			memcpy((void *)(&(((hep_ctrl_t *)(buf))->length)), (void*)&_tmpu.len, 2); \
+			*lenp = _tmp_p - (char *)(buf); \
+		} while (0)
+
+#define _HEP3_PACK_CHUNK_GENERIC(type, tmpvar, vid, tid, val) \
+		do { \
+			(tmpvar).chunk.vendor_id = htons(vid); \
+			(tmpvar).chunk.type_id = htons(tid); \
+			(tmpvar).chunk.length = htons(sizeof(type)); \
+			(tmpvar).data = (val); \
+			memcpy(_tmp_p, (void *) &(tmpvar), sizeof(type)); \
+			_tmp_p += sizeof(type); \
+		} while (0)
+
+#define HEP3_PACK_CHUNK_UINT8(vid, tid, val) _HEP3_PACK_CHUNK_GENERIC(hep_chunk_uint8_t, _tmpu.chunk8, vid, tid, val)
+#define HEP3_PACK_CHUNK_UINT16(vid, tid, val) _HEP3_PACK_CHUNK_GENERIC(hep_chunk_uint16_t, _tmpu.chunk16, vid, tid, htons(val))
+#define HEP3_PACK_CHUNK_UINT16_NBO(vid, tid, val) _HEP3_PACK_CHUNK_GENERIC(hep_chunk_uint16_t, _tmpu.chunk16, vid, tid, (val))
+#define HEP3_PACK_CHUNK_UINT32(vid, tid, val) _HEP3_PACK_CHUNK_GENERIC(hep_chunk_uint32_t, _tmpu.chunk32, vid, tid, htonl(val))
+#define HEP3_PACK_CHUNK_UINT32_NBO(vid, tid, val) _HEP3_PACK_CHUNK_GENERIC(hep_chunk_uint32_t, _tmpu.chunk32, vid, tid, (val))
+
+#define HEP3_PACK_CHUNK_DATA(vid, tid, val, len) \
+		do { \
+			_tmpu.chunkpl.vendor_id = htons(vid); \
+			_tmpu.chunkpl.type_id = htons(tid); \
+			_tmpu.chunkpl.length = htons(sizeof(hep_chunk_t) + (len)); \
+			memcpy(_tmp_p, (void *) &_tmpu.chunkpl, sizeof(hep_chunk_t)); \
+			_tmp_p += sizeof(hep_chunk_t); \
+			memcpy(_tmp_p, (void *) (val), len); \
+			_tmp_p += len; \
+		} while (0)
+
+#define HEP3_PACK_CHUNK_IP6(vid, tid, paddr) HEP3_PACK_CHUNK_DATA(vid, tid, paddr, sizeof(struct in6_addr))
 
 #endif
