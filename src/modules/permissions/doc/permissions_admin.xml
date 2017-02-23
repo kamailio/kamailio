@@ -1201,7 +1201,6 @@ if (allow_trusted("$si", "$proto")) {
 	</section>
 	</section>
 
-	</section>
 	<section>
 	<title>RPC Commands</title>
 	<section id ="permissions.r.addressReload">
