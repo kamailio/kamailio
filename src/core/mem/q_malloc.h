@@ -28,6 +28,9 @@
 #define q_malloc_h
 
 #include "meminfo.h"
+#ifdef VALGRIND_MEMCHECK
+#include <valgrind/memcheck.h>
+#endif
 
 #ifdef DBG_SR_MEMORY
 #define DBG_QM_MALLOC

@@ -162,6 +162,9 @@ static inline void qm_insert_free(struct qm_block* qm, struct qm_frag* frag)
 			f=f->u.nxt_free){
 		if (frag->size <= f->size) break;
 	}
+#ifdef VALGRIND_MEMCHECK
+	VALGRIND_MEMPOOL_FREE(qm, (char*)frag + sizeof(struct qm_frag));
+#endif /* #ifdef VALGRIND_MEMCHECK */
 	/*insert it here*/
 	prev=FRAG_END(f)->prev_free;
 	prev->u.nxt_free=frag;
@@ -236,6 +239,15 @@ struct qm_block* qm_malloc_init(char* address, unsigned long size, int type)
 		qm->free_hash[h].tail.size=0;
 	}
 
+#ifdef VALGRIND_MEMCHECK
+	VALGRIND_CREATE_MEMPOOL(qm, 0 /*sizeof(unsigned long)*/, 0);
+	VALGRIND_MEMPOOL_ALLOC(qm, qm->first_frag, sizeof(struct qm_frag));
+	VALGRIND_MAKE_MEM_DEFINED(qm->first_frag, sizeof(struct qm_frag));
+	VALGRIND_MEMPOOL_ALLOC(qm, FRAG_END(qm->first_frag), sizeof(struct qm_frag_end));
+	VALGRIND_MAKE_MEM_DEFINED(FRAG_END(qm->first_frag), sizeof(struct qm_frag_end));
+	VALGRIND_MEMPOOL_ALLOC(qm, (char*)qm->first_frag + sizeof(struct qm_frag), qm->first_frag->size);
+#endif /* #ifdef VALGRIND_MEMCHECK */
+
 	/* link initial fragment into the free list*/
 
 	qm_insert_free(qm, qm->first_frag);
@@ -254,6 +266,9 @@ static inline void qm_detach_free(struct qm_block* qm, struct qm_frag* frag)
 {
 	struct qm_frag *prev;
 	struct qm_frag *next;
+#ifdef VALGRIND_MEMCHECK
+	VALGRIND_MEMPOOL_ALLOC(qm, (char*)frag + sizeof(struct qm_frag), frag->size);
+#endif /* #ifdef VALGRIND_MEMCHECK */
 
 	prev=FRAG_END(frag)->prev_free;
 	next=frag->u.nxt_free;
@@ -315,15 +330,28 @@ int split_frag(struct qm_block* qm, struct qm_frag* f, size_t new_size)
 #else
 	if (rest>(FRAG_OVERHEAD+MIN_FRAG_SIZE)){
 #endif
+#ifdef VALGRIND_MEMCHECK
+		VALGRIND_MEMPOOL_CHANGE(qm, (char*)f + sizeof(struct qm_frag), (char*)f + sizeof(struct qm_frag), new_size);
+#endif /* #ifdef VALGRIND_MEMCHECK */
 		f->size=new_size;
 		/*split the fragment*/
 		end=FRAG_END(f);
+#ifdef VALGRIND_MEMCHECK
+		VALGRIND_MEMPOOL_ALLOC(qm, end, sizeof(struct qm_frag_end));
+#endif /* #ifdef VALGRIND_MEMCHECK */
 		end->size=new_size;
 		n=(struct qm_frag*)((char*)end+sizeof(struct qm_frag_end));
+#ifdef VALGRIND_MEMCHECK
+		VALGRIND_MEMPOOL_ALLOC(qm, n, sizeof(struct qm_frag));
+#endif /* #ifdef VALGRIND_MEMCHECK */
 		n->size=rest-FRAG_OVERHEAD;
+#ifdef VALGRIND_MEMCHECK
+		VALGRIND_MEMPOOL_ALLOC(qm, (char *)n + sizeof(struct qm_frag), n->size);
+#endif /* #ifdef VALGRIND_MEMCHECK */
 		FRAG_END(n)->size=n->size;
 		FRAG_CLEAR_USED(n); /* never used */
 		qm->real_used+=FRAG_OVERHEAD;
+
 #ifdef DBG_QM_MALLOC
 		end->check1=END_CHECK_PATTERN1;
 		end->check2=END_CHECK_PATTERN2;

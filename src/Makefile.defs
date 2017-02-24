@@ -118,6 +118,10 @@ MEMMNG ?= 0
 # 0 - off (no-debug mode)
 # 1 - on (debug mode)
 MEMDBG ?= 1
+# Valgrind memcheck support
+# 0 - off
+# 1 - on
+MEMCHECK ?= 0
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -694,7 +698,13 @@ C_DEFS+= -DTLSF_MALLOC
 ifeq 	($(MEMDBG), 1)
 	C_DEFS+= -DDBG_SR_MEMORY
 endif
-
+# FIXME: does not seem to work
+ifeq 	($(MEMCHECK), 1)
+	C_DEFS+= -DVALGRIND_MEMCHECK
+endif
+####
+C_DEFS+= -DVALGRIND_MEMCHECK
+# /FIXME
 ifneq ($(PKG_MEM_SIZE),)
 	C_DEFS+= -DPKG_MEM_SIZE=$(PKG_MEM_SIZE)
 endif
