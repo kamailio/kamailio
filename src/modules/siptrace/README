@@ -22,6 +22,12 @@ Giacomo Vacca
 
    <giacomo.vacca@gmail.com>
 
+Edited by
+
+Camille Oudot
+
+   <camille.oudot@orange.com>
+
    Copyright © 2010 asipto.com
 
    Copyright © 2006 voice-system.ro
@@ -62,6 +68,7 @@ Giacomo Vacca
         4. Functions
 
               4.1. sip_trace([address][, correlation_id])
+              4.2. hlog([correlation_id,] message)
 
         5. RPC Commands
 
@@ -92,6 +99,7 @@ Giacomo Vacca
    1.18. Set trace_mode parameter
    1.19. Set auth_key parameter
    1.20. sip_trace() usage
+   1.21. hlog() usage
 
 Chapter 1. Admin Guide
 
@@ -128,6 +136,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. sip_trace([address][, correlation_id])
+        4.2. hlog([correlation_id,] message)
 
    5. RPC Commands
 
@@ -457,6 +466,7 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 4. Functions
 
    4.1. sip_trace([address][, correlation_id])
+   4.2. hlog([correlation_id,] message)
 
 4.1.  sip_trace([address][, correlation_id])
 
@@ -481,6 +491,25 @@ sip_trace();
 sip_trace("sip:10.1.1.2:5085");
 ...
 sip_trace("sip:10.1.1.2:5085", "$ci-abc");
+...
+
+4.2.  hlog([correlation_id,] message)
+
+   Sends a log event as a HEP3 packet to the homer host configured in
+   duplicate_uri.
+
+   Meaning of the parameters is as follows:
+     * correlation_id (optional) - Homer correlation ID for this event. If
+       this parameter is not set, the current message's call-id will be
+       used. (This parameter may contain PVs)
+     * message - The text to send to Homer as log event. (This parameter
+       may contain PVs)
+
+   Example 1.21. hlog() usage
+...
+hlog("[cfg:$cfg(line)] This is a log from kamailio to Homer");
+...
+hlog("$hdr(P-MyID)", "Another one with a custom correlation ID");
 ...
 
 5. RPC Commands
