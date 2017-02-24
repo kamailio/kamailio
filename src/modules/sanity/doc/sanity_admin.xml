@@ -110,6 +110,7 @@
 			duplicated To/From tags (4096) - checks for the presence of duplicated
 			tags in To/From headers.
 			</para>
+		</listitem>
 		<listitem>
 			<para>
 			authorization header (8192) - checks if the Authorization is valid
@@ -120,7 +121,7 @@
 		</itemizedlist>
 	</para>
     </section>
-    
+
     <section id="sanity.dep">
 	<title>Dependencies</title>
 	<para>
