@@ -67,7 +67,6 @@ int sca_call_info_build_header(sca_mod *, sca_subscription *, char *, int);
 int sca_call_info_append_header_for_appearance_index(sca_subscription *, int,
 		char *, int);
 
-hdr_field_t *sca_call_info_header_find(hdr_field_t *);
 int sca_call_info_body_parse(str *, sca_call_info *);
 int sca_call_info_free(sca_call_info *);
 
