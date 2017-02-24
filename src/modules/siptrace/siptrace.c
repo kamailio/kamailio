@@ -95,6 +95,11 @@ static int sip_trace(struct sip_msg*, struct dest_info*, str *correlation_id_str
 static int sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
 static int fixup_siptrace(void ** param, int param_no);
 
+static int w_hlog1(struct sip_msg*, char* message, char*);
+static int w_hlog2(struct sip_msg*, char *correlationid, char* message);
+static int hlog(struct sip_msg*, str*, str*);
+
+
 static int sip_trace_store_db(struct _siptrace_data* sto);
 static int trace_send_duplicate(char *buf, int len, struct dest_info*);
 
@@ -184,6 +189,8 @@ static cmd_export_t cmds[] = {
 	{"sip_trace", (cmd_function)sip_trace, 0, 0, 0, ANY_ROUTE},
 	{"sip_trace", (cmd_function)sip_trace, 1, fixup_siptrace, 0, ANY_ROUTE},
 	{"sip_trace", (cmd_function)sip_trace2, 2, fixup_spve_spve, 0, ANY_ROUTE},
+	{"hlog", (cmd_function)w_hlog1, 1, fixup_spve_null, 0, ANY_ROUTE},
+	{"hlog", (cmd_function)w_hlog2, 2, fixup_spve_spve, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -2263,4 +2270,150 @@ static int siptrace_init_rpc(void)
 		return -1;
 	}
 	return 0;
+}
+
+static int w_hlog1(struct sip_msg* msg, char *message, char *_)
+{
+	str smessage;
+	if(fixup_get_svalue(msg, (gparam_t*)message, &smessage)!=0) {
+		LM_ERR("unable to parse the message\n");
+		return -1;
+	}
+	return hlog(msg, NULL, &smessage);
+}
+
+static int w_hlog2(struct sip_msg* msg, char *correlationid, char *message)
+{
+	str scorrelationid, smessage;
+	if(fixup_get_svalue(msg, (gparam_t*)correlationid, &scorrelationid)!=0) {
+		LM_ERR("unable to parse the correlation id\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)message, &smessage)!=0) {
+		LM_ERR("unable to parse the message\n");
+		return -1;
+	}
+	return hlog(msg, &scorrelationid, &smessage);
+}
+
+static int hlog(struct sip_msg *msg, str *correlationid, str *message) {
+	char *buf;
+	size_t len;
+	struct timeval tvb;
+	struct timezone tz;
+	struct dest_info dst;
+	struct proxy_l* p = NULL;
+	struct socket_info *si;
+
+	if (!correlationid) {
+		if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1) ||
+					(msg->callid==NULL)) )
+		{
+			LM_ERR("cannot parse Call-Id header\n");
+			return -1;
+		}
+		correlationid = &(msg->callid->body);
+	}
+
+	len = sizeof(hep_ctrl_t)
+		+ sizeof(hep_chunk_uint8_t) /* ip protocol family */
+		+ sizeof(hep_chunk_uint8_t) /* ip protocol id */
+		+ sizeof(hep_chunk_t) + 16 /* src address (enough space for ipv6) */
+		+ sizeof(hep_chunk_t) + 16 /* dst address (ditto) */
+		+ sizeof(hep_chunk_uint16_t) /* src port */
+		+ sizeof(hep_chunk_uint16_t) /* dst port */
+		+ sizeof(hep_chunk_uint32_t) /* timestamp */
+		+ sizeof(hep_chunk_uint32_t) /* timestamp micro */
+		+ sizeof(hep_chunk_uint32_t) /* capture id */
+		+ sizeof(hep_chunk_uint8_t) /* protocol type */
+		+ sizeof(hep_chunk_t) + correlationid->len
+		+ sizeof(hep_chunk_t) + message->len;
+
+	if (auth_key_str.len) {
+		len += sizeof(hep_chunk_t) + auth_key_str.len;
+	}
+
+	buf = pkg_malloc(len);
+
+	if (!buf) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+
+	gettimeofday(&tvb, &tz);
+
+	init_dest_info(&dst);
+	dst.proto = PROTO_UDP;
+	p = mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT, dst.proto);
+	if (p == 0)
+	{
+		LM_ERR("bad host name in uri\n");
+		goto error;
+	}
+
+	hostent2su(&dst.to, &p->host, p->addr_idx, (p->port)?p->port:SIP_PORT);
+	LM_DBG("setting up the socket_info\n");
+
+	if (force_send_sock_str.s) {
+		LM_DBG("force_send_sock activated, grep for the sock_info\n");
+		si = grep_sock_info(&force_send_sock_uri->host,
+				(force_send_sock_uri->port_no)?force_send_sock_uri->port_no:SIP_PORT,
+				PROTO_UDP);
+		if (!si) {
+			LM_WARN("cannot grep socket info\n");
+		} else {
+			LM_DBG("found socket while grep: [%.*s] [%.*s]\n", si->name.len, si->name.s, si->address_str.len, si->address_str.s);
+			dst.send_sock = si;
+		}
+	}
+
+	if (dst.send_sock == 0) {
+		dst.send_sock=get_send_socket(0, &dst.to, dst.proto);
+		if (dst.send_sock == 0) {
+			LM_ERR("can't forward to af %d, proto %d no corresponding"
+					" listening socket\n", dst.to.s.sa_family, dst.proto);
+			goto error;
+		}
+	}
+
+	HEP3_PACK_INIT(buf);
+	HEP3_PACK_CHUNK_UINT8 (0, 0x0001, dst.send_sock->address.af);
+	HEP3_PACK_CHUNK_UINT8 (0, 0x0002, 0x11);
+	if (dst.send_sock->address.af == AF_INET) {
+		HEP3_PACK_CHUNK_UINT32_NBO(0, 0x0003, dst.send_sock->address.u.addr32[0]);
+		HEP3_PACK_CHUNK_UINT32_NBO(0, 0x0004, dst.to.sin.sin_addr.s_addr);
+		HEP3_PACK_CHUNK_UINT16_NBO(0, 0x0008, dst.to.sin.sin_port);
+	} else if (dst.send_sock->address.af == AF_INET6) {
+		HEP3_PACK_CHUNK_IP6       (0, 0x0005, dst.send_sock->address.u.addr);
+		HEP3_PACK_CHUNK_IP6       (0, 0x0006, &dst.to.sin6.sin6_addr);
+		HEP3_PACK_CHUNK_UINT16_NBO(0, 0x0008, dst.to.sin6.sin6_port);
+	} else {
+		LM_ERR("unknown address family [%u]\n", dst.send_sock->address.af);
+		goto error;
+	}
+	HEP3_PACK_CHUNK_UINT16(0, 0x0007, dst.send_sock->port_no);
+
+	HEP3_PACK_CHUNK_UINT32(0, 0x0009, tvb.tv_sec);
+	HEP3_PACK_CHUNK_UINT32(0, 0x000a, tvb.tv_usec);
+	HEP3_PACK_CHUNK_UINT8 (0, 0x000b, 0x64); /* protocol type: log */
+	HEP3_PACK_CHUNK_UINT32(0, 0x000c, hep_capture_id);
+	HEP3_PACK_CHUNK_DATA  (0, 0x0011, correlationid->s, correlationid->len);
+	if (auth_key_str.len) {
+		HEP3_PACK_CHUNK_DATA(0, 0x000e, auth_key_str.s, auth_key_str.len);
+	}
+	HEP3_PACK_CHUNK_DATA  (0, 0x000f, message->s, message->len);
+	HEP3_PACK_FINALIZE(buf, &len);
+
+	if (msg_send_buffer(&dst, buf, len, 1)<0)
+	{
+		LM_ERR("cannot send hep log\n");
+		goto error;
+	}
+
+	pkg_free(buf);
+	return 1;
+
+error:
+	pkg_free(buf);
+	return -1;
 }
