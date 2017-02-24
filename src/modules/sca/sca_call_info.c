@@ -308,23 +308,6 @@ int sca_call_info_append_header_for_appearance_index(sca_subscription *sub,
 	return (-1);
 }
 
-hdr_field_t *sca_call_info_header_find(hdr_field_t *msg_hdrs)
-{
-	hdr_field_t *hdr = NULL;
-
-	for (hdr = msg_hdrs; hdr != NULL; hdr = hdr->next) {
-		if (hdr->type == HDR_OTHER_T
-				&& hdr->name.len == SCA_CALL_INFO_HEADER_NAME.len) {
-			if (strncasecmp(hdr->name.s, SCA_CALL_INFO_HEADER_NAME.s,
-					SCA_CALL_INFO_HEADER_NAME.len) == 0) {
-				break;
-			}
-		}
-	}
-
-	return (hdr);
-}
-
 int sca_call_info_body_parse(str *hdr_body, sca_call_info *call_info)
 {
 	str s = STR_NULL;
@@ -485,23 +468,10 @@ static int sca_call_info_header_remove(sip_msg_t *msg)
 		LM_ERR("Failed to parse_headers\n");
 		return (-1);
 	}
-
-#ifdef notdef
-	for (hdr = sca_call_info_header_find(msg->headers); hdr != NULL;
-			hdr = sca_call_info_header_find(hdr->next)) {
-#endif // notdef
-	for (hdr = msg->headers; hdr; hdr = hdr->next) {
-		if (hdr->name.len != SCA_CALL_INFO_HEADER_NAME.len) {
-			continue;
-		}
-		if (memcmp(hdr->name.s, SCA_CALL_INFO_HEADER_NAME.s, hdr->name.len)
-				!= 0) {
-			continue;
-		}
-
+	for (hdr = get_hdr(msg, HDR_CALLINFO_T); hdr; hdr = next_sibling_hdr(hdr)) {
 		// del_lump takes packet, offset, lump length, & hdr type
 		ci_hdr_lump = del_lump(msg, hdr->name.s - msg->buf, hdr->len,
-				HDR_OTHER_T);
+				HDR_CALLINFO_T);
 		if (ci_hdr_lump == NULL) {
 			LM_ERR("Failed to del_lump Call-Info header\n");
 			rc = -1;
@@ -1883,7 +1853,7 @@ int sca_call_info_update(sip_msg_t *msg, char *p1, str *uri_to, str *uri_from)
 	}
 
 	memset(&call_info, 0, sizeof(sca_call_info));
-	call_info_hdr = sca_call_info_header_find(msg->headers);
+	call_info_hdr = get_hdr(msg, HDR_CALLINFO_T);
 	if (!SCA_HEADER_EMPTY(call_info_hdr)) {
 		// this needs to accomodate comma-separated appearance info
 		if (sca_call_info_body_parse(&call_info_hdr->body, &call_info) < 0) {

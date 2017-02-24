@@ -1197,7 +1197,7 @@ int sca_handle_subscribe(sip_msg_t *msg, char *p1, char *p2)
 	pkg_free(sub_key.s);
 
 	if (req_sub.event == SCA_EVENT_TYPE_LINE_SEIZE) {
-		call_info_hdr = sca_call_info_header_find(msg->headers);
+		call_info_hdr = get_hdr(msg, HDR_CALLINFO_T);
 		if (call_info_hdr) {
 			if (sca_call_info_body_parse(&call_info_hdr->body, &call_info)
 					< 0) {
