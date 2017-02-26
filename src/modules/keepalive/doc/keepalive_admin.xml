@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+		<title>Overview</title>
+		<para>
+		This module performs destinations monitoring either for itself, or on the behalf of other modules
+		</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+				The following modules must be loaded before this module:
+				<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>tm</emphasis> - Transaction module
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed before running
+				&kamailio; with this module loaded:
+				<itemizedlist>
+				<listitem>
+	            <para>
+					<emphasis>none</emphasis>
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>Parameters</title>
+			<section>
+				<title><varname>ping_interval</varname> (integer)</title>
+				<para>
+					Interval requests are sent to destinations (in seconds)
+				</para>
+				<para>
+				<emphasis>
+					Default value is 30 seconds.
+				</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>ping_interval</varname> parameter</title>
+					<programlisting format="linespecific">
+...
+modparam("keepalive", "ping_interval", 10)
+...
+					</programlisting>
+				</example>
+			</section>
+			<section>
+				<title><varname>destination</varname> (string)</title>
+				<para>
+					Allows to specify statically destinations you want to monitor
+				</para>
+				<example>
+					<title>Set <varname>destination</varname> parameter</title>
+					<programlisting format="linespecific">
+...
+modparam("keepalive", "destination", "192.168.10.20")
+modparam("keepalive", "destination", "sip.provider.com")
+...
+					</programlisting>
+				</example>
+			</section>
+		</section>
+
+		<section>
+			<title>Functions</title>
+			<section id="keepalive.is_alive">
+			    <title>
+					<function moreinfo="none">is_alive(destination)</function>
+			    </title>
+				<para>
+					Get destination status
+				</para>
+		        <para>
+					Parameter <quote>destination</quote> is destination you want to check status
+		        </para>
+        		<para>
+		            Return value: 1 if destination is up, 2 if destination is down, -1 on error.
+        		</para>
+		        <para>
+				    This function can be used from ANY_ROUTE.
+		        </para>
+				<example>
+					<title><function>is_alive()</function> usage</title>
+					<programlisting format="linespecific">
+...
+is_alive("192.168.10.20");
+...
+			        </programlisting>
+			    </example>
+			</section>
+		</section>
+	</section>
+</chapter>
+
