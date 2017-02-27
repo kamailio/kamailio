@@ -10,8 +10,8 @@ var FLT_ACCMISSED=2
 var FLT_ACCFAILED=3
 var FLT_NATS=5
 
-FLB_NATB=6
-FLB_NATSIPPING=7
+var FLB_NATB=6
+var FLB_NATSIPPING=7
 
 // SIP request routing
 // equivalent of request_route{}
