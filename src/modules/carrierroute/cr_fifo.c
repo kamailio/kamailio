@@ -41,6 +41,7 @@
 #include "cr_rule.h"
 
 
+#ifdef MI_REMOVED
 /**
  * Defines the option set for the different fifo commands
  * Every line is for a command,
@@ -54,6 +55,7 @@ static unsigned int opt_settings[5][3] = {
         {O_HOST|O_DOMAIN|O_PREFIX, O_PROB|O_NEW_TARGET, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX},
         {O_HOST|O_DOMAIN|O_PREFIX, O_PROB, O_R_PREFIX|O_R_SUFFIX|O_NEW_TARGET|O_H_INDEX}
 };
+#endif
 
 int fifo_err;
 
@@ -456,6 +458,7 @@ static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, c
 }
 #endif
 
+#ifdef MI_REMOVED
 /**
  * parses the command line argument for options
  *
@@ -606,8 +609,10 @@ static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
 	}
 	return 0;
 }
+#endif
 
 
+#ifdef MI_REMOVED
 /**
  * loads the config data into shared memory (but doesn't really
  * share it), updates the routing data and writes it to the config
@@ -729,6 +734,7 @@ errout:
 	clear_route_data(rd);
 	return -1;
 }
+#endif
 
 
 /**
