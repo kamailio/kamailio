@@ -18,15 +18,6 @@ CURL_BUILDER=$(shell \
 	fi)
 endif
 
-ifneq ($(XML2CFG),)
-	DEFS += $(shell $(XML2CFG) --cflags )
-	LIBS += $(shell $(XML2CFG) --libs)
-else
-	DEFS+=-I$(LOCALBASE)/include/libxml2 \
-      -I$(LOCALBASE)/include
-	LIBS+=-L$(LOCALBASE)/lib -lxml2
-endif
-
 ifneq ($(CURL_BUILDER),)
 	DEFS += $(shell $(CURL_BUILDER) --cflags )
 	LIBS += $(shell $(CURL_BUILDER) --libs)
