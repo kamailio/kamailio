@@ -39,6 +39,7 @@ MODULE_VERSION
 
 static int mt_mem_alloc_f(struct sip_msg*, char*,char*);
 static int mt_mem_free_f(struct sip_msg*, char*,char*);
+static int mt_pkg_overflow_f(struct sip_msg*, char*,char*);
 static int mod_init(void);
 static void mod_destroy(void);
 
@@ -47,6 +48,8 @@ static cmd_export_t cmds[]={
 	{"mt_mem_alloc", mt_mem_alloc_f, 1, fixup_var_int_1,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
 	{"mt_mem_free", mt_mem_free_f, 1, fixup_var_int_1,
+		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
+	{"mt_pkg_overflow", mt_pkg_overflow_f, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONSEND_ROUTE},
 	{0, 0, 0, 0, 0}
 };
@@ -672,6 +675,25 @@ static int mt_mem_free_f(struct sip_msg* msg, char* sz, char* foo)
 	return (freed==0)?1:freed;
 }
 
+static int mt_pkg_overflow_f(struct sip_msg* msg, char *p1,char *p2) {
+	int i;
+	unsigned long *a;
+
+	a = pkg_malloc(1024 * sizeof(unsigned long));
+
+	if (!a) {
+		LM_ERR("no more pkg\n");
+		return -1;
+	}
+
+	*(a - 1) = 0xdeadbeef;
+	*(a + 1024) = 0xdeadc0de;
+	for (i = 0 ; i < 1024; i++) {
+		a[i] = (long)i;
+	}
+
+	return 1;
+}
 
 
 /* RPC exports: */
