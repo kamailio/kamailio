@@ -558,17 +558,19 @@ makefile_vars makefile-vars:
 dist: tar
 
 tar: makefile_vars $(auto_gen_keep)
-	$(TAR) -C .. \
-		--exclude=$(notdir $(CURDIR))/test* \
-		--exclude=$(notdir $(CURDIR))/tmp* \
-		--exclude=$(notdir $(CURDIR))/debian \
-		--exclude=$(notdir $(CURDIR))/debian/$(MAIN_NAME) \
-		--exclude=$(notdir $(CURDIR))/debian/$(MAIN_NAME)-* \
-		--exclude=$(notdir $(CURDIR))/$(MAIN_NAME)_tls* \
+	$(TAR) -C ../.. \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/test* \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/tmp* \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/debian \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/debian/$(MAIN_NAME) \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/debian/$(MAIN_NAME)-* \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/$(MAIN_NAME)_tls* \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/misc/obsolete \
 		--exclude=.git* \
 		--exclude=CVS* \
 		--exclude=.svn* \
 		--exclude=.cvsignore \
+		--exclude=tags \
 		--exclude=librpath.lst \
 		--exclude=libiname.lst \
 		--exclude=makecfg.lst \
@@ -577,7 +579,8 @@ tar: makefile_vars $(auto_gen_keep)
 		--exclude=*.[do] \
 		--exclude=*.so \
 		--exclude=*.il \
-		--exclude=$(notdir $(CURDIR))/$(MAIN_NAME) \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/$(MAIN_NAME) \
+		--exclude=$(notdir $(realpath $(shell pwd)/..))/src/$(MAIN_NAME) \
 		--exclude=*.gz \
 		--exclude=*.bz2 \
 		--exclude=*.tar \
@@ -586,15 +589,15 @@ tar: makefile_vars $(auto_gen_keep)
 		--exclude=*.swp \
 		--exclude=*.swo \
 		${tar_extra_args} \
-		-cf - $(notdir $(CURDIR)) | \
-			(mkdir -p tmp/_tar1; mkdir -p tmp/_tar2 ; \
-			    cd tmp/_tar1; $(TAR) -xf - ) && \
-			    mv tmp/_tar1/$(notdir $(CURDIR)) \
-			       tmp/_tar2/"$(NAME)-$(RELEASE)" && \
-			    (cd tmp/_tar2 && $(TAR) \
+		-cf - $(notdir $(realpath $(shell pwd)/..)) | \
+			(mkdir -p ../tmp/_tar1; mkdir -p ../tmp/_tar2 ; \
+			    cd ../tmp/_tar1; $(TAR) -xf - ) && \
+			    mv ../tmp/_tar1/$(notdir $(realpath $(shell pwd)/..)) \
+			       ../tmp/_tar2/"$(NAME)-$(RELEASE)" && \
+			    (cd ../tmp/_tar2 && $(TAR) \
 			                    -zcf ../../"$(tar_name)".tar.gz \
 			                               "$(NAME)-$(RELEASE)" ) ; \
-			    rm -rf tmp/_tar1; rm -rf tmp/_tar2
+			    rm -rf ../tmp/_tar1; rm -rf ../tmp/_tar2; rm -rf ../tmp
 
 # binary dist. tar.gz
 .PHONY: bin
