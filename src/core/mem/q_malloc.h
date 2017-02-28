@@ -71,6 +71,10 @@
  *                            ROUNDTO from bucket to bucket
  * +1 .... end -  size = 2^k, big buckets */
 
+#ifdef VALGRIND_MEMCHECK
+typedef void * _qm_redzone_t;
+#endif
+
 struct qm_frag{
 	unsigned long size;
 	union{
@@ -84,6 +88,9 @@ struct qm_frag{
 	unsigned long line;
 	unsigned long check;
 #endif
+#ifdef VALGRIND_MEMCHECK
+	_qm_redzone_t _rz;
+#endif /* #ifdef VALGRIND_MEMCHECK */
 };
 
 struct qm_frag_end{
@@ -95,6 +102,9 @@ struct qm_frag_end{
 #endif
 	unsigned long size;
 	struct qm_frag* prev_free;
+#ifdef VALGRIND_MEMCHECK
+	_qm_redzone_t _rz;
+#endif /* #ifdef VALGRIND_MEMCHECK */
 };
 
 

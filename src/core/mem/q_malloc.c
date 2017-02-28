@@ -61,7 +61,13 @@
 
 
 #define ROUNDTO_MASK	(~((unsigned long)ROUNDTO-1))
-#define ROUNDUP(s)		(((s)+(ROUNDTO-1))&ROUNDTO_MASK)
+
+#ifdef VALGRIND_MEMCHECK
+	#define ROUNDUP(s)		(((s+sizeof(_qm_redzone_t))+(ROUNDTO-1))&ROUNDTO_MASK)
+#else
+	#define ROUNDUP(s)		(((s)+(ROUNDTO-1))&ROUNDTO_MASK)
+#endif /* #ifdef VALGRIND_MEMCHECK */
+
 #define ROUNDDOWN(s)	((s)&ROUNDTO_MASK)
 
 
@@ -163,7 +169,10 @@ static inline void qm_insert_free(struct qm_block* qm, struct qm_frag* frag)
 		if (frag->size <= f->size) break;
 	}
 #ifdef VALGRIND_MEMCHECK
-	VALGRIND_MEMPOOL_FREE(qm, (char*)frag + sizeof(struct qm_frag));
+	if (qm->type == MEM_TYPE_PKG) {
+		VALGRIND_DISCARD((char*)frag + sizeof(struct qm_frag));
+		VALGRIND_MEMPOOL_FREE(qm, (char*)frag + sizeof(struct qm_frag));
+	}
 #endif /* #ifdef VALGRIND_MEMCHECK */
 	/*insert it here*/
 	prev=FRAG_END(f)->prev_free;
@@ -240,12 +249,17 @@ struct qm_block* qm_malloc_init(char* address, unsigned long size, int type)
 	}
 
 #ifdef VALGRIND_MEMCHECK
-	VALGRIND_CREATE_MEMPOOL(qm, 0 /*sizeof(unsigned long)*/, 0);
-	VALGRIND_MEMPOOL_ALLOC(qm, qm->first_frag, sizeof(struct qm_frag));
-	VALGRIND_MAKE_MEM_DEFINED(qm->first_frag, sizeof(struct qm_frag));
-	VALGRIND_MEMPOOL_ALLOC(qm, FRAG_END(qm->first_frag), sizeof(struct qm_frag_end));
-	VALGRIND_MAKE_MEM_DEFINED(FRAG_END(qm->first_frag), sizeof(struct qm_frag_end));
-	VALGRIND_MEMPOOL_ALLOC(qm, (char*)qm->first_frag + sizeof(struct qm_frag), qm->first_frag->size);
+	if (qm->type == MEM_TYPE_PKG) {
+		VALGRIND_CREATE_MEMPOOL(qm, sizeof(unsigned long), 0);
+		VALGRIND_MEMPOOL_ALLOC(qm, qm->first_frag, sizeof(struct qm_frag) - sizeof(_qm_redzone_t));
+		VALGRIND_CREATE_BLOCK(qm->first_frag, sizeof(struct qm_frag) - sizeof(_qm_redzone_t), "fragment header (init)");
+		VALGRIND_MAKE_MEM_DEFINED(qm->first_frag, sizeof(struct qm_frag) - sizeof(_qm_redzone_t));
+		VALGRIND_MEMPOOL_ALLOC(qm, FRAG_END(qm->first_frag), sizeof(struct qm_frag_end) - sizeof(_qm_redzone_t));
+		VALGRIND_CREATE_BLOCK(FRAG_END(qm->first_frag), sizeof(struct qm_frag_end) - sizeof(_qm_redzone_t), "fragment tail (init)");
+		VALGRIND_MAKE_MEM_DEFINED(FRAG_END(qm->first_frag), sizeof(struct qm_frag_end) - sizeof(_qm_redzone_t));
+		VALGRIND_MEMPOOL_ALLOC(qm, (char*)qm->first_frag + sizeof(struct qm_frag), qm->first_frag->size - sizeof(_qm_redzone_t));
+		VALGRIND_CREATE_BLOCK((char*)qm->first_frag + sizeof(struct qm_frag), qm->first_frag->size - sizeof(_qm_redzone_t), "fragment data (init)");
+	}
 #endif /* #ifdef VALGRIND_MEMCHECK */
 
 	/* link initial fragment into the free list*/
@@ -267,7 +281,10 @@ static inline void qm_detach_free(struct qm_block* qm, struct qm_frag* frag)
 	struct qm_frag *prev;
 	struct qm_frag *next;
 #ifdef VALGRIND_MEMCHECK
-	VALGRIND_MEMPOOL_ALLOC(qm, (char*)frag + sizeof(struct qm_frag), frag->size);
+	if (qm->type == MEM_TYPE_PKG) {
+		VALGRIND_MEMPOOL_ALLOC(qm, (char*)frag + sizeof(struct qm_frag), frag->size - sizeof(_qm_redzone_t));
+		VALGRIND_CREATE_BLOCK((char*)frag + sizeof(struct qm_frag), frag->size - sizeof(_qm_redzone_t), "fragment data (detach)");
+	}
 #endif /* #ifdef VALGRIND_MEMCHECK */
 
 	prev=FRAG_END(frag)->prev_free;
@@ -331,22 +348,38 @@ int split_frag(struct qm_block* qm, struct qm_frag* f, size_t new_size)
 	if (rest>(FRAG_OVERHEAD+MIN_FRAG_SIZE)){
 #endif
 #ifdef VALGRIND_MEMCHECK
-		VALGRIND_MEMPOOL_CHANGE(qm, (char*)f + sizeof(struct qm_frag), (char*)f + sizeof(struct qm_frag), new_size);
+		if (qm->type == MEM_TYPE_PKG) {
+			VALGRIND_DISCARD((char*)f + sizeof(struct qm_frag));
+			VALGRIND_MEMPOOL_FREE(qm, (char*)f + sizeof(struct qm_frag));
+			VALGRIND_MEMPOOL_ALLOC(qm, (char*)f + sizeof(struct qm_frag), new_size - sizeof(_qm_redzone_t));
+			VALGRIND_CREATE_BLOCK((char*)f + sizeof(struct qm_frag), new_size - sizeof(_qm_redzone_t), "fragment data (split 1)");
+			VALGRIND_DISCARD(FRAG_END(f));
+			VALGRIND_CREATE_BLOCK(FRAG_END(f), sizeof(struct qm_frag_end) - sizeof(_qm_redzone_t), "fragment tail (split 2)");
+		}
 #endif /* #ifdef VALGRIND_MEMCHECK */
 		f->size=new_size;
 		/*split the fragment*/
 		end=FRAG_END(f);
 #ifdef VALGRIND_MEMCHECK
-		VALGRIND_MEMPOOL_ALLOC(qm, end, sizeof(struct qm_frag_end));
+		if (qm->type == MEM_TYPE_PKG) {
+			VALGRIND_MEMPOOL_ALLOC(qm, end, sizeof(struct qm_frag_end) - sizeof(_qm_redzone_t));
+			VALGRIND_CREATE_BLOCK(end, sizeof(struct qm_frag_end) - sizeof(_qm_redzone_t), "fragment tail (split 1)");
+		}
 #endif /* #ifdef VALGRIND_MEMCHECK */
 		end->size=new_size;
 		n=(struct qm_frag*)((char*)end+sizeof(struct qm_frag_end));
 #ifdef VALGRIND_MEMCHECK
-		VALGRIND_MEMPOOL_ALLOC(qm, n, sizeof(struct qm_frag));
+		if (qm->type == MEM_TYPE_PKG) {
+			VALGRIND_MEMPOOL_ALLOC(qm, n, sizeof(struct qm_frag) - sizeof(_qm_redzone_t));
+			VALGRIND_CREATE_BLOCK(n, sizeof(struct qm_frag) - sizeof(_qm_redzone_t), "fragment header (split 2)");
+		}
 #endif /* #ifdef VALGRIND_MEMCHECK */
 		n->size=rest-FRAG_OVERHEAD;
 #ifdef VALGRIND_MEMCHECK
-		VALGRIND_MEMPOOL_ALLOC(qm, (char *)n + sizeof(struct qm_frag), n->size);
+		if (qm->type == MEM_TYPE_PKG) {
+			VALGRIND_MEMPOOL_ALLOC(qm, (char *)n + sizeof(struct qm_frag), n->size - sizeof(_qm_redzone_t));
+			VALGRIND_CREATE_BLOCK((char *)n + sizeof(struct qm_frag), n->size - sizeof(_qm_redzone_t), "fragment data (split 2)");
+		}
 #endif /* #ifdef VALGRIND_MEMCHECK */
 		FRAG_END(n)->size=n->size;
 		FRAG_CLEAR_USED(n); /* never used */
@@ -500,8 +533,7 @@ void qm_free(void* qmp, void* p)
 		else return;
 	}
 #endif
-
-	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
+		f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
 
 #ifdef DBG_QM_MALLOC
 	qm_debug_frag(qm, f, file, line);
@@ -698,7 +730,11 @@ void* qm_realloc(void* qmp, void* p, size_t size)
 	#endif
 				if (ptr){
 					/* copy, need by libssl */
+#ifdef VALGRIND_MEMCHECK
+					memcpy(ptr, p, orig_size - sizeof(_qm_redzone_t));
+#else
 					memcpy(ptr, p, orig_size);
+#endif /* #ifdef VALGRIND_MEMCHECK */
 				} else {
 #ifdef DBG_QM_MALLOC
 					LOG(L_ERR, "qm_realloc(%p, %lu) called from %s: %s(%d), module: %s; qm_malloc() failed!\n",
