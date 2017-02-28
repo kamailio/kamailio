@@ -1306,6 +1306,27 @@ modparam("dialog", "ka_interval", 300)
 		</example>
 	</section>
 
+	<section id="dialog.p.ka_failed_limit">
+		<title><varname>ka_failed_limit</varname> (int)</title>
+		<para>
+			The number of failed keep-alive requests that is accepted
+			before generating a dialog timeout.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>ka_failed_limit</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "ka_failed_limit", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dialog.p.timeout_noreset">
 		<title><varname>timeout_noreset</varname> (int)</title>
 		<para>
