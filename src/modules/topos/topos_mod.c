@@ -147,6 +147,12 @@ static int mod_init(void)
 				"provide all functions needed\n");
 			return -1;
 		}
+	} else {
+		if(_tps_storage.len!=7 && strncmp(_tps_storage.s, "redis", 5)!=0) {
+			LM_ERR("unknown storage type: %.*s\n",
+					_tps_storage.len, _tps_storage.s);
+			return -1;
+		}
 	}
 
 	if(_tps_sanity_checks!=0) {
