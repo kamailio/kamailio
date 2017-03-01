@@ -534,7 +534,7 @@ modparam("htable", "key_value_column", "kvalue")
 		<title>Set <varname>expires_column</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("htable", "expires", "expiry")
+modparam("htable", "expires_column", "expiry")
 ...
 </programlisting>
 		</example>
