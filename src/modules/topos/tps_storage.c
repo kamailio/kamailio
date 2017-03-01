@@ -89,6 +89,7 @@ int tps_set_storage_api(tps_storage_api_t *tsa)
 {
 	if(tsa==NULL)
 		return -1;
+	LM_DBG("setting new storage api: %p\n", tsa);
 	memcpy(&_tps_storage_api, tsa, sizeof(tps_storage_api_t));
 
 	return 0;
@@ -197,7 +198,7 @@ int tps_storage_branch_rm(sip_msg_t *msg, tps_data_t *td)
 /**
  *
  */
-int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
+int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir)
 {
 	str sv;
 	sip_uri_t puri;
@@ -213,9 +214,7 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
 		return 0;
 	}
 
-	sruid_next(&_tps_sruid);
-
-	if(td->cp + 8 + (2*_tps_sruid.uid.len) + sv.len >= td->cbuf + TPS_DATA_SIZE) {
+	if(td->cp + 8 + (2*uuid->len) + sv.len >= td->cbuf + TPS_DATA_SIZE) {
 		LM_ERR("insufficient data buffer\n");
 		return -1;
 	}
@@ -227,8 +226,8 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
 		td->b_uuid.s = td->cp;
 		*td->cp = 'b';
 		td->cp++;
-		memcpy(td->cp, _tps_sruid.uid.s, _tps_sruid.uid.len);
-		td->cp += _tps_sruid.uid.len;
+		memcpy(td->cp, uuid->s, uuid->len);
+		td->cp += uuid->len;
 		td->b_uuid.len = td->cp - td->b_uuid.s;
 
 		td->bs_contact.s = td->cp;
@@ -236,8 +235,8 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
 		td->a_uuid.s = td->cp;
 		*td->cp = 'a';
 		td->cp++;
-		memcpy(td->cp, _tps_sruid.uid.s, _tps_sruid.uid.len);
-		td->cp += _tps_sruid.uid.len;
+		memcpy(td->cp, uuid->s, uuid->len);
+		td->cp += uuid->len;
 		td->a_uuid.len = td->cp - td->a_uuid.s;
 
 		td->as_contact.s = td->cp;
@@ -255,8 +254,8 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, int dir)
 		*td->cp = 'a';
 	}
 	td->cp++;
-	memcpy(td->cp, _tps_sruid.uid.s, _tps_sruid.uid.len);
-	td->cp += _tps_sruid.uid.len;
+	memcpy(td->cp, uuid->s, uuid->len);
+	td->cp += uuid->len;
 	*td->cp = '@';
 	td->cp++;
 	memcpy(td->cp, puri.host.s, puri.host.len);
@@ -369,9 +368,11 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog)
 {
 	int ret;
 
-	ret = tps_storage_fill_contact(msg, td, TPS_DIR_DOWNSTREAM);
+	sruid_next(&_tps_sruid);
+
+	ret = tps_storage_fill_contact(msg, td, &_tps_sruid.uid, TPS_DIR_DOWNSTREAM);
 	if(ret<0) goto error;
-	ret = tps_storage_fill_contact(msg, td, TPS_DIR_UPSTREAM);
+	ret = tps_storage_fill_contact(msg, td, &_tps_sruid.uid, TPS_DIR_UPSTREAM);
 	if(ret<0) goto error;
 	ret = tps_storage_link_msg(msg, td, TPS_DIR_DOWNSTREAM);
 	if(ret<0) goto error;
@@ -1049,22 +1050,9 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_val_t db_uvals[TPS_NR_KEYS];
 	int nr_keys;
 	int nr_ucols;
-	int ret;
 
-	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
+	if(_tps_db_handle==NULL)
 		return -1;
-
-	if(md->s_method_id != METHOD_INVITE) {
-		return 0;
-	}
-	if(msg->first_line.u.reply.statuscode<200
-			|| msg->first_line.u.reply.statuscode>=300) {
-		return 0;
-	}
-
-
-	ret = tps_storage_link_msg(msg, md, md->direction);
-	if(ret<0) return -1;
 
 	memset(db_ucols, 0, TPS_NR_KEYS*sizeof(db_key_t));
 	memset(db_uvals, 0, TPS_NR_KEYS*sizeof(db_val_t));
@@ -1134,6 +1122,22 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
  */
 int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
+	int ret;
+
+	if(msg==NULL || md==NULL || sd==NULL)
+		return -1;
+
+	if(md->s_method_id != METHOD_INVITE) {
+		return 0;
+	}
+	if(msg->first_line.u.reply.statuscode<200
+			|| msg->first_line.u.reply.statuscode>=300) {
+		return 0;
+	}
+
+	ret = tps_storage_link_msg(msg, md, md->direction);
+	if(ret<0) return -1;
+
 	return _tps_storage_api.update_dialog(msg, md, sd);
 }
 
