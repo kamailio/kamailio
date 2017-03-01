@@ -867,6 +867,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	tps_data_t stsd;
 	tps_data_t *ptsd;
 	str lkey;
+	str ftag;
 	str xuuid;
 	int direction = TPS_DIR_DOWNSTREAM;
 
@@ -907,6 +908,23 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 		if(tps_storage_load_dialog(msg, &mtsd, &stsd)==0) {
 			ptsd = &stsd;
 		}
+		/* detect direction - get from-tag */
+		if(parse_from_header(msg)<0 || msg->from==NULL) {
+			LM_ERR("failed getting 'from' header!\n");
+			goto error;
+		}
+		ftag = get_from(msg)->tag_value;
+
+		if(stsd.a_tag.len!=ftag.len) {
+			direction = TPS_DIR_UPSTREAM;
+		} else {
+			if(memcmp(stsd.a_tag.s, ftag.s, ftag.len)==0) {
+				direction = TPS_DIR_DOWNSTREAM;
+			} else {
+				direction = TPS_DIR_UPSTREAM;
+			}
+		}
+		mtsd.direction = direction;
 	}
 
 	/* local generated requests */
