@@ -998,6 +998,7 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	    }
 	}
 	if (!VAL_NULL(ROW_VALUES(row)) &&
+	    (VAL_TYPE(ROW_VALUES(row)) != DB1_STR) &&
 	    (VAL_TYPE(ROW_VALUES(row)) != DB1_STRING)) {
 	    LM_ERR("lcr_gw gw_name at row <%u> is not null or string\n", i);
 	    return 0;
@@ -1006,12 +1007,19 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	    gw_name_len = 0;
 	    gw_name = (char *)0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row)) != DB1_STRING) {
+	    switch(VAL_TYPE(ROW_VALUES(row))) {
+	    case DB1_STR:
+		gw_name = VAL_STR(ROW_VALUES(row)).s;
+		gw_name_len = VAL_STR(ROW_VALUES(row)).len;
+		break;
+	    case DB1_STRING:
+		gw_name = (char *)VAL_STRING(ROW_VALUES(row));
+		gw_name_len = strlen(gw_name);
+		break;
+	    default:
 		LM_ERR("lcr_gw gw_name at row <%u> is not string\n", i);
 		return 0;
 	    }
-	    gw_name = (char *)VAL_STRING(ROW_VALUES(row));
-	    gw_name_len = strlen(gw_name);
 	}
 	if (gw_name_len > MAX_NAME_LEN) {
 	    LM_ERR("lcr_gw gw_name <%u> at row <%u> it too long\n",
@@ -1019,6 +1027,7 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	    return 0;
 	}
 	if (!VAL_NULL(ROW_VALUES(row) + 1) &&
+	    (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_STR) &&
 	    (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_STRING)) {
 	    LM_ERR("lcr_gw ip_addr at row <%u> is not null or string\n",
 		   i);
@@ -1031,8 +1040,19 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	    ip_addr.len = 0;
 	    *null_gw_ip_addr = 1;
 	} else {
-	    ip_string.s = (char *)VAL_STRING(ROW_VALUES(row) + 1);
-	    ip_string.len = strlen(ip_string.s);
+	    switch(VAL_TYPE(ROW_VALUES(row) + 1)) {
+	    case DB1_STR:
+		ip_string.s = VAL_STR(ROW_VALUES(row) + 1).s;
+		ip_string.len = VAL_STR(ROW_VALUES(row) + 1).len;
+		break;
+	    case DB1_STRING:
+		ip_string.s = (char *)VAL_STRING(ROW_VALUES(row) + 1);
+		ip_string.len = strlen(ip_string.s);
+		break;
+	    default:
+		LM_ERR("lcr_gw ip_addr at row <%u> is not string\n", i);
+		return 0;
+	    }
 	    if ((ip_p = str2ip(&ip_string))) {
 		/* 123.123.123.123 */
 		ip_addr = *ip_p;
@@ -1132,12 +1152,19 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	    params_len = 0;
 	    params = (char *)0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 5) != DB1_STRING) {
+	    switch(VAL_TYPE(ROW_VALUES(row) + 5)) {
+	    case DB1_STR:
+		params = VAL_STR(ROW_VALUES(row) + 5).s;
+		params_len = VAL_STR(ROW_VALUES(row) + 5).len;
+		break;
+	    case DB1_STRING:
+		params = (char *)VAL_STRING(ROW_VALUES(row) + 5);
+		params_len = strlen(params);
+		break;
+	    default:
 		LM_ERR("lcr_gw params at row <%u> is not string\n", i);
 		return 0;
 	    }
-	    params = (char *)VAL_STRING(ROW_VALUES(row) + 5);
-	    params_len = strlen(params);
 	    if ((params_len > 0) && (params[0] != ';')) {
 		LM_ERR("lcr_gw params at row <%u> does not start "
 		       "with ';'\n", i);
@@ -1158,12 +1185,19 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	    hostname_len = 0;
 	    hostname = (char *)0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 6) != DB1_STRING) {
-		LM_ERR("hostname at row <%u> is not string\n", i);
+	    switch(VAL_TYPE(ROW_VALUES(row) + 6)) {
+	    case DB1_STR:
+		hostname = VAL_STR(ROW_VALUES(row) + 6).s;
+		hostname_len = VAL_STR(ROW_VALUES(row) + 6).len;
+		break;
+	    case DB1_STRING:
+		hostname = (char *)VAL_STRING(ROW_VALUES(row) + 6);
+		hostname_len = strlen(hostname);
+		break;
+	    default:
+		LM_ERR("lcr_gw hostname at row <%u> is not string\n", i);
 		return 0;
 	    }
-	    hostname = (char *)VAL_STRING(ROW_VALUES(row) + 6);
-	    hostname_len = strlen(hostname);
 	}
 	if (hostname_len > MAX_HOST_LEN) {
 	    LM_ERR("lcr_gw hostname at row <%u> it too long\n", i);
@@ -1187,12 +1221,19 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	    prefix_len = 0;
 	    prefix = (char *)0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 8) != DB1_STRING) {
+	    switch(VAL_TYPE(ROW_VALUES(row) + 8)) {
+	    case DB1_STR:
+		prefix = VAL_STR(ROW_VALUES(row) + 8).s;
+		prefix_len = VAL_STR(ROW_VALUES(row) + 8).len;
+		break;
+	    case DB1_STRING:
+		prefix = (char *)VAL_STRING(ROW_VALUES(row) + 8);
+		prefix_len = strlen(prefix);
+		break;
+	    default:
 		LM_ERR("lcr_gw prefix at row <%u> is not string\n", i);
 		return 0;
 	    }
-	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 8);
-	    prefix_len = strlen(prefix);
 	}
 	if (prefix_len > MAX_PREFIX_LEN) {
 	    LM_ERR("lcr_gw prefix at row <%u> it too long\n", i);
@@ -1202,12 +1243,19 @@ static int insert_gws(db1_res_t *res, struct gw_info *gws,
 	    tag_len = 0;
 	    tag = (char *)0;
 	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 9) != DB1_STRING) {
+	    switch(VAL_TYPE(ROW_VALUES(row) + 9)) {
+	    case DB1_STR:
+		tag = VAL_STR(ROW_VALUES(row) + 9).s;
+		tag_len = VAL_STR(ROW_VALUES(row) + 9).len;
+		break;
+	    case DB1_STRING:
+		tag = (char *)VAL_STRING(ROW_VALUES(row) + 9);
+		tag_len = strlen(tag);
+		break;
+	    default:
 		LM_ERR("lcr_gw tag at row <%u> is not string\n", i);
 		return 0;
 	    }
-	    tag = (char *)VAL_STRING(ROW_VALUES(row) + 9);
-	    tag_len = strlen(tag);
 	}
 	if (tag_len > MAX_TAG_LEN) {
 	    LM_ERR("lcr_gw tag at row <%u> it too long\n", i);
@@ -1369,12 +1417,19 @@ int reload_tables()
 		    prefix_len = 0;
 		    prefix = 0;
 		} else {
-		    if (VAL_TYPE(ROW_VALUES(row) + 1) != DB1_STRING) {
+		    switch(VAL_TYPE(ROW_VALUES(row) + 1)) {
+		    case DB1_STR:
+			prefix = VAL_STR(ROW_VALUES(row) + 1).s;
+			prefix_len = VAL_STR(ROW_VALUES(row) + 1).len;
+			break;
+		    case DB1_STRING:
+			prefix = (char *)VAL_STRING(ROW_VALUES(row) + 1);
+			prefix_len = strlen(prefix);
+			break;
+		    default:
 			LM_ERR("lcr rule <%u> prefix is not string\n", rule_id);
 			goto err;
 		    }
-		    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 1);
-		    prefix_len = strlen(prefix);
 		}
 		if (prefix_len > MAX_PREFIX_LEN) {
 		    LM_ERR("lcr rule <%u> prefix is too long\n", rule_id);
@@ -1404,13 +1459,19 @@ int reload_tables()
 		    from_uri_len = 0;
 		    from_uri = 0;
 		} else {
-		    if (VAL_TYPE(ROW_VALUES(row) + 2) != DB1_STRING) {
-			LM_ERR("lcr rule <%u> from_uri is not string\n",
-			       rule_id);
+		    switch(VAL_TYPE(ROW_VALUES(row) + 2)) {
+		    case DB1_STR:
+			from_uri = VAL_STR(ROW_VALUES(row) + 2).s;
+			from_uri_len = VAL_STR(ROW_VALUES(row) + 2).len;
+			break;
+		    case DB1_STRING:
+			from_uri = (char *)VAL_STRING(ROW_VALUES(row) + 2);
+			from_uri_len = strlen(from_uri);
+			break;
+		    default:
+			LM_ERR("lcr rule <%u> from_uri is not string\n", rule_id);
 			goto err;
 		    }
-		    from_uri = (char *)VAL_STRING(ROW_VALUES(row) + 2);
-		    from_uri_len = strlen(from_uri);
 		}
 		if (from_uri_len > MAX_URI_LEN) {
 		    LM_ERR("lcr rule <%u> from_uri is too long\n", rule_id);
@@ -1431,13 +1492,19 @@ int reload_tables()
 		    request_uri_len = 0;
 		    request_uri = 0;
 		} else {
-		    if (VAL_TYPE(ROW_VALUES(row) + 5) != DB1_STRING) {
-			LM_ERR("lcr rule <%u> request_uri is not string\n",
-			       rule_id);
+		    switch(VAL_TYPE(ROW_VALUES(row) + 5)) {
+		    case DB1_STR:
+			request_uri = VAL_STR(ROW_VALUES(row) + 5).s;
+			request_uri_len = VAL_STR(ROW_VALUES(row) + 5).len;
+			break;
+		    case DB1_STRING:
+			request_uri = (char *)VAL_STRING(ROW_VALUES(row) + 5);
+			request_uri_len = strlen(request_uri);
+			break;
+		    default:
+			LM_ERR("lcr rule <%u> request_uri is not string\n", rule_id);
 			goto err;
 		    }
-		    request_uri = (char *)VAL_STRING(ROW_VALUES(row) + 5);
-		    request_uri_len = strlen(request_uri);
 		}
 		if (request_uri_len > MAX_URI_LEN) {
 		    LM_ERR("lcr rule <%u> request_uri is too long\n", rule_id);
