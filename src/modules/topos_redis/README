@@ -1,0 +1,94 @@
+TOPOS_REDIS Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2017 kamailio.org
+
+   Copyright © 2017 flowroute.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. serverid (str)
+
+   List of Examples
+
+   1.1. Set serverid parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. serverid (str)
+
+1. Overview
+
+   This module offers REDIS storage support for TOPOS module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * ndb_redis module - for interaction with a REDIS server.
+     * topos module - to bind to as a storage engine.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * hiredis - available at https://github.com/antirez/hiredis .
+
+3. Parameters
+
+   3.1. serverid (str)
+
+3.1. serverid (str)
+
+   The name of the REDIS server to be used as provided to the 'name'
+   attribute of 'server' parameter for NDB_REDIS module.
+
+   The 'storage' parameter for TOPOS module must be set to 'redis'.
+
+   Default value is “NULL”.
+
+   Example 1.1. Set serverid parameter
+...
+# ----- ndb_redis params -----
+modparam("ndb_redis", "server", "name=srv8;addr=127.0.0.1;port=6379;db=8")
+
+# ----- topos params -----
+modparam("topos", "storage", "redis")
+
+# ----- topos_redis params -----
+modparam("topos_redis", "serverid", "srv8")
+...
