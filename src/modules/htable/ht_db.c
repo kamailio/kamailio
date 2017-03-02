@@ -271,18 +271,28 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				goto error;
 			}
 
-			if(RES_ROWS(db_res)[i].values[0].type!=DB1_STRING) {
+			switch(RES_ROWS(db_res)[i].values[0].type) {
+			case DB1_STR:
+				kname.s = (RES_ROWS(db_res)[i].values[0].val.str_val.s);
+				if(kname.s==NULL) {
+					LM_ERR("null key in row %d\n", i);
+					goto error;
+				}
+				kname.len = (RES_ROWS(db_res)[i].values[0].val.str_val.len);
+				break;
+			case DB1_STRING:
+				kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
+				if(kname.s==NULL) {
+					LM_ERR("null key in row %d\n", i);
+					goto error;
+				}
+				kname.len = strlen(kname.s);
+				break;
+			default:
 				LM_ERR("key type must be string (type=%d)\n",
 						RES_ROWS(db_res)[i].values[0].type);
 				goto error;
 			}
-
-			kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
-			if(kname.s==NULL) {
-				LM_ERR("null key in row %d\n", i);
-				goto error;
-			}
-			kname.len = strlen(kname.s);
 
 			if(ht->ncols>0) {
 				if(ht_pack_values(ht, db_res, i, ncols, &val.s)<0) {
