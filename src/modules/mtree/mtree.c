@@ -52,7 +52,9 @@ extern int _mt_allow_duplicates;
 static m_tree_t **_ptree = NULL;
 
 /* quick transaltion table */
-unsigned char _mt_char_table[256];
+#define MT_CHAR_TABLE_SIZE	256
+#define MT_CHAR_TABLE_NOTSET 255
+unsigned char _mt_char_table[MT_CHAR_TABLE_SIZE];
 
 /**
  *
@@ -60,10 +62,17 @@ unsigned char _mt_char_table[256];
 void mt_char_table_init(void)
 {
 	unsigned int i;
-	for(i=0; i<=255; i++)
-		_mt_char_table[i] = 255;
-	for(i=0; i<mt_char_list.len; i++)
+	for(i=0; i<=MT_CHAR_TABLE_SIZE; i++) {
+		_mt_char_table[i] = MT_CHAR_TABLE_NOTSET;
+	}
+	for(i=0; i<mt_char_list.len; i++) {
+		if((unsigned int)mt_char_list.s[i]>=MT_CHAR_TABLE_SIZE) {
+			LM_ERR("char at position %u in [%.*s] is out of range - skipping\n",
+					i, mt_char_list.len, mt_char_list.s);
+			continue;
+		}
 		_mt_char_table[(unsigned int)mt_char_list.s[i]] = (unsigned char)i;
+	}
 }
 
 
@@ -232,7 +241,12 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 	}
 
 	itn0 = pt->head;
-	if(_mt_char_table[(unsigned int)sp->s[l]]==255)
+	if((unsigned int)sp->s[l]>=MT_CHAR_TABLE_SIZE) {
+		LM_ERR("invalid range for char %d in prefix [%c (0x%x)]\n",
+				l, sp->s[l], sp->s[l]);
+		return -1;
+	}
+	if(_mt_char_table[(unsigned int)sp->s[l]]==MT_CHAR_TABLE_NOTSET)
 	{
 		LM_ERR("invalid char %d in prefix [%c (0x%x)]\n",
 				l, sp->s[l], sp->s[l]);
@@ -256,7 +270,13 @@ int mt_add_to_tree(m_tree_t *pt, str *sp, str *svalue)
 			itn0[_mt_char_table[(unsigned int)sp->s[l]]].child = itn;
 		}
 		l++;
-		if(_mt_char_table[(unsigned int)sp->s[l]]==255)
+
+		if((unsigned int)sp->s[l]>=MT_CHAR_TABLE_SIZE) {
+			LM_ERR("invalid range for char %d in prefix [%c (0x%x)]\n",
+					l, sp->s[l], sp->s[l]);
+			return -1;
+		}
+		if(_mt_char_table[(unsigned int)sp->s[l]]==MT_CHAR_TABLE_NOTSET)
 		{
 			LM_ERR("invalid char %d in prefix [%c (0x%x)]\n",
 					l, sp->s[l], sp->s[l]);
@@ -362,8 +382,14 @@ is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *len)
 
 	while(itn!=NULL && l < tomatch->len && l < MT_MAX_DEPTH)
 	{
+		/* check range */
+		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
+			LM_DBG("out of range char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return NULL;
+		}
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255)
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET)
 		{
 			LM_DBG("not matching char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
@@ -409,8 +435,14 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 	itn = pt->head;
 
 	while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
+		/* check range */
+		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
+			LM_DBG("out of range char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return -1;
+		}
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255) {
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET) {
 			LM_ERR("invalid char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
 			return -1;
@@ -518,8 +550,14 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 
 	while(itn!=NULL && l < tomatch->len && l < MT_MAX_DEPTH)
 	{
+		/* check range */
+		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
+			LM_DBG("out of range char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return -1;
+		}
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255)
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET)
 		{
 			LM_ERR("invalid char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
@@ -958,8 +996,14 @@ int mt_rpc_add_tvalues(rpc_t* rpc, void* ctx, m_tree_t *pt, str *tomatch)
 	itn = pt->head;
 
 	while (itn != NULL && l < tomatch->len && l < MT_MAX_DEPTH) {
+		/* check range */
+		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
+			LM_DBG("out of range char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return -1;
+		}
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255) {
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET) {
 			LM_ERR("invalid char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
 			return -1;
@@ -1068,8 +1112,14 @@ int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *it,
 
 	while(itn!=NULL && l < tomatch->len && l < MT_MAX_DEPTH)
 	{
+		/* check range */
+		if((unsigned int)tomatch->s[l]>=MT_CHAR_TABLE_SIZE) {
+			LM_DBG("out of range char at %d in [%.*s]\n",
+					l, tomatch->len, tomatch->s);
+			return -1;
+		}
 		/* check validity */
-		if(_mt_char_table[(unsigned int)tomatch->s[l]]==255)
+		if(_mt_char_table[(unsigned int)tomatch->s[l]]==MT_CHAR_TABLE_NOTSET)
 		{
 			LM_ERR("invalid char at %d in [%.*s]\n",
 					l, tomatch->len, tomatch->s);
