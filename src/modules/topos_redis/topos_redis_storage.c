@@ -267,7 +267,7 @@ int tps_redis_insert_dialog(tps_data_t *td)
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
-		LM_ERR("failed to execute expireredis command\n");
+		LM_ERR("failed to execute expire redis command\n");
 		if(rsrv->ctxRedis->err) {
 			LM_ERR("redis error: %s\n", rsrv->ctxRedis->errstr);
 		}
@@ -386,7 +386,7 @@ int tps_redis_insert_branch(tps_data_t *td)
 	argvlen[argc] = rkey.len;
 	argc++;
 
-	lval = (unsigned long)_tps_api.get_dialog_expire();
+	lval = (unsigned long)_tps_api.get_branch_expire();
 	if(lval==0) {
 		return 0;
 	}
@@ -394,7 +394,7 @@ int tps_redis_insert_branch(tps_data_t *td)
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
-		LM_ERR("failed to execute expireredis command\n");
+		LM_ERR("failed to execute expire redis command\n");
 		if(rsrv->ctxRedis->err) {
 			LM_ERR("redis error: %s\n", rsrv->ctxRedis->errstr);
 		}
@@ -910,5 +910,116 @@ int tps_redis_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
  */
 int tps_redis_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
+	char* argv[TPS_REDIS_NR_KEYS];
+	size_t argvlen[TPS_REDIS_NR_KEYS];
+	int argc = 0;
+	str rcmd = str_init("HMSET");
+	str rkey = STR_NULL;
+	char *rp;
+	str rval = STR_NULL;
+	redisc_server_t *rsrv = NULL;
+	redisReply *rrpl = NULL;
+	int32_t liflags;
+	unsigned long lval = 0;
+
+	if(sd->a_uuid.len<=0 && sd->b_uuid.len<=0) {
+		LM_INFO("no uuid for this message\n");
+		return -1;
+	}
+
+	rsrv = _tps_redis_api.get_server(&_topos_redis_serverid);
+	if(rsrv==NULL) {
+		LM_ERR("cannot find redis server [%.*s]\n",
+				_topos_redis_serverid.len, _topos_redis_serverid.s);
+		return -1;
+	}
+
+	memset(argv, 0, TPS_REDIS_NR_KEYS * sizeof(char*));
+	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
+	argc = 0;
+
+	rp = _tps_redis_cbuf;
+	memcpy(rp, _tps_redis_dprefix.s, _tps_redis_dprefix.len);
+
+	if(sd->a_uuid.len>0) {
+		memcpy(rp + _tps_redis_dprefix.len,
+				sd->a_uuid.s, sd->a_uuid.len);
+		if(sd->a_uuid.s[0]=='b') {
+			rp[_tps_redis_dprefix.len] = 'a';
+		}
+		rp[_tps_redis_dprefix.len+sd->a_uuid.len] = '\0';
+		rkey.s = rp;
+		rkey.len = _tps_redis_dprefix.len+sd->a_uuid.len;
+		rp += _tps_redis_dprefix.len+sd->a_uuid.len+1;
+	} else {
+		memcpy(rp + _tps_redis_dprefix.len,
+				sd->b_uuid.s, sd->b_uuid.len);
+		if(sd->b_uuid.s[0]=='b') {
+			rp[_tps_redis_dprefix.len] = 'a';
+		}
+		rp[_tps_redis_dprefix.len+sd->b_uuid.len] = '\0';
+		rkey.s = rp;
+		rkey.len = _tps_redis_dprefix.len+sd->b_uuid.len;
+		rp += _tps_redis_dprefix.len+sd->b_uuid.len+1;
+	}
+
+	argv[argc]    = rcmd.s;
+	argvlen[argc] = rcmd.len;
+	argc++;
+
+	argv[argc]    = rkey.s;
+	argvlen[argc] = rkey.len;
+	argc++;
+
+	lval = (unsigned long)time(NULL);
+	TPS_REDIS_SET_ARGN(lval, rp, &rval, argc, &td_key_rectime,
+			argv, argvlen);
+	liflags = 0;
+	TPS_REDIS_SET_ARGN(liflags, rp, &rval, argc, &td_key_iflags,
+					argv, argvlen);
+
+	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
+	if(rrpl==NULL) {
+		LM_ERR("failed to execute redis command\n");
+		if(rsrv->ctxRedis->err) {
+			LM_ERR("redis error: %s\n", rsrv->ctxRedis->errstr);
+		}
+		return -1;
+	}
+	LM_DBG("updated on end the dialog record for [%.*s] with argc %d\n",
+			rkey.len, rkey.s, argc);
+
+	freeReplyObject(rrpl);
+
+	/* set expire for the key */
+	argc = 0;
+
+	argv[argc]    = "EXPIRE";
+	argvlen[argc] = 6;
+	argc++;
+
+	argv[argc]    = rkey.s;
+	argvlen[argc] = rkey.len;
+	argc++;
+
+	/* dialog ended -- keep it for branch lifetime only */
+	lval = (unsigned long)_tps_api.get_branch_expire();
+	if(lval==0) {
+		return 0;
+	}
+	TPS_REDIS_SET_ARGNV(lval, rp, &rval, argc, argv, argvlen);
+
+	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
+	if(rrpl==NULL) {
+		LM_ERR("failed to execute expire redis command\n");
+		if(rsrv->ctxRedis->err) {
+			LM_ERR("redis error: %s\n", rsrv->ctxRedis->errstr);
+		}
+		return -1;
+	}
+	LM_DBG("expire set on branch record for [%.*s] with argc %d\n",
+			rkey.len, rkey.s, argc);
+	freeReplyObject(rrpl);
+
 	return 0;
 }
