@@ -42,6 +42,7 @@
 
 extern str _topos_redis_serverid;
 extern ndb_redis_api_t _tps_redis_api;
+extern topos_api_t _tps_api;
 
 static str _tps_redis_bprefix = str_init("b:x:");
 static str _tps_redis_dprefix = str_init("d:z:");
@@ -93,6 +94,15 @@ str tt_key_x_tag = str_init("x_tag");
 str tt_key_s_method = str_init("s_method");
 str tt_key_s_cseq = str_init("s_cseq");
 
+#define TPS_REDIS_SET_ARGSV(sval, argc, argv, argvlen) \
+	do { \
+		if((sval)->s!=NULL && (sval)->len>0) { \
+			argv[argc] = (sval)->s; \
+			argvlen[argc] = (sval)->len; \
+			argc++; \
+		} \
+	} while(0)
+
 #define TPS_REDIS_SET_ARGS(sval, argc, akey, argv, argvlen) \
 	do { \
 		if((sval)->s!=NULL && (sval)->len>0) { \
@@ -118,6 +128,14 @@ str tt_key_s_cseq = str_init("s_cseq");
 		rp = (sval)->s + (sval)->len + 1; \
 		TPS_REDIS_SET_ARGS((sval), argc, akey, argv, argvlen); \
 	} while(0)
+
+#define TPS_REDIS_SET_ARGNV(nval, rp, sval, argc, argv, argvlen) \
+	do { \
+		(sval)->s = int2bstr((unsigned long)nval, rp, &(sval)->len); \
+		rp = (sval)->s + (sval)->len + 1; \
+		TPS_REDIS_SET_ARGSV((sval), argc, argv, argvlen); \
+	} while(0)
+
 
 /**
  *
@@ -230,6 +248,35 @@ int tps_redis_insert_dialog(tps_data_t *td)
 			rkey.len, rkey.s, argc);
 	freeReplyObject(rrpl);
 
+	/* set expire for the key */
+	argc = 0;
+
+	argv[argc]    = "EXPIRE";
+	argvlen[argc] = 6;
+	argc++;
+
+	argv[argc]    = rkey.s;
+	argvlen[argc] = rkey.len;
+	argc++;
+
+	lval = (unsigned long)_tps_api.get_dialog_expire();
+	if(lval==0) {
+		return 0;
+	}
+	TPS_REDIS_SET_ARGNV(lval, rp, &rval, argc, argv, argvlen);
+
+	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
+	if(rrpl==NULL) {
+		LM_ERR("failed to execute expireredis command\n");
+		if(rsrv->ctxRedis->err) {
+			LM_ERR("redis error: %s\n", rsrv->ctxRedis->errstr);
+		}
+		return -1;
+	}
+	LM_DBG("expire set on dialog record for [%.*s] with argc %d\n",
+			rkey.len, rkey.s, argc);
+	freeReplyObject(rrpl);
+
 	return 0;
 }
 
@@ -326,6 +373,35 @@ int tps_redis_insert_branch(tps_data_t *td)
 	LM_DBG("inserting branch record for [%.*s] with argc %d\n",
 			rkey.len, rkey.s, argc);
 
+	freeReplyObject(rrpl);
+
+	/* set expire for the key */
+	argc = 0;
+
+	argv[argc]    = "EXPIRE";
+	argvlen[argc] = 6;
+	argc++;
+
+	argv[argc]    = rkey.s;
+	argvlen[argc] = rkey.len;
+	argc++;
+
+	lval = (unsigned long)_tps_api.get_dialog_expire();
+	if(lval==0) {
+		return 0;
+	}
+	TPS_REDIS_SET_ARGNV(lval, rp, &rval, argc, argv, argvlen);
+
+	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
+	if(rrpl==NULL) {
+		LM_ERR("failed to execute expireredis command\n");
+		if(rsrv->ctxRedis->err) {
+			LM_ERR("redis error: %s\n", rsrv->ctxRedis->errstr);
+		}
+		return -1;
+	}
+	LM_DBG("expire set on branch record for [%.*s] with argc %d\n",
+			rkey.len, rkey.s, argc);
 	freeReplyObject(rrpl);
 
 	return 0;
