@@ -56,12 +56,16 @@ typedef struct tps_storage_api {
 typedef int (*tps_set_storage_api_f)(tps_storage_api_t *tsa);
 int tps_set_storage_api(tps_storage_api_t *tsa);
 
+typedef int (*tps_get_dialog_expire_f)(void);
+typedef int (*tps_get_branch_expire_f)(void);
 
 /**
  * @brief TOPOS API structure
  */
 typedef struct topos_api {
 	tps_set_storage_api_f set_storage_api;
+	tps_get_dialog_expire_f get_dialog_expire;
+	tps_get_branch_expire_f get_branch_expire;
 } topos_api_t;
 
 typedef int (*bind_topos_f)(topos_api_t* api);

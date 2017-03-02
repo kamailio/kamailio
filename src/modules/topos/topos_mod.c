@@ -383,6 +383,22 @@ done:
 /**
  *
  */
+int tps_get_dialog_expire(void)
+{
+	return _tps_dialog_expire;
+}
+
+/**
+ *
+ */
+int tps_get_branch_expire(void)
+{
+	return _tps_branch_expire;
+}
+
+/**
+ *
+ */
 int bind_topos(topos_api_t *api)
 {
 	if (!api) {
@@ -391,6 +407,8 @@ int bind_topos(topos_api_t *api)
 	}
 	memset(api, 0, sizeof(topos_api_t));
 	api->set_storage_api = tps_set_storage_api;
+	api->get_dialog_expire = tps_get_dialog_expire;
+	api->get_branch_expire = tps_get_branch_expire;
 
 	return 0;
 }
