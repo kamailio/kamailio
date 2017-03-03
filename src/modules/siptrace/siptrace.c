@@ -320,11 +320,6 @@ static int mod_init(void)
 		}
 	}
 
-	if(hep_version != 1 && hep_version != 2 && hep_version != 3) {
-		LM_ERR("unsupported version of HEP");
-		return -1;
-	}
-
 	trace_on_flag = (int*)shm_malloc(sizeof(int));
 	if(trace_on_flag==NULL) {
 		LM_ERR("no more shm memory left\n");
