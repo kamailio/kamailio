@@ -82,12 +82,18 @@ typedef struct kz_amqp_connection_t {
 	char* url;
 } kz_amqp_connection, *kz_amqp_connection_ptr;
 
+typedef struct kz_amqp_timer_t {
+	struct event *ev;
+	struct itimerspec *timer;
+	int    fd;
+} kz_amqp_timer, *kz_amqp_timer_ptr;
+
 typedef struct kz_amqp_conn_t {
 	struct kz_amqp_server_t* server;
 	amqp_connection_state_t conn;
 	kz_amqp_connection_state state;
-	struct event *ev;
-	struct itimerspec *timer;
+	kz_amqp_timer_ptr reconnect;
+	kz_amqp_timer_ptr heartbeat;
 	amqp_socket_t *socket;
 	amqp_channel_t channel_count;
 	amqp_channel_t channel_counter;
@@ -268,6 +274,10 @@ kz_amqp_zone_ptr kz_amqp_add_zone(char* zone);
 void kz_amqp_fire_connection_event(char *event, char* host);
 
 void kz_amqp_free_pipe_cmd(kz_amqp_cmd_ptr cmd);
+
+void kz_amqp_timer_destroy(kz_amqp_timer_ptr* pTimer);
+int kz_amqp_timer_create(kz_amqp_timer_ptr* pTimer, int seconds, void (*callback)(int, short, void *), void *data);
+void kz_amqp_heartbeat_proc(int fd, short event, void *arg);
 
 static inline int kz_amqp_error(char const *context, amqp_rpc_reply_t x)
 {
