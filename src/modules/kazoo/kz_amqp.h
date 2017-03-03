@@ -80,16 +80,8 @@ extern int dbk_consumer_workers;
 typedef struct kz_amqp_connection_t {
 	kz_amqp_connection_info info;
 	char* url;
-//    struct kz_amqp_connection_t* next;
 } kz_amqp_connection, *kz_amqp_connection_ptr;
 
-/*
-typedef struct {
-	kz_amqp_connection_ptr current;
-	kz_amqp_connection_ptr head;
-	kz_amqp_connection_ptr tail;
-} kz_amqp_connection_pool, *kz_amqp_connection_pool_ptr;
-*/
 typedef struct kz_amqp_conn_t {
 	struct kz_amqp_server_t* server;
 	amqp_connection_state_t conn;
@@ -99,7 +91,6 @@ typedef struct kz_amqp_conn_t {
 	amqp_socket_t *socket;
 	amqp_channel_t channel_count;
 	amqp_channel_t channel_counter;
-//    struct kz_amqp_conn_t* next;
 } kz_amqp_conn, *kz_amqp_conn_ptr;
 
 typedef struct {
@@ -132,10 +123,6 @@ typedef struct {
 	uint64_t delivery_tag;
 	amqp_channel_t channel;
 	struct timeval timeout;
-
-	/* timer */
-//	struct event *timer_ev;
-//	int timerfd;
 
 	/* async */
 	char *cb_route;

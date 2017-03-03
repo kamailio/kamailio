@@ -41,6 +41,8 @@
 #define DBK_DEFAULT_NO_CONSUMERS 1
 #define DBK_DEFAULT_NO_WORKERS 8
 
+#define AMQP_WORKERS_RANKING PROC_XWORKER
+
 static int mod_init(void);
 static int  mod_child_init(int rank);
 static int fire_init_event(int rank);
@@ -352,27 +354,15 @@ static int mod_child_init(int rank)
 	kz_amqp_zone_ptr g;
 	kz_amqp_server_ptr s;
 
-	fire_init_event(rank);
+	if (rank==PROC_INIT)
+		fire_init_event(rank);
 
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0;
 
-//	if (rank>PROC_MAIN)
-//		kz_cmd_pipe = kz_cmd_pipe_fds[1];
-
-
 	if (rank==PROC_MAIN) {
-		/*
-		pid=fork_process(PROC_NOCHLDINIT, "AMQP Timer", 0);
-		if (pid<0)
-			return -1;
-		if(pid==0){
-			return(kz_amqp_timeout_proc());
-		}
-		*/
-
 		for(i=0; i < dbk_consumer_workers; i++) {
-			pid=fork_process(PROC_XWORKER, "AMQP Consumer Worker", 1);
+			pid=fork_process(AMQP_WORKERS_RANKING, "AMQP Consumer Worker", 1);
 			if (pid<0)
 				return -1; /* error */
 			if(pid==0){
@@ -408,7 +398,7 @@ static int mod_child_init(int rank)
 		return 0;
 	}
 
-	if(dbk_pua_mode == 1) {
+	if(rank == AMQP_WORKERS_RANKING && dbk_pua_mode == 1) {
 		if (kz_pa_dbf.init==0)
 		{
 			LM_CRIT("child_init: database not bound\n");
