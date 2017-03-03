@@ -143,7 +143,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 		LM_ERR("database [%.*s] does not exists!\n", _s->len, _s->s);
 		goto done;
 	}
-	LM_DBG("new db!\n");
+	LM_INFO("using database at: %.*s\n", _s->len, _s->s);
 
 	_dcache = (dbt_cache_p)shm_malloc(sizeof(dbt_cache_t));
 	if(!_dcache)
