@@ -500,146 +500,178 @@ clean:
 /**
  *
  */
-int dbt_print_table(dbt_table_p _dtp, str *_dbn)
+int dbt_print_table_header(dbt_table_p _dtp, FILE *fout)
 {
-	dbt_column_p colp = NULL;
-	dbt_row_p rowp = NULL;
-	FILE *fout = NULL;
-	int ccol;
-	char *p, path[512];
+        dbt_column_p colp = NULL;
+        colp = _dtp->cols;
+        while(colp)
+        {
+                switch(colp->type)
+                {
+                        case DB1_INT:
+                                fprintf(fout, "%.*s(int", colp->name.len, colp->name.s);
+                        break;
+                        case DB1_DOUBLE:
+                                fprintf(fout, "%.*s(double", colp->name.len, colp->name.s);
+                        break;
+                        case DB1_STR:
+                                fprintf(fout, "%.*s(str", colp->name.len, colp->name.s);
+                        break;
+                        case DB1_STRING:
+                                fprintf(fout, "%.*s(string", colp->name.len, colp->name.s);
+                        break;
+                        case DB1_BLOB:
+                                fprintf(fout, "%.*s(blob", colp->name.len, colp->name.s);
+                        break;
+                        case DB1_DATETIME:
+                                fprintf(fout, "%.*s(time", colp->name.len, colp->name.s);
+                        break;
+                        default:
+                                if(fout!=stdout)
+                                        fclose(fout);
+                                return -1;
+                }
 
-	if(!_dtp || !_dtp->name.s || _dtp->name.len <= 0)
-		return -1;
+                if(colp->flag & DBT_FLAG_NULL)
+                                fprintf(fout,",null");
+                else if(colp->type==DB1_INT && colp->flag & DBT_FLAG_AUTO)
+                                        fprintf(fout,",auto");
+                fprintf(fout,")");
 
-	if(!_dbn || !_dbn->s || _dbn->len <= 0)
-	{
-		fout = stdout;
-		fprintf(fout, "\n Content of [%.*s::%.*s]\n",
-				_dtp->dbname.len, _dtp->dbname.s,
-				_dtp->name.len, _dtp->name.s);
-	}
-	else
-	{
-		if(_dtp->name.len+_dbn->len > 510)
-			return -1;
-		strncpy(path, _dbn->s, _dbn->len);
-		path[_dbn->len] = '/';
-		strncpy(path+_dbn->len+1, _dtp->name.s, _dtp->name.len);
-		path[_dbn->len+_dtp->name.len+1] = 0;
-		fout = fopen(path, "wt");
-		if(!fout)
-			return -1;
-	}
-
-	colp = _dtp->cols;
-	while(colp)
-	{
-		switch(colp->type)
-		{
-			case DB1_INT:
-				fprintf(fout, "%.*s(int", colp->name.len, colp->name.s);
-			break;
-			case DB1_DOUBLE:
-				fprintf(fout, "%.*s(double", colp->name.len, colp->name.s);
-			break;
-			case DB1_STR:
-				fprintf(fout, "%.*s(str", colp->name.len, colp->name.s);
-			break;
-			case DB1_STRING:
-				fprintf(fout, "%.*s(string", colp->name.len, colp->name.s);
-			break;
-			case DB1_BLOB:
-				fprintf(fout, "%.*s(blob", colp->name.len, colp->name.s);
-			break;
-			case DB1_DATETIME:
-				fprintf(fout, "%.*s(time", colp->name.len, colp->name.s);
-			break;
-			default:
-				if(fout!=stdout)
-					fclose(fout);
-				return -1;
-		}
-
-		if(colp->flag & DBT_FLAG_NULL)
-				fprintf(fout,",null");
-		else if(colp->type==DB1_INT && colp->flag & DBT_FLAG_AUTO)
-					fprintf(fout,",auto");
-		fprintf(fout,")");
-
-		colp = colp->next;
-		if(colp)
-			fprintf(fout,"%c", DBT_DELIM_C);
-	}
-	fprintf(fout, "%c", DBT_DELIM_R);
-	rowp = _dtp->rows;
-	while(rowp)
-	{
-		for(ccol=0; ccol<_dtp->nrcols; ccol++)
-		{
-			switch(_dtp->colv[ccol]->type)
-			{
-				case DB1_DATETIME:
-				case DB1_INT:
-					if(!rowp->fields[ccol].nul)
-						fprintf(fout,"%d",
-								rowp->fields[ccol].val.int_val);
-				break;
-				case DB1_DOUBLE:
-					if(!rowp->fields[ccol].nul)
-						fprintf(fout, "%.2f",
-								rowp->fields[ccol].val.double_val);
-				break;
-				case DB1_STR:
-				case DB1_STRING:
-				case DB1_BLOB:
-					if(!rowp->fields[ccol].nul)
-					{
-						p = rowp->fields[ccol].val.str_val.s;
-						while(p < rowp->fields[ccol].val.str_val.s
-								+ rowp->fields[ccol].val.str_val.len)
-						{
-							switch(*p)
-							{
-								case '\n':
-									fprintf(fout, "\\n");
-								break;
-								case '\r':
-									fprintf(fout, "\\r");
-								break;
-								case '\t':
-									fprintf(fout, "\\t");
-								break;
-								case '\\':
-									fprintf(fout, "\\\\");
-								break;
-								case DBT_DELIM:
-									fprintf(fout, "\\%c", DBT_DELIM);
-								break;
-								case '\0':
-									fprintf(fout, "\\0");
-								break;
-								default:
-									fprintf(fout, "%c", *p);
-							}
-							p++;
-						}
-					}
-				break;
-				default:
-					if(fout!=stdout)
-						fclose(fout);
-					return -1;
-			}
-			if(ccol<_dtp->nrcols-1)
-				fprintf(fout, "%c",DBT_DELIM);
-		}
-		fprintf(fout, "%c", DBT_DELIM_R);
-		rowp = rowp->next;
-	}
-
-	if(fout!=stdout)
-		fclose(fout);
-
-	return 0;
+                colp = colp->next;
+                if(colp)
+                        fprintf(fout,"%c", DBT_DELIM_C);
+        }
+        fprintf(fout, "%c", DBT_DELIM_R);
+        return 0;
 }
 
+int dbt_print_table_row_ex(dbt_table_p _dtp, dbt_row_p rowp, FILE *fout, int newline)
+{
+        int ccol;
+        char *p;
+        for(ccol=0; ccol<_dtp->nrcols; ccol++)
+        {
+                switch(_dtp->colv[ccol]->type)
+                {
+                case DB1_DATETIME:
+                case DB1_INT:
+                        if(!rowp->fields[ccol].nul)
+                                fprintf(fout,"%d",
+                                                rowp->fields[ccol].val.int_val);
+                        break;
+                case DB1_DOUBLE:
+                        if(!rowp->fields[ccol].nul)
+                                fprintf(fout, "%.2f",
+                                                rowp->fields[ccol].val.double_val);
+                        break;
+                case DB1_STR:
+                case DB1_STRING:
+                case DB1_BLOB:
+                        if(!rowp->fields[ccol].nul)
+                        {
+                                p = rowp->fields[ccol].val.str_val.s;
+                                while(p < rowp->fields[ccol].val.str_val.s
+                                                + rowp->fields[ccol].val.str_val.len)
+                                {
+                                        switch(*p)
+                                        {
+                                        case '\n':
+                                        fprintf(fout, "\\n");
+                                        break;
+                                        case '\r':
+                                                fprintf(fout, "\\r");
+                                                break;
+                                        case '\t':
+                                                fprintf(fout, "\\t");
+                                                break;
+                                        case '\\':
+                                                fprintf(fout, "\\\\");
+                                                break;
+                                        case DBT_DELIM:
+                                                fprintf(fout, "\\%c", DBT_DELIM);
+                                                break;
+                                        case '\0':
+                                                fprintf(fout, "\\0");
+                                                break;
+                                        default:
+                                                fprintf(fout, "%c", *p);
+                                        }
+                                        p++;
+                                }
+                        }
+                        break;
+                default:
+                        if(fout!=stdout)
+                                fclose(fout);
+                        return -1;
+                }
+                if(ccol<_dtp->nrcols-1)
+                        fprintf(fout, "%c",DBT_DELIM);
+        }
+        if(newline)
+                fprintf(fout, "%c", DBT_DELIM_R);
+
+        return 0;
+}
+
+int dbt_print_table_row(dbt_table_p _dtp, dbt_row_p rowp, FILE *fout)
+{
+        return dbt_print_table_row_ex(_dtp, rowp, fout, 1);
+}
+
+int dbt_print_table_rows(dbt_table_p _dtp, FILE *fout)
+{
+        dbt_row_p rowp = _dtp->rows;
+        while(rowp) {
+                if(dbt_print_table_row(_dtp, rowp, fout))
+                        return -1;
+                rowp = rowp->next;
+        }
+
+        return 0;
+}
+
+int dbt_print_table_content(dbt_table_p _dtp, FILE *fout)
+{
+        if(dbt_print_table_header(_dtp, fout))
+                return -1;
+        return dbt_print_table_rows(_dtp, fout);
+}
+
+int dbt_print_table(dbt_table_p _dtp, str *_dbn)
+{
+        FILE *fout = NULL;
+        int res=0;
+        char path[512];
+
+        if(!_dtp || !_dtp->name.s || _dtp->name.len <= 0)
+                return -1;
+
+        if(!_dbn || !_dbn->s || _dbn->len <= 0)
+        {
+                fout = stdout;
+                fprintf(fout, "\n Content of [%.*s::%.*s]\n",
+                                _dtp->dbname.len, _dtp->dbname.s,
+                                _dtp->name.len, _dtp->name.s);
+        }
+        else
+        {
+                if(_dtp->name.len+_dbn->len > 510)
+                        return -1;
+                strncpy(path, _dbn->s, _dbn->len);
+                path[_dbn->len] = '/';
+                strncpy(path+_dbn->len+1, _dtp->name.s, _dtp->name.len);
+                path[_dbn->len+_dtp->name.len+1] = 0;
+                fout = fopen(path, "wt");
+                if(!fout)
+                        return -1;
+        }
+
+        res = dbt_print_table_content(_dtp, fout);
+        if(fout!=stdout)
+                fclose(fout);
+
+        return res;
+
+}
