@@ -511,3 +511,80 @@ error:
 	return ret;
 }
 
+int kz_pua_publish_mwi(struct sip_msg* msg, char *json) {
+    struct json_object *json_obj = NULL;
+    int ret = 1;
+
+    if(dbk_pua_mode != 1) {
+    	LM_ERR("pua_mode must be 1 to publish\n");
+    	ret = -1;
+    	goto error;
+    }
+
+    /* extract info from json and construct xml */
+    json_obj = kz_json_parse(json);
+    if (json_obj == NULL) {
+    	ret = -1;
+    	goto error;
+    }
+
+	ret = kz_pua_publish_mwi_to_presentity(json_obj);
+
+error:
+	if(json_obj)
+		json_object_put(json_obj);
+
+	return ret;
+}
+
+int kz_pua_publish_presence(struct sip_msg* msg, char *json) {
+    struct json_object *json_obj = NULL;
+    int ret = 1;
+
+    if(dbk_pua_mode != 1) {
+    	LM_ERR("pua_mode must be 1 to publish\n");
+    	ret = -1;
+    	goto error;
+    }
+
+    /* extract info from json and construct xml */
+    json_obj = kz_json_parse(json);
+    if (json_obj == NULL) {
+    	ret = -1;
+    	goto error;
+    }
+
+	ret = kz_pua_publish_presence_to_presentity(json_obj);
+
+error:
+	if(json_obj)
+		json_object_put(json_obj);
+
+	return ret;
+}
+
+int kz_pua_publish_dialoginfo(struct sip_msg* msg, char *json) {
+    struct json_object *json_obj = NULL;
+    int ret = 1;
+
+    if(dbk_pua_mode != 1) {
+    	LM_ERR("pua_mode must be 1 to publish\n");
+    	ret = -1;
+    	goto error;
+    }
+
+    /* extract info from json and construct xml */
+    json_obj = kz_json_parse(json);
+    if (json_obj == NULL) {
+    	ret = -1;
+    	goto error;
+    }
+
+	ret = kz_pua_publish_dialoginfo_to_presentity(json_obj);
+
+error:
+	if(json_obj)
+		json_object_put(json_obj);
+
+	return ret;
+}
