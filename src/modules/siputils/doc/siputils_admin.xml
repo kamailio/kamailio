@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -26,16 +26,16 @@
 	So its necessary to drop the 183 in this cases and send a 180 instead.
 	</para>
 	<para>
-	This module also provides a function to answer OPTIONS requests which 
-	are directed to the server itself. This means an OPTIONS request 
-	which has the address of the server in the request URI, and no 
-	username in the URI. The request will be answered with a 200 OK 
+	This module also provides a function to answer OPTIONS requests which
+	are directed to the server itself. This means an OPTIONS request
+	which has the address of the server in the request URI, and no
+	username in the URI. The request will be answered with a 200 OK
 	with the capabilities of the server.
 	</para>
 	<para>
 	To answer OPTIONS request directed to your server is the easiest
-	way for is-alive-tests on the SIP (application) layer from remote 
-	(similar to ICMP echo requests, also known as <quote>ping</quote>, 
+	way for is-alive-tests on the SIP (application) layer from remote
+	(similar to ICMP echo requests, also known as <quote>ping</quote>,
 	on the network layer).
 	</para>
 	</section>
@@ -57,7 +57,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -69,7 +69,7 @@
 		</para>
 	</section>
 	</section>
-	
+
 	<section>
 		<title>Parameters</title>
 		<section>
@@ -640,7 +640,8 @@ if (is_tel_number("+24242424") {
 		<function moreinfo="none">is_numeric(tval)</function>
 		</title>
 		<para>
-		  Checks if the parameter value consists solely of decimal digits. The parameter can include variables.
+			Checks if the parameter value consists solely of decimal digits.
+			The parameter can include variables.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -649,7 +650,30 @@ if (is_tel_number("+24242424") {
 		<title><function>is_numeric</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (is_numeric($rU)) {  # Test if R-URI user consists of decimal digits
+if (is_numeric("$rU")) {  # Test if R-URI user consists of decimal digits
+   ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="siputils.f.is_alphanum">
+		<title>
+		<function moreinfo="none">is_alphanum(tval)</function>
+		</title>
+		<para>
+			Checks if the parameter value consists solely of decimal digits
+			or alphabetic ASCII characters. The parameter can include variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_alphanum</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_alphanum("$rU")) {
    ...
 }
 ...
@@ -662,13 +686,13 @@ if (is_numeric($rU)) {  # Test if R-URI user consists of decimal digits
 		<function moreinfo="none">encode_contact(encoding_prefix,hostpart)</function>
 		</title>
 		<para>
-		This function will encode uri-s inside Contact header in the following 
+		This function will encode uri-s inside Contact header in the following
 		manner
 		sip:username:password@ip:port;transport=protocol goes
 		sip:encoding_prefix*username*ip*port*protocol@hostpart.
 		</para>
 		<para>
-		* is the default separator and can be changed by setting the contact_flds_separator 
+		* is the default separator and can be changed by setting the contact_flds_separator
 		module parameter.
 		</para>
 		<para>

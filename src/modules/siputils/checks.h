@@ -124,4 +124,9 @@ int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2);
  */
 int is_numeric(sip_msg_t *msg, char *_sp, char* _s2);
 
+/*
+ * Check if the parameter contains alphanumeric characters
+ */
+int is_alphanum(sip_msg_t *msg, char *_sp, char* _s2);
+
 #endif /* CHECKS_H */
