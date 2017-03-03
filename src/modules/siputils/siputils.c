@@ -181,6 +181,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"is_alphanum", (cmd_function)is_alphanum,               1, fixup_spve_null,
 		0, ANY_ROUTE},
+	{"is_alphanumex", (cmd_function)is_alphanumex,           2, fixup_spve_spve,
+		0, ANY_ROUTE},
 	{"sip_p_charging_vector", (cmd_function)sip_handle_pcv,  1, fixup_spve_null,
 		fixup_free_spve_null, ANY_ROUTE},
 	{0,0,0,0,0,0}

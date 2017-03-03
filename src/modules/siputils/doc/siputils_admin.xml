@@ -681,6 +681,30 @@ if (is_alphanum("$rU")) {
 		</example>
 	</section>
 
+	<section id="siputils.f.is_alphanumex">
+		<title>
+		<function moreinfo="none">is_alphanumex(tval, eset)</function>
+		</title>
+		<para>
+			Checks if the value of parameter 'tval' consists solely of decimal
+			digits, alphabetic ASCII characters and the characters in the
+			second parameter 'eset'. The parameters can include variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>is_alphanumex</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_alphanumex("$rU", "+.-_")) {
+   ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="siputils.f.encode_contact">
 		<title>
 		<function moreinfo="none">encode_contact(encoding_prefix,hostpart)</function>
