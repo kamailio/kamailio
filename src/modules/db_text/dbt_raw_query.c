@@ -115,22 +115,46 @@ int dbt_raw_query_select(db1_con_t* _h, str* _s, db1_res_t** _r)
 	if(ncols == 1 && strncmp(*tokens, "*", 1) == 0) {
 		cols = _tbc->nrcols;
 		result_cols = pkg_malloc(sizeof(db_key_t) * cols);
+        if(result_cols == NULL) {
+            LM_ERR("no more memory allocating");
+            goto error;
+        }
 		memset(result_cols, 0, sizeof(db_key_t) * cols);
 		for(n=0; n < cols; n++) {
 			result_cols[n] = pkg_malloc(sizeof(str));
+            if(result_cols[n] == NULL) {
+                LM_ERR("no more memory allocating");
+                goto error;
+            }
 			result_cols[n]->len = _tbc->colv[n]->name.len;
 			result_cols[n]->s = pkg_malloc((_tbc->colv[n]->name.len + 1) * sizeof(char));
+            if(result_cols[n]->s == NULL) {
+                LM_ERR("no more memory allocating");
+                goto error;
+            }
 			strncpy(result_cols[n]->s, _tbc->colv[n]->name.s, _tbc->colv[n]->name.len);
 			result_cols[n]->s[_tbc->colv[n]->name.len] = '\0';
 		}
 	} else {
 		cols = ncols;
 		result_cols = pkg_malloc(sizeof(db_key_t) * cols);
+        if(result_cols == NULL) {
+            LM_ERR("no more memory allocating");
+            goto error;
+        }
 		memset(result_cols, 0, sizeof(db_key_t) * cols);
 		for(n=0; *(tokens + n); n++) {
 			result_cols[n] = pkg_malloc(sizeof(str));
+            if(result_cols[n] == NULL) {
+                LM_ERR("no more memory allocating");
+                goto error;
+            }
 			result_cols[n]->len = strlen(*(tokens + n));
 			result_cols[n]->s = pkg_malloc((strlen(*(tokens + n)) + 1) * sizeof(char));
+            if(result_cols[n]->s == NULL) {
+                LM_ERR("no more memory allocating");
+                goto error;
+            }
 			strncpy(result_cols[n]->s, *(tokens + n), strlen(*(tokens + n)));
 			result_cols[n]->s[strlen(*(tokens + n))] = '\0';
 		}
@@ -167,8 +191,10 @@ error:
 
 	if(result_cols) {
 		for(n=0; n < cols; n++) {
-			pkg_free(result_cols[n]->s);
-			pkg_free(result_cols[n]);
+            if(result_cols[n]->s)
+                pkg_free(result_cols[n]->s);
+            if(result_cols[n])
+                pkg_free(result_cols[n]);
 		}
 		pkg_free(result_cols);
 	}
