@@ -270,6 +270,26 @@ modparam("db_text", "db_mode", 1)
 </programlisting>
 			</example>
 		</section>
+        <section>
+            <title><varname>default_connection</varname> (string)</title>
+            <para>
+                connection for use with rpc query command.
+            </para>
+            
+            <para>
+                <emphasis>
+                    Default value is <quote>none</quote> (off).
+                </emphasis>
+            </para>
+            <example>
+                <title>Set <varname>default_connection</varname> parameter</title>
+                <programlisting format="linespecific">
+                    ...
+                    modparam("db_text", "default_connection", "text:///var/db/kamailio/dbtext")
+                    ...
+                </programlisting>
+            </example>
+        </section>
 		<section>
 			<title><varname>emptystring</varname> (integer)</title>
 			<para>
@@ -329,6 +349,18 @@ modparam("db_text", "file_buffer_size", 8192)
 	kamcmd db_text.dump
 		</programlisting>
 	</section>
+    <section>
+        <title>
+            <function moreinfo="none">db_text.query</function>
+        </title>
+        <para>run sql command</para>
+        <para>Name: <emphasis>db_text.query</emphasis></para>
+        <para>Parameters: <emphasis>sqlcmd</emphasis></para>
+        <para>RPC Command Format:</para>
+        <programlisting  format="linespecific">
+            kamcmd db_text.query 'select * from location where username="xxx"'
+        </programlisting>
+    </section>
 	</section>
 	<section>
 		<title>Installation and Running</title>
