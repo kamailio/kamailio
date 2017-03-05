@@ -77,7 +77,8 @@ MODULE_VERSION
 int _compare_ips(char*, size_t, enum enum_ip_type, char*, size_t, enum enum_ip_type);
 int _compare_ips_v4(struct in_addr *ip, char*, size_t);
 int _compare_ips_v6(struct in6_addr *ip, char*, size_t);
-int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask);
+int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type,
+		char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask);
 int _ip_is_in_subnet_v4(struct in_addr *ip, char *net, size_t netlen, int netmask);
 int _ip_is_in_subnet_v6(struct in6_addr *ip, char *net, size_t netlen, int netmask);
 int _ip_is_in_subnet_str(void *ip, enum enum_ip_type type, char *s, int slen);
@@ -304,8 +305,10 @@ int _compare_ips_v6(struct in6_addr *ip, char* ip2, size_t len2)
 	return 0;
 }
 
-/*! \brief Return 1 if IP1 is in the subnet given by IP2 and the netmask, 0 otherwise. */
-int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type, char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask)
+/*! \brief Return 1 if IP1 is in the subnet given by IP2 and the netmask,
+ * 0 otherwise. */
+int _ip_is_in_subnet(char *ip1, size_t len1, enum enum_ip_type ip1_type,
+		char *ip2, size_t len2, enum enum_ip_type ip2_type, int netmask)
 {
 	struct in_addr in_addr1, in_addr2;
 	struct in6_addr in6_addr1, in6_addr2;
@@ -875,7 +878,9 @@ static int w_ip_is_in_subnet(struct sip_msg* _msg, char* _s1, char* _s2)
 		if((ret = _ip_is_in_subnet_str_trimmed(ip,ip1_type,b,e))>0) return ret;
 	}
 	e = string2.s+string2.len;
-	return _ip_is_in_subnet_str_trimmed(ip,ip1_type,b,e);
+	ret = _ip_is_in_subnet_str_trimmed(ip,ip1_type,b,e);
+	if(ret==0) return -1;
+	return ret;
 }
 
 
