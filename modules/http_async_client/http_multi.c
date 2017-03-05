@@ -316,6 +316,8 @@ void reply_error(struct http_m_cell *cell)
 
 	cell->cb(reply, cell->param);
 
+	pkg_free(reply);
+
 	return;
 }
 
