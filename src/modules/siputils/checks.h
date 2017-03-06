@@ -127,12 +127,12 @@ int is_numeric(sip_msg_t *msg, char *_sp, char* _s2);
 /*
  * Check if the parameter contains alphanumeric characters
  */
-int is_alphanum(sip_msg_t *msg, char *_sp, char* _s2);
+int ksr_is_alphanum(sip_msg_t *msg, char *_sp, char* _s2);
 
 /*
  * Check if the parameter contains alphanumeric characters or are part of
  * the second parameter
  */
-int is_alphanumex(sip_msg_t *msg, char *_sp, char* _se);
+int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char* _se);
 
 #endif /* CHECKS_H */
