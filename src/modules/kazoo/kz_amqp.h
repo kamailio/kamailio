@@ -183,6 +183,7 @@ typedef struct {
 	amqp_boolean_t no_ack;
 	amqp_boolean_t wait_for_consumer_ack;
 	amqp_boolean_t federate;
+    amqp_boolean_t consistent_worker;
 } kz_amqp_bind, *kz_amqp_bind_ptr;
 
 typedef struct {
