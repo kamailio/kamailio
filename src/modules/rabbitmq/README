@@ -32,6 +32,7 @@ Stefan-Cristian Mititelu
               3.5. port (int)
               3.6. timeout_sec (int)
               3.7. timeout_usec (int)
+              3.8. direct_reply_to (int)
 
         4. Functions
 
@@ -50,8 +51,9 @@ Stefan-Cristian Mititelu
    1.5. Set the “port” parameter
    1.6. Set the “timeout_sec” parameter
    1.7. Set the “timeout_usec” parameter
-   1.8. rabbitmq_publish usage
-   1.9. rabbitmq_publish_consume usage
+   1.8. Set the “direct_reply_to” parameter
+   1.9. rabbitmq_publish usage
+   1.10. rabbitmq_publish_consume usage
 
 Chapter 1. Admin Guide
 
@@ -72,6 +74,7 @@ Chapter 1. Admin Guide
         3.5. port (int)
         3.6. timeout_sec (int)
         3.7. timeout_usec (int)
+        3.8. direct_reply_to (int)
 
    4. Functions
 
@@ -118,6 +121,7 @@ Chapter 1. Admin Guide
    3.5. port (int)
    3.6. timeout_sec (int)
    3.7. timeout_usec (int)
+   3.8. direct_reply_to (int)
 
 3.1. username (string)
 
@@ -200,6 +204,19 @@ modparam("rabbitmq", "timeout_sec", 1)
 modparam("rabbitmq", "timeout_usec", 0)
 ...
 
+3.8. direct_reply_to (int)
+
+   Setting this parameter to 1, enables rabbitmq direct reply-to feature.
+   More info about this, can be found at
+   https://www.rabbitmq.com/direct-reply-to.html.
+
+   Default value is “0”.
+
+   Example 1.8. Set the “direct_reply_to” parameter
+...
+modparam("rabbitmq", "direct_reply_to", 1)
+...
+
 4. Functions
 
    4.1. rabbitmq_publish(exchange, routing_key, content_type, messagebody)
@@ -219,7 +236,7 @@ modparam("rabbitmq", "timeout_usec", 0)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.8. rabbitmq_publish usage
+   Example 1.9. rabbitmq_publish usage
 rabbitmq_publish("exchange", "routing_key", "application/json", "$avp(json_reque
 st)");
 
@@ -239,6 +256,6 @@ messagebody, reply)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.9. rabbitmq_publish_consume usage
+   Example 1.10. rabbitmq_publish_consume usage
 rabbitmq_publish_consume("exchange", "routing_key", "application/json", "$avp(js
 on_request)", "$avp(json_reply)");

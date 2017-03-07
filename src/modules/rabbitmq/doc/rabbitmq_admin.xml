@@ -226,6 +226,28 @@ modparam("rabbitmq", "timeout_usec", 0)
 				</programlisting>
 			</example>
 		</section>
+
+		<section id="rabbitmq.p.direct_reply_to">
+			<title><varname>direct_reply_to</varname> (int)</title>
+			<para>
+				Setting this parameter to 1, enables rabbitmq direct reply-to feature. More info about this, can be found at https://www.rabbitmq.com/direct-reply-to.html.
+			</para>
+
+			<para>
+				<emphasis>
+					Default value is <quote>0</quote>.
+				</emphasis>
+			</para>
+
+			<example>
+				<title>Set the <quote>direct_reply_to</quote> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("rabbitmq", "direct_reply_to", 1)
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section>

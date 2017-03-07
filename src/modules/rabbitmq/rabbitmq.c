@@ -77,6 +77,7 @@ int amqp_port = 5672;
 int max_reconnect_attempts = 1;
 int timeout_sec = 1;
 int timeout_usec = 0;
+int direct_reply_to = 0;
 
 /* module helper functions */
 static int rabbitmq_connect(amqp_connection_state_t *conn);
@@ -130,6 +131,7 @@ static param_export_t params[] = {
 	{"port", PARAM_INT, &amqp_port},
 	{"timeout_sec", PARAM_INT, &timeout_sec},
 	{"timeout_usec", PARAM_INT, &timeout_usec},
+	{"direct_reply_to", PARAM_INT, &direct_reply_to},
 	{ 0, 0, 0}
 };
 
@@ -285,6 +287,8 @@ static int rabbitmq_publish_consume(struct sip_msg* msg, char* in_exchange, char
 	tv.tv_sec=timeout_sec;
 	tv.tv_usec=timeout_usec;
 
+	amqp_queue_declare_ok_t *reply_to;
+
 	// sanity checks
 	if (get_str_fparam(&exchange, msg, (fparam_t*)in_exchange) < 0) {
 		LM_ERR("failed to get exchange\n");
@@ -305,9 +309,6 @@ static int rabbitmq_publish_consume(struct sip_msg* msg, char* in_exchange, char
 		LM_ERR("failed to get content type\n");
 		return -1;
 	}
-
-
-	amqp_bytes_t reply_to_queue;
 
 reconnect:
 	// open channel
@@ -342,25 +343,22 @@ reconnect:
 		return RABBITMQ_ERR_CHANNEL;
 	}
 
-	// alloc queue
-	amqp_queue_declare_ok_t *r = amqp_queue_declare(conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
+	// alloc reply_to queue
+	if (direct_reply_to == 1) {
+		reply_to = amqp_queue_declare(conn, 1, amqp_cstring_bytes("amq.rabbitmq.reply-to"), 0, 0, 0, 1, amqp_empty_table);
+	} else {
+		reply_to = amqp_queue_declare(conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
+	}
+
 	if (log_on_amqp_error(amqp_get_rpc_reply(conn), "amqp_queue_declare()") != AMQP_RESPONSE_NORMAL) {
 		LM_ERR("FAIL: amqp_queue_declare()\n");
 		amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
 		return RABBITMQ_ERR_QUEUE;
 	}
 
-	// alloc bytes
-	reply_to_queue = amqp_bytes_malloc_dup(r->queue);
-	LM_DBG("%.*s\n", (int)reply_to_queue.len, (char*)reply_to_queue.bytes);
-	if (reply_to_queue.bytes == NULL) {
-		amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-		amqp_bytes_free(reply_to_queue);
-		LM_ERR("Out of memory while copying queue name");
-		return -1;
-	}
+	LM_INFO("reply_to = %.*s\n", (int)reply_to->queue.len, (char*)reply_to->queue.bytes);
 
-	// alloc properties
+	// alloc request properties
 	amqp_basic_properties_t props;
 	props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG |
 			AMQP_BASIC_DELIVERY_MODE_FLAG |
@@ -368,14 +366,21 @@ reconnect:
 			AMQP_BASIC_CORRELATION_ID_FLAG;
 	props.content_type = amqp_cstring_bytes(contenttype.s);
 	props.delivery_mode = 2; /* persistent delivery mode */
-	props.reply_to = amqp_bytes_malloc_dup(reply_to_queue);
+	props.reply_to = reply_to->queue;
 	if (props.reply_to.bytes == NULL) {
-		amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-		amqp_bytes_free(reply_to_queue);
 		LM_ERR("Out of memory while copying queue name");
+		amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
 		return -1;
 	}
 	props.correlation_id = amqp_cstring_bytes("1");
+
+	// start consume
+	amqp_basic_consume(conn, 1, reply_to->queue, amqp_empty_bytes, 0, 1, 0, amqp_empty_table);
+	if (log_on_amqp_error(amqp_get_rpc_reply(conn), "amqp_basic_consume()") != AMQP_RESPONSE_NORMAL) {
+		LM_ERR("FAIL: amqp_basic_consume()\n");
+		amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
+		return RABBITMQ_ERR_CONSUME;
+	}
 
 	// publish
 	if (log_on_error(amqp_basic_publish(conn,1,
@@ -388,20 +393,8 @@ reconnect:
 		"amqp_basic_publish()") != AMQP_RESPONSE_NORMAL) {
 			LM_ERR("FAIL: amqp_basic_publish()\n");
 			amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-			amqp_bytes_free(reply_to_queue);
 			return RABBITMQ_ERR_PUBLISH;
 	}
-	amqp_bytes_free(props.reply_to);
-
-	// consume
-	amqp_basic_consume(conn, 1, reply_to_queue, amqp_empty_bytes, 0, 1, 0, amqp_empty_table);
-	if (log_on_amqp_error(amqp_get_rpc_reply(conn), "amqp_basic_consume()") != AMQP_RESPONSE_NORMAL) {
-		LM_ERR("FAIL: amqp_basic_consume()\n");
-		amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-		amqp_bytes_free(reply_to_queue);
-		return RABBITMQ_ERR_CONSUME;
-	}
-	amqp_bytes_free(reply_to_queue);
 
 	// consume frame
 	for (;;) {
