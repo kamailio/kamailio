@@ -347,6 +347,9 @@ int init_dns_cache()
 		ret=E_OUT_OF_MEM;
 		goto error;
 	}
+
+	*dns_cache_mem_used=0;
+
 #ifdef DNS_LU_LST
 	dns_last_used_lst=shm_malloc(sizeof(*dns_last_used_lst));
 	if (dns_last_used_lst==0){
