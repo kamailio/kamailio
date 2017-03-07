@@ -377,9 +377,16 @@ int db_mongodb_get_columns(const db1_con_t* _h, db1_res_t* _r)
 		LM_DBG("Found a field[%d] named: %s\n", col, colname);
 		if(mgres->colsdoc) {
 			if(!bson_iter_find(&riter, colname)) {
-				LM_ERR("field [%s] not found in result iterator\n",
-						colname);
-				return -4;
+				/* re-init the iterator */
+				if (!bson_iter_init (&riter, mgres->rdoc)) {
+					LM_ERR("failed to initialize result iterator\n");
+					return -3;
+				}
+				if(!bson_iter_find(&riter, colname)) {
+					LM_ERR("field [%s] not found in result iterator\n",
+							colname);
+					return -4;
+				}
 			}
 			coltype = bson_iter_type(&riter);
 		} else {
