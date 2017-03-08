@@ -430,6 +430,7 @@ extern char *default_routename;
 %token TCP_OPT_CRLF_PING
 %token TCP_OPT_ACCEPT_NO_CL
 %token TCP_CLONE_RCVBUF
+%token TCP_REUSE_PORT
 %token DISABLE_TLS
 %token ENABLE_TLS
 %token TLSLOG
@@ -1204,6 +1205,18 @@ assign_stm:
 		#endif
 	}
 	| TCP_CLONE_RCVBUF EQUAL error { yyerror("number expected"); }
+	| TCP_REUSE_PORT EQUAL NUMBER {
+		#ifdef USE_TCP
+		#ifdef SO_REUSEPORT
+			tcp_default_cfg.reuse_port=$3;
+		#else
+			warn("support for SO_REUSEPORT not compiled in");
+		#endif
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_REUSE_PORT EQUAL error { yyerror("boolean value expected"); }
 	| DISABLE_TLS EQUAL NUMBER {
 		#ifdef USE_TLS
 			tls_disable=$3;

@@ -680,7 +680,7 @@ C_DEFS= $(extra_defs) \
 	 #-DSTATS \
 	 #-DNO_LOG \
 	 #-DPROFILING \
-	 #-DNO_SIG_DEBUG
+	 #-DNO_SIG_DEBUG 
 
 #PROFILE=  -pg	# set this if you want profiling
 				# you may also want to set -DPROFILING

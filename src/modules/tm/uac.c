@@ -476,6 +476,14 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	request->dst = dst;
 	request->flags |= nhtype;
 
+#ifdef SO_REUSEPORT
+	if (cfg_get(tcp, tcp_cfg, reuse_port) && 
+			uac_r->ssock!=NULL && uac_r->ssock->len>0 &&
+			request->dst.send_sock->proto == PROTO_TCP) {
+		request->dst.send_flags.f |= SND_F_FORCE_SOCKET;
+	}
+#endif
+
 	if (!is_ack) {
 #ifdef TM_DEL_UNREF
 		INIT_REF(new_cell, 1); /* ref'ed only from the hash */
