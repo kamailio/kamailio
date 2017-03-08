@@ -623,7 +623,7 @@ void ws_rpc_dump(rpc_t* rpc, void* ctx)
 		return;
 	}
 	if(rpc->struct_add(th, "[{",
-				"connections",  "info", &ih, &dh)<0)
+				"connections", &ih,  "info", &dh)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error connections structure");
 		return;
@@ -703,8 +703,8 @@ void ws_rpc_dump(rpc_t* rpc, void* ctx)
 	WSCONN_UNLOCK;
 
 	if(rpc->struct_add(dh, "ds",
-				"wscounter", "truncated",
-				connections, (truncated==1)?"yes":"no")<0)
+				"wscounter", connections,
+				"truncated", (truncated==1)?"yes":"no")<0)
 	{
 		rpc->fault(ctx, 500, "Internal error adding info structure");
 		return;
