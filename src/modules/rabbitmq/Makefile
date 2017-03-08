@@ -7,8 +7,8 @@ LIBS=
 
 ifeq ($(CROSS_COMPILE),)
 RMQ_BUILDER=$(shell \
-	if pkg-config --exists librabbitmq; then \
-		echo 'pkg-config librabbitmq'; \
+	if pkg-config --exists librabbitmq && pkg-config --exists uuid; then \
+		echo 'pkg-config librabbitmq uuid'; \
 	fi)
 endif
 
@@ -17,7 +17,7 @@ ifneq ($(RMQ_BUILDER),)
 	LIBS += $(shell $(RMQ_BUILDER) --libs)
 else
 	DEFS+=-I$(LOCALBASE)/include
-	LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -lrabbitmq
+	LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -lrabbitmq -luuid
 endif
 
 DEFS+=-DKAMAILIO_MOD_INTERFACE

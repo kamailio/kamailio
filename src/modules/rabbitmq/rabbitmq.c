@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <uuid/uuid.h>
 
 #include <stdint.h>
 #include <amqp_tcp_socket.h>
@@ -289,6 +290,10 @@ static int rabbitmq_publish_consume(struct sip_msg* msg, char* in_exchange, char
 
 	amqp_queue_declare_ok_t *reply_to;
 
+	uuid_t uuid;
+	char uuid_buffer[40];
+	char reply_to_buffer[64];
+
 	// sanity checks
 	if (get_str_fparam(&exchange, msg, (fparam_t*)in_exchange) < 0) {
 		LM_ERR("failed to get exchange\n");
@@ -347,7 +352,13 @@ reconnect:
 	if (direct_reply_to == 1) {
 		reply_to = amqp_queue_declare(conn, 1, amqp_cstring_bytes("amq.rabbitmq.reply-to"), 0, 0, 0, 1, amqp_empty_table);
 	} else {
-		reply_to = amqp_queue_declare(conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
+		uuid_generate_random(uuid);
+		uuid_unparse(uuid, uuid_buffer);
+
+		strcpy(reply_to_buffer, "kamailio-");
+		strcat(reply_to_buffer, uuid_buffer);
+
+		reply_to = amqp_queue_declare(conn, 1, amqp_cstring_bytes(reply_to_buffer), 0, 0, 0, 1, amqp_empty_table);
 	}
 
 	if (log_on_amqp_error(amqp_get_rpc_reply(conn), "amqp_queue_declare()") != AMQP_RESPONSE_NORMAL) {
