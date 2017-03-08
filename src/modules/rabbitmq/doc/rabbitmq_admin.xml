@@ -71,6 +71,29 @@
 	<section>
 		<title>Parameters</title>
 
+		<section id="rabbitmq.p.url">
+			<title><varname>url</varname> (string)</title>
+			<para>
+				The amqp connection url.
+				If set to something else than the default value, it will overwrite the values of all connection parameters below (e.g. username, password, host, vhost, port)
+			</para>
+
+			<para>
+				<emphasis>
+					Default value is <quote>amqp://guest:guest@localhost:5672/%2F</quote>.
+				</emphasis>
+			</para>
+
+			<example>
+				<title>Set the <quote>url</quote> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("rabbitmq", "url", "amqp://kamailio:kamailio@localhost:5672/%2Fkamailio")
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="rabbitmq.p.username">
 			<title><varname>username</varname> (string)</title>
 			<para>

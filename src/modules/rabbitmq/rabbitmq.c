@@ -70,6 +70,8 @@ amqp_socket_t *amqp_sock = NULL;
 amqp_connection_state_t conn = NULL;
 
 /* module parameters */
+struct amqp_connection_info amqp_info;
+char *amqp_url = RABBITMQ_DEFAULT_AMQP_URL;
 char *amqp_username = "guest";
 char *amqp_password = "guest";
 char *amqp_host = "localhost";
@@ -125,6 +127,7 @@ static cmd_export_t cmds[] = {
 
 /* module parameters */
 static param_export_t params[] = {
+	{"url", PARAM_STRING, &amqp_url},
 	{"username", PARAM_STRING, &amqp_username},
 	{"password", PARAM_STRING, &amqp_password},
 	{"host", PARAM_STRING, &amqp_host},
@@ -152,6 +155,20 @@ struct module_exports exports = {
 /* module init */
 static int mod_init(void)
 {
+	if (strcmp(amqp_url, RABBITMQ_DEFAULT_AMQP_URL)) {
+		if (amqp_parse_url(amqp_url, &amqp_info) == AMQP_STATUS_BAD_URL) {
+			LM_ERR("FAIL parsing url: '%s'\n", amqp_url);
+			return -1;
+		} else {
+			LM_INFO("SUCCESS parsing url: '%s'\n", amqp_url);
+			amqp_username = amqp_info.user;
+			amqp_password = amqp_info.password;
+			amqp_host = amqp_info.host;
+			amqp_vhost = amqp_info.vhost;
+			amqp_port = amqp_info.port;
+		}
+	}
+
 	return 0;
 }
 
