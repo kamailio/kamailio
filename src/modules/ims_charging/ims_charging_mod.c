@@ -61,6 +61,9 @@ client_ro_cfg cfg = { str_init(""),
     0
 };
 
+static str custom_user_spec = {NULL, 0};
+pv_spec_t custom_user_avp;
+
 extern struct ims_charging_counters_h ims_charging_cnts_h;
 struct cdp_binds cdpb;
 ims_dlg_api_t dlgb;
@@ -130,6 +133,7 @@ static param_export_t params[] = {
 		{ "db_update_period",		INT_PARAM,			&db_update_period		},
 		{ "vendor_specific_chargeinfo",		INT_PARAM,	&vendor_specific_chargeinfo		}, /* VSI for extra charing info in Ro */
 		{ "vendor_specific_id",		INT_PARAM,			&vendor_specific_id		}, /* VSI for extra charing info in Ro */
+		{ "custom_user_avp",		PARAM_STR,			&custom_user_spec},
 		{ 0, 0, 0 }
 };
 
@@ -172,6 +176,17 @@ int fix_parameters() {
 		LM_ERR("fix_parameters: error while creating service_context_id\n");
 		return 0;
 	}
+
+	if (custom_user_spec.s) {
+		if (pv_parse_spec(&custom_user_spec, &custom_user_avp) == 0
+				&& (custom_user_avp.type != PVT_AVP)) {
+			LM_ERR("malformed or non AVP custom_user "
+					"AVP definition in '%.*s'\n", custom_user_spec.len,custom_user_spec.s);
+			return -1;
+		}
+	}
+
+	init_custom_user(custom_user_spec.s ? &custom_user_avp : 0);
 
 	return 1;
 }

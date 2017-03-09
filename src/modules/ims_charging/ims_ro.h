@@ -27,4 +27,6 @@ void send_ccr_interim(struct ro_session* ro_session, unsigned int used, unsigned
 void send_ccr_stop_with_param(struct ro_session *ro_session, unsigned int code, str* reason);
 int get_direction_as_int(str* direction);
 
+void init_custom_user(pv_spec_t *custom_user_avp);
+
 #endif /* CLIENT_RF_IMS_RO_H */

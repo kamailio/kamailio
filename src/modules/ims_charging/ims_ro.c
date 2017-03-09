@@ -34,6 +34,8 @@
 #include "ro_db_handler.h"
 #include "ims_charging_stats.h"
 
+static pv_spec_t *custom_user_avp;		/*!< AVP for custom_user setting */
+
 extern struct tm_binds tmb;
 extern struct cdp_binds cdpb;
 extern client_ro_cfg cfg;
@@ -69,6 +71,33 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
 static void resume_on_interim_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 static void resume_on_termination_ccr(int is_timeout, void *param, AAAMessage *cca, long elapsed_msecs);
 static int get_mac_avp_value(struct sip_msg *msg, str *value);
+
+void init_custom_user(pv_spec_t *custom_user_avp_p)
+{
+    custom_user_avp = custom_user_avp_p;
+}
+
+/*!
+ * \brief Return the custom_user for a record route
+ * \param req SIP message
+ * \param custom_user to be returned
+ * \return <0 for failure
+ */
+inline static int get_custom_user(struct sip_msg *req, str *custom_user) {
+	pv_value_t pv_val;
+
+	if (custom_user_avp) {
+		if ((pv_get_spec_value(req, custom_user_avp, &pv_val) == 0)
+				&& (pv_val.flags & PV_VAL_STR) && (pv_val.rs.len > 0)) {
+			custom_user->s = pv_val.rs.s;
+			custom_user->len = pv_val.rs.len;
+			return 0;
+		}
+		LM_DBG("invalid AVP value, using default user from P-Asserted-Identity/From-Header\n");
+	}
+
+	return -1;
+}
 
 void credit_control_session_callback(int event, void* session) {
     switch (event) {
@@ -349,13 +378,15 @@ int get_sip_header_info(struct sip_msg * req,
     *expires = cscf_get_expires_hdr(req, 0);
     *callid = cscf_get_call_id(req, NULL);
 
-    if ((*asserted_id_uri = cscf_get_asserted_identity(req, 0)).len == 0) {
-        LM_DBG("No P-Asserted-Identity hdr found. Using From hdr");
+    if (get_custom_user(req, asserted_id_uri) == -1) {
+	    if ((*asserted_id_uri = cscf_get_asserted_identity(req, 0)).len == 0) {
+		LM_DBG("No P-Asserted-Identity hdr found. Using From hdr");
 
-        if (!cscf_get_from_uri(req, asserted_id_uri)) {
-            LM_ERR("Error assigning P-Asserted-Identity using From hdr");
-            goto error;
-        }
+		if (!cscf_get_from_uri(req, asserted_id_uri)) {
+		    LM_ERR("Error assigning P-Asserted-Identity using From hdr");
+		    goto error;
+		}
+	    }
     }
 
     *to_uri = req->first_line.u.request.uri;

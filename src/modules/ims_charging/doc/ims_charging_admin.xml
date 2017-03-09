@@ -730,6 +730,31 @@ modparam("ims_charging", "service_context_id_release", "262")
         </programlisting>
       </example>
     </section>
+
+    <section>
+      <title><varname>custom_user_avp</varname> (avp string)</title>
+
+      <para>When this parameter is set and the contents of the AVP is not
+      empty, the User-AVP in the Ro-Charging-Request will be based on the 
+      this parameter rather than on the P-Asserted or From-Header.</para>
+      <para>
+      This parameter allows you to setup an AVP with which you can customise
+      the user to be used in the Diameter-Request.</para>
+
+      <para><emphasis> Default value: if not set, P-Asserted-Identity with a
+      fallback to the From-Header is used. </emphasis></para>
+
+      <example>
+        <title><varname>custom_user_avp</varname>parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_charging", "custom_user_avp", "$avp(from_user)")
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
