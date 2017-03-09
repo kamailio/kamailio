@@ -622,8 +622,7 @@ void ws_rpc_dump(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
-	if(rpc->struct_add(th, "[{",
-				"connections", &ih,  "info", &dh)<0)
+	if(rpc->struct_add(th, "[", "connections", &ih)<0)
 	{
 		rpc->fault(ctx, 500, "Internal error connections structure");
 		return;
@@ -702,6 +701,11 @@ void ws_rpc_dump(rpc_t* rpc, void* ctx)
 	}
 	WSCONN_UNLOCK;
 
+	if(rpc->struct_add(th, "{", "info", &dh)<0)
+	{
+		rpc->fault(ctx, 500, "Internal error info structure");
+		return;
+	}
 	if(rpc->struct_add(dh, "ds",
 				"wscounter", connections,
 				"truncated", (truncated==1)?"yes":"no")<0)
