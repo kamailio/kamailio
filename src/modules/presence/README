@@ -38,44 +38,46 @@ Juha Heinanen
               3.3. active_watchers_table(str)
               3.4. watchers_table(str)
               3.5. clean_period (int)
-              3.6. db_update_period (int)
-              3.7. waitn_time (int)
-              3.8. notifier_poll_rate (int)
-              3.9. notifier_processes (int)
-              3.10. force_delete (int)
-              3.11. startup_mode (int)
-              3.12. to_tag_pref (str)
-              3.13. expires_offset (int)
-              3.14. max_expires (int)
-              3.15. min_expires (int)
-              3.16. min_expires_action (int)
-              3.17. server_address (str)
-              3.18. subs_db_mode (int)
-              3.19. publ_cache (int)
-              3.20. subs_htable_size (int)
-              3.21. pres_htable_size (int)
-              3.22. send_fast_notify (int)
-              3.23. enable_sphere_check (int)
-              3.24. timeout_rm_subs (int)
-              3.25. fetch_rows (integer)
-              3.26. db_table_lock_type (integer)
-              3.27. local_log_level (int)
-              3.28. local_log_facility (int)
-              3.29. subs_remove_match (int)
-              3.30. xavp_cfg (str)
-              3.31. retrieve_order (int)
-              3.32. retrieve_order_by (str)
-              3.33. sip_uri_match (int)
+              3.6. cseq_offset (int)
+              3.7. db_update_period (int)
+              3.8. waitn_time (int)
+              3.9. notifier_poll_rate (int)
+              3.10. notifier_processes (int)
+              3.11. force_delete (int)
+              3.12. startup_mode (int)
+              3.13. to_tag_pref (str)
+              3.14. expires_offset (int)
+              3.15. max_expires (int)
+              3.16. min_expires (int)
+              3.17. min_expires_action (int)
+              3.18. server_address (str)
+              3.19. subs_db_mode (int)
+              3.20. publ_cache (int)
+              3.21. subs_htable_size (int)
+              3.22. pres_htable_size (int)
+              3.23. send_fast_notify (int)
+              3.24. enable_sphere_check (int)
+              3.25. timeout_rm_subs (int)
+              3.26. fetch_rows (integer)
+              3.27. db_table_lock_type (integer)
+              3.28. local_log_level (int)
+              3.29. local_log_facility (int)
+              3.30. subs_remove_match (int)
+              3.31. xavp_cfg (str)
+              3.32. retrieve_order (int)
+              3.33. retrieve_order_by (str)
+              3.34. sip_uri_match (int)
 
         4. Functions
 
               4.1. handle_publish([sender_uri])
               4.2. handle_subscribe([watcher_uri])
               4.3. pres_auth_status(watcher_uri, presentity_uri)
-              4.4. pres_refresh_watchers(uri, event, type[, file_uri,
+              4.4. pres_has_subscribers(presentity_uri, event)
+              4.5. pres_refresh_watchers(uri, event, type[, file_uri,
                       filename])
 
-              4.5. pres_update_watchers(uri, event)
+              4.6. pres_update_watchers(uri, event)
 
         5. RPC Commands
 
@@ -120,42 +122,44 @@ Juha Heinanen
    1.3. Set active_watchers_table parameter
    1.4. Set watchers_table parameter
    1.5. Set clean_period parameter
-   1.6. Set db_update_period parameter
-   1.7. Set waitn_time parameter
-   1.8. Set notifier_poll_rate parameter
-   1.9. Set notifier_processes parameter
-   1.10. Set force_delete parameter
-   1.11. Set startup_mode parameter
-   1.12. Set to_tag_pref parameter
-   1.13. Set expires_offset parameter
-   1.14. Set max_expires parameter
-   1.15. Set min_expires parameter
+   1.6. Set cseq_offset parameter
+   1.7. Set db_update_period parameter
+   1.8. Set waitn_time parameter
+   1.9. Set notifier_poll_rate parameter
+   1.10. Set notifier_processes parameter
+   1.11. Set force_delete parameter
+   1.12. Set startup_mode parameter
+   1.13. Set to_tag_pref parameter
+   1.14. Set expires_offset parameter
+   1.15. Set max_expires parameter
    1.16. Set min_expires parameter
-   1.17. Set server_address parameter
-   1.18. Set subs_db_mode parameter
-   1.19. Set publ_cache parameter
-   1.20. Set subs_htable_size parameter
-   1.21. Set pres_htable_size parameter
-   1.22. Set send_fast_notify parameter
-   1.23. Set enable_sphere_check parameter
-   1.24. Set timeout_rm_subs parameter
-   1.25. Set fetch_rows parameter
-   1.26. Set db_table_lock_type parameter
-   1.27. Set local_log_level parameter
-   1.28. Set local_log_facility parameter
-   1.29. Set subs_remove_match parameter
-   1.30. Set xavp_cfg parameter
-   1.31. Set retrieve_order parameter
-   1.32. Set retrieve_order_by parameter
-   1.33. Set sip_uri_match parameter
-   1.34. handle_publish usage
-   1.35. handle_subscribe usage
-   1.36. pres_auth_status usage
-   1.37. pres_refresh_watchers usage
-   1.38. pres_update_watchers usage
-   1.39. $subs(name) usage
-   1.40. $notify_reply(name) usage
-   1.41. $notify_reply(name) usage
+   1.17. Set min_expires parameter
+   1.18. Set server_address parameter
+   1.19. Set subs_db_mode parameter
+   1.20. Set publ_cache parameter
+   1.21. Set subs_htable_size parameter
+   1.22. Set pres_htable_size parameter
+   1.23. Set send_fast_notify parameter
+   1.24. Set enable_sphere_check parameter
+   1.25. Set timeout_rm_subs parameter
+   1.26. Set fetch_rows parameter
+   1.27. Set db_table_lock_type parameter
+   1.28. Set local_log_level parameter
+   1.29. Set local_log_facility parameter
+   1.30. Set subs_remove_match parameter
+   1.31. Set xavp_cfg parameter
+   1.32. Set retrieve_order parameter
+   1.33. Set retrieve_order_by parameter
+   1.34. Set sip_uri_match parameter
+   1.35. handle_publish usage
+   1.36. handle_subscribe usage
+   1.37. pres_auth_status usage
+   1.38. pres_has_subscribers usage
+   1.39. pres_refresh_watchers usage
+   1.40. pres_update_watchers usage
+   1.41. $subs(name) usage
+   1.42. $notify_reply(name) usage
+   1.43. $notify_reply(name) usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -175,43 +179,45 @@ Chapter 1. Admin Guide
         3.3. active_watchers_table(str)
         3.4. watchers_table(str)
         3.5. clean_period (int)
-        3.6. db_update_period (int)
-        3.7. waitn_time (int)
-        3.8. notifier_poll_rate (int)
-        3.9. notifier_processes (int)
-        3.10. force_delete (int)
-        3.11. startup_mode (int)
-        3.12. to_tag_pref (str)
-        3.13. expires_offset (int)
-        3.14. max_expires (int)
-        3.15. min_expires (int)
-        3.16. min_expires_action (int)
-        3.17. server_address (str)
-        3.18. subs_db_mode (int)
-        3.19. publ_cache (int)
-        3.20. subs_htable_size (int)
-        3.21. pres_htable_size (int)
-        3.22. send_fast_notify (int)
-        3.23. enable_sphere_check (int)
-        3.24. timeout_rm_subs (int)
-        3.25. fetch_rows (integer)
-        3.26. db_table_lock_type (integer)
-        3.27. local_log_level (int)
-        3.28. local_log_facility (int)
-        3.29. subs_remove_match (int)
-        3.30. xavp_cfg (str)
-        3.31. retrieve_order (int)
-        3.32. retrieve_order_by (str)
-        3.33. sip_uri_match (int)
+        3.6. cseq_offset (int)
+        3.7. db_update_period (int)
+        3.8. waitn_time (int)
+        3.9. notifier_poll_rate (int)
+        3.10. notifier_processes (int)
+        3.11. force_delete (int)
+        3.12. startup_mode (int)
+        3.13. to_tag_pref (str)
+        3.14. expires_offset (int)
+        3.15. max_expires (int)
+        3.16. min_expires (int)
+        3.17. min_expires_action (int)
+        3.18. server_address (str)
+        3.19. subs_db_mode (int)
+        3.20. publ_cache (int)
+        3.21. subs_htable_size (int)
+        3.22. pres_htable_size (int)
+        3.23. send_fast_notify (int)
+        3.24. enable_sphere_check (int)
+        3.25. timeout_rm_subs (int)
+        3.26. fetch_rows (integer)
+        3.27. db_table_lock_type (integer)
+        3.28. local_log_level (int)
+        3.29. local_log_facility (int)
+        3.30. subs_remove_match (int)
+        3.31. xavp_cfg (str)
+        3.32. retrieve_order (int)
+        3.33. retrieve_order_by (str)
+        3.34. sip_uri_match (int)
 
    4. Functions
 
         4.1. handle_publish([sender_uri])
         4.2. handle_subscribe([watcher_uri])
         4.3. pres_auth_status(watcher_uri, presentity_uri)
-        4.4. pres_refresh_watchers(uri, event, type[, file_uri, filename])
+        4.4. pres_has_subscribers(presentity_uri, event)
+        4.5. pres_refresh_watchers(uri, event, type[, file_uri, filename])
 
-        4.5. pres_update_watchers(uri, event)
+        4.6. pres_update_watchers(uri, event)
 
    5. RPC Commands
 
@@ -278,34 +284,35 @@ Chapter 1. Admin Guide
    3.3. active_watchers_table(str)
    3.4. watchers_table(str)
    3.5. clean_period (int)
-   3.6. db_update_period (int)
-   3.7. waitn_time (int)
-   3.8. notifier_poll_rate (int)
-   3.9. notifier_processes (int)
-   3.10. force_delete (int)
-   3.11. startup_mode (int)
-   3.12. to_tag_pref (str)
-   3.13. expires_offset (int)
-   3.14. max_expires (int)
-   3.15. min_expires (int)
-   3.16. min_expires_action (int)
-   3.17. server_address (str)
-   3.18. subs_db_mode (int)
-   3.19. publ_cache (int)
-   3.20. subs_htable_size (int)
-   3.21. pres_htable_size (int)
-   3.22. send_fast_notify (int)
-   3.23. enable_sphere_check (int)
-   3.24. timeout_rm_subs (int)
-   3.25. fetch_rows (integer)
-   3.26. db_table_lock_type (integer)
-   3.27. local_log_level (int)
-   3.28. local_log_facility (int)
-   3.29. subs_remove_match (int)
-   3.30. xavp_cfg (str)
-   3.31. retrieve_order (int)
-   3.32. retrieve_order_by (str)
-   3.33. sip_uri_match (int)
+   3.6. cseq_offset (int)
+   3.7. db_update_period (int)
+   3.8. waitn_time (int)
+   3.9. notifier_poll_rate (int)
+   3.10. notifier_processes (int)
+   3.11. force_delete (int)
+   3.12. startup_mode (int)
+   3.13. to_tag_pref (str)
+   3.14. expires_offset (int)
+   3.15. max_expires (int)
+   3.16. min_expires (int)
+   3.17. min_expires_action (int)
+   3.18. server_address (str)
+   3.19. subs_db_mode (int)
+   3.20. publ_cache (int)
+   3.21. subs_htable_size (int)
+   3.22. pres_htable_size (int)
+   3.23. send_fast_notify (int)
+   3.24. enable_sphere_check (int)
+   3.25. timeout_rm_subs (int)
+   3.26. fetch_rows (integer)
+   3.27. db_table_lock_type (integer)
+   3.28. local_log_level (int)
+   3.29. local_log_facility (int)
+   3.30. subs_remove_match (int)
+   3.31. xavp_cfg (str)
+   3.32. retrieve_order (int)
+   3.33. retrieve_order_by (str)
+   3.34. sip_uri_match (int)
 
 3.1. db_url(str)
 
@@ -369,7 +376,18 @@ modparam("presence", "watchers_table", "watchers")
 modparam("presence", "clean_period", 100)
 ...
 
-3.6. db_update_period (int)
+3.6. cseq_offset (int)
+
+   The allowed offset between server and client cseq.
+
+   Default value is “0”.
+
+   Example 1.6. Set cseq_offset parameter
+                ...
+                modparam("presence", "cseq_offset", 1)
+                ...
+
+3.7. db_update_period (int)
 
    The period at which to synchronize cached subscriber info with the
    database.
@@ -377,12 +395,12 @@ modparam("presence", "clean_period", 100)
    Default value is “100”. A zero or negative value disables
    synchronization.
 
-   Example 1.6. Set db_update_period parameter
+   Example 1.7. Set db_update_period parameter
 ...
 modparam("presence", "db_update_period", 100)
 ...
 
-3.7. waitn_time (int)
+3.8. waitn_time (int)
 
    The maximum time period that NOTIFY requests will be buffered for. The
    server will attempt to send NOTIFY requests within many seconds of a
@@ -394,12 +412,12 @@ modparam("presence", "db_update_period", 100)
 
    Default value is “5”.
 
-   Example 1.7. Set waitn_time parameter
+   Example 1.8. Set waitn_time parameter
 ...
 modparam("presence", "waitn_time", 10)
 ...
 
-3.8. notifier_poll_rate (int)
+3.9. notifier_poll_rate (int)
 
    The number of times per second that the notifier processes should check
    for work. Approximately 1/(waitn_time * notifier_poll_rate *
@@ -411,12 +429,12 @@ modparam("presence", "waitn_time", 10)
 
    Default value is “10”.
 
-   Example 1.8. Set notifier_poll_rate parameter
+   Example 1.9. Set notifier_poll_rate parameter
 ...
 modparam("presence", "notifier_poll_rate", 20)
 ...
 
-3.9. notifier_processes (int)
+3.10. notifier_processes (int)
 
    The number of notifier processes that should be started.
 
@@ -431,12 +449,12 @@ modparam("presence", "notifier_poll_rate", 20)
 
    Default value is “1”.
 
-   Example 1.9. Set notifier_processes parameter
+   Example 1.10. Set notifier_processes parameter
 ...
 modparam("presence", "notifier_processes", 2)
 ...
 
-3.10. force_delete (int)
+3.11. force_delete (int)
 
    Enabling this parameter will delete expired presentity records without
    updating watchers.
@@ -445,12 +463,12 @@ modparam("presence", "notifier_processes", 2)
 
    Default value is “0”.
 
-   Example 1.10. Set force_delete parameter
+   Example 1.11. Set force_delete parameter
 ...
 modparam("presence", "force_delete", 1)
 ...
 
-3.11. startup_mode (int)
+3.12. startup_mode (int)
 
    Setting this parameter to 0 will provide startup related backward
    compatibility for some modules. Setting to 0 fixes presentity requests
@@ -460,24 +478,24 @@ modparam("presence", "force_delete", 1)
 
    Default value is “1”.
 
-   Example 1.11. Set startup_mode parameter
+   Example 1.12. Set startup_mode parameter
 ...
 modparam("presence", "startup_mode", 0)
 ...
 
-3.12. to_tag_pref (str)
+3.13. to_tag_pref (str)
 
    The prefix used when generating to_tag when sending replies for
    SUBSCRIBE requests.
 
    Default value is “10”.
 
-   Example 1.12. Set to_tag_pref parameter
+   Example 1.13. Set to_tag_pref parameter
 ...
 modparam("presence", "to_tag_pref", 'pres')
 ...
 
-3.13. expires_offset (int)
+3.14. expires_offset (int)
 
    The value in seconds that should be subtracted from the expires value
    when sending a 200OK for a publish. It is used for forcing the client
@@ -485,24 +503,24 @@ modparam("presence", "to_tag_pref", 'pres')
 
    Default value is “0”.
 
-   Example 1.13. Set expires_offset parameter
+   Example 1.14. Set expires_offset parameter
 ...
 modparam("presence", "expires_offset", 10)
 ...
 
-3.14. max_expires (int)
+3.15. max_expires (int)
 
    The maximum admissible expires value for PUBLISH/SUBSCRIBE message (in
    seconds).
 
    Default value is “3600”.
 
-   Example 1.14. Set max_expires parameter
+   Example 1.15. Set max_expires parameter
 ...
 modparam("presence", "max_expires", 3600)
 ...
 
-3.15. min_expires (int)
+3.16. min_expires (int)
 
    The minimum admissible expires value for PUBLISH/SUBSCRIBE message (in
    seconds).
@@ -511,12 +529,12 @@ modparam("presence", "max_expires", 3600)
 
    Default value is “0”.
 
-   Example 1.15. Set min_expires parameter
+   Example 1.16. Set min_expires parameter
             ...
             modparam("presence", "min_expires", 1800)
             ...
 
-3.16. min_expires_action (int)
+3.17. min_expires_action (int)
 
    The action to take when UA sends a expires value less then min_expires.
 
@@ -528,23 +546,23 @@ modparam("presence", "max_expires", 3600)
 
    Default value is “1”.
 
-   Example 1.16. Set min_expires parameter
+   Example 1.17. Set min_expires parameter
             ...
             modparam("presence", "min_expires", 1800)
             ...
 
-3.17. server_address (str)
+3.18. server_address (str)
 
    The presence server address which will become the value of Contact
    header filed for 200 OK replies to SUBSCRIBE and PUBLISH and in NOTIFY
    messages.
 
-   Example 1.17. Set server_address parameter
+   Example 1.18. Set server_address parameter
 ...
 modparam("presence", "server_address", "sip:10.10.10.10:5060")
 ...
 
-3.18. subs_db_mode (int)
+3.19. subs_db_mode (int)
 
    The presence module can utilize database for persistent subscription
    storage. If you use database, your subscriptions will survive machine
@@ -578,12 +596,12 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 
    Default value is 2 (Write-Back scheme).
 
-   Example 1.18. Set subs_db_mode parameter
+   Example 1.19. Set subs_db_mode parameter
 ...
 modparam("presence", "subs_db_mode", 1)
 ...
 
-3.19. publ_cache (int)
+3.20. publ_cache (int)
 
    To improve performance, the presence module holds by default a publish
    cache that says if a certain publication exists in database. This is
@@ -599,12 +617,12 @@ modparam("presence", "subs_db_mode", 1)
 
    Default value is “1”.
 
-   Example 1.19. Set publ_cache parameter
+   Example 1.20. Set publ_cache parameter
 ...
 modparam("presence", "publ_cache", 0)
 ...
 
-3.20. subs_htable_size (int)
+3.21. subs_htable_size (int)
 
    The size of the in-memory hash table to store subscription dialogs.
    This parameter will be used as the power of 2 when computing table
@@ -612,24 +630,24 @@ modparam("presence", "publ_cache", 0)
 
    Default value is “9 (512)”.
 
-   Example 1.20. Set subs_htable_size parameter
+   Example 1.21. Set subs_htable_size parameter
 ...
 modparam("presence", "subs_htable_size", 11)
 ...
 
-3.21. pres_htable_size (int)
+3.22. pres_htable_size (int)
 
    The size of the in-memory hash table to store publish records. This
    parameter will be used as the power of 2 when computing table size.
 
    Default value is “9 (512)”.
 
-   Example 1.21. Set pres_htable_size parameter
+   Example 1.22. Set pres_htable_size parameter
 ...
 modparam("presence", "pres_htable_size", 11)
 ...
 
-3.22. send_fast_notify (int)
+3.23. send_fast_notify (int)
 
    This parameter enables or disables the sending of an initial empty
    NOTIFY after a SUBSCRIBE/reSUBSCRIBE. This caused problems for MWI
@@ -639,12 +657,12 @@ modparam("presence", "pres_htable_size", 11)
 
    Default value is “1 ”.
 
-   Example 1.22. Set send_fast_notify parameter
+   Example 1.23. Set send_fast_notify parameter
 ...
 modparam("presence", "send_fast_notify", 0)
 ...
 
-3.23. enable_sphere_check (int)
+3.24. enable_sphere_check (int)
 
    This parameter is a flag that should be set if permission rules include
    sphere checking. The sphere information is expected to be present in
@@ -654,12 +672,12 @@ modparam("presence", "send_fast_notify", 0)
 
    Default value is “0 ”.
 
-   Example 1.23. Set enable_sphere_check parameter
+   Example 1.24. Set enable_sphere_check parameter
 ...
 modparam("presence", "enable_sphere_check", 1)
 ...
 
-3.24. timeout_rm_subs (int)
+3.25. timeout_rm_subs (int)
 
    This parameter is a flag that should be set if subscriptions should be
    removed from the active_watchers when a NOTIFY times out. RFC3265
@@ -669,23 +687,23 @@ modparam("presence", "enable_sphere_check", 1)
 
    Default value is “1”.
 
-   Example 1.24. Set timeout_rm_subs parameter
+   Example 1.25. Set timeout_rm_subs parameter
 ...
 modparam("presence", "timeout_rm_subs", 0)
 ...
 
-3.25. fetch_rows (integer)
+3.26. fetch_rows (integer)
 
    Number of rows to be loaded in one step from database.
 
    Default value is 500.
 
-   Example 1.25. Set fetch_rows parameter
+   Example 1.26. Set fetch_rows parameter
 ...
 modparam("presence", "fetch_rows", 1000)
 ...
 
-3.26. db_table_lock_type (integer)
+3.27. db_table_lock_type (integer)
 
    Enable (=1) or disable (=0) the Locks for table during an transaction.
    Locking only the "current" table causes problems with a MySQL-Databases
@@ -698,35 +716,35 @@ modparam("presence", "fetch_rows", 1000)
 
    Default value is 1 (Write Lock for the Tables).
 
-   Example 1.26. Set db_table_lock_type parameter
+   Example 1.27. Set db_table_lock_type parameter
 ...
 modparam("presence", "db_table_lock_type", 0)
 ...
 
-3.27. local_log_level (int)
+3.28. local_log_level (int)
 
    Control log level for some debug messages inside the module.
 
    Default value is 2 (L_INFO).
 
-   Example 1.27. Set local_log_level parameter
+   Example 1.28. Set local_log_level parameter
 ...
 modparam("presence", "local_log_level", 3)
 ...
 
-3.28. local_log_facility (int)
+3.29. local_log_facility (int)
 
    Control syslog facility for some debug messages inside the module.
 
    Default value is taken from the core log_facility configuration
    parameter.
 
-   Example 1.28. Set local_log_facility parameter
+   Example 1.29. Set local_log_facility parameter
 ...
 modparam("presence", "local_log_facility", "LOG_LOCAL3")
 ...
 
-3.29. subs_remove_match (int)
+3.30. subs_remove_match (int)
 
    Control how to match the subscriptions to remove from memory. If set to
    0, then the match is done on To-Tag (local generated), if set to 1,
@@ -735,12 +753,12 @@ modparam("presence", "local_log_facility", "LOG_LOCAL3")
 
    Default value is 0.
 
-   Example 1.29. Set subs_remove_match parameter
+   Example 1.30. Set subs_remove_match parameter
 ...
 modparam("presence", "subs_remove_match", 1)
 ...
 
-3.30. xavp_cfg (str)
+3.31. xavp_cfg (str)
 
    The name of the xavp to be used to specify attributes for internal
    processing of presence module.
@@ -763,7 +781,7 @@ modparam("presence", "subs_remove_match", 1)
 
    Default value is empty (not set).
 
-   Example 1.30. Set xavp_cfg parameter
+   Example 1.31. Set xavp_cfg parameter
 ...
 modparam("presence", "xavp_cfg", "pres")
 ...
@@ -772,7 +790,7 @@ if(is_method("PUBLISH")) {
 }
 ...
 
-3.31. retrieve_order (int)
+3.32. retrieve_order (int)
 
    If set to 0, presentity records are retrieve by received_time order. If
    set to 1, presentity records are retrieve by the value of
@@ -780,24 +798,24 @@ if(is_method("PUBLISH")) {
 
    Default value is 0.
 
-   Example 1.31. Set retrieve_order parameter
+   Example 1.32. Set retrieve_order parameter
 ...
 modparam("presence", "retrieve_order", 1)
 ...
 
-3.32. retrieve_order_by (str)
+3.33. retrieve_order_by (str)
 
    Used to set the order-by of the db query for fetching the presence
    records when retrieve_order is set to 1.
 
    Default value is “priority”.
 
-   Example 1.32. Set retrieve_order_by parameter
+   Example 1.33. Set retrieve_order_by parameter
 ...
 modparam("presence", "retrieve_order_by", "priority, received_time")
 ...
 
-3.33. sip_uri_match (int)
+3.34. sip_uri_match (int)
 
    The mode used when comparing uris.
 
@@ -807,7 +825,7 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
 
    Default value is “0”.
 
-   Example 1.33. Set sip_uri_match parameter
+   Example 1.34. Set sip_uri_match parameter
             ...
             modparam("presence", "sip_uri_match", 1)
             ...
@@ -817,8 +835,9 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
    4.1. handle_publish([sender_uri])
    4.2. handle_subscribe([watcher_uri])
    4.3. pres_auth_status(watcher_uri, presentity_uri)
-   4.4. pres_refresh_watchers(uri, event, type[, file_uri, filename])
-   4.5. pres_update_watchers(uri, event)
+   4.4. pres_has_subscribers(presentity_uri, event)
+   4.5. pres_refresh_watchers(uri, event, type[, file_uri, filename])
+   4.6. pres_update_watchers(uri, event)
 
 4.1.  handle_publish([sender_uri])
 
@@ -840,7 +859,7 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.34. handle_publish usage
+   Example 1.35. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -871,7 +890,7 @@ modparam("presence", "retrieve_order_by", "priority, received_time")
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.35. handle_subscribe usage
+   Example 1.36. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -888,7 +907,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.36. pres_auth_status usage
+   Example 1.37. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -900,7 +919,19 @@ if (method=="MESSAGE") {
 }
 ...
 
-4.4.  pres_refresh_watchers(uri, event, type[, file_uri, filename])
+4.4.  pres_has_subscribers(presentity_uri, event)
+
+   Allows to check if presentity has any subscribers of event.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.38. pres_has_subscribers usage
+            ...
+            if(pres_has_subscribers($var(uri), "message-summary"))
+            do something...;
+            ...
+
+4.5.  pres_refresh_watchers(uri, event, type[, file_uri, filename])
 
    The function can be used in configuration to triger notifies to
    watchers if a change in watchers authorization or in published state
@@ -924,12 +955,12 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.37. pres_refresh_watchers usage
+   Example 1.39. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
 
-4.5.  pres_update_watchers(uri, event)
+4.6.  pres_update_watchers(uri, event)
 
    The function can be used in configuration to triger updates to watchers
    status if a change in watchers authorization state occurred (i.e.,
@@ -942,7 +973,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.38. pres_update_watchers usage
+   Example 1.40. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
@@ -1033,7 +1064,7 @@ kamcmd presence.refreshWatchers sip:test@kamailio.org presence 1
      * flags
      * user_agent
 
-   Example 1.39. $subs(name) usage
+   Example 1.41. $subs(name) usage
 ...
 if(handle_subscription())
 {
@@ -1049,7 +1080,7 @@ if(handle_subscription())
 
    The “attr” can be any pseudo var that accesses attributes of msg
 
-   Example 1.40. $notify_reply(name) usage
+   Example 1.42. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
@@ -1065,7 +1096,7 @@ event_route[presence:notify-reply]
 
    Fired after notify reply is received or timeout.
 
-   Example 1.41. $notify_reply(name) usage
+   Example 1.43. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
