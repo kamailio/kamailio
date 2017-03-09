@@ -809,7 +809,8 @@ error:
 /**
  *
  */
-int tps_redis_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
+int tps_redis_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode)
 {
 	char* argv[TPS_REDIS_NR_KEYS];
 	size_t argvlen[TPS_REDIS_NR_KEYS];
@@ -871,9 +872,14 @@ int tps_redis_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	argvlen[argc] = rkey.len;
 	argc++;
 
-	TPS_REDIS_SET_ARGS(&md->b_contact, argc, &td_key_b_contact, argv, argvlen);
+	if(mode & TPS_DBU_CONTACT) {
+		TPS_REDIS_SET_ARGS(&md->b_contact, argc, &td_key_b_contact,
+				argv, argvlen);
+		TPS_REDIS_SET_ARGS(&md->b_contact, argc, &td_key_b_contact,
+				argv, argvlen);
+	}
 
-	if(msg->first_line.type==SIP_REPLY) {
+	if((mode & TPS_DBU_RPLATTRS) && msg->first_line.type==SIP_REPLY) {
 		if(sd->b_tag.len<=0
 				&& msg->first_line.u.reply.statuscode>=200
 				&& msg->first_line.u.reply.statuscode<300) {
@@ -888,6 +894,10 @@ int tps_redis_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 			TPS_REDIS_SET_ARGN(liflags, rp, &rval, argc, &td_key_iflags,
 					argv, argvlen);
 		}
+	}
+
+	if(argc<=2) {
+		return 0;
 	}
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
