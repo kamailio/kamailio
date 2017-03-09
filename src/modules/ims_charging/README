@@ -17,7 +17,7 @@ Carlos Ruiz Diaz
 
    Copyright © 2013 Smile Communications
 
-   Copyright © 2013 ng-voice GmbH
+   Copyright © 2013-2017 ng-voice GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -61,6 +61,7 @@ Carlos Ruiz Diaz
               4.21. video_rating_group(string)
               4.22. service_context_id_mcc(string)
               4.23. service_context_id_release(string)
+              4.24. custom_user_avp (avp string)
 
         5. Functions
 
@@ -113,8 +114,9 @@ Carlos Ruiz Diaz
    1.21. video_rating_groupparameter usage
    1.22. service_context_id_mccparameter usage
    1.23. service_context_id_releaseparameter usage
-   1.24. Ro_CCR
-   1.25. Ro_set_session_id_avp
+   1.24. custom_user_avpparameter usage
+   1.25. Ro_CCR
+   1.26. Ro_set_session_id_avp
 
 Chapter 1. Admin Guide
 
@@ -157,6 +159,7 @@ Chapter 1. Admin Guide
         4.21. video_rating_group(string)
         4.22. service_context_id_mcc(string)
         4.23. service_context_id_release(string)
+        4.24. custom_user_avp (avp string)
 
    5. Functions
 
@@ -354,6 +357,7 @@ Chapter 1. Admin Guide
    4.21. video_rating_group(string)
    4.22. service_context_id_mcc(string)
    4.23. service_context_id_release(string)
+   4.24. custom_user_avp (avp string)
 
 4.1. hash_size(int)
 
@@ -666,6 +670,23 @@ modparam("ims_charging", "service_context_id_mcc", "262")
 modparam("ims_charging", "service_context_id_release", "262")
 ...
 
+4.24. custom_user_avp (avp string)
+
+   When this parameter is set and the contents of the AVP is not empty,
+   the User-AVP in the Ro-Charging-Request will be based on the this
+   parameter rather than on the P-Asserted or From-Header.
+
+   This parameter allows you to setup an AVP with which you can customise
+   the user to be used in the Diameter-Request.
+
+   Default value: if not set, P-Asserted-Identity with a fallback to the
+   From-Header is used.
+
+   Example 1.24. custom_user_avpparameter usage
+...
+modparam("ims_charging", "custom_user_avp", "$avp(from_user)")
+...
+
 5. Functions
 
    5.1. Ro_CCR(route_name, direction, reservation_units, domain,
@@ -694,7 +715,7 @@ incoming_trunk_id, outgoing_trunk_id
    This method is executed asynchronously. See example on how to retrieve
    return value.
 
-   Example 1.24. Ro_CCR
+   Example 1.25. Ro_CCR
 ...
   xlog("L_DBG","Sending initial CCR Request for call\n");
     Ro_CCR("RO_ASYNC_TERM_REPLY", "term", 30, "1", "1");
@@ -730,7 +751,7 @@ n");
 
    This function can be used from REQUEST_ROUTE or ONREPLY_ROUTE.
 
-   Example 1.25. Ro_set_session_id_avp
+   Example 1.26. Ro_set_session_id_avp
 ...
             Ro_set_session_id_avp();
             xlog("L_DBG","Ro session AVP has been set: $avp(ro_session_id)\n");
