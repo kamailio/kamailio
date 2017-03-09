@@ -72,11 +72,6 @@ amqp_connection_state_t conn = NULL;
 /* module parameters */
 struct amqp_connection_info amqp_info;
 char *amqp_url = RABBITMQ_DEFAULT_AMQP_URL;
-char *amqp_username = "guest";
-char *amqp_password = "guest";
-char *amqp_host = "localhost";
-char *amqp_vhost = "/";
-int amqp_port = 5672;
 int max_reconnect_attempts = 1;
 int timeout_sec = 1;
 int timeout_usec = 0;
@@ -128,11 +123,6 @@ static cmd_export_t cmds[] = {
 /* module parameters */
 static param_export_t params[] = {
 	{"url", PARAM_STRING, &amqp_url},
-	{"username", PARAM_STRING, &amqp_username},
-	{"password", PARAM_STRING, &amqp_password},
-	{"host", PARAM_STRING, &amqp_host},
-	{"vhost", PARAM_STRING, &amqp_vhost},
-	{"port", PARAM_INT, &amqp_port},
 	{"timeout_sec", PARAM_INT, &timeout_sec},
 	{"timeout_usec", PARAM_INT, &timeout_usec},
 	{"direct_reply_to", PARAM_INT, &direct_reply_to},
@@ -155,18 +145,11 @@ struct module_exports exports = {
 /* module init */
 static int mod_init(void)
 {
-	if (strcmp(amqp_url, RABBITMQ_DEFAULT_AMQP_URL)) {
-		if (amqp_parse_url(amqp_url, &amqp_info) == AMQP_STATUS_BAD_URL) {
-			LM_ERR("FAIL parsing url: '%s'\n", amqp_url);
-			return -1;
-		} else {
-			LM_INFO("SUCCESS parsing url: '%s'\n", amqp_url);
-			amqp_username = amqp_info.user;
-			amqp_password = amqp_info.password;
-			amqp_host = amqp_info.host;
-			amqp_vhost = amqp_info.vhost;
-			amqp_port = amqp_info.port;
-		}
+	if (amqp_parse_url(amqp_url, &amqp_info) == AMQP_STATUS_BAD_URL) {
+		LM_ERR("FAIL parsing url: '%s'\n", amqp_url);
+		return -1;
+	} else {
+		LM_INFO("SUCCESS parsing url: '%s'\n", amqp_url);
 	}
 
 	return 0;
@@ -539,14 +522,14 @@ static int rabbitmq_connect(amqp_connection_state_t *conn) {
 		return RABBITMQ_ERR_SOCK;
 	}
 
-	ret = amqp_socket_open(amqp_sock, amqp_host, amqp_port);
+	ret = amqp_socket_open(amqp_sock, amqp_info.host, amqp_info.port);
 	if (ret != AMQP_STATUS_OK) {
 		LM_ERR("FAIL: open TCP sock, amqp_status=%d", ret);
 		// amqp_destroy_connection(*conn);
 		return RABBITMQ_ERR_SOCK;
 	}
 
-	log_ret = log_on_amqp_error(amqp_login(*conn, amqp_vhost, 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, amqp_username, amqp_password), "amqp_login()");
+	log_ret = log_on_amqp_error(amqp_login(*conn, amqp_info.vhost, 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, amqp_info.user, amqp_info.password), "amqp_login()");
 	if (log_ret != AMQP_RESPONSE_NORMAL && log_ret != AMQP_RESPONSE_NONE) {
 		LM_ERR("FAIL: amqp_login()\n");
 		// amqp_destroy_connection(*conn);

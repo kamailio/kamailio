@@ -75,7 +75,6 @@
 			<title><varname>url</varname> (string)</title>
 			<para>
 				The amqp connection url.
-				If set to something else than the default value, it will overwrite the values of all connection parameters below (e.g. username, password, host, vhost, port)
 			</para>
 
 			<para>
@@ -89,116 +88,6 @@
 				<programlisting format="linespecific">
 ...
 modparam("rabbitmq", "url", "amqp://kamailio:kamailio@localhost:5672/%2Fkamailio")
-...
-				</programlisting>
-			</example>
-		</section>
-
-		<section id="rabbitmq.p.username">
-			<title><varname>username</varname> (string)</title>
-			<para>
-				The user name of amqp connection.
-			</para>
-
-			<para>
-				<emphasis>
-					Default value is <quote>"guest"</quote>.
-				</emphasis>
-			</para>
-
-			<example>
-				<title>Set the <quote>username</quote> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("rabbitmq", "username", "user")
-...
-				</programlisting>
-			</example>
-		</section>
-
-		<section id="rabbitmq.p.password">
-			<title><varname>password</varname> (string)</title>
-			<para>
-				The password of amqp connection.
-			</para>
-
-			<para>
-				<emphasis>
-					Default value is <quote>"guest"</quote>.
-				</emphasis>
-			</para>
-
-			<example>
-				<title>Set the <quote>password</quote> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("rabbitmq", "password", "pass")
-...
-				</programlisting>
-			</example>
-		</section>
-
-		<section id="rabbitmq.p.host">
-			<title><varname>host</varname> (string)</title>
-			<para>
-				The host of amqp connection.
-			</para>
-
-			<para>
-				<emphasis>
-					Default value is <quote>"localhost"</quote>.
-				</emphasis>
-			</para>
-
-			<example>
-				<title>Set the <quote>host</quote> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("rabbitmq", "host", "127.0.0.1")
-...
-				</programlisting>
-			</example>
-		</section>
-
-		<section id="rabbitmq.p.vhost">
-			<title><varname>vhost</varname> (string)</title>
-			<para>
-				The vhost of the amqp connection.
-			</para>
-
-			<para>
-				<emphasis>
-					Default value is <quote>"/"</quote>.
-				</emphasis>
-			</para>
-
-			<example>
-				<title>Set the <quote>vhost</quote> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("rabbitmq", "vhost", "/vhost")
-...
-				</programlisting>
-			</example>
-		</section>
-
-		<section id="rabbitmq.p.port">
-			<title><varname>port</varname> (int)</title>
-			<para>
-				The port of the amqp connection.
-			</para>
-
-			<para>
-				<emphasis>
-					Default value is <quote>5672</quote>.
-				</emphasis>
-			</para>
-
-			<example>
-				<title>Set the <quote>port</quote> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("rabbitmq", "port", 5672)
 ...
 				</programlisting>
 			</example>
