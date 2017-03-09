@@ -1,6 +1,6 @@
 %define name    kamailio
-%define ver 5.0.0
-%define rel dev0.0%{dist}
+%define ver 5.1.0
+%define rel dev1%{dist}
 %bcond_with dnssec
 %bcond_with kazoo
 
@@ -1341,6 +1341,8 @@ fi
 
 
 %changelog
+* Thu Mar 09 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
+  - Updated version to 5.1.0-dev1
 * Thu Mar 09 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
   - added jansson package
 * Sat Feb 04 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
