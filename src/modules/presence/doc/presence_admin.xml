@@ -1024,6 +1024,27 @@ if (method=="MESSAGE") {
 		</example>
 	</section>
 
+<section id="presence.f.pres_has_subscribers">
+    <title>
+        <function moreinfo="none">pres_has_subscribers(presentity_uri, event)</function>
+    </title>
+    <para>
+        Allows to check if presentity has any subscribers of event.
+    </para>
+    <para>
+        This function can be used from ANY_ROUTE.
+    </para>
+    <example>
+        <title><function>pres_has_subscribers</function> usage</title>
+        <programlisting format="linespecific">
+            ...
+            if(pres_has_subscribers($var(uri), "message-summary"))
+            do something...;
+            ...
+        </programlisting>
+    </example>
+</section>
+
 	<section id="presence.f.pres_refresh_watchers">
 		<title>
 		<function moreinfo="none">pres_refresh_watchers(uri, event, type[, file_uri, filename])</function>

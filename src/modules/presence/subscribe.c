@@ -2776,8 +2776,7 @@ int get_db_subs_auth(subs_t* subs, int* found)
 		return -1;
 	}
 
-	if(pa_dbf.query(pa_db, db_keys, 0, db_vals, result_cols,
-				n_query_cols, 2, 0, &result )< 0)
+	if(pa_dbf.query(pa_db, db_keys, 0, db_vals, result_cols, n_query_cols, 2, 0, &result )< 0)
 	{
 		LM_ERR("while querying watchers table\n");
 		if(result)
@@ -2911,4 +2910,73 @@ int insert_db_subs_auth(subs_t* subs)
 
 error:
 	return -1;
+}
+
+int get_subscribers_count_from_mem(struct sip_msg* msg, str pres_uri, str event)
+{
+	subs_t* s;
+	unsigned int hash_code;
+	int found = 0;
+
+	hash_code = core_case_hash(&pres_uri, &event, shtable_size);
+	lock_get(&subs_htable[hash_code].lock);
+	s= subs_htable[hash_code].entries->next;
+	while(s)
+	{
+		if(s->pres_uri.len==pres_uri.len && strncmp(s->pres_uri.s, pres_uri.s, pres_uri.len)==0)
+			found++;
+		s= s->next;
+	}
+	lock_release(&subs_htable[hash_code].lock);
+	return found;
+}
+
+int get_subscribers_count_from_db(struct sip_msg* msg, str pres_uri, str event)
+{
+ 	db_key_t query_cols[2];
+	db_val_t query_vals[2];
+	db_key_t result_cols[1];
+	db1_res_t *result= NULL;
+	int n_query_cols = 0;
+	int n_result_cols = 0;
+	int found = 0;
+
+	query_cols[n_query_cols] = &str_presentity_uri_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = pres_uri;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_event_col;
+	query_vals[n_query_cols].type = DB1_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = event;
+	n_query_cols++;
+
+	result_cols[n_result_cols++] = &str_callid_col;
+
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
+	{
+		LM_ERR("unsuccessful use_table sql operation\n");
+		return 0;
+	}
+
+	if (!pa_dbf.query(pa_db, query_cols, 0, query_vals,result_cols, n_query_cols, n_result_cols, 0,  &result))
+	{
+		if(result != NULL)
+			found = result->n;
+	}
+
+	pa_dbf.free_result(pa_db, result);
+
+	return found;
+}
+
+int get_subscribers_count(struct sip_msg* msg, str pres_uri, str event)
+{
+	if(subs_dbmode == DB_ONLY) {
+		return get_subscribers_count_from_db(msg, pres_uri, event);
+	} else {
+		return get_subscribers_count_from_mem(msg, pres_uri, event);
+	}
 }
