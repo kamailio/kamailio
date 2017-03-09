@@ -37,6 +37,10 @@
 #define TPS_IFLAG_INIT	1
 #define TPS_IFLAG_DLGON	2
 
+#define TPS_DBU_CONTACT		(1<<0)
+#define TPS_DBU_RPLATTRS	(1<<1)
+#define TPS_DBU_ALL			(0xffffffff)
+
 #define TPS_DATA_SIZE	8192
 typedef struct tps_data {
 	char cbuf[TPS_DATA_SIZE];
@@ -87,7 +91,8 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog);
 int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
-int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
+		uint32_t mode);
 int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 
 int tps_storage_lock_set_init(void);
