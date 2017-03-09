@@ -261,6 +261,35 @@ int tps_skip_msg(sip_msg_t *msg)
 /**
  *
  */
+int tps_dlg_detect_direction(sip_msg_t *msg, tps_data_t *ptsd,
+		uint32_t *direction)
+{
+	str ftag = {0, 0};
+	/* detect direction - get from-tag */
+	if(parse_from_header(msg)<0 || msg->from==NULL) {
+		LM_ERR("failed getting 'from' header!\n");
+		goto error;
+	}
+	ftag = get_from(msg)->tag_value;
+
+	if(ptsd->a_tag.len!=ftag.len) {
+		*direction = TPS_DIR_UPSTREAM;
+	} else {
+		if(memcmp(ptsd->a_tag.s, ftag.s, ftag.len)==0) {
+			*direction = TPS_DIR_DOWNSTREAM;
+		} else {
+			*direction = TPS_DIR_UPSTREAM;
+		}
+	}
+	return 0;
+
+error:
+	return -1;
+}
+
+/**
+ *
+ */
 int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd)
 {
 	if(parse_sip_msg_uri(msg)<0) {
@@ -723,21 +752,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		goto error;
 	}
 
-	/* detect direction - get from-tag */
-	if(parse_from_header(msg)<0 || msg->from==NULL) {
-		LM_ERR("failed getting 'from' header!\n");
+	/* detect direction - via from-tag */
+	if(tps_dlg_detect_direction(msg, &stsd, &direction)<0) {
 		goto error;
-	}
-	ftag = get_from(msg)->tag_value;
-
-	if(stsd.a_tag.len!=ftag.len) {
-		direction = TPS_DIR_UPSTREAM;
-	} else {
-		if(memcmp(stsd.a_tag.s, ftag.s, ftag.len)==0) {
-			direction = TPS_DIR_DOWNSTREAM;
-		} else {
-			direction = TPS_DIR_UPSTREAM;
-		}
 	}
 	mtsd.direction = direction;
 
@@ -791,7 +808,7 @@ int tps_response_received(sip_msg_t *msg)
 	tps_data_t btsd;
 	str lkey;
 	str ftag;
-	uint32_t direction;
+	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
 	LM_DBG("handling incoming response\n");
 
@@ -820,27 +837,15 @@ int tps_response_received(sip_msg_t *msg)
 		goto error;
 	}
 
-	/* detect direction - get from-tag */
-	if(parse_from_header(msg)<0 || msg->from==NULL) {
-		LM_ERR("failed getting 'from' header!\n");
+	/* detect direction - via from-tag */
+	if(tps_dlg_detect_direction(msg, &stsd, &direction)<0) {
 		goto error;
-	}
-	ftag = get_from(msg)->tag_value;
-
-	if(stsd.a_tag.len!=ftag.len) {
-		direction = TPS_DIR_UPSTREAM;
-	} else {
-		if(memcmp(stsd.a_tag.s, ftag.s, ftag.len)==0) {
-			direction = TPS_DIR_DOWNSTREAM;
-		} else {
-			direction = TPS_DIR_UPSTREAM;
-		}
 	}
 	mtsd.direction = direction;
 	if(tps_storage_update_branch(msg, &mtsd, &btsd)<0) {
 		goto error;
 	}
-	if(tps_storage_update_dialog(msg, &mtsd, &stsd)<0) {
+	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_RPLATTRS)<0) {
 		goto error;
 	}
 	tps_storage_lock_release(&lkey);
@@ -869,7 +874,7 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	str lkey;
 	str ftag;
 	str xuuid;
-	int direction = TPS_DIR_DOWNSTREAM;
+	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
 	LM_DBG("handling outgoing request\n");
 
@@ -908,21 +913,9 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 		if(tps_storage_load_dialog(msg, &mtsd, &stsd)==0) {
 			ptsd = &stsd;
 		}
-		/* detect direction - get from-tag */
-		if(parse_from_header(msg)<0 || msg->from==NULL) {
-			LM_ERR("failed getting 'from' header!\n");
+		/* detect direction - via from-tag */
+		if(tps_dlg_detect_direction(msg, &stsd, &direction)<0) {
 			goto error;
-		}
-		ftag = get_from(msg)->tag_value;
-
-		if(stsd.a_tag.len!=ftag.len) {
-			direction = TPS_DIR_UPSTREAM;
-		} else {
-			if(memcmp(stsd.a_tag.s, ftag.s, ftag.len)==0) {
-				direction = TPS_DIR_DOWNSTREAM;
-			} else {
-				direction = TPS_DIR_UPSTREAM;
-			}
 		}
 		mtsd.direction = direction;
 	}
@@ -955,6 +948,9 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	if(dialog!=0) {
 		tps_storage_end_dialog(msg, &mtsd, ptsd);
 	}
+	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
+		goto error;
+	}
 
 done:
 	tps_storage_lock_release(&lkey);
@@ -974,7 +970,7 @@ int tps_response_sent(sip_msg_t *msg)
 	tps_data_t stsd;
 	tps_data_t btsd;
 	str lkey;
-	int direction = TPS_DIR_UPSTREAM;
+	uint32_t direction = TPS_DIR_UPSTREAM;
 	str xvbranch = {0, 0};
 
 	LM_DBG("handling outgoing response\n");
@@ -1007,12 +1003,18 @@ int tps_response_sent(sip_msg_t *msg)
 	if(tps_storage_load_branch(msg, &mtsd, &btsd)<0) {
 		goto error;
 	}
-	LM_DBG("loaded dialog a_uuid [%.*s]\n",
+	LM_DBG("loaded branch a_uuid [%.*s]\n",
 			btsd.a_uuid.len, ZSW(btsd.a_uuid.s));
 	if(tps_storage_load_dialog(msg, &btsd, &stsd)<0) {
 		goto error;
 	}
 	tps_storage_lock_release(&lkey);
+
+	/* detect direction - via from-tag */
+	if(tps_dlg_detect_direction(msg, &stsd, &direction)<0) {
+		goto error1;
+	}
+	mtsd.direction = direction;
 
 	tps_remove_headers(msg, HDR_RECORDROUTE_T);
 	tps_remove_headers(msg, HDR_CONTACT_T);
@@ -1024,9 +1026,13 @@ int tps_response_sent(sip_msg_t *msg)
 	}
 
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
+	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
+		goto error1;
+	}
 	return 0;
 
 error:
 	tps_storage_lock_release(&lkey);
+error1:
 	return -1;
 }
