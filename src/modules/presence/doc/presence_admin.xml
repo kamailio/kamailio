@@ -175,7 +175,25 @@ modparam("presence", "clean_period", 100)
 </programlisting>
 		</example>
 	</section>
-	<section id="presence.p.db_update_period">
+    <section id="presence.p.cseq_offset">
+        <title><varname>cseq_offset</varname> (int)</title>
+        <para>
+            The allowed offset between server and client cseq.
+        </para>
+        <para>
+            <emphasis>Default value is <quote>0</quote>.
+            </emphasis>
+        </para>
+        <example>
+            <title>Set <varname>cseq_offset</varname> parameter</title>
+            <programlisting format="linespecific">
+                ...
+                modparam("presence", "cseq_offset", 1)
+                ...
+            </programlisting>
+        </example>
+    </section>
+    <section id="presence.p.db_update_period">
 		<title><varname>db_update_period</varname> (int)</title>
 		<para>
 		The period at which to synchronize cached subscriber info with the
