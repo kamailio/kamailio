@@ -207,6 +207,15 @@ BuildRequires:  libxml2-devel
 %description    ims
 IMS modules and extensions module for Kamailio.
 
+%package    jansson
+Summary:    json string handling and RPC modules for Kamailio using JANSSON library.
+Group:      System Environment/Daemons
+Requires:   json-c, libevent, kamailio = %ver
+BuildRequires:  jansson-devel
+
+%description    jansson
+json string handling and RPC modules for Kamailio using JANSSON library.
+
 
 %package    json
 Summary:    json string handling and RPC modules for Kamailio.
@@ -559,7 +568,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with dnssec}
     kdnssec \
 %endif
-    kgeoip kgzcompress khttp_async kims kjson kjsonrpcs \
+    kgeoip kgzcompress khttp_async kims kjansson kjson kjsonrpcs \
 %if %{with kazoo}
     kkazoo \
 %endif
@@ -582,7 +591,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with dnssec}
     kdnssec \
 %endif
-    kgeoip kgzcompress khttp_async kims kjson kjsonrpcs \
+    kgeoip kgzcompress khttp_async kims kjansson kjson kjsonrpcs \
 %if %{with kazoo}
     kkazoo \
 %endif
@@ -1044,6 +1053,13 @@ fi
 %{_libdir}/kamailio/modules/statsc.so
 %{_libdir}/kamailio/modules/topos.so
 
+%files      jansson
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.jansson
+%doc %{_docdir}/kamailio/modules/README.janssonrpcc
+%{_libdir}/kamailio/modules/jansson.so
+%{_libdir}/kamailio/modules/janssonrpcc.so
+
 
 %files      json
 %defattr(-,root,root)
@@ -1319,6 +1335,8 @@ fi
 
 
 %changelog
+* Thu Mar 09 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
+  - added jansson package
 * Sat Feb 04 2017 Federico Cabiddu <federico.cabiddu@gmail.com>
   - added http_async_client package
   - fix http_client package
