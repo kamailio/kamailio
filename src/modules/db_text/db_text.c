@@ -47,6 +47,7 @@ int db_mode = 0;  /* Database usage mode: 0 = cache, 1 = no cache */
 int empty_string = 0;  /* Treat empty string as "" = 0, 1 = NULL */
 int _db_text_read_buffer_size = DEFAULT_DB_TEXT_READ_BUFFER_SIZE;
 int _db_text_max_result_rows = DEFAULT_MAX_RESULT_ROWS;
+str dbt_default_connection = str_init("");
 
 int dbt_bind_api(db_func_t *dbb);
 
@@ -67,6 +68,7 @@ static param_export_t params[] = {
 	{"emptystring", INT_PARAM, &empty_string},
 	{"file_buffer_size", INT_PARAM, &_db_text_read_buffer_size},
 	{"max_result_rows", INT_PARAM, &_db_text_max_result_rows},
+	{"default_connection", PARAM_STR, &dbt_default_connection},
 	{0, 0, 0}
 };
 
@@ -156,8 +158,78 @@ static void rpc_dump(rpc_t *rpc, void *c) {
 	return;
 }
 
-static rpc_export_t rpc_methods[] = {
-	{"db_text.dump", rpc_dump, rpc_dump_doc, 0},
-	{0, 0, 0, 0}
+static const char *rpc_query_doc[2] = {
+        "Perform Live Query", 0
 };
 
+/* rpc function implementations */
+static void rpc_query(rpc_t *rpc, void *ctx) {
+        str sql;
+        db1_con_t *con;
+        db1_res_t* _r;
+        int res;
+        int n;
+        char *buf;
+        size_t len;
+        FILE *stream;
+        dbt_table_p tab;
+        dbt_row_p rowp;
+
+        rpc->scan(ctx, "S", &sql);
+
+        con = dbt_init(&dbt_default_connection);
+        if(con == NULL) {
+                rpc->rpl_printf(ctx, "invalid connection : %s", dbt_default_connection.s);
+                return;
+        }
+
+        res = dbt_raw_query(con, &sql, &_r);
+        if(res != 0) {
+                rpc->rpl_printf(ctx, "error executing sql statement");
+                goto end;
+        }
+
+
+        if(_r) {
+                tab = (dbt_table_p)_r->ptr;
+                if(_r->n == 0) {
+                        rpc->rpl_printf(ctx, "statement returned 0 rows");
+                } else {
+                        stream = open_memstream (&buf, &len);
+                        if (stream == NULL) {
+                                rpc->rpl_printf(ctx, "error opening stream");
+                                goto end;
+                        }
+                        dbt_print_table_header(tab, stream);
+                        fflush (stream);
+                        buf[len] = '\0';
+                        rpc->rpl_printf(ctx, "%s", buf);
+                        rowp = tab->rows;
+                        for(n=0; n < _r->n; n++) {
+                                fseeko (stream, 0, SEEK_SET);
+                                dbt_print_table_row_ex(tab, rowp, stream, 0);
+                                fflush (stream);
+                                buf[len] = '\0';
+                                rpc->rpl_printf(ctx, "%s", buf);
+                                rowp = rowp->next;
+                        }
+                        fclose (stream);
+                        free (buf);
+                        rpc->rpl_printf(ctx, "\ntotal rows %d / %d", _r->n, tab->nrrows);
+                }
+        } else {
+                rpc->rpl_printf(ctx, "%d affected rows", ((dbt_con_p)con->tail)->affected);
+        }
+
+        if(_r)
+                dbt_free_result(con, _r);
+
+end:
+        dbt_close(con);
+}
+
+static rpc_export_t rpc_methods[] = {
+        {"db_text.dump", rpc_dump, rpc_dump_doc, 0},
+        {"db_text.query", rpc_query, rpc_query_doc, 0},
+        {0, 0, 0, 0}
+};

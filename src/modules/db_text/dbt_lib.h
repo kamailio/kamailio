@@ -141,6 +141,11 @@ int dbt_table_update_flags(dbt_table_p, int, int, int);
 int dbt_check_mtime(const str *, const str *, time_t *);
 dbt_table_p dbt_load_file(const str *, const str *);
 int dbt_print_table(dbt_table_p, str *);
+int dbt_print_table_header(dbt_table_p _dtp, FILE *fout);
+int dbt_print_table_row(dbt_table_p _dtp, dbt_row_p rowp, FILE *fout);
+int dbt_print_table_row_ex(dbt_table_p _dtp, dbt_row_p rowp, FILE *fout, int newline);
+int dbt_print_table_rows(dbt_table_p _dtp, FILE *fout);
+int dbt_print_table_content(dbt_table_p _dtp, FILE *fout);
 int dbt_is_neq_type(db_type_t _t0, db_type_t _t1);
 
 #endif
