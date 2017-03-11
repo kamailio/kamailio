@@ -1114,7 +1114,7 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 		goto error;
 	}
 
-	if (pres_notifier_processes > 0 && pa_dbf.start_transaction)
+	if (pres_notifier_processes > 0 && !send_fast_notify && pa_dbf.start_transaction)
 	{
 		if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 		{
@@ -1241,7 +1241,7 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 	LM_DBG("subscription status= %s - %s\n", get_status_str(subs.status),
 			(found==0)?"inserted":"found in watcher table");
 
-	if (pres_notifier_processes > 0)
+	if (pres_notifier_processes > 0 && !send_fast_notify)
 	{
 		if (update_subscription_notifier(msg, &subs, to_tag_gen,
 					&sent_reply) < 0)
@@ -1255,7 +1255,8 @@ int handle_subscribe(struct sip_msg* msg, str watcher_user, str watcher_domain)
 		LM_ERR("in update_subscription\n");
 		goto error;
 	}
-	if (pres_notifier_processes > 0 && pa_dbf.end_transaction)
+
+	if (pres_notifier_processes > 0 && !send_fast_notify && pa_dbf.end_transaction)
 	{
 		if (pa_dbf.end_transaction(pa_db) < 0)
 		{
