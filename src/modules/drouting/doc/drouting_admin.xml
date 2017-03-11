@@ -1142,6 +1142,30 @@ modparam("drouting", "force_dns", 0)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>enable_keepalive</varname> (int)</title>
+		<para>
+		Enable monitoring of GW/destinations using keepalive module.
+		Destinations found unavailable will not be used on do_routing() call.
+		</para>
+		<para>
+		NOTE: this option is only compatible with <em>sort_order</em> 0 currently.
+		With sort_order value of 1 or 2, destinations status will simply be ignored.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0 (disabled)</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_keepalive</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("drouting", "enable_keepalive", 1)
+...
+	</programlisting>
+		</example>
+	</section>
+
 </section>
 
 <section>
