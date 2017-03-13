@@ -718,7 +718,6 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	tps_data_t mtsd;
 	tps_data_t stsd;
 	str lkey;
-	str ftag;
 	str nuri;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
@@ -807,7 +806,6 @@ int tps_response_received(sip_msg_t *msg)
 	tps_data_t stsd;
 	tps_data_t btsd;
 	str lkey;
-	str ftag;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
 	LM_DBG("handling incoming response\n");
@@ -872,7 +870,6 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 	tps_data_t stsd;
 	tps_data_t *ptsd;
 	str lkey;
-	str ftag;
 	str xuuid;
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
