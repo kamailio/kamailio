@@ -134,8 +134,8 @@ modparam("topoh", "sanity_checks", 1)
 </programlisting>
 		</example>
 	</section>
-	<section id="topos.p.branch_expires">
-		<title><varname>branch_expires</varname> (int)</title>
+	<section id="topos.p.branch_expire">
+		<title><varname>branch_expire</varname> (int)</title>
 		<para>
 			Interval in seconds after which the branch records are deleted.
 		</para>
@@ -145,16 +145,16 @@ modparam("topoh", "sanity_checks", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>branch_expires</varname> parameter</title>
+		<title>Set <varname>branch_expire</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("topos", "branch_expires", 300)
+modparam("topos", "branch_expire", 300)
 ...
 </programlisting>
 		</example>
 	</section>
-	<section id="topos.p.branch_dialog">
-		<title><varname>branch_dialog</varname> (int)</title>
+	<section id="topos.p.dialog_expire">
+		<title><varname>dialog_expire</varname> (int)</title>
 		<para>
 			Interval in seconds after which the dialog records are deleted.
 		</para>
@@ -164,10 +164,10 @@ modparam("topos", "branch_expires", 300)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>branch_dialog</varname> parameter</title>
+		<title>Set <varname>dialog_expire</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("topos", "branch_dialog", 3600)
+modparam("topos", "dialog_expire", 3600)
 ...
 </programlisting>
 		</example>
