@@ -1723,6 +1723,7 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 		case FPARAM_UNSPEC:
 		case FPARAM_STRING:
 		case FPARAM_STR:
+			LM_ERR("Unsupported param type for int value: %d\n", param->type);
 			return -1;
 		case FPARAM_AVP:
 			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
@@ -1759,6 +1760,10 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 			}
 			break;
 		case FPARAM_PVE:
+			LM_ERR("Unsupported param type for int value: %d\n", param->type);
+			return -1;
+		default:
+			LM_ERR("Unexpected param type: %d\n", param->type);
 			return -1;
 	}
 	return 0;
