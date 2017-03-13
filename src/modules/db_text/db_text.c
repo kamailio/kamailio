@@ -164,6 +164,7 @@ static const char *rpc_query_doc[2] = {
 
 /* rpc function implementations */
 static void rpc_query(rpc_t *rpc, void *ctx) {
+#ifdef __OS_linux
         str sql;
         db1_con_t *con;
         db1_res_t* _r;
@@ -226,6 +227,9 @@ static void rpc_query(rpc_t *rpc, void *ctx) {
 
 end:
         dbt_close(con);
+#else
+		rpc->fault(ctx, 500, "Command available on Linux only");
+#endif
 }
 
 static rpc_export_t rpc_methods[] = {
