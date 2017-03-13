@@ -38,6 +38,7 @@
 #include "../../core/pvapi.h"
 #include "../../core/dset.h"
 #include "../../core/basex.h"
+#include "../../core/action.h"
 
 #include "../../core/parser/parse_param.h"
 #include "../../core/parser/parse_uri.h"
@@ -96,7 +97,7 @@ char *tr_set_crt_buffer(void)
 
 #define tr_string_clone_result do { \
 		if(val->rs.len>TR_BUFFER_SIZE-1) { \
-			LM_ERR("result is too big\n"); \
+			LM_ERR("result is too big (cfg line: %d)\n", get_cfg_crt_line()); \
 			return -1; \
 		} \
 		strncpy(_tr_buffer, val->rs.s, val->rs.len); \
@@ -528,7 +529,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_SUBSTR:
 			if(tp==NULL || tp->next==NULL)
 			{
-				LM_ERR("substr invalid parameters\n");
+				LM_ERR("substr invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(!(val->flags&PV_VAL_STR))
@@ -540,7 +542,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_INT)))
 				{
-					LM_ERR("substr cannot get p1\n");
+					LM_ERR("substr cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				i = v.ri;
@@ -552,7 +555,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->next->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_INT)))
 				{
-					LM_ERR("substr cannot get p2\n");
+					LM_ERR("substr cannot get p2 (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				j = v.ri;
@@ -560,7 +564,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			LM_DBG("i=%d j=%d\n", i, j);
 			if(j<0)
 			{
-				LM_ERR("substr negative offset\n");
+				LM_ERR("substr negative offset (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			val->flags = PV_VAL_STR;
@@ -569,7 +574,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			{
 				if(i>=val->rs.len)
 				{
-					LM_ERR("substr out of range\n");
+					LM_ERR("substr out of range (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				if(i+j>=val->rs.len) j=0;
@@ -587,7 +593,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			i = -i;
 			if(i>val->rs.len)
 			{
-				LM_ERR("substr out of range\n");
+				LM_ERR("substr out of range (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(i<j) j=0;
@@ -606,7 +613,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_SELECT:
 			if(tp==NULL || tp->next==NULL)
 			{
-				LM_ERR("select invalid parameters\n");
+				LM_ERR("select invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(!(val->flags&PV_VAL_STR))
@@ -618,7 +626,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_INT)))
 				{
-					LM_ERR("select cannot get p1\n");
+					LM_ERR("select cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				i = v.ri;
@@ -716,7 +725,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_STRIPTAIL:
 			if(tp==NULL)
 			{
-				LM_ERR("strip invalid parameters\n");
+				LM_ERR("strip invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(!(val->flags&PV_VAL_STR))
@@ -728,7 +738,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_INT)))
 				{
-					LM_ERR("select cannot get p1\n");
+					LM_ERR("select cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				i = v.ri;
@@ -754,7 +765,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_STRIPTO:
 			if(tp==NULL)
 			{
-				LM_ERR("stripto invalid parameters\n");
+				LM_ERR("stripto invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(!(val->flags&PV_VAL_STR))
@@ -767,7 +779,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
 				{
-					LM_ERR("stripto cannot get p1\n");
+					LM_ERR("stripto cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				st = v.rs;
@@ -807,7 +820,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 							|| (!(v.flags&PV_VAL_INT)))
 					{
-						LM_ERR("prefixes cannot get max\n");
+						LM_ERR("prefixes cannot get max (cfg line: %d)\n",
+								get_cfg_crt_line());
 						return -1;
 					}
 					if (v.ri > 0 && v.ri < max)
@@ -816,7 +830,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			}
 
 			if(max * (max/2 + (subtype==TR_S_PREFIXES_QUOT ? 1 : 3)) > TR_BUFFER_SIZE-1) {
-				LM_ERR("prefixes buffer too short\n");
+				LM_ERR("prefixes buffer too short (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 
@@ -840,7 +855,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_REPLACE:
 			if(tp==NULL || tp->next==NULL)
 			{
-				LM_ERR("select invalid parameters\n");
+				LM_ERR("select invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(!(val->flags&PV_VAL_STR))
@@ -853,7 +869,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
 				{
-					LM_ERR("replace cannot get p1\n");
+					LM_ERR("replace cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				st = v.rs;
@@ -866,7 +883,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->next->v.data, &w)!=0
 						|| (!(w.flags&PV_VAL_STR)) || w.rs.len<=0)
 				{
-					LM_ERR("replace cannot get p2\n");
+					LM_ERR("replace cannot get p2 (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				st2 = w.rs;
@@ -895,13 +913,15 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_TIMEFORMAT:
 			if(tp==NULL)
 			{
-				LM_ERR("timeformat invalid parameters\n");
+				LM_ERR("timeformat invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(!(val->flags&PV_VAL_INT) && (str2int(&val->rs,
 							(unsigned int*) &val->ri)!=0))
 			{
-				LM_ERR("value is not numeric\n");
+				LM_ERR("value is not numeric (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(tp->type==TR_PARAM_STRING)
@@ -911,7 +931,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
 				{
-					LM_ERR("timeformat cannot get p1\n");
+					LM_ERR("timeformat cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				st = v.rs;
@@ -919,7 +940,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			s = pkg_malloc(st.len + 1);
 			if (s==NULL)
 			{
-				LM_ERR("no more pkg memory\n");
+				LM_ERR("no more pkg memory (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			memcpy(s, st.s, st.len);
@@ -971,7 +993,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_RM:
 			if(tp==NULL)
 			{
-				LM_ERR("invalid parameters\n");
+				LM_ERR("invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
 				return -1;
 			}
 			if(!(val->flags&PV_VAL_STR))
@@ -1019,7 +1042,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
 				{
-					LM_ERR("cannot get parameter value\n");
+					LM_ERR("cannot get parameter value (cfg line: %d)\n",
+							get_cfg_crt_line());
 					return -1;
 				}
 				st = v.rs;
@@ -1074,8 +1098,8 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			break;
 
 		default:
-			LM_ERR("unknown subtype %d\n",
-					subtype);
+			LM_ERR("unknown subtype %d (cfg line: %d)\n",
+					subtype, get_cfg_crt_line());
 			return -1;
 	}
 	return 0;
