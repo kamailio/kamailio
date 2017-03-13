@@ -1672,8 +1672,8 @@ static void internal_rpc_profile_print_dlgs(rpc_t *rpc, void *c, str *profile_na
 				ph=ph->next;
 			}while(ph!=profile->entries[i].first);
 		}
-		lock_release(&profile->lock);
 	}
+	lock_release(&profile->lock);
 }
 
 /*
