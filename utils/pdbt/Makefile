@@ -1,3 +1,11 @@
+#set some vars from the environment (and not make builtins)
+CC   := $(shell echo "$${CC}")
+
+# find compiler name & version
+ifeq ($(CC),)
+        CC=gcc
+endif
+
 .phony: all clean install
 
 header=common.h carrier.h dt.h dtm.h pdb_server_backend.h log.h
@@ -10,13 +18,13 @@ extdep=Makefile
 all: pdbt pdb_server
 
 $(obj): %.o : %.c %.h $(header) $(extdep)
-	gcc $(cflags) -c $<
+	$(CC) $(cflags) -c $<
 
 pdbt: pdbt.c $(obj) $(header) $(extdep)
-	gcc $(cflags) -o $@ $< $(obj)
+	$(CC) $(cflags) -o $@ $< $(obj)
 
 pdb_server: pdb_server.c $(pdb_server_obj) $(header) $(extdep)
-	gcc $(cflags) -o $@ $< $(pdb_server_obj)
+	$(CC) $(cflags) -o $@ $< $(pdb_server_obj)
 
 clean:
 	rm -f *~ *.o pdbt pdb_server
