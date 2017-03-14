@@ -17,7 +17,7 @@
 #include "dlg_profile.h"
 #include "dlg_handlers.h"
 #include "dlg_db_handler.h"
-#include <execinfo.h>
+//#include <execinfo.h>
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
@@ -70,6 +70,7 @@ static int dlg_hash_size_out = 4096;
 		}\
 	}while(0)
 
+#if 0
 inline static int backtrace2str(char* buf, int size)
 {
         void* bt[32];
@@ -87,6 +88,7 @@ inline static int backtrace2str(char* buf, int size)
         }
         return 0;
 }
+#endif
 
 /*!
  * \brief Initialize the global dialog table
