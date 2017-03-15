@@ -138,7 +138,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri,
 		 * username, the comparison is case insensitive
 		 */
 		if (_uri->user.len == username.len) {
- 			if (!strncasecmp(_uri->user.s, username.s, _uri->user.len)) {
+			if (!strncasecmp(_uri->user.s, username.s, _uri->user.len)) {
 				DBG("Digest username and URI username match\n");
 				return 1;
 			}
@@ -159,7 +159,7 @@ int check_to(struct sip_msg* _m, char* _s1, char* _s2)
 		ERR("Error while parsing To header field\n");
 		return -1;
 	}
-	if(parse_to_uri(_m)==NULL) {
+	if (parse_to_uri(_m)==NULL) {
 		ERR("Error while parsing To header URI\n");
 		return -1;
 	}
