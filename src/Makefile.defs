@@ -374,6 +374,12 @@ ARCH:=$(CC_ARCH)
 else
 ARCH:=$(HOST_ARCH)
 endif
+
+# retarget amd64 to x86_64
+ifeq ($(ARCH), amd64)
+	ARCH=x86_64
+endif
+
 $(info target architecture <$(ARCH)>, host architecture <$(HOST_ARCH)>)
 
 LIBDIR ?=
@@ -785,10 +791,6 @@ ifeq ($(ARCH), i386)
 endif
 
 ifeq ($(ARCH), x86_64)
-	use_fast_lock=yes
-endif
-
-ifeq ($(ARCH), amd64)
 	use_fast_lock=yes
 endif
 
