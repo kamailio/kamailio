@@ -335,7 +335,7 @@ int uridb_db_ver(const str* db_url, str* name)
 	int ver;
 
 	if (uridb_dbf.init==0){
-		CRIT("BUG: unbound database\n");
+		BUG("unbound database\n");
 		return -1;
 	}
 
