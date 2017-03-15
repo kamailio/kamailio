@@ -783,6 +783,10 @@ ifeq ($(ARCH), x86_64)
 	use_fast_lock=yes
 endif
 
+ifeq ($(ARCH), amd64)
+	use_fast_lock=yes
+endif
+
 ifeq ($(ARCH), sparc64)
 ifeq 	($(CC_NAME), gcc)
 	use_fast_lock=yes
