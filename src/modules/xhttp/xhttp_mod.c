@@ -399,6 +399,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 			return -1;
 		}
 		pkg_free(tbuf.s);
+		LM_DBG("response with content-type: %.*s\n", ctype->len, ctype->s);
 	}
 
 	if(body!=NULL && body->len>0)
@@ -408,7 +409,9 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 			LM_ERR("Error while adding reply lump\n");
 			return -1;
 		}
+		LM_DBG("response with body: %.*s\n", body->len, body->s);
 	}
+	LM_DBG("sending out response: %d %.*s\n", code, reason->len, reason->s);
 	if (slb.freply(msg, code, reason) < 0)
 	{
 		LM_ERR("Error while sending reply\n");
