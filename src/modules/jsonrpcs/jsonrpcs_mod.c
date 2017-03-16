@@ -391,6 +391,8 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 		rbuf.len = strlen(rbuf.s);
 	}
 	if (rbuf.s!=NULL) {
+		LM_DBG("sending response with body: %p - %d %.*s\n", ctx->msg,
+				ctx->http_code, ctx->http_text.len, ctx->http_text.s);
 		if(ctx->msg) {
 			xhttp_api.reply(ctx->msg, ctx->http_code, &ctx->http_text,
 				&JSONRPC_CONTENT_TYPE_HTML, &rbuf);
@@ -400,6 +402,8 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 			rbuf.s=NULL;
 		}
 	} else {
+		LM_DBG("sending response without body: %p - %d %.*s\n", ctx->msg,
+				ctx->http_code, ctx->http_text.len, ctx->http_text.s);
 		if(ctx->msg) {
 			xhttp_api.reply(ctx->msg, ctx->http_code, &ctx->http_text,
 					NULL, NULL);
