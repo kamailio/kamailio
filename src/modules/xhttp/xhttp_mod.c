@@ -412,7 +412,7 @@ static int xhttp_send_reply(sip_msg_t *msg, int code, str *reason,
 		LM_DBG("response with body: %.*s\n", body->len, body->s);
 	}
 	LM_DBG("sending out response: %d %.*s\n", code, reason->len, reason->s);
-	if (slb.freply(msg, code, reason) < 0)
+	if (slb.sreply(msg, code, reason) < 0)
 	{
 		LM_ERR("Error while sending reply\n");
 		return -1;
