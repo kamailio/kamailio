@@ -588,7 +588,7 @@ static void cdr_on_start( struct dlg_cell* dialog,
                           int type,
                           struct dlg_cb_params* params)
 {
-    if( !dialog || !params)
+    if( !dialog )
     {
         LM_ERR("invalid values\n!");
         return;
@@ -663,7 +663,7 @@ static void cdr_on_end( struct dlg_cell* dialog,
                         int type,
                         struct dlg_cb_params* params)
 {
-    if( !dialog || !params)
+    if( !dialog )
     {
         LM_ERR("invalid values\n!");
         return;
@@ -724,7 +724,7 @@ static void cdr_on_destroy( struct dlg_cell* dialog,
                             int type,
                             struct dlg_cb_params* params)
 {
-    if( !dialog || !params)
+    if( !dialog )
     {
         LM_ERR("invalid values\n!");
         return;
@@ -738,7 +738,7 @@ static void cdr_on_create( struct dlg_cell* dialog,
                            int type,
                            struct dlg_cb_params* params)
 {
-    if( !dialog || !params || !params->req)
+    if( !dialog )
     {
         LM_ERR( "invalid values\n!");
         return;
@@ -795,6 +795,65 @@ static void cdr_on_create( struct dlg_cell* dialog,
         return;
     }
 }
+
+/* callback for loading a dialog frm database */
+static void cdr_on_load( struct dlg_cell* dialog,
+                           int type,
+                           struct dlg_cb_params* params)
+{
+    if( !dialog )
+    {
+        LM_ERR( "invalid values\n!");
+        return;
+    }
+
+    if( cdr_enable == 0)
+    {
+        return;
+    }
+
+    if( dlgb.register_dlgcb( dialog, DLGCB_CONFIRMED, cdr_on_start, 0, 0) != 0)
+    {
+        LM_ERR("can't register create dialog CONFIRM callback\n");
+        return;
+    }
+
+	if(_acc_cdr_on_failed==1) {
+		if( dlgb.register_dlgcb( dialog, DLGCB_FAILED, cdr_on_failed, 0, 0) != 0)
+		{
+			LM_ERR("can't register create dialog FAILED callback\n");
+			return;
+		}
+	}
+
+    if( dlgb.register_dlgcb( dialog, DLGCB_TERMINATED, cdr_on_end, 0, 0) != 0)
+    {
+        LM_ERR("can't register create dialog TERMINATED callback\n");
+        return;
+    }
+
+    if( dlgb.register_dlgcb( dialog, DLGCB_TERMINATED_CONFIRMED, cdr_on_end_confirmed, 0, 0) != 0)
+    {
+        LM_ERR("can't register create dialog TERMINATED CONFIRMED callback\n");
+        return;
+    }
+
+    if( dlgb.register_dlgcb( dialog, DLGCB_EXPIRED, cdr_on_expired, 0, 0) != 0)
+    {
+        LM_ERR("can't register create dialog EXPIRED callback\n");
+        return;
+    }
+
+    if( dlgb.register_dlgcb( dialog, DLGCB_DESTROY, cdr_on_destroy, 0, 0) != 0)
+    {
+        LM_ERR("can't register create dialog DESTROY callback\n");
+        return;
+    }
+
+    LM_DBG("dialog '%p' loaded!", dialog);
+
+}
+
 /* convert the extra-data string into a list and store it */
 int set_cdr_extra( char* cdr_extra_value)
 {
@@ -858,6 +917,12 @@ int init_cdr_generation( void)
         LM_ERR("can't register create callback\n");
         return -1;
     }
+
+	if( dlgb.register_dlgcb( 0, DLGCB_LOADED, cdr_on_load, 0, 0) != 0)
+	{
+		LM_ERR("can't register create callback\n");
+		return -1;
+	}
 
     return 0;
 }
