@@ -313,6 +313,16 @@ static int init_sock_opt(int s, int af)
 		/* continue, not critical */
 	}
 #endif /* !TCP_DONT_REUSEADDR */
+
+#ifdef SO_REUSEPORT
+	if ((optval=cfg_get(tcp, tcp_cfg, reuse_port))) {
+		if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT,
+				(void*)&optval, sizeof(optval))==-1) {
+			LM_ERR("setsockopt %s\n", strerror(errno));
+		}
+	}
+#endif
+
 #ifdef HAVE_TCP_SYNCNT
 	if ((optval=cfg_get(tcp, tcp_cfg, syncnt))){
 		if (setsockopt(s, IPPROTO_TCP, TCP_SYNCNT, &optval,
@@ -2747,6 +2757,16 @@ int tcp_init(struct socket_info* sock_info)
 		goto error;
 	}
 #endif
+
+#ifdef SO_REUSEPORT
+	if ((optval=cfg_get(tcp, tcp_cfg, reuse_port))) {
+		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_REUSEPORT,
+				(void*)&optval, sizeof(optval))==-1) {
+			LM_ERR("setsockopt %s\n", strerror(errno));
+		}
+	}
+#endif
+
 	/* tos */
 	optval = tos;
 	if(sock_info->address.af==AF_INET){

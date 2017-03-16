@@ -106,6 +106,8 @@ static cfg_def_t tcp_cfg_def[] = {
 		"flags for the def. aliases for a new conn. (FORCE_ADD:1, REPLACE:2 "},
 	{ "accept_no_cl",   CFG_VAR_INT | CFG_ATOMIC,   0,        1,  0,         0,
 		"accept TCP messages without Content-Length "},
+	{ "reuse_port",   CFG_VAR_INT | CFG_ATOMIC,   0,        1,  0,         0,
+		"reuse TCP ports "},
 	/* internal and/or "fixed" versions of some vars
 	   (not supposed to be writeable, read will provide only debugging value*/
 	{ "rd_buf_size", CFG_VAR_INT | CFG_ATOMIC,    512,    16777216,  0,         0,
@@ -161,6 +163,7 @@ void init_tcp_options()
 	tcp_default_cfg.new_conn_alias_flags=TCP_ALIAS_REPLACE;
 	tcp_default_cfg.rd_buf_size=DEFAULT_TCP_BUF_SIZE;
 	tcp_default_cfg.wq_blk_size=DEFAULT_TCP_WBUF_SIZE;
+	tcp_default_cfg.reuse_port=0;
 }
 
 
