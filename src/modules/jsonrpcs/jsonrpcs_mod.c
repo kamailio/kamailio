@@ -1050,11 +1050,12 @@ error:
 
 static int mod_init(void)
 {
+	memset(&xhttp_api, 0, sizeof(xhttp_api_t));
 
 	/* bind the XHTTP API */
 	if(jsonrpc_transport==0 || (jsonrpc_transport&1)) {
 		if (xhttp_load_api(&xhttp_api) < 0) {
-			if(jsonrpc_transport==1) {
+			if(jsonrpc_transport&1) {
 				LM_ERR("cannot bind to XHTTP API\n");
 				return -1;
 			} else {
@@ -1167,6 +1168,11 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	if(!IS_HTTP(msg)) {
 		LM_DBG("Got non HTTP msg\n");
 		return NONSIP_MSG_PASS;
+	}
+
+	if(xhttp_api.reply==NULL) {
+		LM_ERR("jsonrpc over http not initialized - check transport param\n");
+		return NONSIP_MSG_ERROR;
 	}
 
 	/* initialize jsonrpc context */
