@@ -76,6 +76,7 @@ extern str ulattrs_last_mod_col;
 extern str db_url;
 extern int timer_interval;
 extern int db_mode;
+extern int db_insert_update;
 extern int use_domain;
 extern int desc_time_order;
 extern int cseq_delay;
