@@ -679,10 +679,18 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, vals, nr_cols) < 0) {
-		LM_ERR("inserting contact in db failed %.*s (%.*s)\n",
-				_c->aor->len, ZSW(_c->aor->s), _c->ruid.len, ZSW(_c->ruid.s));
-		return -1;
+	if (db_insert_update && ul_dbf.insert_update) {
+		if (ul_dbf.insert_update(ul_dbh, keys, vals, nr_cols) < 0) {
+			LM_ERR("inserting with update contact in db failed %.*s (%.*s)\n",
+					_c->aor->len, ZSW(_c->aor->s), _c->ruid.len, ZSW(_c->ruid.s));
+			return -1;
+		}
+	} else {
+		if (ul_dbf.insert(ul_dbh, keys, vals, nr_cols) < 0) {
+			LM_ERR("inserting contact in db failed %.*s (%.*s)\n",
+					_c->aor->len, ZSW(_c->aor->s), _c->ruid.len, ZSW(_c->ruid.s));
+			return -1;
+		}
 	}
 
 	if (ul_xavp_contact_name.s) {

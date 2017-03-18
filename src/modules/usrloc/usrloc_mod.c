@@ -104,6 +104,7 @@ static int ul_preload_param(modparam_t type, void* val);
 
 extern int bind_usrloc(usrloc_api_t* api);
 int ul_db_update_as_insert = 0;
+
 int ul_timer_procs = 0;
 int ul_db_check_update = 0;
 int ul_keepalive_timeout = 0;
@@ -155,6 +156,8 @@ str ulattrs_last_mod_col = str_init(ULATTRS_LAST_MOD_COL);	/*!< Name of column c
 str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 int timer_interval  = 60;				/*!< Timer interval in seconds */
 int db_mode         = 0;				/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
+int db_load         = 1;				/*!< Database load after restart: 1- true, 0- false (only the db_mode allows it) */
+int db_insert_update = 0;				/*!< Database : update on duplicate key instead of error */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
 int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 int handle_lost_tcp = 0;				/*!< By default do not remove contacts before expiration time */
@@ -202,6 +205,8 @@ static param_export_t params[] = {
 	{"db_url",              PARAM_STR, &db_url        },
 	{"timer_interval",      INT_PARAM, &timer_interval  },
 	{"db_mode",             INT_PARAM, &db_mode         },
+	{"db_load",             INT_PARAM, &db_load         },
+	{"db_insert_update",    INT_PARAM, &db_insert_update },
 	{"use_domain",          INT_PARAM, &use_domain      },
 	{"desc_time_order",     INT_PARAM, &desc_time_order },
 	{"user_agent_column",   PARAM_STR, &user_agent_col},
@@ -416,7 +421,7 @@ static int child_init(int _rank)
 		return -1;
 	}
 	/* _rank==PROC_SIPINIT is used even when fork is disabled */
-	if (_rank==PROC_SIPINIT && db_mode!=DB_ONLY) {
+	if (_rank==PROC_SIPINIT && db_mode!=DB_ONLY && db_load) {
 		/* if cache is used, populate domains from DB */
 		for( ptr=root ; ptr ; ptr=ptr->next) {
 			if (preload_udomain(ul_dbh, ptr->d) < 0) {
