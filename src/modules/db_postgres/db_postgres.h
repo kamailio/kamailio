@@ -38,4 +38,6 @@ int pg_init_lock_set(int sz);
 
 void pg_destroy_lock_set(void);
 
+int pg_alloc_buffer(void);
+
 #endif /* _KM_DB_POSTGRES_H */

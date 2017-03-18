@@ -149,6 +149,7 @@ int db_postgres_get_columns(const db1_con_t* _h, db1_res_t* _r)
 			case BOOLOID:
 			case CHAROID:
 			case VARCHAROID:
+			case NAMEOID:
 			case BPCHAROID:
 				LM_DBG("use DB1_STRING result type\n");
 				RES_TYPES(_r)[col] = DB1_STRING;

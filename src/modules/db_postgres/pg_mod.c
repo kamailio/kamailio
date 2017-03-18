@@ -534,6 +534,10 @@ int pg_test(void)
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
+	if(!pg_alloc_buffer()) {
+		LM_ERR("failed too allocate buffer");
+		return -1;
+	}
 	if(db_api_init()<0)
 		return -1;
 	return 0;
