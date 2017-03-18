@@ -35,6 +35,16 @@
 #include "../../lib/srdb1/db_op.h"
 #include "../../lib/srdb1/db_val.h"
 
+/*
+ * Storage for all the unique constraints found by insert_update
+ */
+typedef struct db_pg_constraint_list {
+	struct db_pg_constraint_list* next;
+	struct db_pg_constraint_list* prev;
+	str database;
+	str table;
+	str unique;
+} pg_constraint_t;
 
 /*
  * Initialize database connection
@@ -91,6 +101,11 @@ int db_postgres_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r);
 int db_postgres_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		const int _n);
 
+/*
+ * Insert and update ON CONFLICT
+ */
+int db_postgres_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+		const int _n);
 
 /*
  * Delete a row from table
