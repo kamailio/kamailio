@@ -1183,7 +1183,7 @@ modparam("lcr", "ping_socket", "192.98.102.10:5060")
 		by caller_uri argument. If caller_uri argument is
 		omitted, it defaults to empty string. Both uri_user and
 		caller_uri argument may be a string or a pseudo variable
-		containing a sting value.  
+		containing a string value.  
 		</para>
 		<para>
 		Returns 1 if at least one matching gateway was found, 2
@@ -1549,6 +1549,23 @@ if (to_any_gw("192.55.66.2", 1)) {
 		<title><function>lcr.dump_rules</function> RPC example</title>
         <programlisting  format="linespecific">
 		$ &sercmd; lcr.dump_rules
+		</programlisting>
+		</example>
+		</section>
+
+		<section>
+		<title><function>lcr.load_gws</function></title>
+		<para>
+			Loads gateways and prints ids of matching ones in priority order.
+		</para>
+		<para>
+		Name: <emphasis>lcr.load_gws</emphasis>
+		</para>
+		<para>Parameters: <emphasis>lcr_id uri_user [caller_uri request_uri]</emphasis></para>
+		<example>
+		<title><function>lcr.load_gws</function> RPC example</title>
+		<programlisting  format="linespecific">
+		$ &sercmd; lcr.load_gws 2 s:0447058050
 		</programlisting>
 		</example>
 		</section>

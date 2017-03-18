@@ -211,11 +211,51 @@ static void defunct_gw(rpc_t* rpc, void* c)
     return;
 }
 
+static const char* load_gws_doc[2] = {
+    "Load matching gateways and prints their ids in priority order.  Mandatory parameters are lcr_id and uri_user followed by optional parameters caller_uri and request_uri.  Error is reported if an lcr_rule with matching prefix and from_uri has non-null request_uri and request_uri parameter has not been given.",
+    0
+};
+
+
+static void load_gws(rpc_t* rpc, void* c)
+{
+    unsigned int lcr_id, i;
+    int gw_count, ret;
+    str uri_user;
+    str caller_uri;
+    str request_uri;
+    unsigned int gw_ids[MAX_NO_OF_GWS];
+
+    ret =  rpc->scan(c, "dS*SS", &lcr_id, &uri_user, &caller_uri, &request_uri);
+    if (ret == -1) {
+	rpc->fault(c, 400, "parameter error; if using cli, remember to prefix numeric uri_user param value with 's:'");
+	return;
+    }
+
+    if (ret < 4) request_uri.len = 0;
+    if (ret < 3) caller_uri.len = 0;
+
+    gw_count = load_gws_dummy(lcr_id, &uri_user, &caller_uri, &request_uri,
+			      &(gw_ids[0]));
+
+    if (gw_count < 0) {
+	rpc->fault(c, 400, "load_gws excution error (see syslog)");
+	return;
+    }
+    
+    for (i = 0; i < gw_count; i++) {
+	rpc->add(c, "d", gw_ids[i]);
+    }
+	
+    return;
+}
+
 
 rpc_export_t lcr_rpc[] = {
     {"lcr.reload", reload, reload_doc, 0},
     {"lcr.dump_gws", dump_gws, dump_gws_doc, 0},
     {"lcr.dump_rules", dump_rules, dump_rules_doc, 0},
     {"lcr.defunct_gw", defunct_gw, defunct_gw_doc, 0},
+    {"lcr.load_gws", load_gws, load_gws_doc, 0},
     {0, 0, 0, 0}
 };

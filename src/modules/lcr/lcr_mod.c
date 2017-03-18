@@ -116,18 +116,6 @@ MODULE_VERSION
 #define DEF_FETCH_ROWS 1024
 
 /*
- * Type definitions
- */
-
-struct matched_gw_info {
-    unsigned short gw_index;
-    unsigned short prefix_len;
-    unsigned short priority;
-    unsigned int weight;
-    unsigned short duplicate;
-};
-
-/*
  * Database variables
  */
 static db1_con_t* dbh = 0;   /* Database connection handle */
@@ -1941,6 +1929,113 @@ void add_gws_into_avps(struct gw_info *gws, struct matched_gw_info *matched_gws,
     skip:
 	continue;
     }
+}
+
+
+/*
+ * Loads ids matching GWs in priority order into gw_ids array.
+ * Returns the number of entries in the array.
+ */
+int load_gws_dummy(int lcr_id, str* ruri_user, str* from_uri, str* request_uri,
+		   unsigned int* gw_ids)
+{
+    int i, j;
+    unsigned int gw_index, now, dex;
+    struct rule_info **rules, *rule, *pl;
+    struct gw_info *gws;
+    struct target *t;
+    struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
+
+    if ((lcr_id < 1) || (lcr_id > lcr_count_param)) {
+	LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
+	return -1;
+    }
+
+    LM_DBG("load_gws_dummy(%u, %.*s, %.*s, %.*s)\n",
+	   lcr_id, ruri_user->len, ruri_user->s, from_uri->len, from_uri->s,
+	   request_uri->len, request_uri->s);
+
+    rules = rule_pt[lcr_id];
+    gws = gw_pt[lcr_id];
+    pl = rules[lcr_rule_hash_size_param];
+    gw_index = 0;
+
+    now = time((time_t *)NULL);
+
+    while (pl) {
+	if (ruri_user->len < pl->prefix_len) {
+	    pl = pl->next;
+	    continue;
+	}
+	rule = rule_hash_table_lookup(rules, pl->prefix_len, ruri_user->s);
+	while (rule) {
+
+	    if ((rule->prefix_len != pl->prefix_len) ||
+		strncmp(rule->prefix, ruri_user->s, pl->prefix_len))
+		goto next;
+	    
+	    if ((rule->from_uri_len != 0) &&
+		(pcre_exec(rule->from_uri_re, NULL, from_uri->s,
+			   from_uri->len, 0, 0, NULL, 0) < 0))
+		goto next;
+
+	    if (rule->request_uri_len != 0) {
+		if (request_uri->len == 0) {
+		    LM_ERR("lcr_rule has non-null request_uri and request_uri param has not been given.\n");
+		    return -1;
+		}
+		if (pcre_exec(rule->request_uri_re, NULL, request_uri->s,
+			      request_uri->len, 0, 0, NULL, 0) < 0)
+		    goto next;
+	    }
+
+	    t = rule->targets;
+	    while (t) {
+		if ((gws[t->gw_index].defunct_until > now) ||
+		    (gws[t->gw_index].state == GW_INACTIVE))
+		    goto skip_gw;
+		matched_gws[gw_index].gw_index = t->gw_index;
+		matched_gws[gw_index].prefix_len = pl->prefix_len;
+		matched_gws[gw_index].priority = t->priority;
+		matched_gws[gw_index].weight = t->weight *
+		    (kam_rand() >> 8);
+		matched_gws[gw_index].duplicate = 0;
+		LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
+		       gw_index, t->gw_index, pl->prefix_len,
+		       t->priority, matched_gws[gw_index].weight);
+		gw_index++;
+	    skip_gw:
+		t = t->next;
+	    }
+	    if (rule->stopper == 1) goto done;
+
+	next:
+	    rule = rule->next;
+	}
+	pl = pl->next;
+    }
+
+done:
+    qsort(matched_gws, gw_index, sizeof(struct matched_gw_info), comp_matched);
+
+    for (i = gw_index - 1; i >= 0; i--) {
+	if (matched_gws[i].duplicate == 1) continue;
+	dex = matched_gws[i].gw_index;
+	for (j = i - 1; j >= 0; j--) {
+	    if (matched_gws[j].gw_index == dex) {
+		matched_gws[j].duplicate = 1;
+	    }
+	}
+    }
+
+    j = 0;
+    for (i = gw_index - 1; i >= 0; i--) {
+	if (matched_gws[i].duplicate == 1) continue;
+	gw_ids[j] = gws[matched_gws[i].gw_index].gw_id;
+	j++;
+    }
+	
+    return j;
 }
 
 

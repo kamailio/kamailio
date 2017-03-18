@@ -86,7 +86,8 @@ Juha Heinanen
               5.1. lcr.reload
               5.2. lcr.dump_gws
               5.3. lcr.dump_rules
-              5.4. lcr.defunct_gw
+              5.4. lcr.load_gws
+              5.5. lcr.defunct_gw
 
         6. Known Limitations
 
@@ -148,7 +149,8 @@ Juha Heinanen
    1.54. lcr.reload RPC example
    1.55. lcr.dump_gws RPC example
    1.56. lcr.dump_rules RPC example
-   1.57. lcr.defunct_gw RPC example
+   1.57. lcr.load_gws RPC example
+   1.58. lcr.defunct_gw RPC example
 
 Chapter 1. Admin Guide
 
@@ -223,7 +225,8 @@ Chapter 1. Admin Guide
         5.1. lcr.reload
         5.2. lcr.dump_gws
         5.3. lcr.dump_rules
-        5.4. lcr.defunct_gw
+        5.4. lcr.load_gws
+        5.5. lcr.defunct_gw
 
    6. Known Limitations
 
@@ -920,7 +923,7 @@ modparam("lcr", "ping_socket", "192.98.102.10:5060")
    look for matching gateways. Caller's URI may be given by caller_uri
    argument. If caller_uri argument is omitted, it defaults to empty
    string. Both uri_user and caller_uri argument may be a string or a
-   pseudo variable containing a sting value.
+   pseudo variable containing a string value.
 
    Returns 1 if at least one matching gateway was found, 2 if no matching
    gateways was found, and -1 on error.
@@ -1132,7 +1135,8 @@ if (to_any_gw("192.55.66.2", 1)) {
    5.1. lcr.reload
    5.2. lcr.dump_gws
    5.3. lcr.dump_rules
-   5.4. lcr.defunct_gw
+   5.4. lcr.load_gws
+   5.5. lcr.defunct_gw
 
 5.1. lcr.reload
 
@@ -1164,7 +1168,18 @@ if (to_any_gw("192.55.66.2", 1)) {
    Example 1.56. lcr.dump_rules RPC example
                 $ kamcmd lcr.dump_rules
 
-5.4. lcr.defunct_gw
+5.4. lcr.load_gws
+
+   Loads gateways and prints ids of matching ones in priority order.
+
+   Name: lcr.load_gws
+
+   Parameters: lcr_id uri_user [caller_uri request_uri]
+
+   Example 1.57. lcr.load_gws RPC example
+                $ kamcmd lcr.load_gws 2 s:0447058050
+
+5.5. lcr.defunct_gw
 
    Defuncts gateway loaded into memory for a period of time (seconds)
    without a need to store gateway's defunct value into database and
@@ -1174,7 +1189,7 @@ if (to_any_gw("192.55.66.2", 1)) {
 
    Parameters: lcr_id gw_id period
 
-   Example 1.57. lcr.defunct_gw RPC example
+   Example 1.58. lcr.defunct_gw RPC example
                 $ kamcmd lcr.defunct_gw 1 4 120
 
 6. Known Limitations
