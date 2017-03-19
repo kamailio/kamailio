@@ -1,0 +1,4 @@
+username(str) password(str) domain(str) name(str) ha1(str,null) ha1b(str,null)
+kamailio:kamailio:kamailio.org:kamailio_user0:
+1:1:domain.com:user1:
+2:2:domain.com:user2:

@@ -1,0 +1,1 @@
+src_user(str) src_domain(str) src_ip(str) dst_ouser(str) dst_user(str,null) dst_domain(str,null)
