@@ -1214,6 +1214,10 @@ static int append_time_request_f(struct sip_msg* msg, char* p1, char *p2)
 	}
 
 	time_str.s = pkg_malloc(MAX_TIME);
+	if(time_str.s==NULL) {
+		LM_ERR("no more pkg memory\n");
+		goto error;
+	}
 	time_str.len=strftime(time_str.s, MAX_TIME, TIME_FORMAT, bd_time);
 	if (time_str.len>MAX_TIME-2 || time_str.len==0) {
 		LM_ERR("unexpected time length\n");
