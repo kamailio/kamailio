@@ -1594,19 +1594,9 @@ static int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 		return 0;
 
 	init_dest_info(&dst);
-	/* create a temporary proxy*/
-	dst.proto = PROTO_UDP;
-	p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
-			dst.proto);
-	if (p==0)
-	{
-		LM_ERR("bad host name in uri\n");
-		return -1;
-	}
 
 	if (!dst2){
-		init_dest_info(&dst);
-		/* create a temporary proxy*/
+		/* create a temporary proxy from dst param */
 		dst.proto = PROTO_UDP;
 		p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
 				dst.proto);
@@ -1621,6 +1611,16 @@ static int trace_send_duplicate(char *buf, int len, struct dest_info *dst2)
 			LM_ERR("can't forward to af %d, proto %d no corresponding"
 					" listening socket\n", dst.to.s.sa_family, dst.proto);
 			goto error;
+		}
+	} else {
+		/* create a temporary proxy to dup uri */
+		dst.proto = PROTO_UDP;
+		p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
+				dst.proto);
+		if (p==0)
+		{
+			LM_ERR("bad host name in uri\n");
+			return -1;
 		}
 	}
 
