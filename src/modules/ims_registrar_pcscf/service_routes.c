@@ -413,6 +413,10 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 			}
 			
 			LM_DBG("num_routes is %d\n", num_routes);
+			if (num_routes == 0) {
+				LM_DBG("Request doesn't have any route headers (except those pointing here), to check service-route...ignoring\n");		
+				goto error;
+			}
 			for (i=0; i<num_routes; i++) {
 				LM_DBG("route %d for checking is %s\n", i, routes[i]);
 			}
