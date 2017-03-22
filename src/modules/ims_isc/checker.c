@@ -182,6 +182,40 @@ static int isc_check_session_desc(ims_spt *spt, struct sip_msg *msg) {
 }
 
 /**
+ *	Check if a Service Point Trigger for RURI matches the RURI of a message
+ *	@param spt - the service point trigger
+ *	@param msg - the message
+ *	@returns - 1 on success, 0 on failure
+ */
+static int isc_check_ruri(ims_spt *spt, struct sip_msg *msg) {
+	char buf[256];
+	regex_t comp;
+
+	if (spt->request_uri.len >= sizeof(buf)) {
+	    LM_ERR("RURI \"%.*s\" is to long to be processed (max %d bytes)\n", spt->request_uri.len, spt->request_uri.s, (int) (sizeof(buf) - 1));
+	    return FALSE;
+	}
+
+	/* compile the regex for content */
+	memcpy(buf, spt->request_uri.s, spt->request_uri.len);
+	buf[spt->request_uri.len] = 0;
+	if(regcomp(&(comp), buf, REG_ICASE | REG_EXTENDED) != 0) {
+	    LM_ERR("Error compiling the following regexp for RURI content: %.*s\n", spt->request_uri.len, spt->request_uri.s);
+	    return FALSE;
+	}
+
+	if (regexec(&(comp), buf, 0, NULL, 0) == 0) //regex match
+	{
+		regfree(&(comp));
+		return TRUE;
+	}
+	regfree(&(comp));
+	return FALSE;
+}
+
+
+
+/**
  *	Check if a Service Point Trigger matches a message 
  *	@param spt - the service point trigger
  *	@param msg - the message
@@ -198,8 +232,7 @@ static int isc_check_spt(ims_spt *spt, struct sip_msg *msg, char direction,
 				spt->type, spt->request_uri.len, spt->request_uri.s);
 		LM_DBG("ifc_check_spt:               Found Request URI %.*s \n",
 				msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s);
-		r = (strncasecmp(spt->request_uri.s, msg->first_line.u.request.uri.s,
-				spt->request_uri.len) == 0);
+		r = isc_check_ruri(spt, msg);
 		break;
 	case IFC_METHOD:
 		LM_DBG("ifc_check_spt:             SPT type %d -> Method == %.*s ?\n",
