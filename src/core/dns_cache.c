@@ -597,8 +597,10 @@ again:
 			cname_chain++;
 			cname.s=((struct cname_rdata*)e->rr_lst->rdata)->name;
 			cname.len= ((struct cname_rdata*)e->rr_lst->rdata)->name_len;
-			name=&cname;
-			goto again;
+			if(cname.s!=NULL && cname.len>0) {
+				name=&cname;
+				goto again;
+			}
 		}
 	}
 	return ret;
