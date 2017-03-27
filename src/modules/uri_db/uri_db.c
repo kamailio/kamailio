@@ -1,4 +1,4 @@
-/* 
+/*
  * Various URI related functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -71,6 +71,8 @@ int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
 
 static int fixup_exist(void** param, int param_no);
 
+static int w_check_uri1(struct sip_msg* _m, char* _uri, char* _s);
+
 /*
  * Exported functions
  */
@@ -79,8 +81,10 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE},
 	{"check_from",     (cmd_function)check_from,     0, 0, 0,
 		REQUEST_ROUTE},
-	{"check_uri",      (cmd_function)check_uri,      1, fixup_spve_null, 0,
-        REQUEST_ROUTE},
+	{"check_uri",      (cmd_function)w_check_uri1,   1, fixup_spve_null, 0,
+		REQUEST_ROUTE},
+	{"check_uri",      (cmd_function)check_uri,      3, fixup_spve_all, 0,
+		REQUEST_ROUTE},
 	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist,
 		REQUEST_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
@@ -192,4 +196,10 @@ static int fixup_exist(void** param, int param_no)
 		return E_CFG;
 	}
 	return 0;
+}
+
+
+static int w_check_uri1(struct sip_msg* msg, char* uri, char* _s)
+{
+	return check_uri(msg, uri, NULL, NULL);
 }

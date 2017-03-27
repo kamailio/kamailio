@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -41,10 +41,12 @@ static db_func_t uridb_dbf;
  * Check if a header field contains the same username
  * as digest credentials
  */
-static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
+static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri,
+								str* _username, str* _realm)
 {
-	struct hdr_field* h;
-	auth_body_t* c;
+	str username;
+	str realm;
+
 	db_key_t keys[3];
 	db_val_t vals[3];
 	db_key_t cols[1];
@@ -55,24 +57,36 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 		return -1;
 	}
 
-	/* Get authorized digest credentials */
-	get_authorized_cred(_m->authorization, &h);
-	if (!h) {
-		get_authorized_cred(_m->proxy_auth, &h);
-		if (!h) {
-			LM_ERR("No authorized credentials found (error in scripts)\n");
-			LM_ERR("Call {www,proxy}_authorize before calling check_* functions!\n");
-			return -2;
-		}
-	}
-
-	c = (auth_body_t*)(h->parsed);
-
 	/* Parse To/From URI */
 	/* Make sure that the URI contains username */
 	if (!_uri->user.len) {
 		LM_ERR("Username not found in URI\n");
 		return -4;
+	}
+
+	/* use digest credentials if no other credentials are supplied */
+	if (!_username || !_realm) {
+		struct hdr_field* h;
+		auth_body_t* c;
+
+		/* Get authorized digest credentials */
+		get_authorized_cred(_m->authorization, &h);
+		if (!h) {
+			get_authorized_cred(_m->proxy_auth, &h);
+			if (!h) {
+				LM_ERR("No authorized credentials found (error in scripts)\n");
+				LM_ERR("Call {www,proxy}_authorize before calling check_* functions!\n");
+				return -2;
+			}
+		}
+
+		c = (auth_body_t*)(h->parsed);
+
+		username = c->digest.username.user;
+		realm = *GET_REALM(&c->digest);
+	} else {
+		username = *_username;
+		realm = *_realm;
 	}
 
 	/* If use_uri_table is set, use URI table to determine if Digest username
@@ -94,8 +108,8 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 		VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB1_STR;
 		VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
 
-		VAL_STR(vals) = c->digest.username.user;
-		VAL_STR(vals + 1) = *GET_REALM(&c->digest);
+		VAL_STR(vals) = username;
+		VAL_STR(vals + 1) = realm;
 		VAL_STR(vals + 2) = _uri->user;
 
 		if (uridb_dbf.query(db_handle, keys, 0, vals, cols, 3, 1, 0, &res) < 0)
@@ -110,7 +124,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 		 */
 		if (RES_ROW_N(res) == 0) {
 			LM_DBG("From/To user '%.*s' is spoofed\n",
-				   _uri->user.len, ZSW(_uri->user.s));
+				    _uri->user.len, ZSW(_uri->user.s));
 			uridb_dbf.free_result(db_handle, res);
 			return -9;
 		} else {
@@ -123,9 +137,8 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 		/* URI table not used, simply compare digest username and From/To
 		 * username, the comparison is case insensitive
 		 */
-		if (_uri->user.len == c->digest.username.user.len) {
-			if (!strncasecmp(_uri->user.s, c->digest.username.user.s, 
-			_uri->user.len)) {
+		if (_uri->user.len == username.len) {
+			if (!strncasecmp(_uri->user.s, username.s, _uri->user.len)) {
 				LM_DBG("Digest username and URI username match\n");
 				return 1;
 			}
@@ -146,12 +159,12 @@ int check_to(struct sip_msg* _m, char* _s1, char* _s2)
 		LM_ERR("Error while parsing To header field\n");
 		return -1;
 	}
-	if(parse_to_uri(_m)==NULL) {
+	if (parse_to_uri(_m)==NULL) {
 		LM_ERR("Error while parsing To header URI\n");
 		return -1;
 	}
 
-	return check_username(_m, &get_to(_m)->parsed_uri);
+	return check_username(_m, &get_to(_m)->parsed_uri, NULL, NULL);
 }
 
 
@@ -169,31 +182,51 @@ int check_from(struct sip_msg* _m, char* _s1, char* _s2)
 		return -1;
 	}
 
-	return check_username(_m, &get_from(_m)->parsed_uri);
+	return check_username(_m, &get_from(_m)->parsed_uri, NULL, NULL);
 }
 
 
 /*
- *
+ * Checks username part of the supplied sip URI.
+ * Optinal with supplied credentials.
  */
-int check_uri(struct sip_msg* msg, char* uri, char* _s2)
+int check_uri(struct sip_msg* msg, char* uri, char* username, char* realm)
 {
-    str suri;
-    struct sip_uri parsed_uri;
+	str suri;
+	str susername;
+	str srealm;
 
-    if (fixup_get_svalue(msg, (gparam_t*)uri, &suri) != 0)
-    {
-        ERR("cannot get uri value\n");
-        return -1;
-    }
+	struct sip_uri parsed_uri;
 
-    if (parse_uri(suri.s, suri.len, &parsed_uri) != 0)
-    {
-        ERR("Error while parsing URI\n");
-        return -1;
-    }
+	if (get_str_fparam(&suri, msg, (fparam_t*) uri) != 0)
+	{
+		LM_ERR("Error while getting URI value\n");
+		return -1;
+	}
 
-    return check_username(msg, &parsed_uri);
+	if (parse_uri(suri.s, suri.len, &parsed_uri) != 0)
+	{
+		LM_ERR("Error while parsing URI\n");
+		return -1;
+	}
+
+	if (!username || !realm) {
+		return check_username(msg, &parsed_uri, NULL, NULL);
+	}
+
+	if (get_str_fparam(&susername, msg, (fparam_t*) username) != 0)
+	{
+		LM_ERR("Error while getting username value\n");
+		return -1;
+	}
+
+	if (get_str_fparam(&srealm, msg, (fparam_t*) realm) != 0)
+	{
+		LM_ERR("Error while getting realm value\n");
+		return -1;
+	}
+
+	return check_username(msg, &parsed_uri, &susername, &srealm);
 }
 
 
@@ -240,7 +273,7 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		LM_ERR("Error while querying database\n");
 		return -4;
 	}
-	
+
 	if (RES_ROW_N(res) == 0) {
 		LM_DBG("User in request uri does not exist\n");
 		uridb_dbf.free_result(db_handle, res);
@@ -257,10 +290,10 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 int uridb_db_init(const str* db_url)
 {
 	if (uridb_dbf.init==0){
-		LM_CRIT("BUG: null dbf\n");
-		return -1; 
+		LM_BUG("null dbf\n");
+		return -1;
 	}
-	
+
 	db_handle=uridb_dbf.init(db_url);
 	if (db_handle==0){
 		LM_ERR("unable to connect to the database\n");
@@ -300,9 +333,9 @@ int uridb_db_ver(const str* db_url, str* name)
 {
 	db1_con_t* dbh;
 	int ver;
-	
+
 	if (uridb_dbf.init==0){
-		LM_CRIT("BUG: unbound database\n");
+		LM_BUG("unbound database\n");
 		return -1;
 	}
 
