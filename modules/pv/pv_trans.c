@@ -2624,13 +2624,13 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 			start_pos = ++p;
 			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
 			t->params = tp;
-			tp = 0;
-			if (p - start_pos != 1)
+			if (tp->type != TR_PARAM_SPEC && p - start_pos != 1)
 			{
 				LM_ERR("invalid separator in transformation: "
 						"%.*s\n", in->len, in->s);
 				goto error;
 			}
+			tp = 0;
 
 			while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
 			if(*p!=TR_RBRACKET)
