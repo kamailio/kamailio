@@ -575,7 +575,7 @@ static int sipt_set_bci_1(struct sip_msg *msg, char *_charge_indicator, char *_c
 
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai) {
 	str terminator = str_init("1");
-	sipt_destination2(msg, _destination, _hops, _nai, &terminator);
+	return sipt_destination2(msg, _destination, _hops, _nai, (char*)&terminator);
 }
 
 static int sipt_destination2(struct sip_msg *msg, char *_destination, char *_hops, char * _nai, char * _terminator)
