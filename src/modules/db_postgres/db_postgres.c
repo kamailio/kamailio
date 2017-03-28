@@ -90,6 +90,7 @@ int db_postgres_bind_api(db_func_t *dbb)
 	dbb->raw_query        = db_postgres_raw_query;
 	dbb->free_result      = db_postgres_free_result;
 	dbb->insert           = db_postgres_insert;
+	dbb->insert_update    = db_postgres_insert_update;
 	dbb->delete           = db_postgres_delete; 
 	dbb->update           = db_postgres_update;
 	dbb->replace          = db_postgres_replace;

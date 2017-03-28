@@ -91,6 +91,11 @@ int db_postgres_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r);
 int db_postgres_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		const int _n);
 
+/*
+ * Insert and update ON CONFLICT
+ */
+int db_postgres_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+		const int _n);
 
 /*
  * Delete a row from table

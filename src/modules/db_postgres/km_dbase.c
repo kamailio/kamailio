@@ -2,6 +2,7 @@
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2006 Norman Brandinger
  * Copyright (C) 2008 1&1 Internet AG
+ * Copyright (C) 2017 Julien Chavanton, Flowroute
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -49,6 +50,9 @@
 static gen_lock_set_t *_pg_lock_set = NULL;
 static unsigned int _pg_lock_size = 0;
 
+extern unsigned int sql_buffer_size;
+static char *postgres_sql_buf = NULL;
+
 /*!
  * \brief init lock set used to implement SQL REPLACE via UPDATE/INSERT
  * \param sz power of two to compute the lock set size 
@@ -80,6 +84,21 @@ void pg_destroy_lock_set(void)
 		_pg_lock_set = NULL;
 		_pg_lock_size = 0;
 	}
+}
+
+int pg_alloc_buffer(void)
+{
+	if (postgres_sql_buf != NULL) {
+		LM_DBG("postgres_sql_buf not NULL on init\n");
+		return 0;
+	}
+	LM_DBG("About to allocate postgres_sql_buf size = %d\n", sql_buffer_size);
+	postgres_sql_buf = (char*)malloc(sql_buffer_size);
+	if (postgres_sql_buf == NULL) {
+		LM_ERR("failed to allocate postgres_sql_buf\n");
+		return -1;
+	}
+	return 1;
 }
 
 static void db_postgres_free_query(const db1_con_t* _con);
@@ -624,6 +643,70 @@ int db_postgres_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _
 		db_free_result(_r);
 
 	return ret;
+}
+
+
+/*!
+ * Insert a row into a specified table, update on duplicate key.
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
+ *
+ * Why is insert_update doing nothing in Kamailio db insert_update ?
+ *
+ * As explained in the following article the design of "UPSERT" in PostgreSQL is requiring to be explicit about the constraint on which we accept to do update
+ * modification to Kamailio database framework/API would be required to expose which specific key constraint should be handled as an update
+ * http://pgeoghegan.blogspot.com/2015/10/avoid-naming-constraint-directly-when.html
+ *
+ * In the mean time DO NOTHING is providing the simple feature to ignore error on insert when facing a constraint violation
+ */
+
+int db_postgres_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+	const int _n)
+{
+	int off, ret;
+	static str sql_str;
+
+	if ((!_h) || (!_k) || (!_v) || (!_n)) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	ret = snprintf(postgres_sql_buf, sql_buffer_size, "insert into %s%.*s%s (",
+			CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
+	if (ret < 0 || ret >= sql_buffer_size) goto error;
+	off = ret;
+
+	ret = db_print_columns(postgres_sql_buf + off, sql_buffer_size - off, _k, _n, CON_TQUOTESZ(_h));
+	if (ret < 0) return -1;
+	off += ret;
+
+	ret = snprintf(postgres_sql_buf + off, sql_buffer_size - off, ") values (");
+	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
+	off += ret;
+	ret = db_print_values(_h, postgres_sql_buf + off, sql_buffer_size - off, _v, _n, db_postgres_val2str);
+	if (ret < 0) return -1;
+	off += ret;
+
+	*(postgres_sql_buf + off++) = ')';
+
+	ret = snprintf(postgres_sql_buf + off, sql_buffer_size - off, " on conflict do nothing ");
+	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
+	off += ret;
+
+	sql_str.s = postgres_sql_buf;
+	sql_str.len = off;
+	LM_DBG("%s\n", sql_str.s);
+	if (db_postgres_submit_query(_h, &sql_str) < 0) {
+		LM_ERR("error while submitting query\n");
+		return -2;
+	}
+	return 0;
+
+error:
+	LM_ERR("error while preparing insert_update operation\n");
+	return -1;
 }
 
 
