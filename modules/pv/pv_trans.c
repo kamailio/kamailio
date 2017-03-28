@@ -1259,6 +1259,7 @@ int tr_eval_paramlist(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		pv_value_t *val)
 {
 	pv_value_t v;
+	pv_value_t vs;
 	str sv;
 	int n, i;
 	char separator = ';';
@@ -1272,17 +1273,23 @@ int tr_eval_paramlist(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	{
 		if (subtype == TR_PL_COUNT)
 		{
-			if(tp->type != TR_PARAM_STRING || tp->v.s.len != 1)
-				return -1;
-
-			separator = tp->v.s.s[0];
-		}
-		else if (tp->next != NULL)
-		{
+			if(tp->type != TR_PARAM_STRING) {
+				if(pv_get_spec_value(msg, (pv_spec_t*)tp->v.data, &vs)!=0
+						|| (!(vs.flags&PV_VAL_STR)) || vs.rs.len<=0)
+				{
+					LM_ERR("value cannot get p1\n");
+					return -1;
+				}
+				separator = vs.rs.s[0];
+			} else {
+				if(tp->v.s.len != 1)
+					return -1;
+				separator = tp->v.s.s[0];
+			}
+		} else if (tp->next != NULL) {
 			if(tp->next->type != TR_PARAM_STRING
 					|| tp->next->v.s.len != 1)
 				return -1;
-
 			separator = tp->next->v.s.s[0];
 		}
 	}
