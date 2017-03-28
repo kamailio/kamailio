@@ -59,7 +59,6 @@
 #include "../../core/parser/parse_uri.h"
 
 extern int db_mode;
-extern int hashing_type;
 
 extern int expires_grace;
 

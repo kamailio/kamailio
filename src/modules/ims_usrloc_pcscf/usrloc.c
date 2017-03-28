@@ -52,7 +52,6 @@
 #include "../../core/parser/parse_uri.h"
 
 extern unsigned int init_flag;
-extern int hashing_type;
 
 int bind_usrloc(usrloc_api_t* api) {
 	if (!api) {
