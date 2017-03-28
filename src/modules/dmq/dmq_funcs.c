@@ -459,12 +459,28 @@ void ping_servers(unsigned int ticks, void *param) {
 	str* body;
 	int ret;
 	LM_DBG("ping_servers\n");
+
+	if (!node_list->nodes || (node_list->nodes->local && !node_list->nodes->next)) {
+		LM_DBG("node list is empty - attempt to rebuild from notification address\n");
+		*dmq_init_callback_done = 0;
+		if(dmq_notification_address.s) {
+			notification_node = add_server_and_notify(&dmq_notification_address);
+			if(!notification_node) {
+				LM_ERR("cannot retrieve initial nodelist from %.*s\n",
+					STR_FMT(&dmq_notification_address));
+			}
+		} else {
+			LM_ERR("no notification address");
+		}
+		return;
+	}
+
 	body = build_notification_body();
 	if (!body) {
 		LM_ERR("could not build notification body\n");
 		return;
 	}
-	ret = bcast_dmq_message(dmq_notification_peer, body, notification_node,
+	ret = bcast_dmq_message(dmq_notification_peer, body, NULL,
 			&notification_callback, 1, &notification_content_type);
 	pkg_free(body->s);
 	pkg_free(body);
