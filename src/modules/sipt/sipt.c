@@ -40,6 +40,7 @@ MODULE_VERSION
 
 static int sipt_set_bci_1(struct sip_msg *msg, char *_charge_indicator, char *_called_status, char * _called_category, char * _e2e_indicator);
 static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai);
+static int sipt_destination2(struct sip_msg *msg, char *_destination, char *_hops, char * _nai, char * _terminator);
 static int sipt_set_calling(struct sip_msg *msg, char *_origin, char *_nai, char *_pres, char * _screen);
 static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_event_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
@@ -129,6 +130,12 @@ static cmd_export_t cmds[]={
 	{"sipt_destination", /* action name as in scripts */
 		(cmd_function)sipt_destination,  /* C function name */
 		3,          /* number of parameters */
+		fixup_str_str_str, fixup_free_str_str_str,         /* */
+		/* can be applied to original requests */
+		REQUEST_ROUTE|BRANCH_ROUTE}, 
+	{"sipt_destination", /* action name as in scripts */
+		(cmd_function)sipt_destination2,  /* C function name */
+		4,          /* number of parameters */
 		fixup_str_str_str, fixup_free_str_str_str,         /* */
 		/* can be applied to original requests */
 		REQUEST_ROUTE|BRANCH_ROUTE}, 
@@ -566,7 +573,12 @@ static int sipt_set_bci_1(struct sip_msg *msg, char *_charge_indicator, char *_c
 	return 1;
 }
 
-static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai)
+static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops, char * _nai) {
+	str terminator = str_init("1");
+	sipt_destination2(msg, _destination, _hops, _nai, &terminator);
+}
+
+static int sipt_destination2(struct sip_msg *msg, char *_destination, char *_hops, char * _nai, char * _terminator)
 {
 	str * str_hops = (str*)_hops;
 	unsigned int hops = 0;
@@ -574,6 +586,9 @@ static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops
 	str * nai = (str*)_nai;
 	unsigned int int_nai = 0;
 	str2int(nai, &int_nai);
+	str * terminator = (str*)_terminator;
+	unsigned int int_terminator;
+	str2int(terminator, &int_terminator);
 	str * destination = (str*)_destination;
 	struct sdp_mangler mangle;
 
@@ -613,7 +628,10 @@ static int sipt_destination(struct sip_msg *msg, char *_destination, char *_hops
 
 	char * digits = calloc(1,destination->len+2);
 	memcpy(digits, destination->s, destination->len);
-	digits[destination->len] = '#';
+
+	if (int_terminator) {
+		digits[destination->len] = '#';
+	}
 
 	int res = isup_update_destination(&mangle, digits, hops, int_nai, (unsigned char*)body.s, body.len);
 	free(digits);
