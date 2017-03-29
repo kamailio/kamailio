@@ -57,6 +57,7 @@ int pid = 0;
 
 /* module parameters */
 int num_workers = DEFAULT_NUM_WORKERS;
+int worker_usleep = 0;
 str dmq_server_address = {0, 0};
 str dmq_server_socket = {0, 0};
 struct sip_uri dmq_server_uri;
@@ -111,6 +112,7 @@ static param_export_t params[] = {
 	{"server_address", PARAM_STR, &dmq_server_address},
 	{"notification_address", PARAM_STR, &dmq_notification_address},
 	{"multi_notify", INT_PARAM, &multi_notify},
+	{"worker_usleep", INT_PARAM, &worker_usleep},
 	{0, 0, 0}
 };
 

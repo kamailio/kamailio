@@ -171,6 +171,31 @@ modparam("dmq", "num_workers", 4)
 </programlisting>
                 </example>
         </section>
+	<section id="dmq.p.worker_usleep">
+		<title><varname>worker_usleep</varname>(int)</title>
+		<para>
+		The default locking/synchronisation mechanism between producer/consumer
+		threads is the optimum for most environments. On some systems (e.g. FreeBSD)
+		it can cause high CPU load and in such cases, it can be useful to disable
+		locking and switch to polling for tasks at set intervals instead - putting
+		the thread to sleep in-between and taking it out of process during that time.
+		</para>
+		<para>
+		A value >0 will disable the default locking and set the polling interval
+		(in microseconds), which can be tuned to suit the specific environment.
+		</para>
+		<para>
+		<emphasis>Default value is 0 (recommended for most systems).</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>worker_usleep</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "worker_usleep", 1000)
+...
+</programlisting>
+		</example>
+	</section>
         <section id="dmq.p.ping_interval">
                 <title><varname>ping_interval</varname>(int)</title>
                 <para>

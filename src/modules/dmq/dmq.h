@@ -37,6 +37,7 @@
 #define MIN_PING_INTERVAL	5
 
 extern int num_workers;
+extern int worker_usleep;
 extern dmq_worker_t* workers;
 extern dmq_peer_t* dmq_notification_peer;
 extern str dmq_server_address;
