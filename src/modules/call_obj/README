@@ -1,0 +1,247 @@
+CALL_OBJ Module
+
+Vicente Hernando
+
+   <vhernando@systemonenoc.com>
+
+Edited by
+
+Vicente Hernando
+
+   <vhernando@systemonenoc.com>
+
+Javier Gallart
+
+   <jgallart@systemonenoc.com>
+
+   Copyright © 2016 www.systemonenoc.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. start (integer)
+              3.2. end (integer)
+
+        4. Functions
+
+              4.1. call_obj_get(reply_number)
+              4.2. call_obj_free(object_number)
+
+        5. RPC Commands
+
+              5.1. call_obj.free
+              5.2. call_obj.stats
+              5.3. call_obj.free_all
+              5.4. call_obj.list
+
+   List of Examples
+
+   1.1. Set start parameter
+   1.2. Set end parameter
+   1.3. call_obj_get usage
+   1.4. call_obj_free usage
+   1.5. call_obj.free usage
+   1.6. call_obj.stats usage
+   1.7. call_obj.free_all usage
+   1.8. call_obj.list usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. start (integer)
+        3.2. end (integer)
+
+   4. Functions
+
+        4.1. call_obj_get(reply_number)
+        4.2. call_obj_free(object_number)
+
+   5. RPC Commands
+
+        5.1. call_obj.free
+        5.2. call_obj.stats
+        5.3. call_obj.free_all
+        5.4. call_obj.list
+
+1. Overview
+
+   This module provides a way to identify calls using a increasing
+   sequence of integers.
+
+   It starts assigning an integer to a call. Next call gets next free
+   integer in a ring. When a call finishes its assigned number shall be
+   freed.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None.
+
+3. Parameters
+
+   3.1. start (integer)
+   3.2. end (integer)
+
+3.1. start (integer)
+
+   First number to assign when no number has been assigned yet.
+
+   This parameter has no default value. Not setting it raises an error.
+
+   Its value shall be greater than zero.
+
+   Example 1.1. Set start parameter
+...
+modparam("call_obj", "start", 10)
+...
+
+3.2. end (integer)
+
+   Last number to assign when all other numbers have been already
+   assigned.
+
+   No default value. Not setting this parameter raises an error.
+
+   Its value shall be greater than zero.
+
+   Example 1.2. Set end parameter
+...
+modparam("call_obj", "end", 93)
+...
+
+4. Functions
+
+   4.1. call_obj_get(reply_number)
+   4.2. call_obj_free(object_number)
+
+4.1.  call_obj_get(reply_number)
+
+   Get next free number. reply_number parameter is a variable where
+   function will store result in string format.
+
+   Example 1.3. call_obj_get usage
+...
+if (call_obj_get("$dlg_var(x)")) {
+        xlog("Object: $dlg_var(x)\n");
+}
+...
+
+4.2.  call_obj_free(object_number)
+
+   Mark an object_number as free, so it can be assigned again. This number
+   will not be readily assigned until a loop in the ring has completed.
+   object_number shall be provided in string format.
+
+   Example 1.4. call_obj_free usage
+...
+$dlg_var(y) = "27";
+if (call_obj_free("$dlg_var(y)")) {
+        xlog("object $dlg_var(y) freed OK\n");
+}
+...
+
+5. RPC Commands
+
+   5.1. call_obj.free
+   5.2. call_obj.stats
+   5.3. call_obj.free_all
+   5.4. call_obj.list
+
+5.1. call_obj.free
+
+   Free an object.
+
+   Parameter is a number represented in string format.
+
+   Name: call_obj.free
+
+   Parameters: object_number
+
+   Example 1.5. call_obj.free usage
+...
+kamcmd call_obj.free s:12
+...
+
+5.2. call_obj.stats
+
+   Return some statistics about call_obj module.
+
+   It currently returns:
+     * Start: Number of first object
+     * End: Number of last object in range
+     * Total: Total assignable objects
+     * Assigned: Number of currently assigned objects
+
+   Name: call_obj.stats
+
+   Parameters: none
+
+   Example 1.6. call_obj.stats usage
+...
+kamcmd call_obj.stats
+...
+
+5.3. call_obj.free_all
+
+   Make all objects free at once.
+
+   Name: call_obj.free_all
+
+   Parameters: none
+
+   Example 1.7. call_obj.free_all usage
+...
+kamcmd call_obj.free_all
+...
+
+5.4. call_obj.list
+
+   List all active calls which duration is longer than a value in seconds.
+
+   Name: call_obj.list
+
+   Parameters: duration limit
+
+   limit parameter is optional
+
+   Example 1.8. call_obj.list usage
+...
+Show every call which duration is less than or equal to 24 seconds:
+kamcmd call_obj.list 24
+
+Same but limit output to at most 5 calls:
+kamcmd call_obj.list 24  5
+
+Same but show again all calls (0 means no limit):
+kamcmd call_obj.list 24  0
+...

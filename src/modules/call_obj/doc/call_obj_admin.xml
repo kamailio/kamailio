@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a way to identify calls using a increasing sequence
+		of integers.
+	</para>
+	<para>
+		It starts assigning an integer to a call. Next call gets next free integer in a ring.
+		When a call finishes its assigned number shall be freed.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="call_obj.p.start">
+		<title><varname>start</varname> (integer)</title>
+		<para>
+			First number to assign when no number has been assigned yet.
+		</para>
+		<para>
+			<emphasis>
+			This parameter has no default value. Not setting it raises an error.
+			</emphasis>
+		</para>
+		<para>Its value shall be greater than zero.</para>
+		<example>
+			<title>Set <varname>start</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("call_obj", "start", 10)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="call_obj.p.end">
+		<title><varname>end</varname> (integer)</title>
+		<para>
+			Last number to assign when all other numbers have been already assigned.
+		</para>
+		<para>
+		<emphasis>
+			No default value. Not setting this parameter raises an error.
+		</emphasis>
+		</para>
+		<para>Its value shall be greater than zero.</para>		
+		<example>
+			<title>Set <varname>end</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("call_obj", "end", 93)
+...
+			</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="call_obj.f.call_obj_get">
+		<title>
+		<function moreinfo="none">call_obj_get(reply_number)</function>
+		</title>
+		<para>
+			Get next free number. reply_number parameter is a variable where function will
+			store result in string format.
+		</para>
+		<example>
+		<title><function>call_obj_get</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (call_obj_get("$dlg_var(x)")) {
+	xlog("Object: $dlg_var(x)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="call_obj.f.call_obj_free">
+	<title>
+		<function moreinfo="none">call_obj_free(object_number)</function>
+	</title>
+	<para>
+		Mark an object_number as free, so it can be assigned again.
+		This number will not be readily assigned until a loop in the ring has completed.
+		object_number shall be provided in string format.
+	</para>
+	<example>
+		<title><function>call_obj_free</function> usage</title>
+		<programlisting format="linespecific">
+...
+$dlg_var(y) = "27";
+if (call_obj_free("$dlg_var(y)")) {
+	xlog("object $dlg_var(y) freed OK\n");
+}
+...
+		</programlisting>
+	</example>
+	</section>
+	</section>
+
+	<section>
+		<title><acronym>RPC</acronym> Commands</title>
+		<section  id="call_obj.rpc.free">
+			<title><function moreinfo="none">call_obj.free</function></title>
+			<para>
+			  Free an object.
+			</para>
+			<para>
+			  Parameter is a number represented in string format.
+			</para>
+            <para>
+            Name: <emphasis>call_obj.free</emphasis>
+            </para>
+            <para>Parameters: <emphasis>object_number</emphasis></para>
+			<example>
+			  <title><function>call_obj.free</function> usage</title>
+			  <programlisting format="linespecific">
+...
+&sercmd; call_obj.free s:12
+...
+			  </programlisting>
+			</example>
+        </section>
+		<section  id="call_obj.rpc.stats">
+			<title><function moreinfo="none">call_obj.stats</function></title>
+			<para>
+			  Return some statistics about call_obj module.
+			</para>
+			<para>
+			  It currently returns:
+			  <itemizedlist>
+				<listitem>
+				  <para><emphasis>Start</emphasis>: Number of first object</para>
+				</listitem>
+				<listitem>
+				  <para><emphasis>End</emphasis>: Number of last object in range</para>
+				</listitem>
+				<listitem>
+				  <para><emphasis>Total</emphasis>: Total assignable objects</para>
+				</listitem>
+				<listitem>
+				  <para><emphasis>Assigned</emphasis>: Number of currently assigned objects</para>
+				</listitem>
+			  </itemizedlist>
+			</para>
+            <para>
+            Name: <emphasis>call_obj.stats</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+			<example>
+			  <title><function>call_obj.stats</function> usage</title>
+			  <programlisting format="linespecific">
+...
+&sercmd; call_obj.stats
+...
+			  </programlisting>
+			</example>
+        </section>
+		<section  id="call_obj.rpc.free_all">
+			<title><function moreinfo="none">call_obj.free_all</function></title>
+			<para>
+			  Make all objects free at once.
+			</para>
+            <para>
+            Name: <emphasis>call_obj.free_all</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+			<example>
+			  <title><function>call_obj.free_all</function> usage</title>
+			  <programlisting format="linespecific">
+...
+&sercmd; call_obj.free_all
+...
+			  </programlisting>
+			</example>
+        </section>
+		<section  id="call_obj.rpc.list">
+			<title><function moreinfo="none">call_obj.list</function></title>
+			<para>
+			  List all active calls which duration is longer than a value in seconds.
+			</para>
+            <para>
+            Name: <emphasis>call_obj.list</emphasis>
+            </para>
+            <para>Parameters: <emphasis>duration</emphasis> <emphasis>limit</emphasis></para>
+			<para>limit parameter is optional</para>
+			<example>
+			  <title><function>call_obj.list</function> usage</title>
+			  <programlisting format="linespecific">
+...
+Show every call which duration is less than or equal to 24 seconds:				
+&sercmd; call_obj.list 24
+
+Same but limit output to at most 5 calls:
+&sercmd; call_obj.list 24  5
+
+Same but show again all calls (0 means no limit):
+&sercmd; call_obj.list 24  0
+...
+			  </programlisting>
+			</example>
+        </section>
+	</section>
+</chapter>
