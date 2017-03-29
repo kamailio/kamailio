@@ -1797,6 +1797,70 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 
 }
 
+/**
+ *
+ */
+int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
+{
+	int idx;
+	int idxf;
+	pv_value_t tv;
+	struct hdr_field *hf;
+	struct hdr_field *hf0;
+	char *p, *p_ini;
+	int n, p_size;
+	int hcount;
+
+	if(msg==NULL || res==NULL || param==NULL)
+		return -1;
+
+	hcount = 0;
+
+	/* get the name */
+	if(param->pvn.type == PV_NAME_PVAR)
+	{
+		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR)))
+		{
+			LM_ERR("invalid name\n");
+			return pv_get_sintval(msg, param, res, hcount);
+		}
+	} else {
+		if(param->pvn.u.isname.type == AVP_NAME_STR)
+		{
+			tv.flags = PV_VAL_STR;
+			tv.rs = param->pvn.u.isname.name.s;
+		} else {
+			tv.flags = 0;
+			tv.ri = param->pvn.u.isname.name.n;
+		}
+	}
+	/* we need to be sure we have parsed all headers */
+	if(parse_headers(msg, HDR_EOH_F, 0)<0)
+	{
+		LM_ERR("error parsing headers\n");
+		return pv_get_sintval(msg, param, res, hcount);
+	}
+
+
+	for (hf=msg->headers; hf; hf=hf->next)
+	{
+		if(tv.flags == 0)
+		{
+			if (tv.ri==hf->type) {
+				hcount++;
+			}
+		} else {
+			if (cmp_hdrname_str(&hf->name, &tv.rs)==0) {
+				hcount++;
+			}
+		}
+	}
+	return pv_get_sintval(msg, param, res, hcount);
+}
+
+/**
+ *
+ */
 int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {

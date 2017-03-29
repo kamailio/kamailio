@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -28,10 +28,10 @@
 int pv_get_msgid(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
-int pv_get_udp(struct sip_msg *msg, pv_param_t *param, 
+int pv_get_udp(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
-int pv_get_5060(struct sip_msg *msg, pv_param_t *param, 
+int pv_get_5060(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
 int pv_get_return_code(struct sip_msg *msg, pv_param_t *param,
@@ -202,6 +202,8 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
 int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+
+int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
 int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
