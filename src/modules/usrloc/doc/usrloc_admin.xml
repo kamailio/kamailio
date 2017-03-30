@@ -687,6 +687,48 @@ modparam("usrloc", "db_mode", 2)
 		</example>
 	</section>
 
+	<section id="usrloc.p.db_load">
+		<title><varname>db_load</varname> (integer)</title>
+		<para>
+		Determine if the usrloc module should load contacts from the database storage during module initialization
+		A value of 0 disable the loading from the database, this parameter is ignored if db_mode 4 is set
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_load</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_load", "0")
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.db_insert_update">
+		<title><varname>db_insert_update</varname> (integer)</title>
+		<para>
+		Determine if the usrloc module should do an update when a duplicate key is found while inserting
+		A value of 1 will activate update on duplicate key
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_insert_update</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_insert_update", "1")
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="usrloc.p.matching_mode">
 		<title><varname>matching_mode</varname> (integer)</title>
 		<para>
