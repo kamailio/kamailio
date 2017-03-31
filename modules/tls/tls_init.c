@@ -563,11 +563,13 @@ int init_tls_h(void)
 {
 	/*struct socket_info* si;*/
 	long ssl_version;
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
 	int lib_kerberos;
 	int lib_zlib;
 	int kerberos_support;
 	int comp_support;
 	const char* lib_cflags;
+#endif
 	int low_mem_threshold1;
 	int low_mem_threshold2;
 	str tls_grp;
@@ -603,6 +605,10 @@ int init_tls_h(void)
 		else
 			return -1; /* safer to exit */
 	}
+
+/* check kerberos support using compile flags only for version < 1.1.0 */
+#if OPENSSL_VERSION_NUMBER < 0x010100000L
+
 #ifdef TLS_KERBEROS_SUPPORT
 	kerberos_support=1;
 #else
@@ -672,6 +678,9 @@ int init_tls_h(void)
 			" kerberos support will be disabled...\n");
 	}
 	#endif
+
+#endif /* libssl version < 1.1.0 (OPENSSL_VERSION_NUMBER < 0x010100000L) */
+
 	/* set free memory threshold for openssl bug #1491 workaround */
 	low_mem_threshold1 = cfg_get(tls, tls_cfg, low_mem_threshold1);
 	low_mem_threshold2 = cfg_get(tls, tls_cfg, low_mem_threshold2);
