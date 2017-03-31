@@ -535,6 +535,20 @@ cat <<EOF
 EOF
 }
 
+usage_ksr_srv() {
+	echo
+	mecho " -- command 'srv' - server management commands"
+	echo
+cat <<EOF
+   * Examples: srv sockets
+   *           srv rpclist
+ srv sockets ................... show the list of listen sockets
+ srv aliases ................... show the list of server aliases
+ srv rpclist ................... show the list of server rpc commands
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_ksr_srv"
+
 ##### ----------------------------------------------- #####
 #### Common functions
 
