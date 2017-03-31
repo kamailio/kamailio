@@ -1686,6 +1686,35 @@ dispatcher() {
 
 #
 ##### ------------------------------------------------ #####
+### Server management
+#
+ksr_srv() {
+	case $1 in
+		sockets)
+			require_ctlengine
+			mecho "list listen sockets"
+			ctl_cmd_run corex.list_sockets corex.list_sockets
+			;;
+		aliases)
+			require_ctlengine
+			mecho "list server aliases"
+			ctl_cmd_run corex.list_aliases corex.list_aliases
+			;;
+		rpclist)
+			require_ctlengine
+			mecho "list server rpc commands"
+			ctl_cmd_run system.listMethods system.listMethods
+			;;
+		*)
+			usage_ksr_srv
+			exit 1
+
+	esac
+}
+
+
+#
+##### ------------------------------------------------ #####
 ### DIALOG management
 #
 dialog() {
@@ -2902,6 +2931,11 @@ case $1 in
 		else
 			ctl_cmd_run get_statistics stats.get_statistics "${2}:"
 		fi
+		;;
+
+	srv)
+		shift
+		ksr_srv "$@"
 		;;
 
 	restart)
