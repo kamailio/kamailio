@@ -39,6 +39,21 @@
 	<copyright>
 	    <year>2014</year>
 	</copyright>
+	    <editor>
+		<firstname>Julien</firstname>
+		<surname>Chavanton</surname>
+		<affiliation><orgname>flowroute.com</orgname></affiliation>
+		<email>jchavanton@gmail.com</email>
+		<address>
+		<otheraddr>
+		<ulink></ulink>
+		</otheraddr>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2017</year>
+	</copyright>
     </bookinfo>
     <toc></toc>
     
