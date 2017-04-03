@@ -114,7 +114,8 @@ static char ht_name_buf[HT_NAME_BUF_SIZE];
 static int ht_pack_values(ht_t *ht, db1_res_t* db_res,
 		int row, int cols, str *hvalue)
 {
-	static char vbuf[4096];
+#define HTABLE_PACK_BUF_SIZE	4096
+	static char vbuf[HTABLE_PACK_BUF_SIZE];
 	int c;
 	int len;
 	char *p;
@@ -128,6 +129,8 @@ static int ht_pack_values(ht_t *ht, db1_res_t* db_res,
 			len += strlen(RES_ROWS(db_res)[row].values[c].val.string_val);
 		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_STR) {
 			len += RES_ROWS(db_res)[row].values[c].val.str_val.len;
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_BLOB) {
+			len += RES_ROWS(db_res)[row].values[c].val.blob_val.len;
 		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_INT) {
 			len += 12;
 		} else {
@@ -135,8 +138,9 @@ static int ht_pack_values(ht_t *ht, db1_res_t* db_res,
 			return -1;
 		}
 	}
-	if(len + c>=4096) {
-		LM_ERR("too large values (need %d)\n", len+c);
+	if(len + c>=HTABLE_PACK_BUF_SIZE) {
+		LM_ERR("too large values (need %d, have %d)\n", len+c,
+				HTABLE_PACK_BUF_SIZE);
 		return -1;
 	}
 	p = vbuf;
@@ -151,6 +155,10 @@ static int ht_pack_values(ht_t *ht, db1_res_t* db_res,
 			strncpy(p, RES_ROWS(db_res)[row].values[c].val.str_val.s,
 				RES_ROWS(db_res)[row].values[c].val.str_val.len);
 			p += RES_ROWS(db_res)[row].values[c].val.str_val.len;
+		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_BLOB) {
+			memcpy(p, RES_ROWS(db_res)[row].values[c].val.blob_val.s,
+				RES_ROWS(db_res)[row].values[c].val.blob_val.len);
+			p += RES_ROWS(db_res)[row].values[c].val.blob_val.len;
 		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_INT) {
 			iv.s = sint2str(RES_ROWS(db_res)[row].values[c].val.int_val, &iv.len);
 			strncpy(p, iv.s, iv.len);
@@ -280,6 +288,14 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				}
 				kname.len = (RES_ROWS(db_res)[i].values[0].val.str_val.len);
 				break;
+			case DB1_BLOB:
+				kname.s = (RES_ROWS(db_res)[i].values[0].val.blob_val.s);
+				if(kname.s==NULL) {
+					LM_ERR("null key in row %d\n", i);
+					goto error;
+				}
+				kname.len = (RES_ROWS(db_res)[i].values[0].val.blob_val.len);
+				break;
 			case DB1_STRING:
 				kname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
 				if(kname.s==NULL) {
@@ -392,6 +408,14 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 							}
 							str2sint(&kvalue, &val.n);
 							break;
+						case DB1_BLOB:
+							kvalue = RES_ROWS(db_res)[i].values[3].val.blob_val;
+							if(kvalue.s==NULL) {
+								LM_ERR("null value in row %d\n", i);
+								goto error;
+							}
+							str2sint(&kvalue, &val.n);
+							break;
 						case DB1_STRING:
 							kvalue.s = (char*)(RES_ROWS(db_res)[i].values[3].val.string_val);
 							if(kvalue.s==NULL) {
@@ -417,6 +441,14 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 					{
 						case DB1_STR:
 							kvalue = RES_ROWS(db_res)[i].values[3].val.str_val;
+							if(kvalue.s==NULL) {
+								LM_ERR("null value in row %d\n", i);
+								goto error;
+							}
+							val.s = kvalue;
+							break;
+						case DB1_BLOB:
+							kvalue = RES_ROWS(db_res)[i].values[3].val.blob_val;
 							if(kvalue.s==NULL) {
 								LM_ERR("null value in row %d\n", i);
 								goto error;
