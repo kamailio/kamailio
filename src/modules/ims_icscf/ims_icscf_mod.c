@@ -270,15 +270,14 @@ static int fixup_uar(void** param, int param_no)
 {
     if (strlen((char*) *param) <= 0) {
         LM_ERR("empty parameter %d not allowed\n", param_no);
-        return -1;
+	return -1;
     }
 
-    if (param_no == 1) {        //route name - static or dynamic string (config vars)
-        if (fixup_spve_null(param, param_no) < 0){
-            LM_ERR("fixup spve failed on %d\n", param_no);
-            return -1;
-        }
-        return 0;
+    switch (param_no) {
+	case 1:
+		return fixup_spve_null(param, param_no);
+	case 2:
+		return fixup_var_int_12(param, 1);
     }
     return 0;
     
@@ -291,11 +290,12 @@ static int fixup_lir(void** param, int param_no)
         return -1;
         }
 
-        if (param_no == 1) {        //route name - static or dynamic string (config vars)
-            if (fixup_spve_null(param, param_no) < 0)
-                return -1;
-            return 0;
-        } 
+    switch (param_no) {
+	case 1:
+		return fixup_spve_null(param, param_no);
+	case 2:
+		return fixup_var_int_12(param, 1);
+    }
         return 0;
     
 }
