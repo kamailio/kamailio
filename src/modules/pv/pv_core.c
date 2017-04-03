@@ -1802,13 +1802,8 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
  */
 int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 {
-	int idx;
-	int idxf;
 	pv_value_t tv;
 	struct hdr_field *hf;
-	struct hdr_field *hf0;
-	char *p, *p_ini;
-	int n, p_size;
 	int hcount;
 
 	if(msg==NULL || res==NULL || param==NULL)
