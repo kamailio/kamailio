@@ -23,7 +23,8 @@
 KAM=/usr/sbin/kamailio
 KAMCFG=/etc/kamailio/kamailio.cfg
 PROG=kamailio
-PID_FILE=/var/run/kamailio.pid
+HOMEDIR=/var/run/$PROG
+PID_FILE=/var/run/$PROG/kamailio.pid
 LOCK_FILE=/var/lock/subsys/kamailio
 RETVAL=0
 DEFAULTS=/etc/sysconfig/kamailio
@@ -99,6 +100,12 @@ if test "$DUMP_CORE" = "yes" ; then
     # directory for the core dump files
     COREDIR=/tmp
     echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
+fi
+
+# /var/run can be a tmpfs
+if [ ! -d $HOMEDIR ]; then
+    mkdir -p $HOMEDIR
+	chown ${USER}:${GROUP} $HOMEDIR
 fi
 
 OPTIONS="-P $PID_FILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP $EXTRA_OPTIONS"
