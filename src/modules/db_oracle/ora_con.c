@@ -153,7 +153,6 @@ void db_oracle_free_connection(ora_con_t* con)
 		OCIHandleFree(con->errhp, OCI_HTYPE_ERROR);
 	if (con->envhp)
 		OCIHandleFree(con->envhp, OCI_HTYPE_ENV);
-	free_db_id(con->hdr.id);
 	pkg_free(con);
 }
 
