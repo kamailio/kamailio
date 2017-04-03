@@ -1,7 +1,6 @@
 /**
  * keepalive module - remote destinations probing
  * 
- * Copyright (C) 2004-2006 FhG Fokus
  * Copyright (C) 2017 Guillaume Bour <guillaume@bour.cc>
  *
  * This file is part of Kamailio, a free SIP server.
