@@ -4,6 +4,9 @@
  * Copyright (C) 2012 Vicente Hernando Ara (System One: www.systemonenoc.com)
  *     - for: redis array reply support
  *
+ * Copyright (C) 2017 Carsten Bock (ng-voice GmbH)
+ *     - for: Cluster support
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -44,6 +47,7 @@ int redis_srv_param(modparam_t type, void *val);
 int init_without_redis = 0;
 int redis_connect_timeout_param = 1000;
 int redis_cmd_timeout_param = 1000;
+int redis_cluster_param = 0;
 
 static int w_redis_cmd3(struct sip_msg* msg, char* ssrv, char* scmd,
 		char* sres);
@@ -57,6 +61,7 @@ static int fixup_redis_cmd6(void** param, int param_no);
 
 static int w_redis_free_reply(struct sip_msg* msg, char* res);
 
+static int mod_init(void);
 static void mod_destroy(void);
 static int  child_init(int rank);
 
@@ -96,6 +101,7 @@ static param_export_t params[]={
 	{"init_without_redis", INT_PARAM, &init_without_redis},
 	{"connect_timeout", INT_PARAM, &redis_connect_timeout_param},
 	{"cmd_timeout", INT_PARAM, &redis_cmd_timeout_param},
+	{"cluster", INT_PARAM, &redis_cluster_param},
 	{0, 0, 0}
 };
 
@@ -108,7 +114,7 @@ struct module_exports exports = {
 	0,              /* exported MI functions */
 	mod_pvs,        /* exported pseudo-variables */
 	0,              /* extra processes */
-	0,       /* module initialization function */
+	mod_init,       /* module initialization function */
 	0,              /* response function */
 	mod_destroy,    /* destroy function */
 	child_init      /* per child init function */
@@ -124,6 +130,18 @@ static int child_init(int rank)
 		return 0;
 
 	if(redisc_init()<0) {
+		LM_ERR("failed to initialize redis connections\n");
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int mod_init(void)
+{
+	if (init_list() < 0) {
 		LM_ERR("failed to initialize redis connections\n");
 		return -1;
 	}

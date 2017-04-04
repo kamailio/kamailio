@@ -1,6 +1,12 @@
 /**
  * Copyright (C) 2011 Daniel-Constantin Mierla (asipto.com)
  *
+ * Copyright (C) 2012 Vicente Hernando Ara (System One: www.systemonenoc.com)
+ *     - for: redis array reply support
+ *
+ * Copyright (C) 2017 Carsten Bock (ng-voice GmbH)
+ *     - for: Cluster support
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -28,6 +34,7 @@
 #include "../../core/parser/parse_param.h"
 #include "../../core/mod_fix.h"
 
+int init_list(void);
 int redisc_init(void);
 int redisc_destroy(void);
 int redisc_add_server(char *spec);
@@ -39,6 +46,7 @@ typedef struct redisc_server {
 	param_t *attrs;
 	redisContext *ctxRedis;
 	struct redisc_server *next;
+	char * settings;
 } redisc_server_t;
 
 typedef struct redisc_reply {

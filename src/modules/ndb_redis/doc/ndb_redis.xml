@@ -33,6 +33,11 @@
 				<surname>Isaksen</surname>
 				<email>misak@uni-tel.dk</email>
 			</author>
+			<author>
+				<firstname>Carsten</firstname>
+				<surname>Bock</surname>
+				<email>carsten@ng-voice.com</email>
+			</author>
 		</authorgroup>
 		<copyright>
 			<year>2011</year>
@@ -41,6 +46,10 @@
 		<copyright>
 			<year>2012</year>
 			<holder>www.systemonenoc.com</holder>
+		</copyright>
+		<copyright>
+			<year>2017</year>
+			<holder>ng-voice GmbH</holder>
 		</copyright>
 	</bookinfo>
 	<toc></toc>
