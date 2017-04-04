@@ -136,6 +136,8 @@ pv_spec_t ds_setid_pv;
 str ds_attrs_pvname   = STR_NULL;
 pv_spec_t ds_attrs_pv;
 
+str ds_event_callback = STR_NULL;
+
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
@@ -248,6 +250,7 @@ static param_export_t params[]={
 	{"outbound_proxy",  PARAM_STR, &ds_outbound_proxy},
 	{"ds_default_socket",  PARAM_STR, &ds_default_socket},
 	{"ds_timer_mode",      PARAM_INT, &ds_timer_mode},
+	{"event_callback",     PARAM_STR, &ds_event_callback},
 	{0,0,0}
 };
 

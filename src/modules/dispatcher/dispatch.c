@@ -51,6 +51,7 @@
 #include "../../lib/srdb1/db_res.h"
 #include "../../core/str.h"
 #include "../../core/script_cb.h"
+#include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 
 #include "ds_ht.h"
@@ -72,6 +73,7 @@ static ds_ht_t *_dsht_load = NULL;
 static int *_ds_ping_active = NULL;
 
 extern int ds_force_dst;
+extern str ds_event_callback;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -2263,6 +2265,8 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str evname;
 
 	if(route == NULL) {
 		LM_ERR("bad route\n");
@@ -2271,10 +2275,20 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 
 	LM_DBG("ds_run_route event_route[%s]\n", route);
 
-	rt = route_get(&event_rt, route);
-	if(rt < 0 || event_rt.rlist[rt] == NULL) {
-		LM_DBG("route does not exist");
-		return;
+	rt = -1;
+	if(ds_event_callback.s==NULL || ds_event_callback.len<=0) {
+		rt = route_lookup(&event_rt, route);
+		if(rt < 0 || event_rt.rlist[rt] == NULL) {
+			LM_DBG("route does not exist");
+			return;
+		}
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			LM_DBG("event callback (%s) set, but no cfg engine\n",
+					ds_event_callback.s);
+			return;
+		}
 	}
 
 	if(msg == NULL) {
@@ -2289,11 +2303,24 @@ static void ds_run_route(sip_msg_t *msg, str *uri, char *route)
 		fmsg = msg;
 	}
 
-	backup_rt = get_route_type();
-	set_route_type(REQUEST_ROUTE);
-	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[rt], fmsg, 0);
-	set_route_type(backup_rt);
+	if(rt>=0 || ds_event_callback.len>0) {
+		backup_rt = get_route_type();
+		set_route_type(REQUEST_ROUTE);
+		init_run_actions_ctx(&ctx);
+		if(rt>=0) {
+			run_top_route(event_rt.rlist[rt], fmsg, 0);
+		} else {
+			if(keng!=NULL) {
+				evname.s = route;
+				evname.len = strlen(evname.s);
+				if(keng->froute(fmsg, EVENT_ROUTE,
+							&ds_event_callback, &evname)<0) {
+					LM_ERR("error running event route kemi callback\n");
+				}
+			}
+		}
+		set_route_type(backup_rt);
+	}
 }
 
 

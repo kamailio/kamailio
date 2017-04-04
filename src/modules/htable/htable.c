@@ -263,7 +263,7 @@ static int child_init(int rank)
 		rtb = get_route_type();
 		set_route_type(REQUEST_ROUTE);
 		init_run_actions_ctx(&ctx);
-		if(rt>0) {
+		if(rt>=0) {
 			run_top_route(event_rt.rlist[rt], fmsg, &ctx);
 		} else {
 			if(keng!=NULL) {
@@ -274,11 +274,11 @@ static int child_init(int rank)
 				}
 			}
 		}
+		set_route_type(rtb);
 		if(ctx.run_flags&DROP_R_F) {
 			LM_ERR("exit due to 'drop' in event route\n");
 			return -1;
 		}
-		set_route_type(rtb);
 	}
 
 done:
