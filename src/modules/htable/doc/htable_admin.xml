@@ -677,8 +677,12 @@ modparam("htable", "timer_procs", 4)
 		<para>
 			The name of the function in the kemi configuration file (embedded
 			scripting language such as Lua, Python, ...) to be executed instead
-			of event_route[...] blocks. The function receives a string parameter
-			with the name of the event.
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the values can be: 'htable:mod-init', 'htable:expired:htname'
+			('htname' being the name of hash table).
 		</para>
 		<para>
 		<emphasis>
