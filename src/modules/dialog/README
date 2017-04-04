@@ -103,6 +103,7 @@ Olle E. Johansson
               6.53. enable_dmq (int)
               6.54. track_cseq_updates (int)
               6.55. lreq_callee_headers (string)
+              6.56. event_callback (str)
 
         7. Functions
 
@@ -226,23 +227,24 @@ Olle E. Johansson
    1.53. Set enable_dmq parameter
    1.54. Set track_cseq_updates parameter
    1.55. Set lreq_callee_headers parameter
-   1.56. set_dlg_profile usage
-   1.57. unset_dlg_profile usage
-   1.58. is_in_profile usage
-   1.59. get_profile_size usage
-   1.60. dlg_isflagset usage
-   1.61. dlg_setflag usage
-   1.62. dlg_resetflag usage
-   1.63. dlg_bye usage
-   1.64. dlg_refer usage
-   1.65. dlg_manage usage
-   1.66. dlg_bridge usage
-   1.67. dlg_get usage
-   1.68. is_known_dlg() usage
-   1.69. dlg_set_timeout usage
-   1.70. dlg_set_timeout_by_profile usage
-   1.71. dlg_set_property usage
-   1.72. dlg_remote_profile usage
+   1.56. Set event_callback parameter
+   1.57. set_dlg_profile usage
+   1.58. unset_dlg_profile usage
+   1.59. is_in_profile usage
+   1.60. get_profile_size usage
+   1.61. dlg_isflagset usage
+   1.62. dlg_setflag usage
+   1.63. dlg_resetflag usage
+   1.64. dlg_bye usage
+   1.65. dlg_refer usage
+   1.66. dlg_manage usage
+   1.67. dlg_bridge usage
+   1.68. dlg_get usage
+   1.69. is_known_dlg() usage
+   1.70. dlg_set_timeout usage
+   1.71. dlg_set_timeout_by_profile usage
+   1.72. dlg_set_property usage
+   1.73. dlg_remote_profile usage
 
 Chapter 1. Admin Guide
 
@@ -314,6 +316,7 @@ Chapter 1. Admin Guide
         6.53. enable_dmq (int)
         6.54. track_cseq_updates (int)
         6.55. lreq_callee_headers (string)
+        6.56. event_callback (str)
 
    7. Functions
 
@@ -526,6 +529,7 @@ Chapter 1. Admin Guide
    6.53. enable_dmq (int)
    6.54. track_cseq_updates (int)
    6.55. lreq_callee_headers (string)
+   6.56. event_callback (str)
 
 6.1. enable_stats (integer)
 
@@ -1258,6 +1262,30 @@ modparam("dialog", "track_cseq_updates", 1)
 modparam("dialog", "lreq_callee_headers", "TH: dlh\r\n")
 ...
 
+6.56. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event,
+   the values are: 'dialog:start', 'dialog:end', 'dialog:failed'. It is
+   also executed if '$dlg_ctx(timeout_route)' is set, the callback
+   function being executed with the variable value as parameter.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.56. Set event_callback parameter
+...
+modparam("dialog", "event_callback", "ksr_dialog_event")
+...
+-- event callback function implemented in Lua
+function ksr_dialog_event(evname)
+        KSR.info("===== dialog module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
 7. Functions
 
    7.1. set_dlg_profile(profile,[value])
@@ -1294,7 +1322,7 @@ modparam("dialog", "lreq_callee_headers", "TH: dlh\r\n")
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.56. set_dlg_profile usage
+   Example 1.57. set_dlg_profile usage
 ...
 set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
@@ -1313,7 +1341,7 @@ set_dlg_profile("caller","$fu");
    This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.57. unset_dlg_profile usage
+   Example 1.58. unset_dlg_profile usage
 ...
 unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
@@ -1336,7 +1364,7 @@ unset_dlg_profile("caller","$fu");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.58. is_in_profile usage
+   Example 1.59. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
         log("this request belongs to a inbound call\n");
@@ -1365,7 +1393,7 @@ if (is_in_profile("caller","XX")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.59. get_profile_size usage
+   Example 1.60. get_profile_size usage
 ...
 if(get_profile_size("inbound_call","$avp(size)"))
     xlog("currently there are $avp(size) inbound calls\n");
@@ -1384,7 +1412,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.60. dlg_isflagset usage
+   Example 1.61. dlg_isflagset usage
 ...
 if(dlg_isflagset("1"))
 {
@@ -1402,7 +1430,7 @@ if(dlg_isflagset("1"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.61. dlg_setflag usage
+   Example 1.62. dlg_setflag usage
 ...
 dlg_setflag("1");
 ...
@@ -1417,7 +1445,7 @@ dlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.62. dlg_resetflag usage
+   Example 1.63. dlg_resetflag usage
 ...
 redlg_setflag("1");
 ...
@@ -1433,7 +1461,7 @@ redlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.63. dlg_bye usage
+   Example 1.64. dlg_bye usage
 ...
 dlg_bye("all");
 ...
@@ -1450,7 +1478,7 @@ dlg_bye("all");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.64. dlg_refer usage
+   Example 1.65. dlg_refer usage
 ...
 dlg_refer("caller", "sip:announcement@kamailio.org");
 ...
@@ -1463,7 +1491,7 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.65. dlg_manage usage
+   Example 1.66. dlg_manage usage
 ...
 modparam("dialog", "default_timeout", 100)
 ...
@@ -1491,7 +1519,7 @@ request_route {
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.66. dlg_bridge usage
+   Example 1.67. dlg_bridge usage
 ...
 dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
@@ -1510,7 +1538,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.67. dlg_get usage
+   Example 1.68. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {
@@ -1534,7 +1562,7 @@ if(dlg_get("abcdef", "123", "456"))
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.68. is_known_dlg() usage
+   Example 1.69. is_known_dlg() usage
 ...
 if(!uri == myself) {
         if(is_known_dlg()) {
@@ -1558,7 +1586,7 @@ if(!uri == myself) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.69. dlg_set_timeout usage
+   Example 1.70. dlg_set_timeout usage
 ...
 if(dlg_set_timeout("180", "123", "456"))
 {
@@ -1580,7 +1608,7 @@ if(dlg_set_timeout("180", "123", "456"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.70. dlg_set_timeout_by_profile usage
+   Example 1.71. dlg_set_timeout_by_profile usage
 ...
 # All dialogs belonging to user abc123 (tracked via set_dlg_profile())
 # will be timed out in 3 seconds.
@@ -1612,7 +1640,7 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.71. dlg_set_property usage
+   Example 1.72. dlg_set_property usage
 ...
 dlg_set_property("ka-src");
 dlg_set_property("ka-dst");
@@ -1640,7 +1668,7 @@ dlg_set_property("timeout-noreset");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.72. dlg_remote_profile usage
+   Example 1.73. dlg_remote_profile usage
 ...
 $var(exp) = 3600 + $Ts;
 dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");

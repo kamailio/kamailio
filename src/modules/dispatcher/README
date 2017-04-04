@@ -88,6 +88,7 @@ Luis Martin
               3.31. outbound_proxy (str)
               3.32. ds_default_socket (str)
               3.33. ds_timer_mode (int)
+              3.34. event_callback (str)
 
         4. Functions
 
@@ -162,15 +163,16 @@ Luis Martin
    1.32. Set the “outbound_proxy” parameter
    1.33. Set the “ds_default_socket” parameter
    1.34. Set the “ds_timer_mode” parameter
-   1.35. ds_select_dst usage
-   1.36. ds_select_domain usage
-   1.37. ds_select usage
-   1.38. ds_mark_dst usage
-   1.39. ds_list_exist usage
-   1.40. ds_is_from_list usage
-   1.41. ds_load_unset usage
-   1.42. dispatcher list file
-   1.43. Kamailio config script - sample dispatcher usage
+   1.35. Set event_callback parameter
+   1.36. ds_select_dst usage
+   1.37. ds_select_domain usage
+   1.38. ds_select usage
+   1.39. ds_mark_dst usage
+   1.40. ds_list_exist usage
+   1.41. ds_is_from_list usage
+   1.42. ds_load_unset usage
+   1.43. dispatcher list file
+   1.44. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -217,6 +219,7 @@ Chapter 1. Admin Guide
         3.31. outbound_proxy (str)
         3.32. ds_default_socket (str)
         3.33. ds_timer_mode (int)
+        3.34. event_callback (str)
 
    4. Functions
 
@@ -323,6 +326,7 @@ Chapter 1. Admin Guide
    3.31. outbound_proxy (str)
    3.32. ds_default_socket (str)
    3.33. ds_timer_mode (int)
+   3.34. event_callback (str)
 
 3.1. list_file (string)
 
@@ -812,6 +816,28 @@ Note
  modparam("dispatcher", "ds_timer_mode", 1)
  ...
 
+3.34. event_callback (str)
+
+   The name of the function in the kemi configuration file (embedded
+   scripting language such as Lua, Python, ...) to be executed instead of
+   event_route[...] blocks.
+
+   The function receives a string parameter with the name of the event,
+   the values are: 'dispatcher:dst-down', 'dispatcher:dst-up'.
+
+   Default value is 'empty' (no function is executed for events).
+
+   Example 1.35. Set event_callback parameter
+...
+modparam("dispatcher", "event_callback", "ksr_dispatcher_event")
+...
+-- event callback function implemented in Lua
+function ksr_dispatcher_event(evname)
+        KSR.info("===== dispatcher module triggered event: " .. evname .. "\n");
+        return 1;
+end
+...
+
 4. Functions
 
    4.1. ds_select_dst(set, alg[, limit])
@@ -893,7 +919,7 @@ Note
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.35. ds_select_dst usage
+   Example 1.36. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -916,7 +942,7 @@ ds_select_dst("1", "4", "3");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.36. ds_select_domain usage
+   Example 1.37. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -940,7 +966,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.37. ds_select usage
+   Example 1.38. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -991,7 +1017,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.38. ds_mark_dst usage
+   Example 1.39. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1008,7 +1034,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.39. ds_list_exist usage
+   Example 1.40. ds_list_exist usage
 ...
 if(ds_list_exist("10")) {
     ...
@@ -1051,7 +1077,7 @@ if(ds_list_exist("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.40. ds_is_from_list usage
+   Example 1.41. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1085,7 +1111,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.41. ds_load_unset usage
+   Example 1.42. ds_load_unset usage
 ...
 route {
     ...
@@ -1257,7 +1283,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.42. dispatcher list file
+   Example 1.43. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -1282,7 +1308,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.43. Kamailio config script - sample dispatcher usage
+   Example 1.44. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
