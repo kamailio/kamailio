@@ -122,6 +122,38 @@ modparam("evapi", "netstring_format", 0)
 </programlisting>
 		</example>
 	</section>
+	<section id="evapi.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[...] blocks.
+		</para>
+		<para>
+			The function receives a string parameter with the name of the event,
+			the values are: 'evapi:connection-new', 'evapi:connection-closed',
+			'evapi:message-received'.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "event_callback", "ksr_evapi_event")
+...
+-- event callback function implemented in Lua
+function ksr_evapi_event(evname)
+	KSR.info("===== evapi module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
