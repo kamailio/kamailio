@@ -37,12 +37,15 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/cfg/cfg_struct.h"
+#include "../../core/kemi.h"
 #include "../../core/fmsg.h"
 
 #include "evapi_dispatch.h"
 
 static int _evapi_notify_sockets[2];
 static int _evapi_netstring_format = 1;
+
+extern str _evapi_event_callback;
 
 #define EVAPI_IPADDR_SIZE	64
 #define EVAPI_TAG_SIZE	64
@@ -77,8 +80,11 @@ static evapi_client_t _evapi_clients[EVAPI_MAX_CLIENTS+1];
 
 typedef struct _evapi_evroutes {
 	int con_new;
+	str con_new_name;
 	int con_closed;
+	str con_closed_name;
 	int msg_received;
+	str msg_received_name;
 } evapi_evroutes_t;
 
 static evapi_evroutes_t _evapi_rts;
@@ -101,34 +107,46 @@ void evapi_init_environment(int dformat)
 {
 	memset(&_evapi_rts, 0, sizeof(evapi_evroutes_t));
 
-	_evapi_rts.con_new = route_get(&event_rt, "evapi:connection-new");
+	_evapi_rts.con_new_name.s = "evapi:connection-new";
+	_evapi_rts.con_new_name.len = strlen(_evapi_rts.con_new_name.s);
+	_evapi_rts.con_new = route_lookup(&event_rt, "evapi:connection-new");
 	if (_evapi_rts.con_new < 0 || event_rt.rlist[_evapi_rts.con_new] == NULL)
 		_evapi_rts.con_new = -1;
-	_evapi_rts.con_closed = route_get(&event_rt, "evapi:connection-closed");
+
+	_evapi_rts.con_closed_name.s = "evapi:connection-closed";
+	_evapi_rts.con_closed_name.len = strlen(_evapi_rts.con_closed_name.s);
+	_evapi_rts.con_closed = route_lookup(&event_rt, "evapi:connection-closed");
 	if (_evapi_rts.con_closed < 0 || event_rt.rlist[_evapi_rts.con_closed] == NULL)
 		_evapi_rts.con_closed = -1;
-	_evapi_rts.msg_received = route_get(&event_rt, "evapi:message-received");
+
+	_evapi_rts.msg_received_name.s = "evapi:message-received";
+	_evapi_rts.msg_received_name.len = strlen(_evapi_rts.msg_received_name.s);
+	_evapi_rts.msg_received = route_lookup(&event_rt, "evapi:message-received");
 	if (_evapi_rts.msg_received < 0 || event_rt.rlist[_evapi_rts.msg_received] == NULL)
 		_evapi_rts.msg_received = -1;
+
 	_evapi_netstring_format = dformat;
 }
 
 /**
  *
  */
-int evapi_run_cfg_route(evapi_env_t *evenv, int rt)
+int evapi_run_cfg_route(evapi_env_t *evenv, int rt, str *rtname)
 {
 	int backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
 	sip_msg_t tmsg;
+	sr_kemi_eng_t *keng = NULL;
+	str evname;
+
 
 	if(evenv==0 || evenv->eset==0) {
 		LM_ERR("evapi env not set\n");
 		return -1;
 	}
 
-	if(rt<0)
+	if((rt<0) && (_evapi_event_callback.s==NULL || _evapi_event_callback.len<=0))
 		return 0;
 
 	fmsg = faked_msg_next();
@@ -138,7 +156,17 @@ int evapi_run_cfg_route(evapi_env_t *evenv, int rt)
 	backup_rt = get_route_type();
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
-	run_top_route(event_rt.rlist[rt], fmsg, 0);
+	if(rt>=0) {
+		run_top_route(event_rt.rlist[rt], fmsg, 0);
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng!=NULL) {
+			if(keng->froute(fmsg, EVENT_ROUTE,
+						&_evapi_event_callback, rtname)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
+	}
 	set_route_type(backup_rt);
 	evapi_set_msg_env(fmsg, NULL);
 	return 0;
@@ -323,7 +351,8 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 		/* client is gone */
 		evenv.eset = 1;
 		evenv.conidx = i;
-		evapi_run_cfg_route(&evenv, _evapi_rts.con_closed);
+		evapi_run_cfg_route(&evenv, _evapi_rts.con_closed,
+				&_evapi_rts.con_closed_name);
 		_evapi_clients[i].connected = 0;
 		_evapi_clients[i].sock = 0;
 		_evapi_clients[i].rpos = 0;
@@ -420,14 +449,16 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			evenv.msg.len = frame.len;
 			LM_DBG("executing event route for frame: [%.*s] (%d)\n",
 						frame.len, frame.s, frame.len);
-			evapi_run_cfg_route(&evenv, _evapi_rts.msg_received);
+			evapi_run_cfg_route(&evenv, _evapi_rts.msg_received,
+					&_evapi_rts.msg_received_name);
 			k++;
 		}
 		_evapi_clients[i].rpos = 0 ;
 	} else {
 		evenv.msg.s = _evapi_clients[i].rbuffer;
 		evenv.msg.len = rlen;
-		evapi_run_cfg_route(&evenv, _evapi_rts.msg_received);
+		evapi_run_cfg_route(&evenv, _evapi_rts.msg_received,
+				&_evapi_rts.msg_received_name);
 	}
 }
 
@@ -507,7 +538,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 	evapi_env_reset(&evenv);
 	evenv.conidx = i;
 	evenv.eset = 1;
-	evapi_run_cfg_route(&evenv, _evapi_rts.con_new);
+	evapi_run_cfg_route(&evenv, _evapi_rts.con_new, &_evapi_rts.con_new_name);
 
 	if(_evapi_clients[i].connected == 0) {
 		free(evapi_client);

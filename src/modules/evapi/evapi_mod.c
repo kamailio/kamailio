@@ -50,6 +50,8 @@ static int   _evapi_bind_port = 8448;
 static char *_evapi_bind_param = NULL;
 static int   _evapi_netstring_format_param = 1;
 
+str _evapi_event_callback = STR_NULL;
+
 static tm_api_t tmb;
 static int   _evapi_dispatcher_pid = -1;
 
@@ -94,6 +96,7 @@ static param_export_t params[]={
 	{"workers",           INT_PARAM,   &_evapi_workers},
 	{"bind_addr",         PARAM_STRING,   &_evapi_bind_param},
 	{"netstring_format",  INT_PARAM,   &_evapi_netstring_format_param},
+	{"event_callback",    PARAM_STR,   &_evapi_event_callback},
 	{0, 0, 0}
 };
 
