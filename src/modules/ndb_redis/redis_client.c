@@ -181,7 +181,7 @@ int redisc_destroy(void)
 			freeReplyObject(rpl->rplRedis);
 
 		if(rpl->rname.s != NULL)
-			shm_free(rpl->rname.s);
+			pkg_free(rpl->rname.s);
 
 		pkg_free(rpl);
 		rpl = next_rpl;
