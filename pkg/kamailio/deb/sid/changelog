@@ -1,3 +1,9 @@
+kamailio (5.0.1) unstable; urgency=medium
+
+  * version set to 5.0.1
+
+ -- Victor Seva <vseva@debian.org>  Wed, 05 Apr 2017 10:59:02 +0200
+
 kamailio (5.0.0) unstable; urgency=medium
 
   * version set to 5.0.0
