@@ -2571,7 +2571,7 @@ error:
 
 }
 
-void kz_amqp_send_worker_event(int _kz_server_id, amqp_envelope_t* envelope, kz_amqp_bind_ptr bind)
+void kz_amqp_send_worker_event(kz_amqp_server_ptr server_ptr, amqp_envelope_t* envelope, kz_amqp_bind_ptr bind)
 {
     char buffer[100];
     kz_amqp_cmd_ptr cmd = NULL;
@@ -2579,6 +2579,7 @@ void kz_amqp_send_worker_event(int _kz_server_id, amqp_envelope_t* envelope, kz_
     str* message_id = NULL;
     int idx = envelope->channel-1;
     int worker = 0;
+    int _kz_server_id = server_ptr->id;
 
     json_obj_ptr json_obj = kz_json_parse((char*)envelope->message.body.bytes);
     if (json_obj == NULL) {
@@ -2593,6 +2594,8 @@ void kz_amqp_send_worker_event(int _kz_server_id, amqp_envelope_t* envelope, kz_
         json_object_object_del(json_obj, BLF_JSON_SERVERID);
         json_object_object_add(json_obj, BLF_JSON_SERVERID, json_object_new_string(buffer));
     }
+
+    json_object_object_add(json_obj, BLF_JSON_BROKER_ZONE, json_object_new_string(server_ptr->zone->zone));
 
     JObj = kz_json_get_object(json_obj, BLF_JSON_MSG_ID);
     if(JObj != NULL) {
@@ -2762,7 +2765,7 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 			case AMQP_RESPONSE_NORMAL:
 				idx = envelope.channel-1;
 				if(idx < channel_base) {
-					kz_amqp_send_worker_event(server_ptr->id, &envelope, NULL);
+					kz_amqp_send_worker_event(server_ptr, &envelope, NULL);
 				} else {
 					idx = idx - channel_base;
 					if(!consumer_channels[idx].consumer->no_ack ) {
@@ -2772,7 +2775,7 @@ int kz_amqp_consumer_proc(kz_amqp_server_ptr server_ptr)
 						}
 					}
 					if(OK)
-						kz_amqp_send_worker_event(server_ptr->id, &envelope, consumer_channels[idx].consumer);
+						kz_amqp_send_worker_event(server_ptr, &envelope, consumer_channels[idx].consumer);
 				}
 				break;
 			case AMQP_RESPONSE_SERVER_EXCEPTION:
