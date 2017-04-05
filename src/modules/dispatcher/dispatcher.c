@@ -51,6 +51,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 
 #include "ds_ht.h"
 #include "dispatch.h"
@@ -1002,6 +1003,137 @@ int ds_ping_check_rplcode(int code)
 void ds_ping_reply_codes_update(str *gname, str *name)
 {
 	ds_parse_reply_codes();
+}
+
+/* KEMI wrappers */
+/**
+ *
+ */
+static int ki_ds_select(sip_msg_t *msg, int set, int alg)
+{
+	return ds_select_dst_limit(msg, set, alg, 0xffff /* limit number of dst*/,
+			2 /*set no dst/uri*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_select_limit(sip_msg_t *msg, int set, int alg, int limit)
+{
+	return ds_select_dst_limit(msg, set, alg, limit /* limit number of dst*/,
+			2 /*set no dst/uri*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_select_dst(sip_msg_t *msg, int set, int alg)
+{
+	return ds_select_dst_limit(msg, set, alg, 0xffff /* limit number of dst*/,
+			0 /*set dst uri*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_select_dst_limit(sip_msg_t *msg, int set, int alg, int limit)
+{
+	return ds_select_dst_limit(msg, set, alg, limit /* limit number of dst*/,
+			0 /*set dst uri*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_select_domain(sip_msg_t *msg, int set, int alg)
+{
+	return ds_select_dst_limit(msg, set, alg, 0xffff /* limit number of dst*/,
+			1 /*set host port*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_select_domain_limit(sip_msg_t *msg, int set, int alg, int limit)
+{
+	return ds_select_dst_limit(msg, set, alg, limit /* limit number of dst*/,
+			1 /*set host port*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_next_dst(sip_msg_t *msg)
+{
+	return ds_next_dst(msg, 0 /*set dst uri*/);
+}
+
+/**
+ *
+ */
+static int ki_ds_next_domain(sip_msg_t *msg)
+{
+	return ds_next_dst(msg, 1 /*set host port*/);
+}
+
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_dispatcher_exports[] = {
+	{ str_init("dispatcher"), str_init("ds_select"),
+		SR_KEMIP_INT, ki_ds_select,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_select_limit"),
+		SR_KEMIP_INT, ki_ds_select_limit,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_select_domain"),
+		SR_KEMIP_INT, ki_ds_select_domain,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_select_domain_limit"),
+		SR_KEMIP_INT, ki_ds_select_domain_limit,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_next_domain"),
+		SR_KEMIP_INT, ki_ds_next_domain,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_select_dst"),
+		SR_KEMIP_INT, ki_ds_select_dst,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_select_dst_limit"),
+		SR_KEMIP_INT, ki_ds_select_dst_limit,
+		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_next_dst"),
+		SR_KEMIP_INT, ki_ds_next_dst,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_dispatcher_exports);
+	return 0;
 }
 
 /*** RPC implementation ***/
