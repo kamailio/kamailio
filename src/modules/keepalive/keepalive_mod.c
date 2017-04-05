@@ -43,14 +43,14 @@
 MODULE_VERSION
 
 
-static int  mod_init(void);
+static int mod_init(void);
 static void mod_destroy(void);
-static int  ka_mod_add_destination(modparam_t type, void *val);
-int  ka_init_rpc(void);
-int         ka_alloc_destinations_list();
-extern void ka_check_timer(unsigned int ticks, void* param);
+static int ka_mod_add_destination(modparam_t type, void *val);
+int ka_init_rpc(void);
+int ka_alloc_destinations_list();
+extern void ka_check_timer(unsigned int ticks, void *param);
 
-static int cmd_is_alive(struct sip_msg* msg, char *str1, char *str2);
+static int cmd_is_alive(struct sip_msg *msg, char *str1, char *str2);
 
 extern struct tm_binds tmb;
 
@@ -58,36 +58,37 @@ int ka_ping_interval = 30;
 ka_destinations_list_t *ka_destinations_list = NULL;
 
 
-static cmd_export_t cmds[]={
-	{"is_alive",       (cmd_function)cmd_is_alive, 1, 0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
+static cmd_export_t cmds[] = {
+	{"is_alive", (cmd_function)cmd_is_alive, 1, 0, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	// internal API
 	{"bind_keepalive", (cmd_function)bind_keepalive, 0, 0, 0, 0},
-	{0,0,0,0,0,0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 
-static param_export_t params[]={
-	{"ping_interval", PARAM_INT                  , &ka_ping_interval},
-	{"destination"  , PARAM_STRING|USE_FUNC_PARAM, (void *)ka_mod_add_destination},
-	{0,0,0}
+static param_export_t params[] = {
+	{"ping_interval", PARAM_INT, &ka_ping_interval},
+	{"destination", PARAM_STRING | USE_FUNC_PARAM,
+				(void *)ka_mod_add_destination},
+	{0, 0, 0}
 };
 
 
 /** module exports */
-struct module_exports exports= {
+struct module_exports exports = {
 	"keepalive",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
-	0,          /* exported statistics */
-	0,          /* exported MI functions - no available anymore since 5.0 */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
+	0,		  /* exported statistics */
+	0,		  /* exported MI functions - no available anymore since 5.0 */
+	0,		  /* exported pseudo-variables */
+	0,		  /* extra processes */
+	mod_init, /* module initialization function */
 	0,
-	(destroy_function) mod_destroy,
-	0           /* per-child init function */
+	(destroy_function)mod_destroy,
+	0 /* per-child init function */
 };
 
 
@@ -98,8 +99,7 @@ static int mod_init(void)
 {
 	LM_INFO("Initializing keepalive module\n");
 
-	if (load_tm_api( &tmb ) == -1)
-	{
+	if(load_tm_api(&tmb) == -1) {
 		LM_ERR("could not load the TM-functions - please load tm module\n");
 		return -1;
 	}
@@ -109,7 +109,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (ka_alloc_destinations_list() < 0)
+	if(ka_alloc_destinations_list() < 0)
 		return -1;
 
 	if(register_timer(ka_check_timer, NULL, ka_ping_interval) < 0) {
@@ -132,7 +132,7 @@ static void mod_destroy(void)
  * parses string to dispatcher dst flags set
  * returns <0 on failure or int with flag on success.
  */
-int ka_parse_flags( char* flag_str, int flag_len )
+int ka_parse_flags(char *flag_str, int flag_len)
 {
 	return 0;
 }
@@ -144,7 +144,7 @@ int ka_parse_flags( char* flag_str, int flag_len )
  */
 static int ka_mod_add_destination(modparam_t type, void *val)
 {
-	if (ka_alloc_destinations_list() < 0)
+	if(ka_alloc_destinations_list() < 0)
 		return -1;
 
 	str dest = {val, strlen(val)};
@@ -161,12 +161,13 @@ static int ka_mod_add_destination(modparam_t type, void *val)
  */
 int ka_alloc_destinations_list()
 {
-	if (ka_destinations_list != NULL) {
+	if(ka_destinations_list != NULL) {
 		LM_DBG("ka_destinations_list already allocated\n");
 		return 1;
 	}
 
-	ka_destinations_list = (ka_destinations_list_t *) shm_malloc(sizeof(ka_destinations_list_t));
+	ka_destinations_list = (ka_destinations_list_t *)shm_malloc(
+			sizeof(ka_destinations_list_t));
 	if(ka_destinations_list == NULL) {
 		LM_ERR("no more memory.\n");
 		return -1;
@@ -176,13 +177,13 @@ int ka_alloc_destinations_list()
 }
 
 
-static int cmd_is_alive(struct sip_msg* msg, char *str1, char *str2)
+static int cmd_is_alive(struct sip_msg *msg, char *str1, char *str2)
 {
 	str dest = {str1, strlen(str1)};
 
 	ka_state state = ka_destination_state(dest);
 	// must not return 0, as it stops dialplan execution
-	if (state == KA_STATE_UNKNOWN) {
+	if(state == KA_STATE_UNKNOWN) {
 		return KA_STATE_UP;
 	}
 

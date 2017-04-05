@@ -32,39 +32,37 @@
 #include "../../core/sr_module.h"
 
 
-#define KA_INACTIVE_DST		1  /*!< inactive destination */
-#define KA_TRYING_DST		2  /*!< temporary trying destination */
-#define KA_DISABLED_DST		4  /*!< admin disabled destination */
-#define KA_PROBING_DST		8  /*!< checking destination */
-#define KA_STATES_ALL		15  /*!< all bits for the states of destination */
+#define KA_INACTIVE_DST 1 /*!< inactive destination */
+#define KA_TRYING_DST 2   /*!< temporary trying destination */
+#define KA_DISABLED_DST 4 /*!< admin disabled destination */
+#define KA_PROBING_DST 8  /*!< checking destination */
+#define KA_STATES_ALL 15  /*!< all bits for the states of destination */
 
-#define ds_skip_dst(flags)	((flags) & (KA_INACTIVE_DST|KA_DISABLED_DST))
+#define ds_skip_dst(flags) ((flags) & (KA_INACTIVE_DST | KA_DISABLED_DST))
 
-#define KA_PROBE_NONE			0
-#define KA_PROBE_ALL			1
-#define KA_PROBE_INACTIVE		2
-#define KA_PROBE_ONLYFLAGGED	3
+#define KA_PROBE_NONE 0
+#define KA_PROBE_ALL 1
+#define KA_PROBE_INACTIVE 2
+#define KA_PROBE_ONLYFLAGGED 3
 
 typedef void (*ka_statechanged_f)(str uri, int state, void *user_attr);
 
 typedef struct _ka_dest
 {
 	str uri;
-	str owner;                  // name of destination "owner"
-                                // (module asking to monitor this destination
+	str owner; // name of destination "owner"
+			   // (module asking to monitor this destination
 	int flags;
 	int state;
-	time_t last_checked,
-		   last_up,
-		   last_down;
+	time_t last_checked, last_up, last_down;
 
 	void *user_attr;
 	ka_statechanged_f statechanged_clb;
 
-	struct socket_info * sock;
-	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
-	unsigned short int port; 	/*!< Port of the URI */
-	unsigned short int proto; 	/*!< Protocol of the URI */
+	struct socket_info *sock;
+	struct ip_addr ip_address; /*!< IP-Address of the entry */
+	unsigned short int port;   /*!< Port of the URI */
+	unsigned short int proto;  /*!< Protocol of the URI */
 	struct _ka_dest *next;
 } ka_dest_t;
 
@@ -75,9 +73,9 @@ typedef struct _ka_destinations_list
 
 extern ka_destinations_list_t *ka_destinations_list;
 
-int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback, void *user_attr);
+int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback,
+		void *user_attr);
 int ka_destination_state(str uri);
 int ka_str_copy(str src, str *dest, char *prefix);
 
 #endif
-

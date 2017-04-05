@@ -44,9 +44,9 @@
  * Regroup all exported functions in keepalive_api_t structure
  *
  */
-int bind_keepalive(keepalive_api_t* api)
+int bind_keepalive(keepalive_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
@@ -59,49 +59,52 @@ int bind_keepalive(keepalive_api_t* api)
 /*
  * Add a new destination in keepalive pool
  */
-int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback, void *user_attr) {
+int ka_add_dest(str uri, str owner, int flags, ka_statechanged_f callback,
+		void *user_attr)
+{
 	struct sip_uri _uri;
 	ka_dest_t *dest;
 
 	LM_INFO("adding destination: %.*s\n", uri.len, uri.s);
 
-	dest = (ka_dest_t *) shm_malloc(sizeof(ka_dest_t));
+	dest = (ka_dest_t *)shm_malloc(sizeof(ka_dest_t));
 	if(dest == NULL) {
 		LM_ERR("no more memory.\n");
 		goto err;
 	}
 	memset(dest, 0, sizeof(ka_dest_t));
 
-	if (uri.len >= 4 && (!strncasecmp("sip:", uri.s, 4) || !strncasecmp("sips:", uri.s, 5))) {
+	if(uri.len >= 4 && (!strncasecmp("sip:", uri.s, 4)
+							   || !strncasecmp("sips:", uri.s, 5))) {
 		// protocol found
-		if (ka_str_copy(uri  , &(dest->uri), NULL) < 0)
+		if(ka_str_copy(uri, &(dest->uri), NULL) < 0)
 			goto err;
 	} else {
-		if (ka_str_copy(uri  , &(dest->uri), "sip:") < 0)
+		if(ka_str_copy(uri, &(dest->uri), "sip:") < 0)
 			goto err;
 	}
 
 	// checking uri is valid
-	if (parse_uri(dest->uri.s, dest->uri.len, &_uri) != 0) {
+	if(parse_uri(dest->uri.s, dest->uri.len, &_uri) != 0) {
 		LM_ERR("invalid uri <%.*s>\n", dest->uri.len, dest->uri.s);
 		goto err;
 	}
 
-	if (ka_str_copy(owner, &(dest->owner), NULL) < 0)
+	if(ka_str_copy(owner, &(dest->owner), NULL) < 0)
 		goto err;
 
-	dest->flags                 = flags;
-	dest->statechanged_clb      = callback;
-	dest->user_attr             = user_attr;
+	dest->flags = flags;
+	dest->statechanged_clb = callback;
+	dest->user_attr = user_attr;
 
-	dest->next                  = ka_destinations_list->first;
+	dest->next = ka_destinations_list->first;
 	ka_destinations_list->first = dest;
 
 	return 0;
 
 err:
-	if (dest) {
-		if (dest->uri.s)
+	if(dest) {
+		if(dest->uri.s)
 			shm_free(dest->uri.s);
 
 		shm_free(dest);
@@ -112,24 +115,28 @@ err:
 /*
  * TODO
  */
-int ka_rm_dest() {
+int ka_rm_dest()
+{
 	return -1;
 }
 
 /*
  *
  */
-ka_state ka_destination_state(str destination) {
+ka_state ka_destination_state(str destination)
+{
 	ka_dest_t *ka_dest = NULL;
 
-	for(ka_dest = ka_destinations_list->first; ka_dest != NULL; ka_dest = ka_dest->next) {
-		if (strncmp(ka_dest->uri.s+4, destination.s, ka_dest->uri.len-4) == 0) {
+	for(ka_dest = ka_destinations_list->first; ka_dest != NULL;
+			ka_dest = ka_dest->next) {
+		if(strncmp(ka_dest->uri.s + 4, destination.s, ka_dest->uri.len - 4)
+				== 0) {
 			break;
 		}
 	}
 
-	if (ka_dest == NULL) {
-		return(-1);
+	if(ka_dest == NULL) {
+		return (-1);
 	}
 
 	return ka_dest->state;

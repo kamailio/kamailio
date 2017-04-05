@@ -43,7 +43,8 @@
 struct tm_binds tmb;
 
 static void ka_run_route(sip_msg_t *msg, str *uri, char *route);
-static void ka_options_callback( struct cell *t, int type, struct tmcb_params *ps );
+static void ka_options_callback(struct cell *t, int type,
+		struct tmcb_params *ps);
 
 
 /*! \brief
@@ -51,32 +52,30 @@ static void ka_options_callback( struct cell *t, int type, struct tmcb_params *p
  *
  * This timer is regularly fired.
  */
-void ka_check_timer(unsigned int ticks, void* param)
+void ka_check_timer(unsigned int ticks, void *param)
 {
 	ka_dest_t *ka_dest;
 	str ka_ping_method = str_init("OPTIONS");
-	str ka_ping_from   = str_init("sip:dispatcher@localhost");
+	str ka_ping_from = str_init("sip:dispatcher@localhost");
 	str ka_outbound_proxy = {0, 0};
 	uac_req_t uac_r;
 
 	LM_DBG("ka check timer\n");
 
-	for(ka_dest = ka_destinations_list->first; ka_dest != NULL; ka_dest = ka_dest->next) {
+	for(ka_dest = ka_destinations_list->first; ka_dest != NULL;
+			ka_dest = ka_dest->next) {
 		LM_DBG("ka_check_timer dest:%.*s\n", ka_dest->uri.len, ka_dest->uri.s);
 
 		/* Send ping using TM-Module.
 		 * int request(str* m, str* ruri, str* to, str* from, str* h,
 		 *		str* b, str *oburi,
 		 *		transaction_cb cb, void* cbp); */
-		set_uac_req(&uac_r, &ka_ping_method, 0, 0, 0,
-				TMCB_LOCAL_COMPLETED, ka_options_callback,
-				(void *) ka_dest);
+		set_uac_req(&uac_r, &ka_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
+				ka_options_callback, (void *)ka_dest);
 
-		if (tmb.t_request(&uac_r,
-					&ka_dest->uri,
-					&ka_dest->uri,
-					&ka_ping_from,
-					&ka_outbound_proxy) < 0) {
+		if(tmb.t_request(&uac_r, &ka_dest->uri, &ka_dest->uri, &ka_ping_from,
+				   &ka_outbound_proxy)
+				< 0) {
 			LM_ERR("unable to ping [%.*s]\n", ka_dest->uri.len, ka_dest->uri.s);
 		}
 
@@ -91,8 +90,8 @@ void ka_check_timer(unsigned int ticks, void* param)
  * This Function is called, as soon as the Transaction is finished
  * (e. g. a Response came in, the timeout was hit, ...)
  */
-static void ka_options_callback( struct cell *t, int type,
-		struct tmcb_params *ps )
+static void ka_options_callback(
+		struct cell *t, int type, struct tmcb_params *ps)
 {
 	str uri = {0, 0};
 	sip_msg_t *msg = NULL;
@@ -101,25 +100,25 @@ static void ka_options_callback( struct cell *t, int type,
 	char *state_routes[] = {"", "keepalive:dst-up", "keepalive:dst-down"};
 
 	//NOTE: how to be sure destination is still allocated ?
-	ka_dest_t *ka_dest = (ka_dest_t *) (*ps->param);
+	ka_dest_t *ka_dest = (ka_dest_t *)(*ps->param);
 
-	uri.s   = t->to.s + 5;
+	uri.s = t->to.s + 5;
 	uri.len = t->to.len - 8;
-	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s)\n",
-			ps->code, ka_dest->uri.len, ka_dest->uri.s); //uri.len, uri.s);
+	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s)\n", ps->code,
+			ka_dest->uri.len, ka_dest->uri.s); //uri.len, uri.s);
 
 
 	// accepting 2XX return codes
-	if (ps->code >= 200 && ps->code <= 299) {
-		state              = KA_STATE_UP;
+	if(ps->code >= 200 && ps->code <= 299) {
+		state = KA_STATE_UP;
 		ka_dest->last_down = time(NULL);
 	} else {
-		state              = KA_STATE_DOWN;
-		ka_dest->last_up   = time(NULL);
+		state = KA_STATE_DOWN;
+		ka_dest->last_up = time(NULL);
 	}
 
 	LM_DBG("new state is: %d\n", state);
-	if (state != ka_dest->state) {
+	if(state != ka_dest->state) {
 		ka_run_route(msg, &uri, state_routes[state]);
 
 		if(ka_dest->statechanged_clb != NULL) {
@@ -140,8 +139,7 @@ static void ka_run_route(sip_msg_t *msg, str *uri, char *route)
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
 
-	if (route == NULL)
-	{
+	if(route == NULL) {
 		LM_ERR("bad route\n");
 		return;
 	}
@@ -149,17 +147,14 @@ static void ka_run_route(sip_msg_t *msg, str *uri, char *route)
 	LM_DBG("ka_run_route event_route[%s]\n", route);
 
 	rt = route_get(&event_rt, route);
-	if (rt < 0 || event_rt.rlist[rt] == NULL)
-	{
+	if(rt < 0 || event_rt.rlist[rt] == NULL) {
 		LM_DBG("route *%s* does not exist", route);
 		return;
 	}
 
 	fmsg = msg;
-	if (fmsg == NULL)
-	{
-		if (faked_msg_init() < 0)
-		{
+	if(fmsg == NULL) {
+		if(faked_msg_init() < 0) {
 			LM_ERR("faked_msg_init() failed\n");
 			return;
 		}
@@ -179,22 +174,21 @@ static void ka_run_route(sip_msg_t *msg, str *uri, char *route)
 /*
  * copy str into dynamically allocated shm memory
  */
-int ka_str_copy(str src, str *dest, char *prefix) {
-	int lp = prefix?strlen(prefix):0;
+int ka_str_copy(str src, str *dest, char *prefix)
+{
+	int lp = prefix ? strlen(prefix) : 0;
 
-	dest->s = (char *) shm_malloc((src.len + 1 + lp) * sizeof(char));
-	if(dest->s == NULL)
-	{
+	dest->s = (char *)shm_malloc((src.len + 1 + lp) * sizeof(char));
+	if(dest->s == NULL) {
 		LM_ERR("no more memory!\n");
 		return -1;
 	}
 
 	if(prefix)
 		strncpy(dest->s, prefix, lp);
-	strncpy(dest->s+lp, src.s, src.len);
-	dest->s[src.len+lp] = '\0';
-	dest->len           = src.len+lp;
+	strncpy(dest->s + lp, src.s, src.len);
+	dest->s[src.len + lp] = '\0';
+	dest->len = src.len + lp;
 
 	return 0;
 }
-

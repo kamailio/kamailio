@@ -49,8 +49,9 @@ rpc_export_t keepalive_rpc_cmds[] = {
 	{0, 0, 0, 0}
 };
 
-int ka_init_rpc(void) {
-	if (rpc_register_array(keepalive_rpc_cmds) != 0) {
+int ka_init_rpc(void)
+{
+	if(rpc_register_array(keepalive_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 	}
 
@@ -60,7 +61,8 @@ int ka_init_rpc(void) {
 static const char *keepalive_rpc_list_doc[2] = {
 		"Return the content of dispatcher sets", 0};
 
-static void keepalive_rpc_list(rpc_t *rpc, void *ctx) {
+static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
+{
 	void *foo, *bar, *baz;
 	void *sub;
 	ka_dest_t *dest;
@@ -69,9 +71,9 @@ static void keepalive_rpc_list(rpc_t *rpc, void *ctx) {
 	char *_dtime;
 	str text = str_init("foobar");
 
-	if (rpc->add(ctx, "Sd", &text, 42) < 0)
+	if(rpc->add(ctx, "Sd", &text, 42) < 0)
 		LM_ERR("failed creating RPC struct\n");
-	if (rpc->add(ctx, "Sd", &text, 42) < 0)
+	if(rpc->add(ctx, "Sd", &text, 42) < 0)
 		LM_ERR("failed creating RPC struct\n");
 
 	rpc->add(ctx, "{", &foo);
@@ -85,9 +87,7 @@ static void keepalive_rpc_list(rpc_t *rpc, void *ctx) {
 	for(dest = ka_destinations_list->first; dest != NULL; dest = dest->next) {
 		rpc->add(ctx, "{", &sub);
 
-		rpc->struct_add(sub, "SS",
-			"uri"  , &dest->uri,
-			"owner", &dest->owner);
+		rpc->struct_add(sub, "SS", "uri", &dest->uri, "owner", &dest->owner);
 
 		_ctime = ctime(&dest->last_checked);
 		_ctime[strlen(_ctime) - 1] = '\0';

@@ -32,22 +32,23 @@
 
 typedef int ka_state;
 
-#define KA_STATE_UNKNOWN    0
-#define KA_STATE_UP         1
-#define KA_STATE_DOWN       2
+#define KA_STATE_UNKNOWN 0
+#define KA_STATE_UP 1
+#define KA_STATE_DOWN 2
 
 typedef void (*ka_statechanged_f)(str uri, int state, void *user_attr);
-typedef int  (*ka_add_dest_f)(str uri, str owner, int flags, ka_statechanged_f callback,
-                              void *user_attr);
+typedef int (*ka_add_dest_f)(str uri, str owner, int flags,
+		ka_statechanged_f callback, void *user_attr);
 typedef ka_state (*ka_dest_state_f)(str uri);
 
-typedef struct keepalive_api {
-	ka_add_dest_f	  add_destination;
-	ka_dest_state_f   destination_state;
+typedef struct keepalive_api
+{
+	ka_add_dest_f add_destination;
+	ka_dest_state_f destination_state;
 } keepalive_api_t;
 
-typedef int (*bind_keepalive_f)(keepalive_api_t* api);
-int bind_keepalive(keepalive_api_t* api);
+typedef int (*bind_keepalive_f)(keepalive_api_t *api);
+int bind_keepalive(keepalive_api_t *api);
 
 /**
  * @brief Load the dispatcher API
@@ -62,8 +63,7 @@ static inline int keepalive_load_api(keepalive_api_t *api)
 		return -1;
 	}
 
-	if(bindkeepalive(api) < 0)
-	{
+	if(bindkeepalive(api) < 0) {
 		LM_ERR("cannot bind keepalive api\n");
 		return -1;
 	}
@@ -71,4 +71,3 @@ static inline int keepalive_load_api(keepalive_api_t *api)
 }
 
 #endif /* __KEEPALIVE_API_H__ */
-
