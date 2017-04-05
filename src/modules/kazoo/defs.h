@@ -57,6 +57,7 @@
 #define BLF_JSON_TYPE           "Type"
 #define BLF_JSON_MSG_ID         "Msg-ID"
 #define BLF_JSON_DIRECTION      "Direction"
+#define BLF_JSON_BROKER_ZONE    "AMQP-Broker-Zone"
 
 #define BLF_JSON_CONTACT   	"Contact"
 #define BLF_JSON_EVENT_PKG      "Event-Package"
