@@ -74,7 +74,9 @@ CREATE TABLE mtrees (
 
 /** parameters */
 static str db_url = str_init(DEFAULT_DB_URL);
-static str db_table = str_init("mtrees");
+/* default name created by sql scripts is 'mtrees'
+ * - don't set it here with default value, only via config param */
+static str db_table = str_init("");
 static str tname_column   = str_init("tname");
 static str tprefix_column = str_init("tprefix");
 static str tvalue_column  = str_init("tvalue");
@@ -269,6 +271,9 @@ static int mod_init(void)
 			}
 			pt = pt->next;
 		}
+		/* reset db_table value */
+		db_table.s = "";
+		db_table.len = 0;
 	} else {
 		if(db_table.len<=0)
 		{
