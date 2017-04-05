@@ -175,14 +175,15 @@ modparam("mtree", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 3.2. db_table (string)
 
-   Name of database table where data for trees is stored. It is ignored if
-   a 'mtree' parameter is defined.
+   Name of database table where data for many trees is stored. It is
+   ignored if a 'mtree' parameter is defined. The SQL scripts creates a
+   table named 'mtrees' that can be used for this parameter.
 
-   Default value is “mtrees”.
+   Default value is “” (no table name).
 
    Example 1.2. Set db_table parameter
 ...
-modparam("mtree", "db_table", "mymtrees")
+modparam("mtree", "db_table", "mtrees")
 ...
 
 3.3. mtree (string)
