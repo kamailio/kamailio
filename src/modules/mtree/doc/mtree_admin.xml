@@ -86,19 +86,20 @@ modparam("mtree", "db_url", "&exampledb;")
 	<section>
 	    <title><varname>db_table</varname> (string)</title>
 	    <para>
-		Name of database table where data for trees is stored. It is ignored if a
-		'mtree' parameter is defined.
+		Name of database table where data for many trees is stored. It is ignored
+		if a 'mtree' parameter is defined. The SQL scripts creates a table named
+		'mtrees' that can be used for this parameter.
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>mtrees</quote>.
+		    Default value is <quote></quote> (no table name).
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>db_table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mtree", "db_table", "mymtrees")
+modparam("mtree", "db_table", "mtrees")
 ...
 </programlisting>
 	    </example>
