@@ -38,6 +38,7 @@ int dmq_usrloc_enable = 0;
 int _dmq_usrloc_sync = 1;
 int _dmq_usrloc_batch_size = 0;
 int _dmq_usrloc_batch_msg_contacts = 1;
+int _dmq_usrloc_batch_msg_size = 60000;
 int _dmq_usrloc_batch_usleep = 0;
 str _dmq_usrloc_domain = str_init("location");
 
@@ -49,6 +50,7 @@ static param_export_t params[] = {
 	{"enable", INT_PARAM, &dmq_usrloc_enable},
 	{"sync",   INT_PARAM, &_dmq_usrloc_sync},
 	{"batch_msg_contacts",   INT_PARAM, &_dmq_usrloc_batch_msg_contacts},
+	{"batch_msg_size",   INT_PARAM, &_dmq_usrloc_batch_msg_size},
 	{"batch_size",   INT_PARAM, &_dmq_usrloc_batch_size},
 	{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
 	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
@@ -76,6 +78,10 @@ static int mod_init(void)
 	bind_usrloc_t bind_usrloc;
 	LM_INFO("dmq usrloc replication mode = %d\n", dmq_usrloc_enable);
 
+	if(_dmq_usrloc_batch_msg_size > 60000) {
+		LM_ERR("batch_msg_size too high[%d] setting to [60000]\n", _dmq_usrloc_batch_msg_size);
+		_dmq_usrloc_batch_msg_size = 60000;
+	}
 	if(_dmq_usrloc_batch_msg_contacts > 150) {
 		LM_ERR("batch_msg_contacts too high[%d] setting to [150]\n", _dmq_usrloc_batch_msg_contacts);
 		_dmq_usrloc_batch_msg_contacts = 150;
